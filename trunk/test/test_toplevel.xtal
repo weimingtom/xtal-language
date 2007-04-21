@@ -1,0 +1,35 @@
+
+nod : class{
+
+}
+
+mod : class(nod){
+	foo : fun(){
+		return "foo";
+	}
+}
+
+toplevel.inherit(mod);
+
+assert foo===mod::foo;
+
+assert foo()=="foo";
+
+nod::bar : fun(){
+	return "bar";
+}
+
+assert bar()=="bar";
+
+mod::bar : fun(){
+	return "mod::bar";
+}
+
+assert bar()=="mod::bar";
+
+toplevel::bar : fun(){
+	return "toplevel::bar";
+}
+
+assert bar()=="toplevel::bar";
+

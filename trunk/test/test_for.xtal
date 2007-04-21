@@ -1,0 +1,57 @@
+{
+	ret : "";
+	for(i: 0; i<10; ++i){
+		ret ~= i.to_s;
+	}else{
+		ret ~= "!";
+	}
+	
+	assert ret=="0123456789!";
+}
+
+{
+	ret : "";
+	for(i: 0; i<10; ++i){
+		ret ~= i.to_s;
+		if(i==5){
+			break;
+		}
+	}else{
+		assert false;
+	}
+
+	assert ret=="012345";
+}
+
+
+{
+	ret : "";
+	for(i: 0; i<10; ++i){
+		ret ~= i.to_s;
+		continue;
+	}
+	assert ret=="0123456789";
+}
+
+{
+	ret : "";
+	outer:for(i: 0; i<10; ++i){
+		for(j: 0; j<10; ++j){
+			ret ~= i.to_s;
+			continue outer;
+		}
+	}
+	assert ret=="0123456789";
+}
+
+
+{
+	ret : "";
+	outer:for(i: 0; i<10; ++i){
+		for(j: 0; j<10; ++j){
+			ret ~= i.to_s;
+			break outer;
+		}
+	}
+	assert ret=="0";
+}

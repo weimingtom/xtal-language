@@ -1,0 +1,87 @@
+
+{
+	a : 10;
+	b : fun(){
+		return 20;
+	}
+	c : 0;
+
+	if(a < b()){
+		c = 10;
+	}else{
+		assert false;
+	}
+	assert c==10;
+
+	if(a > b()){
+		assert false;
+	}else{
+		c = 55;
+	}
+	assert c==55;
+
+	if(5 <= 20){
+		c = 78;
+	}else{
+		assert false;
+	}
+	assert c==78;
+
+	if(10 >= a){
+		c = 980;
+	}else{
+		assert false;
+	}
+	assert c==980;
+
+	if(11 >= a){
+		c = "true";
+	}else{
+		assert false;
+	}
+	assert c=="true";
+}
+
+
+{
+	a : "aaa";
+	b : fun(){
+		return "bbb";
+	}
+	c : 0;
+
+	if(a < b()){
+		c = 10;
+	}else{
+		assert false;
+	}
+	assert c==10;
+
+	if(a > b()){
+		assert false;
+	}else{
+		c = 55;
+	}
+	assert c==55;
+
+	if("a" <= "b"){
+		c = 78;
+	}else{
+		assert false;
+	}
+	assert c==78;
+
+	if("aaa" >= a){
+		c = 980;
+	}else{
+		assert false;
+	}
+	assert c==980;
+
+	if("aab" >= a){
+		c = "true";
+	}else{
+		assert false;
+	}
+	assert c=="true";
+}

@@ -1,0 +1,25 @@
+
+#pragma once
+
+#include "xtal.h"
+
+#include "allocator.cpp"
+#include "any.cpp"
+#include "array.cpp"
+#include "code.cpp"
+#include "codebuilder.cpp"
+#include "expr.cpp"
+#include "frame.cpp"
+#include "fun.cpp"
+#include "cfun.cpp"
+#include "lexer.cpp"
+#include "lib.cpp"
+#include "map.cpp"
+#include "parser.cpp"
+#include "string.cpp"
+#include "vmachine.cpp"
+#include "vmachineimpl.cpp"
+#include "cast.cpp"
+#include "marshal.cpp"
+#include "stream.cpp"
+#include "stack.cpp"

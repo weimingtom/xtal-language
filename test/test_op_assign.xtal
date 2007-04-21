@@ -1,0 +1,44 @@
+
+{
+	str : "aaa";
+	str ~= "bbb";
+	assert str=="aaabbb";
+}
+
+{
+	i : 10;
+	i += 20;
+	assert i==30;
+	
+	i *= 5;
+	assert i==150;
+}
+
+{
+	i : [10];
+	i[0] += 20;
+	assert i[0]==30;
+	
+	i[0] *= 5;
+	assert i[0]==150;
+}
+
+{
+	C : class{
+		x : @x;	
+		y : @y;	
+		set_x : @x=;
+		set_y : @y=;
+	}
+	
+	c : C();
+	c.x = 100;
+	
+	c.x += 50;
+	assert c.x==150;
+	
+	c.x *= 10;
+	assert c.x==1500;
+}
+
+

@@ -147,7 +147,9 @@ public:
 	MemoryStreamImpl(const void* data, uint_t data_size){
 		set_class(TClass<MemoryStream>::get());
 		data_.resize(data_size);
-		memcpy(&data_[0], data, data_size);
+		if(data_size>0){
+			memcpy(&data_[0], data, data_size);
+		}
 		pos_ = 0;
 	}
 	
@@ -159,7 +161,9 @@ public:
 		if(pos_+size>data_.size()){ 
 			data_.resize(pos_+4);
 		}
-		memcpy(&data_[pos_], p, size);
+		if(size>0){
+			memcpy(&data_[pos_], p, size);
+		}
 		pos_ += size;
 		return size;	
 	}
@@ -167,12 +171,16 @@ public:
 	virtual uint_t do_read(void* p, uint_t size){
 		if(pos_+size>data_.size()){ 
 			uint_t diff = data_.size()-pos_;
-			memcpy(p, &data_[pos_], diff);
+			if(diff>0){
+				memcpy(p, &data_[pos_], diff);
+			}
 			pos_ += diff;
 			return diff; 
 		}
 		
-		memcpy(p, &data_[pos_], size);
+		if(size>0){
+			memcpy(p, &data_[pos_], size);
+		}
 		pos_ += size;
 		return size;
 	}

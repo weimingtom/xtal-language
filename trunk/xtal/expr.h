@@ -149,7 +149,7 @@ struct Expr{
 	int_t type;
 	int_t line;
 	RegionAlloc* alloc;
-
+	
 	Expr(int_t type, int_t line)
 		:type(type), line(line){}
 
@@ -160,7 +160,7 @@ struct Expr{
 	}
 	
 	void operator delete(void *, RegionAlloc*){}
-	
+
 	operator Expr*(){ return this; }
 };
 

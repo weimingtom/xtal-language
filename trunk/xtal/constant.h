@@ -34,7 +34,7 @@ enum CodeType{
 * @brief 何もしない。
 * 
 * format op
-* stack ->
+* stack [] -> []
 */
 CODE_NOP,
 	
@@ -42,7 +42,7 @@ CODE_NOP,
 * @brief スタックにnull値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_NULL,
 
@@ -50,7 +50,7 @@ CODE_PUSH_NULL,
 * @brief スタックにtrue値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_TRUE,
 
@@ -58,7 +58,7 @@ CODE_PUSH_TRUE,
 * @brief スタックにnop値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_NOP,
 
@@ -66,7 +66,7 @@ CODE_PUSH_NOP,
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_0,
 
@@ -74,7 +74,7 @@ CODE_PUSH_INT_0,
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_1,
 
@@ -82,7 +82,7 @@ CODE_PUSH_INT_1,
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_2,
 
@@ -90,7 +90,7 @@ CODE_PUSH_INT_2,
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_3,
 
@@ -98,16 +98,15 @@ CODE_PUSH_INT_3,
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_4,
-
 
 /**
 * @brief スタックにint値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_5,
 
@@ -115,7 +114,7 @@ CODE_PUSH_INT_5,
 * @brief スタックにint値をプッシュする。
 * 
 * format op, value
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_1BYTE,
 
@@ -123,7 +122,7 @@ CODE_PUSH_INT_1BYTE,
 * @brief スタックにint値をプッシュする。
 * 
 * format op, value1, value2
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_INT_2BYTE,
 
@@ -131,7 +130,7 @@ CODE_PUSH_INT_2BYTE,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_0,
 
@@ -139,7 +138,7 @@ CODE_PUSH_FLOAT_0,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_0_25,
 
@@ -147,7 +146,7 @@ CODE_PUSH_FLOAT_0_25,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_0_5,
 
@@ -155,7 +154,7 @@ CODE_PUSH_FLOAT_0_5,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_1,
 
@@ -163,7 +162,7 @@ CODE_PUSH_FLOAT_1,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_2,
 
@@ -171,7 +170,7 @@ CODE_PUSH_FLOAT_2,
 * @brief スタックにfloat値をプッシュする。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FLOAT_3,
 
@@ -179,7 +178,7 @@ CODE_PUSH_FLOAT_3,
 * @brief 配列を作る。
 * 
 * format op, count
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_ARRAY,
 
@@ -187,7 +186,7 @@ CODE_PUSH_ARRAY,
 * @brief 配列に要素を追加する。
 * 
 * format op
-* stack arrya, value -> array 
+* stack [arrya, value] -> [array]
 */
 CODE_ARRAY_APPEND,
 
@@ -195,7 +194,7 @@ CODE_ARRAY_APPEND,
 * @brief 連想配列を作る。
 * 
 * format op, count
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_MAP,
 
@@ -203,7 +202,7 @@ CODE_PUSH_MAP,
 * @brief 連想配列に要素を追加する。
 * 
 * format op
-* stack map, key, value -> map 
+* stack [map, key, value] -> [map]
 */
 CODE_MAP_APPEND,
 
@@ -211,7 +210,7 @@ CODE_MAP_APPEND,
 * @brief 関数を作る。
 * 
 * format op, type, num1, num2
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_FUN,
 
@@ -219,7 +218,7 @@ CODE_PUSH_FUN,
 * @brief 現在の呼ばれている関数自身をスタックに積む。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_CALLEE,
 
@@ -227,7 +226,7 @@ CODE_PUSH_CALLEE,
 * @brief 現在の残り引数オブジェクトをスタックに積む。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_ARGS,
 
@@ -235,7 +234,7 @@ CODE_PUSH_ARGS,
 * @brief 現在のthisをスタックに積む。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_THIS,
 
@@ -243,7 +242,7 @@ CODE_PUSH_THIS,
 * @brief 現在のフレームをスタックに積む。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_PUSH_CURRENT_CONTEXT,
 
@@ -251,7 +250,7 @@ CODE_PUSH_CURRENT_CONTEXT,
 * @brief 表明。
 * 
 * format op
-* stack expr, expr_String, message ->
+* stack [expr, expr_String, message] -> []
 */
 CODE_ASSERT,
 
@@ -259,7 +258,7 @@ CODE_ASSERT,
 * @brief スタックトップの値をポップする。
 * 
 * format op
-* stack value -> 
+* stack [value] -> []
 */
 CODE_POP,
 
@@ -267,7 +266,7 @@ CODE_POP,
 * @brief スタックトップの値をプッシュする。
 * 
 * format op
-* stack value -> value, value
+* stack [value] -> [value, value]
 */
 CODE_DUP,
 
@@ -275,7 +274,7 @@ CODE_DUP,
 * @brief スタックトップの値を一つ前に入れる。
 * 
 * format op
-* stack value1, value2 -> value2, value1
+* stack [value1, value2] -> [value2, value1]
 */
 CODE_INSERT_1,
 
@@ -283,7 +282,7 @@ CODE_INSERT_1,
 * @brief スタックトップの値を二つ前に入れる。
 * 
 * format op
-* stack value1, value2, value3 -> value3, value1, value2
+* stack [value1, value2, value3] -> [value3, value1, value2]
 */
 CODE_INSERT_2,
 
@@ -291,7 +290,7 @@ CODE_INSERT_2,
 * @brief スタックトップの値を三つ前に入れる。
 * 
 * format op
-* stack value1, value2, value3, value4 -> value4, value1, value2, value3
+* stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
 */
 CODE_INSERT_3,
 
@@ -299,7 +298,7 @@ CODE_INSERT_3,
 * @brief 名前をつける
 * 
 * format op, size1, size2
-* stack value -> value
+* stack [value] -> [value]
 */
 CODE_SET_NAME,
 
@@ -307,7 +306,7 @@ CODE_SET_NAME,
 * @brief ブロックを開始する。
 * 
 * format op, size1, size2
-* stack -> 
+* stack [] -> []
 */
 CODE_BLOCK_BEGIN,
 
@@ -315,7 +314,7 @@ CODE_BLOCK_BEGIN,
 * @brief ブロックを閉じる。
 * 
 * format op
-* stack -> 
+* stack [] -> []
 */
 CODE_BLOCK_END,
 
@@ -323,7 +322,7 @@ CODE_BLOCK_END,
 * @brief ヒープに乗らないと静的に確定しているブロックを閉じる。
 * 
 * format op
-* stack -> 
+* stack [] -> []
 */
 CODE_BLOCK_END_NOT_ON_HEAP,
 
@@ -331,7 +330,7 @@ CODE_BLOCK_END_NOT_ON_HEAP,
 * @brief フレームの開始
 * 
 * format op, type, core1, core2
-* stack -> 
+* stack [] -> []
 */
 CODE_FRAME_BEGIN,
 
@@ -339,7 +338,7 @@ CODE_FRAME_BEGIN,
 * @brief フレームを閉じる
 * 
 * format op
-* stack -> value 
+* stack [] -> [value]
 */
 CODE_FRAME_END,
 
@@ -347,7 +346,7 @@ CODE_FRAME_END,
 * @brief ローカル変数を取り出す。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_0, 
 
@@ -355,7 +354,7 @@ CODE_LOCAL_0,
 * @brief ローカル変数を取り出す。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_1, 
 
@@ -363,7 +362,7 @@ CODE_LOCAL_1,
 * @brief ローカル変数を取り出す。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_2, 
 
@@ -371,7 +370,7 @@ CODE_LOCAL_2,
 * @brief ローカル変数を取り出す。
 * 
 * format op
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_3, 
 
@@ -379,7 +378,7 @@ CODE_LOCAL_3,
 * @brief ローカル変数を取り出す。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL, 
 
@@ -387,7 +386,7 @@ CODE_LOCAL,
 * @brief ヒープに乗らないと静的に確定しているローカル変数を取り出す。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_NOT_ON_HEAP, 
 
@@ -395,7 +394,7 @@ CODE_LOCAL_NOT_ON_HEAP,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_0, 
 
@@ -403,7 +402,7 @@ CODE_SET_LOCAL_0,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_1, 
 
@@ -411,7 +410,7 @@ CODE_SET_LOCAL_1,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_2, 
 
@@ -419,7 +418,7 @@ CODE_SET_LOCAL_2,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_3, 
 
@@ -427,7 +426,7 @@ CODE_SET_LOCAL_3,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL, 
 
@@ -435,7 +434,7 @@ CODE_SET_LOCAL,
 * @brief ヒープに乗らないと静的に確定しているローカル変数に値を設定する。
 * 
 * format op, pos
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_NOT_ON_HEAP, 
 
@@ -443,7 +442,7 @@ CODE_SET_LOCAL_NOT_ON_HEAP,
 * @brief ローカル変数を取り出す。
 * 
 * format op, pos1, pos2
-* stack -> value
+* stack [] -> [value]
 */
 CODE_LOCAL_W, 
 
@@ -451,7 +450,7 @@ CODE_LOCAL_W,
 * @brief ローカル変数に値を設定する。
 * 
 * format op, pos1, pos2
-* stack -> value
+* stack [] -> [value]
 */
 CODE_SET_LOCAL_W, 
 
@@ -459,7 +458,7 @@ CODE_SET_LOCAL_W,
 * @brief グローバル変数を取り出す。
 * 
 * format op, symbol1, symbol2
-* stack -> value
+* stack [] -> [value]
 */
 CODE_GLOBAL, 
 
@@ -467,7 +466,7 @@ CODE_GLOBAL,
 * @brief オブジェクトのメンバを取り出す。
 * 
 * format op, symbol1, symbol2
-* stack object -> result 
+* stack [object] -> [result]
 */
 CODE_MEMBER,
 
@@ -475,7 +474,7 @@ CODE_MEMBER,
 * @brief オブジェクトのメンバを取り出す。
 * 
 * format op, symbol1, symbol2
-* stack object -> result 
+* stack [object] -> [result]
 */
 CODE_MEMBER_IF_DEFINED,
 
@@ -483,7 +482,7 @@ CODE_MEMBER_IF_DEFINED,
 * @brief オブジェクトのメンバを定義する。
 * 
 * format op, symbol1, symbol2
-* stack object, value -> 
+* stack [object, value] -> []
 */
 CODE_DEFINE_MEMBER,
 
@@ -491,7 +490,7 @@ CODE_DEFINE_MEMBER,
 * @brief インスタンス変数を取り出す。
 * 
 * format op, symbol1, symbol2
-* stack object -> result 
+* stack [object] -> [result]
 */
 CODE_INSTANCE_VARIABLE,
 
@@ -499,7 +498,7 @@ CODE_INSTANCE_VARIABLE,
 * @brief インスタンス変数に値を設定する。
 * 
 * format op, symbol1, symbol2
-* stack object, value -> 
+* stack [object, value] -> []
 */
 CODE_SET_INSTANCE_VARIABLE,
 
@@ -507,7 +506,7 @@ CODE_SET_INSTANCE_VARIABLE,
 * @brief 条件分岐
 * 
 * format op, goto1, goto2
-* stack value ->
+* stack [value] -> []
 */
 CODE_IF,
 
@@ -515,7 +514,7 @@ CODE_IF,
 * @brief 条件分岐
 * 
 * format op, goto1, goto2
-* stack value ->
+* stack [value] -> []
 */
 CODE_UNLESS,
 
@@ -524,20 +523,39 @@ CODE_UNLESS,
 * @brief 無条件分岐
 * 
 * format op, goto1, goto2
-* stack
+* stack [] -> []
 */
 CODE_GOTO,
 
+/**
+* @brief スタックにジャンプ位置を埋め込む
+* 
+* format op, goto1, goto2
+* stack [] -> [address]
+*/
 CODE_PUSH_GOTO,
+
+/**
+* @brief スタックからポップしたアドレスにジャンプする
+* 
+* format op
+* stack [] -> []
+*/
 CODE_POP_GOTO,
 
+/**
+* @brief once演算子
+* 
+* format op, goto1, goto2, value1, value2
+* stack [] -> []
+*/
 CODE_ONCE,
 
 /**
 * @brief 関数呼び出しの後始末をする
 * 
 * format op
-* stack ->
+* stack [] -> []
 */
 CODE_CLEANUP_CALL,
 
@@ -545,7 +563,7 @@ CODE_CLEANUP_CALL,
 * @brief 関数から抜ける
 * 
 * format op
-* stack ->
+* stack [] -> []
 */
 CODE_RETURN_0,
 
@@ -553,7 +571,7 @@ CODE_RETURN_0,
 * @brief 関数から抜ける
 * 
 * format op
-* stack value1 ->
+* stack [value1] -> []
 */
 CODE_RETURN_1,
 
@@ -561,7 +579,7 @@ CODE_RETURN_1,
 * @brief 関数から抜ける
 * 
 * format op
-* stack value1, value2 ->
+* stack [value1, value2] -> []
 */
 CODE_RETURN_2,
 
@@ -569,14 +587,14 @@ CODE_RETURN_2,
 * @brief 関数から抜ける
 * 
 * format op, N
-* stack value1, value2, ... valueN ->
+* stack [value1, value2, ... valueN] -> []
 */
 CODE_RETURN_N,
 
 /**
 * @brief fiberの実行を一時中断する
 format; op, N
-* stack value1, value2, ... valueN ->
+* stack [value1, value2, ... valueN] -> []
 */
 CODE_YIELD,
 
@@ -584,7 +602,7 @@ CODE_YIELD,
 * @brief 仮想マシンのループから脱出する。
 * 
 * format op
-* stack ->
+* stack [] -> []
 */
 CODE_EXIT,
 
@@ -592,7 +610,7 @@ CODE_EXIT,
 * @brief 例外UnsupportedErrorを投げる。
 * 
 * format op
-* stack ->
+* stack [] -> []
 */
 CODE_THROW_UNSUPPORTED_ERROR,
 
@@ -600,7 +618,7 @@ CODE_THROW_UNSUPPORTED_ERROR,
 * @brief オブジェクトテーブルから値を取り出す。
 * 
 * format op, pos1, pos2
-* stack -> result
+* stack [] -> [result]
 */
 CODE_GET_VALUE,
 
@@ -608,7 +626,7 @@ CODE_GET_VALUE,
 * @brief オブジェクトテーブルに値を設定する。
 * 
 * format op, pos1, pos2
-* stack value ->
+* stack [value] -> []
 */
 CODE_SET_VALUE,
 
@@ -616,25 +634,71 @@ CODE_SET_VALUE,
 * @brief 直前のメンバ参照が有効かチェックする。
 * 
 * format op
-* stack value -> result
+* stack [value] -> [result]
 */
 CODE_CHECK_UNSUPPORTED,
 
+/**
+* @brief メソッド呼び出し
+* 
+* format op, sym, ...
+* stack [target] -> [result 0..num]
+*/
 CODE_SEND,
+
+/**
+* @brief メソッド呼び出し
+* 
+* format op, sym, ...
+* stack [target] -> [result 0..num]
+*/
 CODE_SEND_IF_DEFINED,
 
+/**
+* @brief 関数呼び出し
+* 
+* format op, ...
+* stack [target] -> [result 0..num]
+*/
 CODE_CALL,
+
+/**
+* @brief 関数呼び出し
+* 
+* format op, ...
+* stack [target] -> [result 0..num]
+*/
 CODE_CALLEE,
 
+/**
+* @brief 例外フレームを開始
+* 
+* format op, catch1, catch2, finally1, finally2, end1, end2 
+* stack [] -> []
+*/
 CODE_TRY_BEGIN,
+
+/**
+* @brief 例外フレームを終了
+* 
+* format op
+* stack [] -> []
+*/
 CODE_TRY_END,
+
+/**
+* @brief 例外を投げる
+* 
+* format op
+* stack [value] -> []
+*/
 CODE_THROW,
 
 /**
 * @brief 単項+の演算を行う。
 * 
 * format op
-* stack value -> result
+* stack [value] -> [result]
 */
 CODE_POS,
 
@@ -642,7 +706,7 @@ CODE_POS,
 * @brief 単項-の演算を行う。
 * 
 * format op
-* stack value -> result
+* stack [value] -> [result]
 */
 CODE_NEG,
 
@@ -650,7 +714,7 @@ CODE_NEG,
 * @brief 単項~の演算を行う。
 * 
 * format op
-* stack value -> result
+* stack [value] -> [result]
 */
 CODE_COM,
 
@@ -658,7 +722,7 @@ CODE_COM,
 * @brief 単項!の演算を行う。
 * 
 * format op
-* stack value -> result
+* stack [value] -> [result]
 */
 CODE_NOT,
 
@@ -666,7 +730,7 @@ CODE_NOT,
 * @brief 配列の要素を取り出す。
 * 
 * format op
-* stack object, index -> result
+* stack [object, index] -> [result]
 */
 CODE_AT,
 
@@ -674,7 +738,7 @@ CODE_AT,
 * @brief 配列の要素を設定する。
 * 
 * format op
-* stack object, index, value ->
+* stack [object, index, value] -> []
 */
 CODE_SET_AT, 
 
@@ -682,7 +746,7 @@ CODE_SET_AT,
 * @brief 二項+の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_ADD,
 
@@ -690,7 +754,7 @@ CODE_ADD,
 * @brief 二項-の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SUB,
 
@@ -698,7 +762,7 @@ CODE_SUB,
 * @brief 二項~の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_CAT,
 
@@ -706,7 +770,7 @@ CODE_CAT,
 * @brief 二項*の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_MUL,
 
@@ -714,7 +778,7 @@ CODE_MUL,
 * @brief 二項/の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_DIV,
 
@@ -722,7 +786,7 @@ CODE_DIV,
 * @brief 二項%の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_MOD,
 
@@ -730,7 +794,7 @@ CODE_MOD,
 * @brief 二項&の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_AND,
 
@@ -738,7 +802,7 @@ CODE_AND,
 * @brief 二項&の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_OR,
 
@@ -746,7 +810,7 @@ CODE_OR,
 * @brief 二項^の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_XOR,
 
@@ -754,7 +818,7 @@ CODE_XOR,
 * @brief 二項<<の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SHL,
 
@@ -762,7 +826,7 @@ CODE_SHL,
 * @brief 二項>>の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SHR,
 
@@ -770,18 +834,56 @@ CODE_SHR,
 * @brief 二項>>>の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_USHR,
 
+/**
+* @brief ローカル変数をインクリメントする
+* 
+* format op, variable1, variable2
+* stack [] -> []
+*/
 CODE_LOCAL_NOT_ON_HEAP_INC,
+
+/**
+* @brief ローカル変数をデクリメントする
+* 
+* format op, variable1, variable2
+* stack [] -> []
+*/
 CODE_LOCAL_NOT_ON_HEAP_DEC,
 
+/**
+* @brief ローカル変数をインクリメントする
+* 
+* format op
+* stack [value] -> [result]
+*/
 CODE_INC,
+
+/**
+* @brief ローカル変数をデクリメントする
+* 
+* format op
+* stack [value] -> [result]
+*/
 CODE_DEC,
 
+/**
+* @brief クローンを生成する
+* 
+* format op
+* stack [value] -> [result]
+*/
 CODE_CLONE,
 
+/**
+* @brief 二項==の演算を行い、条件分岐する。
+* 
+* format op, goto1, goto2
+* stack [value1, value2] -> [result]
+*/
 CODE_EQ_IF,
 CODE_NE_IF,
 CODE_LT_IF,
@@ -793,7 +895,7 @@ CODE_GE_IF,
 * @brief 二項==の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_EQ,
 CODE_NE,
@@ -811,7 +913,7 @@ CODE_NIS,
 * @brief 二項+の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_ADD_ASSIGN,
 
@@ -819,7 +921,7 @@ CODE_ADD_ASSIGN,
 * @brief 二項-の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SUB_ASSIGN,
 
@@ -827,7 +929,7 @@ CODE_SUB_ASSIGN,
 * @brief 二項~の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_CAT_ASSIGN,
 
@@ -835,7 +937,7 @@ CODE_CAT_ASSIGN,
 * @brief 二項*の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_MUL_ASSIGN,
 
@@ -843,7 +945,7 @@ CODE_MUL_ASSIGN,
 * @brief 二項/の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_DIV_ASSIGN,
 
@@ -851,7 +953,7 @@ CODE_DIV_ASSIGN,
 * @brief 二項%の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_MOD_ASSIGN,
 
@@ -859,7 +961,7 @@ CODE_MOD_ASSIGN,
 * @brief 二項&の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_AND_ASSIGN,
 
@@ -867,7 +969,7 @@ CODE_AND_ASSIGN,
 * @brief 二項&の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_OR_ASSIGN,
 
@@ -875,7 +977,7 @@ CODE_OR_ASSIGN,
 * @brief 二項^の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_XOR_ASSIGN,
 
@@ -883,7 +985,7 @@ CODE_XOR_ASSIGN,
 * @brief 二項<<の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SHL_ASSIGN,
 
@@ -891,7 +993,7 @@ CODE_SHL_ASSIGN,
 * @brief 二項>>の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_SHR_ASSIGN,
 
@@ -899,7 +1001,7 @@ CODE_SHR_ASSIGN,
 * @brief 二項>>>の演算を行う。
 * 
 * format op
-* stack value1, value2 -> result 
+* stack [value1, value2] -> [result]
 */
 CODE_USHR_ASSIGN,
 

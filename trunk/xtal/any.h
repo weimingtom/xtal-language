@@ -572,9 +572,13 @@ public:
 
 protected:
 
-	void inc_ref_count();
+	void inc_ref_count() const;
 
-	void dec_ref_count();	
+	void dec_ref_count() const;	
+
+	const Any& cref() const{
+		return (const Any&)*this;
+	}
 
 private:
 
@@ -844,11 +848,11 @@ inline bool operator !=(const Any& a, const Null&){ return a; }
 inline bool operator ==(const Null&, const Any& a){ return !a; }
 inline bool operator !=(const Null&, const Any& a){ return a; }
 
-inline void Any::inc_ref_count(){
+inline void Any::inc_ref_count() const{
 	if(type()==TYPE_BASE){ impl()->inc_ref_count(); }
 }
 
-inline void Any::dec_ref_count(){
+inline void Any::dec_ref_count() const{
 	if(type()==TYPE_BASE){ impl()->dec_ref_count(); }
 }
 

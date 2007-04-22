@@ -181,35 +181,35 @@ public:
 	}
 
 	/**
-	読み進める。
+	* 読み進める。
 	*/
 	int_t read();
 
 	/**
-	次の要素を読む。
+	* 次の要素を読む。
 	*/
 	int_t peek();
 
 	/**
-	次の要素が引数chと同じだったら読み進める。
-	@param ch この値と次の要素が等しい場合に読み進める。
-	@retval true 次の要素はchと同じで、読み進めた。
-	@retval false 次の要素はchと異なり、読み進めなかった。
+	* 次の要素が引数chと同じだったら読み進める。
+	* @param ch この値と次の要素が等しい場合に読み進める。
+	* @retval true 次の要素はchと同じで、読み進めた。
+	* @retval false 次の要素はchと異なり、読み進めなかった。
 	*/
 	bool eat(int_t ch);
 
 	/**
-	要素を一つ戻す。
+	* 要素を一つ戻す。
 	*/
 	void putback(int_t ch);
 	
 	/**
-	ポジションの取得。
+	* ポジションの取得。
 	*/
 	int_t position();
 	
 	/**
-	ポジションをposの位置に戻す。
+	* ポジションをposの位置に戻す。
 	*/
 	void set_position(int_t pos);
 

@@ -36,6 +36,13 @@ void user_free(void* p, size_t size);
 */
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 
+
+/**
+* @brief xtalで使用するメモリーを設定する。
+*
+*/
+void set_memory(void* memory, size_t size);
+
 /**
 * 動的な、ポインタの配列を作成、拡張する関数。
 *
@@ -193,6 +200,54 @@ private:
 	RegionAlloc(const RegionAlloc&);
 	RegionAlloc& operator =(const RegionAlloc&);
 
+};
+
+/**
+* @brief とてもシンプルなメモリ管理機構
+*
+*/
+class SimpleMemoryManager{
+public:
+	
+	struct Chunk{
+		Chunk* next;
+		Chunk* prev;
+		int used;
+		
+		size_t size(){ return (char*)next - (char*)buf(); }
+		void* buf(){ return this+1; }
+	};
+
+	SimpleMemoryManager(){
+		head_ = begin_ = end_ = 0;
+	}
+	
+	void init(void* begin, void* end);
+	
+	void* malloc(size_t size);
+	
+	void free(void* p);
+
+	Chunk* begin(){
+		return begin_;
+	}
+	
+	Chunk* end(){
+		return end_;
+	}
+
+	Chunk* to_chunk(void* p){
+		return (Chunk*)p-1;
+	}
+
+	void add_ref(void* p){
+		to_chunk(p)->used++;
+	}
+	
+private:
+	Chunk* head_;
+	Chunk* begin_;
+	Chunk* end_;
 };
 
 }//namespace 

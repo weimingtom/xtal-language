@@ -14,6 +14,23 @@ void (*user_free_)(void*) = &free;
 size_t used_user_malloc_size_ = 0;
 size_t used_user_malloc_threshold_ = 1024*50;
 
+
+SimpleMemoryManager smm_;
+
+void* smm_malloc(size_t size){
+	return smm_.malloc(size);
+}
+
+void smm_free(void* p){
+	smm_.free(p);
+}
+
+}
+
+
+void set_memory(void* memory, size_t size){
+	smm_.init(memory, (char*)memory + size);
+	set_user_malloc(&smm_malloc, &smm_free);
 }
 
 void* user_malloc(size_t size){
@@ -101,6 +118,61 @@ void RegionAlloc::add_chunk(size_t minsize){
 	*((int_t*)allocate(sizeof(int_t))) = alloced_size_;
 	alloced_size_*=2;
 
+}
+
+
+void SimpleMemoryManager::init(void* begin, void* end){
+	head_ = (Chunk*)begin;
+	begin_ = head_+1;
+	end_ = (Chunk*)end-1;
+	
+	head_->next = begin_;
+	head_->prev = 0;
+	head_->used = 1;
+	
+	begin_->next = end_;
+	begin_->prev = head_;
+	begin_->used = 0;
+	
+	end_->next = 0;
+	end_->prev = begin_;
+	end_->used = 1;
+}
+
+void* SimpleMemoryManager::malloc(size_t size){
+	size = (size+(8-1)) & ~(8-1);
+	for(Chunk* it = begin_; it!=end_; it = it->next){
+		if(!it->used && size + sizeof(Chunk) <= it->size()){
+			Chunk* newchunk = (Chunk*)(((char*)it->buf())+size);
+			newchunk->used = 0;
+			it->next->prev = newchunk;
+			newchunk->next = it->next;
+			it->next = newchunk;
+			newchunk->prev = it;
+			it->used = 1;
+			return it->buf();
+		}
+	}
+	return 0;
+}
+
+void SimpleMemoryManager::free(void* p){
+	if(p){
+		Chunk* it = to_chunk(p);
+		it->used--;
+		if(it->used==0){
+			if(it->prev->used==0){
+				it->prev->next = it->next;
+				it->next->prev = it->prev;
+				it = it->prev;
+			}
+		
+			if(it->next->used==0){
+				it->next->next->prev = it;
+				it->next = it->next->next;
+			}
+		}		
+	}
 }
 
 

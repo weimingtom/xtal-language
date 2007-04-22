@@ -682,7 +682,7 @@ uint_t Any::hashcode() const{
 }
 
 
-/*
+
 using namespace xtal;
 
 
@@ -717,6 +717,8 @@ private:
 	unsigned long prev_time_;
 };
 
+int buf[1024*400];
+
 int main(){
 
 	
@@ -727,6 +729,8 @@ int main(){
 	// );
 	
 	try{
+
+		set_memory(buf, sizeof(buf));
 
 		initialize();
 
@@ -751,9 +755,6 @@ int main(){
 		Timer t;
 		Xsrc((		
 
-			c: [["y"]];
-			c.p;
-
 			fib : fun(i){
 				if(i<2){
 					return 1;
@@ -761,12 +762,15 @@ int main(){
 					return callee(i-2) + callee(i-1);
 				}
 			}
-			fib.call(33).p;
+
+		    fib(33).p;
 		))();
 		std::cout<<"X "<<t.elapsed_time()<<std::endl<<std::endl;		
 
 	}catch(Any e){
 		std::cout << e << std::endl;
+	}catch(std::bad_alloc& b){
+		std::cout << b.what() << std::endl;
 	}
 
 	vmachine().impl()->print_info();

@@ -6,6 +6,7 @@ namespace xtal{
 
 PODStackBase::Buf PODStackBase::buf_;
 
+
 PODStackBase::PODStackBase(size_t onesize){
 	one_size_ = onesize;
 	begin_ = plusp(dummy_allocate(), 1);
@@ -18,6 +19,7 @@ PODStackBase::~PODStackBase(){
 }
 
 PODStackBase::PODStackBase(const PODStackBase &a){
+	one_size_ = a.one_size_;
 	if(a.empty()){
 		begin_ = plusp(dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
@@ -26,9 +28,7 @@ PODStackBase::PODStackBase(const PODStackBase &a){
 		begin_ = plusp(allocate(one_size_*(a.capacity()+1)), 1);
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
-
-		size_t capa = a.capacity();
-		memcpy(begin_, a.begin_, one_size_*capa);
+		memcpy(begin_, a.begin_, one_size_*a.size());
 	}
 }
 
@@ -36,16 +36,21 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 	if(this==&a)
 		return *this;
 
-	void* newp = plusp(allocate(one_size_*(a.capacity()+1)), 1);
-
-	deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
-
-	begin_ = newp;
-	current_ = plusp(begin_, a.size()-1);
-	end_ = plusp(begin_, a.capacity());
-
-	size_t capa = a.capacity();
-	memcpy(begin_, a.begin_, one_size_*capa);
+	if(a.empty()){
+		deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
+		one_size_ = a.one_size_;
+		begin_ = plusp(dummy_allocate(), 1);
+		current_ = minusp(begin_, 1);
+		end_ = begin_;
+	}else{
+		void* newp = plusp(allocate(a.one_size_*(a.capacity()+1)), 1);
+		deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
+		one_size_ = a.one_size_;
+		begin_ = newp;
+		current_ = plusp(begin_, a.size()-1);
+		end_ = plusp(begin_, a.capacity());
+		memcpy(begin_, a.begin_, one_size_*a.size());
+	}
 
 	return *this;
 }

@@ -13,7 +13,7 @@ namespace xtal{
 /**
 * @brief 参照カウントをしないAny
 *
-* 一般ユーザーはこれを使用することは無い
+* 一般ユーザーはこれを直接使用することは無い
 */
 class UncountedAny{
 public:
@@ -142,7 +142,7 @@ private:
 /**
 * @brief 参照カウントをしないAny
 *
-* 一般ユーザーはこれを使用することは無い
+* 一般ユーザーはこれを直接使用することは無い
 */
 class UncountedAny{
 public:
@@ -802,8 +802,8 @@ public:
 	static void* operator new(size_t size, Any& guard);
 	static void operator delete(void* p, Any& guard);
 
-	static void* operator new(size_t size, void* p){ return p; }
-	static void operator delete(void* p, void*){}
+	static void* operator new(size_t, void* p){ return p; }
+	static void operator delete(void*, void*){}
 
 public:
 
@@ -884,7 +884,7 @@ inline Any& Any::operator =(AnyImpl* v){
 	else{ set_null(); }
 	return *this;
 }
-	
+
 inline Any& Any::operator =(const AnyImpl* v){
 	dec_ref_count();
 	if(v){ set_p(v); impl()->inc_ref_count(); }
@@ -916,9 +916,5 @@ inline Any& Any::operator =(const Null&){
 	return *this;
 }
 
-inline Any::~Any(){ 
-	dec_ref_count();
-	set_null();
-}
 
 }

@@ -11,7 +11,8 @@ enum{
 enum{
 	KIND_FUN,
 	KIND_METHOD,
-	KIND_FIBER
+	KIND_FIBER,
+	KIND_THREAD
 };
 
 enum{

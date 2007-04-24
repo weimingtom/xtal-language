@@ -150,14 +150,14 @@ public:
 			bool have_label; /// ‘Î‰‚·‚éƒ‰ƒxƒ‹‚ğ‚Á‚Ä‚¢‚é‚©
 		};
 		
-		Stack<Loop> loops;
+		PODStack<Loop> loops;
 
 		struct Finally{
 			int frame_count;
 			int finally_label;
 		};
 
-		Stack<Finally> finallys;
+		PODStack<Finally> finallys;
 
 		bool used_args_object;
 	};
@@ -190,13 +190,13 @@ private:
 	Parser parser_;
 	LPCCommon com_;
 	
-	Stack<int_t> variables_;
-	Stack<int_t> label_names_;
+	PODStack<int_t> variables_;
+	PODStack<int_t> label_names_;
 	Stack<FunFrame> fun_frames_;
 	Code result_;
 	CodeImpl* p_;
-	Stack<Scope> scopes_;
-	Stack<int_t> lines_;
+	PODStack<Scope> scopes_;
+	PODStack<int_t> lines_;
 	Stack<ClassFrame> class_scopes_;
 };
 

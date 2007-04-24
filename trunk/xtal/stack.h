@@ -393,19 +393,19 @@ private:
 		user_free(p, size);
 	}
 
-	void* plusp(const void* p, size_t v) const{
+	void* plusp(const void* p, int v) const{
 		return (char*)p + v*one_size_;
 	}
 	
-	void* minusp(const void* p, size_t v) const{
+	void* minusp(const void* p, int v) const{
 		return (char*)p - v*one_size_;
 	}
 
-	void* addp(void*& p, size_t v){
+	void* addp(void*& p, int v){
 		return p = plusp(p, v);
 	}
 
-	void* subp(void*& p, size_t v){
+	void* subp(void*& p, int v){
 		return p = minusp(p, v);
 	}
 
@@ -421,7 +421,7 @@ private:
 
 public:
 
-	PODStackBase(size_t onesize);
+	explicit PODStackBase(size_t onesize);
 
 	PODStackBase(const PODStackBase &a);
 	
@@ -471,7 +471,7 @@ public:
 
 	void downsize(size_t ds){
 		XTAL_ASSERT(size()>=ds);
-		minusp(current_, ds);
+		subp(current_, ds);
 	}
 
 	void downsize_n(size_t newsize){

@@ -370,6 +370,10 @@ void* AnyImpl::operator new(size_t size){
 	}	
 	AnyImpl* p = static_cast<AnyImpl*>(user_malloc(size));
 	*objects_current_++=p;
+	
+	p->ref_count_ = 1;
+	p->class_ = null;
+	
 	return p;
 }
 	
@@ -555,6 +559,11 @@ Any::Any(const char* str){
 	*this = String(str);
 }
 
+Any::~Any(){ 
+	dec_ref_count();
+	set_null();
+}
+
 const Any& Any::member(const ID& name) const{
 	if(type()==TYPE_BASE){
 		return impl()->member(name);
@@ -682,7 +691,6 @@ uint_t Any::hashcode() const{
 }
 
 
-
 using namespace xtal;
 
 
@@ -692,6 +700,7 @@ using namespace xtal;
 #include <sstream>
 
 //#include <crtdbg.h>
+/*
 #include <windows.h>
 
 class Timer{
@@ -716,6 +725,7 @@ public:
 private:
 	unsigned long prev_time_;
 };
+*/
 
 int buf[1024*400];
 
@@ -727,7 +737,11 @@ int main(){
 	//		| _CRTDBG_LEAK_CHECK_DF
 	//		| _CRTDBG_CHECK_ALWAYS_DF
 	// );
+
+	//Sleep(1000*2);
 	
+	//return 0;
+
 	try{
 
 		set_memory(buf, sizeof(buf));
@@ -752,7 +766,7 @@ int main(){
 		
 		
 
-		Timer t;
+		//Timer t;
 		Xsrc((		
 
 			fib : fun(i){
@@ -763,9 +777,9 @@ int main(){
 				}
 			}
 
-		    fib(33).p;
+		    fib(20).p;
 		))();
-		std::cout<<"X "<<t.elapsed_time()<<std::endl<<std::endl;		
+		//std::cout<<"X "<<t.elapsed_time()<<std::endl<<std::endl;		
 
 	}catch(Any e){
 		std::cout << e << std::endl;

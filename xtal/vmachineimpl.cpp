@@ -902,6 +902,10 @@ const u8* VMachineImpl::PUSH_FUN(const u8* pc){
 		XTAL_CASE(KIND_FIBER){ 
 			push(Fiber(decolonize(), ff().self, code(), code().get_fun_core(table_n)));
 		}
+		
+		XTAL_CASE(KIND_THREAD){ 
+			push(Fiber(decolonize(), ff().self, code(), code().get_fun_core(table_n)));
+		}
 	}
 	return pc+end;
 }

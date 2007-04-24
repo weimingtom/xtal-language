@@ -42,6 +42,8 @@
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
+#define XTAL_GLOBAL_INTERPRETER_LOCK
+
 namespace xtal{
 
 template<class T>

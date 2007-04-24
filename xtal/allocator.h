@@ -127,7 +127,7 @@ struct Alloc{
 	}
 	
     size_type max_size() const{
-		return 0x7fffffff/sizeof(T);
+		return 0xffffffffU/sizeof(T);
 	}
 
 };

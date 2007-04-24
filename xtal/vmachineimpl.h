@@ -266,52 +266,52 @@ public:
 
 public:
 
-	/// スタックのi番目の値を取得する。
+	// スタックのi番目の値を取得する。
 	const Any& get(int_t i){ return stack_[i].cref(); }
 
-	/// スタックの0番目の値を取得する。
+	// スタックの0番目の値を取得する。
 	const Any& get(){ return stack_.top().cref(); }
 
-	/// スタックのi番目の値を設定する。
+	// スタックのi番目の値を設定する。
 	void set(int_t i, const Any& v){ stack_[i]=v; }
 
-	/// スタックの0番目の値を設定する。
+	// スタックの0番目の値を設定する。
 	void set(const Any& v){ stack_.top()=v; }
 
-	/// スタックをn拡大する。
+	// スタックをn拡大する。
 	void upsize(int_t n){ stack_.upsize_unchecked(n); }
 
-	/// スタックをn縮小する
+	// スタックをn縮小する
 	void downsize(int_t n){ stack_.downsize(n); }
 
-	/// スタックをn個にする。
+	// スタックをn個にする。
 	void resize(int_t n){ stack_.resize(n); }
 
-	/// スタックに値vをプッシュする。
+	// スタックに値vをプッシュする。
 	void push(const Any& v){ stack_.push_unchecked(v); }
 
-	/// スタックに値vをプッシュする。
+	// スタックに値vをプッシュする。
 	void push_unchecked(const Any& v){ stack_.push_unchecked(v); }
 
-	/// スタックから値をポップする。
-	Any& pop(){ return (Any&)stack_.pop().cref(); }
+	// スタックから値をポップする。
+	const Any& pop(){ return stack_.pop().cref(); }
 
-	/// 先頭の値をプッシュする。
+	// 先頭の値をプッシュする。
 	void dup(){ push(get()); }
 
-	/// i番目の値をプッシュする。
+	// i番目の値をプッシュする。
 	void dup(int_t i){ push(get(i)); }
 
-	/// スタックの大きさを返す。
+	// スタックの大きさを返す。
 	int_t stack_size(){ return (int_t)stack_.size(); }
 	
-	/// srcのスタックの内容をsize個プッシュする。
+	// srcのスタックの内容をsize個プッシュする。
 	void push(VMachineImpl* src, int_t size){ stack_.push(src->stack_, size); }
 	
-	/// srcのスタックの内容をsize個プッシュする。
+	// srcのスタックの内容をsize個プッシュする。
 	void push(VMachineImpl* src, int_t src_offset, int_t size){ stack_.push(src->stack_, src_offset, size); }
 
-	/// srcのスタックの内容をsize個取り除いて、プッシュする。
+	// srcのスタックの内容をsize個取り除いて、プッシュする。
 	void move(VMachineImpl* src, int_t size){ stack_.move(src->stack_, size); }
 	
 private:
@@ -335,28 +335,28 @@ private:
 
 	struct FunFrame{
 
-		/// 呼び出された関数オブジェクト
+		// 呼び出された関数オブジェクト
 		Fun fun; 
 
-		/// スコープの外側のフレームオブジェクト
+		// スコープの外側のフレームオブジェクト
 		Frame outer;
 
-		/// 保存されたプログラムカウント
+		// 保存されたプログラムカウント
 		const u8* pc;
 
-		/// スコープがオブジェクト化されてない時のローカル変数領域
+		// スコープがオブジェクト化されてない時のローカル変数領域
 		Stack<Any> variables;
 
-		/// スコープ情報 
+		// スコープ情報 
 		Stack<FrameCore*> scopes;
 
-		/// 関数が呼ばれたときの順番指定引数の数
+		// 関数が呼ばれたときの順番指定引数の数
 		int_t ordered_arg_count;
 		
-		/// 関数が呼ばれたときの名前指定引数の数
+		// 関数が呼ばれたときの名前指定引数の数
 		int_t named_arg_count;
 
-		/// 関数呼び出し側が必要とする戻り値の数
+		// 関数呼び出し側が必要とする戻り値の数
 		int_t required_result_count;
 
 		int_t result_count;
@@ -364,24 +364,27 @@ private:
 		int_t result_flag;
 
 		enum{
-			CALLING_STATE_NONE,
-			CALLING_STATE_PUSHED_FUN,
-			CALLING_STATE_PUSHED_RESULT
+			CALLING_STATE_NONE, // 何もなってない状態
+			CALLING_STATE_PUSHED_FUN, // 関数が積まれている状態
+			CALLING_STATE_PUSHED_RESULT // 結果が積まれている状態
 		};
 
-		/// 
+		// 呼び出し状態
 		int_t calling_state;
 
-		/// 関数が呼ばれたときのthisオブジェクト
+		// 関数が呼ばれたときのthisオブジェクト
 		Any self;
 
-		/// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
+		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
-		/// オブジェクト化した引数。
+		// オブジェクト化した引数。
 		Arguments arguments;
 		
+		// デバッグメッセージ出力用のヒント
 		Any hint1;
+		
+		// デバッグメッセージ出力用のヒント
 		String hint2;
 
 		FunFrame()
@@ -392,7 +395,7 @@ private:
 		m & v.fun & v.outer & v.arguments & v.variables & v.hint1 & v.hint2 & v.self;
 	}
 
-	/// 例外を処理するためのフレーム
+	// 例外を処理するためのフレーム
 	struct ExceptFrame{
 		ExceptFrame(){}
 		ExceptFrame(const u8* catch_pc, const u8* finally_pc, const u8* end_pc)
@@ -559,14 +562,14 @@ private:
 
 	UncountedAny myself_;
 
-	/// 計算用スタック
+	// 計算用スタック
 	Stack<UncountedAny> stack_;
 
-	/// 関数呼び出しの度に積まれるフレーム
+	// 関数呼び出しの度に積まれるフレーム
 	Stack<FunFrame> fun_frames_;
 
-	/// tryの度に積まれるフレーム。
-	Stack<ExceptFrame> except_frames_;
+	// tryの度に積まれるフレーム。
+	PODStack<ExceptFrame> except_frames_;
 	
 protected:
 

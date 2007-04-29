@@ -18,7 +18,7 @@ namespace xtal{
 class UncountedAny{
 public:
 
-	UncountedAny(){}
+	UncountedAny(){ value_ = TYPE_NULL; }
 	UncountedAny(int_t v){ set_i(v); }
 	UncountedAny(float_t v){ set_f(v); }
 	UncountedAny(AnyImpl* v){ set_p(v); }
@@ -27,6 +27,9 @@ public:
 	UncountedAny(check_xtype<float>::type v){ set_f(v); }
 	UncountedAny(PrimitiveType type){ value_ = type; }
 	
+	struct noinit_t{};
+	UncountedAny(noinit_t){}
+
 protected:
 
 	void set_null(){
@@ -147,7 +150,7 @@ private:
 class UncountedAny{
 public:
 
-	UncountedAny(){}
+	UncountedAny(){ type_ = TYPE_NULL; pvalue_ = 0; }
 	UncountedAny(int_t v){ set_i(v); }
 	UncountedAny(float_t v){ set_f(v); }
 	UncountedAny(AnyImpl* v){ set_p(v); }
@@ -159,6 +162,9 @@ public:
 		type_ = type;
 		value_ = 0;
 	}
+
+	struct noinit_t{};
+	UncountedAny(noinit_t){}
 	
 protected:
 
@@ -781,7 +787,8 @@ Any& operator <<=(Any& a, const Any& b);
 class AnyImpl{
 public:
 	
-	AnyImpl(){}
+	AnyImpl()
+		:class_(UncountedAny::noinit_t()){}
 
 	AnyImpl(const AnyImpl& b)
 		:class_(b.class_){}
@@ -790,9 +797,9 @@ public:
 	
 public:
 
-	struct noinit_tag{};
-
-	AnyImpl(noinit_tag){}
+	struct noinit_t{};
+	AnyImpl(noinit_t)
+		:class_(UncountedAny::noinit_t()){}
 		
 public:
 	

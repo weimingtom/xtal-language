@@ -6,27 +6,28 @@
 #include "frame.h"
 #include "lib.h"
 #include "xmacro.h"
+#include "thread.h"
 
 namespace xtal{
 
 class StreamImpl : public AnyImpl{
 public:
 
-	void p1(int_t v){
-		struct{ u8 data[1]; } data;
+	void p8(int_t v){
+		struct{ xtal::u8 data[1]; } data;
 		data.data[0] = (v>>0)&0xff;
 		do_write(data.data, 1);
 	}
 
-	void p2(int_t v){
-		struct{ u8 data[2]; } data;
+	void p16(int_t v){
+		struct{ xtal::u8 data[2]; } data;
 		data.data[0] = (v>>8)&0xff;
 		data.data[1] = (v>>0)&0xff;
 		do_write(data.data, 2);
 	}
 
-	void p4(int_t v){
-		struct{ u8 data[4]; } data;
+	void p32(int_t v){
+		struct{ xtal::u8 data[4]; } data;
 		data.data[0] = (v>>24)&0xff;
 		data.data[1] = (v>>16)&0xff;
 		data.data[2] = (v>>8)&0xff;
@@ -34,38 +35,38 @@ public:
 		do_write(data.data, 4);
 	}
 
-	int_t s1(){
-		struct{ u8 data[1]; } data;
+	int_t s8(){
+		struct{ xtal::u8 data[1]; } data;
 		do_read(data.data, 1);
-		return (s8)data.data[0];
+		return (xtal::s8)data.data[0];
 	}
 
-	int_t s2(){
-		struct{ u8 data[2]; } data;
+	int_t s16(){
+		struct{ xtal::u8 data[2]; } data;
 		do_read(data.data, 2);
-		return (s16)((data.data[0]<<8) | data.data[1]);
+		return (xtal::s16)((data.data[0]<<8) | data.data[1]);
 	}
 
-	int_t s4(){
-		struct{ u8 data[4]; } data;
+	int_t s32(){
+		struct{ xtal::u8 data[4]; } data;
 		do_read(data.data, 4);
 		return ((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 	}
 
-	uint_t u1(){
-		struct{ u8 data[1]; } data;
+	uint_t u8(){
+		struct{ xtal::u8 data[1]; } data;
 		do_read(data.data, 1);
-		return (u8)data.data[0];
+		return (xtal::u8)data.data[0];
 	}
 
-	uint_t u2(){
-		struct{ u8 data[2]; } data;
+	uint_t u16(){
+		struct{ xtal::u8 data[2]; } data;
 		do_read(data.data, 2);
-		return (u16)((data.data[0]<<8) | data.data[1]);
+		return (xtal::u16)((data.data[0]<<8) | data.data[1]);
 	}
 
-	uint_t u4(){
-		struct{ u8 data[4]; } data;
+	uint_t u32(){
+		struct{ xtal::u8 data[4]; } data;
 		do_read(data.data, 4);
 		return ((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 	}
@@ -117,11 +118,17 @@ public:
 	}
 
 	virtual uint_t do_write(const void* p, uint_t size){
-		return fwrite(p, 1, size, fp_);
+		XTAL_UNLOCK{
+			return fwrite(p, 1, size, fp_);
+		}
+		return 0;
 	}
 
 	virtual uint_t do_read(void* p, uint_t size){
-		return fread(p, 1, size, fp_);
+		XTAL_UNLOCK{
+			return fread(p, 1, size, fp_);
+		}
+		return 0;
 	}
 
 	virtual void close(){

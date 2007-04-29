@@ -109,7 +109,6 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("unittest"), (int_t)Token::KEYWORD_UNITTEST);
 	keyword_map_.set_at(ID("assert"), (int_t)Token::KEYWORD_ASSERT);
 	keyword_map_.set_at(ID("pure"), (int_t)Token::KEYWORD_PURE);
-	keyword_map_.set_at(ID("thread"), (int_t)Token::KEYWORD_THREAD);
 }
 
 LPCCommon Lexer::common(){

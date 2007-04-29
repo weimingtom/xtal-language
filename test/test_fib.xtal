@@ -7,7 +7,7 @@ fib : fun(i){
 	}
 }
 
-fib2 : fiber() {
+fib2 : fiber{
   i : 1; j : 1;
   while (true) {
     yield i;

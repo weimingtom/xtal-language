@@ -12,8 +12,9 @@ void* (*user_malloc_)(size_t) = &malloc;
 void (*user_free_)(void*) = &free;
 
 size_t used_user_malloc_size_ = 0;
-size_t used_user_malloc_threshold_ = 1024*50;
+size_t used_user_malloc_threshold_ = 1024*5000;
 
+bool calling_malloc_ = false;
 
 SimpleMemoryManager smm_;
 
@@ -42,28 +43,37 @@ void* user_malloc(size_t size){
 } 
 
 void* user_malloc_nothrow(size_t size){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		calling_malloc_ = true;
 
-	if(used_user_malloc_threshold_<used_user_malloc_size_){
-		used_user_malloc_threshold_ += 1024*10; // 10KB‚Ù‚Çè‡’l‚ð‘‚â‚·
-		gc();
+		if(used_user_malloc_threshold_<used_user_malloc_size_+size){
+			used_user_malloc_threshold_ += size+1024*1000; // è‡’l‚ð‘‚â‚·
+			gc();
+		}
+		
+		void* ret = user_malloc_(size);
+		if(!ret){
+			full_gc();
+			ret = user_malloc_(size);
+		}
+		
+		if(ret){
+			used_user_malloc_size_+=size;
+		}
+
+		calling_malloc_ = false;
+
+		return ret;
 	}
-	
-	void* ret = user_malloc_(size);
-	if(!ret){
-		full_gc();
-		ret = user_malloc_(size);
-	}
-	
-	if(ret){
-		used_user_malloc_size_+=size;
-	}
-	
-	return ret;
+
+	return 0;
 } 
 
 void user_free(void* p, size_t size){
-	used_user_malloc_size_-=size;
-	user_free_(p);
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		used_user_malloc_size_-=size;
+		user_free_(p);
+	}
 }
 
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*)){
@@ -73,6 +83,10 @@ void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*)){
 	user_free_ = free;
 }
 
+
+bool calling_malloc(){
+	return calling_malloc_;
+}
 
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 	alloced_size_ = first_buffer_size;
@@ -117,7 +131,6 @@ void RegionAlloc::add_chunk(size_t minsize){
 	*((void**)allocate(sizeof(void*))) = old_begin;
 	*((int_t*)allocate(sizeof(int_t))) = alloced_size_;
 	alloced_size_*=2;
-
 }
 
 

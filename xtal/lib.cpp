@@ -15,11 +15,6 @@
 
 namespace xtal{
 
-const VMachine& vmachine(){
-	static LLVar<VMachine> p;
-	return p;	
-}
-
 Any compile_file(const String& file_name){
 	CodeBuilder cb;
 	FileStream fs(file_name, "r");
@@ -85,6 +80,11 @@ void object_dump(const Any& v, const Stream& out){
 Any object_load(const Stream& in){
 	Marshal m(in);
 	return m.load();
+}
+
+void object_to_script(const Any& v, const Stream& out){
+	Marshal m(out);
+	m.to_script(v);
 }
 
 Result result;
@@ -362,6 +362,8 @@ void initialize_lib(){
 	builtin.def("Stream", TClass<Stream>::get());
 	builtin.def("FileStream", TClass<FileStream>::get());
 	builtin.def("MemoryStream", TClass<MemoryStream>::get());
+	builtin.def("Thread", TClass<Thread>::get());
+	builtin.def("Mutex", TClass<Mutex>::get());
 	
 	builtin.fun("print", &print);
 	builtin.fun("println", &println);
@@ -373,6 +375,7 @@ void initialize_lib(){
 	builtin.fun("enable_gc", &enable_gc);
 	builtin.fun("object_dump", &object_dump);
 	builtin.fun("object_load", &object_load);
+	builtin.fun("object_to_script", &object_to_script);
 
 	Class math(Math<float_t>::make((float_t*)0));
 	math.fun("abs", &abs);
@@ -571,6 +574,25 @@ void initialize_lib(){
 
 		Fun::call : method(...){
 			return this(...);
+		}
+
+		builtin::open : fun(file_name, mode){
+			return FileStream(file_name, mode);
+		}
+
+		Mutex::iter_first : method(){
+			this.lock;
+			return this;
+		}
+
+		Mutex::iter_next : method(){
+			this.unlock;
+			return null;
+		}
+
+		Mutex::iter_break : method(){
+			this.unlock;
+			return null;
 		}
 
 	))();
@@ -1027,12 +1049,33 @@ private:
 	}
 };
 
+namespace{
+	Any user_get_text_map_(null);
+}
+
 void InitFormat(){
 	TClass<Format> p("Format");
 	p.method("to_s", &Format::to_s);
+	add_long_life_var(&user_get_text_map_);
+	user_get_text_map_ = Map();
+}
+
+void set_get_text_map(const Any& map){
+	user_get_text_map_ = map;
+}
+
+Any get_get_text_map(){
+	return user_get_text_map_;
 }
 
 Any get_text(const char* text){
+	if(user_get_text_map_){
+		String key(text);
+		if(const Any& value=user_get_text_map_[key]){
+			Any ret; new(ret) Format(value.to_s().c_str());
+			return ret;
+		}
+	}
 	Any ret; new(ret) Format(text);
 	return ret;
 }

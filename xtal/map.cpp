@@ -120,16 +120,7 @@ StrictMap::StrictMap(){
 }
 
 StrictMap::~StrictMap(){
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		while(p){
-			Node* next = p->next;
-			p->~Node();
-			user_free(p, sizeof(Node));
-			p = next;
-		}
-	}
-	user_free(begin_, sizeof(Node*)*size_);
+	destroy();
 }
 	
 const Any& StrictMap::at(const Any& key){
@@ -188,6 +179,25 @@ void StrictMap::expand(int_t addsize){
 		}
 	}
 	user_free(oldbegin, sizeof(Node*)*oldsize);
+}
+	
+void StrictMap::destroy(){
+	if(!begin_)
+		return;
+
+	for(uint_t i = 0; i<size_; ++i){
+		Node* p = begin_[i];
+		while(p){
+			Node* next = p->next;
+			p->~Node();
+			user_free(p, sizeof(Node));
+			p = next;
+		}
+	}
+	user_free(begin_, sizeof(Node*)*size_);
+	size_ = 0;
+	begin_ = 0;
+	used_size_ = 0;
 }
 
 }

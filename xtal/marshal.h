@@ -17,19 +17,25 @@ public:
 
 	Any load();
 
+	void to_script(const Any& v);
+
 private:
 
 	void inner_dump(const Any& v);
 
 	Any inner_load();
 
-	enum{ VALUE, VALUE2, LIB, LIB2, REF, TNULL, INT, FLOAT, STRING, TID, ARRAY, MAP };
+	void inner_to_script(const Any& v, int_t tab);
+
+	enum{ VALUE, LIB, REF, TNULL, INT, FLOAT, STRING, TID, ARRAY, MAP };
 
 	Any demangle(int_t n);
 
 	int_t register_dvalue(const Any& v, bool& added);
 
 	int_t register_lvalue(const Any& v);
+
+	void put_tab(int_t tab);
 
 	StrictMap dmap_;
 	Array dvalues_;

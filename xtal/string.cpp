@@ -273,6 +273,10 @@ String::String(const char* str1, int_t size1, const char* str2, int_t size2){
 	new(*this) StringImpl(str1, size1, str2, size2);
 }
 
+String::String(char* str, int_t size, delegate_memory_t){
+	new(*this) StringImpl(str, size, delegate_memory_t());
+}
+
 const char* String::c_str() const{
 	return impl()->c_str();
 }

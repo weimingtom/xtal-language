@@ -53,6 +53,14 @@ public:
 		intern_ = true;
 	}
 
+	StringImpl(char* str, int_t len, String::delegate_memory_t){
+		set_class(TClass<String>::get());
+		size_ = len;
+		str_ = str;
+		intern_ = false;
+		hashcode_ = make_hashcode(c_str(), size());
+	}
+
 	virtual ~StringImpl(){
 		user_free(str_, size_+1);
 	}

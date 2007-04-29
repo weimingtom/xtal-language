@@ -5,15 +5,15 @@ namespace xtal{
 
 void InitStream(){
 	TClass<Stream> cls("Stream");
-	cls.method("p1", &Stream::p1);
-	cls.method("p2", &Stream::p2);
-	cls.method("p4", &Stream::p4);
-	cls.method("s1", &Stream::s1);
-	cls.method("s2", &Stream::s2);
-	cls.method("s4", &Stream::s4);
-	cls.method("u1", &Stream::u1);
-	cls.method("u2", &Stream::u2);
-	cls.method("u4", &Stream::u4);
+	cls.method("p8", &Stream::p8);
+	cls.method("p16", &Stream::p16);
+	cls.method("p32", &Stream::p32);
+	cls.method("s8", &Stream::s8);
+	cls.method("s16", &Stream::s16);
+	cls.method("s32", &Stream::s32);
+	cls.method("u8", &Stream::u8);
+	cls.method("u16", &Stream::u16);
+	cls.method("u32", &Stream::u32);
 
 	cls.method("iter_first", &Stream::iter_first);
 	cls.method("iter_next", &Stream::iter_next);
@@ -32,40 +32,40 @@ void InitFileStream(){
 	cls.def("new", New<FileStream, const String&, const String&>());
 }
 
-void Stream::p1(int_t v) const{
-	impl()->p1(v);
+void Stream::p8(int_t v) const{
+	impl()->p8(v);
 }
 
-void Stream::p2(int_t v) const{
-	impl()->p2(v);
+void Stream::p16(int_t v) const{
+	impl()->p16(v);
 }
 
-void Stream::p4(int_t v) const{
-	impl()->p4(v);
+void Stream::p32(int_t v) const{
+	impl()->p32(v);
 }
 
-int_t Stream::s1() const{
-	return impl()->s1();
+int_t Stream::s8() const{
+	return impl()->s8();
 }
 
-int_t Stream::s2() const{
-	return impl()->s2();
+int_t Stream::s16() const{
+	return impl()->s16();
 }
 
-int_t Stream::s4() const{
-	return impl()->s4();
+int_t Stream::s32() const{
+	return impl()->s32();
 }
 
-uint_t Stream::u1() const{
-	return impl()->u1();
+uint_t Stream::u8() const{
+	return impl()->u8();
 }
 
-uint_t Stream::u2() const{
-	return impl()->u2();
+uint_t Stream::u16() const{
+	return impl()->u16();
 }
 
-uint_t Stream::u4() const{
-	return impl()->u4();
+uint_t Stream::u32() const{
+	return impl()->u32();
 }
 
 uint_t Stream::tell() const{
@@ -78,6 +78,10 @@ uint_t Stream::write(const void* p, uint_t size) const{
 	
 uint_t Stream::read(void* p, uint_t size) const{
 	return impl()->do_read(p, size);
+}
+
+uint_t Stream::write(const String& str) const{
+	return write(str.c_str(), str.length());
 }
 
 void Stream::close(){

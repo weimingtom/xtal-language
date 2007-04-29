@@ -13,10 +13,7 @@ namespace xtal{
 class FunImpl : public HaveNameImpl{
 public:
 
-	FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core)
-		:outer_(outer), this_(athis), code_(code), core_(core){
-		set_class(TClass<Fun>::get());
-	}
+	FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core);
 
 	const Frame& outer() const{ return outer_; }
 
@@ -71,11 +68,10 @@ public:
 class FiberImpl : public FunImpl{
 public:
 
-	FiberImpl(const Frame& outer, const Any& th, const Code& code, FunCore* core)
-		:FunImpl(outer, th, code, core), vm_(null), resume_pc_(0){
-		set_class(TClass<Fiber>::get());
-	}
+	FiberImpl(const Frame& outer, const Any& th, const Code& code, FunCore* core);
 		
+	~FiberImpl();
+	
 public:
 
 	void iter_first(const VMachine& vm){

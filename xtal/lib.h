@@ -88,6 +88,14 @@ void object_dump(const Any& obj, const Stream& out);
 Any object_load(const Stream& in);
 
 /**
+* @brief オブジェクトをスクリプト化して保存する
+*
+* @param obj スクリプト化して保存したいオブジェクト
+* @param out 直列化先のストリーム
+*/
+void object_to_script(const Any& obj, const Stream& out);
+
+/**
 * @brief メインVMachineオブジェクトを返す
 */
 const VMachine& vmachine();
@@ -120,6 +128,10 @@ const Any& nop();
 Any get_text(const char* text);
 
 Any format(const char* text);
+
+void set_get_text_map(const Any& map);
+
+Any get_get_text_map();
 
 Any source(const char* src, int_t size, const char* file);
 

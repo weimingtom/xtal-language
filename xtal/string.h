@@ -20,9 +20,14 @@ public:
 	/**
 	* @brief NUL終端のC文字列から構築する
 	*
+	* @param str NULL終端文字列
 	*/
 	String(const char* str = "");
 
+	/**
+	* @brief STLの文字列から構築する
+	*
+	*/
 	String(const string_t& str);
 
 	/**
@@ -43,6 +48,17 @@ public:
 	*
 	*/
 	String(const char* str1, int_t size1, const char* str2, int_t size2);
+
+
+	struct delegate_memory_t{};
+
+	/**
+	* @brief user_mallocで獲得したメモリを委譲して構築する。
+	*
+	* @param str NULL終端文字列
+	* @param size NULL文字を含めたバッファのサイズ
+	*/
+	String(char* str, int_t size, delegate_memory_t);
 
 	explicit String(StringImpl* p)
 		:Any((AnyImpl*)p){}

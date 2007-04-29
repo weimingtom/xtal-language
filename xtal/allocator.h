@@ -65,6 +65,7 @@ void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& curren
 
 /*@}*/
 
+bool calling_malloc();
 
 /**
 * @brief user_malloc, user_freeを使う、STLの要件に適合したアロケータクラス。

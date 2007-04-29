@@ -99,12 +99,12 @@ public:
 	}
 	
 	void set_arg_this(const Any& self){ 
-		ff().self = self;
+		ff().self(self);
 	}
 
 	void set_hint(const Any& hint1, const String& hint2){ 
-		ff().hint1 = hint1;
-		ff().hint2 = hint2;
+		ff().hint1(hint1);
+		ff().hint2(hint2);
 	}
 	
 public:
@@ -156,7 +156,7 @@ public:
 	}
 
 	const Any& get_arg_this(){ 
-		return ff().self; 
+		return ff().self(); 
 	}
 
 	int_t ordered_arg_count(){ 
@@ -256,7 +256,9 @@ public:
 
 	const u8* resume_fiber(const Fiber& fun, const u8* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
 
-	void cleanup();
+	void exit_fiber();
+
+	void reset();
 		
 public:
 
@@ -333,22 +335,25 @@ private:
 		return myself();
 	}
 
+	static void inc_ref_count(const UncountedAny& a){
+		if(a.cref().type()==TYPE_BASE){
+			a.cref().impl()->inc_ref_count();
+		}
+	}
+	
+	static void dec_ref_count(const UncountedAny& a){
+		if(a.cref().type()==TYPE_BASE){
+			a.cref().impl()->dec_ref_count();
+		}
+	}
+
 	struct FunFrame{
-
-		// 呼び出された関数オブジェクト
-		Fun fun; 
-
-		// スコープの外側のフレームオブジェクト
-		Frame outer;
 
 		// 保存されたプログラムカウント
 		const u8* pc;
 
-		// スコープがオブジェクト化されてない時のローカル変数領域
-		Stack<Any> variables;
-
 		// スコープ情報 
-		Stack<FrameCore*> scopes;
+		PStack<FrameCore*> scopes;
 
 		// 関数が呼ばれたときの順番指定引数の数
 		int_t ordered_arg_count;
@@ -372,27 +377,80 @@ private:
 		// 呼び出し状態
 		int_t calling_state;
 
-		// 関数が呼ばれたときのthisオブジェクト
-		Any self;
-
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
-		// オブジェクト化した引数。
-		Arguments arguments;
-		
-		// デバッグメッセージ出力用のヒント
-		Any hint1;
-		
-		// デバッグメッセージ出力用のヒント
-		String hint2;
+		// 呼び出された関数オブジェクト
+		UncountedAny fun_; 
 
-		FunFrame()
-			:fun(null), outer(null), arguments(null), hint2(null){}
+		// スコープの外側のフレームオブジェクト
+		UncountedAny outer_;
+
+		// スコープがオブジェクト化されてない時のローカル変数領域
+		Stack<UncountedAny> variables_;
+
+		// 関数が呼ばれたときのthisオブジェクト
+		UncountedAny self_;
+
+		// オブジェクト化した引数。
+		UncountedAny arguments_;
+		
+		// デバッグメッセージ出力用のヒント
+		UncountedAny hint1_;
+		
+		// デバッグメッセージ出力用のヒント
+		UncountedAny hint2_;
+
+		const Fun& fun() const{ return (const Fun&)fun_; }
+		const Frame& outer() const{ return (const Frame&)outer_; }
+		const Any& variable(int_t i) const{ return (const Any&)variables_[i]; }
+		const Any& self() const{ return (const Any&)self_; }
+		const Arguments& arguments() const{ return (const Arguments&)arguments_; }
+		const Any& hint1() const{ return (const Any&)hint1_; }
+		const String& hint2() const{ return (const String&)hint2_; }
+
+		void fun(const UncountedAny& v){ fun_ = v; }
+		void outer(const UncountedAny& v){ outer_ = v; }
+		void variable(int_t i, const UncountedAny& v){ variables_[i] = v; }
+		void self(const UncountedAny& v){ self_ = v; }
+		void arguments(const UncountedAny& v){ arguments_ = v; }
+		void hint1(const UncountedAny& v){ hint1_ = v; }
+		void hint2(const UncountedAny& v){ hint2_ = v; }
+
+		void inc_ref(){
+			inc_ref_count(fun_);
+			inc_ref_count(outer_);
+			
+			for(int_t i=0, size=variables_.size(); i<size; ++i){
+				inc_ref_count(variables_[i]);
+			}
+			
+			inc_ref_count(self_);
+			inc_ref_count(arguments_);
+			inc_ref_count(hint1_);
+			inc_ref_count(hint2_);
+		}
+		
+		void dec_ref(){
+			dec_ref_count(fun_);
+			dec_ref_count(outer_);
+			
+			for(int_t i=0, size=variables_.size(); i<size; ++i){
+				dec_ref_count(variables_[i]);
+			}
+			
+			dec_ref_count(self_);
+			dec_ref_count(arguments_);
+			dec_ref_count(hint1_);
+			dec_ref_count(hint2_);
+		}
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v){
-		m & v.fun & v.outer & v.arguments & v.variables & v.hint1 & v.hint2 & v.self;
+		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self();
+		for(int_t i=0, size=v.variables_.size(); i<size; ++i){
+			m & v.variable(i);
+		}
 	}
 
 	// 例外を処理するためのフレーム
@@ -422,11 +480,11 @@ private:
 	FunFrame& ff(){ return fun_frames_.top(); }
 	FunFrame& prev_ff(){ return fun_frames_[1]; }
 
-	const Fun& fun(){ return ff().fun; }
-	const Fun& prev_fun(){ return prev_ff().fun; }
+	const Fun& fun(){ return ff().fun(); }
+	const Fun& prev_fun(){ return prev_ff().fun(); }
 
-	Frame& outer(){ return ff().outer; }
-	Frame& prev_outer(){ return prev_ff().outer; }
+	const Frame& outer(){ return ff().outer(); }
+	const Frame& prev_outer(){ return prev_ff().outer(); }
 
 	const Code& code(){ return fun().code(); }
 	const Code& prev_code(){ return prev_fun().code(); }
@@ -452,6 +510,10 @@ private:
 	const u8* send1(const u8* pc, const ID& id, int_t n = 1);
 	const u8* send2(const u8* pc, const ID& id, int_t n = 1);
 	const u8* send2r(const u8* pc, const ID& id, int_t n = 1);
+
+	const u8* ARRAY_APPEND(const u8* pc);
+	const u8* MAP_APPEND(const u8* pc);
+	const u8* SET_NAME(const u8* pc);
 
 	void SET_LOCAL_VARIABLE(int_t pos);
 	void LOCAL_VARIABLE(int_t pos);
@@ -555,10 +617,10 @@ private:
 	u8 throw_unsupported_error_code_;
 	u8 check_unsupported_code_;
 	u8 cleanup_call_code_;
+	u8 throw_nop_code_;
 	
 	const u8* resume_pc_;
 	int_t yield_result_count_;
-	bool executing_gc_;
 
 	UncountedAny myself_;
 
@@ -578,25 +640,39 @@ protected:
 		m & fun_frames_;
 	}
 
-	void before_gc(){
+	virtual void before_gc(){
 		//fun_frames_.fill_over();
-		for(int_t i = 0, size = stack_.size(); i<size; ++i){
-			if(stack_[i].type()==TYPE_BASE){
-				stack_[i].cref().impl()->inc_ref_count();
-			}
+		//stack_.fill_over();
+
+		for(int_t i=0, size=stack_.size(); i<size; ++i){
+			inc_ref_count(stack_[i]);
 		}
-		executing_gc_ = true;
+
+		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
+			fun_frames_.reverse_at_unchecked(i).inc_ref();
+		}
 	}
 
-	void after_gc(){
-		for(int_t i = 0, size = stack_.size(); i<size; ++i){
-			if(stack_[i].type()==TYPE_BASE){
-				stack_[i].cref().impl()->dec_ref_count();
-			}
+	virtual void after_gc(){
+		for(int_t i=0, size=stack_.size(); i<size; ++i){
+			dec_ref_count(stack_[i]);
 		}
-		executing_gc_ = false;
+
+		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
+			fun_frames_.reverse_at_unchecked(i).dec_ref();
+		}
 	}
-	
+
+	/*
+	virtual bool finalize(){
+		if(resume_pc_){
+			exit_fiber();
+			return true;
+		}
+		return false;
+	}
+	*/
+
 public:
 
 	void print_info(){

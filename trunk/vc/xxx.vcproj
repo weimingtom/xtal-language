@@ -23,7 +23,7 @@
 				Optimization="0"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="xtal.h"
@@ -81,7 +81,7 @@
 				OptimizeForProcessor="2"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="TRUE"
-				RuntimeLibrary="4"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="2"
@@ -91,7 +91,8 @@
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -101,7 +102,11 @@
 				OutputFile=".\Release/xxx.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Release/xxx.pdb"
+				GenerateMapFile="TRUE"
+				MapExports="TRUE"
+				MapLines="TRUE"
 				SubSystem="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -181,6 +186,9 @@
 				RelativePath="..\xtal\string.cpp">
 			</File>
 			<File
+				RelativePath="..\xtal\thread.cpp">
+			</File>
+			<File
 				RelativePath="..\xtal\vmachine.cpp">
 			</File>
 			<File
@@ -246,6 +254,9 @@
 				RelativePath="..\xtal\fwd.h">
 			</File>
 			<File
+				RelativePath="..\xtal\id.rb">
+			</File>
+			<File
 				RelativePath="..\xtal\lexer.h">
 			</File>
 			<File
@@ -279,6 +290,9 @@
 				RelativePath="..\xtal\stringimpl.h">
 			</File>
 			<File
+				RelativePath="..\xtal\thread.h">
+			</File>
+			<File
 				RelativePath="..\xtal\userdata.h">
 			</File>
 			<File
@@ -303,9 +317,6 @@
 				RelativePath="..\xtal\xtal.h">
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\xtal\id.rb">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

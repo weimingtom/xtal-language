@@ -219,6 +219,7 @@ public:
 
 	VMachineImpl* impl() const{ return (VMachineImpl*)Any::impl(); }
 
+	void reset() const;
 };
 
 }

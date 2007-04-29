@@ -173,7 +173,6 @@ arg_cast(const Any& a, int param_num, const Any& param_name){
 	return CastHelper<T>::arg_cast(a, param_num, param_name);
 }
 
-
 template<>
 struct CastHelper<Any*>{
 	static Any* as(const Any& a){ return (Any*)&a; }

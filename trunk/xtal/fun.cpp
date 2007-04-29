@@ -7,7 +7,19 @@
 namespace xtal{
 
 void InitFun(){
-	TClass<Fun> cls("Fun");
+	TClass<Fun> fun("Fun");
+	
+	TClass<Method> met("Method");
+	met.inherit(fun);
+
+	TClass<Fiber> fib("Fiber");
+	fib.inherit(fun);
+	fib.method("finalize", &Fiber::iter_break);
+}
+
+FunImpl::FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core)
+	:outer_(outer), this_(athis), code_(code), core_(core){
+	set_class(TClass<Fun>::get());
 }
 
 void FunImpl::check_arg(const VMachine& vm){
@@ -59,12 +71,13 @@ public:
 		if(vms_.empty()){
 			vms_.push_back(VMachine());
 		}
-		VMachine vm((const VMachine&)vms_.at(vms_.size()-1));
+		VMachine vm((const VMachine&)vms_.back());
 		vms_.pop_back();
 		return vm;
 	}
 
 	void take_back(const VMachine& vm){
+		vm.reset();
 		vms_.push_back(vm);
 	}
 };
@@ -75,11 +88,26 @@ static VMachineMgrImpl* vm_mgr(){
 	return (VMachineMgrImpl*)p.impl();
 }
 
+FiberImpl::FiberImpl(const Frame& outer, const Any& th, const Code& code, FunCore* core)
+	:FunImpl(outer, th, code, core), vm_(null), resume_pc_(0){
+	set_class(TClass<Fiber>::get());
+}
+
+FiberImpl::~FiberImpl(){
+	/*if(resume_pc_!=0){
+		vm_.impl()->exit_fiber(Fiber(this), resume_pc_);
+		resume_pc_ = 0;
+		vm_mgr()->take_back(vm_);
+		vm_ = null;
+	}*/
+}
+
 void FiberImpl::iter_break(){
 	if(resume_pc_!=0){
+		vm_.impl()->exit_fiber();
 		resume_pc_ = 0;
-		vm_.impl()->cleanup(); 
 		vm_mgr()->take_back(vm_);
+		vm_ = null;
 	}
 }
 
@@ -92,8 +120,8 @@ void FiberImpl::call_helper(const VMachine& vm, bool add_succ_or_fail_result){
 		resume_pc_ = vm_.impl()->resume_fiber(Fiber(this), resume_pc_, vm.impl(), add_succ_or_fail_result);
 	}
 	if(resume_pc_==0){
-		vm_.impl()->cleanup(); 
 		vm_mgr()->take_back(vm_);
+		vm_ = null;
 	}
 }
 

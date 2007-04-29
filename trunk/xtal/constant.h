@@ -12,7 +12,6 @@ enum{
 	KIND_FUN,
 	KIND_METHOD,
 	KIND_FIBER,
-	KIND_THREAD
 };
 
 enum{
@@ -614,6 +613,14 @@ CODE_EXIT,
 * stack [] -> []
 */
 CODE_THROW_UNSUPPORTED_ERROR,
+
+/**
+* @brief nullを投げる。
+* 
+* format op
+* stack [] -> []
+*/
+CODE_THROW_NULL,
 
 /**
 * @brief オブジェクトテーブルから値を取り出す。

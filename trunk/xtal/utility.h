@@ -18,7 +18,13 @@
 #endif
 
 #ifdef XTAL_DEBUG
-# define XTAL_ASSERT(expr) assert(expr)
+inline void my_assert(bool b){
+	if(!b){
+		b = b;
+	}
+}
+
+# define XTAL_ASSERT(expr) my_assert(expr)
 #else
 # define XTAL_ASSERT(expr)
 #endif
@@ -42,7 +48,9 @@
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
-#define XTAL_GLOBAL_INTERPRETER_LOCK
+#define XTAL_GLOBAL_INTERPRETER_LOCK if(GlobalInterpreterLock global_interpreger_lock = 0)
+#define XTAL_GLOBAL_INTERPRETER_UNLOCK if(GlobalInterpreterUnlock global_interpreger_unlock = 0)
+#define XTAL_UNLOCK if(XUnlock xxunlock = 0)
 
 namespace xtal{
 

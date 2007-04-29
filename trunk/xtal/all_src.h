@@ -23,3 +23,4 @@
 #include "marshal.cpp"
 #include "stream.cpp"
 #include "stack.cpp"
+#include "thread.cpp"

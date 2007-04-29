@@ -120,6 +120,8 @@ public:
 	}
 
 	String to_s(){
+		if(empty())
+			return String("[:]");
 		String ret("[");
 		bool first = true;
 		for(uint_t i = 0; i<size_; ++i){
@@ -392,6 +394,8 @@ public:
 	bool empty(){
 		return used_size_==0;
 	}
+
+	void destroy();
 	
 private:
 

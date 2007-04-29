@@ -5,7 +5,7 @@ namespace xtal{
 	enum{
 		VERSION1 = 0,
 		VERSION2 = 9,
-		VERSION3 = 1,
+		VERSION3 = 4,
 		VERSION4 = 0
 	};
 }
@@ -16,6 +16,7 @@ namespace xtal{
 #include "vmachine.h"
 #include "string.h"
 #include "lib.h"
+#include "thread.h"
 #include "frame.h"
 #include "userdata.h"
 #include "cast.h"

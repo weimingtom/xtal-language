@@ -173,4 +173,8 @@ void VMachine::push(const Any& v) const{
 	impl()->push(v);
 }
 
+void VMachine::reset() const{
+	impl()->reset();
+}
+
 }

@@ -304,6 +304,8 @@ public:
 	
 	virtual void call(const VMachine& vm);
 
+	virtual void marshal_new(const VMachine& vm);
+
 	virtual void inherit(const Any& md);
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self);
@@ -384,6 +386,8 @@ public:
 public:
 
 	virtual void call(const VMachine& vm);
+
+	virtual void marshal_new(const VMachine& vm);
 };
 
 class LibImpl : public ClassImpl{

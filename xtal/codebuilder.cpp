@@ -1198,25 +1198,33 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(WhileStmt){
 			int_t label_cond = reserve_label();
-			int_t label_first = reserve_label();
+			int_t label_cond_first = reserve_label();
+			int_t label_cond_end = reserve_label();
 			int_t label_if = reserve_label();
 			int_t label_if2 = reserve_label();
 			int_t label_end = reserve_label();
 			
+			if(e->cond_expr){
+				put_if_code(e->cond_expr, label_if, label_if2);
+			}
+			put_jump_code(CODE_GOTO, label_cond_end);
+
 			if(e->next_stmt){
-				put_jump_code(CODE_GOTO, label_first);
 				set_label(label_cond);
 				compile(e->next_stmt);
-				set_label(label_first);
 			}else{
 				set_label(label_cond);
 			}
 
-
 			if(e->cond_expr){
-				put_if_code(e->cond_expr, label_if, label_if2);
+				if(e->else_stmt){
+					put_if_code(e->cond_expr, label_end, label_end);
+				}else{
+					put_if_code(e->cond_expr, label_if, label_if2);
+				}
 			}
 			
+			set_label(label_cond_end);
 			push_loop(label_end, label_cond, e->label);
 			compile(e->body_stmt);
 			pop_loop(); 
@@ -1225,7 +1233,11 @@ void CodeBuilder::compile(Stmt* ex){
 
 			set_label(label_if);
 			set_label(label_if2);
-			compile(e->else_stmt);
+			if(e->nobreak_stmt){
+				compile(e->nobreak_stmt);
+			}else{
+				compile(e->else_stmt);
+			}
 
 			set_label(label_end);
 		}

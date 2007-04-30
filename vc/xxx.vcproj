@@ -25,7 +25,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"
 				PrecompiledHeaderFile=".\Debug/xxx.pch"
 				AssemblerListingLocation=".\Debug/"
@@ -84,7 +84,7 @@
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"
 				PrecompiledHeaderFile=".\Release/xxx.pch"
 				AssemblerListingLocation=".\Release/"
@@ -180,9 +180,6 @@
 				RelativePath="..\xtal\stack.cpp">
 			</File>
 			<File
-				RelativePath="..\xtal\stream.cpp">
-			</File>
-			<File
 				RelativePath="..\xtal\string.cpp">
 			</File>
 			<File
@@ -276,6 +273,9 @@
 			</File>
 			<File
 				RelativePath="..\xtal\stack.h">
+			</File>
+			<File
+				RelativePath="..\xtal\stream.cpp">
 			</File>
 			<File
 				RelativePath="..\xtal\stream.h">

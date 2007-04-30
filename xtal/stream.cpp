@@ -1,4 +1,5 @@
 
+#include "xtal.h"
 #include "streamimpl.h"
 
 namespace xtal{

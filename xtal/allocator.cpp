@@ -12,7 +12,7 @@ void* (*user_malloc_)(size_t) = &malloc;
 void (*user_free_)(void*) = &free;
 
 size_t used_user_malloc_size_ = 0;
-size_t used_user_malloc_threshold_ = 1024*5000;
+size_t used_user_malloc_threshold_ = 1024*50;
 
 bool calling_malloc_ = false;
 
@@ -47,7 +47,7 @@ void* user_malloc_nothrow(size_t size){
 		calling_malloc_ = true;
 
 		if(used_user_malloc_threshold_<used_user_malloc_size_+size){
-			used_user_malloc_threshold_ += size+1024*1000; // 臒l�𑝂₷
+			used_user_malloc_threshold_ += size+1024*10; // 臒l�𑝂₷
 			gc();
 		}
 		

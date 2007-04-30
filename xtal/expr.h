@@ -372,8 +372,9 @@ struct WhileStmt : public Stmt{
 	Stmt* body_stmt; 
 	Stmt* next_stmt;
 	Stmt* else_stmt;
-	WhileStmt(int_t line, Expr* cond_expr = 0, Stmt* body_stmt = 0, Stmt* else_stmt = 0)
-		:Stmt(TYPE, line), label(0), cond_expr(cond_expr), body_stmt(body_stmt), else_stmt(else_stmt), next_stmt(0){}
+	Stmt* nobreak_stmt;
+	WhileStmt(int_t line, Expr* cond_expr = 0, Stmt* body_stmt = 0, Stmt* else_stmt = 0, Stmt* nobreak_stmt = 0)
+		:Stmt(TYPE, line), label(0), cond_expr(cond_expr), body_stmt(body_stmt), else_stmt(else_stmt), nobreak_stmt(nobreak_stmt), next_stmt(0){}
 };
 
 struct FunExpr : public Expr{

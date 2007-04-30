@@ -1,9 +1,8 @@
+#include "xtal.h"
 
 #include <map>
 #include <fstream>
 #include <math.h>
-
-#include "xtal.h"
 
 #include "funimpl.h"
 #include "vmachineimpl.h"
@@ -886,7 +885,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 
 const u8* VMachineImpl::ONCE(const u8* pc){
 	const Any& ret = code().get_value(get_u16(pc+3));
-	if(ret.raweq(nop())){
+	if(!ret.raweq(nop())){
 		push(ret);
 		return pc+get_s16(pc+1);
 	}
@@ -1108,6 +1107,7 @@ const u8* VMachineImpl::DIV(const u8* pc){
 }
 
 const u8* VMachineImpl::MOD(const u8* pc){ 
+	using namespace std;
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); return pc+1; }

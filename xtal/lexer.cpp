@@ -1,7 +1,7 @@
+#include "xtal.h"
 
 #include <math.h>
 
-#include "xtal.h"
 #include "lexer.h"
 #include "xmacro.h"
 
@@ -109,6 +109,7 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("unittest"), (int_t)Token::KEYWORD_UNITTEST);
 	keyword_map_.set_at(ID("assert"), (int_t)Token::KEYWORD_ASSERT);
 	keyword_map_.set_at(ID("pure"), (int_t)Token::KEYWORD_PURE);
+	keyword_map_.set_at(ID("nobreak"), (int_t)Token::KEYWORD_NOBREAK);
 }
 
 LPCCommon Lexer::common(){
@@ -432,7 +433,10 @@ void Lexer::parse_number(){
 					com_.error(line(), Xt("•s³‚È•‚“®¬”“_”ƒŠƒeƒ‰ƒ‹")());
 				}
 				e *= parse_integer();
-				fval *= (float_t)pow((float_t)10, (float_t)e);
+				{
+					using namespace std;
+					fval *= (float_t)pow((float_t)10, (float_t)e);
+				}
 			}
 			parse_number_suffix(fval);
 		}else{

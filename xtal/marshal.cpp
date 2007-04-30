@@ -1,8 +1,6 @@
 
+#include "xtal.h"
 #include "marshal.h"
-
-#pragma once
-
 #include "any.h"
 #include "marshal.h"
 #include "array.h"
@@ -12,7 +10,6 @@
 #include "map.h"
 #include "codeimpl.h"
 #include "fun.h"
-#include "xtal.h"
 
 namespace xtal{
 
@@ -170,8 +167,11 @@ Any Marshal::inner_load(){
 		XTAL_CASE(VALUE){
 			int_t num = register_lvalue(null);
 			Class c(cast<Class>(demangle(register_lvalue(inner_load()))));
-			lvalues_.set_at(num, c.member(Xid(marshal_new))());
-			lvalues_[num].send(Xid(marshal_load), inner_load());
+			const VMachine& vm = vmachine();
+			vm.setup_call(1, inner_load());
+			c.marshal_new(vm);
+			lvalues_.set_at(num, vm.result());
+			vm.cleanup_call();
 			return lvalues_[num];
 		}
 

@@ -2,7 +2,7 @@
 	ret : "";
 	for(i: 0; i<10; ++i){
 		ret ~= i.to_s;
-	}else{
+	}nobreak{
 		ret ~= "!";
 	}
 	

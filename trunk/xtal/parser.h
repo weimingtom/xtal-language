@@ -59,6 +59,7 @@ private:
 	void while_body(Stmt* stmt);
 	void while_next(Stmt* stmt);
 	void while_else(Stmt* stmt);
+	void while_nobreak(Stmt* stmt);
 	Stmt* while_end();
 
 	void if_begin(int_t var, Expr* expr);

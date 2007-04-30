@@ -130,6 +130,8 @@ public:
 
 public:
 
+	void marshal_new(const VMachine& vm);
+
 	const Any& member(const ID& name, int_t*& mutate_count) const;
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;

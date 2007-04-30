@@ -736,6 +736,9 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 				if(eat_a(Token::KEYWORD_ELSE)){
 					while_else(parse_stmt_must());
 					lexer_.putback();
+				}else if(eat_a(Token::KEYWORD_NOBREAK)){
+					while_nobreak(parse_stmt_must());
+					lexer_.putback();
 				}
 
 			s = while_end();
@@ -1040,6 +1043,8 @@ Stmt* Parser::parse_for(int_t label){
 
 			if(eat(Token::KEYWORD_ELSE)){
 				while_else(parse_stmt_must());
+			}else if(eat(Token::KEYWORD_NOBREAK)){
+				while_nobreak(parse_stmt_must());
 			}
 
 		s = while_end();
@@ -1392,6 +1397,8 @@ Stmt* Parser::parse_while(int_t label){
 		while_body(parse_stmt_must());
 		if(eat(Token::KEYWORD_ELSE)){
 			while_else(parse_stmt_must());
+		}else if(eat(Token::KEYWORD_NOBREAK)){
+			while_nobreak(parse_stmt_must());
 		}
 	return while_end();
 }
@@ -1597,6 +1604,10 @@ void Parser::while_next(Stmt* stmt){
 
 void Parser::while_else(Stmt* stmt){
 	while_stack_.top()->else_stmt = stmt;
+}
+
+void Parser::while_nobreak(Stmt* stmt){
+	while_stack_.top()->nobreak_stmt = stmt;
 }
 
 Stmt* Parser::while_end(){

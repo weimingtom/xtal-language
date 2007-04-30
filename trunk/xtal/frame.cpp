@@ -139,6 +139,14 @@ void ClassImpl::call(const VMachine& vm){
 	}
 }
 
+void ClassImpl::marshal_new(const VMachine& vm){
+	if(const Any& ret = member(Xid(new))){
+		ret.call(vm);
+	}else{
+		throw builtin().member("RuntimeError")(Xt("%s :: new 関数が登録されていないため、インスタンスを生成できません。")(object_name()));
+	}
+}
+
 void ClassImpl::inherit(const Any& md){
 	if(is_inherited(md))
 		return;
@@ -310,6 +318,33 @@ void XClassImpl::call(const VMachine& vm){
 	}
 }
 
+void XClassImpl::marshal_new(const VMachine& vm){
+	Instance inst(Class(this));
+	init_instance(inst.impl(), vm, inst);
+	
+	if(inst.impl()->empty()){
+		if(const Any& ret = bases_member(Xid(new))){
+			ret.call(vm);
+			if(vm.result().type()==TYPE_BASE){
+				vm.result().impl()->set_class(Class(this));
+			}
+			return;
+		}
+	}
+	
+	if(const Any& ret = member(Xid(marshal_load))){
+		vm.set_arg_this(inst);
+		if(vm.required_result_count()){
+			ret.call(vm);
+			vm.replace_result(0, inst);
+		}else{
+			ret.call(vm);
+		}
+	}else{
+		vm.return_result(inst);
+	}
+}
+
 const Any& LibImpl::member(const ID& name){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
@@ -442,6 +477,10 @@ Class::Class(const Frame& outer, const Code& code, FrameCore* core)
 
 void Class::init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const{
 	impl()->init_instance(inst, vm, self);
+}
+
+void Class::marshal_new(const VMachine& vm){
+	impl()->marshal_new(vm);
 }
 
 void Class::inherit(const Any& md) const{

@@ -1,3 +1,4 @@
+#include "xtal.h"
 
 #include <iostream>
 #include <iomanip>
@@ -5,7 +6,6 @@
 #include <cmath>
 #include <stdio.h>
 
-#include "xtal.h"
 #include "codebuilder.h"
 #include "fun.h"
 #include "codeimpl.h"
@@ -576,8 +576,17 @@ void initialize_lib(){
 			return this(...);
 		}
 
-		builtin::open : fun(file_name, mode){
-			return FileStream(file_name, mode);
+		builtin::open : fun(file_name, mode: "r"){
+			ret: null;
+			try{
+				ret = FileStream(file_name, mode);
+			}catch(e){
+				ret = once (class{
+					iter_first: method{ return false; }	
+					iter_next: method{ return false; }	
+				})();
+			}
+			return ret;
 		}
 
 		Mutex::iter_first : method(){

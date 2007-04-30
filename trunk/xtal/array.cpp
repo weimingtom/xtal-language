@@ -18,7 +18,7 @@ void InitArray(){
 	TClass<Array> p("Array");
 	p.inherit(Enumerable());
 
-	p.def("new", New<Array, int_t>());
+	p.def("new", New<Array, int_t>().param(Named("size", 0)));
 	p.method("size", &Array::size);
 	p.method("length", &Array::length);
 	p.method("resize", &Array::resize);

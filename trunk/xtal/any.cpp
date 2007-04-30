@@ -502,6 +502,7 @@ GCObserverImpl::~GCObserverImpl(){
 void InitAny(){
 	TClass<Any> p("Any");
 	p.method("class", &Any::get_class);
+	p.method("get_class", &Any::get_class);
 	p.method("object_name", &Any::object_name);
 	p.method("op_eq", &Any::raweq);
 }
@@ -965,6 +966,7 @@ int main(){
 
 		gc();
 		
+/*
 		load("../test/test_fib.xtal");
 		load("../test/test_calc.xtal");
 		load("../test/test_for.xtal");
@@ -982,12 +984,19 @@ int main(){
 		Timer t;
 		Xsrc((
 
-			fib : fun(i){
+			toplevel::fib : (fun(i){
 				if(i<2){
 					return 1;
 				}else{
 					return callee(i-2) + callee(i-1);
 				}
+			});
+
+
+			open("out.txtp"){
+
+			}else{
+				"else".p;
 			}
 
 			//fib.p.call(33).p;

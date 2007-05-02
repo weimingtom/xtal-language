@@ -538,6 +538,10 @@ void initialize_lib(){
 			return "null";
 		}
 
+		Null::iter_first: method{
+			return null;
+		}
+
 		builtin::range : fun(first, last, step:1){
 			if(step==1){
 				return fiber{
@@ -581,10 +585,7 @@ void initialize_lib(){
 			try{
 				ret = FileStream(file_name, mode);
 			}catch(e){
-				ret = once (class{
-					iter_first: method{ return false; }	
-					iter_next: method{ return false; }	
-				})();
+				ret = null;
 			}
 			return ret;
 		}

@@ -5,7 +5,26 @@
 #include "userdata.h"
 
 namespace xtal{
+	
+/**
+* @brief cast関数、as関数、arg_cast関数の戻り値の型を決定するためのヘルパーテンプレートクラス
+*
+* ほとんどの場合、CastResult<T>::typeはT自身を返す。
+* 異なる場合としてCastResult<const int&>::type はintを返す。
+*/
+template<class T>
+struct CastResult{ typedef T type; };
 
+template<class T> 
+inline typename CastResult<T>::type as(const Any& a);
+	
+template<class T>
+inline typename CastResult<T>::type cast(const Any& a);
+	
+template<class T>
+inline typename CastResult<T>::type arg_cast(const Any& a, int param_num, const Any& param_name);
+
+	
 // 変換後の型がUserDataの場合
 template<class U, class V>
 inline UserData<U>* as_helper_helper(const Any& a, const UserData<U>*, const V&){
@@ -128,14 +147,6 @@ struct CastHelper{
 
 };
 
-/**
-* @brief cast関数、as関数、arg_cast関数の戻り値の型を決定するためのヘルパーテンプレートクラス
-*
-* ほとんどの場合、CastResult<T>::typeはT自身を返す。
-* 異なる場合としてCastResult<const int&>::type はintを返す。
-*/
-template<class T>
-struct CastResult{ typedef T type; };
 
 /**
 * @brief T型に変換する。

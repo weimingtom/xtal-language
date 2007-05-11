@@ -59,6 +59,11 @@ Any source(const char* src, int_t size, const char* file){
 	throw builtin().member("CompileError")(Xt("コンパイル中、エラーが発生しました")(), cb.errors());
 }
 
+void ix(){
+	CodeBuilder cb;
+	cb.interactive_compile();
+}
+
 void print(const VMachine& vm){
 	for(int_t i = 0; i<vm.ordered_arg_count(); ++i){
 		String str = vm.arg(i).to_s();

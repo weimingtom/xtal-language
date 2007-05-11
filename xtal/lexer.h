@@ -74,7 +74,6 @@ public:
 		KEYWORD_IF,
 		KEYWORD_FOR,
 		KEYWORD_ELSE,
-		KEYWORD_SWITCH,
 		KEYWORD_FUN,
 		KEYWORD_METHOD,
 		KEYWORD_DO,
@@ -107,6 +106,9 @@ public:
 		KEYWORD_ASSERT,
 		KEYWORD_PURE,
 		KEYWORD_NOBREAK,
+		KEYWORD_SWITCH,
+		KEYWORD_CASE,
+		KEYWORD_DEFAULT,
 	
 		KEYWORD_MAX
 	};
@@ -150,7 +152,8 @@ private:
 	
 };
 
-struct LPCCommon{
+class LPCCommon{
+public:
 
 	LPCCommon();
 		
@@ -159,13 +162,11 @@ struct LPCCommon{
 	void error(int_t line, const Any& message);
 	
 	int_t register_ident(const ID& ident);
-
 	int_t register_value(const Any& v);
-
 	int_t append_ident(const ID& ident);
-
 	int_t append_value(const Any& v);
 	
+	int_t line;
 	Array errors;
 	Array ident_table;
 	Map ident_map;
@@ -280,6 +281,11 @@ public:
 	int_t line(){ return line_; }
 	
 	/**
+	* 現在の行数を設定する
+	*/
+	void set_line(int_t v){ com_.line = line_ = v; }
+	
+	/**
 	* トークンを読める形の文字列に変換する
 	*/
 	String token2str(const Token& t);
@@ -292,7 +298,7 @@ public:
 	/**
 	* Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
 	*/
-	LPCCommon common();
+	LPCCommon* common();
 	
 	/**
 	* 文字列の記録を開始する
@@ -316,39 +322,26 @@ private:
 	void do_read();
 
 	void push(int_t v);
-	
 	void push_int(int_t v);
-	
 	void push_float(float_t v);
-	
 	void push_keyword(int_t v);
-	
 	void push_ident(int_t v);
-
 	void push_direct(int_t v);
 
 	void deplete_space();
 
 	int_t parse_ident();
-
 	int_t parse_integer();
-
 	int_t parse_hex();
-
 	int_t parse_bin();
 
 	void parse_number_suffix(int_t val);
-	
 	void parse_number_suffix(float_t val);
-
 	void parse_number();
 	
 	int_t test_right_space(int_t ch);
-
 	int_t read_from_reader();
-
 	bool eat_from_reader(int_t ch);
-
 	void putback_to_reader(int_t ch);
 
 private:

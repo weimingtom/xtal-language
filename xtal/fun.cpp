@@ -160,6 +160,10 @@ int_t Fun::defined_file_line_number() const{
 	return impl()->defined_file_line_number();
 }
 
+void Fun::set_core(FunCore* fc) const{
+	impl()->set_core(fc);
+}
+
 FunCore* Fun::core() const{
 	return impl()->core();
 }

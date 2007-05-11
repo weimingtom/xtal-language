@@ -243,6 +243,23 @@ public:
 	void recycle_call();
 	
 	void recycle_call(const Any& a1);
+
+	void execute(const Fun& fun, const u8* start_pc = 0){
+		setup_call(0);
+		
+		carry_over(fun);
+		
+		const u8* pc = prev_ff().pc;
+		prev_ff().pc = &end_code_;
+		execute(start_pc ? start_pc : ff().pc);
+		fun_frames_.upsize(1);
+		ff().pc = &cleanup_call_code_;
+		prev_ff().pc = pc;
+		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+
+		downsize(ff().required_result_count);
+		pop_ff();
+	}
 	
 public:
 

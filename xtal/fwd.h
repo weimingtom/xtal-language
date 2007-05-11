@@ -116,6 +116,8 @@ Any* make_place();
 void initialize();
 void uninitialize();
 void initialize_lib();
+bool initialized();
+
 Any bad_cast_error(const Any& from, const Any& to);
 Any invalid_argument_error(const Any& from, const Any& to, int param_num, const Any& param_name);
 Any unsupported_error(const Any& name, const Any& member);

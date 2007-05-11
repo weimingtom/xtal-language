@@ -64,7 +64,7 @@ int_t LPCCommon::append_value(const Any& v){
 }
 
 Lexer::Lexer(){
-	line_ = 1;
+	set_line(1);
 	read_ = 0;
 	pos_ = 0;
 	mode_ = NORMAL_MODE;
@@ -77,7 +77,6 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("if"), (int_t)Token::KEYWORD_IF);
 	keyword_map_.set_at(ID("for"), (int_t)Token::KEYWORD_FOR);
 	keyword_map_.set_at(ID("else"), (int_t)Token::KEYWORD_ELSE);
-	keyword_map_.set_at(ID("switch"), (int_t)Token::KEYWORD_SWITCH);
 	keyword_map_.set_at(ID("fun"), (int_t)Token::KEYWORD_FUN);
 	keyword_map_.set_at(ID("method"), (int_t)Token::KEYWORD_METHOD);
 	keyword_map_.set_at(ID("do"), (int_t)Token::KEYWORD_DO);
@@ -110,10 +109,13 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("assert"), (int_t)Token::KEYWORD_ASSERT);
 	keyword_map_.set_at(ID("pure"), (int_t)Token::KEYWORD_PURE);
 	keyword_map_.set_at(ID("nobreak"), (int_t)Token::KEYWORD_NOBREAK);
+	keyword_map_.set_at(ID("switch"), (int_t)Token::KEYWORD_SWITCH);
+	keyword_map_.set_at(ID("case"), (int_t)Token::KEYWORD_CASE);
+	keyword_map_.set_at(ID("default"), (int_t)Token::KEYWORD_DEFAULT);
 }
 
-LPCCommon Lexer::common(){
-	return com_;
+LPCCommon* Lexer::common(){
+	return &com_;
 }
 
 
@@ -480,10 +482,10 @@ void Lexer::do_read(){
 		int_t ch = read_from_reader();
 		if(ch=='\r'){
 			eat_from_reader('\n');
-			line_++;
+			set_line(line()+1);
 			ch = '\n';
 		}else if(ch=='\n'){
-			line_++;
+			set_line(line()+1);
 		}
 		push_direct(ch);
 		return;
@@ -567,11 +569,11 @@ void Lexer::do_read(){
 						int_t ch = read_from_reader();
 						if(ch=='\r'){
 							eat_from_reader('\n');
-							line_++;
+							set_line(line()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}else if(ch=='\n'){
-							line_++;
+							set_line(line()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}else if(ch==-1){
@@ -584,9 +586,9 @@ void Lexer::do_read(){
 						int_t ch = read_from_reader();
 						if(ch=='\r'){
 							eat_from_reader('\n');
-							line_++;
+							set_line(line()+1);
 						}else if(ch=='\n'){
-							line_++;
+							set_line(line()+1);
 						}else if(ch=='*'){
 							if(eat_from_reader('/')){
 								left_space_ = Token::FLAG_LEFT_SPACE;
@@ -752,9 +754,9 @@ void Lexer::deplete_space(){
 		int_t ch = read_from_reader();
 		if(ch=='\r'){
 			eat_from_reader('\n');
-			line_++;	
+			set_line(line()+1);
 		}else if(ch=='\n'){
-			line_++;	
+			set_line(line()+1);
 		}else if(ch==' ' || ch=='\t'){
 			
 		}else{

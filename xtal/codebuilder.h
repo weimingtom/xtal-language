@@ -11,15 +11,15 @@ class CodeBuilder{
 public:
 
 	CodeBuilder();
-	
 	~CodeBuilder();
 	
 	Fun compile(const Stream& stream, const String& source_file_name = "anonymous");
 
+	void interactive_compile();
+
 	void adjust_result(int_t required_result_count, int_t result_count);
 
 	void compile(Expr* p, int_t required_result_count=1);
-	
 	void compile(Stmt* p);	
 	
 	/**
@@ -51,21 +51,14 @@ public:
 	* ラベルにジャンプするコードを埋め込めるように細工する。
 	*/	
 	void put_jump_code_nocode(int_t oppos, int_t labelno);
-
 	void put_jump_code(int_t code, int_t labelno);
-
 	void process_labels();
 
 	bool put_local_code(int_t var);
-	
 	bool put_set_local_code(int_t var);
-	
 	void put_send_code(int_t var, int_t required_result_count, int_t result_flag, bool tail, bool if_defined);
-
 	void put_set_send_code(int_t var, bool if_defined);
-
 	void put_member_code(int_t var, bool if_defined);
-
 	void put_define_member_code(int_t var);
 
 	/**
@@ -75,15 +68,10 @@ public:
 	* @retval 非-1 変数位置
 	*/
 	int_t lookup_instance_variable(int_t key);
-
 	void put_set_instance_variable_code(int_t var);
-
 	void put_instance_variable_code(int_t var);
-
 	void put_if_code(Expr* cond, int_t label_if, int_t label_if2);
-			
 	void push_loop(int break_labelno, int continue_labelno, int_t name = 0, bool have_label = false);
-	
 	void pop_loop();
 	
 	/**
@@ -167,15 +155,11 @@ public:
 	};
 
 	void block_begin(int_t type, int_t kind, TList<int_t>& vars, bool on_heap, int_t mixins = 0);
-
 	void block_end();
 
 	int_t fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count);
-
 	void register_param(int_t name);
-
 	void fun_frame_end();
-
 	FunFrame& fun_frame();
 
 	struct ClassFrame{
@@ -188,7 +172,7 @@ public:
 private:
 	
 	Parser parser_;
-	LPCCommon com_;
+	LPCCommon* com_;
 	
 	PODStack<int_t> variables_;
 	PODStack<int_t> label_names_;

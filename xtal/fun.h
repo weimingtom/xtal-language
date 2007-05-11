@@ -22,22 +22,15 @@ public:
 		:Any((AnyImpl*)p){}
 
 	const Frame& outer() const;
-
 	const Code& code() const;
-
 	int_t pc() const;
-
 	const u8* source() const;
-	
 	const ID& param_name_at(size_t i) const;
-
 	int_t param_size() const;
-
 	bool used_args_object() const;
-
 	int_t defined_file_line_number() const;
-
 	FunCore* core() const;
+	void set_core(FunCore* fc) const;
 	
 	FunImpl* impl() const{ return (FunImpl*)Any::impl(); }
 };

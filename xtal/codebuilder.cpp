@@ -7,6 +7,7 @@
 #include "constant.h"
 #include "funimpl.h"
 #include "codeimpl.h"
+#include "streamimpl.h"
 
 
 namespace xtal{
@@ -22,27 +23,27 @@ CodeBuilder::~CodeBuilder(){
 Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 
 	result_ = Code();
+	
 	p_ = result_.impl();
 	p_->source_file_name_ = source_file_name;
 
 	class_scopes_.resize(1);
-	Code ret(null);
 	lines_.push(1);
 	fun_frame_begin(true, 0, 0, 0);
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
-	p_->symbol_table_ = com_.ident_table;
-	p_->value_table_ = com_.value_table;
+	p_->symbol_table_ = com_->ident_table;
+	p_->value_table_ = com_->value_table;
 	
 	if(ep){
 		compile(ep);
 	}
 
 	parser_.release();
-	ret = result_;
+	Code ret = result_;
 	result_ = null;
 
-	if(com_.errors.size()==0){
+	if(com_->errors.size()==0){
 		Fun p(null, null, ret, &ret.impl()->xfun_core_table_[0]);
 		p.set_object_name("<TopLevel>", 1, null);
 		return p;
@@ -51,12 +52,79 @@ Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	}
 }
 
+void CodeBuilder::interactive_compile(){
+	result_ = Code();
+	p_ = result_.impl();
+	p_->source_file_name_ = "<ix>";
+
+	class_scopes_.resize(1);
+	lines_.push(1);
+	fun_frame_begin(true, 0, 0, 0);
+	Fun fun(null, null, result_, &p_->xfun_core_table_[0]);
+	fun.set_object_name("<TopLevel>", 1, null);
+
+	Stream stream;
+	new(stream) InteractiveStreamImpl();
+	parser_.begin_interactive_parsing(stream);
+
+	int_t pc_pos = 0;
+	
+	ExprBuilder& e = *parser_.expr_builder();
+
+	while(true){
+		Stmt* ep = parser_.interactive_parse();
+		((InteractiveStreamImpl*)stream.impl())->set_continue_stmt(false);
+		com_ = parser_.common();
+
+		p_->symbol_table_ = com_->ident_table;
+		p_->value_table_ = com_->value_table;
+		com_->register_ident("toplevel");
+		
+		if(ep){
+			DefineStmt* ds = stmt_cast<DefineStmt>(ep);
+			LocalExpr* le = ds ? expr_cast<LocalExpr>(ds->lhs) : 0;
+			if(le){
+				compile(e.define(e.member(e.local(com_->register_ident("toplevel")), le->var), ds->rhs));
+			}else{
+				compile(ep);
+			}
+		}else{
+			Token tok = parser_.lexer().read();
+			if(tok.type()==Token::TYPE_TOKEN && tok.ivalue()==-1){
+				break;
+			}
+			com_->error(parser_.lexer().line(), Xt("構文エラー"));
+		}
+	
+		if(com_->errors.size()==0){
+			process_labels();
+			put_code_u8(CODE_RETURN_0);
+			put_code_u8(CODE_THROW);
+
+			fun.set_core(&p_->xfun_core_table_[0]);
+			try{
+				vmachine().impl()->execute(fun, &p_->code_[pc_pos]);
+			}catch(Any& e){
+				printf("%s\n", e.to_s().c_str());
+			}
+			
+			p_->code_.pop_back();
+			pc_pos = p_->code_.size();
+
+		}else{
+			printf("Error: %s\n", errors().at(0).to_s().c_str());
+			com_->errors.clear();
+		}
+	}
+}
+
+
 Array CodeBuilder::errors(){
-	return com_.errors;
+	return com_->errors;
 }
 
 ID CodeBuilder::to_id(int_t ident){
-	return (ID&)com_.ident_table[ident];
+	return (ID&)com_->ident_table[ident];
 }
 
 int_t CodeBuilder::lookup_variable(int_t key){
@@ -106,7 +174,7 @@ bool CodeBuilder::put_set_local_code(int_t var){
 		else if(id == 3){ put_code_u8(CODE_SET_LOCAL_3); }
 		return true;
 	}else{
-		com_.error(line(), Xt("定義されていない変数%sに代入しようとしました")(to_id(var)));
+		com_->error(line(), Xt("定義されていない変数%sに代入しようとしました")(to_id(var)));
 		return false;
 	}
 }
@@ -164,7 +232,7 @@ void CodeBuilder::put_set_send_code(int_t var, bool if_defined){
 	}else{
 		put_code_u8(CODE_SEND);
 	}
-	put_code_u16(com_.register_ident(String("set_", 4, to_id(var).c_str(), to_id(var).size())));
+	put_code_u16(com_->register_ident(String("set_", 4, to_id(var).c_str(), to_id(var).size())));
 	put_code_u8(1);
 	put_code_u8(0);
 	put_code_u8(0);
@@ -191,7 +259,7 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 			return i; 
 		}
 	}
-	com_.error(line(), Xt("定義されていないインスタンス変数 '@%s' が参照されています")(to_id(key)));
+	com_->error(line(), Xt("定義されていないインスタンス変数 '@%s' が参照されています")(to_id(key)));
 	return 0;
 }
 
@@ -207,24 +275,15 @@ void CodeBuilder::put_instance_variable_code(int_t var){
 	put_code_u16(class_scopes_.top().n);
 }
 
-/**
-ラベル番号を予約し、返す。
-*/
 int_t CodeBuilder::reserve_label(){
 	fun_frames_.top().labels.resize(fun_frames_.top().labels.size()+1);
 	return fun_frames_.top().labels.size()-1;
 }
 
-/**
-ラベルを設定する。
-*/
 void CodeBuilder::set_label(int_t labelno){
 	fun_frames_.top().labels[labelno].pos = code_size();
 }
 
-/**
-ラベルにジャンプするコードを埋め込めるように細工する。
-*/
 void CodeBuilder::put_jump_code_nocode(int_t oppos, int_t labelno){
 	FunFrame::Label::From f;
 	f.line = lines_.top();
@@ -240,9 +299,6 @@ void CodeBuilder::put_jump_code(int_t code, int_t labelno){
 	put_jump_code_nocode(oppos, labelno);
 }
 
-/**
-ラベルにジャンプするコードを生成する。
-*/
 void CodeBuilder::process_labels(){
 	for(size_t i = 0; i<fun_frames_.top().labels.size(); ++i){
 		FunFrame::Label &l = fun_frames_.top().labels[i];
@@ -254,9 +310,6 @@ void CodeBuilder::process_labels(){
 	fun_frames_.top().labels.clear();
 }
 
-/**
-ブロックの終りを埋め込む
-*/
 void CodeBuilder::break_off(int_t n, int_t block_end, int_t j){
 
 	XTAL_ASSERT(n>=0);
@@ -296,10 +349,10 @@ void CodeBuilder::put_if_code(Expr* e, int_t label_if, int_t label_if2){
 	BinCompExpr* e2 = expr_cast<BinCompExpr>(e);
 	if(e2 && CODE_EQ<=e2->code && e2->code<=CODE_GE){
 		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->lhs)){
-			com_.error(line(), Xt("比較演算式の結果を再比較しています"));
+			com_->error(line(), Xt("比較演算式の結果を再比較しています"));
 		}
 		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->rhs)){
-			com_.error(line(), Xt("比較演算式の結果を再比較しています"));
+			com_->error(line(), Xt("比較演算式の結果を再比較しています"));
 		}
 		compile(e2->lhs);
 		compile(e2->rhs);
@@ -510,7 +563,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		}
 
-		XTAL_EXPR_CASE(PseudoVariableExpr){			
+		XTAL_EXPR_CASE(PseudoVariableExpr){
 			put_code_u8(e->code);
 		}
 
@@ -543,7 +596,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 				put_code_u16(e->value);
 			}else{
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(e->value));
+				put_code_u16(com_->register_value(e->value));
 			}
 		}
 
@@ -562,20 +615,20 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 				put_code_u8(CODE_PUSH_FLOAT_3);
 			}else{
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(e->value));
+				put_code_u16(com_->register_value(e->value));
 			}
 		}
 
 		XTAL_EXPR_CASE(StringExpr){
 			if(e->kind==KIND_TEXT){
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(get_text(cast<String>(com_.value_table[e->value]).c_str())));
+				put_code_u16(com_->register_value(get_text(cast<String>(com_->value_table[e->value]).c_str())));
 			}else if(e->kind==KIND_FORMAT){
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(format(cast<String>(com_.value_table[e->value]).c_str())));
+				put_code_u16(com_->register_value(format(cast<String>(com_->value_table[e->value]).c_str())));
 			}else{
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(com_.value_table[e->value]));
+				put_code_u16(com_->register_value(com_->value_table[e->value]));
 			}
 		}
 
@@ -619,10 +672,10 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(BinExpr){
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
-				com_.error(line(), Xt("比較演算式の結果を演算しています"));
+				com_->error(line(), Xt("比較演算式の結果を演算しています"));
 			}
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
-				com_.error(line(), Xt("比較演算式の結果を演算しています"));
+				com_->error(line(), Xt("比較演算式の結果を演算しています"));
 			}
 			
 			compile(e->lhs);
@@ -632,10 +685,10 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(BinCompExpr){
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
-				com_.error(line(), Xt("比較演算式の結果を再比較しています"));
+				com_->error(line(), Xt("比較演算式の結果を再比較しています"));
 			}
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
-				com_.error(line(), Xt("比較演算式の結果を再比較しています"));
+				com_->error(line(), Xt("比較演算式の結果を再比較しています"));
 			}
 
 			compile(e->lhs);
@@ -698,7 +751,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 			
 			put_jump_code(CODE_ONCE, label_end);
 			
-			int_t num = com_.append_value(nop());
+			int_t num = com_->append_value(nop());
 			put_code_u16(num);
 			
 			compile(e->expr);
@@ -730,7 +783,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 			for(TPairList<int_t, Expr*>::Node* p = e->named.head; p; p = p->next){ 
 				put_code_u8(CODE_GET_VALUE);
-				put_code_u16(com_.register_value(to_id(p->key)));
+				put_code_u16(com_->register_value(to_id(p->key)));
 				compile(p->value);
 			}
 
@@ -775,7 +828,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 					}
 				}else{
 					if(minv!=-1){
-						com_.error(line(), Xt("構文エラー"));
+						com_->error(line(), Xt("構文エラー"));
 					}
 				}
 				maxv++;
@@ -889,7 +942,32 @@ void CodeBuilder::compile(Stmt* ex){
 		XTAL_EXPR_CASE(PushStmt){
 			compile(e->expr);
 		}
+		
+		XTAL_EXPR_CASE(DefineStmt){
+			if(LocalExpr* p = expr_cast<LocalExpr>(e->lhs)){
+				compile(e->rhs);
+				
+				if(expr_cast<FunExpr>(e->rhs) || expr_cast<ClassExpr>(e->rhs)){
+					put_code_u8(CODE_SET_NAME);
+					put_code_u16(p->var);
+				}
 
+				put_set_local_code(p->var);
+			}else if(MemberExpr* p = expr_cast<MemberExpr>(e->lhs)){
+				compile(p->lhs);
+				compile(e->rhs);
+
+				if(expr_cast<FunExpr>(e->rhs) || expr_cast<ClassExpr>(e->rhs)){
+					put_code_u8(CODE_SET_NAME);
+					put_code_u16(p->var);
+				}
+
+				put_define_member_code(p->var);
+			}else{
+				com_->error(line(), Xt("不正な変数定義文の左辺です"));
+			}
+		}
+		
 		XTAL_EXPR_CASE(AssignStmt){
 			if(LocalExpr* p = expr_cast<LocalExpr>(e->lhs)){
 				compile(e->rhs);
@@ -907,7 +985,7 @@ void CodeBuilder::compile(Stmt* ex){
 				compile(p->index);
 				put_code_u8(CODE_SET_AT);	
 			}else{
-				com_.error(line(), Xt("不正な代入文の左辺です"));
+				com_->error(line(), Xt("不正な代入文の左辺です"));
 			}
 		}
 
@@ -1007,23 +1085,6 @@ void CodeBuilder::compile(Stmt* ex){
 			}
 		}
 
-		XTAL_EXPR_CASE(DefineLocalStmt){
-			compile(e->rhs);
-			if(e->set_object_name){
-				put_code_u8(CODE_SET_NAME);
-				put_code_u16(e->var);
-			}
-			put_set_local_code(e->var);
-		}
-
-		XTAL_EXPR_CASE(DefineMemberStmt){
-			compile(e->lhs);
-			compile(e->rhs);
-			put_code_u8(CODE_SET_NAME);
-			put_code_u16(e->var);
-			put_define_member_code(e->var);
-		}
-		
 		XTAL_EXPR_CASE(UnaStmt){
 			compile(e->expr);
 			put_code_u8(e->code);
@@ -1067,27 +1128,13 @@ void CodeBuilder::compile(Stmt* ex){
 				put_code_u8(CODE_RETURN_N);
 				put_code_u8(e->exprs.size);
 				if(e->exprs.size>=256){
-					com_.error(line(), Xt("関数から返せる多値は最大で255個です"));
+					com_->error(line(), Xt("関数から返せる多値は最大で255個です"));
 				}
 			}	
 
 		}
 
 		XTAL_EXPR_CASE(AssertStmt){
-		
-			/*if(e->exprs.size!=0){
-				if(BinExpr* p = expr_cast<BinExpr>(e->exprs.head->value)){
-					compile(p->lhs);
-					put_code_u8(CODE_DUP);
-					
-					compile(p->rhs);
-					put_code_u8(CODE_DUP);
-					put_code_u8(CODE_INSERT2);
-					put_code_u8(p->code);
-					
-					
-				}
-			}*/
 							
 			if(e->exprs.size==1){
 				compile(e->exprs.head->value);
@@ -1105,10 +1152,8 @@ void CodeBuilder::compile(Stmt* ex){
 				compile(e->exprs.head->next->value);
 				compile(e->exprs.head->next->next->value);
 			}else{
-				com_.error(line(), Xt("不正なassert文です"));
+				com_->error(line(), Xt("不正なassert文です"));
 			}
-			
-
 			
 			put_code_u8(CODE_ASSERT);
 		}
@@ -1175,7 +1220,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 			set_label(end_label);
 		}
-
+		
 		XTAL_EXPR_CASE(IfStmt){
 			int_t label_if = reserve_label();
 			int_t label_if2 = reserve_label();
@@ -1284,7 +1329,7 @@ void CodeBuilder::compile(Stmt* ex){
 						compile(e2->lhs);
 						put_define_member_code(e2->var);
 					}else{
-						com_.error(line(), Xt("不正な多重定義文です"));
+						com_->error(line(), Xt("不正な多重定義文です"));
 					}
 				}
 			}else{
@@ -1301,7 +1346,7 @@ void CodeBuilder::compile(Stmt* ex){
 						compile(e2->index);
 						put_code_u8(CODE_SET_AT);
 					}else{
-						com_.error(line(), Xt("不正な多重代入文です"));
+						com_->error(line(), Xt("不正な多重代入文です"));
 					}
 				}
 			}
@@ -1309,7 +1354,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(BreakStmt){
 			if(fun_frame().loops.empty()){
-				com_.error(line(), Xt("不正なbreak文です"));
+				com_->error(line(), Xt("不正なbreak文です"));
 			}else{
 				if(e->var){
 					bool found = false;
@@ -1324,7 +1369,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_.error(line(), Xt("break文に対応するループ文が見つかりません"));
+						com_->error(line(), Xt("break文に対応するループ文が見つかりません"));
 					}
 				}else{
 					bool found = false;
@@ -1338,7 +1383,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_.error(line(), Xt("break文に対応するループ文が見つかりません"));
+						com_->error(line(), Xt("break文に対応するループ文が見つかりません"));
 					}
 				}
 			}
@@ -1346,7 +1391,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(ContinueStmt){
 			if(fun_frame().loops.empty()){
-				com_.error(line(), Xt("不正なcontinue文です"));
+				com_->error(line(), Xt("不正なcontinue文です"));
 			}else{
 				if(e->var){
 					bool found = false;
@@ -1361,7 +1406,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_.error(line(), Xt("continue文に対応するループ文が見つかりません"));
+						com_->error(line(), Xt("continue文に対応するループ文が見つかりません"));
 					}
 				}else{
 					bool found = false;
@@ -1375,7 +1420,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_.error(line(), Xt("continue文に対応するループ文が見つかりません"));
+						com_->error(line(), Xt("continue文に対応するループ文が見つかりません"));
 					}
 				}
 			}

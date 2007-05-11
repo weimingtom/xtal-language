@@ -45,6 +45,7 @@ void InitArray(){
 	p.method("clone", &Array::clone);
 	p.method("front", &Array::front);
 	p.method("back", &Array::back);
+	p.method("clear", &Array::clear);
 }
 
 Array::Array(int_t size)
@@ -143,6 +144,10 @@ const Any& Array::front() const{
 
 const Any& Array::back() const{
 	return impl()->at(-1);
+}
+
+void Array::clear() const{
+	return impl()->clear();
 }
 
 }

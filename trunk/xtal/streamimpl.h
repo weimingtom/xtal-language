@@ -8,6 +8,8 @@
 #include "xmacro.h"
 #include "thread.h"
 
+#include <stdio.h>
+
 namespace xtal{
 
 class StreamImpl : public AnyImpl{
@@ -204,6 +206,56 @@ private:
 
 	AC<xtal::u8>::vector data_;
 	uint_t pos_;
+};
+
+
+class InteractiveStreamImpl : public StreamImpl{
+public:
+
+	InteractiveStreamImpl(){
+		//set_class(TClass<InteractiveStreamImpl>::get());
+		line_ = 1;
+		continue_stmt_ = false;
+	}
+	
+	virtual uint_t tell(){
+		unsupported_error("InteractiveStream", "tell");
+		return 0;
+	}
+
+	virtual uint_t do_write(const void* p, uint_t size){
+		unsupported_error("InteractiveStream", "do_write");
+		return 0;
+	}
+
+	virtual uint_t do_read(void* p, uint_t size){
+		if(continue_stmt_){
+			printf("ix:%03d>    ", line_);
+		}else{
+			printf("ix:%03d>", line_);
+		}
+		continue_stmt_ = true;
+		if(fgets((char*)p, size, stdin)){
+			uint_t sz = strlen((char*)p);
+			if(sz!=size-1){
+				line_++;
+			}
+			return sz;
+		}
+		return 0;
+	}
+
+	virtual void close(){
+
+	}
+
+	void set_continue_stmt(bool b){
+		continue_stmt_ = b;
+	}
+
+private:
+	int_t line_;
+	bool continue_stmt_;
 };
 
 }

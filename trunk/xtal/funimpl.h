@@ -16,23 +16,15 @@ public:
 	FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core);
 
 	const Frame& outer() const{ return outer_; }
-
 	const Code& code() const{ return code_; }
-
 	int_t pc() const{ return core_->pc; }
-
 	const u8* source() const{ return code_.data()+core_->pc; }
-	
 	const ID& param_name_at(size_t i) const{ return code_.get_symbol(i+core_->variable_symbol_offset); }
-
 	int_t param_size() const{ return core_->variable_size; }	
-
 	bool used_args_object() const{ return core_->used_args_object!=0; }
-
 	int_t defined_file_line_number(){ return core_->line_number; }
-
 	FunCore* core() const{ return core_; }
-
+	void set_core(FunCore* fc){ core_ = fc; }
 	void check_arg(const VMachine& vm);
 
 public:

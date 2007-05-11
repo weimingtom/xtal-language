@@ -18,13 +18,7 @@
 #endif
 
 #ifdef XTAL_DEBUG
-inline void my_assert(bool b){
-	if(!b){
-		b = b;
-	}
-}
-
-# define XTAL_ASSERT(expr) my_assert(expr)
+# define XTAL_ASSERT(expr) assert(expr)
 #else
 # define XTAL_ASSERT(expr)
 #endif

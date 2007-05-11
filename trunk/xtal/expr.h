@@ -202,6 +202,7 @@ inline T* stmt_cast(Stmt* p){
 	return 0;
 }
 
+
 struct ExprStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	Expr* expr;
@@ -358,8 +359,8 @@ struct TryStmt : public Stmt{
 
 struct IfStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	Expr* cond_expr; 
-	Stmt* body_stmt; 
+	Expr* cond_expr;
+	Stmt* body_stmt;
 	Stmt* else_stmt;
 	IfStmt(int_t line, Expr* cond_expr = 0, Stmt* body_stmt = 0, Stmt* else_stmt = 0)
 		:Stmt(TYPE, line), cond_expr(cond_expr), body_stmt(body_stmt), else_stmt(else_stmt){}
@@ -481,22 +482,12 @@ struct PopExpr : public Expr{
 		:Expr(TYPE, line){}
 };
 
-struct DefineLocalStmt : public Stmt{
+struct DefineStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	int_t var; 
+	Expr* lhs; 
 	Expr* rhs;
-	bool set_object_name;
-	DefineLocalStmt(int_t line, int_t var = 0, Expr* rhs = 0, bool set_object_name = false)
-		:Stmt(TYPE, line), var(var), rhs(rhs), set_object_name(set_object_name){}
-};
-
-struct DefineMemberStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs;
-	int_t  var; 
-	Expr* rhs;
-	DefineMemberStmt(int_t line, Expr* lhs = 0, int_t var = 0, Expr* rhs = 0)
-		:Stmt(TYPE, line), lhs(lhs), var(var), rhs(rhs){}
+	DefineStmt(int_t line, Expr* lhs, Expr* rhs)
+		:Stmt(TYPE, line), lhs(lhs), rhs(rhs){}
 };
 
 struct AtExpr : public Expr{

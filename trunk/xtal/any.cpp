@@ -99,6 +99,10 @@ void disable_gc(){
 	cycle_count_--;
 }
 
+bool initialized(){
+	return objects_begin_ ? true : false;
+}
+
 void initialize(){
 	if(objects_begin_){ return; } // initialized
 
@@ -476,8 +480,8 @@ void full_gc(){
 
 		}while(prev_oc!=objects_current_);
 		
-		printf("finished full_gc\n");
-		printf(" alive object = %d\n", objects_current_-objects_begin_);
+		//printf("finished full_gc\n");
+		//printf(" alive object = %d\n", objects_current_-objects_begin_);
 
 		restart_the_world();
 	}
@@ -831,189 +835,4 @@ uint_t Any::hashcode() const{
 	return (uint_t)rawvalue();
 }
 
-
 }
-
-/*
-using namespace xtal;
-
-
-#include "xtal.h"
-#include "vmachineimpl.h"
-using namespace xtal;
-#include <sstream>
-
-#include <crtdbg.h>
-
-#include <windows.h>
-
-class Timer{
-public:
-
-	Timer(){ 
-		start(); 
-	}	
-
-	void start(){ 
-		prev_time_=GetTickCount(); 
-	}
-
-	double elapsed_time(){
-		return GetTickCount()-prev_time_; 
-	}
-
-	static double frequency(){
-		return 1000;
-	}
-
-private:
-	unsigned long prev_time_;
-};
-
-#include <process.h>
-
-namespace xtal{
-
-class MyMutex : public MutexImpl{
-	CRITICAL_SECTION sect_;
-public:
-	MyMutex(){
-		InitializeCriticalSection(&sect_);
-	}
-	
-	~MyMutex(){
-		DeleteCriticalSection(&sect_);
-	}
-	
-	virtual void lock(){
-		EnterCriticalSection(&sect_);
-	}
-	
-	virtual void unlock(){
-		LeaveCriticalSection(&sect_);
-	}
-};
-
-class MyThread : public ThreadImpl{
-	HANDLE id_;
-	
-	static unsigned int WINAPI entry(void* self){
-		((MyThread*)self)->begin_thread();
-		return 0;
-	}
-	
-public:
-
-	MyThread(void (*fun)(const Any&), const Any& value)
-		:ThreadImpl(fun, value){
-		id_ = (HANDLE)_beginthreadex(0, 0, &entry, this, 0, 0);
-	}
-
-	~MyThread(){
-		CloseHandle(id_);
-	}
-
-	virtual void join(){
-		WaitForSingleObject(id_, INFINITE);
-	}
-};
-
-
-class MyThreadLib : public ThreadLib{
-public:
-
-	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value){
-		return new MyThread(fun, value);
-	}
-
-	virtual MutexImpl* create_mutex(){
-		return new MyMutex();
-	}
-
-	virtual void sleep(uint_t millisec){
-		Sleep(millisec);
-	}
-
-	virtual uint_t current_thread_id(){
-		return GetCurrentThreadId();
-	}
-
-} my_thread_lib;
-
-}
-
-int buf[1024*400];
-
-int main(){
-
-	
-	//_CrtSetDbgFlag(
-	//		_CRTDBG_ALLOC_MEM_DF
-	//		| _CRTDBG_LEAK_CHECK_DF
-	//		| _CRTDBG_CHECK_ALWAYS_DF
-	// );
-
-	//Sleep(1000*2);
-	
-	//return 0;
-
-	try{
-
-		//set_memory(buf, sizeof(buf));
-		set_thread(my_thread_lib);
-	
-		initialize();
-
-		gc();
-		
-/*
-		load("../test/test_fib.xtal");
-		load("../test/test_calc.xtal");
-		load("../test/test_for.xtal");
-		load("../test/test_iter.xtal");
-		load("../test/test_except.xtal");
-		load("../test/test_fiber.xtal");
-		load("../test/test_if.xtal");
-		load("../test/test_nested_loops.xtal");
-		load("../test/test_assign.xtal");
-		load("../test/test_op_assign.xtal");
-		load("../test/test_inc.xtal");
-		load("../test/test_toplevel.xtal");
-
-
-		Timer t;
-		Xsrc((
-
-			toplevel::fib : (fun(i){
-				if(i<2){
-					return 1;
-				}else{
-					return callee(i-2) + callee(i-1);
-				}
-			});
-
-
-			open("out.txtp"){
-
-			}else{
-				"else".p;
-			}
-
-			//fib.p.call(33).p;
-
-		))();
-		std::cout<<"X "<<t.elapsed_time()<<std::endl<<std::endl;		
-
-	}catch(Any e){
-		std::cout << e << std::endl;
-	}catch(std::bad_alloc& b){
-		std::cout << b.what() << std::endl;
-	}
-
-	vmachine().impl()->print_info();
-
-	uninitialize();
-
-	return 0;
-}
-/**/

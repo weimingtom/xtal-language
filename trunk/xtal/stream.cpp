@@ -33,6 +33,10 @@ void InitFileStream(){
 	cls.def("new", New<FileStream, const String&, const String&>());
 }
 
+Stream::Stream(){
+
+}
+
 void Stream::p8(int_t v) const{
 	impl()->p8(v);
 }

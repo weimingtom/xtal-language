@@ -130,6 +130,10 @@ public:
 		return values_.empty();
 	}
 
+	void clear(){
+		values_.clear();
+	}
+
 	class ArrayIterImpl : public AnyImpl{
 		Array array_;
 		int_t index_;

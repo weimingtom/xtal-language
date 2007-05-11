@@ -44,6 +44,11 @@ Any load(const String& file_name);
 Any load_and_save(const String& file_name);
 
 /**
+* @brief interactive xtalの実行
+*/
+void ix();
+
+/**
 * @brief ガーベジコレクションを実行する
 *
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数

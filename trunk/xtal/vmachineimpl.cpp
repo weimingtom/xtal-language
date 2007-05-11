@@ -85,6 +85,7 @@ const Any& VMachineImpl::result(int_t pos){
 				hint1 ? hint1 : String("?"),
 				hint2 ? hint2 : String("()"))); 
 		}else{
+			//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
 			throw "ñ¢íËã`ÉGÉâÅ[";
 		}
 	}
@@ -1561,7 +1562,7 @@ void VMachineImpl::THROW(const u8* pc, int_t stack_size, int_t fun_frames_size){
 		if(!e){
 			e = String("");
 		}
-		e = append_backtrace(pc, e);
+		//e = append_backtrace(pc, e);
 		throw e;
 	}
 }
@@ -1580,6 +1581,10 @@ void VMachineImpl::THROW_UNSUPPROTED_ERROR(int_t stack_size, int_t fun_frames_si
 	
 void VMachineImpl::THROW2(const u8* pc, const Any& e, int_t stack_size, int_t fun_frames_size){
 	Any ep = e;
+	ep = append_backtrace(pc+1, ep);
+	if(fun_frames_size<=(int_t)fun_frames_.size()){
+		pop_ff();
+	}
 	while(fun_frames_size<=(int_t)fun_frames_.size()){
 		ep = append_backtrace(ff().pc, ep);
 		pop_ff();

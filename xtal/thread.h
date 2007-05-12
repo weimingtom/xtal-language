@@ -101,8 +101,9 @@ void UninitThread();
 
 void set_thread(ThreadLib& lib);
 
-bool stop_the_world();
+void set_thread();
 
+bool stop_the_world();
 void restart_the_world();
 
 void global_interpreter_lock();

@@ -84,8 +84,9 @@ ID finalize_id(null);
 
 void print_alive_objects(){
 	for(AnyImpl** it = objects_begin_; it!=objects_current_; ++it){
-		StringImpl* str = dynamic_cast<StringImpl*>(*it);
-		printf(" %s rc=%d %s\n", typeid(**it).name(), (*it)->ref_count(), str ? str->c_str() : "");
+//		StringImpl* str = dynamic_cast<StringImpl*>(*it);
+//		fprintf(stderr, " %s rc=%d %s\n", typeid(**it).name(), (*it)->ref_count(), str ? str->c_str() : "");
+		fprintf(stderr, " rc=%d\n", (*it)->ref_count());
 	}
 }
 
@@ -182,8 +183,8 @@ void uninitialize(){
 	full_gc();
 	
 	if(objects_current_-objects_begin_ != 0){
-		printf("finished gc\n");
-		printf(" alive object = %d\n", objects_current_-objects_begin_);
+		fprintf(stderr, "finished gc\n");
+		fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		//print_alive_objects();
 		XTAL_ASSERT(false); // オブジェクトが全て解放されていない。
 	}
@@ -326,8 +327,8 @@ void gc(){
 
 		objects_gene_line_ = (objects_current_-objects_begin_)*2/3;
 
-		//printf("finished gc\n");
-		//printf(" alive object = %d\n", objects_current_-objects_begin_);
+		//fprintf(stderr, "finished gc\n");
+		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 
 		restart_the_world();
 	}
@@ -480,8 +481,8 @@ void full_gc(){
 
 		}while(prev_oc!=objects_current_);
 		
-		//printf("finished full_gc\n");
-		//printf(" alive object = %d\n", objects_current_-objects_begin_);
+		//fprintf(stderr, "finished full_gc\n");
+		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 
 		restart_the_world();
 	}

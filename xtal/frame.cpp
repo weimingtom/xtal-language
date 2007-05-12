@@ -135,15 +135,15 @@ void ClassImpl::call(const VMachine& vm){
 	if(const Any& ret = member(Xid(new))){
 		ret.call(vm);
 	}else{
-		throw builtin().member("RuntimeError")(Xt("%s :: new 関数が登録されていないため、インスタンスを生成できません。")(object_name()));
+		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name()));
 	}
 }
 
 void ClassImpl::marshal_new(const VMachine& vm){
-	if(const Any& ret = member(Xid(new))){
+	if(const Any& ret = member(Xid(marshal_new))){
 		ret.call(vm);
 	}else{
-		throw builtin().member("RuntimeError")(Xt("%s :: new 関数が登録されていないため、インスタンスを生成できません。")(object_name()));
+		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name()));
 	}
 }
 
@@ -179,7 +179,7 @@ void ClassImpl::def(const ID& name, const Any& value){
 		value.set_object_name(name, object_name_force(), this);
 	}else{
 		if((it->flags&NOMEMBER)==0){
-			throw builtin().member("BadRedefineError")(Xt("%s :: '%s' は既に定義されています")(this->object_name(), name));
+			throw builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name));
 		}else{
 			it->flags = 0;
 			it->mutate_count = 0;
@@ -223,6 +223,7 @@ const Any& ClassImpl::bases_member(const ID& name){
 	}
 	return null;
 }
+
 
 const Any& ClassImpl::member(const ID& name){
 	IdMap::Node* it = map_members_->find(name);
@@ -269,6 +270,21 @@ const Any& ClassImpl::member(const ID& name, int_t*& pmutate_count){
 	}
 
 	return null;
+}
+
+void ClassImpl::set_member(const ID& name, const Any& value){
+	IdMap::Node* it = map_members_->find(name);
+	if(!it){
+		//throw;
+	}else{
+		if((it->flags&NOMEMBER)==0){
+			members_[it->num] = value;
+		}else{
+			//throw;
+		}
+	}
+
+	mutate();
 }
 
 void ClassImpl::mutate(){
@@ -323,7 +339,7 @@ void XClassImpl::marshal_new(const VMachine& vm){
 	init_instance(inst.impl(), vm, inst);
 	
 	if(inst.impl()->empty()){
-		if(const Any& ret = bases_member(Xid(new))){
+		if(const Any& ret = bases_member(Xid(marshal_new))){
 			ret.call(vm);
 			if(vm.result().type()==TYPE_BASE){
 				vm.result().impl()->set_class(Class(this));
@@ -402,7 +418,7 @@ const Any& LibImpl::rawdef(const ID& name, const Any& value, int_t*& pmutate_cou
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
 	}else{
-		throw builtin().member("BadRedefineError")(Xt("%s :: '%s' は既に定義されています")(this->object_name(), name));
+		throw builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name));
 	}
 }
 
@@ -493,6 +509,10 @@ bool Class::is_inherited(const Any& md) const{
 
 const Any& Class::member(const ID& name) const{
 	return impl()->member(name);
+}
+
+void Class::set_member(const ID& name, const Any& value) const{
+	return impl()->set_member(name, value);
 }
 	
 const Any& Class::member(const ID& name, int_t*& mutate_count) const{

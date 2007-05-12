@@ -106,7 +106,7 @@ public:
 			full_gc();
 			fp_ = fopen(filename.c_str(), mode.c_str());
 			if(!fp_){
-				throw builtin().member(Xid(IOError))(Xt("ファイル '%s' は開けません")(filename));
+				throw builtin().member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Xid(name)=filename));
 			}
 		}
 	}
@@ -216,6 +216,7 @@ public:
 		//set_class(TClass<InteractiveStreamImpl>::get());
 		line_ = 1;
 		continue_stmt_ = false;
+		closed_ = false;
 	}
 	
 	virtual uint_t tell(){
@@ -229,6 +230,8 @@ public:
 	}
 
 	virtual uint_t do_read(void* p, uint_t size){
+		if(closed_)
+			return 0;
 		if(continue_stmt_){
 			printf("ix:%03d>    ", line_);
 		}else{
@@ -242,6 +245,7 @@ public:
 			}
 			return sz;
 		}
+		closed_ = true;
 		return 0;
 	}
 
@@ -256,6 +260,7 @@ public:
 private:
 	int_t line_;
 	bool continue_stmt_;
+	bool closed_;
 };
 
 }

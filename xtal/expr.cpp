@@ -2,309 +2,249 @@
 #include "xtal.h"
 #include "any.h"
 #include "vmachine.h"
-#include "frame.h"
+#include "expr.h"
 
 namespace xtal{
 
-/*
-namespace par{
+PseudoVariableExpr* ExprBuilder::pseudo(int_t code){
+	return new(alloc) PseudoVariableExpr(common->line, code);
+}
 
-typedef UserData<xtal::Reader> Reader;
+BinExpr* ExprBuilder::bin(int_t code, Expr* lhs, Expr* rhs){
+	return new(alloc) BinExpr(common->line, code, lhs, rhs);
+}
 
-class Parser;
+BinCompExpr* ExprBuilder::bin_comp(int_t code, Expr* lhs, Expr* rhs){
+	return new(alloc) BinCompExpr(common->line, code, lhs, rhs);
+}
 
-class ParserImpl : public AnyImpl{
-public:
-	
-	virtual bool parse(const Reader& r, const Array& out) = 0;
-	
-	bool try_parse(const Reader& r, const Array& out){
-		int_t len = out.length();
-		int_t pos = r->position();
-		if(parse(r, out)){
-			return true;
+OpAssignStmt* ExprBuilder::op_assign(int_t code, Expr* lhs, Expr* rhs){
+	return new(alloc) OpAssignStmt(common->line, code, lhs, rhs);
+}
+
+AtExpr* ExprBuilder::at(Expr* lhs, Expr* rhs){
+	return new(alloc) AtExpr(common->line, lhs, rhs);
+}
+
+LocalExpr* ExprBuilder::local(int_t var){
+	return new(alloc) LocalExpr(common->line, var);
+}
+
+InstanceVariableExpr* ExprBuilder::instance_variable(int_t var){
+	return new(alloc) InstanceVariableExpr(common->line, var);
+}
+
+DefineStmt* ExprBuilder::define(Expr* lhs, Expr* rhs){
+	if(LocalExpr* loc = expr_cast<LocalExpr>(lhs)){
+		register_variable(loc->var);
+	}
+	return new(alloc) DefineStmt(common->line, lhs, rhs);
+}
+
+AssignStmt* ExprBuilder::assign(Expr* lhs, Expr* rhs){
+	return new(alloc) AssignStmt(common->line, lhs, rhs);
+}
+
+CallExpr* ExprBuilder::call(Expr* lhs, Expr* a1, Expr* a2){
+	CallExpr* ret = new(alloc) CallExpr(common->line, lhs);
+	if(a1)ret->ordered.push_back(a1);
+	if(a2)ret->ordered.push_back(a2);
+	return ret;
+}
+
+MemberExpr* ExprBuilder::member(Expr* lhs, int_t var){
+	return new(alloc) MemberExpr(common->line, lhs, var);
+}
+
+MemberExpr* ExprBuilder::member_q(Expr* lhs, int_t var){
+	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs, var);
+	ret->if_defined = true;
+	return ret;
+}
+
+SendExpr* ExprBuilder::send(Expr* lhs, int_t var){
+	return new(alloc) SendExpr(common->line, lhs, var);
+}
+
+SendExpr* ExprBuilder::send_q(Expr* lhs, int_t var){
+	SendExpr* ret = new(alloc) SendExpr(common->line, lhs, var);
+	ret->if_defined = true;
+	return ret;
+}
+
+ExprStmt* ExprBuilder::e2s(Expr* expr){
+	return new(alloc) ExprStmt(common->line, expr);
+}
+
+ReturnStmt* ExprBuilder::return_(Expr* e1, Expr* e2){
+	ReturnStmt* ret = new(alloc) ReturnStmt(common->line);
+	if(e1)ret->exprs.push_back(e1);
+	if(e2)ret->exprs.push_back(e2);
+	return ret;
+}
+
+AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
+	AssertStmt* ret = new(alloc) AssertStmt(common->line);
+	if(e1)ret->exprs.push_back(e1);
+	if(e2)ret->exprs.push_back(e2);
+	return ret;
+}
+
+
+void ExprBuilder::scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag){
+	VarInfo vi = {list, on_heap, set_name_flag};
+	var_info_stack.push(vi);
+	*on_heap = false;
+}
+
+void ExprBuilder::scope_carry_on_heap_flag(){
+	*var_info_stack[0].on_heap_flag = *var_info_stack[1].on_heap_flag;
+}
+
+void ExprBuilder::scope_set_on_heap_flag(int_t i){
+	*var_info_stack[i].on_heap_flag = true;
+}
+
+void ExprBuilder::scope_pop(){
+	var_info_stack.pop();	
+}
+
+void ExprBuilder::register_variable(int_t var){
+	for(TList<int_t>::Node* p = var_info_stack.top().variables->head; p; p = p->next){
+		if(p->value == var){
+			common->error(common->line, Xt("Xtal Compile Error 1026")(
+				Xid(name)=common->ident_table[var]
+			));
 		}
-		r->set_position(pos);
-		out.resize(len);
-		return false;
 	}
-	
-	virtual void set(const Parser& p){}
-};
-
-class Parser : public Any{
-public:
-
-	Parser();
-
-	Parser(ParserImpl* p)
-		:Any((AnyImpl*)p){}
-		
-	Parser(const Null&)
-		:Any(null){}
-		
-	bool parse(const Reader& r, const Array& out);
-	
-	bool try_parse(const Reader& r, const Array& out);
-	
-	void set(const Parser& p);
-	
-	ParserImpl* impl() const{
-		return (ParserImpl*)Any::impl();
-	}
-};
-
-class RefParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	RefParserImpl(const Parser& p = null):p_(p){}
-
-	virtual bool parse(const Reader& r, const Array& out){
-		return p_.parse(r, out);
-	}
-			
-	virtual void set(const Parser& p){
-		p_ = p;
-	}
-};
-
-Parser::Parser()
-	:Any(new RefParserImpl()){}
-		
-void Parser::set(const Parser& p){
-	return impl()->set(p);
+	var_info_stack.top().variables->push_back(var);
 }
 
-class ChParserImpl : public ParserImpl{
-	int ch_;
-public:
-	virtual bool parse(const Reader& r, const Array& out){
-		if(r->read()==ch_){
-			if(out){
-				out.push_back(ch_);
-			}
-			return true;
-		}
-		return false;
+void ExprBuilder::block_begin(){
+	block_stack.push(new(alloc) BlockStmt(common->line));
+	scope_push(&block_stack.top()->vars, &block_stack.top()->on_heap, false);
+}	
+
+void ExprBuilder::block_add(Stmt* stmt){
+	block_stack.top()->stmts.push_back(stmt);
+}
+
+BlockStmt* ExprBuilder::block_end(){
+	scope_pop();
+	return block_stack.pop();
+}
+
+void ExprBuilder::try_begin(){
+	try_stack.push(new(alloc) TryStmt(common->line));
+	scope_push(&try_stack.top()->catch_vars, &try_stack.top()->on_heap, false);
+}
+
+void ExprBuilder::try_body(Stmt* stmt){
+	try_stack.top()->try_stmt = stmt;
+}
+
+void ExprBuilder::try_catch(Stmt* stmt){
+	try_stack.top()->catch_stmt = stmt;
+}
+
+void ExprBuilder::try_finally(Stmt* stmt){
+	try_stack.top()->finally_stmt = stmt;
+}
+
+TryStmt* ExprBuilder::try_end(){
+	scope_pop();
+	return try_stack.pop();
+}
+
+void ExprBuilder::while_begin(int_t var, Expr* expr){
+	while_stack.push(new(alloc) WhileStmt(common->line));
+	block_begin();
+	if(var){
+		block_add(define(local(var), expr));
+		while_stack.top()->cond_expr = local(var);
+	}else{
+		while_stack.top()->cond_expr = expr;
 	}
-};
+}
 
-class StringParserImpl : public ParserImpl{
-	String str_;
-public:
-	StringParserImpl(const String& str):str_(str){}
-	virtual bool parse(const Reader& r, const Array& out){
-		for(int_t i=0; i<str_.size(); ++i){
-			if(r->read()!=str_.c_str()[i]){
-				return false;
-			}
-		}
-		if(out){
-			out.push_back(str_);
-		}
-		return true;
+void ExprBuilder::while_label(int_t label){
+	while_stack.top()->label = label;
+}
+
+void ExprBuilder::while_body(Stmt* stmt){
+	while_stack.top()->body_stmt = stmt;
+}
+
+void ExprBuilder::while_next(Stmt* stmt){
+	while_stack.top()->next_stmt = stmt;
+}
+
+void ExprBuilder::while_else(Stmt* stmt){
+	while_stack.top()->else_stmt = stmt;
+}
+
+void ExprBuilder::while_nobreak(Stmt* stmt){
+	while_stack.top()->nobreak_stmt = stmt;
+}
+
+Stmt* ExprBuilder::while_end(){
+	block_add(while_stack.pop());
+	return block_end();
+}
+
+void ExprBuilder::if_begin(int_t var, Expr* expr){
+	if_stack.push(new(alloc) IfStmt(common->line));
+	block_begin();
+	if(var){
+		block_add(define(local(var), expr));
+		if_stack.top()->cond_expr = local(var);
+	}else{
+		if_stack.top()->cond_expr = expr;
 	}
-};
-
-class ManyParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	ManyParserImpl(const Parser& p):p_(p){}
-	virtual bool parse(const Reader& r, const Array& out){
-		while(p_.try_parse(r, out)){}
-		return true;
-	}
-};
-
-class Many1ParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	Many1ParserImpl(const Parser& p):p_(p){}
-	virtual bool parse(const Reader& r, const Array& out){
-		if(!p_.parse(r, out)){
-			while(p_.try_parse(r, out)){}
-			return true;
-		}
-		return false;
-	}
-};
-
-class SkipParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	SkipParserImpl(const Parser& p):p_(p){}
-	virtual bool parse(const Reader& r, const Array& out){
-		return p_.parse(r, null);
-	}
-};
-
-class OrParserImpl : public ParserImpl{
-	Parser lhs_, rhs_;
-public:
-	OrParserImpl(const Parser& l, const Parser& r):lhs_(l), rhs_(r){}
-	virtual bool parse(const Reader& r, const Array& out){
-		return lhs_.try_parse(r, out) || rhs_.parse(r, out);
-	}
-};
-
-class AndParserImpl : public ParserImpl{
-	Parser lhs_, rhs_;
-public:	
-	AndParserImpl(const Parser& l, const Parser& r):lhs_(l), rhs_(r){}
-	virtual bool parse(const Reader& r, const Array& out){
-		return lhs_.parse(r, out) && rhs_.parse(r, out);
-	}
-};
-
-class InvertParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	InvertParserImpl(const Parser& p):p_(p){}
-	virtual bool parse(const Reader& r, const Array& out){
-		int_t len = out.length();
-		int_t pos = r->position();
-		bool ret = !parse(r, out);
-		r->set_position(pos);
-		out.resize(len);
-		return ret;
-	}
-};
-
-class EmptyParserImpl : public ParserImpl{
-public:
-	virtual bool parse(const Reader& r, const Array& out){
-		return true;
-	}
-};
-
-const Parser e(new EmptyParserImpl());
-
-
-class JoinParserImpl : public ParserImpl{
-	Parser p_;
-	String sep_;
-public:
-	JoinParserImpl(const Parser& p, const String& sep = ""):p_(p), sep_(sep){}
-	virtual bool parse(const Reader& r, const Array& out){
-		Array ret;
-		if(p_.parse(r, ret)){
-			out.push_back(ret.join(sep_));
-			return true;
-		}
-		return false;
-	}
-};
-
-class ArrayParserImpl : public ParserImpl{
-	Parser p_;
-public:
-	ArrayParserImpl(const Parser& p):p_(p){}
-	virtual bool parse(const Reader& r, const Array& out){
-		Array ret;
-		if(p_.parse(r, ret)){
-			out.push_back(ret);
-			return true;
-		}
-		return false;
-	}
-};
-
-
-class ValParserImpl : public ParserImpl{
-	Any val_;
-public:
-	ValParserImpl(const Any& val):val_(val){}
-	virtual bool parse(const Reader& r, const Array& out){
-		out.push_back(val_);
-		return true;
-	}
-};
-
-bool Parser::parse(const Reader& r, const Array& out){
-	return impl()->parse(r, out);
 }
 
-bool Parser::try_parse(const Reader& r, const Array& out){
-	return impl()->try_parse(r, out);
+void ExprBuilder::if_body(Stmt* stmt){
+	if_stack.top()->body_stmt = stmt;
 }
 
-inline Parser operator *(const Parser& p){
-	return Parser(new ManyParserImpl(p));
+void ExprBuilder::if_else(Stmt* stmt){
+	if_stack.top()->else_stmt = stmt;
 }
 
-inline Parser operator +(const Parser& p){
-	return Parser(new Many1ParserImpl(p));
+Stmt* ExprBuilder::if_end(){
+	block_add(if_stack.pop());
+	return block_end();
 }
 
-inline Parser operator -(const Parser& p){
-	return Parser(new SkipParserImpl(p));
+void ExprBuilder::fun_begin(int_t kind){
+	fun_stack.push(new(alloc) FunExpr(common->line, kind));
+	scope_push(&fun_stack.top()->vars, &fun_stack.top()->on_heap, false);
+	scope_set_on_heap_flag(1);
 }
 
-inline Parser operator |(const Parser& l, const Parser& r){
-	return Parser(new OrParserImpl(l, r));
+void ExprBuilder::fun_param(int_t name, Expr* def){
+	register_variable(name);
+	fun_stack.top()->params.push_back(name, def);
 }
 
-inline Parser operator >>(const Parser& l, const Parser& r){
-	return Parser(new AndParserImpl(l, r));
+void ExprBuilder::fun_body(Stmt* stmt){
+	fun_stack.top()->stmt = stmt;
 }
 
-inline Parser operator ~(const Parser& p){
-	return Parser(new InvertParserImpl(p));
+FunExpr* ExprBuilder::fun_end(){
+	scope_pop();
+	return fun_stack.pop();
 }
 
-inline Parser operator !(const Parser& p){
-	return p | e;
+void ExprBuilder::init(LPCCommon* com, RegionAlloc* all){
+	common = com;
+	alloc = all;
+	var_info_stack.clear();
+	block_stack.clear();
+	try_stack.clear();
+	while_stack.clear();
+	if_stack.clear();
+	fun_stack.clear();
 }
-
-inline Parser join(const Parser& p, const String& sep = ""){
-	return Parser(new JoinParserImpl(p, sep));
-}
-
-inline Parser str(const String& p){
-	return Parser(new StringParserImpl(p));
-}
-
-inline Parser array(const Parser& p){
-	return Parser(new ArrayParserImpl(p));
-}
-
-inline Parser val(const Any& p){
-	return Parser(new ValParserImpl(p));
-}
-
-class IntParserImpl : public ParserImpl{
-public:
-	virtual bool parse(const Reader& r, const Array& out){
-		if(!test_digit(r->peek())){
-			return false;
-		}
-		int_t ret = 0;
-		while(1){
-			if(test_digit(r->peek())){
-				ret *= 10;
-				ret += r->read()-'0';
-			}else if(r->peek()=='_'){
-				r->read();
-			}else{
-				break;
-			}
-		}
-		out.push_back(ret);
-	}
-};
-
-const Parser int_(new IntParserImpl());
-
-
-Parser end = str(";") | str("\a");
-Parser if_ = array(-ident("if") >> val(IF_STMT) >> line >> -str("(") >> expr >> -str(")") >> stmt);
-Parser multi_expr = array(*(expr >> -!str(",")));
-Parser return_ = array(-ident("return") >> val(RETURN_STMT) >> line >> multi_expr >> -end);
-Parser fun_expr = array(-ident(fun) >> str("(") >> args >> str(")") >> str("{") >> multi_stmt >> str("}"));
-Parser multi_stmt = array(*stmt);
-Parser args = *(expr >> -!str(",")) >> *(key >> str(":") >> expr >> -!str(","))
-
-}
-*/
 
 }

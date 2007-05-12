@@ -46,6 +46,7 @@ void InitArray(){
 	p.method("front", &Array::front);
 	p.method("back", &Array::back);
 	p.method("clear", &Array::clear);
+	p.method("values", &Array::values);
 }
 
 Array::Array(int_t size)
@@ -147,7 +148,11 @@ const Any& Array::back() const{
 }
 
 void Array::clear() const{
-	return impl()->clear();
+	impl()->clear();
+}
+
+void Array::values(const VMachine& vm) const{
+	vm.return_result_array(*this);
 }
 
 }

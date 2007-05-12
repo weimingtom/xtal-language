@@ -463,6 +463,23 @@ CODE_SET_LOCAL_W,
 CODE_GLOBAL, 
 
 /**
+* @brief グローバル変数に設定する。
+* 
+* format op, symbol1, symbol2
+* stack [value] -> []
+*/
+CODE_SET_GLOBAL, 
+
+/**
+* @brief グローバル変数を定義する。
+* 
+* format op, symbol1, symbol2
+* stack [value] -> []
+*/
+CODE_DEFINE_GLOBAL, 
+
+
+/**
 * @brief オブジェクトのメンバを取り出す。
 * 
 * format op, symbol1, symbol2

@@ -570,6 +570,9 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_SET_LOCAL_W){ SET_LOCAL_VARIABLE(get_u16(pc+1)); pc+=3; }
 
 	XTAL_VM_CASE(CODE_GLOBAL){ pc = GLOBAL_VARIABLE(pc); }
+	XTAL_VM_CASE(CODE_SET_GLOBAL){ pc = SET_GLOBAL_VARIABLE(pc); }
+	XTAL_VM_CASE(CODE_DEFINE_GLOBAL){ pc = DEFINE_GLOBAL_VARIABLE(pc); }
+
 	XTAL_VM_CASE(CODE_MEMBER){ pc = MEMBER(pc); }
 	XTAL_VM_CASE(CODE_MEMBER_IF_DEFINED){ pc = MEMBER_IF_DEFINED(pc); }
 	XTAL_VM_CASE(CODE_DEFINE_MEMBER){ pc = DEFINE_MEMBER(pc); }
@@ -856,6 +859,20 @@ const u8* VMachineImpl::GLOBAL_VARIABLE(const u8* pc){
 	return pc+3;
 }
 
+const u8* VMachineImpl::SET_GLOBAL_VARIABLE(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		code().toplevel().set_member(symbol(get_u16(pc+1)), pop());
+	}
+	return pc+3;
+}
+
+const u8* VMachineImpl::DEFINE_GLOBAL_VARIABLE(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		code().toplevel().def(symbol(get_u16(pc+1)), pop());
+	}
+	return pc+3;
+}
+
 const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 	int_t n = get_u8(pc+1);
 	int_t m = get_u16(pc+2);
@@ -864,7 +881,7 @@ const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 		p->set_variable(n, code().get_frame_core(m), pop());
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadInstanceVariableError")(Xt("不正なインスタンス変数の参照です"));
+			throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
 		}
 	}
 	return pc+4;
@@ -878,7 +895,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 		push(p->variable(n, code().get_frame_core(m)));
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadInstanceVariableError")(Xt("不正なインスタンス変数の参照です"));
+			throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
 		}
 	}
 	return pc+4;
@@ -1012,7 +1029,7 @@ void VMachineImpl::YIELD(const u8* pc){
 	}else{
 		downsize(yield_result_count_);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadYieldError")(Xt("yieldがfiber実行中以外のところで呼ばれました")()); 
+			throw builtin().member("BadYieldError")(Xt("Xtal Runtime Error 1012")); 
 		}
 	}
 }
@@ -1561,6 +1578,9 @@ void VMachineImpl::THROW(const u8* pc, int_t stack_size, int_t fun_frames_size){
 		Any e = pop();
 		if(!e){
 			e = String("");
+		}
+		if(!e.is(builtin().member("Exception"))){
+			e = builtin().member("RuntimeError")(e);
 		}
 		//e = append_backtrace(pc, e);
 		throw e;

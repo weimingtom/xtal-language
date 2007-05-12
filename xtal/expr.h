@@ -3,6 +3,7 @@
 
 #include "codeimpl.h"
 #include "constant.h"
+#include "lexer.h"
 
 namespace xtal{
 
@@ -548,6 +549,85 @@ struct TopLevelStmt : public Stmt{
 	Stmt* unittest_stmt;
 	TopLevelStmt(int_t line)
 		:Stmt(TYPE, line), vars(alloc), stmts(alloc), export_expr(0), unittest_stmt(0){}
+};
+
+
+
+
+class ExprBuilder{
+public:
+
+	PseudoVariableExpr* pseudo(int_t code);
+	BinExpr* bin(int_t code, Expr* lhs, Expr* rhs);
+	BinCompExpr* bin_comp(int_t code, Expr* lhs, Expr* rhs);
+	OpAssignStmt* op_assign(int_t code, Expr* lhs, Expr* rhs);
+	AtExpr* at(Expr* lhs, Expr* rhs);
+	LocalExpr* local(int_t var);
+	InstanceVariableExpr* instance_variable(int_t var);
+	DefineStmt* define(Expr* lhs, Expr* rhs);
+	AssignStmt* assign(Expr* lhs, Expr* rhs);
+	CallExpr* call(Expr* lhs, Expr* a1 = 0, Expr* a2 = 0);
+	MemberExpr* member(Expr* lhs, int_t var);
+	MemberExpr* member_q(Expr* lhs, int_t var);
+	SendExpr* send(Expr* lhs, int_t var);
+	SendExpr* send_q(Expr* lhs, int_t var);
+	ExprStmt* e2s(Expr* expr);
+	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
+	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);
+
+	void scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag);
+	void scope_carry_on_heap_flag();
+	void scope_set_on_heap_flag(int_t i);
+	void scope_pop();
+	void register_variable(int_t var);
+
+	void block_begin();
+	void block_add(Stmt* stmt);
+	BlockStmt* block_end();
+
+	void try_begin();
+	void try_body(Stmt* stmt);
+	void try_catch(Stmt* stmt);
+	void try_finally(Stmt* stmt);
+	TryStmt* try_end();
+
+	void while_begin(int_t var, Expr* expr);
+	void while_label(int_t label);
+	void while_body(Stmt* stmt);
+	void while_next(Stmt* stmt);
+	void while_else(Stmt* stmt);
+	void while_nobreak(Stmt* stmt);
+	Stmt* while_end();
+
+	void if_begin(int_t var, Expr* expr);
+	void if_body(Stmt* stmt);
+	void if_else(Stmt* stmt);
+	Stmt* if_end();
+
+	void fun_begin(int_t kind);
+	void fun_param(int_t name, Expr* def = 0);
+	void fun_body(Stmt* stmt);
+	FunExpr* fun_end();
+
+	void init(LPCCommon* com, RegionAlloc* all);
+
+	struct VarInfo{
+		TList<int_t>* variables;
+		bool* on_heap_flag;
+		bool set_name_flag;
+	};
+	
+	PODStack<VarInfo> var_info_stack;
+	
+	LPCCommon* common;
+	RegionAlloc* alloc;
+	
+	PStack<BlockStmt*> block_stack;
+	PStack<TryStmt*> try_stack;
+	PStack<WhileStmt*> while_stack;
+	PStack<IfStmt*> if_stack;
+	PStack<FunExpr*> fun_stack;
+
 };
 
 }

@@ -50,21 +50,6 @@ public:
 
 public:
 
-	template<int N> void p(int_t v) const{ p(v, I2T<N>()); }
-	void p(int_t v, I2T<1>) const{ p8(v); }
-	void p(int_t v, I2T<2>) const{ p16(v); }
-	void p(int_t v, I2T<4>) const{ p32(v); }
-
-	template<int N> int_t s() const{ s(I2T<N>()); }
-	int_t s(I2T<1>) const{ return s8(); }
-	int_t s(I2T<2>) const{ return s16(); }
-	int_t s(I2T<4>) const{ return s32(); }
-
-	template<int N> int_t u() const{ u(I2T<N>()); }
-	int_t u(I2T<1>) const{ return u8(); }
-	int_t u(I2T<2>) const{ return u16(); }
-	int_t u(I2T<4>) const{ return u32(); }
-
 	void iter_first(const VMachine& vm);
 	void iter_next(const VMachine& vm);
 	void iter_break(const VMachine& vm);

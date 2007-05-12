@@ -129,7 +129,7 @@ void RegionAlloc::add_chunk(size_t minsize){
 	end_ = begin_+alloced_size_;
 
 	*((void**)allocate(sizeof(void*))) = old_begin;
-	*((int_t*)allocate(sizeof(int_t))) = alloced_size_;
+	*((int_t*)allocate(sizeof(int_t))) = (int_t)alloced_size_;
 	alloced_size_*=2;
 }
 
@@ -190,7 +190,7 @@ void SimpleMemoryManager::free(void* p){
 
 
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize){
-	uint_t size = end-begin;
+	uint_t size = (uint_t)(end-begin);
 	uint_t newsize = size+addsize+size/4;
 	void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
 	memcpy(newbegin, begin, sizeof(void*)*size);
@@ -201,8 +201,8 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 }
 
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current){
-	uint_t size = end-begin;
-	uint_t newsize = current-begin;
+	uint_t size = (uint_t)(end-begin);
+	uint_t newsize = (uint_t)(current-begin);
 	if(newsize){
 		void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
 		memcpy(newbegin, begin, sizeof(void*)*newsize);

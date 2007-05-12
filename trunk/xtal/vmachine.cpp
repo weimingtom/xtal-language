@@ -153,6 +153,11 @@ void VMachine::return_result(const Any& value1, const Any& value2, const Any& va
 	impl()->return_result(value1, value2, value3, value4);
 }
 
+void VMachine::return_result_array(const Array& values) const{
+	impl()->return_result(values);
+}
+
+
 bool VMachine::processed() const{
 	return impl()->processed();
 }

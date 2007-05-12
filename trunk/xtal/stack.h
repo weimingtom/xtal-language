@@ -393,19 +393,19 @@ private:
 		user_free(p, size);
 	}
 
-	void* plusp(const void* p, int v) const{
+	void* plusp(const void* p, size_t v) const{
 		return (char*)p + v*one_size_;
 	}
 	
-	void* minusp(const void* p, int v) const{
+	void* minusp(const void* p, size_t v) const{
 		return (char*)p - v*one_size_;
 	}
 
-	void* addp(void*& p, int v){
+	void* addp(void*& p, size_t v){
 		return p = plusp(p, v);
 	}
 
-	void* subp(void*& p, int v){
+	void* subp(void*& p, size_t v){
 		return p = minusp(p, v);
 	}
 

@@ -182,6 +182,12 @@ public:
 	*/
 	const Any& back() const;
 
+	/**
+	* @brief 配列の要素を全て多値として返す
+	*
+	*/
+	void values(const VMachine& vm) const;
+
 	ArrayImpl* impl() const{ return (ArrayImpl*)Any::impl(); }
 
 	const Any& operator [] (int_t i){

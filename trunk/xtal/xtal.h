@@ -6,7 +6,7 @@ namespace xtal{
 		VERSION1 = 0,
 		VERSION2 = 9,
 		VERSION3 = 4,
-		VERSION4 = 0
+		VERSION4 = 1
 	};
 }
 
@@ -21,4 +21,5 @@ namespace xtal{
 #include "userdata.h"
 #include "cast.h"
 #include "marshal.h"
+#include "thread.h"
 

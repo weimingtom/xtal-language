@@ -28,7 +28,7 @@ void LPCCommon::init(const String& file_name){
 
 void LPCCommon::error(int_t line, const Any& message){
 	if(errors.size()<10){
-		errors.push_back(Xt("%(file)s:%(line)d:%(message)")(
+		errors.push_back(Xf("%(file)s:%(line)d:%(message)")(
 			Xid(file)=source_file_name,
 			Xid(line)=line,
 			Xid(message)=message
@@ -173,27 +173,27 @@ String Lexer::token2str(const Token& t){
 		XTAL_CASE(Token::TYPE_KEYWORD){
 			Xfor2(key, value, keyword_map_.send("pairs")){
 				if(value.ivalue()==t.ivalue()){
-					return cast<String>(Xt("予約語 %s ")(key));
+					return String("Keyword");
 				}
 			}
-			return String("unknown keyword");
+			return String("Unknown Keyword");
 		}
 
 		XTAL_CASE(Token::TYPE_IDENT){
-			return cast<String>(Xt("識別子 %s ")(com_.ident_table[t.ivalue()]));
+			return cast<String>(Xf("Identifier %s")(com_.ident_table[t.ivalue()]));
 		}
 				
 		XTAL_CASE(Token::TYPE_INT){
-			return cast<String>(Xt("整数リテラル")());
+			return cast<String>(Xf("Number %s")(t.ivalue()));
 		}
 		
 		XTAL_CASE(Token::TYPE_FLOAT){
-			return cast<String>(Xt("不動小数点数リテラル")());
+			return cast<String>(Xf("Number %s")(t.fvalue()));
 		}
 
 		XTAL_CASE(Token::TYPE_TOKEN){
 			if(t.ivalue()==-1){
-				return String("EOF");
+				return String("End of File");
 			}else{
 				char buf[5];
 				buf[0] = t.ivalue() & 0xff;
@@ -329,7 +329,7 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_.peek())){
-		com_.error(line(), Xt("不正な16進数値リテラルのサフィックス")());
+		com_.error(line(), Xt("Xtal Compile Error 1015"));
 	}
 
 	return ret;		
@@ -349,7 +349,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
-		com_.error(line(), Xt("不正な2進数値リテラルのサフィックス")());
+		com_.error(line(), Xt("Xtal Compile Error 1020"));
 	}
 
 	return ret;
@@ -367,7 +367,7 @@ void Lexer::parse_number_suffix(int_t val){
 	}else{
 
 		if(test_ident_rest(reader_.peek())){
-			com_.error(line(), Xt("不正な数字リテラルのサフィックス")());
+			com_.error(line(), Xt("Xtal Compile Error 1010"));
 		}
 
 		push_int(val);
@@ -386,7 +386,7 @@ void Lexer::parse_number_suffix(float_t val){
 	}else{
 	
 		if(test_ident_rest(reader_.peek())){
-			com_.error(line(), Xt("不正な数字リテラルのサフィックス")());
+			com_.error(line(), Xt("Xtal Compile Error 1010"));
 		}
 
 		push_float(val);
@@ -432,7 +432,7 @@ void Lexer::parse_number(){
 					eat_from_reader('+');
 				}
 				if(!test_digit(reader_.peek())){
-					com_.error(line(), Xt("不正な浮動小数点数リテラル")());
+					com_.error(line(), Xt("Xtal Compile Error 1014"));
 				}
 				e *= parse_integer();
 				{
@@ -595,13 +595,36 @@ void Lexer::do_read(){
 								break;
 							}
 						}else if(ch==-1){
-							com_.error(line(), Xt("コメントの途中でEOFが検出されました")());
+							com_.error(line(), Xt("Xtal Compile Error 1021"));
 							break;
 						}
 					}
 					continue;
 				}else{
 					push('/');
+				}
+			}			
+			
+			XTAL_CASE('#'){
+				if(eat_from_reader('!')){
+					while(1){
+						int_t ch = read_from_reader();
+						if(ch=='\r'){
+							eat_from_reader('\n');
+							set_line(line()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch=='\n'){
+							set_line(line()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch==-1){
+							break;
+						}
+					}
+					continue;
+				}else{
+					push('#');
 				}
 			}			
 			

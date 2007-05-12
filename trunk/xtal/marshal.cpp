@@ -44,7 +44,7 @@ void Marshal::inner_dump(const Any& v){
 		return;
 	}else if(cls.raweq(TClass<Float>::get())){
 		stream_.p8(FLOAT);
-		union{ int_t i; float_t f; } u;
+		union{ int i; float f; } u;
 		u.f = v.fvalue();
 		stream_.p32(u.i);
 		return;
@@ -194,7 +194,7 @@ Any Marshal::inner_load(){
 		}
 
 		XTAL_CASE(FLOAT){
-			union{ int_t i; float_t f; } u;
+			union{ int i; float f; } u;
 			u.i = stream_.s32();
 			return u.f;
 		}
@@ -245,7 +245,7 @@ Any Marshal::inner_load(){
 			CodeImpl* p = new(guard) CodeImpl();
 
 			if(stream_.u8()!='T' || stream_.u8()!='A' || stream_.u8()!='L'){
-				throw builtin().member("RuntimeError")(Xt("不正なコンパイル済みXtalファイルです"));
+				throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009"));
 			}
 
 			stream_.u8(); stream_.u8(); stream_.u8(); stream_.u8();
@@ -324,7 +324,7 @@ Any Marshal::demangle(int_t n){
 		}
 	}
 	if(!ret){
-		throw builtin().member("RuntimeError")(Xt("%sにアクセスできずmarshal loadに失敗しました。")(lvalues_[n]));
+		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Xid(name)=lvalues_[n]));
 	}
 	return ret;
 }

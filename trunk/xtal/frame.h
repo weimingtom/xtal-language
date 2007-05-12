@@ -95,13 +95,26 @@ public:
 		:Frame((FrameImpl*)p){}
 
 public:
+	/**
+	* @brief 新しいメンバを定義する
+	*
+	* @param name 新しく定義するメンバの名前
+	*/
+	void def(const ID& name, const Any& value) const{ Any::def(name, value); }
 
 	/**
 	* @brief メンバを取り出す
 	*
-	* @param name
+	* @param name 取り出したいメンバの名前
 	*/
 	const Any& member(const ID& name) const;
+
+	/**
+	* @brief メンバを再設定する
+	*
+	* @param name 再設定したいメンバの名前
+	*/
+	void set_member(const ID& name, const Any& value) const;
 
 	/**
 	* @brief Mix-inする
@@ -127,27 +140,6 @@ public:
 	* @endcode
 	*/
 	Any members() const;
-
-public:
-
-	void marshal_new(const VMachine& vm);
-
-	const Any& member(const ID& name, int_t*& mutate_count) const;
-
-	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;
-
-	void mutate() const;
-
-	ClassImpl* impl() const{ return (ClassImpl*)Any::impl(); }
-
-protected:
-
-	CFun def_and_return(const ID& name, const CFun& cfun) const{
-		def(name, cfun);
-		return cfun;
-	}
-
-public:
 
 	/**
 	* @brief 関数を定義する
@@ -188,7 +180,26 @@ public:
 	CFun method(const ID& name, Fun fun) const{
 		return method(name, fun, result);
 	}
-	
+
+public:
+
+	void marshal_new(const VMachine& vm);
+
+	const Any& member(const ID& name, int_t*& mutate_count) const;
+
+	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;
+
+	void mutate() const;
+
+	ClassImpl* impl() const{ return (ClassImpl*)Any::impl(); }
+
+protected:
+
+	CFun def_and_return(const ID& name, const CFun& cfun) const{
+		def(name, cfun);
+		return cfun;
+	}
+
 protected:
 
 	struct init_tag{};

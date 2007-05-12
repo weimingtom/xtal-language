@@ -24,7 +24,7 @@ public:
 	void init_variables(FrameCore* core){
 		VariablesInfo vi;
 		vi.core = core;
-		vi.pos = variables_.size();
+		vi.pos = (int_t)variables_.size();
 		variables_.resize(vi.pos+core->instance_variable_size);
 		variables_info_.push_back(vi);
 	}
@@ -40,13 +40,13 @@ public:
 	int_t find_core(FrameCore* core){
 		if(variables_info_[0].core == core)
 			return variables_info_[0].pos;
-		for(int_t i = 1, size = variables_info_.size(); i<size; ++i){
+		for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 			if(variables_info_[i].core==core){
 				std::swap(variables_info_[0], variables_info_[i]);
 				return variables_info_[0].pos;
 			}	
 		}
-		throw builtin().member("BadInstanceVariableError")(Xt("不正なインスタンス変数の参照です"));
+		throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
 	}
 	
 	bool empty(){
@@ -319,6 +319,8 @@ public:
 	const Any& bases_member(const ID& name);
 	
 	virtual const Any& member(const ID& name);
+
+	virtual void set_member(const ID& name, const Any& value);
 	
 	virtual const Any& member(const ID& name, int_t*& pmutate_count);
 

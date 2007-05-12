@@ -27,20 +27,30 @@ void FunImpl::check_arg(const VMachine& vm){
 	if(n<core_->min_param_count || (!core_->used_args_object && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
 			throw builtin().member("InvalidArgumentError")(
-				Xt("%s関数呼び出しの引数の数が不正です。引数を取らない関数に%s個の値を渡しました")(
-					object_name(),
-					n
+				Xt("Xtal Runtime Error 1007")(
+					Xid(name)=object_name(),
+					Xid(value)=n
 				)
 			);
 		}else{
-			throw builtin().member("InvalidArgumentError")(
-				Xt("%s関数呼び出しの引数の数が不正です。%s以上 %s以下の引数を受け取る関数に%s個の値を渡しました")(
-					object_name(),
-					core_->min_param_count,
-					core_->max_param_count,
-					n
-				)
-			);
+			if(core_->used_args_object){
+				throw builtin().member("InvalidArgumentError")(
+					Xt("Xtal Runtime Error 1005")(
+						Xid(name)=object_name(),
+						Xid(min)=core_->min_param_count,
+						Xid(value)=n
+					)
+				);
+			}else{
+				throw builtin().member("InvalidArgumentError")(
+					Xt("Xtal Runtime Error 1006")(
+						Xid(name)=object_name(),
+						Xid(min)=core_->min_param_count,
+						Xid(max)=core_->max_param_count,
+						Xid(value)=n
+					)
+				);
+			}
 		}
 	}
 }

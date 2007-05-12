@@ -109,7 +109,7 @@ void Parser::expect_end(){
 	if(eat_end()){
 		return;
 	}
-	com_->error(line(), Xt("';' がありません"));
+	com_->error(line(), Xt("Xtal Compile Error 1003"));
 }
 
 Stmt* Parser::parse(const Stream& stream, const String& source_file_name){
@@ -135,10 +135,6 @@ void Parser::begin_interactive_parsing(const Stream& stream){
 	e.scope_set_on_heap_flag(0);
 }
 
-void Parser::end_interactive_parsing(){
-
-}
-
 Stmt* Parser::interactive_parse(){
 	if(eat_end())
 		return e.e2s(e.pseudo(CODE_PUSH_NULL));
@@ -161,8 +157,7 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	com_->error(line(), Xt("予期せぬ '%(char)s' が検出されました")(
-		Xid(char)=lexer_.token2str(lexer_.peek())));
+	com_->error(line(), Xt("Xtal Compile Error 1002")(Xid(char)=lexer_.token2str(lexer_.peek())));
 }
 
 bool Parser::eat(int_t ch){
@@ -218,7 +213,7 @@ string_t Parser::parse_string(int_t open, int_t close){
 			++depth;
 		}
 		if(ch==-1){
-			com_->error(line(), Xt("文字列リテラルが終わる前にEOFが検出されました"));
+			com_->error(line(), Xt("Xtal Compile Error 1011"));
 			break;
 		}
 		if(ch=='\\'){
@@ -314,7 +309,7 @@ Expr* Parser::parse_term(){
 						switch(open){
 						case 't':
 							if(kind!=KIND_STRING){
-								com_->error(line(), Xt("不正な%%記法リテラルです"));
+								com_->error(line(), Xt("Xtal Compile Error 1017"));
 							}
 							kind = KIND_TEXT;
 							open = lexer_.read().ivalue();
@@ -322,7 +317,7 @@ Expr* Parser::parse_term(){
 
 						case 'f':
 							if(kind!=KIND_STRING){
-								com_->error(line(), Xt("不正な%%記法リテラルです"));
+								com_->error(line(), Xt("Xtal Compile Error 1017"));
 							}
 							kind = KIND_FORMAT;
 							open = lexer_.read().ivalue();
@@ -342,7 +337,7 @@ Expr* Parser::parse_term(){
 
 						default:
 							close = open;
-							com_->error(line(), Xt("不正な%%記法リテラルです"));
+							com_->error(line(), Xt("Xtal Compile Error 1017"));
 							break;
 						}
 
@@ -391,7 +386,7 @@ Expr* Parser::parse_term(){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_ONCE){ ret = XTAL_NEW OnceExpr(ln, parse_expr_must(PRI_ONCE - r_space*2)); }
-				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class_or_module(KIND_CLASS); }
+				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class(); }
 				XTAL_CASE(Token::KEYWORD_FUN){ ret = parse_fun(KIND_FUN); }
 				XTAL_CASE(Token::KEYWORD_METHOD){ ret = parse_fun(KIND_METHOD); }
 				XTAL_CASE(Token::KEYWORD_FIBER){ ret = parse_fun(KIND_FIBER); }
@@ -846,11 +841,11 @@ Stmt* Parser::parse_assign_stmt(){
 								}else if(SendExpr* le = expr_cast<SendExpr>(lhs)){
 								
 								}else{
-									com_->error(line(), Xt("構文エラー"));
+									com_->error(line(), Xt("Xtal Compile Error 1001"));
 								}
 							}
 						}else{
-							com_->error(line(), Xt("構文エラー"));
+							com_->error(line(), Xt("Xtal Compile Error 1001"));
 						}
 						
 						return mas;
@@ -947,7 +942,7 @@ Stmt* Parser::parse_stmt(){
 Stmt* Parser::parse_stmt_must(){
 	Stmt* ret = parse_stmt();
 	if(!ret){
-		com_->error(line(), Xt("構文エラー"));
+		com_->error(line(), Xt("Xtal Compile Error 1001"));
 	}
 	return ret;
 }
@@ -1075,7 +1070,7 @@ Stmt* Parser::parse_top_level(){
 			top->stmts.push_back(p);
 		}else if(eat(Token::KEYWORD_EXPORT)){
 			if(top->export_expr){
-				com_->error(line(), Xt("export出来るのは一つのファイルで一つだけです"));
+				com_->error(line(), Xt("Xtal Compile Error 1019"));
 			}else{
 				int_t export_id = com_->register_ident(ID("$export"));
 				int_t ident = parse_var();
@@ -1112,9 +1107,9 @@ Stmt* Parser::parse_block(){
 	return p;
 }
 
-Expr* Parser::parse_class_or_module(int_t kind){
+Expr* Parser::parse_class(){
 	ClassExpr* p = XTAL_NEW ClassExpr(lexer_.line());
-	p->kind = kind;
+	p->kind = KIND_CLASS;
 
 	e.scope_push(&p->vars, &p->on_heap, true);
 	e.scope_set_on_heap_flag(0);
@@ -1145,10 +1140,7 @@ Expr* Parser::parse_class_or_module(int_t kind){
 					if(eat('=')){
 						e.fun_begin(KIND_METHOD);
 						e.fun_param(com_->register_ident(Xid(value)));
-						AssignStmt *as = XTAL_NEW AssignStmt(lexer_.line());
-						as->lhs = XTAL_NEW InstanceVariableExpr(lexer_.line(), var2);
-						as->rhs = e.local(com_->register_ident(Xid(value)));
-						e.fun_body(as);
+						e.fun_body(e.assign(e.instance_variable(var2), e.local(com_->register_ident(Xid(value)))));
 						p->stmts.push_back(e.define(e.local(var), e.fun_end()));
 					}else{
 						e.fun_begin(KIND_METHOD);
@@ -1172,7 +1164,7 @@ Expr* Parser::parse_class_or_module(int_t kind){
 
 				for(TList<int_t>::Node* np = p->inst_vars.head; np; np = np->next){
 					if(np->value==var){
-						com_->error(line(), Xt("同じインスタンス変数名 '%(name)s' が重複定義されました")(Xid(name)=var));
+						com_->error(line(), Xt("Xtal Compile Error 1024")(Xid(name)=var));
 						break;
 					}
 				}
@@ -1182,7 +1174,7 @@ Expr* Parser::parse_class_or_module(int_t kind){
 			if(eat(':')){
 				p->stmts.push_back(e.define(e.member(e.pseudo(CODE_PUSH_CURRENT_CONTEXT), var), parse_expr_must()));
 			}else{
-				com_->error(line(), Xt("構文エラー"));
+				com_->error(line(), Xt("Xtal Compile Error 1001"));
 			}
 			expect_end();
 
@@ -1225,7 +1217,7 @@ Expr* Parser::parse_define_local_or_expr(){
 Stmt* Parser::parse_try(){
 	e.try_begin();
 
-	e.	try_body(parse_stmt_must());
+	e.try_body(parse_stmt_must());
 	
 		if(eat(Token::KEYWORD_CATCH)){
 			expect('(');
@@ -1370,7 +1362,7 @@ Expr* Parser::parse_expr(int_t pri){
 Expr* Parser::parse_expr_must(int_t pri){
 	Expr* ret = parse_expr(pri);
 	if(!ret){
-		com_->error(line(), Xt("構文エラー"));
+		com_->error(line(), Xt("Xtal Compile Error 1001"));
 	}
 	return ret;
 }
@@ -1378,13 +1370,13 @@ Expr* Parser::parse_expr_must(int_t pri){
 Expr* Parser::parse_expr_must(){
 	Expr* ret = parse_expr();
 	if(!ret){
-		com_->error(line(), Xt("構文エラー"));
+		com_->error(line(), Xt("Xtal Compile Error 1001"));
 	}
 	return ret;
 }
 
 Stmt* Parser::parse_return(){
-	ReturnStmt* p = XTAL_NEW ReturnStmt(lexer_.line());
+	ReturnStmt* p = e.return_();
 	parse_multiple_expr(&p->exprs);
 	expect_end();
 	return p;
@@ -1482,7 +1474,7 @@ Stmt* Parser::parse_switch(){
 
 			}else if(eat(Token::KEYWORD_DEFAULT)){
 				if(default_stmt){
-					com_->error(line(), Xt("default節が重複定義されました")());					
+					com_->error(line(), Xt("Xtal Compile Error 1018")());					
 				}
 				default_stmt = parse_stmt();
 			}else{

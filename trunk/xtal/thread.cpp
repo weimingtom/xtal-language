@@ -279,3 +279,95 @@ uint_t Thread::current_thread_id(){
 }
 
 }
+
+
+#if defined(_WIN32) && defined(_MT)
+
+#include <windows.h>
+#include <process.h>
+
+namespace xtal{
+
+class WinMutex : public MutexImpl{
+	CRITICAL_SECTION sect_;
+public:
+	WinMutex(){
+		InitializeCriticalSection(&sect_);
+	}
+	
+	~WinMutex(){
+		DeleteCriticalSection(&sect_);
+	}
+	
+	virtual void lock(){
+		EnterCriticalSection(&sect_);
+	}
+	
+	virtual void unlock(){
+		LeaveCriticalSection(&sect_);
+	}
+};
+
+class WinThread : public ThreadImpl{
+	HANDLE id_;
+	
+	static unsigned int WINAPI entry(void* self){
+		((WinThread*)self)->begin_thread();
+		return 0;
+	}
+	
+public:
+
+	WinThread(void (*fun)(const Any&), const Any& value)
+		:ThreadImpl(fun, value){
+		id_ = (HANDLE)_beginthreadex(0, 0, &entry, this, 0, 0);
+	}
+
+	~WinThread(){
+		CloseHandle(id_);
+	}
+
+	virtual void join(){
+		WaitForSingleObject(id_, INFINITE);
+	}
+};
+
+
+class WinThreadLib : public ThreadLib{
+public:
+
+	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value){
+		return new WinThread(fun, value);
+	}
+
+	virtual MutexImpl* create_mutex(){
+		return new WinMutex();
+	}
+
+	virtual void sleep(uint_t millisec){
+		Sleep(millisec);
+	}
+
+	virtual uint_t current_thread_id(){
+		return GetCurrentThreadId();
+	}
+
+} win_thread_lib;
+
+void set_thread(){
+	set_thread(win_thread_lib);
+}
+
+}
+
+#else
+
+namespace xtal{
+
+void set_thread(){
+	
+}
+
+}
+
+#endif

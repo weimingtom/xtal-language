@@ -81,19 +81,12 @@ void CodeBuilder::interactive_compile(){
 		com_->register_ident("toplevel");
 		
 		if(ep){
-			DefineStmt* ds = stmt_cast<DefineStmt>(ep);
-			LocalExpr* le = ds ? expr_cast<LocalExpr>(ds->lhs) : 0;
-			if(le){
-				compile(e.define(e.member(e.local(com_->register_ident("toplevel")), le->var), ds->rhs));
-			}else{
-				compile(ep);
-			}
+			compile(ep);
 		}else{
-			Token tok = parser_.lexer().read();
-			if(tok.type()==Token::TYPE_TOKEN && tok.ivalue()==-1){
+			if(com_->errors.size()==0){
 				break;
 			}
-			com_->error(parser_.lexer().line(), Xt("\•¶ƒGƒ‰["));
+			com_->error(1, Xt("Xtal Compile Error 1001"));
 		}
 	
 		if(com_->errors.size()==0){
@@ -174,8 +167,20 @@ bool CodeBuilder::put_set_local_code(int_t var){
 		else if(id == 3){ put_code_u8(CODE_SET_LOCAL_3); }
 		return true;
 	}else{
-		com_->error(line(), Xt("’è‹`‚³‚ê‚Ä‚¢‚È‚¢•Ï”%s‚É‘ã“ü‚µ‚æ‚¤‚Æ‚µ‚Ü‚µ‚½")(to_id(var)));
+		//com_->error(line(), Xt("’è‹`‚³‚ê‚Ä‚¢‚È‚¢•Ï”%s‚É‘ã“ü‚µ‚æ‚¤‚Æ‚µ‚Ü‚µ‚½")(to_id(var)));
+		put_code_u8(CODE_SET_GLOBAL);
+		put_code_u16(var);
 		return false;
+	}
+}
+
+void CodeBuilder::put_define_local_code(int_t var){
+	int_t id = lookup_variable(var);
+	if(id>=0){
+		put_set_local_code(var);
+	}else{
+		put_code_u8(CODE_DEFINE_GLOBAL);
+		put_code_u16(var);
 	}
 }
 
@@ -259,7 +264,7 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 			return i; 
 		}
 	}
-	com_->error(line(), Xt("’è‹`‚³‚ê‚Ä‚¢‚È‚¢ƒCƒ“ƒXƒ^ƒ“ƒX•Ï” '@%s' ‚ªŽQÆ‚³‚ê‚Ä‚¢‚Ü‚·")(to_id(key)));
+	com_->error(line(), Xt("Xtal Compile Error 1023")(Xid(name)=to_id(key)));
 	return 0;
 }
 
@@ -349,10 +354,10 @@ void CodeBuilder::put_if_code(Expr* e, int_t label_if, int_t label_if2){
 	BinCompExpr* e2 = expr_cast<BinCompExpr>(e);
 	if(e2 && CODE_EQ<=e2->code && e2->code<=CODE_GE){
 		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->lhs)){
-			com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ðÄ”äŠr‚µ‚Ä‚¢‚Ü‚·"));
+			com_->error(line(), Xt("Xtal Compile Error 1025"));
 		}
 		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->rhs)){
-			com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ðÄ”äŠr‚µ‚Ä‚¢‚Ü‚·"));
+			com_->error(line(), Xt("Xtal Compile Error 1025"));
 		}
 		compile(e2->lhs);
 		compile(e2->rhs);
@@ -672,10 +677,10 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(BinExpr){
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
-				com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ð‰‰ŽZ‚µ‚Ä‚¢‚Ü‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1013"));
 			}
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
-				com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ð‰‰ŽZ‚µ‚Ä‚¢‚Ü‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1013"));
 			}
 			
 			compile(e->lhs);
@@ -685,10 +690,10 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(BinCompExpr){
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
-				com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ðÄ”äŠr‚µ‚Ä‚¢‚Ü‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1025"));
 			}
 			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
-				com_->error(line(), Xt("”äŠr‰‰ŽZŽ®‚ÌŒ‹‰Ê‚ðÄ”äŠr‚µ‚Ä‚¢‚Ü‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1025"));
 			}
 
 			compile(e->lhs);
@@ -828,7 +833,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 					}
 				}else{
 					if(minv!=-1){
-						com_->error(line(), Xt("\•¶ƒGƒ‰["));
+						com_->error(line(), Xt("Xtal Compile Error 1001"));
 					}
 				}
 				maxv++;
@@ -952,7 +957,7 @@ void CodeBuilder::compile(Stmt* ex){
 					put_code_u16(p->var);
 				}
 
-				put_set_local_code(p->var);
+				put_define_local_code(p->var);
 			}else if(MemberExpr* p = expr_cast<MemberExpr>(e->lhs)){
 				compile(p->lhs);
 				compile(e->rhs);
@@ -964,7 +969,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 				put_define_member_code(p->var);
 			}else{
-				com_->error(line(), Xt("•s³‚È•Ï”’è‹`•¶‚Ì¶•Ó‚Å‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1012"));
 			}
 		}
 		
@@ -985,7 +990,7 @@ void CodeBuilder::compile(Stmt* ex){
 				compile(p->index);
 				put_code_u8(CODE_SET_AT);	
 			}else{
-				com_->error(line(), Xt("•s³‚È‘ã“ü•¶‚Ì¶•Ó‚Å‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1012"));
 			}
 		}
 
@@ -1128,7 +1133,7 @@ void CodeBuilder::compile(Stmt* ex){
 				put_code_u8(CODE_RETURN_N);
 				put_code_u8(e->exprs.size);
 				if(e->exprs.size>=256){
-					com_->error(line(), Xt("ŠÖ”‚©‚ç•Ô‚¹‚é‘½’l‚ÍÅ‘å‚Å255ŒÂ‚Å‚·"));
+					com_->error(line(), Xt("Xtal Compile Error 1022"));
 				}
 			}	
 
@@ -1152,7 +1157,7 @@ void CodeBuilder::compile(Stmt* ex){
 				compile(e->exprs.head->next->value);
 				compile(e->exprs.head->next->next->value);
 			}else{
-				com_->error(line(), Xt("•s³‚Èassert•¶‚Å‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1016"));
 			}
 			
 			put_code_u8(CODE_ASSERT);
@@ -1324,12 +1329,12 @@ void CodeBuilder::compile(Stmt* ex){
 			if(e->define){
 				for(TList<Expr*>::Node* lhs=e->lhs.tail; lhs; lhs=lhs->prev){	
 					if(LocalExpr* e2 = expr_cast<LocalExpr>(lhs->value)){
-						put_set_local_code(e2->var);
+						put_define_local_code(e2->var);
 					}else if(MemberExpr* e2 = expr_cast<MemberExpr>(lhs->value)){
 						compile(e2->lhs);
 						put_define_member_code(e2->var);
 					}else{
-						com_->error(line(), Xt("•s³‚È‘½d’è‹`•¶‚Å‚·"));
+						com_->error(line(), Xt("Xtal Compile Error 1008"));
 					}
 				}
 			}else{
@@ -1346,7 +1351,7 @@ void CodeBuilder::compile(Stmt* ex){
 						compile(e2->index);
 						put_code_u8(CODE_SET_AT);
 					}else{
-						com_->error(line(), Xt("•s³‚È‘½d‘ã“ü•¶‚Å‚·"));
+						com_->error(line(), Xt("Xtal Compile Error 1008"));
 					}
 				}
 			}
@@ -1354,7 +1359,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(BreakStmt){
 			if(fun_frame().loops.empty()){
-				com_->error(line(), Xt("•s³‚Èbreak•¶‚Å‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1007"));
 			}else{
 				if(e->var){
 					bool found = false;
@@ -1369,7 +1374,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_->error(line(), Xt("break•¶‚É‘Î‰ž‚·‚éƒ‹[ƒv•¶‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"));
+						com_->error(line(), Xt("Xtal Compile Error 1005"));
 					}
 				}else{
 					bool found = false;
@@ -1383,7 +1388,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_->error(line(), Xt("break•¶‚É‘Î‰ž‚·‚éƒ‹[ƒv•¶‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"));
+						com_->error(line(), Xt("Xtal Compile Error 1005"));
 					}
 				}
 			}
@@ -1391,7 +1396,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(ContinueStmt){
 			if(fun_frame().loops.empty()){
-				com_->error(line(), Xt("•s³‚Ècontinue•¶‚Å‚·"));
+				com_->error(line(), Xt("Xtal Compile Error 1006"));
 			}else{
 				if(e->var){
 					bool found = false;
@@ -1406,7 +1411,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_->error(line(), Xt("continue•¶‚É‘Î‰ž‚·‚éƒ‹[ƒv•¶‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"));
+						com_->error(line(), Xt("Xtal Compile Error 1004"));
 					}
 				}else{
 					bool found = false;
@@ -1420,7 +1425,7 @@ void CodeBuilder::compile(Stmt* ex){
 					}
 
 					if(!found){
-						com_->error(line(), Xt("continue•¶‚É‘Î‰ž‚·‚éƒ‹[ƒv•¶‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"));
+						com_->error(line(), Xt("Xtal Compile Error 1004"));
 					}
 				}
 			}

@@ -36,7 +36,7 @@ Any compile(const String& source);
 Any load(const String& file_name);
 
 /**
-* @brief file_nameファイルをコンパイルして実行し、コンパイル済みソースを保存する。
+* @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
 *
 * @param file_name Xtalスクリプトが記述されたファイルの名前
 * @return スクリプト内でexportされた値
@@ -99,6 +99,14 @@ Any object_load(const Stream& in);
 * @param out 直列化先のストリーム
 */
 void object_to_script(const Any& obj, const Stream& out);
+
+/**
+* @brief オブジェクトをC++に埋め込める形にして保存する
+*
+* @param obj C++化したいオブジェクト
+* @param out 直列化先のストリーム
+*/
+void object_to_cpp(const Any& obj, const Stream& out);
 
 /**
 * @brief メインVMachineオブジェクトを返す

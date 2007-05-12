@@ -202,6 +202,14 @@ public:
 	void return_result(const Any& value1, const Any& value2, const Any& value3, const Any& value4) const;
 
 	/**
+	* @brief 呼び出し元に配列の要素の数だけの戻り値を返す。
+	*
+	* values.lengthの方が数が多い場合はその分nullが返される。
+	* values.lengthの方が数が少ない場合は返した値は捨てられる。
+	*/
+	void return_result_array(const Array& values) const;
+
+	/**
 	* @brief return_resultやcarry_overを既に呼び出したならtrueを、そうでないならfalseを返す。
 	*
 	*/

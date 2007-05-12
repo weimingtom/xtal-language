@@ -229,6 +229,18 @@ public:
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
+	void return_result(const Array& values){
+		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+		int_t size = size=values.size();
+		for(int_t i=0; i<size; ++i){
+			push(values.at(i));
+		}
+		adjust_result(size);
+		f.pc = &cleanup_call_code_;
+		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+	}
+
 	void carry_over(const Fun& fun);
 
 	bool processed(){ 
@@ -537,6 +549,8 @@ private:
 	const Any& LOCAL(int_t pos);
 
 	const u8* GLOBAL_VARIABLE(const u8* pc);
+	const u8* SET_GLOBAL_VARIABLE(const u8* pc);
+	const u8* DEFINE_GLOBAL_VARIABLE(const u8* pc);
 
 	const u8* ONCE(const u8* pc);
 

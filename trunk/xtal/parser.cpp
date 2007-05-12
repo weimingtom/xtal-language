@@ -138,7 +138,15 @@ void Parser::begin_interactive_parsing(const Stream& stream){
 Stmt* Parser::interactive_parse(){
 	if(eat_end())
 		return e.e2s(e.pseudo(CODE_PUSH_NULL));
-	return parse_stmt();
+	
+	if(Stmt* p = parse_stmt())
+		return p;
+
+	Token tok = lexer_.read();
+	if(tok.type()==Token::TYPE_TOKEN && tok.ivalue()==-1)
+		return 0;
+
+	return e.e2s(e.pseudo(CODE_PUSH_NULL));
 }
 
 LPCCommon* Parser::common(){

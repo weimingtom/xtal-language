@@ -69,9 +69,9 @@ int main(int argc, char** argv){
 		load("../test/test_toplevel.xtal");
 		*/
 	
-		//*
+		/*
 		MemoryStream out;
-		object_dump(compile_file("../message.xtal"), out);
+		object_dump(load("../message.xtal"), out);
 		unsigned char* data = (unsigned char*)out.data();
 		int size = out.tell();
 

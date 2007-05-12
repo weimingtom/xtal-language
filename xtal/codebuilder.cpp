@@ -83,7 +83,7 @@ void CodeBuilder::interactive_compile(){
 		if(ep){
 			compile(ep);
 		}else{
-			if(com_->errors.size()==0){
+			if(com_->errors.empty()){
 				break;
 			}
 			com_->error(1, Xt("Xtal Compile Error 1001"));

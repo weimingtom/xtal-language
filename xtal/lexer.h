@@ -1,6 +1,7 @@
 
-
 #pragma once
+
+#ifndef XTAL_NO_PARSER
 
 #include "xtal.h"
 #include "stream.h"
@@ -368,3 +369,5 @@ private:
 };
 
 }
+
+#endif

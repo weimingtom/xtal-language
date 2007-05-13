@@ -6,7 +6,6 @@
 
 namespace xtal{
 
-//#define XTAL_USE_COMPRESSED_ANY
 
 #ifdef XTAL_USE_COMPRESSED_ANY
 

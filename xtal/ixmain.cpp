@@ -1,6 +1,9 @@
 
-#include "xtal/all_src.h"
 #include "xtal/xtal.h"
+
+//#include "xtal/all_src.h"
+#pragma comment(lib, "../xtallib.lib") 
+
 #include "xtal/message_jp_sjis.txt"
 
 int main(){

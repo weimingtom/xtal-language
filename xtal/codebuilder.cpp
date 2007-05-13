@@ -1,6 +1,8 @@
 
 #include "xtal.h"
 
+#ifndef XTAL_NO_PARSER
+
 #include "codebuilder.h"
 #include "expr.h"
 #include "parser.h"
@@ -556,6 +558,11 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 		adjust_result(required_result_count, 0);
 		return;
 	}
+
+	if(debug::is_enabled() && lines_.top()!=ex->line){
+		put_code_u8(CODE_BREAKPOINT);
+		put_code_u8(BREAKPOINT_LINE);
+	}
 	
 	lines_.push(ex->line);
 	p_->set_line_number_info(ex->line);
@@ -932,6 +939,11 @@ void CodeBuilder::compile(Stmt* ex){
 
 	if(!ex)
 		return;
+
+	if(debug::is_enabled() && lines_.top()!=ex->line){
+		put_code_u8(CODE_BREAKPOINT);
+		put_code_u8(BREAKPOINT_LINE);
+	}
 
 	lines_.push(ex->line);
 	p_->set_line_number_info(ex->line);
@@ -1464,3 +1476,6 @@ void CodeBuilder::compile(Stmt* ex){
 }
 
 }
+
+#endif
+

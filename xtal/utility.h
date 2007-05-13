@@ -13,6 +13,9 @@
 #include <map>
 #include <set>
 
+//#define XTAL_USE_COMPRESSED_ANY
+//#define XTAL_NO_PARSER
+
 #if defined(_DEBUG) || defined(DEBUG)
 #	define XTAL_DEBUG
 #endif

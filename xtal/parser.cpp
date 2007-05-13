@@ -1,7 +1,10 @@
 
+#include "xtal.h"
+
+#ifndef XTAL_NO_PARSER
+
 #include <math.h>
 
-#include "xtal.h"
 #include "parser.h"
 #include "any.h"
 #include "xmacro.h"
@@ -1570,3 +1573,5 @@ Expr* Parser::parse_array(){
 }
 
 }
+
+#endif

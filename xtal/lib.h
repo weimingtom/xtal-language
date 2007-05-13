@@ -109,7 +109,9 @@ void object_to_script(const Any& obj, const Stream& out);
 void object_to_cpp(const Any& obj, const Stream& out);
 
 /**
-* @brief メインVMachineオブジェクトを返す
+* @brief VMachineオブジェクトを返す
+* グローバルなVMachineオブジェクトを返す。
+* スレッド毎にこのグローバルVMachineオブジェクトは存在する。
 */
 const VMachine& vmachine();
 
@@ -170,6 +172,31 @@ struct IterBreaker{
 
 /*@}*/
 
+namespace debug{
+
+/**
+* @brief デバッグ機能を有効にする
+* デバッグ機能を有効化した状態でスクリプトをコンパイルするとデバッグ機能が埋め込まれる。
+* デバッグ機能はデフォルトでは無効になっている。
+*/
+void enable();
+
+/**
+* @brief デバッグ機能を無効にする
+*/
+void disable();
+
+bool is_enabled();
+
+void set_line_hook(const Any& hook);
+void set_call_hook(const Any& hook);
+void set_return_hook(const Any& hook);
+
+Any line_hook();
+Any call_hook();
+Any return_hook();
+
+}
 
 }
 

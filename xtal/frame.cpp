@@ -456,7 +456,11 @@ const Any& Frame::member_direct(int_t i) const{
 void Frame::set_member_direct(int_t i, const Any& value) const{
 	return impl()->set_member_direct(i, value);
 }
-	
+
+Any Frame::members() const{
+	return impl()->members();
+}
+
 bool Frame::is_defined_by_xtal() const{
 	return impl()->is_defined_by_xtal();
 }
@@ -521,10 +525,6 @@ const Any& Class::member(const ID& name, int_t*& mutate_count) const{
 
 void Class::mutate() const{
 	return impl()->mutate();
-}
-
-Any Class::members() const{
-	return impl()->members();
 }
 
 Class new_xclass(const Frame& outer, const Code& code, FrameCore* core){

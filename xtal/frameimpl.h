@@ -212,7 +212,11 @@ class FrameImpl : public HaveNameImpl{
 public:
 	
 	FrameImpl(const Frame& outer, const Code& code, FrameCore* core)
-		:outer_(outer), code_(code), core_(core ? core : &empty_frame_core), map_members_(0), members_(core_->variable_size){}
+		:outer_(outer), code_(code), core_(core ? core : &empty_frame_core), map_members_(0), members_(core_->variable_size){
+		if(debug::is_enabled()){
+			make_map_members();	
+		}
+	}
 	
 	FrameImpl()
 		:outer_(null), code_(null), core_(&empty_frame_core), map_members_(0){}
@@ -267,6 +271,43 @@ public:
 				p->num = core_->variable_size-1-i;
 			}
 		}
+	}
+
+	class MembersIterImpl : public AnyImpl{
+		Frame frame_;
+		IdMap::iterator it_;
+
+		virtual void visit_members(Visitor& m){
+			AnyImpl::visit_members(m);
+			m & frame_;
+		}
+
+	public:
+
+		MembersIterImpl(const Frame& a)
+			:frame_(a), it_(frame_.impl()->map_members_){
+			set_class(TClass<MembersIterImpl>::get());
+		}
+
+		void iter_first(const VMachine& vm){
+			it_ = frame_.impl()->map_members_;
+			iter_next(vm);
+		}
+
+		void iter_next(const VMachine& vm){
+			if(frame_.impl()->map_members_ && !it_.is_done()){
+				vm.return_result(this, it_->key, frame_.impl()->members_[it_->num]);
+				++it_;
+			}else{
+				vm.return_result(null);
+			}
+		}
+	};
+
+	Any members(){
+		Any ret;
+		new(ret) MembersIterImpl(Frame(this));
+		return ret;
 	}
 	
 protected:
@@ -327,44 +368,6 @@ public:
 	void mutate();
 
 	bool is_inherited(const Any& v);
-
-
-	class MembersIterImpl : public AnyImpl{
-		Class frame_;
-		IdMap::iterator it_;
-
-		virtual void visit_members(Visitor& m){
-			AnyImpl::visit_members(m);
-			m & frame_;
-		}
-
-	public:
-
-		MembersIterImpl(const Class& a)
-			:frame_(a), it_(frame_.impl()->map_members_){
-			set_class(TClass<MembersIterImpl>::get());
-		}
-
-		void iter_first(const VMachine& vm){
-			it_ = frame_.impl()->map_members_;
-			iter_next(vm);
-		}
-
-		void iter_next(const VMachine& vm){
-			if(!it_.is_done()){
-				vm.return_result(this, it_->key, frame_.impl()->members_[it_->num]);
-				++it_;
-			}else{
-				vm.return_result(null);
-			}
-		}
-	};
-
-	Any members(){
-		Any ret;
-		new(ret) MembersIterImpl(Class(this));
-		return ret;
-	}
 	
 protected:
 

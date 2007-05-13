@@ -825,6 +825,72 @@ Any format(const char* text){
 
 namespace debug{
 
+class InfoImpl : public AnyImpl{
+public:
+
+	InfoImpl(){
+		set_class(TClass<Info>::get());
+	}
+
+	void visit_members(Visitor& m){
+		AnyImpl::visit_members(m);
+		m & file_name & fun_name & local_variables;
+	}
+
+	int_t kind;
+	int_t line;
+	String file_name;
+	String fun_name;
+	Frame local_variables;
+};
+
+Info::Info()	
+	:Any(null){
+	new(*this) InfoImpl();
+}
+
+int_t Info::kind() const{
+	return impl()->kind;
+}
+
+int_t Info::line() const{
+	return impl()->line;
+}
+
+String Info::file_name() const{
+	return impl()->file_name;
+}
+
+String Info::fun_name() const{
+	return impl()->fun_name;
+}
+
+Frame Info::local_variables() const{
+	return impl()->local_variables;
+}
+
+void Info::set_kind(int_t v) const{
+	impl()->kind = v;
+}
+
+void Info::set_line(int_t v) const{
+	impl()->line = v;
+}
+
+void Info::set_file_name(const String& v) const{
+	impl()->file_name = v;
+}
+
+void Info::set_fun_name(const String& v) const{
+	impl()->fun_name = v;
+}
+
+void Info::set_local_variables(const Frame& v) const{
+	impl()->local_variables = v;
+}
+
+
+
 namespace{
 	int_t enable_count_;
 	Any line_hook_;
@@ -832,15 +898,10 @@ namespace{
 	Any return_hook_;
 }
 
-void InitDebug(){
-	add_long_life_var(&line_hook_);
-	add_long_life_var(&call_hook_);
-	add_long_life_var(&return_hook_);
-	enable_count_ = 0;
-}
-
 void enable(){
 	enable_count_++;
+	if(enable_count_>1)
+		enable_count_ = 1;
 }
 
 void disable(){
@@ -877,10 +938,30 @@ Any return_hook(){
 
 }
 
+void InitDebug(){
+	using namespace debug;
+
+	add_long_life_var(&line_hook_);
+	add_long_life_var(&call_hook_);
+	add_long_life_var(&return_hook_);
+	enable_count_ = 0;
+
+	TClass<Info> cls;
+	cls.method("kind", &Info::kind);
+	cls.method("line", &Info::line);
+	cls.method("fun_name", &Info::fun_name);
+	cls.method("file_name", &Info::file_name);
+	cls.method("set_kind", &Info::set_kind);
+	cls.method("set_line", &Info::line);
+	cls.method("set_fun_name", &Info::set_fun_name);
+	cls.method("set_file_name", &Info::set_file_name);
+
+	cls.def("LINE", BREAKPOINT_LINE);
+	cls.def("CALL", BREAKPOINT_CALL);
+	cls.def("RETURN", BREAKPOINT_RETURN);
+}
 
 void initialize_lib(){
-
-	debug::InitDebug();
 
 	Class builtin = xtal::builtin();
 

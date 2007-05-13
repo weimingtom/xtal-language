@@ -3,7 +3,7 @@
 
 //#include "xtal/all_src.h"
 #pragma comment(lib, "../xtallib.lib") 
-
+ 
 #include "xtal/message_jp_sjis.txt"
 
 using namespace xtal;
@@ -45,6 +45,16 @@ static void handle_argv(char** argv){
 	}
 }
 
+void debug_line(const debug::Info& info){
+	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info.kind(), info.line(), info.file_name(), info.fun_name());
+
+	if(info.local_variables()){
+		Xfor2(key, value, info.local_variables().members()){
+			//std::cout << Xf("key=%s, value=%s\n")(key, value);
+		}
+	}
+}
+
 int main(int argc, char** argv){
 
 	try{
@@ -52,27 +62,30 @@ int main(int argc, char** argv){
 		set_thread();
 		initialize();
 
-		debug::enable();
+		//debug::enable();
+		//debug::set_line_hook(fun(&debug_line));
+		//debug::set_call_hook(fun(&debug_line));
+		//debug::set_return_hook(fun(&debug_line));
 		
 		MemoryStream ms(message_data, sizeof(message_data));
 		set_get_text_map(object_load(ms));
 
 		handle_argv(argv);
 
-		/*
-		load("../test/test_fib.xtal");
-		load("../test/test_calc.xtal");
-		load("../test/test_for.xtal");
-		load("../test/test_iter.xtal");
-		load("../test/test_except.xtal");
-		load("../test/test_fiber.xtal");
-		load("../test/test_if.xtal");
-		load("../test/test_nested_loops.xtal");
-		load("../test/test_assign.xtal");
-		load("../test/test_op_assign.xtal");
-		load("../test/test_inc.xtal");
-		load("../test/test_toplevel.xtal");
-		*/
+
+		load("../../test/test_fib.xtal");
+		load("../../test/test_calc.xtal");
+		load("../../test/test_for.xtal");
+		load("../../test/test_iter.xtal");
+		load("../../test/test_except.xtal");
+		load("../../test/test_fiber.xtal");
+		load("../../test/test_if.xtal");
+		load("../../test/test_nested_loops.xtal");
+		load("../../test/test_assign.xtal");
+		load("../../test/test_op_assign.xtal");
+		load("../../test/test_inc.xtal");
+		load("../../test/test_toplevel.xtal");
+		
 	
 		/*
 		MemoryStream out;

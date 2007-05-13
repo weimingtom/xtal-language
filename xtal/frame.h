@@ -58,7 +58,18 @@ public:
 	*
 	*/
 	void set_member_direct(int_t i, const Any& value) const;
-	
+
+	/**
+	* @brief メンバを順次取り出すIteratorを返す
+	*
+	* @code
+	* Xfor2(key, value, frame.members()){
+	*   puts(Xf("%s %s")(key, value).to_s().c_str());
+	* }
+	* @endcode
+	*/
+	Any members() const;
+
 	/**
 	* @brief Xtalで定義されているならtrueを返す。
 	*
@@ -129,17 +140,6 @@ public:
 	* @param md Mix-inされている調べたいクラスオブジェクト
 	*/
 	bool is_inherited(const Any& md) const;
-
-	/**
-	* @brief メンバを順次取り出すIteratorを返す
-	*
-	* @code
-	* Xfor2(key, value, frame.members()){
-	*   puts(Xf("%s %s")(key, value).to_s().c_str());
-	* }
-	* @endcode
-	*/
-	Any members() const;
 
 	/**
 	* @brief 関数を定義する

@@ -6,7 +6,7 @@ namespace xtal{
 		VERSION1 = 0,
 		VERSION2 = 9,
 		VERSION3 = 4,
-		VERSION4 = 1
+		VERSION4 = 2
 	};
 }
 

@@ -1,5 +1,8 @@
 
 #include "xtal.h"
+
+#ifndef XTAL_NO_PARSER
+
 #include "any.h"
 #include "vmachine.h"
 #include "expr.h"
@@ -248,3 +251,6 @@ void ExprBuilder::init(LPCCommon* com, RegionAlloc* all){
 }
 
 }
+
+#endif
+

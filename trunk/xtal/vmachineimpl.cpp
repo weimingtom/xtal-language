@@ -644,6 +644,8 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_USHR_ASSIGN){ pc = USHR_ASSIGN(pc); }
 	XTAL_VM_CASE(CODE_SHL_ASSIGN){ pc = SHL_ASSIGN(pc); }
 
+	XTAL_VM_CASE(CODE_BREAKPOINT){ pc = BREAKPOINT(pc); }
+
 goto begin;
 
 }}catch(const Any& e){
@@ -1633,6 +1635,38 @@ const u8* VMachineImpl::CHECK_ASSERT(const u8* pc, int_t stack_size, int_t fun_f
 		downsize(3);
 	}
 	return pc+1;
+}
+
+const u8* VMachineImpl::BREAKPOINT(const u8* pc){
+	if(debug::is_enabled()){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			debug::disable();
+			int_t kind = get_u8(pc);
+			switch(kind){
+				XTAL_NODEFAULT;
+				
+				XTAL_CASE(BREAKPOINT_LINE){
+					if(Any hook = debug::line_hook()){
+
+					}
+				}
+
+				XTAL_CASE(BREAKPOINT_CALL){
+					if(Any hook = debug::call_hook()){
+
+					}				
+				}
+
+				XTAL_CASE(BREAKPOINT_RETURN){
+					if(Any hook = debug::return_hook()){
+
+					}				
+				}
+			}
+			debug::enable();
+		}
+	}
+	return pc+2;
 }
 
 const u8* VMachineImpl::CATCH_BODY(const u8* lpc, const Any& e, int_t stack_size, int_t fun_frames_size){

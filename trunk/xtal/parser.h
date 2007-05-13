@@ -1,6 +1,8 @@
 
 #pragma once
 
+#ifndef XTAL_NO_PARSER
+
 #include "lexer.h"
 #include "allocator.h"
 #include "expr.h"
@@ -103,3 +105,6 @@ public:
 
 
 }
+
+#endif
+

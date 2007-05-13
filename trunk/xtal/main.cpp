@@ -1,6 +1,9 @@
 
 #include "xtal/xtal.h"
-#include "xtal/all_src.h"
+
+//#include "xtal/all_src.h"
+#pragma comment(lib, "../xtallib.lib") 
+
 #include "xtal/message_jp_sjis.txt"
 
 using namespace xtal;
@@ -48,6 +51,8 @@ int main(int argc, char** argv){
 
 		set_thread();
 		initialize();
+
+		debug::enable();
 		
 		MemoryStream ms(message_data, sizeof(message_data));
 		set_get_text_map(object_load(ms));
@@ -89,8 +94,6 @@ int main(int argc, char** argv){
 	}catch(Any e){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
-
-	vmachine().impl()->print_info();
 
 	uninitialize();
 

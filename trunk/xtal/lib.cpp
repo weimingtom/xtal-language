@@ -12,8 +12,11 @@
 #include "xmacro.h"
 #include "marshal.h"
 #include "frameimpl.h"
+#include "constant.h"
 
 namespace xtal{
+
+#ifndef XTAL_NO_PARSER
 
 Any compile_file(const String& file_name){
 	CodeBuilder cb;
@@ -63,6 +66,34 @@ void ix(){
 	CodeBuilder cb;
 	cb.interactive_compile();
 }
+
+#else
+
+Any compile_file(const String& file_name){
+	throw unsupported_error("", "");
+}
+
+Any compile(const String& source){
+	throw unsupported_error("", "");
+}
+
+Any load(const String& file_name){
+	throw unsupported_error("", "");
+}
+
+Any load_and_save(const String& file_name){
+	throw unsupported_error("", "");
+}
+
+Any source(const char* src, int_t size, const char* file){
+	throw unsupported_error("", "");
+}
+
+void ix(){
+	throw unsupported_error("", "");
+}
+
+#endif
 
 void print(const VMachine& vm){
 	for(int_t i = 0; i<vm.ordered_arg_count(); ++i){
@@ -792,10 +823,64 @@ Any format(const char* text){
 	return ret;
 }
 
+namespace debug{
 
+namespace{
+	int_t enable_count_;
+	Any line_hook_;
+	Any call_hook_;
+	Any return_hook_;
+}
+
+void InitDebug(){
+	add_long_life_var(&line_hook_);
+	add_long_life_var(&call_hook_);
+	add_long_life_var(&return_hook_);
+	enable_count_ = 0;
+}
+
+void enable(){
+	enable_count_++;
+}
+
+void disable(){
+	enable_count_--;
+}
+
+bool is_enabled(){
+	return enable_count_>0;
+}
+
+void set_line_hook(const Any& hook){
+	line_hook_ = hook;
+}
+
+void set_call_hook(const Any& hook){
+	call_hook_ = hook;
+}
+
+void set_return_hook(const Any& hook){
+	return_hook_ = hook;
+}
+
+Any line_hook(){
+	return line_hook_;
+}
+
+Any call_hook(){
+	return call_hook_;
+}
+
+Any return_hook(){
+	return return_hook_;
+}
+
+}
 
 
 void initialize_lib(){
+
+	debug::InitDebug();
 
 	Class builtin = xtal::builtin();
 

@@ -1,6 +1,7 @@
 
-
 #pragma once
+
+#ifndef XTAL_NO_PARSER
 
 #include "expr.h"
 #include "parser.h"
@@ -186,3 +187,6 @@ private:
 };
 
 }
+
+#endif
+

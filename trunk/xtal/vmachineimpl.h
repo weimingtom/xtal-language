@@ -621,6 +621,7 @@ private:
 	void THROW2(const u8* lpc, const Any& e, int_t stack_size, int_t fun_frames_size);
 	void THROW_UNSUPPROTED_ERROR(int_t stack_size, int_t fun_frames_size);
 	const u8* CHECK_ASSERT(const u8* lpc, int_t stack_size, int_t fun_frames_size);
+	const u8* BREAKPOINT(const u8* pc);
 
 	const u8* RETURN(int_t n);
 	void YIELD(const u8* pc);

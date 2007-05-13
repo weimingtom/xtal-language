@@ -1,6 +1,8 @@
 
 #pragma once
 
+#ifndef XTAL_NO_PARSER
+
 #include "codeimpl.h"
 #include "constant.h"
 #include "lexer.h"
@@ -631,3 +633,5 @@ public:
 };
 
 }
+
+#endif

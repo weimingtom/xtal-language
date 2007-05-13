@@ -11,7 +11,7 @@ enum{
 enum{
 	KIND_FUN,
 	KIND_METHOD,
-	KIND_FIBER,
+	KIND_FIBER
 };
 
 enum{
@@ -25,6 +25,12 @@ enum{
 	RESULT_TO_ARRAY = 1<<2,
 	RESULT_COVER_NULL = 0<<3,
 	RESULT_COVER_FROM_ARRAY = 1<<3
+};
+
+enum{
+	BREAKPOINT_LINE,
+	BREAKPOINT_CALL,
+	BREAKPOINT_RETURN
 };
 
 /// バイトコードの識別ID
@@ -1037,6 +1043,14 @@ CODE_USHR_ASSIGN,
 * stack [] -> [value]
 */
 CODE_PUSH_CURRENT_CONTINUATION,
+
+/**
+* @brief ブレークポイント
+* 
+* format op, kind
+* stack [] -> []
+*/
+CODE_BREAKPOINT,
 
 CODE_MAX
 

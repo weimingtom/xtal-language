@@ -90,6 +90,8 @@ int main(int argc, char** argv){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
+	vmachine().impl()->print_info();
+
 	uninitialize();
 
 	return 0;

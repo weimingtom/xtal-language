@@ -491,6 +491,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(ff().fun()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ push(decolonize()); pc+=1; }	
+	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_ARGS){ push(ff().arguments()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 
@@ -1547,6 +1548,14 @@ const u8* VMachineImpl::SHL_ASSIGN(const u8* pc){
 		}}
 	}
 	return send2(pc, Xid(op_shl_assign));
+}
+
+const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		Any ret; new(ret) ContinuationImpl(clone(), pc);
+		push(ret);
+	}
+	return pc + 1;
 }
 
 Any VMachineImpl::append_backtrace(const u8* pc, const Any& e){

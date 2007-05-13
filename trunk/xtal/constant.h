@@ -1030,6 +1030,13 @@ CODE_SHR_ASSIGN,
 */
 CODE_USHR_ASSIGN,
 
+/**
+* @brief 現在の継続をスタックに積む。
+* 
+* format op
+* stack [] -> [value]
+*/
+CODE_PUSH_CURRENT_CONTINUATION,
 
 CODE_MAX
 

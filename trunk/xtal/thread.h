@@ -59,9 +59,7 @@ public:
 	explicit Thread(const ThreadImpl* p)
 		:Any((AnyImpl*)p){}
 
-	void join() const{
-		impl()->join();
-	}
+	void join() const;
 	
 	static void sleep(uint_t millisec);
 

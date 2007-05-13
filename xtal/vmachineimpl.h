@@ -59,6 +59,41 @@ public:
 
 	~VMachineImpl();
 
+	VMachineImpl(const VMachineImpl& vm)
+		:GCObserverImpl(vm){
+		end_code_ = vm.end_code_;
+		throw_unsupported_error_code_= vm.throw_unsupported_error_code_;
+		check_unsupported_code_= vm.check_unsupported_code_;
+		cleanup_call_code_= vm.cleanup_call_code_;
+		throw_nop_code_= vm.throw_nop_code_;
+		resume_pc_= vm.resume_pc_;
+		yield_result_count_= vm.yield_result_count_;
+		stack_= vm.stack_;
+		fun_frames_= vm.fun_frames_;
+		except_frames_= vm.except_frames_;	
+
+		myself_ = this;
+	}
+
+	VMachineImpl& operator=(const VMachineImpl& vm){
+		if(this==&vm)
+			return *this;
+		GCObserverImpl::operator=(vm);
+		end_code_ = vm.end_code_;
+		throw_unsupported_error_code_= vm.throw_unsupported_error_code_;
+		check_unsupported_code_= vm.check_unsupported_code_;
+		cleanup_call_code_= vm.cleanup_call_code_;
+		throw_nop_code_= vm.throw_nop_code_;
+		resume_pc_= vm.resume_pc_;
+		yield_result_count_= vm.yield_result_count_;
+		stack_= vm.stack_;
+		fun_frames_= vm.fun_frames_;
+		except_frames_= vm.except_frames_;	
+
+		myself_ = this;
+		return *this;
+	}
+
 public:
 
 	void setup_call(int_t required_result_count);
@@ -255,6 +290,8 @@ public:
 	void recycle_call();
 	
 	void recycle_call(const Any& a1);
+
+	void execute(const u8* start);
 
 	void execute(const Fun& fun, const u8* start_pc = 0){
 		setup_call(0);
@@ -495,8 +532,6 @@ private:
 		int_t fun_frame_count;
 	};
 
-	void execute(const u8* start);
-
 	void push_ff(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
 	
 	void push_ff_args(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
@@ -572,6 +607,7 @@ private:
 	const u8* PUSH_ARRAY(const u8* pc);
 	const u8* PUSH_MAP(const u8* pc);
 	const u8* PUSH_FUN(const u8* pc);
+	const u8* CURRENT_CONTINUATION(const u8* pc);
 	
 	const u8* FRAME_BEGIN(const u8* pc);
 	const u8* FRAME_END(const u8* pc);
@@ -642,6 +678,12 @@ private:
 	const u8* USHR_ASSIGN(const u8* pc);
 	const u8* SHL_ASSIGN(const u8* pc);
 
+	VMachine clone(){
+		VMachine vm;
+		*vm.impl() = *this;
+		return vm;
+	}
+
 private:
 
 	u8 end_code_;
@@ -710,6 +752,32 @@ public:
 		printf("stack size %d\n", stack_.size());
 		printf("fun_frames size %d\n", fun_frames_.size()-1);
 		printf("except_frames size %d\n", except_frames_.size());
+	}
+
+};
+
+class ContinuationImpl : public AnyImpl{
+public:
+
+	ContinuationImpl(const VMachine& vm, const u8* pc)
+		:vm_(vm), pc_(pc){
+		set_class(TClass<Any>::get());
+	}
+
+	virtual void call(const VMachine& vm){
+		*vm.impl() = *vm_.impl();
+		vm.impl()->execute(pc_);
+		//vm.return_result();
+	}
+
+public:
+
+	VMachine vm_;
+	const u8* pc_;
+
+	virtual void visit_members(Visitor& m){
+		AnyImpl::visit_members(m);
+		m & vm_;
 	}
 
 };

@@ -244,6 +244,28 @@ Thread::Thread(const Any& fun){
 	*this = Thread(thread_lib_->create_thread(&thread_entry, fun));
 }
 
+void Thread::sleep(uint_t millisec){
+	if(!thread_lib_){
+		return;
+	}
+	XTAL_UNLOCK{
+		thread_lib_->sleep(millisec);
+	}
+}
+
+uint_t Thread::current_thread_id(){
+	if(!thread_lib_){
+		return 0;
+	}
+	return thread_lib_->current_thread_id();
+}
+
+void Thread::join() const{
+	XTAL_UNLOCK{
+		impl()->join();
+	}
+}
+
 Mutex::Mutex(){
 	if(!thread_lib_temp_){
 		throw unsupported_error("Mutex", "new");
@@ -260,22 +282,6 @@ void Mutex::lock() const{
 
 void Mutex::unlock() const{
 	impl()->unlock();
-}
-
-void Thread::sleep(uint_t millisec){
-	if(!thread_lib_){
-		return;
-	}
-	XTAL_UNLOCK{
-		thread_lib_->sleep(millisec);
-	}
-}
-
-uint_t Thread::current_thread_id(){
-	if(!thread_lib_){
-		return 0;
-	}
-	return thread_lib_->current_thread_id();
 }
 
 }

@@ -20,7 +20,7 @@ PODStackBase::~PODStackBase(){
 
 PODStackBase::PODStackBase(const PODStackBase &a){
 	one_size_ = a.one_size_;
-	if(a.empty()){
+	if(a.capacity()==0){
 		begin_ = plusp(dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
@@ -28,7 +28,7 @@ PODStackBase::PODStackBase(const PODStackBase &a){
 		begin_ = plusp(allocate(one_size_*(a.capacity()+1)), 1);
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
-		memcpy(begin_, a.begin_, one_size_*a.size());
+		memcpy(begin_, a.begin_, one_size_*a.capacity());
 	}
 }
 
@@ -36,7 +36,7 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 	if(this==&a)
 		return *this;
 
-	if(a.empty()){
+	if(a.capacity()==0){
 		deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
 		one_size_ = a.one_size_;
 		begin_ = plusp(dummy_allocate(), 1);
@@ -49,7 +49,7 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 		begin_ = newp;
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
-		memcpy(begin_, a.begin_, one_size_*a.size());
+		memcpy(begin_, a.begin_, one_size_*a.capacity());
 	}
 
 	return *this;

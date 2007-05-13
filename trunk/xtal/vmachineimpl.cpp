@@ -1584,6 +1584,25 @@ Any VMachineImpl::append_backtrace(const u8* pc, const Any& e){
 	return e;
 }
 
+void VMachineImpl::hook_return(const u8* pc){
+	if(debug::is_enabled()){
+		debug_info_.set_kind(BREAKPOINT_RETURN);
+		debug_info_.set_line(code().compliant_line_number(pc));
+		debug_info_.set_file_name(code().source_file_name());
+		debug_info_.set_fun_name(fun().object_name());
+		debug_info_.set_local_variables(decolonize());
+
+		struct guard{
+			guard(){ debug::disable(); }
+			~guard(){ debug::enable(); }
+		} g;
+	
+		if(Any hook = debug::return_hook()){
+			hook(debug_info_);
+		}				
+	}
+}
+
 void VMachineImpl::THROW(const u8* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		Any e = pop();
@@ -1614,10 +1633,12 @@ void VMachineImpl::THROW2(const u8* pc, const Any& e, int_t stack_size, int_t fu
 	Any ep = e;
 	ep = append_backtrace(pc+1, ep);
 	if(fun_frames_size<=(int_t)fun_frames_.size()){
+		hook_return(pc);
 		pop_ff();
 	}
 	while(fun_frames_size<=(int_t)fun_frames_.size()){
 		ep = append_backtrace(ff().pc, ep);
+		hook_return(pc);
 		pop_ff();
 	}
 	resize(stack_size);
@@ -1640,30 +1661,40 @@ const u8* VMachineImpl::CHECK_ASSERT(const u8* pc, int_t stack_size, int_t fun_f
 const u8* VMachineImpl::BREAKPOINT(const u8* pc){
 	if(debug::is_enabled()){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			debug::disable();
-			int_t kind = get_u8(pc);
+			int_t kind = get_u8(pc+1);
+			
+			debug_info_.set_kind(kind);
+			debug_info_.set_line(code().compliant_line_number(pc));
+			debug_info_.set_file_name(code().source_file_name());
+			debug_info_.set_fun_name(fun().object_name());
+			debug_info_.set_local_variables(decolonize());
+
+			struct guard{
+				guard(){ debug::disable(); }
+				~guard(){ debug::enable(); }
+			} g;
+		
 			switch(kind){
 				XTAL_NODEFAULT;
 				
 				XTAL_CASE(BREAKPOINT_LINE){
 					if(Any hook = debug::line_hook()){
-
+						hook(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_CALL){
 					if(Any hook = debug::call_hook()){
-
+						hook(debug_info_);
 					}				
 				}
 
 				XTAL_CASE(BREAKPOINT_RETURN){
 					if(Any hook = debug::return_hook()){
-
+						hook(debug_info_);
 					}				
 				}
 			}
-			debug::enable();
 		}
 	}
 	return pc+2;
@@ -1687,6 +1718,7 @@ const u8* VMachineImpl::CATCH_BODY(const u8* lpc, const Any& e, int_t stack_size
 		while(ef.fun_frame_count!=fun_frames_.size()){
 			if(fun_frames_.size()==1)
 				break;
+			hook_return(pc);
 			if(prev_ff().pc != &end_code_){
 				pop_ff();
 				pc = ff().pc - 1;	

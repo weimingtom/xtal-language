@@ -174,6 +174,37 @@ struct IterBreaker{
 
 namespace debug{
 
+class InfoImpl;
+
+class Info : public Any{
+public:
+
+	Info();
+
+	explicit Info(InfoImpl* p)
+		:Any((AnyImpl*)p){}
+
+	Info(const Null&)
+		:Any(null){}
+
+	int_t kind() const;
+	int_t line() const;
+	String file_name() const;
+	String fun_name() const;
+	Frame local_variables() const;
+
+	void set_kind(int_t v) const;
+	void set_line(int_t v) const;
+	void set_file_name(const String& v) const;
+	void set_fun_name(const String& v) const;
+	void set_local_variables(const Frame& v) const;
+
+	InfoImpl* impl() const{
+		return (InfoImpl*)Any::impl();
+	}
+};
+
+
 /**
 * @brief デバッグ機能を有効にする
 * デバッグ機能を有効化した状態でスクリプトをコンパイルするとデバッグ機能が埋め込まれる。
@@ -197,6 +228,8 @@ Any call_hook();
 Any return_hook();
 
 }
+
+void InitDebug();
 
 }
 

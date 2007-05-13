@@ -143,6 +143,7 @@ void initialize(){
 
 	InitString();
 	InitAny();
+	InitDebug();
 	InitThread();
 	InitInt();
 	InitFloat();

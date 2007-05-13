@@ -679,6 +679,8 @@ private:
 	const u8* USHR_ASSIGN(const u8* pc);
 	const u8* SHL_ASSIGN(const u8* pc);
 
+	void hook_return(const u8* pc);
+
 	VMachine clone(){
 		VMachine vm;
 		*vm.impl() = *this;
@@ -707,11 +709,13 @@ private:
 	// tryの度に積まれるフレーム。
 	PODStack<ExceptFrame> except_frames_;
 	
+	debug::Info debug_info_;
+
 protected:
 
 	void visit_members(Visitor& m){
 		GCObserverImpl::visit_members(m);
-		m & fun_frames_;
+		m & fun_frames_ & debug_info_;
 	}
 
 	virtual void before_gc(){

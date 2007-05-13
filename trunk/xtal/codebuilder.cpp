@@ -82,7 +82,7 @@ void CodeBuilder::interactive_compile(){
 		p_->value_table_ = com_->value_table;
 		com_->register_ident("toplevel");
 		
-		if(ep){
+		if(ep && com_->errors.empty()){
 			compile(ep);
 		}else{
 			if(com_->errors.empty()){
@@ -132,6 +132,10 @@ int_t CodeBuilder::lookup_variable(int_t key){
 }
 
 bool CodeBuilder::variable_on_heap(int_t pos){
+	if(debug::is_enabled()){
+		return true;
+	}
+
 	for(size_t i = 0, last = scopes_.size(); i<last; ++i){
 		if(pos<scopes_[i].variable_size){
 			return scopes_[i].on_heap;
@@ -388,6 +392,12 @@ void CodeBuilder::pop_loop(){
 	fun_frames_.top().loops.pop();
 }
 
+void CodeBuilder::set_on_heap_flag(){
+	for(int_t i = 0; i<(int_t)scopes_.size(); ++i){
+		scopes_[i].on_heap = true;	
+	}
+}
+
 void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool on_heap, int_t mixins){
 	Scope s;
 	s.variable_size = 0;
@@ -398,10 +408,8 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 	s.frame_core_num = p_->frame_core_table_.size();
 
 	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(on_heap){
-		for(int_t i = 0; i<(int_t)scopes_.size(); ++i){
-			scopes_[i].on_heap = true;	
-		}
+	if(on_heap || debug::is_enabled()){
+		set_on_heap_flag();
 	}
 	scopes_.push(s);
 
@@ -446,7 +454,7 @@ void CodeBuilder::block_end(){
 	}else{
 		if(scopes_.top().variable_size){
 			variables_.downsize(scopes_.top().variable_size);
-			if(scopes_.top().on_heap){
+			if(scopes_.top().on_heap || debug::is_enabled()){
 				put_code_u8(CODE_BLOCK_END);
 			}else{
 				put_code_u8(CODE_BLOCK_END_NOT_ON_HEAP);
@@ -517,6 +525,10 @@ int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char m
 	p_->xfun_core_table_.back().max_param_count = max_param_count;
 	fun_frame().used_args_object = have_args;
 		
+	if(debug::is_enabled()){
+		set_on_heap_flag();
+	}
+
 	return p_->xfun_core_table_.size()-1;
 }
 
@@ -559,10 +571,12 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 		return;
 	}
 
+	/*
 	if(debug::is_enabled() && lines_.top()!=ex->line){
 		put_code_u8(CODE_BREAKPOINT);
 		put_code_u8(BREAKPOINT_LINE);
 	}
+	*/
 	
 	lines_.push(ex->line);
 	p_->set_line_number_info(ex->line);
@@ -848,6 +862,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 			if(minv==-1){
 				minv = maxv;
 			}
+
 			int_t n = fun_frame_begin(e->have_args, 6, minv, maxv);
 			
 			for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){ 
@@ -862,6 +877,11 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 			put_code_u16(n);
 			put_jump_code_nocode(oppos, fun_end_label);
 			
+			if(debug::is_enabled()){
+				put_code_u8(CODE_BREAKPOINT);
+				put_code_u8(BREAKPOINT_CALL);
+			}
+
 			block_begin(FUN, 0, e->vars, e->on_heap);{
 				FunFrame& ff = fun_frames_.top();	
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
@@ -876,6 +896,10 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 				}
 				compile(e->stmt);
 				break_off(scopes_.size(), 1);
+				if(debug::is_enabled()){
+					put_code_u8(CODE_BREAKPOINT);
+					put_code_u8(BREAKPOINT_RETURN);
+				}
 				put_code_u8(CODE_RETURN_0);
 			}block_end();
 
@@ -1133,22 +1157,30 @@ void CodeBuilder::compile(Stmt* ex){
 			}
 			//break_off(scopes_.size());
 			//break_off(scopes_.size(), 1);
-			break_off(scopes_.size() - fun_frame().frame_count-1);
-
-			if(e->exprs.size==0){
-				put_code_u8(CODE_RETURN_0);
-			}else if(e->exprs.size==1){
-				put_code_u8(CODE_RETURN_1);
-			}else if(e->exprs.size==2){
-				put_code_u8(CODE_RETURN_2);
+			if(int_t(scopes_.size() - fun_frame().frame_count-1) < 0){
+				
 			}else{
-				put_code_u8(CODE_RETURN_N);
-				put_code_u8(e->exprs.size);
-				if(e->exprs.size>=256){
-					com_->error(line(), Xt("Xtal Compile Error 1022"));
-				}
-			}	
+				break_off(scopes_.size() - fun_frame().frame_count-1);
 
+				if(debug::is_enabled()){
+					put_code_u8(CODE_BREAKPOINT);
+					put_code_u8(BREAKPOINT_RETURN);
+				}
+
+				if(e->exprs.size==0){
+					put_code_u8(CODE_RETURN_0);
+				}else if(e->exprs.size==1){
+					put_code_u8(CODE_RETURN_1);
+				}else if(e->exprs.size==2){
+					put_code_u8(CODE_RETURN_2);
+				}else{
+					put_code_u8(CODE_RETURN_N);
+					put_code_u8(e->exprs.size);
+					if(e->exprs.size>=256){
+						com_->error(line(), Xt("Xtal Compile Error 1022"));
+					}
+				}	
+			}
 		}
 
 		XTAL_EXPR_CASE(AssertStmt){

@@ -149,7 +149,7 @@ bool CodeBuilder::put_set_local_code(int_t var){
 	int_t id = lookup_variable(var);
 	if(id>=0){
 		bool on_heap = variable_on_heap(id);
-
+ 
 		if(on_heap){
 			if(id<=0xff){
 				put_code_u8(CODE_SET_LOCAL);

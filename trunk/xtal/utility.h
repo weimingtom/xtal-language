@@ -141,6 +141,11 @@ struct T2T{
 	typedef T type;
 };
 
+struct Other{
+	template<class T>
+	Other(const T&){}
+};
+
 template<class T>
 struct IsConst{
 	typedef char (&yes)[2];

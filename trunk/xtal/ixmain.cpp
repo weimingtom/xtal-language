@@ -5,15 +5,15 @@
 #pragma comment(lib, "../xtallib.lib") 
 
 #include "xtal/message_jp_sjis.txt"
-
+ 
 int main(){
 	using namespace xtal;
-
+ 
 	try{
 		set_thread();
 		initialize();
-
-		MemoryStream ms(message_data, sizeof(message_data));
+ 
+		StringStream ms(message_data, sizeof(message_data));
 		set_get_text_map(object_load(ms));
 
 		ix();

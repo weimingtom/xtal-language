@@ -156,7 +156,7 @@ void initialize(){
 	InitClass();
 	InitStream();
 	InitFileStream();
-	InitMemoryStream();
+	InitStringStream();
 
 	initialize_lib();
 	/**/
@@ -835,6 +835,76 @@ uint_t Any::hashcode() const{
 		return impl()->hashcode();
 	}
 	return (uint_t)rawvalue();
+}
+
+Any Any::p() const{
+	VMachine vm = vmachine();
+	vm.setup_call(0);
+	vm.push_arg(*this);
+	println(vm);
+	vm.cleanup_call();
+	return *this;
+}
+
+
+Any::Any(AnyImpl* v){
+	if(v){ set_p(v); impl()->inc_ref_count(); }
+	else{ set_null(); }
+}
+
+Any::Any(const AnyImpl* v){
+	if(v){ set_p(v); impl()->inc_ref_count(); }
+	else{ set_null(); }
+}
+
+Any::Any(const Any& v){
+	UncountedAny::operator =(v);
+	inc_ref_count();
+}
+
+Any& Any::operator =(const Any& v){
+	dec_ref_count();
+	UncountedAny::operator =(v);
+	inc_ref_count();
+	return *this;
+}
+	
+Any& Any::operator =(AnyImpl* v){
+	dec_ref_count();
+	if(v){ set_p(v); impl()->inc_ref_count(); }
+	else{ set_null(); }
+	return *this;
+}
+
+Any& Any::operator =(const AnyImpl* v){
+	dec_ref_count();
+	if(v){ set_p(v); impl()->inc_ref_count(); }
+	else{ set_null(); }
+	return *this;
+}
+
+Any& Any::operator =(int_t v){
+	dec_ref_count();
+	set_i(v);
+	return *this;
+}
+	
+Any& Any::operator =(float_t v){
+	dec_ref_count();
+	set_f(v);
+	return *this;
+}
+
+Any& Any::operator =(bool v){
+	dec_ref_count();
+	set_b(v);
+	return *this;
+}
+
+Any& Any::operator =(const Null&){
+	dec_ref_count();
+	set_null();
+	return *this;
 }
 
 }

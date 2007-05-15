@@ -66,13 +66,13 @@ int main(int argc, char** argv){
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-		
-		MemoryStream ms(message_data, sizeof(message_data));
+		 
+		StringStream ms(message_data, sizeof(message_data));
 		set_get_text_map(object_load(ms));
 
-		handle_argv(argv);
+		//handle_argv(argv);
 
-
+ 
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");
 		load("../../test/test_for.xtal");
@@ -85,7 +85,7 @@ int main(int argc, char** argv){
 		load("../../test/test_op_assign.xtal");
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
-		
+
 	
 		/*
 		MemoryStream out;

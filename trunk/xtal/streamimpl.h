@@ -145,16 +145,16 @@ private:
 	FILE* fp_;
 };
 
-class MemoryStreamImpl : public StreamImpl{
+class StringStreamImpl : public StreamImpl{
 public:
 
-	MemoryStreamImpl(){
-		set_class(TClass<MemoryStream>::get());
+	StringStreamImpl(){
+		set_class(TClass<StringStream>::get());
 		pos_ = 0;
 	}
 	
-	MemoryStreamImpl(const void* data, uint_t data_size){
-		set_class(TClass<MemoryStream>::get());
+	StringStreamImpl(const void* data, uint_t data_size){
+		set_class(TClass<StringStream>::get());
 		data_.resize(data_size);
 		if(data_size>0){
 			memcpy(&data_[0], data, data_size);
@@ -202,7 +202,13 @@ public:
 
 	}
 
-private:
+	String to_s(){
+		if(data_.empty())
+			return String("");
+		return String((char*)&data_[0], data_.size());
+	}
+
+public:
 
 	AC<xtal::u8>::vector data_;
 	uint_t pos_;

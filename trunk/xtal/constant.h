@@ -21,10 +21,7 @@ enum{
 };
 
 enum{
-	RESULT_DISCARD = 0<<2,
-	RESULT_TO_ARRAY = 1<<2,
-	RESULT_COVER_NULL = 0<<3,
-	RESULT_COVER_FROM_ARRAY = 1<<3
+	RESULT_DISCARD = 1,
 };
 
 enum{
@@ -32,6 +29,9 @@ enum{
 	BREAKPOINT_CALL,
 	BREAKPOINT_RETURN
 };
+
+/** @addtogroup code */
+/*@{*/
 
 /// バイトコードの識別ID
 enum CodeType{
@@ -1055,6 +1055,8 @@ CODE_BREAKPOINT,
 CODE_MAX
 
 };
+
+/*@}*/
 
 }
 

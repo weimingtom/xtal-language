@@ -122,28 +122,65 @@ inline U* arg_cast_helper_helper(const Any& a, int param_num, const Any& param_n
 	return (U*)arg_cast_helper_helper_other(a, param_num, param_name, TClass<U>::get());
 }
 
+template<class T>
+struct TypeType{
+	typedef char (&ptr)[1];
+	typedef char (&ref)[2];
+	typedef char (&other)[3];
+
+	static T makeT();
+	
+	template<class U> static ptr testT(U* (*)());
+	template<class U> static ref testT(U& (*)());
+	static other testT(...);
+
+	enum{ value = sizeof(testT((T (*)())0))-1 };
+};
 
 template<class T>
 struct CastHelper{
 
 	// 変換後の型がポインタの場合
-	template<class U> static T as_inner(const Any& a, U* (*)()){ return as_helper_helper(a, (U*)0, (U*)0); }
-	template<class U> static T cast_inner(const Any& a, U* (*)()){ return cast_helper_helper(a, (U*)0, (U*)0); }
-	template<class U> static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, U* (*)()){ return arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0); }
+	template<class U> static T as_inner(const Any& a, U* (*)()){ 
+		return as_helper_helper(a, (U*)0, (U*)0); }
+		
+	template<class U> static T cast_inner(const Any& a, U* (*)()){ 
+		return cast_helper_helper(a, (U*)0, (U*)0); }	
+		
+	template<class U> static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, U* (*)()){ 
+		return arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0); }
+	
 	
 	// 変換後の型が参照の場合
-	template<class U> static T as_inner(const Any& a, U& (*)()){ if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
-	template<class U> static T cast_inner(const Any& a, U& (*)()){ return *xtal::cast<U*>(a); }
-	template<class U> static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, U& (*)()){ return *xtal::arg_cast<U*>(a, param_num, param_name); }
+	template<class U> static T as_inner(const Any& a, U& (*)()){ 
+		if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
+		
+	template<class U> static T cast_inner(const Any& a, U& (*)()){ 
+		return *xtal::cast<U*>(a); }
+		
+	template<class U> static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, U& (*)()){ 
+		return *xtal::arg_cast<U*>(a, param_num, param_name); }
+
 
 	// 変換後の型が参照でもポインタでもない場合
-	static T as_inner(const Any& a, ...){ if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
-	static T cast_inner(const Any& a, ...){ return *xtal::cast<const T*>(a); }
-	static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, ...){ return *xtal::arg_cast<const T*>(a, param_num, param_name); }
+	static T as_inner(const Any& a, ...){ 
+		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
+		
+	static T cast_inner(const Any& a, ...){ 
+		return *xtal::cast<const T*>(a); }
+		
+	static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, ...){ 
+		return *xtal::arg_cast<const T*>(a, param_num, param_name); }
 
-	static T as(const Any& a){ return as_inner(a, (T (*)())0); }
-	static T cast(const Any& a){ return cast_inner(a, (T (*)())0); }
-	static T arg_cast(const Any& a, int param_num, const Any& param_name){ return arg_cast_inner(a, param_num, param_name, (T (*)())0); }
+
+	static T as(const Any& a){ 
+		return as_inner(a, (T (*)())0); }
+		
+	static T cast(const Any& a){ 
+		return cast_inner(a, (T (*)())0); }
+		
+	static T arg_cast(const Any& a, int param_num, const Any& param_name){ 
+		return arg_cast_inner(a, param_num, param_name, (T (*)())0); }
 
 };
 

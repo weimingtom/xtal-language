@@ -47,6 +47,7 @@ void InitArray(){
 	p.method("back", &Array::back);
 	p.method("clear", &Array::clear);
 	p.method("values", &Array::values);
+
 }
 
 Array::Array(int_t size)

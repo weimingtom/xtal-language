@@ -7,11 +7,11 @@
 namespace xtal{
 
 class StreamImpl;
-class MemoryStreamImpl;
+class StringStreamImpl;
 class FileStreamImpl;
 
 void InitStream();
-void InitMemoryStream();
+void InitStringStream();
 void InitFileStream();
 
 class Stream : public Any{
@@ -39,12 +39,13 @@ public:
 
 	uint_t tell() const;
 
-	//void seek(uint_t offset, const String& whence) const;
+	void seek(uint_t offset, const String& whence) const;
 
 	uint_t write(const void* p, uint_t size) const;
 	uint_t read(void* p, uint_t size) const;
 
 	uint_t write(const String& str) const;
+	String read(uint_t size) const;
 
 	void close();
 
@@ -78,25 +79,27 @@ public:
 
 };
 
-class MemoryStream : public Stream{
+class StringStream : public Stream{
 public:
 
-	MemoryStream();
+	StringStream();
 	
-	MemoryStream(const void* data, uint_t data_size);
+	StringStream(const void* data, uint_t data_size);
 
-	MemoryStream(const Null&)
+	StringStream(const Null&)
 		:Stream(null){}
 
-	explicit MemoryStream(MemoryStreamImpl* p)
+	explicit StringStream(StringStreamImpl* p)
 		:Stream((StreamImpl*)p){}
 
 public:
 
 	void* data() const;
+	
+	String to_s() const;
 
-	MemoryStreamImpl* impl() const{
-		return (MemoryStreamImpl*)Any::impl();
+	StringStreamImpl* impl() const{
+		return (StringStreamImpl*)Any::impl();
 	}
 
 };

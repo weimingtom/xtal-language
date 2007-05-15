@@ -301,6 +301,15 @@ Expr* Parser::parse_term(){
 					ret = parse_lambda();
 				}
 
+				XTAL_CASE(c2('|', '|')){
+					FunExpr* p = XTAL_NEW FunExpr(lexer_.line(), KIND_FUN);
+					e.scope_push(&p->vars, &p->on_heap, false);
+					e.scope_set_on_heap_flag(1);
+					p->stmt = e.return_(parse_expr_must());
+					e.scope_pop();
+					ret = p;
+				}
+
 				XTAL_CASE('@'){
 					ret = XTAL_NEW InstanceVariableExpr(ln, parse_ident_or_keyword());
 				}
@@ -733,11 +742,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			mas->lhs = param;
 			mas->define = true;
 			send_expr = e.call(e.send(XTAL_NEW PopExpr(ln), iter_first));
-			if(param.size==2){
-				send_expr->result_flag = RESULT_TO_ARRAY;
-			}else if(param.size>2){
-				send_expr->result_flag = RESULT_COVER_FROM_ARRAY;
-			}
+
 			mas->rhs.push_back(set_line(ln, send_expr));
 			e.block_add(mas);
 			
@@ -752,11 +757,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					mas->define = false;
 
 					send_expr = e.call(e.send(e.local(it), iter_next));
-					if(param.size==2){
-						send_expr->result_flag = RESULT_TO_ARRAY;
-					}else if(param.size>2){
-						send_expr->result_flag = RESULT_COVER_FROM_ARRAY;
-					}
+
 					mas->rhs.push_back(set_line(ln, send_expr));
 					e.while_next(mas);
 

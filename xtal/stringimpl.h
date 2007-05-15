@@ -53,7 +53,7 @@ public:
 		intern_ = true;
 	}
 
-	StringImpl(char* str, int_t len, String::delegate_memory_t){
+	StringImpl(char* str, int_t len, int_t buffer_size, String::delegate_memory_t){
 		set_class(TClass<String>::get());
 		size_ = len;
 		str_ = str;

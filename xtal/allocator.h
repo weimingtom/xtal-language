@@ -44,7 +44,7 @@ void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 void set_memory(void* memory, size_t size);
 
 /**
-* 動的な、ポインタの配列を作成、拡張する関数。
+* @brief 動的な、ポインタの配列を作成、拡張する関数。
 *
 * 一番最初の作成時は、引数全てがnullである必要がある。
 * @param begin メモリの先頭
@@ -54,7 +54,7 @@ void set_memory(void* memory, size_t size);
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize=1024);
 
 /**
-* expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
+* @brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
 *
 * 要素が一つも無いなら(current==beginなら)完全に解放される。
 * @param begin メモリの先頭
@@ -63,8 +63,11 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
 
-/*@}*/
-
+/**
+* @brief mallocが呼ばれている最中か調べる
+* @retval true mallocが呼ばれている途中
+* @retval false mallocが呼ばれている途中ではない
+*/
 bool calling_malloc();
 
 /**
@@ -250,5 +253,8 @@ private:
 	Chunk* begin_;
 	Chunk* end_;
 };
+
+/*@}*/
+
 
 }//namespace 

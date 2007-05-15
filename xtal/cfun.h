@@ -79,7 +79,8 @@ struct fun0{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 		));
 	}
@@ -106,29 +107,31 @@ struct fun1{
 		fun(vm);
 	}	
 		
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class U>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<U>, Other){
 		f3(vm, p, fun, T2T<A0>());
 	}
-
+	
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, Other){
+		check_arg(vm, p);
+		fun(
+			arg_get<A0>(vm, p, 0)
+		);
+		Policy::return_result(vm);
+	}
+	
 	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<const VMachine&>){
 		Policy::return_result(vm, fun(
 			vm
 		));
 	}
 
-	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		check_arg(vm, p);
 		Policy::return_result(vm, fun(
 			arg_get<A0>(vm, p, 0)
 		));
-	}
-	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, ...){
-		check_arg(vm, p);
-		fun(
-			arg_get<A0>(vm, p, 0)
-		);
-		Policy::return_result(vm);
 	}
 };
 
@@ -142,7 +145,8 @@ struct fun2{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1)
@@ -167,12 +171,10 @@ void fun2<T, R, A0, A1, Policy>::f(const VMachine& vm, const ParamInfo& p, void*
 template<class T, class R, class A0, class A1, class A2, class Policy>
 struct fun3{
 	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
@@ -185,25 +187,62 @@ struct fun3{
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2)
+		);
+		Policy::return_result(vm);
+	}
+};
+
+template<class T, class R, class A0, class A1, class A2, class Policy>
+void fun3<T, R, A0, A1, A2, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
+	
+template<class T, class R, class A0, class A1, class A2, class A3, class Policy>
+struct fun4{
+	
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
+	
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
+		Policy::return_result(vm, fun(
+			arg_get<A0>(vm, p, 0), 
+			arg_get<A1>(vm, p, 1), 
+			arg_get<A2>(vm, p, 2), 
+			arg_get<A3>(vm, p, 3)
+		));
+	}
+	
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
+		fun(
+			arg_get<A0>(vm, p, 0), 
+			arg_get<A1>(vm, p, 1), 
+			arg_get<A2>(vm, p, 2), 
+			arg_get<A3>(vm, p, 3)
 		);
 		Policy::return_result(vm);
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class Policy>
-struct fun4{
+void fun4<T, R, A0, A1, A2, A3, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
+
+template<class T, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+struct fun5{
 	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3)
+			arg_get<A3>(vm, p, 3),
+			arg_get<A4>(vm, p, 4)
 		));
 	}
 	
@@ -212,48 +251,26 @@ struct fun4{
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3)
+			arg_get<A3>(vm, p, 3),
+			arg_get<A4>(vm, p, 4)
 		);
 		Policy::return_result(vm);
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-struct fun5{
-	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
-	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
-		Policy::return_result(vm, fun(
-			arg_get<A0>(vm, p, 0), 
-			arg_get<A1>(vm, p, 1), 
-			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3),
-			arg_get<A4>(vm, p, 4)
-		));
-	}
-	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
-		fun(
-			arg_get<A0>(vm, p, 0), 
-			arg_get<A1>(vm, p, 1), 
-			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3),
-			arg_get<A4>(vm, p, 4)
-		);
-		Policy::return_result(vm);
-	}
-};
+void fun5<T, R, A0, A1, A2, A3, A4, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
 
 template<class T, class C, class R, class Policy>
 struct method0{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this())
 		));
@@ -279,14 +296,25 @@ struct method1{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, T2T<const VMachine&>){
-		fun(cast<C>(vm.get_arg_this()), vm);
-	}	
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class U>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<U>, Other){
 		f3(vm, p, fun, T2T<A0>());
 	}
 	
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, Other){
+		check_arg(vm, p);
+		fun(
+			cast<C>(vm.get_arg_this()), 
+			arg_get<A0>(vm, p, 0)
+		);
+		Policy::return_result(vm);
+	}
+
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, T2T<const VMachine&>){
+		fun(cast<C>(vm.get_arg_this()), vm);
+	}	
+		
 	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<const VMachine&>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
@@ -294,21 +322,13 @@ struct method1{
 		));
 	}
 
-	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		check_arg(vm, p);
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
 			arg_get<A0>(vm, p, 0)
 		));
-	}
-
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, ...){
-		check_arg(vm, p);
-		fun(
-			cast<C>(vm.get_arg_this()), 
-			arg_get<A0>(vm, p, 0)
-		);
-		Policy::return_result(vm);
 	}
 };
 
@@ -322,7 +342,8 @@ struct method2{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
 			arg_get<A0>(vm, p, 0), 
@@ -349,12 +370,10 @@ void method2<T, C, R, A0, A1, Policy>::f(const VMachine& vm, const ParamInfo& p,
 template<class T, class C, class R, class A0, class A1, class A2, class Policy>
 struct method3{
 	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
 			arg_get<A0>(vm, p, 0), 
@@ -369,26 +388,65 @@ struct method3{
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2)
+		);
+		Policy::return_result(vm);
+	}
+};
+
+template<class T, class C, class R, class A0, class A1, class A2, class Policy>
+void method3<T, C, R, A0, A1, A2, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
+
+template<class T, class C, class R, class A0, class A1, class A2, class A3, class Policy>
+struct method4{
+	
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
+	
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
+		Policy::return_result(vm, fun(
+			cast<C>(vm.get_arg_this()), 
+			arg_get<A0>(vm, p, 0), 
+			arg_get<A1>(vm, p, 1), 
+			arg_get<A2>(vm, p, 2), 
+			arg_get<A3>(vm, p, 3)
+		));
+	}
+	
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
+		fun(
+			cast<C>(vm.get_arg_this()), 
+			arg_get<A0>(vm, p, 0), 
+			arg_get<A1>(vm, p, 1), 
+			arg_get<A2>(vm, p, 2), 
+			arg_get<A3>(vm, p, 3)
 		);
 		Policy::return_result(vm);
 	}
 };
 
 template<class T, class C, class R, class A0, class A1, class A2, class A3, class Policy>
-struct method4{
+void method4<T, C, R, A0, A1, A2, A3, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
+
+template<class T, class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+struct method5{
 	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
+	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
+	template<class V>
+	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3)
+			arg_get<A3>(vm, p, 3),
+			arg_get<A4>(vm, p, 4)
 		));
 	}
 	
@@ -398,43 +456,18 @@ struct method4{
 			arg_get<A0>(vm, p, 0), 
 			arg_get<A1>(vm, p, 1), 
 			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3)
+			arg_get<A3>(vm, p, 3),
+			arg_get<A4>(vm, p, 4)
 		);
 		Policy::return_result(vm);
 	}
 };
 
 template<class T, class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-struct method5{
-	
-	static void f(const VMachine& vm, const ParamInfo& p, void* data){
-		check_arg(vm, p);
-		f2(vm, p, *(T*)data, T2T<R>());
-	}
-	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, ...){
-		Policy::return_result(vm, fun(
-			cast<C>(vm.get_arg_this()), 
-			arg_get<A0>(vm, p, 0), 
-			arg_get<A1>(vm, p, 1), 
-			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3),
-			arg_get<A4>(vm, p, 4)
-		));
-	}
-	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
-		fun(
-			cast<C>(vm.get_arg_this()), 
-			arg_get<A0>(vm, p, 0), 
-			arg_get<A1>(vm, p, 1), 
-			arg_get<A2>(vm, p, 2), 
-			arg_get<A3>(vm, p, 3),
-			arg_get<A4>(vm, p, 4)
-		);
-		Policy::return_result(vm);
-	}
-};
+void method5<T, C, R, A0, A1, A2, A3, A4, Policy>::f(const VMachine& vm, const ParamInfo& p, void* data){
+	check_arg(vm, p);
+	f2(vm, p, *(T*)data, T2T<R>());
+}
 
 template<class C, class R>
 struct memfun0{

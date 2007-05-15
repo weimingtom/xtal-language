@@ -472,6 +472,12 @@ public:
 	*/
 	uint_t hashcode() const;
 
+	/**
+	* @brief 自身を文字列化してprintlnする。
+	* @return 自身を返す。
+	*/
+	Any p() const;
+
 public:
 
 	// 関数呼び出し。5つまでの引数を受け取るバージョンが定義されている。
@@ -861,66 +867,5 @@ inline void Any::inc_ref_count() const{
 inline void Any::dec_ref_count() const{
 	if(type()==TYPE_BASE){ impl()->dec_ref_count(); }
 }
-
-inline Any::Any(AnyImpl* v){
-	if(v){ set_p(v); impl()->inc_ref_count(); }
-	else{ set_null(); }
-}
-
-inline Any::Any(const AnyImpl* v){
-	if(v){ set_p(v); impl()->inc_ref_count(); }
-	else{ set_null(); }
-}
-
-inline Any::Any(const Any& v){
-	UncountedAny::operator =(v);
-	inc_ref_count();
-}
-
-inline Any& Any::operator =(const Any& v){
-	dec_ref_count();
-	UncountedAny::operator =(v);
-	inc_ref_count();
-	return *this;
-}
-	
-inline Any& Any::operator =(AnyImpl* v){
-	dec_ref_count();
-	if(v){ set_p(v); impl()->inc_ref_count(); }
-	else{ set_null(); }
-	return *this;
-}
-
-inline Any& Any::operator =(const AnyImpl* v){
-	dec_ref_count();
-	if(v){ set_p(v); impl()->inc_ref_count(); }
-	else{ set_null(); }
-	return *this;
-}
-
-inline Any& Any::operator =(int_t v){
-	dec_ref_count();
-	set_i(v);
-	return *this;
-}
-	
-inline Any& Any::operator =(float_t v){
-	dec_ref_count();
-	set_f(v);
-	return *this;
-}
-
-inline Any& Any::operator =(bool v){
-	dec_ref_count();
-	set_b(v);
-	return *this;
-}
-
-inline Any& Any::operator =(const Null&){
-	dec_ref_count();
-	set_null();
-	return *this;
-}
-
 
 }

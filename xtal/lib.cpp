@@ -31,7 +31,7 @@ Any compile_file(const String& file_name){
 
 Any compile(const String& source){
 	CodeBuilder cb;
-	MemoryStream ms(source.c_str(), source.size());
+	StringStream ms(source.c_str(), source.size());
 	if(Any fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
@@ -55,7 +55,7 @@ Any load_and_save(const String& file_name){
 
 Any source(const char* src, int_t size, const char* file){
 	CodeBuilder cb;
-	MemoryStream ms(src, size);
+	StringStream ms(src, size);
 	if(Any fun = cb.compile(ms, file)){
 		return fun;
 	}
@@ -320,7 +320,6 @@ public:
 		value = Array(next.size());
 		for(int_t i = 0, len = next.size(); i<len; ++i){
 			vm.setup_call(2);
-			vm.set_call_flags(RESULT_TO_ARRAY);
 			next.at(i).send(id, vm);
 			next.set_at(i, vm.result(0));
 			value.set_at(i, vm.result(1));
@@ -387,7 +386,6 @@ IterBreaker::~IterBreaker(){
 void iter_next(Any& target, Any& value1, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(2);
-	vm.set_call_flags(RESULT_TO_ARRAY);
 	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
 	target = vm.result(0);
 	value1 = vm.result(1);
@@ -397,7 +395,6 @@ void iter_next(Any& target, Any& value1, bool first){
 void iter_next(Any& target, Any& value1, Any& value2, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(3);
-	vm.set_call_flags(RESULT_COVER_FROM_ARRAY);
 	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
 	target = vm.result(0);
 	value1 = vm.result(1);
@@ -408,7 +405,6 @@ void iter_next(Any& target, Any& value1, Any& value2, bool first){
 void iter_next(Any& target, Any& value1, Any& value2, Any& value3, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(4);
-	vm.set_call_flags(RESULT_COVER_FROM_ARRAY);
 	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
 	target = vm.result(0);
 	value1 = vm.result(1);
@@ -984,7 +980,7 @@ void initialize_lib(){
 	builtin.def("Fiber", TClass<Fiber>::get());
 	builtin.def("Stream", TClass<Stream>::get());
 	builtin.def("FileStream", TClass<FileStream>::get());
-	builtin.def("MemoryStream", TClass<MemoryStream>::get());
+	builtin.def("StringStream", TClass<StringStream>::get());
 	builtin.def("Thread", TClass<Thread>::get());
 	builtin.def("Mutex", TClass<Mutex>::get());
 	builtin.def("Format", TClass<Format>::get());
@@ -2845,7 +2841,7 @@ void initialize_lib(){
 0x00, 0x00, 0xb7, 0x02, 0x00, 0x00, 0x00, 0xb8,
 	};
 
-	MemoryStream ms(script_data, sizeof(script_data));
+	StringStream ms(script_data, sizeof(script_data));
 	object_load(ms)();
 	//*/
 }

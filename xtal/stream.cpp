@@ -15,16 +15,21 @@ void InitStream(){
 	cls.method("u8", &Stream::u8);
 	cls.method("u16", &Stream::u16);
 	cls.method("u32", &Stream::u32);
+	
+	cls.method("read", (String (Stream::*)(uint_t) const)&Stream::read);
+	cls.method("write", (uint_t (Stream::*)(const String&) const)&Stream::write);
+	//cls.method("seek", &Stream::seek);
 
 	cls.method("iter_first", &Stream::iter_first);
 	cls.method("iter_next", &Stream::iter_next);
 	cls.method("iter_break", &Stream::iter_break);
 }
 
-void InitMemoryStream(){
-	TClass<MemoryStream> cls("MemoryStream");
+void InitStringStream(){
+	TClass<StringStream> cls("StringStream");
 	cls.inherit(TClass<Stream>::get());
-	cls.def("new", New<MemoryStream>());
+	cls.def("new", New<StringStream>());
+	cls.method("to_s", &StringStream::to_s);
 }
 
 void InitFileStream(){
@@ -89,6 +94,14 @@ uint_t Stream::write(const String& str) const{
 	return write(str.c_str(), str.length());
 }
 
+String Stream::read(uint_t size) const{
+	char* buf = (char*)user_malloc(size+1);
+	uint_t len = impl()->do_read(buf, size);
+	buf[len] = 0;
+	return String(buf, len, size+1, String::delegate_memory_t());
+}
+
+
 void Stream::close(){
 	impl()->close();
 }
@@ -110,18 +123,21 @@ FileStream::FileStream(const String& filename, const String& mode)
 	new(*this) FileStreamImpl(filename, mode);
 }
 
-MemoryStream::MemoryStream()
+StringStream::StringStream()
 :Stream(null){
-	new(*this) MemoryStreamImpl();
+	new(*this) StringStreamImpl();
 }
 
-MemoryStream::MemoryStream(const void* data, uint_t data_size)
+StringStream::StringStream(const void* data, uint_t data_size)
 :Stream(null){
-	new(*this) MemoryStreamImpl(data, data_size);
+	new(*this) StringStreamImpl(data, data_size);
 }
 
+String StringStream::to_s() const{
+	return impl()->to_s();
+}
 
-void* MemoryStream::data() const{
+void* StringStream::data() const{
 	return impl()->data();
 }
 

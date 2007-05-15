@@ -134,10 +134,47 @@ void VMachineImpl::adjust_result(int_t n){
 	int_t required_result_count = ff().required_result_count;
 	int_t result_flag = ff().result_flag;		
 	ff().result_count = n;
+
+	// 戻り値なんて要求してない
+	if(required_result_count==0){
+		downsize(n);
+		return;
+	}
+
+	// 戻り値が一つも無いのでnullで埋める
+	if(n==0){
+		for(int_t i = n; i<required_result_count; ++i){
+			push(null);
+		}
+	}
+
+	// 戻り値の数と要求している戻り値の数が等しい
 	if(required_result_count==n){
 		return;
-	}else if(required_result_count<n){
-		if(result_flag & RESULT_TO_ARRAY){
+	}
+
+	// この時点で、nもrequired_result_countも1以上
+
+	// 戻り値を切り捨てるフラグがついている
+	if(result_flag==RESULT_DISCARD){
+	
+		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
+		if(required_result_count<n){
+			// 戻り値を捨てる
+			downsize(n-required_result_count);
+		}else{
+			// 要求している戻り値の数の方が、関数が返す戻り値より多い
+			
+			// nullで埋めとく
+			for(int_t i = n; i<required_result_count; ++i){
+				push(null);
+			}
+		}
+	}else{
+			
+		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
+		if(required_result_count<n){
+			// 余った戻り値を配列に直す。
 			int_t size = n-required_result_count+1;
 			XTAL_GLOBAL_INTERPRETER_LOCK{
 				Array ret(size);
@@ -146,28 +183,24 @@ void VMachineImpl::adjust_result(int_t n){
 				}
 				downsize(size);
 				push(ret);
-			}
+			}		
 		}else{
-			downsize(n-required_result_count);
-		}
-	}else{
-		if((result_flag & RESULT_COVER_FROM_ARRAY) && n!=0){
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				Array ary(xtal::as<const Array&>(get()));
-				if(ary){
+			// 要求している戻り値の数の方が、関数が返す戻り値より多い
+			const Array& temp(xtal::as<const Array&>(get()));
+			if(temp){
+				// 最後の要素の配列を展開する。
+				Array ary(temp);
+				XTAL_GLOBAL_INTERPRETER_LOCK{
 					downsize(1);
 					for(int_t i = 0; i<required_result_count-n+1; ++i){
 						push(ary.at(i));
 					}
-				}else{
-					for(int_t i = n; i<required_result_count; ++i){
-						push(null);
-					}
 				}
-			}
-		}else{
-			for(int_t i = n; i<required_result_count; ++i){
-				push(null);
+			}else{
+				// 最後の要素が配列ではないので、nullで埋めとく
+				for(int_t i = n; i<required_result_count; ++i){
+					push(null);
+				}
 			}
 		}
 	}

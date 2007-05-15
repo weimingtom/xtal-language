@@ -56,9 +56,10 @@ public:
 	* @brief user_mallocで獲得したメモリを委譲して構築する。
 	*
 	* @param str NULL終端文字列
-	* @param size NULL文字を含めたバッファのサイズ
+	* @param size 文字列の長さ
+	* @param buffer_size 確保したバッファのサイズ
 	*/
-	String(char* str, int_t size, delegate_memory_t);
+	String(char* str, int_t size, int_t buffer_size, delegate_memory_t);
 
 	explicit String(StringImpl* p)
 		:Any((AnyImpl*)p){}

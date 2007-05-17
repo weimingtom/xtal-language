@@ -21,7 +21,7 @@ enum{
 };
 
 enum{
-	RESULT_DISCARD = 1,
+	RESULT_DISCARD = (1<<2),
 };
 
 enum{

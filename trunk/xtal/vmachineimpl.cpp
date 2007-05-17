@@ -156,7 +156,7 @@ void VMachineImpl::adjust_result(int_t n){
 	// この時点で、nもrequired_result_countも1以上
 
 	// 戻り値を切り捨てるフラグがついている
-	if(result_flag==RESULT_DISCARD){
+	if(result_flag&RESULT_DISCARD){
 	
 		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
 		if(required_result_count<n){

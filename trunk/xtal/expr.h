@@ -396,10 +396,11 @@ struct FunExpr : public Expr{
 struct MultipleAssignStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	bool define;
+	bool discard;
 	TList<Expr*> lhs;
 	TList<Expr*> rhs;
 	MultipleAssignStmt(int_t line)
-		:Stmt(TYPE, line), define(false), lhs(alloc), rhs(alloc){}
+		:Stmt(TYPE, line), define(false), discard(false), lhs(alloc), rhs(alloc){}
 };
 
 struct IncStmt : public Stmt{ 
@@ -430,11 +431,12 @@ struct CallExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	Expr* expr; 
 	bool tail;
+	bool discard;
 	TList<Expr*> ordered; 
 	TPairList<int_t, Expr*> named;
-	int_t result_flag;
+	//int_t result_flag;
 	CallExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr), tail(false), ordered(alloc), named(alloc), result_flag(0){}
+		:Expr(TYPE, line), expr(expr), tail(false), discard(false), ordered(alloc), named(alloc){}
 };
 
 struct SendExpr : public Expr{
@@ -443,9 +445,10 @@ struct SendExpr : public Expr{
 	int_t var;
 	bool tail;
 	bool if_defined;
-	int_t result_flag;
+	bool discard;
+	//int_t result_flag;
 	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), tail(false), if_defined(false), result_flag(0){}
+		:Expr(TYPE, line), lhs(lhs), var(var), tail(false), discard(false), if_defined(false){}
 };
 
 struct AssignStmt : public Stmt{

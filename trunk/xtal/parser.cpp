@@ -717,16 +717,20 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			TList<Expr*> param(&alloc_);
 			e.register_variable(it);
 			param.push_back(e.local(it));
+			bool discard = false;
 			if(eat('|')){ // ブロックパラメータ
 				while(true){
 					Token ch = lexer_.peek();
 					if(ch.type()==ch.TYPE_IDENT){
+						discard = false;
 						lexer_.read();
 						e.register_variable(ch.ivalue());
 						param.push_back(e.local(ch.ivalue()));
 						if(!eat(',')){
 							expect('|');
 							break;
+						}else{
+							discard = true;
 						}
 					}else{
 						expect('|');
@@ -841,7 +845,7 @@ Stmt* Parser::parse_assign_stmt(){
 					XTAL_CASE(','){
 						MultipleAssignStmt* mas = XTAL_NEW MultipleAssignStmt(ln);
 						mas->lhs.push_back(lhs);
-						parse_multiple_expr(&mas->lhs);
+						parse_multiple_expr(&mas->lhs, &mas->discard);
 						
 						if(eat('=')){
 							mas->define = false;
@@ -991,12 +995,14 @@ Expr* Parser::string2expr(string_t& str){
 	return e;
 }
 	
-void Parser::parse_multiple_expr(TList<Expr*>* exprs){
+void Parser::parse_multiple_expr(TList<Expr*>* exprs, bool* discard){
+	if(discard) *discard = false;
 	while(1){
 		if(Expr* p = parse_expr()){
+			if(discard) *discard = false;
 			exprs->push_back(p);
 			if(eat_a(',')){
-
+				if(discard) *discard = true;
 			}else{
 				break;
 			}

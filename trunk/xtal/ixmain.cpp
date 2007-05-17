@@ -1,11 +1,12 @@
 
-#include "xtal/xtal.h"
+#include "xtal.h"
 
-//#include "xtal/all_src.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "../xtallib.lib") 
+#else
+#include "all_src.h"
+#endif
 
-#include "xtal/message_jp_sjis.txt"
- 
 int main(){
 	using namespace xtal;
  
@@ -13,9 +14,6 @@ int main(){
 		set_thread();
 		initialize();
  
-		StringStream ms(message_data, sizeof(message_data));
-		set_get_text_map(object_load(ms));
-
 		ix();
 
 	}catch(Any e){

@@ -104,12 +104,7 @@ FiberImpl::FiberImpl(const Frame& outer, const Any& th, const Code& code, FunCor
 }
 
 FiberImpl::~FiberImpl(){
-	/*if(resume_pc_!=0){
-		vm_.impl()->exit_fiber(Fiber(this), resume_pc_);
-		resume_pc_ = 0;
-		vm_mgr()->take_back(vm_);
-		vm_ = null;
-	}*/
+
 }
 
 void FiberImpl::iter_break(){

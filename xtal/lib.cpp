@@ -14,6 +14,8 @@
 #include "frameimpl.h"
 #include "constant.h"
 
+#include "message_jp_sjis.txt"
+
 namespace xtal{
 
 #ifndef XTAL_NO_PARSER
@@ -1014,6 +1016,9 @@ void initialize_lib(){
 	InitZipIter();
 	builtin.def("zip", TClass<ZipIterImpl>::get());
 	
+	StringStream ss(message_data, sizeof(message_data));
+	set_get_text_map(object_load(ss));
+
 	//*
 	static unsigned char script_data[] = {
 0x58, 0x54, 0x41, 0x4c, 0x00, 0x09, 0x04, 0x00,

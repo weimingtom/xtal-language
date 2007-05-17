@@ -224,7 +224,7 @@ bool CodeBuilder::put_local_code(int_t var){
 	}
 }
 
-void CodeBuilder::put_send_code(int_t var, int_t required_result_count, int_t result_flag, bool tail, bool if_defined){
+void CodeBuilder::put_send_code(int_t var, int_t required_result_count, bool discard, bool tail, bool if_defined){
 	if(if_defined){
 		put_code_u8(CODE_SEND_IF_DEFINED);
 	}else{
@@ -234,7 +234,7 @@ void CodeBuilder::put_send_code(int_t var, int_t required_result_count, int_t re
 	put_code_u8(0);
 	put_code_u8(0);
 	put_code_u8(required_result_count);
-	put_code_u8(0 | (tail ? 1<<1 : 0) | result_flag);
+	put_code_u8(0 | (tail ? (1<<1) : 0) | (discard ? RESULT_DISCARD : 0));
 }
 
 void CodeBuilder::put_set_send_code(int_t var, bool if_defined){
@@ -791,7 +791,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(SendExpr){
 			compile(e->lhs);
-			put_send_code(e->var, required_result_count, e->result_flag, e->tail, e->if_defined);
+			put_send_code(e->var, required_result_count, e->discard, e->tail, e->if_defined);
 			result_count = required_result_count;
 		}
 
@@ -832,12 +832,12 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 				put_code_u8(e->ordered.size-1);
 				put_code_u8(e->named.size);
 				put_code_u8(required_result_count);
-				put_code_u8(1 | (e->tail ? (1<<1) : 0) | e->result_flag);
+				put_code_u8(1 | (e->tail ? (1<<1) : 0) | (e->discard ? RESULT_DISCARD : 0));
 			}else{
 				put_code_u8(e->ordered.size);
 				put_code_u8(e->named.size);
 				put_code_u8(required_result_count);
-				put_code_u8(0 | (e->tail ? (1<<1) : 0) | e->result_flag);
+				put_code_u8(0 | (e->tail ? (1<<1) : 0) | (e->discard ? RESULT_DISCARD : 0));
 			}			
 			result_count = required_result_count;
 		}
@@ -1044,7 +1044,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
-				put_send_code(p->var, 1, p->result_flag, p->tail, p->if_defined);
+				put_send_code(p->var, 1, p->discard, p->tail, p->if_defined);
 				compile(e->rhs);
 				put_code_u8(e->code);
 				put_code_u8(CODE_INSERT_1);
@@ -1109,7 +1109,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
-				put_send_code(p->var, 1, p->result_flag, p->tail, p->if_defined);
+				put_send_code(p->var, 1, p->discard, p->tail, p->if_defined);
 				put_code_u8(e->code);
 				put_code_u8(CODE_INSERT_1);
 				put_set_send_code(p->var, p->if_defined);
@@ -1349,6 +1349,15 @@ void CodeBuilder::compile(Stmt* ex){
 						}
 						compile(rhs->value, rrc);
 						pushed_count += rrc;
+
+						if(CallExpr* ce = expr_cast<CallExpr>(rhs->value)){
+							ce->discard = e->discard;
+						}
+
+						if(SendExpr* ce = expr_cast<SendExpr>(rhs->value)){
+							ce->discard = e->discard;
+						}
+
 						break;
 					}else{
 						compile(rhs->value);

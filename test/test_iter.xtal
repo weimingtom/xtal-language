@@ -6,6 +6,7 @@
 	assert n==45;
 }
 
+
 {
 	ret : range(5, 10).each.collect(fun(x) x*2).join(",");
 	assert ret=="10,12,14,16,18";

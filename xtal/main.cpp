@@ -1,10 +1,11 @@
 
-#include "xtal/xtal.h"
+#include "xtal.h"
 
-//#include "xtal/all_src.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "../xtallib.lib") 
- 
-#include "xtal/message_jp_sjis.txt"
+#else
+#include "all_src.h"
+#endif
 
 using namespace xtal;
 
@@ -55,6 +56,8 @@ void debug_line(const debug::Info& info){
 	}
 }
 
+#include <windows.h>
+
 int main(int argc, char** argv){
 
 	try{
@@ -67,16 +70,14 @@ int main(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 		 
-		StringStream ms(message_data, sizeof(message_data));
-		set_get_text_map(object_load(ms));
+		handle_argv(argv);
 
-		//handle_argv(argv);
 
- 
+/*
+		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");
 		load("../../test/test_for.xtal");
-		load("../../test/test_iter.xtal");
 		load("../../test/test_except.xtal");
 		load("../../test/test_fiber.xtal");
 		load("../../test/test_if.xtal");
@@ -85,8 +86,9 @@ int main(int argc, char** argv){
 		load("../../test/test_op_assign.xtal");
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
+//*/
 
-	
+
 		/*
 		MemoryStream out;
 		object_dump(load("../message.xtal"), out);

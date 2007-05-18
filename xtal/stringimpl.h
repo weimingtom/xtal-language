@@ -94,9 +94,9 @@ public:
 			set_class(TClass<StringSplitImpl>::get());
 		}
 		
-		void iter_first(const VMachine& vm){
+		Any restart(){
 			index_ = 0;
-			iter_next(vm);
+			return this;
 		}
 
 		void iter_next(const VMachine& vm){

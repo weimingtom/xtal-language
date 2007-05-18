@@ -61,8 +61,8 @@ public:
 
 	explicit Fiber(FiberImpl* p)
 		:Fun((FunImpl*)p){}
-
-	void iter_first(const VMachine& vm);
+		
+	Any restart();
 
 	void iter_next(const VMachine& vm);
 	

@@ -73,7 +73,7 @@ int main(int argc, char** argv){
 		handle_argv(argv);
 
 
-/*
+//*
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");
@@ -87,7 +87,6 @@ int main(int argc, char** argv){
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
 //*/
-
 
 		/*
 		MemoryStream out;

@@ -45,10 +45,10 @@ VMachineImpl::~VMachineImpl(){
 
 }
 
-void VMachineImpl::push_ff(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+void VMachineImpl::push_ff(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
 	ff().pc = pc;
 	FunFrame& f = fun_frames_.push();
-	f.required_result_count = required_result_count;
+	f.need_result_count = need_result_count;
 	f.result_count = 0;
 	f.result_flag = result_flag;
 	f.ordered_arg_count = ordered_arg_count;
@@ -77,7 +77,7 @@ const Any& VMachineImpl::result(int_t pos){
 	}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
 		String hint1 = ff().hint1().get_class().object_name();
 		String hint2 = ff().hint2();
-		int_t rrc = required_result_count();
+		int_t rrc = need_result_count();
 		pop_ff();
 		//downsize(rrc);
 		if(Any uerror = builtin().member("UnsupportedError")){
@@ -92,8 +92,8 @@ const Any& VMachineImpl::result(int_t pos){
 
 	XTAL_ASSERT(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_RESULT);
 	
-	if(pos<ff().required_result_count){
-		return get(ff().required_result_count-pos-1);
+	if(pos<ff().need_result_count){
+		return get(ff().need_result_count-pos-1);
 	}else{
 		return null;
 	}
@@ -131,51 +131,51 @@ void VMachineImpl::carry_over(const Fun& fun){
 }
 	
 void VMachineImpl::adjust_result(int_t n){
-	int_t required_result_count = ff().required_result_count;
+	int_t need_result_count = ff().need_result_count;
 	int_t result_flag = ff().result_flag;		
 	ff().result_count = n;
 
 	// 戻り値なんて要求してない
-	if(required_result_count==0){
+	if(need_result_count==0){
 		downsize(n);
 		return;
 	}
 
 	// 戻り値が一つも無いのでnullで埋める
 	if(n==0){
-		for(int_t i = n; i<required_result_count; ++i){
+		for(int_t i = n; i<need_result_count; ++i){
 			push(null);
 		}
 	}
 
 	// 戻り値の数と要求している戻り値の数が等しい
-	if(required_result_count==n){
+	if(need_result_count==n){
 		return;
 	}
 
-	// この時点で、nもrequired_result_countも1以上
+	// この時点で、nもneed_result_countも1以上
 
 	// 戻り値を切り捨てるフラグがついている
 	if(result_flag&RESULT_DISCARD){
 	
 		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-		if(required_result_count<n){
+		if(need_result_count<n){
 			// 戻り値を捨てる
-			downsize(n-required_result_count);
+			downsize(n-need_result_count);
 		}else{
 			// 要求している戻り値の数の方が、関数が返す戻り値より多い
 			
 			// nullで埋めとく
-			for(int_t i = n; i<required_result_count; ++i){
+			for(int_t i = n; i<need_result_count; ++i){
 				push(null);
 			}
 		}
 	}else{
 			
 		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-		if(required_result_count<n){
+		if(need_result_count<n){
 			// 余った戻り値を配列に直す。
-			int_t size = n-required_result_count+1;
+			int_t size = n-need_result_count+1;
 			XTAL_GLOBAL_INTERPRETER_LOCK{
 				Array ret(size);
 				for(int_t i=0; i<size; ++i){
@@ -192,13 +192,13 @@ void VMachineImpl::adjust_result(int_t n){
 				Array ary(temp);
 				XTAL_GLOBAL_INTERPRETER_LOCK{
 					downsize(1);
-					for(int_t i = 0; i<required_result_count-n+1; ++i){
+					for(int_t i = 0; i<need_result_count-n+1; ++i){
 						push(ary.at(i));
 					}
 				}
 			}else{
 				// 最後の要素が配列ではないので、nullで埋めとく
-				for(int_t i = n; i<required_result_count; ++i){
+				for(int_t i = n; i<need_result_count; ++i){
 					push(null);
 				}
 			}
@@ -208,7 +208,7 @@ void VMachineImpl::adjust_result(int_t n){
 	
 void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 	// 結果をvmに渡す
-	if(int_t required_result_count = vm->required_result_count()){
+	if(int_t need_result_count = vm->need_result_count()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
 				vm->push(fun);
@@ -230,7 +230,7 @@ const u8* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool add
 
 	yield_result_count_ = 0;
 	
-	push_ff(&end_code_, vm->required_result_count(), vm->ff().result_flag, vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
+	push_ff(&end_code_, vm->need_result_count(), vm->ff().result_flag, vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
 
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	
@@ -360,10 +360,10 @@ void VMachineImpl::push_args(int_t named_arg_count){
 	a.impl()->named_.impl()->push_all(myself());
 }
 
-void VMachineImpl::push_ff_args(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+void VMachineImpl::push_ff_args(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
 	push_args(named_arg_count);
 	const Arguments& a = ff().arguments();
-	push_ff(pc, required_result_count, result_flag, a.impl()->ordered_.size()+ordered_arg_count, a.impl()->named_.size()+named_arg_count, self);
+	push_ff(pc, need_result_count, result_flag, a.impl()->ordered_.size()+ordered_arg_count, a.impl()->named_.size()+named_arg_count, self);
 }
 
 void VMachineImpl::recycle_ff(const u8* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -382,27 +382,27 @@ void VMachineImpl::recycle_ff_args(const u8* pc, int_t ordered_arg_count, int_t 
 	recycle_ff(pc, a.impl()->ordered_.size()+ordered_arg_count, a.impl()->named_.size()+named_arg_count, self);
 }
 
-void VMachineImpl::setup_call(int_t required_result_count){
-	push_ff(&end_code_, required_result_count, 0, 0, 0, null);
+void VMachineImpl::setup_call(int_t need_result_count){
+	push_ff(&end_code_, need_result_count, 0, 0, 0, null);
 }
 
-void VMachineImpl::setup_call(int_t required_result_count, const Any& a1){
-	push_ff(&end_code_, required_result_count, 0, 1, 0, null);
+void VMachineImpl::setup_call(int_t need_result_count, const Any& a1){
+	push_ff(&end_code_, need_result_count, 0, 1, 0, null);
 	push(a1);
 }
 
-void VMachineImpl::setup_call(int_t required_result_count, const Any& a1, const Any& a2){
-	push_ff(&end_code_, required_result_count, 0, 2, 0, null);
+void VMachineImpl::setup_call(int_t need_result_count, const Any& a1, const Any& a2){
+	push_ff(&end_code_, need_result_count, 0, 2, 0, null);
 	push(a1); push(a2);
 }
 
-void VMachineImpl::setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3){
-	push_ff(&end_code_, required_result_count, 0, 3, 0, null);
+void VMachineImpl::setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3){
+	push_ff(&end_code_, need_result_count, 0, 3, 0, null);
 	push(a1); push(a2); push(a3);
 }
 
-void VMachineImpl::setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4){
-	push_ff(&end_code_, required_result_count, 0, 4, 0, null);
+void VMachineImpl::setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4){
+	push_ff(&end_code_, need_result_count, 0, 4, 0, null);
 	push(a1); push(a2); push(a3); push(a4);
 }
 

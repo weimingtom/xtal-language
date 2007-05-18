@@ -96,11 +96,11 @@ public:
 
 public:
 
-	void setup_call(int_t required_result_count);
-	void setup_call(int_t required_result_count, const Any& a1);
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2);
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3);
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4);
+	void setup_call(int_t need_result_count);
+	void setup_call(int_t need_result_count, const Any& a1);
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2);
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3);
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4);
 	
 	void set_call_flags(int_t flags){
 		ff().result_flag = flags;
@@ -122,14 +122,14 @@ public:
 		
 	Any result_and_cleanup_call(int_t pos){
 		const Any& ret = result(pos);
-		downsize(ff().required_result_count);
+		downsize(ff().need_result_count);
 		pop_ff();
 		return ret;
 	}
 		
 	void cleanup_call(){
 		result(0);
-		downsize(ff().required_result_count);
+		downsize(ff().need_result_count);
 		pop_ff();
 	}
 	
@@ -202,10 +202,14 @@ public:
 		return ff().named_arg_count; 
 	}
 		
-	int_t required_result_count(){ 
-		return ff().required_result_count; 
+	int_t need_result_count(){ 
+		return ff().need_result_count; 
 	}
-
+	
+	bool need_result(){ 
+		return ff().need_result_count!=0; 
+	}
+	
 	/*
 	* Argumentsオブジェクトを生成する。
 	* return_result()を呼んだ後は正常な値は得られない。
@@ -284,7 +288,7 @@ public:
 	
 	void replace_result(int_t pos, const Any& v){
 		result(0);
-		set(ff().required_result_count-pos-1, v);
+		set(ff().need_result_count-pos-1, v);
 	}
 	
 	void recycle_call();
@@ -306,7 +310,7 @@ public:
 		prev_ff().pc = pc;
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 
-		downsize(ff().required_result_count);
+		downsize(ff().need_result_count);
 		pop_ff();
 	}
 	
@@ -384,19 +388,19 @@ public:
 	
 private:
 
-	const VMachine& inner_setup_call(const u8* pc, int_t required_result_count){
-		push_ff(pc, required_result_count, 0, 0, 0, null);
+	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count){
+		push_ff(pc, need_result_count, 0, 0, 0, null);
 		return myself();
 	}
 
-	const VMachine& inner_setup_call(const u8* pc, int_t required_result_count, const Any& a1){
-		push_ff(pc, required_result_count, 0, 1, 0, null);
+	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count, const Any& a1){
+		push_ff(pc, need_result_count, 0, 1, 0, null);
 		push(a1);
 		return myself();
 	}
 
-	const VMachine& inner_setup_call(const u8* pc, int_t required_result_count, const Any& a1, const Any& a2){
-		push_ff(pc, required_result_count, 0, 2, 0, null);
+	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count, const Any& a1, const Any& a2){
+		push_ff(pc, need_result_count, 0, 2, 0, null);
 		push(a1); push(a2);
 		return myself();
 	}
@@ -428,7 +432,7 @@ private:
 		int_t named_arg_count;
 
 		// 関数呼び出し側が必要とする戻り値の数
-		int_t required_result_count;
+		int_t need_result_count;
 
 		int_t result_count;
 
@@ -532,9 +536,9 @@ private:
 		int_t fun_frame_count;
 	};
 
-	void push_ff(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
+	void push_ff(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
 	
-	void push_ff_args(const u8* pc, int_t required_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
+	void push_ff_args(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
 	void recycle_ff(const u8* pc, int_t ordered_count, int_t named_count, const Any& self);
 	void recycle_ff_args(const u8* pc, int_t ordered_count, int_t named_count, const Any& self);
 	void pop_ff(){ fun_frames_.pop(); }

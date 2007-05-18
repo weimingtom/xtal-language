@@ -224,7 +224,7 @@ bool CodeBuilder::put_local_code(int_t var){
 	}
 }
 
-void CodeBuilder::put_send_code(int_t var, int_t required_result_count, bool discard, bool tail, bool if_defined){
+void CodeBuilder::put_send_code(int_t var, int_t need_result_count, bool discard, bool tail, bool if_defined){
 	if(if_defined){
 		put_code_u8(CODE_SEND_IF_DEFINED);
 	}else{
@@ -233,7 +233,7 @@ void CodeBuilder::put_send_code(int_t var, int_t required_result_count, bool dis
 	put_code_u16(var);
 	put_code_u8(0);
 	put_code_u8(0);
-	put_code_u8(required_result_count);
+	put_code_u8(need_result_count);
 	put_code_u8(0 | (tail ? (1<<1) : 0) | (discard ? RESULT_DISCARD : 0));
 }
 
@@ -546,28 +546,28 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 	return fun_frames_.top();
 }
 
-void CodeBuilder::adjust_result(int_t required_result_count, int_t result_count){
-	if(required_result_count<result_count){
-		while(required_result_count!=result_count){
+void CodeBuilder::adjust_result(int_t need_result_count, int_t result_count){
+	if(need_result_count<result_count){
+		while(need_result_count!=result_count){
 			put_code_u8(CODE_POP);
 			result_count--;
 		}
 	}else{
-		while(required_result_count!=result_count){
+		while(need_result_count!=result_count){
 			put_code_u8(CODE_PUSH_NULL);
-			required_result_count--;
+			need_result_count--;
 		}
 	}
 }
 
 #define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e=(KEY*)ex)
 
-void CodeBuilder::compile(Expr* ex, int_t required_result_count){
+void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 
 	int_t result_count = 1;
 
 	if(!ex){
-		adjust_result(required_result_count, 0);
+		adjust_result(need_result_count, 0);
 		return;
 	}
 
@@ -791,8 +791,8 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 
 		XTAL_EXPR_CASE(SendExpr){
 			compile(e->lhs);
-			put_send_code(e->var, required_result_count, e->discard, e->tail, e->if_defined);
-			result_count = required_result_count;
+			put_send_code(e->var, need_result_count, e->discard, e->tail, e->if_defined);
+			result_count = need_result_count;
 		}
 
 		XTAL_EXPR_CASE(CallExpr){
@@ -831,15 +831,15 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 			if(expr_cast<ArgsExpr>(e->ordered.tail ? (Expr*)e->ordered.tail->value : (Expr*)0)){
 				put_code_u8(e->ordered.size-1);
 				put_code_u8(e->named.size);
-				put_code_u8(required_result_count);
+				put_code_u8(need_result_count);
 				put_code_u8(1 | (e->tail ? (1<<1) : 0) | (e->discard ? RESULT_DISCARD : 0));
 			}else{
 				put_code_u8(e->ordered.size);
 				put_code_u8(e->named.size);
-				put_code_u8(required_result_count);
+				put_code_u8(need_result_count);
 				put_code_u8(0 | (e->tail ? (1<<1) : 0) | (e->discard ? RESULT_DISCARD : 0));
 			}			
-			result_count = required_result_count;
+			result_count = need_result_count;
 		}
 
 		XTAL_EXPR_CASE(FunExpr){
@@ -956,7 +956,7 @@ void CodeBuilder::compile(Expr* ex, int_t required_result_count){
 	p_->set_line_number_info(ex->line);
 	lines_.pop();
 
-	adjust_result(required_result_count, result_count);
+	adjust_result(need_result_count, result_count);
 }
 
 void CodeBuilder::compile(Stmt* ex){

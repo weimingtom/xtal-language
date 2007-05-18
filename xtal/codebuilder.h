@@ -18,9 +18,9 @@ public:
 
 	void interactive_compile();
 
-	void adjust_result(int_t required_result_count, int_t result_count);
+	void adjust_result(int_t need_result_count, int_t result_count);
 
-	void compile(Expr* p, int_t required_result_count=1);
+	void compile(Expr* p, int_t need_result_count=1);
 	void compile(Stmt* p);	
 	
 	/**
@@ -58,7 +58,7 @@ public:
 	bool put_local_code(int_t var);
 	bool put_set_local_code(int_t var);
 	void put_define_local_code(int_t var);
-	void put_send_code(int_t var, int_t required_result_count, bool discard, bool tail, bool if_defined);
+	void put_send_code(int_t var, int_t need_result_count, bool discard, bool tail, bool if_defined);
 	void put_set_send_code(int_t var, bool if_defined);
 	void put_member_code(int_t var, bool if_defined);
 	void put_define_member_code(int_t var);

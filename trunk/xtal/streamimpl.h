@@ -168,7 +168,7 @@ public:
 
 	virtual uint_t do_write(const void* p, uint_t size){
 		if(pos_+size>data_.size()){ 
-			data_.resize(pos_+4);
+			data_.resize(pos_+size);
 		}
 		if(size>0){
 			memcpy(&data_[pos_], p, size);

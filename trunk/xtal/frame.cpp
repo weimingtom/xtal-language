@@ -9,7 +9,8 @@ namespace xtal{
 static void InitClassIterImpl(){
 	TClass<ClassImpl::MembersIterImpl> p("ClassMembersIter");
 	p.inherit(Iterator());
-	p.method("iter_first", &ClassImpl::MembersIterImpl::iter_first);
+	p.method("restart", &ClassImpl::MembersIterImpl::restart);
+	p.method("iter_first", &ClassImpl::MembersIterImpl::iter_next);
 	p.method("iter_next", &ClassImpl::MembersIterImpl::iter_next);
 }
 
@@ -323,7 +324,7 @@ void XClassImpl::call(const VMachine& vm){
 	
 	if(const Any& ret = member(Xid(initialize))){
 		vm.set_arg_this(inst);
-		if(vm.required_result_count()){
+		if(vm.need_result()){
 			ret.call(vm);
 			vm.replace_result(0, inst);
 		}else{
@@ -350,7 +351,7 @@ void XClassImpl::marshal_new(const VMachine& vm){
 	
 	if(const Any& ret = member(Xid(marshal_load))){
 		vm.set_arg_this(inst);
-		if(vm.required_result_count()){
+		if(vm.need_result()){
 			ret.call(vm);
 			vm.replace_result(0, inst);
 		}else{

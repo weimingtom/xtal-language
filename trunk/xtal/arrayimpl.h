@@ -109,21 +109,22 @@ public:
 	}
 	
 	String join(const String& sep){
-		String ret;
+		StringStream ret;
 		for(int_t i = 0, sz = size(); i<sz; ++i){
-			ret = ret.cat(at(i).to_s());
+			ret.write(at(i).to_s());
 			if(i<sz-1){
-				ret = ret.cat(sep);
+				ret.write(sep);
 			}
 		}
-		return ret;
+		return ret.to_s();
 	}
 
 	String to_s(){
-		String str("[");
-		str = str.cat(join(","));
-		str = str.cat(String("]"));
-		return str;
+		StringStream ret;
+		ret.write("[");
+		ret.write(join(","));
+		ret.write("]");
+		return ret.to_s();
 	}
 
 	bool empty(){
@@ -149,12 +150,12 @@ public:
 			:array_(a), index_(-1){
 			set_class(TClass<ArrayIterImpl>::get());
 		}
-		
-		void iter_first(const VMachine& vm){
-			index_ = -1;
-			iter_next(vm);
-		}
 
+		Any restart(){
+			index_ = -1;
+			return this;
+		}
+				
 		void iter_next(const VMachine& vm){
 			++index_;
 			if(index_<array_.size()){

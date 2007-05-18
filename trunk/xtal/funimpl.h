@@ -66,11 +66,6 @@ public:
 	
 public:
 
-	void iter_first(const VMachine& vm){
-		iter_break();
-		call_helper(vm, true);
-	}
-
 	void iter_next(const VMachine& vm){
 		call_helper(vm, true);
 	}

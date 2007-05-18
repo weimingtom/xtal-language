@@ -145,7 +145,7 @@ Any get_text(const char* text);
 Any format(const char* text);
 
 void set_get_text_map(const Any& map);
-
+void add_get_text_map(const Any& map);
 Any get_get_text_map();
 
 Any source(const char* src, int_t size, const char* file);

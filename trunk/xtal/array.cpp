@@ -8,7 +8,8 @@ namespace xtal{
 static void InitArrayIterImpl(){
 	TClass<ArrayImpl::ArrayIterImpl> p("ArrayIter");
 	p.inherit(Iterator());
-	p.method("iter_first", &ArrayImpl::ArrayIterImpl::iter_first);
+	p.method("restart", &ArrayImpl::ArrayIterImpl::restart);
+	p.method("iter_first", &ArrayImpl::ArrayIterImpl::iter_next);
 	p.method("iter_next", &ArrayImpl::ArrayIterImpl::iter_next);
 }
 

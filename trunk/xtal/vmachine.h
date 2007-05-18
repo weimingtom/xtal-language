@@ -57,11 +57,11 @@ public:
 	* @brief 関数を呼び出す用意をする。
 	*
 	*/
-	void setup_call(int_t required_result_count) const;
-	void setup_call(int_t required_result_count, const Any& a1) const;
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2) const;
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3) const;
-	void setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4) const;
+	void setup_call(int_t need_result_count) const;
+	void setup_call(int_t need_result_count, const Any& a1) const;
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2) const;
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3) const;
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4) const;
 	
 	/**
 	* @brief 引数を積む。
@@ -184,16 +184,16 @@ public:
 	int_t named_arg_count() const;
 	
 	/**
-	* @brief 呼び出し元が必要としている戻り値の数。
+	* @brief 呼び出し元が戻り値を必要としているかどうか。
 	*
 	*/
-	int_t required_result_count() const;
+	bool need_result() const;
 	
 	/**
 	* @brief 呼び出し元に引数の数だけの戻り値を返す。
 	*
-	* required_result_countの方が数が多い場合はその分nullが返される。
-	* required_result_countの方が数が少ない場合は返した値は捨てられる。
+	* need_result_countの方が数が多い場合はその分nullが返される。
+	* need_result_countの方が数が少ない場合は返した値は捨てられる。
 	*/
 	void return_result() const;
 	void return_result(const Any& value1) const;

@@ -1052,6 +1052,15 @@ CODE_PUSH_CURRENT_CONTINUATION,
 */
 CODE_BREAKPOINT,
 
+/**
+* @brief スタックに現在実行中の関数呼び出しに戻り値が必要かどうかをプッシュする。
+* 
+* format op
+* stack [] -> [value]
+*/
+CODE_PUSH_NEED_RESULT,
+
+
 CODE_MAX
 
 };

@@ -51,12 +51,20 @@ builtin::CompileError: class(Exception){
 }		
 
 Enumerable::collect: method(conv){ return this.each.collect(conv); }
+Enumerable::map: method(conv){ return this.each.map(conv); }
 Enumerable::select: method(pred){ return this.each.select(pred); }
+Enumerable::filter: method(pred){ return this.each.filter(pred); }
 Enumerable::to_a: method(){ return this.each.to_a; }
 Enumerable::join: method(sep:","){ return this.each.join(sep); }
 Enumerable::with_index: method(start:0){ return this.each.with_index(start); }
 Enumerable::iter_first: method(){ return this.each.iter_first; }
-
+Enumerable::cycle: method(){ return this.each.cycle; }
+Enumerable::break_if: method(pred){ return this.each.break_if(pred); }
+Enumerable::take: method(times){ return this.each.take(times); }
+Enumerable::zip: method(...){ return this.each.zip(...); }
+Enumerable::unique: method(){ return this.each.unique; }
+Enumerable::unique_if: method(pred){ return this.each.unique_if(pred); }
+Enumerable::chain: method(){ return this.each.chain; }
 
 Iterator::to_a: method{
 	ret: [];
@@ -67,17 +75,17 @@ Iterator::to_a: method{
 }
 
 Iterator::join: method(sep:","){
-	ret: "";
+	ret: StringStream();
 	first: true;
 	this{
 		if(first){
 			first = false;
 		}else{
-			ret ~= sep;
+			ret.write(sep);
 		}
-		ret ~= it.to_s;
+		ret.write(it.to_s);
 	}
-	return ret;
+	return ret.to_s;
 }
 
 Iterator::with_index: method(start:0){
@@ -97,6 +105,8 @@ Iterator::collect: method(conv){
 	}
 }
 
+Iterator::map: Iterator::collect;
+
 Iterator::select: method(pred){
 	return fiber{
 		this{
@@ -107,8 +117,93 @@ Iterator::select: method(pred){
 	}
 }
 
-Iterator::each: method{ return this; }
+Iterator::filter: Iterator::select;
 
+Iterator::each: method{ 
+	return this; 
+}
+
+
+Iterator::break_if: method(pred){
+	return fiber{
+		this{
+			if(pred(it))
+				break;
+			yield it;
+		}
+	}
+}
+
+Iterator::take: method(times){
+	return fiber{
+		i: 0;
+		this{
+			if(i>=times)
+				break;
+			yield it;
+			i++;
+		}
+	}
+}
+
+Iterator::zip: method(...){
+	return builtin::zip(this, ...);
+}
+
+Iterator::unique: method(){
+	return fiber{
+		prev: once class{}
+		this{
+			if(prev!=it){
+				yield it;
+				prev = it;
+			}
+		}
+	}
+}
+
+Iterator::unique_if: method(pred){
+	return fiber{
+		prev: once class{}
+		this{
+			if(pred(it, prev)){
+				yield it;
+				prev = it;
+			}
+		}
+	}
+}
+
+builtin::chain: fun(...){
+	arg: ...;
+	return fiber{
+		arg.each_ordered{
+			it{
+				yield it;
+			}
+		}
+	}
+}
+
+Iterator::chain: method(...){
+	return builtin::chain(this, ...);
+}
+
+Iterator::cycle: method{
+	return fiber{
+		temp: [];
+		this{
+			temp.push_back(it);
+			yield it;
+		}
+		
+		for(;;){
+			temp{
+				yield it;
+			}
+		}
+	}
+}
 
 Any::p: method{
 	println(this.to_s);
@@ -183,17 +278,17 @@ builtin::open: fun(file_name, mode: "r"){
 	return ret;
 }
 
-Mutex::iter_first: method(){
+Mutex::iter_first: method{
 	this.lock;
 	return this;
 }
 
-Mutex::iter_next: method(){
+Mutex::iter_next: method{
 	this.unlock;
 	return null;
 }
 
-Mutex::iter_break: method(){
+Mutex::iter_break: method{
 	this.unlock;
 	return null;
 }

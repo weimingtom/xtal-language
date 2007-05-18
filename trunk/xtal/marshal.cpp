@@ -13,6 +13,11 @@
 
 namespace xtal{
 
+enum{
+	MARSHAL_VERSION1 = 1,
+	MARSHAL_VERSION2 = 0,
+};
+
 Marshal::Marshal(const Stream& s)
 	:stream_(s){
 }
@@ -86,7 +91,9 @@ void Marshal::inner_dump(const Any& v){
 		}else if(cls.raweq(TClass<Fun>::get()) && v.object_name()==String("<TopLevel>")){
 			CodeImpl* p = (CodeImpl*)((Fun*)&v)->code().impl();
 			stream_.p8('X'); stream_.p8('T'); stream_.p8('A'); stream_.p8('L');
-			stream_.p8(VERSION1); stream_.p8(VERSION2); stream_.p8(VERSION3); stream_.p8(VERSION4);
+			stream_.p8(MARSHAL_VERSION1); stream_.p8(MARSHAL_VERSION2); 
+			stream_.p8(0); 
+			stream_.p8(0);
 			
 			int_t sz;
 
@@ -248,7 +255,13 @@ Any Marshal::inner_load(){
 				throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009"));
 			}
 
-			stream_.u8(); stream_.u8(); stream_.u8(); stream_.u8();
+			xtal::u8 version1 = stream_.u8(), version2 = stream_.u8();
+			//if(version1!=MARSHAL_VERSION1){
+			//	throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009"));
+			//}
+			
+			stream_.u8();
+			stream_.u8();
 		
 			int_t sz;
 

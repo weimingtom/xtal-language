@@ -289,9 +289,9 @@ public:
 			set_class(TClass<MembersIterImpl>::get());
 		}
 
-		void iter_first(const VMachine& vm){
+		Any restart(){
 			it_ = frame_.impl()->map_members_;
-			iter_next(vm);
+			return this;
 		}
 
 		void iter_next(const VMachine& vm){

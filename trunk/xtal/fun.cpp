@@ -183,7 +183,8 @@ void InitFiber(){
 	TClass<Fiber> p("Fiber");
 	p.inherit(TClass<Fun>::get());
 	p.inherit(Iterator());
-	p.method("iter_first", &Fiber::iter_first);
+	p.method("restart", &Fiber::restart);
+	p.method("iter_first", &Fiber::iter_next);
 	p.method("iter_next", &Fiber::iter_next);
 	p.method("iter_break", &Fiber::iter_break);
 }
@@ -193,8 +194,9 @@ Fiber::Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core)
 	new(*this) FiberImpl(outer, th, code, core);
 }
 
-void Fiber::iter_first(const VMachine& vm){
-	impl()->iter_first(vm);
+Any Fiber::restart(){
+	impl()->iter_break();
+	return *this;
 }
 
 void Fiber::iter_next(const VMachine& vm){

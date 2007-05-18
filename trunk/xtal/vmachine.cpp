@@ -37,24 +37,24 @@ VMachine::VMachine(){
 	new(*this) VMachineImpl();
 }
 
-void VMachine::setup_call(int_t required_result_count) const{
-	impl()->setup_call(required_result_count);
+void VMachine::setup_call(int_t need_result_count) const{
+	impl()->setup_call(need_result_count);
 }
 
-void VMachine::setup_call(int_t required_result_count, const Any& a1) const{
-	impl()->setup_call(required_result_count, a1);
+void VMachine::setup_call(int_t need_result_count, const Any& a1) const{
+	impl()->setup_call(need_result_count, a1);
 }
 
-void VMachine::setup_call(int_t required_result_count, const Any& a1, const Any& a2) const{
-	impl()->setup_call(required_result_count, a1, a2);
+void VMachine::setup_call(int_t need_result_count, const Any& a1, const Any& a2) const{
+	impl()->setup_call(need_result_count, a1, a2);
 }
 
-void VMachine::setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3) const{
-	impl()->setup_call(required_result_count, a1, a2, a3);
+void VMachine::setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3) const{
+	impl()->setup_call(need_result_count, a1, a2, a3);
 }
 
-void VMachine::setup_call(int_t required_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4) const{
-	impl()->setup_call(required_result_count, a1, a2, a3, a4);
+void VMachine::setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4) const{
+	impl()->setup_call(need_result_count, a1, a2, a3, a4);
 }
 	
 void VMachine::set_call_flags(int_t flags) const{
@@ -129,8 +129,8 @@ int_t VMachine::named_arg_count() const{
 	return impl()->named_arg_count();
 }
 
-int_t VMachine::required_result_count() const{
-	return impl()->required_result_count();
+bool VMachine::need_result() const{
+	return impl()->need_result();
 }
 
 void VMachine::return_result() const{

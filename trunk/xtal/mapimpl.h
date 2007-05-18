@@ -162,15 +162,16 @@ public:
 		MapIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapIterImpl>::get());
+			restart();
 		}
 
-		void iter_first(const VMachine& vm){
+		Any restart(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
-			iter_next(vm);
+			return this;
 		}
-
+		
 		void iter_next(const VMachine& vm){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			while(!node_){
@@ -203,13 +204,14 @@ public:
 		MapKeyIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapKeyIterImpl>::get());
+			restart();
 		}
 
-		void iter_first(const VMachine& vm){
+		Any restart(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
-			iter_next(vm);
+			return this;
 		}
 
 		void iter_next(const VMachine& vm){
@@ -244,13 +246,14 @@ public:
 		MapValueIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapValueIterImpl>::get());
+			restart();
 		}
-
-		void iter_first(const VMachine& vm){
+		
+		Any restart(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
-			iter_next(vm);
+			return this;
 		}
 
 		void iter_next(const VMachine& vm){

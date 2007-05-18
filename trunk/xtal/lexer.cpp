@@ -95,7 +95,6 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("true"), (int_t)Token::KEYWORD_TRUE);
 	keyword_map_.set_at(ID("nop"), (int_t)Token::KEYWORD_NOP);
 	keyword_map_.set_at(ID("xtal"), (int_t)Token::KEYWORD_XTAL);
-	keyword_map_.set_at(ID("debug"), (int_t)Token::KEYWORD_DEBUG);
 	keyword_map_.set_at(ID("try"), (int_t)Token::KEYWORD_TRY);
 	keyword_map_.set_at(ID("catch"), (int_t)Token::KEYWORD_CATCH);
 	keyword_map_.set_at(ID("finally"), (int_t)Token::KEYWORD_FINALLY);
@@ -116,6 +115,7 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("switch"), (int_t)Token::KEYWORD_SWITCH);
 	keyword_map_.set_at(ID("case"), (int_t)Token::KEYWORD_CASE);
 	keyword_map_.set_at(ID("default"), (int_t)Token::KEYWORD_DEFAULT);
+	keyword_map_.set_at(ID("need_result"), (int_t)Token::KEYWORD_NEED_RESULT);
 }
 
 LPCCommon* Lexer::common(){

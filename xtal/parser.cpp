@@ -1517,7 +1517,7 @@ Stmt* Parser::parse_switch(){
 
 Stmt* Parser::parse_throw(){
 	UnaStmt* p = XTAL_NEW UnaStmt(lexer_.line(), CODE_THROW);
-	p->expr = parse_expr();
+	p->expr = parse_expr_must();
 	expect_end();
 	return p;
 }

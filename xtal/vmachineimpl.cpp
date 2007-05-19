@@ -1639,26 +1639,18 @@ void VMachineImpl::hook_return(const u8* pc){
 void VMachineImpl::THROW(const u8* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		Any e = pop();
-		if(!e){
-			e = String("");
-		}
-		if(!e.is(builtin().member("Exception"))){
+		if(e && !e.is(builtin().member("Exception"))){
 			e = builtin().member("RuntimeError")(e);
 		}
-		//e = append_backtrace(pc, e);
 		throw e;
 	}
 }
 
 void VMachineImpl::THROW_UNSUPPROTED_ERROR(int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any hint1a = ff().hint1();
 		String hint1 = ff().hint1().object_name();
 		String hint2 = ff().hint2();
 		throw unsupported_error(hint1, hint2);
-		//pop_ff();
-		//const u8* pc = ff().pc;
-		//THROW2(pc, unsupported_error(hint1, hint2), stack_size, fun_frames_size);
 	}
 }
 	
@@ -1772,7 +1764,7 @@ const u8* VMachineImpl::CATCH_BODY(const u8* lpc, const Any& e, int_t stack_size
 			ff().scopes.downsize(1);
 		}
 
-		resize(ef.stack_count);
+		stack_.downsize_n(ef.stack_count);
 		if(ef.catch_pc && e){
 			pc = ef.catch_pc;
 			push(Any(ef.end_pc-source()));

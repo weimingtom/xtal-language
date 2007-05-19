@@ -153,7 +153,7 @@ static Any max_(const Any& a, const Any& b){
 			}
 		}
 	}
-	return 0;
+	return a<b ? b : a;
 }
 
 static Any min_(const Any& a, const Any& b){
@@ -171,7 +171,7 @@ static Any min_(const Any& a, const Any& b){
 			}
 		}
 	}
-	return 0;
+	return a<b ? a : b;
 }
 
 class Random{
@@ -1087,9 +1087,12 @@ Enumerable::cycle: method(){ return this.each.cycle; }
 Enumerable::break_if: method(pred){ return this.each.break_if(pred); }
 Enumerable::take: method(times){ return this.each.take(times); }
 Enumerable::zip: method(...){ return this.each.zip(...); }
-Enumerable::unique: method(){ return this.each.unique; }
-Enumerable::unique_if: method(pred){ return this.each.unique_if(pred); }
+Enumerable::unique: method(pred:null){ return this.each.unique(pred); }
 Enumerable::chain: method(){ return this.each.chain; }
+Enumerable::max_element: method(pred:null){ return this.each.max_element(pred); }
+Enumerable::min_element: method(pred:null){ return this.each.min_element(pred); }
+Enumerable::find: method(pred){ return this.each.find(pred); }
+Enumerable::inject: method(init, fn){ return this.each.inject(init, fn); }
 	))();
 
 
@@ -1179,23 +1182,22 @@ Iterator::zip: method(...){
 	return builtin::zip(this, ...);
 }
 
-Iterator::unique: method(){
-	return fiber{
-		prev: once class{}
-		this{
-			if(prev!=it){
-				yield it;
-				prev = it;
+Iterator::unique: method(pred:null){
+	prev: once class{}
+	if(pred){
+		return fiber{
+			this{
+				if(pred(it, prev)){
+					yield it;
+					prev = it;
+				}
 			}
 		}
 	}
-}
 
-Iterator::unique_if: method(pred){
 	return fiber{
-		prev: once class{}
 		this{
-			if(pred(it, prev)){
+			if(prev!=it){
 				yield it;
 				prev = it;
 			}
@@ -1232,6 +1234,74 @@ Iterator::cycle: method{
 			}
 		}
 	}
+}
+	))();
+
+	Xsrc((
+Iterator::max_element: method(pred:null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item<it)
+				item = it;
+		}else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::min_element: method(pred:null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item>it)
+				item = it;
+		}else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::find: method(pred){
+	this{
+		if(pred(it)){
+			return it;
+		}
+	}
+}
+
+Iterator::inject: method(init, fn){
+	result: init;
+	this{
+		init = fn(result, it);
+	}
+	return init;
 }
 	))();
 
@@ -1471,7 +1541,8 @@ export [
 	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
 	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
 	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が重複定義されました",
-];))());
+];
+	))());
 
 	add_get_text_map(Xsrc((
 	export [

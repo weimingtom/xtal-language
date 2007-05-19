@@ -72,8 +72,7 @@ int main(int argc, char** argv){
 		 
 		handle_argv(argv);
 
-
-//*
+/*
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");

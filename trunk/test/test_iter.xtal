@@ -35,3 +35,17 @@
 	assert n==1;
 }
 
+{
+	foo: fun(it, fn){
+		it{
+			return fn(it);
+		}
+	}
+	
+	assert foo(100.times, |x|x+5)==5;
+	assert foo([5, 2, 8], |x|x*2)==10;
+}
+
+{
+	assert [5, 7, 66, 8, 2].with_index.find(|x|x[1]>10)[1]==66;
+}

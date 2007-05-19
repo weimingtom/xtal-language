@@ -108,13 +108,8 @@ public:
 	}
 
 	Map cat_assign(const Map& a){
-		for(uint_t i = 0; i<size_; ++i){
-			Node* p = a.impl()->begin_[i];
-			while(p){
-				Node* next = p->next;
-				set_at(p->key, p->value);
-				p = next;
-			}
+		Xfor2(k, v, a.pairs()){
+			set_at(k, v);
 		}		
 		return Map(this);
 	}

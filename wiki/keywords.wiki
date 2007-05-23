@@ -1,0 +1,12 @@
+#summary 予約語一覧
+
+||if||for||else||fun||method||
+||do||while||continue||break||fiber||
+||yield||return||once||null||false||
+||true||nop||xtal||try||catch||
+||finally||throw||class||import||callee||
+||current_context||this||dofun||is||export||
+||unittest||assert||pure||nobreak||switch||
+||current_continuation||case||default||need_result|| ||
+
+

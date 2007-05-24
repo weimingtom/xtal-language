@@ -1,2 +1,1 @@
-
-[priority]
+[priority 演算子の優先順位]

@@ -1,0 +1,87 @@
+
+==classリテラル==
+classを生成する式です。
+{{{
+TestClass: class{
+   
+  @value; // インスタンス変数@valueを宣言
+  @test: 100; // このような初期化の仕方も可能。
+   
+  initialize: method(){ // initializeという名前のメソッドはインスタンス生成時に呼び出される
+    @value = 0; // インスタンス変数@valueを0で初期化
+  }
+   
+  add: method(val){ // メソッドaddを定義
+    @value += val; // インスタンス変数@valueにvalを足す
+  }
+   
+  print: method(){
+    println(@value);
+  }
+}
+ 
+t: TestClass(); // classオブジェクトに対し、関数呼び出し式を使うとそのインスタンスを生成できる
+t.add(10);
+t.print(); // 10が出力される
+}}}
+
+インスタンス変数は外部から参照することが出来ません。
+{{{
+ t.@value
+}}}
+という式は不正です。
+
+インスタンス変数は、そのclass生成式のスコープの中にあるメソッドからしかアクセスすることが出来ません。
+つまり、サブクラスの中からでも継承元のインスタンス変数は不可視です。
+
+また、Xtalではclassの定義後にメソッドを追加することが可能ですが、
+その中でもインスタンス変数に触ることは出来ません。
+{{{
+TestClass::access: method(){
+  @value = 10; // エラー！
+}
+}}}
+
+そのため継承先に同名のインスタンス変数があったとしても競合することはありません。
+それらは完全に別のモノとして扱われます。
+
+==クラス定義後のメソッド追加==
+ _classname_ *`::`* _ident_ *`:`* _expr_ ;
+
+{{{
+Foo: class{}
+
+Foo::hoge: method(){}
+}}}
+
+または、classを作り、それを元のクラスにinheritすることでも追加できます。
+
+{{{
+Bar: class{
+  boo: method(){}
+}
+
+Foo.inherit(Bar);
+}}}
+
+===継承===
+classの継承は次のような書式です。
+{{{
+A: class{
+  foo: method(){
+   
+  }
+}
+B: class(A){
+  bar: method(){
+   
+  }
+}
+}}}
+===多重継承===
+Xtalではclassの多重継承をサポートします。カンマで区切って指定します。
+{{{
+C: class(Foo, Bar){
+ 
+}
+}}}

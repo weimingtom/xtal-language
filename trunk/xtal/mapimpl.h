@@ -108,7 +108,7 @@ public:
 	}
 
 	Map cat_assign(const Map& a){
-		Xfor2(k, v, a.pairs()){
+		Xfor2(k, v, a.each_pair()){
 			set_at(k, v);
 		}		
 		return Map(this);
@@ -268,19 +268,19 @@ public:
 		}
 	};
 	
-	Any pairs(){
+	Any each_pair(){
 		Any ret;
 		new(ret) MapIterImpl(this);
 		return ret;
 	}
 	
-	Any keys(){
+	Any each_key(){
 		Any ret;
 		new(ret) MapKeyIterImpl(this);
 		return ret;
 	}
 	
-	Any values(){
+	Any each_value(){
 		Any ret;
 		new(ret) MapValueIterImpl(this);
 		return ret;
@@ -288,7 +288,7 @@ public:
 	
 	Map clone(){
 		Map ret;
-		Xfor2(k, v, pairs()){
+		Xfor2(k, v, each_pair()){
 			ret.set_at(k, v);
 		}
 		return ret;

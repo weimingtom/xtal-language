@@ -70,7 +70,7 @@ public:
 		call_helper(vm, true);
 	}
 
-	void iter_break();
+	void halt();
 
 	void call(const VMachine& vm){
 		call_helper(vm, false);

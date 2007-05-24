@@ -136,7 +136,7 @@ void ClassImpl::call(const VMachine& vm){
 	if(const Any& ret = member(Xid(new))){
 		ret.call(vm);
 	}else{
-		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name()));
+		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
 }
 
@@ -144,7 +144,7 @@ void ClassImpl::marshal_new(const VMachine& vm){
 	if(const Any& ret = member(Xid(marshal_new))){
 		ret.call(vm);
 	}else{
-		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name()));
+		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
 }
 
@@ -180,7 +180,7 @@ void ClassImpl::def(const ID& name, const Any& value){
 		value.set_object_name(name, object_name_force(), this);
 	}else{
 		if((it->flags&NOMEMBER)==0){
-			throw builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name));
+			XTAL_THROW(builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
 		}else{
 			it->flags = 0;
 			it->mutate_count = 0;
@@ -419,7 +419,8 @@ const Any& LibImpl::rawdef(const ID& name, const Any& value, int_t*& pmutate_cou
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
 	}else{
-		throw builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name));
+		XTAL_THROW(builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
+		return null;
 	}
 }
 

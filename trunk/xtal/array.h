@@ -129,12 +129,6 @@ public:
 	Array to_a() const;
 	
 	/**
-	* @brief 子要素が配列なら配列のままで、配列じゃないなら配列に直した要素を持つ配列を返す
-	*
-	*/
-	Array bp_to_a() const;
-	
-	/**
 	* @brief 浅いコピーを返す
 	*
 	*/

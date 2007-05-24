@@ -27,9 +27,9 @@ public:
 	
 	int_t length() const;
 	
-	Any ordered_args() const;
+	Any each_ordered_arg() const;
 	
-	Any named_args() const;
+	Any each_named_arg() const;
 
 	ArgumentsImpl* impl() const{ return (ArgumentsImpl*)Any::impl(); }
 };

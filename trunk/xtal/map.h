@@ -77,26 +77,26 @@ public:
 	* @brief keyとvalueをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any pairs() const;
+	Any each_pair() const;
 
 	/**
 	* @brief keyをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any keys() const;
+	Any each_key() const;
 
 	/**
 	* @brief valueをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any values() const;
+	Any each_value() const;
 
 	/**
 	* @brief keyとvalueをブロックパラメータとするIteratorを返す
 	*
-	* pairsと同じ
+	* each_pairと同じ
 	*/
-	Any each() const{ return pairs(); }
+	Any each() const{ return each_pair(); }
 
 	/**
 	* @brief keyに対応する値を削除する

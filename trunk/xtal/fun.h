@@ -66,7 +66,7 @@ public:
 
 	void iter_next(const VMachine& vm);
 	
-	void iter_break();
+	void halt();
 
 	FiberImpl* impl() const{ return (FiberImpl*)Any::impl(); }
 };

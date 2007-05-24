@@ -97,9 +97,9 @@ void CodeBuilder::interactive_compile(){
 			put_code_u8(CODE_THROW);
 
 			fun.set_core(&p_->xfun_core_table_[0]);
-			try{
+			XTAL_TRY{
 				vmachine().impl()->execute(fun, &p_->code_[pc_pos]);
-			}catch(Any& e){
+			}XTAL_CATCH(e){
 				printf("%s\n", e.to_s().c_str());
 			}
 			

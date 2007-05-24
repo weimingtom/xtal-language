@@ -83,7 +83,7 @@ void Marshal::inner_dump(const Any& v){
 			const Map& a = (const Map&)v;
 			stream_.p8(MAP);
 			stream_.p32(a.size());
-			Xfor2(key, value, a.pairs()){
+			Xfor2(key, value, a.each_pair()){
 				inner_dump(key);
 				inner_dump(value);
 			}
@@ -252,12 +252,12 @@ Any Marshal::inner_load(){
 			CodeImpl* p = new(guard) CodeImpl();
 
 			if(stream_.u8()!='T' || stream_.u8()!='A' || stream_.u8()!='L'){
-				throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009"));
+				XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
 			}
 
 			xtal::u8 version1 = stream_.u8(), version2 = stream_.u8();
 			//if(version1!=MARSHAL_VERSION1){
-			//	throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009"));
+			//	XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
 			//}
 			
 			stream_.u8();
@@ -337,7 +337,7 @@ Any Marshal::demangle(int_t n){
 		}
 	}
 	if(!ret){
-		throw builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Xid(name)=lvalues_[n]));
+		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Xid(name)=lvalues_[n])));
 	}
 	return ret;
 }
@@ -422,7 +422,7 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 			}else{
 				stream_.write("[\n");
 				tab++;
-				Xfor2(key, value, a.pairs()){
+				Xfor2(key, value, a.each_pair()){
 					put_tab(tab);
 					inner_to_script(key, tab);
 					stream_.write(": ");

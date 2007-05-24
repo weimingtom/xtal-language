@@ -224,11 +224,11 @@ void thread_entry(const Any& thread){
 
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		VMachine vm;
-		try{
+		XTAL_TRY{
 			vm.setup_call(0);
 			((ThreadImpl*)thread.impl())->value().call(vm);
 			vm.cleanup_call();
-		}catch(Any e){
+		}XTAL_CATCH(e){
 			std::cout << e << std::endl;
 		}
 		vm.reset();
@@ -239,7 +239,8 @@ void thread_entry(const Any& thread){
 
 Thread::Thread(const Any& fun){
 	if(!thread_lib_){
-		throw unsupported_error("Thread", "new");
+		XTAL_THROW(unsupported_error("Thread", "new"));
+		return;
 	}
 	*this = Thread(thread_lib_->create_thread(&thread_entry, fun));
 }
@@ -268,7 +269,8 @@ void Thread::join() const{
 
 Mutex::Mutex(){
 	if(!thread_lib_temp_){
-		throw unsupported_error("Mutex", "new");
+		XTAL_THROW(unsupported_error("Mutex", "new"));
+		return;
 	}
 	*this = Mutex(thread_lib_temp_->create_mutex()); 
 	impl()->dec_ref_count();

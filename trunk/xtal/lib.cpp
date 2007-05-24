@@ -28,7 +28,8 @@ Any compile_file(const String& file_name){
 		return fun;
 	}
 	fs.close();
-	throw builtin().member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors());
+	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()));
+	return null;
 }
 
 Any compile(const String& source){
@@ -37,7 +38,8 @@ Any compile(const String& source){
 	if(Any fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
-	throw builtin().member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors());
+	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()));
+	return null;
 }
 
 Any load(const String& file_name){
@@ -61,7 +63,8 @@ Any source(const char* src, int_t size, const char* file){
 	if(Any fun = cb.compile(ms, file)){
 		return fun;
 	}
-	throw builtin().member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors());
+	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()));
+	return null;
 }
 
 void ix(){
@@ -506,6 +509,41 @@ Any unsupported_error(const Any& name, const Any& member){
 	return builtin().member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
 		Xid(object)=name, Xid(name)=(member ? member : Any("()"))
 	));
+}
+
+namespace{
+	void default_except_handler(const Any& except, const char* file, int line){
+#ifdef XTAL_NO_EXCEPT
+		printf("%s(%d):%s\n", file, line, except.to_s().c_str());
+		exit(1);
+#endif
+	}
+
+	except_handler_t except_handler_ = &default_except_handler;
+	Any except_;
+}
+
+except_handler_t except_handler(){
+	return except_handler_;
+}
+
+void set_except_handler(except_handler_t handler){
+	except_handler_ = handler;
+}
+
+Any except(){
+	Any ret = except_;
+	except_ = null;
+	return ret;
+}
+
+void set_except(const Any& except){
+	static bool init = false;
+	if(!init){
+		init = true;
+		add_long_life_var(&except_);
+	}
+	except_ = except;
 }
 
 struct FormatString : public AnyImpl{
@@ -1088,7 +1126,7 @@ Enumerable::break_if: method(pred){ return this.each.break_if(pred); }
 Enumerable::take: method(times){ return this.each.take(times); }
 Enumerable::zip: method(...){ return this.each.zip(...); }
 Enumerable::unique: method(pred:null){ return this.each.unique(pred); }
-Enumerable::chain: method(){ return this.each.chain; }
+Enumerable::chain: method(other){ return this.each.chain(other); }
 Enumerable::max_element: method(pred:null){ return this.each.max_element(pred); }
 Enumerable::min_element: method(pred:null){ return this.each.min_element(pred); }
 Enumerable::find: method(pred){ return this.each.find(pred); }
@@ -1357,13 +1395,39 @@ builtin::load: fun(file_name, ...){
 
 Arguments::each: method{
 	return fiber{ 
-		this.ordered_args.with_index{ |i, v|
+		this.each_ordered_arg.with_index{ |i, v|
 			yield i, v;
 		}
-		this.named_args{ |i, v|
+		this.each_named_arg{ |i, v|
 			yield i, v;
 		}
 	}
+}
+
+Arguments::each_pair: Arguments::each;
+
+Arguments::pairs: method(){
+	return this.each.to_a;
+}
+
+Arguments::ordered_args: method(){
+	return this.each_ordered_arg.to_a;
+}
+
+Arguments::named_args: method(){
+	return this.each_named_arg.to_a;
+}
+
+Map::pairs: method(){
+	return this.each_pair.to_a;
+}
+
+Map::values: method(){
+	return this.each_value.to_a;
+}
+
+Map::keys: method(){
+	return this.each_key.to_a;
 }
 
 Fun::call: method(...){
@@ -1372,9 +1436,9 @@ Fun::call: method(...){
 
 builtin::open: fun(file_name, mode: "r"){
 	ret: null;
-	try{
+	XTAL_TRY{
 		ret = FileStream(file_name, mode);
-	}catch(e){
+	}XTAL_CATCH(e){
 		ret = null;
 	}
 	return ret;

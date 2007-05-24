@@ -283,7 +283,7 @@ private:
 			}
 		}
 		if(!ret){
-			throw builtin().member("RuntimeError")(Xt("%sにアクセスできません。")(lvalues_[n]));
+			XTAL_THROW(builtin().member("RuntimeError")(Xt("%sにアクセスできません。")(lvalues_[n])));
 		}
 		return ret;
 	}

@@ -31,12 +31,12 @@ public:
 		return ordered_.length();
 	}
 	
-	Any ordered_args(){
+	Any each_ordered_arg(){
 		return ordered_.each();
 	}
 	
-	Any named_args(){
-		return named_.pairs();
+	Any each_named_arg(){
+		return named_.each_pair();
 	}
 
 public:
@@ -620,10 +620,9 @@ private:
 
 	const u8* TRY_BEGIN(const u8* pc);
 	const u8* TRY_END(const u8* pc);
-	const u8* CATCH_BODY(const u8* pc, const Any& e, int_t stack_size, int_t fun_frames_size);
-	void THROW(const u8* pc, int_t stack_size, int_t fun_frames_size);
-	void THROW2(const u8* lpc, const Any& e, int_t stack_size, int_t fun_frames_size);
-	void THROW_UNSUPPROTED_ERROR(int_t stack_size, int_t fun_frames_size);
+	const u8* CATCH_BODY(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size);
+	void THROW(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size);
+	void THROW_UNSUPPROTED_ERROR(Any& e, int_t stack_size, int_t fun_frames_size);
 	const u8* CHECK_ASSERT(const u8* lpc, int_t stack_size, int_t fun_frames_size);
 	const u8* BREAKPOINT(const u8* pc);
 

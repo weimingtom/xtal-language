@@ -46,10 +46,10 @@ void InitMap(){
 	p.method("set_at", &Map::set_at);
 	p.method("op_at", &Map::at);
 	p.method("op_set_at", &Map::set_at);
-	p.method("each", &Map::pairs);
-	p.method("pairs", &Map::pairs);
-	p.method("keys", &Map::keys);
-	p.method("values", &Map::values);
+	p.method("each", &Map::each_pair);
+	p.method("each_pair", &Map::each_pair);
+	p.method("each_key", &Map::each_key);
+	p.method("each_value", &Map::each_value);
 	p.method("clone", &Map::clone);
 	p.method("op_cat", &Map::cat);
 	p.method("op_cat_assign", &Map::cat_assign);
@@ -79,16 +79,16 @@ String Map::to_s() const{
 	return impl()->to_s();
 }
 
-Any Map::pairs() const{ 
-	return impl()->pairs();
+Any Map::each_pair() const{ 
+	return impl()->each_pair();
 }
 
-Any Map::keys() const{ 
-	return impl()->keys();
+Any Map::each_key() const{ 
+	return impl()->each_key();
 }
 
-Any Map::values() const{ 
-	return impl()->values();
+Any Map::each_value() const{ 
+	return impl()->each_value();
 }
 
 Map Map::clone() const{ 

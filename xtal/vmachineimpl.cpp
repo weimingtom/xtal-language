@@ -81,12 +81,12 @@ const Any& VMachineImpl::result(int_t pos){
 		pop_ff();
 		//downsize(rrc);
 		if(Any uerror = builtin().member("UnsupportedError")){
-			throw uerror(Xt("%s :: '%s' は定義されていません")(
+			XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
 				hint1 ? hint1 : String("?"),
-				hint2 ? hint2 : String("()"))); 
+				hint2 ? hint2 : String("()")))); 
 		}else{
 			//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
-			throw "未定義エラー";
+			XTAL_THROW(null);
 		}
 	}
 
@@ -273,19 +273,16 @@ const u8* VMachineImpl::resume_fiber(const Fiber& fun, const u8* pc, VMachineImp
 }
 
 void VMachineImpl::exit_fiber(){
-	try{
+	XTAL_TRY{
 		yield_result_count_ = 0;
-
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 		ff().pc = resume_pc_;
-	
 		resume_pc_ = 0;
-
 		execute(&throw_nop_code_);
-		ff().calling_state = FunFrame::CALLING_STATE_NONE;
-	}catch(const Any&){
-		reset();
+	}XTAL_CATCH(e){
+		(void)e;
 	}
+	reset();
 }
 
 void VMachineImpl::reset(){
@@ -480,7 +477,9 @@ void VMachineImpl::execute(const u8* start){ XTAL_GLOBAL_INTERPRETER_UNLOCK{
 	int_t stack_size = stack_.size();
 	int_t fun_frames_size = fun_frames_.size();
 
-retry:try{begin:
+	Any except;
+
+retry:XTAL_TRY{begin:
 
 /*
 CodeType ct=(CodeType)*pc;
@@ -560,8 +559,23 @@ switch(*pc){
 
 	XTAL_VM_CASE(CODE_EXIT){ resume_pc_ = 0; return; }
 
-	XTAL_VM_CASE(CODE_THROW_UNSUPPORTED_ERROR){ THROW_UNSUPPROTED_ERROR(stack_size, fun_frames_size); }
-	XTAL_VM_CASE(CODE_THROW_NULL){ throw null; }
+	XTAL_VM_CASE(CODE_TRY_BEGIN){ pc = TRY_BEGIN(pc); }
+	XTAL_VM_CASE(CODE_TRY_END){ pc = TRY_END(pc); }
+
+	XTAL_VM_CASE(CODE_THROW){ 
+		THROW(pc, except, stack_size, fun_frames_size); 
+		goto except_catch; 
+	}
+
+	XTAL_VM_CASE(CODE_THROW_UNSUPPORTED_ERROR){ 
+		THROW_UNSUPPROTED_ERROR(except, stack_size, fun_frames_size); 
+		goto except_catch;
+	}
+
+	XTAL_VM_CASE(CODE_THROW_NULL){ 
+		except = null; 
+		goto except_catch; 
+	}
 
 	XTAL_VM_CASE(CODE_BLOCK_BEGIN){ 
 		FrameCore* p = code().get_frame_core(get_u16(pc+1)); 
@@ -580,10 +594,6 @@ switch(*pc){
 
 	XTAL_VM_CASE(CODE_FRAME_BEGIN){ pc = FRAME_BEGIN(pc); }
 	XTAL_VM_CASE(CODE_FRAME_END){ pc = FRAME_END(pc); }
-
-	XTAL_VM_CASE(CODE_TRY_BEGIN){ pc = TRY_BEGIN(pc); }
-	XTAL_VM_CASE(CODE_TRY_END){ pc = TRY_END(pc); }
-	XTAL_VM_CASE(CODE_THROW){ THROW(pc, stack_size, fun_frames_size); }
 
 	XTAL_VM_CASE(CODE_INSTANCE_VARIABLE){ pc = INSTANCE_VARIABLE(pc); }
 	XTAL_VM_CASE(CODE_SET_INSTANCE_VARIABLE){ pc = SET_INSTANCE_VARIABLE(pc); }
@@ -681,14 +691,20 @@ switch(*pc){
 
 goto begin;
 
-}}catch(const Any& e){
-	pc = CATCH_BODY(pc, e, stack_size, fun_frames_size);
-	goto retry;
-}/*catch(...){
-	pc = CATCH_BODY(pc, null, stack_size, fun_frames_size);
-	throw;
-}*/
+}}XTAL_CATCH(e){
+	except = e;
+	goto except_catch;
+}
 
+except_catch:
+	pc = CATCH_BODY(pc, except, stack_size, fun_frames_size);
+	if(pc){
+		goto retry;
+	}
+
+	if(except){
+		XTAL_THROW(except);
+	}
 }}
 	
 const u8* VMachineImpl::ARRAY_APPEND(const u8* pc){
@@ -889,7 +905,7 @@ const u8* VMachineImpl::GLOBAL_VARIABLE(const u8* pc){
 		if(const Any& ret = code().toplevel().member(symbol(get_u16(pc+1)))){
 			push(ret);
 		}else{
-			throw unsupported_error("toplevel", symbol(get_u16(pc+1)));
+			XTAL_THROW(unsupported_error("toplevel", symbol(get_u16(pc+1))));
 		}
 	}
 	return pc+3;
@@ -917,7 +933,7 @@ const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 		p->set_variable(n, code().get_frame_core(m), pop());
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
+			XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		}
 	}
 	return pc+4;
@@ -931,7 +947,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 		push(p->variable(n, code().get_frame_core(m)));
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
+			XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		}
 	}
 	return pc+4;
@@ -953,7 +969,7 @@ const u8* VMachineImpl::MEMBER(const u8* pc){
 		if(const Any& ret = target.member(name)){
 			set(ret);
 		}else{
-			throw unsupported_error(target.object_name(), symbol(get_u16(pc+1)));
+			XTAL_THROW(unsupported_error(target.object_name(), symbol(get_u16(pc+1))));
 		}
 	}
 	return pc+3; 
@@ -1065,7 +1081,7 @@ void VMachineImpl::YIELD(const u8* pc){
 	}else{
 		downsize(yield_result_count_);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			throw builtin().member("BadYieldError")(Xt("Xtal Runtime Error 1012")); 
+			XTAL_THROW(builtin().member("BadYieldError")(Xt("Xtal Runtime Error 1012"))); 
 		}
 	}
 }
@@ -1636,40 +1652,21 @@ void VMachineImpl::hook_return(const u8* pc){
 	}
 }
 
-void VMachineImpl::THROW(const u8* pc, int_t stack_size, int_t fun_frames_size){
+void VMachineImpl::THROW(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any e = pop();
+		e = pop();
 		if(e && !e.is(builtin().member("Exception"))){
 			e = builtin().member("RuntimeError")(e);
 		}
-		throw e;
 	}
 }
 
-void VMachineImpl::THROW_UNSUPPROTED_ERROR(int_t stack_size, int_t fun_frames_size){
+void VMachineImpl::THROW_UNSUPPROTED_ERROR(Any& e, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		String hint1 = ff().hint1().object_name();
-		String hint2 = ff().hint2();
-		throw unsupported_error(hint1, hint2);
+		e = unsupported_error(ff().hint1().object_name(), ff().hint2());
 	}
 }
 	
-void VMachineImpl::THROW2(const u8* pc, const Any& e, int_t stack_size, int_t fun_frames_size){
-	Any ep = e;
-	ep = append_backtrace(pc+1, ep);
-	if(fun_frames_size<=(int_t)fun_frames_.size()){
-		hook_return(pc);
-		pop_ff();
-	}
-	while(fun_frames_size<=(int_t)fun_frames_.size()){
-		ep = append_backtrace(ff().pc, ep);
-		hook_return(pc);
-		pop_ff();
-	}
-	resize(stack_size);
-	throw ep;
-}	
-
 const u8* VMachineImpl::CHECK_ASSERT(const u8* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		Any expr = get(2);
@@ -1725,14 +1722,27 @@ const u8* VMachineImpl::BREAKPOINT(const u8* pc){
 	return pc+2;
 }
 
-const u8* VMachineImpl::CATCH_BODY(const u8* lpc, const Any& e, int_t stack_size, int_t fun_frames_size){
+const u8* VMachineImpl::CATCH_BODY(const u8* lpc, Any& e, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		if(fun_frames_size>(int_t)fun_frames_.size()){
-			throw e;
+			return 0;
 		}
 		
 		if(except_frames_.empty()){
-			THROW2(lpc, e, stack_size, fun_frames_size);
+			Any ep = e;
+			ep = append_backtrace(lpc+1, ep);
+			if(fun_frames_size<=(int_t)fun_frames_.size()){
+				hook_return(lpc);
+				pop_ff();
+			}
+			while(fun_frames_size<=(int_t)fun_frames_.size()){
+				ep = append_backtrace(ff().pc, ep);
+				hook_return(lpc);
+				pop_ff();
+			}
+			resize(stack_size);
+			e = ep;
+			return 0;
 		}
 
 		ExceptFrame& ef = except_frames_.top();
@@ -1751,7 +1761,8 @@ const u8* VMachineImpl::CATCH_BODY(const u8* lpc, const Any& e, int_t stack_size
 			}else{
 				pop_ff();
 				resize(stack_size);
-				throw e;
+				e = ep;
+				return 0;
 			}
 		}
 

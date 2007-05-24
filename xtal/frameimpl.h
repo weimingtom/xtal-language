@@ -46,7 +46,8 @@ public:
 				return variables_info_[0].pos;
 			}	
 		}
-		throw builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003"));
+		XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+		return 0;
 	}
 	
 	bool empty(){

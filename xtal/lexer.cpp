@@ -175,7 +175,7 @@ String Lexer::token2str(const Token& t){
 		XTAL_NODEFAULT;
 		
 		XTAL_CASE(Token::TYPE_KEYWORD){
-			Xfor2(key, value, keyword_map_.send("pairs")){
+			Xfor2(key, value, keyword_map_.send("each_pair")){
 				if(value.ivalue()==t.ivalue()){
 					return String("Keyword");
 				}
@@ -214,7 +214,7 @@ String Lexer::token2str(const Token& t){
 }
 
 ID Lexer::keyword2id(int_t v){
-	Xfor2(key, value, keyword_map_.pairs()){
+	Xfor2(key, value, keyword_map_.each_pair()){
 		if(value.ivalue()==v){
 			return (const String&)key;
 		}

@@ -151,8 +151,14 @@ Any get_get_text_map();
 Any source(const char* src, int_t size, const char* file);
 
 void print(const VMachine& vm);
-
 void println(const VMachine& vm);
+
+typedef void (*except_handler_t)(const Any& except, const char* file, int line);
+except_handler_t except_handler();
+void set_except_handler(except_handler_t handler);
+
+Any except();
+void set_except(const Any& except);
 
 void InitFormat();
 void InitInt();
@@ -217,14 +223,39 @@ void enable();
 */
 void disable();
 
+/**
+* @brief デバッグ機能が有効かどうか
+*/
 bool is_enabled();
 
+/**
+* @brief 行が実行される度に呼び出されるフック関数を登録する
+*/
 void set_line_hook(const Any& hook);
+
+/**
+* @brief 関数呼び出しされる度に呼び出されるフック関数を登録する
+*/
 void set_call_hook(const Any& hook);
+
+/**
+* @brief 関数からreturnされる度に呼び出されるフック関数を登録する
+*/
 void set_return_hook(const Any& hook);
 
+/**
+* @brief set_line_hook関数で登録した関数を取得する
+*/
 Any line_hook();
+
+/**
+* @brief set_call_hook関数で登録した関数を取得する
+*/
 Any call_hook();
+
+/**
+* @brief set_return_hook関数で登録した関数を取得する
+*/
 Any return_hook();
 
 }

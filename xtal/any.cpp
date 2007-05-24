@@ -161,7 +161,7 @@ void initialize(){
 	initialize_lib();
 	/**/
 	
-	atexit(&uninitialize); // uninitialize‚ð“o˜^‚·‚é
+	//atexit(&uninitialize); // uninitialize‚ð“o˜^‚·‚é
 }
 
 void uninitialize(){

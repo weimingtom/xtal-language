@@ -15,15 +15,16 @@
 
 //#define XTAL_USE_COMPRESSED_ANY
 //#define XTAL_NO_PARSER
+#define XTAL_NO_EXCEPT
 
 #if defined(_DEBUG) || defined(DEBUG)
 #	define XTAL_DEBUG
 #endif
 
 #ifdef XTAL_DEBUG
-# define XTAL_ASSERT(expr) assert(expr)
+#	define XTAL_ASSERT(expr) assert(expr)
 #else
-# define XTAL_ASSERT(expr)
+#	define XTAL_ASSERT(expr)
 #endif
 
 #define XTAL_ASSERT_TYPE_CHECK(expr, type) XTAL_ASSERT_1(::xtal::cast<type*>(expr), #type)
@@ -48,6 +49,16 @@
 #define XTAL_GLOBAL_INTERPRETER_LOCK if(GlobalInterpreterLock global_interpreger_lock = 0)
 #define XTAL_GLOBAL_INTERPRETER_UNLOCK if(GlobalInterpreterUnlock global_interpreger_unlock = 0)
 #define XTAL_UNLOCK if(XUnlock xxunlock = 0)
+
+#ifdef XTAL_NO_EXCEPT
+#	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); }while(0)
+#	define XTAL_TRY 
+#	define XTAL_CATCH(e) if(const Any& e = ::xtal::except())
+#else
+#	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
+#	define XTAL_TRY try
+#	define XTAL_CATCH(e) catch(const Any& e)
+#endif
 
 namespace xtal{
 

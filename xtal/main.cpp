@@ -7,6 +7,7 @@
 #include "all_src.h"
 #endif
 
+
 using namespace xtal;
 
 static void print_usage(){
@@ -55,8 +56,6 @@ void debug_line(const debug::Info& info){
 		}
 	}
 }
-
-#include <windows.h>
 
 int main(int argc, char** argv){
 

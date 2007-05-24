@@ -11,10 +11,6 @@ void InitFun(){
 	
 	TClass<Method> met("Method");
 	met.inherit(fun);
-
-	TClass<Fiber> fib("Fiber");
-	fib.inherit(fun);
-	fib.method("finalize", &Fiber::iter_break);
 }
 
 FunImpl::FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core)
@@ -26,30 +22,30 @@ void FunImpl::check_arg(const VMachine& vm){
 	int_t n = vm.ordered_arg_count();
 	if(n<core_->min_param_count || (!core_->used_args_object && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
-			throw builtin().member("InvalidArgumentError")(
+			XTAL_THROW(builtin().member("InvalidArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
 					Xid(name)=object_name(),
 					Xid(value)=n
 				)
-			);
+			));
 		}else{
 			if(core_->used_args_object){
-				throw builtin().member("InvalidArgumentError")(
+				XTAL_THROW(builtin().member("InvalidArgumentError")(
 					Xt("Xtal Runtime Error 1005")(
 						Xid(name)=object_name(),
 						Xid(min)=core_->min_param_count,
 						Xid(value)=n
 					)
-				);
+				));
 			}else{
-				throw builtin().member("InvalidArgumentError")(
+				XTAL_THROW(builtin().member("InvalidArgumentError")(
 					Xt("Xtal Runtime Error 1006")(
 						Xid(name)=object_name(),
 						Xid(min)=core_->min_param_count,
 						Xid(max)=core_->max_param_count,
 						Xid(value)=n
 					)
-				);
+				));
 			}
 		}
 	}
@@ -107,7 +103,7 @@ FiberImpl::~FiberImpl(){
 
 }
 
-void FiberImpl::iter_break(){
+void FiberImpl::halt(){
 	if(resume_pc_!=0){
 		vm_.impl()->exit_fiber();
 		resume_pc_ = 0;
@@ -186,7 +182,8 @@ void InitFiber(){
 	p.method("restart", &Fiber::restart);
 	p.method("iter_first", &Fiber::iter_next);
 	p.method("iter_next", &Fiber::iter_next);
-	p.method("iter_break", &Fiber::iter_break);
+	p.method("halt", &Fiber::halt);
+	p.method("finalize", &Fiber::halt);
 }
 
 Fiber::Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core)
@@ -195,7 +192,7 @@ Fiber::Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core)
 }
 
 Any Fiber::restart(){
-	impl()->iter_break();
+	impl()->halt();
 	return *this;
 }
 
@@ -203,8 +200,8 @@ void Fiber::iter_next(const VMachine& vm){
 	impl()->iter_next(vm);
 }
 
-void Fiber::iter_break(){
-	impl()->iter_break();
+void Fiber::halt(){
+	impl()->halt();
 }
 
 }

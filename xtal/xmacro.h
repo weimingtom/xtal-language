@@ -24,7 +24,7 @@
 * @brief foreachを簡単に記述するためのマクロ
 *
 * @code
-* Xfor(key, value, map.send("pairs")){
+* Xfor(key, value, map.send("each_pair")){
 *   // use key and value
 * }
 * @endcode

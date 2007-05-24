@@ -7,7 +7,8 @@
 
 namespace xtal{
 
-uint_t make_hashcode(const char* str, int_t size){
+uint_t make_hashcode(const char* p, int_t size){
+	const u8* str = (u8*)p;
 	uint_t value = 3;
 	for(int_t i = 0; i<size; i++){
 		value = value*137 + str[i] + (value>>16);
@@ -250,7 +251,7 @@ void StringImpl::common_init(int_t len){
 	set_class(TClass<String>::get());
 	size_ = len;
 	str_ = static_cast<char*>(user_malloc(size_+1));
-	str_[size_]=0;
+	str_[size_] = 0;
 	intern_ = false;
 }
 

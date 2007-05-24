@@ -9,8 +9,8 @@ void InitArguments(){
 	TClass<Arguments> p("Arguments");
 	p.method("length", &Arguments::length);
 	p.method("op_at", &Arguments::op_at);
-	p.method("ordered_args", &Arguments::ordered_args);
-	p.method("named_args", &Arguments::named_args);
+	p.method("each_ordered_arg", &Arguments::each_ordered_arg);
+	p.method("each_named_arg", &Arguments::each_named_arg);
 }
 
 Arguments::Arguments(){
@@ -25,12 +25,12 @@ int_t Arguments::length() const{
 	return impl()->length();
 }
 	
-Any Arguments::ordered_args() const{
-	return impl()->ordered_args();
+Any Arguments::each_ordered_arg() const{
+	return impl()->each_ordered_arg();
 }
 	
-Any Arguments::named_args() const{
-	return impl()->named_args();
+Any Arguments::each_named_arg() const{
+	return impl()->each_named_arg();
 }
 
 VMachine::VMachine(){

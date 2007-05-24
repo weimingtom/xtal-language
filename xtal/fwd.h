@@ -1,11 +1,13 @@
 
 #pragma once
 
+#include "allocator.h"
+#include "utility.h"
+
 #include <string>
 #include <algorithm>
 #include <stddef.h>
 
-#include "allocator.h"
 
 /**
 * ‘S‚Ä‚Ì—v‘f‚Íxtal namespace‚Ì’†
@@ -23,18 +25,56 @@ typedef unsigned int uint_t;
 
 /// byte
 typedef unsigned char byte_t;
-	
+
+template<int N>
+struct SelectInt{
+	typedef If<sizeof(signed char)==N,
+		signed char,
+		If<sizeof(signed short)==N, 
+			signed short,
+			If<sizeof(signed int)==N,
+				signed int,
+				If<sizeof(signed long)==N,
+					signed long,
+					void
+				>::type
+			>::type
+		>::type
+	>::type signed_t;
+
+	typedef If<sizeof(unsigned char)==N,
+		unsigned char,
+		If<sizeof(unsigned short)==N, 
+			unsigned short,
+			If<sizeof(unsigned int)==N,
+				unsigned int,
+				If<sizeof(unsigned long)==N,
+					unsigned long,
+					void
+				>::type
+			>::type
+		>::type
+	>::type unsigned_t;
+};
+
 /// 1-byte uint
-typedef unsigned char u8;
+typedef SelectInt<1>::unsigned_t u8;
 
 /// 2-byte uint
-typedef unsigned short u16;
+typedef SelectInt<2>::unsigned_t u16;
 	
+/// 4-byte uint
+typedef SelectInt<4>::unsigned_t u32;
+
+
 /// 1-byte int
-typedef signed char s8;
-	
+typedef SelectInt<1>::signed_t s8;
+
 /// 2-byte int
-typedef signed short s16;
+typedef SelectInt<2>::signed_t s16;
+	
+/// 4-byte int
+typedef SelectInt<4>::signed_t s32;
 
 typedef std::basic_string<char, std::char_traits<char>, Alloc<char> > string_t;
 

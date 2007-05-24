@@ -24,4 +24,4 @@
  * [expr_stmt 式文]
  * [define_variable 変数定義文]
  * [assign_stmt 代入文]
- * [assign_operatpr 代入演算文]
+ * [assign_operator 代入演算文]

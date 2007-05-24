@@ -1,21 +1,20 @@
-
 =構成=
-[comment コメント]
-[variable_name 変数名に使える文字]
-[keywords 予約語一覧]
+ * [comment コメント]
+ * [variable_name 変数名に使える文字]
+ * [keywords 予約語一覧]
 
 =式=
-[pseudo_variable 擬似変数]
+ * [pseudo_variable 擬似変数]
 ==リテラル==
-[number_literal 数値リテラル]
-[array_literal 配列式]
-[function_literal 関数リテラル]
-[class_literal クラスリテラル]
+ * [number_literal 数値リテラル]
+ * [array_literal 配列式]
+ * [function_literal 関数リテラル]
+ * [class_literal クラスリテラル]
 
 ==演算子==
-[basic_operator 基本的な演算子]
-[funcall 関数呼び出し]
-[methodcall メソッド呼び出し]
-[getmember メンバ取得]
-[priority 演算子の優先順位]
-[priority_control 空白による演算子の優先順位のコントロール]
+ * [basic_operator 基本的な演算子]
+ * [funcall 関数呼び出し]
+ * [methodcall メソッド呼び出し]
+ * [getmember メンバ取得]
+ * [priority 演算子の優先順位]
+ * [priority_control 空白による演算子の優先順位のコントロール]

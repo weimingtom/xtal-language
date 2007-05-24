@@ -19,3 +19,9 @@
  * [getmember メンバ取得]
  * [priority 演算子の優先順位]
  * [priority_control 空白による演算子の優先順位のコントロール]
+
+=文=
+ * [expr_stmt 式文]
+ * [define_variable 変数定義文]
+ * [assign_stmt 代入文]
+ * [assign_operatpr 代入演算文]

@@ -7,37 +7,37 @@ namespace xtal{
 
 void* cast_helper_helper_extend_anyimpl(const Any& a, const Class& cls){
 	if(a.is(cls)){ return (void*)a.impl(); }
-	XTAL_THROW(bad_cast_error(a, cls.object_name()));
+	XTAL_THROW(cast_error(a, cls.object_name()));
 	return 0;
 }
 
 void* cast_helper_helper_extend_any(const Any& a, const Class& cls){
 	if(a.is(cls)){ return (void*)&a; }
-	XTAL_THROW(bad_cast_error(a, cls.object_name()));
+	XTAL_THROW(cast_error(a, cls.object_name()));
 	return 0;
 }
 
 void* cast_helper_helper_other(const Any& a, const Class& cls){
 	if(a.is(cls)){ return ((UserData<int>&)a).get(); }
-	XTAL_THROW(bad_cast_error(a, cls.object_name()));
+	XTAL_THROW(cast_error(a, cls.object_name()));
 	return 0;
 }
 
 void* arg_cast_helper_helper_extend_anyimpl(const Any& a, int param_num, const Any& param_name, const Class& cls){
 	if(a.is(cls)){ return (void*)a.impl(); }
-	XTAL_THROW(invalid_argument_error(a, cls.object_name(), param_num, param_name));
+	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
 	return 0;
 }
 
 void* arg_cast_helper_helper_extend_any(const Any& a, int param_num, const Any& param_name, const Class& cls){
 	if(a.is(cls)){ return (void*)&a; }
-	XTAL_THROW(invalid_argument_error(a, cls.object_name(), param_num, param_name));
+	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
 	return 0;
 }
 
 void* arg_cast_helper_helper_other(const Any& a, int param_num, const Any& param_name, const Class& cls){
 	if(a.is(cls)){ return ((UserData<int>&)a).get(); }
-	XTAL_THROW(invalid_argument_error(a, cls.object_name(), param_num, param_name));
+	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
 	return 0;
 }
 
@@ -54,7 +54,7 @@ const ID* CastHelper<const ID*>::cast(const Any& a){
 	if(const ID* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(bad_cast_error(a, "interned String"));
+	XTAL_THROW(cast_error(a, "interned String"));
 	return 0;
 }
 
@@ -62,7 +62,7 @@ const ID* CastHelper<const ID*>::arg_cast(const Any& a, int param_num, const Any
 	if(const ID* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(invalid_argument_error(a, "interned String", param_num, param_name));
+	XTAL_THROW(argument_error(a, "interned String", param_num, param_name));
 	return 0;
 }
 
@@ -78,7 +78,7 @@ const char* CastHelper<const char*>::cast(const Any& a){
 	if(const char* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(bad_cast_error(a, TClass<String>::get().object_name()));
+	XTAL_THROW(cast_error(a, TClass<String>::get().object_name()));
 	return 0;
 }
 
@@ -86,7 +86,7 @@ const char* CastHelper<const char*>::arg_cast(const Any& a, int param_num, const
 	if(const char* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(invalid_argument_error(a, TClass<String>::get().object_name(), param_num, param_name));
+	XTAL_THROW(argument_error(a, TClass<String>::get().object_name(), param_num, param_name));
 	return 0;
 }
 
@@ -102,7 +102,7 @@ int_t CastHelper<int_t>::as(const Any& a){
 	
 int_t CastHelper<int_t>::cast(const Any& a){
 	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(bad_cast_error(a, String("Int"))); }
+		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, String("Int"))); }
 		XTAL_CASE(TYPE_INT){ return a.ivalue(); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(a.fvalue()); }
 	}
@@ -111,7 +111,7 @@ int_t CastHelper<int_t>::cast(const Any& a){
 
 int_t CastHelper<int_t>::arg_cast(const Any& a, int param_num, const Any& param_name){
 	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(invalid_argument_error(a, String("Int"), param_num, param_name)); }
+		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, String("Int"), param_num, param_name)); }
 		XTAL_CASE(TYPE_INT){ return a.ivalue(); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(a.fvalue()); }
 	}
@@ -129,7 +129,7 @@ float_t CastHelper<float_t>::as(const Any& a){
 	
 float_t CastHelper<float_t>::cast(const Any& a){
 	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(bad_cast_error(a, String("Float"))); }
+		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, String("Float"))); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(a.ivalue()); }
 		XTAL_CASE(TYPE_FLOAT){ return a.fvalue(); }
 	}
@@ -138,7 +138,7 @@ float_t CastHelper<float_t>::cast(const Any& a){
 
 float_t CastHelper<float_t>::arg_cast(const Any& a, int param_num, const Any& param_name){
 	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(invalid_argument_error(a, String("Float"), param_num, param_name)); }
+		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, String("Float"), param_num, param_name)); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(a.ivalue()); }
 		XTAL_CASE(TYPE_FLOAT){ return a.fvalue(); }
 	}

@@ -22,7 +22,7 @@ void FunImpl::check_arg(const VMachine& vm){
 	int_t n = vm.ordered_arg_count();
 	if(n<core_->min_param_count || (!core_->used_args_object && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
-			XTAL_THROW(builtin().member("InvalidArgumentError")(
+			XTAL_THROW(builtin().member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
 					Xid(name)=object_name(),
 					Xid(value)=n
@@ -30,7 +30,7 @@ void FunImpl::check_arg(const VMachine& vm){
 			));
 		}else{
 			if(core_->used_args_object){
-				XTAL_THROW(builtin().member("InvalidArgumentError")(
+				XTAL_THROW(builtin().member("ArgumentError")(
 					Xt("Xtal Runtime Error 1005")(
 						Xid(name)=object_name(),
 						Xid(min)=core_->min_param_count,
@@ -38,7 +38,7 @@ void FunImpl::check_arg(const VMachine& vm){
 					)
 				));
 			}else{
-				XTAL_THROW(builtin().member("InvalidArgumentError")(
+				XTAL_THROW(builtin().member("ArgumentError")(
 					Xt("Xtal Runtime Error 1006")(
 						Xid(name)=object_name(),
 						Xid(min)=core_->min_param_count,

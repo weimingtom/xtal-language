@@ -91,7 +91,7 @@ public:
 	* @brief 名前を与えて構築する
 	*
 	*/	
-	Class(const char* = 0);
+	Class(const ID& = ID(null));
 	
 	/**
 	* @brief クラスを生成せず、nullを入れる
@@ -208,7 +208,7 @@ protected:
 
 	static Class& make_impl(Any*& p);
 
-	Class(const char* name, Any*& p, init_tag);
+	Class(const ID& name, Any*& p, init_tag);
 
 };
 
@@ -226,7 +226,7 @@ public:
 	* @brief 名前を与えて構築する
 	*
 	*/	
-	TClass(const char* name = "")
+	TClass(const ID& name = ID(null))
 		:Class(name, pinst_, init_tag()){}
 	
 	/**

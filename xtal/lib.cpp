@@ -34,7 +34,7 @@ Any compile_file(const String& file_name){
 
 Any compile(const String& source){
 	CodeBuilder cb;
-	StringStream ms(source.c_str(), source.size());
+	MemoryStream ms(source.c_str(), source.size());
 	if(Any fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
@@ -59,7 +59,7 @@ Any load_and_save(const String& file_name){
 
 Any source(const char* src, int_t size, const char* file){
 	CodeBuilder cb;
-	StringStream ms(src, size);
+	MemoryStream ms(src, size);
 	if(Any fun = cb.compile(ms, file)){
 		return fun;
 	}
@@ -423,8 +423,8 @@ const Class& Iterator(){
 	return p;
 }
 
-const Class& Enumerable(){
-	static LLVar<Class> p("Enumerable");
+const Class& Enumerator(){
+	static LLVar<Class> p("Enumerator");
 	return p;
 }
 
@@ -482,22 +482,22 @@ const Any& nop(){
 	return obj;
 }
 
-Any bad_cast_error(const Any& from, const Any& to){
-	return builtin().member("BadCastError")(Xt("Xtal Runtime Error 1004")(
+Any cast_error(const Any& from, const Any& to){
+	return builtin().member("CastError")(Xt("Xtal Runtime Error 1004")(
 		Xid(type)=from.get_class().object_name(), Xid(required)=to
 	));
 }
 
-Any invalid_argument_error(const Any& from, const Any& to, int param_num, const Any& param_name){
+Any argument_error(const Any& from, const Any& to, int param_num, const Any& param_name){
 	if(param_name.to_b()){
-		return builtin().member("InvalidArgumentError")(Xt("Xtal Runtime Error 1001")(
+		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Xid(n)=param_num+1, 
 			Xid(param_name)=param_name, 
 			Xid(type)=from.get_class().object_name(), 
 			Xid(required)=to
 		));
 	}else{
-		return builtin().member("InvalidArgumentError")(Xt("Xtal Runtime Error 1001")(
+		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Xid(n)=param_num+1, 
 			Xid(param_name)=String(""), 
 			Xid(type)=from.get_class().object_name(), 
@@ -1017,14 +1017,14 @@ void initialize_lib(){
 	builtin.def("Float", TClass<Float>::get());
 	builtin.def("Arguments", TClass<Arguments>::get());
 	builtin.def("Iterator", Iterator());
-	builtin.def("Enumerable", Enumerable());
+	builtin.def("Enumerator", Enumerator());
 	builtin.def("Null", TClass<Null>::get());
 	builtin.def("Class", TClass<Class>::get());
 	builtin.def("Fun", TClass<Fun>::get());
 	builtin.def("Fiber", TClass<Fiber>::get());
 	builtin.def("Stream", TClass<Stream>::get());
 	builtin.def("FileStream", TClass<FileStream>::get());
-	builtin.def("StringStream", TClass<StringStream>::get());
+	builtin.def("MemoryStream", TClass<MemoryStream>::get());
 	builtin.def("Thread", TClass<Thread>::get());
 	builtin.def("Mutex", TClass<Mutex>::get());
 	builtin.def("Format", TClass<Format>::get());
@@ -1060,17 +1060,14 @@ void initialize_lib(){
 
 	Xsrc((
 builtin::Exception: class{
-	@message;
-	@backtrace;
+	backtrace: @backtrace;
+	message: @message;
 
 	initialize: method(message:""){
 		@message = message;
 		@backtrace = [];
 	}
 
-	backtrace: @backtrace;
-
-	message: @message;
 
 	append_backtrace: method(file, line, name){
 		if(name){
@@ -1090,21 +1087,22 @@ builtin::Exception: class{
 	}
 }
 
-builtin::RuntimeError: class(Exception){}
-builtin::IOError: class(Exception){}
-builtin::LogicError: class(Exception){}
-builtin::BadCastError: class(Exception){}
-builtin::InvalidArgumentError: class(Exception){}
-builtin::BadYieldError: class(Exception){}
-builtin::BadInstanceVariableError: class(Exception){}
-builtin::UnsupportedError: class(Exception){}
-builtin::BadRedefineError: class(Exception){}
-builtin::AssertionFailed: class(Exception){
+builtin::StandardError: class(Exception){}
+builtin::RuntimeError: class(StandardError){}
+builtin::IOError: class(StandardError){}
+builtin::LogicError: class(StandardError){}
+builtin::CastError: class(StandardError){}
+builtin::ArgumentError: class(StandardError){}
+builtin::YieldError: class(StandardError){}
+builtin::InstanceVariableError: class(StandardError){}
+builtin::UnsupportedError: class(StandardError){}
+builtin::RedefinedError: class(StandardError){}
+builtin::AssertionFailed: class(StandardError){
 	initialize: method(message, expr){
 		Exception::initialize(%t"'%s':%s"(expr, message));
 	}
 }
-builtin::CompileError: class(Exception){
+builtin::CompileError: class(StandardError){
 	initialize: method(message, errors){
 		Exception::initialize(%t"%s\n%s"(message, errors.join("\t\n")));
 	}		
@@ -1113,24 +1111,25 @@ builtin::CompileError: class(Exception){
 
 
 	Xsrc((
-Enumerable::collect: method(conv){ return this.each.collect(conv); }
-Enumerable::map: method(conv){ return this.each.map(conv); }
-Enumerable::select: method(pred){ return this.each.select(pred); }
-Enumerable::filter: method(pred){ return this.each.filter(pred); }
-Enumerable::to_a: method(){ return this.each.to_a; }
-Enumerable::join: method(sep:","){ return this.each.join(sep); }
-Enumerable::with_index: method(start:0){ return this.each.with_index(start); }
-Enumerable::iter_first: method(){ return this.each.iter_first; }
-Enumerable::cycle: method(){ return this.each.cycle; }
-Enumerable::break_if: method(pred){ return this.each.break_if(pred); }
-Enumerable::take: method(times){ return this.each.take(times); }
-Enumerable::zip: method(...){ return this.each.zip(...); }
-Enumerable::unique: method(pred:null){ return this.each.unique(pred); }
-Enumerable::chain: method(other){ return this.each.chain(other); }
-Enumerable::max_element: method(pred:null){ return this.each.max_element(pred); }
-Enumerable::min_element: method(pred:null){ return this.each.min_element(pred); }
-Enumerable::find: method(pred){ return this.each.find(pred); }
-Enumerable::inject: method(init, fn){ return this.each.inject(init, fn); }
+Enumerator::restart: method(){ return this.each.restart; }
+Enumerator::collect: method(conv){ return this.each.collect(conv); }
+Enumerator::map: method(conv){ return this.each.map(conv); }
+Enumerator::select: method(pred){ return this.each.select(pred); }
+Enumerator::filter: method(pred){ return this.each.filter(pred); }
+Enumerator::to_a: method(){ return this.each.to_a; }
+Enumerator::join: method(sep:","){ return this.each.join(sep); }
+Enumerator::with_index: method(start:0){ return this.each.with_index(start); }
+Enumerator::iter_first: method(){ return this.each.iter_first; }
+Enumerator::cycle: method(){ return this.each.cycle; }
+Enumerator::break_if: method(pred){ return this.each.break_if(pred); }
+Enumerator::take: method(times){ return this.each.take(times); }
+Enumerator::zip: method(...){ return this.each.zip(...); }
+Enumerator::unique: method(pred:null){ return this.each.unique(pred); }
+Enumerator::chain: method(other){ return this.each.chain(other); }
+Enumerator::max_element: method(pred:null){ return this.each.max_element(pred); }
+Enumerator::min_element: method(pred:null){ return this.each.min_element(pred); }
+Enumerator::find: method(pred){ return this.each.find(pred); }
+Enumerator::inject: method(init, fn){ return this.each.inject(init, fn); }
 	))();
 
 
@@ -1144,7 +1143,7 @@ Iterator::to_a: method{
 }
 
 Iterator::join: method(sep:","){
-	ret: StringStream();
+	ret: MemoryStream();
 	first: true;
 	this{
 		if(first){
@@ -1373,16 +1372,14 @@ Null::iter_first: method{
 builtin::range: fun(first, last, step:1){
 	if(step==1){
 		return fiber{
-			while(first<last){
-				yield first;
-				first++;
+			for(i:first; i<last; i++){
+				yield i;
 			}
 		}
 	}else{
 		return fiber{
-			while(first<last){
-				yield first;
-				first += step;
+			for(i:first; i<last; i+=step){
+				yield i;
 			}
 		}
 	}
@@ -1575,59 +1572,6 @@ Float::op_mod_r_Float: method(lhs){ return lhs % this; }
 Float::op_eq_r_Float: method(lhs){ return lhs == this; }
 Float::op_lt_r_Float: method(lhs){ return lhs < this; }
 	))();
-///////////////////////////////////////////////////////////
-
-	add_get_text_map(Xsrc((
-export [
-	"Xtal Compile Error 1001":"構文エラーです。",
-	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
-	"Xtal Compile Error 1003":"';' がありません。",
-	"Xtal Compile Error 1004":"continue文に対応するループ文がありません。",
-	"Xtal Compile Error 1005":"break文に対応するループ文がありません。",
-	"Xtal Compile Error 1006":"不正なcontinue文です。",
-	"Xtal Compile Error 1007":"不正なbreak文です。",
-	"Xtal Compile Error 1008":"不正な多重代入文です。",
-	"Xtal Compile Error 1009":"定義されていない変数 '%(name)s' に代入しようとしました 。",
-	"Xtal Compile Error 1010":"不正な数字リテラルのサフィックスです。",
-	"Xtal Compile Error 1011":"文字列リテラルの途中でファイルが終わりました。",
-	"Xtal Compile Error 1012":"不正な代入文の左辺です。",
-	"Xtal Compile Error 1013":"比較演算式の結果を演算しようとしています。",
-	"Xtal Compile Error 1014":"不正な浮動小数点数リテラルです。",
-	"Xtal Compile Error 1015":"不正な16進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1016":"assert文の引数の数が不正です。",
-	"Xtal Compile Error 1017":"不正な%%記法リテラルです。",
-	"Xtal Compile Error 1018":"default節が重複定義されました。",
-	"Xtal Compile Error 1019":"exportは一つのファイルで一つのみ許可されます。",
-	"Xtal Compile Error 1020":"不正な2進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1021":"コメントの途中でファイルが終わりました。",
-	"Xtal Compile Error 1022":"関数から返せる多値の最大は255個です。",
-	"Xtal Compile Error 1023":"定義されていないインスタンス変数名 '%(name)s' を参照しています。",
-	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
-	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が重複定義されました",
-];
-	))());
-
-	add_get_text_map(Xsrc((
-	export [
-	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)の型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1003":"不正なインスタンス変数の参照です。",
-	"Xtal Runtime Error 1004":"型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1005":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1006":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上、%(max)以下の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1007":"'%(name)s'関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1008":"%(name)sにアクセスできず、marshal loadに失敗しました。",
-	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
-	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' は既に定義されています。",
-	"Xtal Runtime Error 1012":"yieldがfiberの非実行中に実行されました。",
-	"Xtal Runtime Error 1013":"%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。",
-	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",
-	"Xtal Runtime Error 1015":"%(object)s :: '%(name)s' は定義されていません。",
-	"Xtal Runtime Error 1016":"ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。",
-];
-	))());
 }
 
 }

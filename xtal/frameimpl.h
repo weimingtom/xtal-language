@@ -46,7 +46,7 @@ public:
 				return variables_info_[0].pos;
 			}	
 		}
-		XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+		XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		return 0;
 	}
 	
@@ -300,6 +300,7 @@ public:
 				vm.return_result(this, it_->key, frame_.impl()->members_[it_->num]);
 				++it_;
 			}else{
+				restart();
 				vm.return_result(null);
 			}
 		}
@@ -400,11 +401,13 @@ class LibImpl : public ClassImpl{
 public:
 
 	LibImpl(){
-		set_object_name("lib", 1000, null);
+		set_object_name(Xid(lib), 1000, null);
+		set_class(TClass<LibImpl>::get());
 	}
 
 	LibImpl(const Array& path)
 		:path_(path){
+		set_class(TClass<LibImpl>::get());
 	}
 
 	virtual const Any& member(const ID& name);
@@ -412,6 +415,10 @@ public:
 	virtual const Any& member(const ID& name, int_t*& pmutate_count);
 
 	virtual void def(const ID& name, const Any& value);
+
+	void append_load_path(const String& path){
+		load_path_list_.push_back(path);
+	}
 
 private:
 
@@ -421,11 +428,12 @@ private:
 
 private:
 
+	Array load_path_list_;
 	Array path_;
 
 	virtual void visit_members(Visitor& m){
 		ClassImpl::visit_members(m);
-		m & path_;
+		m & path_ & load_path_list_;
 	}
 };
 

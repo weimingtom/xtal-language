@@ -101,6 +101,7 @@ public:
 
 		void iter_next(const VMachine& vm){
 			if(str_.size()<=index_){
+				restart();
 				vm.return_result(null);
 				return;
 			}

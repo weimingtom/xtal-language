@@ -340,6 +340,13 @@ public:
 
 	~Any();
 	
+private:
+
+	// AnyImplを継承していないポインタ型が渡されたとき、
+	// Any(bool)が使われるのを阻止するためのコンストラクタ
+	// 実装は無い。
+	Any(void*);
+
 public:
 	
 	/**

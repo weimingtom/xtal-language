@@ -28,13 +28,13 @@ typedef unsigned char byte_t;
 
 template<int N>
 struct SelectInt{
-	typedef If<sizeof(signed char)==N,
+	typedef typename If<sizeof(signed char)==N,
 		signed char,
-		If<sizeof(signed short)==N, 
+		typename If<sizeof(signed short)==N, 
 			signed short,
-			If<sizeof(signed int)==N,
+			typename If<sizeof(signed int)==N,
 				signed int,
-				If<sizeof(signed long)==N,
+				typename If<sizeof(signed long)==N,
 					signed long,
 					void
 				>::type
@@ -42,13 +42,13 @@ struct SelectInt{
 		>::type
 	>::type signed_t;
 
-	typedef If<sizeof(unsigned char)==N,
+	typedef typename If<sizeof(unsigned char)==N,
 		unsigned char,
-		If<sizeof(unsigned short)==N, 
+		typename If<sizeof(unsigned short)==N, 
 			unsigned short,
-			If<sizeof(unsigned int)==N,
+			typename If<sizeof(unsigned int)==N,
 				unsigned int,
-				If<sizeof(unsigned long)==N,
+				typename If<sizeof(unsigned long)==N,
 					unsigned long,
 					void
 				>::type
@@ -158,8 +158,8 @@ void uninitialize();
 void initialize_lib();
 bool initialized();
 
-Any bad_cast_error(const Any& from, const Any& to);
-Any invalid_argument_error(const Any& from, const Any& to, int param_num, const Any& param_name);
+Any cast_error(const Any& from, const Any& to);
+Any argument_error(const Any& from, const Any& to, int param_num, const Any& param_name);
 Any unsupported_error(const Any& name, const Any& member);
 
 template<class T>

@@ -109,7 +109,7 @@ public:
 	}
 	
 	String join(const String& sep){
-		StringStream ret;
+		MemoryStream ret;
 		for(int_t i = 0, sz = size(); i<sz; ++i){
 			ret.write(at(i).to_s());
 			if(i<sz-1){
@@ -120,7 +120,7 @@ public:
 	}
 
 	String to_s(){
-		StringStream ret;
+		MemoryStream ret;
 		ret.write("[");
 		ret.write(join(","));
 		ret.write("]");
@@ -161,6 +161,7 @@ public:
 			if(index_<array_.size()){
 				vm.return_result(this, array_.at(index_));
 			}else{
+				restart();
 				vm.return_result(null);
 			}
 		}

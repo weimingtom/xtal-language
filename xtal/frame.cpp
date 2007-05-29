@@ -1,4 +1,5 @@
 
+
 #include <algorithm>
 
 #include "xtal.h"
@@ -6,21 +7,26 @@
 
 namespace xtal{
 
-static void InitClassIterImpl(){
-	TClass<ClassImpl::MembersIterImpl> p("ClassMembersIter");
-	p.inherit(Iterator());
-	p.method("restart", &ClassImpl::MembersIterImpl::restart);
-	p.method("iter_first", &ClassImpl::MembersIterImpl::iter_next);
-	p.method("iter_next", &ClassImpl::MembersIterImpl::iter_next);
-}
-
 void InitClass(){
-	InitClassIterImpl();
-	
-	TClass<Class> p("Class");
-	p.method("inherit", &Class::inherit);
-	p.method("is_inherited", &Class::is_inherited);
-	p.method("members", &Class::members);
+	{
+		TClass<ClassImpl::MembersIterImpl> p("ClassMembersIter");
+		p.inherit(Iterator());
+		p.method("restart", &ClassImpl::MembersIterImpl::restart);
+		p.method("iter_first", &ClassImpl::MembersIterImpl::iter_next);
+		p.method("iter_next", &ClassImpl::MembersIterImpl::iter_next);
+	}
+
+	{
+		TClass<Class> p("Class");
+		p.method("inherit", &Class::inherit);
+		p.method("is_inherited", &Class::is_inherited);
+		p.method("members", &Class::members);
+	}
+
+	{
+		TClass<LibImpl> p("Lib");
+		p.method("append_load_path", &LibImpl::append_load_path);
+	}
 }
 
 
@@ -180,7 +186,7 @@ void ClassImpl::def(const ID& name, const Any& value){
 		value.set_object_name(name, object_name_force(), this);
 	}else{
 		if((it->flags&NOMEMBER)==0){
-			XTAL_THROW(builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
+			XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
 		}else{
 			it->flags = 0;
 			it->mutate_count = 0;
@@ -368,7 +374,7 @@ const Any& LibImpl::member(const ID& name){
 		return members_[it->num];
 	}else{
 		int_t* pmutate_count;
-		Xfor(var, builtin().member("lib_path").send("each")){
+		Xfor(var, load_path_list_.each()){
 			String file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal").to_s();
 			if(FILE* fp = fopen(file_name.c_str(), "r")){
 				fclose(fp);
@@ -388,7 +394,7 @@ const Any& LibImpl::member(const ID& name, int_t*& pmutate_count){
 		pmutate_count = &mutate_count_;
 		return members_[it->num];
 	}else{
-		Xfor(var, builtin().member("lib_path").send("each")){
+		Xfor(var, load_path_list_.each()){
 			String file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal").to_s();
 			if(FILE* fp = fopen(file_name.c_str(), "r")){
 				fclose(fp);
@@ -419,7 +425,7 @@ const Any& LibImpl::rawdef(const ID& name, const Any& value, int_t*& pmutate_cou
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
 	}else{
-		XTAL_THROW(builtin().member("BadRedefineError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
+		XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
 		return null;
 	}
 }
@@ -467,7 +473,7 @@ bool Frame::is_defined_by_xtal() const{
 	return impl()->is_defined_by_xtal();
 }
 
-Class::Class(const char* name, Any*& p, init_tag)
+Class::Class(const ID& name, Any*& p, init_tag)
 	:Frame(make_impl(p)){
 	impl()->set_object_name(name, 1, null);
 }
@@ -486,7 +492,7 @@ Class& Class::make_impl(Any*& p){
 	return *(Class*)p;
 }
 
-Class::Class(const char* name)
+Class::Class(const ID& name)
 	:Frame(null){
 	new(*this) ClassImpl();
 	impl()->set_object_name(name, 1, null);	

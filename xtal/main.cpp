@@ -57,21 +57,43 @@ void debug_line(const debug::Info& info){
 	}
 }
 
+//#include <crtdbg.h>
+
 int main(int argc, char** argv){
+
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
 
 	try{
 
 		set_thread();
 		initialize();
 
+
 		//debug::enable();
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-		 
+		
+		{
+			String path(argv[0]);
+
+#ifdef WIN32
+			String sep("\\");
+#else
+			String sep("/");
+#endif
+
+			Array temp = cast<Array>(path.split(sep).send("to_a"));
+			temp.pop_back();
+			temp.push_back("message.xtal");
+			path = temp.join(sep).to_s();
+			load(path);
+		}
+
 		handle_argv(argv);
 
-/*
+
+//*
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");

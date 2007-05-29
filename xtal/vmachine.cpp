@@ -7,6 +7,7 @@ namespace xtal{
 
 void InitArguments(){
 	TClass<Arguments> p("Arguments");
+	p.method("size", &Arguments::length);
 	p.method("length", &Arguments::length);
 	p.method("op_at", &Arguments::op_at);
 	p.method("each_ordered_arg", &Arguments::each_ordered_arg);

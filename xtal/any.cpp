@@ -156,7 +156,7 @@ void initialize(){
 	InitClass();
 	InitStream();
 	InitFileStream();
-	InitStringStream();
+	InitMemoryStream();
 
 	initialize_lib();
 	/**/
@@ -263,7 +263,7 @@ void gc(){
 		// mallocの中からgcが呼ばれている
 		if(calling_malloc()){
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count()
+				if((*it)->ref_count()!=0
 					// finalizeメソッドがあるオブジェクトも生き延びさせる
 					|| (*it)->get_class().member(finalize_id)){
 					std::swap(*it, *objects_alive++);
@@ -272,7 +272,7 @@ void gc(){
 				
 		}else{
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count()){
+				if((*it)->ref_count()!=0){
 					std::swap(*it, *objects_alive++);
 				}
 			}
@@ -306,7 +306,7 @@ void gc(){
 			objects_alive = objects_begin_+objects_gene_line_;
 
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count() || it<objects_finalized){
+				if((*it)->ref_count()!=0 || it<objects_finalized){
 					std::swap(*it, *objects_alive++);
 				}
 			}
@@ -371,7 +371,7 @@ void full_gc(){
 						while(!end){
 							end = true;
 							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-								if((*it)->ref_count() 
+								if((*it)->ref_count()!=0 
 									// finalizeメソッドがあるオブジェクトも生き延びさせる
 									|| (*it)->get_class().member(finalize_id)){
 									end = false;
@@ -389,7 +389,7 @@ void full_gc(){
 						while(!end){
 							end = true;
 							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-								if((*it)->ref_count()){
+								if((*it)->ref_count()!=0){
 									end = false;
 									(*it)->visit_members(m);
 									std::swap(*it, *objects_alive++);
@@ -447,7 +447,7 @@ void full_gc(){
 							while(!end){
 								end = true;
 								for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-									if((*it)->ref_count() || it<objects_finalized){
+									if((*it)->ref_count()!=0 || it<objects_finalized){
 										end = false;
 										(*it)->visit_members(m);
 										std::swap(*it, *objects_alive++);

@@ -3,7 +3,7 @@
 	10.times{ |v|
 		n += v;
 	}
-	assert n==45;
+	assert n==45, %f(n==%d)(n);
 }
 
 

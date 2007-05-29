@@ -81,6 +81,14 @@ public:
 
 	virtual void close() = 0;
 
+	virtual uint_t inpour(const Stream& in_stream, uint_t size){
+		xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+		uint_t len = in_stream.read(buf, size);
+		do_write(buf, len);
+		user_free(buf, size*sizeof(xtal::u8));
+		return len;
+	}
+
 	void iter_first(const VMachine& vm){
 		vm.return_result(this, this);
 	}
@@ -145,16 +153,16 @@ private:
 	FILE* fp_;
 };
 
-class StringStreamImpl : public StreamImpl{
+class MemoryStreamImpl : public StreamImpl{
 public:
 
-	StringStreamImpl(){
-		set_class(TClass<StringStream>::get());
+	MemoryStreamImpl(){
+		set_class(TClass<MemoryStream>::get());
 		pos_ = 0;
 	}
 	
-	StringStreamImpl(const void* data, uint_t data_size){
-		set_class(TClass<StringStream>::get());
+	MemoryStreamImpl(const void* data, uint_t data_size){
+		set_class(TClass<MemoryStream>::get());
 		data_.resize(data_size);
 		if(data_size>0){
 			memcpy(&data_[0], data, data_size);
@@ -200,6 +208,18 @@ public:
 
 	virtual void close(){
 
+	}
+
+	virtual uint_t inpour(const Stream& in_stream, uint_t size){
+		if(size==0){
+			return 0;
+		}
+
+		if(data_.size()-pos_<=size){
+			data_.resize(data_.size()-pos_+size);
+		}
+
+		return in_stream.read(&data_[pos_], size);
 	}
 
 	String to_s(){

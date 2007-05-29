@@ -202,7 +202,7 @@ as(const Any& a){
 /**
 * @brief TŒ^‚É•ÏŠ·‚·‚éB
 *
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("BadCastError")‚ª“Š‚°‚ç‚ê‚é
+* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("CastError")‚ª“Š‚°‚ç‚ê‚é
 */
 template<class T>
 inline typename CastResult<T>::type 
@@ -213,7 +213,7 @@ cast(const Any& a){
 /**
 * @brief TŒ^‚É•ÏŠ·‚·‚éB
 *
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("InvalidArgumentError")‚ª“Š‚°‚ç‚ê‚é
+* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("ArgumentError")‚ª“Š‚°‚ç‚ê‚é
 */
 template<class T>
 inline typename CastResult<T>::type 

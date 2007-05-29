@@ -9,14 +9,14 @@ void check_arg(const VMachine& vm, const ParamInfo& p){
 	int_t n = vm.ordered_arg_count();
 	if(n<p.min_param_count || n>p.max_param_count){
 		if(p.min_param_count==0 && p.max_param_count==0){
-			XTAL_THROW(builtin().member("InvalidArgumentError")(
+			XTAL_THROW(builtin().member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
 					Xid(name)=p.fun.cref().object_name(),
 					Xid(value)=n
 				)
 			));
 		}else{
-			XTAL_THROW(builtin().member("InvalidArgumentError")(
+			XTAL_THROW(builtin().member("ArgumentError")(
 				Xt("Xtal Runtime Error 1006")(
 					Xid(name)=p.fun.cref().object_name(),
 					Xid(min)=p.min_param_count,

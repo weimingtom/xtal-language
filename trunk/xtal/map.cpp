@@ -36,7 +36,7 @@ void InitMap(){
 	InitMapValueIterImpl();
 
 	TClass<Map> p("Map");
-	p.inherit(Enumerable());
+	p.inherit(Enumerator());
 	
 	p.def("new", New<Map>());
 	p.method("to_s", &Map::to_s);

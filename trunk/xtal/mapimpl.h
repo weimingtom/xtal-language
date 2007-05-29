@@ -174,6 +174,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
+					restart();
 					vm.return_result(null);
 					return;
 				}
@@ -216,6 +217,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
+					restart();
 					vm.return_result(null);
 					return;
 				}
@@ -258,6 +260,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
+					restart();
 					vm.return_result(null);
 					return;
 				}

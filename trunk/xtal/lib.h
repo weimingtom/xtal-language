@@ -121,9 +121,9 @@ const VMachine& vmachine();
 const Class& Iterator();
 
 /**
-* @brief Enumerableクラスを返す
+* @brief Enumeratorクラスを返す
 */
-const Class& Enumerable();
+const Class& Enumerator();
 
 /**
 * @brief builtinクラスを返す

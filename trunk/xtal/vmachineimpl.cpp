@@ -933,7 +933,7 @@ const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 		p->set_variable(n, code().get_frame_core(m), pop());
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+			XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		}
 	}
 	return pc+4;
@@ -947,7 +947,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 		push(p->variable(n, code().get_frame_core(m)));
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			XTAL_THROW(builtin().member("BadInstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+			XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		}
 	}
 	return pc+4;
@@ -1081,7 +1081,7 @@ void VMachineImpl::YIELD(const u8* pc){
 	}else{
 		downsize(yield_result_count_);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			XTAL_THROW(builtin().member("BadYieldError")(Xt("Xtal Runtime Error 1012"))); 
+			XTAL_THROW(builtin().member("YieldError")(Xt("Xtal Runtime Error 1012"))); 
 		}
 	}
 }

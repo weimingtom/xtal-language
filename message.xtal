@@ -27,7 +27,7 @@ export [
 	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
 	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が重複定義されました",
 	
-	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)の型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
+	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
 	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
 	"Xtal Runtime Error 1003":"不正なインスタンス変数の参照です。",
 	"Xtal Runtime Error 1004":"型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",

@@ -2,7 +2,7 @@
 #include "xtal.h"
 
 #ifdef _MSC_VER
-#pragma comment(lib, "../xtallib.lib") 
+#pragma comment(lib, "../../xtallib.lib") 
 #else
 #include "all_src.h"
 #endif
@@ -85,27 +85,31 @@ int main(int argc, char** argv){
 
 			Array temp = cast<Array>(path.split(sep).send("to_a"));
 			temp.pop_back();
+#ifdef WIN32
 			temp.push_back("message.xtal");
+#else
+			temp.push_back("message_en.xtal");
+#endif
 			path = temp.join(sep).to_s();
-			load(path);
+			add_get_text_map(load(path));
 		}
 
 		handle_argv(argv);
 
 
-//*
-		load("../../test/test_iter.xtal");
-		load("../../test/test_fib.xtal");
-		load("../../test/test_calc.xtal");
-		load("../../test/test_for.xtal");
-		load("../../test/test_except.xtal");
-		load("../../test/test_fiber.xtal");
-		load("../../test/test_if.xtal");
-		load("../../test/test_nested_loops.xtal");
-		load("../../test/test_assign.xtal");
-		load("../../test/test_op_assign.xtal");
-		load("../../test/test_inc.xtal");
-		load("../../test/test_toplevel.xtal");
+/*
+		load("test/test_iter.xtal");
+		load("test/test_fib.xtal");
+		load("test/test_calc.xtal");
+		load("test/test_for.xtal");
+		load("test/test_except.xtal");
+		load("test/test_fiber.xtal");
+		load("test/test_if.xtal");
+		load("test/test_nested_loops.xtal");
+		load("test/test_assign.xtal");
+		load("test/test_op_assign.xtal");
+		load("test/test_inc.xtal");
+		load("test/test_toplevel.xtal");
 //*/
 
 		/*

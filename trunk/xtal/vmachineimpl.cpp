@@ -134,6 +134,10 @@ void VMachineImpl::adjust_result(int_t n){
 	int_t need_result_count = ff().need_result_count;
 	int_t result_flag = ff().result_flag;		
 	ff().result_count = n;
+	adjust_result(n, need_result_count, result_flag);
+}
+
+void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_flag){
 
 	// ñﬂÇËílÇ»ÇÒÇƒóvãÅÇµÇƒÇ»Ç¢
 	if(need_result_count==0){
@@ -524,7 +528,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ push(decolonize()); pc+=1; }	
 	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_ARGS){ push(ff().arguments()); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 
 	XTAL_VM_CASE(CODE_IF){ pc = pop()!=null ? pc+3 : pc+get_s16(pc+1); }
@@ -1068,6 +1072,17 @@ const u8* VMachineImpl::PUSH_FUN(const u8* pc){
 	return pc+end;
 }
 
+const u8* VMachineImpl::PUSH_ARGS(const u8* pc){
+	for(int i=0, last=fun_frames_.size(); i<last; ++i){
+		if(const Arguments& args =  fun_frames_[i].arguments()){
+			push(args);
+			return pc + 1;
+		}
+	}
+	push(null);
+	return pc + 1;
+}
+
 const u8* VMachineImpl::RETURN(int_t n){
 	adjust_result(n);
 	pop_ff();
@@ -1602,11 +1617,18 @@ const u8* VMachineImpl::SHL_ASSIGN(const u8* pc){
 }
 
 const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
+	decolonize(); 
+
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any ret; new(ret) ContinuationImpl(clone(), pc);
+		u8 need_result_count = get_u8(pc+1);
+		u8 result_flag = get_u8(pc+2);
+		VMachine cloned_vm(clone());
+		Any ret; new(ret) ContinuationImpl(cloned_vm, need_result_count, result_flag, pc+3);
 		push(ret);
+		push(null);
+		adjust_result(2, need_result_count, result_flag);
 	}
-	return pc + 1;
+	return pc+3;
 }
 
 Any VMachineImpl::append_backtrace(const u8* pc, const Any& e){

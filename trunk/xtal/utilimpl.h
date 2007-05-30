@@ -27,6 +27,7 @@ public:
 class GCObserverImpl : public AnyImpl{
 public:
 	GCObserverImpl();
+	GCObserverImpl(const GCObserverImpl& v);
 	virtual ~GCObserverImpl();
 	virtual void before_gc(){}
 	virtual void after_gc(){}

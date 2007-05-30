@@ -65,9 +65,9 @@ int main(int argc, char** argv){
 
 	try{
 
+
 		set_thread();
 		initialize();
-
 
 		//debug::enable();
 		//debug::set_line_hook(fun(&debug_line));
@@ -95,6 +95,7 @@ int main(int argc, char** argv){
 		}
 
 		handle_argv(argv);
+
 
 
 /*

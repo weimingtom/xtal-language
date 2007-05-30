@@ -418,8 +418,16 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(CODE_PUSH_NOP); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(CODE_PUSH_THIS); }
 				XTAL_CASE(Token::KEYWORD_NEED_RESULT){ ret = e.pseudo(CODE_PUSH_NEED_RESULT); }
-				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ ret = e.pseudo(CODE_PUSH_CURRENT_CONTEXT); }
-				XTAL_CASE(Token::KEYWORD_CURRENT_CONTINUATION){ ret = e.pseudo(CODE_PUSH_CURRENT_CONTINUATION); }
+				
+				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){
+					e.scope_set_on_heap_flag(0);
+					ret = e.pseudo(CODE_PUSH_CURRENT_CONTEXT); 
+				}
+				
+				XTAL_CASE(Token::KEYWORD_CURRENT_CONTINUATION){
+					e.scope_set_on_heap_flag(0);
+					ret = e.pseudo(CODE_PUSH_CURRENT_CONTINUATION); 
+				}
 			}
 		}
 		
@@ -846,6 +854,7 @@ Stmt* Parser::parse_assign_stmt(){
 					XTAL_CASE(','){
 						MultipleAssignStmt* mas = XTAL_NEW MultipleAssignStmt(ln);
 						mas->lhs.push_back(lhs);
+						mas->discard = true;
 						parse_multiple_expr(&mas->lhs, &mas->discard);
 						
 						if(eat('=')){
@@ -997,7 +1006,6 @@ Expr* Parser::string2expr(string_t& str){
 }
 	
 void Parser::parse_multiple_expr(TList<Expr*>* exprs, bool* discard){
-	if(discard) *discard = false;
 	while(1){
 		if(Expr* p = parse_expr()){
 			if(discard) *discard = false;

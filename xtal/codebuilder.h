@@ -20,7 +20,7 @@ public:
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
-	void compile(Expr* p, int_t need_result_count=1);
+	void compile(Expr* p, int_t need_result_count=1, bool discard=false);
 	void compile(Stmt* p);	
 	
 	/**

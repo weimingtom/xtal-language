@@ -562,7 +562,7 @@ void CodeBuilder::adjust_result(int_t need_result_count, int_t result_count){
 
 #define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e=(KEY*)ex)
 
-void CodeBuilder::compile(Expr* ex, int_t need_result_count){
+void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 	int_t result_count = 1;
 
@@ -590,7 +590,14 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 		}
 
 		XTAL_EXPR_CASE(PseudoVariableExpr){
-			put_code_u8(e->code);
+			if(e->code==CODE_PUSH_CURRENT_CONTINUATION){
+				put_code_u8(e->code);
+				put_code_u8(need_result_count);
+				put_code_u8(discard ? RESULT_DISCARD : 0);
+				result_count = need_result_count;
+			}else{
+				put_code_u8(e->code);
+			}
 		}
 
 		XTAL_EXPR_CASE(CalleeExpr){
@@ -1347,8 +1354,6 @@ void CodeBuilder::compile(Stmt* ex){
 						}else{
 							rrc = 0;
 						}
-						compile(rhs->value, rrc);
-						pushed_count += rrc;
 
 						if(CallExpr* ce = expr_cast<CallExpr>(rhs->value)){
 							ce->discard = e->discard;
@@ -1358,10 +1363,20 @@ void CodeBuilder::compile(Stmt* ex){
 							ce->discard = e->discard;
 						}
 
+						compile(rhs->value, rrc);
+						pushed_count += rrc;
+
 						break;
 					}else{
-						compile(rhs->value);
-						pushed_count++;
+						int_t rrc;
+						if(pushed_count<e->lhs.size){
+							rrc = e->lhs.size - pushed_count;
+						}else{
+							rrc = 0;
+						}
+						compile(rhs->value, rrc, e->discard);
+						pushed_count += rrc;
+						break;
 					}
 				}else{
 					compile(rhs->value);

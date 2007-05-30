@@ -1099,12 +1099,12 @@ builtin::UnsupportedError: class(StandardError){}
 builtin::RedefinedError: class(StandardError){}
 builtin::AssertionFailed: class(StandardError){
 	initialize: method(message, expr){
-		Exception::initialize(%t"'%s':%s"(expr, message));
+		Exception::initialize(%f"'%s':%s"(expr, message));
 	}
 }
 builtin::CompileError: class(StandardError){
 	initialize: method(message, errors){
-		Exception::initialize(%t"%s\n%s"(message, errors.join("\t\n")));
+		Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));
 	}		
 }		
 	))();
@@ -1157,10 +1157,11 @@ Iterator::join: method(sep:","){
 }
 
 Iterator::with_index: method(start:0){
-	return fiber{		
+	return fiber{
+		i: start;
 		this{
-			yield start, it;
-			++start;
+			yield i, it;
+			++i;
 		}
 	}
 }
@@ -1220,9 +1221,10 @@ Iterator::zip: method(...){
 }
 
 Iterator::unique: method(pred:null){
-	prev: once class{}
+	tag: once class{}
 	if(pred){
 		return fiber{
+			prev: tag;
 			this{
 				if(pred(it, prev)){
 					yield it;
@@ -1233,6 +1235,7 @@ Iterator::unique: method(pred:null){
 	}
 
 	return fiber{
+		prev: tag;
 		this{
 			if(prev!=it){
 				yield it;

@@ -76,7 +76,9 @@ typedef SelectInt<2>::signed_t s16;
 /// 4-byte int
 typedef SelectInt<4>::signed_t s32;
 
-typedef std::basic_string<char, std::char_traits<char>, Alloc<char> > string_t;
+typedef char char_t;
+
+typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
 
 /**
 * プリミティブな型を示す整数値

@@ -104,6 +104,9 @@
 				RelativePath="..\..\xtal\cfun.cpp">
 			</File>
 			<File
+				RelativePath="..\..\xtal\ch.cpp">
+			</File>
+			<File
 				RelativePath="..\..\xtal\code.cpp">
 			</File>
 			<File
@@ -175,6 +178,9 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\cfun.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\ch.h">
 			</File>
 			<File
 				RelativePath="..\..\xtal\code.h">

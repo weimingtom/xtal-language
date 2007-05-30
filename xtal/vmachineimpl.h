@@ -59,40 +59,22 @@ public:
 
 	~VMachineImpl();
 
-	VMachineImpl(const VMachineImpl& vm)
-		:GCObserverImpl(vm){
-		end_code_ = vm.end_code_;
-		throw_unsupported_error_code_= vm.throw_unsupported_error_code_;
-		check_unsupported_code_= vm.check_unsupported_code_;
-		cleanup_call_code_= vm.cleanup_call_code_;
-		throw_nop_code_= vm.throw_nop_code_;
-		resume_pc_= vm.resume_pc_;
-		yield_result_count_= vm.yield_result_count_;
-		stack_= vm.stack_;
-		fun_frames_= vm.fun_frames_;
-		except_frames_= vm.except_frames_;	
-
-		myself_ = this;
-	}
 
 	VMachineImpl& operator=(const VMachineImpl& vm){
 		if(this==&vm)
 			return *this;
-		GCObserverImpl::operator=(vm);
-		end_code_ = vm.end_code_;
-		throw_unsupported_error_code_= vm.throw_unsupported_error_code_;
-		check_unsupported_code_= vm.check_unsupported_code_;
-		cleanup_call_code_= vm.cleanup_call_code_;
-		throw_nop_code_= vm.throw_nop_code_;
+		//GCObserverImpl::operator=(vm);
 		resume_pc_= vm.resume_pc_;
 		yield_result_count_= vm.yield_result_count_;
 		stack_= vm.stack_;
 		fun_frames_= vm.fun_frames_;
 		except_frames_= vm.except_frames_;	
-
-		myself_ = this;
 		return *this;
 	}
+
+private:
+
+	VMachineImpl(const VMachineImpl& vm);
 
 public:
 
@@ -217,6 +199,7 @@ public:
 	Arguments make_arguments();
 
 	void adjust_result(int_t n);
+	void adjust_result(int_t n, int_t need_result_count, int_t result_flag);
 	
 	void return_result(){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
@@ -386,7 +369,7 @@ public:
 	// srcのスタックの内容をsize個取り除いて、プッシュする。
 	void move(VMachineImpl* src, int_t size){ stack_.move(src->stack_, size); }
 	
-private:
+public:
 
 	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count){
 		push_ff(pc, need_result_count, 0, 0, 0, null);
@@ -582,6 +565,8 @@ private:
 	const u8* ARRAY_APPEND(const u8* pc);
 	const u8* MAP_APPEND(const u8* pc);
 	const u8* SET_NAME(const u8* pc);
+	
+	const u8* PUSH_ARGS(const u8* pc);
 
 	void SET_LOCAL_VARIABLE(int_t pos);
 	void LOCAL_VARIABLE(int_t pos);
@@ -716,9 +701,17 @@ private:
 
 protected:
 
-	void visit_members(Visitor& m){
+	virtual void visit_members(Visitor& m){
 		GCObserverImpl::visit_members(m);
-		m & fun_frames_ & debug_info_;
+		m & debug_info_;
+		
+		for(int_t i=0, size=stack_.size(); i<size; ++i){
+			m & stack_[i].cref();
+		}
+
+		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
+			m & fun_frames_.reverse_at_unchecked(i);
+		}
 	}
 
 	virtual void before_gc(){
@@ -744,16 +737,6 @@ protected:
 		}
 	}
 
-	/*
-	virtual bool finalize(){
-		if(resume_pc_){
-			exit_fiber();
-			return true;
-		}
-		return false;
-	}
-	*/
-
 public:
 
 	void print_info(){
@@ -767,20 +750,25 @@ public:
 class ContinuationImpl : public AnyImpl{
 public:
 
-	ContinuationImpl(const VMachine& vm, const u8* pc)
-		:vm_(vm), pc_(pc){
+	ContinuationImpl(const VMachine& vm, int_t need_result_count, int_t result_flag, const u8* pc)
+		:vm_(vm), need_result_count_(need_result_count), result_flag_(result_flag), pc_(pc){
 		set_class(TClass<Any>::get());
 	}
 
 	virtual void call(const VMachine& vm){
+		Any arg = vm.arg_default(0, null);
 		*vm.impl() = *vm_.impl();
-		vm.impl()->execute(pc_);
-		//vm.return_result();
+		vm.impl()->push(UncountedAny(this).cref());
+		vm.impl()->push(arg);
+		vm.impl()->adjust_result(2, need_result_count_, result_flag_);
+		vm.impl()->ff().pc = pc_;
 	}
 
 public:
 
 	VMachine vm_;
+	int_t need_result_count_;
+	int_t result_flag_;
 	const u8* pc_;
 
 	virtual void visit_members(Visitor& m){

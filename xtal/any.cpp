@@ -495,6 +495,14 @@ GCObserverImpl::GCObserverImpl(){
 	}
 	*gcobservers_current_++ = this;
 }
+
+GCObserverImpl::GCObserverImpl(const GCObserverImpl& v)
+:AnyImpl(v){
+	if(gcobservers_current_==gcobservers_end_){
+		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
+	}
+	*gcobservers_current_++ = this;
+}
 	
 GCObserverImpl::~GCObserverImpl(){
 	for(GCObserverImpl** p = gcobservers_begin_; p!=gcobservers_current_; ++p){
@@ -559,7 +567,7 @@ void AnyImpl::visit_members(Visitor& m){
 }
 	
 void AnyImpl::call(const VMachine& vm){
-
+	UncountedAny(this).cref().send(Xid(op_call), vm);
 }
 
 const Any& AnyImpl::member(const ID& name){ 

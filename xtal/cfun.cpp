@@ -60,17 +60,17 @@ public:
 	}
 
 	void param(
-		const Named& value0, 
-		const Named& value1,
-		const Named& value2,
-		const Named& value3,
-		const Named& value4
+		const Named2& value0, 
+		const Named2& value1,
+		const Named2& value2,
+		const Named2& value3,
+		const Named2& value4
 	){
-		if(param_n_>0)pi_.params[0] = value0;
-		if(param_n_>1)pi_.params[1] = value1;
-		if(param_n_>2)pi_.params[2] = value2;
-		if(param_n_>3)pi_.params[3] = value3;
-		if(param_n_>4)pi_.params[4] = value4;
+		if(param_n_>0)pi_.params[0] = Named(value0.name, value0.value);
+		if(param_n_>1)pi_.params[1] = Named(value1.name, value1.value);
+		if(param_n_>2)pi_.params[2] = Named(value2.name, value2.value);
+		if(param_n_>3)pi_.params[3] = Named(value3.name, value3.value);
+		if(param_n_>4)pi_.params[4] = Named(value4.name, value4.value);
 
 		pi_.min_param_count = pi_.max_param_count = param_n_;
 		for(int_t i=0; i<param_n_; ++i){
@@ -104,11 +104,11 @@ CFun::CFun(CFunImpl::fun_t fun, const void* val, int_t val_size, int_t param_n)
 }
 
 const CFun& CFun::param(
-	const Named& value0, 
-	const Named& value1,
-	const Named& value2,
-	const Named& value3,
-	const Named& value4
+	const Named2& value0, 
+	const Named2& value1,
+	const Named2& value2,
+	const Named2& value3,
+	const Named2& value4
 ) const{
 	impl()->param(value0, value1, value2, value3, value4);
 	return *this;

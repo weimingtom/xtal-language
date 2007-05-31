@@ -728,11 +728,11 @@ public:
 	*
 	*/
 	const CFun& param(
-		const Named& value0=null, 
-		const Named& value1=null,
-		const Named& value2=null,
-		const Named& value3=null,
-		const Named& value4=null
+		const Named2& value0=null, 
+		const Named2& value1=null,
+		const Named2& value2=null,
+		const Named2& value3=null,
+		const Named2& value4=null
 	) const;
 
 public:

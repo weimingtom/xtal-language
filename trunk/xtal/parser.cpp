@@ -168,7 +168,7 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	com_->error(line(), Xt("Xtal Compile Error 1002")(Xid(char)=lexer_.token2str(lexer_.peek())));
+	com_->error(line(), Xt("Xtal Compile Error 1002")(Named("char", lexer_.token2str(lexer_.peek()))));
 }
 
 bool Parser::eat(int_t ch){
@@ -264,7 +264,10 @@ string_t Parser::parse_string(int_t open, int_t close){
 			}else if(ch=='\n'){
 				str+='\n';
 			}else{
-				str+=ch;
+				str+=(char_t)ch;
+				for(int_t i=1, size = ch_len(ch); i<size; ++i){
+					str+=(char_t)lexer_.read().ivalue();
+				}
 			}
 		}	
 	}
@@ -1193,7 +1196,7 @@ Expr* Parser::parse_class(){
 
 				for(TList<int_t>::Node* np = p->inst_vars.head; np; np = np->next){
 					if(np->value==var){
-						com_->error(line(), Xt("Xtal Compile Error 1024")(Xid(name)=var));
+						com_->error(line(), Xt("Xtal Compile Error 1024")(Named("name", var)));
 						break;
 					}
 				}

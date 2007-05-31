@@ -51,14 +51,6 @@
 	if(::xtal::IterBreaker tar = target)\
 	for(::xtal::iter_next(tar, var1, var2, var3, true); tar; ::xtal::iter_next(tar, var1, var2, var3, false))
 
-/**
-* @brief インターンされた文字列を簡単に記述するためのマクロ
-*
-* @code
-* ID id = Xid(test);
-* @endcode
-*/
-#define Xid(string) ::xtal::Key(::xtal::ID(#string, sizeof(#string)-1))
 
 /**
 * @brief get_textを簡単に記述するためのマクロ
@@ -90,3 +82,24 @@
 #define Xsrc(text) ::xtal::source(#text+1, sizeof(#text)-3, __FILE__)
 
 /*@}*/
+
+
+#ifndef XTAL_USE_PREDEFINED_ID
+
+/*
+* @brief インターンされた文字列を簡単に記述するためのマクロ
+* XTAL_USE_PREDEFINED_ID が定義されている場合、::xtal::id::id##string という名前の変数の直接アクセスとなる。
+* ある事情により、これはユーザーが使ってはならないマクロとなった。
+* 将来はまた使えるようになる日がくるかもしれない。
+* 
+* @code
+* ID id = Xid(test);
+* @endcode
+*/
+#define Xid(string) ::xtal::ID(#string, sizeof(#string)-1)
+
+#else
+
+#define Xid(string) ::xtal::id::id##string
+
+#endif

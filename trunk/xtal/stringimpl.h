@@ -159,7 +159,6 @@ public:
 private:
 
 	char* str_;
-	u32* str32_;
 	int_t size_;
 	int_t hashcode_;
 	bool intern_;

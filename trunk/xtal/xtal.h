@@ -22,4 +22,5 @@ namespace xtal{
 #include "cast.h"
 #include "marshal.h"
 #include "thread.h"
+#include "ch.h"
 

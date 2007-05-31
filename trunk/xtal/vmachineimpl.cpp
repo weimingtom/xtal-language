@@ -1,3 +1,4 @@
+
 #include "xtal.h"
 
 #include <map>
@@ -699,6 +700,12 @@ goto begin;
 	except = e;
 	goto except_catch;
 }
+#ifndef XTAL_NO_EXCEPT
+catch(...){
+	CATCH_BODY(pc, null, stack_size, fun_frames_size);
+	throw;
+}
+#endif
 
 except_catch:
 	pc = CATCH_BODY(pc, except, stack_size, fun_frames_size);

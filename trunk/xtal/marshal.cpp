@@ -337,7 +337,7 @@ Any Marshal::demangle(int_t n){
 		}
 	}
 	if(!ret){
-		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Xid(name)=lvalues_[n])));
+		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", lvalues_[n]))));
 	}
 	return ret;
 }

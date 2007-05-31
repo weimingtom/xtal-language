@@ -11,17 +11,17 @@ void check_arg(const VMachine& vm, const ParamInfo& p){
 		if(p.min_param_count==0 && p.max_param_count==0){
 			XTAL_THROW(builtin().member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
-					Xid(name)=p.fun.cref().object_name(),
-					Xid(value)=n
+					Named("name", p.fun.cref().object_name()),
+					Named("value", n)
 				)
 			));
 		}else{
 			XTAL_THROW(builtin().member("ArgumentError")(
 				Xt("Xtal Runtime Error 1006")(
-					Xid(name)=p.fun.cref().object_name(),
-					Xid(min)=p.min_param_count,
-					Xid(max)=p.max_param_count,
-					Xid(value)=n
+					Named("name", p.fun.cref().object_name()),
+					Named("min", p.min_param_count),
+					Named("max", p.max_param_count),
+					Named("value", n)
 				)
 			));
 		}

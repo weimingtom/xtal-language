@@ -250,7 +250,69 @@ std::basic_ostream<Ch, T>& operator << (std::basic_ostream<Ch, T>& os, const Any
 	return os;
 }
 	
-//{{{
-//}}}
+#ifdef XTAL_USE_PREDEFINED_ID
+
+//{ID{{
+namespace id{
+extern ID idop_or_assign;
+extern ID idop_add_assign;
+extern ID idop_shr;
+extern ID idop_ushr_assign;
+extern ID idop_call;
+extern ID idop_sub_assign;
+extern ID idop_lt;
+extern ID idop_eq;
+extern ID idop_mul;
+extern ID idname;
+extern ID idop_neg;
+extern ID iditer_next;
+extern ID iditer_first;
+extern ID idmarshal_new;
+extern ID idop_and_assign;
+extern ID idop_mod_assign;
+extern ID idop_div_assign;
+extern ID idop_or;
+extern ID idop_div;
+extern ID idmarshal_dump;
+extern ID idlib;
+extern ID idop_cat_assign;
+extern ID idop_cat;
+extern ID idIOError;
+extern ID idop_cat_r_String;
+extern ID idmarshal_load;
+extern ID idop_add;
+extern ID idop_dec;
+extern ID idop_inc;
+extern ID idop_ushr;
+extern ID idop_pos;
+extern ID idop_eq_r_String;
+extern ID iditer_break;
+extern ID idop_shr_assign;
+extern ID idop_mod;
+extern ID idstring;
+extern ID idop_lt_r_String;
+extern ID idinitialize;
+extern ID idop_set_at;
+extern ID idtest;
+extern ID idvalue;
+extern ID idop_at;
+extern ID idop_shl_assign;
+extern ID idop_sub;
+extern ID idchar;
+extern ID idop_clone;
+extern ID idop_com;
+extern ID idnew;
+extern ID idop_shl;
+extern ID idop_xor;
+extern ID idop_and;
+extern ID idsize;
+extern ID idop_xor_assign;
+extern ID idop_mul_assign;
+}
+//}}ID}
+
+#else
+
+#endif
 
 }

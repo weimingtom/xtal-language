@@ -116,7 +116,7 @@ void ExprBuilder::register_variable(int_t var){
 	for(TList<int_t>::Node* p = var_info_stack.top().variables->head; p; p = p->next){
 		if(p->value == var){
 			common->error(common->line, Xt("Xtal Compile Error 1026")(
-				Xid(name)=common->ident_table[var]
+				Named("name", common->ident_table[var])
 			));
 		}
 	}

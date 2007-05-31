@@ -114,7 +114,7 @@ public:
 			full_gc();
 			fp_ = fopen(filename.c_str(), mode.c_str());
 			if(!fp_){
-				XTAL_THROW(builtin().member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Xid(name)=filename)));
+				XTAL_THROW(builtin().member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))));
 			}
 		}
 	}

@@ -21,6 +21,7 @@
 namespace xtal{
 
 void InitAny();
+void InitID();
 
 Null null;
 
@@ -137,11 +138,12 @@ void initialize(){
 	TClass<Arguments>();
 	TClass<Fiber>();
 
-	finalize_id = Xid(finalize);
-
+	
+	finalize_id = ID("finalize");
 	enable_gc();
-
+	
 	InitString();
+	InitID();
 	InitAny();
 	InitDebug();
 	InitThread();
@@ -157,8 +159,10 @@ void initialize(){
 	InitStream();
 	InitFileStream();
 	InitMemoryStream();
-
+	
 	initialize_lib();
+	
+
 	/**/
 	
 	//atexit(&uninitialize); // uninitialize‚ð“o˜^‚·‚é

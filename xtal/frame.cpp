@@ -1,8 +1,8 @@
 
+#include "xtal.h"
 
 #include <algorithm>
 
-#include "xtal.h"
 #include "frameimpl.h"
 
 namespace xtal{

@@ -1,3 +1,4 @@
+
 #include "xtal.h"
 
 #include <iostream>
@@ -75,27 +76,27 @@ void ix(){
 #else
 
 Any compile_file(const String& file_name){
-	throw unsupported_error("", "");
+	return null;
 }
 
 Any compile(const String& source){
-	throw unsupported_error("", "");
+	return null;
 }
 
 Any load(const String& file_name){
-	throw unsupported_error("", "");
+	return null;
 }
 
 Any load_and_save(const String& file_name){
-	throw unsupported_error("", "");
+	return null;
 }
 
 Any source(const char* src, int_t size, const char* file){
-	throw unsupported_error("", "");
+	return null;
 }
 
 void ix(){
-	throw unsupported_error("", "");
+
 }
 
 #endif
@@ -276,7 +277,7 @@ public:
 	int_t to_i(){ return ivalue(); }
 	float_t to_f(){ return static_cast<float_t>(ivalue()); }
 	String to_s(){
-		char buf[256];
+		char buf[32];
 		sprintf(buf, "%d", ivalue());
 		return String(buf);
 	}
@@ -295,7 +296,7 @@ public:
 	int_t to_i(){ return static_cast<int_t>(fvalue()); }
 	float_t to_f(){ return fvalue(); }
 	String to_s(){
-		char buf[256];
+		char buf[32];
 		sprintf(buf, "%g", fvalue());
 		return String(buf);
 	}
@@ -484,30 +485,30 @@ const Any& nop(){
 
 Any cast_error(const Any& from, const Any& to){
 	return builtin().member("CastError")(Xt("Xtal Runtime Error 1004")(
-		Xid(type)=from.get_class().object_name(), Xid(required)=to
+		Named("type", from.get_class().object_name()), Named("required", to)
 	));
 }
 
 Any argument_error(const Any& from, const Any& to, int param_num, const Any& param_name){
 	if(param_name.to_b()){
 		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Xid(n)=param_num+1, 
-			Xid(param_name)=param_name, 
-			Xid(type)=from.get_class().object_name(), 
-			Xid(required)=to
+			Named("n", param_num+1), 
+			Named("param_name", param_name), 
+			Named("type", from.get_class().object_name()), 
+			Named("required", to)
 		));
 	}else{
 		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Xid(n)=param_num+1, 
-			Xid(param_name)=String(""), 
-			Xid(type)=from.get_class().object_name(), 
-			Xid(required)=to
+			Named("n", param_num+1), 
+			Named("param_name", String("")), 
+			Named("type", from.get_class().object_name()), 
+			Named("required", to)
 		));	}
 }
 
 Any unsupported_error(const Any& name, const Any& member){
 	return builtin().member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-		Xid(object)=name, Xid(name)=(member ? member : Any("()"))
+		Named("object", name), Named("name", (member ? member : Any("()")))
 	));
 }
 

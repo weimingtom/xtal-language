@@ -49,9 +49,14 @@ inline int to_lalpha(int ch){
 	using namespace std;
 	return tolower(ch);
 }
-	
-int read_ch(void* dest, const void* src);
-	
-void set_read_ch(int_t (*read_ch_fun)(char_t* dest, const void* src));
+
+/**
+* @brief 先頭文字を渡して、それが何バイト文字か返す
+*/
+int_t ch_len(char_t lead);
+
+void set_code_sjis();
+void set_code_euc();
+void set_code_utf8();
 
 }

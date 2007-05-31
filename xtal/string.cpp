@@ -1,7 +1,8 @@
 
+#include "xtal.h"
+
 #include <string.h>
 
-#include "xtal.h"
 #include "stringimpl.h"
 #include "xmacro.h"
 
@@ -371,8 +372,136 @@ ID::ID(const char* name, int_t size)
 ID::ID(const String& name)
 :String(!name ? null : name.impl()->is_interned() ? name : str_mgr()->insert(name.c_str(), name.size())){}
 
-//{{{
-//}}}
+#ifdef XTAL_USE_PREDEFINED_ID
+
+//{ID{{
+namespace id{
+ID idop_or_assign(null);
+ID idop_add_assign(null);
+ID idop_shr(null);
+ID idop_ushr_assign(null);
+ID idop_call(null);
+ID idop_sub_assign(null);
+ID idop_lt(null);
+ID idop_eq(null);
+ID idop_mul(null);
+ID idname(null);
+ID idop_neg(null);
+ID iditer_next(null);
+ID iditer_first(null);
+ID idmarshal_new(null);
+ID idop_and_assign(null);
+ID idop_mod_assign(null);
+ID idop_div_assign(null);
+ID idop_or(null);
+ID idop_div(null);
+ID idmarshal_dump(null);
+ID idlib(null);
+ID idop_cat_assign(null);
+ID idop_cat(null);
+ID idIOError(null);
+ID idop_cat_r_String(null);
+ID idmarshal_load(null);
+ID idop_add(null);
+ID idop_dec(null);
+ID idop_inc(null);
+ID idop_ushr(null);
+ID idop_pos(null);
+ID idop_eq_r_String(null);
+ID iditer_break(null);
+ID idop_shr_assign(null);
+ID idop_mod(null);
+ID idstring(null);
+ID idop_lt_r_String(null);
+ID idinitialize(null);
+ID idop_set_at(null);
+ID idtest(null);
+ID idvalue(null);
+ID idop_at(null);
+ID idop_shl_assign(null);
+ID idop_sub(null);
+ID idchar(null);
+ID idop_clone(null);
+ID idop_com(null);
+ID idnew(null);
+ID idop_shl(null);
+ID idop_xor(null);
+ID idop_and(null);
+ID idsize(null);
+ID idop_xor_assign(null);
+ID idop_mul_assign(null);
+}
+void InitID(){
+id::idop_or_assign = ID("op_or_assign", 12); add_long_life_var(&id::idop_or_assign); 
+id::idop_add_assign = ID("op_add_assign", 13); add_long_life_var(&id::idop_add_assign); 
+id::idop_shr = ID("op_shr", 6); add_long_life_var(&id::idop_shr); 
+id::idop_ushr_assign = ID("op_ushr_assign", 14); add_long_life_var(&id::idop_ushr_assign); 
+id::idop_call = ID("op_call", 7); add_long_life_var(&id::idop_call); 
+id::idop_sub_assign = ID("op_sub_assign", 13); add_long_life_var(&id::idop_sub_assign); 
+id::idop_lt = ID("op_lt", 5); add_long_life_var(&id::idop_lt); 
+id::idop_eq = ID("op_eq", 5); add_long_life_var(&id::idop_eq); 
+id::idop_mul = ID("op_mul", 6); add_long_life_var(&id::idop_mul); 
+id::idname = ID("name", 4); add_long_life_var(&id::idname); 
+id::idop_neg = ID("op_neg", 6); add_long_life_var(&id::idop_neg); 
+id::iditer_next = ID("iter_next", 9); add_long_life_var(&id::iditer_next); 
+id::iditer_first = ID("iter_first", 10); add_long_life_var(&id::iditer_first); 
+id::idmarshal_new = ID("marshal_new", 11); add_long_life_var(&id::idmarshal_new); 
+id::idop_and_assign = ID("op_and_assign", 13); add_long_life_var(&id::idop_and_assign); 
+id::idop_mod_assign = ID("op_mod_assign", 13); add_long_life_var(&id::idop_mod_assign); 
+id::idop_div_assign = ID("op_div_assign", 13); add_long_life_var(&id::idop_div_assign); 
+id::idop_or = ID("op_or", 5); add_long_life_var(&id::idop_or); 
+id::idop_div = ID("op_div", 6); add_long_life_var(&id::idop_div); 
+id::idmarshal_dump = ID("marshal_dump", 12); add_long_life_var(&id::idmarshal_dump); 
+id::idlib = ID("lib", 3); add_long_life_var(&id::idlib); 
+id::idop_cat_assign = ID("op_cat_assign", 13); add_long_life_var(&id::idop_cat_assign); 
+id::idop_cat = ID("op_cat", 6); add_long_life_var(&id::idop_cat); 
+id::idIOError = ID("IOError", 7); add_long_life_var(&id::idIOError); 
+id::idop_cat_r_String = ID("op_cat_r_String", 15); add_long_life_var(&id::idop_cat_r_String); 
+id::idmarshal_load = ID("marshal_load", 12); add_long_life_var(&id::idmarshal_load); 
+id::idop_add = ID("op_add", 6); add_long_life_var(&id::idop_add); 
+id::idop_dec = ID("op_dec", 6); add_long_life_var(&id::idop_dec); 
+id::idop_inc = ID("op_inc", 6); add_long_life_var(&id::idop_inc); 
+id::idop_ushr = ID("op_ushr", 7); add_long_life_var(&id::idop_ushr); 
+id::idop_pos = ID("op_pos", 6); add_long_life_var(&id::idop_pos); 
+id::idop_eq_r_String = ID("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
+id::iditer_break = ID("iter_break", 10); add_long_life_var(&id::iditer_break); 
+id::idop_shr_assign = ID("op_shr_assign", 13); add_long_life_var(&id::idop_shr_assign); 
+id::idop_mod = ID("op_mod", 6); add_long_life_var(&id::idop_mod); 
+id::idstring = ID("string", 6); add_long_life_var(&id::idstring); 
+id::idop_lt_r_String = ID("op_lt_r_String", 14); add_long_life_var(&id::idop_lt_r_String); 
+id::idinitialize = ID("initialize", 10); add_long_life_var(&id::idinitialize); 
+id::idop_set_at = ID("op_set_at", 9); add_long_life_var(&id::idop_set_at); 
+id::idtest = ID("test", 4); add_long_life_var(&id::idtest); 
+id::idvalue = ID("value", 5); add_long_life_var(&id::idvalue); 
+id::idop_at = ID("op_at", 5); add_long_life_var(&id::idop_at); 
+id::idop_shl_assign = ID("op_shl_assign", 13); add_long_life_var(&id::idop_shl_assign); 
+id::idop_sub = ID("op_sub", 6); add_long_life_var(&id::idop_sub); 
+id::idchar = ID("char", 4); add_long_life_var(&id::idchar); 
+id::idop_clone = ID("op_clone", 8); add_long_life_var(&id::idop_clone); 
+id::idop_com = ID("op_com", 6); add_long_life_var(&id::idop_com); 
+id::idnew = ID("new", 3); add_long_life_var(&id::idnew); 
+id::idop_shl = ID("op_shl", 6); add_long_life_var(&id::idop_shl); 
+id::idop_xor = ID("op_xor", 6); add_long_life_var(&id::idop_xor); 
+id::idop_and = ID("op_and", 6); add_long_life_var(&id::idop_and); 
+id::idsize = ID("size", 4); add_long_life_var(&id::idsize); 
+id::idop_xor_assign = ID("op_xor_assign", 13); add_long_life_var(&id::idop_xor_assign); 
+id::idop_mul_assign = ID("op_mul_assign", 13); add_long_life_var(&id::idop_mul_assign); 
+}
+//}}ID}
+
+
+#else
+
+void InitID(){}
+
+#endif
+
+
+
+
+
+
+
 
 
 }

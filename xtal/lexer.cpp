@@ -32,9 +32,9 @@ void LPCCommon::init(const String& file_name){
 void LPCCommon::error(int_t line, const Any& message){
 	if(errors.size()<10){
 		errors.push_back(Xf("%(file)s:%(line)d:%(message)")(
-			Xid(file)=source_file_name,
-			Xid(line)=line,
-			Xid(message)=message
+			Named("file", source_file_name),
+			Named("line", line),
+			Named("message", message)
 		));
 	}
 }

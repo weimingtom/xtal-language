@@ -270,7 +270,7 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 			return i; 
 		}
 	}
-	com_->error(line(), Xt("Xtal Compile Error 1023")(Xid(name)=to_id(key)));
+	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", to_id(key))));
 	return 0;
 }
 

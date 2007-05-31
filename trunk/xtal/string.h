@@ -199,28 +199,50 @@ public:
 inline bool operator ==(const ID& a, const ID& b){ return a.raweq(b); }
 inline bool operator !=(const ID& a, const ID& b){ return !a.raweq(b); }
 
+struct Named2;
+
 /**
 * @brief 名前付き引数のトリックのためのクラス
 *
 */
-struct Named{
-
+struct Named2{
 	ID name;
 	Any value;
 
-	Named(const ID& n, const Any& v = null)
-		:name(n), value(v){}
+	Named2(const char* name)
+		:name(name){}
 
-	Named()
+	Named2(const ID& name)
+		:name(name), value(null){}
+
+	Named2(const ID& name, const Any& value)
+		:name(name), value(value){}
+
+	Named2()
 		:name(null), value(null){}
 
-	Named(const Null&)
+	Named2(const Null&)
 		:name(null), value(null){}
-
 };
 
-
 /**
+* @brief 名前付き引数のトリックのためのクラス
+*
+*/
+struct Named : public Named2{
+
+	Named(const ID& name)
+		:Named2(name){}
+
+	Named(const ID& name, const Any& value)
+		:Named2(name, value){}
+
+	Named(){}
+
+	Named(const Null&){}
+};
+
+/*
 * @brief 名前付き引数のトリックのためのクラス
 *
 */

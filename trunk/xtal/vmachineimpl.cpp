@@ -148,9 +148,10 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 
 	// 戻り値が一つも無いのでnullで埋める
 	if(n==0){
-		for(int_t i = n; i<need_result_count; ++i){
+		for(int_t i = 0; i<need_result_count; ++i){
 			push(null);
 		}
+		return;
 	}
 
 	// 戻り値の数と要求している戻り値の数が等しい

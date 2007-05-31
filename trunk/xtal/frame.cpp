@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "frameimpl.h"
+#include "vmachineimpl.h"
 
 namespace xtal{
 

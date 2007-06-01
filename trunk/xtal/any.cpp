@@ -20,7 +20,14 @@
 
 namespace xtal{
 
-void InitAny();
+void InitAny(){
+	TClass<Any> p("Any");
+	p.method("class", &Any::get_class);
+	p.method("get_class", &Any::get_class);
+	p.method("object_name", &Any::object_name);
+	p.method("op_eq", &Any::raweq);
+}
+
 void InitID();
 
 Null null;
@@ -131,13 +138,14 @@ void initialize(){
 
 	TClass<String>();
 	TClass<Null>();
+	TClass<True>();
+	TClass<False>();
 	TClass<Int>();
 	TClass<Float>();
 	TClass<Array>();
 	TClass<Map>();
 	TClass<Arguments>();
 	TClass<Fiber>();
-
 	
 	finalize_id = ID("finalize");
 	enable_gc();
@@ -165,7 +173,8 @@ void initialize(){
 
 	/**/
 	
-	//atexit(&uninitialize); // uninitializeÇìoò^Ç∑ÇÈ
+	atexit(&uninitialize); // uninitializeÇìoò^Ç∑ÇÈ
+	atexit(&uninitialize); // uninitializeÇìoò^Ç∑ÇÈ Ç¶ÅIÅH2âÒÇ‡ÅIÅH
 }
 
 void uninitialize(){
@@ -516,14 +525,6 @@ GCObserverImpl::~GCObserverImpl(){
 		}
 	}
 }
-
-void InitAny(){
-	TClass<Any> p("Any");
-	p.method("class", &Any::get_class);
-	p.method("get_class", &Any::get_class);
-	p.method("object_name", &Any::object_name);
-	p.method("op_eq", &Any::raweq);
-}
 	
 void* AnyImpl::operator new(size_t size){
 	if(objects_current_==objects_end_){
@@ -790,6 +791,8 @@ String Any::object_name() const{
 		XTAL_CASE(TYPE_BASE){ return impl()->object_name(); }
 		XTAL_CASE(TYPE_INT){ return String("instance of Int"); }
 		XTAL_CASE(TYPE_FLOAT){ return String("instance of Float"); }
+		XTAL_CASE(TYPE_FALSE){ return String("instance of False"); }
+		XTAL_CASE(TYPE_TRUE){ return String("instance of True"); }
 	}
 	return null;	
 }
@@ -818,6 +821,8 @@ const Class& Any::get_class() const{
 		XTAL_CASE(TYPE_BASE){ return impl()->get_class(); }
 		XTAL_CASE(TYPE_INT){ return TClass<Int>::get(); }
 		XTAL_CASE(TYPE_FLOAT){ return TClass<Float>::get(); }
+		XTAL_CASE(TYPE_FALSE){ return TClass<True>::get(); }
+		XTAL_CASE(TYPE_TRUE){ return TClass<False>::get(); }
 	}
 	return TClass<Any>::get();
 }

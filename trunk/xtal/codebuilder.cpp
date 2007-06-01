@@ -892,12 +892,25 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 			block_begin(FUN, 0, e->vars, e->on_heap);{
 				FunFrame& ff = fun_frames_.top();	
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
+					// デフォルト値を持つ
 					if(p->value){
+						/*
 						put_local_code(p->key);
 						int_t label = reserve_label();
 						put_jump_code(CODE_UNLESS, label);
 						compile(p->value);
 						put_set_local_code(p->key);
+						set_label(label);
+						*/
+						
+						int_t id = lookup_variable(p->key);
+						int_t label = reserve_label();
+						
+						put_jump_code(CODE_IF_ARG_IS_NULL, label);
+						put_code_u8(id);						
+						compile(p->value);
+						put_set_local_code(p->key);
+						
 						set_label(label);
 					}
 				}

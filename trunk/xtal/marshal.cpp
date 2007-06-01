@@ -53,6 +53,12 @@ void Marshal::inner_dump(const Any& v){
 		u.f = v.fvalue();
 		stream_.p32(u.i);
 		return;
+	}else if(cls.raweq(TClass<True>::get())){
+		stream_.p8(TTRUE);
+		return;
+	}else if(cls.raweq(TClass<False>::get())){
+		stream_.p8(TFALSE);
+		return;
 	}
 
 	bool added = false;
@@ -245,6 +251,14 @@ Any Marshal::inner_load(){
 				ret.set_at(key, inner_load());
 			}				
 			return ret;
+		}
+		
+		XTAL_CASE(TTRUE){
+			return true;
+		}
+		
+		XTAL_CASE(TFALSE){
+			return false;
 		}
 
 		XTAL_CASE('X'){

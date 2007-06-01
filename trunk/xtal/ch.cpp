@@ -22,7 +22,7 @@ int_t ch_len_euc(char_t ch){
 
 int_t ch_len_utf8(char_t ch){
 	unsigned char c = (unsigned char)ch;
-	if(c&0x80 && c&0x40){
+	if((c&0x80) && (c&0x40)){
 		if(c&0x20){
 			if(c&0x10){
 				if(c&0x8){

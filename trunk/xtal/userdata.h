@@ -36,7 +36,10 @@ protected:
 		char buf_[sizeof(T)];
 	};
 };
-	
+
+/**
+* @brief ユーザー定義型を保持するためのクラス
+*/
 template<class T>
 class UserData : public Any{
 public:
@@ -53,17 +56,31 @@ public:
 	UserData(const Null&)
 		:Any(null){}
 	
+	/**
+	* @brief ->演算子
+	* スマートポインタとして扱うためにオーバーロードする。
+	*/
 	T* operator ->() const{ return get(); }
 	
+	/**
+	* @brief *演算子
+	* スマートポインタとして扱うためにオーバーロードする。
+	*/
 	T& operator *() const{ return *get(); }
 	
+	/**
+	* @brief T型へのポインタを取得する。
+	*/
 	T* get() const{ return impl()->get(); }
 
-	UserDataImpl<T>* impl() const{ return (UserDataImpl<T>*)Any::impl(); }
-	
+	/**
+	* @brief T型をUserData<T>に変換する。
+	*/
 	static UserData<T> from_this(T* p){
 		return UserData<T>(UserDataImpl<T>::from_this(p));
 	}
+	
+	UserDataImpl<T>* impl() const{ return (UserDataImpl<T>*)Any::impl(); }
 };
 
 template<class T>

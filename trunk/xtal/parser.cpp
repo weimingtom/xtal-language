@@ -417,7 +417,7 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_CALLEE){ ret = XTAL_NEW CalleeExpr(ln); }
 				XTAL_CASE(Token::KEYWORD_NULL){ ret = e.pseudo(CODE_PUSH_NULL); }
 				XTAL_CASE(Token::KEYWORD_TRUE){ ret = e.pseudo(CODE_PUSH_TRUE); }
-				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(CODE_PUSH_NULL); }
+				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(CODE_PUSH_FALSE); }
 				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(CODE_PUSH_NOP); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(CODE_PUSH_THIS); }
 				XTAL_CASE(Token::KEYWORD_NEED_RESULT){ ret = e.pseudo(CODE_PUSH_NEED_RESULT); }

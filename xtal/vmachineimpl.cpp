@@ -502,6 +502,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_NOP){ pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_NULL){ push(null); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_TRUE){ push(UncountedAny(true).cref()); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_FALSE){ push(UncountedAny(false).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_NOP){ push(nop()); pc+=1; }
 	
 	XTAL_VM_CASE(CODE_PUSH_INT_0){ push(UncountedAny(0).cref()); pc+=1; }
@@ -536,6 +537,11 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_IF){ pc = pop()!=null ? pc+3 : pc+get_s16(pc+1); }
 	XTAL_VM_CASE(CODE_UNLESS){ pc = pop()==null ? pc+3 : pc+get_s16(pc+1); }
 	XTAL_VM_CASE(CODE_GOTO){ pc = pc+get_s16(pc+1); }
+	
+	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){
+		int_t argid = get_u8(pc+3);
+		pc = LOCAL_VARIABLE(get_u8(pc+1)).is_null() ? pc+4 : pc+get_s16(pc+1);
+	}
 
 	XTAL_VM_CASE(CODE_INSERT_1){ UncountedAny temp = get(); set(get(1)); set(1, temp.cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_INSERT_2){ UncountedAny temp = get(); set(get(1)); set(1, get(2)); set(2, temp.cref()); pc+=1; }
@@ -608,16 +614,16 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_LOCAL_1){ push(ff().variable(1)); pc+=1; }
 	XTAL_VM_CASE(CODE_LOCAL_2){ push(ff().variable(2)); pc+=1; }
 	XTAL_VM_CASE(CODE_LOCAL_3){ push(ff().variable(3)); pc+=1; }
-	XTAL_VM_CASE(CODE_LOCAL){ LOCAL_VARIABLE(get_u8(pc+1)); pc+=2; }
+	XTAL_VM_CASE(CODE_LOCAL){ push(LOCAL_VARIABLE(get_u8(pc+1))); pc+=2; }
 	XTAL_VM_CASE(CODE_LOCAL_NOT_ON_HEAP){ push(ff().variable(get_u8(pc+1))); pc+=2; }
-	XTAL_VM_CASE(CODE_LOCAL_W){ LOCAL_VARIABLE(get_u16(pc+1)); pc+=3; }
+	XTAL_VM_CASE(CODE_LOCAL_W){ push(LOCAL_VARIABLE(get_u16(pc+1))); pc+=3; }
 	XTAL_VM_CASE(CODE_SET_LOCAL_0){ ff().variable(0, pop()); pc+=1; }
 	XTAL_VM_CASE(CODE_SET_LOCAL_1){ ff().variable(1, pop()); pc+=1; }
 	XTAL_VM_CASE(CODE_SET_LOCAL_2){ ff().variable(2, pop()); pc+=1; }
 	XTAL_VM_CASE(CODE_SET_LOCAL_3){ ff().variable(3, pop()); pc+=1; }
-	XTAL_VM_CASE(CODE_SET_LOCAL){ SET_LOCAL_VARIABLE(get_u8(pc+1)); pc+=2; }
+	XTAL_VM_CASE(CODE_SET_LOCAL){ SET_LOCAL_VARIABLE(get_u8(pc+1), pop()); pc+=2; }
 	XTAL_VM_CASE(CODE_SET_LOCAL_NOT_ON_HEAP){ ff().variable(get_u8(pc+1), pop()); pc+=2; }
-	XTAL_VM_CASE(CODE_SET_LOCAL_W){ SET_LOCAL_VARIABLE(get_u16(pc+1)); pc+=3; }
+	XTAL_VM_CASE(CODE_SET_LOCAL_W){ SET_LOCAL_VARIABLE(get_u16(pc+1), pop()); pc+=3; }
 
 	XTAL_VM_CASE(CODE_GLOBAL){ pc = GLOBAL_VARIABLE(pc); }
 	XTAL_VM_CASE(CODE_SET_GLOBAL){ pc = SET_GLOBAL_VARIABLE(pc); }
@@ -872,10 +878,10 @@ const u8* VMachineImpl::TRY_END(const u8* pc){
 	return except_frames_.pop().finally_pc;
 }
 
-void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos){
+void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos, const Any& value){
 	int_t variables_size = ff().variables_.size();
 	if(pos<variables_size){
-		ff().variable(pos, pop());
+		ff().variable(pos, value);
 		return;
 	}	
 	pos-=variables_size;
@@ -883,7 +889,7 @@ void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos){
 	while(1){
 		variables_size = outer->block_size();
 		if(pos<variables_size){
-			outer->set_member_direct(pos, pop());
+			outer->set_member_direct(pos, value);
 			return;
 		}
 		pos-=variables_size;
@@ -891,11 +897,10 @@ void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos){
 	}
 }
 
-void VMachineImpl::LOCAL_VARIABLE(int_t pos){
+const Any& VMachineImpl::LOCAL_VARIABLE(int_t pos){
 	int_t variables_size = ff().variables_.size();
 	if(pos<variables_size){
-		push(ff().variable(pos));
-		return;
+		return ff().variable(pos);
 	}
 	pos-=variables_size;
 	const Frame* outer = &ff().outer();
@@ -903,13 +908,13 @@ void VMachineImpl::LOCAL_VARIABLE(int_t pos){
 		while(1){
 			variables_size = outer->block_size();
 			if(pos<variables_size){
-				push(outer->member_direct(pos));
-				return;
+				return outer->member_direct(pos);
 			}
 			pos-=variables_size;
 			outer = &outer->outer();
 		}
 	}
+	return null;
 }
 
 const u8* VMachineImpl::GLOBAL_VARIABLE(const u8* pc){

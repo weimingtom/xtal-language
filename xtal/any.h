@@ -65,11 +65,7 @@ protected:
 	}
 
 	void set_b(bool b){
-		if(b){ 
-			set_i(1); 
-		}else{ 
-			set_null(); 
-		}
+		value_ = TYPE_FALSE + (int)b;
 	}
 
 public:
@@ -195,8 +191,8 @@ protected:
 	}
 
 	void set_b(bool b){
-		if(b){ set_i(1); }
-		else{ set_null(); }
+		type_ = TYPE_FALSE + (int)b;
+		value_ = 0;
 	}
 
 public:
@@ -441,9 +437,8 @@ public:
 	/**
 	* @brief 真偽値に変換して返す。
 	*
-	* つまり、 obj != null と等しい
 	*/
-	bool to_b() const{ return *this; }
+	bool to_b() const{ return !(type()==TYPE_NULL || type()==TYPE_FALSE); }
 	
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。
@@ -484,6 +479,11 @@ public:
 	* @return 自身を返す。
 	*/
 	Any p() const;
+	
+	/**
+	* @brief 自身がnullか返す
+	*/ 
+	bool is_null() const{ return type()==TYPE_NULL; }
 
 public:
 
@@ -610,7 +610,7 @@ public:
 	*
 	*/
 	operator safe_bool() const{
-		return type()!=TYPE_NULL ? &dummy_bool_tag::safe_true : (safe_bool)0;
+		return to_b() ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 };
 
@@ -860,7 +860,8 @@ private:
 
 class Null : public Any{};
 class Nop : public Any{};
-
+class True : public Any{};
+class False : public Any{};
 
 inline bool operator ==(const Any& a, const Null&){ return !a; }
 inline bool operator !=(const Any& a, const Null&){ return a; }

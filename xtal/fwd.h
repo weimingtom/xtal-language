@@ -88,9 +88,12 @@ enum PrimitiveType{
 	TYPE_BASE = 1,
 	TYPE_INT = 2,
 	TYPE_FLOAT = 3,
+	
+	TYPE_FALSE = 4,
+	TYPE_TRUE = 5,
 
-	TYPE_MASK = 1<<0 | 1<<1,
-	TYPE_SHIFT = 2
+	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
+	TYPE_SHIFT = 3
 };
 
 class Any;

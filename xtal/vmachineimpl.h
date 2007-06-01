@@ -568,9 +568,8 @@ private:
 	
 	const u8* PUSH_ARGS(const u8* pc);
 
-	void SET_LOCAL_VARIABLE(int_t pos);
-	void LOCAL_VARIABLE(int_t pos);
-	const Any& LOCAL(int_t pos);
+	void SET_LOCAL_VARIABLE(int_t pos, const Any&);
+	const Any& LOCAL_VARIABLE(int_t pos);
 
 	const u8* GLOBAL_VARIABLE(const u8* pc);
 	const u8* SET_GLOBAL_VARIABLE(const u8* pc);

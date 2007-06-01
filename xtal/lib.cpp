@@ -181,7 +181,7 @@ static Any min_(const Any& a, const Any& b){
 class Random{
 public:
 
-	Random(int_t seed=1){ 
+	Random(int_t seed=time(0)){ 
 		set_seed(seed); 
 	}
 	
@@ -1020,6 +1020,8 @@ void initialize_lib(){
 	builtin.def("Iterator", Iterator());
 	builtin.def("Enumerator", Enumerator());
 	builtin.def("Null", TClass<Null>::get());
+	builtin.def("True", TClass<True>::get());
+	builtin.def("False", TClass<False>::get());
 	builtin.def("Class", TClass<Class>::get());
 	builtin.def("Fun", TClass<Fun>::get());
 	builtin.def("Fiber", TClass<Fiber>::get());
@@ -1371,6 +1373,14 @@ Null::to_s: method{
 
 Null::iter_first: method{
 	return null;
+}
+
+True::to_s: method{
+	return "true";
+}
+
+False::to_s: method{
+	return "false";
 }
 
 builtin::range: fun(first, last, step:1){

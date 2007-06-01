@@ -94,6 +94,7 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
+
 		handle_argv(argv);
 
 /*

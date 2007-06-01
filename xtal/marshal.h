@@ -32,7 +32,7 @@ private:
 
 	void put_tab(int_t tab);
 
-	enum{ VALUE, LIB, REF, TNULL, INT, FLOAT, STRING, TID, ARRAY, MAP };
+	enum{ VALUE, LIB, REF, TNULL, INT, FLOAT, STRING, TID, ARRAY, MAP, TFALSE, TTRUE };
 
 	StrictMap dmap_;
 	Array dvalues_;

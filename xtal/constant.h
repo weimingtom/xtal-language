@@ -61,6 +61,14 @@ CODE_PUSH_NULL,
 CODE_PUSH_TRUE,
 
 /**
+* @brief スタックにfalse値をプッシュする。
+* 
+* format op
+* stack [] -> [value]
+*/
+CODE_PUSH_FALSE,
+
+/**
 * @brief スタックにnop値をプッシュする。
 * 
 * format op
@@ -1059,6 +1067,14 @@ CODE_BREAKPOINT,
 * stack [] -> [value]
 */
 CODE_PUSH_NEED_RESULT,
+
+/**
+* @brief 引数のチェック
+* 
+* format op, goto1, goto2, argid
+* stack [] -> []
+*/
+CODE_IF_ARG_IS_NULL,
 
 
 CODE_MAX

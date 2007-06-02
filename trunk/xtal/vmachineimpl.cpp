@@ -535,7 +535,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 
 	XTAL_VM_CASE(CODE_IF){ pc = pop().to_b() ? pc+3 : pc+get_s16(pc+1); }
-	XTAL_VM_CASE(CODE_UNLESS){ pc = pop().to_b() ? pc+3 : pc+get_s16(pc+1); }
+	XTAL_VM_CASE(CODE_UNLESS){ pc = !pop().to_b() ? pc+3 : pc+get_s16(pc+1); }
 	XTAL_VM_CASE(CODE_GOTO){ pc = pc+get_s16(pc+1); }
 	
 	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){ pc = LOCAL_VARIABLE(get_u8(pc+3)).is_null() ? pc+4 : pc+get_s16(pc+1); }

@@ -31,6 +31,7 @@ void InitAny(){
 void InitID();
 
 Null null;
+Nop nop;
 
 Any operator +(const Any& a, const Any& b){ return a.send(Xid(op_add), b); }
 Any operator -(const Any& a, const Any& b){ return a.send(Xid(op_sub), b); }
@@ -728,22 +729,39 @@ Any::~Any(){
 }
 
 const Any& Any::member(const ID& name) const{
-	if(type()==TYPE_BASE){
-		return impl()->member(name);
+	switch(type()){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){ return impl()->member(name); }
+		XTAL_CASE(TYPE_NOP){ return *this; }
 	}
 	return null;
 }
 
 void Any::def(const ID& name, const Any& value) const{
-	if(type()==TYPE_BASE){
-		value.set_object_name(name, object_name_force(), *this);
-		return impl()->def(name, value);
+	switch(type()){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){
+			value.set_object_name(name, object_name_force(), *this);
+			impl()->def(name, value);
+		}
 	}
 }
 
 void Any::send(const ID& name, const VMachine& vm) const{
-	vm.set_hint(get_class(), name);
-	if(const Any& ret = get_class().member(name)){
+	const Class* p;
+	switch(type()){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_NULL){ p = &TClass<Null>::get(); }
+		XTAL_CASE(TYPE_BASE){ p = &impl()->get_class(); }
+		XTAL_CASE(TYPE_INT){ p = &TClass<Int>::get(); }
+		XTAL_CASE(TYPE_FLOAT){ p = &TClass<Float>::get(); }
+		XTAL_CASE(TYPE_FALSE){ p = &TClass<True>::get(); }
+		XTAL_CASE(TYPE_TRUE){ p = &TClass<False>::get(); }
+		XTAL_CASE(TYPE_NOP){ vm.return_result(*this); return; }
+	}
+
+	vm.set_hint(*p, name);
+	if(const Any& ret = p->member(name)){
 		vm.set_arg_this(*this);
 		ret.call(vm);
 		return;
@@ -754,6 +772,7 @@ void Any::call(const VMachine& vm) const{
 	switch(type()){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){ impl()->call(vm); }
+		XTAL_CASE(TYPE_NOP){ vm.return_result(*this); }
 	}
 }
 
@@ -793,6 +812,7 @@ String Any::object_name() const{
 		XTAL_CASE(TYPE_FLOAT){ return String("instance of Float"); }
 		XTAL_CASE(TYPE_FALSE){ return String("instance of False"); }
 		XTAL_CASE(TYPE_TRUE){ return String("instance of True"); }
+		XTAL_CASE(TYPE_NOP){ return String("instance of Nop"); }
 	}
 	return null;	
 }
@@ -823,6 +843,7 @@ const Class& Any::get_class() const{
 		XTAL_CASE(TYPE_FLOAT){ return TClass<Float>::get(); }
 		XTAL_CASE(TYPE_FALSE){ return TClass<True>::get(); }
 		XTAL_CASE(TYPE_TRUE){ return TClass<False>::get(); }
+		XTAL_CASE(TYPE_NOP){ return TClass<Nop>::get(); }
 	}
 	return TClass<Any>::get();
 }

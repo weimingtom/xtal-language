@@ -157,6 +157,7 @@ int_t Fun::param_size() const{
 bool Fun::used_args_object() const{
 	return impl()->used_args_object();
 }
+
 int_t Fun::defined_file_line_number() const{
 	return impl()->defined_file_line_number();
 }

@@ -321,39 +321,19 @@ void CodeBuilder::process_labels(){
 	fun_frames_.top().labels.clear();
 }
 
-void CodeBuilder::break_off(int_t n, int_t block_end, int_t j){
-
-	XTAL_ASSERT(n>=0);
-	
-	if(n==0)
-		return;
-
-	for(uint_t k = 0; k<fun_frames_.top().finallys.size(); ++k){
-		if(fun_frames_.top().finallys[k].frame_count==scopes_.size()-j){
-			int_t label = reserve_label();
-			
-			for(int_t i = 1; i<block_end; ++i){
-				if(scopes_[j+i-1].type!=SCOPE){
-					put_code_u8(CODE_BLOCK_END);
-				}
+void CodeBuilder::break_off(int_t n){
+	for(uint_t scope_count = scopes_.size(); scope_count!=n; scope_count--){
+		for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
+			if(fun_frame().finallys[k].frame_count==scope_count){
+				int_t label = reserve_label();
+				put_jump_code(CODE_PUSH_GOTO, label);
+				put_code_u8(CODE_TRY_END);
+				set_label(label);
 			}
-			
-			block_end = 0;
-			put_jump_code(CODE_PUSH_GOTO, label);
-			put_code_u8(CODE_TRY_END);
-			set_label(label);
 		}
-	}
-
-	
-	if(block_end==0){
-		if(scopes_[j].type!=SCOPE){
+		if(scopes_[scopes_.size()-scope_count].type!=SCOPE)
 			put_code_u8(CODE_BLOCK_END);
-		}
-	}else{
-		block_end++;
 	}
-	break_off(n-1, block_end, j+1);
 }
 
 void CodeBuilder::put_if_code(Expr* e, int_t label_if, int_t label_if2){
@@ -444,8 +424,6 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 }
 
 void CodeBuilder::block_end(){
-	int sz = scopes_.size();
-
 	if(scopes_.top().type==FRAME){
 		variables_.downsize(scopes_.top().variable_size);
 		put_code_u8(CODE_FRAME_END);
@@ -534,7 +512,7 @@ int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char m
 
 void CodeBuilder::register_param(int_t name){
 	p_->xfun_core_table_.back().variable_size++;
-	p_->symbol_table_.push_back(name);
+	p_->symbol_table_.push_back(to_id(name));
 }
 
 void CodeBuilder::fun_frame_end(){
@@ -784,7 +762,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 			
 			put_jump_code(CODE_ONCE, label_end);
 			
-			int_t num = com_->append_value(nop());
+			int_t num = com_->append_value(nop);
 			put_code_u16(num);
 			
 			compile(e->expr);
@@ -915,7 +893,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 					}
 				}
 				compile(e->stmt);
-				break_off(scopes_.size(), 1);
+				break_off(fun_frame().frame_count+1);
 				if(debug::is_enabled()){
 					put_code_u8(CODE_BREAKPOINT);
 					put_code_u8(BREAKPOINT_RETURN);
@@ -1160,7 +1138,17 @@ void CodeBuilder::compile(Stmt* ex){
 		}
 
 		XTAL_EXPR_CASE(ReturnStmt){
-			if(e->exprs.size==1){
+
+			bool have_finally = false;
+			for(uint_t scope_count = scopes_.size(); scope_count!=fun_frame().frame_count+1; scope_count--){
+				for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
+					if(fun_frame().finallys[k].frame_count==scope_count){
+						have_finally = true;
+					}
+				}
+			}
+
+			if(!have_finally && e->exprs.size==1){
 				if(CallExpr* ce = expr_cast<CallExpr>(e->exprs.head->value)){
 					ce->tail = true;
 					compile(ce);
@@ -1175,12 +1163,10 @@ void CodeBuilder::compile(Stmt* ex){
 			for(TList<Expr*>::Node* p = e->exprs.head; p; p = p->next){
 				compile(p->value);
 			}
-			//break_off(scopes_.size());
-			//break_off(scopes_.size(), 1);
-			if(int_t(scopes_.size() - fun_frame().frame_count-1) < 0){
+			
+			{
 				
-			}else{
-				break_off(scopes_.size() - fun_frame().frame_count-1);
+				break_off(fun_frame().frame_count+1);
 
 				if(debug::is_enabled()){
 					put_code_u8(CODE_BREAKPOINT);
@@ -1447,8 +1433,8 @@ void CodeBuilder::compile(Stmt* ex){
 					int_t name = e->var;
 					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
 						if(fun_frame().loops[i].name==name){
-							break_off(scopes_.size()-fun_frames_.top().loops[i].frame_count);
-							put_jump_code(CODE_GOTO, fun_frames_.top().loops[i].break_label);
+							break_off(fun_frame().loops[i].frame_count);
+							put_jump_code(CODE_GOTO, fun_frame().loops[i].break_label);
 							found = true;
 							break;
 						}
@@ -1461,8 +1447,8 @@ void CodeBuilder::compile(Stmt* ex){
 					bool found = false;
 					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
 						if(!fun_frame().loops[i].have_label){
-							break_off(scopes_.size()-fun_frames_.top().loops[i].frame_count);
-							put_jump_code(CODE_GOTO, fun_frames_.top().loops[i].break_label);
+							break_off(fun_frame().loops[i].frame_count);
+							put_jump_code(CODE_GOTO, fun_frame().loops[i].break_label);
 							found = true;
 							break;
 						}
@@ -1484,7 +1470,7 @@ void CodeBuilder::compile(Stmt* ex){
 					int_t name = e->var;
 					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
 						if(fun_frame().loops[i].name==name){
-							break_off(scopes_.size()-fun_frame().loops[i].frame_count);
+							break_off(fun_frame().loops[i].frame_count);
 							put_jump_code(CODE_GOTO, fun_frame().loops[i].continue_label);
 							found = true;
 							break;
@@ -1498,7 +1484,7 @@ void CodeBuilder::compile(Stmt* ex){
 					bool found = false;
 					for(size_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
 						if(!fun_frame().loops[i].have_label){
-							break_off(scopes_.size()-fun_frame().loops[i].frame_count);
+							break_off(fun_frame().loops[i].frame_count);
 							put_jump_code(CODE_GOTO, fun_frame().loops[i].continue_label);		
 							found = true;
 							break;
@@ -1526,7 +1512,7 @@ void CodeBuilder::compile(Stmt* ex){
 					compile(p->value);
 				}
 				
-				break_off(scopes_.size(), 1);
+				break_off(1);
 				if(e->export_expr){
 					compile(e->export_expr);
 					put_code_u8(CODE_RETURN_1);

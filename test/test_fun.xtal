@@ -1,13 +1,12 @@
 
+aa, bb, cc, dd, : null, null, null, null;
 
-aa, bb, cc, dd, : null;
-foo : fun(a, b:10, c:20, d:30){
+foo: fun(a, b:10, c:20, d:30, k:0){
 	assert a==aa;
 	assert b==bb;
 	assert c==cc;
 	assert d==dd;
 }
-
 
 aa, bb, cc, dd, = 55, 44, 33, 22;
 foo(aa, bb, cc, dd);
@@ -20,4 +19,7 @@ foo(aa, d:dd, b:bb, c:cc);
 
 aa, bb, cc, dd, = 55, 44, 20, 99;
 foo(aa, bb, d:dd);
+
+
+
 

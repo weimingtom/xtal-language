@@ -440,49 +440,6 @@ const Any& lib(){
 	return lib;
 }
 
-class NopClassImpl : public ClassImpl{
-public:
-	virtual const Any& member(const ID& name){
-		return nop();
-	}
-	virtual void call(const VMachine& vm){
-		vm.return_result(nop());
-	}
-	virtual void def(const ID& name, const Any& v){
-	}
-};
-
-class NopImpl : public AnyImpl{
-public:
-
-	NopImpl(){
-		set_class(TClass<Nop>::get());
-	}
-
-	virtual void call(const VMachine& vm){
-		vm.return_result(nop());
-	}
-	
-	virtual const Any& member(const ID& name){
-		return nop();
-	}
-
-	virtual void def(const ID& name, const Any& v){
-	}
-};
-
-const Any& nop(){
-	static LLVar<Any> obj;
-	if(!obj){
-		TClass<Nop> p(null);
-		new(p) NopClassImpl();
-		TClass<Nop>::set(p);
-		p.set_object_name("Nop", 1, null);
-		new(obj) NopImpl();
-	}
-	return obj;
-}
-
 Any cast_error(const Any& from, const Any& to){
 	return builtin().member("CastError")(Xt("Xtal Runtime Error 1004")(
 		Named("type", from.get_class().object_name()), Named("required", to)

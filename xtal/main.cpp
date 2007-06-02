@@ -1,8 +1,9 @@
 
 #include "xtal.h"
+#include "vmachineimpl.h"
 
 #ifdef _MSC_VER
-#pragma comment(lib, "../../xtallib.lib") 
+//#pragma comment(lib, "../../xtallib.lib") 
 #else
 #include "all_src.h"
 #endif
@@ -65,7 +66,6 @@ int main(int argc, char** argv){
 
 	try{
 
-
 		set_thread();
 		initialize();
 
@@ -94,10 +94,11 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
-
 		handle_argv(argv);
 
 /*
+
+		load("test/test_fun.xtal");
 		load("test/test_iter.xtal");
 		load("test/test_fib.xtal");
 		load("test/test_calc.xtal");
@@ -111,6 +112,7 @@ int main(int argc, char** argv){
 		load("test/test_inc.xtal");
 		load("test/test_toplevel.xtal");
 //*/
+
 
 		/*
 		MemoryStream out;
@@ -132,6 +134,8 @@ int main(int argc, char** argv){
 	}catch(Any e){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
+
+	//vmachine().impl()->print_info();
 
 	uninitialize();
 

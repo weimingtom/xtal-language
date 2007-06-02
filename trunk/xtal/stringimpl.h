@@ -4,6 +4,7 @@
 #include "string.h"
 #include "utilimpl.h"
 #include "marshal.h"
+#include "ch.h"
 
 namespace xtal{
 
@@ -114,7 +115,7 @@ public:
 				return;
 			}
 
-			for(int_t j=index_, jsz=str_.size(); j<jsz; ++j){
+			for(int_t j=index_, jsz=str_.size(); j<jsz; j+=ch_len(str[j])){
 				for(int_t i=0, sz=sep_.size()+1; i<sz; ++i){
 					if(sep[i]==0){
 						vm.return_result(this, String(&str[index_], j-index_));

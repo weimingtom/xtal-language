@@ -135,11 +135,6 @@ const Class& builtin();
 */
 const Any& lib();
 
-/**
-* @brief nopオブジェクトを返す
-*/
-const Any& nop();
-
 Any get_text(const char* text);
 
 Any format(const char* text);

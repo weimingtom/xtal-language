@@ -91,6 +91,7 @@ enum PrimitiveType{
 	
 	TYPE_FALSE = 4,
 	TYPE_TRUE = 5,
+	TYPE_NOP = 6,
 
 	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
 	TYPE_SHIFT = 3
@@ -152,6 +153,9 @@ struct check_xtype<float_t>{ typedef TypeValue<float_t> type; };
 
 class Null;
 extern Null null;
+
+class Nop;
+extern Nop nop;
 
 void add_long_life_var(Any* a, int_t n = 1);
 void remove_long_life_var(Any* a, int_t n = 1);

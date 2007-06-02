@@ -79,7 +79,7 @@ public:
 	/**
 	* ブロックの終りを埋め込む
 	*/
-	void break_off(int_t to, int_t block_end = 0, int_t j = 0);
+	void break_off(int_t to);
 		
 	/**
 	* 末尾にコードを一つ追加する。

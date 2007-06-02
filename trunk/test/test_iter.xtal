@@ -36,9 +36,13 @@
 }
 
 {
-	foo: fun(it, fn){
-		it{
-			return fn(it);
+	foo: fun(iter, fn){
+		try{
+			iter{
+				return fn(it);
+			}
+		}finally{
+			"fin".p;
 		}
 	}
 	

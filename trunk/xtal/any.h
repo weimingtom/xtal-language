@@ -859,9 +859,9 @@ private:
 
 
 class Null : public Any{};
-class Nop : public Any{};
-class True : public Any{};
-class False : public Any{};
+class Nop : public Any{ public: Nop():Any(TYPE_NOP){} };
+class True : public Any{ public: True():Any(TYPE_TRUE){} };
+class False : public Any{ public: False():Any(TYPE_FALSE){} };
 
 inline bool operator ==(const Any& a, const Null&){ return !a; }
 inline bool operator !=(const Any& a, const Null&){ return a; }

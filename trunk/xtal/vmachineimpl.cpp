@@ -503,7 +503,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_NULL){ push(null); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_TRUE){ push(UncountedAny(true).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FALSE){ push(UncountedAny(false).cref()); pc+=1; }
-	XTAL_VM_CASE(CODE_PUSH_NOP){ push(nop()); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_NOP){ push(nop); pc+=1; }
 	
 	XTAL_VM_CASE(CODE_PUSH_INT_0){ push(UncountedAny(0).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_INT_1){ push(UncountedAny(1).cref()); pc+=1; }
@@ -540,7 +540,7 @@ switch(*pc){
 	
 	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){
 		int_t argid = get_u8(pc+3);
-		pc = LOCAL_VARIABLE(get_u8(pc+1)).is_null() ? pc+4 : pc+get_s16(pc+1);
+		pc = LOCAL_VARIABLE(argid).is_null() ? pc+4 : pc+get_s16(pc+1);
 	}
 
 	XTAL_VM_CASE(CODE_INSERT_1){ UncountedAny temp = get(); set(get(1)); set(1, temp.cref()); pc+=1; }
@@ -552,7 +552,7 @@ switch(*pc){
 
 	XTAL_VM_CASE(CODE_SET_NAME){ pc = SET_NAME(pc); }
 
-	XTAL_VM_CASE(CODE_CHECK_UNSUPPORTED){ return_result(nop()); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_CHECK_UNSUPPORTED){ return_result(nop); pc = ff().pc; }
 	XTAL_VM_CASE(CODE_ASSERT){ pc = CHECK_ASSERT(pc, stack_size, fun_frames_size); }
 
 	XTAL_VM_CASE(CODE_CALL){ pc = CALL(pc); }
@@ -972,7 +972,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 
 const u8* VMachineImpl::ONCE(const u8* pc){
 	const Any& ret = code().get_value(get_u16(pc+3));
-	if(!ret.raweq(nop())){
+	if(!ret.raweq(nop)){
 		push(ret);
 		return pc+get_s16(pc+1);
 	}
@@ -999,7 +999,7 @@ const u8* VMachineImpl::MEMBER_IF_DEFINED(const u8* pc){
 		if(const Any& ret = target.member(name)){
 			set(ret);
 		}else{
-			set(nop());
+			set(nop);
 		}
 	}
 	return pc+3; 

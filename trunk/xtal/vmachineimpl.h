@@ -454,13 +454,13 @@ public:
 		// デバッグメッセージ出力用のヒント
 		UncountedAny hint2_;
 
-		const Fun& fun() const{ return (const Fun&)fun_; }
-		const Frame& outer() const{ return (const Frame&)outer_; }
-		const Any& variable(int_t i) const{ return (const Any&)variables_[i]; }
-		const Any& self() const{ return (const Any&)self_; }
-		const Arguments& arguments() const{ return (const Arguments&)arguments_; }
-		const Any& hint1() const{ return (const Any&)hint1_; }
-		const String& hint2() const{ return (const String&)hint2_; }
+		const Fun& fun() const{ return (const Fun&)fun_.cref(); }
+		const Frame& outer() const{ return (const Frame&)outer_.cref(); }
+		const Any& variable(int_t i) const{ return (const Any&)variables_[i].cref(); }
+		const Any& self() const{ return (const Any&)self_.cref(); }
+		const Arguments& arguments() const{ return (const Arguments&)arguments_.cref(); }
+		const Any& hint1() const{ return (const Any&)hint1_.cref(); }
+		const String& hint2() const{ return (const String&)hint2_.cref(); }
 
 		void fun(const UncountedAny& v){ fun_ = v; }
 		void outer(const UncountedAny& v){ outer_ = v; }

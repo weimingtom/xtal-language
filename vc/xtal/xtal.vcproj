@@ -77,6 +77,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="../../xtallib.lib"
 				OutputFile="$(OutDir)/xtal.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"

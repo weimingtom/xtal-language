@@ -4,13 +4,15 @@
 namespace xtal{
 
 namespace{
-	volatile int thread_count_ = 1;
-	volatile int thread_locked_count_ = 0;
-	volatile int thread_unlocked_count_ = 0;
-	volatile bool stop_the_world_ = false;
-	volatile uint_t current_thread_id_ = (uint_t)-1;
-	volatile int current_thread_recursive_ = 0;
+	int thread_count_ = 1;
+	int thread_locked_count_ = 0;
+	int thread_unlocked_count_ = 0;
+	bool stop_the_world_ = false;
+	uint_t current_thread_id_ = (uint_t)-1;
+	uint_t current_vmachine_id_ = (uint_t)-1;
+	int current_thread_recursive_ = 0;
 	ThreadLib* thread_lib_temp_ = 0;
+	ThreadLib* thread_lib_ = 0;
 
 	Mutex mutex_(null);
 	Mutex mutex2_(null);
@@ -18,23 +20,25 @@ namespace{
 
 	StrictMap vmachine_table_;
 	
-	void change_vmachine(uint_t id){
-		if(const Any& ret = vmachine_table_.at(UncountedAny((int_t)id).cref())){
-			vmachine_ = (const VMachine&)ret;
-		}else{
-			vmachine_ = VMachine();
-			vmachine_table_.set_at(UncountedAny((int_t)id).cref(), vmachine_);
+	inline void change_vmachine(uint_t id){
+		if(current_vmachine_id_!=id){
+			if(const Any& ret = vmachine_table_.at(UncountedAny((int_t)id).cref())){
+				vmachine_ = (const VMachine&)ret;
+			}else{
+				vmachine_ = VMachine();
+				vmachine_table_.set_at(UncountedAny((int_t)id).cref(), vmachine_);
+			}
+			current_vmachine_id_ = id;
 		}
 	}
 
 }
 	
-ThreadLib* thread_lib_ = 0;
+bool thread_enabled_ = false;
 
 const VMachine& vmachine(){
 	return vmachine_;
 }
-
 
 void InitThread(){
 	{
@@ -66,6 +70,7 @@ void InitThread(){
 		*/
 
 		thread_lib_ = thread_lib_temp_;
+		thread_enabled_ = true;
 		global_interpreter_lock();
 	}else{
 		add_long_life_var(&vmachine_);
@@ -76,6 +81,7 @@ void InitThread(){
 void UninitThread(){
 	if(thread_lib_){
 		global_interpreter_unlock();
+		thread_enabled_ = false;
 		thread_lib_ = 0;
 		vmachine_table_.destroy();
 	}
@@ -177,7 +183,6 @@ void global_interpreter_unlock(){
 	if(current_thread_recursive_==0){
 		current_thread_id_ = (uint_t)-1;
 		mutex_.impl()->unlock();
-		thread_lib_->sleep(0);
 	}
 }
 
@@ -212,7 +217,6 @@ void xunlock(){
 	if(current_thread_recursive_==0){
 		thread_unlocked_count_++;
 		mutex_.impl()->unlock();
-		thread_lib_->sleep(0);
 		current_thread_id_ = (uint_t)-1;
 	}
 }

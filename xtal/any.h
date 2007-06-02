@@ -318,7 +318,10 @@ public:
 	
 	Any(const AnyImpl* v);
 
-	Any(const Any& v);
+	Any(const Any& v){
+		UncountedAny::operator =(v);
+		inc_ref_count();
+	}
 
 	Any& operator =(const Any& v);
 
@@ -334,7 +337,9 @@ public:
 
 	Any& operator =(const Null&);
 
-	~Any();
+	~Any(){ 
+		dec_ref_count();
+	}
 	
 private:
 
@@ -438,7 +443,9 @@ public:
 	* @brief 真偽値に変換して返す。
 	*
 	*/
-	bool to_b() const{ return !(type()==TYPE_NULL || type()==TYPE_FALSE); }
+	bool to_b() const{
+		return type()>TYPE_FALSE;
+	}
 	
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。

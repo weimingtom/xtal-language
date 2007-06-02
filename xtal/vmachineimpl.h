@@ -147,6 +147,13 @@ public:
 		return arg(name);
 	}
 
+	const Any& arg(int_t pos, const Fun& names){
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get((f.ordered_arg_count+f.named_arg_count*2)-1-pos);
+		return arg(names.param_name_at(pos));
+	}
+
 	const Any& arg_default(int_t pos, const Any& def){
 		if(pos<ordered_arg_count())
 			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);

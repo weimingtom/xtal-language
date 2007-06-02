@@ -122,7 +122,7 @@ void VMachineImpl::carry_over(const Fun& fun){
 		f.variables_.upsize(size);
 		UncountedAny* vars=&f.variables_[size-1];
 		for(int_t n = 0; n<size; ++n){
-			vars[n] = arg(n, fun.param_name_at(n));
+			vars[n] = arg(n, fun);
 		}
 	}
 	
@@ -534,14 +534,11 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 
-	XTAL_VM_CASE(CODE_IF){ pc = pop()!=null ? pc+3 : pc+get_s16(pc+1); }
-	XTAL_VM_CASE(CODE_UNLESS){ pc = pop()==null ? pc+3 : pc+get_s16(pc+1); }
+	XTAL_VM_CASE(CODE_IF){ pc = pop().to_b() ? pc+3 : pc+get_s16(pc+1); }
+	XTAL_VM_CASE(CODE_UNLESS){ pc = pop().to_b() ? pc+3 : pc+get_s16(pc+1); }
 	XTAL_VM_CASE(CODE_GOTO){ pc = pc+get_s16(pc+1); }
 	
-	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){
-		int_t argid = get_u8(pc+3);
-		pc = LOCAL_VARIABLE(argid).is_null() ? pc+4 : pc+get_s16(pc+1);
-	}
+	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){ pc = LOCAL_VARIABLE(get_u8(pc+3)).is_null() ? pc+4 : pc+get_s16(pc+1); }
 
 	XTAL_VM_CASE(CODE_INSERT_1){ UncountedAny temp = get(); set(get(1)); set(1, temp.cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_INSERT_2){ UncountedAny temp = get(); set(get(1)); set(1, get(2)); set(2, temp.cref()); pc+=1; }
@@ -765,6 +762,7 @@ const u8* VMachineImpl::CALL(const u8* pc){
 }
 	
 const u8* VMachineImpl::CALLEE(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
 	UncountedAny fun = ff().fun();
 	UncountedAny self = ff().self();
 	switch(get_u8(pc + 4) & 3){
@@ -775,6 +773,7 @@ const u8* VMachineImpl::CALLEE(const u8* pc){
 		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
 	}
 	carry_over((const Fun&)fun);
+	}
 	return ff().pc;	
 }
 
@@ -904,15 +903,13 @@ const Any& VMachineImpl::LOCAL_VARIABLE(int_t pos){
 	}
 	pos-=variables_size;
 	const Frame* outer = &ff().outer();
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		while(1){
-			variables_size = outer->block_size();
-			if(pos<variables_size){
-				return outer->member_direct(pos);
-			}
-			pos-=variables_size;
-			outer = &outer->outer();
+	while(1){
+		variables_size = outer->block_size();
+		if(pos<variables_size){
+			return outer->member_direct(pos);
 		}
+		pos-=variables_size;
+		outer = &outer->outer();
 	}
 	return null;
 }

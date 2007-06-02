@@ -84,14 +84,13 @@ typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > stri
 * プリミティブな型を示す整数値
 */
 enum PrimitiveType{
-	TYPE_NULL = 0,
-	TYPE_BASE = 1,
-	TYPE_INT = 2,
-	TYPE_FLOAT = 3,
-	
-	TYPE_FALSE = 4,
-	TYPE_TRUE = 5,
-	TYPE_NOP = 6,
+	TYPE_NULL,
+	TYPE_FALSE,
+	TYPE_TRUE,
+	TYPE_BASE,
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_NOP,
 
 	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
 	TYPE_SHIFT = 3

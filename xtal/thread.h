@@ -111,23 +111,23 @@ void xlock();
 void xunlock();
 
 
-extern ThreadLib* thread_lib_;
+extern bool thread_enabled_;
 
 struct GlobalInterpreterLock{
-	GlobalInterpreterLock(int){ if(thread_lib_)global_interpreter_lock(); }
-	~GlobalInterpreterLock(){ if(thread_lib_)global_interpreter_unlock(); }
+	GlobalInterpreterLock(int){ if(thread_enabled_)global_interpreter_lock(); }
+	~GlobalInterpreterLock(){ if(thread_enabled_)global_interpreter_unlock(); }
 	operator bool() const{ return true; }
 };
 
 struct GlobalInterpreterUnlock{
-	GlobalInterpreterUnlock(int){ if(thread_lib_)global_interpreter_unlock(); }
-	~GlobalInterpreterUnlock(){ if(thread_lib_)global_interpreter_lock(); }
+	GlobalInterpreterUnlock(int){ if(thread_enabled_)global_interpreter_unlock(); }
+	~GlobalInterpreterUnlock(){ if(thread_enabled_)global_interpreter_lock(); }
 	operator bool() const{ return true; }
 };
 
 struct XUnlock{
-	XUnlock(int){ if(thread_lib_)xunlock(); }
-	~XUnlock(){ if(thread_lib_)xlock(); }
+	XUnlock(int){ if(thread_enabled_)xunlock(); }
+	~XUnlock(){ if(thread_enabled_)xlock(); }
 	operator bool() const{ return true; }
 };
 

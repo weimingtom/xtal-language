@@ -51,9 +51,9 @@
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
-#define XTAL_GLOBAL_INTERPRETER_LOCK if(GlobalInterpreterLock global_interpreger_lock = 0)
-#define XTAL_GLOBAL_INTERPRETER_UNLOCK if(GlobalInterpreterUnlock global_interpreger_unlock = 0)
-#define XTAL_UNLOCK if(XUnlock xxunlock = 0)
+#define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
+#define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
+#define XTAL_UNLOCK if(::xtal::XUnlock xxunlock = 0)
 
 #ifdef XTAL_NO_EXCEPT
 #	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); }while(0)

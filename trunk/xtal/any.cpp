@@ -723,11 +723,6 @@ Any::Any(const char* str){
 	*this = String(str);
 }
 
-Any::~Any(){ 
-	dec_ref_count();
-	set_null();
-}
-
 const Any& Any::member(const ID& name) const{
 	switch(type()){
 		XTAL_DEFAULT;
@@ -893,11 +888,6 @@ Any::Any(AnyImpl* v){
 Any::Any(const AnyImpl* v){
 	if(v){ set_p(v); impl()->inc_ref_count(); }
 	else{ set_null(); }
-}
-
-Any::Any(const Any& v){
-	UncountedAny::operator =(v);
-	inc_ref_count();
 }
 
 Any& Any::operator =(const Any& v){

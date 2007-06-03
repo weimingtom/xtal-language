@@ -43,4 +43,5 @@ export [
 	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",
 	"Xtal Runtime Error 1015":"%(object)s :: '%(name)s' は定義されていません。",
 	"Xtal Runtime Error 1016":"ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。",
+	"Xtal Runtime Error 1017":"%(object)s :: '%(name)s' は %(accessibility)s です。",
 ];

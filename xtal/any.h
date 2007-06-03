@@ -404,11 +404,20 @@ public:
 	/**
 	* @brief nameメンバを取得する。
 	*
-	* @retval null そのメンバーは存在しない
+	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
 	const Any& member(const ID& name) const;
 	
+	/**
+	* @brief nameメンバを取得する。
+	* 可触性を考慮したメンバ取得
+	*
+	* @retval null そのメンバは存在しない
+	* @retval 非null nameに対応したメンバ  
+	*/
+	const Any& member(const ID& name, const Any& self) const;
+
 	/**
 	* @brief nameメンバを初期値valueで定義する。
 	*
@@ -846,6 +855,7 @@ public:
 	virtual void visit_members(Visitor& m);
 	virtual void call(const VMachine& vm);
 	virtual const Any& member(const ID& name);
+	virtual const Any& member(const ID& name, const Any& self);
 	virtual void def(const ID& name, const Any& value);
 	virtual HaveInstanceVariables* have_instance_variables();
 	virtual String object_name();

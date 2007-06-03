@@ -15,8 +15,6 @@
 #include "frameimpl.h"
 #include "constant.h"
 
-//#include "message_jp_sjis.txt"
-
 namespace xtal{
 
 #ifndef XTAL_NO_PARSER
@@ -1020,8 +1018,8 @@ void initialize_lib(){
 
 	Xsrc((
 builtin::Exception: class{
-	backtrace: @backtrace;
-	message: @message;
+	+ @backtrace;
+	+ @message;
 
 	initialize: method(message:""){
 		@message = message;
@@ -1057,6 +1055,7 @@ builtin::YieldError: class(StandardError){}
 builtin::InstanceVariableError: class(StandardError){}
 builtin::UnsupportedError: class(StandardError){}
 builtin::RedefinedError: class(StandardError){}
+builtin::AccessibilityError: class(StandardError){}
 builtin::AssertionFailed: class(StandardError){
 	initialize: method(message, expr){
 		Exception::initialize(%f"'%s':%s"(expr, message));

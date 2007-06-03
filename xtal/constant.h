@@ -21,6 +21,12 @@ enum{
 };
 
 enum{
+	KIND_PUBLIC,
+	KIND_PROTECTED,
+	KIND_PRIVATE,
+};
+
+enum{
 	RESULT_DISCARD = (1<<2),
 };
 
@@ -315,6 +321,13 @@ CODE_INSERT_3,
 * stack [value] -> [value]
 */
 CODE_SET_NAME,
+
+/**
+* @brief 可触性を設定する
+*
+* format op, type
+*/
+CODE_SET_ACCESSIBILITY,
 
 /**
 * @brief ブロックを開始する。

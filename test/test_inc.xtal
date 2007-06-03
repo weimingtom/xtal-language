@@ -32,10 +32,8 @@
 
 {
 	C : class{
-		x : @x;	
-		y : @y;	
-		set_x : @x=;
-		set_y : @y=;
+		+ @x;	
+		+ @y;	
 	}
 	
 	c : C();

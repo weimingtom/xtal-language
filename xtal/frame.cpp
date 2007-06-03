@@ -199,16 +199,17 @@ void ClassImpl::def(const ID& name, const Any& value){
 	mutate();
 }
 
-void ClassImpl::lay(const ID& name, const Any& value, int_t* pmutate_count){
+void ClassImpl::lay(const ID& name, const Any& value, int_t* pmutate_count, unsigned short flags){
 	IdMap::Node* it = map_members_->find(name);
 	if(!it){
 		it = map_members_->insert(name);
 		it->num = members_.size();
-		it->flags = NOMEMBER;
+		it->flags = flags | NOMEMBER;
 		it->mutate_count = *pmutate_count;
 		it->pmutate_count = pmutate_count;
 		members_.push_back(value);	
 	}else{
+		it->flags = flags | it->flags;
 		it->mutate_count = *pmutate_count;
 		it->pmutate_count = pmutate_count;
 		members_[it->num] = value;
@@ -232,23 +233,27 @@ const Any& ClassImpl::bases_member(const ID& name){
 	return null;
 }
 
-
 const Any& ClassImpl::member(const ID& name){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		if(it->flags&NOMEMBER){
-			if(it->mutate_count==*it->pmutate_count){
+		// メンバが見つかった
+
+		{
+			if(it->flags&NOMEMBER){
+				if(it->mutate_count==*it->pmutate_count){
+					return members_[it->num];
+				}
+			}else{
 				return members_[it->num];
 			}
-		}else{
-			return members_[it->num];
 		}
 	}
 	
-	int_t* pmutate_count;
+	int_t* pmutate_count = 0;
+	unsigned short flags = 0;
 	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(const Any& ret = mixins_[i].member(name, pmutate_count)){
-			lay(name, ret, pmutate_count);
+		if(const Any& ret = mixins_[i].member(name, pmutate_count, flags)){
+			lay(name, ret, pmutate_count, flags);
 			return ret;
 		}
 	}
@@ -256,29 +261,149 @@ const Any& ClassImpl::member(const ID& name){
 	return TClass<Any>::get().impl()->any_member(name);
 }
 
-const Any& ClassImpl::member(const ID& name, int_t*& pmutate_count){
+const Any& ClassImpl::member(const ID& name, int_t*& pmutate_count, unsigned short& flags){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		if(it->flags&NOMEMBER){
-			if(it->mutate_count==*it->pmutate_count){
-				pmutate_count = it->pmutate_count;
+		// メンバが見つかった
+
+		{
+			if(it->flags&NOMEMBER){
+				if(it->mutate_count==*it->pmutate_count){
+					pmutate_count = it->pmutate_count;
+					flags = it->flags;
+					return members_[it->num];
+				}
+			}else{
+				pmutate_count = &mutate_count_;
+				flags = it->flags;
 				return members_[it->num];
 			}
-		}else{
-			pmutate_count = &mutate_count_;
-			return members_[it->num];
 		}
 	}
 	
 	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(const Any& ret = mixins_[i].member(name, pmutate_count)){
-			lay(name, ret, pmutate_count);
+		if(const Any& ret = mixins_[i].member(name, pmutate_count, flags)){
+			lay(name, ret, pmutate_count, flags);
 			return ret;
 		}
 	}
 
 	return null;
 }
+
+const Any& ClassImpl::member(const ID& name, const Any& self){
+	IdMap::Node* it = map_members_->find(name);
+	if(it){
+		// メンバが見つかった
+
+		// しかしprivateが付けられている
+		if(it->flags&PRIVATE){
+			if(self.get_class().raweq(this)){
+				return members_[it->num];
+			}else{
+				// アクセスできない
+				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
+					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
+				);
+			}
+		}
+
+		// しかしprotectedが付けられている
+		if(it->flags&PROTECTED){
+			if(self.is(this)){
+				if(it->flags&NOMEMBER){
+					if(it->mutate_count==*it->pmutate_count){
+						return members_[it->num];
+					}
+				}else{
+					return members_[it->num];
+				}
+			}else{
+				// アクセスできない
+				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
+					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
+				);			}
+		}else{
+			if(it->flags&NOMEMBER){
+				if(it->mutate_count==*it->pmutate_count){
+					return members_[it->num];
+				}
+			}else{
+				return members_[it->num];
+			}
+		}
+	}
+	
+	int_t* pmutate_count = 0;
+	unsigned short flags = 0;
+	for(int_t i = mixins_.size()-1; i>=0; --i){
+		if(const Any& ret = mixins_[i].member(name, self, pmutate_count, flags)){
+			lay(name, ret, pmutate_count, flags);
+			return ret;
+		}
+	}
+
+	return TClass<Any>::get().impl()->any_member(name);
+}
+
+const Any& ClassImpl::member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
+	IdMap::Node* it = map_members_->find(name);
+	if(it){
+		// メンバが見つかった
+
+		// しかしprivateが付けられている
+		if(it->flags&PRIVATE){
+			// アクセスできない
+			XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
+				Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
+			);
+		}
+
+		// しかしprotectedが付けられている
+		if(it->flags&PROTECTED){
+			if(self.is(this)){
+				if(it->flags&NOMEMBER){
+					if(it->mutate_count==*it->pmutate_count){
+						pmutate_count = it->pmutate_count;
+						flags = it->flags;
+						return members_[it->num];
+					}
+				}else{
+					pmutate_count = &mutate_count_;
+					flags = it->flags;
+					return members_[it->num];
+				}
+			}else{
+				// アクセスできない
+				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
+					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
+				);
+			}
+		}else{
+			if(it->flags&NOMEMBER){
+				if(it->mutate_count==*it->pmutate_count){
+					pmutate_count = it->pmutate_count;
+					flags = it->flags;
+					return members_[it->num];
+				}
+			}else{
+				pmutate_count = &mutate_count_;
+				flags = it->flags;
+				return members_[it->num];
+			}
+		}
+	}
+	
+	for(int_t i = mixins_.size()-1; i>=0; --i){
+		if(const Any& ret = mixins_[i].member(name, self, pmutate_count, flags)){
+			lay(name, ret, pmutate_count, flags);
+			return ret;
+		}
+	}
+
+	return null;
+}
+
 
 void ClassImpl::set_member(const ID& name, const Any& value){
 	IdMap::Node* it = map_members_->find(name);
@@ -389,8 +514,9 @@ const Any& LibImpl::member(const ID& name){
 	}
 }
 
-const Any& LibImpl::member(const ID& name, int_t*& pmutate_count){
+const Any& LibImpl::member(const ID& name, int_t*& pmutate_count, unsigned short& flags){
 	IdMap::Node* it = map_members_->find(name);
+	flags = 0;
 	if(it){
 		pmutate_count = &mutate_count_;
 		return members_[it->num];
@@ -524,16 +650,28 @@ const Any& Class::member(const ID& name) const{
 	return impl()->member(name);
 }
 
+const Any& Class::member(const ID& name, const Any& self) const{
+	return impl()->member(name, self);
+}
+
 void Class::set_member(const ID& name, const Any& value) const{
 	return impl()->set_member(name, value);
 }
 	
-const Any& Class::member(const ID& name, int_t*& mutate_count) const{
-	return impl()->member(name, mutate_count);
+const Any& Class::member(const ID& name, int_t*& mutate_count, unsigned short& flags) const{
+	return impl()->member(name, mutate_count, flags);
+}
+
+const Any& Class::member(const ID& name, const Any& self, int_t*& mutate_count, unsigned short& flags) const{
+	return impl()->member(name, self, mutate_count, flags);
 }
 
 void Class::mutate() const{
 	return impl()->mutate();
+}
+
+void Class::set_accessibility(const ID& name, int_t kind) const{
+	return impl()->set_accessibility(name, kind);
 }
 
 Class new_xclass(const Frame& outer, const Code& code, FrameCore* core){

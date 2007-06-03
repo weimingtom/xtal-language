@@ -556,13 +556,20 @@ struct TopLevelStmt : public Stmt{
 		:Stmt(TYPE, line), vars(alloc), stmts(alloc), export_expr(0), unittest_stmt(0){}
 };
 
-
+struct SetAccessibilityStmt : public Stmt{
+	enum{ TYPE = __LINE__ };
+	int_t var;
+	int_t kind;
+	SetAccessibilityStmt(int_t line)
+		:Stmt(TYPE, line), var(0), kind(0){}
+};
 
 
 class ExprBuilder{
 public:
 
 	PseudoVariableExpr* pseudo(int_t code);
+	UnaExpr* una(int_t code, Expr* term);
 	BinExpr* bin(int_t code, Expr* lhs, Expr* rhs);
 	BinCompExpr* bin_comp(int_t code, Expr* lhs, Expr* rhs);
 	OpAssignStmt* op_assign(int_t code, Expr* lhs, Expr* rhs);
@@ -579,6 +586,7 @@ public:
 	ExprStmt* e2s(Expr* expr);
 	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
 	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);
+	SetAccessibilityStmt* set_accessibility(int_t var, int_t kind);
 
 	void scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag);
 	void scope_carry_on_heap_flag();

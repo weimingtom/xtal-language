@@ -580,6 +580,10 @@ const Any& AnyImpl::member(const ID& name){
 	return null; 
 }
 
+const Any& AnyImpl::member(const ID& name, const Any& self){ 
+	return null; 
+}
+
 void AnyImpl::def(const ID& name, const Any& value){
 
 }
@@ -743,20 +747,9 @@ void Any::def(const ID& name, const Any& value) const{
 }
 
 void Any::send(const ID& name, const VMachine& vm) const{
-	const Class* p;
-	switch(type()){
-		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_NULL){ p = &TClass<Null>::get(); }
-		XTAL_CASE(TYPE_BASE){ p = &impl()->get_class(); }
-		XTAL_CASE(TYPE_INT){ p = &TClass<Int>::get(); }
-		XTAL_CASE(TYPE_FLOAT){ p = &TClass<Float>::get(); }
-		XTAL_CASE(TYPE_FALSE){ p = &TClass<True>::get(); }
-		XTAL_CASE(TYPE_TRUE){ p = &TClass<False>::get(); }
-		XTAL_CASE(TYPE_NOP){ vm.return_result(*this); return; }
-	}
-
-	vm.set_hint(*p, name);
-	if(const Any& ret = p->member(name)){
+	const Class& p = get_class();
+	vm.set_hint(p, name);
+	if(const Any& ret = p.member(name)){
 		vm.set_arg_this(*this);
 		ret.call(vm);
 		return;

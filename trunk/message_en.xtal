@@ -43,4 +43,5 @@ export [
 	"Xtal Runtime Error 1014":"can't open file: '%(name)s'",
 	"Xtal Runtime Error 1015":"%(object)s :: '%(name)s' is not defined member",
 	"Xtal Runtime Error 1016":"compile error in '%(name)s'",
+	"Xtal Runtime Error 1017":"%(object)s :: '%(name)s' is %(accessibility)s member",
 ];

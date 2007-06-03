@@ -673,6 +673,9 @@ private:
 	const u8* USHR_ASSIGN(const u8* pc);
 	const u8* SHL_ASSIGN(const u8* pc);
 
+	const u8* SET_ACCESSIBILITY(const u8* pc);
+	const u8* CURRENT_CONTEXT(const u8* pc);
+
 	void hook_return(const u8* pc);
 
 	VMachine clone(){

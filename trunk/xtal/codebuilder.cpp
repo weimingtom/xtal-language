@@ -1505,6 +1505,12 @@ void CodeBuilder::compile(Stmt* ex){
 				}
 			}block_end();
 		}
+
+		XTAL_EXPR_CASE(SetAccessibilityStmt){
+			put_code_u8(CODE_SET_ACCESSIBILITY);
+			put_code_u16(e->var);
+			put_code_u8(e->kind);
+		}
 		
 		XTAL_EXPR_CASE(TopLevelStmt){
 			block_begin(BLOCK, 0, e->vars, e->on_heap);{

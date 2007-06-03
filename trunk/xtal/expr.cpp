@@ -13,6 +13,10 @@ PseudoVariableExpr* ExprBuilder::pseudo(int_t code){
 	return new(alloc) PseudoVariableExpr(common->line, code);
 }
 
+UnaExpr* ExprBuilder::una(int_t code, Expr* term){
+	return new(alloc) UnaExpr(common->line, code, term);
+}
+
 BinExpr* ExprBuilder::bin(int_t code, Expr* lhs, Expr* rhs){
 	return new(alloc) BinExpr(common->line, code, lhs, rhs);
 }
@@ -93,6 +97,12 @@ AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
 	return ret;
 }
 
+SetAccessibilityStmt* ExprBuilder::set_accessibility(int_t var, int_t kind){
+	SetAccessibilityStmt* ret = new(alloc) SetAccessibilityStmt(common->line);
+	ret->var = var;
+	ret->kind = kind;
+	return ret;
+}
 
 void ExprBuilder::scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag){
 	VarInfo vi = {list, on_heap, set_name_flag};

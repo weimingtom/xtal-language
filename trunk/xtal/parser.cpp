@@ -1155,44 +1155,47 @@ Expr* Parser::parse_class(){
 
 	expect('{');
 	while(true){
-		if(int_t var = parse_var()){
-			if(eat('@')){
-				if(int_t var2 = parse_ident()){
-					bool found = false;
-					for(TList<int_t>::Node* np = p->inst_vars.head; np; np = np->next){
-						if(np->value==var2){
-							found = true;
-							break;
-						}
-					}
-					if(!found){
-						p->inst_vars.push_back(var2);
-					}
 
-					if(eat('=')){
-						e.fun_begin(KIND_METHOD);
-						e.fun_param(com_->register_ident(Xid(value)));
-						e.fun_body(e.assign(e.instance_variable(var2), e.local(com_->register_ident(Xid(value)))));
-						p->stmts.push_back(e.define(e.local(var), e.fun_end()));
-					}else{
-						e.fun_begin(KIND_METHOD);
-						e.fun_body(e.return_(e.instance_variable(var2)));
-						p->stmts.push_back(e.define(e.local(var), e.fun_end()));
-					}
+		int_t accessibility = -1;
+		
+		if(eat('#')){// 可触性 protected 指定
+			accessibility = KIND_PROTECTED;
+		}else if(eat('-')){// 可触性 private 指定
+			accessibility = KIND_PRIVATE;
+		}else if(eat('+')){// 可触性 public 指定
+			accessibility = KIND_PUBLIC;
+		}
 
-					expect_end();
-				}
-			}else{
-				p->stmts.push_back(e.define(e.local(var), parse_expr_must()));
-				expect_end();
-			}
-		}else if(eat('@')){
-			if(int_t var2 = parse_ident()){
-				var = var2;
-				if(eat(':')){
+		if(int_t var = parse_var()){ // メンバ定義
+			p->stmts.push_back(e.define(e.local(var), parse_expr_must()));
+			expect_end();
+			
+			if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
+				p->stmts.push_back(e.set_accessibility(var, accessibility));
+
+		}else if(eat('@')){// インスタンス変数定義
+			if(int_t var = parse_ident()){
+				
+				if(eat(':')){ // 初期値込み
 					insts.push_back(std::make_pair(var, parse_expr_must()));
 				}
 				expect_end();
+
+				if(accessibility!=-1){ // 可触性が付いているので、アクセッサを定義する
+					e.fun_begin(KIND_METHOD);
+					e.fun_body(e.return_(e.instance_variable(var)));
+					p->stmts.push_back(e.define(e.local(var), e.fun_end()));
+					if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
+						p->stmts.push_back(e.set_accessibility(var, accessibility));
+					
+					int_t var2 = com_->register_ident(String("set_").cat(com_->ident_table[var].to_s()).intern());
+					e.fun_begin(KIND_METHOD);
+					e.fun_param(com_->register_ident(Xid(value)));
+					e.fun_body(e.assign(e.instance_variable(var), e.local(com_->register_ident(Xid(value)))));
+					p->stmts.push_back(e.define(e.local(var2), e.fun_end()));
+					if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
+						p->stmts.push_back(e.set_accessibility(var2, accessibility));
+				}
 
 				for(TList<int_t>::Node* np = p->inst_vars.head; np; np = np->next){
 					if(np->value==var){
@@ -1201,15 +1204,9 @@ Expr* Parser::parse_class(){
 					}
 				}
 				p->inst_vars.push_back(var);
-			}				
-		}else if(int_t var = parse_ident()){
-			if(eat(':')){
-				p->stmts.push_back(e.define(e.member(e.pseudo(CODE_PUSH_CURRENT_CONTEXT), var), parse_expr_must()));
 			}else{
 				com_->error(line(), Xt("Xtal Compile Error 1001"));
 			}
-			expect_end();
-
 		}else{
 			break;
 		}

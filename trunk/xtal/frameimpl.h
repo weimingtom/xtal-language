@@ -6,6 +6,7 @@
 #include "string.h"
 #include "utilimpl.h"
 #include "xmacro.h"
+#include "constant.h"
 
 namespace xtal{
 
@@ -322,7 +323,9 @@ protected:
 	vector_t members_;
 	
 	enum{
-		NOMEMBER = 1 << 0
+		NOMEMBER = 1 << 0,
+		PROTECTED = 1 << 1,
+		PRIVATE = 1 << 2
 	};
 	
 	IdMap* map_members_;
@@ -355,21 +358,31 @@ public:
 
 	virtual void def(const ID& name, const Any& value);
 	
-	void lay(const ID& name, const Any& value, int_t* pmutate_count);
+	void lay(const ID& name, const Any& value, int_t* pmutate_count, unsigned short flags);
 
 	const Any& any_member(const ID& name);
 	
 	const Any& bases_member(const ID& name);
 	
-	virtual const Any& member(const ID& name);
-
 	virtual void set_member(const ID& name, const Any& value);
+
+	virtual const Any& member(const ID& name, const Any& self);
 	
-	virtual const Any& member(const ID& name, int_t*& pmutate_count);
+	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags);
+	
+	virtual const Any& member(const ID& name);
+	
+	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags);
 
 	void mutate();
 
 	bool is_inherited(const Any& v);
+
+	void set_accessibility(const ID& name, int_t kind){
+		if(IdMap::Node* node = map_members_->find(name)){
+			node->flags |= kind==KIND_PROTECTED ? PROTECTED : (kind==KIND_PRIVATE ? PRIVATE : 0);
+		}
+	}
 	
 protected:
 
@@ -412,7 +425,15 @@ public:
 
 	virtual const Any& member(const ID& name);
 
-	virtual const Any& member(const ID& name, int_t*& pmutate_count);
+	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags);
+	
+	virtual const Any& member(const ID& name, const Any& self){
+		return member(name);
+	}
+
+	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
+		return member(name, pmutate_count, flags);
+	}
 
 	virtual void def(const ID& name, const Any& value);
 

@@ -121,7 +121,25 @@ public:
 	const Any& member(const ID& name) const;
 
 	/**
+	* @brief メンバを取り出す
+	* 可触性を考慮して取り出す
+	*
+	* @param name 取り出したいメンバの名前
+	* @param self 可視性を判定するためのオブジェクト
+	*/
+	const Any& member(const ID& name, const Any& self) const;
+
+	/**
+	* @brief nameメンバの可触性をprotectedに変更する
+	*
+	* @param name 可触性を変更するメンバ
+	* @param kind 可触性を表す定数
+	*/
+	void set_accessibility(const ID& name, int_t kind) const;
+
+	/**
 	* @brief メンバを再設定する
+	* Xtalレベルでは禁止されている操作だが、C++レベルでは可能にしておく
 	*
 	* @param name 再設定したいメンバの名前
 	*/
@@ -185,7 +203,9 @@ public:
 
 	void marshal_new(const VMachine& vm);
 
-	const Any& member(const ID& name, int_t*& mutate_count) const;
+	const Any& member(const ID& name, const Any& self, int_t*& mutate_count, unsigned short& flags) const;
+	
+	const Any& member(const ID& name, int_t*& mutate_count, unsigned short& flags) const;
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;
 

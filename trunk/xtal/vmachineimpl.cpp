@@ -529,7 +529,7 @@ switch(*pc){
 
 	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(ff().fun()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ push(decolonize()); pc+=1; }	
+	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ pc = CURRENT_CONTEXT(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
@@ -560,6 +560,8 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_CLEANUP_CALL){ pop_ff(); pc = ff().pc; }
 
 	XTAL_VM_CASE(CODE_YIELD){ YIELD(pc); return; }
+
+	XTAL_VM_CASE(CODE_SET_ACCESSIBILITY){ pc = SET_ACCESSIBILITY(pc); }
 
 	XTAL_VM_CASE(CODE_RETURN_0){ pc = RETURN(0); }
 	XTAL_VM_CASE(CODE_RETURN_1){ pc = RETURN(1); }
@@ -789,7 +791,15 @@ const u8* VMachineImpl::SEND(const u8* pc){
 			XTAL_CASE(2){ recycle_ff(pc+7, get_u8(pc+3), get_u8(pc+4), self.cref()); }
 			XTAL_CASE(3){ recycle_ff_args(pc+7, get_u8(pc+3), get_u8(pc+4), self.cref()); }
 		}
-		target.send(sym, myself());
+
+		//target.send(sym, myself());
+
+		const Class& cls = target.get_class();
+		set_hint(cls, sym);
+		if(const Any& ret = cls.member(sym, ff().self())){
+			set_arg_this(target);
+			ret.call(myself());
+		}
 	}
 	return ff().pc; 	
 }
@@ -1627,9 +1637,8 @@ const u8* VMachineImpl::SHL_ASSIGN(const u8* pc){
 }
 
 const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
-	decolonize(); 
-
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		decolonize(); 
 		u8 need_result_count = get_u8(pc+1);
 		u8 result_flag = get_u8(pc+2);
 		VMachine cloned_vm(clone());
@@ -1639,6 +1648,23 @@ const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
 		adjust_result(2, need_result_count, result_flag);
 	}
 	return pc+3;
+}
+
+const u8* VMachineImpl::CURRENT_CONTEXT(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		push(decolonize());
+	}
+	return pc+1;
+}
+
+const u8* VMachineImpl::SET_ACCESSIBILITY(const u8* pc){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		Class cls(cast<Class>(decolonize()));
+		int_t member = get_u16(pc+1);
+		int_t kind = get_u8(pc+3);
+		cls.set_accessibility(symbol(member), kind);
+	}
+	return pc+4;
 }
 
 Any VMachineImpl::append_backtrace(const u8* pc, const Any& e){

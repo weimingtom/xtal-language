@@ -314,7 +314,7 @@ Expr* Parser::parse_term(){
 				}
 
 				XTAL_CASE('@'){
-					ret = XTAL_NEW InstanceVariableExpr(ln, parse_ident_or_keyword());
+					ret = e.instance_variable(parse_ident());
 				}
 
 				XTAL_CASE('"'){ //"
@@ -1267,7 +1267,10 @@ Expr* Parser::parse_fun(int_t kind){
 	FunExpr* ret = XTAL_NEW FunExpr(lexer_.line(), kind);
 	e.scope_push(&ret->vars, &ret->on_heap, false);
 	e.scope_set_on_heap_flag(1);
-	
+
+	int_t inst_assign_list_count = 0;
+	int_t inst_assign_list[255];
+
 	if(eat('(')){
 
 		while(true){
@@ -1282,7 +1285,20 @@ Expr* Parser::parse_fun(int_t kind){
 				break;
 			}
 			
-			if(int_t var = parse_ident()){
+			if(eat('@')){
+				if(int_t var = parse_ident()){
+					e.register_variable(var);
+					if(eat(':')){
+						ret->params.push_back(var, parse_expr_must());
+					}else{
+						ret->params.push_back(var, 0);
+					}
+					if(inst_assign_list_count<255)
+						inst_assign_list[inst_assign_list_count++] = var;
+				}else{
+					com_->error(line(), Xt("Xtal Compile Error 1001"));
+				}
+			}else if(int_t var = parse_ident()){
 				e.register_variable(var);
 				if(eat(':')){
 					ret->params.push_back(var, parse_expr_must());
@@ -1302,11 +1318,26 @@ Expr* Parser::parse_fun(int_t kind){
 		}
 	}
 
-	if(eat('{')){
-		ret->stmt = parse_block();
+	if(inst_assign_list_count==0){
+		if(eat('{')){
+			ret->stmt = parse_block();
+		}else{
+			ret->stmt = e.return_(parse_expr_must());
+		}
 	}else{
-		ret->stmt = e.return_(parse_expr_must());
+		e.block_begin();
+		for(int_t i=0; i<inst_assign_list_count; ++i){
+			int_t var = inst_assign_list[i];
+			e.block_add(e.assign(e.instance_variable(var), e.local(var)));
+		}
+		if(eat('{')){
+			e.block_add(parse_block());
+		}else{
+			e.block_add(e.return_(parse_expr_must()));
+		}
+		ret->stmt = e.block_end();
 	}
+
 	e.scope_pop();
 	return ret;
 }

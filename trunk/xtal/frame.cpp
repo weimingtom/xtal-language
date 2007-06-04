@@ -298,7 +298,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 
 		// しかしprivateが付けられている
 		if(it->flags&PRIVATE){
-			if(self.get_class().raweq(this)){
+			if(self.get_class().raweq(this) || self.raweq(this)){
 				return members_[it->num];
 			}else{
 				// アクセスできない
@@ -310,7 +310,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 
 		// しかしprotectedが付けられている
 		if(it->flags&PROTECTED){
-			if(self.is(this)){
+			if(self.is(this) || this->is_inherited(self)){
 				if(it->flags&NOMEMBER){
 					if(it->mutate_count==*it->pmutate_count){
 						return members_[it->num];
@@ -361,7 +361,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self, int_t*& pmutate_co
 
 		// しかしprotectedが付けられている
 		if(it->flags&PROTECTED){
-			if(self.is(this)){
+			if(self.is(this)/* || this->is_inherited(self)*/){
 				if(it->flags&NOMEMBER){
 					if(it->mutate_count==*it->pmutate_count){
 						pmutate_count = it->pmutate_count;
@@ -454,7 +454,7 @@ void XClassImpl::call(const VMachine& vm){
 		}
 	}
 	
-	if(const Any& ret = member(Xid(initialize))){
+	if(const Any& ret = member(Xid(initialize), vm.impl()->ff().self())){
 		vm.set_arg_this(inst);
 		if(vm.need_result()){
 			ret.call(vm);

@@ -101,16 +101,19 @@ RegionAlloc::~RegionAlloc(){
 }
 
 void *RegionAlloc::allocate(size_t size){
+//	return malloc(size);
+	size = align(size+4, sizeof(void*));
 	if(pos_+size>=end_){
 		add_chunk(size);
 	}
 	
 	void *p = pos_;
-	pos_ += align(size, sizeof(void*));
+	pos_ += size;
 	return p;
 }
 	
 void RegionAlloc::release(){
+//	return;
 	while(begin_){
 		void* next = *(void**)begin_;
 		user_free(begin_, *((int_t*)((void**)begin_+1)));

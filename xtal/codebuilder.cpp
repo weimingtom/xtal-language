@@ -406,7 +406,7 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 	}
 
 	if(scopes_.top().type==FRAME){
-		put_code_u8(CODE_FRAME_BEGIN);
+		put_code_u8(CODE_CLASS_BEGIN);
 		put_code_u16(s.frame_core_num);
 		if(scopes_.top().kind==KIND_CLASS){
 			put_code_u8(scopes_.top().mixins);
@@ -426,7 +426,7 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 void CodeBuilder::block_end(){
 	if(scopes_.top().type==FRAME){
 		variables_.downsize(scopes_.top().variable_size);
-		put_code_u8(CODE_FRAME_END);
+		put_code_u8(CODE_CLASS_END);
 	}else if(scopes_.top().type==FUN){
 		variables_.downsize(scopes_.top().variable_size);
 	}else{

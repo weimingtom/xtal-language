@@ -603,8 +603,8 @@ switch(*pc){
 		pc+=1;
 	}
 
-	XTAL_VM_CASE(CODE_FRAME_BEGIN){ pc = FRAME_BEGIN(pc); }
-	XTAL_VM_CASE(CODE_FRAME_END){ pc = FRAME_END(pc); }
+	XTAL_VM_CASE(CODE_CLASS_BEGIN){ pc = CLASS_BEGIN(pc); }
+	XTAL_VM_CASE(CODE_CLASS_END){ pc = CLASS_END(pc); }
 
 	XTAL_VM_CASE(CODE_INSTANCE_VARIABLE){ pc = INSTANCE_VARIABLE(pc); }
 	XTAL_VM_CASE(CODE_SET_INSTANCE_VARIABLE){ pc = SET_INSTANCE_VARIABLE(pc); }
@@ -822,39 +822,33 @@ const u8* VMachineImpl::SEND_IF_DEFINED(const u8* pc){
 	return ff().pc; 	
 }
 
-const u8* VMachineImpl::FRAME_BEGIN(const u8* pc){
+const u8* VMachineImpl::CLASS_BEGIN(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		FrameCore* p = code().get_frame_core(get_u16(pc+1)); 
-		switch(p->kind){
-			XTAL_NODEFAULT;
-			
-			XTAL_CASE(KIND_BLOCK){ 
-				ff().outer(Frame(decolonize(), code(), p));
-				ff().scopes.push(0); 
-				return pc + 3;
-			}
-			
-			XTAL_CASE(KIND_CLASS){ 
-				Class cp = new_xclass(decolonize(), code(), p);
-				
-				int_t n = get_u8(pc+3);
-				for(int_t i = 0; i<n; ++i){
-					cp.inherit(pop());
-				}
-
-				ff().outer(cp);
-				ff().scopes.push(0); 
-				return pc + 4;
-			}
+		Class cp = new_xclass(decolonize(), code(), p);
+		
+		int_t n = get_u8(pc+3);
+		for(int_t i = 0; i<n; ++i){
+			cp.inherit(pop());
 		}
+
+		ff().outer(decolonize());
+		push_ff(pc+4, 0, 0, 0, 0, cp);
+		ff().fun(prev_ff().fun());
+
+		ff().outer(cp);
+		ff().scopes.push(0); 
+
+		return pc + 4;
 	}
 	return 0;
 }
 
-const u8* VMachineImpl::FRAME_END(const u8* pc){
+const u8* VMachineImpl::CLASS_END(const u8* pc){
 	push(ff().outer());
 	ff().outer(ff().outer().outer());
 	ff().scopes.downsize(1);
+	pop_ff();
 	return pc+1;
 }
 

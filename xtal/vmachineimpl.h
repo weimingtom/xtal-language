@@ -604,8 +604,8 @@ private:
 	const u8* PUSH_FUN(const u8* pc);
 	const u8* CURRENT_CONTINUATION(const u8* pc);
 	
-	const u8* FRAME_BEGIN(const u8* pc);
-	const u8* FRAME_END(const u8* pc);
+	const u8* CLASS_BEGIN(const u8* pc);
+	const u8* CLASS_END(const u8* pc);
 
 	const u8* BLOCK_END(const u8* pc);
 

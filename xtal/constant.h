@@ -359,7 +359,7 @@ CODE_BLOCK_END_NOT_ON_HEAP,
 * format op, type, core1, core2
 * stack [] -> []
 */
-CODE_FRAME_BEGIN,
+CODE_CLASS_BEGIN,
 
 /**
 * @brief フレームを閉じる
@@ -367,7 +367,7 @@ CODE_FRAME_BEGIN,
 * format op
 * stack [] -> [value]
 */
-CODE_FRAME_END,
+CODE_CLASS_END,
 
 /**
 * @brief ローカル変数を取り出す。

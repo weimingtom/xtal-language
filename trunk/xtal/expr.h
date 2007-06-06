@@ -422,9 +422,10 @@ struct MemberExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	Expr* lhs;
 	int_t var;
+	Expr* pvar;
 	bool if_defined;
 	MemberExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), if_defined(false){}
+		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), if_defined(false){}
 };
 
 struct CallExpr : public Expr{ 
@@ -443,12 +444,13 @@ struct SendExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	Expr* lhs;
 	int_t var;
+	Expr* pvar;
 	bool tail;
 	bool if_defined;
 	bool discard;
 	//int_t result_flag;
 	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), tail(false), discard(false), if_defined(false){}
+		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), tail(false), discard(false), if_defined(false){}
 };
 
 struct AssignStmt : public Stmt{
@@ -569,6 +571,7 @@ class ExprBuilder{
 public:
 
 	PseudoVariableExpr* pseudo(int_t code);
+	StringExpr* string(int_t n);
 	UnaExpr* una(int_t code, Expr* term);
 	BinExpr* bin(int_t code, Expr* lhs, Expr* rhs);
 	BinCompExpr* bin_comp(int_t code, Expr* lhs, Expr* rhs);
@@ -581,8 +584,12 @@ public:
 	CallExpr* call(Expr* lhs, Expr* a1 = 0, Expr* a2 = 0);
 	MemberExpr* member(Expr* lhs, int_t var);
 	MemberExpr* member_q(Expr* lhs, int_t var);
+	MemberExpr* member(Expr* lhs, Expr* var);
+	MemberExpr* member_q(Expr* lhs, Expr* var);
 	SendExpr* send(Expr* lhs, int_t var);
 	SendExpr* send_q(Expr* lhs, int_t var);
+	SendExpr* send(Expr* lhs, Expr* var);
+	SendExpr* send_q(Expr* lhs, Expr* var);
 	ExprStmt* e2s(Expr* expr);
 	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
 	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);

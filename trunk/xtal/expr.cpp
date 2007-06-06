@@ -13,6 +13,10 @@ PseudoVariableExpr* ExprBuilder::pseudo(int_t code){
 	return new(alloc) PseudoVariableExpr(common->line, code);
 }
 
+StringExpr* ExprBuilder::string(int_t n){
+	return new(alloc) StringExpr(common->line, n);
+}
+
 UnaExpr* ExprBuilder::una(int_t code, Expr* term){
 	return new(alloc) UnaExpr(common->line, code, term);
 }
@@ -69,6 +73,19 @@ MemberExpr* ExprBuilder::member_q(Expr* lhs, int_t var){
 	return ret;
 }
 
+MemberExpr* ExprBuilder::member(Expr* lhs, Expr* var){
+	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs);
+	ret->pvar = var;
+	return ret;
+}
+
+MemberExpr* ExprBuilder::member_q(Expr* lhs, Expr* var){
+	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs);
+	ret->if_defined = true;
+	ret->pvar = var;
+	return ret;
+}
+
 SendExpr* ExprBuilder::send(Expr* lhs, int_t var){
 	return new(alloc) SendExpr(common->line, lhs, var);
 }
@@ -76,6 +93,19 @@ SendExpr* ExprBuilder::send(Expr* lhs, int_t var){
 SendExpr* ExprBuilder::send_q(Expr* lhs, int_t var){
 	SendExpr* ret = new(alloc) SendExpr(common->line, lhs, var);
 	ret->if_defined = true;
+	return ret;
+}
+
+SendExpr* ExprBuilder::send(Expr* lhs, Expr* var){
+	SendExpr* ret = new(alloc) SendExpr(common->line, lhs);
+	ret->pvar = var;
+	return ret;
+}
+
+SendExpr* ExprBuilder::send_q(Expr* lhs, Expr* var){
+	SendExpr* ret = new(alloc) SendExpr(common->line, lhs);
+	ret->if_defined = true;
+	ret->pvar = var;
 	return ret;
 }
 

@@ -652,15 +652,31 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 				XTAL_CASE(c2(':',':')){
 					if(pri < PRI_MEMBER - l_space){
-						ret = e.member(lhs, parse_ident_or_keyword());
+						if(eat('(')){
+							ret = e.member(lhs, parse_expr_must());
+							expect_a(')');
+						}else{
+							ret = e.member(lhs, parse_ident_or_keyword());
+						}
+					}
+				}
+
+				XTAL_CASE(c3(':',':', '?')){
+					if(pri < PRI_MEMBER - l_space){
+						if(eat('(')){
+							ret = e.member_q(lhs, parse_expr_must());
+							expect_a(')');
+						}else{
+							ret = e.member_q(lhs, parse_ident_or_keyword());
+						}
 					}
 				}
 
 				XTAL_CASE('.'){
 					if(pri < PRI_SEND - l_space){
-						if(eat('<')){
-						//	lexer_.set_string_mode();
-						//	send(lhs, false, com_->register_ident("child"));
+						if(eat('(')){
+							ret = e.send(lhs, parse_expr_must());
+							expect_a(')');
 						}else{
 							ret = e.send(lhs, parse_ident_or_keyword());
 						}
@@ -669,7 +685,12 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 				XTAL_CASE(c2('.', '?')){ 
 					if(pri < PRI_SEND - l_space){
-						ret = e.send_q(lhs, parse_ident_or_keyword());
+						if(eat('(')){
+							ret = e.send_q(lhs, parse_expr_must());
+							expect_a(')');
+						}else{
+							ret = e.send_q(lhs, parse_ident_or_keyword());
+						}
 					}
 				}
 

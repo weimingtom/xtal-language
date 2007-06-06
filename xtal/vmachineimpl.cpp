@@ -792,8 +792,6 @@ const u8* VMachineImpl::SEND(const u8* pc){
 			XTAL_CASE(3){ recycle_ff_args(pc+7, get_u8(pc+3), get_u8(pc+4), self.cref()); }
 		}
 
-		//target.send(sym, myself());
-
 		const Class& cls = target.get_class();
 		set_hint(cls, sym);
 		if(const Any& ret = cls.member(sym, ff().self())){
@@ -826,7 +824,7 @@ const u8* VMachineImpl::CLASS_BEGIN(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		FrameCore* p = code().get_frame_core(get_u16(pc+1)); 
 		Class cp = new_xclass(decolonize(), code(), p);
-		
+
 		int_t n = get_u8(pc+3);
 		for(int_t i = 0; i<n; ++i){
 			cp.inherit(pop());

@@ -224,44 +224,80 @@ bool CodeBuilder::put_local_code(int_t var){
 	}
 }
 
-void CodeBuilder::put_send_code(int_t var, int_t need_result_count, bool discard, bool tail, bool if_defined){
+void CodeBuilder::put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool discard, bool tail, bool if_defined){
+	if(pvar){
+		compile(pvar);
+	}	
+	
 	if(if_defined){
 		put_code_u8(CODE_SEND_IF_DEFINED);
 	}else{
 		put_code_u8(CODE_SEND);
 	}
-	put_code_u16(var);
+	if(pvar){
+		put_code_u16(0);
+	}else{
+		put_code_u16(var);
+	}
 	put_code_u8(0);
 	put_code_u8(0);
 	put_code_u8(need_result_count);
 	put_code_u8(0 | (tail ? (1<<1) : 0) | (discard ? RESULT_DISCARD : 0));
 }
 
-void CodeBuilder::put_set_send_code(int_t var, bool if_defined){
+void CodeBuilder::put_set_send_code(int_t var, Expr* pvar, bool if_defined){
+	if(pvar){
+		ExprBuilder& e = *parser_.expr_builder();
+		compile(e.bin(CODE_CAT, e.string(com_->register_value("set_")), pvar));
+	}	
+	
 	if(if_defined){
 		put_code_u8(CODE_SEND_IF_DEFINED);
 	}else{
 		put_code_u8(CODE_SEND);
 	}
-	put_code_u16(com_->register_ident(String("set_", 4, to_id(var).c_str(), to_id(var).size())));
+
+	if(pvar){
+		put_code_u16(0);
+	}else{
+		put_code_u16(com_->register_ident(String("set_", 4, to_id(var).c_str(), to_id(var).size())));
+	}
 	put_code_u8(1);
 	put_code_u8(0);
 	put_code_u8(0);
 	put_code_u8(0 | 0);
 }
 
-void CodeBuilder::put_member_code(int_t var, bool if_defined){
+void CodeBuilder::put_member_code(int_t var, Expr* pvar, bool if_defined){
+	if(pvar){
+		compile(pvar);
+	}
+	
 	if(if_defined){
 		put_code_u8(CODE_MEMBER_IF_DEFINED);
 	}else{
 		put_code_u8(CODE_MEMBER);
 	}
-	put_code_u16(var);
+
+	if(pvar){
+		put_code_u16(0);
+	}else{
+		put_code_u16(var);
+	}
 }
 
-void CodeBuilder::put_define_member_code(int_t var){
+void CodeBuilder::put_define_member_code(int_t var, Expr* pvar){
+	if(pvar){
+		compile(pvar);
+	}
+
 	put_code_u8(CODE_DEFINE_MEMBER);
-	put_code_u16(var);
+
+	if(pvar){
+		put_code_u16(0);
+	}else{
+		put_code_u16(var);
+	}
 }
 
 int_t CodeBuilder::lookup_instance_variable(int_t key){
@@ -776,7 +812,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 		XTAL_EXPR_CASE(SendExpr){
 			compile(e->lhs);
-			put_send_code(e->var, need_result_count, e->discard, e->tail, e->if_defined);
+			put_send_code(e->var, e->pvar, need_result_count, e->discard, e->tail, e->if_defined);
 			result_count = need_result_count;
 		}
 
@@ -800,12 +836,22 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 			if(SendExpr* e2 = expr_cast<SendExpr>(e->expr)){ // a.b(); メッセージ送信式
 				compile(e2->lhs);
+
+				if(e2->pvar){
+					compile(e2->pvar);
+				}
+
 				if(e2->if_defined){
 					put_code_u8(CODE_SEND_IF_DEFINED);
 				}else{
 					put_code_u8(CODE_SEND);
 				}
-				put_code_u16(e2->var);
+
+				if(e2->pvar){
+					put_code_u16(0);
+				}else{
+					put_code_u16(e2->var);
+				}
 			}else if(CalleeExpr* e2 = expr_cast<CalleeExpr>(e->expr)){ //recall(); 再帰呼び出しだ
 				put_code_u8(CODE_CALLEE);
 			}else{
@@ -915,7 +961,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 		XTAL_EXPR_CASE(MemberExpr){
 			compile(e->lhs);
-			put_member_code(e->var, e->if_defined);
+			put_member_code(e->var, e->pvar, e->if_defined);
 		}
 
 		XTAL_EXPR_CASE(FrameExpr){
@@ -996,12 +1042,12 @@ void CodeBuilder::compile(Stmt* ex){
 				compile(p->lhs);
 				compile(e->rhs);
 
-				if(expr_cast<FunExpr>(e->rhs) || expr_cast<ClassExpr>(e->rhs)){
+				if(p->var!=0 && (expr_cast<FunExpr>(e->rhs) || expr_cast<ClassExpr>(e->rhs))){
 					put_code_u8(CODE_SET_NAME);
 					put_code_u16(p->var);
 				}
 
-				put_define_member_code(p->var);
+				put_define_member_code(p->var, p->pvar);
 			}else{
 				com_->error(line(), Xt("Xtal Compile Error 1012"));
 			}
@@ -1017,7 +1063,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(e->rhs);
 				compile(p->lhs);
-				put_set_send_code(p->var, p->if_defined);
+				put_set_send_code(p->var, p->pvar, p->if_defined);
 			}else if(AtExpr* p = expr_cast<AtExpr>(e->lhs)){
 				compile(e->rhs);
 				compile(p->lhs);
@@ -1042,11 +1088,11 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
-				put_send_code(p->var, 1, p->discard, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, p->discard, p->tail, p->if_defined);
 				compile(e->rhs);
 				put_code_u8(e->code);
 				put_code_u8(CODE_INSERT_1);
-				put_set_send_code(p->var, p->if_defined);
+				put_set_send_code(p->var, p->pvar, p->if_defined);
 			}else if(AtExpr* p = expr_cast<AtExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
@@ -1107,10 +1153,10 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
-				put_send_code(p->var, 1, p->discard, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, p->discard, p->tail, p->if_defined);
 				put_code_u8(e->code);
 				put_code_u8(CODE_INSERT_1);
-				put_set_send_code(p->var, p->if_defined);
+				put_set_send_code(p->var, p->pvar, p->if_defined);
 			}else if(AtExpr* p = expr_cast<AtExpr>(e->lhs)){
 				compile(p->lhs);
 				put_code_u8(CODE_DUP);
@@ -1399,7 +1445,7 @@ void CodeBuilder::compile(Stmt* ex){
 						put_define_local_code(e2->var);
 					}else if(MemberExpr* e2 = expr_cast<MemberExpr>(lhs->value)){
 						compile(e2->lhs);
-						put_define_member_code(e2->var);
+						put_define_member_code(e2->var, e2->pvar);
 					}else{
 						com_->error(line(), Xt("Xtal Compile Error 1008"));
 					}
@@ -1410,7 +1456,7 @@ void CodeBuilder::compile(Stmt* ex){
 						put_set_local_code(e2->var);
 					}else if(SendExpr* e2 = expr_cast<SendExpr>(lhs->value)){
 						compile(e2->lhs);
-						put_set_send_code(e2->var, e2->if_defined);
+						put_set_send_code(e2->var, e2->pvar, e2->if_defined);
 					}else if(InstanceVariableExpr* e2 = expr_cast<InstanceVariableExpr>(lhs->value)){
 						put_set_instance_variable_code(e2->var);					
 					}else if(AtExpr* e2 = expr_cast<AtExpr>(lhs->value)){

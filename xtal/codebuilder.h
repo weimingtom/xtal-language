@@ -58,10 +58,10 @@ public:
 	bool put_local_code(int_t var);
 	bool put_set_local_code(int_t var);
 	void put_define_local_code(int_t var);
-	void put_send_code(int_t var, int_t need_result_count, bool discard, bool tail, bool if_defined);
-	void put_set_send_code(int_t var, bool if_defined);
-	void put_member_code(int_t var, bool if_defined);
-	void put_define_member_code(int_t var);
+	void put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool discard, bool tail, bool if_defined);
+	void put_set_send_code(int_t var, Expr* pvar, bool if_defined);
+	void put_member_code(int_t var, Expr* pvar, bool if_defined);
+	void put_define_member_code(int_t var, Expr* pvar);
 
 	/**
 	* 識別子が変数としてあるか探し、変数位置を返す。

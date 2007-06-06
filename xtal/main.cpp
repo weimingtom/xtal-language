@@ -96,7 +96,7 @@ int main(int argc, char** argv){
 
 		handle_argv(argv);
 
-/*
+//*
 
 		load("test/test_fun.xtal");
 		load("test/test_iter.xtal");

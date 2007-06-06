@@ -71,14 +71,14 @@ public:
 		return current_+1;
 	}
 		
-	void push_unchecked(const T &val){
+	T& push_unchecked(const T &val){
 		upsize_unchecked(1);
-		top()=val;
+		return top()=val;
 	}
 
-	void push(const T &val){
+	T& push(const T &val){
 		upsize(1);
-		top()=val;
+		return top()=val;
 	}
 
 	T& push_unchecked(){
@@ -335,8 +335,8 @@ public:
 	const_iterator begin() const{ (iterator)impl_.begin(); }
 	iterator end(){ (iterator)impl_.end(); }	
 	const_iterator end() const{ (iterator)impl_.end(); }		
-	void push_unchecked(const T &val){ impl_.push_unchecked(val); }
-	void push(const T &val){ impl_.push(val); }
+	T& push_unchecked(const T &val){ return (T&)impl_.push_unchecked(val); }
+	T& push(const T &val){ return (T&)impl_.push(val); }
 	T& push_unchecked(){ return (T&)impl_.push_unchecked(); }
 	T& push(){ return (T&)impl_.push(); }
 	T &pop(){ return (T&)impl_.pop();}

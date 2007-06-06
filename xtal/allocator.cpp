@@ -44,37 +44,31 @@ void* user_malloc(size_t size){
 } 
 
 void* user_malloc_nothrow(size_t size){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		calling_malloc_ = true;
+	calling_malloc_ = true;
 
-		if(used_user_malloc_threshold_<used_user_malloc_size_+size){
-			used_user_malloc_threshold_ += size+1024*10; // 臒l�𑝂₷
-			gc();
-		}
-		
-		void* ret = user_malloc_(size);
-		if(!ret){
-			full_gc();
-			ret = user_malloc_(size);
-		}
-		
-		if(ret){
-			used_user_malloc_size_+=size;
-		}
-
-		calling_malloc_ = false;
-
-		return ret;
+	if(used_user_malloc_threshold_<used_user_malloc_size_+size){
+		used_user_malloc_threshold_ += size+1024*10; // 臒l�𑝂₷
+		gc();
+	}
+	
+	void* ret = user_malloc_(size);
+	if(!ret){
+		full_gc();
+		ret = user_malloc_(size);
+	}
+	
+	if(ret){
+		used_user_malloc_size_+=size;
 	}
 
-	return 0;
+	calling_malloc_ = false;
+
+	return ret;
 } 
 
 void user_free(void* p, size_t size){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		used_user_malloc_size_-=size;
-		user_free_(p);
-	}
+	used_user_malloc_size_-=size;
+	user_free_(p);
 }
 
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*)){
@@ -102,7 +96,7 @@ RegionAlloc::~RegionAlloc(){
 
 void *RegionAlloc::allocate(size_t size){
 //	return malloc(size);
-	size = align(size+4, sizeof(void*));
+	size = align(size, sizeof(void*)*2);
 	if(pos_+size>=end_){
 		add_chunk(size);
 	}
@@ -132,8 +126,10 @@ void RegionAlloc::add_chunk(size_t minsize){
 	pos_ = begin_;
 	end_ = begin_+alloced_size_;
 
-	*((void**)allocate(sizeof(void*))) = old_begin;
-	*((int_t*)allocate(sizeof(int_t))) = (int_t)alloced_size_;
+	*(void**)pos_ = old_begin;
+	pos_ += sizeof(void*);
+	*(int_t*)pos_ = alloced_size_;
+	pos_ += sizeof(alloced_size_);
 	alloced_size_*=2;
 }
 

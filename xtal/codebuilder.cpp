@@ -301,10 +301,12 @@ void CodeBuilder::put_define_member_code(int_t var, Expr* pvar){
 }
 
 int_t CodeBuilder::lookup_instance_variable(int_t key){
-	for(int_t i = 0; i<(int_t)class_scopes_.top().inst_vars.size(); ++i){
-		if(class_scopes_.top().inst_vars[i]==key){
+	int_t i = 0;
+	for(TPairList<int_t, Expr*>::Node* p=class_scopes_.top()->inst_vars.head; p; p=p->next){
+		if(p->key==key){
 			return i; 
 		}
+		i++;
 	}
 	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", to_id(key))));
 	return 0;
@@ -313,13 +315,13 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 void CodeBuilder::put_set_instance_variable_code(int_t var){
 	put_code_u8(CODE_SET_INSTANCE_VARIABLE);
 	put_code_u8(lookup_instance_variable(var));
-	put_code_u16(class_scopes_.top().n);
+	put_code_u16(class_scopes_.top()->frame_number);
 }
 
 void CodeBuilder::put_instance_variable_code(int_t var){
 	put_code_u8(CODE_INSTANCE_VARIABLE);
 	put_code_u8(lookup_instance_variable(var));
-	put_code_u16(class_scopes_.top().n);
+	put_code_u16(class_scopes_.top()->frame_number);
 }
 
 int_t CodeBuilder::reserve_label(){
@@ -560,20 +562,6 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 	return fun_frames_.top();
 }
 
-void CodeBuilder::adjust_result(int_t need_result_count, int_t result_count){
-	if(need_result_count<result_count){
-		while(need_result_count!=result_count){
-			put_code_u8(CODE_POP);
-			result_count--;
-		}
-	}else{
-		while(need_result_count!=result_count){
-			put_code_u8(CODE_PUSH_NULL);
-			need_result_count--;
-		}
-	}
-}
-
 #define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e=(KEY*)ex)
 
 void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
@@ -581,7 +569,10 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 	int_t result_count = 1;
 
 	if(!ex){
-		adjust_result(need_result_count, 0);
+		put_code_u8(CODE_ADJUST_RESULT);
+		put_code_u8(0);
+		put_code_u8(need_result_count);
+		put_code_u8(discard ? RESULT_DISCARD : 0);
 		return;
 	}
 
@@ -918,14 +909,6 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
 					// デフォルト値を持つ
 					if(p->value){
-						/*
-						put_local_code(p->key);
-						int_t label = reserve_label();
-						put_jump_code(CODE_UNLESS, label);
-						compile(p->value);
-						put_set_local_code(p->key);
-						set_label(label);
-						*/
 						
 						int_t id = lookup_variable(p->key);
 						int_t label = reserve_label();
@@ -979,15 +962,10 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 			}
 
 			block_begin(FRAME, e->kind, e->vars, e->on_heap, e->mixins.size);{
-				class_scopes_.upsize(1);
-				class_scopes_.top().inst_vars.clear();
+				class_scopes_.push(e);
 				p_->frame_core_table_.back().instance_variable_symbol_offset = 0;
 				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
-				class_scopes_.top().n = p_->frame_core_table_.size()-1;
-
-				for(TPairList<int_t, Expr*>::Node* p = e->inst_vars.head; p; p = p->next){
-					class_scopes_.top().inst_vars.push_back(p->key);
-				}
+				class_scopes_.top()->frame_number = p_->frame_core_table_.size()-1;
 
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
@@ -1000,7 +978,12 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 	p_->set_line_number_info(ex->line);
 	lines_.pop();
 
-	adjust_result(need_result_count, result_count);
+	if(need_result_count!=result_count){
+		put_code_u8(CODE_ADJUST_RESULT);
+		put_code_u8(result_count);
+		put_code_u8(need_result_count);
+		put_code_u8(discard ? RESULT_DISCARD : 0);
+	}
 }
 
 void CodeBuilder::compile(Stmt* ex){
@@ -1397,7 +1380,7 @@ void CodeBuilder::compile(Stmt* ex){
 						if(pushed_count<e->lhs.size){
 							rrc = e->lhs.size - pushed_count;
 						}else{
-							rrc = 0;
+							rrc = 1;
 						}
 
 						if(CallExpr* ce = expr_cast<CallExpr>(rhs->value)){
@@ -1417,7 +1400,7 @@ void CodeBuilder::compile(Stmt* ex){
 						if(pushed_count<e->lhs.size){
 							rrc = e->lhs.size - pushed_count;
 						}else{
-							rrc = 0;
+							rrc = 1;
 						}
 						compile(rhs->value, rrc, e->discard);
 						pushed_count += rrc;
@@ -1428,15 +1411,12 @@ void CodeBuilder::compile(Stmt* ex){
 					pushed_count++;
 				}
 			}
-			
-			if(e->lhs.size < pushed_count){
-				for(int i=0; i<pushed_count-e->lhs.size; ++i){
-					put_code_u8(CODE_PUSH_NULL);
-				}
-			}else if(e->lhs.size > pushed_count){
-				for(int i=0; i<e->lhs.size-pushed_count; ++i){
-					put_code_u8(CODE_POP);
-				}
+
+			if(e->lhs.size!=pushed_count){
+				put_code_u8(CODE_ADJUST_RESULT);
+				put_code_u8(pushed_count);
+				put_code_u8(e->lhs.size);
+				put_code_u8(e->discard ? RESULT_DISCARD : 0);
 			}
 
 			if(e->define){

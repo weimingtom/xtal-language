@@ -527,8 +527,11 @@ struct ClassExpr : public FrameExpr{
 	enum{ TYPE = __LINE__ };
 	TPairList<int_t, Expr*> inst_vars;
 	TList<Expr*> mixins;
+//-
+	int_t frame_number;
+//-
 	ClassExpr(int_t line)
-		:FrameExpr(line, KIND_CLASS){ type = TYPE; }
+		:FrameExpr(line, KIND_CLASS), frame_number(0){ type = TYPE; }
 };
 
 struct TopLevelStmt : public Stmt{

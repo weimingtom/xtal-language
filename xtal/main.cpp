@@ -62,7 +62,7 @@ void debug_line(const debug::Info& info){
 
 int main(int argc, char** argv){
 
-	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	try{
 
@@ -98,13 +98,13 @@ int main(int argc, char** argv){
 
 //*
 
+		load("test/test_except.xtal");
+		load("test/test_fiber.xtal");
 		load("test/test_fun.xtal");
 		load("test/test_iter.xtal");
 		load("test/test_fib.xtal");
 		load("test/test_calc.xtal");
 		load("test/test_for.xtal");
-		load("test/test_except.xtal");
-		load("test/test_fiber.xtal");
 		load("test/test_if.xtal");
 		load("test/test_nested_loops.xtal");
 		load("test/test_assign.xtal");

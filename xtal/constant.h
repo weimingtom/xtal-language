@@ -1089,6 +1089,14 @@ CODE_PUSH_NEED_RESULT,
 */
 CODE_IF_ARG_IS_NULL,
 
+/**
+* @brief ’l‚Ì”‚ð’²®‚·‚é
+* 
+* format op, retult_count, need_result_count, flags
+* stack [] -> []
+*/
+CODE_ADJUST_RESULT,
+
 
 CODE_MAX
 

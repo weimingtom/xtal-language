@@ -1018,30 +1018,30 @@ void initialize_lib(){
 
 	Xsrc((
 builtin::Exception: class{
-	+ @backtrace;
-	+ @message;
+	+ _backtrace;
+	+ _message;
 
 	initialize: method(message:""){
-		@message = message;
-		@backtrace = [];
+		_message = message;
+		_backtrace = [];
 	}
 
 
 	append_backtrace: method(file, line, name){
 		if(name){
-			@backtrace.push_back(%t"\t%(file)s:%(line)d: in %(name)s"(
+			_backtrace.push_back(%t"\t%(file)s:%(line)d: in %(name)s"(
 				file:file,
 				line:line,
 				name:name));
 		}else{
-			@backtrace.push_back(%t"\t%(file)s:%(line)d:"(
+			_backtrace.push_back(%t"\t%(file)s:%(line)d:"(
 				file:file,
 				line:line));
 		}
 	}
 
 	to_s: method{
-		return this.class.object_name ~ ": " ~ @message.to_s ~ "\n" ~ @backtrace.each.join("\n");
+		return this.class.object_name ~ ": " ~ _message.to_s ~ "\n" ~ _backtrace.each.join("\n");
 	}
 }
 
@@ -1103,14 +1103,20 @@ Iterator::to_a: method{
 
 Iterator::join: method(sep:","){
 	ret: MemoryStream();
-	first: true;
-	this{
-		if(first){
-			first = false;
-		}else{
-			ret.write(sep);
+	if(sep==""){
+		this{
+			ret.write(it.to_s);
 		}
-		ret.write(it.to_s);
+	}else{
+		first: true;
+		this{
+			if(first){
+				first = false;
+			}else{
+				ret.write(sep);
+			}
+			ret.write(it.to_s);
+		}
 	}
 	return ret.to_s;
 }

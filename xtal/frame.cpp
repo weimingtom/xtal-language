@@ -21,7 +21,7 @@ void InitClass(){
 		TClass<Class> p("Class");
 		p.method("inherit", &Class::inherit);
 		p.method("is_inherited", &Class::is_inherited);
-		p.method("members", &Class::members);
+		p.method("each_member", &Class::each_member);
 	}
 
 	{
@@ -592,8 +592,8 @@ void Frame::set_member_direct(int_t i, const Any& value) const{
 	return impl()->set_member_direct(i, value);
 }
 
-Any Frame::members() const{
-	return impl()->members();
+Any Frame::each_member() const{
+	return impl()->each_member();
 }
 
 bool Frame::is_defined_by_xtal() const{

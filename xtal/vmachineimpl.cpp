@@ -1085,13 +1085,7 @@ const u8* VMachineImpl::PUSH_FUN(const u8* pc){
 }
 
 const u8* VMachineImpl::PUSH_ARGS(const u8* pc){
-	for(int i=0, last=fun_frames_.size(); i<last; ++i){
-		if(const Arguments& args =  fun_frames_[i].arguments()){
-			push(args);
-			return pc + 1;
-		}
-	}
-	push(null);
+	push(fun_frames_[0].arguments());
 	return pc + 1;
 }
 

@@ -76,8 +76,7 @@ private:
 	Expr* parse_class();
 	Expr* parse_prop();
 	Stmt* parse_loop();
-	Expr* parse_fun(int_t kind);
-	Expr* parse_lambda();
+	Expr* parse_fun(int_t kind, bool lambda = false);
 	Expr* parse_call(Expr* lhs);
 	Expr* parse_expr(int_t pri);
 	Expr* parse_expr();

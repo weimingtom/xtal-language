@@ -10,125 +10,126 @@
 namespace xtal{
 
 PseudoVariableExpr* ExprBuilder::pseudo(int_t code){
-	return new(alloc) PseudoVariableExpr(common->line, code);
+	return new(alloc) PseudoVariableExpr(line(), code);
 }
 
-StringExpr* ExprBuilder::string(int_t n){
-	return new(alloc) StringExpr(common->line, n);
+StringExpr* ExprBuilder::string(int_t value, int_t kind){
+	return new(alloc) StringExpr(line(), value, kind);
 }
 
 UnaExpr* ExprBuilder::una(int_t code, Expr* term){
-	return new(alloc) UnaExpr(common->line, code, term);
+	return new(alloc) UnaExpr(line(), code, term);
 }
 
 BinExpr* ExprBuilder::bin(int_t code, Expr* lhs, Expr* rhs){
-	return new(alloc) BinExpr(common->line, code, lhs, rhs);
+	return new(alloc) BinExpr(line(), code, lhs, rhs);
 }
 
 BinCompExpr* ExprBuilder::bin_comp(int_t code, Expr* lhs, Expr* rhs){
-	return new(alloc) BinCompExpr(common->line, code, lhs, rhs);
+	return new(alloc) BinCompExpr(line(), code, lhs, rhs);
 }
 
 OpAssignStmt* ExprBuilder::op_assign(int_t code, Expr* lhs, Expr* rhs){
-	return new(alloc) OpAssignStmt(common->line, code, lhs, rhs);
+	return new(alloc) OpAssignStmt(line(), code, lhs, rhs);
 }
 
 AtExpr* ExprBuilder::at(Expr* lhs, Expr* rhs){
-	return new(alloc) AtExpr(common->line, lhs, rhs);
+	return new(alloc) AtExpr(line(), lhs, rhs);
 }
 
 LocalExpr* ExprBuilder::local(int_t var){
-	return new(alloc) LocalExpr(common->line, var);
+	return new(alloc) LocalExpr(line(), var);
 }
 
 InstanceVariableExpr* ExprBuilder::instance_variable(int_t var){
-	return new(alloc) InstanceVariableExpr(common->line, var);
+	return new(alloc) InstanceVariableExpr(line(), var);
 }
 
 DefineStmt* ExprBuilder::define(Expr* lhs, Expr* rhs){
 	if(LocalExpr* loc = expr_cast<LocalExpr>(lhs)){
 		register_variable(loc->var);
 	}
-	return new(alloc) DefineStmt(common->line, lhs, rhs);
+	return new(alloc) DefineStmt(line(), lhs, rhs);
 }
 
 AssignStmt* ExprBuilder::assign(Expr* lhs, Expr* rhs){
-	return new(alloc) AssignStmt(common->line, lhs, rhs);
+	return new(alloc) AssignStmt(line(), lhs, rhs);
 }
 
 CallExpr* ExprBuilder::call(Expr* lhs, Expr* a1, Expr* a2){
-	CallExpr* ret = new(alloc) CallExpr(common->line, lhs);
-	if(a1)ret->ordered.push_back(a1);
-	if(a2)ret->ordered.push_back(a2);
-	return ret;
+	call_begin(lhs);
+	if(a1)call_arg(a1);
+	if(a2)call_arg(a1);
+	return call_end();
 }
 
 MemberExpr* ExprBuilder::member(Expr* lhs, int_t var){
-	return new(alloc) MemberExpr(common->line, lhs, var);
+	return new(alloc) MemberExpr(line(), lhs, var);
 }
 
 MemberExpr* ExprBuilder::member_q(Expr* lhs, int_t var){
-	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs, var);
+	MemberExpr* ret = new(alloc) MemberExpr(line(), lhs, var);
 	ret->if_defined = true;
 	return ret;
 }
 
 MemberExpr* ExprBuilder::member(Expr* lhs, Expr* var){
-	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs);
+	MemberExpr* ret = new(alloc) MemberExpr(line(), lhs);
 	ret->pvar = var;
 	return ret;
 }
 
 MemberExpr* ExprBuilder::member_q(Expr* lhs, Expr* var){
-	MemberExpr* ret = new(alloc) MemberExpr(common->line, lhs);
+	MemberExpr* ret = new(alloc) MemberExpr(line(), lhs);
 	ret->if_defined = true;
 	ret->pvar = var;
 	return ret;
 }
 
 SendExpr* ExprBuilder::send(Expr* lhs, int_t var){
-	return new(alloc) SendExpr(common->line, lhs, var);
+	return new(alloc) SendExpr(line(), lhs, var);
 }
 
 SendExpr* ExprBuilder::send_q(Expr* lhs, int_t var){
-	SendExpr* ret = new(alloc) SendExpr(common->line, lhs, var);
+	SendExpr* ret = new(alloc) SendExpr(line(), lhs, var);
 	ret->if_defined = true;
 	return ret;
 }
 
 SendExpr* ExprBuilder::send(Expr* lhs, Expr* var){
-	SendExpr* ret = new(alloc) SendExpr(common->line, lhs);
+	SendExpr* ret = new(alloc) SendExpr(line(), lhs);
 	ret->pvar = var;
 	return ret;
 }
 
 SendExpr* ExprBuilder::send_q(Expr* lhs, Expr* var){
-	SendExpr* ret = new(alloc) SendExpr(common->line, lhs);
+	SendExpr* ret = new(alloc) SendExpr(line(), lhs);
 	ret->if_defined = true;
 	ret->pvar = var;
 	return ret;
 }
 
 ExprStmt* ExprBuilder::e2s(Expr* expr){
-	return new(alloc) ExprStmt(common->line, expr);
+	return new(alloc) ExprStmt(line(), expr);
 }
 
 ReturnStmt* ExprBuilder::return_(Expr* e1, Expr* e2){
-	ReturnStmt* ret = new(alloc) ReturnStmt(common->line);
-	if(e1)ret->exprs.push_back(e1);
-	if(e2)ret->exprs.push_back(e2);
-	return ret;
+	return_begin();
+	ReturnStmt* ret = new(alloc) ReturnStmt(line());
+	if(e1)return_add(e1);
+	if(e2)return_add(e2);
+	return return_end();
 }
 
 AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
-	AssertStmt* ret = new(alloc) AssertStmt(common->line);
-	if(e1)ret->exprs.push_back(e1);
-	if(e2)ret->exprs.push_back(e2);
+	AssertStmt* ret = new(alloc) AssertStmt(line());
+	if(e1)ret->exprs.push_back(e1, alloc);
+	if(e2)ret->exprs.push_back(e2, alloc);
 	return ret;
 }
 
 SetAccessibilityStmt* ExprBuilder::set_accessibility(int_t var, int_t kind){
-	SetAccessibilityStmt* ret = new(alloc) SetAccessibilityStmt(common->line);
+	SetAccessibilityStmt* ret = new(alloc) SetAccessibilityStmt(line());
 	ret->var = var;
 	ret->kind = kind;
 	return ret;
@@ -155,21 +156,21 @@ void ExprBuilder::scope_pop(){
 void ExprBuilder::register_variable(int_t var){
 	for(TList<int_t>::Node* p = var_info_stack.top().variables->head; p; p = p->next){
 		if(p->value == var){
-			common->error(common->line, Xt("Xtal Compile Error 1026")(
+			common->error(line(), Xt("Xtal Compile Error 1026")(
 				Named("name", common->ident_table[var])
 			));
 		}
 	}
-	var_info_stack.top().variables->push_back(var);
+	var_info_stack.top().variables->push_back(var, alloc);
 }
 
 void ExprBuilder::block_begin(){
-	block_stack.push(new(alloc) BlockStmt(common->line));
+	block_stack.push(new(alloc) BlockStmt(line()));
 	scope_push(&block_stack.top()->vars, &block_stack.top()->on_heap, false);
 }	
 
 void ExprBuilder::block_add(Stmt* stmt){
-	block_stack.top()->stmts.push_back(stmt);
+	block_stack.top()->stmts.push_back(stmt, alloc);
 }
 
 BlockStmt* ExprBuilder::block_end(){
@@ -178,7 +179,7 @@ BlockStmt* ExprBuilder::block_end(){
 }
 
 void ExprBuilder::try_begin(){
-	try_stack.push(new(alloc) TryStmt(common->line));
+	try_stack.push(new(alloc) TryStmt(line()));
 	scope_push(&try_stack.top()->catch_vars, &try_stack.top()->on_heap, false);
 }
 
@@ -200,7 +201,7 @@ TryStmt* ExprBuilder::try_end(){
 }
 
 void ExprBuilder::while_begin(int_t var, Expr* expr){
-	while_stack.push(new(alloc) WhileStmt(common->line));
+	while_stack.push(new(alloc) WhileStmt(line()));
 	block_begin();
 	if(var){
 		block_add(define(local(var), expr));
@@ -236,7 +237,7 @@ Stmt* ExprBuilder::while_end(){
 }
 
 void ExprBuilder::if_begin(int_t var, Expr* expr){
-	if_stack.push(new(alloc) IfStmt(common->line));
+	if_stack.push(new(alloc) IfStmt(line()));
 	block_begin();
 	if(var){
 		block_add(define(local(var), expr));
@@ -260,23 +261,44 @@ Stmt* ExprBuilder::if_end(){
 }
 
 void ExprBuilder::fun_begin(int_t kind){
-	fun_stack.push(new(alloc) FunExpr(common->line, kind));
+	fun_stack.push(new(alloc) FunExpr(line(), kind));
 	scope_push(&fun_stack.top()->vars, &fun_stack.top()->on_heap, false);
 	scope_set_on_heap_flag(1);
 }
 
 void ExprBuilder::fun_param(int_t name, Expr* def){
 	register_variable(name);
-	fun_stack.top()->params.push_back(name, def);
+	fun_stack.top()->params.push_back(name, def, alloc);
+}
+
+FunExpr* ExprBuilder::fun_end(){
+	scope_pop();
+	return fun_stack.pop();
 }
 
 void ExprBuilder::fun_body(Stmt* stmt){
 	fun_stack.top()->stmt = stmt;
 }
 
-FunExpr* ExprBuilder::fun_end(){
-	scope_pop();
-	return fun_stack.pop();
+void ExprBuilder::fun_have_args(){
+	fun_stack.top()->have_args = true;
+}
+
+void ExprBuilder::fun_body_begin(){
+	block_begin();
+
+	if(fun_stack.top()->have_args){
+		int_t var = register_ident(Xid(__ARGS__));
+		block_add(define(local(var), pseudo(CODE_PUSH_ARGS)));
+	}
+}
+
+void ExprBuilder::fun_body_add(Stmt* stmt){
+	block_add(stmt);
+}
+
+void ExprBuilder::fun_body_end(){
+	fun_body(block_end());
 }
 
 void ExprBuilder::init(LPCCommon* com, RegionAlloc* all){

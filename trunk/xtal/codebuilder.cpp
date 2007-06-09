@@ -619,7 +619,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		}
 
 		XTAL_EXPR_CASE(ArgsExpr){
-			put_code_u8(CODE_PUSH_ARGS);
+			put_local_code(com_->register_ident(Xid(__ARGS__)));
 		}
 
 		XTAL_EXPR_CASE(IntExpr){
@@ -985,8 +985,8 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
 				class_scopes_.top().n = p_->frame_core_table_.size()-1;
 
-				for(TList<int_t>::Node* p = e->inst_vars.head; p; p = p->next){
-					class_scopes_.top().inst_vars.push_back(p->value);
+				for(TPairList<int_t, Expr*>::Node* p = e->inst_vars.head; p; p = p->next){
+					class_scopes_.top().inst_vars.push_back(p->key);
 				}
 
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){

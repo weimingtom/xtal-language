@@ -30,7 +30,7 @@ inline bool test_space(int ch){
 }
 
 inline bool test_ident_first(int ch){
-	return test_alpha(ch) || ch=='_';
+	return test_alpha(ch);
 }
 
 inline bool test_ident_rest(int ch){

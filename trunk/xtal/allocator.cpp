@@ -95,7 +95,6 @@ RegionAlloc::~RegionAlloc(){
 }
 
 void *RegionAlloc::allocate(size_t size){
-//	return malloc(size);
 	size = align(size, sizeof(void*)*2);
 	if(pos_+size>=end_){
 		add_chunk(size);
@@ -107,7 +106,6 @@ void *RegionAlloc::allocate(size_t size){
 }
 	
 void RegionAlloc::release(){
-//	return;
 	while(begin_){
 		void* next = *(void**)begin_;
 		user_free(begin_, *((int_t*)((void**)begin_+1)));
@@ -127,9 +125,11 @@ void RegionAlloc::add_chunk(size_t minsize){
 	end_ = begin_+alloced_size_;
 
 	*(void**)pos_ = old_begin;
-	pos_ += sizeof(void*);
+	pos_ += sizeof(old_begin);
+
 	*(int_t*)pos_ = alloced_size_;
 	pos_ += sizeof(alloced_size_);
+
 	alloced_size_*=2;
 }
 

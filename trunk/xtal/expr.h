@@ -38,20 +38,19 @@ struct TList{
 	Node* head;
 	Node* tail;
 	int size;
-	RegionAlloc* alloc;
 
-	TList(RegionAlloc* alloc = 0)
-		:head(0), tail(0), alloc(alloc), size(0){}
+	TList()
+		:head(0), tail(0), size(0){}
 
-	void push_front(const T& v);
+	void push_front(const T& v, RegionAlloc* alloc);
 
-	void push_back(const T &v);
+	void push_back(const T &v, RegionAlloc* alloc);
 
 	void pop_back();
 };
 
 template <class T>
-void TList<T>::push_front(const T &v){
+void TList<T>::push_front(const T &v, RegionAlloc* alloc){
 	if(head){
 		Node* p = new(alloc) Node(v);
 		p->next = head;
@@ -64,7 +63,7 @@ void TList<T>::push_front(const T &v){
 }
 
 template <class T>
-void TList<T>::push_back(const T &v){
+void TList<T>::push_back(const T &v, RegionAlloc* alloc){
 	if(head){
 		Node* p = new(alloc) Node(v);
 		p->prev = tail;
@@ -109,18 +108,17 @@ struct TPairList{
 	Node* head;
 	Node* tail;
 	int size;
-	RegionAlloc* alloc;
 
-	TPairList(RegionAlloc* alloc = 0)
-		:head(0), tail(0), alloc(alloc), size(0){}
+	TPairList()
+		:head(0), tail(0), size(0){}
 
-	void push_back(const Key& k, const T &v);
+	void push_back(const Key& k, const T &v, RegionAlloc* alloc);
 
 	void pop_back();
 };
 
 template <class Key, class T>
-void TPairList<Key, T>::push_back(const Key& k, const T &v){
+void TPairList<Key, T>::push_back(const Key& k, const T &v, RegionAlloc* alloc){
 	if(head){
 		Node* p = new(alloc) Node(k, v);
 		p->prev = tail;
@@ -151,17 +149,11 @@ struct Expr{
 	
 	int_t type;
 	int_t line;
-	RegionAlloc* alloc;
 	
 	Expr(int_t type, int_t line)
 		:type(type), line(line){}
 
-	void *operator new(size_t size, RegionAlloc* a){ 
-		void* p = a->allocate(size);
-		((Expr*)p)->alloc = a;
-		return p; 
-	}
-	
+	void *operator new(size_t size, RegionAlloc* a){ return a->allocate(size); }
 	void operator delete(void *, RegionAlloc*){}
 
 	operator Expr*(){ return this; }
@@ -181,17 +173,11 @@ struct Stmt{
 	
 	int_t type;
 	int_t line;
-	RegionAlloc* alloc;
 
 	Stmt(int_t type, int_t line)
 		:type(type), line(line){}
 
-	void *operator new(size_t size, RegionAlloc* a){ 
-		void* p = a->allocate(size);
-		((Expr*)p)->alloc = a;
-		return p; 
-	}
-	
+	void *operator new(size_t size, RegionAlloc* a){ return  a->allocate(size); }
 	void operator delete(void *, RegionAlloc*){}
 	
 	operator Stmt*(){ return this; }
@@ -256,13 +242,13 @@ struct StringExpr : public Expr{
 struct ArrayExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	TList<Expr*> values;
-	ArrayExpr(int_t line):Expr(TYPE, line), values(alloc){}
+	ArrayExpr(int_t line):Expr(TYPE, line){}
 };
 
 struct MapExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	TPairList<Expr*, Expr*> values;
-	MapExpr(int_t line):Expr(TYPE, line), values(alloc){}
+	MapExpr(int_t line):Expr(TYPE, line){}
 };
 
 struct BinExpr : public Expr{ 
@@ -325,21 +311,21 @@ struct ReturnStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	TList<Expr*> exprs;
 	ReturnStmt(int_t line)
-		:Stmt(TYPE, line), exprs(alloc){}
+		:Stmt(TYPE, line){}
 };
 
 struct YieldStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	TList<Expr*> exprs;
 	YieldStmt(int_t line)
-		:Stmt(TYPE, line), exprs(alloc){}
+		:Stmt(TYPE, line){}
 };
 
 struct AssertStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	TList<Expr*> exprs;
 	AssertStmt(int_t line)
-		:Stmt(TYPE, line), exprs(alloc){}
+		:Stmt(TYPE, line){}
 };
 
 struct OnceExpr : public Expr{
@@ -357,7 +343,7 @@ struct TryStmt : public Stmt{
 	Stmt* catch_stmt; 
 	Stmt* finally_stmt;	
 	TryStmt(int_t line, Stmt* try_stmt = 0, Stmt* catch_stmt = 0, Stmt* finally_stmt = 0)
-		:Stmt(TYPE, line), try_stmt(try_stmt), catch_vars(alloc), catch_stmt(catch_stmt), finally_stmt(finally_stmt){}
+		:Stmt(TYPE, line), try_stmt(try_stmt), catch_stmt(catch_stmt), finally_stmt(finally_stmt){}
 };
 
 struct IfStmt : public Stmt{
@@ -390,7 +376,7 @@ struct FunExpr : public Expr{
 	bool on_heap;
 	TPairList<int_t, Expr*> params;
 	FunExpr(int_t line, int_t kind, Stmt* stmt = 0)
-		:Expr(TYPE, line), kind(kind), stmt(stmt), vars(alloc), have_args(false), params(alloc){}
+		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false){}
 };
 
 struct MultipleAssignStmt : public Stmt{
@@ -400,7 +386,7 @@ struct MultipleAssignStmt : public Stmt{
 	TList<Expr*> lhs;
 	TList<Expr*> rhs;
 	MultipleAssignStmt(int_t line)
-		:Stmt(TYPE, line), define(false), discard(false), lhs(alloc), rhs(alloc){}
+		:Stmt(TYPE, line), define(false), discard(false){}
 };
 
 struct IncStmt : public Stmt{ 
@@ -435,9 +421,8 @@ struct CallExpr : public Expr{
 	bool discard;
 	TList<Expr*> ordered; 
 	TPairList<int_t, Expr*> named;
-	//int_t result_flag;
 	CallExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr), tail(false), discard(false), ordered(alloc), named(alloc){}
+		:Expr(TYPE, line), expr(expr), tail(false), discard(false){}
 };
 
 struct SendExpr : public Expr{
@@ -448,7 +433,6 @@ struct SendExpr : public Expr{
 	bool tail;
 	bool if_defined;
 	bool discard;
-	//int_t result_flag;
 	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
 		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), tail(false), discard(false), if_defined(false){}
 };
@@ -526,7 +510,7 @@ struct BlockStmt : public Stmt{
 	bool on_heap;
 	TList<Stmt*> stmts;
 	BlockStmt(int_t line)
-		:Stmt(TYPE, line), vars(alloc), stmts(alloc){}
+		:Stmt(TYPE, line){}
 };
 
 struct FrameExpr : public Expr{
@@ -536,15 +520,15 @@ struct FrameExpr : public Expr{
 	TList<Stmt*> stmts;
 	int_t kind;
 	FrameExpr(int_t line, int_t kind)
-		:Expr(TYPE, line), vars(alloc), stmts(alloc), kind(kind){}
+		:Expr(TYPE, line), kind(kind){}
 };
 
 struct ClassExpr : public FrameExpr{
 	enum{ TYPE = __LINE__ };
-	TList<int_t> inst_vars;
+	TPairList<int_t, Expr*> inst_vars;
 	TList<Expr*> mixins;
 	ClassExpr(int_t line)
-		:FrameExpr(line, KIND_CLASS), inst_vars(alloc), mixins(alloc){ type = TYPE; }
+		:FrameExpr(line, KIND_CLASS){ type = TYPE; }
 };
 
 struct TopLevelStmt : public Stmt{
@@ -555,7 +539,7 @@ struct TopLevelStmt : public Stmt{
 	Expr* export_expr;
 	Stmt* unittest_stmt;
 	TopLevelStmt(int_t line)
-		:Stmt(TYPE, line), vars(alloc), stmts(alloc), export_expr(0), unittest_stmt(0){}
+		:Stmt(TYPE, line), export_expr(0), unittest_stmt(0){}
 };
 
 struct SetAccessibilityStmt : public Stmt{
@@ -571,7 +555,43 @@ class ExprBuilder{
 public:
 
 	PseudoVariableExpr* pseudo(int_t code);
-	StringExpr* string(int_t n);
+	IntExpr* int_(int_t value){
+		return new(alloc) IntExpr(line(), value);
+	}
+	FloatExpr* float_(float_t value){
+		return new(alloc) FloatExpr(line(), value);
+	}
+	ArgsExpr* args(){
+		return new(alloc) ArgsExpr(line());
+	}
+	OnceExpr* once(Expr* expr){
+		return new(alloc) OnceExpr(line(), expr);
+	}
+	CalleeExpr* callee(){
+		return new(alloc) CalleeExpr(line());
+	}
+	AndAndExpr* andand(Expr* lhs, Expr* rhs){
+		return new(alloc) AndAndExpr(line(), lhs, rhs);
+	}
+	TerExpr* ter(Expr* cond, Expr* true_expr, Expr* false_expr){
+		TerExpr* ret = new(alloc) TerExpr(line(), cond);
+		ret->second = true_expr;
+		ret->third = false_expr;
+		return ret;
+	}
+	OrOrExpr* oror(Expr* lhs, Expr* rhs){
+		return new(alloc) OrOrExpr(line(), lhs, rhs);
+	}
+	PushStmt* push(Expr* expr){
+		return new(alloc) PushStmt(line(), expr);
+	}
+	PopExpr* pop(){
+		return new(alloc) PopExpr(line());
+	}
+	IncStmt* inc(int_t code, Expr* expr){
+		return new(alloc) IncStmt(line(), code, expr);	
+	}
+	StringExpr* string(int_t n, int_t kind = KIND_STRING);
 	UnaExpr* una(int_t code, Expr* term);
 	BinExpr* bin(int_t code, Expr* lhs, Expr* rhs);
 	BinCompExpr* bin_comp(int_t code, Expr* lhs, Expr* rhs);
@@ -594,6 +614,12 @@ public:
 	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
 	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);
 	SetAccessibilityStmt* set_accessibility(int_t var, int_t kind);
+	ContinueStmt* continue_(int_t name){
+		return new(alloc) ContinueStmt(line(), name);
+	}
+	BreakStmt* break_(int_t name){
+		return new(alloc) BreakStmt(line(), name);
+	}
 
 	void scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag);
 	void scope_carry_on_heap_flag();
@@ -604,6 +630,9 @@ public:
 	void block_begin();
 	void block_add(Stmt* stmt);
 	BlockStmt* block_end();
+	TList<Stmt*>* block_stmts(){
+		return &block_stack.top()->stmts;
+	}
 
 	void try_begin();
 	void try_body(Stmt* stmt);
@@ -625,11 +654,187 @@ public:
 	Stmt* if_end();
 
 	void fun_begin(int_t kind);
-	void fun_param(int_t name, Expr* def = 0);
+	void fun_param(int_t name, Expr* default_value = 0);
 	void fun_body(Stmt* stmt);
+	void fun_body_begin();
+	void fun_body_add(Stmt* stmt);
+	void fun_body_end();
 	FunExpr* fun_end();
+	void fun_have_args();
+
+	void toplevel_begin(){
+		toplevel_stack.push(new(alloc) TopLevelStmt(line()));
+		scope_push(&toplevel_stack.top()->vars, &toplevel_stack.top()->on_heap, true);
+		scope_set_on_heap_flag(0);
+	}
+	void toplevel_add(Stmt* stmt){
+		toplevel_stack.top()->stmts.push_back(stmt, alloc);
+	}
+	void toplevel_export(int_t name, Expr* expr){
+			if(toplevel_stack.top()->export_expr){
+				common->error(line(), Xt("Xtal Compile Error 1019"));
+			}else{
+				int_t export_id = register_ident(ID("__EXPORT__"));
+				
+				if(name){
+					toplevel_add(define(local(name), expr));
+					toplevel_add(define(local(export_id), local(name)));
+				}else{
+					toplevel_add(define(local(export_id), expr));
+				}
+				toplevel_stack.top()->export_expr = local(export_id);
+			}
+	}
+	TopLevelStmt* toplevel_end(){
+		scope_pop();
+		return toplevel_stack.pop();
+	}
+
+	void class_begin(){
+		class_stack.push(new(alloc) ClassExpr(line()));
+		class_stack.top()->kind = KIND_CLASS;
+
+		scope_push(&class_stack.top()->vars, &class_stack.top()->on_heap, true);
+		scope_set_on_heap_flag(0);
+	}
+	void class_define_instance_variable(int_t name, Expr* expr){
+		for(TPairList<int_t, Expr*>::Node* p=class_stack.top()->inst_vars.head; p; p=p->next){
+			if(p->key==name){
+				common->error(line(), Xt("Xtal Compile Error 1024")(Named("name", name)));
+				break;
+			}
+		}
+
+		class_stack.top()->inst_vars.push_back(name, expr, alloc);
+	}
+	void class_add(Stmt* stmt){
+		class_stack.top()->stmts.push_back(stmt, alloc);
+	}
+	ClassExpr* class_end(){
+		Stmt* s;
+		fun_begin(KIND_METHOD);
+			block_begin();
+				for(TPairList<int_t, Expr*>::Node* p=class_stack.top()->inst_vars.head; p; p=p->next){
+					block_add(assign(instance_variable(p->key), p->value));
+				}
+			s = block_end();
+			fun_body(s);
+		class_stack.top()->stmts.push_front(define(local(register_ident("__INITIALIZE__")), fun_end()), alloc);
+
+		scope_pop();
+		return class_stack.pop();
+	}
+	TList<Expr*>* class_mixins(){
+		return &class_stack.top()->mixins;
+	}
+
+	void call_begin(Expr* expr){
+		call_stack.push(new(alloc) CallExpr(line(), expr));
+	}
+	void call_arg(Expr* expr){
+		call_stack.top()->ordered.push_back(expr, alloc);
+	}
+	void call_arg(int_t name, Expr* expr){
+		call_stack.top()->named.push_back(name, expr, alloc);
+	}
+	CallExpr* call_end(){
+		if(call_stack.top()->ordered.tail && !call_stack.top()->ordered.tail->value){
+			call_stack.top()->ordered.pop_back();
+		}
+		return call_stack.pop();
+	}
+
+	void return_begin(){
+		return_stack.push(new(alloc) ReturnStmt(line()));
+	}
+	void return_add(Expr* expr){
+		return_exprs()->push_back(expr, alloc);
+	}
+	ReturnStmt* return_end(){
+		return return_stack.pop();
+	}
+	TList<Expr*>* return_exprs(){
+		return &return_stack.top()->exprs;
+	}
+	
+	void yield_begin(){
+		yield_stack.push(new(alloc) YieldStmt(line()));
+	}
+	void yield_add(Expr* expr){
+		yield_exprs()->push_back(expr, alloc);
+	}
+	YieldStmt* yield_end(){
+		return yield_stack.pop();
+	}
+	TList<Expr*>* yield_exprs(){
+		return &yield_stack.top()->exprs;
+	}
+
+	void massign_begin(){
+		massign_stack.push(new(alloc) MultipleAssignStmt(line()));
+	}
+	void massign_lhs(Expr* expr){
+		massign_lhs_exprs()->push_back(expr, alloc);
+	}
+	void massign_rhs(Expr* expr){
+		massign_rhs_exprs()->push_back(expr, alloc);
+	}
+	MultipleAssignStmt* massign_end(){
+		return massign_stack.pop();
+	}
+	TList<Expr*>* massign_lhs_exprs(){
+		return &massign_stack.top()->lhs;
+	}
+	TList<Expr*>* massign_rhs_exprs(){
+		return &massign_stack.top()->rhs;
+	}
+	void massign_define(bool b){
+		massign_stack.top()->define = b;
+	}
+
+	void ter_begin(Expr* cond){
+		ter_stack.push(new(alloc) TerExpr(line(), cond));
+	}
+	void ter_true(Expr* expr){
+		ter_stack.top()->second = expr;
+	}
+	void ter_false(Expr* expr){
+		ter_stack.top()->third = expr;
+	}
+	TerExpr* ter_end(){
+		return ter_stack.pop();
+	}
+
+	void array_begin(){
+		array_stack.push(new(alloc) ArrayExpr(line()));
+	}
+	void array_add(Expr* expr){
+		array_stack.top()->values.push_back(expr, alloc);
+	}
+	ArrayExpr* array_end(){
+		return array_stack.pop();
+	}
+
+	void map_begin(){
+		map_stack.push(new(alloc) MapExpr(line()));
+	}
+	void map_add(Expr* key, Expr* value){
+		map_stack.top()->values.push_back(key, value, alloc);
+	}
+	MapExpr* map_end(){
+		return map_stack.pop();
+	}
 
 	void init(LPCCommon* com, RegionAlloc* all);
+
+	int_t line(){
+		return common->line;
+	}
+
+	int_t register_ident(const ID& ident){ return common->register_ident(ident); }
+	int_t register_value(const Any& v){ return common->register_value(v); }
+	int_t append_ident(const ID& ident){ return common->append_ident(ident); }
+	int_t append_value(const Any& v){ return common->append_value(v); }
 
 	struct VarInfo{
 		TList<int_t>* variables;
@@ -647,7 +852,15 @@ public:
 	PStack<WhileStmt*> while_stack;
 	PStack<IfStmt*> if_stack;
 	PStack<FunExpr*> fun_stack;
-
+	PStack<TopLevelStmt*> toplevel_stack;
+	PStack<CallExpr*> call_stack;
+	PStack<MultipleAssignStmt*> massign_stack;
+	PStack<ClassExpr*> class_stack;
+	PStack<ReturnStmt*> return_stack;
+	PStack<YieldStmt*> yield_stack;
+	PStack<TerExpr*> ter_stack;
+	PStack<ArrayExpr*> array_stack;
+	PStack<MapExpr*> map_stack;
 };
 
 }

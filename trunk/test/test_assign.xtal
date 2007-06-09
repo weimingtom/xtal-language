@@ -40,8 +40,8 @@ multi : fun(){
 
 {
 	C : class{
-		+ @x;	
-		+ @y;	
+		+ _x;	
+		+ _y;	
 	}
 	
 	c : C();

@@ -514,8 +514,8 @@ void Lexer::do_read(){
 					putback_to_reader(ch);
 					parse_number();
 					return;
-				}else if(ch=='@'){
-					push('@');
+				}else if(ch=='_'){
+					push('_');
 					int_t ident = parse_ident();
 					if(ident<0){
 						push_keyword(-ident);

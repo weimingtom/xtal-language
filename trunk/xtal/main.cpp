@@ -52,7 +52,7 @@ void debug_line(const debug::Info& info){
 	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info.kind(), info.line(), info.file_name(), info.fun_name());
 
 	if(info.local_variables()){
-		Xfor2(key, value, info.local_variables().members()){
+		Xfor2(key, value, info.local_variables().each_member()){
 			//std::cout << Xf("key=%s, value=%s\n")(key, value);
 		}
 	}

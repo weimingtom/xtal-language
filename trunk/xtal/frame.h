@@ -63,12 +63,12 @@ public:
 	* @brief メンバを順次取り出すIteratorを返す
 	*
 	* @code
-	* Xfor2(key, value, frame.members()){
+	* Xfor2(key, value, frame.each_member()){
 	*   puts(Xf("%s %s")(key, value).to_s().c_str());
 	* }
 	* @endcode
 	*/
-	Any members() const;
+	Any each_member() const;
 
 	/**
 	* @brief Xtalで定義されているならtrueを返す。

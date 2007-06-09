@@ -182,6 +182,7 @@ struct Alloc<void> {
 * スタック型のメモリアロケータ。
 * STLのアロケータには適合しない。
 */
+//*
 class RegionAlloc{
 	char* begin_;
 	char* pos_;
@@ -208,7 +209,7 @@ private:
 
 };
 
-/*
+/*/
 class RegionAlloc{
 	std::vector<void*> alloced_;
 public:
@@ -231,7 +232,7 @@ private:
 	RegionAlloc& operator =(const RegionAlloc&);
 
 };
-*/
+//*/
 
 /**
 * @brief とてもシンプルなメモリ管理機構

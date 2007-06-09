@@ -196,12 +196,16 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 			if(const Array& temp(xtal::as<const Array&>(get()))){
 				// 最後の要素の配列を展開する。
 				Array ary(temp);
+				downsize(1);
+
+				// 配列を展開し埋め込む
 				XTAL_GLOBAL_INTERPRETER_LOCK{
-					downsize(1);
-					for(int_t i = 0; i<need_result_count-n+1; ++i){
+					for(int_t i=0, len=ary.size(); i<len; ++i){
 						push(ary.at(i));
 					}
 				}
+
+				adjust_result(n-1+ary.size(), need_result_count, result_flag);
 			}else{
 				// 最後の要素が配列ではないので、nullで埋めとく
 				for(int_t i = n; i<need_result_count; ++i){

@@ -83,7 +83,7 @@ bool calling_malloc(){
 	return calling_malloc_;
 }
 
-
+//*
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 	alloced_size_ = first_buffer_size;
 	begin_ = 0;
@@ -134,7 +134,7 @@ void RegionAlloc::add_chunk(size_t minsize){
 	alloced_size_*=2;
 }
 
-/*
+/*/
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 
 }
@@ -155,7 +155,7 @@ void RegionAlloc::release(){
 	}
 	alloced_.clear();
 }
-*/
+//*/
 
 void SimpleMemoryManager::init(void* begin, void* end){
 	head_ = (Chunk*)begin;

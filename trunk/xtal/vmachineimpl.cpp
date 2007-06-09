@@ -192,8 +192,8 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 			}		
 		}else{
 			// 要求している戻り値の数の方が、関数が返す戻り値より多い
-			const Array& temp(xtal::as<const Array&>(get()));
-			if(temp){
+
+			if(const Array& temp(xtal::as<const Array&>(get()))){
 				// 最後の要素の配列を展開する。
 				Array ary(temp);
 				XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -546,6 +546,9 @@ switch(*pc){
 	
 	XTAL_VM_CASE(CODE_POP){ downsize(1); pc+=1; }
 	XTAL_VM_CASE(CODE_DUP){ dup(); pc+=1; }
+	XTAL_VM_CASE(CODE_ADJUST_RESULT){ 
+		adjust_result(get_u8(pc+1), get_u8(pc+2), get_u8(pc+3)); pc+=4; 
+	}
 
 	XTAL_VM_CASE(CODE_SET_NAME){ pc = SET_NAME(pc); }
 

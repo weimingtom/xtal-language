@@ -339,6 +339,7 @@ public:
 
 	~Any(){ 
 		dec_ref_count();
+		set_null(); // •K{
 	}
 	
 private:

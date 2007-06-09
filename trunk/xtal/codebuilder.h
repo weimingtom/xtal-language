@@ -133,11 +133,11 @@ public:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			int_t name; ///< ラベル名
-			int frame_count; ///< フレームの数
-			int break_label; ///< break_labelの番号
-			int continue_label; ///< continue_labelの番号
-			bool have_label; /// 対応するラベルを持っているか
+			int_t name; // ラベル名
+			int frame_count; // フレームの数
+			int break_label; // break_labelの番号
+			int continue_label; // continue_labelの番号
+			bool have_label; // 対応するラベルを持っているか
 		};
 		
 		PODStack<Loop> loops;
@@ -166,11 +166,6 @@ public:
 	void fun_frame_end();
 	FunFrame& fun_frame();
 
-	struct ClassFrame{
-		int_t n;
-		AC<int_t>::vector inst_vars;
-	};
-	
 	int_t line(){ return lines_.top(); }
 
 private:
@@ -185,7 +180,7 @@ private:
 	CodeImpl* p_;
 	PODStack<Scope> scopes_;
 	PODStack<int_t> lines_;
-	Stack<ClassFrame> class_scopes_;
+	Stack<ClassExpr*> class_scopes_;
 };
 
 }

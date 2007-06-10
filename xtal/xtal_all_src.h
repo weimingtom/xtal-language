@@ -1,0 +1,27 @@
+
+#pragma once
+
+#include "xtal.h"
+
+#include "xtal_allocator.cpp"
+#include "xtal_any.cpp"
+#include "xtal_array.cpp"
+#include "xtal_code.cpp"
+#include "xtal_codebuilder.cpp"
+#include "xtal_expr.cpp"
+#include "xtal_frame.cpp"
+#include "xtal_fun.cpp"
+#include "xtal_cfun.cpp"
+#include "xtal_lexer.cpp"
+#include "xtal_lib.cpp"
+#include "xtal_map.cpp"
+#include "xtal_parser.cpp"
+#include "xtal_string.cpp"
+#include "xtal_vmachine.cpp"
+#include "xtal_vmachineimpl.cpp"
+#include "xtal_cast.cpp"
+#include "xtal_marshal.cpp"
+#include "xtal_stream.cpp"
+#include "xtal_stack.cpp"
+#include "xtal_thread.cpp"
+#include "xtal_ch.cpp"

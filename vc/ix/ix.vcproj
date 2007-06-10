@@ -102,9 +102,6 @@
 		<Filter
 			Name="ソース ファイル"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
-			<File
-				RelativePath="..\..\xtal\ixmain.cpp">
-			</File>
 		</Filter>
 		<Filter
 			Name="ヘッダー ファイル"

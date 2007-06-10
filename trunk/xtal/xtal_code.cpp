@@ -1,0 +1,81 @@
+
+#include "xtal.h"
+
+#include "xtal_codeimpl.h"
+
+namespace xtal{
+
+FunCore empty_xfun_core;
+FrameCore empty_frame_core;
+
+CodeImpl::CodeImpl()
+	:toplevel_("toplevel"), source_file_name_("<noname>"){
+	toplevel_.inherit(builtin());
+	toplevel_.def("toplevel", toplevel_);
+}
+
+int_t CodeImpl::compliant_line_number(const u8* p){
+	AC<LineNumberTable>::vector::const_iterator it=
+		std::lower_bound(
+			line_number_table_.begin(),
+			line_number_table_.end(),
+			static_cast<int_t>(p-data()),
+			LineNumberCmp()
+		);
+
+	if(it!=line_number_table_.end()){
+		if(it==line_number_table_.begin()){
+			return 1;
+		}
+		--it;
+		return it->line_number;
+	}
+	return 0;
+}
+
+Code::Code(){
+	new(*this) CodeImpl();
+}
+
+int_t Code::compliant_line_number(const u8* p) const{
+	return impl()->compliant_line_number(p);
+}
+
+const u8* Code::data() const{
+	return impl()->data();
+}
+
+int_t Code::size() const{
+	return impl()->size();
+}
+
+const ID& Code::get_symbol(int_t i) const{
+	return impl()->get_symbol(i);
+}
+
+const Any& Code::get_value(int_t i) const{
+	return impl()->get_value(i);
+}
+
+void Code::set_value(int_t i, const Any& v) const{
+	impl()->set_value(i, v);
+}
+
+FrameCore* Code::get_frame_core(int_t i) const{
+	return &impl()->frame_core_table_[i];
+}
+
+FunCore* Code::get_fun_core(int_t i) const{
+	return &impl()->xfun_core_table_[i];
+}
+
+
+String Code::source_file_name() const{ 
+	return impl()->source_file_name();
+}
+
+const Class& Code::toplevel() const{ 
+	return impl()->toplevel();
+}
+
+}

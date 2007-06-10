@@ -1,6 +1,6 @@
 
 #include "xtal.h"
-#include "vmachineimpl.h"
+#include "xtal_vmachineimpl.h"
 
 #ifdef _MSC_VER
 //#pragma comment(lib, "../../xtallib.lib") 
@@ -94,41 +94,9 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
-		Any code = Xsrc((
-
-			lib::Test: class{
-				marshal_load: method(v){
-					
-				}
-
-				marshal_dump: method(){
-					return "test", 7, 5, 7;
-				}
-			}
-
-			lib::Test2: class{
-				marshal_load: method(v){
-					v.p;
-				}
-
-				marshal_dump: method(){
-				  return lib::Test();
-				}
-			}
-
-l: lib::Test2.marshal_new("testtest");
-
-			export lib::Test2();
-
-		))();
-
-		//MemoryStream ms;
-		//object_to_script(code, ms);
-		//ms.to_s().p();
-
 		handle_argv(argv);
 
-//*
+/*
 
 		load("test/test_except.xtal");
 		load("test/test_fiber.xtal");
@@ -167,7 +135,7 @@ l: lib::Test2.marshal_new("testtest");
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
-	vmachine().impl()->print_info();
+	//vmachine().impl()->print_info();
 
 	uninitialize();
 

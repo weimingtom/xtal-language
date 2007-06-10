@@ -89,191 +89,188 @@
 			Name="ソース ファイル"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
 			<File
-				RelativePath="..\..\xtal\allocator.cpp">
+				RelativePath="..\..\xtal\xtal_allocator.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\any.cpp">
+				RelativePath="..\..\xtal\xtal_any.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\array.cpp">
+				RelativePath="..\..\xtal\xtal_array.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\cast.cpp">
+				RelativePath="..\..\xtal\xtal_cast.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\cfun.cpp">
+				RelativePath="..\..\xtal\xtal_cfun.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\ch.cpp">
+				RelativePath="..\..\xtal\xtal_ch.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\code.cpp">
+				RelativePath="..\..\xtal\xtal_code.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\codebuilder.cpp">
+				RelativePath="..\..\xtal\xtal_codebuilder.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\expr.cpp">
+				RelativePath="..\..\xtal\xtal_expr.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\frame.cpp">
+				RelativePath="..\..\xtal\xtal_frame.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\fun.cpp">
+				RelativePath="..\..\xtal\xtal_fun.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\lexer.cpp">
+				RelativePath="..\..\xtal\xtal_lexer.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\lib.cpp">
+				RelativePath="..\..\xtal\xtal_lib.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\map.cpp">
+				RelativePath="..\..\xtal\xtal_map.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\marshal.cpp">
+				RelativePath="..\..\xtal\xtal_marshal.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\parser.cpp">
+				RelativePath="..\..\xtal\xtal_parser.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\stack.cpp">
+				RelativePath="..\..\xtal\xtal_stack.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\stream.cpp">
+				RelativePath="..\..\xtal\xtal_stream.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\string.cpp">
+				RelativePath="..\..\xtal\xtal_string.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\thread.cpp">
+				RelativePath="..\..\xtal\xtal_thread.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\vmachine.cpp">
+				RelativePath="..\..\xtal\xtal_vmachine.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xtal\vmachineimpl.cpp">
+				RelativePath="..\..\xtal\xtal_vmachineimpl.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="ヘッダー ファイル"
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
-				RelativePath="..\..\xtal\all_src.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\allocator.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\any.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\array.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\arrayimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\cast.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\cfun.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\ch.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\code.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\codebuilder.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\codeimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\constant.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\expr.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\frame.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\frameimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\fun.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\funimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\fwd.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\lexer.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\lib.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\map.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\mapimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\marshal.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\marshalimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\parser.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\stack.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\stream.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\streamimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\string.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\stringimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\thread.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\userdata.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\utilimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\utility.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\visitor.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\vmachine.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\vmachineimpl.h">
-			</File>
-			<File
-				RelativePath="..\..\xtal\xmacro.h">
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_all_src.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_allocator.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_any.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_array.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_arrayimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_cast.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_cfun.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_ch.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_code.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_codebuilder.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_codeimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_constant.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_expr.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_frame.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_frameimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_fun.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_funimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_fwd.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_lexer.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_lib.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_macro.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_map.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_mapimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_marshal.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_parser.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_stack.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_stream.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_streamimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_string.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_stringimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_thread.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_userdata.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_utilimpl.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_utility.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_visitor.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_vmachine.h">
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_vmachineimpl.h">
 			</File>
 		</Filter>
 		<Filter

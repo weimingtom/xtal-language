@@ -39,7 +39,13 @@ public:
 
 	uint_t tell() const;
 
-	void seek(uint_t offset, const String& whence) const;
+	enum{
+		XSEEK_SET,
+		XSEEK_CUR,
+		XSEEK_END
+	};
+
+	void seek(int_t offset, int_t whence = XSEEK_SET) const;
 
 	uint_t write(const void* p, uint_t size) const;
 	uint_t read(void* p, uint_t size) const;
@@ -47,9 +53,9 @@ public:
 	uint_t write(const String& str) const;
 	String read(uint_t size) const;
 
-	void close();
+	void close() const;
 
-	uint_t inpour(const Stream& in_stream, uint_t size);
+	uint_t inpour(const Stream& in_stream, uint_t size) const;
 
 public:
 

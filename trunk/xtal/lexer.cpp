@@ -746,9 +746,9 @@ void Lexer::do_read(){
 			XTAL_CASE(':'){
 				if(eat_from_reader(':')){
 					if(eat_from_reader('?')){
-						push(c2(':', ':'));
-					}else{
 						push(c3(':', ':', '?'));
+					}else{
+						push(c2(':', ':'));
 					}
 				}else{
 					push(':');

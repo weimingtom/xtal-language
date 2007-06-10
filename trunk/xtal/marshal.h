@@ -25,6 +25,7 @@ private:
 	Any inner_load();
 	void inner_to_script(const Any& v, int_t tab);
 
+	bool check_id(const ID& id);
 	Any demangle(int_t n);
 
 	int_t register_dvalue(const Any& v, bool& added);

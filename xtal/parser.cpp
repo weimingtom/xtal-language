@@ -656,7 +656,7 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 					}
 				}
 
-				XTAL_CASE(c3(':',':', '?')){
+				XTAL_CASE(c3(':',':','?')){
 					if(pri < PRI_MEMBER - l_space){
 						if(eat('(')){
 							ret = e.member_q(lhs, parse_expr_must());

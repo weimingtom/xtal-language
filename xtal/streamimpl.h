@@ -79,6 +79,8 @@ public:
 
 	virtual uint_t do_read(void* p, uint_t size) = 0;
 
+	virtual void seek(int_t offset, int_t whence) = 0;
+
 	virtual void close() = 0;
 
 	virtual uint_t inpour(const Stream& in_stream, uint_t size){
@@ -139,6 +141,11 @@ public:
 			return fread(p, 1, size, fp_);
 		}
 		return 0;
+	}
+
+	virtual void seek(int_t offset, int_t whence){
+		int wh = whence==Stream::XSEEK_END ? SEEK_END : whence==Stream::XSEEK_CUR ? SEEK_CUR : SEEK_SET;
+		fseek(fp_, offset, whence);
 	}
 
 	virtual void close(){
@@ -204,6 +211,20 @@ public:
 
 	void* data(){
 		return &data_[0];
+	}
+
+	virtual void seek(int_t offset, int_t whence){
+		switch(whence){
+			case Stream::XSEEK_END:
+				pos_ = data_.size()-offset;
+				break;
+			case Stream::XSEEK_CUR:
+				pos_ += offset;
+				break;
+			default:
+				pos_ = offset;
+				break;
+		}
 	}
 
 	virtual void close(){
@@ -275,8 +296,12 @@ public:
 		return 0;
 	}
 
-	virtual void close(){
+	virtual void seek(int_t offset, int_t whence){
 
+	}
+
+	virtual void close(){
+		closed_ = true;
 	}
 
 	void set_continue_stmt(bool b){

@@ -22,11 +22,17 @@ void InitClass(){
 		p.method("inherit", &Class::inherit);
 		p.method("is_inherited", &Class::is_inherited);
 		p.method("each_member", &Class::each_member);
+		p.method("marshal_new", &Class::marshal_new);
 	}
 
 	{
 		TClass<LibImpl> p("Lib");
 		p.method("append_load_path", &LibImpl::append_load_path);
+	}
+
+	{
+		TClass<Nop> p(new NopImpl());
+		p.impl()->dec_ref_count();
 	}
 }
 
@@ -471,6 +477,7 @@ void XClassImpl::marshal_new(const VMachine& vm){
 	Instance inst(Class(this));
 	init_instance(inst.impl(), vm, inst);
 	
+	
 	if(inst.impl()->empty()){
 		if(const Any& ret = bases_member(Xid(marshal_new))){
 			ret.call(vm);
@@ -480,18 +487,9 @@ void XClassImpl::marshal_new(const VMachine& vm){
 			return;
 		}
 	}
-	
-	if(const Any& ret = member(Xid(marshal_load))){
-		vm.set_arg_this(inst);
-		if(vm.need_result()){
-			ret.call(vm);
-			vm.replace_result(0, inst);
-		}else{
-			ret.call(vm);
-		}
-	}else{
-		vm.return_result(inst);
-	}
+
+	inst.send(Xid(marshal_load), vm.arg(0));
+	vm.return_result(inst);
 }
 
 const Any& LibImpl::member(const ID& name){

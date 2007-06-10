@@ -18,12 +18,16 @@ void InitStream(){
 	
 	cls.method("read", (String (Stream::*)(uint_t) const)&Stream::read);
 	cls.method("write", (uint_t (Stream::*)(const String&) const)&Stream::write);
-	//cls.method("seek", &Stream::seek);
+	cls.method("seek", &Stream::seek).param(null, Named("whence", Stream::XSEEK_SET));
 	cls.method("inpour", &Stream::inpour);
 
 	cls.method("iter_first", &Stream::iter_first);
 	cls.method("iter_next", &Stream::iter_next);
 	cls.method("iter_break", &Stream::iter_break);
+
+	cls.def("SEEK_SET", Stream::XSEEK_SET);
+	cls.def("SEEK_CUR", Stream::XSEEK_CUR);
+	cls.def("SEEK_END", Stream::XSEEK_END);
 }
 
 void InitMemoryStream(){
@@ -102,12 +106,15 @@ String Stream::read(uint_t size) const{
 	return String(buf, len, size+1, String::delegate_memory_t());
 }
 
+void Stream::seek(int_t offset, int_t whence) const{
+	impl()->seek(offset, whence);
+}
 
-void Stream::close(){
+void Stream::close() const{
 	impl()->close();
 }
 
-uint_t Stream::inpour(const Stream& in_stream, uint_t size){
+uint_t Stream::inpour(const Stream& in_stream, uint_t size) const{
 	return impl()->inpour(in_stream, size);
 }
 

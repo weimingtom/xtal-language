@@ -30,10 +30,33 @@ Any Marshal::load(){
 	return inner_load();
 }
 
+bool Marshal::check_id(const ID& id){
+	const char_t* str = id.c_str();
+	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
+		return true;
+	}
+	XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")));
+	return false;
+}
+
 void Marshal::to_script(const Any& v){
+
+	/*
+	Stream temp(stream_);
+	stream_ = MemoryStream();
+	*/
+
 	stream_.write("export ");
 	inner_to_script(v, 0);
 	stream_.write(";\n");
+
+	/*
+	stream_.swap(temp);
+
+	stream_.write("values: ");
+	inner_to_script(dvalues_, 0);
+	stream_.write(";\n");
+	*/
 }
 
 void Marshal::inner_dump(const Any& v){
@@ -96,7 +119,7 @@ void Marshal::inner_dump(const Any& v){
 			return;
 		}else if(cls.raweq(TClass<Fun>::get()) && v.object_name()==String("<TopLevel>")){
 			CodeImpl* p = (CodeImpl*)((Fun*)&v)->code().impl();
-			stream_.p8('X'); stream_.p8('T'); stream_.p8('A'); stream_.p8('L');
+			stream_.p8('x'); stream_.p8('t'); stream_.p8('a'); stream_.p8('l');
 			stream_.p8(MARSHAL_VERSION1); stream_.p8(MARSHAL_VERSION2); 
 			stream_.p8(0); 
 			stream_.p8(0);
@@ -158,10 +181,12 @@ void Marshal::inner_dump(const Any& v){
 		if(v.get_class().member(Xid(marshal_dump))){
 			ID id = v.get_class().object_name();
 			stream_.p8(VALUE);
+			check_id(id);
 			inner_dump(id); // クラスの名前を埋め込む
 			inner_dump(v.send(Xid(marshal_dump)));					
 		}else{
 			ID id = v.object_name();
+			check_id(id);
 			stream_.p8(LIB);
 			inner_dump(id);
 		}
@@ -261,11 +286,11 @@ Any Marshal::inner_load(){
 			return false;
 		}
 
-		XTAL_CASE('X'){
+		XTAL_CASE('x'){
 			Code guard(null);
 			CodeImpl* p = new(guard) CodeImpl();
 
-			if(stream_.u8()!='T' || stream_.u8()!='A' || stream_.u8()!='L'){
+			if(stream_.u8()!='t' || stream_.u8()!='a' || stream_.u8()!='l'){
 				XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
 			}
 
@@ -387,6 +412,12 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 	}else if(cls.raweq(TClass<Float>::get())){
 		stream_.write(v.to_s());
 		return;
+	}else if(cls.raweq(TClass<True>::get())){
+		stream_.write(Xid(true));
+		return;
+	}else if(cls.raweq(TClass<False>::get())){
+		stream_.write(Xid(false));
+		return;
 	}
 
 	bool added = false;
@@ -453,22 +484,24 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 		// 所属クラスにmarshal_dump関数が定義されている
 		if(v.get_class().member(Xid(marshal_dump))){
 			ID id = v.get_class().object_name();
+			check_id(id);
 			// クラスの名前を埋め込む
 			for(int_t i=0; i<id.size(); ++i){
 				stream_.p8(id.c_str()[i]);
 			}
-			stream_.write("::marshal_new(");
+			stream_.write(".marshal_new(");
 			inner_to_script(v.send(Xid(marshal_dump)), tab);
 			stream_.write(")");
 		}else{
 			ID id = v.object_name();
+			check_id(id);
 			for(int_t i=0; i<id.size(); ++i){
 				stream_.p8(id.c_str()[i]);
 			}
 		}
 	}/*else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
-		stream_.write("value[");
+		stream_.write("values[");
 		stream_.write(Any(num).to_s());
 		stream_.write("]");
 	}*/

@@ -20,7 +20,7 @@
 
 
 
-//#define XTAL_USE_PREDEFINED_ID
+#define XTAL_USE_PREDEFINED_ID
 
 #if defined(_DEBUG) || defined(DEBUG)
 #	define XTAL_DEBUG

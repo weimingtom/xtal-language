@@ -94,6 +94,38 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
+		Any code = Xsrc((
+
+			lib::Test: class{
+				marshal_load: method(v){
+					
+				}
+
+				marshal_dump: method(){
+					return "test", 7, 5, 7;
+				}
+			}
+
+			lib::Test2: class{
+				marshal_load: method(v){
+					v.p;
+				}
+
+				marshal_dump: method(){
+				  return lib::Test();
+				}
+			}
+
+l: lib::Test2.marshal_new("testtest");
+
+			export lib::Test2();
+
+		))();
+
+		//MemoryStream ms;
+		//object_to_script(code, ms);
+		//ms.to_s().p();
+
 		handle_argv(argv);
 
 //*

@@ -458,4 +458,31 @@ private:
 	}
 };
 
+class NopImpl : public ClassImpl{
+public:
+
+	NopImpl(){
+	}
+
+	virtual const Any& member(const ID& name){
+		return nop;
+	}
+
+	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags){
+		return nop;
+	}
+	
+	virtual const Any& member(const ID& name, const Any& self){
+		return nop;
+	}
+
+	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
+		return nop;
+	}
+
+	virtual void def(const ID& name, const Any& value){
+
+	}
+};
+
 }

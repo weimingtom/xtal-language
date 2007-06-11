@@ -183,14 +183,14 @@ public:
 	}
 	
 	void push(const Stack<T>& other, size_t sz){
-		for(size_t i = sz; sz!=0; --sz){
-			push(other[sz-1]);
+		for(size_t i = sz; i!=0; --i){
+			push(other[i-1]);
 		} 
 	}
 	
 	void push(const Stack<T>& other, size_t other_offset, size_t sz){
-		for(size_t i = sz; sz!=0; --sz){
-			push(other[other_offset+sz-1]);
+		for(size_t i = sz; i!=0; --i){
+			push(other[other_offset+i-1]);
 		} 
 	}
 		

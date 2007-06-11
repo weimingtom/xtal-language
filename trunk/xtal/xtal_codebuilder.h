@@ -181,6 +181,10 @@ private:
 	PODStack<Scope> scopes_;
 	PODStack<int_t> lines_;
 	Stack<ClassExpr*> class_scopes_;
+
+private:
+	CodeBuilder(const CodeBuilder&);
+	CodeBuilder& operator=(const CodeBuilder&);
 };
 
 }

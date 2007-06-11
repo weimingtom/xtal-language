@@ -19,7 +19,7 @@ public:
 	void set_line_number_info(int_t line){
 		if(!line_number_table_.empty() && line_number_table_.back().line_number==line)
 			return;
-		LineNumberTable lnt={code_.size(), line};
+		LineNumberTable lnt={(u16)code_.size(), (u16)line};
 		line_number_table_.push_back(lnt);
 	}
 

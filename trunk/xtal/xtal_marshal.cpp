@@ -102,7 +102,7 @@ void Marshal::inner_dump(const Any& v){
 				stream_.put_i8(STRING);
 			}
 			stream_.put_i32(a.size());
-			for(int_t i=0; i<a.size(); ++i){
+			for(size_t i=0; i<a.size(); ++i){
 				stream_.put_i8(a.c_str()[i]);
 			}
 			return;
@@ -291,7 +291,7 @@ Any Marshal::inner_load(){
 			}
 
 			xtal::u8 version1 = stream_.get_u8(), version2 = stream_.get_u8();
-			if(version1!=MARSHAL_VERSION1){
+			if(version1!=MARSHAL_VERSION1 || version2!=MARSHAL_VERSION2){
 				XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
 			}
 			
@@ -439,7 +439,7 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 		}else if(cls.raweq(TClass<String>::get())){
 			const String& a = (const String&)v;
 			stream_.put_i8('"');
-			for(int_t i=0; i<a.size(); ++i){
+			for(size_t i=0; i<a.size(); ++i){
 				u8 ch = a.c_str()[i];
 				switch(ch){
 					XTAL_DEFAULT{ stream_.put_i8(ch); }

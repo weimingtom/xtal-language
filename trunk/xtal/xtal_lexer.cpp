@@ -199,11 +199,11 @@ String Lexer::token2str(const Token& t){
 			if(t.ivalue()==-1){
 				return String("End of File");
 			}else{
-				char buf[5];
-				buf[0] = t.ivalue() & 0xff;
-				buf[1] = t.ivalue()>>8 & 0xff;
-				buf[2] = t.ivalue()>>16 & 0xff;
-				buf[3] = t.ivalue()>>24 & 0xff;
+				char_t buf[5];
+				buf[0] = (char_t)(t.ivalue() & 0xff);
+				buf[1] = (char_t)(t.ivalue()>>8 & 0xff);
+				buf[2] = (char_t)(t.ivalue()>>16 & 0xff);
+				buf[3] = (char_t)(t.ivalue()>>24 & 0xff);
 				buf[4] = 0;
 				return String(buf);
 			}
@@ -398,9 +398,6 @@ void Lexer::parse_number_suffix(float_t val){
 }
 
 void Lexer::parse_number(){
-	int_t val = 0;
-	int_t temp = 0;
-	
 	if(eat_from_reader('0')){
 		if(eat_from_reader('x') || eat_from_reader('X')){
 			push_int(parse_hex());

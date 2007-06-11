@@ -229,7 +229,7 @@ string_t Parser::parse_string(int_t open, int_t close){
 			switch(lexer_.peek().ivalue()){
 				XTAL_DEFAULT{ 
 					str+='\\';
-					str+=lexer_.peek().ivalue(); 
+					str+=(char_t)lexer_.peek().ivalue(); 
 				}
 				
 				XTAL_CASE('n'){ str+='\n'; }
@@ -263,7 +263,7 @@ string_t Parser::parse_string(int_t open, int_t close){
 				str+='\n';
 			}else{
 				str+=(char_t)ch;
-				for(int_t i=1, size = ch_len(ch); i<size; ++i){
+				for(int_t i=1, size = ch_len((char_t)ch); i<size; ++i){
 					str+=(char_t)lexer_.read().ivalue();
 				}
 			}
@@ -275,7 +275,6 @@ string_t Parser::parse_string(int_t open, int_t close){
 
 Expr* Parser::parse_term(){
 	
-	int_t ln = lexer_.line();
 	Token ch = lexer_.read();
 
 	Expr* ret = 0;
@@ -323,7 +322,7 @@ Expr* Parser::parse_term(){
 					int_t open = lexer_.read().ivalue();
 					int_t close = 0;
 					int_t kind = KIND_STRING;
-					while(true){
+					for(;;){
 						switch(open){
 						case 't':
 							if(kind!=KIND_STRING){
@@ -451,7 +450,6 @@ Expr* Parser::parse_term(){
 
 Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
-	int_t ln = lexer_.line();
 	Token ch = lexer_.read();
 
 	Expr* ret = 0;
@@ -771,6 +769,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			e.massign_begin();
 			*e.massign_lhs_exprs() = param;
 			e.massign_define(true);
+			e.massign_discard(discard);
 			e.massign_rhs(e.call(e.send(e.pop(), iter_first)));
 			e.block_add(e.massign_end());
 			
@@ -784,6 +783,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					e.massign_begin();
 					*e.massign_lhs_exprs() = param;
 					e.massign_define(false);
+					e.massign_discard(discard);
 					e.massign_rhs(e.call(e.send(e.local(it), iter_next)));
 					e.while_next(e.massign_end());
 
@@ -1493,8 +1493,6 @@ Stmt* Parser::parse_throw(){
 
 Expr* Parser::parse_array(){
 	
-	int_t ln = lexer_.line();
-
 	if(eat(']')){//empty array
 		e.array_begin();
 		return e.array_end();
@@ -1512,8 +1510,9 @@ Expr* Parser::parse_array(){
 		e.map_add(key, parse_expr_must());	
 		
 		if(eat_a(',')){
-			while(true){
-				if((key = parse_expr())){
+			for(;;){
+				key = parse_expr();
+				if(key){
 					expect_a(':');
 					e.map_add(key, parse_expr_must());
 					
@@ -1533,7 +1532,8 @@ Expr* Parser::parse_array(){
 		e.array_add(key);
 		if(eat_a(',')){
 			while(true){
-				if((key = parse_expr())){
+				key = parse_expr();
+				if(key){
 					e.array_add(key);
 					if(!eat_a(',')){
 						break;

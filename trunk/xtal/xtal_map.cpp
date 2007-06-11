@@ -57,6 +57,7 @@ void InitMap(){
 	p.method("cat_assign", &Map::cat_assign);
 	p.method("erase", &Map::erase);
 	p.method("empty", &Map::empty);
+	p.method("op_eq", &Map::op_eq);
 }
 
 Map::Map(){
@@ -113,6 +114,10 @@ int_t Map::length() const{
 
 bool Map::empty() const{
 	return impl()->size()==0;
+}
+
+bool Map::op_eq(const Map& other) const{
+	return impl()->op_eq(other);
 }
 
 StrictMap::StrictMap(){

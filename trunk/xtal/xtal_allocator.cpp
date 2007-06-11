@@ -83,7 +83,7 @@ bool calling_malloc(){
 	return calling_malloc_;
 }
 
-//*
+/*
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 	alloced_size_ = first_buffer_size;
 	begin_ = 0;
@@ -150,7 +150,7 @@ void *RegionAlloc::allocate(size_t size){
 }
 	
 void RegionAlloc::release(){
-	for(int i=0; i<alloced_.size(); ++i){
+	for(size_t i=0; i<alloced_.size(); ++i){
 		user_free(alloced_[i], 1);
 	}
 	alloced_.clear();

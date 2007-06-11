@@ -122,6 +122,7 @@ public:
 	*/
 	bool empty() const;
 
+	bool op_eq(const Map& other) const;
 
 	MapImpl* impl() const{ return (MapImpl*)Any::impl(); }
 

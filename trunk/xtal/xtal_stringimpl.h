@@ -8,13 +8,13 @@
 
 namespace xtal{
 
-uint_t make_hashcode(const char* str, int_t size);
+uint_t make_hashcode(const char* str, uint_t size);
 
 class StringImpl : public AnyImpl{
 public:
 
 	
-	void common_init(int_t len);
+	void common_init(uint_t len);
 	
 	StringImpl(const char* str){
 		common_init(strlen(str));
@@ -22,7 +22,7 @@ public:
 		hashcode_ = make_hashcode(c_str(), size());
 	}
 
-	StringImpl(const char* str, int_t len){
+	StringImpl(const char* str, uint_t len){
 		common_init(len);
 		memcpy(str_, str, size_);
 		hashcode_ = make_hashcode(c_str(), size());
@@ -34,7 +34,7 @@ public:
 		hashcode_ = make_hashcode(c_str(), size());
 	}
 
-	StringImpl(const char* str1, int_t size1, const char* str2, int_t size2){
+	StringImpl(const char* str1, uint_t size1, const char* str2, uint_t size2){
 		common_init(size1 + size2);
 		memcpy(str_, str1, size1);
 		memcpy(str_+size1, str2, size2);
@@ -47,14 +47,14 @@ public:
 		hashcode_ = make_hashcode(c_str(), size());
 	}
 
-	StringImpl(const char* str, int_t len, uint_t hashcode){
+	StringImpl(const char* str, uint_t len, uint_t hashcode){
 		common_init(len);
 		memcpy(str_, str, size_);
 		hashcode_ = hashcode;
 		intern_ = true;
 	}
 
-	StringImpl(char* str, int_t len, int_t buffer_size, String::delegate_memory_t){
+	StringImpl(char* str, uint_t len, uint_t /*buffer_size*/, String::delegate_memory_t){
 		set_class(TClass<String>::get());
 		size_ = len;
 		str_ = str;
@@ -67,8 +67,8 @@ public:
 	}
 		
 	const char* c_str(){ return str_; }
-	int_t size(){ return size_; }
-	int_t length(){ return size_; }
+	uint_t size(){ return size_; }
+	uint_t length(){ return size_; }
 	String slice(int_t first, int_t last){ return String(c_str()+first, last-first); }
 	uint_t hashcode(){ return hashcode_; }
 	String clone(){ return String(this); }
@@ -81,7 +81,7 @@ public:
 	
 	class StringSplitImpl : public AnyImpl{
 		String str_, sep_;
-		int_t index_;
+		uint_t index_;
 
 		virtual void visit_members(Visitor& m){
 			AnyImpl::visit_members(m);
@@ -160,8 +160,8 @@ public:
 private:
 
 	char* str_;
-	int_t size_;
-	int_t hashcode_;
+	uint_t size_;
+	uint_t hashcode_;
 	bool intern_;
 
 };

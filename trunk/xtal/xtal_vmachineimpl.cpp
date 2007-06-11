@@ -63,6 +63,7 @@ void VMachineImpl::push_ff(const u8* pc, int_t need_result_count, int_t result_f
 
 	f.outer(null);
 	f.variables_.clear();
+	f.scopes.clear();
 	f.arguments(null);
 }
 
@@ -78,9 +79,7 @@ const Any& VMachineImpl::result(int_t pos){
 	}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
 		String hint1 = ff().hint1().get_class().object_name();
 		String hint2 = ff().hint2();
-		int_t rrc = need_result_count();
 		pop_ff();
-		//downsize(rrc);
 		if(Any uerror = builtin().member("UnsupportedError")){
 			XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
 				hint1 ? hint1 : String("?"),
@@ -161,25 +160,13 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 
 	// この時点で、nもneed_result_countも1以上
 
-	// 戻り値を切り捨てるフラグがついている
-	if(result_flag&RESULT_DISCARD){
-	
-		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-		if(need_result_count<n){
-			// 戻り値を捨てる
+
+	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
+	if(need_result_count<n){
+		// 戻り値を切り捨てるフラグがついている
+		if(result_flag&RESULT_DISCARD){
 			downsize(n-need_result_count);
 		}else{
-			// 要求している戻り値の数の方が、関数が返す戻り値より多い
-			
-			// nullで埋めとく
-			for(int_t i = n; i<need_result_count; ++i){
-				push(null);
-			}
-		}
-	}else{
-			
-		// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-		if(need_result_count<n){
 			// 余った戻り値を配列に直す。
 			int_t size = n-need_result_count+1;
 			XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -189,28 +176,28 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 				}
 				downsize(size);
 				push(ret);
-			}		
+			}	
+		}
+	}else{
+		// 要求している戻り値の数の方が、関数が返す戻り値より多い
+
+		if(const Array& temp = xtal::as<const Array&>(get())){
+			// 最後の要素の配列を展開する。
+			Array ary(temp);
+			downsize(1);
+
+			// 配列を展開し埋め込む
+			XTAL_GLOBAL_INTERPRETER_LOCK{
+				for(int_t i=0, len=ary.size(); i<len; ++i){
+					push(ary.at(i));
+				}
+			}
+
+			adjust_result(n-1+ary.size(), need_result_count, result_flag);
 		}else{
-			// 要求している戻り値の数の方が、関数が返す戻り値より多い
-
-			if(const Array& temp(xtal::as<const Array&>(get()))){
-				// 最後の要素の配列を展開する。
-				Array ary(temp);
-				downsize(1);
-
-				// 配列を展開し埋め込む
-				XTAL_GLOBAL_INTERPRETER_LOCK{
-					for(int_t i=0, len=ary.size(); i<len; ++i){
-						push(ary.at(i));
-					}
-				}
-
-				adjust_result(n-1+ary.size(), need_result_count, result_flag);
-			}else{
-				// 最後の要素が配列ではないので、nullで埋めとく
-				for(int_t i = n; i<need_result_count; ++i){
-					push(null);
-				}
+			// 最後の要素が配列ではないので、nullで埋めとく
+			for(int_t i = n; i<need_result_count; ++i){
+				push(null);
 			}
 		}
 	}
@@ -310,6 +297,7 @@ void VMachineImpl::reset(){
 	f.fun(null);
 	f.outer(null);
 	f.variables_.clear();
+	f.scopes.clear();
 	f.arguments(null);
 }
 	
@@ -557,7 +545,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_SET_NAME){ pc = SET_NAME(pc); }
 
 	XTAL_VM_CASE(CODE_CHECK_UNSUPPORTED){ return_result(nop); pc = ff().pc; }
-	XTAL_VM_CASE(CODE_ASSERT){ pc = CHECK_ASSERT(pc, stack_size, fun_frames_size); }
+	XTAL_VM_CASE(CODE_ASSERT){ pc = CHECK_ASSERT(pc); }
 
 	XTAL_VM_CASE(CODE_CALL){ pc = CALL(pc); }
 	XTAL_VM_CASE(CODE_CALLEE){ pc = CALLEE(pc); }
@@ -581,12 +569,12 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_TRY_END){ pc = TRY_END(pc); }
 
 	XTAL_VM_CASE(CODE_THROW){ 
-		THROW(pc, except, stack_size, fun_frames_size); 
+		THROW(pc, except); 
 		goto except_catch; 
 	}
 
 	XTAL_VM_CASE(CODE_THROW_UNSUPPORTED_ERROR){ 
-		THROW_UNSUPPROTED_ERROR(except, stack_size, fun_frames_size); 
+		THROW_UNSUPPROTED_ERROR(except); 
 		goto except_catch;
 	}
 
@@ -912,7 +900,7 @@ const Any& VMachineImpl::LOCAL_VARIABLE(int_t pos){
 	}
 	pos-=variables_size;
 	const Frame* outer = &ff().outer();
-	while(1){
+	for(;;){
 		variables_size = outer->block_size();
 		if(pos<variables_size){
 			return outer->member_direct(pos);
@@ -1398,12 +1386,12 @@ const u8* VMachineImpl::EQ_IF(const u8* pc){
 const u8* VMachineImpl::NE_IF(const u8* pc){
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() != get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() != get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() != get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() != get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 		XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() != get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() != get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() != get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() != get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 	}
 	return send2(pc, Xid(op_eq), 3);
@@ -1412,12 +1400,12 @@ const u8* VMachineImpl::NE_IF(const u8* pc){
 const u8* VMachineImpl::LT_IF(const u8* pc){ 
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() < get().ivalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() < get().fvalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() < get().ivalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() < get().fvalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 		XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() < get().ivalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() < get().fvalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() < get().ivalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() < get().fvalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 	}
 	return send2(pc, Xid(op_lt), 3);
@@ -1426,12 +1414,12 @@ const u8* VMachineImpl::LT_IF(const u8* pc){
 const u8* VMachineImpl::GT_IF(const u8* pc){
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() > get().ivalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() > get().fvalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() > get().ivalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() > get().fvalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 		XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() > get().ivalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() > get().fvalue() ? pc+6 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() > get().ivalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() > get().fvalue() ? pc+6 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 	}
 	return send2r(pc, Xid(op_lt), 3);
@@ -1440,12 +1428,12 @@ const u8* VMachineImpl::GT_IF(const u8* pc){
 const u8* VMachineImpl::LE_IF(const u8* pc){
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() <= get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() <= get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() <= get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() <= get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 		XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() <= get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() <= get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() <= get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() <= get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 	}
 	return send2r(pc, Xid(op_lt), 3);
@@ -1454,12 +1442,12 @@ const u8* VMachineImpl::LE_IF(const u8* pc){
 const u8* VMachineImpl::GE_IF(const u8* pc){
 	switch(get(1).type()){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() >= get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() >= get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).ivalue() >= get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).ivalue() >= get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 		XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() >= get().ivalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
-			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() >= get().fvalue() ? pc+7 : pc+=get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_INT){ pc = get(1).fvalue() >= get().ivalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
+			XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() >= get().fvalue() ? pc+7 : pc+get_i16(pc+1); downsize(2); return pc; }
 		}}
 	}
 	return send2(pc, Xid(op_lt), 3);
@@ -1632,8 +1620,8 @@ const u8* VMachineImpl::SHL_ASSIGN(const u8* pc){
 const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		decolonize(); 
-		u8 need_result_count = get_u8(pc+1);
-		u8 result_flag = get_u8(pc+2);
+		int_t need_result_count = get_u8(pc+1);
+		int_t result_flag = get_u8(pc+2);
 		VMachine cloned_vm(clone());
 		Any ret; new(ret) ContinuationImpl(cloned_vm, need_result_count, result_flag, pc+3);
 		push(ret);
@@ -1703,7 +1691,7 @@ void VMachineImpl::hook_return(const u8* pc){
 	}
 }
 
-void VMachineImpl::THROW(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size){
+void VMachineImpl::THROW(const u8* pc, Any& e){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		e = pop();
 		if(e && !e.is(builtin().member("Exception"))){
@@ -1712,13 +1700,13 @@ void VMachineImpl::THROW(const u8* pc, Any& e, int_t stack_size, int_t fun_frame
 	}
 }
 
-void VMachineImpl::THROW_UNSUPPROTED_ERROR(Any& e, int_t stack_size, int_t fun_frames_size){
+void VMachineImpl::THROW_UNSUPPROTED_ERROR(Any& e){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		e = unsupported_error(ff().hint1().object_name(), ff().hint2());
 	}
 }
 	
-const u8* VMachineImpl::CHECK_ASSERT(const u8* pc, int_t stack_size, int_t fun_frames_size){
+const u8* VMachineImpl::CHECK_ASSERT(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		Any expr = get(2);
 		Any expr_string = get(1) ? get(1) : Any("");
@@ -1801,14 +1789,14 @@ const u8* VMachineImpl::CATCH_BODY(const u8* lpc, Any& e, int_t stack_size, int_
 		const u8* pc = &end_code_;
 		Any ep = e;
 
-		while(ef.fun_frame_count!=fun_frames_.size()){
+		while((size_t)ef.fun_frame_count<fun_frames_.size()){
 			if(fun_frames_.size()==1)
 				break;
 			hook_return(pc);
 			if(prev_ff().pc != &end_code_){
 				pop_ff();
-				pc = ff().pc - 1;	
-				ep = append_backtrace(pc, ep);
+				pc = ff().pc;	
+				ep = append_backtrace(pc - 1, ep);
 			}else{
 				pop_ff();
 				resize(stack_size);
@@ -1817,7 +1805,7 @@ const u8* VMachineImpl::CATCH_BODY(const u8* lpc, Any& e, int_t stack_size, int_
 			}
 		}
 
-		while(ff().scopes.size()!=ef.scope_count){
+		while((size_t)ef.scope_count<ff().scopes.size()){
 			if(ff().scopes.top()){
 				ff().variables_.downsize(ff().scopes.top()->variable_size);
 			}else{

@@ -225,14 +225,14 @@ template<>
 struct CastHelper<Any*>{
 	static Any* as(const Any& a){ return (Any*)&a; }
 	static Any* cast(const Any& a){ return (Any*)&a; }
-	static Any* arg_cast(const Any& a, int param_num, const Any& param_name){ return (Any*)&a; }
+	static Any* arg_cast(const Any& a, int, const Any&){ return (Any*)&a; }
 };
 
 template<>
 struct CastHelper<const Any*>{
 	static const Any* as(const Any& a){ return &a; }
 	static const Any* cast(const Any& a){ return &a; }
-	static const Any* arg_cast(const Any& a, int param_num, const Any& param_name){ return &a; }
+	static const Any* arg_cast(const Any& a, int, const Any&){ return &a; }
 };
 
 template<>
@@ -268,7 +268,7 @@ template<>
 struct CastHelper<bool>{
 	static bool as(const Any& a){ return a.to_b(); }
 	static bool cast(const Any& a){ return a.to_b(); }
-	static bool arg_cast(const Any& a, int param_num, const Any& param_name){ return a.to_b(); }
+	static bool arg_cast(const Any& a, int, const Any&){ return a.to_b(); }
 };
 
 #define XTAL_CAST_HELPER(Type) \

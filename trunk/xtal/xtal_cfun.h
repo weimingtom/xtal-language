@@ -80,12 +80,12 @@ struct fun0{
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
 	template<class V>
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 		));
 	}
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<void>){
 		fun(
 		);
 		Policy::return_result(vm);
@@ -103,7 +103,7 @@ struct fun1{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, T2T<const VMachine&>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<void>, T2T<const VMachine&>){
 		fun(vm);
 	}	
 		
@@ -120,7 +120,7 @@ struct fun1{
 		Policy::return_result(vm);
 	}
 	
-	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<const VMachine&>){
+	static void f3(const VMachine& vm, const ParamInfo&, T& fun, T2T<const VMachine&>){
 		Policy::return_result(vm, fun(
 			vm
 		));
@@ -270,13 +270,13 @@ struct method0{
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
 	template<class V>
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<V>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<V>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this())
 		));
 	}
 	
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<void>){
 		fun(
 			cast<C>(vm.get_arg_this())
 		);
@@ -311,11 +311,11 @@ struct method1{
 		Policy::return_result(vm);
 	}
 
-	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<void>, T2T<const VMachine&>){
+	static void f2(const VMachine& vm, const ParamInfo&, T& fun, T2T<void>, T2T<const VMachine&>){
 		fun(cast<C>(vm.get_arg_this()), vm);
 	}	
 		
-	static void f3(const VMachine& vm, const ParamInfo& p, T& fun, T2T<const VMachine&>){
+	static void f3(const VMachine& vm, const ParamInfo&, T& fun, T2T<const VMachine&>){
 		Policy::return_result(vm, fun(
 			cast<C>(vm.get_arg_this()), 
 			vm

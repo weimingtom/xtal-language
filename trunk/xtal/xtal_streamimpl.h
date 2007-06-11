@@ -49,37 +49,37 @@ public:
 		do_write(data.data, 4);
 	}
 
-	int_t get_i8(){
+	i8 get_i8(){
 		struct{ xtal::u8 data[1]; } data;
 		do_read(data.data, 1);
 		return (xtal::i8)data.data[0];
 	}
 
-	int_t get_i16(){
+	i16 get_i16(){
 		struct{ xtal::u8 data[2]; } data;
 		do_read(data.data, 2);
 		return (xtal::i16)((data.data[0]<<8) | data.data[1]);
 	}
 
-	int_t get_i32(){
+	i32 get_i32(){
 		struct{ xtal::u8 data[4]; } data;
 		do_read(data.data, 4);
 		return ((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 	}
 
-	uint_t get_u8(){
+	u8 get_u8(){
 		struct{ xtal::u8 data[1]; } data;
 		do_read(data.data, 1);
 		return (xtal::u8)data.data[0];
 	}
 
-	uint_t get_u16(){
+	u16 get_u16(){
 		struct{ xtal::u8 data[2]; } data;
 		do_read(data.data, 2);
 		return (xtal::u16)((data.data[0]<<8) | data.data[1]);
 	}
 
-	uint_t get_u32(){
+	u32 get_u32(){
 		struct{ xtal::u8 data[4]; } data;
 		do_read(data.data, 4);
 		return ((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
@@ -195,7 +195,7 @@ public:
 
 	virtual void seek(int_t offset, int_t whence){
 		int wh = whence==Stream::XSEEK_END ? SEEK_END : whence==Stream::XSEEK_CUR ? SEEK_CUR : SEEK_SET;
-		fseek(fp_, offset, whence);
+		fseek(fp_, offset, wh);
 	}
 
 	virtual void close(){

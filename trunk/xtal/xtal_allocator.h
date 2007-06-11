@@ -116,7 +116,7 @@ struct Alloc{
 		return &x;
 	}
 
-    pointer allocate(size_type n, const void* hint = 0){
+    pointer allocate(size_type n, const void* = 0){
 		return static_cast<pointer>(user_malloc(sizeof(T)*n));
 	}
 
@@ -130,6 +130,7 @@ struct Alloc{
 
     void destroy(pointer p){
 		p->~T();
+		p = 0;
 	}
 	
     size_type max_size() const{
@@ -182,7 +183,7 @@ struct Alloc<void> {
 * スタック型のメモリアロケータ。
 * STLのアロケータには適合しない。
 */
-//*
+/*
 class RegionAlloc{
 	char* begin_;
 	char* pos_;

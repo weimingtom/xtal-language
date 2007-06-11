@@ -5,7 +5,7 @@
 #ifdef _MSC_VER
 //#pragma comment(lib, "../../xtallib.lib") 
 #else
-#include "all_src.h"
+#include "xtal_all_src.h"
 #endif
 
 
@@ -97,7 +97,8 @@ int main(int argc, char** argv){
 		handle_argv(argv);
 
 /*
-
+		load("test/test_class.xtal");
+		load("test/test_multiple_values.xtal");
 		load("test/test_except.xtal");
 		load("test/test_fiber.xtal");
 		load("test/test_fun.xtal");

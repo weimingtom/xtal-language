@@ -694,7 +694,7 @@ public:
 				}
 				
 				FormatString* fs = (FormatString*)values_[i].value.impl();
-				int_t malloc_size = 0;
+				size_t malloc_size = 0;
 				if(fs->max_buf_size()>=256){
 					malloc_size = fs->max_buf_size() + 1;
 					pcbuf = (char*)user_malloc(malloc_size);

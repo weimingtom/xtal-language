@@ -182,6 +182,8 @@ public:
 	*/
 	void values(const VMachine& vm) const;
 
+	bool op_eq(const Array& other) const;
+
 	ArrayImpl* impl() const{ return (ArrayImpl*)Any::impl(); }
 
 	const Any& operator [] (int_t i){

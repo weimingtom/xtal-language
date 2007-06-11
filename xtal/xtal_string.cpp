@@ -8,10 +8,10 @@
 
 namespace xtal{
 
-uint_t make_hashcode(const char* p, int_t size){
+uint_t make_hashcode(const char* p, uint_t size){
 	const u8* str = (u8*)p;
 	uint_t value = 3;
-	for(int_t i = 0; i<size; i++){
+	for(uint_t i = 0; i<size; i++){
 		value = value*137 + str[i] + (value>>16);
 	}
 	return value;
@@ -153,6 +153,8 @@ protected:
 		int_t& count;
 		Guard(int_t& c):count(c){ count++; }
 		~Guard(){ count--; }
+	private:
+		void operator=(const Guard&);
 	};
 
 	/*
@@ -171,12 +173,12 @@ protected:
 
 public:
 
-	const String& insert(const char* str, int_t size);
+	const String& insert(const char* str, uint_t size);
 
 	virtual void before_gc();
 };
 
-const String& StringMgrImpl::insert(const char* str, int_t size){
+const String& StringMgrImpl::insert(const char* str, uint_t size){
 	Guard guard(guard_);
 
 	uint_t hashcode = make_hashcode(str, size);
@@ -248,7 +250,7 @@ static StringMgrImpl* str_mgr(){
 	return (StringMgrImpl*)p.impl();
 }
 
-void StringImpl::common_init(int_t len){
+void StringImpl::common_init(uint_t len){
 	set_class(TClass<String>::get());
 	size_ = len;
 	str_ = static_cast<char*>(user_malloc(size_+1));
@@ -264,7 +266,7 @@ String::String(const string_t& str){
 	new(*this) StringImpl(str);
 }
 
-String::String(const char* str, int_t size){
+String::String(const char* str, uint_t size){
 	new(*this) StringImpl(str, size);
 }
 	
@@ -272,11 +274,11 @@ String::String(const char* begin, const char* last){
 	new(*this) StringImpl(begin, last);
 }
 
-String::String(const char* str1, int_t size1, const char* str2, int_t size2){
+String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
 	new(*this) StringImpl(str1, size1, str2, size2);
 }
 
-String::String(char* str, int_t size, int_t buffer_size, delegate_memory_t){
+String::String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t){
 	new(*this) StringImpl(str, size, buffer_size, delegate_memory_t());
 }
 
@@ -284,11 +286,11 @@ const char* String::c_str() const{
 	return impl()->c_str();
 }
 
-int_t String::size() const{
+uint_t String::size() const{
 	return impl()->size();
 }
 
-int_t String::length() const{
+uint_t String::length() const{
 	return impl()->length();
 }
 

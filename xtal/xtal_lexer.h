@@ -74,10 +74,10 @@ public:
 	Token(){}
 	
 	Token(int_t type, int_t value, int_t flags)
-		:type_(type), flags_(flags), ivalue_(value){}
+		:type_((u8)type), flags_((u8)flags), ivalue_(value){}
 
 	Token(int_t type, float_t value, int_t flags)
-		:type_(type), flags_(flags), fvalue_(value){}
+		:type_((u8)type), flags_((u8)flags), fvalue_(value){}
 
 	int_t type() const{
 		return type_;

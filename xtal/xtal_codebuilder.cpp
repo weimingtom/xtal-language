@@ -29,7 +29,6 @@ Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	p_ = result_.impl();
 	p_->source_file_name_ = source_file_name;
 
-	class_scopes_.resize(1);
 	lines_.push(1);
 	fun_frame_begin(true, 0, 0, 0);
 	Stmt* ep = parser_.parse(stream, source_file_name);
@@ -59,7 +58,6 @@ void CodeBuilder::interactive_compile(){
 	p_ = result_.impl();
 	p_->source_file_name_ = "<ix>";
 
-	class_scopes_.resize(1);
 	lines_.push(1);
 	fun_frame_begin(true, 0, 0, 0);
 	Fun fun(null, null, result_, &p_->xfun_core_table_[0]);
@@ -301,27 +299,29 @@ void CodeBuilder::put_define_member_code(int_t var, Expr* pvar){
 }
 
 int_t CodeBuilder::lookup_instance_variable(int_t key){
-	int_t i = 0;
-	for(TPairList<int_t, Expr*>::Node* p=class_scopes_.top()->inst_vars.head; p; p=p->next){
-		if(p->key==key){
-			return i; 
+	if(!class_scopes_.empty()){
+		int_t i = 0;
+		for(TPairList<int_t, Expr*>::Node* p=class_scopes_.top()->inst_vars.head; p; p=p->next){
+			if(p->key==key){
+				return i; 
+			}
+			i++;
 		}
-		i++;
 	}
-	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", to_id(key))));
+	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", String("_").cat(to_id(key)))));
 	return 0;
 }
 
 void CodeBuilder::put_set_instance_variable_code(int_t var){
 	put_code_u8(CODE_SET_INSTANCE_VARIABLE);
 	put_code_u8(lookup_instance_variable(var));
-	put_code_u16(class_scopes_.top()->frame_number);
+	put_code_u16(class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number);
 }
 
 void CodeBuilder::put_instance_variable_code(int_t var){
 	put_code_u8(CODE_INSTANCE_VARIABLE);
 	put_code_u8(lookup_instance_variable(var));
-	put_code_u16(class_scopes_.top()->frame_number);
+	put_code_u16(class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number);
 }
 
 int_t CodeBuilder::reserve_label(){

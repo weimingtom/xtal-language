@@ -80,27 +80,27 @@ void Stream::put_u32(uint_t v) const{
 	impl()->put_u32(v);
 }
 
-int_t Stream::get_i8() const{
+i8 Stream::get_i8() const{
 	return impl()->get_i8();
 }
 
-int_t Stream::get_i16() const{
+i16 Stream::get_i16() const{
 	return impl()->get_i16();
 }
 
-int_t Stream::get_i32() const{
+i32 Stream::get_i32() const{
 	return impl()->get_i32();
 }
 
-uint_t Stream::get_u8() const{
+u8 Stream::get_u8() const{
 	return impl()->get_u8();
 }
 
-uint_t Stream::get_u16() const{
+u16 Stream::get_u16() const{
 	return impl()->get_u16();
 }
 
-uint_t Stream::get_u32() const{
+u32 Stream::get_u32() const{
 	return impl()->get_u32();
 }
 

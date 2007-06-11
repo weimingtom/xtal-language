@@ -39,6 +39,7 @@ public:
 
 class ThreadLib{
 public:
+	virtual ~ThreadLib();
 	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value) = 0;
 	virtual MutexImpl* create_mutex() = 0;
 	virtual void sleep(uint_t millisec) = 0;

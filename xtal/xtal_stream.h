@@ -32,12 +32,12 @@ public:
 	void put_u16(uint_t v) const;
 	void put_u32(uint_t v) const;
 
-	int_t get_i8() const;
-	int_t get_i16() const;
-	int_t get_i32() const;
-	uint_t get_u8() const;
-	uint_t get_u16() const;
-	uint_t get_u32() const;
+	i8 get_i8() const;
+	i16 get_i16() const;
+	i32 get_i32() const;
+	u8 get_u8() const;
+	u16 get_u16() const;
+	u32 get_u32() const;
 
 	void put_f32(float_t v) const;
 	float_t get_f32() const;

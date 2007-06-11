@@ -1,0 +1,49 @@
+
+
+{
+	temp: null;
+	
+	try{
+		compile(" _x = 0; ");
+	}catch(e){
+		temp = e;
+	}
+	assert temp!=null;
+}
+
+Foo: class{
+	+ _pub: 100;
+	# _pro: 200;
+	- _pri: 300; 
+}
+
+
+
+{
+	a: Foo();
+	assert a.pub==100;
+	
+	a.pub = 10;
+	assert a.pub==10;
+	
+	a.pub += 10;
+	assert a.pub==20;
+	
+	temp: null;
+	
+	try{
+		a.pro = 10;
+	}catch(e){
+		temp = "pro";
+	}
+	assert temp=="pro";
+	
+	try{
+		a.pri = 10;
+	}catch(e){
+		temp = "pri";
+	}
+	assert temp=="pri";
+}
+
+

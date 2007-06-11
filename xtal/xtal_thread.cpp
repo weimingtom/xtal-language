@@ -241,6 +241,8 @@ void thread_entry(const Any& thread){
 	}
 }
 
+ThreadLib::~ThreadLib(){}
+
 Thread::Thread(const Any& fun){
 	if(!thread_lib_){
 		XTAL_THROW(unsupported_error("Thread", "new"));

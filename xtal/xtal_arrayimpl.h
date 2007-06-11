@@ -127,6 +127,17 @@ public:
 		return ret.to_s();
 	}
 
+	bool op_eq(const Array& other){
+		if(size()!=other.size())
+			return false;
+		for(int_t i=0, size=other.size(); i<size; ++i){
+			if(at(i)!=other.at(i)){
+				return false;
+			}
+		}
+		return true;
+	}
+
 	bool empty(){
 		return values_.empty();
 	}

@@ -261,7 +261,7 @@ public:
 	void return_result(const Array& values){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
 		FunFrame& f = ff();
-		int_t size = size=values.size();
+		int_t size = values.size();
 		for(int_t i=0; i<size; ++i){
 			push(values.at(i));
 		}
@@ -612,9 +612,9 @@ private:
 	const u8* TRY_BEGIN(const u8* pc);
 	const u8* TRY_END(const u8* pc);
 	const u8* CATCH_BODY(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size);
-	void THROW(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size);
-	void THROW_UNSUPPROTED_ERROR(Any& e, int_t stack_size, int_t fun_frames_size);
-	const u8* CHECK_ASSERT(const u8* lpc, int_t stack_size, int_t fun_frames_size);
+	void THROW(const u8* pc, Any& e);
+	void THROW_UNSUPPROTED_ERROR(Any& e);
+	const u8* CHECK_ASSERT(const u8* lpc);
 	const u8* BREAKPOINT(const u8* pc);
 
 	const u8* RETURN(int_t n);

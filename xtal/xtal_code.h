@@ -25,7 +25,7 @@ struct FrameCore{
 
 struct FunCore : public FrameCore{
 	FunCore()
-		:pc(0), used_args_object(0), max_stack(256), min_param_count(0), max_param_count(0){}
+		:pc(0), max_stack(256), min_param_count(0), max_param_count(0), used_args_object(0){}
 	u16 pc;
 	u16 max_stack;
 	u8 min_param_count;

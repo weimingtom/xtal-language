@@ -48,7 +48,7 @@ void InitArray(){
 	p.method("back", &Array::back);
 	p.method("clear", &Array::clear);
 	p.method("values", &Array::values);
-
+	p.method("op_eq", &Array::op_eq);
 }
 
 Array::Array(int_t size)
@@ -155,6 +155,10 @@ void Array::clear() const{
 
 void Array::values(const VMachine& vm) const{
 	vm.return_result_array(*this);
+}
+
+bool Array::op_eq(const Array& other) const{
+	return impl()->op_eq(other);
 }
 
 }

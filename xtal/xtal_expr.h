@@ -794,6 +794,9 @@ public:
 	void massign_define(bool b){
 		massign_stack.top()->define = b;
 	}
+	void massign_discard(bool b){
+		massign_stack.top()->discard = b;
+	}
 
 	void ter_begin(Expr* cond){
 		ter_stack.push(new(alloc) TerExpr(line(), cond));

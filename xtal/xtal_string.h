@@ -34,7 +34,7 @@ public:
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	String(const char* str, int_t size);
+	String(const char* str, uint_t size);
 	
 	/**
 	* @brief beginからlastまでの文字列で構築する
@@ -47,7 +47,7 @@ public:
 	* @brief 二つのC文字列から構築する
 	*
 	*/
-	String(const char* str1, int_t size1, const char* str2, int_t size2);
+	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
 
 
 	struct delegate_memory_t{};
@@ -59,7 +59,7 @@ public:
 	* @param size 文字列の長さ
 	* @param buffer_size 確保したバッファのサイズ
 	*/
-	String(char* str, int_t size, int_t buffer_size, delegate_memory_t);
+	String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t);
 
 	explicit String(StringImpl* p)
 		:Any((AnyImpl*)p){}
@@ -86,13 +86,13 @@ public:
 	* @brief 文字列の長さを返す。
 	*
 	*/
-	int_t size() const;
+	uint_t size() const;
 
 	/**
 	* @brief 文字列の長さを返す。
 	*
 	*/
-	int_t length() const;
+	uint_t length() const;
 
 	/**
 	* @brief 部分文字列を取り出す。

@@ -107,13 +107,13 @@ public:
 
 	struct Node{
 		ID key;
-		unsigned short num;
-		unsigned short flags;
+		u16 num;
+		u16 flags;
 		int_t mutate_count;
 		int_t* pmutate_count;
 		Node* next;
 		
-		Node(const ID& key = null, int_t num = 0, int_t flags = 0, int_t mutate_count = 0, int_t* pmutate_count = 0)
+		Node(const ID& key = null, u16 num = 0, u16 flags = 0, int_t mutate_count = 0, int_t* pmutate_count = 0)
 			:key(key), num(num), flags(flags), mutate_count(mutate_count), pmutate_count(pmutate_count), next(0){}
 	};
 	
@@ -214,7 +214,7 @@ class FrameImpl : public HaveNameImpl{
 public:
 	
 	FrameImpl(const Frame& outer, const Code& code, FrameCore* core)
-		:outer_(outer), code_(code), core_(core ? core : &empty_frame_core), map_members_(0), members_(core_->variable_size){
+		:outer_(outer), code_(code), core_(core ? core : &empty_frame_core), members_(core_->variable_size), map_members_(0){
 		if(debug::is_enabled()){
 			make_map_members();	
 		}
@@ -270,7 +270,7 @@ public:
 			map_members_ = new(user_malloc(sizeof(IdMap))) IdMap();
 			for(int_t i = 0; i<core_->variable_size; ++i){
 				IdMap::Node* p = map_members_->insert(code_.get_symbol(core_->variable_symbol_offset+i));
-				p->num = core_->variable_size-1-i;
+				p->num = (u16)(core_->variable_size-1-i);
 			}
 		}
 	}

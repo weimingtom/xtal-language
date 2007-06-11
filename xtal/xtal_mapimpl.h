@@ -137,6 +137,18 @@ public:
 		ret = ret.cat("]");
 		return ret;
 	}
+
+	bool op_eq(const Map& other){
+		if(size()!=other.size())
+			return false;
+
+		Xfor2(key, value, other){
+			if(at(key)!=other.at(key)){
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	friend class MapIterImpl;
 	friend class MapKeyIterImpl;

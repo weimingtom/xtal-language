@@ -417,7 +417,7 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 	}
 
 	bool added = false;
-	int_t num = register_dvalue(v, added);
+	/*int_t num = */register_dvalue(v, added);
 	/*if(added)*/{
 		if(cls.raweq(TClass<Array>::get())){
 			const Array& a = (const Array&)v;

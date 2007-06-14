@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 
 	try{
 
-		set_thread();
+		//set_thread();
 		initialize();
 
 		//debug::enable();
@@ -76,6 +76,7 @@ int main(int argc, char** argv){
 		
 		{
 			String path(argv[0]);
+
 
 #ifdef WIN32
 			String sep("\\");

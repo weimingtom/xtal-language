@@ -47,9 +47,9 @@ public:
 
 	Stack();
 
-	Stack(const Stack<T> &a);
+	Stack(const Stack<T>& a);
 	
-	Stack<T> &operator =(const Stack<T> &a);
+	Stack<T> &operator =(const Stack<T>& a);
 
 	~Stack();
 
@@ -91,18 +91,18 @@ public:
 		return top();
 	}
 
-	T &pop(){
+	T& pop(){
 		XTAL_ASSERT(!empty());
 		--current_;
 		return current_[1];
 	}
 
-	T &top(){
+	T& top(){
 		XTAL_ASSERT(!empty());
 		return *current_;
 	}
 
-	const T &top() const{
+	const T& top() const{
 		XTAL_ASSERT(!empty());
 		return *current_;
 	}
@@ -339,9 +339,9 @@ public:
 	T& push(const T &val){ return (T&)impl_.push(val); }
 	T& push_unchecked(){ return (T&)impl_.push_unchecked(); }
 	T& push(){ return (T&)impl_.push(); }
-	T &pop(){ return (T&)impl_.pop();}
-	T &top(){ return (T&)impl_.top();}
-	const T &top() const{ return (const T&)impl_.top();}
+	T& pop(){ return (T&)impl_.pop();}
+	T& top(){ return (T&)impl_.top();}
+	const T& top() const{ return (const T&)impl_.top();}
 	void resize(size_t newsize){ impl_.resize(newsize);}
 	void downsize(size_t ds){ impl_.downsize(ds);}
 	void downsize_n(size_t newsize){ impl_.downsize_n(newsize);}
@@ -351,11 +351,11 @@ public:
 	size_t capacity() const{ return impl_.capacity();}
 	void reserve(size_t capa){ impl_.reserve(capa);}
 	T& operator [](size_t i){ return (T&)impl_[i];}
-	const T &operator [](size_t i) const{ return (const T&)impl_[i];}
+	const T& operator [](size_t i) const{ return (const T&)impl_[i];}
 	T& reverse_at(size_t i){ return (T&)impl_.reverse_at(i);}
-	const T &reverse_at(size_t i) const{ return (const T&)impl_.reverse_at(i);}
+	const T& reverse_at(size_t i) const{ return (const T&)impl_.reverse_at(i);}
 	T& reverse_at_unchecked(size_t i){ return (T&)impl_.reverse_at_unchecked(i);}
-	const T &reverse_at_unchecked(size_t i) const{ return (const T&)impl_.reverse_at_unchecked(i);}
+	const T& reverse_at_unchecked(size_t i) const{ return (const T&)impl_.reverse_at_unchecked(i);}
 	bool empty() const{ return impl_.empty();}
 	void clear(){ impl_.clear();}
 	void push(const PStack<T>& other, size_t sz){ impl_.push((const Stack<void*>&)other, sz);}

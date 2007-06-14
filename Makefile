@@ -3,12 +3,12 @@
 # cygwinでコンパイルできたので、多分Linuxでも出来るんじゃないかと思います。
 #
 
-CC = g++
+CC = gcc
 
 all: ix xtal
 
 ix: xtal/ixmain.cpp
-	$(CC) -o ix xtal/ixmain.cpp -O2 -lstdc++
+	$(CC) xtal/ixmain.cpp -o ix -O2 -finline-functions -lstdc++
 
 xtal: xtal/main.cpp
-	$(CC) -o xtal xtal/main.cpp -O2 -lstdc++
+	$(CC) xtal/main.cpp -o xtal -O2 -lstdc++ -pg

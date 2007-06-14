@@ -30,7 +30,7 @@ Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	p_->source_file_name_ = source_file_name;
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0);
+	fun_frame_begin(true, 0, 0, 0, false);
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
 	p_->symbol_table_ = com_->ident_table;
@@ -59,7 +59,7 @@ void CodeBuilder::interactive_compile(){
 	p_->source_file_name_ = "<ix>";
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0);
+	fun_frame_begin(true, 0, 0, 0, false);
 	Fun fun(null, null, result_, &p_->xfun_core_table_[0]);
 	fun.set_object_name("<TopLevel>", 1, null);
 
@@ -69,8 +69,6 @@ void CodeBuilder::interactive_compile(){
 
 	int_t pc_pos = 0;
 	
-	ExprBuilder& e = *parser_.expr_builder();
-
 	while(true){
 		Stmt* ep = parser_.interactive_parse();
 		((InteractiveStreamImpl*)stream.impl())->set_continue_stmt(false);
@@ -360,9 +358,9 @@ void CodeBuilder::process_labels(){
 }
 
 void CodeBuilder::break_off(int_t n){
-	for(uint_t scope_count = scopes_.size(); scope_count!=n; scope_count--){
+	for(uint_t scope_count = scopes_.size(); scope_count!=(uint_t)n; scope_count--){
 		for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
-			if(fun_frame().finallys[k].frame_count==scope_count){
+			if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 				int_t label = reserve_label();
 				put_jump_code(CODE_PUSH_GOTO, label);
 				put_code_u8(CODE_TRY_END);
@@ -377,10 +375,10 @@ void CodeBuilder::break_off(int_t n){
 void CodeBuilder::put_if_code(Expr* e, int_t label_if, int_t label_if2){
 	BinCompExpr* e2 = expr_cast<BinCompExpr>(e);
 	if(e2 && CODE_EQ<=e2->code && e2->code<=CODE_GE){
-		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->lhs)){
+		if(expr_cast<BinCompExpr>(e2->lhs)){
 			com_->error(line(), Xt("Xtal Compile Error 1025"));
 		}
-		if(BinCompExpr* p = expr_cast<BinCompExpr>(e2->rhs)){
+		if(expr_cast<BinCompExpr>(e2->rhs)){
 			com_->error(line(), Xt("Xtal Compile Error 1025"));
 		}
 		compile(e2->lhs);
@@ -524,7 +522,7 @@ int_t CodeBuilder::code_size(){
 	return p_->code_.size();
 }
 
-int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count){
+int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count, bool extra_comma){
 	FunFrame& f = fun_frames_.push();	
 	f.used_args_object = false;
 	f.labels.clear();
@@ -536,9 +534,10 @@ int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char m
 	p_->xfun_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
 	p_->xfun_core_table_.back().pc = code_size()+offset;
 	p_->xfun_core_table_.back().line_number = lines_.top();
-	p_->xfun_core_table_.back().used_args_object = have_args;
 	p_->xfun_core_table_.back().min_param_count = min_param_count;
 	p_->xfun_core_table_.back().max_param_count = max_param_count;
+	p_->xfun_core_table_.back().used_args_object = have_args;
+	p_->xfun_core_table_.back().extra_comma = extra_comma;
 	fun_frame().used_args_object = have_args;
 		
 	if(debug::is_enabled()){
@@ -562,7 +561,7 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 	return fun_frames_.top();
 }
 
-#define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e=(KEY*)ex)
+#define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e = (KEY*)ex)if(e)
 
 void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
@@ -591,7 +590,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		XTAL_NODEFAULT;
 
 		XTAL_EXPR_CASE(Expr){
-
+			(void)e;
 		}
 
 		XTAL_EXPR_CASE(PseudoVariableExpr){
@@ -606,10 +605,12 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		}
 
 		XTAL_EXPR_CASE(CalleeExpr){
+			(void)e;
 			put_code_u8(CODE_PUSH_CALLEE);
 		}
 
 		XTAL_EXPR_CASE(ArgsExpr){
+			(void)e;
 			put_local_code(com_->register_ident(Xid(__ARGS__)));
 		}
 
@@ -709,10 +710,10 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		}
 
 		XTAL_EXPR_CASE(BinExpr){
-			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
+			if(expr_cast<BinCompExpr>(e->lhs)){
 				com_->error(line(), Xt("Xtal Compile Error 1013"));
 			}
-			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
+			if(expr_cast<BinCompExpr>(e->rhs)){
 				com_->error(line(), Xt("Xtal Compile Error 1013"));
 			}
 			
@@ -722,10 +723,10 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		}
 
 		XTAL_EXPR_CASE(BinCompExpr){
-			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->lhs)){
+			if(expr_cast<BinCompExpr>(e->lhs)){
 				com_->error(line(), Xt("Xtal Compile Error 1025"));
 			}
-			if(BinCompExpr* p = expr_cast<BinCompExpr>(e->rhs)){
+			if(expr_cast<BinCompExpr>(e->rhs)){
 				com_->error(line(), Xt("Xtal Compile Error 1025"));
 			}
 
@@ -843,7 +844,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				}else{
 					put_code_u16(e2->var);
 				}
-			}else if(CalleeExpr* e2 = expr_cast<CalleeExpr>(e->expr)){ //recall(); 再帰呼び出しだ
+			}else if(expr_cast<CalleeExpr>(e->expr)){ //recall(); 再帰呼び出しだ
 				put_code_u8(CODE_CALLEE);
 			}else{
 				compile(e->expr);
@@ -885,7 +886,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				minv = maxv;
 			}
 
-			int_t n = fun_frame_begin(e->have_args, 6, minv, maxv);
+			int_t n = fun_frame_begin(e->have_args, 6, minv, maxv, e->extra_comma);
 			
 			for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){ 
 				register_param(p->key);
@@ -905,7 +906,6 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 			}
 
 			block_begin(FUN, 0, e->vars, e->on_heap);{
-				FunFrame& ff = fun_frames_.top();	
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
 					// デフォルト値を持つ
 					if(p->value){
@@ -1169,9 +1169,9 @@ void CodeBuilder::compile(Stmt* ex){
 		XTAL_EXPR_CASE(ReturnStmt){
 
 			bool have_finally = false;
-			for(uint_t scope_count = scopes_.size(); scope_count!=fun_frame().frame_count+1; scope_count--){
-				for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
-					if(fun_frame().finallys[k].frame_count==scope_count){
+			for(uint_t scope_count = scopes_.size(); scope_count!=(uint_t)fun_frame().frame_count+1; scope_count--){
+				for(uint_t k = 0; k<(uint_t)fun_frame().finallys.size(); ++k){
+					if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 						have_finally = true;
 					}
 				}
@@ -1327,7 +1327,6 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(WhileStmt){
 			int_t label_cond = reserve_label();
-			int_t label_cond_first = reserve_label();
 			int_t label_cond_end = reserve_label();
 			int_t label_if = reserve_label();
 			int_t label_if2 = reserve_label();

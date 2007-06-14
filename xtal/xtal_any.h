@@ -318,8 +318,7 @@ public:
 	
 	Any(const AnyImpl* v);
 
-	Any(const Any& v){
-		UncountedAny::operator =(v);
+	Any(const Any& v):UncountedAny(v){
 		inc_ref_count();
 	}
 
@@ -503,6 +502,8 @@ public:
 	bool is_null() const{ return type()==TYPE_NULL; }
 
 public:
+
+	int_t arity() const;
 
 	// 関数呼び出し。5つまでの引数を受け取るバージョンが定義されている。
 	Any operator()() const;
@@ -855,6 +856,7 @@ public:
 
 	virtual void visit_members(Visitor& m);
 	virtual void call(const VMachine& vm);
+	virtual int_t arity();
 	virtual const Any& member(const ID& name);
 	virtual const Any& member(const ID& name, const Any& self);
 	virtual void def(const ID& name, const Any& value);

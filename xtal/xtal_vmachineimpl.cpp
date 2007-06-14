@@ -12,16 +12,6 @@
 
 namespace xtal{
 
-namespace{
-
-inline int_t get_u8(const u8* p){ return p[0]; }
-inline int_t get_i8(const u8* p){ return (i8)p[0]; }
-
-inline int_t get_u16(const u8* p){ return p[0]<<8 | p[1]; }
-inline int_t get_i16(const u8* p){ return (i16)(p[0]<<8 | p[1]); }
-
-}
-
 VMachineImpl::VMachineImpl(){	
 	
 	myself_ = this;
@@ -71,7 +61,7 @@ const Any& VMachineImpl::result(int_t pos){
 	if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
 		const u8* pc = prev_ff().pc;
 		prev_ff().pc = &end_code_;
-		execute(ff().pc);
+		execute_try(ff().pc);
 		fun_frames_.upsize(1);
 		ff().pc = &cleanup_call_code_;
 		prev_ff().pc = pc;
@@ -115,9 +105,11 @@ void VMachineImpl::carry_over(const Fun& fun){
 	if(fun.used_args_object()){
 		f.arguments(make_args(fun));
 	}
+	
+	FunCore* core = fun.core();
 
-	if(int_t size = fun.param_size()){
-		f.scopes.push(fun.core());
+	if(int_t size = core->variable_size){
+		f.scopes.push(core);
 		f.variables_.upsize(size);
 		UncountedAny* vars=&f.variables_[size-1];
 		for(int_t n = 0; n<size; ++n){
@@ -125,16 +117,50 @@ void VMachineImpl::carry_over(const Fun& fun){
 		}
 	}
 	
-	int_t max_stack = f.fun().core()->max_stack;
+	int_t max_stack = core->max_stack;
 	stack_.upsize(max_stack);
 	stack_.downsize(f.ordered_arg_count+f.named_arg_count*2 + max_stack);
 }
+
+void VMachineImpl::mv_carry_over(const Fun& fun){
+	FunFrame& f = ff();
+	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
-void VMachineImpl::adjust_result(int_t n){
-	int_t need_result_count = ff().need_result_count;
-	int_t result_flag = ff().result_flag;		
-	ff().result_count = n;
-	adjust_result(n, need_result_count, result_flag);
+	f.fun(fun);
+	f.outer(fun.outer());
+
+	f.variables_.clear();
+	f.scopes.clear();
+
+	f.pc = fun.pc()+fun.code().data();
+	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
+
+	if(fun.used_args_object()){
+		f.arguments(make_args(fun));
+	}
+	
+	// –¼‘O•t‚«ˆø”‚ÍŽ×–‚
+	stack_.downsize(f.named_arg_count*2);
+
+	FunCore* core = fun.core();
+	
+	if(int_t size = core->variable_size){
+		f.scopes.push(core);
+		f.variables_.upsize(size);
+	
+		adjust_result(f.ordered_arg_count, size, core->extra_comma ? RESULT_DISCARD : 0);
+		
+		UncountedAny* vars=&f.variables_[size-1];
+		for(int_t n = 0; n<size; ++n){
+			vars[n] = get(size-1-n);
+		}
+		
+		stack_.downsize(size);
+	}
+	
+	int_t max_stack = core->max_stack;
+	stack_.upsize(max_stack);
+	stack_.downsize(max_stack);
 }
 
 void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_flag){
@@ -205,7 +231,7 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 	
 void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 	// Œ‹‰Ê‚ðvm‚É“n‚·
-	if(int_t need_result_count = vm->need_result_count()){
+	if(vm->need_result()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
 				vm->push(fun);
@@ -236,7 +262,7 @@ const u8* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool add
 	carry_over(fun);
 	ff().yieldable = true;
 
-	execute(ff().pc);
+	execute_try(ff().pc);
 	ff().calling_state = FunFrame::CALLING_STATE_NONE;
 
 	present_for_vm(fun, vm, add_succ_or_fail_result);
@@ -258,7 +284,7 @@ const u8* VMachineImpl::resume_fiber(const Fiber& fun, const u8* pc, VMachineImp
 
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 
-	execute(ff().pc);
+	execute_try(ff().pc);
 	ff().calling_state = FunFrame::CALLING_STATE_NONE;
 	
 	present_for_vm(fun, vm, add_succ_or_fail_result);
@@ -275,7 +301,7 @@ void VMachineImpl::exit_fiber(){
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 		ff().pc = resume_pc_;
 		resume_pc_ = 0;
-		execute(&throw_nop_code_);
+		execute_try(&throw_nop_code_);
 	}XTAL_CATCH(e){
 		(void)e;
 	}
@@ -462,22 +488,232 @@ const u8* VMachineImpl::send2r(const u8* pc, const ID& id, int_t n){
 	return ff().pc;
 }
 
+namespace{
+inline int_t get_u8(const u8* p){ return p[0]; }
+inline int_t get_i8(const u8* p){ return (i8)p[0]; }
+
+inline int_t get_u16(const u8* p){ return p[0]<<8 | p[1]; }
+inline int_t get_i16(const u8* p){ return (i16)(p[0]<<8 | p[1]); }
+}
+
+/*
+#define get_u8(p) (*(p))
+#define get_i8(p) ((i8)(*(p))
+#define get_u16(p) (*(p)<<8 | *(p+1))
+#define get_i16(p) ((i16)(*(p)<<8 | *(p+1)))
+*/
+
+#ifdef __GNUC__
+#	define XTAL_VM_OPT
+#endif
+
+#ifdef XTAL_VM_OPT
+
+#define XTAL_VM_CASE(key) goto *label_table[*pc]; k##key:
+#define XTAL_VM_SWITCH(x) goto *label_table[x];
+
+#else
+
 //std::ofstream log("code.txt");
 //#define XTAL_VM_CASE(key) goto begin; case key: log<<(#key)<<std::endl;
 //#define XTAL_VM_CASE(key) goto begin; case key: printf("%s\n", #key);
 #define XTAL_VM_CASE(key) goto begin; case key:
+#define XTAL_VM_SWITCH(x) switch(x)
 
-void VMachineImpl::execute(const u8* start){ XTAL_GLOBAL_INTERPRETER_UNLOCK{
-	
+#endif
+
+void VMachineImpl::execute_try(const u8* start){ 
+	int_t stack_size = stack_.size();
+	int_t fun_frames_size = fun_frames_.size();
+	XTAL_GLOBAL_INTERPRETER_UNLOCK{
+retry:
+		XTAL_TRY{
+			execute_inner(start);
+		}XTAL_CATCH(e){
+			last_except_ = e;
+			start = CATCH_BODY(ff().pc, stack_size, fun_frames_size);
+
+			if(start){
+				goto retry;
+			}
+
+			if(last_except_.cref()){
+				XTAL_THROW(last_except_.cref());
+			}else{
+				goto retry;
+			}
+		}
+#ifndef XTAL_NO_EXCEPT
+		catch(...){
+			last_except_ = null;
+			CATCH_BODY(start, stack_size, fun_frames_size);
+			throw;
+		}
+#endif
+	}
+}
+
+void VMachineImpl::execute_inner(const u8* start){
+
+#ifdef XTAL_VM_OPT
+
+	static void* label_table[] = {
+		&&kCODE_NOP,
+		&&kCODE_PUSH_NULL,
+		&&kCODE_PUSH_TRUE,
+		&&kCODE_PUSH_FALSE,
+		&&kCODE_PUSH_NOP,
+		&&kCODE_PUSH_NEED_RESULT,
+		&&kCODE_PUSH_INT_0,
+		&&kCODE_PUSH_INT_1,
+		&&kCODE_PUSH_INT_2,
+		&&kCODE_PUSH_INT_3,
+		&&kCODE_PUSH_INT_4,
+		&&kCODE_PUSH_INT_5,
+		&&kCODE_PUSH_FLOAT_0,
+		&&kCODE_PUSH_FLOAT_0_25,
+		&&kCODE_PUSH_FLOAT_0_5,
+		&&kCODE_PUSH_FLOAT_1,
+		&&kCODE_PUSH_FLOAT_2,
+		&&kCODE_PUSH_FLOAT_3,
+		&&kCODE_PUSH_INT_1BYTE,
+		&&kCODE_PUSH_INT_2BYTE,
+		&&kCODE_PUSH_THIS,
+		&&kCODE_IF_ARG_IS_NULL,
+		&&kCODE_INSERT_1,
+		&&kCODE_INSERT_2,
+		&&kCODE_INSERT_3,
+		&&kCODE_POP,
+		&&kCODE_DUP,
+		&&kCODE_ADJUST_RESULT,
+		&&kCODE_IF,
+		&&kCODE_UNLESS,
+		&&kCODE_GOTO,
+		&&kCODE_CALL,
+		&&kCODE_CALLEE,
+		&&kCODE_SEND,
+		&&kCODE_SEND_IF_DEFINED,
+		&&kCODE_RETURN_0,
+		&&kCODE_RETURN_1,
+		&&kCODE_RETURN_2,
+		&&kCODE_RETURN_N,
+		&&kCODE_CLEANUP_CALL,
+		&&kCODE_YIELD,
+		&&kCODE_TRY_BEGIN,
+		&&kCODE_TRY_END,
+		&&kCODE_BLOCK_BEGIN,
+		&&kCODE_BLOCK_END,
+		&&kCODE_BLOCK_END_NOT_ON_HEAP,
+		&&kCODE_INSTANCE_VARIABLE,
+		&&kCODE_SET_INSTANCE_VARIABLE,
+		&&kCODE_LOCAL_0,
+		&&kCODE_LOCAL_1,
+		&&kCODE_LOCAL_2,
+		&&kCODE_LOCAL_3,
+		&&kCODE_LOCAL,
+		&&kCODE_LOCAL_NOT_ON_HEAP,
+		&&kCODE_LOCAL_W,
+		&&kCODE_SET_LOCAL_0,
+		&&kCODE_SET_LOCAL_1,
+		&&kCODE_SET_LOCAL_2,
+		&&kCODE_SET_LOCAL_3,
+		&&kCODE_SET_LOCAL,
+		&&kCODE_SET_LOCAL_NOT_ON_HEAP,
+		&&kCODE_SET_LOCAL_W,
+		&&kCODE_GLOBAL,
+		&&kCODE_SET_GLOBAL,
+		&&kCODE_DEFINE_GLOBAL,
+		&&kCODE_MEMBER,
+		&&kCODE_MEMBER_IF_DEFINED,
+		&&kCODE_DEFINE_MEMBER,
+		&&kCODE_AT,
+		&&kCODE_SET_AT,
+		&&kCODE_ONCE,
+		&&kCODE_GET_VALUE,
+		&&kCODE_SET_VALUE,
+		&&kCODE_PUSH_GOTO,
+		&&kCODE_POP_GOTO,
+		&&kCODE_NOT,
+		&&kCODE_POS,
+		&&kCODE_NEG,
+		&&kCODE_COM,
+		&&kCODE_CLONE,
+		&&kCODE_ADD,
+		&&kCODE_SUB,
+		&&kCODE_CAT,
+		&&kCODE_MUL,
+		&&kCODE_DIV,
+		&&kCODE_MOD,
+		&&kCODE_AND,
+		&&kCODE_OR,
+		&&kCODE_XOR,
+		&&kCODE_SHR,
+		&&kCODE_USHR,
+		&&kCODE_SHL,
+		&&kCODE_EQ,
+		&&kCODE_NE,
+		&&kCODE_LT,
+		&&kCODE_GT,
+		&&kCODE_LE,
+		&&kCODE_GE,
+		&&kCODE_RAW_EQ,
+		&&kCODE_RAW_NE,
+		&&kCODE_IS,
+		&&kCODE_NIS,
+		&&kCODE_EQ_IF,
+		&&kCODE_NE_IF,
+		&&kCODE_LT_IF,
+		&&kCODE_GT_IF,
+		&&kCODE_LE_IF,
+		&&kCODE_GE_IF,
+		&&kCODE_INC,
+		&&kCODE_DEC,
+		&&kCODE_LOCAL_NOT_ON_HEAP_INC,
+		&&kCODE_LOCAL_NOT_ON_HEAP_DEC,
+		&&kCODE_ADD_ASSIGN,
+		&&kCODE_SUB_ASSIGN,
+		&&kCODE_CAT_ASSIGN,
+		&&kCODE_MUL_ASSIGN,
+		&&kCODE_DIV_ASSIGN,
+		&&kCODE_MOD_ASSIGN,
+		&&kCODE_AND_ASSIGN,
+		&&kCODE_OR_ASSIGN,
+		&&kCODE_XOR_ASSIGN,
+		&&kCODE_SHR_ASSIGN,
+		&&kCODE_USHR_ASSIGN,
+		&&kCODE_SHL_ASSIGN,
+		&&kCODE_PUSH_ARRAY,
+		&&kCODE_PUSH_MAP,
+		&&kCODE_PUSH_CALLEE,
+		&&kCODE_PUSH_FUN,
+		&&kCODE_PUSH_CURRENT_CONTEXT,
+		&&kCODE_PUSH_CURRENT_CONTINUATION,
+		&&kCODE_PUSH_ARGS,
+		&&kCODE_CLASS_BEGIN,
+		&&kCODE_CLASS_END,
+		&&kCODE_SET_NAME,
+		&&kCODE_CHECK_UNSUPPORTED,
+		&&kCODE_ASSERT,
+		&&kCODE_SET_ACCESSIBILITY,
+		&&kCODE_ARRAY_APPEND,
+		&&kCODE_MAP_APPEND,
+		&&kCODE_EXIT,
+		&&kCODE_BREAKPOINT,
+		&&kCODE_THROW,
+		&&kCODE_THROW_UNSUPPORTED_ERROR,
+		&&kCODE_THROW_NULL,
+	};
+#else
+
+#endif
+
 	typedef const u8* pc_t;
 	register pc_t pc = start;
 
 	int_t stack_size = stack_.size();
 	int_t fun_frames_size = fun_frames_.size();
 
-	Any except;
-
-retry:XTAL_TRY{begin:
+begin:
 
 /*
 CodeType ct=(CodeType)*pc;
@@ -487,7 +723,7 @@ CodeType ct3=(CodeType)*(pc+3);
 CodeType ct4=(CodeType)*(pc+4);
 */
 
-switch(*pc){
+XTAL_VM_SWITCH(*pc){
 
 	XTAL_NODEFAULT;
 	
@@ -496,6 +732,7 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_TRUE){ push(UncountedAny(true).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FALSE){ push(UncountedAny(false).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_NOP){ push(nop); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_NEED_RESULT){ push(UncountedAny(need_result()).cref()); pc+=1; }
 	
 	XTAL_VM_CASE(CODE_PUSH_INT_0){ push(UncountedAny(0).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_INT_1){ push(UncountedAny(1).cref()); pc+=1; }
@@ -514,93 +751,53 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_PUSH_INT_1BYTE){ push(UncountedAny(get_u8(pc+1)).cref()); pc+=2; }
 	XTAL_VM_CASE(CODE_PUSH_INT_2BYTE){ push(UncountedAny(get_i16(pc+1)).cref()); pc+=3; }
 	
-	XTAL_VM_CASE(CODE_PUSH_ARRAY){ pc = PUSH_ARRAY(pc); }
-	XTAL_VM_CASE(CODE_ARRAY_APPEND){ pc = ARRAY_APPEND(pc); }
-	XTAL_VM_CASE(CODE_PUSH_MAP){ pc = PUSH_MAP(pc); }
-	XTAL_VM_CASE(CODE_MAP_APPEND){ pc = MAP_APPEND(pc); }
-
-	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(ff().fun()); pc+=1; }
-	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ pc = CURRENT_CONTEXT(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
-
-	XTAL_VM_CASE(CODE_IF){ pc = pop().to_b() ? pc+3 : pc+get_i16(pc+1); }
-	XTAL_VM_CASE(CODE_UNLESS){ pc = !pop().to_b() ? pc+3 : pc+get_i16(pc+1); }
-	XTAL_VM_CASE(CODE_GOTO){ pc = pc+get_i16(pc+1); }
-	
 	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){ pc = LOCAL_VARIABLE(get_u8(pc+3)).is_null() ? pc+4 : pc+get_i16(pc+1); }
-
 	XTAL_VM_CASE(CODE_INSERT_1){ UncountedAny temp = get(); set(get(1)); set(1, temp.cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_INSERT_2){ UncountedAny temp = get(); set(get(1)); set(1, get(2)); set(2, temp.cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_INSERT_3){ UncountedAny temp = get(); set(get(1)); set(1, get(2)); set(2, get(3)); set(3, temp.cref()); pc+=1; }
 	
 	XTAL_VM_CASE(CODE_POP){ downsize(1); pc+=1; }
 	XTAL_VM_CASE(CODE_DUP){ dup(); pc+=1; }
-	XTAL_VM_CASE(CODE_ADJUST_RESULT){ 
-		adjust_result(get_u8(pc+1), get_u8(pc+2), get_u8(pc+3)); pc+=4; 
-	}
-
-	XTAL_VM_CASE(CODE_SET_NAME){ pc = SET_NAME(pc); }
-
-	XTAL_VM_CASE(CODE_CHECK_UNSUPPORTED){ return_result(nop); pc = ff().pc; }
-	XTAL_VM_CASE(CODE_ASSERT){ pc = CHECK_ASSERT(pc); }
-
+	XTAL_VM_CASE(CODE_ADJUST_RESULT){ adjust_result(get_u8(pc+1), get_u8(pc+2), get_u8(pc+3)); pc+=4; }
+	
+	XTAL_VM_CASE(CODE_IF){ pc = pop().to_b() ? pc+3 : pc+get_i16(pc+1); }
+	XTAL_VM_CASE(CODE_UNLESS){ pc = !pop().to_b() ? pc+3 : pc+get_i16(pc+1); }
+	XTAL_VM_CASE(CODE_GOTO){ pc = pc+get_i16(pc+1); }
+	
 	XTAL_VM_CASE(CODE_CALL){ pc = CALL(pc); }
 	XTAL_VM_CASE(CODE_CALLEE){ pc = CALLEE(pc); }
 	XTAL_VM_CASE(CODE_SEND){ pc = SEND(pc); }
 	XTAL_VM_CASE(CODE_SEND_IF_DEFINED){ pc = SEND_IF_DEFINED(pc); }
-
+	
+	XTAL_VM_CASE(CODE_RETURN_0){ adjust_result(0); pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_RETURN_1){ adjust_result(1); pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_RETURN_2){ adjust_result(2); pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_RETURN_N){ adjust_result(get_u8(pc+1)); pop_ff(); pc = ff().pc; }
+	
 	XTAL_VM_CASE(CODE_CLEANUP_CALL){ pop_ff(); pc = ff().pc; }
-
 	XTAL_VM_CASE(CODE_YIELD){ YIELD(pc); return; }
-
-	XTAL_VM_CASE(CODE_SET_ACCESSIBILITY){ pc = SET_ACCESSIBILITY(pc); }
-
-	XTAL_VM_CASE(CODE_RETURN_0){ pc = RETURN(0); }
-	XTAL_VM_CASE(CODE_RETURN_1){ pc = RETURN(1); }
-	XTAL_VM_CASE(CODE_RETURN_2){ pc = RETURN(2); }
-	XTAL_VM_CASE(CODE_RETURN_N){ pc = RETURN(get_u8(pc+1)); }
-
-	XTAL_VM_CASE(CODE_EXIT){ resume_pc_ = 0; return; }
-
+	
 	XTAL_VM_CASE(CODE_TRY_BEGIN){ pc = TRY_BEGIN(pc); }
-	XTAL_VM_CASE(CODE_TRY_END){ pc = TRY_END(pc); }
-
-	XTAL_VM_CASE(CODE_THROW){ 
-		THROW(pc, except); 
-		goto except_catch; 
-	}
-
-	XTAL_VM_CASE(CODE_THROW_UNSUPPORTED_ERROR){ 
-		THROW_UNSUPPROTED_ERROR(except); 
-		goto except_catch;
-	}
-
-	XTAL_VM_CASE(CODE_THROW_NULL){ 
-		except = null; 
-		goto except_catch; 
-	}
-
+	XTAL_VM_CASE(CODE_TRY_END){ pc = except_frames_.pop().finally_pc; }
+	
 	XTAL_VM_CASE(CODE_BLOCK_BEGIN){ 
+		FunFrame& f = ff(); 
 		FrameCore* p = code().get_frame_core(get_u16(pc+1)); 
-		ff().scopes.push(p); 
-		ff().variables_.upsize(p->variable_size); 
+		f.scopes.push(p); 
+		f.variables_.upsize(p->variable_size); 
 		pc+=3; 
 	}
 
 	XTAL_VM_CASE(CODE_BLOCK_END){ pc = BLOCK_END(pc); }
 
 	XTAL_VM_CASE(CODE_BLOCK_END_NOT_ON_HEAP){
-		ff().variables_.downsize(ff().scopes.top()->variable_size);
-		ff().scopes.downsize(1);
+		FunFrame& f = ff(); 
+		f.variables_.downsize(f.scopes.top()->variable_size);
+		f.scopes.downsize(1);
 		pc+=1;
 	}
-
-	XTAL_VM_CASE(CODE_CLASS_BEGIN){ pc = CLASS_BEGIN(pc); }
-	XTAL_VM_CASE(CODE_CLASS_END){ pc = CLASS_END(pc); }
-
+	
 	XTAL_VM_CASE(CODE_INSTANCE_VARIABLE){ pc = INSTANCE_VARIABLE(pc); }
 	XTAL_VM_CASE(CODE_SET_INSTANCE_VARIABLE){ pc = SET_INSTANCE_VARIABLE(pc); }
 
@@ -692,32 +889,57 @@ switch(*pc){
 	XTAL_VM_CASE(CODE_SHR_ASSIGN){ pc = SHR_ASSIGN(pc); }
 	XTAL_VM_CASE(CODE_USHR_ASSIGN){ pc = USHR_ASSIGN(pc); }
 	XTAL_VM_CASE(CODE_SHL_ASSIGN){ pc = SHL_ASSIGN(pc); }
+	
+	XTAL_VM_CASE(CODE_PUSH_ARRAY){ pc = PUSH_ARRAY(pc); }
+	XTAL_VM_CASE(CODE_PUSH_MAP){ pc = PUSH_MAP(pc); }
+	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(ff().fun()); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
+	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ pc = CURRENT_CONTEXT(pc); }	
+	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
+	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
+	
+	XTAL_VM_CASE(CODE_CLASS_BEGIN){ pc = CLASS_BEGIN(pc); }
+	XTAL_VM_CASE(CODE_CLASS_END){ pc = CLASS_END(pc); }
+	XTAL_VM_CASE(CODE_SET_NAME){ pc = SET_NAME(pc); }
+	XTAL_VM_CASE(CODE_CHECK_UNSUPPORTED){ return_result(nop); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_ASSERT){ pc = CHECK_ASSERT(pc); }
+	XTAL_VM_CASE(CODE_SET_ACCESSIBILITY){ pc = SET_ACCESSIBILITY(pc); }
+	
+	XTAL_VM_CASE(CODE_ARRAY_APPEND){ pc = ARRAY_APPEND(pc); }
+	XTAL_VM_CASE(CODE_MAP_APPEND){ pc = MAP_APPEND(pc); }
 
+	XTAL_VM_CASE(CODE_EXIT){ resume_pc_ = 0; return; }
+	
 	XTAL_VM_CASE(CODE_BREAKPOINT){ pc = BREAKPOINT(pc); }
 
-goto begin;
+	XTAL_VM_CASE(CODE_THROW){ 
+		THROW(pc); 
+		goto except_catch; 
+	}
 
-}}XTAL_CATCH(e){
-	except = e;
-	goto except_catch;
+	XTAL_VM_CASE(CODE_THROW_UNSUPPORTED_ERROR){ 
+		THROW_UNSUPPROTED_ERROR(); 
+		goto except_catch;
+	}
+
+	XTAL_VM_CASE(CODE_THROW_NULL){ 
+		last_except_ = null; 
+		goto except_catch; 
+	}
+
+goto begin;
 }
-#ifndef XTAL_NO_EXCEPT
-catch(...){
-	CATCH_BODY(pc, null, stack_size, fun_frames_size);
-	throw;
-}
-#endif
 
 except_catch:
-	pc = CATCH_BODY(pc, except, stack_size, fun_frames_size);
+	pc = CATCH_BODY(pc, stack_size, fun_frames_size);
 	if(pc){
-		goto retry;
+		goto begin;
 	}
 
-	if(except){
-		XTAL_THROW(except);
+	if(last_except_.cref()){
+		XTAL_THROW(last_except_.cref());
 	}
-}}
+}
 	
 const u8* VMachineImpl::ARRAY_APPEND(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -759,7 +981,6 @@ const u8* VMachineImpl::CALL(const u8* pc){
 }
 	
 const u8* VMachineImpl::CALLEE(const u8* pc){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
 	UncountedAny fun = ff().fun();
 	UncountedAny self = ff().self();
 	switch(get_u8(pc + 4) & 3){
@@ -770,7 +991,6 @@ const u8* VMachineImpl::CALLEE(const u8* pc){
 		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
 	}
 	carry_over((const Fun&)fun);
-	}
 	return ff().pc;	
 }
 
@@ -870,26 +1090,26 @@ const u8* VMachineImpl::TRY_BEGIN(const u8* pc){
 	return pc+7;
 }
 
-const u8* VMachineImpl::TRY_END(const u8* pc){
-	return except_frames_.pop().finally_pc;
-}
-
 void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos, const Any& value){
 	int_t variables_size = ff().variables_.size();
 	if(pos<variables_size){
 		ff().variable(pos, value);
 		return;
 	}	
+	
 	pos-=variables_size;
 	const Frame* outer = &ff().outer();
-	while(1){
-		variables_size = outer->block_size();
-		if(pos<variables_size){
-			outer->set_member_direct(pos, value);
-			return;
+	
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		while(1){
+			variables_size = outer->block_size();
+			if(pos<variables_size){
+				outer->set_member_direct(pos, value);
+				return;
+			}
+			pos-=variables_size;
+			outer = &outer->outer();
 		}
-		pos-=variables_size;
-		outer = &outer->outer();
 	}
 }
 
@@ -898,15 +1118,19 @@ const Any& VMachineImpl::LOCAL_VARIABLE(int_t pos){
 	if(pos<variables_size){
 		return ff().variable(pos);
 	}
+	
 	pos-=variables_size;
 	const Frame* outer = &ff().outer();
-	for(;;){
-		variables_size = outer->block_size();
-		if(pos<variables_size){
-			return outer->member_direct(pos);
+	
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		for(;;){
+			variables_size = outer->block_size();
+			if(pos<variables_size){
+				return outer->member_direct(pos);
+			}
+			pos-=variables_size;
+			outer = &outer->outer();
 		}
-		pos-=variables_size;
-		outer = &outer->outer();
 	}
 	return null;
 }
@@ -1067,6 +1291,10 @@ const u8* VMachineImpl::PUSH_FUN(const u8* pc){
 				push(Fun(decolonize(), ff().self(), code(), code().get_fun_core(table_n))); 
 			}
 
+			XTAL_CASE(KIND_LAMBDA){ 
+				push(Lambda(decolonize(), ff().self(), code(), code().get_fun_core(table_n))); 
+			}
+
 			XTAL_CASE(KIND_METHOD){ 
 				push(Method(decolonize(), code(), code().get_fun_core(table_n))); 
 			}
@@ -1082,12 +1310,6 @@ const u8* VMachineImpl::PUSH_FUN(const u8* pc){
 const u8* VMachineImpl::PUSH_ARGS(const u8* pc){
 	push(fun_frames_[0].arguments());
 	return pc + 1;
-}
-
-const u8* VMachineImpl::RETURN(int_t n){
-	adjust_result(n);
-	pop_ff();
-	return ff().pc;
 }
 
 void VMachineImpl::YIELD(const u8* pc){
@@ -1691,18 +1913,18 @@ void VMachineImpl::hook_return(const u8* pc){
 	}
 }
 
-void VMachineImpl::THROW(const u8* pc, Any& e){
+void VMachineImpl::THROW(const u8* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		e = pop();
-		if(e && !e.is(builtin().member("Exception"))){
-			e = builtin().member("RuntimeError")(e);
+		last_except_ = pop();
+		if(last_except_.cref() && !last_except_.cref().is(builtin().member("Exception"))){
+			last_except_ = builtin().member("RuntimeError")(last_except_.cref());
 		}
 	}
 }
 
-void VMachineImpl::THROW_UNSUPPROTED_ERROR(Any& e){
+void VMachineImpl::THROW_UNSUPPROTED_ERROR(){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		e = unsupported_error(ff().hint1().object_name(), ff().hint2());
+		last_except_ = unsupported_error(ff().hint1().object_name(), ff().hint2());
 	}
 }
 	
@@ -1761,8 +1983,11 @@ const u8* VMachineImpl::BREAKPOINT(const u8* pc){
 	return pc+2;
 }
 
-const u8* VMachineImpl::CATCH_BODY(const u8* lpc, Any& e, int_t stack_size, int_t fun_frames_size){
+const u8* VMachineImpl::CATCH_BODY(const u8* lpc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+
+		Any e = last_except_.cref();
+
 		if(fun_frames_size>(int_t)fun_frames_.size()){
 			return 0;
 		}

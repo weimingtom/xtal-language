@@ -205,7 +205,11 @@ public:
 	*/
 	Arguments make_arguments();
 
-	void adjust_result(int_t n);
+	void adjust_result(int_t n){		
+		ff().result_count = n;
+		adjust_result(n, ff().need_result_count, ff().result_flag);
+	}
+
 	void adjust_result(int_t n, int_t need_result_count, int_t result_flag);
 	
 	void return_result(){
@@ -271,6 +275,8 @@ public:
 	}
 
 	void carry_over(const Fun& fun);
+	
+	void mv_carry_over(const Fun& fun);
 
 	bool processed(){ 
 		return ff().calling_state!=FunFrame::CALLING_STATE_NONE; 
@@ -285,7 +291,8 @@ public:
 	
 	void recycle_call(const Any& a1);
 
-	void execute(const u8* start);
+	void execute_inner(const u8* start);
+	void execute_try(const u8* start);
 
 	void execute(const Fun& fun, const u8* start_pc = 0){
 		setup_call(0);
@@ -294,7 +301,7 @@ public:
 		
 		const u8* pc = prev_ff().pc;
 		prev_ff().pc = &end_code_;
-		execute(start_pc ? start_pc : ff().pc);
+		execute_try(start_pc ? start_pc : ff().pc);
 		fun_frames_.upsize(1);
 		ff().pc = &cleanup_call_code_;
 		prev_ff().pc = pc;
@@ -610,14 +617,12 @@ private:
 	const u8* BLOCK_END(const u8* pc);
 
 	const u8* TRY_BEGIN(const u8* pc);
-	const u8* TRY_END(const u8* pc);
-	const u8* CATCH_BODY(const u8* pc, Any& e, int_t stack_size, int_t fun_frames_size);
-	void THROW(const u8* pc, Any& e);
-	void THROW_UNSUPPROTED_ERROR(Any& e);
+	const u8* CATCH_BODY(const u8* pc, int_t stack_size, int_t fun_frames_size);
+	void THROW(const u8* pc);
+	void THROW_UNSUPPROTED_ERROR();
 	const u8* CHECK_ASSERT(const u8* lpc);
 	const u8* BREAKPOINT(const u8* pc);
 
-	const u8* RETURN(int_t n);
 	void YIELD(const u8* pc);
 
 	const u8* POS(const u8* pc);
@@ -708,11 +713,13 @@ private:
 	
 	debug::Info debug_info_;
 
+	UncountedAny last_except_;
+
 protected:
 
 	virtual void visit_members(Visitor& m){
 		GCObserverImpl::visit_members(m);
-		m & debug_info_;
+		m & debug_info_ & last_except_.cref();
 		
 		for(int_t i=0, size=stack_.size(); i<size; ++i){
 			m & stack_[i].cref();
@@ -727,6 +734,8 @@ protected:
 		//fun_frames_.fill_over();
 		//stack_.fill_over();
 
+		inc_ref_count(last_except_);
+
 		for(int_t i=0, size=stack_.size(); i<size; ++i){
 			inc_ref_count(stack_[i]);
 		}
@@ -737,6 +746,8 @@ protected:
 	}
 
 	virtual void after_gc(){
+		dec_ref_count(last_except_);
+
 		for(int_t i=0, size=stack_.size(); i<size; ++i){
 			dec_ref_count(stack_[i]);
 		}

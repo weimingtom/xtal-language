@@ -153,6 +153,10 @@ void ClassImpl::call(const VMachine& vm){
 	}
 }
 
+int_t ClassImpl::arity(){
+	return member(Xid(initialize)).arity();
+}
+
 void ClassImpl::marshal_new(const VMachine& vm){
 	if(const Any& ret = member(Xid(marshal_new))){
 		ret.call(vm);

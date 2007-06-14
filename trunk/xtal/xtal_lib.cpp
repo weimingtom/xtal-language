@@ -127,6 +127,7 @@ void object_to_script(const Any& v, const Stream& out){
 	m.to_script(v);
 }
 
+
 Result result;
 ReturnThis return_this;
 ReturnVoid return_void;
@@ -1016,6 +1017,7 @@ void initialize_lib(){
 	InitZipIter();
 	builtin.def("zip", TClass<ZipIterImpl>::get());
 
+	
 	Xsrc((
 builtin::Exception: class{
 	+ _backtrace;

@@ -349,6 +349,8 @@ public:
 public:
 	
 	virtual void call(const VMachine& vm);
+	
+	virtual int_t arity();
 
 	virtual void marshal_new(const VMachine& vm);
 

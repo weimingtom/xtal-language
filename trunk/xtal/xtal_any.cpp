@@ -148,13 +148,14 @@ void initialize(){
 	TClass<Arguments>();
 	TClass<Fiber>();
 	
+	InitDebug();
+
 	finalize_id = ID("finalize");
 	enable_gc();
 	
 	InitString();
 	InitID();
 	InitAny();
-	InitDebug();
 	InitThread();
 	InitInt();
 	InitFloat();
@@ -176,6 +177,7 @@ void initialize(){
 	
 	atexit(&uninitialize); // uninitialize‚ð“o˜^‚·‚é
 	atexit(&uninitialize); // uninitialize‚ð“o˜^‚·‚é ‚¦IH2‰ñ‚àIH
+
 }
 
 void uninitialize(){
@@ -571,6 +573,10 @@ void AnyImpl::set_class(const Class& c){
 void AnyImpl::visit_members(Visitor& m){
 	//m & class_;
 }
+
+int_t AnyImpl::arity(){
+	return 0;
+}
 	
 void AnyImpl::call(const VMachine& vm){
 	UncountedAny(this).cref().send(Xid(op_call), vm);
@@ -606,6 +612,16 @@ void AnyImpl::set_object_name(const String& name, int_t force, const Any& parent
 
 uint_t AnyImpl::hashcode(){
 	return (uint_t)this;
+}
+
+int_t Any::arity() const{
+	switch(type()){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){
+			return impl()->arity();
+		}
+	}
+	return 0;
 }
 
 #define XTAL_ANY_CALL0(op, call, args) \

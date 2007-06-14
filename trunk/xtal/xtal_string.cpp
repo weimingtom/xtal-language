@@ -81,7 +81,7 @@ public:
 		Node* next;
 
 		Node()
-			:next(0), value(null){}
+			:value(null), next(0){}
 	};
 
 

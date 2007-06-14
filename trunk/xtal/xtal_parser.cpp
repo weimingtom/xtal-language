@@ -298,12 +298,18 @@ Expr* Parser::parse_term(){
 				}
 				
 				XTAL_CASE('|'){
-					ret = parse_fun(KIND_FUN, true);
+					ret = parse_fun(KIND_LAMBDA);
 				}
 
 				XTAL_CASE(c2('|', '|')){
 					e.fun_begin(KIND_FUN);
-					e.fun_body(e.return_(parse_expr_must()));
+					e.fun_body_begin();
+					if(eat('{')){
+						e.fun_body_add(parse_block());
+					}else{
+						e.fun_body_add(e.return_(parse_expr_must()));
+					}
+					e.fun_body_end();
 					ret = e.fun_end();
 				}
 
@@ -879,7 +885,7 @@ Stmt* Parser::parse_assign_stmt(){
 							for(TList<Expr*>::Node* p = mas->lhs.head; p; p = p->next){
 								if(LocalExpr* le = expr_cast<LocalExpr>(p->value)){
 									e.register_variable(le->var);
-								}else if(SendExpr* le = expr_cast<SendExpr>(lhs)){
+								}else if(expr_cast<SendExpr>(lhs)){
 								
 								}else{
 									com_->error(line(), Xt("Xtal Compile Error 1001"));
@@ -1229,7 +1235,9 @@ Stmt* Parser::parse_try(){
 	return e.try_end();
 }
 
-Expr* Parser::parse_fun(int_t kind, bool lambda){
+Expr* Parser::parse_fun(int_t kind){
+	bool lambda = kind==KIND_LAMBDA;
+	
 	e.fun_begin(kind);
 
 	int_t inst_assign_list_count = 0;
@@ -1243,8 +1251,8 @@ Expr* Parser::parse_fun(int_t kind, bool lambda){
 				break;
 			}
 				
-			if(eat(c3('.','.','.'))){
-				e.fun_have_args();
+			if(!lambda && eat(c3('.','.','.'))){
+				e.fun_have_args(true);
 				expect(')');
 				break;
 			}
@@ -1271,11 +1279,9 @@ Expr* Parser::parse_fun(int_t kind, bool lambda){
 			
 			if(eat_a(',')){
 				if(eat_a(lambda ? '|' : ')')){
+					e.fun_extra_comma(true);
 					break;
 				}
-			}else{
-				expect_a(lambda ? '|' : ')');
-				break;
 			}
 		}
 	}

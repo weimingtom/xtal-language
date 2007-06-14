@@ -57,6 +57,15 @@ void FunImpl::call(const VMachine& vm){
 	vm.impl()->carry_over(Fun(this));
 }
 
+int_t FunImpl::arity(){
+	return param_size();
+}
+
+void LambdaImpl::call(const VMachine& vm){
+	vm.set_arg_this(this_);
+	vm.impl()->mv_carry_over(Fun(this));
+}
+
 void MethodImpl::call(const VMachine& vm){
 	check_arg(vm);
 	vm.impl()->carry_over(Fun(this));
@@ -168,6 +177,11 @@ void Fun::set_core(FunCore* fc) const{
 
 FunCore* Fun::core() const{
 	return impl()->core();
+}
+
+Lambda::Lambda(const Frame& outer, const Any& th, const Code& code, FunCore* core)
+	:Fun(null){ 
+	new(*this) LambdaImpl(outer, th, code, core);
 }
 
 Method::Method(const Frame& outer, const Code& code, FunCore* core)

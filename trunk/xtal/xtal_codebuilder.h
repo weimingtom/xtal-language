@@ -161,7 +161,7 @@ public:
 
 	void set_on_heap_flag();
 
-	int_t fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count);
+	int_t fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count, bool extra_comma);
 	void register_param(int_t name);
 	void fun_frame_end();
 	FunFrame& fun_frame();

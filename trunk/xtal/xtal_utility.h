@@ -18,11 +18,9 @@
 //#define XTAL_NO_PARSER
 //#define XTAL_NO_EXCEPT
 
-
-
 #define XTAL_USE_PREDEFINED_ID
 
-#if defined(_DEBUG) || defined(DEBUG)
+#if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG
 #endif
 
@@ -37,10 +35,10 @@
 #ifdef XTAL_DEBUG
 #	define XTAL_NODEFAULT default: XTAL_ASSERT(false)
 #else
-#	ifdef WIN32 
+#	ifdef _MSC_VER
 #		define XTAL_NODEFAULT default: __assume(0)
 #	else
-#		define XTAL_NODEFAULT default:
+#		define XTAL_NODEFAULT
 #	endif
 #endif
 
@@ -53,7 +51,7 @@
 
 #define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
 #define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
-#define XTAL_UNLOCK if(::xtal::XUnlock xxunlock = 0)
+#define XTAL_UNLOCK if(::xtal::XUnlock xunlock = 0)
 
 #ifdef XTAL_NO_EXCEPT
 #	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); }while(0)
@@ -63,6 +61,12 @@
 #	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
 #	define XTAL_TRY try
 #	define XTAL_CATCH(e) catch(const Any& e)
+#endif
+
+#ifdef __GNUC__
+#	define XTAL_NOINLINE __attribute__((noinline)) 
+#else
+#	define XTAL_NOINLINE
 #endif
 
 namespace xtal{

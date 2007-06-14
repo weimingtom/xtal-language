@@ -183,7 +183,7 @@ struct Alloc<void> {
 * スタック型のメモリアロケータ。
 * STLのアロケータには適合しない。
 */
-/*
+//*
 class RegionAlloc{
 	char* begin_;
 	char* pos_;

@@ -5,6 +5,7 @@ namespace xtal{
 
 // fwd decl
 class FunImpl;
+class LambdaImpl;
 class MethodImpl;
 class FiberImpl;
 
@@ -33,6 +34,20 @@ public:
 	void set_core(FunCore* fc) const;
 	
 	FunImpl* impl() const{ return (FunImpl*)Any::impl(); }
+};
+
+class Lambda : public Fun{
+public:
+
+	Lambda(const Frame& outer, const Any& athis, const Code& code, FunCore* core);
+
+	Lambda(const Null&)
+		:Fun(null){}
+
+	explicit Lambda(LambdaImpl* p)
+		:Fun((FunImpl*)p){}
+
+	LambdaImpl* impl() const{ return (LambdaImpl*)Any::impl(); }
 };
 
 class Method : public Fun{

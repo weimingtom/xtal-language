@@ -30,6 +30,8 @@ public:
 public:
 		
 	virtual void call(const VMachine& vm);
+	
+	virtual int_t arity();
 
 protected:
 
@@ -43,6 +45,18 @@ protected:
 		m & outer_ & this_ & code_;
 	}
 
+};
+
+class LambdaImpl : public FunImpl{
+public:
+
+	LambdaImpl(const Frame& outer, const Any& th, const Code& code, FunCore* core)
+		:FunImpl(outer, th, code, core){
+	}
+
+public:
+	
+	virtual void call(const VMachine& vm);
 };
 
 class MethodImpl : public FunImpl{

@@ -2,13 +2,6 @@
 #include "xtal.h"
 #include "xtal_vmachineimpl.h"
 
-#ifdef _MSC_VER
-//#pragma comment(lib, "../../xtallib.lib") 
-#else
-#include "xtal_all_src.h"
-#endif
-
-
 using namespace xtal;
 
 static void print_usage(){
@@ -137,7 +130,7 @@ int main(int argc, char** argv){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
-	//vmachine().impl()->print_info();
+	vmachine().impl()->print_info();
 
 	uninitialize();
 

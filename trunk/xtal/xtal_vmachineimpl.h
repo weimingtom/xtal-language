@@ -147,13 +147,6 @@ public:
 		return arg(name);
 	}
 
-	const Any& arg(int_t pos, const Fun& names){
-		FunFrame& f = ff();
-		if(pos<f.ordered_arg_count)
-			return get((f.ordered_arg_count+f.named_arg_count*2)-1-pos);
-		return arg(names.param_name_at(pos));
-	}
-
 	const Any& arg_default(int_t pos, const Any& def){
 		if(pos<ordered_arg_count())
 			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
@@ -274,9 +267,9 @@ public:
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
-	void carry_over(const Fun& fun);
+	void carry_over(FunImpl* p);
 	
-	void mv_carry_over(const Fun& fun);
+	void mv_carry_over(FunImpl* fun);
 
 	bool processed(){ 
 		return ff().calling_state!=FunFrame::CALLING_STATE_NONE; 
@@ -297,7 +290,7 @@ public:
 	void execute(const Fun& fun, const u8* start_pc = 0){
 		setup_call(0);
 		
-		carry_over(fun);
+		carry_over(fun.impl());
 		
 		const u8* pc = prev_ff().pc;
 		prev_ff().pc = &end_code_;
@@ -403,13 +396,13 @@ public:
 	}
 
 	static void inc_ref_count(const UncountedAny& a){
-		if(a.cref().type()==TYPE_BASE){
+		if(a.cref().type()==TYPE_BASE && a.impl()){
 			a.cref().impl()->inc_ref_count();
 		}
 	}
 	
 	static void dec_ref_count(const UncountedAny& a){
-		if(a.cref().type()==TYPE_BASE){
+		if(a.cref().type()==TYPE_BASE && a.impl()){
 			a.cref().impl()->dec_ref_count();
 		}
 	}
@@ -548,17 +541,20 @@ public:
 	const Fun& fun(){ return ff().fun(); }
 	const Fun& prev_fun(){ return prev_ff().fun(); }
 
+//	const u8* fun_pc(){ return fun().impl()->pc(); }
+//	const u8* prev_fun_pc(){ return prev_fun().impl()->pc(); }
+
 	const Frame& outer(){ return ff().outer(); }
 	const Frame& prev_outer(){ return prev_ff().outer(); }
 
-	const Code& code(){ return fun().code(); }
-	const Code& prev_code(){ return prev_fun().code(); }
+	const Code& code(){ return fun().impl()->code(); }
+	const Code& prev_code(){ return prev_fun().impl()->code(); }
 
-	const u8* source(){ return code().data(); }
-	const u8* prev_source(){ return prev_code().data(); }
+	const u8* source(){ return code().impl()->data(); }
+	const u8* prev_source(){ return prev_code().impl()->data(); }
 
-	const ID& symbol(int_t n){ return code().get_symbol(n); }
-	const ID& prev_symbol(int_t n){ return prev_code().get_symbol(n); }
+	const ID& symbol(int_t n){ return code().impl()->get_symbol(n); }
+	const ID& prev_symbol(int_t n){ return prev_code().impl()->get_symbol(n); }
 	
 	Frame decolonize();
 	
@@ -609,7 +605,6 @@ private:
 	const u8* PUSH_ARRAY(const u8* pc);
 	const u8* PUSH_MAP(const u8* pc);
 	const u8* PUSH_FUN(const u8* pc);
-	const u8* CURRENT_CONTINUATION(const u8* pc);
 	
 	const u8* CLASS_BEGIN(const u8* pc);
 	const u8* CLASS_END(const u8* pc);
@@ -763,37 +758,6 @@ public:
 		printf("stack size %d\n", stack_.size());
 		printf("fun_frames size %d\n", fun_frames_.size()-1);
 		printf("except_frames size %d\n", except_frames_.size());
-	}
-
-};
-
-class ContinuationImpl : public AnyImpl{
-public:
-
-	ContinuationImpl(const VMachine& vm, int_t need_result_count, int_t result_flag, const u8* pc)
-		:vm_(vm), need_result_count_(need_result_count), result_flag_(result_flag), pc_(pc){
-		set_class(TClass<Any>::get());
-	}
-
-	virtual void call(const VMachine& vm){
-		Any arg = vm.arg_default(0, null);
-		*vm.impl() = *vm_.impl();
-		vm.impl()->push(UncountedAny(this).cref());
-		vm.impl()->push(arg);
-		vm.impl()->adjust_result(2, need_result_count_, result_flag_);
-		vm.impl()->ff().pc = pc_;
-	}
-
-public:
-
-	VMachine vm_;
-	int_t need_result_count_;
-	int_t result_flag_;
-	const u8* pc_;
-
-	virtual void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
-		m & vm_;
 	}
 
 };

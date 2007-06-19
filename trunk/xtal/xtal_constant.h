@@ -84,15 +84,6 @@ CODE_PUSH_FALSE,
 CODE_PUSH_NOP,
 
 /**
-* @brief スタックに現在実行中の関数呼び出しに戻り値が必要かどうかをプッシュする
-。
-*
-* format op
-* stack [] -> [value]
-*/
-CODE_PUSH_NEED_RESULT,
-
-/**
 * @brief スタックにint値をプッシュする。
 *
 * format op
@@ -1074,14 +1065,6 @@ CODE_PUSH_FUN,
 * stack [] -> [value]
 */
 CODE_PUSH_CURRENT_CONTEXT,
-
-/**
-* @brief 現在の継続をスタックに積む。
-*
-* format op
-* stack [] -> [value]
-*/
-CODE_PUSH_CURRENT_CONTINUATION,
 
 /**
 * @brief 現在の残り引数オブジェクトをスタックに積む。

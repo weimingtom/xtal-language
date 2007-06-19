@@ -35,199 +35,6 @@ VMachineImpl::VMachineImpl(){
 VMachineImpl::~VMachineImpl(){
 
 }
-
-void VMachineImpl::push_ff(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
-	ff().pc = pc;
-	FunFrame& f = fun_frames_.push();
-	f.need_result_count = need_result_count;
-	f.result_count = 0;
-	f.result_flag = result_flag;
-	f.ordered_arg_count = ordered_arg_count;
-	f.named_arg_count = named_arg_count;
-	f.calling_state = FunFrame::CALLING_STATE_NONE;
-	f.pc = &throw_unsupported_error_code_;
-	f.self(self);
-	f.hint1(null);
-	f.hint2(null);
-	f.fun(null);
-
-	f.outer(null);
-	f.variables_.clear();
-	f.scopes.clear();
-	f.arguments(null);
-}
-
-const Any& VMachineImpl::result(int_t pos){
-	if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
-		const u8* pc = prev_ff().pc;
-		prev_ff().pc = &end_code_;
-		execute_try(ff().pc);
-		fun_frames_.upsize(1);
-		ff().pc = &cleanup_call_code_;
-		prev_ff().pc = pc;
-		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
-	}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
-		String hint1 = ff().hint1().get_class().object_name();
-		String hint2 = ff().hint2();
-		pop_ff();
-		if(Any uerror = builtin().member("UnsupportedError")){
-			XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
-				hint1 ? hint1 : String("?"),
-				hint2 ? hint2 : String("()")))); 
-		}else{
-			//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
-			XTAL_THROW(null);
-		}
-	}
-
-	XTAL_ASSERT(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_RESULT);
-	
-	if(pos<ff().need_result_count){
-		return get(ff().need_result_count-pos-1);
-	}else{
-		return null;
-	}
-}
-	
-void VMachineImpl::carry_over(const Fun& fun){
-	FunFrame& f = ff();
-	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
-	
-	f.fun(fun);
-	f.outer(fun.outer());
-
-	f.variables_.clear();
-	f.scopes.clear();
-
-	f.pc = fun.pc()+fun.code().data();
-	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
-
-	if(fun.used_args_object()){
-		f.arguments(make_args(fun));
-	}
-	
-	FunCore* core = fun.core();
-
-	if(int_t size = core->variable_size){
-		f.scopes.push(core);
-		f.variables_.upsize(size);
-		UncountedAny* vars=&f.variables_[size-1];
-		for(int_t n = 0; n<size; ++n){
-			vars[n] = arg(n, fun);
-		}
-	}
-	
-	int_t max_stack = core->max_stack;
-	stack_.upsize(max_stack);
-	stack_.downsize(f.ordered_arg_count+f.named_arg_count*2 + max_stack);
-}
-
-void VMachineImpl::mv_carry_over(const Fun& fun){
-	FunFrame& f = ff();
-	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
-	
-	f.fun(fun);
-	f.outer(fun.outer());
-
-	f.variables_.clear();
-	f.scopes.clear();
-
-	f.pc = fun.pc()+fun.code().data();
-	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
-
-	if(fun.used_args_object()){
-		f.arguments(make_args(fun));
-	}
-	
-	// 名前付き引数は邪魔
-	stack_.downsize(f.named_arg_count*2);
-
-	FunCore* core = fun.core();
-	
-	if(int_t size = core->variable_size){
-		f.scopes.push(core);
-		f.variables_.upsize(size);
-	
-		adjust_result(f.ordered_arg_count, size, core->extra_comma ? RESULT_DISCARD : 0);
-		
-		UncountedAny* vars=&f.variables_[size-1];
-		for(int_t n = 0; n<size; ++n){
-			vars[n] = get(size-1-n);
-		}
-		
-		stack_.downsize(size);
-	}
-	
-	int_t max_stack = core->max_stack;
-	stack_.upsize(max_stack);
-	stack_.downsize(max_stack);
-}
-
-void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_flag){
-
-	// 戻り値なんて要求してない
-	if(need_result_count==0){
-		downsize(n);
-		return;
-	}
-
-	// 戻り値が一つも無いのでnullで埋める
-	if(n==0){
-		for(int_t i = 0; i<need_result_count; ++i){
-			push(null);
-		}
-		return;
-	}
-
-	// 戻り値の数と要求している戻り値の数が等しい
-	if(need_result_count==n){
-		return;
-	}
-
-	// この時点で、nもneed_result_countも1以上
-
-
-	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-	if(need_result_count<n){
-		// 戻り値を切り捨てるフラグがついている
-		if(result_flag&RESULT_DISCARD){
-			downsize(n-need_result_count);
-		}else{
-			// 余った戻り値を配列に直す。
-			int_t size = n-need_result_count+1;
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				Array ret(size);
-				for(int_t i=0; i<size; ++i){
-					ret.set_at(i, get(size-1-i));
-				}
-				downsize(size);
-				push(ret);
-			}	
-		}
-	}else{
-		// 要求している戻り値の数の方が、関数が返す戻り値より多い
-
-		if(const Array& temp = xtal::as<const Array&>(get())){
-			// 最後の要素の配列を展開する。
-			Array ary(temp);
-			downsize(1);
-
-			// 配列を展開し埋め込む
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				for(int_t i=0, len=ary.size(); i<len; ++i){
-					push(ary.at(i));
-				}
-			}
-
-			adjust_result(n-1+ary.size(), need_result_count, result_flag);
-		}else{
-			// 最後の要素が配列ではないので、nullで埋めとく
-			for(int_t i = n; i<need_result_count; ++i){
-				push(null);
-			}
-		}
-	}
-}
 	
 void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 	// 結果をvmに渡す
@@ -259,7 +66,7 @@ const u8* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool add
 	
 	resume_pc_ = 0;
 	
-	carry_over(fun);
+	carry_over(fun.impl());
 	ff().yieldable = true;
 
 	execute_try(ff().pc);
@@ -395,6 +202,8 @@ void VMachineImpl::recycle_ff(const u8* pc, int_t ordered_arg_count, int_t named
 	f.self(self);
 	f.calling_state = FunFrame::CALLING_STATE_NONE;
 	f.pc = &throw_unsupported_error_code_;
+	f.variables_.clear();
+	f.scopes.clear();
 }
 
 void VMachineImpl::recycle_ff_args(const u8* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -488,6 +297,216 @@ const u8* VMachineImpl::send2r(const u8* pc, const ID& id, int_t n){
 	return ff().pc;
 }
 
+void VMachineImpl::push_ff(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+	ff().pc = pc;
+	FunFrame& f = fun_frames_.push();
+	f.need_result_count = need_result_count;
+	f.result_count = 0;
+	f.result_flag = result_flag;
+	f.ordered_arg_count = ordered_arg_count;
+	f.named_arg_count = named_arg_count;
+	f.calling_state = FunFrame::CALLING_STATE_NONE;
+	f.pc = &throw_unsupported_error_code_;
+	f.self(self);
+	f.hint1(null);
+	f.hint2(null);
+	f.fun(null);
+	f.outer(null);
+	f.variables_.clear();
+	f.scopes.clear();
+	f.arguments(null);
+}
+
+const Any& VMachineImpl::result(int_t pos){
+	if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
+		const u8* pc = prev_ff().pc;
+		prev_ff().pc = &end_code_;
+		execute_try(ff().pc);
+		fun_frames_.upsize(1);
+		ff().pc = &cleanup_call_code_;
+		prev_ff().pc = pc;
+		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+	}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
+		String hint1 = ff().hint1().get_class().object_name();
+		String hint2 = ff().hint2();
+		pop_ff();
+		if(Any uerror = builtin().member("UnsupportedError")){
+			XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
+				hint1 ? hint1 : String("?"),
+				hint2 ? hint2 : String("()")))); 
+		}else{
+			//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
+			XTAL_THROW(null);
+		}
+	}
+
+	XTAL_ASSERT(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_RESULT);
+	
+	if(pos<ff().need_result_count){
+		return get(ff().need_result_count-pos-1);
+	}else{
+		return null;
+	}
+}
+	
+void VMachineImpl::carry_over(FunImpl* p){
+	FunFrame& f = ff();
+	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+	
+	f.fun(p);
+	f.outer(p->outer());
+
+	XTAL_ASSERT(f.variables_.empty()); //f.variables_.clear();
+	XTAL_ASSERT(f.scopes.empty()); //f.scopes.clear();
+
+	f.pc = p->pc()+p->code().impl()->data();
+	f.yieldable = prev_ff().pc!=&end_code_ && prev_ff().yieldable;
+
+	if(p->used_args_object()){
+		f.arguments(make_args((Fun&)UncountedAny(p).cref()));
+	}
+	
+	FunCore* core = p->core();
+	int_t ordered_arg_count = f.ordered_arg_count;
+	int_t named_arg_count2 = f.named_arg_count*2;
+
+	if(int_t size = core->variable_size){
+		f.scopes.push(core);
+		f.variables_.upsize(size);
+		UncountedAny* vars=&f.variables_[size-1];
+
+		for(int_t n=0; n<size; ++n){
+			if(n<ordered_arg_count){
+				vars[n] = get(ordered_arg_count+named_arg_count2-1-n);
+			}else{
+				vars[n] = arg(p->param_name_at(n));
+			}
+		}
+	}
+	
+	int_t max_stack = core->max_stack;
+	stack_.upsize(max_stack);
+	stack_.downsize(ordered_arg_count+named_arg_count2 + max_stack);
+}
+
+void VMachineImpl::mv_carry_over(FunImpl* p){
+	FunFrame& f = ff();
+	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+	
+	f.fun(p);
+	f.outer(p->outer());
+
+	XTAL_ASSERT(f.variables_.empty()); //f.variables_.clear();
+	XTAL_ASSERT(f.scopes.empty()); //f.scopes.clear();
+
+	f.pc = p->pc()+p->code().impl()->data();
+	f.yieldable = prev_ff().pc!=&end_code_ && prev_ff().yieldable;
+
+	if(p->used_args_object()){
+		f.arguments(make_args((Fun&)UncountedAny(p).cref()));
+	}
+	
+	// 名前付き引数は邪魔
+	stack_.downsize(f.named_arg_count*2);
+
+	FunCore* core = p->core();
+	
+	if(int_t size = core->variable_size){
+		f.scopes.push(core);
+		f.variables_.upsize(size);
+	
+		adjust_result(f.ordered_arg_count, size, core->extra_comma ? RESULT_DISCARD : 0);
+		
+		UncountedAny* vars=&f.variables_[size-1];
+		for(int_t n = 0; n<size; ++n){
+			vars[n] = get(size-1-n);
+		}
+		
+		stack_.downsize(size);
+	}
+	
+	int_t max_stack = core->max_stack;
+	stack_.upsize(max_stack);
+	stack_.downsize(max_stack);
+}
+
+void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_flag){
+	
+	// 戻り値の数と要求している戻り値の数が等しい
+	if(need_result_count==n){
+		// 戻り値を切り捨てるフラグがついている
+		if(result_flag&RESULT_DISCARD){
+			downsize(1);
+		}
+		return;
+	}
+
+	// 戻り値なんて要求してない
+	if(need_result_count==0){
+		downsize(n);
+		return;
+	}
+
+	// 戻り値が一つも無いのでnullで埋める
+	if(n==0){
+		for(int_t i = 0; i<need_result_count; ++i){
+			push(null);
+		}
+		// 戻り値を切り捨てるフラグがついている
+		if(result_flag&RESULT_DISCARD){
+			downsize(1);
+		}
+		return;
+	}
+
+	// この時点で、nもneed_result_countも1以上
+
+
+	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
+	if(need_result_count<n){
+		// 戻り値を切り捨てるフラグがついている
+		if(result_flag&RESULT_DISCARD){
+			downsize(n-need_result_count+1);
+		}else{
+			// 余った戻り値を配列に直す。
+			int_t size = n-need_result_count+1;
+			XTAL_GLOBAL_INTERPRETER_LOCK{
+				Array ret(size);
+				for(int_t i=0; i<size; ++i){
+					ret.set_at(i, get(size-1-i));
+				}
+				downsize(size);
+				push(ret);
+			}	
+		}
+	}else{
+		// 要求している戻り値の数の方が、関数が返す戻り値より多い
+
+		if(const Array& temp = xtal::as<const Array&>(get())){
+			XTAL_GLOBAL_INTERPRETER_LOCK{
+				// 最後の要素の配列を展開する。
+				Array ary(temp);
+				downsize(1);
+
+				// 配列を展開し埋め込む
+				for(int_t i=0, len=ary.size(); i<len; ++i){
+					push(ary.at(i));
+				}
+				adjust_result(n-1+ary.size(), need_result_count, result_flag);
+			}
+		}else{
+			// 最後の要素が配列ではないので、nullで埋めとく
+			for(int_t i = n; i<need_result_count; ++i){
+				push(null);
+			}
+			// 戻り値を切り捨てるフラグがついている
+			if(result_flag&RESULT_DISCARD){
+				downsize(1);
+			}
+		}
+	}
+}
+
 namespace{
 inline int_t get_u8(const u8* p){ return p[0]; }
 inline int_t get_i8(const u8* p){ return (i8)p[0]; }
@@ -563,7 +582,6 @@ void VMachineImpl::execute_inner(const u8* start){
 		&&kCODE_PUSH_TRUE,
 		&&kCODE_PUSH_FALSE,
 		&&kCODE_PUSH_NOP,
-		&&kCODE_PUSH_NEED_RESULT,
 		&&kCODE_PUSH_INT_0,
 		&&kCODE_PUSH_INT_1,
 		&&kCODE_PUSH_INT_2,
@@ -687,7 +705,6 @@ void VMachineImpl::execute_inner(const u8* start){
 		&&kCODE_PUSH_CALLEE,
 		&&kCODE_PUSH_FUN,
 		&&kCODE_PUSH_CURRENT_CONTEXT,
-		&&kCODE_PUSH_CURRENT_CONTINUATION,
 		&&kCODE_PUSH_ARGS,
 		&&kCODE_CLASS_BEGIN,
 		&&kCODE_CLASS_END,
@@ -732,7 +749,6 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(CODE_PUSH_TRUE){ push(UncountedAny(true).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FALSE){ push(UncountedAny(false).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_NOP){ push(nop); pc+=1; }
-	XTAL_VM_CASE(CODE_PUSH_NEED_RESULT){ push(UncountedAny(need_result()).cref()); pc+=1; }
 	
 	XTAL_VM_CASE(CODE_PUSH_INT_0){ push(UncountedAny(0).cref()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_INT_1){ push(UncountedAny(1).cref()); pc+=1; }
@@ -749,7 +765,7 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(CODE_PUSH_FLOAT_3){ push(UncountedAny(3.0f).cref()); pc+=1; }
 
 	XTAL_VM_CASE(CODE_PUSH_INT_1BYTE){ push(UncountedAny(get_u8(pc+1)).cref()); pc+=2; }
-	XTAL_VM_CASE(CODE_PUSH_INT_2BYTE){ push(UncountedAny(get_i16(pc+1)).cref()); pc+=3; }
+	XTAL_VM_CASE(CODE_PUSH_INT_2BYTE){ push(UncountedAny(get_u16(pc+1)).cref()); pc+=3; }
 	
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){ pc = LOCAL_VARIABLE(get_u8(pc+3)).is_null() ? pc+4 : pc+get_i16(pc+1); }
@@ -770,8 +786,21 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(CODE_SEND){ pc = SEND(pc); }
 	XTAL_VM_CASE(CODE_SEND_IF_DEFINED){ pc = SEND_IF_DEFINED(pc); }
 	
-	XTAL_VM_CASE(CODE_RETURN_0){ adjust_result(0); pop_ff(); pc = ff().pc; }
-	XTAL_VM_CASE(CODE_RETURN_1){ adjust_result(1); pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(CODE_RETURN_0){ 
+		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
+			push(null);
+		}
+		pop_ff(); 
+		pc = ff().pc; 
+	}
+	XTAL_VM_CASE(CODE_RETURN_1){
+		if(ff().need_result_count!=1){
+			adjust_result(1);
+		}
+		pop_ff(); 
+		pc = ff().pc; 
+	}
+
 	XTAL_VM_CASE(CODE_RETURN_2){ adjust_result(2); pop_ff(); pc = ff().pc; }
 	XTAL_VM_CASE(CODE_RETURN_N){ adjust_result(get_u8(pc+1)); pop_ff(); pc = ff().pc; }
 	
@@ -892,10 +921,9 @@ XTAL_VM_SWITCH(*pc){
 	
 	XTAL_VM_CASE(CODE_PUSH_ARRAY){ pc = PUSH_ARRAY(pc); }
 	XTAL_VM_CASE(CODE_PUSH_MAP){ pc = PUSH_MAP(pc); }
-	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(ff().fun()); pc+=1; }
+	XTAL_VM_CASE(CODE_PUSH_CALLEE){ push(fun()); pc+=1; }
 	XTAL_VM_CASE(CODE_PUSH_FUN){ pc = PUSH_FUN(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTEXT){ pc = CURRENT_CONTEXT(pc); }	
-	XTAL_VM_CASE(CODE_PUSH_CURRENT_CONTINUATION){ pc = CURRENT_CONTINUATION(pc); }	
 	XTAL_VM_CASE(CODE_PUSH_ARGS){ pc = PUSH_ARGS(pc); }
 	
 	XTAL_VM_CASE(CODE_CLASS_BEGIN){ pc = CLASS_BEGIN(pc); }
@@ -981,16 +1009,15 @@ const u8* VMachineImpl::CALL(const u8* pc){
 }
 	
 const u8* VMachineImpl::CALLEE(const u8* pc){
-	UncountedAny fun = ff().fun();
-	UncountedAny self = ff().self();
+	FunImpl* fn = fun().impl();
 	switch(get_u8(pc + 4) & 3){
 		XTAL_NODEFAULT;
-		XTAL_CASE(0){ push_ff(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), self.cref()); }
-		XTAL_CASE(1){ push_ff_args(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), self.cref()); }
-		XTAL_CASE(2){ recycle_ff(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
-		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
+		XTAL_CASE(0){ push_ff(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), ff().self()); }
+		XTAL_CASE(1){ push_ff_args(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), ff().self()); }
+		XTAL_CASE(2){ recycle_ff(pc+5, get_u8(pc+1), get_u8(pc+2), ff().self()); }
+		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), ff().self()); }
 	}
-	carry_over((const Fun&)fun);
+	carry_over(fn);
 	return ff().pc;	
 }
 
@@ -1047,7 +1074,7 @@ const u8* VMachineImpl::CLASS_BEGIN(const u8* pc){
 
 		ff().outer(decolonize());
 		push_ff(pc+4, 0, 0, 0, 0, cp);
-		ff().fun(prev_ff().fun());
+		ff().fun(prev_fun());
 
 		ff().outer(cp);
 		ff().scopes.push(0); 
@@ -1837,20 +1864,6 @@ const u8* VMachineImpl::SHL_ASSIGN(const u8* pc){
 		}}
 	}
 	return send2(pc, Xid(op_shl_assign));
-}
-
-const u8* VMachineImpl::CURRENT_CONTINUATION(const u8* pc){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		decolonize(); 
-		int_t need_result_count = get_u8(pc+1);
-		int_t result_flag = get_u8(pc+2);
-		VMachine cloned_vm(clone());
-		Any ret; new(ret) ContinuationImpl(cloned_vm, need_result_count, result_flag, pc+3);
-		push(ret);
-		push(null);
-		adjust_result(2, need_result_count, result_flag);
-	}
-	return pc+3;
 }
 
 const u8* VMachineImpl::CURRENT_CONTEXT(const u8* pc){

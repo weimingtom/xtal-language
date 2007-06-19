@@ -283,7 +283,7 @@ void Stack<T>::upsize_detail(size_t us){
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
-	size_t newcapa = newsize + newsize/2;
+	size_t newcapa = newsize + newsize/2 + 16;
 	T* newp = (T*)allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i)

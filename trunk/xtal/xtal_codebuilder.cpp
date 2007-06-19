@@ -10,12 +10,14 @@
 #include "xtal_funimpl.h"
 #include "xtal_codeimpl.h"
 #include "xtal_streamimpl.h"
+#include "xtal_fun.h"
+#include "xtal_vmachineimpl.h"
 
 
 namespace xtal{
 
 CodeBuilder::CodeBuilder(){
-
+	fun_frames_.reserve(16);
 }
 
 CodeBuilder::~CodeBuilder(){
@@ -594,14 +596,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 		}
 
 		XTAL_EXPR_CASE(PseudoVariableExpr){
-			if(e->code==CODE_PUSH_CURRENT_CONTINUATION){
-				put_code_u8(e->code);
-				put_code_u8(need_result_count);
-				put_code_u8(discard ? RESULT_DISCARD : 0);
-				result_count = need_result_count;
-			}else{
-				put_code_u8(e->code);
-			}
+			put_code_u8(e->code);
 		}
 
 		XTAL_EXPR_CASE(CalleeExpr){
@@ -1372,12 +1367,13 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(MultipleAssignStmt){
 			int_t pushed_count = 0;
+			int_t lhs_size = e->discard ? e->lhs.size+1 : e->lhs.size;
 			for(TList<Expr*>::Node* rhs=e->rhs.head; rhs; rhs=rhs->next){	
 				if(!rhs->next){
 					if(expr_cast<CallExpr>(rhs->value) || expr_cast<SendExpr>(rhs->value)){
 						int_t rrc;
-						if(pushed_count<e->lhs.size){
-							rrc = e->lhs.size - pushed_count;
+						if(pushed_count<lhs_size){
+							rrc = lhs_size - pushed_count;
 						}else{
 							rrc = 1;
 						}
@@ -1396,8 +1392,8 @@ void CodeBuilder::compile(Stmt* ex){
 						break;
 					}else{
 						int_t rrc;
-						if(pushed_count<e->lhs.size){
-							rrc = e->lhs.size - pushed_count;
+						if(pushed_count<lhs_size){
+							rrc = lhs_size - pushed_count;
 						}else{
 							rrc = 1;
 						}
@@ -1411,10 +1407,10 @@ void CodeBuilder::compile(Stmt* ex){
 				}
 			}
 
-			if(e->lhs.size!=pushed_count){
+			if(lhs_size!=pushed_count){
 				put_code_u8(CODE_ADJUST_RESULT);
 				put_code_u8(pushed_count);
-				put_code_u8(e->lhs.size);
+				put_code_u8(lhs_size);
 				put_code_u8(e->discard ? RESULT_DISCARD : 0);
 			}
 

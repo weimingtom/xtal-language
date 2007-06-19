@@ -5,7 +5,6 @@
 
 #include "xtal_frameimpl.h"
 #include "xtal_codeimpl.h"
-#include "xtal_vmachineimpl.h"
 #include "xtal_utilimpl.h"
 
 namespace xtal{

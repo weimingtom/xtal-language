@@ -1,12 +1,6 @@
 
 #include "xtal.h"
 
-#ifdef _MSC_VER
-#pragma comment(lib, "../../xtallib.lib") 
-#else
-#include "xtal_all_src.h"
-#endif
-
 int main(int argc, char** argv){
 	using namespace xtal;
  

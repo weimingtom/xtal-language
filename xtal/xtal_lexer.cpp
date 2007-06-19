@@ -104,7 +104,6 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("callee"), (int_t)Token::KEYWORD_CALLEE);
 	keyword_map_.set_at(ID("this"), (int_t)Token::KEYWORD_THIS);
 	keyword_map_.set_at(ID("current_context"), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
-	keyword_map_.set_at(ID("current_continuation"), (int_t)Token::KEYWORD_CURRENT_CONTINUATION);
 	keyword_map_.set_at(ID("dofun"), (int_t)Token::KEYWORD_DOFUN);
 	keyword_map_.set_at(ID("is"), (int_t)Token::KEYWORD_IS);
 	keyword_map_.set_at(ID("export"), (int_t)Token::KEYWORD_EXPORT);
@@ -115,7 +114,6 @@ void Lexer::init(const Stream& stream, const String& source_file_name){
 	keyword_map_.set_at(ID("switch"), (int_t)Token::KEYWORD_SWITCH);
 	keyword_map_.set_at(ID("case"), (int_t)Token::KEYWORD_CASE);
 	keyword_map_.set_at(ID("default"), (int_t)Token::KEYWORD_DEFAULT);
-	keyword_map_.set_at(ID("need_result"), (int_t)Token::KEYWORD_NEED_RESULT);
 }
 
 LPCCommon* Lexer::common(){

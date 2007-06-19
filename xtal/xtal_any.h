@@ -36,7 +36,7 @@ protected:
 	}
 
 	void set_p(AnyImpl* p){
-		XTAL_ASSERT(p!=0);
+		//XTAL_ASSERT(p!=0);
 		union{
 			int_t value;
 			AnyImpl* pvalue;
@@ -107,6 +107,10 @@ public:
 		return value_;
 	}
 
+	void assign_p(AnyImpl* p){
+		set_p(p);
+	}
+
 public:
 
 	bool raweq(const UncountedAny& a) const{
@@ -169,13 +173,13 @@ protected:
 	}
 
 	void set_p(AnyImpl* p){
-		XTAL_ASSERT(p!=0);
+		//XTAL_ASSERT(p!=0);
 		type_ = TYPE_BASE;
 		pvalue_ = p;
 	}
 	
 	void set_p(const AnyImpl* p){
-		XTAL_ASSERT(p!=0);
+		//XTAL_ASSERT(p!=0);
 		type_ = TYPE_BASE;
 		pvalue_ = (AnyImpl*)p;
 	}
@@ -224,6 +228,10 @@ public:
 		return (uint_t)value_;
 	}
 	
+	void assign_p(AnyImpl* p){
+		pvalue_ = p;
+	}
+
 public:
 
 	bool raweq(const UncountedAny& a) const{

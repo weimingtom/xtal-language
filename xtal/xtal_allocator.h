@@ -13,67 +13,67 @@ namespace xtal{
 /*@{*/
 
 /**
-* @brief ���[�U�[���o�^�����������A���P�[�g�֐����g���ă������m�ۂ���B
+* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
-* �������m�ێ��s�͗�O�ŕԂ����B
+* メモリ確保失敗は例外で返される。
 */
 void* user_malloc(size_t size);
 
 /**
-* @brief ���[�U�[���o�^�����������A���P�[�g�֐����g���ă������m�ۂ���B
+* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
-* �������m�ێ��s��NULL�l�ŕԂ����B
+* メモリ確保失敗はNULL値で返される。
 */
 void* user_malloc_nothrow(size_t size);
 
 /**
-* @brief ���[�U�[���o�^�����������f�A���P�[�g�֐����g���ă������������B
+* @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
 void user_free(void* p, size_t size);
 
 /**
-* @brief �g�p���郁�����A���P�[�g�֐���ݒ肷��B
+* @brief 使用するメモリアロケート関数を設定する。
 *
 */
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 
 
 /**
-* @brief xtal�Ŏg�p���郁�����[��ݒ肷��B
+* @brief xtalで使用するメモリーを設定する。
 *
 */
 void set_memory(void* memory, size_t size);
 
 /**
-* @brief ���I�ȁA�|�C���^�̔z����쐬�A�g������֐��B
+* @brief 動的な、ポインタの配列を作成、拡張する関数。
 *
-* ��ԍŏ��̍쐬���́A�����S�Ă�null�ł���K�v������B
-* @param begin �������̐擪
-* @param end �������̍Ō�̈��
-* @param current �g�p���̗v�f�̈��
+* 一番最初の作成時は、引数全てがnullである必要がある。
+* @param begin メモリの先頭
+* @param end メモリの最後の一つ次
+* @param current 使用中の要素の一つ次
 */
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize=1024);
 
 /**
-* @brief expand_simple_dynamic_pointer_array�Ő��������z����A�g���Ă�����ۂ̃T�C�Y�܂ŏk������B
+* @brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
 *
-* �v�f����������Ȃ�(current==begin�Ȃ�)���S�ɉ�������B
-* @param begin �������̐擪
-* @param end �������̍Ō�̈��
-* @param current �g�p���̗v�f�̈��
+* 要素が一つも無いなら(current==beginなら)完全に解放される。
+* @param begin メモリの先頭
+* @param end メモリの最後の一つ次
+* @param current 使用中の要素の一つ次
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
 
 /**
-* @brief malloc���Ă΂�Ă���Œ������ׂ�
-* @retval true malloc���Ă΂�Ă���r��
-* @retval false malloc���Ă΂�Ă���r���ł͂Ȃ�
+* @brief mallocが呼ばれている最中か調べる
+* @retval true mallocが呼ばれている途中
+* @retval false mallocが呼ばれている途中ではない
 */
 bool calling_malloc();
 
 /**
-* @brief user_malloc, user_free���g���ASTL�̗v���ɓK�������A���P�[�^�N���X�B
+* @brief user_malloc, user_freeを使う、STLの要件に適合したアロケータクラス。
 *
 */
 template<class T>
@@ -180,8 +180,8 @@ struct Alloc<void> {
 };
 
 /*
-* �X�^�b�N�^�̃������A���P�[�^�B
-* STL�̃A���P�[�^�ɂ͓K�����Ȃ��B
+* スタック型のメモリアロケータ。
+* STLのアロケータには適合しない。
 */
 //*
 class RegionAlloc{
@@ -236,7 +236,7 @@ private:
 //*/
 
 /**
-* @brief �ƂĂ��V���v���ȃ������Ǘ��@�\
+* @brief とてもシンプルなメモリ管理機構
 *
 */
 class SimpleMemoryManager{

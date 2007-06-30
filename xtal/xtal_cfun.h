@@ -707,7 +707,7 @@ struct TType{
 }
 
 /**
-* @brief C++�̊֐���Xtal����Ăяo����悤�ɂ��邽�߂̃N���X
+* @brief C++の関数をXtalから呼び出せるようにするためのクラス
 *
 */
 class CFun : public Any{
@@ -724,7 +724,7 @@ public:
 public:
 
 	/**
-	* @brief �������̖��O�A�f�t�H���g�������w�肷��B
+	* @brief 仮引数の名前、デフォルト引数を指定する。
 	*
 	*/
 	const CFun& param(
@@ -888,7 +888,7 @@ CFun method(R (*f)(C, A0, A1, A2, A3, A4), const Policy&){
 }
 
 /**
-* @brief C++�̊֐���Xtal����Ăяo����I�u�W�F�N�g�ɕϊ����邽�߂̊֐�
+* @brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 */
 template<class Fun>
@@ -897,7 +897,7 @@ CFun fun(Fun f){
 }
 
 /**
-* @brief C++�̊֐���Xtal����Ăяo����I�u�W�F�N�g�ɕϊ����邽�߂̊֐�
+* @brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 */
 template<class Fun, class Policy>
@@ -907,9 +907,9 @@ CFun fun(Fun f, const Policy& policy){
 
 
 /**
-* @brief C++�̊֐��A�����o��Xtal����Ăяo����I�u�W�F�N�g�ɕϊ����邽�߂̊֐�
+* @brief C++の関数、メンバをXtalから呼び出せるオブジェクトに変換するための関数
 *
-* ���ʂ̊֐������\�b�h�Ƃ��ĕϊ��������ꍇ�A�����������̌^�ɂ��邱�ƁB
+* 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun>
 CFun method(Fun f){
@@ -917,9 +917,9 @@ CFun method(Fun f){
 }
 
 /**
-* @brief C++�̊֐��A�����o��Xtal����Ăяo����I�u�W�F�N�g�ɕϊ����邽�߂̊֐�
+* @brief C++の関数、メンバをXtalから呼び出せるオブジェクトに変換するための関数
 *
-* ���ʂ̊֐������\�b�h�Ƃ��ĕϊ��������ꍇ�A�����������̌^�ɂ��邱�ƁB
+* 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun, class Policy>
 CFun method(Fun f, const Policy& policy){

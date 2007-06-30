@@ -20,14 +20,14 @@ public:
 	Stmt* interactive_parse();
 
 	/**
-	* Lexer, Parser, CodeBuilder�����ʂ��Ď���LPCCommon�I�u�W�F�N�g��Ԃ�
+	* Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
 	*/
 	LPCCommon* common();
 	
 	ExprBuilder* expr_builder();
 	
 	/**
-	* �����Ŏg�p���Ă��郁�����Ȃǂ̃��\�[�X���������
+	* 内部で使用しているメモリなどのリソースを解放する
 	*/
 	void release();
 

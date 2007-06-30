@@ -41,7 +41,7 @@ extern FunCore empty_fun_core;
 class CodeImpl;
 
 /**
-* @brief Xtal‚ÌƒoƒCƒgƒR[ƒh‚ğ•\‚·
+* @brief Xtalã®ãƒã‚¤ãƒˆã‚³ãƒ¼ãƒ‰ã‚’è¡¨ã™
 */
 class Code : public Any{
 public:
@@ -55,32 +55,32 @@ public:
 		:Any(null){}
 
 	/**
-	* @brief ƒR[ƒh‚Ìæ“ªƒ|ƒCƒ“ƒ^‚ğ“¾‚éB
+	* @brief ã‚³ãƒ¼ãƒ‰ã®å…ˆé ­ãƒã‚¤ãƒ³ã‚¿ã‚’å¾—ã‚‹ã€‚
 	*/
 	const u8* data() const;
 			
 	/**
-	* @brief ƒR[ƒh‚ÌƒTƒCƒY‚ğ“¾‚éB
+	* @brief ã‚³ãƒ¼ãƒ‰ã®ã‚µã‚¤ã‚ºã‚’å¾—ã‚‹ã€‚
 	*/
 	int_t size() const;
 		
 	/**
-	* @brief ƒVƒ“ƒ{ƒ‹ƒe[ƒuƒ‹‚©‚çi”Ô–Ú‚ÌƒVƒ“ƒ{ƒ‹‚ğæ‚èo‚·B
+	* @brief ã‚·ãƒ³ãƒœãƒ«ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰iç•ªç›®ã®ã‚·ãƒ³ãƒœãƒ«ã‚’å–ã‚Šå‡ºã™ã€‚
 	*/
 	const ID& get_symbol(int_t i) const;
 	
 	/**
-	* @brief ’lƒe[ƒuƒ‹‚©‚çi”Ô–Ú‚Ì’l‚ğæ‚èo‚·B
+	* @brief å€¤ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰iç•ªç›®ã®å€¤ã‚’å–ã‚Šå‡ºã™ã€‚
 	*/
 	const Any& get_value(int_t i) const;
 	
 	/**
-	* @brief ’lƒe[ƒuƒ‹‚Ìi”Ô–Ú‚É’l‚ğİ’è‚·‚éB
+	* @brief å€¤ãƒ†ãƒ¼ãƒ–ãƒ«ã®iç•ªç›®ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
 	*/
 	void set_value(int_t i, const Any& v) const;
 
 	/**
-	* @brief ƒR[ƒh‚É‘Î‰‚µ‚½ƒ\[ƒXs”‚ğ•Ô‚·B
+	* @brief ã‚³ãƒ¼ãƒ‰ã«å¯¾å¿œã—ãŸã‚½ãƒ¼ã‚¹è¡Œæ•°ã‚’è¿”ã™ã€‚
 	*/
 	int_t compliant_line_number(const u8* p) const;
 

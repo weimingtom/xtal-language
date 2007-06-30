@@ -74,7 +74,7 @@ void PODStackBase::upsize_detail(size_t us){
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	void* oldp = begin_;
-	size_t newcapa = newsize + newsize/2 + 16;
+	size_t newcapa = newsize + newsize/2;
 	void* newp = plusp(allocate(one_size_*(newcapa+1)), 1);
 
 	memcpy(newp, oldp, one_size_*oldsize);

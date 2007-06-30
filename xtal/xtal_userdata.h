@@ -38,7 +38,7 @@ protected:
 };
 
 /**
-* @brief ƒ†[ƒU[’è‹`Œ^‚ğ•Û‚·‚é‚½‚ß‚ÌƒNƒ‰ƒX
+* @brief ãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©å‹ã‚’ä¿æŒã™ã‚‹ãŸã‚ã®ã‚¯ãƒ©ã‚¹
 */
 template<class T>
 class UserData : public Any{
@@ -57,24 +57,24 @@ public:
 		:Any(null){}
 	
 	/**
-	* @brief ->‰‰Zq
-	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉƒI[ƒo[ƒ[ƒh‚·‚éB
+	* @brief ->æ¼”ç®—å­
+	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
 	*/
 	T* operator ->() const{ return get(); }
 	
 	/**
-	* @brief *‰‰Zq
-	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉƒI[ƒo[ƒ[ƒh‚·‚éB
+	* @brief *æ¼”ç®—å­
+	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
 	*/
 	T& operator *() const{ return *get(); }
 	
 	/**
-	* @brief TŒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾‚·‚éB
+	* @brief Tå‹ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—ã™ã‚‹ã€‚
 	*/
 	T* get() const{ return impl()->get(); }
 
 	/**
-	* @brief TŒ^‚ğUserData<T>‚É•ÏŠ·‚·‚éB
+	* @brief Tå‹ã‚’UserData<T>ã«å¤‰æ›ã™ã‚‹ã€‚
 	*/
 	static UserData<T> from_this(T* p){
 		return UserData<T>(UserDataImpl<T>::from_this(p));

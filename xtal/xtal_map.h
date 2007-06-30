@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 #include "xtal_any.h"
@@ -12,20 +11,20 @@ void InitMap();
 class MapImpl;
 
 /**
-* @brief ˜A‘z”z—ñ
+* @brief é€£æƒ³é…åˆ—
 *
 */
 class Map : public Any{
 public:
 
 	/**
-	* @brief ‹ó‚Ì˜A‘z”z—ñ‚ğ¶¬‚·‚é 
+	* @brief ç©ºã®é€£æƒ³é…åˆ—ã‚’ç”Ÿæˆã™ã‚‹ 
 	*
 	*/
 	Map();
 
 	/**
-	* @brief ˜A‘z”z—ñ‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief é€£æƒ³é…åˆ—ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	Map(const Null&)
@@ -38,86 +37,86 @@ public:
 		:Any((AnyImpl*)p){}
 		
 	/**
-	* @brief ˜A‘z”z—ñ‚Ì—e—Ê‚ğ•Ô‚·
+	* @brief é€£æƒ³é…åˆ—ã®å®¹é‡ã‚’è¿”ã™
 	*
 	*/
 	int_t size() const;
 
 	/**
-	* @brief ˜A‘z”z—ñ‚Ì—e—Ê‚ğ•Ô‚·
+	* @brief é€£æƒ³é…åˆ—ã®å®¹é‡ã‚’è¿”ã™
 	*
 	*/
 	int_t length() const;
 
 	/**
-	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğ•Ô‚·
+	* @brief iã«å¯¾å¿œã™ã‚‹è¦ç´ ã‚’è¿”ã™
 	*
 	*/
 	const Any& at(const Any& i) const;
 	
 	/**
-	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğİ’è‚·‚é
+	* @brief iã«å¯¾å¿œã™ã‚‹è¦ç´ ã‚’è¨­å®šã™ã‚‹
 	*
 	*/
 	void set_at(const Any& i, const Any& v) const;
 		
 	/**
-	* @brief ó‚¢ƒRƒs[‚ğ•Ô‚·
+	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™
 	*
 	*/
 	Map clone() const;
 	
 	/**
-	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
+	* @brief ã“ã®é…åˆ—ã®æ–‡å­—åˆ—è¡¨ç¾ã‚’è¿”ã™
 	*
 	*/
 	String to_s() const;
 	
 	/**
-	* @brief key‚Ævalue‚ğƒuƒƒbƒNƒpƒ‰ƒ[ƒ^‚Æ‚·‚éIterator‚ğ•Ô‚·
+	* @brief keyã¨valueã‚’ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¨ã™ã‚‹Iteratorã‚’è¿”ã™
 	*
 	*/
 	Any each_pair() const;
 
 	/**
-	* @brief key‚ğƒuƒƒbƒNƒpƒ‰ƒ[ƒ^‚Æ‚·‚éIterator‚ğ•Ô‚·
+	* @brief keyã‚’ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¨ã™ã‚‹Iteratorã‚’è¿”ã™
 	*
 	*/
 	Any each_key() const;
 
 	/**
-	* @brief value‚ğƒuƒƒbƒNƒpƒ‰ƒ[ƒ^‚Æ‚·‚éIterator‚ğ•Ô‚·
+	* @brief valueã‚’ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¨ã™ã‚‹Iteratorã‚’è¿”ã™
 	*
 	*/
 	Any each_value() const;
 
 	/**
-	* @brief key‚Ævalue‚ğƒuƒƒbƒNƒpƒ‰ƒ[ƒ^‚Æ‚·‚éIterator‚ğ•Ô‚·
+	* @brief keyã¨valueã‚’ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¨ã™ã‚‹Iteratorã‚’è¿”ã™
 	*
-	* each_pair‚Æ“¯‚¶
+	* each_pairã¨åŒã˜
 	*/
 	Any each() const{ return each_pair(); }
 
 	/**
-	* @brief key‚É‘Î‰‚·‚é’l‚ğíœ‚·‚é
+	* @brief keyã«å¯¾å¿œã™ã‚‹å€¤ã‚’å‰Šé™¤ã™ã‚‹
 	*
 	*/
 	void erase(const Any& key) const;
 	
 	/**
-	* @brief ˜AŒ‹‚µ‚½˜A‘z”z—ñ‚ğ•Ô‚·
+	* @brief é€£çµã—ãŸé€£æƒ³é…åˆ—ã‚’è¿”ã™
 	*
 	*/
 	Map cat(const Map& a) const;
 
 	/**
-	* @brief ˜AŒ‹‚µ‚½˜A‘z”z—ñ‚ğ•Ô‚·
+	* @brief é€£çµã—ãŸé€£æƒ³é…åˆ—ã‚’è¿”ã™
 	*
 	*/
 	Map cat_assign(const Map& a) const;
 
 	/**
-	* @brief ‹ó‚©’²‚×‚é
+	* @brief ç©ºã‹èª¿ã¹ã‚‹
 	*
 	*/
 	bool empty() const;

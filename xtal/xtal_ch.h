@@ -51,7 +51,7 @@ inline int to_lalpha(int ch){
 }
 
 /**
-* @brief 先頭文字を渡して、それが何バイト文字か返す
+* @brief 蜈磯　ュ譁㍾ュ励ｒ貂。縺励※縲√◎繧後′菴輔ヰ繧、繝域枚蟄励°霑斐☆
 */
 int_t ch_len(char_t lead);
 

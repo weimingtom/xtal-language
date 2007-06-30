@@ -140,35 +140,35 @@ public:
 	}
 
 	/**
-	* �ǂݐi�߂�B
+	* 読み進める。
 	*/
 	int_t read();
 
 	/**
-	* ���̗v�f��ǂށB
+	* 次の要素を読む。
 	*/
 	int_t peek();
 
 	/**
-	* ���̗v�f������ch�Ɠ�����������ǂݐi�߂�B
-	* @param ch ���̒l�Ǝ��̗v�f���������ꍇ�ɓǂݐi�߂�B
-	* @retval true ���̗v�f��ch�Ɠ����ŁA�ǂݐi�߂��B
-	* @retval false ���̗v�f��ch�ƈقȂ�A�ǂݐi�߂Ȃ������B
+	* 次の要素が引数chと同じだったら読み進める。
+	* @param ch この値と次の要素が等しい場合に読み進める。
+	* @retval true 次の要素はchと同じで、読み進めた。
+	* @retval false 次の要素はchと異なり、読み進めなかった。
 	*/
 	bool eat(int_t ch);
 
 	/**
-	* �v�f����߂��B
+	* 要素を一つ戻す。
 	*/
 	void putback(int_t ch);
 	
 	/**
-	* �|�W�V�����̎擾�B
+	* ポジションの取得。
 	*/
 	int_t position();
 	
 	/**
-	* �|�W�V������pos�̈ʒu�ɖ߂��B
+	* ポジションをposの位置に戻す。
 	*/
 	void set_position(int_t pos);
 
@@ -188,7 +188,7 @@ private:
 	
 
 /*
-* XTAL�v���O�����\�[�X���g�[�N����ɕϊ����Ď��o��
+* XTALプログラムソースをトークン列に変換して取り出す
 */
 class Lexer{
 public:
@@ -196,78 +196,78 @@ public:
 	Lexer();
 	
 	/**
-	* ������
+	* 初期化
 	*/
 	void init(const Stream& stream, const String& source_file_name);
 	
 	/**
-	* �ǂݐi�߂�
+	* 読み進める
 	*/
 	Token read();
 
 	/**
-	* ���̗v�f��ǂ�
+	* 次の要素を読む
 	*/
 	Token peek();
 
 	/**
-	* �ǂݍ��񂾗v�f����߂�
+	* 読み込んだ要素を一つ戻す
 	*/
 	void putback();
 	
 	/**
-	* �w�肵���g�[�N������߂�
-	* ����read��peek�ł́A����Ŗ߂����l��������
+	* 指定したトークンを一つ戻す
+	* 次のreadやpeekでは、これで戻した値が得られる
 	*/
 	void putback(const Token& ch);
 	
 	/**
-	* ������𒼐ړǂރ��[�h�ɕύX����
+	* 文字列を直接読むモードに変更する
 	*/
 	void set_string_mode();
 	
 	/**
-	* ��������g�[�N���ŕԂ����[�h�ɕύX����
+	* 文字列をトークンで返すモードに変更する
 	*/
 	void set_normal_mode();
 
 	/**
-	* ���݂̍s����Ԃ�
+	* 現在の行数を返す
 	*/
 	int_t line(){ return line_; }
 	
 	/**
-	* ���݂̍s����ݒ肷��
+	* 現在の行数を設定する
 	*/
 	void set_line(int_t v){ com_.line = line_ = v; }
 	
 	/**
-	* �g�[�N����ǂ߂�`�̕�����ɕϊ�����
+	* トークンを読める形の文字列に変換する
 	*/
 	String token2str(const Token& t);
 	
 	/**
-	* �L�[���[�h��ID�ɕϊ�����
+	* キーワードをIDに変換する
 	*/
 	ID keyword2id(int_t v);
 
 	/**
-	* Lexer, Parser, CodeBuilder�����ʂ��Ď���LPCCommon�I�u�W�F�N�g��Ԃ�
+	* Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
 	*/
 	LPCCommon* common();
 	
 	/**
-	* ������̋L�^���J�n����
+	* 文字列の記録を開始する
 	*/
 	void begin_record();
 
 	/**
-	* ������̋L�^���I�����āA�����Ԃ��B
+	* 文字列の記録を終了して、それを返す。
 	*/
 	string_t end_record();
 
 	/**
-	* �����Ŏg�p���Ă��郁�����ȂǑS�ĉ������
+	* 内部で使用しているメモリなど全て解放する
 	*/
 	void release();
 	

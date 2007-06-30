@@ -17,7 +17,7 @@ struct RegionAllocObject{
 
 /*
 
-„‰ñƒTƒ“ƒvƒ‹
+å·¡å›žã‚µãƒ³ãƒ—ãƒ«
 
 for(TList<Any>::Node* p = values.head; p; p = p->next){
 	//p->value;
@@ -142,7 +142,7 @@ void TPairList<Key, T>::pop_back(){
 	}
 }
 
-// ’l‚ð•Ô‚·•¶–@—v‘f
+// å€¤ã‚’è¿”ã™æ–‡æ³•è¦ç´ 
 struct Expr : public RegionAllocObject{	
 	enum{ TYPE = __LINE__ };
 	
@@ -163,7 +163,7 @@ inline T* expr_cast(Expr* p){
 	return 0;
 }
 
-// ’l‚ð•Ô‚³‚È‚¢•¶–@—v‘f
+// å€¤ã‚’è¿”ã•ãªã„æ–‡æ³•è¦ç´ 
 struct Stmt : public RegionAllocObject{
 	enum{ TYPE = __LINE__ };
 	

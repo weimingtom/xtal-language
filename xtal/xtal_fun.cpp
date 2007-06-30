@@ -54,7 +54,7 @@ void FunImpl::check_arg(const VMachine& vm){
 void FunImpl::call(const VMachine& vm){
 	check_arg(vm);
 	vm.set_arg_this(this_);
-	vm.impl()->carry_over(this);
+	vm.impl()->carry_over(Fun(this));
 }
 
 int_t FunImpl::arity(){
@@ -63,12 +63,12 @@ int_t FunImpl::arity(){
 
 void LambdaImpl::call(const VMachine& vm){
 	vm.set_arg_this(this_);
-	vm.impl()->mv_carry_over(this);
+	vm.impl()->mv_carry_over(Fun(this));
 }
 
 void MethodImpl::call(const VMachine& vm){
 	check_arg(vm);
-	vm.impl()->carry_over(this);
+	vm.impl()->carry_over(Fun(this));
 }
 
 class VMachineMgrImpl : public AnyImpl{

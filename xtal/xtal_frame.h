@@ -17,7 +17,7 @@ class ClassImpl;
 class InstanceImpl;
 
 /**
-* @briefƒuƒƒbƒN‚ğ•\‚·ƒNƒ‰ƒX
+* @briefãƒ–ãƒ­ãƒƒã‚¯ã‚’è¡¨ã™ã‚¯ãƒ©ã‚¹
 *
 */
 class Frame : public Any{
@@ -36,31 +36,31 @@ public:
 public:
 	
 	/**
-	* @brief ŠO‘¤‚ÌƒXƒR[ƒv‚ğ•\‚·FrameƒIƒuƒWƒFƒNƒg‚ğ•Ô‚·B
+	* @brief å¤–å´ã®ã‚¹ã‚³ãƒ¼ãƒ—ã‚’è¡¨ã™Frameã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’è¿”ã™ã€‚
 	*
 	*/
 	const Frame& outer() const;
 
 	/**
-	* @brief ƒŠƒeƒ‰ƒ‹‚É’è‹`‚³‚ê‚½—v‘f‚Ì”‚ğ•Ô‚·B
+	* @brief ãƒªãƒ†ãƒ©ãƒ«æ™‚ã«å®šç¾©ã•ã‚ŒãŸè¦ç´ ã®æ•°ã‚’è¿”ã™ã€‚
 	*
 	*/
 	int_t block_size() const;
 
 	/**
-	* @brief i”Ô–Ú‚Ìƒƒ“ƒo[‚ğƒ_ƒCƒŒƒNƒg‚Éæ“¾B
+	* @brief iç•ªç›®ã®ãƒ¡ãƒ³ãƒãƒ¼ã‚’ãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆã«å–å¾—ã€‚
 	*
 	*/
 	const Any& member_direct(int_t i) const;
 
 	/**
-	* @brief i”Ô–Ú‚Ìƒƒ“ƒo[‚ğƒ_ƒCƒŒƒNƒg‚Éİ’èB
+	* @brief iç•ªç›®ã®ãƒ¡ãƒ³ãƒãƒ¼ã‚’ãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆã«è¨­å®šã€‚
 	*
 	*/
 	void set_member_direct(int_t i, const Any& value) const;
 
 	/**
-	* @brief ƒƒ“ƒo‚ğ‡Ÿæ‚èo‚·Iterator‚ğ•Ô‚·
+	* @brief ãƒ¡ãƒ³ãƒã‚’é †æ¬¡å–ã‚Šå‡ºã™Iteratorã‚’è¿”ã™
 	*
 	* @code
 	* Xfor2(key, value, frame.each_member()){
@@ -71,7 +71,7 @@ public:
 	Any each_member() const;
 
 	/**
-	* @brief Xtal‚Å’è‹`‚³‚ê‚Ä‚¢‚é‚È‚çtrue‚ğ•Ô‚·B
+	* @brief Xtalã§å®šç¾©ã•ã‚Œã¦ã„ã‚‹ãªã‚‰trueã‚’è¿”ã™ã€‚
 	*
 	*/
 	bool is_defined_by_xtal() const;
@@ -81,20 +81,20 @@ public:
 };
 
 /**
-* @briefƒNƒ‰ƒX
+* @briefã‚¯ãƒ©ã‚¹
 *
 */ 
 class Class : public Frame{
 public:
 
 	/**
-	* @brief –¼‘O‚ğ—^‚¦‚Ä\’z‚·‚é
+	* @brief åå‰ã‚’ä¸ãˆã¦æ§‹ç¯‰ã™ã‚‹
 	*
 	*/	
 	Class(const ID& = ID(null));
 	
 	/**
-	* @brief ƒNƒ‰ƒX‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief ã‚¯ãƒ©ã‚¹ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	Class(const Null&)
@@ -107,62 +107,62 @@ public:
 
 public:
 	/**
-	* @brief V‚µ‚¢ƒƒ“ƒo‚ğ’è‹`‚·‚é
+	* @brief æ–°ã—ã„ãƒ¡ãƒ³ãƒã‚’å®šç¾©ã™ã‚‹
 	*
-	* @param name V‚µ‚­’è‹`‚·‚éƒƒ“ƒo‚Ì–¼‘O
+	* @param name æ–°ã—ãå®šç¾©ã™ã‚‹ãƒ¡ãƒ³ãƒã®åå‰
 	*/
 	void def(const ID& name, const Any& value) const{ Any::def(name, value); }
 
 	/**
-	* @brief ƒƒ“ƒo‚ğæ‚èo‚·
+	* @brief ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™
 	*
-	* @param name æ‚èo‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
+	* @param name å–ã‚Šå‡ºã—ãŸã„ãƒ¡ãƒ³ãƒã®åå‰
 	*/
 	const Any& member(const ID& name) const;
 
 	/**
-	* @brief ƒƒ“ƒo‚ğæ‚èo‚·
-	* ‰ÂG«‚ğl—¶‚µ‚Äæ‚èo‚·
+	* @brief ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™
+	* å¯è§¦æ€§ã‚’è€ƒæ…®ã—ã¦å–ã‚Šå‡ºã™
 	*
-	* @param name æ‚èo‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
-	* @param self ‰Â‹«‚ğ”»’è‚·‚é‚½‚ß‚ÌƒIƒuƒWƒFƒNƒg
+	* @param name å–ã‚Šå‡ºã—ãŸã„ãƒ¡ãƒ³ãƒã®åå‰
+	* @param self å¯è¦–æ€§ã‚’åˆ¤å®šã™ã‚‹ãŸã‚ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 	*/
 	const Any& member(const ID& name, const Any& self) const;
 
 	/**
-	* @brief nameƒƒ“ƒo‚Ì‰ÂG«‚ğprotected‚É•ÏX‚·‚é
+	* @brief nameãƒ¡ãƒ³ãƒã®å¯è§¦æ€§ã‚’protectedã«å¤‰æ›´ã™ã‚‹
 	*
-	* @param name ‰ÂG«‚ğ•ÏX‚·‚éƒƒ“ƒo
-	* @param kind ‰ÂG«‚ğ•\‚·’è”
+	* @param name å¯è§¦æ€§ã‚’å¤‰æ›´ã™ã‚‹ãƒ¡ãƒ³ãƒ
+	* @param kind å¯è§¦æ€§ã‚’è¡¨ã™å®šæ•°
 	*/
 	void set_accessibility(const ID& name, int_t kind) const;
 
 	/**
-	* @brief ƒƒ“ƒo‚ğÄİ’è‚·‚é
-	* XtalƒŒƒxƒ‹‚Å‚Í‹Ö~‚³‚ê‚Ä‚¢‚é‘€ì‚¾‚ªAC++ƒŒƒxƒ‹‚Å‚Í‰Â”\‚É‚µ‚Ä‚¨‚­
+	* @brief ãƒ¡ãƒ³ãƒã‚’å†è¨­å®šã™ã‚‹
+	* Xtalãƒ¬ãƒ™ãƒ«ã§ã¯ç¦æ­¢ã•ã‚Œã¦ã„ã‚‹æ“ä½œã ãŒã€C++ãƒ¬ãƒ™ãƒ«ã§ã¯å¯èƒ½ã«ã—ã¦ãŠã
 	*
-	* @param name Äİ’è‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
+	* @param name å†è¨­å®šã—ãŸã„ãƒ¡ãƒ³ãƒã®åå‰
 	*/
 	void set_member(const ID& name, const Any& value) const;
 
 	/**
-	* @brief Mix-in‚·‚é
+	* @brief Mix-inã™ã‚‹
 	*
-	* @param md Mix-in‚·‚éƒNƒ‰ƒXƒIƒuƒWƒFƒNƒg
+	* @param md Mix-inã™ã‚‹ã‚¯ãƒ©ã‚¹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 	*/
 	void inherit(const Any& md) const;
 
 	/**
-	* @brief Mix-in‚³‚ê‚Ä‚¢‚é‚©’²‚×‚é
+	* @brief Mix-inã•ã‚Œã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹
 	*
-	* @param md Mix-in‚³‚ê‚Ä‚¢‚é’²‚×‚½‚¢ƒNƒ‰ƒXƒIƒuƒWƒFƒNƒg
+	* @param md Mix-inã•ã‚Œã¦ã„ã‚‹èª¿ã¹ãŸã„ã‚¯ãƒ©ã‚¹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 	*/
 	bool is_inherited(const Any& md) const;
 
 	/**
-	* @brief ŠÖ”‚ğ’è‹`‚·‚é
+	* @brief é–¢æ•°ã‚’å®šç¾©ã™ã‚‹
 	*
-	* cls.fun("name", &foo); ‚Í cls.def("name", xtal::fun(&foo)); ‚Æ“¯ˆê
+	* cls.fun("name", &foo); ã¯ cls.def("name", xtal::fun(&foo)); ã¨åŒä¸€
 	*/
 	template<class Fun, class Policy>
 	CFun fun(const ID& name, Fun fun, const Policy& policy) const{
@@ -170,9 +170,9 @@ public:
 	}
 
 	/**
-	* @brief ŠÖ”‚ğ’è‹`‚·‚é
+	* @brief é–¢æ•°ã‚’å®šç¾©ã™ã‚‹
 	*
-	* cls.fun("name", &foo); ‚Í cls.def("name", xtal::fun(&foo)); ‚Æ“¯ˆê
+	* cls.fun("name", &foo); ã¯ cls.def("name", xtal::fun(&foo)); ã¨åŒä¸€
 	*/
 	template<class Fun>
 	CFun fun(const ID& name, Fun f) const{
@@ -180,9 +180,9 @@ public:
 	}
 
 	/**
-	* @brief ŠÖ”‚ğ’è‹`‚·‚é
+	* @brief é–¢æ•°ã‚’å®šç¾©ã™ã‚‹
 	*
-	* cls.method("name", &foo); ‚Í cls.def("name", xtal::method(&foo)); ‚Æ“¯ˆê
+	* cls.method("name", &foo); ã¯ cls.def("name", xtal::method(&foo)); ã¨åŒä¸€
 	*/
 	template<class Fun, class Policy>
 	CFun method(const ID& name, Fun fun, const Policy& policy) const{
@@ -190,9 +190,9 @@ public:
 	}
 
 	/**
-	* @brief ŠÖ”‚ğ’è‹`‚·‚é
+	* @brief é–¢æ•°ã‚’å®šç¾©ã™ã‚‹
 	*
-	* cls.method("name", &foo); ‚Í cls.def("name", xtal::method(&foo)); ‚Æ“¯ˆê
+	* cls.method("name", &foo); ã¯ cls.def("name", xtal::method(&foo)); ã¨åŒä¸€
 	*/
 	template<class Fun>
 	CFun method(const ID& name, Fun fun) const{
@@ -233,24 +233,24 @@ protected:
 };
 
 /**
-* @brief C++‚ÌƒNƒ‰ƒX‚É‘Î‰‚µ‚½ƒNƒ‰ƒX
+* @brief C++ã®ã‚¯ãƒ©ã‚¹ã«å¯¾å¿œã—ãŸã‚¯ãƒ©ã‚¹
 *
-* ˆê“x\’z‚³‚ê‚é‚ÆAÀs’†‚¸‚Á‚Æ•Û‚³‚ê‚éB
-* TClass<Foo>::get()ŠÖ”‚Å‚»‚ê‚ğæ“¾‚Å‚«‚éB
+* ä¸€åº¦æ§‹ç¯‰ã•ã‚Œã‚‹ã¨ã€å®Ÿè¡Œä¸­ãšã£ã¨ä¿æŒã•ã‚Œã‚‹ã€‚
+* TClass<Foo>::get()é–¢æ•°ã§ãã‚Œã‚’å–å¾—ã§ãã‚‹ã€‚
 */
 template<class C>
 class TClass : public Class{
 public:
 
 	/**
-	* @brief –¼‘O‚ğ—^‚¦‚Ä\’z‚·‚é
+	* @brief åå‰ã‚’ä¸ãˆã¦æ§‹ç¯‰ã™ã‚‹
 	*
 	*/	
 	TClass(const ID& name = ID(null))
 		:Class(name, pinst_, init_tag()){}
 	
 	/**
-	* @brief ƒNƒ‰ƒX‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief ã‚¯ãƒ©ã‚¹ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	TClass(const Null&)
@@ -270,7 +270,7 @@ private:
 public:
 
 	/**
-	* @brief ‚±‚ÌƒNƒ‰ƒX‚ªŠù‚É\’z‚³‚ê‚Ä‚¢‚é‚©’²‚×‚é
+	* @brief ã“ã®ã‚¯ãƒ©ã‚¹ãŒæ—¢ã«æ§‹ç¯‰ã•ã‚Œã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹
 	*
 	*/
 	static bool exists(){
@@ -278,7 +278,7 @@ public:
 	}
 
 	/**
-	* @brief \’z‚³‚ê‚½ƒIƒuƒWƒFƒNƒg‚ğæ“¾‚·‚é
+	* @brief æ§‹ç¯‰ã•ã‚ŒãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å–å¾—ã™ã‚‹
 	*
 	*/
 	static const TClass<C>& get(){
@@ -296,7 +296,7 @@ public:
 	}
 	
 	/**
-	* @brief w’è‚µ‚½ƒNƒ‰ƒX‚Æ“¯‚¶ƒ‚ƒm‚ğİ’è‚·‚é
+	* @brief æŒ‡å®šã—ãŸã‚¯ãƒ©ã‚¹ã¨åŒã˜ãƒ¢ãƒã‚’è¨­å®šã™ã‚‹
 	*
 	*/
 	static void conform_to(const Class& v){
@@ -307,7 +307,7 @@ public:
 public:
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚²ãƒƒã‚¿ãƒ¼ã‚’ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
 	*/
 	template<class T, class U, class Policy>
@@ -318,10 +318,10 @@ public:
 	}
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒZƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚»ãƒƒã‚¿ãƒ¼ã‚’ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
-	* Xtal‚Å‚ÍAobj.name = 10; ‚Æ‚·‚é‚É‚Íset_name‚Æset_‚ğ‘O’u‚µ‚½ƒƒ\ƒbƒh‚ğ’è‹`‚·‚é•K—v‚ª‚ ‚é‚½‚ßA
-	* ’Pƒ‚ÈƒZƒbƒ^[‚ğ’è‹`‚µ‚½‚¢ê‡Aset_xxx‚Æ‚·‚é‚±‚Æ‚ğ–Y‚ê‚È‚¢‚±‚ÆB
+	* Xtalã§ã¯ã€obj.name = 10; ã¨ã™ã‚‹ã«ã¯set_nameã¨set_ã‚’å‰ç½®ã—ãŸãƒ¡ã‚½ãƒƒãƒ‰ã‚’å®šç¾©ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ãŸã‚ã€
+	* å˜ç´”ãªã‚»ãƒƒã‚¿ãƒ¼ã‚’å®šç¾©ã—ãŸã„å ´åˆã€set_xxxã¨ã™ã‚‹ã“ã¨ã‚’å¿˜ã‚Œãªã„ã“ã¨ã€‚
 	*/
 	template<class T, class U, class Policy>
 	CFun setter(const ID& name, T U::* v, const Policy&) const{
@@ -331,11 +331,11 @@ public:
 	}
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[AƒZƒbƒ^[‚ğ—¼•û¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚²ãƒƒã‚¿ãƒ¼ã€ã‚»ãƒƒã‚¿ãƒ¼ã‚’ä¸¡æ–¹ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
 	* cls.getter(name, var, policy);
 	* cls.setter(String("set_").cat(name), v, policy);
-	* ‚Æ“™‚µ‚¢	
+	* ã¨ç­‰ã—ã„	
 	*/	
 	template<class T, class U, class Policy>
 	void var(const ID& name, T U::* v, const Policy& policy) const{
@@ -344,7 +344,7 @@ public:
 	}
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚²ãƒƒã‚¿ãƒ¼ã‚’ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
 	*/
 	template<class T, class U>
@@ -353,7 +353,7 @@ public:
 	}
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒZƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚»ãƒƒã‚¿ãƒ¼ã‚’ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
 	*/
 	template<class T, class U>
@@ -362,11 +362,11 @@ public:
 	}
 	
 	/**
-	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[AƒZƒbƒ^[‚ğ—¼•û¶¬‚µA’è‹`‚·‚é
+	* @brief ãƒ¡ãƒ³ãƒå¤‰æ•°ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã‚²ãƒƒã‚¿ãƒ¼ã€ã‚»ãƒƒã‚¿ãƒ¼ã‚’ä¸¡æ–¹ç”Ÿæˆã—ã€å®šç¾©ã™ã‚‹
 	*
 	* cls.getter(name, v);
 	* cls.setter(String("set_").cat(name), v);
-	* ‚Æ“™‚µ‚¢	
+	* ã¨ç­‰ã—ã„	
 	*/	
 	template<class T, class U>
 	void var(const ID& name, T U::* v) const{

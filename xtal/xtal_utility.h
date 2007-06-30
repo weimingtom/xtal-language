@@ -114,7 +114,7 @@ struct static_ntz{
 };
 
 
-// Å’áŒÀ‚Ìƒƒ^ƒvƒƒOƒ‰ƒ~ƒ“ƒO‰º’n
+// æœ€ä½Žé™ã®ãƒ¡ã‚¿ãƒ—ãƒ­ã‚°ãƒ©ãƒŸãƒ³ã‚°ä¸‹åœ°
 
 template<bool>
 struct IfHelper{
@@ -217,13 +217,13 @@ namespace detail{
 
 
 /**
-* AllocƒNƒ‰ƒX‚ðŽg‚Á‚½STLƒRƒ“ƒeƒi‚ðŽg‚¢‚â‚·‚­‚·‚é‚½‚ß‚Ìƒ†[ƒeƒBƒŠƒeƒB
+* Allocã‚¯ãƒ©ã‚¹ã‚’ä½¿ã£ãŸSTLã‚³ãƒ³ãƒ†ãƒŠã‚’ä½¿ã„ã‚„ã™ãã™ã‚‹ãŸã‚ã®ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£
 * 
-* Allocator-Container ‚Ì—ª
+* Allocator-Container ã®ç•¥
 * 
-* AC<int>::vector ‚Í std::vector<int, Alloc<int> > ‚Æ“¯‚¶
-* AC<int, float>::map ‚Í std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > ‚Æ“¯‚¶
-* AC<int, float, Comp>::map ‚Í std::map<int, float, Comp, Alloc<std::pair<const int, float> > > ‚Æ“¯‚¶
+* AC<int>::vector ã¯ std::vector<int, Alloc<int> > ã¨åŒã˜
+* AC<int, float>::map ã¯ std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > ã¨åŒã˜
+* AC<int, float, Comp>::map ã¯ std::map<int, float, Comp, Alloc<std::pair<const int, float> > > ã¨åŒã˜
 */
 template<class FIRST, class SECOND = detail::AC_default, class THIRD = detail::AC_default>
 struct AC{

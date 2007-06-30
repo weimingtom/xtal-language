@@ -17,7 +17,7 @@
 namespace xtal{
 
 CodeBuilder::CodeBuilder(){
-	fun_frames_.reserve(16);
+
 }
 
 CodeBuilder::~CodeBuilder(){
@@ -171,7 +171,7 @@ bool CodeBuilder::put_set_local_code(int_t var){
 		else if(id == 3){ put_code_u8(CODE_SET_LOCAL_3); }
 		return true;
 	}else{
-		//com_->error(line(), Xt("’è‹`‚³‚ê‚Ä‚¢‚È‚¢•Ï”%s‚É‘ã“ü‚µ‚æ‚¤‚Æ‚µ‚Ü‚µ‚½")(to_id(var)));
+		//com_->error(line(), Xt("å®šç¾©ã•ã‚Œã¦ã„ãªã„å¤‰æ•°%sã«ä»£å…¥ã—ã‚ˆã†ã¨ã—ã¾ã—ãŸ")(to_id(var)));
 		put_code_u8(CODE_SET_GLOBAL);
 		put_code_u16(var);
 		return false;
@@ -425,7 +425,7 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 	s.mixins = mixins;
 	s.frame_core_num = p_->frame_core_table_.size();
 
-	// ‚à‚µƒq[ƒv‚Éæ‚éƒXƒR[ƒv‚ª—ˆ‚½‚È‚çA¡‚Ü‚ÅÏ‚ñ‚¾‘S‚Ä‚ÌƒXƒR[ƒv‚ğƒq[ƒv‚Éæ‚¹‚éƒtƒ‰ƒO‚ğ—§‚Ä‚é
+	// ã‚‚ã—ãƒ’ãƒ¼ãƒ—ã«ä¹—ã‚‹ã‚¹ã‚³ãƒ¼ãƒ—ãŒæ¥ãŸãªã‚‰ã€ä»Šã¾ã§ç©ã‚“ã å…¨ã¦ã®ã‚¹ã‚³ãƒ¼ãƒ—ã‚’ãƒ’ãƒ¼ãƒ—ã«ä¹—ã›ã‚‹ãƒ•ãƒ©ã‚°ã‚’ç«‹ã¦ã‚‹
 	if(on_heap || debug::is_enabled()){
 		set_on_heap_flag();
 	}
@@ -821,7 +821,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				compile(p->value);
 			}
 
-			if(SendExpr* e2 = expr_cast<SendExpr>(e->expr)){ // a.b(); ƒƒbƒZ[ƒW‘—M®
+			if(SendExpr* e2 = expr_cast<SendExpr>(e->expr)){ // a.b(); ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸é€ä¿¡å¼
 				compile(e2->lhs);
 
 				if(e2->pvar){
@@ -839,7 +839,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				}else{
 					put_code_u16(e2->var);
 				}
-			}else if(expr_cast<CalleeExpr>(e->expr)){ //recall(); Ä‹AŒÄ‚Ño‚µ‚¾
+			}else if(expr_cast<CalleeExpr>(e->expr)){ //recall(); å†å¸°å‘¼ã³å‡ºã—ã 
 				put_code_u8(CODE_CALLEE);
 			}else{
 				compile(e->expr);
@@ -902,7 +902,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 			block_begin(FUN, 0, e->vars, e->on_heap);{
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
-					// ƒfƒtƒHƒ‹ƒg’l‚ğ‚Â
+					// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆå€¤ã‚’æŒã¤
 					if(p->value){
 						
 						int_t id = lookup_variable(p->key);
@@ -1263,10 +1263,10 @@ void CodeBuilder::compile(Stmt* ex){
 			put_code_u8(CODE_TRY_END);
 
 			set_label(catch_label);
-			// catchß‚ÌƒR[ƒh‚ğ–„‚ß‚Ş
+			// catchç¯€ã®ã‚³ãƒ¼ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚€
 			if(e->catch_stmt){
 				
-				// catchß‚Ì’†‚Å‚Ì—áŠO‚É”õ‚¦A—áŠOƒtƒŒ[ƒ€‚ğ\’zB
+				// catchç¯€ã®ä¸­ã§ã®ä¾‹å¤–ã«å‚™ãˆã€ä¾‹å¤–ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’æ§‹ç¯‰ã€‚
 				int_t oppos2 = code_size();
 				put_code_u8(CODE_TRY_BEGIN);
 				put_code_u16(0);
@@ -1290,7 +1290,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}
 			
 			set_label(finally_label);
-			// finallyß‚ÌƒR[ƒh‚ğ–„‚ß‚Ş
+			// finallyç¯€ã®ã‚³ãƒ¼ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚€
 			compile(e->finally_stmt);
 			
 			fun_frame().finallys.pop();
@@ -1367,13 +1367,12 @@ void CodeBuilder::compile(Stmt* ex){
 
 		XTAL_EXPR_CASE(MultipleAssignStmt){
 			int_t pushed_count = 0;
-			int_t lhs_size = e->discard ? e->lhs.size+1 : e->lhs.size;
 			for(TList<Expr*>::Node* rhs=e->rhs.head; rhs; rhs=rhs->next){	
 				if(!rhs->next){
 					if(expr_cast<CallExpr>(rhs->value) || expr_cast<SendExpr>(rhs->value)){
 						int_t rrc;
-						if(pushed_count<lhs_size){
-							rrc = lhs_size - pushed_count;
+						if(pushed_count<e->lhs.size){
+							rrc = e->lhs.size - pushed_count;
 						}else{
 							rrc = 1;
 						}
@@ -1392,8 +1391,8 @@ void CodeBuilder::compile(Stmt* ex){
 						break;
 					}else{
 						int_t rrc;
-						if(pushed_count<lhs_size){
-							rrc = lhs_size - pushed_count;
+						if(pushed_count<e->lhs.size){
+							rrc = e->lhs.size - pushed_count;
 						}else{
 							rrc = 1;
 						}
@@ -1407,10 +1406,10 @@ void CodeBuilder::compile(Stmt* ex){
 				}
 			}
 
-			if(lhs_size!=pushed_count){
+			if(e->lhs.size!=pushed_count){
 				put_code_u8(CODE_ADJUST_RESULT);
 				put_code_u8(pushed_count);
-				put_code_u8(lhs_size);
+				put_code_u8(e->lhs.size);
 				put_code_u8(e->discard ? RESULT_DISCARD : 0);
 			}
 

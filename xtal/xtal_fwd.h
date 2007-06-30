@@ -10,7 +10,7 @@
 
 
 /**
-* 全ての要素はxtal namespaceの中
+* 蜈ｨ縺ｦ縺ｮ隕∫ｴ縺ｯxtal namespace縺ｮ荳ｭ
 */
 namespace xtal{
 
@@ -84,7 +84,7 @@ typedef char char_t;
 typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
 
 /**
-* プリミティブな型を示す整数値
+* 繝励Μ繝溘ユ繧｣繝悶↑蝙九ｒ遉ｺ縺呎紛謨ｰ蛟､
 */
 enum PrimitiveType{
 	TYPE_NULL,

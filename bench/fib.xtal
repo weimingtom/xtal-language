@@ -1,0 +1,9 @@
+
+fib: fun(i){
+	if(i<2)
+		return 1;
+	return callee(i-1)+callee(i-2);
+}
+
+fib(33).p;
+

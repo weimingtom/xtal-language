@@ -175,8 +175,8 @@ void initialize(){
 
 	/**/
 	
-	atexit(&uninitialize); // uninitialize‚ğ“o˜^‚·‚é
-	atexit(&uninitialize); // uninitialize‚ğ“o˜^‚·‚é ‚¦IH2‰ñ‚àIH
+	atexit(&uninitialize); // uninitializeã‚’ç™»éŒ²ã™ã‚‹
+	atexit(&uninitialize); // uninitializeã‚’ç™»éŒ²ã™ã‚‹ ãˆï¼ï¼Ÿ2å›ã‚‚ï¼ï¼Ÿ
 
 }
 
@@ -203,7 +203,7 @@ void uninitialize(){
 		fprintf(stderr, "finished gc\n");
 		fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		//print_alive_objects();
-		XTAL_ASSERT(false); // ƒIƒuƒWƒFƒNƒg‚ª‘S‚Ä‰ğ•ú‚³‚ê‚Ä‚¢‚È‚¢B
+		XTAL_ASSERT(false); // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒå…¨ã¦è§£æ”¾ã•ã‚Œã¦ã„ãªã„ã€‚
 	}
 	
 	for(Any** p = place_begin_; p!=place_current_; ++p){
@@ -276,11 +276,11 @@ void gc(){
 
 		AnyImpl** objects_alive = objects_begin_+objects_gene_line_;
 
-		// malloc‚Ì’†‚©‚çgc‚ªŒÄ‚Î‚ê‚Ä‚¢‚é
+		// mallocã®ä¸­ã‹ã‚‰gcãŒå‘¼ã°ã‚Œã¦ã„ã‚‹
 		if(calling_malloc()){
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 				if((*it)->ref_count()!=0
-					// finalizeƒƒ\ƒbƒh‚ª‚ ‚éƒIƒuƒWƒFƒNƒg‚à¶‚«‰„‚Ñ‚³‚¹‚é
+					// finalizeãƒ¡ã‚½ãƒƒãƒ‰ãŒã‚ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚‚ç”Ÿãå»¶ã³ã•ã›ã‚‹
 					|| (*it)->get_class().member(finalize_id)){
 					std::swap(*it, *objects_alive++);
 				}
@@ -301,7 +301,7 @@ void gc(){
 				int_t objects_alive_n = objects_alive-objects_begin_;
 				int_t objects_current_n = objects_current_-objects_begin_;
 
-				// €‚Ê—\’è‚ÌƒIƒuƒWƒFƒNƒg‚Ìfinalizer‚ğÀs‚·‚é
+				// æ­»ã¬äºˆå®šã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®finalizerã‚’å®Ÿè¡Œã™ã‚‹
 				for(int_t i=objects_alive_n; i<objects_current_n; ++i){
 					if(const Any& ret = objects_begin_[i]->get_class().member(finalize_id)){
 						vm.setup_call(0);
@@ -379,7 +379,7 @@ void full_gc(){
 			{
 				AnyImpl** objects_alive = objects_begin_;
 
-				// malloc‚Ì’†‚©‚çgc‚ªŒÄ‚Î‚ê‚Ä‚¢‚é
+				// mallocã®ä¸­ã‹ã‚‰gcãŒå‘¼ã°ã‚Œã¦ã„ã‚‹
 				if(calling_malloc()){
 					{
 						Visitor m(1);
@@ -388,7 +388,7 @@ void full_gc(){
 							end = true;
 							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 								if((*it)->ref_count()!=0 
-									// finalizeƒƒ\ƒbƒh‚ª‚ ‚éƒIƒuƒWƒFƒNƒg‚à¶‚«‰„‚Ñ‚³‚¹‚é
+									// finalizeãƒ¡ã‚½ãƒƒãƒ‰ãŒã‚ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚‚ç”Ÿãå»¶ã³ã•ã›ã‚‹
 									|| (*it)->get_class().member(finalize_id)){
 									end = false;
 									(*it)->visit_members(m);
@@ -429,7 +429,7 @@ void full_gc(){
 						int_t objects_alive_n = objects_alive-objects_begin_;
 						int_t objects_current_n = objects_current_-objects_begin_;
 
-						// €‚Ê—\’è‚ÌƒIƒuƒWƒFƒNƒg‚Ìfinalizer‚ğÀs‚·‚é
+						// æ­»ã¬äºˆå®šã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®finalizerã‚’å®Ÿè¡Œã™ã‚‹
 						for(int_t i=objects_alive_n; i<objects_current_n; ++i){		
 							if(const Any& ret = objects_begin_[i]->get_class().member(finalize_id)){
 								vm.setup_call(0);
@@ -446,7 +446,7 @@ void full_gc(){
 						}
 
 
-						{// QÆƒJƒEƒ“ƒg‚ğ‚Ü‚½ˆê’U‰º‚°‚é
+						{// å‚ç…§ã‚«ã‚¦ãƒ³ãƒˆã‚’ã¾ãŸä¸€æ—¦ä¸‹ã’ã‚‹
 							Visitor m(-1);	
 							for(AnyImpl** it = objects_begin_; it!=objects_current_; ++it){
 								(*it)->visit_members(m);
@@ -475,7 +475,7 @@ void full_gc(){
 					}
 				}
 
-				{// íœ‚³‚ê‚éƒIƒuƒWƒFƒNƒg‚¾‚ªA®‡«‚ğ‚Æ‚é‚½‚ßQÆƒJƒEƒ“ƒ^‚ğŒ³‚É–ß‚·
+				{// å‰Šé™¤ã•ã‚Œã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã ãŒã€æ•´åˆæ€§ã‚’ã¨ã‚‹ãŸã‚å‚ç…§ã‚«ã‚¦ãƒ³ã‚¿ã‚’å…ƒã«æˆ»ã™
 					Visitor m(1);
 					for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 						(*it)->visit_members(m);

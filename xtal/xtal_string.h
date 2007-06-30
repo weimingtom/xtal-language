@@ -11,40 +11,40 @@ void InitString();
 class StringImpl;
 
 /**
-* @brief •¶š—ñ
+* @brief æ–‡å­—åˆ—
 *
 */
 class String : public Any{
 public:
 
 	/**
-	* @brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
+	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
-	* @param str NULLI’[•¶š—ñ
+	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
 	*/
 	String(const char* str = "");
 
 	/**
-	* @brief STL‚Ì•¶š—ñ‚©‚ç\’z‚·‚é
+	* @brief STLã®æ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	String(const string_t& str);
 
 	/**
-	* @brief C•¶š—ñ‚©‚çsize•ª‚Ì’·‚³‚ğæ‚èo‚µ\’z‚·‚é
+	* @brief Cæ–‡å­—åˆ—ã‹ã‚‰sizeåˆ†ã®é•·ã•ã‚’å–ã‚Šå‡ºã—æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	String(const char* str, uint_t size);
 	
 	/**
-	* @brief begin‚©‚çlast‚Ü‚Å‚Ì•¶š—ñ‚Å\’z‚·‚é
+	* @brief beginã‹ã‚‰lastã¾ã§ã®æ–‡å­—åˆ—ã§æ§‹ç¯‰ã™ã‚‹
 	*
 	* [begin, last)
 	*/
 	String(const char* begin, const char* last);
 
 	/**
-	* @brief “ñ‚Â‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
+	* @brief äºŒã¤ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
@@ -53,11 +53,11 @@ public:
 	struct delegate_memory_t{};
 
 	/**
-	* @brief user_malloc‚ÅŠl“¾‚µ‚½ƒƒ‚ƒŠ‚ğˆÏ÷‚µ‚Ä\’z‚·‚éB
+	* @brief user_mallocã§ç²å¾—ã—ãŸãƒ¡ãƒ¢ãƒªã‚’å§”è­²ã—ã¦æ§‹ç¯‰ã™ã‚‹ã€‚
 	*
-	* @param str NULLI’[•¶š—ñ
-	* @param size •¶š—ñ‚Ì’·‚³
-	* @param buffer_size Šm•Û‚µ‚½ƒoƒbƒtƒ@‚ÌƒTƒCƒY
+	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
+	* @param size æ–‡å­—åˆ—ã®é•·ã•
+	* @param buffer_size ç¢ºä¿ã—ãŸãƒãƒƒãƒ•ã‚¡ã®ã‚µã‚¤ã‚º
 	*/
 	String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t);
 
@@ -68,7 +68,7 @@ public:
 		:Any((AnyImpl*)p){}
 
 	/**
-	* @brief •¶š—ñ‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief æ–‡å­—åˆ—ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	String(const Null&)
@@ -77,72 +77,72 @@ public:
 public:
 
 	/**
-	* @brief 0I’[‚Ì•¶š—ñæ“ª‚Ìƒ|ƒCƒ“ƒ^‚ğ•Ô‚·B
+	* @brief 0çµ‚ç«¯ã®æ–‡å­—åˆ—å…ˆé ­ã®ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™ã€‚
 	*
 	*/
 	const char* c_str() const;
 
 	/**
-	* @brief •¶š—ñ‚Ì’·‚³‚ğ•Ô‚·B
+	* @brief æ–‡å­—åˆ—ã®é•·ã•ã‚’è¿”ã™ã€‚
 	*
 	*/
 	uint_t size() const;
 
 	/**
-	* @brief •¶š—ñ‚Ì’·‚³‚ğ•Ô‚·B
+	* @brief æ–‡å­—åˆ—ã®é•·ã•ã‚’è¿”ã™ã€‚
 	*
 	*/
 	uint_t length() const;
 
 	/**
-	* @brief •”•ª•¶š—ñ‚ğæ‚èo‚·B
+	* @brief éƒ¨åˆ†æ–‡å­—åˆ—ã‚’å–ã‚Šå‡ºã™ã€‚
 	*
 	*/
 	String slice(int_t first, int_t last) const;
 
 	/*
-	* @brief ó‚¢ƒRƒs[‚ğ•Ô‚·B
+	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™ã€‚
 	*
 	*/
 	String clone() const;
 
 	/**
-	* @brief ˆêˆÓ‰»‚µ‚½•¶š—ñ‚ğ•Ô‚·B
+	* @brief ä¸€æ„åŒ–ã—ãŸæ–‡å­—åˆ—ã‚’è¿”ã™ã€‚
 	*
 	*/
 	ID intern() const;
 
 	/**
-	* @brief ˆêˆÓ‰»‚³‚ê‚Ä‚¢‚é‚©•Ô‚·B
+	* @brief ä¸€æ„åŒ–ã•ã‚Œã¦ã„ã‚‹ã‹è¿”ã™ã€‚
 	*/
 	bool is_interned() const;
 
 	/**
-	* @brief ®”‚É•ÏŠ·‚µ‚½Œ‹‰Ê‚ğ•Ô‚·B
+	* @brief æ•´æ•°ã«å¤‰æ›ã—ãŸçµæœã‚’è¿”ã™ã€‚
 	*
 	*/ 
 	int_t to_i() const;
 	
 	/**
-	* @brief •‚“®¬”“_”‚É•ÏŠ·‚µ‚½Œ‹‰Ê‚ğ•Ô‚·B
+	* @brief æµ®å‹•å°æ•°ç‚¹æ•°ã«å¤‰æ›ã—ãŸçµæœã‚’è¿”ã™ã€‚
 	*
 	*/ 
 	float_t to_f() const;
 	
 	/**
-	* @brief ©•ª©g‚ğ•Ô‚·B
+	* @brief è‡ªåˆ†è‡ªèº«ã‚’è¿”ã™ã€‚
 	*
 	*/
 	String to_s() const;
 
 	/**
-	* @brief sep‚Å‹æØ‚Á‚½•¶š—ñ‚ğ“¾‚ç‚ê‚éƒCƒeƒŒ[ƒ^‚ğ•Ô‚·B
+	* @brief sepã§åŒºåˆ‡ã£ãŸæ–‡å­—åˆ—ã‚’å¾—ã‚‰ã‚Œã‚‹ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã‚’è¿”ã™ã€‚
 	*
 	*/ 
 	Any split(const String& sep) const;
 
 	/**
-	* @brief ˜AŒ‹‚·‚é
+	* @brief é€£çµã™ã‚‹
 	*
 	*/
 	String cat(const String& v) const;
@@ -164,32 +164,32 @@ public:
 };
 
 /**
-* @brief •K‚¸ƒCƒ“ƒ^[ƒ“Ï‚İ‚Ì•¶š—ñ‚ğ•Û‚·‚é‚½‚ß‚ÌƒNƒ‰ƒX
+* @brief å¿…ãšã‚¤ãƒ³ã‚¿ãƒ¼ãƒ³æ¸ˆã¿ã®æ–‡å­—åˆ—ã‚’ä¿æŒã™ã‚‹ãŸã‚ã®ã‚¯ãƒ©ã‚¹
 *
 */
 class ID : public String{
 public:
 	
 	/**
-	* @brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
+	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
 	*/	
 	ID(const char* name = "");
 	
 	/**
-	* @brief C•¶š—ñ‚©‚çsize•ª‚Ì’·‚³‚ğæ‚èo‚µ\’z‚·‚é
+	* @brief Cæ–‡å­—åˆ—ã‹ã‚‰sizeåˆ†ã®é•·ã•ã‚’å–ã‚Šå‡ºã—æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	ID(const char* name, int_t size);
 
 	/**
-	* @brief String‚©‚ç\’z‚·‚é
+	* @brief Stringã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	ID(const String& name);
 		
 	/**
-	* @brief •¶š—ñ‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief æ–‡å­—åˆ—ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	ID(const Null&)
@@ -202,7 +202,7 @@ inline bool operator !=(const ID& a, const ID& b){ return !a.raweq(b); }
 struct Named2;
 
 /**
-* @brief –¼‘O•t‚«ˆø”‚ÌƒgƒŠƒbƒN‚Ì‚½‚ß‚ÌƒNƒ‰ƒX
+* @brief åå‰ä»˜ãå¼•æ•°ã®ãƒˆãƒªãƒƒã‚¯ã®ãŸã‚ã®ã‚¯ãƒ©ã‚¹
 *
 */
 struct Named2{
@@ -226,7 +226,7 @@ struct Named2{
 };
 
 /**
-* @brief –¼‘O•t‚«ˆø”‚ÌƒgƒŠƒbƒN‚Ì‚½‚ß‚ÌƒNƒ‰ƒX
+* @brief åå‰ä»˜ãå¼•æ•°ã®ãƒˆãƒªãƒƒã‚¯ã®ãŸã‚ã®ã‚¯ãƒ©ã‚¹
 *
 */
 struct Named : public Named2{
@@ -243,20 +243,20 @@ struct Named : public Named2{
 };
 
 /*
-* @brief –¼‘O•t‚«ˆø”‚ÌƒgƒŠƒbƒN‚Ì‚½‚ß‚ÌƒNƒ‰ƒX
+* @brief åå‰ä»˜ãå¼•æ•°ã®ãƒˆãƒªãƒƒã‚¯ã®ãŸã‚ã®ã‚¯ãƒ©ã‚¹
 *
 */
 struct Key : public ID{
 	
 	/**
-	* @brief ID‚©‚ç\’z‚·‚é
+	* @brief IDã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
 	*
 	*/
 	Key(const ID& name)
 		:ID(name){}
 	
 	/**
-	* @brief Key("key")=10‚Æ‚¢‚¤‘®‚Ì‚½‚ß‚Ì‘ã“ü‰‰Zq
+	* @brief Key("key")=10ã¨ã„ã†æ›¸å¼ã®ãŸã‚ã®ä»£å…¥æ¼”ç®—å­
 	*
 	*/
 	Named operator =(const Any& value){

@@ -40,11 +40,11 @@ enum{
 /** @addtogroup code */
 /*@{*/
 
-/// ÉoÉCÉgÉRÅ[ÉhÇÃéØï ID
+/// „Éê„Ç§„Éà„Ç≥„Éº„Éâ„ÅÆË≠òÂà•ID
 enum CodeType{
 
 /**
-* @brief âΩÇ‡ÇµÇ»Ç¢ÅB
+* @brief ‰Ωï„ÇÇ„Åó„Å™„ÅÑ„ÄÇ
 *
 * format op
 * stack [] -> []
@@ -52,7 +52,7 @@ enum CodeType{
 CODE_NOP,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…nullílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´nullÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -60,7 +60,7 @@ CODE_NOP,
 CODE_PUSH_NULL,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…trueílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´trueÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -68,7 +68,7 @@ CODE_PUSH_NULL,
 CODE_PUSH_TRUE,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…falseílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´falseÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -76,7 +76,7 @@ CODE_PUSH_TRUE,
 CODE_PUSH_FALSE,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…nopílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´nopÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -84,7 +84,7 @@ CODE_PUSH_FALSE,
 CODE_PUSH_NOP,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -92,7 +92,7 @@ CODE_PUSH_NOP,
 CODE_PUSH_INT_0,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -100,7 +100,7 @@ CODE_PUSH_INT_0,
 CODE_PUSH_INT_1,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -108,7 +108,7 @@ CODE_PUSH_INT_1,
 CODE_PUSH_INT_2,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -116,7 +116,7 @@ CODE_PUSH_INT_2,
 CODE_PUSH_INT_3,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -124,7 +124,7 @@ CODE_PUSH_INT_3,
 CODE_PUSH_INT_4,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -132,7 +132,7 @@ CODE_PUSH_INT_4,
 CODE_PUSH_INT_5,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -140,7 +140,7 @@ CODE_PUSH_INT_5,
 CODE_PUSH_FLOAT_0,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -148,7 +148,7 @@ CODE_PUSH_FLOAT_0,
 CODE_PUSH_FLOAT_0_25,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -156,7 +156,7 @@ CODE_PUSH_FLOAT_0_25,
 CODE_PUSH_FLOAT_0_5,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -164,7 +164,7 @@ CODE_PUSH_FLOAT_0_5,
 CODE_PUSH_FLOAT_1,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -172,7 +172,7 @@ CODE_PUSH_FLOAT_1,
 CODE_PUSH_FLOAT_2,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…floatílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´floatÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -180,7 +180,7 @@ CODE_PUSH_FLOAT_2,
 CODE_PUSH_FLOAT_3,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op, value
 * stack [] -> [value]
@@ -188,7 +188,7 @@ CODE_PUSH_FLOAT_3,
 CODE_PUSH_INT_1BYTE,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…intílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´intÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op, value1, value2
 * stack [] -> [value]
@@ -196,7 +196,7 @@ CODE_PUSH_INT_1BYTE,
 CODE_PUSH_INT_2BYTE,
 
 /**
-* @brief åªç›ÇÃthisÇÉXÉ^ÉbÉNÇ…êœÇﬁÅB
+* @brief ÁèæÂú®„ÅÆthis„Çí„Çπ„Çø„ÉÉ„ÇØ„Å´Á©ç„ÇÄ„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -204,7 +204,7 @@ CODE_PUSH_INT_2BYTE,
 CODE_PUSH_THIS,
 
 /**
-* @brief à¯êîÇÃÉ`ÉFÉbÉN
+* @brief ÂºïÊï∞„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ
 *
 * format op, goto1, goto2, argid
 * stack [] -> []
@@ -212,7 +212,7 @@ CODE_PUSH_THIS,
 CODE_IF_ARG_IS_NULL,
 
 /**
-* @brief ÉXÉ^ÉbÉNÉgÉbÉvÇÃílÇàÍÇ¬ëOÇ…ì¸ÇÍÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Éà„ÉÉ„Éó„ÅÆÂÄ§„Çí‰∏Ä„Å§Ââç„Å´ÂÖ•„Çå„Çã„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [value2, value1]
@@ -220,7 +220,7 @@ CODE_IF_ARG_IS_NULL,
 CODE_INSERT_1,
 
 /**
-* @brief ÉXÉ^ÉbÉNÉgÉbÉvÇÃílÇìÒÇ¬ëOÇ…ì¸ÇÍÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Éà„ÉÉ„Éó„ÅÆÂÄ§„Çí‰∫å„Å§Ââç„Å´ÂÖ•„Çå„Çã„ÄÇ
 *
 * format op
 * stack [value1, value2, value3] -> [value3, value1, value2]
@@ -228,7 +228,7 @@ CODE_INSERT_1,
 CODE_INSERT_2,
 
 /**
-* @brief ÉXÉ^ÉbÉNÉgÉbÉvÇÃílÇéOÇ¬ëOÇ…ì¸ÇÍÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Éà„ÉÉ„Éó„ÅÆÂÄ§„Çí‰∏â„Å§Ââç„Å´ÂÖ•„Çå„Çã„ÄÇ
 *
 * format op
 * stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
@@ -236,7 +236,7 @@ CODE_INSERT_2,
 CODE_INSERT_3,
 
 /**
-* @brief ÉXÉ^ÉbÉNÉgÉbÉvÇÃílÇÉ|ÉbÉvÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Éà„ÉÉ„Éó„ÅÆÂÄ§„Çí„Éù„ÉÉ„Éó„Åô„Çã„ÄÇ
 *
 * format op
 * stack [value] -> []
@@ -244,7 +244,7 @@ CODE_INSERT_3,
 CODE_POP,
 
 /**
-* @brief ÉXÉ^ÉbÉNÉgÉbÉvÇÃílÇÉvÉbÉVÉÖÇ∑ÇÈÅB
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Éà„ÉÉ„Éó„ÅÆÂÄ§„Çí„Éó„ÉÉ„Ç∑„É•„Åô„Çã„ÄÇ
 *
 * format op
 * stack [value] -> [value, value]
@@ -252,7 +252,7 @@ CODE_POP,
 CODE_DUP,
 
 /**
-* @brief ílÇÃêîÇí≤êÆÇ∑ÇÈ
+* @brief ÂÄ§„ÅÆÊï∞„ÇíË™øÊï¥„Åô„Çã
 *
 * format op, retult_count, need_result_count, flags
 * stack [] -> []
@@ -260,7 +260,7 @@ CODE_DUP,
 CODE_ADJUST_RESULT,
 
 /**
-* @brief èåèï™äÚ
+* @brief Êù°‰ª∂ÂàÜÂ≤ê
 *
 * format op, goto1, goto2
 * stack [value] -> []
@@ -268,7 +268,7 @@ CODE_ADJUST_RESULT,
 CODE_IF,
 
 /**
-* @brief èåèï™äÚ
+* @brief Êù°‰ª∂ÂàÜÂ≤ê
 *
 * format op, goto1, goto2
 * stack [value] -> []
@@ -276,7 +276,7 @@ CODE_IF,
 CODE_UNLESS,
 
 /**
-* @brief ñ≥èåèï™äÚ
+* @brief ÁÑ°Êù°‰ª∂ÂàÜÂ≤ê
 *
 * format op, goto1, goto2
 * stack [] -> []
@@ -284,7 +284,7 @@ CODE_UNLESS,
 CODE_GOTO,
 
 /**
-* @brief ä÷êîåƒÇ—èoÇµ
+* @brief Èñ¢Êï∞Âëº„Å≥Âá∫„Åó
 *
 * format op, ...
 * stack [target] -> [result 0..num]
@@ -292,7 +292,7 @@ CODE_GOTO,
 CODE_CALL,
 
 /**
-* @brief ä÷êîåƒÇ—èoÇµ
+* @brief Èñ¢Êï∞Âëº„Å≥Âá∫„Åó
 *
 * format op, ...
 * stack [target] -> [result 0..num]
@@ -300,7 +300,7 @@ CODE_CALL,
 CODE_CALLEE,
 
 /**
-* @brief ÉÅÉ\ÉbÉhåƒÇ—èoÇµ
+* @brief „É°„ÇΩ„ÉÉ„ÉâÂëº„Å≥Âá∫„Åó
 *
 * format op, sym, ...
 * stack [target] -> [result 0..num]
@@ -308,7 +308,7 @@ CODE_CALLEE,
 CODE_SEND,
 
 /**
-* @brief ÉÅÉ\ÉbÉhåƒÇ—èoÇµ
+* @brief „É°„ÇΩ„ÉÉ„ÉâÂëº„Å≥Âá∫„Åó
 *
 * format op, sym, ...
 * stack [target] -> [result 0..num]
@@ -316,7 +316,7 @@ CODE_SEND,
 CODE_SEND_IF_DEFINED,
 
 /**
-* @brief ä÷êîÇ©ÇÁî≤ÇØÇÈ
+* @brief Èñ¢Êï∞„Åã„ÇâÊäú„Åë„Çã
 *
 * format op
 * stack [] -> []
@@ -324,7 +324,7 @@ CODE_SEND_IF_DEFINED,
 CODE_RETURN_0,
 
 /**
-* @brief ä÷êîÇ©ÇÁî≤ÇØÇÈ
+* @brief Èñ¢Êï∞„Åã„ÇâÊäú„Åë„Çã
 *
 * format op
 * stack [value1] -> []
@@ -332,7 +332,7 @@ CODE_RETURN_0,
 CODE_RETURN_1,
 
 /**
-* @brief ä÷êîÇ©ÇÁî≤ÇØÇÈ
+* @brief Èñ¢Êï∞„Åã„ÇâÊäú„Åë„Çã
 *
 * format op
 * stack [value1, value2] -> []
@@ -340,7 +340,7 @@ CODE_RETURN_1,
 CODE_RETURN_2,
 
 /**
-* @brief ä÷êîÇ©ÇÁî≤ÇØÇÈ
+* @brief Èñ¢Êï∞„Åã„ÇâÊäú„Åë„Çã
 *
 * format op, N
 * stack [value1, value2, ... valueN] -> []
@@ -348,7 +348,7 @@ CODE_RETURN_2,
 CODE_RETURN_N,
 
 /**
-* @brief ä÷êîåƒÇ—èoÇµÇÃå„énññÇÇ∑ÇÈ
+* @brief Èñ¢Êï∞Âëº„Å≥Âá∫„Åó„ÅÆÂæåÂßãÊú´„Çí„Åô„Çã
 *
 * format op
 * stack [] -> []
@@ -356,14 +356,14 @@ CODE_RETURN_N,
 CODE_CLEANUP_CALL,
 
 /**
-* @brief fiberÇÃé¿çsÇàÍéûíÜífÇ∑ÇÈ
+* @brief fiber„ÅÆÂÆüË°å„Çí‰∏ÄÊôÇ‰∏≠Êñ≠„Åô„Çã
 format; op, N
 * stack [value1, value2, ... valueN] -> []
 */
 CODE_YIELD,
 
 /**
-* @brief ó·äOÉtÉåÅ[ÉÄÇäJén
+* @brief ‰æãÂ§ñ„Éï„É¨„Éº„É†„ÇíÈñãÂßã
 *
 * format op, catch1, catch2, finally1, finally2, end1, end2
 * stack [] -> []
@@ -371,7 +371,7 @@ CODE_YIELD,
 CODE_TRY_BEGIN,
 
 /**
-* @brief ó·äOÉtÉåÅ[ÉÄÇèIóπ
+* @brief ‰æãÂ§ñ„Éï„É¨„Éº„É†„ÇíÁµÇ‰∫Ü
 *
 * format op
 * stack [] -> []
@@ -379,7 +379,7 @@ CODE_TRY_BEGIN,
 CODE_TRY_END,
 
 /**
-* @brief ÉuÉçÉbÉNÇäJénÇ∑ÇÈÅB
+* @brief „Éñ„É≠„ÉÉ„ÇØ„ÇíÈñãÂßã„Åô„Çã„ÄÇ
 *
 * format op, size1, size2
 * stack [] -> []
@@ -387,7 +387,7 @@ CODE_TRY_END,
 CODE_BLOCK_BEGIN,
 
 /**
-* @brief ÉuÉçÉbÉNÇï¬Ç∂ÇÈÅB
+* @brief „Éñ„É≠„ÉÉ„ÇØ„ÇíÈñâ„Åò„Çã„ÄÇ
 *
 * format op
 * stack [] -> []
@@ -395,7 +395,7 @@ CODE_BLOCK_BEGIN,
 CODE_BLOCK_END,
 
 /**
-* @brief ÉqÅ[ÉvÇ…èÊÇÁÇ»Ç¢Ç∆ê√ìIÇ…ämíËÇµÇƒÇ¢ÇÈÉuÉçÉbÉNÇï¬Ç∂ÇÈÅB
+* @brief „Éí„Éº„Éó„Å´‰πó„Çâ„Å™„ÅÑ„Å®ÈùôÁöÑ„Å´Á¢∫ÂÆö„Åó„Å¶„ÅÑ„Çã„Éñ„É≠„ÉÉ„ÇØ„ÇíÈñâ„Åò„Çã„ÄÇ
 *
 * format op
 * stack [] -> []
@@ -403,7 +403,7 @@ CODE_BLOCK_END,
 CODE_BLOCK_END_NOT_ON_HEAP,
 
 /**
-* @brief ÉCÉìÉXÉ^ÉìÉXïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „Ç§„É≥„Çπ„Çø„É≥„ÇπÂ§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [object] -> [result]
@@ -411,7 +411,7 @@ CODE_BLOCK_END_NOT_ON_HEAP,
 CODE_INSTANCE_VARIABLE,
 
 /**
-* @brief ÉCÉìÉXÉ^ÉìÉXïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „Ç§„É≥„Çπ„Çø„É≥„ÇπÂ§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [object, value] -> []
@@ -419,7 +419,7 @@ CODE_INSTANCE_VARIABLE,
 CODE_SET_INSTANCE_VARIABLE,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -427,7 +427,7 @@ CODE_SET_INSTANCE_VARIABLE,
 CODE_LOCAL_0,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -435,7 +435,7 @@ CODE_LOCAL_0,
 CODE_LOCAL_1,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -443,7 +443,7 @@ CODE_LOCAL_1,
 CODE_LOCAL_2,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -451,7 +451,7 @@ CODE_LOCAL_2,
 CODE_LOCAL_3,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -459,7 +459,7 @@ CODE_LOCAL_3,
 CODE_LOCAL,
 
 /**
-* @brief ÉqÅ[ÉvÇ…èÊÇÁÇ»Ç¢Ç∆ê√ìIÇ…ämíËÇµÇƒÇ¢ÇÈÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „Éí„Éº„Éó„Å´‰πó„Çâ„Å™„ÅÑ„Å®ÈùôÁöÑ„Å´Á¢∫ÂÆö„Åó„Å¶„ÅÑ„Çã„É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -467,7 +467,7 @@ CODE_LOCAL,
 CODE_LOCAL_NOT_ON_HEAP,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, pos1, pos2
 * stack [] -> [value]
@@ -475,7 +475,7 @@ CODE_LOCAL_NOT_ON_HEAP,
 CODE_LOCAL_W,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -483,7 +483,7 @@ CODE_LOCAL_W,
 CODE_SET_LOCAL_0,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -491,7 +491,7 @@ CODE_SET_LOCAL_0,
 CODE_SET_LOCAL_1,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -499,7 +499,7 @@ CODE_SET_LOCAL_1,
 CODE_SET_LOCAL_2,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -507,7 +507,7 @@ CODE_SET_LOCAL_2,
 CODE_SET_LOCAL_3,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -515,7 +515,7 @@ CODE_SET_LOCAL_3,
 CODE_SET_LOCAL,
 
 /**
-* @brief ÉqÅ[ÉvÇ…èÊÇÁÇ»Ç¢Ç∆ê√ìIÇ…ämíËÇµÇƒÇ¢ÇÈÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „Éí„Éº„Éó„Å´‰πó„Çâ„Å™„ÅÑ„Å®ÈùôÁöÑ„Å´Á¢∫ÂÆö„Åó„Å¶„ÅÑ„Çã„É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos
 * stack [] -> [value]
@@ -523,7 +523,7 @@ CODE_SET_LOCAL,
 CODE_SET_LOCAL_NOT_ON_HEAP,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos1, pos2
 * stack [] -> [value]
@@ -531,7 +531,7 @@ CODE_SET_LOCAL_NOT_ON_HEAP,
 CODE_SET_LOCAL_W,
 
 /**
-* @brief ÉOÉçÅ[ÉoÉãïœêîÇéÊÇËèoÇ∑ÅB
+* @brief „Ç∞„É≠„Éº„Éê„É´Â§âÊï∞„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [] -> [value]
@@ -539,7 +539,7 @@ CODE_SET_LOCAL_W,
 CODE_GLOBAL,
 
 /**
-* @brief ÉOÉçÅ[ÉoÉãïœêîÇ…ê›íËÇ∑ÇÈÅB
+* @brief „Ç∞„É≠„Éº„Éê„É´Â§âÊï∞„Å´Ë®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [value] -> []
@@ -547,7 +547,7 @@ CODE_GLOBAL,
 CODE_SET_GLOBAL,
 
 /**
-* @brief ÉOÉçÅ[ÉoÉãïœêîÇíËã`Ç∑ÇÈÅB
+* @brief „Ç∞„É≠„Éº„Éê„É´Â§âÊï∞„ÇíÂÆöÁæ©„Åô„Çã„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [value] -> []
@@ -555,7 +555,7 @@ CODE_SET_GLOBAL,
 CODE_DEFINE_GLOBAL,
 
 /**
-* @brief ÉIÉuÉWÉFÉNÉgÇÃÉÅÉìÉoÇéÊÇËèoÇ∑ÅB
+* @brief „Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„ÅÆ„É°„É≥„Éê„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [object] -> [result]
@@ -563,7 +563,7 @@ CODE_DEFINE_GLOBAL,
 CODE_MEMBER,
 
 /**
-* @brief ÉIÉuÉWÉFÉNÉgÇÃÉÅÉìÉoÇéÊÇËèoÇ∑ÅB
+* @brief „Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„ÅÆ„É°„É≥„Éê„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [object] -> [result]
@@ -571,7 +571,7 @@ CODE_MEMBER,
 CODE_MEMBER_IF_DEFINED,
 
 /**
-* @brief ÉIÉuÉWÉFÉNÉgÇÃÉÅÉìÉoÇíËã`Ç∑ÇÈÅB
+* @brief „Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„ÅÆ„É°„É≥„Éê„ÇíÂÆöÁæ©„Åô„Çã„ÄÇ
 *
 * format op, symbol1, symbol2
 * stack [object, value] -> []
@@ -579,7 +579,7 @@ CODE_MEMBER_IF_DEFINED,
 CODE_DEFINE_MEMBER,
 
 /**
-* @brief îzóÒÇÃóvëfÇéÊÇËèoÇ∑ÅB
+* @brief ÈÖçÂàó„ÅÆË¶ÅÁ¥†„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op
 * stack [object, index] -> [result]
@@ -587,7 +587,7 @@ CODE_DEFINE_MEMBER,
 CODE_AT,
 
 /**
-* @brief îzóÒÇÃóvëfÇê›íËÇ∑ÇÈÅB
+* @brief ÈÖçÂàó„ÅÆË¶ÅÁ¥†„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op
 * stack [object, index, value] -> []
@@ -595,7 +595,7 @@ CODE_AT,
 CODE_SET_AT,
 
 /**
-* @brief onceââéZéq
+* @brief onceÊºîÁÆóÂ≠ê
 *
 * format op, goto1, goto2, value1, value2
 * stack [] -> []
@@ -603,7 +603,7 @@ CODE_SET_AT,
 CODE_ONCE,
 
 /**
-* @brief ÉIÉuÉWÉFÉNÉgÉeÅ[ÉuÉãÇ©ÇÁílÇéÊÇËèoÇ∑ÅB
+* @brief „Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„ÉÜ„Éº„Éñ„É´„Åã„ÇâÂÄ§„ÇíÂèñ„ÇäÂá∫„Åô„ÄÇ
 *
 * format op, pos1, pos2
 * stack [] -> [result]
@@ -611,7 +611,7 @@ CODE_ONCE,
 CODE_GET_VALUE,
 
 /**
-* @brief ÉIÉuÉWÉFÉNÉgÉeÅ[ÉuÉãÇ…ílÇê›íËÇ∑ÇÈÅB
+* @brief „Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„ÉÜ„Éº„Éñ„É´„Å´ÂÄ§„ÇíË®≠ÂÆö„Åô„Çã„ÄÇ
 *
 * format op, pos1, pos2
 * stack [value] -> []
@@ -619,7 +619,7 @@ CODE_GET_VALUE,
 CODE_SET_VALUE,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ…ÉWÉÉÉìÉvà íuÇñÑÇﬂçûÇﬁ
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Å´„Ç∏„É£„É≥„Éó‰ΩçÁΩÆ„ÇíÂüã„ÇÅËæº„ÇÄ
 *
 * format op, goto1, goto2
 * stack [] -> [address]
@@ -627,7 +627,7 @@ CODE_SET_VALUE,
 CODE_PUSH_GOTO,
 
 /**
-* @brief ÉXÉ^ÉbÉNÇ©ÇÁÉ|ÉbÉvÇµÇΩÉAÉhÉåÉXÇ…ÉWÉÉÉìÉvÇ∑ÇÈ
+* @brief „Çπ„Çø„ÉÉ„ÇØ„Åã„Çâ„Éù„ÉÉ„Éó„Åó„Åü„Ç¢„Éâ„É¨„Çπ„Å´„Ç∏„É£„É≥„Éó„Åô„Çã
 *
 * format op
 * stack [] -> []
@@ -635,7 +635,7 @@ CODE_PUSH_GOTO,
 CODE_POP_GOTO,
 
 /**
-* @brief íPçÄ!ÇÃââéZÇçsÇ§ÅB
+* @brief ÂçòÈ†Ö!„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value] -> [result]
@@ -643,7 +643,7 @@ CODE_POP_GOTO,
 CODE_NOT,
 
 /**
-* @brief íPçÄ+ÇÃââéZÇçsÇ§ÅB
+* @brief ÂçòÈ†Ö+„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value] -> [result]
@@ -651,7 +651,7 @@ CODE_NOT,
 CODE_POS,
 
 /**
-* @brief íPçÄ-ÇÃââéZÇçsÇ§ÅB
+* @brief ÂçòÈ†Ö-„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value] -> [result]
@@ -659,7 +659,7 @@ CODE_POS,
 CODE_NEG,
 
 /**
-* @brief íPçÄ~ÇÃââéZÇçsÇ§ÅB
+* @brief ÂçòÈ†Ö~„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value] -> [result]
@@ -667,7 +667,7 @@ CODE_NEG,
 CODE_COM,
 
 /**
-* @brief ÉNÉçÅ[ÉìÇê∂ê¨Ç∑ÇÈ
+* @brief „ÇØ„É≠„Éº„É≥„ÇíÁîüÊàê„Åô„Çã
 *
 * format op
 * stack [value] -> [result]
@@ -675,7 +675,7 @@ CODE_COM,
 CODE_CLONE,
 
 /**
-* @brief ìÒçÄ+ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö+„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -683,7 +683,7 @@ CODE_CLONE,
 CODE_ADD,
 
 /**
-* @brief ìÒçÄ-ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö-„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -691,7 +691,7 @@ CODE_ADD,
 CODE_SUB,
 
 /**
-* @brief ìÒçÄ~ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö~„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -699,7 +699,7 @@ CODE_SUB,
 CODE_CAT,
 
 /**
-* @brief ìÒçÄ*ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö*„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -707,7 +707,7 @@ CODE_CAT,
 CODE_MUL,
 
 /**
-* @brief ìÒçÄ/ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö/„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -715,7 +715,7 @@ CODE_MUL,
 CODE_DIV,
 
 /**
-* @brief ìÒçÄ%ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö%„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -723,7 +723,7 @@ CODE_DIV,
 CODE_MOD,
 
 /**
-* @brief ìÒçÄ&ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö&„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -731,7 +731,7 @@ CODE_MOD,
 CODE_AND,
 
 /**
-* @brief ìÒçÄ&ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö&„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -739,7 +739,7 @@ CODE_AND,
 CODE_OR,
 
 /**
-* @brief ìÒçÄ^ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö^„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -747,7 +747,7 @@ CODE_OR,
 CODE_XOR,
 
 /**
-* @brief ìÒçÄ>>ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö>>„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -755,7 +755,7 @@ CODE_XOR,
 CODE_SHR,
 
 /**
-* @brief ìÒçÄ>>>ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö>>>„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -763,7 +763,7 @@ CODE_SHR,
 CODE_USHR,
 
 /**
-* @brief ìÒçÄ<<ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö<<„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -771,7 +771,7 @@ CODE_USHR,
 CODE_SHL,
 
 /**
-* @brief ìÒçÄ==ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö==„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -779,7 +779,7 @@ CODE_SHL,
 CODE_EQ,
 
 /**
-* @brief ìÒçÄ!=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö!=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -787,7 +787,7 @@ CODE_EQ,
 CODE_NE,
 
 /**
-* @brief ìÒçÄ<ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö<„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -795,7 +795,7 @@ CODE_NE,
 CODE_LT,
 
 /**
-* @brief ìÒçÄ>ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö>„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -803,7 +803,7 @@ CODE_LT,
 CODE_GT,
 
 /**
-* @brief ìÒçÄ<=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö<=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -811,7 +811,7 @@ CODE_GT,
 CODE_LE,
 
 /**
-* @brief ìÒçÄ>=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö>=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -819,7 +819,7 @@ CODE_LE,
 CODE_GE,
 
 /**
-* @brief ìÒçÄ===ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö===„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -827,7 +827,7 @@ CODE_GE,
 CODE_RAW_EQ,
 
 /**
-* @brief ìÒçÄ!==ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö!==„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -835,7 +835,7 @@ CODE_RAW_EQ,
 CODE_RAW_NE,
 
 /**
-* @brief ìÒçÄisÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Öis„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -843,7 +843,7 @@ CODE_RAW_NE,
 CODE_IS,
 
 /**
-* @brief ìÒçÄ!isÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö!is„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -851,7 +851,7 @@ CODE_IS,
 CODE_NIS,
 
 /**
-* @brief ìÒçÄ==ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö==„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -859,7 +859,7 @@ CODE_NIS,
 CODE_EQ_IF,
 
 /**
-* @brief ìÒçÄ!=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö!=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -867,7 +867,7 @@ CODE_EQ_IF,
 CODE_NE_IF,
 
 /**
-* @brief ìÒçÄ<ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö<„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -875,7 +875,7 @@ CODE_NE_IF,
 CODE_LT_IF,
 
 /**
-* @brief ìÒçÄ>ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö>„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -883,7 +883,7 @@ CODE_LT_IF,
 CODE_GT_IF,
 
 /**
-* @brief ìÒçÄ<=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö<=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -891,7 +891,7 @@ CODE_GT_IF,
 CODE_LE_IF,
 
 /**
-* @brief ìÒçÄ>=ÇÃââéZÇçsÇ¢ÅAèåèï™äÚÇ∑ÇÈÅB
+* @brief ‰∫åÈ†Ö>=„ÅÆÊºîÁÆó„ÇíË°å„ÅÑ„ÄÅÊù°‰ª∂ÂàÜÂ≤ê„Åô„Çã„ÄÇ
 *
 * format op, goto1, goto2
 * stack [value1, value2] -> [result]
@@ -899,7 +899,7 @@ CODE_LE_IF,
 CODE_GE_IF,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇÉCÉìÉNÉäÉÅÉìÉgÇ∑ÇÈ
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Çí„Ç§„É≥„ÇØ„É™„É°„É≥„Éà„Åô„Çã
 *
 * format op
 * stack [value] -> [result]
@@ -907,7 +907,7 @@ CODE_GE_IF,
 CODE_INC,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇÉfÉNÉäÉÅÉìÉgÇ∑ÇÈ
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Çí„Éá„ÇØ„É™„É°„É≥„Éà„Åô„Çã
 *
 * format op
 * stack [value] -> [result]
@@ -915,7 +915,7 @@ CODE_INC,
 CODE_DEC,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇÉCÉìÉNÉäÉÅÉìÉgÇ∑ÇÈ
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Çí„Ç§„É≥„ÇØ„É™„É°„É≥„Éà„Åô„Çã
 *
 * format op, variable1, variable2
 * stack [] -> []
@@ -923,7 +923,7 @@ CODE_DEC,
 CODE_LOCAL_NOT_ON_HEAP_INC,
 
 /**
-* @brief ÉçÅ[ÉJÉãïœêîÇÉfÉNÉäÉÅÉìÉgÇ∑ÇÈ
+* @brief „É≠„Éº„Ç´„É´Â§âÊï∞„Çí„Éá„ÇØ„É™„É°„É≥„Éà„Åô„Çã
 *
 * format op, variable1, variable2
 * stack [] -> []
@@ -931,7 +931,7 @@ CODE_LOCAL_NOT_ON_HEAP_INC,
 CODE_LOCAL_NOT_ON_HEAP_DEC,
 
 /**
-* @brief ìÒçÄ+ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö+„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -939,7 +939,7 @@ CODE_LOCAL_NOT_ON_HEAP_DEC,
 CODE_ADD_ASSIGN,
 
 /**
-* @brief ìÒçÄ-ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö-„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -947,7 +947,7 @@ CODE_ADD_ASSIGN,
 CODE_SUB_ASSIGN,
 
 /**
-* @brief ìÒçÄ~ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö~„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -955,7 +955,7 @@ CODE_SUB_ASSIGN,
 CODE_CAT_ASSIGN,
 
 /**
-* @brief ìÒçÄ*ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö*„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -963,7 +963,7 @@ CODE_CAT_ASSIGN,
 CODE_MUL_ASSIGN,
 
 /**
-* @brief ìÒçÄ/ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö/„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -971,7 +971,7 @@ CODE_MUL_ASSIGN,
 CODE_DIV_ASSIGN,
 
 /**
-* @brief ìÒçÄ%ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö%„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -979,7 +979,7 @@ CODE_DIV_ASSIGN,
 CODE_MOD_ASSIGN,
 
 /**
-* @brief ìÒçÄ&ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö&„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -987,7 +987,7 @@ CODE_MOD_ASSIGN,
 CODE_AND_ASSIGN,
 
 /**
-* @brief ìÒçÄ&ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö&„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -995,7 +995,7 @@ CODE_AND_ASSIGN,
 CODE_OR_ASSIGN,
 
 /**
-* @brief ìÒçÄ^ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö^„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -1003,7 +1003,7 @@ CODE_OR_ASSIGN,
 CODE_XOR_ASSIGN,
 
 /**
-* @brief ìÒçÄ>>ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö>>„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -1011,7 +1011,7 @@ CODE_XOR_ASSIGN,
 CODE_SHR_ASSIGN,
 
 /**
-* @brief ìÒçÄ>>>ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö>>>„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -1019,7 +1019,7 @@ CODE_SHR_ASSIGN,
 CODE_USHR_ASSIGN,
 
 /**
-* @brief ìÒçÄ<<ÇÃââéZÇçsÇ§ÅB
+* @brief ‰∫åÈ†Ö<<„ÅÆÊºîÁÆó„ÇíË°å„ÅÜ„ÄÇ
 *
 * format op
 * stack [value1, value2] -> [result]
@@ -1027,7 +1027,7 @@ CODE_USHR_ASSIGN,
 CODE_SHL_ASSIGN,
 
 /**
-* @brief îzóÒÇçÏÇÈÅB
+* @brief ÈÖçÂàó„Çí‰Ωú„Çã„ÄÇ
 *
 * format op, count
 * stack [] -> [value]
@@ -1035,7 +1035,7 @@ CODE_SHL_ASSIGN,
 CODE_PUSH_ARRAY,
 
 /**
-* @brief òAëzîzóÒÇçÏÇÈÅB
+* @brief ÈÄ£ÊÉ≥ÈÖçÂàó„Çí‰Ωú„Çã„ÄÇ
 *
 * format op, count
 * stack [] -> [value]
@@ -1043,7 +1043,7 @@ CODE_PUSH_ARRAY,
 CODE_PUSH_MAP,
 
 /**
-* @brief åªç›ÇÃåƒÇŒÇÍÇƒÇ¢ÇÈä÷êîé©êgÇÉXÉ^ÉbÉNÇ…êœÇﬁÅB
+* @brief ÁèæÂú®„ÅÆÂëº„Å∞„Çå„Å¶„ÅÑ„ÇãÈñ¢Êï∞Ëá™Ë∫´„Çí„Çπ„Çø„ÉÉ„ÇØ„Å´Á©ç„ÇÄ„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -1051,7 +1051,7 @@ CODE_PUSH_MAP,
 CODE_PUSH_CALLEE,
 
 /**
-* @brief ä÷êîÇçÏÇÈÅB
+* @brief Èñ¢Êï∞„Çí‰Ωú„Çã„ÄÇ
 *
 * format op, type, num1, num2
 * stack [] -> [value]
@@ -1059,7 +1059,7 @@ CODE_PUSH_CALLEE,
 CODE_PUSH_FUN,
 
 /**
-* @brief åªç›ÇÃÉtÉåÅ[ÉÄÇÉXÉ^ÉbÉNÇ…êœÇﬁÅB
+* @brief ÁèæÂú®„ÅÆ„Éï„É¨„Éº„É†„Çí„Çπ„Çø„ÉÉ„ÇØ„Å´Á©ç„ÇÄ„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -1067,7 +1067,7 @@ CODE_PUSH_FUN,
 CODE_PUSH_CURRENT_CONTEXT,
 
 /**
-* @brief åªç›ÇÃécÇËà¯êîÉIÉuÉWÉFÉNÉgÇÉXÉ^ÉbÉNÇ…êœÇﬁÅB
+* @brief ÁèæÂú®„ÅÆÊÆã„ÇäÂºïÊï∞„Ç™„Éñ„Ç∏„Çß„ÇØ„Éà„Çí„Çπ„Çø„ÉÉ„ÇØ„Å´Á©ç„ÇÄ„ÄÇ
 *
 * format op
 * stack [] -> [value]
@@ -1075,7 +1075,7 @@ CODE_PUSH_CURRENT_CONTEXT,
 CODE_PUSH_ARGS,
 
 /**
-* @brief ÉtÉåÅ[ÉÄÇÃäJén
+* @brief „Éï„É¨„Éº„É†„ÅÆÈñãÂßã
 *
 * format op, type, core1, core2
 * stack [] -> []
@@ -1083,7 +1083,7 @@ CODE_PUSH_ARGS,
 CODE_CLASS_BEGIN,
 
 /**
-* @brief ÉtÉåÅ[ÉÄÇï¬Ç∂ÇÈ
+* @brief „Éï„É¨„Éº„É†„ÇíÈñâ„Åò„Çã
 *
 * format op
 * stack [] -> [value]
@@ -1091,7 +1091,7 @@ CODE_CLASS_BEGIN,
 CODE_CLASS_END,
 
 /**
-* @brief ñºëOÇÇ¬ÇØÇÈ
+* @brief ÂêçÂâç„Çí„Å§„Åë„Çã
 *
 * format op, size1, size2
 * stack [value] -> [value]
@@ -1099,7 +1099,7 @@ CODE_CLASS_END,
 CODE_SET_NAME,
 
 /**
-* @brief íºëOÇÃÉÅÉìÉoéQè∆Ç™óLå¯Ç©É`ÉFÉbÉNÇ∑ÇÈÅB
+* @brief Áõ¥Ââç„ÅÆ„É°„É≥„ÉêÂèÇÁÖß„ÅåÊúâÂäπ„Åã„ÉÅ„Çß„ÉÉ„ÇØ„Åô„Çã„ÄÇ
 *
 * format op
 * stack [value] -> [result]
@@ -1107,7 +1107,7 @@ CODE_SET_NAME,
 CODE_CHECK_UNSUPPORTED,
 
 /**
-* @brief ï\ñæÅB
+* @brief Ë°®Êòé„ÄÇ
 *
 * format op
 * stack [expr, expr_String, message] -> []
@@ -1115,14 +1115,14 @@ CODE_CHECK_UNSUPPORTED,
 CODE_ASSERT,
 
 /**
-* @brief â¬êGê´Çê›íËÇ∑ÇÈ
+* @brief ÂèØËß¶ÊÄß„ÇíË®≠ÂÆö„Åô„Çã
 *
 * format op, type
 */
 CODE_SET_ACCESSIBILITY,
 
 /**
-* @brief îzóÒÇ…óvëfÇí«â¡Ç∑ÇÈÅB
+* @brief ÈÖçÂàó„Å´Ë¶ÅÁ¥†„ÇíËøΩÂä†„Åô„Çã„ÄÇ
 *
 * format op
 * stack [arrya, value] -> [array]
@@ -1130,7 +1130,7 @@ CODE_SET_ACCESSIBILITY,
 CODE_ARRAY_APPEND,
 
 /**
-* @brief òAëzîzóÒÇ…óvëfÇí«â¡Ç∑ÇÈÅB
+* @brief ÈÄ£ÊÉ≥ÈÖçÂàó„Å´Ë¶ÅÁ¥†„ÇíËøΩÂä†„Åô„Çã„ÄÇ
 *
 * format op
 * stack [map, key, value] -> [map]
@@ -1138,7 +1138,7 @@ CODE_ARRAY_APPEND,
 CODE_MAP_APPEND,
 
 /**
-* @brief âºëzÉ}ÉVÉìÇÃÉãÅ[ÉvÇ©ÇÁíEèoÇ∑ÇÈÅB
+* @brief ‰ªÆÊÉ≥„Éû„Ç∑„É≥„ÅÆ„É´„Éº„Éó„Åã„ÇâËÑ±Âá∫„Åô„Çã„ÄÇ
 *
 * format op
 * stack [] -> []
@@ -1146,7 +1146,7 @@ CODE_MAP_APPEND,
 CODE_EXIT,
 
 /**
-* @brief ÉuÉåÅ[ÉNÉ|ÉCÉìÉg
+* @brief „Éñ„É¨„Éº„ÇØ„Éù„Ç§„É≥„Éà
 *
 * format op, kind
 * stack [] -> []
@@ -1154,7 +1154,7 @@ CODE_EXIT,
 CODE_BREAKPOINT,
 
 /**
-* @brief ó·äOÇìäÇ∞ÇÈ
+* @brief ‰æãÂ§ñ„ÇíÊäï„Åí„Çã
 *
 * format op
 * stack [value] -> []
@@ -1162,7 +1162,7 @@ CODE_BREAKPOINT,
 CODE_THROW,
 
 /**
-* @brief ó·äOUnsupportedErrorÇìäÇ∞ÇÈÅB
+* @brief ‰æãÂ§ñUnsupportedError„ÇíÊäï„Åí„Çã„ÄÇ
 *
 * format op
 * stack [] -> []
@@ -1170,7 +1170,7 @@ CODE_THROW,
 CODE_THROW_UNSUPPORTED_ERROR,
 
 /**
-* @brief nullÇìäÇ∞ÇÈÅB
+* @brief null„ÇíÊäï„Åí„Çã„ÄÇ
 *
 * format op
 * stack [] -> []

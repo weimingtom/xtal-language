@@ -520,7 +520,7 @@ void Lexer::do_read(){
 					return;
 				}else{
 					push(ch);
-					//com_.error(line(), "•s³‚È•¶š‚Å‚·");
+					//com_.error(line(), "ä¸æ­£ãªæ–‡å­—ã§ã™");
 				}
 			}
 			

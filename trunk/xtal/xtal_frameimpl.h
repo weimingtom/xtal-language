@@ -41,18 +41,19 @@ public:
 	int_t find_core(FrameCore* core){
 		if(variables_info_[0].core == core)
 			return variables_info_[0].pos;
+
 		for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 			if(variables_info_[i].core==core){
 				std::swap(variables_info_[0], variables_info_[i]);
 				return variables_info_[0].pos;
 			}	
 		}
-		XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+		//XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 		return 0;
 	}
 	
 	bool empty(){
-		return variables_.empty();
+		return variables_.size()==1;
 	}
 
 protected:

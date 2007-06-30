@@ -175,12 +175,12 @@ void Marshal::inner_dump(const Any& v){
 			return;
 		}
 
-		// Š‘®ƒNƒ‰ƒX‚Émarshal_dumpŠÖ”‚ª’è‹`‚³‚ê‚Ä‚¢‚é
+		// æ‰€å±ã‚¯ãƒ©ã‚¹ã«marshal_dumpé–¢æ•°ãŒå®šç¾©ã•ã‚Œã¦ã„ã‚‹
 		if(v.get_class().member(Xid(marshal_dump))){
 			ID id = v.get_class().object_name();
 			stream_.put_i8(VALUE);
 			check_id(id);
-			inner_dump(id); // ƒNƒ‰ƒX‚Ì–¼‘O‚ğ–„‚ß‚Ş
+			inner_dump(id); // ã‚¯ãƒ©ã‚¹ã®åå‰ã‚’åŸ‹ã‚è¾¼ã‚€
 			inner_dump(v.send(Xid(marshal_dump)));					
 		}else{
 			ID id = v.object_name();
@@ -189,7 +189,7 @@ void Marshal::inner_dump(const Any& v){
 			inner_dump(id);
 		}
 	}else{
-		// Šù‚É•Û‘¶‚³‚ê‚Ä‚¢‚éƒIƒuƒWƒFƒNƒg‚È‚Ì‚ÅQÆˆÊ’u‚¾‚¯•Û‘¶‚·‚é
+		// æ—¢ã«ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãªã®ã§å‚ç…§ä½ç½®ã ã‘ä¿å­˜ã™ã‚‹
 		stream_.put_i8(REF);
 		stream_.put_i32(num);
 	}
@@ -477,7 +477,7 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 			return;
 		}
 
-		// Š‘®ƒNƒ‰ƒX‚Émarshal_dumpŠÖ”‚ª’è‹`‚³‚ê‚Ä‚¢‚é
+		// æ‰€å±ã‚¯ãƒ©ã‚¹ã«marshal_dumpé–¢æ•°ãŒå®šç¾©ã•ã‚Œã¦ã„ã‚‹
 		if(v.get_class().member(Xid(marshal_dump))){
 			ID id = v.get_class().object_name();
 			check_id(id);
@@ -491,7 +491,7 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 			stream_.put_s(id);
 		}
 	}/*else{
-		// Šù‚É•Û‘¶‚³‚ê‚Ä‚¢‚éƒIƒuƒWƒFƒNƒg‚È‚Ì‚ÅQÆˆÊ’u‚¾‚¯•Û‘¶‚·‚é
+		// æ—¢ã«ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãªã®ã§å‚ç…§ä½ç½®ã ã‘ä¿å­˜ã™ã‚‹
 		stream_.write("values[");
 		stream_.write(Any(num).to_s());
 		stream_.write("]");

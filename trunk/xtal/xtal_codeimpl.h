@@ -50,10 +50,18 @@ public:
 		return source_file_name_; 
 	}
 
-	const Class& toplevel() const{ 
+	const Class& toplevel(){ 
 		return toplevel_; 
 	}
-	
+
+	FrameCore* get_frame_core(int_t i){
+		return &frame_core_table_[i];
+	}
+
+	FunCore* get_fun_core(int_t i){
+		return &xfun_core_table_[i];
+	}	
+
 public:
 
 	typedef AC<u8>::vector code_t;

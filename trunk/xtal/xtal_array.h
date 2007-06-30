@@ -11,14 +11,14 @@ void InitArray();
 class ArrayImpl;
 
 /**
-* @brief ”z—ñ
+* @brief é…åˆ—
 *
 */
 class Array : public Any{
 public:
 	
 	/**
-	* @brief size‚Ì’·‚³‚Ì”z—ñ‚ğ¶¬‚·‚é 
+	* @brief sizeã®é•·ã•ã®é…åˆ—ã‚’ç”Ÿæˆã™ã‚‹ 
 	*
 	*/
 	explicit Array(int_t size = 0);
@@ -26,7 +26,7 @@ public:
 	explicit Array(check_xtype<int>::type size);
 	
 	/**
-	* @brief ”z—ñ‚ğ¶¬‚¹‚¸Anull‚ğ“ü‚ê‚é
+	* @brief é…åˆ—ã‚’ç”Ÿæˆã›ãšã€nullã‚’å…¥ã‚Œã‚‹
 	*
 	*/
 	Array(const Null&)
@@ -39,145 +39,145 @@ public:
 		:Any((AnyImpl*)p){}
 	
 	/**
-	* @brief ”z—ñ‚Ì’·‚³‚ğ•Ô‚·
+	* @brief é…åˆ—ã®é•·ã•ã‚’è¿”ã™
 	*
 	*/
 	int_t size() const;
 
 	/**
-	* @brief ”z—ñ‚Ì’·‚³‚ğ•ÏX‚·‚é
+	* @brief é…åˆ—ã®é•·ã•ã‚’å¤‰æ›´ã™ã‚‹
 	*/
 	void resize(int_t sz) const;
 	
 	/**
-	* @brief ”z—ñ‚Ì’·‚³‚ğ•Ô‚·
+	* @brief é…åˆ—ã®é•·ã•ã‚’è¿”ã™
 	*
 	*/
 	int_t length() const;
 	
 	/**
-	* @brief i”Ô–Ú‚Ì—v‘f‚ğ•Ô‚·
+	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¿”ã™
 	*
 	*/
 	const Any& at(int_t i) const;
 	
 	/**
-	* @brief i”Ô–Ú‚Ì—v‘f‚ğİ’è‚·‚é
+	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¨­å®šã™ã‚‹
 	*
 	*/
 	void set_at(int_t i, const Any& v) const;
 
 	/**
-	* @brief æ“ª‚É—v‘f‚ğ’Ç‰Á‚·‚é
+	* @brief å…ˆé ­ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
 	*
 	*/
 	void push_front(const Any& v) const;
 
 	/**
-	* @brief æ“ª‚Ì—v‘f‚ğíœ‚·‚é
+	* @brief å…ˆé ­ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
 	*
 	*/
 	void pop_front() const;
 
 	/**
-	* @brief ––”ö‚É—v‘f‚ğ’Ç‰Á‚·‚é
+	* @brief æœ«å°¾ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
 	*
 	*/
 	void push_back(const Any& v) const;
 
 	/**
-	* @brief ––”ö‚Ì—v‘f‚ğíœ‚·‚é
+	* @brief æœ«å°¾ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
 	*
 	*/
 	void pop_back() const;
 
 	/**
-	* @brief first‚©‚çlast‚Ü‚Å‚Ì•”•ª”z—ñ‚ğ•Ô‚·
+	* @brief firstã‹ã‚‰lastã¾ã§ã®éƒ¨åˆ†é…åˆ—ã‚’è¿”ã™
 	*
 	*/
 	Array slice(int_t first, int_t last) const;
 
 	/**
-	* @brief i”Ô–Ú‚Ì—v‘f‚ğíœ‚·‚é
+	* @brief iç•ªç›®ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
 	*
 	*/
 	void erase(int_t i) const;
 
 	/**
-	* @brief i”Ô–Ú‚É—v‘f‚ğ’Ç‰Á‚·‚é
+	* @brief iç•ªç›®ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
 	*
 	*/
 	void insert(int_t i, const Any& v) const;
 
 	/**
-	* @brief —v‘f‚ğ•¶š—ñ‚Æ‚µ‚Ä˜AŒ‹‚µ‚½Œ‹‰Ê‚ğ•Ô‚·
+	* @brief è¦ç´ ã‚’æ–‡å­—åˆ—ã¨ã—ã¦é€£çµã—ãŸçµæœã‚’è¿”ã™
 	*
-	* @param sep —v‘f‚Æ—v‘f‚Ì‹æØ‚è•¶š—ñ
+	* @param sep è¦ç´ ã¨è¦ç´ ã®åŒºåˆ‡ã‚Šæ–‡å­—åˆ—
 	*/
 	String join(const String& sep) const;
 
 	/**
-	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
+	* @brief ã“ã®é…åˆ—ã®æ–‡å­—åˆ—è¡¨ç¾ã‚’è¿”ã™
 	*
 	*/
 	String to_s() const;
 
 	/**
-	* @brief ©g‚ğ•Ô‚·
+	* @brief è‡ªèº«ã‚’è¿”ã™
 	*
 	*/
 	Array to_a() const;
 	
 	/**
-	* @brief ó‚¢ƒRƒs[‚ğ•Ô‚·
+	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™
 	*
 	*/
 	Array clone() const;
 
 	/**
-	* @brief ˜AŒ‹‚µ‚½”z—ñ‚ğ•Ô‚·
+	* @brief é€£çµã—ãŸé…åˆ—ã‚’è¿”ã™
 	*
 	*/
 	Array cat(const Array& a) const;
 
 	/**
-	* @brief ˜AŒ‹‚µ‚½”z—ñ‚ğ•Ô‚·
+	* @brief é€£çµã—ãŸé…åˆ—ã‚’è¿”ã™
 	*
 	*/
 	Array cat_assign(const Array& a) const;
 
 	/**
-	* @brief —v‘f‚ğ„‰ñ‚·‚éIterator‚ğ•Ô‚·
+	* @brief è¦ç´ ã‚’å·¡å›ã™ã‚‹Iteratorã‚’è¿”ã™
 	*
 	*/
 	Any each() const;
 	
 	/**
-	* @brief —v‘f‚ğ‘S‚Äíœ‚·‚é
+	* @brief è¦ç´ ã‚’å…¨ã¦å‰Šé™¤ã™ã‚‹
 	*
 	*/
 	void clear() const;
 
 	/**
-	* @brief ‹ó‚©’²‚×‚é
+	* @brief ç©ºã‹èª¿ã¹ã‚‹
 	*
 	*/
 	bool empty() const;
 
 	/**
-	* @brief Å‰‚Ì—v‘f‚ğæ“¾‚·‚é
+	* @brief æœ€åˆã®è¦ç´ ã‚’å–å¾—ã™ã‚‹
 	*
 	*/
 	const Any& front() const;
 
 	/**
-	* @brief ÅŒã‚Ì—v‘f‚ğæ“¾‚·‚é
+	* @brief æœ€å¾Œã®è¦ç´ ã‚’å–å¾—ã™ã‚‹
 	*
 	*/
 	const Any& back() const;
 
 	/**
-	* @brief ”z—ñ‚Ì—v‘f‚ğ‘S‚Ä‘½’l‚Æ‚µ‚Ä•Ô‚·
+	* @brief é…åˆ—ã®è¦ç´ ã‚’å…¨ã¦å¤šå€¤ã¨ã—ã¦è¿”ã™
 	*
 	*/
 	void values(const VMachine& vm) const;

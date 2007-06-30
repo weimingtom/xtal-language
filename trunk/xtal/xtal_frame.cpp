@@ -182,7 +182,7 @@ void ClassImpl::init_instance(HaveInstanceVariables* inst, const VMachine& vm, c
 
 		vm.setup_call(0);
 		vm.set_arg_this(self);
-		// ˆê”ÔÅ‰‚Ìƒƒ\ƒbƒh‚ªƒCƒ“ƒXƒ^ƒ“ƒX•Ï”‰Šú‰»ŠÖ”
+		// ä¸€ç•ªæœ€åˆã®ãƒ¡ã‚½ãƒƒãƒ‰ãŒã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°åˆæœŸåŒ–é–¢æ•°
 		members_[0].impl()->call(vm);
 		vm.cleanup_call();
 	}
@@ -246,7 +246,7 @@ const Any& ClassImpl::bases_member(const ID& name){
 const Any& ClassImpl::member(const ID& name){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		// ƒƒ“ƒo‚ªŒ©‚Â‚©‚Á‚½
+		// ãƒ¡ãƒ³ãƒãŒè¦‹ã¤ã‹ã£ãŸ
 
 		{
 			if(it->flags&NOMEMBER){
@@ -274,7 +274,7 @@ const Any& ClassImpl::member(const ID& name){
 const Any& ClassImpl::member(const ID& name, int_t*& pmutate_count, unsigned short& flags){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		// ƒƒ“ƒo‚ªŒ©‚Â‚©‚Á‚½
+		// ãƒ¡ãƒ³ãƒãŒè¦‹ã¤ã‹ã£ãŸ
 
 		{
 			if(it->flags&NOMEMBER){
@@ -304,21 +304,21 @@ const Any& ClassImpl::member(const ID& name, int_t*& pmutate_count, unsigned sho
 const Any& ClassImpl::member(const ID& name, const Any& self){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		// ƒƒ“ƒo‚ªŒ©‚Â‚©‚Á‚½
+		// ãƒ¡ãƒ³ãƒãŒè¦‹ã¤ã‹ã£ãŸ
 
-		// ‚µ‚©‚µprivate‚ª•t‚¯‚ç‚ê‚Ä‚¢‚é
+		// ã—ã‹ã—privateãŒä»˜ã‘ã‚‰ã‚Œã¦ã„ã‚‹
 		if(it->flags&PRIVATE){
 			if(self.get_class().raweq(this) || self.raweq(this)){
 				return members_[it->num];
 			}else{
-				// ƒAƒNƒZƒX‚Å‚«‚È‚¢
+				// ã‚¢ã‚¯ã‚»ã‚¹ã§ããªã„
 				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
 				);
 			}
 		}
 
-		// ‚µ‚©‚µprotected‚ª•t‚¯‚ç‚ê‚Ä‚¢‚é
+		// ã—ã‹ã—protectedãŒä»˜ã‘ã‚‰ã‚Œã¦ã„ã‚‹
 		if(it->flags&PROTECTED){
 			if(self.is(this) || this->is_inherited(self)){
 				if(it->flags&NOMEMBER){
@@ -329,7 +329,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 					return members_[it->num];
 				}
 			}else{
-				// ƒAƒNƒZƒX‚Å‚«‚È‚¢
+				// ã‚¢ã‚¯ã‚»ã‚¹ã§ããªã„
 				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
 				);			}
@@ -359,17 +359,17 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 const Any& ClassImpl::member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
 	IdMap::Node* it = map_members_->find(name);
 	if(it){
-		// ƒƒ“ƒo‚ªŒ©‚Â‚©‚Á‚½
+		// ãƒ¡ãƒ³ãƒãŒè¦‹ã¤ã‹ã£ãŸ
 
-		// ‚µ‚©‚µprivate‚ª•t‚¯‚ç‚ê‚Ä‚¢‚é
+		// ã—ã‹ã—privateãŒä»˜ã‘ã‚‰ã‚Œã¦ã„ã‚‹
 		if(it->flags&PRIVATE){
-			// ƒAƒNƒZƒX‚Å‚«‚È‚¢
+			// ã‚¢ã‚¯ã‚»ã‚¹ã§ããªã„
 			XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 				Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
 			);
 		}
 
-		// ‚µ‚©‚µprotected‚ª•t‚¯‚ç‚ê‚Ä‚¢‚é
+		// ã—ã‹ã—protectedãŒä»˜ã‘ã‚‰ã‚Œã¦ã„ã‚‹
 		if(it->flags&PROTECTED){
 			if(self.is(this)/* || this->is_inherited(self)*/){
 				if(it->flags&NOMEMBER){
@@ -384,7 +384,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self, int_t*& pmutate_co
 					return members_[it->num];
 				}
 			}else{
-				// ƒAƒNƒZƒX‚Å‚«‚È‚¢
+				// ã‚¢ã‚¯ã‚»ã‚¹ã§ããªã„
 				XTAL_THROW(builtin().member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
 				);

@@ -4,14 +4,14 @@
 namespace xtal{
 
 /*
-* VMachineƒNƒ‰ƒX‚ÌƒXƒ^ƒbƒN—p‚ÉA“Á’è‚Ì‘€ì‚ÌÀs‘¬“x‚ğd‹‚µ‚ÄİŒv‚µ‚½ƒXƒ^ƒbƒNƒRƒ“ƒeƒiB
+* VMachineã‚¯ãƒ©ã‚¹ã®ã‚¹ã‚¿ãƒƒã‚¯ç”¨ã«ã€ç‰¹å®šã®æ“ä½œã®å®Ÿè¡Œé€Ÿåº¦ã‚’é‡è¦–ã—ã¦è¨­è¨ˆã—ãŸã‚¹ã‚¿ãƒƒã‚¯ã‚³ãƒ³ãƒ†ãƒŠã€‚
 */
 template<class T>
 class Stack{
 
-	T* begin_; // Šm•Û‚µ‚½ƒƒ‚ƒŠ‚Ìæ“ª‚ÌŸ‚ğw‚·B
-	T* end_; // Šm•Û‚µ‚½ƒƒ‚ƒŠ‚Ìˆê”ÔÅŒã‚ÌŸ‚ğw‚·
-	T* current_; // ƒXƒ^ƒbƒNƒgƒbƒv‚Ì—v‘f‚ğw‚·
+	T* begin_; // ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã®å…ˆé ­ã®æ¬¡ã‚’æŒ‡ã™ã€‚
+	T* end_; // ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã®ä¸€ç•ªæœ€å¾Œã®æ¬¡ã‚’æŒ‡ã™
+	T* current_; // ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®è¦ç´ ã‚’æŒ‡ã™
 
 private:
 
@@ -283,7 +283,7 @@ void Stack<T>::upsize_detail(size_t us){
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
-	size_t newcapa = newsize + newsize/2 + 16;
+	size_t newcapa = newsize + newsize/2;
 	T* newp = (T*)allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i)
@@ -366,9 +366,9 @@ public:
 
 class PODStackBase{
 
-	void* begin_; // Šm•Û‚µ‚½ƒƒ‚ƒŠ‚Ìæ“ª‚ÌŸ‚ğw‚·B
-	void* end_; // Šm•Û‚µ‚½ƒƒ‚ƒŠ‚Ìˆê”ÔÅŒã‚ÌŸ‚ğw‚·
-	void* current_; // ƒXƒ^ƒbƒNƒgƒbƒv‚Ì—v‘f‚ğw‚·
+	void* begin_; // ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã®å…ˆé ­ã®æ¬¡ã‚’æŒ‡ã™ã€‚
+	void* end_; // ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã®ä¸€ç•ªæœ€å¾Œã®æ¬¡ã‚’æŒ‡ã™
+	void* current_; // ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®è¦ç´ ã‚’æŒ‡ã™
 	int one_size_;
 
 private:

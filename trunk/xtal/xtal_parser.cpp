@@ -420,7 +420,7 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(CODE_PUSH_FALSE); }
 				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(CODE_PUSH_NOP); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(CODE_PUSH_THIS); }
-				
+
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){
 					e.scope_set_on_heap_flag(0);
 					ret = e.pseudo(CODE_PUSH_CURRENT_CONTEXT); 
@@ -477,7 +477,7 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 			switch(ch.ivalue()){
 
 				XTAL_DEFAULT{
-					//com_->error(line(), "\•¶ƒGƒ‰[‚Å‚·");
+					//com_->error(line(), "æ§‹æ–‡ã‚¨ãƒ©ãƒ¼ã§ã™");
 					ret = 0;
 				}
 
@@ -742,7 +742,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			e.register_variable(it);
 			param.push_back(e.local(it), &alloc_);
 			bool discard = false;
-			if(eat('|')){ // ƒuƒƒbƒNƒpƒ‰ƒ[ƒ^
+			if(eat('|')){ // ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 				while(true){
 					Token ch = lexer_.peek();
 					if(ch.type()==ch.TYPE_IDENT){
@@ -810,7 +810,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 
 Stmt* Parser::parse_loop(){
 	if(int_t ident = parse_var()){
-		Token ch = lexer_.read(); // :‚ÌŸ‚ğ“Ç‚İæ‚é
+		Token ch = lexer_.read(); // :ã®æ¬¡ã‚’èª­ã¿å–ã‚‹
 		if(ch.type()==Token::TYPE_KEYWORD){
 			switch(ch.ivalue()){
 				XTAL_DEFAULT{}
@@ -1142,32 +1142,32 @@ Expr* Parser::parse_class(){
 
 		int_t accessibility = -1;
 		
-		if(eat('#')){// ‰ÂG« protected w’è
+		if(eat('#')){// å¯è§¦æ€§ protected æŒ‡å®š
 			accessibility = KIND_PROTECTED;
-		}else if(eat('-')){// ‰ÂG« private w’è
+		}else if(eat('-')){// å¯è§¦æ€§ private æŒ‡å®š
 			accessibility = KIND_PRIVATE;
-		}else if(eat('+')){// ‰ÂG« public w’è
+		}else if(eat('+')){// å¯è§¦æ€§ public æŒ‡å®š
 			accessibility = KIND_PUBLIC;
 		}
 
-		if(int_t var = parse_var()){ // ƒƒ“ƒo’è‹`
+		if(int_t var = parse_var()){ // ãƒ¡ãƒ³ãƒå®šç¾©
 			e.class_add(e.define(e.local(var), parse_expr_must()));
 			expect_end();
 			
 			if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
 				e.class_add(e.set_accessibility(var, accessibility));
 
-		}else if(eat('_')){// ƒCƒ“ƒXƒ^ƒ“ƒX•Ï”’è‹`
+		}else if(eat('_')){// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°å®šç¾©
 			if(int_t var = parse_ident()){
 				
-				if(eat(':')){ // ‰Šú’l‚İ
+				if(eat(':')){ // åˆæœŸå€¤è¾¼ã¿
 					e.class_define_instance_variable(var, parse_expr_must());
 				}else{
 					e.class_define_instance_variable(var, 0);
 				}
 				expect_end();
 
-				if(accessibility!=-1){ // ‰ÂG«‚ª•t‚¢‚Ä‚¢‚é‚Ì‚ÅAƒAƒNƒZƒbƒT‚ğ’è‹`‚·‚é
+				if(accessibility!=-1){ // å¯è§¦æ€§ãŒä»˜ã„ã¦ã„ã‚‹ã®ã§ã€ã‚¢ã‚¯ã‚»ãƒƒã‚µã‚’å®šç¾©ã™ã‚‹
 					e.fun_begin(KIND_METHOD);
 					e.fun_body(e.return_(e.instance_variable(var)));
 					e.class_add(e.define(e.local(var), e.fun_end()));

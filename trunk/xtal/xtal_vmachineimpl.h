@@ -12,7 +12,7 @@
 
 namespace xtal{
 
-// ˆø”ƒIƒuƒWƒFƒNƒg
+// å¼•æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 class ArgumentsImpl : public AnyImpl{
 public:
 
@@ -51,7 +51,7 @@ public:
 
 };
 
-// XTAL‰¼‘zƒ}ƒVƒ“
+// XTALä»®æƒ³ãƒã‚·ãƒ³
 class VMachineImpl : public GCObserverImpl{
 public:
 
@@ -147,6 +147,13 @@ public:
 		return arg(name);
 	}
 
+	const Any& arg(int_t pos, const Fun& names){
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get((f.ordered_arg_count+f.named_arg_count*2)-1-pos);
+		return arg(names.param_name_at(pos));
+	}
+
 	const Any& arg_default(int_t pos, const Any& def){
 		if(pos<ordered_arg_count())
 			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
@@ -193,8 +200,8 @@ public:
 	}
 	
 	/*
-	* ArgumentsƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚éB
-	* return_result()‚ğŒÄ‚ñ‚¾Œã‚Í³í‚È’l‚Í“¾‚ç‚ê‚È‚¢B
+	* Argumentsã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹ã€‚
+	* return_result()ã‚’å‘¼ã‚“ã å¾Œã¯æ­£å¸¸ãªå€¤ã¯å¾—ã‚‰ã‚Œãªã„ã€‚
 	*/
 	Arguments make_arguments();
 
@@ -267,9 +274,9 @@ public:
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
-	void carry_over(FunImpl* p);
+	void carry_over(const Fun& fun);
 	
-	void mv_carry_over(FunImpl* fun);
+	void mv_carry_over(const Fun& fun);
 
 	bool processed(){ 
 		return ff().calling_state!=FunFrame::CALLING_STATE_NONE; 
@@ -290,7 +297,7 @@ public:
 	void execute(const Fun& fun, const u8* start_pc = 0){
 		setup_call(0);
 		
-		carry_over(fun.impl());
+		carry_over(fun);
 		
 		const u8* pc = prev_ff().pc;
 		prev_ff().pc = &end_code_;
@@ -328,52 +335,52 @@ public:
 
 public:
 
-	// ƒXƒ^ƒbƒN‚Ìi”Ô–Ú‚Ì’l‚ğæ“¾‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã®iç•ªç›®ã®å€¤ã‚’å–å¾—ã™ã‚‹ã€‚
 	const Any& get(int_t i){ return stack_[i].cref(); }
 
-	// ƒXƒ^ƒbƒN‚Ì0”Ô–Ú‚Ì’l‚ğæ“¾‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã®0ç•ªç›®ã®å€¤ã‚’å–å¾—ã™ã‚‹ã€‚
 	const Any& get(){ return stack_.top().cref(); }
 
-	// ƒXƒ^ƒbƒN‚Ìi”Ô–Ú‚Ì’l‚ğİ’è‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã®iç•ªç›®ã®å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
 	void set(int_t i, const Any& v){ stack_[i]=v; }
 
-	// ƒXƒ^ƒbƒN‚Ì0”Ô–Ú‚Ì’l‚ğİ’è‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã®0ç•ªç›®ã®å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
 	void set(const Any& v){ stack_.top()=v; }
 
-	// ƒXƒ^ƒbƒN‚ğnŠg‘å‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’næ‹¡å¤§ã™ã‚‹ã€‚
 	void upsize(int_t n){ stack_.upsize_unchecked(n); }
 
-	// ƒXƒ^ƒbƒN‚ğnk¬‚·‚é
+	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’nç¸®å°ã™ã‚‹
 	void downsize(int_t n){ stack_.downsize(n); }
 
-	// ƒXƒ^ƒbƒN‚ğnŒÂ‚É‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’nå€‹ã«ã™ã‚‹ã€‚
 	void resize(int_t n){ stack_.resize(n); }
 
-	// ƒXƒ^ƒbƒN‚É’lv‚ğƒvƒbƒVƒ…‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã«å€¤vã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void push(const Any& v){ stack_.push_unchecked(v); }
 
-	// ƒXƒ^ƒbƒN‚É’lv‚ğƒvƒbƒVƒ…‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã«å€¤vã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void push_unchecked(const Any& v){ stack_.push_unchecked(v); }
 
-	// ƒXƒ^ƒbƒN‚©‚ç’l‚ğƒ|ƒbƒv‚·‚éB
+	// ã‚¹ã‚¿ãƒƒã‚¯ã‹ã‚‰å€¤ã‚’ãƒãƒƒãƒ—ã™ã‚‹ã€‚
 	const Any& pop(){ return stack_.pop().cref(); }
 
-	// æ“ª‚Ì’l‚ğƒvƒbƒVƒ…‚·‚éB
+	// å…ˆé ­ã®å€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void dup(){ push(get()); }
 
-	// i”Ô–Ú‚Ì’l‚ğƒvƒbƒVƒ…‚·‚éB
+	// iç•ªç›®ã®å€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void dup(int_t i){ push(get(i)); }
 
-	// ƒXƒ^ƒbƒN‚Ì‘å‚«‚³‚ğ•Ô‚·B
+	// ã‚¹ã‚¿ãƒƒã‚¯ã®å¤§ãã•ã‚’è¿”ã™ã€‚
 	int_t stack_size(){ return (int_t)stack_.size(); }
 	
-	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂƒvƒbƒVƒ…‚·‚éB
+	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void push(VMachineImpl* src, int_t size){ stack_.push(src->stack_, size); }
 	
-	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂƒvƒbƒVƒ…‚·‚éB
+	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void push(VMachineImpl* src, int_t src_offset, int_t size){ stack_.push(src->stack_, src_offset, size); }
 
-	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂæ‚èœ‚¢‚ÄAƒvƒbƒVƒ…‚·‚éB
+	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹å–ã‚Šé™¤ã„ã¦ã€ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
 	void move(VMachineImpl* src, int_t size){ stack_.move(src->stack_, size); }
 	
 public:
@@ -396,32 +403,32 @@ public:
 	}
 
 	static void inc_ref_count(const UncountedAny& a){
-		if(a.cref().type()==TYPE_BASE && a.impl()){
+		if(a.cref().type()==TYPE_BASE){
 			a.cref().impl()->inc_ref_count();
 		}
 	}
 	
 	static void dec_ref_count(const UncountedAny& a){
-		if(a.cref().type()==TYPE_BASE && a.impl()){
+		if(a.cref().type()==TYPE_BASE){
 			a.cref().impl()->dec_ref_count();
 		}
 	}
 
 	struct FunFrame{
 
-		// •Û‘¶‚³‚ê‚½ƒvƒƒOƒ‰ƒ€ƒJƒEƒ“ƒg
+		// ä¿å­˜ã•ã‚ŒãŸãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚«ã‚¦ãƒ³ãƒˆ
 		const u8* pc;
 
-		// ƒXƒR[ƒvî•ñ 
+		// ã‚¹ã‚³ãƒ¼ãƒ—æƒ…å ± 
 		PStack<FrameCore*> scopes;
 
-		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚Ì‡”Ôw’èˆø”‚Ì”
+		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®é †ç•ªæŒ‡å®šå¼•æ•°ã®æ•°
 		int_t ordered_arg_count;
 		
-		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚Ì–¼‘Ow’èˆø”‚Ì”
+		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®åå‰æŒ‡å®šå¼•æ•°ã®æ•°
 		int_t named_arg_count;
 
-		// ŠÖ”ŒÄ‚Ño‚µ‘¤‚ª•K—v‚Æ‚·‚é–ß‚è’l‚Ì”
+		// é–¢æ•°å‘¼ã³å‡ºã—å´ãŒå¿…è¦ã¨ã™ã‚‹æˆ»ã‚Šå€¤ã®æ•°
 		int_t need_result_count;
 
 		int_t result_count;
@@ -429,36 +436,36 @@ public:
 		int_t result_flag;
 
 		enum{
-			CALLING_STATE_NONE, // ‰½‚à‚È‚Á‚Ä‚È‚¢ó‘Ô
-			CALLING_STATE_PUSHED_FUN, // ŠÖ”‚ªÏ‚Ü‚ê‚Ä‚¢‚éó‘Ô
-			CALLING_STATE_PUSHED_RESULT // Œ‹‰Ê‚ªÏ‚Ü‚ê‚Ä‚¢‚éó‘Ô
+			CALLING_STATE_NONE, // ä½•ã‚‚ãªã£ã¦ãªã„çŠ¶æ…‹
+			CALLING_STATE_PUSHED_FUN, // é–¢æ•°ãŒç©ã¾ã‚Œã¦ã„ã‚‹çŠ¶æ…‹
+			CALLING_STATE_PUSHED_RESULT // çµæœãŒç©ã¾ã‚Œã¦ã„ã‚‹çŠ¶æ…‹
 		};
 
-		// ŒÄ‚Ño‚µó‘Ô
+		// å‘¼ã³å‡ºã—çŠ¶æ…‹
 		int_t calling_state;
 
-		// yield‚ª‰Â”\‚©ƒtƒ‰ƒOB‚±‚Ìƒtƒ‰ƒO‚ÍŒÄ‚Ño‚µ‚ğŒ×‚¢‚Å“`”d‚·‚éB
+		// yieldãŒå¯èƒ½ã‹ãƒ•ãƒ©ã‚°ã€‚ã“ã®ãƒ•ãƒ©ã‚°ã¯å‘¼ã³å‡ºã—ã‚’è·¨ã„ã§ä¼æ’­ã™ã‚‹ã€‚
 		int_t yieldable;
 
-		// ŒÄ‚Ño‚³‚ê‚½ŠÖ”ƒIƒuƒWƒFƒNƒg
+		// å‘¼ã³å‡ºã•ã‚ŒãŸé–¢æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 		UncountedAny fun_; 
 
-		// ƒXƒR[ƒv‚ÌŠO‘¤‚ÌƒtƒŒ[ƒ€ƒIƒuƒWƒFƒNƒg
+		// ã‚¹ã‚³ãƒ¼ãƒ—ã®å¤–å´ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 		UncountedAny outer_;
 
-		// ƒXƒR[ƒv‚ªƒIƒuƒWƒFƒNƒg‰»‚³‚ê‚Ä‚È‚¢‚Ìƒ[ƒJƒ‹•Ï”—Ìˆæ
+		// ã‚¹ã‚³ãƒ¼ãƒ—ãŒã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆåŒ–ã•ã‚Œã¦ãªã„æ™‚ã®ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°é ˜åŸŸ
 		Stack<UncountedAny> variables_;
 
-		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚ÌthisƒIƒuƒWƒFƒNƒg
+		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®thisã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 		UncountedAny self_;
 
-		// ƒIƒuƒWƒFƒNƒg‰»‚µ‚½ˆø”B
+		// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆåŒ–ã—ãŸå¼•æ•°ã€‚
 		UncountedAny arguments_;
 		
-		// ƒfƒoƒbƒOƒƒbƒZ[ƒWo—Í—p‚Ìƒqƒ“ƒg
+		// ãƒ‡ãƒãƒƒã‚°ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å‡ºåŠ›ç”¨ã®ãƒ’ãƒ³ãƒˆ
 		UncountedAny hint1_;
 		
-		// ƒfƒoƒbƒOƒƒbƒZ[ƒWo—Í—p‚Ìƒqƒ“ƒg
+		// ãƒ‡ãƒãƒƒã‚°ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å‡ºåŠ›ç”¨ã®ãƒ’ãƒ³ãƒˆ
 		UncountedAny hint2_;
 
 		const Fun& fun() const{ return (const Fun&)fun_.cref(); }
@@ -513,7 +520,7 @@ public:
 		}
 	}
 
-	// —áŠO‚ğˆ—‚·‚é‚½‚ß‚ÌƒtƒŒ[ƒ€
+	// ä¾‹å¤–ã‚’å‡¦ç†ã™ã‚‹ãŸã‚ã®ãƒ•ãƒ¬ãƒ¼ãƒ 
 	struct ExceptFrame{
 		ExceptFrame(){}
 		ExceptFrame(const u8* catch_pc, const u8* finally_pc, const u8* end_pc)
@@ -697,13 +704,13 @@ private:
 
 	UncountedAny myself_;
 
-	// ŒvZ—pƒXƒ^ƒbƒN
+	// è¨ˆç®—ç”¨ã‚¹ã‚¿ãƒƒã‚¯
 	Stack<UncountedAny> stack_;
 
-	// ŠÖ”ŒÄ‚Ño‚µ‚Ì“x‚ÉÏ‚Ü‚ê‚éƒtƒŒ[ƒ€
+	// é–¢æ•°å‘¼ã³å‡ºã—ã®åº¦ã«ç©ã¾ã‚Œã‚‹ãƒ•ãƒ¬ãƒ¼ãƒ 
 	Stack<FunFrame> fun_frames_;
 
-	// try‚Ì“x‚ÉÏ‚Ü‚ê‚éƒtƒŒ[ƒ€B
+	// tryã®åº¦ã«ç©ã¾ã‚Œã‚‹ãƒ•ãƒ¬ãƒ¼ãƒ ã€‚
 	PODStack<ExceptFrame> except_frames_;
 	
 	debug::Info debug_info_;

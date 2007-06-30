@@ -10,9 +10,9 @@ namespace xtal{
 #ifdef XTAL_USE_COMPRESSED_ANY
 
 /**
-* @brief QÆƒJƒEƒ“ƒg‚ğ‚µ‚È‚¢Any
+* @brief å‚ç…§ã‚«ã‚¦ãƒ³ãƒˆã‚’ã—ãªã„Any
 *
-* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğ’¼Úg—p‚·‚é‚±‚Æ‚Í–³‚¢
+* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’ç›´æ¥ä½¿ç”¨ã™ã‚‹ã“ã¨ã¯ç„¡ã„
 */
 class UncountedAny{
 public:
@@ -36,7 +36,7 @@ protected:
 	}
 
 	void set_p(AnyImpl* p){
-		//XTAL_ASSERT(p!=0);
+		XTAL_ASSERT(p!=0);
 		union{
 			int_t value;
 			AnyImpl* pvalue;
@@ -107,10 +107,6 @@ public:
 		return value_;
 	}
 
-	void assign_p(AnyImpl* p){
-		set_p(p);
-	}
-
 public:
 
 	bool raweq(const UncountedAny& a) const{
@@ -142,9 +138,9 @@ private:
 #else
 	
 /**
-* @brief QÆƒJƒEƒ“ƒg‚ğ‚µ‚È‚¢Any
+* @brief å‚ç…§ã‚«ã‚¦ãƒ³ãƒˆã‚’ã—ãªã„Any
 *
-* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğ’¼Úg—p‚·‚é‚±‚Æ‚Í–³‚¢
+* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’ç›´æ¥ä½¿ç”¨ã™ã‚‹ã“ã¨ã¯ç„¡ã„
 */
 class UncountedAny{
 public:
@@ -173,13 +169,13 @@ protected:
 	}
 
 	void set_p(AnyImpl* p){
-		//XTAL_ASSERT(p!=0);
+		XTAL_ASSERT(p!=0);
 		type_ = TYPE_BASE;
 		pvalue_ = p;
 	}
 	
 	void set_p(const AnyImpl* p){
-		//XTAL_ASSERT(p!=0);
+		XTAL_ASSERT(p!=0);
 		type_ = TYPE_BASE;
 		pvalue_ = (AnyImpl*)p;
 	}
@@ -228,10 +224,6 @@ public:
 		return (uint_t)value_;
 	}
 	
-	void assign_p(AnyImpl* p){
-		pvalue_ = p;
-	}
-
 public:
 
 	bool raweq(const UncountedAny& a) const{
@@ -270,43 +262,43 @@ private:
 #endif
 	
 /**
-* @brief Xtal‚Ì’l‚ğ•Û‚·‚é‚½‚ß‚ÌŒ^
+* @brief Xtalã®å€¤ã‚’ä¿æŒã™ã‚‹ãŸã‚ã®å‹
 *
 */
 class Any : public UncountedAny{	
 public:
 
 	/**
-	* @brief ƒfƒtƒHƒ‹ƒgƒRƒ“ƒXƒgƒ‰ƒNƒ^Bnull‚ªŠi”[‚³‚ê‚éB
+	* @brief ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚nullãŒæ ¼ç´ã•ã‚Œã‚‹ã€‚
 	*
 	*/
 	Any(){ set_null(); }
 	
 	/**
-	* @brief ®”’l‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
+	* @brief æ•´æ•°å€¤ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
 	*
 	*/
 	Any(int_t v){ set_i(v); }
 	
 	/**
-	* @brief •‚“®¬”“_”’l‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
+	* @brief æµ®å‹•å°æ•°ç‚¹æ•°å€¤ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
 	*
 	*/
 	Any(float_t v){ set_f(v); }
 	
 	/**
-	* @brief •¶š—ñ‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
+	* @brief æ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
 	*
 	*/
 	Any(bool b){ set_b(b); }
 
 	/**
-	* @brief •¶š—ñ‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
+	* @brief æ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
 	*
 	*/
 	Any(const char* str);
 
-	// Šî–{Œ^‚Ì®”A•‚“®¬”“_”‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	// åŸºæœ¬å‹ã®æ•´æ•°ã€æµ®å‹•å°æ•°ç‚¹æ•°ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	Any(check_xtype<int>::type v){ set_i((int_t)v); }
 	Any(check_xtype<long>::type v){ set_i((int_t)v); }
 	Any(check_xtype<short>::type v){ set_i((int_t)v); }
@@ -346,118 +338,118 @@ public:
 
 	~Any(){ 
 		dec_ref_count();
-		set_null(); // •K{
+		set_null(); // å¿…é ˆ
 	}
 	
 private:
 
-	// AnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢ƒ|ƒCƒ“ƒ^Œ^‚ª“n‚³‚ê‚½‚Æ‚«A
-	// Any(bool)‚ªg‚í‚ê‚é‚Ì‚ğ‘j~‚·‚é‚½‚ß‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^
-	// À‘•‚Í–³‚¢B
+	// AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„ãƒã‚¤ãƒ³ã‚¿å‹ãŒæ¸¡ã•ã‚ŒãŸã¨ãã€
+	// Any(bool)ãŒä½¿ã‚ã‚Œã‚‹ã®ã‚’é˜»æ­¢ã™ã‚‹ãŸã‚ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	// å®Ÿè£…ã¯ç„¡ã„ã€‚
 	Any(void*);
 
 public:
 	
 	/**
-	* @brief ƒvƒŠƒ~ƒeƒBƒu‚ÈŒ^”Ô†‚ğ—p‚¢‚ÄAny‚ğ\’z‚·‚éB
+	* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªå‹ç•ªå·ã‚’ç”¨ã„ã¦Anyã‚’æ§‹ç¯‰ã™ã‚‹ã€‚
 	*
-	* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğQÆ‚·‚é•K—v‚Í‚Ù‚Æ‚ñ‚Ç‚È‚¢B
+	* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’å‚ç…§ã™ã‚‹å¿…è¦ã¯ã»ã¨ã‚“ã©ãªã„ã€‚
 	*/
 	Any(PrimitiveType type):UncountedAny(type){}
 
 	/**
-	* @brief ƒvƒŠƒ~ƒeƒBƒu‚ÈŒ^”Ô†‚ğ•Ô‚·B
+	* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªå‹ç•ªå·ã‚’è¿”ã™ã€‚
 	*
-	* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğQÆ‚·‚é•K—v‚Í‚Ù‚Æ‚ñ‚Ç‚È‚¢B
+	* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’å‚ç…§ã™ã‚‹å¿…è¦ã¯ã»ã¨ã‚“ã©ãªã„ã€‚
 	*/
 	int_t type() const{ return UncountedAny::type(); }
 	
 	/**
-	* @brief ƒvƒŠƒ~ƒeƒBƒu‚È®”’l‚ğ•Ô‚·B
+	* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªæ•´æ•°å€¤ã‚’è¿”ã™ã€‚
 	*
-	* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚æ‚èAto_i()‚ğg‚¤•û‚ª‚æ‚¢B
+	* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚ˆã‚Šã€to_i()ã‚’ä½¿ã†æ–¹ãŒã‚ˆã„ã€‚
 	*/
 	int_t ivalue() const{ return UncountedAny::ivalue(); }
 	
 	/**
-	* @brief ƒvƒŠƒ~ƒeƒBƒu‚È•‚“®¬”“_”’l‚ğ•Ô‚·B
+	* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªæµ®å‹•å°æ•°ç‚¹æ•°å€¤ã‚’è¿”ã™ã€‚
 	*
-	* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚æ‚èAto_f()‚ğg‚¤•û‚ª‚æ‚¢B
+	* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚ˆã‚Šã€to_f()ã‚’ä½¿ã†æ–¹ãŒã‚ˆã„ã€‚
 	*/
 	float_t fvalue() const{ return UncountedAny::fvalue(); }
 	
 	/**
-	* @brief ƒvƒŠƒ~ƒeƒBƒu‚ÈƒIƒuƒWƒFƒNƒg‚Ìƒ|ƒCƒ“ƒ^’l‚ğ•Ô‚·B
+	* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒã‚¤ãƒ³ã‚¿å€¤ã‚’è¿”ã™ã€‚
 	*
-	* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğQÆ‚·‚é•K—v‚Í‚Ù‚Æ‚ñ‚Ç‚È‚¢B
+	* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’å‚ç…§ã™ã‚‹å¿…è¦ã¯ã»ã¨ã‚“ã©ãªã„ã€‚
 	*/
 	AnyImpl* impl() const{ return UncountedAny::impl(); }
 	
 public:
 	
 	/**
-	* @brief ŠÖ”ƒIƒuƒWƒFƒNƒg‚Æ‚İ‚È‚µAŠÖ”ŒÄ‚Ño‚µ‚ğ‚·‚éB
+	* @brief é–¢æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã¨ã¿ãªã—ã€é–¢æ•°å‘¼ã³å‡ºã—ã‚’ã™ã‚‹ã€‚
 	*
-	* ˆø”‚â–ß‚è’l‚Ívm‚ğ’Ê‚µ‚Ä‚â‚èæ‚è‚·‚éB
+	* å¼•æ•°ã‚„æˆ»ã‚Šå€¤ã¯vmã‚’é€šã—ã¦ã‚„ã‚Šå–ã‚Šã™ã‚‹ã€‚
 	*/
 	void call(const VMachine& vm) const;
 	
 	/**
-	* @brief nameƒƒ\ƒbƒhŒÄ‚Ño‚µ‚ğ‚·‚é
+	* @brief nameãƒ¡ã‚½ãƒƒãƒ‰å‘¼ã³å‡ºã—ã‚’ã™ã‚‹
 	*
-	* ˆø”‚â–ß‚è’l‚Ívm‚ğ’Ê‚µ‚Ä‚â‚èæ‚è‚·‚éB
+	* å¼•æ•°ã‚„æˆ»ã‚Šå€¤ã¯vmã‚’é€šã—ã¦ã‚„ã‚Šå–ã‚Šã™ã‚‹ã€‚
 	*/
 	void send(const ID& name, const VMachine& vm) const;
 
 	/**
-	* @brief nameƒƒ“ƒo‚ğæ“¾‚·‚éB
+	* @brief nameãƒ¡ãƒ³ãƒã‚’å–å¾—ã™ã‚‹ã€‚
 	*
-	* @retval null ‚»‚Ìƒƒ“ƒo‚Í‘¶İ‚µ‚È‚¢
-	* @retval ”ñnull name‚É‘Î‰‚µ‚½ƒƒ“ƒo  
+	* @retval null ãã®ãƒ¡ãƒ³ãƒã¯å­˜åœ¨ã—ãªã„
+	* @retval énull nameã«å¯¾å¿œã—ãŸãƒ¡ãƒ³ãƒ  
 	*/
 	const Any& member(const ID& name) const;
 	
 	/**
-	* @brief nameƒƒ“ƒo‚ğæ“¾‚·‚éB
-	* ‰ÂG«‚ğl—¶‚µ‚½ƒƒ“ƒoæ“¾
+	* @brief nameãƒ¡ãƒ³ãƒã‚’å–å¾—ã™ã‚‹ã€‚
+	* å¯è§¦æ€§ã‚’è€ƒæ…®ã—ãŸãƒ¡ãƒ³ãƒå–å¾—
 	*
-	* @retval null ‚»‚Ìƒƒ“ƒo‚Í‘¶İ‚µ‚È‚¢
-	* @retval ”ñnull name‚É‘Î‰‚µ‚½ƒƒ“ƒo  
+	* @retval null ãã®ãƒ¡ãƒ³ãƒã¯å­˜åœ¨ã—ãªã„
+	* @retval énull nameã«å¯¾å¿œã—ãŸãƒ¡ãƒ³ãƒ  
 	*/
 	const Any& member(const ID& name, const Any& self) const;
 
 	/**
-	* @brief nameƒƒ“ƒo‚ğ‰Šú’lvalue‚Å’è‹`‚·‚éB
+	* @brief nameãƒ¡ãƒ³ãƒã‚’åˆæœŸå€¤valueã§å®šç¾©ã™ã‚‹ã€‚
 	*
 	*/
 	void def(const ID& name, const Any& value) const;
 
 	/**
-	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚ªŠ‘®‚·‚éƒNƒ‰ƒX‚ğ•Ô‚·B
+	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒæ‰€å±ã™ã‚‹ã‚¯ãƒ©ã‚¹ã‚’è¿”ã™ã€‚
 	*
 	*/
 	const Class& get_class() const;
 
 	/**
-	* @brief ®”‚É•ÏŠ·‚µ‚Ä•Ô‚·B
+	* @brief æ•´æ•°ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
 	*
 	*/
 	int_t to_i() const;
 	
 	/**
-	* @brief •‚“®¬”“_”‚É•ÏŠ·‚µ‚Ä•Ô‚·B
+	* @brief æµ®å‹•å°æ•°ç‚¹æ•°ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
 	*
 	*/
 	float_t to_f() const;
 	
 	/**
-	* @brief •¶š—ñ‚É•ÏŠ·‚µ‚Ä•Ô‚·B
+	* @brief æ–‡å­—åˆ—ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
 	*
 	*/
 	String to_s() const;
 	
 	/**
-	* @brief ^‹U’l‚É•ÏŠ·‚µ‚Ä•Ô‚·B
+	* @brief çœŸå½å€¤ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
 	*
 	*/
 	bool to_b() const{
@@ -465,47 +457,47 @@ public:
 	}
 	
 	/**
-	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É•t‚¯‚ç‚ê‚½–¼‘O‚ğ•Ô‚·B
+	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã‚’è¿”ã™ã€‚
 	*
 	*/
 	String object_name() const;
 
 	/**
-	* @brief clsƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚©’²‚×‚éB
+	* @brief clsã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‹èª¿ã¹ã‚‹ã€‚
 	*
 	*/
 	bool is(const Any& cls) const;
 		
 	/**
-	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É•t‚¯‚ç‚ê‚½–¼‘O‚Ì‹­‚³‚ğ•Ô‚·B
+	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã®å¼·ã•ã‚’è¿”ã™ã€‚
 	*
 	*/
 	int_t object_name_force() const;
 	
 	/**
-	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É–¼‘O‚ğ‚Â‚¯‚éB
+	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«åå‰ã‚’ã¤ã‘ã‚‹ã€‚
 	*
-	* –¼‘O‚ğ‚Ä‚È‚¢ƒIƒuƒWƒFƒNƒg‚âA‘O‚É•t‚¯‚ç‚ê‚½–¼‘O‚Ì•û‚ª‹­‚¢ê‡–³‹‚³‚ê‚éB
-	* @param name ‚Â‚¯‚é–¼‘O
-	* @param force –¼‘O‚Ì‹­‚³
-	* @param parent e
+	* åå‰ã‚’æŒã¦ãªã„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚„ã€å‰ã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã®æ–¹ãŒå¼·ã„å ´åˆç„¡è¦–ã•ã‚Œã‚‹ã€‚
+	* @param name ã¤ã‘ã‚‹åå‰
+	* @param force åå‰ã®å¼·ã•
+	* @param parent è¦ª
 	*/
 	void set_object_name(const String& name, int_t force, const Any& parent) const;
 
 	/**
-	* @brief ƒnƒbƒVƒ…’l‚ğ•Ô‚·
+	* @brief ãƒãƒƒã‚·ãƒ¥å€¤ã‚’è¿”ã™
 	*
 	*/
 	uint_t hashcode() const;
 
 	/**
-	* @brief ©g‚ğ•¶š—ñ‰»‚µ‚Äprintln‚·‚éB
-	* @return ©g‚ğ•Ô‚·B
+	* @brief è‡ªèº«ã‚’æ–‡å­—åˆ—åŒ–ã—ã¦printlnã™ã‚‹ã€‚
+	* @return è‡ªèº«ã‚’è¿”ã™ã€‚
 	*/
 	Any p() const;
 	
 	/**
-	* @brief ©g‚ªnull‚©•Ô‚·
+	* @brief è‡ªèº«ãŒnullã‹è¿”ã™
 	*/ 
 	bool is_null() const{ return type()==TYPE_NULL; }
 
@@ -513,7 +505,7 @@ public:
 
 	int_t arity() const;
 
-	// ŠÖ”ŒÄ‚Ño‚µB5‚Â‚Ü‚Å‚Ìˆø”‚ğó‚¯æ‚éƒo[ƒWƒ‡ƒ“‚ª’è‹`‚³‚ê‚Ä‚¢‚éB
+	// é–¢æ•°å‘¼ã³å‡ºã—ã€‚5ã¤ã¾ã§ã®å¼•æ•°ã‚’å—ã‘å–ã‚‹ãƒãƒ¼ã‚¸ãƒ§ãƒ³ãŒå®šç¾©ã•ã‚Œã¦ã„ã‚‹ã€‚
 	Any operator()() const;
 	Any operator()(const Any& a0) const;
 	Any operator()(const Any& a0, const Any& a1) const;
@@ -536,7 +528,7 @@ public:
 	Any operator()(const Any& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4) const;
 	Any operator()(const Named& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4) const;
 
-	// ƒƒ\ƒbƒhŒÄ‚Ño‚µB5‚Â‚Ü‚Å‚Ìˆø”‚ğó‚¯æ‚éƒo[ƒWƒ‡ƒ“‚ª’è‹`‚³‚ê‚Ä‚¢‚éB
+	// ãƒ¡ã‚½ãƒƒãƒ‰å‘¼ã³å‡ºã—ã€‚5ã¤ã¾ã§ã®å¼•æ•°ã‚’å—ã‘å–ã‚‹ãƒãƒ¼ã‚¸ãƒ§ãƒ³ãŒå®šç¾©ã•ã‚Œã¦ã„ã‚‹ã€‚
 	Any send(const ID& name) const;
 	Any send(const ID& name, const Any& a0) const;
 	Any send(const ID& name, const Any& a0, const Any& a1) const;
@@ -562,54 +554,54 @@ public:
 public:
 
 	/**
-	* @brief ˜AŒ‹‚·‚é
+	* @brief é€£çµã™ã‚‹
 	*
-	* send("op_cat", v)‚Æ“™‚µ‚¢
+	* send("op_cat", v)ã¨ç­‰ã—ã„
 	*/
 	Any cat(const Any& v) const;
 
 	/**
-	* @brief ”z—ñ‚Ì—v‘f‚ğ•Ô‚·
+	* @brief é…åˆ—ã®è¦ç´ ã‚’è¿”ã™
 	*
-	* send("op_at", index)‚Æ“™‚µ‚¢
+	* send("op_at", index)ã¨ç­‰ã—ã„
 	*/	
 	const Any at(const Any& index) const;
 	
 	/**
-	* @brief ”z—ñ‚Ì—v‘f‚ğİ’è‚·‚é
+	* @brief é…åˆ—ã®è¦ç´ ã‚’è¨­å®šã™ã‚‹
 	*
-	* send("op_set_at", index, value)‚Æ“™‚µ‚¢
+	* send("op_set_at", index, value)ã¨ç­‰ã—ã„
 	*/	
 	void set_at(const Any& index, const Any& value) const;
 		
 	/**
-	* @brief ”z—ñ‚Ì’·‚³‚ğæ“¾‚·‚é
+	* @brief é…åˆ—ã®é•·ã•ã‚’å–å¾—ã™ã‚‹
 	*
-	* send("size").to_i()‚Æ“™‚µ‚¢
+	* send("size").to_i()ã¨ç­‰ã—ã„
 	*/
 	int_t size() const;
 
 	/**
-	* @brief ”z—ñ‚Ì—v‘f‚ğ•Ô‚·
+	* @brief é…åˆ—ã®è¦ç´ ã‚’è¿”ã™
 	*
-	* send("op_at", index)‚Æ“™‚µ‚¢
+	* send("op_at", index)ã¨ç­‰ã—ã„
 	*/
 	const Any operator[](const Any& index) const;
 
 	/**
-	* @brief “¯ˆê‚ÌƒIƒuƒWƒFƒNƒg‚©’²‚×‚é
+	* @brief åŒä¸€ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‹èª¿ã¹ã‚‹
 	*
 	*/
 	bool raweq(const Any& a) const{ return UncountedAny::raweq(a); }
 
 	/**
-	* @brief “¯ˆê‚ÌƒIƒuƒWƒFƒNƒg‚Å‚Í‚È‚¢‚©’²‚×‚é
+	* @brief åŒä¸€ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã§ã¯ãªã„ã‹èª¿ã¹ã‚‹
 	*
 	*/
 	bool rawne(const Any& a) const{ return UncountedAny::rawne(a); }
 	
 	/**
-	* @brief ƒIƒuƒWƒFƒNƒg‚ÌƒAƒhƒŒƒX“™‚Å‚æ‚è¬‚³‚¢‚©‹‚ß‚é
+	* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ã‚¢ãƒ‰ãƒ¬ã‚¹ç­‰ã§ã‚ˆã‚Šå°ã•ã„ã‹æ±‚ã‚ã‚‹
 	*
 	*/
 	bool rawlt(const Any& a) const{ return UncountedAny::rawlt(a); }
@@ -632,7 +624,7 @@ private:
 public:
 	
 	/**
-	* @brief boolŒ^‚É©“®•ÏŠ·‚·‚éB
+	* @brief boolå‹ã«è‡ªå‹•å¤‰æ›ã™ã‚‹ã€‚
 	*
 	*/
 	operator safe_bool() const{
@@ -641,187 +633,187 @@ public:
 };
 
 /**
-* @brief ‘«‚·
+* @brief è¶³ã™
 *
-* a.send("op_add", b)‚Æ“™‚µ‚¢
+* a.send("op_add", b)ã¨ç­‰ã—ã„
 */	
 Any operator +(const Any& a, const Any& b);
 
 /**
-* @brief ˆø‚­
+* @brief å¼•ã
 *
-* a.send("op_sub", b)‚Æ“™‚µ‚¢
+* a.send("op_sub", b)ã¨ç­‰ã—ã„
 */	
 Any operator -(const Any& a, const Any& b);
 
 /**
-* @brief Š|‚¯‚é
+* @brief æ›ã‘ã‚‹
 *
-* a.send("op_mul", b)‚Æ“™‚µ‚¢
+* a.send("op_mul", b)ã¨ç­‰ã—ã„
 */	
 Any operator *(const Any& a, const Any& b);
 
 /**
-* @brief Š„‚é
+* @brief å‰²ã‚‹
 *
-* a.send("op_div", b)‚Æ“™‚µ‚¢
+* a.send("op_div", b)ã¨ç­‰ã—ã„
 */	
 Any operator /(const Any& a, const Any& b);
 
 /**
-* @brief —]‚è‚ğ‹‚ß‚é
+* @brief ä½™ã‚Šã‚’æ±‚ã‚ã‚‹
 *
-* a.send("op_mod", b)‚Æ“™‚µ‚¢
+* a.send("op_mod", b)ã¨ç­‰ã—ã„
 */	
 Any operator %(const Any& a, const Any& b);
 
 /**
 * @brief bitwise OR
 *
-* a.send("op_or", b)‚Æ“™‚µ‚¢
+* a.send("op_or", b)ã¨ç­‰ã—ã„
 */	
 Any operator |(const Any& a, const Any& b);
 
 /**
 * @brief bitwise AND
 *
-* a.send("op_and", b)‚Æ“™‚µ‚¢
+* a.send("op_and", b)ã¨ç­‰ã—ã„
 */	
 Any operator &(const Any& a, const Any& b);
 
 /**
 * @brief bitwise XOR
-* a.send("op_xor", b)‚Æ“™‚µ‚¢
+* a.send("op_xor", b)ã¨ç­‰ã—ã„
 */	
 Any operator ^(const Any& a, const Any& b);
 
 /**
-* @brief ‰EƒVƒtƒg
+* @brief å³ã‚·ãƒ•ãƒˆ
 *
-* a.send("op_shr", b)‚Æ“™‚µ‚¢
+* a.send("op_shr", b)ã¨ç­‰ã—ã„
 */	
 Any operator >>(const Any& a, const Any& b);
 
 /**
-* @brief ¶ƒVƒtƒg
+* @brief å·¦ã‚·ãƒ•ãƒˆ
 *
-* a.send("op_shl", b)‚Æ“™‚µ‚¢
+* a.send("op_shl", b)ã¨ç­‰ã—ã„
 */	
 Any operator <<(const Any& a, const Any& b);
 
 /**
-* @brief “™‚µ‚¢‚©
+* @brief ç­‰ã—ã„ã‹
 *
-* a.send("op_eq", b)‚Æ“™‚µ‚¢
+* a.send("op_eq", b)ã¨ç­‰ã—ã„
 */	
 Any operator ==(const Any& a, const Any& b);
 
 /**
-* @brief “™‚µ‚­‚È‚¢‚©
+* @brief ç­‰ã—ããªã„ã‹
 *
-* !a.send("op_eq", b)‚Æ“™‚µ‚¢
+* !a.send("op_eq", b)ã¨ç­‰ã—ã„
 */	
 Any operator !=(const Any& a, const Any& b);
 
 /**
-* @brief ‚æ‚è¬‚³‚¢‚©
+* @brief ã‚ˆã‚Šå°ã•ã„ã‹
 *
-* a.send("op_lt", b)‚Æ“™‚µ‚¢
+* a.send("op_lt", b)ã¨ç­‰ã—ã„
 */	
 Any operator <(const Any& a, const Any& b);
 
 /**
-* @brief ‚æ‚è‘å‚«‚¢‚©
+* @brief ã‚ˆã‚Šå¤§ãã„ã‹
 *
-* b.send("op_lt", a)‚Æ“™‚µ‚¢
+* b.send("op_lt", a)ã¨ç­‰ã—ã„
 */	
 Any operator >(const Any& a, const Any& b);
 
 /**
-* @brief ˆÈã‚©
+* @brief ä»¥ä¸Šã‹
 *
-* !b.send("op_lt", a)‚Æ“™‚µ‚¢
+* !b.send("op_lt", a)ã¨ç­‰ã—ã„
 */	
 Any operator <=(const Any& a, const Any& b);
 
 /**
-* @brief ˆÈ‰º‚©
-* !a.send("op_lt", b)‚Æ“™‚µ‚¢
+* @brief ä»¥ä¸‹ã‹
+* !a.send("op_lt", b)ã¨ç­‰ã—ã„
 */	
 Any operator >=(const Any& a, const Any& b);
 
 /**
-* @brief ‘«‚µ‡‚í‚¹‚é
+* @brief è¶³ã—åˆã‚ã›ã‚‹
 *
-* a = a.send("op_add_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_add_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator +=(Any& a, const Any& b);
 
 /**
-* @brief ˆø‚«‡‚í‚¹‚é
+* @brief å¼•ãåˆã‚ã›ã‚‹
 *
-* a = a.send("op_sub_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_sub_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator -=(Any& a, const Any& b);
 
 /**
-* @brief Š|‚¯‡‚í‚¹‚é
+* @brief æ›ã‘åˆã‚ã›ã‚‹
 *
-* a = a.send("op_mod_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_mod_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator *=(Any& a, const Any& b);
 
 /**
-* @brief Š„‚è‡‚í‚¹‚é
+* @brief å‰²ã‚Šåˆã‚ã›ã‚‹
 *
-* a = a.send("op_div_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_div_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator /=(Any& a, const Any& b);
 
 /**
-* @brief —]‚è‚ğ‹‚ß‡‚í‚¹‚é
+* @brief ä½™ã‚Šã‚’æ±‚ã‚åˆã‚ã›ã‚‹
 *
-* a = a.send("op_mod_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_mod_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator %=(Any& a, const Any& b);
 
 /**
-* @brief bitwise OR‚µ‚Ä‘ã“ü‚·‚é
+* @brief bitwise ORã—ã¦ä»£å…¥ã™ã‚‹
 *
-* a = a.send("op_or_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_or_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator |=(Any& a, const Any& b);
 
 /**
-* @brief bitwise AND‚µ‚Ä‘ã“ü‚·‚é
+* @brief bitwise ANDã—ã¦ä»£å…¥ã™ã‚‹
 *
-* a = a.send("op_and_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_and_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator &=(Any& a, const Any& b);
 
 /**
-* @brief bitwise XOR‚µ‚Ä‘ã“ü‚·‚é
+* @brief bitwise XORã—ã¦ä»£å…¥ã™ã‚‹
 *
-* a = a.send("op_xor_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_xor_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator ^=(Any& a, const Any& b);
 
 /**
-* @brief ‰EƒVƒtƒg‚µ‚Ä‘ã“ü‚·‚é
+* @brief å³ã‚·ãƒ•ãƒˆã—ã¦ä»£å…¥ã™ã‚‹
 *
-* a = a.send("op_shr_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_shr_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator >>=(Any& a, const Any& b);
 
 /**
-* @brief ¶ƒVƒtƒg‚µ‚Ä‘ã“ü‚·‚é
+* @brief å·¦ã‚·ãƒ•ãƒˆã—ã¦ä»£å…¥ã™ã‚‹
 *
-* a = a.send("op_shl_assign", b)‚Æ“™‚µ‚¢
+* a = a.send("op_shl_assign", b)ã¨ç­‰ã—ã„
 */	
 Any& operator <<=(Any& a, const Any& b);
 
 
-// Any‚ÌÀ‘•
+// Anyã®å®Ÿè£…
 class AnyImpl{
 public:
 	

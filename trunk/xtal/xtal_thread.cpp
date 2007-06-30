@@ -158,7 +158,7 @@ void global_interpreter_lock(){
 	if(current_thread_id_!=id){
 		mutex_.impl()->lock();
 
-		if(stop_the_world_){ // lock‚ğŠl“¾‚Å‚«‚½‚Ì‚ªA¢ŠE‚ª~‚Ü‚Á‚½Šˆ×‚È‚ç
+		if(stop_the_world_){ // lockã‚’ç²å¾—ã§ããŸã®ãŒã€ä¸–ç•ŒãŒæ­¢ã¾ã£ãŸæ‰€ç‚ºãªã‚‰
 			thread_locked_count_++;
 			mutex_.impl()->unlock();
 			
@@ -169,7 +169,7 @@ void global_interpreter_lock(){
 			thread_locked_count_--;
 		}
 		
-		// lockedó‘Ô
+		// lockedçŠ¶æ…‹
 		current_thread_id_ = id;
 		current_thread_recursive_ = 1;
 		change_vmachine(id);
@@ -192,7 +192,7 @@ void xlock(){
 		mutex_.impl()->lock();
 		thread_unlocked_count_--;
 
-		if(stop_the_world_){ // lock‚ğŠl“¾‚Å‚«‚½‚Ì‚ªA¢ŠE‚ª~‚Ü‚Á‚½Šˆ×‚È‚ç
+		if(stop_the_world_){ // lockã‚’ç²å¾—ã§ããŸã®ãŒã€ä¸–ç•ŒãŒæ­¢ã¾ã£ãŸæ‰€ç‚ºãªã‚‰
 			thread_locked_count_++;
 			mutex_.impl()->unlock();
 			
@@ -203,7 +203,7 @@ void xlock(){
 			thread_locked_count_--;
 		}
 		
-		// lockedó‘Ô
+		// lockedçŠ¶æ…‹
 		current_thread_id_ = id;
 		current_thread_recursive_ = 1;
 		change_vmachine(id);

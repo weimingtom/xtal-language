@@ -47,7 +47,9 @@ void* user_malloc_nothrow(size_t size){
 	calling_malloc_ = true;
 
 	if(used_user_malloc_threshold_<used_user_malloc_size_+size){
-		used_user_malloc_threshold_ += size+1024*10; // 臒l�𑝂₷
+
+		// 閾値を増やす
+		used_user_malloc_threshold_ += size+1024*10; 
 		gc();
 	}
 	

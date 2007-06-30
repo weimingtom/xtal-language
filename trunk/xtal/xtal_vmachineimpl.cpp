@@ -37,7 +37,7 @@ VMachineImpl::~VMachineImpl(){
 }
 	
 void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
-	// Œ‹‰Ê‚ğvm‚É“n‚·
+	// çµæœã‚’vmã«æ¸¡ã™
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
@@ -66,7 +66,7 @@ const u8* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool add
 	
 	resume_pc_ = 0;
 	
-	carry_over(fun.impl());
+	carry_over(fun);
 	ff().yieldable = true;
 
 	execute_try(ff().pc);
@@ -202,8 +202,6 @@ void VMachineImpl::recycle_ff(const u8* pc, int_t ordered_arg_count, int_t named
 	f.self(self);
 	f.calling_state = FunFrame::CALLING_STATE_NONE;
 	f.pc = &throw_unsupported_error_code_;
-	f.variables_.clear();
-	f.scopes.clear();
 }
 
 void VMachineImpl::recycle_ff_args(const u8* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -331,7 +329,7 @@ const Any& VMachineImpl::result(int_t pos){
 		String hint2 = ff().hint2();
 		pop_ff();
 		if(Any uerror = builtin().member("UnsupportedError")){
-			XTAL_THROW(uerror(Xt("%s :: '%s' ‚Í’è‹`‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ")(
+			XTAL_THROW(uerror(Xt("%s :: '%s' ã¯å®šç¾©ã•ã‚Œã¦ã„ã¾ã›ã‚“")(
 				hint1 ? hint1 : String("?"),
 				hint2 ? hint2 : String("()")))); 
 		}else{
@@ -349,67 +347,60 @@ const Any& VMachineImpl::result(int_t pos){
 	}
 }
 	
-void VMachineImpl::carry_over(FunImpl* p){
+void VMachineImpl::carry_over(const Fun& fun){
 	FunFrame& f = ff();
 	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
-	f.fun(p);
-	f.outer(p->outer());
+	f.fun(fun);
+	f.outer(fun.impl()->outer());
 
-	XTAL_ASSERT(f.variables_.empty()); //f.variables_.clear();
-	XTAL_ASSERT(f.scopes.empty()); //f.scopes.clear();
+	f.variables_.clear();
+	f.scopes.clear();
 
-	f.pc = p->pc()+p->code().impl()->data();
-	f.yieldable = prev_ff().pc!=&end_code_ && prev_ff().yieldable;
+	f.pc = fun.impl()->pc()+fun.impl()->code().impl()->data();
+	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
 
-	if(p->used_args_object()){
-		f.arguments(make_args((Fun&)UncountedAny(p).cref()));
+	if(fun.impl()->used_args_object()){
+		f.arguments(make_args(fun));
 	}
 	
-	FunCore* core = p->core();
-	int_t ordered_arg_count = f.ordered_arg_count;
-	int_t named_arg_count2 = f.named_arg_count*2;
+	FunCore* core = fun.impl()->core();
 
 	if(int_t size = core->variable_size){
 		f.scopes.push(core);
 		f.variables_.upsize(size);
 		UncountedAny* vars=&f.variables_[size-1];
-
-		for(int_t n=0; n<size; ++n){
-			if(n<ordered_arg_count){
-				vars[n] = get(ordered_arg_count+named_arg_count2-1-n);
-			}else{
-				vars[n] = arg(p->param_name_at(n));
-			}
+		for(int_t n = 0; n<size; ++n){
+			vars[n] = arg(n, fun);
 		}
 	}
 	
 	int_t max_stack = core->max_stack;
 	stack_.upsize(max_stack);
-	stack_.downsize(ordered_arg_count+named_arg_count2 + max_stack);
+	stack_.downsize(f.ordered_arg_count+f.named_arg_count*2 + max_stack);
 }
 
-void VMachineImpl::mv_carry_over(FunImpl* p){
+void VMachineImpl::mv_carry_over(const Fun& fun){
 	FunFrame& f = ff();
 	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
-	f.fun(p);
-	f.outer(p->outer());
+	f.fun(fun);
+	f.outer(fun.impl()->outer());
 
-	XTAL_ASSERT(f.variables_.empty()); //f.variables_.clear();
-	XTAL_ASSERT(f.scopes.empty()); //f.scopes.clear();
+	f.variables_.clear();
+	f.scopes.clear();
 
-	f.pc = p->pc()+p->code().impl()->data();
-	f.yieldable = prev_ff().pc!=&end_code_ && prev_ff().yieldable;
+	f.pc = fun.impl()->pc()+fun.impl()->code().impl()->data();
+	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
 
-	if(p->used_args_object()){
-		f.arguments(make_args((Fun&)UncountedAny(p).cref()));
+	if(fun.impl()->used_args_object()){
+		f.arguments(make_args(fun));
 	}
 	
-	// –¼‘O•t‚«ˆø”‚Í×–‚
+	// åå‰ä»˜ãå¼•æ•°ã¯é‚ªé­”
 	stack_.downsize(f.named_arg_count*2);
 
-	FunCore* core = p->core();
+	FunCore* core = fun.impl()->core();
 	
 	if(int_t size = core->variable_size){
 		f.scopes.push(core);
@@ -431,44 +422,35 @@ void VMachineImpl::mv_carry_over(FunImpl* p){
 }
 
 void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_flag){
-	
-	// –ß‚è’l‚Ì”‚Æ—v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚ª“™‚µ‚¢
+	// æˆ»ã‚Šå€¤ã®æ•°ã¨è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ãŒç­‰ã—ã„
 	if(need_result_count==n){
-		// –ß‚è’l‚ğØ‚èÌ‚Ä‚éƒtƒ‰ƒO‚ª‚Â‚¢‚Ä‚¢‚é
-		if(result_flag&RESULT_DISCARD){
-			downsize(1);
-		}
 		return;
 	}
 
-	// –ß‚è’l‚È‚ñ‚Ä—v‹‚µ‚Ä‚È‚¢
+	// æˆ»ã‚Šå€¤ãªã‚“ã¦è¦æ±‚ã—ã¦ãªã„
 	if(need_result_count==0){
 		downsize(n);
 		return;
 	}
 
-	// –ß‚è’l‚ªˆê‚Â‚à–³‚¢‚Ì‚Ånull‚Å–„‚ß‚é
+	// æˆ»ã‚Šå€¤ãŒä¸€ã¤ã‚‚ç„¡ã„ã®ã§nullã§åŸ‹ã‚ã‚‹
 	if(n==0){
 		for(int_t i = 0; i<need_result_count; ++i){
 			push(null);
 		}
-		// –ß‚è’l‚ğØ‚èÌ‚Ä‚éƒtƒ‰ƒO‚ª‚Â‚¢‚Ä‚¢‚é
-		if(result_flag&RESULT_DISCARD){
-			downsize(1);
-		}
 		return;
 	}
 
-	// ‚±‚Ì“_‚ÅAn‚àneed_result_count‚à1ˆÈã
+	// ã“ã®æ™‚ç‚¹ã§ã€nã‚‚need_result_countã‚‚1ä»¥ä¸Š
 
 
-	// —v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚Ì•û‚ªAŠÖ”‚ª•Ô‚·–ß‚è’l‚æ‚è­‚È‚¢
+	// è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ã®æ–¹ãŒã€é–¢æ•°ãŒè¿”ã™æˆ»ã‚Šå€¤ã‚ˆã‚Šå°‘ãªã„
 	if(need_result_count<n){
-		// –ß‚è’l‚ğØ‚èÌ‚Ä‚éƒtƒ‰ƒO‚ª‚Â‚¢‚Ä‚¢‚é
+		// æˆ»ã‚Šå€¤ã‚’åˆ‡ã‚Šæ¨ã¦ã‚‹ãƒ•ãƒ©ã‚°ãŒã¤ã„ã¦ã„ã‚‹
 		if(result_flag&RESULT_DISCARD){
-			downsize(n-need_result_count+1);
+			downsize(n-need_result_count);
 		}else{
-			// —]‚Á‚½–ß‚è’l‚ğ”z—ñ‚É’¼‚·B
+			// ä½™ã£ãŸæˆ»ã‚Šå€¤ã‚’é…åˆ—ã«ç›´ã™ã€‚
 			int_t size = n-need_result_count+1;
 			XTAL_GLOBAL_INTERPRETER_LOCK{
 				Array ret(size);
@@ -480,28 +462,25 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count, int_t result_
 			}	
 		}
 	}else{
-		// —v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚Ì•û‚ªAŠÖ”‚ª•Ô‚·–ß‚è’l‚æ‚è‘½‚¢
+		// è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ã®æ–¹ãŒã€é–¢æ•°ãŒè¿”ã™æˆ»ã‚Šå€¤ã‚ˆã‚Šå¤šã„
 
 		if(const Array& temp = xtal::as<const Array&>(get())){
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				// ÅŒã‚Ì—v‘f‚Ì”z—ñ‚ğ“WŠJ‚·‚éB
-				Array ary(temp);
-				downsize(1);
+			// æœ€å¾Œã®è¦ç´ ã®é…åˆ—ã‚’å±•é–‹ã™ã‚‹ã€‚
+			Array ary(temp);
+			downsize(1);
 
-				// ”z—ñ‚ğ“WŠJ‚µ–„‚ß‚Ş
+			// é…åˆ—ã‚’å±•é–‹ã—åŸ‹ã‚è¾¼ã‚€
+			XTAL_GLOBAL_INTERPRETER_LOCK{
 				for(int_t i=0, len=ary.size(); i<len; ++i){
 					push(ary.at(i));
 				}
-				adjust_result(n-1+ary.size(), need_result_count, result_flag);
 			}
+
+			adjust_result(n-1+ary.size(), need_result_count, result_flag);
 		}else{
-			// ÅŒã‚Ì—v‘f‚ª”z—ñ‚Å‚Í‚È‚¢‚Ì‚ÅAnull‚Å–„‚ß‚Æ‚­
+			// æœ€å¾Œã®è¦ç´ ãŒé…åˆ—ã§ã¯ãªã„ã®ã§ã€nullã§åŸ‹ã‚ã¨ã
 			for(int_t i = n; i<need_result_count; ++i){
 				push(null);
-			}
-			// –ß‚è’l‚ğØ‚èÌ‚Ä‚éƒtƒ‰ƒO‚ª‚Â‚¢‚Ä‚¢‚é
-			if(result_flag&RESULT_DISCARD){
-				downsize(1);
 			}
 		}
 	}
@@ -732,7 +711,7 @@ void VMachineImpl::execute_inner(const u8* start){
 
 begin:
 
-/*
+/* 
 CodeType ct=(CodeType)*pc;
 CodeType ct1=(CodeType)*(pc+1);
 CodeType ct2=(CodeType)*(pc+2);
@@ -765,7 +744,7 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(CODE_PUSH_FLOAT_3){ push(UncountedAny(3.0f).cref()); pc+=1; }
 
 	XTAL_VM_CASE(CODE_PUSH_INT_1BYTE){ push(UncountedAny(get_u8(pc+1)).cref()); pc+=2; }
-	XTAL_VM_CASE(CODE_PUSH_INT_2BYTE){ push(UncountedAny(get_u16(pc+1)).cref()); pc+=3; }
+	XTAL_VM_CASE(CODE_PUSH_INT_2BYTE){ push(UncountedAny(get_i16(pc+1)).cref()); pc+=3; }
 	
 	XTAL_VM_CASE(CODE_PUSH_THIS){ push(ff().self()); pc+=1; }
 	XTAL_VM_CASE(CODE_IF_ARG_IS_NULL){ pc = LOCAL_VARIABLE(get_u8(pc+3)).is_null() ? pc+4 : pc+get_i16(pc+1); }
@@ -858,8 +837,8 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(CODE_ONCE){ pc = ONCE(pc); }
 
-	XTAL_VM_CASE(CODE_GET_VALUE){ push(code().get_value(get_u16(pc+1))); pc+=3; }
-	XTAL_VM_CASE(CODE_SET_VALUE){ code().set_value(get_u16(pc+1), pop()); pc+=3; }
+	XTAL_VM_CASE(CODE_GET_VALUE){ push(code().impl()->get_value(get_u16(pc+1))); pc+=3; }
+	XTAL_VM_CASE(CODE_SET_VALUE){ code().impl()->set_value(get_u16(pc+1), pop()); pc+=3; }
 	
 	XTAL_VM_CASE(CODE_PUSH_GOTO){ push(UncountedAny((pc+get_i16(pc+1))-source()).cref()); pc+=3; }
 	XTAL_VM_CASE(CODE_POP_GOTO){ pc = source()+pop().ivalue(); }
@@ -1009,15 +988,16 @@ const u8* VMachineImpl::CALL(const u8* pc){
 }
 	
 const u8* VMachineImpl::CALLEE(const u8* pc){
-	FunImpl* fn = fun().impl();
+	UncountedAny fn = fun();
+	UncountedAny self = ff().self();
 	switch(get_u8(pc + 4) & 3){
 		XTAL_NODEFAULT;
-		XTAL_CASE(0){ push_ff(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), ff().self()); }
-		XTAL_CASE(1){ push_ff_args(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), ff().self()); }
-		XTAL_CASE(2){ recycle_ff(pc+5, get_u8(pc+1), get_u8(pc+2), ff().self()); }
-		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), ff().self()); }
+		XTAL_CASE(0){ push_ff(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), self.cref()); }
+		XTAL_CASE(1){ push_ff_args(pc+5, get_u8(pc+3), get_u8(pc+4), get_u8(pc+1), get_u8(pc+2), self.cref()); }
+		XTAL_CASE(2){ recycle_ff(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
+		XTAL_CASE(3){ recycle_ff_args(pc+5, get_u8(pc+1), get_u8(pc+2), self.cref()); }
 	}
-	carry_over(fn);
+	carry_over((const Fun&)fn);
 	return ff().pc;	
 }
 
@@ -1190,9 +1170,12 @@ const u8* VMachineImpl::DEFINE_GLOBAL_VARIABLE(const u8* pc){
 const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 	int_t n = get_u8(pc+1);
 	int_t m = get_u16(pc+2);
-	UncountedAny self = ff().self();
-	if(HaveInstanceVariables* p = self.cref().type()==TYPE_BASE ? self.cref().impl()->have_instance_variables() : (HaveInstanceVariables*)0){
-		p->set_variable(n, code().get_frame_core(m), pop());
+	const Any& self = ff().self();
+
+	if(HaveInstanceVariables* p = self.type()==TYPE_BASE ? self.impl()->have_instance_variables() : (HaveInstanceVariables*)0){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			p->set_variable(n, code().impl()->get_frame_core(m), pop());
+		}
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
@@ -1204,9 +1187,12 @@ const u8* VMachineImpl::SET_INSTANCE_VARIABLE(const u8* pc){
 const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 	int_t n = get_u8(pc+1);
 	int_t m = get_u16(pc+2);
-	UncountedAny self = ff().self();
-	if(HaveInstanceVariables* p = self.cref().type()==TYPE_BASE ? self.cref().impl()->have_instance_variables() : (HaveInstanceVariables*)0){
-		push(p->variable(n, code().get_frame_core(m)));
+	const Any& self = ff().self();
+
+	if(HaveInstanceVariables* p = self.type()==TYPE_BASE ? self.impl()->have_instance_variables() : (HaveInstanceVariables*)0){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			push(p->variable(n, code().impl()->get_frame_core(m)));
+		}
 	}else{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
@@ -1216,7 +1202,7 @@ const u8* VMachineImpl::INSTANCE_VARIABLE(const u8* pc){
 }
 
 const u8* VMachineImpl::ONCE(const u8* pc){
-	const Any& ret = code().get_value(get_u16(pc+3));
+	const Any& ret = code().impl()->get_value(get_u16(pc+3));
 	if(!ret.raweq(nop)){
 		push(ret);
 		return pc+get_i16(pc+1);

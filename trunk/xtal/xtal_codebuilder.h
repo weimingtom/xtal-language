@@ -24,32 +24,32 @@ public:
 	void compile(Stmt* p);	
 	
 	/**
-	* ƒRƒ“ƒpƒCƒ‹ƒGƒ‰[‚ğæ“¾‚·‚éB
+	* ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã‚¨ãƒ©ãƒ¼ã‚’å–å¾—ã™ã‚‹ã€‚
 	*/
 	Array errors();
 		
 	/**
-	* ¯•Êq‚ª•Ï”‚Æ‚µ‚Ä‚ ‚é‚©’T‚µA•Ï”ˆÊ’u‚ğ•Ô‚·B
-	* @param key ¯•Êq
-	* @retval -1 “o˜^‚³‚ê‚Ä‚¢‚È‚¢
-	* @retval ”ñ-1 •Ï”ˆÊ’u
+	* è­˜åˆ¥å­ãŒå¤‰æ•°ã¨ã—ã¦ã‚ã‚‹ã‹æ¢ã—ã€å¤‰æ•°ä½ç½®ã‚’è¿”ã™ã€‚
+	* @param key è­˜åˆ¥å­
+	* @retval -1 ç™»éŒ²ã•ã‚Œã¦ã„ãªã„
+	* @retval é-1 å¤‰æ•°ä½ç½®
 	*/
 	int_t lookup_variable(int_t key);
 
 	bool variable_on_heap(int_t n);
 	
 	/**
-	* ƒ‰ƒxƒ‹”Ô†‚ğ—\–ñ‚µA•Ô‚·B
+	* ãƒ©ãƒ™ãƒ«ç•ªå·ã‚’äºˆç´„ã—ã€è¿”ã™ã€‚
 	*/
 	int_t reserve_label();
 	
 	/**
-	* ƒ‰ƒxƒ‹‚ğİ’è‚·‚éB
+	* ãƒ©ãƒ™ãƒ«ã‚’è¨­å®šã™ã‚‹ã€‚
 	*/
 	void set_label(int_t lableno);
 
 	/**
-	* ƒ‰ƒxƒ‹‚ÉƒWƒƒƒ“ƒv‚·‚éƒR[ƒh‚ğ–„‚ß‚ß‚é‚æ‚¤‚É×H‚·‚éB
+	* ãƒ©ãƒ™ãƒ«ã«ã‚¸ãƒ£ãƒ³ãƒ—ã™ã‚‹ã‚³ãƒ¼ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚ã‚‹ã‚ˆã†ã«ç´°å·¥ã™ã‚‹ã€‚
 	*/	
 	void put_jump_code_nocode(int_t oppos, int_t labelno);
 	void put_jump_code(int_t code, int_t labelno);
@@ -64,10 +64,10 @@ public:
 	void put_define_member_code(int_t var, Expr* pvar);
 
 	/**
-	* ¯•Êq‚ª•Ï”‚Æ‚µ‚Ä‚ ‚é‚©’T‚µA•Ï”ˆÊ’u‚ğ•Ô‚·B
-	* @param key ¯•Êq
-	* @retval -1 “o˜^‚³‚ê‚Ä‚¢‚È‚¢
-	* @retval ”ñ-1 •Ï”ˆÊ’u
+	* è­˜åˆ¥å­ãŒå¤‰æ•°ã¨ã—ã¦ã‚ã‚‹ã‹æ¢ã—ã€å¤‰æ•°ä½ç½®ã‚’è¿”ã™ã€‚
+	* @param key è­˜åˆ¥å­
+	* @retval -1 ç™»éŒ²ã•ã‚Œã¦ã„ãªã„
+	* @retval é-1 å¤‰æ•°ä½ç½®
 	*/
 	int_t lookup_instance_variable(int_t key);
 	void put_set_instance_variable_code(int_t var);
@@ -77,12 +77,12 @@ public:
 	void pop_loop();
 	
 	/**
-	* ƒuƒƒbƒN‚ÌI‚è‚ğ–„‚ß‚Ş
+	* ãƒ–ãƒ­ãƒƒã‚¯ã®çµ‚ã‚Šã‚’åŸ‹ã‚è¾¼ã‚€
 	*/
 	void break_off(int_t to);
 		
 	/**
-	* ––”ö‚ÉƒR[ƒh‚ğˆê‚Â’Ç‰Á‚·‚éB
+	* æœ«å°¾ã«ã‚³ãƒ¼ãƒ‰ã‚’ä¸€ã¤è¿½åŠ ã™ã‚‹ã€‚
 	*/
 	void put_code_u8(int_t val);
 	void put_code_u16(int_t val);
@@ -90,7 +90,7 @@ public:
 	void put_code_i16(int_t val);
 
 	/**
-	* i”Ô–Ú‚Ì•”•ª‚Ì’l‚ğ‘‚«Š·‚¦‚éB
+	* iç•ªç›®ã®éƒ¨åˆ†ã®å€¤ã‚’æ›¸ãæ›ãˆã‚‹ã€‚
 	*/
 	void set_code_u8(int_t i, int_t val);
 	void set_code_u16(int_t i, int_t val);
@@ -98,7 +98,7 @@ public:
 	void set_code_i16(int_t i, int_t val);
 	
 	/**
-	* ƒR[ƒh‚ÌƒTƒCƒY‚ğ“¾‚éB
+	* ã‚³ãƒ¼ãƒ‰ã®ã‚µã‚¤ã‚ºã‚’å¾—ã‚‹ã€‚
 	*/
 	int_t code_size();
 		
@@ -133,11 +133,11 @@ public:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			int_t name; // ƒ‰ƒxƒ‹–¼
-			int frame_count; // ƒtƒŒ[ƒ€‚Ì”
-			int break_label; // break_label‚Ì”Ô†
-			int continue_label; // continue_label‚Ì”Ô†
-			bool have_label; // ‘Î‰‚·‚éƒ‰ƒxƒ‹‚ğ‚Á‚Ä‚¢‚é‚©
+			int_t name; // ãƒ©ãƒ™ãƒ«å
+			int frame_count; // ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ•°
+			int break_label; // break_labelã®ç•ªå·
+			int continue_label; // continue_labelã®ç•ªå·
+			bool have_label; // å¯¾å¿œã™ã‚‹ãƒ©ãƒ™ãƒ«ã‚’æŒã£ã¦ã„ã‚‹ã‹
 		};
 		
 		PODStack<Loop> loops;

@@ -90,22 +90,28 @@ int main(int argc, char** argv){
 
 		handle_argv(argv);
 
+		/*
+		int c = clock();
+		load("../bench/inst.xtal");
+		printf("%g\n", (clock()-c)/1000.0f);
+		*/
+
 /*
-		load("test/test_class.xtal");
-		load("test/test_multiple_values.xtal");
-		load("test/test_except.xtal");
-		load("test/test_fiber.xtal");
-		load("test/test_fun.xtal");
-		load("test/test_iter.xtal");
-		load("test/test_fib.xtal");
-		load("test/test_calc.xtal");
-		load("test/test_for.xtal");
-		load("test/test_if.xtal");
-		load("test/test_nested_loops.xtal");
-		load("test/test_assign.xtal");
-		load("test/test_op_assign.xtal");
-		load("test/test_inc.xtal");
-		load("test/test_toplevel.xtal");
+		load("../test/test_class.xtal");
+		load("../test/test_multiple_values.xtal");
+		load("../test/test_except.xtal");
+		load("../test/test_fiber.xtal");
+		load("../test/test_fun.xtal");
+		load("../test/test_iter.xtal");
+		load("../test/test_fib.xtal");
+		load("../test/test_calc.xtal");
+		load("../test/test_for.xtal");
+		load("../test/test_if.xtal");
+		load("../test/test_nested_loops.xtal");
+		load("../test/test_assign.xtal");
+		load("../test/test_op_assign.xtal");
+		load("../test/test_inc.xtal");
+		load("../test/test_toplevel.xtal");
 //*/
 
 
@@ -130,7 +136,7 @@ int main(int argc, char** argv){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
-	vmachine().impl()->print_info();
+	//vmachine().impl()->print_info();
 
 	uninitialize();
 

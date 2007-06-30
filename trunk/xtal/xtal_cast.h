@@ -7,10 +7,10 @@
 namespace xtal{
 	
 /**
-* @brief castŠÖ”AasŠÖ”Aarg_castŠÖ”‚Ì–ß‚è’l‚ÌŒ^‚ğŒˆ’è‚·‚é‚½‚ß‚Ìƒwƒ‹ƒp[ƒeƒ“ƒvƒŒ[ƒgƒNƒ‰ƒX
+* @brief casté–¢æ•°ã€asé–¢æ•°ã€arg_casté–¢æ•°ã®æˆ»ã‚Šå€¤ã®å‹ã‚’æ±ºå®šã™ã‚‹ãŸã‚ã®ãƒ˜ãƒ«ãƒ‘ãƒ¼ãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆã‚¯ãƒ©ã‚¹
 *
-* ‚Ù‚Æ‚ñ‚Ç‚Ìê‡ACastResult<T>::type‚ÍT©g‚ğ•Ô‚·B
-* ˆÙ‚È‚éê‡‚Æ‚µ‚ÄCastResult<const int&>::type ‚Íint‚ğ•Ô‚·B
+* ã»ã¨ã‚“ã©ã®å ´åˆã€CastResult<T>::typeã¯Tè‡ªèº«ã‚’è¿”ã™ã€‚
+* ç•°ãªã‚‹å ´åˆã¨ã—ã¦CastResult<const int&>::type ã¯intã‚’è¿”ã™ã€‚
 */
 template<class T>
 struct CastResult{ typedef T type; };
@@ -25,28 +25,28 @@ template<class T>
 inline typename CastResult<T>::type arg_cast(const Any& a, int param_num, const Any& param_name);
 
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªUserData‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒUserDataã®å ´åˆ
 template<class U, class V>
 inline UserData<U>* as_helper_helper(const Any& a, const UserData<U>*, const V&){
 	if(a.is(TClass<U>::get())){ return (UserData<U>*)&a; }
 	return 0;
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyImpl‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyImplã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* as_helper_helper(const Any& a, const AnyImpl*, const U*){
 	if(a.is(TClass<U>::get())){ return (U*)a.impl(); }
 	return 0;
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* as_helper_helper(const Any& a, const Any*, const U*){
 	if(a.is(TClass<U>::get())){ return (U*)&a; }
 	return 0;
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âAnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚„AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
 template<class U>
 inline U* as_helper_helper(const Any& a, const void*, const U*){
 	if(a.is(TClass<U>::get())){ return ((UserData<U>&)a).get(); }
@@ -54,69 +54,69 @@ inline U* as_helper_helper(const Any& a, const void*, const U*){
 }
 
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyImpl‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyImplã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 void* cast_helper_helper_extend_anyimpl(const Any& a, const Class& cls);
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 void* cast_helper_helper_extend_any(const Any& a, const Class& cls);
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âAnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚„AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
 void* cast_helper_helper_other(const Any& a, const Class& cls);
 
-// •ÏŠ·Œã‚ÌŒ^‚ªUserData‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒUserDataã®å ´åˆ
 template<class U, class V>
 inline UserData<U>* cast_helper_helper(const Any& a, const UserData<U>*, const V&){
 	return (UserData<U>*)cast_helper_helper_extend_any(a, TClass<U>::get());
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyImpl‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyImplã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* cast_helper_helper(const Any& a, const AnyImpl*, const U*){
 	return (U*)cast_helper_helper_extend_anyimpl(a, TClass<U>::get());
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* cast_helper_helper(const Any& a, const Any*, const U*){
 	return (U*)cast_helper_helper_extend_any(a, TClass<U>::get());
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âAnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚„AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
 template<class U>
 inline U* cast_helper_helper(const Any& a, const void*, const U*){
 	return (U*)cast_helper_helper_other(a, TClass<U>::get());
 }
 
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyImpl‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyImplã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 void* arg_cast_helper_helper_extend_anyimpl(const Any& a, int param_num, const Any& param_name, const Class& cls);
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 void* arg_cast_helper_helper_extend_any(const Any& a, int param_num, const Any& param_name, const Class& cls);
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âAnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚„AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
 void* arg_cast_helper_helper_other(const Any& a, int param_num, const Any& param_name, const Class& cls);
 
 
-// •ÏŠ·Œã‚ÌŒ^‚ªUserData‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒUserDataã®å ´åˆ
 template<class U, class V>
 inline UserData<U>* arg_cast_helper_helper(const Any& a, int param_num, const Any& param_name, const UserData<U>*, const V&){
 	return (UserData<U>*)arg_cast_helper_helper_extend_any(a, param_num, param_name, TClass<U>::get());
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyImpl‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyImplã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* arg_cast_helper_helper(const Any& a, int param_num, const Any& param_name, const AnyImpl*, const U*){
 	return (U*)arg_cast_helper_helper_extend_anyimpl(a, param_num, param_name, TClass<U>::get());
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
 template<class U>
 inline U* arg_cast_helper_helper(const Any& a, int param_num, const Any& param_name, const Any*, const U*){
 	return (U*)arg_cast_helper_helper_extend_any(a, param_num, param_name, TClass<U>::get());
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âAnyImpl‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// å¤‰æ›å¾Œã®å‹ãŒAnyã‚„AnyImplã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
 template<class U>
 inline U* arg_cast_helper_helper(const Any& a, int param_num, const Any& param_name, const void*, const U*){
 	return (U*)arg_cast_helper_helper_other(a, param_num, param_name, TClass<U>::get());
@@ -140,7 +140,7 @@ struct TypeType{
 template<class T>
 struct CastHelper{
 
-	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
+	// å¤‰æ›å¾Œã®å‹ãŒãƒã‚¤ãƒ³ã‚¿ã®å ´åˆ
 	template<class U> static T as_inner(const Any& a, U* (*)()){ 
 		return as_helper_helper(a, (U*)0, (U*)0); }
 		
@@ -151,7 +151,7 @@ struct CastHelper{
 		return arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0); }
 	
 	
-	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡
+	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã®å ´åˆ
 	template<class U> static T as_inner(const Any& a, U& (*)()){ 
 		if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
 		
@@ -162,7 +162,7 @@ struct CastHelper{
 		return *xtal::arg_cast<U*>(a, param_num, param_name); }
 
 
-	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Å‚àƒ|ƒCƒ“ƒ^‚Å‚à‚È‚¢ê‡
+	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã§ã‚‚ãƒã‚¤ãƒ³ã‚¿ã§ã‚‚ãªã„å ´åˆ
 	static T as_inner(const Any& a, ...){ 
 		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
 		
@@ -186,12 +186,12 @@ struct CastHelper{
 
 
 /**
-* @brief TŒ^‚É•ÏŠ·‚·‚éB
+* @brief Tå‹ã«å¤‰æ›ã™ã‚‹ã€‚
 *
-* T‚É•ÏŠ·‚Å‚«‚È‚¢ê‡A
-* T‚ªƒ|ƒCƒ“ƒ^Œ^‚È‚çNULL‚ğ•Ô‚·B
-* T‚ª’l‚©QÆ‚ÅAAny‚ğŒp³‚µ‚½Œ^‚È‚çxtal::null‚ğ•Ô‚·B
-* ‚»‚êˆÈŠO‚ÌŒ^‚Ìê‡‚Í–¢’è‹`B
+* Tã«å¤‰æ›ã§ããªã„å ´åˆã€
+* TãŒãƒã‚¤ãƒ³ã‚¿å‹ãªã‚‰NULLã‚’è¿”ã™ã€‚
+* TãŒå€¤ã‹å‚ç…§ã§ã€Anyã‚’ç¶™æ‰¿ã—ãŸå‹ãªã‚‰xtal::nullã‚’è¿”ã™ã€‚
+* ãã‚Œä»¥å¤–ã®å‹ã®å ´åˆã¯æœªå®šç¾©ã€‚
 */
 template<class T> 
 inline typename CastResult<T>::type 
@@ -200,9 +200,9 @@ as(const Any& a){
 }
 
 /**
-* @brief TŒ^‚É•ÏŠ·‚·‚éB
+* @brief Tå‹ã«å¤‰æ›ã™ã‚‹ã€‚
 *
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("CastError")‚ª“Š‚°‚ç‚ê‚é
+* Tå‹ã«å¤‰æ›ã§ããªã„å ´åˆã€builtin().member("CastError")ãŒæŠ•ã’ã‚‰ã‚Œã‚‹
 */
 template<class T>
 inline typename CastResult<T>::type 
@@ -211,9 +211,9 @@ cast(const Any& a){
 }
 
 /**
-* @brief TŒ^‚É•ÏŠ·‚·‚éB
+* @brief Tå‹ã«å¤‰æ›ã™ã‚‹ã€‚
 *
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin().member("ArgumentError")‚ª“Š‚°‚ç‚ê‚é
+* Tå‹ã«å¤‰æ›ã§ããªã„å ´åˆã€builtin().member("ArgumentError")ãŒæŠ•ã’ã‚‰ã‚Œã‚‹
 */
 template<class T>
 inline typename CastResult<T>::type 

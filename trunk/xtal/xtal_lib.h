@@ -10,128 +10,128 @@ namespace xtal{
 /*@{*/
 
 /**
-* @brief file_name�t�@�C�����R���p�C������B
+* @brief file_nameファイルをコンパイルする。
 *
-* @param file_name Xtal�X�N���v�g���L�q���ꂽ�t�@�C���̖��O
-* @return ���s�ł���֐��I�u�W�F�N�g
-* ���̖߂�l��object_dump����ƁA�o�C�g�R�[�h�`���ŕۑ������B
+* @param file_name Xtalスクリプトが記述されたファイルの名前
+* @return 実行できる関数オブジェクト
+* この戻り値をobject_dumpすると、バイトコード形式で保存される。
 */
 Any compile_file(const String& file_name);
 
 /**
-* @brief source��������R���p�C������B
+* @brief source文字列をコンパイルする。
 *
-* @param source Xtal�X�N���v�g���L�q���ꂽ������
-* @return ���s�ł���֐��I�u�W�F�N�g
-* ���̖߂�l��object_dump����ƁA�o�C�g�R�[�h�`���ŕۑ������B
+* @param source Xtalスクリプトが記述された文字列
+* @return 実行できる関数オブジェクト
+* この戻り値をobject_dumpすると、バイトコード形式で保存される。
 */
 Any compile(const String& source);
 
 /**
-* @brief file_name�t�@�C�����R���p�C�����Ď��s����B
+* @brief file_nameファイルをコンパイルして実行する。
 *
-* @param file_name Xtal�X�N���v�g���L�q���ꂽ�t�@�C���̖��O
-* @return �X�N���v�g����export���ꂽ�l
+* @param file_name Xtalスクリプトが記述されたファイルの名前
+* @return スクリプト内でexportされた値
 */
 Any load(const String& file_name);
 
 /**
-* @brief file_name�t�@�C�����R���p�C�����ăR���p�C���ς݃\�[�X��ۑ����A���s����B
+* @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
 *
-* @param file_name Xtal�X�N���v�g���L�q���ꂽ�t�@�C���̖��O
-* @return �X�N���v�g����export���ꂽ�l
+* @param file_name Xtalスクリプトが記述されたファイルの名前
+* @return スクリプト内でexportされた値
 */
 Any load_and_save(const String& file_name);
 
 /**
-* @brief interactive xtal�̎��s
+* @brief interactive xtalの実行
 */
 void ix();
 
 /**
-* @brief �K�[�x�W�R���N�V���������s����
+* @brief ガーベジコレクションを実行する
 *
-* ���قǎ��Ԃ͂�����Ȃ����A���S�ɃS�~������ł��Ȃ��K�[�x�W�R���N�g�֐�
+* さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
 */
 void gc();
 
 /**
-* @brief �z�I�u�W�F�N�g���������t���K�[�x�W�R���N�V���������s����
+* @brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
 *
-* ���Ԃ͂����邪�A���݃S�~�ƂȂ��Ă�����̂͂Ȃ�ׂ��S�ĉ������K�[�x�W�R���N�g�֐�
+* 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
 */
 void full_gc();
 
 /**
-* @brief �K�[�x�W�R���N�V������L��������
+* @brief ガーベジコレクションを有効化する
 *
-* enable_gc���Ă΂ꂽ�񐔂Ɠ��������Ăяo���ƃK�[�x�W�R���N�V�������L���ɂȂ�
+* enable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
 */
 void enable_gc();
 
 /**
-* @brief �K�[�x�W�R���N�V�����𖳌�������
+* @brief ガーベジコレクションを無効化する
 *
-* �����ł��ꂪ����Ăяo���ꂽ���L������Ă���A�Ăяo������enable_gc���ĂтȂ��ƃK�[�x�W�R���N�V�����͗L���ɂȂ�Ȃ�
+* 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
 */
 void disable_gc();
 
 /**
-* @brief �I�u�W�F�N�g�𒼗񉻂��ĕۑ�����
+* @brief オブジェクトを直列化して保存する
 *
-* @param obj ���񉻂��ĕۑ��������I�u�W�F�N�g
-* @param out ���񉻐�̃X�g���[��
+* @param obj 直列化して保存したいオブジェクト
+* @param out 直列化先のストリーム
 */
 void object_dump(const Any& obj, const Stream& out);
 
 /**
-* @brief �I�u�W�F�N�g�𒼗񉻂��ēǂݍ���
+* @brief オブジェクトを直列化して読み込む
 *
-* @param in ���񉻂��ꂽ�I�u�W�F�N�g��ǂݍ��ރX�g���[��
-* @return �������ꂽ�I�u�W�F�N�g
+* @param in 直列化されたオブジェクトを読み込むストリーム
+* @return 復元されたオブジェクト
 */
 Any object_load(const Stream& in);
 
 /**
-* @brief �I�u�W�F�N�g���X�N���v�g�����ĕۑ�����
+* @brief オブジェクトをスクリプト化して保存する
 *
-* @param obj �X�N���v�g�����ĕۑ��������I�u�W�F�N�g
-* @param out ���񉻐�̃X�g���[��
+* @param obj スクリプト化して保存したいオブジェクト
+* @param out 直列化先のストリーム
 */
 void object_to_script(const Any& obj, const Stream& out);
 
 /**
-* @brief �I�u�W�F�N�g��C++�ɖ��ߍ��߂�`�ɂ��ĕۑ�����
+* @brief オブジェクトをC++に埋め込める形にして保存する
 *
-* @param obj C++���������I�u�W�F�N�g
-* @param out ���񉻐�̃X�g���[��
+* @param obj C++化したいオブジェクト
+* @param out 直列化先のストリーム
 */
 void object_to_cpp(const Any& obj, const Stream& out);
 
 /**
-* @brief VMachine�I�u�W�F�N�g��Ԃ�
-* �O���[�o����VMachine�I�u�W�F�N�g��Ԃ��B
-* �X���b�h���ɂ��̃O���[�o��VMachine�I�u�W�F�N�g�͑��݂���B
+* @brief VMachineオブジェクトを返す
+* グローバルなVMachineオブジェクトを返す。
+* スレッド毎にこのグローバルVMachineオブジェクトは存在する。
 */
 const VMachine& vmachine();
 
 /**
-* @brief Iterator�N���X��Ԃ�
+* @brief Iteratorクラスを返す
 */
 const Class& Iterator();
 
 /**
-* @brief Enumerator�N���X��Ԃ�
+* @brief Enumeratorクラスを返す
 */
 const Class& Enumerator();
 
 /**
-* @brief builtin�N���X��Ԃ�
+* @brief builtinクラスを返す
 */
 const Class& builtin();
 
 /**
-* @brief lib�I�u�W�F�N�g��Ԃ�
+* @brief libオブジェクトを返す
 */
 const Any& lib();
 
@@ -207,49 +207,49 @@ public:
 
 
 /**
-* @brief �f�o�b�O�@�\��L���ɂ���
-* �f�o�b�O�@�\��L����������ԂŃX�N���v�g���R���p�C������ƃf�o�b�O�@�\�����ߍ��܂��B
-* �f�o�b�O�@�\�̓f�t�H���g�ł͖����ɂȂ��Ă���B
+* @brief デバッグ機能を有効にする
+* デバッグ機能を有効化した状態でスクリプトをコンパイルするとデバッグ機能が埋め込まれる。
+* デバッグ機能はデフォルトでは無効になっている。
 */
 void enable();
 
 /**
-* @brief �f�o�b�O�@�\�𖳌��ɂ���
+* @brief デバッグ機能を無効にする
 */
 void disable();
 
 /**
-* @brief �f�o�b�O�@�\���L�����ǂ���
+* @brief デバッグ機能が有効かどうか
 */
 bool is_enabled();
 
 /**
-* @brief �s�����s�����x�ɌĂяo�����t�b�N�֐���o�^����
+* @brief 行が実行される度に呼び出されるフック関数を登録する
 */
 void set_line_hook(const Any& hook);
 
 /**
-* @brief �֐��Ăяo�������x�ɌĂяo�����t�b�N�֐���o�^����
+* @brief 関数呼び出しされる度に呼び出されるフック関数を登録する
 */
 void set_call_hook(const Any& hook);
 
 /**
-* @brief �֐�����return�����x�ɌĂяo�����t�b�N�֐���o�^����
+* @brief 関数からreturnされる度に呼び出されるフック関数を登録する
 */
 void set_return_hook(const Any& hook);
 
 /**
-* @brief set_line_hook�֐��œo�^�����֐����擾����
+* @brief set_line_hook関数で登録した関数を取得する
 */
 Any line_hook();
 
 /**
-* @brief set_call_hook�֐��œo�^�����֐����擾����
+* @brief set_call_hook関数で登録した関数を取得する
 */
 Any call_hook();
 
 /**
-* @brief set_return_hook�֐��œo�^�����֐����擾����
+* @brief set_return_hook関数で登録した関数を取得する
 */
 Any return_hook();
 

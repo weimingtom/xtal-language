@@ -1103,22 +1103,6 @@ Iterator::to_a: method{
 	return ret;
 }
 
-Iterator::expand: method(n){
-	return fiber{
-		switch(n){
-			case(1){ this{ |a1| yield a1; } }
-			case(2){ this{ |a1,a2| yield a1,a2; } }
-			case(3){ this{ |a1,a2,a3| yield a1,a2,a3; } }
-			case(4){ this{ |a1,a2,a3,a4| yield a1,a2,a3,a4; } }
-			case(5){ this{ |a1,a2,a3,a4,a5| yield a1,a2,a3,a4,a5; } }
-			case(6){ this{ |a1,a2,a3,a4,a5,a6| yield a1,a2,a3,a4,a5,a6; } }
-			case(7){ this{ |a1,a2,a3,a4,a5,a6,a7| yield a1,a2,a3,a4,a5,a6,a7; } }
-			case(8){ this{ |a1,a2,a3,a4,a5,a6,a7,a8| yield a1,a2,a3,a4,a5,a6,a7,a8; } }
-			default{ throw "error"; }
-		}
-	}
-}
-
 Iterator::join: method(sep:","){
 	ret: MemoryStream();
 	if(sep==""){

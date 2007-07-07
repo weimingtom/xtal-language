@@ -113,6 +113,13 @@ void xunlock();
 
 
 extern bool thread_enabled_;
+extern int thread_counter_;
+
+inline int yield_thread(){
+	thread_counter_ = 0;
+	Thread::sleep(0);
+	return 1;
+}
 
 struct GlobalInterpreterLock{
 	GlobalInterpreterLock(int){ if(thread_enabled_)global_interpreter_lock(); }

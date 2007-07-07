@@ -47,8 +47,8 @@ void* user_malloc_nothrow(size_t size){
 	calling_malloc_ = true;
 
 	if(used_user_malloc_threshold_<used_user_malloc_size_+size){
-		// 閾値を現在使われているメモリから20KB増やした値に設定する
-		used_user_malloc_threshold_ = used_user_malloc_size_ + size + 1024*20; 
+		// 閾値を現在使われているメモリから50KB増やした値に設定する
+		used_user_malloc_threshold_ = used_user_malloc_size_ + size + 1024*10; 
 		gc();
 	}
 	

@@ -9,6 +9,18 @@
 
 namespace xtal{
 
+class InstanceVariableGetterImpl : public HaveNameImpl{
+public:
+
+	InstanceVariableGetterImpl(int_t number, FrameCore* core);
+
+	virtual void call(const VMachine& vm);
+
+private:
+	int_t number_;
+	FrameCore* core_;
+};
+
 class FunImpl : public HaveNameImpl{
 public:
 
@@ -17,8 +29,8 @@ public:
 	const Frame& outer() const{ return outer_; }
 	const Code& code() const{ return code_; }
 	int_t pc() const{ return core_->pc; }
-	const u8* source() const{ return code_.data()+core_->pc; }
-	const ID& param_name_at(size_t i) const{ return code_.get_symbol(i+core_->variable_symbol_offset); }
+	const inst_t* source() const{ return code_.data()+core_->pc; }
+	const ID& param_name_at(size_t i) const{ return code_.symbol(i+core_->variable_symbol_offset); }
 	int_t param_size() const{ return core_->variable_size; }	
 	bool used_args_object() const{ return core_->used_args_object!=0; }
 	int_t defined_file_line_number(){ return core_->line_number; }
@@ -92,7 +104,7 @@ public:
 	void call_helper(const VMachine& vm, bool add_succ_or_fail_result);
 
 	VMachine vm_;
-	const u8* resume_pc_;
+	const inst_t* resume_pc_;
 
 	void visit_members(Visitor& m){
 		FunImpl::visit_members(m);

@@ -4,6 +4,7 @@
 #include "xtal_allocator.h"
 #include "xtal_stack.h"
 #include "xtal_string.h"
+#include "xtal_constant.h"
 
 namespace xtal{
 
@@ -34,8 +35,18 @@ struct FunCore : public FrameCore{
 	u8 extra_comma;
 };
 
+// 例外を処理するためのフレーム
+struct ExceptCore{
+	ExceptCore(u16 catch_pc = 0, u16 finally_pc = 0, u16 end_pc = 0)
+		:catch_pc(catch_pc), finally_pc(finally_pc), end_pc(end_pc){}
+	u16 catch_pc;
+	u16 finally_pc;
+	u16 end_pc;
+};
+
 extern FrameCore empty_frame_core;
 extern FunCore empty_fun_core;
+extern ExceptCore empty_except_core;
 
 // fwd decl
 class CodeImpl;
@@ -57,7 +68,7 @@ public:
 	/**
 	* @brief コードの先頭ポインタを得る。
 	*/
-	const u8* data() const;
+	const inst_t* data() const;
 			
 	/**
 	* @brief コードのサイズを得る。
@@ -67,12 +78,12 @@ public:
 	/**
 	* @brief シンボルテーブルからi番目のシンボルを取り出す。
 	*/
-	const ID& get_symbol(int_t i) const;
+	const ID& symbol(int_t i) const;
 	
 	/**
 	* @brief 値テーブルからi番目の値を取り出す。
 	*/
-	const Any& get_value(int_t i) const;
+	const Any& value(int_t i) const;
 	
 	/**
 	* @brief 値テーブルのi番目に値を設定する。
@@ -82,11 +93,11 @@ public:
 	/**
 	* @brief コードに対応したソース行数を返す。
 	*/
-	int_t compliant_line_number(const u8* p) const;
+	int_t compliant_line_number(const inst_t* p) const;
 
-	FrameCore* get_frame_core(int_t i) const;
+	FrameCore* frame_core(int_t i) const;
 
-	FunCore* get_fun_core(int_t i) const;
+	FunCore* fun_core(int_t i) const;
 
 	String source_file_name() const;
 

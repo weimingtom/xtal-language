@@ -14,7 +14,7 @@ public:
 	
 	CodeImpl();
 
-	int_t compliant_line_number(const u8* p);
+	int_t compliant_line_number(const inst_t* p);
 		
 	void set_line_number_info(int_t line){
 		if(!line_number_table_.empty() && line_number_table_.back().line_number==line)
@@ -23,7 +23,7 @@ public:
 		line_number_table_.push_back(lnt);
 	}
 
-	const u8* data(){
+	const inst_t* data(){
 		return &code_[0];
 	}
 
@@ -31,12 +31,12 @@ public:
 		return code_.size();
 	}
 
-	const ID& get_symbol(int_t i){
+	const ID& symbol(int_t i){
 		XTAL_ASSERT(i<(int_t)symbol_table_.size());
 		return (const ID&)symbol_table_[i];
 	}
 
-	const Any& get_value(int_t i){
+	const Any& value(int_t i){
 		XTAL_ASSERT(i<(int_t)code_.size());
 		return value_table_[i];
 	}
@@ -54,17 +54,21 @@ public:
 		return toplevel_; 
 	}
 
-	FrameCore* get_frame_core(int_t i){
+	FrameCore* frame_core(int_t i){
 		return &frame_core_table_[i];
 	}
 
-	FunCore* get_fun_core(int_t i){
+	FunCore* fun_core(int_t i){
 		return &xfun_core_table_[i];
+	}	
+
+	ExceptCore* except_core(int_t i){
+		return &except_core_table_[i];
 	}	
 
 public:
 
-	typedef AC<u8>::vector code_t;
+	typedef AC<inst_t>::vector code_t;
 	code_t code_;
 	Array symbol_table_;
 	Array value_table_;
@@ -82,9 +86,7 @@ public:
 
 	AC<FunCore>::vector xfun_core_table_;
 	AC<FrameCore>::vector frame_core_table_;
-
-	static FunCore empty_xfun_core_;
-	static FrameCore empty_frame_core_;
+	AC<ExceptCore>::vector except_core_table_;
 
 	struct LineNumberTable{
 		u16 start_pc;

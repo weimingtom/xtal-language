@@ -254,13 +254,13 @@ struct Math{
 		math.fun("acos", (double (*)(double))&acos);
 		math.fun("asin", (double (*)(double))&asin);
 		math.fun("atan", (double (*)(double))&atan);
-		math.fun("atan2", (double (*)(double))&atan2);
+		math.fun("atan2", (double (*)(double, double))&atan2);
 		math.fun("ceil", (double (*)(double))&ceil);
 		math.fun("cos", (double (*)(double))&cos);
 		math.fun("exp", (double (*)(double))&exp);
 		math.fun("floor", (double (*)(double))&floor);
 		math.fun("log", (double (*)(double))&log);
-		math.fun("pow", (double (*)(double))&pow);
+		math.fun("pow", (double (*)(double, double))&pow);
 		math.fun("sin", (double (*)(double))&sin);
 		math.fun("sqrt", (double (*)(double))&sqrt);
 		math.fun("tan", (double (*)(double))&tan);

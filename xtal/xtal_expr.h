@@ -202,7 +202,7 @@ struct PseudoVariableExpr : public Expr{
 struct CalleeExpr : public PseudoVariableExpr{
 	enum{ TYPE = __LINE__ };
 	CalleeExpr(int_t line)
-		:PseudoVariableExpr(line, CODE_PUSH_CALLEE){ type = TYPE; }
+		:PseudoVariableExpr(line, InstPushCallee::NUMBER){ type = TYPE; }
 };
 
 struct ArgsExpr : public Expr{

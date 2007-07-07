@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "xtal_inst.h"
+
 namespace xtal{
 	
 enum{
@@ -12,7 +14,7 @@ enum{
 	KIND_FUN,
 	KIND_LAMBDA,
 	KIND_METHOD,
-	KIND_FIBER
+	KIND_FIBER,
 };
 
 enum{
@@ -28,10 +30,6 @@ enum{
 };
 
 enum{
-	RESULT_DISCARD = (1<<2),
-};
-
-enum{
 	BREAKPOINT_LINE,
 	BREAKPOINT_CALL,
 	BREAKPOINT_RETURN
@@ -40,6 +38,7 @@ enum{
 /** @addtogroup code */
 /*@{*/
 
+#if 0
 /// バイトコードの識別ID
 enum CodeType{
 
@@ -1182,6 +1181,8 @@ CODE_THROW_NULL,
 CODE_MAX
 
 };
+
+#endif
 
 /*@}*/
 

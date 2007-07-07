@@ -13,6 +13,21 @@ void InitFun(){
 	met.inherit(fun);
 }
 
+InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, FrameCore* core)
+	:number_(number), core_(core){
+}
+
+void InstanceVariableGetterImpl::call(const VMachine& vm){
+	const Any& self = vm.get_arg_this();
+	HaveInstanceVariables* p;
+	if(self.type()==TYPE_BASE){
+		p = self.impl()->have_instance_variables();
+	}else{
+		p = &empty_have_instance_variables;
+	}
+	vm.impl()->return_result(p->variable(number_, core_));
+}
+
 FunImpl::FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core)
 	:outer_(outer), this_(athis), code_(code), core_(core){
 	set_class(TClass<Fun>::get());
@@ -151,7 +166,7 @@ int_t Fun::pc() const{
 	return impl()->pc();
 }
 
-const u8* Fun::source() const{
+const inst_t* Fun::source() const{
 	return impl()->source();
 }
 

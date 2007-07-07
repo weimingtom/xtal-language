@@ -1,4 +1,3 @@
-require 'benchmark'
 
 class Foo
 
@@ -21,6 +20,4 @@ class Foo
 
 end
 
-Benchmark.bm do |x|
-  x.report { puts Foo.new.bar }
-end
+puts Foo.new.bar

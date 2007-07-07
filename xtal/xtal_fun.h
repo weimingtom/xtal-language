@@ -25,7 +25,7 @@ public:
 	const Frame& outer() const;
 	const Code& code() const;
 	int_t pc() const;
-	const u8* source() const;
+	const inst_t* source() const;
 	const ID& param_name_at(size_t i) const;
 	int_t param_size() const;
 	bool used_args_object() const;

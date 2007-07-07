@@ -81,8 +81,6 @@ public:
 	*/
 	void push_arg(const Named& p) const{ push_arg(p.name, p.value); }
 
-	void set_call_flags(int_t flags) const;
-
 	/**
 	* @brief pos番目の戻り値を得る。
 	*

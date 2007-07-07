@@ -51,8 +51,7 @@ public:
 	/**
 	* ラベルにジャンプするコードを埋め込めるように細工する。
 	*/	
-	void put_jump_code_nocode(int_t oppos, int_t labelno);
-	void put_jump_code(int_t code, int_t labelno);
+	void set_jump(int_t offset, int_t labelno);
 	void process_labels();
 
 	bool put_local_code(int_t var);
@@ -80,22 +79,14 @@ public:
 	* ブロックの終りを埋め込む
 	*/
 	void break_off(int_t to);
-		
-	/**
-	* 末尾にコードを一つ追加する。
-	*/
-	void put_code_u8(int_t val);
-	void put_code_u16(int_t val);
-	void put_code_i8(int_t val);
-	void put_code_i16(int_t val);
 
-	/**
-	* i番目の部分の値を書き換える。
-	*/
-	void set_code_u8(int_t i, int_t val);
-	void set_code_u16(int_t i, int_t val);
-	void set_code_i8(int_t i, int_t val);
-	void set_code_i16(int_t i, int_t val);
+	template<class T>
+	void put_inst(const T& t){
+		size_t cur = p_->code_.size();
+		size_t sz = sizeof(T);
+		p_->code_.resize(cur+sz/sizeof(inst_t));
+		memcpy(&p_->code_[cur], &t, sz);
+	}
 	
 	/**
 	* コードのサイズを得る。
@@ -167,6 +158,10 @@ public:
 	FunFrame& fun_frame();
 
 	int_t line(){ return lines_.top(); }
+
+	int_t frame_number(){
+		return class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number;
+	}
 
 private:
 	

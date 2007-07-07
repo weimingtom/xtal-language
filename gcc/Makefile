@@ -4,6 +4,8 @@ CC = g++
 OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_vmachineimpl.o xtal_cast.o xtal_marshal.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o 
 
 OPT_FLAGS = -O3 -DNDEBUG -g
+#OPT_FLAGS = -O3 -DNDEBUG -pg
+#OPT_FLAGS = -O3 -DNDEBUG -pg
 
 all: xtallib ix xtal
 
@@ -79,11 +81,13 @@ xtallib: $(OBJS)
 	ranlib xtallib.a
 
 xtal: xtallib ../xtal/main.cpp
-	$(CC) -o ../bin/xtal ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+	$(CC) -o ../bin/xtal.exe ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+	#strip --strip-all ../bin/xtal.exe
 
 ix: xtallib ../xtal/ixmain.cpp
-	$(CC) -o ../bin/ix ../xtal/ixmain.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
-
+	$(CC) -o ../bin/ixmain.exe ../xtal/ixmain.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+	#strip --strip-all ../bin/ixmain.exe
+	
 clean:
 	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe
 

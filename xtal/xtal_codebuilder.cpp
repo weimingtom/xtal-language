@@ -34,7 +34,7 @@ Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	p_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0, false);
+	fun_frame_begin(true, 0, 0, 0);
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
 	p_->symbol_table_ = com_->ident_table;
@@ -65,7 +65,7 @@ void CodeBuilder::interactive_compile(){
 	p_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0, false);
+	fun_frame_begin(true, 0, 0, 0);
 	Fun fun(null, null, result_, &p_->xfun_core_table_[0]);
 	fun.set_object_name("<TopLevel>", 1, null);
 
@@ -219,22 +219,22 @@ bool CodeBuilder::put_local_code(int_t var){
 	}
 }
 
-void CodeBuilder::put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool discard, bool tail, bool if_defined){
+void CodeBuilder::put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool tail, bool if_defined){
 	if(pvar){
 		compile(pvar);
 	}	
 	
 	if(if_defined){
 		if(tail){
-			put_inst(InstSendIfDefined_T(0, 0, discard ? -need_result_count : need_result_count, pvar ? 0 : var));
+			put_inst(InstSendIfDefined_T(0, 0, need_result_count, pvar ? 0 : var));
 		}else{
-			put_inst(InstSendIfDefined(0, 0, discard ? -need_result_count : need_result_count, pvar ? 0 : var));
+			put_inst(InstSendIfDefined(0, 0, need_result_count, pvar ? 0 : var));
 		}
 	}else{
 		if(tail){
-			put_inst(InstSend_T(0, 0, discard ? -need_result_count : need_result_count, pvar ? 0 : var));
+			put_inst(InstSend_T(0, 0, need_result_count, pvar ? 0 : var));
 		}else{
-			put_inst(InstSend(0, 0, discard ? -need_result_count : need_result_count, pvar ? 0 : var)); 
+			put_inst(InstSend(0, 0, need_result_count, pvar ? 0 : var)); 
 		}
 	}
 }
@@ -473,7 +473,7 @@ int_t CodeBuilder::code_size(){
 	return p_->code_.size();
 }
 
-int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count, bool extra_comma){
+int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count){
 	FunFrame& f = fun_frames_.push();	
 	f.used_args_object = false;
 	f.labels.clear();
@@ -488,7 +488,6 @@ int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char m
 	p_->xfun_core_table_.back().min_param_count = min_param_count;
 	p_->xfun_core_table_.back().max_param_count = max_param_count;
 	p_->xfun_core_table_.back().used_args_object = have_args;
-	p_->xfun_core_table_.back().extra_comma = extra_comma;
 	fun_frame().used_args_object = have_args;
 		
 	if(debug::is_enabled()){
@@ -514,12 +513,12 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 
 #define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e = (KEY*)ex)if(e)
 
-void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
+void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 
 	int_t result_count = 1;
 
 	if(!ex){
-		put_inst(InstAdjustResult(0, discard ? -need_result_count : need_result_count));
+		put_inst(InstAdjustResult(0, need_result_count));
 		return;
 	}
 
@@ -753,13 +752,13 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 			int_t iter_break = com_->register_ident(ID("iter_break")); 
 
 			if(e->var==iter_first && !e->tail){
-				put_inst(InstSendIterFirst(e->discard ? -need_result_count : need_result_count));
+				put_inst(InstSendIterFirst(need_result_count));
 			}else if(e->var==iter_next && !e->tail){
-				put_inst(InstSendIterNext(e->discard ? -need_result_count : need_result_count));
+				put_inst(InstSendIterNext(need_result_count));
 			}else if(e->var==iter_break && e->if_defined && !e->tail){
-				put_inst(InstSendIterBreak(e->discard ? -need_result_count : need_result_count));
+				put_inst(InstSendIterBreak(need_result_count));
 			}else{
-				put_send_code(e->var, e->pvar, need_result_count, e->discard, e->tail, e->if_defined);
+				put_send_code(e->var, e->pvar, need_result_count, e->tail, e->if_defined);
 			}
 			result_count = need_result_count;
 		}
@@ -801,37 +800,37 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 
 				if(e2->if_defined){
 					if(e->tail){
-						if(have_args){ put_inst(InstSendIfDefined_AT(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSendIfDefined_T(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSendIfDefined_AT(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSendIfDefined_T(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
 					}else{
-						if(have_args){ put_inst(InstSendIfDefined_A(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSendIfDefined(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSendIfDefined_A(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSendIfDefined(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
 					}
 				}else{
 					if(e->tail){
-						if(have_args){ put_inst(InstSend_AT(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSend_T(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSend_AT(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSend_T(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
 					}else{
-						if(have_args){ put_inst(InstSend_A(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSend(ordered, named, e->discard ? -need_result_count : need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSend_A(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSend(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
 					}
 				}
 			}else if(expr_cast<CalleeExpr>(e->expr)){
 				if(e->tail){
-					if(have_args){ put_inst(InstCallCallee_AT(ordered, named, e->discard ? -need_result_count : need_result_count));
-					}else{ put_inst(InstCallCallee_T(ordered, named, e->discard ? -need_result_count : need_result_count)); }
+					if(have_args){ put_inst(InstCallCallee_AT(ordered, named, need_result_count));
+					}else{ put_inst(InstCallCallee_T(ordered, named, need_result_count)); }
 				}else{
-					if(have_args){ put_inst(InstCallCallee_A(ordered, named, e->discard ? -need_result_count : need_result_count));
-					}else{ put_inst(InstCallCallee(ordered, named, e->discard ? -need_result_count : need_result_count)); }
+					if(have_args){ put_inst(InstCallCallee_A(ordered, named, need_result_count));
+					}else{ put_inst(InstCallCallee(ordered, named, need_result_count)); }
 				}
 			}else{
 				compile(e->expr);
 				if(e->tail){
-					if(have_args){ put_inst(InstCall_AT(ordered, named, e->discard ? -need_result_count : need_result_count));
-					}else{ put_inst(InstCall_T(ordered, named, e->discard ? -need_result_count : need_result_count)); }
+					if(have_args){ put_inst(InstCall_AT(ordered, named, need_result_count));
+					}else{ put_inst(InstCall_T(ordered, named, need_result_count)); }
 				}else{
-					if(have_args){ put_inst(InstCall_A(ordered, named, e->discard ? -need_result_count : need_result_count));
-					}else{ put_inst(InstCall(ordered, named, e->discard ? -need_result_count : need_result_count)); }
+					if(have_args){ put_inst(InstCall_A(ordered, named, need_result_count));
+					}else{ put_inst(InstCall(ordered, named, need_result_count)); }
 				}
 			}
 
@@ -881,7 +880,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 				minv = maxv;
 			}
 
-			int_t n = fun_frame_begin(e->have_args, InstMakeFun::ISIZE, minv, maxv, e->extra_comma);
+			int_t n = fun_frame_begin(e->have_args, InstMakeFun::ISIZE, minv, maxv);
 			
 			for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){ 
 				register_param(p->key);
@@ -970,7 +969,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count, bool discard){
 	lines_.pop();
 
 	if(need_result_count!=result_count){
-		put_inst(InstAdjustResult(result_count, discard ? -need_result_count : need_result_count));
+		put_inst(InstAdjustResult(result_count, need_result_count));
 	}
 }
 
@@ -1075,7 +1074,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_inst(InstDup());
-				put_send_code(p->var, p->pvar, 1, p->discard, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, p->tail, p->if_defined);
 				compile(e->rhs);
 				put_inst(Inst(e->code));
 				put_inst(InstInsert1());
@@ -1126,7 +1125,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_inst(InstDup());
-				put_send_code(p->var, p->pvar, 1, p->discard, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, p->tail, p->if_defined);
 				put_inst(Inst(e->code));
 				put_inst(InstInsert1());
 				put_set_send_code(p->var, p->pvar, p->if_defined);
@@ -1152,7 +1151,11 @@ void CodeBuilder::compile(Stmt* ex){
 			for(TList<Expr*>::Node* p = e->exprs.head; p; p = p->next){
 				compile(p->value);
 			}
+
 			put_inst(InstYield(e->exprs.size));
+			if(e->exprs.size>=256){
+				com_->error(line(), Xt("Xtal Compile Error 1022"));
+			}
 		}
 
 		XTAL_EXPR_CASE(ReturnStmt){
@@ -1372,14 +1375,6 @@ void CodeBuilder::compile(Stmt* ex){
 							rrc = 1;
 						}
 
-						if(CallExpr* ce = expr_cast<CallExpr>(rhs->value)){
-							ce->discard = e->discard;
-						}
-
-						if(SendExpr* ce = expr_cast<SendExpr>(rhs->value)){
-							ce->discard = e->discard;
-						}
-
 						compile(rhs->value, rrc);
 						pushed_count += rrc;
 
@@ -1391,7 +1386,7 @@ void CodeBuilder::compile(Stmt* ex){
 						}else{
 							rrc = 1;
 						}
-						compile(rhs->value, rrc, e->discard);
+						compile(rhs->value, rrc);
 						pushed_count += rrc;
 						break;
 					}
@@ -1402,7 +1397,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}
 
 			if(e->lhs.size!=pushed_count){
-				put_inst(InstAdjustResult(pushed_count, e->discard ? -e->lhs.size : e->lhs.size));
+				put_inst(InstAdjustResult(pushed_count, e->lhs.size));
 			}
 
 			if(e->define){

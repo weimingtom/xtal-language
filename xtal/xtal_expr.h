@@ -367,20 +367,18 @@ struct FunExpr : public Expr{
 	TList<int_t> vars;
 	bool have_args;
 	bool on_heap;
-	bool extra_comma;
 	TPairList<int_t, Expr*> params;
 	FunExpr(int_t line, int_t kind, Stmt* stmt = 0)
-		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false), on_heap(false), extra_comma(false){}
+		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false), on_heap(false){}
 };
 
 struct MultipleAssignStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	bool define;
-	bool discard;
 	TList<Expr*> lhs;
 	TList<Expr*> rhs;
 	MultipleAssignStmt(int_t line)
-		:Stmt(TYPE, line), define(false), discard(false){}
+		:Stmt(TYPE, line), define(false){}
 };
 
 struct IncStmt : public Stmt{ 
@@ -412,11 +410,10 @@ struct CallExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	Expr* expr; 
 	bool tail;
-	bool discard;
 	TList<Expr*> ordered; 
 	TPairList<int_t, Expr*> named;
 	CallExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr), tail(false), discard(false){}
+		:Expr(TYPE, line), expr(expr), tail(false){}
 };
 
 struct SendExpr : public Expr{
@@ -426,9 +423,8 @@ struct SendExpr : public Expr{
 	Expr* pvar;
 	bool tail;
 	bool if_defined;
-	bool discard;
 	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), tail(false), if_defined(false), discard(false){}
+		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), tail(false), if_defined(false){}
 };
 
 struct AssignStmt : public Stmt{
@@ -547,7 +543,6 @@ struct SetAccessibilityStmt : public Stmt{
 		:Stmt(TYPE, line), var(0), kind(0){}
 };
 
-
 class ExprBuilder{
 public:
 
@@ -626,7 +621,6 @@ public:
 	void fun_body_end();
 	FunExpr* fun_end();
 	void fun_have_args(bool v);
-	void fun_extra_comma(bool v);
 
 	void toplevel_begin();
 	void toplevel_add(Stmt* stmt);
@@ -660,7 +654,6 @@ public:
 	TList<Expr*>* massign_lhs_exprs();
 	TList<Expr*>* massign_rhs_exprs();
 	void massign_define(bool b);
-	void massign_discard(bool b);
 	void ter_begin(Expr* cond);
 	void ter_true(Expr* expr);
 	void ter_false(Expr* expr);

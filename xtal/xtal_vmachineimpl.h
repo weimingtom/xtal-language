@@ -450,6 +450,9 @@ public:
 		// 一時的に関数オブジェクトかレシーバオブジェクトを置くための場所
 		UncountedAny temp_;
 
+		// 一時的に何かを置くための場所
+		UncountedAny temp2_;
+
 		// スコープの外側のフレームオブジェクト
 		UncountedAny outer_;
 
@@ -498,6 +501,7 @@ public:
 			inc_ref_count(hint2_);
 
 			inc_ref_count(temp_);
+			inc_ref_count(temp2_);
 		}
 		
 		void dec_ref(){
@@ -514,11 +518,12 @@ public:
 			dec_ref_count(hint2_);
 
 			dec_ref_count(temp_);
+			dec_ref_count(temp2_);
 		}
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v){
-		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self() & v.temp_.cref();
+		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self() & v.temp_.cref() & v.temp2_.cref();
 		for(int_t i=0, size=v.variables_.size(); i<size; ++i){
 			m & v.variable(i);
 		}
@@ -558,6 +563,14 @@ public:
 
 	const ID& symbol(int_t n){ return code().impl()->symbol(n); }
 	const ID& prev_symbol(int_t n){ return prev_code().impl()->symbol(n); }
+
+	const ID& symbol_ex(int_t n){ 
+		if(n!=0){
+			return code().impl()->symbol(n); 
+		}else{
+			return (const ID&)(ff().temp2_ = pop().to_s().intern()).cref();
+		}
+	}
 
 	void return_result_instance_variable(int_t number, FrameCore* core){
 		return_result((ff().instance_variables->variable(number, core)));
@@ -636,9 +649,6 @@ private:
 	const inst_t* DEFINE_GLOBAL_VARIABLE(const inst_t* pc);
 
 	const inst_t* ONCE(const inst_t* pc);
-
-	void SET_INSTANCE_VARIABLE(int_t number, int_t core_number, const Any&);
-	const Any& INSTANCE_VARIABLE(int_t number, int_t core_number);
 
 	const inst_t* MEMBER(const inst_t* pc);
 	const inst_t* MEMBER_IF_DEFINED(const inst_t* pc);

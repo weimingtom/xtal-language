@@ -356,7 +356,6 @@ void gc(){
 
 
 void full_gc(){
-
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		const VMachine& vm = vmachine();

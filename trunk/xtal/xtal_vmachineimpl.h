@@ -447,6 +447,9 @@ public:
 		// 呼び出された関数オブジェクト
 		UncountedAny fun_; 
 
+		// 一時的に関数オブジェクトかレシーバオブジェクトを置くための場所
+		UncountedAny temp_;
+
 		// スコープの外側のフレームオブジェクト
 		UncountedAny outer_;
 
@@ -493,6 +496,8 @@ public:
 			inc_ref_count(arguments_);
 			inc_ref_count(hint1_);
 			inc_ref_count(hint2_);
+
+			inc_ref_count(temp_);
 		}
 		
 		void dec_ref(){
@@ -507,11 +512,13 @@ public:
 			dec_ref_count(arguments_);
 			dec_ref_count(hint1_);
 			dec_ref_count(hint2_);
+
+			dec_ref_count(temp_);
 		}
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v){
-		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self();
+		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self() & v.temp_.cref();
 		for(int_t i=0, size=v.variables_.size(); i<size; ++i){
 			m & v.variable(i);
 		}
@@ -570,13 +577,13 @@ private:
 
 	const inst_t* VMachineImpl::send1(const inst_t* pc, const ID& name, int_t n = 1){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			UncountedAny self = ff().self();
 			push_ff(pc + n, 1, 0, 0, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
 			if(const Any& ret = member_cache(cls, name, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -586,14 +593,14 @@ private:
 	const inst_t* VMachineImpl::send2(const inst_t* pc, const ID& name, int_t n = 1){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const Any& temp = pop();
-			Any target = get();
+			UncountedAny target = ff().temp_ = get();
 			set(temp);
 			UncountedAny self = ff().self();
 			push_ff(pc + n, 1, 1, 0, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
 			if(const Any& ret = member_cache(cls, name, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -602,13 +609,13 @@ private:
 
 	const inst_t* VMachineImpl::send2r(const inst_t* pc, const ID& name, int_t n = 1){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			UncountedAny self = ff().self();
 			push_ff(pc + n, 1, 1, 0, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
 			if(const Any& ret = member_cache(cls, name, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}

@@ -1088,9 +1088,9 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(Call){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.call(myself());
+			target.cref().call(myself());
 		}
 		pc = ff().pc;	
 	}
@@ -1098,9 +1098,9 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(Call_A){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.call(myself());
+			target.cref().call(myself());
 		}
 		pc = ff().pc;	
 	}
@@ -1108,9 +1108,9 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(Call_T){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.call(myself());
+			target.cref().call(myself());
 		}
 		pc = ff().pc;	
 	}
@@ -1118,9 +1118,9 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(Call_AT){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.call(myself());
+			target.cref().call(myself());
 		}
 		pc = ff().pc;	
 	}
@@ -1163,12 +1163,12 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1179,12 +1179,12 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1195,12 +1195,12 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1211,12 +1211,12 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1227,13 +1227,13 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().pc = &check_unsupported_code_;
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1245,13 +1245,13 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().pc = &check_unsupported_code_;
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1263,13 +1263,13 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().pc = &check_unsupported_code_;
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}
@@ -1281,13 +1281,13 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& sym = symbol(inst.symbol_number);
 			UncountedAny self = ff().self();
-			Any target = pop();
+			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().pc = &check_unsupported_code_;
-			const Class& cls = target.get_class();
+			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self())){
-				set_arg_this(target);
+				set_arg_this(target.cref());
 				ret.call(myself());
 			}
 		}

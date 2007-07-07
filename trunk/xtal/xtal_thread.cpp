@@ -10,6 +10,7 @@ namespace{
 	bool stop_the_world_ = false;
 	uint_t current_thread_id_ = (uint_t)-1;
 	uint_t current_vmachine_id_ = (uint_t)-1;
+	uint_t stop_the_world_thread_id_ = (uint_t)-1;
 	int current_thread_recursive_ = 0;
 	ThreadLib* thread_lib_temp_ = 0;
 	ThreadLib* thread_lib_ = 0;
@@ -30,11 +31,14 @@ namespace{
 			}
 			current_vmachine_id_ = id;
 		}
+		current_thread_recursive_ = 1;
+		current_thread_id_ = id;
 	}
 
 }
 	
 bool thread_enabled_ = false;
+int thread_counter_ = 0;
 
 const VMachine& vmachine(){
 	return vmachine_;
@@ -110,6 +114,8 @@ void set_thread(ThreadLib& lib){
 	thread_lib_temp_ = &lib;
 }
 
+#ifdef XTAL_USE_THREAD_MODEL_2
+
 bool stop_the_world(){
 	if(!thread_lib_){
 		return true;
@@ -120,18 +126,24 @@ bool stop_the_world(){
 	}
 
 	stop_the_world_ = true;
+	stop_the_world_thread_id_ = thread_lib_->current_thread_id();
 	mutex2_.impl()->lock();	
 	mutex_.impl()->unlock();
 	thread_lib_->sleep(0);
 	
+	int count = 0;
 	while(true){
 		mutex_.impl()->lock();
 
 		if(thread_locked_count_+thread_unlocked_count_==thread_count_-1){
+			/*if(count!=0){
+				printf("ok locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
+			}*/
 			break;
 		}/*else{
 			printf("locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
 			thread_lib_->sleep(1000);
+			count++;
 		}*/
 
 		mutex_.impl()->unlock();
@@ -144,10 +156,9 @@ void restart_the_world(){
 	if(!thread_lib_){
 		return;
 	}
-	
-	if(!stop_the_world_){
-		return;
-	}
+	//printf("restart the world\n");
+
+	XTAL_ASSERT(stop_the_world_ && thread_lib_->current_thread_id()==stop_the_world_thread_id_);
 
 	stop_the_world_ = false;
 	mutex2_.impl()->unlock();
@@ -156,22 +167,88 @@ void restart_the_world(){
 void global_interpreter_lock(){
 	uint_t id = thread_lib_->current_thread_id();
 	if(current_thread_id_!=id){
-		mutex_.impl()->lock();
 
-		if(stop_the_world_){ // lockを獲得できたのが、世界が止まった所為なら
-			thread_locked_count_++;
-			mutex_.impl()->unlock();
-			
-			mutex2_.impl()->lock();
-			mutex2_.impl()->unlock();
-			
+		for(;;){
 			mutex_.impl()->lock();
-			thread_locked_count_--;
+			if(stop_the_world_){ // lockを獲得できたのが、世界が止まった所為なら
+				thread_locked_count_++;
+
+				mutex_.impl()->unlock(); // lockを開放し
+				mutex2_.impl()->lock(); // 世界が動き出すまで待つ
+				mutex2_.impl()->unlock();
+
+				thread_locked_count_--;
+			}else{
+				break;
+			}
+		}
+
+		// locked状態
+		change_vmachine(id);
+	}else{
+		current_thread_recursive_++;
+	}
+}
+
+void global_interpreter_unlock(){
+	current_thread_recursive_--;
+	if(current_thread_recursive_==0){
+		current_thread_id_ = (uint_t)-1;
+		mutex_.impl()->unlock();
+	}
+}
+
+void xlock(){
+	uint_t id = thread_lib_->current_thread_id();
+	if(current_thread_id_!=id){
+
+		for(;;){
+			mutex_.impl()->lock();
+			if(stop_the_world_){ // lockを獲得できたのが、世界が止まった所為なら
+				thread_locked_count_++;
+
+				mutex_.impl()->unlock(); // lockを開放し
+				mutex2_.impl()->lock(); // 世界が動き出すまで待つ
+				mutex2_.impl()->unlock();
+
+				thread_locked_count_--;
+			}else{
+				thread_unlocked_count_--;
+				break;
+			}
 		}
 		
 		// locked状態
-		current_thread_id_ = id;
-		current_thread_recursive_ = 1;
+		change_vmachine(id);
+	}else{
+		current_thread_recursive_++;
+	}
+}
+
+void xunlock(){
+	current_thread_recursive_--;
+	if(current_thread_recursive_==0){
+		thread_unlocked_count_++;
+		current_thread_id_ = (uint_t)-1;
+		mutex_.impl()->unlock();
+	}
+}
+
+#else
+
+bool stop_the_world(){
+	return true;
+}
+
+void restart_the_world(){
+
+}
+
+void global_interpreter_lock(){
+	uint_t id = thread_lib_->current_thread_id();
+	if(current_thread_id_!=id){
+		mutex_.impl()->lock();
+		// locked状態
 		change_vmachine(id);
 	}else{
 		current_thread_recursive_++;
@@ -190,22 +267,7 @@ void xlock(){
 	uint_t id = thread_lib_->current_thread_id();
 	if(current_thread_id_!=id){
 		mutex_.impl()->lock();
-		thread_unlocked_count_--;
-
-		if(stop_the_world_){ // lockを獲得できたのが、世界が止まった所為なら
-			thread_locked_count_++;
-			mutex_.impl()->unlock();
-			
-			mutex2_.impl()->lock();
-			mutex2_.impl()->unlock();
-			
-			mutex_.impl()->lock();
-			thread_locked_count_--;
-		}
-		
 		// locked状態
-		current_thread_id_ = id;
-		current_thread_recursive_ = 1;
 		change_vmachine(id);
 	}else{
 		current_thread_recursive_++;
@@ -215,18 +277,21 @@ void xlock(){
 void xunlock(){
 	current_thread_recursive_--;
 	if(current_thread_recursive_==0){
-		thread_unlocked_count_++;
-		mutex_.impl()->unlock();
 		current_thread_id_ = (uint_t)-1;
+		mutex_.impl()->unlock();
 	}
 }
+
+#endif
 
 void thread_entry(const Any& thread){
 	mutex_.impl()->lock();
 	thread_count_++;
 	mutex_.impl()->unlock();
 
-	XTAL_GLOBAL_INTERPRETER_LOCK{
+	{
+		GlobalInterpreterLock guard(0);
+
 		VMachine vm;
 		XTAL_TRY{
 			vm.setup_call(0);

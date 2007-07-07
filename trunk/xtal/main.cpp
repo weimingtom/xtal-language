@@ -59,7 +59,7 @@ int main(int argc, char** argv){
 
 	try{
 
-		//set_thread();
+		set_thread();
 		initialize();
 
 		//debug::enable();
@@ -90,9 +90,9 @@ int main(int argc, char** argv){
 
 
 		
-		//int c = clock();
+		int c = clock();
 		//xtal::disable_gc();
-		//load("../bench/vec.xtal");
+		//load("../bench/inst.xtal");
 		handle_argv(argv);
 		//printf("%g\n", (clock()-c)/1000.0f);
 		//xtal::enable_gc();

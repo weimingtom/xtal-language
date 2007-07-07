@@ -18,6 +18,7 @@
 //#define XTAL_USE_WORD_CODE
 //#define XTAL_NO_PARSER
 //#define XTAL_NO_EXCEPT
+//#define XTAL_USE_THREAD_MODEL_2
 
 #define XTAL_USE_PREDEFINED_ID
 
@@ -48,8 +49,14 @@
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
-#define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
-#define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
+#ifdef XTAL_USE_THREAD_MODEL_2
+#	define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
+#	define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
+#else
+#	define XTAL_GLOBAL_INTERPRETER_LOCK if((((++ ::xtal::thread_counter_)==500) ? ::xtal::yield_thread():0), true)
+#	define XTAL_GLOBAL_INTERPRETER_UNLOCK if((((++ ::xtal::thread_counter_)==500) ? ::xtal::yield_thread():0), true)
+#endif
+
 #define XTAL_UNLOCK if(::xtal::XUnlock xunlock = 0)
 
 #ifdef XTAL_NO_EXCEPT

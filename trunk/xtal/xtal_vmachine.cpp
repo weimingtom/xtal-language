@@ -57,10 +57,6 @@ void VMachine::setup_call(int_t need_result_count, const Any& a1, const Any& a2,
 void VMachine::setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4) const{
 	impl()->setup_call(need_result_count, a1, a2, a3, a4);
 }
-	
-void VMachine::set_call_flags(int_t flags) const{
-	impl()->set_call_flags(flags);
-}
 
 void VMachine::push_arg(const Any& value) const{
 	impl()->push_arg(value);

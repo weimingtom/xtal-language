@@ -8,7 +8,8 @@
 #include "xtal_funimpl.h"
 #include "xtal_constant.h"
 #include "xtal_fun.h"
- 
+#include "xtal_any.h"
+
 
 namespace xtal{
 
@@ -83,10 +84,6 @@ public:
 	void setup_call(int_t need_result_count, const Any& a1, const Any& a2);
 	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3);
 	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4);
-	
-	void set_call_flags(int_t flags){
-		ff().result_flag = flags;
-	}
 
 	void push_arg(const Any& value){
 		XTAL_ASSERT(named_arg_count() == 0);
@@ -207,10 +204,10 @@ public:
 
 	void adjust_result(int_t n){		
 		ff().result_count = n;
-		adjust_result(n, ff().need_result_count, ff().result_flag);
+		adjust_result(n, ff().need_result_count);
 	}
 
-	void adjust_result(int_t n, int_t need_result_count, int_t result_flag);
+	void adjust_result(int_t n, int_t need_result_count);
 	
 	void return_result(){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
@@ -291,15 +288,15 @@ public:
 	
 	void recycle_call(const Any& a1);
 
-	void execute_inner(const u8* start);
-	void execute_try(const u8* start);
+	void execute_inner(const inst_t* start);
+	void execute_try(const inst_t* start);
 
-	void execute(const Fun& fun, const u8* start_pc = 0){
+	void execute(const Fun& fun, const inst_t* start_pc = 0){
 		setup_call(0);
 		
 		carry_over(fun);
 		
-		const u8* pc = prev_ff().pc;
+		const inst_t* pc = prev_ff().pc;
 		prev_ff().pc = &end_code_;
 		execute_try(start_pc ? start_pc : ff().pc);
 		fun_frames_.upsize(1);
@@ -313,15 +310,15 @@ public:
 	
 public:
 
-	const u8* resume_pc(){ 
+	const inst_t* resume_pc(){ 
 		return resume_pc_; 
 	}
 
 	void present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result);
 
-	const u8* start_fiber(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result);
+	const inst_t* start_fiber(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result);
 
-	const u8* resume_fiber(const Fiber& fun, const u8* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
+	const inst_t* resume_fiber(const Fiber& fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
 
 	void exit_fiber();
 
@@ -385,19 +382,19 @@ public:
 	
 public:
 
-	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count){
-		push_ff(pc, need_result_count, 0, 0, 0, null);
+	const VMachine& inner_setup_call(const inst_t* pc, int_t need_result_count){
+		push_ff(pc, need_result_count, 0, 0, null);
 		return myself();
 	}
 
-	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count, const Any& a1){
-		push_ff(pc, need_result_count, 0, 1, 0, null);
+	const VMachine& inner_setup_call(const inst_t* pc, int_t need_result_count, const Any& a1){
+		push_ff(pc, need_result_count, 1, 0, null);
 		push(a1);
 		return myself();
 	}
 
-	const VMachine& inner_setup_call(const u8* pc, int_t need_result_count, const Any& a1, const Any& a2){
-		push_ff(pc, need_result_count, 0, 2, 0, null);
+	const VMachine& inner_setup_call(const inst_t* pc, int_t need_result_count, const Any& a1, const Any& a2){
+		push_ff(pc, need_result_count, 2, 0, null);
 		push(a1); push(a2);
 		return myself();
 	}
@@ -417,7 +414,7 @@ public:
 	struct FunFrame{
 
 		// 保存されたプログラムカウント
-		const u8* pc;
+		const inst_t* pc;
 
 		// スコープ情報 
 		PStack<FrameCore*> scopes;
@@ -433,8 +430,6 @@ public:
 
 		int_t result_count;
 
-		int_t result_flag;
-
 		enum{
 			CALLING_STATE_NONE, // 何もなってない状態
 			CALLING_STATE_PUSHED_FUN, // 関数が積まれている状態
@@ -446,6 +441,8 @@ public:
 
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
+
+		HaveInstanceVariables* instance_variables;
 
 		// 呼び出された関数オブジェクト
 		UncountedAny fun_; 
@@ -522,22 +519,17 @@ public:
 
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
-		ExceptFrame(){}
-		ExceptFrame(const u8* catch_pc, const u8* finally_pc, const u8* end_pc)
-			:catch_pc(catch_pc), finally_pc(finally_pc), end_pc(end_pc){}
-		const u8* catch_pc;
-		const u8* finally_pc;
-		const u8* end_pc;
+		ExceptCore* core;
 		int_t scope_count;
 		int_t stack_count;
 		int_t fun_frame_count;
 	};
 
-	void push_ff(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
+	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
 	
-	void push_ff_args(const u8* pc, int_t need_result_count, int_t result_flag, int_t ordered_count, int_t named_count, const Any& self);
-	void recycle_ff(const u8* pc, int_t ordered_count, int_t named_count, const Any& self);
-	void recycle_ff_args(const u8* pc, int_t ordered_count, int_t named_count, const Any& self);
+	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
+	void recycle_ff(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
+	void recycle_ff_args(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
 	void pop_ff(){ fun_frames_.pop(); }
 
 	void push_args(int_t named_arg_count);
@@ -548,26 +540,27 @@ public:
 	const Fun& fun(){ return ff().fun(); }
 	const Fun& prev_fun(){ return prev_ff().fun(); }
 
-//	const u8* fun_pc(){ return fun().impl()->pc(); }
-//	const u8* prev_fun_pc(){ return prev_fun().impl()->pc(); }
-
 	const Frame& outer(){ return ff().outer(); }
 	const Frame& prev_outer(){ return prev_ff().outer(); }
 
 	const Code& code(){ return fun().impl()->code(); }
 	const Code& prev_code(){ return prev_fun().impl()->code(); }
 
-	const u8* source(){ return code().impl()->data(); }
-	const u8* prev_source(){ return prev_code().impl()->data(); }
+	const inst_t* source(){ return code().impl()->data(); }
+	const inst_t* prev_source(){ return prev_code().impl()->data(); }
 
-	const ID& symbol(int_t n){ return code().impl()->get_symbol(n); }
-	const ID& prev_symbol(int_t n){ return prev_code().impl()->get_symbol(n); }
+	const ID& symbol(int_t n){ return code().impl()->symbol(n); }
+	const ID& prev_symbol(int_t n){ return prev_code().impl()->symbol(n); }
+
+	void return_result_instance_variable(int_t number, FrameCore* core){
+		return_result((ff().instance_variables->variable(number, core)));
+	}
 	
 	Frame decolonize();
 	
 	Arguments make_args(const Fun& fun);
 
-	Any append_backtrace(const u8* pc, const Any& ep);
+	Any append_backtrace(const inst_t* pc, const Any& ep);
 	
 	const VMachine& myself(){ 
 		return *(const VMachine*)&myself_;
@@ -575,115 +568,164 @@ public:
 
 private:
 
-	const u8* send1(const u8* pc, const ID& id, int_t n = 1);
-	const u8* send2(const u8* pc, const ID& id, int_t n = 1);
-	const u8* send2r(const u8* pc, const ID& id, int_t n = 1);
+	const inst_t* VMachineImpl::send1(const inst_t* pc, const ID& name, int_t n = 1){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Any target = pop();
+			UncountedAny self = ff().self();
+			push_ff(pc + n, 1, 0, 0, self.cref());
+			const Class& cls = target.get_class();
+			set_hint(cls, name);
+			if(const Any& ret = member_cache(cls, name, ff().self())){
+				set_arg_this(target);
+				ret.call(myself());
+			}
+		}
+		return ff().pc;
+	}
 
-	const u8* ARRAY_APPEND(const u8* pc);
-	const u8* MAP_APPEND(const u8* pc);
-	const u8* SET_NAME(const u8* pc);
+	const inst_t* VMachineImpl::send2(const inst_t* pc, const ID& name, int_t n = 1){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const Any& temp = pop();
+			Any target = get();
+			set(temp);
+			UncountedAny self = ff().self();
+			push_ff(pc + n, 1, 1, 0, self.cref());
+			const Class& cls = target.get_class();
+			set_hint(cls, name);
+			if(const Any& ret = member_cache(cls, name, ff().self())){
+				set_arg_this(target);
+				ret.call(myself());
+			}
+		}
+		return ff().pc;
+	}
+
+	const inst_t* VMachineImpl::send2r(const inst_t* pc, const ID& name, int_t n = 1){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Any target = pop();
+			UncountedAny self = ff().self();
+			push_ff(pc + n, 1, 1, 0, self.cref());
+			const Class& cls = target.get_class();
+			set_hint(cls, name);
+			if(const Any& ret = member_cache(cls, name, ff().self())){
+				set_arg_this(target);
+				ret.call(myself());
+			}
+		}
+		return ff().pc;
+	}
+
+	const inst_t* ARRAY_APPEND(const inst_t* pc);
+	const inst_t* MAP_INSERT(const inst_t* pc);
+	const inst_t* SET_NAME(const inst_t* pc);
 	
-	const u8* PUSH_ARGS(const u8* pc);
+	const inst_t* PUSH_ARGS(const inst_t* pc);
 
 	void SET_LOCAL_VARIABLE(int_t pos, const Any&);
 	const Any& LOCAL_VARIABLE(int_t pos);
 
-	const u8* GLOBAL_VARIABLE(const u8* pc);
-	const u8* SET_GLOBAL_VARIABLE(const u8* pc);
-	const u8* DEFINE_GLOBAL_VARIABLE(const u8* pc);
+	const inst_t* GLOBAL_VARIABLE(const inst_t* pc);
+	const inst_t* SET_GLOBAL_VARIABLE(const inst_t* pc);
+	const inst_t* DEFINE_GLOBAL_VARIABLE(const inst_t* pc);
 
-	const u8* ONCE(const u8* pc);
+	const inst_t* ONCE(const inst_t* pc);
 
-	const u8* SET_INSTANCE_VARIABLE(const u8* pc);
-	const u8* INSTANCE_VARIABLE(const u8* pc);
+	void SET_INSTANCE_VARIABLE(int_t number, int_t core_number, const Any&);
+	const Any& INSTANCE_VARIABLE(int_t number, int_t core_number);
 
-	const u8* CALL(const u8* pc);
-	const u8* CALLEE(const u8* pc);
-	const u8* SEND(const u8* pc);
-	const u8* SEND_IF_DEFINED(const u8* pc);
+	const inst_t* MEMBER(const inst_t* pc);
+	const inst_t* MEMBER_IF_DEFINED(const inst_t* pc);
+	const inst_t* DEFINE_MEMBER(const inst_t* pc);
 
-	const u8* MEMBER(const u8* pc);
-	const u8* MEMBER_IF_DEFINED(const u8* pc);
-	const u8* DEFINE_MEMBER(const u8* pc);
+	const inst_t* AT(const inst_t* pc);
+	const inst_t* SET_AT(const inst_t* pc);
 
-	const u8* AT(const u8* pc);
-	const u8* SET_AT(const u8* pc);
-
-	const u8* PUSH_ARRAY(const u8* pc);
-	const u8* PUSH_MAP(const u8* pc);
-	const u8* PUSH_FUN(const u8* pc);
+	const inst_t* PUSH_ARRAY(const inst_t* pc);
+	const inst_t* PUSH_MAP(const inst_t* pc);
+	const inst_t* PUSH_FUN(const inst_t* pc);
 	
-	const u8* CLASS_BEGIN(const u8* pc);
-	const u8* CLASS_END(const u8* pc);
+	const inst_t* CLASS_BEGIN(const inst_t* pc);
+	const inst_t* CLASS_END(const inst_t* pc);
 
-	const u8* BLOCK_END(const u8* pc);
+	const inst_t* BLOCK_END(const inst_t* pc);
 
-	const u8* TRY_BEGIN(const u8* pc);
-	const u8* CATCH_BODY(const u8* pc, int_t stack_size, int_t fun_frames_size);
-	void THROW(const u8* pc);
+	const inst_t* TRY_BEGIN(const inst_t* pc);
+	const inst_t* CATCH_BODY(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
+	void THROW(const inst_t* pc);
 	void THROW_UNSUPPROTED_ERROR();
-	const u8* CHECK_ASSERT(const u8* lpc);
-	const u8* BREAKPOINT(const u8* pc);
+	const inst_t* CHECK_ASSERT(const inst_t* lpc);
+	const inst_t* BREAKPOINT(const inst_t* pc);
 
-	void YIELD(const u8* pc);
+	void YIELD(const inst_t* pc);
 
-	const u8* POS(const u8* pc);
-	const u8* NEG(const u8* pc);
-	const u8* COM(const u8* pc);
-	const u8* CLONE(const u8* pc);
-	const u8* ADD(const u8* pc);
-	const u8* SUB(const u8* pc);
-	const u8* CAT(const u8* pc);
-	const u8* MUL(const u8* pc);
-	const u8* DIV(const u8* pc);
-	const u8* MOD(const u8* pc);
-	const u8* AND(const u8* pc);
-	const u8* OR(const u8* pc);
-	const u8* XOR(const u8* pc);
-	const u8* SHR(const u8* pc);
-	const u8* USHR(const u8* pc);
-	const u8* SHL(const u8* pc);
+	const inst_t* POS(const inst_t* pc);
+	const inst_t* NEG(const inst_t* pc);
+	const inst_t* COM(const inst_t* pc);
+	const inst_t* CLONE(const inst_t* pc);
+	const inst_t* ADD(const inst_t* pc);
+	const inst_t* SUB(const inst_t* pc);
+	const inst_t* CAT(const inst_t* pc);
+	const inst_t* MUL(const inst_t* pc);
+	const inst_t* DIV(const inst_t* pc);
+	const inst_t* MOD(const inst_t* pc);
+	const inst_t* AND(const inst_t* pc);
+	const inst_t* OR(const inst_t* pc);
+	const inst_t* XOR(const inst_t* pc);
+	const inst_t* SHR(const inst_t* pc);
+	const inst_t* USHR(const inst_t* pc);
+	const inst_t* SHL(const inst_t* pc);
 
-	const u8* EQ(const u8* pc);
-	const u8* NE(const u8* pc);
-	const u8* LT(const u8* pc);
-	const u8* GT(const u8* pc);
-	const u8* LE(const u8* pc);
-	const u8* GE(const u8* pc);
-	const u8* RAW_EQ(const u8* pc);
-	const u8* RAW_NE(const u8* pc);
-	const u8* IS(const u8* pc);
-	const u8* NIS(const u8* pc);
+	const inst_t* EQ(const inst_t* pc);
+	const inst_t* NE(const inst_t* pc);
+	const inst_t* LT(const inst_t* pc);
+	const inst_t* GT(const inst_t* pc);
+	const inst_t* LE(const inst_t* pc);
+	const inst_t* GE(const inst_t* pc);
+	const inst_t* RAW_EQ(const inst_t* pc);
+	const inst_t* RAW_NE(const inst_t* pc);
+	const inst_t* IS(const inst_t* pc);
+	const inst_t* NIS(const inst_t* pc);
 
-	const u8* EQ_IF(const u8* pc);
-	const u8* NE_IF(const u8* pc);
-	const u8* LT_IF(const u8* pc);
-	const u8* GT_IF(const u8* pc);
-	const u8* LE_IF(const u8* pc);
-	const u8* GE_IF(const u8* pc);
+	const inst_t* IF_EQ(const inst_t* pc);
+	const inst_t* IF_NE(const inst_t* pc);
+	const inst_t* IF_LT(const inst_t* pc);
+	const inst_t* IF_GT(const inst_t* pc);
+	const inst_t* IF_LE(const inst_t* pc);
+	const inst_t* IF_GE(const inst_t* pc);
+	const inst_t* IF_RAW_EQ(const inst_t* pc);
+	const inst_t* IF_RAW_NE(const inst_t* pc);
+	const inst_t* IF_IS(const inst_t* pc);
+	const inst_t* IF_NIS(const inst_t* pc);
 
-	const u8* INC(const u8* pc);
-	const u8* DEC(const u8* pc);
-	const u8* LOCAL_NOT_ON_HEAP_INC(const u8* pc);
-	const u8* LOCAL_NOT_ON_HEAP_DEC(const u8* pc);
+	const inst_t* INC(const inst_t* pc);
+	const inst_t* DEC(const inst_t* pc);
+	const inst_t* LOCAL_VARIABLE_INC(const inst_t* pc);
+	const inst_t* LOCAL_VARIABLE_DEC(const inst_t* pc);
+	const inst_t* LocalVariableIncDirect(const inst_t* pc);
+	const inst_t* LocalVariableDecDirect(const inst_t* pc);
 
-	const u8* ADD_ASSIGN(const u8* pc);
-	const u8* SUB_ASSIGN(const u8* pc);
-	const u8* CAT_ASSIGN(const u8* pc);
-	const u8* MUL_ASSIGN(const u8* pc);
-	const u8* DIV_ASSIGN(const u8* pc);
-	const u8* MOD_ASSIGN(const u8* pc);
-	const u8* AND_ASSIGN(const u8* pc);
-	const u8* OR_ASSIGN(const u8* pc);
-	const u8* XOR_ASSIGN(const u8* pc);
-	const u8* SHR_ASSIGN(const u8* pc);
-	const u8* USHR_ASSIGN(const u8* pc);
-	const u8* SHL_ASSIGN(const u8* pc);
+	const inst_t* ADD_ASSIGN(const inst_t* pc);
+	const inst_t* SUB_ASSIGN(const inst_t* pc);
+	const inst_t* CAT_ASSIGN(const inst_t* pc);
+	const inst_t* MUL_ASSIGN(const inst_t* pc);
+	const inst_t* DIV_ASSIGN(const inst_t* pc);
+	const inst_t* MOD_ASSIGN(const inst_t* pc);
+	const inst_t* AND_ASSIGN(const inst_t* pc);
+	const inst_t* OR_ASSIGN(const inst_t* pc);
+	const inst_t* XOR_ASSIGN(const inst_t* pc);
+	const inst_t* SHR_ASSIGN(const inst_t* pc);
+	const inst_t* USHR_ASSIGN(const inst_t* pc);
+	const inst_t* SHL_ASSIGN(const inst_t* pc);
 
-	const u8* SET_ACCESSIBILITY(const u8* pc);
-	const u8* CURRENT_CONTEXT(const u8* pc);
+	const inst_t* SET_ACCESSIBILITY(const inst_t* pc);
+	const inst_t* CURRENT_CONTEXT(const inst_t* pc);
 
-	void hook_return(const u8* pc);
+	void hook_return(const inst_t* pc);
+
+	struct Add{
+		template<class T, class U> static inline typename NumericCalcResultType<T, U>::type calc(T a, U b){ return (typename NumericCalcResultType<T, U>::type)(a + b); }
+		static inline const ID& id(){ return Xid(op_add_assign); }
+	};
 
 	VMachine clone(){
 		VMachine vm;
@@ -691,15 +733,78 @@ private:
 		return vm;
 	}
 
+	struct MemberCacheTable{
+		struct Unit{
+			AnyImpl* klass;
+			StringImpl* name;
+			UncountedAny member;
+			uint_t mutate_count;
+		};
+
+		enum{ CACHE_MAX = /*179*/ 256 };
+
+		Unit table_[CACHE_MAX];
+		uint_t hit_;
+		uint_t miss_;
+
+		MemberCacheTable(){
+			for(int_t i=0; i<CACHE_MAX; ++i){
+				table_[i].klass = 0;
+			}
+			hit_ = 0;
+			miss_ = 0;
+		}
+
+		float cache_hit_rate(){
+			return (float_t)hit_/(hit_+miss_);
+		}
+
+		uint_t hit(){
+			return hit_;
+		}
+
+		uint_t miss(){
+			return miss_;
+		}
+
+		const Any& cache(const Any& target_class, const ID& member_name, const Any& self){
+			if(target_class.type()!=TYPE_BASE)
+				return null;
+
+			AnyImpl* klass = target_class.impl();
+			StringImpl* name = member_name.impl();
+
+			uint_t hash = (((uint_t)klass)>>3) + (((uint_t)name)>>2);
+			Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
+			if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name){
+				hit_++;
+				return unit.member.cref();
+			}else{
+				miss_++;
+				unit.member = klass->member(member_name, self);
+				unit.klass = klass;
+				unit.name = name;
+				unit.mutate_count = global_mutate_count;
+				return unit.member.cref();
+			}
+		}
+	};
+	
+public:
+
+	const Any& member_cache(const Any& target_class, const ID& member_name, const Any& self){
+		return member_cache_table_.cache(target_class, member_name, self);
+	}
+
 private:
 
-	u8 end_code_;
-	u8 throw_unsupported_error_code_;
-	u8 check_unsupported_code_;
-	u8 cleanup_call_code_;
-	u8 throw_nop_code_;
+	inst_t end_code_;
+	inst_t throw_unsupported_error_code_;
+	inst_t check_unsupported_code_;
+	inst_t cleanup_call_code_;
+	inst_t throw_nop_code_;
 	
-	const u8* resume_pc_;
+	const inst_t* resume_pc_;
 	int_t yield_result_count_;
 
 	UncountedAny myself_;
@@ -716,6 +821,8 @@ private:
 	debug::Info debug_info_;
 
 	UncountedAny last_except_;
+
+	MemberCacheTable member_cache_table_;
 
 protected:
 
@@ -765,6 +872,7 @@ public:
 		printf("stack size %d\n", stack_.size());
 		printf("fun_frames size %d\n", fun_frames_.size()-1);
 		printf("except_frames size %d\n", except_frames_.size());
+		printf("cache hit=%d, miss=%d, rate=%g\n", member_cache_table_.hit(), member_cache_table_.miss(), member_cache_table_.cache_hit_rate());
 	}
 
 };

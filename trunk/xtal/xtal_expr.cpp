@@ -296,7 +296,7 @@ void ExprBuilder::fun_body_begin(){
 
 	if(fun_stack.top()->have_args){
 		int_t var = register_ident(Xid(__ARGS__));
-		block_add(define(local(var), pseudo(CODE_PUSH_ARGS)));
+		block_add(define(local(var), pseudo(InstPushArgs::NUMBER)));
 	}
 }
 

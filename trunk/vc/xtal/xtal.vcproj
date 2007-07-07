@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../xtallib.lib"
+				AdditionalDependencies="../../lib/xtallib.lib"
 				OutputFile="$(OutDir)/xtal.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -142,7 +142,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../xtallib.lib"
+				AdditionalDependencies="../../lib/xtallib.lib"
 				OutputFile="$(OutDir)/xtal.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"

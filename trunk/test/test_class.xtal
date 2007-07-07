@@ -17,7 +17,9 @@ Foo: class{
 	- _pri: 300; 
 }
 
-
+Bar: class(Foo){
+	
+}
 
 {
 	a: Foo();
@@ -44,6 +46,23 @@ Foo: class{
 		temp = "pri";
 	}
 	assert temp=="pri";
+	
+	
+	b: Bar();
+	assert b.pub==100;
+	
+	Bar::pub: method(){ return 200; }
+	assert b.pub==200;
+	
+	try{
+		b.pro = 10;
+	}catch(e){
+		temp = "pro";
+	}
+	assert temp=="pro";
+	
+	Bar::pro: method(){ return 200; }
+	assert b.pro==200;
 }
 
 

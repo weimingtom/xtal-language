@@ -138,7 +138,7 @@ void Parser::begin_interactive_parsing(const Stream& stream){
 
 Stmt* Parser::interactive_parse(){
 	if(eat_end())
-		return e.e2s(e.pseudo(CODE_PUSH_NULL));
+		return e.e2s(e.pseudo(InstPushNull::NUMBER));
 	
 	if(Stmt* p = parse_stmt())
 		return p;
@@ -147,7 +147,7 @@ Stmt* Parser::interactive_parse(){
 	if(tok.type()==Token::TYPE_TOKEN && tok.ivalue()==-1)
 		return 0;
 
-	return e.e2s(e.pseudo(CODE_PUSH_NULL));
+	return e.e2s(e.pseudo(InstPushNull::NUMBER));
 }
 
 LPCCommon* Parser::common(){
@@ -379,25 +379,25 @@ Expr* Parser::parse_term(){
 
 				XTAL_CASE('+'){
 					if(Expr* rhs = parse_expr(PRI_POS - r_space)){
-						ret = e.una(CODE_POS, rhs);
+						ret = e.una(InstPos::NUMBER, rhs);
 					}
 				}
 
 				XTAL_CASE('-'){ 
 					if(Expr* rhs = parse_expr(PRI_NEG - r_space)){
-						ret = e.una(CODE_NEG, rhs);
+						ret = e.una(InstNeg::NUMBER, rhs);
 					}
 				}
 
 				XTAL_CASE('~'){ 
 					if(Expr* rhs = parse_expr(PRI_COM - r_space)){
-						ret = e.una(CODE_COM, rhs);
+						ret = e.una(InstCom::NUMBER, rhs);
 					}
 				}
 
 				XTAL_CASE('!'){ 
 					if(Expr* rhs = parse_expr(PRI_NOT - r_space)){
-						ret = e.una(CODE_NOT, rhs);
+						ret = e.una(InstNot::NUMBER, rhs);
 					}
 				}
 			}
@@ -415,15 +415,15 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_FIBER){ ret = parse_fun(KIND_FIBER); }
 				XTAL_CASE(Token::KEYWORD_DOFUN){ ret = e.call(parse_fun(KIND_FUN)); }
 				XTAL_CASE(Token::KEYWORD_CALLEE){ ret = e.callee(); }
-				XTAL_CASE(Token::KEYWORD_NULL){ ret = e.pseudo(CODE_PUSH_NULL); }
-				XTAL_CASE(Token::KEYWORD_TRUE){ ret = e.pseudo(CODE_PUSH_TRUE); }
-				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(CODE_PUSH_FALSE); }
-				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(CODE_PUSH_NOP); }
-				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(CODE_PUSH_THIS); }
+				XTAL_CASE(Token::KEYWORD_NULL){ ret = e.pseudo(InstPushNull::NUMBER); }
+				XTAL_CASE(Token::KEYWORD_TRUE){ ret = e.pseudo(InstPushTrue::NUMBER); }
+				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(InstPushFalse::NUMBER); }
+				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(InstPushNop::NUMBER); }
+				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(InstPushThis::NUMBER); }
 
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){
 					e.scope_set_on_heap_flag(0);
-					ret = e.pseudo(CODE_PUSH_CURRENT_CONTEXT); 
+					ret = e.pseudo(InstPushCurrentContext::NUMBER); 
 				}
 			}
 		}
@@ -467,7 +467,7 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 				
 				XTAL_CASE(Token::KEYWORD_IS){ 
 					if(pri < PRI_IS - l_space){
-						ret = e.bin_comp(CODE_IS, lhs, parse_expr(PRI_IS - r_space)); 
+						ret = e.bin_comp(InstIs::NUMBER, lhs, parse_expr(PRI_IS - r_space)); 
 					}
 				}
 			}
@@ -507,43 +507,43 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 			
 				XTAL_CASE('+'){
 					if(pri < PRI_ADD - l_space){
-						ret = e.bin(CODE_ADD, lhs, parse_expr(PRI_ADD - r_space)); 
+						ret = e.bin(InstAdd::NUMBER, lhs, parse_expr(PRI_ADD - r_space)); 
 					}
 				}
 
 				XTAL_CASE('-'){
 					if(pri < PRI_SUB - l_space){
-						ret = e.bin(CODE_SUB, lhs, parse_expr(PRI_SUB - r_space)); 
+						ret = e.bin(InstSub::NUMBER, lhs, parse_expr(PRI_SUB - r_space)); 
 					}
 				}
 
 				XTAL_CASE('~'){
 					if(pri < PRI_CAT - l_space){
-						ret = e.bin(CODE_CAT, lhs, parse_expr(PRI_CAT - r_space)); 
+						ret = e.bin(InstCat::NUMBER, lhs, parse_expr(PRI_CAT - r_space)); 
 					}
 				}
 
 				XTAL_CASE('*'){
 					if(pri < PRI_MUL - l_space){
-						ret = e.bin(CODE_MUL, lhs, parse_expr(PRI_MUL - r_space)); 
+						ret = e.bin(InstMul::NUMBER, lhs, parse_expr(PRI_MUL - r_space)); 
 					}
 				}
 
 				XTAL_CASE('/'){
 					if(pri < PRI_DIV - l_space){
-						ret = e.bin(CODE_DIV, lhs, parse_expr(PRI_DIV - r_space)); 
+						ret = e.bin(InstDiv::NUMBER, lhs, parse_expr(PRI_DIV - r_space)); 
 					}
 				}
 
 				XTAL_CASE('%'){
 					if(pri < PRI_MOD - l_space){
-						ret = e.bin(CODE_MOD, lhs, parse_expr(PRI_MOD - r_space)); 
+						ret = e.bin(InstMod::NUMBER, lhs, parse_expr(PRI_MOD - r_space)); 
 					}
 				}
 
 				XTAL_CASE('^'){
 					if(pri < PRI_XOR - l_space){
-						ret = e.bin(CODE_XOR, lhs, parse_expr(PRI_XOR - r_space)); 
+						ret = e.bin(InstXor::NUMBER, lhs, parse_expr(PRI_XOR - r_space)); 
 					}
 				}
 
@@ -555,7 +555,7 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 				XTAL_CASE('&'){
 					if(pri < PRI_AND - l_space){
-						ret = e.bin(CODE_AND, lhs, parse_expr(PRI_AND - r_space)); 
+						ret = e.bin(InstAnd::NUMBER, lhs, parse_expr(PRI_AND - r_space)); 
 					}
 				}
 
@@ -567,79 +567,79 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 				XTAL_CASE('|'){
 					if(pri < PRI_OR - l_space){
-						ret = e.bin(CODE_OR, lhs, parse_expr(PRI_OR - r_space)); 
+						ret = e.bin(InstOr::NUMBER, lhs, parse_expr(PRI_OR - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c2('<','<')){ 
 					if(pri < PRI_SHL - l_space){
-						ret = e.bin(CODE_SHL, lhs, parse_expr(PRI_SHL - r_space)); 
+						ret = e.bin(InstShl::NUMBER, lhs, parse_expr(PRI_SHL - r_space)); 
 					}
 				}
 				
 				XTAL_CASE(c2('>','>')){ 
 					if(pri < PRI_SHR - l_space){
-						ret = e.bin(CODE_SHR, lhs, parse_expr(PRI_SHR - r_space)); 
+						ret = e.bin(InstShr::NUMBER, lhs, parse_expr(PRI_SHR - r_space)); 
 					}
 				}
 				
 				XTAL_CASE(c3('>','>','>')){ 
 					if(pri < PRI_USHR - l_space){
-						ret = e.bin(CODE_USHR, lhs, parse_expr(PRI_USHR - r_space)); 
+						ret = e.bin(InstUshr::NUMBER, lhs, parse_expr(PRI_USHR - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c2('<','=')){ 
 					if(pri < PRI_LE - l_space){
-						ret = e.bin_comp(CODE_LE, lhs, parse_expr(PRI_LE - r_space)); 
+						ret = e.bin_comp(InstLe::NUMBER, lhs, parse_expr(PRI_LE - r_space)); 
 					}
 				}
 
 				XTAL_CASE('<'){ 
 					if(pri < PRI_LT - l_space){
-						ret = e.bin_comp(CODE_LT, lhs, parse_expr(PRI_LT - r_space)); 
+						ret = e.bin_comp(InstLt::NUMBER, lhs, parse_expr(PRI_LT - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c2('>','=')){ 
 					if(pri < PRI_GE - l_space){
-						ret = e.bin_comp(CODE_GE, lhs, parse_expr(PRI_GE - r_space)); 
+						ret = e.bin_comp(InstGe::NUMBER, lhs, parse_expr(PRI_GE - r_space)); 
 					}
 				}
 
 				XTAL_CASE('>'){ 
 					if(pri < PRI_GT - l_space){
-						ret = e.bin_comp(CODE_GT, lhs, parse_expr(PRI_GT - r_space)); 
+						ret = e.bin_comp(InstGt::NUMBER, lhs, parse_expr(PRI_GT - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c2('=','=')){ 
 					if(pri < PRI_EQ - l_space){
-						ret = e.bin_comp(CODE_EQ, lhs, parse_expr(PRI_EQ - r_space)); 
+						ret = e.bin_comp(InstEq::NUMBER, lhs, parse_expr(PRI_EQ - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c2('!','=')){ 
 					if(pri < PRI_NE - l_space){
-						ret = e.bin_comp(CODE_NE, lhs, parse_expr(PRI_NE - r_space)); 
+						ret = e.bin_comp(InstNe::NUMBER, lhs, parse_expr(PRI_NE - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c3('=','=','=')){ 
 					if(pri < PRI_RAW_EQ - l_space){
-						ret = e.bin_comp(CODE_RAW_EQ, lhs, parse_expr(PRI_RAW_EQ - r_space)); 
+						ret = e.bin_comp(InstRawEq::NUMBER, lhs, parse_expr(PRI_RAW_EQ - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c3('!','=','=')){ 
 					if(pri < PRI_RAW_NE - l_space){
-						ret = e.bin_comp(CODE_RAW_NE, lhs, parse_expr(PRI_RAW_NE - r_space)); 
+						ret = e.bin_comp(InstRawNe::NUMBER, lhs, parse_expr(PRI_RAW_NE - r_space)); 
 					}
 				}
 
 				XTAL_CASE(c3('!','i','s')){ 
 					if(pri < PRI_NIS - l_space){
-						ret = e.bin_comp(CODE_NIS, lhs, parse_expr(PRI_NIS - r_space)); 
+						ret = e.bin_comp(InstNis::NUMBER, lhs, parse_expr(PRI_NIS - r_space)); 
 					}
 				}
 
@@ -770,7 +770,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			*e.massign_lhs_exprs() = param;
 			e.massign_define(true);
 			e.massign_discard(discard);
-			e.massign_rhs(e.call(e.send(e.pop(), iter_first)));
+			e.massign_rhs(e.send(e.pop(), iter_first));
 			e.block_add(e.massign_end());
 			
 			e.try_begin();
@@ -784,7 +784,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					*e.massign_lhs_exprs() = param;
 					e.massign_define(false);
 					e.massign_discard(discard);
-					e.massign_rhs(e.call(e.send(e.local(it), iter_next)));
+					e.massign_rhs(e.send(e.local(it), iter_next));
 					e.while_next(e.massign_end());
 
 					if(eat_a(Token::KEYWORD_ELSE)){
@@ -798,7 +798,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 				s = e.while_end();
 				e.try_body(s);
 				
-				s = e.e2s(set_line(ln, e.call(e.send_q(e.local(it), iter_break))));
+				s = e.e2s(set_line(ln, e.send_q(e.local(it), iter_break)));
 				e.try_finally(s);
 
 			s = e.try_end();
@@ -843,8 +843,8 @@ Stmt* Parser::parse_assign_stmt(){
 	if(ch.type()==Token::TYPE_TOKEN){
 		switch(ch.ivalue()){
 			XTAL_DEFAULT{}
-			XTAL_CASE(c2('+','+')){ return e.inc(CODE_INC, parse_expr_must()); }
-			XTAL_CASE(c2('-','-')){ return e.inc(CODE_DEC, parse_expr_must()); }
+			XTAL_CASE(c2('+','+')){ return e.inc(InstInc::NUMBER, parse_expr_must()); }
+			XTAL_CASE(c2('-','-')){ return e.inc(InstDec::NUMBER, parse_expr_must()); }
 		}
 	}
 	lexer_.putback();
@@ -895,21 +895,21 @@ Stmt* Parser::parse_assign_stmt(){
 					XTAL_CASE('='){  return e.assign(lhs, parse_expr_must()); }
 					XTAL_CASE(':'){ return e.define(lhs, parse_expr_must()); }
 
-					XTAL_CASE(c2('+','+')){ return e.inc(CODE_INC, lhs); }
-					XTAL_CASE(c2('-','-')){ return e.inc(CODE_DEC, lhs); }
+					XTAL_CASE(c2('+','+')){ return e.inc(InstInc::NUMBER, lhs); }
+					XTAL_CASE(c2('-','-')){ return e.inc(InstDec::NUMBER, lhs); }
 					
-					XTAL_CASE(c2('+','=')){ return e.op_assign(CODE_ADD_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('-','=')){ return e.op_assign(CODE_SUB_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('~','=')){ return e.op_assign(CODE_CAT_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('*','=')){ return e.op_assign(CODE_MUL_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('/','=')){ return e.op_assign(CODE_DIV_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('%','=')){ return e.op_assign(CODE_MOD_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('^','=')){ return e.op_assign(CODE_XOR_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('|','=')){ return e.op_assign(CODE_OR_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c2('&','=')){ return e.op_assign(CODE_AND_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c3('<','<','=')){ return e.op_assign(CODE_SHL_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c3('>','>','=')){ return e.op_assign(CODE_SHR_ASSIGN, lhs, parse_expr_must()); }
-					XTAL_CASE(c4('>','>','>','=')){ return e.op_assign(CODE_USHR_ASSIGN, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('+','=')){ return e.op_assign(InstAddAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('-','=')){ return e.op_assign(InstSubAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('~','=')){ return e.op_assign(InstCatAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('*','=')){ return e.op_assign(InstMulAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('/','=')){ return e.op_assign(InstDivAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('%','=')){ return e.op_assign(InstModAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('^','=')){ return e.op_assign(InstXorAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('|','=')){ return e.op_assign(InstOrAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c2('&','=')){ return e.op_assign(InstAndAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c3('<','<','=')){ return e.op_assign(InstShlAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c3('>','>','=')){ return e.op_assign(InstShrAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c4('>','>','>','=')){ return e.op_assign(InstUshrAssign::NUMBER, lhs, parse_expr_must()); }
 
 					XTAL_CASE('{'){
 						return parse_each(0, lhs);
@@ -1445,9 +1445,9 @@ Stmt* Parser::parse_switch(){
 				while(true){
 					if(temp->cond_expr){
 						temp->cond_expr = e.oror(temp->cond_expr,
-							e.bin_comp(CODE_EQ, e.local(var), parse_expr_must()));
+							e.bin_comp(InstEq::NUMBER, e.local(var), parse_expr_must()));
 					}else{
-						temp->cond_expr = e.bin_comp(CODE_EQ, e.local(var), parse_expr_must());
+						temp->cond_expr = e.bin_comp(InstEq::NUMBER, e.local(var), parse_expr_must());
 					}
 					
 					if(eat_a(',')){
@@ -1485,7 +1485,7 @@ Stmt* Parser::parse_switch(){
 
 
 Stmt* Parser::parse_throw(){
-	UnaStmt* p = XTAL_NEW UnaStmt(lexer_.line(), CODE_THROW);
+	UnaStmt* p = XTAL_NEW UnaStmt(lexer_.line(), InstThrow::NUMBER);
 	p->expr = parse_expr_must();
 	expect_end();
 	return p;

@@ -88,14 +88,14 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
+
+		
+		//int c = clock();
+		//xtal::disable_gc();
+		//load("../bench/vec.xtal");
 		handle_argv(argv);
-
-		/*
-		int c = clock();
-		load("../bench/inst.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
-		*/
-
+		//printf("%g\n", (clock()-c)/1000.0f);
+		//xtal::enable_gc();
 /*
 		load("../test/test_class.xtal");
 		load("../test/test_multiple_values.xtal");
@@ -136,7 +136,7 @@ int main(int argc, char** argv){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
-	//vmachine().impl()->print_info();
+	vmachine().impl()->print_info();
 
 	uninitialize();
 

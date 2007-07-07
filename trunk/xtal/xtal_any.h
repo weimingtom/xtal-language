@@ -146,6 +146,10 @@ class UncountedAny{
 public:
 
 	UncountedAny(){ type_ = TYPE_NULL; pvalue_ = 0; }
+	UncountedAny(u8 v){ set_i(v); }
+	UncountedAny(u16 v){ set_i(v); }
+	UncountedAny(i8 v){ set_i(v); }
+	UncountedAny(i16 v){ set_i(v); }
 	UncountedAny(int_t v){ set_i(v); }
 	UncountedAny(float_t v){ set_f(v); }
 	UncountedAny(AnyImpl* v){ set_p(v); }
@@ -894,6 +898,13 @@ inline void Any::inc_ref_count() const{
 
 inline void Any::dec_ref_count() const{
 	if(type()==TYPE_BASE){ impl()->dec_ref_count(); }
+}
+
+inline uint_t Any::hashcode() const{
+	if(type()==TYPE_BASE){
+		return impl()->hashcode();
+	}
+	return (uint_t)rawvalue();
 }
 
 }

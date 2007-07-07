@@ -13,11 +13,15 @@ namespace xtal{
 class HaveInstanceVariables{
 public:
 
+	struct uninit_t{};
+
+	HaveInstanceVariables(uninit_t){}
+
 	HaveInstanceVariables(){
 		VariablesInfo vi;
 		vi.core = 0;
 		vi.pos = 0;
-		variables_info_.push_back(vi);
+		variables_info_.push(vi);
 	}
 			
 	~HaveInstanceVariables(){}
@@ -27,7 +31,7 @@ public:
 		vi.core = core;
 		vi.pos = (int_t)variables_.size();
 		variables_.resize(vi.pos+core->instance_variable_size);
-		variables_info_.push_back(vi);
+		variables_info_.push(vi);
 	}
 
 	const Any& variable(int_t index, FrameCore* core){
@@ -39,21 +43,16 @@ public:
 	}
 
 	int_t find_core(FrameCore* core){
-		if(variables_info_[0].core == core)
-			return variables_info_[0].pos;
-
-		for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
-			if(variables_info_[i].core==core){
-				std::swap(variables_info_[0], variables_info_[i]);
-				return variables_info_[0].pos;
-			}	
-		}
-		//XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
-		return 0;
+		VariablesInfo& info = variables_info_.top();
+		if(info.core == core)
+			return info.pos;
+		return find_core_inner(core);
 	}
-	
+
+	int_t find_core_inner(FrameCore* core);
+
 	bool empty(){
-		return variables_.size()==1;
+		return variables_.empty();
 	}
 
 protected:
@@ -63,7 +62,7 @@ protected:
 		int_t pos;
 	};
 
-	AC<VariablesInfo>::vector variables_info_;
+	PODStack<VariablesInfo> variables_info_;
 	AC<Any>::vector variables_;
 	
 	void visit_members(Visitor& m){
@@ -71,6 +70,21 @@ protected:
 	}
 
 };
+
+class EmptyHaveInstanceVariables : public HaveInstanceVariables{
+public:
+	EmptyHaveInstanceVariables():HaveInstanceVariables(uninit_t()){}
+
+	void init(){
+		VariablesInfo vi;
+		vi.core = 0;
+		vi.pos = 0;
+		variables_info_.push(vi);
+	}
+};
+
+extern EmptyHaveInstanceVariables empty_have_instance_variables;
+extern uint_t global_mutate_count;
 
 class InstanceImpl : public AnyImpl, public HaveInstanceVariables{
 public:
@@ -110,12 +124,10 @@ public:
 		ID key;
 		u16 num;
 		u16 flags;
-		int_t mutate_count;
-		int_t* pmutate_count;
 		Node* next;
 		
-		Node(const ID& key = null, u16 num = 0, u16 flags = 0, int_t mutate_count = 0, int_t* pmutate_count = 0)
-			:key(key), num(num), flags(flags), mutate_count(mutate_count), pmutate_count(pmutate_count), next(0){}
+		Node(const ID& key = null, u16 num = 0, u16 flags = 0)
+			:key(key), num(num), flags(flags), next(0){}
 	};
 	
 	friend class iterator;
@@ -270,7 +282,7 @@ public:
 		if(!map_members_){
 			map_members_ = new(user_malloc(sizeof(IdMap))) IdMap();
 			for(int_t i = 0; i<core_->variable_size; ++i){
-				IdMap::Node* p = map_members_->insert(code_.get_symbol(core_->variable_symbol_offset+i));
+				IdMap::Node* p = map_members_->insert(code_.symbol(core_->variable_symbol_offset+i));
 				p->num = (u16)(core_->variable_size-1-i);
 			}
 		}
@@ -324,9 +336,8 @@ protected:
 	vector_t members_;
 	
 	enum{
-		NOMEMBER = 1 << 0,
-		PROTECTED = 1 << 1,
-		PRIVATE = 1 << 2
+		PROTECTED = 1 << 0,
+		PRIVATE = 1 << 1
 	};
 	
 	IdMap* map_members_;
@@ -361,8 +372,6 @@ public:
 
 	virtual void def(const ID& name, const Any& value);
 	
-	void lay(const ID& name, const Any& value, int_t* pmutate_count, unsigned short flags);
-
 	const Any& any_member(const ID& name);
 	
 	const Any& bases_member(const ID& name);
@@ -370,15 +379,9 @@ public:
 	virtual void set_member(const ID& name, const Any& value);
 
 	virtual const Any& member(const ID& name, const Any& self);
-	
-	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags);
-	
+		
 	virtual const Any& member(const ID& name);
 	
-	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags);
-
-	void mutate();
-
 	bool is_inherited(const Any& v);
 
 	void set_accessibility(const ID& name, int_t kind){
@@ -427,15 +430,9 @@ public:
 	}
 
 	virtual const Any& member(const ID& name);
-
-	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags);
 	
 	virtual const Any& member(const ID& name, const Any& self){
 		return member(name);
-	}
-
-	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
-		return member(name, pmutate_count, flags);
 	}
 
 	virtual void def(const ID& name, const Any& value);

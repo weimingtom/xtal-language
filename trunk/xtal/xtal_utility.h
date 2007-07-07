@@ -15,13 +15,14 @@
 
 
 //#define XTAL_USE_COMPRESSED_ANY
+//#define XTAL_USE_WORD_CODE
 //#define XTAL_NO_PARSER
 //#define XTAL_NO_EXCEPT
 
 #define XTAL_USE_PREDEFINED_ID
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
-#	define XTAL_DEBUG
+#define XTAL_DEBUG
 #endif
 
 #ifdef XTAL_DEBUG
@@ -29,8 +30,6 @@
 #else
 #	define XTAL_ASSERT(expr)
 #endif
-
-#define XTAL_ASSERT_TYPE_CHECK(expr, type) XTAL_ASSERT_1(::xtal::cast<type*>(expr), #type)
 
 #ifdef XTAL_DEBUG
 #	define XTAL_NODEFAULT default: XTAL_ASSERT(false)
@@ -238,20 +237,10 @@ struct AC{
 		std::basic_string<FIRST, std::char_traits<FIRST>, Alloc<FIRST> >,
 		std::basic_string<FIRST, SECOND, Alloc<FIRST> >
 		>::type string;
-
-
-#if _MSC_VER <= 1200
-	typedef typename detail::AC_IfDefault<THIRD,
-		std::map<FIRST, SECOND, std::less<FIRST>, Alloc<SECOND> >,
-		std::map<FIRST, SECOND, THIRD, Alloc<SECOND> >
-		>::type map;
-#else
 	typedef typename detail::AC_IfDefault<THIRD,
 		std::map<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
 		std::map<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
 		>::type map;
-#endif
-
 	typedef typename detail::AC_IfDefault<THIRD,
 		std::multimap<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
 		std::multimap<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >

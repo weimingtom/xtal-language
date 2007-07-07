@@ -18,7 +18,7 @@ class Vec2D:
 
 def foo():
 	v = Vec2D(0, 0)
-	u = Vec2D(1.5, 2.5)
+	u = Vec2D(1, 2)
 	i = 0
 	while i<5000000:
 		v += u

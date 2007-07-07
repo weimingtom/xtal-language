@@ -17,6 +17,7 @@
 #include "xtal_frameimpl.h"
 #include "xtal_macro.h"
 #include "xtal_stream.h"
+#include "xtal_vmachineimpl.h"
 
 namespace xtal{
 
@@ -119,6 +120,8 @@ void initialize(){
 	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 
 	disable_gc();
+
+	empty_have_instance_variables.init();
 
 	TClass<Any>::set((ClassImpl*)AnyImpl::operator new(sizeof(ClassImpl)));  
 	TClass<Any>::get().impl()->set_ref_count(1);
@@ -281,7 +284,7 @@ void gc(){
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 				if((*it)->ref_count()!=0
 					// finalizeメソッドがあるオブジェクトも生き延びさせる
-					|| (*it)->get_class().member(finalize_id)){
+					|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it)){
 					std::swap(*it, *objects_alive++);
 				}
 			}
@@ -303,7 +306,7 @@ void gc(){
 
 				// 死ぬ予定のオブジェクトのfinalizerを実行する
 				for(int_t i=objects_alive_n; i<objects_current_n; ++i){
-					if(const Any& ret = objects_begin_[i]->get_class().member(finalize_id)){
+					if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i])){
 						vm.setup_call(0);
 						vm.set_arg_this(objects_begin_[i]);
 						ret.call(vm);
@@ -389,7 +392,7 @@ void full_gc(){
 							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 								if((*it)->ref_count()!=0 
 									// finalizeメソッドがあるオブジェクトも生き延びさせる
-									|| (*it)->get_class().member(finalize_id)){
+									|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it)){
 									end = false;
 									(*it)->visit_members(m);
 									std::swap(*it, *objects_alive++);
@@ -431,7 +434,7 @@ void full_gc(){
 
 						// 死ぬ予定のオブジェクトのfinalizerを実行する
 						for(int_t i=objects_alive_n; i<objects_current_n; ++i){		
-							if(const Any& ret = objects_begin_[i]->get_class().member(finalize_id)){
+							if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i])){
 								vm.setup_call(0);
 								vm.set_arg_this(objects_begin_[i]);
 								ret.call(vm);
@@ -595,7 +598,7 @@ void AnyImpl::def(const ID& name, const Any& value){
 }
 
 HaveInstanceVariables* AnyImpl::have_instance_variables(){ 
-	return 0; 
+	return &empty_have_instance_variables; 
 }
 
 String AnyImpl::object_name(){ 
@@ -752,6 +755,15 @@ const Any& Any::member(const ID& name) const{
 	return null;
 }
 
+const Any& Any::member(const ID& name, const Any& self) const{
+	switch(type()){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self); }
+		XTAL_CASE(TYPE_NOP){ return *this; }
+	}
+	return null;
+}
+
 void Any::def(const ID& name, const Any& value) const{
 	switch(type()){
 		XTAL_DEFAULT;
@@ -763,20 +775,18 @@ void Any::def(const ID& name, const Any& value) const{
 }
 
 void Any::send(const ID& name, const VMachine& vm) const{
-	const Class& p = get_class();
-	vm.set_hint(p, name);
-	if(const Any& ret = p.member(name)){
+	const Class& cls = get_class();
+	vm.impl()->set_hint(cls, name);
+	if(const Any& ret = vm.impl()->member_cache(cls, name, *this)){
 		vm.set_arg_this(*this);
 		ret.call(vm);
-		return;
 	}
 }
 
 void Any::call(const VMachine& vm) const{
 	switch(type()){
-		XTAL_DEFAULT;
+		XTAL_DEFAULT{ vm.return_result(*this); }
 		XTAL_CASE(TYPE_BASE){ impl()->call(vm); }
-		XTAL_CASE(TYPE_NOP){ vm.return_result(*this); }
 	}
 }
 
@@ -810,7 +820,7 @@ String Any::to_s() const{
 String Any::object_name() const{
 	switch(type()){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_NULL){ return String("Null"); }
+		XTAL_CASE(TYPE_NULL){ return String("instance of Null"); }
 		XTAL_CASE(TYPE_BASE){ return impl()->object_name(); }
 		XTAL_CASE(TYPE_INT){ return String("instance of Int"); }
 		XTAL_CASE(TYPE_FLOAT){ return String("instance of Float"); }
@@ -832,10 +842,6 @@ void Any::set_object_name(const String& name, int_t force, const Any& parent) co
 	if(type()==TYPE_BASE){ 
 		impl()->set_object_name(name, force, parent); 
 	}
-}
-
-bool Any::is(const Any& v) const{
-	return get_class().is_inherited(v);	
 }
 
 const Class& Any::get_class() const{
@@ -872,12 +878,10 @@ int_t Any::size() const{
 	return send(Xid(size)).to_i();
 }
 
-uint_t Any::hashcode() const{
-	if(type()==TYPE_BASE){
-		return impl()->hashcode();
-	}
-	return (uint_t)rawvalue();
+bool Any::is(const Any& v) const{
+	return get_class().impl()->is_inherited(v);	
 }
+
 
 Any Any::p() const{
 	VMachine vm = vmachine();

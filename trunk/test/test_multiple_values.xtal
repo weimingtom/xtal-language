@@ -6,6 +6,7 @@
 	assert b==[1, 2, 3, 4];
 }
 
+
 {
 	foo: fun(){ return [0, 1, 2, 3, 4]; }
 	a, b: foo();
@@ -67,4 +68,5 @@
 	assert b==1;
 	assert c==null;
 }
+
 

@@ -61,7 +61,7 @@ private:
 	Stmt* parse_assert();
 	Stmt* parse_each(int_t label, Expr* lhs);
 	void parse_multiple_stmt(TList<Stmt*>* stmts);
-	void parse_multiple_expr(TList<Expr*>* exprs, bool* discard=0);
+	bool parse_multiple_expr(TList<Expr*>* exprs, bool discard=false);
 	Stmt* parse_define_local_stmt();
 	Expr* parse_define_local_or_expr();
 	int_t parse_var();

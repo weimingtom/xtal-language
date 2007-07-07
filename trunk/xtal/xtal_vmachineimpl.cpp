@@ -391,7 +391,7 @@ void VMachineImpl::mv_carry_over(const Fun& fun){
 		f.scopes.push(core);
 		f.variables_.upsize(size);
 	
-		adjust_result(f.ordered_arg_count, core->extra_comma ? -size : size);
+		adjust_result(f.ordered_arg_count, size);
 		
 		UncountedAny* vars=&f.variables_[size-1];
 		for(int_t n = 0; n<size; ++n){
@@ -407,14 +407,6 @@ void VMachineImpl::mv_carry_over(const Fun& fun){
 }
 
 void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
-
-	bool discard;
-	if(need_result_count<0){
-		need_result_count = -need_result_count;
-		discard = true;
-	}else{
-		discard = false;
-	}
 
 	// 戻り値の数と要求している戻り値の数が等しい
 	if(need_result_count==n){
@@ -440,21 +432,17 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 
 	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
 	if(need_result_count<n){
-		// 戻り値を切り捨てるフラグがついている
-		if(discard){
-			downsize(n-need_result_count);
-		}else{
-			// 余った戻り値を配列に直す。
-			int_t size = n-need_result_count+1;
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				Array ret(size);
-				for(int_t i=0; i<size; ++i){
-					ret.set_at(i, get(size-1-i));
-				}
-				downsize(size);
-				push(ret);
-			}	
-		}
+
+		// 余った戻り値を配列に直す。
+		int_t size = n-need_result_count+1;
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Array ret(size);
+			for(int_t i=0; i<size; ++i){
+				ret.set_at(i, get(size-1-i));
+			}
+			downsize(size);
+			push(ret);
+		}	
 	}else{
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
@@ -470,7 +458,7 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 				}
 			}
 
-			adjust_result(n-1+ary.size(), discard ? -need_result_count : need_result_count);
+			adjust_result(n-1+ary.size(), need_result_count);
 		}else{
 			// 最後の要素が配列ではないので、nullで埋めとく
 			for(int_t i = n; i<need_result_count; ++i){
@@ -810,7 +798,17 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(Return){ adjust_result(inst.results); pop_ff(); pc = ff().pc; }
 	
 	XTAL_VM_CASE(CleanupCall){ pop_ff(); pc = ff().pc; }
-	XTAL_VM_CASE(Yield){ YIELD(pc); return; }
+
+	XTAL_VM_CASE(Yield){
+		yield_result_count_ = inst.results;	
+		if(ff().yieldable){
+			resume_pc_ = pc + inst.ISIZE;
+			return;
+		}else{
+			downsize(yield_result_count_);
+			XTAL_GLOBAL_INTERPRETER_LOCK{ XTAL_THROW(builtin().member("YieldError")(Xt("Xtal Runtime Error 1012"))); }
+		}
+	}
 	
 	XTAL_VM_CASE(TryBegin){ pc = TRY_BEGIN(pc); }
 	XTAL_VM_CASE(TryEnd){ pc = except_frames_.pop().core->finally_pc + source(); }
@@ -943,48 +941,6 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(ShrAssign){ pc = SHR_ASSIGN(pc); }
 	XTAL_VM_CASE(UshrAssign){ pc = USHR_ASSIGN(pc); }
 	XTAL_VM_CASE(ShlAssign){ pc = SHL_ASSIGN(pc); }
-
-	XTAL_VM_CASE(InstanceVariableAddAssign){
-		/*
-		//pc = instance_op_assign<Add, InstInstanceVariableAddAssign>(pc); 
-		typedef Add Util;
-		Any& a = (Any&)INSTANCE_VARIABLE(inst.number, inst.core_number);
-		switch(a.type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){
-					XTAL_GLOBAL_INTERPRETER_LOCK{
-						a = (UncountedAny(Util::calc(a.ivalue(), get().ivalue())).cref());
-					}
-					downsize(1);
-					pc = pc + inst.ISIZE+InstSetInstanceVariable::ISIZE;
-					XTAL_VM_CONTINUE;
-				}
-				XTAL_CASE(TYPE_FLOAT){
-					a = (UncountedAny(Util::calc(a.ivalue(), get().fvalue())).cref());
-					downsize(1);
-					pc = pc + inst.ISIZE+InstSetInstanceVariable::ISIZE;
-					XTAL_VM_CONTINUE;
-				}
-			}}
-			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){
-					a = (inst.number, inst.core_number, UncountedAny(Util::calc(a.fvalue(), get().ivalue())).cref());
-					downsize(1);
-					pc = pc + inst.ISIZE+InstSetInstanceVariable::ISIZE;
-					XTAL_VM_CONTINUE;
-				}
-				XTAL_CASE(TYPE_FLOAT){
-					a = (inst.number, inst.core_number, UncountedAny(Util::calc(a.fvalue(), get().fvalue())).cref());
-					downsize(1);
-					pc = pc + inst.ISIZE+InstSetInstanceVariable::ISIZE;
-					XTAL_VM_CONTINUE;
-				}
-			}}
-		}
-		pc = send2(pc, Util::id(), inst.ISIZE);
-		*/
-	}
-
 	XTAL_VM_CASE(MakeArray){ pc = PUSH_ARRAY(pc); }
 	XTAL_VM_CASE(MakeMap){ pc = PUSH_MAP(pc); }
 	XTAL_VM_CASE(PushCallee){ push(fun()); pc += inst.ISIZE; }
@@ -1161,7 +1117,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(Send){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1177,7 +1133,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(Send_A){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1193,7 +1149,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(Send_T){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1209,7 +1165,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(Send_AT){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1225,7 +1181,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(SendIfDefined){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1243,7 +1199,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(SendIfDefined_A){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1261,7 +1217,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(SendIfDefined_T){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1279,7 +1235,7 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(SendIfDefined_AT){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = symbol(inst.symbol_number);
+			const ID& sym = symbol_ex(inst.symbol_number);
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
@@ -1458,19 +1414,6 @@ const inst_t* VMachineImpl::DEFINE_GLOBAL_VARIABLE(const inst_t* pc){
 	return pc + inst.ISIZE;
 }
 
-void VMachineImpl::SET_INSTANCE_VARIABLE(int_t number, int_t core_number, const Any& value){
-	XTAL_GLOBAL_INTERPRETER_LOCK{ 
-		ff().instance_variables->set_variable(number, code().impl()->frame_core(core_number), value); 
-	}
-}
-
-const Any& VMachineImpl::INSTANCE_VARIABLE(int_t number, int_t core_number){
-	XTAL_GLOBAL_INTERPRETER_LOCK{ 
-		return ff().instance_variables->variable(number, code().impl()->frame_core(core_number));
-	}
-	return null;
-}
-
 const inst_t* VMachineImpl::ONCE(const inst_t* pc){
 	XTAL_VM_DEF(Once);
 	const Any& ret = code().impl()->value(inst.value_number);
@@ -1484,7 +1427,7 @@ const inst_t* VMachineImpl::ONCE(const inst_t* pc){
 const inst_t* VMachineImpl::MEMBER(const inst_t* pc){
 	XTAL_VM_DEF(Member);
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		const ID& name = symbol(inst.symbol_number);
+		const ID& name = symbol_ex(inst.symbol_number);
 		const Any& target = get();
 		if(const Any& ret = member_cache(target, name, ff().self())){
 			set(ret);
@@ -1498,7 +1441,7 @@ const inst_t* VMachineImpl::MEMBER(const inst_t* pc){
 const inst_t* VMachineImpl::MEMBER_IF_DEFINED(const inst_t* pc){
 	XTAL_VM_DEF(MemberIfDefined);
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		const ID& name = symbol(inst.symbol_number);
+		const ID& name = symbol_ex(inst.symbol_number);
 		const Any& target = get();
 		if(const Any& ret = member_cache(target, name, ff().self())){
 			set(ret);
@@ -1512,7 +1455,7 @@ const inst_t* VMachineImpl::MEMBER_IF_DEFINED(const inst_t* pc){
 const inst_t* VMachineImpl::DEFINE_MEMBER(const inst_t* pc){
 	XTAL_VM_DEF(DefineMember);
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		const ID& name = symbol(inst.symbol_number);
+		const ID& name = symbol_ex(inst.symbol_number);
 		const Any& value = get();
 		const Any& target = get(1);
 		target.def(name, value); 

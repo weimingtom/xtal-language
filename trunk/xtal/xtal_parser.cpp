@@ -727,6 +727,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 	int_t iter_break = com_->register_ident(ID("iter_break")); 
 	int_t it = com_->register_ident(ID("__IT__"));
 	int_t itv = com_->register_ident(ID("it"));
+	int_t dummy = com_->register_ident(ID("__DUMMY__"));
 
 	Stmt* s;
 	int_t ln = lexer_.line();
@@ -766,10 +767,14 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 				param.push_back(e.local(itv), &alloc_);
 			}
 
+			if(discard){
+				param.push_back(e.local(dummy), &alloc_);
+				e.register_variable(dummy);
+			}
+
 			e.massign_begin();
 			*e.massign_lhs_exprs() = param;
 			e.massign_define(true);
-			e.massign_discard(discard);
 			e.massign_rhs(e.send(e.pop(), iter_first));
 			e.block_add(e.massign_end());
 			
@@ -783,7 +788,6 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					e.massign_begin();
 					*e.massign_lhs_exprs() = param;
 					e.massign_define(false);
-					e.massign_discard(discard);
 					e.massign_rhs(e.send(e.local(it), iter_next));
 					e.while_next(e.massign_end());
 
@@ -867,8 +871,9 @@ Stmt* Parser::parse_assign_stmt(){
 					XTAL_CASE(','){
 						MultipleAssignStmt* mas = XTAL_NEW MultipleAssignStmt(ln);
 						mas->lhs.push_back(lhs, &alloc_);
-						mas->discard = true;
-						parse_multiple_expr(&mas->lhs, &mas->discard);
+						if(parse_multiple_expr(&mas->lhs, true)){
+							mas->lhs.push_back(e.local(com_->register_ident("__DUMMY__")), &alloc_);
+						}
 						
 						if(eat('=')){
 							mas->define = false;
@@ -1017,13 +1022,13 @@ Expr* Parser::string2expr(string_t& str){
 	return ret;
 }
 	
-void Parser::parse_multiple_expr(TList<Expr*>* exprs, bool* discard){
+bool Parser::parse_multiple_expr(TList<Expr*>* exprs, bool discard){
 	while(1){
 		if(Expr* p = parse_expr()){
-			if(discard) *discard = false;
+			discard = false;
 			exprs->push_back(p, &alloc_);
 			if(eat_a(',')){
-				if(discard) *discard = true;
+				discard = true;
 			}else{
 				break;
 			}
@@ -1031,6 +1036,7 @@ void Parser::parse_multiple_expr(TList<Expr*>* exprs, bool* discard){
 			break;
 		}
 	}
+	return discard;
 }
 
 void Parser::parse_multiple_stmt(TList<Stmt*>* stmts){
@@ -1273,7 +1279,7 @@ Expr* Parser::parse_fun(int_t kind){
 			
 			if(eat_a(',')){
 				if(eat_a(lambda ? '|' : ')')){
-					e.fun_extra_comma(true);
+					e.fun_param(com_->register_ident("__DUMMY__"));
 					break;
 				}
 			}

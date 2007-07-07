@@ -20,7 +20,7 @@ public:
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
-	void compile(Expr* p, int_t need_result_count=1, bool discard=false);
+	void compile(Expr* p, int_t need_result_count=1);
 	void compile(Stmt* p);	
 	
 	/**
@@ -57,7 +57,7 @@ public:
 	bool put_local_code(int_t var);
 	bool put_set_local_code(int_t var);
 	void put_define_local_code(int_t var);
-	void put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool discard, bool tail, bool if_defined);
+	void put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool tail, bool if_defined);
 	void put_set_send_code(int_t var, Expr* pvar, bool if_defined);
 	void put_member_code(int_t var, Expr* pvar, bool if_defined);
 	void put_define_member_code(int_t var, Expr* pvar);
@@ -152,7 +152,7 @@ public:
 
 	void set_on_heap_flag();
 
-	int_t fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count, bool extra_comma);
+	int_t fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count);
 	void register_param(int_t name);
 	void fun_frame_end();
 	FunFrame& fun_frame();

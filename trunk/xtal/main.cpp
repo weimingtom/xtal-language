@@ -41,31 +41,12 @@ static void handle_argv(char** argv){
 	}
 }
 
-void debug_line(const debug::Info& info){
-	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info.kind(), info.line(), info.file_name(), info.fun_name());
-
-	if(info.local_variables()){
-		Xfor2(key, value, info.local_variables().each_member()){
-			//std::cout << Xf("key=%s, value=%s\n")(key, value);
-		}
-	}
-}
-
-//#include <crtdbg.h>
-
 int main(int argc, char** argv){
-
-	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	try{
 
 		set_thread();
 		initialize();
-
-		//debug::enable();
-		//debug::set_line_hook(fun(&debug_line));
-		//debug::set_call_hook(fun(&debug_line));
-		//debug::set_return_hook(fun(&debug_line));
 		
 		{
 			String path(argv[0]);
@@ -88,58 +69,13 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
-
-		
-		int c = clock();
-		//xtal::disable_gc();
-		//load("../bench/inst.xtal");
 		handle_argv(argv);
-		//printf("%g\n", (clock()-c)/1000.0f);
-		//xtal::enable_gc();
-/*
-		load("../test/test_class.xtal");
-		load("../test/test_multiple_values.xtal");
-		load("../test/test_except.xtal");
-		load("../test/test_fiber.xtal");
-		load("../test/test_fun.xtal");
-		load("../test/test_iter.xtal");
-		load("../test/test_fib.xtal");
-		load("../test/test_calc.xtal");
-		load("../test/test_for.xtal");
-		load("../test/test_if.xtal");
-		load("../test/test_nested_loops.xtal");
-		load("../test/test_assign.xtal");
-		load("../test/test_op_assign.xtal");
-		load("../test/test_inc.xtal");
-		load("../test/test_toplevel.xtal");
-//*/
-
-
-		/*
-		MemoryStream out;
-		object_dump(load("../message.xtal"), out);
-		unsigned char* data = (unsigned char*)out.data();
-		int size = out.tell();
-
-		for(int i=0; i<size; ++i){
-			printf("0x%02x, ", data[i]);
-			if((i%8)==7){
-				printf("\n");
-			}
-		}
-		printf("\n");
-		//*/
-
-		//ix();
 
 	}catch(Any e){
 		fprintf(stderr, "%s\n", e.to_s().c_str());
 	}
 
-	vmachine().impl()->print_info();
-
 	uninitialize();
 
 	return 0;
 }
-/**/

@@ -287,10 +287,6 @@ void ExprBuilder::fun_have_args(bool v){
 	fun_stack.top()->have_args = v;
 }
 
-void ExprBuilder::fun_extra_comma(bool v){
-	fun_stack.top()->extra_comma = v;
-}
-
 void ExprBuilder::fun_body_begin(){
 	block_begin();
 
@@ -484,10 +480,6 @@ TList<Expr*>* ExprBuilder::massign_rhs_exprs(){
 void ExprBuilder::massign_define(bool b){
 	massign_stack.top()->define = b;
 }
-void ExprBuilder::massign_discard(bool b){
-	massign_stack.top()->discard = b;
-}
-
 void ExprBuilder::ter_begin(Expr* cond){
 	ter_stack.push(new(alloc) TerExpr(line(), cond));
 }

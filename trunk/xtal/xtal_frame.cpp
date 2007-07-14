@@ -28,6 +28,7 @@ void InitClass(){
 	{
 		TClass<LibImpl> p("Lib");
 		p.inherit(TClass<Class>::get());
+		p.def("new", New<LibImpl>());
 		p.method("append_load_path", &LibImpl::append_load_path);
 	}
 
@@ -377,7 +378,6 @@ const Any& LibImpl::rawdef(const ID& name, const Any& value, const Any& ns){
 		it->flags = KIND_PUBLIC;
 		members_.push_back(value);
 		global_mutate_count++;
-		//value.set_object_name(String("lib").cat(join_path("::")).cat(name), 100);
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
 	}else{

@@ -131,13 +131,6 @@ AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
 	return ret;
 }
 
-SetAccessibilityStmt* ExprBuilder::set_accessibility(int_t var, int_t kind){
-	SetAccessibilityStmt* ret = new(alloc) SetAccessibilityStmt(line());
-	ret->var = var;
-	ret->kind = kind;
-	return ret;
-}
-
 void ExprBuilder::scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag){
 	VarInfo vi = {list, on_heap, set_name_flag};
 	var_info_stack.push(vi);
@@ -398,8 +391,14 @@ void ExprBuilder::class_define_instance_variable(int_t name, Expr* expr){
 
 	class_stack.top()->inst_vars.push_back(name, expr, alloc);
 }
-void ExprBuilder::class_add(Stmt* stmt){
-	class_stack.top()->stmts.push_back(stmt, alloc);
+void ExprBuilder::class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs){
+	register_variable(var);
+	ClassExpr::Attr attr;
+	attr.var = var;
+	attr.accessibility = accessibility;
+	attr.ns = ns;
+	class_stack.top()->stmts.push_back(push(rhs), alloc);
+	class_stack.top()->attrs.push_back(attr, alloc);
 }
 ClassExpr* ExprBuilder::class_end(){
 	fun_begin(KIND_METHOD);
@@ -408,7 +407,9 @@ ClassExpr* ExprBuilder::class_end(){
 				block_add(assign(instance_variable(p->key), p->value));
 			}
 		fun_body(block_end());
-	class_stack.top()->stmts.push_front(define(local(register_ident("__INITIALIZE__")), fun_end()), alloc);
+	class_define_member(register_ident("__INITIALIZE__"), KIND_PUBLIC, pseudo(InstPushNull::NUMBER), fun_end());
+
+	XTAL_ASSERT(class_stack.top()->stmts.size == class_stack.top()->attrs.size);
 
 	scope_pop();
 	return class_stack.pop();

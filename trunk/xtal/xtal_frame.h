@@ -111,7 +111,7 @@ public:
 	*
 	* @param name 新しく定義するメンバの名前
 	*/
-	void def(const ID& name, const Any& value) const{ Any::def(name, value); }
+	void def(const ID& name, const Any& value, int_t accessibility = KIND_PUBLIC, const Any& ns = null) const{ Any::def(name, value, accessibility, ns); }
 
 	/**
 	* @brief メンバを取り出す
@@ -130,12 +130,13 @@ public:
 	const Any& member(const ID& name, const Any& self) const;
 
 	/**
-	* @brief nameメンバの可触性をprotectedに変更する
+	* @brief メンバを取り出す
+	* 可触性を考慮して取り出す
 	*
-	* @param name 可触性を変更するメンバ
-	* @param kind 可触性を表す定数
+	* @param name 取り出したいメンバの名前
+	* @param self 可視性を判定するためのオブジェクト
 	*/
-	void set_accessibility(const ID& name, int_t kind) const;
+	const Any& member(const ID& name, const Any& self, const Any& ns) const;
 
 	/**
 	* @brief メンバを再設定する
@@ -143,7 +144,7 @@ public:
 	*
 	* @param name 再設定したいメンバの名前
 	*/
-	void set_member(const ID& name, const Any& value) const;
+	void set_member(const ID& name, const Any& value, const Any& ns) const;
 
 	/**
 	* @brief Mix-inする
@@ -216,7 +217,7 @@ public:
 protected:
 
 	CFun def_and_return(const ID& name, const CFun& cfun) const{
-		def(name, cfun);
+		def(name, cfun, KIND_PUBLIC, null);
 		return cfun;
 	}
 

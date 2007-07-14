@@ -133,6 +133,8 @@ void VMachineImpl::reset(){
 	f.variables_.clear();
 	f.scopes.clear();
 	f.arguments(null);
+	f.temp_ = null;
+	f.temp2_ = null;
 }
 	
 void VMachineImpl::recycle_call(){
@@ -289,6 +291,8 @@ void VMachineImpl::push_ff(const inst_t* pc, int_t need_result_count, int_t orde
 	f.variables_.clear();
 	f.scopes.clear();
 	f.arguments(null);
+	f.temp_ = null;
+	f.temp2_ = null;
 	f.instance_variables = &empty_have_instance_variables;
 }
 
@@ -447,18 +451,22 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
 		if(const Array& temp = xtal::as<const Array&>(get())){
-			// 最後の要素の配列を展開する。
-			Array ary(temp);
-			downsize(1);
+
+			int_t len;
 
 			// 配列を展開し埋め込む
 			XTAL_GLOBAL_INTERPRETER_LOCK{
-				for(int_t i=0, len=ary.size(); i<len; ++i){
+				// 最後の要素の配列を展開する。
+				Array ary(temp);
+				downsize(1);
+
+				len = ary.size();
+				for(int_t i=0; i<len; ++i){
 					push(ary.at(i));
 				}
 			}
 
-			adjust_result(n-1+ary.size(), need_result_count);
+			adjust_result(len-1, need_result_count-n);
 		}else{
 			// 最後の要素が配列ではないので、nullで埋めとく
 			for(int_t i = n; i<need_result_count; ++i){
@@ -817,7 +825,7 @@ XTAL_VM_SWITCH(*pc){
 		FunFrame& f = ff(); 
 		FrameCore* p = code().frame_core(inst.core_number); 
 		f.scopes.push(p); 
-		f.variables_.upsize(p->variable_size); 
+		f.variables_.upsize(p->variable_size);
 		pc += inst.ISIZE;
 	}
 
@@ -966,7 +974,15 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(SetName){ pc = SET_NAME(pc); }
 	XTAL_VM_CASE(CheckUnsupported){ return_result(nop); pc = ff().pc; }
 	XTAL_VM_CASE(Assert){ pc = CHECK_ASSERT(pc); }
-	XTAL_VM_CASE(SetAccessibility){ pc = SET_ACCESSIBILITY(pc); }
+	
+	XTAL_VM_CASE(DefineClassMember){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ClassImpl* p = cast<Class>(ff().outer()).impl();
+			p->set_class_member(inst.number, symbol(inst.symbol_number), inst.accessibility, get(), get(1));
+			downsize(2);
+		}
+		pc += inst.ISIZE;
+	}
 	
 	XTAL_VM_CASE(ArrayAppend){ pc = ARRAY_APPEND(pc); }
 	XTAL_VM_CASE(MapInsert){ pc = MAP_INSERT(pc); }
@@ -998,7 +1014,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff(pc + inst.ISIZE, inst.need_result_count, 0, 0, self.cref());
 			const Class& cls = target.get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target);
 				ret.call(myself());
 			}
@@ -1014,7 +1030,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff(pc + inst.ISIZE, inst.need_result_count, 0, 0, self.cref());
 			const Class& cls = target.get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target);
 				ret.call(myself());
 			}
@@ -1031,7 +1047,7 @@ XTAL_VM_SWITCH(*pc){
 			ff().pc = &check_unsupported_code_;
 			const Class& cls = target.get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target);
 				ret.call(myself());
 			}else{
@@ -1123,7 +1139,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1139,7 +1155,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1155,7 +1171,7 @@ XTAL_VM_SWITCH(*pc){
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1171,7 +1187,7 @@ XTAL_VM_SWITCH(*pc){
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1188,7 +1204,7 @@ XTAL_VM_SWITCH(*pc){
 			ff().pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1206,7 +1222,7 @@ XTAL_VM_SWITCH(*pc){
 			ff().pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1224,7 +1240,7 @@ XTAL_VM_SWITCH(*pc){
 			ff().pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1242,7 +1258,7 @@ XTAL_VM_SWITCH(*pc){
 			ff().pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self())){
+			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -1353,13 +1369,13 @@ void VMachineImpl::SET_LOCAL_VARIABLE(int_t pos, const Any& value){
 	
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		while(1){
-			variables_size = outer->block_size();
+			variables_size = outer->impl()->block_size();
 			if(pos<variables_size){
-				outer->set_member_direct(pos, value);
+				outer->impl()->set_member_direct(pos, value);
 				return;
 			}
 			pos-=variables_size;
-			outer = &outer->outer();
+			outer = &outer->impl()->outer();
 		}
 	}
 }
@@ -1375,12 +1391,12 @@ const Any& VMachineImpl::LOCAL_VARIABLE(int_t pos){
 	
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		for(;;){
-			variables_size = outer->block_size();
+			variables_size = outer->impl()->block_size();
 			if(pos<variables_size){
-				return outer->member_direct(pos);
+				return outer->impl()->member_direct(pos);
 			}
 			pos-=variables_size;
-			outer = &outer->outer();
+			outer = &outer->impl()->outer();
 		}
 	}
 	return null;
@@ -1401,7 +1417,7 @@ const inst_t* VMachineImpl::GLOBAL_VARIABLE(const inst_t* pc){
 const inst_t* VMachineImpl::SET_GLOBAL_VARIABLE(const inst_t* pc){
 	XTAL_VM_DEF(GlobalVariable);
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		code().toplevel().set_member(symbol(inst.symbol_number), pop());
+		code().toplevel().set_member(symbol(inst.symbol_number), pop(), null);
 	}
 	return pc + inst.ISIZE;
 }
@@ -1409,7 +1425,7 @@ const inst_t* VMachineImpl::SET_GLOBAL_VARIABLE(const inst_t* pc){
 const inst_t* VMachineImpl::DEFINE_GLOBAL_VARIABLE(const inst_t* pc){
 	XTAL_VM_DEF(GlobalVariable);
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		code().toplevel().def(symbol(inst.symbol_number), pop());
+		code().toplevel().def(symbol(inst.symbol_number), pop(), KIND_PUBLIC, null);
 	}
 	return pc + inst.ISIZE;
 }
@@ -1429,7 +1445,7 @@ const inst_t* VMachineImpl::MEMBER(const inst_t* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		const ID& name = symbol_ex(inst.symbol_number);
 		const Any& target = get();
-		if(const Any& ret = member_cache(target, name, ff().self())){
+		if(const Any& ret = member_cache(target, name, ff().self(), null)){
 			set(ret);
 		}else{
 			XTAL_THROW(unsupported_error(target.object_name(), name));
@@ -1443,7 +1459,7 @@ const inst_t* VMachineImpl::MEMBER_IF_DEFINED(const inst_t* pc){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		const ID& name = symbol_ex(inst.symbol_number);
 		const Any& target = get();
-		if(const Any& ret = member_cache(target, name, ff().self())){
+		if(const Any& ret = member_cache(target, name, ff().self(), null)){
 			set(ret);
 		}else{
 			set(nop);
@@ -2138,15 +2154,6 @@ const inst_t* VMachineImpl::CURRENT_CONTEXT(const inst_t* pc){
 	return pc+1;
 }
 
-const inst_t* VMachineImpl::SET_ACCESSIBILITY(const inst_t* pc){
-	XTAL_VM_DEF(SetAccessibility);
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Class cls(cast<Class>(decolonize()));
-		cls.set_accessibility(symbol(inst.member), inst.type);
-	}
-	return pc + inst.ISIZE;
-}
-
 Any VMachineImpl::append_backtrace(const inst_t* pc, const Any& e){
 	if(e){
 		Any ep = e;
@@ -2211,7 +2218,7 @@ const inst_t* VMachineImpl::CHECK_ASSERT(const inst_t* pc){
 		Any expr_string = get(1) ? get(1) : Any("");
 		Any message = get() ? get() : Any("");
 		if(!expr){ 
-			throw append_backtrace(pc, builtin().member("AssertionFailed")(message, expr_string));
+			XTAL_THROW(append_backtrace(pc, builtin().member("AssertionFailed")(message, expr_string)));
 		}
 		downsize(3);
 	}

@@ -122,12 +122,13 @@ public:
 
 	struct Node{
 		ID key;
+		Any ns;
 		u16 num;
 		u16 flags;
 		Node* next;
 		
-		Node(const ID& key = null, u16 num = 0, u16 flags = 0)
-			:key(key), num(num), flags(flags), next(0){}
+		Node(const ID& key = null, const Any& ns=null, u16 num = -1, u16 flags = 0)
+			:key(key), ns(ns), num(num), flags(flags), next(0){}
 	};
 	
 	friend class iterator;
@@ -186,9 +187,9 @@ public:
 
 	~IdMap();
 		
-	Node* find(const ID& key);
+	Node* find(const ID& key, const Any& ns);
 
-	Node* insert(const ID& key);
+	Node* insert(const ID& key, const Any& ns);
 
 	int_t size(){
 		return used_size_;
@@ -253,12 +254,23 @@ public:
 		return core_->variable_size; 
 	}
 
-	const Any& member_direct(int_t i){ 
+	const Any& member_direct(int_t i){
+		XTAL_ASSERT(members_[i].get_class().type()<16);
 		return members_[i];
 	}
 
-	void set_member_direct(int_t i, const Any& value){ 
+	void set_member_direct(int_t i, const Any& value){
 		members_[i] = value;
+	}
+
+	void set_class_member(int_t i, const ID& name, int_t accessibility, const Any& ns, const Any& value){ 
+		members_[i] = value;
+		//const ID& name = code_.symbol(core_->variable_symbol_offset+(core_->variable_size-1-i));
+		IdMap::Node* p = map_members_->insert(name, ns);
+		p->flags = accessibility;
+		p->num = i;
+		value.set_object_name(name, object_name_force(), this);
+		global_mutate_count++;
 	}
 		
 	void set_object_name(const String& name, int_t force, const Any& parent){
@@ -281,10 +293,11 @@ public:
 	void make_map_members(){
 		if(!map_members_){
 			map_members_ = new(user_malloc(sizeof(IdMap))) IdMap();
-			for(int_t i = 0; i<core_->variable_size; ++i){
-				IdMap::Node* p = map_members_->insert(code_.symbol(core_->variable_symbol_offset+i));
+			/*for(int_t i = 0; i<core_->variable_size; ++i){
+				IdMap::Node* p = map_members_->insert(code_.symbol(core_->variable_symbol_offset+i), null);
+				p->flags = 0;
 				p->num = (u16)(core_->variable_size-1-i);
-			}
+			}*/
 		}
 	}
 
@@ -311,7 +324,7 @@ public:
 
 		void iter_next(const VMachine& vm){
 			if(frame_.impl()->map_members_ && !it_.is_done()){
-				vm.return_result(this, it_->key, frame_.impl()->members_[it_->num]);
+				vm.return_result(this, it_->key, it_->ns, frame_.impl()->members_[it_->num]);
 				++it_;
 			}else{
 				restart();
@@ -334,11 +347,6 @@ protected:
 	
 	typedef AC<Any>::vector vector_t;
 	vector_t members_;
-	
-	enum{
-		PROTECTED = 1 << 0,
-		PRIVATE = 1 << 1
-	};
 	
 	IdMap* map_members_;
 	
@@ -370,30 +378,21 @@ public:
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self);
 
-	virtual void def(const ID& name, const Any& value);
+	virtual void def(const ID& name, const Any& value, int_t accessibility, const Any& ns);
 	
-	const Any& any_member(const ID& name);
+	const Any& any_member(const ID& name, const Any& ns);
 	
 	const Any& bases_member(const ID& name);
 	
-	virtual void set_member(const ID& name, const Any& value);
+	virtual void set_member(const ID& name, const Any& value, const Any& ns);
 
-	virtual const Any& member(const ID& name, const Any& self);
-		
-	virtual const Any& member(const ID& name);
+	virtual const Any& member(const ID& name, const Any& self, const Any& ns);
 	
 	bool is_inherited(const Any& v);
-
-	void set_accessibility(const ID& name, int_t kind){
-		if(IdMap::Node* node = map_members_->find(name)){
-			node->flags |= kind==KIND_PROTECTED ? PROTECTED : (kind==KIND_PRIVATE ? PRIVATE : 0);
-		}
-	}
 	
 protected:
 
 	AC<Class>::vector mixins_;
-	int_t mutate_count_;
 
 	virtual void visit_members(Visitor& m){
 		FrameImpl::visit_members(m);
@@ -428,14 +427,10 @@ public:
 		:path_(path){
 		set_class(TClass<LibImpl>::get());
 	}
-
-	virtual const Any& member(const ID& name);
 	
-	virtual const Any& member(const ID& name, const Any& self){
-		return member(name);
-	}
+	virtual const Any& member(const ID& name, const Any& self, const Any& ns);
 
-	virtual void def(const ID& name, const Any& value);
+	virtual void def(const ID& name, const Any& value, int_t accessibility, const Any& ns);
 
 	void append_load_path(const String& path){
 		load_path_list_.push_back(path);
@@ -443,7 +438,7 @@ public:
 
 private:
 
-	const Any& rawdef(const ID& name, const Any& value, int_t*& pmutate_count);
+	const Any& rawdef(const ID& name, const Any& value, const Any& ns);
 
 	String join_path(const String& sep);
 
@@ -464,23 +459,11 @@ public:
 	NopImpl(){
 	}
 
-	virtual const Any& member(const ID& name){
+	virtual const Any& member(const ID& name, const Any& self, const Any& ns){
 		return nop;
 	}
 
-	virtual const Any& member(const ID& name, int_t*& pmutate_count, unsigned short& flags){
-		return nop;
-	}
-	
-	virtual const Any& member(const ID& name, const Any& self){
-		return nop;
-	}
-
-	virtual const Any& member(const ID& name, const Any& self, int_t*& pmutate_count, unsigned short& flags){
-		return nop;
-	}
-
-	virtual void def(const ID& name, const Any& value){
+	virtual void def(const ID& name, const Any& value, const Any& ns){
 
 	}
 };

@@ -6,32 +6,11 @@
 	assert b==[1, 2, 3, 4];
 }
 
-
 {
 	foo: fun(){ return [0, 1, 2, 3, 4]; }
 	a, b: foo();
 	assert a==0;
 	assert b==[1, 2, 3, 4];
-}
-
-{
-	bar: fun(){ return 2, 3, 4; }
-	foo: fun(){ return 0, 1, bar(); }
-	a, b, c, d: foo();
-	assert a==0;
-	assert b==1;
-	assert c==2;
-	assert d==[3, 4];
-}
-
-{
-	bar: fun(){ return [2, 3, 4]; }
-	foo: fun(){ return [0, 1, bar()]; }
-	a, b, c, d: foo();
-	assert a==0;
-	assert b==1;
-	assert c==2;
-	assert d==[3, 4];
 }
 
 {
@@ -68,5 +47,4 @@
 	assert b==1;
 	assert c==null;
 }
-
 

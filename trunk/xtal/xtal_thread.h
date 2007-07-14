@@ -37,17 +37,29 @@ public:
 	virtual void unlock() = 0;
 };
 
-class ThreadLib{
-public:
-	virtual ~ThreadLib();
-	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value) = 0;
-	virtual MutexImpl* create_mutex() = 0;
-	virtual void sleep(uint_t millisec) = 0;
-	virtual uint_t current_thread_id() = 0;
-};
-
 class Thread : public Any{
 public:
+	
+	class ID{
+		//ポインタ四つ分のサイズがあれば、スレッドのIDくらい保存できるはず。
+		struct Dummy{ void* dummy[4]; } dummy_;
+		bool valid_;
+	public:
+		ID(){ valid_ = false; }
+
+		template<class T>
+		void set(const T& v){
+			XTAL_ASSERT(sizeof(v)<=sizeof(dummy_));
+			valid_ = true;
+			(T&)dummy_ = v;
+		}
+
+		template<class T>
+		const T& get() const{ return (const T&)dummy_; }
+
+		void invalid(){ valid_ = false; }
+		bool is_valid() const{ return valid_; }
+	};
 
 	Thread(const Any& fun);
 
@@ -62,10 +74,7 @@ public:
 
 	void join() const;
 	
-	static void sleep(uint_t millisec);
-
-	static uint_t current_thread_id();
-
+	static void yield();
 
 	ThreadImpl* impl() const{
 		return (ThreadImpl*)Any::impl();
@@ -95,11 +104,20 @@ public:
 	}
 };
 
+class ThreadLib{
+public:
+	virtual ~ThreadLib();
+	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value) = 0;
+	virtual MutexImpl* create_mutex() = 0;
+	virtual void yield() = 0;
+	virtual void current_thread_id(Thread::ID& id) = 0;
+	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b) = 0;
+};
+
 void InitThread();
 void UninitThread();
 
 void set_thread(ThreadLib& lib);
-
 void set_thread();
 
 bool stop_the_world();
@@ -117,7 +135,7 @@ extern int thread_counter_;
 
 inline int yield_thread(){
 	thread_counter_ = 0;
-	Thread::sleep(0);
+	Thread::yield();
 	return 1;
 }
 

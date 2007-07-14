@@ -10,6 +10,7 @@ namespace xtal{
 	};
 }
 
+#include "xtal_utility.h"
 #include "xtal_any.h"
 #include "xtal_array.h"
 #include "xtal_map.h"

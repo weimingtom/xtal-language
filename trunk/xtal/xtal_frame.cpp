@@ -70,7 +70,7 @@ IdMap::~IdMap(){
 	user_free(begin_, sizeof(Node*)*size_);
 }
 	
-IdMap::Node* IdMap::find(const ID& key){
+IdMap::Node* IdMap::find(const ID& key, const Any& ns){
 	Node* p = begin_[key.rawvalue() % size_];
 	while(p){
 		if(p->key.impl()==key.impl()){
@@ -81,7 +81,7 @@ IdMap::Node* IdMap::find(const ID& key){
 	return 0;
 }
 
-IdMap::Node* IdMap::insert(const ID& key){
+IdMap::Node* IdMap::insert(const ID& key, const Any& ns){
 	Node** p = &begin_[key.rawvalue() % size_];
 	while(*p){
 		if((*p)->key.impl()==key.impl()){
@@ -90,11 +90,11 @@ IdMap::Node* IdMap::insert(const ID& key){
 		p = &(*p)->next;
 	}
 	*p = (Node*)user_malloc(sizeof(Node));
-	new(*p) Node(key);
+	new(*p) Node(key, ns);
 	used_size_++;
 	if(rate()>0.8f){
 		expand(17);
-		return find(key);
+		return find(key, ns);
 	}else{
 		return *p;		
 	}
@@ -106,7 +106,7 @@ void IdMap::visit_members(Visitor& m){
 		Node* p = begin_[i];
 		while(p){
 			Node* next = p->next;
-			m & p->key;
+			m & p->key & p->ns;
 			p = next;
 		}
 	}		
@@ -147,18 +147,16 @@ ClassImpl::ClassImpl(const Frame& outer, const Code& code, FrameCore* core)
 	:FrameImpl(outer, code, core){
 	set_class(TClass<Class>::get());
 	make_map_members();
-	mutate_count_ = 0;
 }
 
 ClassImpl::ClassImpl()
 	:FrameImpl(null, null, 0){
 	set_class(TClass<Class>::get());
 	make_map_members();
-	mutate_count_ = 0;
 }
 
 void ClassImpl::call(const VMachine& vm){
-	if(const Any& ret = member(Xid(new))){
+	if(const Any& ret = member(Xid(new), this, null)){
 		ret.call(vm);
 	}else{
 		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
@@ -166,11 +164,11 @@ void ClassImpl::call(const VMachine& vm){
 }
 
 int_t ClassImpl::arity(){
-	return member(Xid(initialize)).arity();
+	return member(Xid(initialize), this, null).arity();
 }
 
 void ClassImpl::marshal_new(const VMachine& vm){
-	if(const Any& ret = member(Xid(marshal_new))){
+	if(const Any& ret = member(Xid(marshal_new), this, null)){
 		ret.call(vm);
 	}else{
 		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
@@ -194,17 +192,19 @@ void ClassImpl::init_instance(HaveInstanceVariables* inst, const VMachine& vm, c
 
 		vm.setup_call(0);
 		vm.set_arg_this(self);
-		// 一番最初のメソッドがインスタンス変数初期化関数
+		// 先頭のメソッドはインスタンス変数初期化関数
+		int i = members_.size();
 		members_[0].impl()->call(vm);
 		vm.cleanup_call();
 	}
 }
 
-void ClassImpl::def(const ID& name, const Any& value){
-	IdMap::Node* it = map_members_->find(name);
+void ClassImpl::def(const ID& name, const Any& value, int_t accessibility, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(!it){
-		it = map_members_->insert(name);
+		it = map_members_->insert(name, ns);
 		it->num = members_.size();
+		it->flags = accessibility;
 		members_.push_back(value);
 		value.set_object_name(name, object_name_force(), this);
 	}else{
@@ -213,8 +213,8 @@ void ClassImpl::def(const ID& name, const Any& value){
 	global_mutate_count++;
 }
 
-const Any& ClassImpl::any_member(const ID& name){
-	IdMap::Node* it = map_members_->find(name);
+const Any& ClassImpl::any_member(const ID& name, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(it){
 		return members_[it->num];
 	}
@@ -230,29 +230,13 @@ const Any& ClassImpl::bases_member(const ID& name){
 	return null;
 }
 
-const Any& ClassImpl::member(const ID& name){
-	IdMap::Node* it = map_members_->find(name);
-	if(it){
-		// メンバが見つかった
-		return members_[it->num];
-	}
-	
-	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(const Any& ret = mixins_[i].member(name)){
-			return ret;
-		}
-	}
-
-	return TClass<Any>::get().impl()->any_member(name);
-}
-
-const Any& ClassImpl::member(const ID& name, const Any& self){
-	IdMap::Node* it = map_members_->find(name);
+const Any& ClassImpl::member(const ID& name, const Any& self, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(it){
 		// メンバが見つかった
 
 		// しかしprivateが付けられている
-		if(it->flags&PRIVATE){
+		if(it->flags & KIND_PRIVATE){
 			if(self.get_class().raweq(this) || self.raweq(this)){
 				return members_[it->num];
 			}else{
@@ -264,7 +248,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 		}
 
 		// しかしprotectedが付けられている
-		if(it->flags&PROTECTED){
+		if(it->flags & KIND_PROTECTED){
 			if(self.is(this) || this->is_inherited(self)){
 				
 			}else{
@@ -284,11 +268,11 @@ const Any& ClassImpl::member(const ID& name, const Any& self){
 		}
 	}
 
-	return TClass<Any>::get().impl()->any_member(name);
+	return TClass<Any>::get().impl()->any_member(name, ns);
 }
 
-void ClassImpl::set_member(const ID& name, const Any& value){
-	IdMap::Node* it = map_members_->find(name);
+void ClassImpl::set_member(const ID& name, const Any& value, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(!it){
 		//throw;
 	}else{
@@ -325,7 +309,7 @@ void XClassImpl::call(const VMachine& vm){
 		}
 	}
 	
-	if(const Any& ret = member(Xid(initialize), vm.impl()->ff().self())){
+	if(const Any& ret = member(Xid(initialize), vm.impl()->ff().self(), null)){
 		vm.set_arg_this(inst);
 		if(vm.need_result()){
 			ret.call(vm);
@@ -357,39 +341,37 @@ void XClassImpl::marshal_new(const VMachine& vm){
 	vm.return_result(inst);
 }
 
-const Any& LibImpl::member(const ID& name){
-	IdMap::Node* it = map_members_->find(name);
+const Any& LibImpl::member(const ID& name, const Any& self, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(it){
 		return members_[it->num];
 	}else{
-		int_t* pmutate_count;
 		Xfor(var, load_path_list_.each()){
 			String file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal").to_s();
 			if(FILE* fp = fopen(file_name.c_str(), "r")){
 				fclose(fp);
-				return rawdef(name, load(file_name), pmutate_count);
+				return rawdef(name, load(file_name), ns);
 			}
 		}
 		Array next = path_.clone();
 		next.push_back(name);
 		Any lib; new(lib) LibImpl(next);
-		return rawdef(name, lib, pmutate_count);
+		return rawdef(name, lib, ns);
 	}
 }
 
-void LibImpl::def(const ID& name, const Any& value){
-	int_t* pmutate_count;
-	rawdef(name, value, pmutate_count);
+void LibImpl::def(const ID& name, const Any& value, int_t accessibility, const Any& ns){
+	rawdef(name, value, ns);
 }
 
-const Any& LibImpl::rawdef(const ID& name, const Any& value, int_t*& pmutate_count){
-	IdMap::Node* it = map_members_->find(name);
+const Any& LibImpl::rawdef(const ID& name, const Any& value, const Any& ns){
+	IdMap::Node* it = map_members_->find(name, ns);
 	if(!it){
-		it = map_members_->insert(name);
+		it = map_members_->insert(name, ns);
 		it->num = members_.size();
+		it->flags = KIND_PUBLIC;
 		members_.push_back(value);
 		global_mutate_count++;
-		pmutate_count = &mutate_count_;
 		//value.set_object_name(String("lib").cat(join_path("::")).cat(name), 100);
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
@@ -489,19 +471,19 @@ bool Class::is_inherited(const Any& md) const{
 }
 
 const Any& Class::member(const ID& name) const{
-	return impl()->member(name);
+	return impl()->member(name, *this, null);
 }
 
 const Any& Class::member(const ID& name, const Any& self) const{
-	return impl()->member(name, self);
+	return impl()->member(name, self, null);
 }
 
-void Class::set_member(const ID& name, const Any& value) const{
-	return impl()->set_member(name, value);
+const Any& Class::member(const ID& name, const Any& self, const Any& ns) const{
+	return impl()->member(name, self, ns);
 }
 
-void Class::set_accessibility(const ID& name, int_t kind) const{
-	return impl()->set_accessibility(name, kind);
+void Class::set_member(const ID& name, const Any& value, const Any& ns) const{
+	return impl()->set_member(name, value, ns);
 }
 
 Class new_xclass(const Frame& outer, const Code& code, FrameCore* core){

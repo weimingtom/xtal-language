@@ -121,6 +121,9 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
+typedef SelectType<sizeof(void*)>::uint_t thread_id_t;
+
+
 /**
 * プリミティブな型を示す整数値
 */

@@ -1156,13 +1156,17 @@ Expr* Parser::parse_class(){
 			accessibility = KIND_PUBLIC;
 		}
 
-		if(int_t var = parse_var()){ // メンバ定義
-			e.class_add(e.define(e.local(var), parse_expr_must()));
+		if(int_t var = parse_ident()){ // メンバ定義
+			if(eat('@')){
+				Expr* ns = parse_expr();
+				expect(':');
+				e.class_define_member(var, accessibility<0 ? KIND_PUBLIC : accessibility, ns, parse_expr_must());
+			}else{
+				expect(':');
+				e.class_define_member(var, accessibility<0 ? KIND_PUBLIC : accessibility, e.pseudo(InstPushNull::NUMBER), parse_expr_must());
+			}
 			expect_end();
 			
-			if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
-				e.class_add(e.set_accessibility(var, accessibility));
-
 		}else if(eat('_')){// インスタンス変数定義
 			if(int_t var = parse_ident()){
 				
@@ -1176,17 +1180,13 @@ Expr* Parser::parse_class(){
 				if(accessibility!=-1){ // 可触性が付いているので、アクセッサを定義する
 					e.fun_begin(KIND_METHOD);
 					e.fun_body(e.return_(e.instance_variable(var)));
-					e.class_add(e.define(e.local(var), e.fun_end()));
-					if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
-						e.class_add(e.set_accessibility(var, accessibility));
+					e.class_define_member(var, accessibility, e.pseudo(InstPushNull::NUMBER), e.fun_end());
 					
 					int_t var2 = com_->register_ident(String("set_").cat(com_->ident_table[var].to_s()).intern());
 					e.fun_begin(KIND_METHOD);
 					e.fun_param(com_->register_ident(Xid(value)));
 					e.fun_body(e.assign(e.instance_variable(var), e.local(com_->register_ident(Xid(value)))));
-					e.class_add(e.define(e.local(var2), e.fun_end()));
-					if(accessibility==KIND_PRIVATE || accessibility==KIND_PROTECTED)
-						e.class_add(e.set_accessibility(var2, accessibility));
+					e.class_define_member(var2, accessibility, e.pseudo(InstPushNull::NUMBER), e.fun_end());
 				}
 			}else{
 				com_->error(line(), Xt("Xtal Compile Error 1001"));

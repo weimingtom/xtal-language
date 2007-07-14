@@ -472,6 +472,16 @@ struct DefineStmt : public Stmt{
 		:Stmt(TYPE, line), lhs(lhs), rhs(rhs){}
 };
 
+struct DefineClassMemberStmt : public Stmt{
+	enum{ TYPE = __LINE__ };
+	int_t var;
+	int_t asscessibility;
+	Expr* expr;
+	Expr* ns;
+	DefineClassMemberStmt(int_t line)
+		:Stmt(TYPE, line){}
+};
+
 struct AtExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	Expr* lhs;
@@ -517,9 +527,16 @@ struct ClassExpr : public FrameExpr{
 	enum{ TYPE = __LINE__ };
 	TPairList<int_t, Expr*> inst_vars;
 	TList<Expr*> mixins;
-//-
 	int_t frame_number;
-//-
+
+	struct Attr{
+		int_t var;
+		int_t accessibility;
+		Expr* ns;
+	};
+
+	TList<Attr> attrs;
+
 	ClassExpr(int_t line)
 		:FrameExpr(line, KIND_CLASS), frame_number(0){ type = TYPE; }
 };
@@ -533,14 +550,6 @@ struct TopLevelStmt : public Stmt{
 	Stmt* unittest_stmt;
 	TopLevelStmt(int_t line)
 		:Stmt(TYPE, line), export_expr(0), unittest_stmt(0){}
-};
-
-struct SetAccessibilityStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t var;
-	int_t kind;
-	SetAccessibilityStmt(int_t line)
-		:Stmt(TYPE, line), var(0), kind(0){}
 };
 
 class ExprBuilder{
@@ -580,9 +589,9 @@ public:
 	ExprStmt* e2s(Expr* expr);
 	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
 	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);
-	SetAccessibilityStmt* set_accessibility(int_t var, int_t kind);
 	ContinueStmt* continue_(int_t name);
 	BreakStmt* break_(int_t name);
+
 	void scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag);
 	void scope_carry_on_heap_flag();
 	void scope_set_on_heap_flag(int_t i);
@@ -628,7 +637,7 @@ public:
 	TopLevelStmt* toplevel_end();
 	void class_begin();
 	void class_define_instance_variable(int_t name, Expr* expr);
-	void class_add(Stmt* stmt);
+	void class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs);
 	ClassExpr* class_end();
 	TList<Expr*>* class_mixins();
 

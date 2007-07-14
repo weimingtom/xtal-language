@@ -140,17 +140,17 @@ public:
 	}
 
 	/**
-	* 読み進める。
+	* @brief 読み進める。
 	*/
 	int_t read();
 
 	/**
-	* 次の要素を読む。
+	* @brief 次の要素を読む。
 	*/
 	int_t peek();
 
 	/**
-	* 次の要素が引数chと同じだったら読み進める。
+	* @brief 次の要素が引数chと同じだったら読み進める。
 	* @param ch この値と次の要素が等しい場合に読み進める。
 	* @retval true 次の要素はchと同じで、読み進めた。
 	* @retval false 次の要素はchと異なり、読み進めなかった。
@@ -158,17 +158,17 @@ public:
 	bool eat(int_t ch);
 
 	/**
-	* 要素を一つ戻す。
+	* @brief 要素を一つ戻す。
 	*/
 	void putback(int_t ch);
 	
 	/**
-	* ポジションの取得。
+	* @brief ポジションの取得。
 	*/
 	int_t position();
 	
 	/**
-	* ポジションをposの位置に戻す。
+	* @brief ポジションをposの位置に戻す。
 	*/
 	void set_position(int_t pos);
 
@@ -196,78 +196,78 @@ public:
 	Lexer();
 	
 	/**
-	* 初期化
+	* @brief 初期化
 	*/
 	void init(const Stream& stream, const String& source_file_name);
 	
 	/**
-	* 読み進める
+	* @brief 読み進める
 	*/
 	Token read();
 
 	/**
-	* 次の要素を読む
+	* @brief 次の要素を読む
 	*/
 	Token peek();
 
 	/**
-	* 読み込んだ要素を一つ戻す
+	* @brief 読み込んだ要素を一つ戻す
 	*/
 	void putback();
 	
 	/**
-	* 指定したトークンを一つ戻す
+	* @brief 指定したトークンを一つ戻す
 	* 次のreadやpeekでは、これで戻した値が得られる
 	*/
 	void putback(const Token& ch);
 	
 	/**
-	* 文字列を直接読むモードに変更する
+	* @brief 文字列を直接読むモードに変更する
 	*/
 	void set_string_mode();
 	
 	/**
-	* 文字列をトークンで返すモードに変更する
+	* @brief 文字列をトークンで返すモードに変更する
 	*/
 	void set_normal_mode();
 
 	/**
-	* 現在の行数を返す
+	* @brief 現在の行数を返す
 	*/
 	int_t line(){ return line_; }
 	
 	/**
-	* 現在の行数を設定する
+	* @brief 現在の行数を設定する
 	*/
 	void set_line(int_t v){ com_.line = line_ = v; }
 	
 	/**
-	* トークンを読める形の文字列に変換する
+	* @brief トークンを読める形の文字列に変換する
 	*/
 	String token2str(const Token& t);
 	
 	/**
-	* キーワードをIDに変換する
+	* @brief キーワードをIDに変換する
 	*/
 	ID keyword2id(int_t v);
 
 	/**
-	* Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
+	* @brief Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
 	*/
 	LPCCommon* common();
 	
 	/**
-	* 文字列の記録を開始する
+	* @brief 文字列の記録を開始する
 	*/
 	void begin_record();
 
 	/**
-	* 文字列の記録を終了して、それを返す。
+	* @brief 文字列の記録を終了して、それを返す。
 	*/
 	string_t end_record();
 
 	/**
-	* 内部で使用しているメモリなど全て解放する
+	* @brief 内部で使用しているメモリなど全て解放する
 	*/
 	void release();
 	

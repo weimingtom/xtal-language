@@ -296,7 +296,6 @@ struct method1{
 	
 	static void f(const VMachine& vm, const ParamInfo& p, void* data);
 	
-	
 	template<class U>
 	static void f2(const VMachine& vm, const ParamInfo& p, T& fun, T2T<U>, Other){
 		f3(vm, p, fun, T2T<A0>());
@@ -725,7 +724,7 @@ public:
 
 	/**
 	* @brief 仮引数の名前、デフォルト引数を指定する。
-	*
+	* @return 自分自身を返す
 	*/
 	const CFun& param(
 		const Named2& value0=null, 

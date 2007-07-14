@@ -82,11 +82,11 @@ xtallib: $(OBJS)
 
 xtal: xtallib ../xtal/main.cpp
 	$(CC) -o ../bin/xtal.exe ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
-	#strip --strip-all ../bin/xtal.exe
+	strip --strip-all ../bin/xtal.exe
 
 ix: xtallib ../xtal/ixmain.cpp
-	$(CC) -o ../bin/ixmain.exe ../xtal/ixmain.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
-	#strip --strip-all ../bin/ixmain.exe
+	$(CC) -o ../bin/ix.exe ../xtal/ixmain.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+	strip --strip-all ../bin/ix.exe
 	
 clean:
 	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe

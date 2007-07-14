@@ -27,6 +27,7 @@ void InitClass(){
 
 	{
 		TClass<LibImpl> p("Lib");
+		p.inherit(TClass<Class>::get());
 		p.method("append_load_path", &LibImpl::append_load_path);
 	}
 
@@ -353,10 +354,14 @@ const Any& LibImpl::member(const ID& name, const Any& self, const Any& ns){
 				return rawdef(name, load(file_name), ns);
 			}
 		}
+		return null;
+
+		/* 指定した名前をフォルダーとみなす
 		Array next = path_.clone();
 		next.push_back(name);
 		Any lib; new(lib) LibImpl(next);
 		return rawdef(name, lib, ns);
+		*/
 	}
 }
 

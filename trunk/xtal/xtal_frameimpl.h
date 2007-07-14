@@ -421,6 +421,7 @@ public:
 	LibImpl(){
 		set_object_name(Xid(lib), 1000, null);
 		set_class(TClass<LibImpl>::get());
+		append_load_path(".");
 	}
 
 	LibImpl(const Array& path)

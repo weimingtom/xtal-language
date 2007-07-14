@@ -21,6 +21,18 @@ private:
 	FrameCore* core_;
 };
 
+class InstanceVariableSetterImpl : public HaveNameImpl{
+public:
+
+	InstanceVariableSetterImpl(int_t number, FrameCore* core);
+
+	virtual void call(const VMachine& vm);
+
+private:
+	int_t number_;
+	FrameCore* core_;
+};
+
 class FunImpl : public HaveNameImpl{
 public:
 

@@ -203,8 +203,8 @@ void uninitialize(){
 	full_gc();
 	
 	if(objects_current_-objects_begin_ != 0){
-		fprintf(stderr, "finished gc\n");
-		fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
+		//fprintf(stderr, "finished gc\n");
+		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		//print_alive_objects();
 		XTAL_ASSERT(false); // オブジェクトが全て解放されていない。
 	}

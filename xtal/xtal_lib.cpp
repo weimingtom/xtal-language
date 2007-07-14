@@ -1013,6 +1013,7 @@ void initialize_lib(){
 	Any lib = xtal::lib();
 	lib.def("builtin", builtin);		
 	builtin.def("lib", lib);
+	builtin.def("Lib", TClass<LibImpl>::get());
 
 	InitZipIter();
 	builtin.def("zip", TClass<ZipIterImpl>::get());
@@ -1070,6 +1071,9 @@ builtin::CompileError: class(StandardError){
 }		
 	))();
 
+	Xsrc((
+		lib.append_load_path(".");
+	))();
 
 	Xsrc((
 Enumerator::restart: method(){ return this.each.restart; }

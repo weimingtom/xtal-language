@@ -68,7 +68,7 @@ namespace{
 }
 	
 bool thread_enabled_ = false;
-int thread_counter_ = 0;
+int thread_counter_ = 500;
 
 const VMachine& vmachine(){
 	return vmachine_;
@@ -395,7 +395,11 @@ void Mutex::unlock() const{
 }
 
 
-#if defined(_WIN32) && defined(_MT)
+#if defined(_WIN32) && (defined(_MT) || defined(__GNUC__))
+
+#ifndef _MT
+#	define _MT
+#endif
 
 #include <windows.h>
 #include <process.h>

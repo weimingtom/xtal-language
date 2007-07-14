@@ -52,6 +52,38 @@ public:
 
 };
 
+struct MemberCacheTable{
+	struct Unit{
+		int_t klass;
+		int_t name;
+		int_t ns;
+		UncountedAny member;
+		uint_t mutate_count;
+	};
+
+	enum{ CACHE_MAX = /*179*/ 256 };
+
+	Unit table_[CACHE_MAX];
+	uint_t hit_;
+	uint_t miss_;
+
+	MemberCacheTable();
+
+	float cache_hit_rate(){
+		return (float_t)hit_/(hit_+miss_);
+	}
+
+	uint_t hit(){
+		return hit_;
+	}
+
+	uint_t miss(){
+		return miss_;
+	}
+
+	const Any& cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp);
+};
+
 // XTAL仮想マシン
 class VMachineImpl : public GCObserverImpl{
 public:
@@ -144,11 +176,11 @@ public:
 		return arg(name);
 	}
 
-	const Any& arg(int_t pos, const Fun& names){
+	const Any& arg(int_t pos, FunImpl* names){
 		FunFrame& f = ff();
 		if(pos<f.ordered_arg_count)
 			return get((f.ordered_arg_count+f.named_arg_count*2)-1-pos);
-		return arg(names.param_name_at(pos));
+		return arg(names->param_name_at(pos));
 	}
 
 	const Any& arg_default(int_t pos, const Any& def){
@@ -271,9 +303,9 @@ public:
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
-	void carry_over(const Fun& fun);
+	void carry_over(FunImpl* fun);
 	
-	void mv_carry_over(const Fun& fun);
+	void mv_carry_over(FunImpl* fun);
 
 	bool processed(){ 
 		return ff().calling_state!=FunFrame::CALLING_STATE_NONE; 
@@ -291,7 +323,7 @@ public:
 	void execute_inner(const inst_t* start);
 	void execute_try(const inst_t* start);
 
-	void execute(const Fun& fun, const inst_t* start_pc = 0){
+	void execute(FunImpl* fun, const inst_t* start_pc = 0){
 		setup_call(0);
 		
 		carry_over(fun);
@@ -314,12 +346,9 @@ public:
 		return resume_pc_; 
 	}
 
-	void present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result);
-
-	const inst_t* start_fiber(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result);
-
-	const inst_t* resume_fiber(const Fiber& fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
-
+	void present_for_vm(FunImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result);
+	const inst_t* start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result);
+	const inst_t* resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
 	void exit_fiber();
 
 	void reset();
@@ -748,68 +777,6 @@ private:
 		*vm.impl() = *this;
 		return vm;
 	}
-
-	struct MemberCacheTable{
-		struct Unit{
-			int_t klass;
-			int_t name;
-			int_t ns;
-			UncountedAny member;
-			uint_t mutate_count;
-		};
-
-		enum{ CACHE_MAX = /*179*/ 256 };
-
-		Unit table_[CACHE_MAX];
-		uint_t hit_;
-		uint_t miss_;
-
-		MemberCacheTable(){
-			for(int_t i=0; i<CACHE_MAX; ++i){
-				table_[i].klass = 0;
-				table_[i].member = null;
-			}
-			hit_ = 0;
-			miss_ = 0;
-		}
-
-		float cache_hit_rate(){
-			return (float_t)hit_/(hit_+miss_);
-		}
-
-		uint_t hit(){
-			return hit_;
-		}
-
-		uint_t miss(){
-			return miss_;
-		}
-
-		const Any& cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
-
-			uint_t klass = target_class.rawvalue();
-			uint_t name = member_name.rawvalue();
-			uint_t ns = nsp.rawvalue();
-
-			uint_t hash = (klass>>3) + (name>>2) + (ns);
-			Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
-			if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
-				hit_++;
-				return unit.member.cref();
-			}else{
-				if(target_class.type()!=TYPE_BASE)
-					return null;
-
-				miss_++;
-				unit.member = target_class.impl()->member(member_name, self, nsp);
-				unit.klass = klass;
-				unit.name = name;
-				unit.ns = ns;
-				unit.mutate_count = global_mutate_count;
-				return unit.member.cref();
-			}
-		}
-	};
 	
 public:
 

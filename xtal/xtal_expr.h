@@ -409,11 +409,10 @@ struct MemberExpr : public Expr{
 struct CallExpr : public Expr{ 
 	enum{ TYPE = __LINE__ };
 	Expr* expr; 
-	bool tail;
 	TList<Expr*> ordered; 
 	TPairList<int_t, Expr*> named;
 	CallExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr), tail(false){}
+		:Expr(TYPE, line), expr(expr){}
 };
 
 struct SendExpr : public Expr{
@@ -421,10 +420,9 @@ struct SendExpr : public Expr{
 	Expr* lhs;
 	int_t var;
 	Expr* pvar;
-	bool tail;
 	bool if_defined;
 	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), tail(false), if_defined(false){}
+		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), if_defined(false){}
 };
 
 struct AssignStmt : public Stmt{

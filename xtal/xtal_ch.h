@@ -51,7 +51,7 @@ inline int to_lalpha(int ch){
 }
 
 /**
-* @brief 蜈磯　ュ譁㍾ュ励ｒ貂。縺励※縲√◎繧後′菴輔ヰ繧、繝域枚蟄励°霑斐☆
+* @brief 先頭バイトからそのマルチバイト文字が何文字かを調べる
 */
 int_t ch_len(char_t lead);
 

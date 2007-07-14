@@ -12,6 +12,40 @@
 
 namespace xtal{
 
+MemberCacheTable::MemberCacheTable(){
+	for(int_t i=0; i<CACHE_MAX; ++i){
+		table_[i].klass = 0;
+		table_[i].member = null;
+	}
+	hit_ = 0;
+	miss_ = 0;
+}
+
+const Any& MemberCacheTable::cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
+
+	uint_t klass = target_class.rawvalue();
+	uint_t name = member_name.rawvalue();
+	uint_t ns = nsp.rawvalue();
+
+	uint_t hash = (klass>>3) + (name>>2) + (ns);
+	Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
+	if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
+		hit_++;
+		return unit.member.cref();
+	}else{
+		if(target_class.type()!=TYPE_BASE)
+			return null;
+
+		miss_++;
+		unit.member = target_class.impl()->member(member_name, self, nsp);
+		unit.klass = klass;
+		unit.name = name;
+		unit.ns = ns;
+		unit.mutate_count = global_mutate_count;
+		return unit.member.cref();
+	}
+}
+
 VMachineImpl::VMachineImpl(){	
 	
 	myself_ = this;
@@ -36,7 +70,7 @@ VMachineImpl::~VMachineImpl(){
 
 }
 	
-void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
+void VMachineImpl::present_for_vm(FunImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 	// 結果をvmに渡す
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){
@@ -56,7 +90,7 @@ void VMachineImpl::present_for_vm(const Fiber& fun, VMachineImpl* vm, bool add_s
 	}
 }
 
-const inst_t* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool add_succ_or_fail_result){
+const inst_t* VMachineImpl::start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 
 	yield_result_count_ = 0;
 	
@@ -80,7 +114,7 @@ const inst_t* VMachineImpl::start_fiber(const Fiber& fun, VMachineImpl* vm, bool
 	return resume_pc_;
 }
 
-const inst_t* VMachineImpl::resume_fiber(const Fiber& fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result){
+const inst_t* VMachineImpl::resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result){
 
 	yield_result_count_ = 0;
 
@@ -328,28 +362,28 @@ const Any& VMachineImpl::result(int_t pos){
 	}
 }
 	
-void VMachineImpl::carry_over(const Fun& fun){
+void VMachineImpl::carry_over(FunImpl* fun){
 	FunFrame& f = ff();
 	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
 	f.fun(fun);
-	f.outer(fun.impl()->outer());
+	f.outer(fun->outer());
 
 	f.variables_.clear();
 	f.scopes.clear();
 
-	f.pc = fun.impl()->pc()+fun.impl()->code().impl()->data();
+	f.pc = fun->pc()+fun->code().impl()->data();
 	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
 	
 	if(f.self().type()==TYPE_BASE){
 		f.instance_variables = f.self().impl()->have_instance_variables();
 	}
 
-	if(fun.impl()->used_args_object()){
-		f.arguments(make_args(fun));
+	if(fun->used_args_object()){
+		f.arguments(make_args(Fun(fun)));
 	}
 	
-	FunCore* core = fun.impl()->core();
+	FunCore* core = fun->core();
 
 	if(int_t size = core->variable_size){
 		f.scopes.push(core);
@@ -365,31 +399,31 @@ void VMachineImpl::carry_over(const Fun& fun){
 	stack_.downsize(f.ordered_arg_count+f.named_arg_count*2 + max_stack);
 }
 
-void VMachineImpl::mv_carry_over(const Fun& fun){
+void VMachineImpl::mv_carry_over(FunImpl* fun){
 	FunFrame& f = ff();
 	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
 	f.fun(fun);
-	f.outer(fun.impl()->outer());
+	f.outer(fun->outer());
 
 	f.variables_.clear();
 	f.scopes.clear();
 
-	f.pc = fun.impl()->pc()+fun.impl()->code().impl()->data();
+	f.pc = fun->pc()+fun->code().impl()->data();
 	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
 
 	if(f.self().type()==TYPE_BASE){
 		f.instance_variables = f.self().impl()->have_instance_variables();
 	}
 
-	if(fun.impl()->used_args_object()){
-		f.arguments(make_args(fun));
+	if(fun->used_args_object()){
+		f.arguments(make_args(Fun(fun)));
 	}
 	
 	// 名前付き引数は邪魔
 	stack_.downsize(f.named_arg_count*2);
 
-	FunCore* core = fun.impl()->core();
+	FunCore* core = fun->core();
 	
 	if(int_t size = core->variable_size){
 		f.scopes.push(core);
@@ -475,6 +509,7 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 		}
 	}
 }
+
 
 #ifdef __GNUC__
 //#	define XTAL_VM_OPT
@@ -871,6 +906,34 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(SetLocalVariable1Byte){ SET_LOCAL_VARIABLE(inst.number, pop()); pc += inst.ISIZE; }
 	XTAL_VM_CASE(SetLocalVariable2Byte){ SET_LOCAL_VARIABLE(inst.number, pop()); pc += inst.ISIZE; }
 
+	XTAL_VM_CASE(SetMultipleLocalVariable2Direct){
+		FunFrame& f = ff();
+		f.variable(inst.local_variable2, pop()); 
+		f.variable(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable3Direct){
+		FunFrame& f = ff();
+		f.variable(inst.local_variable3, pop()); 
+		f.variable(inst.local_variable2, pop()); 
+		f.variable(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable2){
+		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable3){
+		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
 	XTAL_VM_CASE(GlobalVariable){ pc = GLOBAL_VARIABLE(pc); }
 	XTAL_VM_CASE(SetGlobalVariable){ pc = SET_GLOBAL_VARIABLE(pc); }
 	XTAL_VM_CASE(DefineGlobalVariable){ pc = DEFINE_GLOBAL_VARIABLE(pc); }
@@ -958,8 +1021,11 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(MakeInstanceVariableAccessor){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any ret;
-			if(inst.type==0){
-				new(ret) InstanceVariableGetterImpl(inst.number, code().impl()->frame_core(inst.core_number));
+			switch(inst.type){
+				XTAL_NODEFAULT;
+
+				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, code().impl()->frame_core(inst.core_number)); }
+				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, code().impl()->frame_core(inst.core_number)); }
 			}
 			push(ret);
 		}
@@ -1004,57 +1070,6 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(ThrowNull){ 
 		last_except_ = null; 
 		goto except_catch; 
-	}
-
-	XTAL_VM_CASE(SendIterFirst){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = Xid(iter_first);
-			UncountedAny self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, 0, 0, self.cref());
-			const Class& cls = target.get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target);
-				ret.call(myself());
-			}
-		}
-		pc = ff().pc; 
-	}
-
-	XTAL_VM_CASE(SendIterNext){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = Xid(iter_next);
-			UncountedAny self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, 0, 0, self.cref());
-			const Class& cls = target.get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target);
-				ret.call(myself());
-			}
-		}
-		pc = ff().pc; 
-	}
-
-	XTAL_VM_CASE(SendIterBreak){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const ID& sym = Xid(iter_break);
-			UncountedAny self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, 0, 0, self.cref());
-			ff().pc = &check_unsupported_code_;
-			const Class& cls = target.get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target);
-				ret.call(myself());
-			}else{
-				return_result(nop);
-			}
-		}
-		pc = ff().pc; 
 	}
 
 	XTAL_VM_CASE(Call){
@@ -1102,7 +1117,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny fn = fun();
 		UncountedAny self = ff().self();
 		push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-		carry_over((const Fun&)fn);
+		carry_over(((const Fun&)fn.cref()).impl());
 		pc = ff().pc;	
 	}
 
@@ -1110,7 +1125,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny fn = fun();
 		UncountedAny self = ff().self();
 		push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-		carry_over((const Fun&)fn);
+		carry_over(((const Fun&)fn.cref()).impl());
 		pc = ff().pc;	
 	}
 
@@ -1118,7 +1133,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny fn = fun();
 		UncountedAny self = ff().self();
 		recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-		carry_over((const Fun&)fn);
+		carry_over(((const Fun&)fn.cref()).impl());
 		pc = ff().pc;	
 	}
 
@@ -1126,7 +1141,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny fn = fun();
 		UncountedAny self = ff().self();
 		recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-		carry_over((const Fun&)fn);
+		carry_over(((const Fun&)fn.cref()).impl());
 		pc = ff().pc;	
 	}
 
@@ -1264,6 +1279,42 @@ XTAL_VM_SWITCH(*pc){
 			}
 		}
 		pc = ff().pc; 	
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable4Direct){
+		FunFrame& f = ff();
+		f.variable(inst.local_variable4, pop()); 
+		f.variable(inst.local_variable3, pop()); 
+		f.variable(inst.local_variable2, pop()); 
+		f.variable(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable5Direct){
+		FunFrame& f = ff();
+		f.variable(inst.local_variable5, pop()); 
+		f.variable(inst.local_variable4, pop()); 
+		f.variable(inst.local_variable3, pop()); 
+		f.variable(inst.local_variable2, pop()); 
+		f.variable(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable4){
+		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(SetMultipleLocalVariable5){
+		SET_LOCAL_VARIABLE(inst.local_variable5, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
+		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
 	}
 
 	XTAL_VM_NODEFAULT;

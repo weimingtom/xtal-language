@@ -29,8 +29,8 @@ def foo()
 	u = Vec2D.new(1, 2)
 	i = 0
 	while i<5000000
-		v = v + u
-		#v = v.add_assign(u)
+		#v = v + u
+		v = v.add_assign(u)
 		i += 1
 	end
 	

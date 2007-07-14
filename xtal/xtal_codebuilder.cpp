@@ -100,7 +100,7 @@ void CodeBuilder::interactive_compile(){
 
 			fun.set_core(&p_->xfun_core_table_[0]);
 			XTAL_TRY{
-				vmachine().impl()->execute(fun, &p_->code_[pc_pos]);
+				vmachine().impl()->execute(fun.impl(), &p_->code_[pc_pos]);
 			}XTAL_CATCH(e){
 				printf("%s\n", e.to_s().c_str());
 			}
@@ -513,12 +513,12 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 
 #define XTAL_EXPR_CASE(KEY) break; case KEY::TYPE: if(KEY* e = (KEY*)ex)if(e)
 
-void CodeBuilder::compile(Expr* ex, int_t need_result_count){
+void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 	int_t result_count = 1;
 
 	if(!ex){
-		put_inst(InstAdjustResult(0, need_result_count));
+		put_inst(InstAdjustResult(0, info.need_result_count));
 		return;
 	}
 
@@ -749,20 +749,24 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 		XTAL_EXPR_CASE(SendExpr){
 			compile(e->lhs);
 
+			/*
 			int_t iter_first = com_->register_ident(ID("iter_first")); 
 			int_t iter_next = com_->register_ident(ID("iter_next")); 
 			int_t iter_break = com_->register_ident(ID("iter_break")); 
 
-			if(e->var==iter_first && !e->tail){
-				put_inst(InstSendIterFirst(need_result_count));
-			}else if(e->var==iter_next && !e->tail){
-				put_inst(InstSendIterNext(need_result_count));
-			}else if(e->var==iter_break && e->if_defined && !e->tail){
-				put_inst(InstSendIterBreak(need_result_count));
+			if(e->var==iter_first && !info.tail){
+				put_inst(InstSendIterFirst(info.need_result_count));
+			}else if(e->var==iter_next && !info.tail){
+				put_inst(InstSendIterNext(info.need_result_count));
+			}else if(e->var==iter_break && e->if_defined && !info.tail){
+				put_inst(InstSendIterBreak(info.need_result_count));
 			}else{
-				put_send_code(e->var, e->pvar, need_result_count, e->tail, e->if_defined);
+				put_send_code(e->var, e->pvar, info.need_result_count, info.tail, e->if_defined);
 			}
-			result_count = need_result_count;
+			*/
+
+			put_send_code(e->var, e->pvar, info.need_result_count, info.tail, e->if_defined);
+			result_count = info.need_result_count;
 		}
 
 		XTAL_EXPR_CASE(CallExpr){
@@ -801,63 +805,88 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 				}
 
 				if(e2->if_defined){
-					if(e->tail){
-						if(have_args){ put_inst(InstSendIfDefined_AT(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSendIfDefined_T(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
+					if(info.tail){
+						if(have_args){ put_inst(InstSendIfDefined_AT(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSendIfDefined_T(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var)); }
 					}else{
-						if(have_args){ put_inst(InstSendIfDefined_A(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSendIfDefined(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSendIfDefined_A(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSendIfDefined(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var)); }
 					}
 				}else{
-					if(e->tail){
-						if(have_args){ put_inst(InstSend_AT(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSend_T(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
+					if(info.tail){
+						if(have_args){ put_inst(InstSend_AT(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSend_T(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var)); }
 					}else{
-						if(have_args){ put_inst(InstSend_A(ordered, named, need_result_count, e2->pvar ? 0 : e2->var));
-						}else{ put_inst(InstSend(ordered, named, need_result_count, e2->pvar ? 0 : e2->var)); }
+						if(have_args){ put_inst(InstSend_A(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var));
+						}else{ put_inst(InstSend(ordered, named, info.need_result_count, e2->pvar ? 0 : e2->var)); }
 					}
 				}
 			}else if(expr_cast<CalleeExpr>(e->expr)){
-				if(e->tail){
-					if(have_args){ put_inst(InstCallCallee_AT(ordered, named, need_result_count));
-					}else{ put_inst(InstCallCallee_T(ordered, named, need_result_count)); }
+				if(info.tail){
+					if(have_args){ put_inst(InstCallCallee_AT(ordered, named, info.need_result_count));
+					}else{ put_inst(InstCallCallee_T(ordered, named, info.need_result_count)); }
 				}else{
-					if(have_args){ put_inst(InstCallCallee_A(ordered, named, need_result_count));
-					}else{ put_inst(InstCallCallee(ordered, named, need_result_count)); }
+					if(have_args){ put_inst(InstCallCallee_A(ordered, named, info.need_result_count));
+					}else{ put_inst(InstCallCallee(ordered, named, info.need_result_count)); }
 				}
 			}else{
 				compile(e->expr);
-				if(e->tail){
-					if(have_args){ put_inst(InstCall_AT(ordered, named, need_result_count));
-					}else{ put_inst(InstCall_T(ordered, named, need_result_count)); }
+				if(info.tail){
+					if(have_args){ put_inst(InstCall_AT(ordered, named, info.need_result_count));
+					}else{ put_inst(InstCall_T(ordered, named, info.need_result_count)); }
 				}else{
-					if(have_args){ put_inst(InstCall_A(ordered, named, need_result_count));
-					}else{ put_inst(InstCall(ordered, named, need_result_count)); }
+					if(have_args){ put_inst(InstCall_A(ordered, named, info.need_result_count));
+					}else{ put_inst(InstCall(ordered, named, info.need_result_count)); }
 				}
 			}
 
-			result_count = need_result_count;
+			result_count = info.need_result_count;
 		}
 
 		XTAL_EXPR_CASE(FunExpr){
 
-			if(e->params.size==0){
-				if(BlockStmt* p = stmt_cast<BlockStmt>(e->stmt)){
-					if(p->stmts.size==1){
-						if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(p->stmts.head->value)){
-							if(p2->exprs.size==1){
-								if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-									put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
-									break;
+			if(e->kind==KIND_METHOD){
+
+				// ゲッタか？
+				if(e->params.size==0){
+					if(BlockStmt* p = stmt_cast<BlockStmt>(e->stmt)){
+						if(p->stmts.size==1){
+							if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(p->stmts.head->value)){
+								if(p2->exprs.size==1){
+									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
+										put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+										break;
+									}
 								}
 							}
 						}
+					}else if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(e->stmt)){
+						if(p2->exprs.size==1){
+							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
+								put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+								break;
+							}
+						}
 					}
-				}else if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(e->stmt)){
-					if(p2->exprs.size==1){
-						if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-							put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
-							break;
+				}
+
+				// セッタか？
+				if(e->params.size==1){
+					if(!e->params.head->value){
+						if(BlockStmt* p = stmt_cast<BlockStmt>(e->stmt)){
+							if(p->stmts.size==1){
+								if(AssignStmt* p2 = stmt_cast<AssignStmt>(p->stmts.head->value)){
+									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
+										put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+										break;
+									}
+								}
+							}
+						}else if(AssignStmt* p2 = stmt_cast<AssignStmt>(e->stmt)){
+							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
+								put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+								break;
+							}
 						}
 					}
 				}
@@ -974,8 +1003,8 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 	p_->set_line_number_info(ex->line);
 	lines_.pop();
 
-	if(need_result_count!=result_count){
-		put_inst(InstAdjustResult(result_count, need_result_count));
+	if(info.need_result_count!=result_count){
+		put_inst(InstAdjustResult(result_count, info.need_result_count));
 	}
 }
 
@@ -1080,7 +1109,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_inst(InstDup());
-				put_send_code(p->var, p->pvar, 1, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, false, p->if_defined);
 				compile(e->rhs);
 				put_inst(Inst(e->code));
 				put_inst(InstInsert1());
@@ -1131,7 +1160,7 @@ void CodeBuilder::compile(Stmt* ex){
 			}else if(SendExpr* p = expr_cast<SendExpr>(e->lhs)){
 				compile(p->lhs);
 				put_inst(InstDup());
-				put_send_code(p->var, p->pvar, 1, p->tail, p->if_defined);
+				put_send_code(p->var, p->pvar, 1, false, p->if_defined);
 				put_inst(Inst(e->code));
 				put_inst(InstInsert1());
 				put_set_send_code(p->var, p->pvar, p->if_defined);
@@ -1177,12 +1206,10 @@ void CodeBuilder::compile(Stmt* ex){
 
 			if(!have_finally && e->exprs.size==1){
 				if(CallExpr* ce = expr_cast<CallExpr>(e->exprs.head->value)){
-					ce->tail = true;
-					compile(ce);
+					compile(ce, CompileInfo(1, true));
 					break;
 				}else if(SendExpr* se = expr_cast<SendExpr>(e->exprs.head->value)){
-					se->tail = true;
-					compile(se);
+					compile(se, CompileInfo(1, true));
 					break;
 				}
 			}
@@ -1404,6 +1431,49 @@ void CodeBuilder::compile(Stmt* ex){
 
 			if(e->lhs.size!=pushed_count){
 				put_inst(InstAdjustResult(pushed_count, e->lhs.size));
+			}
+
+			{
+				int list[5];
+				bool direct = true;
+				bool bad = false;
+				int i = 0;
+				for(TList<Expr*>::Node* lhs=e->lhs.head; lhs; lhs=lhs->next){	
+					if(LocalExpr* e2 = expr_cast<LocalExpr>(lhs->value)){
+						int id = lookup_variable(e2->var);
+						if(id>=256 || id<0){
+							bad = true;
+							break;
+						}
+						direct = direct && !variable_on_heap(id);
+						list[i] = id;
+					}else{
+						bad = true;
+						break;
+					}
+
+					++i;
+				}
+
+				if(!bad){
+					if(direct){
+						switch(i){
+						case 2: put_inst(InstSetMultipleLocalVariable2Direct(list[0], list[1])); break;
+						case 3: put_inst(InstSetMultipleLocalVariable3Direct(list[0], list[1], list[2])); break;
+						case 4: put_inst(InstSetMultipleLocalVariable4Direct(list[0], list[1], list[2], list[3])); break;
+						case 5: put_inst(InstSetMultipleLocalVariable5Direct(list[0], list[1], list[2], list[3], list[4])); break;
+						}
+					}else{
+						switch(i){
+						case 2: put_inst(InstSetMultipleLocalVariable2(list[0], list[1])); break;
+						case 3: put_inst(InstSetMultipleLocalVariable3(list[0], list[1], list[2])); break;
+						case 4: put_inst(InstSetMultipleLocalVariable4(list[0], list[1], list[2], list[3])); break;
+						case 5: put_inst(InstSetMultipleLocalVariable5(list[0], list[1], list[2], list[3], list[4])); break;
+						}
+					}
+
+					break;
+				}
 			}
 
 			if(e->define){

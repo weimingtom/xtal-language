@@ -134,7 +134,7 @@ extern bool thread_enabled_;
 extern int thread_counter_;
 
 inline int yield_thread(){
-	thread_counter_ = 0;
+	thread_counter_ = 500;
 	Thread::yield();
 	return 1;
 }

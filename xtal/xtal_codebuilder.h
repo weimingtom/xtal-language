@@ -20,7 +20,15 @@ public:
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
-	void compile(Expr* p, int_t need_result_count=1);
+	struct CompileInfo{
+		int_t need_result_count;
+		bool tail;
+
+		CompileInfo(int_t need_result_count = 1, bool tail = false)
+			:need_result_count(need_result_count), tail(tail){}
+	};
+
+	void compile(Expr* p, const CompileInfo& info = CompileInfo());
 	void compile(Stmt* p);	
 	
 	/**

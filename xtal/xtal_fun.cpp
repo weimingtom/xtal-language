@@ -28,6 +28,23 @@ void InstanceVariableGetterImpl::call(const VMachine& vm){
 	vm.impl()->return_result(p->variable(number_, core_));
 }
 
+InstanceVariableSetterImpl::InstanceVariableSetterImpl(int_t number, FrameCore* core)
+	:number_(number), core_(core){
+}
+
+void InstanceVariableSetterImpl::call(const VMachine& vm){
+	const Any& self = vm.get_arg_this();
+	HaveInstanceVariables* p;
+	if(self.type()==TYPE_BASE){
+		p = self.impl()->have_instance_variables();
+	}else{
+		p = &empty_have_instance_variables;
+	}
+	p->set_variable(number_, core_, vm.impl()->arg(0));
+	vm.impl()->return_result();
+}
+
+
 FunImpl::FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore* core)
 	:outer_(outer), this_(athis), code_(code), core_(core){
 	set_class(TClass<Fun>::get());
@@ -69,7 +86,7 @@ void FunImpl::check_arg(const VMachine& vm){
 void FunImpl::call(const VMachine& vm){
 	check_arg(vm);
 	vm.set_arg_this(this_);
-	vm.impl()->carry_over(Fun(this));
+	vm.impl()->carry_over(this);
 }
 
 int_t FunImpl::arity(){
@@ -78,12 +95,12 @@ int_t FunImpl::arity(){
 
 void LambdaImpl::call(const VMachine& vm){
 	vm.set_arg_this(this_);
-	vm.impl()->mv_carry_over(Fun(this));
+	vm.impl()->mv_carry_over(this);
 }
 
 void MethodImpl::call(const VMachine& vm){
 	check_arg(vm);
-	vm.impl()->carry_over(Fun(this));
+	vm.impl()->carry_over(this);
 }
 
 class VMachineMgrImpl : public AnyImpl{
@@ -139,10 +156,10 @@ void FiberImpl::halt(){
 void FiberImpl::call_helper(const VMachine& vm, bool add_succ_or_fail_result){
 	vm.set_arg_this(this_);
 	if(resume_pc_==0){
-		if(vm_==null){ vm_ = vm_mgr()->take_over(); }
-		resume_pc_ = vm_.impl()->start_fiber(Fiber(this), vm.impl(), add_succ_or_fail_result);
+		if(vm_.is_null()){ vm_ = vm_mgr()->take_over(); }
+		resume_pc_ = vm_.impl()->start_fiber(this, vm.impl(), add_succ_or_fail_result);
 	}else{ 
-		resume_pc_ = vm_.impl()->resume_fiber(Fiber(this), resume_pc_, vm.impl(), add_succ_or_fail_result);
+		resume_pc_ = vm_.impl()->resume_fiber(this, resume_pc_, vm.impl(), add_succ_or_fail_result);
 	}
 	if(resume_pc_==0){
 		vm_mgr()->take_back(vm_);

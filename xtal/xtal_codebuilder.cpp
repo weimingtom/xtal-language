@@ -595,6 +595,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 				compile(p->value);
 				count++;
 				if(count>32){
+					p = p->next;
 					break;
 				}
 			}
@@ -614,6 +615,7 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 				compile(p->value);
 				count++;
 				if(count>16){
+					p = p->next;
 					break;
 				}
 			}
@@ -957,8 +959,12 @@ void CodeBuilder::compile(Expr* ex, int_t need_result_count){
 				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
 				class_scopes_.top()->frame_number = p_->frame_core_table_.size()-1;
 
+				TList<ClassExpr::Attr>::Node* p2 = e->attrs.head;
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
+					compile(p2->value.ns);
+					put_inst(InstDefineClassMember(lookup_variable(p2->value.var), p2->value.var, p2->value.accessibility));
+					p2 = p2->next;
 				}
 				class_scopes_.downsize(1);
 			}block_end();
@@ -1515,10 +1521,6 @@ void CodeBuilder::compile(Stmt* ex){
 					compile(p->value);
 				}
 			}block_end();
-		}
-
-		XTAL_EXPR_CASE(SetAccessibilityStmt){
-			put_inst(InstSetAccessibility(e->var, e->kind));
 		}
 		
 		XTAL_EXPR_CASE(TopLevelStmt){

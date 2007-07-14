@@ -484,7 +484,7 @@ public:
 		void variable(int_t i, const UncountedAny& v){ variables_[i] = v; }
 		void self(const UncountedAny& v){ self_ = v; }
 		void arguments(const UncountedAny& v){ arguments_ = v; }
-		void hint1(const UncountedAny& v){ hint1_ = v; }
+		void hint1(const UncountedAny& v){ hint1_ = v; XTAL_ASSERT(v.type()<16); }
 		void hint2(const UncountedAny& v){ hint2_ = v; }
 
 		void inc_ref(){
@@ -595,7 +595,7 @@ private:
 			push_ff(pc + n, 1, 0, 0, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self())){
+			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -612,7 +612,7 @@ private:
 			push_ff(pc + n, 1, 1, 0, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self())){
+			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -627,7 +627,7 @@ private:
 			push_ff(pc + n, 1, 1, 0, self.cref());
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self())){
+			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
 				set_arg_this(target.cref());
 				ret.call(myself());
 			}
@@ -734,7 +734,6 @@ private:
 	const inst_t* USHR_ASSIGN(const inst_t* pc);
 	const inst_t* SHL_ASSIGN(const inst_t* pc);
 
-	const inst_t* SET_ACCESSIBILITY(const inst_t* pc);
 	const inst_t* CURRENT_CONTEXT(const inst_t* pc);
 
 	void hook_return(const inst_t* pc);
@@ -752,8 +751,9 @@ private:
 
 	struct MemberCacheTable{
 		struct Unit{
-			AnyImpl* klass;
-			StringImpl* name;
+			int_t klass;
+			int_t name;
+			int_t ns;
 			UncountedAny member;
 			uint_t mutate_count;
 		};
@@ -767,6 +767,7 @@ private:
 		MemberCacheTable(){
 			for(int_t i=0; i<CACHE_MAX; ++i){
 				table_[i].klass = 0;
+				table_[i].member = null;
 			}
 			hit_ = 0;
 			miss_ = 0;
@@ -784,23 +785,26 @@ private:
 			return miss_;
 		}
 
-		const Any& cache(const Any& target_class, const ID& member_name, const Any& self){
-			if(target_class.type()!=TYPE_BASE)
-				return null;
+		const Any& cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
 
-			AnyImpl* klass = target_class.impl();
-			StringImpl* name = member_name.impl();
+			uint_t klass = target_class.rawvalue();
+			uint_t name = member_name.rawvalue();
+			uint_t ns = nsp.rawvalue();
 
-			uint_t hash = (((uint_t)klass)>>3) + (((uint_t)name)>>2);
+			uint_t hash = (klass>>3) + (name>>2) + (ns);
 			Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
-			if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name){
+			if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
 				hit_++;
 				return unit.member.cref();
 			}else{
+				if(target_class.type()!=TYPE_BASE)
+					return null;
+
 				miss_++;
-				unit.member = klass->member(member_name, self);
+				unit.member = target_class.impl()->member(member_name, self, nsp);
 				unit.klass = klass;
 				unit.name = name;
+				unit.ns = ns;
 				unit.mutate_count = global_mutate_count;
 				return unit.member.cref();
 			}
@@ -809,8 +813,8 @@ private:
 	
 public:
 
-	const Any& member_cache(const Any& target_class, const ID& member_name, const Any& self){
-		return member_cache_table_.cache(target_class, member_name, self);
+	const Any& member_cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
+		return member_cache_table_.cache(target_class, member_name, self, nsp);
 	}
 
 private:

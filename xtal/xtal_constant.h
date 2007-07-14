@@ -24,9 +24,9 @@ enum{
 };
 
 enum{
-	KIND_PUBLIC,
-	KIND_PROTECTED,
-	KIND_PRIVATE,
+	KIND_PUBLIC = 0,
+	KIND_PROTECTED = 1<<0,
+	KIND_PRIVATE = 1<<1,
 };
 
 enum{

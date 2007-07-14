@@ -284,7 +284,7 @@ void gc(){
 			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 				if((*it)->ref_count()!=0
 					// finalizeメソッドがあるオブジェクトも生き延びさせる
-					|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it)){
+					|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it, null)){
 					std::swap(*it, *objects_alive++);
 				}
 			}
@@ -306,7 +306,7 @@ void gc(){
 
 				// 死ぬ予定のオブジェクトのfinalizerを実行する
 				for(int_t i=objects_alive_n; i<objects_current_n; ++i){
-					if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i])){
+					if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i], null)){
 						vm.setup_call(0);
 						vm.set_arg_this(objects_begin_[i]);
 						ret.call(vm);
@@ -391,7 +391,7 @@ void full_gc(){
 							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
 								if((*it)->ref_count()!=0 
 									// finalizeメソッドがあるオブジェクトも生き延びさせる
-									|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it)){
+									|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it, null)){
 									end = false;
 									(*it)->visit_members(m);
 									std::swap(*it, *objects_alive++);
@@ -433,7 +433,7 @@ void full_gc(){
 
 						// 死ぬ予定のオブジェクトのfinalizerを実行する
 						for(int_t i=objects_alive_n; i<objects_current_n; ++i){		
-							if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i])){
+							if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i], null)){
 								vm.setup_call(0);
 								vm.set_arg_this(objects_begin_[i]);
 								ret.call(vm);
@@ -584,15 +584,11 @@ void AnyImpl::call(const VMachine& vm){
 	UncountedAny(this).cref().send(Xid(op_call), vm);
 }
 
-const Any& AnyImpl::member(const ID& name){ 
+const Any& AnyImpl::member(const ID& name, const Any& self, const Any& ns){ 
 	return null; 
 }
 
-const Any& AnyImpl::member(const ID& name, const Any& self){ 
-	return null; 
-}
-
-void AnyImpl::def(const ID& name, const Any& value){
+void AnyImpl::def(const ID& name, const Any& value, int_t accessibility, const Any& ns){
 
 }
 
@@ -748,7 +744,7 @@ Any::Any(const char* str){
 const Any& Any::member(const ID& name) const{
 	switch(type()){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ return impl()->member(name); }
+		XTAL_CASE(TYPE_BASE){ return impl()->member(name, *this, null); }
 		XTAL_CASE(TYPE_NOP){ return *this; }
 	}
 	return null;
@@ -757,18 +753,27 @@ const Any& Any::member(const ID& name) const{
 const Any& Any::member(const ID& name, const Any& self) const{
 	switch(type()){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self); }
+		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self, null); }
 		XTAL_CASE(TYPE_NOP){ return *this; }
 	}
 	return null;
 }
 
-void Any::def(const ID& name, const Any& value) const{
+const Any& Any::member(const ID& name, const Any& self, const Any& ns) const{
+	switch(type()){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self, ns); }
+		XTAL_CASE(TYPE_NOP){ return *this; }
+	}
+	return null;
+}
+
+void Any::def(const ID& name, const Any& value, int_t accessibility, const Any& ns) const{
 	switch(type()){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
 			value.set_object_name(name, object_name_force(), *this);
-			impl()->def(name, value);
+			impl()->def(name, value, accessibility, ns);
 		}
 	}
 }
@@ -776,7 +781,7 @@ void Any::def(const ID& name, const Any& value) const{
 void Any::send(const ID& name, const VMachine& vm) const{
 	const Class& cls = get_class();
 	vm.impl()->set_hint(cls, name);
-	if(const Any& ret = vm.impl()->member_cache(cls, name, *this)){
+	if(const Any& ret = vm.impl()->member_cache(cls, name, *this, null)){
 		vm.set_arg_this(*this);
 		ret.call(vm);
 	}

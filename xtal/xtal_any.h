@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "xtal_fwd.h"
 #include "xtal_utility.h"
+#include "xtal_fwd.h"
 
 namespace xtal{
 
@@ -423,10 +423,19 @@ public:
 	const Any& member(const ID& name, const Any& self) const;
 
 	/**
+	* @brief nameメンバを取得する。
+	* 可触性を考慮したメンバ取得
+	*
+	* @retval null そのメンバは存在しない
+	* @retval 非null nameに対応したメンバ  
+	*/
+	const Any& member(const ID& name, const Any& self, const Any& ns) const;
+
+	/**
 	* @brief nameメンバを初期値valueで定義する。
 	*
 	*/
-	void def(const ID& name, const Any& value) const;
+	void def(const ID& name, const Any& value, int_t accessibility = 0, const Any& ns = (const Any&)null) const;
 
 	/**
 	* @brief このオブジェクトが所属するクラスを返す。
@@ -861,9 +870,8 @@ public:
 	virtual void visit_members(Visitor& m);
 	virtual void call(const VMachine& vm);
 	virtual int_t arity();
-	virtual const Any& member(const ID& name);
-	virtual const Any& member(const ID& name, const Any& self);
-	virtual void def(const ID& name, const Any& value);
+	virtual const Any& member(const ID& name, const Any& self, const Any& ns);
+	virtual void def(const ID& name, const Any& value, int_t accessibility, const Any& ns);
 	virtual HaveInstanceVariables* have_instance_variables();
 	virtual String object_name();
 	virtual int_t object_name_force();

@@ -88,55 +88,26 @@ struct Alloc{
     typedef T value_type;
 
 	template<class U>
-	struct rebind{
-		typedef Alloc<U> other;
-    };
+	struct rebind{ typedef Alloc<U> other; };
 
     Alloc(){}
-
 	template<class U>
 	Alloc(const Alloc<U>&){}
-
 	template<class U>
-	Alloc<T>& operator=(const Alloc<U>&){
-		return* this;
-	}
-
+	Alloc<T>& operator=(const Alloc<U>&){ return* this; }
 	Alloc(const Alloc<T>&){}
+    Alloc<T>& operator=(const Alloc<T>&){ return* this; }
 
-    Alloc<T>& operator=(const Alloc<T>&){
-		return* this;
-	}
+    pointer address(reference x) const{ return &x; }
+    const_pointer address(const_reference x) const{ return &x; }
 
-    pointer address(reference x) const{
-		return &x;
-	}
-
-    const_pointer address(const_reference x) const{
-		return &x;
-	}
-
-    pointer allocate(size_type n, const void* = 0){
-		return static_cast<pointer>(user_malloc(sizeof(T)*n));
-	}
-
-    void deallocate(pointer p, size_type n){
-		user_free(p, sizeof(T)*n);
-    }
+    pointer allocate(size_type n, const void* = 0){ return static_cast<pointer>(user_malloc(sizeof(T)*n)); }
+    void deallocate(pointer p, size_type n){ user_free(p, sizeof(T)*n); }
 	
-	void construct(pointer p, const T& val){
-		new(p) T(val);
-	}
-
-    void destroy(pointer p){
-		p->~T();
-		p = 0;
-	}
+	void construct(pointer p, const T& val){ new(p) T(val); }
+    void destroy(pointer p){ p->~T(); p = 0; }
 	
-    size_type max_size() const{
-		return 0xffffffffU/sizeof(T);
-	}
-
+    size_type max_size() const{ return 0xffffffffU/sizeof(T); }
 };
 
 template<class T, class U> 
@@ -158,25 +129,15 @@ struct Alloc<void> {
     typedef void value_type;
 
 	template<class U>
-	struct rebind{
-		typedef Alloc<U> other;
-    };
+	struct rebind{ typedef Alloc<U> other; };
 
     Alloc(){}
-
 	Alloc(const Alloc<void> &){}
-
-    Alloc<void>& operator=(const Alloc<void>&){
-		return* this;
-	}
-
+    Alloc<void>& operator=(const Alloc<void>&){ return* this; }
 	template<class U>
 	Alloc(const Alloc<U>&){}
-
 	template<class U>
-	Alloc<void>& operator=(const Alloc<U>&){
-		return* this;
-	}
+	Alloc<void>& operator=(const Alloc<U>&){ return* this; }
 };
 
 /*
@@ -251,31 +212,18 @@ public:
 		void* buf(){ return this+1; }
 	};
 
-	SimpleMemoryManager(){
-		head_ = begin_ = end_ = 0;
-	}
+	SimpleMemoryManager(){ head_ = begin_ = end_ = 0; }
 	
 	void init(void* begin, void* end);
-	
+
 	void* malloc(size_t size);
-	
 	void free(void* p);
 
-	Chunk* begin(){
-		return begin_;
-	}
-	
-	Chunk* end(){
-		return end_;
-	}
+	Chunk* begin(){ return begin_; }
+	Chunk* end(){ return end_; }
 
-	Chunk* to_chunk(void* p){
-		return (Chunk*)p-1;
-	}
-
-	void add_ref(void* p){
-		to_chunk(p)->used++;
-	}
+	Chunk* to_chunk(void* p){ return (Chunk*)p-1; }
+	void add_ref(void* p){ to_chunk(p)->used++; }
 	
 private:
 	Chunk* head_;

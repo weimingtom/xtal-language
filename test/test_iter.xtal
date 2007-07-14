@@ -8,12 +8,12 @@
 
 
 {
-	ret : range(5, 10).each.collect(fun(x) x*2).join(",");
+	ret : range(5, 10).each.collect(|x| x*2).join(",");
 	assert ret=="10,12,14,16,18";
 }
 
 {
-	ret : [5, 8, 7, 3, 2].each.select(fun(x) x%2 != 0).join(",");
+	ret : [5, 8, 7, 3, 2].each.select(|x| x%2 != 0).join(",");
 	assert ret=="5,7,3";
 }
 

@@ -69,6 +69,9 @@ void* user_malloc_nothrow(size_t size){
 
 void user_free(void* p, size_t size){
 	used_user_malloc_size_-=size;
+#ifdef XTAL_DEBUG
+	memset(p, 'd', size);
+#endif
 	user_free_(p);
 }
 

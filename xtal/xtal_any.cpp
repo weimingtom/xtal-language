@@ -179,8 +179,6 @@ void initialize(){
 	/**/
 	
 	atexit(&uninitialize); // uninitializeを登録する
-	atexit(&uninitialize); // uninitializeを登録する え！？2回も！？
-
 }
 
 void uninitialize(){
@@ -789,7 +787,7 @@ void Any::send(const ID& name, const VMachine& vm) const{
 
 void Any::call(const VMachine& vm) const{
 	switch(type()){
-		XTAL_DEFAULT{ vm.return_result(*this); }
+		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ impl()->call(vm); }
 	}
 }

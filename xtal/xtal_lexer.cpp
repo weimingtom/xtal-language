@@ -285,9 +285,14 @@ void Lexer::set_normal_mode(){
 	
 int_t Lexer::parse_ident(){
 	string_t buf;
-	buf += read_from_reader();
-	while(test_ident_rest(reader_.peek())){
+
+	int len = ch_len(reader_.peek());
+	while(len--)
 		buf += read_from_reader();
+	while(test_ident_rest(reader_.peek())){
+		len = ch_len(reader_.peek());
+		while(len--)
+			buf += read_from_reader();
 	}
 	ID id(buf);
 	if(Any ret = keyword_map_[id]){

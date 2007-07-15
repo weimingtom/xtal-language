@@ -5,6 +5,11 @@
 
 namespace xtal{
 	
+/**
+* @brief 先頭バイトからそのマルチバイト文字が何文字かを調べる
+*/
+int_t ch_len(char_t lead);
+
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;
 }
@@ -30,11 +35,11 @@ inline bool test_space(int ch){
 }
 
 inline bool test_ident_first(int ch){
-	return test_alpha(ch);
+	return test_alpha(ch) || ch_len(ch)>1;
 }
 
 inline bool test_ident_rest(int ch){
-	return test_alpha(ch) || test_digit(ch) || ch=='_';
+	return test_ident_first(ch) || test_digit(ch) || ch=='_';
 }
 
 inline bool test_delim(int ch){
@@ -49,11 +54,6 @@ inline int to_lalpha(int ch){
 	using namespace std;
 	return tolower(ch);
 }
-
-/**
-* @brief 先頭バイトからそのマルチバイト文字が何文字かを調べる
-*/
-int_t ch_len(char_t lead);
 
 void set_code_sjis();
 void set_code_euc();

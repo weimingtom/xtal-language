@@ -57,12 +57,6 @@ VMachineImpl::VMachineImpl(){
 	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
 	throw_nop_code_ = InstThrowNull::NUMBER;
-
-	FunFrame& f = fun_frames_.push();
-	f.pc = &end_code_;
-	f.calling_state = FunFrame::CALLING_STATE_NONE;
-	f.yieldable = false;
-
 	resume_pc_ = 0;
 }
 
@@ -103,12 +97,11 @@ const inst_t* VMachineImpl::start_fiber(FiberImpl* fun, VMachineImpl* vm, bool a
 	carry_over(fun);
 	ff().yieldable = true;
 
-	execute_try(ff().pc);
-	ff().calling_state = FunFrame::CALLING_STATE_NONE;
+	execute_try(ff().called_pc);
 
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 
-	vm->ff().pc = &cleanup_call_code_;
+	vm->ff().called_pc = &cleanup_call_code_;
 	vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
 	
 	return resume_pc_;
@@ -118,19 +111,18 @@ const inst_t* VMachineImpl::resume_fiber(FiberImpl* fun, const inst_t* pc, VMach
 
 	yield_result_count_ = 0;
 
+	ff().called_pc = pc;
 	ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
-	ff().pc = pc;
 	
 	resume_pc_ = 0;
 
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 
-	execute_try(ff().pc);
-	ff().calling_state = FunFrame::CALLING_STATE_NONE;
+	execute_try(ff().called_pc);
 	
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 
-	vm->ff().pc = &cleanup_call_code_;
+	vm->ff().called_pc = &cleanup_call_code_;
 	vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
 
 	return resume_pc_;
@@ -140,7 +132,7 @@ void VMachineImpl::exit_fiber(){
 	XTAL_TRY{
 		yield_result_count_ = 0;
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
-		ff().pc = resume_pc_;
+		ff().called_pc = resume_pc_;
 		resume_pc_ = 0;
 		execute_try(&throw_nop_code_);
 	}XTAL_CATCH(e){
@@ -152,23 +144,7 @@ void VMachineImpl::exit_fiber(){
 void VMachineImpl::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
-	fun_frames_.resize(1);
-	FunFrame& f = fun_frames_.top();
-	f.pc = &end_code_;
-	f.calling_state = FunFrame::CALLING_STATE_NONE;
-	f.yieldable = false;
-	f.instance_variables = &empty_have_instance_variables;
-	
-	f.self(null);
-	f.hint1(null);
-	f.hint2(null);
-	f.fun(null);
-	f.outer(null);
-	f.variables_.clear();
-	f.scopes.clear();
-	f.arguments(null);
-	f.temp_ = null;
-	f.temp2_ = null;
+	fun_frames_.resize(0);
 }
 	
 void VMachineImpl::recycle_call(){
@@ -176,7 +152,7 @@ void VMachineImpl::recycle_call(){
 	downsize(f.ordered_arg_count+f.named_arg_count*2);
 	f.ordered_arg_count = 0;
 	f.named_arg_count = 0;
-	f.pc = &throw_unsupported_error_code_;
+	f.called_pc = &throw_unsupported_error_code_;
 	f.calling_state = FunFrame::CALLING_STATE_NONE;
 }
 
@@ -232,13 +208,13 @@ void VMachineImpl::push_ff_args(const inst_t* pc, int_t need_result_count, int_t
 }
 
 void VMachineImpl::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
-	ff().pc = pc;
 	FunFrame& f = ff();
 	f.ordered_arg_count = ordered_arg_count;
 	f.named_arg_count = named_arg_count;
 	f.self(self);
+	//f.poped_pc = pc;
+	f.called_pc = &throw_unsupported_error_code_;
 	f.calling_state = FunFrame::CALLING_STATE_NONE;
-	f.pc = &throw_unsupported_error_code_;
 }
 
 void VMachineImpl::recycle_ff_args(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -309,14 +285,14 @@ Arguments VMachineImpl::make_args(const Fun& fun){
 }
 
 void VMachineImpl::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
-	ff().pc = pc;
 	FunFrame& f = fun_frames_.push();
 	f.need_result_count = need_result_count;
 	f.result_count = 0;
 	f.ordered_arg_count = ordered_arg_count;
 	f.named_arg_count = named_arg_count;
+	f.called_pc = &throw_unsupported_error_code_;
 	f.calling_state = FunFrame::CALLING_STATE_NONE;
-	f.pc = &throw_unsupported_error_code_;
+	f.poped_pc = pc;
 	f.self(self);
 	f.hint1(null);
 	f.hint2(null);
@@ -332,12 +308,12 @@ void VMachineImpl::push_ff(const inst_t* pc, int_t need_result_count, int_t orde
 
 const Any& VMachineImpl::result(int_t pos){
 	if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
-		const inst_t* pc = prev_ff().pc;
-		prev_ff().pc = &end_code_;
-		execute_try(ff().pc);
+		const inst_t* temp = ff().poped_pc;
+		ff().poped_pc = &end_code_;
+		execute_try(ff().called_pc);
 		fun_frames_.upsize(1);
-		ff().pc = &cleanup_call_code_;
-		prev_ff().pc = pc;
+		ff().poped_pc = temp;
+		ff().called_pc = &cleanup_call_code_;
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
 		String hint1 = ff().hint1().get_class().object_name();
@@ -364,7 +340,6 @@ const Any& VMachineImpl::result(int_t pos){
 	
 void VMachineImpl::carry_over(FunImpl* fun){
 	FunFrame& f = ff();
-	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
 	f.fun(fun);
 	f.outer(fun->outer());
@@ -372,8 +347,10 @@ void VMachineImpl::carry_over(FunImpl* fun){
 	f.variables_.clear();
 	f.scopes.clear();
 
-	f.pc = fun->pc()+fun->code().impl()->data();
-	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
+	f.called_pc = fun->pc()+fun->code().impl()->data();
+	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+
+	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	
 	if(f.self().type()==TYPE_BASE){
 		f.instance_variables = f.self().impl()->have_instance_variables();
@@ -401,7 +378,6 @@ void VMachineImpl::carry_over(FunImpl* fun){
 
 void VMachineImpl::mv_carry_over(FunImpl* fun){
 	FunFrame& f = ff();
-	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 	
 	f.fun(fun);
 	f.outer(fun->outer());
@@ -409,8 +385,10 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 	f.variables_.clear();
 	f.scopes.clear();
 
-	f.pc = fun->pc()+fun->code().impl()->data();
-	f.yieldable = prev_ff().pc==&end_code_ ? false : prev_ff().yieldable;
+	f.called_pc = fun->pc()+fun->code().impl()->data();
+	f.calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+
+	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 
 	if(f.self().type()==TYPE_BASE){
 		f.instance_variables = f.self().impl()->have_instance_variables();
@@ -528,7 +506,7 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 
 //std::ofstream log("code.txt");
 //#define XTAL_VM_CASE(key) goto begin; case key: log<<(#key)<<std::endl;
-//#define XTAL_VM_CASE(key) goto begin; case key: printf("%s\n", #key);
+//#define XTAL_VM_CASE(key) } goto begin; case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc; printf("%s\n", #key);
 #define XTAL_VM_NODEFAULT } goto begin; XTAL_NODEFAULT
 #define XTAL_VM_FIRST_CASE(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
 #define XTAL_VM_CASE(key) } goto begin; case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
@@ -546,22 +524,20 @@ retry:
 			execute_inner(start);
 		}XTAL_CATCH(e){
 			last_except_ = e;
-			start = CATCH_BODY(ff().pc, stack_size, fun_frames_size);
+			start = CATCH_BODY(ff().called_pc, stack_size, fun_frames_size);
 
 			if(start){
 				goto retry;
 			}
 
-			if(last_except_.cref()){
-				XTAL_THROW(last_except_.cref());
-			}else{
-				goto retry;
-			}
+			pop_ff();
+			XTAL_THROW(last_except_.cref());	
 		}
 #ifndef XTAL_NO_EXCEPT
 		catch(...){
 			last_except_ = null;
 			CATCH_BODY(start, stack_size, fun_frames_size);
+			pop_ff();
 			throw;
 		}
 #endif
@@ -826,21 +802,28 @@ XTAL_VM_SWITCH(*pc){
 		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
 			push(null);
 		}
-		pop_ff(); 
-		pc = ff().pc; 
+		pc = pop_ff();  
 	}
 	XTAL_VM_CASE(Return1){
 		if(ff().need_result_count!=1){
 			adjust_result(1);
 		}
-		pop_ff(); 
-		pc = ff().pc; 
+		pc = pop_ff();  
 	}
 
-	XTAL_VM_CASE(Return2){ adjust_result(2); pop_ff(); pc = ff().pc; }
-	XTAL_VM_CASE(Return){ adjust_result(inst.results); pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(Return2){ 
+		adjust_result(2); 
+		pc = pop_ff(); 
+	}
+
+	XTAL_VM_CASE(Return){ 
+		adjust_result(inst.results); 
+		pc = pop_ff();  
+	}
 	
-	XTAL_VM_CASE(CleanupCall){ pop_ff(); pc = ff().pc; }
+	XTAL_VM_CASE(CleanupCall){ 
+		pc = pop_ff();
+	}
 
 	XTAL_VM_CASE(Yield){
 		yield_result_count_ = inst.results;	
@@ -1038,8 +1021,11 @@ XTAL_VM_SWITCH(*pc){
 	XTAL_VM_CASE(ClassBegin){ pc = CLASS_BEGIN(pc); }
 	XTAL_VM_CASE(ClassEnd){ pc = CLASS_END(pc); }
 	XTAL_VM_CASE(SetName){ pc = SET_NAME(pc); }
-	XTAL_VM_CASE(CheckUnsupported){ return_result(nop); pc = ff().pc; }
-	XTAL_VM_CASE(Assert){ pc = CHECK_ASSERT(pc); }
+
+	XTAL_VM_CASE(CheckUnsupported){ 
+		return_result(nop); 
+		pc = pop_ff();
+	}
 	
 	XTAL_VM_CASE(DefineClassMember){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1057,21 +1043,6 @@ XTAL_VM_SWITCH(*pc){
 	
 	XTAL_VM_CASE(BreakPoint){ pc = BREAKPOINT(pc); }
 
-	XTAL_VM_CASE(Throw){ 
-		THROW(pc); 
-		goto except_catch; 
-	}
-
-	XTAL_VM_CASE(ThrowUnsupportedError){ 
-		THROW_UNSUPPROTED_ERROR(); 
-		goto except_catch;
-	}
-
-	XTAL_VM_CASE(ThrowNull){ 
-		last_except_ = null; 
-		goto except_catch; 
-	}
-
 	XTAL_VM_CASE(Call){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			UncountedAny self = ff().self();
@@ -1079,7 +1050,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			target.cref().call(myself());
 		}
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(Call_A){
@@ -1089,7 +1060,7 @@ XTAL_VM_SWITCH(*pc){
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			target.cref().call(myself());
 		}
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(Call_T){
@@ -1099,7 +1070,7 @@ XTAL_VM_SWITCH(*pc){
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			target.cref().call(myself());
 		}
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(Call_AT){
@@ -1109,7 +1080,7 @@ XTAL_VM_SWITCH(*pc){
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			target.cref().call(myself());
 		}
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 
@@ -1118,7 +1089,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny self = ff().self();
 		push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 		carry_over(((const Fun&)fn.cref()).impl());
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(CallCallee_A){
@@ -1126,7 +1097,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny self = ff().self();
 		push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 		carry_over(((const Fun&)fn.cref()).impl());
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(CallCallee_T){
@@ -1134,7 +1105,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny self = ff().self();
 		recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 		carry_over(((const Fun&)fn.cref()).impl());
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 	XTAL_VM_CASE(CallCallee_AT){
@@ -1142,7 +1113,7 @@ XTAL_VM_SWITCH(*pc){
 		UncountedAny self = ff().self();
 		recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 		carry_over(((const Fun&)fn.cref()).impl());
-		pc = ff().pc;	
+		pc = ff().called_pc;	
 	}
 
 
@@ -1159,7 +1130,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 	XTAL_VM_CASE(Send_A){
@@ -1175,7 +1146,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 	XTAL_VM_CASE(Send_T){
@@ -1191,7 +1162,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 	XTAL_VM_CASE(Send_AT){
@@ -1207,7 +1178,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 	XTAL_VM_CASE(SendIfDefined){
@@ -1216,7 +1187,7 @@ XTAL_VM_SWITCH(*pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			ff().pc = &check_unsupported_code_;
+			ff().called_pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
@@ -1224,7 +1195,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 
@@ -1234,7 +1205,7 @@ XTAL_VM_SWITCH(*pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			ff().pc = &check_unsupported_code_;
+			ff().called_pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
@@ -1242,7 +1213,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 
@@ -1252,7 +1223,7 @@ XTAL_VM_SWITCH(*pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			ff().pc = &check_unsupported_code_;
+			ff().called_pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
@@ -1260,7 +1231,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 
@@ -1270,7 +1241,7 @@ XTAL_VM_SWITCH(*pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			ff().pc = &check_unsupported_code_;
+			ff().called_pc = &check_unsupported_code_;
 			const Class& cls = target.cref().get_class();
 			set_hint(cls, sym);
 			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
@@ -1278,7 +1249,7 @@ XTAL_VM_SWITCH(*pc){
 				ret.call(myself());
 			}
 		}
-		pc = ff().pc; 	
+		pc = ff().called_pc; 	
 	}
 
 	XTAL_VM_CASE(SetMultipleLocalVariable4Direct){
@@ -1314,6 +1285,46 @@ XTAL_VM_SWITCH(*pc){
 		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
 		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
 		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
+		pc += inst.ISIZE;
+	}
+
+	XTAL_VM_CASE(Throw){ 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Any except = pop();
+			if(!except){
+				except = last_except_.cref();
+			}
+
+			if(!except.is(builtin().member("Exception"))){
+				last_except_ = append_backtrace(pc, builtin().member("RuntimeError")(except));
+			}
+		}
+		goto except_catch; 
+	}
+
+	XTAL_VM_CASE(ThrowUnsupportedError){ 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			last_except_ = unsupported_error(ff().hint1().object_name(), ff().hint2());
+		}
+		goto except_catch;
+	}
+
+	XTAL_VM_CASE(ThrowNull){ 
+		last_except_ = null; 
+		goto except_catch; 
+	}
+
+	XTAL_VM_CASE(Assert){ 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Any expr = get(2);
+			Any expr_string = get(1) ? get(1) : Any("");
+			Any message = get() ? get() : Any("");
+			downsize(3);
+			if(!expr){
+				last_except_ = builtin().member("AssertionFailed")(message, expr_string);
+				goto except_catch; 
+			}
+		}
 		pc += inst.ISIZE;
 	}
 
@@ -1401,9 +1412,9 @@ const inst_t* VMachineImpl::TRY_BEGIN(const inst_t* pc){
 	ExceptFrame& ef = except_frames_.push();
 	
 	ef.core = &code().impl()->except_core_table_[inst.core_number];
+	ef.fun_frame_count = fun_frames_.size();
 	ef.scope_count = ff().scopes.size();
 	ef.stack_count = stack_size();
-	ef.fun_frame_count = fun_frames_.size();
 	
 	return pc + inst.ISIZE;
 }
@@ -1538,7 +1549,7 @@ const inst_t* VMachineImpl::AT(const inst_t* pc){
 		inner_setup_call(pc+1, 1, idx);
 		target.send(Xid(op_at), myself());
 	}
-	return ff().pc; 
+	return ff().called_pc; 
 }
 
 const inst_t* VMachineImpl::SET_AT(const inst_t* pc){ 
@@ -1549,7 +1560,7 @@ const inst_t* VMachineImpl::SET_AT(const inst_t* pc){
 		inner_setup_call(pc+1, 0, idx, value);
 		target.send(Xid(op_set_at), myself());
 	}
-	return ff().pc;
+	return ff().called_pc;
 }
 
 const inst_t* VMachineImpl::PUSH_ARRAY(const inst_t* pc){
@@ -2034,7 +2045,7 @@ const inst_t* VMachineImpl::LOCAL_VARIABLE_INC(const inst_t* pc){
 		XTAL_CASE(TYPE_FLOAT){ SET_LOCAL_VARIABLE(inst.number, UncountedAny(a.fvalue()+1).cref()); return pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE; }
 	}
 	a.cref().send(Xid(op_inc), inner_setup_call(pc + inst.ISIZE, 1));
-	return ff().pc;
+	return ff().called_pc;
 }
 
 const inst_t* VMachineImpl::LOCAL_VARIABLE_DEC(const inst_t* pc){
@@ -2045,7 +2056,7 @@ const inst_t* VMachineImpl::LOCAL_VARIABLE_DEC(const inst_t* pc){
 		XTAL_CASE(TYPE_FLOAT){ SET_LOCAL_VARIABLE(inst.number, UncountedAny(a.fvalue()-1).cref()); return pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE; }
 	}
 	a.cref().send(Xid(op_dec), inner_setup_call(pc + inst.ISIZE, 1));
-	return ff().pc;
+	return ff().called_pc;
 }
 
 const inst_t* VMachineImpl::LocalVariableIncDirect(const inst_t* pc){
@@ -2056,7 +2067,7 @@ const inst_t* VMachineImpl::LocalVariableIncDirect(const inst_t* pc){
 		XTAL_CASE(TYPE_FLOAT){ a = UncountedAny(a.fvalue()+1); return pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE; }
 	}
 	a.cref().send(Xid(op_inc), inner_setup_call(pc + inst.ISIZE, 1));
-	return ff().pc;
+	return ff().called_pc;
 }
 
 const inst_t* VMachineImpl::LocalVariableDecDirect(const inst_t* pc){
@@ -2067,7 +2078,7 @@ const inst_t* VMachineImpl::LocalVariableDecDirect(const inst_t* pc){
 		XTAL_CASE(TYPE_FLOAT){ a = UncountedAny(a.fvalue()-1); return pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE; }
 	}
 	a.cref().send(Xid(op_dec), inner_setup_call(pc + inst.ISIZE, 1));
-	return ff().pc;
+	return ff().called_pc;
 }
 
 const inst_t* VMachineImpl::ADD_ASSIGN(const inst_t* pc){ 
@@ -2248,34 +2259,6 @@ void VMachineImpl::hook_return(const inst_t* pc){
 	}
 }
 
-void VMachineImpl::THROW(const inst_t* pc){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		last_except_ = pop();
-		if(last_except_.cref() && !last_except_.cref().is(builtin().member("Exception"))){
-			last_except_ = builtin().member("RuntimeError")(last_except_.cref());
-		}
-	}
-}
-
-void VMachineImpl::THROW_UNSUPPROTED_ERROR(){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		last_except_ = unsupported_error(ff().hint1().object_name(), ff().hint2());
-	}
-}
-	
-const inst_t* VMachineImpl::CHECK_ASSERT(const inst_t* pc){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any expr = get(2);
-		Any expr_string = get(1) ? get(1) : Any("");
-		Any message = get() ? get() : Any("");
-		if(!expr){ 
-			XTAL_THROW(append_backtrace(pc, builtin().member("AssertionFailed")(message, expr_string)));
-		}
-		downsize(3);
-	}
-	return pc+1;
-}
-
 const inst_t* VMachineImpl::BREAKPOINT(const inst_t* pc){
 	XTAL_VM_DEF(BreakPoint);
 	if(debug::is_enabled()){
@@ -2319,49 +2302,33 @@ const inst_t* VMachineImpl::BREAKPOINT(const inst_t* pc){
 	return pc + inst.ISIZE;
 }
 
-const inst_t* VMachineImpl::CATCH_BODY(const inst_t* lpc, int_t stack_size, int_t fun_frames_size){
+const inst_t* VMachineImpl::CATCH_BODY(const inst_t* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 
 		Any e = last_except_.cref();
 
-		if(fun_frames_size>(int_t)fun_frames_.size()){
-			return 0;
-		}
-		
+		// try .. catch .. finally文で囲われていない
 		if(except_frames_.empty()){
-			Any ep = e;
-			ep = append_backtrace(lpc+1, ep);
-			if(fun_frames_size<=(int_t)fun_frames_.size()){
-				hook_return(lpc);
-				pop_ff();
-			}
-			while(fun_frames_size<=(int_t)fun_frames_.size()){
-				ep = append_backtrace(ff().pc, ep);
-				hook_return(lpc);
-				pop_ff();
+			while((size_t)fun_frames_size<fun_frames_.size()){
+				hook_return(pc);
+				pc = pop_ff();
+				e = append_backtrace(pc, e);
 			}
 			resize(stack_size);
-			e = ep;
+			last_except_ = e;
 			return 0;
 		}
 
 		ExceptFrame& ef = except_frames_.top();
 
-		const inst_t* pc = &end_code_;
-		Any ep = e;
-
 		while((size_t)ef.fun_frame_count<fun_frames_.size()){
-			if(fun_frames_.size()==1)
-				break;
 			hook_return(pc);
-			if(prev_ff().pc != &end_code_){
-				pop_ff();
-				pc = ff().pc;	
-				ep = append_backtrace(pc - 1, ep);
-			}else{
-				pop_ff();
+			pc = pop_ff();
+			e = append_backtrace(pc, e);
+
+			if(pc==&end_code_){
 				resize(stack_size);
-				e = ep;
+				last_except_ = e;
 				return 0;
 			}
 		}
@@ -2388,6 +2355,7 @@ const inst_t* VMachineImpl::CATCH_BODY(const inst_t* lpc, int_t stack_size, int_
 		except_frames_.downsize(1);
 		return pc;
 	}
+
 	return 0;
 }
 	

@@ -92,22 +92,10 @@ public:
 
 	~VMachineImpl();
 
-
-	VMachineImpl& operator=(const VMachineImpl& vm){
-		if(this==&vm)
-			return *this;
-		//GCObserverImpl::operator=(vm);
-		resume_pc_= vm.resume_pc_;
-		yield_result_count_= vm.yield_result_count_;
-		stack_= vm.stack_;
-		fun_frames_= vm.fun_frames_;
-		except_frames_= vm.except_frames_;	
-		return *this;
-	}
-
 private:
 
-	VMachineImpl(const VMachineImpl& vm);
+	VMachineImpl(const VMachineImpl&);
+	VMachineImpl& operator=(const VMachineImpl&);
 
 public:
 
@@ -243,63 +231,63 @@ public:
 	
 	void return_result(){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		adjust_result(0);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
 	void return_result(const Any& value1){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		push(value1);
 		adjust_result(1);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 		
 	void return_result(const Any& value1, const Any& value2){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		push(value1);
 		push(value2);
 		adjust_result(2);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
 	void return_result(const Any& value1, const Any& value2, const Any& value3){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		push(value1);
 		push(value2);
 		push(value3);
 		adjust_result(3);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 		
 	void return_result(const Any& value1, const Any& value2, const Any& value3, const Any& value4){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		push(value1);
 		push(value2);
 		push(value3);
 		push(value4);
 		adjust_result(4);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
 	void return_result(const Array& values){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		FunFrame& f = ff();
 		int_t size = values.size();
 		for(int_t i=0; i<size; ++i){
 			push(values.at(i));
 		}
 		adjust_result(size);
-		f.pc = &cleanup_call_code_;
+		FunFrame& f = ff();
+		f.called_pc = &cleanup_call_code_;
 		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 	}
 
@@ -328,12 +316,12 @@ public:
 		
 		carry_over(fun);
 		
-		const inst_t* pc = prev_ff().pc;
-		prev_ff().pc = &end_code_;
-		execute_try(start_pc ? start_pc : ff().pc);
+		const inst_t* temp = ff().poped_pc;
+		ff().poped_pc = &end_code_;
+		execute_try(start_pc ? start_pc : ff().called_pc);
 		fun_frames_.upsize(1);
-		ff().pc = &cleanup_call_code_;
-		prev_ff().pc = pc;
+		ff().poped_pc = temp;
+		ff().called_pc = &cleanup_call_code_;
 		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 
 		downsize(ff().need_result_count);
@@ -442,8 +430,11 @@ public:
 
 	struct FunFrame{
 
-		// 保存されたプログラムカウント
-		const inst_t* pc;
+		// pop_ffしたときはこのpcから実行する
+		const inst_t* poped_pc;
+
+		// callしたときはこのpcから実行する
+		const inst_t* called_pc;
 
 		// スコープ情報 
 		PStack<FrameCore*> scopes;
@@ -552,7 +543,7 @@ public:
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v){
-		m & v.fun() & v.outer() & v.arguments() & v.hint1() & v.hint2() & v.self() & v.temp_.cref() & v.temp2_.cref();
+		m & v.fun_.cref() & v.outer_.cref() & v.arguments_.cref() & v.hint1_.cref() & v.hint2_.cref() & v.self_.cref() & v.temp_.cref() & v.temp2_.cref();
 		for(int_t i=0, size=v.variables_.size(); i<size; ++i){
 			m & v.variable(i);
 		}
@@ -567,11 +558,10 @@ public:
 	};
 
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
-	
 	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
 	void recycle_ff_args(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
-	void pop_ff(){ fun_frames_.pop(); }
+	const inst_t* pop_ff(){ return fun_frames_.pop().poped_pc; }
 
 	void push_args(int_t named_arg_count);
 
@@ -629,7 +619,7 @@ private:
 				ret.call(myself());
 			}
 		}
-		return ff().pc;
+		return ff().called_pc;
 	}
 
 	const inst_t* VMachineImpl::send2(const inst_t* pc, const ID& name, int_t n = 1){
@@ -646,7 +636,7 @@ private:
 				ret.call(myself());
 			}
 		}
-		return ff().pc;
+		return ff().called_pc;
 	}
 
 	const inst_t* VMachineImpl::send2r(const inst_t* pc, const ID& name, int_t n = 1){
@@ -661,7 +651,7 @@ private:
 				ret.call(myself());
 			}
 		}
-		return ff().pc;
+		return ff().called_pc;
 	}
 
 	const inst_t* ARRAY_APPEND(const inst_t* pc);
@@ -767,17 +757,6 @@ private:
 
 	void hook_return(const inst_t* pc);
 
-	struct Add{
-		template<class T, class U> static inline typename NumericCalcResultType<T, U>::type calc(T a, U b){ return (typename NumericCalcResultType<T, U>::type)(a + b); }
-		static inline const ID& id(){ return Xid(op_add_assign); }
-	};
-
-	VMachine clone(){
-		VMachine vm;
-		*vm.impl() = *this;
-		return vm;
-	}
-	
 public:
 
 	const Any& member_cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
@@ -822,8 +801,8 @@ protected:
 			m & stack_[i].cref();
 		}
 
-		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
-			m & fun_frames_.reverse_at_unchecked(i);
+		for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
+			m & fun_frames_[i];
 		}
 	}
 
@@ -837,8 +816,8 @@ protected:
 			inc_ref_count(stack_[i]);
 		}
 
-		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
-			fun_frames_.reverse_at_unchecked(i).inc_ref();
+		for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
+			fun_frames_[i].inc_ref();
 		}
 	}
 
@@ -849,8 +828,8 @@ protected:
 			dec_ref_count(stack_[i]);
 		}
 
-		for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
-			fun_frames_.reverse_at_unchecked(i).dec_ref();
+		for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
+			fun_frames_[i].dec_ref();
 		}
 	}
 
@@ -858,7 +837,7 @@ public:
 
 	void print_info(){
 		printf("stack size %d\n", stack_.size());
-		printf("fun_frames size %d\n", fun_frames_.size()-1);
+		printf("fun_frames size %d\n", fun_frames_.size());
 		printf("except_frames size %d\n", except_frames_.size());
 		printf("cache hit=%d, miss=%d, rate=%g\n", member_cache_table_.hit(), member_cache_table_.miss(), member_cache_table_.cache_hit_rate());
 	}

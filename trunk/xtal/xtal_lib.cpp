@@ -962,10 +962,6 @@ void initialize_lib(){
 
 	Class builtin = xtal::builtin();
 
-	Array lib_path;
-	lib_path.push_back(".");
-	builtin.def("lib_path", lib_path);
-
 	builtin.def("Any", TClass<Any>::get());
 	builtin.def("Array", TClass<Array>::get());
 	builtin.def("Map", TClass<Map>::get());

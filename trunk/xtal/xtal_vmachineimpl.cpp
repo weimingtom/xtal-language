@@ -1297,6 +1297,8 @@ XTAL_VM_SWITCH(*pc){
 
 			if(!except.is(builtin().member("Exception"))){
 				last_except_ = append_backtrace(pc, builtin().member("RuntimeError")(except));
+			}else{
+				last_except_ = append_backtrace(pc, except);
 			}
 		}
 		goto except_catch; 

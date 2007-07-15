@@ -1411,9 +1411,9 @@ Fun::call: method(...){
 
 builtin::open: fun(file_name, mode: "r"){
 	ret: null;
-	XTAL_TRY{
+	try{
 		ret = FileStream(file_name, mode);
-	}XTAL_CATCH(e){
+	}catch(e){
 		ret = null;
 	}
 	return ret;

@@ -165,12 +165,14 @@ public:
 	struct noinit_t{};
 	UncountedAny(noinit_t){}
 	
-protected:
+public:
 
 	void set_null(){
 		type_ = TYPE_NULL;
 		pvalue_ = 0;
 	}
+
+protected:
 
 	void set_p(AnyImpl* p){
 		XTAL_ASSERT(p!=0);
@@ -351,6 +353,8 @@ private:
 	// Any(bool)が使われるのを阻止するためのコンストラクタ
 	// 実装は無い。
 	Any(void*);
+	
+	using UncountedAny::set_null;
 
 public:
 	

@@ -28,7 +28,10 @@ void InitStream(){
 	cls.method("println", &Stream::println);
 
 	cls.method("seek", &Stream::seek).param(null, Named("whence", Stream::XSEEK_SET));
-	cls.method("inpour", &Stream::inpour);
+	cls.method("tell", &Stream::tell);
+	cls.method("pour", &Stream::pour);
+	cls.method("pour_all", &Stream::pour_all);
+	cls.method("size", &Stream::size);
 
 	cls.method("iter_first", &Stream::iter_first);
 	cls.method("iter_next", &Stream::iter_next);
@@ -148,8 +151,16 @@ void Stream::close() const{
 	impl()->close();
 }
 
-uint_t Stream::inpour(const Stream& in_stream, uint_t size) const{
-	return impl()->inpour(in_stream, size);
+uint_t Stream::pour(const Stream& in_stream, uint_t size) const{
+	return impl()->pour(in_stream, size);
+}
+
+uint_t Stream::pour_all(const Stream& in_stream) const{
+	return impl()->pour_all(in_stream);
+}
+
+uint_t Stream::size() const{
+	return impl()->size();
 }
 
 void Stream::iter_first(const VMachine& vm){

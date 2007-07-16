@@ -133,11 +133,31 @@ public:
 
 	virtual void close() = 0;
 
-	virtual uint_t inpour(const Stream& in_stream, uint_t size){
+	virtual uint_t pour(const Stream& in_stream, uint_t size){
 		xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
 		uint_t len = in_stream.read(buf, size);
 		do_write(buf, len);
 		user_free(buf, size*sizeof(xtal::u8));
+		return len;
+	}
+
+	virtual uint_t pour_all(const Stream& in_stream){
+		uint_t size = 1024*10, len, sum = 0;
+		xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+		do{
+			len = in_stream.read(buf, size);
+			sum += len;
+			do_write(buf, len);
+		}while(len==size);
+		user_free(buf, size*sizeof(xtal::u8));
+		return sum;
+	}
+
+	virtual uint_t size(){
+		uint_t pos = tell();
+		seek(0, Stream::XSEEK_END);
+		uint_t len = tell();
+		seek(pos, Stream::XSEEK_SET);
 		return len;
 	}
 
@@ -281,16 +301,36 @@ public:
 
 	}
 
-	virtual uint_t inpour(const Stream& in_stream, uint_t size){
+	virtual uint_t pour(const Stream& in_stream, uint_t size){
 		if(size==0){
 			return 0;
 		}
 
-		if(data_.size()-pos_<=size){
-			data_.resize(data_.size()-pos_+size);
+		if(data_.size() <= pos_ + size){
+			data_.resize(pos_+size);
 		}
 
-		return in_stream.read(&data_[pos_], size);
+		uint_t len = in_stream.read(&data_[pos_], size);
+		data_.resize(data_.size() - (size - len));
+		return len;
+	}
+
+	virtual uint_t pour_all(const Stream& in_stream){
+		uint_t size = 1024*10, len, sum = 0;
+		do{
+			if(data_.size() <= pos_ + size){
+				data_.resize(pos_+size);
+			}
+
+			len = in_stream.read(&data_[pos_], size);
+			sum += len;
+		}while(len==size);
+		data_.resize(data_.size() - (size - len));
+		return sum;
+	}
+
+	virtual uint_t size(){
+		return data_.size();
 	}
 
 	String to_s(){

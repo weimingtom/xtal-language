@@ -97,7 +97,6 @@ public:
 
 
 	VMachineImpl(){	
-		
 		myself_ = this;
 
 		stack_.reserve(32);
@@ -140,7 +139,6 @@ public:
 		push_ff(&end_code_, need_result_count, 4, 0, null);
 		push(a1); push(a2); push(a3); push(a4);
 	}
-
 
 	void push_arg(const Any& value){
 		XTAL_ASSERT(named_arg_count() == 0);
@@ -370,9 +368,19 @@ public:
 		set(ff().need_result_count-pos-1, v);
 	}
 	
-	void recycle_call();
-	
-	void recycle_call(const Any& a1);
+	void recycle_call(){
+		FunFrame& f = ff();
+		downsize(f.ordered_arg_count+f.named_arg_count*2);
+		f.ordered_arg_count = 0;
+		f.named_arg_count = 0;
+		f.called_pc = &throw_unsupported_error_code_;
+		f.calling_state = FunFrame::CALLING_STATE_NONE;
+	}
+
+	void recycle_call(const Any& a1){
+		recycle_call();
+		push_arg(a1);
+	}
 
 	void execute_inner(const inst_t* start);
 	void execute_try(const inst_t* start);
@@ -421,7 +429,6 @@ public:
 	}
 
 	const inst_t* start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
-
 		yield_result_count_ = 0;
 		
 		push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
@@ -444,7 +451,6 @@ public:
 	}
 
 	const inst_t* resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result){
-
 		yield_result_count_ = 0;
 
 		ff().called_pc = pc;
@@ -654,7 +660,12 @@ public:
 		const Any& hint1() const{ return (const Any&)hint1_.cref(); }
 		const String& hint2() const{ return (const String&)hint2_.cref(); }
 
-		void fun(const UncountedAny& v){ fun_ = v; }
+		void fun(const UncountedAny& v){ 
+			fun_ = v;
+			pcode = fun().impl()->code().impl();
+			psource = pcode->data();
+		}
+
 		void outer(const UncountedAny& v){ outer_ = v; }
 		void variable(int_t i, const UncountedAny& v){ variables_[i] = v; }
 		void self(const UncountedAny& v){ self_ = v; }
@@ -712,13 +723,67 @@ public:
 		int_t fun_frame_count;
 	};
 
-	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
-	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_count, int_t named_count, const Any& self);
-	void recycle_ff(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
-	void recycle_ff_args(const inst_t* pc, int_t ordered_count, int_t named_count, const Any& self);
+	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+		push_args(named_arg_count);
+		const Arguments& a = ff().arguments();
+		push_ff(pc, need_result_count, a.impl()->ordered_.size()+ordered_arg_count, a.impl()->named_.size()+named_arg_count, self);
+	}
+
+	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+		FunFrame& f = ff();
+		f.ordered_arg_count = ordered_arg_count;
+		f.named_arg_count = named_arg_count;
+		f.self(self);
+		//f.poped_pc = pc;
+		f.called_pc = &throw_unsupported_error_code_;
+		f.calling_state = FunFrame::CALLING_STATE_NONE;
+	}
+
+	void recycle_ff_args(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+		push_args(named_arg_count);
+		const Arguments& a = ff().arguments();
+		recycle_ff(pc, a.impl()->ordered_.size()+ordered_arg_count, a.impl()->named_.size()+named_arg_count, self);
+	}
+
+	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
+		FunFrame& f = fun_frames_.push();
+		f.need_result_count = need_result_count;
+		f.result_count = 0;
+		f.ordered_arg_count = ordered_arg_count;
+		f.named_arg_count = named_arg_count;
+		f.called_pc = &throw_unsupported_error_code_;
+		f.calling_state = FunFrame::CALLING_STATE_NONE;
+		f.poped_pc = pc;
+		f.variables_.clear();
+		f.scopes.clear();
+		f.instance_variables = &empty_have_instance_variables;
+		f.self(self);
+		f.set_null();
+	}
+
 	const inst_t* pop_ff(){ return fun_frames_.pop().poped_pc; }
 
-	void push_args(int_t named_arg_count);
+	void push_args(int_t named_arg_count){
+		const Arguments& a = ff().arguments();
+		if(!named_arg_count){
+			for(int_t i = 0; i<a.impl()->ordered_.size(); ++i){
+				push(a.impl()->ordered_.at(i));
+			}
+		}else{
+			int_t usize = a.impl()->ordered_.size();
+			upsize(usize);
+			int_t offset = named_arg_count*2;
+			for(int_t i = 0; i<offset; ++i){
+				set(i+usize, get(i));
+			}
+
+			for(int_t i = 0; i<usize; ++i){
+				set(offset-1-i, a.impl()->ordered_.at(i));
+			}
+		}
+
+		a.impl()->named_.impl()->push_all(myself());
+	}
 
 	FunFrame& ff(){ return fun_frames_.top(); }
 	FunFrame& prev_ff(){ return fun_frames_[1]; }
@@ -732,15 +797,12 @@ public:
 	const Code& code(){ return fun().impl()->code(); }
 	const Code& prev_code(){ return prev_fun().impl()->code(); }
 
-	const inst_t* source(){ return code().impl()->data(); }
-	const inst_t* prev_source(){ return prev_code().impl()->data(); }
-
-	const ID& symbol(int_t n){ return code().impl()->symbol(n); }
-	const ID& prev_symbol(int_t n){ return prev_code().impl()->symbol(n); }
+	const ID& symbol(int_t n){ return ff().pcode->symbol(n); }
+	const ID& prev_symbol(int_t n){ return prev_ff().pcode->symbol(n); }
 
 	const ID& symbol_ex(int_t n){ 
 		if(n!=0){
-			return code().impl()->symbol(n); 
+			return ff().pcode->symbol(n); 
 		}else{
 			return (const ID&)(ff().temp2_ = pop().to_s().intern()).cref();
 		}

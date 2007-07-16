@@ -158,19 +158,13 @@ bool CodeBuilder::put_set_local_code(int_t var){
 			}else{
 				put_inst(InstSetLocalVariable2Byte(id));
 			}		
-		}else if(id>=6){
+		}else{
 			if(id<=0xff){
 				put_inst(InstSetLocalVariable1ByteDirect(id));
 			}else{
 				put_inst(InstSetLocalVariable2Byte(id));
 			}
 		}
-		else if(id == 0){ put_inst(InstSetLocalVariable0Direct()); }
-		else if(id == 1){ put_inst(InstSetLocalVariable1Direct()); }
-		else if(id == 2){ put_inst(InstSetLocalVariable2Direct()); }
-		else if(id == 3){ put_inst(InstSetLocalVariable3Direct()); }
-		else if(id == 4){ put_inst(InstSetLocalVariable4Direct()); }
-		else if(id == 5){ put_inst(InstSetLocalVariable5Direct()); }
 		return true;
 	}else{
 		//com_->error(line(), Xt("定義されていない変数%sに代入しようとしました")(to_id(var)));
@@ -199,19 +193,13 @@ bool CodeBuilder::put_local_code(int_t var){
 			}else{
 				put_inst(InstLocalVariable2Byte(id));
 			}		
-		}else if(id>=6){
+		}else{
 			if(id<=0xff){
 				put_inst(InstLocalVariable1ByteDirect(id));
 			}else{
 				put_inst(InstLocalVariable2Byte(id));
 			}
 		}
-		else if(id == 0){ put_inst(InstLocalVariable0Direct()); }
-		else if(id == 1){ put_inst(InstLocalVariable1Direct()); }
-		else if(id == 2){ put_inst(InstLocalVariable2Direct()); }
-		else if(id == 3){ put_inst(InstLocalVariable3Direct()); }
-		else if(id == 4){ put_inst(InstLocalVariable4Direct()); }
-		else if(id == 5){ put_inst(InstLocalVariable5Direct()); }
 		return true;
 	}else{
 		put_inst(InstGlobalVariable(var));
@@ -555,25 +543,15 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		}
 
 		XTAL_EXPR_CASE(IntExpr){
-			if(e->value==0){ put_inst(InstPushInt0());
-			}else if(e->value==1){ put_inst(InstPushInt1());
-			}else if(e->value==2){ put_inst(InstPushInt2());
-			}else if(e->value==3){ put_inst(InstPushInt3());
-			}else if(e->value==4){ put_inst(InstPushInt4());
-			}else if(e->value==5){ put_inst(InstPushInt5());
-			}else if(e->value==(u8)e->value){ put_inst(InstPushInt1Byte(e->value));
+			if(e->value==(u8)e->value){ put_inst(InstPushInt1Byte(e->value));
 			}else if(e->value==(u16)e->value){ put_inst(InstPushInt2Byte(e->value));
 			}else{ put_inst(InstValue(com_->register_value(e->value)));
 			}
 		}
 
 		XTAL_EXPR_CASE(FloatExpr){
-			if(e->value==0){ put_inst(InstPushFloat0());
-			}else if(e->value==0.25f){ put_inst(InstPushFloat025());
-			}else if(e->value==0.5f){ put_inst(InstPushFloat05());
-			}else if(e->value==1){ put_inst(InstPushFloat1());
-			}else if(e->value==2){ put_inst(InstPushFloat2());
-			}else if(e->value==3){ put_inst(InstPushFloat3());
+			if(e->value==(u8)e->value){ put_inst(InstPushFloat1Byte((u8)e->value));
+			}else if(e->value==(u16)e->value){ put_inst(InstPushFloat2Byte((u16)e->value));
 			}else{ put_inst(InstValue(com_->register_value(e->value)));
 			}
 		}
@@ -589,39 +567,16 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		}
 
 		XTAL_EXPR_CASE(ArrayExpr){
-			int_t count = 0;
-			TList<Expr*>::Node* p;
-			for(p = e->values.head; p; p = p->next){
-				compile(p->value);
-				count++;
-				if(count>32){
-					p = p->next;
-					break;
-				}
-			}
-
-			put_inst(InstMakeArray(count));
-			for(; p; p = p->next){
+			put_inst(InstMakeArray());
+			for(TList<Expr*>::Node* p = e->values.head; p; p = p->next){
 				compile(p->value);
 				put_inst(InstArrayAppend());				
 			}
 		}
 
 		XTAL_EXPR_CASE(MapExpr){
-			int_t count = 0;
-			TPairList<Expr*, Expr*>::Node* p;
-			for(p = e->values.head; p; p = p->next){
-				compile(p->key);
-				compile(p->value);
-				count++;
-				if(count>16){
-					p = p->next;
-					break;
-				}
-			}
-
-			put_inst(InstMakeMap(count));
-			for(; p; p = p->next){
+			put_inst(InstMakeMap());
+			for(TPairList<Expr*, Expr*>::Node* p = e->values.head; p; p = p->next){
 				compile(p->key);
 				compile(p->value);
 				put_inst(InstMapInsert());				
@@ -1433,45 +1388,31 @@ void CodeBuilder::compile(Stmt* ex){
 				put_inst(InstAdjustResult(pushed_count, e->lhs.size));
 			}
 
-			{
-				int list[5];
-				bool direct = true;
+			if(2<=e->lhs.size && e->lhs.size<=4){
 				bool bad = false;
-				int i = 0;
-				for(TList<Expr*>::Node* lhs=e->lhs.head; lhs; lhs=lhs->next){	
+				int_t list[4];
+				int_t i = 0;
+				for(TList<Expr*>::Node* lhs=e->lhs.head; lhs; lhs=lhs->next){
 					if(LocalExpr* e2 = expr_cast<LocalExpr>(lhs->value)){
-						int id = lookup_variable(e2->var);
-						if(id>=256 || id<0){
+						int_t id = lookup_variable(e2->var);
+						if(id>=256 || id<0 || variable_on_heap(id)){
 							bad = true;
 							break;
 						}
-						direct = direct && !variable_on_heap(id);
 						list[i] = id;
 					}else{
 						bad = true;
 						break;
 					}
-
 					++i;
 				}
 
 				if(!bad){
-					if(direct){
-						switch(i){
-						case 2: put_inst(InstSetMultipleLocalVariable2Direct(list[0], list[1])); break;
-						case 3: put_inst(InstSetMultipleLocalVariable3Direct(list[0], list[1], list[2])); break;
-						case 4: put_inst(InstSetMultipleLocalVariable4Direct(list[0], list[1], list[2], list[3])); break;
-						case 5: put_inst(InstSetMultipleLocalVariable5Direct(list[0], list[1], list[2], list[3], list[4])); break;
-						}
-					}else{
-						switch(i){
-						case 2: put_inst(InstSetMultipleLocalVariable2(list[0], list[1])); break;
-						case 3: put_inst(InstSetMultipleLocalVariable3(list[0], list[1], list[2])); break;
-						case 4: put_inst(InstSetMultipleLocalVariable4(list[0], list[1], list[2], list[3])); break;
-						case 5: put_inst(InstSetMultipleLocalVariable5(list[0], list[1], list[2], list[3], list[4])); break;
-						}
+					switch(i){
+					case 2: put_inst(InstSetMultipleLocalVariable2Direct(list[0], list[1])); break;
+					case 3: put_inst(InstSetMultipleLocalVariable3Direct(list[0], list[1], list[2])); break;
+					case 4: put_inst(InstSetMultipleLocalVariable4Direct(list[0], list[1], list[2], list[3])); break;
 					}
-
 					break;
 				}
 			}

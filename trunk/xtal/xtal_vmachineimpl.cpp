@@ -80,20 +80,10 @@ void VMachineImpl::execute_inner(const inst_t* start){
 		&&LabelPushNop,
 		&&LabelPushTrue,
 		&&LabelPushFalse,
-		&&LabelPushInt0,
-		&&LabelPushInt1,
-		&&LabelPushInt2,
-		&&LabelPushInt3,
-		&&LabelPushInt4,
-		&&LabelPushInt5,
 		&&LabelPushInt1Byte,
 		&&LabelPushInt2Byte,
-		&&LabelPushFloat0,
-		&&LabelPushFloat025,
-		&&LabelPushFloat05,
-		&&LabelPushFloat1,
-		&&LabelPushFloat2,
-		&&LabelPushFloat3,
+		&&LabelPushFloat1Byte,
+		&&LabelPushFloat2Byte,
 		&&LabelPushCallee,
 		&&LabelPushArgs,
 		&&LabelPushThis,
@@ -111,21 +101,9 @@ void VMachineImpl::execute_inner(const inst_t* start){
 		&&LabelLocalVariableDec,
 		&&LabelLocalVariableIncDirect,
 		&&LabelLocalVariableDecDirect,
-		&&LabelLocalVariable0Direct,
-		&&LabelLocalVariable1Direct,
-		&&LabelLocalVariable2Direct,
-		&&LabelLocalVariable3Direct,
-		&&LabelLocalVariable4Direct,
-		&&LabelLocalVariable5Direct,
 		&&LabelLocalVariable1ByteDirect,
 		&&LabelLocalVariable1Byte,
 		&&LabelLocalVariable2Byte,
-		&&LabelSetLocalVariable0Direct,
-		&&LabelSetLocalVariable1Direct,
-		&&LabelSetLocalVariable2Direct,
-		&&LabelSetLocalVariable3Direct,
-		&&LabelSetLocalVariable4Direct,
-		&&LabelSetLocalVariable5Direct,
 		&&LabelSetLocalVariable1ByteDirect,
 		&&LabelSetLocalVariable1Byte,
 		&&LabelSetLocalVariable2Byte,
@@ -229,11 +207,6 @@ void VMachineImpl::execute_inner(const inst_t* start){
 		&&LabelSetMultipleLocalVariable2Direct,
 		&&LabelSetMultipleLocalVariable3Direct,
 		&&LabelSetMultipleLocalVariable4Direct,
-		&&LabelSetMultipleLocalVariable5Direct,
-		&&LabelSetMultipleLocalVariable2,
-		&&LabelSetMultipleLocalVariable3,
-		&&LabelSetMultipleLocalVariable4,
-		&&LabelSetMultipleLocalVariable5,
 		&&LabelOnce,
 		&&LabelClassBegin,
 		&&LabelClassEnd,
@@ -287,36 +260,6 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(PushInt0){ // 3
-		push(UncountedAny(0).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushInt1){ // 3
-		push(UncountedAny(1).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushInt2){ // 3
-		push(UncountedAny(2).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushInt3){ // 3
-		push(UncountedAny(3).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushInt4){ // 3
-		push(UncountedAny(4).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushInt5){ // 3
-		push(UncountedAny(5).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
 	XTAL_VM_CASE(PushInt1Byte){ // 3
 		push(UncountedAny((int_t)inst.value).cref()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -327,33 +270,13 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(PushFloat0){ // 3
-		push(UncountedAny(0.0f).cref()); 
+	XTAL_VM_CASE(PushFloat1Byte){ // 3
+		push(UncountedAny((float_t)inst.value).cref()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(PushFloat025){ // 3
-		push(UncountedAny(0.25f).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushFloat05){ // 3
-		push(UncountedAny(0.5f).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushFloat1){ // 3
-		push(UncountedAny(1.0f).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushFloat2){ // 3
-		push(UncountedAny(2.0f).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushFloat3){ // 3
-		push(UncountedAny(3.0f).cref()); 
+	XTAL_VM_CASE(PushFloat2Byte){ // 3
+		push(UncountedAny((float_t)inst.value).cref()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -470,36 +393,6 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
-	XTAL_VM_CASE(LocalVariable0Direct){ // 3
-		push(ff().variable(0)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(LocalVariable1Direct){ // 3
-		push(ff().variable(1)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(LocalVariable2Direct){ // 3
-		push(ff().variable(2)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(LocalVariable3Direct){ // 3
-		push(ff().variable(3)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(LocalVariable4Direct){ // 3
-		push(ff().variable(4)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(LocalVariable5Direct){ // 3
-		push(ff().variable(5)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
 	XTAL_VM_CASE(LocalVariable1ByteDirect){ // 3
 		push(ff().variable(inst.number)); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -512,36 +405,6 @@ XTAL_VM_SWITCH(*pc){
 
 	XTAL_VM_CASE(LocalVariable2Byte){ // 3
 		push(LOCAL_VARIABLE(inst.number)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable0Direct){ // 3
-		ff().variable(0, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable1Direct){ // 3
-		ff().variable(1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable2Direct){ // 3
-		ff().variable(2, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable3Direct){ // 3
-		ff().variable(3, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable4Direct){ // 3
-		ff().variable(4, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(SetLocalVariable5Direct){ // 3
-		ff().variable(5, pop()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1527,54 +1390,14 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(SetMultipleLocalVariable4Direct){ // 14
+	XTAL_VM_CASE(SetMultipleLocalVariable4Direct){ // 7
 		FunFrame& f = ff();
 		f.variable(inst.local_variable4, pop()); 
 		f.variable(inst.local_variable3, pop()); 
 		f.variable(inst.local_variable2, pop()); 
 		f.variable(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable5Direct){ // 15
-		FunFrame& f = ff();
-		f.variable(inst.local_variable5, pop()); 
-		f.variable(inst.local_variable4, pop()); 
-		f.variable(inst.local_variable3, pop()); 
-		f.variable(inst.local_variable2, pop()); 
-		f.variable(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable2){ // 4
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable3){ // 5
-		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable4){ XTAL_VM_CONTINUE(FunSetMultipleLocalVariable4(pc)); /*
-		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-	}*/ }
-
-	XTAL_VM_CASE(SetMultipleLocalVariable5){ XTAL_VM_CONTINUE(FunSetMultipleLocalVariable5(pc)); /*
-		SET_LOCAL_VARIABLE(inst.local_variable5, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-	}*/ }
 
 	XTAL_VM_CASE(Once){ // 5
 		const Any& ret = ff().pcode->value(inst.value_number);
@@ -1614,47 +1437,35 @@ XTAL_VM_SWITCH(*pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 	}*/ }
 
-	XTAL_VM_CASE(MakeArray){ XTAL_VM_CONTINUE(FunMakeArray(pc)); /*
+	XTAL_VM_CASE(MakeArray){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			int_t size = inst.size;
-			Array ary(size);
-			for(int_t i = 0; i<size; ++i){
-				ary.set_at(i, get(size-1-i));
-			}
-			downsize(size);
-			push(ary);
+			push(Array());
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}*/ }
+	}
 
-	XTAL_VM_CASE(ArrayAppend){ XTAL_VM_CONTINUE(FunArrayAppend(pc)); /*
+	XTAL_VM_CASE(ArrayAppend){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			cast<Array*>(get(1))->push_back(get()); 
 			downsize(1);
 		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
 
-	XTAL_VM_CASE(MakeMap){ XTAL_VM_CONTINUE(FunMakeMap(pc)); /*
+	XTAL_VM_CASE(MakeMap){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			int_t size = inst.size;
-			Map map;
-			for(int_t i = 0; i<size; ++i){
-				map.set_at(get(size*2-i*2-0-1), get(size*2-i*2-1-1));
-			}
-			downsize(size*2);
-			push(map);
+			push(Map());
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}*/ }
+	}
 
-	XTAL_VM_CASE(MapInsert){ XTAL_VM_CONTINUE(FunMapInsert(pc)); /*
+	XTAL_VM_CASE(MapInsert){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			cast<Map*>(get(2))->set_at(get(1), get()); 
 			downsize(2);	
 		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
 
 	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
 		int_t type = inst.type, table_n = inst.core_number, end = inst.address;
@@ -2628,25 +2439,6 @@ const inst_t* VMachineImpl::FunSetName(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 
-const inst_t* VMachineImpl::FunSetMultipleLocalVariable4(const inst_t* pc){
-		XTAL_VM_DEF_INST(SetMultipleLocalVariable4)
-		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-}
-
-const inst_t* VMachineImpl::FunSetMultipleLocalVariable5(const inst_t* pc){
-		XTAL_VM_DEF_INST(SetMultipleLocalVariable5)
-		SET_LOCAL_VARIABLE(inst.local_variable5, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable4, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable3, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable2, pop()); 
-		SET_LOCAL_VARIABLE(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;;;
-}
-
 const inst_t* VMachineImpl::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin)
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2674,52 +2466,6 @@ const inst_t* VMachineImpl::FunClassEnd(const inst_t* pc){
 		ff().outer(ff().outer().outer());
 		ff().scopes.downsize(1);
 		pop_ff();
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-}
-
-const inst_t* VMachineImpl::FunMakeArray(const inst_t* pc){
-		XTAL_VM_DEF_INST(MakeArray)
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			int_t size = inst.size;
-			Array ary(size);
-			for(int_t i = 0; i<size; ++i){
-				ary.set_at(i, get(size-1-i));
-			}
-			downsize(size);
-			push(ary);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachineImpl::FunArrayAppend(const inst_t* pc){
-		XTAL_VM_DEF_INST(ArrayAppend)
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			cast<Array*>(get(1))->push_back(get()); 
-			downsize(1);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-}
-
-const inst_t* VMachineImpl::FunMakeMap(const inst_t* pc){
-		XTAL_VM_DEF_INST(MakeMap)
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			int_t size = inst.size;
-			Map map;
-			for(int_t i = 0; i<size; ++i){
-				map.set_at(get(size*2-i*2-0-1), get(size*2-i*2-1-1));
-			}
-			downsize(size*2);
-			push(map);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachineImpl::FunMapInsert(const inst_t* pc){
-		XTAL_VM_DEF_INST(MapInsert)
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			cast<Map*>(get(2))->set_at(get(1), get()); 
-			downsize(2);	
-		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 

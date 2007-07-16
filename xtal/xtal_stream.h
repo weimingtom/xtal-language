@@ -63,7 +63,10 @@ public:
 
 	void close() const;
 
-	uint_t inpour(const Stream& in_stream, uint_t size) const;
+	uint_t pour(const Stream& in_stream, uint_t size) const;
+	uint_t pour_all(const Stream& in_stream) const;
+
+	uint_t size() const;
 
 public:
 

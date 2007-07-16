@@ -67,7 +67,14 @@ struct MemberCacheTable{
 	uint_t hit_;
 	uint_t miss_;
 
-	MemberCacheTable();
+	MemberCacheTable(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			table_[i].klass = 0;
+			table_[i].member = null;
+		}
+		hit_ = 0;
+		miss_ = 0;
+	}
 
 	float cache_hit_rate(){
 		return (float_t)hit_/(hit_+miss_);
@@ -88,9 +95,20 @@ struct MemberCacheTable{
 class VMachineImpl : public GCObserverImpl{
 public:
 
-	VMachineImpl();
 
-	~VMachineImpl();
+	VMachineImpl(){	
+		
+		myself_ = this;
+
+		stack_.reserve(32);
+
+		end_code_ = InstExit::NUMBER;
+		throw_unsupported_error_code_ = InstThrowUnsupportedError::NUMBER;
+		check_unsupported_code_ = InstCheckUnsupported::NUMBER;
+		cleanup_call_code_ = InstCleanupCall::NUMBER;
+		throw_nop_code_ = InstThrowNull::NUMBER;
+		resume_pc_ = 0;
+	}
 
 private:
 
@@ -99,11 +117,30 @@ private:
 
 public:
 
-	void setup_call(int_t need_result_count);
-	void setup_call(int_t need_result_count, const Any& a1);
-	void setup_call(int_t need_result_count, const Any& a1, const Any& a2);
-	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3);
-	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4);
+	void setup_call(int_t need_result_count){
+		push_ff(&end_code_, need_result_count, 0, 0, null);
+	}
+
+	void setup_call(int_t need_result_count, const Any& a1){
+		push_ff(&end_code_, need_result_count, 1, 0, null);
+		push(a1);
+	}
+
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2){
+		push_ff(&end_code_, need_result_count, 2, 0, null);
+		push(a1); push(a2);
+	}
+
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3){
+		push_ff(&end_code_, need_result_count, 3, 0, null);
+		push(a1); push(a2); push(a3);
+	}
+
+	void setup_call(int_t need_result_count, const Any& a1, const Any& a2, const Any& a3, const Any& a4){
+		push_ff(&end_code_, need_result_count, 4, 0, null);
+		push(a1); push(a2); push(a3); push(a4);
+	}
+
 
 	void push_arg(const Any& value){
 		XTAL_ASSERT(named_arg_count() == 0);
@@ -117,7 +154,37 @@ public:
 		push(value);
 	}
 		
-	const Any& result(int_t pos = 0);
+	const Any& result(int_t pos = 0){
+		if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
+			const inst_t* temp = ff().poped_pc;
+			ff().poped_pc = &end_code_;
+			execute_try(ff().called_pc);
+			fun_frames_.upsize(1);
+			ff().poped_pc = temp;
+			ff().called_pc = &cleanup_call_code_;
+			ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
+			String hint1 = ff().hint1().get_class().object_name();
+			String hint2 = ff().hint2();
+			pop_ff();
+			if(Any uerror = builtin().member("UnsupportedError")){
+				XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
+					hint1 ? hint1 : String("?"),
+					hint2 ? hint2 : String("()")))); 
+			}else{
+				//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
+				XTAL_THROW(null);
+			}
+		}
+
+		XTAL_ASSERT(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_RESULT);
+		
+		if(pos<ff().need_result_count){
+			return get(ff().need_result_count-pos-1);
+		}else{
+			return null;
+		}
+	}
 		
 	Any result_and_cleanup_call(int_t pos){
 		const Any& ret = result(pos);
@@ -292,7 +359,6 @@ public:
 	}
 
 	void carry_over(FunImpl* fun);
-	
 	void mv_carry_over(FunImpl* fun);
 
 	bool processed(){ 
@@ -334,13 +400,89 @@ public:
 		return resume_pc_; 
 	}
 
-	void present_for_vm(FunImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result);
-	const inst_t* start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result);
-	const inst_t* resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result);
-	void exit_fiber();
+	void present_for_vm(FunImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
+		// 結果をvmに渡す
+		if(vm->need_result()){
+			if(add_succ_or_fail_result){
+				if(resume_pc_!=0){
+					vm->push(fun);
+				}else{
+					vm->push(null);
+				}
+				vm->push(this, yield_result_count_);
+				downsize(yield_result_count_);
+				vm->adjust_result(yield_result_count_+1);
+			}else{
+				vm->push(this, yield_result_count_);
+				downsize(yield_result_count_);
+				vm->adjust_result(yield_result_count_);
+			}
+		}
+	}
 
-	void reset();
+	const inst_t* start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
+
+		yield_result_count_ = 0;
 		
+		push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
+
+		move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+		
+		resume_pc_ = 0;
+		
+		carry_over(fun);
+		ff().yieldable = true;
+
+		execute_try(ff().called_pc);
+
+		present_for_vm(fun, vm, add_succ_or_fail_result);
+
+		vm->ff().called_pc = &cleanup_call_code_;
+		vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
+		
+		return resume_pc_;
+	}
+
+	const inst_t* resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result){
+
+		yield_result_count_ = 0;
+
+		ff().called_pc = pc;
+		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+		
+		resume_pc_ = 0;
+
+		move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+
+		execute_try(ff().called_pc);
+		
+		present_for_vm(fun, vm, add_succ_or_fail_result);
+
+		vm->ff().called_pc = &cleanup_call_code_;
+		vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
+
+		return resume_pc_;
+	}
+
+	void exit_fiber(){
+		XTAL_TRY{
+			yield_result_count_ = 0;
+			ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
+			ff().called_pc = resume_pc_;
+			resume_pc_ = 0;
+			execute_try(&throw_nop_code_);
+		}XTAL_CATCH(e){
+			(void)e;
+		}
+		reset();
+	}
+
+	void reset(){
+		stack_.resize(0);
+		except_frames_.resize(0);
+		fun_frames_.resize(0);
+	}
+
 public:
 
 	const Code& current_code(){ return code(); }
@@ -491,6 +633,19 @@ public:
 		// デバッグメッセージ出力用のヒント
 		UncountedAny hint2_;
 
+		CodeImpl* pcode;
+		const inst_t* psource;
+
+		void set_null(){
+			fun_.set_null(); 
+			temp_.set_null();
+			temp2_.set_null();
+			outer_.set_null();
+			arguments_.set_null();
+			hint1_.set_null();
+			hint2_.set_null();
+		}
+
 		const Fun& fun() const{ return (const Fun&)fun_.cref(); }
 		const Frame& outer() const{ return (const Frame&)outer_.cref(); }
 		const Any& variable(int_t i) const{ return (const Any&)variables_[i].cref(); }
@@ -607,155 +762,195 @@ public:
 
 private:
 
-	const inst_t* VMachineImpl::send1(const inst_t* pc, const ID& name, int_t n = 1){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			UncountedAny target = ff().temp_ = pop();
-			UncountedAny self = ff().self();
-			push_ff(pc + n, 1, 0, 0, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
-		}
-		return ff().called_pc;
-	}
-
-	const inst_t* VMachineImpl::send2(const inst_t* pc, const ID& name, int_t n = 1){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const Any& temp = pop();
-			UncountedAny target = ff().temp_ = get();
-			set(temp);
-			UncountedAny self = ff().self();
-			push_ff(pc + n, 1, 1, 0, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
-		}
-		return ff().called_pc;
-	}
-
-	const inst_t* VMachineImpl::send2r(const inst_t* pc, const ID& name, int_t n = 1){
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			UncountedAny target = ff().temp_ = pop();
-			UncountedAny self = ff().self();
-			push_ff(pc + n, 1, 1, 0, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, name);
-			if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
-		}
-		return ff().called_pc;
-	}
-
-	const inst_t* ARRAY_APPEND(const inst_t* pc);
-	const inst_t* MAP_INSERT(const inst_t* pc);
-	const inst_t* SET_NAME(const inst_t* pc);
-	
-	const inst_t* PUSH_ARGS(const inst_t* pc);
+	const inst_t* send1(const inst_t* pc, const ID& name, int_t n = 1);
+	const inst_t* send2(const inst_t* pc, const ID& name, int_t n = 1);
+	const inst_t* send2r(const inst_t* pc, const ID& name, int_t n = 1);
 
 	void SET_LOCAL_VARIABLE(int_t pos, const Any&);
 	const Any& LOCAL_VARIABLE(int_t pos);
 
-	const inst_t* GLOBAL_VARIABLE(const inst_t* pc);
-	const inst_t* SET_GLOBAL_VARIABLE(const inst_t* pc);
-	const inst_t* DEFINE_GLOBAL_VARIABLE(const inst_t* pc);
-
-	const inst_t* ONCE(const inst_t* pc);
-
-	const inst_t* MEMBER(const inst_t* pc);
-	const inst_t* MEMBER_IF_DEFINED(const inst_t* pc);
-	const inst_t* DEFINE_MEMBER(const inst_t* pc);
-
-	const inst_t* AT(const inst_t* pc);
-	const inst_t* SET_AT(const inst_t* pc);
-
-	const inst_t* PUSH_ARRAY(const inst_t* pc);
-	const inst_t* PUSH_MAP(const inst_t* pc);
-	const inst_t* PUSH_FUN(const inst_t* pc);
-	
-	const inst_t* CLASS_BEGIN(const inst_t* pc);
-	const inst_t* CLASS_END(const inst_t* pc);
-
-	const inst_t* BLOCK_END(const inst_t* pc);
-
-	const inst_t* TRY_BEGIN(const inst_t* pc);
 	const inst_t* CATCH_BODY(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
-	void THROW(const inst_t* pc);
-	void THROW_UNSUPPROTED_ERROR();
-	const inst_t* CHECK_ASSERT(const inst_t* lpc);
-	const inst_t* BREAKPOINT(const inst_t* pc);
-
-	void YIELD(const inst_t* pc);
-
-	const inst_t* POS(const inst_t* pc);
-	const inst_t* NEG(const inst_t* pc);
-	const inst_t* COM(const inst_t* pc);
-	const inst_t* CLONE(const inst_t* pc);
-	const inst_t* ADD(const inst_t* pc);
-	const inst_t* SUB(const inst_t* pc);
-	const inst_t* CAT(const inst_t* pc);
-	const inst_t* MUL(const inst_t* pc);
-	const inst_t* DIV(const inst_t* pc);
-	const inst_t* MOD(const inst_t* pc);
-	const inst_t* AND(const inst_t* pc);
-	const inst_t* OR(const inst_t* pc);
-	const inst_t* XOR(const inst_t* pc);
-	const inst_t* SHR(const inst_t* pc);
-	const inst_t* USHR(const inst_t* pc);
-	const inst_t* SHL(const inst_t* pc);
-
-	const inst_t* EQ(const inst_t* pc);
-	const inst_t* NE(const inst_t* pc);
-	const inst_t* LT(const inst_t* pc);
-	const inst_t* GT(const inst_t* pc);
-	const inst_t* LE(const inst_t* pc);
-	const inst_t* GE(const inst_t* pc);
-	const inst_t* RAW_EQ(const inst_t* pc);
-	const inst_t* RAW_NE(const inst_t* pc);
-	const inst_t* IS(const inst_t* pc);
-	const inst_t* NIS(const inst_t* pc);
-
-	const inst_t* IF_EQ(const inst_t* pc);
-	const inst_t* IF_NE(const inst_t* pc);
-	const inst_t* IF_LT(const inst_t* pc);
-	const inst_t* IF_GT(const inst_t* pc);
-	const inst_t* IF_LE(const inst_t* pc);
-	const inst_t* IF_GE(const inst_t* pc);
-	const inst_t* IF_RAW_EQ(const inst_t* pc);
-	const inst_t* IF_RAW_NE(const inst_t* pc);
-	const inst_t* IF_IS(const inst_t* pc);
-	const inst_t* IF_NIS(const inst_t* pc);
-
-	const inst_t* INC(const inst_t* pc);
-	const inst_t* DEC(const inst_t* pc);
-	const inst_t* LOCAL_VARIABLE_INC(const inst_t* pc);
-	const inst_t* LOCAL_VARIABLE_DEC(const inst_t* pc);
-	const inst_t* LocalVariableIncDirect(const inst_t* pc);
-	const inst_t* LocalVariableDecDirect(const inst_t* pc);
-
-	const inst_t* ADD_ASSIGN(const inst_t* pc);
-	const inst_t* SUB_ASSIGN(const inst_t* pc);
-	const inst_t* CAT_ASSIGN(const inst_t* pc);
-	const inst_t* MUL_ASSIGN(const inst_t* pc);
-	const inst_t* DIV_ASSIGN(const inst_t* pc);
-	const inst_t* MOD_ASSIGN(const inst_t* pc);
-	const inst_t* AND_ASSIGN(const inst_t* pc);
-	const inst_t* OR_ASSIGN(const inst_t* pc);
-	const inst_t* XOR_ASSIGN(const inst_t* pc);
-	const inst_t* SHR_ASSIGN(const inst_t* pc);
-	const inst_t* USHR_ASSIGN(const inst_t* pc);
-	const inst_t* SHL_ASSIGN(const inst_t* pc);
-
-	const inst_t* CURRENT_CONTEXT(const inst_t* pc);
 
 	void hook_return(const inst_t* pc);
+
+public:
+
+//{DECLS{{
+	const inst_t* FunNop(const inst_t* pc);
+	const inst_t* FunPushNull(const inst_t* pc);
+	const inst_t* FunPushNop(const inst_t* pc);
+	const inst_t* FunPushTrue(const inst_t* pc);
+	const inst_t* FunPushFalse(const inst_t* pc);
+	const inst_t* FunPushInt0(const inst_t* pc);
+	const inst_t* FunPushInt1(const inst_t* pc);
+	const inst_t* FunPushInt2(const inst_t* pc);
+	const inst_t* FunPushInt3(const inst_t* pc);
+	const inst_t* FunPushInt4(const inst_t* pc);
+	const inst_t* FunPushInt5(const inst_t* pc);
+	const inst_t* FunPushInt1Byte(const inst_t* pc);
+	const inst_t* FunPushInt2Byte(const inst_t* pc);
+	const inst_t* FunPushFloat0(const inst_t* pc);
+	const inst_t* FunPushFloat025(const inst_t* pc);
+	const inst_t* FunPushFloat05(const inst_t* pc);
+	const inst_t* FunPushFloat1(const inst_t* pc);
+	const inst_t* FunPushFloat2(const inst_t* pc);
+	const inst_t* FunPushFloat3(const inst_t* pc);
+	const inst_t* FunPushCallee(const inst_t* pc);
+	const inst_t* FunPushArgs(const inst_t* pc);
+	const inst_t* FunPushThis(const inst_t* pc);
+	const inst_t* FunPushCurrentContext(const inst_t* pc);
+	const inst_t* FunPop(const inst_t* pc);
+	const inst_t* FunDup(const inst_t* pc);
+	const inst_t* FunInsert1(const inst_t* pc);
+	const inst_t* FunInsert2(const inst_t* pc);
+	const inst_t* FunInsert3(const inst_t* pc);
+	const inst_t* FunAdjustResult(const inst_t* pc);
+	const inst_t* FunIf(const inst_t* pc);
+	const inst_t* FunUnless(const inst_t* pc);
+	const inst_t* FunGoto(const inst_t* pc);
+	const inst_t* FunLocalVariableInc(const inst_t* pc);
+	const inst_t* FunLocalVariableDec(const inst_t* pc);
+	const inst_t* FunLocalVariableIncDirect(const inst_t* pc);
+	const inst_t* FunLocalVariableDecDirect(const inst_t* pc);
+	const inst_t* FunLocalVariable0Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable1Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable2Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable3Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable4Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable5Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable1ByteDirect(const inst_t* pc);
+	const inst_t* FunLocalVariable1Byte(const inst_t* pc);
+	const inst_t* FunLocalVariable2Byte(const inst_t* pc);
+	const inst_t* FunSetLocalVariable0Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable1Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable2Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable3Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable4Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable5Direct(const inst_t* pc);
+	const inst_t* FunSetLocalVariable1ByteDirect(const inst_t* pc);
+	const inst_t* FunSetLocalVariable1Byte(const inst_t* pc);
+	const inst_t* FunSetLocalVariable2Byte(const inst_t* pc);
+	const inst_t* FunInstanceVariable(const inst_t* pc);
+	const inst_t* FunSetInstanceVariable(const inst_t* pc);
+	const inst_t* FunCleanupCall(const inst_t* pc);
+	const inst_t* FunReturn0(const inst_t* pc);
+	const inst_t* FunReturn1(const inst_t* pc);
+	const inst_t* FunReturn2(const inst_t* pc);
+	const inst_t* FunReturn(const inst_t* pc);
+	const inst_t* FunYield(const inst_t* pc);
+	const inst_t* FunExit(const inst_t* pc);
+	const inst_t* FunValue(const inst_t* pc);
+	const inst_t* FunSetValue(const inst_t* pc);
+	const inst_t* FunCheckUnsupported(const inst_t* pc);
+	const inst_t* FunSend(const inst_t* pc);
+	const inst_t* FunSendIfDefined(const inst_t* pc);
+	const inst_t* FunCall(const inst_t* pc);
+	const inst_t* FunCallCallee(const inst_t* pc);
+	const inst_t* FunSend_A(const inst_t* pc);
+	const inst_t* FunSendIfDefined_A(const inst_t* pc);
+	const inst_t* FunCall_A(const inst_t* pc);
+	const inst_t* FunCallCallee_A(const inst_t* pc);
+	const inst_t* FunSend_T(const inst_t* pc);
+	const inst_t* FunSendIfDefined_T(const inst_t* pc);
+	const inst_t* FunCall_T(const inst_t* pc);
+	const inst_t* FunCallCallee_T(const inst_t* pc);
+	const inst_t* FunSend_AT(const inst_t* pc);
+	const inst_t* FunSendIfDefined_AT(const inst_t* pc);
+	const inst_t* FunCall_AT(const inst_t* pc);
+	const inst_t* FunCallCallee_AT(const inst_t* pc);
+	const inst_t* FunBlockBegin(const inst_t* pc);
+	const inst_t* FunBlockEnd(const inst_t* pc);
+	const inst_t* FunBlockBeginDirect(const inst_t* pc);
+	const inst_t* FunBlockEndDirect(const inst_t* pc);
+	const inst_t* FunTryBegin(const inst_t* pc);
+	const inst_t* FunTryEnd(const inst_t* pc);
+	const inst_t* FunPushGoto(const inst_t* pc);
+	const inst_t* FunPopGoto(const inst_t* pc);
+	const inst_t* FunIfEq(const inst_t* pc);
+	const inst_t* FunIfNe(const inst_t* pc);
+	const inst_t* FunIfLt(const inst_t* pc);
+	const inst_t* FunIfLe(const inst_t* pc);
+	const inst_t* FunIfGt(const inst_t* pc);
+	const inst_t* FunIfGe(const inst_t* pc);
+	const inst_t* FunIfRawEq(const inst_t* pc);
+	const inst_t* FunIfRawNe(const inst_t* pc);
+	const inst_t* FunIfIs(const inst_t* pc);
+	const inst_t* FunIfNis(const inst_t* pc);
+	const inst_t* FunIfArgIsNull(const inst_t* pc);
+	const inst_t* FunPos(const inst_t* pc);
+	const inst_t* FunNeg(const inst_t* pc);
+	const inst_t* FunCom(const inst_t* pc);
+	const inst_t* FunNot(const inst_t* pc);
+	const inst_t* FunAt(const inst_t* pc);
+	const inst_t* FunSetAt(const inst_t* pc);
+	const inst_t* FunAdd(const inst_t* pc);
+	const inst_t* FunSub(const inst_t* pc);
+	const inst_t* FunCat(const inst_t* pc);
+	const inst_t* FunMul(const inst_t* pc);
+	const inst_t* FunDiv(const inst_t* pc);
+	const inst_t* FunMod(const inst_t* pc);
+	const inst_t* FunAnd(const inst_t* pc);
+	const inst_t* FunOr(const inst_t* pc);
+	const inst_t* FunXor(const inst_t* pc);
+	const inst_t* FunShl(const inst_t* pc);
+	const inst_t* FunShr(const inst_t* pc);
+	const inst_t* FunUshr(const inst_t* pc);
+	const inst_t* FunEq(const inst_t* pc);
+	const inst_t* FunNe(const inst_t* pc);
+	const inst_t* FunLt(const inst_t* pc);
+	const inst_t* FunLe(const inst_t* pc);
+	const inst_t* FunGt(const inst_t* pc);
+	const inst_t* FunGe(const inst_t* pc);
+	const inst_t* FunRawEq(const inst_t* pc);
+	const inst_t* FunRawNe(const inst_t* pc);
+	const inst_t* FunIs(const inst_t* pc);
+	const inst_t* FunNis(const inst_t* pc);
+	const inst_t* FunInc(const inst_t* pc);
+	const inst_t* FunDec(const inst_t* pc);
+	const inst_t* FunAddAssign(const inst_t* pc);
+	const inst_t* FunSubAssign(const inst_t* pc);
+	const inst_t* FunCatAssign(const inst_t* pc);
+	const inst_t* FunMulAssign(const inst_t* pc);
+	const inst_t* FunDivAssign(const inst_t* pc);
+	const inst_t* FunModAssign(const inst_t* pc);
+	const inst_t* FunAndAssign(const inst_t* pc);
+	const inst_t* FunOrAssign(const inst_t* pc);
+	const inst_t* FunXorAssign(const inst_t* pc);
+	const inst_t* FunShlAssign(const inst_t* pc);
+	const inst_t* FunShrAssign(const inst_t* pc);
+	const inst_t* FunUshrAssign(const inst_t* pc);
+	const inst_t* FunGlobalVariable(const inst_t* pc);
+	const inst_t* FunSetGlobalVariable(const inst_t* pc);
+	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
+	const inst_t* FunMember(const inst_t* pc);
+	const inst_t* FunMemberIfDefined(const inst_t* pc);
+	const inst_t* FunDefineMember(const inst_t* pc);
+	const inst_t* FunDefineClassMember(const inst_t* pc);
+	const inst_t* FunSetName(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable2Direct(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable3Direct(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable4Direct(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable5Direct(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable2(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable3(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable4(const inst_t* pc);
+	const inst_t* FunSetMultipleLocalVariable5(const inst_t* pc);
+	const inst_t* FunOnce(const inst_t* pc);
+	const inst_t* FunClassBegin(const inst_t* pc);
+	const inst_t* FunClassEnd(const inst_t* pc);
+	const inst_t* FunMakeArray(const inst_t* pc);
+	const inst_t* FunArrayAppend(const inst_t* pc);
+	const inst_t* FunMakeMap(const inst_t* pc);
+	const inst_t* FunMapInsert(const inst_t* pc);
+	const inst_t* FunMakeFun(const inst_t* pc);
+	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
+	const inst_t* FunThrow(const inst_t* pc);
+	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
+	const inst_t* FunThrowNull(const inst_t* pc);
+	const inst_t* FunAssert(const inst_t* pc);
+	const inst_t* FunBreakPoint(const inst_t* pc);
+//}}DECLS}
+
 
 public:
 

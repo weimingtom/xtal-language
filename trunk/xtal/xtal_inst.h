@@ -51,6 +51,9 @@ typedef u8 inst_t;
 
 #endif
 
+typedef inst_i16_t inst_address_t;
+
+
 struct Inst{
 	inst_t op;
 	Inst(inst_t v = 0)
@@ -240,13 +243,13 @@ XTAL_DEF_INST_2(18, AdjustResult,
 );
 
 XTAL_DEF_INST_1(19, If,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(20, Unless,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(21, Goto,
-        inst_i16_t, address
+        inst_address_t, address
 );
 
 XTAL_DEF_INST_1(22, LocalVariableInc,
@@ -434,44 +437,44 @@ XTAL_DEF_INST_1(64, TryBegin,
 XTAL_DEF_INST_0(65, TryEnd);
 
 XTAL_DEF_INST_1(66, PushGoto,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_0(67, PopGoto);
 
 XTAL_DEF_INST_1(68, IfEq,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(69, IfNe,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(70, IfLt,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(71, IfLe,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(72, IfGt,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(73, IfGe,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(74, IfRawEq,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(75, IfRawNe,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(76, IfIs,
-        inst_i16_t, address
+        inst_address_t, address
 );
 XTAL_DEF_INST_1(77, IfNis,
-        inst_i16_t, address
+        inst_address_t, address
 );
 
 XTAL_DEF_INST_2(78, IfArgIsNull,
 	inst_u8_t, arg,
-	inst_i16_t, address
+	inst_address_t, address
 );
 
 XTAL_DEF_INST_0(79, Pos);
@@ -569,7 +572,7 @@ XTAL_DEF_INST_4(131, SetMultipleLocalVariable4Direct,
 );
 
 XTAL_DEF_INST_2(132, Once,
-        inst_i16_t, address,
+        inst_address_t, address,
         inst_u16_t, value_number
 );
 
@@ -588,7 +591,7 @@ XTAL_DEF_INST_0(138, MapInsert);
 XTAL_DEF_INST_3(139, MakeFun,
         inst_u8_t, type,
         inst_u16_t, core_number,
-		inst_i16_t, address
+		inst_address_t, address
 );
 
 XTAL_DEF_INST_3(140, MakeInstanceVariableAccessor,

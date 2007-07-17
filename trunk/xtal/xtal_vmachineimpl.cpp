@@ -743,7 +743,7 @@ XTAL_VM_SWITCH(*pc){
 	}
 
 	XTAL_VM_CASE(PushGoto){ // 3
-		push(UncountedAny((pc+inst.address)-ff().psource).cref()); 
+		push(UncountedAny((int_t)((pc+inst.address)-ff().psource)).cref()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 

@@ -198,7 +198,7 @@ public:
 		push(other, sz);
 		other.downsize(sz);
 	}
-	
+
 	void fill_over(const T& val = T()){
 		for(size_t i = size(); i<capacity(); ++i){
 			reverse_at_unchecked(i)=val;

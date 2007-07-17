@@ -52,7 +52,7 @@ void InitMemoryStream(){
 void InitFileStream(){
 	TClass<FileStream> cls("FileStream");
 	cls.inherit(TClass<Stream>::get());
-	cls.def("new", New<FileStream, const String&, const String&>());
+	cls.def("new", New<FileStream, const String&, const String&>().param(Named("name"), Named("mode", "r")));
 }
 
 Stream::Stream(){

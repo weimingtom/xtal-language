@@ -166,7 +166,7 @@ public:
 	}
 
 	void iter_next(const VMachine& vm){
-		vm.return_result(null);
+		vm.return_result(null, null);
 		close();
 	}
 
@@ -292,6 +292,9 @@ public:
 				pos_ += offset;
 				break;
 			default:
+				if(offset<0){
+					offset = 0;
+				}
 				pos_ = offset;
 				break;
 		}
@@ -312,6 +315,7 @@ public:
 
 		uint_t len = in_stream.read(&data_[pos_], size);
 		data_.resize(data_.size() - (size - len));
+		pos_ += len;
 		return len;
 	}
 
@@ -326,6 +330,7 @@ public:
 			sum += len;
 		}while(len==size);
 		data_.resize(data_.size() - (size - len));
+		pos_ += sum;
 		return sum;
 	}
 

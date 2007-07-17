@@ -19,7 +19,7 @@ void InitClass(){
 
 	{
 		TClass<Class> p("Class");
-		p.method("inherit", &Class::inherit);
+		p.method("inherit", &Class::inherit_strict);
 		p.method("is_inherited", &Class::is_inherited);
 		p.method("each_member", &Class::each_member);
 		p.method("marshal_new", &Class::marshal_new);
@@ -148,12 +148,14 @@ void IdMap::expand(int_t addsize){
 ClassImpl::ClassImpl(const Frame& outer, const Code& code, FrameCore* core)
 	:FrameImpl(outer, code, core){
 	set_class(TClass<Class>::get());
+	is_defined_by_xtal_ = true;
 	make_map_members();
 }
 
 ClassImpl::ClassImpl()
 	:FrameImpl(null, null, 0){
 	set_class(TClass<Class>::get());
+	is_defined_by_xtal_ = false;
 	make_map_members();
 }
 
@@ -177,12 +179,22 @@ void ClassImpl::marshal_new(const VMachine& vm){
 	}
 }
 
-void ClassImpl::inherit(const Any& md){
+void ClassImpl::inherit(const Class& md){
 	if(is_inherited(md))
 		return;
-	mixins_.push_back(cast<Class>(md));
+	mixins_.push_back(md);
 	global_mutate_count++;
 }
+
+void ClassImpl::inherit_strict(const Class& md){
+	if(is_inherited(md))
+		return;
+	if(!md.impl()->is_defined_by_xtal_)
+		return;
+	mixins_.push_back(md);
+	global_mutate_count++;
+}
+
 
 void ClassImpl::init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self){
 	for(int_t i = mixins_.size()-1; i>=0; --i){
@@ -239,7 +251,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self, const Any& ns){
 
 		// しかしprivateが付けられている
 		if(it->flags & KIND_PRIVATE){
-			if(self.get_class().raweq(this) || self.raweq(this)){
+			if(self.get_class().raweq(this)){
 				return members_[it->num];
 			}else{
 				// アクセスできない
@@ -251,7 +263,7 @@ const Any& ClassImpl::member(const ID& name, const Any& self, const Any& ns){
 
 		// しかしprotectedが付けられている
 		if(it->flags & KIND_PROTECTED){
-			if(self.is(this) || this->is_inherited(self)){
+			if(self.is(Class(this))){
 				
 			}else{
 				// アクセスできない
@@ -284,7 +296,7 @@ void ClassImpl::set_member(const ID& name, const Any& value, const Any& ns){
 	global_mutate_count++;
 }
 
-bool ClassImpl::is_inherited(const Any& v){
+bool ClassImpl::is_inherited(const Class& v){
 	if(this==v.impl()){
 		return true;
 	}
@@ -425,10 +437,6 @@ Any Frame::each_member() const{
 	return impl()->each_member();
 }
 
-bool Frame::is_defined_by_xtal() const{
-	return impl()->is_defined_by_xtal();
-}
-
 Class::Class(const ID& name, Any*& p, init_tag)
 	:Frame(make_impl(p)){
 	impl()->set_object_name(name, 1, null);
@@ -450,7 +458,7 @@ Class& Class::make_impl(Any*& p){
 
 Class::Class(const ID& name)
 	:Frame(null){
-	new(*this) ClassImpl();
+	new(*this) ClassImpl(null, null, 0);
 	impl()->set_object_name(name, 1, null);	
 }
 
@@ -467,11 +475,15 @@ void Class::marshal_new(const VMachine& vm){
 	impl()->marshal_new(vm);
 }
 
-void Class::inherit(const Any& md) const{
+void Class::inherit(const Class& md) const{
 	impl()->inherit(md);
 }
 
-bool Class::is_inherited(const Any& md) const{
+void Class::inherit_strict(const Class& md) const{
+	impl()->inherit_strict(md);
+}
+
+bool Class::is_inherited(const Class& md) const{
 	return impl()->is_inherited(md);
 }
 

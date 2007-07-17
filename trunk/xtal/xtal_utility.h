@@ -5,7 +5,6 @@
 //#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
 
-
 //#define XTAL_NO_PARSER // 現在有効にするとバグがある
 //#define XTAL_USE_THREAD_MODEL_2 // 現在有効にするとバグがある
 //#define XTAL_USE_WORD_CODE // 現在有効にするとバグがある
@@ -23,7 +22,7 @@
 #endif
 
 #ifdef XTAL_DEBUG
-#	define XTAL_NODEFAULT default: XTAL_ASSERT(false)
+#	define XTAL_NODEFAULT default: XTAL_ASSERT(false); break
 #else
 #	ifdef _MSC_VER
 #		define XTAL_NODEFAULT default: __assume(0)

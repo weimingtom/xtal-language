@@ -77,6 +77,7 @@
 
 #include <cassert>
 #include <stddef.h>
+#include <string.h>
 #include <time.h>
 #include <iostream>
 #include <vector>

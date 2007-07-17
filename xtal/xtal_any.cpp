@@ -880,7 +880,7 @@ int_t Any::size() const{
 	return send(Xid(size)).to_i();
 }
 
-bool Any::is(const Any& v) const{
+bool Any::is(const Class& v) const{
 	return get_class().impl()->is_inherited(v);	
 }
 

@@ -29,11 +29,13 @@ public:
 	struct noinit_t{};
 	UncountedAny(noinit_t){}
 
-protected:
+public:
 
 	void set_null(){
 		value_ = TYPE_NULL;
 	}
+
+protected:
 
 	void set_p(AnyImpl* p){
 		XTAL_ASSERT(p!=0);
@@ -483,7 +485,7 @@ public:
 	* @brief clsクラスのインスタンスか調べる。
 	*
 	*/
-	bool is(const Any& cls) const;
+	bool is(const Class& cls) const;
 		
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。

@@ -18,7 +18,7 @@ InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, FrameCore* 
 }
 
 void InstanceVariableGetterImpl::call(const VMachine& vm){
-	const Any& self = vm.get_arg_this();
+	const Any& self = vm.impl()->get_arg_this();
 	HaveInstanceVariables* p;
 	if(self.type()==TYPE_BASE){
 		p = self.impl()->have_instance_variables();
@@ -33,7 +33,7 @@ InstanceVariableSetterImpl::InstanceVariableSetterImpl(int_t number, FrameCore* 
 }
 
 void InstanceVariableSetterImpl::call(const VMachine& vm){
-	const Any& self = vm.get_arg_this();
+	const Any& self = vm.impl()->get_arg_this();
 	HaveInstanceVariables* p;
 	if(self.type()==TYPE_BASE){
 		p = self.impl()->have_instance_variables();
@@ -51,7 +51,7 @@ FunImpl::FunImpl(const Frame& outer, const Any& athis, const Code& code, FunCore
 }
 
 void FunImpl::check_arg(const VMachine& vm){
-	int_t n = vm.ordered_arg_count();
+	int_t n = vm.impl()->ordered_arg_count();
 	if(n<core_->min_param_count || (!core_->used_args_object && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
 			XTAL_THROW(builtin().member("ArgumentError")(
@@ -84,7 +84,8 @@ void FunImpl::check_arg(const VMachine& vm){
 }
 
 void FunImpl::call(const VMachine& vm){
-	check_arg(vm);
+	if(vm.impl()->ordered_arg_count()!=core_->max_param_count)
+		check_arg(vm);
 	vm.set_arg_this(this_);
 	vm.impl()->carry_over(this);
 }
@@ -99,7 +100,8 @@ void LambdaImpl::call(const VMachine& vm){
 }
 
 void MethodImpl::call(const VMachine& vm){
-	check_arg(vm);
+	if(vm.impl()->ordered_arg_count()!=core_->max_param_count)
+		check_arg(vm);
 	vm.impl()->carry_over(this);
 }
 

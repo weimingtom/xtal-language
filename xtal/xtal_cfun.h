@@ -17,8 +17,7 @@ struct Result{
 		vm.return_result();
 	}
 
-	template<class T>
-	static void return_result2(const VMachine& vm, const T& ret, Bool<true>){
+	static void return_result2(const VMachine& vm, const Any& ret, Bool<true>){
 		vm.return_result(ret);
 	}
 
@@ -37,9 +36,10 @@ struct ReturnThis{
 	static void return_result(const VMachine& vm){
 		vm.return_result(vm.get_arg_this());
 	}
+
 	template<class T>
 	static void return_result(const VMachine& vm, const T&){
-		vm.return_result(vm.get_arg_this());
+		return_result(vm);
 	}
 };
 
@@ -47,9 +47,10 @@ struct ReturnVoid{
 	static void return_result(const VMachine& vm){
 		vm.return_result();
 	}
+
 	template<class T>
 	static void return_result(const VMachine& vm, const T&){
-		vm.return_result();
+		return_result(vm);
 	}
 };
 

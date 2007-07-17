@@ -285,7 +285,7 @@ public:
 	}
 	
 	bool is_defined_by_xtal(){
-		return code_;
+		return code_!=null;
 	}
 
 public:
@@ -374,8 +374,6 @@ public:
 
 	virtual void marshal_new(const VMachine& vm);
 
-	virtual void inherit(const Any& md);
-
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self);
 
 	virtual void def(const ID& name, const Any& value, int_t accessibility, const Any& ns);
@@ -387,12 +385,17 @@ public:
 	virtual void set_member(const ID& name, const Any& value, const Any& ns);
 
 	virtual const Any& member(const ID& name, const Any& self, const Any& ns);
+
+	void inherit(const Class& md);
+
+	void inherit_strict(const Class& md);
 	
-	bool is_inherited(const Any& v);
+	bool is_inherited(const Class& v);
 	
 protected:
 
 	AC<Class>::vector mixins_;
+	bool is_defined_by_xtal_;
 
 	virtual void visit_members(Visitor& m){
 		FrameImpl::visit_members(m);

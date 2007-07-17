@@ -153,34 +153,37 @@ public:
 	}
 		
 	const Any& result(int_t pos = 0){
-		if(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_FUN){
-			const inst_t* temp = ff().poped_pc;
-			ff().poped_pc = &end_code_;
-			execute_try(ff().called_pc);
-			fun_frames_.upsize(1);
-			ff().poped_pc = temp;
-			ff().called_pc = &cleanup_call_code_;
-			ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
-		}else if(ff().calling_state==FunFrame::CALLING_STATE_NONE){
-			String hint1 = ff().hint1().get_class().object_name();
-			String hint2 = ff().hint2();
-			pop_ff();
-			if(Any uerror = builtin().member("UnsupportedError")){
-				XTAL_THROW(uerror(Xt("%s :: '%s' は定義されていません")(
-					hint1 ? hint1 : String("?"),
-					hint2 ? hint2 : String("()")))); 
-			}else{
-				//printf("UnsupportedError %s %s\n", hint1 ? hint1.c_str() : "?", hint2 ? hint2.c_str() : "()");
-				XTAL_THROW(null);
+		const inst_t* temp;
+
+		{
+			FunFrame& f = ff();
+
+			if(*f.called_pc==InstCleanupCall::NUMBER){
+				if(pos<f.need_result_count){
+					return get(f.need_result_count-pos-1);
+				}else{
+					return null;
+				}
 			}
+
+			temp = f.poped_pc;
+			f.poped_pc = &end_code_;
+			execute_try(f.called_pc);
 		}
 
-		XTAL_ASSERT(ff().calling_state==FunFrame::CALLING_STATE_PUSHED_RESULT);
-		
-		if(pos<ff().need_result_count){
-			return get(ff().need_result_count-pos-1);
-		}else{
-			return null;
+		fun_frames_.upsize(1);
+
+		{
+			FunFrame& f = ff();
+
+			f.poped_pc = temp;
+			f.called_pc = &cleanup_call_code_;
+
+			if(pos<f.need_result_count){
+				return get(f.need_result_count-pos-1);
+			}else{
+				return null;
+			}
 		}
 	}
 		
@@ -202,8 +205,7 @@ public:
 	}
 
 	void set_hint(const Any& hint1, const String& hint2){ 
-		ff().hint1(hint1);
-		ff().hint2(hint2);
+		ff().hint(hint1, hint2);
 	}
 	
 public:
@@ -296,19 +298,19 @@ public:
 	
 	void return_result(){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
-		adjust_result(0);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
+			push(null);
+		}
+		ff().called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Any& value1){
 		downsize(ordered_arg_count()+(named_arg_count()*2));
 		push(value1);
-		adjust_result(1);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		if(ff().need_result_count!=1){
+			adjust_result(1);
+		}
+		ff().called_pc = &cleanup_call_code_;
 	}
 		
 	void return_result(const Any& value1, const Any& value2){
@@ -316,9 +318,7 @@ public:
 		push(value1);
 		push(value2);
 		adjust_result(2);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		ff().called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Any& value1, const Any& value2, const Any& value3){
@@ -327,9 +327,8 @@ public:
 		push(value2);
 		push(value3);
 		adjust_result(3);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		ff().called_pc = &cleanup_call_code_;
+
 	}
 		
 	void return_result(const Any& value1, const Any& value2, const Any& value3, const Any& value4){
@@ -339,9 +338,7 @@ public:
 		push(value3);
 		push(value4);
 		adjust_result(4);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		ff().called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Array& values){
@@ -351,16 +348,14 @@ public:
 			push(values.at(i));
 		}
 		adjust_result(size);
-		FunFrame& f = ff();
-		f.called_pc = &cleanup_call_code_;
-		f.calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
+		ff().called_pc = &cleanup_call_code_;
 	}
 
 	void carry_over(FunImpl* fun);
 	void mv_carry_over(FunImpl* fun);
 
 	bool processed(){ 
-		return ff().calling_state!=FunFrame::CALLING_STATE_NONE; 
+		return *ff().called_pc!=InstThrowUnsupportedError::NUMBER; 
 	}
 	
 	void replace_result(int_t pos, const Any& v){
@@ -374,7 +369,6 @@ public:
 		f.ordered_arg_count = 0;
 		f.named_arg_count = 0;
 		f.called_pc = &throw_unsupported_error_code_;
-		f.calling_state = FunFrame::CALLING_STATE_NONE;
 	}
 
 	void recycle_call(const Any& a1){
@@ -396,7 +390,6 @@ public:
 		fun_frames_.upsize(1);
 		ff().poped_pc = temp;
 		ff().called_pc = &cleanup_call_code_;
-		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;
 
 		downsize(ff().need_result_count);
 		pop_ff();
@@ -445,7 +438,6 @@ public:
 		present_for_vm(fun, vm, add_succ_or_fail_result);
 
 		vm->ff().called_pc = &cleanup_call_code_;
-		vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
 		
 		return resume_pc_;
 	}
@@ -454,7 +446,6 @@ public:
 		yield_result_count_ = 0;
 
 		ff().called_pc = pc;
-		ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 		
 		resume_pc_ = 0;
 
@@ -465,7 +456,6 @@ public:
 		present_for_vm(fun, vm, add_succ_or_fail_result);
 
 		vm->ff().called_pc = &cleanup_call_code_;
-		vm->ff().calling_state = FunFrame::CALLING_STATE_PUSHED_RESULT;	
 
 		return resume_pc_;
 	}
@@ -473,7 +463,6 @@ public:
 	void exit_fiber(){
 		XTAL_TRY{
 			yield_result_count_ = 0;
-			ff().calling_state = FunFrame::CALLING_STATE_PUSHED_FUN;
 			ff().called_pc = resume_pc_;
 			resume_pc_ = 0;
 			execute_try(&throw_nop_code_);
@@ -596,16 +585,8 @@ public:
 		// 関数呼び出し側が必要とする戻り値の数
 		int_t need_result_count;
 
+		// 関数が返した戻り値の数
 		int_t result_count;
-
-		enum{
-			CALLING_STATE_NONE, // 何もなってない状態
-			CALLING_STATE_PUSHED_FUN, // 関数が積まれている状態
-			CALLING_STATE_PUSHED_RESULT // 結果が積まれている状態
-		};
-
-		// 呼び出し状態
-		int_t calling_state;
 
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
@@ -670,8 +651,7 @@ public:
 		void variable(int_t i, const UncountedAny& v){ variables_[i] = v; }
 		void self(const UncountedAny& v){ self_ = v; }
 		void arguments(const UncountedAny& v){ arguments_ = v; }
-		void hint1(const UncountedAny& v){ hint1_ = v; XTAL_ASSERT(v.type()<16); }
-		void hint2(const UncountedAny& v){ hint2_ = v; }
+		void hint(const UncountedAny& v1, const UncountedAny& v2){ hint1_ = v1; hint2_ = v2; }
 
 		void inc_ref(){
 			inc_ref_count(fun_);
@@ -736,7 +716,6 @@ public:
 		f.self(self);
 		//f.poped_pc = pc;
 		f.called_pc = &throw_unsupported_error_code_;
-		f.calling_state = FunFrame::CALLING_STATE_NONE;
 	}
 
 	void recycle_ff_args(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -752,7 +731,6 @@ public:
 		f.ordered_arg_count = ordered_arg_count;
 		f.named_arg_count = named_arg_count;
 		f.called_pc = &throw_unsupported_error_code_;
-		f.calling_state = FunFrame::CALLING_STATE_NONE;
 		f.poped_pc = pc;
 		f.variables_.clear();
 		f.scopes.clear();
@@ -828,10 +806,10 @@ private:
 	const inst_t* send2(const inst_t* pc, const ID& name, int_t n = 1);
 	const inst_t* send2r(const inst_t* pc, const ID& name, int_t n = 1);
 
-	void SET_LOCAL_VARIABLE(int_t pos, const Any&);
-	const Any& LOCAL_VARIABLE(int_t pos);
+	void set_local_variable(int_t pos, const Any&);
+	const Any& local_variable(int_t pos);
 
-	const inst_t* CATCH_BODY(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
+	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
 
 	void hook_return(const inst_t* pc);
 

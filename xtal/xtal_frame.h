@@ -70,12 +70,7 @@ public:
 	*/
 	Any each_member() const;
 
-	/**
-	* @brief Xtalで定義されているならtrueを返す。
-	*
-	*/
-	bool is_defined_by_xtal() const;
-	
+
 	FrameImpl* impl() const{ return (FrameImpl*)Any::impl(); }
 
 };
@@ -151,14 +146,21 @@ public:
 	*
 	* @param md Mix-inするクラスオブジェクト
 	*/
-	void inherit(const Any& md) const;
+	void inherit(const Class& md) const;
+
+	/**
+	* @brief Mix-inする
+	*
+	* @param md Mix-inするクラスオブジェクト
+	*/
+	void inherit_strict(const Class& md) const;
 
 	/**
 	* @brief Mix-inされているか調べる
 	*
 	* @param md Mix-inされている調べたいクラスオブジェクト
 	*/
-	bool is_inherited(const Any& md) const;
+	bool is_inherited(const Class& md) const;
 
 	/**
 	* @brief 関数を定義する

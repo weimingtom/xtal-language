@@ -2,11 +2,12 @@
 #include "xtal_cfun.h"
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_vmachineimpl.h"
 
 namespace xtal{
 
 void check_arg(const VMachine& vm, const ParamInfo& p){
-	int_t n = vm.ordered_arg_count();
+	int_t n = vm.impl()->ordered_arg_count();
 	if(n<p.min_param_count || n>p.max_param_count){
 		if(p.min_param_count==0 && p.max_param_count==0){
 			XTAL_THROW(builtin().member("ArgumentError")(

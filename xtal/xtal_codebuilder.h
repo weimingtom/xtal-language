@@ -14,7 +14,7 @@ public:
 	CodeBuilder();
 	~CodeBuilder();
 	
-	Fun compile(const Stream& stream, const String& source_file_name = "anonymous");
+	Code compile(const Stream& stream, const String& source_file_name = "anonymous");
 
 	void interactive_compile();
 

@@ -16,7 +16,7 @@ namespace xtal{
 * @return 実行できる関数オブジェクト
 * この戻り値をobject_dumpすると、バイトコード形式で保存される。
 */
-Any compile_file(const String& file_name);
+Code compile_file(const String& file_name);
 
 /**
 * @brief source文字列をコンパイルする。
@@ -25,7 +25,7 @@ Any compile_file(const String& file_name);
 * @return 実行できる関数オブジェクト
 * この戻り値をobject_dumpすると、バイトコード形式で保存される。
 */
-Any compile(const String& source);
+Code compile(const String& source);
 
 /**
 * @brief file_nameファイルをコンパイルして実行する。
@@ -155,10 +155,6 @@ void set_except_handler(except_handler_t handler);
 Any except();
 void set_except(const Any& except);
 
-void InitFormat();
-void InitInt();
-void InitFloat();
-
 void iter_next(Any& target, Any& value, bool first);
 void iter_next(Any& target, Any& value1, Any& value2, bool first);
 void iter_next(Any& target, Any& value1, Any& value2, Any& value3, bool first);
@@ -254,8 +250,6 @@ Any call_hook();
 Any return_hook();
 
 }
-
-void InitDebug();
 
 }
 

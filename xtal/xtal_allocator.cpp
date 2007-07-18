@@ -83,7 +83,7 @@ bool calling_malloc(){
 	return calling_malloc_;
 }
 
-//*
+/*
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 	alloced_size_ = first_buffer_size;
 	begin_ = 0;

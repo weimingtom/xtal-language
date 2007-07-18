@@ -6,13 +6,19 @@
 #include "xtal_allocator.h"
 #include "xtal_stack.h"
 #include "xtal_string.h"
+#include "xtal_funimpl.h"
 
 namespace xtal{
 
-class CodeImpl : public AnyImpl{
+class CodeImpl : public FunImpl{
 public:
 	
 	CodeImpl();
+
+	void reset_core(){
+		FunImpl::code_ = Code(this);
+		core_ = &xfun_core_table_[0];
+	}
 
 	int_t compliant_line_number(const inst_t* p);
 		
@@ -80,7 +86,7 @@ public:
 protected:
 
 	virtual void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
+		FunImpl::visit_members(m);
 		m & symbol_table_ & value_table_ & toplevel_ & source_file_name_;
 	}
 

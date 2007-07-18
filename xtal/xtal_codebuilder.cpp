@@ -24,13 +24,10 @@ CodeBuilder::~CodeBuilder(){
 
 }
 
-Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
-
+Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	result_ = Code();
-	
 	p_ = result_.impl();
 	p_->source_file_name_ = source_file_name;
-
 	p_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
@@ -45,13 +42,11 @@ Fun CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	}
 
 	parser_.release();
-	Code ret = result_;
 	result_ = null;
 
 	if(com_->errors.size()==0){
-		Fun p(null, null, ret, &ret.impl()->xfun_core_table_[0]);
-		p.set_object_name("<TopLevel>", 1, null);
-		return p;
+		p_->reset_core();
+		return Code(p_);
 	}else{
 		return null;
 	}
@@ -66,8 +61,6 @@ void CodeBuilder::interactive_compile(){
 
 	lines_.push(1);
 	fun_frame_begin(true, 0, 0, 0);
-	Fun fun(null, null, result_, &p_->xfun_core_table_[0]);
-	fun.set_object_name("<TopLevel>", 1, null);
 
 	Stream stream;
 	new(stream) InteractiveStreamImpl();
@@ -98,9 +91,9 @@ void CodeBuilder::interactive_compile(){
 			put_inst(InstReturn0());
 			put_inst(InstThrow());
 
-			fun.set_core(&p_->xfun_core_table_[0]);
+			p_->reset_core();
 			XTAL_TRY{
-				vmachine().impl()->execute(fun.impl(), &p_->code_[pc_pos]);
+				vmachine().impl()->execute(p_, &p_->code_[pc_pos]);
 			}XTAL_CATCH(e){
 				printf("%s\n", e.to_s().c_str());
 			}

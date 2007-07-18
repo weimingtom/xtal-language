@@ -6,8 +6,6 @@
 
 namespace xtal{
 
-void InitArguments();
-
 // fwd decl
 class VMachineImpl;
 class ArgumentsImpl;

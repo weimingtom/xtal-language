@@ -92,10 +92,10 @@ int main(int argc, char** argv){
 		int c;
 		
 		c = clock();
-		handle_argv(argv);
+		//handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 
-		///*
+		/*
 		
 		c = clock();
 		load("../bench/loop.xtal");

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "xtal_lib.h"
+
 namespace xtal{
 
 #ifdef XTAL_USE_WORD_CODE
@@ -59,7 +61,7 @@ struct Inst{
 	Inst(inst_t v = 0)
 		:op(v){}
 };
-	
+
 #define XTAL_DEF_INST_0(N, InstName) \
 	struct Inst##InstName : public Inst{\
 		enum{ \
@@ -70,7 +72,10 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-	};
+		String inspect(){\
+			return String("" #InstName ":");\
+		}\
+	}
 
 #define XTAL_DEF_INST_1(N, InstName, MemberType1, MemberName1) \
 	struct Inst##InstName : public Inst{\
@@ -87,7 +92,12 @@ struct Inst{
 			op = N;\
 			MemberName1 = m1;\
 		}\
-	};
+		String inspect(){\
+			return format("" #InstName ": "\
+					#MemberName1 "=%s")\
+				((int_t)MemberName1).to_s();\
+		}\
+	}
 
 #define XTAL_DEF_INST_2(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2) \
 	struct Inst##InstName : public Inst{\
@@ -106,7 +116,13 @@ struct Inst{
 			MemberName1 = m1;\
 			MemberName2 = m2;\
 		}\
-	};
+		String inspect(){\
+			return format("" #InstName ": "\
+					#MemberName1 "=%s, "\
+					#MemberName2 "=%s")\
+				((int_t)MemberName1, (int_t)MemberName2).to_s();\
+		}\
+	}
 	
 #define XTAL_DEF_INST_3(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3) \
 	struct Inst##InstName : public Inst{\
@@ -127,7 +143,14 @@ struct Inst{
 			MemberName2 = m2;\
 			MemberName3 = m3;\
 		}\
-	};
+		String inspect(){\
+			return format("" #InstName ": "\
+					#MemberName1 "=%s, "\
+					#MemberName2 "=%s, "\
+					#MemberName3 "=%s")\
+				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3).to_s();\
+		}\
+	}
 	
 #define XTAL_DEF_INST_4(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4) \
 	struct Inst##InstName : public Inst{\
@@ -150,8 +173,17 @@ struct Inst{
 			MemberName3 = m3;\
 			MemberName4 = m4;\
 		}\
-	};
+		String inspect(){\
+			return format("" #InstName ": "\
+					#MemberName1 "=%s, "\
+					#MemberName2 "=%s, "\
+					#MemberName3 "=%s, "\
+					#MemberName4 "=%s")\
+				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3, (int_t)MemberName4).to_s();\
+		}\
+	}
 	
+/*
 #define XTAL_DEF_INST_5(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5) \
 	struct Inst##InstName : public Inst{\
 		enum{ \
@@ -175,7 +207,16 @@ struct Inst{
 			MemberName4 = m4;\
 			MemberName5 = m5;\
 		}\
-	};
+		String inspect(){\
+			return format("" #InstName ": "\
+					#MemberName1 "=%s, "\
+					#MemberName2 "=%s, "\
+					#MemberName3 "=%s, "\
+					#MemberName4 "=%s, "\
+					#MemberName5 "=%s")\
+				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3, (int_t)MemberName4, (int_t)MemberName5).to_s();\
+		}\
+	}
 	
 #define XTAL_DEF_INST_6(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5, MemberType6, MemberName6) \
 	struct Inst##InstName : public Inst{\
@@ -202,8 +243,18 @@ struct Inst{
 			MemberName5 = m5;\
 			MemberName6 = m6;\
 		}\
-	};
-	
+		String inspect(){\
+			return format("" ##InstName ": "\
+					#MemberName1 "=%s, "\
+					#MemberName2 "=%s, "\
+					#MemberName3 "=%s, "\
+					#MemberName4 "=%s, "\
+					#MemberName5 "=%s, "\
+					#MemberName6 "=%s")\
+				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3, (int_t)MemberName4, (int_t)MemberName5, (int_t)MemberName6).to_s();\
+		}\
+	}
+*/
 
 XTAL_DEF_INST_0(0, Nop);
 
@@ -609,5 +660,7 @@ XTAL_DEF_INST_0(144, Assert);
 XTAL_DEF_INST_1(145, BreakPoint,
         inst_u8_t, type
 );
+
+XTAL_DEF_INST_0(146, MAX);
 
 }

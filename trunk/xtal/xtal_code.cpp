@@ -9,6 +9,7 @@ FunCore empty_xfun_core;
 FrameCore empty_frame_core;
 ExceptCore empty_except_core;
 
+
 CodeImpl::CodeImpl()
 	:toplevel_("toplevel"), source_file_name_("<noname>"){
 	toplevel_.inherit(builtin());
@@ -77,6 +78,31 @@ String Code::source_file_name() const{
 
 const Class& Code::toplevel() const{ 
 	return impl()->toplevel();
+}
+
+String Code::inspect() const{
+	return impl()->inspect();
+}
+
+String CodeImpl::inspect(){
+
+	int size = 0;
+	const inst_t* pc = data();
+	String temp;
+	MemoryStream ms;
+
+	for(;;){switch(*pc){
+		XTAL_NODEFAULT;
+
+//{CODE_INSPECT{{
+
+	
+//}}CODE_INSPECT}
+
+	} pc += size; ms.put_s(Xt("%04d:%s\n")((int_t)(data()-pc), temp).to_s()); }
+
+	ms.seek(0);
+	return ms.get_s(ms.size());
 }
 
 }

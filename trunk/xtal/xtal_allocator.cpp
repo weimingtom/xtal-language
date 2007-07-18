@@ -28,7 +28,6 @@ void smm_free(void* p){
 
 }
 
-
 void set_memory(void* memory, size_t size){
 	smm_.init(memory, (char*)memory + size);
 	set_user_malloc(&smm_malloc, &smm_free);
@@ -46,32 +45,29 @@ void* user_malloc(size_t size){
 void* user_malloc_nothrow(size_t size){
 	calling_malloc_ = true;
 
-	if(used_user_malloc_threshold_<used_user_malloc_size_+size){
-		// 閾値を現在使われているメモリから50KB増やした値に設定する
-		used_user_malloc_threshold_ = used_user_malloc_size_ + size + 1024*10; 
+	if(used_user_malloc_size_ > used_user_malloc_threshold_){
+		used_user_malloc_threshold_ = 0; 
 		gc();
 	}
+	used_user_malloc_size_ += size;
 	
 	void* ret = user_malloc_(size);
+
 	if(!ret){
-		full_gc();
+		gc();
 		ret = user_malloc_(size);
-	}
-	
-	if(ret){
-		used_user_malloc_size_+=size;
 	}
 
 	calling_malloc_ = false;
-
 	return ret;
 } 
 
 void user_free(void* p, size_t size){
-	used_user_malloc_size_-=size;
+
 #ifdef XTAL_DEBUG
 	memset(p, 'd', size);
 #endif
+
 	user_free_(p);
 }
 

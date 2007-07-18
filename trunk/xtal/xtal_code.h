@@ -102,6 +102,8 @@ public:
 
 	const Class& toplevel() const;
 
+	String inspect() const;
+
 	CodeImpl* impl() const{ return (CodeImpl*)Any::impl(); }
 };
 	

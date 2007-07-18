@@ -154,7 +154,6 @@ void initialize(){
 	InitDebug();
 
 	finalize_id = ID("finalize");
-	enable_gc();
 	
 	InitString();
 	InitID();
@@ -173,12 +172,11 @@ void initialize(){
 	InitFileStream();
 	InitMemoryStream();
 	
-	initialize_lib();
-	
-
-	/**/
-	
 	atexit(&uninitialize); // uninitializeを登録する
+
+	initialize_lib();
+
+	enable_gc();
 }
 
 void uninitialize(){
@@ -531,7 +529,6 @@ GCObserverImpl::~GCObserverImpl(){
 	
 void* AnyImpl::operator new(size_t size){
 	if(objects_current_==objects_end_){
-		initialize();
 		expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	}	
 	AnyImpl* p = static_cast<AnyImpl*>(user_malloc(size));
@@ -549,7 +546,6 @@ void AnyImpl::operator delete(void* p, size_t size){
 
 void* AnyImpl::operator new(size_t size, Any& guard){
 	if(objects_current_==objects_end_){
-		initialize();
 		expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	}	
 	AnyImpl* p = static_cast<AnyImpl*>(user_malloc(size));

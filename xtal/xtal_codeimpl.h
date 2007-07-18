@@ -64,7 +64,9 @@ public:
 
 	ExceptCore* except_core(int_t i){
 		return &except_core_table_[i];
-	}	
+	}
+
+	String inspect();
 
 public:
 

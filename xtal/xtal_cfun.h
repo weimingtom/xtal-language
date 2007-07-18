@@ -696,9 +696,10 @@ struct TType{
 	typedef char (&unknown)[3];
 	static any testT(Any*);
 	static anyimpl testT(AnyImpl*);
-	static unknown testT(void*);
+	static unknown testT(...);
+	static T* makeT();
 	enum{ 
-		temp = sizeof(testT((T*)0)),
+		temp = sizeof(testT(makeT())),
 		value = temp==sizeof(any) ? 0 :
 				temp==sizeof(anyimpl) ? 1 : 2
 	}; 

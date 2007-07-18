@@ -115,7 +115,7 @@ void Marshal::inner_dump(const Any& v){
 				inner_dump(value);
 			}
 			return;
-		}else if(cls.raweq(TClass<Fun>::get()) && v.object_name()==String("<TopLevel>")){
+		}else if(cls.raweq(TClass<Code>::get())){
 			CodeImpl* p = (CodeImpl*)((Fun*)&v)->code().impl();
 			stream_.put_i8('x'); stream_.put_i8('t'); stream_.put_i8('a'); stream_.put_i8('l');
 			stream_.put_i8(MARSHAL_VERSION1); stream_.put_i8(MARSHAL_VERSION2); 

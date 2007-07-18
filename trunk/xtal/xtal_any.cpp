@@ -29,7 +29,25 @@ void InitAny(){
 	p.method("op_eq", &Any::raweq);
 }
 
+
+void InitDebug();
+void InitString();
 void InitID();
+void InitAny();
+void InitInt();
+void InitFloat();
+void InitArray();
+void InitMap();
+void InitArguments();
+void InitFun();
+void InitFiber();
+void InitFormat();
+void InitClass();
+void InitStream();
+void InitFileStream();
+void InitMemoryStream();
+void InitCode();
+
 
 Null null;
 Nop nop;
@@ -171,6 +189,7 @@ void initialize(){
 	InitStream();
 	InitFileStream();
 	InitMemoryStream();
+	InitCode();
 	
 	atexit(&uninitialize); // uninitializeを登録する
 

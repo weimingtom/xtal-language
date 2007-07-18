@@ -19,10 +19,10 @@ namespace xtal{
 
 #ifndef XTAL_NO_PARSER
 
-Any compile_file(const String& file_name){
+Code compile_file(const String& file_name){
 	CodeBuilder cb;
 	FileStream fs(file_name, "r");
-	if(Any fun = cb.compile(fs, file_name)){
+	if(Code fun = cb.compile(fs, file_name)){
 		fs.close();
 		return fun;
 	}
@@ -31,10 +31,10 @@ Any compile_file(const String& file_name){
 	return null;
 }
 
-Any compile(const String& source){
+Code compile(const String& source){
 	CodeBuilder cb;
 	MemoryStream ms(source.c_str(), source.size());
-	if(Any fun =  cb.compile(ms, "<eval>")){
+	if(Code fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
 	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()));
@@ -73,11 +73,11 @@ void ix(){
 
 #else
 
-Any compile_file(const String& file_name){
+Code compile_file(const String& file_name){
 	return null;
 }
 
-Any compile(const String& source){
+Code compile(const String& source){
 	return null;
 }
 
@@ -983,6 +983,7 @@ void initialize_lib(){
 	builtin.def("Thread", TClass<Thread>::get());
 	builtin.def("Mutex", TClass<Mutex>::get());
 	builtin.def("Format", TClass<Format>::get());
+	builtin.def("Code", TClass<Code>::get());
 	
 	builtin.fun("print", &print);
 	builtin.fun("println", &println);

@@ -4,8 +4,6 @@
 #include "xtal_any.h"
 
 namespace xtal{
-
-void InitString(); 
 	
 // fwd decl
 class StringImpl;

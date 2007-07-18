@@ -962,6 +962,7 @@ public:
 	const inst_t* FunThrowNull(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
+	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
 

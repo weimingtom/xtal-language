@@ -221,6 +221,7 @@ void VMachineImpl::execute_inner(const inst_t* start){
 		&&LabelThrowNull,
 		&&LabelAssert,
 		&&LabelBreakPoint,
+		&&LabelMAX,
 //}}LABELS}
 
 	};
@@ -1416,7 +1417,7 @@ XTAL_VM_SWITCH(*pc){
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
-				cp.inherit(pop());
+				cp.inherit(cast<Class>(pop()));
 			}
 
 			ff().outer(decolonize());
@@ -1543,7 +1544,7 @@ XTAL_VM_SWITCH(*pc){
 				failure = true;
 				Any expr_string = get(1) ? get(1) : Any("");
 				Any message = get() ? get() : Any("");
-				last_except_ = builtin().member("AssertionFailed")(message, expr_string);
+				last_except_ = append_backtrace(pc, builtin().member("AssertionFailed")(message, expr_string));
 			}
 			downsize(3);
 		}

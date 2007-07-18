@@ -10,10 +10,6 @@ class StreamImpl;
 class MemoryStreamImpl;
 class FileStreamImpl;
 
-void InitStream();
-void InitMemoryStream();
-void InitFileStream();
-
 class Stream : public Any{
 public:
 

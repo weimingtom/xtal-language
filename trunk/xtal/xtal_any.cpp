@@ -63,11 +63,11 @@ Any operator ^(const Any& a, const Any& b){ return a.send(Xid(op_xor), b); }
 Any operator >>(const Any& a, const Any& b){ return a.send(Xid(op_shr), b); }
 Any operator <<(const Any& a, const Any& b){ return a.send(Xid(op_shl), b); }
 Any operator ==(const Any& a, const Any& b){ return a.raweq(b) || a.send(Xid(op_eq), b); }
-Any operator !=(const Any& a, const Any& b){ return !a.raweq(b) || !a.send(Xid(op_eq), b); }
+Any operator !=(const Any& a, const Any& b){ return !(a==b); }
 Any operator <(const Any& a, const Any& b){ return a.send(Xid(op_lt), b); }
-Any operator >(const Any& a, const Any& b){ return b.send(Xid(op_lt), a); }
-Any operator <=(const Any& a, const Any& b){ return !a.send(Xid(op_lt), b); }
-Any operator >=(const Any& a, const Any& b){ return !b.send(Xid(op_lt), a); }
+Any operator >(const Any& a, const Any& b){ return b<a; }
+Any operator <=(const Any& a, const Any& b){ return !(b<a); }
+Any operator >=(const Any& a, const Any& b){ return !(a<b); }
 
 Any& operator +=(Any& a, const Any& b){ a = a.send(Xid(op_add_assign), b); return a; }
 Any& operator -=(Any& a, const Any& b){ a = a.send(Xid(op_sub_assign), b); return a; }

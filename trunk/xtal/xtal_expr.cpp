@@ -131,38 +131,44 @@ AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
 	return ret;
 }
 
-void ExprBuilder::scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag){
-	VarInfo vi = {list, on_heap, set_name_flag};
-	var_info_stack.push(vi);
-	*on_heap = false;
+void ExprBuilder::scope_push(Vars* vars){
+	vars->on_heap = false;
+	vars_stack.push(vars);
 }
 
 void ExprBuilder::scope_carry_on_heap_flag(){
-	*var_info_stack[0].on_heap_flag = *var_info_stack[1].on_heap_flag;
+	vars_stack[0]->on_heap = vars_stack[1]->on_heap;
 }
 
 void ExprBuilder::scope_set_on_heap_flag(int_t i){
-	*var_info_stack[i].on_heap_flag = true;
+	vars_stack[i]->on_heap = true;
 }
 
 void ExprBuilder::scope_pop(){
-	var_info_stack.pop();	
+	vars_stack.pop();	
 }
 
 void ExprBuilder::register_variable(int_t var){
-	for(TList<int_t>::Node* p = var_info_stack.top().variables->head; p; p = p->next){
-		if(p->value == var){
+	for(TList<Var>::Node* p = vars_stack[0]->vars.head; p; p = p->next){
+		if(p->value.name == var){
 			common->error(line(), Xt("Xtal Compile Error 1026")(
 				Named("name", common->ident_table[var])
 			));
 		}
 	}
-	var_info_stack.top().variables->push_back(var, alloc);
+
+	Var v;
+	v.name = var;
+	v.constant = true;
+	v.init = 0;
+	v.accessibility = KIND_PUBLIC;
+	v.ns = 0;
+	vars_stack[0]->vars.push_back(v, alloc);
 }
 
 void ExprBuilder::block_begin(){
 	block_stack.push(new(alloc) BlockStmt(line()));
-	scope_push(&block_stack.top()->vars, &block_stack.top()->on_heap, false);
+	scope_push(&block_stack.top()->vars);
 }	
 
 void ExprBuilder::block_add(Stmt* stmt){
@@ -176,7 +182,7 @@ BlockStmt* ExprBuilder::block_end(){
 
 void ExprBuilder::try_begin(){
 	try_stack.push(new(alloc) TryStmt(line()));
-	scope_push(&try_stack.top()->catch_vars, &try_stack.top()->on_heap, false);
+	scope_push(&try_stack.top()->catch_vars);
 }
 
 void ExprBuilder::try_body(Stmt* stmt){
@@ -258,7 +264,7 @@ Stmt* ExprBuilder::if_end(){
 
 void ExprBuilder::fun_begin(int_t kind){
 	fun_stack.push(new(alloc) FunExpr(line(), kind));
-	scope_push(&fun_stack.top()->vars, &fun_stack.top()->on_heap, false);
+	scope_push(&fun_stack.top()->vars);
 	scope_set_on_heap_flag(1);
 }
 
@@ -348,7 +354,7 @@ TList<Stmt*>* ExprBuilder::block_stmts(){
 
 void ExprBuilder::toplevel_begin(){
 	toplevel_stack.push(new(alloc) TopLevelStmt(line()));
-	scope_push(&toplevel_stack.top()->vars, &toplevel_stack.top()->on_heap, true);
+	scope_push(&toplevel_stack.top()->vars);
 	scope_set_on_heap_flag(0);
 }
 void ExprBuilder::toplevel_add(Stmt* stmt){
@@ -376,9 +382,8 @@ TopLevelStmt* ExprBuilder::toplevel_end(){
 
 void ExprBuilder::class_begin(){
 	class_stack.push(new(alloc) ClassExpr(line()));
-	class_stack.top()->kind = KIND_CLASS;
 
-	scope_push(&class_stack.top()->vars, &class_stack.top()->on_heap, true);
+	scope_push(&class_stack.top()->vars);
 	scope_set_on_heap_flag(0);
 }
 void ExprBuilder::class_define_instance_variable(int_t name, Expr* expr){
@@ -393,12 +398,13 @@ void ExprBuilder::class_define_instance_variable(int_t name, Expr* expr){
 }
 void ExprBuilder::class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs){
 	register_variable(var);
-	ClassExpr::Attr attr;
-	attr.var = var;
-	attr.accessibility = accessibility;
-	attr.ns = ns;
-	class_stack.top()->stmts.push_back(push(rhs), alloc);
-	class_stack.top()->attrs.push_back(attr, alloc);
+	Var v;
+	v.name = var;
+	v.constant = true;
+	v.init = rhs;
+	v.accessibility = accessibility;
+	v.ns = ns;
+	class_stack.top()->vars.vars.push_back(v, alloc);
 }
 ClassExpr* ExprBuilder::class_end(){
 	fun_begin(KIND_METHOD);
@@ -408,8 +414,6 @@ ClassExpr* ExprBuilder::class_end(){
 			}
 		fun_body(block_end());
 	class_define_member(register_ident("__INITIALIZE__"), KIND_PUBLIC, pseudo(InstPushNull::NUMBER), fun_end());
-
-	XTAL_ASSERT(class_stack.top()->stmts.size == class_stack.top()->attrs.size);
 
 	scope_pop();
 	return class_stack.pop();
@@ -517,7 +521,7 @@ MapExpr* ExprBuilder::map_end(){
 void ExprBuilder::init(LPCCommon* com, RegionAlloc* all){
 	common = com;
 	alloc = all;
-	var_info_stack.clear();
+	vars_stack.clear();
 	block_stack.clear();
 	try_stack.clear();
 	while_stack.clear();

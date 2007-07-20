@@ -12,6 +12,7 @@ class CodeBuilder{
 public:
 
 	CodeBuilder();
+
 	~CodeBuilder();
 	
 	Code compile(const Stream& stream, const String& source_file_name = "anonymous");
@@ -155,7 +156,7 @@ public:
 		SCOPE, BLOCK, FRAME, FUN
 	};
 
-	void block_begin(int_t type, int_t kind, TList<int_t>& vars, bool on_heap, int_t mixins = 0);
+	void block_begin(int_t type, int_t kind, const Vars& vars, int_t mixins = 0);
 	void block_end();
 
 	void set_on_heap_flag();

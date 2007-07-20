@@ -328,11 +328,31 @@ struct OnceExpr : public Expr{
 		:Expr(TYPE, line), expr(expr){}
 };
 
+struct Var{
+
+	// 変数名
+	int_t name;
+
+	// 代入が存在しないか？
+	bool constant;
+
+	// 初期値の式
+	Expr* init;
+
+	int_t accessibility;
+		
+	Expr* ns;
+};
+
+struct Vars{
+	TList<Var> vars;
+	bool on_heap;
+};
+
 struct TryStmt : public Stmt{ 
 	enum{ TYPE = __LINE__ };
 	Stmt* try_stmt; 
-	TList<int_t> catch_vars;
-	bool on_heap;
+	Vars catch_vars;
 	Stmt* catch_stmt; 
 	Stmt* finally_stmt;	
 	TryStmt(int_t line, Stmt* try_stmt = 0, Stmt* catch_stmt = 0, Stmt* finally_stmt = 0)
@@ -364,12 +384,11 @@ struct FunExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	int_t kind;
 	Stmt* stmt;
-	TList<int_t> vars;
+	Vars vars;
 	bool have_args;
-	bool on_heap;
 	TPairList<int_t, Expr*> params;
 	FunExpr(int_t line, int_t kind, Stmt* stmt = 0)
-		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false), on_heap(false){}
+		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false){}
 };
 
 struct MultipleAssignStmt : public Stmt{
@@ -504,8 +523,7 @@ struct ContinueStmt : public Stmt{
 
 struct BlockStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	TList<int_t> vars;
-	bool on_heap;
+	Vars vars;
 	TList<Stmt*> stmts;
 	BlockStmt(int_t line)
 		:Stmt(TYPE, line){}
@@ -513,36 +531,27 @@ struct BlockStmt : public Stmt{
 
 struct FrameExpr : public Expr{
 	enum{ TYPE = __LINE__ };
-	TList<int_t> vars;
-	bool on_heap;
+	Vars vars;
 	TList<Stmt*> stmts;
 	int_t kind;
 	FrameExpr(int_t line, int_t kind)
 		:Expr(TYPE, line), kind(kind){}
 };
 
-struct ClassExpr : public FrameExpr{
+struct ClassExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	TPairList<int_t, Expr*> inst_vars;
 	TList<Expr*> mixins;
 	int_t frame_number;
-
-	struct Attr{
-		int_t var;
-		int_t accessibility;
-		Expr* ns;
-	};
-
-	TList<Attr> attrs;
+	Vars vars;
 
 	ClassExpr(int_t line)
-		:FrameExpr(line, KIND_CLASS), frame_number(0){ type = TYPE; }
+		:Expr(TYPE, line), frame_number(0){}
 };
 
 struct TopLevelStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	TList<int_t> vars;
-	bool on_heap;
+	Vars vars;
 	TList<Stmt*> stmts;
 	Expr* export_expr;
 	Stmt* unittest_stmt;
@@ -590,7 +599,7 @@ public:
 	ContinueStmt* continue_(int_t name);
 	BreakStmt* break_(int_t name);
 
-	void scope_push(TList<int_t>* list, bool* on_heap, bool set_name_flag);
+	void scope_push(Vars* vars);
 	void scope_carry_on_heap_flag();
 	void scope_set_on_heap_flag(int_t i);
 	void scope_pop();
@@ -683,17 +692,10 @@ public:
 	int_t append_ident(const ID& ident){ return common->append_ident(ident); }
 	int_t append_value(const Any& v){ return common->append_value(v); }
 
-	struct VarInfo{
-		TList<int_t>* variables;
-		bool* on_heap_flag;
-		bool set_name_flag;
-	};
-	
-	PODStack<VarInfo> var_info_stack;
-	
 	LPCCommon* common;
 	RegionAlloc* alloc;
 	
+	PStack<Vars*> vars_stack;
 	PStack<BlockStmt*> block_stack;
 	PStack<TryStmt*> try_stack;
 	PStack<WhileStmt*> while_stack;

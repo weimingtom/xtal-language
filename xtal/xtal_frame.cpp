@@ -288,9 +288,10 @@ const Any& ClassImpl::member(const ID& name, const Any& self, const Any& ns){
 void ClassImpl::set_member(const ID& name, const Any& value, const Any& ns){
 	IdMap::Node* it = map_members_->find(name, ns);
 	if(!it){
-		//throw;
+		XTAL_THROW(builtin().member("RuntimeError")("undefined"));
 	}else{
-		//throw;
+		members_.push_back(value);
+		value.set_object_name(name, object_name_force(), this);
 	}
 
 	global_mutate_count++;

@@ -268,17 +268,17 @@ XTAL_DEF_INST_0(3, PushTrue);
 XTAL_DEF_INST_0(4, PushFalse);
 
 XTAL_DEF_INST_1(5, PushInt1Byte,
-        inst_u8_t, value
+        inst_i8_t, value
 );
 XTAL_DEF_INST_1(6, PushInt2Byte,
-        inst_u16_t, value
+        inst_i16_t, value
 );
 
 XTAL_DEF_INST_1(7, PushFloat1Byte,
-        inst_u8_t, value
+        inst_i8_t, value
 );
 XTAL_DEF_INST_1(8, PushFloat2Byte,
-        inst_u16_t, value
+        inst_i16_t, value
 );
 
 XTAL_DEF_INST_0(9, PushCallee);

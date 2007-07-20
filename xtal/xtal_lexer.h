@@ -183,7 +183,6 @@ private:
 	uint_t pos_;
 	uint_t read_;
 	uint_t marked_;
-	int_t line_;
 };
 	
 
@@ -234,12 +233,12 @@ public:
 	/**
 	* @brief 現在の行数を返す
 	*/
-	int_t line(){ return line_; }
+	int_t line(){ return com_.line; }
 	
 	/**
 	* @brief 現在の行数を設定する
 	*/
-	void set_line(int_t v){ com_.line = line_ = v; }
+	void set_line(int_t v){ com_.line = v; }
 	
 	/**
 	* @brief トークンを読める形の文字列に変換する
@@ -315,7 +314,6 @@ private:
 
 	uint_t pos_;
 	uint_t read_;
-	int_t line_;
 	int_t left_space_;
 	
 	enum{ NORMAL_MODE, STRING_MODE };

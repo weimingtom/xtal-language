@@ -12,24 +12,46 @@
 
 namespace xtal{
 
-#ifdef __GNUC__
-//#	define XTAL_VM_OPT
+// VC用のジャンプテーブル機構
+// 逆に遅くなるので未使用
+#if 0 && defined(_MSC_VER)
+#	define XTAL_COPY_LABEL_ADDRESS(n, label) {\
+		__asm mov eax, offset label\
+		__asm mov ebx, offset label_table[n*4]\
+		__asm mov [ebx], eax\
+	}
+
+#	define XTAL_GOTO_LABEL_ADDRESS() {\
+		int temp = *pc;\
+		__asm mov eax, temp\
+		__asm jmp dword ptr label_table[eax*4]\
+	}
+
+#	define XTAL_VM_OPT
 #endif
+	
+// GCC用のジャンプテーブル機構
+// 逆に遅くなるので未使用
+#if 0 && defined(__GNUC__)
+#	define XTAL_COPY_LABEL_ADDRESS(n, label) label_table[n] = &&label
+
+#	define XTAL_GOTO_LABEL_ADDRESS() goto *label_table[*pc]
+
+#	define XTAL_VM_OPT
+#endif
+
 
 #ifdef XTAL_VM_OPT
 
-#	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
+#	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false);
 #	define XTAL_VM_FIRST_CASE(key) Label##key: { Inst##key& inst = *(Inst##key*)pc;
 #	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); Label##key: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
-#	define XTAL_VM_SWITCH goto *label_table[*pc];
+#	define XTAL_VM_SWITCH XTAL_GOTO_LABEL_ADDRESS(); 
 #	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
-#	define XTAL_VM_CONTINUE(x) pc = (x); goto *label_table[*pc]
+#	define XTAL_VM_CONTINUE(x) pc = (x); XTAL_GOTO_LABEL_ADDRESS()
 
 #else
 
-//std::ofstream log("code.txt");
-//#define XTAL_VM_CASE(key) goto begin; case key: log<<(#key)<<std::endl;
-//#define XTAL_VM_CASE(key) } goto begin; case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc; printf("%s\n", #key);
 #	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
 #	define XTAL_VM_FIRST_CASE(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
 #	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
@@ -72,159 +94,160 @@ void VMachineImpl::execute_inner(const inst_t* start){
 
 #ifdef XTAL_VM_OPT
 
-	static void* label_table[] = {
-
+	static void* label_table[InstMAX::NUMBER];
+	bool label_table_initialized = false;
+	if(!label_table_initialized){
+		label_table_initialized = true;
 //{LABELS{{
-		&&LabelNop,
-		&&LabelPushNull,
-		&&LabelPushNop,
-		&&LabelPushTrue,
-		&&LabelPushFalse,
-		&&LabelPushInt1Byte,
-		&&LabelPushInt2Byte,
-		&&LabelPushFloat1Byte,
-		&&LabelPushFloat2Byte,
-		&&LabelPushCallee,
-		&&LabelPushArgs,
-		&&LabelPushThis,
-		&&LabelPushCurrentContext,
-		&&LabelPop,
-		&&LabelDup,
-		&&LabelInsert1,
-		&&LabelInsert2,
-		&&LabelInsert3,
-		&&LabelAdjustResult,
-		&&LabelIf,
-		&&LabelUnless,
-		&&LabelGoto,
-		&&LabelLocalVariableInc,
-		&&LabelLocalVariableDec,
-		&&LabelLocalVariableIncDirect,
-		&&LabelLocalVariableDecDirect,
-		&&LabelLocalVariable1ByteDirect,
-		&&LabelLocalVariable1Byte,
-		&&LabelLocalVariable2Byte,
-		&&LabelSetLocalVariable1ByteDirect,
-		&&LabelSetLocalVariable1Byte,
-		&&LabelSetLocalVariable2Byte,
-		&&LabelInstanceVariable,
-		&&LabelSetInstanceVariable,
-		&&LabelCleanupCall,
-		&&LabelReturn0,
-		&&LabelReturn1,
-		&&LabelReturn2,
-		&&LabelReturn,
-		&&LabelYield,
-		&&LabelExit,
-		&&LabelValue,
-		&&LabelSetValue,
-		&&LabelCheckUnsupported,
-		&&LabelSend,
-		&&LabelSendIfDefined,
-		&&LabelCall,
-		&&LabelCallCallee,
-		&&LabelSend_A,
-		&&LabelSendIfDefined_A,
-		&&LabelCall_A,
-		&&LabelCallCallee_A,
-		&&LabelSend_T,
-		&&LabelSendIfDefined_T,
-		&&LabelCall_T,
-		&&LabelCallCallee_T,
-		&&LabelSend_AT,
-		&&LabelSendIfDefined_AT,
-		&&LabelCall_AT,
-		&&LabelCallCallee_AT,
-		&&LabelBlockBegin,
-		&&LabelBlockEnd,
-		&&LabelBlockBeginDirect,
-		&&LabelBlockEndDirect,
-		&&LabelTryBegin,
-		&&LabelTryEnd,
-		&&LabelPushGoto,
-		&&LabelPopGoto,
-		&&LabelIfEq,
-		&&LabelIfNe,
-		&&LabelIfLt,
-		&&LabelIfLe,
-		&&LabelIfGt,
-		&&LabelIfGe,
-		&&LabelIfRawEq,
-		&&LabelIfRawNe,
-		&&LabelIfIs,
-		&&LabelIfNis,
-		&&LabelIfArgIsNull,
-		&&LabelPos,
-		&&LabelNeg,
-		&&LabelCom,
-		&&LabelNot,
-		&&LabelAt,
-		&&LabelSetAt,
-		&&LabelAdd,
-		&&LabelSub,
-		&&LabelCat,
-		&&LabelMul,
-		&&LabelDiv,
-		&&LabelMod,
-		&&LabelAnd,
-		&&LabelOr,
-		&&LabelXor,
-		&&LabelShl,
-		&&LabelShr,
-		&&LabelUshr,
-		&&LabelEq,
-		&&LabelNe,
-		&&LabelLt,
-		&&LabelLe,
-		&&LabelGt,
-		&&LabelGe,
-		&&LabelRawEq,
-		&&LabelRawNe,
-		&&LabelIs,
-		&&LabelNis,
-		&&LabelInc,
-		&&LabelDec,
-		&&LabelAddAssign,
-		&&LabelSubAssign,
-		&&LabelCatAssign,
-		&&LabelMulAssign,
-		&&LabelDivAssign,
-		&&LabelModAssign,
-		&&LabelAndAssign,
-		&&LabelOrAssign,
-		&&LabelXorAssign,
-		&&LabelShlAssign,
-		&&LabelShrAssign,
-		&&LabelUshrAssign,
-		&&LabelGlobalVariable,
-		&&LabelSetGlobalVariable,
-		&&LabelDefineGlobalVariable,
-		&&LabelMember,
-		&&LabelMemberIfDefined,
-		&&LabelDefineMember,
-		&&LabelDefineClassMember,
-		&&LabelSetName,
-		&&LabelSetMultipleLocalVariable2Direct,
-		&&LabelSetMultipleLocalVariable3Direct,
-		&&LabelSetMultipleLocalVariable4Direct,
-		&&LabelOnce,
-		&&LabelClassBegin,
-		&&LabelClassEnd,
-		&&LabelMakeArray,
-		&&LabelArrayAppend,
-		&&LabelMakeMap,
-		&&LabelMapInsert,
-		&&LabelMakeFun,
-		&&LabelMakeInstanceVariableAccessor,
-		&&LabelThrow,
-		&&LabelThrowUnsupportedError,
-		&&LabelThrowNull,
-		&&LabelAssert,
-		&&LabelBreakPoint,
-		&&LabelMAX,
+		XTAL_COPY_LABEL_ADDRESS(0, LabelNop);
+		XTAL_COPY_LABEL_ADDRESS(1, LabelPushNull);
+		XTAL_COPY_LABEL_ADDRESS(2, LabelPushNop);
+		XTAL_COPY_LABEL_ADDRESS(3, LabelPushTrue);
+		XTAL_COPY_LABEL_ADDRESS(4, LabelPushFalse);
+		XTAL_COPY_LABEL_ADDRESS(5, LabelPushInt1Byte);
+		XTAL_COPY_LABEL_ADDRESS(6, LabelPushInt2Byte);
+		XTAL_COPY_LABEL_ADDRESS(7, LabelPushFloat1Byte);
+		XTAL_COPY_LABEL_ADDRESS(8, LabelPushFloat2Byte);
+		XTAL_COPY_LABEL_ADDRESS(9, LabelPushCallee);
+		XTAL_COPY_LABEL_ADDRESS(10, LabelPushArgs);
+		XTAL_COPY_LABEL_ADDRESS(11, LabelPushThis);
+		XTAL_COPY_LABEL_ADDRESS(12, LabelPushCurrentContext);
+		XTAL_COPY_LABEL_ADDRESS(13, LabelPop);
+		XTAL_COPY_LABEL_ADDRESS(14, LabelDup);
+		XTAL_COPY_LABEL_ADDRESS(15, LabelInsert1);
+		XTAL_COPY_LABEL_ADDRESS(16, LabelInsert2);
+		XTAL_COPY_LABEL_ADDRESS(17, LabelInsert3);
+		XTAL_COPY_LABEL_ADDRESS(18, LabelAdjustResult);
+		XTAL_COPY_LABEL_ADDRESS(19, LabelIf);
+		XTAL_COPY_LABEL_ADDRESS(20, LabelUnless);
+		XTAL_COPY_LABEL_ADDRESS(21, LabelGoto);
+		XTAL_COPY_LABEL_ADDRESS(22, LabelLocalVariableInc);
+		XTAL_COPY_LABEL_ADDRESS(23, LabelLocalVariableDec);
+		XTAL_COPY_LABEL_ADDRESS(24, LabelLocalVariableIncDirect);
+		XTAL_COPY_LABEL_ADDRESS(25, LabelLocalVariableDecDirect);
+		XTAL_COPY_LABEL_ADDRESS(26, LabelLocalVariable1ByteDirect);
+		XTAL_COPY_LABEL_ADDRESS(27, LabelLocalVariable1Byte);
+		XTAL_COPY_LABEL_ADDRESS(28, LabelLocalVariable2Byte);
+		XTAL_COPY_LABEL_ADDRESS(29, LabelSetLocalVariable1ByteDirect);
+		XTAL_COPY_LABEL_ADDRESS(30, LabelSetLocalVariable1Byte);
+		XTAL_COPY_LABEL_ADDRESS(31, LabelSetLocalVariable2Byte);
+		XTAL_COPY_LABEL_ADDRESS(32, LabelInstanceVariable);
+		XTAL_COPY_LABEL_ADDRESS(33, LabelSetInstanceVariable);
+		XTAL_COPY_LABEL_ADDRESS(34, LabelCleanupCall);
+		XTAL_COPY_LABEL_ADDRESS(35, LabelReturn0);
+		XTAL_COPY_LABEL_ADDRESS(36, LabelReturn1);
+		XTAL_COPY_LABEL_ADDRESS(37, LabelReturn2);
+		XTAL_COPY_LABEL_ADDRESS(38, LabelReturn);
+		XTAL_COPY_LABEL_ADDRESS(39, LabelYield);
+		XTAL_COPY_LABEL_ADDRESS(40, LabelExit);
+		XTAL_COPY_LABEL_ADDRESS(41, LabelValue);
+		XTAL_COPY_LABEL_ADDRESS(42, LabelSetValue);
+		XTAL_COPY_LABEL_ADDRESS(43, LabelCheckUnsupported);
+		XTAL_COPY_LABEL_ADDRESS(44, LabelSend);
+		XTAL_COPY_LABEL_ADDRESS(45, LabelSendIfDefined);
+		XTAL_COPY_LABEL_ADDRESS(46, LabelCall);
+		XTAL_COPY_LABEL_ADDRESS(47, LabelCallCallee);
+		XTAL_COPY_LABEL_ADDRESS(48, LabelSend_A);
+		XTAL_COPY_LABEL_ADDRESS(49, LabelSendIfDefined_A);
+		XTAL_COPY_LABEL_ADDRESS(50, LabelCall_A);
+		XTAL_COPY_LABEL_ADDRESS(51, LabelCallCallee_A);
+		XTAL_COPY_LABEL_ADDRESS(52, LabelSend_T);
+		XTAL_COPY_LABEL_ADDRESS(53, LabelSendIfDefined_T);
+		XTAL_COPY_LABEL_ADDRESS(54, LabelCall_T);
+		XTAL_COPY_LABEL_ADDRESS(55, LabelCallCallee_T);
+		XTAL_COPY_LABEL_ADDRESS(56, LabelSend_AT);
+		XTAL_COPY_LABEL_ADDRESS(57, LabelSendIfDefined_AT);
+		XTAL_COPY_LABEL_ADDRESS(58, LabelCall_AT);
+		XTAL_COPY_LABEL_ADDRESS(59, LabelCallCallee_AT);
+		XTAL_COPY_LABEL_ADDRESS(60, LabelBlockBegin);
+		XTAL_COPY_LABEL_ADDRESS(61, LabelBlockEnd);
+		XTAL_COPY_LABEL_ADDRESS(62, LabelBlockBeginDirect);
+		XTAL_COPY_LABEL_ADDRESS(63, LabelBlockEndDirect);
+		XTAL_COPY_LABEL_ADDRESS(64, LabelTryBegin);
+		XTAL_COPY_LABEL_ADDRESS(65, LabelTryEnd);
+		XTAL_COPY_LABEL_ADDRESS(66, LabelPushGoto);
+		XTAL_COPY_LABEL_ADDRESS(67, LabelPopGoto);
+		XTAL_COPY_LABEL_ADDRESS(68, LabelIfEq);
+		XTAL_COPY_LABEL_ADDRESS(69, LabelIfNe);
+		XTAL_COPY_LABEL_ADDRESS(70, LabelIfLt);
+		XTAL_COPY_LABEL_ADDRESS(71, LabelIfLe);
+		XTAL_COPY_LABEL_ADDRESS(72, LabelIfGt);
+		XTAL_COPY_LABEL_ADDRESS(73, LabelIfGe);
+		XTAL_COPY_LABEL_ADDRESS(74, LabelIfRawEq);
+		XTAL_COPY_LABEL_ADDRESS(75, LabelIfRawNe);
+		XTAL_COPY_LABEL_ADDRESS(76, LabelIfIs);
+		XTAL_COPY_LABEL_ADDRESS(77, LabelIfNis);
+		XTAL_COPY_LABEL_ADDRESS(78, LabelIfArgIsNull);
+		XTAL_COPY_LABEL_ADDRESS(79, LabelPos);
+		XTAL_COPY_LABEL_ADDRESS(80, LabelNeg);
+		XTAL_COPY_LABEL_ADDRESS(81, LabelCom);
+		XTAL_COPY_LABEL_ADDRESS(82, LabelNot);
+		XTAL_COPY_LABEL_ADDRESS(83, LabelAt);
+		XTAL_COPY_LABEL_ADDRESS(84, LabelSetAt);
+		XTAL_COPY_LABEL_ADDRESS(85, LabelAdd);
+		XTAL_COPY_LABEL_ADDRESS(86, LabelSub);
+		XTAL_COPY_LABEL_ADDRESS(87, LabelCat);
+		XTAL_COPY_LABEL_ADDRESS(88, LabelMul);
+		XTAL_COPY_LABEL_ADDRESS(89, LabelDiv);
+		XTAL_COPY_LABEL_ADDRESS(90, LabelMod);
+		XTAL_COPY_LABEL_ADDRESS(91, LabelAnd);
+		XTAL_COPY_LABEL_ADDRESS(92, LabelOr);
+		XTAL_COPY_LABEL_ADDRESS(93, LabelXor);
+		XTAL_COPY_LABEL_ADDRESS(94, LabelShl);
+		XTAL_COPY_LABEL_ADDRESS(95, LabelShr);
+		XTAL_COPY_LABEL_ADDRESS(96, LabelUshr);
+		XTAL_COPY_LABEL_ADDRESS(97, LabelEq);
+		XTAL_COPY_LABEL_ADDRESS(98, LabelNe);
+		XTAL_COPY_LABEL_ADDRESS(99, LabelLt);
+		XTAL_COPY_LABEL_ADDRESS(100, LabelLe);
+		XTAL_COPY_LABEL_ADDRESS(101, LabelGt);
+		XTAL_COPY_LABEL_ADDRESS(102, LabelGe);
+		XTAL_COPY_LABEL_ADDRESS(103, LabelRawEq);
+		XTAL_COPY_LABEL_ADDRESS(104, LabelRawNe);
+		XTAL_COPY_LABEL_ADDRESS(105, LabelIs);
+		XTAL_COPY_LABEL_ADDRESS(106, LabelNis);
+		XTAL_COPY_LABEL_ADDRESS(107, LabelInc);
+		XTAL_COPY_LABEL_ADDRESS(108, LabelDec);
+		XTAL_COPY_LABEL_ADDRESS(109, LabelAddAssign);
+		XTAL_COPY_LABEL_ADDRESS(110, LabelSubAssign);
+		XTAL_COPY_LABEL_ADDRESS(111, LabelCatAssign);
+		XTAL_COPY_LABEL_ADDRESS(112, LabelMulAssign);
+		XTAL_COPY_LABEL_ADDRESS(113, LabelDivAssign);
+		XTAL_COPY_LABEL_ADDRESS(114, LabelModAssign);
+		XTAL_COPY_LABEL_ADDRESS(115, LabelAndAssign);
+		XTAL_COPY_LABEL_ADDRESS(116, LabelOrAssign);
+		XTAL_COPY_LABEL_ADDRESS(117, LabelXorAssign);
+		XTAL_COPY_LABEL_ADDRESS(118, LabelShlAssign);
+		XTAL_COPY_LABEL_ADDRESS(119, LabelShrAssign);
+		XTAL_COPY_LABEL_ADDRESS(120, LabelUshrAssign);
+		XTAL_COPY_LABEL_ADDRESS(121, LabelGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(122, LabelSetGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(123, LabelDefineGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(124, LabelMember);
+		XTAL_COPY_LABEL_ADDRESS(125, LabelMemberIfDefined);
+		XTAL_COPY_LABEL_ADDRESS(126, LabelDefineMember);
+		XTAL_COPY_LABEL_ADDRESS(127, LabelDefineClassMember);
+		XTAL_COPY_LABEL_ADDRESS(128, LabelSetName);
+		XTAL_COPY_LABEL_ADDRESS(129, LabelSetMultipleLocalVariable2Direct);
+		XTAL_COPY_LABEL_ADDRESS(130, LabelSetMultipleLocalVariable3Direct);
+		XTAL_COPY_LABEL_ADDRESS(131, LabelSetMultipleLocalVariable4Direct);
+		XTAL_COPY_LABEL_ADDRESS(132, LabelOnce);
+		XTAL_COPY_LABEL_ADDRESS(133, LabelClassBegin);
+		XTAL_COPY_LABEL_ADDRESS(134, LabelClassEnd);
+		XTAL_COPY_LABEL_ADDRESS(135, LabelMakeArray);
+		XTAL_COPY_LABEL_ADDRESS(136, LabelArrayAppend);
+		XTAL_COPY_LABEL_ADDRESS(137, LabelMakeMap);
+		XTAL_COPY_LABEL_ADDRESS(138, LabelMapInsert);
+		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeFun);
+		XTAL_COPY_LABEL_ADDRESS(140, LabelMakeInstanceVariableAccessor);
+		XTAL_COPY_LABEL_ADDRESS(141, LabelThrow);
+		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowUnsupportedError);
+		XTAL_COPY_LABEL_ADDRESS(143, LabelThrowNull);
+		XTAL_COPY_LABEL_ADDRESS(144, LabelAssert);
+		XTAL_COPY_LABEL_ADDRESS(145, LabelBreakPoint);
+		XTAL_COPY_LABEL_ADDRESS(146, LabelMAX);
 //}}LABELS}
-
-	};
+	}
 #else
 
 #endif
@@ -720,6 +743,14 @@ XTAL_VM_SWITCH{
 			ff().outer(ff().outer().outer()); 
 		}
 		ff().scopes.downsize(1);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(BlockBeginDirect){ // 6
+		FunFrame& f = ff(); 
+		FrameCore* p = ff().pcode->frame_core(inst.core_number); 
+		f.scopes.push(p); 
+		f.variables_.upsize(p->variable_size);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
@@ -1597,6 +1628,10 @@ XTAL_VM_SWITCH{
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
+
+	XTAL_VM_CASE(MAX){ // 2
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
 
 //}}OPS}
 

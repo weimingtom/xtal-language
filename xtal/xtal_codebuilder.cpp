@@ -391,17 +391,17 @@ void CodeBuilder::set_on_heap_flag(){
 	}
 }
 
-void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool on_heap, int_t mixins){
+void CodeBuilder::block_begin(int_t type, int_t kind, const Vars& vars, int_t mixins){
 	Scope s;
 	s.variable_size = 0;
 	s.type = type;
 	s.kind = kind;
-	s.on_heap = on_heap;
+	s.on_heap = vars.on_heap;
 	s.mixins = mixins;
 	s.frame_core_num = p_->frame_core_table_.size();
 
 	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(on_heap || debug::is_enabled()){
+	if(vars.on_heap || debug::is_enabled()){
 		set_on_heap_flag();
 	}
 	scopes_.push(s);
@@ -411,11 +411,11 @@ void CodeBuilder::block_begin(int_t type, int_t kind, TList<int_t>& vars, bool o
 	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
 	p_->frame_core_table_.back().line_number = lines_.top();
 
-	for(TList<int_t>::Node* p = vars.head; p; p = p->next){
-		variables_.push(p->value);
+	for(TList<Var>::Node* p = vars.vars.head; p; p = p->next){
+		variables_.push(p->value.name);
 		scopes_.top().variable_size++;
 		p_->frame_core_table_.back().variable_size++;
-		p_->symbol_table_.push_back(to_id(p->value));
+		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
 
 	if(scopes_.top().type==FRAME){
@@ -536,15 +536,15 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		}
 
 		XTAL_EXPR_CASE(IntExpr){
-			if(e->value==(u8)e->value){ put_inst(InstPushInt1Byte(e->value));
-			}else if(e->value==(u16)e->value){ put_inst(InstPushInt2Byte(e->value));
+			if(e->value==(i8)e->value){ put_inst(InstPushInt1Byte(e->value));
+			}else if(e->value==(i16)e->value){ put_inst(InstPushInt2Byte(e->value));
 			}else{ put_inst(InstValue(com_->register_value(e->value)));
 			}
 		}
 
 		XTAL_EXPR_CASE(FloatExpr){
-			if(e->value==(u8)e->value){ put_inst(InstPushFloat1Byte((u8)e->value));
-			}else if(e->value==(u16)e->value){ put_inst(InstPushFloat2Byte((u16)e->value));
+			if(e->value==(i8)e->value){ put_inst(InstPushFloat1Byte((u8)e->value));
+			}else if(e->value==(i16)e->value){ put_inst(InstPushFloat2Byte((u16)e->value));
 			}else{ put_inst(InstValue(com_->register_value(e->value)));
 			}
 		}
@@ -874,7 +874,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				put_inst(InstBreakPoint(BREAKPOINT_CALL));
 			}
 
-			block_begin(FUN, 0, e->vars, e->on_heap);{
+			block_begin(FUN, 0, e->vars);{
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
 					// デフォルト値を持つ
 					if(p->value){
@@ -917,7 +917,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		}
 
 		XTAL_EXPR_CASE(FrameExpr){
-			block_begin(FRAME, e->kind, e->vars, e->on_heap);{
+			block_begin(FRAME, e->kind, e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
 				}
@@ -930,18 +930,16 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				compile(p->value);
 			}
 
-			block_begin(FRAME, e->kind, e->vars, e->on_heap, e->mixins.size);{
+			block_begin(FRAME, KIND_CLASS, e->vars, e->mixins.size);{
 				class_scopes_.push(e);
 				p_->frame_core_table_.back().instance_variable_symbol_offset = 0;
 				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
 				class_scopes_.top()->frame_number = p_->frame_core_table_.size()-1;
 
-				TList<ClassExpr::Attr>::Node* p2 = e->attrs.head;
-				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
-					compile(p->value);
-					compile(p2->value.ns);
-					put_inst(InstDefineClassMember(lookup_variable(p2->value.var), p2->value.var, p2->value.accessibility));
-					p2 = p2->next;
+				for(TList<Var>::Node* p = e->vars.vars.head; p; p = p->next){
+					compile(p->value.init);
+					compile(p->value.ns);
+					put_inst(InstDefineClassMember(lookup_variable(p->value.name), p->value.name, p->value.accessibility));
 				}
 				class_scopes_.downsize(1);
 			}block_end();
@@ -1246,9 +1244,9 @@ void CodeBuilder::compile(Stmt* ex){
 				exc.finally_label = finally_label;
 				fun_frame().finallys.push(exc);
 
-				block_begin(BLOCK, 0, e->catch_vars, e->on_heap);{
-					if(e->catch_vars.head){
-						put_set_local_code(e->catch_vars.head->value);
+				block_begin(BLOCK, 0, e->catch_vars);{
+					if(e->catch_vars.vars.head){
+						put_set_local_code(e->catch_vars.vars.head->value.name);
 					}
 					compile(e->catch_stmt);
 				}block_end();
@@ -1520,7 +1518,7 @@ void CodeBuilder::compile(Stmt* ex){
 		}	
 		
 		XTAL_EXPR_CASE(BlockStmt){
-			block_begin(BLOCK, 0, e->vars, e->on_heap);{
+			block_begin(BLOCK, 0, e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
 				}
@@ -1528,7 +1526,7 @@ void CodeBuilder::compile(Stmt* ex){
 		}
 		
 		XTAL_EXPR_CASE(TopLevelStmt){
-			block_begin(BLOCK, 0, e->vars, e->on_heap);{
+			block_begin(BLOCK, 0, e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
 				}

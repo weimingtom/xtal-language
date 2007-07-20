@@ -14,8 +14,6 @@ void (*user_free_)(void*) = &free;
 size_t used_user_malloc_size_ = 0;
 size_t used_user_malloc_threshold_ = 1024*50;
 
-bool calling_malloc_ = false;
-
 SimpleMemoryManager smm_;
 
 void* smm_malloc(size_t size){
@@ -43,10 +41,9 @@ void* user_malloc(size_t size){
 } 
 
 void* user_malloc_nothrow(size_t size){
-	calling_malloc_ = true;
 
 	if(used_user_malloc_size_ > used_user_malloc_threshold_){
-		used_user_malloc_threshold_ = 0; 
+		used_user_malloc_size_ = 0; 
 		gc();
 	}
 	used_user_malloc_size_ += size;
@@ -58,7 +55,6 @@ void* user_malloc_nothrow(size_t size){
 		ret = user_malloc_(size);
 	}
 
-	calling_malloc_ = false;
 	return ret;
 } 
 
@@ -79,11 +75,7 @@ void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*)){
 }
 
 
-bool calling_malloc(){
-	return calling_malloc_;
-}
-
-/*
+//*
 RegionAlloc::RegionAlloc(size_t first_buffer_size){
 	alloced_size_ = first_buffer_size;
 	begin_ = 0;

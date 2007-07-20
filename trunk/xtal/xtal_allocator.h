@@ -66,13 +66,6 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
 
 /**
-* @brief mallocが呼ばれている最中か調べる
-* @retval true mallocが呼ばれている途中
-* @retval false mallocが呼ばれている途中ではない
-*/
-bool calling_malloc();
-
-/**
 * @brief user_malloc, user_freeを使う、STLの要件に適合したアロケータクラス。
 *
 */
@@ -144,7 +137,7 @@ struct Alloc<void> {
 * スタック型のメモリアロケータ。
 * STLのアロケータには適合しない。
 */
-/*
+//*
 class RegionAlloc{
 	char* begin_;
 	char* pos_;

@@ -88,7 +88,7 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
-		//compile_file("../bench/nested_loops.xtal").inspect().p();
+		//compile_file("../bench/gc.xtal").inspect().p();
 	
 		int c;
 		

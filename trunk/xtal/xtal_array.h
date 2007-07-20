@@ -151,7 +151,13 @@ public:
 	*
 	*/
 	Any each() const;
-	
+
+	/**
+	* @brief 要素を逆順に巡回するIteratorを返す
+	*
+	*/
+	Any r_each() const;
+
 	/**
 	* @brief 要素を全て削除する
 	*
@@ -177,10 +183,16 @@ public:
 	const Any& back() const;
 
 	/**
-	* @brief 配列の要素を全て多値として返す
+	* @brief 配列の要素を逆順にする
 	*
 	*/
-	void values(const VMachine& vm) const;
+	void reverse() const;
+
+	/**
+	* @brief 配列の要素を逆順にした新しい配列を返す
+	*
+	*/
+	Array reversed() const;
 
 	bool op_eq(const Array& other) const;
 

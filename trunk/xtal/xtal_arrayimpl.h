@@ -90,6 +90,22 @@ public:
 		values_.insert(values_.begin()+i, v);
 	}
 
+	void reverse(){
+		int_t sz = size();
+		for(int_t i=0; i<sz/2; ++i){
+			values_[sz-1-i].swap(values_[i]);
+		}
+	}
+
+	Array reversed(){
+		int_t sz = size();
+		Array ret(size());
+		for(int_t i=0; i<sz; ++i){
+			ret.impl()->values_[sz-1-i] = values_[i];
+		}
+		return ret;
+	}
+
 	Array clone() const{
 		Array ret(null); new(ret) ArrayImpl(*this);
 		return ret;
@@ -149,6 +165,7 @@ public:
 	class ArrayIterImpl : public AnyImpl{
 		Array array_;
 		int_t index_;
+		bool reverse_;
 
 		virtual void visit_members(Visitor& m){
 			AnyImpl::visit_members(m);
@@ -157,8 +174,8 @@ public:
 
 	public:
 
-		ArrayIterImpl(const Array& a)
-			:array_(a), index_(-1){
+		ArrayIterImpl(const Array& a, bool reverse = false)
+			:array_(a), index_(-1), reverse_(reverse){
 			set_class(TClass<ArrayIterImpl>::get());
 		}
 
@@ -170,16 +187,27 @@ public:
 		void iter_next(const VMachine& vm){
 			++index_;
 			if(index_<array_.size()){
-				vm.return_result(this, array_.at(index_));
+				vm.return_result(this, array_.at(reverse_ ? array_.size()-1-index_ : index_));
 			}else{
 				restart();
-				vm.return_result(null);
+				vm.return_result(null, null);
+			}
+		}
+
+		void remove(){
+			if(-1<=index_ && index_<array_.size()-1){
+				array_.erase(index_+1);
 			}
 		}
 	};
 
 	Any each() const{
 		Any ret; new(ret) ArrayIterImpl(Array(this));
+		return ret;
+	}
+
+	Any r_each() const{
+		Any ret; new(ret) ArrayIterImpl(Array(this), true);
 		return ret;
 	}
 

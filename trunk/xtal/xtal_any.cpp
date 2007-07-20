@@ -135,9 +135,9 @@ bool initialized(){
 void initialize(){
 	if(initialized()){ return; } 
 
-	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
-
 	disable_gc();
+
+	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 
 	empty_have_instance_variables.init();
 
@@ -171,7 +171,7 @@ void initialize(){
 	
 	InitDebug();
 
-	finalize_id = ID("finalize");
+	//finalize_id = ID("finalize");
 	
 	InitString();
 	InitID();
@@ -294,57 +294,12 @@ void gc(){
 
 		AnyImpl** objects_alive = objects_begin_+objects_gene_line_;
 
-		// mallocの中からgcが呼ばれている
-		if(calling_malloc()){
-			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count()!=0
-					// finalizeメソッドがあるオブジェクトも生き延びさせる
-					|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it, null)){
-					std::swap(*it, *objects_alive++);
-				}
+		for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
+			if((*it)->ref_count()!=0
+				// finalizeメソッドがあるオブジェクトも生き延びさせる
+				|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it, null)){
+				std::swap(*it, *objects_alive++);
 			}
-				
-		}else{
-			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count()!=0){
-					std::swap(*it, *objects_alive++);
-				}
-			}
-				
-			{
-				for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-					(*it)->after_gc();
-				}
-
-				int_t objects_alive_n = objects_alive-objects_begin_;
-				int_t objects_current_n = objects_current_-objects_begin_;
-
-				// 死ぬ予定のオブジェクトのfinalizerを実行する
-				for(int_t i=objects_alive_n; i<objects_current_n; ++i){
-					if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i], null)){
-						vm.setup_call(0);
-						vm.set_arg_this(objects_begin_[i]);
-						ret.call(vm);
-						vm.cleanup_call();
-					}
-				}
-
-				objects_alive = objects_begin_ + objects_alive_n;
-
-				for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-					(*it)->before_gc();
-				}
-			}
-
-			AnyImpl** objects_finalized = objects_alive;
-			objects_alive = objects_begin_+objects_gene_line_;
-
-			for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-				if((*it)->ref_count()!=0 || it<objects_finalized){
-					std::swap(*it, *objects_alive++);
-				}
-			}
-
 		}
 
 		for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
@@ -360,6 +315,7 @@ void gc(){
 		}
 		objects_current_ = objects_alive;
 
+		// 生きているオブジェクトの2/3の位置にラインを設定する
 		objects_gene_line_ = (objects_current_-objects_begin_)*2/3;
 
 		//fprintf(stderr, "finished gc\n");
@@ -396,27 +352,68 @@ void full_gc(){
 			{
 				AnyImpl** objects_alive = objects_begin_;
 
-				// mallocの中からgcが呼ばれている
-				if(calling_malloc()){
-					{
-						Visitor m(1);
-						bool end = false;
-						while(!end){
-							end = true;
-							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-								if((*it)->ref_count()!=0 
-									// finalizeメソッドがあるオブジェクトも生き延びさせる
-									|| vm.impl()->member_cache((*it)->get_class(), finalize_id, *it, null)){
-									end = false;
-									(*it)->visit_members(m);
-									std::swap(*it, *objects_alive++);
-								}
+				{
+					Visitor m(1);
+					bool end = false;
+					while(!end){
+						end = true;
+						for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
+							if((*it)->ref_count()!=0){
+								end = false;
+								(*it)->visit_members(m);
+								std::swap(*it, *objects_alive++);
 							}
 						}
 					}
-				}else{
+				}
+	
+				if(finalize_id){
 
 					{
+						Visitor m(1);
+						for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
+							(*it)->visit_members(m);
+						}
+					}
+
+					for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+						(*it)->after_gc();
+					}
+
+					int_t objects_alive_n = objects_alive-objects_begin_;
+					int_t objects_current_n = objects_current_-objects_begin_;
+
+					// 死ぬ予定のオブジェクトのfinalizerを実行する
+					for(int_t i=objects_alive_n; i<objects_current_n; ++i){		
+						if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i], null)){
+							vm.setup_call(0);
+							vm.set_arg_this(objects_begin_[i]);
+
+							XTAL_TRY{
+								ret.call(vm);
+								vm.cleanup_call();
+							}XTAL_CATCH(e){
+								(void)e;
+							}
+						}
+					}
+						
+					objects_alive = objects_begin_ + objects_alive_n;
+
+					for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+						(*it)->before_gc();
+					}
+
+
+					{// 参照カウントをまた一旦下げる
+						Visitor m(-1);	
+						for(AnyImpl** it = objects_begin_; it!=objects_current_; ++it){
+							(*it)->visit_members(m);
+						}
+					}
+
+					{// 生きているオブジェクトの参照カウンタを全て元通りにする
+						objects_alive = objects_begin_;
 						Visitor m(1);
 						bool end = false;
 						while(!end){
@@ -425,72 +422,15 @@ void full_gc(){
 								if((*it)->ref_count()!=0){
 									end = false;
 									(*it)->visit_members(m);
+
+									// 生き返った
 									std::swap(*it, *objects_alive++);
 								}
 							}
 						}
 					}
-		
-					if(finalize_id){
-						{
-							Visitor m(1);
-							for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-								(*it)->visit_members(m);
-							}
-						}
-
-						for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-							(*it)->after_gc();
-						}
-
-						int_t objects_alive_n = objects_alive-objects_begin_;
-						int_t objects_current_n = objects_current_-objects_begin_;
-
-						// 死ぬ予定のオブジェクトのfinalizerを実行する
-						for(int_t i=objects_alive_n; i<objects_current_n; ++i){		
-							if(const Any& ret = vm.impl()->member_cache(objects_begin_[i]->get_class(), finalize_id, objects_begin_[i], null)){
-								vm.setup_call(0);
-								vm.set_arg_this(objects_begin_[i]);
-								ret.call(vm);
-								vm.cleanup_call();
-							}
-						}
-							
-						objects_alive = objects_begin_ + objects_alive_n;
-
-						for(GCObserverImpl** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-							(*it)->before_gc();
-						}
-
-
-						{// 参照カウントをまた一旦下げる
-							Visitor m(-1);	
-							for(AnyImpl** it = objects_begin_; it!=objects_current_; ++it){
-								(*it)->visit_members(m);
-							}
-						}
-
-						AnyImpl** objects_finalized = objects_alive;
-
-						{
-							objects_alive = objects_begin_;
-					
-							Visitor m(1);
-							bool end = false;
-							while(!end){
-								end = true;
-								for(AnyImpl** it = objects_alive; it!=objects_current_; ++it){
-									if((*it)->ref_count()!=0 || it<objects_finalized){
-										end = false;
-										(*it)->visit_members(m);
-										std::swap(*it, *objects_alive++);
-									}
-								}
-								objects_finalized = 0;
-							}
-						}
-					}
 				}
+	
 
 				{// 削除されるオブジェクトだが、整合性をとるため参照カウンタを元に戻す
 					Visitor m(1);

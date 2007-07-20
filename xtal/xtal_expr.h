@@ -529,15 +529,6 @@ struct BlockStmt : public Stmt{
 		:Stmt(TYPE, line){}
 };
 
-struct FrameExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Vars vars;
-	TList<Stmt*> stmts;
-	int_t kind;
-	FrameExpr(int_t line, int_t kind)
-		:Expr(TYPE, line), kind(kind){}
-};
-
 struct ClassExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	TPairList<int_t, Expr*> inst_vars;

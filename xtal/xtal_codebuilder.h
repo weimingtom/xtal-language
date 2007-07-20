@@ -106,15 +106,6 @@ public:
 
 	void assign_lhs(Expr* lhs);
 	void define_lhs(Expr* lhs);
-		
-	struct Scope{
-		int_t variable_size;
-		int_t type;
-		int_t kind;
-		bool on_heap;
-		int_t mixins;
-		int_t frame_core_num;
-	};
 	
 	struct FunFrame{
 
@@ -152,12 +143,13 @@ public:
 		bool used_args_object;
 	};
 
-	enum {
-		SCOPE, BLOCK, FRAME, FUN
-	};
 
-	void block_begin(int_t type, int_t kind, const Vars& vars, int_t mixins = 0);
+	void block_begin(Vars* vars);
 	void block_end();
+	void class_begin(Vars* vars, int_t mixins);
+	void class_end();
+	void fun_begin(Vars* vars);
+	void fun_end();
 
 	void set_on_heap_flag();
 
@@ -176,14 +168,13 @@ private:
 	
 	Parser parser_;
 	LPCCommon* com_;
-	
-	PODStack<int_t> variables_;
-	PODStack<int_t> label_names_;
-	Stack<FunFrame> fun_frames_;
 	Code result_;
 	CodeImpl* p_;
-	PODStack<Scope> scopes_;
+	
+	PODStack<int_t> label_names_;
+	Stack<FunFrame> fun_frames_;
 	PODStack<int_t> lines_;
+	PStack<Vars*> vars_stack_;
 	Stack<ClassExpr*> class_scopes_;
 
 private:

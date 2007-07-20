@@ -118,9 +118,13 @@ ID CodeBuilder::to_id(int_t ident){
 }
 
 int_t CodeBuilder::lookup_variable(int_t key){
-	for(size_t i = 0, last = variables_.size(); i<last; ++i){
-		if(variables_[i]==key){
-			return i;
+	int ret = 0;
+	for(size_t i = 0, last = vars_stack_.size(); i<last; ++i){
+		for(TList<Var>::Node* p = vars_stack_[i]->vars.tail; p; p = p->prev){
+			if(p->value.name==key){
+				return ret;
+			}
+			ret++;
 		}
 	}
 	return -1;
@@ -131,11 +135,11 @@ bool CodeBuilder::variable_on_heap(int_t pos){
 		return true;
 	}
 
-	for(size_t i = 0, last = scopes_.size(); i<last; ++i){
-		if(pos<scopes_[i].variable_size){
-			return scopes_[i].on_heap;
+	for(size_t i = 0, last = vars_stack_.size(); i<last; ++i){
+		if(pos<vars_stack_[i]->vars.size){
+			return vars_stack_[i]->on_heap;
 		}
-		pos -= scopes_[i].variable_size;
+		pos -= vars_stack_[i]->vars.size;
 	}
 	return false;
 }
@@ -322,7 +326,7 @@ void CodeBuilder::process_labels(){
 }
 
 void CodeBuilder::break_off(int_t n){
-	for(uint_t scope_count = scopes_.size(); scope_count!=(uint_t)n; scope_count--){
+	for(uint_t scope_count = vars_stack_.size(); scope_count!=(uint_t)n; scope_count--){
 		for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
 			if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 				int_t label = reserve_label();
@@ -332,7 +336,7 @@ void CodeBuilder::break_off(int_t n){
 				set_label(label);
 			}
 		}
-		if(scopes_[scopes_.size()-scope_count].type!=SCOPE){
+		if(vars_stack_[vars_stack_.size()-scope_count]->vars.size){
 			put_inst(InstBlockEnd());
 		}
 	}
@@ -376,7 +380,7 @@ void CodeBuilder::push_loop(int break_labelno, int continue_labelno, int_t name,
 	loop.break_label = break_labelno;
 	loop.continue_label = continue_labelno;
 	loop.name = name;
-	loop.frame_count = scopes_.size();
+	loop.frame_count = vars_stack_.size();
 	loop.have_label = have_label;
 	fun_frames_.top().loops.push(loop);
 }
@@ -386,68 +390,96 @@ void CodeBuilder::pop_loop(){
 }
 
 void CodeBuilder::set_on_heap_flag(){
-	for(int_t i = 0; i<(int_t)scopes_.size(); ++i){
-		scopes_[i].on_heap = true;	
+	for(int_t i = 0; i<(int_t)vars_stack_.size(); ++i){
+		vars_stack_[i]->on_heap = true;	
 	}
 }
 
-void CodeBuilder::block_begin(int_t type, int_t kind, const Vars& vars, int_t mixins){
-	Scope s;
-	s.variable_size = 0;
-	s.type = type;
-	s.kind = kind;
-	s.on_heap = vars.on_heap;
-	s.mixins = mixins;
-	s.frame_core_num = p_->frame_core_table_.size();
+void CodeBuilder::block_begin(Vars* vars){
 
 	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(vars.on_heap || debug::is_enabled()){
+	if(vars->on_heap || debug::is_enabled()){
 		set_on_heap_flag();
 	}
-	scopes_.push(s);
+	vars_stack_.push(vars);
 
+	int_t frame_core_num = p_->frame_core_table_.size();
 	p_->frame_core_table_.push_back(FrameCore());
-	p_->frame_core_table_.back().kind = scopes_.top().kind;
+	p_->frame_core_table_.back().kind = KIND_BLOCK;
 	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
 	p_->frame_core_table_.back().line_number = lines_.top();
 
-	for(TList<Var>::Node* p = vars.vars.head; p; p = p->next){
-		variables_.push(p->value.name);
-		scopes_.top().variable_size++;
+	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
 		p_->frame_core_table_.back().variable_size++;
 		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
 
-	if(scopes_.top().type==FRAME){
-		put_inst(InstClassBegin(s.frame_core_num, scopes_.top().mixins));
-	}else if(scopes_.top().type==FUN){
-		
-	}else{
-		if(scopes_.top().variable_size){
-			put_inst(InstBlockBegin(s.frame_core_num));
-		}else{
-			scopes_.top().type = SCOPE;
-		}
+	if(vars_stack_.top()->vars.size){
+		put_inst(InstBlockBegin(frame_core_num));
 	}
 }
 
 void CodeBuilder::block_end(){
-	if(scopes_.top().type==FRAME){
-		variables_.downsize(scopes_.top().variable_size);
-		put_inst(InstClassEnd());
-	}else if(scopes_.top().type==FUN){
-		variables_.downsize(scopes_.top().variable_size);
-	}else{
-		if(scopes_.top().variable_size){
-			variables_.downsize(scopes_.top().variable_size);
-			if(scopes_.top().on_heap || debug::is_enabled()){
-				put_inst(InstBlockEnd());
-			}else{
-				put_inst(InstBlockEndDirect());
-			}
+	if(vars_stack_.top()->vars.size){
+		if(vars_stack_.top()->on_heap || debug::is_enabled()){
+			put_inst(InstBlockEnd());
+		}else{
+			put_inst(InstBlockEndDirect());
 		}
 	}
-	scopes_.pop();
+	vars_stack_.pop();
+}
+
+void CodeBuilder::class_begin(Vars* vars, int_t mixins){
+
+	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
+	if(vars->on_heap || debug::is_enabled()){
+		set_on_heap_flag();
+	}
+
+	vars_stack_.push(vars);
+
+	int_t frame_core_num = p_->frame_core_table_.size();
+	p_->frame_core_table_.push_back(FrameCore());
+	p_->frame_core_table_.back().kind = KIND_CLASS;
+	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
+	p_->frame_core_table_.back().line_number = lines_.top();
+
+	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
+		p_->frame_core_table_.back().variable_size++;
+		p_->symbol_table_.push_back(to_id(p->value.name));
+	}
+
+	put_inst(InstClassBegin(frame_core_num, mixins));
+}
+
+void CodeBuilder::class_end(){
+	put_inst(InstClassEnd());
+	vars_stack_.pop();
+}
+
+void CodeBuilder::fun_begin(Vars* vars){
+
+	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
+	if(vars->on_heap || debug::is_enabled()){
+		set_on_heap_flag();
+	}
+	vars_stack_.push(vars);
+
+	int_t frame_core_num = p_->frame_core_table_.size();
+	p_->frame_core_table_.push_back(FrameCore());
+	p_->frame_core_table_.back().kind = KIND_FUN;
+	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
+	p_->frame_core_table_.back().line_number = lines_.top();
+
+	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
+		p_->frame_core_table_.back().variable_size++;
+		p_->symbol_table_.push_back(to_id(p->value.name));
+	}
+}
+
+void CodeBuilder::fun_end(){
+	vars_stack_.pop();
 }
 
 int_t CodeBuilder::code_size(){
@@ -460,7 +492,7 @@ int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char m
 	f.labels.clear();
 	f.loops.clear();
 	f.finallys.clear();
-	f.frame_count = scopes_.size();
+	f.frame_count = vars_stack_.size();
 
 	p_->xfun_core_table_.push_back(FunCore());
 	p_->xfun_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
@@ -874,7 +906,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				put_inst(InstBreakPoint(BREAKPOINT_CALL));
 			}
 
-			block_begin(FUN, 0, e->vars);{
+			fun_begin(&e->vars);{
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
 					// デフォルト値を持つ
 					if(p->value){
@@ -897,7 +929,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 				put_inst(InstReturn0());
-			}block_end();
+			}fun_end();
 
 			set_label(fun_end_label);
 			fun_frame_end();
@@ -916,21 +948,13 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 			put_member_code(e->var, e->pvar, e->if_defined);
 		}
 
-		XTAL_EXPR_CASE(FrameExpr){
-			block_begin(FRAME, e->kind, e->vars);{
-				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
-					compile(p->value);
-				}
-			}block_end();
-		}	
-
 		XTAL_EXPR_CASE(ClassExpr){
 
 			for(TList<Expr*>::Node* p = e->mixins.head; p; p = p->next){
 				compile(p->value);
 			}
 
-			block_begin(FRAME, KIND_CLASS, e->vars, e->mixins.size);{
+			class_begin(&e->vars, e->mixins.size);{
 				class_scopes_.push(e);
 				p_->frame_core_table_.back().instance_variable_symbol_offset = 0;
 				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
@@ -942,7 +966,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 					put_inst(InstDefineClassMember(lookup_variable(p->value.name), p->value.name, p->value.accessibility));
 				}
 				class_scopes_.downsize(1);
-			}block_end();
+			}class_end();
 		}
 	}
 	
@@ -1142,7 +1166,7 @@ void CodeBuilder::compile(Stmt* ex){
 		XTAL_EXPR_CASE(ReturnStmt){
 
 			bool have_finally = false;
-			for(uint_t scope_count = scopes_.size(); scope_count!=(uint_t)fun_frame().frame_count+1; scope_count--){
+			for(uint_t scope_count = vars_stack_.size(); scope_count!=(uint_t)fun_frame().frame_count+1; scope_count--){
 				for(uint_t k = 0; k<(uint_t)fun_frame().finallys.size(); ++k){
 					if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 						have_finally = true;
@@ -1218,7 +1242,7 @@ void CodeBuilder::compile(Stmt* ex){
 			p_->except_core_table_.push_back(ExceptCore());
 
 			CodeBuilder::FunFrame::Finally exc;
-			exc.frame_count = scopes_.size();
+			exc.frame_count = vars_stack_.size();
 			exc.finally_label = finally_label;
 			fun_frame().finallys.push(exc);
 
@@ -1240,11 +1264,11 @@ void CodeBuilder::compile(Stmt* ex){
 				p_->except_core_table_.push_back(ExceptCore());
 
 				CodeBuilder::FunFrame::Finally exc;
-				exc.frame_count = scopes_.size();
+				exc.frame_count = vars_stack_.size();
 				exc.finally_label = finally_label;
 				fun_frame().finallys.push(exc);
 
-				block_begin(BLOCK, 0, e->catch_vars);{
+				block_begin(&e->catch_vars);{
 					if(e->catch_vars.vars.head){
 						put_set_local_code(e->catch_vars.vars.head->value.name);
 					}
@@ -1518,7 +1542,7 @@ void CodeBuilder::compile(Stmt* ex){
 		}	
 		
 		XTAL_EXPR_CASE(BlockStmt){
-			block_begin(BLOCK, 0, e->vars);{
+			block_begin(&e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
 				}
@@ -1526,7 +1550,7 @@ void CodeBuilder::compile(Stmt* ex){
 		}
 		
 		XTAL_EXPR_CASE(TopLevelStmt){
-			block_begin(BLOCK, 0, e->vars);{
+			block_begin(&e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile(p->value);
 				}

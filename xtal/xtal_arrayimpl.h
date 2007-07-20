@@ -179,7 +179,7 @@ public:
 			set_class(TClass<ArrayIterImpl>::get());
 		}
 
-		Any restart(){
+		Any reset(){
 			index_ = -1;
 			return this;
 		}
@@ -189,7 +189,7 @@ public:
 			if(index_<array_.size()){
 				vm.return_result(this, array_.at(reverse_ ? array_.size()-1-index_ : index_));
 			}else{
-				restart();
+				reset();
 				vm.return_result(null, null);
 			}
 		}

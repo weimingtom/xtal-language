@@ -20,7 +20,7 @@ uint_t make_hashcode(const char* p, uint_t size){
 static void InitStringSplitImpl(){
 	TClass<StringImpl::StringSplitImpl> p("StringSplit");
 	p.inherit(Iterator());
-	p.method("restart", &StringImpl::StringSplitImpl::restart);
+	p.method("reset", &StringImpl::StringSplitImpl::reset);
 	p.method("iter_first", &StringImpl::StringSplitImpl::iter_next);
 	p.method("iter_next", &StringImpl::StringSplitImpl::iter_next);
 }

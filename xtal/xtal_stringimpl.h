@@ -95,14 +95,14 @@ public:
 			set_class(TClass<StringSplitImpl>::get());
 		}
 		
-		Any restart(){
+		Any reset(){
 			index_ = 0;
 			return this;
 		}
 
 		void iter_next(const VMachine& vm){
 			if(str_.size()<=index_){
-				restart();
+				reset();
 				vm.return_result(null);
 				return;
 			}

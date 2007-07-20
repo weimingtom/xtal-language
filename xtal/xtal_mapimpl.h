@@ -169,10 +169,10 @@ public:
 		MapIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapIterImpl>::get());
-			restart();
+			reset();
 		}
 
-		Any restart(){
+		Any reset(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
@@ -186,7 +186,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
-					restart();
+					reset();
 					vm.return_result(null, null, null);
 					return;
 				}
@@ -212,10 +212,10 @@ public:
 		MapKeyIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapKeyIterImpl>::get());
-			restart();
+			reset();
 		}
 
-		Any restart(){
+		Any reset(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
@@ -229,7 +229,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
-					restart();
+					reset();
 					vm.return_result(null, null);
 					return;
 				}
@@ -255,10 +255,10 @@ public:
 		MapValueIterImpl(MapImpl* m)
 			:map_(m), pos_(0), node_(0){
 			set_class(TClass<MapValueIterImpl>::get());
-			restart();
+			reset();
 		}
 		
-		Any restart(){
+		Any reset(){
 			MapImpl* impl = (MapImpl*)map_.impl();
 			pos_ = 0;
 			node_ = impl->begin_[pos_];
@@ -272,7 +272,7 @@ public:
 					pos_++;
 					node_ = impl->begin_[pos_];
 				}else{
-					restart();
+					reset();
 					vm.return_result(null, null);
 					return;
 				}

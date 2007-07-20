@@ -8,7 +8,7 @@ namespace xtal{
 static void InitMapIterImpl(){
 	TClass<MapImpl::MapIterImpl> p("MapIter");
 	p.inherit(Iterator());
-	p.method("restart", &MapImpl::MapIterImpl::restart);
+	p.method("reset", &MapImpl::MapIterImpl::reset);
 	p.method("iter_first", &MapImpl::MapIterImpl::iter_next);
 	p.method("iter_next", &MapImpl::MapIterImpl::iter_next);
 }
@@ -16,7 +16,7 @@ static void InitMapIterImpl(){
 static void InitMapKeyIterImpl(){
 	TClass<MapImpl::MapKeyIterImpl> p("MapKeyIter");
 	p.inherit(Iterator());
-	p.method("restart", &MapImpl::MapKeyIterImpl::restart);
+	p.method("reset", &MapImpl::MapKeyIterImpl::reset);
 	p.method("iter_first", &MapImpl::MapKeyIterImpl::iter_next);
 	p.method("iter_next", &MapImpl::MapKeyIterImpl::iter_next);
 }
@@ -24,7 +24,7 @@ static void InitMapKeyIterImpl(){
 static void InitMapValueIterImpl(){
 	TClass<MapImpl::MapValueIterImpl> p("MapValueIter");
 	p.inherit(Iterator());
-	p.method("restart", &MapImpl::MapValueIterImpl::restart);
+	p.method("reset", &MapImpl::MapValueIterImpl::reset);
 	p.method("iter_first", &MapImpl::MapValueIterImpl::iter_next);
 	p.method("iter_next", &MapImpl::MapValueIterImpl::iter_next);
 }

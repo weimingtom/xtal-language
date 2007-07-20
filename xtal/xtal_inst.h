@@ -60,6 +60,10 @@ struct Inst{
 	inst_t op;
 	Inst(inst_t v = 0)
 		:op(v){}
+
+	operator const inst_t*() const{
+		return &op;
+	}
 };
 
 #define XTAL_DEF_INST_0(N, InstName) \

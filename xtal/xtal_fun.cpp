@@ -13,6 +13,16 @@ void InitFun(){
 	met.inherit(fun);
 }
 
+void InitFiber(){
+	TClass<Fiber> p("Fiber");
+	p.inherit(TClass<Fun>::get());
+	p.inherit(Iterator());
+	p.method("reset", &Fiber::reset);
+	p.method("iter_first", &Fiber::iter_next);
+	p.method("iter_next", &Fiber::iter_next);
+	p.method("halt", &Fiber::halt);
+}
+
 InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, FrameCore* core)
 	:number_(number), core_(core){
 }
@@ -224,23 +234,12 @@ Method::Method(const Frame& outer, const Code& code, FunCore* core)
 }
 
 
-void InitFiber(){
-	TClass<Fiber> p("Fiber");
-	p.inherit(TClass<Fun>::get());
-	p.inherit(Iterator());
-	p.method("restart", &Fiber::restart);
-	p.method("iter_first", &Fiber::iter_next);
-	p.method("iter_next", &Fiber::iter_next);
-	p.method("halt", &Fiber::halt);
-	p.method("finalize", &Fiber::halt);
-}
-
 Fiber::Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core)
 	:Fun(null){ 
 	new(*this) FiberImpl(outer, th, code, core);
 }
 
-Any Fiber::restart(){
+Any Fiber::reset(){
 	impl()->halt();
 	return *this;
 }

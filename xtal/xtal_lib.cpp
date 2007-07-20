@@ -43,7 +43,7 @@ Code compile(const String& source){
 
 Any load(const String& file_name){
 	Any ret = compile_file(file_name)();
-	full_gc();
+	gc();
 	return ret;
 }
 
@@ -52,7 +52,7 @@ Any load_and_save(const String& file_name){
 	FileStream fs(file_name.cat("c"), "w");
 	object_dump(ret, fs);
 	fs.close();
-	full_gc();
+	gc();
 	return ret();
 }
 

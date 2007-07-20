@@ -6,49 +6,55 @@
 namespace xtal{
 
 static void InitArrayIterImpl(){
-	TClass<ArrayImpl::ArrayIterImpl> p("ArrayIter");
-	p.inherit(Iterator());
-	p.method("restart", &ArrayImpl::ArrayIterImpl::restart);
-	p.method("iter_first", &ArrayImpl::ArrayIterImpl::iter_next);
-	p.method("iter_next", &ArrayImpl::ArrayIterImpl::iter_next);
 }
 
 void InitArray(){
-	InitArrayIterImpl();
+	{
+		TClass<ArrayImpl::ArrayIterImpl> p("ArrayIter");
+		p.inherit(Iterator());
+		p.method("restart", &ArrayImpl::ArrayIterImpl::restart);
+		p.method("iter_first", &ArrayImpl::ArrayIterImpl::iter_next);
+		p.method("iter_next", &ArrayImpl::ArrayIterImpl::iter_next);
+		p.method("remove", &ArrayImpl::ArrayIterImpl::remove);
+	}
 
-	TClass<Array> p("Array");
-	p.inherit(Enumerator());
+	{
+		TClass<Array> p("Array");
+		p.inherit(Enumerator());
 
-	p.def("new", New<Array, int_t>().param(Named("size", 0)));
-	p.method("size", &Array::size);
-	p.method("length", &Array::length);
-	p.method("resize", &Array::resize);
-	p.method("empty", &Array::empty);
-	p.method("at", &Array::at);
-	p.method("set_at", &Array::set_at);
-	p.method("op_at", &Array::at);
-	p.method("op_set_at", &Array::set_at);
-	p.method("slice", &Array::slice);
-	p.method("pop_back", &Array::pop_back);
-	p.method("push_back", &Array::push_back);
-	p.method("pop_front", &Array::pop_front);
-	p.method("push_front", &Array::push_front);
-	p.method("erase", &Array::erase);
-	p.method("insert", &Array::insert);
-	p.method("cat", &Array::cat);
-	p.method("cat_assign", &Array::cat_assign);
-	p.method("op_cat", &Array::cat);
-	p.method("op_cat_assign", &Array::cat_assign);
-	p.method("to_s", &Array::to_s);
-	p.method("to_a", &Array::to_a);
-	p.method("join", &Array::join).param(Named("sep"));
-	p.method("each", &Array::each);
-	p.method("clone", &Array::clone);
-	p.method("front", &Array::front);
-	p.method("back", &Array::back);
-	p.method("clear", &Array::clear);
-	p.method("values", &Array::values);
-	p.method("op_eq", &Array::op_eq);
+		p.def("new", New<Array, int_t>().param(Named("size", 0)));
+		p.method("size", &Array::size);
+		p.method("length", &Array::length);
+		p.method("resize", &Array::resize);
+		p.method("empty", &Array::empty);
+		p.method("at", &Array::at);
+		p.method("set_at", &Array::set_at);
+		p.method("op_at", &Array::at);
+		p.method("op_set_at", &Array::set_at);
+		p.method("slice", &Array::slice);
+		p.method("pop_back", &Array::pop_back);
+		p.method("push_back", &Array::push_back);
+		p.method("pop_front", &Array::pop_front);
+		p.method("push_front", &Array::push_front);
+		p.method("erase", &Array::erase);
+		p.method("insert", &Array::insert);
+		p.method("cat", &Array::cat);
+		p.method("cat_assign", &Array::cat_assign);
+		p.method("op_cat", &Array::cat);
+		p.method("op_cat_assign", &Array::cat_assign);
+		p.method("to_s", &Array::to_s);
+		p.method("to_a", &Array::to_a);
+		p.method("join", &Array::join).param(Named("sep"));
+		p.method("each", &Array::each);
+		p.method("r_each", &Array::r_each);
+		p.method("clone", &Array::clone);
+		p.method("front", &Array::front);
+		p.method("back", &Array::back);
+		p.method("clear", &Array::clear);
+		p.method("op_eq", &Array::op_eq);
+		p.method("reverse", &Array::reverse);
+		p.method("reversed", &Array::reversed);
+	}
 }
 
 Array::Array(int_t size)
@@ -137,6 +143,10 @@ Any Array::each() const{
 	return impl()->each();
 }
 
+Any Array::r_each() const{
+	return impl()->r_each();
+}
+
 bool Array::empty() const{
 	return impl()->empty();
 }
@@ -153,8 +163,12 @@ void Array::clear() const{
 	impl()->clear();
 }
 
-void Array::values(const VMachine& vm) const{
-	vm.return_result_array(*this);
+void Array::reverse() const{
+	impl()->reverse();
+}
+
+Array Array::reversed() const{
+	return impl()->reversed();
 }
 
 bool Array::op_eq(const Array& other) const{

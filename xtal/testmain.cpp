@@ -88,15 +88,15 @@ int main(int argc, char** argv){
 			add_get_text_map(load(path));
 		}
 
-		compile_file("../bench/nested_loops.xtal").inspect().p();
+		//compile_file("../bench/nested_loops.xtal").inspect().p();
 	
 		int c;
 		
 		c = clock();
-		//handle_argv(argv);
+		handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 
-		//*
+		/*
 		
 		c = clock();
 		load("../bench/loop.xtal");

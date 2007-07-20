@@ -96,8 +96,11 @@ int main(int argc, char** argv){
 		handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 
-		/*
-		
+		//*
+		c = clock();
+		full_gc();
+		printf("%g\n", (clock()-c)/1000.0f);
+
 		c = clock();
 		load("../bench/loop.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);

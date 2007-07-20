@@ -77,7 +77,7 @@ public:
 	explicit Fiber(FiberImpl* p)
 		:Fun((FunImpl*)p){}
 		
-	Any restart();
+	Any reset();
 
 	void iter_next(const VMachine& vm);
 	

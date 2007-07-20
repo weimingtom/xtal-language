@@ -12,7 +12,7 @@ void InitArray(){
 	{
 		TClass<ArrayImpl::ArrayIterImpl> p("ArrayIter");
 		p.inherit(Iterator());
-		p.method("restart", &ArrayImpl::ArrayIterImpl::restart);
+		p.method("reset", &ArrayImpl::ArrayIterImpl::reset);
 		p.method("iter_first", &ArrayImpl::ArrayIterImpl::iter_next);
 		p.method("iter_next", &ArrayImpl::ArrayIterImpl::iter_next);
 		p.method("remove", &ArrayImpl::ArrayIterImpl::remove);

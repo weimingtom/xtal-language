@@ -317,7 +317,7 @@ public:
 			set_class(TClass<MembersIterImpl>::get());
 		}
 
-		Any restart(){
+		Any reset(){
 			it_ = frame_.impl()->map_members_;
 			return this;
 		}
@@ -327,7 +327,7 @@ public:
 				vm.return_result(this, it_->key, it_->ns, frame_.impl()->members_[it_->num]);
 				++it_;
 			}else{
-				restart();
+				reset();
 				vm.return_result(null);
 			}
 		}

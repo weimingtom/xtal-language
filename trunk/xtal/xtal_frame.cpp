@@ -12,7 +12,7 @@ void InitClass(){
 	{
 		TClass<ClassImpl::MembersIterImpl> p("ClassMembersIter");
 		p.inherit(Iterator());
-		p.method("restart", &ClassImpl::MembersIterImpl::restart);
+		p.method("reset", &ClassImpl::MembersIterImpl::reset);
 		p.method("iter_first", &ClassImpl::MembersIterImpl::iter_next);
 		p.method("iter_next", &ClassImpl::MembersIterImpl::iter_next);
 	}

@@ -21,7 +21,7 @@ namespace xtal{
 #	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
 #	define XTAL_VM_FIRST_CASE(key) Label##key: { Inst##key& inst = *(Inst##key*)pc;
 #	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); Label##key: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
-#	define XTAL_VM_SWITCH(x) goto *label_table[x];
+#	define XTAL_VM_SWITCH goto *label_table[*pc];
 #	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #	define XTAL_VM_CONTINUE(x) pc = (x); goto *label_table[*pc]
 
@@ -33,7 +33,7 @@ namespace xtal{
 #	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
 #	define XTAL_VM_FIRST_CASE(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
 #	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
-#	define XTAL_VM_SWITCH(x) switch(x)
+#	define XTAL_VM_SWITCH switch(*pc)
 #	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #	define XTAL_VM_CONTINUE(x) pc = (x); goto begin
 
@@ -234,7 +234,7 @@ void VMachineImpl::execute_inner(const inst_t* start){
 	int_t fun_frames_size = fun_frames_.size();
 
 begin:
-XTAL_VM_SWITCH(*pc){
+XTAL_VM_SWITCH{
 	
 	XTAL_VM_FIRST_CASE(Nop){ 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 

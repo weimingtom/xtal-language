@@ -1073,7 +1073,7 @@ builtin::CompileError: class(StandardError){
 	))();
 
 	Xsrc((
-Enumerator::restart: method(){ return this.each.restart; }
+Enumerator::reset: method(){ return this.each.reset; }
 Enumerator::collect: method(conv){ return this.each.collect(conv); }
 Enumerator::map: method(conv){ return this.each.map(conv); }
 Enumerator::select: method(pred){ return this.each.select(pred); }
@@ -1216,7 +1216,7 @@ Iterator::unique: method(pred:null){
 builtin::chain: fun(...){
 	arg: ...;
 	return fiber{
-		arg.each_ordered{
+		arg.each_ordered_arg{
 			it{
 				yield it;
 			}

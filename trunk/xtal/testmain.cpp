@@ -67,7 +67,8 @@ int main(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 		
-		compile_file("../bench/loop.xtal").inspect().p();
+		compile_file("../test/test_iter.xtal").inspect().p();
+		load("../test/test_iter.xtal");
 
 		{
 			String path(argv[0]);
@@ -92,7 +93,7 @@ int main(int argc, char** argv){
 	
 		int c;
 		
-		//*		
+		/*		
 		c = clock();
 		handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);

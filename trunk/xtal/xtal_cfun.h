@@ -572,6 +572,22 @@ struct memfun5{
 	R operator()(C* self, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return (self->*fun)(a0, a1, a2, a3, a4); }
 };
 
+
+/*
+template<class C, class R, R (C::*fun)()>
+struct memfun0_static{
+	static R f(C* self){ return (self->*fun)(); }
+	static R f(const VMachine& cm){ 
+		return (cast<C*>(cm.get_arg_this())->*fun)(); 
+	}
+};
+
+template<class C, class R, class A0, R (C::*fun)(A0)>
+struct memfun1_static{
+	static R f(C* self, A0 a0){ return (self->*fun)(a0); }
+};
+*/
+
 template<class C, class T>
 struct getter{
 	T C::* var;

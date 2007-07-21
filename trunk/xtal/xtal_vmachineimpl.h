@@ -527,14 +527,14 @@ public:
 	}
 
 	const VMachine& inner_setup_call(const inst_t* pc, int_t need_result_count, const Any& a1){
-		push_ff(pc, need_result_count, 1, 0, null);
 		push(a1);
+		push_ff(pc, need_result_count, 1, 0, null);
 		return myself();
 	}
 
 	const VMachine& inner_setup_call(const inst_t* pc, int_t need_result_count, const Any& a1, const Any& a2){
-		push_ff(pc, need_result_count, 2, 0, null);
 		push(a1); push(a2);
+		push_ff(pc, need_result_count, 2, 0, null);
 		return myself();
 	}
 

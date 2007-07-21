@@ -2672,15 +2672,14 @@ void VMachineImpl::carry_over(FunImpl* fun){
 	}
 	
 	FunCore* core = fun->core();
-	int_t size = core->variable_size;
-	if(core->on_heap){
-		f.outer(Frame(f.outer(), fun->code(), core));
-		FrameImpl* frame = f.outer().impl();
-		for(int_t n = 0; n<size; ++n){
-			frame->set_member_direct(size-1-n, arg(n, fun));
-		}
-	}else{
-		if(size!=0){
+	if(int_t size = core->variable_size){
+		if(core->on_heap){
+			f.outer(Frame(f.outer(), fun->code(), core));
+			FrameImpl* frame = f.outer().impl();
+			for(int_t n = 0; n<size; ++n){
+				frame->set_member_direct(size-1-n, arg(n, fun));
+			}
+		}else{
 			f.variables_.upsize(size);
 			UncountedAny* vars=&f.variables_[size-1];
 			for(int_t n = 0; n<size; ++n){
@@ -2714,8 +2713,9 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 	stack_.downsize(f.named_arg_count*2);
 
 	FunCore* core = fun->core();
-	
-	if(int_t size = core->variable_size){
+	int_t size = core->variable_size;
+	adjust_result(f.ordered_arg_count, size);
+	if(size){
 		if(core->on_heap){
 			f.outer(Frame(f.outer(), fun->code(), core));
 			FrameImpl* frame = f.outer().impl();
@@ -2724,7 +2724,6 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 			}
 		}else{
 			f.variables_.upsize(size);	
-			adjust_result(f.ordered_arg_count, size);
 			UncountedAny* vars=&f.variables_[size-1];
 			for(int_t n = 0; n<size; ++n){
 				vars[n] = get(size-1-n);
@@ -2807,18 +2806,11 @@ void VMachineImpl::adjust_result(int_t n, int_t need_result_count){
 
 
 void VMachineImpl::set_local_variable(int_t pos, const Any& value){
-	int_t variables_size = ff().variables_.size();
-	if(pos<variables_size){
-		ff().variable(pos, value);
-		return;
-	}	
-	
-	pos-=variables_size;
+	pos -= ff().variables_.size();
 	const Frame* outer = &ff().outer();
-	
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		while(1){
-			variables_size = outer->impl()->block_size();
+			int_t variables_size = outer->impl()->block_size();
 			if(pos<variables_size){
 				outer->impl()->set_member_direct(pos, value);
 				return;
@@ -2830,17 +2822,11 @@ void VMachineImpl::set_local_variable(int_t pos, const Any& value){
 }
 
 const Any& VMachineImpl::local_variable(int_t pos){
-	int_t variables_size = ff().variables_.size();
-	if(pos<variables_size){
-		return ff().variable(pos);
-	}
-	
-	pos-=variables_size;
+	pos -= ff().variables_.size();
 	const Frame* outer = &ff().outer();
-	
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		for(;;){
-			variables_size = outer->impl()->block_size();
+			int_t variables_size = outer->impl()->block_size();
 			if(pos<variables_size){
 				return outer->impl()->member_direct(pos);
 			}

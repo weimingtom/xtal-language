@@ -927,22 +927,24 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(At){ XTAL_VM_CONTINUE(FunAt(pc)); /*
+		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any idx = pop();
-			Any target = pop();
-			inner_setup_call(pc+1, 1, idx);
-			target.send(Xid(op_at), myself());
+			f.temp2_ = pop();
+			UncountedAny target = f.temp_ = pop();
+			inner_setup_call(pc+inst.ISIZE, 1, f.temp2_.cref());
+			target.cref().send(Xid(op_at), myself());
 		}
-		XTAL_VM_CONTINUE(ff().called_pc); 
+		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
 
 	XTAL_VM_CASE(SetAt){ XTAL_VM_CONTINUE(FunSetAt(pc)); /*
+		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any idx = pop();
-			Any target = pop();
-			Any value = pop();
-			inner_setup_call(pc+1, 0, idx, value);
-			target.send(Xid(op_set_at), myself());
+			f.temp2_ = pop();
+			UncountedAny target = f.temp_ = pop();
+			UncountedAny value = pop();
+			inner_setup_call(pc+inst.ISIZE, 0, f.temp2_.cref(), value.cref());
+			target.cref().send(Xid(op_set_at), myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -1442,7 +1444,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			BlockCore* p = ff().pcode->block_core(inst.core_number); 
+			ClassCore* p = ff().pcode->class_core(inst.core_number); 
 			Class cp = new_xclass(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
@@ -1527,8 +1529,8 @@ XTAL_VM_SWITCH{
 			switch(inst.type){
 				XTAL_NODEFAULT;
 
-				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->block_core(inst.core_number)); }
-				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->block_core(inst.core_number)); }
+				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->class_core(inst.core_number)); }
+				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->class_core(inst.core_number)); }
 			}
 			push(ret);
 		}
@@ -1983,23 +1985,25 @@ const inst_t* VMachineImpl::FunCom(const inst_t* pc){
 
 const inst_t* VMachineImpl::FunAt(const inst_t* pc){
 		XTAL_VM_DEF_INST(At);
+		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any idx = pop();
-			Any target = pop();
-			inner_setup_call(pc+1, 1, idx);
-			target.send(Xid(op_at), myself());
+			f.temp2_ = pop();
+			UncountedAny target = f.temp_ = pop();
+			inner_setup_call(pc+inst.ISIZE, 1, f.temp2_.cref());
+			target.cref().send(Xid(op_at), myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 
 }
 
 const inst_t* VMachineImpl::FunSetAt(const inst_t* pc){
 		XTAL_VM_DEF_INST(SetAt);
+		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any idx = pop();
-			Any target = pop();
-			Any value = pop();
-			inner_setup_call(pc+1, 0, idx, value);
-			target.send(Xid(op_set_at), myself());
+			f.temp2_ = pop();
+			UncountedAny target = f.temp_ = pop();
+			UncountedAny value = pop();
+			inner_setup_call(pc+inst.ISIZE, 0, f.temp2_.cref(), value.cref());
+			target.cref().send(Xid(op_set_at), myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -2660,6 +2664,7 @@ void VMachineImpl::carry_over(FunImpl* fun){
 	
 	f.fun(fun);
 	f.outer(fun->outer());
+	f.variables_.clear();
 	f.called_pc = fun->pc()+f.psource;
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	
@@ -2698,6 +2703,7 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 	
 	f.fun(fun);
 	f.outer(fun->outer());
+	f.variables_.clear();
 	f.called_pc = fun->pc()+f.psource;
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 

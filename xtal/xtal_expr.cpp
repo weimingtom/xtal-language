@@ -266,8 +266,8 @@ Stmt* ExprBuilder::if_end(){
 
 void ExprBuilder::fun_begin(int_t kind){
 	fun_stack.push(new(alloc) FunExpr(line(), kind));
+	scope_set_on_heap_flag(0);
 	scope_push(&fun_stack.top()->vars);
-	scope_set_on_heap_flag(1);
 }
 
 void ExprBuilder::fun_param(int_t name, Expr* def){

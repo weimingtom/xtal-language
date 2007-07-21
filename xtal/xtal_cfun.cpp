@@ -66,7 +66,7 @@ public:
 	void check_arg(const VMachine& vm);
 
 	virtual void call(const VMachine& vm){
-		if(vm.impl()->ordered_arg_count()==pi_.min_param_count){
+		if(vm.impl()->ordered_arg_count()!=pi_.min_param_count){
 			check_arg(vm);
 		}
 		fun_(vm, pi_, data_);

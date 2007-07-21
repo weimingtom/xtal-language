@@ -501,7 +501,11 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 	int_t result_count = 1;
 
 	if(!ex){
-		put_inst(InstAdjustResult(0, info.need_result_count));
+		if(info.need_result_count==1){
+			put_inst(InstPushNull());
+		}else if(info.need_result_count!=0){
+			put_inst(InstAdjustResult(0, info.need_result_count));
+		}
 		return;
 	}
 	

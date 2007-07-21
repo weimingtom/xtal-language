@@ -54,7 +54,7 @@ namespace xtal{
 
 #	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
 #	define XTAL_VM_FIRST_CASE(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
-#	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
+#	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
 #	define XTAL_VM_SWITCH switch(*pc)
 #	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #	define XTAL_VM_CONTINUE(x) pc = (x); goto begin
@@ -178,74 +178,75 @@ void VMachineImpl::execute_inner(const inst_t* start){
 		XTAL_COPY_LABEL_ADDRESS(76, LabelIfIs);
 		XTAL_COPY_LABEL_ADDRESS(77, LabelIfNis);
 		XTAL_COPY_LABEL_ADDRESS(78, LabelIfArgIsNull);
-		XTAL_COPY_LABEL_ADDRESS(79, LabelPos);
-		XTAL_COPY_LABEL_ADDRESS(80, LabelNeg);
-		XTAL_COPY_LABEL_ADDRESS(81, LabelCom);
-		XTAL_COPY_LABEL_ADDRESS(82, LabelNot);
-		XTAL_COPY_LABEL_ADDRESS(83, LabelAt);
-		XTAL_COPY_LABEL_ADDRESS(84, LabelSetAt);
-		XTAL_COPY_LABEL_ADDRESS(85, LabelAdd);
-		XTAL_COPY_LABEL_ADDRESS(86, LabelSub);
-		XTAL_COPY_LABEL_ADDRESS(87, LabelCat);
-		XTAL_COPY_LABEL_ADDRESS(88, LabelMul);
-		XTAL_COPY_LABEL_ADDRESS(89, LabelDiv);
-		XTAL_COPY_LABEL_ADDRESS(90, LabelMod);
-		XTAL_COPY_LABEL_ADDRESS(91, LabelAnd);
-		XTAL_COPY_LABEL_ADDRESS(92, LabelOr);
-		XTAL_COPY_LABEL_ADDRESS(93, LabelXor);
-		XTAL_COPY_LABEL_ADDRESS(94, LabelShl);
-		XTAL_COPY_LABEL_ADDRESS(95, LabelShr);
-		XTAL_COPY_LABEL_ADDRESS(96, LabelUshr);
-		XTAL_COPY_LABEL_ADDRESS(97, LabelEq);
-		XTAL_COPY_LABEL_ADDRESS(98, LabelNe);
-		XTAL_COPY_LABEL_ADDRESS(99, LabelLt);
-		XTAL_COPY_LABEL_ADDRESS(100, LabelLe);
-		XTAL_COPY_LABEL_ADDRESS(101, LabelGt);
-		XTAL_COPY_LABEL_ADDRESS(102, LabelGe);
-		XTAL_COPY_LABEL_ADDRESS(103, LabelRawEq);
-		XTAL_COPY_LABEL_ADDRESS(104, LabelRawNe);
-		XTAL_COPY_LABEL_ADDRESS(105, LabelIs);
-		XTAL_COPY_LABEL_ADDRESS(106, LabelNis);
-		XTAL_COPY_LABEL_ADDRESS(107, LabelInc);
-		XTAL_COPY_LABEL_ADDRESS(108, LabelDec);
-		XTAL_COPY_LABEL_ADDRESS(109, LabelAddAssign);
-		XTAL_COPY_LABEL_ADDRESS(110, LabelSubAssign);
-		XTAL_COPY_LABEL_ADDRESS(111, LabelCatAssign);
-		XTAL_COPY_LABEL_ADDRESS(112, LabelMulAssign);
-		XTAL_COPY_LABEL_ADDRESS(113, LabelDivAssign);
-		XTAL_COPY_LABEL_ADDRESS(114, LabelModAssign);
-		XTAL_COPY_LABEL_ADDRESS(115, LabelAndAssign);
-		XTAL_COPY_LABEL_ADDRESS(116, LabelOrAssign);
-		XTAL_COPY_LABEL_ADDRESS(117, LabelXorAssign);
-		XTAL_COPY_LABEL_ADDRESS(118, LabelShlAssign);
-		XTAL_COPY_LABEL_ADDRESS(119, LabelShrAssign);
-		XTAL_COPY_LABEL_ADDRESS(120, LabelUshrAssign);
-		XTAL_COPY_LABEL_ADDRESS(121, LabelGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(122, LabelSetGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(123, LabelDefineGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(124, LabelMember);
-		XTAL_COPY_LABEL_ADDRESS(125, LabelMemberIfDefined);
-		XTAL_COPY_LABEL_ADDRESS(126, LabelDefineMember);
-		XTAL_COPY_LABEL_ADDRESS(127, LabelDefineClassMember);
-		XTAL_COPY_LABEL_ADDRESS(128, LabelSetName);
-		XTAL_COPY_LABEL_ADDRESS(129, LabelSetMultipleLocalVariable2Direct);
-		XTAL_COPY_LABEL_ADDRESS(130, LabelSetMultipleLocalVariable3Direct);
-		XTAL_COPY_LABEL_ADDRESS(131, LabelSetMultipleLocalVariable4Direct);
-		XTAL_COPY_LABEL_ADDRESS(132, LabelOnce);
-		XTAL_COPY_LABEL_ADDRESS(133, LabelClassBegin);
-		XTAL_COPY_LABEL_ADDRESS(134, LabelClassEnd);
-		XTAL_COPY_LABEL_ADDRESS(135, LabelMakeArray);
-		XTAL_COPY_LABEL_ADDRESS(136, LabelArrayAppend);
-		XTAL_COPY_LABEL_ADDRESS(137, LabelMakeMap);
-		XTAL_COPY_LABEL_ADDRESS(138, LabelMapInsert);
-		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeFun);
-		XTAL_COPY_LABEL_ADDRESS(140, LabelMakeInstanceVariableAccessor);
-		XTAL_COPY_LABEL_ADDRESS(141, LabelThrow);
-		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowUnsupportedError);
-		XTAL_COPY_LABEL_ADDRESS(143, LabelThrowNull);
-		XTAL_COPY_LABEL_ADDRESS(144, LabelAssert);
-		XTAL_COPY_LABEL_ADDRESS(145, LabelBreakPoint);
-		XTAL_COPY_LABEL_ADDRESS(146, LabelMAX);
+		XTAL_COPY_LABEL_ADDRESS(79, LabelIfArgIsNullDirect);
+		XTAL_COPY_LABEL_ADDRESS(80, LabelPos);
+		XTAL_COPY_LABEL_ADDRESS(81, LabelNeg);
+		XTAL_COPY_LABEL_ADDRESS(82, LabelCom);
+		XTAL_COPY_LABEL_ADDRESS(83, LabelNot);
+		XTAL_COPY_LABEL_ADDRESS(84, LabelAt);
+		XTAL_COPY_LABEL_ADDRESS(85, LabelSetAt);
+		XTAL_COPY_LABEL_ADDRESS(86, LabelAdd);
+		XTAL_COPY_LABEL_ADDRESS(87, LabelSub);
+		XTAL_COPY_LABEL_ADDRESS(88, LabelCat);
+		XTAL_COPY_LABEL_ADDRESS(89, LabelMul);
+		XTAL_COPY_LABEL_ADDRESS(90, LabelDiv);
+		XTAL_COPY_LABEL_ADDRESS(91, LabelMod);
+		XTAL_COPY_LABEL_ADDRESS(92, LabelAnd);
+		XTAL_COPY_LABEL_ADDRESS(93, LabelOr);
+		XTAL_COPY_LABEL_ADDRESS(94, LabelXor);
+		XTAL_COPY_LABEL_ADDRESS(95, LabelShl);
+		XTAL_COPY_LABEL_ADDRESS(96, LabelShr);
+		XTAL_COPY_LABEL_ADDRESS(97, LabelUshr);
+		XTAL_COPY_LABEL_ADDRESS(98, LabelEq);
+		XTAL_COPY_LABEL_ADDRESS(99, LabelNe);
+		XTAL_COPY_LABEL_ADDRESS(100, LabelLt);
+		XTAL_COPY_LABEL_ADDRESS(101, LabelLe);
+		XTAL_COPY_LABEL_ADDRESS(102, LabelGt);
+		XTAL_COPY_LABEL_ADDRESS(103, LabelGe);
+		XTAL_COPY_LABEL_ADDRESS(104, LabelRawEq);
+		XTAL_COPY_LABEL_ADDRESS(105, LabelRawNe);
+		XTAL_COPY_LABEL_ADDRESS(106, LabelIs);
+		XTAL_COPY_LABEL_ADDRESS(107, LabelNis);
+		XTAL_COPY_LABEL_ADDRESS(108, LabelInc);
+		XTAL_COPY_LABEL_ADDRESS(109, LabelDec);
+		XTAL_COPY_LABEL_ADDRESS(110, LabelAddAssign);
+		XTAL_COPY_LABEL_ADDRESS(111, LabelSubAssign);
+		XTAL_COPY_LABEL_ADDRESS(112, LabelCatAssign);
+		XTAL_COPY_LABEL_ADDRESS(113, LabelMulAssign);
+		XTAL_COPY_LABEL_ADDRESS(114, LabelDivAssign);
+		XTAL_COPY_LABEL_ADDRESS(115, LabelModAssign);
+		XTAL_COPY_LABEL_ADDRESS(116, LabelAndAssign);
+		XTAL_COPY_LABEL_ADDRESS(117, LabelOrAssign);
+		XTAL_COPY_LABEL_ADDRESS(118, LabelXorAssign);
+		XTAL_COPY_LABEL_ADDRESS(119, LabelShlAssign);
+		XTAL_COPY_LABEL_ADDRESS(120, LabelShrAssign);
+		XTAL_COPY_LABEL_ADDRESS(121, LabelUshrAssign);
+		XTAL_COPY_LABEL_ADDRESS(122, LabelGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(123, LabelSetGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(124, LabelDefineGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(125, LabelMember);
+		XTAL_COPY_LABEL_ADDRESS(126, LabelMemberIfDefined);
+		XTAL_COPY_LABEL_ADDRESS(127, LabelDefineMember);
+		XTAL_COPY_LABEL_ADDRESS(128, LabelDefineClassMember);
+		XTAL_COPY_LABEL_ADDRESS(129, LabelSetName);
+		XTAL_COPY_LABEL_ADDRESS(130, LabelSetMultipleLocalVariable2Direct);
+		XTAL_COPY_LABEL_ADDRESS(131, LabelSetMultipleLocalVariable3Direct);
+		XTAL_COPY_LABEL_ADDRESS(132, LabelSetMultipleLocalVariable4Direct);
+		XTAL_COPY_LABEL_ADDRESS(133, LabelOnce);
+		XTAL_COPY_LABEL_ADDRESS(134, LabelClassBegin);
+		XTAL_COPY_LABEL_ADDRESS(135, LabelClassEnd);
+		XTAL_COPY_LABEL_ADDRESS(136, LabelMakeArray);
+		XTAL_COPY_LABEL_ADDRESS(137, LabelArrayAppend);
+		XTAL_COPY_LABEL_ADDRESS(138, LabelMakeMap);
+		XTAL_COPY_LABEL_ADDRESS(139, LabelMapInsert);
+		XTAL_COPY_LABEL_ADDRESS(140, LabelMakeFun);
+		XTAL_COPY_LABEL_ADDRESS(141, LabelMakeInstanceVariableAccessor);
+		XTAL_COPY_LABEL_ADDRESS(142, LabelThrow);
+		XTAL_COPY_LABEL_ADDRESS(143, LabelThrowUnsupportedError);
+		XTAL_COPY_LABEL_ADDRESS(144, LabelThrowNull);
+		XTAL_COPY_LABEL_ADDRESS(145, LabelAssert);
+		XTAL_COPY_LABEL_ADDRESS(146, LabelBreakPoint);
+		XTAL_COPY_LABEL_ADDRESS(147, LabelMAX);
 //}}LABELS}
 	}
 #else
@@ -319,12 +320,10 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(PushCurrentContext){ XTAL_VM_CONTINUE(FunPushCurrentContext(pc)); /*
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push(decolonize());
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+	XTAL_VM_CASE(PushCurrentContext){ // 3
+		push(ff().outer());
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
 
 	XTAL_VM_CASE(Pop){ // 3
 		downsize(1); 
@@ -728,45 +727,37 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
-	XTAL_VM_CASE(BlockBegin){ // 6
+	XTAL_VM_CASE(BlockBegin){ // 4
 		FunFrame& f = ff(); 
-		FrameCore* p = ff().pcode->frame_core(inst.core_number); 
-		f.scopes.push(p); 
-		f.variables_.upsize(p->variable_size);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(BlockEnd){ // 5
-		if(ff().scopes.top()){ 
-			ff().variables_.downsize(ff().scopes.top()->variable_size);
-		}else{
-			ff().outer(ff().outer().outer()); 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			f.outer(Frame(f.outer(), code(), f.pcode->frame_core(inst.core_number)));
 		}
-		ff().scopes.downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(BlockBeginDirect){ // 6
+	XTAL_VM_CASE(BlockEnd){ // 3
+		ff().outer(ff().outer().impl()->outer()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(BlockBeginDirect){ // 3
+		ff().variables_.upsize(inst.variable_size);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(BlockEndDirect){ // 3
+		ff().variables_.downsize(inst.variable_size);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(TryBegin){ // 9
 		FunFrame& f = ff(); 
-		FrameCore* p = ff().pcode->frame_core(inst.core_number); 
-		f.scopes.push(p); 
-		f.variables_.upsize(p->variable_size);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(BlockEndDirect){ // 5
-		FunFrame& f = ff(); 
-		f.variables_.downsize(f.scopes.top()->variable_size);
-		f.scopes.downsize(1);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(TryBegin){ // 7
 		ExceptFrame& ef = except_frames_.push();
-		ef.core = &ff().pcode->except_core_table_[inst.core_number];
+		ef.core = &f.pcode->except_core_table_[inst.core_number];
 		ef.fun_frame_count = fun_frames_.size();
-		ef.scope_count = ff().scopes.size();
 		ef.stack_count = this->stack_size();
+		ef.variable_size = f.variables_.size();
+		ef.outer = f.outer();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
@@ -893,6 +884,14 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(IfArgIsNull){ // 3
 		if(local_variable(inst.arg).is_null()){
+			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(pc + inst.address); 
+		}
+	}
+
+	XTAL_VM_CASE(IfArgIsNullDirect){ // 3
+		if(ff().variable(inst.arg).is_null()){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
@@ -1444,19 +1443,17 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FrameCore* p = ff().pcode->frame_core(inst.core_number); 
-			Class cp = new_xclass(decolonize(), code(), p);
+			Class cp = new_xclass(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp.inherit(cast<Class>(pop()));
 			}
 
-			ff().outer(decolonize());
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
 			ff().fun(prev_fun());
 
 			ff().outer(cp);
-			ff().scopes.push(0);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
@@ -1464,7 +1461,6 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ClassEnd){ XTAL_VM_CONTINUE(FunClassEnd(pc)); /*
 		push(ff().outer());
 		ff().outer(ff().outer().outer());
-		ff().scopes.downsize(1);
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 	}*/ }
@@ -1506,19 +1502,19 @@ XTAL_VM_SWITCH{
 				XTAL_NODEFAULT;
 				
 				XTAL_CASE(KIND_FUN){ 
-					push(Fun(decolonize(), ff().self(), code(), code().fun_core(table_n))); 
+					push(Fun(ff().outer(), ff().self(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_LAMBDA){ 
-					push(Lambda(decolonize(), ff().self(), code(), code().fun_core(table_n))); 
+					push(Lambda(ff().outer(), ff().self(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_METHOD){ 
-					push(Method(decolonize(), code(), code().fun_core(table_n))); 
+					push(Method(ff().outer(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_FIBER){ 
-					push(Fiber(decolonize(), ff().self(), code(), code().fun_core(table_n)));
+					push(Fiber(ff().outer(), ff().self(), code(), code().fun_core(table_n)));
 				}
 			}
 		}
@@ -1596,7 +1592,7 @@ XTAL_VM_SWITCH{
 				debug_info_.set_line(code().compliant_line_number(pc));
 				debug_info_.set_file_name(code().source_file_name());
 				debug_info_.set_fun_name(fun().object_name());
-				debug_info_.set_local_variables(decolonize());
+				debug_info_.set_local_variables(ff().outer());
 
 				struct guard{
 					guard(){ debug::disable(); }
@@ -1653,14 +1649,6 @@ except_catch:
 #define XTAL_VM_CONTINUE(x) return (x)
 
 //{FUNS{{
-const inst_t* VMachineImpl::FunPushCurrentContext(const inst_t* pc){
-		XTAL_VM_DEF_INST(PushCurrentContext);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push(decolonize());
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-}
-
 const inst_t* VMachineImpl::FunInsert3(const inst_t* pc){
 		XTAL_VM_DEF_INST(Insert3);
 		UncountedAny temp = get(); 
@@ -2485,19 +2473,17 @@ const inst_t* VMachineImpl::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FrameCore* p = ff().pcode->frame_core(inst.core_number); 
-			Class cp = new_xclass(decolonize(), code(), p);
+			Class cp = new_xclass(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp.inherit(cast<Class>(pop()));
 			}
 
-			ff().outer(decolonize());
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
 			ff().fun(prev_fun());
 
 			ff().outer(cp);
-			ff().scopes.push(0);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
@@ -2506,7 +2492,6 @@ const inst_t* VMachineImpl::FunClassEnd(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassEnd);
 		push(ff().outer());
 		ff().outer(ff().outer().outer());
-		ff().scopes.downsize(1);
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
@@ -2519,19 +2504,19 @@ const inst_t* VMachineImpl::FunMakeFun(const inst_t* pc){
 				XTAL_NODEFAULT;
 				
 				XTAL_CASE(KIND_FUN){ 
-					push(Fun(decolonize(), ff().self(), code(), code().fun_core(table_n))); 
+					push(Fun(ff().outer(), ff().self(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_LAMBDA){ 
-					push(Lambda(decolonize(), ff().self(), code(), code().fun_core(table_n))); 
+					push(Lambda(ff().outer(), ff().self(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_METHOD){ 
-					push(Method(decolonize(), code(), code().fun_core(table_n))); 
+					push(Method(ff().outer(), code(), code().fun_core(table_n))); 
 				}
 
 				XTAL_CASE(KIND_FIBER){ 
-					push(Fiber(decolonize(), ff().self(), code(), code().fun_core(table_n)));
+					push(Fiber(ff().outer(), ff().self(), code(), code().fun_core(table_n)));
 				}
 			}
 		}
@@ -2563,7 +2548,7 @@ const inst_t* VMachineImpl::FunBreakPoint(const inst_t* pc){
 				debug_info_.set_line(code().compliant_line_number(pc));
 				debug_info_.set_file_name(code().source_file_name());
 				debug_info_.set_fun_name(fun().object_name());
-				debug_info_.set_local_variables(decolonize());
+				debug_info_.set_local_variables(ff().outer());
 
 				struct guard{
 					guard(){ debug::disable(); }
@@ -2675,12 +2660,7 @@ void VMachineImpl::carry_over(FunImpl* fun){
 	
 	f.fun(fun);
 	f.outer(fun->outer());
-
-	f.variables_.clear();
-	f.scopes.clear();
-
 	f.called_pc = fun->pc()+f.psource;
-
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	
 	if(f.self().type()==TYPE_BASE){
@@ -2692,13 +2672,20 @@ void VMachineImpl::carry_over(FunImpl* fun){
 	}
 	
 	FunCore* core = fun->core();
-
-	if(int_t size = core->variable_size){
-		f.scopes.push(core);
-		f.variables_.upsize(size);
-		UncountedAny* vars=&f.variables_[size-1];
+	int_t size = core->variable_size;
+	if(core->on_heap){
+		f.outer(Frame(f.outer(), fun->code(), core));
+		FrameImpl* frame = f.outer().impl();
 		for(int_t n = 0; n<size; ++n){
-			vars[n] = arg(n, fun);
+			frame->set_member_direct(size-1-n, arg(n, fun));
+		}
+	}else{
+		if(size!=0){
+			f.variables_.upsize(size);
+			UncountedAny* vars=&f.variables_[size-1];
+			for(int_t n = 0; n<size; ++n){
+				vars[n] = arg(n, fun);
+			}
 		}
 	}
 	
@@ -2712,12 +2699,7 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 	
 	f.fun(fun);
 	f.outer(fun->outer());
-
-	f.variables_.clear();
-	f.scopes.clear();
-
 	f.called_pc = fun->pc()+f.psource;
-
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 
 	if(f.self().type()==TYPE_BASE){
@@ -2734,16 +2716,21 @@ void VMachineImpl::mv_carry_over(FunImpl* fun){
 	FunCore* core = fun->core();
 	
 	if(int_t size = core->variable_size){
-		f.scopes.push(core);
-		f.variables_.upsize(size);
-	
-		adjust_result(f.ordered_arg_count, size);
-		
-		UncountedAny* vars=&f.variables_[size-1];
-		for(int_t n = 0; n<size; ++n){
-			vars[n] = get(size-1-n);
+		if(core->on_heap){
+			f.outer(Frame(f.outer(), fun->code(), core));
+			FrameImpl* frame = f.outer().impl();
+			for(int_t n = 0; n<size; ++n){
+				frame->set_member_direct(n, arg(n, fun));
+			}
+		}else{
+			f.variables_.upsize(size);	
+			adjust_result(f.ordered_arg_count, size);
+			UncountedAny* vars=&f.variables_[size-1];
+			for(int_t n = 0; n<size; ++n){
+				vars[n] = get(size-1-n);
+			}
 		}
-		
+
 		stack_.downsize(size);
 	}
 	
@@ -2901,24 +2888,6 @@ Arguments VMachineImpl::make_args(const Fun& fun){
 	return p;
 }
 
-Frame VMachineImpl::decolonize(){
-	FunFrame& f = ff();
-	int_t sum = 0;
-	for(int_t k = 0, ksize = f.scopes.size(); k<ksize; ++k){
-		if(FrameCore* p = f.scopes.reverse_at(k)){
-			Frame block(f.outer(), code(), p);
-			for(int_t i = 0; i<p->variable_size; ++i){
-				block.set_member_direct(i, f.variables_.reverse_at(sum+p->variable_size-1-i).cref());
-			}
-			f.outer(block);
-			sum+=p->variable_size;
-			f.scopes.reverse_at(k)=0;
-		}
-	}
-	f.variables_.downsize(sum);	
-	return f.outer();
-}
-
 Any VMachineImpl::append_backtrace(const inst_t* pc, const Any& e){
 	if(e){
 		Any ep = e;
@@ -2949,7 +2918,7 @@ void VMachineImpl::hook_return(const inst_t* pc){
 		debug_info_.set_line(code().compliant_line_number(pc));
 		debug_info_.set_file_name(code().source_file_name());
 		debug_info_.set_fun_name(fun().object_name());
-		debug_info_.set_local_variables(decolonize());
+		debug_info_.set_local_variables(ff().outer());
 
 		struct guard{
 			guard(){ debug::disable(); }
@@ -2993,13 +2962,11 @@ const inst_t* VMachineImpl::catch_body(const inst_t* pc, int_t stack_size, int_t
 			}
 		}
 
-		while((size_t)ef.scope_count<ff().scopes.size()){
-			if(ff().scopes.top()){
-				ff().variables_.downsize(ff().scopes.top()->variable_size);
-			}else{
+		ff().variables_.downsize_n(ef.variable_size);
+		if(ef.outer.cref()){
+			while(!ef.outer.raweq(ff().outer())){
 				ff().outer(ff().outer().outer());
 			}
-			ff().scopes.downsize(1);
 		}
 
 		stack_.downsize_n(ef.stack_count);

@@ -180,6 +180,7 @@ String CodeImpl::inspect(){
 		XTAL_CASE(InstIfIs::NUMBER){ temp = ((InstIfIs*)pc)->inspect(); sz = InstIfIs::ISIZE; }
 		XTAL_CASE(InstIfNis::NUMBER){ temp = ((InstIfNis*)pc)->inspect(); sz = InstIfNis::ISIZE; }
 		XTAL_CASE(InstIfArgIsNull::NUMBER){ temp = ((InstIfArgIsNull*)pc)->inspect(); sz = InstIfArgIsNull::ISIZE; }
+		XTAL_CASE(InstIfArgIsNullDirect::NUMBER){ temp = ((InstIfArgIsNullDirect*)pc)->inspect(); sz = InstIfArgIsNullDirect::ISIZE; }
 		XTAL_CASE(InstPos::NUMBER){ temp = ((InstPos*)pc)->inspect(); sz = InstPos::ISIZE; }
 		XTAL_CASE(InstNeg::NUMBER){ temp = ((InstNeg*)pc)->inspect(); sz = InstNeg::ISIZE; }
 		XTAL_CASE(InstCom::NUMBER){ temp = ((InstCom*)pc)->inspect(); sz = InstCom::ISIZE; }

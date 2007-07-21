@@ -31,7 +31,10 @@ Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 	p_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0);
+	Vars vars;
+	vars.on_heap = true;
+	fun_begin(&vars, true, 0, 0, 0);
+
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
 	p_->symbol_table_ = com_->ident_table;
@@ -53,6 +56,7 @@ Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 }
 
 void CodeBuilder::interactive_compile(){
+	/*
 	result_ = Code();
 	p_ = result_.impl();
 	p_->source_file_name_ = "<ix>";
@@ -106,6 +110,7 @@ void CodeBuilder::interactive_compile(){
 			com_->errors.clear();
 		}
 	}
+	*/
 }
 
 
@@ -131,10 +136,6 @@ int_t CodeBuilder::lookup_variable(int_t key){
 }
 
 bool CodeBuilder::variable_on_heap(int_t pos){
-	if(debug::is_enabled()){
-		return true;
-	}
-
 	for(size_t i = 0, last = vars_stack_.size(); i<last; ++i){
 		if(pos<vars_stack_[i]->vars.size){
 			return vars_stack_[i]->on_heap;
@@ -337,7 +338,11 @@ void CodeBuilder::break_off(int_t n){
 			}
 		}
 		if(vars_stack_[vars_stack_.size()-scope_count]->vars.size){
-			put_inst(InstBlockEnd());
+			if(vars_stack_[vars_stack_.size()-scope_count]->on_heap){
+				put_inst(InstBlockEnd());
+			}else{
+				put_inst(InstBlockEndDirect(vars_stack_[vars_stack_.size()-scope_count]->vars.size));
+			}
 		}
 	}
 }
@@ -389,18 +394,7 @@ void CodeBuilder::pop_loop(){
 	fun_frames_.top().loops.pop();
 }
 
-void CodeBuilder::set_on_heap_flag(){
-	for(int_t i = 0; i<(int_t)vars_stack_.size(); ++i){
-		vars_stack_[i]->on_heap = true;	
-	}
-}
-
 void CodeBuilder::block_begin(Vars* vars){
-
-	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(vars->on_heap || debug::is_enabled()){
-		set_on_heap_flag();
-	}
 	vars_stack_.push(vars);
 
 	int_t frame_core_num = p_->frame_core_table_.size();
@@ -414,29 +408,29 @@ void CodeBuilder::block_begin(Vars* vars){
 		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
 
-	if(vars_stack_.top()->vars.size){
-		put_inst(InstBlockBegin(frame_core_num));
+	if(vars->vars.size){
+		if(vars->on_heap){
+			put_inst(InstBlockBegin(frame_core_num));
+		}else{
+			put_inst(InstBlockBeginDirect(vars->vars.size));
+		}
 	}
 }
 
 void CodeBuilder::block_end(){
-	if(vars_stack_.top()->vars.size){
-		if(vars_stack_.top()->on_heap || debug::is_enabled()){
+	Vars* vars = vars_stack_.top();
+
+	if(vars->vars.size){
+		if(vars->on_heap){
 			put_inst(InstBlockEnd());
 		}else{
-			put_inst(InstBlockEndDirect());
+			put_inst(InstBlockEndDirect(vars->vars.size));
 		}
 	}
 	vars_stack_.pop();
 }
 
 void CodeBuilder::class_begin(Vars* vars, int_t mixins){
-
-	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(vars->on_heap || debug::is_enabled()){
-		set_on_heap_flag();
-	}
-
 	vars_stack_.push(vars);
 
 	int_t frame_core_num = p_->frame_core_table_.size();
@@ -458,66 +452,42 @@ void CodeBuilder::class_end(){
 	vars_stack_.pop();
 }
 
-void CodeBuilder::fun_begin(Vars* vars){
+void CodeBuilder::fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count){
 
-	// もしヒープに乗るスコープが来たなら、今まで積んだ全てのスコープをヒープに乗せるフラグを立てる
-	if(vars->on_heap || debug::is_enabled()){
-		set_on_heap_flag();
-	}
-	vars_stack_.push(vars);
-
-	int_t frame_core_num = p_->frame_core_table_.size();
-	p_->frame_core_table_.push_back(FrameCore());
-	p_->frame_core_table_.back().kind = KIND_FUN;
-	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->frame_core_table_.back().line_number = lines_.top();
-
-	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		p_->frame_core_table_.back().variable_size++;
-		p_->symbol_table_.push_back(to_id(p->value.name));
-	}
-}
-
-void CodeBuilder::fun_end(){
-	vars_stack_.pop();
-}
-
-int_t CodeBuilder::code_size(){
-	return p_->code_.size();
-}
-
-int_t CodeBuilder::fun_frame_begin(bool have_args, int_t offset, unsigned char min_param_count, unsigned char max_param_count){
 	FunFrame& f = fun_frames_.push();	
 	f.used_args_object = false;
 	f.labels.clear();
 	f.loops.clear();
 	f.finallys.clear();
 	f.frame_count = vars_stack_.size();
+	f.used_args_object = have_args;
 
-	p_->xfun_core_table_.push_back(FunCore());
-	p_->xfun_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->xfun_core_table_.back().pc = code_size()+offset;
-	p_->xfun_core_table_.back().line_number = lines_.top();
-	p_->xfun_core_table_.back().min_param_count = min_param_count;
-	p_->xfun_core_table_.back().max_param_count = max_param_count;
-	p_->xfun_core_table_.back().used_args_object = have_args;
-	fun_frame().used_args_object = have_args;
-		
-	if(debug::is_enabled()){
-		set_on_heap_flag();
+	vars_stack_.push(vars);
+
+	FunCore core;
+	core.variable_symbol_offset = p_->symbol_table_.size();
+	core.pc = code_size()+offset;
+	core.line_number = lines_.top();
+	core.min_param_count = min_param_count;
+	core.max_param_count = max_param_count;
+	core.used_args_object = have_args;
+	core.on_heap = vars->on_heap;
+
+	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
+		core.variable_size++;
+		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
-
-	return p_->xfun_core_table_.size()-1;
+	p_->xfun_core_table_.push_back(core);
 }
 
-void CodeBuilder::register_param(int_t name){
-	p_->xfun_core_table_.back().variable_size++;
-	p_->symbol_table_.push_back(to_id(name));
-}
-
-void CodeBuilder::fun_frame_end(){
+void CodeBuilder::fun_end(){
+	vars_stack_.pop();
 	process_labels();
 	fun_frames_.downsize(1);
+}
+
+int_t CodeBuilder::code_size(){
+	return p_->code_.size();
 }
 
 CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
@@ -534,13 +504,6 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		put_inst(InstAdjustResult(0, info.need_result_count));
 		return;
 	}
-
-	/*
-	if(debug::is_enabled() && lines_.top()!=ex->line){
-		put_code_u8(CODE_BREAKPOINT);
-		put_code_u8(BREAKPOINT_LINE);
-	}
-	*/
 	
 	lines_.push(ex->line);
 	p_->set_line_number_info(ex->line);
@@ -891,32 +854,33 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				minv = maxv;
 			}
 
-			int_t n = fun_frame_begin(e->have_args, InstMakeFun::ISIZE, minv, maxv);
-			
-			for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){ 
-				register_param(p->key);
-			}
+			int_t n = p_->xfun_core_table_.size();
+			fun_begin(&e->vars, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
 
-			int_t fun_end_label = reserve_label();
+				int_t fun_end_label = reserve_label();
 
-			set_jump(offsetof(InstMakeFun, address), fun_end_label);
-			put_inst(InstMakeFun(e->kind, n, 0));
-			
-			if(debug::is_enabled()){
-				put_inst(InstBreakPoint(BREAKPOINT_CALL));
-			}
+				set_jump(offsetof(InstMakeFun, address), fun_end_label);
+				put_inst(InstMakeFun(e->kind, n, 0));
+				
+				if(debug::is_enabled()){
+					//put_inst(InstBreakPoint(BREAKPOINT_CALL));
+				}
 
-			fun_begin(&e->vars);{
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
 					// デフォルト値を持つ
 					if(p->value){
 						
 						int_t id = lookup_variable(p->key);
+						bool on_heap = variable_on_heap(id);
 						int_t label = reserve_label();
 						
-						set_jump(offsetof(InstIfArgIsNull, address), label);
-						put_inst(InstIfArgIsNull(id, 0));
-					
+						if(on_heap){
+							set_jump(offsetof(InstIfArgIsNull, address), label);
+							put_inst(InstIfArgIsNull(id, 0));
+						}else{
+							set_jump(offsetof(InstIfArgIsNullDirect, address), label);
+							put_inst(InstIfArgIsNullDirect(id, 0));
+						}
 						compile(p->value);
 						put_set_local_code(p->key);
 						
@@ -926,13 +890,11 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				compile(e->stmt);
 				break_off(fun_frame().frame_count+1);
 				if(debug::is_enabled()){
-					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
+					//put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 				put_inst(InstReturn0());
+				set_label(fun_end_label);
 			}fun_end();
-
-			set_label(fun_end_label);
-			fun_frame_end();
 		}
 
 		XTAL_EXPR_CASE(LocalExpr){
@@ -984,7 +946,7 @@ void CodeBuilder::compile(Stmt* ex){
 		return;
 
 	if(debug::is_enabled() && lines_.top()!=ex->line){
-		put_inst(InstBreakPoint(BREAKPOINT_LINE));
+		//put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
 
 	lines_.push(ex->line);
@@ -1193,7 +1155,7 @@ void CodeBuilder::compile(Stmt* ex){
 				break_off(fun_frame().frame_count+1);
 
 				if(debug::is_enabled()){
-					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
+					//put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 
 				if(e->exprs.size==0){
@@ -1555,11 +1517,12 @@ void CodeBuilder::compile(Stmt* ex){
 					compile(p->value);
 				}
 				
-				break_off(1);
 				if(e->export_expr){
 					compile(e->export_expr);
+					break_off(1);
 					put_inst(InstReturn1());
 				}else{
+					break_off(1);
 					put_inst(InstReturn0());
 				}
 			}block_end();

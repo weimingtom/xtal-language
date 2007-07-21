@@ -67,6 +67,8 @@ int main(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 		
+		compile_file("../bench/loop.xtal").inspect().p();
+
 		{
 			String path(argv[0]);
 
@@ -87,16 +89,15 @@ int main(int argc, char** argv){
 			path = temp.join(sep).to_s();
 			add_get_text_map(load(path));
 		}
-
-		compile_file("../bench/fib.xtal").inspect().p();
 	
 		int c;
 		
+		/*		
 		c = clock();
 		handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 
-		//*
+
 		c = clock();
 		full_gc();
 		printf("%g\n", (clock()-c)/1000.0f);

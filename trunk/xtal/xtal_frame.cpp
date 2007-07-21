@@ -41,7 +41,7 @@ void InitClass(){
 EmptyHaveInstanceVariables empty_have_instance_variables;
 uint_t global_mutate_count = 0;
 
-int_t HaveInstanceVariables::find_core_inner(FrameCore* core){
+int_t HaveInstanceVariables::find_core_inner(ClassCore* core){
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].core==core){
 			std::swap(variables_info_[0], variables_info_[i]);
@@ -145,7 +145,7 @@ void IdMap::expand(int_t addsize){
 }
 
 
-ClassImpl::ClassImpl(const Frame& outer, const Code& code, FrameCore* core)
+ClassImpl::ClassImpl(const Frame& outer, const Code& code, ClassCore* core)
 	:FrameImpl(outer, code, core){
 	set_class(TClass<Class>::get());
 	is_defined_by_xtal_ = true;
@@ -201,8 +201,8 @@ void ClassImpl::init_instance(HaveInstanceVariables* inst, const VMachine& vm, c
 		mixins_[i].init_instance(inst, vm, self);
 	}
 	
-	if(core_->instance_variable_size){
-		inst->init_variables(core_);
+	if(core()->instance_variable_size){
+		inst->init_variables(core());
 
 		vm.setup_call(0);
 		vm.set_arg_this(self);
@@ -413,7 +413,7 @@ Frame::Frame()
 	new(*this) FrameImpl();
 }
 	
-Frame::Frame(const Frame& outer, const Code& code, FrameCore* core)
+Frame::Frame(const Frame& outer, const Code& code, BlockCore* core)
 	:Any(null){
 	new(*this) FrameImpl(outer, code, core);
 }
@@ -463,7 +463,7 @@ Class::Class(const ID& name)
 	impl()->set_object_name(name, 1, null);	
 }
 
-Class::Class(const Frame& outer, const Code& code, FrameCore* core)
+Class::Class(const Frame& outer, const Code& code, ClassCore* core)
 	:Frame(null){
 	new(*this) ClassImpl(outer, code, core);
 }
@@ -504,7 +504,7 @@ void Class::set_member(const ID& name, const Any& value, const Any& ns) const{
 	return impl()->set_member(name, value, ns);
 }
 
-Class new_xclass(const Frame& outer, const Code& code, FrameCore* core){
+Class new_xclass(const Frame& outer, const Code& code, ClassCore* core){
 	Class ret(null); new(ret) XClassImpl(outer, code, core);
 	return ret; 
 }

@@ -397,20 +397,19 @@ void CodeBuilder::pop_loop(){
 void CodeBuilder::block_begin(Vars* vars){
 	vars_stack_.push(vars);
 
-	int_t frame_core_num = p_->frame_core_table_.size();
-	p_->frame_core_table_.push_back(FrameCore());
-	p_->frame_core_table_.back().kind = KIND_BLOCK;
-	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->frame_core_table_.back().line_number = lines_.top();
+	int_t block_core_num = p_->block_core_table_.size();
+	p_->block_core_table_.push_back(BlockCore());
+	p_->block_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
+	p_->block_core_table_.back().line_number = lines_.top();
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		p_->frame_core_table_.back().variable_size++;
+		p_->block_core_table_.back().variable_size++;
 		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
 
 	if(vars->vars.size){
 		if(vars->on_heap){
-			put_inst(InstBlockBegin(frame_core_num));
+			put_inst(InstBlockBegin(block_core_num));
 		}else{
 			put_inst(InstBlockBeginDirect(vars->vars.size));
 		}
@@ -433,18 +432,17 @@ void CodeBuilder::block_end(){
 void CodeBuilder::class_begin(Vars* vars, int_t mixins){
 	vars_stack_.push(vars);
 
-	int_t frame_core_num = p_->frame_core_table_.size();
-	p_->frame_core_table_.push_back(FrameCore());
-	p_->frame_core_table_.back().kind = KIND_CLASS;
-	p_->frame_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->frame_core_table_.back().line_number = lines_.top();
+	int_t class_core_num = p_->class_core_table_.size();
+	p_->class_core_table_.push_back(ClassCore());
+	p_->class_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
+	p_->class_core_table_.back().line_number = lines_.top();
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		p_->frame_core_table_.back().variable_size++;
+		p_->class_core_table_.back().variable_size++;
 		p_->symbol_table_.push_back(to_id(p->value.name));
 	}
 
-	put_inst(InstClassBegin(frame_core_num, mixins));
+	put_inst(InstClassBegin(class_core_num, mixins));
 }
 
 void CodeBuilder::class_end(){
@@ -922,9 +920,9 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 			class_begin(&e->vars, e->mixins.size);{
 				class_scopes_.push(e);
-				p_->frame_core_table_.back().instance_variable_symbol_offset = 0;
-				p_->frame_core_table_.back().instance_variable_size = e->inst_vars.size;
-				class_scopes_.top()->frame_number = p_->frame_core_table_.size()-1;
+				p_->class_core_table_.back().instance_variable_symbol_offset = 0;
+				p_->class_core_table_.back().instance_variable_size = e->inst_vars.size;
+				class_scopes_.top()->frame_number = p_->class_core_table_.size()-1;
 
 				for(TList<Var>::Node* p = e->vars.vars.head; p; p = p->next){
 					compile(p->value.init);

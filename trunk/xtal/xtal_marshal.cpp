@@ -130,32 +130,38 @@ void Marshal::inner_dump(const Any& v){
 				stream_.put_i8(p->code_[i]);
 			}
 			
-			sz = p->frame_core_table_.size();
-			stream_.put_i32(sz);
+			sz = p->block_core_table_.size();
+			stream_.put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_.put_i8(p->frame_core_table_[i].kind);
-				stream_.put_u16(p->frame_core_table_[i].variable_symbol_offset);
-				stream_.put_u16(p->frame_core_table_[i].variable_size);
-				stream_.put_u16(p->frame_core_table_[i].instance_variable_symbol_offset);
-				stream_.put_u16(p->frame_core_table_[i].instance_variable_size);
-				stream_.put_u16(p->frame_core_table_[i].line_number);			
+				stream_.put_u16(p->block_core_table_[i].line_number);			
+				stream_.put_u16(p->block_core_table_[i].variable_symbol_offset);
+				stream_.put_u16(p->block_core_table_[i].variable_size);
+			}
+
+			sz = p->class_core_table_.size();
+			stream_.put_u32(sz);
+			for(int_t i=0; i<sz; ++i){
+				stream_.put_u16(p->class_core_table_[i].line_number);			
+				stream_.put_u16(p->class_core_table_[i].variable_symbol_offset);
+				stream_.put_u16(p->class_core_table_[i].variable_size);
+
+				stream_.put_u16(p->class_core_table_[i].instance_variable_symbol_offset);
+				stream_.put_u16(p->class_core_table_[i].instance_variable_size);			
 			}
 
 			sz = p->xfun_core_table_.size();
-			stream_.put_i32(sz);
+			stream_.put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_.put_i8(p->frame_core_table_[i].kind);
-				stream_.put_u16(p->xfun_core_table_[i].variable_symbol_offset);
-				stream_.put_u16(p->xfun_core_table_[i].variable_size);
-				stream_.put_u16(p->xfun_core_table_[i].instance_variable_symbol_offset);
-				stream_.put_u16(p->xfun_core_table_[i].instance_variable_size);
 				stream_.put_u16(p->xfun_core_table_[i].line_number);			
+				stream_.put_u16(p->xfun_core_table_[i].variable_symbol_offset);
+				stream_.put_u16(p->xfun_core_table_[i].variable_size);		
 
 				stream_.put_u16(p->xfun_core_table_[i].pc);			
 				stream_.put_u16(p->xfun_core_table_[i].max_stack);			
-				stream_.put_i8(p->xfun_core_table_[i].min_param_count);
-				stream_.put_i8(p->xfun_core_table_[i].max_param_count);
-				stream_.put_i8(p->xfun_core_table_[i].used_args_object);
+				stream_.put_u8(p->xfun_core_table_[i].min_param_count);
+				stream_.put_u8(p->xfun_core_table_[i].max_param_count);
+				stream_.put_u8(p->xfun_core_table_[i].used_args_object);
+				stream_.put_u8(p->xfun_core_table_[i].on_heap);
 			}
 
 			sz = p->line_number_table_.size();
@@ -306,32 +312,38 @@ Any Marshal::inner_load(){
 				p->code_[i] = stream_.get_u8();
 			}
 			
-			sz = stream_.get_u32();
-			p->frame_core_table_.resize(sz);
+			sz = stream_.get_u16();
+			p->block_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->frame_core_table_[i].kind = stream_.get_u8();
-				p->frame_core_table_[i].variable_symbol_offset = stream_.get_u16();
-				p->frame_core_table_[i].variable_size = stream_.get_u16();
-				p->frame_core_table_[i].instance_variable_symbol_offset = stream_.get_u16();
-				p->frame_core_table_[i].instance_variable_size = stream_.get_u16();
-				p->frame_core_table_[i].line_number = stream_.get_u16();			
+				p->block_core_table_[i].line_number = stream_.get_u16();			
+				p->block_core_table_[i].variable_symbol_offset = stream_.get_u16();
+				p->block_core_table_[i].variable_size = stream_.get_u16();
 			}
 
-			sz = stream_.get_u32();
+			sz = stream_.get_u16();
+			p->class_core_table_.resize(sz);
+			for(int_t i=0; i<sz; ++i){
+				p->class_core_table_[i].line_number = stream_.get_u16();			
+				p->class_core_table_[i].variable_symbol_offset = stream_.get_u16();
+				p->class_core_table_[i].variable_size = stream_.get_u16();
+
+				p->class_core_table_[i].instance_variable_symbol_offset = stream_.get_u16();
+				p->class_core_table_[i].instance_variable_size = stream_.get_u16();
+			}
+
+			sz = stream_.get_u16();
 			p->xfun_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->frame_core_table_[i].kind = stream_.get_u8();
+				p->xfun_core_table_[i].line_number = stream_.get_u16();			
 				p->xfun_core_table_[i].variable_symbol_offset = stream_.get_u16();
 				p->xfun_core_table_[i].variable_size = stream_.get_u16();
-				p->xfun_core_table_[i].instance_variable_symbol_offset = stream_.get_u16();
-				p->xfun_core_table_[i].instance_variable_size = stream_.get_u16();
-				p->xfun_core_table_[i].line_number = stream_.get_u16();		
 
 				p->xfun_core_table_[i].pc = stream_.get_u16();		
 				p->xfun_core_table_[i].max_stack = stream_.get_u16();			
 				p->xfun_core_table_[i].min_param_count = stream_.get_u8();
 				p->xfun_core_table_[i].max_param_count = stream_.get_u8();
 				p->xfun_core_table_[i].used_args_object = stream_.get_u8();
+				p->xfun_core_table_[i].on_heap = stream_.get_u8();
 			}
 
 			sz = stream_.get_u32();

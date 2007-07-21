@@ -11,25 +11,25 @@ namespace xtal{
 class InstanceVariableGetterImpl : public HaveNameImpl{
 public:
 
-	InstanceVariableGetterImpl(int_t number, FrameCore* core);
+	InstanceVariableGetterImpl(int_t number, ClassCore* core);
 
 	virtual void call(const VMachine& vm);
 
 private:
 	int_t number_;
-	FrameCore* core_;
+	ClassCore* core_;
 };
 
 class InstanceVariableSetterImpl : public HaveNameImpl{
 public:
 
-	InstanceVariableSetterImpl(int_t number, FrameCore* core);
+	InstanceVariableSetterImpl(int_t number, ClassCore* core);
 
 	virtual void call(const VMachine& vm);
 
 private:
 	int_t number_;
-	FrameCore* core_;
+	ClassCore* core_;
 };
 
 class FunImpl : public HaveNameImpl{

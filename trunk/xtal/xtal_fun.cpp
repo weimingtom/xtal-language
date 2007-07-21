@@ -23,7 +23,7 @@ void InitFiber(){
 	p.method("halt", &Fiber::halt);
 }
 
-InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, FrameCore* core)
+InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, ClassCore* core)
 	:number_(number), core_(core){
 }
 
@@ -38,7 +38,7 @@ void InstanceVariableGetterImpl::call(const VMachine& vm){
 	vm.impl()->return_result(p->variable(number_, core_));
 }
 
-InstanceVariableSetterImpl::InstanceVariableSetterImpl(int_t number, FrameCore* core)
+InstanceVariableSetterImpl::InstanceVariableSetterImpl(int_t number, ClassCore* core)
 	:number_(number), core_(core){
 }
 

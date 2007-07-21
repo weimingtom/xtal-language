@@ -60,8 +60,12 @@ public:
 		return toplevel_; 
 	}
 
-	FrameCore* frame_core(int_t i){
-		return &frame_core_table_[i];
+	BlockCore* block_core(int_t i){
+		return &block_core_table_[i];
+	}
+
+	ClassCore* class_core(int_t i){
+		return &class_core_table_[i];
 	}
 
 	FunCore* fun_core(int_t i){
@@ -93,7 +97,8 @@ protected:
 public:
 
 	AC<FunCore>::vector xfun_core_table_;
-	AC<FrameCore>::vector frame_core_table_;
+	AC<BlockCore>::vector block_core_table_;
+	AC<ClassCore>::vector class_core_table_;
 	AC<ExceptCore>::vector except_core_table_;
 
 	struct LineNumberTable{

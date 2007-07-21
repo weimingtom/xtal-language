@@ -5,6 +5,67 @@
 
 namespace xtal{
 
+struct CastCacheTable{
+	struct Unit{
+		const void* key1;
+		int_t key2;
+		const void* value;
+		bool same;
+	};
+
+	enum{ CACHE_MAX = 256 };
+
+	Unit table_[CACHE_MAX];
+
+	CastCacheTable(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			table_[i].value = 0;
+			table_[i].key1 = 0;
+			table_[i].key2 = 0;
+		}
+	}
+
+	const void* fetch(const Any& a, const void* type_key){
+		uint_t ia = a.rawvalue();
+		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
+		Unit& unit = table_[hash & (CACHE_MAX-1)];
+		if(type_key==unit.key1 && ia==unit.key2){
+			//printf("e");
+			if(unit.same){
+				return &a;
+			}else{
+				return unit.value;
+			}
+		}
+		//printf("n");
+		return 0;
+	}
+
+	void store(const Any& a, const void* value, const void* type_key){
+		if(a.type()!=TYPE_BASE){
+			return;
+		}
+
+		uint_t ia = a.rawvalue();
+		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
+		Unit& unit = table_[hash & (CACHE_MAX-1)];
+		unit.key1 = type_key;
+		unit.key2 = ia;
+		unit.value = value;
+		unit.same = &a==value;
+	}
+
+} cast_cache_table;
+
+const void* fetch_cast_cache(const Any& a, const void* type_key){
+	return cast_cache_table.fetch(a, type_key);
+}
+
+void store_cast_cache(const Any& a, const void* ret, const void* type_key){
+	cast_cache_table.store(a, ret, type_key);
+}
+
+
 void* cast_helper_helper_extend_anyimpl(const Any& a, const Class& cls){
 	if(a.is(cls)){ return (void*)a.impl(); }
 	XTAL_THROW(cast_error(a, cls.object_name()));

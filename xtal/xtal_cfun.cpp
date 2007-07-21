@@ -6,29 +6,6 @@
 
 namespace xtal{
 
-void check_arg(const VMachine& vm, const ParamInfo& p){
-	int_t n = vm.impl()->ordered_arg_count();
-	if(n<p.min_param_count || n>p.max_param_count){
-		if(p.min_param_count==0 && p.max_param_count==0){
-			XTAL_THROW(builtin().member("ArgumentError")(
-				Xt("Xtal Runtime Error 1007")(
-					Named("name", p.fun.cref().object_name()),
-					Named("value", n)
-				)
-			));
-		}else{
-			XTAL_THROW(builtin().member("ArgumentError")(
-				Xt("Xtal Runtime Error 1006")(
-					Named("name", p.fun.cref().object_name()),
-					Named("min", p.min_param_count),
-					Named("max", p.max_param_count),
-					Named("value", n)
-				)
-			));
-		}
-	}
-}
-
 class CFunImpl : public HaveNameImpl{
 public:
 	typedef void (*fun_t)(const VMachine&, const ParamInfo&, void* data);
@@ -86,12 +63,16 @@ public:
 		std::for_each(pi_.params, pi_.params+param_n_, m);
 	}
 
+	void check_arg(const VMachine& vm);
+
 	virtual void call(const VMachine& vm){
+		if(vm.impl()->ordered_arg_count()==pi_.min_param_count){
+			check_arg(vm);
+		}
 		fun_(vm, pi_, data_);
 	}
 
 protected:
-	
 	void* data_;
 	int_t data_size_;
 	fun_t fun_;
@@ -99,9 +80,47 @@ protected:
 	int_t param_n_;
 };
 
-CFun::CFun(CFunImpl::fun_t fun, const void* val, int_t val_size, int_t param_n)
+void CFunImpl::check_arg(const VMachine& vm){
+	int_t n = vm.impl()->ordered_arg_count();
+	if(n<pi_.min_param_count || n>pi_.max_param_count){
+		if(pi_.min_param_count==0 && pi_.max_param_count==0){
+			XTAL_THROW(builtin().member("ArgumentError")(
+				Xt("Xtal Runtime Error 1007")(
+					Named("name", pi_.fun.cref().object_name()),
+					Named("value", n)
+				)
+			));
+		}else{
+			XTAL_THROW(builtin().member("ArgumentError")(
+				Xt("Xtal Runtime Error 1006")(
+					Named("name", pi_.fun.cref().object_name()),
+					Named("min", pi_.min_param_count),
+					Named("max", pi_.max_param_count),
+					Named("value", n)
+				)
+			));
+		}
+	}
+}
+
+class CFunArgsImpl : public CFunImpl{
+public:
+
+	CFunArgsImpl(fun_t f, const void* val, int_t val_size, int_t param_n)
+		:CFunImpl(f, val, val_size, param_n){}
+
+	virtual void call(const VMachine& vm){
+		fun_(vm, pi_, data_);
+	}
+};
+
+CFun::CFun(CFunImpl::fun_t fun, const void* val, int_t val_size, int_t param_n, int_t is_args)
 	:Any(null){
-	new(*this) CFunImpl(fun, val, val_size, param_n);
+	if(is_args){
+		new(*this) CFunArgsImpl(fun, val, val_size, param_n);
+	}else{
+		new(*this) CFunImpl(fun, val, val_size, param_n);
+	}
 }
 
 const CFun& CFun::param(

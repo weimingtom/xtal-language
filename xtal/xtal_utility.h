@@ -206,6 +206,16 @@ struct IsReference{
 	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
 };
 
+template<class T, class U>
+struct IsSame{
+	typedef char (&yes)[2];
+	typedef char (&no)[1];
+	static yes test(U (*)());
+	static no test(...);
+
+	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
+};
+
 template<class T>
 struct IsNotVoid{ enum{ value = 1 }; };
 template<>

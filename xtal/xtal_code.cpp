@@ -6,7 +6,8 @@
 namespace xtal{
 
 FunCore empty_xfun_core;
-FrameCore empty_frame_core;
+BlockCore empty_block_core;
+ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
 void InitCode(){
@@ -69,8 +70,8 @@ void Code::set_value(int_t i, const Any& v) const{
 	impl()->set_value(i, v);
 }
 
-FrameCore* Code::frame_core(int_t i) const{
-	return &impl()->frame_core_table_[i];
+BlockCore* Code::block_core(int_t i) const{
+	return &impl()->block_core_table_[i];
 }
 
 FunCore* Code::fun_core(int_t i) const{

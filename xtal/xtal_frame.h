@@ -25,7 +25,7 @@ public:
 		
 	Frame();
 	
-	Frame(const Frame& outer, const Code& code, FrameCore* core);
+	Frame(const Frame& outer, const Code& code, BlockCore* core);
 	
 	Frame(FrameImpl* p)
 		:Any((AnyImpl*)p){}
@@ -95,7 +95,7 @@ public:
 	Class(const Null&)
 		:Frame(null){}
 	
-	Class(const Frame& outer, const Code& code, FrameCore* core);
+	Class(const Frame& outer, const Code& code, ClassCore* core);
 
 	explicit Class(ClassImpl* p)
 		:Frame((FrameImpl*)p){}
@@ -380,7 +380,7 @@ public:
 template<class C>
 Any* TClass<C>::pinst_ = 0;
 
-Class new_xclass(const Frame& outer, const Code& code, FrameCore* core);
+Class new_xclass(const Frame& outer, const Code& code, ClassCore* core);
 
 class Instance : public Any{
 public:

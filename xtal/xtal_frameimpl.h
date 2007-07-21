@@ -26,7 +26,7 @@ public:
 			
 	~HaveInstanceVariables(){}
 		
-	void init_variables(FrameCore* core){
+	void init_variables(ClassCore* core){
 		VariablesInfo vi;
 		vi.core = core;
 		vi.pos = (int_t)variables_.size();
@@ -34,22 +34,22 @@ public:
 		variables_info_.push(vi);
 	}
 
-	const Any& variable(int_t index, FrameCore* core){
+	const Any& variable(int_t index, ClassCore* core){
 		return variables_[find_core(core) + index];
 	}
 
-	void set_variable(int_t index, FrameCore* core, const Any& value){
+	void set_variable(int_t index, ClassCore* core, const Any& value){
 		variables_[find_core(core) + index] = value;
 	}
 
-	int_t find_core(FrameCore* core){
+	int_t find_core(ClassCore* core){
 		VariablesInfo& info = variables_info_.top();
 		if(info.core == core)
 			return info.pos;
 		return find_core_inner(core);
 	}
 
-	int_t find_core_inner(FrameCore* core);
+	int_t find_core_inner(ClassCore* core);
 
 	bool empty(){
 		return variables_.empty();
@@ -58,7 +58,7 @@ public:
 protected:
 	
 	struct VariablesInfo{
-		FrameCore* core;
+		ClassCore* core;
 		int_t pos;
 	};
 
@@ -227,15 +227,15 @@ private:
 class FrameImpl : public HaveNameImpl{
 public:
 	
-	FrameImpl(const Frame& outer, const Code& code, FrameCore* core)
-		:outer_(outer), code_(code), core_(core ? core : &empty_frame_core), members_(core_->variable_size), map_members_(0){
+	FrameImpl(const Frame& outer, const Code& code, BlockCore* core)
+		:outer_(outer), code_(code), core_(core ? core : &empty_class_core), members_(core_->variable_size), map_members_(0){
 		if(debug::is_enabled()){
 			make_map_members();	
 		}
 	}
 	
 	FrameImpl()
-		:outer_(null), code_(null), core_(&empty_frame_core), map_members_(0){}
+		:outer_(null), code_(null), core_(&empty_class_core), map_members_(0){}
 		
 	~FrameImpl(){
 		if(map_members_){
@@ -343,7 +343,7 @@ protected:
 
 	Frame outer_;
 	Code code_;
-	FrameCore* core_;
+	BlockCore* core_;
 	
 	typedef AC<Any>::vector vector_t;
 	vector_t members_;
@@ -362,7 +362,7 @@ protected:
 class ClassImpl : public FrameImpl{
 public:
 
-	ClassImpl(const Frame& outer, const Code& code, FrameCore* core);
+	ClassImpl(const Frame& outer, const Code& code, ClassCore* core);
 	
 	ClassImpl();
 
@@ -391,6 +391,10 @@ public:
 	void inherit_strict(const Class& md);
 	
 	bool is_inherited(const Class& v);
+
+	ClassCore* core(){
+		return (ClassCore*)core_;
+	}
 	
 protected:
 
@@ -407,7 +411,7 @@ protected:
 class XClassImpl : public ClassImpl{
 public:
 		
-	XClassImpl(const Frame& outer, const Code& code, FrameCore* core)
+	XClassImpl(const Frame& outer, const Code& code, ClassCore* core)
 		:ClassImpl(outer, code, core){
 	}
 

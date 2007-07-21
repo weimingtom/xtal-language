@@ -449,7 +449,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(InstanceVariable){ // 4
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push(f.instance_variables->variable(inst.number, f.pcode->frame_core(inst.core_number)));
+			push(f.instance_variables->variable(inst.number, f.pcode->class_core(inst.core_number)));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -457,7 +457,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(SetInstanceVariable){ // 4
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{ 
-			f.instance_variables->set_variable(inst.number, f.pcode->frame_core(inst.core_number), pop());
+			f.instance_variables->set_variable(inst.number, f.pcode->class_core(inst.core_number), pop());
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -730,7 +730,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(BlockBegin){ // 4
 		FunFrame& f = ff(); 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			f.outer(Frame(f.outer(), code(), f.pcode->frame_core(inst.core_number)));
+			f.outer(Frame(f.outer(), code(), f.pcode->block_core(inst.core_number)));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -1442,7 +1442,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			FrameCore* p = ff().pcode->frame_core(inst.core_number); 
+			BlockCore* p = ff().pcode->block_core(inst.core_number); 
 			Class cp = new_xclass(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
@@ -1527,8 +1527,8 @@ XTAL_VM_SWITCH{
 			switch(inst.type){
 				XTAL_NODEFAULT;
 
-				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->frame_core(inst.core_number)); }
-				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->frame_core(inst.core_number)); }
+				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->block_core(inst.core_number)); }
+				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->block_core(inst.core_number)); }
 			}
 			push(ret);
 		}
@@ -2472,7 +2472,7 @@ const inst_t* VMachineImpl::FunSetName(const inst_t* pc){
 const inst_t* VMachineImpl::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			FrameCore* p = ff().pcode->frame_core(inst.core_number); 
+			ClassCore* p = ff().pcode->class_core(inst.core_number); 
 			Class cp = new_xclass(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
@@ -2530,8 +2530,8 @@ const inst_t* VMachineImpl::FunMakeInstanceVariableAccessor(const inst_t* pc){
 			switch(inst.type){
 				XTAL_NODEFAULT;
 
-				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->frame_core(inst.core_number)); }
-				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->frame_core(inst.core_number)); }
+				XTAL_CASE(0){ new(ret) InstanceVariableGetterImpl(inst.number, ff().pcode->class_core(inst.core_number)); }
+				XTAL_CASE(1){ new(ret) InstanceVariableSetterImpl(inst.number, ff().pcode->class_core(inst.core_number)); }
 			}
 			push(ret);
 		}

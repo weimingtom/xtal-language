@@ -10,21 +10,22 @@ namespace xtal{
 
 void InitPrototypes();
 
-struct FrameCore{
-	FrameCore()
-		:kind(0),
-		variable_symbol_offset(0), variable_size(0),
-		instance_variable_symbol_offset(0), instance_variable_size(0),
-		line_number(0){}
-	u8 kind;
+struct BlockCore{
+	BlockCore()
+		:line_number(0), variable_symbol_offset(0), variable_size(0){}
+	u16 line_number;
 	u16 variable_symbol_offset;
 	u16 variable_size;
-	u16 instance_variable_symbol_offset;
-	u16 instance_variable_size;
-	u16 line_number;
 };
 
-struct FunCore : public FrameCore{
+struct ClassCore : public BlockCore{
+	ClassCore()
+		:instance_variable_symbol_offset(0), instance_variable_size(0){}
+	u16 instance_variable_symbol_offset;
+	u16 instance_variable_size;
+};
+
+struct FunCore : public BlockCore{
 	FunCore()
 		:pc(0), max_stack(256), min_param_count(0), max_param_count(0), used_args_object(0), on_heap(0){}
 	u16 pc;
@@ -44,7 +45,8 @@ struct ExceptCore{
 	u16 end_pc;
 };
 
-extern FrameCore empty_frame_core;
+extern BlockCore empty_block_core;
+extern ClassCore empty_class_core;
 extern FunCore empty_fun_core;
 extern ExceptCore empty_except_core;
 
@@ -95,7 +97,7 @@ public:
 	*/
 	int_t compliant_line_number(const inst_t* p) const;
 
-	FrameCore* frame_core(int_t i) const;
+	BlockCore* block_core(int_t i) const;
 
 	FunCore* fun_core(int_t i) const;
 

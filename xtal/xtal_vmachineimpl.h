@@ -783,7 +783,7 @@ public:
 		}
 	}
 
-	void return_result_instance_variable(int_t number, FrameCore* core){
+	void return_result_instance_variable(int_t number, ClassCore* core){
 		return_result((ff().instance_variables->variable(number, core)));
 	}
 		

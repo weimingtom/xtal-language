@@ -6,6 +6,31 @@
 
 namespace xtal{
 	
+template<class T>
+struct CastCacheType{
+	static CastCacheType<T> instance;
+private:
+	CastCacheType(){}
+	CastCacheType(const CastCacheType&);
+	CastCacheType& operator=(const CastCacheType&);
+};
+
+template<class T>
+CastCacheType<T> CastCacheType<T>::instance;
+
+const void* fetch_cast_cache(const Any& a, const void* type_key);
+void store_cast_cache(const Any& a, const void* ret, const void* type_key);
+
+template<class T>
+inline const void* fetch_cast_cache(const Any& a){
+	return fetch_cast_cache(a, &CastCacheType<T>::instance);
+}
+
+template<class T>
+inline void store_cast_cache(const Any& a, const void* ret){
+	store_cast_cache(a, ret, &CastCacheType<T>::instance);
+}
+
 /**
 * @brief cast関数、as関数、arg_cast関数の戻り値の型を決定するためのヘルパーテンプレートクラス
 *
@@ -141,17 +166,39 @@ template<class T>
 struct CastHelper{
 
 	// 変換後の型がポインタの場合
+	// このレベルで、キャッシュの機構を取り入れる
 	template<class U> static T as_inner(const Any& a, U* (*)()){ 
-		return as_helper_helper(a, (U*)0, (U*)0); }
+		if(const void* p = fetch_cast_cache<T>(a)){
+			return (T)p;
+		}else{
+			T ret = (T)as_helper_helper(a, (U*)0, (U*)0);
+			store_cast_cache<T>(a, ret);
+			return ret;
+		}
+	}
 		
 	template<class U> static T cast_inner(const Any& a, U* (*)()){ 
-		return cast_helper_helper(a, (U*)0, (U*)0); }	
+		if(const void* p = fetch_cast_cache<T>(a)){
+			return (T)p;
+		}else{
+			T ret = (T)cast_helper_helper(a, (U*)0, (U*)0);
+			store_cast_cache<T>(a, ret);
+			return ret; 
+		}
+	}	
 		
 	template<class U> static T arg_cast_inner(const Any& a, int param_num, const Any& param_name, U* (*)()){ 
-		return arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0); }
+		if(const void* p = fetch_cast_cache<T>(a)){
+			return (T)p;
+		}else{
+			T ret = (T)arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0);
+			store_cast_cache<T>(a, ret);
+			return ret; 
+		}
+	}
 	
 	
-	// 変換後の型が参照の場合
+	// 変換後の型が参照の場合、ポインタ型としてキャストしたあと参照にする
 	template<class U> static T as_inner(const Any& a, U& (*)()){ 
 		if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
 		
@@ -162,7 +209,7 @@ struct CastHelper{
 		return *xtal::arg_cast<U*>(a, param_num, param_name); }
 
 
-	// 変換後の型が参照でもポインタでもない場合
+	// 変換後の型が参照でもポインタでもない場合、ポインタ型としてキャストしたあと実体にする
 	static T as_inner(const Any& a, ...){ 
 		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
 		
@@ -233,6 +280,13 @@ struct CastHelper<const Any*>{
 	static const Any* as(const Any& a){ return &a; }
 	static const Any* cast(const Any& a){ return &a; }
 	static const Any* arg_cast(const Any& a, int, const Any&){ return &a; }
+};
+
+template<>
+struct CastHelper<const Any&>{
+	static const Any& as(const Any& a){ return a; }
+	static const Any& cast(const Any& a){ return a; }
+	static const Any& arg_cast(const Any& a, int, const Any&){ return a; }
 };
 
 template<>

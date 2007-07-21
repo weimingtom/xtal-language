@@ -127,7 +127,7 @@ public:
 		u16 flags;
 		Node* next;
 		
-		Node(const ID& key = null, const Any& ns=null, u16 num = -1, u16 flags = 0)
+		Node(const ID& key = null, const Any& ns=null, u16 num = 0xffff, u16 flags = 0)
 			:key(key), ns(ns), num(num), flags(flags), next(0){}
 	};
 	

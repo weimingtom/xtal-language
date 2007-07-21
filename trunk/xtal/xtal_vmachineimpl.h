@@ -423,40 +423,25 @@ public:
 
 	const inst_t* start_fiber(FiberImpl* fun, VMachineImpl* vm, bool add_succ_or_fail_result){
 		yield_result_count_ = 0;
-		
 		push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
-
 		move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-		
 		resume_pc_ = 0;
-		
 		carry_over(fun);
 		ff().yieldable = true;
-
 		execute_try(ff().called_pc);
-
 		present_for_vm(fun, vm, add_succ_or_fail_result);
-
 		vm->ff().called_pc = &cleanup_call_code_;
-		
 		return resume_pc_;
 	}
 
 	const inst_t* resume_fiber(FiberImpl* fun, const inst_t* pc, VMachineImpl* vm, bool add_succ_or_fail_result){
 		yield_result_count_ = 0;
-
 		ff().called_pc = pc;
-		
 		resume_pc_ = 0;
-
 		move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-
 		execute_try(ff().called_pc);
-		
 		present_for_vm(fun, vm, add_succ_or_fail_result);
-
 		vm->ff().called_pc = &cleanup_call_code_;
-
 		return resume_pc_;
 	}
 

@@ -141,7 +141,9 @@ void ExprBuilder::scope_carry_on_heap_flag(){
 }
 
 void ExprBuilder::scope_set_on_heap_flag(int_t i){
-	vars_stack[i]->on_heap = true;
+	for(; i<vars_stack.size(); ++i){
+		vars_stack[i]->on_heap = true;
+	}
 }
 
 void ExprBuilder::scope_pop(){

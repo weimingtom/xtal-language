@@ -573,9 +573,6 @@ public:
 		// callしたときはこのpcから実行する
 		const inst_t* called_pc;
 
-		// スコープ情報 
-		PStack<FrameCore*> scopes;
-
 		// 関数が呼ばれたときの順番指定引数の数
 		int_t ordered_arg_count;
 		
@@ -698,9 +695,10 @@ public:
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
 		ExceptCore* core;
-		int_t scope_count;
 		int_t stack_count;
 		int_t fun_frame_count;
+		int_t variable_size;
+		UncountedAny outer;
 	};
 
 	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const Any& self){
@@ -733,7 +731,6 @@ public:
 		f.called_pc = &throw_unsupported_error_code_;
 		f.poped_pc = pc;
 		f.variables_.clear();
-		f.scopes.clear();
 		f.instance_variables = &empty_have_instance_variables;
 		f.self(self);
 		f.set_null();
@@ -789,9 +786,7 @@ public:
 	void return_result_instance_variable(int_t number, FrameCore* core){
 		return_result((ff().instance_variables->variable(number, core)));
 	}
-	
-	Frame decolonize();
-	
+		
 	Arguments make_args(const Fun& fun);
 
 	Any append_backtrace(const inst_t* pc, const Any& ep);
@@ -895,6 +890,7 @@ public:
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfNis(const inst_t* pc);
 	const inst_t* FunIfArgIsNull(const inst_t* pc);
+	const inst_t* FunIfArgIsNullDirect(const inst_t* pc);
 	const inst_t* FunPos(const inst_t* pc);
 	const inst_t* FunNeg(const inst_t* pc);
 	const inst_t* FunCom(const inst_t* pc);

@@ -47,5 +47,9 @@ inline void visit_members(Visitor& m, const Named& p){
 	m & p.name & p.value;
 }
 
+inline void visit_members(Visitor& m, AnyImpl* p){
+	m & UncountedAny(p).cref();
+}
+
 }
 

@@ -11,7 +11,7 @@ namespace xtal{
 uint_t make_hashcode(const char* p, uint_t size){
 	const u8* str = (u8*)p;
 	uint_t value = 3;
-	for(uint_t i = 0; i<size; i++){
+	for(uint_t i=0; i<size; ++i){
 		value = value*137 + str[i] + (value>>16);
 	}
 	return value;
@@ -157,19 +157,17 @@ protected:
 		void operator=(const Guard&);
 	};
 
-	/*
 	virtual void visit_members(Visitor& m){
 		AnyImpl::visit_members(m);
 		for(uint_t i = 0; i<size_; ++i){
 			Node* p = begin_[i];
 			while(p){
 				Node* next = p->next;
-				m & p->key & p->value;
+				m & p->value;
 				p = next;
 			}
 		}		
 	}
-	*/
 
 public:
 
@@ -199,7 +197,7 @@ const String& StringMgrImpl::insert(const char* str, uint_t size){
 	(*p)->size = size;
 
 	used_size_++;
-	if(rate()>0.25f){
+	if(rate()>0.5f){
 		expand(17);
 
 		p = &begin_[hashcode % size_];
@@ -216,6 +214,8 @@ const String& StringMgrImpl::insert(const char* str, uint_t size){
 }
 
 void StringMgrImpl::before_gc(){
+	return;
+
 	if(guard_){
 		return;
 	}
@@ -253,9 +253,39 @@ static StringMgrImpl* str_mgr(){
 void StringImpl::common_init(uint_t len){
 	set_class(TClass<String>::get());
 	size_ = len;
-	str_ = static_cast<char*>(user_malloc(size_+1));
-	str_[size_] = 0;
-	intern_ = false;
+	str_.p = static_cast<char*>(user_malloc(size_+1));
+	str_.p[size_] = 0;
+	flags_ = 0;
+}
+
+void StringImpl::became_unified(){
+	if((flags_ & ROPE)==0)
+		return;
+
+	uint_t pos = 0;
+	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(size_+1));
+	write_to_memory(this, memory, pos);
+	memory[pos] = 0;
+	rope_.left->dec_ref_count();
+	rope_.right->dec_ref_count();
+	str_.p = memory;
+	flags_ = 0;
+}
+
+void StringImpl::write_to_memory(StringImpl* p, char_t* memory, uint_t& pos){
+	PStack<StringImpl*> stack;
+	for(;;){
+		if((p->flags_ & ROPE)==0){
+			memcpy(&memory[pos], p->str_.p, p->size_);
+			pos += p->size_;
+			if(stack.empty())
+				return;
+			p = stack.pop();
+		}else{
+			stack.push(p->rope_.right);
+			p = p->rope_.left;
+		}
+	}
 }
 
 String::String(const char* str){

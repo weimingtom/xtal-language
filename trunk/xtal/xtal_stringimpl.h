@@ -11,69 +11,102 @@ namespace xtal{
 uint_t make_hashcode(const char* str, uint_t size);
 
 class StringImpl : public AnyImpl{
-public:
 
+	StringImpl(const StringImpl&);
+	StringImpl& operator=(const StringImpl&);
+
+public:
 	
 	void common_init(uint_t len);
 	
 	StringImpl(const char* str){
 		common_init(strlen(str));
-		memcpy(str_, str, size_);
-		hashcode_ = make_hashcode(c_str(), size());
+		memcpy(str_.p, str, size_);
 	}
 
 	StringImpl(const char* str, uint_t len){
 		common_init(len);
-		memcpy(str_, str, size_);
-		hashcode_ = make_hashcode(c_str(), size());
+		memcpy(str_.p, str, size_);
 	}
 
 	StringImpl(const char* begin, const char* last){
 		common_init(last-begin);
-		memcpy(str_, begin, size_);
-		hashcode_ = make_hashcode(c_str(), size());
+		memcpy(str_.p, begin, size_);
 	}
 
 	StringImpl(const char* str1, uint_t size1, const char* str2, uint_t size2){
 		common_init(size1 + size2);
-		memcpy(str_, str1, size1);
-		memcpy(str_+size1, str2, size2);
-		hashcode_ = make_hashcode(c_str(), size());
+		memcpy(str_.p, str1, size1);
+		memcpy(str_.p+size1, str2, size2);
 	}
 
 	StringImpl(const string_t& str){
 		common_init(str.size());
-		memcpy(str_, str.c_str(), size_);
-		hashcode_ = make_hashcode(c_str(), size());
+		memcpy(str_.p, str.c_str(), size_);
 	}
 
 	StringImpl(const char* str, uint_t len, uint_t hashcode){
 		common_init(len);
-		memcpy(str_, str, size_);
-		hashcode_ = hashcode;
-		intern_ = true;
+		memcpy(str_.p, str, size_);
+		str_.hashcode = hashcode;
+		flags_ = INTERNED | HASHED;
 	}
 
 	StringImpl(char* str, uint_t len, uint_t /*buffer_size*/, String::delegate_memory_t){
 		set_class(TClass<String>::get());
 		size_ = len;
-		str_ = str;
-		intern_ = false;
-		hashcode_ = make_hashcode(c_str(), size());
+		str_.p = str;
+		flags_ = 0;
+	}
+
+	StringImpl(StringImpl* left, StringImpl* right){
+		set_class(TClass<String>::get());
+		left->inc_ref_count();
+		right->inc_ref_count();
+		rope_.left = left;
+		rope_.right = right;
+		size_ = left->size() + right->size();
+		flags_ = ROPE;
 	}
 
 	virtual ~StringImpl(){
-		user_free(str_, size_+1);
+		if((flags_ & ROPE)==0){
+			if((flags_ & NOFREE)==0){
+				user_free(str_.p, size_+1);
+			}
+		}else{
+			rope_.left->dec_ref_count();
+			rope_.right->dec_ref_count();
+		}
 	}
-		
-	const char* c_str(){ return str_; }
+
+	void became_unified();
+	static void write_to_memory(StringImpl* p, char_t* memory, uint_t& pos);
+
+	const char* debug_c_str(){
+		if((flags_ & ROPE)!=0){
+			return "rope";
+		}
+		return str_.p;
+	}
+
+	const char* c_str(){ became_unified(); return str_.p; }
 	uint_t size(){ return size_; }
 	uint_t length(){ return size_; }
 	String slice(int_t first, int_t last){ return String(c_str()+first, last-first); }
-	uint_t hashcode(){ return hashcode_; }
+
+	uint_t hashcode(){ 
+		if((flags_ & HASHED)!=0)
+			return str_.hashcode;		
+		became_unified(); 
+		str_.hashcode = make_hashcode(str_.p, size_);
+		flags_ |= HASHED;
+		return str_.hashcode; 
+	}
+
 	String clone(){ return String(this); }
 	ID intern(){ return String(this); }
-	bool is_interned(){ return intern_; }
+	bool is_interned(){ return (flags_ & INTERNED)!=0; }
 
 	int_t to_i(){ return atoi(c_str()); }
 	float_t to_f(){ return (float_t)atof(c_str()); }
@@ -143,10 +176,11 @@ public:
 	}
 
 	String op_cat_String(const String& v){
-		if(v){
+		if(size_+v.impl()->size_ <= 16)
 			return String(c_str(), size(), v.c_str(), v.size());
-		}
-		return String(this);
+		String ret(null);
+		new(ret) StringImpl(this, v.impl());
+		return ret;
 	}
 	
 	bool op_eq_r_String(const String& v){ 
@@ -157,13 +191,39 @@ public:
 		return strcmp(v.c_str(), c_str())<0; 
 	}
 
+	virtual void visit_members(Visitor& m){
+		AnyImpl::visit_members(m);
+		if((flags_ & ROPE)!=0){
+			m & rope_.left & rope_.right;
+		}
+	}
+
 private:
 
-	char* str_;
-	uint_t size_;
-	uint_t hashcode_;
-	bool intern_;
+	enum{
+		ROPE = 1<<0,
+		INTERNED = 1<<1,
+		NOFREE = 1<<2,
+		HASHED = 1<<3
+	};
+	uint_t flags_;
 
+	struct Str{
+		char* p;
+		uint_t hashcode;
+	};
+
+	struct Rope{
+		StringImpl* left;
+		StringImpl* right;
+	};
+
+	union{
+		Str str_;
+		Rope rope_;
+	};
+
+	uint_t size_;
 };
 
 }

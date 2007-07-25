@@ -154,7 +154,6 @@ public:
 		
 	const Any& result(int_t pos = 0){
 		const inst_t* temp;
-
 		{
 			FunFrame& f = ff();
 
@@ -211,51 +210,57 @@ public:
 public:
 
 	const Any& arg(int_t pos){
-		if(pos<ordered_arg_count())
-			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get(f.args_stack_size()-1-pos);
 		return null;
 	}
 
 	const Any& arg(const ID& name){
-		for(int_t i = 0; i<named_arg_count(); ++i){
-			if(get(named_arg_count()*2-1-(i*2+0)).raweq(name)){
-				return get(named_arg_count()*2-1-(i*2+1));
+		FunFrame& f = ff();
+		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
+			if(get(sz*2-1-(i*2+0)).raweq(name)){
+				return get(sz*2-1-(i*2+1));
 			}
 		}
 		return null;
 	}
 
 	const Any& arg(int_t pos, const ID& name){
-		if(pos<ordered_arg_count())
-			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get(f.args_stack_size()-1-pos);
 		return arg(name);
 	}
 
 	const Any& arg(int_t pos, FunImpl* names){
 		FunFrame& f = ff();
 		if(pos<f.ordered_arg_count)
-			return get((f.ordered_arg_count+f.named_arg_count*2)-1-pos);
+			return get(f.args_stack_size()-1-pos);
 		return arg(names->param_name_at(pos));
 	}
 
 	const Any& arg_default(int_t pos, const Any& def){
-		if(pos<ordered_arg_count())
-			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get(f.args_stack_size()-1-pos);
 		return def;
 	}
 		
 	const Any& arg_default(const ID& name, const Any& def){
-		for(int_t i = 0; i<named_arg_count(); ++i){
-			if(get(named_arg_count()*2-1-(i*2+0)).raweq(name)){
-				return get(named_arg_count()*2-1-(i*2+1));
+		FunFrame& f = ff();
+		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
+			if(get(sz*2-1-(i*2+0)).raweq(name)){
+				return get(sz*2-1-(i*2+1));
 			}
 		}
 		return def;
 	}
 		
 	const Any& arg_default(int_t pos, const ID& name, const Any& def){
-		if(pos<ordered_arg_count())
-			return get((ordered_arg_count()+named_arg_count()*2)-1-pos);
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count)
+			return get(f.args_stack_size()-1-pos);
 		return arg_default(name, def);
 	}
 
@@ -297,58 +302,75 @@ public:
 	void adjust_result(int_t n, int_t need_result_count);
 	
 	void return_result(){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
-		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
+		for(int_t i=0, sz=f.need_result_count; i<sz; ++i){
 			push(null);
 		}
-		ff().called_pc = &cleanup_call_code_;
+
+		f.called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Any& value1){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
 		push(value1);
-		if(ff().need_result_count!=1){
+		if(f.need_result_count!=1){
 			adjust_result(1);
 		}
-		ff().called_pc = &cleanup_call_code_;
+
+		f.called_pc = &cleanup_call_code_;
 	}
 		
 	void return_result(const Any& value1, const Any& value2){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
 		push(value1);
 		push(value2);
 		adjust_result(2);
-		ff().called_pc = &cleanup_call_code_;
+
+		f.called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Any& value1, const Any& value2, const Any& value3){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
 		push(value1);
 		push(value2);
 		push(value3);
 		adjust_result(3);
-		ff().called_pc = &cleanup_call_code_;
 
+		f.called_pc = &cleanup_call_code_;
 	}
 		
 	void return_result(const Any& value1, const Any& value2, const Any& value3, const Any& value4){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
 		push(value1);
 		push(value2);
 		push(value3);
 		push(value4);
 		adjust_result(4);
-		ff().called_pc = &cleanup_call_code_;
+
+		f.called_pc = &cleanup_call_code_;
 	}
 
 	void return_result(const Array& values){
-		downsize(ordered_arg_count()+(named_arg_count()*2));
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
 		int_t size = values.size();
 		for(int_t i=0; i<size; ++i){
 			push(values.at(i));
 		}
 		adjust_result(size);
-		ff().called_pc = &cleanup_call_code_;
+
+		f.called_pc = &cleanup_call_code_;
 	}
 
 	void carry_over(FunImpl* fun);
@@ -622,6 +644,10 @@ public:
 		const Arguments& arguments() const{ return (const Arguments&)arguments_.cref(); }
 		const Any& hint1() const{ return (const Any&)hint1_.cref(); }
 		const String& hint2() const{ return (const String&)hint2_.cref(); }
+
+		int_t args_stack_size(){
+			return ordered_arg_count+(named_arg_count<<1);
+		}
 
 		void fun(const UncountedAny& v){ 
 			fun_ = v;

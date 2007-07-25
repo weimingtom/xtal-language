@@ -67,8 +67,8 @@ int main(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 		
-		compile_file("../test/test_iter.xtal").inspect().p();
-		load("../test/test_iter.xtal");
+		//compile_file("../test/test_iter.xtal").inspect().p();
+		//load("../test/test_iter.xtal");
 
 		{
 			String path(argv[0]);
@@ -92,10 +92,17 @@ int main(int argc, char** argv){
 		}
 	
 		int c;
+		c = clock();
+		handle_argv(argv);
+		printf("%g\n", (clock()-c)/1000.0f);
 		
 		/*		
 		c = clock();
-		handle_argv(argv);
+		load("../bench/vec.xtal");
+		printf("%g\n", (clock()-c)/1000.0f);		
+		
+		c = clock();
+		load("../bench/inst.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);
 
 
@@ -105,14 +112,6 @@ int main(int argc, char** argv){
 
 		c = clock();
 		load("../bench/loop.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
-
-		c = clock();
-		load("../bench/inst.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
-
-		c = clock();
-		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);
 
 		c = clock();
@@ -138,6 +137,7 @@ int main(int argc, char** argv){
 		//*/
 
 		load("../test/test_empty.xtal");
+		load("../test/test_float.xtal");
 		load("../test/test_class.xtal");
 		load("../test/test_multiple_values.xtal");
 		load("../test/test_except.xtal");

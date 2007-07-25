@@ -519,7 +519,14 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(CheckUnsupported){ // 3
-		return_result(nop); 
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
+		push(nop);
+		if(f.need_result_count!=1){
+			adjust_result(1);
+		}
+
 		XTAL_VM_CONTINUE(pop_ff());
 	}
 

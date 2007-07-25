@@ -110,9 +110,9 @@ uint_t objects_gene_line_ = 0;
 
 void print_alive_objects(){
 	for(AnyImpl** it = objects_begin_; it!=objects_current_; ++it){
-//		StringImpl* str = dynamic_cast<StringImpl*>(*it);
-//		fprintf(stderr, " %s rc=%d %s\n", typeid(**it).name(), (*it)->ref_count(), str ? str->c_str() : "");
-		fprintf(stderr, " rc=%d\n", (*it)->ref_count());
+		//StringImpl* str = dynamic_cast<StringImpl*>(*it);
+		//fprintf(stderr, " %s rc=%d %s\n", typeid(**it).name(), (*it)->ref_count(), str ? str->debug_c_str() : "");
+		//fprintf(stderr, " rc=%d\n", (*it)->ref_count());
 	}
 }
 
@@ -216,7 +216,7 @@ void uninitialize(){
 	if(objects_current_-objects_begin_ != 0){
 		//fprintf(stderr, "finished gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
-		//print_alive_objects();
+		print_alive_objects();
 		XTAL_ASSERT(false); // オブジェクトが全て解放されていない。
 	}
 	

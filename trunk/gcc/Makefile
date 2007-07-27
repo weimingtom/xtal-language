@@ -3,7 +3,7 @@ CC = g++
 
 OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_vmachineimpl.o xtal_cast.o xtal_marshal.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o 
 
-OPT_FLAGS = -O3 -DNDEBUG -g
+OPT_FLAGS = -O3 -DNDEBUG -pg
 
 all: xtallib ix xtal
 
@@ -89,9 +89,10 @@ ix: xtallib ../xtal/ixmain.cpp
 clean:
 	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe
 
-prof: xtal
-	../bin/xtal.exe ../test.xtal
-	gprof ../bin/xtal.exe gmon.out -p > prof.txt
+prof: xtallib ../xtal/main.cpp
+	$(CC) -o ../bin/prof.exe ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+	../bin/prof.exe ../bench/array_for.xtal
+	gprof ../bin/prof.exe gmon.out -p > prof.txt
 
 run: xtal
 	../xtal.exe ../test.xtal

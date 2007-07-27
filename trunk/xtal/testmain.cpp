@@ -153,6 +153,7 @@ int main(int argc, char** argv){
 		load("../test/test_op_assign.xtal");
 		load("../test/test_inc.xtal");
 		load("../test/test_toplevel.xtal");
+		load("../test/test_serialize.xtal");
 		
 
 		/*

@@ -61,35 +61,6 @@ namespace xtal{
 
 #endif
 
-void VMachineImpl::execute_try(const inst_t* start){ 
-	int_t stack_size = stack_.size();
-	int_t fun_frames_size = fun_frames_.size();
-	XTAL_GLOBAL_INTERPRETER_UNLOCK{
-retry:
-		XTAL_TRY{
-			execute_inner(start);
-		}XTAL_CATCH(e){
-			last_except_ = e;
-			start = catch_body(ff().called_pc, stack_size, fun_frames_size);
-
-			if(start){
-				goto retry;
-			}
-
-			pop_ff();
-			XTAL_THROW(last_except_.cref());	
-		}
-#ifndef XTAL_NO_EXCEPT
-		catch(...){
-			last_except_ = null;
-			catch_body(start, stack_size, fun_frames_size);
-			pop_ff();
-			throw;
-		}
-#endif
-	}
-}
-
 void VMachineImpl::execute_inner(const inst_t* start){
 
 #ifdef XTAL_VM_OPT
@@ -257,6 +228,10 @@ void VMachineImpl::execute_inner(const inst_t* start){
 	int_t stack_size = stack_.size();
 	int_t fun_frames_size = fun_frames_.size();
 
+XTAL_GLOBAL_INTERPRETER_UNLOCK{
+retry:
+XTAL_TRY{
+
 begin:
 XTAL_VM_SWITCH{
 	
@@ -382,7 +357,7 @@ XTAL_VM_SWITCH{
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, UncountedAny(a.ivalue()+1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, UncountedAny(a.fvalue()+1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 		}
-		a.cref().send(Xid(op_inc), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
 
@@ -392,7 +367,7 @@ XTAL_VM_SWITCH{
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, UncountedAny(a.ivalue()-1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, UncountedAny(a.fvalue()-1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 		}
-		a.cref().send(Xid(op_dec), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
 
@@ -402,7 +377,7 @@ XTAL_VM_SWITCH{
 			XTAL_CASE(TYPE_INT){ a = UncountedAny(a.ivalue()+1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ a = UncountedAny(a.fvalue()+1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
 		}
-		a.cref().send(Xid(op_inc), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
@@ -412,7 +387,7 @@ XTAL_VM_SWITCH{
 			XTAL_CASE(TYPE_INT){ a = UncountedAny(a.ivalue()-1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ a = UncountedAny(a.fvalue()-1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
 		}
-		a.cref().send(Xid(op_dec), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
@@ -518,7 +493,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(CheckUnsupported){ // 3
+	XTAL_VM_CASE(CheckUnsupported){ // 6
 		FunFrame& f = ff();
 
 		downsize(f.args_stack_size());
@@ -536,12 +511,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -553,12 +523,7 @@ XTAL_VM_SWITCH{
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -568,7 +533,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -587,12 +552,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -604,12 +564,7 @@ XTAL_VM_SWITCH{
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -619,7 +574,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -638,12 +593,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -655,12 +605,7 @@ XTAL_VM_SWITCH{
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -670,7 +615,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -689,12 +634,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -706,12 +646,7 @@ XTAL_VM_SWITCH{
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -721,7 +656,7 @@ XTAL_VM_SWITCH{
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -792,7 +727,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() == get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 	}*/ }
 
 	XTAL_VM_CASE(IfNe){ XTAL_VM_CONTINUE(FunIfNe(pc)); /*
@@ -806,7 +741,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() != get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 	}*/ }
 
 	XTAL_VM_CASE(IfLt){ XTAL_VM_CONTINUE(FunIfLt(pc)); /*
@@ -820,7 +755,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() < get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(IfLe){ XTAL_VM_CONTINUE(FunIfLe(pc)); /*
@@ -834,7 +769,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() <= get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(IfGt){ XTAL_VM_CONTINUE(FunIfGt(pc)); /*
@@ -848,7 +783,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() > get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(IfGe){ XTAL_VM_CONTINUE(FunIfGe(pc)); /*
@@ -862,7 +797,7 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() >= get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(IfRawEq){ // 4
@@ -915,22 +850,22 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Neg){ XTAL_VM_CONTINUE(FunNeg(pc)); /*
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(-get().ivalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(-get().fvalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(-get().ivalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(-get().fvalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_neg)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_neg)));
 	}*/ }
 
 	XTAL_VM_CASE(Com){ XTAL_VM_CONTINUE(FunCom(pc)); /*
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(~get().ivalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(~get().ivalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_com)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_com)));
 	}*/ }
 
 	XTAL_VM_CASE(Not){ // 3
 		set(UncountedAny(!get().to_b()).cref()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+		XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 	}
 
 	XTAL_VM_CASE(At){ XTAL_VM_CONTINUE(FunAt(pc)); /*
@@ -939,7 +874,7 @@ XTAL_VM_SWITCH{
 			f.temp2_ = pop();
 			UncountedAny target = f.temp_ = pop();
 			inner_setup_call(pc+inst.ISIZE, 1, f.temp2_.cref());
-			target.cref().send(Xid(op_at), myself());
+			target.cref().rawsend(myself(), Xid(op_at));
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -951,7 +886,7 @@ XTAL_VM_SWITCH{
 			UncountedAny target = f.temp_ = pop();
 			UncountedAny value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, f.temp2_.cref(), value.cref());
-			target.cref().send(Xid(op_set_at), myself());
+			target.cref().rawsend(myself(), Xid(op_set_at));
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -959,214 +894,214 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(Add){ XTAL_VM_CONTINUE(FunAdd(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_add)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_add)));
 	}*/ }
 
 	XTAL_VM_CASE(Sub){ XTAL_VM_CONTINUE(FunSub(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_sub)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub)));
 	}*/ }
 
 	XTAL_VM_CASE(Cat){ // 2
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_cat)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_cat)));
 	}
 
 	XTAL_VM_CASE(Mul){ XTAL_VM_CONTINUE(FunMul(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mul)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mul)));
 	}*/ }
 
 	XTAL_VM_CASE(Div){ XTAL_VM_CONTINUE(FunDiv(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_div)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div)));
 	}*/ }
 
 	XTAL_VM_CASE(Mod){ XTAL_VM_CONTINUE(FunMod(pc)); /*
 		using namespace std;
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mod)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mod)));
 	}*/ }
 
 	XTAL_VM_CASE(And){ XTAL_VM_CONTINUE(FunAnd(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_and)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_and)));
 	}*/ }
 
 	XTAL_VM_CASE(Or){ XTAL_VM_CONTINUE(FunOr(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_or)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_or)));
 	}*/ }
 
 	XTAL_VM_CASE(Xor){ XTAL_VM_CONTINUE(FunXor(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_xor)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_xor)));
 	}*/ }
 
 	XTAL_VM_CASE(Shl){ XTAL_VM_CONTINUE(FunShl(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shl)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shl)));
 	}*/ }
 
 	XTAL_VM_CASE(Shr){ XTAL_VM_CONTINUE(FunShr(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shr)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shr)));
 	}*/ }
 
 	XTAL_VM_CASE(Ushr){ XTAL_VM_CONTINUE(FunUshr(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_ushr)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr)));
 	}*/ }
 
 	XTAL_VM_CASE(Eq){ XTAL_VM_CONTINUE(FunEq(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 	}*/ }
 
 	XTAL_VM_CASE(Ne){ XTAL_VM_CONTINUE(FunNe(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1);}
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);}
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 	}*/ }
 
 	XTAL_VM_CASE(Lt){ XTAL_VM_CONTINUE(FunLt(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(Le){ XTAL_VM_CONTINUE(FunLe(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(Gt){ XTAL_VM_CONTINUE(FunGt(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(Ge){ XTAL_VM_CONTINUE(FunGe(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 	}*/ }
 
 	XTAL_VM_CASE(RawEq){ // 4
@@ -1195,146 +1130,146 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Inc){ XTAL_VM_CONTINUE(FunInc(pc)); /*
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()+1).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()+1).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()+1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()+1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_inc)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_inc)));
 	}*/ }
 
 	XTAL_VM_CASE(Dec){ XTAL_VM_CONTINUE(FunDec(pc)); /*
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()-1).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()-1).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()-1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()-1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_dec)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_dec)));
 	}*/ }
 
 	XTAL_VM_CASE(AddAssign){ XTAL_VM_CONTINUE(FunAddAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_add_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_add_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(SubAssign){ XTAL_VM_CONTINUE(FunSubAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_sub_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(CatAssign){ // 2
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_cat_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_cat_assign)));
 	}
 
 	XTAL_VM_CASE(MulAssign){ XTAL_VM_CONTINUE(FunMulAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mul_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mul_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(DivAssign){ XTAL_VM_CONTINUE(FunDivAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_div_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(ModAssign){ XTAL_VM_CONTINUE(FunModAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mod_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mod_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(AndAssign){ XTAL_VM_CONTINUE(FunAndAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_and_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_and_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(OrAssign){ XTAL_VM_CONTINUE(FunOrAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_or_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_or_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(XorAssign){ XTAL_VM_CONTINUE(FunXorAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_xor_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_xor_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(ShlAssign){ XTAL_VM_CONTINUE(FunShlAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shl_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shl_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(ShrAssign){ XTAL_VM_CONTINUE(FunShrAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shr_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shr_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(UshrAssign){ XTAL_VM_CONTINUE(FunUshrAssign(pc)); /*
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_ushr_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr_assign)));
 	}*/ }
 
 	XTAL_VM_CASE(GlobalVariable){ XTAL_VM_CONTINUE(FunGlobalVariable(pc)); /*
@@ -1366,7 +1301,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& name = symbol_ex(inst.symbol_number);
 			const Any& target = get();
-			if(const Any& ret = member_cache(target, name, ff().self(), null)){
+			if(const Any& ret = target.member(name, ff().self(), null)){
 				set(ret);
 			}else{
 				XTAL_THROW(unsupported_error(target.object_name(), name));
@@ -1379,7 +1314,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& name = symbol_ex(inst.symbol_number);
 			const Any& target = get();
-			if(const Any& ret = member_cache(target, name, ff().self(), null)){
+			if(const Any& ret = target.member(name, ff().self(), null)){
 				set(ret);
 			}else{
 				set(nop);
@@ -1467,12 +1402,12 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
 
-	XTAL_VM_CASE(ClassEnd){ XTAL_VM_CONTINUE(FunClassEnd(pc)); /*
+	XTAL_VM_CASE(ClassEnd){ // 10
 		push(ff().outer());
 		ff().outer(ff().outer().outer());
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+	}
 
 	XTAL_VM_CASE(MakeArray){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1552,9 +1487,9 @@ XTAL_VM_SWITCH{
 			}
 
 			if(!except.is(cast<const Class&>(builtin().member("Exception")))){
-				last_except_ = append_backtrace(pc, builtin().member("RuntimeError")(except));
+				last_except_ = builtin().member("RuntimeError")(except);
 			}else{
-				last_except_ = append_backtrace(pc, except);
+				last_except_ = except;
 			}
 		}
 		goto except_catch; 
@@ -1580,7 +1515,7 @@ XTAL_VM_SWITCH{
 				failure = true;
 				Any expr_string = get(1) ? get(1) : Any("");
 				Any message = get() ? get() : Any("");
-				last_except_ = append_backtrace(pc, builtin().member("AssertionFailed")(message, expr_string));
+				last_except_ = builtin().member("AssertionFailed")(message, expr_string);
 			}
 			downsize(3);
 		}
@@ -1644,14 +1579,36 @@ XTAL_VM_SWITCH{
 }
 
 except_catch:
+	last_except_ = append_backtrace(pc, last_except_.cref());
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
 		goto begin;
 	}
-
-	if(last_except_.cref()){
-		XTAL_THROW(last_except_.cref());
+	goto rethrow;
+}XTAL_CATCH(e){
+	last_except_ = append_backtrace(pc, e);
+	pc = catch_body(pc, stack_size, fun_frames_size);
+	if(pc){
+		goto retry;
 	}
+	goto rethrow;	
+}
+#ifndef XTAL_NO_EXCEPT
+catch(...){
+	last_except_ = null;
+	catch_body(start, stack_size, fun_frames_size);
+	pop_ff();
+	throw;
+}
+#endif
+}
+
+return;
+
+rethrow:
+	pop_ff();
+	XTAL_THROW(last_except_.cref());	
+
 }
 
 #undef XTAL_VM_CONTINUE
@@ -1675,7 +1632,7 @@ const inst_t* VMachineImpl::FunLocalVariableInc(const inst_t* pc){
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, UncountedAny(a.ivalue()+1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, UncountedAny(a.fvalue()+1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 		}
-		a.cref().send(Xid(op_inc), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
@@ -1686,7 +1643,7 @@ const inst_t* VMachineImpl::FunLocalVariableDec(const inst_t* pc){
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, UncountedAny(a.ivalue()-1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, UncountedAny(a.fvalue()-1).cref()); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
 		}
-		a.cref().send(Xid(op_dec), inner_setup_call(pc + inst.ISIZE, 1));
+		a.cref().rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
@@ -1697,12 +1654,7 @@ const inst_t* VMachineImpl::FunSend(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1715,12 +1667,7 @@ const inst_t* VMachineImpl::FunSendIfDefined(const inst_t* pc){
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1731,7 +1678,7 @@ const inst_t* VMachineImpl::FunCall(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -1743,12 +1690,7 @@ const inst_t* VMachineImpl::FunSend_A(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1761,12 +1703,7 @@ const inst_t* VMachineImpl::FunSendIfDefined_A(const inst_t* pc){
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1777,7 +1714,7 @@ const inst_t* VMachineImpl::FunCall_A(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -1789,12 +1726,7 @@ const inst_t* VMachineImpl::FunSend_T(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1807,12 +1739,7 @@ const inst_t* VMachineImpl::FunSendIfDefined_T(const inst_t* pc){
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1823,7 +1750,7 @@ const inst_t* VMachineImpl::FunCall_T(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -1835,12 +1762,7 @@ const inst_t* VMachineImpl::FunSend_AT(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1853,12 +1775,7 @@ const inst_t* VMachineImpl::FunSendIfDefined_AT(const inst_t* pc){
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
 			ff().called_pc = &check_unsupported_code_;
-			const Class& cls = target.cref().get_class();
-			set_hint(cls, sym);
-			if(const Any& ret = member_cache(cls, sym, ff().self(), null)){
-				set_arg_this(target.cref());
-				ret.call(myself());
-			}
+			target.cref().rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -1869,7 +1786,7 @@ const inst_t* VMachineImpl::FunCall_AT(const inst_t* pc){
 			UncountedAny self = ff().self();
 			UncountedAny target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, self.cref());
-			target.cref().call(myself());
+			target.cref().rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -1886,7 +1803,7 @@ const inst_t* VMachineImpl::FunIfEq(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() == get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 }
 
 const inst_t* VMachineImpl::FunIfNe(const inst_t* pc){
@@ -1901,7 +1818,7 @@ const inst_t* VMachineImpl::FunIfNe(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() != get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 }
 
 const inst_t* VMachineImpl::FunIfLt(const inst_t* pc){
@@ -1916,7 +1833,7 @@ const inst_t* VMachineImpl::FunIfLt(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() < get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunIfLe(const inst_t* pc){
@@ -1931,7 +1848,7 @@ const inst_t* VMachineImpl::FunIfLe(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() <= get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunIfGt(const inst_t* pc){
@@ -1946,7 +1863,7 @@ const inst_t* VMachineImpl::FunIfGt(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() > get().fvalue() ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunIfGe(const inst_t* pc){
@@ -1961,7 +1878,7 @@ const inst_t* VMachineImpl::FunIfGe(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = get(1).fvalue() >= get().fvalue() ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt), inst.ISIZE));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunPos(const inst_t* pc){
@@ -1976,18 +1893,18 @@ const inst_t* VMachineImpl::FunPos(const inst_t* pc){
 const inst_t* VMachineImpl::FunNeg(const inst_t* pc){
 		XTAL_VM_DEF_INST(Neg);
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(-get().ivalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(-get().fvalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(-get().ivalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(-get().fvalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_neg)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_neg)));
 }
 
 const inst_t* VMachineImpl::FunCom(const inst_t* pc){
 		XTAL_VM_DEF_INST(Com);
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(~get().ivalue()).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(~get().ivalue()).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_com)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_com)));
 }
 
 const inst_t* VMachineImpl::FunAt(const inst_t* pc){
@@ -1997,9 +1914,9 @@ const inst_t* VMachineImpl::FunAt(const inst_t* pc){
 			f.temp2_ = pop();
 			UncountedAny target = f.temp_ = pop();
 			inner_setup_call(pc+inst.ISIZE, 1, f.temp2_.cref());
-			target.cref().send(Xid(op_at), myself());
+			target.cref().rawsend(myself(), Xid(op_at));
 		}
-		XTAL_VM_CONTINUE(ff().called_pc); 
+		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
 const inst_t* VMachineImpl::FunSetAt(const inst_t* pc){
@@ -2010,7 +1927,7 @@ const inst_t* VMachineImpl::FunSetAt(const inst_t* pc){
 			UncountedAny target = f.temp_ = pop();
 			UncountedAny value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, f.temp2_.cref(), value.cref());
-			target.cref().send(Xid(op_set_at), myself());
+			target.cref().rawsend(myself(), Xid(op_set_at));
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -2019,60 +1936,60 @@ const inst_t* VMachineImpl::FunAdd(const inst_t* pc){
 		XTAL_VM_DEF_INST(Add);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_add)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_add)));
 }
 
 const inst_t* VMachineImpl::FunSub(const inst_t* pc){
 		XTAL_VM_DEF_INST(Sub);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_sub)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub)));
 }
 
 const inst_t* VMachineImpl::FunMul(const inst_t* pc){
 		XTAL_VM_DEF_INST(Mul);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mul)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mul)));
 }
 
 const inst_t* VMachineImpl::FunDiv(const inst_t* pc){
 		XTAL_VM_DEF_INST(Div);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_div)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div)));
 }
 
 const inst_t* VMachineImpl::FunMod(const inst_t* pc){
@@ -2080,318 +1997,318 @@ const inst_t* VMachineImpl::FunMod(const inst_t* pc){
 		using namespace std;
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mod)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mod)));
 }
 
 const inst_t* VMachineImpl::FunAnd(const inst_t* pc){
 		XTAL_VM_DEF_INST(And);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_and)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_and)));
 }
 
 const inst_t* VMachineImpl::FunOr(const inst_t* pc){
 		XTAL_VM_DEF_INST(Or);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_or)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_or)));
 }
 
 const inst_t* VMachineImpl::FunXor(const inst_t* pc){
 		XTAL_VM_DEF_INST(Xor);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_xor)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_xor)));
 }
 
 const inst_t* VMachineImpl::FunShl(const inst_t* pc){
 		XTAL_VM_DEF_INST(Shl);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shl)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shl)));
 }
 
 const inst_t* VMachineImpl::FunShr(const inst_t* pc){
 		XTAL_VM_DEF_INST(Shr);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shr)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shr)));
 }
 
 const inst_t* VMachineImpl::FunUshr(const inst_t* pc){
 		XTAL_VM_DEF_INST(Ushr);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_ushr)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr)));
 }
 
 const inst_t* VMachineImpl::FunEq(const inst_t* pc){
 		XTAL_VM_DEF_INST(Eq);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() == get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() == get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 }
 
 const inst_t* VMachineImpl::FunNe(const inst_t* pc){
 		XTAL_VM_DEF_INST(Ne);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1);}
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() != get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() != get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);}
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_eq)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
 }
 
 const inst_t* VMachineImpl::FunLt(const inst_t* pc){
 		XTAL_VM_DEF_INST(Lt);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() < get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() < get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunLe(const inst_t* pc){
 		XTAL_VM_DEF_INST(Le);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() <= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() <= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunGt(const inst_t* pc){
 		XTAL_VM_DEF_INST(Gt);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() > get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() > get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2r(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2r(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunGe(const inst_t* pc){
 		XTAL_VM_DEF_INST(Ge);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1+1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() >= get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() >= get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_lt)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
 const inst_t* VMachineImpl::FunInc(const inst_t* pc){
 		XTAL_VM_DEF_INST(Inc);
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()+1).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()+1).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()+1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()+1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_inc)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_inc)));
 }
 
 const inst_t* VMachineImpl::FunDec(const inst_t* pc){
 		XTAL_VM_DEF_INST(Dec);
 		switch(get().type()){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()-1).cref()); XTAL_VM_CONTINUE(pc + 1); }
-			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()-1).cref()); XTAL_VM_CONTINUE(pc + 1); }
+			XTAL_CASE(TYPE_INT){ set(UncountedAny(get().ivalue()-1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set(UncountedAny(get().fvalue()-1).cref()); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
-		XTAL_VM_CONTINUE(send1(pc, Xid(op_dec)));
+		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_dec)));
 }
 
 const inst_t* VMachineImpl::FunAddAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(AddAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() + get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() + get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_add_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_add_assign)));
 }
 
 const inst_t* VMachineImpl::FunSubAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(SubAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() - get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() - get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_sub_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub_assign)));
 }
 
 const inst_t* VMachineImpl::FunMulAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(MulAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() * get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() * get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mul_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mul_assign)));
 }
 
 const inst_t* VMachineImpl::FunDivAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(DivAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).ivalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).fvalue() / get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(get(1).fvalue() / get().fvalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_div_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div_assign)));
 }
 
 const inst_t* VMachineImpl::FunModAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(ModAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() % get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf((float_t)get(1).ivalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(fmodf(get(1).fvalue(),(float_t)get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, UncountedAny(fmodf(get(1).fvalue(), get().fvalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_mod_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_mod_assign)));
 }
 
 const inst_t* VMachineImpl::FunAndAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(AndAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() & get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_and_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_and_assign)));
 }
 
 const inst_t* VMachineImpl::FunOrAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(OrAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() | get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_or_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_or_assign)));
 }
 
 const inst_t* VMachineImpl::FunXorAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(XorAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() ^ get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_xor_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_xor_assign)));
 }
 
 const inst_t* VMachineImpl::FunShlAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(ShlAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() << get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shl_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shl_assign)));
 }
 
 const inst_t* VMachineImpl::FunShrAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(ShrAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny(get(1).ivalue() >> get().ivalue()).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_shr_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_shr_assign)));
 }
 
 const inst_t* VMachineImpl::FunUshrAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(UshrAssign);
 		switch(get(1).type()){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(get().type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc + 1); }
+				XTAL_CASE(TYPE_INT){ set(1, UncountedAny((int_t)((uint_t)get(1).ivalue() >> get().ivalue())).cref()); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc, Xid(op_ushr_assign)));
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr_assign)));
 }
 
 const inst_t* VMachineImpl::FunGlobalVariable(const inst_t* pc){
@@ -2427,7 +2344,7 @@ const inst_t* VMachineImpl::FunMember(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& name = symbol_ex(inst.symbol_number);
 			const Any& target = get();
-			if(const Any& ret = member_cache(target, name, ff().self(), null)){
+			if(const Any& ret = target.member(name, ff().self(), null)){
 				set(ret);
 			}else{
 				XTAL_THROW(unsupported_error(target.object_name(), name));
@@ -2441,7 +2358,7 @@ const inst_t* VMachineImpl::FunMemberIfDefined(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ID& name = symbol_ex(inst.symbol_number);
 			const Any& target = get();
-			if(const Any& ret = member_cache(target, name, ff().self(), null)){
+			if(const Any& ret = target.member(name, ff().self(), null)){
 				set(ret);
 			}else{
 				set(nop);
@@ -2497,14 +2414,6 @@ const inst_t* VMachineImpl::FunClassBegin(const inst_t* pc){
 			ff().outer(cp);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachineImpl::FunClassEnd(const inst_t* pc){
-		XTAL_VM_DEF_INST(ClassEnd);
-		push(ff().outer());
-		ff().outer(ff().outer().outer());
-		pop_ff();
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 
 const inst_t* VMachineImpl::FunMakeFun(const inst_t* pc){
@@ -2593,78 +2502,6 @@ const inst_t* VMachineImpl::FunBreakPoint(const inst_t* pc){
 }
 
 //}}FUNS}
-
-const Any& MemberCacheTable::cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
-
-	uint_t klass = target_class.rawvalue();
-	uint_t name = member_name.rawvalue();
-	uint_t ns = nsp.rawvalue();
-
-	uint_t hash = (klass>>3) + (name>>2) + (ns);
-	Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
-	if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
-		hit_++;
-		return unit.member.cref();
-	}else{
-		if(target_class.type()!=TYPE_BASE)
-			return null;
-
-		miss_++;
-		unit.member = target_class.impl()->member(member_name, self, nsp);
-		unit.klass = klass;
-		unit.name = name;
-		unit.ns = ns;
-		unit.mutate_count = global_mutate_count;
-		return unit.member.cref();
-	}
-}
-
-const inst_t* VMachineImpl::send1(const inst_t* pc, const ID& name, int_t n){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		UncountedAny target = ff().temp_ = pop();
-		UncountedAny self = ff().self();
-		push_ff(pc + n, 1, 0, 0, self.cref());
-		const Class& cls = target.cref().get_class();
-		set_hint(cls, name);
-		if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-			set_arg_this(target.cref());
-			ret.call(myself());
-		}
-	}
-	return ff().called_pc;
-}
-
-const inst_t* VMachineImpl::send2(const inst_t* pc, const ID& name, int_t n){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		const Any& temp = pop();
-		UncountedAny target = ff().temp_ = get();
-		set(temp);
-		UncountedAny self = ff().self();
-		push_ff(pc + n, 1, 1, 0, self.cref());
-		const Class& cls = target.cref().get_class();
-		set_hint(cls, name);
-		if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-			set_arg_this(target.cref());
-			ret.call(myself());
-		}
-	}
-	return ff().called_pc;
-}
-
-const inst_t* VMachineImpl::send2r(const inst_t* pc, const ID& name, int_t n){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		UncountedAny target = ff().temp_ = pop();
-		UncountedAny self = ff().self();
-		push_ff(pc + n, 1, 1, 0, self.cref());
-		const Class& cls = target.cref().get_class();
-		set_hint(cls, name);
-		if(const Any& ret = member_cache(cls, name, ff().self(), null)){
-			set_arg_this(target.cref());
-			ret.call(myself());
-		}
-	}
-	return ff().called_pc;
-}
 	
 void VMachineImpl::carry_over(FunImpl* fun){
 	FunFrame& f = ff();

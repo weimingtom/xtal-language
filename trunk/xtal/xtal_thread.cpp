@@ -335,7 +335,7 @@ void thread_entry(const Any& thread){
 		const VMachine& vm(vmachine_);
 		XTAL_TRY{
 			vm.setup_call(0);
-			((ThreadImpl*)thread.impl())->value().call(vm);
+			((ThreadImpl*)thread.impl())->value().rawcall(vm);
 			vm.cleanup_call();
 		}XTAL_CATCH(e){
 			std::cout << e << std::endl;

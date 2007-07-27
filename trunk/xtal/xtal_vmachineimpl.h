@@ -52,45 +52,6 @@ public:
 
 };
 
-struct MemberCacheTable{
-	struct Unit{
-		int_t klass;
-		int_t name;
-		int_t ns;
-		UncountedAny member;
-		uint_t mutate_count;
-	};
-
-	enum{ CACHE_MAX = /*179*/ 256 };
-
-	Unit table_[CACHE_MAX];
-	uint_t hit_;
-	uint_t miss_;
-
-	MemberCacheTable(){
-		for(int_t i=0; i<CACHE_MAX; ++i){
-			table_[i].klass = 0;
-			table_[i].member = null;
-		}
-		hit_ = 0;
-		miss_ = 0;
-	}
-
-	float cache_hit_rate(){
-		return (float_t)hit_/(hit_+miss_);
-	}
-
-	uint_t hit(){
-		return hit_;
-	}
-
-	uint_t miss(){
-		return miss_;
-	}
-
-	const Any& cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp);
-};
-
 // XTAL仮想マシン
 class VMachineImpl : public GCObserverImpl{
 public:
@@ -167,7 +128,7 @@ public:
 
 			temp = f.poped_pc;
 			f.poped_pc = &end_code_;
-			execute_try(f.called_pc);
+			execute_inner(f.called_pc);
 		}
 
 		fun_frames_.upsize(1);
@@ -399,23 +360,6 @@ public:
 	}
 
 	void execute_inner(const inst_t* start);
-	void execute_try(const inst_t* start);
-
-	void execute(FunImpl* fun, const inst_t* start_pc = 0){
-		setup_call(0);
-		
-		carry_over(fun);
-		
-		const inst_t* temp = ff().poped_pc;
-		ff().poped_pc = &end_code_;
-		execute_try(start_pc ? start_pc : ff().called_pc);
-		fun_frames_.upsize(1);
-		ff().poped_pc = temp;
-		ff().called_pc = &cleanup_call_code_;
-
-		downsize(ff().need_result_count);
-		pop_ff();
-	}
 	
 public:
 
@@ -450,7 +394,7 @@ public:
 		resume_pc_ = 0;
 		carry_over(fun);
 		ff().yieldable = true;
-		execute_try(ff().called_pc);
+		execute_inner(ff().called_pc);
 		present_for_vm(fun, vm, add_succ_or_fail_result);
 		vm->ff().called_pc = &cleanup_call_code_;
 		return resume_pc_;
@@ -461,7 +405,7 @@ public:
 		ff().called_pc = pc;
 		resume_pc_ = 0;
 		move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-		execute_try(ff().called_pc);
+		execute_inner(ff().called_pc);
 		present_for_vm(fun, vm, add_succ_or_fail_result);
 		vm->ff().called_pc = &cleanup_call_code_;
 		return resume_pc_;
@@ -472,7 +416,7 @@ public:
 			yield_result_count_ = 0;
 			ff().called_pc = resume_pc_;
 			resume_pc_ = 0;
-			execute_try(&throw_nop_code_);
+			execute_inner(&throw_nop_code_);
 		}XTAL_CATCH(e){
 			(void)e;
 		}
@@ -808,9 +752,37 @@ public:
 
 private:
 
-	const inst_t* send1(const inst_t* pc, const ID& name, int_t n = 1);
-	const inst_t* send2(const inst_t* pc, const ID& name, int_t n = 1);
-	const inst_t* send2r(const inst_t* pc, const ID& name, int_t n = 1);
+	const inst_t* send1(const inst_t* pc, const ID& name){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			UncountedAny target = ff().temp_ = pop();
+			UncountedAny self = ff().self();
+			push_ff(pc, 1, 0, 0, self.cref());
+			target.cref().rawsend(myself(), name, ff().self(), null);
+		}
+		return ff().called_pc;
+	}
+
+	const inst_t* send2(const inst_t* pc, const ID& name){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const Any& temp = pop();
+			UncountedAny target = ff().temp_ = get();
+			set(temp);
+			UncountedAny self = ff().self();
+			push_ff(pc, 1, 1, 0, self.cref());
+			target.cref().rawsend(myself(), name, ff().self(), null);
+		}
+		return ff().called_pc;
+	}
+
+	const inst_t* send2r(const inst_t* pc, const ID& name){
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			UncountedAny target = ff().temp_ = pop();
+			UncountedAny self = ff().self();
+			push_ff(pc, 1, 1, 0, self.cref());
+			target.cref().rawsend(myself(), name, ff().self(), null);
+		}
+		return ff().called_pc;
+	}
 
 	void set_local_variable(int_t pos, const Any&);
 	const Any& local_variable(int_t pos);
@@ -973,12 +945,6 @@ public:
 //}}DECLS}
 
 
-public:
-
-	const Any& member_cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
-		return member_cache_table_.cache(target_class, member_name, self, nsp);
-	}
-
 private:
 
 	inst_t end_code_;
@@ -1004,8 +970,6 @@ private:
 	debug::Info debug_info_;
 
 	UncountedAny last_except_;
-
-	MemberCacheTable member_cache_table_;
 
 protected:
 
@@ -1055,7 +1019,6 @@ public:
 		printf("stack size %d\n", stack_.size());
 		printf("fun_frames size %d\n", fun_frames_.size());
 		printf("except_frames size %d\n", except_frames_.size());
-		printf("cache hit=%d, miss=%d, rate=%g\n", member_cache_table_.hit(), member_cache_table_.miss(), member_cache_table_.cache_hit_rate());
 	}
 
 };

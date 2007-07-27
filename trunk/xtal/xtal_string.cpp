@@ -365,20 +365,24 @@ String String::op_cat_String(const String& v) const{
 }
 
 void String::op_cat(const VMachine& vm) const{
-	Any a = vm.arg(0); vm.recycle_call(*this); a.send(Xid(op_cat_r_String), vm);
+	Any a = vm.arg(0); 
+	vm.recycle_call(*this); 
+	a.rawsend(vm, Xid(op_cat_r_String));
 }
 
 void String::op_eq(const VMachine& vm) const{
 	Any a = vm.arg(0); 
 	vm.recycle_call(*this); 
-	a.send(Xid(op_eq_r_String), vm);
+	a.rawsend(vm, Xid(op_eq_r_String));
 	if(!vm.processed()){
 		vm.return_result(null);
 	}
 }
 
 void String::op_lt(const VMachine& vm) const{
-	Any a = vm.arg(0); vm.recycle_call(*this); a.send(Xid(op_lt_r_String), vm);
+	Any a = vm.arg(0); 
+	vm.recycle_call(*this); 
+	a.rawsend(vm, Xid(op_lt_r_String));
 }
 
 String String::op_cat_r_String(const String& v) const{

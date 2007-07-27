@@ -22,7 +22,7 @@ void InitClass(){
 		p.method("inherit", &Class::inherit_strict);
 		p.method("is_inherited", &Class::is_inherited);
 		p.method("each_member", &Class::each_member);
-		p.method("serial_new", &Class::serial_new);
+		p.method("s_new", &Class::s_new);
 		p.method("each_inherited_class", &Class::each_inherited_class);
 	}
 
@@ -202,19 +202,15 @@ ClassImpl::ClassImpl()
 
 void ClassImpl::call(const VMachine& vm){
 	if(const Any& ret = member(Xid(new), this, null)){
-		ret.call(vm);
+		ret.rawcall(vm);
 	}else{
 		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
 }
 
-int_t ClassImpl::arity(){
-	return member(Xid(initialize), this, null).arity();
-}
-
-void ClassImpl::serial_new(const VMachine& vm){
+void ClassImpl::s_new(const VMachine& vm){
 	if(const Any& ret = member(Xid(serial_new), this, null)){
-		ret.call(vm);
+		ret.rawcall(vm);
 	}else{
 		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
@@ -262,7 +258,7 @@ void ClassImpl::def(const ID& name, const Any& value, int_t accessibility, const
 		members_.push_back(value);
 		value.set_object_name(name, object_name_force(), this);
 	}else{
-		XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
+		XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))));
 	}
 	global_mutate_count++;
 }
@@ -356,7 +352,7 @@ void XClassImpl::call(const VMachine& vm){;
 	
 	if(inst.impl()->empty()){
 		if(const Any& ret = bases_member(Xid(new))){
-			ret.call(vm);
+			ret.rawcall(vm);
 			if(vm.result().type()==TYPE_BASE){
 				vm.result().impl()->set_class(Class(this));
 			}
@@ -367,23 +363,23 @@ void XClassImpl::call(const VMachine& vm){;
 	if(const Any& ret = member(Xid(initialize), vm.impl()->ff().self(), null)){
 		vm.set_arg_this(inst);
 		if(vm.need_result()){
-			ret.call(vm);
+			ret.rawcall(vm);
 			vm.replace_result(0, inst);
 		}else{
-			ret.call(vm);
+			ret.rawcall(vm);
 		}
 	}else{
 		vm.return_result(inst);
 	}
 }
 
-void XClassImpl::serial_new(const VMachine& vm){
+void XClassImpl::s_new(const VMachine& vm){
 	Instance inst(Class(this));
 	init_instance(inst.impl(), vm, inst);
 	
 	if(inst.impl()->empty()){
 		if(const Any& ret = bases_member(Xid(serial_new))){
-			ret.call(vm);
+			ret.rawcall(vm);
 			if(vm.result().type()==TYPE_BASE){
 				vm.result().impl()->set_class(Class(this));
 			}
@@ -391,7 +387,6 @@ void XClassImpl::serial_new(const VMachine& vm){
 		}
 	}
 
-	inst.send(Xid(serial_load), vm.arg(0));
 	vm.return_result(inst);
 }
 
@@ -433,7 +428,7 @@ const Any& LibImpl::rawdef(const ID& name, const Any& value, const Any& ns){
 		value.set_object_name(name, object_name_force(), this);
 		return members_.back();
 	}else{
-		XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(this->object_name(), name)));
+		XTAL_THROW(builtin().member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))));
 		return null;
 	}
 }
@@ -511,8 +506,8 @@ void Class::init_instance(HaveInstanceVariables* inst, const VMachine& vm, const
 	impl()->init_instance(inst, vm, self);
 }
 
-void Class::serial_new(const VMachine& vm){
-	impl()->serial_new(vm);
+void Class::s_new(const VMachine& vm){
+	impl()->s_new(vm);
 }
 
 void Class::inherit(const Class& md) const{

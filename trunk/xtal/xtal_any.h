@@ -396,20 +396,49 @@ public:
 	AnyImpl* impl() const{ return UncountedAny::impl(); }
 	
 public:
+private:
+
+	/**
+	* @brief rawcall に名前変更した
+	*/
+	void call(const VMachine& vm) const;
 	
+	/**
+	* @brief rawsend に名前変更した
+	*
+	* 引数や戻り値はvmを通してやり取りする。
+	*/
+	void send(const ID& name, const VMachine& vm) const;
+
+public:
+
 	/**
 	* @brief 関数オブジェクトとみなし、関数呼び出しをする。
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void call(const VMachine& vm) const;
+	void rawcall(const VMachine& vm) const;
 	
 	/**
 	* @brief nameメソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void send(const ID& name, const VMachine& vm) const;
+	void rawsend(const VMachine& vm, const ID& name) const;
+
+	/**
+	* @brief nameメソッド呼び出しをする
+	*
+	* 引数や戻り値はvmを通してやり取りする。
+	*/
+	void rawsend(const VMachine& vm, const ID& name, const Any& self) const;
+
+	/**
+	* @brief nameメソッド呼び出しをする
+	*
+	* 引数や戻り値はvmを通してやり取りする。
+	*/
+	void rawsend(const VMachine& vm, const ID& name, const Any& self, const Any& ns) const;
 
 	/**
 	* @brief nameメンバを取得する。
@@ -520,9 +549,12 @@ public:
 	*/ 
 	bool is_null() const{ return type()==TYPE_NULL; }
 
-public:
+	/**
+	* @brief 自身がnopか返す
+	*/ 
+	bool is_nop() const{ return type()==TYPE_NOP; }
 
-	int_t arity() const;
+public:
 
 	// 関数呼び出し。5つまでの引数を受け取るバージョンが定義されている。
 	Any operator()() const;
@@ -875,7 +907,6 @@ public:
 
 	virtual void visit_members(Visitor& m);
 	virtual void call(const VMachine& vm);
-	virtual int_t arity();
 	virtual const Any& member(const ID& name, const Any& self, const Any& ns);
 	virtual void def(const ID& name, const Any& value, int_t accessibility, const Any& ns);
 	virtual HaveInstanceVariables* have_instance_variables();

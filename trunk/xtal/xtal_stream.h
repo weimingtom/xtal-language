@@ -78,6 +78,16 @@ public:
 	*/	
 	Any deserialize() const;
 
+	/**
+	* @brief オブジェクトをXtalのソースに変換して保存する
+	*/
+	void xtalize(const Any& obj) const;
+
+	/**
+	* @brief Xtalのソース化されたオブジェクトを読み出す
+	*/
+	Any dextalize() const;
+	
 public:
 
 	void iter_first(const VMachine& vm);

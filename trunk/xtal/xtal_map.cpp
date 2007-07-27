@@ -160,7 +160,7 @@ void StrictMap::set_at(const Any& key, const Any& value){
 }
 
 void StrictMap::set_node(Node* node){
-	Node** p = &begin_[node->key.hashcode() % size_];
+	Node** p = &begin_[node->key.rawvalue() % size_];
 	while(*p){
 		p = &(*p)->next;
 	}
@@ -181,8 +181,8 @@ void StrictMap::expand(int_t addsize){
 		Node* p = oldbegin[i];
 		while(p){
 			Node* next = p->next;
-			set_node(p);
 			p->next = 0;
+			set_node(p);
 			p = next;
 		}
 	}

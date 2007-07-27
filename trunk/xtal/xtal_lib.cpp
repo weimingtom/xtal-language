@@ -305,7 +305,7 @@ public:
 		value = Array(next.size());
 		for(int_t i = 0, len = next.size(); i<len; ++i){
 			vm.setup_call(2);
-			next.at(i).send(id, vm);
+			next.at(i).rawsend(vm, id);
 			next.set_at(i, vm.result(0));
 			value.set_at(i, vm.result(1));
 			vm.cleanup_call();
@@ -331,7 +331,7 @@ public:
 		ID id = Xid(iter_break);
 		for(int_t i = 0, len = next.size(); i<len; ++i){
 			vm.setup_call(0);
-			next.at(i).send(id, vm);
+			next.at(i).rawsend(vm, id);
 			if(!vm.processed()){
 				vm.return_result();	
 			}
@@ -361,7 +361,7 @@ void InitZipIter(){
 IterBreaker::~IterBreaker(){
 	const VMachine& vm = vmachine();
 	vm.setup_call(0);
-	target.send(Xid(iter_break), vm);
+	target.rawsend(vm, Xid(iter_break));
 	if(!vm.processed()){
 		vm.return_result();
 	}
@@ -371,7 +371,7 @@ IterBreaker::~IterBreaker(){
 void iter_next(Any& target, Any& value1, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(2);
-	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
+	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
 	target = vm.result(0);
 	value1 = vm.result(1);
 	vm.cleanup_call();
@@ -380,7 +380,7 @@ void iter_next(Any& target, Any& value1, bool first){
 void iter_next(Any& target, Any& value1, Any& value2, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(3);
-	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
+	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
 	target = vm.result(0);
 	value1 = vm.result(1);
 	value2 = vm.result(2);
@@ -390,7 +390,7 @@ void iter_next(Any& target, Any& value1, Any& value2, bool first){
 void iter_next(Any& target, Any& value1, Any& value2, Any& value3, bool first){
 	const VMachine& vm = vmachine();
 	vm.setup_call(4);
-	target.send(first ? Xid(iter_first) : Xid(iter_next), vm);
+	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
 	target = vm.result(0);
 	value1 = vm.result(1);
 	value2 = vm.result(2);
@@ -608,6 +608,10 @@ private:
 class Format : public AnyImpl{
 public:
 
+	Format(){
+		set_class(TClass<Format>::get());
+	}
+
 	Format(const String& str){
 		set_class(TClass<Format>::get());
 		set(str.c_str());
@@ -735,6 +739,10 @@ public:
 		return original_;
 	}
 
+	void serial_load(const String& v){
+		set(v.c_str());
+	}
+
 private:
 
 	struct Pair{
@@ -765,6 +773,7 @@ void InitFormat(){
 	TClass<Format> p("Format");
 	p.method("to_s", &Format::to_s);
 	p.method("serial_save", &Format::serial_save);
+	p.method("serial_load", &Format::serial_load);
 	p.def("serial_new", New<Format, const String&>());
 
 	add_long_life_var(&user_get_text_map_);
@@ -1293,28 +1302,37 @@ Iterator::inject: method(init, fn){
 
 	Xsrc((
 
+Class::each_ancestor: method fiber{
+	this.each_inherited_class{
+		yield it;
+		it.each_ancestor{
+			yield it;
+		}
+	}
+}
+
 Instance::serial_save: method{
 	ret: [:];
 	klass: this.class;
-	klass.each_inherited_class{
+	if(n: this.instance_serial_save(klass))
+		ret[klass.object_name] = n;
+
+	klass.each_ancestor{
 		if(n: this.instance_serial_save(it))
 			ret[it.object_name] = n;
 	}
-
-	if(n: this.instance_serial_save(klass))
-		ret[klass.object_name] = n;
 	return ret;
 }
 
 Instance::serial_load: method(v){
 	klass: this.class;
-	klass.each_inherited_class{
+	if(n: v[klass.object_name])
+		this.instance_serial_load(klass, n);
+
+	klass.each_ancestor{
 		if(n: v[it.object_name])
 			this.instance_serial_load(it, n);
 	}
-
-	if(n: v[klass.object_name])
-		this.instance_serial_load(klass, n);
 }
 
 Any::p: method{

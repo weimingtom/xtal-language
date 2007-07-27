@@ -33,6 +33,9 @@ void InitStream(){
 	cls.method("pour_all", &Stream::pour_all);
 	cls.method("size", &Stream::size);
 
+	cls.method("serialize", &Stream::serialize);
+	cls.method("deserialize", &Stream::deserialize);
+
 	cls.method("iter_first", &Stream::iter_first);
 	cls.method("iter_next", &Stream::iter_next);
 	cls.method("iter_break", &Stream::iter_break);
@@ -161,6 +164,16 @@ uint_t Stream::pour_all(const Stream& in_stream) const{
 
 uint_t Stream::size() const{
 	return impl()->size();
+}
+
+void Stream::serialize(const Any& v) const{
+	Marshal m(*this);
+	m.dump(v);
+}
+
+Any Stream::deserialize() const{
+	Marshal m(*this);
+	return m.load();
 }
 
 void Stream::iter_first(const VMachine& vm){

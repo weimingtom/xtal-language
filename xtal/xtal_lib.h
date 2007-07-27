@@ -14,7 +14,7 @@ namespace xtal{
 *
 * @param file_name Xtalスクリプトが記述されたファイルの名前
 * @return 実行できる関数オブジェクト
-* この戻り値をobject_dumpすると、バイトコード形式で保存される。
+* この戻り値をserializeすると、バイトコード形式で保存される。
 */
 Code compile_file(const String& file_name);
 
@@ -23,7 +23,7 @@ Code compile_file(const String& file_name);
 *
 * @param source Xtalスクリプトが記述された文字列
 * @return 実行できる関数オブジェクト
-* この戻り値をobject_dumpすると、バイトコード形式で保存される。
+* この戻り値をserializeすると、バイトコード形式で保存される。
 */
 Code compile(const String& source);
 
@@ -52,6 +52,8 @@ void ix();
 * @brief ガーベジコレクションを実行する
 *
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
+* 例えば循環参照はこれでは検知できない。
+* ゲームで使用する場合、毎フレームこれを呼んだ方が良い。
 */
 void gc();
 
@@ -59,46 +61,28 @@ void gc();
 * @brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
 *
 * 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
+* 循環参照も検知できる。
+* ゲームで使用する場合、シーンの切り替え時など、節目節目に呼んだほうが良い。
 */
 void full_gc();
 
-/**
-* @brief ガーベジコレクションを有効化する
-*
-* disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
-*/
-void enable_gc();
 
 /**
 * @brief ガーベジコレクションを無効化する
 *
+* gcやfull_gcの呼び出しを無効化する関数。
 * 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
 */
 void disable_gc();
 
 /**
-* @brief オブジェクトを直列化して保存する
+* @brief ガーベジコレクションを有効化する
 *
-* @param obj 直列化して保存したいオブジェクト
-* @param out 直列化先のストリーム
+* disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
+* 
 */
-void object_dump(const Any& obj, const Stream& out);
+void enable_gc();
 
-/**
-* @brief オブジェクトを直列化して読み込む
-*
-* @param in 直列化されたオブジェクトを読み込むストリーム
-* @return 復元されたオブジェクト
-*/
-Any object_load(const Stream& in);
-
-/**
-* @brief オブジェクトをスクリプト化して保存する
-*
-* @param obj スクリプト化して保存したいオブジェクト
-* @param out 直列化先のストリーム
-*/
-void object_to_script(const Any& obj, const Stream& out);
 
 /**
 * @brief オブジェクトをC++に埋め込める形にして保存する
@@ -110,6 +94,7 @@ void object_to_cpp(const Any& obj, const Stream& out);
 
 /**
 * @brief VMachineオブジェクトを返す
+*
 * グローバルなVMachineオブジェクトを返す。
 * スレッド毎にこのグローバルVMachineオブジェクトは存在する。
 */
@@ -131,12 +116,13 @@ const Class& Enumerator();
 const Class& builtin();
 
 /**
-* @brief libオブジェクトを返す
+* @brief libクラスを返す
 */
-const Any& lib();
+const Class& lib();
+
+
 
 Any get_text(const char* text);
-
 Any format(const char* text);
 
 void set_get_text_map(const Any& map);

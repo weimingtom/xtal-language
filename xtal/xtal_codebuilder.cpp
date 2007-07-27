@@ -920,9 +920,13 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 			class_begin(&e->vars, e->mixins.size);{
 				class_scopes_.push(e);
-				p_->class_core_table_.back().instance_variable_symbol_offset = 0;
+				p_->class_core_table_.back().instance_variable_symbol_offset = p_->symbol_table_.size();
 				p_->class_core_table_.back().instance_variable_size = e->inst_vars.size;
 				class_scopes_.top()->frame_number = p_->class_core_table_.size()-1;
+
+				for(TPairList<int_t, Expr*>::Node* p=e->inst_vars.head; p; p=p->next){
+					p_->symbol_table_.push_back(to_id(p->key));
+				}
 
 				for(TList<Var>::Node* p = e->vars.vars.head; p; p = p->next){
 					compile(p->value.init);

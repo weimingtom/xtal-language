@@ -163,6 +163,12 @@ public:
 	bool is_inherited(const Class& md) const;
 
 	/**
+	* @brief Mix-inされているクラスをイテレートできるイテレータを返す
+	*
+	*/
+	Any each_inherited_class() const;
+
+	/**
 	* @brief 関数を定義する
 	*
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
@@ -204,15 +210,9 @@ public:
 
 public:
 
-	void marshal_new(const VMachine& vm);
-
-	const Any& member(const ID& name, const Any& self, int_t*& mutate_count, unsigned short& flags) const;
-	
-	const Any& member(const ID& name, int_t*& mutate_count, unsigned short& flags) const;
+	void serial_new(const VMachine& vm);
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;
-
-	void mutate() const;
 
 	ClassImpl* impl() const{ return (ClassImpl*)Any::impl(); }
 
@@ -392,6 +392,10 @@ public:
 	
 	Instance(const Null&)
 		:Any(null){}
+
+	Any instance_serial_save(const Class& cls);
+
+	void instance_serial_load(const Class& cls, const Any& v);
 	
 	InstanceImpl* impl() const{ return (InstanceImpl*)Any::impl(); }
 };

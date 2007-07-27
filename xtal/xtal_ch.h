@@ -6,9 +6,14 @@
 namespace xtal{
 	
 /**
-* @brief 先頭バイトからそのマルチバイト文字が何文字かを調べる
+* @brief 先頭バイトから、そのマルチバイト文字が何文字かを調べる
+* 何の文字コードかは set_code_sjis、set_code_euc、set_code_utf8を使用する。
 */
 int_t ch_len(char_t lead);
+
+void set_code_sjis();
+void set_code_euc();
+void set_code_utf8();
 
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;
@@ -54,9 +59,5 @@ inline int to_lalpha(int ch){
 	using namespace std;
 	return tolower(ch);
 }
-
-void set_code_sjis();
-void set_code_euc();
-void set_code_utf8();
 
 }

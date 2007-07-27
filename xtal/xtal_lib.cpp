@@ -50,7 +50,7 @@ Any load(const String& file_name){
 Any load_and_save(const String& file_name){
 	Any ret = compile_file(file_name);
 	FileStream fs(file_name.cat("c"), "w");
-	object_dump(ret, fs);
+	fs.serialize(ret);
 	fs.close();
 	gc();
 	return ret();
@@ -111,26 +111,6 @@ void println(const VMachine& vm){
 	print(vm);
 	std::cout << std::endl;
 }
-
-void object_dump(const Any& v, const Stream& out){
-	Marshal m(out);
-	m.dump(v);
-}
-
-Any object_load(const Stream& in){
-	Marshal m(in);
-	return m.load();
-}
-
-void object_to_script(const Any& v, const Stream& out){
-	Marshal m(out);
-	m.to_script(v);
-}
-
-
-Result result;
-ReturnThis return_this;
-ReturnVoid return_void;
 
 
 static Any abs(const Any& a){
@@ -433,8 +413,8 @@ const Class& builtin(){
 	return p;
 }
 
-const Any& lib(){
-	static LLVar<Any> lib;
+const Class& lib(){
+	static LLVar<Class> lib(null);
 	if(!lib){ new(lib) LibImpl(); }
 	return lib;
 }
@@ -751,7 +731,7 @@ public:
 		call(vm);
 	}
 
-	Any marshal_dump(){
+	Any serial_save(){
 		return original_;
 	}
 
@@ -784,8 +764,8 @@ namespace{
 void InitFormat(){
 	TClass<Format> p("Format");
 	p.method("to_s", &Format::to_s);
-	p.method("marshal_dump", &Format::marshal_dump);
-	p.def("marshal_new", New<Format, const String&>());
+	p.method("serial_save", &Format::serial_save);
+	p.def("serial_new", New<Format, const String&>());
 
 	add_long_life_var(&user_get_text_map_);
 	user_get_text_map_ = Map();
@@ -984,6 +964,7 @@ void initialize_lib(){
 	builtin.def("Mutex", TClass<Mutex>::get());
 	builtin.def("Format", TClass<Format>::get());
 	builtin.def("Code", TClass<Code>::get());
+	builtin.def("Instance", TClass<Instance>::get());
 	
 	builtin.fun("print", &print);
 	builtin.fun("println", &println);
@@ -993,9 +974,6 @@ void initialize_lib(){
 	builtin.fun("full_gc", &full_gc);
 	builtin.fun("disable_gc", &disable_gc);
 	builtin.fun("enable_gc", &enable_gc);
-	builtin.fun("object_dump", &object_dump);
-	builtin.fun("object_load", &object_load);
-	builtin.fun("object_to_script", &object_to_script);
 
 	Class math(Math<float_t>::make((float_t*)0));
 	math.fun("abs", &abs);
@@ -1314,6 +1292,30 @@ Iterator::inject: method(init, fn){
 	))();
 
 	Xsrc((
+
+Instance::serial_save: method{
+	ret: [:];
+	klass: this.class;
+	klass.each_inherited_class{
+		if(n: this.instance_serial_save(it))
+			ret[it.object_name] = n;
+	}
+
+	if(n: this.instance_serial_save(klass))
+		ret[klass.object_name] = n;
+	return ret;
+}
+
+Instance::serial_load: method(v){
+	klass: this.class;
+	klass.each_inherited_class{
+		if(n: v[it.object_name])
+			this.instance_serial_load(it, n);
+	}
+
+	if(n: v[klass.object_name])
+		this.instance_serial_load(klass, n);
+}
 
 Any::p: method{
 	println(this.to_s);

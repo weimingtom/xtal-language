@@ -47,11 +47,16 @@ public:
 	}
 		
 	const Any& at(const Any& key){
+		const VMachine& vm = vmachine();
 		Node* p = begin_[key.hashcode() % size_];
 		while(p){
-			if(p->key==key){
+			vm.setup_call(1, p->key);
+			key.send(Xid(op_eq), vm);
+			if(vm.processed() && vm.result()){
+				vm.cleanup_call();
 				return p->value;
 			}
+			vm.cleanup_call();
 			p = p->next;
 		}
 		return null;

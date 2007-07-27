@@ -61,24 +61,24 @@ void Marshal::to_script(const Any& v){
 
 void Marshal::inner_dump(const Any& v){
 	if(!v){
-		stream_.put_i8(TNULL);
+		stream_.put_u8(TNULL);
 		return;
 	}
 
 	const Class& cls = v.get_class();
 	if(cls.raweq(TClass<Int>::get())){
-		stream_.put_i8(INT);
+		stream_.put_u8(INT);
 		stream_.put_i32(v.ivalue());
 		return;
 	}else if(cls.raweq(TClass<Float>::get())){
-		stream_.put_i8(FLOAT);
+		stream_.put_u8(FLOAT);
 		stream_.put_f32(v.fvalue());
 		return;
 	}else if(cls.raweq(TClass<True>::get())){
-		stream_.put_i8(TTRUE);
+		stream_.put_u8(TTRUE);
 		return;
 	}else if(cls.raweq(TClass<False>::get())){
-		stream_.put_i8(TFALSE);
+		stream_.put_u8(TFALSE);
 		return;
 	}
 
@@ -88,8 +88,8 @@ void Marshal::inner_dump(const Any& v){
 
 		if(cls.raweq(TClass<Array>::get())){
 			const Array& a = (const Array&)v;
-			stream_.put_i8(ARRAY);
-			stream_.put_i32(a.size());
+			stream_.put_u8(ARRAY);
+			stream_.put_u32(a.size());
 			for(int_t i=0; i<a.size(); ++i){
 				inner_dump(a.at(i));
 			}
@@ -97,19 +97,19 @@ void Marshal::inner_dump(const Any& v){
 		}else if(cls.raweq(TClass<String>::get())){
 			const String& a = (const String&)v;
 			if(a.is_interned()){
-				stream_.put_i8(TID);
+				stream_.put_u8(TID);
 			}else{
-				stream_.put_i8(STRING);
+				stream_.put_u8(STRING);
 			}
 			stream_.put_i32(a.size());
 			for(size_t i=0; i<a.size(); ++i){
-				stream_.put_i8(a.c_str()[i]);
+				stream_.put_u8(a.c_str()[i]);
 			}
 			return;
 		}else if(cls.raweq(TClass<Map>::get())){
 			const Map& a = (const Map&)v;
-			stream_.put_i8(MAP);
-			stream_.put_i32(a.size());
+			stream_.put_u8(MAP);
+			stream_.put_u32(a.size());
 			Xfor2(key, value, a.each_pair()){
 				inner_dump(key);
 				inner_dump(value);
@@ -117,10 +117,10 @@ void Marshal::inner_dump(const Any& v){
 			return;
 		}else if(cls.raweq(TClass<Code>::get())){
 			CodeImpl* p = (CodeImpl*)((Fun*)&v)->code().impl();
-			stream_.put_i8('x'); stream_.put_i8('t'); stream_.put_i8('a'); stream_.put_i8('l');
-			stream_.put_i8(MARSHAL_VERSION1); stream_.put_i8(MARSHAL_VERSION2); 
-			stream_.put_i8(0); 
-			stream_.put_i8(0);
+			stream_.put_u8('x'); stream_.put_u8('t'); stream_.put_u8('a'); stream_.put_u8('l');
+			stream_.put_u8(MARSHAL_VERSION1); stream_.put_u8(MARSHAL_VERSION2); 
+			stream_.put_u8(0); 
+			stream_.put_u8(0);
 			
 			int_t sz;
 
@@ -181,23 +181,23 @@ void Marshal::inner_dump(const Any& v){
 			return;
 		}
 
-		// 所属クラスにmarshal_dump関数が定義されている
-		if(v.get_class().member(Xid(marshal_dump))){
+		// 所属クラスにserial_save関数が定義されている
+		if(v.get_class().member(Xid(serial_save))){
 			ID id = v.get_class().object_name();
-			stream_.put_i8(VALUE);
+			stream_.put_u8(VALUE);
 			check_id(id);
 			inner_dump(id); // クラスの名前を埋め込む
-			inner_dump(v.send(Xid(marshal_dump)));					
+			inner_dump(v.send(Xid(serial_save)));					
 		}else{
 			ID id = v.object_name();
 			check_id(id);
-			stream_.put_i8(LIB);
+			stream_.put_u8(LIB);
 			inner_dump(id);
 		}
 	}else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
-		stream_.put_i8(REF);
-		stream_.put_i32(num);
+		stream_.put_u8(REF);
+		stream_.put_u32(num);
 	}
 }
 
@@ -211,7 +211,7 @@ Any Marshal::inner_load(){
 			Class c(cast<Class>(demangle(register_lvalue(inner_load()))));
 			const VMachine& vm = vmachine();
 			vm.setup_call(1, inner_load());
-			c.marshal_new(vm);
+			c.serial_new(vm);
 			lvalues_.set_at(num, vm.result());
 			vm.cleanup_call();
 			return lvalues_[num];
@@ -240,26 +240,26 @@ Any Marshal::inner_load(){
 		}
 
 		XTAL_CASE2(STRING, TID){
-			int_t sz = stream_.get_i32();
-			char* p = (char*)user_malloc(sz);
+			int_t sz = stream_.get_u32();
+			char* p = (char*)user_malloc(sz+1);
 			for(int_t i = 0; i<sz; ++i){
-				p[i] = stream_.get_i8();
+				p[i] = (char_t)stream_.get_u8();
 			}
+			p[sz] = 0;
 			if(op==TID){
 				ID ret(p, sz);
 				register_lvalue(ret);
 				user_free(p, sz);
 				return ret;
 			}else{
-				String ret(p, sz);
+				String ret(p, sz, sz+1, String::delegate_memory_t());
 				register_lvalue(ret);
-				user_free(p, sz);
 				return ret;
 			}
 		}
 
 		XTAL_CASE(ARRAY){
-			int_t sz = stream_.get_i32();
+			int_t sz = stream_.get_u32();
 			Array ret(sz);
 			register_lvalue(ret);
 			for(int_t i = 0; i<sz; ++i){
@@ -269,7 +269,7 @@ Any Marshal::inner_load(){
 		}
 		
 		XTAL_CASE(MAP){
-			int_t sz = stream_.get_i32();
+			int_t sz = stream_.get_u32();
 			Map ret;
 			register_lvalue(ret);
 			Any key;
@@ -489,13 +489,13 @@ void Marshal::inner_to_script(const Any& v, int_t tab){
 			return;
 		}
 
-		// 所属クラスにmarshal_dump関数が定義されている
-		if(v.get_class().member(Xid(marshal_dump))){
+		// 所属クラスにserial_save関数が定義されている
+		if(v.get_class().member(Xid(serial_save))){
 			ID id = v.get_class().object_name();
 			check_id(id);
 			stream_.put_s(id);
-			stream_.put_s(".marshal_new(");
-			inner_to_script(v.send(Xid(marshal_dump)), tab);
+			stream_.put_s(".serial_new(");
+			inner_to_script(v.send(Xid(serial_save)), tab);
 			stream_.put_s(")");
 		}else{
 			ID id = v.object_name();

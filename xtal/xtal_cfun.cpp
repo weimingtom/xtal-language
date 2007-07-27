@@ -6,6 +6,10 @@
 
 namespace xtal{
 
+Result result;
+ReturnThis return_this;
+ReturnVoid return_void;
+
 class CFunImpl : public HaveNameImpl{
 public:
 	typedef void (*fun_t)(const VMachine&, const ParamInfo&, void* data);

@@ -210,7 +210,7 @@ public:
 
 public:
 
-	void serial_new(const VMachine& vm);
+	void s_new(const VMachine& vm);
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self) const;
 

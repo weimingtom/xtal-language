@@ -378,9 +378,7 @@ public:
 	
 	virtual void call(const VMachine& vm);
 	
-	virtual int_t arity();
-
-	virtual void serial_new(const VMachine& vm);
+	virtual void s_new(const VMachine& vm);
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self);
 
@@ -436,7 +434,7 @@ public:
 
 	virtual void call(const VMachine& vm);
 
-	virtual void serial_new(const VMachine& vm);
+	virtual void s_new(const VMachine& vm);
 };
 
 class LibImpl : public ClassImpl{

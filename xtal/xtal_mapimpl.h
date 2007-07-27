@@ -51,7 +51,7 @@ public:
 		Node* p = begin_[key.hashcode() % size_];
 		while(p){
 			vm.setup_call(1, p->key);
-			key.send(Xid(op_eq), vm);
+			key.rawsend(vm, Xid(op_eq));
 			if(vm.processed() && vm.result()){
 				vm.cleanup_call();
 				return p->value;
@@ -414,6 +414,11 @@ public:
 	}
 
 	void destroy();
+
+	void clear(){
+		destroy();
+		expand(7);
+	}
 	
 private:
 

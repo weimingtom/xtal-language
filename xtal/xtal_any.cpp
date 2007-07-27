@@ -458,13 +458,9 @@ void AnyImpl::set_class(const Class& c){
 void AnyImpl::visit_members(Visitor& m){
 	//m & class_;
 }
-
-int_t AnyImpl::arity(){
-	return 0;
-}
 	
 void AnyImpl::call(const VMachine& vm){
-	UncountedAny(this).cref().send(Xid(op_call), vm);
+	UncountedAny(this).cref().rawsend(vm, Xid(op_call));
 }
 
 const Any& AnyImpl::member(const ID& name, const Any& self, const Any& ns){ 
@@ -493,16 +489,6 @@ void AnyImpl::set_object_name(const String& name, int_t force, const Any& parent
 
 uint_t AnyImpl::hashcode(){
 	return (uint_t)this;
-}
-
-int_t Any::arity() const{
-	switch(type()){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){
-			return impl()->arity();
-		}
-	}
-	return 0;
 }
 
 #define XTAL_ANY_CALL0(op, call, args) \
@@ -568,49 +554,49 @@ Any Any::op args const{\
 	return vm.result_and_cleanup_call();\
 }
 
-XTAL_ANY_CALL0(operator(), call(vm), ());
-XTAL_ANY_CALL1(operator(), call(vm), (const Any& a0));
-XTAL_ANY_CALL2(operator(), call(vm), (const Any& a0, const Any& a1));
-XTAL_ANY_CALL3(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2));
-XTAL_ANY_CALL4(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3));
-XTAL_ANY_CALL5(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Any& a4));
-XTAL_ANY_CALL1(operator(), call(vm), (const Named& a0));
-XTAL_ANY_CALL2(operator(), call(vm), (const Any& a0, const Named& a1));
-XTAL_ANY_CALL3(operator(), call(vm), (const Any& a0, const Any& a1, const Named& a2));
-XTAL_ANY_CALL4(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2, const Named& a3));
-XTAL_ANY_CALL5(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Named& a4));
-XTAL_ANY_CALL2(operator(), call(vm), (const Named& a0, const Named& a1));
-XTAL_ANY_CALL3(operator(), call(vm), (const Any& a0, const Named& a1, const Named& a2));
-XTAL_ANY_CALL4(operator(), call(vm), (const Any& a0, const Any& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(operator(), call(vm), (const Any& a0, const Any& a1, const Any& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL3(operator(), call(vm), (const Named& a0, const Named& a1, const Named& a2));
-XTAL_ANY_CALL4(operator(), call(vm), (const Any& a0, const Named& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(operator(), call(vm), (const Any& a0, const Any& a1, const Named& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL4(operator(), call(vm), (const Named& a0, const Named& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(operator(), call(vm), (const Any& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL5(operator(), call(vm), (const Named& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL0(operator(), rawcall(vm), ());
+XTAL_ANY_CALL1(operator(), rawcall(vm), (const Any& a0));
+XTAL_ANY_CALL2(operator(), rawcall(vm), (const Any& a0, const Any& a1));
+XTAL_ANY_CALL3(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2));
+XTAL_ANY_CALL4(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Any& a4));
+XTAL_ANY_CALL1(operator(), rawcall(vm), (const Named& a0));
+XTAL_ANY_CALL2(operator(), rawcall(vm), (const Any& a0, const Named& a1));
+XTAL_ANY_CALL3(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Named& a2));
+XTAL_ANY_CALL4(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2, const Named& a3));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Named& a4));
+XTAL_ANY_CALL2(operator(), rawcall(vm), (const Named& a0, const Named& a1));
+XTAL_ANY_CALL3(operator(), rawcall(vm), (const Any& a0, const Named& a1, const Named& a2));
+XTAL_ANY_CALL4(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Any& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL3(operator(), rawcall(vm), (const Named& a0, const Named& a1, const Named& a2));
+XTAL_ANY_CALL4(operator(), rawcall(vm), (const Any& a0, const Named& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Any& a0, const Any& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL4(operator(), rawcall(vm), (const Named& a0, const Named& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Any& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL5(operator(), rawcall(vm), (const Named& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
 
-XTAL_ANY_CALL0(send, send(name, vm), (const ID& name));
-XTAL_ANY_CALL1(send, send(name, vm), (const ID& name, const Any& a0));
-XTAL_ANY_CALL2(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1));
-XTAL_ANY_CALL3(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2));
-XTAL_ANY_CALL4(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Any& a4));
-XTAL_ANY_CALL1(send, send(name, vm), (const ID& name, const Named& a0));
-XTAL_ANY_CALL2(send, send(name, vm), (const ID& name, const Any& a0, const Named& a1));
-XTAL_ANY_CALL3(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Named& a2));
-XTAL_ANY_CALL4(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Named& a3));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Named& a4));
-XTAL_ANY_CALL2(send, send(name, vm), (const ID& name, const Named& a0, const Named& a1));
-XTAL_ANY_CALL3(send, send(name, vm), (const ID& name, const Any& a0, const Named& a1, const Named& a2));
-XTAL_ANY_CALL4(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL3(send, send(name, vm), (const ID& name, const Named& a0, const Named& a1, const Named& a2));
-XTAL_ANY_CALL4(send, send(name, vm), (const ID& name, const Any& a0, const Named& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Any& a0, const Any& a1, const Named& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL4(send, send(name, vm), (const ID& name, const Named& a0, const Named& a1, const Named& a2, const Named& a3));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Any& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
-XTAL_ANY_CALL5(send, send(name, vm), (const ID& name, const Named& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL0(send, rawsend(vm, name), (const ID& name));
+XTAL_ANY_CALL1(send, rawsend(vm, name), (const ID& name, const Any& a0));
+XTAL_ANY_CALL2(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1));
+XTAL_ANY_CALL3(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2));
+XTAL_ANY_CALL4(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Any& a4));
+XTAL_ANY_CALL1(send, rawsend(vm, name), (const ID& name, const Named& a0));
+XTAL_ANY_CALL2(send, rawsend(vm, name), (const ID& name, const Any& a0, const Named& a1));
+XTAL_ANY_CALL3(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Named& a2));
+XTAL_ANY_CALL4(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Named& a3));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Any& a3, const Named& a4));
+XTAL_ANY_CALL2(send, rawsend(vm, name), (const ID& name, const Named& a0, const Named& a1));
+XTAL_ANY_CALL3(send, rawsend(vm, name), (const ID& name, const Any& a0, const Named& a1, const Named& a2));
+XTAL_ANY_CALL4(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Any& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL3(send, rawsend(vm, name), (const ID& name, const Named& a0, const Named& a1, const Named& a2));
+XTAL_ANY_CALL4(send, rawsend(vm, name), (const ID& name, const Any& a0, const Named& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Any& a0, const Any& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL4(send, rawsend(vm, name), (const ID& name, const Named& a0, const Named& a1, const Named& a2, const Named& a3));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Any& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
+XTAL_ANY_CALL5(send, rawsend(vm, name), (const ID& name, const Named& a0, const Named& a1, const Named& a2, const Named& a3, const Named& a4));
 
 #undef XTAL_ANY_CALL0
 #undef XTAL_ANY_CALL1
@@ -624,31 +610,82 @@ Any::Any(const char* str){
 	*this = String(str);
 }
 
-const Any& Any::member(const ID& name) const{
-	switch(type()){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ return impl()->member(name, *this, null); }
-		XTAL_CASE(TYPE_NOP){ return *this; }
+struct MemberCacheTable{
+	struct Unit{
+		int_t klass;
+		int_t name;
+		int_t ns;
+		UncountedAny member;
+		uint_t mutate_count;
+	};
+
+	enum{ CACHE_MAX = /*179*/ 256 };
+
+	Unit table_[CACHE_MAX];
+	uint_t hit_;
+	uint_t miss_;
+
+	MemberCacheTable(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			table_[i].klass = 0;
+			table_[i].member = null;
+		}
+		hit_ = 0;
+		miss_ = 0;
 	}
-	return null;
+
+	float cache_hit_rate(){
+		return (float_t)hit_/(hit_+miss_);
+	}
+
+	uint_t hit(){
+		return hit_;
+	}
+
+	uint_t miss(){
+		return miss_;
+	}
+
+	const Any& cache(const Any& target_class, const ID& member_name, const Any& self, const Any& nsp){
+
+		uint_t klass = target_class.rawvalue();
+		uint_t name = member_name.rawvalue();
+		uint_t ns = nsp.rawvalue();
+
+		uint_t hash = (klass>>3) + (name>>2) + (ns);
+		Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
+		if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
+			hit_++;
+			return unit.member.cref();
+		}else{
+			if(target_class.type()!=TYPE_BASE)
+				return null;
+
+			miss_++;
+			unit.member = target_class.impl()->member(member_name, self, nsp);
+			unit.klass = klass;
+			unit.name = name;
+			unit.ns = ns;
+			unit.mutate_count = global_mutate_count;
+			return unit.member.cref();
+		}
+	}
+};
+
+namespace{
+	MemberCacheTable member_cache_table;
+}
+
+const Any& Any::member(const ID& name) const{
+	return member_cache_table.cache(*this, name, *this, null);
 }
 
 const Any& Any::member(const ID& name, const Any& self) const{
-	switch(type()){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self, null); }
-		XTAL_CASE(TYPE_NOP){ return *this; }
-	}
-	return null;
+	return member_cache_table.cache(*this, name, self, null);
 }
 
 const Any& Any::member(const ID& name, const Any& self, const Any& ns) const{
-	switch(type()){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ return impl()->member(name, self, ns); }
-		XTAL_CASE(TYPE_NOP){ return *this; }
-	}
-	return null;
+	return member_cache_table.cache(*this, name, self, ns);
 }
 
 void Any::def(const ID& name, const Any& value, int_t accessibility, const Any& ns) const{
@@ -661,16 +698,34 @@ void Any::def(const ID& name, const Any& value, int_t accessibility, const Any& 
 	}
 }
 
-void Any::send(const ID& name, const VMachine& vm) const{
+void Any::rawsend(const VMachine& vm, const ID& name) const{
 	const Class& cls = get_class();
 	vm.impl()->set_hint(cls, name);
-	if(const Any& ret = vm.impl()->member_cache(cls, name, *this, null)){
+	if(const Any& ret = member_cache_table.cache(cls, name, *this, null)){
 		vm.set_arg_this(*this);
-		ret.call(vm);
+		ret.rawcall(vm);
 	}
 }
 
-void Any::call(const VMachine& vm) const{
+void Any::rawsend(const VMachine& vm, const ID& name, const Any& self) const{
+	const Class& cls = get_class();
+	vm.impl()->set_hint(cls, name);
+	if(const Any& ret = member_cache_table.cache(cls, name, self, null)){
+		vm.set_arg_this(*this);
+		ret.rawcall(vm);
+	}
+}
+
+void Any::rawsend(const VMachine& vm, const ID& name, const Any& self, const Any& ns) const{
+	const Class& cls = get_class();
+	vm.impl()->set_hint(cls, name);
+	if(const Any& ret = member_cache_table.cache(cls, name, self, ns)){
+		vm.set_arg_this(*this);
+		ret.rawcall(vm);
+	}
+}
+
+void Any::rawcall(const VMachine& vm) const{
 	switch(type()){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ impl()->call(vm); }

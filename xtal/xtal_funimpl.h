@@ -53,8 +53,6 @@ public:
 		
 	virtual void call(const VMachine& vm);
 	
-	virtual int_t arity();
-
 protected:
 
 	Frame outer_;
@@ -113,6 +111,10 @@ public:
 	}
 
 	void call_helper(const VMachine& vm, bool add_succ_or_fail_result);
+
+	bool is_finished(){
+		return resume_pc_ == 0;
+	}
 
 	VMachine vm_;
 	const inst_t* resume_pc_;

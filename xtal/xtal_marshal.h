@@ -13,33 +13,39 @@ public:
 
 	Marshal(const Stream& s);
 
-	void dump(const Any& v);
+	void serialize(const Any& v);
 
-	Any load();
+	Any deserialize();
 
-	void to_script(const Any& v);
+	void xtalize(const Any& v);
 
 private:
 
-	void inner_dump(const Any& v);
-	Any inner_load();
-	void inner_to_script(const Any& v, int_t tab);
+	void inner_serialize(const Any& v);
+	Any inner_deserialize();
+	void inner_xtalize(const Any& v, int_t tab);
 
 	bool check_id(const ID& id);
 	Any demangle(int_t n);
 
-	int_t register_dvalue(const Any& v, bool& added);
-	int_t register_lvalue(const Any& v);
+	int_t register_value(const Any& v, bool& added);
+	int_t append_value(const Any& v);
 
 	void put_tab(int_t tab);
 
-	enum{ VALUE, LIB, REF, TNULL, INT, FLOAT, STRING, TID, ARRAY, MAP, TFALSE, TTRUE };
+	void clear(){
+		values_.clear();
+		map_.clear();
+	}
 
-	StrictMap dmap_;
-	Array dvalues_;
+private:
 
-	StrictMap lmap_;
-	Array lvalues_;
+	enum{ SERIAL_NEW, LIB, REF, TNULL, TINT, TFLOAT, TSTRING, TID, TARRAY, TMAP, TFALSE, TTRUE, TNOP };
+
+private:
+
+	StrictMap map_;
+	Array values_;
 
 	Stream stream_;
 };

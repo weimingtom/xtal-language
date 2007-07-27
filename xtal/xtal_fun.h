@@ -77,11 +77,13 @@ public:
 	explicit Fiber(FiberImpl* p)
 		:Fun((FunImpl*)p){}
 		
-	Any reset();
+	Any reset() const;
 
-	void iter_next(const VMachine& vm);
+	void iter_next(const VMachine& vm) const;
 	
-	void halt();
+	void halt() const;
+
+	bool is_finished() const;
 
 	FiberImpl* impl() const{ return (FiberImpl*)Any::impl(); }
 };

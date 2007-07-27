@@ -59,7 +59,11 @@ struct CastCacheTable{
 		unit.mutate_count = global_mutate_count;
 	}
 
-} cast_cache_table;
+};
+
+namespace{
+	CastCacheTable cast_cache_table;
+}
 
 const void* fetch_cast_cache(const Any& a, const void* type_key){
 	return cast_cache_table.fetch(a, type_key);

@@ -21,6 +21,7 @@ void InitFiber(){
 	p.method("iter_first", &Fiber::iter_next);
 	p.method("iter_next", &Fiber::iter_next);
 	p.method("halt", &Fiber::halt);
+	p.method("is_finished", &Fiber::is_finished);
 }
 
 InstanceVariableGetterImpl::InstanceVariableGetterImpl(int_t number, ClassCore* core)
@@ -98,10 +99,6 @@ void FunImpl::call(const VMachine& vm){
 		check_arg(vm);
 	vm.set_arg_this(this_);
 	vm.impl()->carry_over(this);
-}
-
-int_t FunImpl::arity(){
-	return param_size();
 }
 
 void LambdaImpl::call(const VMachine& vm){
@@ -239,17 +236,21 @@ Fiber::Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core)
 	new(*this) FiberImpl(outer, th, code, core);
 }
 
-Any Fiber::reset(){
+Any Fiber::reset() const{
 	impl()->halt();
 	return *this;
 }
 
-void Fiber::iter_next(const VMachine& vm){
+void Fiber::iter_next(const VMachine& vm) const{
 	impl()->iter_next(vm);
 }
 
-void Fiber::halt(){
+void Fiber::halt() const{
 	impl()->halt();
+}
+	
+bool Fiber::is_finished() const{
+	return impl()->is_finished();
 }
 
 }

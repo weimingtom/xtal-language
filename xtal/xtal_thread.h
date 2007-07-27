@@ -1,4 +1,4 @@
-
+ï»¿
 #pragma once
 
 #include "xtal_any.h"
@@ -41,7 +41,7 @@ class Thread : public Any{
 public:
 	
 	class ID{
-		//ƒ|ƒCƒ“ƒ^l‚Â•ª‚ÌƒTƒCƒY‚ª‚ ‚ê‚ÎAƒXƒŒƒbƒh‚ÌID‚­‚ç‚¢•Û‘¶‚Å‚«‚é‚Í‚¸B
+		//ID
 		struct Dummy{ void* dummy[4]; } dummy_;
 		bool valid_;
 	public:

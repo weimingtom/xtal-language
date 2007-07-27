@@ -1,4 +1,4 @@
-
+ï»¿
 #pragma once
 
 #include "xtal_any.h"
@@ -65,26 +65,26 @@ public:
 	uint_t size() const;
 
 	/**
-	* @brief ƒIƒuƒWƒFƒNƒg‚ğ’¼—ñ‰»‚µ‚Ä•Û‘¶‚·‚é
+	* @brief 
 	*
-	* @param obj ’¼—ñ‰»‚µ‚Ä•Û‘¶‚µ‚½‚¢ƒIƒuƒWƒFƒNƒg
+	* @param obj 
 	*/
 	void serialize(const Any& obj) const;
 
 	/**
-	* @brief ’¼—ñ‰»‚³‚ê‚½ƒIƒuƒWƒFƒNƒg‚ğ“Ç‚İo‚·
+	* @brief 
 	*
-	* @return •œŒ³‚³‚ê‚½ƒIƒuƒWƒFƒNƒg
+	* @return 
 	*/	
 	Any deserialize() const;
 
 	/**
-	* @brief ƒIƒuƒWƒFƒNƒg‚ğXtal‚Ìƒ\[ƒX‚É•ÏŠ·‚µ‚Ä•Û‘¶‚·‚é
+	* @brief Xtal
 	*/
 	void xtalize(const Any& obj) const;
 
 	/**
-	* @brief Xtal‚Ìƒ\[ƒX‰»‚³‚ê‚½ƒIƒuƒWƒFƒNƒg‚ğ“Ç‚İo‚·
+	* @brief Xtal
 	*/
 	Any dextalize() const;
 	

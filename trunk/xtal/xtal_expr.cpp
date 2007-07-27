@@ -1,4 +1,4 @@
-
+﻿
 #include "xtal.h"
 
 #ifndef XTAL_NO_PARSER
@@ -141,7 +141,7 @@ void ExprBuilder::scope_carry_on_heap_flag(){
 }
 
 void ExprBuilder::scope_set_on_heap_flag(int_t i){
-	for(; i<vars_stack.size(); ++i){
+	for(; i<(int_t)vars_stack.size(); ++i){
 		vars_stack[i]->on_heap = true;
 	}
 }

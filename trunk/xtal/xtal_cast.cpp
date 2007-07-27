@@ -2,6 +2,7 @@
 #include "xtal.h"
 #include "xtal_cast.h"
 #include "xtal_frame.h"
+#include "xtal_frameimpl.h"
 
 namespace xtal{
 
@@ -11,6 +12,7 @@ struct CastCacheTable{
 		int_t key2;
 		const void* value;
 		bool same;
+		uint_t mutate_count;
 	};
 
 	enum{ CACHE_MAX = 256 };
@@ -22,6 +24,7 @@ struct CastCacheTable{
 			table_[i].value = 0;
 			table_[i].key1 = 0;
 			table_[i].key2 = 0;
+			table_[i].mutate_count = 0;
 		}
 	}
 
@@ -29,7 +32,7 @@ struct CastCacheTable{
 		uint_t ia = a.rawvalue();
 		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];
-		if(type_key==unit.key1 && ia==unit.key2){
+		if(global_mutate_count==unit.mutate_count && type_key==unit.key1 && ia==unit.key2){
 			//printf("e");
 			if(unit.same){
 				return &a;
@@ -53,6 +56,7 @@ struct CastCacheTable{
 		unit.key2 = ia;
 		unit.value = value;
 		unit.same = &a==value;
+		unit.mutate_count = global_mutate_count;
 	}
 
 } cast_cache_table;

@@ -64,6 +64,20 @@ public:
 
 	uint_t size() const;
 
+	/**
+	* @brief オブジェクトを直列化して保存する
+	*
+	* @param obj 直列化して保存したいオブジェクト
+	*/
+	void serialize(const Any& obj) const;
+
+	/**
+	* @brief 直列化されたオブジェクトを読み出す
+	*
+	* @return 復元されたオブジェクト
+	*/	
+	Any deserialize() const;
+
 public:
 
 	void iter_first(const VMachine& vm);

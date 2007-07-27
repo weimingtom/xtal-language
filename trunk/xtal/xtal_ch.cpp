@@ -4,7 +4,7 @@
 
 namespace xtal{
 
-int_t ch_len_sjis(char ch){
+int_t ch_len_sjis(char_t ch){
 	unsigned char c = (unsigned char)ch;
 	if((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)){
 		return 2;

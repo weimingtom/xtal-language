@@ -22,7 +22,14 @@ void InitClass(){
 		p.method("inherit", &Class::inherit_strict);
 		p.method("is_inherited", &Class::is_inherited);
 		p.method("each_member", &Class::each_member);
-		p.method("marshal_new", &Class::marshal_new);
+		p.method("serial_new", &Class::serial_new);
+		p.method("each_inherited_class", &Class::each_inherited_class);
+	}
+
+	{
+		TClass<Instance> p("Instance");
+		p.method("instance_serial_save", &Instance::instance_serial_save);
+		p.method("instance_serial_load", &Instance::instance_serial_load);
 	}
 
 	{
@@ -51,6 +58,40 @@ int_t HaveInstanceVariables::find_core_inner(ClassCore* core){
 	XTAL_THROW(builtin().member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
 }
 
+Any InstanceImpl::instance_serial_save(const Class& cls){
+	ClassImpl* p = cls.impl();
+	CodeImpl* code = p->code().impl();
+	ClassCore* core = p->core();
+	if(core->instance_variable_size!=0){	
+		int_t pos = find_core(core);
+
+		Map insts;
+		for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
+			insts.set_at(code->symbol(core->instance_variable_symbol_offset+i), variables_[pos+i]);
+		}
+
+		return insts;
+	}
+	return null;
+}
+
+void InstanceImpl::instance_serial_load(const Class& cls, const Any& v){
+	if(!v)
+		return;
+
+	Map insts = cast<Map>(v);
+
+	ClassImpl* p = cls.impl();
+	CodeImpl* code = p->code().impl();
+	ClassCore* core = p->core();
+	if(core->instance_variable_size!=0){	
+		int_t pos = find_core(core);
+
+		for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
+			variables_[pos+i] = insts.at(code->symbol(core->instance_variable_symbol_offset+i));
+		}
+	}
+}
 
 IdMap::IdMap(){
 	size_ = 0;
@@ -171,8 +212,8 @@ int_t ClassImpl::arity(){
 	return member(Xid(initialize), this, null).arity();
 }
 
-void ClassImpl::marshal_new(const VMachine& vm){
-	if(const Any& ret = member(Xid(marshal_new), this, null)){
+void ClassImpl::serial_new(const VMachine& vm){
+	if(const Any& ret = member(Xid(serial_new), this, null)){
 		ret.call(vm);
 	}else{
 		XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
@@ -207,7 +248,6 @@ void ClassImpl::init_instance(HaveInstanceVariables* inst, const VMachine& vm, c
 		vm.setup_call(0);
 		vm.set_arg_this(self);
 		// 先頭のメソッドはインスタンス変数初期化関数
-		int i = members_.size();
 		members_[0].impl()->call(vm);
 		vm.cleanup_call();
 	}
@@ -310,7 +350,7 @@ bool ClassImpl::is_inherited(const Class& v){
 }
 
 
-void XClassImpl::call(const VMachine& vm){
+void XClassImpl::call(const VMachine& vm){;
 	Instance inst(Class(this));
 	init_instance(inst.impl(), vm, inst);
 	
@@ -337,13 +377,12 @@ void XClassImpl::call(const VMachine& vm){
 	}
 }
 
-void XClassImpl::marshal_new(const VMachine& vm){
+void XClassImpl::serial_new(const VMachine& vm){
 	Instance inst(Class(this));
 	init_instance(inst.impl(), vm, inst);
 	
-	
 	if(inst.impl()->empty()){
-		if(const Any& ret = bases_member(Xid(marshal_new))){
+		if(const Any& ret = bases_member(Xid(serial_new))){
 			ret.call(vm);
 			if(vm.result().type()==TYPE_BASE){
 				vm.result().impl()->set_class(Class(this));
@@ -352,7 +391,7 @@ void XClassImpl::marshal_new(const VMachine& vm){
 		}
 	}
 
-	inst.send(Xid(marshal_load), vm.arg(0));
+	inst.send(Xid(serial_load), vm.arg(0));
 	vm.return_result(inst);
 }
 
@@ -472,8 +511,8 @@ void Class::init_instance(HaveInstanceVariables* inst, const VMachine& vm, const
 	impl()->init_instance(inst, vm, self);
 }
 
-void Class::marshal_new(const VMachine& vm){
-	impl()->marshal_new(vm);
+void Class::serial_new(const VMachine& vm){
+	impl()->serial_new(vm);
 }
 
 void Class::inherit(const Class& md) const{
@@ -486,6 +525,10 @@ void Class::inherit_strict(const Class& md) const{
 
 bool Class::is_inherited(const Class& md) const{
 	return impl()->is_inherited(md);
+}
+
+Any Class::each_inherited_class() const{
+	return impl()->each_inherited_class();
 }
 
 const Any& Class::member(const ID& name) const{
@@ -513,5 +556,14 @@ Instance::Instance(const Class& c)
 	:Any(null){
 	new(*this) InstanceImpl(c);
 }
+
+Any Instance::instance_serial_save(const Class& cls){
+	return impl()->instance_serial_save(cls);
+}
+	
+void Instance::instance_serial_load(const Class& cls, const Any& v){
+	impl()->instance_serial_load(cls, v);
+}
+
 
 }

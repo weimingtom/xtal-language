@@ -106,6 +106,10 @@ public:
 		((AnyImpl*)get_class().impl())->inc_ref_count();	
 	}
 
+	Any instance_serial_save(const Class& cls);
+
+	void instance_serial_load(const Class& cls, const Any& v);
+
 	virtual HaveInstanceVariables* have_instance_variables(){
 		return this;
 	}
@@ -250,6 +254,10 @@ public:
 		return outer_; 
 	}
 
+	const Code& code(){ 
+		return code_; 
+	}
+
 	int_t block_size(){ 
 		return core_->variable_size; 
 	}
@@ -338,7 +346,7 @@ public:
 		new(ret) MembersIterImpl(Frame(this));
 		return ret;
 	}
-	
+
 protected:
 
 	Frame outer_;
@@ -372,7 +380,7 @@ public:
 	
 	virtual int_t arity();
 
-	virtual void marshal_new(const VMachine& vm);
+	virtual void serial_new(const VMachine& vm);
 
 	void init_instance(HaveInstanceVariables* inst, const VMachine& vm, const Any& self);
 
@@ -392,6 +400,14 @@ public:
 	
 	bool is_inherited(const Class& v);
 
+	Any each_inherited_class(){
+		Array bases;
+		for(size_t i=0; i<mixins_.size(); ++i){
+			bases.push_back(mixins_[i]);
+		}
+		return bases;
+	}
+	
 	ClassCore* core(){
 		return (ClassCore*)core_;
 	}
@@ -413,13 +429,14 @@ public:
 		
 	XClassImpl(const Frame& outer, const Code& code, ClassCore* core)
 		:ClassImpl(outer, code, core){
+		inherit(TClass<Instance>::get());
 	}
 
 public:
 
 	virtual void call(const VMachine& vm);
 
-	virtual void marshal_new(const VMachine& vm);
+	virtual void serial_new(const VMachine& vm);
 };
 
 class LibImpl : public ClassImpl{

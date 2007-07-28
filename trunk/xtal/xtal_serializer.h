@@ -8,10 +8,10 @@
 
 namespace xtal{
 
-class Marshal{
+class Serializer{
 public:
 
-	Marshal(const Stream& s);
+	Serializer(const Stream& s);
 
 	void serialize(const Any& v);
 

@@ -2,6 +2,7 @@
 #include "xtal.h"
 
 #include "xtal_codeimpl.h"
+#include "xtal_stream.h"
 
 namespace xtal{
 

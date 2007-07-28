@@ -22,15 +22,26 @@ public:
 	explicit Fun(FunImpl* p)
 		:Any((AnyImpl*)p){}
 
+public:
+
 	const Frame& outer() const;
+
 	const Code& code() const;
+	
 	int_t pc() const;
+	
 	const inst_t* source() const;
+	
 	const ID& param_name_at(size_t i) const;
+	
 	int_t param_size() const;
+	
 	bool used_args_object() const;
+	
 	int_t defined_file_line_number() const;
+	
 	FunCore* core() const;
+	
 	void set_core(FunCore* fc) const;
 	
 	FunImpl* impl() const{ return (FunImpl*)Any::impl(); }
@@ -64,8 +75,6 @@ public:
 	MethodImpl* impl() const{ return (MethodImpl*)Any::impl(); }
 };
 
-void InitFiber();
-
 class Fiber : public Fun{
 public:
 
@@ -77,6 +86,8 @@ public:
 	explicit Fiber(FiberImpl* p)
 		:Fun((FunImpl*)p){}
 		
+public:
+
 	Any reset() const;
 
 	void iter_next(const VMachine& vm) const;

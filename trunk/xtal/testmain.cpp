@@ -51,11 +51,13 @@ void debug_line(const debug::Info& info){
 	}
 }
 
-#include <crtdbg.h>
+
+
+//#include <crtdbg.h>
 
 int main(int argc, char** argv){
 
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	try{
 

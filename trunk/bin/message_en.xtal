@@ -34,7 +34,7 @@ export [
 	"Xtal Runtime Error 1005":"''%(name)s' takes at least %(min)s arguments (%(value)s given)",
 	"Xtal Runtime Error 1006":"''%(name)s' takes no fewer than %(min), nor more than %(max) arguments (%(value)s given)",
 	"Xtal Runtime Error 1007":"''%(name)s' takes no arguments (%(value)s given)",
-	"Xtal Runtime Error 1008":"mistake marshal_load",
+	"Xtal Runtime Error 1008":"'%(name)s' can't serialize object",
 	"Xtal Runtime Error 1009":"invalid compiled xtal script",
 	"Xtal Runtime Error 1010":"compile error",
 	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' is already defined member",

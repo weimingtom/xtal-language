@@ -1,6 +1,7 @@
 ﻿
 #include "xtal.h"
 #include "xtal_streamimpl.h"
+#include "xtal_serializer.h"
 
 namespace xtal{
 
@@ -169,22 +170,22 @@ uint_t Stream::size() const{
 }
 
 void Stream::serialize(const Any& v) const{
-	Marshal m(*this);
+	Serializer m(*this);
 	m.serialize(v);
 }
 
 Any Stream::deserialize() const{
-	Marshal m(*this);
+	Serializer m(*this);
 	return m.deserialize();
 }
 
 void Stream::xtalize(const Any& v) const{
-	Marshal m(*this);
+	Serializer m(*this);
 	m.xtalize(v);
 }
 
 Any Stream::dextalize() const{
-	//Marshal m(*this);
+	//Serializer m(*this);
 	//return m.load();
 	return null;
 }

@@ -11,7 +11,7 @@
 #include "xtal_fun.h"
 #include "xtal_codeimpl.h"
 #include "xtal_macro.h"
-#include "xtal_marshal.h"
+#include "xtal_serializer.h"
 #include "xtal_frameimpl.h"
 #include "xtal_constant.h"
 

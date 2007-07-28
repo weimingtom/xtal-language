@@ -26,6 +26,7 @@ export [
 	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
 	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
 	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が重複定義されました",
+	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました",
 	
 	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
 	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
@@ -34,7 +35,7 @@ export [
 	"Xtal Runtime Error 1005":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
 	"Xtal Runtime Error 1006":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上、%(max)以下の引数を受け取る関数に、%(value)s個の引数を渡しました。",
 	"Xtal Runtime Error 1007":"'%(name)s'関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1008":"'%(name)s'は不正です。marshalに失敗しました。",
+	"Xtal Runtime Error 1008":"'%(name)s'はシリアライズできません。",
 	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
 	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",
 	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' は既に定義されています。",

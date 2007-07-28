@@ -9,6 +9,7 @@
 #include "xtal_constant.h"
 #include "xtal_fun.h"
 #include "xtal_any.h"
+#include "xtal_mapimpl.h"
 
 
 namespace xtal{

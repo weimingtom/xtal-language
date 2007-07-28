@@ -1,8 +1,7 @@
 ﻿
 #include "xtal.h"
-#include "xtal_marshal.h"
+#include "xtal_serializer.h"
 #include "xtal_any.h"
-#include "xtal_marshal.h"
 #include "xtal_array.h"
 #include "xtal_frame.h"
 #include "xtal_cast.h"
@@ -18,21 +17,21 @@ enum{
 	MARSHAL_VERSION2 = 0,
 };
 
-Marshal::Marshal(const Stream& s)
+Serializer::Serializer(const Stream& s)
 	:stream_(s){
 }
 
-void Marshal::serialize(const Any& v){
+void Serializer::serialize(const Any& v){
 	clear();
 	inner_serialize(v);
 }
 
-Any Marshal::deserialize(){
+Any Serializer::deserialize(){
 	clear();
 	return inner_deserialize();
 }
 
-void Marshal::xtalize(const Any& v){
+void Serializer::xtalize(const Any& v){
 	clear();
 	stream_.put_s("v: [:];\n");
 	stream_.put_s("d: fun(n, m){ v[n] = m; return m; }\nexport ");
@@ -40,7 +39,7 @@ void Marshal::xtalize(const Any& v){
 	stream_.put_s(";\n");
 }
 
-bool Marshal::check_id(const ID& id){
+bool Serializer::check_id(const ID& id){
 	const char_t* str = id.c_str();
 	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
 		return true;
@@ -49,7 +48,7 @@ bool Marshal::check_id(const ID& id){
 	return false;
 }
 
-void Marshal::inner_serialize(const Any& v){
+void Serializer::inner_serialize(const Any& v){
 	
 	switch(v.type()){
 		XTAL_NODEFAULT;
@@ -215,7 +214,7 @@ void Marshal::inner_serialize(const Any& v){
 	}
 }
 
-Any Marshal::inner_deserialize(){
+Any Serializer::inner_deserialize(){
 	int_t op = stream_.get_u8();
 	switch(op){
 		XTAL_NODEFAULT;
@@ -397,7 +396,7 @@ Any Marshal::inner_deserialize(){
 	return null;
 }
 
-Any Marshal::demangle(int_t n){
+Any Serializer::demangle(int_t n){
 	Any ret = map_.at(n);
 	if(ret){ return ret; }
 	Xfor(v, ((String&)values_[n]).split("::")){
@@ -418,7 +417,7 @@ Any Marshal::demangle(int_t n){
 	return ret;
 }
 
-int_t Marshal::register_value(const Any& v, bool& added){
+int_t Serializer::register_value(const Any& v, bool& added){
 	Any ret = map_.at(v);
 	if(ret){
 		added = false;
@@ -429,14 +428,14 @@ int_t Marshal::register_value(const Any& v, bool& added){
 	return ret.ivalue();
 }
 
-int_t Marshal::append_value(const Any& v){
+int_t Serializer::append_value(const Any& v){
 	int_t ret = (int_t)values_.size();
 	map_.set_at(v, ret);
 	values_.push_back(v);
 	return ret;
 }
 
-void Marshal::inner_xtalize(const Any& v, int_t tab){
+void Serializer::inner_xtalize(const Any& v, int_t tab){
 	if(!v){
 		stream_.write("null", 4);
 		return;
@@ -549,7 +548,7 @@ void Marshal::inner_xtalize(const Any& v, int_t tab){
 	}
 }
 
-void Marshal::put_tab(int_t tab){
+void Serializer::put_tab(int_t tab){
 	while(tab--)
 		stream_.put_i8('\t');
 }

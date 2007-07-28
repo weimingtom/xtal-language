@@ -362,12 +362,12 @@ public:
 	}
 	
 	virtual uint_t tell(){
-		unsupported_error("InteractiveStream", "tell");
+		XTAL_THROW(unsupported_error("InteractiveStream", "tell"));
 		return 0;
 	}
 
 	virtual uint_t do_write(const void* p, uint_t size){
-		unsupported_error("InteractiveStream", "do_write");
+		XTAL_THROW(unsupported_error("InteractiveStream", "do_write"));
 		return 0;
 	}
 
@@ -392,7 +392,7 @@ public:
 	}
 
 	virtual void seek(int_t offset, int_t whence){
-
+		XTAL_THROW(unsupported_error("InteractiveStream", "seek"));
 	}
 
 	virtual void close(){

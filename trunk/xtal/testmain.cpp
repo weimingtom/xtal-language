@@ -90,6 +90,9 @@ int main(int argc, char** argv){
 			path = temp.join(sep).to_s();
 			add_get_text_map(load(path));
 		}
+
+		MemoryStream ms;
+		ms.serialize(compile_file("..\\xtal\\lib.xtal"));
 	
 		int c;
 		c = clock();
@@ -164,7 +167,7 @@ int main(int argc, char** argv){
 
 		for(int i=0; i<size; ++i){
 			printf("0x%02x, ", data[i]);
-			if((i%8)==7){
+			if((i%32)==31){
 				printf("\n");
 			}
 		}

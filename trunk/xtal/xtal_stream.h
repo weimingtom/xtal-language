@@ -65,16 +65,16 @@ public:
 	uint_t size() const;
 
 	/**
-	* @brief 
+	* @brief オブジェクトを直列化してストリームに書き込む
 	*
-	* @param obj 
+	* @param obj 直列化して保存したいオブジェクト
 	*/
 	void serialize(const Any& obj) const;
 
 	/**
-	* @brief 
+	* @brief 直列化されたオブジェクトをストリームから読み出す
 	*
-	* @return 
+	* @return 復元されたオブジェクト
 	*/	
 	Any deserialize() const;
 

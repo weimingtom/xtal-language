@@ -18,6 +18,7 @@ void InitCode(){
 
 CodeImpl::CodeImpl()
 	:FunImpl(null, null, null, 0), toplevel_("toplevel"), source_file_name_("<noname>"){
+	set_class(TClass<Code>::get());
 	set_object_name("<TopLevel>", 1, null);
 	toplevel_.inherit(builtin());
 	toplevel_.def("toplevel", toplevel_);

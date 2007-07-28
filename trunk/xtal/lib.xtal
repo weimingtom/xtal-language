@@ -1,0 +1,558 @@
+
+lib.append_load_path(".");
+
+
+builtin::Exception: class{
+	+ _backtrace;
+	+ _message;
+
+	initialize: method(message:""){
+		_message = message;
+		_backtrace = [];
+	}
+
+	append_backtrace: method(file, line, function_name: null){
+		if(function_name){
+			_backtrace.push_back(%t"\t%(file)s:%(line)d: in %(function_name)s"(
+				file:file,
+				line:line,
+				function_name:function_name));
+		}else{
+			_backtrace.push_back(%t"\t%(file)s:%(line)d:"(
+				file:file,
+				line:line));
+		}
+	}
+
+	to_s: method{
+		return this.class.object_name ~ ": " ~ _message.to_s ~ "\n" ~ _backtrace.each.join("\n");
+	}
+}
+
+builtin::StandardError: class(Exception){}
+builtin::RuntimeError: class(StandardError){}
+builtin::IOError: class(StandardError){}
+builtin::LogicError: class(StandardError){}
+builtin::CastError: class(StandardError){}
+builtin::ArgumentError: class(StandardError){}
+builtin::YieldError: class(StandardError){}
+builtin::InstanceVariableError: class(StandardError){}
+builtin::UnsupportedError: class(StandardError){}
+builtin::RedefinedError: class(StandardError){}
+builtin::AccessibilityError: class(StandardError){}
+builtin::AssertionFailed: class(StandardError){
+	initialize: method(message, expr){
+		Exception::initialize(%f"'%s':%s"(expr, message));
+	}
+}
+builtin::CompileError: class(StandardError){
+	initialize: method(message, errors){
+		Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));
+	}		
+}		
+
+
+Enumerator::reset: method(){ return this.each.reset; }
+Enumerator::collect: method(conv){ return this.each.collect(conv); }
+Enumerator::map: method(conv){ return this.each.map(conv); }
+Enumerator::select: method(pred){ return this.each.select(pred); }
+Enumerator::filter: method(pred){ return this.each.filter(pred); }
+Enumerator::to_a: method(){ return this.each.to_a; }
+Enumerator::join: method(sep:","){ return this.each.join(sep); }
+Enumerator::with_index: method(start:0){ return this.each.with_index(start); }
+Enumerator::iter_first: method(){ return this.each.iter_first; }
+Enumerator::cycle: method(){ return this.each.cycle; }
+Enumerator::break_if: method(pred){ return this.each.break_if(pred); }
+Enumerator::take: method(times){ return this.each.take(times); }
+Enumerator::zip: method(...){ return this.each.zip(...); }
+Enumerator::unique: method(pred:null){ return this.each.unique(pred); }
+Enumerator::chain: method(other){ return this.each.chain(other); }
+Enumerator::max_element: method(pred:null){ return this.each.max_element(pred); }
+Enumerator::min_element: method(pred:null){ return this.each.min_element(pred); }
+Enumerator::find: method(pred){ return this.each.find(pred); }
+Enumerator::inject: method(init, fn){ return this.each.inject(init, fn); }
+
+
+
+Iterator::to_a: method{
+	ret: [];
+	this{
+		ret.push_back(it); 
+	}
+	return ret;
+}
+
+Iterator::join: method(sep:","){
+	ret: MemoryStream();
+	if(sep==""){
+		this{
+			ret.put_s(it.to_s);
+		}
+	}else{
+		first: true;
+		this{
+			if(first){
+				first = false;
+			}else{
+				ret.put_s(sep);
+			}
+			ret.put_s(it.to_s);
+		}
+	}
+	return ret.to_s;
+}
+
+Iterator::with_index: method(start:0){
+	return fiber{
+		i: start;
+		this{
+			yield i, it;
+			++i;
+		}
+	}
+}
+
+Iterator::collect: method(conv){
+	return fiber{
+		this{
+			yield conv(it);
+		}
+	}
+}
+
+Iterator::map: Iterator::collect;
+
+Iterator::select: method(pred){
+	return fiber{
+		this{
+			if(pred(it)){
+				yield it;
+			}
+		}
+	}
+}
+
+Iterator::filter: Iterator::select;
+
+Iterator::each: method{ 
+	return this; 
+}
+	
+Iterator::break_if: method(pred){
+	return fiber{
+		this{
+			if(pred(it))
+				break;
+			yield it;
+		}
+	}
+}
+
+Iterator::take: method(times){
+	return fiber{
+		i: 0;
+		this{
+			if(i>=times)
+				break;
+			yield it;
+			i++;
+		}
+	}
+}
+
+Iterator::zip: method(...){
+	return builtin::zip(this, ...);
+}
+
+Iterator::unique: method(pred:null){
+	tag: once class{}
+	if(pred){
+		return fiber{
+			prev: tag;
+			this{
+				if(pred(it, prev)){
+					yield it;
+					prev = it;
+				}
+			}
+		}
+	}
+
+	return fiber{
+		prev: tag;
+		this{
+			if(prev!=it){
+				yield it;
+				prev = it;
+			}
+		}
+	}
+}
+
+builtin::chain: fun(...){
+	arg: ...;
+	return fiber{
+		arg.each_ordered_arg{
+			it{
+				yield it;
+			}
+		}
+	}
+}
+
+Iterator::chain: method(...){
+	return builtin::chain(this, ...);
+}
+
+Iterator::cycle: method{
+	return fiber{
+		temp: [];
+		this{
+			temp.push_back(it);
+			yield it;
+		}
+		
+		for(;;){
+			temp{
+				yield it;
+			}
+		}
+	}
+}
+
+Iterator::max_element: method(pred:null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item<it)
+				item = it;
+		}else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::min_element: method(pred:null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item>it)
+				item = it;
+		}else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::find: method(pred){
+	this{
+		if(pred(it)){
+			return it;
+		}
+	}
+}
+
+Iterator::inject: method(init, fn){
+	result: init;
+	this{
+		init = fn(result, it);
+	}
+	return init;
+}
+
+
+
+Class::each_ancestor: method fiber{
+	this.each_inherited_class{
+		yield it;
+		it.each_ancestor{
+			yield it;
+		}
+	}
+}
+
+Instance::serial_save: method{
+	ret: [:];
+	klass: this.class;
+	if(n: this.instance_serial_save(klass))
+		ret[klass.object_name] = n;
+
+	klass.each_ancestor{
+		if(n: this.instance_serial_save(it))
+			ret[it.object_name] = n;
+	}
+	return ret;
+}
+
+Instance::serial_load: method(v){
+	klass: this.class;
+	if(n: v[klass.object_name])
+		this.instance_serial_load(klass, n);
+
+	klass.each_ancestor{
+		if(n: v[it.object_name])
+			this.instance_serial_load(it, n);
+	}
+}
+
+Any::p: method{
+	println(this.to_s);
+	return this;
+}
+
+Any::to_s: method{
+	return this.object_name;
+}
+
+Int::times: method{
+	return fiber{
+		for(i: 0; i<this; ++i){
+			yield i;
+		}
+	}
+}
+
+Null::to_s: method{
+	return "null";
+}
+
+Null::iter_first: method{
+	return null;
+}
+
+True::to_s: method{
+	return "true";
+}
+
+False::to_s: method{
+	return "false";
+}
+
+builtin::range: fun(first, last, step:1){
+	if(step==1){
+		return fiber{
+			for(i:first; i<last; i++){
+				yield i;
+			}
+		}
+	}else{
+		return fiber{
+			for(i:first; i<last; i+=step){
+				yield i;
+			}
+		}
+	}
+}
+
+builtin::load: fun(file_name, ...){
+	code: compile_file(file_name);
+	return code(...);
+}
+
+Arguments::each: method{
+	return fiber{ 
+		this.each_ordered_arg.with_index{ |i, v|
+			yield i, v;
+		}
+		this.each_named_arg{ |i, v|
+			yield i, v;
+		}
+	}
+}
+
+Arguments::each_pair: Arguments::each;
+
+Arguments::pairs: method(){
+	return this.each.to_a;
+}
+
+Arguments::ordered_args: method(){
+	return this.each_ordered_arg.to_a;
+}
+
+Arguments::named_args: method(){
+	return this.each_named_arg.to_a;
+}
+
+Map::pairs: method(){
+	return this.each_pair.to_a;
+}
+
+Map::values: method(){
+	return this.each_value.to_a;
+}
+
+Map::keys: method(){
+	return this.each_key.to_a;
+}
+
+Fun::call: method(...){
+	return this(...);
+}
+
+builtin::open: fun(file_name, mode: "r"){
+	ret: null;
+	try{
+		ret = FileStream(file_name, mode);
+	}catch(e){
+		ret = null;
+	}
+	return ret;
+}
+
+Mutex::iter_first: method{
+	this.lock;
+	return this;
+}
+
+Mutex::iter_next: method{
+	this.unlock;
+	return null;
+}
+
+Mutex::iter_break: method{
+	this.unlock;
+	return null;
+}
+
+
+
+Int::op_add: method(rhs){ return rhs.op_add_r_Int(this); }
+Int::op_add_assign: Int::op_add;
+Int::op_sub: method(rhs){ return rhs.op_sub_r_Int(this); }
+Int::op_sub_assign: Int::op_sub;
+Int::op_cat: method(rhs){ return rhs.op_cat_r_Int(this); }
+Int::op_cat_assign: Int::op_cat;
+Int::op_mul: method(rhs){ return rhs.op_mul_r_Int(this); }
+Int::op_mul_assign: Int::op_mul;
+Int::op_div: method(rhs){ return rhs.op_div_r_Int(this); }
+Int::op_div_assign: Int::op_div;
+Int::op_mod: method(rhs){ return rhs.op_mod_r_Int(this); }
+Int::op_mod_assign: Int::op_mod;
+Int::op_and: method(rhs){ return rhs.op_and_r_Int(this); }
+Int::op_and_assign: Int::op_and;
+Int::op_or: method(rhs){ return rhs.op_or_r_Int(this); }
+Int::op_or_assign: Int::op_or;
+Int::op_xor: method(rhs){ return rhs.op_xor_r_Int(this); }
+Int::op_xor_assign: Int::op_xor;
+Int::op_shr: method(rhs){ return rhs.op_shr_r_Int(this); }
+Int::op_shr_assign: Int::op_shr;
+Int::op_shl: method(rhs){ return rhs.op_shl_r_Int(this); }
+Int::op_shl_assign: Int::op_shl;
+Int::op_ushr: method(rhs){ return rhs.op_ushr_r_Int(this); }
+Int::op_ushr_assign: Int::op_ushr;
+Int::op_eq: method(rhs){ return rhs.op_eq_r_Int(this); }
+Int::op_eq_assign: Int::op_eq;
+Int::op_lt: method(rhs){ return rhs.op_lt_r_Int(this); }
+Int::op_lt_assign: Int::op_lt;
+
+
+
+Float::op_add: method(rhs){ return rhs.op_add_r_Float(this); }
+Float::op_add_assign: Float::op_add;
+Float::op_sub: method(rhs){ return rhs.op_sub_r_Float(this); }
+Float::op_sub_assign: Float::op_sub;
+Float::op_cat: method(rhs){ return rhs.op_cat_r_Float(this); }
+Float::op_cat_assign: Float::op_cat;
+Float::op_mul: method(rhs){ return rhs.op_mul_r_Float(this); }
+Float::op_mul_assign: Float::op_mul;
+Float::op_div: method(rhs){ return rhs.op_div_r_Float(this); }
+Float::op_div_assign: Float::op_div;
+Float::op_mod: method(rhs){ return rhs.op_mod_r_Float(this); }
+Float::op_mod_assign: Float::op_mod;
+Float::op_and: method(rhs){ return rhs.op_and_r_Float(this); }
+Float::op_and_assign: Float::op_and;
+Float::op_or: method(rhs){ return rhs.op_or_r_Float(this); }
+Float::op_or_assign: Float::op_or;
+Float::op_xor: method(rhs){ return rhs.op_xor_r_Float(this); }
+Float::op_xor_assign: Float::op_xor;
+Float::op_shr: method(rhs){ return rhs.op_shr_r_Float(this); }
+Float::op_shr_assign: Float::op_shr;
+Float::op_shl: method(rhs){ return rhs.op_shl_r_Float(this); }
+Float::op_shl_assign: Float::op_shl;
+Float::op_ushr: method(rhs){ return rhs.op_ushr_r_Float(this); }
+Float::op_ushr_assign: Float::op_ushr;
+Float::op_eq: method(rhs){ return rhs.op_eq_r_Float(this); }
+Float::op_eq_assign: Float::op_eq;
+Float::op_lt: method(rhs){ return rhs.op_lt_r_Float(this); }
+Float::op_lt_assign: Float::op_lt;
+
+
+
+Int::op_pos: method(){ return this; }
+Int::op_neg: method(){ return -this; }
+Int::op_com: method(){ return ~this; }
+Int::op_inc: method(){ return this + 1; }
+Int::op_dec: method(){ return this - 1; }
+
+Int::op_add_r_Int: method(lhs){ return lhs + this; }
+Int::op_sub_r_Int: method(lhs){ return lhs - this; }
+Int::op_mul_r_Int: method(lhs){ return lhs * this; }
+Int::op_div_r_Int: method(lhs){ return lhs / this; }
+Int::op_mod_r_Int: method(lhs){ return lhs % this; }
+Int::op_or_r_Int: method(lhs){ return lhs | this; }
+Int::op_and_r_Int: method(lhs){ return lhs & this; }
+Int::op_xor_r_Int: method(lhs){ return lhs ^ this; }
+Int::op_shr_r_Int: method(lhs){ return lhs >> this; }
+Int::op_shl_r_Int: method(lhs){ return lhs << this; }
+Int::op_ushr_r_Int: method(lhs){ return lhs >>> this; }
+Int::op_eq_r_Int: method(lhs){ return lhs == this; }
+Int::op_lt_r_Int: method(lhs){ return lhs < this; }
+
+Int::op_add_r_Float: method(lhs){ return lhs + this; }
+Int::op_sub_r_Float: method(lhs){ return lhs - this; }
+Int::op_mul_r_Float: method(lhs){ return lhs * this; }
+Int::op_div_r_Float: method(lhs){ return lhs / this; }
+Int::op_mod_r_Float: method(lhs){ return lhs % this; }
+Int::op_eq_r_Float: method(lhs){ return lhs == this; }
+Int::op_lt_r_Float: method(lhs){ return lhs < this; }
+
+
+
+Float::op_pos: method(){ return this; }
+Float::op_neg: method(){ return -this; }
+Float::op_inc: method(){ return this + 1; }
+Float::op_dec: method(){ return this - 1; }
+
+Float::op_add_r_Int: method(lhs){ return lhs + this; }
+Float::op_sub_r_Int: method(lhs){ return lhs - this; }
+Float::op_mul_r_Int: method(lhs){ return lhs * this; }
+Float::op_div_r_Int: method(lhs){ return lhs / this; }
+Float::op_mod_r_Int: method(lhs){ return lhs % this; }
+Float::op_eq_r_Int: method(lhs){ return lhs == this; }
+Float::op_lt_r_Int: method(lhs){ return lhs < this; }
+
+Float::op_add_r_Float: method(lhs){ return lhs + this; }
+Float::op_sub_r_Float: method(lhs){ return lhs - this; }
+Float::op_mul_r_Float: method(lhs){ return lhs * this; }
+Float::op_div_r_Float: method(lhs){ return lhs / this; }
+Float::op_mod_r_Float: method(lhs){ return lhs % this; }
+Float::op_eq_r_Float: method(lhs){ return lhs == this; }
+Float::op_lt_r_Float: method(lhs){ return lhs < this; }
+

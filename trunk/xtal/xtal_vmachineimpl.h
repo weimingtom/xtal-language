@@ -360,7 +360,31 @@ public:
 	}
 
 	void execute_inner(const inst_t* start);
-	
+
+	void execute(FunImpl* fun, const inst_t* start_pc){
+		setup_call(0);
+		carry_over(fun);
+		const inst_t* temp;
+
+		{
+			FunFrame& f = ff();
+
+			temp = f.poped_pc;
+			f.poped_pc = &end_code_;
+			execute_inner(start_pc ? start_pc : f.called_pc);
+		}
+
+		fun_frames_.upsize(1);
+
+		{
+			FunFrame& f = ff();
+
+			f.poped_pc = temp;
+			f.called_pc = &cleanup_call_code_;
+		}
+
+	}
+
 public:
 
 	const inst_t* resume_pc(){ 

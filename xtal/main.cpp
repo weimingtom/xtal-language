@@ -51,6 +51,7 @@ int main(int argc, char** argv){
 		{
 			String path(argv[0]);
 
+			path.p();
 
 #ifdef WIN32
 			String sep("\\");

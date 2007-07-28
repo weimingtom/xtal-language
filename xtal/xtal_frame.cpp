@@ -326,8 +326,8 @@ void ClassImpl::set_member(const ID& name, const Any& value, const Any& ns){
 	if(!it){
 		XTAL_THROW(builtin().member("RuntimeError")("undefined"));
 	}else{
-		members_.push_back(value);
-		value.set_object_name(name, object_name_force(), this);
+		members_[it->num] = value;
+		//value.set_object_name(name, object_name_force(), this);
 	}
 
 	global_mutate_count++;

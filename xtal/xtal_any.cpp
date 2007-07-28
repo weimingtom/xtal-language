@@ -158,6 +158,7 @@ void initialize(){
 
 	TClass<String>();
 	TClass<Null>();
+	TClass<Nop>();
 	TClass<True>();
 	TClass<False>();
 	TClass<Int>();

@@ -45,13 +45,11 @@ bool Marshal::check_id(const ID& id){
 	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
 		return true;
 	}
-	XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")));
+	XTAL_THROW(builtin().member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))));
 	return false;
 }
 
 void Marshal::inner_serialize(const Any& v){
-
-	const Class& cls = v.get_class();
 	
 	switch(v.type()){
 		XTAL_NODEFAULT;
@@ -91,6 +89,7 @@ void Marshal::inner_serialize(const Any& v){
 		}
 	}
 
+	const Class& cls = v.get_class();
 	bool added = false;
 	int_t num = register_value(v, added);
 	if(added){

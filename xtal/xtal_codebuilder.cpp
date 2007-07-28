@@ -56,15 +56,15 @@ Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 }
 
 void CodeBuilder::interactive_compile(){
-	/*
 	result_ = Code();
 	p_ = result_.impl();
 	p_->source_file_name_ = "<ix>";
-
 	p_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	fun_frame_begin(true, 0, 0, 0);
+	Vars vars;
+	vars.on_heap = true;
+	fun_begin(&vars, true, 0, 0, 0);
 
 	Stream stream;
 	new(stream) InteractiveStreamImpl();
@@ -110,7 +110,6 @@ void CodeBuilder::interactive_compile(){
 			com_->errors.clear();
 		}
 	}
-	*/
 }
 
 

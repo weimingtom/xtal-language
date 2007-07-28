@@ -25,7 +25,7 @@ namespace xtal{
 #include "xtal_frame.h"
 #include "xtal_userdata.h"
 #include "xtal_cast.h"
-#include "xtal_marshal.h"
 #include "xtal_thread.h"
 #include "xtal_ch.h"
+#include "xtal_stream.h"
 

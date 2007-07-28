@@ -91,6 +91,11 @@ public:
 
 	template<class T>
 	void put_inst(const T& t){
+
+		if(t.op==255){
+			com_->error(line(), Xt("Xtal Compile Error 1027"));
+		}
+
 		size_t cur = p_->code_.size();
 		size_t sz = sizeof(T);
 		p_->code_.resize(cur+sz/sizeof(inst_t));

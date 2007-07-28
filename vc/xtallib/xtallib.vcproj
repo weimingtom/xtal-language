@@ -212,11 +212,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_marshal.cpp"
+				RelativePath="..\..\xtal\xtal_parser.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_parser.cpp"
+				RelativePath="..\..\xtal\xtal_serializer.cpp"
 				>
 			</File>
 			<File
@@ -354,11 +354,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_marshal.h"
+				RelativePath="..\..\xtal\xtal_parser.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_parser.h"
+				RelativePath="..\..\xtal\xtal_serializer.h"
 				>
 			</File>
 			<File

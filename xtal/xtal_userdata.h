@@ -24,7 +24,7 @@ public:
 	T* get(){ return (T*)&buf_[0]; }
 
 	static UserDataImpl<T>* from_this(T* p){
-		return (UserDataImpl<T>*)(((char*)p) - offsetof(UserDataImpl, i_));//(((char*)&((UserDataImpl*)0)->i_) - ((char*)(UserDataImpl*)0)));
+		return (UserDataImpl<T>*)(((char*)p) - offsetof(UserDataImpl, i_));
 	}
 	
 protected:
@@ -36,6 +36,7 @@ protected:
 		char buf_[sizeof(T)];
 	};
 };
+
 
 /**
 * @brief ユーザー定義型を保持するためのクラス
@@ -74,7 +75,7 @@ public:
 	T* get() const{ return impl()->get(); }
 
 	/**
-	* @brief T型をUserData<T>に変換する。
+	* @brief thisからUserData<T>を取り出す。
 	*/
 	static UserData<T> from_this(T* p){
 		return UserData<T>(UserDataImpl<T>::from_this(p));

@@ -3,7 +3,7 @@
 
 #include "xtal_string.h"
 #include "xtal_utilimpl.h"
-#include "xtal_marshal.h"
+#include "xtal_serializer.h"
 #include "xtal_ch.h"
 
 namespace xtal{

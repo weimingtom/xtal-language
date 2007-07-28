@@ -395,7 +395,6 @@ public:
 	*/
 	AnyImpl* impl() const{ return UncountedAny::impl(); }
 	
-public:
 private:
 
 	/**
@@ -405,8 +404,6 @@ private:
 	
 	/**
 	* @brief rawsend に名前変更した
-	*
-	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	void send(const ID& name, const VMachine& vm) const;
 

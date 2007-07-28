@@ -64,6 +64,14 @@ struct Inst{
 	operator const inst_t*() const{
 		return &op;
 	}
+
+	template<class T>
+	void checked_assign(T& ref, int v){
+		ref = v;
+		if(ref!=v){
+			op = 0xff;
+		}
+	}
 };
 
 #define XTAL_DEF_INST_0(N, InstName) \
@@ -92,9 +100,9 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-		Inst##InstName(MemberType1 m1){\
+		Inst##InstName(int m1){\
 			op = N;\
-			MemberName1 = m1;\
+			checked_assign(MemberName1, m1);\
 		}\
 		String inspect(){\
 			return format("" #InstName ": "\
@@ -117,8 +125,8 @@ struct Inst{
 		}\
 		Inst##InstName(MemberType1 m1, MemberType2 m2){\
 			op = N;\
-			MemberName1 = m1;\
-			MemberName2 = m2;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
 		}\
 		String inspect(){\
 			return format("" #InstName ": "\
@@ -143,9 +151,9 @@ struct Inst{
 		}\
 		Inst##InstName(MemberType1 m1, MemberType2 m2, MemberType3 m3){\
 			op = N;\
-			MemberName1 = m1;\
-			MemberName2 = m2;\
-			MemberName3 = m3;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
 		}\
 		String inspect(){\
 			return format("" #InstName ": "\
@@ -172,10 +180,10 @@ struct Inst{
 		}\
 		Inst##InstName(MemberType1 m1, MemberType2 m2, MemberType3 m3, MemberType4 m4){\
 			op = N;\
-			MemberName1 = m1;\
-			MemberName2 = m2;\
-			MemberName3 = m3;\
-			MemberName4 = m4;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
+			checked_assign(MemberName4, m4);\
 		}\
 		String inspect(){\
 			return format("" #InstName ": "\

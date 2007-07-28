@@ -1,6 +1,7 @@
 ﻿
 #include "xtal.h"
 #include "xtal_utilimpl.h"
+#include "xtal_stream.h"
 
 namespace xtal{
 

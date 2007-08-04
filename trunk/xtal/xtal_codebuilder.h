@@ -1,10 +1,11 @@
-﻿
+
 #pragma once
 
 #ifndef XTAL_NO_PARSER
 
 #include "xtal_expr.h"
 #include "xtal_parser.h"
+#include "xtal_macro.h"
 
 namespace xtal{
 
@@ -15,7 +16,7 @@ public:
 
 	~CodeBuilder();
 	
-	Code compile(const Stream& stream, const String& source_file_name = "anonymous");
+	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = "anonymous");
 
 	void interactive_compile();
 
@@ -35,7 +36,7 @@ public:
 	/**
 	* コンパイルエラーを取得する。
 	*/
-	Array errors();
+	ArrayPtr errors();
 		
 	/**
 	* 識別子が変数としてあるか探し、変数位置を返す。
@@ -96,10 +97,10 @@ public:
 			com_->error(line(), Xt("Xtal Compile Error 1027"));
 		}
 
-		size_t cur = p_->code_.size();
+		size_t cur = result_->code_.size();
 		size_t sz = sizeof(T);
-		p_->code_.resize(cur+sz/sizeof(inst_t));
-		memcpy(&p_->code_[cur], &t, sz);
+		result_->code_.resize(cur+sz/sizeof(inst_t));
+		memcpy(&result_->code_[cur], &t, sz);
 	}
 	
 	/**
@@ -107,7 +108,7 @@ public:
 	*/
 	int_t code_size();
 		
-	ID to_id(int_t i);
+	InternedStringPtr to_id(int_t i);
 
 	void assign_lhs(Expr* lhs);
 	void define_lhs(Expr* lhs);
@@ -168,8 +169,7 @@ private:
 	
 	Parser parser_;
 	LPCCommon* com_;
-	Code result_;
-	CodeImpl* p_;
+	CodePtr result_;
 	
 	PODStack<int_t> label_names_;
 	Stack<FunFrame> fun_frames_;

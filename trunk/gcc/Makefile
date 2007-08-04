@@ -1,9 +1,9 @@
 
 CC = g++
 
-OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_vmachineimpl.o xtal_cast.o xtal_marshal.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o 
+OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_cast.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o xtal_base.o xtal_serializer.o
 
-OPT_FLAGS = -O3 -DNDEBUG -pg
+OPT_FLAGS = -O3 -DNDEBUG -fno-rtti
 
 all: xtallib ix xtal
 
@@ -52,14 +52,8 @@ xtal_string.o: ../xtal/xtal_string.cpp
 xtal_vmachine.o: ../xtal/xtal_vmachine.cpp
 	$(CC) -c ../xtal/xtal_vmachine.cpp $(OPT_FLAGS)
 
-xtal_vmachineimpl.o: ../xtal/xtal_vmachineimpl.cpp
-	$(CC) -c ../xtal/xtal_vmachineimpl.cpp $(OPT_FLAGS)
-
 xtal_cast.o: ../xtal/xtal_cast.cpp
 	$(CC) -c ../xtal/xtal_cast.cpp $(OPT_FLAGS)
-
-xtal_marshal.o: ../xtal/xtal_marshal.cpp
-	$(CC) -c ../xtal/xtal_marshal.cpp $(OPT_FLAGS)
 
 xtal_stream.o: ../xtal/xtal_stream.cpp
 	$(CC) -c ../xtal/xtal_stream.cpp $(OPT_FLAGS)
@@ -73,7 +67,13 @@ xtal_thread.o: ../xtal/xtal_thread.cpp
 xtal_ch.o: ../xtal/xtal_ch.cpp
 	$(CC) -c ../xtal/xtal_ch.cpp $(OPT_FLAGS)
 
-		
+xtal_base.o: ../xtal/xtal_base.cpp
+	$(CC) -c ../xtal/xtal_base.cpp $(OPT_FLAGS)
+
+xtal_serializer.o: ../xtal/xtal_serializer.cpp
+	$(CC) -c ../xtal/xtal_serializer.cpp $(OPT_FLAGS)
+
+
 xtallib: $(OBJS)
 	ar r xtallib.a $(OBJS)
 	ranlib xtallib.a
@@ -95,5 +95,5 @@ prof: xtallib ../xtal/main.cpp
 	gprof ../bin/prof.exe gmon.out -p > prof.txt
 
 run: xtal
-	../xtal.exe ../test.xtal
+	../bin/xtal.exe ../test.xtal
 	

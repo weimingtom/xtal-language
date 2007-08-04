@@ -1,4 +1,4 @@
-﻿
+
 #include "xtal.h"
 
 #ifndef XTAL_NO_PARSER
@@ -6,6 +6,7 @@
 #include "xtal_any.h"
 #include "xtal_vmachine.h"
 #include "xtal_expr.h"
+#include "xtal_macro.h"
 
 namespace xtal{
 
@@ -154,7 +155,7 @@ void ExprBuilder::register_variable(int_t var){
 	for(TList<Var>::Node* p = vars_stack[0]->vars.head; p; p = p->next){
 		if(p->value.name == var){
 			common->error(line(), Xt("Xtal Compile Error 1026")(
-				Named("name", common->ident_table[var])
+				Named("name", common->ident_table->at(var))
 			));
 		}
 	}
@@ -366,7 +367,7 @@ void ExprBuilder::toplevel_export(int_t name, Expr* expr){
 	if(toplevel_stack.top()->export_expr){
 		common->error(line(), Xt("Xtal Compile Error 1019"));
 	}else{
-		int_t export_id = register_ident(ID("__EXPORT__"));
+		int_t export_id = register_ident(InternedStringPtr("__EXPORT__"));
 		
 		if(name){
 			toplevel_add(define(local(name), expr));

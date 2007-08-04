@@ -1,47 +1,14 @@
-﻿
+
 #pragma once
 
 #include "xtal_any.h"
 
 namespace xtal{
 
-class ThreadImpl : public AnyImpl{
+class Thread : public Base{
 public:
 
-	ThreadImpl(void (*fun)(const Any&), const Any& value);
-
-	virtual void join() = 0;
-	
-	Any value() const{
-		return value_;
-	}
-
-protected:
-
-	void begin_thread();
-
-protected:
-
-	virtual void visit_members(Visitor& m);
-
-	void (*fun_)(const Any&);
-	Any value_;
-};
-
-class MutexImpl : public AnyImpl{
-public:
-
-	MutexImpl();
-
-	virtual void lock() = 0;
-	virtual void unlock() = 0;
-};
-
-class Thread : public Any{
-public:
-	
 	class ID{
-		//ID
 		struct Dummy{ void* dummy[4]; } dummy_;
 		bool valid_;
 	public:
@@ -61,54 +28,45 @@ public:
 		bool is_valid() const{ return valid_; }
 	};
 
-	Thread(const Any& fun);
+public:
 
-	Thread(const Null&)
-		:Any(null){}
+	Thread(const AnyPtr& callback);
 
-	explicit Thread(ThreadImpl* p)
-		:Any((AnyImpl*)p){}
+public:
 
-	explicit Thread(const ThreadImpl* p)
-		:Any((AnyImpl*)p){}
-
-	void join() const;
+	virtual void join() = 0;
 	
-	static void yield();
-
-	ThreadImpl* impl() const{
-		return (ThreadImpl*)Any::impl();
+	AnyPtr callback(){
+		return callback_;
 	}
+
+protected:
+
+	void begin_thread();
+
+protected:
+
+	virtual void visit_members(Visitor& m);
+
+	AnyPtr callback_;
 };
 
-class Mutex : public Any{
+class Mutex : public Base{
 public:
 
 	Mutex();
 
-	Mutex(const Null&)
-		:Any(null){}
-
-	explicit Mutex(MutexImpl* p)
-		:Any((AnyImpl*)p){}
-
-	explicit Mutex(const MutexImpl* p)
-		:Any((AnyImpl*)p){}
-
-	void lock() const;
-
-	void unlock() const;
-		
-	MutexImpl* impl() const{
-		return (MutexImpl*)Any::impl();
-	}
+	virtual void lock() = 0;
+	virtual void unlock() = 0;
 };
+
 
 class ThreadLib{
 public:
 	virtual ~ThreadLib();
-	virtual ThreadImpl* create_thread(void (*fun)(const Any&), const Any& value) = 0;
-	virtual MutexImpl* create_mutex() = 0;
+	virtual void initialize() = 0;
+	virtual ThreadPtr create_thread(const AnyPtr& callback) = 0;
+	virtual MutexPtr create_mutex() = 0;
 	virtual void yield() = 0;
 	virtual void current_thread_id(Thread::ID& id) = 0;
 	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b) = 0;
@@ -133,11 +91,7 @@ void xunlock();
 extern bool thread_enabled_;
 extern int thread_counter_;
 
-inline int yield_thread(){
-	thread_counter_ = 500;
-	Thread::yield();
-	return 1;
-}
+int yield_thread();
 
 struct GlobalInterpreterLock{
 	GlobalInterpreterLock(int){ if(thread_enabled_)global_interpreter_lock(); }

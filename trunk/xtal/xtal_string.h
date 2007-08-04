@@ -1,18 +1,17 @@
-﻿
+
 #pragma once
 
 #include "xtal_any.h"
+#include "xtal_smartptr.h"
+#include "xtal_fwd.h"
 
 namespace xtal{
-	
-// fwd decl
-class StringImpl;
 
 /**
 * @brief 文字列
 *
 */
-class String : public Any{
+class String : public Base{
 public:
 
 	/**
@@ -47,7 +46,6 @@ public:
 	*/
 	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
 
-
 	struct delegate_memory_t{};
 
 	/**
@@ -59,18 +57,11 @@ public:
 	*/
 	String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t);
 
-	explicit String(StringImpl* p)
-		:Any((AnyImpl*)p){}
+	String(const char* str, uint_t len, uint_t hashcode);
+	
+	String(String* left, String* right);
 
-	explicit String(const StringImpl* p)
-		:Any((AnyImpl*)p){}
-
-	/**
-	* @brief 文字列を生成せず、nullを入れる
-	*
-	*/
-	String(const Null&)
-		:Any(null){}
+	~String();
 
 public:
 
@@ -78,124 +69,159 @@ public:
 	* @brief 0終端の文字列先頭のポインタを返す。
 	*
 	*/
-	const char* c_str() const;
+	const char* c_str();
 
 	/**
 	* @brief 文字列の長さを返す。
 	*
 	*/
-	uint_t size() const;
+	uint_t size();
 
 	/**
 	* @brief 文字列の長さを返す。
 	*
 	*/
-	uint_t length() const;
+	uint_t length();
 
 	/**
 	* @brief 部分文字列を取り出す。
 	*
 	*/
-	String slice(int_t first, int_t last) const;
+	StringPtr slice(int_t first, int_t last);
 
 	/*
 	* @brief 浅いコピーを返す。
 	*
 	*/
-	String clone() const;
+	StringPtr clone();
 
 	/**
 	* @brief 一意化した文字列を返す。
 	*
 	*/
-	ID intern() const;
+	InternedStringPtr intern();
 
 	/**
 	* @brief 一意化されているか返す。
 	*/
-	bool is_interned() const;
+	bool is_interned();
 
 	/**
 	* @brief 整数に変換した結果を返す。
 	*
 	*/ 
-	int_t to_i() const;
+	int_t to_i();
 	
 	/**
 	* @brief 浮動小数点数に変換した結果を返す。
 	*
 	*/ 
-	float_t to_f() const;
+	float_t to_f();
 	
 	/**
 	* @brief 自分自身を返す。
 	*
 	*/
-	String to_s() const;
+	StringPtr to_s();
 
 	/**
 	* @brief sepで区切った文字列を得られるイテレータを返す。
 	*
 	*/ 
-	Any split(const String& sep) const;
+	AnyPtr split(const StringPtr& sep);
 
 	/**
 	* @brief 連結する
 	*
 	*/
-	String cat(const String& v) const;
+	StringPtr cat(const StringPtr& v);
+
+	uint_t hashcode();
 
 public:
 
-	String op_cat_String(const String& v) const;
-	String op_mul_Int(int_t v) const;
+	StringPtr op_cat_String(const StringPtr& v);
+	StringPtr op_mul_Int(int_t v);
 
-	void op_cat(const VMachine& vm) const;
-	void op_eq(const VMachine& vm) const;
-	void op_lt(const VMachine& vm) const;
+	void op_cat(const VMachinePtr& vm);
+	void op_eq(const VMachinePtr& vm);
+	void op_lt(const VMachinePtr& vm);
 
-	String op_cat_r_String(const String& v) const;
-	bool op_eq_r_String(const String& v) const;
-	bool op_lt_r_String(const String& v) const;
+	StringPtr op_cat_r_String(const StringPtr& v);
+	bool op_eq_r_String(const StringPtr& v);
+	bool op_lt_r_String(const StringPtr& v);
 
-	StringImpl* impl() const{ return (StringImpl*)Any::impl(); }
+private:
+	
+	void common_init(uint_t len);
+
+	void became_unified();
+
+	void write_to_memory(String* p, char_t* memory, uint_t& pos);
+
+	virtual void visit_members(Visitor& m);
+
+	enum{
+		ROPE = 1<<0,
+		INTERNED = 1<<1,
+		NOFREE = 1<<2,
+		HASHED = 1<<3
+	};
+	uint_t flags_;
+
+	struct Str{
+		char* p;
+		uint_t hashcode;
+	};
+
+	struct Rope{
+		String* left;
+		String* right;
+	};
+
+	union{
+		Str str_;
+		Rope rope_;
+	};
+
+	uint_t size_;
 };
 
 /**
 * @brief 必ずインターン済みの文字列を保持するためのクラス
 *
 */
-class ID : public String{
+class InternedStringPtr : public StringPtr{
 public:
 	
 	/**
 	* @brief NUL終端のC文字列から構築する
 	*
 	*/	
-	ID(const char* name = "");
+	InternedStringPtr(const char* name = "");
 	
 	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	ID(const char* name, int_t size);
+	InternedStringPtr(const char* name, int_t size);
 
 	/**
 	* @brief Stringから構築する
 	*
 	*/
-	ID(const String& name);
+	InternedStringPtr(const StringPtr& name);
 		
 	/**
 	* @brief 文字列を生成せず、nullを入れる
 	*
 	*/
-	ID(const Null&)
-		:String(null){}
+	InternedStringPtr(const Null&)
+		:StringPtr(null){}
 };
 
-inline bool operator ==(const ID& a, const ID& b){ return a.raweq(b); }
-inline bool operator !=(const ID& a, const ID& b){ return !a.raweq(b); }
+inline bool operator ==(const InternedStringPtr& a, const InternedStringPtr& b){ return raweq(a, b); }
+inline bool operator !=(const InternedStringPtr& a, const InternedStringPtr& b){ return rawne(a, b); }
 
 struct Named2;
 
@@ -204,16 +230,16 @@ struct Named2;
 *
 */
 struct Named2{
-	ID name;
-	Any value;
+	InternedStringPtr name;
+	AnyPtr value;
 
 	Named2(const char* name)
 		:name(name){}
 
-	Named2(const ID& name)
+	Named2(const InternedStringPtr& name)
 		:name(name), value(null){}
 
-	Named2(const ID& name, const Any& value)
+	Named2(const InternedStringPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
 	Named2()
@@ -229,10 +255,10 @@ struct Named2{
 */
 struct Named : public Named2{
 
-	Named(const ID& name)
+	explicit Named(const InternedStringPtr& name)
 		:Named2(name){}
 
-	Named(const ID& name, const Any& value)
+	Named(const InternedStringPtr& name, const AnyPtr& value)
 		:Named2(name, value){}
 
 	Named(){}
@@ -244,93 +270,95 @@ struct Named : public Named2{
 * @brief 名前付き引数のトリックのためのクラス
 *
 */
-struct Key : public ID{
+struct Key : public InternedStringPtr{
 	
 	/**
-	* @brief IDから構築する
+	* @brief InternedStringPtrから構築する
 	*
 	*/
-	Key(const ID& name)
-		:ID(name){}
+	Key(const InternedStringPtr& name)
+		:InternedStringPtr(name){}
 	
 	/**
 	* @brief Key("key")=10という書式のための代入演算子
 	*
 	*/
-	Named operator =(const Any& value){
+	Named operator =(const AnyPtr& value){
 		return Named(*this, value);
 	}
 };
 
+void visit_members(Visitor& m, const Named& p);
+
 
 template<class Ch, class T>
-std::basic_ostream<Ch, T>& operator << (std::basic_ostream<Ch, T>& os, const Any& a){
-	String str = a.to_s(); 
-	os << str.c_str();
+std::basic_ostream<Ch, T>& operator << (std::basic_ostream<Ch, T>& os, const AnyPtr& a){
+	StringPtr str = a->to_s(); 
+	os << str->c_str();
 	return os;
 }
 	
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{ID{{
+//{InternedStringPtr{{
 namespace id{
-extern ID id__ARGS__;
-extern ID idop_or_assign;
-extern ID idop_add_assign;
-extern ID idop_shr;
-extern ID idop_ushr_assign;
-extern ID idop_call;
-extern ID idop_sub_assign;
-extern ID idop_lt;
-extern ID idop_eq;
-extern ID idop_mul;
-extern ID idop_neg;
-extern ID idserial_new;
-extern ID iditer_next;
-extern ID iditer_first;
-extern ID idtrue;
-extern ID idserial_save;
-extern ID idop_and_assign;
-extern ID idop_mod_assign;
-extern ID idop_div_assign;
-extern ID idop_or;
-extern ID idop_div;
-extern ID idlib;
-extern ID idop_cat_assign;
-extern ID idop_cat;
-extern ID idIOError;
-extern ID idserial_load;
-extern ID idfalse;
-extern ID idop_add;
-extern ID idop_cat_r_String;
-extern ID idop_dec;
-extern ID idop_inc;
-extern ID idop_ushr;
-extern ID idop_pos;
-extern ID idop_shr_assign;
-extern ID idop_mod;
-extern ID iditer_break;
-extern ID idop_eq_r_String;
-extern ID idstring;
-extern ID idinitialize;
-extern ID idop_set_at;
-extern ID idop_lt_r_String;
-extern ID idtest;
-extern ID idop_at;
-extern ID idop_shl_assign;
-extern ID idop_sub;
-extern ID idvalue;
-extern ID idop_clone;
-extern ID idop_com;
-extern ID idnew;
-extern ID idop_shl;
-extern ID idop_xor;
-extern ID idop_and;
-extern ID idsize;
-extern ID idop_xor_assign;
-extern ID idop_mul_assign;
+extern InternedStringPtr id__ARGS__;
+extern InternedStringPtr idop_or_assign;
+extern InternedStringPtr idop_add_assign;
+extern InternedStringPtr idop_shr;
+extern InternedStringPtr idop_ushr_assign;
+extern InternedStringPtr idop_call;
+extern InternedStringPtr idop_sub_assign;
+extern InternedStringPtr idop_lt;
+extern InternedStringPtr idop_eq;
+extern InternedStringPtr idop_mul;
+extern InternedStringPtr idop_neg;
+extern InternedStringPtr idserial_new;
+extern InternedStringPtr iditer_next;
+extern InternedStringPtr iditer_first;
+extern InternedStringPtr idtrue;
+extern InternedStringPtr idserial_save;
+extern InternedStringPtr idop_and_assign;
+extern InternedStringPtr idop_mod_assign;
+extern InternedStringPtr idop_div_assign;
+extern InternedStringPtr idop_or;
+extern InternedStringPtr idop_div;
+extern InternedStringPtr idlib;
+extern InternedStringPtr idop_cat_assign;
+extern InternedStringPtr idop_cat;
+extern InternedStringPtr idIOError;
+extern InternedStringPtr idserial_load;
+extern InternedStringPtr idfalse;
+extern InternedStringPtr idop_add;
+extern InternedStringPtr idop_cat_r_String;
+extern InternedStringPtr idop_dec;
+extern InternedStringPtr idop_inc;
+extern InternedStringPtr idop_ushr;
+extern InternedStringPtr idop_pos;
+extern InternedStringPtr idop_shr_assign;
+extern InternedStringPtr idop_mod;
+extern InternedStringPtr iditer_break;
+extern InternedStringPtr idop_eq_r_String;
+extern InternedStringPtr idstring;
+extern InternedStringPtr idinitialize;
+extern InternedStringPtr idop_set_at;
+extern InternedStringPtr idop_lt_r_String;
+extern InternedStringPtr idtest;
+extern InternedStringPtr idop_at;
+extern InternedStringPtr idop_shl_assign;
+extern InternedStringPtr idop_sub;
+extern InternedStringPtr idvalue;
+extern InternedStringPtr idop_clone;
+extern InternedStringPtr idop_com;
+extern InternedStringPtr idnew;
+extern InternedStringPtr idop_shl;
+extern InternedStringPtr idop_xor;
+extern InternedStringPtr idop_and;
+extern InternedStringPtr idsize;
+extern InternedStringPtr idop_xor_assign;
+extern InternedStringPtr idop_mul_assign;
 }
-//}}ID}
+//}}InternedStringPtr}
 
 
 

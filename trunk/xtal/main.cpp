@@ -1,6 +1,5 @@
-﻿
+
 #include "xtal.h"
-#include "xtal_vmachineimpl.h"
 
 using namespace xtal;
 
@@ -31,12 +30,12 @@ static void handle_argv(char** argv){
 	}
 
 	if(argv[i]!=0){
-		Array arg_list;
+		ArrayPtr arg_list(xnew<Array>());
 		const char *filename = argv[i++];
 		for(i=1; argv[i]!=0; i++){
-			arg_list.push_back(argv[i]);
+			arg_list->push_back(argv[i]);
 		}
-		builtin().def("argv", arg_list);
+		builtin()->def("argv", arg_list);
 		load(filename);
 	}
 }
@@ -49,29 +48,29 @@ int main(int argc, char** argv){
 		initialize();
 		
 		{
-			String path(argv[0]);
+			StringPtr path(argv[0]);
 
 #ifdef WIN32
-			String sep("\\");
+			StringPtr sep("\\");
 #else
-			String sep("/");
+			StringPtr sep("/");
 #endif
 
-			Array temp = cast<Array>(path.split(sep).send("to_a"));
-			temp.pop_back();
+			ArrayPtr temp = cast<ArrayPtr>(path->split(sep)->send("to_a"));
+			temp->pop_back();
 #ifdef WIN32
-			temp.push_back("message.xtal");
+			temp->push_back("message.xtal");
 #else
-			temp.push_back("message_en.xtal");
+			temp->push_back("message_en.xtal");
 #endif
-			path = temp.join(sep).to_s();
-			add_get_text_map(load(path));
+			path = temp->join(sep)->to_s();
+			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 
 		handle_argv(argv);
 
-	}catch(Any e){
-		fprintf(stderr, "%s\n", e.to_s().c_str());
+	}catch(AnyPtr e){
+		fprintf(stderr, "%s\n", e->to_s()->c_str());
 	}
 
 	uninitialize();

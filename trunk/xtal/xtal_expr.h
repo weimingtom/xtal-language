@@ -1,10 +1,8 @@
-﻿
+
 #pragma once
 
 #ifndef XTAL_NO_PARSER
 
-#include "xtal_codeimpl.h"
-#include "xtal_constant.h"
 #include "xtal_lexer.h"
 
 namespace xtal{
@@ -678,10 +676,10 @@ public:
 		return common->line;
 	}
 
-	int_t register_ident(const ID& ident){ return common->register_ident(ident); }
-	int_t register_value(const Any& v){ return common->register_value(v); }
-	int_t append_ident(const ID& ident){ return common->append_ident(ident); }
-	int_t append_value(const Any& v){ return common->append_value(v); }
+	int_t register_ident(const InternedStringPtr& ident){ return common->register_ident(ident); }
+	int_t register_value(const AnyPtr& v){ return common->register_value(v); }
+	int_t append_ident(const InternedStringPtr& ident){ return common->append_ident(ident); }
+	int_t append_value(const AnyPtr& v){ return common->append_value(v); }
 
 	LPCCommon* common;
 	RegionAlloc* alloc;

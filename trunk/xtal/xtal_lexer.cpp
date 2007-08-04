@@ -1,4 +1,4 @@
-﻿
+
 #include "xtal.h"
 
 #ifndef XTAL_NO_PARSER
@@ -7,6 +7,8 @@
 
 #include "xtal_lexer.h"
 #include "xtal_macro.h"
+#include "xtal_array.h"
+#include "xtal_stream.h"
 
 namespace xtal{
 
@@ -18,20 +20,22 @@ namespace xtal{
 LPCCommon::LPCCommon()
 	:errors(null), ident_table(null), ident_map(null), value_table(null), source_file_name(null){}
 	
-void LPCCommon::init(const String& file_name){
-	errors = Array();
-	ident_table = Array();
-	ident_map = Map();
-	value_table = Array();
+void LPCCommon::init(const StringPtr& file_name){
+	errors = xnew<Array>();
+	ident_table = xnew<Array>();
+	ident_map = xnew<Map>();
+	value_table = xnew<Array>();
+	once_table = xnew<Array>();
 	source_file_name = file_name;
 
-	register_ident(ID(""));
-	value_table.push_back(null);
+	register_ident(InternedStringPtr(""));
+	value_table->push_back(null);
+	once_table->push_back(nop);
 }
 
-void LPCCommon::error(int_t line, const Any& message){
-	if(errors.size()<10){
-		errors.push_back(Xf("%(file)s:%(line)d:%(message)")(
+void LPCCommon::error(int_t line, const AnyPtr& message){
+	if(errors->size()<10){
+		errors->push_back(Xf("%(file)s:%(line)d:%(message)")(
 			Named("file", source_file_name),
 			Named("line", line),
 			Named("message", message)
@@ -39,31 +43,36 @@ void LPCCommon::error(int_t line, const Any& message){
 	}
 }
 
-int_t LPCCommon::register_ident(const ID& ident){
-	if(Any pos = ident_map[ident]){ return pos.to_i(); }
-	ident_table.push_back(ident);
-	ident_map.set_at(ident, ident_table.size()-1);
-	return ident_table.size()-1;
+int_t LPCCommon::register_ident(const InternedStringPtr& ident){
+	if(AnyPtr pos = ident_map->at(ident)){ return pos->to_i(); }
+	ident_table->push_back(ident);
+	ident_map->set_at(ident, ident_table->size()-1);
+	return ident_table->size()-1;
 }
 
 
-int_t LPCCommon::register_value(const Any& v){
-	if(String str = as<String>(v)){
-		value_table.push_back(str.intern());
+int_t LPCCommon::register_value(const AnyPtr& v){
+	if(StringPtr str = as<StringPtr>(v)){
+		value_table->push_back(str->intern());
 	}else{
-		value_table.push_back(v);
+		value_table->push_back(v);
 	}
-	return value_table.size()-1;
+	return value_table->size()-1;
 }
 
-int_t LPCCommon::append_ident(const ID& ident){
-	ident_table.push_back(ident);
-	return ident_table.size()-1;
+int_t LPCCommon::append_ident(const InternedStringPtr& ident){
+	ident_table->push_back(ident);
+	return ident_table->size()-1;
 }
 
-int_t LPCCommon::append_value(const Any& v){
-	value_table.push_back(v);
-	return value_table.size()-1;
+int_t LPCCommon::append_value(const AnyPtr& v){
+	value_table->push_back(v);
+	return value_table->size()-1;
+}
+
+int_t LPCCommon::append_once(){
+	once_table->push_back(nop);
+	return once_table->size()-1;
 }
 
 Lexer::Lexer(){
@@ -73,47 +82,48 @@ Lexer::Lexer(){
 	mode_ = NORMAL_MODE;
 }
 
-void Lexer::init(const Stream& stream, const String& source_file_name){
+void Lexer::init(const StreamPtr& stream, const StringPtr& source_file_name){
 	reader_.set_stream(stream);
 	com_.init(source_file_name);
 	
-	keyword_map_.set_at(ID("if"), (int_t)Token::KEYWORD_IF);
-	keyword_map_.set_at(ID("for"), (int_t)Token::KEYWORD_FOR);
-	keyword_map_.set_at(ID("else"), (int_t)Token::KEYWORD_ELSE);
-	keyword_map_.set_at(ID("fun"), (int_t)Token::KEYWORD_FUN);
-	keyword_map_.set_at(ID("method"), (int_t)Token::KEYWORD_METHOD);
-	keyword_map_.set_at(ID("do"), (int_t)Token::KEYWORD_DO);
-	keyword_map_.set_at(ID("while"), (int_t)Token::KEYWORD_WHILE);
-	keyword_map_.set_at(ID("continue"), (int_t)Token::KEYWORD_CONTINUE);
-	keyword_map_.set_at(ID("break"), (int_t)Token::KEYWORD_BREAK);
-	keyword_map_.set_at(ID("fiber"), (int_t)Token::KEYWORD_FIBER);
-	keyword_map_.set_at(ID("yield"), (int_t)Token::KEYWORD_YIELD);
-	keyword_map_.set_at(ID("return"), (int_t)Token::KEYWORD_RETURN);
-	keyword_map_.set_at(ID("once"), (int_t)Token::KEYWORD_ONCE);
-	keyword_map_.set_at(ID("null"), (int_t)Token::KEYWORD_NULL);
-	keyword_map_.set_at(ID("false"), (int_t)Token::KEYWORD_FALSE);
-	keyword_map_.set_at(ID("true"), (int_t)Token::KEYWORD_TRUE);
-	keyword_map_.set_at(ID("nop"), (int_t)Token::KEYWORD_NOP);
-	keyword_map_.set_at(ID("xtal"), (int_t)Token::KEYWORD_XTAL);
-	keyword_map_.set_at(ID("try"), (int_t)Token::KEYWORD_TRY);
-	keyword_map_.set_at(ID("catch"), (int_t)Token::KEYWORD_CATCH);
-	keyword_map_.set_at(ID("finally"), (int_t)Token::KEYWORD_FINALLY);
-	keyword_map_.set_at(ID("throw"), (int_t)Token::KEYWORD_THROW);
-	keyword_map_.set_at(ID("class"), (int_t)Token::KEYWORD_CLASS);
-	keyword_map_.set_at(ID("import"), (int_t)Token::KEYWORD_IMPORT);
-	keyword_map_.set_at(ID("callee"), (int_t)Token::KEYWORD_CALLEE);
-	keyword_map_.set_at(ID("this"), (int_t)Token::KEYWORD_THIS);
-	keyword_map_.set_at(ID("current_context"), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
-	keyword_map_.set_at(ID("dofun"), (int_t)Token::KEYWORD_DOFUN);
-	keyword_map_.set_at(ID("is"), (int_t)Token::KEYWORD_IS);
-	keyword_map_.set_at(ID("export"), (int_t)Token::KEYWORD_EXPORT);
-	keyword_map_.set_at(ID("unittest"), (int_t)Token::KEYWORD_UNITTEST);
-	keyword_map_.set_at(ID("assert"), (int_t)Token::KEYWORD_ASSERT);
-	keyword_map_.set_at(ID("pure"), (int_t)Token::KEYWORD_PURE);
-	keyword_map_.set_at(ID("nobreak"), (int_t)Token::KEYWORD_NOBREAK);
-	keyword_map_.set_at(ID("switch"), (int_t)Token::KEYWORD_SWITCH);
-	keyword_map_.set_at(ID("case"), (int_t)Token::KEYWORD_CASE);
-	keyword_map_.set_at(ID("default"), (int_t)Token::KEYWORD_DEFAULT);
+	keyword_map_ = xnew<Map>();
+	keyword_map_->set_at(InternedStringPtr("if"), (int_t)Token::KEYWORD_IF);
+	keyword_map_->set_at(InternedStringPtr("for"), (int_t)Token::KEYWORD_FOR);
+	keyword_map_->set_at(InternedStringPtr("else"), (int_t)Token::KEYWORD_ELSE);
+	keyword_map_->set_at(InternedStringPtr("fun"), (int_t)Token::KEYWORD_FUN);
+	keyword_map_->set_at(InternedStringPtr("method"), (int_t)Token::KEYWORD_METHOD);
+	keyword_map_->set_at(InternedStringPtr("do"), (int_t)Token::KEYWORD_DO);
+	keyword_map_->set_at(InternedStringPtr("while"), (int_t)Token::KEYWORD_WHILE);
+	keyword_map_->set_at(InternedStringPtr("continue"), (int_t)Token::KEYWORD_CONTINUE);
+	keyword_map_->set_at(InternedStringPtr("break"), (int_t)Token::KEYWORD_BREAK);
+	keyword_map_->set_at(InternedStringPtr("fiber"), (int_t)Token::KEYWORD_FIBER);
+	keyword_map_->set_at(InternedStringPtr("yield"), (int_t)Token::KEYWORD_YIELD);
+	keyword_map_->set_at(InternedStringPtr("return"), (int_t)Token::KEYWORD_RETURN);
+	keyword_map_->set_at(InternedStringPtr("once"), (int_t)Token::KEYWORD_ONCE);
+	keyword_map_->set_at(InternedStringPtr("null"), (int_t)Token::KEYWORD_NULL);
+	keyword_map_->set_at(InternedStringPtr("false"), (int_t)Token::KEYWORD_FALSE);
+	keyword_map_->set_at(InternedStringPtr("true"), (int_t)Token::KEYWORD_TRUE);
+	keyword_map_->set_at(InternedStringPtr("nop"), (int_t)Token::KEYWORD_NOP);
+	keyword_map_->set_at(InternedStringPtr("xtal"), (int_t)Token::KEYWORD_XTAL);
+	keyword_map_->set_at(InternedStringPtr("try"), (int_t)Token::KEYWORD_TRY);
+	keyword_map_->set_at(InternedStringPtr("catch"), (int_t)Token::KEYWORD_CATCH);
+	keyword_map_->set_at(InternedStringPtr("finally"), (int_t)Token::KEYWORD_FINALLY);
+	keyword_map_->set_at(InternedStringPtr("throw"), (int_t)Token::KEYWORD_THROW);
+	keyword_map_->set_at(InternedStringPtr("class"), (int_t)Token::KEYWORD_CLASS);
+	keyword_map_->set_at(InternedStringPtr("import"), (int_t)Token::KEYWORD_IMPORT);
+	keyword_map_->set_at(InternedStringPtr("callee"), (int_t)Token::KEYWORD_CALLEE);
+	keyword_map_->set_at(InternedStringPtr("this"), (int_t)Token::KEYWORD_THIS);
+	keyword_map_->set_at(InternedStringPtr("current_context"), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
+	keyword_map_->set_at(InternedStringPtr("dofun"), (int_t)Token::KEYWORD_DOFUN);
+	keyword_map_->set_at(InternedStringPtr("is"), (int_t)Token::KEYWORD_IS);
+	keyword_map_->set_at(InternedStringPtr("export"), (int_t)Token::KEYWORD_EXPORT);
+	keyword_map_->set_at(InternedStringPtr("unittest"), (int_t)Token::KEYWORD_UNITTEST);
+	keyword_map_->set_at(InternedStringPtr("assert"), (int_t)Token::KEYWORD_ASSERT);
+	keyword_map_->set_at(InternedStringPtr("pure"), (int_t)Token::KEYWORD_PURE);
+	keyword_map_->set_at(InternedStringPtr("nobreak"), (int_t)Token::KEYWORD_NOBREAK);
+	keyword_map_->set_at(InternedStringPtr("switch"), (int_t)Token::KEYWORD_SWITCH);
+	keyword_map_->set_at(InternedStringPtr("case"), (int_t)Token::KEYWORD_CASE);
+	keyword_map_->set_at(InternedStringPtr("default"), (int_t)Token::KEYWORD_DEFAULT);
 }
 
 LPCCommon* Lexer::common(){
@@ -136,7 +146,7 @@ int_t Reader::read(){
 
 int_t Reader::peek(){
 	if(pos_==read_){
-		read_ += stream_.read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
+		read_ += stream_->read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
 		if(pos_==read_){
 			return -1;
 		}
@@ -168,34 +178,34 @@ void Reader::set_position(int_t pos){
 }
 
 	
-String Lexer::token2str(const Token& t){
+StringPtr Lexer::token2str(const Token& t){
 	switch(t.type()){
 		XTAL_NODEFAULT;
 		
 		XTAL_CASE(Token::TYPE_KEYWORD){
-			Xfor2(key, value, keyword_map_.send("each_pair")){
-				if(value.ivalue()==t.ivalue()){
-					return String("Keyword");
+			Xfor2(key, value, keyword_map_->each_pair()){
+				if(ivalue(value)==t.ivalue()){
+					return xnew<String>("Keyword");
 				}
 			}
-			return String("Unknown Keyword");
+			return xnew<String>("Unknown Keyword");
 		}
 
 		XTAL_CASE(Token::TYPE_IDENT){
-			return cast<String>(Xf("Identifier %s")(com_.ident_table[t.ivalue()]));
+			return cast<StringPtr>(Xf("Identifier %s")(com_.ident_table->at(t.ivalue())));
 		}
 				
 		XTAL_CASE(Token::TYPE_INT){
-			return cast<String>(Xf("Number %s")(t.ivalue()));
+			return cast<StringPtr>(Xf("Number %s")(t.ivalue()));
 		}
 		
 		XTAL_CASE(Token::TYPE_FLOAT){
-			return cast<String>(Xf("Number %s")(t.fvalue()));
+			return cast<StringPtr>(Xf("Number %s")(t.fvalue()));
 		}
 
 		XTAL_CASE(Token::TYPE_TOKEN){
 			if(t.ivalue()==-1){
-				return String("End of File");
+				return xnew<String>("End of File");
 			}else{
 				char_t buf[5];
 				buf[0] = (char_t)(t.ivalue() & 0xff);
@@ -203,21 +213,21 @@ String Lexer::token2str(const Token& t){
 				buf[2] = (char_t)(t.ivalue()>>16 & 0xff);
 				buf[3] = (char_t)(t.ivalue()>>24 & 0xff);
 				buf[4] = 0;
-				return String(buf);
+				return xnew<String>(buf);
 			}
 		}
 	}
 
-	return String();
+	return xnew<String>("");
 }
 
-ID Lexer::keyword2id(int_t v){
-	Xfor2(key, value, keyword_map_.each_pair()){
-		if(value.ivalue()==v){
-			return (const String&)key;
+InternedStringPtr Lexer::keyword2id(int_t v){
+	Xfor2(key, value, keyword_map_->each_pair()){
+		if(ivalue(value)==v){
+			return cast<StringPtr>(key);
 		}
 	}
-	return ID("");
+	return InternedStringPtr("");
 }
 
 Token Lexer::read(){
@@ -294,9 +304,9 @@ int_t Lexer::parse_ident(){
 		while(len--)
 			buf += read_from_reader();
 	}
-	ID id(buf);
-	if(Any ret = keyword_map_[id]){
-		return -ret.ivalue();
+	InternedStringPtr id(buf.c_str());
+	if(AnyPtr ret = keyword_map_->at(id)){
+		return -ret->to_i();
 	}
 	return com_.register_ident(id);
 }

@@ -8,7 +8,7 @@
 	}catch(e){
 		temp = e;
 	}
-	assert temp!=null;
+	assert temp!==null;
 }
 
 Foo: class{

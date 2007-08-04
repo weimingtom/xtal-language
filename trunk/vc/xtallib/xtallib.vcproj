@@ -168,6 +168,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_base.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_cast.cpp"
 				>
 			</File>
@@ -239,10 +243,6 @@
 				RelativePath="..\..\xtal\xtal_vmachine.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_vmachineimpl.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="リソース ファイル"
@@ -274,7 +274,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_arrayimpl.h"
+				RelativePath="..\..\xtal\xtal_base.h"
 				>
 			</File>
 			<File
@@ -298,14 +298,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_codeimpl.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_constant.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_expr.h"
 				>
 			</File>
@@ -314,15 +306,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_frameimpl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_fun.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_funimpl.h"
 				>
 			</File>
 			<File
@@ -350,15 +334,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_mapimpl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_parser.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_serializer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_smartptr.h"
 				>
 			</File>
 			<File
@@ -370,15 +354,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_streamimpl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_string.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_stringimpl.h"
 				>
 			</File>
 			<File
@@ -386,27 +362,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_userdata.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_utilimpl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_utility.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\xtal\xtal_visitor.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xtal\xtal_vmachine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_vmachineimpl.h"
 				>
 			</File>
 		</Filter>

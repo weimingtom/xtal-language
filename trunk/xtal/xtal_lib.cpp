@@ -1,4 +1,4 @@
-﻿
+
 #include "xtal.h"
 
 #include <iostream>
@@ -9,60 +9,61 @@
 
 #include "xtal_codebuilder.h"
 #include "xtal_fun.h"
-#include "xtal_codeimpl.h"
+#include "xtal_code.h"
 #include "xtal_macro.h"
 #include "xtal_serializer.h"
-#include "xtal_frameimpl.h"
-#include "xtal_constant.h"
+#include "xtal_frame.h"
+#include "xtal_stream.h"
+#include "xtal_smartptr.h"
 
 namespace xtal{
 
 #ifndef XTAL_NO_PARSER
 
-Code compile_file(const String& file_name){
+CodePtr compile_file(const StringPtr& file_name){
 	CodeBuilder cb;
-	FileStream fs(file_name, "r");
-	if(Code fun = cb.compile(fs, file_name)){
-		fs.close();
+	FileStreamPtr fs(xnew<FileStream>(file_name, "r"));
+	if(CodePtr fun = cb.compile(fs, file_name)){
+		fs->close();
 		return fun;
 	}
-	fs.close();
-	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()));
+	fs->close();
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()));
 	return null;
 }
 
-Code compile(const String& source){
+CodePtr compile(const StringPtr& source){
 	CodeBuilder cb;
-	MemoryStream ms(source.c_str(), source.size());
-	if(Code fun =  cb.compile(ms, "<eval>")){
+	MemoryStreamPtr ms(xnew<MemoryStream>(source->c_str(), source->size()));
+	if(CodePtr fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
-	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()));
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()));
 	return null;
 }
 
-Any load(const String& file_name){
-	Any ret = compile_file(file_name)();
+AnyPtr load(const StringPtr& file_name){
+	AnyPtr ret = compile_file(file_name)();
 	gc();
 	return ret;
 }
 
-Any load_and_save(const String& file_name){
-	Any ret = compile_file(file_name);
-	FileStream fs(file_name.cat("c"), "w");
-	fs.serialize(ret);
-	fs.close();
+AnyPtr load_and_save(const StringPtr& file_name){
+	AnyPtr ret = compile_file(file_name);
+	FileStreamPtr fs(xnew<FileStream>(file_name->cat("c"), "w"));
+	fs->serialize(ret);
+	fs->close();
 	gc();
 	return ret();
 }
 
-Any source(const char* src, int_t size, const char* file){
+AnyPtr source(const char* src, int_t size, const char* file){
 	CodeBuilder cb;
-	MemoryStream ms(src, size);
-	if(Any fun = cb.compile(ms, file)){
+	MemoryStreamPtr ms(xnew<MemoryStream>(src, size));
+	if(AnyPtr fun = cb.compile(ms, file)){
 		return fun;
 	}
-	XTAL_THROW(builtin().member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()));
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()));
 	return null;
 }
 
@@ -73,23 +74,23 @@ void ix(){
 
 #else
 
-Code compile_file(const String& file_name){
+Code compile_file(const StringPtr& file_name){
 	return null;
 }
 
-Code compile(const String& source){
+Code compile(const StringPtr& source){
 	return null;
 }
 
-Any load(const String& file_name){
+AnyPtr load(const StringPtr& file_name){
 	return null;
 }
 
-Any load_and_save(const String& file_name){
+AnyPtr load_and_save(const StringPtr& file_name){
 	return null;
 }
 
-Any source(const char* src, int_t size, const char* file){
+AnyPtr source(const char* src, int_t size, const char* file){
 	return null;
 }
 
@@ -99,62 +100,48 @@ void ix(){
 
 #endif
 
-void print(const VMachine& vm){
-	for(int_t i = 0; i<vm.ordered_arg_count(); ++i){
-		String str = vm.arg(i).to_s();
-		std::cout << str.c_str();
-	}	
-	vm.return_result();
-}
-
-void println(const VMachine& vm){
-	print(vm);
-	std::cout << std::endl;
-}
-
-
-static Any abs(const Any& a){
-	switch(a.type()){XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){ return a.ivalue()<0 ? -a.ivalue() : a; }
-		XTAL_CASE(TYPE_FLOAT){ return a.fvalue()<0 ? -a.fvalue() : a; }
+static AnyPtr abs(const AnyPtr& a){
+	switch(type(a)){XTAL_DEFAULT;
+		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? -ivalue(a) : a; }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? -fvalue(a) : a; }
 	}
 	return 0;
 }
 
-static Any max_(const Any& a, const Any& b){
-	switch(a.type()){XTAL_DEFAULT;
+static AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
+	switch(type(a)){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){
-			switch(b.type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return a.ivalue()<b.ivalue() ? b.ivalue() : a.ivalue(); }
-				XTAL_CASE(TYPE_FLOAT){ return a.ivalue()<b.fvalue() ? b.fvalue() : a.ivalue(); }
+			switch(type(b)){XTAL_DEFAULT;
+				XTAL_CASE(TYPE_INT){ return ivalue(a)<ivalue(b) ? ivalue(b) : ivalue(a); }
+				XTAL_CASE(TYPE_FLOAT){ return ivalue(a)<fvalue(b) ? fvalue(b) : ivalue(a); }
 			}
 		}
 		XTAL_CASE(TYPE_FLOAT){
-			switch(b.type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return a.fvalue()<b.ivalue() ? b.ivalue() : a.fvalue(); }
-				XTAL_CASE(TYPE_FLOAT){ return a.fvalue()<b.fvalue() ? b.fvalue() : a.fvalue(); }
+			switch(type(b)){XTAL_DEFAULT;
+				XTAL_CASE(TYPE_INT){ return fvalue(a)<ivalue(b) ? ivalue(b) : fvalue(a); }
+				XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<fvalue(b) ? fvalue(b) : fvalue(a); }
 			}
 		}
 	}
-	return a<b ? b : a;
+	return null;// a->send(Xid(op_lt), a, b) ? b : a;
 }
 
-static Any min_(const Any& a, const Any& b){
-	switch(a.type()){XTAL_DEFAULT;
+static AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
+	switch(type(a)){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){
-			switch(b.type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return a.ivalue()<b.ivalue() ? a.ivalue() : b.ivalue(); }
-				XTAL_CASE(TYPE_FLOAT){ return a.ivalue()<b.fvalue() ? a.fvalue() : b.ivalue(); }
+			switch(type(b)){XTAL_DEFAULT;
+				XTAL_CASE(TYPE_INT){ return ivalue(a)<ivalue(b) ? ivalue(a) : ivalue(b); }
+				XTAL_CASE(TYPE_FLOAT){ return ivalue(a)<fvalue(b) ? fvalue(a) : ivalue(b); }
 			}
 		}
 		XTAL_CASE(TYPE_FLOAT){
-			switch(b.type()){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return a.fvalue()<b.ivalue() ? a.ivalue() : b.fvalue(); }
-				XTAL_CASE(TYPE_FLOAT){ return a.fvalue()<b.fvalue() ? a.fvalue() : b.fvalue(); }
+			switch(type(b)){XTAL_DEFAULT;
+				XTAL_CASE(TYPE_INT){ return fvalue(a)<ivalue(b) ? ivalue(a) : fvalue(b); }
+				XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<fvalue(b) ? fvalue(a) : fvalue(b); }
 			}
 		}
 	}
-	return a<b ? a : b;
+	return null;//a->send(Xid(op_lt), a, b) ? a : b;
 }
 
 class Random{
@@ -200,256 +187,284 @@ static float_t random_range(float_t in, float_t ax){
 	return random_instance(in, ax);
 }
 
+static float_t clock_(){
+	return clock()/(float_t)CLOCKS_PER_SEC;
+}
+
 template<class T>
 struct Math{
-	static Class make(float*){
+	static ClassPtr make(float*){
 		using namespace std;
 
-		Class math("math");
+		ClassPtr math = xnew<Class>("math");
 		
-		math.fun("acos", (float (*)(float))&acosf);
-		math.fun("asin", (float (*)(float))&asinf);
-		math.fun("atan", (float (*)(float))&atanf);
-		math.fun("atan2", (float (*)(float, float))&atan2f);
-		math.fun("ceil", (float (*)(float))&ceilf);
-		math.fun("cos", (float (*)(float))&cosf);
-		math.fun("exp", (float (*)(float))&expf);
-		math.fun("floor", (float (*)(float))&floorf);
-		math.fun("log", (float (*)(float))&logf);
-		math.fun("pow", (float (*)(float, float))&powf);
-		math.fun("sin", (float (*)(float))&sinf);
-		math.fun("sqrt", (float (*)(float))&sqrtf);
-		math.fun("tan", (float (*)(float))&tanf);
-		math.def("PI", (float_t)3.14159265358979);
-		math.def("E", (float_t)2.71828182845905);
+		math->fun("acos", (float (*)(float))&acosf);
+		math->fun("asin", (float (*)(float))&asinf);
+		math->fun("atan", (float (*)(float))&atanf);
+		math->fun("atan2", (float (*)(float, float))&atan2f);
+		math->fun("ceil", (float (*)(float))&ceilf);
+		math->fun("cos", (float (*)(float))&cosf);
+		math->fun("exp", (float (*)(float))&expf);
+		math->fun("floor", (float (*)(float))&floorf);
+		math->fun("log", (float (*)(float))&logf);
+		math->fun("pow", (float (*)(float, float))&powf);
+		math->fun("sin", (float (*)(float))&sinf);
+		math->fun("sqrt", (float (*)(float))&sqrtf);
+		math->fun("tan", (float (*)(float))&tanf);
+		math->def("PI", (float_t)3.14159265358979);
+		math->def("E", (float_t)2.71828182845905);
 
 		return math;
 	}
 
-	static Class make(double*){
+	static ClassPtr make(double*){
 		using namespace std;
 
-		Class math("math");
+		ClassPtr math = xnew<Class>("math");
 
-		math.fun("acos", (double (*)(double))&acos);
-		math.fun("asin", (double (*)(double))&asin);
-		math.fun("atan", (double (*)(double))&atan);
-		math.fun("atan2", (double (*)(double, double))&atan2);
-		math.fun("ceil", (double (*)(double))&ceil);
-		math.fun("cos", (double (*)(double))&cos);
-		math.fun("exp", (double (*)(double))&exp);
-		math.fun("floor", (double (*)(double))&floor);
-		math.fun("log", (double (*)(double))&log);
-		math.fun("pow", (double (*)(double, double))&pow);
-		math.fun("sin", (double (*)(double))&sin);
-		math.fun("sqrt", (double (*)(double))&sqrt);
-		math.fun("tan", (double (*)(double))&tan);
-		math.def("PI", (float_t)3.14159265358979);
-		math.def("E", (float_t)2.71828182845905);
+		math->fun("acos", (double (*)(double))&acos);
+		math->fun("asin", (double (*)(double))&asin);
+		math->fun("atan", (double (*)(double))&atan);
+		math->fun("atan2", (double (*)(double, double))&atan2);
+		math->fun("ceil", (double (*)(double))&ceil);
+		math->fun("cos", (double (*)(double))&cos);
+		math->fun("exp", (double (*)(double))&exp);
+		math->fun("floor", (double (*)(double))&floor);
+		math->fun("log", (double (*)(double))&log);
+		math->fun("pow", (double (*)(double, double))&pow);
+		math->fun("sin", (double (*)(double))&sin);
+		math->fun("sqrt", (double (*)(double))&sqrt);
+		math->fun("tan", (double (*)(double))&tan);
+		math->def("PI", (float_t)3.14159265358979);
+		math->def("E", (float_t)2.71828182845905);
 
 		return math;
 	}
 };
 
-class Int : public Any{
-public:
-	int_t to_i(){ return ivalue(); }
-	float_t to_f(){ return static_cast<float_t>(ivalue()); }
-	String to_s(){
-		char buf[32];
-		sprintf(buf, "%d", ivalue());
-		return String(buf);
+namespace{
+
+	int_t Int_to_i(const AnyPtr& p){
+		if(type(p)==TYPE_INT){
+			return ivalue(p);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
 	}
-};
+
+	float_t Int_to_f(const AnyPtr& p){
+		if(type(p)==TYPE_INT){
+			return (float_t)ivalue(p);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+	}
+
+	StringPtr Int_to_s(const AnyPtr& p){
+		if(type(p)==TYPE_INT){
+			char buf[32];
+			sprintf(buf, "%d", ivalue(p));
+			return xnew<String>(buf);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+	}
+
+
+	int_t Float_to_i(const AnyPtr& p){
+		if(type(p)==TYPE_FLOAT){
+			return (int_t)fvalue(p);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+	}
+
+	float_t Float_to_f(const AnyPtr& p){
+		if(type(p)==TYPE_FLOAT){
+			return fvalue(p);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+	}
+
+	StringPtr Float_to_s(const AnyPtr& p){
+		if(type(p)==TYPE_FLOAT){
+			char buf[32];
+			sprintf(buf, "%g", fvalue(p));
+			return xnew<String>(buf);
+		}
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+	}
+}
 
 void InitInt(){
-	TClass<Int> p("Int");
-	
-	p.method("to_i", &Int::to_i);
-	p.method("to_f", &Int::to_f);
-	p.method("to_s", &Int::to_s);
+	ClassPtr p = new_cpp_class<Int>("Int");	
+	p->method("to_i", &Int_to_i);
+	p->method("to_f", &Int_to_f);
+	p->method("to_s", &Int_to_s);
 }
-
-class Float : public Any{
-public:
-	int_t to_i(){ return static_cast<int_t>(fvalue()); }
-	float_t to_f(){ return fvalue(); }
-	String to_s(){
-		char buf[32];
-		sprintf(buf, "%g", fvalue());
-		return String(buf);
-	}
-};
 
 void InitFloat(){
-	TClass<Float> p("Float");
-	
-	p.method("to_i", &Float::to_i);
-	p.method("to_f", &Float::to_f);
-	p.method("to_s", &Float::to_s);
+	ClassPtr p = new_cpp_class<Float>("Float");		
+	p->method("to_i", &Float_to_i);
+	p->method("to_f", &Float_to_f);
+	p->method("to_s", &Float_to_s);
 }
 	
-class ZipIterImpl : public AnyImpl{
+class ZipIter : public Base{
 public:
 
-	ZipIterImpl(const VMachine& vm)
-		:next(vm.ordered_arg_count()), value(null){
-		set_class(TClass<ZipIterImpl>::get());
-		for(int_t i = 0, len = next.size(); i<len; ++i){
-			next.set_at(i, vm.arg(i));
+	ZipIter(const VMachinePtr& vm){
+		next = xnew<Array>(vm->ordered_arg_count());
+		for(int_t i = 0, len = next->size(); i<len; ++i){
+			next->set_at(i, vm->arg(i));
 		}
 	}
 
-	void common(const VMachine& vm, const ID& id){
+	void common(const VMachinePtr& vm, const InternedStringPtr& id){
 		bool all = true;
-		value = Array(next.size());
-		for(int_t i = 0, len = next.size(); i<len; ++i){
-			vm.setup_call(2);
-			next.at(i).rawsend(vm, id);
-			next.set_at(i, vm.result(0));
-			value.set_at(i, vm.result(1));
-			vm.cleanup_call();
-			if(!next.at(i))
+		value = xnew<Array>(next->size());
+		for(int_t i = 0, len = next->size(); i<len; ++i){
+			vm->setup_call(2);
+			next->at(i)->rawsend(vm, id);
+			next->set_at(i, vm->result(0));
+			value->set_at(i, vm->result(1));
+			vm->cleanup_call();
+			if(!next->at(i))
 				all = false;
 		}
 		if(all){
-			vm.return_result(this, value);
+			vm->return_result(SmartPtr<ZipIter>::from_this(this), value);
 		}else{
-			vm.return_result(null);
+			vm->return_result(null);
 		}
 	}
 
-	void iter_first(const VMachine& vm){
+	void iter_first(const VMachinePtr& vm){
 		common(vm, Xid(iter_first));
 	}
 	
-	void iter_next(const VMachine& vm){
+	void iter_next(const VMachinePtr& vm){
 		common(vm, Xid(iter_next));
 	}
 
-	void iter_break(const VMachine& vm){
-		ID id = Xid(iter_break);
-		for(int_t i = 0, len = next.size(); i<len; ++i){
-			vm.setup_call(0);
-			next.at(i).rawsend(vm, id);
-			if(!vm.processed()){
-				vm.return_result();	
+	void iter_break(const VMachinePtr& vm){
+		InternedStringPtr id = Xid(iter_break);
+		for(int_t i = 0, len = next->size(); i<len; ++i){
+			vm->setup_call(0);
+			next->at(i)->rawsend(vm, id);
+			if(!vm->processed()){
+				vm->return_result();	
 			}
-			vm.cleanup_call();
+			vm->cleanup_call();
 		}
-		vm.return_result();
+		vm->return_result();
 	}
 
 	virtual void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
+		Base::visit_members(m);
 		m & next & value;
 	}
 
-	Array next;
-	Array value;
+	ArrayPtr next;
+	ArrayPtr value;
 };
 
 void InitZipIter(){
-	TClass<ZipIterImpl> cls;
-	cls.inherit(Iterator());
-	cls.def("new", New<ZipIterImpl, const VMachine&>());
-	cls.method("iter_first", &ZipIterImpl::iter_next);
-	cls.method("iter_next", &ZipIterImpl::iter_next);
-	cls.method("iter_break", &ZipIterImpl::iter_break);
+	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
+	p->inherit(Iterator());
+	p->def("new", New<ZipIter, const VMachinePtr&>());
+	p->method("iter_first", &ZipIter::iter_next);
+	p->method("iter_next", &ZipIter::iter_next);
+	p->method("iter_break", &ZipIter::iter_break);
 }
 
 IterBreaker::~IterBreaker(){
-	const VMachine& vm = vmachine();
-	vm.setup_call(0);
-	target.rawsend(vm, Xid(iter_break));
-	if(!vm.processed()){
-		vm.return_result();
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(0);
+	target->rawsend(vm, Xid(iter_break));
+	if(!vm->processed()){
+		vm->return_result();
 	}
-	vm.cleanup_call();
+	vm->cleanup_call();
 }
 
-void iter_next(Any& target, Any& value1, bool first){
-	const VMachine& vm = vmachine();
-	vm.setup_call(2);
-	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm.result(0);
-	value1 = vm.result(1);
-	vm.cleanup_call();
+void iter_next(AnyPtr& target, AnyPtr& value1, bool first){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(2);
+	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
+	target = vm->result(0);
+	value1 = vm->result(1);
+	vm->cleanup_call();
 }
 
-void iter_next(Any& target, Any& value1, Any& value2, bool first){
-	const VMachine& vm = vmachine();
-	vm.setup_call(3);
-	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm.result(0);
-	value1 = vm.result(1);
-	value2 = vm.result(2);
-	vm.cleanup_call();
+void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(3);
+	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
+	target = vm->result(0);
+	value1 = vm->result(1);
+	value2 = vm->result(2);
+	vm->cleanup_call();
 }
 
-void iter_next(Any& target, Any& value1, Any& value2, Any& value3, bool first){
-	const VMachine& vm = vmachine();
-	vm.setup_call(4);
-	target.rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm.result(0);
-	value1 = vm.result(1);
-	value2 = vm.result(2);
-	value3 = vm.result(3);
-	vm.cleanup_call();
+void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(4);
+	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
+	target = vm->result(0);
+	value1 = vm->result(1);
+	value2 = vm->result(2);
+	value3 = vm->result(3);
+	vm->cleanup_call();
 }
 
-const Class& Iterator(){
-	static LLVar<Class> p("Iterator");
+const ClassPtr& Iterator(){
+	static LLVar<ClassPtr> p = xnew<Class>("Iterator");
 	return p;
 }
 
-const Class& Enumerator(){
-	static LLVar<Class> p("Enumerator");
+const ClassPtr& Enumerator(){
+	static LLVar<ClassPtr> p = xnew<Class>("Enumerator");
 	return p;
 }
 
-const Class& builtin(){
-	static LLVar<Class> p("builtin");
+const ClassPtr& builtin(){
+	static LLVar<ClassPtr> p = xnew<Class>("builtin");
 	return p;
 }
 
-const Class& lib(){
-	static LLVar<Class> lib(null);
-	if(!lib){ new(lib) LibImpl(); }
-	return lib;
+const ClassPtr& lib(){
+	static LLVar<ClassPtr> p = xnew<Lib>();
+	return p;
 }
 
-Any cast_error(const Any& from, const Any& to){
-	return builtin().member("CastError")(Xt("Xtal Runtime Error 1004")(
-		Named("type", from.get_class().object_name()), Named("required", to)
+AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
+	return builtin()->member("CastError")(Xt("Xtal Runtime Error 1004")(
+		Named("type", from->get_class()->object_name()), Named("required", to)
 	));
 }
 
-Any argument_error(const Any& from, const Any& to, int param_num, const Any& param_name){
-	if(param_name.to_b()){
-		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
+AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name){
+	if(param_name->to_b()){
+		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Named("n", param_num+1), 
 			Named("param_name", param_name), 
-			Named("type", from.get_class().object_name()), 
+			Named("type", from->get_class()->object_name()), 
 			Named("required", to)
 		));
 	}else{
-		return builtin().member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
+		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Named("n", param_num+1), 
-			Named("param_name", String("")), 
-			Named("type", from.get_class().object_name()), 
+			Named("param_name", xnew<String>("")), 
+			Named("type", from->get_class()->object_name()), 
 			Named("required", to)
 		));	}
 }
 
-Any unsupported_error(const Any& name, const Any& member){
-	return builtin().member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-		Named("object", name), Named("name", (member ? member : Any("()")))
+AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member){
+	return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
+		Named("object", name), Named("name", (member ? member : AnyPtr("()")))
 	));
 }
 
 namespace{
-	void default_except_handler(const Any& except, const char* file, int line){
+	void default_except_handler(const AnyPtr& except, const char* file, int line){
 #ifdef XTAL_NO_EXCEPT
 		printf("%s(%d):%s\n", file, line, except.to_s().c_str());
 		exit(1);
@@ -457,7 +472,7 @@ namespace{
 	}
 
 	except_handler_t except_handler_ = &default_except_handler;
-	Any except_;
+	AnyPtr except_;
 }
 
 except_handler_t except_handler(){
@@ -468,13 +483,13 @@ void set_except_handler(except_handler_t handler){
 	except_handler_ = handler;
 }
 
-Any except(){
-	Any ret = except_;
+AnyPtr except(){
+	AnyPtr ret = except_;
 	except_ = null;
 	return ret;
 }
 
-void set_except(const Any& except){
+void set_except(const AnyPtr& except){
 	static bool init = false;
 	if(!init){
 		init = true;
@@ -483,7 +498,7 @@ void set_except(const Any& except){
 	except_ = except;
 }
 
-struct FormatString : public AnyImpl{
+struct FormatString : public Base{
 
 	enum{ BUF_MAX = 14, REAL_BUF_MAX = BUF_MAX + 2 };
 	
@@ -605,33 +620,31 @@ private:
 
 };
 
-class Format : public AnyImpl{
+class Format : public Base{
 public:
 
 	Format(){
-		set_class(TClass<Format>::get());
+		set("");
 	}
 
-	Format(const String& str){
-		set_class(TClass<Format>::get());
-		set(str.c_str());
+	Format(const StringPtr& str){
+		set(str->c_str());
 	}
 
 	Format(const char* str){
-		set_class(TClass<Format>::get());
 		set(str);
 	}
 
 	void set(const char* str){
 
-		original_ = String(str);
+		original_ = xnew<String>(str);
 
 		const char* begin = str;
 		char buf[256];
 		int bufpos = 0, n = 0;
 		while(true){
 			if(str[0]=='%'){
-				values_.push_back(Pair(null, String(begin, str)));
+				values_.push_back(Pair(null, xnew<String>(begin, str)));
 				str++;
 				
 				if(str[0]=='%'){
@@ -651,12 +664,12 @@ public:
 					}else{
 						bufpos = sprintf(buf, "%d", n++);
 					}
-					Any ret; new(ret) FormatString(str);
-					values_.push_back(Pair(ID(buf), ret));
+					AnyPtr ret = xnew<FormatString>(ref(str));
+					values_.push_back(Pair(InternedStringPtr(buf), ret));
 					begin = str;
 				}
 			}else if(str[0]=='\0'){
-				values_.push_back(Pair(null, String(begin, str)));
+				values_.push_back(Pair(null, xnew<String>(begin, str)));
 				break;
 			}else{
 				str++;
@@ -664,21 +677,21 @@ public:
 		}
 	}
 
-	virtual void call(const VMachine& vm){
+	virtual void call(const VMachinePtr& vm){
 		string_t buf;
 		char cbuf[256];
 		char* pcbuf;
 			
 		for(int i = 0, size = values_.size(); i<size; ++i){
 			if(!values_[i].key){
-				buf += cast<String>(values_[i].value).c_str();
+				buf += cast<StringPtr>(values_[i].value)->c_str();
 			}else{
-				Any a = vm.arg(values_[i].key);
-				if(a==null){
-					a = vm.arg(values_[i].key.to_i());
+				AnyPtr a = vm->arg(values_[i].key);
+				if(!a){
+					a = vm->arg(values_[i].key->to_i());
 				}
 				
-				FormatString* fs = (FormatString*)values_[i].value.impl();
+				SmartPtr<FormatString> fs = cast<SmartPtr<FormatString> >(values_[i].value);
 				size_t malloc_size = 0;
 				if(fs->max_buf_size()>=256){
 					malloc_size = fs->max_buf_size() + 1;
@@ -687,22 +700,22 @@ public:
 					pcbuf = cbuf;
 				}
 				
-				switch(a.type()){
+				switch(type(a)){
 					XTAL_DEFAULT{
-						String str = a.to_s();
+						StringPtr str = a->to_s();
 						
-						if(str.size()>=256){
-							if(str.size()>malloc_size){
+						if(str->size()>=256){
+							if(str->size()>malloc_size){
 								if(malloc_size!=0){
 									user_free(pcbuf, malloc_size);
 								}
 								
-								malloc_size = str.size() + fs->max_buf_size() + 1;
+								malloc_size = str->size() + fs->max_buf_size() + 1;
 								pcbuf = (char*)user_malloc(malloc_size);
 							}
 						}
 						fs->change_string_code();
-						sprintf(pcbuf, fs->format_string(), str.c_str());
+						sprintf(pcbuf, fs->format_string(), str->c_str());
 						buf += pcbuf;
 					}
 
@@ -712,13 +725,13 @@ public:
 
 					XTAL_CASE(TYPE_INT){
 						fs->change_int_code();
-						sprintf(pcbuf, fs->format_string(), a.ivalue());
+						sprintf(pcbuf, fs->format_string(), ivalue(a));
 						buf += pcbuf;
 					}
 					
 					XTAL_CASE(TYPE_FLOAT){
 						fs->change_float_code();
-						sprintf(pcbuf, fs->format_string(), a.fvalue());
+						sprintf(pcbuf, fs->format_string(), fvalue(a));
 						buf += pcbuf;
 					}
 				}
@@ -728,27 +741,27 @@ public:
 				}
 			}
 		}
-		vm.return_result(String(buf));
+		vm->return_result(xnew<String>(buf));
 	}
 
-	void to_s(const VMachine& vm){
+	void to_s(const VMachinePtr& vm){
 		call(vm);
 	}
 
-	Any serial_save(){
+	AnyPtr serial_save(){
 		return original_;
 	}
 
-	void serial_load(const String& v){
-		set(v.c_str());
+	void serial_load(const StringPtr& v){
+		set(v->c_str());
 	}
 
 private:
 
 	struct Pair{
-		ID key;
-		Any value;
-		Pair(const ID& k = null, const Any& v = null)
+		InternedStringPtr key;
+		AnyPtr value;
+		Pair(const InternedStringPtr& k = null, const AnyPtr& v = null)
 			:key(k), value(v){}
 	};
 	
@@ -757,131 +770,67 @@ private:
 	}
 
 	AC<Pair>::vector values_;
-	String original_;
+	StringPtr original_;
 	
 	virtual void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
+		Base::visit_members(m);
 		m & values_ & original_;
 	}
 };
 
 namespace{
-	Any user_get_text_map_(null);
+	MapPtr user_get_text_map_;
 }
 
 void InitFormat(){
-	TClass<Format> p("Format");
-	p.method("to_s", &Format::to_s);
-	p.method("serial_save", &Format::serial_save);
-	p.method("serial_load", &Format::serial_load);
-	p.def("serial_new", New<Format, const String&>());
+	ClassPtr p = new_cpp_class<Format>("Format");
+	p->method("to_s", &Format::to_s);
+	p->method("serial_save", &Format::serial_save);
+	p->method("serial_load", &Format::serial_load);
+	p->def("serial_new", New<Format, const StringPtr&>());
 
 	add_long_life_var(&user_get_text_map_);
-	user_get_text_map_ = Map();
+	user_get_text_map_ = xnew<Map>();
 }
 
-void set_get_text_map(const Any& map){
+void set_get_text_map(const MapPtr& map){
 	user_get_text_map_ = map;
 }
 
-void add_get_text_map(const Any& map){
-	user_get_text_map_ = user_get_text_map_.cat(map);
+void add_get_text_map(const MapPtr& map){
+	user_get_text_map_ = user_get_text_map_->cat(map);
 }
 
-Any get_get_text_map(){
+MapPtr get_get_text_map(){
 	return user_get_text_map_;
 }
 
-Any get_text(const char* text){
+AnyPtr get_text(const char* text){
 	if(user_get_text_map_){
-		String key(text);
-		if(const Any& value=user_get_text_map_[key]){
-			Any ret; new(ret) Format(value.to_s().c_str());
-			return ret;
+		StringPtr key(text);
+		if(const AnyPtr& value=user_get_text_map_->at(key)){
+			return xnew<Format>(value->to_s());
 		}
 	}
-	Any ret; new(ret) Format(text);
-	return ret;
+	return xnew<Format>(text);
 }
 
-Any format(const char* text){
-	Any ret; new(ret) Format(text);
-	return ret;
+AnyPtr format(const char* text){
+	return xnew<Format>(text);
 }
 
 namespace debug{
 
-class InfoImpl : public AnyImpl{
-public:
-
-	InfoImpl(){
-		set_class(TClass<Info>::get());
-	}
-
-	void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
-		m & file_name & fun_name & local_variables;
-	}
-
-	int_t kind;
-	int_t line;
-	String file_name;
-	String fun_name;
-	Frame local_variables;
-};
-
-Info::Info()	
-	:Any(null){
-	new(*this) InfoImpl();
+void InfoImpl::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & file_name_ & fun_name_ & local_variables_;
 }
-
-int_t Info::kind() const{
-	return impl()->kind;
-}
-
-int_t Info::line() const{
-	return impl()->line;
-}
-
-String Info::file_name() const{
-	return impl()->file_name;
-}
-
-String Info::fun_name() const{
-	return impl()->fun_name;
-}
-
-Frame Info::local_variables() const{
-	return impl()->local_variables;
-}
-
-void Info::set_kind(int_t v) const{
-	impl()->kind = v;
-}
-
-void Info::set_line(int_t v) const{
-	impl()->line = v;
-}
-
-void Info::set_file_name(const String& v) const{
-	impl()->file_name = v;
-}
-
-void Info::set_fun_name(const String& v) const{
-	impl()->fun_name = v;
-}
-
-void Info::set_local_variables(const Frame& v) const{
-	impl()->local_variables = v;
-}
-
-
 
 namespace{
 	int_t enable_count_;
-	Any line_hook_;
-	Any call_hook_;
-	Any return_hook_;
+	AnyPtr line_hook_;
+	AnyPtr call_hook_;
+	AnyPtr return_hook_;
 }
 
 void enable(){
@@ -898,27 +847,27 @@ bool is_enabled(){
 	return enable_count_>0;
 }
 
-void set_line_hook(const Any& hook){
+void set_line_hook(const AnyPtr& hook){
 	line_hook_ = hook;
 }
 
-void set_call_hook(const Any& hook){
+void set_call_hook(const AnyPtr& hook){
 	call_hook_ = hook;
 }
 
-void set_return_hook(const Any& hook){
+void set_return_hook(const AnyPtr& hook){
 	return_hook_ = hook;
 }
 
-Any line_hook(){
+AnyPtr line_hook(){
 	return line_hook_;
 }
 
-Any call_hook(){
+AnyPtr call_hook(){
 	return call_hook_;
 }
 
-Any return_hook(){
+AnyPtr return_hook(){
 	return return_hook_;
 }
 
@@ -932,78 +881,84 @@ void InitDebug(){
 	add_long_life_var(&return_hook_);
 	enable_count_ = 0;
 
-	TClass<Info> cls;
-	cls.method("kind", &Info::kind);
-	cls.method("line", &Info::line);
-	cls.method("fun_name", &Info::fun_name);
-	cls.method("file_name", &Info::file_name);
-	cls.method("set_kind", &Info::set_kind);
-	cls.method("set_line", &Info::line);
-	cls.method("set_fun_name", &Info::set_fun_name);
-	cls.method("set_file_name", &Info::set_file_name);
+	{
+		ClassPtr p = new_cpp_class<InfoImpl>("Info");
+		p->method("kind", &InfoImpl::kind);
+		p->method("line", &InfoImpl::line);
+		p->method("fun_name", &InfoImpl::fun_name);
+		p->method("file_name", &InfoImpl::file_name);
+		p->method("set_kind", &InfoImpl::set_kind);
+		p->method("set_line", &InfoImpl::line);
+		p->method("set_fun_name", &InfoImpl::set_fun_name);
+		p->method("set_file_name", &InfoImpl::set_file_name);
 
-	cls.def("LINE", BREAKPOINT_LINE);
-	cls.def("CALL", BREAKPOINT_CALL);
-	cls.def("RETURN", BREAKPOINT_RETURN);
+		p->def("LINE", BREAKPOINT_LINE);
+		p->def("CALL", BREAKPOINT_CALL);
+		p->def("RETURN", BREAKPOINT_RETURN);
+	}
 }
 
 void initialize_lib(){
 
-	Class builtin = xtal::builtin();
+	ClassPtr builtin = xtal::builtin();
 
-	builtin.def("Any", TClass<Any>::get());
-	builtin.def("Array", TClass<Array>::get());
-	builtin.def("Map", TClass<Map>::get());
-	builtin.def("String", TClass<String>::get());
-	builtin.def("Int", TClass<Int>::get());
-	builtin.def("Float", TClass<Float>::get());
-	builtin.def("Arguments", TClass<Arguments>::get());
-	builtin.def("Iterator", Iterator());
-	builtin.def("Enumerator", Enumerator());
-	builtin.def("Null", TClass<Null>::get());
-	builtin.def("True", TClass<True>::get());
-	builtin.def("False", TClass<False>::get());
-	builtin.def("Class", TClass<Class>::get());
-	builtin.def("Fun", TClass<Fun>::get());
-	builtin.def("Fiber", TClass<Fiber>::get());
-	builtin.def("Stream", TClass<Stream>::get());
-	builtin.def("FileStream", TClass<FileStream>::get());
-	builtin.def("MemoryStream", TClass<MemoryStream>::get());
-	builtin.def("Thread", TClass<Thread>::get());
-	builtin.def("Mutex", TClass<Mutex>::get());
-	builtin.def("Format", TClass<Format>::get());
-	builtin.def("Code", TClass<Code>::get());
-	builtin.def("Instance", TClass<Instance>::get());
+	builtin->def("Any", get_cpp_class<Any>());
+	builtin->def("Array", get_cpp_class<Array>());
+	builtin->def("Map", get_cpp_class<Map>());
+	builtin->def("String", get_cpp_class<String>());
+	builtin->def("Int", get_cpp_class<Int>());
+	builtin->def("Float", get_cpp_class<Float>());
+	builtin->def("Arguments", get_cpp_class<Arguments>());
+	builtin->def("Iterator", Iterator());
+	builtin->def("Enumerator", Enumerator());
+	builtin->def("Null", get_cpp_class<Null>());
+	builtin->def("True", get_cpp_class<True>());
+	builtin->def("False", get_cpp_class<False>());
+	builtin->def("Class", get_cpp_class<Class>());
+	builtin->def("Fun", get_cpp_class<Fun>());
+	builtin->def("Fiber", get_cpp_class<Fiber>());
+	builtin->def("Stream", get_cpp_class<Stream>());
+	builtin->def("FileStream", get_cpp_class<FileStream>());
+	builtin->def("MemoryStream", get_cpp_class<MemoryStream>());
+	builtin->def("Thread", get_cpp_class<Thread>());
+	builtin->def("Mutex", get_cpp_class<Mutex>());
+	builtin->def("Format", get_cpp_class<Format>());
+	builtin->def("Code", get_cpp_class<Code>());
+	builtin->def("Instance", get_cpp_class<Instance>());
+	builtin->def("stdin", xnew<FileStream>(stdin));
+	builtin->def("stdout", xnew<FileStream>(stdout));
+	builtin->def("stderr", xnew<FileStream>(stderr));
 	
-	builtin.fun("print", &print);
-	builtin.fun("println", &println);
-	builtin.fun("compile_file", &compile_file);
-	builtin.fun("compile", &compile);
-	builtin.fun("gc", &gc);
-	builtin.fun("full_gc", &full_gc);
-	builtin.fun("disable_gc", &disable_gc);
-	builtin.fun("enable_gc", &enable_gc);
+	builtin->fun("compile_file", &compile_file);
+	builtin->fun("compile", &compile);
+	builtin->fun("gc", &gc);
+	builtin->fun("full_gc", &full_gc);
+	builtin->fun("disable_gc", &disable_gc);
+	builtin->fun("enable_gc", &enable_gc);
 
-	Class math(Math<float_t>::make((float_t*)0));
-	math.fun("abs", &abs);
-	math.fun("max", &max_);
-	math.fun("min", &min_);
-	math.fun("random", &random);
-	math.fun("random_range", &random_range);
-	builtin.def("math", math);
+	builtin->fun("clock", &clock_);
 
-	builtin.def("builtin", builtin);
+	ClassPtr math(Math<float_t>::make((float_t*)0));
+	math->fun("abs", &abs);
+	math->fun("max", &max_);
+	math->fun("min", &min_);
+	math->fun("random", &random);
+	math->fun("random_range", &random_range);
+	builtin->def("math", math);
 
-	Any lib = xtal::lib();
-	lib.def("builtin", builtin);		
-	builtin.def("lib", lib);
-	builtin.def("Lib", TClass<LibImpl>::get());
+	builtin->def("builtin", builtin);
+
+	ClassPtr lib = xtal::lib();
+	lib->def("builtin", builtin);		
+	builtin->def("lib", lib);
+	builtin->def("Lib", get_cpp_class<Lib>());
 
 	InitZipIter();
-	builtin.def("zip", TClass<ZipIterImpl>::get());
+	builtin->def("zip", get_cpp_class<ZipIter>());
 
 	
 	Xsrc((
+
 builtin::Exception: class{
 	+ _backtrace;
 	+ _message;
@@ -1013,13 +968,12 @@ builtin::Exception: class{
 		_backtrace = [];
 	}
 
-
-	append_backtrace: method(file, line, name){
-		if(name){
-			_backtrace.push_back(%t"\t%(file)s:%(line)d: in %(name)s"(
+	append_backtrace: method(file, line, function_name: null){
+		if(function_name){
+			_backtrace.push_back(%t"\t%(file)s:%(line)d: in %(function_name)s"(
 				file:file,
 				line:line,
-				name:name));
+				function_name:function_name));
 		}else{
 			_backtrace.push_back(%t"\t%(file)s:%(line)d:"(
 				file:file,
@@ -1053,6 +1007,7 @@ builtin::CompileError: class(StandardError){
 		Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));
 	}		
 }		
+
 	))();
 
 	Xsrc((
@@ -1093,6 +1048,7 @@ Iterator::to_a: method{
 
 Iterator::join: method(sep:","){
 	ret: MemoryStream();
+
 	if(sep==""){
 		this{
 			ret.put_s(it.to_s);
@@ -1108,6 +1064,7 @@ Iterator::join: method(sep:","){
 			ret.put_s(it.to_s);
 		}
 	}
+		
 	return ret.to_s;
 }
 
@@ -1198,6 +1155,17 @@ Iterator::unique: method(pred:null){
 			}
 		}
 	}
+}
+
+builtin::print: fun(...){
+	....each_ordered_arg{
+		stdout.put_s(it.to_s);
+	}
+}
+
+builtin::println: fun(...){
+	print(...);
+	print("\n");
 }
 
 builtin::chain: fun(...){

@@ -1,7 +1,7 @@
-﻿
+
 #pragma once
 
-//#define XTAL_USE_COMPRESSED_ANY
+//#define XTAL_USE_COMPRESSED_INNOCENCE
 //#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
 
@@ -56,11 +56,11 @@
 #ifdef XTAL_NO_EXCEPT
 #	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); }while(0)
 #	define XTAL_TRY 
-#	define XTAL_CATCH(e) if(const ::xtal::Any& e = ::xtal::except())
+#	define XTAL_CATCH(e) if(const ::xtal::AnyPtr& e = ::xtal::except())
 #else
 #	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
 #	define XTAL_TRY try
-#	define XTAL_CATCH(e) catch(const Any& e)
+#	define XTAL_CATCH(e) catch(const AnyPtr& e)
 #endif
 
 #ifdef __GNUC__
@@ -155,6 +155,7 @@ struct If{
 	typedef typename IfHelper<N>::template inner<T, U>::type type;
 };
 
+
 template<bool>
 struct Bool{};
 
@@ -165,6 +166,17 @@ struct Convertible{
 	static yes test(U);
 	static no test(...);
 	static T makeT();
+
+	enum{ value = sizeof(test(makeT()))==sizeof(yes) };
+};
+
+template<class T, class U>
+struct IsInherited{
+	typedef char (&yes)[2];
+	typedef char (&no)[1];
+	static yes test(U*);
+	static no test(...);
+	static T* makeT();
 
 	enum{ value = sizeof(test(makeT()))==sizeof(yes) };
 };
@@ -275,5 +287,23 @@ struct AC{
 		std::multimap<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
 		>::type multimap;
 };
+
+template<class T>
+struct Ref{
+	T& ref;
+	Ref(T& ref):ref(ref){};
+	operator T&() const{ return ref; }
+};
+
+template<class T>
+inline Ref<T> ref(T& r){
+	return Ref<T>(r);
+}
+
+template<class T, class U>
+struct NumericCalcResultType{
+	typedef typename If<1, T, U>::type type;
+};
+
 
 }

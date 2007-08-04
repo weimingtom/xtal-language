@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include "xtal_fwd.h"
@@ -16,7 +16,7 @@ namespace xtal{
 * @return 実行できる関数オブジェクト
 * この戻り値をserializeすると、バイトコード形式で保存される。
 */
-Code compile_file(const String& file_name);
+CodePtr compile_file(const StringPtr& file_name);
 
 /**
 * @brief source文字列をコンパイルする。
@@ -25,7 +25,7 @@ Code compile_file(const String& file_name);
 * @return 実行できる関数オブジェクト
 * この戻り値をserializeすると、バイトコード形式で保存される。
 */
-Code compile(const String& source);
+CodePtr compile(const StringPtr& source);
 
 /**
 * @brief file_nameファイルをコンパイルして実行する。
@@ -33,7 +33,7 @@ Code compile(const String& source);
 * @param file_name Xtalスクリプトが記述されたファイルの名前
 * @return スクリプト内でexportされた値
 */
-Any load(const String& file_name);
+AnyPtr load(const StringPtr& file_name);
 
 /**
 * @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
@@ -41,7 +41,7 @@ Any load(const String& file_name);
 * @param file_name Xtalスクリプトが記述されたファイルの名前
 * @return スクリプト内でexportされた値
 */
-Any load_and_save(const String& file_name);
+AnyPtr load_and_save(const StringPtr& file_name);
 
 /**
 * @brief interactive xtalの実行
@@ -83,73 +83,77 @@ void disable_gc();
 */
 void enable_gc();
 
-
 /**
-* @brief オブジェクトをC++に埋め込める形にして保存する
+* @brief VMachinePtrオブジェクトを返す
 *
-* @param obj C++化したいオブジェクト
-* @param out 直列化先のストリーム
+* グローバルなVMachinePtrオブジェクトを返す。
+* スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
 */
-void object_to_cpp(const Any& obj, const Stream& out);
-
-/**
-* @brief VMachineオブジェクトを返す
-*
-* グローバルなVMachineオブジェクトを返す。
-* スレッド毎にこのグローバルVMachineオブジェクトは存在する。
-*/
-const VMachine& vmachine();
+const VMachinePtr& vmachine();
 
 /**
 * @brief Iteratorクラスを返す
 */
-const Class& Iterator();
+const ClassPtr& Iterator();
 
 /**
 * @brief Enumeratorクラスを返す
 */
-const Class& Enumerator();
+const ClassPtr& Enumerator();
 
 /**
 * @brief builtinクラスを返す
 */
-const Class& builtin();
+const ClassPtr& builtin();
 
 /**
 * @brief libクラスを返す
 */
-const Class& lib();
+const ClassPtr& lib();
 
+/**
+* @brief グローバルに存在する仮想マシンオブジェクトを取得する
+*/
+const VMachinePtr& vmachine();
 
+void add_long_life_var(AnyPtr* a, int_t n = 1);
+void remove_long_life_var(AnyPtr* a, int_t n = 1);
+AnyPtr* make_place();
 
-Any get_text(const char* text);
-Any format(const char* text);
+void initialize();
+void uninitialize();
+void initialize_lib();
+bool initialized();
 
-void set_get_text_map(const Any& map);
-void add_get_text_map(const Any& map);
-Any get_get_text_map();
+AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
+AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name);
+AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member);
 
-Any source(const char* src, int_t size, const char* file);
+AnyPtr get_text(const char* text);
+AnyPtr format(const char* text);
 
-void print(const VMachine& vm);
-void println(const VMachine& vm);
+void set_get_text_map(const MapPtr& map);
+void add_get_text_map(const MapPtr& map);
+MapPtr get_get_text_map();
 
-typedef void (*except_handler_t)(const Any& except, const char* file, int line);
+AnyPtr source(const char* src, int_t size, const char* file);
+
+typedef void (*except_handler_t)(const AnyPtr& except, const char* file, int line);
 except_handler_t except_handler();
 void set_except_handler(except_handler_t handler);
 
-Any except();
-void set_except(const Any& except);
+AnyPtr except();
+void set_except(const AnyPtr& except);
 
-void iter_next(Any& target, Any& value, bool first);
-void iter_next(Any& target, Any& value1, Any& value2, bool first);
-void iter_next(Any& target, Any& value1, Any& value2, Any& value3, bool first);
+void iter_next(AnyPtr& target, AnyPtr& value, bool first);
+void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
+void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
 
 struct IterBreaker{
-	Any target;
-	IterBreaker(const Any& tar=null):target(tar){}
+	AnyPtr target;
+	IterBreaker(const AnyPtr& tar=null):target(tar){}
 	~IterBreaker();
-	operator Any&(){ return target; }
+	operator AnyPtr&(){ return target; }
 	operator bool(){ return target; }
 };
 
@@ -159,32 +163,31 @@ namespace debug{
 
 class InfoImpl;
 
-class Info : public Any{
+
+class InfoImpl : public Base{
 public:
 
-	Info();
+	int_t kind(){ return kind_; } 
+	int_t line(){ return line_; }
+	StringPtr file_name(){ return file_name_; }
+	StringPtr fun_name(){ return fun_name_; }
+	FramePtr local_variables(){ return local_variables_; }
 
-	explicit Info(InfoImpl* p)
-		:Any((AnyImpl*)p){}
+	void set_kind(int_t v){ kind_ = v; }
+	void set_line(int_t v){ line_ = v; }
+	void set_file_name(const StringPtr& v){ file_name_ = v; }
+	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
+	void set_local_variables(const FramePtr& v){ local_variables_ = v; }
 
-	Info(const Null&)
-		:Any(null){}
+private:
 
-	int_t kind() const;
-	int_t line() const;
-	String file_name() const;
-	String fun_name() const;
-	Frame local_variables() const;
+	void visit_members(Visitor& m);
 
-	void set_kind(int_t v) const;
-	void set_line(int_t v) const;
-	void set_file_name(const String& v) const;
-	void set_fun_name(const String& v) const;
-	void set_local_variables(const Frame& v) const;
-
-	InfoImpl* impl() const{
-		return (InfoImpl*)Any::impl();
-	}
+	int_t kind_;
+	int_t line_;
+	StringPtr file_name_;
+	StringPtr fun_name_;
+	FramePtr local_variables_;
 };
 
 
@@ -208,32 +211,32 @@ bool is_enabled();
 /**
 * @brief 行が実行される度に呼び出されるフック関数を登録する
 */
-void set_line_hook(const Any& hook);
+void set_line_hook(const AnyPtr& hook);
 
 /**
 * @brief 関数呼び出しされる度に呼び出されるフック関数を登録する
 */
-void set_call_hook(const Any& hook);
+void set_call_hook(const AnyPtr& hook);
 
 /**
 * @brief 関数からreturnされる度に呼び出されるフック関数を登録する
 */
-void set_return_hook(const Any& hook);
+void set_return_hook(const AnyPtr& hook);
 
 /**
 * @brief set_line_hook関数で登録した関数を取得する
 */
-Any line_hook();
+AnyPtr line_hook();
 
 /**
 * @brief set_call_hook関数で登録した関数を取得する
 */
-Any call_hook();
+AnyPtr call_hook();
 
 /**
 * @brief set_return_hook関数で登録した関数を取得する
 */
-Any return_hook();
+AnyPtr return_hook();
 
 }
 

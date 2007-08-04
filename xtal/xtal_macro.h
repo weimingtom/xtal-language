@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include "xtal_lib.h"
@@ -16,7 +16,7 @@
 * @endcode
 */
 #define Xfor(var, target) \
-	if(::xtal::Any var = 1)\
+	if(::xtal::AnyPtr var = 1)\
 	if(::xtal::IterBreaker tar = target)\
 	for(::xtal::iter_next(tar, var, true); tar; ::xtal::iter_next(tar, var, false))
 
@@ -30,8 +30,8 @@
 * @endcode
 */
 #define Xfor2(var1, var2, target) \
-	if(::xtal::Any var1 = 1)\
-	if(::xtal::Any var2 = 1)\
+	if(::xtal::AnyPtr var1 = 1)\
+	if(::xtal::AnyPtr var2 = 1)\
 	if(::xtal::IterBreaker tar = target)\
 	for(::xtal::iter_next(tar, var1, var2, true); tar; ::xtal::iter_next(tar, var1, var2, false))
 
@@ -45,9 +45,9 @@
 * @endcode
 */
 #define Xfor3(var1, var2, var3, target) \
-	if(::xtal::Any var1 = 1)\
-	if(::xtal::Any var2 = 1)\
-	if(::xtal::Any var3 = 1)\
+	if(::xtal::AnyPtr var1 = 1)\
+	if(::xtal::AnyPtr var2 = 1)\
+	if(::xtal::AnyPtr var3 = 1)\
 	if(::xtal::IterBreaker tar = target)\
 	for(::xtal::iter_next(tar, var1, var2, var3, true); tar; ::xtal::iter_next(tar, var1, var2, var3, false))
 
@@ -56,7 +56,7 @@
 * @brief get_textを簡単に記述するためのマクロ
 *
 * @code
-* Any text = Xt("Text %d %s")(10, "test");
+* AnyPtr text = Xt("Text %d %s")(10, "test");
 * @endcode
 */
 #define Xt(text) ::xtal::get_text(text) 
@@ -65,7 +65,7 @@
 * @brief formatを簡単に記述するためのマクロ
 *
 * @code
-* Any fmt = Xf("Text %d %s")(10, "test");
+* AnyPtr fmt = Xf("Text %d %s")(10, "test");
 * @endcode
 */
 #define Xf(text) ::xtal::format(text) 
@@ -74,7 +74,7 @@
 * @brief Xtalのソースを簡単に記述するためのマクロ
 *
 * @code
-* Any src = Xsrc((
+* AnyPtr src = Xsrc((
 *   export [0, 2, 3, 4];
 * ));
 * @endcode
@@ -93,10 +93,10 @@
 * 将来はまた使えるようになる日がくるかもしれない。
 * 
 * @code
-* ID id = Xid(test);
+* InternedStringPtr id = Xid(test);
 * @endcode
 */
-#define Xid(string) ::xtal::ID(#string, sizeof(#string)-1)
+#define Xid(string) ::xtal::InternedStringPtr(#string, sizeof(#string)-1)
 
 #else
 

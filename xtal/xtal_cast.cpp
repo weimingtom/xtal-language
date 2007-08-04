@@ -1,8 +1,8 @@
-﻿
+
 #include "xtal.h"
 #include "xtal_cast.h"
 #include "xtal_frame.h"
-#include "xtal_frameimpl.h"
+#include "xtal_frame.h"
 
 namespace xtal{
 
@@ -28,28 +28,26 @@ struct CastCacheTable{
 		}
 	}
 
-	const void* fetch(const Any& a, const void* type_key){
-		uint_t ia = a.rawvalue();
+	const void* fetch(const AnyPtr& a, const void* type_key){
+		uint_t ia = rawvalue(a);
 		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];
 		if(global_mutate_count==unit.mutate_count && type_key==unit.key1 && ia==unit.key2){
-			//printf("e");
 			if(unit.same){
 				return &a;
 			}else{
 				return unit.value;
 			}
 		}
-		//printf("n");
 		return 0;
 	}
 
-	void store(const Any& a, const void* value, const void* type_key){
-		if(a.type()!=TYPE_BASE){
+	void store(const AnyPtr& a, const void* value, const void* type_key){
+		if(type(a)!=TYPE_BASE){
 			return;
 		}
 
-		uint_t ia = a.rawvalue();
+		uint_t ia = rawvalue(a);
 		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];
 		unit.key1 = type_key;
@@ -65,70 +63,70 @@ namespace{
 	CastCacheTable cast_cache_table;
 }
 
-const void* fetch_cast_cache(const Any& a, const void* type_key){
+const void* fetch_cast_cache(const AnyPtr& a, const void* type_key){
 	return cast_cache_table.fetch(a, type_key);
 }
 
-void store_cast_cache(const Any& a, const void* ret, const void* type_key){
+void store_cast_cache(const AnyPtr& a, const void* ret, const void* type_key){
 	cast_cache_table.store(a, ret, type_key);
 }
 
 
-void* cast_helper_helper_extend_anyimpl(const Any& a, const Class& cls){
-	if(a.is(cls)){ return (void*)a.impl(); }
-	XTAL_THROW(cast_error(a, cls.object_name()));
+void* cast_helper_helper_extend_anyimpl(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)pvalue(a); }
+	XTAL_THROW(cast_error(a, cls->object_name()));
 	return 0;
 }
 
-void* cast_helper_helper_extend_any(const Any& a, const Class& cls){
-	if(a.is(cls)){ return (void*)&a; }
-	XTAL_THROW(cast_error(a, cls.object_name()));
+void* cast_helper_helper_extend_any(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)&a; }
+	XTAL_THROW(cast_error(a, cls->object_name()));
 	return 0;
 }
 
-void* cast_helper_helper_other(const Any& a, const Class& cls){
-	if(a.is(cls)){ return ((UserData<int>&)a).get(); }
-	XTAL_THROW(cast_error(a, cls.object_name()));
+void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	XTAL_THROW(cast_error(a, cls->object_name()));
 	return 0;
 }
 
-void* arg_cast_helper_helper_extend_anyimpl(const Any& a, int param_num, const Any& param_name, const Class& cls){
-	if(a.is(cls)){ return (void*)a.impl(); }
-	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
+void* arg_cast_helper_helper_extend_anyimpl(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)pvalue(a); }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name));
 	return 0;
 }
 
-void* arg_cast_helper_helper_extend_any(const Any& a, int param_num, const Any& param_name, const Class& cls){
-	if(a.is(cls)){ return (void*)&a; }
-	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
+void* arg_cast_helper_helper_extend_any(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)&a; }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name));
 	return 0;
 }
 
-void* arg_cast_helper_helper_other(const Any& a, int param_num, const Any& param_name, const Class& cls){
-	if(a.is(cls)){ return ((UserData<int>&)a).get(); }
-	XTAL_THROW(argument_error(a, cls.object_name(), param_num, param_name));
+void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name));
 	return 0;
 }
 
-const ID* CastHelper<const ID*>::as(const Any& a){ 
-	if(const String* p = xtal::as<const String*>(a)){
+const InternedStringPtr* CastHelper<const InternedStringPtr*>::as(const AnyPtr& a){ 
+	if(String* p = xtal::as<String*>(a)){
 		if(p->is_interned()){
-			return (const ID*)p;
+			return (const InternedStringPtr*)p;
 		}
 	}
 	return 0;
 }
 
-const ID* CastHelper<const ID*>::cast(const Any& a){
-	if(const ID* p = as(a)){
+const InternedStringPtr* CastHelper<const InternedStringPtr*>::cast(const AnyPtr& a){
+	if(const InternedStringPtr* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(cast_error(a, "interned String"));
 	return 0;
 }
 
-const ID* CastHelper<const ID*>::arg_cast(const Any& a, int param_num, const Any& param_name){
-	if(const ID* p = as(a)){
+const InternedStringPtr* CastHelper<const InternedStringPtr*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	if(const InternedStringPtr* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(argument_error(a, "interned String", param_num, param_name));
@@ -136,80 +134,80 @@ const ID* CastHelper<const ID*>::arg_cast(const Any& a, int param_num, const Any
 }
 
 
-const char* CastHelper<const char*>::as(const Any& a){ 
-	if(const String* p = xtal::as<const String*>(a)){
+const char* CastHelper<const char*>::as(const AnyPtr& a){ 
+	if(String* p = xtal::as<String*>(a)){
 		return p->c_str();
 	}
 	return 0;
 }
 
-const char* CastHelper<const char*>::cast(const Any& a){
+const char* CastHelper<const char*>::cast(const AnyPtr& a){
 	if(const char* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(cast_error(a, TClass<String>::get().object_name()));
+	XTAL_THROW(cast_error(a, get_cpp_class<String>()->object_name()));
 	return 0;
 }
 
-const char* CastHelper<const char*>::arg_cast(const Any& a, int param_num, const Any& param_name){
+const char* CastHelper<const char*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
 	if(const char* p = as(a)){
 		return p;
 	}
-	XTAL_THROW(argument_error(a, TClass<String>::get().object_name(), param_num, param_name));
+	XTAL_THROW(argument_error(a, get_cpp_class<String>()->object_name(), param_num, param_name));
 	return 0;
 }
 
 
-int_t CastHelper<int_t>::as(const Any& a){
-	switch(a.type()){
+int_t CastHelper<int_t>::as(const AnyPtr& a){
+	switch(type(a)){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){ return a.ivalue(); }
-		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(a.fvalue()); }
+		XTAL_CASE(TYPE_INT){ return ivalue(a); }
+		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
 	}
 	return 0;
 }
 	
-int_t CastHelper<int_t>::cast(const Any& a){
-	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, String("Int"))); }
-		XTAL_CASE(TYPE_INT){ return a.ivalue(); }
-		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(a.fvalue()); }
+int_t CastHelper<int_t>::cast(const AnyPtr& a){
+	switch(type(a)){
+		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Int"))); }
+		XTAL_CASE(TYPE_INT){ return ivalue(a); }
+		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
 	}
 	return 0;
 }
 
-int_t CastHelper<int_t>::arg_cast(const Any& a, int param_num, const Any& param_name){
-	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, String("Int"), param_num, param_name)); }
-		XTAL_CASE(TYPE_INT){ return a.ivalue(); }
-		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(a.fvalue()); }
+int_t CastHelper<int_t>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	switch(type(a)){
+		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Int"), param_num, param_name)); }
+		XTAL_CASE(TYPE_INT){ return ivalue(a); }
+		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
 	}
 	return 0;
 }
 	
-float_t CastHelper<float_t>::as(const Any& a){
-	switch(a.type()){
+float_t CastHelper<float_t>::as(const AnyPtr& a){
+	switch(type(a)){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(a.ivalue()); }
-		XTAL_CASE(TYPE_FLOAT){ return a.fvalue(); }
+		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
 	}
 	return 0;
 }
 	
-float_t CastHelper<float_t>::cast(const Any& a){
-	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, String("Float"))); }
-		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(a.ivalue()); }
-		XTAL_CASE(TYPE_FLOAT){ return a.fvalue(); }
+float_t CastHelper<float_t>::cast(const AnyPtr& a){
+	switch(type(a)){
+		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Float"))); }
+		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
 	}
 	return 0;
 }
 
-float_t CastHelper<float_t>::arg_cast(const Any& a, int param_num, const Any& param_name){
-	switch(a.type()){
-		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, String("Float"), param_num, param_name)); }
-		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(a.ivalue()); }
-		XTAL_CASE(TYPE_FLOAT){ return a.fvalue(); }
+float_t CastHelper<float_t>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	switch(type(a)){
+		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Float"), param_num, param_name)); }
+		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
 	}
 	return 0;
 }

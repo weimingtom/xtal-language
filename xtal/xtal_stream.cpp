@@ -1,233 +1,368 @@
-﻿
+
 #include "xtal.h"
-#include "xtal_streamimpl.h"
+#include "xtal_stream.h"
 #include "xtal_serializer.h"
+#include "xtal_macro.h"
 
 namespace xtal{
 
 void InitStream(){
-	TClass<Stream> cls("Stream");
-	cls.method("put_i8", &Stream::put_i8);
-	cls.method("put_i16", &Stream::put_i16);
-	cls.method("put_i32", &Stream::put_i32);
-	cls.method("put_u8", &Stream::put_u8);
-	cls.method("put_u16", &Stream::put_u16);
-	cls.method("put_u32", &Stream::put_u32);
-	cls.method("get_i8", &Stream::get_i8);
-	cls.method("get_i16", &Stream::get_i16);
-	cls.method("get_i32", &Stream::get_i32);
-	cls.method("get_u8", &Stream::get_u8);
-	cls.method("get_u16", &Stream::get_u16);
-	cls.method("get_u32", &Stream::get_u32);
-	cls.method("put_f32", &Stream::put_f32);
-	cls.method("get_f32", &Stream::get_f32);
-	
-	cls.method("get_s", &Stream::get_s);
-	cls.method("put_s", &Stream::put_s);
 
-	cls.method("print", &Stream::print);
-	cls.method("println", &Stream::println);
+	{
+		ClassPtr p = new_cpp_class<Stream>("Stream");
+		p->method("put_i8", &Stream::put_i8);
+		p->method("put_i16", &Stream::put_i16);
+		p->method("put_i32", &Stream::put_i32);
+		p->method("put_u8", &Stream::put_u8);
+		p->method("put_u16", &Stream::put_u16);
+		p->method("put_u32", &Stream::put_u32);
+		p->method("get_i8", &Stream::get_i8);
+		p->method("get_i16", &Stream::get_i16);
+		p->method("get_i32", &Stream::get_i32);
+		p->method("get_u8", &Stream::get_u8);
+		p->method("get_u16", &Stream::get_u16);
+		p->method("get_u32", &Stream::get_u32);
+		p->method("put_f32", &Stream::put_f32);
+		p->method("get_f32", &Stream::get_f32);
+		
+		p->method("get_s", &Stream::get_s);
+		p->method("put_s", &Stream::put_s);
 
-	cls.method("seek", &Stream::seek).param(null, Named("whence", Stream::XSEEK_SET));
-	cls.method("tell", &Stream::tell);
-	cls.method("pour", &Stream::pour);
-	cls.method("pour_all", &Stream::pour_all);
-	cls.method("size", &Stream::size);
+		p->method("print", &Stream::print);
+		p->method("println", &Stream::println);
 
-	cls.method("serialize", &Stream::serialize);
-	cls.method("deserialize", &Stream::deserialize);
-	cls.method("xtalize", &Stream::xtalize);
-	cls.method("dextalize", &Stream::dextalize);
+		p->method("seek", &Stream::seek)->param(null, Named("whence", Stream::XSEEK_SET));
+		p->method("tell", &Stream::tell);
+		p->method("pour", &Stream::pour);
+		p->method("pour_all", &Stream::pour_all);
+		p->method("size", &Stream::size);
 
-	cls.method("iter_first", &Stream::iter_first);
-	cls.method("iter_next", &Stream::iter_next);
-	cls.method("iter_break", &Stream::iter_break);
+		p->method("serialize", &Stream::serialize);
+		p->method("deserialize", &Stream::deserialize);
+		p->method("xtalize", &Stream::xtalize);
+		p->method("dextalize", &Stream::dextalize);
 
-	cls.def("SEEK_SET", Stream::XSEEK_SET);
-	cls.def("SEEK_CUR", Stream::XSEEK_CUR);
-	cls.def("SEEK_END", Stream::XSEEK_END);
+		p->method("iter_first", &Stream::iter_first);
+		p->method("iter_next", &Stream::iter_next);
+		p->method("iter_break", &Stream::iter_break);
+
+		p->def("SEEK_SET", Stream::XSEEK_SET);
+		p->def("SEEK_CUR", Stream::XSEEK_CUR);
+		p->def("SEEK_END", Stream::XSEEK_END);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<MemoryStream>("MemoryStream");
+		p->inherit(get_cpp_class<Stream>());
+		p->def("new", New<MemoryStream>());
+		p->method("to_s", &MemoryStream::to_s);
+		p->method("resize", &MemoryStream::resize);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<FileStream>("FileStream");
+		p->inherit(get_cpp_class<Stream>());
+		p->def("new", New<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
+	}
+
 }
 
-void InitMemoryStream(){
-	TClass<MemoryStream> cls("MemoryStream");
-	cls.inherit(TClass<Stream>::get());
-	cls.def("new", New<MemoryStream>());
-	cls.method("to_s", &MemoryStream::to_s);
+
+void Stream::put_s(const StringPtr& str){
+	write(str->c_str(), str->length());
 }
 
-void InitFileStream(){
-	TClass<FileStream> cls("FileStream");
-	cls.inherit(TClass<Stream>::get());
-	cls.def("new", New<FileStream, const String&, const String&>().param(Named("name"), Named("mode", "r")));
+StringPtr Stream::get_s(int_t length){
+	char* buf = (char*)user_malloc(length+1);
+	uint_t len = read(buf, length);
+	buf[len] = 0;
+	return xnew<String>(buf, len, length+1, String::delegate_memory_t());
 }
 
-Stream::Stream(){
+uint_t Stream::print(const StringPtr& str){
+	return write(str->c_str(), str->length());
+}
+
+void Stream::println(const StringPtr& str){
+	write(str->c_str(), str->length());
+	write("\n", str->length());
+}
+
+uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
+	xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+	uint_t len = in_stream->read(buf, size);
+	write(buf, len);
+	user_free(buf, size*sizeof(xtal::u8));
+	return len;
+}
+
+uint_t Stream::pour_all(const StreamPtr& in_stream){
+	uint_t size = 1024*10, len, sum = 0;
+	xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+	do{
+		len = in_stream->read(buf, size);
+		sum += len;
+		write(buf, len);
+	}while(len==size);
+	user_free(buf, size*sizeof(xtal::u8));
+	return sum;
+}
+
+uint_t Stream::size(){
+	uint_t pos = tell();
+	seek(0, XSEEK_END);
+	uint_t len = tell();
+	seek(pos, XSEEK_SET);
+	return len;
+}
+
+void Stream::iter_first(const VMachinePtr& vm){
+	vm->return_result(StreamPtr::from_this(this), StreamPtr::from_this(this));
+}
+
+void Stream::iter_next(const VMachinePtr& vm){
+	vm->return_result(null, null);
+	close();
+}
+
+void Stream::iter_break(const VMachinePtr& vm){
+	close();
+}
+
+void Stream::serialize(const AnyPtr& obj){
+	Serializer s(StreamPtr::from_this(this));
+	s.serialize(obj);
+}
+
+AnyPtr Stream::deserialize(){
+	Serializer s(StreamPtr::from_this(this));
+	return s.deserialize();
+}
+
+void Stream::xtalize(const AnyPtr& obj){
 
 }
 
-void Stream::put_i8(int_t v) const{
-	impl()->put_i8(v);
-}
-
-void Stream::put_i16(int_t v) const{
-	impl()->put_i16(v);
-}
-
-void Stream::put_i32(int_t v) const{
-	impl()->put_i32(v);
-}
-
-void Stream::put_u8(uint_t v) const{
-	impl()->put_u8(v);
-}
-
-void Stream::put_u16(uint_t v) const{
-	impl()->put_u16(v);
-}
-
-void Stream::put_u32(uint_t v) const{
-	impl()->put_u32(v);
-}
-
-i8 Stream::get_i8() const{
-	return impl()->get_i8();
-}
-
-i16 Stream::get_i16() const{
-	return impl()->get_i16();
-}
-
-i32 Stream::get_i32() const{
-	return impl()->get_i32();
-}
-
-u8 Stream::get_u8() const{
-	return impl()->get_u8();
-}
-
-u16 Stream::get_u16() const{
-	return impl()->get_u16();
-}
-
-u32 Stream::get_u32() const{
-	return impl()->get_u32();
-}
-
-void Stream::put_f32(float_t v) const{
-	impl()->put_f32(v);
-}
-
-float_t Stream::get_f32() const{
-	return impl()->get_f32();
-}
-
-void Stream::put_s(const String& str) const{
-	impl()->put_s(str);
-}
-
-String Stream::get_s(uint_t length) const{
-	return impl()->get_s(length);
-}
-
-void Stream::print(const String& str) const{
-	impl()->print(str);
-}
-
-void Stream::println(const String& str) const{
-	impl()->println(str);
-}
-
-uint_t Stream::tell() const{
-	return impl()->tell();
-}
-	
-uint_t Stream::write(const void* p, uint_t size) const{
-	return impl()->do_write(p, size);
-}
-	
-uint_t Stream::read(void* p, uint_t size) const{
-	return impl()->do_read(p, size);
-}
-
-void Stream::seek(int_t offset, int_t whence) const{
-	impl()->seek(offset, whence);
-}
-
-void Stream::close() const{
-	impl()->close();
-}
-
-uint_t Stream::pour(const Stream& in_stream, uint_t size) const{
-	return impl()->pour(in_stream, size);
-}
-
-uint_t Stream::pour_all(const Stream& in_stream) const{
-	return impl()->pour_all(in_stream);
-}
-
-uint_t Stream::size() const{
-	return impl()->size();
-}
-
-void Stream::serialize(const Any& v) const{
-	Serializer m(*this);
-	m.serialize(v);
-}
-
-Any Stream::deserialize() const{
-	Serializer m(*this);
-	return m.deserialize();
-}
-
-void Stream::xtalize(const Any& v) const{
-	Serializer m(*this);
-	m.xtalize(v);
-}
-
-Any Stream::dextalize() const{
-	//Serializer m(*this);
-	//return m.load();
+AnyPtr Stream::dextalize(){
 	return null;
 }
 
-void Stream::iter_first(const VMachine& vm){
-	return impl()->iter_first(vm);
+
+FileStream::FileStream(const StringPtr& filename, const StringPtr& mode){
+	const char_t* str = mode->c_str();
+	while(*str){
+		if(*str=='t'){
+			break;
+		}
+		str++;
+	}
+
+	StringPtr bmode = *str=='t' ? mode : mode->cat("b");
+	fp_ = fopen(filename->c_str(), bmode->c_str());
+	if(!fp_){
+		full_gc();
+		fp_ = fopen(filename->c_str(), bmode->c_str());
+		if(!fp_){
+			XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))));
+		}
+	}
 }
 
-void Stream::iter_next(const VMachine& vm){
-	return impl()->iter_next(vm);
+FileStream::FileStream(FILE* fp){
+	fp_ = fp;
 }
 
-void Stream::iter_break(const VMachine& vm){
-	return impl()->iter_break(vm);
+FileStream::~FileStream(){
+	close();
 }
 
-FileStream::FileStream(const String& filename, const String& mode)
-:Stream(null){
-	new(*this) FileStreamImpl(filename, mode);
+uint_t FileStream::tell(){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+
+	return ftell(fp_);
 }
 
-MemoryStream::MemoryStream()
-:Stream(null){
-	new(*this) MemoryStreamImpl();
+uint_t FileStream::write(const void* p, uint_t size){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+
+	XTAL_UNLOCK{
+		return fwrite(p, 1, size, fp_);
+	}
+	return 0;
 }
 
-MemoryStream::MemoryStream(const void* data, uint_t data_size)
-:Stream(null){
-	new(*this) MemoryStreamImpl(data, data_size);
+uint_t FileStream::read(void* p, uint_t size){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+
+	XTAL_UNLOCK{
+		return fread(p, 1, size, fp_);
+	}
+	return 0;
 }
 
-MemoryStream::MemoryStream(const String& data)
-:Stream(null){
-	new(*this) MemoryStreamImpl(data.c_str(), data.size()*sizeof(char_t));
+void FileStream::seek(int_t offset, int_t whence){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+
+	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
+	fseek(fp_, offset, wh);
 }
 
-String MemoryStream::to_s() const{
-	return impl()->to_s();
+void FileStream::close(){
+	if(fp_){
+		fclose(fp_);
+		fp_ = 0;
+	}
 }
 
-void* MemoryStream::data() const{
-	return impl()->data();
+
+MemoryStream::MemoryStream(){
+	pos_ = 0;
 }
+
+MemoryStream::MemoryStream(const void* data, uint_t data_size){
+	data_.resize(data_size);
+	if(data_size>0){
+		memcpy(&data_[0], data, data_size);
+	}
+	pos_ = 0;
+}
+
+uint_t MemoryStream::tell(){
+	return pos_;
+}
+
+uint_t MemoryStream::write(const void* p, uint_t size){
+	if(pos_+size>data_.size()){ 
+		data_.resize(pos_+size);
+	}
+	if(size>0){
+		memcpy(&data_[pos_], p, size);
+	}
+	pos_ += size;
+	return size;	
+}
+
+uint_t MemoryStream::read(void* p, uint_t size){
+	if(pos_+size>data_.size()){ 
+		uint_t diff = data_.size()-pos_;
+		if(diff>0){
+			memcpy(p, &data_[pos_], diff);
+		}
+		pos_ += diff;
+		return diff; 
+	}
+	
+	if(size>0){
+		memcpy(p, &data_[pos_], size);
+	}
+	pos_ += size;
+	return size;
+}
+
+void MemoryStream::seek(int_t offset, int_t whence){
+	switch(whence){
+		case XSEEK_END:
+			pos_ = data_.size()-offset;
+			break;
+		case XSEEK_CUR:
+			pos_ += offset;
+			break;
+		default:
+			if(offset<0){
+				offset = 0;
+			}
+			pos_ = offset;
+			break;
+	}
+}
+
+uint_t MemoryStream::pour(const StreamPtr& in_stream, uint_t size){
+	if(size==0){
+		return 0;
+	}
+
+	if(data_.size() <= pos_ + size){
+		data_.resize(pos_+size);
+	}
+
+	uint_t len = in_stream->read(&data_[pos_], size);
+	data_.resize(data_.size() - (size - len));
+	pos_ += len;
+	return len;
+}
+
+uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
+	uint_t size = 1024*10, len, sum = 0;
+	do{
+		if(data_.size() <= pos_ + size){
+			data_.resize(pos_+size);
+		}
+
+		len = in_stream->read(&data_[pos_], size);
+		sum += len;
+	}while(len==size);
+	data_.resize(data_.size() - (size - len));
+	pos_ += sum;
+	return sum;
+}
+
+StringPtr MemoryStream::to_s(){
+	if(data_.empty())
+		return xnew<String>("");
+	return xnew<String>((char*)&data_[0], data_.size());
+}
+
+
+InteractiveStream::InteractiveStream(){
+	line_ = 1;
+	continue_stmt_ = false;
+	fp_ = stdin;
+}
+
+uint_t InteractiveStream::tell(){
+	XTAL_THROW(unsupported_error("InteractiveStream", "tell"));
+	return 0;
+}
+
+uint_t InteractiveStream::write(const void* p, uint_t size){
+	XTAL_THROW(unsupported_error("InteractiveStream", "write"));
+	return 0;
+}
+
+uint_t InteractiveStream::read(void* p, uint_t size){
+	if(!fp_)
+		return 0;
+	if(continue_stmt_){
+		printf("ix:%03d>    ", line_);
+	}else{
+		printf("ix:%03d>", line_);
+	}
+	continue_stmt_ = true;
+	if(fgets((char*)p, size, fp_)){
+		uint_t sz = strlen((char*)p);
+		if(sz!=size-1){
+			line_++;
+		}
+		return sz;
+	}
+	fp_ = 0;
+	return 0;
+}
+
+void InteractiveStream::seek(int_t offset, int_t whence){
+	XTAL_THROW(unsupported_error("InteractiveStream", "seek"));
+}
+
+void InteractiveStream::close(){
+	if(fp_){
+		fclose(fp_);
+		fp_ = 0;
+	}
+}
+
+void InteractiveStream::set_continue_stmt(bool b){
+	continue_stmt_ = b;
+}
+
 
 }

@@ -1,113 +1,145 @@
-﻿
+
 #pragma once
 
 #include "xtal_allocator.h"
 #include "xtal_stack.h"
 #include "xtal_string.h"
-#include "xtal_constant.h"
 
 namespace xtal{
 
-void InitPrototypes();
-
-struct BlockCore{
-	BlockCore()
-		:line_number(0), variable_symbol_offset(0), variable_size(0){}
-	u16 line_number;
-	u16 variable_symbol_offset;
-	u16 variable_size;
-};
-
-struct ClassCore : public BlockCore{
-	ClassCore()
-		:instance_variable_symbol_offset(0), instance_variable_size(0){}
-	u16 instance_variable_symbol_offset;
-	u16 instance_variable_size;
-};
-
-struct FunCore : public BlockCore{
-	FunCore()
-		:pc(0), max_stack(256), min_param_count(0), max_param_count(0), used_args_object(0), on_heap(0){}
-	u16 pc;
-	u16 max_stack;
-	u8 min_param_count;
-	u8 max_param_count;
-	u8 used_args_object;
-	u8 on_heap;
-};
-
-// 例外を処理するためのフレーム
-struct ExceptCore{
-	ExceptCore(u16 catch_pc = 0, u16 finally_pc = 0, u16 end_pc = 0)
-		:catch_pc(catch_pc), finally_pc(finally_pc), end_pc(end_pc){}
-	u16 catch_pc;
-	u16 finally_pc;
-	u16 end_pc;
-};
-
-extern BlockCore empty_block_core;
-extern ClassCore empty_class_core;
-extern FunCore empty_fun_core;
-extern ExceptCore empty_except_core;
-
-// fwd decl
-class CodeImpl;
-
-/**
-* @brief Xtalのバイトコードを表す
-*/
-class Code : public Any{
+class Code : public Base{
 public:
-		
+	
 	Code();
-
-	Code(CodeImpl* p)
-		:Any((AnyImpl*)p){}
-
-	Code(const Null&)
-		:Any(null){}
-
-	/**
-	* @brief コードの先頭ポインタを得る。
-	*/
-	const inst_t* data() const;
-			
-	/**
-	* @brief コードのサイズを得る。
-	*/
-	int_t size() const;
-		
-	/**
-	* @brief シンボルテーブルからi番目のシンボルを取り出す。
-	*/
-	const ID& symbol(int_t i) const;
-	
-	/**
-	* @brief 値テーブルからi番目の値を取り出す。
-	*/
-	const Any& value(int_t i) const;
-	
-	/**
-	* @brief 値テーブルのi番目に値を設定する。
-	*/
-	void set_value(int_t i, const Any& v) const;
 
 	/**
 	* @brief コードに対応したソース行数を返す。
 	*/
-	int_t compliant_line_number(const inst_t* p) const;
+	int_t compliant_line_number(const inst_t* p);
+		
+	void set_line_number_info(int_t line);
 
-	BlockCore* block_core(int_t i) const;
+	const inst_t* data(){
+		return &code_[0];
+	}
 
-	FunCore* fun_core(int_t i) const;
+	int_t size(){
+		return code_.size();
+	}
 
-	String source_file_name() const;
+	/**
+	* @brief シンボルテーブルからi番目のシンボルを取り出す。
+	*/
+	const InternedStringPtr& symbol(int_t i){
+		XTAL_ASSERT(i<(int_t)symbol_table_->size());
+		return (const InternedStringPtr&)symbol_table_->at(i);
+	}
 
-	const Class& toplevel() const;
+	/**
+	* @brief 値テーブルからi番目の値を取り出す。
+	*/
+	const AnyPtr& value(int_t i){
+		XTAL_ASSERT(i<(int_t)value_table_->size());
+		return value_table_->at(i);
+	}
 
-	String inspect() const;
+	/**
+	* @brief onceテーブルからi番目の値を取り出す。
+	*/
+	const AnyPtr& once_value(int_t i){
+		XTAL_ASSERT(i<(int_t)once_table_->size());
+		return once_table_->at(i);
+	}
 
-	CodeImpl* impl() const{ return (CodeImpl*)Any::impl(); }
+	/**
+	* @brief onceテーブルのi番目に値を設定する。
+	*/
+	void set_once_value(int_t i, const AnyPtr& v){
+		XTAL_ASSERT(i<(int_t)once_table_->size());
+		once_table_->set_at(i, v);
+	}
+
+	const StringPtr& source_file_name(){ 
+		return source_file_name_; 
+	}
+
+	const ClassPtr& toplevel(){ 
+		return toplevel_; 
+	}
+
+	BlockCore* block_core(int_t i){
+		return &block_core_table_[i];
+	}
+
+	ClassCore* class_core(int_t i){
+		return &class_core_table_[i];
+	}
+
+	FunCore* fun_core(int_t i){
+		return &xfun_core_table_[i];
+	}	
+
+	ExceptCore* except_core(int_t i){
+		return &except_core_table_[i];
+	}
+
+	FunPtr first_fun(){
+		return first_fun_;
+	}
+
+	StringPtr inspect();
+
+	virtual void call(const VMachinePtr& vm);
+
+private:
+
+	friend class CodeBuilder;
+	friend class VMachine;
+	friend class Serializer;
+
+	void reset_core();
+
+	typedef AC<inst_t>::vector code_t;
+	code_t code_;
+	ArrayPtr symbol_table_;
+	ArrayPtr value_table_;
+	ArrayPtr once_table_;
+	ClassPtr toplevel_;
+	StringPtr source_file_name_;
+	FunPtr first_fun_;
+
+protected:
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & symbol_table_ & value_table_ & toplevel_ & source_file_name_ & first_fun_;
+	}
+
+private:
+
+	AC<FunCore>::vector xfun_core_table_;
+	AC<BlockCore>::vector block_core_table_;
+	AC<ClassCore>::vector class_core_table_;
+	AC<ExceptCore>::vector except_core_table_;
+
+	struct LineNumberTable{
+		u16 start_pc;
+		u16 line_number;
+	};
+
+	struct LineNumberCmp{
+		bool operator ()(const LineNumberTable& lnt, int_t pc){
+			return lnt.start_pc<pc;
+		}
+		bool operator ()(int_t pc, const LineNumberTable& lnt){
+			return pc<lnt.start_pc;
+		}
+		bool operator ()(const LineNumberTable& l, const LineNumberTable& r){
+			return l.start_pc<r.start_pc;
+		}
+	};
+
+	AC<LineNumberTable>::vector line_number_table_;
 };
-	
+
 }

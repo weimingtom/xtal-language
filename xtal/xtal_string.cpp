@@ -1,10 +1,11 @@
-﻿
+
 #include "xtal.h"
 
 #include <string.h>
 
-#include "xtal_stringimpl.h"
+#include "xtal_string.h"
 #include "xtal_macro.h"
+#include "xtal_stack.h"
 
 namespace xtal{
 
@@ -17,41 +18,110 @@ uint_t make_hashcode(const char* p, uint_t size){
 	return value;
 }
 
-static void InitStringSplitImpl(){
-	TClass<StringImpl::StringSplitImpl> p("StringSplit");
-	p.inherit(Iterator());
-	p.method("reset", &StringImpl::StringSplitImpl::reset);
-	p.method("iter_first", &StringImpl::StringSplitImpl::iter_next);
-	p.method("iter_next", &StringImpl::StringSplitImpl::iter_next);
-}
+class StringSplit : public Base{
+	StringPtr str_, sep_;
+	uint_t index_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & str_ & sep_;
+	}
+
+public:
+
+	StringSplit(const StringPtr& str, const StringPtr& sep)
+		:str_(str), sep_(sep), index_(0){
+	}
+	
+	AnyPtr reset(){
+		index_ = 0;
+		return SmartPtr<StringSplit>::from_this(this);
+	}
+
+	void iter_next(const VMachinePtr& vm){
+		if(str_->size()<=index_){
+			reset();
+			vm->return_result(null);
+			return;
+		}
+		const char* sep = sep_->c_str();
+		const char* str = str_->c_str();
+
+		if(sep[0]==0){
+			vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], 1));
+			index_ += 1;
+			return;
+		}
+
+		for(int_t j=index_, jsz=str_->size(); j<jsz; j+=ch_len(str[j])){
+			for(int_t i=0, sz=sep_->size()+1; i<sz; ++i){
+				if(sep[i]==0){
+					vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], j-index_));
+					index_ = j+i;
+					return;
+				}
+				if(str[j+i]==0){
+					vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], j-index_));
+					index_ = j+i;
+					return;
+				}
+				if(str[j+i]!=sep[i]){
+					break;
+				}
+			}
+		}
+		vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], str_->size()-index_));
+		index_ = str_->size();
+	}
+};
 
 void InitString(){
-	TClass<String> p("String");
-	
-	InitStringSplitImpl();
 
-	p.def("new", New<String>());
-	p.method("to_i", &String::to_i);
-	p.method("to_f", &String::to_f);
-	p.method("to_s", &String::to_s);
-	p.method("clone", &String::clone);
+	{
+		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
+		p->inherit(Iterator());
+		p->method("reset", &StringSplit::reset);
+		p->method("iter_first", &StringSplit::iter_next);
+		p->method("iter_next", &StringSplit::iter_next);
+	}
 
-	p.method("length", &String::length);
-	p.method("size", &String::size);
-	p.method("slice", &String::slice);
-	p.method("intern", &String::intern);
+	{
+		ClassPtr p = new_cpp_class<String>("String");
 
-	p.method("split", &String::split);
+		p->def("new", New<String>());
+		p->method("to_i", &String::to_i);
+		p->method("to_f", &String::to_f);
+		p->method("to_s", &String::to_s);
+		p->method("clone", &String::clone);
 
-	p.method("op_cat", &String::op_cat);
-	p.method("op_eq", &String::op_eq);
-	p.method("op_lt", &String::op_lt);
+		p->method("length", &String::length);
+		p->method("size", &String::size);
+		p->method("slice", &String::slice);
+		p->method("intern", &String::intern);
 
-	p.method("op_cat_r_String", &String::op_cat_r_String);
-	p.method("op_eq_r_String", &String::op_eq_r_String);
-	p.method("op_lt_r_String", &String::op_lt_r_String);
-	
-	p.method("op_cat_assign", &String::op_cat);
+		p->method("split", &String::split);
+
+		p->method("op_cat", &String::op_cat);
+		p->method("op_eq", &String::op_eq);
+		p->method("op_lt", &String::op_lt);
+
+		p->method("op_cat_r_String", &String::op_cat_r_String);
+		p->method("op_eq_r_String", &String::op_eq_r_String);
+		p->method("op_lt_r_String", &String::op_lt_r_String);
+		
+		p->method("op_cat_assign", &String::op_cat);
+	}
+}
+
+void String::visit_members(Visitor& m){
+	Base::visit_members(m);
+	if((flags_ & ROPE)!=0){
+		m & rope_.left & rope_.right;
+	}
+}
+
+void visit_members(Visitor& m, const Named& p){
+	m & p.name & p.value;
 }
 
 struct StringKey{
@@ -70,14 +140,14 @@ struct StringKey{
 	}
 };
 
-class StringMgrImpl : public GCObserverImpl{
+class StringMgr : public GCObserver{
 public:
 
 	struct Node{
 		uint_t hashcode;
 		const char* str;
 		uint_t size;
-		String value;
+		StringPtr value;
 		Node* next;
 
 		Node()
@@ -85,7 +155,7 @@ public:
 	};
 
 
-	StringMgrImpl(){
+	StringMgr(){
 		size_ = 0;
 		begin_ = 0;
 		used_size_ = 0;
@@ -93,7 +163,7 @@ public:
 		expand(7);
 	}
 
-	virtual ~StringMgrImpl(){
+	virtual ~StringMgr(){
 		for(uint_t i = 0; i<size_; ++i){
 			Node* p = begin_[i];
 			while(p){
@@ -158,7 +228,7 @@ protected:
 	};
 
 	virtual void visit_members(Visitor& m){
-		AnyImpl::visit_members(m);
+		Base::visit_members(m);
 		for(uint_t i = 0; i<size_; ++i){
 			Node* p = begin_[i];
 			while(p){
@@ -171,12 +241,12 @@ protected:
 
 public:
 
-	const String& insert(const char* str, uint_t size);
+	const StringPtr& insert(const char* str, uint_t size);
 
 	virtual void before_gc();
 };
 
-const String& StringMgrImpl::insert(const char* str, uint_t size){
+const StringPtr& StringMgr::insert(const char* str, uint_t size){
 	Guard guard(guard_);
 
 	uint_t hashcode = make_hashcode(str, size);
@@ -190,10 +260,10 @@ const String& StringMgrImpl::insert(const char* str, uint_t size){
 
 	*p = (Node*)user_malloc(sizeof(Node));
 	new(*p) Node();
-
-	new((*p)->value) StringImpl(str, size, hashcode);
+	
+	(*p)->value = xnew<String>(str, size, hashcode);
 	(*p)->hashcode = hashcode;
-	(*p)->str = (*p)->value.c_str();
+	(*p)->str = (*p)->value->c_str();
 	(*p)->size = size;
 
 	used_size_++;
@@ -213,7 +283,7 @@ const String& StringMgrImpl::insert(const char* str, uint_t size){
 	}
 }
 
-void StringMgrImpl::before_gc(){
+void StringMgr::before_gc(){
 	return;
 
 	if(guard_){
@@ -225,7 +295,7 @@ void StringMgrImpl::before_gc(){
 		Node* prev = 0;
 		while(p){
 			Node* next = p->next;
-			if(p->value.impl()->ref_count()==1){
+			if(pvalue(p->value)->ref_count()==1){
 				p->~Node();
 				user_free(p, sizeof(Node));
 				used_size_--;
@@ -242,23 +312,147 @@ void StringMgrImpl::before_gc(){
 	}
 }
 	
-static StringMgrImpl* str_mgr(){
-	static LLVar<Any> p;
-	if(!p){ 
-		new(p) StringMgrImpl();
-	}
-	return (StringMgrImpl*)p.impl();
+static const SmartPtr<StringMgr>& str_mgr(){
+	static LLVar<SmartPtr<StringMgr> > p = xnew<StringMgr>();
+	return p;
 }
 
-void StringImpl::common_init(uint_t len){
-	set_class(TClass<String>::get());
+void String::common_init(uint_t len){
 	size_ = len;
 	str_.p = static_cast<char*>(user_malloc(size_+1));
 	str_.p[size_] = 0;
 	flags_ = 0;
 }
 
-void StringImpl::became_unified(){
+	
+String::String(const char* str){
+	common_init(strlen(str));
+	memcpy(str_.p, str, size_);
+}
+
+String::String(const char* str, uint_t len){
+	common_init(len);
+	memcpy(str_.p, str, size_);
+}
+
+String::String(const char* begin, const char* last){
+	common_init(last-begin);
+	memcpy(str_.p, begin, size_);
+}
+
+String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
+	common_init(size1 + size2);
+	memcpy(str_.p, str1, size1);
+	memcpy(str_.p+size1, str2, size2);
+}
+
+String::String(const string_t& str){
+	common_init(str.size());
+	memcpy(str_.p, str.c_str(), size_);
+}
+
+String::String(const char* str, uint_t len, uint_t hashcode){
+	common_init(len);
+	memcpy(str_.p, str, size_);
+	str_.hashcode = hashcode;
+	flags_ = INTERNED | HASHED;
+}
+
+String::String(char* str, uint_t len, uint_t /*buffer_size*/, delegate_memory_t){
+	size_ = len;
+	str_.p = str;
+	flags_ = 0;
+}
+
+String::String(String* left, String* right){
+	left->inc_ref_count();
+	right->inc_ref_count();
+	rope_.left = left;
+	rope_.right = right;
+	size_ = left->size() + right->size();
+	flags_ = ROPE;
+}
+
+String::~String(){
+	if((flags_ & ROPE)==0){
+		if((flags_ & NOFREE)==0){
+			user_free(str_.p, size_+1);
+		}
+	}else{
+		rope_.left->dec_ref_count();
+		rope_.right->dec_ref_count();
+	}
+}
+
+const char* String::c_str(){ 
+	became_unified();
+	return str_.p; 
+}
+
+uint_t String::size(){ 
+	return size_; 
+}
+
+uint_t String::length(){ 
+	return size_; 
+}
+
+StringPtr String::slice(int_t first, int_t last){ 
+	return xnew<String>(c_str()+first, last-first); 
+}
+
+uint_t String::hashcode(){ 
+	if((flags_ & HASHED)!=0)
+		return str_.hashcode;		
+	became_unified(); 
+	str_.hashcode = make_hashcode(str_.p, size_);
+	flags_ |= HASHED;
+	return str_.hashcode; 
+}
+
+StringPtr String::clone(){ 
+	return StringPtr::from_this(this); 
+}
+
+InternedStringPtr String::intern(){ 
+	return StringPtr::from_this(this); 
+}
+
+bool String::is_interned(){ 
+	return (flags_ & INTERNED)!=0; 
+}
+
+int_t String::to_i(){ 
+	return atoi(c_str()); 
+}
+
+float_t String::to_f(){ 
+	return (float_t)atof(c_str()); 
+}
+
+StringPtr String::to_s(){ 
+	return StringPtr::from_this(this); 
+}
+
+AnyPtr String::split(const StringPtr& sep){
+	return xnew<StringSplit>(StringPtr::from_this(this), sep);
+}
+
+StringPtr String::op_cat_String(const StringPtr& v){
+	if(size_+v->size_ <= 16)
+		return xnew<String>(c_str(), size(), v->c_str(), v->size());
+	return xnew<String>(this, v.get());
+}
+
+bool String::op_eq_r_String(const StringPtr& v){ 
+	return v->size()==size() && memcmp(v->c_str(), c_str(), size())==0; 
+}
+
+bool String::op_lt_r_String(const StringPtr& v){ 
+	return strcmp(v->c_str(), c_str())<0; 
+}
+
+void String::became_unified(){
 	if((flags_ & ROPE)==0)
 		return;
 
@@ -272,8 +466,8 @@ void StringImpl::became_unified(){
 	flags_ = 0;
 }
 
-void StringImpl::write_to_memory(StringImpl* p, char_t* memory, uint_t& pos){
-	PStack<StringImpl*> stack;
+void String::write_to_memory(String* p, char_t* memory, uint_t& pos){
+	PStack<String*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
 			memcpy(&memory[pos], p->str_.p, p->size_);
@@ -288,244 +482,164 @@ void StringImpl::write_to_memory(StringImpl* p, char_t* memory, uint_t& pos){
 	}
 }
 
-String::String(const char* str){
-	new(*this) StringImpl(str);
+StringPtr String::cat(const StringPtr& v){
+	return op_cat_String(v);
 }
 
-String::String(const string_t& str){
-	new(*this) StringImpl(str);
+StringPtr String::op_cat_r_String(const StringPtr& v){
+	return v->op_cat_String(StringPtr::from_this(this));
 }
 
-String::String(const char* str, uint_t size){
-	new(*this) StringImpl(str, size);
-}
-	
-String::String(const char* begin, const char* last){
-	new(*this) StringImpl(begin, last);
+void String::op_cat(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_cat_r_String));
 }
 
-String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
-	new(*this) StringImpl(str1, size1, str2, size2);
-}
-
-String::String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t){
-	new(*this) StringImpl(str, size, buffer_size, delegate_memory_t());
-}
-
-const char* String::c_str() const{
-	return impl()->c_str();
-}
-
-uint_t String::size() const{
-	return impl()->size();
-}
-
-uint_t String::length() const{
-	return impl()->length();
-}
-
-String String::slice(int_t first, int_t last) const{
-	return impl()->slice(first, last);
-}
-
-String String::clone() const{
-	return impl()->clone();
-}
-
-ID String::intern() const{
-	return *this;
-}
-	
-bool String::is_interned() const{
-	return impl()->is_interned();
-}
-
-int_t String::to_i() const{
-	return impl()->to_i();
-}
-
-float_t String::to_f() const{
-	return impl()->to_f();
-}
-
-String String::to_s() const{
-	return impl()->to_s();
-}
-
-Any String::split(const String& sep) const{
-	return impl()->split(sep);
-}
-
-String String::cat(const String& v) const{
-	return impl()->op_cat_String(v);
-}
-
-String String::op_cat_String(const String& v) const{
-	return impl()->op_cat_String(v);
-}
-
-void String::op_cat(const VMachine& vm) const{
-	Any a = vm.arg(0); 
-	vm.recycle_call(*this); 
-	a.rawsend(vm, Xid(op_cat_r_String));
-}
-
-void String::op_eq(const VMachine& vm) const{
-	Any a = vm.arg(0); 
-	vm.recycle_call(*this); 
-	a.rawsend(vm, Xid(op_eq_r_String));
-	if(!vm.processed()){
-		vm.return_result(null);
+void String::op_eq(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_eq_r_String));
+	if(!vm->processed()){
+		vm->return_result(null);
 	}
 }
 
-void String::op_lt(const VMachine& vm) const{
-	Any a = vm.arg(0); 
-	vm.recycle_call(*this); 
-	a.rawsend(vm, Xid(op_lt_r_String));
+void String::op_lt(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_lt_r_String));
 }
 
-String String::op_cat_r_String(const String& v) const{
-	return v.op_cat_String(*this);
-}
 
-bool String::op_eq_r_String(const String& v) const{
-	return impl()->op_eq_r_String(v);
-}
 
-bool String::op_lt_r_String(const String& v) const{
-	return impl()->op_lt_r_String(v);
-}
+InternedStringPtr::InternedStringPtr(const char* name)
+	:StringPtr(name ? str_mgr()->insert(name, strlen(name)) : null){}
 
-	
+InternedStringPtr::InternedStringPtr(const char* name, int_t size)
+	:StringPtr(str_mgr()->insert(name, size)){}
 
-ID::ID(const char* name)
-:String(name ? str_mgr()->insert(name, strlen(name)) : null){}
-
-ID::ID(const char* name, int_t size)
-:String(str_mgr()->insert(name, size)){}
-
-ID::ID(const String& name)
-:String(!name ? null : name.impl()->is_interned() ? name : str_mgr()->insert(name.c_str(), name.size())){}
+InternedStringPtr::InternedStringPtr(const StringPtr& name)
+	:StringPtr(!name ? null : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->size())){}
 
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{ID{{
+//{InternedStringPtr{{
 namespace id{
-ID id__ARGS__(null);
-ID idop_or_assign(null);
-ID idop_add_assign(null);
-ID idop_shr(null);
-ID idop_ushr_assign(null);
-ID idop_call(null);
-ID idop_sub_assign(null);
-ID idop_lt(null);
-ID idop_eq(null);
-ID idop_mul(null);
-ID idop_neg(null);
-ID idserial_new(null);
-ID iditer_next(null);
-ID iditer_first(null);
-ID idtrue(null);
-ID idserial_save(null);
-ID idop_and_assign(null);
-ID idop_mod_assign(null);
-ID idop_div_assign(null);
-ID idop_or(null);
-ID idop_div(null);
-ID idlib(null);
-ID idop_cat_assign(null);
-ID idop_cat(null);
-ID idIOError(null);
-ID idserial_load(null);
-ID idfalse(null);
-ID idop_add(null);
-ID idop_cat_r_String(null);
-ID idop_dec(null);
-ID idop_inc(null);
-ID idop_ushr(null);
-ID idop_pos(null);
-ID idop_shr_assign(null);
-ID idop_mod(null);
-ID iditer_break(null);
-ID idop_eq_r_String(null);
-ID idstring(null);
-ID idinitialize(null);
-ID idop_set_at(null);
-ID idop_lt_r_String(null);
-ID idtest(null);
-ID idop_at(null);
-ID idop_shl_assign(null);
-ID idop_sub(null);
-ID idvalue(null);
-ID idop_clone(null);
-ID idop_com(null);
-ID idnew(null);
-ID idop_shl(null);
-ID idop_xor(null);
-ID idop_and(null);
-ID idsize(null);
-ID idop_xor_assign(null);
-ID idop_mul_assign(null);
+InternedStringPtr id__ARGS__(null);
+InternedStringPtr idop_or_assign(null);
+InternedStringPtr idop_add_assign(null);
+InternedStringPtr idop_shr(null);
+InternedStringPtr idop_ushr_assign(null);
+InternedStringPtr idop_call(null);
+InternedStringPtr idop_sub_assign(null);
+InternedStringPtr idop_lt(null);
+InternedStringPtr idop_eq(null);
+InternedStringPtr idop_mul(null);
+InternedStringPtr idop_neg(null);
+InternedStringPtr idserial_new(null);
+InternedStringPtr iditer_next(null);
+InternedStringPtr iditer_first(null);
+InternedStringPtr idtrue(null);
+InternedStringPtr idserial_save(null);
+InternedStringPtr idop_and_assign(null);
+InternedStringPtr idop_mod_assign(null);
+InternedStringPtr idop_div_assign(null);
+InternedStringPtr idop_or(null);
+InternedStringPtr idop_div(null);
+InternedStringPtr idlib(null);
+InternedStringPtr idop_cat_assign(null);
+InternedStringPtr idop_cat(null);
+InternedStringPtr idIOError(null);
+InternedStringPtr idserial_load(null);
+InternedStringPtr idfalse(null);
+InternedStringPtr idop_add(null);
+InternedStringPtr idop_cat_r_String(null);
+InternedStringPtr idop_dec(null);
+InternedStringPtr idop_inc(null);
+InternedStringPtr idop_ushr(null);
+InternedStringPtr idop_pos(null);
+InternedStringPtr idop_shr_assign(null);
+InternedStringPtr idop_mod(null);
+InternedStringPtr iditer_break(null);
+InternedStringPtr idop_eq_r_String(null);
+InternedStringPtr idstring(null);
+InternedStringPtr idinitialize(null);
+InternedStringPtr idop_set_at(null);
+InternedStringPtr idop_lt_r_String(null);
+InternedStringPtr idtest(null);
+InternedStringPtr idop_at(null);
+InternedStringPtr idop_shl_assign(null);
+InternedStringPtr idop_sub(null);
+InternedStringPtr idvalue(null);
+InternedStringPtr idop_clone(null);
+InternedStringPtr idop_com(null);
+InternedStringPtr idnew(null);
+InternedStringPtr idop_shl(null);
+InternedStringPtr idop_xor(null);
+InternedStringPtr idop_and(null);
+InternedStringPtr idsize(null);
+InternedStringPtr idop_xor_assign(null);
+InternedStringPtr idop_mul_assign(null);
 }
 void InitID(){
-id::id__ARGS__ = ID("__ARGS__", 8); add_long_life_var(&id::id__ARGS__); 
-id::idop_or_assign = ID("op_or_assign", 12); add_long_life_var(&id::idop_or_assign); 
-id::idop_add_assign = ID("op_add_assign", 13); add_long_life_var(&id::idop_add_assign); 
-id::idop_shr = ID("op_shr", 6); add_long_life_var(&id::idop_shr); 
-id::idop_ushr_assign = ID("op_ushr_assign", 14); add_long_life_var(&id::idop_ushr_assign); 
-id::idop_call = ID("op_call", 7); add_long_life_var(&id::idop_call); 
-id::idop_sub_assign = ID("op_sub_assign", 13); add_long_life_var(&id::idop_sub_assign); 
-id::idop_lt = ID("op_lt", 5); add_long_life_var(&id::idop_lt); 
-id::idop_eq = ID("op_eq", 5); add_long_life_var(&id::idop_eq); 
-id::idop_mul = ID("op_mul", 6); add_long_life_var(&id::idop_mul); 
-id::idop_neg = ID("op_neg", 6); add_long_life_var(&id::idop_neg); 
-id::idserial_new = ID("serial_new", 10); add_long_life_var(&id::idserial_new); 
-id::iditer_next = ID("iter_next", 9); add_long_life_var(&id::iditer_next); 
-id::iditer_first = ID("iter_first", 10); add_long_life_var(&id::iditer_first); 
-id::idtrue = ID("true", 4); add_long_life_var(&id::idtrue); 
-id::idserial_save = ID("serial_save", 11); add_long_life_var(&id::idserial_save); 
-id::idop_and_assign = ID("op_and_assign", 13); add_long_life_var(&id::idop_and_assign); 
-id::idop_mod_assign = ID("op_mod_assign", 13); add_long_life_var(&id::idop_mod_assign); 
-id::idop_div_assign = ID("op_div_assign", 13); add_long_life_var(&id::idop_div_assign); 
-id::idop_or = ID("op_or", 5); add_long_life_var(&id::idop_or); 
-id::idop_div = ID("op_div", 6); add_long_life_var(&id::idop_div); 
-id::idlib = ID("lib", 3); add_long_life_var(&id::idlib); 
-id::idop_cat_assign = ID("op_cat_assign", 13); add_long_life_var(&id::idop_cat_assign); 
-id::idop_cat = ID("op_cat", 6); add_long_life_var(&id::idop_cat); 
-id::idIOError = ID("IOError", 7); add_long_life_var(&id::idIOError); 
-id::idserial_load = ID("serial_load", 11); add_long_life_var(&id::idserial_load); 
-id::idfalse = ID("false", 5); add_long_life_var(&id::idfalse); 
-id::idop_add = ID("op_add", 6); add_long_life_var(&id::idop_add); 
-id::idop_cat_r_String = ID("op_cat_r_String", 15); add_long_life_var(&id::idop_cat_r_String); 
-id::idop_dec = ID("op_dec", 6); add_long_life_var(&id::idop_dec); 
-id::idop_inc = ID("op_inc", 6); add_long_life_var(&id::idop_inc); 
-id::idop_ushr = ID("op_ushr", 7); add_long_life_var(&id::idop_ushr); 
-id::idop_pos = ID("op_pos", 6); add_long_life_var(&id::idop_pos); 
-id::idop_shr_assign = ID("op_shr_assign", 13); add_long_life_var(&id::idop_shr_assign); 
-id::idop_mod = ID("op_mod", 6); add_long_life_var(&id::idop_mod); 
-id::iditer_break = ID("iter_break", 10); add_long_life_var(&id::iditer_break); 
-id::idop_eq_r_String = ID("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
-id::idstring = ID("string", 6); add_long_life_var(&id::idstring); 
-id::idinitialize = ID("initialize", 10); add_long_life_var(&id::idinitialize); 
-id::idop_set_at = ID("op_set_at", 9); add_long_life_var(&id::idop_set_at); 
-id::idop_lt_r_String = ID("op_lt_r_String", 14); add_long_life_var(&id::idop_lt_r_String); 
-id::idtest = ID("test", 4); add_long_life_var(&id::idtest); 
-id::idop_at = ID("op_at", 5); add_long_life_var(&id::idop_at); 
-id::idop_shl_assign = ID("op_shl_assign", 13); add_long_life_var(&id::idop_shl_assign); 
-id::idop_sub = ID("op_sub", 6); add_long_life_var(&id::idop_sub); 
-id::idvalue = ID("value", 5); add_long_life_var(&id::idvalue); 
-id::idop_clone = ID("op_clone", 8); add_long_life_var(&id::idop_clone); 
-id::idop_com = ID("op_com", 6); add_long_life_var(&id::idop_com); 
-id::idnew = ID("new", 3); add_long_life_var(&id::idnew); 
-id::idop_shl = ID("op_shl", 6); add_long_life_var(&id::idop_shl); 
-id::idop_xor = ID("op_xor", 6); add_long_life_var(&id::idop_xor); 
-id::idop_and = ID("op_and", 6); add_long_life_var(&id::idop_and); 
-id::idsize = ID("size", 4); add_long_life_var(&id::idsize); 
-id::idop_xor_assign = ID("op_xor_assign", 13); add_long_life_var(&id::idop_xor_assign); 
-id::idop_mul_assign = ID("op_mul_assign", 13); add_long_life_var(&id::idop_mul_assign); 
+id::id__ARGS__ = InternedStringPtr("__ARGS__", 8); add_long_life_var(&id::id__ARGS__); 
+id::idop_or_assign = InternedStringPtr("op_or_assign", 12); add_long_life_var(&id::idop_or_assign); 
+id::idop_add_assign = InternedStringPtr("op_add_assign", 13); add_long_life_var(&id::idop_add_assign); 
+id::idop_shr = InternedStringPtr("op_shr", 6); add_long_life_var(&id::idop_shr); 
+id::idop_ushr_assign = InternedStringPtr("op_ushr_assign", 14); add_long_life_var(&id::idop_ushr_assign); 
+id::idop_call = InternedStringPtr("op_call", 7); add_long_life_var(&id::idop_call); 
+id::idop_sub_assign = InternedStringPtr("op_sub_assign", 13); add_long_life_var(&id::idop_sub_assign); 
+id::idop_lt = InternedStringPtr("op_lt", 5); add_long_life_var(&id::idop_lt); 
+id::idop_eq = InternedStringPtr("op_eq", 5); add_long_life_var(&id::idop_eq); 
+id::idop_mul = InternedStringPtr("op_mul", 6); add_long_life_var(&id::idop_mul); 
+id::idop_neg = InternedStringPtr("op_neg", 6); add_long_life_var(&id::idop_neg); 
+id::idserial_new = InternedStringPtr("serial_new", 10); add_long_life_var(&id::idserial_new); 
+id::iditer_next = InternedStringPtr("iter_next", 9); add_long_life_var(&id::iditer_next); 
+id::iditer_first = InternedStringPtr("iter_first", 10); add_long_life_var(&id::iditer_first); 
+id::idtrue = InternedStringPtr("true", 4); add_long_life_var(&id::idtrue); 
+id::idserial_save = InternedStringPtr("serial_save", 11); add_long_life_var(&id::idserial_save); 
+id::idop_and_assign = InternedStringPtr("op_and_assign", 13); add_long_life_var(&id::idop_and_assign); 
+id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13); add_long_life_var(&id::idop_mod_assign); 
+id::idop_div_assign = InternedStringPtr("op_div_assign", 13); add_long_life_var(&id::idop_div_assign); 
+id::idop_or = InternedStringPtr("op_or", 5); add_long_life_var(&id::idop_or); 
+id::idop_div = InternedStringPtr("op_div", 6); add_long_life_var(&id::idop_div); 
+id::idlib = InternedStringPtr("lib", 3); add_long_life_var(&id::idlib); 
+id::idop_cat_assign = InternedStringPtr("op_cat_assign", 13); add_long_life_var(&id::idop_cat_assign); 
+id::idop_cat = InternedStringPtr("op_cat", 6); add_long_life_var(&id::idop_cat); 
+id::idIOError = InternedStringPtr("IOError", 7); add_long_life_var(&id::idIOError); 
+id::idserial_load = InternedStringPtr("serial_load", 11); add_long_life_var(&id::idserial_load); 
+id::idfalse = InternedStringPtr("false", 5); add_long_life_var(&id::idfalse); 
+id::idop_add = InternedStringPtr("op_add", 6); add_long_life_var(&id::idop_add); 
+id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15); add_long_life_var(&id::idop_cat_r_String); 
+id::idop_dec = InternedStringPtr("op_dec", 6); add_long_life_var(&id::idop_dec); 
+id::idop_inc = InternedStringPtr("op_inc", 6); add_long_life_var(&id::idop_inc); 
+id::idop_ushr = InternedStringPtr("op_ushr", 7); add_long_life_var(&id::idop_ushr); 
+id::idop_pos = InternedStringPtr("op_pos", 6); add_long_life_var(&id::idop_pos); 
+id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13); add_long_life_var(&id::idop_shr_assign); 
+id::idop_mod = InternedStringPtr("op_mod", 6); add_long_life_var(&id::idop_mod); 
+id::iditer_break = InternedStringPtr("iter_break", 10); add_long_life_var(&id::iditer_break); 
+id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
+id::idstring = InternedStringPtr("string", 6); add_long_life_var(&id::idstring); 
+id::idinitialize = InternedStringPtr("initialize", 10); add_long_life_var(&id::idinitialize); 
+id::idop_set_at = InternedStringPtr("op_set_at", 9); add_long_life_var(&id::idop_set_at); 
+id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14); add_long_life_var(&id::idop_lt_r_String); 
+id::idtest = InternedStringPtr("test", 4); add_long_life_var(&id::idtest); 
+id::idop_at = InternedStringPtr("op_at", 5); add_long_life_var(&id::idop_at); 
+id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13); add_long_life_var(&id::idop_shl_assign); 
+id::idop_sub = InternedStringPtr("op_sub", 6); add_long_life_var(&id::idop_sub); 
+id::idvalue = InternedStringPtr("value", 5); add_long_life_var(&id::idvalue); 
+id::idop_clone = InternedStringPtr("op_clone", 8); add_long_life_var(&id::idop_clone); 
+id::idop_com = InternedStringPtr("op_com", 6); add_long_life_var(&id::idop_com); 
+id::idnew = InternedStringPtr("new", 3); add_long_life_var(&id::idnew); 
+id::idop_shl = InternedStringPtr("op_shl", 6); add_long_life_var(&id::idop_shl); 
+id::idop_xor = InternedStringPtr("op_xor", 6); add_long_life_var(&id::idop_xor); 
+id::idop_and = InternedStringPtr("op_and", 6); add_long_life_var(&id::idop_and); 
+id::idsize = InternedStringPtr("size", 4); add_long_life_var(&id::idsize); 
+id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13); add_long_life_var(&id::idop_xor_assign); 
+id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13); add_long_life_var(&id::idop_mul_assign); 
 }
-//}}ID}
+//}}InternedStringPtr}
 
 
 

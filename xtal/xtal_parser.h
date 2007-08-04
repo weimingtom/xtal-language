@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #ifndef XTAL_NO_PARSER
@@ -14,9 +14,10 @@ public:
 
 	Parser();
 
-	Stmt* parse(const Stream& stream, const String& source_file_name);
+	Stmt* parse(const StreamPtr& stream, const StringPtr& source_file_name);
 
-	void begin_interactive_parsing(const Stream& stream);
+	void begin_interactive_parsing(const StreamPtr& stream);
+
 	Stmt* interactive_parse();
 
 	/**

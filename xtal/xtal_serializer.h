@@ -1,9 +1,9 @@
-﻿
+
 #pragma once
 
 #include "xtal_any.h"
 #include "xtal_array.h"
-#include "xtal_mapimpl.h"
+#include "xtal_map.h"
 #include "xtal_stream.h"
 
 namespace xtal{
@@ -11,30 +11,30 @@ namespace xtal{
 class Serializer{
 public:
 
-	Serializer(const Stream& s);
+	Serializer(const StreamPtr& s);
 
-	void serialize(const Any& v);
+	void serialize(const AnyPtr& v);
 
-	Any deserialize();
+	AnyPtr deserialize();
 
-	void xtalize(const Any& v);
+	void xtalize(const AnyPtr& v);
 
 private:
 
-	void inner_serialize(const Any& v);
-	Any inner_deserialize();
-	void inner_xtalize(const Any& v, int_t tab);
+	void inner_serialize(const AnyPtr& v);
+	AnyPtr inner_deserialize();
+	void inner_xtalize(const AnyPtr& v, int_t tab);
 
-	bool check_id(const ID& id);
-	Any demangle(int_t n);
+	bool check_id(const InternedStringPtr& id);
+	AnyPtr demangle(int_t n);
 
-	int_t register_value(const Any& v, bool& added);
-	int_t append_value(const Any& v);
+	int_t register_value(const AnyPtr& v, bool& added);
+	int_t append_value(const AnyPtr& v);
 
 	void put_tab(int_t tab);
 
 	void clear(){
-		values_.clear();
+		values_ = xnew<Array>();
 		map_.clear();
 	}
 
@@ -45,9 +45,8 @@ private:
 private:
 
 	StrictMap map_;
-	Array values_;
-
-	Stream stream_;
+	ArrayPtr values_;
+	StreamPtr stream_;
 };
 
 }

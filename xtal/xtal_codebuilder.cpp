@@ -1,4 +1,4 @@
-﻿
+
 #include "xtal.h"
 
 #ifndef XTAL_NO_PARSER
@@ -6,12 +6,11 @@
 #include "xtal_codebuilder.h"
 #include "xtal_expr.h"
 #include "xtal_parser.h"
-#include "xtal_constant.h"
-#include "xtal_funimpl.h"
-#include "xtal_codeimpl.h"
-#include "xtal_streamimpl.h"
+#include "xtal_code.h"
+#include "xtal_stream.h"
 #include "xtal_fun.h"
-#include "xtal_vmachineimpl.h"
+#include "xtal_vmachine.h"
+#include "xtal_code.h"
 
 
 namespace xtal{
@@ -24,11 +23,10 @@ CodeBuilder::~CodeBuilder(){
 
 }
 
-Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
-	result_ = Code();
-	p_ = result_.impl();
-	p_->source_file_name_ = source_file_name;
-	p_->except_core_table_.push_back(ExceptCore());
+CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
+	result_ = xnew<Code>();
+	result_->source_file_name_ = source_file_name;
+	result_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
 	Vars vars;
@@ -37,88 +35,89 @@ Code CodeBuilder::compile(const Stream& stream, const String& source_file_name){
 
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
-	p_->symbol_table_ = com_->ident_table;
-	p_->value_table_ = com_->value_table;
+	result_->symbol_table_ = com_->ident_table;
+	result_->value_table_ = com_->value_table;
+	result_->once_table_ = com_->once_table;
 	
 	if(ep){
 		compile(ep);
 	}
 
 	parser_.release();
+	CodePtr retval = result_;
 	result_ = null;
 
-	if(com_->errors.size()==0){
-		p_->reset_core();
-		return Code(p_);
+	if(com_->errors->size()==0){
+		retval->reset_core();
+		return retval;
 	}else{
 		return null;
 	}
 }
 
 void CodeBuilder::interactive_compile(){
-	result_ = Code();
-	p_ = result_.impl();
-	p_->source_file_name_ = "<ix>";
-	p_->except_core_table_.push_back(ExceptCore());
+	result_ = xnew<Code>();
+	result_->source_file_name_ = "<ix>";
+	result_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
 	Vars vars;
 	vars.on_heap = true;
 	fun_begin(&vars, true, 0, 0, 0);
 
-	Stream stream;
-	new(stream) InteractiveStreamImpl();
+	StreamPtr stream(xnew<InteractiveStream>());
 	parser_.begin_interactive_parsing(stream);
 
 	int_t pc_pos = 0;
 	
 	while(true){
 		Stmt* ep = parser_.interactive_parse();
-		((InteractiveStreamImpl*)stream.impl())->set_continue_stmt(false);
+		cast<SmartPtr<InteractiveStream> >(stream)->set_continue_stmt(false);
 		com_ = parser_.common();
 
-		p_->symbol_table_ = com_->ident_table;
-		p_->value_table_ = com_->value_table;
+		result_->symbol_table_ = com_->ident_table;
+		result_->value_table_ = com_->value_table;
+		result_->once_table_ = com_->once_table;
 		com_->register_ident("toplevel");
 		
-		if(ep && com_->errors.empty()){
+		if(ep && com_->errors->empty()){
 			compile(ep);
 		}else{
-			if(com_->errors.empty()){
+			if(com_->errors->empty()){
 				break;
 			}
 			com_->error(1, Xt("Xtal Compile Error 1001"));
 		}
 	
-		if(com_->errors.size()==0){
+		if(com_->errors->size()==0){
 			process_labels();
 			put_inst(InstReturn0());
 			put_inst(InstThrow());
 
-			p_->reset_core();
+			result_->reset_core();
 			XTAL_TRY{
-				vmachine().impl()->execute(p_, &p_->code_[pc_pos]);
+				vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
 			}XTAL_CATCH(e){
-				printf("%s\n", e.to_s().c_str());
+				printf("%s\n", e->to_s()->c_str());
 			}
 			
-			p_->code_.pop_back();
-			pc_pos = p_->code_.size();
+			result_->code_.pop_back();
+			pc_pos = result_->code_.size();
 
 		}else{
-			printf("Error: %s\n", errors().at(0).to_s().c_str());
-			com_->errors.clear();
+			printf("Error: %s\n", errors()->at(0)->to_s()->c_str());
+			com_->errors->clear();
 		}
 	}
 }
 
 
-Array CodeBuilder::errors(){
+ArrayPtr CodeBuilder::errors(){
 	return com_->errors;
 }
 
-ID CodeBuilder::to_id(int_t ident){
-	return (ID&)com_->ident_table[ident];
+InternedStringPtr CodeBuilder::to_id(int_t ident){
+	return (InternedStringPtr&)com_->ident_table->at(ident);
 }
 
 int_t CodeBuilder::lookup_variable(int_t key){
@@ -230,7 +229,7 @@ void CodeBuilder::put_set_send_code(int_t var, Expr* pvar, bool if_defined){
 		compile(e.bin(InstCat::NUMBER, e.string(com_->register_value("set_")), pvar));
 	}	
 	
-	int_t symbol_number = com_->register_ident(String("set_", 4, to_id(var).c_str(), to_id(var).size()));
+	int_t symbol_number = com_->register_ident(xnew<String>("set_", 4, to_id(var)->c_str(), to_id(var)->size()));
 	bool tail = false;
 
 	if(if_defined){
@@ -284,7 +283,7 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 			i++;
 		}
 	}
-	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", String("_").cat(to_id(key)))));
+	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(to_id(key)))));
 	return 0;
 }
 
@@ -318,7 +317,7 @@ void CodeBuilder::process_labels(){
 		FunFrame::Label &l = fun_frames_.top().labels[i];
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
-			inst_i16_t& buf = *(inst_i16_t*)&p_->code_[f.set_pos];
+			inst_i16_t& buf = *(inst_i16_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.pos;
 		}
 	}
@@ -396,14 +395,14 @@ void CodeBuilder::pop_loop(){
 void CodeBuilder::block_begin(Vars* vars){
 	vars_stack_.push(vars);
 
-	int_t block_core_num = p_->block_core_table_.size();
-	p_->block_core_table_.push_back(BlockCore());
-	p_->block_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->block_core_table_.back().line_number = lines_.top();
+	int_t block_core_num = result_->block_core_table_.size();
+	result_->block_core_table_.push_back(BlockCore());
+	result_->block_core_table_.back().variable_symbol_offset = result_->symbol_table_->size();
+	result_->block_core_table_.back().line_number = lines_.top();
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		p_->block_core_table_.back().variable_size++;
-		p_->symbol_table_.push_back(to_id(p->value.name));
+		result_->block_core_table_.back().variable_size++;
+		result_->symbol_table_->push_back(to_id(p->value.name));
 	}
 
 	if(vars->vars.size){
@@ -431,14 +430,14 @@ void CodeBuilder::block_end(){
 void CodeBuilder::class_begin(Vars* vars, int_t mixins){
 	vars_stack_.push(vars);
 
-	int_t class_core_num = p_->class_core_table_.size();
-	p_->class_core_table_.push_back(ClassCore());
-	p_->class_core_table_.back().variable_symbol_offset = p_->symbol_table_.size();
-	p_->class_core_table_.back().line_number = lines_.top();
+	int_t class_core_num = result_->class_core_table_.size();
+	result_->class_core_table_.push_back(ClassCore());
+	result_->class_core_table_.back().variable_symbol_offset = result_->symbol_table_->size();
+	result_->class_core_table_.back().line_number = lines_.top();
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		p_->class_core_table_.back().variable_size++;
-		p_->symbol_table_.push_back(to_id(p->value.name));
+		result_->class_core_table_.back().variable_size++;
+		result_->symbol_table_->push_back(to_id(p->value.name));
 	}
 
 	put_inst(InstClassBegin(class_core_num, mixins));
@@ -462,7 +461,7 @@ void CodeBuilder::fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_par
 	vars_stack_.push(vars);
 
 	FunCore core;
-	core.variable_symbol_offset = p_->symbol_table_.size();
+	core.variable_symbol_offset = result_->symbol_table_->size();
 	core.pc = code_size()+offset;
 	core.line_number = lines_.top();
 	core.min_param_count = min_param_count;
@@ -472,9 +471,9 @@ void CodeBuilder::fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_par
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
 		core.variable_size++;
-		p_->symbol_table_.push_back(to_id(p->value.name));
+		result_->symbol_table_->push_back(to_id(p->value.name));
 	}
-	p_->xfun_core_table_.push_back(core);
+	result_->xfun_core_table_.push_back(core);
 }
 
 void CodeBuilder::fun_end(){
@@ -484,7 +483,7 @@ void CodeBuilder::fun_end(){
 }
 
 int_t CodeBuilder::code_size(){
-	return p_->code_.size();
+	return result_->code_.size();
 }
 
 CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
@@ -507,7 +506,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 	}
 	
 	lines_.push(ex->line);
-	p_->set_line_number_info(ex->line);
+	result_->set_line_number_info(ex->line);
 
 	switch(ex->type){
 
@@ -547,11 +546,11 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 		XTAL_EXPR_CASE(StringExpr){
 			if(e->kind==KIND_TEXT){
-				put_inst(InstValue(com_->register_value(get_text(cast<String>(com_->value_table[e->value]).c_str()))));
+				put_inst(InstValue(com_->register_value(get_text(cast<StringPtr>(com_->value_table->at(e->value))->c_str()))));
 			}else if(e->kind==KIND_FORMAT){
-				put_inst(InstValue(com_->register_value(format(cast<String>(com_->value_table[e->value]).c_str()))));
+				put_inst(InstValue(com_->register_value(format(cast<StringPtr>(com_->value_table->at(e->value))->c_str()))));
 			}else{
-				put_inst(InstValue(com_->register_value(com_->value_table[e->value])));
+				put_inst(InstValue(com_->register_value(com_->value_table->at(e->value))));
 			}
 		}
 
@@ -679,13 +678,12 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 			int_t label_end = reserve_label();
 			
 			set_jump(offsetof(InstOnce, address), label_end);
-			int_t num = com_->append_value(nop);
+			int_t num = com_->append_once();
 			put_inst(InstOnce(0, num));
 						
 			compile(e->expr);
-			put_inst(InstDup());
-			
-			put_inst(InstSetValue(num));
+			put_inst(InstDup());		
+			put_inst(InstSetOnce(num));
 			
 			set_label(label_end);	
 		}
@@ -694,9 +692,9 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 			compile(e->lhs);
 
 			/*
-			int_t iter_first = com_->register_ident(ID("iter_first")); 
-			int_t iter_next = com_->register_ident(ID("iter_next")); 
-			int_t iter_break = com_->register_ident(ID("iter_break")); 
+			int_t iter_first = com_->register_ident(InternedStringPtr("iter_first")); 
+			int_t iter_next = com_->register_ident(InternedStringPtr("iter_next")); 
+			int_t iter_break = com_->register_ident(InternedStringPtr("iter_break")); 
 
 			if(e->var==iter_first && !info.tail){
 				put_inst(InstSendIterFirst(info.need_result_count));
@@ -855,7 +853,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				minv = maxv;
 			}
 
-			int_t n = p_->xfun_core_table_.size();
+			int_t n = result_->xfun_core_table_.size();
 			fun_begin(&e->vars, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
 
 				int_t fun_end_label = reserve_label();
@@ -919,12 +917,12 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 			class_begin(&e->vars, e->mixins.size);{
 				class_scopes_.push(e);
-				p_->class_core_table_.back().instance_variable_symbol_offset = p_->symbol_table_.size();
-				p_->class_core_table_.back().instance_variable_size = e->inst_vars.size;
-				class_scopes_.top()->frame_number = p_->class_core_table_.size()-1;
+				result_->class_core_table_.back().instance_variable_symbol_offset = result_->symbol_table_->size();
+				result_->class_core_table_.back().instance_variable_size = e->inst_vars.size;
+				class_scopes_.top()->frame_number = result_->class_core_table_.size()-1;
 
 				for(TPairList<int_t, Expr*>::Node* p=e->inst_vars.head; p; p=p->next){
-					p_->symbol_table_.push_back(to_id(p->key));
+					result_->symbol_table_->push_back(to_id(p->key));
 				}
 
 				for(TList<Var>::Node* p = e->vars.vars.head; p; p = p->next){
@@ -937,7 +935,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 		}
 	}
 	
-	p_->set_line_number_info(ex->line);
+	result_->set_line_number_info(ex->line);
 	lines_.pop();
 
 	if(info.need_result_count!=result_count){
@@ -955,7 +953,7 @@ void CodeBuilder::compile(Stmt* ex){
 	}
 
 	lines_.push(ex->line);
-	p_->set_line_number_info(ex->line);
+	result_->set_line_number_info(ex->line);
 
 	switch(ex->type){
 
@@ -1204,9 +1202,9 @@ void CodeBuilder::compile(Stmt* ex){
 			int_t finally_label = reserve_label();
 			int_t end_label = reserve_label();
 
-			int_t core = p_->except_core_table_.size();
+			int_t core = result_->except_core_table_.size();
 			put_inst(InstTryBegin(core));
-			p_->except_core_table_.push_back(ExceptCore());
+			result_->except_core_table_.push_back(ExceptCore());
 
 			CodeBuilder::FunFrame::Finally exc;
 			exc.frame_count = vars_stack_.size();
@@ -1222,13 +1220,13 @@ void CodeBuilder::compile(Stmt* ex){
 			// catch節のコードを埋め込む
 			if(e->catch_stmt){
 
-				p_->except_core_table_[core].catch_pc = code_size();
+				result_->except_core_table_[core].catch_pc = code_size();
 				
 				// catch節の中での例外に備え、例外フレームを構築。
 			
-				int_t core2 = p_->except_core_table_.size();
+				int_t core2 = result_->except_core_table_.size();
 				put_inst(InstTryBegin(core2));
-				p_->except_core_table_.push_back(ExceptCore());
+				result_->except_core_table_.push_back(ExceptCore());
 
 				CodeBuilder::FunFrame::Finally exc;
 				exc.frame_count = vars_stack_.size();
@@ -1245,13 +1243,13 @@ void CodeBuilder::compile(Stmt* ex){
 				put_inst(InstTryEnd());
 				fun_frame().finallys.pop();
 
-				p_->except_core_table_[core2].finally_pc = code_size();
-				p_->except_core_table_[core2].end_pc = code_size();
+				result_->except_core_table_[core2].finally_pc = code_size();
+				result_->except_core_table_[core2].end_pc = code_size();
 			}
 			
 			set_label(finally_label);
 
-			p_->except_core_table_[core].finally_pc = code_size();
+			result_->except_core_table_[core].finally_pc = code_size();
 
 			// finally節のコードを埋め込む
 			compile(e->finally_stmt);
@@ -1261,7 +1259,7 @@ void CodeBuilder::compile(Stmt* ex){
 			put_inst(InstPopGoto());
 
 			set_label(end_label);
-			p_->except_core_table_[core].end_pc = code_size();
+			result_->except_core_table_[core].end_pc = code_size();
 		}
 		
 		XTAL_EXPR_CASE(IfStmt){
@@ -1537,7 +1535,7 @@ void CodeBuilder::compile(Stmt* ex){
 		}	
 	}
 
-	p_->set_line_number_info(ex->line);
+	result_->set_line_number_info(ex->line);
 	lines_.pop();
 }
 

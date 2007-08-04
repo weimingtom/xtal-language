@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #ifndef XTAL_NO_PARSER
@@ -113,21 +113,23 @@ public:
 
 	LPCCommon();
 		
-	void init(const String& file_name);
+	void init(const StringPtr& file_name);
 
-	void error(int_t line, const Any& message);
+	void error(int_t line, const AnyPtr& message);
 	
-	int_t register_ident(const ID& ident);
-	int_t register_value(const Any& v);
-	int_t append_ident(const ID& ident);
-	int_t append_value(const Any& v);
+	int_t register_ident(const InternedStringPtr& ident);
+	int_t register_value(const AnyPtr& v);
+	int_t append_ident(const InternedStringPtr& ident);
+	int_t append_value(const AnyPtr& v);
+	int_t append_once();
 	
 	int_t line;
-	Array errors;
-	Array ident_table;
-	Map ident_map;
-	Array value_table;
-	String source_file_name;
+	ArrayPtr errors;
+	ArrayPtr ident_table;
+	MapPtr ident_map;
+	ArrayPtr value_table;
+	ArrayPtr once_table;
+	StringPtr source_file_name;
 };
 
 class Reader{
@@ -135,7 +137,7 @@ public:
 
 	Reader();
 
-	void set_stream(const Stream& stream){
+	void set_stream(const StreamPtr& stream){
 		stream_ = stream;
 	}
 
@@ -176,7 +178,7 @@ private:
 
 	enum{ BUF_SIZE = 1024, BUF_MASK = BUF_SIZE-1 };
 
-	Stream stream_;
+	StreamPtr stream_;
 
 	char buf_[BUF_SIZE];
 
@@ -197,7 +199,7 @@ public:
 	/**
 	* @brief 初期化
 	*/
-	void init(const Stream& stream, const String& source_file_name);
+	void init(const StreamPtr& stream, const StringPtr& source_file_name);
 	
 	/**
 	* @brief 読み進める
@@ -243,12 +245,12 @@ public:
 	/**
 	* @brief トークンを読める形の文字列に変換する
 	*/
-	String token2str(const Token& t);
+	StringPtr token2str(const Token& t);
 	
 	/**
-	* @brief キーワードをIDに変換する
+	* @brief キーワードをInternedStringPtrに変換する
 	*/
-	ID keyword2id(int_t v);
+	InternedStringPtr keyword2id(int_t v);
 
 	/**
 	* @brief Lexer, Parser, CodeBuilderが共通して持つLPCCommonオブジェクトを返す
@@ -272,7 +274,7 @@ public:
 	
 private:
 
-	void error(const Any&);
+	void error(const AnyPtr&);
 	
 	void do_read();
 
@@ -304,7 +306,7 @@ private:
 	Reader reader_;
 	
 	LPCCommon com_;
-	Map keyword_map_;
+	MapPtr keyword_map_;
 
 	string_t recorded_string_;
 	bool recording_;

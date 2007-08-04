@@ -1,8 +1,10 @@
-﻿
+
 #include "xtal.h"
 
-#include "xtal_codeimpl.h"
 #include "xtal_stream.h"
+#include "xtal_macro.h"
+#include "xtal_code.h"
+#include "xtal_fun.h"
 
 namespace xtal{
 
@@ -12,20 +14,35 @@ ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
 void InitCode(){
-	TClass<Code> p("Code");
-	p.inherit(TClass<Fun>::get());
-	p.method("inspect", &Code::inspect);
+	ClassPtr p = new_cpp_class<Code>("Code");
+	p->inherit(get_cpp_class<Fun>());
+	p->method("inspect", &Code::inspect);
 }
 
-CodeImpl::CodeImpl()
-	:FunImpl(null, null, null, 0), toplevel_("toplevel"), source_file_name_("<noname>"){
-	set_class(TClass<Code>::get());
+Code::Code()
+	:toplevel_(xnew<Class>("toplevel")), source_file_name_("<noname>"){
 	set_object_name("<TopLevel>", 1, null);
-	toplevel_.inherit(builtin());
-	toplevel_.def("toplevel", toplevel_);
+	toplevel_->inherit(builtin());
+	toplevel_->def("toplevel", toplevel_);
+
+	symbol_table_ = xnew<Array>();
+	value_table_ = xnew<Array>();
+
+	first_fun_ = xnew<Fun>(null, null, CodePtr::from_this(this), (FunCore*)0);
 }
 
-int_t CodeImpl::compliant_line_number(const inst_t* p){
+void Code::reset_core(){
+	first_fun_->set_core(&xfun_core_table_[0]);
+}
+	
+void Code::set_line_number_info(int_t line){
+	if(!line_number_table_.empty() && line_number_table_.back().line_number==line)
+		return;
+	LineNumberTable lnt={(u16)code_.size(), (u16)line};
+	line_number_table_.push_back(lnt);
+}
+
+int_t Code::compliant_line_number(const inst_t* p){
 	AC<LineNumberTable>::vector::const_iterator it=
 		std::lower_bound(
 			line_number_table_.begin(),
@@ -44,61 +61,16 @@ int_t CodeImpl::compliant_line_number(const inst_t* p){
 	return 0;
 }
 
-Code::Code(){
-	new(*this) CodeImpl();
+void Code::call(const VMachinePtr& vm){
+	first_fun_->call(vm);
 }
 
-int_t Code::compliant_line_number(const inst_t* p) const{
-	return impl()->compliant_line_number(p);
-}
-
-const inst_t* Code::data() const{
-	return impl()->data();
-}
-
-int_t Code::size() const{
-	return impl()->size();
-}
-
-const ID& Code::symbol(int_t i) const{
-	return impl()->symbol(i);
-}
-
-const Any& Code::value(int_t i) const{
-	return impl()->value(i);
-}
-
-void Code::set_value(int_t i, const Any& v) const{
-	impl()->set_value(i, v);
-}
-
-BlockCore* Code::block_core(int_t i) const{
-	return &impl()->block_core_table_[i];
-}
-
-FunCore* Code::fun_core(int_t i) const{
-	return &impl()->xfun_core_table_[i];
-}
-
-
-String Code::source_file_name() const{ 
-	return impl()->source_file_name();
-}
-
-const Class& Code::toplevel() const{ 
-	return impl()->toplevel();
-}
-
-String Code::inspect() const{
-	return impl()->inspect();
-}
-
-String CodeImpl::inspect(){
+StringPtr Code::inspect(){
 
 	int sz = 0;
 	const inst_t* pc = data();
-	String temp;
-	MemoryStream ms;
+	StringPtr temp;
+	MemoryStreamPtr ms(xnew<MemoryStream>());
 
 	for(; pc < data() + size();){switch(*pc){
 		XTAL_NODEFAULT;
@@ -146,7 +118,6 @@ String CodeImpl::inspect(){
 		XTAL_CASE(InstYield::NUMBER){ temp = ((InstYield*)pc)->inspect(); sz = InstYield::ISIZE; }
 		XTAL_CASE(InstExit::NUMBER){ temp = ((InstExit*)pc)->inspect(); sz = InstExit::ISIZE; }
 		XTAL_CASE(InstValue::NUMBER){ temp = ((InstValue*)pc)->inspect(); sz = InstValue::ISIZE; }
-		XTAL_CASE(InstSetValue::NUMBER){ temp = ((InstSetValue*)pc)->inspect(); sz = InstSetValue::ISIZE; }
 		XTAL_CASE(InstCheckUnsupported::NUMBER){ temp = ((InstCheckUnsupported*)pc)->inspect(); sz = InstCheckUnsupported::ISIZE; }
 		XTAL_CASE(InstSend::NUMBER){ temp = ((InstSend*)pc)->inspect(); sz = InstSend::ISIZE; }
 		XTAL_CASE(InstSendIfDefined::NUMBER){ temp = ((InstSendIfDefined*)pc)->inspect(); sz = InstSendIfDefined::ISIZE; }
@@ -238,6 +209,7 @@ String CodeImpl::inspect(){
 		XTAL_CASE(InstSetMultipleLocalVariable3Direct::NUMBER){ temp = ((InstSetMultipleLocalVariable3Direct*)pc)->inspect(); sz = InstSetMultipleLocalVariable3Direct::ISIZE; }
 		XTAL_CASE(InstSetMultipleLocalVariable4Direct::NUMBER){ temp = ((InstSetMultipleLocalVariable4Direct*)pc)->inspect(); sz = InstSetMultipleLocalVariable4Direct::ISIZE; }
 		XTAL_CASE(InstOnce::NUMBER){ temp = ((InstOnce*)pc)->inspect(); sz = InstOnce::ISIZE; }
+		XTAL_CASE(InstSetOnce::NUMBER){ temp = ((InstSetOnce*)pc)->inspect(); sz = InstSetOnce::ISIZE; }
 		XTAL_CASE(InstClassBegin::NUMBER){ temp = ((InstClassBegin*)pc)->inspect(); sz = InstClassBegin::ISIZE; }
 		XTAL_CASE(InstClassEnd::NUMBER){ temp = ((InstClassEnd*)pc)->inspect(); sz = InstClassEnd::ISIZE; }
 		XTAL_CASE(InstMakeArray::NUMBER){ temp = ((InstMakeArray*)pc)->inspect(); sz = InstMakeArray::ISIZE; }
@@ -254,10 +226,10 @@ String CodeImpl::inspect(){
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
 
-	} ms.put_s(Xt("%04d:%s\n")((int_t)(pc-data()), temp).to_s()); pc += sz; }
+	} ms->put_s(Xt("%04d:%s\n")((int_t)(pc-data()), temp)->to_s()); pc += sz; }
 
-	ms.seek(0);
-	return ms.get_s(ms.size());
+	ms->seek(0);
+	return ms->get_s(ms->size());
 }
 
 }

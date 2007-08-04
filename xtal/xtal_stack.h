@@ -1,10 +1,10 @@
-﻿
+
 #pragma once
 
 namespace xtal{
 
 /*
-* VMachineクラスのスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
+* VMachinePtrクラスのスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
 */
 template<class T>
 class Stack{

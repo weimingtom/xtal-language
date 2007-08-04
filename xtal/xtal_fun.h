@@ -1,102 +1,166 @@
-﻿
+
 #pragma once
+
+#include "xtal_frame.h"
 
 namespace xtal{
 
-// fwd decl
-class FunImpl;
-class LambdaImpl;
-class MethodImpl;
-class FiberImpl;
-
-void InitFun();
-
-class Fun : public Any{
+class InstanceVariableGetter : public HaveName{
 public:
 
-	Fun(const Frame& outer, const Any& athis, const Code& code, FunCore* core);
+	InstanceVariableGetter(int_t number, ClassCore* core);
 
-	Fun(const Null& = null)
-		:Any(null){}
+	virtual void call(const VMachinePtr& vm);
 
-	explicit Fun(FunImpl* p)
-		:Any((AnyImpl*)p){}
+private:
+	int_t number_;
+	ClassCore* core_;
+};
 
+class InstanceVariableSetter : public HaveName{
 public:
 
-	const Frame& outer() const;
+	InstanceVariableSetter(int_t number, ClassCore* core);
 
-	const Code& code() const;
+	virtual void call(const VMachinePtr& vm);
+
+private:
+	int_t number_;
+	ClassCore* core_;
+};
+
+class Fun : public HaveName{
+public:
+
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCore* core);
+
+	const FramePtr& outer(){ return outer_; }
+	const CodePtr& code(){ return code_; }
+	int_t pc(){ return core_->pc; }
+	const inst_t* source();
+	const InternedStringPtr& param_name_at(size_t i);
+	int_t param_size(){ return core_->variable_size; }	
+	bool used_args_object(){ return core_->used_args_object!=0; }
+	int_t defined_file_line_number(){ return core_->line_number; }
+	FunCore* core(){ return core_; }
+	void set_core(FunCore* fc){ core_ = fc; }
+	void check_arg(const VMachinePtr& vm);
+
+public:
+		
+	virtual void call(const VMachinePtr& vm);
 	
-	int_t pc() const;
+protected:
+
+	FramePtr outer_;
+	AnyPtr this_;
+	CodePtr code_;
+	FunCore* core_;
 	
-	const inst_t* source() const;
-	
-	const ID& param_name_at(size_t i) const;
-	
-	int_t param_size() const;
-	
-	bool used_args_object() const;
-	
-	int_t defined_file_line_number() const;
-	
-	FunCore* core() const;
-	
-	void set_core(FunCore* fc) const;
-	
-	FunImpl* impl() const{ return (FunImpl*)Any::impl(); }
+	virtual void visit_members(Visitor& m){
+		HaveName::visit_members(m);
+		m & outer_ & this_ & code_;
+	}
+
 };
 
 class Lambda : public Fun{
 public:
 
-	Lambda(const Frame& outer, const Any& athis, const Code& code, FunCore* core);
+	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
+		:Fun(outer, th, code, core){
+	}
 
-	Lambda(const Null&)
-		:Fun(null){}
-
-	explicit Lambda(LambdaImpl* p)
-		:Fun((FunImpl*)p){}
-
-	LambdaImpl* impl() const{ return (LambdaImpl*)Any::impl(); }
+public:
+	
+	virtual void call(const VMachinePtr& vm);
 };
 
 class Method : public Fun{
 public:
 
-	Method(const Frame& outer, const Code& code, FunCore* core);
+	Method(const FramePtr& outer, const CodePtr& code, FunCore* core)
+		:Fun(outer, null, code, core){
+	}
 
-	Method(const Null&)
-		:Fun(null){}
-
-	explicit Method(MethodImpl* p)
-		:Fun((FunImpl*)p){}
-
-	MethodImpl* impl() const{ return (MethodImpl*)Any::impl(); }
+public:
+	
+	virtual void call(const VMachinePtr& vm);
 };
 
 class Fiber : public Fun{
 public:
 
-	Fiber(const Frame& outer, const Any& th, const Code& code, FunCore* core);
-
-	Fiber(const Null&)
-		:Fun(null){}
-
-	explicit Fiber(FiberImpl* p)
-		:Fun((FunImpl*)p){}
-		
+	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core);
+			
 public:
 
-	Any reset() const;
+	void iter_next(const VMachinePtr& vm){
+		call_helper(vm, true);
+	}
 
-	void iter_next(const VMachine& vm) const;
+	void halt();
+
+	void call(const VMachinePtr& vm){
+		call_helper(vm, false);
+	}
+
+	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
+
+	bool is_finished(){
+		return resume_pc_ == 0;
+	}
+
+	AnyPtr reset(){
+		halt();
+		return FiberPtr::from_this(this);
+	}
+
+private:
+
+	VMachinePtr vm_;
+	const inst_t* resume_pc_;
+
+	void visit_members(Visitor& m){
+		Fun::visit_members(m);
+		m & vm_;
+	}
+};
+
+// 引数オブジェクト
+class Arguments : public Base{
+public:
+
+	Arguments(){
+		ordered_ = xnew<Array>();
+		named_ = xnew<Map>();
+	}
+
+	const AnyPtr& op_at(const AnyPtr& index){
+		if(type(index)==TYPE_INT){
+			return ordered_->at(index->to_i());
+		}
+		return named_->at(index); 
+	}
 	
-	void halt() const;
+	int_t length(){
+		return ordered_->length();
+	}
+	
+	AnyPtr each_ordered_arg(){
+		return ordered_->each();
+	}
+	
+	AnyPtr each_named_arg(){
+		return named_->each_pair();
+	}
 
-	bool is_finished() const;
+public:
 
-	FiberImpl* impl() const{ return (FiberImpl*)Any::impl(); }
+	ArrayPtr ordered_;
+	MapPtr named_;
+
+	virtual void visit_members(Visitor& m);
 };
 
 }

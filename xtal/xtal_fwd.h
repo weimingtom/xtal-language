@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include "xtal_allocator.h"
@@ -122,60 +122,6 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 typedef SelectType<1>::uint_t byte_t;
 
 
-
-/**
-* プリミティブな型を示す整数値
-*/
-enum PrimitiveType{
-	TYPE_NULL,
-	TYPE_FALSE,
-	TYPE_TRUE,
-	TYPE_BASE,
-	TYPE_INT,
-	TYPE_FLOAT,
-	TYPE_NOP,
-
-	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
-	TYPE_SHIFT = 3
-};
-
-class Any;
-
-class Int;
-class Float;
-
-class Array;
-class Code;
-class Map;
-class Fun;
-class Method;
-class Fiber;
-class Prop;
-class VMachine;
-class Frame;
-class ClassImpl;
-class Object;
-class Instance;
-class HaveInstanceVariables;
-class Arguments;
-class Lib;
-struct Named;
-class GCObserverImpl;
-class Class;
-class String;
-class ID;
-class Visitor;
-class FrameImpl;
-class ClassImpl;
-class StringImpl;
-class AnyImpl;
-class Stream;
-
-template<class T> class UserData;
-template<class T> class TClass;
-
-const VMachine& vmachine();
-
 template<class T>
 struct TypeValue{ 
 	T val; 
@@ -192,15 +138,180 @@ struct check_xtype<int_t>{ typedef TypeValue<int_t> type; };
 template<>
 struct check_xtype<float_t>{ typedef TypeValue<float_t> type; };
 
+
 template<class T>
 struct IsFloat{ enum{ value = 0 }; };
 template<>
 struct IsFloat<float_t>{ enum{ value = 1 }; };
 
-template<class T, class U>
-struct NumericCalcResultType{
-	typedef typename If<1, T, U>::type type;
+
+/**
+* @brief プリミティブな型の種類
+*/
+enum PrimitiveType{
+	TYPE_NULL,
+	TYPE_FALSE,
+	TYPE_TRUE,
+	TYPE_BASE,
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_NOP,
+
+	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
+	TYPE_SHIFT = 3
 };
+
+
+/**
+* @brief ブロックの種類
+*/
+enum{
+	KIND_BLOCK,
+	KIND_CLASS
+};
+
+/**
+* @brief 関数の種類
+*/
+enum{
+	KIND_FUN,
+	KIND_LAMBDA,
+	KIND_METHOD,
+	KIND_FIBER,
+};
+
+/**
+* @brief 文字列の種類
+*/
+enum{
+	KIND_STRING,
+	KIND_TEXT,
+	KIND_FORMAT
+};
+
+/**
+* @brief 可触性の種類
+*/
+enum{
+	KIND_PUBLIC = 0,
+	KIND_PROTECTED = 1<<0,
+	KIND_PRIVATE = 1<<1,
+};
+
+/**
+* @brief ブレークポイントの種類
+*/
+enum{
+	BREAKPOINT_LINE,
+	BREAKPOINT_CALL,
+	BREAKPOINT_RETURN
+};
+
+
+template<class T>
+class SmartPtr;
+
+class Any;
+template<> class SmartPtr<Any>;
+typedef SmartPtr<Any> AnyPtr;
+
+
+class Array;
+class Map;
+class Stream;
+class MemoryStream;
+class FileStream;
+class Fun;
+class Method;
+class Fiber;
+class InstanceVariableGetter;
+class InstanceVariableSetter;
+class Lambda;
+class String;
+class Code;
+class Arguments;
+class VMachine;
+class CFun;
+class Frame;
+class Class;
+class Lib;
+class Instance;
+class XClass;
+class Thread;
+class Mutex;
+
+typedef SmartPtr<Array> ArrayPtr;
+typedef SmartPtr<Map> MapPtr;
+typedef SmartPtr<Stream> StreamPtr;
+typedef SmartPtr<MemoryStream> MemoryStreamPtr;
+typedef SmartPtr<FileStream> FileStreamPtr;
+typedef SmartPtr<Fun> FunPtr;
+typedef SmartPtr<Fiber> FiberPtr;
+typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
+typedef SmartPtr<InstanceVariableSetter> InstanceVariableSetterPtr;
+typedef SmartPtr<String> StringPtr;
+typedef SmartPtr<Code> CodePtr;
+typedef SmartPtr<Arguments> ArgumentsPtr;
+typedef SmartPtr<VMachine> VMachinePtr;
+typedef SmartPtr<CFun> CFunPtr;
+typedef SmartPtr<Frame> FramePtr;
+typedef SmartPtr<Class> ClassPtr;
+typedef SmartPtr<Lib> LibPtr;
+typedef SmartPtr<Instance> InstancePtr;
+typedef SmartPtr<XClass> XClassPtr;
+typedef SmartPtr<Thread> ThreadPtr;
+typedef SmartPtr<Mutex> MutexPtr;
+
+class Base;
+class InternedStringPtr;
+class AtProxy;
+class Visitor;
+class HaveInstanceVariables;
+class Int;
+class Float;
+
+struct BlockCore{
+	BlockCore()
+		:line_number(0), variable_symbol_offset(0), variable_size(0){}
+
+	u16 line_number;
+	u16 variable_symbol_offset;
+	u16 variable_size;
+};
+
+struct ClassCore : public BlockCore{
+	ClassCore()
+		:instance_variable_symbol_offset(0), instance_variable_size(0){}
+
+	u16 instance_variable_symbol_offset;
+	u16 instance_variable_size;
+};
+
+struct FunCore : public BlockCore{
+	FunCore()
+		:pc(0), max_stack(256), min_param_count(0), max_param_count(0), used_args_object(0), on_heap(0){}
+
+	u16 pc;
+	u16 max_stack;
+	u8 min_param_count;
+	u8 max_param_count;
+	u8 used_args_object;
+	u8 on_heap;
+};
+
+struct ExceptCore{
+	ExceptCore(u16 catch_pc = 0, u16 finally_pc = 0, u16 end_pc = 0)
+		:catch_pc(catch_pc), finally_pc(finally_pc), end_pc(end_pc){}
+
+	u16 catch_pc;
+	u16 finally_pc;
+	u16 end_pc;
+};
+
+extern BlockCore empty_block_core;
+extern ClassCore empty_class_core;
+extern FunCore empty_fun_core;
+extern ExceptCore empty_except_core;
 
 class Null;
 extern Null null;
@@ -208,39 +319,24 @@ extern Null null;
 class Nop;
 extern Nop nop;
 
-void add_long_life_var(Any* a, int_t n = 1);
-void remove_long_life_var(Any* a, int_t n = 1);
+class True;
+class False;
 
-Any* make_place();
+struct Result;
+struct ReturnThis;
+struct ReturnVoid;
 
-void initialize();
-void uninitialize();
-void initialize_lib();
-bool initialized();
-
-Any cast_error(const Any& from, const Any& to);
-Any argument_error(const Any& from, const Any& to, int param_num, const Any& param_name);
-Any unsupported_error(const Any& name, const Any& member);
+extern Result result;
+extern ReturnThis return_this;
+extern ReturnVoid return_void;
 
 template<class T>
-UserData<T> new_userdata();
+const ClassPtr& new_cpp_class(const char* name = "");
 
-template<class T, class A0>
-UserData<T> new_userdata(const A0& a0);
+template<class T>
+inline bool exists_cpp_class();
 
-template<class T, class A0, class A1>
-UserData<T> new_userdata(const A0& a0, const A1& a1);
-
-template<class T, class A0, class A1, class A2>
-UserData<T> new_userdata(const A0& a0, const A1& a1, const A2& a2);
-
-template<class T, class A0, class A1, class A2, class A3>
-UserData<T> new_userdata(const A0& a0, const A1& a1, const A2& a2, const A3& a3);
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-UserData<T> new_userdata(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4);
-
-
-void visit_members(Visitor& m, const Any& value);
+template<class T>
+inline const ClassPtr& get_cpp_class();
 
 }

@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 namespace xtal{
@@ -7,8 +7,8 @@ namespace xtal{
 
 		VERSION1 = 0,
 		VERSION2 = 9,
-		VERSION3 = 6,
-		VERSION4 = 1
+		VERSION3 = 7,
+		VERSION4 = 0
 
 
 	};
@@ -23,9 +23,10 @@ namespace xtal{
 #include "xtal_lib.h"
 #include "xtal_thread.h"
 #include "xtal_frame.h"
-#include "xtal_userdata.h"
+#include "xtal_smartptr.h"
 #include "xtal_cast.h"
 #include "xtal_thread.h"
 #include "xtal_ch.h"
 #include "xtal_stream.h"
+
 

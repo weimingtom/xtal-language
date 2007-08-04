@@ -1,258 +1,236 @@
-﻿
+
 #pragma once
 
 #include "xtal_any.h"
-#include "xtal_string.h"
+#include "xtal_smartptr.h"
 
 namespace xtal{
-
-void InitArray();
-
-class ArrayImpl;
 
 /**
 * @brief 配列
 *
 */
-class Array : public Any{
+class Array : public Base{
 public:
-	
+
 	/**
 	* @brief sizeの長さの配列を生成する 
 	*
 	*/
-	explicit Array(int_t size = 0);
+	Array(int_t size = 0);
 
-	explicit Array(check_xtype<int>::type size);
-	
 	/**
-	* @brief 配列を生成せず、nullを入れる
-	*
+	* @brief コピーコンストラクタを備える
 	*/
-	Array(const Null&)
-		:Any(null){}
+	Array(const Array& v);
 
-	explicit Array(ArrayImpl* p)
-		:Any((AnyImpl*)p){}
+	/**
+	* @brief 代入演算子を備える
+	*/
+	Array& operator =(const Array& v);
 
-	explicit Array(const ArrayImpl* p)
-		:Any((AnyImpl*)p){}
-	
+	/**
+	* @brief デストラクタ
+	*/
+	~Array();
+
 	/**
 	* @brief 配列の長さを返す
 	*
 	*/
-	int_t size() const;
+	int_t size(){
+		return size_;
+	}
 
 	/**
 	* @brief 配列の長さを変更する
 	*/
-	void resize(int_t sz) const;
-	
+	void resize(int_t sz);
+
 	/**
 	* @brief 配列の長さを返す
 	*
 	*/
-	int_t length() const;
-	
+	int_t length(){
+		return size_;
+	}
+
 	/**
 	* @brief i番目の要素を返す
 	*
 	*/
-	const Any& at(int_t i) const;
-	
+	const AnyPtr& at(int_t i){
+		return values_[i];
+	}
+
 	/**
 	* @brief i番目の要素を設定する
 	*
 	*/
-	void set_at(int_t i, const Any& v) const;
+	void set_at(int_t i, const AnyPtr& v){
+		values_[i] = v;
+	}
+
+	/**
+	* @brief i番目の要素を返す
+	*
+	*/
+	const AnyPtr& op_at(int_t i);
+
+	/**
+	* @brief i番目の要素を設定する
+	*
+	*/
+	void op_set_at(int_t i, const AnyPtr& v);
 
 	/**
 	* @brief 先頭に要素を追加する
 	*
 	*/
-	void push_front(const Any& v) const;
+	void push_front(const AnyPtr& v){
+		insert(0, v);
+	}
 
 	/**
 	* @brief 先頭の要素を削除する
 	*
 	*/
-	void pop_front() const;
+	void pop_front(){
+		erase(0);
+	}
 
 	/**
 	* @brief 末尾に要素を追加する
 	*
 	*/
-	void push_back(const Any& v) const;
+	void push_back(const AnyPtr& v);
 
 	/**
 	* @brief 末尾の要素を削除する
 	*
 	*/
-	void pop_back() const;
+	void pop_back();
+
+	/**
+	* @brief 先頭の要素を返す
+	*
+	*/
+	const AnyPtr& front(){
+		return at(0);
+	}
+
+	/**
+	* @brief 末尾の要素を返す
+	*
+	*/
+	const AnyPtr& back(){
+		return at(size()-1);
+	}
 
 	/**
 	* @brief firstからlastまでの部分配列を返す
 	*
 	*/
-	Array slice(int_t first, int_t last) const;
+	ArrayPtr slice(int_t first, int_t last);
 
 	/**
 	* @brief i番目の要素を削除する
 	*
 	*/
-	void erase(int_t i) const;
+	void erase(int_t i);
 
 	/**
 	* @brief i番目に要素を追加する
 	*
 	*/
-	void insert(int_t i, const Any& v) const;
-
-	/**
-	* @brief 要素を文字列として連結した結果を返す
-	*
-	* @param sep 要素と要素の区切り文字列
-	*/
-	String join(const String& sep) const;
-
-	/**
-	* @brief この配列の文字列表現を返す
-	*
-	*/
-	String to_s() const;
-
-	/**
-	* @brief 自身を返す
-	*
-	*/
-	Array to_a() const;
-	
-	/**
-	* @brief 浅いコピーを返す
-	*
-	*/
-	Array clone() const;
-
-	/**
-	* @brief 連結した配列を返す
-	*
-	*/
-	Array cat(const Array& a) const;
-
-	/**
-	* @brief 連結した配列を返す
-	*
-	*/
-	Array cat_assign(const Array& a) const;
-
-	/**
-	* @brief 要素を巡回するIteratorを返す
-	*
-	*/
-	Any each() const;
-
-	/**
-	* @brief 要素を逆順に巡回するIteratorを返す
-	*
-	*/
-	Any r_each() const;
-
-	/**
-	* @brief 要素を全て削除する
-	*
-	*/
-	void clear() const;
-
-	/**
-	* @brief 空か調べる
-	*
-	*/
-	bool empty() const;
-
-	/**
-	* @brief 最初の要素を取得する
-	*
-	*/
-	const Any& front() const;
-
-	/**
-	* @brief 最後の要素を取得する
-	*
-	*/
-	const Any& back() const;
-
+	void insert(int_t i, const AnyPtr& v);
 	/**
 	* @brief 配列の要素を逆順にする
 	*
 	*/
-	void reverse() const;
+	void reverse();
 
 	/**
 	* @brief 配列の要素を逆順にした新しい配列を返す
 	*
 	*/
-	Array reversed() const;
+	ArrayPtr reversed();
+	
+	/**
+	* @brief 浅いコピーを返す
+	*
+	*/
+	ArrayPtr clone();
 
-	bool op_eq(const Array& other) const;
+	/**
+	* @brief 連結した配列を返す
+	*
+	*/
+	ArrayPtr cat(const ArrayPtr& a);
 
-	ArrayImpl* impl() const{ return (ArrayImpl*)Any::impl(); }
+	/**
+	* @brief 自身を連結し、自身を返す
+	*
+	*/
+	ArrayPtr cat_assign(const ArrayPtr& a);
+	
+	/**
+	* @brief 要素を文字列として連結した結果を返す
+	*
+	* @param sep 要素と要素の区切り文字列
+	*/
+	StringPtr join(const StringPtr& sep);
 
-	const Any& operator [] (int_t i){
-		return at(i);
+	/**
+	* @brief この配列の文字列表現を返す
+	*
+	*/
+	StringPtr to_s();
+
+	/**
+	* @brief 自身を返す
+	*
+	*/
+	ArrayPtr to_a(){
+		return ArrayPtr::from_this(this);
 	}
 
+	bool op_eq(const ArrayPtr& other);
+
+	/**
+	* @brief 空か調べる
+	*
+	*/
+	bool empty(){
+		return size_ == 0;
+	}
+
+	/**
+	* @brief 要素を全て削除する
+	*
+	*/
+	void clear();
+
+	/**
+	* @brief 要素を巡回するIteratorを返す
+	*
+	*/
+	AnyPtr each();
+
+	/**
+	* @brief 要素を逆順に巡回するIteratorを返す
+	*
+	*/
+	AnyPtr r_each();
+
+protected:
+
+	AnyPtr* values_;
+	uint_t size_;
+	uint_t capa_;
+
+	virtual void visit_members(Visitor& m);
 };
 
-template<class T>
-class TArray : public Array{
-public:
 
-	TArray(int_t size = 0)
-		:Array(size){}
-	
-	TArray(const Null&)
-		:Array(null){}
-
-	explicit TArray(ArrayImpl* p)
-		:Array((AnyImpl*)p){}
-
-	explicit TArray(const ArrayImpl* p)
-		:Array((AnyImpl*)p){}
-
-	const T& at(int_t i) const{
-		return (const T&)Array::at(i);
-	}
-	
-	void set_at(int_t i, const T& v) const{
-		Array::set_at(i, v);
-	}
-
-	void push_front(const T& v) const{
-		Array::push_front(v);
-	}
-
-	void push_back(const T& v) const{
-		Array::push_back(v);
-	}
-
-	TArray slice(int_t first, int_t last) const{
-		return Array::slice(first, last).impl();
-	}
-
-	void insert(int_t i, const T& v) const{
-		Array::insert(i, v);
-	}
-
-	TArray cat(const TArray<T>& a) const{ 
-		Array::cat(a); 
-		return *this;
-	}
-
-	const T& operator [] (int_t i){ 
-		return (const T&)at(i); 
-	}
-};
-
-}//namespace
-
+}

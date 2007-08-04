@@ -1,4 +1,4 @@
-﻿
+
 #include "xtal.h"
 
 #ifndef XTAL_NO_PARSER
@@ -115,20 +115,20 @@ void Parser::expect_end(){
 	com_->error(line(), Xt("Xtal Compile Error 1003"));
 }
 
-Stmt* Parser::parse(const Stream& stream, const String& source_file_name){
+Stmt* Parser::parse(const StreamPtr& stream, const StringPtr& source_file_name){
 	lexer_.init(stream, source_file_name);
 	com_ = lexer_.common();
 	e.init(com_, &alloc_);
 
 	Stmt* p = parse_top_level();
 
-	if(com_->errors.size()!=0){
+	if(com_->errors->size()!=0){
 		return 0;
 	}
 	return p;
 }
 
-void Parser::begin_interactive_parsing(const Stream& stream){
+void Parser::begin_interactive_parsing(const StreamPtr& stream){
 	lexer_.init(stream, "<ix>");
 	com_ = lexer_.common();
 	e.init(com_, &alloc_);
@@ -319,7 +319,7 @@ Expr* Parser::parse_term(){
 
 				XTAL_CASE('"'){ //"
 					lexer_.set_string_mode();
-					String str(parse_string('"', '"'));
+					StringPtr str(xnew<String>(parse_string('"', '"')));
 					ret = e.string(com_->register_value(str));
 				}
 				
@@ -367,7 +367,7 @@ Expr* Parser::parse_term(){
 						break;
 					}
 				
-					String str(parse_string(open, close));
+					StringPtr str(xnew<String>(parse_string(open, close)));
 					ret = e.string(com_->register_value(str), kind);
 				}
 				
@@ -722,12 +722,12 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 Stmt* Parser::parse_each(int_t label, Expr* lhs){
 
-	int_t iter_first = com_->register_ident(ID("iter_first")); 
-	int_t iter_next = com_->register_ident(ID("iter_next")); 
-	int_t iter_break = com_->register_ident(ID("iter_break")); 
-	int_t it = com_->register_ident(ID("__IT__"));
-	int_t itv = com_->register_ident(ID("it"));
-	int_t dummy = com_->register_ident(ID("__DUMMY__"));
+	int_t iter_first = com_->register_ident(InternedStringPtr("iter_first")); 
+	int_t iter_next = com_->register_ident(InternedStringPtr("iter_next")); 
+	int_t iter_break = com_->register_ident(InternedStringPtr("iter_break")); 
+	int_t it = com_->register_ident(InternedStringPtr("__IT__"));
+	int_t itv = com_->register_ident(InternedStringPtr("it"));
+	int_t dummy = com_->register_ident(InternedStringPtr("__DUMMY__"));
 
 	Stmt* s;
 	int_t ln = lexer_.line();
@@ -998,7 +998,7 @@ Stmt* Parser::parse_assert(){
 
 	lexer_.begin_record();
 	if(Expr* e = parse_expr()){
-		String ref_str(lexer_.end_record());
+		StringPtr ref_str(xnew<String>(lexer_.end_record()));
 		p->exprs.push_back(e, &alloc_);
 		p->exprs.push_back(XTAL_NEW StringExpr(lexer_.line(), com_->register_value(ref_str)), &alloc_);
 
@@ -1017,7 +1017,7 @@ Stmt* Parser::parse_assert(){
 }
 
 Expr* Parser::string2expr(string_t& str){
-	Expr* ret = e.string(com_->register_value(String(str)));
+	Expr* ret = e.string(com_->register_value(xnew<String>(str)));
 	str = "";
 	return ret;
 }
@@ -1182,7 +1182,7 @@ Expr* Parser::parse_class(){
 					e.fun_body(e.return_(e.instance_variable(var)));
 					e.class_define_member(var, accessibility, e.pseudo(InstPushNull::NUMBER), e.fun_end());
 					
-					int_t var2 = com_->register_ident(String("set_").cat(com_->ident_table[var].to_s()).intern());
+					int_t var2 = com_->register_ident(xnew<String>("set_")->cat(com_->ident_table->at(var)->to_s())->intern());
 					e.fun_begin(KIND_METHOD);
 					e.fun_param(com_->register_ident(Xid(value)));
 					e.fun_body(e.assign(e.instance_variable(var), e.local(com_->register_ident(Xid(value)))));
@@ -1423,7 +1423,7 @@ Stmt* Parser::parse_switch(){
 	e.block_begin();
 		int_t var = parse_var();
 		if(!var){
-			var = com_->register_ident(ID("__SWITCH__"));
+			var = com_->register_ident(InternedStringPtr("__SWITCH__"));
 		}
 		
 		e.block_add(e.define(e.local(var), parse_expr_must()));

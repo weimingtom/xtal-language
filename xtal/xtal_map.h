@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include "xtal_any.h"
@@ -6,15 +6,7 @@
 
 namespace xtal{
 
-void InitMap();
-
-class MapImpl;
-
-/**
-* @brief 連想配列
-*
-*/
-class Map : public Any{
+class Map : public Base{
 public:
 
 	/**
@@ -23,111 +15,228 @@ public:
 	*/
 	Map();
 
-	/**
-	* @brief 連想配列を生成せず、nullを入れる
-	*
-	*/
-	Map(const Null&)
-		:Any(null){}
-
-	explicit Map(MapImpl* p)
-		:Any((AnyImpl*)p){}
-
-	explicit Map(const MapImpl* p)
-		:Any((AnyImpl*)p){}
+	virtual ~Map();
 		
-	/**
-	* @brief 連想配列の容量を返す
-	*
-	*/
-	int_t size() const;
-
-	/**
-	* @brief 連想配列の容量を返す
-	*
-	*/
-	int_t length() const;
-
 	/**
 	* @brief iに対応する要素を返す
 	*
 	*/
-	const Any& at(const Any& i) const;
+	const AnyPtr& at(const AnyPtr& key);
 	
 	/**
 	* @brief iに対応する要素を設定する
 	*
-	*/
-	void set_at(const Any& i, const Any& v) const;
-		
+	*/	
+	void set_at(const AnyPtr& key, const AnyPtr& value);
+
 	/**
-	* @brief 浅いコピーを返す
+	* @brief keyに対応する値を削除する
 	*
 	*/
-	Map clone() const;
+	void erase(const AnyPtr& key);
+
+	/**
+	* @brief 連想配列の容量を返す
+	*
+	*/
+	int_t size(){
+		return used_size_;
+	}
 	
+	/**
+	* @brief 連想配列の容量を返す
+	*
+	*/
+	int_t length(){
+		return used_size_;
+	}
+
+	/**
+	* @brief 空か調べる
+	*
+	*/
+	bool empty(){
+		return used_size_==0;
+	}
+
+	/**
+	* @brief 連結した連想配列を返す
+	*
+	*/
+	MapPtr cat(const MapPtr& a);
+
+	/**
+	* @brief 自身と連結し、自身を返す
+	*
+	*/
+	MapPtr cat_assign(const MapPtr& a);
+
 	/**
 	* @brief この配列の文字列表現を返す
 	*
 	*/
-	String to_s() const;
-	
+	StringPtr to_s();
+
+	/**
+	* @brief == の再定義
+	*/
+	bool op_eq(const MapPtr& other);
+		
 	/**
 	* @brief keyとvalueをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any each_pair() const;
-
+	AnyPtr each_pair();
+	
 	/**
 	* @brief keyをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any each_key() const;
-
+	AnyPtr each_key();
+	
 	/**
 	* @brief valueをブロックパラメータとするIteratorを返す
 	*
 	*/
-	Any each_value() const;
+	AnyPtr each_value();
 
 	/**
 	* @brief keyとvalueをブロックパラメータとするIteratorを返す
 	*
 	* each_pairと同じ
 	*/
-	Any each() const{ return each_pair(); }
-
-	/**
-	* @brief keyに対応する値を削除する
-	*
-	*/
-	void erase(const Any& key) const;
+	AnyPtr each(){
+		return each_pair();
+	}
 	
 	/**
-	* @brief 連結した連想配列を返す
+	* @brief 浅いコピーを返す
 	*
 	*/
-	Map cat(const Map& a) const;
+	MapPtr clone();
+	
+	void push_all(const VMachinePtr& vm);
 
-	/**
-	* @brief 連結した連想配列を返す
-	*
-	*/
-	Map cat_assign(const Map& a) const;
+protected:
 
-	/**
-	* @brief 空か調べる
-	*
-	*/
-	bool empty() const;
+	struct Node{
+		AnyPtr key;
+		AnyPtr value;
+		Node* next;
+		
+		Node()
+			:next(0){}
 
-	bool op_eq(const Map& other) const;
+		Node(const AnyPtr& key, const AnyPtr& value)
+			:key(key), value(value), next(0){}
+	};
 
-	MapImpl* impl() const{ return (MapImpl*)Any::impl(); }
+	friend class MapIter;
+	friend class MapKeyIter;
+	friend class MapValueIter;
 
-	const Any operator [](const Any& key) const{
-		return at(key);
+	float_t rate(){
+		return used_size_/(float_t)size_;
 	}
+	
+	void set_node(Node* node){
+		Node** p = &begin_[node->key->hashcode() % size_];
+		while(*p){
+			p = &(*p)->next;
+		}
+		*p = node;
+	}
+
+	void expand(int_t addsize){
+		Node** oldbegin = begin_;
+		uint_t oldsize = size_;
+
+		size_ = size_ + size_/2 + addsize;
+		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
+		for(uint_t i = 0; i<size_; ++i){
+			begin_[i] = 0;
+		}
+
+		for(uint_t i = 0; i<oldsize; ++i){
+			Node* p = oldbegin[i];
+			while(p){
+				Node* next = p->next;
+				set_node(p);
+				p->next = 0;
+				p = next;
+			}
+		}
+		user_free(oldbegin, sizeof(Node*)*oldsize);
+	}
+	
+protected:
+
+	Node** begin_;
+	uint_t size_;
+	uint_t used_size_;
+
+	virtual void visit_members(Visitor& m);
+};
+
+class StrictMap{
+public:
+
+	struct Node{
+		AnyPtr key;
+		AnyPtr value;
+		Node* next;
+		
+		Node()
+			:next(0){}
+
+		Node(const AnyPtr& key, const AnyPtr& value)
+			:key(key), value(value), next(0){}
+	};
+
+
+	StrictMap();
+
+	~StrictMap();
+		
+	const AnyPtr& at(const AnyPtr& key);
+	
+	void set_at(const AnyPtr& key, const AnyPtr& value);
+
+	int_t size(){
+		return used_size_;
+	}
+	
+	bool empty(){
+		return used_size_==0;
+	}
+
+	void destroy();
+
+	void clear(){
+		destroy();
+		expand(7);
+	}
+	
+private:
+
+	float_t rate(){
+		return used_size_/(float_t)size_;
+	}
+	
+	void set_node(Node* node);
+
+	void expand(int_t addsize);
+		
+private:
+
+	Node** begin_;
+	uint_t size_;
+	uint_t used_size_;
+
+private:
+	
+	StrictMap(const StrictMap&);
+	StrictMap& operator = (const StrictMap&);
 };
 
 }//namespace

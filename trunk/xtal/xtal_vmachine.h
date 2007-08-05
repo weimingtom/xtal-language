@@ -25,26 +25,22 @@ public:
 	* @brief 関数を呼び出す用意をする。
 	*
 	*/
-	void setup_call(int_t need_result_count);
-	void setup_call(int_t need_result_count, const AnyPtr& a1);
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2);
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3);
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4);
+	void setup_call(int_t need_result_count = 1);
 
 	/**
-	* @brief 引数を積む。
+	* @brief 引数を1個積む。
 	*
 	*/
 	void push_arg(const AnyPtr& value);
 	
 	/**
-	* @brief 名前付き引数を積む。
+	* @brief 名前付き引数を1個積む。
 	*
 	*/
 	void push_arg(const InternedStringPtr& name, const AnyPtr& value);
 	
 	/**
-	* @brief 名前付き引数を積む。
+	* @brief 名前付き引数を1個積む。
 	*
 	*/
 	void push_arg(const Named& p){ push_arg(p.name, p.value); }
@@ -81,10 +77,146 @@ public:
 	* 例外が起きたときのエラーメッセージのために、
 	* 現在呼び出しているオブジェクトとメソッド名を登録する。
 	*/
-	void set_hint(const AnyPtr& hint1, const StringPtr& hint2){ 
-		ff().hint(hint1, hint2);
+	void set_hint(const AnyPtr& object, const StringPtr& method_name){ 
+		ff().hint(object, method_name);
 	}
 	
+
+// 
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を1個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const AnyPtr& a5);
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をする。
+	*
+	*/
+	void setup_call(int_t need_result_count, const Named& a1);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を1個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const Named& a5);
+
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const Named& a1, const Named& a2);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4, const Named& a5);
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4, const Named& a5);
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4);
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5);
+
+
+
+	/**
+	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	*
+	*/
+	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5);
+
 public:
 
 	// 関数呼び出され側が使うための関数群
@@ -266,6 +398,9 @@ public:
 
 	// スタックに値vをプッシュする。
 	void push(const Innocence& v){ stack_.push_unchecked(v); }
+
+	// スタックに値vをプッシュする。
+	void push(const Named& v){ push(v.name); push(v.value); }
 
 	// スタックから値をポップする。
 	const AnyPtr& pop(){ return ap(stack_.pop()); }
@@ -645,55 +780,40 @@ public:
 template<class A0>
 AnyPtr Innocence::operator()(const A0& a0) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	ap(*this)->rawcall(vm);
+	vm->setup_call(1, a0);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
 template<class A0, class A1>
 AnyPtr Innocence::operator()(const A0& a0, const A1& a1) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	ap(*this)->rawcall(vm);
+	vm->setup_call(1, a0, a1);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
 template<class A0, class A1, class A2>
 AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
-	ap(*this)->rawcall(vm);
+	vm->setup_call(1, a0, a1, a2);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
 template<class A0, class A1, class A2, class A3>
 AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
-	vm->push_arg(a3);
-	ap(*this)->rawcall(vm);
+	vm->setup_call(1, a0, a1, a2, a3);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
 template<class A0, class A1, class A2, class A3, class A4>
 AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
-	vm->push_arg(a3);
-	vm->push_arg(a4);
-	ap(*this)->rawcall(vm);
+	vm->setup_call(1, a0, a1, a2, a3, a4);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
@@ -701,8 +821,7 @@ AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2, const A3&
 template<class A0>
 AnyPtr Any::send(const InternedStringPtr& name, const A0& a0) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
+	vm->setup_call(1, a0);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
 }
@@ -710,9 +829,7 @@ AnyPtr Any::send(const InternedStringPtr& name, const A0& a0) const{
 template<class A0, class A1>
 AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
+	vm->setup_call(1, a0, a1);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
 }
@@ -720,10 +837,7 @@ AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1) cons
 template<class A0, class A1, class A2>
 AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
+	vm->setup_call(1, a0, a1, a2);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
 }
@@ -731,11 +845,7 @@ AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1, cons
 template<class A0, class A1, class A2, class A3>
 AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
-	vm->push_arg(a3);
+	vm->setup_call(1, a0, a1, a2, a3);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
 }
@@ -743,16 +853,51 @@ AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1, cons
 template<class A0, class A1, class A2, class A3, class A4>
 AnyPtr Any::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
 	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	vm->push_arg(a0);
-	vm->push_arg(a1);
-	vm->push_arg(a2);
-	vm->push_arg(a3);
-	vm->push_arg(a4);
+	vm->setup_call(1, a0, a1, a2, a3, a4);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
 }
 
+
+template<class A0>
+AnyPtr Base::send(const InternedStringPtr& name, const A0& a0){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0);
+	rawsend(vm, name);
+	return vm->result_and_cleanup_call();
+}
+
+template<class A0, class A1>
+AnyPtr Base::send(const InternedStringPtr& name, const A0& a0, const A1& a1){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0, a1);
+	rawsend(vm, name);
+	return vm->result_and_cleanup_call();
+}
+
+template<class A0, class A1, class A2>
+AnyPtr Base::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0, a1, a2);
+	rawsend(vm, name);
+	return vm->result_and_cleanup_call();
+}
+
+template<class A0, class A1, class A2, class A3>
+AnyPtr Base::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0, a1, a2, a3);
+	rawsend(vm, name);
+	return vm->result_and_cleanup_call();
+}
+
+template<class A0, class A1, class A2, class A3, class A4>
+AnyPtr Base::send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0, a1, a2, a3, a4);
+	rawsend(vm, name);
+	return vm->result_and_cleanup_call();
+}
 
 class AtProxy{
 	AnyPtr obj;
@@ -762,24 +907,13 @@ public:
 	AtProxy(const AnyPtr& obj, const AnyPtr& key)
 		:obj(obj), key(key){}
 
-	/*
-	const AtProxy& operator =(const AnyPtr& value){
-		obj->set_at(key, value);
-		return *this;
-	}
+	const AtProxy& operator =(const AnyPtr& value);
 
-	operator const AnyPtr&() const{
-		return obj->at(key);
-	}
+	operator const AnyPtr&();
 
-	const AnyPtr& operator ->() const{
-		return obj->at(key);
-	}
+	const AnyPtr& operator ->();
 
-	const Any& operator *() const{
-		return *obj->at(key);
-	}
-	*/
+	const Any& operator *();
 };
 
 }

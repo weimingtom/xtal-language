@@ -63,7 +63,15 @@ typedef SmartPtr<Reader> ReaderPtr;
 namespace grammer{
 
 class Parser;
-typedef SmartPtr<Parser> ParserPtr;
+
+class ParserPtr : public SmartPtr<Parser>{
+public:
+
+	ParserPtr(const SmartPtr<Parser>& p)
+		:SmartPtr<Parser>(p){}
+
+};
+
 
 class Parser : public Base{
 public:
@@ -89,12 +97,29 @@ public:
 		return false;
 	}
 
-	virtual bool parse_with_next(const ReaderPtr& r, const ParserPtr& next, const ArrayPtr& out){
-		if(!parse(r, out)){
-			return false;
+	bool try_parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
+		if(out){
+			int_t len = out->length();
+			int_t pos = r->position();
+			if(parse_with_next(r, out, next, nextout)){
+				return true;
+			}
+			r->set_position(pos);
+			out->resize(len);
+		}else{
+			int_t pos = r->position();
+			if(parse_with_next(r, out, next, nextout)){
+				return true;
+			}
+			r->set_position(pos);
 		}
-		return next->parse(r, out);
+		return false;
 	}
+
+	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
+		return parse(r, out) && next->parse(r, nextout);
+	}
+
 };
 
 class ChParser : public Parser{
@@ -135,7 +160,7 @@ class AnyChParser : public Parser{
 public:
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		char buf[2] = {r->read(), 0};
-		out->push_back(xnew<String>(buf));
+		if(out) out->push_back(xnew<String>(buf));
 		return true;
 	}
 };
@@ -151,12 +176,12 @@ public:
 		return true;
 	}
 
-	virtual bool parse_with_next(const ReaderPtr& r, const ParserPtr& next, const ArrayPtr& out){
+	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
 		ArrayPtr temp = xnew<Array>();
 
 		for(;;){
 			if(next->try_parse(r, temp)){
-				if(out) out->cat(temp);
+				if(nextout) nextout->cat_assign(temp);
 				return true;
 			}
 
@@ -223,6 +248,13 @@ public:
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		return lhs_->try_parse(r, out) || rhs_->parse(r, out);
 	}
+
+	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
+		if(lhs_->try_parse_with_next(r, out, next, nextout)){
+			return true;
+		}
+		return rhs_->parse_with_next(r, out, next, nextout);
+	}
 };
 
 class AndParser : public Parser{
@@ -233,7 +265,14 @@ public:
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		//return lhs_->parse(r, out) && rhs_->parse(r, out);
-		return lhs_->parse_with_next(r, rhs_, out);
+		return lhs_->parse_with_next(r, out, rhs_, out);
+	}
+
+	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
+		if(!lhs_->try_parse_with_next(r, out, rhs_, nextout)){
+			return false;
+		}
+		return next->parse(r, nextout);
 	}
 };
 
@@ -275,6 +314,18 @@ public:
 		}
 		return false;
 	}
+
+	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
+		ArrayPtr ret = xnew<Array>();
+		ArrayPtr nextret = xnew<Array>();
+		if(p_->parse_with_next(r, ret, next, nextret)){
+			out->push_back(ret->join(sep_));
+			out->cat_assign(nextret);
+			return true;
+		}
+		return false;
+	}
+
 };
 
 class ArrayParser : public Parser{
@@ -376,9 +427,9 @@ public:
 		out->push_back(ret);
 	}
 };
-
-
+			
 }
+
 
 
 //#include <crtdbg.h>
@@ -398,28 +449,27 @@ int main(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 		
-		/*
+		
 		{
-			
+			/*
 			using namespace grammer;
-			const char* source = "aaaaaaaabbbbbbb";
+			const char* source = "aaawqraaaabwprbbbrwerbbbcbwercdddd";
 			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
 			ReaderPtr reader = xnew<Reader>();
 			reader->set_stream(stream);
 
+			ParserPtr anych = xnew<AnyChParser>();
 			
-			
-
-			ParserPtr test = *ParserPtr(xnew<AnyChParser>()) >> +str("b");
+			//ParserPtr test = *(ParserPtr(xnew<AnyChParser>()) - str("b"));// >> *(str("b"));
+			//ParserPtr test = join(*(anych)) >> (val("#") >> *str("bb") >> (str("cc") >> join(*str("d"), "!")));
+			ParserPtr test = ( *-anych >> (str("b") >> (str("w") >> anych >> str("r"))) ) >> ( *-anych >> (str("b") >> (str("w") >> anych >> str("r"))) );
 			ArrayPtr ret = xnew<Array>();
 
 			if(test->parse(reader, ret)){
 				ap(ret->join("-"))->p();
 			}
-
-			return 0;
+			*/
 		}
-		*/
 
 
 		{
@@ -445,10 +495,10 @@ int main(int argc, char** argv){
 
 		int c;
 		c = clock();
-		handle_argv(argv);
+		//handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 		
-		/*		
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

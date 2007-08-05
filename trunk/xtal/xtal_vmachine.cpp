@@ -32,17 +32,147 @@ void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1){
 
 void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2){
 	push_ff(&end_code_, need_result_count, 2, 0, null);
-	push(a1); push(a2);
+	push(a1); 
+	push(a2);
 }
 
 void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3){
 	push_ff(&end_code_, need_result_count, 3, 0, null);
-	push(a1); push(a2); push(a3);
+	push(a1); 
+	push(a2); 
+	push(a3);
 }
 
 void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4){
 	push_ff(&end_code_, need_result_count, 4, 0, null);
-	push(a1); push(a2); push(a3); push(a4);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const AnyPtr& a5){
+	push_ff(&end_code_, need_result_count, 5, 0, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
+}
+
+void VMachine::setup_call(int_t need_result_count, const Named& a1){
+	push_ff(&end_code_, need_result_count, 0, 1, null);
+	push(a1);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2){
+	push_ff(&end_code_, need_result_count, 1, 1, null);
+	push(a1); 
+	push(a2);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3){
+	push_ff(&end_code_, need_result_count, 2, 1, null);
+	push(a1); 
+	push(a2); 
+	push(a3);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4){
+	push_ff(&end_code_, need_result_count, 3, 1, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const Named& a5){
+	push_ff(&end_code_, need_result_count, 4, 1, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
+}
+
+void VMachine::setup_call(int_t need_result_count, const Named& a1, const Named& a2){
+	push_ff(&end_code_, need_result_count, 1, 2, null);
+	push(a1); 
+	push(a2);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3){
+	push_ff(&end_code_, need_result_count, 1, 2, null);
+	push(a1); 
+	push(a2); 
+	push(a3);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4){
+	push_ff(&end_code_, need_result_count, 2, 2, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4, const Named& a5){
+	push_ff(&end_code_, need_result_count, 3, 2, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
+}
+
+void VMachine::setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3){
+	push_ff(&end_code_, need_result_count, 0, 3, null);
+	push(a1); 
+	push(a2); 
+	push(a3);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4){
+	push_ff(&end_code_, need_result_count, 1, 3, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4, const Named& a5){
+	push_ff(&end_code_, need_result_count, 2, 3, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
+}
+
+void VMachine::setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4){
+	push_ff(&end_code_, need_result_count, 0, 4, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+}
+
+void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5){
+	push_ff(&end_code_, need_result_count, 1, 4, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
+}
+
+void VMachine::setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5){
+	push_ff(&end_code_, need_result_count, 0, 5, null);
+	push(a1); 
+	push(a2); 
+	push(a3); 
+	push(a4);
+	push(a5);
 }
 
 void VMachine::push_arg(const AnyPtr& value){
@@ -816,11 +946,11 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(If){ // 2
-		XTAL_VM_CONTINUE(pc + (pop()->to_b() ? inst.ISIZE : inst.address));
+		XTAL_VM_CONTINUE(pc + (pop() ? inst.ISIZE : inst.address));
 	}
 
 	XTAL_VM_CASE(Unless){ // 2
-		XTAL_VM_CONTINUE(pc + (!pop()->to_b() ? inst.ISIZE : inst.address));
+		XTAL_VM_CONTINUE(pc + (!pop() ? inst.ISIZE : inst.address));
 	}
 
 	XTAL_VM_CASE(Goto){ // 2
@@ -1004,7 +1134,7 @@ XTAL_VM_SWITCH{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -1045,7 +1175,7 @@ XTAL_VM_SWITCH{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -1086,7 +1216,7 @@ XTAL_VM_SWITCH{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -1127,7 +1257,7 @@ XTAL_VM_SWITCH{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}*/ }
@@ -1296,7 +1426,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfArgIsNull){ // 3
-		if(local_variable(inst.arg)->is_null()){
+		if(type(local_variable(inst.arg))==TYPE_NULL){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
@@ -1304,7 +1434,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfArgIsNullDirect){ // 3
-		if(ff().variable(inst.arg)->is_null()){
+		if(type(ff().variable(inst.arg))==TYPE_NULL){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
@@ -1335,7 +1465,7 @@ XTAL_VM_SWITCH{
 	}*/ }
 
 	XTAL_VM_CASE(Not){ // 3
-		set(Innocence(!get()->to_b())); 
+		set(Innocence(!get())); 
 		XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 	}
 
@@ -2154,7 +2284,7 @@ const inst_t* VMachine::FunCall(const inst_t* pc){
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -2190,7 +2320,7 @@ const inst_t* VMachine::FunCall_A(const inst_t* pc){
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -2226,7 +2356,7 @@ const inst_t* VMachine::FunCall_T(const inst_t* pc){
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -2262,7 +2392,7 @@ const inst_t* VMachine::FunCall_AT(const inst_t* pc){
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
-			ap(target)->rawcall(myself());
+			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }

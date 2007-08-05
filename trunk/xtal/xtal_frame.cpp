@@ -303,7 +303,7 @@ Class::Class(const char* name)
 
 void Class::call(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
-		ret->rawcall(vm);
+		ret->call(vm);
 	}else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
@@ -311,7 +311,7 @@ void Class::call(const VMachinePtr& vm){
 
 void Class::s_new(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
-		ret->rawcall(vm);
+		ret->call(vm);
 	}else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
 	}
@@ -352,7 +352,7 @@ void Class::init_instance(HaveInstanceVariables* inst, const VMachinePtr& vm, co
 		vm->setup_call(0);
 		vm->set_arg_this(self);
 		// 先頭のメソッドはインスタンス変数初期化関数
-		members_->at(0)->rawcall(vm);
+		members_->at(0)->call(vm);
 		vm->cleanup_call();
 	}
 }
@@ -460,7 +460,7 @@ void XClass::call(const VMachinePtr& vm){;
 	
 	if(inst.get()->empty()){
 		if(const AnyPtr& ret = bases_member(Xid(new))){
-			ret->rawcall(vm);
+			ret->call(vm);
 			if(type(vm->result())==TYPE_BASE){
 				pvalue(vm->result())->set_class(ClassPtr::from_this(this));
 			}
@@ -471,10 +471,10 @@ void XClass::call(const VMachinePtr& vm){;
 	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
 		vm->set_arg_this(inst);
 		if(vm->need_result()){
-			ret->rawcall(vm);
+			ret->call(vm);
 			vm->replace_result(0, inst);
 		}else{
-			ret->rawcall(vm);
+			ret->call(vm);
 		}
 	}else{
 		vm->return_result(inst);
@@ -487,7 +487,7 @@ void XClass::s_new(const VMachinePtr& vm){
 	
 	if(inst.get()->empty()){
 		if(const AnyPtr& ret = bases_member(Xid(serial_new))){
-			ret->rawcall(vm);
+			ret->call(vm);
 			if(type(vm->result())==TYPE_BASE){
 				pvalue(vm->result())->set_class(ClassPtr::from_this(this));
 			}

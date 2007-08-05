@@ -441,7 +441,7 @@ AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
 }
 
 AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name){
-	if(param_name->to_b()){
+	if(param_name){
 		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Named("n", param_num+1), 
 			Named("param_name", param_name), 

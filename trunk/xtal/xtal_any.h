@@ -303,45 +303,14 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawcall(const VMachinePtr& vm) const;
+	void call(const VMachinePtr& vm) const;
 	
 	/**
 	* @brief nameメソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name) const;
-
-	/**
-	* @brief nameメソッド呼び出しをする
-	*
-	* 引数や戻り値はvmを通してやり取りする。
-	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self) const;
-
-	/**
-	* @brief nameメソッド呼び出しをする
-	*
-	* 引数や戻り値はvmを通してやり取りする。
-	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const;
-
-	/**
-	* @brief nameメンバを取得する。
-	*
-	* @retval null そのメンバは存在しない
-	* @retval 非null nameに対応したメンバ  
-	*/
-	const AnyPtr& member(const InternedStringPtr& name) const;
-	
-	/**
-	* @brief nameメンバを取得する。
-	* 可触性を考慮したメンバ取得
-	*
-	* @retval null そのメンバは存在しない
-	* @retval 非null nameに対応したメンバ  
-	*/
-	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self) const;
+	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null) const;
 
 	/**
 	* @brief nameメンバを取得する。
@@ -350,7 +319,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const;
+	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null) const;
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
@@ -381,14 +350,6 @@ public:
 	*
 	*/
 	StringPtr to_s() const;
-	
-	/**
-	* @brief 真偽値に変換して返す。
-	*
-	*/
-	bool to_b() const{
-		return type(*this)>TYPE_FALSE;
-	}
 	
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。
@@ -429,16 +390,6 @@ public:
 	* @return 自身を返す。
 	*/
 	AnyPtr p() const;
-	
-	/**
-	* @brief 自身がnullか返す
-	*/ 
-	bool is_null() const{ return type(*this)==TYPE_NULL; }
-
-	/**
-	* @brief 自身がnopか返す
-	*/ 
-	bool is_nop() const{ return type(*this)==TYPE_NOP; }
 
 public:
 

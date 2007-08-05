@@ -355,7 +355,7 @@ void thread_entry(const ThreadPtr& thread){
 
 		XTAL_TRY{
 			vm->setup_call(0);
-			thread->callback()->rawcall(vm);
+			thread->callback()->call(vm);
 			vm->cleanup_call();
 		}XTAL_CATCH(e){
 			std::cout << e << std::endl;

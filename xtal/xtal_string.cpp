@@ -524,24 +524,26 @@ InternedStringPtr::InternedStringPtr(const StringPtr& name)
 
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{InternedStringPtr{{
+//{ID{{
 namespace id{
 InternedStringPtr id__ARGS__(null);
 InternedStringPtr idop_or_assign(null);
 InternedStringPtr idop_add_assign(null);
 InternedStringPtr idop_shr(null);
 InternedStringPtr idop_ushr_assign(null);
+InternedStringPtr idserial_save(null);
 InternedStringPtr idop_call(null);
 InternedStringPtr idop_sub_assign(null);
 InternedStringPtr idop_lt(null);
-InternedStringPtr idop_eq(null);
 InternedStringPtr idop_mul(null);
+InternedStringPtr idop_eq(null);
 InternedStringPtr idop_neg(null);
-InternedStringPtr idserial_new(null);
+InternedStringPtr idserial_load(null);
 InternedStringPtr iditer_next(null);
 InternedStringPtr iditer_first(null);
 InternedStringPtr idtrue(null);
-InternedStringPtr idserial_save(null);
+InternedStringPtr idp(null);
+InternedStringPtr idset_at(null);
 InternedStringPtr idop_and_assign(null);
 InternedStringPtr idop_mod_assign(null);
 InternedStringPtr idop_div_assign(null);
@@ -551,54 +553,58 @@ InternedStringPtr idlib(null);
 InternedStringPtr idop_cat_assign(null);
 InternedStringPtr idop_cat(null);
 InternedStringPtr idIOError(null);
-InternedStringPtr idserial_load(null);
-InternedStringPtr idfalse(null);
-InternedStringPtr idop_add(null);
 InternedStringPtr idop_cat_r_String(null);
-InternedStringPtr idop_dec(null);
-InternedStringPtr idop_inc(null);
+InternedStringPtr idfalse(null);
+InternedStringPtr idserial_new(null);
+InternedStringPtr idto_i(null);
+InternedStringPtr idop_add(null);
 InternedStringPtr idop_ushr(null);
 InternedStringPtr idop_pos(null);
+InternedStringPtr idop_dec(null);
+InternedStringPtr idop_inc(null);
+InternedStringPtr idop_eq_r_String(null);
+InternedStringPtr iditer_break(null);
+InternedStringPtr idto_f(null);
 InternedStringPtr idop_shr_assign(null);
 InternedStringPtr idop_mod(null);
-InternedStringPtr iditer_break(null);
-InternedStringPtr idop_eq_r_String(null);
 InternedStringPtr idstring(null);
-InternedStringPtr idinitialize(null);
 InternedStringPtr idop_set_at(null);
 InternedStringPtr idop_lt_r_String(null);
+InternedStringPtr idinitialize(null);
 InternedStringPtr idtest(null);
 InternedStringPtr idop_at(null);
+InternedStringPtr idvalue(null);
+InternedStringPtr idto_s(null);
 InternedStringPtr idop_shl_assign(null);
 InternedStringPtr idop_sub(null);
-InternedStringPtr idvalue(null);
-InternedStringPtr idop_clone(null);
 InternedStringPtr idop_com(null);
 InternedStringPtr idnew(null);
 InternedStringPtr idop_shl(null);
 InternedStringPtr idop_xor(null);
 InternedStringPtr idop_and(null);
-InternedStringPtr idsize(null);
+InternedStringPtr idat(null);
 InternedStringPtr idop_xor_assign(null);
 InternedStringPtr idop_mul_assign(null);
 }
-void InitID(){
+void InitInternedString(){
 id::id__ARGS__ = InternedStringPtr("__ARGS__", 8); add_long_life_var(&id::id__ARGS__); 
 id::idop_or_assign = InternedStringPtr("op_or_assign", 12); add_long_life_var(&id::idop_or_assign); 
 id::idop_add_assign = InternedStringPtr("op_add_assign", 13); add_long_life_var(&id::idop_add_assign); 
 id::idop_shr = InternedStringPtr("op_shr", 6); add_long_life_var(&id::idop_shr); 
 id::idop_ushr_assign = InternedStringPtr("op_ushr_assign", 14); add_long_life_var(&id::idop_ushr_assign); 
+id::idserial_save = InternedStringPtr("serial_save", 11); add_long_life_var(&id::idserial_save); 
 id::idop_call = InternedStringPtr("op_call", 7); add_long_life_var(&id::idop_call); 
 id::idop_sub_assign = InternedStringPtr("op_sub_assign", 13); add_long_life_var(&id::idop_sub_assign); 
 id::idop_lt = InternedStringPtr("op_lt", 5); add_long_life_var(&id::idop_lt); 
-id::idop_eq = InternedStringPtr("op_eq", 5); add_long_life_var(&id::idop_eq); 
 id::idop_mul = InternedStringPtr("op_mul", 6); add_long_life_var(&id::idop_mul); 
+id::idop_eq = InternedStringPtr("op_eq", 5); add_long_life_var(&id::idop_eq); 
 id::idop_neg = InternedStringPtr("op_neg", 6); add_long_life_var(&id::idop_neg); 
-id::idserial_new = InternedStringPtr("serial_new", 10); add_long_life_var(&id::idserial_new); 
+id::idserial_load = InternedStringPtr("serial_load", 11); add_long_life_var(&id::idserial_load); 
 id::iditer_next = InternedStringPtr("iter_next", 9); add_long_life_var(&id::iditer_next); 
 id::iditer_first = InternedStringPtr("iter_first", 10); add_long_life_var(&id::iditer_first); 
 id::idtrue = InternedStringPtr("true", 4); add_long_life_var(&id::idtrue); 
-id::idserial_save = InternedStringPtr("serial_save", 11); add_long_life_var(&id::idserial_save); 
+id::idp = InternedStringPtr("p", 1); add_long_life_var(&id::idp); 
+id::idset_at = InternedStringPtr("set_at", 6); add_long_life_var(&id::idset_at); 
 id::idop_and_assign = InternedStringPtr("op_and_assign", 13); add_long_life_var(&id::idop_and_assign); 
 id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13); add_long_life_var(&id::idop_mod_assign); 
 id::idop_div_assign = InternedStringPtr("op_div_assign", 13); add_long_life_var(&id::idop_div_assign); 
@@ -608,38 +614,45 @@ id::idlib = InternedStringPtr("lib", 3); add_long_life_var(&id::idlib);
 id::idop_cat_assign = InternedStringPtr("op_cat_assign", 13); add_long_life_var(&id::idop_cat_assign); 
 id::idop_cat = InternedStringPtr("op_cat", 6); add_long_life_var(&id::idop_cat); 
 id::idIOError = InternedStringPtr("IOError", 7); add_long_life_var(&id::idIOError); 
-id::idserial_load = InternedStringPtr("serial_load", 11); add_long_life_var(&id::idserial_load); 
-id::idfalse = InternedStringPtr("false", 5); add_long_life_var(&id::idfalse); 
-id::idop_add = InternedStringPtr("op_add", 6); add_long_life_var(&id::idop_add); 
 id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15); add_long_life_var(&id::idop_cat_r_String); 
-id::idop_dec = InternedStringPtr("op_dec", 6); add_long_life_var(&id::idop_dec); 
-id::idop_inc = InternedStringPtr("op_inc", 6); add_long_life_var(&id::idop_inc); 
+id::idfalse = InternedStringPtr("false", 5); add_long_life_var(&id::idfalse); 
+id::idserial_new = InternedStringPtr("serial_new", 10); add_long_life_var(&id::idserial_new); 
+id::idto_i = InternedStringPtr("to_i", 4); add_long_life_var(&id::idto_i); 
+id::idop_add = InternedStringPtr("op_add", 6); add_long_life_var(&id::idop_add); 
 id::idop_ushr = InternedStringPtr("op_ushr", 7); add_long_life_var(&id::idop_ushr); 
 id::idop_pos = InternedStringPtr("op_pos", 6); add_long_life_var(&id::idop_pos); 
+id::idop_dec = InternedStringPtr("op_dec", 6); add_long_life_var(&id::idop_dec); 
+id::idop_inc = InternedStringPtr("op_inc", 6); add_long_life_var(&id::idop_inc); 
+id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
+id::iditer_break = InternedStringPtr("iter_break", 10); add_long_life_var(&id::iditer_break); 
+id::idto_f = InternedStringPtr("to_f", 4); add_long_life_var(&id::idto_f); 
 id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13); add_long_life_var(&id::idop_shr_assign); 
 id::idop_mod = InternedStringPtr("op_mod", 6); add_long_life_var(&id::idop_mod); 
-id::iditer_break = InternedStringPtr("iter_break", 10); add_long_life_var(&id::iditer_break); 
-id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
 id::idstring = InternedStringPtr("string", 6); add_long_life_var(&id::idstring); 
-id::idinitialize = InternedStringPtr("initialize", 10); add_long_life_var(&id::idinitialize); 
 id::idop_set_at = InternedStringPtr("op_set_at", 9); add_long_life_var(&id::idop_set_at); 
 id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14); add_long_life_var(&id::idop_lt_r_String); 
+id::idinitialize = InternedStringPtr("initialize", 10); add_long_life_var(&id::idinitialize); 
 id::idtest = InternedStringPtr("test", 4); add_long_life_var(&id::idtest); 
 id::idop_at = InternedStringPtr("op_at", 5); add_long_life_var(&id::idop_at); 
+id::idvalue = InternedStringPtr("value", 5); add_long_life_var(&id::idvalue); 
+id::idto_s = InternedStringPtr("to_s", 4); add_long_life_var(&id::idto_s); 
 id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13); add_long_life_var(&id::idop_shl_assign); 
 id::idop_sub = InternedStringPtr("op_sub", 6); add_long_life_var(&id::idop_sub); 
-id::idvalue = InternedStringPtr("value", 5); add_long_life_var(&id::idvalue); 
-id::idop_clone = InternedStringPtr("op_clone", 8); add_long_life_var(&id::idop_clone); 
 id::idop_com = InternedStringPtr("op_com", 6); add_long_life_var(&id::idop_com); 
 id::idnew = InternedStringPtr("new", 3); add_long_life_var(&id::idnew); 
 id::idop_shl = InternedStringPtr("op_shl", 6); add_long_life_var(&id::idop_shl); 
 id::idop_xor = InternedStringPtr("op_xor", 6); add_long_life_var(&id::idop_xor); 
 id::idop_and = InternedStringPtr("op_and", 6); add_long_life_var(&id::idop_and); 
-id::idsize = InternedStringPtr("size", 4); add_long_life_var(&id::idsize); 
+id::idat = InternedStringPtr("at", 2); add_long_life_var(&id::idat); 
 id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13); add_long_life_var(&id::idop_xor_assign); 
 id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13); add_long_life_var(&id::idop_mul_assign); 
 }
-//}}InternedStringPtr}
+//}}ID}
+
+
+
+
+
 
 
 

@@ -67,7 +67,7 @@ Innocence::Innocence(const char* str){
 AnyPtr Innocence::operator()() const{
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(1);
-	ap(*this)->rawcall(vm);
+	ap(*this)->call(vm);
 	return vm->result_and_cleanup_call();
 }
 
@@ -145,14 +145,6 @@ namespace{
 	MemberCacheTable member_cache_table;
 }
 
-const AnyPtr& Any::member(const InternedStringPtr& name) const{
-	return member_cache_table.cache(*this, name, *this, null);
-}
-
-const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self) const{
-	return member_cache_table.cache(*this, name, self, null);
-}
-
 const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
 	return member_cache_table.cache(*this, name, self, ns);
 }
@@ -167,34 +159,16 @@ void Any::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessib
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name) const{
-	const ClassPtr& cls = get_class();
-	vm->set_hint(cls, name);
-	if(const AnyPtr& ret = member_cache_table.cache(cls, name, *this, null)){
-		vm->set_arg_this(ap(*this));
-		ret->rawcall(vm);
-	}
-}
-
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self) const{
-	const ClassPtr& cls = get_class();
-	vm->set_hint(cls, name);
-	if(const AnyPtr& ret = member_cache_table.cache(cls, name, self, null)){
-		vm->set_arg_this(ap(*this));
-		ret->rawcall(vm);
-	}
-}
-
 void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, name);
 	if(const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns)){
 		vm->set_arg_this(ap(*this));
-		ret->rawcall(vm);
+		ret->call(vm);
 	}
 }
 
-void Any::rawcall(const VMachinePtr& vm) const{
+void Any::call(const VMachinePtr& vm) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->call(vm); }
@@ -282,7 +256,7 @@ bool Any::is(const ClassPtr& v) const{
 }
 
 AnyPtr Any::p() const{
-	ap(*this)->send("p")();
+	ap(*this)->send("p");
 	return ap(*this);
 }
 
@@ -292,5 +266,24 @@ void visit_members(Visitor& m, const AnyPtr& p){
 		pvalue(p)->add_ref_count(m.value());
 	}
 }
+
+
+const AtProxy& AtProxy::operator =(const AnyPtr& value){
+	obj->send(Xid(set_at), key, value);
+	return *this;
+}
+
+AtProxy::operator const AnyPtr&(){
+	return obj = obj->send(Xid(at), key);
+}
+
+const AnyPtr& AtProxy::operator ->(){
+	return obj = obj->send(Xid(at), key);
+}
+
+const Any& AtProxy::operator *(){
+	return *(obj = obj->send(Xid(at), key));
+}
+
 
 }

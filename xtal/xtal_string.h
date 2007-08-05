@@ -300,24 +300,26 @@ std::basic_ostream<Ch, T>& operator << (std::basic_ostream<Ch, T>& os, const Any
 	
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{InternedStringPtr{{
+//{ID{{
 namespace id{
 extern InternedStringPtr id__ARGS__;
 extern InternedStringPtr idop_or_assign;
 extern InternedStringPtr idop_add_assign;
 extern InternedStringPtr idop_shr;
 extern InternedStringPtr idop_ushr_assign;
+extern InternedStringPtr idserial_save;
 extern InternedStringPtr idop_call;
 extern InternedStringPtr idop_sub_assign;
 extern InternedStringPtr idop_lt;
-extern InternedStringPtr idop_eq;
 extern InternedStringPtr idop_mul;
+extern InternedStringPtr idop_eq;
 extern InternedStringPtr idop_neg;
-extern InternedStringPtr idserial_new;
+extern InternedStringPtr idserial_load;
 extern InternedStringPtr iditer_next;
 extern InternedStringPtr iditer_first;
 extern InternedStringPtr idtrue;
-extern InternedStringPtr idserial_save;
+extern InternedStringPtr idp;
+extern InternedStringPtr idset_at;
 extern InternedStringPtr idop_and_assign;
 extern InternedStringPtr idop_mod_assign;
 extern InternedStringPtr idop_div_assign;
@@ -327,38 +329,45 @@ extern InternedStringPtr idlib;
 extern InternedStringPtr idop_cat_assign;
 extern InternedStringPtr idop_cat;
 extern InternedStringPtr idIOError;
-extern InternedStringPtr idserial_load;
-extern InternedStringPtr idfalse;
-extern InternedStringPtr idop_add;
 extern InternedStringPtr idop_cat_r_String;
-extern InternedStringPtr idop_dec;
-extern InternedStringPtr idop_inc;
+extern InternedStringPtr idfalse;
+extern InternedStringPtr idserial_new;
+extern InternedStringPtr idto_i;
+extern InternedStringPtr idop_add;
 extern InternedStringPtr idop_ushr;
 extern InternedStringPtr idop_pos;
+extern InternedStringPtr idop_dec;
+extern InternedStringPtr idop_inc;
+extern InternedStringPtr idop_eq_r_String;
+extern InternedStringPtr iditer_break;
+extern InternedStringPtr idto_f;
 extern InternedStringPtr idop_shr_assign;
 extern InternedStringPtr idop_mod;
-extern InternedStringPtr iditer_break;
-extern InternedStringPtr idop_eq_r_String;
 extern InternedStringPtr idstring;
-extern InternedStringPtr idinitialize;
 extern InternedStringPtr idop_set_at;
 extern InternedStringPtr idop_lt_r_String;
+extern InternedStringPtr idinitialize;
 extern InternedStringPtr idtest;
 extern InternedStringPtr idop_at;
+extern InternedStringPtr idvalue;
+extern InternedStringPtr idto_s;
 extern InternedStringPtr idop_shl_assign;
 extern InternedStringPtr idop_sub;
-extern InternedStringPtr idvalue;
-extern InternedStringPtr idop_clone;
 extern InternedStringPtr idop_com;
 extern InternedStringPtr idnew;
 extern InternedStringPtr idop_shl;
 extern InternedStringPtr idop_xor;
 extern InternedStringPtr idop_and;
-extern InternedStringPtr idsize;
+extern InternedStringPtr idat;
 extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idop_mul_assign;
 }
-//}}InternedStringPtr}
+//}}ID}
+
+
+
+
+
 
 
 

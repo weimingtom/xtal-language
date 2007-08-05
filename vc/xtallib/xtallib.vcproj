@@ -310,6 +310,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_funimpl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_fwd.h"
 				>
 			</File>

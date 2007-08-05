@@ -96,6 +96,7 @@ void InitArray(){
 		p->method("reverse", &Array::reverse);
 		p->method("reversed", &Array::reversed);
 	}
+
 }
 
 void Array::visit_members(Visitor& m){

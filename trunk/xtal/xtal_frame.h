@@ -26,7 +26,7 @@ const ClassPtr& new_cpp_class(const char* name){
 }
 
 template<class T>
-inline bool exists_cpp_class(){
+bool exists_cpp_class(){
 	return CppClassHolder<T>::value!=0 && ap(*CppClassHolder<T>::value);
 }
 
@@ -445,6 +445,70 @@ public:
 		return method(name, fun, result);
 	}
 
+	
+	/**
+	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	*
+	*/
+	template<class T, class U, class Policy>
+	CFunPtr getter(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
+		return def_and_return(name, xtal::getter(v, policy));
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	*
+	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
+	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
+	*/
+	template<class T, class U, class Policy>
+	CFunPtr setter(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
+		return def_and_return(name, xtal::setter(v, policy));
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	*
+	* cls->getter(name, var, policy);
+	* cls->setter(StringPtr("set_")->cat(name), v, policy);
+	* と等しい	
+	*/	
+	template<class T, class U, class Policy>
+	void var(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
+		getter(name, v, policy);
+		setter(String("set_").cat(name), v, policy);
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	*
+	*/
+	template<class T, class U>
+	CFunPtr getter(const InternedStringPtr& name, T U::* v) const{
+		return getter(name, v, result);
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	*
+	*/
+	template<class T, class U>
+	CFunPtr setter(const InternedStringPtr& name, T U::* v) const{
+		return setter(name, v, result);
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	*
+	* cls->getter(name, v);
+	* cls->setter(StringPtr("set_")->cat(name), v);
+	* と等しい	
+	*/	
+	template<class T, class U>
+	void var(const InternedStringPtr& name, T U::* v) const{
+		var(name, v, result);
+	}
+
 public:
 
 	virtual void call(const VMachinePtr& vm);
@@ -468,7 +532,7 @@ protected:
 		return cfun;
 	}
 
-	AC<ClassPtr>::vector mixins_;
+	ArrayPtr mixins_;
 	bool is_defined_by_xtal_;
 
 	virtual void visit_members(Visitor& m){
@@ -481,11 +545,7 @@ protected:
 class XClass : public Class{
 public:
 		
-	XClass(const FramePtr& outer, const CodePtr& code, ClassCore* core)
-		:Class(outer, code, core){
-		inherit(get_cpp_class<Instance>());
-	}
-
+	XClass(const FramePtr& outer, const CodePtr& code, ClassCore* core);
 public:
 
 	virtual void call(const VMachinePtr& vm);

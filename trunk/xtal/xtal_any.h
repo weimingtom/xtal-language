@@ -34,7 +34,6 @@ public:
 
 	AtProxy operator[](const AnyPtr& key) const;
 
-
 protected:
 
 	Innocence(const char* str);
@@ -410,5 +409,34 @@ public:
 	template<class A0, class A1, class A2, class A3, class A4>
 	AnyPtr send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
 };
+
+
+AnyPtr operator +(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator -(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator *(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator /(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator %(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator |(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator &(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator !=(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator <(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator >(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator <=(const AnyPtr& a, const AnyPtr& b);
+AnyPtr operator >=(const AnyPtr& a, const AnyPtr& b);
+
+AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
+AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
 
 }

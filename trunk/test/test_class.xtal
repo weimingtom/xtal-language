@@ -1,16 +1,5 @@
 
 
-{
-	temp: null;
-	
-	try{
-		compile(" _x = 0; ");
-	}catch(e){
-		temp = e;
-	}
-	assert temp!==null;
-}
-
 Foo: class{
 	+ _pub: 100;
 	# _pro: 200;

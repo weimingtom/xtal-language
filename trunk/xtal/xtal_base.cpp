@@ -69,6 +69,8 @@ bool initialized(){
 void initialize(){
 	if(initialized()){ return; } 
 
+	set_thread();
+
 	disable_gc();
 
 	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);

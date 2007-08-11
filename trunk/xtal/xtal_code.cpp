@@ -20,10 +20,10 @@ void InitCode(){
 }
 
 Code::Code()
-	:toplevel_(xnew<Class>("toplevel")), source_file_name_("<noname>"){
-	set_object_name("<TopLevel>", 1, null);
-	toplevel_->inherit(builtin());
-	toplevel_->def("toplevel", toplevel_);
+	:filelocal_(xnew<Class>("filelocal")), source_file_name_("<noname>"){
+	set_object_name("<filelocal>", 1, null);
+	filelocal_->inherit(builtin());
+	filelocal_->def("filelocal", filelocal_);
 
 	symbol_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();

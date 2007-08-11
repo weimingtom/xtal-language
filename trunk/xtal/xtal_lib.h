@@ -142,9 +142,6 @@ typedef void (*except_handler_t)(const AnyPtr& except, const char* file, int lin
 except_handler_t except_handler();
 void set_except_handler(except_handler_t handler);
 
-AnyPtr except();
-void set_except(const AnyPtr& except);
-
 void iter_next(AnyPtr& target, AnyPtr& value, bool first);
 void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
 void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
@@ -161,10 +158,7 @@ struct IterBreaker{
 
 namespace debug{
 
-class InfoImpl;
-
-
-class InfoImpl : public Base{
+class Info : public Base{
 public:
 
 	int_t kind(){ return kind_; } 
@@ -178,6 +172,10 @@ public:
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
 	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
 	void set_local_variables(const FramePtr& v){ local_variables_ = v; }
+
+	SmartPtr<Info> clone(){
+		return xnew<Info>(*this);
+	}
 
 private:
 

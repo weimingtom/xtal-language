@@ -241,13 +241,7 @@ public:
 	/**
 	* @brief T型へのポインタを取得する。
 	*/
-	T* get() const{
-		if(IsInherited<T, Base>::value){
-			return (T*)pvalue(*this);
-		}else{
-			return (T*)((Base*)pvalue(*this) + 1);
-		}
-	}
+	T* get() const{ return get2(I2T<IsInherited<T, Base>::value>()); }
 
 private:
 
@@ -256,6 +250,11 @@ private:
 
 	SmartPtr(nc, Base* p)
 		:SmartPtr<Any>(nc(), p){}
+
+
+	T* get2(const I2T<0>&) const{ return (T*)((Base*)pvalue(*this) + 1); }
+	T* get2(const I2T<1>&) const{ return (T*)pvalue(*this); }
+
 };
 
 

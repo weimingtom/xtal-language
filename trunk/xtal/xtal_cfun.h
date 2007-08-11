@@ -886,9 +886,12 @@ CFunPtr method(Fun f, const Policy& policy){
 	return detail::method(f, policy);
 }
 
-
+/**
+* @brief C++のコンストラクタをXtalから呼び出せるオブジェクトに変換するための擬似関数
+*
+*/
 template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void>
-class New : public CFunPtr{
+class ctor : public CFunPtr{
 	enum{
 		N = 
 		IsNotVoid<A0>::value + 
@@ -899,8 +902,33 @@ class New : public CFunPtr{
 	};
 public:
 	
-	New()
+	ctor()
 		:CFunPtr(fun(&detail::ctor_fun<N>::template inner<T, A0, A1, A2, A3, A4>::make)){}
 };
+
+
+	
+/**
+* @brief メンバ変数へのポインタからゲッター関数を生成する
+*
+*/
+template<class T, class U, class Policy>
+CFunPtr getter(T U::* v, const Policy&){
+	typedef detail::getter<C, T> getter;
+	getter data(v);
+	return xnew<CFun>(&detail::method0<getter, C*, const T&, Policy>::f, &data, sizeof(data), 0);
+}
+	
+/**
+* @brief メンバ変数へのポインタからセッター関数を生成する
+*
+*/
+template<class T, class U, class Policy>
+CFunPtr setter(T U::* v, const Policy&){
+	typedef detail::setter<C, T> setter;
+	setter data(v);
+	return xnew<CFun>(&detail::method1<setter, C*, const T&, const T&, Policy>::f, &data, sizeof(data), 1);
+}
+
 
 }

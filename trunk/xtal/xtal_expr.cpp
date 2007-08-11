@@ -133,7 +133,7 @@ AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
 }
 
 void ExprBuilder::scope_push(Vars* vars){
-	vars->on_heap = false;
+	vars->on_heap = debug::is_enabled();
 	vars_stack.push(vars);
 }
 

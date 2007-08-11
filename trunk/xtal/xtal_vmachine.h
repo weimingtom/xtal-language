@@ -342,6 +342,20 @@ public:
 
 public:
 
+	AnyPtr catch_except(){
+		AnyPtr ret = ap(last_except_);
+		last_except_ = null;
+		return ret;
+	}
+
+	AnyPtr except(){
+		return ap(last_except_);
+	}
+
+	void set_except(const AnyPtr& e){
+		last_except_ = e;
+	}
+
 	void execute_inner(const inst_t* start);
 
 	void execute(Fun* fun, const inst_t* start_pc);
@@ -494,13 +508,13 @@ public:
 			set_null_force(hint2_);
 		}
 
-		const FunPtr& fun() const{ return forced_cast<Fun>(ap(fun_)); }
-		const FramePtr& outer() const{ return forced_cast<Frame>(ap(outer_)); }
+		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
+		const FramePtr& outer() const{ return static_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& variable(int_t i) const{ return ap(variables_[i]); }
 		const AnyPtr& self() const{ return ap(self_); }
-		const ArgumentsPtr& arguments() const{ return forced_cast<Arguments>(ap(arguments_)); }
+		const ArgumentsPtr& arguments() const{ return static_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint1() const{ return ap(hint1_); }
-		const StringPtr& hint2() const{ return forced_cast<String>(ap(hint2_)); }
+		const StringPtr& hint2() const{ return static_ptr_cast<String>(ap(hint2_)); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
@@ -625,7 +639,6 @@ public:
 	const inst_t* FunYield(const inst_t* pc);
 	const inst_t* FunExit(const inst_t* pc);
 	const inst_t* FunValue(const inst_t* pc);
-	const inst_t* FunSetValue(const inst_t* pc);
 	const inst_t* FunCheckUnsupported(const inst_t* pc);
 	const inst_t* FunSend(const inst_t* pc);
 	const inst_t* FunSendIfDefined(const inst_t* pc);
@@ -717,6 +730,7 @@ public:
 	const inst_t* FunSetMultipleLocalVariable3Direct(const inst_t* pc);
 	const inst_t* FunSetMultipleLocalVariable4Direct(const inst_t* pc);
 	const inst_t* FunOnce(const inst_t* pc);
+	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);
 	const inst_t* FunClassEnd(const inst_t* pc);
 	const inst_t* FunMakeArray(const inst_t* pc);
@@ -760,7 +774,7 @@ private:
 	// tryの度に積まれるフレーム。
 	PODStack<ExceptFrame> except_frames_;
 	
-	SmartPtr<debug::InfoImpl> debug_info_;
+	SmartPtr<debug::Info> debug_info_;
 
 	Innocence last_except_;
 

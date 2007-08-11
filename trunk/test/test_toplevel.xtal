@@ -9,7 +9,7 @@ mod : class(nod){
 	}
 }
 
-toplevel.inherit(mod);
+filelocal.inherit(mod);
 
 assert foo===mod::foo;
 
@@ -27,9 +27,9 @@ mod::bar : fun(){
 
 assert bar()=="mod::bar";
 
-toplevel::bar : fun(){
-	return "toplevel::bar";
+filelocal::bar : fun(){
+	return "filelocal::bar";
 }
 
-assert bar()=="toplevel::bar";
+assert bar()=="filelocal::bar";
 

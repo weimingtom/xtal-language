@@ -63,8 +63,8 @@ public:
 		return source_file_name_; 
 	}
 
-	const ClassPtr& toplevel(){ 
-		return toplevel_; 
+	const ClassPtr& filelocal(){ 
+		return filelocal_; 
 	}
 
 	BlockCore* block_core(int_t i){
@@ -104,7 +104,7 @@ private:
 	ArrayPtr symbol_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
-	ClassPtr toplevel_;
+	ClassPtr filelocal_;
 	StringPtr source_file_name_;
 	FunPtr first_fun_;
 
@@ -112,7 +112,7 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & symbol_table_ & value_table_ & toplevel_ & source_file_name_ & first_fun_;
+		m & symbol_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_;
 	}
 
 private:

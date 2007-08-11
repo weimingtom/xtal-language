@@ -45,7 +45,7 @@ bool Serializer::check_id(const InternedStringPtr& id){
 	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
 		return true;
 	}
-	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))));
+	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return false);
 	return false;
 }
 
@@ -324,12 +324,12 @@ AnyPtr Serializer::inner_deserialize(){
 			CodePtr p = xnew<Code>();
 
 			if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
+				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")), return null);
 			}
 
 			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
 			if(version1!=MARSHAL_VERSION1 || version2!=MARSHAL_VERSION2){
-				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")));
+				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")), return null);
 			}
 			
 			stream_->get_u8();
@@ -395,7 +395,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->symbol_table_ = cast<ArrayPtr>(map->at("symbols"));
 			p->value_table_ = cast<ArrayPtr>(map->at("values"));
 			
-			ret->set_object_name("<TopLevel>", 1, null);	
+			ret->set_object_name("<filelocal>", 1, null);	
 			return ret;
 		}
 	}
@@ -418,7 +418,7 @@ AnyPtr Serializer::demangle(int_t n){
 		}
 	}
 	if(!ret){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", values_->at(n)))));
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", values_->at(n)))), return null);
 	}
 	return ret;
 }

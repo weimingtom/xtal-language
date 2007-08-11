@@ -88,7 +88,7 @@ void InitString(){
 	{
 		ClassPtr p = new_cpp_class<String>("String");
 
-		p->def("new", New<String>());
+		p->def("new", ctor<String>());
 		p->method("to_i", &String::to_i);
 		p->method("to_f", &String::to_f);
 		p->method("to_s", &String::to_s);

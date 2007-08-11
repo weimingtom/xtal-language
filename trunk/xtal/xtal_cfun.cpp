@@ -84,7 +84,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 					Named("name", ap(pi_.fun)->object_name()),
 					Named("value", n)
 				)
-			));
+			), return);
 		}else{
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1006")(
@@ -93,7 +93,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 					Named("max", pi_.max_param_count),
 					Named("value", n)
 				)
-			));
+			), return);
 		}
 	}
 }

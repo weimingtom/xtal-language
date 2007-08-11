@@ -4,6 +4,7 @@
 //#define XTAL_USE_COMPRESSED_INNOCENCE
 //#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
+//#define XTAL_ENFORCE_64_BIT
 
 //#define XTAL_NO_PARSER // 現在有効にするとバグがある
 //#define XTAL_USE_THREAD_MODEL_2 // 現在有効にするとバグがある
@@ -54,13 +55,15 @@
 #endif
 
 #ifdef XTAL_NO_EXCEPT
-#	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); }while(0)
+#	define XTAL_THROW(e, ret) do{ ::xtal::vmachine()->set_except(e); ::xtal::except_handler()(e, __FILE__, __LINE__); ret; }while(0)
 #	define XTAL_TRY 
-#	define XTAL_CATCH(e) if(const ::xtal::AnyPtr& e = ::xtal::except())
+#	define XTAL_CATCH(e) if(::xtal::AnyPtr e = ::xtal::vmachine()->catch_except())
+#	define XTAL_CHECK_EXCEPT(ret) do{ if(::xtal::AnyPtr e = ::xtal::vmachine()->except()) ret; }while(0)
 #else
-#	define XTAL_THROW(e) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
+#	define XTAL_THROW(e, ret) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
 #	define XTAL_TRY try
-#	define XTAL_CATCH(e) catch(const AnyPtr& e)
+#	define XTAL_CATCH(e) catch(const ::xtal::AnyPtr& e)
+#	define XTAL_CHECK_EXCEPT(ret)
 #endif
 
 #ifdef __GNUC__

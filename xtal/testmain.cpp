@@ -41,18 +41,6 @@ static void handle_argv(char** argv){
 	}
 }
 
-/*
-void debug_line(const debug::Info& info){
-	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info.kind(), info.line(), info.file_name(), info.fun_name());
-
-	if(info.local_variables()){
-		Xfor2(key, value, info.local_variables()->each_member()){
-			//std::cout << Xf("key=%s, value=%s\n")(key, value);
-		}
-	}
-}
-*/
-
 
 #include "xtal_parser.h"
 
@@ -96,30 +84,6 @@ public:
 		}
 		return false;
 	}
-
-	bool try_parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		if(out){
-			int_t len = out->length();
-			int_t pos = r->position();
-			if(parse_with_next(r, out, next, nextout)){
-				return true;
-			}
-			r->set_position(pos);
-			out->resize(len);
-		}else{
-			int_t pos = r->position();
-			if(parse_with_next(r, out, next, nextout)){
-				return true;
-			}
-			r->set_position(pos);
-		}
-		return false;
-	}
-
-	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		return parse(r, out) && next->parse(r, nextout);
-	}
-
 };
 
 class ChParser : public Parser{
@@ -159,7 +123,10 @@ public:
 class AnyChParser : public Parser{
 public:
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		char buf[2] = {r->read(), 0};
+		int_t ret = r->read();
+		if(ret<0)
+			return false;
+		char buf[2] = {ret, 0};
 		if(out) out->push_back(xnew<String>(buf));
 		return true;
 	}
@@ -174,21 +141,6 @@ public:
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		while(p_->try_parse(r, out)){}
 		return true;
-	}
-
-	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		ArrayPtr temp = xnew<Array>();
-
-		for(;;){
-			if(next->try_parse(r, temp)){
-				if(nextout) nextout->cat_assign(temp);
-				return true;
-			}
-
-			if(!p_->try_parse(r, out)){
-				return false;
-			}
-		}
 	}
 };
 
@@ -225,17 +177,13 @@ public:
 		:lhs_(l), rhs_(r){}
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		for(;;){
-			int_t pos = r->position();
-			if(rhs_->try_parse(r, null)){
-				r->set_position(pos);
-				return true;
-			}
-
-			if(!lhs_->parse(r, out)){
-				return false;
-			}
+		int_t pos = r->position();
+		if(rhs_->try_parse(r, null)){
+			r->set_position(pos);
+			return false;
 		}
+
+		return lhs_->parse(r, out);
 	}
 };
 
@@ -248,13 +196,6 @@ public:
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		return lhs_->try_parse(r, out) || rhs_->parse(r, out);
 	}
-
-	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		if(lhs_->try_parse_with_next(r, out, next, nextout)){
-			return true;
-		}
-		return rhs_->parse_with_next(r, out, next, nextout);
-	}
 };
 
 class AndParser : public Parser{
@@ -264,15 +205,7 @@ public:
 		:lhs_(l), rhs_(r){}
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		//return lhs_->parse(r, out) && rhs_->parse(r, out);
-		return lhs_->parse_with_next(r, out, rhs_, out);
-	}
-
-	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		if(!lhs_->try_parse_with_next(r, out, rhs_, nextout)){
-			return false;
-		}
-		return next->parse(r, nextout);
+		return lhs_->parse(r, out) && rhs_->parse(r, out);
 	}
 };
 
@@ -314,18 +247,6 @@ public:
 		}
 		return false;
 	}
-
-	virtual bool parse_with_next(const ReaderPtr& r, const ArrayPtr& out, const ParserPtr& next, const ArrayPtr& nextout){
-		ArrayPtr ret = xnew<Array>();
-		ArrayPtr nextret = xnew<Array>();
-		if(p_->parse_with_next(r, ret, next, nextret)){
-			out->push_back(ret->join(sep_));
-			out->cat_assign(nextret);
-			return true;
-		}
-		return false;
-	}
-
 };
 
 class ArrayParser : public Parser{
@@ -335,12 +256,18 @@ public:
 		:p_(p){}
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		ArrayPtr ret = xnew<Array>();
-		if(p_->parse(r, ret)){
-			out->push_back(ret);
-			return true;
+		if(out){
+			int_t pos = out->size();
+			if(p_->parse(r, out)){
+				ArrayPtr ret = out->slice(pos, out->size());
+				out->resize(pos);
+				out->push_back(ret);
+				return true;
+			}
+			return false;
 		}
-		return false;
+
+		return p_->parse(r, out);
 	}
 };
 
@@ -425,12 +352,22 @@ public:
 			}
 		}
 		out->push_back(ret);
+		return true;
 	}
 };
 			
 }
 
 
+void debug_line(const SmartPtr<debug::Info>& info){
+	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
+
+	/*if(info->local_variables()){
+		Xfor2(key, value, info->local_variables()->each_member()){
+			std::cout << Xf("key=%s, value=%s\n")(key, value);
+		}
+	}*/
+}
 
 //#include <crtdbg.h>
 
@@ -440,7 +377,6 @@ int main(int argc, char** argv){
 
 	try{
 
-		set_thread();
 		initialize();
 
 
@@ -451,24 +387,26 @@ int main(int argc, char** argv){
 		
 		
 		{
-			/*
+
 			using namespace grammer;
-			const char* source = "aaawqraaaabwprbbbrwerbbbcbwercdddd";
+
+			const char* source = "189+256";
 			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
 			ReaderPtr reader = xnew<Reader>();
 			reader->set_stream(stream);
 
 			ParserPtr anych = xnew<AnyChParser>();
+			ParserPtr integer = xnew<IntParser>();
 			
-			//ParserPtr test = *(ParserPtr(xnew<AnyChParser>()) - str("b"));// >> *(str("b"));
-			//ParserPtr test = join(*(anych)) >> (val("#") >> *str("bb") >> (str("cc") >> join(*str("d"), "!")));
-			ParserPtr test = ( *-anych >> (str("b") >> (str("w") >> anych >> str("r"))) ) >> ( *-anych >> (str("b") >> (str("w") >> anych >> str("r"))) );
+			ParserPtr test = array(val("test ") >> *((-str("a") | integer | anych) - str("cbw")) >> array(*anych));
+			ParserPtr add = val("ADD") >> integer >> str("+") >> integer;
+
 			ArrayPtr ret = xnew<Array>();
 
-			if(test->parse(reader, ret)){
-				ap(ret->join("-"))->p();
+			if(add->parse(reader, ret)){
+				ap(ret->join(" "))->p();
 			}
-			*/
+
 		}
 
 
@@ -493,12 +431,14 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 
+		int ret = cast<int_t>(AnyPtr(5) + AnyPtr(10));
+
 		int c;
 		c = clock();
-		//handle_argv(argv);
+		handle_argv(argv);
 		printf("%g\n", (clock()-c)/1000.0f);
 		
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		
@@ -536,6 +476,8 @@ int main(int argc, char** argv){
 		printf("%g\n", (clock()-c)/1000.0f);
 
 		//*/
+
+		//*
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");

@@ -28,8 +28,8 @@ CodePtr compile_file(const StringPtr& file_name){
 		return fun;
 	}
 	fs->close();
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()));
-	return null;
+
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()), return null);
 }
 
 CodePtr compile(const StringPtr& source){
@@ -38,8 +38,8 @@ CodePtr compile(const StringPtr& source){
 	if(CodePtr fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()));
-	return null;
+
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()), return null);
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -63,8 +63,8 @@ AnyPtr source(const char* src, int_t size, const char* file){
 	if(AnyPtr fun = cb.compile(ms, file)){
 		return fun;
 	}
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()));
-	return null;
+
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()), return null);
 }
 
 void ix(){
@@ -248,14 +248,16 @@ namespace{
 		if(type(p)==TYPE_INT){
 			return ivalue(p);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
 	}
 
 	float_t Int_to_f(const AnyPtr& p){
 		if(type(p)==TYPE_INT){
 			return (float_t)ivalue(p);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
 	}
 
 	StringPtr Int_to_s(const AnyPtr& p){
@@ -264,7 +266,8 @@ namespace{
 			sprintf(buf, "%d", ivalue(p));
 			return xnew<String>(buf);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return null);
 	}
 
 
@@ -272,14 +275,16 @@ namespace{
 		if(type(p)==TYPE_FLOAT){
 			return (int_t)fvalue(p);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
 	}
 
 	float_t Float_to_f(const AnyPtr& p){
 		if(type(p)==TYPE_FLOAT){
 			return fvalue(p);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
 	}
 
 	StringPtr Float_to_s(const AnyPtr& p){
@@ -288,7 +293,8 @@ namespace{
 			sprintf(buf, "%g", fvalue(p));
 			return xnew<String>(buf);
 		}
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"));
+
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return null);
 	}
 }
 
@@ -368,7 +374,7 @@ public:
 void InitZipIter(){
 	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
 	p->inherit(Iterator());
-	p->def("new", New<ZipIter, const VMachinePtr&>());
+	p->def("new", ctor<ZipIter, const VMachinePtr&>());
 	p->method("iter_first", &ZipIter::iter_next);
 	p->method("iter_next", &ZipIter::iter_next);
 	p->method("iter_break", &ZipIter::iter_break);
@@ -462,11 +468,10 @@ AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member){
 		Named("object", name), Named("name", (member ? member : AnyPtr("()")))
 	));
 }
-
 namespace{
 	void default_except_handler(const AnyPtr& except, const char* file, int line){
 #ifdef XTAL_NO_EXCEPT
-		printf("%s(%d):%s\n", file, line, except.to_s().c_str());
+		printf("%s(%d):%s\n", file, line, except->to_s()->c_str());
 		exit(1);
 #endif
 	}
@@ -475,27 +480,13 @@ namespace{
 	AnyPtr except_;
 }
 
+
 except_handler_t except_handler(){
 	return except_handler_;
 }
 
 void set_except_handler(except_handler_t handler){
 	except_handler_ = handler;
-}
-
-AnyPtr except(){
-	AnyPtr ret = except_;
-	except_ = null;
-	return ret;
-}
-
-void set_except(const AnyPtr& except){
-	static bool init = false;
-	if(!init){
-		init = true;
-		add_long_life_var(&except_);
-	}
-	except_ = except;
 }
 
 struct FormatString : public Base{
@@ -787,7 +778,7 @@ void InitFormat(){
 	p->method("to_s", &Format::to_s);
 	p->method("serial_save", &Format::serial_save);
 	p->method("serial_load", &Format::serial_load);
-	p->def("serial_new", New<Format, const StringPtr&>());
+	p->def("serial_new", ctor<Format, const StringPtr&>());
 
 	add_long_life_var(&user_get_text_map_);
 	user_get_text_map_ = xnew<Map>();
@@ -821,7 +812,7 @@ AnyPtr format(const char* text){
 
 namespace debug{
 
-void InfoImpl::visit_members(Visitor& m){
+void Info::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & file_name_ & fun_name_ & local_variables_;
 }
@@ -882,15 +873,16 @@ void InitDebug(){
 	enable_count_ = 0;
 
 	{
-		ClassPtr p = new_cpp_class<InfoImpl>("Info");
-		p->method("kind", &InfoImpl::kind);
-		p->method("line", &InfoImpl::line);
-		p->method("fun_name", &InfoImpl::fun_name);
-		p->method("file_name", &InfoImpl::file_name);
-		p->method("set_kind", &InfoImpl::set_kind);
-		p->method("set_line", &InfoImpl::line);
-		p->method("set_fun_name", &InfoImpl::set_fun_name);
-		p->method("set_file_name", &InfoImpl::set_file_name);
+		ClassPtr p = new_cpp_class<Info>("Info");
+		p->method("clone", &Info::clone);
+		p->method("kind", &Info::kind);
+		p->method("line", &Info::line);
+		p->method("fun_name", &Info::fun_name);
+		p->method("file_name", &Info::file_name);
+		p->method("set_kind", &Info::set_kind);
+		p->method("set_line", &Info::line);
+		p->method("set_fun_name", &Info::set_fun_name);
+		p->method("set_file_name", &Info::set_file_name);
 
 		p->def("LINE", BREAKPOINT_LINE);
 		p->def("CALL", BREAKPOINT_CALL);

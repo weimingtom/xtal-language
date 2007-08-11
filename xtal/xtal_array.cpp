@@ -63,7 +63,7 @@ void InitArray(){
 		ClassPtr p = new_cpp_class<Array>("Array");
 		p->inherit(Enumerator());
 
-		p->def("new", New<Array, int_t>()->param(Named("size", 0)));
+		p->def("new", ctor<Array, int_t>()->param(Named("size", 0)));
 		p->method("size", &Array::size);
 		p->method("length", &Array::length);
 		p->method("resize", &Array::resize);

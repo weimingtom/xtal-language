@@ -95,7 +95,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 					Named("name", object_name()),
 					Named("value", n)
 				)
-			));
+			), return);
 		}else{
 			if(core_->used_args_object){
 				XTAL_THROW(builtin()->member("ArgumentError")(
@@ -104,7 +104,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 						Named("min", core_->min_param_count),
 						Named("value", n)
 					)
-				));
+				), return);
 			}else{
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1006")(
@@ -113,7 +113,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 						Named("max", core_->max_param_count),
 						Named("value", n)
 					)
-				));
+				), return);
 			}
 		}
 	}
@@ -165,7 +165,7 @@ public:
 		if(vms_->empty()){
 			vms_->push_back(xnew<VMachine>());
 		}
-		VMachinePtr vm = forced_cast<VMachine>(vms_->back());
+		VMachinePtr vm = static_ptr_cast<VMachine>(vms_->back());
 		vms_->pop_back();
 		return vm;
 	}

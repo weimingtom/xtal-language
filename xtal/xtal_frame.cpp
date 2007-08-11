@@ -78,7 +78,7 @@ void InitClass(){
 	{
 		ClassPtr p = new_cpp_class<Lib>("Lib");
 		p->inherit(get_cpp_class<Class>());
-		p->def("new", New<Lib>());
+		p->def("new", ctor<Lib>());
 		p->method("append_load_path", &Lib::append_load_path);
 	}
 }
@@ -109,7 +109,7 @@ int_t HaveInstanceVariables::find_core_inner(ClassCore* core){
 			return variables_info_[0].pos;
 		}	
 	}
-	XTAL_THROW(builtin()->member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")));
+	XTAL_THROW(builtin()->member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")), return 0);
 }
 
 AnyPtr Instance::instance_serial_save(const ClassPtr& cls){
@@ -290,13 +290,13 @@ AnyPtr Frame::each_member(){
 
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassCore* core)
-	:Frame(outer, code, core){
+	:Frame(outer, code, core), mixins_(xnew<Array>()){
 	is_defined_by_xtal_ = true;
 	make_map_members();
 }
 
 Class::Class(const char* name)
-	:Frame(null, null, 0){
+	:Frame(null, null, 0), mixins_(xnew<Array>()){
 	is_defined_by_xtal_ = false;
 	make_map_members();
 }
@@ -305,7 +305,7 @@ void Class::call(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
 		ret->call(vm);
 	}else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
 
@@ -313,14 +313,14 @@ void Class::s_new(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
 		ret->call(vm);
 	}else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())));
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
 
 void Class::inherit(const ClassPtr& md){
 	if(is_inherited(md))
 		return;
-	mixins_.push_back(md);
+	mixins_->push_back(md);
 	global_mutate_count++;
 }
 
@@ -329,21 +329,21 @@ void Class::inherit_strict(const ClassPtr& md){
 		return;
 	if(!md->is_defined_by_xtal_)
 		return;
-	mixins_.push_back(md);
+	mixins_->push_back(md);
 	global_mutate_count++;
 }
 
 AnyPtr Class::each_inherited_class(){
 	ArrayPtr bases = xnew<Array>();
-	for(size_t i=0; i<mixins_.size(); ++i){
-		bases->push_back(mixins_[i]);
+	for(size_t i=0; i<mixins_->size(); ++i){
+		bases->push_back(mixins_->at(i));
 	}
 	return bases;
 }
 
 void Class::init_instance(HaveInstanceVariables* inst, const VMachinePtr& vm, const AnyPtr& self){
-	for(int_t i = mixins_.size()-1; i>=0; --i){
-		mixins_[i]->init_instance(inst, vm, self);
+	for(int_t i = mixins_->size(); i>0; --i){
+		static_ptr_cast<Class>(mixins_->at(i-1))->init_instance(inst, vm, self);
 	}
 	
 	if(core()->instance_variable_size){
@@ -366,7 +366,7 @@ void Class::def(const InternedStringPtr& name, const AnyPtr& value, int_t access
 		members_->push_back(value);
 		value->set_object_name(name, object_name_force(), ClassPtr::from_this(this));
 	}else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))));
+		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))), return);
 	}
 	global_mutate_count++;
 }
@@ -380,8 +380,8 @@ const AnyPtr& Class::any_member(const InternedStringPtr& name, const AnyPtr& ns)
 }
 
 const AnyPtr& Class::bases_member(const InternedStringPtr& name){
-	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(const AnyPtr& ret = mixins_[i]->member(name)){
+	for(int_t i = mixins_->size(); i>0; --i){
+		if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name)){
 			return ret;
 		}
 	}
@@ -401,7 +401,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
-				);
+				, return null);
 			}
 		}
 
@@ -413,15 +413,15 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
-				);			
+				, return null);			
 			}
 		}
 
 		return members_->at(it->num);
 	}
 	
-	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(const AnyPtr& ret = mixins_[i]->member(name, self)){
+	for(int_t i = mixins_->size(); i>0; --i){
+		if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, self)){
 			return ret;
 		}
 	}
@@ -432,7 +432,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 void Class::set_member(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
 	IdMap::Node* it = map_members_->find(name, ns);
 	if(!it){
-		XTAL_THROW(builtin()->member("RuntimeError")("undefined"));
+		XTAL_THROW(builtin()->member("RuntimeError")("undefined"), return);
 	}else{
 		members_->set_at(it->num, value);
 		//value.set_object_name(name, object_name_force(), this);
@@ -445,14 +445,18 @@ bool Class::is_inherited(const ClassPtr& v){
 	if(this==pvalue(v)){
 		return true;
 	}
-	for(int_t i = mixins_.size()-1; i>=0; --i){
-		if(mixins_[i]->is_inherited(v)){
+	for(int_t i = mixins_->size(); i>0; --i){
+		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited(v)){
 			return true;
 		}
 	}
 	return raweq(v, get_cpp_class<Any>());
 }
 
+XClass::XClass(const FramePtr& outer, const CodePtr& code, ClassCore* core)
+	:Class(outer, code, core){
+	inherit(get_cpp_class<Instance>());
+}
 
 void XClass::call(const VMachinePtr& vm){;
 	InstancePtr inst = InstancePtr::nocount(new Instance(ClassPtr::from_this(this)));
@@ -547,8 +551,7 @@ const AnyPtr& Lib::rawdef(const InternedStringPtr& name, const AnyPtr& value, co
 		value->set_object_name(name, object_name_force(), LibPtr::from_this(this));
 		return members_->back();
 	}else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))));
-		return null;
+		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))), return null);
 	}
 }
 

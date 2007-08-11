@@ -78,7 +78,7 @@ void CodeBuilder::interactive_compile(){
 		result_->symbol_table_ = com_->ident_table;
 		result_->value_table_ = com_->value_table;
 		result_->once_table_ = com_->once_table;
-		com_->register_ident("toplevel");
+		com_->register_ident("filelocal");
 		
 		if(ep && com_->errors->empty()){
 			compile(ep);
@@ -862,7 +862,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				put_inst(InstMakeFun(e->kind, n, 0));
 				
 				if(debug::is_enabled()){
-					//put_inst(InstBreakPoint(BREAKPOINT_CALL));
+					put_inst(InstBreakPoint(BREAKPOINT_CALL));
 				}
 
 				for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
@@ -889,7 +889,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				compile(e->stmt);
 				break_off(fun_frame().frame_count+1);
 				if(debug::is_enabled()){
-					//put_inst(InstBreakPoint(BREAKPOINT_RETURN));
+					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 				put_inst(InstReturn0());
 				set_label(fun_end_label);
@@ -949,7 +949,7 @@ void CodeBuilder::compile(Stmt* ex){
 		return;
 
 	if(debug::is_enabled() && lines_.top()!=ex->line){
-		//put_inst(InstBreakPoint(BREAKPOINT_LINE));
+		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
 
 	lines_.push(ex->line);
@@ -1158,7 +1158,7 @@ void CodeBuilder::compile(Stmt* ex){
 				break_off(fun_frame().frame_count+1);
 
 				if(debug::is_enabled()){
-					//put_inst(InstBreakPoint(BREAKPOINT_RETURN));
+					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 
 				if(e->exprs.size==0){

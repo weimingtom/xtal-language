@@ -156,7 +156,7 @@ void InitMap(){
 		ClassPtr p = new_cpp_class<Map>("Map");
 		p->inherit(Enumerator());
 		
-		p->def("new", New<Map>());
+		p->def("new", ctor<Map>());
 		p->method("to_s", &Map::to_s);
 		p->method("size", &Map::size);
 		p->method("length", &Map::length);

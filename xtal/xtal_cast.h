@@ -184,13 +184,7 @@ struct CastHelper{
 	}	
 		
 	template<class U> static T arg_cast_inner(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, U* (*)()){ 
-		if(const void* p = fetch_cast_cache<T>(a)){
-			return (T)p;
-		}else{
-			T ret = (T)arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0);
-			store_cast_cache<T>(a, ret);
-			return ret; 
-		}
+		return (T)arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0);
 	}
 	
 	
@@ -267,15 +261,12 @@ arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
 /**
 * @brief SmartPtr<T>型に変換する。
 *
-* Tに変換できない場合、
-* Tがポインタ型ならNULLを返す。
-* Tが値か参照で、AnyPtrを継承した型ならxtal::nullを返す。
-* それ以外の型の場合は未定義。
+* Tに変換できない場合xtal::nullを返す。
 */
 template<class T> 
-inline typename CastResult<T>::type 
+inline const SmartPtr<T>&
 ptr_as(const AnyPtr& a){
-	return CastHelper<T>::as(a);
+	return CastHelper<const SmartPtr<T>&>::as(a);
 }
 
 /**
@@ -284,9 +275,9 @@ ptr_as(const AnyPtr& a){
 * T型に変換できない場合、builtin()->member("CastError")が投げられる
 */
 template<class T>
-inline typename CastResult<T>::type 
+inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
-	return CastHelper<T>::cast(a);
+	return CastHelper<const SmartPtr<T>&>::cast(a);
 }
 
 /**
@@ -294,7 +285,7 @@ ptr_cast(const AnyPtr& a){
 */
 template<class T>
 inline const SmartPtr<T>&
-forced_cast(const AnyPtr& a){
+static_ptr_cast(const AnyPtr& a){
 	return *(const SmartPtr<T>*)&a;
 }
 

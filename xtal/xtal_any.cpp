@@ -29,35 +29,33 @@ void InitAny(){
 Null null;
 Nop nop;
 
-/*
-Any operator +(const Any& a, const Any& b){ return a.send(Xid(op_add), b); }
-Any operator -(const Any& a, const Any& b){ return a.send(Xid(op_sub), b); }
-Any operator *(const Any& a, const Any& b){ return a.send(Xid(op_mul), b); }
-Any operator /(const Any& a, const Any& b){ return a.send(Xid(op_div), b); }
-Any operator %(const Any& a, const Any& b){ return a.send(Xid(op_mod), b); }
-Any operator |(const Any& a, const Any& b){ return a.send(Xid(op_or), b); }
-Any operator &(const Any& a, const Any& b){ return a.send(Xid(op_and), b); }
-Any operator ^(const Any& a, const Any& b){ return a.send(Xid(op_xor), b); }
-Any operator >>(const Any& a, const Any& b){ return a.send(Xid(op_shr), b); }
-Any operator <<(const Any& a, const Any& b){ return a.send(Xid(op_shl), b); }
-Any operator ==(const Any& a, const Any& b){ return a.raweq(b) || a.send(Xid(op_eq), b); }
-Any operator !=(const Any& a, const Any& b){ return !(a==b); }
-Any operator <(const Any& a, const Any& b){ return a.send(Xid(op_lt), b); }
-Any operator >(const Any& a, const Any& b){ return b<a; }
-Any operator <=(const Any& a, const Any& b){ return !(b<a); }
-Any operator >=(const Any& a, const Any& b){ return !(a<b); }
+AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
+AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
+AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
+AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_div), b); }
+AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mod), b); }
+AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_or), b); }
+AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and), b); }
+AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b); }
+AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b); }
+AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b); }
+AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){ return raweq(a, b) || a->send(Xid(op_eq), b); }
+AnyPtr operator !=(const AnyPtr& a, const AnyPtr& b){ return !(a==b); }
+AnyPtr operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b); }
+AnyPtr operator >(const AnyPtr& a, const AnyPtr& b){ return b<a; }
+AnyPtr operator <=(const AnyPtr& a, const AnyPtr& b){ return !(b<a); }
+AnyPtr operator >=(const AnyPtr& a, const AnyPtr& b){ return !(a<b); }
 
-Any& operator +=(Any& a, const Any& b){ a = a.send(Xid(op_add_assign), b); return a; }
-Any& operator -=(Any& a, const Any& b){ a = a.send(Xid(op_sub_assign), b); return a; }
-Any& operator *=(Any& a, const Any& b){ a = a.send(Xid(op_mul_assign), b); return a; }
-Any& operator /=(Any& a, const Any& b){ a = a.send(Xid(op_div_assign), b); return a; }
-Any& operator %=(Any& a, const Any& b){ a = a.send(Xid(op_mod_assign), b); return a; }
-Any& operator |=(Any& a, const Any& b){ a = a.send(Xid(op_or_assign), b); return a; }
-Any& operator &=(Any& a, const Any& b){ a = a.send(Xid(op_and_assign), b); return a; }
-Any& operator ^=(Any& a, const Any& b){ a = a.send(Xid(op_xor_assign), b); return a; }
-Any& operator >>=(Any& a, const Any& b){ a = a.send(Xid(op_shr_assign), b); return a; }
-Any& operator <<=(Any& a, const Any& b){ a = a.send(Xid(op_shl_assign), b); return a; }
-*/
+AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_add_assign), b); return a; }
+AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_sub_assign), b); return a; }
+AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mul_assign), b); return a; }
+AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_div_assign), b); return a; }
+AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mod_assign), b); return a; }
+AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_or_assign), b); return a; }
+AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign), b); return a; }
+AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b); return a; }
+AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b); return a; }
+AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
 
 
 Innocence::Innocence(const char* str){

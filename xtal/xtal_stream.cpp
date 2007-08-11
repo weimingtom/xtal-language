@@ -54,7 +54,7 @@ void InitStream(){
 	{
 		ClassPtr p = new_cpp_class<MemoryStream>("MemoryStream");
 		p->inherit(get_cpp_class<Stream>());
-		p->def("new", New<MemoryStream>());
+		p->def("new", ctor<MemoryStream>());
 		p->method("to_s", &MemoryStream::to_s);
 		p->method("resize", &MemoryStream::resize);
 	}
@@ -62,7 +62,7 @@ void InitStream(){
 	{
 		ClassPtr p = new_cpp_class<FileStream>("FileStream");
 		p->inherit(get_cpp_class<Stream>());
-		p->def("new", New<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
+		p->def("new", ctor<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
 	}
 
 }
@@ -163,7 +163,7 @@ FileStream::FileStream(const StringPtr& filename, const StringPtr& mode){
 		full_gc();
 		fp_ = fopen(filename->c_str(), bmode->c_str());
 		if(!fp_){
-			XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))));
+			XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))), return);
 		}
 	}
 }
@@ -177,13 +177,13 @@ FileStream::~FileStream(){
 }
 
 uint_t FileStream::tell(){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	return ftell(fp_);
 }
 
 uint_t FileStream::write(const void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	XTAL_UNLOCK{
 		return fwrite(p, 1, size, fp_);
@@ -192,7 +192,7 @@ uint_t FileStream::write(const void* p, uint_t size){
 }
 
 uint_t FileStream::read(void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	XTAL_UNLOCK{
 		return fread(p, 1, size, fp_);
@@ -201,7 +201,7 @@ uint_t FileStream::read(void* p, uint_t size){
 }
 
 void FileStream::seek(int_t offset, int_t whence){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018"))); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return); }
 
 	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
 	fseek(fp_, offset, wh);
@@ -320,13 +320,11 @@ InteractiveStream::InteractiveStream(){
 }
 
 uint_t InteractiveStream::tell(){
-	XTAL_THROW(unsupported_error("InteractiveStream", "tell"));
-	return 0;
+	XTAL_THROW(unsupported_error("InteractiveStream", "tell"), return 0);
 }
 
 uint_t InteractiveStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("InteractiveStream", "write"));
-	return 0;
+	XTAL_THROW(unsupported_error("InteractiveStream", "write"), return 0);
 }
 
 uint_t InteractiveStream::read(void* p, uint_t size){
@@ -350,7 +348,7 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 }
 
 void InteractiveStream::seek(int_t offset, int_t whence){
-	XTAL_THROW(unsupported_error("InteractiveStream", "seek"));
+	XTAL_THROW(unsupported_error("InteractiveStream", "seek"), return);
 }
 
 void InteractiveStream::close(){

@@ -161,8 +161,20 @@ void uninitialize(){
 	if(objects_current_-objects_begin_ != 0){
 		//fprintf(stderr, "finished gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
-		print_alive_objects();
-		XTAL_ASSERT(false); // 
+		//print_alive_objects();
+		XTAL_ASSERT(false); // 全部開放できてない
+
+		// 強制的に全部開放する
+
+		for(Base** it = objects_begin_; it!=objects_current_; ++it){
+			delete *it;
+		}
+
+		for(Base** it = objects_begin_; it!=objects_current_; ++it){
+			user_free(*it, 0);
+		}
+
+		objects_current_ = objects_begin_;
 	}
 	
 	for(AnyPtr** p = place_begin_; p!=place_current_; ++p){
@@ -176,6 +188,8 @@ void uninitialize(){
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)place_begin_, (void**&)place_end_, (void**&)place_current_);
+
+	//
 }
 
 void add_long_life_var(AnyPtr* a, int_t n){

@@ -20,7 +20,7 @@ template<class T>
 const ClassPtr& new_cpp_class(const char* name){
 	if(!CppClassHolder<T>::value){
 		CppClassHolder<T>::value = make_place();
-		*CppClassHolder<T>::value = xnew<Class>();
+		*CppClassHolder<T>::value = xnew<CppClass>();
 	}
 	return (const ClassPtr&)*CppClassHolder<T>::value;
 }
@@ -527,13 +527,17 @@ public:
 	
 protected:
 
+	struct cpp_class_t{};
+
+	Class(cpp_class_t, const char* name = "");
+
 	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun){
 		def(name, cfun, KIND_PUBLIC, null);
 		return cfun;
 	}
 
 	ArrayPtr mixins_;
-	bool is_defined_by_xtal_;
+	bool is_cpp_class_;
 
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);
@@ -542,10 +546,11 @@ protected:
 
 };
 
-class XClass : public Class{
+class CppClass : public Class{
 public:
 		
-	XClass(const FramePtr& outer, const CodePtr& code, ClassCore* core);
+	CppClass(const char* name = "");
+
 public:
 
 	virtual void call(const VMachinePtr& vm);

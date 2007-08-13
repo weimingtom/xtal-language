@@ -14,10 +14,12 @@ namespace xtal{
 	};
 }
 
+#include "xtal_fwd.h"
 #include "xtal_utility.h"
 #include "xtal_any.h"
 #include "xtal_array.h"
 #include "xtal_map.h"
+#include "xtal_cfun.h"
 #include "xtal_vmachine.h"
 #include "xtal_string.h"
 #include "xtal_lib.h"
@@ -28,5 +30,6 @@ namespace xtal{
 #include "xtal_thread.h"
 #include "xtal_ch.h"
 #include "xtal_stream.h"
+#include "xtal_smartptr.h"
 
 

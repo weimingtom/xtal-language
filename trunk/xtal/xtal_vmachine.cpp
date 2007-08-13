@@ -2985,7 +2985,7 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassCore* p = ff().pcode->class_core(inst.core_number); 
-			ClassPtr cp = xnew<XClass>(ff().outer(), code(), p);
+			ClassPtr cp = xnew<Class>(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){

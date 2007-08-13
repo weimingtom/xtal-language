@@ -71,7 +71,7 @@ void InitClass(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<XClass>("XClass");
+		ClassPtr p = new_cpp_class<CppClass>("CppClass");
 		p->inherit(get_cpp_class<Class>());
 	}
 
@@ -291,31 +291,23 @@ AnyPtr Frame::each_member(){
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 	:Frame(outer, code, core), mixins_(xnew<Array>()){
-	is_defined_by_xtal_ = true;
+	is_cpp_class_ = false;
 	make_map_members();
+	inherit(get_cpp_class<Instance>());
 }
 
 Class::Class(const char* name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	is_defined_by_xtal_ = false;
+	is_cpp_class_ = false;
 	make_map_members();
 }
 
-void Class::call(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
-		ret->call(vm);
-	}else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
-	}
+Class::Class(cpp_class_t, const char* name)
+	:Frame(null, null, 0), mixins_(xnew<Array>()){
+	is_cpp_class_ = true;
+	make_map_members();
 }
 
-void Class::s_new(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
-		ret->call(vm);
-	}else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
-	}
-}
 
 void Class::inherit(const ClassPtr& md){
 	if(is_inherited(md))
@@ -327,7 +319,7 @@ void Class::inherit(const ClassPtr& md){
 void Class::inherit_strict(const ClassPtr& md){
 	if(is_inherited(md))
 		return;
-	if(!md->is_defined_by_xtal_)
+	if(md->is_cpp_class_)
 		return;
 	mixins_->push_back(md);
 	global_mutate_count++;
@@ -453,12 +445,7 @@ bool Class::is_inherited(const ClassPtr& v){
 	return raweq(v, get_cpp_class<Any>());
 }
 
-XClass::XClass(const FramePtr& outer, const CodePtr& code, ClassCore* core)
-	:Class(outer, code, core){
-	inherit(get_cpp_class<Instance>());
-}
-
-void XClass::call(const VMachinePtr& vm){;
+void Class::call(const VMachinePtr& vm){;
 	InstancePtr inst = InstancePtr::nocount(new Instance(ClassPtr::from_this(this)));
 	init_instance(inst.get(), vm, inst);
 	
@@ -485,7 +472,7 @@ void XClass::call(const VMachinePtr& vm){;
 	}
 }
 
-void XClass::s_new(const VMachinePtr& vm){
+void Class::s_new(const VMachinePtr& vm){
 	InstancePtr inst = InstancePtr::nocount(new Instance(ClassPtr::from_this(this)));
 	init_instance(inst.get(), vm, inst);
 	
@@ -500,6 +487,26 @@ void XClass::s_new(const VMachinePtr& vm){
 	}
 
 	vm->return_result(inst);
+}
+
+CppClass::CppClass(const char* name)
+	:Class(cpp_class_t(), name){
+}
+
+void CppClass::call(const VMachinePtr& vm){
+	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
+		ret->call(vm);
+	}else{
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+	}
+}
+
+void CppClass::s_new(const VMachinePtr& vm){
+	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
+		ret->call(vm);
+	}else{
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+	}
 }
 
 Lib:: Lib(){

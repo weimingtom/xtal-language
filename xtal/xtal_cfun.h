@@ -912,8 +912,8 @@ public:
 * @brief メンバ変数へのポインタからゲッター関数を生成する
 *
 */
-template<class T, class U, class Policy>
-CFunPtr getter(T U::* v, const Policy&){
+template<class T, class C, class Policy>
+CFunPtr getter(T C::* v, const Policy&){
 	typedef detail::getter<C, T> getter;
 	getter data(v);
 	return xnew<CFun>(&detail::method0<getter, C*, const T&, Policy>::f, &data, sizeof(data), 0);
@@ -923,8 +923,8 @@ CFunPtr getter(T U::* v, const Policy&){
 * @brief メンバ変数へのポインタからセッター関数を生成する
 *
 */
-template<class T, class U, class Policy>
-CFunPtr setter(T U::* v, const Policy&){
+template<class T, class C, class Policy>
+CFunPtr setter(T C::* v, const Policy&){
 	typedef detail::setter<C, T> setter;
 	setter data(v);
 	return xnew<CFun>(&detail::method1<setter, C*, const T&, const T&, Policy>::f, &data, sizeof(data), 1);

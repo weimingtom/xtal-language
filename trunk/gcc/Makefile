@@ -5,7 +5,7 @@ OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o x
 
 OPT_FLAGS = -O3 -DNDEBUG -fno-rtti
 
-all: xtallib ix xtal
+all: libxtal ix xtal
 
 xtal_allocator.o: ../xtal/xtal_allocator.cpp
 	$(CC) -c ../xtal/xtal_allocator.cpp $(OPT_FLAGS)
@@ -74,23 +74,23 @@ xtal_serializer.o: ../xtal/xtal_serializer.cpp
 	$(CC) -c ../xtal/xtal_serializer.cpp $(OPT_FLAGS)
 
 
-xtallib: $(OBJS)
-	ar r xtallib.a $(OBJS)
-	ranlib xtallib.a
+libxtal: $(OBJS)
+	ar r libxtal.a $(OBJS)
+	ranlib libxtal.a
 
-xtal: xtallib ../xtal/main.cpp
-	$(CC) -o ../bin/xtal.exe ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+xtal: libxtal ../xtal/main.cpp
+	$(CC) -o ../bin/xtal.exe ../xtal/main.cpp libxtal.a -lstdc++ $(OPT_FLAGS)
 	strip --strip-all ../bin/xtal.exe
 
-ix: xtallib ../xtal/ixmain.cpp
-	$(CC) -o ../bin/ix.exe ../xtal/ixmain.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+ix: libxtal ../xtal/ixmain.cpp
+	$(CC) -o ../bin/ix.exe ../xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT_FLAGS)
 	strip --strip-all ../bin/ix.exe
 	
 clean:
 	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe
 
-prof: xtallib ../xtal/main.cpp
-	$(CC) -o ../bin/prof.exe ../xtal/main.cpp xtallib.a -lstdc++ $(OPT_FLAGS)
+prof: libxtal ../xtal/main.cpp
+	$(CC) -o ../bin/prof.exe ../xtal/main.cpp libxtal.a -lstdc++ $(OPT_FLAGS)
 	../bin/prof.exe ../bench/array_for.xtal
 	gprof ../bin/prof.exe gmon.out -p > prof.txt
 

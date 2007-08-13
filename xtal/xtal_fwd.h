@@ -236,7 +236,7 @@ class Frame;
 class Class;
 class Lib;
 class Instance;
-class XClass;
+class CppClass;
 class Thread;
 class Mutex;
 
@@ -258,7 +258,6 @@ typedef SmartPtr<Frame> FramePtr;
 typedef SmartPtr<Class> ClassPtr;
 typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Instance> InstancePtr;
-typedef SmartPtr<XClass> XClassPtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
 

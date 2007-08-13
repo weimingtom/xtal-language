@@ -112,7 +112,7 @@ void initialize(){
 	new_cpp_class<CFun>();
 	new_cpp_class<CFunArgsImpl>();
 	new_cpp_class<Fiber>();
-	new_cpp_class<XClass>();
+	new_cpp_class<CppClass>();
 	new_cpp_class<Lib>();
 	
 	InitDebug();

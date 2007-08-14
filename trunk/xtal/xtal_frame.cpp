@@ -312,15 +312,20 @@ Class::Class(cpp_class_t, const char* name)
 void Class::inherit(const ClassPtr& md){
 	if(is_inherited(md))
 		return;
+
 	mixins_->push_back(md);
 	global_mutate_count++;
 }
 
 void Class::inherit_strict(const ClassPtr& md){
+	
+	if(md->is_cpp_class_){
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1019")), return);
+	}
+
 	if(is_inherited(md))
 		return;
-	if(md->is_cpp_class_)
-		return;
+
 	mixins_->push_back(md);
 	global_mutate_count++;
 }

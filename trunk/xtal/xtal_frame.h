@@ -525,11 +525,11 @@ public:
 		return (ClassCore*)core_;
 	}
 	
-protected:
-
 	struct cpp_class_t{};
 
 	Class(cpp_class_t, const char* name = "");
+
+protected:
 
 	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun){
 		def(name, cfun, KIND_PUBLIC, null);

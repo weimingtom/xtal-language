@@ -96,7 +96,7 @@ void VMachine::setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPt
 }
 
 void VMachine::setup_call(int_t need_result_count, const Named& a1, const Named& a2){
-	push_ff(&end_code_, need_result_count, 1, 2, null);
+	push_ff(&end_code_, need_result_count, 0, 2, null);
 	push(a1); 
 	push(a2);
 }

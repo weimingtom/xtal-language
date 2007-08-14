@@ -58,7 +58,7 @@ AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign)
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
 
 
-Innocence::Innocence(const char* str){
+Innocence::Innocence(const char_t* str){
 	*this = xnew<String>(str);
 }
 

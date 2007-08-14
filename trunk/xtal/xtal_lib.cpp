@@ -57,7 +57,7 @@ AnyPtr load_and_save(const StringPtr& file_name){
 	return ret();
 }
 
-AnyPtr source(const char* src, int_t size, const char* file){
+AnyPtr source(const char_t* src, int_t size, const char_t* file){
 	CodeBuilder cb;
 	MemoryStreamPtr ms(xnew<MemoryStream>(src, size));
 	if(AnyPtr fun = cb.compile(ms, file)){
@@ -498,7 +498,7 @@ struct FormatString : public Base{
 	
 public:
 
-	FormatString(const char*& str){
+	FormatString(const char_t*& str){
 		code_pos_ = 0;
 		buf_[code_pos_++] = '%';
 		width_ = 0;
@@ -560,7 +560,7 @@ public:
 	
 private:
 
-	void parse_fmt(const char*& str){
+	void parse_fmt(const char_t*& str){
 		while(str[0]){
 			switch(str[0]){
 			case '-': case '+': case '0': case ' ': case '#':
@@ -670,8 +670,8 @@ public:
 
 	virtual void call(const VMachinePtr& vm){
 		string_t buf;
-		char cbuf[256];
-		char* pcbuf;
+		char_t cbuf[256];
+		char_t* pcbuf;
 			
 		for(int i = 0, size = values_.size(); i<size; ++i){
 			if(!values_[i].key){

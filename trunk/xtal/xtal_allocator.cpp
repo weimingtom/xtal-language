@@ -27,7 +27,7 @@ void smm_free(void* p){
 }
 
 void set_memory(void* memory, size_t size){
-	smm_.init(memory, (char*)memory + size);
+	smm_.init(memory, (u8*)memory + size);
 	set_user_malloc(&smm_malloc, &smm_free);
 }
 
@@ -101,7 +101,7 @@ void RegionAlloc::release(){
 	while(begin_){
 		void* next = *(void**)begin_;
 		user_free(begin_, *((int_t*)((void**)begin_+1)));
-		begin_=(char*)next;
+		begin_=(u8*)next;
 	}
 	begin_ = 0;
 	pos_ = 0;
@@ -112,7 +112,7 @@ void RegionAlloc::add_chunk(size_t minsize){
 	if(alloced_size_<minsize+sizeof(void*)+sizeof(int_t))
 		alloced_size_ = minsize+sizeof(void*)+sizeof(int_t);
 	void* old_begin = begin_;
-	begin_=(char*)user_malloc(alloced_size_);
+	begin_=(u8*)user_malloc(alloced_size_);
 	pos_ = begin_;
 	end_ = begin_+alloced_size_;
 
@@ -170,7 +170,7 @@ void* SimpleMemoryManager::malloc(size_t size){
 	size = (size+(8-1)) & ~(8-1);
 	for(Chunk* it = begin_; it!=end_; it = it->next){
 		if(!it->used && size + sizeof(Chunk) <= it->size()){
-			Chunk* newchunk = (Chunk*)(((char*)it->buf())+size);
+			Chunk* newchunk = (Chunk*)(((u8*)it->buf())+size);
 			newchunk->used = 0;
 			it->next->prev = newchunk;
 			newchunk->next = it->next;

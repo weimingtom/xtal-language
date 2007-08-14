@@ -183,12 +183,152 @@ inline T* stmt_cast(Stmt* p){
 }
 
 
+/*
+
+struct XXXExpr{
+	int_t expr_type;
+	int_t line;
+};
+
+typedef SmartPtr<XXXExpr> ExprPtr;
+
+struct XXXExprPushNull : public XXXExpr{
+
+};
+
+struct KeyValuePair{
+	AnyPtr key;
+	AnyPtr value;
+};
+
+struct XXXExprMakeArray : public XXXExpr{
+	ArrayPtr values;
+};
+
+struct XXXExprMakeMap : public XXXExpr{
+	ArrayPtr values;
+};
+
+struct XXXExprIf : public XXXExpr{
+	ExprPtr cond_expr;
+	ExprPtr body_expr;
+	ExprPtr else_expr;
+};
+
+#define XTAL_DEF_EXPR_0(N, ExprName, SuperExpr) \
+	struct Expr##ExprName : public Expr##SuperExpr{\
+		enum{ \
+			NUMBER = N\
+		};\
+		Expr##ExprName(){\
+			expr_type = N;\
+		}\
+	}
+
+#define XTAL_DEF_EXPR_1(N, ExprName, SuperExpr, MemberType1, MemberName1) \
+	struct Expr##ExprName : public Expr##SuperExpr{\
+		enum{ \
+			NUMBER = N\
+		};\
+		MemberType1 MemberName1;\
+		Expr##ExprName(){\
+			expr_type = N;\
+		}\
+		Expr##ExprName(const MemberType1& m1)\
+			:MemberName1(m1){\
+			expr_type = N;\
+		}\
+	}
+
+#define XTAL_DEF_EXPR_2(N, ExprName, SuperExpr, MemberType1, MemberName1, MemberType2, MemberName2) \
+	struct Expr##ExprName : public Expr##SuperExpr{\
+		enum{ \
+			NUMBER = N\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		Expr##ExprName(){\
+			expr_type = N;\
+		}\
+		Expr##ExprName(const MemberType1& m1, const MemberType2& m2)\
+			:MemberName1(m1), MemberName2(m2){\
+			expr_type = N;\
+		}\
+	}
+	
+#define XTAL_DEF_EXPR_3(N, ExprName, SuperExpr, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3) \
+	struct Expr##ExprName : public Expr##SuperExpr{\
+		enum{ \
+			NUMBER = N\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		Expr##ExprName(){\
+			expr_type = N;\
+		}\
+		Expr##ExprName(const MemberType1& m1, const MemberType2& m2, const MemberType3& m3)\
+			:MemberName1(m1), MemberName2(m2), MemberName3(m3){\
+			expr_type = N;\
+		}\
+	}
+	
+#define XTAL_DEF_EXPR_4(N, ExprName, SuperExpr, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4) \
+struct Expr##ExprName : public Expr##SuperExpr{\
+		enum{ \
+			NUMBER = N\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		MemberType4 MemberName4;\
+		Expr##ExprName(){\
+			expr_type = N;\
+		}\
+		Expr##ExprName(const MemberType1& m1, const MemberType2& m2, const MemberType3& m3, const MemberType4& m4)\
+			:MemberName1(m1), MemberName2(m2), MemberName3(m3), MemberName4(m4){\
+			expr_type = N;\
+		}\
+	}
+
+XTAL_DEF_EXPR_0(1, PushNull, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushNop, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushTrue, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushFalse, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushInt, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushFloat, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushString, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushCallee, XXXExpr);
+XTAL_DEF_EXPR_0(1, PushArgs, XXXExpr);
+
+XTAL_DEF_EXPR_1(1, Una, XXXExpr, ExprPtr, expr);
+XTAL_DEF_EXPR_2(5, Bin, XXXExpr, ExprPtr, lhs, ExprPtr, rhs);
+
+XTAL_DEF_EXPR_0(1, AndAnd, Bin);
+XTAL_DEF_EXPR_0(1, OrOr, Bin);
+
+XTAL_DEF_EXPR_1(5, MakeArray, XXXExpr, ArrayPtr, exprs);
+XTAL_DEF_EXPR_1(5, MakeMap, XXXExpr, ArrayPtr, exprs);
+XTAL_DEF_EXPR_3(5, If, XXXExpr, ExprPtr, cond, ExprPtr, block, ExprPtr, else_block);
+XTAL_DEF_EXPR_3(5, While, XXXExpr, ExprPtr, cond, ExprPtr, block, ExprPtr, nobreak_block, ExprPtr, else_block);
+
+XTAL_DEF_EXPR_1(0, LocalVariable, InternedStringPtr, name);
+XTAL_DEF_EXPR_1(0, InstanceVariable, InternedStringPtr, name);
+
+SmartPtr<Block> block = xnew<Block>();
+block->block->push_back();
+xnew<ExprIf>(xnew<ExprPushNull>(), xnew<Block>(), xnew<Block>());
+
+*/
+
+
 struct ExprStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	Expr* expr;
 	ExprStmt(int_t line, Expr* expr)
 		:Stmt(TYPE, line), expr(expr){}
 };
+
 
 struct PseudoVariableExpr : public Expr{
 	enum{ TYPE = __LINE__ };

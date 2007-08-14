@@ -379,7 +379,6 @@ int main(int argc, char** argv){
 
 		initialize();
 
-
 		//debug::enable();
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
@@ -387,7 +386,6 @@ int main(int argc, char** argv){
 		
 		
 		{
-
 			using namespace grammer;
 
 			const char* source = "189+256";
@@ -432,22 +430,20 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
-			foo: class(Class){}
 
-			 export fiber{
-				yield 5;
-				yield 6;
-				yield 7; 
-			 }
-		));
+			Foo: class{
+			  _foo: "foo".p;
+			  _dummy: dofun{
+                _foo.p;
+			  }
 
-		 FiberPtr f1 = ptr_cast<Fiber>(cd());
-		 FiberPtr f2 = ptr_cast<Fiber>(cd());
+			  initialize: method(){
+				callee.p;
+			  }
+			}
 
-		 f1()->p();
-		 f2()->p();
-		 f1()->p();
-		 f2()->p();
+			Foo();
+		))();
 
 		int c;
 		c = clock();

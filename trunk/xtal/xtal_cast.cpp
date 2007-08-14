@@ -126,22 +126,22 @@ const InternedStringPtr* CastHelper<const InternedStringPtr*>::arg_cast(const An
 }
 
 
-const char* CastHelper<const char*>::as(const AnyPtr& a){ 
+const char_t* CastHelper<const char_t*>::as(const AnyPtr& a){ 
 	if(String* p = xtal::as<String*>(a)){
 		return p->c_str();
 	}
 	return 0;
 }
 
-const char* CastHelper<const char*>::cast(const AnyPtr& a){
+const char_t* CastHelper<const char_t*>::cast(const AnyPtr& a){
 	if(const char* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(cast_error(a, get_cpp_class<String>()->object_name()), return 0);
 }
 
-const char* CastHelper<const char*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
-	if(const char* p = as(a)){
+const char_t* CastHelper<const char_t*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	if(const char_t* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(argument_error(a, get_cpp_class<String>()->object_name(), param_num, param_name), return 0);

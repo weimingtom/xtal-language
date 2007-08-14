@@ -69,9 +69,7 @@ struct Inst{
 	template<class T>
 	void checked_assign(T& ref, int v){
 		ref = v;
-		if(ref!=v){
-			op = 0xff;
-		}
+		if((int)ref != v){ op = 0xff; }
 	}
 };
 
@@ -124,7 +122,7 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-		Inst##InstName(MemberType1 m1, MemberType2 m2){\
+		Inst##InstName(int m1, int m2){\
 			op = N;\
 			checked_assign(MemberName1, m1);\
 			checked_assign(MemberName2, m2);\
@@ -150,7 +148,7 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-		Inst##InstName(MemberType1 m1, MemberType2 m2, MemberType3 m3){\
+		Inst##InstName(int m1, int m2, int m3){\
 			op = N;\
 			checked_assign(MemberName1, m1);\
 			checked_assign(MemberName2, m2);\
@@ -179,7 +177,7 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-		Inst##InstName(MemberType1 m1, MemberType2 m2, MemberType3 m3, MemberType4 m4){\
+		Inst##InstName(int m1, int m2, int m3, int m4){\
 			op = N;\
 			checked_assign(MemberName1, m1);\
 			checked_assign(MemberName2, m2);\

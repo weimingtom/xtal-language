@@ -5,7 +5,7 @@
 namespace xtal{
 
 int_t ch_len_sjis(char_t ch){
-	unsigned char c = (unsigned char)ch;
+	u8 c = (u8)ch;
 	if((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)){
 		return 2;
 	}
@@ -13,7 +13,7 @@ int_t ch_len_sjis(char_t ch){
 }
 
 int_t ch_len_euc(char_t ch){
-	unsigned char c = (unsigned char)ch;
+	u8 c = (u8)ch;
 	if(c&0x80){
 		return 2;
 	}
@@ -21,7 +21,7 @@ int_t ch_len_euc(char_t ch){
 }
 
 int_t ch_len_utf8(char_t ch){
-	unsigned char c = (unsigned char)ch;
+	u8 c = (u8)ch;
 	if((c&0x80) && (c&0x40)){
 		if(c&0x20){
 			if(c&0x10){

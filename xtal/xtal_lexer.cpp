@@ -467,7 +467,7 @@ void Lexer::parse_number(){
 int_t Lexer::read_from_reader(){
 	int_t ch = reader_.read();
 	if(recording_){
-		recorded_string_ += (char)ch;
+		recorded_string_ += (char_t)ch;
 	}
 	return ch;
 }
@@ -475,7 +475,7 @@ int_t Lexer::read_from_reader(){
 bool Lexer::eat_from_reader(int_t ch){
 	if(reader_.eat(ch)){
 		if(recording_){
-			recorded_string_ += (char)ch;
+			recorded_string_ += (char_t)ch;
 		}
 		return true;
 	}

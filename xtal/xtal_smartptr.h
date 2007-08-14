@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "xtal_base.h"
+#include "xtal_allocator.h"
 
 namespace xtal{
 

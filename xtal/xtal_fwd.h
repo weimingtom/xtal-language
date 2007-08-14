@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "xtal_allocator.h"
 #include "xtal_utility.h"
 
 #include <string>
@@ -91,9 +90,6 @@ typedef SelectType<4>::float_t f32;
 typedef SelectType<8>::float_t f64;
 
 
-typedef char char_t;
-typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
-
 #ifdef XTAL_ENFORCE_64_BIT
 
 /// int
@@ -143,6 +139,13 @@ template<class T>
 struct IsFloat{ enum{ value = 0 }; };
 template<>
 struct IsFloat<float_t>{ enum{ value = 1 }; };
+
+
+template<class T>
+struct Alloc;
+
+typedef char char_t;
+typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
 
 
 /**

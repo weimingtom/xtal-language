@@ -1996,11 +1996,11 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassCore* p = ff().pcode->class_core(inst.core_number); 
-			ClassPtr cp = xnew<XClass>(ff().outer(), code(), p);
+			ClassPtr cp = xnew<Class>(ff().outer(), code(), p);
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
-				cp->inherit(cast<ClassPtr>(pop()));
+				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
 
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
@@ -2989,7 +2989,7 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
-				cp->inherit(cast<ClassPtr>(pop()));
+				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
 
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);

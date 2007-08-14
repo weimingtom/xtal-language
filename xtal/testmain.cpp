@@ -432,6 +432,8 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
+			foo: class(Class){}
+
 			 export fiber{
 				yield 5;
 				yield 6;

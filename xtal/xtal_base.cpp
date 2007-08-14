@@ -89,13 +89,15 @@ void initialize(){
 	int_t temp_ref_count;
 	
 	temp_ref_count = pvalue(get_cpp_class<Any>())->ref_count(); 
-	new(pvalue(get_cpp_class<Any>())) Class();
+	new(pvalue(get_cpp_class<Any>())) Class(Class::cpp_class_t());
 	pvalue(get_cpp_class<Any>())->add_ref_count(temp_ref_count-1);
 		
 	temp_ref_count = pvalue(get_cpp_class<Class>())->ref_count(); 
-	new(pvalue(get_cpp_class<Class>())) Class();
+	new(pvalue(get_cpp_class<Class>())) Class(Class::cpp_class_t());
 	pvalue(get_cpp_class<Class>())->add_ref_count(temp_ref_count-1);
 	
+	pvalue(get_cpp_class<Any>())->set_class(get_cpp_class<Class>());
+	pvalue(get_cpp_class<Class>())->set_class(get_cpp_class<Class>());
 
 	new_cpp_class<String>();
 	new_cpp_class<Null>();

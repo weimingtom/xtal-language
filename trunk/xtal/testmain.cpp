@@ -431,7 +431,21 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 
-		int ret = cast<int_t>(AnyPtr(5) + AnyPtr(10));
+		AnyPtr cd = Xsrc((
+			 export fiber{
+				yield 5;
+				yield 6;
+				yield 7; 
+			 }
+		));
+
+		 FiberPtr f1 = ptr_cast<Fiber>(cd());
+		 FiberPtr f2 = ptr_cast<Fiber>(cd());
+
+		 f1()->p();
+		 f2()->p();
+		 f1()->p();
+		 f2()->p();
 
 		int c;
 		c = clock();

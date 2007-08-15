@@ -39,7 +39,7 @@ void* user_malloc_nothrow(size_t size);
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
-void user_free(void* p, size_t size);
+void user_free(void* p);
 
 /**
 * @brief 使用するメモリアロケート関数を設定する。
@@ -104,7 +104,7 @@ struct Alloc{
     const_pointer address(const_reference x) const{ return &x; }
 
     pointer allocate(size_type n, const void* = 0){ return static_cast<pointer>(user_malloc(sizeof(T)*n)); }
-    void deallocate(pointer p, size_type n){ user_free(p, sizeof(T)*n); }
+    void deallocate(pointer p, size_type n){ user_free(p); }
 	
 	void construct(pointer p, const T& val){ new(p) T(val); }
     void destroy(pointer p){ p->~T(); p = 0; }

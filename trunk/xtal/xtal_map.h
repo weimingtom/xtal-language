@@ -166,7 +166,7 @@ protected:
 				p = next;
 			}
 		}
-		user_free(oldbegin, sizeof(Node*)*oldsize);
+		user_free(oldbegin);
 	}
 	
 protected:

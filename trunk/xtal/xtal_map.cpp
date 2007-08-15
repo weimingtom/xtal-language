@@ -205,11 +205,11 @@ Map::~Map(){
 		while(p){
 			Node* next = p->next;
 			p->~Node();
-			user_free(p, sizeof(Node));
+			user_free(p);
 			p = next;
 		}
 	}
-	user_free(begin_, sizeof(Node*)*size_);
+	user_free(begin_);
 }
 	
 const AnyPtr& Map::at(const AnyPtr& key){
@@ -265,7 +265,7 @@ void Map::erase(const AnyPtr& key){
 				begin_[key->hashcode() % size_] = p->next;
 			}
 			p->~Node();
-			user_free(p, sizeof(Node));
+			user_free(p);
 		}
 		vm->cleanup_call();
 		prev = p;
@@ -426,7 +426,7 @@ void StrictMap::expand(int_t addsize){
 			p = next;
 		}
 	}
-	user_free(oldbegin, sizeof(Node*)*oldsize);
+	user_free(oldbegin);
 }
 	
 void StrictMap::destroy(){
@@ -438,11 +438,11 @@ void StrictMap::destroy(){
 		while(p){
 			Node* next = p->next;
 			p->~Node();
-			user_free(p, sizeof(Node));
+			user_free(p);
 			p = next;
 		}
 	}
-	user_free(begin_, sizeof(Node*)*size_);
+	user_free(begin_);
 	size_ = 0;
 	begin_ = 0;
 	used_size_ = 0;

@@ -39,14 +39,17 @@ public:
 		return SmartPtr<StringSplit>::from_this(this);
 	}
 
+
 	void iter_next(const VMachinePtr& vm){
-		if(str_->size()<=index_){
+		if(str_->byte_size()<=index_){
 			reset();
 			vm->return_result(null);
 			return;
 		}
 		const char* sep = sep_->c_str();
 		const char* str = str_->c_str();
+		uint_t sepsize = sep_->byte_size();
+		uint_t strsize = str_->byte_size();
 
 		if(sep[0]==0){
 			int_t len = ch_len(str[index_]);
@@ -55,8 +58,8 @@ public:
 			return;
 		}
 
-		for(int_t j=index_, jsz=str_->size(); j<jsz; j+=ch_len(str[j])){
-			for(int_t i=0, sz=sep_->size()+1; i<sz; ++i){
+		for(int_t j=index_, jsz=strsize; j<jsz; j+=ch_len(str[j])){
+			for(int_t i=0, sz=sepsize+1; i<sz; ++i){
 				if(sep[i]==0){
 					vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], j-index_));
 					index_ = j+i;
@@ -72,8 +75,8 @@ public:
 				}
 			}
 		}
-		vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], str_->size()-index_));
-		index_ = str_->size();
+		vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], strsize-index_));
+		index_ = strsize;
 	}
 };
 
@@ -96,9 +99,8 @@ void InitString(){
 		p->method("to_s", &String::to_s);
 		p->method("clone", &String::clone);
 
-		p->method("length", &String::length);
-		p->method("size", &String::size);
-		p->method("slice", &String::slice);
+		//p->method("length", &String::length);
+		//p->method("size", &String::size);
 		p->method("intern", &String::intern);
 
 		p->method("split", &String::split)->param("i", Named("n", 1));
@@ -205,15 +207,15 @@ String::String(LargeString* left, LargeString* right){
 	pvalue(*this)->dec_ref_count();
 }
 
-String::String(char* str, uint_t len, uint_t buffer_size, delegate_memory_t dmt){
+String::String(char* str, uint_t len, delegate_memory_t dmt){
 	uint_t sz = len;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
 		svalue_[sz] = 0;
-		user_free(str, 0);
+		user_free(str);
 	}else{
-		set_p(new LargeString(str, len, buffer_size, dmt));
+		set_p(new LargeString(str, len, dmt));
 		pvalue(*this)->set_class(new_cpp_class<String>());
 		pvalue(*this)->dec_ref_count();
 	}
@@ -227,30 +229,20 @@ const char* String::c_str(){
 	}
 }
 
-uint_t String::size(){
+uint_t String::byte_size(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->size();
+		return ((LargeString*)pvalue(*this))->byte_size();
 	}else{
 		return strlen(svalue_);
 	}
 }
 
-uint_t String::length(){
-	return size();
+uint_t String::byte_length(){
+	return byte_size();
 }
 
 StringPtr String::clone(){
 	return StringPtr::from_this(this);
-}
-
-StringPtr String::slice(int_t start, int_t n){
-	int pos = calc_offset(start);
-	if(n<0 || (uint_t)(n + pos)>size()){
-		throw_index_error();
-		return null;
-	}
-
-	return xnew<String>(c_str()+pos, n); 
 }
 
 InternedStringPtr String::intern(){
@@ -286,8 +278,8 @@ AnyPtr String::each(){
 }
 
 StringPtr String::op_cat_String(const StringPtr& v){
-	uint_t mysize = size();
-	uint_t vsize = v->size();
+	uint_t mysize = byte_size();
+	uint_t vsize = v->byte_size();
 
 	if(mysize+vsize <= 16 || mysize<SMALL_STRING_MAX || vsize<SMALL_STRING_MAX)
 		return xnew<String>(c_str(), mysize, v->c_str(), vsize);
@@ -295,7 +287,7 @@ StringPtr String::op_cat_String(const StringPtr& v){
 }
 
 bool String::op_eq_r_String(const StringPtr& v){ 
-	return v->size()==size() && memcmp(v->c_str(), c_str(), size())==0; 
+	return v->byte_size()==byte_size() && memcmp(v->c_str(), c_str(), byte_size())==0; 
 }
 
 bool String::op_lt_r_String(const StringPtr& v){ 
@@ -335,12 +327,12 @@ uint_t String::hashcode(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->hashcode();
 	}else{
-		return make_hashcode(svalue_, size());
+		return make_hashcode(svalue_, byte_size());
 	}
 }
 
 int_t String::calc_offset(int_t i){
-	uint_t sz = size();
+	uint_t sz = byte_size();
 	if(i<0){
 		i = sz + i;
 		if(i<0){
@@ -419,11 +411,11 @@ public:
 			while(p){
 				Node* next = p->next;
 				p->~Node();
-				user_free(p, sizeof(Node));
+				user_free(p);
 				p = next;
 			}
 		}
-		user_free(begin_, sizeof(Node*)*size_);
+		user_free(begin_);
 	}
 		
 protected:
@@ -459,7 +451,7 @@ protected:
 				p = next;
 			}
 		}
-		user_free(oldbegin, sizeof(Node*)*oldsize);
+		user_free(oldbegin);
 	}
 	
 protected:
@@ -547,7 +539,7 @@ void StringMgr::before_gc(){
 			Node* next = p->next;
 			if(pvalue(p->value)->ref_count()==1){
 				p->~Node();
-				user_free(p, sizeof(Node));
+				user_free(p);
 				used_size_--;
 				if(prev){
 					prev->next = next;
@@ -570,26 +562,26 @@ static const SmartPtr<StringMgr>& str_mgr(){
 void LargeString::common_init(uint_t len){
 	XTAL_ASSERT(len>=Innocence::SMALL_STRING_MAX);
 
-	size_ = len;
-	str_.p = static_cast<char*>(user_malloc(size_+1));
-	str_.p[size_] = 0;
+	byte_size_ = len;
+	str_.p = static_cast<char*>(user_malloc(byte_size_+1));
+	str_.p[byte_size_] = 0;
 	flags_ = 0;
 }
 
 	
 LargeString::LargeString(const char* str){
 	common_init(strlen(str));
-	memcpy(str_.p, str, size_);
+	memcpy(str_.p, str, byte_size_);
 }
 
 LargeString::LargeString(const char* str, uint_t len){
 	common_init(len);
-	memcpy(str_.p, str, size_);
+	memcpy(str_.p, str, byte_size_);
 }
 
 LargeString::LargeString(const char* begin, const char* last){
 	common_init(last-begin);
-	memcpy(str_.p, begin, size_);
+	memcpy(str_.p, begin, byte_size_);
 }
 
 LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2){
@@ -600,18 +592,18 @@ LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_
 
 LargeString::LargeString(const string_t& str){
 	common_init(str.size());
-	memcpy(str_.p, str.c_str(), size_);
+	memcpy(str_.p, str.c_str(), byte_size_);
 }
 
 LargeString::LargeString(const char* str, uint_t len, uint_t hashcode){
 	common_init(len);
-	memcpy(str_.p, str, size_);
+	memcpy(str_.p, str, byte_size_);
 	str_.hashcode = hashcode;
 	flags_ = INTERNED | HASHED;
 }
 
-LargeString::LargeString(char* str, uint_t len, uint_t /*buffer_size*/, String::delegate_memory_t){
-	size_ = len;
+LargeString::LargeString(char* str, uint_t len, String::delegate_memory_t){
+	byte_size_ = len;
 	str_.p = str;
 	flags_ = 0;
 }
@@ -621,14 +613,14 @@ LargeString::LargeString(LargeString* left, LargeString* right){
 	right->inc_ref_count();
 	rope_.left = left;
 	rope_.right = right;
-	size_ = left->size() + right->size();
+	byte_size_ = left->byte_size() + right->byte_size();
 	flags_ = ROPE;
 }
 
 LargeString::~LargeString(){
 	if((flags_ & ROPE)==0){
 		if((flags_ & NOFREE)==0){
-			user_free(str_.p, size_+1);
+			user_free(str_.p);
 		}
 	}else{
 		rope_.left->dec_ref_count();
@@ -641,15 +633,15 @@ const char* LargeString::c_str(){
 	return str_.p; 
 }
 
-uint_t LargeString::size(){ 
-	return size_; 
+uint_t LargeString::byte_size(){ 
+	return byte_size_; 
 }
 
 uint_t LargeString::hashcode(){ 
 	if((flags_ & HASHED)!=0)
 		return str_.hashcode;		
 	became_unified(); 
-	str_.hashcode = make_hashcode(str_.p, size_);
+	str_.hashcode = make_hashcode(str_.p, byte_size_);
 	flags_ |= HASHED;
 	return str_.hashcode; 
 }
@@ -663,7 +655,7 @@ void LargeString::became_unified(){
 		return;
 
 	uint_t pos = 0;
-	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(size_+1));
+	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(byte_size_+1));
 	write_to_memory(this, memory, pos);
 	memory[pos] = 0;
 	rope_.left->dec_ref_count();
@@ -676,8 +668,8 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 	PStack<LargeString*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
-			memcpy(&memory[pos], p->str_.p, p->size_);
-			pos += p->size_;
+			memcpy(&memory[pos], p->str_.p, p->byte_size_);
+			pos += p->byte_size_;
 			if(stack.empty())
 				return;
 			p = stack.pop();
@@ -696,7 +688,7 @@ InternedStringPtr::InternedStringPtr(const char* name, int_t size)
 	:StringPtr(make(name, size)){}
 
 InternedStringPtr::InternedStringPtr(const StringPtr& name)
-	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->size())){}
+	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->byte_size())){}
 
 
 StringPtr InternedStringPtr::make(const char* name, uint_t size){

@@ -123,7 +123,7 @@ public:
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
 		const char_t* str = str_->c_str();
-		for(int_t i=0; i<str_->size(); ++i){
+		for(int_t i=0; i<str_->byte_size(); ++i){
 			if(r->read()!=str[i]){
 				return false;
 			}
@@ -505,7 +505,13 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
-			"‚ ‚¢‚¤‚¦ts\\‚¨".each.to_a.p;
+			ms: MemoryStream();
+			ms.put_s("‚ a‚¢i‚¤u‚¦e‚¨o");
+			ms.seek(0);
+			ms.get_s(1).p;
+			ms.get_s.each.to_a.p;
+			ms.get_s.p;
+			ms.get_s.p;
 		))();
 
 		int c;

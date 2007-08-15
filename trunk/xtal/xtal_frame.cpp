@@ -160,11 +160,11 @@ IdMap::~IdMap(){
 		while(p){
 			Node* next = p->next;
 			p->~Node();
-			user_free(p, sizeof(Node));
+			user_free(p);
 			p = next;
 		}
 	}
-	user_free(begin_, sizeof(Node*)*size_);
+	user_free(begin_);
 }
 	
 IdMap::Node* IdMap::find(const InternedStringPtr& key, const AnyPtr& ns){
@@ -236,7 +236,7 @@ void IdMap::expand(int_t addsize){
 			p = next;
 		}
 	}
-	user_free(oldbegin, sizeof(Node*)*oldsize);
+	user_free(oldbegin);
 }
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, BlockCore* core)
@@ -252,7 +252,7 @@ Frame::Frame()
 Frame::~Frame(){
 	if(map_members_){
 		map_members_->~IdMap();
-		user_free(map_members_, sizeof(IdMap));
+		user_free(map_members_);
 	}
 }
 

@@ -138,7 +138,7 @@ Array::~Array(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
-	user_free(values_, 0);
+	user_free(values_);
 }
 
 void Array::clear(){
@@ -162,7 +162,7 @@ void Array::resize(int_t sz){
 			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
 			memcpy(newp, values_, sizeof(AnyPtr)*size_);
 			memset(&newp[size_], 0, sizeof(AnyPtr)*(sz-size_));
-			user_free(values_, 0);
+			user_free(values_);
 			values_ = newp;
 			size_ = sz;
 			capa_ = newcapa;

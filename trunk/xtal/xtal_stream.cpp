@@ -25,7 +25,7 @@ void InitStream(){
 		p->method("put_f32", &Stream::put_f32);
 		p->method("get_f32", &Stream::get_f32);
 		
-		p->method("get_s", &Stream::get_s)->param(Named("length", 1));
+		p->method("get_s", &Stream::get_s)->param(Named("length", -1));
 		p->method("put_s", &Stream::put_s);
 
 		p->method("print", &Stream::print);
@@ -69,30 +69,53 @@ void InitStream(){
 
 
 void Stream::put_s(const StringPtr& str){
-	write(str->c_str(), str->length());
+	write(str->c_str(), str->byte_size());
 }
 
 StringPtr Stream::get_s(int_t length){
-	char* buf = (char*)user_malloc(length+1);
-	uint_t len = read(buf, length);
-	buf[len] = 0;
-	return xnew<String>(buf, len, length+1, String::delegate_memory_t());
+	char buf[16];
+	if(length==1){
+		buf[0] = get_u8();
+		
+		if(eof())
+			return "";
+
+		int_t len = ch_len(buf[0]);
+		for(int_t i=1; i<len; ++i){
+			buf[i] = get_u8();
+		}
+		return xnew<String>(buf, len);
+	}
+
+	if(length<0){
+		MemoryStreamPtr ms = xnew<MemoryStream>();
+		while(!eof()){
+			ms->put_s(get_s(1));
+		}
+		return ms->to_s();
+	}
+
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	for(int_t i=0; i<length; ++i){
+		ms->put_s(get_s(1));
+	}
+	return ms->to_s();
 }
 
 uint_t Stream::print(const StringPtr& str){
-	return write(str->c_str(), str->length());
+	return write(str->c_str(), str->byte_size());
 }
 
 void Stream::println(const StringPtr& str){
-	write(str->c_str(), str->length());
-	write("\n", str->length());
+	write(str->c_str(), str->byte_size());
+	write("\n", 1);
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
 	xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
 	uint_t len = in_stream->read(buf, size);
 	write(buf, len);
-	user_free(buf, size*sizeof(xtal::u8));
+	user_free(buf);
 	return len;
 }
 
@@ -104,7 +127,7 @@ uint_t Stream::pour_all(const StreamPtr& in_stream){
 		sum += len;
 		write(buf, len);
 	}while(len==size);
-	user_free(buf, size*sizeof(xtal::u8));
+	user_free(buf);
 	return sum;
 }
 
@@ -214,6 +237,10 @@ void FileStream::close(){
 	}
 }
 
+bool FileStream::eof(){
+	if(!fp_){ return true; }
+	return feof(fp_)!=0;
+}
 
 MemoryStream::MemoryStream(){
 	pos_ = 0;
@@ -306,12 +333,49 @@ uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
 	return sum;
 }
 
+StringPtr MemoryStream::get_s(int_t length){
+	if(pos_ >= data_.size())
+		return "";
+
+	if(length<0){
+		StringPtr ret = xnew<String>((char_t*)&data_[pos_], data_.size() - pos_);
+		pos_ = data_.size();
+		return ret;
+	}
+
+	int_t slen = 0;
+	int_t blen = 0;
+	while(slen<length){
+		if(pos_ + blen >= data_.size()){
+			break;
+		}
+
+		int_t len = ch_len(data_[pos_ + blen]);
+		if(pos_ + blen + len > data_.size()){
+			break;
+		}
+
+		blen += len;
+		slen++;
+	}
+
+	if(blen==0)
+		return "";
+
+	StringPtr ret = xnew<String>((char_t*)&data_[pos_], blen);
+	pos_ += blen;
+	return ret;	
+}
+
 StringPtr MemoryStream::to_s(){
 	if(data_.empty())
 		return xnew<String>("");
-	return xnew<String>((char*)&data_[0], data_.size());
+	return xnew<String>((char_t*)&data_[0], data_.size());
 }
 
+bool MemoryStream::eof(){
+	return pos_>=data_.size();
+}
 
 InteractiveStream::InteractiveStream(){
 	line_ = 1;

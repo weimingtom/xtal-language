@@ -220,6 +220,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_peg.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_serializer.cpp"
 				>
 			</File>
@@ -339,6 +343,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_parser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_peg.h"
 				>
 			</File>
 			<File

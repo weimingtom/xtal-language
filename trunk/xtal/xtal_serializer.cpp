@@ -87,6 +87,18 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u8(TNOP);
 			return;
 		}
+
+		XTAL_CASE(TYPE_SMALL_STRING){
+			StringPtr a = cast<StringPtr>(v);
+			stream_->put_u8(TID);
+			uint_t sz = a->size();
+			const char* str = a->c_str();
+			stream_->put_i32(sz);
+			for(size_t i=0; i<sz; ++i){
+				stream_->put_u8(str[i]);
+			}
+			return;
+		}
 	}
 
 	const ClassPtr& cls = v->get_class();
@@ -109,9 +121,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			}else{
 				stream_->put_u8(TSTRING);
 			}
-			stream_->put_i32(a->size());
-			for(size_t i=0; i<a->size(); ++i){
-				stream_->put_u8(a->c_str()[i]);
+			uint_t sz = a->size();
+			const char* str = a->c_str();
+			stream_->put_i32(sz);
+			for(size_t i=0; i<sz; ++i){
+				stream_->put_u8(str[i]);
 			}
 			return;
 		}else if(raweq(cls, get_cpp_class<Map>())){

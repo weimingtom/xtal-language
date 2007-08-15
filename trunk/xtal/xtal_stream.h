@@ -111,7 +111,7 @@ public:
 
 	void put_s(const StringPtr& str);
 
-	StringPtr get_s(int_t length);
+	StringPtr get_s(int_t length = 1);
 
 	uint_t print(const StringPtr& str);
 
@@ -230,7 +230,6 @@ public:
 	AC<xtal::u8>::vector data_;
 	uint_t pos_;
 };
-
 
 class InteractiveStream : public Stream{
 public:

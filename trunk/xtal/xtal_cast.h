@@ -92,9 +92,9 @@ inline U* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return (U*)cast_helper_helper_extend_anyimpl(a, get_cpp_class<U>());
 }
 	
-// 変換後の型がAnyPtrを継承した型の場合
+// 変換後の型がInnocenceを継承した型の場合
 template<class U>
-inline U* cast_helper_helper(const AnyPtr& a, const AnyPtr*, const U*){
+inline U* cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
 	return (U*)cast_helper_helper_extend_any(a, get_cpp_class<U>());
 }
 	
@@ -127,9 +127,9 @@ inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr&
 	return (U*)arg_cast_helper_helper_extend_anyimpl(a, param_num, param_name, get_cpp_class<U>());
 }
 	
-// 変換後の型がAnyPtrを継承した型の場合
+// 変換後の型がInnocenceを継承した型の場合
 template<class U>
-inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const AnyPtr*, const U*){
+inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const Innocence*, const U*){
 	return (U*)arg_cast_helper_helper_extend_any(a, param_num, param_name, get_cpp_class<U>());
 }
 	

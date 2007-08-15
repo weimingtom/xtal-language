@@ -25,7 +25,7 @@ void InitStream(){
 		p->method("put_f32", &Stream::put_f32);
 		p->method("get_f32", &Stream::get_f32);
 		
-		p->method("get_s", &Stream::get_s);
+		p->method("get_s", &Stream::get_s)->param(Named("length", 1));
 		p->method("put_s", &Stream::put_s);
 
 		p->method("print", &Stream::print);

@@ -152,13 +152,18 @@ typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > stri
 * @brief プリミティブな型の種類
 */
 enum PrimitiveType{
-	TYPE_NULL,
-	TYPE_FALSE,
-	TYPE_TRUE,
-	TYPE_BASE,
-	TYPE_INT,
-	TYPE_FLOAT,
-	TYPE_NOP,
+	TYPE_NULL = 0,
+
+	TYPE_FALSE = 1,
+	TYPE_TRUE = 2,
+	TYPE_NOP = 3,
+	
+	TYPE_BASE = 4,
+	
+	TYPE_INT = 5,
+	TYPE_FLOAT = 6,
+	
+	TYPE_SMALL_STRING = 7,
 
 	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
 	TYPE_SHIFT = 3

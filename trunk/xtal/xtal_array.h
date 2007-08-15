@@ -128,16 +128,22 @@ public:
 	}
 
 	/**
-	* @brief firstからlastまでの部分配列を返す
+	* @brief i番目からn個の部分配列を返す
 	*
 	*/
-	ArrayPtr slice(int_t first, int_t last);
+	ArrayPtr slice(int_t i, int_t n = 1);
+	
+	/**
+	* @brief indexからn個の部分配列を削除し、配列として返す
+	*
+	*/
+	ArrayPtr splice(int_t i, int_t n = 1);
 
 	/**
-	* @brief i番目の要素を削除する
+	* @brief i番目のn個の要素を削除する
 	*
 	*/
-	void erase(int_t i);
+	void erase(int_t i, int_t n = 1);
 
 	/**
 	* @brief i番目に要素を追加する
@@ -224,6 +230,9 @@ public:
 	AnyPtr r_each();
 
 protected:
+
+	int_t calc_offset(int_t i);
+	void throw_index_error();
 
 	AnyPtr* values_;
 	uint_t size_;

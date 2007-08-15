@@ -302,7 +302,8 @@ Expr* Parser::parse_term(){
 				}
 
 				XTAL_CASE(c2('|', '|')){
-					e.fun_begin(KIND_FUN);
+					e.fun_begin(KIND_LAMBDA);
+					e.fun_param(com_->register_ident(InternedStringPtr("it")));
 					e.fun_body_begin();
 					if(eat('{')){
 						e.fun_body_add(parse_block());

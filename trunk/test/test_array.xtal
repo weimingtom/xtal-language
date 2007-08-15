@@ -1,0 +1,19 @@
+
+
+{
+	a: [];
+	a.push_back(1);
+	a.push_back(2);
+	assert a==[1, 2];
+}
+
+{
+	a: [];
+	ret: "";
+	try{
+		a[5] = 10;
+	}catch(e){
+		ret = "catched";
+	}
+	assert ret=="catched";
+}

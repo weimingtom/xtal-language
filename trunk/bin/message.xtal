@@ -47,4 +47,5 @@ export [
 	"Xtal Runtime Error 1017":"%(object)s :: '%(name)s' は %(accessibility)s です。",
 	"Xtal Runtime Error 1018":"既に閉じられたストリームです。",
 	"Xtal Runtime Error 1019":"C++で定義されたクラスの継承は出来ません。",
+	"Xtal Runtime Error 1020":"配列の範囲外アクセスです。",
 ];

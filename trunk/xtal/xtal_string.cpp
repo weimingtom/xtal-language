@@ -99,7 +99,7 @@ void InitString(){
 		p->method("slice", &String::slice);
 		p->method("intern", &String::intern);
 
-		p->method("split", &String::split);
+		p->method("split", &String::split)->param("i", Named("n", 1));
 
 		p->method("op_cat", &String::op_cat);
 		p->method("op_eq", &String::op_eq);
@@ -397,8 +397,14 @@ uint_t String::length(){
 	return size_; 
 }
 
-StringPtr String::slice(int_t first, int_t last){ 
-	return xnew<String>(c_str()+first, last-first); 
+StringPtr String::slice(int_t start, int_t n){
+	int pos = calc_offset(start);
+	if(n<0 || (uint_t)(n + pos)>size_){
+		throw_index_error();
+		return null;
+	}
+
+	return xnew<String>(c_str()+pos, n); 
 }
 
 uint_t String::hashcode(){ 
@@ -511,7 +517,25 @@ void String::op_lt(const VMachinePtr& vm){
 	a->rawsend(vm, Xid(op_lt_r_String));
 }
 
+int_t String::calc_offset(int_t i){
+	if(i<0){
+		i = size_ + i;
+		if(i<0){
+			throw_index_error();
+			return 0;
+		}
+	}else{
+		if((uint_t)i >= size_){
+			throw_index_error();
+			return 0;
+		}
+	}
+	return i;
+}
 
+void String::throw_index_error(){
+	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1020")), return);
+}
 
 InternedStringPtr::InternedStringPtr(const char* name)
 	:StringPtr(name ? str_mgr()->insert(name, strlen(name)) : null){}

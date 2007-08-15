@@ -72,12 +72,13 @@ void InitArray(){
 		p->method("set_at", &Array::op_set_at);
 		p->method("op_at", &Array::op_at);
 		p->method("op_set_at", &Array::op_set_at);
-		p->method("slice", &Array::slice);
+		p->method("slice", &Array::slice)->param("i", Named("n", 1));
+		p->method("splice", &Array::splice)->param("i", Named("n", 1));
 		p->method("pop_back", &Array::pop_back);
 		p->method("push_back", &Array::push_back);
 		p->method("pop_front", &Array::pop_front);
 		p->method("push_front", &Array::push_front);
-		p->method("erase", &Array::erase);
+		p->method("erase", &Array::erase)->param("i", Named("n", 1));
 		p->method("insert", &Array::insert);
 		p->method("cat", &Array::cat);
 		p->method("cat_assign", &Array::cat_assign);
@@ -148,6 +149,8 @@ void Array::clear(){
 }
 
 void Array::resize(int_t sz){
+	if(sz<0) sz = 0;
+
 	if(sz<(int_t)size_){
 		for(uint_t i=sz; i<size_; ++i){
 			dec_ref_count_force(values_[i]);
@@ -171,76 +174,39 @@ void Array::resize(int_t sz){
 }
 
 const AnyPtr& Array::op_at(int_t i){
-	if(i>=0){
-		if(i<(int_t)size_){
-			return values_[i];
-		}else{
-			return null;
-		}
-	}else{
-		if(-i-1<(int_t)size_){
-			return values_[size_+i];
-		}else{
-			return null;
-		}
-	}
+	return values_[calc_offset(i)];
+
 }
 
 void Array::op_set_at(int_t i, const AnyPtr& v){
-	if(i>=0){
-		if(i<(int_t)size_){
-			values_[i] = v;
-		}else{
-			resize(i+1);
-		}
-	}else{
-		if(-i-1<(int_t)size_){
-			values_[size_+i] = v;
-		}else{
-			resize(-i-1+1);	
-		}
-	}
+	values_[calc_offset(i)] = v;
 }
 
-void Array::erase(int_t i){
-	int_t pos;
-	if(i>=0){
-		if(i<(int_t)size_){
-			pos = i;
-		}else{
-			return;
-		}
-	}else{
-		if(-i-1<(int_t)size_){
-			pos = size_+i;
-		}else{
-			return;
-		}
+void Array::erase(int_t start, int_t n){
+	int pos = calc_offset(start);
+	if(n<0 || (uint_t)(n + pos)>size_){
+		throw_index_error();
+		return;
 	}
 
-	dec_ref_count_force(values_[pos]);
-	memmove(&values_[pos], &values_[pos+1], sizeof(AnyPtr)*((size_-pos)-1));
-	size_--;
+	for(int_t j=0; j<n; ++j){
+		dec_ref_count_force(values_[pos + j]);
+	}
+
+	size_ -= n;
+	if(size_!=0){
+		memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-pos));
+	}
 }
 
 void Array::insert(int_t i, const AnyPtr& v){
-	int_t pos;
-	if(i>=0){
-		if(i<(int_t)size_+1){
-			pos = i;
-		}else{
-			return;
-		}
+	if(capa_==size_){
+		resize(size_ + 1);
 	}else{
-		if(-i-1<(int_t)size_+1){
-			pos = size_+i+1;
-		}else{
-			return;
-		}
+		size_++;
 	}
-
-	resize(size_ + 1);
-	memmove(&values_[pos], &values_[pos+1], sizeof(AnyPtr)*(size_-1-pos));
+	int_t pos = calc_offset(i);
+	memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-1-pos));
 	memcpy(&values_[pos], &v, sizeof(AnyPtr));
 	inc_ref_count_force(values_[pos]);
 }
@@ -262,11 +228,23 @@ void Array::pop_back(){
 	}
 }
 
-ArrayPtr Array::slice(int_t first, int_t last){
-	ArrayPtr ret(xnew<Array>(last-first));
-	for(int_t i = first; i!=last; ++i){
-		ret->values_[i-first] = values_[i];
+ArrayPtr Array::slice(int_t start, int_t n){
+	int pos = calc_offset(start);
+	if(n<0 || (uint_t)(n + pos)>size_){
+		throw_index_error();
+		return null;
 	}
+
+	ArrayPtr ret(xnew<Array>(n));
+	for(int_t i=0; i<n; ++i){
+		ret->values_[i] = values_[pos + i];
+	}
+	return ret;
+}
+
+ArrayPtr Array::splice(int_t start, int_t n){
+	ArrayPtr ret = slice(start, n);
+	erase(start, n);
 	return ret;
 }
 
@@ -345,6 +323,26 @@ AnyPtr Array::each(){
 
 AnyPtr Array::r_each(){
 	return xnew<ArrayIter>(ArrayPtr::from_this(this), true);
+}
+
+int_t Array::calc_offset(int_t i){
+	if(i<0){
+		i = size_ + i;
+		if(i<0){
+			throw_index_error();
+			return 0;
+		}
+	}else{
+		if((uint_t)i >= size_){
+			throw_index_error();
+			return 0;
+		}
+	}
+	return i;
+}
+
+void Array::throw_index_error(){
+	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1020")), return);
 }
 
 }

@@ -18,6 +18,7 @@ uint_t make_hashcode(const char* p, uint_t size){
 	return value;
 }
 
+
 class StringSplit : public Base{
 	StringPtr str_, sep_;
 	uint_t index_;
@@ -48,8 +49,9 @@ public:
 		const char* str = str_->c_str();
 
 		if(sep[0]==0){
-			vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], 1));
-			index_ += 1;
+			int_t len = ch_len(str[index_]);
+			vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], len));
+			index_ += len;
 			return;
 		}
 
@@ -100,6 +102,7 @@ void InitString(){
 		p->method("intern", &String::intern);
 
 		p->method("split", &String::split)->param("i", Named("n", 1));
+		p->method("each", &String::each);
 
 		p->method("op_cat", &String::op_cat);
 		p->method("op_eq", &String::op_eq);
@@ -113,7 +116,254 @@ void InitString(){
 	}
 }
 
-void String::visit_members(Visitor& m){
+
+
+////////////////////////////////////////////////////////////////
+
+String::String(const char* str){
+	uint_t sz = strlen(str);
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str, sz);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(str));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(const string_t& str){
+	uint_t sz = str.size();
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str.c_str(), sz);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(str));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(const char* str, uint_t size){
+	uint_t sz = size;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str, sz);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(str, size));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(const char* begin, const char* last){
+	uint_t sz = last-begin;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, begin, sz);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(begin, last));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
+	uint_t sz = size1 + size2;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str1, size1);
+		memcpy(&svalue_[size1], str2, size2);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(str1, size1, str2, size2));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(const char* str, uint_t len, uint_t hashcode){
+	uint_t sz = len;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str, sz);
+		svalue_[sz] = 0;
+	}else{
+		set_p(new LargeString(str, len, hashcode));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+String::String(LargeString* left, LargeString* right){
+	set_p(new LargeString(left, right));
+	pvalue(*this)->set_class(new_cpp_class<String>());
+	pvalue(*this)->dec_ref_count();
+}
+
+String::String(char* str, uint_t len, uint_t buffer_size, delegate_memory_t dmt){
+	uint_t sz = len;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
+		memcpy(svalue_, str, sz);
+		svalue_[sz] = 0;
+		user_free(str, 0);
+	}else{
+		set_p(new LargeString(str, len, buffer_size, dmt));
+		pvalue(*this)->set_class(new_cpp_class<String>());
+		pvalue(*this)->dec_ref_count();
+	}
+}
+
+const char* String::c_str(){
+	if(type(*this)==TYPE_BASE){
+		return ((LargeString*)pvalue(*this))->c_str();
+	}else{
+		return svalue_;
+	}
+}
+
+uint_t String::size(){
+	if(type(*this)==TYPE_BASE){
+		return ((LargeString*)pvalue(*this))->size();
+	}else{
+		return strlen(svalue_);
+	}
+}
+
+uint_t String::length(){
+	return size();
+}
+
+StringPtr String::clone(){
+	return StringPtr::from_this(this);
+}
+
+StringPtr String::slice(int_t start, int_t n){
+	int pos = calc_offset(start);
+	if(n<0 || (uint_t)(n + pos)>size()){
+		throw_index_error();
+		return null;
+	}
+
+	return xnew<String>(c_str()+pos, n); 
+}
+
+InternedStringPtr String::intern(){
+	return StringPtr::from_this(this);
+}
+
+bool String::is_interned(){
+	if(type(*this)==TYPE_BASE){
+		return ((LargeString*)pvalue(*this))->is_interned();
+	}else{
+		return true;
+	}
+}
+
+StringPtr String::to_s(){
+	return StringPtr::from_this(this);
+}
+
+int_t String::to_i(){ 
+	return atoi(c_str()); 
+}
+
+float_t String::to_f(){ 
+	return (float_t)atof(c_str()); 
+}
+
+AnyPtr String::split(const StringPtr& sep){
+	return xnew<StringSplit>(StringPtr::from_this(this), sep);
+}
+
+AnyPtr String::each(){
+	return xnew<StringSplit>(StringPtr::from_this(this), "");
+}
+
+StringPtr String::op_cat_String(const StringPtr& v){
+	uint_t mysize = size();
+	uint_t vsize = v->size();
+
+	if(mysize+vsize <= 16 || mysize<SMALL_STRING_MAX || vsize<SMALL_STRING_MAX)
+		return xnew<String>(c_str(), mysize, v->c_str(), vsize);
+	return xnew<String>((LargeString*)pvalue(*this), (LargeString*)pvalue(v));
+}
+
+bool String::op_eq_r_String(const StringPtr& v){ 
+	return v->size()==size() && memcmp(v->c_str(), c_str(), size())==0; 
+}
+
+bool String::op_lt_r_String(const StringPtr& v){ 
+	return strcmp(v->c_str(), c_str())<0; 
+}
+
+StringPtr String::cat(const StringPtr& v){
+	return op_cat_String(v);
+}
+
+StringPtr String::op_cat_r_String(const StringPtr& v){
+	return v->op_cat_String(StringPtr::from_this(this));
+}
+
+void String::op_cat(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_cat_r_String));
+}
+
+void String::op_eq(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_eq_r_String));
+	if(!vm->processed()){
+		vm->return_result(null);
+	}
+}
+
+void String::op_lt(const VMachinePtr& vm){
+	AnyPtr a = vm->arg(0); 
+	vm->recycle_call(StringPtr::from_this(this)); 
+	a->rawsend(vm, Xid(op_lt_r_String));
+}
+
+uint_t String::hashcode(){
+	if(type(*this)==TYPE_BASE){
+		return ((LargeString*)pvalue(*this))->hashcode();
+	}else{
+		return make_hashcode(svalue_, size());
+	}
+}
+
+int_t String::calc_offset(int_t i){
+	uint_t sz = size();
+	if(i<0){
+		i = sz + i;
+		if(i<0){
+			throw_index_error();
+			return 0;
+		}
+	}else{
+		if((uint_t)i >= sz){
+			throw_index_error();
+			return 0;
+		}
+	}
+	return i;
+}
+
+void String::throw_index_error(){
+	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1020")), return);
+}
+
+////////////////////////////////////////////////////////////////
+
+
+void LargeString::visit_members(Visitor& m){
 	Base::visit_members(m);
 	if((flags_ & ROPE)!=0){
 		m & rope_.left & rope_.right;
@@ -317,7 +567,9 @@ static const SmartPtr<StringMgr>& str_mgr(){
 	return p;
 }
 
-void String::common_init(uint_t len){
+void LargeString::common_init(uint_t len){
+	XTAL_ASSERT(len>=Innocence::SMALL_STRING_MAX);
+
 	size_ = len;
 	str_.p = static_cast<char*>(user_malloc(size_+1));
 	str_.p[size_] = 0;
@@ -325,46 +577,46 @@ void String::common_init(uint_t len){
 }
 
 	
-String::String(const char* str){
+LargeString::LargeString(const char* str){
 	common_init(strlen(str));
 	memcpy(str_.p, str, size_);
 }
 
-String::String(const char* str, uint_t len){
+LargeString::LargeString(const char* str, uint_t len){
 	common_init(len);
 	memcpy(str_.p, str, size_);
 }
 
-String::String(const char* begin, const char* last){
+LargeString::LargeString(const char* begin, const char* last){
 	common_init(last-begin);
 	memcpy(str_.p, begin, size_);
 }
 
-String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
+LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2){
 	common_init(size1 + size2);
 	memcpy(str_.p, str1, size1);
 	memcpy(str_.p+size1, str2, size2);
 }
 
-String::String(const string_t& str){
+LargeString::LargeString(const string_t& str){
 	common_init(str.size());
 	memcpy(str_.p, str.c_str(), size_);
 }
 
-String::String(const char* str, uint_t len, uint_t hashcode){
+LargeString::LargeString(const char* str, uint_t len, uint_t hashcode){
 	common_init(len);
 	memcpy(str_.p, str, size_);
 	str_.hashcode = hashcode;
 	flags_ = INTERNED | HASHED;
 }
 
-String::String(char* str, uint_t len, uint_t /*buffer_size*/, delegate_memory_t){
+LargeString::LargeString(char* str, uint_t len, uint_t /*buffer_size*/, String::delegate_memory_t){
 	size_ = len;
 	str_.p = str;
 	flags_ = 0;
 }
 
-String::String(String* left, String* right){
+LargeString::LargeString(LargeString* left, LargeString* right){
 	left->inc_ref_count();
 	right->inc_ref_count();
 	rope_.left = left;
@@ -373,7 +625,7 @@ String::String(String* left, String* right){
 	flags_ = ROPE;
 }
 
-String::~String(){
+LargeString::~LargeString(){
 	if((flags_ & ROPE)==0){
 		if((flags_ & NOFREE)==0){
 			user_free(str_.p, size_+1);
@@ -384,30 +636,16 @@ String::~String(){
 	}
 }
 
-const char* String::c_str(){ 
+const char* LargeString::c_str(){ 
 	became_unified();
 	return str_.p; 
 }
 
-uint_t String::size(){ 
+uint_t LargeString::size(){ 
 	return size_; 
 }
 
-uint_t String::length(){ 
-	return size_; 
-}
-
-StringPtr String::slice(int_t start, int_t n){
-	int pos = calc_offset(start);
-	if(n<0 || (uint_t)(n + pos)>size_){
-		throw_index_error();
-		return null;
-	}
-
-	return xnew<String>(c_str()+pos, n); 
-}
-
-uint_t String::hashcode(){ 
+uint_t LargeString::hashcode(){ 
 	if((flags_ & HASHED)!=0)
 		return str_.hashcode;		
 	became_unified(); 
@@ -416,49 +654,11 @@ uint_t String::hashcode(){
 	return str_.hashcode; 
 }
 
-StringPtr String::clone(){ 
-	return StringPtr::from_this(this); 
-}
-
-InternedStringPtr String::intern(){ 
-	return StringPtr::from_this(this); 
-}
-
-bool String::is_interned(){ 
+bool LargeString::is_interned(){ 
 	return (flags_ & INTERNED)!=0; 
 }
 
-int_t String::to_i(){ 
-	return atoi(c_str()); 
-}
-
-float_t String::to_f(){ 
-	return (float_t)atof(c_str()); 
-}
-
-StringPtr String::to_s(){ 
-	return StringPtr::from_this(this); 
-}
-
-AnyPtr String::split(const StringPtr& sep){
-	return xnew<StringSplit>(StringPtr::from_this(this), sep);
-}
-
-StringPtr String::op_cat_String(const StringPtr& v){
-	if(size_+v->size_ <= 16)
-		return xnew<String>(c_str(), size(), v->c_str(), v->size());
-	return xnew<String>(this, v.get());
-}
-
-bool String::op_eq_r_String(const StringPtr& v){ 
-	return v->size()==size() && memcmp(v->c_str(), c_str(), size())==0; 
-}
-
-bool String::op_lt_r_String(const StringPtr& v){ 
-	return strcmp(v->c_str(), c_str())<0; 
-}
-
-void String::became_unified(){
+void LargeString::became_unified(){
 	if((flags_ & ROPE)==0)
 		return;
 
@@ -472,8 +672,8 @@ void String::became_unified(){
 	flags_ = 0;
 }
 
-void String::write_to_memory(String* p, char_t* memory, uint_t& pos){
-	PStack<String*> stack;
+void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
+	PStack<LargeString*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
 			memcpy(&memory[pos], p->str_.p, p->size_);
@@ -488,63 +688,25 @@ void String::write_to_memory(String* p, char_t* memory, uint_t& pos){
 	}
 }
 
-StringPtr String::cat(const StringPtr& v){
-	return op_cat_String(v);
-}
-
-StringPtr String::op_cat_r_String(const StringPtr& v){
-	return v->op_cat_String(StringPtr::from_this(this));
-}
-
-void String::op_cat(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_cat_r_String));
-}
-
-void String::op_eq(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_eq_r_String));
-	if(!vm->processed()){
-		vm->return_result(null);
-	}
-}
-
-void String::op_lt(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_lt_r_String));
-}
-
-int_t String::calc_offset(int_t i){
-	if(i<0){
-		i = size_ + i;
-		if(i<0){
-			throw_index_error();
-			return 0;
-		}
-	}else{
-		if((uint_t)i >= size_){
-			throw_index_error();
-			return 0;
-		}
-	}
-	return i;
-}
-
-void String::throw_index_error(){
-	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1020")), return);
-}
 
 InternedStringPtr::InternedStringPtr(const char* name)
-	:StringPtr(name ? str_mgr()->insert(name, strlen(name)) : null){}
+	:StringPtr(!name ? StringPtr(null) : make(name, strlen(name))){}
 
 InternedStringPtr::InternedStringPtr(const char* name, int_t size)
-	:StringPtr(str_mgr()->insert(name, size)){}
+	:StringPtr(make(name, size)){}
 
 InternedStringPtr::InternedStringPtr(const StringPtr& name)
-	:StringPtr(!name ? null : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->size())){}
+	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->size())){}
+
+
+StringPtr InternedStringPtr::make(const char* name, uint_t size){
+	if(size<Innocence::SMALL_STRING_MAX){
+		String temp(name, size);
+		return StringPtr::from_this(&temp);
+	}
+	return str_mgr()->insert(name, size);
+}
+
 
 #ifdef XTAL_USE_PREDEFINED_ID
 

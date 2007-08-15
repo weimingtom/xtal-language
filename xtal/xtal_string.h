@@ -7,19 +7,19 @@
 
 namespace xtal{
 
-/**
-* @brief 文字列
-*
-*/
-class String : public Base{
+class LargeString;
+
+class String : public Innocence{
 public:
+
+	String(){}
 
 	/**
 	* @brief NUL終端のC文字列から構築する
 	*
 	* @param str NULL終端文字列
 	*/
-	String(const char* str = "");
+	String(const char* str);
 
 	/**
 	* @brief STLの文字列から構築する
@@ -59,9 +59,7 @@ public:
 
 	String(const char* str, uint_t len, uint_t hashcode);
 	
-	String(String* left, String* right);
-
-	~String();
+	String(LargeString* left, LargeString* right);
 
 public:
 
@@ -131,6 +129,12 @@ public:
 	AnyPtr split(const StringPtr& sep);
 
 	/**
+	* @brief 一文字づつ得られるイテレータを返す。
+	*
+	*/
+	AnyPtr each();
+
+	/**
 	* @brief 連結する
 	*
 	*/
@@ -152,12 +156,38 @@ public:
 	bool op_lt_r_String(const StringPtr& v);
 
 private:
+
+	int_t calc_offset(int_t pos);
+	void throw_index_error();
+
+};
+
+class LargeString : public Base{
+public:
+
+
+	LargeString(const char* str = "");
+	LargeString(const string_t& str);
+	LargeString(const char* str, uint_t size);
+	LargeString(const char* begin, const char* last);
+	LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2);
+	LargeString(char* str, uint_t size, uint_t buffer_size, String::delegate_memory_t);
+	LargeString(const char* str, uint_t len, uint_t hashcode);
+	LargeString(LargeString* left, LargeString* right);
+	~LargeString();
+
+public:
+
+	const char* c_str();
+	uint_t size();
+	bool is_interned();
+	uint_t hashcode();
+
+private:
 	
 	void common_init(uint_t len);
 	void became_unified();
-	void write_to_memory(String* p, char_t* memory, uint_t& pos);
-	int_t calc_offset(int_t i);
-	void throw_index_error();
+	void write_to_memory(LargeString* p, char_t* memory, uint_t& pos);
 
 	virtual void visit_members(Visitor& m);
 
@@ -175,8 +205,8 @@ private:
 	};
 
 	struct Rope{
-		String* left;
-		String* right;
+		LargeString* left;
+		LargeString* right;
 	};
 
 	union{
@@ -218,6 +248,11 @@ public:
 	*/
 	InternedStringPtr(const Null&)
 		:StringPtr(null){}
+
+private:
+
+	static StringPtr make(const char* name, uint_t size);
+
 };
 
 inline bool operator ==(const InternedStringPtr& a, const InternedStringPtr& b){ return raweq(a, b); }

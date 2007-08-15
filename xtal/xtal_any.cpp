@@ -229,6 +229,7 @@ StringPtr Any::object_name() const{
 		XTAL_CASE(TYPE_FALSE){ return xnew<String>("instance of False"); }
 		XTAL_CASE(TYPE_TRUE){ return xnew<String>("instance of True"); }
 		XTAL_CASE(TYPE_NOP){ return xnew<String>("instance of Nop"); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return xnew<String>("instance of String"); }
 	}
 	return null;	
 }
@@ -256,6 +257,7 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<False>(); }
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<True>(); }
 		XTAL_CASE(TYPE_NOP){ return get_cpp_class<Nop>(); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
 	}
 	return get_cpp_class<Any>();
 }

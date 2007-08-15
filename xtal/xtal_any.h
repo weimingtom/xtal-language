@@ -93,6 +93,10 @@ protected:
 		value_ = TYPE_FALSE + (int)b;
 	}
 
+	void set_small_string(){
+		type_ = TYPE_SMALL_STRING;
+	}
+
 public:
 
 	friend int_t type(const Innocence& v){
@@ -148,12 +152,28 @@ public:
 		v.value_ = TYPE_NULL;
 	}
 
-private:
+public:
+
+	enum{
+		SMALL_STRING_MAX = (sizeof(int_t) / sizeof(char_t)) - 1
+	};
+
+protected:
+
+	struct SmallString{
+		char_t nouse;
+		char_t buf[SMALL_STRING_MAX];
+
+		operator char_t*(){
+			return buf;
+		}
+	};
 
 	union{
 		int_t value_;
 		float_t fvalue_;
 		Base* pvalue_;
+		SmallString svalue_;
 	};
 
 #else
@@ -188,7 +208,6 @@ protected:
 		pvalue_ = 0;
 	}
 
-
 	void set_p(Base* p){
 		XTAL_ASSERT(p!=0);
 		type_ = TYPE_BASE;
@@ -216,6 +235,11 @@ protected:
 		value_ = 0;
 	}
 
+	void set_small_string(){
+		type_ = TYPE_SMALL_STRING;
+		value_ = 0;
+	}
+
 public:
 
 	friend int_t type(const Innocence& v){ 
@@ -238,7 +262,7 @@ public:
 	}
 
 	friend uint_t rawvalue(const Innocence& v){
-		return (uint_t)v.value_;
+		return (uint_t)(v.value_);
 	}
 	
 	friend bool raweq(const Innocence& a, const Innocence& b){
@@ -267,14 +291,30 @@ public:
 		v.value_ = 0;
 	}
 
-private:
+
+public:
+
+	enum{
+		SMALL_STRING_MAX = (sizeof(int_t) / sizeof(char_t))
+	};
+
+protected:
+
+	struct SmallString{
+		char_t buf[SMALL_STRING_MAX];
+
+		operator char_t*(){
+			return buf;
+		}
+	};
 
 	int_t type_;
-	
+
 	union{
 		int_t value_;
 		float_t fvalue_;
 		Base* pvalue_;
+		SmallString svalue_;
 	};
 
 #endif

@@ -243,4 +243,6 @@ struct NumericCalcResultType{
 };
 
 
+struct Void{};
+
 }

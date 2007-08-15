@@ -170,7 +170,7 @@ IdMap::~IdMap(){
 IdMap::Node* IdMap::find(const InternedStringPtr& key, const AnyPtr& ns){
 	Node* p = begin_[rawvalue(key) % size_];
 	while(p){
-		if(pvalue(p->key)==pvalue(key)){
+		if(raweq(p->key, key)){
 			return p;
 		}
 		p = p->next;
@@ -181,7 +181,7 @@ IdMap::Node* IdMap::find(const InternedStringPtr& key, const AnyPtr& ns){
 IdMap::Node* IdMap::insert(const InternedStringPtr& key, const AnyPtr& ns){
 	Node** p = &begin_[rawvalue(key) % size_];
 	while(*p){
-		if(pvalue((*p)->key)==pvalue(key)){
+		if(raweq((*p)->key, key)){
 			return *p;
 		}
 		p = &(*p)->next;

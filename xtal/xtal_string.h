@@ -87,7 +87,7 @@ public:
 	* @brief 部分文字列を取り出す。
 	*
 	*/
-	StringPtr slice(int_t first, int_t last);
+	StringPtr slice(int_t i, int_t n);
 
 	/*
 	* @brief 浅いコピーを返す。
@@ -154,10 +154,10 @@ public:
 private:
 	
 	void common_init(uint_t len);
-
 	void became_unified();
-
 	void write_to_memory(String* p, char_t* memory, uint_t& pos);
+	int_t calc_offset(int_t i);
+	void throw_index_error();
 
 	virtual void visit_members(Visitor& m);
 

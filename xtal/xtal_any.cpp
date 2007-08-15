@@ -69,12 +69,31 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
-
 AnyPtr Any::send(const InternedStringPtr& name) const{
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(1);
 	rawsend(vm, name);
 	return vm->result_and_cleanup_call();
+}
+const AtProxy& AtProxy::operator =(const AnyPtr& value){
+	obj->send(Xid(set_at), key, value);
+	return *this;
+}
+
+AtProxy Innocence::operator[](const AnyPtr& key) const{
+	return AtProxy(ap(*this), key);
+}
+
+AtProxy::operator const AnyPtr&(){
+	return obj = obj->send(Xid(at), key);
+}
+
+const AnyPtr& AtProxy::operator ->(){
+	return obj = obj->send(Xid(at), key);
+}
+
+const Any& AtProxy::operator *(){
+	return *(obj = obj->send(Xid(at), key));
 }
 
 struct MemberCacheTable{
@@ -266,22 +285,6 @@ void visit_members(Visitor& m, const AnyPtr& p){
 }
 
 
-const AtProxy& AtProxy::operator =(const AnyPtr& value){
-	obj->send(Xid(set_at), key, value);
-	return *this;
-}
-
-AtProxy::operator const AnyPtr&(){
-	return obj = obj->send(Xid(at), key);
-}
-
-const AnyPtr& AtProxy::operator ->(){
-	return obj = obj->send(Xid(at), key);
-}
-
-const Any& AtProxy::operator *(){
-	return *(obj = obj->send(Xid(at), key));
-}
 
 
 }

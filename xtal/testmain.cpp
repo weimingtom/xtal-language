@@ -259,9 +259,7 @@ public:
 		if(out){
 			int_t pos = out->size();
 			if(p_->parse(r, out)){
-				ArrayPtr ret = out->slice(pos, out->size());
-				out->resize(pos);
-				out->push_back(ret);
+				out->push_back(out->splice(pos, out->size()-pos));
 				return true;
 			}
 			return false;
@@ -271,14 +269,27 @@ public:
 	}
 };
 
-class ValParser : public Parser{
+class InsertValParser : public Parser{
 	AnyPtr val_;
+	int_t pos_;
 public:
-	ValParser(const AnyPtr& val)
-		:val_(val){}
+	InsertValParser(const AnyPtr& val, int_t pos)
+		:val_(val), pos_(pos){}
 
 	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		out->push_back(val_);
+		if(out) out->insert(out->size() - pos_, val_);
+		return true;
+	}
+};
+
+class SpliceParser : public Parser{
+	int_t n_;
+public:
+	SpliceParser(int_t n)
+		:n_(n){}
+
+	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+		if(out) out->push_back(out->splice(out->size() - n_, n_));
 		return true;
 	}
 };
@@ -330,8 +341,12 @@ inline ParserPtr array(const ParserPtr& p){
 	return ParserPtr(xnew<ArrayParser>(p));
 }
 
-inline ParserPtr val(const AnyPtr& p){
-	return ParserPtr(xnew<ValParser>(p));
+inline ParserPtr insert_val(const AnyPtr& p, int_t pos = 0){
+	return ParserPtr(xnew<InsertValParser>(p, pos));
+}
+
+inline ParserPtr splice(int_t n){
+	return ParserPtr(xnew<SpliceParser>(n));
 }
 
 class IntParser : public Parser{
@@ -388,7 +403,7 @@ int main(int argc, char** argv){
 		{
 			using namespace grammer;
 
-			const char* source = "189+256";
+			const char* source = "189+256*100+55";
 			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
 			ReaderPtr reader = xnew<Reader>();
 			reader->set_stream(stream);
@@ -396,13 +411,22 @@ int main(int argc, char** argv){
 			ParserPtr anych = xnew<AnyChParser>();
 			ParserPtr integer = xnew<IntParser>();
 			
-			ParserPtr test = array(val("test ") >> *((-str("a") | integer | anych) - str("cbw")) >> array(*anych));
-			ParserPtr add = val("ADD") >> integer >> str("+") >> integer;
+			ParserPtr term = integer >> insert_val("INT", 1) >> splice(2);
+
+			ParserPtr expr_mul = term >> *((
+				(-str("*") >> insert_val("MUL", 1) >> splice(2)) | 
+				(-str("/") >> insert_val("DIV", 1) >> splice(2))
+				) >> term);
+
+			ParserPtr expr_add = expr_mul >> *((
+				(-str("+") >> insert_val("ADD", 1) >> splice(2)) | 
+				(-str("-") >> insert_val("SUB", 1) >> splice(2))
+				) >> expr_mul);
 
 			ArrayPtr ret = xnew<Array>();
 
-			if(add->parse(reader, ret)){
-				ap(ret->join(" "))->p();
+			if(expr_add->parse(reader, ret)){
+				ret[0]->p();
 			}
 
 		}
@@ -430,19 +454,7 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
-
-			Foo: class{
-			  _foo: "foo".p;
-			  _dummy: dofun{
-                _foo.p;
-			  }
-
-			  initialize: method(){
-				callee.p;
-			  }
-			}
-
-			Foo();
+			(|| it.p)();
 		))();
 
 		int c;

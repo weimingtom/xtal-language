@@ -314,6 +314,8 @@ XTAL_DEF_EXPR_3(5, While, XXXExpr, ExprPtr, cond, ExprPtr, block, ExprPtr, nobre
 
 XTAL_DEF_EXPR_1(0, LocalVariable, InternedStringPtr, name);
 XTAL_DEF_EXPR_1(0, InstanceVariable, InternedStringPtr, name);
+XTAL_DEF_EXPR_1(0, Member, ExprPtr, lhs, InternedStringPtr, name, ExprPtr name_expr);
+XTAL_DEF_EXPR_2(5, Define, ExprPtr, lhs, ExprPtr, rhs);
 
 SmartPtr<Block> block = xnew<Block>();
 block->block->push_back();

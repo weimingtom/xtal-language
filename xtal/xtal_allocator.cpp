@@ -57,12 +57,7 @@ void* user_malloc_nothrow(size_t size){
 	return ret;
 } 
 
-void user_free(void* p, size_t size){
-
-#ifdef XTAL_DEBUG
-	memset(p, 'd', size);
-#endif
-
+void user_free(void* p){
 	user_free_(p);
 }
 
@@ -100,7 +95,7 @@ void *RegionAlloc::allocate(size_t size){
 void RegionAlloc::release(){
 	while(begin_){
 		void* next = *(void**)begin_;
-		user_free(begin_, *((int_t*)((void**)begin_+1)));
+		user_free(begin_);
 		begin_=(u8*)next;
 	}
 	begin_ = 0;
@@ -210,7 +205,7 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 	memcpy(newbegin, begin, sizeof(void*)*size);
 	end = newbegin+newsize;
 	current = newbegin+(current-begin);
-	user_free(begin, sizeof(void*)*size);
+	user_free(begin);
 	begin = newbegin;	
 }
 
@@ -222,10 +217,10 @@ void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& curren
 		memcpy(newbegin, begin, sizeof(void*)*newsize);
 		end = newbegin+newsize;
 		current = newbegin+newsize;
-		user_free(begin, sizeof(void*)*size);
+		user_free(begin);
 		begin = newbegin;	
 	}else{
-		user_free(begin, sizeof(void*)*size);
+		user_free(begin);
 		begin = end = current = 0;
 	}
 }

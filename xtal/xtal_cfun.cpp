@@ -34,8 +34,8 @@ CFun::~CFun(){
 	for(int_t i=0; i<param_n_; ++i){
 		pi_.params[i].~Named();
 	}
-	user_free(data_, data_size_);
-	user_free(pi_.params, sizeof(Named)*param_n_);		
+	user_free(data_);
+	user_free(pi_.params);		
 }
 
 CFunPtr CFun::param(

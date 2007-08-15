@@ -173,14 +173,14 @@ void uninitialize(){
 		}
 
 		for(Base** it = objects_begin_; it!=objects_current_; ++it){
-			user_free(*it, 0);
+			user_free(*it);
 		}
 
 		objects_current_ = objects_begin_;
 	}
 	
 	for(AnyPtr** p = place_begin_; p!=place_current_; ++p){
-		user_free(*p, sizeof(AnyPtr));
+		user_free(*p);
 	}
 	
 	llvars_current_ = llvars_begin_;
@@ -266,7 +266,7 @@ void gc(){
 		}
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
-			user_free(*it, 0);
+			user_free(*it);
 		}
 		objects_current_ = objects_alive;
 
@@ -338,7 +338,7 @@ void full_gc(){
 				}
 
 				for(Base** it = objects_alive; it!=objects_current_; ++it){
-					user_free(*it, 0);
+					user_free(*it);
 				}
 				objects_current_ = objects_alive;
 			}

@@ -109,9 +109,15 @@ public:
 		return u.f;
 	}
 
+	/**
+	* @brief 文字列strをストリームに流す
+	*/
 	void put_s(const StringPtr& str);
 
-	StringPtr get_s(int_t length = 1);
+	/**
+	* @brief length文字分ストリームから取り出し、文字列として返す。
+	*/
+	virtual StringPtr get_s(int_t length = -1);
 
 	uint_t print(const StringPtr& str);
 
@@ -132,6 +138,8 @@ public:
 	virtual uint_t pour_all(const StreamPtr& in_stream);
 
 	virtual uint_t size();
+
+	virtual bool eof(){ return false; }
 
 	void iter_first(const VMachinePtr& vm);
 
@@ -163,7 +171,6 @@ public:
 	*/	
 	AnyPtr dextalize();
 
-
 };
 
 class FileStream : public Stream{
@@ -184,6 +191,8 @@ public:
 	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
 
 	virtual void close();
+
+	virtual bool eof();
 
 private:
 
@@ -210,6 +219,10 @@ public:
 	virtual uint_t pour(const StreamPtr& in_stream, uint_t size);
 
 	virtual uint_t pour_all(const StreamPtr& in_stream);
+
+	virtual bool eof();
+
+	virtual StringPtr get_s(int_t length = -1);
 
 	void* data(){
 		return &data_[0];

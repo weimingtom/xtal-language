@@ -53,9 +53,8 @@ public:
 	*
 	* @param str NULL終端文字列
 	* @param size 文字列の長さ
-	* @param buffer_size 確保したバッファのサイズ
 	*/
-	String(char* str, uint_t size, uint_t buffer_size, delegate_memory_t);
+	String(char* str, uint_t size, delegate_memory_t);
 
 	String(const char* str, uint_t len, uint_t hashcode);
 	
@@ -70,6 +69,20 @@ public:
 	const char* c_str();
 
 	/**
+	* @brief 文字列のバイト数を返す。
+	*
+	*/
+	uint_t byte_size();
+
+	/**
+	* @brief 文字列のバイト数を返す。
+	*
+	*/
+	uint_t byte_length();
+
+#if 0
+
+	/**
 	* @brief 文字列の長さを返す。
 	*
 	*/
@@ -81,11 +94,7 @@ public:
 	*/
 	uint_t length();
 
-	/**
-	* @brief 部分文字列を取り出す。
-	*
-	*/
-	StringPtr slice(int_t i, int_t n);
+#endif
 
 	/*
 	* @brief 浅いコピーを返す。
@@ -171,7 +180,7 @@ public:
 	LargeString(const char* str, uint_t size);
 	LargeString(const char* begin, const char* last);
 	LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2);
-	LargeString(char* str, uint_t size, uint_t buffer_size, String::delegate_memory_t);
+	LargeString(char* str, uint_t size, String::delegate_memory_t);
 	LargeString(const char* str, uint_t len, uint_t hashcode);
 	LargeString(LargeString* left, LargeString* right);
 	~LargeString();
@@ -179,7 +188,7 @@ public:
 public:
 
 	const char* c_str();
-	uint_t size();
+	uint_t byte_size();
 	bool is_interned();
 	uint_t hashcode();
 
@@ -214,7 +223,7 @@ private:
 		Rope rope_;
 	};
 
-	uint_t size_;
+	uint_t byte_size_;
 };
 
 /**
@@ -324,14 +333,6 @@ struct Key : public InternedStringPtr{
 };
 
 void visit_members(Visitor& m, const Named& p);
-
-
-template<class Ch, class T>
-std::basic_ostream<Ch, T>& operator << (std::basic_ostream<Ch, T>& os, const AnyPtr& a){
-	StringPtr str = a->to_s(); 
-	os << str->c_str();
-	return os;
-}
 	
 #ifdef XTAL_USE_PREDEFINED_ID
 
@@ -398,12 +399,6 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idop_mul_assign;
 }
 //}}ID}
-
-
-
-
-
-
 
 
 #else

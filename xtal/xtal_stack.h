@@ -29,10 +29,10 @@ private:
 		return user_malloc(size);
 	}
 
-	static void deallocate(void* p, size_t size){
+	static void deallocate(void* p){
 		if(p==&buf_)
 			return;
-		user_free(p, size);
+		user_free(p);
 	}
 
 	void upsize_detail(size_t us);
@@ -220,7 +220,7 @@ template<class T>
 Stack<T>::~Stack(){
 	for(size_t i = 0, last = capacity(); i<last; ++i)
 		begin_[i].~T();
-	deallocate(begin_-1, sizeof(T)*(capacity()+1));
+	deallocate(begin_-1);
 }
 
 template<class T>
@@ -293,7 +293,7 @@ void Stack<T>::upsize_detail(size_t us){
 
 	for(size_t i = 0; i<oldcapa; ++i)
 		oldp[i].~T();
-	deallocate(oldp-1, sizeof(T)*(oldcapa+1));
+	deallocate(oldp-1);
 
 	begin_ = newp;
 	current_ = begin_+newsize-1;
@@ -387,10 +387,10 @@ private:
 		return user_malloc(size);
 	}
 
-	static void deallocate(void* p, size_t size){
+	static void deallocate(void* p){
 		if(p==&buf_)
 			return;
-		user_free(p, size);
+		user_free(p);
 	}
 
 	void* plusp(const void* p, size_t v) const{

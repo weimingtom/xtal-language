@@ -34,7 +34,7 @@ CodePtr compile_file(const StringPtr& file_name){
 
 CodePtr compile(const StringPtr& source){
 	CodeBuilder cb;
-	MemoryStreamPtr ms(xnew<MemoryStream>(source->c_str(), source->byte_size()));
+	MemoryStreamPtr ms(xnew<MemoryStream>(source->c_str(), source->buffer_size()));
 	if(CodePtr fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}
@@ -695,13 +695,13 @@ public:
 					XTAL_DEFAULT{
 						StringPtr str = a->to_s();
 						
-						if(str->byte_size()>=256){
-							if(str->byte_size()>malloc_size){
+						if(str->buffer_size()>=256){
+							if(str->buffer_size()>malloc_size){
 								if(malloc_size!=0){
 									user_free(pcbuf);
 								}
 								
-								malloc_size = str->byte_size() + fs->max_buf_size() + 1;
+								malloc_size = str->buffer_size() + fs->max_buf_size() + 1;
 								pcbuf = (char*)user_malloc(malloc_size);
 							}
 						}

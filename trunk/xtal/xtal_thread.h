@@ -68,6 +68,7 @@ public:
 	virtual ThreadPtr create_thread(const AnyPtr& callback) = 0;
 	virtual MutexPtr create_mutex() = 0;
 	virtual void yield() = 0;
+	virtual void sleep(float_t sec) = 0;
 	virtual void current_thread_id(Thread::ID& id) = 0;
 	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b) = 0;
 };
@@ -91,7 +92,7 @@ void xunlock();
 extern bool thread_enabled_;
 extern int thread_counter_;
 
-int yield_thread();
+int check_yield_thread();
 
 struct GlobalInterpreterLock{
 	GlobalInterpreterLock(int){ if(thread_enabled_)global_interpreter_lock(); }

@@ -57,9 +57,9 @@ int_t ch_len(char_t lead){
 	return ch_len_(lead);
 }
 
-int_t str_len(const char_t* str, uint_t byte_size){
+int_t str_len(const char_t* str, uint_t buffer_size){
 	int_t i = 0, j = 0;
-	while(j<byte_size){
+	while(j<buffer_size){
 		j += ch_len(str[j]);
 		++i;
 	}

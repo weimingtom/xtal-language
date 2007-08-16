@@ -1,67 +1,135 @@
 
 #pragma once
 
-#if 0
+#include "xtal_macro.h"
 
 namespace xtal{ namespace peg{
 
 	
-class Lexer{
+class Lexer : public Stream{
 public:
 
-	Lexer();
-
-	void set_stream(const StreamPtr& stream){
+	Lexer(const StreamPtr& stream){
 		stream_ = stream;
+		buf_.resize(1024);
+
+		pos_ = 0;
+		read_ = 0;
+		marked_pos_ = 0;
+		marked_count_ = 0;
 	}
 
 	/**
-	* @brief 読み進める。
+	* @brief 現在の位置をマークする
+	*
+	* この位置まではseek可能なことが保障される
 	*/
-	int_t read();
+	uint_t mark(){
+		if(marked_count_==0 || pos_<marked_pos_){
+			marked_count_ = 1;
+			marked_pos_ = pos_;
+		}else if(marked_count_!=0 && pos_==marked_pos_){
+			marked_count_++;
+		}
+		return pos_;
+	}
 
 	/**
-	* @brief 次の要素を読む。
+	* @brief マークを消す
 	*/
-	int_t peek();
+	void unmark(uint_t marked){
+		if(marked_count_!=0){
+			if(marked==marked_pos_){
+				marked_count_--;
+			}
+		}
+	}
 
-	/**
-	* @brief 次の要素が引数chと同じだったら読み進める。
-	* @param ch この値と次の要素が等しい場合に読み進める。
-	* @retval true 次の要素はchと同じで、読み進めた。
-	* @retval false 次の要素はchと異なり、読み進めなかった。
-	*/
-	bool eat(int_t ch);
+	void seek_and_unmark(uint_t marked){
+		seek(marked);
+		unmark(marked);
+	}
 
-	/**
-	* @brief 要素を一つ戻す。
-	*/
-	void putback(int_t ch);
-	
-	/**
-	* @brief ポジションの取得。
-	*/
-	int_t position();
-	
-	/**
-	* @brief ポジションをposの位置に戻す。
-	*/
-	void set_position(int_t pos);
+	virtual uint_t tell(){
+		return pos_;
+	}
+
+	virtual uint_t write(const void* p, uint_t size){
+		return 0;
+	}
+
+	virtual uint_t read(void* p, uint_t size){
+
+		uint_t bufsize = buf_.size();
+		uint_t bufmask = buf_.size() - 1;
+
+		// 読み込もうとしているサイズがバッファのサイズより小さい場合は
+		// 簡単のためにバッファを拡大する
+		while(bufsize<size){
+			buf_.resize(bufsize*2);
+			bufsize = buf_.size();
+			bufmask = buf_.size() - 1;		
+		}
+
+		// 読み込んでいない領域をreadしようとしている
+		if(pos_ + size > read_){
+			uint_t newreadsize = pos_ + size - read_;
+
+			if(marked_count_!=0){
+				// マーク中の領域を侵犯しようとしているので、リングバッファを倍倍で拡大
+				while((read_&bufmask) < (marked_pos_&bufmask) && ((read_+newreadsize)&bufmask) > (marked_pos_&bufmask)){
+					buf_.resize(bufsize*2);
+					bufsize = buf_.size();
+					bufmask = buf_.size() - 1;
+				}
+			}
+
+			// 新しく読もうとしているところは、リングバッファの境目を跨いでいる
+			if((read_&bufmask) + newreadsize > bufsize){
+				uint_t nsize = (read_&bufmask) + newreadsize - bufsize;
+				uint_t readsize = stream_->read(&buf_[read_&bufmask], nsize);
+				readsize += stream_->read(&buf_[0], bufsize - nsize);
+				read_ += readsize;
+			}else{
+				uint_t readsize = stream_->read(&buf_[read_&bufmask], newreadsize);
+				read_ += readsize;
+			}
+		}
+		
+		if((pos_&bufmask) + size > bufsize){
+			uint_t nsize = (pos_&bufmask) + size - bufsize;
+			memcpy(p, &buf_[pos_&bufmask], nsize);
+			memcpy((u8*)p + nsize, &buf_[0], bufsize - nsize);
+		}else{
+			memcpy(p, &buf_[pos_&bufmask], size);
+		}
+		pos_ += size;
+		return size;
+	}
+
+	virtual void seek(int_t offset, int_t whence = XSEEK_SET){
+		pos_ = offset;
+	}
+
+	virtual void close(){
+		stream_->close();
+	}
 
 private:
-
-	enum{ BUF_SIZE = 1024, BUF_MASK = BUF_SIZE-1 };
 
 	StreamPtr stream_;
 	StringPtr ws_set_;
 
-	char buf_[BUF_SIZE];
+	AC<u8>::vector buf_;
 
 	uint_t pos_;
 	uint_t read_;
-	uint_t marked_;
+	uint_t marked_pos_;
+	uint_t marked_count_;
 };
 
+
+typedef SmartPtr<Lexer> LexerPtr;
 
 class Parser;
 
@@ -76,23 +144,25 @@ public:
 class Parser : public Base{
 public:
 	
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out) = 0;
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out) = 0;
 	
-	bool try_parse(const ReaderPtr& r, const ArrayPtr& out){
+	bool try_parse(const LexerPtr& r, const ArrayPtr& out){
 		if(out){
-			int_t len = out->length();
-			int_t pos = r->position();
+			uint_t len = out->length();
+			uint_t pos = r->mark();
 			if(parse(r, out)){
+				r->unmark(pos);
 				return true;
 			}
-			r->set_position(pos);
+			r->seek_and_unmark(pos);
 			out->resize(len);
 		}else{
-			int_t pos = r->position();
+			uint_t pos = r->mark();
 			if(parse(r, out)){
+				r->unmark(pos);
 				return true;
 			}
-			r->set_position(pos);
+			r->seek_and_unmark(pos);
 		}
 		return false;
 	}
@@ -104,26 +174,12 @@ class RefParser : public Parser{
 	ParserPtr p_;
 public:
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return p_->parse(r, out);
 	}
 
 	virtual void set_ref(const ParserPtr& p){
 		p_ = p;
-	}
-};
-
-class ChParser : public Parser{
-	int ch_;
-public:
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		if(r->read()==ch_){
-			if(out){
-				out->push_back(ch_);
-			}
-			return true;
-		}
-		return false;
 	}
 };
 
@@ -133,10 +189,12 @@ public:
 	StringParser(const StringPtr& str)
 		:str_(str){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		const char_t* str = str_->c_str();
-		for(int_t i=0; i<str_->size(); ++i){
-			if(r->read()!=str[i]){
+		uint_t size = str_->buffer_size();
+
+		for(uint_t i=0; i<size; ++i){
+			if(r->get_u8()!=(u8)str[i]){
 				return false;
 			}
 		}
@@ -147,14 +205,34 @@ public:
 	}
 };
 
+class SetParser : public Parser{
+	MapPtr set_;
+public:
+
+	SetParser(const StringPtr& str){
+		set_ = xnew<Map>();
+		Xfor(v, str->split("")){
+			set_->set_at(v, true);
+		}
+	}
+
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		StringPtr s = r->get_s(1);
+		if(set_->at(s)){
+			if(out) out->push_back(s);
+			return true;
+		}
+		return false;
+	}
+};
+
 class AnyChParser : public Parser{
 public:
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		int_t ret = r->read();
-		if(ret<0)
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		StringPtr ret = r->get_s(1);
+		if(ret->buffer_size()==0)
 			return false;
-		char buf[2] = {ret, 0};
-		if(out) out->push_back(xnew<String>(buf));
+		if(out) out->push_back(ret);
 		return true;
 	}
 };
@@ -166,7 +244,7 @@ public:
 	RepeatParser(const ParserPtr& p, int_t n)
 		:p_(p), n_(n){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		if(n_<0){
 			for(int_t i=0; i<-n_; ++i){
 				if(!p_->try_parse(r, out)){
@@ -191,7 +269,7 @@ public:
 	SkipParser(const ParserPtr& p)
 		:p_(p){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return p_->parse(r, null);
 	}
 };
@@ -202,13 +280,13 @@ public:
 	SubParser(const ParserPtr& l, const ParserPtr& r)
 		:lhs_(l), rhs_(r){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		int_t pos = r->position();
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		uint_t pos = r->mark();
 		if(rhs_->try_parse(r, null)){
-			r->set_position(pos);
+			r->seek_and_unmark(pos);
 			return false;
 		}
-
+		r->unmark(pos);
 		return lhs_->parse(r, out);
 	}
 };
@@ -219,7 +297,7 @@ public:
 	OrParser(const ParserPtr& l, const ParserPtr& r)
 		:lhs_(l), rhs_(r){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return lhs_->try_parse(r, out) || rhs_->parse(r, out);
 	}
 };
@@ -230,7 +308,7 @@ public:
 	AndParser(const ParserPtr& l, const ParserPtr& r)
 		:lhs_(l), rhs_(r){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return lhs_->parse(r, out) && rhs_->parse(r, out);
 	}
 };
@@ -241,11 +319,11 @@ public:
 	InvertParser(const ParserPtr& p)
 		:p_(p){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		int_t len = out->length();
-		int_t pos = r->position();
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		uint_t len = out->length();
+		uint_t pos = r->mark();
 		bool ret = !parse(r, out);
-		r->set_position(pos);
+		r->seek_and_unmark(pos);
 		out->resize(len);
 		return ret;
 	}
@@ -253,7 +331,7 @@ public:
 
 class EmptyParser : public Parser{
 public:
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return true;
 	}
 };
@@ -265,7 +343,7 @@ public:
 	JoinParser(const ParserPtr& p, const StringPtr& sep = "")
 		:p_(p), sep_(sep){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		ArrayPtr ret = xnew<Array>();
 		if(p_->parse(r, ret)){
 			out->push_back(ret->join(sep_));
@@ -281,7 +359,7 @@ public:
 	ArrayParser(const ParserPtr& p)
 		:p_(p){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		if(out){
 			int_t pos = out->size();
 			if(p_->parse(r, out)){
@@ -302,7 +380,7 @@ public:
 	InsertValParser(const AnyPtr& val, int_t pos)
 		:val_(val), pos_(pos){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		if(out) out->insert(out->size() - pos_, val_);
 		return true;
 	}
@@ -314,7 +392,7 @@ public:
 	SpliceParser(int_t n)
 		:n_(n){}
 
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		if(out) out->push_back(out->splice(out->size() - n_, n_));
 		return true;
 	}
@@ -337,12 +415,12 @@ inline ParserPtr operator >>(const ParserPtr& l, const ParserPtr& r){
 	return ParserPtr(xnew<AndParser>(l, r));
 }
 
-inline ParserPtr operator ^(const ParserPtr& p, int_t n){
+inline ParserPtr operator *(const ParserPtr& p, int_t n){
 	return ParserPtr(xnew<RepeatParser>(p, n));
 }
 
 inline ParserPtr operator <<(const ParserPtr& l, const ParserPtr& r){
-	return l >> -(str(" ")^0) >> r;
+	return l >> -(str(" ")*0) >> r;
 }
 
 inline ParserPtr operator ~(const ParserPtr& p){
@@ -353,6 +431,9 @@ inline ParserPtr operator -(const ParserPtr& l, const ParserPtr& r){
 	return ParserPtr(xnew<SubParser>(l, r));
 }
 
+inline ParserPtr set(const StringPtr& set){
+	return ParserPtr(xnew<SetParser>(set));
+}
 
 inline ParserPtr join(const ParserPtr& p, const StringPtr& sep = ""){
 	return ParserPtr(xnew<JoinParser>(p, sep));
@@ -376,20 +457,28 @@ inline ParserPtr to_node(const AnyPtr& tag, int_t n){
 
 class IntParser : public Parser{
 public:
-	virtual bool parse(const ReaderPtr& r, const ArrayPtr& out){
-		if(!test_digit(r->peek())){
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		uint_t pos = r->mark();
+		if(!test_digit(r->get_u8())){
+			r->seek_and_unmark(pos);
 			return false;
 		}
+		r->seek_and_unmark(pos);
+
 		int_t ret = 0;
 		while(1){
-			if(test_digit(r->peek())){
+			pos = r->mark();
+			u8 ch = r->get_u8();
+			if(test_digit(ch)){
 				ret *= 10;
-				ret += r->read()-'0';
-			}else if(r->peek()=='_'){
-				r->read();
+				ret += ch-'0';
+			}else if(ch=='_'){
+				
 			}else{
+				r->seek_and_unmark(pos);
 				break;
 			}
+			r->unmark(pos);
 		}
 		out->push_back(ret);
 		return true;
@@ -398,4 +487,3 @@ public:
 	
 }}
 
-#endif

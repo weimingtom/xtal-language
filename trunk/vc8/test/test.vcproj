@@ -184,13 +184,13 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="ヘッダー ファイル"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			Name="リソース ファイル"
 			>
 		</Filter>
 		<Filter
-			Name="リソース ファイル"
+			Name="ヘッダー ファイル"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 		</Filter>
 	</Files>

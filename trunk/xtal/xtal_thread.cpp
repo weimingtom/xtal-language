@@ -88,7 +88,7 @@ const VMachinePtr& vmachine(){
 	return vmachine_;
 }
 
-int yield_thread(){
+int check_yield_thread(){
 
 	if(thread_count_==1){
 		thread_counter_ = 0x7fffffff;
@@ -102,6 +102,21 @@ int yield_thread(){
 	}
 
 	return 1;
+}
+
+void yield_thread(){
+	XTAL_UNLOCK{
+		thread_lib_->yield();
+	}
+}
+
+void sleep_thread(float_t sec){
+	if(!thread_lib_)
+		return;
+
+	XTAL_UNLOCK{
+		thread_lib_->sleep(sec);
+	}
 }
 
 
@@ -123,6 +138,7 @@ void InitThread(){
 
 		p->method("join", &Thread::join);
 		p->fun("yield", &yield_thread);
+		p->fun("sleep", &sleep_thread);
 	}
 
 	{
@@ -179,7 +195,7 @@ bool stop_the_world(){
 	thread_lib_->current_thread_id(stop_the_world_thread_id_);
 	mutex2_.pvalue()->lock();	
 	mutex_->unlock();
-	thread_lib_->yield();
+	yield_thread();
 	
 	int count = 0;
 	while(true){
@@ -192,12 +208,12 @@ bool stop_the_world(){
 			break;
 		}else{
 			printf("locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
-			thread_lib_->yield();
+			yield_thread();
 			count++;
 		}
 
 		mutex_->unlock();
-		thread_lib_->yield();
+		yield_thread();
 	}
 	printf("start locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
 	return true;
@@ -477,9 +493,11 @@ public:
 	}
 
 	virtual void yield(){
-		XTAL_UNLOCK{
-			Sleep(0);
-		}
+		Sleep(0);
+	}
+
+	virtual void sleep(float_t sec){
+		Sleep((DWORD)(1000*sec));
 	}
 
 	virtual void current_thread_id(Thread::ID& id){
@@ -501,6 +519,8 @@ void set_thread(){
 #elif defined(XTAL_USE_PTHREAD)
 
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 namespace xtal{
 
@@ -576,9 +596,11 @@ public:
 	}
 
 	virtual void yield(){
-		XTAL_UNLOCK{
-			sched_yield();
-		}
+		sched_yield();
+	}
+
+	virtual void sleep(float_t sec){
+		usleep(sec*1000*1000);
 	}
 
 	virtual void current_thread_id(Thread::ID& id){

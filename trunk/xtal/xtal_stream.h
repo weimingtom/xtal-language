@@ -110,11 +110,11 @@ public:
 	}
 
 	void put_ch(char_t ch){
-
+		put_t<SelectType<sizeof(char_t)>::uint_t>(ch);
 	}
 
 	char_t get_ch(){
-		return 0;
+		return get_t<SelectType<sizeof(char_t)>::uint_t>();
 	}
 
 	/**
@@ -179,6 +179,30 @@ public:
 	*/	
 	AnyPtr dextalize();
 
+
+public:
+
+	template<class T>
+	T get_t(){ return get_t((T*)0); }
+
+	template<class T>
+	void put_t(const T& v){ return put_t(v, (T*)0); }
+
+private:
+
+	i8 get_t(i8*){ return get_i8(); }
+	i16 get_t(i16*){ return get_i16(); }
+	i32 get_t(i32*){ return get_i32(); }
+	u8 get_t(u8*){ return get_u8(); }
+	u16 get_t(u16*){ return get_u16(); }
+	u32 get_t(u32*){ return get_u32(); }
+
+	void put_t(int_t v, i8*){ put_i8(v); }
+	void put_t(int_t v, i16*){ put_i16(v); }
+	void put_t(int_t v, i32*){ put_i32(v); }
+	void put_t(int_t v, u8*){ put_u8(v); }
+	void put_t(int_t v, u16*){ put_u16(v); }
+	void put_t(int_t v, u32*){ put_u32(v); }
 };
 
 class FileStream : public Stream{

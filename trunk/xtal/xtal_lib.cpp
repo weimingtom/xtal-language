@@ -907,6 +907,7 @@ void initialize_lib(){
 	builtin->def("True", get_cpp_class<True>());
 	builtin->def("False", get_cpp_class<False>());
 	builtin->def("Class", get_cpp_class<Class>());
+	builtin->def("CppClass", get_cpp_class<CppClass>());
 	builtin->def("Fun", get_cpp_class<Fun>());
 	builtin->def("Fiber", get_cpp_class<Fiber>());
 	builtin->def("Stream", get_cpp_class<Stream>());
@@ -1254,9 +1255,9 @@ Iterator::find: method(pred){
 Iterator::inject: method(init, fn){
 	result: init;
 	this{
-		init = fn(result, it);
+		result = fn(result, it);
 	}
-	return init;
+	return result;
 }
 	))();
 

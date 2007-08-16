@@ -108,6 +108,8 @@ public:
 	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
 
 	bool is_finished(){
+		if(!nostart_)
+			return false;
 		return resume_pc_ == 0;
 	}
 
@@ -120,6 +122,7 @@ private:
 
 	VMachinePtr vm_;
 	const inst_t* resume_pc_;
+	bool nostart_;
 
 	void visit_members(Visitor& m){
 		Fun::visit_members(m);

@@ -91,7 +91,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		XTAL_CASE(TYPE_SMALL_STRING){
 			StringPtr a = cast<StringPtr>(v);
 			stream_->put_u8(TID);
-			uint_t sz = a->byte_size();
+			uint_t sz = a->buffer_size();
 			const char* str = a->c_str();
 			stream_->put_i32(sz);
 			for(size_t i=0; i<sz; ++i){
@@ -121,7 +121,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			}else{
 				stream_->put_u8(TSTRING);
 			}
-			uint_t sz = a->byte_size();
+			uint_t sz = a->buffer_size();
 			const char* str = a->c_str();
 			stream_->put_i32(sz);
 			for(size_t i=0; i<sz; ++i){
@@ -504,7 +504,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 			StringPtr a = cast<StringPtr>(v);
 			stream_->put_i8('"');
 			const u8* src = (const u8*)a->c_str();
-			int_t size = a->byte_size();
+			int_t size = a->buffer_size();
 			for(size_t i=0; i<size; ++i){
 				u8 ch = src[i];
 				switch(ch){

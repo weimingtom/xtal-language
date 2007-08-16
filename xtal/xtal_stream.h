@@ -109,6 +109,14 @@ public:
 		return u.f;
 	}
 
+	void put_ch(char_t ch){
+
+	}
+
+	char_t get_ch(){
+		return 0;
+	}
+
 	/**
 	* @brief 文字列strをストリームに流す
 	*/

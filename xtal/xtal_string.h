@@ -69,16 +69,10 @@ public:
 	const char* c_str();
 
 	/**
-	* @brief 文字列のバイト数を返す。
+	* @brief 内部バッファサイズを返す。
 	*
 	*/
-	uint_t byte_size();
-
-	/**
-	* @brief 文字列のバイト数を返す。
-	*
-	*/
-	uint_t byte_length();
+	uint_t buffer_size();
 
 #if 0
 
@@ -188,7 +182,7 @@ public:
 public:
 
 	const char* c_str();
-	uint_t byte_size();
+	uint_t buffer_size();
 	bool is_interned();
 	uint_t hashcode();
 
@@ -223,7 +217,7 @@ private:
 		Rope rope_;
 	};
 
-	uint_t byte_size_;
+	uint_t buffer_size_;
 };
 
 /**

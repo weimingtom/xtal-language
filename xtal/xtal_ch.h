@@ -11,7 +11,7 @@ namespace xtal{
 */
 int_t ch_len(char_t lead);
 
-int_t str_len(const char_t* str, uint_t byte_size);
+int_t str_len(const char_t* str, uint_t buffer_size);
 
 void set_code_sjis();
 void set_code_euc();

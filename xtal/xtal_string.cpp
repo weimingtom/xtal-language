@@ -41,15 +41,15 @@ public:
 
 
 	void iter_next(const VMachinePtr& vm){
-		if(str_->byte_size()<=index_){
+		if(str_->buffer_size()<=index_){
 			reset();
 			vm->return_result(null);
 			return;
 		}
 		const char* sep = sep_->c_str();
 		const char* str = str_->c_str();
-		uint_t sepsize = sep_->byte_size();
-		uint_t strsize = str_->byte_size();
+		uint_t sepsize = sep_->buffer_size();
+		uint_t strsize = str_->buffer_size();
 
 		if(sep[0]==0){
 			int_t len = ch_len(str[index_]);
@@ -229,16 +229,12 @@ const char* String::c_str(){
 	}
 }
 
-uint_t String::byte_size(){
+uint_t String::buffer_size(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->byte_size();
+		return ((LargeString*)pvalue(*this))->buffer_size();
 	}else{
 		return strlen(svalue_);
 	}
-}
-
-uint_t String::byte_length(){
-	return byte_size();
 }
 
 StringPtr String::clone(){
@@ -278,8 +274,8 @@ AnyPtr String::each(){
 }
 
 StringPtr String::op_cat_String(const StringPtr& v){
-	uint_t mysize = byte_size();
-	uint_t vsize = v->byte_size();
+	uint_t mysize = buffer_size();
+	uint_t vsize = v->buffer_size();
 
 	if(mysize+vsize <= 16 || mysize<SMALL_STRING_MAX || vsize<SMALL_STRING_MAX)
 		return xnew<String>(c_str(), mysize, v->c_str(), vsize);
@@ -287,7 +283,7 @@ StringPtr String::op_cat_String(const StringPtr& v){
 }
 
 bool String::op_eq_r_String(const StringPtr& v){ 
-	return v->byte_size()==byte_size() && memcmp(v->c_str(), c_str(), byte_size())==0; 
+	return v->buffer_size()==buffer_size() && memcmp(v->c_str(), c_str(), buffer_size())==0; 
 }
 
 bool String::op_lt_r_String(const StringPtr& v){ 
@@ -327,12 +323,12 @@ uint_t String::hashcode(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->hashcode();
 	}else{
-		return make_hashcode(svalue_, byte_size());
+		return make_hashcode(svalue_, buffer_size());
 	}
 }
 
 int_t String::calc_offset(int_t i){
-	uint_t sz = byte_size();
+	uint_t sz = buffer_size();
 	if(i<0){
 		i = sz + i;
 		if(i<0){
@@ -562,26 +558,26 @@ static const SmartPtr<StringMgr>& str_mgr(){
 void LargeString::common_init(uint_t len){
 	XTAL_ASSERT(len>=Innocence::SMALL_STRING_MAX);
 
-	byte_size_ = len;
-	str_.p = static_cast<char*>(user_malloc(byte_size_+1));
-	str_.p[byte_size_] = 0;
+	buffer_size_ = len;
+	str_.p = static_cast<char*>(user_malloc(buffer_size_+1));
+	str_.p[buffer_size_] = 0;
 	flags_ = 0;
 }
 
 	
 LargeString::LargeString(const char* str){
 	common_init(strlen(str));
-	memcpy(str_.p, str, byte_size_);
+	memcpy(str_.p, str, buffer_size_);
 }
 
 LargeString::LargeString(const char* str, uint_t len){
 	common_init(len);
-	memcpy(str_.p, str, byte_size_);
+	memcpy(str_.p, str, buffer_size_);
 }
 
 LargeString::LargeString(const char* begin, const char* last){
 	common_init(last-begin);
-	memcpy(str_.p, begin, byte_size_);
+	memcpy(str_.p, begin, buffer_size_);
 }
 
 LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2){
@@ -592,18 +588,18 @@ LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_
 
 LargeString::LargeString(const string_t& str){
 	common_init(str.size());
-	memcpy(str_.p, str.c_str(), byte_size_);
+	memcpy(str_.p, str.c_str(), buffer_size_);
 }
 
 LargeString::LargeString(const char* str, uint_t len, uint_t hashcode){
 	common_init(len);
-	memcpy(str_.p, str, byte_size_);
+	memcpy(str_.p, str, buffer_size_);
 	str_.hashcode = hashcode;
 	flags_ = INTERNED | HASHED;
 }
 
 LargeString::LargeString(char* str, uint_t len, String::delegate_memory_t){
-	byte_size_ = len;
+	buffer_size_ = len;
 	str_.p = str;
 	flags_ = 0;
 }
@@ -613,7 +609,7 @@ LargeString::LargeString(LargeString* left, LargeString* right){
 	right->inc_ref_count();
 	rope_.left = left;
 	rope_.right = right;
-	byte_size_ = left->byte_size() + right->byte_size();
+	buffer_size_ = left->buffer_size() + right->buffer_size();
 	flags_ = ROPE;
 }
 
@@ -633,15 +629,15 @@ const char* LargeString::c_str(){
 	return str_.p; 
 }
 
-uint_t LargeString::byte_size(){ 
-	return byte_size_; 
+uint_t LargeString::buffer_size(){ 
+	return buffer_size_; 
 }
 
 uint_t LargeString::hashcode(){ 
 	if((flags_ & HASHED)!=0)
 		return str_.hashcode;		
 	became_unified(); 
-	str_.hashcode = make_hashcode(str_.p, byte_size_);
+	str_.hashcode = make_hashcode(str_.p, buffer_size_);
 	flags_ |= HASHED;
 	return str_.hashcode; 
 }
@@ -655,7 +651,7 @@ void LargeString::became_unified(){
 		return;
 
 	uint_t pos = 0;
-	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(byte_size_+1));
+	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(buffer_size_+1));
 	write_to_memory(this, memory, pos);
 	memory[pos] = 0;
 	rope_.left->dec_ref_count();
@@ -668,8 +664,8 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 	PStack<LargeString*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
-			memcpy(&memory[pos], p->str_.p, p->byte_size_);
-			pos += p->byte_size_;
+			memcpy(&memory[pos], p->str_.p, p->buffer_size_);
+			pos += p->buffer_size_;
 			if(stack.empty())
 				return;
 			p = stack.pop();
@@ -688,7 +684,7 @@ InternedStringPtr::InternedStringPtr(const char* name, int_t size)
 	:StringPtr(make(name, size)){}
 
 InternedStringPtr::InternedStringPtr(const StringPtr& name)
-	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->byte_size())){}
+	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->buffer_size())){}
 
 
 StringPtr InternedStringPtr::make(const char* name, uint_t size){

@@ -1110,13 +1110,17 @@ Iterator::break_if: method(pred){
 }
 
 Iterator::take: method(times){
+	if(times<=0)
+		return [];
+
 	return fiber{
 		i: 0;
 		this{
-			if(i>=times)
-				break;
 			yield it;
 			i++;
+
+			if(i>=times)
+				break;
 		}
 	}
 }

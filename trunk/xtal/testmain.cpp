@@ -183,7 +183,9 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
-			
+		  c: [1,2,3].each;
+		  c.take(1).to_a.p;
+		  c.take(1).to_a.p; 
 		))();
 
 		int c;

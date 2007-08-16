@@ -20,7 +20,7 @@ template<class T>
 const ClassPtr& new_cpp_class(const char* name){
 	if(!CppClassHolder<T>::value){
 		CppClassHolder<T>::value = make_place();
-		*CppClassHolder<T>::value = xnew<CppClass>();
+		*CppClassHolder<T>::value = xnew<CppClass>(name);
 	}
 	return (const ClassPtr&)*CppClassHolder<T>::value;
 }

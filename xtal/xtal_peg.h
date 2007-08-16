@@ -5,7 +5,10 @@
 
 namespace xtal{ namespace peg{
 
-	
+
+/**
+* @brief peg::Parser‚ª“Ç‚ÝŽæ‚é‚½‚ß‚Ì“Á•Ê‚ÈStream
+*/
 class Lexer : public Stream{
 public:
 
@@ -115,13 +118,75 @@ public:
 		stream_->close();
 	}
 
+	StringPtr white_space(){
+		return ws_set_;
+	}
+
+	void set_white_space(const StringPtr& ws){
+		ws_set_ = ws;
+	}
+
+	bool check_cache(const void* key, bool& success, uint_t& pos, uint_t& array_size, const ArrayPtr& out){
+		array_size = out ? out->size() : 0;
+		pos = pos_;
+		return cache_table_.fetch(key, success, pos, out, pos_);
+	}
+
+	void cache(const void* key, bool success, uint_t pos, uint_t array_size, const ArrayPtr& out){
+		cache_table_.store(key, success, pos, out ? out->slice(array_size, out->size()-array_size) : ArrayPtr(null), pos_);
+	}
+
 private:
+
+	struct CacheTable{
+		struct Unit{
+			const void* key;
+			uint_t pos;
+			ArrayPtr out;
+			uint_t seek;
+			bool success;
+		};
+
+		enum{ CACHE_MAX = 256 };
+
+		Unit table_[CACHE_MAX];
+
+		CacheTable(){
+			for(int_t i=0; i<CACHE_MAX; ++i){
+				table_[i].key = 0;
+			}
+		}
+
+		bool fetch(const void* key, bool& success, uint_t pos, const ArrayPtr& out, uint_t& seek){
+			uint_t hash = (((uint_t)key)>>3) ^ pos;
+			Unit& unit = table_[hash & (CACHE_MAX-1)];
+			if(key==unit.key){
+				success = unit.success;
+				seek = unit.seek;
+				if(out && unit.out) out->cat_assign(unit.out);
+				return true;
+			}
+			return false;
+		}
+
+		void store(const void* key, bool success, uint_t pos, const ArrayPtr& out, uint_t seek){
+			uint_t hash = (((uint_t)key)>>3) ^ pos;
+			Unit& unit = table_[hash & (CACHE_MAX-1)];
+			unit.success = success;
+			unit.key = key;
+			unit.pos = pos;
+			unit.out = out;
+			unit.seek = seek;
+		}
+
+	};
+
+	CacheTable cache_table_;
 
 	StreamPtr stream_;
 	StringPtr ws_set_;
 
 	AC<u8>::vector buf_;
-
 	uint_t pos_;
 	uint_t read_;
 	uint_t marked_pos_;
@@ -139,7 +204,6 @@ public:
 	ParserPtr(const SmartPtr<Parser>& p = null)
 		:SmartPtr<Parser>(p){}
 };
-
 
 class Parser : public Base{
 public:
@@ -274,6 +338,25 @@ public:
 	}
 };
 
+class MemoizeParser : public Parser{
+	ParserPtr p_;
+public:
+	MemoizeParser(const ParserPtr& p)
+		:p_(p){}
+
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		uint_t len, pos;
+		bool success;
+		if(r->check_cache(p_.get(), success, pos, len, out)){
+			return success;
+		}
+		success = p_->parse(r, out);
+		r->cache(p_.get(), success, pos, len, out);
+		return success;
+	}
+};
+
+
 class SubParser : public Parser{
 	ParserPtr lhs_, rhs_;
 public:
@@ -302,14 +385,30 @@ public:
 	}
 };
 
-class AndParser : public Parser{
+class FollowedParser : public Parser{
 	ParserPtr lhs_, rhs_;
 public:	
-	AndParser(const ParserPtr& l, const ParserPtr& r)
+	FollowedParser(const ParserPtr& l, const ParserPtr& r)
 		:lhs_(l), rhs_(r){}
 
 	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
 		return lhs_->parse(r, out) && rhs_->parse(r, out);
+	}
+};
+
+class TestParser : public Parser{
+	ParserPtr p_;
+public:
+	TestParser(const ParserPtr& p)
+		:p_(p){}
+
+	virtual bool parse(const LexerPtr& r, const ArrayPtr& out){
+		uint_t len = out->length();
+		uint_t pos = r->mark();
+		bool ret = parse(r, out);
+		r->seek_and_unmark(pos);
+		out->resize(len);
+		return ret;
 	}
 };
 
@@ -398,6 +497,9 @@ public:
 	}
 };
 
+inline ParserPtr operator +(const ParserPtr& p){
+	return ParserPtr(xnew<MemoizeParser>(p));
+}
 
 inline ParserPtr operator -(const ParserPtr& p){
 	return ParserPtr(xnew<SkipParser>(p));
@@ -412,15 +514,19 @@ inline ParserPtr str(const StringPtr& p){
 }
 
 inline ParserPtr operator >>(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<AndParser>(l, r));
+	return ParserPtr(xnew<FollowedParser>(l, r));
 }
 
 inline ParserPtr operator *(const ParserPtr& p, int_t n){
 	return ParserPtr(xnew<RepeatParser>(p, n));
 }
 
-inline ParserPtr operator <<(const ParserPtr& l, const ParserPtr& r){
+inline ParserPtr operator >(const ParserPtr& l, const ParserPtr& r){
 	return l >> -(str(" ")*0) >> r;
+}
+
+inline void operator <<(const ParserPtr& l, const ParserPtr& r){
+	l->set_ref(r);
 }
 
 inline ParserPtr operator ~(const ParserPtr& p){

@@ -516,7 +516,7 @@ void set_thread(){
 
 }
 
-#elif defined(XTAL_USE_PTHREAD)
+#elif defined(XTAL_USE_PTHREAD) || defined(__CYGWIN__) 
 
 #include <pthread.h>
 #include <unistd.h>

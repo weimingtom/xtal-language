@@ -395,9 +395,9 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 	if(!fp_)
 		return 0;
 	if(continue_stmt_){
-		printf("ix:%03d>    ", line_);
+		fprintf(stdout, "ix:%03d>    ", line_);
 	}else{
-		printf("ix:%03d>", line_);
+		fprintf(stdout, "ix:%03d>", line_);
 	}
 	continue_stmt_ = true;
 	if(fgets((char*)p, size, fp_)){

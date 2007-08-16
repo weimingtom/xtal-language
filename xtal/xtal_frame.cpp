@@ -298,12 +298,14 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 
 Class::Class(const char* name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
+	set_object_name(name, 1, null);
 	is_cpp_class_ = false;
 	make_map_members();
 }
 
 Class::Class(cpp_class_t, const char* name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
+	set_object_name(name, 1, null);
 	is_cpp_class_ = true;
 	make_map_members();
 }
@@ -514,7 +516,7 @@ void CppClass::s_new(const VMachinePtr& vm){
 	}
 }
 
-Lib:: Lib(){
+Lib::Lib(){
 	set_object_name(Xid(lib), 1000, null);
 	load_path_list_ = xnew<Array>();
 	path_ = xnew<Array>();

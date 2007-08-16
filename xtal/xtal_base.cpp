@@ -79,12 +79,15 @@ void initialize(){
 
 	CppClassHolder<Any>::value = make_place();
 	CppClassHolder<Class>::value = make_place();
+	CppClassHolder<CppClass>::value = make_place();
 
 	*CppClassHolder<Any>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
 	*CppClassHolder<Class>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
+	*CppClassHolder<CppClass>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
 
 	pvalue(get_cpp_class<Any>())->set_ref_count(1);
 	pvalue(get_cpp_class<Class>())->set_ref_count(1);
+	pvalue(get_cpp_class<CppClass>())->set_ref_count(1);
 	
 	int_t temp_ref_count;
 	
@@ -95,9 +98,15 @@ void initialize(){
 	temp_ref_count = pvalue(get_cpp_class<Class>())->ref_count(); 
 	new(pvalue(get_cpp_class<Class>())) Class(Class::cpp_class_t());
 	pvalue(get_cpp_class<Class>())->add_ref_count(temp_ref_count-1);
-	
+
+	temp_ref_count = pvalue(get_cpp_class<CppClass>())->ref_count(); 
+	new(pvalue(get_cpp_class<CppClass>())) Class(Class::cpp_class_t());
+	pvalue(get_cpp_class<CppClass>())->add_ref_count(temp_ref_count-1);
+
+
 	pvalue(get_cpp_class<Any>())->set_class(get_cpp_class<Class>());
 	pvalue(get_cpp_class<Class>())->set_class(get_cpp_class<Class>());
+	pvalue(get_cpp_class<CppClass>())->set_class(get_cpp_class<Class>());
 
 	new_cpp_class<String>();
 	new_cpp_class<Null>();
@@ -114,7 +123,6 @@ void initialize(){
 	new_cpp_class<CFun>();
 	new_cpp_class<CFunArgsImpl>();
 	new_cpp_class<Fiber>();
-	new_cpp_class<CppClass>();
 	new_cpp_class<Lib>();
 	
 	InitDebug();

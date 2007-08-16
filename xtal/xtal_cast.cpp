@@ -30,7 +30,7 @@ struct CastCacheTable{
 
 	const void* fetch(const AnyPtr& a, const void* type_key){
 		uint_t ia = rawvalue(a);
-		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
+		uint_t hash = (((uint_t)type_key)>>3) ^ (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];
 		if(global_mutate_count==unit.mutate_count && type_key==unit.key1 && ia==unit.key2){
 			if(unit.same){
@@ -48,7 +48,7 @@ struct CastCacheTable{
 		}
 
 		uint_t ia = rawvalue(a);
-		uint_t hash = (((uint_t)type_key)>>3) | (ia>>2);
+		uint_t hash = (((uint_t)type_key)>>3) ^ (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];
 		unit.key1 = type_key;
 		unit.key2 = ia;

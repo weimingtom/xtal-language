@@ -80,15 +80,17 @@ int main(int argc, char** argv){
 		
 		
 		{
+			/*
 			using namespace peg;
 			ParserPtr anych = xnew<AnyChParser>();
 			ParserPtr integer = xnew<IntParser>();
 
-			const char* source = "ateeee‚ ewera";
+			const char* source = "aaaabbbcccd";
 			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
 			LexerPtr reader = xnew<Lexer>(stream);
 			
-			ParserPtr re = set("‚ aete‚¢a")*0;
+			ParserPtr e = join(set("abcd")*0);
+			ParserPtr re = ((insert_val("VV") >> e >> integer) | (insert_val("UU") >> e >> str("d")));
 
 			ArrayPtr ret = xnew<Array>();
 			if(re->parse(reader, ret)){
@@ -100,22 +102,26 @@ int main(int argc, char** argv){
 			ParserPtr anych = xnew<AnyChParser>();
 			ParserPtr integer = xnew<IntParser>();
 
-			const char* source = "145+ 1-0 * 500+  55/5";
+			const char* source = "145+ 1-0 * 500+ (555555555+44444444) - 55/5";
 			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
 			LexerPtr reader = xnew<Lexer>(stream);
 			
-			ParserPtr term = integer >> to_node("INT", 1);
+			ParserPtr expr_top = xnew<RefParser>();
 
-			ParserPtr expr_mul = term << (
-				(-str("*") << term >> to_node("MUL", 2)) | 
-				(-str("/") << term >> to_node("DIV", 2)) 
+			ParserPtr term = (integer >> to_node("INT", 1)) | 
+				-str("(") > expr_top > -str(")");
+
+			ParserPtr expr_mul = term > (
+				(-str("*") > term >> to_node("MUL", 2)) | 
+				(-str("/") > term >> to_node("DIV", 2)) 
 				)*0;
 
-			ParserPtr expr_add = expr_mul << (
-				(-str("+") << expr_mul >> to_node("ADD", 2)) | 
-				(-str("-") << expr_mul >> to_node("SUB", 2)) 
+			ParserPtr expr_add = expr_mul > (
+				(-str("+") > expr_mul >> to_node("ADD", 2)) | 
+				(-str("-") > expr_mul >> to_node("SUB", 2)) 
 				)*0;
 
+			expr_top << expr_add;
 
 			ArrayPtr ret = xnew<Array>();
 
@@ -159,7 +165,6 @@ int main(int argc, char** argv){
 		{
 			StringPtr path(argv[0]);
 
-
 #ifdef WIN32
 			StringPtr sep("\\");
 #else
@@ -178,14 +183,7 @@ int main(int argc, char** argv){
 		}
 
 		AnyPtr cd = Xsrc((
-			ms: MemoryStream();
-			ms.put_s("‚ a‚¢i‚¤u‚¦e‚¨o‚¨");
-			ms.seek(0);
-			ms.get_s(1).p;
-			Thread::sleep(1.5);
-			ms.get_s.each.to_a.p;
-			ms.get_s.p;
-			ms.get_s.p;
+			
 		))();
 
 		int c;

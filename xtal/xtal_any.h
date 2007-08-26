@@ -335,6 +335,8 @@ protected:
 	// 直接 Anyを作ることは出来ない
 
 	Any(){}
+		
+	Any(noinit_t n):Innocence(n){}
 
 	Any(const Any& v):Innocence(v){}
 	

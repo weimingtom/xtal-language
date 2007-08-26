@@ -8,6 +8,8 @@
 #include "xtal_stack.h"
 #include "xtal_peg.h"
 
+#undef XTAL_USE_PEG
+
 namespace xtal{
 
 static uint_t make_hashcode(const char_t* str, uint_t size){
@@ -25,10 +27,11 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 	for(uint_t i=0; i<size; ++i){
 		int_t len = ch_len(str[i]);
 		if(len<0){
-			if(i+len > size){
-				return;	
+			if(i + -len > size){
+				len = size - i;
+			}else{
+				len = ch_len2(str+i);
 			}
-			len = ch_len2(str+i);
 		}
 		for(int_t j=0; j<len; ++j){
 			hash = hash*137 + str[i+j] + (hash>>16);
@@ -413,7 +416,6 @@ void String::init_string(const char_t* str, uint_t sz){
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
-		svalue_[sz] = 0;
 	}else{
 		uint_t hash, length;
 		make_hashcode_and_length(str, sz, hash, length);
@@ -428,24 +430,23 @@ void String::init_string(const char_t* str, uint_t sz){
 }
 
 
-String::String(const char* str){
+String::String(const char* str):Any(noinit_t()){
 	init_string(str, strlen(str));
 }
 
-String::String(const string_t& str){
+String::String(const string_t& str):Any(noinit_t()){
 	init_string(str.c_str(), str.size());
 }
 
-String::String(const char* str, uint_t size){
+String::String(const char* str, uint_t size):Any(noinit_t()){
 	init_string(str, size);
 }
 
-String::String(const char* begin, const char* last){
+String::String(const char* begin, const char* last):Any(noinit_t()){
 	init_string(begin, last-begin);
 }
 
-String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
-
+String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):Any(noinit_t()){
 	if(size1==0){
 		init_string(str2, size2);
 		return;
@@ -467,7 +468,7 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
 	}
 }
 
-String::String(const char* str, uint_t len, uint_t hashcode, uint_t length){
+String::String(const char* str, uint_t len, uint_t hashcode, uint_t length):Any(noinit_t()){
 	uint_t sz = len;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
@@ -484,7 +485,7 @@ String::String(const char* str, uint_t len, uint_t hashcode, uint_t length){
 	}
 }
 
-String::String(LargeString* left, LargeString* right){
+String::String(LargeString* left, LargeString* right):Any(noinit_t()){
 	if(left->buffer_size()==0){
 		init_string(right->c_str(), right->buffer_size());
 		return;

@@ -1265,7 +1265,7 @@ Iterator::inject: method(init, fn){
 	return result;
 }
 
-Iterator::with_prev: method(init, fn){
+Iterator::with_prev: method{
 	return fiber{
 		prev: nop;
 		this{
@@ -1274,6 +1274,13 @@ Iterator::with_prev: method(init, fn){
 		}
 	}
 }
+
+Int::iter_next: method{
+	return (this==0 ? null : this-1), this;
+}
+
+Int::iter_first: Int::iter_next;
+
 	))();
 
 	Xsrc((

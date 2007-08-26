@@ -52,3 +52,24 @@
 	
 }
 
+{
+	fib : fiber(){
+		yield 1;
+		yield 2;
+	}
+	
+	assert !fib.is_running;
+	
+	assert fib()==1;
+	
+	assert fib.is_running;
+	
+	assert fib()==2;
+
+	assert fib.is_running;
+	
+	fib();
+	
+	assert !fib.is_running;
+}
+

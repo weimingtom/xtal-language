@@ -1329,7 +1329,12 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = fvalue(get(1)) == fvalue(get()) ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(raweq(get(1), get(0))){
+			downsize(2);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 	}*/ }
 
 	XTAL_VM_CASE(IfNe){ XTAL_VM_CONTINUE(FunIfNe(pc)); /*
@@ -1343,7 +1348,12 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ pc = fvalue(get(1)) != fvalue(get()) ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(rawne(get(1), get(0))){
+			downsize(2);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 	}*/ }
 
 	XTAL_VM_CASE(IfLt){ XTAL_VM_CONTINUE(FunIfLt(pc)); /*
@@ -1633,7 +1643,12 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) == fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(raweq(get(1), get(0))){
+			set(1, Innocence(true)); downsize(1);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 	}*/ }
 
 	XTAL_VM_CASE(Ne){ XTAL_VM_CONTINUE(FunNe(pc)); /*
@@ -1647,7 +1662,12 @@ XTAL_VM_SWITCH{
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) != fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);}
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(rawne(get(1), get(0))){
+			set(1, Innocence(true)); downsize(1);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 	}*/ }
 
 	XTAL_VM_CASE(Lt){ XTAL_VM_CONTINUE(FunLt(pc)); /*
@@ -2413,7 +2433,12 @@ const inst_t* VMachine::FunIfEq(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = fvalue(get(1)) == fvalue(get()) ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(raweq(get(1), get(0))){
+			downsize(2);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 }
 
 const inst_t* VMachine::FunIfNe(const inst_t* pc){
@@ -2428,7 +2453,12 @@ const inst_t* VMachine::FunIfNe(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ pc = fvalue(get(1)) != fvalue(get()) ? pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE : pc+inst.address; downsize(2); XTAL_VM_CONTINUE(pc); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(rawne(get(1), get(0))){
+			downsize(2);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE+InstIf::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 }
 
 const inst_t* VMachine::FunIfLt(const inst_t* pc){
@@ -2690,7 +2720,12 @@ const inst_t* VMachine::FunEq(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) == fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(raweq(get(1), get(0))){
+			set(1, Innocence(true)); downsize(1);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 }
 
 const inst_t* VMachine::FunNe(const inst_t* pc){
@@ -2705,7 +2740,12 @@ const inst_t* VMachine::FunNe(const inst_t* pc){
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) != fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);}
 			}}
 		}
-		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		if(rawne(get(1), get(0))){
+			set(1, Innocence(true)); downsize(1);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_eq)));
+		}
 }
 
 const inst_t* VMachine::FunLt(const inst_t* pc){

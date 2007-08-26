@@ -6,18 +6,117 @@
 #include "xtal_string.h"
 #include "xtal_macro.h"
 #include "xtal_stack.h"
+#include "xtal_peg.h"
 
 namespace xtal{
 
-uint_t make_hashcode(const char* p, uint_t size){
-	const u8* str = (u8*)p;
-	uint_t value = 3;
+static uint_t make_hashcode(const char_t* str, uint_t size){
+	uint_t hash = 3;
 	for(uint_t i=0; i<size; ++i){
-		value = value*137 + str[i] + (value>>16);
+		hash = hash*137 + str[i] + (hash>>16);
 	}
-	return value;
+	return hash;
 }
 
+static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
+	hash = 3;
+	length = 0;
+
+	for(uint_t i=0; i<size; ++i){
+		int_t len = ch_len(str[i]);
+		if(len<0){
+			if(i+len > size){
+				return;	
+			}
+			len = ch_len2(str+i);
+		}
+		for(int_t j=0; j<len; ++j){
+			hash = hash*137 + str[i+j] + (hash>>16);
+		}
+
+		length += len;
+	}
+}
+
+#ifdef XTAL_USE_PEG
+
+class StringScanIter : public Base{
+	SmartPtr<StringStream> ss_;
+	SmartPtr<peg::CharLexer> lex_;
+	peg::ParserPtr patt_;
+	ArrayPtr ret_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & ss_ & lex_ & patt_ & ret_;
+	}
+
+public:
+
+	StringScanIter(const StringPtr& str, const peg::ParserPtr& patt)
+		:ss_(xnew<StringStream>(str)), lex_(xnew<peg::CharLexer>(ss_)), patt_(patt), ret_(xnew<Array>()){
+	}
+	
+	AnyPtr reset(){
+		ss_->seek(0);
+		lex_ = xnew<peg::CharLexer>(ss_);
+		ret_->clear();
+		return SmartPtr<StringScanIter>::from_this(this);
+	}
+
+	void iter_next(const VMachinePtr& vm){
+		/*
+		if(patt_->parse(lex_, ret_)){
+			vm->return_result(SmartPtr<StringScanIter>::from_this(this), ret_->empty() ? null : ret_->front());
+			ret_->clear();
+		}else{
+			vm->return_result(null);	
+		}
+		*/
+	}
+};
+
+void InitString(){
+
+	{
+		ClassPtr p = new_cpp_class<StringScanIter>("StringScanIter");
+		p->inherit(Iterator());
+		p->method("reset", &StringScanIter::reset);
+		p->method("iter_first", &StringScanIter::iter_next);
+		p->method("iter_next", &StringScanIter::iter_next);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<String>("String");
+
+		p->def("new", ctor<String>());
+		p->method("to_i", &String::to_i);
+		p->method("to_f", &String::to_f);
+		p->method("to_s", &String::to_s);
+		p->method("clone", &String::clone);
+
+		//p->method("length", &String::length);
+		//p->method("size", &String::size);
+		p->method("intern", &String::intern);
+
+		p->method("split", &String::split)->param("i", Named("n", 1));
+		p->method("each", &String::each);
+		p->method("replaced", &String::replaced);
+		p->method("scan", &String::scan);
+
+		p->method("op_cat", &String::op_cat);
+		p->method("op_eq", &String::op_eq);
+		p->method("op_lt", &String::op_lt);
+
+		p->method("op_cat_r_String", &String::op_cat_r_String);
+		p->method("op_eq_r_String", &String::op_eq_r_String);
+		p->method("op_lt_r_String", &String::op_lt_r_String);
+		
+		p->method("op_cat_assign", &String::op_cat);
+	}
+}
+
+#else
 
 class StringSplit : public Base{
 	StringPtr str_, sep_;
@@ -119,62 +218,242 @@ void InitString(){
 }
 
 
+#endif
 
 ////////////////////////////////////////////////////////////////
 
-String::String(const char* str){
-	uint_t sz = strlen(str);
+class StringMgr : public GCObserver{
+public:
+
+	struct Node{
+		uint_t hashcode;
+		const char* str;
+		uint_t size;
+		StringPtr value;
+		Node* next;
+
+		Node()
+			:value(null), next(0){}
+	};
+
+
+	StringMgr(){
+		size_ = 0;
+		begin_ = 0;
+		used_size_ = 0;
+		guard_ = 0;
+		expand(7);
+	}
+
+	virtual ~StringMgr(){
+		for(uint_t i = 0; i<size_; ++i){
+			Node* p = begin_[i];
+			while(p){
+				Node* next = p->next;
+				p->~Node();
+				user_free(p);
+				p = next;
+			}
+		}
+		user_free(begin_);
+	}
+		
+protected:
+
+	float_t rate(){
+		return used_size_/(float_t)size_;
+	}
+	
+	void set_node(Node* node){
+		Node** p = &begin_[node->hashcode % size_];
+		while(*p){
+			p = &(*p)->next;
+		}
+		*p = node;
+	}
+
+	void expand(int_t addsize){
+		Node** oldbegin = begin_;
+		uint_t oldsize = size_;
+
+		size_ = size_ + size_/2 + addsize;
+		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
+		for(uint_t i = 0; i<size_; ++i){
+			begin_[i] = 0;
+		}
+
+		for(uint_t i = 0; i<oldsize; ++i){
+			Node* p = oldbegin[i];
+			while(p){
+				Node* next = p->next;
+				set_node(p);
+				p->next = 0;
+				p = next;
+			}
+		}
+		user_free(oldbegin);
+	}
+	
+protected:
+
+	Node** begin_;
+	uint_t size_;
+	uint_t used_size_;
+	int_t guard_;
+
+	struct Guard{
+		int_t& count;
+		Guard(int_t& c):count(c){ count++; }
+		~Guard(){ count--; }
+	private:
+		void operator=(const Guard&);
+	};
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		for(uint_t i = 0; i<size_; ++i){
+			Node* p = begin_[i];
+			while(p){
+				Node* next = p->next;
+				m & p->value;
+				p = next;
+			}
+		}		
+	}
+
+public:
+
+	const StringPtr& insert(const char* str, uint_t size);
+
+	const StringPtr& insert(const char* str, uint_t size, uint_t hash, uint_t length);
+
+	virtual void before_gc();
+};
+
+const StringPtr& StringMgr::insert(const char* str, uint_t size){
+	uint_t hashcode;
+	uint_t length;
+	make_hashcode_and_length(str, size, hashcode, length);
+	return insert(str, size, hashcode, length);
+}
+
+const StringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
+	Guard guard(guard_);
+
+	Node** p = &begin_[hashcode % size_];
+	while(*p){
+		if((*p)->size==size && memcmp((*p)->str, str, size)==0){
+			return (*p)->value;
+		}
+		p = &(*p)->next;
+	}
+
+	*p = (Node*)user_malloc(sizeof(Node));
+	new(*p) Node();
+	
+	(*p)->value = xnew<String>(str, size, hashcode, length);
+	(*p)->hashcode = hashcode;
+	(*p)->str = (*p)->value->c_str();
+	(*p)->size = size;
+
+	used_size_++;
+	if(rate()>0.5f){
+		expand(17);
+
+		p = &begin_[hashcode % size_];
+		while(*p){
+			if((*p)->size==size && memcmp((*p)->str, str, size)==0){
+				return (*p)->value;
+			}
+			p = &(*p)->next;
+		}
+		return (*p)->value;
+	}else{
+		return (*p)->value;
+	}
+}
+
+void StringMgr::before_gc(){
+	return;
+
+	if(guard_){
+		return;
+	}
+
+	for(uint_t i = 0; i<size_; ++i){
+		Node* p = begin_[i];
+		Node* prev = 0;
+		while(p){
+			Node* next = p->next;
+			if(pvalue(p->value)->ref_count()==1){
+				p->~Node();
+				user_free(p);
+				used_size_--;
+				if(prev){
+					prev->next = next;
+				}else{
+					begin_[i] = next;
+				}
+			}else{
+				prev = p;
+			}
+			p = next;
+		}
+	}
+}
+	
+static const SmartPtr<StringMgr>& str_mgr(){
+	static LLVar<SmartPtr<StringMgr> > p = xnew<StringMgr>();
+	return p;
+}
+
+////////////////////////////////////////////////////////////////
+
+void String::init_string(const char_t* str, uint_t sz){
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
 		svalue_[sz] = 0;
 	}else{
-		set_p(new LargeString(str));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
+		uint_t hash, length;
+		make_hashcode_and_length(str, sz, hash, length);
+		if(length<=1){
+			set_p(pvalue(str_mgr()->insert(str, sz, hash, length)));
+		}else{
+			set_p(new LargeString(str, sz, hash));
+			pvalue(*this)->set_class(new_cpp_class<String>());
+			pvalue(*this)->dec_ref_count();
+		}
 	}
+}
+
+
+String::String(const char* str){
+	init_string(str, strlen(str));
 }
 
 String::String(const string_t& str){
-	uint_t sz = str.size();
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		memcpy(svalue_, str.c_str(), sz);
-		svalue_[sz] = 0;
-	}else{
-		set_p(new LargeString(str));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
-	}
+	init_string(str.c_str(), str.size());
 }
 
 String::String(const char* str, uint_t size){
-	uint_t sz = size;
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		memcpy(svalue_, str, sz);
-		svalue_[sz] = 0;
-	}else{
-		set_p(new LargeString(str, size));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
-	}
+	init_string(str, size);
 }
 
 String::String(const char* begin, const char* last){
-	uint_t sz = last-begin;
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		memcpy(svalue_, begin, sz);
-		svalue_[sz] = 0;
-	}else{
-		set_p(new LargeString(begin, last));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
-	}
+	init_string(begin, last-begin);
 }
 
 String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
+
+	if(size1==0){
+		init_string(str2, size2);
+		return;
+	}else if(size2==0){
+		init_string(str1, size1);
+		return;
+	}
+
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
@@ -188,37 +467,35 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2){
 	}
 }
 
-String::String(const char* str, uint_t len, uint_t hashcode){
+String::String(const char* str, uint_t len, uint_t hashcode, uint_t length){
 	uint_t sz = len;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
 		svalue_[sz] = 0;
 	}else{
-		set_p(new LargeString(str, len, hashcode));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
+		if(length<=1){
+			set_p(pvalue(str_mgr()->insert(str, sz, hashcode, length)));
+		}else{
+			set_p(new LargeString(str, len, hashcode));
+			pvalue(*this)->set_class(new_cpp_class<String>());
+			pvalue(*this)->dec_ref_count();
+		}
 	}
 }
 
 String::String(LargeString* left, LargeString* right){
+	if(left->buffer_size()==0){
+		init_string(right->c_str(), right->buffer_size());
+		return;
+	}else if(right->buffer_size()==0){
+		init_string(left->c_str(), left->buffer_size());
+		return;
+	}
+
 	set_p(new LargeString(left, right));
 	pvalue(*this)->set_class(new_cpp_class<String>());
 	pvalue(*this)->dec_ref_count();
-}
-
-String::String(char* str, uint_t len, delegate_memory_t dmt){
-	uint_t sz = len;
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		memcpy(svalue_, str, sz);
-		svalue_[sz] = 0;
-		user_free(str);
-	}else{
-		set_p(new LargeString(str, len, dmt));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
-	}
 }
 
 const char* String::c_str(){
@@ -265,13 +542,46 @@ float_t String::to_f(){
 	return (float_t)atof(c_str()); 
 }
 
-AnyPtr String::split(const StringPtr& sep){
-	return xnew<StringSplit>(StringPtr::from_this(this), sep);
+#ifdef XTAL_USE_PEG
+
+AnyPtr String::split(const AnyPtr& sep){
+	using namespace peg;
+	ParserPtr patt = to_parser(sep);
+	return xnew<StringScanIter>(StringPtr::from_this(this), ~end() >> join((anych() - patt)*0) >> -(patt | end()));
+}
+
+AnyPtr String::each(){
+	using namespace peg;
+	return xnew<StringScanIter>(StringPtr::from_this(this), peg::anych());
+}
+	
+AnyPtr String::scan(const AnyPtr& p){
+	using namespace peg;
+	ParserPtr patt = to_parser(p);
+	return xnew<StringScanIter>(StringPtr::from_this(this), -(anych() - patt)*0 >> array(patt));
+}
+
+AnyPtr String::replaced(const AnyPtr& pattern, const StringPtr& str){
+	using namespace peg;
+	ParserPtr patt = to_parser(pattern);
+	ParserPtr elem = ((anych() - patt)*0);
+	ArrayPtr ret = xnew<Array>();
+	join(elem >> (-patt >> val(str) >> elem)*0)->parse_string(StringPtr::from_this(this), ret);
+	return ret->at(0);
+}
+
+
+#else
+
+AnyPtr String::split(const AnyPtr& sep){
+	return xnew<StringSplit>(StringPtr::from_this(this), sep->to_s());
 }
 
 AnyPtr String::each(){
 	return xnew<StringSplit>(StringPtr::from_this(this), "");
 }
+
+#endif
 
 StringPtr String::op_cat_String(const StringPtr& v){
 	uint_t mysize = buffer_size();
@@ -378,206 +688,13 @@ struct StringKey{
 	}
 };
 
-class StringMgr : public GCObserver{
-public:
+void LargeString::common_init(uint_t size){
+	XTAL_ASSERT(size>=Innocence::SMALL_STRING_MAX);
 
-	struct Node{
-		uint_t hashcode;
-		const char* str;
-		uint_t size;
-		StringPtr value;
-		Node* next;
-
-		Node()
-			:value(null), next(0){}
-	};
-
-
-	StringMgr(){
-		size_ = 0;
-		begin_ = 0;
-		used_size_ = 0;
-		guard_ = 0;
-		expand(7);
-	}
-
-	virtual ~StringMgr(){
-		for(uint_t i = 0; i<size_; ++i){
-			Node* p = begin_[i];
-			while(p){
-				Node* next = p->next;
-				p->~Node();
-				user_free(p);
-				p = next;
-			}
-		}
-		user_free(begin_);
-	}
-		
-protected:
-
-	float_t rate(){
-		return used_size_/(float_t)size_;
-	}
-	
-	void set_node(Node* node){
-		Node** p = &begin_[node->hashcode % size_];
-		while(*p){
-			p = &(*p)->next;
-		}
-		*p = node;
-	}
-
-	void expand(int_t addsize){
-		Node** oldbegin = begin_;
-		uint_t oldsize = size_;
-
-		size_ = size_ + size_/2 + addsize;
-		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
-		for(uint_t i = 0; i<size_; ++i){
-			begin_[i] = 0;
-		}
-
-		for(uint_t i = 0; i<oldsize; ++i){
-			Node* p = oldbegin[i];
-			while(p){
-				Node* next = p->next;
-				set_node(p);
-				p->next = 0;
-				p = next;
-			}
-		}
-		user_free(oldbegin);
-	}
-	
-protected:
-
-	Node** begin_;
-	uint_t size_;
-	uint_t used_size_;
-	int_t guard_;
-
-	struct Guard{
-		int_t& count;
-		Guard(int_t& c):count(c){ count++; }
-		~Guard(){ count--; }
-	private:
-		void operator=(const Guard&);
-	};
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		for(uint_t i = 0; i<size_; ++i){
-			Node* p = begin_[i];
-			while(p){
-				Node* next = p->next;
-				m & p->value;
-				p = next;
-			}
-		}		
-	}
-
-public:
-
-	const StringPtr& insert(const char* str, uint_t size);
-
-	virtual void before_gc();
-};
-
-const StringPtr& StringMgr::insert(const char* str, uint_t size){
-	Guard guard(guard_);
-
-	uint_t hashcode = make_hashcode(str, size);
-	Node** p = &begin_[hashcode % size_];
-	while(*p){
-		if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-			return (*p)->value;
-		}
-		p = &(*p)->next;
-	}
-
-	*p = (Node*)user_malloc(sizeof(Node));
-	new(*p) Node();
-	
-	(*p)->value = xnew<String>(str, size, hashcode);
-	(*p)->hashcode = hashcode;
-	(*p)->str = (*p)->value->c_str();
-	(*p)->size = size;
-
-	used_size_++;
-	if(rate()>0.5f){
-		expand(17);
-
-		p = &begin_[hashcode % size_];
-		while(*p){
-			if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-				return (*p)->value;
-			}
-			p = &(*p)->next;
-		}
-		return (*p)->value;
-	}else{
-		return (*p)->value;
-	}
-}
-
-void StringMgr::before_gc(){
-	return;
-
-	if(guard_){
-		return;
-	}
-
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		Node* prev = 0;
-		while(p){
-			Node* next = p->next;
-			if(pvalue(p->value)->ref_count()==1){
-				p->~Node();
-				user_free(p);
-				used_size_--;
-				if(prev){
-					prev->next = next;
-				}else{
-					begin_[i] = next;
-				}
-			}else{
-				prev = p;
-			}
-			p = next;
-		}
-	}
-}
-	
-static const SmartPtr<StringMgr>& str_mgr(){
-	static LLVar<SmartPtr<StringMgr> > p = xnew<StringMgr>();
-	return p;
-}
-
-void LargeString::common_init(uint_t len){
-	XTAL_ASSERT(len>=Innocence::SMALL_STRING_MAX);
-
-	buffer_size_ = len;
+	buffer_size_ = size;
 	str_.p = static_cast<char*>(user_malloc(buffer_size_+1));
 	str_.p[buffer_size_] = 0;
 	flags_ = 0;
-}
-
-	
-LargeString::LargeString(const char* str){
-	common_init(strlen(str));
-	memcpy(str_.p, str, buffer_size_);
-}
-
-LargeString::LargeString(const char* str, uint_t len){
-	common_init(len);
-	memcpy(str_.p, str, buffer_size_);
-}
-
-LargeString::LargeString(const char* begin, const char* last){
-	common_init(last-begin);
-	memcpy(str_.p, begin, buffer_size_);
 }
 
 LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2){
@@ -586,22 +703,11 @@ LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_
 	memcpy(str_.p+size1, str2, size2);
 }
 
-LargeString::LargeString(const string_t& str){
-	common_init(str.size());
-	memcpy(str_.p, str.c_str(), buffer_size_);
-}
-
-LargeString::LargeString(const char* str, uint_t len, uint_t hashcode){
-	common_init(len);
+LargeString::LargeString(const char* str, uint_t size, uint_t hashcode){
+	common_init(size);
 	memcpy(str_.p, str, buffer_size_);
 	str_.hashcode = hashcode;
 	flags_ = INTERNED | HASHED;
-}
-
-LargeString::LargeString(char* str, uint_t len, String::delegate_memory_t){
-	buffer_size_ = len;
-	str_.p = str;
-	flags_ = 0;
 }
 
 LargeString::LargeString(LargeString* left, LargeString* right){

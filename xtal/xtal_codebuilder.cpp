@@ -229,7 +229,7 @@ void CodeBuilder::put_set_send_code(int_t var, Expr* pvar, bool if_defined){
 		compile(e.bin(InstCat::NUMBER, e.string(com_->register_value("set_")), pvar));
 	}	
 	
-	int_t symbol_number = com_->register_ident(xnew<String>("set_", 4, to_id(var)->c_str(), to_id(var)->buffer_size()));
+	int_t symbol_number = com_->register_ident(xnew<String>("set_", 4)->cat(to_id(var)));
 	bool tail = false;
 
 	if(if_defined){

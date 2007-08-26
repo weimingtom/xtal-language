@@ -96,6 +96,7 @@ void InitArray(){
 		p->method("op_eq", &Array::op_eq);
 		p->method("reverse", &Array::reverse);
 		p->method("reversed", &Array::reversed);
+		p->method("assign", &Array::assign);
 	}
 
 }
@@ -111,17 +112,28 @@ Array::Array(int_t size){
 	capa_ = size + 7;
 	size_ = size;
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
-
 	memset(values_, 0, sizeof(AnyPtr)*size_);
 }
 
+Array::Array(const AnyPtr* first, const AnyPtr* end){
+	int_t size = end-first;
+
+	capa_ = size;
+	size_ = size;
+	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+
+	for(int_t i=0; i<size; ++i){
+		copy_innocence(values_[i], first[i]);
+		inc_ref_count_force(values_[i]);
+	}
+}
 
 Array::Array(const Array& v){
 	size_ = capa_ = ((Array&)v).size();
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
 	
-	memcpy(values_, v.values_, sizeof(AnyPtr)*size_);
 	for(uint_t i=0; i<size_; ++i){
+		copy_innocence(values_[i], v.values_[i]);
 		inc_ref_count_force(values_[i]);
 	}
 }
@@ -158,7 +170,7 @@ void Array::resize(int_t sz){
 		size_ = sz;
 	}else if(sz>(int_t)size_){
 		if(sz>(int_t)capa_){
-			uint_t newcapa = sz+capa_/2;
+			uint_t newcapa = sz+capa_;
 			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
 			memcpy(newp, values_, sizeof(AnyPtr)*size_);
 			memset(&newp[size_], 0, sizeof(AnyPtr)*(sz-size_));
@@ -189,8 +201,8 @@ void Array::erase(int_t start, int_t n){
 		return;
 	}
 
-	for(int_t j=0; j<n; ++j){
-		dec_ref_count_force(values_[pos + j]);
+	for(int_t i=0; i<n; ++i){
+		dec_ref_count_force(values_[pos + i]);
 	}
 
 	size_ -= n;
@@ -207,7 +219,7 @@ void Array::insert(int_t i, const AnyPtr& v){
 	}
 	int_t pos = calc_offset(i);
 	memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-1-pos));
-	memcpy(&values_[pos], &v, sizeof(AnyPtr));
+	copy_innocence(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }
 
@@ -217,7 +229,7 @@ void Array::push_back(const AnyPtr& v){
 	}else{
 		size_++;
 	}
-	memcpy(&values_[size_-1], &v, sizeof(AnyPtr));
+	copy_innocence(values_[size_-1], v);
 	inc_ref_count_force(values_[size_-1]);
 }
 
@@ -229,17 +241,17 @@ void Array::pop_back(){
 }
 
 ArrayPtr Array::slice(int_t start, int_t n){
-	int pos = calc_offset(start);
+	if(n==0){
+		return xnew<Array>(0);
+	}
+
+	int_t pos = calc_offset(start);
 	if(n<0 || (uint_t)(n + pos)>size_){
 		throw_index_error();
 		return null;
 	}
 
-	ArrayPtr ret(xnew<Array>(n));
-	for(int_t i=0; i<n; ++i){
-		ret->values_[i] = values_[pos + i];
-	}
-	return ret;
+	return xnew<Array>(&values_[pos], &values_[pos+n]);
 }
 
 ArrayPtr Array::splice(int_t start, int_t n){
@@ -283,10 +295,16 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 
 StringPtr Array::join(const StringPtr& sep){
 	MemoryStreamPtr ret(xnew<MemoryStream>());
-	for(uint_t i = 0, sz = size(); i<sz; ++i){
-		ret->put_s(at(i)->to_s());
-		if(i<sz-1){
-			ret->put_s(sep);
+	if(sep->buffer_size()==0){
+		for(uint_t i = 0, sz = size(); i<sz; ++i){
+			ret->put_s(at(i)->to_s());
+		}
+	}else{
+		for(uint_t i = 0, sz = size(); i<sz; ++i){
+			ret->put_s(at(i)->to_s());
+			if(i<sz-1){
+				ret->put_s(sep);
+			}
 		}
 	}
 	return ret->to_s();
@@ -323,6 +341,13 @@ AnyPtr Array::each(){
 
 AnyPtr Array::r_each(){
 	return xnew<ArrayIter>(ArrayPtr::from_this(this), true);
+}
+
+void Array::assign(const ArrayPtr& other){
+	resize(other->size());
+	for(int_t i=0, sz=size(); i<sz; ++i){
+		values_[i] = other->values_[i];
+	}
 }
 
 int_t Array::calc_offset(int_t i){

@@ -213,33 +213,23 @@ Map::~Map(){
 }
 	
 const AnyPtr& Map::at(const AnyPtr& key){
-	const VMachinePtr& vm = vmachine();
 	Node* p = begin_[key->hashcode() % size_];
 	while(p){
-		vm->setup_call(1, p->key);
-		key->rawsend(vm, Xid(op_eq));
-		if(vm->processed() && vm->result()){
-			vm->cleanup_call();
+		if(p->key==key){
 			return p->value;
 		}
-		vm->cleanup_call();
 		p = p->next;
 	}
 	return null;
 }
 
 void Map::set_at(const AnyPtr& key, const AnyPtr& value){
-	const VMachinePtr& vm = vmachine();
 	Node** p = &begin_[key->hashcode() % size_];
 	while(*p){
-		vm->setup_call(1, (*p)->key);
-		key->rawsend(vm, Xid(op_eq));
-		if(vm->processed() && vm->result()){
-			vm->cleanup_call();
+		if((*p)->key==key){
 			(*p)->value = value;
 			return;
 		}
-		vm->cleanup_call();
 		p = &(*p)->next;
 	}
 	*p = (Node*)user_malloc(sizeof(Node));
@@ -251,14 +241,10 @@ void Map::set_at(const AnyPtr& key, const AnyPtr& value){
 }
 
 void Map::erase(const AnyPtr& key){
-	const VMachinePtr& vm = vmachine();
 	Node* p = begin_[key->hashcode() % size_];
 	Node* prev = 0;
 	while(p){
-		vm->setup_call(1, p->key);
-		key->rawsend(vm, Xid(op_eq));
-		if(vm->processed() && vm->result()){
-			vm->cleanup_call();
+		if(p->key==key){
 			if(prev){
 				prev->next = p->next;
 			}else{
@@ -267,7 +253,6 @@ void Map::erase(const AnyPtr& key){
 			p->~Node();
 			user_free(p);
 		}
-		vm->cleanup_call();
 		prev = p;
 		p = p->next;
 	}

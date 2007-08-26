@@ -452,32 +452,32 @@ SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a
 
 
 template<class T>
-SmartPtr<T> xnew(){
+inline SmartPtr<T> xnew(){
 	return XNewT<T>::make(I2T<InheritedN<T>::value>());
 }
 
 template<class T, class A0>
-SmartPtr<T> xnew(const A0& a0){
+inline SmartPtr<T> xnew(const A0& a0){
 	return XNewT<T, A0>::make(I2T<InheritedN<T>::value>(), a0);
 }
 
 template<class T, class A0, class A1>
-SmartPtr<T> xnew(const A0& a0, const A1& a1){
+inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
 	return XNewT<T, A0, A1>::make(I2T<InheritedN<T>::value>(), a0, a1);
 }
 
 template<class T, class A0, class A1, class A2>
-SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
+inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
 	return XNewT<T, A0, A1, A2>::make(I2T<InheritedN<T>::value>(), a0, a1, a2);
 }
 
 template<class T, class A0, class A1, class A2, class A3>
-SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
+inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 	return XNewT<T, A0, A1, A2, A3>::make(I2T<InheritedN<T>::value>(), a0, a1, a2, a3);
 }
 
 template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 	return XNewT<T, A0, A1, A2, A3, A4>::make(I2T<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 

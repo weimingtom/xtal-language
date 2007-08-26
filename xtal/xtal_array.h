@@ -19,6 +19,8 @@ public:
 	*/
 	Array(int_t size = 0);
 
+	Array(const AnyPtr* first, const AnyPtr* end);
+
 	/**
 	* @brief コピーコンストラクタを備える
 	*/
@@ -228,6 +230,8 @@ public:
 	*
 	*/
 	AnyPtr r_each();
+
+	void assign(const ArrayPtr& other);
 
 protected:
 

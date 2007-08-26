@@ -6,13 +6,57 @@
 
 namespace xtal{
 
-namespace{
+
+#if 0//def XTAL_DEBUG
+
+struct SizeAndCount{
+	EEE(int a, int b){
+		size = a;
+		count = b;
+	}
+	int size;
+	int count;
+};
+
+std::map<void*, SizeAndCount> mem_map_;
+int gcounter = 0;
+
+void* debug_malloc(size_t size){
+	void* ret = malloc(size);
+	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+	return ret;
+}
+
+void debug_free(void* p){
+	free(p);
+	mem_map_.erase(p);
+}
+
+void* (*user_malloc_)(size_t) = &debug_malloc;
+void (*user_free_)(void*) = &debug_free;
+
+void display_debug_memory(){
+	for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
+		int size = it->second.size;
+		int count = it->second.count;
+	}
+}
+
+#else
 
 void* (*user_malloc_)(size_t) = &malloc;
 void (*user_free_)(void*) = &free;
 
+void display_debug_memory(){
+}
+
+#endif
+
+namespace{
+
+
 size_t used_user_malloc_size_ = 0;
-size_t used_user_malloc_threshold_ = 1024*50;
+size_t used_user_malloc_threshold_ = 1024*100;
 
 SimpleMemoryManager smm_;
 
@@ -40,7 +84,6 @@ void* user_malloc(size_t size){
 } 
 
 void* user_malloc_nothrow(size_t size){
-
 	if(used_user_malloc_size_ > used_user_malloc_threshold_){
 		used_user_malloc_size_ = 0; 
 		gc();
@@ -200,7 +243,7 @@ void SimpleMemoryManager::free(void* p){
 
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize){
 	uint_t size = (uint_t)(end-begin);
-	uint_t newsize = size+addsize+size/4;
+	uint_t newsize = size+addsize+size;
 	void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
 	memcpy(newbegin, begin, sizeof(void*)*size);
 	end = newbegin+newsize;

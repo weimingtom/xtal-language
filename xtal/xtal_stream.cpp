@@ -60,6 +60,12 @@ void InitStream(){
 	}
 
 	{
+		ClassPtr p = new_cpp_class<StringStream>("StringStream");
+		p->inherit(get_cpp_class<Stream>());
+		p->def("new", ctor<StringStream, const StringPtr&>());
+	}
+
+	{
 		ClassPtr p = new_cpp_class<FileStream>("FileStream");
 		p->inherit(get_cpp_class<Stream>());
 		p->def("new", ctor<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
@@ -76,13 +82,23 @@ StringPtr Stream::get_s(int_t length){
 	if(eof())
 		return "";
 
-	char buf[16];
 	if(length==1){
-		buf[0] = get_u8();	
+		char_t buf[16];
+		buf[0] = get_ch();
 
 		int_t len = ch_len(buf[0]);
-		for(int_t i=1; i<len; ++i){
-			buf[i] = get_u8();
+		if(len<0){
+			for(int_t i=1; i<-len; ++i){
+				buf[i] = get_ch();
+			}
+			int_t len2 = ch_len2(buf);
+			for(int_t i=len; i<len2; ++i){
+				buf[i] = get_ch();
+			}
+		}else{
+			for(int_t i=1; i<len; ++i){
+				buf[i] = get_ch();
+			}
 		}
 		return xnew<String>(buf, len);
 	}
@@ -351,6 +367,13 @@ StringPtr MemoryStream::get_s(int_t length){
 		}
 
 		int_t len = ch_len(data_[pos_ + blen]);
+		if(len<0){
+			if(pos_ + blen + -len > data_.size()){
+				break;
+			}
+			len = ch_len2((char_t*)&data_[pos_ + blen]);
+		}
+
 		if(pos_ + blen + len > data_.size()){
 			break;
 		}
@@ -375,6 +398,119 @@ StringPtr MemoryStream::to_s(){
 
 bool MemoryStream::eof(){
 	return pos_>=data_.size();
+}
+
+
+StringStream::StringStream(const StringPtr& str)
+:str_(str ? str : StringPtr("")){
+	data_ = str_->c_str();
+	size_ = str_->buffer_size();
+	pos_ = 0;
+}
+	
+uint_t StringStream::tell(){
+	return pos_;
+}
+
+uint_t StringStream::write(const void* p, uint_t size){
+	XTAL_THROW(unsupported_error("StringStream", "write"), return 0);
+}
+
+uint_t StringStream::read(void* p, uint_t size){
+	if(pos_+size>size_){ 
+		uint_t diff = size_-pos_;
+		if(diff>0){
+			memcpy(p, &data_[pos_], diff);
+		}
+		pos_ += diff;
+		return diff; 
+	}
+	
+	if(size>0){
+		memcpy(p, &data_[pos_], size);
+	}
+	pos_ += size;
+	return size;
+}
+
+void StringStream::seek(int_t offset, int_t whence){
+	switch(whence){
+		case XSEEK_END:
+			pos_ = size_-offset;
+			break;
+		case XSEEK_CUR:
+			pos_ += offset;
+			break;
+		default:
+			if(offset<0){
+				offset = 0;
+			}
+			pos_ = offset;
+			break;
+	}
+}
+
+StringPtr StringStream::get_s(int_t length){
+	if(pos_ >= size_)
+		return "";
+
+	if(length==1){
+		uint_t pos = pos_;
+		int_t len = ch_len(data_[pos_]);
+		if(len<0){
+			if(pos_ + -len > size_){
+				return "";
+			}
+			len = ch_len2(&data_[pos_]);
+		}
+
+		if(pos_ + len > size_){
+			return "";
+		}
+
+		pos_ += len;
+		return xnew<String>(&data_[pos], len);
+	}
+
+	if(length<0){
+		StringPtr ret = xnew<String>((char_t*)&data_[pos_], size_ - pos_);
+		pos_ = size_;
+		return ret;
+	}
+
+	int_t slen = 0;
+	int_t blen = 0;
+	while(slen<length){
+		if(pos_ + blen >= size_){
+			break;
+		}
+
+		int_t len = ch_len(data_[pos_ + blen]);
+		if(len<0){
+			if(pos_ + -len > size_){
+				break;
+			}
+			len = ch_len2(&data_[pos_ + blen]);
+		}
+
+		if(pos_ + blen + len > size_){
+			break;
+		}
+
+		blen += len;
+		slen++;
+	}
+
+	if(blen==0)
+		return "";
+
+	StringPtr ret = xnew<String>((char_t*)&data_[pos_], blen);
+	pos_ += blen;
+	return ret;	
+}
+
+bool StringStream::eof(){
+	return pos_>=size_;
 }
 
 InteractiveStream::InteractiveStream(){

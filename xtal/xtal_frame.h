@@ -36,7 +36,7 @@ inline const ClassPtr& get_cpp_class(){
 	return (const ClassPtr&)*CppClassHolder<T>::value;
 }
 
-template<class T, class U>
+template<class T>
 const ClassPtr& set_cpp_class(const ClassPtr& cls){
 	if(!CppClassHolder<T>::value){
 		CppClassHolder<T>::value = make_place();
@@ -118,6 +118,10 @@ public:
 		vi.pos = 0;
 		variables_info_.push(vi);
 	}
+
+	void uninit(){
+		variables_info_.release();
+	}	
 };
 
 extern EmptyHaveInstanceVariables empty_have_instance_variables;

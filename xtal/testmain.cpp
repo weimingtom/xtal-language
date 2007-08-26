@@ -56,15 +56,6 @@ void debug_line(const SmartPtr<debug::Info>& info){
 
 //#include <crtdbg.h>
 
-int calc_expr(const AnyPtr& v){
-	if(v[0]=="INT") return v[1]->to_i();
-	if(v[0]=="ADD") return calc_expr(v[1]) + calc_expr(v[2]);
-	if(v[0]=="SUB") return calc_expr(v[1]) - calc_expr(v[2]);
-	if(v[0]=="MUL") return calc_expr(v[1]) * calc_expr(v[2]);
-	if(v[0]=="DIV") return calc_expr(v[1]) / calc_expr(v[2]);
-	return 0;
-}
-
 int main(int argc, char** argv){
 
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
@@ -77,90 +68,6 @@ int main(int argc, char** argv){
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-		
-		
-		{
-			/*
-			using namespace peg;
-			ParserPtr anych = xnew<AnyChParser>();
-			ParserPtr integer = xnew<IntParser>();
-
-			const char* source = "aaaabbbcccd";
-			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
-			LexerPtr reader = xnew<Lexer>(stream);
-			
-			ParserPtr e = join(set("abcd")*0);
-			ParserPtr re = ((insert_val("VV") >> e >> integer) | (insert_val("UU") >> e >> str("d")));
-
-			ArrayPtr ret = xnew<Array>();
-			if(re->parse(reader, ret)){
-				ret->p();
-			}
-
-			/*
-			using namespace peg;
-			ParserPtr anych = xnew<AnyChParser>();
-			ParserPtr integer = xnew<IntParser>();
-
-			const char* source = "145+ 1-0 * 500+ (555555555+44444444) - 55/5";
-			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
-			LexerPtr reader = xnew<Lexer>(stream);
-			
-			ParserPtr expr_top = xnew<RefParser>();
-
-			ParserPtr term = (integer >> to_node("INT", 1)) | 
-				-str("(") > expr_top > -str(")");
-
-			ParserPtr expr_mul = term > (
-				(-str("*") > term >> to_node("MUL", 2)) | 
-				(-str("/") > term >> to_node("DIV", 2)) 
-				)*0;
-
-			ParserPtr expr_add = expr_mul > (
-				(-str("+") > expr_mul >> to_node("ADD", 2)) | 
-				(-str("-") > expr_mul >> to_node("SUB", 2)) 
-				)*0;
-
-			expr_top << expr_add;
-
-			ArrayPtr ret = xnew<Array>();
-
-			if(expr_add->parse(reader, ret)){
-				ret->p();
-				AnyPtr(calc_expr(ret[0]))->p();
-			}
-			*/
-
-			/*
-			const char* source = "<test>qqq<o>p</o>ppp<popo/></test>";
-			StreamPtr stream = xnew<MemoryStream>(source, strlen(source));
-			ReaderPtr reader = xnew<Reader>();
-			reader->set_stream(stream);
-
-			ParserPtr element = xnew<RefParser>();
-
-			ParserPtr text = join((anych - str("<") )^1);
-			ParserPtr tag_name = join((anych - (str("/") | str(">")) )^1);
-			ParserPtr tag = -str("<") >> tag_name >> -str(">");
-			ParserPtr end_tag = -str("</") >> tag_name >> -str(">");
-			ParserPtr empty_tag = -str("<") >> tag_name >> -str("/>");
-
-			element->set_ref(
-				(tag >> array(element^1) >> end_tag >> to_node("TAG", 3)) |
-				(text >> to_node("TEXT", 1)) |
-				(empty_tag >> to_node("ETAG", 1))
-			);
-
-			ParserPtr xml = element;
-
-			ArrayPtr ret = xnew<Array>();
-
-			if(xml->parse(reader, ret)){
-				ret->p();
-			}
-			*/
-		}
-
 
 		{
 			StringPtr path(argv[0]);
@@ -181,12 +88,6 @@ int main(int argc, char** argv){
 			path = temp->join(sep)->to_s();
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
-
-		AnyPtr cd = Xsrc((
-		  c: [1,2,3].each;
-		  c.take(1).to_a.p;
-		  c.take(1).to_a.p; 
-		))();
 
 		int c;
 		c = clock();

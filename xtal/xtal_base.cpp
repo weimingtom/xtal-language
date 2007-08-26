@@ -21,13 +21,24 @@ void InitFormat();
 void InitClass();
 void InitStream();
 void InitCode();
+void display_debug_memory();
+
+namespace peg{
+	void InitPEG();
+}
 
 
 namespace{
 
+uint_t objects_allocate_size_ = 4096;
+
 Base** objects_begin_ = 0;
 Base** objects_current_ = 0;
 Base** objects_end_ = 0;
+
+Base*** objects_list_begin_ = 0;
+Base*** objects_list_current_ = 0;
+Base*** objects_list_end_ = 0;
 
 GCObserver** gcobservers_begin_ = 0;
 GCObserver** gcobservers_current_ = 0;
@@ -42,7 +53,6 @@ AnyPtr** place_current_ = 0;
 AnyPtr** place_end_ = 0;
 
 uint_t cycle_count_ = 0;
-uint_t objects_gene_line_ = 0;
 
 void print_alive_objects(){
 	for(Base** it = objects_begin_; it!=objects_current_; ++it){
@@ -73,7 +83,9 @@ void initialize(){
 
 	disable_gc();
 
-	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
+	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, objects_allocate_size_);
+	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+	*objects_list_current_++ = objects_begin_;
 
 	empty_have_instance_variables.init();
 
@@ -121,7 +133,7 @@ void initialize(){
 	new_cpp_class<Fiber>();
 	new_cpp_class<VMachine>();
 	new_cpp_class<CFun>();
-	new_cpp_class<CFunArgsImpl>();
+	new_cpp_class<CFunArgs>();
 	new_cpp_class<Fiber>();
 	new_cpp_class<Lib>();
 	
@@ -148,10 +160,16 @@ void initialize(){
 
 	initialize_lib();
 
+#ifdef XTAL_USE_PEG
+	peg::InitPEG();
+#endif
+
 	enable_gc();
 }
 
 void uninitialize(){
+	if(!initialized()){ return; } 
+
 	//print_alive_objects();
 
 	UninitThread();
@@ -173,18 +191,6 @@ void uninitialize(){
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		//print_alive_objects();
 		XTAL_ASSERT(false); // 全部開放できてない
-
-		// 強制的に全部開放する
-
-		for(Base** it = objects_begin_; it!=objects_current_; ++it){
-			delete *it;
-		}
-
-		for(Base** it = objects_begin_; it!=objects_current_; ++it){
-			user_free(*it);
-		}
-
-		objects_current_ = objects_begin_;
 	}
 	
 	for(AnyPtr** p = place_begin_; p!=place_current_; ++p){
@@ -193,13 +199,18 @@ void uninitialize(){
 	
 	llvars_current_ = llvars_begin_;
 	place_current_ = place_begin_;
+	objects_list_current_ = objects_list_begin_;
 
 	fit_simple_dynamic_pointer_array((void**&)llvars_begin_, (void**&)llvars_end_, (void**&)llvars_current_);
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
+	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 	fit_simple_dynamic_pointer_array((void**&)place_begin_, (void**&)place_end_, (void**&)place_current_);
 
+	empty_have_instance_variables.uninit();
+
 	//
+	display_debug_memory();
 }
 
 void add_long_life_var(AnyPtr* a, int_t n){
@@ -245,19 +256,13 @@ struct CycleCounter{
 void gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
-		const VMachinePtr& vm = vmachine();
-
 		CycleCounter cc(&cycle_count_);
 
 		for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 			(*it)->before_gc();
 		}
 
-		if((int)objects_gene_line_>objects_current_-objects_begin_){
-			objects_gene_line_ = 0;
-		}
-
-		Base** objects_alive = objects_begin_+objects_gene_line_;
+		Base** objects_alive = objects_begin_;
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
 			if((*it)->ref_count()!=0){
@@ -276,10 +281,8 @@ void gc(){
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
 			user_free(*it);
 		}
-		objects_current_ = objects_alive;
 
-		// 2/3
-		objects_gene_line_ = (objects_current_-objects_begin_)*2/3;
+		objects_current_ = objects_alive;
 
 		//fprintf(stderr, "finished gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
@@ -288,42 +291,85 @@ void gc(){
 	}
 }
 
+
+struct ConnectedPointer{
+	int_t pos;
+
+	ConnectedPointer(int_t p = 0){
+		pos = p;
+	}
+
+	Base*& operator *(){
+		return objects_list_begin_[pos/objects_allocate_size_][pos&(objects_allocate_size_-1)];
+	}
+
+	ConnectedPointer& operator ++(){
+		++pos;
+		return *this;
+	}
+
+	ConnectedPointer operator ++(int){
+		ConnectedPointer temp(pos);
+		++pos;
+		return temp; 
+	}
+
+	ConnectedPointer& operator --(){
+		--pos;
+	}
+
+	ConnectedPointer operator --(int){
+		ConnectedPointer temp(pos);
+		--pos;
+		return temp; 
+	}
+
+	friend bool operator==(const ConnectedPointer& a, const ConnectedPointer& b){
+		return a.pos==b.pos;
+	}
+
+	friend bool operator!=(const ConnectedPointer& a, const ConnectedPointer& b){
+		return a.pos!=b.pos;
+	}
+};
+
 void full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
-		const VMachinePtr& vm = vmachine();
-
 		CycleCounter cc(&cycle_count_);
+
+		ConnectedPointer prev_oc;
+		ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*objects_allocate_size_ + (objects_current_ - objects_begin_);
+		ConnectedPointer begin = 0;
 		
-		Base** prev_oc;
 		do{
 			
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
 			}
 
-			prev_oc = objects_current_;
+			prev_oc = current;
 
 			{
 				Visitor m(-1);	
-				for(Base** it = objects_begin_; it!=objects_current_; ++it){
+				for(ConnectedPointer it = begin; it!=current; ++it){
 					(*it)->visit_members(m);
 				}
 			}
 
 			{
-				Base** objects_alive = objects_begin_;
+				ConnectedPointer alive = begin;
 
 				{
 					Visitor m(1);
 					bool end = false;
 					while(!end){
 						end = true;
-						for(Base** it = objects_alive; it!=objects_current_; ++it){
+						for(ConnectedPointer it = alive; it!=current; ++it){
 							if((*it)->ref_count()!=0){
 								end = false;
 								(*it)->visit_members(m);
-								std::swap(*it, *objects_alive++);
+								std::swap(*it, *alive++);
 							}
 						}
 					}
@@ -332,7 +378,7 @@ void full_gc(){
 
 				{// 
 					Visitor m(1);
-					for(Base** it = objects_alive; it!=objects_current_; ++it){
+					for(ConnectedPointer it = alive; it!=current; ++it){
 						(*it)->visit_members(m);
 					}
 				}
@@ -341,17 +387,35 @@ void full_gc(){
 					(*it)->after_gc();
 				}
 
-				for(Base** it = objects_alive; it!=objects_current_; ++it){
+				for(ConnectedPointer it = alive; it!=current; ++it){
 					delete *it;
 				}
 
-				for(Base** it = objects_alive; it!=objects_current_; ++it){
+				for(ConnectedPointer it = alive; it!=current; ++it){
 					user_free(*it);
 				}
-				objects_current_ = objects_alive;
+
+				current = alive;
 			}
 
-		}while(prev_oc!=objects_current_);
+		}while(prev_oc!=current);
+
+		int_t list_count = objects_list_current_ - objects_list_begin_;
+		bool first = true;
+		for(int_t i=0; i<list_count; ++i){
+			int_t pos = (i+1)*objects_allocate_size_;
+			if(current.pos<pos){
+				if(first){
+					first = false;
+					objects_begin_ = objects_list_begin_[i];
+					objects_current_ = objects_begin_ + (current.pos&(objects_allocate_size_-1));
+					objects_end_ = objects_begin_ + objects_allocate_size_;
+					objects_list_current_ = objects_list_begin_ + i + 1;
+				}else{
+					user_free(objects_list_begin_[i]);
+				}
+			}
+		}
 		
 		//fprintf(stderr, "finished full_gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
@@ -359,14 +423,23 @@ void full_gc(){
 		restart_the_world();
 	}
 }
-
 	
 void* Base::operator new(size_t size){
 	if(objects_current_==objects_end_){
-		expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
-	}	
+		gc();
+
+		if(objects_current_==objects_end_){
+			if(objects_list_current_==objects_list_end_){
+				expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+			}
+			objects_begin_ = objects_current_ = objects_end_ = 0;
+			expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, objects_allocate_size_);
+			*objects_list_current_++ = objects_begin_;
+		}
+	}
+
 	Base* p = static_cast<Base*>(user_malloc(size));
-	*objects_current_++=p;
+	*objects_current_++ = p;
 	
 	p->ref_count_ = 1;
 	p->class_ = null;

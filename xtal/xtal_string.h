@@ -9,7 +9,7 @@ namespace xtal{
 
 class LargeString;
 
-class String : public Innocence{
+class String : public Any{
 public:
 
 	String(){}
@@ -46,17 +46,7 @@ public:
 	*/
 	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
 
-	struct delegate_memory_t{};
-
-	/**
-	* @brief user_mallocで獲得したメモリを委譲して構築する。
-	*
-	* @param str NULL終端文字列
-	* @param size 文字列の長さ
-	*/
-	String(char* str, uint_t size, delegate_memory_t);
-
-	String(const char* str, uint_t len, uint_t hashcode);
+	String(const char* str, uint_t len, uint_t hashcode, uint_t length);
 	
 	String(LargeString* left, LargeString* right);
 
@@ -128,14 +118,28 @@ public:
 	/**
 	* @brief sepで区切った文字列を得られるイテレータを返す。
 	*
+	* @param sep 文字列かPEGのParser
 	*/ 
-	AnyPtr split(const StringPtr& sep);
+	AnyPtr split(const AnyPtr& sep);
 
 	/**
 	* @brief 一文字づつ得られるイテレータを返す。
 	*
 	*/
 	AnyPtr each();
+
+	/**
+	*
+	*
+	*/
+	AnyPtr scan(const AnyPtr& p);
+
+	/**
+	* @brief patternと一致する部分を置き換えた新しい文字列を返す
+	*
+	* @param  pattern 置き換える文字列かPEGのParser
+	*/ 
+	AnyPtr replaced(const AnyPtr& pattern, const StringPtr& str);
 
 	/**
 	* @brief 連結する
@@ -159,7 +163,7 @@ public:
 	bool op_lt_r_String(const StringPtr& v);
 
 private:
-
+	void init_string(const char_t* str, uint_t size);
 	int_t calc_offset(int_t pos);
 	void throw_index_error();
 
@@ -168,16 +172,10 @@ private:
 class LargeString : public Base{
 public:
 
-
-	LargeString(const char* str = "");
-	LargeString(const string_t& str);
-	LargeString(const char* str, uint_t size);
-	LargeString(const char* begin, const char* last);
 	LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2);
-	LargeString(char* str, uint_t size, String::delegate_memory_t);
 	LargeString(const char* str, uint_t len, uint_t hashcode);
 	LargeString(LargeString* left, LargeString* right);
-	~LargeString();
+	virtual ~LargeString();
 
 public:
 

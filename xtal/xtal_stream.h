@@ -260,6 +260,11 @@ public:
 		return &data_[0];
 	}
 
+	void clear(){
+		seek(0);
+		resize(0);
+	}
+
 	virtual uint_t size(){
 		return data_.size();
 	}
@@ -275,6 +280,47 @@ public:
 	AC<xtal::u8>::vector data_;
 	uint_t pos_;
 };
+
+class StringStream : public Stream{
+public:
+
+	StringStream(const StringPtr& str);
+		
+	virtual uint_t tell();
+
+	virtual uint_t write(const void* p, uint_t size);
+
+	virtual uint_t read(void* p, uint_t size);
+
+	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
+
+	virtual void close(){}
+
+	virtual bool eof();
+
+	virtual StringPtr get_s(int_t length = -1);
+
+	virtual uint_t size(){
+		return size_;
+	}
+
+	StringPtr to_s(){
+		return str_;
+	}
+
+private:
+
+	virtual void visit_members(Visitor& m){
+		Stream::visit_members(m);
+		m & str_;
+	}
+
+	StringPtr str_;
+	const char* data_;
+	uint_t size_;
+	uint_t pos_;
+};
+
 
 class InteractiveStream : public Stream{
 public:

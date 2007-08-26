@@ -39,7 +39,22 @@ AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and),
 AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b); }
 AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b); }
 AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b); }
-AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){ return raweq(a, b) || a->send(Xid(op_eq), b); }
+
+AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){ 
+	if(raweq(a, b))
+		return true;
+
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, b);
+	a->rawsend(vm, Xid(op_eq));
+	if(vm->processed() && vm->result()){
+		vm->cleanup_call();
+		return true;
+	}
+	vm->cleanup_call();
+	return false;
+}
+
 AnyPtr operator !=(const AnyPtr& a, const AnyPtr& b){ return !(a==b); }
 AnyPtr operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b); }
 AnyPtr operator >(const AnyPtr& a, const AnyPtr& b){ return b<a; }
@@ -213,7 +228,7 @@ float_t Any::to_f() const{
 }
 
 StringPtr Any::to_s() const{
-	if(StringPtr ret = as<StringPtr>(ap(*this))){
+	if(const StringPtr& ret = as<StringPtr>(ap(*this))){
 		return ret;
 	}
 	return cast<StringPtr>((*this).send("to_s"));

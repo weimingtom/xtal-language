@@ -29,6 +29,7 @@ Code::Code()
 	value_table_ = xnew<Array>();
 
 	first_fun_ = xnew<Fun>(null, null, CodePtr::from_this(this), (FunCore*)0);
+	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
 void Code::reset_core(){

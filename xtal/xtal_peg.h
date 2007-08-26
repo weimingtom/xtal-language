@@ -3,40 +3,11 @@
 
 #ifdef XTAL_USE_PEG // PEG上手くいかねー
 
+#pragma once
+
 #include "xtal_macro.h"
 
 namespace xtal{ namespace peg{
-
-class List : public Base{
-public:
-
-	List(const AnyPtr& car = null, const AnyPtr& cdr = null)
-		:car_(car), cdr_(cdr){}
-
-public:
-
-	const AnyPtr& car(){
-		return car_;
-	}
-
-	const AnyPtr& cdr(){
-		return cdr_;
-	}
-
-	void set_car(const AnyPtr& car){
-		car_ = car;
-	}
-
-	void set_cdr(const AnyPtr& cdr){
-		cdr_ = cdr;
-	}
-
-private:
-	AnyPtr car_;
-	AnyPtr cdr_;
-};
-
-typedef SmartPtr<List> ListPtr;
 
 /**
 * @brief peg::Parserの読み取り元
@@ -46,17 +17,21 @@ private:
 	
 	struct Cache{
 		const void* ptr;
+		bool success;
 		uint_t flags;
 		uint_t read_pos;
-		ListPtr value_pos;
+		uint_t read_end;
+		uint_t value_pos;
+		uint_t value_end;
 	};
 
 	struct Backtrack{
 		uint_t read_pos;
-		ListPtr value_pos;
+		uint_t value_pos;
 	};
 
 	PODStack<Cache> cache_stack_;
+	PODStack<Cache> temp_cache_stack_;
 	PODStack<Backtrack> backtrack_stack_;
 	PODStack<int_t> flags_stack_;
 	
@@ -75,8 +50,9 @@ private:
 		};
 
 		struct Value{
-			ListPtr value_pos;
-			ListPtr value_end;
+			ArrayPtr results;
+			uint_t value_pos;
+			uint_t value_end;
 			uint_t read_pos;
 			bool success;
 		};
@@ -87,7 +63,7 @@ private:
 
 	CacheUnit cache_table_[CACHE_MAX];
 
-	enum{ CACHE_JUDGE_MAX = 64 };
+	enum{ CACHE_JUDGE_MAX = 16 };
 
 	struct CacheJudgeUnit{
 		CacheJudgeUnit(){
@@ -105,9 +81,6 @@ private:
 		bool operator()(uint_t a, const Cache& b) const{ return a < b.value_pos; }
 		bool operator()(const Cache& a, const Cache& b) const{ return a.value_pos < b.value_pos; }
 	};
-	
-	ListPtr head_;
-	ListPtr tail_;
 
 public:
 
@@ -119,13 +92,10 @@ public:
 public:
 
 	Lexer(){
-		buf_ = xnew<Array>(32);
+		buf_ = xnew<Array>(64);
 		pos_ = 0;
 		read_ = 0;
 		flags_stack_.push(0);
-
-		head_ = xnew<List>();
-		tail_ = head_;
 	}
 
 	/**
@@ -135,14 +105,15 @@ public:
 	void mark(){
 		Backtrack& data = backtrack_stack_.push();
 		data.read_pos = pos_;
-		data.value_pos = tail_;
+		data.value_pos = results_->size();
 	}
 
 	/**
 	* @brief マークを消す
 	*/
 	void unmark(){
-		backtrack_stack_.pop();
+		Backtrack& data = backtrack_stack_.pop();
+		noreflect_cache(data.value_pos);
 	}
 
 	/**
@@ -151,29 +122,86 @@ public:
 	void unmark_and_backtrack(){
 		Backtrack& data = backtrack_stack_.pop();
 		pos_ = data.read_pos;
-		tail_ = data.value_pos;
+		reflect_cache(data.value_pos);
+		results_->resize(data.value_pos);
 	}
 
-	virtual AnyPtr do_read() = 0;
+	void noreflect_cache(uint_t n){
+		Cache* it = std::lower_bound(cache_stack_.begin(), cache_stack_.end(), n, Comp());
+		Cache* end = cache_stack_.end();
+
+		if(it==end)
+			return;
+
+		uint_t len = end - it;
+		cache_stack_.resize(cache_stack_.size() - len);
+	}
+
+	void reflect_cache(uint_t n){
+		Cache* beg = cache_stack_.begin();
+		Cache* it = std::lower_bound(cache_stack_.begin(), cache_stack_.end(), n, Comp());
+		Cache* end = cache_stack_.end();
+
+		if(it==end)
+			return;
+
+		uint_t len = end - it;
+
+		uint_t begin = n;
+		ArrayPtr array = (ignore_flag() || results_->size()==begin) ? ArrayPtr(null) : results_->slice(begin, results_->size()-begin);
+
+		for(; it!=end; it++){
+			uint_t hash = (((uint_t)it->ptr)>>3) ^ it->read_pos ^ it->flags;
+			CacheUnit& unit = cache_table_[hash & (CACHE_MAX-1)];
+
+			unit.key.ptr = it->ptr;
+			unit.key.read_pos = it->read_pos;
+			unit.key.flags = it->flags;
+			unit.value.success = it->success;
+			unit.value.read_pos = it->read_end;
+			unit.value.value_pos = it->value_pos-begin;
+			unit.value.value_end = it->value_end-begin;
+			unit.value.results = array;
+		}
+
+		cache_stack_.resize(cache_stack_.size() - len);
+	}
+
+	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
 	const AnyPtr& read(){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = buf_->size() - 1;
+		uint_t rpos = read_&bufmask;
 
 		// 読み込んでいない領域をreadしようとしているか？
 		if(pos_ == read_){
 			if(!backtrack_stack_.empty()){
-				if(((read_+1)&bufmask) == (backtrack_stack_.reverse_at(0).read_pos&bufmask)){
+				uint_t mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
+
+				if(rpos==mpos){
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
 					buf_->resize(bufsize*2);
 					bufsize = buf_->size();
 					bufmask = buf_->size() - 1;
+					rpos = read_&bufmask;
+					mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 				}
-			}
 
-			buf_->set_at(read_&bufmask, do_read());
-			read_ += 1;
+				if(rpos>mpos){
+					read_ += do_read(buf_->data()+rpos, bufsize-rpos);
+				}else{
+					read_ += do_read(buf_->data()+rpos, mpos-rpos);
+				}
+			}else{
+				read_ += do_read(buf_->data()+rpos, bufsize-rpos);
+			}
 		}
+
+		if(pos_ == read_){
+			return nop;
+		}
+
 		pos_ += 1;
 		return buf_->at((pos_-1)&bufmask);
 	}
@@ -196,11 +224,7 @@ public:
 
 	void push_value(const AnyPtr& v){
 		if(!ignore_flag()){
-			//ListPtr cell = xnew<List>(v);
-			//tail_->set_cdr(cell);
-			//tail_ = cell;
-
-			//v->p();
+			results_->push_back(v);
 		}
 	}
 
@@ -232,16 +256,17 @@ public:
 			success = unit.value.success;
 			pos_ = unit.value.read_pos;
 			if(!ignore_flag()){
-				tail_->set_cdr(unit.value.value_pos);
-				tail_ = unit.value.value_end;
+				for(uint_t i=unit.value.value_pos, sz=unit.value.value_end; i<sz; ++i){
+					results_->push_back(unit.value.results->at(i));
+				}
 			}
 			return true;
 		}
 		
-		Cache& data = cache_stack_.push();
+		Cache& data = temp_cache_stack_.push();
 		data.ptr = ptr;
 		data.read_pos = pos_;
-		data.value_pos = tail_;
+		data.value_pos = results_->size();
 		data.flags = flags();
 		return false;
 	}
@@ -252,17 +277,11 @@ public:
 		if(backtrack_stack_.empty())
 			return;
 
-		Cache& data = cache_stack_.pop();
-		uint_t hash = (((uint_t)data.ptr)>>3) ^ data.read_pos ^ data.flags;
-		CacheUnit& unit = cache_table_[hash & (CACHE_MAX-1)];
-
-		unit.key.ptr = data.ptr;
-		unit.key.read_pos = data.read_pos;
-		unit.key.flags = data.flags;
-		unit.value.success = success;
-		unit.value.read_pos = pos_;
-		unit.value.value_pos = data.value_pos;
-		unit.value.value_end = tail_;
+		Cache& data = temp_cache_stack_.pop();
+		data.success = success;
+		data.read_end = pos_;
+		data.value_end = results_->size();
+		cache_stack_.push(data);
 	}
 
 	bool judge_cache(const void* ptr){
@@ -292,7 +311,7 @@ private:
 		m & ws_set_ & buf_;
 
 		for(int_t i=0; i<CACHE_MAX; ++i){
-			m & cache_table_[i].value.value_pos & cache_table_[i].value.value_end;
+			m & cache_table_[i].value.results;
 		}
 	}
 
@@ -311,10 +330,13 @@ public:
 	CharLexer(const StreamPtr& stream)
 		:stream_(stream){}
 
-	virtual AnyPtr do_read(){
-		if(stream_->eof())
-			return nop;
-		return stream_->get_s(1);
+	virtual int_t do_read(AnyPtr* buffer, int_t max){
+		for(int_t i=0; i<max; ++i){
+			if(stream_->eof())
+				return i;
+			buffer[i] = stream_->get_s(1);
+		}
+		return max;
 	}
 
 private:
@@ -625,13 +647,14 @@ public:
 	JoinParser(const ParserPtr& p, const StringPtr& sep = "")
 		:p_(p), sep_(sep), mm_(xnew<MemoryStream>()){}
 
-	virtual bool do_parse(const LexerPtr& lex){return p_->parse(lex);
+	virtual bool do_parse(const LexerPtr& lex){
 		if(lex->ignore_flag())
 			return p_->parse(lex);
 		
 		ArrayPtr temp = lex->results();
 		uint_t size = temp->size();
 		if(p_->parse(lex)){
+			lex->noreflect_cache(size);
 			mm_->clear();
 			for(uint_t i=size, sz=temp->size(); i<sz; ++i){
 				mm_->put_s(temp->at(i)->to_s());		
@@ -650,13 +673,14 @@ public:
 	ArrayParser(const ParserPtr& p)
 		:p_(p){}
 
-	virtual bool do_parse(const LexerPtr& lex){return p_->parse(lex);
+	virtual bool do_parse(const LexerPtr& lex){
 		if(lex->ignore_flag())
 			return p_->parse(lex);
 
 		ArrayPtr temp = lex->results();
 		uint_t size = temp->size();
 		if(p_->parse(lex)){
+			lex->noreflect_cache(size);
 			temp->push_back(temp->splice(size, temp->size()-size));
 			return true;
 		}
@@ -798,5 +822,6 @@ inline ParserPtr splice(int_t n){
 
 	
 }}
+
 
 #endif

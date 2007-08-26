@@ -233,6 +233,10 @@ public:
 
 	void assign(const ArrayPtr& other);
 
+	AnyPtr* data(){
+		return values_;
+	}
+
 protected:
 
 	int_t calc_offset(int_t i);

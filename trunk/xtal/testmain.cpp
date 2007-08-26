@@ -93,7 +93,7 @@ AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-var: set("abcdefghijklmnopqrstuvwxyz")*1;
+var: join(set("abcdefghijklmnopqrstuvwxyz")*1);
 sep: -str(":");
 pe: var >> (sep >> var)*0;
 
@@ -111,6 +111,7 @@ t: clock();
 if(pe.parse_string(mm.to_s, ret)){
   (clock()-t).p;
   "ok".p;
+  ret.p;
 }
 
 export mm;
@@ -121,7 +122,7 @@ export mm;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

@@ -6,12 +6,18 @@
 namespace xtal{
 	
 /**
-* @brief 先頭バイトから、そのマルチバイト文字が何文字かを調べる
-* 何の文字コードかは set_code_sjis、set_code_euc、set_code_utf8を使用する。
+* @brief 先頭バイトから、そのマルチバイト文字が何文字かを調べる。
+* マイナスの値が返された場合、最低文字数を返す。
+* -2の場合、2文字目を読まないと判断できない、という意味となる。
 */
 int_t ch_len(char_t lead);
 
-int_t str_len(const char_t* str, uint_t buffer_size);
+/**
+* @brief マルチバイト文字が何文字かを調べる。
+* int_t ch_len(char_t lead)が呼ばれた後、マイナスの値を返した場合に続けて呼ばれる。
+* ch_lenで-2の値を返した後は、strの先には2バイト分のデータが格納されている。
+*/
+int_t ch_len2(const char_t* str);
 
 void set_code_sjis();
 void set_code_euc();

@@ -24,46 +24,61 @@ namespace{
 		AnyPtr vm;
 	};
 
-	AC<VMachineTableUnit>::vector vmachine_table_;
+	struct VMachineTable : public Base{
+		AC<VMachineTableUnit>::vector table;
 
-	inline void change_vmachine(const Thread::ID& id){
-		if(!current_vmachine_id_.is_valid() || !thread_lib_->equal_thread_id(current_vmachine_id_, id)){
-			for(uint_t i=0; i<vmachine_table_.size(); ++i){
-				VMachineTableUnit& unit = vmachine_table_[i];
+		inline void change_vmachine(const Thread::ID& id){
+			if(!current_vmachine_id_.is_valid() || !thread_lib_->equal_thread_id(current_vmachine_id_, id)){
+				for(uint_t i=0; i<table.size(); ++i){
+					VMachineTableUnit& unit = table[i];
+					if(thread_lib_->equal_thread_id(unit.id, id)){
+						vmachine_ = (VMachinePtr&)unit.vm;
+						current_vmachine_id_ = id;
+						break;
+					}
+				}
+			}
+			current_thread_recursive_ = 1;
+			current_thread_id_ = id;
+		}
+
+		virtual void visit_members(Visitor& m){
+			Base::visit_members(m);
+			for(uint_t i=0; i<table.size(); ++i){
+				m & table[i].vm;
+			}
+		}
+
+		void register_vmachine(){
+			Thread::ID id;
+			thread_lib_->current_thread_id(id);
+
+			VMachineTableUnit unit;
+			unit.vm = vmachine_ = xnew<VMachine>();
+			unit.id = id;
+			table.push_back(unit);	
+		}
+
+		void remove_vmachine(){
+			Thread::ID id;
+			thread_lib_->current_thread_id(id);
+
+			for(uint_t i=0; i<table.size(); ++i){
+				VMachineTableUnit& unit = table[i];
 				if(thread_lib_->equal_thread_id(unit.id, id)){
-					vmachine_ = (VMachinePtr&)unit.vm;
-					current_vmachine_id_ = id;
+					unit = table[table.size()-1];
+					table.pop_back();
 					break;
 				}
 			}
 		}
-		current_thread_recursive_ = 1;
-		current_thread_id_ = id;
-	}
 
-	void register_vmachine(){
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-
-		VMachineTableUnit unit;
-		unit.vm = vmachine_ = xnew<VMachine>();
-		unit.id = id;
-		vmachine_table_.push_back(unit);	
-	}
-
-	void remove_vmachine(){
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-
-		for(uint_t i=0; i<vmachine_table_.size(); ++i){
-			VMachineTableUnit& unit = vmachine_table_[i];
-			if(thread_lib_->equal_thread_id(unit.id, id)){
-				unit = vmachine_table_[vmachine_table_.size()-1];
-				vmachine_table_.pop_back();
-				break;
-			}
+		void clear(){
+			table.clear();
 		}
-	}
+	};
+
+	SmartPtr<VMachineTable> vmachine_table_;
 
 	ThreadPtr create_thread(const AnyPtr& fun){
 		return thread_lib_->create_thread(fun);
@@ -128,6 +143,9 @@ void InitThread(){
 		add_long_life_var(&mutex_);
 		add_long_life_var(&mutex2_);
 		add_long_life_var(&vmachine_);
+
+		add_long_life_var(&vmachine_table_);
+		vmachine_table_ = xnew<VMachineTable>();
 	}
 
 	{
@@ -160,7 +178,7 @@ void InitThread(){
 		thread_enabled_ = true;
 		global_interpreter_lock();
 
-		register_vmachine();
+		vmachine_table_->register_vmachine();
 	}else{
 		add_long_life_var(&vmachine_);
 		vmachine_ = xnew<VMachine>();
@@ -172,7 +190,7 @@ void UninitThread(){
 		global_interpreter_unlock();
 		thread_enabled_ = false;
 		thread_lib_ = 0;
-		vmachine_table_.clear();
+		vmachine_table_->clear();
 	}
 }
 
@@ -320,7 +338,7 @@ void global_interpreter_lock(){
 	thread_lib_->current_thread_id(id);
 	if(current_thread_recursive_==0){
 		mutex_->lock();
-		change_vmachine(id);
+		vmachine_table_->change_vmachine(id);
 	}else{
 		current_thread_recursive_++;
 	}
@@ -339,7 +357,7 @@ void xlock(){
 	thread_lib_->current_thread_id(id);
 	if(current_thread_recursive_==0){
 		mutex_->lock();
-		change_vmachine(id);
+		vmachine_table_->change_vmachine(id);
 	}else{
 		current_thread_recursive_++;
 	}
@@ -366,7 +384,7 @@ void thread_entry(const ThreadPtr& thread){
 	{
 		GlobalInterpreterLock guard(0);
 
-		register_vmachine();
+		vmachine_table_->register_vmachine();
 		const VMachinePtr& vm(vmachine_);
 
 		XTAL_TRY{
@@ -379,7 +397,7 @@ void thread_entry(const ThreadPtr& thread){
 
 
 		vm->reset();	
-		remove_vmachine();
+		vmachine_table_->remove_vmachine();
 		thread_count_--;
 	}
 }

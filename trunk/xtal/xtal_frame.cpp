@@ -334,7 +334,7 @@ void Class::inherit_strict(const ClassPtr& md){
 
 AnyPtr Class::each_inherited_class(){
 	ArrayPtr bases = xnew<Array>();
-	for(size_t i=0; i<mixins_->size(); ++i){
+	for(int_t i=0; i<mixins_->size(); ++i){
 		bases->push_back(mixins_->at(i));
 	}
 	return bases;

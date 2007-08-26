@@ -331,10 +331,10 @@ public:
 
 public:
 
-	iterator begin(){ (iterator)impl_.begin(); }	
-	const_iterator begin() const{ (iterator)impl_.begin(); }
-	iterator end(){ (iterator)impl_.end(); }	
-	const_iterator end() const{ (iterator)impl_.end(); }		
+	iterator begin(){ return (iterator)impl_.begin(); }	
+	const_iterator begin() const{ return (iterator)impl_.begin(); }
+	iterator end(){ return (iterator)impl_.end(); }	
+	const_iterator end() const{ return (iterator)impl_.end(); }		
 	T& push_unchecked(const T &val){ return (T&)impl_.push_unchecked(val); }
 	T& push(const T &val){ return (T&)impl_.push(val); }
 	T& push_unchecked(){ return (T&)impl_.push_unchecked(); }
@@ -430,7 +430,23 @@ public:
 	~PODStackBase();
 
 public:
-		
+
+	void* begin(){
+		return begin_;
+	}
+	
+	const void* begin() const{
+		return begin_;
+	}
+	
+	void* end(){
+		return plusp(current_, 1);
+	}
+	
+	const void* end() const{
+		return plusp(current_, 1);
+	}
+
 	void push_unchecked(const void* val){
 		upsize_unchecked(1);
 		memcpy(top(), val, one_size_);
@@ -534,6 +550,13 @@ public:
 	void clear(){
 		current_ = minusp(begin_, 1);
 	}
+
+	void release(){
+		deallocate(minusp(begin_, 1));
+		begin_ = plusp(dummy_allocate(), 1);
+		current_ = minusp(begin_, 1);
+		end_ = begin_;
+	}
 };
 
 template<class T>
@@ -545,29 +568,42 @@ public:
 
 	PODStack():impl_(sizeof(T)){}
 
+public:
+
+	typedef T value_type;
+	typedef T* iterator;
+	typedef const T* const_iterator; 
+
+public:
+
+	iterator begin(){ return (iterator)impl_.begin(); }	
+	const_iterator begin() const{ (return iterator)impl_.begin(); }
+	iterator end(){ return (iterator)impl_.end(); }	
+	const_iterator end() const{ return (iterator)impl_.end(); }		
 	void push_unchecked(const T &val){ impl_.push_unchecked(&val); }
 	void push(const T &val){ impl_.push(&val); }
 	T& push_unchecked(){ return *(T*)impl_.push_unchecked(); }
 	T& push(){ return *(T*)impl_.push(); }
-	T& pop(){ return *(T*)impl_.pop();}
-	T& top(){ return *(T*)impl_.top();}
-	const T &top() const{ return *(const T*)impl_.top();}
-	void resize(size_t newsize){ impl_.resize(newsize);}
-	void downsize(size_t ds){ impl_.downsize(ds);}
-	void downsize_n(size_t newsize){ impl_.downsize_n(newsize);}
-	void upsize_unchecked(size_t us){ impl_.upsize_unchecked(us);}
-	void upsize(size_t us){ impl_.upsize(us);}
-	size_t size() const{ return impl_.size();}
-	size_t capacity() const{ return impl_.capacity();}
-	void reserve(size_t capa){ impl_.reserve(capa);}
-	T& operator [](size_t i){ return *(T*)impl_[i];}
-	const T& operator [](size_t i) const{ return *(const T*)impl_[i];}
-	T& reverse_at(size_t i){ return *(T*)impl_.reverse_at(i);}
-	const T& reverse_at(size_t i) const{ return *(const T*)impl_.reverse_at(i);}
-	T& reverse_at_unchecked(size_t i){ return *(T*)impl_.reverse_at_unchecked(i);}
-	const T& reverse_at_unchecked(size_t i) const{ return *(const T*)impl_.reverse_at_unchecked(i);}
+	T& pop(){ return *(T*)impl_.pop(); }
+	T& top(){ return *(T*)impl_.top(); }
+	const T &top() const{ return *(const T*)impl_.top(); }
+	void resize(size_t newsize){ impl_.resize(newsize); }
+	void downsize(size_t ds){ impl_.downsize(ds); }
+	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
+	void upsize_unchecked(size_t us){ impl_.upsize_unchecked(us); }
+	void upsize(size_t us){ impl_.upsize(us); }
+	size_t size() const{ return impl_.size(); }
+	size_t capacity() const{ return impl_.capacity(); }
+	void reserve(size_t capa){ impl_.reserve(capa); }
+	T& operator [](size_t i){ return *(T*)impl_[i]; }
+	const T& operator [](size_t i) const{ return *(const T*)impl_[i]; }
+	T& reverse_at(size_t i){ return *(T*)impl_.reverse_at(i); }
+	const T& reverse_at(size_t i) const{ return *(const T*)impl_.reverse_at(i); }
+	T& reverse_at_unchecked(size_t i){ return *(T*)impl_.reverse_at_unchecked(i); }
+	const T& reverse_at_unchecked(size_t i) const{ return *(const T*)impl_.reverse_at_unchecked(i); }
 	bool empty() const{ return impl_.empty();}
-	void clear(){ impl_.clear();}
+	void clear(){ impl_.clear(); }
+	void release(){ impl_.release(); }
 };
 
 }

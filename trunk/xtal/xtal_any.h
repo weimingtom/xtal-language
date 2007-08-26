@@ -291,6 +291,9 @@ public:
 		v.value_ = 0;
 	}
 
+	friend void copy_innocence(Innocence& v, const Innocence& u){
+		v = u;
+	}
 
 public:
 
@@ -327,13 +330,15 @@ protected:
 *
 */
 class Any : public Innocence{
-private:
+protected:
 
 	// 直接 Anyを作ることは出来ない
 
-	Any();
-	Any(const Any& v);
-	~Any();
+	Any(){}
+
+	Any(const Any& v):Innocence(v){}
+	
+	~Any(){}
 
 public:
 

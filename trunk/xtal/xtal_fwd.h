@@ -153,10 +153,10 @@ typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > stri
 */
 enum PrimitiveType{
 	TYPE_NULL = 0,
+	TYPE_NOP = 1,
 
-	TYPE_FALSE = 1,
-	TYPE_TRUE = 2,
-	TYPE_NOP = 3,
+	TYPE_FALSE = 2,
+	TYPE_TRUE = 3,
 	
 	TYPE_BASE = 4,
 	
@@ -229,6 +229,7 @@ class Map;
 class Stream;
 class MemoryStream;
 class FileStream;
+class StringStream;
 class Fun;
 class Method;
 class Fiber;
@@ -253,6 +254,7 @@ typedef SmartPtr<Map> MapPtr;
 typedef SmartPtr<Stream> StreamPtr;
 typedef SmartPtr<MemoryStream> MemoryStreamPtr;
 typedef SmartPtr<FileStream> FileStreamPtr;
+typedef SmartPtr<StringStream> StringStreamPtr;
 typedef SmartPtr<Fun> FunPtr;
 typedef SmartPtr<Fiber> FiberPtr;
 typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;

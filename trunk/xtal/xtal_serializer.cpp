@@ -294,11 +294,12 @@ AnyPtr Serializer::inner_deserialize(){
 			p[sz] = 0;
 			if(op==TID){
 				InternedStringPtr ret(p, sz);
-				append_value(ret);
 				user_free(p);
+				append_value(ret);
 				return ret;
 			}else{
-				StringPtr ret(xnew<String>(p, sz, String::delegate_memory_t()));
+				StringPtr ret(xnew<String>(p, sz));
+				user_free(p);
 				append_value(ret);
 				return ret;
 			}
@@ -504,7 +505,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 			StringPtr a = cast<StringPtr>(v);
 			stream_->put_i8('"');
 			const u8* src = (const u8*)a->c_str();
-			int_t size = a->buffer_size();
+			size_t size = a->buffer_size();
 			for(size_t i=0; i<size; ++i){
 				u8 ch = src[i];
 				switch(ch){

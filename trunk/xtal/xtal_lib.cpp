@@ -913,6 +913,7 @@ void initialize_lib(){
 	builtin->def("Stream", get_cpp_class<Stream>());
 	builtin->def("FileStream", get_cpp_class<FileStream>());
 	builtin->def("MemoryStream", get_cpp_class<MemoryStream>());
+	builtin->def("StringStream", get_cpp_class<StringStream>());
 	builtin->def("Thread", get_cpp_class<Thread>());
 	builtin->def("Mutex", get_cpp_class<Mutex>());
 	builtin->def("Format", get_cpp_class<Format>());
@@ -1263,6 +1264,16 @@ Iterator::inject: method(init, fn){
 	}
 	return result;
 }
+
+Iterator::with_prev: method(init, fn){
+	return fiber{
+		prev: nop;
+		this{
+			yield prev, it;
+			prev = it;
+		}
+	}
+}
 	))();
 
 	Xsrc((
@@ -1315,6 +1326,14 @@ Int::times: method{
 			yield i;
 		}
 	}
+}
+
+String::gsub: method(pattern, fn){
+	elem: (peg::anych - pattern)*0;
+	split: elem >> (pattern[|| [fn(it)]] >> elem)*0;
+	ret: [];
+	peg::join(split).parse_string(this, ret);
+	return ret[0];
 }
 
 Null::to_s: method{

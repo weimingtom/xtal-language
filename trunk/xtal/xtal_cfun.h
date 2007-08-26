@@ -681,10 +681,10 @@ protected:
 	int_t param_n_;
 };
 
-class CFunArgsImpl : public CFun{
+class CFunArgs : public CFun{
 public:
 
-	CFunArgsImpl(fun_t f, const void* val, int_t val_size, int_t param_n);
+	CFunArgs(fun_t f, const void* val, int_t val_size, int_t param_n);
 
 	virtual void call(const VMachinePtr& vm);
 };
@@ -699,7 +699,7 @@ CFunPtr fun(R (*f)(), const Policy&){
 template<class R, class A0, class Policy>
 CFunPtr fun(R (*f)(A0), const Policy&){
 	enum{ V = IsSame<A0, const VMachinePtr&>::value };
-	if(V)return xnew<CFunArgsImpl>(detail::fun1<R (*)(A0), R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
+	if(V)return xnew<CFunArgs>(detail::fun1<R (*)(A0), R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
 	return xnew<CFun>(detail::fun1<R (*)(A0), R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
 }
 
@@ -736,7 +736,7 @@ CFunPtr method(R (C::*f)(A0), const Policy&){
 	enum{ V = IsSame<A0, const VMachinePtr&>::value };
 	typedef detail::memfun1<C, R, A0> memfun;
 	memfun data(f);
-	if(V)return xnew<CFunArgsImpl>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
+	if(V)return xnew<CFunArgs>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
 	return xnew<CFun>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
 }
 
@@ -780,7 +780,7 @@ CFunPtr method(R (C::*f)(A0) const, const Policy&){
 	enum{ V = IsSame<A0, const VMachinePtr&>::value };
 	typedef detail::memfun1<C, R, A0> memfun;
 	memfun data(f);
-	if(V)return xnew<CFunArgsImpl>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
+	if(V)return xnew<CFunArgs>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
 	return xnew<CFun>(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1);
 }
 
@@ -821,7 +821,7 @@ CFunPtr method(R (*f)(C), const Policy&){
 template<class C, class R, class A0, class Policy>
 CFunPtr method(R (*f)(C, A0), const Policy&){
 	enum{ V = IsSame<A0, const VMachinePtr&>::value };
-	if(V)xnew<CFunArgsImpl>(&detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
+	if(V)xnew<CFunArgs>(&detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
 	return xnew<CFun>(&detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
 }
 

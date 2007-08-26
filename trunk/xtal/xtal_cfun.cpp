@@ -98,10 +98,10 @@ void CFun::check_arg(const VMachinePtr& vm){
 	}
 }
 
-CFunArgsImpl::CFunArgsImpl(fun_t f, const void* val, int_t val_size, int_t param_n)
+CFunArgs::CFunArgs(fun_t f, const void* val, int_t val_size, int_t param_n)
 	:CFun(f, val, val_size, param_n){}
 
-void CFunArgsImpl::call(const VMachinePtr& vm){
+void CFunArgs::call(const VMachinePtr& vm){
 	fun_(vm, pi_, data_);
 }
 

@@ -89,12 +89,39 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 
-		int c;
-		c = clock();
-		handle_argv(argv);
-		printf("%g\n", (clock()-c)/1000.0f);
+AnyPtr ret = Xsrc((
+
+filelocal.inherit(peg);
+
+var: set("abcdefghijklmnopqrstuvwxyz")*1;
+sep: -str(":");
+pe: var >> (sep >> var)*0;
+
+src: "test:test:test";
+
+mm: MemoryStream();
+1000000 {
+  mm.put_s(src);
+}
+mm.size/1024.0 .p;
+
+
+ret: [];
+t: clock();
+if(pe.parse_string(mm.to_s, ret)){
+  (clock()-t).p;
+  "ok".p;
+}
+
+export mm;
+
+))();
+
+		//handle_argv(argv);
 		
-		/*		
+int c;
+
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

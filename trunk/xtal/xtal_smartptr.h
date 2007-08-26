@@ -199,6 +199,9 @@ struct SmartPtrCtor2{
 	static int_t call(type){ return 0; };
 };
 
+template <int N>
+struct SmartPtrSelector{};
+
 /**
 * @brief T型へのポインタを保持するためのスマートポインタ
 */
@@ -230,12 +233,12 @@ public:
 	/**
 	* @brief T*からSmartPtr<T>を取り出す。
 	*/
-	static SmartPtr<T> from_this(T* p){ return from_this2(I2T<InheritedN<T>::value>(), p); }
+	static SmartPtr<T> from_this(T* p){ return from_this2(SmartPtrSelector<InheritedN<T>::value>(), p); }
 
 	/**
 	* @brief T*をカウントせずにスマートポインタに格納する
 	*/
-	static SmartPtr<T> nocount(T* p){ return nocount2(I2T<InheritedN<T>::value>(), p); }
+	static SmartPtr<T> nocount(T* p){ return nocount2(SmartPtrSelector<InheritedN<T>::value>(), p); }
 
 public:
 
@@ -254,7 +257,7 @@ public:
 	/**
 	* @brief T型へのポインタを取得する。
 	*/
-	T* get() const{ return get2(I2T<InheritedN<T>::value>()); }
+	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
 
 private:
 
@@ -264,221 +267,178 @@ private:
 	SmartPtr(NC nc, Base* p)
 		:SmartPtr<Any>(nc, p){}
 
-	static SmartPtr<T> from_this2(I2T<INHERITED_BASE>, T* p){ return SmartPtr<T>(PT(), (Base*)p); }
-	static SmartPtr<T> from_this2(I2T<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
-	static SmartPtr<T> from_this2(I2T<INHERITED_OTHER>, T* p){ return SmartPtr<T>(PT(), ((Base*)p - 1)); }
+public:
 
-	static SmartPtr<T> nocount2(I2T<INHERITED_BASE>, T* p){ return SmartPtr<T>(NC(), p); }
-	static SmartPtr<T> nocount2(I2T<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
-	static SmartPtr<T> nocount2(I2T<INHERITED_OTHER>, T* p){ return SmartPtr<T>(NC(), ((Base*)p - 1)); }
+	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_BASE>, T* p){ return SmartPtr<T>(PT(), (Base*)p); }
+	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
+	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_OTHER>, T* p){ return SmartPtr<T>(PT(), ((Base*)p - 1)); }
 
-	T* get2(I2T<INHERITED_BASE>) const{ return (T*)pvalue(*this); }
-	T* get2(I2T<INHERITED_INNOCENCE>) const{ return (T*)this; }
-	T* get2(I2T<INHERITED_OTHER>) const{ return (T*)((Base*)pvalue(*this) + 1); }
+	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_BASE>, T* p){ return SmartPtr<T>(NC(), p); }
+	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
+	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_OTHER>, T* p){ return SmartPtr<T>(NC(), ((Base*)p - 1)); }
 
+	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ return (T*)pvalue(*this); }
+	T* get2(SmartPtrSelector<INHERITED_INNOCENCE>) const{ return (T*)this; }
+	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ return (T*)((Base*)pvalue(*this) + 1); }
+
+public:
+
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
+		:SmartPtr<Any>(NC(), new T()){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T()){}
+
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>());
+	}
+
+/////////////////////
+
+	template<class A0>
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0)
+		:SmartPtr<Any>(NC(), new T(a0)){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	template<class A0>
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0)){}
+
+	template<class A0>
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a01)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>(a0));
+	}
+
+/////////////////////
+
+	template<class A0, class A1>
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
+		:SmartPtr<Any>(NC(), new T(a0, a1)){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	template<class A0, class A1>
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0, a1)){}
+
+	template<class A0, class A1>
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>(a0, a1));
+	}
+
+/////////////////////
+
+	template<class A0, class A1, class A2>
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
+		:SmartPtr<Any>(NC(), new T(a0, a1, a2)){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	template<class A0, class A1, class A2>
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0, a1, a2)){}
+
+	template<class A0, class A1, class A2>
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>(a0, a1, a2));
+	}
+
+/////////////////////
+
+	template<class A0, class A1, class A2, class A3>
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
+		:SmartPtr<Any>(NC(), new T(a0, a1, a2, a3)){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	template<class A0, class A1, class A2, class A3>
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0, a1, a2, a3)){}
+
+	template<class A0, class A1, class A2, class A3>
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>(a0, a1, a2, a3));
+	}
+
+/////////////////////
+
+	template<class A0, class A1, class A2, class A3, class A4>
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+		:SmartPtr<Any>(NC(), new T(a0, a1, a2, a3, a4)){
+		Base* p = pvalue(*this);
+		p->set_class(new_cpp_class<T>());
+	}
+
+	template<class A0, class A1, class A2, class A3, class A4>
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0, a1, a2, a3, a4)){}
+
+	template<class A0, class A1, class A2, class A3, class A4>
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
+		Base* p = pvalue(*this);
+		new(p) TBase<T>();
+		new(p+1) T();
+		p->set_class(new_cpp_class<T>(a0, a1, a2, a3, a4));
+	}
 };
-
-
-template<class T, class A0 = Void, class A1 = Void, class A2 = Void, class A3 = Void, class A4 = Void>
-struct XNewT{
-	static SmartPtr<T> make(I2T<INHERITED_BASE>);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>);
-
-	static SmartPtr<T> make(I2T<INHERITED_BASE>, const A0& a0);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>, const A0& a0);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>, const A0& a0);
-
-	static SmartPtr<T> make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1);
-
-	static SmartPtr<T> make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2);
-
-	static SmartPtr<T> make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3);
-
-	static SmartPtr<T> make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4);
-	static SmartPtr<T> make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4);
-	static SmartPtr<T> make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4);
-};
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>){
-	Base* p = new T();
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>){
-	T temp;
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T();
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-////
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>, const A0& a0){
-	Base* p = new T(a0);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>, const A0& a0){
-	T temp(a0);
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a0){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T(a0);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-////
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1){
-	Base* p = new T(a0, a1);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1){
-	T temp(a0, a1);
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T(a0, a1);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-////
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2){
-	Base* p = new T(a0, a1, a2);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2){
-	T temp(a0, a1, a2);
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T(a0, a1, a2);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-////
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
-	Base* p = new T(a0, a1, a2, a3);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
-	T temp(a0, a1, a2, a3);
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T(a0, a1, a2, a3);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-////
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	Base* p = new T(a0, a1, a2, a3, a4);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)p);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	T temp(a0, a1, a2, a3, a4);
-	return SmartPtr<T>::nocount(&temp);
-}
-
-template<class T, class A0, class A1, class A2, class A3, class A4>
-SmartPtr<T> XNewT<T, A0, A1, A2, A3, A4>::make(I2T<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	Base* p = (Base*)Base::operator new(sizeof(T) + sizeof(Base));
-	new(p) TBase<T>();
-	new(p+1) T(a0, a1, a2, a3, a4);
-	p->set_class(new_cpp_class<T>());
-	return SmartPtr<T>::nocount((T*)(p+1));		
-}
-
-
-
 
 template<class T>
-inline SmartPtr<T> xnew(){
-	return XNewT<T>::make(I2T<InheritedN<T>::value>());
+SmartPtr<T> xnew(){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>());
 }
 
 template<class T, class A0>
-inline SmartPtr<T> xnew(const A0& a0){
-	return XNewT<T, A0>::make(I2T<InheritedN<T>::value>(), a0);
+SmartPtr<T> xnew(const A0& a0){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0);
 }
 
 template<class T, class A0, class A1>
-inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
-	return XNewT<T, A0, A1>::make(I2T<InheritedN<T>::value>(), a0, a1);
+SmartPtr<T> xnew(const A0& a0, const A1& a1){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1);
 }
 
 template<class T, class A0, class A1, class A2>
-inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
-	return XNewT<T, A0, A1, A2>::make(I2T<InheritedN<T>::value>(), a0, a1, a2);
+SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2);
 }
 
 template<class T, class A0, class A1, class A2, class A3>
-inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
-	return XNewT<T, A0, A1, A2, A3>::make(I2T<InheritedN<T>::value>(), a0, a1, a2, a3);
+SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3);
 }
 
 template<class T, class A0, class A1, class A2, class A3, class A4>
-inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	return XNewT<T, A0, A1, A2, A3, A4>::make(I2T<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
+SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 
 

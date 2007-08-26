@@ -50,6 +50,48 @@ public:
 	
 	String(LargeString* left, LargeString* right);
 
+	String(char_t a)
+		:Any(noinit_t()){
+		if(1<SMALL_STRING_MAX){
+			set_small_string();
+			svalue_[0] = a;
+		}else{
+			init_string(&a, 1);
+		}
+	}
+
+	String(char_t a, char_t b)
+		:Any(noinit_t()){
+		set_small_string();
+		if(2<SMALL_STRING_MAX){
+			set_small_string();
+			svalue_[0] = a;
+			svalue_[1] = a;
+		}else{
+			char_t buf[2];
+			buf[0] = a;
+			buf[1] = b;
+			init_string(buf, 2);
+		}
+	}
+
+	String(char_t a, char_t b, char_t c)
+		:Any(noinit_t()){
+		set_small_string();
+		if(1<SMALL_STRING_MAX){
+			set_small_string();
+			svalue_[0] = a;
+			svalue_[1] = b;
+			svalue_[2] = c;
+		}else{
+			char_t buf[3];
+			buf[0] = a;
+			buf[1] = b;
+			buf[2] = c;
+			init_string(buf, 3);
+		}
+	}
+
 public:
 
 	/**

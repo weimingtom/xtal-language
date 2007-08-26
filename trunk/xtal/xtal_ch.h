@@ -19,6 +19,7 @@ int_t ch_len(char_t lead);
 */
 int_t ch_len2(const char_t* str);
 
+
 void set_code_sjis();
 void set_code_euc();
 void set_code_utf8();

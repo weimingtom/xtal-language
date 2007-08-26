@@ -196,9 +196,11 @@ public:
 
 	void push_value(const AnyPtr& v){
 		if(!ignore_flag()){
-			ListPtr cell = xnew<List>(v);
-			tail_->set_cdr(cell);
-			tail_ = cell;
+			//ListPtr cell = xnew<List>(v);
+			//tail_->set_cdr(cell);
+			//tail_ = cell;
+
+			//v->p();
 		}
 	}
 

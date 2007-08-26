@@ -353,6 +353,31 @@ StringPtr MemoryStream::get_s(int_t length){
 	if(pos_ >= data_.size())
 		return "";
 
+	if(length==1){
+		uint_t pos = pos_;
+
+		int_t len = ch_len(data_[pos_]);
+		if(len<0){
+			if(pos_ + -len > data_.size()){
+				return "";
+			}
+			len = ch_len2((char_t*)&data_[pos_]);
+		}
+
+		if(pos_ + len > data_.size()){
+			return "";
+		}
+
+		pos_ += len;
+
+		switch(len){
+		case 1: return xnew<String>(data_[pos]);
+		case 2: return xnew<String>(data_[pos], data_[pos+1]);
+		case 3: return xnew<String>(data_[pos], data_[pos+1], data_[pos+2]);
+		default: return xnew<String>((char_t*)&data_[pos], len);
+		}
+	}
+	
 	if(length<0){
 		StringPtr ret = xnew<String>((char_t*)&data_[pos_], data_.size() - pos_);
 		pos_ = data_.size();
@@ -392,7 +417,7 @@ StringPtr MemoryStream::get_s(int_t length){
 
 StringPtr MemoryStream::to_s(){
 	if(data_.empty())
-		return xnew<String>("");
+		return "";
 	return xnew<String>((char_t*)&data_[0], data_.size());
 }
 
@@ -469,7 +494,13 @@ StringPtr StringStream::get_s(int_t length){
 		}
 
 		pos_ += len;
-		return xnew<String>(&data_[pos], len);
+
+		switch(len){
+		case 1: return xnew<String>(data_[pos]);
+		case 2: return xnew<String>(data_[pos], data_[pos+1]);
+		case 3: return xnew<String>(data_[pos], data_[pos+1], data_[pos+2]);
+		default: return xnew<String>((char_t*)&data_[pos], len);
+		}
 	}
 
 	if(length<0){

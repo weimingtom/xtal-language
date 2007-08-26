@@ -179,7 +179,7 @@ public:
 			if(!backtrack_stack_.empty()){
 				uint_t mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 
-				if(rpos==mpos){
+				if(rpos+1==mpos){
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
 					buf_->resize(bufsize*2);
 					bufsize = buf_->size();
@@ -188,10 +188,10 @@ public:
 					mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 				}
 
-				if(rpos>mpos){
-					read_ += do_read(buf_->data()+rpos, bufsize-rpos);
+				if(mpos>rpos){
+					read_ += do_read(buf_->data()+rpos, mpos-rpos-1);
 				}else{
-					read_ += do_read(buf_->data()+rpos, mpos-rpos);
+					read_ += do_read(buf_->data()+rpos, bufsize-rpos);
 				}
 			}else{
 				read_ += do_read(buf_->data()+rpos, bufsize-rpos);
@@ -494,7 +494,7 @@ public:
 	}
 
 	virtual bool do_parse(const LexerPtr& lex){
-		AnyPtr s = lex->read();
+		const AnyPtr& s = lex->read();
 		if(raweq(s, nop)){
 			return false;
 		}
@@ -515,7 +515,7 @@ public:
 	}
 
 	virtual bool do_parse(const LexerPtr& lex){
-		AnyPtr ret = lex->read();
+		const AnyPtr& ret = lex->read();
 		if(raweq(ret, nop))
 			return false;
 		lex->push_value(ret);

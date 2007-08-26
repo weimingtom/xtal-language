@@ -314,12 +314,12 @@ public:
 		:SmartPtr<Any>(*(SmartPtr<Any>*)&T(a0)){}
 
 	template<class A0>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a01)
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
 		Base* p = pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
-		p->set_class(new_cpp_class<T>(a0));
+		new(p+1) T(a0);
+		p->set_class(new_cpp_class<T>());
 	}
 
 /////////////////////
@@ -340,8 +340,8 @@ public:
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
 		Base* p = pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
-		p->set_class(new_cpp_class<T>(a0, a1));
+		new(p+1) T(a0, a1);
+		p->set_class(new_cpp_class<T>());
 	}
 
 /////////////////////
@@ -362,8 +362,8 @@ public:
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
 		Base* p = pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
-		p->set_class(new_cpp_class<T>(a0, a1, a2));
+		new(p+1) T(a0, a1, a2);
+		p->set_class(new_cpp_class<T>());
 	}
 
 /////////////////////
@@ -384,8 +384,8 @@ public:
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
 		Base* p = pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
-		p->set_class(new_cpp_class<T>(a0, a1, a2, a3));
+		new(p+1) T(a0, a1, a2, a3);
+		p->set_class(new_cpp_class<T>());
 	}
 
 /////////////////////
@@ -406,8 +406,8 @@ public:
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(Base))){
 		Base* p = pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
-		p->set_class(new_cpp_class<T>(a0, a1, a2, a3, a4));
+		new(p+1) T(a0, a1, a2, a3, a4);
+		p->set_class(new_cpp_class<T>());
 	}
 };
 

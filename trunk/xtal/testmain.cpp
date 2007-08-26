@@ -93,11 +93,12 @@ AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-var: join(set("abcdefghijklmnopqrstuvwxyz")*1);
-sep: -str(":");
+vvv: set("tes");
+var: join(vvv*1);
+sep: -set(":-");
 pe: var >> (sep >> var)*0;
 
-src: "test:test:test";
+src: "test:te-st:test";
 
 mm: MemoryStream();
 1000000 {
@@ -108,7 +109,7 @@ mm.size/1024.0 .p;
 
 ret: [];
 t: clock();
-if(pe.parse_string(mm.to_s, ret)){
+if((pe).parse_string(mm.to_s, ret)){
   (clock()-t).p;
   "ok".p;
   ret.p;

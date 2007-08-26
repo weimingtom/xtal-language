@@ -27,7 +27,7 @@ void InitFun(){
 		p->method("iter_first", &Fiber::iter_next);
 		p->method("iter_next", &Fiber::iter_next);
 		p->method("halt", &Fiber::halt);
-		p->method("is_finished", &Fiber::is_finished);
+		p->method("is_running", &Fiber::is_running);
 	}
 
 	{
@@ -182,7 +182,7 @@ static const SmartPtr<VMachineMgr>& vm_mgr(){
 }
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
-	:Fun(outer, th, code, core), vm_(null), resume_pc_(0), nostart_(true){
+	:Fun(outer, th, code, core), vm_(null), resume_pc_(0){
 }
 
 
@@ -196,7 +196,6 @@ void Fiber::halt(){
 }
 
 void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
-	nostart_ = false;
 	vm->set_arg_this(this_);
 	if(resume_pc_==0){
 		if(!vm_){ vm_ = vm_mgr()->take_over(); }

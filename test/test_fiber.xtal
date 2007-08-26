@@ -34,7 +34,12 @@
 		}
 	}
 	
+	assert !fib.is_running;
+	
 	assert fib(10)==1;
+	
+	assert fib.is_running;
+	
 	assert fib()==1;
 	assert fib()==2;
 	assert fib()==3;
@@ -46,3 +51,4 @@
 	assert fib()==55;
 	
 }
+

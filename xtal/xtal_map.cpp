@@ -220,7 +220,7 @@ const AnyPtr& Map::at(const AnyPtr& key){
 		}
 		p = p->next;
 	}
-	return null;
+	return nop;
 }
 
 void Map::set_at(const AnyPtr& key, const AnyPtr& value){
@@ -299,15 +299,10 @@ bool Map::op_eq(const MapPtr& other){
 	if(size()!=other->size())
 		return false;
 	
-	const VMachinePtr& vm = vmachine();
 	Xfor2(key, value, other){
-		vm->setup_call(1, value);
-		at(key)->rawsend(vm, Xid(op_eq));
-		if(!vm->processed() || !vm->result()){
-			vm->cleanup_call();
+		if(at(key)!=value){
 			return false;
 		}
-		vm->cleanup_call();
 	}
 	return true;
 }
@@ -364,7 +359,7 @@ const AnyPtr& StrictMap::at(const AnyPtr& key){
 		}
 		p = p->next;
 	}
-	return null;
+	return nop;
 }
 
 void StrictMap::set_at(const AnyPtr& key, const AnyPtr& value){

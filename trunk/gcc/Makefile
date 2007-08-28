@@ -1,7 +1,7 @@
 
 CC = g++
 
-OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_cast.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o xtal_base.o xtal_serializer.o
+OBJS = xtal_allocator.o xtal_any.o xtal_array.o xtal_code.o xtal_codebuilder.o xtal_expr.o xtal_frame.o xtal_fun.o xtal_cfun.o xtal_lexer.o xtal_lib.o xtal_map.o xtal_parser.o xtal_string.o xtal_vmachine.o xtal_cast.o xtal_stream.o xtal_stack.o xtal_thread.o xtal_ch.o xtal_base.o xtal_serializer.o xtal_debug.o xtal_format.o xtal_math.o xtal_basic_type.o
 
 OPT_FLAGS = -O3 -DNDEBUG -fno-rtti
 
@@ -73,6 +73,17 @@ xtal_base.o: ../xtal/xtal_base.cpp
 xtal_serializer.o: ../xtal/xtal_serializer.cpp
 	$(CC) -c ../xtal/xtal_serializer.cpp $(OPT_FLAGS)
 
+xtal_debug.o: ../xtal/xtal_debug.cpp
+	$(CC) -c ../xtal/xtal_debug.cpp $(OPT_FLAGS)
+
+xtal_format.o: ../xtal/xtal_format.cpp
+	$(CC) -c ../xtal/xtal_format.cpp $(OPT_FLAGS)
+
+xtal_math.o: ../xtal/xtal_math.cpp
+	$(CC) -c ../xtal/xtal_math.cpp $(OPT_FLAGS)
+
+xtal_basic_type.o: ../xtal/xtal_basic_type.cpp
+	$(CC) -c ../xtal/xtal_basic_type.cpp $(OPT_FLAGS)
 
 libxtal: $(OBJS)
 	ar r libxtal.a $(OBJS)

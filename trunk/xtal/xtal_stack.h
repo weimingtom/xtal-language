@@ -577,7 +577,7 @@ public:
 public:
 
 	iterator begin(){ return (iterator)impl_.begin(); }	
-	const_iterator begin() const{ (return iterator)impl_.begin(); }
+	const_iterator begin() const{ return (iterator)impl_.begin(); }
 	iterator end(){ return (iterator)impl_.end(); }	
 	const_iterator end() const{ return (iterator)impl_.end(); }		
 	void push_unchecked(const T &val){ impl_.push_unchecked(&val); }

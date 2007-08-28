@@ -160,7 +160,7 @@ public:
 	void dec_ref_count(){ --ref_count_; }
 	void set_ref_count(uint_t rc){ ref_count_ = rc; }
 	void set_class(const ClassPtr& c);
-	virtual void visit_members(Visitor& m);
+	virtual void visit_members(Visitor& m){}
 	
 private:
 

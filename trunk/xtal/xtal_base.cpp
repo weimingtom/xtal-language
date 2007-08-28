@@ -30,7 +30,9 @@ namespace peg{
 
 namespace{
 
-uint_t objects_allocate_size_ = 4096;
+enum{
+	OBJECTS_ALLOCATE_SIZE = 4096
+};
 
 Base** objects_begin_ = 0;
 Base** objects_current_ = 0;
@@ -55,11 +57,11 @@ AnyPtr** place_end_ = 0;
 uint_t cycle_count_ = 0;
 
 void print_alive_objects(){
-	for(Base** it = objects_begin_; it!=objects_current_; ++it){
+	//for(Base** it = objects_begin_; it!=objects_current_; ++it){
 		//String* str = dynamic_cast<String*>(*it);
 		//fprintf(stderr, " %s rc=%d %s\n", typeid(**it).name(), (*it)->ref_count(), str ? str->debug_c_str() : "");
 		//fprintf(stderr, " rc=%d\n", (*it)->ref_count());
-	}
+	//}
 }
 
 }
@@ -83,7 +85,7 @@ void initialize(){
 
 	disable_gc();
 
-	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, objects_allocate_size_);
+	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
 	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 	*objects_list_current_++ = objects_begin_;
 
@@ -138,8 +140,6 @@ void initialize(){
 	new_cpp_class<Lib>();
 	
 	InitDebug();
-
-	//finalize_id = InternedStringPtr("finalize");
 	
 	InitString();
 	InitInternedString();
@@ -300,7 +300,7 @@ struct ConnectedPointer{
 	}
 
 	Base*& operator *(){
-		return objects_list_begin_[pos/objects_allocate_size_][pos&(objects_allocate_size_-1)];
+		return objects_list_begin_[pos/OBJECTS_ALLOCATE_SIZE][pos&(OBJECTS_ALLOCATE_SIZE-1)];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -339,7 +339,7 @@ void full_gc(){
 		CycleCounter cc(&cycle_count_);
 
 		ConnectedPointer prev_oc;
-		ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*objects_allocate_size_ + (objects_current_ - objects_begin_);
+		ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
 		ConnectedPointer begin = 0;
 		
 		do{
@@ -403,13 +403,13 @@ void full_gc(){
 		int_t list_count = objects_list_current_ - objects_list_begin_;
 		bool first = true;
 		for(int_t i=0; i<list_count; ++i){
-			int_t pos = (i+1)*objects_allocate_size_;
+			int_t pos = (i+1)*OBJECTS_ALLOCATE_SIZE;
 			if(current.pos<pos){
 				if(first){
 					first = false;
 					objects_begin_ = objects_list_begin_[i];
-					objects_current_ = objects_begin_ + (current.pos&(objects_allocate_size_-1));
-					objects_end_ = objects_begin_ + objects_allocate_size_;
+					objects_current_ = objects_begin_ + (current.pos&(OBJECTS_ALLOCATE_SIZE-1));
+					objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 					objects_list_current_ = objects_list_begin_ + i + 1;
 				}else{
 					user_free(objects_list_begin_[i]);
@@ -433,7 +433,7 @@ void* Base::operator new(size_t size){
 				expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 			}
 			objects_begin_ = objects_current_ = objects_end_ = 0;
-			expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, objects_allocate_size_);
+			expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
 			*objects_list_current_++ = objects_begin_;
 		}
 	}
@@ -471,10 +471,6 @@ AnyPtr Base::p(){
 
 void Base::set_class(const ClassPtr& c){
 	class_ = c;
-}
-
-void Base::visit_members(Visitor& m){
-	//m & class_;
 }
 	
 void Base::call(const VMachinePtr& vm){

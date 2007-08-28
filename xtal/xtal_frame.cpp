@@ -81,6 +81,12 @@ void InitClass(){
 		p->def("new", ctor<Lib>());
 		p->method("append_load_path", &Lib::append_load_path);
 	}
+
+	builtin()->def("Class", get_cpp_class<Class>());
+	builtin()->def("CppClass", get_cpp_class<CppClass>());
+	builtin()->def("Instance", get_cpp_class<Instance>());
+	builtin()->def("lib", lib());
+	builtin()->def("Lib", get_cpp_class<Lib>());
 }
 
 EmptyHaveInstanceVariables empty_have_instance_variables;

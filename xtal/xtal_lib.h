@@ -129,7 +129,6 @@ AnyPtr* make_place();
 
 void initialize();
 void uninitialize();
-void initialize_lib();
 bool initialized();
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);

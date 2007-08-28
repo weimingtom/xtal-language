@@ -25,3 +25,6 @@
 #include "xtal_stack.cpp"
 #include "xtal_thread.cpp"
 #include "xtal_ch.cpp"
+#include "xtal_math.cpp"
+#include "xtal_format.cpp"
+#include "xtal_basic_type.cpp"

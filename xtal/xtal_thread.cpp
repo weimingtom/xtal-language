@@ -183,6 +183,10 @@ void InitThread(){
 		add_long_life_var(&vmachine_);
 		vmachine_ = xnew<VMachine>();
 	}
+
+	builtin()->def("Thread", get_cpp_class<Thread>());
+	builtin()->def("Mutex", get_cpp_class<Mutex>());
+
 }
 
 void UninitThread(){

@@ -34,15 +34,19 @@ void InitFun(){
 		ClassPtr p = new_cpp_class<Lambda>("Lambda");
 		p->inherit(get_cpp_class<Fun>());
 	}
-}
 
-void InitArguments(){
-	ClassPtr p = new_cpp_class<Arguments>("Arguments");
-	p->method("size", &Arguments::length);
-	p->method("length", &Arguments::length);
-	p->method("op_at", &Arguments::op_at);
-	p->method("each_ordered_arg", &Arguments::each_ordered_arg);
-	p->method("each_named_arg", &Arguments::each_named_arg);
+	{
+		ClassPtr p = new_cpp_class<Arguments>("Arguments");
+		p->method("size", &Arguments::length);
+		p->method("length", &Arguments::length);
+		p->method("op_at", &Arguments::op_at);
+		p->method("each_ordered_arg", &Arguments::each_ordered_arg);
+		p->method("each_named_arg", &Arguments::each_named_arg);
+	}
+
+	builtin()->def("Arguments", get_cpp_class<Arguments>());
+	builtin()->def("Fun", get_cpp_class<Fun>());
+	builtin()->def("Fiber", get_cpp_class<Fiber>());
 }
 
 void Arguments::visit_members(Visitor& m){

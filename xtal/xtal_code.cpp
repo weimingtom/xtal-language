@@ -14,9 +14,13 @@ ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
 void InitCode(){
-	ClassPtr p = new_cpp_class<Code>("Code");
-	p->inherit(get_cpp_class<Fun>());
-	p->method("inspect", &Code::inspect);
+	{
+		ClassPtr p = new_cpp_class<Code>("Code");
+		p->inherit(get_cpp_class<Fun>());
+		p->method("inspect", &Code::inspect);
+	}
+
+	builtin()->def("Code", get_cpp_class<Code>());
 }
 
 Code::Code()

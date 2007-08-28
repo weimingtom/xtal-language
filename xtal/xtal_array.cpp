@@ -99,6 +99,7 @@ void InitArray(){
 		p->method("assign", &Array::assign);
 	}
 
+	builtin()->def("Array", get_cpp_class<Array>());
 }
 
 void Array::visit_members(Visitor& m){

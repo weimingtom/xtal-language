@@ -117,6 +117,12 @@ const ClassPtr& lib();
 */
 const VMachinePtr& vmachine();
 
+
+const StreamPtr& stdin_stream();
+const StreamPtr& stdout_stream();
+const StreamPtr& stderr_stream();
+
+
 void add_long_life_var(AnyPtr* a, int_t n = 1);
 void remove_long_life_var(AnyPtr* a, int_t n = 1);
 AnyPtr* make_place();

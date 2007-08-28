@@ -226,10 +226,21 @@ public:
 
 	virtual bool eof();
 
-private:
+protected:
 
 	FILE* fp_;
 };
+
+class StdioStream : public FileStream{
+public:
+
+	StdioStream(FILE* fp)
+		:FileStream(fp){}
+
+	virtual uint_t write(const void* p, uint_t size);
+
+};
+
 
 class MemoryStream : public Stream{
 public:

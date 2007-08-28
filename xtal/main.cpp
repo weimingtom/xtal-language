@@ -4,7 +4,7 @@
 using namespace xtal;
 
 static void print_usage(){
-	fprintf(stderr,
+	fprintf(stdout,
 		"usage: xtal [options] [script [args]].\n"
 		"Available options are:\n"
 		"  -v       show version information\n"
@@ -19,7 +19,7 @@ static void handle_argv(char** argv){
 
 		switch(argv[i][1]){
 		case 'v':
-			fprintf(stderr, "xtal %d.%d.%d.%d\n", VERSION1, VERSION2, VERSION3, VERSION4);
+			fprintf(stdout, "xtal %d.%d.%d.%d\n", VERSION1, VERSION2, VERSION3, VERSION4);
 			break;
 
 		default:

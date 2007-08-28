@@ -440,6 +440,21 @@ const ClassPtr& lib(){
 	return p;
 }
 
+const StreamPtr& stdin_stream(){
+	static LLVar<StreamPtr> p = xnew<StdioStream>(stdin);
+	return p;
+}
+
+const StreamPtr& stdout_stream(){
+	static LLVar<StreamPtr> p = xnew<StdioStream>(stdout);
+	return p;
+}
+
+const StreamPtr& stderr_stream(){
+	static LLVar<StreamPtr> p = xnew<StdioStream>(stderr);
+	return p;
+}
+
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
 	return builtin()->member("CastError")(Xt("Xtal Runtime Error 1004")(
 		Named("type", from->get_class()->object_name()), Named("required", to)
@@ -919,9 +934,10 @@ void initialize_lib(){
 	builtin->def("Format", get_cpp_class<Format>());
 	builtin->def("Code", get_cpp_class<Code>());
 	builtin->def("Instance", get_cpp_class<Instance>());
-	builtin->def("stdin", xnew<FileStream>(stdin));
-	builtin->def("stdout", xnew<FileStream>(stdout));
-	builtin->def("stderr", xnew<FileStream>(stderr));
+
+	builtin->def("stdin", stdin_stream());
+	builtin->def("stdout", stdout_stream());
+	builtin->def("stderr", stderr_stream());
 	
 	builtin->fun("compile_file", &compile_file);
 	builtin->fun("compile", &compile);

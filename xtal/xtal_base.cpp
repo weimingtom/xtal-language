@@ -482,8 +482,13 @@ void Base::call(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
+const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){ 
+	return nop;
+}
+
+
 const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){ 
-	return null; 
+	return ap(Innocence(this))->member(name, self, ns); 
 }
 
 void Base::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
@@ -517,8 +522,8 @@ void Base::set_object_name(const StringPtr& name, int_t force, const AnyPtr& par
 
 }
 
-bool Base::is(const ClassPtr& v){
-	return get_class()->is_inherited(v);
+bool Base::is(const ClassPtr& klass){
+	return ap(Innocence(this))->is(klass);
 }
 
 uint_t Base::hashcode(){

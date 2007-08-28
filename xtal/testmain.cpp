@@ -202,6 +202,7 @@ int c;
 	}
 
 	vmachine().get()->print_info();
+	print_result_of_cache();
 
 	uninitialize();
 

@@ -294,10 +294,10 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 			return ret;
 		}
 	}
-	return null;
+	return nop;
 }
 
-const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
+const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -311,7 +311,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
-				, return null);
+				, return nop);
 			}
 		}
 
@@ -323,7 +323,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
-				, return null);			
+				, return nop);			
 			}
 		}
 
@@ -439,7 +439,7 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
+const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -452,7 +452,7 @@ const AnyPtr& Lib::member(const InternedStringPtr& name, const AnyPtr& self, con
 				return rawdef(name, load(file_name), ns);
 			}
 		}
-		return null;
+		return nop;
 
 		/* 指定した名前をフォルダーとみなす
 		ArrayPtr next = path_.clone();

@@ -6,7 +6,6 @@
 
 namespace xtal{
 
-
 /**
 * @brief イノセンス
 *
@@ -407,7 +406,7 @@ public:
 	* @brief clsクラスのインスタンスか調べる。
 	*
 	*/
-	bool is(const ClassPtr& cls) const;
+	bool is(const ClassPtr& klass) const;
 		
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。
@@ -485,5 +484,7 @@ AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
+
+void print_result_of_cache();
 
 }

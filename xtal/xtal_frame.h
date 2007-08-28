@@ -151,113 +151,6 @@ public:
 		m & get_class();
 	}
 };
-
-class IdMap{
-public:
-
-	struct Node{
-		InternedStringPtr key;
-		AnyPtr ns;
-		u16 num;
-		u16 flags;
-		Node* next;
-		
-		Node(const InternedStringPtr& key = null, const AnyPtr& ns=null, u16 num = 0xffff, u16 flags = 0)
-			:key(key), ns(ns), num(num), flags(flags), next(0){}
-	};
-	
-	friend class iterator;
-	
-	class iterator{
-		IdMap* map_;
-		uint_t pos_;
-		Node* node_;
-	public:
-	
-		iterator(IdMap* map){
-			map_ = map;
-			pos_ = 0;
-			node_ = map_->begin_[pos_];
-			
-			while(!node_){
-				if(pos_<map_->size_-1){
-					++pos_;
-					node_ = map_->begin_[pos_];
-				}else{
-					break;
-				}
-			}
-		}
-		
-		bool is_done() const{
-			return node_==0;
-		}
-		
-		Node* operator->() const{
-			return node_;
-		}
-		
-		Node& operator*() const{
-			return *node_;
-		}
-		
-		iterator& operator++(){
-			if(node_){
-				node_ = node_->next;
-			}
-			while(!node_){
-				if(pos_<map_->size_-1){
-					++pos_;
-					node_ = map_->begin_[pos_];
-				}else{
-					return *this;
-				}
-			}
-			return *this;
-		}
-	};
-
-
-	IdMap();
-
-	~IdMap();
-		
-	Node* find(const InternedStringPtr& key, const AnyPtr& ns);
-
-	Node* insert(const InternedStringPtr& key, const AnyPtr& ns);
-
-	int_t size(){
-		return used_size_;
-	}
-	
-	bool empty(){
-		return used_size_==0;
-	}
-
-	void visit_members(Visitor& m);
-	
-private:
-
-	float_t rate(){
-		return used_size_/(float_t)size_;
-	}
-	
-	void set_node(Node* node);
-
-	void expand(int_t addsize);
-	
-private:
-
-	Node** begin_;
-	uint_t size_;
-	uint_t used_size_;
-
-private:
-
-	IdMap(const IdMap&);
-	IdMap& operator = (const IdMap&);
-};
-
 	
 class Frame : public HaveName{
 public:
@@ -338,13 +231,36 @@ protected:
 	BlockCore* core_;
 	
 	ArrayPtr members_;
-	IdMap* map_members_;
+
+	struct Key{
+		InternedStringPtr key;
+		AnyPtr ns;
+
+		friend bool operator <(const Key& a, const Key& b){
+			return rawvalue(a.key) < rawvalue(b.key);
+		}
+
+		friend void visit_members(Visitor& m, const Key& a){
+			m & a.key & a.ns;
+		}
+	};
+
+	struct Value{
+		u16 num;
+		u16 flags;
+
+		friend void visit_members(Visitor& m, const Value&){}
+	};
+
+	typedef AC<Key, Value>::map map_t;
+
+	map_t* map_members_;
 	
 	virtual void visit_members(Visitor& m){
 		HaveName::visit_members(m);
 		m & outer_ & code_ & members_;
 		if(map_members_){
-			map_members_->visit_members(m);
+			m & *map_members_;
 		}
 	}
 };

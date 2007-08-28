@@ -12,7 +12,7 @@ namespace xtal{
 
 class MembersIter : public Base{
 	FramePtr frame_;
-	IdMap::iterator it_;
+	Frame::map_t::iterator it_;
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
@@ -22,17 +22,17 @@ class MembersIter : public Base{
 public:
 
 	MembersIter(const FramePtr& a)
-		:frame_(a), it_(frame_->map_members_){
+		:frame_(a), it_(frame_->map_members_->begin()){
 	}
 
 	AnyPtr reset(){
-		it_ = frame_->map_members_;
+		it_ = frame_->map_members_->begin();
 		return SmartPtr<MembersIter>::from_this(this);
 	}
 
 	void iter_next(const VMachinePtr& vm){
-		if(frame_->map_members_ && !it_.is_done()){
-			vm->return_result(SmartPtr<MembersIter>::from_this(this), it_->key, it_->ns, frame_->members_->at(it_->num));
+		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
+			vm->return_result(SmartPtr<MembersIter>::from_this(this), it_->first.key, it_->first.ns, frame_->members_->at(it_->second.num));
 			++it_;
 		}else{
 			reset();
@@ -147,98 +147,6 @@ void Instance::instance_serial_load(const ClassPtr& cls, const AnyPtr& v){
 	}
 }
 
-IdMap::IdMap(){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	expand(7);
-}
-
-IdMap::~IdMap(){
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		while(p){
-			Node* next = p->next;
-			p->~Node();
-			user_free(p);
-			p = next;
-		}
-	}
-	user_free(begin_);
-}
-	
-IdMap::Node* IdMap::find(const InternedStringPtr& key, const AnyPtr& ns){
-	Node* p = begin_[rawvalue(key) % size_];
-	while(p){
-		if(raweq(p->key, key)){
-			return p;
-		}
-		p = p->next;
-	}
-	return 0;
-}
-
-IdMap::Node* IdMap::insert(const InternedStringPtr& key, const AnyPtr& ns){
-	Node** p = &begin_[rawvalue(key) % size_];
-	while(*p){
-		if(raweq((*p)->key, key)){
-			return *p;
-		}
-		p = &(*p)->next;
-	}
-	*p = (Node*)user_malloc(sizeof(Node));
-	new(*p) Node(key, ns);
-	used_size_++;
-	if(rate()>0.8f){
-		expand(17);
-		return find(key, ns);
-	}else{
-		return *p;		
-	}
-}
-
-
-void IdMap::visit_members(Visitor& m){
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		while(p){
-			Node* next = p->next;
-			m & p->key & p->ns;
-			p = next;
-		}
-	}		
-}
-
-void IdMap::set_node(Node* node){
-	Node** p = &begin_[rawvalue(node->key) % size_];
-	while(*p){
-		p = &(*p)->next;
-	}
-	*p = node;
-}
-
-void IdMap::expand(int_t addsize){
-	Node** oldbegin = begin_;
-	uint_t oldsize = size_;
-
-	size_ = size_ + size_/2 + addsize;
-	begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
-	for(uint_t i = 0; i<size_; ++i){
-		begin_[i] = 0;
-	}
-
-	for(uint_t i = 0; i<oldsize; ++i){
-		Node* p = oldbegin[i];
-		while(p){
-			Node* next = p->next;
-			p->next = 0;
-			set_node(p);
-			p = next;
-		}
-	}
-	user_free(oldbegin);
-}
-
 Frame::Frame(const FramePtr& outer, const CodePtr& code, BlockCore* core)
 	:outer_(outer), code_(code), core_(core ? core : &empty_class_core), members_(xnew<Array>(core_->variable_size)), map_members_(0){
 	if(debug::is_enabled()){
@@ -251,17 +159,17 @@ Frame::Frame()
 	
 Frame::~Frame(){
 	if(map_members_){
-		map_members_->~IdMap();
+		map_members_->~map();
 		user_free(map_members_);
 	}
 }
 
 void Frame::set_class_member(int_t i, const InternedStringPtr& name, int_t accessibility, const AnyPtr& ns, const AnyPtr& value){ 
 	members_->set_at(i, value);
-	//const InternedStringPtr& name = code_.symbol(core_->variable_symbol_offset+(core_->variable_size-1-i));
-	IdMap::Node* p = map_members_->insert(name, ns);
-	p->flags = accessibility;
-	p->num = i;
+	Key key = {name, ns};
+	Value& v = (*map_members_)[key];
+	v.flags = accessibility;
+	v.num = i;
 	value->set_object_name(name, object_name_force(), FramePtr::from_this(this));
 	global_mutate_count++;
 }
@@ -270,8 +178,8 @@ void Frame::set_object_name(const StringPtr& name, int_t force, const AnyPtr& pa
 	if(object_name_force()<force){
 		HaveName::set_object_name(name, force, parent);
 		if(map_members_){
-			for(IdMap::iterator it(map_members_); !it.is_done(); ++it){
-				members_->at(it->num)->set_object_name(it->key, force, FramePtr::from_this(this));
+			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
+				members_->at(it->second.num)->set_object_name(it->first.key, force, FramePtr::from_this(this));
 			}
 		}
 	}
@@ -279,7 +187,7 @@ void Frame::set_object_name(const StringPtr& name, int_t force, const AnyPtr& pa
 
 void Frame::make_map_members(){
 	if(!map_members_){
-		map_members_ = new(user_malloc(sizeof(IdMap))) IdMap();
+		map_members_ = new(user_malloc(sizeof(map_t))) map_t();
 	}
 }
 
@@ -357,11 +265,12 @@ void Class::init_instance(HaveInstanceVariables* inst, const VMachinePtr& vm, co
 }
 
 void Class::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(!it){
-		it = map_members_->insert(name, ns);
-		it->num = members_->size();
-		it->flags = accessibility;
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it==map_members_->end()){
+		Value& v = (*map_members_)[key];
+		v.num = members_->size();
+		v.flags = accessibility;
 		members_->push_back(value);
 		value->set_object_name(name, object_name_force(), ClassPtr::from_this(this));
 	}else{
@@ -371,11 +280,12 @@ void Class::def(const InternedStringPtr& name, const AnyPtr& value, int_t access
 }
 
 const AnyPtr& Class::any_member(const InternedStringPtr& name, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(it){
-		return members_->at(it->num);
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){
+		return members_->at(it->second.num);
 	}
-	return null;
+	return nop;
 }
 
 const AnyPtr& Class::bases_member(const InternedStringPtr& name){
@@ -388,14 +298,15 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 }
 
 const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(it){
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){
 		// メンバが見つかった
 
 		// しかしprivateが付けられている
-		if(it->flags & KIND_PRIVATE){
+		if(it->second.flags & KIND_PRIVATE){
 			if(raweq(self->get_class(), this)){
-				return members_->at(it->num);
+				return members_->at(it->second.num);
 			}else{
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
@@ -405,7 +316,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 		}
 
 		// しかしprotectedが付けられている
-		if(it->flags & KIND_PROTECTED){
+		if(it->second.flags & KIND_PROTECTED){
 			if(self->is(ClassPtr::from_this(this))){
 				
 			}else{
@@ -416,7 +327,7 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 			}
 		}
 
-		return members_->at(it->num);
+		return members_->at(it->second.num);
 	}
 	
 	for(int_t i = mixins_->size(); i>0; --i){
@@ -429,11 +340,12 @@ const AnyPtr& Class::member(const InternedStringPtr& name, const AnyPtr& self, c
 }
 
 void Class::set_member(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(!it){
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it==map_members_->end()){
 		XTAL_THROW(builtin()->member("RuntimeError")("undefined"), return);
 	}else{
-		members_->set_at(it->num, value);
+		members_->set_at(it->second.num, value);
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
@@ -528,9 +440,10 @@ Lib::Lib(const ArrayPtr& path)
 }
 
 const AnyPtr& Lib::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(it){
-		return members_->at(it->num);
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){
+		return members_->at(it->second.num);
 	}else{
 		Xfor(var, load_path_list_->each()){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal")->to_s();
@@ -555,11 +468,12 @@ void Lib::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessib
 }
 
 const AnyPtr& Lib::rawdef(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
-	IdMap::Node* it = map_members_->find(name, ns);
-	if(!it){
-		it = map_members_->insert(name, ns);
-		it->num = members_->size();
-		it->flags = KIND_PUBLIC;
+	Key key = {name, ns};
+	map_t::iterator it = map_members_->find(key);
+	if(it==map_members_->end()){
+		Value& v = (*map_members_)[key];
+		v.num = members_->size();
+		v.flags = KIND_PUBLIC;
 		members_->push_back(value);
 		global_mutate_count++;
 		value->set_object_name(name, object_name_force(), LibPtr::from_this(this));

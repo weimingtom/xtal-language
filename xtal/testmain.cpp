@@ -91,9 +91,9 @@ int main(int argc, char** argv){
 
 Xsrc((
 
-m: ["a":"b", "ee":"c", 4:"d", "edae":55, "e"~"e":"SUPER"];
+m: ["a":"b", "ee":"c", 4:"d", "eda1e":55, "e"~"e":"SUPER"];
 m["e"~"dae"] = 78;
-a: m.each.to_a.each.to_m.p;
+a: m.to_a.to_m.to_a.to_m.to_a.p;
 
 ))();
 
@@ -134,7 +134,7 @@ export mm;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

@@ -16,7 +16,6 @@
 	assert a[2][1]==20;
 }
 
-
 {
 	lib::Mew: class{
 		+_test3: 10;

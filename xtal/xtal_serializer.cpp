@@ -14,8 +14,8 @@
 namespace xtal{
 
 enum{
-	MARSHAL_VERSION1 = 1,
-	MARSHAL_VERSION2 = 0,
+	SERIALIZE_VERSION1 = 1,
+	SERIALIZE_VERSION2 = 0,
 };
 
 Serializer::Serializer(const StreamPtr& s)
@@ -140,7 +140,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}else if(raweq(cls, get_cpp_class<Code>())){
 			CodePtr p = cast<CodePtr>(v);
 			stream_->put_u8('x'); stream_->put_u8('t'); stream_->put_u8('a'); stream_->put_u8('l');
-			stream_->put_u8(MARSHAL_VERSION1); stream_->put_u8(MARSHAL_VERSION2); 
+			stream_->put_u8(SERIALIZE_VERSION1); stream_->put_u8(SERIALIZE_VERSION2); 
 			stream_->put_u8(0); 
 			stream_->put_u8(0);
 			
@@ -343,7 +343,7 @@ AnyPtr Serializer::inner_deserialize(){
 			}
 
 			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
-			if(version1!=MARSHAL_VERSION1 || version2!=MARSHAL_VERSION2){
+			if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
 				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")), return null);
 			}
 			

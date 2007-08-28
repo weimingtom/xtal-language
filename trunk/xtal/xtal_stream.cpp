@@ -71,6 +71,11 @@ void InitStream(){
 		p->def("new", ctor<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
 	}
 
+	{
+		ClassPtr p = new_cpp_class<StdioStream>("StdioStream");
+		p->inherit(get_cpp_class<FileStream>());
+	}
+
 }
 
 
@@ -256,6 +261,12 @@ void FileStream::close(){
 bool FileStream::eof(){
 	if(!fp_){ return true; }
 	return feof(fp_)!=0;
+}
+
+uint_t StdioStream::write(const void* p, uint_t size){
+	uint_t ret = FileStream::write(p, size);
+	fflush(fp_);
+	return ret;
 }
 
 MemoryStream::MemoryStream(){
@@ -562,9 +573,9 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 	if(!fp_)
 		return 0;
 	if(continue_stmt_){
-		fprintf(stdout, "ix:%03d>    ", line_);
+		stdout_stream()->put_s(Xf("ix:%03d>    ")(line_)->to_s());
 	}else{
-		fprintf(stdout, "ix:%03d>", line_);
+		stdout_stream()->put_s(Xf("ix:%03d>")(line_)->to_s());
 	}
 	continue_stmt_ = true;
 	if(fgets((char*)p, size, fp_)){

@@ -46,7 +46,7 @@ public:
 	*/
 	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
 
-	String(const char* str, uint_t len, uint_t hashcode, uint_t length);
+	String(const char* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
 	
 	String(LargeString* left, LargeString* right);
 
@@ -132,7 +132,7 @@ public:
 	* @brief 一意化した文字列を返す。
 	*
 	*/
-	InternedStringPtr intern();
+	const InternedStringPtr& intern();
 
 	/**
 	* @brief 一意化されているか返す。
@@ -204,6 +204,8 @@ public:
 	bool op_eq_r_String(const StringPtr& v);
 	bool op_lt_r_String(const StringPtr& v);
 
+	const char_t* c_str_direct();
+
 private:
 	void init_string(const char_t* str, uint_t size);
 	int_t calc_offset(int_t pos);
@@ -215,15 +217,16 @@ class LargeString : public Base{
 public:
 
 	LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2);
-	LargeString(const char* str, uint_t len, uint_t hashcode);
+	LargeString(const char* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
 	LargeString(LargeString* left, LargeString* right);
 	virtual ~LargeString();
 
 public:
 
 	const char* c_str();
-	uint_t buffer_size();
-	bool is_interned();
+	uint_t buffer_size(){ return buffer_size_; }
+	uint_t length(){ return length_; }
+	bool is_interned(){ return (flags_ & INTERNED)!=0; }
 	uint_t hashcode();
 
 private:
@@ -237,8 +240,6 @@ private:
 	enum{
 		ROPE = 1<<0,
 		INTERNED = 1<<1,
-		NOFREE = 1<<2,
-		HASHED = 1<<3
 	};
 	uint_t flags_;
 
@@ -258,6 +259,7 @@ private:
 	};
 
 	uint_t buffer_size_;
+	uint_t length_;
 };
 
 /**

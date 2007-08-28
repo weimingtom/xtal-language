@@ -418,18 +418,18 @@ AnyPtr Serializer::inner_deserialize(){
 }
 
 AnyPtr Serializer::demangle(int_t n){
-	AnyPtr ret = map_.at(n);
+	AnyPtr ret = map_->at(n);
 	if(ret){ return ret; }
 	Xfor(v, ((StringPtr&)values_->at(n))->split("::")){
 		InternedStringPtr id(((StringPtr&)v)->intern());
 		if(!ret){
 			if(raweq(id, Xid(lib))){
 				ret = lib();
-				map_.set_at(n, ret);
+				map_->set_at(n, ret);
 			}
 		}else{
 			ret = ret->member(id);
-			map_.set_at(n, ret);
+			map_->set_at(n, ret);
 		}
 	}
 	if(!ret){
@@ -439,7 +439,7 @@ AnyPtr Serializer::demangle(int_t n){
 }
 
 int_t Serializer::register_value(const AnyPtr& v, bool& added){
-	AnyPtr ret = map_.at(v);
+	AnyPtr ret = map_->at(v);
 	if(ret){
 		added = false;
 	}else{
@@ -451,7 +451,7 @@ int_t Serializer::register_value(const AnyPtr& v, bool& added){
 
 int_t Serializer::append_value(const AnyPtr& v){
 	int_t ret = (int_t)values_->size();
-	map_.set_at(v, ret);
+	map_->set_at(v, ret);
 	values_->push_back(v);
 	return ret;
 }

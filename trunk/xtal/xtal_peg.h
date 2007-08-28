@@ -169,9 +169,20 @@ public:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
+	const AnyPtr& peek(){
+		if(pos_ == read_){
+			return read();
+		}else{
+			uint_t bufsize = buf_->size();
+			uint_t bufmask = bufsize - 1;
+			uint_t rpos = read_&bufmask;
+			return buf_->at(rpos);
+		}
+	}
+
 	const AnyPtr& read(){
 		uint_t bufsize = buf_->size();
-		uint_t bufmask = buf_->size() - 1;
+		uint_t bufmask = bufsize - 1;
 		uint_t rpos = read_&bufmask;
 
 		// 読み込んでいない領域をreadしようとしているか？
@@ -183,7 +194,7 @@ public:
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
 					buf_->resize(bufsize*2);
 					bufsize = buf_->size();
-					bufmask = buf_->size() - 1;
+					bufmask = bufsize - 1;
 					rpos = read_&bufmask;
 					mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 				}
@@ -469,6 +480,18 @@ public:
 	}
 };
 
+class AlphaParser : public Parser{
+public:
+	virtual bool do_parse(const LexerPtr& lex){
+		const StringPtr& ch = static_ptr_cast<String>(lex->read());
+		if(test_alpha(ch->c_str()[0])){
+			lex->push_value(ch);
+			return true;
+		}
+		return false;
+	}
+};
+
 class EndParser : public Parser{
 public:
 
@@ -689,9 +712,9 @@ public:
 };
 
 class ParserParser : public Parser{
-	AnyPtr fn_;
+	bool (*fn_)(const LexerPtr& lex);
 public:
-	ParserParser(const AnyPtr& fn)
+	ParserParser(bool (*fn)(const LexerPtr& lex))
 		:fn_(fn){}
 
 	virtual bool do_parse(const LexerPtr& lex){
@@ -728,8 +751,8 @@ public:
 
 ParserPtr to_parser(const AnyPtr& a);
 
-inline ParserPtr parse(const AnyPtr& p){
-	return ParserPtr(xnew<ParserParser>(p));
+inline ParserPtr parse(bool (*fn)(const LexerPtr& lex)){
+	return ParserPtr(xnew<ParserParser>(fn));
 }
 
 inline ParserPtr neg(const ParserPtr& p){
@@ -798,6 +821,10 @@ inline ParserPtr operator -(const ParserPtr& l, const ParserPtr& r){
 
 inline ParserPtr set(const StringPtr& set){
 	return ParserPtr(xnew<SetParser>(set));
+}
+
+inline ParserPtr alpha(){
+	return set("abcdefghijklmnopqrstuvwxyz");//ParserPtr(xnew<AlphaParser>());
 }
 
 inline ParserPtr nset(const StringPtr& set){

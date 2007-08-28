@@ -298,7 +298,7 @@ public:
 public:
 
 	enum{
-		SMALL_STRING_MAX = (sizeof(int_t) / sizeof(char_t))
+		SMALL_STRING_MAX = sizeof(int_t) / sizeof(char_t)
 	};
 
 protected:

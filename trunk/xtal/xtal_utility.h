@@ -12,7 +12,7 @@
 //#define XTAL_NO_PARSER
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_USE_WORD_CODE
-//#define XTAL_USE_PEG
+#define XTAL_USE_PEG
 
 #define XTAL_USE_PREDEFINED_ID
 

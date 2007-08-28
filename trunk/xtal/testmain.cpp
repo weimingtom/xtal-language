@@ -89,21 +89,31 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 
+Xsrc((
+
+m: ["a":"b", "ee":"c", 4:"d", "edae":55, "e"~"e":"SUPER"];
+m["e"~"dae"] = 78;
+a: m.each.to_a.p;
+
+))();
+
+		/*
 AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-vvv: set("tes");
-var: join(vvv*1);
+vvv: alpha;
+var: array(vvv >> vvv >> vvv);
 sep: -set(":-");
 pe: var >> (sep >> var)*0;
 
-src: "test:te-st:test";
+src: "tes:tee-ste:tet:";
 
 mm: MemoryStream();
 1000000 {
   mm.put_s(src);
 }
+mm.put_s("eee");
 mm.size/1024.0 .p;
 
 
@@ -118,6 +128,7 @@ if((pe).parse_string(mm.to_s, ret)){
 export mm;
 
 ))();
+*/
 
 		//handle_argv(argv);
 		
@@ -162,7 +173,7 @@ int c;
 
 		//*/
 
-		//*
+		/*
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");

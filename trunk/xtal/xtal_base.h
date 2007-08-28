@@ -14,13 +14,6 @@ public:
 	virtual void call(const VMachinePtr& vm);
 	
 	/**
-	* @brief nameメソッド呼び出しをする
-	*
-	* 引数や戻り値はvmを通してやり取りする。
-	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
-
-	/**
 	* @brief nameメンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
@@ -28,6 +21,13 @@ public:
 	* @retval 非null nameに対応したメンバ  
 	*/
 	virtual const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+
+	/**
+	* @brief nameメソッド呼び出しをする
+	*
+	* 引数や戻り値はvmを通してやり取りする。
+	*/
+	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
@@ -58,18 +58,27 @@ public:
 	*
 	*/
 	StringPtr to_s();
-	
-	/**
-	* @brief このオブジェクトに付けられた名前を返す。
-	*
-	*/
-	virtual StringPtr object_name();
 
 	/**
 	* @brief clsクラスのインスタンスか調べる。
 	*
 	*/
-	bool is(const ClassPtr& cls);
+	bool is(const ClassPtr& klass);
+
+	/**
+	* @brief nameメンバを取得する。
+	* 可触性を考慮したメンバ取得
+	*
+	* @retval null そのメンバは存在しない
+	* @retval 非null nameに対応したメンバ  
+	*/
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+
+	/**
+	* @brief このオブジェクトに付けられた名前を返す。
+	*
+	*/
+	virtual StringPtr object_name();
 		
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。

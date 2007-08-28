@@ -113,68 +113,111 @@ const Any& AtProxy::operator *(){
 
 struct MemberCacheTable{
 	struct Unit{
-		int_t klass;
-		int_t name;
-		int_t ns;
-		Innocence member;
 		uint_t mutate_count;
+		uint_t target_class;
+		uint_t ns;
+		Innocence member_name;
+		Innocence member;
 	};
 
-	enum{ CACHE_MAX = /*179*/ 256 };
+	enum{ CACHE_MAX = 512, CACHE_MASK = CACHE_MAX-1 };
 
 	Unit table_[CACHE_MAX];
-	uint_t hit_;
-	uint_t miss_;
+
+	int_t hit_;
+	int_t miss_;
 
 	MemberCacheTable(){
-		for(int_t i=0; i<CACHE_MAX; ++i){
-			table_[i].klass = 0;
-			table_[i].member = null;
-		}
 		hit_ = 0;
 		miss_ = 0;
 	}
 
-	float cache_hit_rate(){
-		return (float_t)hit_/(hit_+miss_);
+	void print_result(){
+		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
-	uint_t hit(){
-		return hit_;
-	}
+	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& self, const Innocence& ns){
+		uint_t itarget_class = rawvalue(target_class);
+		uint_t imember_name = rawvalue(member_name);
+		uint_t ins = rawvalue(ns);
 
-	uint_t miss(){
-		return miss_;
-	}
-
-	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& self, const Innocence& nsp){
-
-		uint_t klass = rawvalue(target_class);
-		uint_t name = rawvalue(member_name);
-		uint_t ns = rawvalue(nsp);
-
-		uint_t hash = (klass>>3) ^ (name>>2) ^ (ns);
-		Unit& unit = table_[hash/* % CACHE_MAX*/ & (CACHE_MAX-1)];
-		if(global_mutate_count==unit.mutate_count && klass==unit.klass && name==unit.name && ns==unit.ns){
+		uint_t hash = (itarget_class>>3) ^ (imember_name>>2) ^ ins + imember_name;
+		Unit& unit = table_[hash & CACHE_MASK];
+		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(member_name, unit.member_name) && ins==unit.ns){
 			hit_++;
 			return ap(unit.member);
 		}else{
-			if(type(target_class)!=TYPE_BASE)
-				return null;
-
 			miss_++;
-			unit.member = pvalue(target_class)->member(member_name, ap(self), ap(nsp));
-			unit.klass = klass;
-			unit.name = name;
-			unit.ns = ns;
+
+			if(type(target_class)!=TYPE_BASE)
+				return nop;
+
+			unit.member = pvalue(target_class)->do_member(member_name, ap(self), ap(ns));
+			unit.target_class = itarget_class;
+			unit.member_name = member_name;
+			unit.ns = ins;
 			unit.mutate_count = global_mutate_count;
 			return ap(unit.member);
 		}
 	}
 };
 
+struct IsCacheTable{
+	struct Unit{
+		uint_t mutate_count;
+		uint_t target_class;
+		uint_t klass;
+	};
+
+	enum{ CACHE_MAX = 512, CACHE_MASK = CACHE_MAX-1 };
+
+	Unit table_[CACHE_MAX];
+
+	int_t hit_;
+	int_t miss_;
+
+	IsCacheTable(){
+		hit_ = 0;
+		miss_ = 0;
+	}
+
+	void print_result(){
+		printf("IsCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+	}
+
+	bool cache(const Innocence& target_class, const Innocence& klass){
+		uint_t itarget_class = rawvalue(target_class);
+		uint_t iklass = rawvalue(klass);
+
+		uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+		Unit& unit = table_[hash & CACHE_MASK];
+
+		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+			hit_++;
+			return true;
+		}else{
+			miss_++;
+			if(static_ptr_cast<Class>(ap(target_class))->is_inherited(static_ptr_cast<Class>(ap(klass)))){
+				// ƒLƒƒƒbƒVƒ…‚É•Û‘¶
+				unit.target_class = itarget_class;
+				unit.klass = iklass;
+				unit.mutate_count = global_mutate_count;
+				return true;
+			}
+
+			return false;
+		}
+	}
+};
+
 namespace{
 	MemberCacheTable member_cache_table;
+	IsCacheTable is_cache_table;
+}
+
+void print_result_of_cache(){
+	member_cache_table.print_result();
+	is_cache_table.print_result();
 }
 
 const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
@@ -285,8 +328,8 @@ uint_t Any::hashcode() const{
 }
 
 
-bool Any::is(const ClassPtr& v) const{
-	return get_class()->is_inherited(v);	
+bool Any::is(const ClassPtr& klass) const{
+	return is_cache_table.cache(get_class(), klass);
 }
 
 AnyPtr Any::p() const{

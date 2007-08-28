@@ -1938,11 +1938,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& name = symbol_ex(inst.symbol_number);
 			const AnyPtr& target = get();
-			if(const AnyPtr& ret = target->member(name, ff().self(), null)){
-				set(ret);
-			}else{
-				set(nop);
-			}
+			set(target->member(name, ff().self(), null));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
 	}*/ }
@@ -2982,11 +2978,7 @@ const inst_t* VMachine::FunMemberIfDefined(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& name = symbol_ex(inst.symbol_number);
 			const AnyPtr& target = get();
-			if(const AnyPtr& ret = target->member(name, ff().self(), null)){
-				set(ret);
-			}else{
-				set(nop);
-			}
+			set(target->member(name, ff().self(), null));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
 }

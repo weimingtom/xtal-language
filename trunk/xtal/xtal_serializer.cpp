@@ -573,7 +573,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 
 void Serializer::put_tab(int_t tab){
 	while(tab--)
-		stream_->put_i8('\t');
+		stream_->put_s("\t");
 }
 
 

@@ -188,7 +188,8 @@ void uninitialize(){
 	
 	if(objects_current_-objects_begin_ != 0){
 		//fprintf(stderr, "finished gc\n");
-		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
+		fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
+		int n = objects_current_-objects_begin_;
 		//print_alive_objects();
 		XTAL_ASSERT(false); // ‘S•”ŠJ•ú‚Å‚«‚Ä‚È‚¢
 	}

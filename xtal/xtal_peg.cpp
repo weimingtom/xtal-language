@@ -36,6 +36,7 @@ void InitPEG(){
 
 		set_cpp_class<AnyChParser>(p);
 		set_cpp_class<StringParser>(p);
+		set_cpp_class<AlphaParser>(p);
 		set_cpp_class<RepeatParser>(p);
 		set_cpp_class<JoinParser>(p);
 		set_cpp_class<IgnoreParser>(p);
@@ -65,6 +66,7 @@ void InitPEG(){
 
 	peg->def("anych", anych());
 	peg->def("end", end());
+	peg->def("alpha", alpha());
 	peg->fun("str", &str);
 	peg->fun("val", &val)->param(null, Named("pos", 0));
 	peg->fun("set", &set);

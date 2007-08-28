@@ -35,7 +35,7 @@ private:
 
 	void clear(){
 		values_ = xnew<Array>();
-		map_.clear();
+		map_ = xnew<Map>();
 	}
 
 private:
@@ -44,7 +44,7 @@ private:
 
 private:
 
-	StrictMap map_;
+	MapPtr map_;
 	ArrayPtr values_;
 	StreamPtr stream_;
 };

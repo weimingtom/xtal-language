@@ -114,6 +114,8 @@ public:
 	*
 	*/
 	MapPtr clone();
+
+	void clear();
 	
 	void push_all(const VMachinePtr& vm);
 
@@ -123,12 +125,14 @@ protected:
 		AnyPtr key;
 		AnyPtr value;
 		Node* next;
+		Node* ordered_next;
+		Node* ordered_prev;
 		
 		Node()
-			:next(0){}
+			:next(0), ordered_next(0), ordered_prev(0){}
 
 		Node(const AnyPtr& key, const AnyPtr& value)
-			:key(key), value(value), next(0){}
+			:key(key), value(value), next(0), ordered_next(0), ordered_prev(0){}
 	};
 
 	friend class MapIter;
@@ -139,104 +143,19 @@ protected:
 		return used_size_/(float_t)size_;
 	}
 	
-	void set_node(Node* node){
-		Node** p = &begin_[node->key->hashcode() % size_];
-		while(*p){
-			p = &(*p)->next;
-		}
-		*p = node;
-	}
+	void expand(int_t addsize);
 
-	void expand(int_t addsize){
-		Node** oldbegin = begin_;
-		uint_t oldsize = size_;
-
-		size_ = size_ + size_/2 + addsize;
-		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
-		for(uint_t i = 0; i<size_; ++i){
-			begin_[i] = 0;
-		}
-
-		for(uint_t i = 0; i<oldsize; ++i){
-			Node* p = oldbegin[i];
-			while(p){
-				Node* next = p->next;
-				set_node(p);
-				p->next = 0;
-				p = next;
-			}
-		}
-		user_free(oldbegin);
-	}
+	const AnyPtr& calc_key(const AnyPtr& key);
 	
 protected:
 
 	Node** begin_;
+	Node* ordered_head_;
+	Node* ordered_tail_;
 	uint_t size_;
 	uint_t used_size_;
 
 	virtual void visit_members(Visitor& m);
-};
-
-class StrictMap{
-public:
-
-	struct Node{
-		AnyPtr key;
-		AnyPtr value;
-		Node* next;
-		
-		Node()
-			:next(0){}
-
-		Node(const AnyPtr& key, const AnyPtr& value)
-			:key(key), value(value), next(0){}
-	};
-
-
-	StrictMap();
-
-	~StrictMap();
-		
-	const AnyPtr& at(const AnyPtr& key);
-	
-	void set_at(const AnyPtr& key, const AnyPtr& value);
-
-	int_t size(){
-		return used_size_;
-	}
-	
-	bool empty(){
-		return used_size_==0;
-	}
-
-	void destroy();
-
-	void clear(){
-		destroy();
-		expand(7);
-	}
-	
-private:
-
-	float_t rate(){
-		return used_size_/(float_t)size_;
-	}
-	
-	void set_node(Node* node);
-
-	void expand(int_t addsize);
-		
-private:
-
-	Node** begin_;
-	uint_t size_;
-	uint_t used_size_;
-
-private:
-	
-	StrictMap(const StrictMap&);
-	StrictMap& operator = (const StrictMap&);
 };
 
 }//namespace

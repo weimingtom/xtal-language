@@ -37,7 +37,29 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 			hash = hash*137 + str[i+j] + (hash>>16);
 		}
 
-		length += len;
+		length += 1;
+	}
+}
+
+static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
+	hash = 3;
+	length = 0;
+	size = 0;
+	for(uint_t i=0; str[i]; ++i){
+		int_t len = ch_len(str[i]);
+		if(len<0){
+			if(i + -len > size){
+				len = size - i;
+			}else{
+				len = ch_len2(str+i);
+			}
+		}
+		for(int_t j=0; j<len; ++j){
+			hash = hash*137 + str[i+j] + (hash>>16);
+		}
+
+		length += 1;
+		size += len;
 	}
 }
 
@@ -217,6 +239,7 @@ void InitString(){
 		p->method("op_lt_r_String", &String::op_lt_r_String);
 		
 		p->method("op_cat_assign", &String::op_cat);
+
 	}
 }
 
@@ -245,7 +268,7 @@ public:
 		begin_ = 0;
 		used_size_ = 0;
 		guard_ = 0;
-		expand(7);
+		expand(753);
 	}
 
 	virtual ~StringMgr(){
@@ -279,7 +302,7 @@ protected:
 		Node** oldbegin = begin_;
 		uint_t oldsize = size_;
 
-		size_ = size_ + size_/2 + addsize;
+		size_ = size_ + size_ + addsize;
 		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
 		for(uint_t i = 0; i<size_; ++i){
 			begin_[i] = 0;
@@ -326,27 +349,26 @@ protected:
 
 public:
 
-	const StringPtr& insert(const char* str, uint_t size);
-
-	const StringPtr& insert(const char* str, uint_t size, uint_t hash, uint_t length);
+	const InternedStringPtr& insert(const char* str, uint_t size);
+	const InternedStringPtr& insert(const char* str, uint_t size, uint_t hash, uint_t length);
 
 	virtual void before_gc();
 };
 
-const StringPtr& StringMgr::insert(const char* str, uint_t size){
+const InternedStringPtr& StringMgr::insert(const char* str, uint_t size){
 	uint_t hashcode;
 	uint_t length;
 	make_hashcode_and_length(str, size, hashcode, length);
 	return insert(str, size, hashcode, length);
 }
 
-const StringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
+const InternedStringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
 	Guard guard(guard_);
 
 	Node** p = &begin_[hashcode % size_];
 	while(*p){
 		if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-			return (*p)->value;
+			return *(const InternedStringPtr*)&(*p)->value;
 		}
 		p = &(*p)->next;
 	}
@@ -354,9 +376,9 @@ const StringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode
 	*p = (Node*)user_malloc(sizeof(Node));
 	new(*p) Node();
 	
-	(*p)->value = xnew<String>(str, size, hashcode, length);
+	(*p)->value = xnew<String>(str, size, hashcode, length, true);
 	(*p)->hashcode = hashcode;
-	(*p)->str = (*p)->value->c_str();
+	(*p)->str = (*p)->value->c_str_direct();
 	(*p)->size = size;
 
 	used_size_++;
@@ -366,13 +388,13 @@ const StringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode
 		p = &begin_[hashcode % size_];
 		while(*p){
 			if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-				return (*p)->value;
+				return *(const InternedStringPtr*)&(*p)->value;
 			}
 			p = &(*p)->next;
 		}
-		return (*p)->value;
+		return *(const InternedStringPtr*)&(*p)->value;
 	}else{
-		return (*p)->value;
+		return *(const InternedStringPtr*)&(*p)->value;
 	}
 }
 
@@ -422,7 +444,7 @@ void String::init_string(const char_t* str, uint_t sz){
 		if(length<=1){
 			set_p(pvalue(str_mgr()->insert(str, sz, hash, length)));
 		}else{
-			set_p(new LargeString(str, sz, hash));
+			set_p(new LargeString(str, sz, hash, length));
 			pvalue(*this)->set_class(new_cpp_class<String>());
 			pvalue(*this)->dec_ref_count();
 		}
@@ -460,7 +482,6 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 		set_small_string();
 		memcpy(svalue_, str1, size1);
 		memcpy(&svalue_[size1], str2, size2);
-		svalue_[sz] = 0;
 	}else{
 		set_p(new LargeString(str1, size1, str2, size2));
 		pvalue(*this)->set_class(new_cpp_class<String>());
@@ -468,17 +489,16 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	}
 }
 
-String::String(const char* str, uint_t len, uint_t hashcode, uint_t length):Any(noinit_t()){
-	uint_t sz = len;
+String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag):Any(noinit_t()){
+	uint_t sz = size;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
-		svalue_[sz] = 0;
 	}else{
-		if(length<=1){
+		if(!intern_flag && length<=1){
 			set_p(pvalue(str_mgr()->insert(str, sz, hashcode, length)));
 		}else{
-			set_p(new LargeString(str, len, hashcode));
+			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
 			pvalue(*this)->set_class(new_cpp_class<String>());
 			pvalue(*this)->dec_ref_count();
 		}
@@ -503,6 +523,16 @@ const char* String::c_str(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->c_str();
 	}else{
+		uint_t size, hash, length;
+		make_size_and_hashcode_and_length(svalue_, size, hash, length);
+		return ((String*)&str_mgr()->insert(svalue_, size, hash, length))->svalue_;
+	}
+}
+
+const char_t* String::c_str_direct(){
+	if(type(*this)==TYPE_BASE){
+		return ((LargeString*)pvalue(*this))->c_str();
+	}else{
 		return svalue_;
 	}
 }
@@ -519,8 +549,14 @@ StringPtr String::clone(){
 	return StringPtr::from_this(this);
 }
 
-InternedStringPtr String::intern(){
-	return StringPtr::from_this(this);
+const InternedStringPtr& String::intern(){
+	if(type(*this)==TYPE_BASE){
+		LargeString* p = ((LargeString*)pvalue(*this));
+		if(p->is_interned()) return *(const InternedStringPtr*)this;
+		return str_mgr()->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length());
+	}else{
+		return *(const InternedStringPtr*)this;
+	}
 }
 
 bool String::is_interned(){
@@ -702,13 +738,15 @@ LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_
 	common_init(size1 + size2);
 	memcpy(str_.p, str1, size1);
 	memcpy(str_.p+size1, str2, size2);
+	make_hashcode_and_length(str_.p, buffer_size_, str_.hashcode, length_);
 }
 
-LargeString::LargeString(const char* str, uint_t size, uint_t hashcode){
+LargeString::LargeString(const char* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
 	common_init(size);
 	memcpy(str_.p, str, buffer_size_);
 	str_.hashcode = hashcode;
-	flags_ = INTERNED | HASHED;
+	flags_ = intern_flag ? INTERNED : 0;
+	length_ = length;
 }
 
 LargeString::LargeString(LargeString* left, LargeString* right){
@@ -718,13 +756,12 @@ LargeString::LargeString(LargeString* left, LargeString* right){
 	rope_.right = right;
 	buffer_size_ = left->buffer_size() + right->buffer_size();
 	flags_ = ROPE;
+	length_ = left->length() + right->length();
 }
 
 LargeString::~LargeString(){
 	if((flags_ & ROPE)==0){
-		if((flags_ & NOFREE)==0){
-			user_free(str_.p);
-		}
+		user_free(str_.p);
 	}else{
 		rope_.left->dec_ref_count();
 		rope_.right->dec_ref_count();
@@ -732,31 +769,18 @@ LargeString::~LargeString(){
 }
 
 const char* LargeString::c_str(){ 
-	became_unified();
+	if((flags_ & ROPE)!=0)
+		became_unified();
 	return str_.p; 
 }
 
-uint_t LargeString::buffer_size(){ 
-	return buffer_size_; 
-}
-
 uint_t LargeString::hashcode(){ 
-	if((flags_ & HASHED)!=0)
-		return str_.hashcode;		
-	became_unified(); 
-	str_.hashcode = make_hashcode(str_.p, buffer_size_);
-	flags_ |= HASHED;
+	if((flags_ & ROPE)!=0)
+		became_unified();
 	return str_.hashcode; 
 }
 
-bool LargeString::is_interned(){ 
-	return (flags_ & INTERNED)!=0; 
-}
-
 void LargeString::became_unified(){
-	if((flags_ & ROPE)==0)
-		return;
-
 	uint_t pos = 0;
 	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(buffer_size_+1));
 	write_to_memory(this, memory, pos);
@@ -765,6 +789,7 @@ void LargeString::became_unified(){
 	rope_.right->dec_ref_count();
 	str_.p = memory;
 	flags_ = 0;
+	make_hashcode_and_length(str_.p, buffer_size_, str_.hashcode, length_);
 }
 
 void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){

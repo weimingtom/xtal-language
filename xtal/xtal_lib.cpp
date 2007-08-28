@@ -1015,6 +1015,7 @@ Enumerator::map: method(conv){ return this.each.map(conv); }
 Enumerator::select: method(pred){ return this.each.select(pred); }
 Enumerator::filter: method(pred){ return this.each.filter(pred); }
 Enumerator::to_a: method(){ return this.each.to_a; }
+Enumerator::to_m: method(){ return this.each.to_m; }
 Enumerator::join: method(sep:","){ return this.each.join(sep); }
 Enumerator::with_index: method(start:0){ return this.each.with_index(start); }
 Enumerator::iter_first: method(){ return this.each.iter_first; }
@@ -1036,6 +1037,14 @@ Iterator::to_a: method{
 	ret: [];
 	this{
 		ret.push_back(it); 
+	}
+	return ret;
+}
+
+Iterator::to_m: method{
+	ret: [:];
+	this{ |key, value|
+		ret[key] = value; 
 	}
 	return ret;
 }

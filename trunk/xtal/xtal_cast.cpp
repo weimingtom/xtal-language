@@ -29,6 +29,7 @@ struct CastCacheTable{
 	}
 
 	const void* fetch(const AnyPtr& a, const void* type_key){
+		return 0;
 		uint_t ia = rawvalue(a);
 		uint_t hash = (((uint_t)type_key)>>3) ^ (ia>>2);
 		Unit& unit = table_[hash & (CACHE_MAX-1)];

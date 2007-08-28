@@ -93,7 +93,7 @@ Xsrc((
 
 m: ["a":"b", "ee":"c", 4:"d", "edae":55, "e"~"e":"SUPER"];
 m["e"~"dae"] = 78;
-a: m.each.to_a.p;
+a: m.each.to_a.each.to_m.p;
 
 ))();
 
@@ -173,7 +173,7 @@ int c;
 
 		//*/
 
-		/*
+		//*
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");

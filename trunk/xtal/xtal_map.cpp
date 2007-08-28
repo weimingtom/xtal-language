@@ -128,7 +128,7 @@ const AnyPtr& Map::calc_key(const AnyPtr& key){
 }
 	
 const AnyPtr& Map::at(const AnyPtr& akey){
-	AnyPtr key = calc_key(akey);
+	const AnyPtr& key = calc_key(akey);
 	Node* p = begin_[rawvalue(key) % size_];
 	while(p){
 		if(raweq(p->key, key)){
@@ -140,7 +140,7 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 }
 
 void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
-	AnyPtr key = calc_key(akey);
+	const AnyPtr& key = calc_key(akey);
 	Node** p = &begin_[rawvalue(key) % size_];
 	while(*p){
 		if(raweq((*p)->key, key)){
@@ -169,7 +169,7 @@ void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
 }
 
 void Map::erase(const AnyPtr& akey){
-	AnyPtr key = calc_key(akey);
+	const AnyPtr& key = calc_key(akey);
 	uint_t hash = rawvalue(key) % size_;
 	Node* p = begin_[hash];
 	Node* prev = 0;
@@ -200,9 +200,9 @@ MapPtr Map::cat(const MapPtr& a){
 }
 
 MapPtr Map::cat_assign(const MapPtr& a){
-	Xfor2(k, v, a->each_pair()){
-		set_at(k, v);
-	}		
+	for(Node* p = a->ordered_head_; p; p=p->ordered_next){
+		set_at(p->key, p->value);
+	}
 	return MapPtr::from_this(this);
 }
 
@@ -275,22 +275,17 @@ AnyPtr Map::each_value(){
 
 MapPtr Map::clone(){
 	MapPtr ret(xnew<Map>());
-	Xfor2(k, v, each_pair()){
-		ret->set_at(k, v);
-	}
+	for(Node* p = ordered_head_; p; p=p->ordered_next){
+		set_at(p->key, p->value);
+	}	
 	return ret;
 }
 
 void Map::push_all(const VMachinePtr& vm){
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		while(p){
-			Node* next = p->next;
-			vm->push(p->key);
-			vm->push(p->value);
-			p = next;
-		}
-	}		
+	for(Node* p = ordered_head_; p; p=p->ordered_next){
+		vm->push(p->key);
+		vm->push(p->value);
+	}	
 }
 
 }

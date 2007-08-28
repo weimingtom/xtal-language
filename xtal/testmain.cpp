@@ -97,13 +97,13 @@ a: m.to_a.to_m.to_a.to_m.to_a.p;
 
 ))();
 
-		/*
+		
 AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
 vvv: alpha;
-var: array(vvv >> vvv >> vvv);
+var: join(vvv*1);
 sep: -set(":-");
 pe: var >> (sep >> var)*0;
 
@@ -128,7 +128,7 @@ if((pe).parse_string(mm.to_s, ret)){
 export mm;
 
 ))();
-*/
+
 		stdout_stream()->put_s("test");
 
 		//handle_argv(argv);

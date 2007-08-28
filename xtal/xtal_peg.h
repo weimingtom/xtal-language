@@ -207,10 +207,10 @@ public:
 			}else{
 				read_ += do_read(buf_->data()+rpos, bufsize-rpos);
 			}
-		}
 
-		if(pos_ == read_){
-			return nop;
+			if(pos_==read_){
+				return nop;
+			}
 		}
 
 		pos_ += 1;

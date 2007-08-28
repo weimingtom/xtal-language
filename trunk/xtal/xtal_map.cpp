@@ -81,6 +81,8 @@ void InitMap(){
 		p->method("empty", &Map::empty);
 		p->method("op_eq", &Map::op_eq);
 	}
+
+	builtin()->def("Map", get_cpp_class<Map>());
 }
 
 

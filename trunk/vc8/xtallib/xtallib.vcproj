@@ -172,6 +172,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_basic_type.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_cast.cpp"
 				>
 			</File>
@@ -192,7 +196,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_debug.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_expr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_format.cpp"
 				>
 			</File>
 			<File
@@ -213,6 +225,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_map.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_math.cpp"
 				>
 			</File>
 			<File

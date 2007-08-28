@@ -11,16 +11,16 @@ void InitDebug();
 void InitString();
 void InitInternedString();
 void InitAny();
-void InitInt();
-void InitFloat();
+void InitBasicType();
 void InitArray();
 void InitMap();
-void InitArguments();
 void InitFun();
 void InitFormat();
 void InitClass();
 void InitStream();
 void InitCode();
+void InitMath();
+void InitBuiltin();
 void display_debug_memory();
 
 namespace peg{
@@ -145,11 +145,10 @@ void initialize(){
 	InitInternedString();
 	InitAny();
 	InitThread();
-	InitInt();
-	InitFloat();
+	InitBasicType();
+	InitMath();
 	InitArray();
 	InitMap();
-	InitArguments();
 	InitFun();
 	InitFormat();
 	InitClass();
@@ -158,7 +157,7 @@ void initialize(){
 	
 	atexit(&uninitialize); // uninitialize
 
-	initialize_lib();
+	InitBuiltin();
 
 #ifdef XTAL_USE_PEG
 	peg::InitPEG();

@@ -76,6 +76,14 @@ void InitStream(){
 		p->inherit(get_cpp_class<FileStream>());
 	}
 
+	builtin()->def("Stream", get_cpp_class<Stream>());
+	builtin()->def("FileStream", get_cpp_class<FileStream>());
+	builtin()->def("MemoryStream", get_cpp_class<MemoryStream>());
+	builtin()->def("StringStream", get_cpp_class<StringStream>());
+
+	builtin()->def("stdin", stdin_stream());
+	builtin()->def("stdout", stdout_stream());
+	builtin()->def("stderr", stderr_stream());
 }
 
 

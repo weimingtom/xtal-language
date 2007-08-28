@@ -20,14 +20,15 @@
 namespace xtal{
 
 void InitAny(){
-	ClassPtr p = new_cpp_class<Any>("Any");
-	p->method("class", &Any::get_class);
-	p->method("get_class", &Any::get_class);
-	p->method("object_name", &Any::object_name);
-}
+	{
+		ClassPtr p = new_cpp_class<Any>("Any");
+		p->method("class", &Any::get_class);
+		p->method("get_class", &Any::get_class);
+		p->method("object_name", &Any::object_name);
+	}
 
-Null null;
-Nop nop;
+	builtin()->def("Any", get_cpp_class<Any>());
+}
 
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }

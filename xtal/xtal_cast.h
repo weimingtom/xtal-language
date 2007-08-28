@@ -164,23 +164,11 @@ struct CastHelper{
 	// 変換後の型がポインタの場合
 	// このレベルで、キャッシュの機構を取り入れる
 	template<class U> static T as_inner(const AnyPtr& a, U* (*)()){ 
-		if(const void* p = fetch_cast_cache<T>(a)){
-			return (T)p;
-		}else{
-			T ret = (T)as_helper_helper(a, (U*)0, (U*)0);
-			store_cast_cache<T>(a, ret);
-			return ret;
-		}
+		return (T)as_helper_helper(a, (U*)0, (U*)0);
 	}
 		
 	template<class U> static T cast_inner(const AnyPtr& a, U* (*)()){ 
-		if(const void* p = fetch_cast_cache<T>(a)){
-			return (T)p;
-		}else{
-			T ret = (T)cast_helper_helper(a, (U*)0, (U*)0);
-			store_cast_cache<T>(a, ret);
-			return ret; 
-		}
+		return (T)cast_helper_helper(a, (U*)0, (U*)0);
 	}	
 		
 	template<class U> static T arg_cast_inner(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, U* (*)()){ 

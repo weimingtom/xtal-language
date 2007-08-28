@@ -134,7 +134,7 @@ export mm;
 		
 int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

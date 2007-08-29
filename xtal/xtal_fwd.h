@@ -13,7 +13,6 @@
 */
 namespace xtal{
 
-typedef long long int llint;
 template<int N>
 struct SelectType{
 	typedef typename If<sizeof(signed char)==N,

@@ -107,7 +107,7 @@ var: join(vvv*1);
 sep: -set(":-");
 pe: var >> (sep >> var)*0;
 
-src: "tes:tee-ste:tet:";
+src: "tes:tee:ste:tet:";
 
 mm: MemoryStream();
 1000000 {
@@ -119,6 +119,9 @@ mm.size/1024.0 .p;
 
 ret: [];
 t: clock();
+mm.to_s.split(":").to_a.p;
+(clock()-t).p;
+
 if((pe).parse_string(mm.to_s, ret)){
   (clock()-t).p;
   "ok".p;

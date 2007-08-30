@@ -74,7 +74,7 @@ private:
 	Stmt* parse_block();
 	Stmt* parse_switch();
 	Expr* parse_frame(int_t kind);
-	Expr* parse_class();
+	Expr* parse_class(int_t kind);
 	Expr* parse_prop();
 	Stmt* parse_loop();
 	Expr* parse_fun(int_t kind);

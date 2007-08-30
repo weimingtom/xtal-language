@@ -2011,9 +2011,19 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassCore* p = ff().pcode->class_core(inst.core_number); 
-			ClassPtr cp = xnew<Class>(ff().outer(), code(), p);
+			ClassCore* p = ff().pcode->class_core(inst.core_number);
+			ClassPtr cp;
 
+			switch(p->kind){
+				XTAL_CASE(KIND_CLASS){
+					cp = xnew<Class>(ff().outer(), code(), p);
+				}
+
+				XTAL_CASE(KIND_SINGLETON){
+					cp = SingletonPtr::nocount(new Singleton(ff().outer(), code(), p));
+				}
+			}
+			
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
@@ -2027,12 +2037,17 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
 
-	XTAL_VM_CASE(ClassEnd){ // 10
+	XTAL_VM_CASE(ClassEnd){ XTAL_VM_CONTINUE(FunClassEnd(pc)); /*
+		if(raweq(ff().outer()->get_class(), ff().outer())){
+			Singleton* singleton = (Singleton*)pvalue(ff().outer());
+			singleton->init_singleton(myself());
+		}
+
 		push(ff().outer());
 		ff().outer(ff().outer()->outer());
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}
+	}*/ }
 
 	XTAL_VM_CASE(MakeArray){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2065,9 +2080,9 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
-		int_t type = inst.type, table_n = inst.core_number, end = inst.address;
+		int_t table_n = inst.core_number, end = inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			switch(type){
+			switch(code()->fun_core(table_n)->kind){
 				XTAL_NODEFAULT;
 				
 				XTAL_CASE(KIND_FUN){ 
@@ -3016,9 +3031,19 @@ const inst_t* VMachine::FunSetName(const inst_t* pc){
 const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassCore* p = ff().pcode->class_core(inst.core_number); 
-			ClassPtr cp = xnew<Class>(ff().outer(), code(), p);
+			ClassCore* p = ff().pcode->class_core(inst.core_number);
+			ClassPtr cp;
 
+			switch(p->kind){
+				XTAL_CASE(KIND_CLASS){
+					cp = xnew<Class>(ff().outer(), code(), p);
+				}
+
+				XTAL_CASE(KIND_SINGLETON){
+					cp = SingletonPtr::nocount(new Singleton(ff().outer(), code(), p));
+				}
+			}
+			
 			int_t n = inst.mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
@@ -3032,11 +3057,24 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
+const inst_t* VMachine::FunClassEnd(const inst_t* pc){
+		XTAL_VM_DEF_INST(ClassEnd);
+		if(raweq(ff().outer()->get_class(), ff().outer())){
+			Singleton* singleton = (Singleton*)pvalue(ff().outer());
+			singleton->init_singleton(myself());
+		}
+
+		push(ff().outer());
+		ff().outer(ff().outer()->outer());
+		pop_ff();
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
+}
+
 const inst_t* VMachine::FunMakeFun(const inst_t* pc){
 		XTAL_VM_DEF_INST(MakeFun);
-		int_t type = inst.type, table_n = inst.core_number, end = inst.address;
+		int_t table_n = inst.core_number, end = inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			switch(type){
+			switch(code()->fun_core(table_n)->kind){
 				XTAL_NODEFAULT;
 				
 				XTAL_CASE(KIND_FUN){ 

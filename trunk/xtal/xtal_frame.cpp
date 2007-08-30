@@ -496,6 +496,49 @@ StringPtr Lib::join_path(const StringPtr& sep){
 		return sep->cat(path_->join(sep))->cat(sep);
 	}
 }
+
+Singleton::Singleton(){
+	Base::set_class(ClassPtr::from_this(this));
+}
+
+Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core)
+	:Class(outer, code, core){
+	Base::set_class(ClassPtr::from_this(this));
+}
+
+void Singleton::init_singleton(const VMachinePtr& vm){;
+	SingletonPtr inst = SingletonPtr::from_this(this);
+	init_instance(this, vm, inst);
 	
+	if(this->empty()){
+		if(const AnyPtr& ret = bases_member(Xid(new))){
+			ret->call(vm);
+			if(type(vm->result())==TYPE_BASE){
+				pvalue(vm->result())->set_class(inst);
+			}
+			return;
+		}
+	}
+	
+	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
+		vm->set_arg_this(inst);
+		if(vm->need_result()){
+			ret->call(vm);
+			vm->replace_result(0, inst);
+		}else{
+			ret->call(vm);
+		}
+	}else{
+		vm->return_result(inst);
+	}
+}
+
+void Singleton::call(const VMachinePtr& vm){
+	ap(Innocence(this))->rawsend(vm, Xid(op_call));
+}
+
+void Singleton::s_new(const VMachinePtr& vm){
+	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+}
 
 }

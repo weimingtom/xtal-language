@@ -142,7 +142,7 @@ struct MemberCacheTable{
 		uint_t imember_name = rawvalue(member_name);
 		uint_t ins = rawvalue(ns);
 
-		uint_t hash = (itarget_class>>3) ^ (imember_name>>2) ^ ins + imember_name;
+		uint_t hash = (itarget_class>>3) ^ (imember_name>>2) ^ ins + imember_name ^ type(member_name);
 		Unit& unit = table_[hash & CACHE_MASK];
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(member_name, unit.member_name) && ins==unit.ns){
 			hit_++;

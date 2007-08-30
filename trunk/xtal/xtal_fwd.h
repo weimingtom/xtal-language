@@ -174,17 +174,13 @@ enum PrimitiveType{
 */
 enum{
 	KIND_BLOCK,
-	KIND_CLASS
-};
+	KIND_CLASS,
+	KIND_SINGLETON,
 
-/**
-* @brief 関数の種類
-*/
-enum{
 	KIND_FUN,
 	KIND_LAMBDA,
 	KIND_METHOD,
-	KIND_FIBER,
+	KIND_FIBER
 };
 
 /**
@@ -247,6 +243,7 @@ class Instance;
 class CppClass;
 class Thread;
 class Mutex;
+class Singleton;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -269,6 +266,7 @@ typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Instance> InstancePtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
+typedef SmartPtr<Singleton> SingletonPtr;
 
 class Base;
 class InternedStringPtr;
@@ -280,9 +278,10 @@ class Float;
 
 struct BlockCore{
 	BlockCore()
-		:line_number(0), variable_symbol_offset(0), variable_size(0){}
+		:line_number(0), kind(0), variable_symbol_offset(0), variable_size(0){}
 
 	u16 line_number;
+	u16 kind;
 	u16 variable_symbol_offset;
 	u16 variable_size;
 };

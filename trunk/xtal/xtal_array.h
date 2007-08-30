@@ -118,7 +118,7 @@ public:
 	*
 	*/
 	const AnyPtr& front(){
-		return at(0);
+		return op_at(0);
 	}
 
 	/**
@@ -126,7 +126,7 @@ public:
 	*
 	*/
 	const AnyPtr& back(){
-		return at(size()-1);
+		return op_at(size()-1);
 	}
 
 	/**

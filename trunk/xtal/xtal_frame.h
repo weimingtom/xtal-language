@@ -133,6 +133,7 @@ public:
 	Instance(const ClassPtr& c);
 	
 	~Instance();
+
 public:
 
 	void set_class(const ClassPtr& c);
@@ -509,6 +510,32 @@ private:
 		m & path_ & load_path_list_;
 	}
 };
+
+class Singleton : public Class, public HaveInstanceVariables{
+public:
+
+	Singleton();
+
+	Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core);
+	
+public:
+
+	void init_singleton(const VMachinePtr& vm);
+
+	virtual void call(const VMachinePtr& vm);
+	
+	virtual void s_new(const VMachinePtr& vm);
+
+	virtual HaveInstanceVariables* have_instance_variables(){
+		return this;
+	}
+
+	virtual void visit_members(Visitor& m){
+		HaveInstanceVariables::visit_members(m);
+		Class::visit_members(m);
+	}
+};
+
 
 
 }

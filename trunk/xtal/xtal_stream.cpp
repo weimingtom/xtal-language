@@ -87,10 +87,6 @@ void InitStream(){
 }
 
 
-void Stream::put_s(const StringPtr& str){
-	write(str->c_str(), str->buffer_size());
-}
-
 StringPtr Stream::get_s(int_t length){
 	if(eof())
 		return "";

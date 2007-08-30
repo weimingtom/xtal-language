@@ -362,6 +362,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->block_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->block_core_table_[i].line_number = stream_->get_u16();			
+				p->block_core_table_[i].kind = stream_->get_u16();			
 				p->block_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->block_core_table_[i].variable_size = stream_->get_u16();
 			}
@@ -370,6 +371,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->class_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->class_core_table_[i].line_number = stream_->get_u16();			
+				p->class_core_table_[i].kind = stream_->get_u16();			
 				p->class_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->class_core_table_[i].variable_size = stream_->get_u16();
 
@@ -381,6 +383,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->xfun_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->xfun_core_table_[i].line_number = stream_->get_u16();			
+				p->xfun_core_table_[i].kind = stream_->get_u16();			
 				p->xfun_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->xfun_core_table_[i].variable_size = stream_->get_u16();
 

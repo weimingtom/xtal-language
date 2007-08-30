@@ -124,6 +124,7 @@ void Lexer::init(const StreamPtr& stream, const StringPtr& source_file_name){
 	keyword_map_->set_at(InternedStringPtr("switch"), (int_t)Token::KEYWORD_SWITCH);
 	keyword_map_->set_at(InternedStringPtr("case"), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(InternedStringPtr("default"), (int_t)Token::KEYWORD_DEFAULT);
+	keyword_map_->set_at(InternedStringPtr("singleton"), (int_t)Token::KEYWORD_SINGLETON);
 }
 
 LPCCommon* Lexer::common(){

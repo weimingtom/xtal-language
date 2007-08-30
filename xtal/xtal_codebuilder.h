@@ -152,9 +152,9 @@ public:
 
 	void block_begin(Vars* vars);
 	void block_end();
-	void class_begin(Vars* vars, int_t mixins);
+	void class_begin(int_t kind, Vars* vars, int_t mixins);
 	void class_end();
-	void fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count);
+	void fun_begin(int_t kind, Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count);
 	void fun_end();
 
 	FunFrame& fun_frame();

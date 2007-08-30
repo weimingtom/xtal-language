@@ -14,38 +14,12 @@ void InitPEG(){
 		ClassPtr p = new_cpp_class<Parser>("Parser");
 		p->def("new", ctor<Parser>());
 		p->method("parse_string", &Parser::parse_string);
-		p->method("set", &Parser::set);
-		p->method("op_shr", &followed);
-		p->method("op_mul", &repeat);
-		p->method("op_or", &bitor);
-		p->method("op_neg", &neg);
-		p->method("op_sub", &sub);
-		p->method("op_at", &act);
+		p->method("op_shr", &Parser::followed);
+		p->method("op_mul", &Parser::repeat);
+		p->method("op_or", &Parser::select);
+		p->method("op_neg", &Parser::ignore);
 
 		peg->def("Parser", p);
-
-		{
-			ClassPtr pp = new_cpp_class<OrParser>("OrParser");
-			pp->inherit(p);
-		}
-
-		{
-			ClassPtr pp = new_cpp_class<FollowedParser>("FollowedParser");
-			pp->inherit(p);
-		}
-
-		set_cpp_class<AnyChParser>(p);
-		set_cpp_class<StringParser>(p);
-		set_cpp_class<AlphaParser>(p);
-		set_cpp_class<RepeatParser>(p);
-		set_cpp_class<JoinParser>(p);
-		set_cpp_class<IgnoreParser>(p);
-		set_cpp_class<SubParser>(p);
-		set_cpp_class<SetParser>(p);
-		set_cpp_class<ValParser>(p);
-//		set_cpp_class<ActParser>(p);
-		set_cpp_class<EndParser>(p);
-		set_cpp_class<ArrayParser>(p);
 	}
 
 	{
@@ -64,20 +38,20 @@ void InitPEG(){
 
 	builtin()->def("peg", peg);
 
-	peg->def("anych", anych());
-	peg->def("end", end());
-	peg->def("alpha", alpha());
-	peg->fun("str", &str);
-	peg->fun("val", &val)->param(null, Named("pos", 0));
-	peg->fun("set", &set);
-	peg->fun("join", &join)->param(null, Named("sep", ""));
-	peg->fun("array", &array);
+	peg->def("any", Parser::any());
+	peg->def("end", Parser::end());
+	peg->def("alpha", Parser::alpha());
+	peg->fun("str", &Parser::str);
+	peg->fun("ch_set", &Parser::ch_set);
+	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
+	peg->fun("array", &Parser::array);
+	//peg->fun("val", &val)->param(null, Named("pos", 0));
 }
 
 
 ParserPtr to_parser(const AnyPtr& a){
 	if(const StringPtr& ret = ptr_as<String>(a)){
-		return str(ret);
+		return Parser::str(ret);
 	}	
 	
 	if(const ParserPtr& ret = ptr_as<Parser>(a)){

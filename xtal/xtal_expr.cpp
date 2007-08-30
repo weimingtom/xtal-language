@@ -383,9 +383,9 @@ TopLevelStmt* ExprBuilder::toplevel_end(){
 	return toplevel_stack.pop();
 }
 
-void ExprBuilder::class_begin(){
+void ExprBuilder::class_begin(int_t kind){
 	class_stack.push(new(alloc) ClassExpr(line()));
-
+	class_stack.top()->kind = kind;
 	scope_push(&class_stack.top()->vars);
 	scope_set_on_heap_flag(0);
 }

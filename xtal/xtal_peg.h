@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "xtal.h"
+
 #ifdef XTAL_USE_PEG // PEG上手くいかねー
 
 #pragma once
@@ -33,7 +35,6 @@ private:
 	PODStack<Cache> cache_stack_;
 	PODStack<Cache> temp_cache_stack_;
 	PODStack<Backtrack> backtrack_stack_;
-	PODStack<int_t> flags_stack_;
 	
 	enum{ CACHE_MAX = 64 };
 
@@ -82,12 +83,9 @@ private:
 		bool operator()(const Cache& a, const Cache& b) const{ return a.value_pos < b.value_pos; }
 	};
 
-public:
-
-	enum{
-		FLAG_NOCACHE_BIT = 1<<0,
-		FLAG_IGNORE_BIT = 1<<1,
-	};
+	MemoryStreamPtr mm_;
+	int_t join_nest_;
+	int_t ignore_nest_;
 
 public:
 
@@ -95,7 +93,10 @@ public:
 		buf_ = xnew<Array>(64);
 		pos_ = 0;
 		read_ = 0;
-		flags_stack_.push(0);
+
+		mm_ = xnew<MemoryStream>();
+		join_nest_ = 0;
+		ignore_nest_ = 0;
 	}
 
 	/**
@@ -148,7 +149,7 @@ public:
 		uint_t len = end - it;
 
 		uint_t begin = n;
-		ArrayPtr array = (ignore_flag() || results_->size()==begin) ? ArrayPtr(null) : results_->slice(begin, results_->size()-begin);
+		ArrayPtr array = (ignore_nest_ || results_->size()==begin) ? ArrayPtr(null) : results_->slice(begin, results_->size()-begin);
 
 		for(; it!=end; it++){
 			uint_t hash = (((uint_t)it->ptr)>>3) ^ it->read_pos ^ it->flags;
@@ -234,39 +235,54 @@ public:
 	}
 
 	void push_value(const AnyPtr& v){
-		if(!ignore_flag()){
+		if(!ignore_nest_){
 			results_->push_back(v);
 		}
 	}
 
-	void push_flags(uint_t flags){
-		flags_stack_.push(flags);
+	void begin_join(){
+		if(ignore_nest_)
+			return;
+
+		mark();
+		join_nest_++;
 	}
 
-	void pop_flags(){
-		flags_stack_.pop();
+	void end_join(bool b){
+		if(ignore_nest_)
+			return;
+
+		Backtrack& data = backtrack_stack_.top();
+		mm_->clear();
+		for(int_t i=data.value_pos, sz=results_->size(); i<sz; ++i){
+			mm_->put_s(results_->at(i)->to_s());
+		}
+		results_->erase(data.value_pos, results_->size()-data.value_pos);
+		join_nest_--;
+		results_->push_back(mm_->to_s());
+		unmark();
 	}
 
-	uint_t flags(){
-		return flags_stack_.top();
+	void begin_ignore(){
+		ignore_nest_++;
 	}
 
-	bool ignore_flag(){
-		return (flags()&FLAG_IGNORE_BIT) != 0;
+	void end_ignore(){
+		ignore_nest_--;
 	}
+
 
 	bool fetch_cache(const void* ptr, bool& success){
-		if(flags()&FLAG_NOCACHE_BIT)
-			return false;
 		if(backtrack_stack_.empty())
 			return false;
 
-		uint_t hash = (((uint_t)ptr)>>3) ^ pos_ ^ flags();
+		uint_t flags = ignore_nest_!=0;
+		uint_t hash = (((uint_t)ptr)>>3) ^ pos_ ^ flags;
 		CacheUnit& unit = cache_table_[hash & (CACHE_MAX-1)];
-		if(ptr==unit.key.ptr && pos_==unit.key.read_pos && flags()==unit.key.flags){
+		if(ptr==unit.key.ptr && pos_==unit.key.read_pos && flags==unit.key.flags){
 			success = unit.value.success;
 			pos_ = unit.value.read_pos;
-			if(!ignore_flag()){
+			if(!ignore_nest_){
 				for(uint_t i=unit.value.value_pos, sz=unit.value.value_end; i<sz; ++i){
 					results_->push_back(unit.value.results->at(i));
 				}
@@ -278,13 +294,11 @@ public:
 		data.ptr = ptr;
 		data.read_pos = pos_;
 		data.value_pos = results_->size();
-		data.flags = flags();
+		data.flags = flags;
 		return false;
 	}
 
 	void store_cache(bool success){
-		if(flags()&FLAG_NOCACHE_BIT)
-			return;
 		if(backtrack_stack_.empty())
 			return;
 
@@ -367,20 +381,114 @@ public:
 };
 
 class Parser : public Base{
-protected:
-	Parser* p_;
-	int_t cache_state_;
+
+	enum{
+		STRING,
+		CH_SET,
+		ALPHA,
+		END,
+		ANY,
+		SELECT,
+		FOLLOWED,
+		REPEAT,
+		JOIN,
+		ARRAY,
+		TRY,
+		IGNORE,
+	};
+
+	int_t type_;
+	AnyPtr param1_;
+	AnyPtr param2_;
 public:
 
-	Parser(){
-		p_ = 0;
-		cache_state_ = 0;
+	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null)
+		:type_(type), param1_(p1), param2_(p2){}
+
+	static ParserPtr str(const StringPtr& str){
+		StringStreamPtr ss = xnew<StringStream>(str);
+		ArrayPtr data = xnew<Array>();
+		while(!ss->eof()){
+			data->push_back(ss->get_s(1));
+		}
+
+		return xnew<Parser>(STRING, str, data);
 	}
 
-	virtual ~Parser(){
-		if(p_){
-			p_->dec_ref_count();
+	static ParserPtr end(){
+		return xnew<Parser>(END);
+	}
+
+	static ParserPtr any(){
+		return xnew<Parser>(ANY);
+	}
+
+	static ParserPtr alpha(){
+		return xnew<Parser>(ALPHA);
+	}
+
+	static ParserPtr ch_set(const StringPtr& str){
+		MapPtr data = xnew<Map>();
+		StringStreamPtr ss = xnew<StringStream>(str);
+		while(!ss->eof()){
+			data->set_at(ss->get_s(1), true);
 		}
+
+		return xnew<Parser>(CH_SET, data);
+	}
+
+	static ParserPtr repeat(const ParserPtr& p, int_t n){
+		return xnew<Parser>(REPEAT, p, n);
+	}
+
+	static ParserPtr ignore(const ParserPtr& p){
+		return xnew<Parser>(IGNORE, p);
+	}
+
+	static ParserPtr select(const ParserPtr& lhs, const ParserPtr& rhs){
+		ArrayPtr data = xnew<Array>();
+		if(lhs->type_==SELECT){
+			data->cat_assign(static_ptr_cast<Array>(lhs->param1_));
+		}else{
+			data->push_back(lhs);
+		}
+
+		if(rhs->type_==SELECT){
+			data->cat_assign(static_ptr_cast<Array>(rhs->param1_));
+		}else{
+			data->push_back(rhs);
+		}
+
+		return xnew<Parser>(SELECT, data);
+	}
+
+	static ParserPtr followed(const ParserPtr& lhs, const ParserPtr& rhs){
+		ArrayPtr data = xnew<Array>();
+		if(lhs->type_==FOLLOWED){
+			data->cat_assign(static_ptr_cast<Array>(lhs->param1_));
+		}else{
+			data->push_back(lhs);
+		}
+
+		if(rhs->type_==FOLLOWED){
+			data->cat_assign(static_ptr_cast<Array>(rhs->param1_));
+		}else{
+			data->push_back(rhs);
+		}
+
+		return xnew<Parser>(FOLLOWED, data);
+	}
+
+	static ParserPtr join(const ParserPtr& p){
+		return xnew<Parser>(JOIN, p);
+	}
+
+	static ParserPtr array(const ParserPtr& p){
+		return xnew<Parser>(ARRAY, p);
+	}
+
+	static ParserPtr try_(const ParserPtr& p){
+		return xnew<Parser>(TRY, p);
 	}
 
 	bool parse_string(const StringPtr& source, const ArrayPtr& ret){
@@ -389,34 +497,147 @@ public:
 		return parse(lex);
 	}
 
+#define PARSER_RETURN(x) do{ success = x; goto end; }while(0)
+
 	bool parse(const LexerPtr& lex){
-		if(p_){
-			return  p_->parse(lex);
-		}else{
-			if(cache_state_==1){
-				bool success;
-				if(lex->fetch_cache(this, success)){
-					return success;
-				}			
-				success = do_parse(lex);
-				lex->store_cache(success);
-				return success;
-			}else{
-				// このパーサをキャッシュに乗せるべきか判定する
-				if(cache_state_!=-1 && lex->judge_cache(this)){
-					cache_state_ = 1;
-					bool success;
-					if(lex->fetch_cache(this, success)){
-						return success;
-					}			
-					success = do_parse(lex);
-					lex->store_cache(success);
-					return success;
-				}else{
-					return do_parse(lex);
+
+		bool success;
+
+		switch(type_){
+			XTAL_NODEFAULT;
+
+			XTAL_CASE(STRING){
+				const ArrayPtr& data = static_ptr_cast<Array>(param2_);
+				for(uint_t i=0, sz=data->size(); i<sz; ++i){
+					if(rawne(lex->read(), data->at(i))){
+						PARSER_RETURN(false);
+					}
 				}
+				lex->push_value(param1_);
+				PARSER_RETURN(true);
+			}
+
+			XTAL_CASE(ALPHA){
+				if(const StringPtr& ch = static_ptr_cast<String>(lex->read())){
+					if(test_alpha(ch->c_str()[0])){
+						lex->push_value(ch);
+						PARSER_RETURN(true);
+					}
+				}
+				PARSER_RETURN(false);
+			}
+
+			XTAL_CASE(CH_SET){
+				const MapPtr& data = static_ptr_cast<Map>(param1_);
+				const AnyPtr& s = lex->read();
+				if(data->at(s)){
+					lex->push_value(s);
+					PARSER_RETURN(true);
+				}
+				PARSER_RETURN(false);
+			}
+
+			XTAL_CASE(END){
+				PARSER_RETURN(raweq(lex->read(), nop));
+			}
+
+			XTAL_CASE(ANY){
+				const AnyPtr& ret = lex->read();
+				if(raweq(ret, nop)){
+					PARSER_RETURN(false);
+				}
+				lex->push_value(ret);
+				PARSER_RETURN(true);
+			}
+
+			XTAL_CASE(REPEAT){
+				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+				int_t n = ivalue(param2_);
+				if(n<0){
+					for(int_t i=0; i<-n; ++i){
+						if(!p->try_parse(lex)){
+							PARSER_RETURN(true);
+						}
+					}
+				}else{
+					for(int_t i=0; i<n; ++i){
+						if(!p->parse(lex)){
+							PARSER_RETURN(false);
+						}
+					}
+					while(p->try_parse(lex)){}
+				}
+				PARSER_RETURN(true);
+			}
+
+			XTAL_CASE(SELECT){
+				const ArrayPtr& parsers = static_ptr_cast<Array>(param1_);
+				for(uint_t i=0, sz=parsers->size()-1; i<sz; ++i){
+					if(static_ptr_cast<Parser>(parsers->at(i))->try_parse(lex)){
+						PARSER_RETURN(true);
+					}
+				}
+				PARSER_RETURN(static_ptr_cast<Parser>(parsers->back())->parse(lex));
+			}
+
+			XTAL_CASE(FOLLOWED){
+				const ArrayPtr& parsers = static_ptr_cast<Array>(param1_);
+				for(uint_t i=0, sz=parsers->size()-1; i<sz; ++i){
+					if(!static_ptr_cast<Parser>(parsers->at(i))->parse(lex)){
+						PARSER_RETURN(false);
+					}
+				}
+				PARSER_RETURN(static_ptr_cast<Parser>(parsers->back())->parse(lex));
+			}
+
+			XTAL_CASE(JOIN){
+				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+				lex->begin_join();				
+				if(p->parse(lex)){
+					lex->end_join(true);
+					PARSER_RETURN(true);
+				}
+				lex->end_join(false);
+				PARSER_RETURN(false);
+			}
+
+			XTAL_CASE(ARRAY){
+				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+
+				const ArrayPtr& temp = lex->results();
+				uint_t size = temp->size();
+				if(p->parse(lex)){
+					lex->noreflect_cache(size);
+					temp->push_back(temp->splice(size, temp->size()-size));
+					PARSER_RETURN(true);
+				}
+				PARSER_RETURN(false);
+			}
+
+			XTAL_CASE(TRY){
+				lex->mark();
+
+				if(parse(lex)){
+					lex->unmark();
+					PARSER_RETURN(true);
+				}
+
+				lex->unmark_and_backtrack();
+				PARSER_RETURN(false);
+			}
+
+			XTAL_CASE(IGNORE){
+				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+				lex->begin_ignore();
+				bool ret = p->parse(lex);
+				lex->end_ignore();
+				PARSER_RETURN(ret);
 			}
 		}
+
+end:
+
+		return success;
 	}
 	
 	bool try_parse(const LexerPtr& lex){
@@ -431,423 +652,14 @@ public:
 		return false;
 	}
 
-	void set(const ParserPtr& p){
-		if(!p) return;
-
-		if(p_){
-			p_->set(p);
-		}else{
-			p_ = p.get();
-			p_->inc_ref_count();
-		}
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		return true;
-	}
-
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		if(p_){
-			m & ap(p_);
-		}
+		m & param1_ & param2_;
 	}
 };
-
-class StringParser : public Parser{
-	StringPtr str_;
-	ArrayPtr data_;
-public:
-
-	StringParser(const StringPtr& str)
-		:str_(str){
-		StringStreamPtr ss = xnew<StringStream>(str);
-		data_ = xnew<Array>();
-		while(!ss->eof()){
-			data_->push_back(ss->get_s(1));
-		}
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		for(uint_t i=0, sz=data_->size(); i<sz; ++i){
-			if(rawne(lex->read(), data_->at(i))){
-				return false;
-			}
-		}
-
-		lex->push_value(str_);
-		return true;
-	}
-};
-
-class AlphaParser : public Parser{
-public:
-	virtual bool do_parse(const LexerPtr& lex){
-		const StringPtr& ch = static_ptr_cast<String>(lex->read());
-		if(test_alpha(ch->c_str()[0])){
-			lex->push_value(ch);
-			return true;
-		}
-		return false;
-	}
-};
-
-class EndParser : public Parser{
-public:
-
-	EndParser(){
-		cache_state_ = -1;
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		return raweq(lex->read(), nop);
-	}
-};
-
-class SetParser : public Parser{
-	MapPtr data_;
-public:
-
-	SetParser(const StringPtr& str){
-		data_ = xnew<Map>();
-		StringStreamPtr ss = xnew<StringStream>(str);
-		while(!ss->eof()){
-			data_->set_at(ss->get_s(1), true);
-		}
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		const AnyPtr& s = lex->read();
-		if(raweq(s, nop)){
-			return false;
-		}
-
-		if(data_->at(s)){
-			lex->push_value(s);
-			return true;
-		}
-		return false;
-	}
-};
-
-class AnyChParser : public Parser{
-public:
-
-	AnyChParser(){
-		cache_state_ = -1;
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		const AnyPtr& ret = lex->read();
-		if(raweq(ret, nop))
-			return false;
-		lex->push_value(ret);
-		return true;
-	}
-};
-
-class RepeatParser : public Parser{
-	ParserPtr p_;
-	int_t n_;
-public:
-	RepeatParser(const ParserPtr& p, int_t n)
-		:p_(p), n_(n){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		if(n_<0){
-			for(int_t i=0; i<-n_; ++i){
-				if(!p_->try_parse(lex)){
-					return true;
-				}
-			}
-		}else{
-			for(int_t i=0; i<n_; ++i){
-				if(!p_->parse(lex)){
-					return false;
-				}
-			}
-			while(p_->try_parse(lex)){}
-		}
-		return true;
-	}
-};
-
-class IgnoreParser : public Parser{
-	ParserPtr p_;
-public:
-	IgnoreParser(const ParserPtr& p)
-		:p_(p){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		lex->push_flags(lex->flags() | Lexer::FLAG_IGNORE_BIT);
-		bool ret = p_->parse(lex);
-		lex->pop_flags();
-		return ret;
-	}
-};
-
-class SubParser : public Parser{
-	ParserPtr lhs_, rhs_;
-public:
-	SubParser(const ParserPtr& l, const ParserPtr& r)
-		:lhs_(l), rhs_(r){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		lex->mark();
-
-		if(rhs_->parse(lex)){
-			lex->unmark_and_backtrack();
-			return false;
-		}
-		lex->unmark_and_backtrack();
-
-		return lhs_->parse(lex);
-	}
-};
-
-class OrParser : public Parser{
-	ArrayPtr parsers_;
-public:
-	
-	OrParser(const ParserPtr& l, const ParserPtr& r){
-		parsers_ = xnew<Array>();
-		if(SmartPtr<OrParser> p = ptr_as<OrParser>(l)){
-			parsers_->cat_assign(p->parsers_);
-		}else{
-			parsers_->push_back(l);
-		}
-
-		if(SmartPtr<OrParser> p = ptr_as<OrParser>(r)){
-			parsers_->cat_assign(p->parsers_);
-		}else{
-			parsers_->push_back(r);
-		}
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		for(uint_t i=0, sz=parsers_->size()-1; i<sz; ++i){
-			if(static_ptr_cast<Parser>(parsers_->at(i))->try_parse(lex)){
-				return true;
-			}
-		}
-		return static_ptr_cast<Parser>(parsers_->back())->parse(lex);
-	}
-};
-
-class FollowedParser : public Parser{
-	ArrayPtr parsers_;
-public:	
-	FollowedParser(const ParserPtr& l, const ParserPtr& r){
-		parsers_ = xnew<Array>();
-		if(SmartPtr<FollowedParser> p = ptr_as<FollowedParser>(l)){
-			parsers_->cat_assign(p->parsers_);
-		}else{
-			parsers_->push_back(l);
-		}
-
-		if(SmartPtr<FollowedParser> p = ptr_as<FollowedParser>(r)){
-			parsers_->cat_assign(p->parsers_);
-		}else{
-			parsers_->push_back(r);
-		}
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		for(uint_t i=0, sz=parsers_->size(); i<sz; ++i){
-			if(!static_ptr_cast<Parser>(parsers_->at(i))->parse(lex)){
-				return false;
-			}
-		}
-		return true;
-	}
-};
-
-class JoinParser : public Parser{
-	ParserPtr p_;
-	StringPtr sep_;
-	MemoryStreamPtr mm_;
-public:
-	JoinParser(const ParserPtr& p, const StringPtr& sep = "")
-		:p_(p), sep_(sep), mm_(xnew<MemoryStream>()){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		if(lex->ignore_flag())
-			return p_->parse(lex);
-		
-		ArrayPtr temp = lex->results();
-		uint_t size = temp->size();
-		if(p_->parse(lex)){
-			lex->noreflect_cache(size);
-			mm_->clear();
-			for(uint_t i=size, sz=temp->size(); i<sz; ++i){
-				mm_->put_s(temp->at(i)->to_s());		
-			}
-			temp->erase(size, temp->size()-size);
-			temp->push_back(mm_->to_s());
-			return true;
-		}
-		return false;
-	}
-};
-
-class ArrayParser : public Parser{
-	ParserPtr p_;
-public:
-	ArrayParser(const ParserPtr& p)
-		:p_(p){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		if(lex->ignore_flag())
-			return p_->parse(lex);
-
-		ArrayPtr temp = lex->results();
-		uint_t size = temp->size();
-		if(p_->parse(lex)){
-			lex->noreflect_cache(size);
-			temp->push_back(temp->splice(size, temp->size()-size));
-			return true;
-		}
-		return false;
-	}
-};
-
-class ParserParser : public Parser{
-	bool (*fn_)(const LexerPtr& lex);
-public:
-	ParserParser(bool (*fn)(const LexerPtr& lex))
-		:fn_(fn){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		return fn_(lex);
-	}
-};
-
-class ValParser : public Parser{
-	AnyPtr val_;
-	int_t pos_;
-public:
-	ValParser(const AnyPtr& val, int_t pos)
-		:val_(val), pos_(pos){
-		cache_state_ = -1;
-	}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		lex->push_value(val_);
-		return true;
-	}
-};
-
-class SpliceParser : public Parser{
-	int_t n_;
-public:
-	SpliceParser(int_t n)
-		:n_(n){}
-
-	virtual bool do_parse(const LexerPtr& lex){
-		return true;
-	}
-};
-
 
 ParserPtr to_parser(const AnyPtr& a);
 
-inline ParserPtr parse(bool (*fn)(const LexerPtr& lex)){
-	return ParserPtr(xnew<ParserParser>(fn));
-}
-
-inline ParserPtr neg(const ParserPtr& p){
-	return ParserPtr(xnew<IgnoreParser>(p));
-}
-
-inline ParserPtr operator -(const ParserPtr& p){
-	return ParserPtr(xnew<IgnoreParser>(p));
-}
-
-inline ParserPtr operator |(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<OrParser>(l, r));
-}
-
-inline ParserPtr bitor(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<OrParser>(l, r));
-}
-
-inline ParserPtr str(const StringPtr& p){
-	return ParserPtr(xnew<StringParser>(p));
-}
-
-inline ParserPtr anych(){
-	return ParserPtr(xnew<AnyChParser>());
-}
-
-inline ParserPtr end(){
-	return ParserPtr(xnew<EndParser>());
-}
-
-inline ParserPtr act(const ParserPtr& p, const AnyPtr& act){
-	return p;
-}
-
-inline ParserPtr followed(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<FollowedParser>(l, r));
-}
-
-inline ParserPtr operator >>(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<FollowedParser>(l, r));
-}
-
-inline ParserPtr operator *(const ParserPtr& p, int_t n){
-	return ParserPtr(xnew<RepeatParser>(p, n));
-}
-
-inline ParserPtr repeat(const ParserPtr& p, int_t n){
-	return ParserPtr(xnew<RepeatParser>(p, n));
-}
-
-inline ParserPtr operator >(const ParserPtr& l, const ParserPtr& r){
-	return l >> -(str(" ")*0) >> r;
-}
-
-inline ParserPtr operator ~(const ParserPtr& p){
-	return p;
-}
-
-inline ParserPtr sub(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<SubParser>(l, r));
-}
-
-inline ParserPtr operator -(const ParserPtr& l, const ParserPtr& r){
-	return ParserPtr(xnew<SubParser>(l, r));
-}
-
-inline ParserPtr set(const StringPtr& set){
-	return ParserPtr(xnew<SetParser>(set));
-}
-
-inline ParserPtr alpha(){
-	return set("abcdefghijklmnopqrstuvwxyz");//ParserPtr(xnew<AlphaParser>());
-}
-
-inline ParserPtr nset(const StringPtr& set){
-	return ParserPtr(xnew<AnyChParser>()) - ParserPtr(xnew<SetParser>(set));
-}
-
-inline ParserPtr join(const ParserPtr& p, const StringPtr& sep = ""){
-	return ParserPtr(xnew<JoinParser>(p, sep));
-}
-
-inline ParserPtr array(const ParserPtr& p){
-	return ParserPtr(xnew<ArrayParser>(p));
-}
-
-inline ParserPtr val(const AnyPtr& v, int_t pos = 0){
-	return ParserPtr(xnew<ValParser>(v, pos));
-}
-
-inline ParserPtr splice(int_t n){
-	return ParserPtr(xnew<SpliceParser>(n));
-}
-
-	
 }}
 
 

@@ -410,7 +410,8 @@ Expr* Parser::parse_term(){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_ONCE){ ret = e.once(parse_expr_must(PRI_ONCE - r_space*2)); }
-				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class(); }
+				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class(KIND_CLASS); }
+				XTAL_CASE(Token::KEYWORD_SINGLETON){ ret = parse_class(KIND_SINGLETON); }
 				XTAL_CASE(Token::KEYWORD_FUN){ ret = parse_fun(KIND_FUN); }
 				XTAL_CASE(Token::KEYWORD_METHOD){ ret = parse_fun(KIND_METHOD); }
 				XTAL_CASE(Token::KEYWORD_FIBER){ ret = parse_fun(KIND_FIBER); }
@@ -1134,8 +1135,8 @@ Stmt* Parser::parse_block(){
 	return e.block_end();
 }
 
-Expr* Parser::parse_class(){
-	e.class_begin();
+Expr* Parser::parse_class(int_t kind){
+	e.class_begin(kind);
 
 	if(eat('(')){
 		parse_multiple_expr(e.class_mixins());

@@ -120,7 +120,9 @@ public:
 	/**
 	* @brief 文字列strをストリームに流す
 	*/
-	void put_s(const StringPtr& str);
+	void put_s(const StringPtr& str){
+		write(str->c_str_direct(), str->buffer_size());
+	}
 
 	/**
 	* @brief length文字分ストリームから取り出し、文字列として返す。

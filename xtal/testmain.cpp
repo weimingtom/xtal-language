@@ -104,13 +104,13 @@ filelocal.inherit(peg);
 
 vvv: alpha;
 var: join(vvv*1);
-sep: -set(":-");
+sep: -ch_set(":-");
 pe: var >> (sep >> var)*0;
 
 src: "tes:tee:ste:tet:";
 
 mm: MemoryStream();
-1000000 {
+10000 {
   mm.put_s(src);
 }
 mm.put_s("eee");
@@ -119,13 +119,10 @@ mm.size/1024.0 .p;
 
 ret: [];
 t: clock();
-mm.to_s.split(":").to_a.p;
-(clock()-t).p;
-
 if((pe).parse_string(mm.to_s, ret)){
   (clock()-t).p;
   "ok".p;
-  ret.p;
+  //ret.p;
 }
 
 export mm;
@@ -138,7 +135,7 @@ export mm;
 		
 int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

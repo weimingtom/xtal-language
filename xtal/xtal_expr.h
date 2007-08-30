@@ -674,6 +674,7 @@ struct ClassExpr : public Expr{
 	TPairList<int_t, Expr*> inst_vars;
 	TList<Expr*> mixins;
 	int_t frame_number;
+	int_t kind;
 	Vars vars;
 
 	ClassExpr(int_t line)
@@ -773,7 +774,7 @@ public:
 	void toplevel_add(Stmt* stmt);
 	void toplevel_export(int_t name, Expr* expr);
 	TopLevelStmt* toplevel_end();
-	void class_begin();
+	void class_begin(int_t kind);
 	void class_define_instance_variable(int_t name, Expr* expr);
 	void class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs);
 	ClassExpr* class_end();

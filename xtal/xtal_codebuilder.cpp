@@ -31,7 +31,7 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	lines_.push(1);
 	Vars vars;
 	vars.on_heap = true;
-	fun_begin(&vars, true, 0, 0, 0);
+	fun_begin(KIND_FUN, &vars, true, 0, 0, 0);
 
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
@@ -63,7 +63,7 @@ void CodeBuilder::interactive_compile(){
 	lines_.push(1);
 	Vars vars;
 	vars.on_heap = true;
-	fun_begin(&vars, true, 0, 0, 0);
+	fun_begin(KIND_FUN, &vars, true, 0, 0, 0);
 
 	StreamPtr stream(xnew<InteractiveStream>());
 	parser_.begin_interactive_parsing(stream);
@@ -427,13 +427,14 @@ void CodeBuilder::block_end(){
 	vars_stack_.pop();
 }
 
-void CodeBuilder::class_begin(Vars* vars, int_t mixins){
+void CodeBuilder::class_begin(int_t kind, Vars* vars, int_t mixins){
 	vars_stack_.push(vars);
 
 	int_t class_core_num = result_->class_core_table_.size();
 	result_->class_core_table_.push_back(ClassCore());
 	result_->class_core_table_.back().variable_symbol_offset = result_->symbol_table_->size();
 	result_->class_core_table_.back().line_number = lines_.top();
+	result_->class_core_table_.back().kind = kind;
 
 	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
 		result_->class_core_table_.back().variable_size++;
@@ -448,7 +449,7 @@ void CodeBuilder::class_end(){
 	vars_stack_.pop();
 }
 
-void CodeBuilder::fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count){
+void CodeBuilder::fun_begin(int_t kind, Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count){
 
 	FunFrame& f = fun_frames_.push();	
 	f.used_args_object = false;
@@ -464,6 +465,7 @@ void CodeBuilder::fun_begin(Vars* vars, bool have_args, int_t offset, u8 min_par
 	core.variable_symbol_offset = result_->symbol_table_->size();
 	core.pc = code_size()+offset;
 	core.line_number = lines_.top();
+	core.kind = kind;
 	core.min_param_count = min_param_count;
 	core.max_param_count = max_param_count;
 	core.used_args_object = have_args;
@@ -854,12 +856,12 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 			}
 
 			int_t n = result_->xfun_core_table_.size();
-			fun_begin(&e->vars, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
+			fun_begin(e->kind, &e->vars, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
 
 				int_t fun_end_label = reserve_label();
 
 				set_jump(offsetof(InstMakeFun, address), fun_end_label);
-				put_inst(InstMakeFun(e->kind, n, 0));
+				put_inst(InstMakeFun(n, 0));
 				
 				if(debug::is_enabled()){
 					put_inst(InstBreakPoint(BREAKPOINT_CALL));
@@ -915,7 +917,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				compile(p->value);
 			}
 
-			class_begin(&e->vars, e->mixins.size);{
+			class_begin(e->kind, &e->vars, e->mixins.size);{
 				class_scopes_.push(e);
 				result_->class_core_table_.back().instance_variable_symbol_offset = result_->symbol_table_->size();
 				result_->class_core_table_.back().instance_variable_size = e->inst_vars.size;

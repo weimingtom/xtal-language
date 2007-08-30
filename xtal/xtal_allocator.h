@@ -168,7 +168,7 @@ namespace detail{
 /**
 * Allocクラスを使ったSTLコンテナを使いやすくするためのユーティリティ
 * 
-* Allocator-Container の略
+* Alloc-Container の略
 * 
 * AC<int>::vector は std::vector<int, Alloc<int> > と同じ
 * AC<int, float>::map は std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > と同じ

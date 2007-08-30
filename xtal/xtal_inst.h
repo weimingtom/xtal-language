@@ -853,8 +853,7 @@ XTAL_DEF_INST_0(138, MakeMap);
 
 XTAL_DEF_INST_0(139, MapInsert);
 
-XTAL_DEF_INST_3(140, MakeFun,
-        inst_u8_t, type,
+XTAL_DEF_INST_2(140, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );

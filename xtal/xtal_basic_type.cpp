@@ -80,6 +80,7 @@ void InitBasicType(){
 	builtin()->def("Int", get_cpp_class<Int>());
 	builtin()->def("Float", get_cpp_class<Float>());
 	builtin()->def("Null", get_cpp_class<Null>());
+	builtin()->def("Nop", get_cpp_class<Nop>());
 	builtin()->def("True", get_cpp_class<True>());
 	builtin()->def("False", get_cpp_class<False>());
 }

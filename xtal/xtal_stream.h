@@ -243,65 +243,12 @@ public:
 
 };
 
-
-class MemoryStream : public Stream{
+class DataStream : public Stream{
 public:
 
-	MemoryStream();
-	
-	MemoryStream(const void* data, uint_t data_size);
-	
-	virtual uint_t tell();
-
-	virtual uint_t write(const void* p, uint_t size);
-
-	virtual uint_t read(void* p, uint_t size);
-
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
-
-	virtual void close(){}
-
-	virtual uint_t pour(const StreamPtr& in_stream, uint_t size);
-
-	virtual uint_t pour_all(const StreamPtr& in_stream);
-
-	virtual bool eof();
-
-	virtual StringPtr get_s(int_t length = -1);
-
-	void* data(){
-		return &data_[0];
-	}
-
-	void clear(){
-		seek(0);
-		resize(0);
-	}
-
-	virtual uint_t size(){
-		return data_.size();
-	}
-
-	void resize(uint_t size){
-		data_.resize(size);
-	}
-
-	StringPtr to_s();
-
-public:
-
-	AC<xtal::u8>::vector data_;
-	uint_t pos_;
-};
-
-class StringStream : public Stream{
-public:
-
-	StringStream(const StringPtr& str);
+	DataStream();
 		
 	virtual uint_t tell();
-
-	virtual uint_t write(const void* p, uint_t size);
 
 	virtual uint_t read(void* p, uint_t size);
 
@@ -316,6 +263,52 @@ public:
 	virtual uint_t size(){
 		return size_;
 	}
+	
+	const void* data(){
+		return data_;
+	}
+
+protected:
+
+	const u8* data_;
+	uint_t size_;
+	uint_t pos_;
+};
+
+class MemoryStream : public DataStream{
+public:
+
+	MemoryStream();
+	
+	MemoryStream(const void* data, uint_t data_size);
+
+	~MemoryStream();
+	
+	virtual uint_t write(const void* p, uint_t size);
+
+	virtual uint_t pour(const StreamPtr& in_stream, uint_t size);
+
+	virtual uint_t pour_all(const StreamPtr& in_stream);
+
+	void clear();
+
+	void resize(uint_t size);
+
+	StringPtr to_s();
+
+protected:
+
+	void resize_data(uint_t size);
+
+	uint_t capa_;
+};
+
+class StringStream : public DataStream{
+public:
+
+	StringStream(const StringPtr& str);
+		
+	virtual uint_t write(const void* p, uint_t size);
 
 	StringPtr to_s(){
 		return str_;
@@ -329,11 +322,7 @@ private:
 	}
 
 	StringPtr str_;
-	const char* data_;
-	uint_t size_;
-	uint_t pos_;
 };
-
 
 class InteractiveStream : public Stream{
 public:

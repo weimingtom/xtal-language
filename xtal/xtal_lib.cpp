@@ -225,7 +225,7 @@ const ClassPtr& Enumerator(){
 }
 
 const ClassPtr& builtin(){
-	static LLVar<ClassPtr> p = xnew<Class>("builtin");
+	static LLVar<ClassPtr> p = xnew<Singleton>("builtin");
 	return p;
 }
 

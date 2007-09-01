@@ -100,7 +100,7 @@ struct Math{
 	static ClassPtr make(float*){
 		using namespace std;
 
-		ClassPtr math = xnew<Class>("math");
+		ClassPtr math = xnew<Singleton>("math");
 		
 		math->fun("acos", (float (*)(float))&acosf);
 		math->fun("asin", (float (*)(float))&asinf);
@@ -124,7 +124,7 @@ struct Math{
 	static ClassPtr make(double*){
 		using namespace std;
 
-		ClassPtr math = xnew<Class>("math");
+		ClassPtr math = xnew<Singleton>("math");
 
 		math->fun("acos", (double (*)(double))&acos);
 		math->fun("asin", (double (*)(double))&asin);

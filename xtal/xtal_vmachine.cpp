@@ -2020,7 +2020,7 @@ XTAL_VM_SWITCH{
 				}
 
 				XTAL_CASE(KIND_SINGLETON){
-					cp = SingletonPtr::nocount(new Singleton(ff().outer(), code(), p));
+					cp = xnew<Singleton>(ff().outer(), code(), p);
 				}
 			}
 			
@@ -3040,7 +3040,7 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 				}
 
 				XTAL_CASE(KIND_SINGLETON){
-					cp = SingletonPtr::nocount(new Singleton(ff().outer(), code(), p));
+					cp = xnew<Singleton>(ff().outer(), code(), p);
 				}
 			}
 			

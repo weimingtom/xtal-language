@@ -37,6 +37,8 @@ void InitStream(){
 		p->method("pour_all", &Stream::pour_all);
 		p->method("size", &Stream::size);
 
+		p->method("eof", &Stream::eof);
+
 		p->method("serialize", &Stream::serialize);
 		p->method("deserialize", &Stream::deserialize);
 		p->method("xtalize", &Stream::xtalize);
@@ -273,190 +275,19 @@ uint_t StdioStream::write(const void* p, uint_t size){
 	return ret;
 }
 
-MemoryStream::MemoryStream(){
+
+DataStream::DataStream(){
+	static u8 temp = 0;
+	data_ = &temp;
+	size_ = 0;
 	pos_ = 0;
 }
-
-MemoryStream::MemoryStream(const void* data, uint_t data_size){
-	data_.resize(data_size);
-	if(data_size>0){
-		memcpy(&data_[0], data, data_size);
-	}
-	pos_ = 0;
-}
-
-uint_t MemoryStream::tell(){
+	
+uint_t DataStream::tell(){
 	return pos_;
 }
 
-uint_t MemoryStream::write(const void* p, uint_t size){
-	if(pos_+size>data_.size()){ 
-		data_.resize(pos_+size);
-	}
-	if(size>0){
-		memcpy(&data_[pos_], p, size);
-	}
-	pos_ += size;
-	return size;	
-}
-
-uint_t MemoryStream::read(void* p, uint_t size){
-	if(pos_+size>data_.size()){ 
-		uint_t diff = data_.size()-pos_;
-		if(diff>0){
-			memcpy(p, &data_[pos_], diff);
-		}
-		pos_ += diff;
-		return diff; 
-	}
-	
-	if(size>0){
-		memcpy(p, &data_[pos_], size);
-	}
-	pos_ += size;
-	return size;
-}
-
-void MemoryStream::seek(int_t offset, int_t whence){
-	switch(whence){
-		case XSEEK_END:
-			pos_ = data_.size()-offset;
-			break;
-		case XSEEK_CUR:
-			pos_ += offset;
-			break;
-		default:
-			if(offset<0){
-				offset = 0;
-			}
-			pos_ = offset;
-			break;
-	}
-}
-
-uint_t MemoryStream::pour(const StreamPtr& in_stream, uint_t size){
-	if(size==0){
-		return 0;
-	}
-
-	if(data_.size() <= pos_ + size){
-		data_.resize(pos_+size);
-	}
-
-	uint_t len = in_stream->read(&data_[pos_], size);
-	data_.resize(data_.size() - (size - len));
-	pos_ += len;
-	return len;
-}
-
-uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
-	uint_t size = 1024*10, len, sum = 0;
-	do{
-		if(data_.size() <= pos_ + size){
-			data_.resize(pos_+size);
-		}
-
-		len = in_stream->read(&data_[pos_], size);
-		sum += len;
-	}while(len==size);
-	data_.resize(data_.size() - (size - len));
-	pos_ += sum;
-	return sum;
-}
-
-StringPtr MemoryStream::get_s(int_t length){
-	if(pos_ >= data_.size())
-		return "";
-
-	if(length==1){
-		uint_t pos = pos_;
-
-		int_t len = ch_len(data_[pos_]);
-		if(len<0){
-			if(pos_ + -len > data_.size()){
-				return "";
-			}
-			len = ch_len2((char_t*)&data_[pos_]);
-		}
-
-		if(pos_ + len > data_.size()){
-			return "";
-		}
-
-		pos_ += len;
-
-		switch(len){
-		case 1: return xnew<String>(data_[pos]);
-		case 2: return xnew<String>(data_[pos], data_[pos+1]);
-		case 3: return xnew<String>(data_[pos], data_[pos+1], data_[pos+2]);
-		default: return xnew<String>((char_t*)&data_[pos], len);
-		}
-	}
-	
-	if(length<0){
-		StringPtr ret = xnew<String>((char_t*)&data_[pos_], data_.size() - pos_);
-		pos_ = data_.size();
-		return ret;
-	}
-
-	int_t slen = 0;
-	int_t blen = 0;
-	while(slen<length){
-		if(pos_ + blen >= data_.size()){
-			break;
-		}
-
-		int_t len = ch_len(data_[pos_ + blen]);
-		if(len<0){
-			if(pos_ + blen + -len > data_.size()){
-				break;
-			}
-			len = ch_len2((char_t*)&data_[pos_ + blen]);
-		}
-
-		if(pos_ + blen + len > data_.size()){
-			break;
-		}
-
-		blen += len;
-		slen++;
-	}
-
-	if(blen==0)
-		return "";
-
-	StringPtr ret = xnew<String>((char_t*)&data_[pos_], blen);
-	pos_ += blen;
-	return ret;	
-}
-
-StringPtr MemoryStream::to_s(){
-	if(data_.empty())
-		return "";
-	return xnew<String>((char_t*)&data_[0], data_.size());
-}
-
-bool MemoryStream::eof(){
-	return pos_>=data_.size();
-}
-
-
-StringStream::StringStream(const StringPtr& str)
-:str_(str ? str : StringPtr("")){
-	data_ = str_->c_str();
-	size_ = str_->buffer_size();
-	pos_ = 0;
-}
-	
-uint_t StringStream::tell(){
-	return pos_;
-}
-
-uint_t StringStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("StringStream", "write"), return 0);
-}
-
-uint_t StringStream::read(void* p, uint_t size){
+uint_t DataStream::read(void* p, uint_t size){
 	if(pos_+size>size_){ 
 		uint_t diff = size_-pos_;
 		if(diff>0){
@@ -469,39 +300,42 @@ uint_t StringStream::read(void* p, uint_t size){
 	if(size>0){
 		memcpy(p, &data_[pos_], size);
 	}
+
 	pos_ += size;
 	return size;
 }
 
-void StringStream::seek(int_t offset, int_t whence){
+void DataStream::seek(int_t offset, int_t whence){
 	switch(whence){
-		case XSEEK_END:
-			pos_ = size_-offset;
-			break;
-		case XSEEK_CUR:
-			pos_ += offset;
-			break;
-		default:
-			if(offset<0){
-				offset = 0;
-			}
-			pos_ = offset;
-			break;
+	case XSEEK_END:
+		pos_ = size_-offset;
+		break;
+	case XSEEK_CUR:
+		pos_ += offset;
+		break;
+	default:
+		if(offset<0){
+			offset = 0;
+		}
+		pos_ = offset;
+		break;
 	}
 }
 
-StringPtr StringStream::get_s(int_t length){
+StringPtr DataStream::get_s(int_t length){
 	if(pos_ >= size_)
 		return "";
 
+	char_t* data = (char_t*)data_;
+
 	if(length==1){
 		uint_t pos = pos_;
-		int_t len = ch_len(data_[pos_]);
+		int_t len = ch_len(data[pos_]);
 		if(len<0){
 			if(pos_ + -len > size_){
 				return "";
 			}
-			len = ch_len2(&data_[pos_]);
+			len = ch_len2(&data[pos_]);
 		}
 
 		if(pos_ + len > size_){
@@ -511,15 +345,15 @@ StringPtr StringStream::get_s(int_t length){
 		pos_ += len;
 
 		switch(len){
-		case 1: return xnew<String>(data_[pos]);
-		case 2: return xnew<String>(data_[pos], data_[pos+1]);
-		case 3: return xnew<String>(data_[pos], data_[pos+1], data_[pos+2]);
-		default: return xnew<String>((char_t*)&data_[pos], len);
+		case 1: return xnew<String>(data[pos]);
+		case 2: return xnew<String>(data[pos], data[pos+1]);
+		case 3: return xnew<String>(data[pos], data[pos+1], data[pos+2]);
+		default: return xnew<String>((char_t*)&data[pos], len);
 		}
 	}
 
 	if(length<0){
-		StringPtr ret = xnew<String>((char_t*)&data_[pos_], size_ - pos_);
+		StringPtr ret = xnew<String>((char_t*)&data[pos_], size_ - pos_);
 		pos_ = size_;
 		return ret;
 	}
@@ -531,12 +365,12 @@ StringPtr StringStream::get_s(int_t length){
 			break;
 		}
 
-		int_t len = ch_len(data_[pos_ + blen]);
+		int_t len = ch_len(data[pos_ + blen]);
 		if(len<0){
 			if(pos_ + -len > size_){
 				break;
 			}
-			len = ch_len2(&data_[pos_ + blen]);
+			len = ch_len2(&data[pos_ + blen]);
 		}
 
 		if(pos_ + blen + len > size_){
@@ -550,14 +384,109 @@ StringPtr StringStream::get_s(int_t length){
 	if(blen==0)
 		return "";
 
-	StringPtr ret = xnew<String>((char_t*)&data_[pos_], blen);
+	StringPtr ret = xnew<String>(&data[pos_], blen);
 	pos_ += blen;
 	return ret;	
 }
 
-bool StringStream::eof(){
+bool DataStream::eof(){
 	return pos_>=size_;
 }
+
+MemoryStream::MemoryStream(){
+	pos_ = 0;
+	capa_ = 0;
+}
+
+MemoryStream::MemoryStream(const void* data, uint_t data_size){
+	pos_ = 0;
+	capa_ = 0;
+	resize(data_size);
+	memcpy((void*)data_, data, data_size);
+}
+
+MemoryStream::~MemoryStream(){
+	if(capa_){
+		user_free((void*)data_);
+	}
+}
+
+uint_t MemoryStream::write(const void* p, uint_t size){
+	if(pos_+size>capa_){
+		resize(pos_+size);
+	}else{
+		size_ = pos_+size;
+	}
+
+	memcpy((void*)&data_[pos_], p, size);
+
+	pos_ += size;
+
+	return size;	
+}
+
+uint_t MemoryStream::pour(const StreamPtr& in_stream, uint_t size){
+	if(size==0){
+		return 0;
+	}
+
+	resize(pos_+size);
+
+	uint_t len = in_stream->read((void*)&data_[pos_], size);
+	resize(size_ - (size - len));
+	pos_ += len;
+	return len;
+}
+
+uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
+	uint_t size = 1024*10, len, sum = 0;
+	do{
+		if(size_ <= pos_ + size){
+			resize(pos_+size);
+		}
+
+		len = in_stream->read((void*)&data_[pos_], size);
+		sum += len;
+	}while(len==size);
+	resize(size_ - (size - len));
+	pos_ += sum;
+	return sum;
+}
+
+StringPtr MemoryStream::to_s(){
+	return xnew<String>((char_t*)data_, size_);
+}
+
+void MemoryStream::clear(){
+	seek(0);
+	resize(0);
+}
+
+void MemoryStream::resize(uint_t size){
+	if(size>capa_){
+		uint_t newcapa = size + capa_;
+		void* newp = user_malloc(newcapa);
+		memcpy(newp, data_, size_);
+		if(capa_){
+			user_free((void*)data_);
+		}
+		data_ = (u8*)newp;
+		capa_ = newcapa;
+	}
+	size_ = size;
+}
+
+StringStream::StringStream(const StringPtr& str)
+:str_(str ? str : StringPtr("")){
+	data_ = (u8*)str_->c_str();
+	size_ = str_->buffer_size();
+	pos_ = 0;
+}
+
+uint_t StringStream::write(const void* p, uint_t size){
+	XTAL_THROW(unsupported_error("StringStream", "write"), return 0);
+}
+
 
 InteractiveStream::InteractiveStream(){
 	line_ = 1;

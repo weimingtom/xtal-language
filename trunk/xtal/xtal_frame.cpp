@@ -497,39 +497,27 @@ StringPtr Lib::join_path(const StringPtr& sep){
 	}
 }
 
-Singleton::Singleton(){
+Singleton::Singleton(const char* name)
+	:Class(name){
 	Base::set_class(ClassPtr::from_this(this));
+	inherit(get_cpp_class<Class>());
 }
 
 Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 	:Class(outer, code, core){
 	Base::set_class(ClassPtr::from_this(this));
+	inherit(get_cpp_class<Class>());
 }
 
 void Singleton::init_singleton(const VMachinePtr& vm){;
 	SingletonPtr inst = SingletonPtr::from_this(this);
 	init_instance(this, vm, inst);
 	
-	if(this->empty()){
-		if(const AnyPtr& ret = bases_member(Xid(new))){
-			ret->call(vm);
-			if(type(vm->result())==TYPE_BASE){
-				pvalue(vm->result())->set_class(inst);
-			}
-			return;
-		}
-	}
-	
 	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
+		vm->setup_call(0);
 		vm->set_arg_this(inst);
-		if(vm->need_result()){
-			ret->call(vm);
-			vm->replace_result(0, inst);
-		}else{
-			ret->call(vm);
-		}
-	}else{
-		vm->return_result(inst);
+		ret->call(vm);
+		vm->cleanup_call();
 	}
 }
 

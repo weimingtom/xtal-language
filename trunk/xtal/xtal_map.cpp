@@ -131,7 +131,8 @@ const AnyPtr& Map::calc_key(const AnyPtr& key){
 	
 const AnyPtr& Map::at(const AnyPtr& akey){
 	const AnyPtr& key = calc_key(akey);
-	Node* p = begin_[rawvalue(key) % size_];
+	uint_t hash = calc_offset(key);
+	Node* p = begin_[calc_offset(key)];
 	while(p){
 		if(raweq(p->key, key)){
 			return p->value;
@@ -143,7 +144,7 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 
 void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
 	const AnyPtr& key = calc_key(akey);
-	Node** p = &begin_[rawvalue(key) % size_];
+	Node** p = &begin_[calc_offset(key)];
 	while(*p){
 		if(raweq((*p)->key, key)){
 			(*p)->value = value;
@@ -172,7 +173,7 @@ void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
 
 void Map::erase(const AnyPtr& akey){
 	const AnyPtr& key = calc_key(akey);
-	uint_t hash = rawvalue(key) % size_;
+	uint_t hash = calc_offset(key);
 	Node* p = begin_[hash];
 	Node* prev = 0;
 	while(p){
@@ -222,7 +223,7 @@ void Map::expand(int_t addsize){
 	}
 
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		Node** temp = &begin_[rawvalue(p->key) % size_];
+		Node** temp = &begin_[calc_offset(p->key)];
 		while(*temp){
 			temp = &(*temp)->next;
 		}
@@ -278,7 +279,7 @@ AnyPtr Map::each_value(){
 MapPtr Map::clone(){
 	MapPtr ret(xnew<Map>());
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		set_at(p->key, p->value);
+		ret->set_at(p->key, p->value);
 	}	
 	return ret;
 }

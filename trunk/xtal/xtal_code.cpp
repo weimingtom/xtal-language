@@ -24,7 +24,7 @@ void InitCode(){
 }
 
 Code::Code()
-	:filelocal_(xnew<Class>("filelocal")), source_file_name_("<noname>"){
+	:filelocal_(xnew<Singleton>("filelocal")), source_file_name_("<noname>"){
 	set_object_name("<filelocal>", 1, null);
 	filelocal_->inherit(builtin());
 	filelocal_->def("filelocal", filelocal_);

@@ -147,6 +147,10 @@ protected:
 
 	const AnyPtr& calc_key(const AnyPtr& key);
 	
+	uint_t calc_offset(const AnyPtr& key){
+		return ((rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3))) % size_;
+	}
+
 protected:
 
 	Node** begin_;

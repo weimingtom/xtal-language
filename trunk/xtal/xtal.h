@@ -31,5 +31,6 @@ namespace xtal{
 #include "xtal_ch.h"
 #include "xtal_stream.h"
 #include "xtal_smartptr.h"
+#include "xtal_debug.h"
 
 

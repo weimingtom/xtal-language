@@ -514,13 +514,16 @@ private:
 class Singleton : public Class, public HaveInstanceVariables{
 public:
 
-	Singleton();
+	Singleton(const char* name = "");
 
 	Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core);
 	
 public:
 
 	void init_singleton(const VMachinePtr& vm);
+
+	// クラスの設定はスルーする
+	void set_class(const ClassPtr&){}
 
 	virtual void call(const VMachinePtr& vm);
 	

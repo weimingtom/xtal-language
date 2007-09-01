@@ -33,7 +33,6 @@ private:
 	};
 
 	PODStack<Cache> cache_stack_;
-	PODStack<Cache> temp_cache_stack_;
 	PODStack<Backtrack> backtrack_stack_;
 	
 	enum{ CACHE_MAX = 64 };
@@ -170,28 +169,17 @@ public:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
-	const AnyPtr& peek(){
-		if(pos_ == read_){
-			return read();
-		}else{
-			uint_t bufsize = buf_->size();
-			uint_t bufmask = bufsize - 1;
-			uint_t rpos = read_&bufmask;
-			return buf_->at(rpos);
-		}
-	}
-
-	const AnyPtr& read(){
+	const AnyPtr& peek(uint_t n = 0){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = bufsize - 1;
 		uint_t rpos = read_&bufmask;
 
-		// 読み込んでいない領域をreadしようとしているか？
-		if(pos_ == read_){
+		while(pos_+n >= read_){
+			uint_t now_read = 0;
 			if(!backtrack_stack_.empty()){
 				uint_t mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 
-				if(rpos+1==mpos){
+				if(rpos<=mpos && ((rpos+n)&bufmask)>=mpos){
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
 					buf_->resize(bufsize*2);
 					bufsize = buf_->size();
@@ -201,21 +189,33 @@ public:
 				}
 
 				if(mpos>rpos){
-					read_ += do_read(buf_->data()+rpos, mpos-rpos-1);
+					now_read = do_read(buf_->data()+rpos, mpos-rpos);
 				}else{
-					read_ += do_read(buf_->data()+rpos, bufsize-rpos);
+					now_read = do_read(buf_->data()+rpos, bufsize-rpos);
 				}
 			}else{
-				read_ += do_read(buf_->data()+rpos, bufsize-rpos);
+				now_read = do_read(buf_->data()+rpos, bufsize-rpos);
 			}
 
-			if(pos_==read_){
+			if(now_read==0){
 				return nop;
 			}
-		}
 
+			read_ += now_read;
+		}
+		
+		return buf_->at((pos_+n)&bufmask);
+	}
+
+	const AnyPtr& read(){
+		const AnyPtr& ret = peek();
 		pos_ += 1;
-		return buf_->at((pos_-1)&bufmask);
+		return  ret;
+	}
+
+	void skip(uint_t n){
+		peek(n);
+		pos_ += n;
 	}
 
 	void seek(uint_t offset){
@@ -224,14 +224,6 @@ public:
 		}else{
 			pos_ = offset;
 		}
-	}
-
-	StringPtr white_space(){
-		return ws_set_;
-	}
-
-	void set_white_space(const StringPtr& ws){
-		ws_set_ = ws;
 	}
 
 	void push_value(const AnyPtr& v){
@@ -251,15 +243,17 @@ public:
 	void end_join(bool b){
 		if(ignore_nest_)
 			return;
-
-		Backtrack& data = backtrack_stack_.top();
-		mm_->clear();
-		for(int_t i=data.value_pos, sz=results_->size(); i<sz; ++i){
-			mm_->put_s(results_->at(i)->to_s());
-		}
-		results_->erase(data.value_pos, results_->size()-data.value_pos);
 		join_nest_--;
-		results_->push_back(mm_->to_s());
+
+		if(join_nest_==0){
+			Backtrack& data = backtrack_stack_.top();
+			mm_->clear();
+			for(int_t i=data.value_pos, sz=results_->size(); i<sz; ++i){
+				mm_->put_s(results_->at(i)->to_s());
+			}
+			results_->erase(data.value_pos, results_->size()-data.value_pos);
+			results_->push_back(mm_->to_s());
+		}
 		unmark();
 	}
 
@@ -271,8 +265,12 @@ public:
 		ignore_nest_--;
 	}
 
+	struct CacheInfo{
+		uint_t read_pos;
+		uint_t value_pos;
+	};
 
-	bool fetch_cache(const void* ptr, bool& success){
+	bool fetch_cache(const void* ptr, bool& success, CacheInfo& cache_info){
 		if(backtrack_stack_.empty())
 			return false;
 
@@ -290,21 +288,21 @@ public:
 			return true;
 		}
 		
-		Cache& data = temp_cache_stack_.push();
-		data.ptr = ptr;
-		data.read_pos = pos_;
-		data.value_pos = results_->size();
-		data.flags = flags;
+		cache_info.read_pos = pos_;
+		cache_info.value_pos = results_->size();
 		return false;
 	}
 
-	void store_cache(bool success){
+	void store_cache(const void* ptr, bool success, CacheInfo& cache_info){
 		if(backtrack_stack_.empty())
 			return;
 
-		Cache& data = temp_cache_stack_.pop();
+		Cache& data = cache_stack_.push();
+		data.ptr = ptr;
 		data.success = success;
+		data.read_pos = cache_info.read_pos;
 		data.read_end = pos_;
+		data.value_pos = cache_info.value_pos;
 		data.value_end = results_->size();
 		cache_stack_.push(data);
 	}
@@ -312,6 +310,8 @@ public:
 	bool judge_cache(const void* ptr){
 		uint_t hash = (((uint_t)ptr)>>3) ^ pos_;
 		CacheJudgeUnit& unit = cache_judge_table_[hash & (CACHE_JUDGE_MAX-1)];
+
+		// 審判キャッシュに同じデータがあるのなら、キャッシュすべきだろう
 		if(ptr==unit.ptr && pos_==unit.read_pos){
 			return true;
 		}else{
@@ -333,7 +333,7 @@ private:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & ws_set_ & buf_;
+		m & buf_;
 
 		for(int_t i=0; i<CACHE_MAX; ++i){
 			m & cache_table_[i].value.results;
@@ -344,7 +344,6 @@ private:
 
 	ArrayPtr results_;
 	ArrayPtr buf_;
-	StringPtr ws_set_;
 	uint_t pos_;
 	uint_t read_;
 };
@@ -366,6 +365,11 @@ public:
 
 private:
 	StreamPtr stream_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & stream_;
+	}
 };
 
 
@@ -382,280 +386,92 @@ public:
 
 class Parser : public Base{
 
+	// 仮想関数ベースはやめた
+
 	enum{
 		STRING,
+		TRY_STRING,
+		CH,
+		TRY_CH,
 		CH_SET,
-		ALPHA,
+		TRY_CH_SET,
 		END,
 		ANY,
+		FAIL,
+		SUCCESS,
 		SELECT,
 		FOLLOWED,
 		REPEAT,
 		JOIN,
 		ARRAY,
-		TRY,
 		IGNORE,
+		CH_MAP,
+		TRY,
 	};
 
 	int_t type_;
+	bool cacheable_;
 	AnyPtr param1_;
 	AnyPtr param2_;
+
+	virtual void visit_members(Visitor& m);
+
 public:
 
-	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null)
-		:type_(type), param1_(p1), param2_(p2){}
+	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
 
-	static ParserPtr str(const StringPtr& str){
-		StringStreamPtr ss = xnew<StringStream>(str);
-		ArrayPtr data = xnew<Array>();
-		while(!ss->eof()){
-			data->push_back(ss->get_s(1));
-		}
+	static MapPtr make_ch_map2(const StringPtr& ch, const ParserPtr& pp);
 
-		return xnew<Parser>(STRING, str, data);
-	}
+	static MapPtr make_ch_map2(const MapPtr& ch_map, const ParserPtr& pp);
 
-	static ParserPtr end(){
-		return xnew<Parser>(END);
-	}
+	static MapPtr make_ch_map(const ParserPtr& p, const ParserPtr& pp);
 
-	static ParserPtr any(){
-		return xnew<Parser>(ANY);
-	}
+	static ParserPtr str(const StringPtr& str);
 
-	static ParserPtr alpha(){
-		return xnew<Parser>(ALPHA);
-	}
+	static ParserPtr end();
 
-	static ParserPtr ch_set(const StringPtr& str){
-		MapPtr data = xnew<Map>();
-		StringStreamPtr ss = xnew<StringStream>(str);
-		while(!ss->eof()){
-			data->set_at(ss->get_s(1), true);
-		}
+	static ParserPtr any();
 
-		return xnew<Parser>(CH_SET, data);
-	}
+	static ParserPtr digit();
 
-	static ParserPtr repeat(const ParserPtr& p, int_t n){
-		return xnew<Parser>(REPEAT, p, n);
-	}
+	static ParserPtr space();
 
-	static ParserPtr ignore(const ParserPtr& p){
-		return xnew<Parser>(IGNORE, p);
-	}
+	static ParserPtr lalpha();
 
-	static ParserPtr select(const ParserPtr& lhs, const ParserPtr& rhs){
-		ArrayPtr data = xnew<Array>();
-		if(lhs->type_==SELECT){
-			data->cat_assign(static_ptr_cast<Array>(lhs->param1_));
-		}else{
-			data->push_back(lhs);
-		}
+	static ParserPtr ualpha();
 
-		if(rhs->type_==SELECT){
-			data->cat_assign(static_ptr_cast<Array>(rhs->param1_));
-		}else{
-			data->push_back(rhs);
-		}
+	static ParserPtr alpha();
 
-		return xnew<Parser>(SELECT, data);
-	}
+	static ParserPtr ch_set(const StringPtr& str);
 
-	static ParserPtr followed(const ParserPtr& lhs, const ParserPtr& rhs){
-		ArrayPtr data = xnew<Array>();
-		if(lhs->type_==FOLLOWED){
-			data->cat_assign(static_ptr_cast<Array>(lhs->param1_));
-		}else{
-			data->push_back(lhs);
-		}
+	static ParserPtr repeat(const ParserPtr& p, int_t n);
 
-		if(rhs->type_==FOLLOWED){
-			data->cat_assign(static_ptr_cast<Array>(rhs->param1_));
-		}else{
-			data->push_back(rhs);
-		}
+	static ParserPtr ignore(const ParserPtr& p);
 
-		return xnew<Parser>(FOLLOWED, data);
-	}
+	static ParserPtr select(const ParserPtr& lhs, const ParserPtr& rhs);
 
-	static ParserPtr join(const ParserPtr& p){
-		return xnew<Parser>(JOIN, p);
-	}
+	static ParserPtr followed(const ParserPtr& lhs, const ParserPtr& rhs);
 
-	static ParserPtr array(const ParserPtr& p){
-		return xnew<Parser>(ARRAY, p);
-	}
+	static ParserPtr join(const ParserPtr& p);
 
-	static ParserPtr try_(const ParserPtr& p){
-		return xnew<Parser>(TRY, p);
-	}
+	static ParserPtr array(const ParserPtr& p);
 
-	bool parse_string(const StringPtr& source, const ArrayPtr& ret){
-		SmartPtr<CharLexer> lex = xnew<CharLexer>(xnew<StringStream>(source));
-		lex->set_results(ret);
-		return parse(lex);
-	}
-
-#define PARSER_RETURN(x) do{ success = x; goto end; }while(0)
-
-	bool parse(const LexerPtr& lex){
-
-		bool success;
-
-		switch(type_){
-			XTAL_NODEFAULT;
-
-			XTAL_CASE(STRING){
-				const ArrayPtr& data = static_ptr_cast<Array>(param2_);
-				for(uint_t i=0, sz=data->size(); i<sz; ++i){
-					if(rawne(lex->read(), data->at(i))){
-						PARSER_RETURN(false);
-					}
-				}
-				lex->push_value(param1_);
-				PARSER_RETURN(true);
-			}
-
-			XTAL_CASE(ALPHA){
-				if(const StringPtr& ch = static_ptr_cast<String>(lex->read())){
-					if(test_alpha(ch->c_str()[0])){
-						lex->push_value(ch);
-						PARSER_RETURN(true);
-					}
-				}
-				PARSER_RETURN(false);
-			}
-
-			XTAL_CASE(CH_SET){
-				const MapPtr& data = static_ptr_cast<Map>(param1_);
-				const AnyPtr& s = lex->read();
-				if(data->at(s)){
-					lex->push_value(s);
-					PARSER_RETURN(true);
-				}
-				PARSER_RETURN(false);
-			}
-
-			XTAL_CASE(END){
-				PARSER_RETURN(raweq(lex->read(), nop));
-			}
-
-			XTAL_CASE(ANY){
-				const AnyPtr& ret = lex->read();
-				if(raweq(ret, nop)){
-					PARSER_RETURN(false);
-				}
-				lex->push_value(ret);
-				PARSER_RETURN(true);
-			}
-
-			XTAL_CASE(REPEAT){
-				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-				int_t n = ivalue(param2_);
-				if(n<0){
-					for(int_t i=0; i<-n; ++i){
-						if(!p->try_parse(lex)){
-							PARSER_RETURN(true);
-						}
-					}
-				}else{
-					for(int_t i=0; i<n; ++i){
-						if(!p->parse(lex)){
-							PARSER_RETURN(false);
-						}
-					}
-					while(p->try_parse(lex)){}
-				}
-				PARSER_RETURN(true);
-			}
-
-			XTAL_CASE(SELECT){
-				const ArrayPtr& parsers = static_ptr_cast<Array>(param1_);
-				for(uint_t i=0, sz=parsers->size()-1; i<sz; ++i){
-					if(static_ptr_cast<Parser>(parsers->at(i))->try_parse(lex)){
-						PARSER_RETURN(true);
-					}
-				}
-				PARSER_RETURN(static_ptr_cast<Parser>(parsers->back())->parse(lex));
-			}
-
-			XTAL_CASE(FOLLOWED){
-				const ArrayPtr& parsers = static_ptr_cast<Array>(param1_);
-				for(uint_t i=0, sz=parsers->size()-1; i<sz; ++i){
-					if(!static_ptr_cast<Parser>(parsers->at(i))->parse(lex)){
-						PARSER_RETURN(false);
-					}
-				}
-				PARSER_RETURN(static_ptr_cast<Parser>(parsers->back())->parse(lex));
-			}
-
-			XTAL_CASE(JOIN){
-				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-				lex->begin_join();				
-				if(p->parse(lex)){
-					lex->end_join(true);
-					PARSER_RETURN(true);
-				}
-				lex->end_join(false);
-				PARSER_RETURN(false);
-			}
-
-			XTAL_CASE(ARRAY){
-				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-
-				const ArrayPtr& temp = lex->results();
-				uint_t size = temp->size();
-				if(p->parse(lex)){
-					lex->noreflect_cache(size);
-					temp->push_back(temp->splice(size, temp->size()-size));
-					PARSER_RETURN(true);
-				}
-				PARSER_RETURN(false);
-			}
-
-			XTAL_CASE(TRY){
-				lex->mark();
-
-				if(parse(lex)){
-					lex->unmark();
-					PARSER_RETURN(true);
-				}
-
-				lex->unmark_and_backtrack();
-				PARSER_RETURN(false);
-			}
-
-			XTAL_CASE(IGNORE){
-				const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-				lex->begin_ignore();
-				bool ret = p->parse(lex);
-				lex->end_ignore();
-				PARSER_RETURN(ret);
-			}
-		}
-
-end:
-
-		return success;
-	}
+	static ParserPtr try_(const ParserPtr& p);
 	
-	bool try_parse(const LexerPtr& lex){
-		lex->mark();
+	static ParserPtr ch_map(const MapPtr& data);
 
-		if(parse(lex)){
-			lex->unmark();
-			return true;
-		}
+	static ParserPtr success();
 
-		lex->unmark_and_backtrack();
-		return false;
-	}
+	static ParserPtr fail();
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & param1_ & param2_;
-	}
+	static ParserPtr expect(const ParserPtr& p);
+
+	static ParserPtr error();
+
+	bool parse_string(const StringPtr& source, const ArrayPtr& ret);
+
+	bool parse(const LexerPtr& lex);
+
 };
 
 ParserPtr to_parser(const AnyPtr& a);

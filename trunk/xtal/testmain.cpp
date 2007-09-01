@@ -88,54 +88,47 @@ int main(int argc, char** argv){
 			path = temp->join(sep)->to_s();
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
-
-Xsrc((
-
-m: ["a":"b", "ee":"c", 4:"d", "eda1e":55, "e"~"e":"SUPER"];
-m["e"~"dae"] = 78;
-a: m.to_a.to_m.to_a.to_m.to_a.p;
-
-))();
-
 		
 AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-vvv: alpha;
+vvv: alpha | digit;
 var: join(vvv*1);
+
+//var: str("aiueo") | str("byack") | str("clkue") | str("dwerae") | str("clc") | str("cl") | str("kue");
+
 sep: -ch_set(":-");
 pe: var >> (sep >> var)*0;
 
-src: "tes:tee:ste:tet:";
-
+src: "byack-clc:aiwerawer69787ueo:byacAk-aiueo:cl:kue:dwerae:";
 mm: MemoryStream();
 10000 {
   mm.put_s(src);
+
 }
-mm.put_s("eee");
+mm.put_s("aiueo");
 mm.size/1024.0 .p;
 
-
+"start".p;
 ret: [];
 t: clock();
 if((pe).parse_string(mm.to_s, ret)){
   (clock()-t).p;
   "ok".p;
-  //ret.p;
+  ret.p;
 }
 
 export mm;
 
-))();
 
-		stdout_stream()->put_s("test");
+))();
 
 		//handle_argv(argv);
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		
@@ -174,7 +167,7 @@ int c;
 
 		//*/
 
-		//*
+		/*
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");

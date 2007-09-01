@@ -8,6 +8,7 @@
 #include "xtal_cast.h"
 #include "xtal_base.h"
 #include "xtal_code.h"
+#include "xtal_debug.h"
 
 namespace xtal{
 

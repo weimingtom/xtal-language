@@ -272,10 +272,12 @@ float_t Any::to_f() const{
 }
 
 StringPtr Any::to_s() const{
-	if(const StringPtr& ret = as<StringPtr>(ap(*this))){
+	if(type(*this)==TYPE_SMALL_STRING){
+		return static_ptr_cast<String>(ap(*this));
+	}else if(const StringPtr& ret = ptr_as<String>(ap(*this))){
 		return ret;
 	}
-	return cast<StringPtr>((*this).send("to_s"));
+	return ptr_cast<String>((*this).send("to_s"));
 }
 
 StringPtr Any::object_name() const{

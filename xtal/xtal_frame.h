@@ -7,42 +7,48 @@
 
 namespace xtal{
 
+struct CppClassHolderList{
+	AnyPtr value;
+	CppClassHolderList* next;
+};
+
+void chain_cpp_class(CppClassHolderList& link);
+
 // C++のクラスの保持のためのクラス
 template<class T>
 struct CppClassHolder{
-	static AnyPtr* value;
+	static CppClassHolderList value;
 };
 
 template<class T>
-AnyPtr* CppClassHolder<T>::value = 0;
+CppClassHolderList CppClassHolder<T>::value;
 
 template<class T>
 const ClassPtr& new_cpp_class(const char* name){
-	if(!CppClassHolder<T>::value){
-		CppClassHolder<T>::value = make_place();
-		*CppClassHolder<T>::value = xnew<CppClass>(name);
+	if(!CppClassHolder<T>::value.value){
+		chain_cpp_class(CppClassHolder<T>::value);
+		CppClassHolder<T>::value.value = xnew<CppClass>(name);
 	}
-	return (const ClassPtr&)*CppClassHolder<T>::value;
+	return (const ClassPtr&)CppClassHolder<T>::value.value;
 }
 
 template<class T>
-bool exists_cpp_class(){
-	return CppClassHolder<T>::value!=0 && ap(*CppClassHolder<T>::value);
+inline bool exists_cpp_class(){
+	return CppClassHolder<T>::value.value;
 }
 
 template<class T>
 inline const ClassPtr& get_cpp_class(){
 	XTAL_ASSERT(exists_cpp_class<T>());
-	return (const ClassPtr&)*CppClassHolder<T>::value;
+	return (const ClassPtr&)CppClassHolder<T>::value.value;
 }
 
 template<class T>
-const ClassPtr& set_cpp_class(const ClassPtr& cls){
-	if(!CppClassHolder<T>::value){
-		CppClassHolder<T>::value = make_place();
+void set_cpp_class(const ClassPtr& cls){
+	if(!CppClassHolder<T>::value.value){
+		chain_cpp_class(CppClassHolder<T>::value);
 	}
-	*CppClassHolder<T>::value = cls;
-	return (const ClassPtr&)*CppClassHolder<T>::value;
+	CppClassHolder<T>::value.value = cls;
 }
 
 

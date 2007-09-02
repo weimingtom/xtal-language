@@ -13,7 +13,7 @@ BlockCore empty_block_core;
 ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
-void InitCode(){
+void initialize_code(){
 	{
 		ClassPtr p = new_cpp_class<Code>("Code");
 		p->inherit(get_cpp_class<Fun>());
@@ -22,6 +22,7 @@ void InitCode(){
 
 	builtin()->def("Code", get_cpp_class<Code>());
 }
+
 
 Code::Code()
 	:filelocal_(xnew<Singleton>("filelocal")), source_file_name_("<noname>"){

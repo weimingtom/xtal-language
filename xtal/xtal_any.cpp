@@ -19,7 +19,7 @@
 
 namespace xtal{
 
-void InitAny(){
+void initialize_any(){
 	{
 		ClassPtr p = new_cpp_class<Any>("Any");
 		p->method("class", &Any::get_class);
@@ -29,6 +29,8 @@ void InitAny(){
 
 	builtin()->def("Any", get_cpp_class<Any>());
 }
+
+
 
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }

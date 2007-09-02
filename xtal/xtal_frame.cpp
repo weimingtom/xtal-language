@@ -41,7 +41,10 @@ public:
 	}
 };
 
-void InitClass(){
+EmptyHaveInstanceVariables empty_have_instance_variables;
+uint_t global_mutate_count = 0;
+
+void initialize_frame(){
 	{
 		ClassPtr p = new_cpp_class<MembersIter>("ClassMembersIter");
 		p->inherit(Iterator());
@@ -88,9 +91,6 @@ void InitClass(){
 	builtin()->def("lib", lib());
 	builtin()->def("Lib", get_cpp_class<Lib>());
 }
-
-EmptyHaveInstanceVariables empty_have_instance_variables;
-uint_t global_mutate_count = 0;
 
 
 Instance::Instance(const ClassPtr& c){

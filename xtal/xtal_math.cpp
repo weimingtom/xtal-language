@@ -146,7 +146,7 @@ struct Math{
 	}
 };
 
-void InitMath(){
+void initialize_math(){
 	ClassPtr math(Math<float_t>::make((float_t*)0));
 	math->fun("abs", &abs);
 	math->fun("max", &max_);
@@ -154,7 +154,6 @@ void InitMath(){
 	math->fun("random", &random);
 	math->fun("random_range", &random_range);
 	builtin()->def("math", math);
-
 }
 
 }

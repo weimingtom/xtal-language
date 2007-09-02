@@ -214,40 +214,6 @@ void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, b
 	vm->cleanup_call();
 }
 
-const ClassPtr& Iterator(){
-	static LLVar<ClassPtr> p = xnew<Class>("Iterator");
-	return p;
-}
-
-const ClassPtr& Enumerator(){
-	static LLVar<ClassPtr> p = xnew<Class>("Enumerator");
-	return p;
-}
-
-const ClassPtr& builtin(){
-	static LLVar<ClassPtr> p = xnew<Singleton>("builtin");
-	return p;
-}
-
-const ClassPtr& lib(){
-	static LLVar<ClassPtr> p = xnew<Lib>();
-	return p;
-}
-
-const StreamPtr& stdin_stream(){
-	static LLVar<StreamPtr> p = xnew<StdioStream>(stdin);
-	return p;
-}
-
-const StreamPtr& stdout_stream(){
-	static LLVar<StreamPtr> p = xnew<StdioStream>(stdout);
-	return p;
-}
-
-const StreamPtr& stderr_stream(){
-	static LLVar<StreamPtr> p = xnew<StdioStream>(stderr);
-	return p;
-}
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
 	return builtin()->member("CastError")(Xt("Xtal Runtime Error 1004")(
@@ -298,7 +264,7 @@ void set_except_handler(except_handler_t handler){
 	except_handler_ = handler;
 }
 
-void InitBuiltin(){
+void initialize_builtin(){
 
 	builtin()->def("builtin", builtin());
 

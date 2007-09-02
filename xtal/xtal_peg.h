@@ -428,7 +428,7 @@ public:
 
 	static ParserPtr str(const StringPtr& str);
 
-	static ParserPtr end();
+	static ParserPtr eos();
 
 	static ParserPtr any();
 
@@ -444,19 +444,19 @@ public:
 
 	static ParserPtr ch_set(const StringPtr& str);
 
-	static ParserPtr repeat(const ParserPtr& p, int_t n);
+	static ParserPtr repeat(const AnyPtr& p, int_t n);
 
-	static ParserPtr ignore(const ParserPtr& p);
+	static ParserPtr ignore(const AnyPtr& p);
 
-	static ParserPtr select(const ParserPtr& lhs, const ParserPtr& rhs);
+	static ParserPtr select(const AnyPtr& lhs, const AnyPtr& rhs);
 
-	static ParserPtr followed(const ParserPtr& lhs, const ParserPtr& rhs);
+	static ParserPtr followed(const AnyPtr& lhs, const AnyPtr& rhs);
 
-	static ParserPtr join(const ParserPtr& p);
+	static ParserPtr join(const AnyPtr& p);
 
-	static ParserPtr array(const ParserPtr& p);
+	static ParserPtr array(const AnyPtr& p);
 
-	static ParserPtr try_(const ParserPtr& p);
+	static ParserPtr try_(const AnyPtr& p);
 	
 	static ParserPtr ch_map(const MapPtr& data);
 
@@ -464,7 +464,7 @@ public:
 
 	static ParserPtr fail();
 
-	static ParserPtr expect(const ParserPtr& p);
+	static ParserPtr expect(const AnyPtr& p);
 
 	static ParserPtr error();
 
@@ -473,6 +473,16 @@ public:
 	bool parse(const LexerPtr& lex);
 
 };
+
+extern ParserPtr success;
+extern ParserPtr fail;
+extern ParserPtr alpha;
+extern ParserPtr ualpha;
+extern ParserPtr lalpha;
+extern ParserPtr space;
+extern ParserPtr digit;
+extern ParserPtr any;
+extern ParserPtr eos;
 
 ParserPtr to_parser(const AnyPtr& a);
 

@@ -9,7 +9,49 @@
 
 namespace xtal{
 
-void InitFun(){
+class VMachineMgr : public Base{
+
+	ArrayPtr vms_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & vms_;
+	}
+
+public:
+
+	VMachineMgr(){
+		vms_ = xnew<Array>();
+	}
+
+	VMachinePtr take_over(){
+		if(vms_->empty()){
+			vms_->push_back(xnew<VMachine>());
+		}
+		VMachinePtr vm = static_ptr_cast<VMachine>(vms_->back());
+		vms_->pop_back();
+		return vm;
+	}
+
+	void take_back(const VMachinePtr& vm){
+		vm->reset();
+		vms_->push_back(vm);
+	}
+};
+
+namespace{
+	SmartPtr<VMachineMgr> vm_mgr_;
+
+	void uninitialize_fun(){
+		vm_mgr_ = null;
+	}
+}
+
+void initialize_fun(){
+	register_uninitializer(&uninitialize_fun);
+
+	vm_mgr_ = xnew<VMachineMgr>();
+
 	{
 		ClassPtr p = new_cpp_class<Fun>("Fun");
 	}
@@ -150,40 +192,6 @@ void Method::call(const VMachinePtr& vm){
 	vm->carry_over(this);
 }
 
-class VMachineMgr : public Base{
-
-	ArrayPtr vms_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & vms_;
-	}
-
-public:
-
-	VMachineMgr(){
-		vms_ = xnew<Array>();
-	}
-
-	VMachinePtr take_over(){
-		if(vms_->empty()){
-			vms_->push_back(xnew<VMachine>());
-		}
-		VMachinePtr vm = static_ptr_cast<VMachine>(vms_->back());
-		vms_->pop_back();
-		return vm;
-	}
-
-	void take_back(const VMachinePtr& vm){
-		vm->reset();
-		vms_->push_back(vm);
-	}
-};
-
-static const SmartPtr<VMachineMgr>& vm_mgr(){
-	static LLVar<SmartPtr<VMachineMgr> > p = xnew<VMachineMgr>();
-	return p;
-}
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
 	:Fun(outer, th, code, core), vm_(null), resume_pc_(0){
@@ -194,7 +202,7 @@ void Fiber::halt(){
 	if(resume_pc_!=0){
 		vm_->exit_fiber();
 		resume_pc_ = 0;
-		vm_mgr()->take_back(vm_);
+		vm_mgr_->take_back(vm_);
 		vm_ = null;
 	}
 }
@@ -202,13 +210,13 @@ void Fiber::halt(){
 void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 	vm->set_arg_this(this_);
 	if(resume_pc_==0){
-		if(!vm_){ vm_ = vm_mgr()->take_over(); }
+		if(!vm_){ vm_ = vm_mgr_->take_over(); }
 		resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
 	}else{ 
 		resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
 	}
 	if(resume_pc_==0){
-		vm_mgr()->take_back(vm_);
+		vm_mgr_->take_back(vm_);
 		vm_ = null;
 	}
 }

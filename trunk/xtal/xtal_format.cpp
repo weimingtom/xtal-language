@@ -285,9 +285,16 @@ private:
 
 namespace{
 	MapPtr user_get_text_map_;
+
+	void uninitialize_format(){
+		user_get_text_map_ = null;
+	}
 }
 
-void InitFormat(){
+void initialize_format(){
+	register_uninitializer(&uninitialize_format);
+	user_get_text_map_ = xnew<Map>();
+
 	{
 		ClassPtr p = new_cpp_class<Format>("Format");
 		p->method("to_s", &Format::to_s);
@@ -297,10 +304,8 @@ void InitFormat(){
 	}
 
 	builtin()->def("Format", get_cpp_class<Format>());
-
-	add_long_life_var(&user_get_text_map_);
-	user_get_text_map_ = xnew<Map>();
 }
+
 
 void set_get_text_map(const MapPtr& map){
 	user_get_text_map_ = map;

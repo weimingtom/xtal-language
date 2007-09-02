@@ -134,17 +134,27 @@ void sleep_thread(float_t sec){
 	}
 }
 
+void uninitialize_thread(){
+	if(thread_lib_){
+		global_interpreter_unlock();
+		thread_enabled_ = false;
+		thread_lib_ = 0;
+		vmachine_table_->clear();
 
-void InitThread(){
+		mutex_ = null;
+		mutex2_ = null;
+		vmachine_ = null;
+		vmachine_table_ = null;
+	}else{
+		vmachine_ = null;
+	}
+}
+
+void initialize_thread(){
+	register_uninitializer(&uninitialize_thread);
 
 	if(thread_lib_temp_){
 		thread_lib_ = thread_lib_temp_;
-
-		add_long_life_var(&mutex_);
-		add_long_life_var(&mutex2_);
-		add_long_life_var(&vmachine_);
-
-		add_long_life_var(&vmachine_table_);
 		vmachine_table_ = xnew<VMachineTable>();
 	}
 
@@ -180,22 +190,12 @@ void InitThread(){
 
 		vmachine_table_->register_vmachine();
 	}else{
-		add_long_life_var(&vmachine_);
 		vmachine_ = xnew<VMachine>();
 	}
 
 	builtin()->def("Thread", get_cpp_class<Thread>());
 	builtin()->def("Mutex", get_cpp_class<Mutex>());
 
-}
-
-void UninitThread(){
-	if(thread_lib_){
-		global_interpreter_unlock();
-		thread_enabled_ = false;
-		thread_lib_ = 0;
-		vmachine_table_->clear();
-	}
 }
 
 void set_thread(ThreadLib& lib){

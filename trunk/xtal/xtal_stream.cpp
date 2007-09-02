@@ -6,7 +6,32 @@
 
 namespace xtal{
 
-void InitStream(){
+namespace{
+	StreamPtr stdin_stream_;
+	StreamPtr stdout_stream_;
+	StreamPtr stderr_stream_;
+
+	void uninitialize_stream(){
+		stdin_stream_ = null;
+		stdout_stream_ = null;
+		stderr_stream_ = null;
+	}
+}
+
+const StreamPtr& stdin_stream(){
+	return stdin_stream_;
+}
+
+const StreamPtr& stdout_stream(){
+	return stdout_stream_;
+}
+
+const StreamPtr& stderr_stream(){
+	return stderr_stream_;
+}
+
+void initialize_stream(){
+	register_uninitializer(&uninitialize_stream);
 
 	{
 		ClassPtr p = new_cpp_class<Stream>("Stream");
@@ -83,10 +108,15 @@ void InitStream(){
 	builtin()->def("MemoryStream", get_cpp_class<MemoryStream>());
 	builtin()->def("StringStream", get_cpp_class<StringStream>());
 
+	stdin_stream_ = xnew<StdioStream>(stdin);
+	stdout_stream_ = xnew<StdioStream>(stdout);
+	stderr_stream_ = xnew<StdioStream>(stderr);
+
 	builtin()->def("stdin", stdin_stream());
 	builtin()->def("stdout", stdout_stream());
 	builtin()->def("stderr", stderr_stream());
 }
+
 
 
 StringPtr Stream::get_s(int_t length){

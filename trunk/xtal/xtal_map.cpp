@@ -46,8 +46,8 @@ public:
 	}
 };
 
-void InitMap(){
 
+void initialize_map(){
 	{
 		ClassPtr p = new_cpp_class<MapIter>("MapIter");
 		p->inherit(Iterator());
@@ -84,7 +84,6 @@ void InitMap(){
 
 	builtin()->def("Map", get_cpp_class<Map>());
 }
-
 
 void Map::visit_members(Visitor& m){
 	Base::visit_members(m);

@@ -7,6 +7,27 @@
 
 namespace xtal{
 
+/**
+* @brief xtalシステムを初期化する
+*/
+void initialize();
+
+/**
+* @brief xtalシステムを破棄する
+*/
+void uninitialize();
+
+/**
+* @brief xtalシステムが初期化済みか調べる
+*/
+bool is_initialized();
+
+/**
+* @brief uninitializeの時にコールバックされる破棄関数を登録する
+*/
+void register_uninitializer(void (*uninitializer)());
+
+
 /** @addtogroup lib */
 /*@{*/
 
@@ -103,7 +124,7 @@ const ClassPtr& Iterator();
 const ClassPtr& Enumerator();
 
 /**
-* @brief builtinクラスを返す
+* @brief builtinシングルトンクラスを返す
 */
 const ClassPtr& builtin();
 
@@ -123,13 +144,7 @@ const StreamPtr& stdout_stream();
 const StreamPtr& stderr_stream();
 
 
-void add_long_life_var(AnyPtr* a, int_t n = 1);
-void remove_long_life_var(AnyPtr* a, int_t n = 1);
 AnyPtr* make_place();
-
-void initialize();
-void uninitialize();
-bool initialized();
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
 AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name);

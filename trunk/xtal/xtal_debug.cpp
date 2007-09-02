@@ -56,12 +56,17 @@ AnyPtr return_hook(){
 
 }
 
-void InitDebug(){
+void uninitialize_debug(){
 	using namespace debug;
+	line_hook_ = null;
+	call_hook_ = null;
+	return_hook_ = null;
+}
 
-	add_long_life_var(&line_hook_);
-	add_long_life_var(&call_hook_);
-	add_long_life_var(&return_hook_);
+void initialize_debug(){
+	using namespace debug;
+	register_uninitializer(&uninitialize_debug);
+
 	enable_count_ = 0;
 
 	{

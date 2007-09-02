@@ -3,11 +3,12 @@
 #ifdef XTAL_USE_PEG
 
 #include "xtal_peg.h"
-
-namespace xtal{ namespace peg{
-
-void InitPEG(){
 	
+namespace xtal{ 
+	
+void initialize_peg(){
+	using namespace peg;
+
 	ClassPtr peg =  xnew<Class>("peg");
 
 	{
@@ -39,7 +40,7 @@ void InitPEG(){
 	builtin()->def("peg", peg);
 
 	peg->def("any", Parser::any());
-	peg->def("end", Parser::end());
+	peg->def("eos", Parser::eos());
 	peg->def("alpha", Parser::alpha());
 	peg->def("lalpha", Parser::lalpha());
 	peg->def("ualpha", Parser::ualpha());
@@ -52,6 +53,7 @@ void InitPEG(){
 	//peg->fun("val", &val)->param(null, Named("pos", 0));
 }
 
+namespace peg{
 
 Parser::Parser(int_t type, const AnyPtr& p1, const AnyPtr& p2)
 	:type_(type), cacheable_(false), param1_(p1), param2_(p2){}
@@ -81,8 +83,7 @@ MapPtr Parser::make_ch_map(const ParserPtr& p, const ParserPtr& pp){
 		XTAL_CASE(CH_SET){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
 		XTAL_CASE(TRY_CH_SET){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
 		XTAL_CASE(CH_MAP){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
-		XTAL_CASE(FOLLOWED){ 
-			return make_ch_map(ptr_cast<Parser>(ptr_cast<Array>(p->param1_)->at(0)), pp); }
+		XTAL_CASE(FOLLOWED){ return make_ch_map(ptr_cast<Parser>(ptr_cast<Array>(p->param1_)->at(0)), pp); }
 		XTAL_CASE(IGNORE){ return make_ch_map(ptr_cast<Parser>(p->param1_), pp); }
 		XTAL_CASE(ARRAY){ return make_ch_map(ptr_cast<Parser>(p->param1_), pp); }
 		XTAL_CASE(JOIN){ return make_ch_map(ptr_cast<Parser>(p->param1_), pp); }
@@ -106,7 +107,7 @@ ParserPtr Parser::str(const StringPtr& str){
 	return xnew<Parser>(STRING, str, data);
 }
 
-ParserPtr Parser::end(){
+ParserPtr Parser::eos(){
 	return xnew<Parser>(END);
 }
 
@@ -144,7 +145,8 @@ ParserPtr Parser::ch_set(const StringPtr& str){
 	return xnew<Parser>(CH_SET, data);
 }
 
-ParserPtr Parser::repeat(const ParserPtr& p, int_t n){
+ParserPtr Parser::repeat(const AnyPtr& a, int_t n){
+	ParserPtr p = to_parser(a);
 	if(n==0){
 		return xnew<Parser>(REPEAT, try_(p));
 	}
@@ -156,11 +158,14 @@ ParserPtr Parser::repeat(const ParserPtr& p, int_t n){
 	return followed(pp, repeat(p, 0));
 }
 
-ParserPtr Parser::ignore(const ParserPtr& p){
+ParserPtr Parser::ignore(const AnyPtr& a){
+	ParserPtr p = to_parser(a);
 	return xnew<Parser>(IGNORE, p);
 }
 
-ParserPtr Parser::select(const ParserPtr& lhs, const ParserPtr& rhs){
+ParserPtr Parser::select(const AnyPtr& a, const AnyPtr& b){
+	ParserPtr lhs = to_parser(a);
+	ParserPtr rhs = to_parser(b);
 
 	if(lhs->type_==CH_SET && rhs->type_==CH_SET){
 		return xnew<Parser>(CH_SET, ptr_cast<Map>(lhs->param1_)->cat(ptr_cast<Map>(rhs->param1_)));
@@ -199,7 +204,10 @@ ParserPtr Parser::select(const ParserPtr& lhs, const ParserPtr& rhs){
 	return xnew<Parser>(SELECT, data);
 }
 
-ParserPtr Parser::followed(const ParserPtr& lhs, const ParserPtr& rhs){
+ParserPtr Parser::followed(const AnyPtr& a, const AnyPtr& b){
+	ParserPtr lhs = to_parser(a);
+	ParserPtr rhs = to_parser(b);
+
 	if(lhs->type_==STRING && rhs->type_==STRING){
 		return str(ptr_cast<String>(lhs->param1_)->cat(ptr_cast<String>(rhs->param1_)));
 	}
@@ -220,15 +228,18 @@ ParserPtr Parser::followed(const ParserPtr& lhs, const ParserPtr& rhs){
 	return xnew<Parser>(FOLLOWED, data);
 }
 
-ParserPtr Parser::join(const ParserPtr& p){
+ParserPtr Parser::join(const AnyPtr& a){
+	ParserPtr p = to_parser(a);
 	return xnew<Parser>(JOIN, p);
 }
 
-ParserPtr Parser::array(const ParserPtr& p){
+ParserPtr Parser::array(const AnyPtr& a){
+	ParserPtr p = to_parser(a);
 	return xnew<Parser>(ARRAY, p);
 }
 
-ParserPtr Parser::try_(const ParserPtr& p){
+ParserPtr Parser::try_(const AnyPtr& a){
+	ParserPtr p = to_parser(a);
 	switch(p->type_){
 		XTAL_DEFAULT{ return xnew<Parser>(TRY, p); }
 		

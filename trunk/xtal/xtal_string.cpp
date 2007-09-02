@@ -204,44 +204,7 @@ public:
 	}
 };
 
-void InitString(){
 
-	{
-		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
-		p->inherit(Iterator());
-		p->method("reset", &StringSplit::reset);
-		p->method("iter_first", &StringSplit::iter_next);
-		p->method("iter_next", &StringSplit::iter_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<String>("String");
-
-		p->def("new", ctor<String>());
-		p->method("to_i", &String::to_i);
-		p->method("to_f", &String::to_f);
-		p->method("to_s", &String::to_s);
-		p->method("clone", &String::clone);
-
-		//p->method("length", &String::length);
-		//p->method("size", &String::size);
-		p->method("intern", &String::intern);
-
-		p->method("split", &String::split)->param("i", Named("n", 1));
-		p->method("each", &String::each);
-
-		p->method("op_cat", &String::op_cat);
-		p->method("op_eq", &String::op_eq);
-		p->method("op_lt", &String::op_lt);
-
-		p->method("op_cat_r_String", &String::op_cat_r_String);
-		p->method("op_eq_r_String", &String::op_eq_r_String);
-		p->method("op_lt_r_String", &String::op_lt_r_String);
-		
-		p->method("op_cat_assign", &String::op_cat);
-
-	}
-}
 
 
 #endif
@@ -426,10 +389,57 @@ void StringMgr::before_gc(){
 		}
 	}
 }
-	
-static const SmartPtr<StringMgr>& str_mgr(){
-	static LLVar<SmartPtr<StringMgr> > p = xnew<StringMgr>();
-	return p;
+
+namespace{
+
+SmartPtr<StringMgr> str_mgr_;
+
+void uninitialize_string(){
+	str_mgr_ = null;
+}
+
+}
+
+////////////////////////////////////////////////////////////////
+
+void initialize_string(){
+	register_uninitializer(&uninitialize_string);
+	str_mgr_ = xnew<StringMgr>();
+
+	{
+		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
+		p->inherit(Iterator());
+		p->method("reset", &StringSplit::reset);
+		p->method("iter_first", &StringSplit::iter_next);
+		p->method("iter_next", &StringSplit::iter_next);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<String>("String");
+
+		p->def("new", ctor<String>());
+		p->method("to_i", &String::to_i);
+		p->method("to_f", &String::to_f);
+		p->method("to_s", &String::to_s);
+		p->method("clone", &String::clone);
+
+		//p->method("length", &String::length);
+		//p->method("size", &String::size);
+		p->method("intern", &String::intern);
+
+		p->method("split", &String::split)->param("i", Named("n", 1));
+		p->method("each", &String::each);
+
+		p->method("op_cat", &String::op_cat);
+		p->method("op_eq", &String::op_eq);
+		p->method("op_lt", &String::op_lt);
+
+		p->method("op_cat_r_String", &String::op_cat_r_String);
+		p->method("op_eq_r_String", &String::op_eq_r_String);
+		p->method("op_lt_r_String", &String::op_lt_r_String);
+		
+		p->method("op_cat_assign", &String::op_cat);
+	}
 }
 
 ////////////////////////////////////////////////////////////////
@@ -442,7 +452,7 @@ void String::init_string(const char_t* str, uint_t sz){
 		uint_t hash, length;
 		make_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
-			set_p(pvalue(str_mgr()->insert(str, sz, hash, length)));
+			set_p(pvalue(str_mgr_->insert(str, sz, hash, length)));
 		}else{
 			set_p(new LargeString(str, sz, hash, length));
 			pvalue(*this)->set_class(new_cpp_class<String>());
@@ -496,7 +506,7 @@ String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, boo
 		memcpy(svalue_, str, sz);
 	}else{
 		if(!intern_flag && length<=1){
-			set_p(pvalue(str_mgr()->insert(str, sz, hashcode, length)));
+			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length)));
 		}else{
 			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
 			pvalue(*this)->set_class(new_cpp_class<String>());
@@ -525,7 +535,7 @@ const char* String::c_str(){
 	}else{
 		uint_t size, hash, length;
 		make_size_and_hashcode_and_length(svalue_, size, hash, length);
-		return ((String*)&str_mgr()->insert(svalue_, size, hash, length))->svalue_;
+		return ((String*)&str_mgr_->insert(svalue_, size, hash, length))->svalue_;
 	}
 }
 
@@ -553,7 +563,7 @@ const InternedStringPtr& String::intern(){
 	if(type(*this)==TYPE_BASE){
 		LargeString* p = ((LargeString*)pvalue(*this));
 		if(p->is_interned()) return *(const InternedStringPtr*)this;
-		return str_mgr()->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length());
+		return str_mgr_->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length());
 	}else{
 		return *(const InternedStringPtr*)this;
 	}
@@ -816,7 +826,7 @@ InternedStringPtr::InternedStringPtr(const char* name, int_t size)
 	:StringPtr(make(name, size)){}
 
 InternedStringPtr::InternedStringPtr(const StringPtr& name)
-	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr()->insert(name->c_str(), name->buffer_size())){}
+	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr_->insert(name->c_str(), name->buffer_size())){}
 
 
 StringPtr InternedStringPtr::make(const char* name, uint_t size){
@@ -824,7 +834,7 @@ StringPtr InternedStringPtr::make(const char* name, uint_t size){
 		String temp(name, size);
 		return StringPtr::from_this(&temp);
 	}
-	return str_mgr()->insert(name, size);
+	return str_mgr_->insert(name, size);
 }
 
 
@@ -832,140 +842,194 @@ StringPtr InternedStringPtr::make(const char* name, uint_t size){
 
 //{ID{{
 namespace id{
-InternedStringPtr id__ARGS__(null);
-InternedStringPtr idop_or_assign(null);
-InternedStringPtr idop_add_assign(null);
-InternedStringPtr idop_shr(null);
-InternedStringPtr idop_ushr_assign(null);
-InternedStringPtr idserial_save(null);
-InternedStringPtr idop_call(null);
-InternedStringPtr idop_sub_assign(null);
-InternedStringPtr idop_lt(null);
-InternedStringPtr idop_mul(null);
-InternedStringPtr idop_eq(null);
-InternedStringPtr idop_neg(null);
-InternedStringPtr idserial_load(null);
-InternedStringPtr iditer_next(null);
-InternedStringPtr iditer_first(null);
-InternedStringPtr idtrue(null);
-InternedStringPtr idp(null);
-InternedStringPtr idset_at(null);
-InternedStringPtr idop_and_assign(null);
-InternedStringPtr idop_mod_assign(null);
-InternedStringPtr idop_div_assign(null);
-InternedStringPtr idop_or(null);
-InternedStringPtr idop_div(null);
-InternedStringPtr idlib(null);
-InternedStringPtr idop_cat_assign(null);
-InternedStringPtr idop_cat(null);
-InternedStringPtr idIOError(null);
-InternedStringPtr idop_cat_r_String(null);
-InternedStringPtr idfalse(null);
-InternedStringPtr idserial_new(null);
-InternedStringPtr idto_i(null);
-InternedStringPtr idop_add(null);
-InternedStringPtr idop_ushr(null);
-InternedStringPtr idop_pos(null);
-InternedStringPtr idop_dec(null);
-InternedStringPtr idop_inc(null);
-InternedStringPtr idop_eq_r_String(null);
-InternedStringPtr iditer_break(null);
-InternedStringPtr idto_f(null);
-InternedStringPtr idop_shr_assign(null);
-InternedStringPtr idop_mod(null);
-InternedStringPtr idstring(null);
-InternedStringPtr idop_set_at(null);
-InternedStringPtr idop_lt_r_String(null);
-InternedStringPtr idinitialize(null);
-InternedStringPtr idtest(null);
-InternedStringPtr idop_at(null);
-InternedStringPtr idvalue(null);
-InternedStringPtr idto_s(null);
-InternedStringPtr idop_shl_assign(null);
-InternedStringPtr idop_sub(null);
-InternedStringPtr idop_com(null);
-InternedStringPtr idnew(null);
-InternedStringPtr idop_shl(null);
-InternedStringPtr idop_xor(null);
-InternedStringPtr idop_and(null);
-InternedStringPtr idat(null);
-InternedStringPtr idop_xor_assign(null);
-InternedStringPtr idop_mul_assign(null);
+InternedStringPtr id__ARGS__;
+InternedStringPtr idop_or_assign;
+InternedStringPtr idop_add_assign;
+InternedStringPtr idop_shr;
+InternedStringPtr idop_ushr_assign;
+InternedStringPtr idserial_save;
+InternedStringPtr idop_call;
+InternedStringPtr idop_sub_assign;
+InternedStringPtr idop_lt;
+InternedStringPtr idop_eq;
+InternedStringPtr idop_mul;
+InternedStringPtr idop_neg;
+InternedStringPtr idserial_load;
+InternedStringPtr iditer_next;
+InternedStringPtr iditer_first;
+InternedStringPtr idtrue;
+InternedStringPtr idlib;
+InternedStringPtr idp;
+InternedStringPtr idset_at;
+InternedStringPtr idop_and_assign;
+InternedStringPtr idop_mod_assign;
+InternedStringPtr idop_div_assign;
+InternedStringPtr idop_or;
+InternedStringPtr idop_div;
+InternedStringPtr idop_cat_assign;
+InternedStringPtr idop_cat;
+InternedStringPtr idIOError;
+InternedStringPtr idop_cat_r_String;
+InternedStringPtr idfalse;
+InternedStringPtr idserial_new;
+InternedStringPtr idto_i;
+InternedStringPtr idop_add;
+InternedStringPtr idop_ushr;
+InternedStringPtr idop_pos;
+InternedStringPtr idop_dec;
+InternedStringPtr idop_inc;
+InternedStringPtr idop_eq_r_String;
+InternedStringPtr iditer_break;
+InternedStringPtr idto_f;
+InternedStringPtr idop_shr_assign;
+InternedStringPtr idop_mod;
+InternedStringPtr idstring;
+InternedStringPtr idop_set_at;
+InternedStringPtr idop_lt_r_String;
+InternedStringPtr idinitialize;
+InternedStringPtr idtest;
+InternedStringPtr idop_at;
+InternedStringPtr idvalue;
+InternedStringPtr idto_s;
+InternedStringPtr idop_shl_assign;
+InternedStringPtr idop_sub;
+InternedStringPtr idop_com;
+InternedStringPtr idnew;
+InternedStringPtr idop_shl;
+InternedStringPtr idop_xor;
+InternedStringPtr idop_and;
+InternedStringPtr idat;
+InternedStringPtr idop_xor_assign;
+InternedStringPtr idop_mul_assign;
 }
-void InitInternedString(){
-id::id__ARGS__ = InternedStringPtr("__ARGS__", 8); add_long_life_var(&id::id__ARGS__); 
-id::idop_or_assign = InternedStringPtr("op_or_assign", 12); add_long_life_var(&id::idop_or_assign); 
-id::idop_add_assign = InternedStringPtr("op_add_assign", 13); add_long_life_var(&id::idop_add_assign); 
-id::idop_shr = InternedStringPtr("op_shr", 6); add_long_life_var(&id::idop_shr); 
-id::idop_ushr_assign = InternedStringPtr("op_ushr_assign", 14); add_long_life_var(&id::idop_ushr_assign); 
-id::idserial_save = InternedStringPtr("serial_save", 11); add_long_life_var(&id::idserial_save); 
-id::idop_call = InternedStringPtr("op_call", 7); add_long_life_var(&id::idop_call); 
-id::idop_sub_assign = InternedStringPtr("op_sub_assign", 13); add_long_life_var(&id::idop_sub_assign); 
-id::idop_lt = InternedStringPtr("op_lt", 5); add_long_life_var(&id::idop_lt); 
-id::idop_mul = InternedStringPtr("op_mul", 6); add_long_life_var(&id::idop_mul); 
-id::idop_eq = InternedStringPtr("op_eq", 5); add_long_life_var(&id::idop_eq); 
-id::idop_neg = InternedStringPtr("op_neg", 6); add_long_life_var(&id::idop_neg); 
-id::idserial_load = InternedStringPtr("serial_load", 11); add_long_life_var(&id::idserial_load); 
-id::iditer_next = InternedStringPtr("iter_next", 9); add_long_life_var(&id::iditer_next); 
-id::iditer_first = InternedStringPtr("iter_first", 10); add_long_life_var(&id::iditer_first); 
-id::idtrue = InternedStringPtr("true", 4); add_long_life_var(&id::idtrue); 
-id::idp = InternedStringPtr("p", 1); add_long_life_var(&id::idp); 
-id::idset_at = InternedStringPtr("set_at", 6); add_long_life_var(&id::idset_at); 
-id::idop_and_assign = InternedStringPtr("op_and_assign", 13); add_long_life_var(&id::idop_and_assign); 
-id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13); add_long_life_var(&id::idop_mod_assign); 
-id::idop_div_assign = InternedStringPtr("op_div_assign", 13); add_long_life_var(&id::idop_div_assign); 
-id::idop_or = InternedStringPtr("op_or", 5); add_long_life_var(&id::idop_or); 
-id::idop_div = InternedStringPtr("op_div", 6); add_long_life_var(&id::idop_div); 
-id::idlib = InternedStringPtr("lib", 3); add_long_life_var(&id::idlib); 
-id::idop_cat_assign = InternedStringPtr("op_cat_assign", 13); add_long_life_var(&id::idop_cat_assign); 
-id::idop_cat = InternedStringPtr("op_cat", 6); add_long_life_var(&id::idop_cat); 
-id::idIOError = InternedStringPtr("IOError", 7); add_long_life_var(&id::idIOError); 
-id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15); add_long_life_var(&id::idop_cat_r_String); 
-id::idfalse = InternedStringPtr("false", 5); add_long_life_var(&id::idfalse); 
-id::idserial_new = InternedStringPtr("serial_new", 10); add_long_life_var(&id::idserial_new); 
-id::idto_i = InternedStringPtr("to_i", 4); add_long_life_var(&id::idto_i); 
-id::idop_add = InternedStringPtr("op_add", 6); add_long_life_var(&id::idop_add); 
-id::idop_ushr = InternedStringPtr("op_ushr", 7); add_long_life_var(&id::idop_ushr); 
-id::idop_pos = InternedStringPtr("op_pos", 6); add_long_life_var(&id::idop_pos); 
-id::idop_dec = InternedStringPtr("op_dec", 6); add_long_life_var(&id::idop_dec); 
-id::idop_inc = InternedStringPtr("op_inc", 6); add_long_life_var(&id::idop_inc); 
-id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14); add_long_life_var(&id::idop_eq_r_String); 
-id::iditer_break = InternedStringPtr("iter_break", 10); add_long_life_var(&id::iditer_break); 
-id::idto_f = InternedStringPtr("to_f", 4); add_long_life_var(&id::idto_f); 
-id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13); add_long_life_var(&id::idop_shr_assign); 
-id::idop_mod = InternedStringPtr("op_mod", 6); add_long_life_var(&id::idop_mod); 
-id::idstring = InternedStringPtr("string", 6); add_long_life_var(&id::idstring); 
-id::idop_set_at = InternedStringPtr("op_set_at", 9); add_long_life_var(&id::idop_set_at); 
-id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14); add_long_life_var(&id::idop_lt_r_String); 
-id::idinitialize = InternedStringPtr("initialize", 10); add_long_life_var(&id::idinitialize); 
-id::idtest = InternedStringPtr("test", 4); add_long_life_var(&id::idtest); 
-id::idop_at = InternedStringPtr("op_at", 5); add_long_life_var(&id::idop_at); 
-id::idvalue = InternedStringPtr("value", 5); add_long_life_var(&id::idvalue); 
-id::idto_s = InternedStringPtr("to_s", 4); add_long_life_var(&id::idto_s); 
-id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13); add_long_life_var(&id::idop_shl_assign); 
-id::idop_sub = InternedStringPtr("op_sub", 6); add_long_life_var(&id::idop_sub); 
-id::idop_com = InternedStringPtr("op_com", 6); add_long_life_var(&id::idop_com); 
-id::idnew = InternedStringPtr("new", 3); add_long_life_var(&id::idnew); 
-id::idop_shl = InternedStringPtr("op_shl", 6); add_long_life_var(&id::idop_shl); 
-id::idop_xor = InternedStringPtr("op_xor", 6); add_long_life_var(&id::idop_xor); 
-id::idop_and = InternedStringPtr("op_and", 6); add_long_life_var(&id::idop_and); 
-id::idat = InternedStringPtr("at", 2); add_long_life_var(&id::idat); 
-id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13); add_long_life_var(&id::idop_xor_assign); 
-id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13); add_long_life_var(&id::idop_mul_assign); 
+void uninitialize_interned_string(){
+id::id__ARGS__ = null;
+id::idop_or_assign = null;
+id::idop_add_assign = null;
+id::idop_shr = null;
+id::idop_ushr_assign = null;
+id::idserial_save = null;
+id::idop_call = null;
+id::idop_sub_assign = null;
+id::idop_lt = null;
+id::idop_eq = null;
+id::idop_mul = null;
+id::idop_neg = null;
+id::idserial_load = null;
+id::iditer_next = null;
+id::iditer_first = null;
+id::idtrue = null;
+id::idlib = null;
+id::idp = null;
+id::idset_at = null;
+id::idop_and_assign = null;
+id::idop_mod_assign = null;
+id::idop_div_assign = null;
+id::idop_or = null;
+id::idop_div = null;
+id::idop_cat_assign = null;
+id::idop_cat = null;
+id::idIOError = null;
+id::idop_cat_r_String = null;
+id::idfalse = null;
+id::idserial_new = null;
+id::idto_i = null;
+id::idop_add = null;
+id::idop_ushr = null;
+id::idop_pos = null;
+id::idop_dec = null;
+id::idop_inc = null;
+id::idop_eq_r_String = null;
+id::iditer_break = null;
+id::idto_f = null;
+id::idop_shr_assign = null;
+id::idop_mod = null;
+id::idstring = null;
+id::idop_set_at = null;
+id::idop_lt_r_String = null;
+id::idinitialize = null;
+id::idtest = null;
+id::idop_at = null;
+id::idvalue = null;
+id::idto_s = null;
+id::idop_shl_assign = null;
+id::idop_sub = null;
+id::idop_com = null;
+id::idnew = null;
+id::idop_shl = null;
+id::idop_xor = null;
+id::idop_and = null;
+id::idat = null;
+id::idop_xor_assign = null;
+id::idop_mul_assign = null;
+}
+void initialize_interned_string(){
+register_uninitializer(&uninitialize_interned_string);
+id::id__ARGS__ = InternedStringPtr("__ARGS__", 8);
+id::idop_or_assign = InternedStringPtr("op_or_assign", 12);
+id::idop_add_assign = InternedStringPtr("op_add_assign", 13);
+id::idop_shr = InternedStringPtr("op_shr", 6);
+id::idop_ushr_assign = InternedStringPtr("op_ushr_assign", 14);
+id::idserial_save = InternedStringPtr("serial_save", 11);
+id::idop_call = InternedStringPtr("op_call", 7);
+id::idop_sub_assign = InternedStringPtr("op_sub_assign", 13);
+id::idop_lt = InternedStringPtr("op_lt", 5);
+id::idop_eq = InternedStringPtr("op_eq", 5);
+id::idop_mul = InternedStringPtr("op_mul", 6);
+id::idop_neg = InternedStringPtr("op_neg", 6);
+id::idserial_load = InternedStringPtr("serial_load", 11);
+id::iditer_next = InternedStringPtr("iter_next", 9);
+id::iditer_first = InternedStringPtr("iter_first", 10);
+id::idtrue = InternedStringPtr("true", 4);
+id::idlib = InternedStringPtr("lib", 3);
+id::idp = InternedStringPtr("p", 1);
+id::idset_at = InternedStringPtr("set_at", 6);
+id::idop_and_assign = InternedStringPtr("op_and_assign", 13);
+id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13);
+id::idop_div_assign = InternedStringPtr("op_div_assign", 13);
+id::idop_or = InternedStringPtr("op_or", 5);
+id::idop_div = InternedStringPtr("op_div", 6);
+id::idop_cat_assign = InternedStringPtr("op_cat_assign", 13);
+id::idop_cat = InternedStringPtr("op_cat", 6);
+id::idIOError = InternedStringPtr("IOError", 7);
+id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15);
+id::idfalse = InternedStringPtr("false", 5);
+id::idserial_new = InternedStringPtr("serial_new", 10);
+id::idto_i = InternedStringPtr("to_i", 4);
+id::idop_add = InternedStringPtr("op_add", 6);
+id::idop_ushr = InternedStringPtr("op_ushr", 7);
+id::idop_pos = InternedStringPtr("op_pos", 6);
+id::idop_dec = InternedStringPtr("op_dec", 6);
+id::idop_inc = InternedStringPtr("op_inc", 6);
+id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14);
+id::iditer_break = InternedStringPtr("iter_break", 10);
+id::idto_f = InternedStringPtr("to_f", 4);
+id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13);
+id::idop_mod = InternedStringPtr("op_mod", 6);
+id::idstring = InternedStringPtr("string", 6);
+id::idop_set_at = InternedStringPtr("op_set_at", 9);
+id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14);
+id::idinitialize = InternedStringPtr("initialize", 10);
+id::idtest = InternedStringPtr("test", 4);
+id::idop_at = InternedStringPtr("op_at", 5);
+id::idvalue = InternedStringPtr("value", 5);
+id::idto_s = InternedStringPtr("to_s", 4);
+id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13);
+id::idop_sub = InternedStringPtr("op_sub", 6);
+id::idop_com = InternedStringPtr("op_com", 6);
+id::idnew = InternedStringPtr("new", 3);
+id::idop_shl = InternedStringPtr("op_shl", 6);
+id::idop_xor = InternedStringPtr("op_xor", 6);
+id::idop_and = InternedStringPtr("op_and", 6);
+id::idat = InternedStringPtr("at", 2);
+id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13);
+id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13);
 }
 //}}ID}
 
-
-
-
-
-
-
-
-
 #else
 
-void InitID(){}
+void initialize_interned_string(){}
 
 #endif
 

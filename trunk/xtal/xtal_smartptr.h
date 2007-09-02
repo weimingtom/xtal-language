@@ -463,16 +463,6 @@ inline void dec_ref_count_force(const Innocence& v){
 	}
 }
 
-template<class T>
-class LLVar : public T{
-public:
-	LLVar(){ add_long_life_var(this); }
-	LLVar(const LLVar<T>& v):T(v){ add_long_life_var(this); }
-	template<class U> LLVar(const U& v):T(v){ add_long_life_var(this); }
-	~LLVar(){ remove_long_life_var(this); }
-	template<class U> LLVar<T>& operator =(const U& v){ this->T::operator=(v); return *this; }
-};
-
 
 void visit_members(Visitor& m, const AnyPtr& p);
 

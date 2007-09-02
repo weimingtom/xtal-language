@@ -61,7 +61,8 @@ namespace{
 	}
 }
 
-void InitBasicType(){
+
+void initialize_basic_type(){
 	{
 		ClassPtr p = new_cpp_class<Int>("Int");	
 		p->method("to_i", &Int_to_i);
@@ -76,13 +77,13 @@ void InitBasicType(){
 		p->method("to_s", &Float_to_s);
 	}
 
-	builtin()->def("String", get_cpp_class<String>());
-	builtin()->def("Int", get_cpp_class<Int>());
-	builtin()->def("Float", get_cpp_class<Float>());
-	builtin()->def("Null", get_cpp_class<Null>());
-	builtin()->def("Nop", get_cpp_class<Nop>());
-	builtin()->def("True", get_cpp_class<True>());
-	builtin()->def("False", get_cpp_class<False>());
+	builtin()->def("String", new_cpp_class<String>());
+	builtin()->def("Int", new_cpp_class<Int>());
+	builtin()->def("Float", new_cpp_class<Float>());
+	builtin()->def("Null", new_cpp_class<Null>());
+	builtin()->def("Nop", new_cpp_class<Nop>());
+	builtin()->def("True", new_cpp_class<True>());
+	builtin()->def("False", new_cpp_class<False>());
 }
 
 }

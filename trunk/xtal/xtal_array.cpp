@@ -48,8 +48,7 @@ public:
 };
 
 
-void InitArray(){
-
+void initialize_array(){
 	{
 		ClassPtr p = new_cpp_class<ArrayIter>("ArrayIter");
 		p->inherit(Iterator());
@@ -101,6 +100,7 @@ void InitArray(){
 
 	builtin()->def("Array", get_cpp_class<Array>());
 }
+
 
 void Array::visit_members(Visitor& m){
 	Base::visit_members(m);

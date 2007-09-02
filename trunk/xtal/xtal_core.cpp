@@ -42,10 +42,6 @@ namespace{
 	GCObserver** gcobservers_current_ = 0;
 	GCObserver** gcobservers_end_ = 0;
 
-	AnyPtr** place_begin_ = 0;
-	AnyPtr** place_current_ = 0;
-	AnyPtr** place_end_ = 0;
-
 	uint_t cycle_count_ = 0;
 
 	struct UninitializerList{
@@ -54,6 +50,7 @@ namespace{
 	};
 
 	UninitializerList* uninitializer_list_ = 0;
+	CppClassHolderList* cpp_class_holder_list_ = 0;
 
 	ClassPtr iterator_;
 	ClassPtr enumerator_;
@@ -88,6 +85,12 @@ bool is_initialized(){
 	return objects_begin_!=0;
 }
 
+void chain_cpp_class(CppClassHolderList& link){
+	link.next = cpp_class_holder_list_;
+	cpp_class_holder_list_ = &link;
+}
+
+
 void initialize(){
 	if(is_initialized()){ return; } 
 
@@ -101,40 +104,26 @@ void initialize(){
 
 	empty_have_instance_variables.init();
 
-	// 生成の際お互いに必要となる、Any, Class, CppClass を特別な方法で生成
+	// 生成の際お互いに必要となる、Any, Class, CppClass, Array を特別な方法で生成
+	CppClassHolderList* holders[] = { &CppClassHolder<Any>::value, &CppClassHolder<Class>::value, &CppClassHolder<CppClass>::value, &CppClassHolder<Array>::value };
 
-	//AnyPtr* holders[] = { &CppClassHolder<Any>::value, CppClassHolder<Class>::value, CppClassHolder<CppClass>::value };
-
-	CppClassHolder<Any>::value = make_place();
-	CppClassHolder<Class>::value = make_place();
-	CppClassHolder<CppClass>::value = make_place();
-
-	*CppClassHolder<Any>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
-	*CppClassHolder<Class>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
-	*CppClassHolder<CppClass>::value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
-
-	pvalue(get_cpp_class<Any>())->set_ref_count(1);
-	pvalue(get_cpp_class<Class>())->set_ref_count(1);
-	pvalue(get_cpp_class<CppClass>())->set_ref_count(1);
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		chain_cpp_class(*holders[i]);
+		holders[i]->value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
+		pvalue(holders[i]->value)->set_ref_count(1);
+	}
 	
-	int_t temp_ref_count;
-	
-	temp_ref_count = pvalue(get_cpp_class<Any>())->ref_count(); 
-	new(pvalue(get_cpp_class<Any>())) Class(Class::cpp_class_t());
-	pvalue(get_cpp_class<Any>())->add_ref_count(temp_ref_count-1);
-		
-	temp_ref_count = pvalue(get_cpp_class<Class>())->ref_count(); 
-	new(pvalue(get_cpp_class<Class>())) Class(Class::cpp_class_t());
-	pvalue(get_cpp_class<Class>())->add_ref_count(temp_ref_count-1);
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(holders[i]->value);
+		int_t temp_ref_count = p->ref_count(); 
+		new(p) Class(Class::cpp_class_t());
+		p->add_ref_count(temp_ref_count-1);
+	}
 
-	temp_ref_count = pvalue(get_cpp_class<CppClass>())->ref_count(); 
-	new(pvalue(get_cpp_class<CppClass>())) Class(Class::cpp_class_t());
-	pvalue(get_cpp_class<CppClass>())->add_ref_count(temp_ref_count-1);
-
-	pvalue(get_cpp_class<Any>())->set_class(get_cpp_class<Class>());
-	pvalue(get_cpp_class<Class>())->set_class(get_cpp_class<Class>());
-	pvalue(get_cpp_class<CppClass>())->set_class(get_cpp_class<Class>());
-
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(holders[i]->value);
+		p->set_class(get_cpp_class<Class>());
+	}
 	
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>();
@@ -170,16 +159,24 @@ void uninitialize(){
 
 	gc();
 
-	UninitializerList* next=0;
-	for(UninitializerList* p = uninitializer_list_; p; p=next){
-		next = p->next;
-		uninitializer_list_ = next;
-		p->uninitialize();
-		user_free(p);
+	{
+		UninitializerList* next=0;
+		for(UninitializerList* p = uninitializer_list_; p; p=next){
+			next = p->next;
+			uninitializer_list_ = next;
+			p->uninitialize();
+			user_free(p);
+		}
 	}
 
-	for(AnyPtr** p = place_begin_; p!=place_current_; ++p){
-		**p = null;
+	{
+		CppClassHolderList* next=0;
+		for(CppClassHolderList* p = cpp_class_holder_list_; p; p=next){
+			next = p->next;
+			cpp_class_holder_list_ = next;
+			p->value = null;
+		}
+
 	}
 
 	builtin_ = null;
@@ -196,31 +193,17 @@ void uninitialize(){
 		//print_alive_objects();
 		XTAL_ASSERT(false); // 全部開放できてない
 	}
-	
-	for(AnyPtr** p = place_begin_; p!=place_current_; ++p){
-		user_free(*p);
-	}
-	
-	place_current_ = place_begin_;
+
 	objects_list_current_ = objects_list_begin_;
 
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
-	fit_simple_dynamic_pointer_array((void**&)place_begin_, (void**&)place_end_, (void**&)place_current_);
 
 	empty_have_instance_variables.uninit();
 
 	//
 	display_debug_memory();
-}
-
-AnyPtr* make_place(){
-	if(place_current_==place_end_){
-		expand_simple_dynamic_pointer_array((void**&)place_begin_, (void**&)place_end_, (void**&)place_current_);
-	}
-	*place_current_ = new(user_malloc(sizeof(AnyPtr))) AnyPtr();
-	return *place_current_++;
 }
 
 

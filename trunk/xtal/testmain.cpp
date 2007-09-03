@@ -56,6 +56,7 @@ void debug_line(const SmartPtr<debug::Info>& info){
 
 //#include <crtdbg.h>
 
+
 int main(int argc, char** argv){
 
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
@@ -93,7 +94,7 @@ AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-vvv: alpha | digit;
+vvv: (alpha | (-digit >> val("*")));
 var: join(vvv*1);
 
 //var: str("aiueo") | str("byack") | str("clkue") | str("dwerae") | str("clc") | str("cl") | str("kue");
@@ -103,7 +104,7 @@ pe: var >> (sep >> var)*0;
 
 src: "byack-clc:aiwerawer69787ueo:byacAk-aiueo:cl:kue:dwerae:";
 mm: MemoryStream();
-10000 {
+1 {
   mm.put_s(src);
 
 }

@@ -50,7 +50,7 @@ void initialize_peg(){
 	peg->fun("ch_set", &Parser::ch_set);
 	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
 	peg->fun("array", &Parser::array);
-	//peg->fun("val", &val)->param(null, Named("pos", 0));
+	peg->fun("val", &Parser::val);
 }
 
 namespace peg{
@@ -149,6 +149,15 @@ ParserPtr Parser::repeat(const AnyPtr& a, int_t n){
 	ParserPtr p = to_parser(a);
 	if(n==0){
 		return xnew<Parser>(REPEAT, try_(p));
+	}
+
+	if(n<0){
+		p = select(p, success());
+		ParserPtr pp = p;
+		for(int_t i=1; i<-n; ++i){
+			pp = followed(pp, p);
+		}
+		return pp;
 	}
 
 	ParserPtr pp = p;
@@ -264,6 +273,10 @@ ParserPtr Parser::success(){
 
 ParserPtr Parser::fail(){
 	return xnew<Parser>(FAIL);
+}
+
+ParserPtr Parser::val(const AnyPtr& v){
+	return xnew<Parser>(VAL, v);
 }
 
 bool Parser::parse_string(const StringPtr& source, const ArrayPtr& ret){
@@ -451,6 +464,11 @@ bool Parser::parse(const LexerPtr& lex){
 				return static_ptr_cast<Parser>(a)->parse(lex);
 			}
 			PARSER_RETURN(false);
+		}
+
+		XTAL_CASE(VAL){
+			lex->push_value(param1_);
+			PARSER_RETURN(true);
 		}
 	}
 

@@ -28,3 +28,6 @@
 #include "xtal_math.cpp"
 #include "xtal_format.cpp"
 #include "xtal_basic_type.cpp"
+#include "xtal_core.cpp"
+#include "xtal_debug.cpp"
+#include "xtal_peg.cpp"

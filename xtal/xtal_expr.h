@@ -323,6 +323,128 @@ xnew<ExprIf>(xnew<ExprPushNull>(), xnew<Block>(), xnew<Block>());
 
 */
 
+/*
+class Struct : public Array{
+protected:
+	enum{ OFFSET = 0, COUNT = 0 };
+};
+
+#define XTAL_DEF_STRUCT_5(Type, Super, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5) \
+	class Type : public Super{
+	protected:
+		enum{ OFFSET = Super::OFFSET+Super::COUNT, COUNT = 5 };
+	public:
+		
+		Type(const MemberType1& v1 = null, const MemberType2& v2 = null, const MemberType3& v3 = null, const MemberType4& v4 = null, const MemberType5& v5 = null){
+			upsize(COUNT);
+			set_##MemberName1(v1);
+			set_##MemberName2(v2);
+			set_##MemberName3(v3);
+			set_##MemberName4(v4);
+			set_##MemberName5(v5);
+		}
+
+		const MemberType1& MemberName1(){ return (const MemberType1&)at(OFFSET+0); }
+		const MemberType2& MemberName2(){ return (const MemberType2&)at(OFFSET+1); }
+		const MemberType3& MemberName3(){ return (const MemberType3&)at(OFFSET+2); }
+		const MemberType4& MemberName4(){ return (const MemberType4&)at(OFFSET+3); }
+		const MemberType5& MemberName5(){ return (const MemberType5&)at(OFFSET+4); }
+
+		void set_##MemberName1(const MemberType1& v){ set_at(OFFSET+0, v); }
+		void set_##MemberName2(const MemberType2& v){ set_at(OFFSET+1, v); }
+		void set_##MemberName3(const MemberType3& v){ set_at(OFFSET+2, v); }
+		void set_##MemberName4(const MemberType4& v){ set_at(OFFSET+3, v); }
+		void set_##MemberName5(const MemberType5& v){ set_at(OFFSET+4, v); }
+	};
+
+
+enum{
+	EXPR_NULL,
+	EXPR_NOP,
+	EXPR_TRUE,
+	EXPR_FALSE,
+	EXPR_CALLEE,
+	EXPR_ARGS,
+
+	EXPR_INT,
+	EXPR_FLOAT,
+	EXPR_STRING,
+	EXPR_ARRAY,
+	EXPR_MAP,
+
+	EXPR_ADD,
+	EXPR_SUB,
+	EXPR_CAT,
+	EXPR_MUL,
+	EXPR_DIV,
+	EXPR_MOD,
+	EXPR_AND,
+	EXPR_OR,
+	EXPR_XOR,
+	EXPR_SHL,
+	EXPR_SHR,
+	EXPR_USHR,
+
+	EXPR_EQ,
+	EXPR_NE,
+	EXPR_LT,
+	EXPR_GT,
+	EXPR_LE,
+	EXPR_GE,
+
+	EXPR_INC,
+	EXPR_DEC,
+
+	EXPR_POS,
+	EXPR_NEG,
+	EXPR_COM,
+	EXPR_NOT,
+
+	EXPR_RETURN,
+	EXPR_YIELD,
+	EXPR_ASSERT,
+	EXPR_ONCE,
+
+	EXPR_TRY,
+	EXPR_IF,
+	EXPR_WHILE,
+	EXPR_FUN,
+	EXPR_MULTIPLE_ASSIGN,
+	EXPR_INSTANCE_VARIABLE,
+	EXPR_LOCAL_VARIABLE,
+	EXPR_MEMBER,
+	EXPR_CALL,
+	EXPR_SEND,
+	EXPR_ASSIGN,
+	EXPR_DEFINE,
+	EXPR_DEFINE_CLASS_MEMBER,
+	EXPR_AT,
+	EXPR_BREAK,
+	EXPR_CONTINUE,
+	EXPR_BLOCK,
+	EXPR_CLASS,
+
+	EXPR_NODE_EXPRS,
+
+};
+*/
+
+class Expre;
+typedef SmartPtr<Expre> ExprPtr;
+
+class Expre : public Array{
+public:
+	int_t type(){
+		return op_at(0)->to_i();
+	}
+
+	ExprPtr term();
+
+	ExprPtr lhs();
+	ExprPtr rhs();
+
+	AnyPtr val();
+};
 
 struct ExprStmt : public Stmt{
 	enum{ TYPE = __LINE__ };

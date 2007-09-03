@@ -30,6 +30,7 @@ private:
 	struct Backtrack{
 		uint_t read_pos;
 		uint_t value_pos;
+		uint_t line_number;
 	};
 
 	PODStack<Cache> cache_stack_;
@@ -85,6 +86,9 @@ private:
 	MemoryStreamPtr mm_;
 	int_t join_nest_;
 	int_t ignore_nest_;
+	StringPtr newline_ch_;
+	uint_t line_number_;
+	ArrayPtr errors_;
 
 public:
 
@@ -96,6 +100,9 @@ public:
 		mm_ = xnew<MemoryStream>();
 		join_nest_ = 0;
 		ignore_nest_ = 0;
+
+		newline_ch_ = "\n";
+		line_number_ = 1;
 	}
 
 	/**
@@ -106,6 +113,7 @@ public:
 		Backtrack& data = backtrack_stack_.push();
 		data.read_pos = pos_;
 		data.value_pos = results_->size();
+		data.line_number = line_number_;
 	}
 
 	/**
@@ -122,6 +130,7 @@ public:
 	void unmark_and_backtrack(){
 		Backtrack& data = backtrack_stack_.pop();
 		pos_ = data.read_pos;
+		line_number_ = data.line_number;
 		reflect_cache(data.value_pos);
 		results_->resize(data.value_pos);
 	}
@@ -169,6 +178,10 @@ public:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
+	uint_t line_number(){
+		return line_number_;
+	}
+
 	const AnyPtr& peek(uint_t n = 0){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = bufsize - 1;
@@ -209,13 +222,17 @@ public:
 
 	const AnyPtr& read(){
 		const AnyPtr& ret = peek();
+		if(raweq(ret, newline_ch_)){
+			line_number_++;
+		}
 		pos_ += 1;
 		return  ret;
 	}
 
 	void skip(uint_t n){
-		peek(n);
-		pos_ += n;
+		for(uint_t i=0; i<n; ++i){
+			read();
+		}
 	}
 
 	void seek(uint_t offset){
@@ -385,8 +402,7 @@ public:
 };
 
 class Parser : public Base{
-
-	// 仮想関数ベースはやめた
+public:
 
 	enum{
 		STRING,
@@ -407,14 +423,8 @@ class Parser : public Base{
 		IGNORE,
 		CH_MAP,
 		TRY,
+		VAL,
 	};
-
-	int_t type_;
-	bool cacheable_;
-	AnyPtr param1_;
-	AnyPtr param2_;
-
-	virtual void visit_members(Visitor& m);
 
 public:
 
@@ -464,13 +474,24 @@ public:
 
 	static ParserPtr fail();
 
-	static ParserPtr expect(const AnyPtr& p);
+	static ParserPtr error(const AnyPtr& message);
 
-	static ParserPtr error();
+	static ParserPtr val(const AnyPtr& v);
 
 	bool parse_string(const StringPtr& source, const ArrayPtr& ret);
 
 	bool parse(const LexerPtr& lex);
+
+private:
+
+	// 仮想関数ベースはやめた
+
+	int_t type_;
+	bool cacheable_;
+	AnyPtr param1_;
+	AnyPtr param2_;
+
+	virtual void visit_members(Visitor& m);
 
 };
 

@@ -111,7 +111,7 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="false"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"
 				WarningLevel="3"
@@ -193,6 +193,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_codebuilder.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_core.cpp"
 				>
 			</File>
 			<File
@@ -315,6 +319,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_codebuilder.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_debug.h"
 				>
 			</File>
 			<File

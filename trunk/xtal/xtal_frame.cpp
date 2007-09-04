@@ -313,6 +313,8 @@ bool Class::is_inherited(const ClassPtr& v){
 }
 
 bool Class::is_inherited_cpp_class(){
+	if(is_cpp_class())
+		return true;
 	for(int_t i = mixins_->size(); i>0; --i){
 		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited_cpp_class()){
 			return true;

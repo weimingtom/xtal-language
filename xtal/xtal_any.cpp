@@ -25,6 +25,8 @@ void initialize_any(){
 		p->method("class", &Any::get_class);
 		p->method("get_class", &Any::get_class);
 		p->method("object_name", &Any::object_name);
+		p->method("serial_save", &Any::serial_save);
+		p->method("serial_load", &Any::serial_load);
 	}
 
 	builtin()->def("Any", get_cpp_class<Any>());
@@ -284,15 +286,8 @@ StringPtr Any::to_s() const{
 
 StringPtr Any::object_name() const{
 	switch(type(*this)){
-		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_NULL){ return xnew<String>("instance of Null"); }
+		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name()); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(); }
-		XTAL_CASE(TYPE_INT){ return xnew<String>("instance of Int"); }
-		XTAL_CASE(TYPE_FLOAT){ return xnew<String>("instance of Float"); }
-		XTAL_CASE(TYPE_FALSE){ return xnew<String>("instance of False"); }
-		XTAL_CASE(TYPE_TRUE){ return xnew<String>("instance of True"); }
-		XTAL_CASE(TYPE_NOP){ return xnew<String>("instance of Nop"); }
-		XTAL_CASE(TYPE_SMALL_STRING){ return xnew<String>("instance of String"); }
 	}
 	return null;	
 }
@@ -340,6 +335,45 @@ bool Any::is(const ClassPtr& klass) const{
 AnyPtr Any::p() const{
 	ap(*this)->send("p");
 	return ap(*this);
+}
+
+AnyPtr Any::serial_save(const ClassPtr& p) const{
+	if(type(*this)!=TYPE_BASE)
+		return null;
+
+	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
+		if(CodePtr code = p->code()){
+			ClassCore* core = p->core();
+			if(core->instance_variable_size!=0){	
+				MapPtr insts = xnew<Map>();
+				for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
+					insts->set_at(code->symbol(core->instance_variable_symbol_offset+i), iv->variable(i, core));
+				}
+
+				return insts;
+			}
+		}
+	}
+	return null;
+}
+
+void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
+	if(type(*this)!=TYPE_BASE)
+		return;
+
+	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
+		if(MapPtr insts = ptr_as<Map>(v)){
+			if(CodePtr code = p->code()){
+				ClassCore* core = p->core();
+				if(core->instance_variable_size!=0){	
+					for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
+						StringPtr str = code->symbol(core->instance_variable_symbol_offset+i);
+						iv->set_variable(i, core, insts->at(code->symbol(core->instance_variable_symbol_offset+i)));
+					}
+				}
+			}
+		}
+	}
 }
 
 void visit_members(Visitor& m, const AnyPtr& p){

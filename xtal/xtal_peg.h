@@ -346,7 +346,7 @@ public:
 		results_ = ret;
 	}
 
-private:
+protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
@@ -384,7 +384,7 @@ private:
 	StreamPtr stream_;
 
 	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+		Lexer::visit_members(m);
 		m & stream_;
 	}
 };

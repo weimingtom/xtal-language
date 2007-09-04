@@ -138,6 +138,13 @@ protected:
 public:
 
 	/**
+	* @brief T*からSmartPtr<T>を取り出す。
+	*/
+	static AnyPtr from_this(Base* p){ return AnyPtr(PT(), p); }
+
+public:
+
+	/**
 	* @brief ->演算子
 	* スマートポインタとして扱うためにオーバーロードする。
 	*/
@@ -295,9 +302,9 @@ public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
-		new(p+1) T();
+		new(p+1) T;
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -317,7 +324,7 @@ public:
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
 		new(p+1) T(a0);
 		p->set_class(new_cpp_class<T>());
@@ -339,7 +346,7 @@ public:
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
 		new(p+1) T(a0, a1);
 		p->set_class(new_cpp_class<T>());
@@ -361,7 +368,7 @@ public:
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
 		new(p+1) T(a0, a1, a2);
 		p->set_class(new_cpp_class<T>());
@@ -383,7 +390,7 @@ public:
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
 		new(p+1) T(a0, a1, a2, a3);
 		p->set_class(new_cpp_class<T>());
@@ -405,7 +412,7 @@ public:
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
 		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = pvalue(*this);
+		TBase<T>* p = (TBase<T>*)pvalue(*this);
 		new(p) TBase<T>();
 		new(p+1) T(a0, a1, a2, a3, a4);
 		p->set_class(new_cpp_class<T>());

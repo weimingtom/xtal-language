@@ -21,6 +21,7 @@ void initialize_math();
 void initialize_stream();
 void initialize_builtin();
 void initialize_peg();
+void initialize_except();
 
 void display_debug_memory();
 
@@ -102,14 +103,14 @@ void initialize(){
 	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 	*objects_list_current_++ = objects_begin_;
 
-	empty_have_instance_variables.init();
+	empty_instance_variables.init();
 
 	// 生成の際お互いに必要となる、Any, Class, CppClass, Array を特別な方法で生成
 	CppClassHolderList* holders[] = { &CppClassHolder<Any>::value, &CppClassHolder<Class>::value, &CppClassHolder<CppClass>::value, &CppClassHolder<Array>::value };
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		chain_cpp_class(*holders[i]);
-		holders[i]->value = ap(Innocence((Class*)Base::operator new(sizeof(Class))));
+		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(Class))));
 		pvalue(holders[i]->value)->set_ref_count(1);
 	}
 	
@@ -125,14 +126,17 @@ void initialize(){
 		p->set_class(get_cpp_class<Class>());
 	}
 	
+	set_cpp_class<Base>(get_cpp_class<Any>());
+
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>();
 	iterator_ = xnew<Class>();
 	enumerator_ = xnew<Class>();
 
-
 	initialize_string();
 	initialize_interned_string();
+
+	initialize_except();
 	initialize_any();
 	initialize_array();
 	initialize_map();
@@ -200,7 +204,7 @@ void uninitialize(){
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 
-	empty_have_instance_variables.uninit();
+	empty_instance_variables.uninit();
 
 	//
 	display_debug_memory();

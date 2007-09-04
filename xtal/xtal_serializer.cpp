@@ -45,8 +45,13 @@ bool Serializer::check_id(const InternedStringPtr& id){
 	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
 		return true;
 	}
-	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return false);
 	return false;
+}
+
+void Serializer::check_id_and_throw(const InternedStringPtr& id){
+	if(!check_id(id)){
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return false);
+	}
 }
 
 void Serializer::inner_serialize(const AnyPtr& v){
@@ -206,24 +211,21 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			return;
 		}
 
-		// 所属クラスにserial_save関数が定義されている
-		if(v->get_class()->member(Xid(serial_save))){
-			InternedStringPtr id = v->get_class()->object_name();
+		InternedStringPtr id = v->object_name();
+		if(check_id(id)){
+			stream_->put_u8(LIB);
+			inner_serialize(id);
+		}else{
+			id = v->get_class()->object_name();
 
 			// serial_newで空オブジェクトを生成するコマンドを埋め込む
 			stream_->put_u8(SERIAL_NEW);
 			append_value(null);
-			check_id(id);
+			check_id_and_throw(id);
 			inner_serialize(id); // クラスの名前を埋め込む
 
 			// serial_saveでserializableなオブジェクトを取り出しserializeする
-			inner_serialize(v->send(Xid(serial_save)));
-
-		}else{
-			InternedStringPtr id = v->object_name();
-			check_id(id);
-			stream_->put_u8(LIB);
-			inner_serialize(id);
+			inner_serialize(v->send(Xid(s_save)));
 		}
 	}else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
@@ -253,7 +255,7 @@ AnyPtr Serializer::inner_deserialize(){
 			vm->cleanup_call();
 
 			vm->setup_call(0, inner_deserialize());
-			ret->rawsend(vm, Xid(serial_load));
+			ret->rawsend(vm, Xid(s_load));
 			vm->cleanup_call();
 
 			return ret;

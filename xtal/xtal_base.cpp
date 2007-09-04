@@ -5,6 +5,34 @@
 
 namespace xtal{
 
+Base::Base():class_(Innocence::noinit_t()){ 
+	instance_variables_ = &empty_instance_variables; 
+}
+
+Base::Base(const Base& b):class_(Innocence::noinit_t()){
+	if(b.instance_variables_!=&empty_instance_variables){
+		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
+		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
+
+		class_ = b.class_;
+		if(type(class_)==TYPE_BASE)
+			pvalue(class_)->inc_ref_count();
+	}else{
+		instance_variables_ = &empty_instance_variables;
+		class_ = b.class_;
+	}
+}
+
+Base::~Base(){
+	if(instance_variables_!=&empty_instance_variables){
+		instance_variables_->~InstanceVariables();
+		user_free(instance_variables_);
+
+		if(type(class_)==TYPE_BASE)
+			pvalue(class_)->dec_ref_count();
+	}
+}
+
 int_t Base::to_i(){
 	return cast<int_t>(send(Xid(to_i)));
 }
@@ -21,9 +49,16 @@ AnyPtr Base::p(){
 	return send(Xid(p));
 }
 
-
 void Base::set_class(const ClassPtr& c){
-	class_ = c;
+	if(instance_variables_==&empty_instance_variables){
+		class_ = c;
+	}else{
+		if(type(class_)==TYPE_BASE)
+			pvalue(class_)->dec_ref_count();
+		class_ = c;
+		if(type(class_)==TYPE_BASE)
+			pvalue(class_)->inc_ref_count();
+	}
 }
 	
 void Base::call(const VMachinePtr& vm){
@@ -54,10 +89,6 @@ void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const A
 	ap(Innocence(this))->rawsend(vm, name, self, ns);
 }
 
-HaveInstanceVariables* Base::have_instance_variables(){ 
-	return &empty_have_instance_variables; 
-}
-
 StringPtr Base::object_name(){ 
 	return xnew<String>("instance of ")->cat(get_class()->object_name());
 }
@@ -78,11 +109,33 @@ uint_t Base::hashcode(){
 	return (uint_t)this;
 }
 
+void Base::make_instance_variables(){
+	if(instance_variables_==&empty_instance_variables){
+		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
+		new(instance_variables_) InstanceVariables();
+
+		if(type(class_)==TYPE_BASE)
+			pvalue(class_)->inc_ref_count();
+	}
+}
+
+void Base::visit_members(Visitor& m){
+	if(instance_variables_!=&empty_instance_variables){
+		if(type(class_)==TYPE_BASE)
+			m & class_;
+	}
+
+	instance_variables_->visit_members(m);
+}
+
 StringPtr HaveName::object_name(){
 	if(!name_)
 		return xnew<String>("<instance of ")->cat(get_class()->object_name())->cat(">");
 	if(!parent_)
 		return name_;
+	if(LibPtr lib = ptr_as<Lib>(parent_)){
+		lib = lib;
+	}
 	return parent_->object_name()->cat("::")->cat(name_);
 }
 
@@ -97,7 +150,6 @@ void HaveName::set_object_name(const StringPtr& name, int_t force, const AnyPtr&
 		parent_ = parent;
 	}
 }
-
 
 }
 

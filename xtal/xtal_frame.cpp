@@ -41,7 +41,7 @@ public:
 	}
 };
 
-EmptyHaveInstanceVariables empty_have_instance_variables;
+EmptyInstanceVariables empty_instance_variables;
 uint_t global_mutate_count = 0;
 
 void initialize_frame(){
@@ -68,12 +68,6 @@ void initialize_frame(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Instance>("Instance");
-		p->method("instance_serial_save", &Instance::instance_serial_save);
-		p->method("instance_serial_load", &Instance::instance_serial_load);
-	}
-
-	{
 		ClassPtr p = new_cpp_class<CppClass>("CppClass");
 		p->inherit(get_cpp_class<Class>());
 	}
@@ -87,28 +81,11 @@ void initialize_frame(){
 
 	builtin()->def("Class", get_cpp_class<Class>());
 	builtin()->def("CppClass", get_cpp_class<CppClass>());
-	builtin()->def("Instance", get_cpp_class<Instance>());
 	builtin()->def("lib", lib());
 	builtin()->def("Lib", get_cpp_class<Lib>());
 }
 
-
-Instance::Instance(const ClassPtr& c){
-	Base::set_class(c);
-	pvalue(get_class())->inc_ref_count();
-}
-
-Instance::~Instance(){
-	pvalue(get_class())->dec_ref_count();
-}
-
-void Instance::set_class(const ClassPtr& c){
-	pvalue(get_class())->dec_ref_count();
-	Base::set_class(c);
-	pvalue(get_class())->inc_ref_count();	
-}
-
-int_t HaveInstanceVariables::find_core_inner(ClassCore* core){
+int_t InstanceVariables::find_core_inner(ClassCore* core){
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].core==core){
 			std::swap(variables_info_[0], variables_info_[i]);
@@ -116,41 +93,6 @@ int_t HaveInstanceVariables::find_core_inner(ClassCore* core){
 		}	
 	}
 	XTAL_THROW(builtin()->member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")), return 0);
-}
-
-AnyPtr Instance::instance_serial_save(const ClassPtr& cls){
-	Class* p = cls.get();
-	Code* code = p->code().get();
-	ClassCore* core = p->core();
-	if(core->instance_variable_size!=0){	
-		int_t pos = find_core(core);
-
-		MapPtr insts(xnew<Map>());
-		for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-			insts->set_at(code->symbol(core->instance_variable_symbol_offset+i), variables_->at(pos+i));
-		}
-
-		return insts;
-	}
-	return null;
-}
-
-void Instance::instance_serial_load(const ClassPtr& cls, const AnyPtr& v){
-	if(!v)
-		return;
-
-	MapPtr insts(cast<MapPtr>(v));
-
-	Class* p = cls.get();
-	Code* code = p->code().get();
-	ClassCore* core = p->core();
-	if(core->instance_variable_size!=0){	
-		int_t pos = find_core(core);
-
-		for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-			variables_->set_at(pos+i, insts->at(code->symbol(core->instance_variable_symbol_offset+i)));
-		}
-	}
 }
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, BlockCore* core)
@@ -207,7 +149,6 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 	:Frame(outer, code, core), mixins_(xnew<Array>()){
 	is_cpp_class_ = false;
 	make_map_members();
-	inherit(get_cpp_class<Instance>());
 }
 
 Class::Class(const char* name)
@@ -235,7 +176,7 @@ void Class::inherit(const ClassPtr& md){
 
 void Class::inherit_strict(const ClassPtr& md){
 	
-	if(md->is_cpp_class_){
+	if(md->is_cpp_class() && is_inherited_cpp_class()){
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1019")), return);
 	}
 
@@ -254,13 +195,14 @@ AnyPtr Class::each_inherited_class(){
 	return bases;
 }
 
-void Class::init_instance(HaveInstanceVariables* inst, const VMachinePtr& vm, const AnyPtr& self){
+void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	for(int_t i = mixins_->size(); i>0; --i){
-		static_ptr_cast<Class>(mixins_->at(i-1))->init_instance(inst, vm, self);
+		static_ptr_cast<Class>(mixins_->at(i-1))->init_instance(self, vm);
 	}
 	
 	if(core()->instance_variable_size){
-		inst->init_variables(core());
+		pvalue(self)->make_instance_variables();
+		pvalue(self)->instance_variables()->init_variables(core());
 
 		vm->setup_call(0);
 		vm->set_arg_this(self);
@@ -370,48 +312,43 @@ bool Class::is_inherited(const ClassPtr& v){
 	return raweq(v, get_cpp_class<Any>());
 }
 
-void Class::call(const VMachinePtr& vm){;
-	InstancePtr inst = InstancePtr::nocount(new Instance(ClassPtr::from_this(this)));
-	init_instance(inst.get(), vm, inst);
-	
-	if(inst.get()->empty()){
-		if(const AnyPtr& ret = bases_member(Xid(new))){
-			ret->call(vm);
-			if(type(vm->result())==TYPE_BASE){
-				pvalue(vm->result())->set_class(ClassPtr::from_this(this));
-			}
-			return;
+bool Class::is_inherited_cpp_class(){
+	for(int_t i = mixins_->size(); i>0; --i){
+		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited_cpp_class()){
+			return true;
 		}
 	}
+	return false;
+}
+
+void Class::call(const VMachinePtr& vm){
+	const AnyPtr& newfun = bases_member(Xid(new));
+	AnyPtr instance(newfun ? newfun() : xnew<Base>());
+
+	pvalue(instance)->set_class(ClassPtr::from_this(this));
+	init_instance(instance, vm);
 	
 	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
-		vm->set_arg_this(inst);
+		vm->set_arg_this(instance);
 		if(vm->need_result()){
 			ret->call(vm);
-			vm->replace_result(0, inst);
+			vm->replace_result(0, instance);
 		}else{
 			ret->call(vm);
 		}
 	}else{
-		vm->return_result(inst);
+		vm->return_result(instance);
 	}
 }
 
 void Class::s_new(const VMachinePtr& vm){
-	InstancePtr inst = InstancePtr::nocount(new Instance(ClassPtr::from_this(this)));
-	init_instance(inst.get(), vm, inst);
-	
-	if(inst.get()->empty()){
-		if(const AnyPtr& ret = bases_member(Xid(serial_new))){
-			ret->call(vm);
-			if(type(vm->result())==TYPE_BASE){
-				pvalue(vm->result())->set_class(ClassPtr::from_this(this));
-			}
-			return;
-		}
-	}
+	const AnyPtr& newfun = bases_member(Xid(serial_new));
+	AnyPtr instance(newfun ? newfun() : xnew<Base>());
 
-	vm->return_result(inst);
+	pvalue(instance)->set_class(ClassPtr::from_this(this));
+	init_instance(instance, vm);
+
+	vm->return_result(instance);
 }
 
 CppClass::CppClass(const char* name)
@@ -421,6 +358,7 @@ CppClass::CppClass(const char* name)
 void CppClass::call(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
 		ret->call(vm);
+		init_instance(vm->result(), vm);
 	}else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
@@ -429,13 +367,14 @@ void CppClass::call(const VMachinePtr& vm){
 void CppClass::s_new(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
 		ret->call(vm);
+		init_instance(vm->result(), vm);
 	}else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
 
 Lib::Lib(){
-	set_object_name(Xid(lib), 1000, null);
+	set_object_name("lib", 1000, null);
 	load_path_list_ = xnew<Array>();
 	path_ = xnew<Array>();
 }
@@ -510,12 +449,12 @@ Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core
 }
 
 void Singleton::init_singleton(const VMachinePtr& vm){;
-	SingletonPtr inst = SingletonPtr::from_this(this);
-	init_instance(this, vm, inst);
+	SingletonPtr instance = SingletonPtr::from_this(this);
+	init_instance(instance, vm);
 	
 	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
 		vm->setup_call(0);
-		vm->set_arg_this(inst);
+		vm->set_arg_this(instance);
 		ret->call(vm);
 		vm->cleanup_call();
 	}

@@ -292,6 +292,10 @@ public:
 	*/
 	AnyPtr p() const;
 
+	AnyPtr serial_save(const ClassPtr& cls) const;
+
+	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
+
 public:
 
 	AnyPtr send(const InternedStringPtr& name) const;

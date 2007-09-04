@@ -7,59 +7,14 @@
 
 namespace xtal{
 
-struct CppClassHolderList{
-	AnyPtr value;
-	CppClassHolderList* next;
-};
-
-void chain_cpp_class(CppClassHolderList& link);
-
-// C++のクラスの保持のためのクラス
-template<class T>
-struct CppClassHolder{
-	static CppClassHolderList value;
-};
-
-template<class T>
-CppClassHolderList CppClassHolder<T>::value;
-
-template<class T>
-const ClassPtr& new_cpp_class(const char* name){
-	if(!CppClassHolder<T>::value.value){
-		chain_cpp_class(CppClassHolder<T>::value);
-		CppClassHolder<T>::value.value = xnew<CppClass>(name);
-	}
-	return (const ClassPtr&)CppClassHolder<T>::value.value;
-}
-
-template<class T>
-inline bool exists_cpp_class(){
-	return CppClassHolder<T>::value.value;
-}
-
-template<class T>
-inline const ClassPtr& get_cpp_class(){
-	XTAL_ASSERT(exists_cpp_class<T>());
-	return (const ClassPtr&)CppClassHolder<T>::value.value;
-}
-
-template<class T>
-void set_cpp_class(const ClassPtr& cls){
-	if(!CppClassHolder<T>::value.value){
-		chain_cpp_class(CppClassHolder<T>::value);
-	}
-	CppClassHolder<T>::value.value = cls;
-}
-
-
-class HaveInstanceVariables{
+class InstanceVariables{
 public:
 
 	struct uninit_t{};
 
-	HaveInstanceVariables(uninit_t){}
+	InstanceVariables(uninit_t){}
 
-	HaveInstanceVariables()		
+	InstanceVariables()		
 		:variables_(xnew<Array>()){
 		VariablesInfo vi;
 		vi.core = 0;
@@ -67,7 +22,7 @@ public:
 		variables_info_.push(vi);
 	}
 			
-	~HaveInstanceVariables(){}
+	~InstanceVariables(){}
 		
 	void init_variables(ClassCore* core){
 		VariablesInfo vi;
@@ -98,6 +53,10 @@ public:
 		return variables_->empty();
 	}
 
+	void visit_members(Visitor& m){
+		m & variables_;
+	}
+
 protected:
 	
 	struct VariablesInfo{
@@ -107,16 +66,11 @@ protected:
 
 	PODStack<VariablesInfo> variables_info_;
 	ArrayPtr variables_;
-	
-	void visit_members(Visitor& m){
-		m & variables_;
-	}
-
 };
 
-class EmptyHaveInstanceVariables : public HaveInstanceVariables{
+class EmptyInstanceVariables : public InstanceVariables{
 public:
-	EmptyHaveInstanceVariables():HaveInstanceVariables(uninit_t()){}
+	EmptyInstanceVariables():InstanceVariables(uninit_t()){}
 
 	void init(){
 		VariablesInfo vi;
@@ -130,34 +84,8 @@ public:
 	}	
 };
 
-extern EmptyHaveInstanceVariables empty_have_instance_variables;
+extern EmptyInstanceVariables empty_instance_variables;
 extern uint_t global_mutate_count;
-
-class Instance : public Base, public HaveInstanceVariables{
-public:
-
-	Instance(const ClassPtr& c);
-	
-	~Instance();
-
-public:
-
-	void set_class(const ClassPtr& c);
-
-	AnyPtr instance_serial_save(const ClassPtr& cls);
-
-	void instance_serial_load(const ClassPtr& cls, const AnyPtr& v);
-
-	virtual HaveInstanceVariables* have_instance_variables(){
-		return this;
-	}
-
-	virtual void visit_members(Visitor& m){
-		HaveInstanceVariables::visit_members(m);
-		Base::visit_members(m);
-		m & get_class();
-	}
-};
 	
 class Frame : public HaveName{
 public:
@@ -209,10 +137,6 @@ public:
 	void set_class_member(int_t i, const InternedStringPtr& name, int_t accessibility, const AnyPtr& ns, const AnyPtr& value);
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
-	
-	bool is_defined_by_xtal(){
-		return code_;
-	}
 
 public:
 
@@ -325,6 +249,12 @@ public:
 	* @param md Mix-inされている調べたいクラスオブジェクト
 	*/
 	bool is_inherited(const ClassPtr& md);
+
+	/**
+	* @brief C++のクラスがMix-inされているか調べる
+	*
+	*/
+	bool is_inherited_cpp_class();
 
 	/**
 	* @brief Mix-inされているクラスをイテレートできるイテレータを返す
@@ -442,7 +372,7 @@ public:
 	
 	virtual void s_new(const VMachinePtr& vm);
 
-	void init_instance(HaveInstanceVariables* inst, const VMachinePtr& vm, const AnyPtr& self);
+	void init_instance(const AnyPtr& self, const VMachinePtr& vm);
 	
 	const AnyPtr& any_member(const InternedStringPtr& name, const AnyPtr& ns);
 	
@@ -455,6 +385,10 @@ public:
 	struct cpp_class_t{};
 
 	Class(cpp_class_t, const char* name = "");
+
+	bool is_cpp_class(){
+		return is_cpp_class_;
+	}
 
 protected:
 
@@ -517,7 +451,7 @@ private:
 	}
 };
 
-class Singleton : public Class, public HaveInstanceVariables{
+class Singleton : public Class{
 public:
 
 	Singleton(const char* name = "");
@@ -534,17 +468,51 @@ public:
 	virtual void call(const VMachinePtr& vm);
 	
 	virtual void s_new(const VMachinePtr& vm);
-
-	virtual HaveInstanceVariables* have_instance_variables(){
-		return this;
-	}
-
-	virtual void visit_members(Visitor& m){
-		HaveInstanceVariables::visit_members(m);
-		Class::visit_members(m);
-	}
 };
 
 
+struct CppClassHolderList{
+	ClassPtr value;
+	CppClassHolderList* next;
+};
+
+void chain_cpp_class(CppClassHolderList& link);
+
+// C++のクラスの保持のためのクラス
+template<class T>
+struct CppClassHolder{
+	static CppClassHolderList value;
+};
+
+template<class T>
+CppClassHolderList CppClassHolder<T>::value;
+
+template<class T>
+const ClassPtr& new_cpp_class(const char* name){
+	if(!CppClassHolder<T>::value.value){
+		chain_cpp_class(CppClassHolder<T>::value);
+		CppClassHolder<T>::value.value = xnew<CppClass>(name);
+	}
+	return CppClassHolder<T>::value.value;
+}
+
+template<class T>
+inline bool exists_cpp_class(){
+	return CppClassHolder<T>::value.value;
+}
+
+template<class T>
+inline const ClassPtr& get_cpp_class(){
+	XTAL_ASSERT(exists_cpp_class<T>());
+	return CppClassHolder<T>::value.value;
+}
+
+template<class T>
+void set_cpp_class(const ClassPtr& cls){
+	if(!CppClassHolder<T>::value.value){
+		chain_cpp_class(CppClassHolder<T>::value);
+	}
+	CppClassHolder<T>::value.value = cls;
+}
 
 }

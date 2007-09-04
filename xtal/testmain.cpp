@@ -56,6 +56,18 @@ void debug_line(const SmartPtr<debug::Info>& info){
 
 //#include <crtdbg.h>
 
+struct PointSelf : public Base{
+	AnyPtr self;
+
+	PointSelf(){
+		self = AnyPtr::from_this(this);
+	}
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & self;
+	}
+};
 
 int main(int argc, char** argv){
 
@@ -65,6 +77,9 @@ int main(int argc, char** argv){
 
 		initialize();
 
+		xnew<PointSelf>();
+
+#if 1
 		//debug::enable();
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
@@ -91,6 +106,16 @@ int main(int argc, char** argv){
 		}
 		
 AnyPtr ret = Xsrc((
+
+E: class(Array, Map){
+  +_test: "USO!";
+}
+
+e: E();
+e.resize(5);
+e[0] = e.test;
+e.size.p;
+
 
 filelocal.inherit(peg);
 
@@ -168,7 +193,7 @@ int c;
 
 		//*/
 
-		/*
+		//*
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");
@@ -191,6 +216,7 @@ int c;
 		load("../test/test_serialize.xtal");
 		
 		//*/
+#endif
 
 	}catch(AnyPtr e){
 		fprintf(stderr, "%s\n", e->to_s()->c_str());

@@ -102,11 +102,11 @@ InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassCore* core)
 
 void InstanceVariableGetter::call(const VMachinePtr& vm){
 	const AnyPtr& self = vm->get_arg_this();
-	HaveInstanceVariables* p;
+	InstanceVariables* p;
 	if(type(self)==TYPE_BASE){
-		p = pvalue(self)->have_instance_variables();
+		p = pvalue(self)->instance_variables();
 	}else{
-		p = &empty_have_instance_variables;
+		p = &empty_instance_variables;
 	}
 	vm->return_result(p->variable(number_, core_));
 }
@@ -117,11 +117,11 @@ InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassCore* core)
 
 void InstanceVariableSetter::call(const VMachinePtr& vm){
 	const AnyPtr& self = vm->get_arg_this();
-	HaveInstanceVariables* p;
+	InstanceVariables* p;
 	if(type(self)==TYPE_BASE){
-		p = pvalue(self)->have_instance_variables();
+		p = pvalue(self)->instance_variables();
 	}else{
-		p = &empty_have_instance_variables;
+		p = &empty_instance_variables;
 	}
 	p->set_variable(number_, core_, vm->arg(0));
 	vm->return_result();

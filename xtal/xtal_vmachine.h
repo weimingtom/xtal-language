@@ -467,7 +467,7 @@ public:
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
-		HaveInstanceVariables* instance_variables;
+		InstanceVariables* instance_variables;
 
 		// 呼び出された関数オブジェクト
 		Innocence fun_; 

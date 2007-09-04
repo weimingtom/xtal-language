@@ -214,56 +214,6 @@ void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, b
 	vm->cleanup_call();
 }
 
-
-AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
-	return builtin()->member("CastError")(Xt("Xtal Runtime Error 1004")(
-		Named("type", from->get_class()->object_name()), Named("required", to)
-	));
-}
-
-AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name){
-	if(param_name){
-		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Named("n", param_num+1), 
-			Named("param_name", param_name), 
-			Named("type", from->get_class()->object_name()), 
-			Named("required", to)
-		));
-	}else{
-		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Named("n", param_num+1), 
-			Named("param_name", xnew<String>("")), 
-			Named("type", from->get_class()->object_name()), 
-			Named("required", to)
-		));	}
-}
-
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member){
-	return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-		Named("object", name), Named("name", (member ? member : AnyPtr("()")))
-	));
-}
-namespace{
-	void default_except_handler(const AnyPtr& except, const char* file, int line){
-#ifdef XTAL_NO_EXCEPT
-		printf("%s(%d):%s\n", file, line, except->to_s()->c_str());
-		exit(1);
-#endif
-	}
-
-	except_handler_t except_handler_ = &default_except_handler;
-	AnyPtr except_;
-}
-
-
-except_handler_t except_handler(){
-	return except_handler_;
-}
-
-void set_except_handler(except_handler_t handler){
-	except_handler_ = handler;
-}
-
 void initialize_builtin(){
 
 	builtin()->def("builtin", builtin());
@@ -284,35 +234,7 @@ void initialize_builtin(){
 	InitZipIter();
 	builtin()->def("zip", get_cpp_class<ZipIter>());
 
-	
 	Xsrc((
-
-builtin::Exception: class{
-	+ _backtrace;
-	+ _message;
-
-	initialize: method(message:""){
-		_message = message;
-		_backtrace = [];
-	}
-
-	append_backtrace: method(file, line, function_name: null){
-		if(function_name){
-			_backtrace.push_back(%t"\t%(file)s:%(line)d: in %(function_name)s"(
-				file:file,
-				line:line,
-				function_name:function_name));
-		}else{
-			_backtrace.push_back(%t"\t%(file)s:%(line)d:"(
-				file:file,
-				line:line));
-		}
-	}
-
-	to_s: method{
-		return this.class.object_name ~ ": " ~ _message.to_s ~ "\n" ~ _backtrace.each.join("\n");
-	}
-}
 
 builtin::StandardError: class(Exception){}
 builtin::RuntimeError: class(StandardError){}
@@ -637,29 +559,33 @@ Class::each_ancestor: method fiber{
 	}
 }
 
-Instance::serial_save: method{
+Any::s_save: method{
 	ret: [:];
 	klass: this.class;
-	if(n: this.instance_serial_save(klass))
-		ret[klass.object_name] = n;
 
-	klass.each_ancestor{
-		if(n: this.instance_serial_save(it))
+	klass.each_ancestor.to_a.r_each{
+		if(n: this.serial_save(it))
 			ret[it.object_name] = n;
 	}
+
+	if(n: this.serial_save(klass)){
+		ret[klass.object_name] = n;
+	}
+
 	return ret;
 }
 
-Instance::serial_load: method(v){
+Any::s_load: method(v){
 	klass: this.class;
-	if(n: v[klass.object_name]){
-		this.instance_serial_load(klass, n);
+
+	klass.each_ancestor.to_a.r_each{
+		if(n: v[it.object_name]){
+			this.serial_load(it, n);
+		}
 	}
 
-	klass.each_ancestor{
-		if(n: v[it.object_name]){
-			this.instance_serial_load(it, n);
-		}
+	if(n: v[klass.object_name]){
+		this.serial_load(klass, n);
 	}
 }
 

@@ -299,7 +299,7 @@ protected:
 	};
 
 	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+		GCObserver::visit_members(m);
 		for(uint_t i = 0; i<size_; ++i){
 			Node* p = begin_[i];
 			while(p){
@@ -854,7 +854,6 @@ InternedStringPtr idop_lt;
 InternedStringPtr idop_eq;
 InternedStringPtr idop_mul;
 InternedStringPtr idop_neg;
-InternedStringPtr idserial_load;
 InternedStringPtr iditer_next;
 InternedStringPtr iditer_first;
 InternedStringPtr idtrue;
@@ -894,6 +893,8 @@ InternedStringPtr idto_s;
 InternedStringPtr idop_shl_assign;
 InternedStringPtr idop_sub;
 InternedStringPtr idop_com;
+InternedStringPtr ids_load;
+InternedStringPtr ids_save;
 InternedStringPtr idnew;
 InternedStringPtr idop_shl;
 InternedStringPtr idop_xor;
@@ -915,7 +916,6 @@ id::idop_lt = null;
 id::idop_eq = null;
 id::idop_mul = null;
 id::idop_neg = null;
-id::idserial_load = null;
 id::iditer_next = null;
 id::iditer_first = null;
 id::idtrue = null;
@@ -955,6 +955,8 @@ id::idto_s = null;
 id::idop_shl_assign = null;
 id::idop_sub = null;
 id::idop_com = null;
+id::ids_load = null;
+id::ids_save = null;
 id::idnew = null;
 id::idop_shl = null;
 id::idop_xor = null;
@@ -977,7 +979,6 @@ id::idop_lt = InternedStringPtr("op_lt", 5);
 id::idop_eq = InternedStringPtr("op_eq", 5);
 id::idop_mul = InternedStringPtr("op_mul", 6);
 id::idop_neg = InternedStringPtr("op_neg", 6);
-id::idserial_load = InternedStringPtr("serial_load", 11);
 id::iditer_next = InternedStringPtr("iter_next", 9);
 id::iditer_first = InternedStringPtr("iter_first", 10);
 id::idtrue = InternedStringPtr("true", 4);
@@ -1017,6 +1018,8 @@ id::idto_s = InternedStringPtr("to_s", 4);
 id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13);
 id::idop_sub = InternedStringPtr("op_sub", 6);
 id::idop_com = InternedStringPtr("op_com", 6);
+id::ids_load = InternedStringPtr("s_load", 6);
+id::ids_save = InternedStringPtr("s_save", 6);
 id::idnew = InternedStringPtr("new", 3);
 id::idop_shl = InternedStringPtr("op_shl", 6);
 id::idop_xor = InternedStringPtr("op_xor", 6);
@@ -1026,6 +1029,9 @@ id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13);
 id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13);
 }
 //}}ID}
+
+
+
 
 #else
 

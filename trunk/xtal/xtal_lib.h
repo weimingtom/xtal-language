@@ -146,10 +146,6 @@ const StreamPtr& stderr_stream();
 
 AnyPtr* make_place();
 
-AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
-AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name);
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member);
-
 AnyPtr get_text(const char* text);
 AnyPtr format(const char* text);
 
@@ -158,10 +154,6 @@ void add_get_text_map(const MapPtr& map);
 MapPtr get_get_text_map();
 
 AnyPtr source(const char* src, int_t size, const char* file);
-
-typedef void (*except_handler_t)(const AnyPtr& except, const char* file, int line);
-except_handler_t except_handler();
-void set_except_handler(except_handler_t handler);
 
 void iter_next(AnyPtr& target, AnyPtr& value, bool first);
 void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);

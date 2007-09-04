@@ -604,49 +604,49 @@ struct ctor_fun;
 template<>
 struct ctor_fun<0>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(){ 
-		return xnew<T>(); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(){ return xnew<T>(); } 
+	};
 };
 
 template<>
 struct ctor_fun<1>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(A0 a0){ 
-		return xnew<T>(a0); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(A0 a0){ return xnew<T>(a0); } 
+	};
 };
 
 template<>
 struct ctor_fun<2>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1){ 
-		return xnew<T>(a0, a1); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(A0 a0, A1 a1){ return xnew<T>(a0, a1); } 
+	};
 };
 
 template<>
 struct ctor_fun<3>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1, A2 a2){ 
-		return xnew<T>(a0, a1, a2); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(A0 a0, A1 a1, A2 a2){ return xnew<T>(a0, a1, a2); } 
+	};
 };
 
 template<>
 struct ctor_fun<4>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return xnew<T>(a0, a1, a2, a3); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3){ return xnew<T>(a0, a1, a2, a3); } 
+	};
 };
 
 template<>
 struct ctor_fun<5>{
 	template<class T, class A0, class A1, class A2, class A3, class A4>
-	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return xnew<T>(a0, a1, a2, a3, a4); 
-	} };
+	struct inner{ 
+		static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return xnew<T>(a0, a1, a2, a3, a4); } 
+	};
 };
 
 }
@@ -905,7 +905,6 @@ public:
 	ctor()
 		:CFunPtr(fun(&detail::ctor_fun<N>::template inner<T, A0, A1, A2, A3, A4>::make)){}
 };
-
 
 	
 /**

@@ -300,7 +300,7 @@ void initialize_format(){
 		p->method("to_s", &Format::to_s);
 		p->method("serial_save", &Format::serial_save);
 		p->method("serial_load", &Format::serial_load);
-		p->def("serial_new", ctor<Format, const StringPtr&>());
+		p->def("serial_new", ctor<Format>());
 	}
 
 	builtin()->def("Format", get_cpp_class<Format>());

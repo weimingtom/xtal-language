@@ -386,7 +386,6 @@ extern InternedStringPtr idop_lt;
 extern InternedStringPtr idop_eq;
 extern InternedStringPtr idop_mul;
 extern InternedStringPtr idop_neg;
-extern InternedStringPtr idserial_load;
 extern InternedStringPtr iditer_next;
 extern InternedStringPtr iditer_first;
 extern InternedStringPtr idtrue;
@@ -426,6 +425,8 @@ extern InternedStringPtr idto_s;
 extern InternedStringPtr idop_shl_assign;
 extern InternedStringPtr idop_sub;
 extern InternedStringPtr idop_com;
+extern InternedStringPtr ids_load;
+extern InternedStringPtr ids_save;
 extern InternedStringPtr idnew;
 extern InternedStringPtr idop_shl;
 extern InternedStringPtr idop_xor;
@@ -435,6 +436,9 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idop_mul_assign;
 }
 //}}ID}
+
+
+
 
 
 

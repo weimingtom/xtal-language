@@ -204,6 +204,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_except.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_expr.cpp"
 				>
 			</File>
@@ -326,6 +330,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_except.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_expr.h"
 				>
 			</File>
@@ -335,10 +343,6 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_fun.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xtal\xtal_funimpl.h"
 				>
 			</File>
 			<File

@@ -317,7 +317,7 @@ public:
 private:
 
 	virtual void visit_members(Visitor& m){
-		Stream::visit_members(m);
+		DataStream::visit_members(m);
 		m & str_;
 	}
 

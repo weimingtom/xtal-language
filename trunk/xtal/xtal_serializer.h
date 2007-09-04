@@ -26,6 +26,7 @@ private:
 	void inner_xtalize(const AnyPtr& v, int_t tab);
 
 	bool check_id(const InternedStringPtr& id);
+	void check_id_and_throw(const InternedStringPtr& id);
 	AnyPtr demangle(int_t n);
 
 	int_t register_value(const AnyPtr& v, bool& added);

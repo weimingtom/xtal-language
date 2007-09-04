@@ -129,20 +129,14 @@ public:
 
 public:
 	
-	Base()
-		:class_(Innocence::noinit_t()){}
+	Base();
 
-	Base(const Base& b)
-		:class_(b.class_){}
+	Base(const Base& b);
 
-	virtual ~Base(){}
-	
-public:
+	Base& operator =(const Base& b);
 
-	struct noinit_t{};
-	Base(noinit_t)
-		:class_(Innocence::noinit_t()){}
-		
+	virtual ~Base();
+			
 public:
 	
 	static void* operator new(size_t size);
@@ -153,18 +147,28 @@ public:
 
 public:
 
-	virtual HaveInstanceVariables* have_instance_variables();
+	InstanceVariables* instance_variables(){ return instance_variables_; }
+	void make_instance_variables();
+
 	uint_t ref_count(){ return ref_count_; }
 	void add_ref_count(int_t rc){ ref_count_+=rc; }
 	void inc_ref_count(){ ++ref_count_; }
 	void dec_ref_count(){ --ref_count_; }
 	void set_ref_count(uint_t rc){ ref_count_ = rc; }
+
 	void set_class(const ClassPtr& c);
-	virtual void visit_members(Visitor& m){}
+
+	virtual void visit_members(Visitor& m);
 	
 private:
 
+	// 参照カウンタ値
 	uint_t ref_count_;
+
+	// インスタンス変数テーブル
+	InstanceVariables* instance_variables_;
+
+	// 所属クラス
 	Innocence class_;
 	
 private:

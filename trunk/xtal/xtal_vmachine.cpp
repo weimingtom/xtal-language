@@ -523,7 +523,7 @@ void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_
 	f.called_pc = &throw_unsupported_error_code_;
 	f.poped_pc = pc;
 	f.variables_.clear();
-	f.instance_variables = &empty_have_instance_variables;
+	f.instance_variables = &empty_instance_variables;
 	f.self(self);
 	f.set_null();
 }
@@ -3168,7 +3168,7 @@ void VMachine::carry_over(Fun* fun){
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	
 	if(type(f.self())==TYPE_BASE){
-		f.instance_variables = pvalue(f.self())->have_instance_variables();
+		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
 	if(fun->used_args_object()){
@@ -3207,7 +3207,7 @@ void VMachine::mv_carry_over(Fun* fun){
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 
 	if(type(f.self())==TYPE_BASE){
-		f.instance_variables = pvalue(f.self())->have_instance_variables();
+		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
 	if(fun->used_args_object()){
@@ -3394,8 +3394,8 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 			}
 		}else{
 			ep->send("append_backtrace",
-				ff().hint1(),
-				ff().hint2(),
+				ff().hint1()->to_s(),
+				ff().hint2()->to_i(),
 				"C++ function");
 		}
 		return ep;

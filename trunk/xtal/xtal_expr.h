@@ -335,13 +335,8 @@ protected:
 		enum{ OFFSET = Super::OFFSET+Super::COUNT, COUNT = 5 };
 	public:
 		
-		Type(const MemberType1& v1 = null, const MemberType2& v2 = null, const MemberType3& v3 = null, const MemberType4& v4 = null, const MemberType5& v5 = null){
+		Type(){
 			upsize(COUNT);
-			set_##MemberName1(v1);
-			set_##MemberName2(v2);
-			set_##MemberName3(v3);
-			set_##MemberName4(v4);
-			set_##MemberName5(v5);
 		}
 
 		const MemberType1& MemberName1(){ return (const MemberType1&)at(OFFSET+0); }

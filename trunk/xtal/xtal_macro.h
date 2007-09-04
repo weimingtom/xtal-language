@@ -100,6 +100,6 @@
 
 #else
 
-#define Xid(string) ::xtal::id::id##string
+#define Xid(string) ((const ::xtal::InternedStringPtr&) ::xtal::id::id##string)
 
 #endif

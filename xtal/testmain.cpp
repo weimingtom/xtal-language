@@ -107,7 +107,7 @@ int main(int argc, char** argv){
 		
 AnyPtr ret = Xsrc((
 
-E: class(Array, Map){
+E: class(Array){
   +_test: "USO!";
 }
 

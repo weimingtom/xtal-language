@@ -224,6 +224,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_iterator.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_lexer.cpp"
 				>
 			</File>
@@ -351,6 +355,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xtal\xtal_inst.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xtal\xtal_iterator.h"
 				>
 			</File>
 			<File

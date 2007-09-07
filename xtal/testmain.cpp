@@ -48,7 +48,7 @@ void debug_line(const SmartPtr<debug::Info>& info){
 	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
 
 	/*if(info->local_variables()){
-		Xfor2(key, value, info->local_variables()->each_member()){
+		Xfor2(key, value, info->local_variables()->members()){
 			std::cout << Xf("key=%s, value=%s\n")(key, value);
 		}
 	}*/
@@ -107,15 +107,10 @@ int main(int argc, char** argv){
 		
 AnyPtr ret = Xsrc((
 
-E: class(Array){
-  +_test: "USO!";
-}
-
-e: E();
-e.resize(5);
-e[0] = e.test;
-e.size.p;
-
+v: [2, 4, 6].map(|x| x*2).p;
+v.push_back(8);
+v.each{ it.p; }
+v.p;
 
 filelocal.inherit(peg);
 
@@ -131,9 +126,8 @@ src: "byack-clc:aiwerawer69787ueo:byacAk-aiueo:cl:kue:dwerae:";
 mm: MemoryStream();
 1 {
   mm.put_s(src);
-
 }
-mm.put_s("aiueo");
+mm.put_s("aiue7o");
 mm.size/1024.0 .p;
 
 "start".p;

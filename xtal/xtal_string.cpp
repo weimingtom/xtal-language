@@ -13,15 +13,15 @@
 namespace xtal{
 
 static uint_t make_hashcode(const char_t* str, uint_t size){
-	uint_t hash = 3;
+	uint_t hash = 2166136261;
 	for(uint_t i=0; i<size; ++i){
-		hash = hash*137 + str[i] + (hash>>16);
+		hash = hash*137 ^ str[i];
 	}
 	return hash;
 }
 
 static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
-	hash = 3;
+	hash = 2166136261;
 	length = 0;
 
 	for(uint_t i=0; i<size; ++i){
@@ -34,7 +34,7 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 			}
 		}
 		for(int_t j=0; j<len; ++j){
-			hash = hash*137 + str[i+j] + (hash>>16);
+			hash = hash*137 ^ str[i+j];
 		}
 
 		length += 1;
@@ -42,7 +42,7 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 }
 
 static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
-	hash = 3;
+	hash = 2166136261;
 	length = 0;
 	size = 0;
 	for(uint_t i=0; str[i]; ++i){
@@ -55,7 +55,7 @@ static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 			}
 		}
 		for(int_t j=0; j<len; ++j){
-			hash = hash*137 + str[i+j] + (hash>>16);
+			hash = hash*137 ^ str[i+j];
 		}
 
 		length += 1;
@@ -89,7 +89,7 @@ public:
 		return SmartPtr<StringScanIter>::from_this(this);
 	}
 
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		/*
 		if(patt_->parse(lex_, ret_)){
 			vm->return_result(SmartPtr<StringScanIter>::from_this(this), ret_->empty() ? null : ret_->front());
@@ -105,10 +105,10 @@ void InitString(){
 
 	{
 		ClassPtr p = new_cpp_class<StringScanIter>("StringScanIter");
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &StringScanIter::reset);
-		p->method("iter_first", &StringScanIter::iter_next);
-		p->method("iter_next", &StringScanIter::iter_next);
+		p->method("block_first", &StringScanIter::block_next);
+		p->method("block_next", &StringScanIter::block_next);
 	}
 
 	{
@@ -164,7 +164,7 @@ public:
 	}
 
 
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		if(str_->buffer_size()<=index_){
 			reset();
 			vm->return_result(null);
@@ -408,10 +408,10 @@ void initialize_string(){
 
 	{
 		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &StringSplit::reset);
-		p->method("iter_first", &StringSplit::iter_next);
-		p->method("iter_next", &StringSplit::iter_next);
+		p->method("block_first", &StringSplit::block_next);
+		p->method("block_next", &StringSplit::block_next);
 	}
 
 	{
@@ -854,10 +854,10 @@ InternedStringPtr idop_lt;
 InternedStringPtr idop_eq;
 InternedStringPtr idop_mul;
 InternedStringPtr idop_neg;
-InternedStringPtr iditer_next;
-InternedStringPtr iditer_first;
+InternedStringPtr idblock_break;
 InternedStringPtr idtrue;
 InternedStringPtr idlib;
+InternedStringPtr idblock_first;
 InternedStringPtr idp;
 InternedStringPtr idset_at;
 InternedStringPtr idop_and_assign;
@@ -870,6 +870,7 @@ InternedStringPtr idop_cat;
 InternedStringPtr idIOError;
 InternedStringPtr idop_cat_r_String;
 InternedStringPtr idfalse;
+InternedStringPtr ideach;
 InternedStringPtr idserial_new;
 InternedStringPtr idto_i;
 InternedStringPtr idop_add;
@@ -878,13 +879,13 @@ InternedStringPtr idop_pos;
 InternedStringPtr idop_dec;
 InternedStringPtr idop_inc;
 InternedStringPtr idop_eq_r_String;
-InternedStringPtr iditer_break;
 InternedStringPtr idto_f;
 InternedStringPtr idop_shr_assign;
 InternedStringPtr idop_mod;
 InternedStringPtr idstring;
 InternedStringPtr idop_set_at;
 InternedStringPtr idop_lt_r_String;
+InternedStringPtr idblock_next;
 InternedStringPtr idinitialize;
 InternedStringPtr idtest;
 InternedStringPtr idop_at;
@@ -916,10 +917,10 @@ id::idop_lt = null;
 id::idop_eq = null;
 id::idop_mul = null;
 id::idop_neg = null;
-id::iditer_next = null;
-id::iditer_first = null;
+id::idblock_break = null;
 id::idtrue = null;
 id::idlib = null;
+id::idblock_first = null;
 id::idp = null;
 id::idset_at = null;
 id::idop_and_assign = null;
@@ -932,6 +933,7 @@ id::idop_cat = null;
 id::idIOError = null;
 id::idop_cat_r_String = null;
 id::idfalse = null;
+id::ideach = null;
 id::idserial_new = null;
 id::idto_i = null;
 id::idop_add = null;
@@ -940,13 +942,13 @@ id::idop_pos = null;
 id::idop_dec = null;
 id::idop_inc = null;
 id::idop_eq_r_String = null;
-id::iditer_break = null;
 id::idto_f = null;
 id::idop_shr_assign = null;
 id::idop_mod = null;
 id::idstring = null;
 id::idop_set_at = null;
 id::idop_lt_r_String = null;
+id::idblock_next = null;
 id::idinitialize = null;
 id::idtest = null;
 id::idop_at = null;
@@ -979,10 +981,10 @@ id::idop_lt = InternedStringPtr("op_lt", 5);
 id::idop_eq = InternedStringPtr("op_eq", 5);
 id::idop_mul = InternedStringPtr("op_mul", 6);
 id::idop_neg = InternedStringPtr("op_neg", 6);
-id::iditer_next = InternedStringPtr("iter_next", 9);
-id::iditer_first = InternedStringPtr("iter_first", 10);
+id::idblock_break = InternedStringPtr("block_break", 11);
 id::idtrue = InternedStringPtr("true", 4);
 id::idlib = InternedStringPtr("lib", 3);
+id::idblock_first = InternedStringPtr("block_first", 11);
 id::idp = InternedStringPtr("p", 1);
 id::idset_at = InternedStringPtr("set_at", 6);
 id::idop_and_assign = InternedStringPtr("op_and_assign", 13);
@@ -995,6 +997,7 @@ id::idop_cat = InternedStringPtr("op_cat", 6);
 id::idIOError = InternedStringPtr("IOError", 7);
 id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15);
 id::idfalse = InternedStringPtr("false", 5);
+id::ideach = InternedStringPtr("each", 4);
 id::idserial_new = InternedStringPtr("serial_new", 10);
 id::idto_i = InternedStringPtr("to_i", 4);
 id::idop_add = InternedStringPtr("op_add", 6);
@@ -1003,13 +1006,13 @@ id::idop_pos = InternedStringPtr("op_pos", 6);
 id::idop_dec = InternedStringPtr("op_dec", 6);
 id::idop_inc = InternedStringPtr("op_inc", 6);
 id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14);
-id::iditer_break = InternedStringPtr("iter_break", 10);
 id::idto_f = InternedStringPtr("to_f", 4);
 id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13);
 id::idop_mod = InternedStringPtr("op_mod", 6);
 id::idstring = InternedStringPtr("string", 6);
 id::idop_set_at = InternedStringPtr("op_set_at", 9);
 id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14);
+id::idblock_next = InternedStringPtr("block_next", 10);
 id::idinitialize = InternedStringPtr("initialize", 10);
 id::idtest = InternedStringPtr("test", 4);
 id::idop_at = InternedStringPtr("op_at", 5);
@@ -1029,6 +1032,7 @@ id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13);
 id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13);
 }
 //}}ID}
+
 
 
 

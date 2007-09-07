@@ -69,9 +69,9 @@ void initialize_stream(){
 		p->method("xtalize", &Stream::xtalize);
 		p->method("dextalize", &Stream::dextalize);
 
-		p->method("iter_first", &Stream::iter_first);
-		p->method("iter_next", &Stream::iter_next);
-		p->method("iter_break", &Stream::iter_break);
+		p->method("block_first", &Stream::block_first);
+		p->method("block_next", &Stream::block_next);
+		p->method("block_break", &Stream::block_break);
 
 		p->def("SEEK_SET", Stream::XSEEK_SET);
 		p->def("SEEK_CUR", Stream::XSEEK_CUR);
@@ -196,16 +196,16 @@ uint_t Stream::size(){
 	return len;
 }
 
-void Stream::iter_first(const VMachinePtr& vm){
+void Stream::block_first(const VMachinePtr& vm){
 	vm->return_result(StreamPtr::from_this(this), StreamPtr::from_this(this));
 }
 
-void Stream::iter_next(const VMachinePtr& vm){
+void Stream::block_next(const VMachinePtr& vm){
 	vm->return_result(null, null);
 	close();
 }
 
-void Stream::iter_break(const VMachinePtr& vm){
+void Stream::block_break(const VMachinePtr& vm){
 	close();
 }
 

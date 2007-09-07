@@ -22,6 +22,7 @@ void initialize_stream();
 void initialize_builtin();
 void initialize_peg();
 void initialize_except();
+void initialize_iterator();
 
 void display_debug_memory();
 
@@ -54,6 +55,7 @@ namespace{
 	CppClassHolderList* cpp_class_holder_list_ = 0;
 
 	ClassPtr iterator_;
+	ClassPtr pseudo_array_;
 	ClassPtr enumerator_;
 	ClassPtr builtin_;
 	ClassPtr lib_;
@@ -68,6 +70,10 @@ void register_uninitializer(void (*uninitializer)()){
 
 const ClassPtr& Iterator(){
 	return iterator_;
+}
+
+const ClassPtr& PseudoArray(){
+	return pseudo_array_;
 }
 
 const ClassPtr& Enumerator(){
@@ -130,8 +136,9 @@ void initialize(){
 
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>();
-	iterator_ = xnew<Class>();
+	iterator_ = xnew<IteratorClass>();
 	enumerator_ = xnew<Class>();
+	pseudo_array_ = xnew<Class>();
 
 	initialize_string();
 	initialize_interned_string();
@@ -140,6 +147,7 @@ void initialize(){
 	initialize_any();
 	initialize_array();
 	initialize_map();
+	initialize_iterator();
 	initialize_basic_type();
 	initialize_fun();
 	initialize_code();
@@ -186,6 +194,7 @@ void uninitialize(){
 	builtin_ = null;
 	lib_ = null;
 	iterator_ = null;
+	pseudo_array_ = null;
 	enumerator_ = null;
 
 	full_gc();

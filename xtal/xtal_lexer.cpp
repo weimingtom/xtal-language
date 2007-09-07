@@ -184,7 +184,7 @@ StringPtr Lexer::token2str(const Token& t){
 		XTAL_NODEFAULT;
 		
 		XTAL_CASE(Token::TYPE_KEYWORD){
-			Xfor2(key, value, keyword_map_->each_pair()){
+			Xfor2(key, value, keyword_map_->pairs()){
 				if(ivalue(value)==t.ivalue()){
 					return xnew<String>("Keyword");
 				}
@@ -223,7 +223,7 @@ StringPtr Lexer::token2str(const Token& t){
 }
 
 InternedStringPtr Lexer::keyword2id(int_t v){
-	Xfor2(key, value, keyword_map_->each_pair()){
+	Xfor2(key, value, keyword_map_->pairs()){
 		if(ivalue(value)==v){
 			return cast<StringPtr>(key);
 		}

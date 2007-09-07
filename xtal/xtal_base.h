@@ -20,7 +20,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
 
 	/**
 	* @brief nameメソッド呼び出しをする

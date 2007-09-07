@@ -34,11 +34,11 @@
 		}
 	}
 	
-	assert !fib.is_running;
+	assert fib.is_alive;
 	
 	assert fib(10)==1;
 	
-	assert fib.is_running;
+	assert fib.is_alive;
 	
 	assert fib()==1;
 	assert fib()==2;
@@ -58,18 +58,18 @@
 		yield 2;
 	}
 	
-	assert !fib.is_running;
+	assert fib.is_alive;
 	
 	assert fib()==1;
 	
-	assert fib.is_running;
+	assert fib.is_alive;
 	
 	assert fib()==2;
 
-	assert fib.is_running;
+	assert fib.is_alive;
 	
 	fib();
 	
-	assert !fib.is_running;
+	assert !fib.is_alive;
 }
 

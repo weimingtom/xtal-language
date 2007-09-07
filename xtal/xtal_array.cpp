@@ -30,12 +30,11 @@ public:
 		return SmartPtr<ArrayIter>::from_this(this);
 	}
 			
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		++index_;
 		if(index_<array_->size()){
 			vm->return_result(SmartPtr<ArrayIter>::from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
 		}else{
-			reset();
 			vm->return_result(null, null);
 		}
 	}
@@ -51,10 +50,10 @@ public:
 void initialize_array(){
 	{
 		ClassPtr p = new_cpp_class<ArrayIter>("ArrayIter");
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &ArrayIter::reset);
-		p->method("iter_first", &ArrayIter::iter_next);
-		p->method("iter_next", &ArrayIter::iter_next);
+		p->method("block_first", &ArrayIter::block_next);
+		p->method("block_next", &ArrayIter::block_next);
 		p->method("remove", &ArrayIter::remove);
 	}
 
@@ -67,8 +66,6 @@ void initialize_array(){
 		p->method("length", &Array::length);
 		p->method("resize", &Array::resize);
 		p->method("empty", &Array::empty);
-		p->method("at", &Array::op_at);
-		p->method("set_at", &Array::op_set_at);
 		p->method("op_at", &Array::op_at);
 		p->method("op_set_at", &Array::op_set_at);
 		p->method("slice", &Array::slice)->param("i", Named("n", 1));

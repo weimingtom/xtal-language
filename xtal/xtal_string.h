@@ -386,10 +386,10 @@ extern InternedStringPtr idop_lt;
 extern InternedStringPtr idop_eq;
 extern InternedStringPtr idop_mul;
 extern InternedStringPtr idop_neg;
-extern InternedStringPtr iditer_next;
-extern InternedStringPtr iditer_first;
+extern InternedStringPtr idblock_break;
 extern InternedStringPtr idtrue;
 extern InternedStringPtr idlib;
+extern InternedStringPtr idblock_first;
 extern InternedStringPtr idp;
 extern InternedStringPtr idset_at;
 extern InternedStringPtr idop_and_assign;
@@ -402,6 +402,7 @@ extern InternedStringPtr idop_cat;
 extern InternedStringPtr idIOError;
 extern InternedStringPtr idop_cat_r_String;
 extern InternedStringPtr idfalse;
+extern InternedStringPtr ideach;
 extern InternedStringPtr idserial_new;
 extern InternedStringPtr idto_i;
 extern InternedStringPtr idop_add;
@@ -410,13 +411,13 @@ extern InternedStringPtr idop_pos;
 extern InternedStringPtr idop_dec;
 extern InternedStringPtr idop_inc;
 extern InternedStringPtr idop_eq_r_String;
-extern InternedStringPtr iditer_break;
 extern InternedStringPtr idto_f;
 extern InternedStringPtr idop_shr_assign;
 extern InternedStringPtr idop_mod;
 extern InternedStringPtr idstring;
 extern InternedStringPtr idop_set_at;
 extern InternedStringPtr idop_lt_r_String;
+extern InternedStringPtr idblock_next;
 extern InternedStringPtr idinitialize;
 extern InternedStringPtr idtest;
 extern InternedStringPtr idop_at;
@@ -436,6 +437,7 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idop_mul_assign;
 }
 //}}ID}
+
 
 
 

@@ -28,9 +28,8 @@ public:
 		return SmartPtr<MapIter>::from_this(this);
 	}
 	
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		if(!node_){
-			reset();
 			vm->return_result(null);
 			return;
 		}
@@ -50,10 +49,10 @@ public:
 void initialize_map(){
 	{
 		ClassPtr p = new_cpp_class<MapIter>("MapIter");
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &MapIter::reset);
-		p->method("iter_first", &MapIter::iter_next);
-		p->method("iter_next", &MapIter::iter_next);
+		p->method("block_first", &MapIter::block_next);
+		p->method("block_next", &MapIter::block_next);
 	}
 
 	{
@@ -68,10 +67,10 @@ void initialize_map(){
 		p->method("set_at", &Map::set_at);
 		p->method("op_at", &Map::at);
 		p->method("op_set_at", &Map::set_at);
-		p->method("each", &Map::each_pair);
-		p->method("each_pair", &Map::each_pair);
-		p->method("each_key", &Map::each_key);
-		p->method("each_value", &Map::each_value);
+		p->method("each", &Map::pairs);
+		p->method("pairs", &Map::pairs);
+		p->method("keys", &Map::keys);
+		p->method("values", &Map::values);
 		p->method("clone", &Map::clone);
 		p->method("op_cat", &Map::cat);
 		p->method("op_cat_assign", &Map::cat_assign);
@@ -263,15 +262,15 @@ bool Map::op_eq(const MapPtr& other){
 	return true;
 }
 	
-AnyPtr Map::each_pair(){
+AnyPtr Map::pairs(){
 	return xnew<MapIter>(MapPtr::from_this(this), 0);
 }
 
-AnyPtr Map::each_key(){
+AnyPtr Map::keys(){
 	return xnew<MapIter>(MapPtr::from_this(this), 1);
 }
 
-AnyPtr Map::each_value(){
+AnyPtr Map::values(){
 	return xnew<MapIter>(MapPtr::from_this(this), 2);
 }
 

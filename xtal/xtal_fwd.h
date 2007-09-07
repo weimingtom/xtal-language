@@ -285,8 +285,8 @@ struct BlockCore{
 };
 
 struct ClassCore : public BlockCore{
-	ClassCore()
-		:instance_variable_symbol_offset(0), instance_variable_size(0){}
+	ClassCore(u16 offset = 0, u16 size = 0)
+		:instance_variable_symbol_offset(offset), instance_variable_size(size){}
 
 	u16 instance_variable_symbol_offset;
 	u16 instance_variable_size;

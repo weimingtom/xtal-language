@@ -5,31 +5,6 @@
 
 namespace xtal{
 	
-template<class T>
-struct CastCacheType{
-	static CastCacheType<T> instance;
-private:
-	CastCacheType(){}
-	CastCacheType(const CastCacheType&);
-	CastCacheType& operator=(const CastCacheType&);
-};
-
-template<class T>
-CastCacheType<T> CastCacheType<T>::instance;
-
-const void* fetch_cast_cache(const AnyPtr& a, const void* type_key);
-void store_cast_cache(const AnyPtr& a, const void* ret, const void* type_key);
-
-template<class T>
-inline const void* fetch_cast_cache(const AnyPtr& a){
-	return fetch_cast_cache(a, &CastCacheType<T>::instance);
-}
-
-template<class T>
-inline void store_cast_cache(const AnyPtr& a, const void* ret){
-	store_cast_cache(a, ret, &CastCacheType<T>::instance);
-}
-
 /**
 * @brief cast関数、as関数、arg_cast関数の戻り値の型を決定するためのヘルパーテンプレートクラス
 *
@@ -162,7 +137,6 @@ template<class T>
 struct CastHelper{
 
 	// 変換後の型がポインタの場合
-	// このレベルで、キャッシュの機構を取り入れる
 	template<class U> static T as_inner(const AnyPtr& a, U* (*)()){ 
 		return (T)as_helper_helper(a, (U*)0, (U*)0);
 	}
@@ -269,7 +243,7 @@ ptr_cast(const AnyPtr& a){
 }
 
 /**
-* @brief T型に変換する。
+* @brief SmartPtr<T>型に強制変換する。
 */
 template<class T>
 inline const SmartPtr<T>&
@@ -326,6 +300,13 @@ struct CastHelper<const InternedStringPtr*>{
 	static const InternedStringPtr* as(const AnyPtr& a);
 	static const InternedStringPtr* cast(const AnyPtr& a);
 	static const InternedStringPtr* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
+};
+
+template<>
+struct CastHelper<const ArrayPtr*>{
+	static const ArrayPtr* as(const AnyPtr& a);
+	static const ArrayPtr* cast(const AnyPtr& a);
+	static const ArrayPtr* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
 };
 
 template<>

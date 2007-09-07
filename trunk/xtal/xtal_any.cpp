@@ -33,7 +33,6 @@ void initialize_any(){
 }
 
 
-
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
 AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
@@ -155,7 +154,7 @@ struct MemberCacheTable{
 			miss_++;
 
 			if(type(target_class)!=TYPE_BASE)
-				return nop;
+				return null;
 
 			unit.member = pvalue(target_class)->do_member(member_name, ap(self), ap(ns));
 			unit.target_class = itarget_class;
@@ -257,7 +256,7 @@ void Any::call(const VMachinePtr& vm) const{
 
 int_t Any::to_i() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{ return cast<int_t>((*this).send("to_i")); }
+		XTAL_DEFAULT{ return cast<int_t>((*this).send(Xid(to_i))); }
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return (int_t)fvalue(*this); }
@@ -267,7 +266,7 @@ int_t Any::to_i() const{
 
 float_t Any::to_f() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{ return cast<float_t>((*this).send("to_f")); }
+		XTAL_DEFAULT{ return cast<float_t>((*this).send(Xid(to_f))); }
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return (float_t)ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(*this); }
@@ -333,7 +332,7 @@ bool Any::is(const ClassPtr& klass) const{
 }
 
 AnyPtr Any::p() const{
-	ap(*this)->send("p");
+	ap(*this)->send(Xid(p));
 	return ap(*this);
 }
 

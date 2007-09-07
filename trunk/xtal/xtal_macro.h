@@ -18,13 +18,13 @@
 #define Xfor(var, target) \
 	if(::xtal::AnyPtr var = 1)\
 	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::iter_next(tar, var, true); tar; ::xtal::iter_next(tar, var, false))
+	for(::xtal::block_next(tar, var, true); tar; ::xtal::block_next(tar, var, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
 *
 * @code
-* Xfor(key, value, map.send("each_pair")){
+* Xfor(key, value, map.send("pairs")){
 *   // use key and value
 * }
 * @endcode
@@ -33,7 +33,7 @@
 	if(::xtal::AnyPtr var1 = 1)\
 	if(::xtal::AnyPtr var2 = 1)\
 	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::iter_next(tar, var1, var2, true); tar; ::xtal::iter_next(tar, var1, var2, false))
+	for(::xtal::block_next(tar, var1, var2, true); tar; ::xtal::block_next(tar, var1, var2, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -49,7 +49,7 @@
 	if(::xtal::AnyPtr var2 = 1)\
 	if(::xtal::AnyPtr var3 = 1)\
 	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::iter_next(tar, var1, var2, var3, true); tar; ::xtal::iter_next(tar, var1, var2, var3, false))
+	for(::xtal::block_next(tar, var1, var2, var3, true); tar; ::xtal::block_next(tar, var1, var2, var3, false))
 
 
 /**

@@ -694,15 +694,15 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 			compile(e->lhs);
 
 			/*
-			int_t iter_first = com_->register_ident(InternedStringPtr("iter_first")); 
-			int_t iter_next = com_->register_ident(InternedStringPtr("iter_next")); 
-			int_t iter_break = com_->register_ident(InternedStringPtr("iter_break")); 
+			int_t block_first = com_->register_ident(InternedStringPtr("block_first")); 
+			int_t block_next = com_->register_ident(InternedStringPtr("block_next")); 
+			int_t block_break = com_->register_ident(InternedStringPtr("block_break")); 
 
-			if(e->var==iter_first && !info.tail){
+			if(e->var==block_first && !info.tail){
 				put_inst(InstSendIterFirst(info.need_result_count));
-			}else if(e->var==iter_next && !info.tail){
+			}else if(e->var==block_next && !info.tail){
 				put_inst(InstSendIterNext(info.need_result_count));
-			}else if(e->var==iter_break && e->if_defined && !info.tail){
+			}else if(e->var==block_break && e->if_defined && !info.tail){
 				put_inst(InstSendIterBreak(info.need_result_count));
 			}else{
 				put_send_code(e->var, e->pvar, info.need_result_count, info.tail, e->if_defined);

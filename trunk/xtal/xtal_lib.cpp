@@ -135,16 +135,16 @@ public:
 		}
 	}
 
-	void iter_first(const VMachinePtr& vm){
-		common(vm, Xid(iter_first));
+	void block_first(const VMachinePtr& vm){
+		common(vm, Xid(block_first));
 	}
 	
-	void iter_next(const VMachinePtr& vm){
-		common(vm, Xid(iter_next));
+	void block_next(const VMachinePtr& vm){
+		common(vm, Xid(block_next));
 	}
 
-	void iter_break(const VMachinePtr& vm){
-		InternedStringPtr id = Xid(iter_break);
+	void block_break(const VMachinePtr& vm){
+		InternedStringPtr id = Xid(block_break);
 		for(int_t i = 0, len = next->size(); i<len; ++i){
 			vm->setup_call(0);
 			next->at(i)->rawsend(vm, id);
@@ -167,51 +167,11 @@ public:
 
 void InitZipIter(){
 	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
-	p->inherit(Iterator());
+	p->inherit(PseudoArray());
 	p->def("new", ctor<ZipIter, const VMachinePtr&>());
-	p->method("iter_first", &ZipIter::iter_next);
-	p->method("iter_next", &ZipIter::iter_next);
-	p->method("iter_break", &ZipIter::iter_break);
-}
-
-IterBreaker::~IterBreaker(){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(0);
-	target->rawsend(vm, Xid(iter_break));
-	if(!vm->processed()){
-		vm->return_result();
-	}
-	vm->cleanup_call();
-}
-
-void iter_next(AnyPtr& target, AnyPtr& value1, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(2);
-	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	vm->cleanup_call();
-}
-
-void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(3);
-	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	value2 = vm->result(2);
-	vm->cleanup_call();
-}
-
-void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(4);
-	target->rawsend(vm, first ? Xid(iter_first) : Xid(iter_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	value2 = vm->result(2);
-	value3 = vm->result(3);
-	vm->cleanup_call();
+	p->method("block_first", &ZipIter::block_next);
+	p->method("block_next", &ZipIter::block_next);
+	p->method("block_break", &ZipIter::block_break);
 }
 
 void initialize_builtin(){
@@ -229,8 +189,8 @@ void initialize_builtin(){
 	builtin()->fun("enable_gc", &enable_gc);
 	builtin()->fun("clock", &clock_);
 
-	lib()->def("builtin", builtin());		
-
+	lib()->def("builtin", builtin());
+	
 	InitZipIter();
 	builtin()->def("zip", get_cpp_class<ZipIter>());
 
@@ -265,31 +225,8 @@ builtin::CompileError: class(StandardError){
 	))();
 
 	Xsrc((
-Enumerator::reset: method(){ return this.each.reset; }
-Enumerator::collect: method(conv){ return this.each.collect(conv); }
-Enumerator::map: method(conv){ return this.each.map(conv); }
-Enumerator::select: method(pred){ return this.each.select(pred); }
-Enumerator::filter: method(pred){ return this.each.filter(pred); }
-Enumerator::to_a: method(){ return this.each.to_a; }
-Enumerator::to_m: method(){ return this.each.to_m; }
-Enumerator::join: method(sep:","){ return this.each.join(sep); }
-Enumerator::with_index: method(start:0){ return this.each.with_index(start); }
-Enumerator::iter_first: method(){ return this.each.iter_first; }
-Enumerator::cycle: method(){ return this.each.cycle; }
-Enumerator::break_if: method(pred){ return this.each.break_if(pred); }
-Enumerator::take: method(times){ return this.each.take(times); }
-Enumerator::zip: method(...){ return this.each.zip(...); }
-Enumerator::unique: method(pred:null){ return this.each.unique(pred); }
-Enumerator::chain: method(other){ return this.each.chain(other); }
-Enumerator::max_element: method(pred:null){ return this.each.max_element(pred); }
-Enumerator::min_element: method(pred:null){ return this.each.min_element(pred); }
-Enumerator::find: method(pred){ return this.each.find(pred); }
-Enumerator::inject: method(init, fn){ return this.each.inject(init, fn); }
-	))();
 
-
-	Xsrc((
-Iterator::to_a: method{
+Iterator::to_a: method(){
 	ret: [];
 	this{
 		ret.push_back(it); 
@@ -359,9 +296,6 @@ Iterator::select: method(pred){
 
 Iterator::filter: Iterator::select;
 
-Iterator::each: method{ 
-	return this; 
-}
 	))();
 
 	Xsrc((
@@ -421,7 +355,7 @@ Iterator::unique: method(pred:null){
 }
 
 builtin::print: fun(...){
-	....each_ordered_arg{
+	....ordered_arguments{
 		stdout.put_s(it.to_s);
 	}
 }
@@ -434,7 +368,7 @@ builtin::println: fun(...){
 builtin::chain: fun(...){
 	arg: ...;
 	return fiber{
-		arg.each_ordered_arg{
+		arg.ordered_arguments{
 			it{
 				yield it;
 			}
@@ -540,20 +474,20 @@ Iterator::with_prev: method{
 	}
 }
 
-Int::iter_next: method{
+Int::block_next: method{
 	return (this==0 ? null : this-1), this;
 }
 
-Int::iter_first: Int::iter_next;
+Int::block_first: Int::block_next;
 
 	))();
 
 	Xsrc((
 
-Class::each_ancestor: method fiber{
-	this.each_inherited_class{
+Class::ancestors: method fiber{
+	this.inherited_classes{
 		yield it;
-		it.each_ancestor{
+		it.ancestors{
 			yield it;
 		}
 	}
@@ -563,7 +497,7 @@ Any::s_save: method{
 	ret: [:];
 	klass: this.class;
 
-	klass.each_ancestor.to_a.r_each{
+	klass.ancestors.r_each{
 		if(n: this.serial_save(it))
 			ret[it.object_name] = n;
 	}
@@ -578,7 +512,7 @@ Any::s_save: method{
 Any::s_load: method(v){
 	klass: this.class;
 
-	klass.each_ancestor.to_a.r_each{
+	klass.ancestors.r_each{
 		if(n: v[it.object_name]){
 			this.serial_load(it, n);
 		}
@@ -587,6 +521,14 @@ Any::s_load: method(v){
 	if(n: v[klass.object_name]){
 		this.serial_load(klass, n);
 	}
+}
+
+Array::block_first: method{
+	return this.each.block_first;
+}
+
+Map::block_first: method{
+	return this.each.block_first;
 }
 
 Any::p: method{
@@ -618,7 +560,7 @@ Null::to_s: method{
 	return "null";
 }
 
-Null::iter_first: method{
+Null::block_first: method{
 	return null;
 }
 
@@ -653,40 +595,16 @@ builtin::load: fun(file_name, ...){
 
 Arguments::each: method{
 	return fiber{ 
-		this.each_ordered_arg.with_index{ |i, v|
+		this.ordered_arguments.with_index{ |i, v|
 			yield i, v;
 		}
-		this.each_named_arg{ |i, v|
+		this.named_arguments{ |i, v|
 			yield i, v;
 		}
 	}
 }
 
-Arguments::each_pair: Arguments::each;
-
-Arguments::pairs: method(){
-	return this.each.to_a;
-}
-
-Arguments::ordered_args: method(){
-	return this.each_ordered_arg.to_a;
-}
-
-Arguments::named_args: method(){
-	return this.each_named_arg.to_a;
-}
-
-Map::pairs: method(){
-	return this.each_pair.to_a;
-}
-
-Map::values: method(){
-	return this.each_value.to_a;
-}
-
-Map::keys: method(){
-	return this.each_key.to_a;
-}
+Arguments::pairs: Arguments::each;
 
 Fun::call: method(...){
 	return this(...);
@@ -702,17 +620,17 @@ builtin::open: fun(file_name, mode: "r"){
 	return ret;
 }
 
-Mutex::iter_first: method{
+Mutex::block_first: method{
 	this.lock;
 	return this;
 }
 
-Mutex::iter_next: method{
+Mutex::block_next: method{
 	this.unlock;
 	return null;
 }
 
-Mutex::iter_break: method{
+Mutex::block_break: method{
 	this.unlock;
 	return null;
 }

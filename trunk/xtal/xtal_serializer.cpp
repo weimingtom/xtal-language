@@ -137,7 +137,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			MapPtr a = cast<MapPtr>(v);
 			stream_->put_u8(TMAP);
 			stream_->put_u32(a->size());
-			Xfor2(key, value, a->each_pair()){
+			Xfor2(key, value, a->pairs()){
 				inner_serialize(key);
 				inner_serialize(value);
 			}
@@ -536,7 +536,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 			}else{
 				stream_->put_s("[\n");
 				tab++;
-				Xfor2(key, value, a->each_pair()){
+				Xfor2(key, value, a->pairs()){
 					put_tab(tab);
 					inner_xtalize(key, tab);
 					stream_->put_s(": ");

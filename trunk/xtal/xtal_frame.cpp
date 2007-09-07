@@ -30,7 +30,7 @@ public:
 		return SmartPtr<MembersIter>::from_this(this);
 	}
 
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
 			vm->return_result(SmartPtr<MembersIter>::from_this(this), it_->first.key, it_->first.ns, frame_->members_->at(it_->second.num));
 			++it_;
@@ -47,10 +47,10 @@ uint_t global_mutate_count = 0;
 void initialize_frame(){
 	{
 		ClassPtr p = new_cpp_class<MembersIter>("ClassMembersIter");
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &MembersIter::reset);
-		p->method("iter_first", &MembersIter::iter_next);
-		p->method("iter_next", &MembersIter::iter_next);
+		p->method("block_first", &MembersIter::block_next);
+		p->method("block_next", &MembersIter::block_next);
 	}
 
 	{
@@ -62,9 +62,9 @@ void initialize_frame(){
 		p->inherit(get_cpp_class<Frame>());
 		p->method("inherit", &Class::inherit_strict);
 		p->method("is_inherited", &Class::is_inherited);
-		p->method("each_member", &Class::each_member);
+		p->method("members", &Class::members);
 		p->method("s_new", &Class::s_new);
-		p->method("each_inherited_class", &Class::each_inherited_class);
+		p->method("inherited_classes", &Class::inherited_classes);
 	}
 
 	{
@@ -140,7 +140,7 @@ void Frame::make_map_members(){
 }
 
 
-AnyPtr Frame::each_member(){
+AnyPtr Frame::members(){
 	return xnew<MembersIter>(FramePtr::from_this(this));
 }
 
@@ -187,7 +187,7 @@ void Class::inherit_strict(const ClassPtr& md){
 	global_mutate_count++;
 }
 
-AnyPtr Class::each_inherited_class(){
+AnyPtr Class::inherited_classes(){
 	ArrayPtr bases = xnew<Array>();
 	for(int_t i=0; i<mixins_->size(); ++i){
 		bases->push_back(mixins_->at(i));

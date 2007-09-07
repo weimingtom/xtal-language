@@ -119,6 +119,11 @@ const VMachinePtr& vmachine();
 const ClassPtr& Iterator();
 
 /**
+* @brief PseudoArrayクラスを返す
+*/
+const ClassPtr& PseudoArray();
+
+/**
 * @brief Enumeratorクラスを返す
 */
 const ClassPtr& Enumerator();
@@ -155,9 +160,9 @@ MapPtr get_get_text_map();
 
 AnyPtr source(const char* src, int_t size, const char* file);
 
-void iter_next(AnyPtr& target, AnyPtr& value, bool first);
-void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
-void iter_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
+void block_next(AnyPtr& target, AnyPtr& value, bool first);
+void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
+void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
 
 struct IterBreaker{
 	AnyPtr target;

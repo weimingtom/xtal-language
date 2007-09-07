@@ -47,6 +47,19 @@ public:
 		return find_core_inner(core);
 	}
 
+	bool is_included(ClassCore* core){
+		VariablesInfo& info = variables_info_.top();
+		if(info.core == core)
+			return true;
+		for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
+			if(variables_info_[i].core==core){
+				std::swap(variables_info_[0], variables_info_[i]);
+				return true;
+			}	
+		}
+		return false;
+	}
+
 	int_t find_core_inner(ClassCore* core);
 
 	bool empty(){
@@ -141,15 +154,15 @@ public:
 public:
 
 	/**
-	* @brief メンバを順次取り出すIteratorを返す
+	* @brief メンバが格納された、PseudoArrayを返す
 	*
 	* @code
-	* Xfor2(key, value, frame.each_member()){
+	* Xfor2(key, value, frame.members()){
 	*   puts(Xf("%s %s")(key, value).to_s().c_str());
 	* }
 	* @endcode
 	*/
-	AnyPtr each_member();
+	AnyPtr members();
 
 protected:
 
@@ -210,7 +223,7 @@ public:
 	*
 	* @param name 新しく定義するメンバの名前
 	*/
-	void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility = KIND_PUBLIC, const AnyPtr& ns = null);
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility = KIND_PUBLIC, const AnyPtr& ns = null);
 
 	/**
 	* @brief メンバを取り出す
@@ -257,10 +270,10 @@ public:
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief Mix-inされているクラスをイテレートできるイテレータを返す
+	* @brief Mix-inされているクラスのPseudoArrayを返す
 	*
 	*/
-	AnyPtr each_inherited_class();
+	AnyPtr inherited_classes();
 
 	/**
 	* @brief 関数を定義する

@@ -60,6 +60,25 @@ const InternedStringPtr* CastHelper<const InternedStringPtr*>::arg_cast(const An
 }
 
 
+const ArrayPtr* CastHelper<const ArrayPtr*>::as(const AnyPtr& a){ 
+	if(a->is(get_cpp_class<Array>())){ return (ArrayPtr*)&a; }
+	if(a->is(PseudoArray())){ return &PseudoArray_arrayize(a); }
+	return 0;
+}
+
+const ArrayPtr* CastHelper<const ArrayPtr*>::cast(const AnyPtr& a){
+	if(a->is(get_cpp_class<Array>())){ return (ArrayPtr*)&a; }
+	if(a->is(PseudoArray())){ return &PseudoArray_arrayize(a); }
+	XTAL_THROW(cast_error(a, "Array"), return 0);
+}
+
+const ArrayPtr* CastHelper<const ArrayPtr*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	if(a->is(get_cpp_class<Array>())){ return (ArrayPtr*)&a; }
+	if(a->is(PseudoArray())){ return &PseudoArray_arrayize(a); }
+	XTAL_THROW(argument_error(a, "Array", param_num, param_name), return 0);
+}
+
+
 const char_t* CastHelper<const char_t*>::as(const AnyPtr& a){ 
 	if(String* p = xtal::as<String*>(a)){
 		return p->c_str();

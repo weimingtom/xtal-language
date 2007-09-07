@@ -724,9 +724,9 @@ Expr* Parser::parse_post(Expr* lhs, int_t pri){
 
 Stmt* Parser::parse_each(int_t label, Expr* lhs){
 
-	int_t iter_first = com_->register_ident(InternedStringPtr("iter_first")); 
-	int_t iter_next = com_->register_ident(InternedStringPtr("iter_next")); 
-	int_t iter_break = com_->register_ident(InternedStringPtr("iter_break")); 
+	int_t block_first = com_->register_ident(InternedStringPtr("block_first")); 
+	int_t block_next = com_->register_ident(InternedStringPtr("block_next")); 
+	int_t block_break = com_->register_ident(InternedStringPtr("block_break")); 
 	int_t it = com_->register_ident(InternedStringPtr("__IT__"));
 	int_t itv = com_->register_ident(InternedStringPtr("it"));
 	int_t dummy = com_->register_ident(InternedStringPtr("__DUMMY__"));
@@ -777,7 +777,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 			e.massign_begin();
 			*e.massign_lhs_exprs() = param;
 			e.massign_define(true);
-			e.massign_rhs(e.send(e.pop(), iter_first));
+			e.massign_rhs(e.send(e.pop(), block_first));
 			e.block_add(e.massign_end());
 			
 			e.try_begin();
@@ -790,7 +790,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					e.massign_begin();
 					*e.massign_lhs_exprs() = param;
 					e.massign_define(false);
-					e.massign_rhs(e.send(e.local(it), iter_next));
+					e.massign_rhs(e.send(e.local(it), block_next));
 					e.while_next(e.massign_end());
 
 					if(eat_a(Token::KEYWORD_ELSE)){
@@ -804,7 +804,7 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 				s = e.while_end();
 				e.try_body(s);
 				
-				s = e.e2s(set_line(ln, e.send_q(e.local(it), iter_break)));
+				s = e.e2s(set_line(ln, e.send_q(e.local(it), block_break)));
 				e.try_finally(s);
 
 			s = e.try_end();

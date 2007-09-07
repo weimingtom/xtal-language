@@ -83,30 +83,30 @@ public:
 	bool op_eq(const MapPtr& other);
 		
 	/**
-	* @brief keyとvalueをブロックパラメータとするIteratorを返す
+	* @brief [key, value]を要素とする、PseudoArrayを返す
 	*
 	*/
-	AnyPtr each_pair();
+	AnyPtr pairs();
 	
 	/**
-	* @brief keyをブロックパラメータとするIteratorを返す
+	* @brief keyを要素とする、PseudoArrayを返す
 	*
 	*/
-	AnyPtr each_key();
+	AnyPtr keys();
 	
 	/**
-	* @brief valueをブロックパラメータとするIteratorを返す
+	* @brief valueを要素とする、PseudoArrayを返す
 	*
 	*/
-	AnyPtr each_value();
+	AnyPtr values();
 
 	/**
-	* @brief keyとvalueをブロックパラメータとするIteratorを返す
+	* @brief [key, value]を要素とする、PseudoArrayを返す
 	*
-	* each_pairと同じ
+	* pairsと同じ
 	*/
 	AnyPtr each(){
-		return each_pair();
+		return pairs();
 	}
 	
 	/**

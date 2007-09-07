@@ -31,3 +31,4 @@
 #include "xtal_core.cpp"
 #include "xtal_debug.cpp"
 #include "xtal_peg.cpp"
+#include "xtal_iterator.cpp"

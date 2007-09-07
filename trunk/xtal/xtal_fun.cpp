@@ -64,12 +64,12 @@ void initialize_fun(){
 	{
 		ClassPtr p = new_cpp_class<Fiber>("Fiber");
 		p->inherit(get_cpp_class<Fun>());
-		p->inherit(Iterator());
+		p->inherit(PseudoArray());
 		p->method("reset", &Fiber::reset);
-		p->method("iter_first", &Fiber::iter_next);
-		p->method("iter_next", &Fiber::iter_next);
+		p->method("block_first", &Fiber::block_next);
+		p->method("block_next", &Fiber::block_next);
 		p->method("halt", &Fiber::halt);
-		p->method("is_running", &Fiber::is_running);
+		p->method("is_alive", &Fiber::is_alive);
 	}
 
 	{
@@ -82,8 +82,8 @@ void initialize_fun(){
 		p->method("size", &Arguments::length);
 		p->method("length", &Arguments::length);
 		p->method("op_at", &Arguments::op_at);
-		p->method("each_ordered_arg", &Arguments::each_ordered_arg);
-		p->method("each_named_arg", &Arguments::each_named_arg);
+		p->method("ordered_arguments", &Arguments::ordered_arguments);
+		p->method("named_arguments", &Arguments::named_arguments);
 	}
 
 	builtin()->def("Arguments", get_cpp_class<Arguments>());
@@ -194,7 +194,7 @@ void Method::call(const VMachinePtr& vm){
 
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
-	:Fun(outer, th, code, core), vm_(null), resume_pc_(0){
+	:Fun(outer, th, code, core), vm_(null), resume_pc_(0), alive_(true){
 }
 
 
@@ -204,22 +204,31 @@ void Fiber::halt(){
 		resume_pc_ = 0;
 		vm_mgr_->take_back(vm_);
 		vm_ = null;
+		alive_ = false;
 	}
 }
 
 void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
-	vm->set_arg_this(this_);
-	if(resume_pc_==0){
-		if(!vm_){ vm_ = vm_mgr_->take_over(); }
-		resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
-	}else{ 
-		resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
-	}
-	if(resume_pc_==0){
-		vm_mgr_->take_back(vm_);
-		vm_ = null;
+	if(alive_){
+		vm->set_arg_this(this_);
+		if(resume_pc_==0){
+			if(!vm_){ vm_ = vm_mgr_->take_over(); }
+			resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
+		}else{ 
+			resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
+		}
+		if(resume_pc_==0){
+			vm_mgr_->take_back(vm_);
+			vm_ = null;
+			alive_ = false;
+		}
 	}
 }
 
+AnyPtr Fiber::reset(){
+	halt();
+	alive_ = true;
+	return FiberPtr::from_this(this);
+}
 
 }

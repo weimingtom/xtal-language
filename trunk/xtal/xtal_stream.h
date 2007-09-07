@@ -151,11 +151,11 @@ public:
 
 	virtual bool eof(){ return false; }
 
-	void iter_first(const VMachinePtr& vm);
+	void block_first(const VMachinePtr& vm);
 
-	void iter_next(const VMachinePtr& vm);
+	void block_next(const VMachinePtr& vm);
 
-	void iter_break(const VMachinePtr& vm);
+	void block_break(const VMachinePtr& vm);
 
 	/**
 	* @brief オブジェクトを直列化してストリームに書き込む

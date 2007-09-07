@@ -285,7 +285,11 @@ public:
 	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
 	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_OTHER>, T* p){ return SmartPtr<T>(NC(), ((Base*)p - 1)); }
 
-	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ return (T*)pvalue(*this); }
+	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
+		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		return (T*)pvalue(*this); 
+	}
+
 	T* get2(SmartPtrSelector<INHERITED_INNOCENCE>) const{ return (T*)this; }
 	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ return (T*)((Base*)pvalue(*this) + 1); }
 

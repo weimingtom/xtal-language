@@ -95,7 +95,7 @@ public:
 			
 public:
 
-	void iter_next(const VMachinePtr& vm){
+	void block_next(const VMachinePtr& vm){
 		call_helper(vm, true);
 	}
 
@@ -107,19 +107,17 @@ public:
 
 	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
 
-	bool is_running(){
-		return resume_pc_ != 0;
+	bool is_alive(){
+		return alive_;
 	}
 
-	AnyPtr reset(){
-		halt();
-		return FiberPtr::from_this(this);
-	}
+	AnyPtr reset();
 
 private:
 
 	VMachinePtr vm_;
 	const inst_t* resume_pc_;
+	bool alive_;
 
 	void visit_members(Visitor& m){
 		Fun::visit_members(m);
@@ -147,12 +145,12 @@ public:
 		return ordered_->length();
 	}
 	
-	AnyPtr each_ordered_arg(){
+	AnyPtr ordered_arguments(){
 		return ordered_->each();
 	}
 	
-	AnyPtr each_named_arg(){
-		return named_->each_pair();
+	AnyPtr named_arguments(){
+		return named_->each();
 	}
 
 public:

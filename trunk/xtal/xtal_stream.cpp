@@ -296,7 +296,12 @@ void FileStream::close(){
 
 bool FileStream::eof(){
 	if(!fp_){ return true; }
-	return feof(fp_)!=0;
+	int ch = getc(fp_);
+	if(feof(fp_)){
+		return true;
+	}
+	ungetc(ch, fp_);
+	return false;
 }
 
 uint_t StdioStream::write(const void* p, uint_t size){

@@ -420,7 +420,6 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_NULL){ ret = e.pseudo(InstPushNull::NUMBER); }
 				XTAL_CASE(Token::KEYWORD_TRUE){ ret = e.pseudo(InstPushTrue::NUMBER); }
 				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(InstPushFalse::NUMBER); }
-				XTAL_CASE(Token::KEYWORD_NOP){ ret = e.pseudo(InstPushNop::NUMBER); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(InstPushThis::NUMBER); }
 
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){

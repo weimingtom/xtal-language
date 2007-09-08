@@ -107,10 +107,33 @@ int main(int argc, char** argv){
 		
 AnyPtr ret = Xsrc((
 
-v: [2, 4, 6].map(|x| x*2).p;
-v.push_back(8);
-v.each{ it.p; }
-v.p;
+
+Range: class(PseudoArray){
+  _lower;
+  _upper;
+  _current;
+
+  initialize: method(_lower, _upper){
+    _current = _lower;
+  }
+ 
+  block_next: method(){
+    if(_current<_upper){
+      temp: _current;
+      _current++;
+      return this, temp;
+    }
+    return null;
+  }
+}
+
+// 配列のメソッドspliceを呼び出す
+r: Range(5, 15);
+r.splice(5, 3).p;
+r{
+  it.p;
+}
+
 
 filelocal.inherit(peg);
 
@@ -148,7 +171,7 @@ export mm;
 		
 int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

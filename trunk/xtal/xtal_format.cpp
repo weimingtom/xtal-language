@@ -253,11 +253,11 @@ public:
 		call(vm);
 	}
 
-	AnyPtr serial_save(){
+	AnyPtr instance_serial_save(){
 		return original_;
 	}
 
-	void serial_load(const StringPtr& v){
+	void instance_serial_load(const StringPtr& v){
 		set(v->c_str());
 	}
 
@@ -298,8 +298,8 @@ void initialize_format(){
 	{
 		ClassPtr p = new_cpp_class<Format>("Format");
 		p->method("to_s", &Format::to_s);
-		p->method("serial_save", &Format::serial_save);
-		p->method("serial_load", &Format::serial_load);
+		p->method("instance_serial_save", &Format::instance_serial_save);
+		p->method("instance_serial_load", &Format::instance_serial_load);
 		p->def("serial_new", ctor<Format>());
 	}
 

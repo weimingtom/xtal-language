@@ -136,7 +136,7 @@ public:
 	ArrayPtr slice(int_t i, int_t n = 1);
 	
 	/**
-	* @brief indexからn個の部分配列を削除し、配列として返す
+	* @brief indexからn個の部分配列を削除し、その部分配列を返す
 	*
 	*/
 	ArrayPtr splice(int_t i, int_t n = 1);
@@ -220,13 +220,13 @@ public:
 	void clear();
 
 	/**
-	* @brief 要素を巡回するIteratorを返す
+	* @brief 要素を最初から持つPseudoArrayを返す
 	*
 	*/
 	AnyPtr each();
 
 	/**
-	* @brief 要素を逆順に巡回するIteratorを返す
+	* @brief 要素を逆順に持つPseudoArrayを返す
 	*
 	*/
 	AnyPtr r_each();

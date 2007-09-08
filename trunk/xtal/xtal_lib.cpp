@@ -178,6 +178,7 @@ void initialize_builtin(){
 
 	builtin()->def("builtin", builtin());
 
+	builtin()->def("PseudoArray", PseudoArray());
 	builtin()->def("Iterator", Iterator());
 	builtin()->def("Enumerator", Enumerator());
 	
@@ -493,33 +494,33 @@ Class::ancestors: method fiber{
 	}
 }
 
-Any::s_save: method{
+Any::serial_save: method{
 	ret: [:];
 	klass: this.class;
 
 	klass.ancestors.r_each{
-		if(n: this.serial_save(it))
+		if(n: this.instance_serial_save(it))
 			ret[it.object_name] = n;
 	}
 
-	if(n: this.serial_save(klass)){
+	if(n: this.instance_serial_save(klass)){
 		ret[klass.object_name] = n;
 	}
 
 	return ret;
 }
 
-Any::s_load: method(v){
+Any::serial_load: method(v){
 	klass: this.class;
 
 	klass.ancestors.r_each{
 		if(n: v[it.object_name]){
-			this.serial_load(it, n);
+			this.instance_serial_load(it, n);
 		}
 	}
 
 	if(n: v[klass.object_name]){
-		this.serial_load(klass, n);
+		this.instance_serial_load(klass, n);
 	}
 }
 

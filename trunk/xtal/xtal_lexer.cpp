@@ -12,6 +12,8 @@
 
 namespace xtal{
 
+extern AnyPtr once_value_none_;
+
 #define c2(C1, C2) ((C2)<<8 | (C1))
 #define c3(C1, C2, C3) ((C3)<<16 | (C2)<<8 | (C1))
 #define c4(C1, C2, C3, C4) ((C4)<<24 | (C3)<<16 | (C2)<<8 | (C1))
@@ -30,7 +32,7 @@ void LPCCommon::init(const StringPtr& file_name){
 
 	register_ident(InternedStringPtr(""));
 	value_table->push_back(null);
-	once_table->push_back(nop);
+	once_table->push_back(once_value_none_);
 }
 
 void LPCCommon::error(int_t line, const AnyPtr& message){
@@ -71,7 +73,7 @@ int_t LPCCommon::append_value(const AnyPtr& v){
 }
 
 int_t LPCCommon::append_once(){
-	once_table->push_back(nop);
+	once_table->push_back(once_value_none_);
 	return once_table->size()-1;
 }
 
@@ -103,7 +105,6 @@ void Lexer::init(const StreamPtr& stream, const StringPtr& source_file_name){
 	keyword_map_->set_at(InternedStringPtr("null"), (int_t)Token::KEYWORD_NULL);
 	keyword_map_->set_at(InternedStringPtr("false"), (int_t)Token::KEYWORD_FALSE);
 	keyword_map_->set_at(InternedStringPtr("true"), (int_t)Token::KEYWORD_TRUE);
-	keyword_map_->set_at(InternedStringPtr("nop"), (int_t)Token::KEYWORD_NOP);
 	keyword_map_->set_at(InternedStringPtr("xtal"), (int_t)Token::KEYWORD_XTAL);
 	keyword_map_->set_at(InternedStringPtr("try"), (int_t)Token::KEYWORD_TRY);
 	keyword_map_->set_at(InternedStringPtr("catch"), (int_t)Token::KEYWORD_CATCH);

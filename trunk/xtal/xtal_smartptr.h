@@ -187,7 +187,6 @@ inline const AnyPtr& ap(const Innocence& v){
 }
 
 class Null : public AnyPtr{};
-class Nop : public AnyPtr{ public: Nop():AnyPtr(TYPE_NOP){} };
 
 inline bool operator ==(const AnyPtr& a, const Null&){ return !a; }
 inline bool operator !=(const AnyPtr& a, const Null&){ return a; }

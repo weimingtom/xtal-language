@@ -89,6 +89,7 @@ private:
 	StringPtr newline_ch_;
 	uint_t line_number_;
 	ArrayPtr errors_;
+	bool eof_;
 
 public:
 
@@ -103,6 +104,7 @@ public:
 
 		newline_ch_ = "\n";
 		line_number_ = 1;
+		eof_ = false;
 	}
 
 	/**
@@ -211,7 +213,7 @@ public:
 			}
 
 			if(now_read==0){
-				return nop;
+				return null;
 			}
 
 			read_ += now_read;
@@ -229,6 +231,11 @@ public:
 		return  ret;
 	}
 
+	bool eof(){
+		peek(1);
+		return pos_==read_;
+	}
+
 	void skip(uint_t n){
 		for(uint_t i=0; i<n; ++i){
 			read();
@@ -243,7 +250,7 @@ public:
 		}
 	}
 
-	void push_value(const AnyPtr& v){
+	void push_result(const AnyPtr& v){
 		if(!ignore_nest_){
 			results_->push_back(v);
 		}
@@ -399,6 +406,9 @@ class ParserPtr : public SmartPtr<Parser>{
 public:
 	ParserPtr(const SmartPtr<Parser>& p = null)
 		:SmartPtr<Parser>(p){}
+
+	ParserPtr(const Null& p)
+		:SmartPtr<Parser>(p){}
 };
 
 class Parser : public Base{
@@ -438,20 +448,6 @@ public:
 
 	static ParserPtr str(const StringPtr& str);
 
-	static ParserPtr eos();
-
-	static ParserPtr any();
-
-	static ParserPtr digit();
-
-	static ParserPtr space();
-
-	static ParserPtr lalpha();
-
-	static ParserPtr ualpha();
-
-	static ParserPtr alpha();
-
 	static ParserPtr ch_set(const StringPtr& str);
 
 	static ParserPtr repeat(const AnyPtr& p, int_t n);
@@ -469,10 +465,6 @@ public:
 	static ParserPtr try_(const AnyPtr& p);
 	
 	static ParserPtr ch_map(const MapPtr& data);
-
-	static ParserPtr success();
-
-	static ParserPtr fail();
 
 	static ParserPtr error(const AnyPtr& message);
 

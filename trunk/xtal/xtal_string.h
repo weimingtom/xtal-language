@@ -158,14 +158,14 @@ public:
 	StringPtr to_s();
 
 	/**
-	* @brief sepで区切った文字列を得られるイテレータを返す。
+	* @brief sepで区切った文字列を要素とするPseudoArrayを返す。
 	*
 	* @param sep 文字列かPEGのParser
 	*/ 
 	AnyPtr split(const AnyPtr& sep);
 
 	/**
-	* @brief 一文字づつ得られるイテレータを返す。
+	* @brief 一文字づつの文字列を要素とするPseudoArrayを返す。
 	*
 	*/
 	AnyPtr each();
@@ -379,6 +379,7 @@ extern InternedStringPtr idop_or_assign;
 extern InternedStringPtr idop_add_assign;
 extern InternedStringPtr idop_shr;
 extern InternedStringPtr idop_ushr_assign;
+extern InternedStringPtr idinstance_serial_save;
 extern InternedStringPtr idserial_save;
 extern InternedStringPtr idop_call;
 extern InternedStringPtr idop_sub_assign;
@@ -386,6 +387,7 @@ extern InternedStringPtr idop_lt;
 extern InternedStringPtr idop_eq;
 extern InternedStringPtr idop_mul;
 extern InternedStringPtr idop_neg;
+extern InternedStringPtr idserial_load;
 extern InternedStringPtr idblock_break;
 extern InternedStringPtr idtrue;
 extern InternedStringPtr idlib;
@@ -426,8 +428,6 @@ extern InternedStringPtr idto_s;
 extern InternedStringPtr idop_shl_assign;
 extern InternedStringPtr idop_sub;
 extern InternedStringPtr idop_com;
-extern InternedStringPtr ids_load;
-extern InternedStringPtr ids_save;
 extern InternedStringPtr idnew;
 extern InternedStringPtr idop_shl;
 extern InternedStringPtr idop_xor;
@@ -437,6 +437,7 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idop_mul_assign;
 }
 //}}ID}
+
 
 
 

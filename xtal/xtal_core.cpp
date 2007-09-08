@@ -117,7 +117,7 @@ void initialize(){
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		chain_cpp_class(*holders[i]);
 		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(Class))));
-		pvalue(holders[i]->value)->set_ref_count(1);
+		pvalue(holders[i]->value)->ref_count_ = 1;
 	}
 	
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){

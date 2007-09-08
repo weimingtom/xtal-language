@@ -600,7 +600,6 @@ public:
 //{DECLS{{
 	const inst_t* FunNop(const inst_t* pc);
 	const inst_t* FunPushNull(const inst_t* pc);
-	const inst_t* FunPushNop(const inst_t* pc);
 	const inst_t* FunPushTrue(const inst_t* pc);
 	const inst_t* FunPushFalse(const inst_t* pc);
 	const inst_t* FunPushInt1Byte(const inst_t* pc);

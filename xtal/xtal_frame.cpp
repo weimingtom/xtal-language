@@ -233,7 +233,7 @@ const AnyPtr& Class::any_member(const InternedStringPtr& name, const AnyPtr& ns)
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}
-	return nop;
+	return null;
 }
 
 const AnyPtr& Class::bases_member(const InternedStringPtr& name){
@@ -242,7 +242,7 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 			return ret;
 		}
 	}
-	return nop;
+	return null;
 }
 
 const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
@@ -325,7 +325,13 @@ bool Class::is_inherited_cpp_class(){
 
 void Class::call(const VMachinePtr& vm){
 	const AnyPtr& newfun = bases_member(Xid(new));
-	AnyPtr instance(newfun ? newfun() : xnew<Base>());
+	AnyPtr instance;
+	if(newfun){
+		instance = newfun();
+	}else{
+		instance = xnew<Base>();
+		pvalue(instance)->set_xtal_instance_flag();
+	}
 
 	pvalue(instance)->set_class(ClassPtr::from_this(this));
 	init_instance(instance, vm);
@@ -345,7 +351,13 @@ void Class::call(const VMachinePtr& vm){
 
 void Class::s_new(const VMachinePtr& vm){
 	const AnyPtr& newfun = bases_member(Xid(serial_new));
-	AnyPtr instance(newfun ? newfun() : xnew<Base>());
+	AnyPtr instance;
+	if(newfun){
+		instance = newfun();
+	}else{
+		instance = xnew<Base>();
+		pvalue(instance)->set_xtal_instance_flag();
+	}
 
 	pvalue(instance)->set_class(ClassPtr::from_this(this));
 	init_instance(instance, vm);
@@ -399,7 +411,7 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, 
 				return rawdef(name, load(file_name), ns);
 			}
 		}
-		return nop;
+		return null;
 
 		/* 指定した名前をフォルダーとみなす
 		ArrayPtr next = path_.clone();

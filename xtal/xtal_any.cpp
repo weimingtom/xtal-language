@@ -25,8 +25,8 @@ void initialize_any(){
 		p->method("class", &Any::get_class);
 		p->method("get_class", &Any::get_class);
 		p->method("object_name", &Any::object_name);
-		p->method("serial_save", &Any::serial_save);
-		p->method("serial_load", &Any::serial_load);
+		p->method("instance_serial_save", &Any::instance_serial_save);
+		p->method("instance_serial_load", &Any::instance_serial_load);
 	}
 
 	builtin()->def("Any", get_cpp_class<Any>());
@@ -313,7 +313,6 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_FLOAT){ return get_cpp_class<Float>(); }
 		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<False>(); }
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<True>(); }
-		XTAL_CASE(TYPE_NOP){ return get_cpp_class<Nop>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
 	}
 	return get_cpp_class<Any>();
@@ -328,7 +327,10 @@ uint_t Any::hashcode() const{
 
 
 bool Any::is(const ClassPtr& klass) const{
-	return is_cache_table.cache(get_class(), klass);
+	const ClassPtr& my_class = get_class();
+	if(raweq(my_class, klass)) return true;
+	if(klass->is_cpp_class() && type(*this)==TYPE_BASE && pvalue(*this)->is_xtal_instance()) return false;
+	return is_cache_table.cache(my_class, klass);
 }
 
 AnyPtr Any::p() const{
@@ -336,7 +338,7 @@ AnyPtr Any::p() const{
 	return ap(*this);
 }
 
-AnyPtr Any::serial_save(const ClassPtr& p) const{
+AnyPtr Any::instance_serial_save(const ClassPtr& p) const{
 	if(type(*this)!=TYPE_BASE)
 		return null;
 
@@ -356,7 +358,7 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 	return null;
 }
 
-void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
+void Any::instance_serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	if(type(*this)!=TYPE_BASE)
 		return;
 

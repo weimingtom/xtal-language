@@ -13,7 +13,19 @@ BlockCore empty_block_core;
 ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
+AnyPtr once_value_none_;
+
+namespace{
+
+void uninitialize_code(){
+	once_value_none_ = null;
+}
+
+}
+
 void initialize_code(){
+	register_uninitializer(&uninitialize_code);
+
 	{
 		ClassPtr p = new_cpp_class<Code>("Code");
 		p->inherit(get_cpp_class<Fun>());
@@ -21,6 +33,8 @@ void initialize_code(){
 	}
 
 	builtin()->def("Code", get_cpp_class<Code>());
+
+	once_value_none_ = xnew<Base>();
 }
 
 
@@ -84,7 +98,6 @@ StringPtr Code::inspect(){
 //{CODE_INSPECT{{
 		XTAL_CASE(InstNop::NUMBER){ temp = ((InstNop*)pc)->inspect(); sz = InstNop::ISIZE; }
 		XTAL_CASE(InstPushNull::NUMBER){ temp = ((InstPushNull*)pc)->inspect(); sz = InstPushNull::ISIZE; }
-		XTAL_CASE(InstPushNop::NUMBER){ temp = ((InstPushNop*)pc)->inspect(); sz = InstPushNop::ISIZE; }
 		XTAL_CASE(InstPushTrue::NUMBER){ temp = ((InstPushTrue*)pc)->inspect(); sz = InstPushTrue::ISIZE; }
 		XTAL_CASE(InstPushFalse::NUMBER){ temp = ((InstPushFalse*)pc)->inspect(); sz = InstPushFalse::ISIZE; }
 		XTAL_CASE(InstPushInt1Byte::NUMBER){ temp = ((InstPushInt1Byte*)pc)->inspect(); sz = InstPushInt1Byte::ISIZE; }

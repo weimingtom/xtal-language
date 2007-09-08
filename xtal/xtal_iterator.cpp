@@ -7,7 +7,7 @@ namespace xtal{
 	
 namespace{
 
-ClassCore iterator_core(0, 2);
+ClassCore pseudo_array_core(0, 2);
 
 }
 
@@ -15,25 +15,25 @@ const ArrayPtr& PseudoArray_arrayize(const AnyPtr& v){
 	if(type(v)==TYPE_BASE){
 		pvalue(v)->make_instance_variables();
 		InstanceVariables* iv = pvalue(v)->instance_variables();
-		if(!iv->is_included(&iterator_core)){
-			iv->init_variables(&iterator_core);
+		if(!iv->is_included(&pseudo_array_core)){
+			iv->init_variables(&pseudo_array_core);
 			ArrayPtr values = xnew<Array>();
 			Xfor(it, v){
 				values->push_back(it);
 			}
-			iv->set_variable(0, &iterator_core, values);
+			iv->set_variable(0, &pseudo_array_core, values);
 		}
-		return static_ptr_cast<Array>(iv->variable(0, &iterator_core));
+		return static_ptr_cast<Array>(iv->variable(0, &pseudo_array_core));
 	}else{
 		return static_ptr_cast<Array>(null);
 	}
 }
 
-const ArrayPtr& PseudoArray_extarct_array(const AnyPtr& v){
+const ArrayPtr& PseudoArray_extract_array(const AnyPtr& v){
 	if(type(v)==TYPE_BASE){
 		if(InstanceVariables* iv = pvalue(v)->instance_variables()){
-			if(iv->is_included(&iterator_core)){
-				return static_ptr_cast<Array>(iv->variable(0, &iterator_core));
+			if(iv->is_included(&pseudo_array_core)){
+				return static_ptr_cast<Array>(iv->variable(0, &pseudo_array_core));
 			}
 		}
 	}
@@ -142,20 +142,28 @@ void PseudoArray_assign(const AnyPtr& self, const ArrayPtr& other){
 	PseudoArray_arrayize(self)->assign(other);
 }
 
-AnyPtr PseudoArray_each(const AnyPtr& self){
-	if(const AnyPtr& ary = PseudoArray_extarct_array(self)){
-		return static_ptr_cast<Array>(ary)->each();
-	}else{
-		return self;
-	}
+void Iterator_each(const VMachinePtr& vm){
+	vm->return_result(vm->get_arg_this());
+}
+
+void Iterator_block_first(const VMachinePtr& vm){
+	vm->get_arg_this()->rawsend(vm, Xid(block_next));
 }
 
 }
 
 void initialize_iterator(){
+
+	{
+		ClassPtr p = Iterator();
+		p->fun("each", &Iterator_each);
+		p->fun("block_first", &Iterator_block_first);
+	}
+
 	{
 		ClassPtr p = PseudoArray();
 		p->method("arrayize", &PseudoArray_arrayize);
+		p->method("extract_array", &PseudoArray_extract_array);
 
 		p->method("size", &PseudoArray_length);
 		p->method("length", &PseudoArray_length);
@@ -185,7 +193,6 @@ void initialize_iterator(){
 		p->method("reverse", &PseudoArray_reverse);
 		p->method("reversed", &PseudoArray_reversed);
 		p->method("assign", &PseudoArray_assign);
-		p->method("each", &PseudoArray_each);
 	}
 }
 
@@ -194,7 +201,7 @@ void DelegateToIterator::call(const VMachinePtr& vm){
 }
 
 void DelegateToIteratorOrArray::call(const VMachinePtr& vm){
-	if(const ArrayPtr& ary = PseudoArray_extarct_array(vm->get_arg_this())){
+	if(const ArrayPtr& ary = PseudoArray_extract_array(vm->get_arg_this())){
 		ary->each()->rawsend(vm, member_);
 	}else{
 		Iterator()->member(member_)->call(vm);

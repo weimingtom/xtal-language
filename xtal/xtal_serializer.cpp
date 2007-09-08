@@ -13,6 +13,8 @@
 
 namespace xtal{
 
+extern AnyPtr once_value_none_;
+
 enum{
 	SERIALIZE_VERSION1 = 1,
 	SERIALIZE_VERSION2 = 0,
@@ -85,11 +87,6 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 		XTAL_CASE(TYPE_TRUE){
 			stream_->put_u8(TTRUE);
-			return;
-		}
-
-		XTAL_CASE(TYPE_NOP){
-			stream_->put_u8(TNOP);
 			return;
 		}
 
@@ -224,8 +221,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			check_id_and_throw(id);
 			inner_serialize(id); // クラスの名前を埋め込む
 
-			// serial_saveでserializableなオブジェクトを取り出しserializeする
-			inner_serialize(v->send(Xid(s_save)));
+			// instance_serial_saveでserializableなオブジェクトを取り出しserializeする
+			inner_serialize(v->send(Xid(serial_save)));
 		}
 	}else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
@@ -255,7 +252,7 @@ AnyPtr Serializer::inner_deserialize(){
 			vm->cleanup_call();
 
 			vm->setup_call(0, inner_deserialize());
-			ret->rawsend(vm, Xid(s_load));
+			ret->rawsend(vm, Xid(serial_load));
 			vm->cleanup_call();
 
 			return ret;
@@ -275,10 +272,6 @@ AnyPtr Serializer::inner_deserialize(){
 			return null;
 		}
 		
-		XTAL_CASE(TNOP){
-			return nop;
-		}
-
 		XTAL_CASE(TINT){
 			return stream_->get_i32();
 		}
@@ -406,6 +399,9 @@ AnyPtr Serializer::inner_deserialize(){
 
 			sz = stream_->get_u32();
 			p->once_table_ = xnew<Array>(sz);
+			for(uint_t i=0; i<sz; ++i){
+				p->once_table_->set_at(i, once_value_none_);
+			}
 
 			FunPtr ret(xnew<Fun>(null, null, p, &p->xfun_core_table_[0]));
 			append_value(ret);
@@ -552,14 +548,14 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 		}
 
 		if(!processed){
-			// 所属クラスにserial_save関数が定義されている
-			if(v->get_class()->member(Xid(serial_save))){
+			// 所属クラスにinstance_serial_save関数が定義されている
+			if(v->get_class()->member(Xid(instance_serial_save))){
 				InternedStringPtr id = v->get_class()->object_name();
 
 				check_id(id);
 				stream_->put_s(id);
-				stream_->put_s(".serial_new).serial_load(");
-				inner_xtalize(v->send(Xid(serial_save)), tab);
+				stream_->put_s(".serial_new).instance_serial_load(");
+				inner_xtalize(v->send(Xid(instance_serial_save)), tab);
 			}else{
 				InternedStringPtr id = v->object_name();
 				check_id(id);

@@ -147,18 +147,25 @@ public:
 
 public:
 
+	enum{
+		XTAL_INSTANCE_FLAG_BIT = 1 << (sizeof(uint_t)*8-1),
+		REF_COUNT_MASK = ~(XTAL_INSTANCE_FLAG_BIT)
+	};
+
 	InstanceVariables* instance_variables(){ return instance_variables_; }
 	void make_instance_variables();
 
-	uint_t ref_count(){ return ref_count_; }
+	uint_t ref_count(){ return ref_count_ & REF_COUNT_MASK; }
 	void add_ref_count(int_t rc){ ref_count_+=rc; }
 	void inc_ref_count(){ ++ref_count_; }
 	void dec_ref_count(){ --ref_count_; }
-	void set_ref_count(uint_t rc){ ref_count_ = rc; }
 
 	void set_class(const ClassPtr& c);
 
 	virtual void visit_members(Visitor& m);
+
+	bool is_xtal_instance(){ return (ref_count_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
+	void set_xtal_instance_flag(){ ref_count_ |= XTAL_INSTANCE_FLAG_BIT; }
 	
 private:
 
@@ -175,6 +182,7 @@ private:
 
 	friend void gc();
 	friend void full_gc();
+	friend void initialize();
 };
 
 

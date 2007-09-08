@@ -66,7 +66,7 @@ void Base::call(const VMachinePtr& vm){
 }
 
 const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){ 
-	return nop;
+	return null;
 }
 
 

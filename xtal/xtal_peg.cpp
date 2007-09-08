@@ -6,8 +6,42 @@
 	
 namespace xtal{ 
 	
+namespace peg{
+
+ParserPtr any;
+ParserPtr eof;
+ParserPtr alpha;
+ParserPtr lalpha;
+ParserPtr ualpha;
+ParserPtr space;
+ParserPtr digit;
+ParserPtr success;
+ParserPtr fail;
+
+}
+
+namespace{
+
+void uninitialize_peg(){
+	using namespace peg;
+
+	any = null;
+	eof = null;
+	alpha = null;
+	lalpha = null;
+	ualpha = null;
+	space = null;
+	digit = null;
+	success = null;
+	fail = null;
+}
+
+}
+
 void initialize_peg(){
 	using namespace peg;
+
+	register_uninitializer(&uninitialize_peg);
 
 	ClassPtr peg =  xnew<Class>("peg");
 
@@ -39,13 +73,26 @@ void initialize_peg(){
 
 	builtin()->def("peg", peg);
 
-	peg->def("any", Parser::any());
-	peg->def("eos", Parser::eos());
-	peg->def("alpha", Parser::alpha());
-	peg->def("lalpha", Parser::lalpha());
-	peg->def("ualpha", Parser::ualpha());
-	peg->def("space", Parser::space());
-	peg->def("digit", Parser::digit());
+
+	any = xnew<Parser>(Parser::ANY);
+	eof = xnew<Parser>(Parser::END);
+	lalpha = Parser::ch_set("abcdefghijklmnopqrstuvwxyz");
+	ualpha = Parser::ch_set("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	alpha = Parser::select(ualpha, lalpha);
+	space = Parser::ch_set(" \t\n\r");
+	digit = Parser::ch_set("0123456789");
+	success = xnew<Parser>(Parser::SUCCESS);
+	fail = xnew<Parser>(Parser::FAIL);
+
+	peg->def("any", any);
+	peg->def("eof", eof);
+	peg->def("alpha", alpha);
+	peg->def("lalpha", lalpha);
+	peg->def("ualpha", ualpha);
+	peg->def("space", alpha);
+	peg->def("digit", digit);
+	peg->def("success", success);
+	peg->def("fail", fail);
 	peg->fun("str", &Parser::str);
 	peg->fun("ch_set", &Parser::ch_set);
 	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
@@ -105,34 +152,6 @@ ParserPtr Parser::str(const StringPtr& str){
 		return xnew<Parser>(CH, data->at(0));
 	}
 	return xnew<Parser>(STRING, str, data);
-}
-
-ParserPtr Parser::eos(){
-	return xnew<Parser>(END);
-}
-
-ParserPtr Parser::any(){
-	return xnew<Parser>(ANY);
-}
-
-ParserPtr Parser::digit(){
-	return ch_set("0123456789");
-}
-
-ParserPtr Parser::space(){
-	return ch_set(" \t\n\r");
-}
-
-ParserPtr Parser::lalpha(){
-	return ch_set("abcdefghijklmnopqrstuvwxyz");
-}
-
-ParserPtr Parser::ualpha(){
-	return ch_set("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-}
-
-ParserPtr Parser::alpha(){
-	return select(lalpha(), ualpha());
 }
 
 ParserPtr Parser::ch_set(const StringPtr& str){
@@ -267,14 +286,6 @@ ParserPtr Parser::ch_map(const MapPtr& data){
 	return xnew<Parser>(CH_MAP, data);
 }
 
-ParserPtr Parser::success(){
-	return xnew<Parser>(SUCCESS);
-}
-
-ParserPtr Parser::fail(){
-	return xnew<Parser>(FAIL);
-}
-
 ParserPtr Parser::val(const AnyPtr& v){
 	return xnew<Parser>(VAL, v);
 }
@@ -320,7 +331,7 @@ bool Parser::parse(const LexerPtr& lex){
 					PARSER_RETURN(false);
 				}
 			}
-			lex->push_value(param1_);
+			lex->push_result(param1_);
 			PARSER_RETURN(true);
 		}
 
@@ -332,13 +343,13 @@ bool Parser::parse(const LexerPtr& lex){
 				}
 			}
 			lex->skip(data->size());
-			lex->push_value(param1_);
+			lex->push_result(param1_);
 			PARSER_RETURN(true);
 		}
 
 		XTAL_CASE(CH){
 			if(raweq(lex->read(), param1_)){
-				lex->push_value(param1_);
+				lex->push_result(param1_);
 				PARSER_RETURN(true);
 			}
 			PARSER_RETURN(false);
@@ -346,7 +357,7 @@ bool Parser::parse(const LexerPtr& lex){
 
 		XTAL_CASE(TRY_CH){
 			if(raweq(lex->peek(), param1_)){
-				lex->push_value(param1_);
+				lex->push_result(param1_);
 				lex->read();
 				PARSER_RETURN(true);
 			}
@@ -357,7 +368,7 @@ bool Parser::parse(const LexerPtr& lex){
 			const MapPtr& data = static_ptr_cast<Map>(param1_);
 			const AnyPtr& s = lex->read();
 			if(data->at(s)){
-				lex->push_value(s);
+				lex->push_result(s);
 				PARSER_RETURN(true);
 			}
 			PARSER_RETURN(false);
@@ -367,7 +378,7 @@ bool Parser::parse(const LexerPtr& lex){
 			const MapPtr& data = static_ptr_cast<Map>(param1_);
 			const AnyPtr& s = lex->peek();
 			if(data->at(s)){
-				lex->push_value(s);
+				lex->push_result(s);
 				lex->skip(1);
 				PARSER_RETURN(true);
 			}
@@ -375,15 +386,14 @@ bool Parser::parse(const LexerPtr& lex){
 		}
 
 		XTAL_CASE(END){
-			PARSER_RETURN(raweq(lex->read(), nop));
+			PARSER_RETURN(lex->eof());
 		}
 
 		XTAL_CASE(ANY){
-			const AnyPtr& ret = lex->read();
-			if(raweq(ret, nop)){
+			if(lex->eof()){
 				PARSER_RETURN(false);
 			}
-			lex->push_value(ret);
+			lex->push_result(lex->read());
 			PARSER_RETURN(true);
 		}
 
@@ -467,7 +477,7 @@ bool Parser::parse(const LexerPtr& lex){
 		}
 
 		XTAL_CASE(VAL){
-			lex->push_value(param1_);
+			lex->push_result(param1_);
 			PARSER_RETURN(true);
 		}
 	}

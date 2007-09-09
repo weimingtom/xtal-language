@@ -40,7 +40,7 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	result_->once_table_ = com_->once_table;
 	
 	if(ep){
-		compile(ep);
+		compile_stmt(ep);
 	}
 
 	parser_.release();
@@ -81,7 +81,7 @@ void CodeBuilder::interactive_compile(){
 		com_->register_ident("filelocal");
 		
 		if(ep && com_->errors->empty()){
-			compile(ep);
+			compile_stmt(ep);
 		}else{
 			if(com_->errors->empty()){
 				break;
@@ -111,6 +111,15 @@ void CodeBuilder::interactive_compile(){
 	}
 }
 
+void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
+	if(t.op==255){
+		com_->error(line(), Xt("Xtal Compile Error 1027"));
+	}
+
+	size_t cur = result_->code_.size();
+	result_->code_.resize(cur+sz/sizeof(inst_t));
+	memcpy(&result_->code_[cur], &t, sz);
+}
 
 ArrayPtr CodeBuilder::errors(){
 	return com_->errors;
@@ -888,7 +897,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 						set_label(label);
 					}
 				}
-				compile(e->stmt);
+				compile_stmt(e->stmt);
 				break_off(fun_frame().frame_count+1);
 				if(debug::is_enabled()){
 					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
@@ -945,7 +954,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 	}
 }
 
-void CodeBuilder::compile(Stmt* ex){
+void CodeBuilder::compile_stmt(Stmt* ex){
 
 	if(!ex)
 		return;
@@ -1213,7 +1222,7 @@ void CodeBuilder::compile(Stmt* ex){
 			exc.finally_label = finally_label;
 			fun_frame().finallys.push(exc);
 
-			compile(e->try_stmt);
+			compile_stmt(e->try_stmt);
 			
 			set_jump(offsetof(InstPushGoto, address), end_label);
 			put_inst(InstPushGoto());
@@ -1239,7 +1248,7 @@ void CodeBuilder::compile(Stmt* ex){
 					if(e->catch_vars.vars.head){
 						put_set_local_code(e->catch_vars.vars.head->value.name);
 					}
-					compile(e->catch_stmt);
+					compile_stmt(e->catch_stmt);
 				}block_end();
 
 				put_inst(InstTryEnd());
@@ -1254,7 +1263,7 @@ void CodeBuilder::compile(Stmt* ex){
 			result_->except_core_table_[core].finally_pc = code_size();
 
 			// finally節のコードを埋め込む
-			compile(e->finally_stmt);
+			compile_stmt(e->finally_stmt);
 			
 			fun_frame().finallys.pop();
 
@@ -1271,7 +1280,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 			put_if_code(e->cond_expr, label_if, label_if2);
 
-			compile(e->body_stmt);
+			compile_stmt(e->body_stmt);
 			
 			if(e->else_stmt){
 				set_jump(offsetof(InstGoto, address), label_end);
@@ -1280,7 +1289,7 @@ void CodeBuilder::compile(Stmt* ex){
 			
 			set_label(label_if);
 			set_label(label_if2);
-			compile(e->else_stmt);
+			compile_stmt(e->else_stmt);
 		
 			set_label(label_end);
 		}
@@ -1301,7 +1310,7 @@ void CodeBuilder::compile(Stmt* ex){
 
 			if(e->next_stmt){
 				set_label(label_cond);
-				compile(e->next_stmt);
+				compile_stmt(e->next_stmt);
 			}else{
 				set_label(label_cond);
 			}
@@ -1316,7 +1325,7 @@ void CodeBuilder::compile(Stmt* ex){
 			
 			set_label(label_cond_end);
 			push_loop(label_end, label_cond, e->label);
-			compile(e->body_stmt);
+			compile_stmt(e->body_stmt);
 			pop_loop(); 
 			
 			set_jump(offsetof(InstGoto, address), label_cond);
@@ -1325,9 +1334,9 @@ void CodeBuilder::compile(Stmt* ex){
 			set_label(label_if);
 			set_label(label_if2);
 			if(e->nobreak_stmt){
-				compile(e->nobreak_stmt);
+				compile_stmt(e->nobreak_stmt);
 			}else{
-				compile(e->else_stmt);
+				compile_stmt(e->else_stmt);
 			}
 
 			set_label(label_end);
@@ -1511,7 +1520,7 @@ void CodeBuilder::compile(Stmt* ex){
 		XTAL_EXPR_CASE(BlockStmt){
 			block_begin(&e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
-					compile(p->value);
+					compile_stmt(p->value);
 				}
 			}block_end();
 		}
@@ -1519,7 +1528,7 @@ void CodeBuilder::compile(Stmt* ex){
 		XTAL_EXPR_CASE(TopLevelStmt){
 			block_begin(&e->vars);{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
-					compile(p->value);
+					compile_stmt(p->value);
 				}
 				
 				if(e->export_expr){

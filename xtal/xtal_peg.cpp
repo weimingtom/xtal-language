@@ -17,6 +17,7 @@ ParserPtr space;
 ParserPtr digit;
 ParserPtr success;
 ParserPtr fail;
+ParserPtr line_number;
 
 }
 
@@ -34,6 +35,7 @@ void uninitialize_peg(){
 	digit = null;
 	success = null;
 	fail = null;
+	line_number = null;
 }
 
 }
@@ -83,6 +85,7 @@ void initialize_peg(){
 	digit = Parser::ch_set("0123456789");
 	success = xnew<Parser>(Parser::SUCCESS);
 	fail = xnew<Parser>(Parser::FAIL);
+	line_number = xnew<Parser>(Parser::LINE_NUMBER);
 
 	peg->def("any", any);
 	peg->def("eof", eof);
@@ -93,6 +96,7 @@ void initialize_peg(){
 	peg->def("digit", digit);
 	peg->def("success", success);
 	peg->def("fail", fail);
+	peg->def("line_number", line_number);
 	peg->fun("str", &Parser::str);
 	peg->fun("ch_set", &Parser::ch_set);
 	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
@@ -478,6 +482,11 @@ bool Parser::parse(const LexerPtr& lex){
 
 		XTAL_CASE(VAL){
 			lex->push_result(param1_);
+			PARSER_RETURN(true);
+		}
+
+		XTAL_CASE(LINE_NUMBER){
+			lex->push_result(lex->line_number());
 			PARSER_RETURN(true);
 		}
 	}

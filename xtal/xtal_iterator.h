@@ -35,4 +35,20 @@ public:
 	}
 };
 
+void block_next(AnyPtr& target, AnyPtr& value, bool first);
+void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
+void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
+void block_break(AnyPtr& target);
+
+template<int N>
+struct BlockValueHolder{
+	BlockValueHolder(const AnyPtr& tar=null):target(tar){}
+	~BlockValueHolder(){ block_break(target); }
+
+	AnyPtr target;
+	AnyPtr values[N];
+
+	operator bool(){ return target; }
+};
+
 }

@@ -137,7 +137,7 @@ r{
 
 filelocal.inherit(peg);
 
-vvv: (alpha | (-digit >> val("*")));
+vvv: (alpha | (-digit >> line_number));
 var: join(vvv*1);
 
 //var: str("aiueo") | str("byack") | str("clkue") | str("dwerae") | str("clc") | str("cl") | str("kue");
@@ -171,7 +171,7 @@ export mm;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

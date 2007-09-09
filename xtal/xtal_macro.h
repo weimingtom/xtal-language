@@ -2,6 +2,7 @@
 #pragma once
 
 #include "xtal_lib.h"
+#include "xtal_iterator.h"
 
 /** @addtogroup xmacro */
 /*@{*/
@@ -15,10 +16,10 @@
 * }
 * @endcode
 */
-#define Xfor(var, target) \
-	if(::xtal::AnyPtr var = 1)\
-	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::block_next(tar, var, true); tar; ::xtal::block_next(tar, var, false))
+#define Xfor(var, tar) \
+	if(::xtal::BlockValueHolder<1> block_value_holder = tar)\
+	for(::xtal::AnyPtr &var = block_value_holder.values[0]; block_value_holder;)\
+	for(::xtal::block_next(block_value_holder.target, var, true); block_value_holder; ::xtal::block_next(block_value_holder.target, var, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -29,11 +30,10 @@
 * }
 * @endcode
 */
-#define Xfor2(var1, var2, target) \
-	if(::xtal::AnyPtr var1 = 1)\
-	if(::xtal::AnyPtr var2 = 1)\
-	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::block_next(tar, var1, var2, true); tar; ::xtal::block_next(tar, var1, var2, false))
+#define Xfor2(var1, var2, tar) \
+	if(::xtal::BlockValueHolder<1> block_value_holder = tar)\
+	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; block_value_holder;)\
+	for(::xtal::block_next(block_value_holder.target, var1, var2, true); block_value_holder.target; ::xtal::block_next(block_value_holder.target, var1, var2, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -44,12 +44,10 @@
 * }
 * @endcode
 */
-#define Xfor3(var1, var2, var3, target) \
-	if(::xtal::AnyPtr var1 = 1)\
-	if(::xtal::AnyPtr var2 = 1)\
-	if(::xtal::AnyPtr var3 = 1)\
-	if(::xtal::IterBreaker tar = target)\
-	for(::xtal::block_next(tar, var1, var2, var3, true); tar; ::xtal::block_next(tar, var1, var2, var3, false))
+#define Xfor3(var1, var2, var3, tar) \
+	if(::xtal::BlockValueHolder<1> block_value_holder = tar)\
+	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; block_value_holder;)\
+	for(::xtal::block_next(block_value_holder.target, var1, var2, var3, true); block_value_holder.target; ::xtal::block_next(block_value_holder.target, var1, var2, var3, false))
 
 
 /**

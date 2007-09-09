@@ -256,6 +256,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_smartptr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_stack.cpp"
 				>
 			</File>

@@ -169,7 +169,7 @@ private:
 	Stack<FunFrame> fun_frames_;
 	PODStack<int_t> lines_;
 	PStack<Vars*> vars_stack_;
-	Stack<ClassExpr*> class_scopes_;
+	PStack<ClassExpr*> class_scopes_;
 
 private:
 	CodeBuilder(const CodeBuilder&);

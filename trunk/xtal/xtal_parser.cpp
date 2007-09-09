@@ -870,22 +870,23 @@ Stmt* Parser::parse_assign_stmt(){
 					}
 
 					XTAL_CASE(','){
-						MultipleAssignStmt* mas = XTAL_NEW MultipleAssignStmt(ln);
-						mas->lhs.push_back(lhs, &alloc_);
-						if(parse_multiple_expr(&mas->lhs, true)){
-							mas->lhs.push_back(e.local(com_->register_ident("__DUMMY__")), &alloc_);
+						e.massign_begin();
+						e.massign_lhs(lhs);
+						if(parse_multiple_expr(e.massign_lhs_exprs(), true)){
+							e.massign_lhs(e.local(com_->register_ident("__DUMMY__")));
 						}
 						
 						if(eat('=')){
-							mas->define = false;
-							parse_multiple_expr(&mas->rhs);
+							e.massign_define(false);
+							parse_multiple_expr(e.massign_rhs_exprs());
 						}else if(eat(':')){
-							mas->define = true;
-							parse_multiple_expr(&mas->rhs);
-							for(TList<Expr*>::Node* p = mas->lhs.head; p; p = p->next){
-								if(LocalExpr* le = expr_cast<LocalExpr>(p->value)){
-									e.register_variable(le->var);
-								}else if(expr_cast<SendExpr>(lhs)){
+							e.massign_define(true);
+							parse_multiple_expr(e.massign_rhs_exprs());
+
+							for(TList<Expr*>::Node* p = e.massign_lhs_exprs()->head; p; p = p->next){
+								if(LocalExpr* loc = expr_cast<LocalExpr>(p->value)){
+									e.register_variable(loc->var);
+								}else if(expr_cast<SendExpr>(p->value)){
 								
 								}else{
 									com_->error(line(), Xt("Xtal Compile Error 1001"));
@@ -895,7 +896,7 @@ Stmt* Parser::parse_assign_stmt(){
 							com_->error(line(), Xt("Xtal Compile Error 1001"));
 						}
 						
-						return mas;
+						return e.massign_end();
 					}
 
 					XTAL_CASE('='){  return e.assign(lhs, parse_expr_must()); }

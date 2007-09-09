@@ -108,16 +108,14 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	int_t num = register_value(v, added);
 	if(added){
 
-		if(raweq(cls, get_cpp_class<Array>())){
-			ArrayPtr a = cast<ArrayPtr>(v);
+		if(ArrayPtr a = as<ArrayPtr>(v)){
 			stream_->put_u8(TARRAY);
 			stream_->put_u32(a->size());
 			for(int_t i=0; i<a->size(); ++i){
 				inner_serialize(a->at(i));
 			}
 			return;
-		}else if(raweq(cls, get_cpp_class<String>())){
-			StringPtr a = cast<StringPtr>(v);
+		}else if(StringPtr a = as<StringPtr>(v)){
 			if(a->is_interned()){
 				stream_->put_u8(TID);
 			}else{
@@ -130,8 +128,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_u8(str[i]);
 			}
 			return;
-		}else if(raweq(cls, get_cpp_class<Map>())){
-			MapPtr a = cast<MapPtr>(v);
+		}else if(MapPtr a = as<MapPtr>(v)){
 			stream_->put_u8(TMAP);
 			stream_->put_u32(a->size());
 			Xfor2(key, value, a->pairs()){
@@ -221,7 +218,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			check_id_and_throw(id);
 			inner_serialize(id); // クラスの名前を埋め込む
 
-			// instance_serial_saveでserializableなオブジェクトを取り出しserializeする
+			// serial_saveでserializableなオブジェクトを取り出しserializeする
 			inner_serialize(v->send(Xid(serial_save)));
 		}
 	}else{

@@ -160,17 +160,6 @@ MapPtr get_get_text_map();
 
 AnyPtr source(const char* src, int_t size, const char* file);
 
-void block_next(AnyPtr& target, AnyPtr& value, bool first);
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
-
-struct IterBreaker{
-	AnyPtr target;
-	IterBreaker(const AnyPtr& tar=null):target(tar){}
-	~IterBreaker();
-	operator AnyPtr&(){ return target; }
-	operator bool(){ return target; }
-};
 
 /*@}*/
 

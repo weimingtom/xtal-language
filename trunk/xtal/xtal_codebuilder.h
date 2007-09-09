@@ -31,7 +31,7 @@ public:
 	};
 
 	void compile(Expr* p, const CompileInfo& info = CompileInfo());
-	void compile(Stmt* p);	
+	void compile_stmt(Stmt* p);	
 	
 	/**
 	* コンパイルエラーを取得する。
@@ -90,17 +90,11 @@ public:
 	*/
 	void break_off(int_t to);
 
+	void put_inst2(const Inst& t, uint_t sz);
+
 	template<class T>
 	void put_inst(const T& t){
-
-		if(t.op==255){
-			com_->error(line(), Xt("Xtal Compile Error 1027"));
-		}
-
-		size_t cur = result_->code_.size();
-		size_t sz = sizeof(T);
-		result_->code_.resize(cur+sz/sizeof(inst_t));
-		memcpy(&result_->code_[cur], &t, sz);
+		put_inst2(t, sizeof(t));
 	}
 	
 	/**

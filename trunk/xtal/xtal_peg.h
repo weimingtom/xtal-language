@@ -434,6 +434,7 @@ public:
 		CH_MAP,
 		TRY,
 		VAL,
+		LINE_NUMBER,
 	};
 
 public:

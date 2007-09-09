@@ -208,7 +208,7 @@ void DelegateToIteratorOrArray::call(const VMachinePtr& vm){
 	}
 }
 
-IterBreaker::~IterBreaker(){
+void block_break(AnyPtr& target){
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(0);
 	target->rawsend(vm, Xid(block_break));

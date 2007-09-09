@@ -104,36 +104,8 @@ int main(int argc, char** argv){
 			path = temp->join(sep)->to_s();
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
-		
+			
 AnyPtr ret = Xsrc((
-
-
-Range: class(PseudoArray){
-  _lower;
-  _upper;
-  _current;
-
-  initialize: method(_lower, _upper){
-    _current = _lower;
-  }
- 
-  block_next: method(){
-    if(_current<_upper){
-      temp: _current;
-      _current++;
-      return this, temp;
-    }
-    return null;
-  }
-}
-
-// 配列のメソッドspliceを呼び出す
-r: Range(5, 15);
-r.splice(5, 3).p;
-r{
-  it.p;
-}
-
 
 filelocal.inherit(peg);
 

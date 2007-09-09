@@ -182,112 +182,12 @@ inline T* stmt_cast(Stmt* p){
 	return 0;
 }
 
-/*
-
-
-enum{
-	EXPR_NULL,
-	EXPR_NOP,
-	EXPR_TRUE,
-	EXPR_FALSE,
-	EXPR_CALLEE,
-	EXPR_ARGS,
-
-	EXPR_INT,
-	EXPR_FLOAT,
-	EXPR_STRING,
-	EXPR_ARRAY,
-	EXPR_MAP,
-
-	EXPR_ADD,
-	EXPR_SUB,
-	EXPR_CAT,
-	EXPR_MUL,
-	EXPR_DIV,
-	EXPR_MOD,
-	EXPR_AND,
-	EXPR_OR,
-	EXPR_XOR,
-	EXPR_SHL,
-	EXPR_SHR,
-	EXPR_USHR,
-
-	EXPR_EQ,
-	EXPR_NE,
-	EXPR_LT,
-	EXPR_GT,
-	EXPR_LE,
-	EXPR_GE,
-
-	EXPR_INC,
-	EXPR_DEC,
-
-	EXPR_POS,
-	EXPR_NEG,
-	EXPR_COM,
-	EXPR_NOT,
-
-	EXPR_RETURN,
-	EXPR_YIELD,
-	EXPR_ASSERT,
-	EXPR_ONCE,
-
-	EXPR_TRY,
-	EXPR_IF,
-	EXPR_WHILE,
-	EXPR_FUN,
-	EXPR_MULTIPLE_ASSIGN,
-	EXPR_INSTANCE_VARIABLE,
-	EXPR_LOCAL_VARIABLE,
-	EXPR_MEMBER,
-	EXPR_CALL,
-	EXPR_SEND,
-	EXPR_ASSIGN,
-	EXPR_DEFINE,
-	EXPR_DEFINE_CLASS_MEMBER,
-	EXPR_AT,
-	EXPR_BREAK,
-	EXPR_CONTINUE,
-	EXPR_BLOCK,
-	EXPR_CLASS,
-
-	EXPR_NODE_EXPRS,
-
-};
-*/
-
-#define XTAL_DEF_MEMBER(N, Type, Name) \
-	Type Name(){ if(size()<=N) resize(N+1); return as<Type>(at(N)); }\
-	void set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); }
-
-/*
-class Expr;
-typedef SmartPtr<Expr> ExprPtr;
-
-class Expr : public Array{
-public:
-
-	XTAL_DEF_MEMBER(0, int_t, type);
-	XTAL_DEF_MEMBER(1, int_t, line);
-	XTAL_DEF_MEMBER(2, AnyPtr, info);
-	
-
-	ExprPtr term();
-
-	ExprPtr lhs();
-	ExprPtr rhs();
-
-	AnyPtr val();
-};
-*/
-
 struct ExprStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
 	Expr* expr;
 	ExprStmt(int_t line, Expr* expr)
 		:Stmt(TYPE, line), expr(expr){}
 };
-
 
 struct PseudoVariableExpr : public Expr{
 	enum{ TYPE = __LINE__ };

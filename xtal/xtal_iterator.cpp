@@ -209,13 +209,15 @@ void DelegateToIteratorOrArray::call(const VMachinePtr& vm){
 }
 
 void block_break(AnyPtr& target){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(0);
-	target->rawsend(vm, Xid(block_break));
-	if(!vm->processed()){
-		vm->return_result();
+	if(target){
+		const VMachinePtr& vm = vmachine();
+		vm->setup_call(0);
+		target->rawsend(vm, Xid(block_break));
+		if(!vm->processed()){
+			vm->return_result();
+		}
+		vm->cleanup_call();
 	}
-	vm->cleanup_call();
 }
 
 void block_next(AnyPtr& target, AnyPtr& value1, bool first){

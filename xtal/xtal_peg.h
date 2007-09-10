@@ -231,6 +231,15 @@ public:
 		return  ret;
 	}
 
+	bool eat(const AnyPtr& value){
+		const AnyPtr& ret = peek();
+		if(raweq(ret, value)){
+			read();
+			return true;
+		}
+		return false;
+	}
+
 	bool eof(){
 		peek(1);
 		return pos_==read_;

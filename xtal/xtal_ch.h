@@ -60,9 +60,6 @@ inline bool test_delim(int ch){
 	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
 }
 
-inline bool test_xml_tag_name(int ch){
-	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
-}
 
 inline int to_lalpha(int ch){
 	using namespace std;

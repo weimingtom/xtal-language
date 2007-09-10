@@ -916,7 +916,7 @@ Stmt* Parser::parse_assign_stmt(){
 					XTAL_CASE(c2('&','=')){ return e.op_assign(InstAndAssign::NUMBER, lhs, parse_expr_must()); }
 					XTAL_CASE(c3('<','<','=')){ return e.op_assign(InstShlAssign::NUMBER, lhs, parse_expr_must()); }
 					XTAL_CASE(c3('>','>','=')){ return e.op_assign(InstShrAssign::NUMBER, lhs, parse_expr_must()); }
-					XTAL_CASE(c4('>','>','>','=')){ return e.op_assign(InstUshrAssign::NUMBER, lhs, parse_expr_must()); }
+					XTAL_CASE(c3('>','3','=')){ return e.op_assign(InstUshrAssign::NUMBER, lhs, parse_expr_must()); }
 
 					XTAL_CASE('{'){
 						return parse_each(0, lhs);

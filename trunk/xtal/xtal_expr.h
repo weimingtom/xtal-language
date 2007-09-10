@@ -631,6 +631,7 @@ public:
 	void toplevel_add(Stmt* stmt);
 	void toplevel_export(int_t name, Expr* expr);
 	TopLevelStmt* toplevel_end();
+
 	void class_begin(int_t kind);
 	void class_define_instance_variable(int_t name, Expr* expr);
 	void class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs);
@@ -659,13 +660,16 @@ public:
 	TList<Expr*>* massign_lhs_exprs();
 	TList<Expr*>* massign_rhs_exprs();
 	void massign_define(bool b);
+	
 	void ter_begin(Expr* cond);
 	void ter_true(Expr* expr);
 	void ter_false(Expr* expr);
 	TerExpr* ter_end();
+	
 	void array_begin();
 	void array_add(Expr* expr);
 	ArrayExpr* array_end();
+
 	void map_begin();
 	void map_add(Expr* key, Expr* value);
 	MapExpr* map_end();

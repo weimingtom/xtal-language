@@ -303,13 +303,6 @@ struct CastHelper<const InternedStringPtr*>{
 };
 
 template<>
-struct CastHelper<const ArrayPtr*>{
-	static const ArrayPtr* as(const AnyPtr& a);
-	static const ArrayPtr* cast(const AnyPtr& a);
-	static const ArrayPtr* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
-};
-
-template<>
 struct CastHelper<const char*>{
 	static const char* as(const AnyPtr& a);
 	static const char* cast(const AnyPtr& a);

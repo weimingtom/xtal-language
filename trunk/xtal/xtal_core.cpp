@@ -72,10 +72,6 @@ const ClassPtr& Iterator(){
 	return iterator_;
 }
 
-const ClassPtr& PseudoArray(){
-	return pseudo_array_;
-}
-
 const ClassPtr& Enumerator(){
 	return enumerator_;
 }

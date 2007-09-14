@@ -49,7 +49,7 @@ public:
 void initialize_map(){
 	{
 		ClassPtr p = new_cpp_class<MapIter>("MapIter");
-		p->inherit(PseudoArray());
+		p->inherit(Iterator());
 		p->method("reset", &MapIter::reset);
 		p->method("block_first", &MapIter::block_next);
 		p->method("block_next", &MapIter::block_next);

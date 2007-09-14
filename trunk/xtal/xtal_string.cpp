@@ -408,7 +408,7 @@ void initialize_string(){
 
 	{
 		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
-		p->inherit(PseudoArray());
+		p->inherit(Iterator());
 		p->method("reset", &StringSplit::reset);
 		p->method("block_first", &StringSplit::block_next);
 		p->method("block_next", &StringSplit::block_next);

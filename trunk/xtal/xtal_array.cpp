@@ -50,7 +50,7 @@ public:
 void initialize_array(){
 	{
 		ClassPtr p = new_cpp_class<ArrayIter>("ArrayIter");
-		p->inherit(PseudoArray());
+		p->inherit(Iterator());
 		p->method("reset", &ArrayIter::reset);
 		p->method("block_first", &ArrayIter::block_next);
 		p->method("block_next", &ArrayIter::block_next);

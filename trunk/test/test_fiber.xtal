@@ -12,7 +12,7 @@
 	assert fib()==3;
 	assert fib()==4;
 }
-
+/*
 {
 	fib : fiber{
 		for(i : 0; i<5; ++i){
@@ -72,4 +72,5 @@
 	
 	assert !fib.is_alive;
 }
+*/
 

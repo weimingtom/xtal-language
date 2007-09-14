@@ -154,7 +154,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			sz = p->block_core_table_.size();
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_->put_u16(p->block_core_table_[i].line_number);			
+				stream_->put_u16(p->block_core_table_[i].lineno);			
 				stream_->put_u16(p->block_core_table_[i].variable_symbol_offset);
 				stream_->put_u16(p->block_core_table_[i].variable_size);
 			}
@@ -162,18 +162,19 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			sz = p->class_core_table_.size();
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_->put_u16(p->class_core_table_[i].line_number);			
+				stream_->put_u16(p->class_core_table_[i].lineno);			
 				stream_->put_u16(p->class_core_table_[i].variable_symbol_offset);
 				stream_->put_u16(p->class_core_table_[i].variable_size);
 
 				stream_->put_u16(p->class_core_table_[i].instance_variable_symbol_offset);
 				stream_->put_u16(p->class_core_table_[i].instance_variable_size);			
+				stream_->put_u8(p->class_core_table_[i].mixins);			
 			}
 
 			sz = p->xfun_core_table_.size();
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_->put_u16(p->xfun_core_table_[i].line_number);			
+				stream_->put_u16(p->xfun_core_table_[i].lineno);			
 				stream_->put_u16(p->xfun_core_table_[i].variable_symbol_offset);
 				stream_->put_u16(p->xfun_core_table_[i].variable_size);		
 
@@ -185,11 +186,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_u8(p->xfun_core_table_[i].on_heap);
 			}
 
-			sz = p->line_number_table_.size();
+			sz = p->lineno_table_.size();
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
-				stream_->put_u16(p->line_number_table_[i].start_pc);
-				stream_->put_u16(p->line_number_table_[i].line_number);
+				stream_->put_u16(p->lineno_table_[i].start_pc);
+				stream_->put_u16(p->lineno_table_[i].lineno);
 			}
 
 			sz = p->once_table_->size();
@@ -353,7 +354,7 @@ AnyPtr Serializer::inner_deserialize(){
 			sz = stream_->get_u16();
 			p->block_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->block_core_table_[i].line_number = stream_->get_u16();			
+				p->block_core_table_[i].lineno = stream_->get_u16();			
 				p->block_core_table_[i].kind = stream_->get_u16();			
 				p->block_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->block_core_table_[i].variable_size = stream_->get_u16();
@@ -362,19 +363,20 @@ AnyPtr Serializer::inner_deserialize(){
 			sz = stream_->get_u16();
 			p->class_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->class_core_table_[i].line_number = stream_->get_u16();			
+				p->class_core_table_[i].lineno = stream_->get_u16();			
 				p->class_core_table_[i].kind = stream_->get_u16();			
 				p->class_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->class_core_table_[i].variable_size = stream_->get_u16();
 
 				p->class_core_table_[i].instance_variable_symbol_offset = stream_->get_u16();
 				p->class_core_table_[i].instance_variable_size = stream_->get_u16();
+				p->class_core_table_[i].mixins = stream_->get_u8();
 			}
 
 			sz = stream_->get_u16();
 			p->xfun_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->xfun_core_table_[i].line_number = stream_->get_u16();			
+				p->xfun_core_table_[i].lineno = stream_->get_u16();			
 				p->xfun_core_table_[i].kind = stream_->get_u16();			
 				p->xfun_core_table_[i].variable_symbol_offset = stream_->get_u16();
 				p->xfun_core_table_[i].variable_size = stream_->get_u16();
@@ -388,10 +390,10 @@ AnyPtr Serializer::inner_deserialize(){
 			}
 
 			sz = stream_->get_u32();
-			p->line_number_table_.resize(sz);
+			p->lineno_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->line_number_table_[i].start_pc = stream_->get_u16();
-				p->line_number_table_[i].line_number = stream_->get_u16();
+				p->lineno_table_[i].start_pc = stream_->get_u16();
+				p->lineno_table_[i].lineno = stream_->get_u16();
 			}
 
 			sz = stream_->get_u32();

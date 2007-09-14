@@ -325,31 +325,10 @@ struct OnceExpr : public Expr{
 		:Expr(TYPE, line), expr(expr){}
 };
 
-struct Var{
-
-	// 変数名
-	int_t name;
-
-	// 代入が存在しないか？
-	bool constant;
-
-	// 初期値の式
-	Expr* init;
-
-	int_t accessibility;
-		
-	Expr* ns;
-};
-
-struct Vars{
-	TList<Var> vars;
-	bool on_heap;
-};
-
 struct TryStmt : public Stmt{ 
 	enum{ TYPE = __LINE__ };
 	Stmt* try_stmt; 
-	Vars catch_vars;
+	int_t catch_var;
 	Stmt* catch_stmt; 
 	Stmt* finally_stmt;	
 	TryStmt(int_t line, Stmt* try_stmt = 0, Stmt* catch_stmt = 0, Stmt* finally_stmt = 0)
@@ -381,7 +360,6 @@ struct FunExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	int_t kind;
 	Stmt* stmt;
-	Vars vars;
 	bool have_args;
 	TPairList<int_t, Expr*> params;
 	FunExpr(int_t line, int_t kind, Stmt* stmt = 0)
@@ -488,8 +466,8 @@ struct DefineStmt : public Stmt{
 
 struct DefineClassMemberStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	int_t var;
-	int_t asscessibility;
+	int_t name;
+	int_t accessibility;
 	Expr* expr;
 	Expr* ns;
 	DefineClassMemberStmt(int_t line)
@@ -520,7 +498,6 @@ struct ContinueStmt : public Stmt{
 
 struct BlockStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	Vars vars;
 	TList<Stmt*> stmts;
 	BlockStmt(int_t line)
 		:Stmt(TYPE, line){}
@@ -529,18 +506,16 @@ struct BlockStmt : public Stmt{
 struct ClassExpr : public Expr{
 	enum{ TYPE = __LINE__ };
 	TPairList<int_t, Expr*> inst_vars;
+	TList<Stmt*> stmts;
 	TList<Expr*> mixins;
-	int_t frame_number;
 	int_t kind;
-	Vars vars;
 
 	ClassExpr(int_t line)
-		:Expr(TYPE, line), frame_number(0){}
+		:Expr(TYPE, line){}
 };
 
 struct TopLevelStmt : public Stmt{
 	enum{ TYPE = __LINE__ };
-	Vars vars;
 	TList<Stmt*> stmts;
 	Expr* export_expr;
 	Stmt* unittest_stmt;
@@ -588,12 +563,6 @@ public:
 	ContinueStmt* continue_(int_t name);
 	BreakStmt* break_(int_t name);
 
-	void scope_push(Vars* vars);
-	void scope_carry_on_heap_flag();
-	void scope_set_on_heap_flag(int_t i);
-	void scope_pop();
-	void register_variable(int_t var);
-
 	void block_begin();
 	void block_add(Stmt* stmt);
 	BlockStmt* block_end();
@@ -601,6 +570,7 @@ public:
 
 	void try_begin();
 	void try_body(Stmt* stmt);
+	void try_catch_var(int_t name);
 	void try_catch(Stmt* stmt);
 	void try_finally(Stmt* stmt);
 	TryStmt* try_end();
@@ -688,7 +658,6 @@ public:
 	LPCCommon* common;
 	RegionAlloc* alloc;
 	
-	PStack<Vars*> vars_stack;
 	PStack<BlockStmt*> block_stack;
 	PStack<TryStmt*> try_stack;
 	PStack<WhileStmt*> while_stack;

@@ -30,7 +30,7 @@ private:
 	struct Backtrack{
 		uint_t read_pos;
 		uint_t value_pos;
-		uint_t line_number;
+		uint_t lineno;
 	};
 
 	PODStack<Cache> cache_stack_;
@@ -87,7 +87,7 @@ private:
 	int_t join_nest_;
 	int_t ignore_nest_;
 	StringPtr newline_ch_;
-	uint_t line_number_;
+	uint_t lineno_;
 	ArrayPtr errors_;
 	bool eof_;
 
@@ -103,7 +103,7 @@ public:
 		ignore_nest_ = 0;
 
 		newline_ch_ = "\n";
-		line_number_ = 1;
+		lineno_ = 1;
 		eof_ = false;
 	}
 
@@ -115,7 +115,7 @@ public:
 		Backtrack& data = backtrack_stack_.push();
 		data.read_pos = pos_;
 		data.value_pos = results_->size();
-		data.line_number = line_number_;
+		data.lineno = lineno_;
 	}
 
 	/**
@@ -132,7 +132,7 @@ public:
 	void unmark_and_backtrack(){
 		Backtrack& data = backtrack_stack_.pop();
 		pos_ = data.read_pos;
-		line_number_ = data.line_number;
+		lineno_ = data.lineno;
 		reflect_cache(data.value_pos);
 		results_->resize(data.value_pos);
 	}
@@ -180,8 +180,8 @@ public:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
-	uint_t line_number(){
-		return line_number_;
+	uint_t lineno(){
+		return lineno_;
 	}
 
 	const AnyPtr& peek(uint_t n = 0){
@@ -225,7 +225,7 @@ public:
 	const AnyPtr& read(){
 		const AnyPtr& ret = peek();
 		if(raweq(ret, newline_ch_)){
-			line_number_++;
+			lineno_++;
 		}
 		pos_ += 1;
 		return  ret;
@@ -441,6 +441,7 @@ public:
 		ARRAY,
 		IGNORE,
 		CH_MAP,
+		NODE,
 		TRY,
 		VAL,
 		LINE_NUMBER,
@@ -475,6 +476,8 @@ public:
 	static ParserPtr try_(const AnyPtr& p);
 	
 	static ParserPtr ch_map(const MapPtr& data);
+
+	static ParserPtr node(const AnyPtr& tag, int_t n);
 
 	static ParserPtr error(const AnyPtr& message);
 

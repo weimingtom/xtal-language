@@ -55,28 +55,28 @@ void Code::reset_core(){
 	first_fun_->set_core(&xfun_core_table_[0]);
 }
 	
-void Code::set_line_number_info(int_t line){
-	if(!line_number_table_.empty() && line_number_table_.back().line_number==line)
+void Code::set_lineno_info(int_t line){
+	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
 		return;
 	LineNumberTable lnt={(u16)code_.size(), (u16)line};
-	line_number_table_.push_back(lnt);
+	lineno_table_.push_back(lnt);
 }
 
-int_t Code::compliant_line_number(const inst_t* p){
+int_t Code::compliant_lineno(const inst_t* p){
 	AC<LineNumberTable>::vector::const_iterator it=
 		std::lower_bound(
-			line_number_table_.begin(),
-			line_number_table_.end(),
+			lineno_table_.begin(),
+			lineno_table_.end(),
 			static_cast<int_t>(p-data()),
 			LineNumberCmp()
 		);
 
-	if(it!=line_number_table_.end()){
-		if(it==line_number_table_.begin()){
+	if(it!=lineno_table_.end()){
+		if(it==lineno_table_.begin()){
 			return 1;
 		}
 		--it;
-		return it->line_number;
+		return it->lineno;
 	}
 	return 0;
 }
@@ -118,14 +118,16 @@ StringPtr Code::inspect(){
 		XTAL_CASE(InstUnless::NUMBER){ temp = ((InstUnless*)pc)->inspect(); sz = InstUnless::ISIZE; }
 		XTAL_CASE(InstGoto::NUMBER){ temp = ((InstGoto*)pc)->inspect(); sz = InstGoto::ISIZE; }
 		XTAL_CASE(InstLocalVariableInc::NUMBER){ temp = ((InstLocalVariableInc*)pc)->inspect(); sz = InstLocalVariableInc::ISIZE; }
-		XTAL_CASE(InstLocalVariableDec::NUMBER){ temp = ((InstLocalVariableDec*)pc)->inspect(); sz = InstLocalVariableDec::ISIZE; }
 		XTAL_CASE(InstLocalVariableIncDirect::NUMBER){ temp = ((InstLocalVariableIncDirect*)pc)->inspect(); sz = InstLocalVariableIncDirect::ISIZE; }
+		XTAL_CASE(InstLocalVariableDec::NUMBER){ temp = ((InstLocalVariableDec*)pc)->inspect(); sz = InstLocalVariableDec::ISIZE; }
 		XTAL_CASE(InstLocalVariableDecDirect::NUMBER){ temp = ((InstLocalVariableDecDirect*)pc)->inspect(); sz = InstLocalVariableDecDirect::ISIZE; }
-		XTAL_CASE(InstLocalVariable1ByteDirect::NUMBER){ temp = ((InstLocalVariable1ByteDirect*)pc)->inspect(); sz = InstLocalVariable1ByteDirect::ISIZE; }
+		XTAL_CASE(InstLocalVariableInc2Byte::NUMBER){ temp = ((InstLocalVariableInc2Byte*)pc)->inspect(); sz = InstLocalVariableInc2Byte::ISIZE; }
+		XTAL_CASE(InstLocalVariableDec2Byte::NUMBER){ temp = ((InstLocalVariableDec2Byte*)pc)->inspect(); sz = InstLocalVariableDec2Byte::ISIZE; }
 		XTAL_CASE(InstLocalVariable1Byte::NUMBER){ temp = ((InstLocalVariable1Byte*)pc)->inspect(); sz = InstLocalVariable1Byte::ISIZE; }
+		XTAL_CASE(InstLocalVariable1ByteDirect::NUMBER){ temp = ((InstLocalVariable1ByteDirect*)pc)->inspect(); sz = InstLocalVariable1ByteDirect::ISIZE; }
 		XTAL_CASE(InstLocalVariable2Byte::NUMBER){ temp = ((InstLocalVariable2Byte*)pc)->inspect(); sz = InstLocalVariable2Byte::ISIZE; }
-		XTAL_CASE(InstSetLocalVariable1ByteDirect::NUMBER){ temp = ((InstSetLocalVariable1ByteDirect*)pc)->inspect(); sz = InstSetLocalVariable1ByteDirect::ISIZE; }
 		XTAL_CASE(InstSetLocalVariable1Byte::NUMBER){ temp = ((InstSetLocalVariable1Byte*)pc)->inspect(); sz = InstSetLocalVariable1Byte::ISIZE; }
+		XTAL_CASE(InstSetLocalVariable1ByteDirect::NUMBER){ temp = ((InstSetLocalVariable1ByteDirect*)pc)->inspect(); sz = InstSetLocalVariable1ByteDirect::ISIZE; }
 		XTAL_CASE(InstSetLocalVariable2Byte::NUMBER){ temp = ((InstSetLocalVariable2Byte*)pc)->inspect(); sz = InstSetLocalVariable2Byte::ISIZE; }
 		XTAL_CASE(InstInstanceVariable::NUMBER){ temp = ((InstInstanceVariable*)pc)->inspect(); sz = InstInstanceVariable::ISIZE; }
 		XTAL_CASE(InstSetInstanceVariable::NUMBER){ temp = ((InstSetInstanceVariable*)pc)->inspect(); sz = InstSetInstanceVariable::ISIZE; }
@@ -155,8 +157,8 @@ StringPtr Code::inspect(){
 		XTAL_CASE(InstCall_AT::NUMBER){ temp = ((InstCall_AT*)pc)->inspect(); sz = InstCall_AT::ISIZE; }
 		XTAL_CASE(InstCallCallee_AT::NUMBER){ temp = ((InstCallCallee_AT*)pc)->inspect(); sz = InstCallCallee_AT::ISIZE; }
 		XTAL_CASE(InstBlockBegin::NUMBER){ temp = ((InstBlockBegin*)pc)->inspect(); sz = InstBlockBegin::ISIZE; }
-		XTAL_CASE(InstBlockEnd::NUMBER){ temp = ((InstBlockEnd*)pc)->inspect(); sz = InstBlockEnd::ISIZE; }
 		XTAL_CASE(InstBlockBeginDirect::NUMBER){ temp = ((InstBlockBeginDirect*)pc)->inspect(); sz = InstBlockBeginDirect::ISIZE; }
+		XTAL_CASE(InstBlockEnd::NUMBER){ temp = ((InstBlockEnd*)pc)->inspect(); sz = InstBlockEnd::ISIZE; }
 		XTAL_CASE(InstBlockEndDirect::NUMBER){ temp = ((InstBlockEndDirect*)pc)->inspect(); sz = InstBlockEndDirect::ISIZE; }
 		XTAL_CASE(InstTryBegin::NUMBER){ temp = ((InstTryBegin*)pc)->inspect(); sz = InstTryBegin::ISIZE; }
 		XTAL_CASE(InstTryEnd::NUMBER){ temp = ((InstTryEnd*)pc)->inspect(); sz = InstTryEnd::ISIZE; }
@@ -224,9 +226,6 @@ StringPtr Code::inspect(){
 		XTAL_CASE(InstDefineMember::NUMBER){ temp = ((InstDefineMember*)pc)->inspect(); sz = InstDefineMember::ISIZE; }
 		XTAL_CASE(InstDefineClassMember::NUMBER){ temp = ((InstDefineClassMember*)pc)->inspect(); sz = InstDefineClassMember::ISIZE; }
 		XTAL_CASE(InstSetName::NUMBER){ temp = ((InstSetName*)pc)->inspect(); sz = InstSetName::ISIZE; }
-		XTAL_CASE(InstSetMultipleLocalVariable2Direct::NUMBER){ temp = ((InstSetMultipleLocalVariable2Direct*)pc)->inspect(); sz = InstSetMultipleLocalVariable2Direct::ISIZE; }
-		XTAL_CASE(InstSetMultipleLocalVariable3Direct::NUMBER){ temp = ((InstSetMultipleLocalVariable3Direct*)pc)->inspect(); sz = InstSetMultipleLocalVariable3Direct::ISIZE; }
-		XTAL_CASE(InstSetMultipleLocalVariable4Direct::NUMBER){ temp = ((InstSetMultipleLocalVariable4Direct*)pc)->inspect(); sz = InstSetMultipleLocalVariable4Direct::ISIZE; }
 		XTAL_CASE(InstOnce::NUMBER){ temp = ((InstOnce*)pc)->inspect(); sz = InstOnce::ISIZE; }
 		XTAL_CASE(InstSetOnce::NUMBER){ temp = ((InstSetOnce*)pc)->inspect(); sz = InstSetOnce::ISIZE; }
 		XTAL_CASE(InstClassBegin::NUMBER){ temp = ((InstClassBegin*)pc)->inspect(); sz = InstClassBegin::ISIZE; }

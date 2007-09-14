@@ -421,11 +421,7 @@ Expr* Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_TRUE){ ret = e.pseudo(InstPushTrue::NUMBER); }
 				XTAL_CASE(Token::KEYWORD_FALSE){ ret = e.pseudo(InstPushFalse::NUMBER); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = e.pseudo(InstPushThis::NUMBER); }
-
-				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){
-					e.scope_set_on_heap_flag(0);
-					ret = e.pseudo(InstPushCurrentContext::NUMBER); 
-				}
+				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ ret = e.pseudo(InstPushCurrentContext::NUMBER); }
 			}
 		}
 		
@@ -734,14 +730,11 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 	int_t ln = lexer_.line();
 	
 	e.block_begin();
-		e.scope_carry_on_heap_flag();
 		e.block_add(e.push(lhs));
 
 		e.block_begin();
-			e.scope_carry_on_heap_flag();
 
 			TList<Expr*> param;
-			e.register_variable(it);
 			param.push_back(e.local(it), &alloc_);
 			bool discard = false;
 			if(eat('|')){ // ブロックパラメータ
@@ -750,7 +743,6 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					if(ch.type()==ch.TYPE_IDENT){
 						discard = false;
 						lexer_.read();
-						e.register_variable(ch.ivalue());
 						param.push_back(e.local(ch.ivalue()), &alloc_);
 						if(!eat(',')){
 							expect('|');
@@ -764,13 +756,11 @@ Stmt* Parser::parse_each(int_t label, Expr* lhs){
 					}
 				}
 			}else{
-				e.register_variable(itv);
 				param.push_back(e.local(itv), &alloc_);
 			}
 
 			if(discard){
 				param.push_back(e.local(dummy), &alloc_);
-				e.register_variable(dummy);
 			}
 
 			e.massign_begin();
@@ -882,16 +872,6 @@ Stmt* Parser::parse_assign_stmt(){
 						}else if(eat(':')){
 							e.massign_define(true);
 							parse_multiple_expr(e.massign_rhs_exprs());
-
-							for(TList<Expr*>::Node* p = e.massign_lhs_exprs()->head; p; p = p->next){
-								if(LocalExpr* loc = expr_cast<LocalExpr>(p->value)){
-									e.register_variable(loc->var);
-								}else if(expr_cast<SendExpr>(p->value)){
-								
-								}else{
-									com_->error(line(), Xt("Xtal Compile Error 1001"));
-								}
-							}
 						}else{
 							com_->error(line(), Xt("Xtal Compile Error 1001"));
 						}
@@ -1143,8 +1123,6 @@ Expr* Parser::parse_class(int_t kind){
 		expect_a(')');
 	}
 
-	//AC<std::pair<int_t, Expr*> >::vector insts;
-
 	expect('{');
 	while(true){
 
@@ -1213,7 +1191,7 @@ Stmt* Parser::parse_define_local_stmt(){
 
 Expr* Parser::parse_define_local_or_expr(){
 	if(int_t var = parse_var()){
-		e.register_variable(var);
+		
 	}
 	return parse_expr();
 }
@@ -1225,7 +1203,7 @@ Stmt* Parser::parse_try(){
 	
 		if(eat(Token::KEYWORD_CATCH)){
 			expect('(');
-			e.register_variable(parse_ident());
+			e.try_catch_var(parse_ident());
 			expect(')');
 			e.try_catch(parse_stmt_must());
 		}

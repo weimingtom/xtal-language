@@ -700,131 +700,130 @@ void VMachine::execute_inner(const inst_t* start){
 		XTAL_COPY_LABEL_ADDRESS(19, LabelUnless);
 		XTAL_COPY_LABEL_ADDRESS(20, LabelGoto);
 		XTAL_COPY_LABEL_ADDRESS(21, LabelLocalVariableInc);
-		XTAL_COPY_LABEL_ADDRESS(22, LabelLocalVariableDec);
-		XTAL_COPY_LABEL_ADDRESS(23, LabelLocalVariableIncDirect);
+		XTAL_COPY_LABEL_ADDRESS(22, LabelLocalVariableIncDirect);
+		XTAL_COPY_LABEL_ADDRESS(23, LabelLocalVariableDec);
 		XTAL_COPY_LABEL_ADDRESS(24, LabelLocalVariableDecDirect);
-		XTAL_COPY_LABEL_ADDRESS(25, LabelLocalVariable1ByteDirect);
-		XTAL_COPY_LABEL_ADDRESS(26, LabelLocalVariable1Byte);
-		XTAL_COPY_LABEL_ADDRESS(27, LabelLocalVariable2Byte);
-		XTAL_COPY_LABEL_ADDRESS(28, LabelSetLocalVariable1ByteDirect);
-		XTAL_COPY_LABEL_ADDRESS(29, LabelSetLocalVariable1Byte);
-		XTAL_COPY_LABEL_ADDRESS(30, LabelSetLocalVariable2Byte);
-		XTAL_COPY_LABEL_ADDRESS(31, LabelInstanceVariable);
-		XTAL_COPY_LABEL_ADDRESS(32, LabelSetInstanceVariable);
-		XTAL_COPY_LABEL_ADDRESS(33, LabelCleanupCall);
-		XTAL_COPY_LABEL_ADDRESS(34, LabelReturn0);
-		XTAL_COPY_LABEL_ADDRESS(35, LabelReturn1);
-		XTAL_COPY_LABEL_ADDRESS(36, LabelReturn2);
-		XTAL_COPY_LABEL_ADDRESS(37, LabelReturn);
-		XTAL_COPY_LABEL_ADDRESS(38, LabelYield);
-		XTAL_COPY_LABEL_ADDRESS(39, LabelExit);
-		XTAL_COPY_LABEL_ADDRESS(40, LabelValue);
-		XTAL_COPY_LABEL_ADDRESS(41, LabelCheckUnsupported);
-		XTAL_COPY_LABEL_ADDRESS(42, LabelSend);
-		XTAL_COPY_LABEL_ADDRESS(43, LabelSendIfDefined);
-		XTAL_COPY_LABEL_ADDRESS(44, LabelCall);
-		XTAL_COPY_LABEL_ADDRESS(45, LabelCallCallee);
-		XTAL_COPY_LABEL_ADDRESS(46, LabelSend_A);
-		XTAL_COPY_LABEL_ADDRESS(47, LabelSendIfDefined_A);
-		XTAL_COPY_LABEL_ADDRESS(48, LabelCall_A);
-		XTAL_COPY_LABEL_ADDRESS(49, LabelCallCallee_A);
-		XTAL_COPY_LABEL_ADDRESS(50, LabelSend_T);
-		XTAL_COPY_LABEL_ADDRESS(51, LabelSendIfDefined_T);
-		XTAL_COPY_LABEL_ADDRESS(52, LabelCall_T);
-		XTAL_COPY_LABEL_ADDRESS(53, LabelCallCallee_T);
-		XTAL_COPY_LABEL_ADDRESS(54, LabelSend_AT);
-		XTAL_COPY_LABEL_ADDRESS(55, LabelSendIfDefined_AT);
-		XTAL_COPY_LABEL_ADDRESS(56, LabelCall_AT);
-		XTAL_COPY_LABEL_ADDRESS(57, LabelCallCallee_AT);
-		XTAL_COPY_LABEL_ADDRESS(58, LabelBlockBegin);
-		XTAL_COPY_LABEL_ADDRESS(59, LabelBlockEnd);
-		XTAL_COPY_LABEL_ADDRESS(60, LabelBlockBeginDirect);
-		XTAL_COPY_LABEL_ADDRESS(61, LabelBlockEndDirect);
-		XTAL_COPY_LABEL_ADDRESS(62, LabelTryBegin);
-		XTAL_COPY_LABEL_ADDRESS(63, LabelTryEnd);
-		XTAL_COPY_LABEL_ADDRESS(64, LabelPushGoto);
-		XTAL_COPY_LABEL_ADDRESS(65, LabelPopGoto);
-		XTAL_COPY_LABEL_ADDRESS(66, LabelIfEq);
-		XTAL_COPY_LABEL_ADDRESS(67, LabelIfNe);
-		XTAL_COPY_LABEL_ADDRESS(68, LabelIfLt);
-		XTAL_COPY_LABEL_ADDRESS(69, LabelIfLe);
-		XTAL_COPY_LABEL_ADDRESS(70, LabelIfGt);
-		XTAL_COPY_LABEL_ADDRESS(71, LabelIfGe);
-		XTAL_COPY_LABEL_ADDRESS(72, LabelIfRawEq);
-		XTAL_COPY_LABEL_ADDRESS(73, LabelIfRawNe);
-		XTAL_COPY_LABEL_ADDRESS(74, LabelIfIs);
-		XTAL_COPY_LABEL_ADDRESS(75, LabelIfNis);
-		XTAL_COPY_LABEL_ADDRESS(76, LabelIfArgIsNull);
-		XTAL_COPY_LABEL_ADDRESS(77, LabelIfArgIsNullDirect);
-		XTAL_COPY_LABEL_ADDRESS(78, LabelPos);
-		XTAL_COPY_LABEL_ADDRESS(79, LabelNeg);
-		XTAL_COPY_LABEL_ADDRESS(80, LabelCom);
-		XTAL_COPY_LABEL_ADDRESS(81, LabelNot);
-		XTAL_COPY_LABEL_ADDRESS(82, LabelAt);
-		XTAL_COPY_LABEL_ADDRESS(83, LabelSetAt);
-		XTAL_COPY_LABEL_ADDRESS(84, LabelAdd);
-		XTAL_COPY_LABEL_ADDRESS(85, LabelSub);
-		XTAL_COPY_LABEL_ADDRESS(86, LabelCat);
-		XTAL_COPY_LABEL_ADDRESS(87, LabelMul);
-		XTAL_COPY_LABEL_ADDRESS(88, LabelDiv);
-		XTAL_COPY_LABEL_ADDRESS(89, LabelMod);
-		XTAL_COPY_LABEL_ADDRESS(90, LabelAnd);
-		XTAL_COPY_LABEL_ADDRESS(91, LabelOr);
-		XTAL_COPY_LABEL_ADDRESS(92, LabelXor);
-		XTAL_COPY_LABEL_ADDRESS(93, LabelShl);
-		XTAL_COPY_LABEL_ADDRESS(94, LabelShr);
-		XTAL_COPY_LABEL_ADDRESS(95, LabelUshr);
-		XTAL_COPY_LABEL_ADDRESS(96, LabelEq);
-		XTAL_COPY_LABEL_ADDRESS(97, LabelNe);
-		XTAL_COPY_LABEL_ADDRESS(98, LabelLt);
-		XTAL_COPY_LABEL_ADDRESS(99, LabelLe);
-		XTAL_COPY_LABEL_ADDRESS(100, LabelGt);
-		XTAL_COPY_LABEL_ADDRESS(101, LabelGe);
-		XTAL_COPY_LABEL_ADDRESS(102, LabelRawEq);
-		XTAL_COPY_LABEL_ADDRESS(103, LabelRawNe);
-		XTAL_COPY_LABEL_ADDRESS(104, LabelIs);
-		XTAL_COPY_LABEL_ADDRESS(105, LabelNis);
-		XTAL_COPY_LABEL_ADDRESS(106, LabelInc);
-		XTAL_COPY_LABEL_ADDRESS(107, LabelDec);
-		XTAL_COPY_LABEL_ADDRESS(108, LabelAddAssign);
-		XTAL_COPY_LABEL_ADDRESS(109, LabelSubAssign);
-		XTAL_COPY_LABEL_ADDRESS(110, LabelCatAssign);
-		XTAL_COPY_LABEL_ADDRESS(111, LabelMulAssign);
-		XTAL_COPY_LABEL_ADDRESS(112, LabelDivAssign);
-		XTAL_COPY_LABEL_ADDRESS(113, LabelModAssign);
-		XTAL_COPY_LABEL_ADDRESS(114, LabelAndAssign);
-		XTAL_COPY_LABEL_ADDRESS(115, LabelOrAssign);
-		XTAL_COPY_LABEL_ADDRESS(116, LabelXorAssign);
-		XTAL_COPY_LABEL_ADDRESS(117, LabelShlAssign);
-		XTAL_COPY_LABEL_ADDRESS(118, LabelShrAssign);
-		XTAL_COPY_LABEL_ADDRESS(119, LabelUshrAssign);
-		XTAL_COPY_LABEL_ADDRESS(120, LabelGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(121, LabelSetGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(122, LabelDefineGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(123, LabelMember);
-		XTAL_COPY_LABEL_ADDRESS(124, LabelMemberIfDefined);
-		XTAL_COPY_LABEL_ADDRESS(125, LabelDefineMember);
-		XTAL_COPY_LABEL_ADDRESS(126, LabelDefineClassMember);
-		XTAL_COPY_LABEL_ADDRESS(127, LabelSetName);
-		XTAL_COPY_LABEL_ADDRESS(128, LabelSetMultipleLocalVariable2Direct);
-		XTAL_COPY_LABEL_ADDRESS(129, LabelSetMultipleLocalVariable3Direct);
-		XTAL_COPY_LABEL_ADDRESS(130, LabelSetMultipleLocalVariable4Direct);
-		XTAL_COPY_LABEL_ADDRESS(131, LabelOnce);
-		XTAL_COPY_LABEL_ADDRESS(132, LabelSetOnce);
-		XTAL_COPY_LABEL_ADDRESS(133, LabelClassBegin);
-		XTAL_COPY_LABEL_ADDRESS(134, LabelClassEnd);
-		XTAL_COPY_LABEL_ADDRESS(135, LabelMakeArray);
-		XTAL_COPY_LABEL_ADDRESS(136, LabelArrayAppend);
-		XTAL_COPY_LABEL_ADDRESS(137, LabelMakeMap);
-		XTAL_COPY_LABEL_ADDRESS(138, LabelMapInsert);
-		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeFun);
-		XTAL_COPY_LABEL_ADDRESS(140, LabelMakeInstanceVariableAccessor);
-		XTAL_COPY_LABEL_ADDRESS(141, LabelThrow);
-		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowUnsupportedError);
-		XTAL_COPY_LABEL_ADDRESS(143, LabelThrowNull);
-		XTAL_COPY_LABEL_ADDRESS(144, LabelAssert);
-		XTAL_COPY_LABEL_ADDRESS(145, LabelBreakPoint);
-		XTAL_COPY_LABEL_ADDRESS(146, LabelMAX);
+		XTAL_COPY_LABEL_ADDRESS(25, LabelLocalVariableInc2Byte);
+		XTAL_COPY_LABEL_ADDRESS(26, LabelLocalVariableDec2Byte);
+		XTAL_COPY_LABEL_ADDRESS(27, LabelLocalVariable1Byte);
+		XTAL_COPY_LABEL_ADDRESS(28, LabelLocalVariable1ByteDirect);
+		XTAL_COPY_LABEL_ADDRESS(29, LabelLocalVariable2Byte);
+		XTAL_COPY_LABEL_ADDRESS(30, LabelSetLocalVariable1Byte);
+		XTAL_COPY_LABEL_ADDRESS(31, LabelSetLocalVariable1ByteDirect);
+		XTAL_COPY_LABEL_ADDRESS(32, LabelSetLocalVariable2Byte);
+		XTAL_COPY_LABEL_ADDRESS(33, LabelInstanceVariable);
+		XTAL_COPY_LABEL_ADDRESS(34, LabelSetInstanceVariable);
+		XTAL_COPY_LABEL_ADDRESS(35, LabelCleanupCall);
+		XTAL_COPY_LABEL_ADDRESS(36, LabelReturn0);
+		XTAL_COPY_LABEL_ADDRESS(37, LabelReturn1);
+		XTAL_COPY_LABEL_ADDRESS(38, LabelReturn2);
+		XTAL_COPY_LABEL_ADDRESS(39, LabelReturn);
+		XTAL_COPY_LABEL_ADDRESS(40, LabelYield);
+		XTAL_COPY_LABEL_ADDRESS(41, LabelExit);
+		XTAL_COPY_LABEL_ADDRESS(42, LabelValue);
+		XTAL_COPY_LABEL_ADDRESS(43, LabelCheckUnsupported);
+		XTAL_COPY_LABEL_ADDRESS(44, LabelSend);
+		XTAL_COPY_LABEL_ADDRESS(45, LabelSendIfDefined);
+		XTAL_COPY_LABEL_ADDRESS(46, LabelCall);
+		XTAL_COPY_LABEL_ADDRESS(47, LabelCallCallee);
+		XTAL_COPY_LABEL_ADDRESS(48, LabelSend_A);
+		XTAL_COPY_LABEL_ADDRESS(49, LabelSendIfDefined_A);
+		XTAL_COPY_LABEL_ADDRESS(50, LabelCall_A);
+		XTAL_COPY_LABEL_ADDRESS(51, LabelCallCallee_A);
+		XTAL_COPY_LABEL_ADDRESS(52, LabelSend_T);
+		XTAL_COPY_LABEL_ADDRESS(53, LabelSendIfDefined_T);
+		XTAL_COPY_LABEL_ADDRESS(54, LabelCall_T);
+		XTAL_COPY_LABEL_ADDRESS(55, LabelCallCallee_T);
+		XTAL_COPY_LABEL_ADDRESS(56, LabelSend_AT);
+		XTAL_COPY_LABEL_ADDRESS(57, LabelSendIfDefined_AT);
+		XTAL_COPY_LABEL_ADDRESS(58, LabelCall_AT);
+		XTAL_COPY_LABEL_ADDRESS(59, LabelCallCallee_AT);
+		XTAL_COPY_LABEL_ADDRESS(60, LabelBlockBegin);
+		XTAL_COPY_LABEL_ADDRESS(61, LabelBlockBeginDirect);
+		XTAL_COPY_LABEL_ADDRESS(62, LabelBlockEnd);
+		XTAL_COPY_LABEL_ADDRESS(63, LabelBlockEndDirect);
+		XTAL_COPY_LABEL_ADDRESS(64, LabelTryBegin);
+		XTAL_COPY_LABEL_ADDRESS(65, LabelTryEnd);
+		XTAL_COPY_LABEL_ADDRESS(66, LabelPushGoto);
+		XTAL_COPY_LABEL_ADDRESS(67, LabelPopGoto);
+		XTAL_COPY_LABEL_ADDRESS(68, LabelIfEq);
+		XTAL_COPY_LABEL_ADDRESS(69, LabelIfNe);
+		XTAL_COPY_LABEL_ADDRESS(70, LabelIfLt);
+		XTAL_COPY_LABEL_ADDRESS(71, LabelIfLe);
+		XTAL_COPY_LABEL_ADDRESS(72, LabelIfGt);
+		XTAL_COPY_LABEL_ADDRESS(73, LabelIfGe);
+		XTAL_COPY_LABEL_ADDRESS(74, LabelIfRawEq);
+		XTAL_COPY_LABEL_ADDRESS(75, LabelIfRawNe);
+		XTAL_COPY_LABEL_ADDRESS(76, LabelIfIs);
+		XTAL_COPY_LABEL_ADDRESS(77, LabelIfNis);
+		XTAL_COPY_LABEL_ADDRESS(78, LabelIfArgIsNull);
+		XTAL_COPY_LABEL_ADDRESS(79, LabelIfArgIsNullDirect);
+		XTAL_COPY_LABEL_ADDRESS(80, LabelPos);
+		XTAL_COPY_LABEL_ADDRESS(81, LabelNeg);
+		XTAL_COPY_LABEL_ADDRESS(82, LabelCom);
+		XTAL_COPY_LABEL_ADDRESS(83, LabelNot);
+		XTAL_COPY_LABEL_ADDRESS(84, LabelAt);
+		XTAL_COPY_LABEL_ADDRESS(85, LabelSetAt);
+		XTAL_COPY_LABEL_ADDRESS(86, LabelAdd);
+		XTAL_COPY_LABEL_ADDRESS(87, LabelSub);
+		XTAL_COPY_LABEL_ADDRESS(88, LabelCat);
+		XTAL_COPY_LABEL_ADDRESS(89, LabelMul);
+		XTAL_COPY_LABEL_ADDRESS(90, LabelDiv);
+		XTAL_COPY_LABEL_ADDRESS(91, LabelMod);
+		XTAL_COPY_LABEL_ADDRESS(92, LabelAnd);
+		XTAL_COPY_LABEL_ADDRESS(93, LabelOr);
+		XTAL_COPY_LABEL_ADDRESS(94, LabelXor);
+		XTAL_COPY_LABEL_ADDRESS(95, LabelShl);
+		XTAL_COPY_LABEL_ADDRESS(96, LabelShr);
+		XTAL_COPY_LABEL_ADDRESS(97, LabelUshr);
+		XTAL_COPY_LABEL_ADDRESS(98, LabelEq);
+		XTAL_COPY_LABEL_ADDRESS(99, LabelNe);
+		XTAL_COPY_LABEL_ADDRESS(100, LabelLt);
+		XTAL_COPY_LABEL_ADDRESS(101, LabelLe);
+		XTAL_COPY_LABEL_ADDRESS(102, LabelGt);
+		XTAL_COPY_LABEL_ADDRESS(103, LabelGe);
+		XTAL_COPY_LABEL_ADDRESS(104, LabelRawEq);
+		XTAL_COPY_LABEL_ADDRESS(105, LabelRawNe);
+		XTAL_COPY_LABEL_ADDRESS(106, LabelIs);
+		XTAL_COPY_LABEL_ADDRESS(107, LabelNis);
+		XTAL_COPY_LABEL_ADDRESS(108, LabelInc);
+		XTAL_COPY_LABEL_ADDRESS(109, LabelDec);
+		XTAL_COPY_LABEL_ADDRESS(110, LabelAddAssign);
+		XTAL_COPY_LABEL_ADDRESS(111, LabelSubAssign);
+		XTAL_COPY_LABEL_ADDRESS(112, LabelCatAssign);
+		XTAL_COPY_LABEL_ADDRESS(113, LabelMulAssign);
+		XTAL_COPY_LABEL_ADDRESS(114, LabelDivAssign);
+		XTAL_COPY_LABEL_ADDRESS(115, LabelModAssign);
+		XTAL_COPY_LABEL_ADDRESS(116, LabelAndAssign);
+		XTAL_COPY_LABEL_ADDRESS(117, LabelOrAssign);
+		XTAL_COPY_LABEL_ADDRESS(118, LabelXorAssign);
+		XTAL_COPY_LABEL_ADDRESS(119, LabelShlAssign);
+		XTAL_COPY_LABEL_ADDRESS(120, LabelShrAssign);
+		XTAL_COPY_LABEL_ADDRESS(121, LabelUshrAssign);
+		XTAL_COPY_LABEL_ADDRESS(122, LabelGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(123, LabelSetGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(124, LabelDefineGlobalVariable);
+		XTAL_COPY_LABEL_ADDRESS(125, LabelMember);
+		XTAL_COPY_LABEL_ADDRESS(126, LabelMemberIfDefined);
+		XTAL_COPY_LABEL_ADDRESS(127, LabelDefineMember);
+		XTAL_COPY_LABEL_ADDRESS(128, LabelDefineClassMember);
+		XTAL_COPY_LABEL_ADDRESS(129, LabelSetName);
+		XTAL_COPY_LABEL_ADDRESS(130, LabelOnce);
+		XTAL_COPY_LABEL_ADDRESS(131, LabelSetOnce);
+		XTAL_COPY_LABEL_ADDRESS(132, LabelClassBegin);
+		XTAL_COPY_LABEL_ADDRESS(133, LabelClassEnd);
+		XTAL_COPY_LABEL_ADDRESS(134, LabelMakeArray);
+		XTAL_COPY_LABEL_ADDRESS(135, LabelArrayAppend);
+		XTAL_COPY_LABEL_ADDRESS(136, LabelMakeMap);
+		XTAL_COPY_LABEL_ADDRESS(137, LabelMapInsert);
+		XTAL_COPY_LABEL_ADDRESS(138, LabelMakeFun);
+		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeInstanceVariableAccessor);
+		XTAL_COPY_LABEL_ADDRESS(140, LabelThrow);
+		XTAL_COPY_LABEL_ADDRESS(141, LabelThrowUnsupportedError);
+		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowNull);
+		XTAL_COPY_LABEL_ADDRESS(143, LabelAssert);
+		XTAL_COPY_LABEL_ADDRESS(144, LabelBreakPoint);
+		XTAL_COPY_LABEL_ADDRESS(145, LabelMAX);
 //}}LABELS}
 	}
 #else
@@ -956,20 +955,10 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(LocalVariableInc){ XTAL_VM_CONTINUE(FunLocalVariableInc(pc)); /*
 		Innocence a = local_variable(inst.number);
 		switch(type(a)){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
-			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
 		}
 		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
-		XTAL_VM_CONTINUE(ff().called_pc);
-	}*/ }
-
-	XTAL_VM_CASE(LocalVariableDec){ XTAL_VM_CONTINUE(FunLocalVariableDec(pc)); /*
-		Innocence a = local_variable(inst.number);
-		switch(type(a)){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
-			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
-		}
-		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
 
@@ -983,6 +972,16 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
+	XTAL_VM_CASE(LocalVariableDec){ XTAL_VM_CONTINUE(FunLocalVariableDec(pc)); /*
+		Innocence a = local_variable(inst.number);
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
+		XTAL_VM_CONTINUE(ff().called_pc);
+	}*/ }
+
 	XTAL_VM_CASE(LocalVariableDecDirect){ // 9
 		Innocence& a = ff().variables_[inst.number];
 		switch(type(a)){XTAL_DEFAULT;
@@ -993,13 +992,33 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
-	XTAL_VM_CASE(LocalVariable1ByteDirect){ // 3
-		push(ff().variable(inst.number)); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
+	XTAL_VM_CASE(LocalVariableInc2Byte){ XTAL_VM_CONTINUE(FunLocalVariableInc2Byte(pc)); /*
+		Innocence a = local_variable(inst.number);
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
+		XTAL_VM_CONTINUE(ff().called_pc);
+	}*/ }
+
+	XTAL_VM_CASE(LocalVariableDec2Byte){ XTAL_VM_CONTINUE(FunLocalVariableDec2Byte(pc)); /*
+		Innocence a = local_variable(inst.number);
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
+		XTAL_VM_CONTINUE(ff().called_pc);
+	}*/ }
 
 	XTAL_VM_CASE(LocalVariable1Byte){ // 3
 		push(local_variable(inst.number)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
+
+	XTAL_VM_CASE(LocalVariable1ByteDirect){ // 3
+		push(ff().variable(inst.number)); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1008,13 +1027,13 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(SetLocalVariable1ByteDirect){ // 3
-		ff().variable(inst.number, pop()); 
+	XTAL_VM_CASE(SetLocalVariable1Byte){ // 3
+		set_local_variable(inst.number, pop()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(SetLocalVariable1Byte){ // 3
-		set_local_variable(inst.number, pop()); 
+	XTAL_VM_CASE(SetLocalVariable1ByteDirect){ // 3
+		ff().variable(inst.number, pop()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1275,18 +1294,20 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
+	XTAL_VM_CASE(BlockBeginDirect){ // 4
+		FunFrame& f = ff(); 
+		f.variables_.upsize(f.pcode->block_core(inst.core_number)->variable_size);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
 	XTAL_VM_CASE(BlockEnd){ // 3
 		ff().outer(ff().outer()->outer()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(BlockBeginDirect){ // 3
-		ff().variables_.upsize(inst.variable_size);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(BlockEndDirect){ // 3
-		ff().variables_.downsize(inst.variable_size);
+	XTAL_VM_CASE(BlockEndDirect){ // 4
+		FunFrame& f = ff();
+		f.variables_.downsize(f.pcode->block_core(inst.core_number)->variable_size);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
@@ -1953,7 +1974,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(DefineClassMember){ XTAL_VM_CONTINUE(FunDefineClassMember(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassPtr p = cast<ClassPtr>(ff().outer());
-			p->set_class_member(inst.number, symbol(inst.symbol_number), inst.accessibility, get(), get(1));
+			p->set_class_member(p->block_size()-1-inst.number, symbol(inst.symbol_number), inst.accessibility, get(), get(1));
 			downsize(2);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1965,30 +1986,6 @@ XTAL_VM_SWITCH{
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 	}*/ }
-
-	XTAL_VM_CASE(SetMultipleLocalVariable2Direct){ // 5
-		FunFrame& f = ff();
-		f.variable(inst.local_variable2, pop()); 
-		f.variable(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable3Direct){ // 6
-		FunFrame& f = ff();
-		f.variable(inst.local_variable3, pop()); 
-		f.variable(inst.local_variable2, pop()); 
-		f.variable(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(SetMultipleLocalVariable4Direct){ // 7
-		FunFrame& f = ff();
-		f.variable(inst.local_variable4, pop()); 
-		f.variable(inst.local_variable3, pop()); 
-		f.variable(inst.local_variable2, pop()); 
-		f.variable(inst.local_variable1, pop()); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
 
 	XTAL_VM_CASE(Once){ // 5
 		const AnyPtr& ret = ff().pcode->once_value(inst.value_number);
@@ -2020,7 +2017,7 @@ XTAL_VM_SWITCH{
 				}
 			}
 			
-			int_t n = inst.mixins;
+			int_t n = p->mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
@@ -2170,7 +2167,7 @@ XTAL_VM_SWITCH{
 				
 				if(!debug_info_) debug_info_ = xnew<debug::Info>();
 				debug_info_->set_kind(kind);
-				debug_info_->set_line(code()->compliant_line_number(pc));
+				debug_info_->set_line(code()->compliant_lineno(pc));
 				debug_info_->set_file_name(code()->source_file_name());
 				debug_info_->set_fun_name(fun()->object_name());
 				debug_info_->set_local_variables(ff().outer());
@@ -2266,8 +2263,8 @@ const inst_t* VMachine::FunLocalVariableInc(const inst_t* pc){
 		XTAL_VM_DEF_INST(LocalVariableInc);
 		Innocence a = local_variable(inst.number);
 		switch(type(a)){XTAL_DEFAULT;
-			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
-			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
 		}
 		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
 		XTAL_VM_CONTINUE(ff().called_pc);
@@ -2275,6 +2272,28 @@ const inst_t* VMachine::FunLocalVariableInc(const inst_t* pc){
 
 const inst_t* VMachine::FunLocalVariableDec(const inst_t* pc){
 		XTAL_VM_DEF_INST(LocalVariableDec);
+		Innocence a = local_variable(inst.number);
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
+		XTAL_VM_CONTINUE(ff().called_pc);
+}
+
+const inst_t* VMachine::FunLocalVariableInc2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariableInc2Byte);
+		Innocence a = local_variable(inst.number);
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)+1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
+		XTAL_VM_CONTINUE(ff().called_pc);
+}
+
+const inst_t* VMachine::FunLocalVariableDec2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariableDec2Byte);
 		Innocence a = local_variable(inst.number);
 		switch(type(a)){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE); }
@@ -3010,7 +3029,7 @@ const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
 		XTAL_VM_DEF_INST(DefineClassMember);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassPtr p = cast<ClassPtr>(ff().outer());
-			p->set_class_member(inst.number, symbol(inst.symbol_number), inst.accessibility, get(), get(1));
+			p->set_class_member(p->block_size()-1-inst.number, symbol(inst.symbol_number), inst.accessibility, get(), get(1));
 			downsize(2);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -3040,7 +3059,7 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 				}
 			}
 			
-			int_t n = inst.mixins;
+			int_t n = p->mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
@@ -3116,7 +3135,7 @@ const inst_t* VMachine::FunBreakPoint(const inst_t* pc){
 				
 				if(!debug_info_) debug_info_ = xnew<debug::Info>();
 				debug_info_->set_kind(kind);
-				debug_info_->set_line(code()->compliant_line_number(pc));
+				debug_info_->set_line(code()->compliant_lineno(pc));
 				debug_info_->set_file_name(code()->source_file_name());
 				debug_info_->set_fun_name(fun()->object_name());
 				debug_info_->set_local_variables(ff().outer());
@@ -3177,7 +3196,7 @@ void VMachine::carry_over(Fun* fun){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
 			Frame* frame = f.outer().get();
 			for(int_t n = 0; n<size; ++n){
-				frame->set_member_direct(size-1-n, arg(n, fun));
+				frame->set_member_direct(n, arg(n, fun));
 			}
 		}else{
 			f.variables_.upsize(size);
@@ -3221,7 +3240,7 @@ void VMachine::mv_carry_over(Fun* fun){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
 			Frame* frame = f.outer().get();
 			for(int_t n = 0; n<size; ++n){
-				frame->set_member_direct(size-1-n, get(size-1-n));
+				frame->set_member_direct(n, get(size-1-n));
 			}
 		}else{
 			f.variables_.upsize(size);	
@@ -3313,7 +3332,7 @@ void VMachine::set_local_variable(int_t pos, const Innocence& value){
 		while(1){
 			int_t variables_size = outer->block_size();
 			if(pos<variables_size){
-				outer->set_member_direct(pos, ap(value));
+				outer->set_member_direct(variables_size-1-pos, ap(value));
 				return;
 			}
 			pos-=variables_size;
@@ -3329,7 +3348,7 @@ const AnyPtr& VMachine::local_variable(int_t pos){
 		for(;;){
 			int_t variables_size = outer->block_size();
 			if(pos<variables_size){
-				return outer->member_direct(pos);
+				return outer->member_direct(variables_size-1-pos);
 			}
 			pos-=variables_size;
 			outer = outer->outer().get();
@@ -3385,7 +3404,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 			if((pc != code()->data()+code()->size()-1)){
 				ep->send("append_backtrace",
 					code()->source_file_name(),
-					code()->compliant_line_number(pc),
+					code()->compliant_lineno(pc),
 					fun()->object_name());
 			}
 		}else{
@@ -3403,7 +3422,7 @@ void VMachine::hook_return(const inst_t* pc){
 	if(debug::is_enabled() && fun() && code()){
 		if(!debug_info_) debug_info_ = xnew<debug::Info>();
 		debug_info_->set_kind(BREAKPOINT_RETURN);
-		debug_info_->set_line(code()->compliant_line_number(pc));
+		debug_info_->set_line(code()->compliant_lineno(pc));
 		debug_info_->set_file_name(code()->source_file_name());
 		debug_info_->set_fun_name(fun()->object_name());
 		debug_info_->set_local_variables(ff().outer());

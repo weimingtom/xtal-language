@@ -51,9 +51,6 @@ InstanceVariableExpr* ExprBuilder::instance_variable(int_t var){
 }
 
 DefineStmt* ExprBuilder::define(Expr* lhs, Expr* rhs){
-	if(LocalExpr* loc = expr_cast<LocalExpr>(lhs)){
-		register_variable(loc->var);
-	}
 	return new(alloc) DefineStmt(line(), lhs, rhs);
 }
 
@@ -132,46 +129,8 @@ AssertStmt* ExprBuilder::assert_(Expr* e1, Expr* e2){
 	return ret;
 }
 
-void ExprBuilder::scope_push(Vars* vars){
-	vars->on_heap = debug::is_enabled();
-	vars_stack.push(vars);
-}
-
-void ExprBuilder::scope_carry_on_heap_flag(){
-	vars_stack[0]->on_heap = vars_stack[1]->on_heap;
-}
-
-void ExprBuilder::scope_set_on_heap_flag(int_t i){
-	for(; i<(int_t)vars_stack.size(); ++i){
-		vars_stack[i]->on_heap = true;
-	}
-}
-
-void ExprBuilder::scope_pop(){
-	vars_stack.pop();	
-}
-
-void ExprBuilder::register_variable(int_t var){
-	for(TList<Var>::Node* p = vars_stack[0]->vars.head; p; p = p->next){
-		if(p->value.name == var){
-			common->error(line(), Xt("Xtal Compile Error 1026")(
-				Named("name", common->ident_table->at(var))
-			));
-		}
-	}
-
-	Var v;
-	v.name = var;
-	v.constant = true;
-	v.init = 0;
-	v.accessibility = KIND_PUBLIC;
-	v.ns = 0;
-	vars_stack[0]->vars.push_back(v, alloc);
-}
-
 void ExprBuilder::block_begin(){
 	block_stack.push(new(alloc) BlockStmt(line()));
-	scope_push(&block_stack.top()->vars);
 }	
 
 void ExprBuilder::block_add(Stmt* stmt){
@@ -179,17 +138,19 @@ void ExprBuilder::block_add(Stmt* stmt){
 }
 
 BlockStmt* ExprBuilder::block_end(){
-	scope_pop();
 	return block_stack.pop();
 }
 
 void ExprBuilder::try_begin(){
 	try_stack.push(new(alloc) TryStmt(line()));
-	scope_push(&try_stack.top()->catch_vars);
 }
 
 void ExprBuilder::try_body(Stmt* stmt){
 	try_stack.top()->try_stmt = stmt;
+}
+	
+void ExprBuilder::try_catch_var(int_t name){
+	try_stack.top()->catch_var = name;
 }
 
 void ExprBuilder::try_catch(Stmt* stmt){
@@ -201,7 +162,6 @@ void ExprBuilder::try_finally(Stmt* stmt){
 }
 
 TryStmt* ExprBuilder::try_end(){
-	scope_pop();
 	return try_stack.pop();
 }
 
@@ -267,17 +227,13 @@ Stmt* ExprBuilder::if_end(){
 
 void ExprBuilder::fun_begin(int_t kind){
 	fun_stack.push(new(alloc) FunExpr(line(), kind));
-	scope_set_on_heap_flag(0);
-	scope_push(&fun_stack.top()->vars);
 }
 
 void ExprBuilder::fun_param(int_t name, Expr* def){
-	register_variable(name);
 	fun_stack.top()->params.push_back(name, def, alloc);
 }
 
 FunExpr* ExprBuilder::fun_end(){
-	scope_pop();
 	return fun_stack.pop();
 }
 
@@ -309,36 +265,46 @@ void ExprBuilder::fun_body_end(){
 IntExpr* ExprBuilder::int_(int_t value){
 	return new(alloc) IntExpr(line(), value);
 }
+
 FloatExpr* ExprBuilder::float_(float_t value){
 	return new(alloc) FloatExpr(line(), value);
 }
+
 ArgsExpr* ExprBuilder::args(){
 	return new(alloc) ArgsExpr(line());
 }
+
 OnceExpr* ExprBuilder::once(Expr* expr){
 	return new(alloc) OnceExpr(line(), expr);
 }
+
 CalleeExpr* ExprBuilder::callee(){
 	return new(alloc) CalleeExpr(line());
 }
+
 AndAndExpr* ExprBuilder::andand(Expr* lhs, Expr* rhs){
 	return new(alloc) AndAndExpr(line(), lhs, rhs);
 }
+
 TerExpr* ExprBuilder::ter(Expr* cond, Expr* true_expr, Expr* false_expr){
 	TerExpr* ret = new(alloc) TerExpr(line(), cond);
 	ret->second = true_expr;
 	ret->third = false_expr;
 	return ret;
 }
+
 OrOrExpr* ExprBuilder::oror(Expr* lhs, Expr* rhs){
 	return new(alloc) OrOrExpr(line(), lhs, rhs);
 }
+
 PushStmt* ExprBuilder::push(Expr* expr){
 	return new(alloc) PushStmt(line(), expr);
 }
+
 PopExpr* ExprBuilder::pop(){
 	return new(alloc) PopExpr(line());
 }
+
 IncStmt* ExprBuilder::inc(int_t code, Expr* expr){
 	return new(alloc) IncStmt(line(), code, expr);	
 }
@@ -346,6 +312,7 @@ IncStmt* ExprBuilder::inc(int_t code, Expr* expr){
 ContinueStmt* ExprBuilder::continue_(int_t name){
 	return new(alloc) ContinueStmt(line(), name);
 }
+
 BreakStmt* ExprBuilder::break_(int_t name){
 	return new(alloc) BreakStmt(line(), name);
 }
@@ -357,12 +324,12 @@ TList<Stmt*>* ExprBuilder::block_stmts(){
 
 void ExprBuilder::toplevel_begin(){
 	toplevel_stack.push(new(alloc) TopLevelStmt(line()));
-	scope_push(&toplevel_stack.top()->vars);
-	scope_set_on_heap_flag(0);
 }
+
 void ExprBuilder::toplevel_add(Stmt* stmt){
 	toplevel_stack.top()->stmts.push_back(stmt, alloc);
 }
+
 void ExprBuilder::toplevel_export(int_t name, Expr* expr){
 	if(toplevel_stack.top()->export_expr){
 		common->error(line(), Xt("Xtal Compile Error 1019"));
@@ -378,17 +345,16 @@ void ExprBuilder::toplevel_export(int_t name, Expr* expr){
 		toplevel_stack.top()->export_expr = local(export_id);
 	}
 }
+
 TopLevelStmt* ExprBuilder::toplevel_end(){
-	scope_pop();
 	return toplevel_stack.pop();
 }
 
 void ExprBuilder::class_begin(int_t kind){
 	class_stack.push(new(alloc) ClassExpr(line()));
 	class_stack.top()->kind = kind;
-	scope_push(&class_stack.top()->vars);
-	scope_set_on_heap_flag(0);
 }
+
 void ExprBuilder::class_define_instance_variable(int_t name, Expr* expr){
 	for(TPairList<int_t, Expr*>::Node* p=class_stack.top()->inst_vars.head; p; p=p->next){
 		if(p->key==name){
@@ -399,16 +365,16 @@ void ExprBuilder::class_define_instance_variable(int_t name, Expr* expr){
 
 	class_stack.top()->inst_vars.push_back(name, expr, alloc);
 }
+
 void ExprBuilder::class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs){
-	register_variable(var);
-	Var v;
-	v.name = var;
-	v.constant = true;
-	v.init = rhs;
-	v.accessibility = accessibility;
-	v.ns = ns;
-	class_stack.top()->vars.vars.push_back(v, alloc);
+	DefineClassMemberStmt* s = new(alloc) DefineClassMemberStmt(line());
+	s->name = var;
+	s->expr = rhs;
+	s->accessibility = accessibility;
+	s->ns = ns;
+	class_stack.top()->stmts.push_back(s, alloc);
 }
+
 ClassExpr* ExprBuilder::class_end(){
 	fun_begin(KIND_METHOD);
 		block_begin();
@@ -416,11 +382,16 @@ ClassExpr* ExprBuilder::class_end(){
 				block_add(assign(instance_variable(p->key), p->value));
 			}
 		fun_body(block_end());
-	class_define_member(register_ident("__INITIALIZE__"), KIND_PUBLIC, pseudo(InstPushNull::NUMBER), fun_end());
+	DefineClassMemberStmt* s = new(alloc) DefineClassMemberStmt(line());
+	s->name = register_ident("__INITIALIZE__");
+	s->expr = fun_end();
+	s->accessibility = KIND_PRIVATE;
+	s->ns = pseudo(InstPushNull::NUMBER);
+	class_stack.top()->stmts.push_front(s, alloc);
 
-	scope_pop();
 	return class_stack.pop();
 }
+
 TList<Expr*>* ExprBuilder::class_mixins(){
 	return &class_stack.top()->mixins;
 }
@@ -524,7 +495,6 @@ MapExpr* ExprBuilder::map_end(){
 void ExprBuilder::init(LPCCommon* com, RegionAlloc* all){
 	common = com;
 	alloc = all;
-	vars_stack.clear();
 	block_stack.clear();
 	try_stack.clear();
 	while_stack.clear();

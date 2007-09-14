@@ -109,8 +109,8 @@ AnyPtr ret = Xsrc((
 
 filelocal.inherit(peg);
 
-vvv: (alpha | (-digit >> line_number));
-var: join(vvv*1);
+vvv: (alpha | digit);
+var: join(vvv*1) >> node("VVV", 1);
 
 //var: str("aiueo") | str("byack") | str("clkue") | str("dwerae") | str("clc") | str("cl") | str("kue");
 

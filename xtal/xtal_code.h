@@ -15,9 +15,9 @@ public:
 	/**
 	* @brief コードに対応したソース行数を返す。
 	*/
-	int_t compliant_line_number(const inst_t* p);
+	int_t compliant_lineno(const inst_t* p);
 		
-	void set_line_number_info(int_t line);
+	void set_lineno_info(int_t line);
 
 	const inst_t* data(){
 		return &code_[0];
@@ -124,7 +124,7 @@ private:
 
 	struct LineNumberTable{
 		u16 start_pc;
-		u16 line_number;
+		u16 lineno;
 	};
 
 	struct LineNumberCmp{
@@ -139,7 +139,7 @@ private:
 		}
 	};
 
-	AC<LineNumberTable>::vector line_number_table_;
+	AC<LineNumberTable>::vector lineno_table_;
 };
 
 }

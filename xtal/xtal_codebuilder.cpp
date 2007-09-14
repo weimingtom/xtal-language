@@ -29,9 +29,8 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	result_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	Vars vars;
-	vars.on_heap = true;
-	fun_begin(KIND_FUN, &vars, true, 0, 0, 0);
+	var_begin(VarFrame::BLOCK);
+	fun_begin(KIND_FUN, true, 0, 0, 0);
 
 	Stmt* ep = parser_.parse(stream, source_file_name);
 	com_ = parser_.common();
@@ -42,6 +41,9 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	if(ep){
 		compile_stmt(ep);
 	}
+	
+	fun_end(0);
+	var_end();
 
 	parser_.release();
 	CodePtr retval = result_;
@@ -61,9 +63,7 @@ void CodeBuilder::interactive_compile(){
 	result_->except_core_table_.push_back(ExceptCore());
 
 	lines_.push(1);
-	Vars vars;
-	vars.on_heap = true;
-	fun_begin(KIND_FUN, &vars, true, 0, 0, 0);
+	fun_begin(KIND_FUN, true, 0, 0, 0);
 
 	StreamPtr stream(xnew<InteractiveStream>());
 	parser_.begin_interactive_parsing(stream);
@@ -129,58 +129,26 @@ InternedStringPtr CodeBuilder::to_id(int_t ident){
 	return (InternedStringPtr&)com_->ident_table->at(ident);
 }
 
-int_t CodeBuilder::lookup_variable(int_t key){
-	int ret = 0;
-	for(size_t i = 0, last = vars_stack_.size(); i<last; ++i){
-		for(TList<Var>::Node* p = vars_stack_[i]->vars.tail; p; p = p->prev){
-			if(p->value.name==key){
-				return ret;
-			}
-			ret++;
-		}
-	}
-	return -1;
-}
-
-bool CodeBuilder::variable_on_heap(int_t pos){
-	for(size_t i = 0, last = vars_stack_.size(); i<last; ++i){
-		if(pos<vars_stack_[i]->vars.size){
-			return vars_stack_[i]->on_heap;
-		}
-		pos -= vars_stack_[i]->vars.size;
-	}
-	return false;
-}
-
 bool CodeBuilder::put_set_local_code(int_t var){
-	int_t id = lookup_variable(var);
-	if(id>=0){
-		bool on_heap = variable_on_heap(id);
- 
-		if(on_heap){
-			if(id<=0xff){
-				put_inst(InstSetLocalVariable1Byte(id));
-			}else{
-				put_inst(InstSetLocalVariable2Byte(id));
-			}		
+	LVarInfo info = var_find(var);
+	if(info.pos>=0){
+		if(info.pos<=0xff){
+			var_set_direct(*info.var_frame);
+			put_inst(InstSetLocalVariable1Byte(info.pos));
 		}else{
-			if(id<=0xff){
-				put_inst(InstSetLocalVariable1ByteDirect(id));
-			}else{
-				put_inst(InstSetLocalVariable2Byte(id));
-			}
-		}
+			put_inst(InstSetLocalVariable2Byte(info.pos));
+		}		
+
 		return true;
 	}else{
-		//com_->error(line(), Xt("定義されていない変数%sに代入しようとしました")(to_id(var)));
 		put_inst(InstSetGlobalVariable(var));
 		return false;
 	}
 }
 
 void CodeBuilder::put_define_local_code(int_t var){
-	int_t id = lookup_variable(var);
-	if(id>=0){
+	LVarInfo info = var_find(var);
+	if(info.pos>=0){
 		put_set_local_code(var);
 	}else{
 		put_inst(InstDefineGlobalVariable(var));
@@ -188,23 +156,15 @@ void CodeBuilder::put_define_local_code(int_t var){
 }
 
 bool CodeBuilder::put_local_code(int_t var){
-	int_t id = lookup_variable(var);
-	if(id>=0){
-		bool on_heap = variable_on_heap(id);
-
-		if(on_heap){
-			if(id<=0xff){
-				put_inst(InstLocalVariable1Byte(id));
-			}else{
-				put_inst(InstLocalVariable2Byte(id));
-			}		
+	LVarInfo info = var_find(var);
+	if(info.pos>=0){
+		if(info.pos<=0xff){
+			var_set_direct(*info.var_frame);
+			put_inst(InstLocalVariable1Byte(info.pos));
 		}else{
-			if(id<=0xff){
-				put_inst(InstLocalVariable1ByteDirect(id));
-			}else{
-				put_inst(InstLocalVariable2Byte(id));
-			}
-		}
+			put_inst(InstLocalVariable2Byte(info.pos));
+		}		
+
 		return true;
 	}else{
 		put_inst(InstGlobalVariable(var));
@@ -283,13 +243,14 @@ void CodeBuilder::put_define_member_code(int_t var, Expr* pvar){
 }
 
 int_t CodeBuilder::lookup_instance_variable(int_t key){
-	if(!class_scopes_.empty()){
-		int_t i = 0;
-		for(TPairList<int_t, Expr*>::Node* p=class_scopes_.top()->inst_vars.head; p; p=p->next){
-			if(p->key==key){
-				return i; 
+	if(!class_frames_.empty()){
+		int ret = 0;
+		ClassFrame& cf = class_frames_.top();
+		for(size_t i = 0, last = cf.entrys.size(); i<last; ++i){
+			if(cf.entrys[i].name==key){
+				return ret;
 			}
-			i++;
+			ret++;
 		}
 	}
 	com_->error(line(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(to_id(key)))));
@@ -297,11 +258,11 @@ int_t CodeBuilder::lookup_instance_variable(int_t key){
 }
 
 void CodeBuilder::put_set_instance_variable_code(int_t var){
-	put_inst(InstSetInstanceVariable(lookup_instance_variable(var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+	put_inst(InstSetInstanceVariable(lookup_instance_variable(var), class_core_num()));
 }
 
 void CodeBuilder::put_instance_variable_code(int_t var){
-	put_inst(InstInstanceVariable(lookup_instance_variable(var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+	put_inst(InstInstanceVariable(lookup_instance_variable(var), class_core_num()));
 }
 
 int_t CodeBuilder::reserve_label(){
@@ -334,7 +295,7 @@ void CodeBuilder::process_labels(){
 }
 
 void CodeBuilder::break_off(int_t n){
-	for(uint_t scope_count = vars_stack_.size(); scope_count!=(uint_t)n; scope_count--){
+	for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)n; scope_count--){
 		for(uint_t k = 0; k<fun_frame().finallys.size(); ++k){
 			if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 				int_t label = reserve_label();
@@ -344,12 +305,11 @@ void CodeBuilder::break_off(int_t n){
 				set_label(label);
 			}
 		}
-		if(vars_stack_[vars_stack_.size()-scope_count]->vars.size){
-			if(vars_stack_[vars_stack_.size()-scope_count]->on_heap){
-				put_inst(InstBlockEnd());
-			}else{
-				put_inst(InstBlockEndDirect(vars_stack_[vars_stack_.size()-scope_count]->vars.size));
-			}
+
+		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
+		if(vf.entrys.size() && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::BLOCK)){
+			var_set_direct(vf);
+			put_inst(InstBlockEnd(vf.block_core_num));
 		}
 	}
 }
@@ -392,7 +352,7 @@ void CodeBuilder::push_loop(int break_labelno, int continue_labelno, int_t name,
 	loop.break_label = break_labelno;
 	loop.continue_label = continue_labelno;
 	loop.name = name;
-	loop.frame_count = vars_stack_.size();
+	loop.frame_count = var_frames_.size();
 	loop.have_label = have_label;
 	fun_frames_.top().loops.push(loop);
 }
@@ -401,96 +361,72 @@ void CodeBuilder::pop_loop(){
 	fun_frames_.top().loops.pop();
 }
 
-void CodeBuilder::block_begin(Vars* vars){
-	vars_stack_.push(vars);
+void CodeBuilder::block_begin(){
+	VarFrame& vf = var_frames_.top();
 
 	int_t block_core_num = result_->block_core_table_.size();
-	result_->block_core_table_.push_back(BlockCore());
-	result_->block_core_table_.back().variable_symbol_offset = result_->symbol_table_->size();
-	result_->block_core_table_.back().line_number = lines_.top();
 
-	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		result_->block_core_table_.back().variable_size++;
-		result_->symbol_table_->push_back(to_id(p->value.name));
+	BlockCore core;
+	core.variable_size = vf.entrys.size();
+	core.variable_symbol_offset = result_->symbol_table_->size();
+	core.lineno = lines_.top();
+
+	vf.block_core_num = block_core_num;
+
+	for(int_t i=0; i<vf.entrys.size(); ++i){
+		result_->symbol_table_->push_back(to_id(vf.entrys[i].name));
 	}
 
-	if(vars->vars.size){
-		if(vars->on_heap){
-			put_inst(InstBlockBegin(block_core_num));
-		}else{
-			put_inst(InstBlockBeginDirect(vars->vars.size));
-		}
+	if(vf.entrys.size()){
+		var_set_direct(var_frames_.top());
+		put_inst(InstBlockBegin(block_core_num));
 	}
+
+	result_->block_core_table_.push_back(core);
 }
 
 void CodeBuilder::block_end(){
-	Vars* vars = vars_stack_.top();
-
-	if(vars->vars.size){
-		if(vars->on_heap){
-			put_inst(InstBlockEnd());
-		}else{
-			put_inst(InstBlockEndDirect(vars->vars.size));
-		}
+	VarFrame& vf = var_frames_.top();
+	if(vf.entrys.size()){
+		var_set_direct(var_frames_.top());
+		put_inst(InstBlockEnd(vf.block_core_num));
 	}
-	vars_stack_.pop();
 }
 
-void CodeBuilder::class_begin(int_t kind, Vars* vars, int_t mixins){
-	vars_stack_.push(vars);
-
-	int_t class_core_num = result_->class_core_table_.size();
-	result_->class_core_table_.push_back(ClassCore());
-	result_->class_core_table_.back().variable_symbol_offset = result_->symbol_table_->size();
-	result_->class_core_table_.back().line_number = lines_.top();
-	result_->class_core_table_.back().kind = kind;
-
-	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		result_->class_core_table_.back().variable_size++;
-		result_->symbol_table_->push_back(to_id(p->value.name));
-	}
-
-	put_inst(InstClassBegin(class_core_num, mixins));
-}
-
-void CodeBuilder::class_end(){
-	put_inst(InstClassEnd());
-	vars_stack_.pop();
-}
-
-void CodeBuilder::fun_begin(int_t kind, Vars* vars, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count){
-
+void CodeBuilder::fun_begin(int_t kind, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count){
 	FunFrame& f = fun_frames_.push();	
 	f.used_args_object = false;
 	f.labels.clear();
 	f.loops.clear();
 	f.finallys.clear();
-	f.frame_count = vars_stack_.size();
+	f.var_frame_count = var_frames_.size()-1;
 	f.used_args_object = have_args;
 
-	vars_stack_.push(vars);
+	VarFrame& vf = var_frames_.top();
 
 	FunCore core;
 	core.variable_symbol_offset = result_->symbol_table_->size();
 	core.pc = code_size()+offset;
-	core.line_number = lines_.top();
+	core.lineno = lines_.top();
 	core.kind = kind;
 	core.min_param_count = min_param_count;
 	core.max_param_count = max_param_count;
 	core.used_args_object = have_args;
-	core.on_heap = vars->on_heap;
+	core.on_heap = 0;
+	core.variable_size = vf.entrys.size();
 
-	for(TList<Var>::Node* p = vars->vars.head; p; p = p->next){
-		core.variable_size++;
-		result_->symbol_table_->push_back(to_id(p->value.name));
+	for(int_t i=0; i<vf.entrys.size(); ++i){
+		result_->symbol_table_->push_back(to_id(vf.entrys[i].name));
 	}
+
 	result_->xfun_core_table_.push_back(core);
 }
 
-void CodeBuilder::fun_end(){
-	vars_stack_.pop();
+void CodeBuilder::fun_end(int_t n){
 	process_labels();
 	fun_frames_.downsize(1);
+
+	result_->xfun_core_table_[n].on_heap = var_frames_.top().kind!=VarFrame::SCOPE;
 }
 
 int_t CodeBuilder::code_size(){
@@ -517,7 +453,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 	}
 	
 	lines_.push(ex->line);
-	result_->set_line_number_info(ex->line);
+	result_->set_lineno_info(ex->line);
 
 	switch(ex->type){
 
@@ -529,6 +465,9 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 		XTAL_EXPR_CASE(PseudoVariableExpr){
 			put_inst(Inst(e->code));
+			if(e->code==InstPushCurrentContext::NUMBER){
+				var_set_on_heap();
+			}
 		}
 
 		XTAL_EXPR_CASE(CalleeExpr){
@@ -687,7 +626,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 		XTAL_EXPR_CASE(OnceExpr){
 			int_t label_end = reserve_label();
-			
+
 			set_jump(offsetof(InstOnce, address), label_end);
 			int_t num = com_->append_once();
 			put_inst(InstOnce(0, num));
@@ -798,6 +737,8 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 
 		XTAL_EXPR_CASE(FunExpr){
 
+			var_set_on_heap();
+
 			if(e->kind==KIND_METHOD){
 
 				// ゲッタか？
@@ -807,7 +748,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 							if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(p->stmts.head->value)){
 								if(p2->exprs.size==1){
 									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-										put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+										put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_core_num()));
 										break;
 									}
 								}
@@ -816,7 +757,7 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 					}else if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(e->stmt)){
 						if(p2->exprs.size==1){
 							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-								put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+								put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_core_num()));
 								break;
 							}
 						}
@@ -830,14 +771,14 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 							if(p->stmts.size==1){
 								if(AssignStmt* p2 = stmt_cast<AssignStmt>(p->stmts.head->value)){
 									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
-										put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+										put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_core_num()));
 										break;
 									}
 								}
 							}
 						}else if(AssignStmt* p2 = stmt_cast<AssignStmt>(e->stmt)){
 							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
-								put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_scopes_.empty() ? 0 : class_scopes_.top()->frame_number));
+								put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_core_num()));
 								break;
 							}
 						}
@@ -864,8 +805,13 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				minv = maxv;
 			}
 
+			var_begin(VarFrame::SCOPE);
+			for(TPairList<int_t, Expr*>::Node* p = e->params.head; p; p = p->next){
+				var_define(p->key);
+			}
+
 			int_t n = result_->xfun_core_table_.size();
-			fun_begin(e->kind, &e->vars, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
+			fun_begin(e->kind, e->have_args, InstMakeFun::ISIZE, minv, maxv);{
 
 				int_t fun_end_label = reserve_label();
 
@@ -880,17 +826,13 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 					// デフォルト値を持つ
 					if(p->value){
 						
-						int_t id = lookup_variable(p->key);
-						bool on_heap = variable_on_heap(id);
+						LVarInfo info = var_find(p->key);
 						int_t label = reserve_label();
 						
-						if(on_heap){
-							set_jump(offsetof(InstIfArgIsNull, address), label);
-							put_inst(InstIfArgIsNull(id, 0));
-						}else{
-							set_jump(offsetof(InstIfArgIsNullDirect, address), label);
-							put_inst(InstIfArgIsNullDirect(id, 0));
-						}
+						set_jump(offsetof(InstIfArgIsNull, address), label);
+						var_set_direct(*info.var_frame);
+						put_inst(InstIfArgIsNull(info.pos, 0));
+
 						compile(p->value);
 						put_set_local_code(p->key);
 						
@@ -898,13 +840,14 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 					}
 				}
 				compile_stmt(e->stmt);
-				break_off(fun_frame().frame_count+1);
+				break_off(fun_frame().var_frame_count+1);
 				if(debug::is_enabled()){
 					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 				}
 				put_inst(InstReturn0());
 				set_label(fun_end_label);
-			}fun_end();
+			}fun_end(n);
+			var_end();
 		}
 
 		XTAL_EXPR_CASE(LocalExpr){
@@ -926,27 +869,69 @@ void CodeBuilder::compile(Expr* ex, const CompileInfo& info){
 				compile(p->value);
 			}
 
-			class_begin(e->kind, &e->vars, e->mixins.size);{
-				class_scopes_.push(e);
-				result_->class_core_table_.back().instance_variable_symbol_offset = result_->symbol_table_->size();
-				result_->class_core_table_.back().instance_variable_size = e->inst_vars.size;
-				class_scopes_.top()->frame_number = result_->class_core_table_.size()-1;
+			var_begin(VarFrame::CLASS);
+			var_set_on_heap();
 
-				for(TPairList<int_t, Expr*>::Node* p=e->inst_vars.head; p; p=p->next){
-					result_->symbol_table_->push_back(to_id(p->key));
+			for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
+				if(DefineClassMemberStmt* dcms = stmt_cast<DefineClassMemberStmt>(p->value)){
+					var_define(dcms->name);
 				}
+			}
 
-				for(TList<Var>::Node* p = e->vars.vars.head; p; p = p->next){
-					compile(p->value.init);
-					compile(p->value.ns);
-					put_inst(InstDefineClassMember(lookup_variable(p->value.name), p->value.name, p->value.accessibility));
+			ClassFrame& cf = class_frames_.push();
+			cf.entrys.clear();
+			cf.class_core_num = result_->class_core_table_.size();
+
+			for(TPairList<int_t, Expr*>::Node* p=e->inst_vars.head; p; p=p->next){
+				ClassFrame::Entry entry;
+				entry.name = p->key;
+				cf.entrys.push_back(entry);
+			}
+
+
+			VarFrame& vf = var_frames_.top();
+
+			int_t class_core_num = result_->class_core_table_.size();
+
+			ClassCore core;
+			core.lineno = lines_.top();
+			core.kind = e->kind;
+			core.mixins = e->mixins.size;
+			core.variable_size = vf.entrys.size();
+			core.instance_variable_size = e->inst_vars.size;
+			
+			core.variable_symbol_offset = result_->symbol_table_->size();
+			for(int_t i=0; i<vf.entrys.size(); ++i){
+				result_->symbol_table_->push_back(to_id(vf.entrys[i].name));
+			}
+
+			core.instance_variable_symbol_offset = result_->symbol_table_->size();
+			for(TPairList<int_t, Expr*>::Node* p=e->inst_vars.head; p; p=p->next){
+				result_->symbol_table_->push_back(to_id(p->key));
+			}
+
+			put_inst(InstClassBegin(class_core_num));
+			result_->class_core_table_.push_back(core);
+
+			{
+
+				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
+					if(DefineClassMemberStmt* dcms = stmt_cast<DefineClassMemberStmt>(p->value)){
+						compile(dcms->expr);
+						compile(dcms->ns);
+						LVarInfo info = var_find(dcms->name);
+						put_inst(InstDefineClassMember(info.pos, dcms->name, dcms->accessibility));
+					}
 				}
-				class_scopes_.downsize(1);
-			}class_end();
+			}
+
+			put_inst(InstClassEnd());
+			class_frames_.pop();
+			var_end();
 		}
 	}
 	
-	result_->set_line_number_info(ex->line);
+	result_->set_lineno_info(ex->line);
 	lines_.pop();
 
 	if(info.need_result_count!=result_count){
@@ -964,7 +949,7 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 	}
 
 	lines_.push(ex->line);
-	result_->set_line_number_info(ex->line);
+	result_->set_lineno_info(ex->line);
 
 	switch(ex->type){
 
@@ -1076,22 +1061,25 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 
 		XTAL_EXPR_CASE(IncStmt){
 			if(LocalExpr* p = expr_cast<LocalExpr>(e->lhs)){
-				int_t id = lookup_variable(p->var);
-				if(id>=0){
-					if(variable_on_heap(id) || id>=256){
+				LVarInfo info = var_find(p->var);
+				if(info.pos>=0){
+					if(info.pos>=256){
 						if(e->code == InstInc::NUMBER){
-							put_inst(InstLocalVariableInc(id));
+							put_inst(InstLocalVariableInc2Byte(info.pos));
 						}else{
-							put_inst(InstLocalVariableDec(id));
+							put_inst(InstLocalVariableDec2Byte(info.pos));
 						}
-						put_inst(InstSetLocalVariable2Byte(id));
+						put_inst(InstSetLocalVariable2Byte(info.pos));
 					}else{
 						if(e->code == InstInc::NUMBER){
-							put_inst(InstLocalVariableIncDirect(id));
+							var_set_direct(*info.var_frame);
+							put_inst(InstLocalVariableInc(info.pos));
 						}else{
-							put_inst(InstLocalVariableDecDirect(id));
+							var_set_direct(*info.var_frame);
+							put_inst(InstLocalVariableDec(info.pos));
 						}
-						put_inst(InstSetLocalVariable1ByteDirect(id));
+						var_set_direct(*info.var_frame);
+						put_inst(InstSetLocalVariable1Byte(info.pos));
 					}
 				}else{
 					put_inst(InstGlobalVariable(p->var));
@@ -1142,7 +1130,7 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 		XTAL_EXPR_CASE(ReturnStmt){
 
 			bool have_finally = false;
-			for(uint_t scope_count = vars_stack_.size(); scope_count!=(uint_t)fun_frame().frame_count+1; scope_count--){
+			for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)fun_frame().var_frame_count+1; scope_count--){
 				for(uint_t k = 0; k<(uint_t)fun_frame().finallys.size(); ++k){
 					if((uint_t)fun_frame().finallys[k].frame_count==scope_count){
 						have_finally = true;
@@ -1166,7 +1154,7 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 			
 			{
 				
-				break_off(fun_frame().frame_count+1);
+				break_off(fun_frame().var_frame_count+1);
 
 				if(debug::is_enabled()){
 					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
@@ -1218,7 +1206,7 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 			result_->except_core_table_.push_back(ExceptCore());
 
 			CodeBuilder::FunFrame::Finally exc;
-			exc.frame_count = vars_stack_.size();
+			exc.frame_count = var_frames_.size();
 			exc.finally_label = finally_label;
 			fun_frame().finallys.push(exc);
 
@@ -1240,16 +1228,17 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 				result_->except_core_table_.push_back(ExceptCore());
 
 				CodeBuilder::FunFrame::Finally exc;
-				exc.frame_count = vars_stack_.size();
+				exc.frame_count = var_frames_.size();
 				exc.finally_label = finally_label;
 				fun_frame().finallys.push(exc);
 
-				block_begin(&e->catch_vars);{
-					if(e->catch_vars.vars.head){
-						put_set_local_code(e->catch_vars.vars.head->value.name);
-					}
+				var_begin(VarFrame::SCOPE);
+				var_define(e->catch_var);
+				block_begin();{
+					put_set_local_code(e->catch_var);
 					compile_stmt(e->catch_stmt);
 				}block_end();
+				var_end();
 
 				put_inst(InstTryEnd());
 				fun_frame().finallys.pop();
@@ -1379,35 +1368,6 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 				put_inst(InstAdjustResult(pushed_count, e->lhs.size));
 			}
 
-			if(2<=e->lhs.size && e->lhs.size<=4){
-				bool bad = false;
-				int_t list[4];
-				int_t i = 0;
-				for(TList<Expr*>::Node* lhs=e->lhs.head; lhs; lhs=lhs->next){
-					if(LocalExpr* e2 = expr_cast<LocalExpr>(lhs->value)){
-						int_t id = lookup_variable(e2->var);
-						if(id>=256 || id<0 || variable_on_heap(id)){
-							bad = true;
-							break;
-						}
-						list[i] = id;
-					}else{
-						bad = true;
-						break;
-					}
-					++i;
-				}
-
-				if(!bad){
-					switch(i){
-					case 2: put_inst(InstSetMultipleLocalVariable2Direct(list[0], list[1])); break;
-					case 3: put_inst(InstSetMultipleLocalVariable3Direct(list[0], list[1], list[2])); break;
-					case 4: put_inst(InstSetMultipleLocalVariable4Direct(list[0], list[1], list[2], list[3])); break;
-					}
-					break;
-				}
-			}
-
 			if(e->define){
 				for(TList<Expr*>::Node* lhs=e->lhs.tail; lhs; lhs=lhs->prev){	
 					if(LocalExpr* e2 = expr_cast<LocalExpr>(lhs->value)){
@@ -1518,15 +1478,20 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 		}	
 		
 		XTAL_EXPR_CASE(BlockStmt){
-			block_begin(&e->vars);{
+			var_begin(VarFrame::SCOPE);
+			var_define(e->stmts);
+			block_begin();{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile_stmt(p->value);
 				}
 			}block_end();
+			var_end();
 		}
 		
 		XTAL_EXPR_CASE(TopLevelStmt){
-			block_begin(&e->vars);{
+			var_begin(VarFrame::SCOPE);
+			var_define(e->stmts);
+			block_begin();{
 				for(TList<Stmt*>::Node* p = e->stmts.head; p; p = p->next){
 					compile_stmt(p->value);
 				}
@@ -1540,13 +1505,14 @@ void CodeBuilder::compile_stmt(Stmt* ex){
 					put_inst(InstReturn0());
 				}
 			}block_end();
+			var_end();
 			
 			process_labels();
 			put_inst(InstThrow());
 		}	
 	}
 
-	result_->set_line_number_info(ex->line);
+	result_->set_lineno_info(ex->line);
 	lines_.pop();
 }
 

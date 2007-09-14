@@ -17,7 +17,7 @@ ParserPtr space;
 ParserPtr digit;
 ParserPtr success;
 ParserPtr fail;
-ParserPtr line_number;
+ParserPtr lineno;
 
 }
 
@@ -35,7 +35,7 @@ void uninitialize_peg(){
 	digit = null;
 	success = null;
 	fail = null;
-	line_number = null;
+	lineno = null;
 }
 
 }
@@ -85,7 +85,7 @@ void initialize_peg(){
 	digit = Parser::ch_set("0123456789");
 	success = xnew<Parser>(Parser::SUCCESS);
 	fail = xnew<Parser>(Parser::FAIL);
-	line_number = xnew<Parser>(Parser::LINE_NUMBER);
+	lineno = xnew<Parser>(Parser::LINE_NUMBER);
 
 	peg->def("any", any);
 	peg->def("eof", eof);
@@ -96,12 +96,13 @@ void initialize_peg(){
 	peg->def("digit", digit);
 	peg->def("success", success);
 	peg->def("fail", fail);
-	peg->def("line_number", line_number);
+	peg->def("lineno", lineno);
 	peg->fun("str", &Parser::str);
 	peg->fun("ch_set", &Parser::ch_set);
 	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
 	peg->fun("array", &Parser::array);
 	peg->fun("val", &Parser::val);
+	peg->fun("node", &Parser::node);
 }
 
 namespace peg{
@@ -288,6 +289,10 @@ ParserPtr Parser::try_(const AnyPtr& a){
 
 ParserPtr Parser::ch_map(const MapPtr& data){
 	return xnew<Parser>(CH_MAP, data);
+}
+	
+ParserPtr Parser::node(const AnyPtr& tag, int_t n){
+	return xnew<Parser>(NODE, tag, n);
 }
 
 ParserPtr Parser::val(const AnyPtr& v){
@@ -480,13 +485,20 @@ bool Parser::parse(const LexerPtr& lex){
 			PARSER_RETURN(false);
 		}
 
+		XTAL_CASE(NODE){
+			lex->push_result(param1_);
+			ArrayPtr results = lex->results();
+			results->push_back(results->splice(results->size()-(param2_->to_i()+1), param2_->to_i()+1));
+			PARSER_RETURN(true);
+		}
+
 		XTAL_CASE(VAL){
 			lex->push_result(param1_);
 			PARSER_RETURN(true);
 		}
 
 		XTAL_CASE(LINE_NUMBER){
-			lex->push_result(lex->line_number());
+			lex->push_result(lex->lineno());
 			PARSER_RETURN(true);
 		}
 	}

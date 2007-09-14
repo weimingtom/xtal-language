@@ -276,9 +276,9 @@ class Float;
 
 struct BlockCore{
 	BlockCore()
-		:line_number(0), kind(0), variable_symbol_offset(0), variable_size(0){}
+		:lineno(0), kind(0), variable_symbol_offset(0), variable_size(0){}
 
-	u16 line_number;
+	u16 lineno;
 	u16 kind;
 	u16 variable_symbol_offset;
 	u16 variable_size;
@@ -290,6 +290,7 @@ struct ClassCore : public BlockCore{
 
 	u16 instance_variable_symbol_offset;
 	u16 instance_variable_size;
+	u8 mixins;
 };
 
 struct FunCore : public BlockCore{

@@ -47,7 +47,7 @@ uint_t global_mutate_count = 0;
 void initialize_frame(){
 	{
 		ClassPtr p = new_cpp_class<MembersIter>("ClassMembersIter");
-		p->inherit(PseudoArray());
+		p->inherit(Iterator());
 		p->method("reset", &MembersIter::reset);
 		p->method("block_first", &MembersIter::block_next);
 		p->method("block_next", &MembersIter::block_next);

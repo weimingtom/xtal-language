@@ -64,7 +64,7 @@ void initialize_fun(){
 	{
 		ClassPtr p = new_cpp_class<Fiber>("Fiber");
 		p->inherit(get_cpp_class<Fun>());
-		p->inherit(PseudoArray());
+		p->inherit(Iterator());
 		p->method("reset", &Fiber::reset);
 		p->method("block_first", &Fiber::block_next);
 		p->method("block_next", &Fiber::block_next);

@@ -119,11 +119,6 @@ const VMachinePtr& vmachine();
 const ClassPtr& Iterator();
 
 /**
-* @brief PseudoArrayクラスを返す
-*/
-const ClassPtr& PseudoArray();
-
-/**
 * @brief Enumeratorクラスを返す
 */
 const ClassPtr& Enumerator();

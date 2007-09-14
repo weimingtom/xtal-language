@@ -167,7 +167,7 @@ public:
 
 void InitZipIter(){
 	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
-	p->inherit(PseudoArray());
+	p->inherit(Iterator());
 	p->def("new", ctor<ZipIter, const VMachinePtr&>());
 	p->method("block_first", &ZipIter::block_next);
 	p->method("block_next", &ZipIter::block_next);
@@ -178,7 +178,6 @@ void initialize_builtin(){
 
 	builtin()->def("builtin", builtin());
 
-	builtin()->def("PseudoArray", PseudoArray());
 	builtin()->def("Iterator", Iterator());
 	builtin()->def("Enumerator", Enumerator());
 	
@@ -226,6 +225,10 @@ builtin::CompileError: class(StandardError){
 	))();
 
 	Xsrc((
+
+Iterator::to_s: method(){
+	return this.to_a.p.each;
+}
 
 Iterator::to_a: method(){
 	ret: [];
@@ -498,7 +501,7 @@ Any::serial_save: method{
 	ret: [:];
 	klass: this.class;
 
-	klass.ancestors.r_each{
+	klass.ancestors.to_a.r_each{
 		if(n: this.instance_serial_save(it))
 			ret[it.object_name] = n;
 	}
@@ -513,7 +516,7 @@ Any::serial_save: method{
 Any::serial_load: method(v){
 	klass: this.class;
 
-	klass.ancestors.r_each{
+	klass.ancestors.to_a.r_each{
 		if(n: v[it.object_name]){
 			this.instance_serial_load(it, n);
 		}

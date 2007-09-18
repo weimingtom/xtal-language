@@ -12,7 +12,6 @@
 
 namespace xtal{
 
-extern AnyPtr once_value_none_;
 
 #define c2(C1, C2) ((C2)<<8 | (C1))
 #define c3(C1, C2, C3) ((C3)<<16 | (C2)<<8 | (C1))
@@ -27,12 +26,10 @@ void LPCCommon::init(const StringPtr& file_name){
 	ident_table = xnew<Array>();
 	ident_map = xnew<Map>();
 	value_table = xnew<Array>();
-	once_table = xnew<Array>();
 	source_file_name = file_name;
 
 	register_ident(InternedStringPtr(""));
 	value_table->push_back(null);
-	once_table->push_back(once_value_none_);
 }
 
 void LPCCommon::error(int_t line, const AnyPtr& message){
@@ -70,11 +67,6 @@ int_t LPCCommon::append_ident(const InternedStringPtr& ident){
 int_t LPCCommon::append_value(const AnyPtr& v){
 	value_table->push_back(v);
 	return value_table->size()-1;
-}
-
-int_t LPCCommon::append_once(){
-	once_table->push_back(once_value_none_);
-	return once_table->size()-1;
 }
 
 Lexer::Lexer(){
@@ -149,6 +141,7 @@ int_t Reader::read(){
 int_t Reader::peek(){
 	if(pos_==read_){
 		read_ += stream_->read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
+
 		if(pos_==read_){
 			return -1;
 		}
@@ -514,7 +507,7 @@ void Lexer::do_read(){
 		switch(ch){
 
 			XTAL_DEFAULT{
-				if(test_ident_first(ch)){
+				if(ch!=-1 && test_ident_first(ch)){
 					putback_to_reader(ch);
 					int_t ident = parse_ident();
 					if(ident<0){
@@ -769,7 +762,7 @@ void Lexer::do_read(){
 
 			XTAL_CASE(';'){ push(';'); }
 			XTAL_CASE('{'){ push('{'); }
-			XTAL_CASE('}'){ push('}'); push('\a'); }
+			XTAL_CASE('}'){ push('}'); }
 			XTAL_CASE('['){ push('['); }
 			XTAL_CASE(']'){ push(']'); }
 			XTAL_CASE('('){ push('('); }

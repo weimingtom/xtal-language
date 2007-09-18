@@ -30,9 +30,36 @@ public:
 			:need_result_count(need_result_count), tail(tail){}
 	};
 
-	void compile(Expr* p, const CompileInfo& info = CompileInfo());
-	void compile_stmt(Stmt* p);	
+	void compile(const AnyPtr& p, const CompileInfo& info = CompileInfo());
+	void compile_stmt(const AnyPtr& p);	
 	
+	int_t register_symbol(const InternedStringPtr& v){
+		if(const AnyPtr& pos = symbol_map_->at(v)){ return pos->to_i(); }
+		result_->symbol_table_->push_back(v);
+		symbol_map_->set_at(v, result_->symbol_table_->size()-1);
+		return result_->symbol_table_->size()-1;
+	}
+
+	int_t register_value(const AnyPtr& v){
+		if(const AnyPtr& pos = value_map_->at(v)){ return pos->to_i(); }
+		result_->value_table_->push_back(v);
+		value_map_->set_at(v, result_->value_table_->size()-1);
+		return result_->value_table_->size()-1;
+	}
+
+	int_t append_symbol(const InternedStringPtr& ident){
+		result_->symbol_table_->push_back(ident);
+		return result_->symbol_table_->size()-1;
+	}
+
+	int_t append_value(const AnyPtr& v){
+		result_->value_table_->push_back(v);
+		return result_->value_table_->size()-1;
+	}
+	
+	MapPtr value_map_;
+	MapPtr symbol_map_;
+
 	/**
 	* コンパイルエラーを取得する。
 	*/
@@ -54,13 +81,13 @@ public:
 	void set_jump(int_t offset, int_t labelno);
 	void process_labels();
 
-	bool put_local_code(int_t var);
-	bool put_set_local_code(int_t var);
-	void put_define_local_code(int_t var);
-	void put_send_code(int_t var, Expr* pvar, int_t need_result_count, bool tail, bool if_defined);
-	void put_set_send_code(int_t var, Expr* pvar, bool if_defined);
-	void put_member_code(int_t var, Expr* pvar, bool if_defined);
-	void put_define_member_code(int_t var, Expr* pvar);
+	bool put_local_code(const InternedStringPtr& var);
+	bool put_set_local_code(const InternedStringPtr& var);
+	void put_define_local_code(const InternedStringPtr& var);
+	void put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined);
+	void put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
+	void put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
+	void put_define_member_code(const InternedStringPtr& var, ExprPtr pvar);
 
 	/**
 	* 識別子が変数としてあるか探し、変数位置を返す。
@@ -68,17 +95,22 @@ public:
 	* @retval -1 登録されていない
 	* @retval 非-1 変数位置
 	*/
-	int_t lookup_instance_variable(int_t key);
-	void put_set_instance_variable_code(int_t var);
-	void put_instance_variable_code(int_t var);
-	void put_if_code(Expr* cond, int_t label_if, int_t label_if2);
-	void push_loop(int break_labelno, int continue_labelno, int_t name = 0, bool have_label = false);
+	int_t lookup_instance_variable(const InternedStringPtr& key);
+	void put_set_instance_variable_code(const InternedStringPtr& var);
+	void put_instance_variable_code(const InternedStringPtr& var);
+	void put_if_code(ExprPtr cond, int_t label_if, int_t label_if2);
+	void push_loop(int break_labelno, int continue_labelno, const InternedStringPtr& name = 0, bool have_label = false);
 	void pop_loop();
 	
 	/**
 	* ブロックの終りを埋め込む
 	*/
 	void break_off(int_t to);
+	
+	void compile_bin(ExprPtr e);
+	void compile_comp_bin(ExprPtr e);
+	void compile_op_assign(const ExprPtr& e);
+	void compile_incdec(const ExprPtr& e);
 
 	void put_inst2(const Inst& t, uint_t sz);
 
@@ -92,10 +124,8 @@ public:
 	*/
 	int_t code_size();
 		
-	InternedStringPtr to_id(int_t i);
-
-	void assign_lhs(Expr* lhs);
-	void define_lhs(Expr* lhs);
+	void assign_lhs(ExprPtr lhs);
+	void define_lhs(ExprPtr lhs);
 	
 	struct FunFrame{
 
@@ -115,14 +145,14 @@ public:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			int_t name; // ラベル名
+			InternedStringPtr name; // ラベル名
 			int_t frame_count; // フレームの数
 			int_t break_label; // break_labelの番号
 			int_t continue_label; // continue_labelの番号
 			bool have_label; // 対応するラベルを持っているか
 		};
 		
-		PODStack<Loop> loops;
+		Stack<Loop> loops;
 
 		struct Finally{
 			int_t frame_count;
@@ -138,8 +168,9 @@ public:
 
 	struct VarFrame{
 		struct Entry{
-			int_t name;
+			InternedStringPtr name;
 			bool constant;
+			bool initialized;
 			int_t accessibility;
 		};
 
@@ -151,6 +182,7 @@ public:
 
 		AC<Direct>::vector directs;
 		int_t block_core_num;
+		int_t fun_frames_size;
 
 		enum{
 			SCOPE,
@@ -163,7 +195,7 @@ public:
 
 	struct ClassFrame{
 		struct Entry{
-			int_t name;
+			InternedStringPtr name;
 		};
 
 		AC<Entry>::vector entrys;
@@ -175,14 +207,17 @@ public:
 		int_t pos;
 	};
 
-	LVarInfo var_find(int_t key){
+	LVarInfo var_find(const InternedStringPtr& key, bool define = false){
 		LVarInfo ret = {0, 0};
 		for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 			VarFrame& vf = var_frames_[i];
 			for(size_t j = 0, jlast = vf.entrys.size(); j<jlast; ++j){
-				if(vf.entrys[vf.entrys.size()-1-j].name==key){
-					ret.var_frame = &vf;
-					return ret;
+				if(raweq(vf.entrys[vf.entrys.size()-1-j].name, key)){
+					if(define){ vf.entrys[vf.entrys.size()-1-j].initialized = true; }
+					if(vf.fun_frames_size!=fun_frames_.size() || vf.entrys[vf.entrys.size()-1-j].initialized){
+						ret.var_frame = &vf;
+						return ret;
+					}
 				}
 				ret.pos++;
 			}
@@ -197,19 +232,26 @@ public:
 		vf.directs.clear();
 		vf.block_core_num = 0;
 		vf.kind = kind;
+		vf.fun_frames_size = fun_frames_.size();
 	}
 
-	void var_define(TList<Stmt*>& stmts){
-		for(TList<Stmt*>::Node* p=stmts.head; p; p=p->next){
-			if(DefineStmt* def_stmt = stmt_cast<DefineStmt>(p->value)){
-				if(LocalExpr* lvar_expr = expr_cast<LocalExpr>(def_stmt->lhs)){
-					var_define(lvar_expr->var);
+	void var_define(const ArrayPtr& stmts){
+		Xfor(v0, stmts->each()){
+			if(!v0){
+				continue;
+			}
+
+			ExprPtr v = ep(v0);
+			if(ep(v)->type()==EXPR_DEFINE){
+				if(v->bin_lhs()->type()==EXPR_LVAR){
+					var_define(v->bin_lhs()->lvar_name());
 				}
-			}else if(MultipleAssignStmt* ma_stmt = stmt_cast<MultipleAssignStmt>(p->value)){
-				if(ma_stmt->define){
-					for(TList<Expr*>::Node* p=ma_stmt->lhs.head; p; p=p->next){
-						if(LocalExpr* lvar_expr = expr_cast<LocalExpr>(p->value)){
-							var_define(lvar_expr->var);
+			}else if(v->type()==EXPR_MASSIGN){
+				if(v->massign_define()){
+					Xfor(v1, v->massign_lhs_exprs()){
+						ExprPtr vv = ep(v1);
+						if(vv->type()==EXPR_LVAR){
+							var_define(vv->lvar_name());
 						}			
 					}
 				}
@@ -217,19 +259,20 @@ public:
 		}
 	}
 
-	void var_set_direct(VarFrame& vf){
-		VarFrame::Direct d;
-		d.pos = code_size();
-		vf.directs.push_back(d);
-	}
-
-	void var_define(int_t name, int_t accessibility = 0){
+	void var_define(const InternedStringPtr& name, int_t accessibility = 0, bool define = false){
 		VarFrame& vf = var_frames_.top();
 		VarFrame::Entry entry;
 		entry.name = name;
 		entry.constant = false;
+		entry.initialized = define;
 		entry.accessibility = accessibility;
 		vf.entrys.push_back(entry);
+	}
+
+	void var_set_direct(VarFrame& vf){
+		VarFrame::Direct d;
+		d.pos = code_size();
+		vf.directs.push_back(d);
 	}
 
 	void var_set_on_heap(){
@@ -265,10 +308,12 @@ public:
 		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
 	}
 
+	void error(const AnyPtr&, const AnyPtr&){
+	}
+
 private:
 	
 	Parser parser_;
-	LPCCommon* com_;
 	CodePtr result_;
 	
 	Stack<FunFrame> fun_frames_;

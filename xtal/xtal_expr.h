@@ -3,676 +3,278 @@
 
 #ifndef XTAL_NO_PARSER
 
-#include "xtal_lexer.h"
-
 namespace xtal{
 
-struct RegionAllocObject{
-	void* operator new(size_t size, RegionAlloc* r);
-	void operator delete(void *, RegionAlloc*);
+enum{
+	EXPR_NULL,
+	EXPR_TRUE,
+	EXPR_FALSE,
+	EXPR_CALLEE,
+	EXPR_ARGS,
+	EXPR_THIS,
+	EXPR_CURRENT_CONTEXT,
+	EXPR_INT,
+	EXPR_FLOAT,
+	EXPR_STRING,
+	EXPR_ARRAY,
+	EXPR_MAP,
+	EXPR_ADD,
+	EXPR_SUB,
+	EXPR_CAT,
+	EXPR_MUL,
+	EXPR_DIV,
+	EXPR_MOD,
+	EXPR_AND,
+	EXPR_OR,
+	EXPR_XOR,
+	EXPR_SHL,
+	EXPR_SHR,
+	EXPR_USHR,
+	EXPR_ADD_ASSIGN,
+	EXPR_SUB_ASSIGN,
+	EXPR_CAT_ASSIGN,
+	EXPR_MUL_ASSIGN,
+	EXPR_DIV_ASSIGN,
+	EXPR_MOD_ASSIGN,
+	EXPR_AND_ASSIGN,
+	EXPR_OR_ASSIGN,
+	EXPR_XOR_ASSIGN,
+	EXPR_SHL_ASSIGN,
+	EXPR_SHR_ASSIGN,
+	EXPR_USHR_ASSIGN,
+	EXPR_EQ,
+	EXPR_NE,
+	EXPR_LT,
+	EXPR_LE,
+	EXPR_GT,
+	EXPR_GE,
+	EXPR_RAWEQ,
+	EXPR_RAWNE,
+	EXPR_IS,
+	EXPR_NIS,
+	EXPR_ANDAND,
+	EXPR_OROR,
+	EXPR_INC,
+	EXPR_DEC,
+	EXPR_POS,
+	EXPR_NEG,
+	EXPR_COM,
+	EXPR_NOT,
+	EXPR_RETURN,
+	EXPR_YIELD,
+	EXPR_ASSERT,
+	EXPR_ONCE,
+	EXPR_THROW,
+	EXPR_Q,
+	EXPR_TRY,
+	EXPR_IF,
+	EXPR_FOR,
+	EXPR_FUN,
+	EXPR_MASSIGN,
+	EXPR_IVAR,
+	EXPR_LVAR,
+	EXPR_MEMBER,
+	EXPR_CALL,
+	EXPR_SEND,
+	EXPR_ASSIGN,
+	EXPR_DEFINE,
+	EXPR_CDEFINE,
+	EXPR_AT,
+	EXPR_BREAK,
+	EXPR_CONTINUE,
+	EXPR_SCOPE,
+	EXPR_CLASS,
+	EXPR_TOPLEVEL,
+	EXPR_PUSH,
+	EXPR_POP,
+
 };
 
+#define XTAL_DEF_MEMBER(N, Type, Name) \
+	Type Name(){ if(size()<=N) resize(N+1); return as<Type>(at(N)); }\
+	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return ExprPtr::from_this(this); }
 
-/*
 
-巡回サンプル
+class Expr;
+typedef SmartPtr<Expr> ExprPtr;
 
-for(TList<Any>::Node* p = values.head; p; p = p->next){
-	//p->value;
+inline ExprPtr ep(const AnyPtr& a){
+	return ptr_cast<Expr>(a);
 }
 
-*/
-template <class T>
-struct TList{
-
-	struct Node : public RegionAllocObject{
-		T value;
-
-		Node* next;
-		Node* prev;
-
-		Node(const T &val = T())
-			:value(val), next(0), prev(0){}
-	};
-
-	Node* head;
-	Node* tail;
-	int size;
-
-	TList()
-		:head(0), tail(0), size(0){}
-
-	void push_front(const T& v, RegionAlloc* alloc);
-
-	void push_back(const T &v, RegionAlloc* alloc);
-
-	void pop_back();
-};
-
-template <class T>
-void TList<T>::push_front(const T &v, RegionAlloc* alloc){
-	if(head){
-		Node* p = new(alloc) Node(v);
-		p->next = head;
-		head->prev = p;
-		head = p;
-	}else{
-		head = tail = new(alloc) Node(v);
-	}
-	size++;
-}
-
-template <class T>
-void TList<T>::push_back(const T &v, RegionAlloc* alloc){
-	if(head){
-		Node* p = new(alloc) Node(v);
-		p->prev = tail;
-		tail->next = p;
-		tail = p;
-	}else{
-		head = tail = new(alloc) Node(v);
-	}
-	size++;
-}
-
-template <class T>
-void TList<T>::pop_back(){
-	if(head){
-		if(head==tail){
-			head = tail = 0;
-		}else{
-			tail = tail->prev;
-			tail->next = 0;
-		}
-		size--;
-	}
-}
-
-template <class Key, class T>
-struct TPairList{
-
-	struct Node : public RegionAllocObject{
-		Key key;
-		T value;
-
-		Node* next;
-		Node* prev;
-
-		Node(const Key &key = Key(), const T &val = T())
-			:key(key), value(val), next(0), prev(0){}
-	};
-
-	Node* head;
-	Node* tail;
-	int size;
-
-	TPairList()
-		:head(0), tail(0), size(0){}
-
-	void push_back(const Key& k, const T &v, RegionAlloc* alloc);
-
-	void pop_back();
-};
-
-template <class Key, class T>
-void TPairList<Key, T>::push_back(const Key& k, const T &v, RegionAlloc* alloc){
-	if(head){
-		Node* p = new(alloc) Node(k, v);
-		p->prev = tail;
-		tail->next = p;
-		tail = p;
-	}else{
-		head = tail = new(alloc) Node(k, v);
-	}
-	size++;
-}
-
-template <class Key, class T>
-void TPairList<Key, T>::pop_back(){
-	if(head){
-		if(head==tail){
-			head = tail = 0;
-		}else{
-			tail = tail->prev;
-			tail->next = 0;
-		}
-		size--;
-	}
-}
-
-// 値を返す文法要素
-struct Expr : public RegionAllocObject{	
-	enum{ TYPE = __LINE__ };
-	
-	int_t type;
-	int_t line;
-	
-	Expr(int_t type, int_t line)
-		:type(type), line(line){}
-
-	operator Expr*(){ return this; }
-};
-
-template<class T>
-inline T* expr_cast(Expr* p){
-	if(p && T::TYPE==p->type){
-		return (T*)p;
-	}
-	return 0;
-}
-
-// 値を返さない文法要素
-struct Stmt : public RegionAllocObject{
-	enum{ TYPE = __LINE__ };
-	
-	int_t type;
-	int_t line;
-
-	Stmt(int_t type, int_t line)
-		:type(type), line(line){}
-	
-	operator Stmt*(){ return this; }
-};
-
-template<class T>
-inline T* stmt_cast(Stmt* p){
-	if(p && T::TYPE==p->type){
-		return (T*)p;
-	}
-	return 0;
-}
-
-struct ExprStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* expr;
-	ExprStmt(int_t line, Expr* expr)
-		:Stmt(TYPE, line), expr(expr){}
-};
-
-struct PseudoVariableExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	int_t code;
-	PseudoVariableExpr(int_t line, int_t code)
-		:Expr(TYPE, line), code(code){}
-};
-
-struct CalleeExpr : public PseudoVariableExpr{
-	enum{ TYPE = __LINE__ };
-	CalleeExpr(int_t line)
-		:PseudoVariableExpr(line, InstPushCallee::NUMBER){ type = TYPE; }
-};
-
-struct ArgsExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	ArgsExpr(int_t line):Expr(TYPE, line){}
-};
-
-struct IntExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	int_t value;	
-	IntExpr(int_t line, int_t value)
-		:Expr(TYPE, line), value(value){}
-};
-
-struct FloatExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	float_t value;	
-	FloatExpr(int_t line, float_t value)
-		:Expr(TYPE, line), value(value){}
-};
-
-struct StringExpr : public Expr{ 
-	enum{ TYPE = __LINE__ };
-	int_t value;
-	int_t kind;
-	StringExpr(int_t line, int_t value, int_t kind = KIND_STRING)
-		:Expr(TYPE, line), value(value), kind(kind){}
-}; 
-
-struct ArrayExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	TList<Expr*> values;
-	ArrayExpr(int_t line):Expr(TYPE, line){}
-};
-
-struct MapExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	TPairList<Expr*, Expr*> values;
-	MapExpr(int_t line):Expr(TYPE, line){}
-};
-
-struct BinExpr : public Expr{ 
-	enum{ TYPE = __LINE__ };
-	int_t code; 
-	Expr* lhs; 
-	Expr* rhs;	
-	BinExpr(int_t line, int_t code, Expr* lhs = 0, Expr* rhs = 0)
-		:Expr(TYPE, line), code(code), lhs(lhs), rhs(rhs){}
-};
-
-struct BinCompExpr : public BinExpr{ 
-	enum{ TYPE = __LINE__ };
-	BinCompExpr(int_t line, int_t code, Expr* lhs = 0, Expr* rhs = 0)
-		:BinExpr(line, code, lhs, rhs){ type = TYPE; }
-};
-
-struct AndAndExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs; 
-	Expr* rhs;
-	AndAndExpr(int_t line, Expr* lhs = 0, Expr* rhs = 0)
-		:Expr(TYPE, line), lhs(lhs), rhs(rhs){}
-};
-
-struct OrOrExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs; 
-	Expr* rhs;
-	OrOrExpr(int_t line, Expr* lhs = 0, Expr* rhs = 0)
-		:Expr(TYPE, line), lhs(lhs), rhs(rhs){}
-};
-
-struct UnaExpr : public Expr{ 
-	enum{ TYPE = __LINE__ };
-	int_t code;
-	Expr* expr;
-	UnaExpr(int_t line, int_t code = 0, Expr* expr = 0)
-		:Expr(TYPE, line), code(code), expr(expr){}
-};
-
-struct UnaStmt : public Stmt{ 
-	enum{ TYPE = __LINE__ };
-	int_t code;
-	Expr* expr;
-	UnaStmt(int_t line, int_t code = 0, Expr* expr = 0)
-		:Stmt(TYPE, line), code(code), expr(expr){}
-};
-
-struct TerExpr : public Expr{ 
-	enum{ TYPE = __LINE__ };
-	Expr* first;
-	Expr* second;
-	Expr* third;
-	TerExpr(int_t line, Expr* first = 0)
-		:Expr(TYPE, line), first(first), second(0), third(0){}
-};
-
-struct ReturnStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	TList<Expr*> exprs;
-	ReturnStmt(int_t line)
-		:Stmt(TYPE, line){}
-};
-
-struct YieldStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	TList<Expr*> exprs;
-	YieldStmt(int_t line)
-		:Stmt(TYPE, line){}
-};
-
-struct AssertStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	TList<Expr*> exprs;
-	AssertStmt(int_t line)
-		:Stmt(TYPE, line){}
-};
-
-struct OnceExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* expr;
-	OnceExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr){}
-};
-
-struct TryStmt : public Stmt{ 
-	enum{ TYPE = __LINE__ };
-	Stmt* try_stmt; 
-	int_t catch_var;
-	Stmt* catch_stmt; 
-	Stmt* finally_stmt;	
-	TryStmt(int_t line, Stmt* try_stmt = 0, Stmt* catch_stmt = 0, Stmt* finally_stmt = 0)
-		:Stmt(TYPE, line), try_stmt(try_stmt), catch_stmt(catch_stmt), finally_stmt(finally_stmt){}
-};
-
-struct IfStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* cond_expr;
-	Stmt* body_stmt;
-	Stmt* else_stmt;
-	IfStmt(int_t line, Expr* cond_expr = 0, Stmt* body_stmt = 0, Stmt* else_stmt = 0)
-		:Stmt(TYPE, line), cond_expr(cond_expr), body_stmt(body_stmt), else_stmt(else_stmt){}
-};
-
-struct WhileStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t label;
-	Expr* cond_expr; 
-	Stmt* body_stmt; 
-	Stmt* next_stmt;
-	Stmt* else_stmt;
-	Stmt* nobreak_stmt;
-	WhileStmt(int_t line, Expr* cond_expr = 0, Stmt* body_stmt = 0, Stmt* else_stmt = 0, Stmt* nobreak_stmt = 0)
-		:Stmt(TYPE, line), label(0), cond_expr(cond_expr), body_stmt(body_stmt), next_stmt(0), else_stmt(else_stmt), nobreak_stmt(nobreak_stmt){}
-};
-
-struct FunExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	int_t kind;
-	Stmt* stmt;
-	bool have_args;
-	TPairList<int_t, Expr*> params;
-	FunExpr(int_t line, int_t kind, Stmt* stmt = 0)
-		:Expr(TYPE, line), kind(kind), stmt(stmt), have_args(false){}
-};
-
-struct MultipleAssignStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	bool define;
-	TList<Expr*> lhs;
-	TList<Expr*> rhs;
-	MultipleAssignStmt(int_t line)
-		:Stmt(TYPE, line), define(false){}
-};
-
-struct IncStmt : public Stmt{ 
-	enum{ TYPE = __LINE__ };
-	int_t code;
-	Expr* lhs;
-	IncStmt(int_t line, int_t code, Expr* lhs = 0)
-		:Stmt(TYPE, line), code(code), lhs(lhs){}
-};
-	
-struct InstanceVariableExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	int_t var; 
-	InstanceVariableExpr(int_t line, int_t var = 0)
-		:Expr(TYPE, line), var(var){}
-};
-
-struct MemberExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs;
-	int_t var;
-	Expr* pvar;
-	bool if_defined;
-	MemberExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), if_defined(false){}
-};
-
-struct CallExpr : public Expr{ 
-	enum{ TYPE = __LINE__ };
-	Expr* expr; 
-	TList<Expr*> ordered; 
-	TPairList<int_t, Expr*> named;
-	CallExpr(int_t line, Expr* expr = 0)
-		:Expr(TYPE, line), expr(expr){}
-};
-
-struct SendExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs;
-	int_t var;
-	Expr* pvar;
-	bool if_defined;
-	SendExpr(int_t line, Expr* lhs = 0, int_t var = 0)
-		:Expr(TYPE, line), lhs(lhs), var(var), pvar(0), if_defined(false){}
-};
-
-struct AssignStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs;
-	Expr* rhs;
-	AssignStmt(int_t line, Expr* lhs = 0, Expr* rhs = 0)
-		:Stmt(TYPE, line), lhs(lhs), rhs(rhs){}
-};
-	
-struct OpAssignStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t code;
-	Expr* lhs;
-	Expr* rhs;
-	OpAssignStmt(int_t line, int_t code, Expr* lhs = 0, Expr* rhs = 0)
-		:Stmt(TYPE, line), code(code), lhs(lhs), rhs(rhs){}
-};
-
-struct LocalExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	int_t var; 
-	LocalExpr(int_t line, int_t var = 0)
-		:Expr(TYPE, line), var(var){}
-};
-
-struct PushStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* expr;
-	PushStmt(int_t line, Expr* expr = 0)
-		:Stmt(TYPE, line), expr(expr){}
-};
-
-struct PopExpr : public Expr{
-	enum{ TYPE = __LINE__ }; 
-	PopExpr(int_t line)
-		:Expr(TYPE, line){}
-};
-
-struct DefineStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs; 
-	Expr* rhs;
-	DefineStmt(int_t line, Expr* lhs, Expr* rhs)
-		:Stmt(TYPE, line), lhs(lhs), rhs(rhs){}
-};
-
-struct DefineClassMemberStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t name;
-	int_t accessibility;
-	Expr* expr;
-	Expr* ns;
-	DefineClassMemberStmt(int_t line)
-		:Stmt(TYPE, line){}
-};
-
-struct AtExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	Expr* lhs;
-	Expr* index;
-	AtExpr(int_t line, Expr* lhs = 0, Expr* index = 0)
-		:Expr(TYPE, line), lhs(lhs), index(index){}
-};
-	
-struct BreakStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t var; 
-	BreakStmt(int_t line, int_t var = 0)
-		:Stmt(TYPE, line), var(var){}
-};
-
-struct ContinueStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	int_t var; 
-	ContinueStmt(int_t line, int_t var = 0)
-		:Stmt(TYPE, line), var(var){}
-};
-
-struct BlockStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	TList<Stmt*> stmts;
-	BlockStmt(int_t line)
-		:Stmt(TYPE, line){}
-};
-
-struct ClassExpr : public Expr{
-	enum{ TYPE = __LINE__ };
-	TPairList<int_t, Expr*> inst_vars;
-	TList<Stmt*> stmts;
-	TList<Expr*> mixins;
-	int_t kind;
-
-	ClassExpr(int_t line)
-		:Expr(TYPE, line){}
-};
-
-struct TopLevelStmt : public Stmt{
-	enum{ TYPE = __LINE__ };
-	TList<Stmt*> stmts;
-	Expr* export_expr;
-	Stmt* unittest_stmt;
-	TopLevelStmt(int_t line)
-		:Stmt(TYPE, line), export_expr(0), unittest_stmt(0){}
-};
-
-class ExprBuilder{
+class Expr : public Array{
 public:
-
-	PseudoVariableExpr* pseudo(int_t code);
-	IntExpr* int_(int_t value);
-	FloatExpr* float_(float_t value);
-	ArgsExpr* args();
-	OnceExpr* once(Expr* expr);
-	CalleeExpr* callee();
-	AndAndExpr* andand(Expr* lhs, Expr* rhs);
-	TerExpr* ter(Expr* cond, Expr* true_expr, Expr* false_expr);
-	OrOrExpr* oror(Expr* lhs, Expr* rhs);
-	PushStmt* push(Expr* expr);
-	PopExpr* pop();
-	IncStmt* inc(int_t code, Expr* expr);
-	StringExpr* string(int_t n, int_t kind = KIND_STRING);
-	UnaExpr* una(int_t code, Expr* term);
-	BinExpr* bin(int_t code, Expr* lhs, Expr* rhs);
-	BinCompExpr* bin_comp(int_t code, Expr* lhs, Expr* rhs);
-	OpAssignStmt* op_assign(int_t code, Expr* lhs, Expr* rhs);
-	AtExpr* at(Expr* lhs, Expr* rhs);
-	LocalExpr* local(int_t var);
-	InstanceVariableExpr* instance_variable(int_t var);
-	DefineStmt* define(Expr* lhs, Expr* rhs);
-	AssignStmt* assign(Expr* lhs, Expr* rhs);
-	CallExpr* call(Expr* lhs, Expr* a1 = 0, Expr* a2 = 0);
-	MemberExpr* member(Expr* lhs, int_t var);
-	MemberExpr* member_q(Expr* lhs, int_t var);
-	MemberExpr* member(Expr* lhs, Expr* var);
-	MemberExpr* member_q(Expr* lhs, Expr* var);
-	SendExpr* send(Expr* lhs, int_t var);
-	SendExpr* send_q(Expr* lhs, int_t var);
-	SendExpr* send(Expr* lhs, Expr* var);
-	SendExpr* send_q(Expr* lhs, Expr* var);
-	ExprStmt* e2s(Expr* expr);
-	ReturnStmt* return_(Expr* e1 = 0, Expr* e2 = 0);
-	AssertStmt* assert_(Expr* e1 = 0, Expr* e2 = 0);
-	ContinueStmt* continue_(int_t name);
-	BreakStmt* break_(int_t name);
-
-	void block_begin();
-	void block_add(Stmt* stmt);
-	BlockStmt* block_end();
-	TList<Stmt*>* block_stmts();
-
-	void try_begin();
-	void try_body(Stmt* stmt);
-	void try_catch_var(int_t name);
-	void try_catch(Stmt* stmt);
-	void try_finally(Stmt* stmt);
-	TryStmt* try_end();
-
-	void while_begin(int_t var, Expr* expr);
-	void while_label(int_t label);
-	void while_body(Stmt* stmt);
-	void while_next(Stmt* stmt);
-	void while_else(Stmt* stmt);
-	void while_nobreak(Stmt* stmt);
-	Stmt* while_end();
-
-	void if_begin(int_t var, Expr* expr);
-	void if_body(Stmt* stmt);
-	void if_else(Stmt* stmt);
-	Stmt* if_end();
-
-	void fun_begin(int_t kind);
-	void fun_param(int_t name, Expr* default_value = 0);
-	void fun_body(Stmt* stmt);
-	void fun_body_begin();
-	void fun_body_add(Stmt* stmt);
-	void fun_body_end();
-	FunExpr* fun_end();
-	void fun_have_args(bool v);
-
-	void toplevel_begin();
-	void toplevel_add(Stmt* stmt);
-	void toplevel_export(int_t name, Expr* expr);
-	TopLevelStmt* toplevel_end();
-
-	void class_begin(int_t kind);
-	void class_define_instance_variable(int_t name, Expr* expr);
-	void class_define_member(int_t var, int_t accessibility, Expr* ns, Expr* rhs);
-	ClassExpr* class_end();
-	TList<Expr*>* class_mixins();
-
-	void call_begin(Expr* expr);
-	void call_arg(Expr* expr);
-	void call_arg(int_t name, Expr* expr);
-	CallExpr* call_end();
-
-	void return_begin();
-	void return_add(Expr* expr);
-	ReturnStmt* return_end();
-	TList<Expr*>* return_exprs();
-	
-	void yield_begin();
-	void yield_add(Expr* expr);
-	YieldStmt* yield_end();
-	TList<Expr*>* yield_exprs();
-
-	void massign_begin();
-	void massign_lhs(Expr* expr);
-	void massign_rhs(Expr* expr);
-	MultipleAssignStmt* massign_end();
-	TList<Expr*>* massign_lhs_exprs();
-	TList<Expr*>* massign_rhs_exprs();
-	void massign_define(bool b);
-	
-	void ter_begin(Expr* cond);
-	void ter_true(Expr* expr);
-	void ter_false(Expr* expr);
-	TerExpr* ter_end();
-	
-	void array_begin();
-	void array_add(Expr* expr);
-	ArrayExpr* array_end();
-
-	void map_begin();
-	void map_add(Expr* key, Expr* value);
-	MapExpr* map_end();
-
-	void init(LPCCommon* com, RegionAlloc* all);
-
-	int_t line(){
-		return common->line;
+	static ExprPtr make(int_t type, int_t lineno=0, int_t size=2){
+		ExprPtr ret = xnew<Expr>();
+		ret->resize(size);
+		ret->set_type(type);
+		ret->set_lineno(lineno);
+		return ret;
 	}
 
-	int_t register_ident(const InternedStringPtr& ident){ return common->register_ident(ident); }
-	int_t register_value(const AnyPtr& v){ return common->register_value(v); }
-	int_t append_ident(const InternedStringPtr& ident){ return common->append_ident(ident); }
-	int_t append_value(const AnyPtr& v){ return common->append_value(v); }
-
-	LPCCommon* common;
-	RegionAlloc* alloc;
+	XTAL_DEF_MEMBER(0, int_t, type);
+	XTAL_DEF_MEMBER(1, int_t, lineno);
 	
-	PStack<BlockStmt*> block_stack;
-	PStack<TryStmt*> try_stack;
-	PStack<WhileStmt*> while_stack;
-	PStack<IfStmt*> if_stack;
-	PStack<FunExpr*> fun_stack;
-	PStack<TopLevelStmt*> toplevel_stack;
-	PStack<CallExpr*> call_stack;
-	PStack<MultipleAssignStmt*> massign_stack;
-	PStack<ClassExpr*> class_stack;
-	PStack<ReturnStmt*> return_stack;
-	PStack<YieldStmt*> yield_stack;
-	PStack<TerExpr*> ter_stack;
-	PStack<ArrayExpr*> array_stack;
-	PStack<MapExpr*> map_stack;
+	XTAL_DEF_MEMBER(2, ExprPtr, una_term);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, bin_lhs);
+	XTAL_DEF_MEMBER(3, ExprPtr, bin_rhs);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, q_cond);
+	XTAL_DEF_MEMBER(3, ExprPtr, q_true);
+	XTAL_DEF_MEMBER(4, ExprPtr, q_false);
+
+	XTAL_DEF_MEMBER(2, int_t, int_value);
+
+	XTAL_DEF_MEMBER(2, float_t, float_value);
+
+	XTAL_DEF_MEMBER(2, int_t, string_kind);
+	XTAL_DEF_MEMBER(3, InternedStringPtr, string_value);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, array_values);
+	
+	XTAL_DEF_MEMBER(2, MapPtr, map_values);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, return_exprs);
+	
+	XTAL_DEF_MEMBER(2, ArrayPtr, yield_exprs);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, assert_exprs);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, throw_expr);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, try_body);
+	XTAL_DEF_MEMBER(3, InternedStringPtr, try_catch_var);
+	XTAL_DEF_MEMBER(4, ExprPtr, try_catch);
+	XTAL_DEF_MEMBER(5, ExprPtr, try_finally);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, if_cond);
+	XTAL_DEF_MEMBER(3, ExprPtr, if_body);
+	XTAL_DEF_MEMBER(4, ExprPtr, if_else);
+
+	XTAL_DEF_MEMBER(2, InternedStringPtr, for_label);
+	XTAL_DEF_MEMBER(3, ExprPtr, for_cond);
+	XTAL_DEF_MEMBER(4, ExprPtr, for_next);
+	XTAL_DEF_MEMBER(5, ExprPtr, for_body);
+	XTAL_DEF_MEMBER(6, ExprPtr, for_else);
+	XTAL_DEF_MEMBER(7, ExprPtr, for_nobreak);
+
+	XTAL_DEF_MEMBER(2, int_t, fun_kind);
+	XTAL_DEF_MEMBER(3, MapPtr, fun_params);
+	XTAL_DEF_MEMBER(4, bool, fun_have_args);
+	XTAL_DEF_MEMBER(5, ExprPtr, fun_body);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, massign_lhs_exprs);
+	XTAL_DEF_MEMBER(3, ArrayPtr, massign_rhs_exprs);
+	XTAL_DEF_MEMBER(4, bool, massign_define);
+
+	XTAL_DEF_MEMBER(2, InternedStringPtr, ivar_name);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, member_term);
+	XTAL_DEF_MEMBER(3, InternedStringPtr, member_name);
+	XTAL_DEF_MEMBER(4, ExprPtr, member_pname);
+	XTAL_DEF_MEMBER(5, bool, member_q);
+
+	XTAL_DEF_MEMBER(2, ExprPtr, send_term);
+	XTAL_DEF_MEMBER(3, InternedStringPtr, send_name);
+	XTAL_DEF_MEMBER(4, ExprPtr, send_pname);
+	XTAL_DEF_MEMBER(5, bool, send_q);
+	
+	XTAL_DEF_MEMBER(2, ExprPtr, call_term);
+	XTAL_DEF_MEMBER(3, ArrayPtr, call_ordered);
+	XTAL_DEF_MEMBER(4, MapPtr, call_named);
+	XTAL_DEF_MEMBER(5, bool, call_have_args);
+
+	XTAL_DEF_MEMBER(2, InternedStringPtr, lvar_name);
+
+	XTAL_DEF_MEMBER(2, int_t, cdefine_accessibility);
+	XTAL_DEF_MEMBER(3, InternedStringPtr, cdefine_name);
+	XTAL_DEF_MEMBER(4, ExprPtr, cdefine_ns);
+	XTAL_DEF_MEMBER(5, ExprPtr, cdefine_term);
+
+	XTAL_DEF_MEMBER(2, InternedStringPtr, break_label);
+
+	XTAL_DEF_MEMBER(2, InternedStringPtr, continue_label);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, scope_stmts);
+
+	XTAL_DEF_MEMBER(2, int_t, class_kind);
+	XTAL_DEF_MEMBER(3, ArrayPtr, class_mixins);
+	XTAL_DEF_MEMBER(4, ArrayPtr, class_stmts);
+	XTAL_DEF_MEMBER(5, MapPtr, class_ivars);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, toplevel_stmts);
+	XTAL_DEF_MEMBER(3, ExprPtr, toplevel_export);
+
 };
+
+
+inline ArrayPtr make_array(){ ArrayPtr ret = xnew<Array>(); return ret; }
+inline ArrayPtr make_array(const AnyPtr& v1){ ArrayPtr ret = xnew<Array>(); ret->push_back(v1); return ret; }
+inline ArrayPtr make_array(const AnyPtr& v1, const AnyPtr& v2){ ArrayPtr ret = xnew<Array>(); ret->push_back(v1); ret->push_back(v2); return ret; }
+
+inline MapPtr make_map(){ MapPtr ret = xnew<Map>(); return ret; }
+inline MapPtr make_map(const AnyPtr& k1, const AnyPtr& v1){ MapPtr ret = xnew<Map>(); ret->set_at(k1, v1); return ret; }
+inline MapPtr make_map(const AnyPtr& k1, const AnyPtr& v1, const AnyPtr& k2, const AnyPtr& v2){ MapPtr ret = xnew<Map>();  ret->set_at(k1, v1);  ret->set_at(k2, v2); return ret; }
+
+inline ExprPtr return_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_RETURN, lineno, 3)->set_return_exprs(exprs); }
+inline ExprPtr continue_(int_t lineno, const InternedStringPtr& label){ return Expr::make(EXPR_CONTINUE, lineno, 3)->set_continue_label(label); }
+inline ExprPtr break_(int_t lineno, const InternedStringPtr& label){ return Expr::make(EXPR_BREAK, lineno, 3)->set_break_label(label); }
+inline ExprPtr yield(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_YIELD, lineno, 3)->set_yield_exprs(exprs); }
+inline ExprPtr assert_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ASSERT, lineno, 3)->set_assert_exprs(exprs); }
+inline ExprPtr scope(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_SCOPE, lineno, 3)->set_scope_stmts(stmts); }
+inline ExprPtr class_(int_t lineno, int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return Expr::make(EXPR_CLASS, lineno, 3)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
+inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPtr& name, const ExprPtr& ns, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(ns)->set_cdefine_term(term); }
+
+inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool have_args, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_have_args(have_args)->set_fun_body(body); }
+
+inline ExprPtr bin(int_t expr_type, int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return Expr::make(expr_type, lineno, 4)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
+inline ExprPtr una(int_t expr_type, int_t lineno, const ExprPtr& term){ return Expr::make(expr_type, lineno, 3)->set_una_term(term); }
+
+inline ExprPtr lvar(int_t lineno, const InternedStringPtr& name){ return Expr::make(EXPR_LVAR, lineno, 3)->set_lvar_name(name); }
+inline ExprPtr ivar(int_t lineno, const InternedStringPtr& name){ return Expr::make(EXPR_IVAR, lineno, 3)->set_ivar_name(name); }
+
+inline ExprPtr string(int_t lineno, int_t kind, const InternedStringPtr& value){ return Expr::make(EXPR_STRING, lineno, 4)->set_string_kind(kind)->set_string_value(value); }
+inline ExprPtr int_(int_t lineno, int_t value){ return Expr::make(EXPR_INT, lineno, 3)->set_int_value(value); }
+inline ExprPtr float_(int_t lineno, float_t value){ return Expr::make(EXPR_FLOAT, lineno, 3)->set_float_value(value); }
+
+inline ExprPtr null_(int_t lineno){ return Expr::make(EXPR_NULL, lineno); }
+inline ExprPtr true_(int_t lineno){ return Expr::make(EXPR_TRUE, lineno); }
+inline ExprPtr false_(int_t lineno){ return Expr::make(EXPR_FALSE, lineno); }
+inline ExprPtr this_(int_t lineno){ return Expr::make(EXPR_THIS, lineno); }
+inline ExprPtr current_context(int_t lineno){ return Expr::make(EXPR_CURRENT_CONTEXT, lineno); }
+inline ExprPtr args(int_t lineno){ return Expr::make(EXPR_ARGS, lineno); }
+inline ExprPtr callee(int_t lineno){ return Expr::make(EXPR_CALLEE, lineno); }
+
+inline ExprPtr once(int_t lineno, const ExprPtr& term){ return una(EXPR_ONCE, lineno, term); }
+
+inline ExprPtr call(int_t lineno, const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, bool have_args){ return Expr::make(EXPR_CALL, lineno, 6)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_have_args(have_args); }
+
+inline ExprPtr member(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name); }
+inline ExprPtr member_q(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name)->set_member_q(true); }
+inline ExprPtr member_e(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_pname(name); }
+inline ExprPtr member_eq(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_pname(name)->set_member_q(true); }
+
+inline ExprPtr send(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_name(name); }
+inline ExprPtr send_q(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_name(name)->set_send_q(true); }
+inline ExprPtr send_e(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_pname(name); }
+inline ExprPtr send_eq(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_pname(name)->set_send_q(true); }
+
+inline ExprPtr q(int_t lineno, const ExprPtr& cond, const ExprPtr& true_, const ExprPtr& false_){ return Expr::make(EXPR_Q, lineno, 5)->set_q_cond(cond)->set_q_true(true_)->set_q_false(false_); }
+
+inline ExprPtr try_(int_t lineno, const ExprPtr& body, const InternedStringPtr& catch_var, const ExprPtr& catch_, const ExprPtr& finally_){ return Expr::make(EXPR_TRY, lineno, 6)->set_try_body(body)->set_try_catch_var(catch_var)->set_try_catch(catch_)->set_try_finally(finally_); }
+inline ExprPtr for_(int_t lineno, const InternedStringPtr& label, const ExprPtr& cond, const ExprPtr& next, const ExprPtr& body, const ExprPtr& else_, const ExprPtr& nobreak){ return Expr::make(EXPR_FOR, lineno, 8)->set_for_label(label)->set_for_cond(cond)->set_for_next(next)->set_for_body(body)->set_for_else(else_)->set_for_nobreak(nobreak); }
+inline ExprPtr if_(int_t lineno, const ExprPtr& cond,const ExprPtr& body, const ExprPtr& else_){ return Expr::make(EXPR_IF, lineno, 5)->set_if_cond(cond)->set_if_body(body)->set_if_else(else_); }
+	
+inline ExprPtr massign(int_t lineno, const ArrayPtr& lhs, const ArrayPtr& rhs, bool define){ return Expr::make(EXPR_MASSIGN, lineno, 5)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs)->set_massign_define(define); }
+
+inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lineno, lhs, rhs); }
+inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lineno, lhs, rhs); }
+
+inline ExprPtr toplevel(int_t lineno, const ArrayPtr& stmts, const ExprPtr& export_){ return Expr::make(EXPR_TOPLEVEL, lineno, 4)->set_toplevel_stmts(stmts)->set_toplevel_export(export_); }
+
+inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }
+inline ExprPtr map(int_t lineno, const MapPtr& exprs){ return Expr::make(EXPR_MAP, lineno, 3)->set_map_values(exprs); }
 
 }
 

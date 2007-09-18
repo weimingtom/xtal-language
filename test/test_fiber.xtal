@@ -5,7 +5,7 @@
 			yield i;
 		}
 	}
-	
+	 
 	assert fib(5)==0;
 	assert fib()==1;
 	assert fib()==2;

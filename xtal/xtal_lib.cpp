@@ -226,8 +226,14 @@ builtin::CompileError: class(StandardError){
 
 	Xsrc((
 
+Iterator::p: method(){
+	a: this.to_a;
+	a.to_s.p;
+	return a.each;
+}
+
 Iterator::to_s: method(){
-	return this.to_a.p.each;
+	return "<Iterator>";
 }
 
 Iterator::to_a: method(){
@@ -248,7 +254,6 @@ Iterator::to_m: method{
 
 Iterator::join: method(sep:","){
 	ret: MemoryStream();
-
 	if(sep==""){
 		this{
 			ret.put_s(it.to_s);

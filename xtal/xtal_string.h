@@ -106,8 +106,6 @@ public:
 	*/
 	uint_t buffer_size();
 
-#if 0
-
 	/**
 	* @brief 文字列の長さを返す。
 	*
@@ -119,8 +117,6 @@ public:
 	*
 	*/
 	uint_t length();
-
-#endif
 
 	/*
 	* @brief 浅いコピーを返す。
@@ -374,69 +370,85 @@ void visit_members(Visitor& m, const Named& p);
 
 //{ID{{
 namespace id{
-extern InternedStringPtr id__ARGS__;
-extern InternedStringPtr idop_or_assign;
-extern InternedStringPtr idop_add_assign;
-extern InternedStringPtr idop_shr;
-extern InternedStringPtr idop_ushr_assign;
-extern InternedStringPtr idinstance_serial_save;
-extern InternedStringPtr idserial_save;
-extern InternedStringPtr idop_call;
-extern InternedStringPtr idop_sub_assign;
-extern InternedStringPtr idop_lt;
-extern InternedStringPtr idop_eq;
-extern InternedStringPtr idop_mul;
-extern InternedStringPtr idop_neg;
-extern InternedStringPtr idserial_load;
-extern InternedStringPtr idblock_break;
-extern InternedStringPtr idtrue;
-extern InternedStringPtr idlib;
-extern InternedStringPtr idblock_first;
-extern InternedStringPtr idp;
-extern InternedStringPtr idset_at;
-extern InternedStringPtr idop_and_assign;
-extern InternedStringPtr idop_mod_assign;
-extern InternedStringPtr idop_div_assign;
-extern InternedStringPtr idop_or;
-extern InternedStringPtr idop_div;
-extern InternedStringPtr idop_cat_assign;
-extern InternedStringPtr idop_cat;
-extern InternedStringPtr idIOError;
-extern InternedStringPtr idop_cat_r_String;
-extern InternedStringPtr idfalse;
-extern InternedStringPtr ideach;
-extern InternedStringPtr idserial_new;
-extern InternedStringPtr idto_i;
-extern InternedStringPtr idop_add;
-extern InternedStringPtr idop_ushr;
-extern InternedStringPtr idop_pos;
-extern InternedStringPtr idop_dec;
-extern InternedStringPtr idop_inc;
-extern InternedStringPtr idop_eq_r_String;
-extern InternedStringPtr idto_f;
-extern InternedStringPtr idop_shr_assign;
-extern InternedStringPtr idop_mod;
-extern InternedStringPtr idstring;
-extern InternedStringPtr idop_set_at;
-extern InternedStringPtr idop_lt_r_String;
-extern InternedStringPtr idblock_next;
-extern InternedStringPtr idinitialize;
-extern InternedStringPtr idtest;
-extern InternedStringPtr idop_at;
-extern InternedStringPtr idvalue;
-extern InternedStringPtr idto_s;
-extern InternedStringPtr idop_shl_assign;
-extern InternedStringPtr idop_sub;
-extern InternedStringPtr idop_com;
 extern InternedStringPtr idnew;
-extern InternedStringPtr idop_shl;
-extern InternedStringPtr idop_xor;
-extern InternedStringPtr idop_and;
-extern InternedStringPtr idat;
+extern InternedStringPtr idop_shl_assign;
+extern InternedStringPtr idop_at;
+extern InternedStringPtr idtest;
+extern InternedStringPtr idop_inc;
+extern InternedStringPtr idserial_new;
+extern InternedStringPtr idop_div_assign;
+extern InternedStringPtr idop_mul;
 extern InternedStringPtr idop_xor_assign;
+extern InternedStringPtr id__DUMMY__;
+extern InternedStringPtr idinitialize;
+extern InternedStringPtr idexport;
+extern InternedStringPtr idstring;
+extern InternedStringPtr idfalse;
+extern InternedStringPtr idop_and_assign;
+extern InternedStringPtr idop_add_assign;
+extern InternedStringPtr idop_cat_assign;
+extern InternedStringPtr idat;
+extern InternedStringPtr idop_shl;
+extern InternedStringPtr idblock_next;
+extern InternedStringPtr idop_cat;
+extern InternedStringPtr idop_lt_r_String;
+extern InternedStringPtr idop_shr_assign;
+extern InternedStringPtr idop_neg;
+extern InternedStringPtr idto_s;
+extern InternedStringPtr idvalue;
+extern InternedStringPtr idop_dec;
+extern InternedStringPtr iddummy_lhs_parameter;
+extern InternedStringPtr idinstance_serial_save;
+extern InternedStringPtr idop_shr;
+extern InternedStringPtr idop_div;
+extern InternedStringPtr idserial_load;
 extern InternedStringPtr idop_mul_assign;
+extern InternedStringPtr idIOError;
+extern InternedStringPtr idop_lt;
+extern InternedStringPtr idop_mod_assign;
+extern InternedStringPtr idset_at;
+extern InternedStringPtr idop_mod;
+extern InternedStringPtr id__IT__;
+extern InternedStringPtr idto_i;
+extern InternedStringPtr idop_or;
+extern InternedStringPtr id__ARGS__;
+extern InternedStringPtr idop_and;
+extern InternedStringPtr idto_f;
+extern InternedStringPtr iditerator;
+extern InternedStringPtr idop_sub_assign;
+extern InternedStringPtr ideach;
+extern InternedStringPtr iddummy_block_parameter;
+extern InternedStringPtr idlib;
+extern InternedStringPtr idop_set_at;
+extern InternedStringPtr idop_com;
+extern InternedStringPtr idop_pos;
+extern InternedStringPtr idop_add;
+extern InternedStringPtr idop_ushr_assign;
+extern InternedStringPtr id__INITIALIZE__;
+extern InternedStringPtr idop_eq_r_String;
+extern InternedStringPtr idop_cat_r_String;
+extern InternedStringPtr idop_eq;
+extern InternedStringPtr idop_or_assign;
+extern InternedStringPtr idop_ushr;
+extern InternedStringPtr idop_sub;
+extern InternedStringPtr idblock_break;
+extern InternedStringPtr idserial_save;
+extern InternedStringPtr idop_xor;
+extern InternedStringPtr idblock_first;
+extern InternedStringPtr idtrue;
+extern InternedStringPtr idop_call;
+extern InternedStringPtr iddummy_fun_parameter;
+extern InternedStringPtr id__EXPORT__;
+extern InternedStringPtr idp;
+extern InternedStringPtr idit;
 }
 //}}ID}
+
+
+
+
+
+
 
 
 

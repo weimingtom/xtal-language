@@ -43,6 +43,6 @@
 	ms.seek(0);
 	b: ms.deserialize;
 	
-	assert b[4][3].test3.foo3==25;
+	assert b[4][3].foo3==25;
 }
 

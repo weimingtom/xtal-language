@@ -317,6 +317,7 @@ public:
 };
 
 
+namespace op{
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b);
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b);
 AnyPtr operator *(const AnyPtr& a, const AnyPtr& b);
@@ -344,6 +345,7 @@ AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
+}
 
 void print_result_of_cache();
 

@@ -44,7 +44,7 @@ Code::Code()
 	filelocal_->inherit(builtin());
 	filelocal_->def("filelocal", filelocal_);
 
-	symbol_table_ = xnew<Array>();
+	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
 	first_fun_ = xnew<Fun>(null, null, CodePtr::from_this(this), (FunCore*)0);

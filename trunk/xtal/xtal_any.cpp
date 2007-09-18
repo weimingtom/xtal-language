@@ -348,7 +348,7 @@ AnyPtr Any::instance_serial_save(const ClassPtr& p) const{
 			if(core->instance_variable_size!=0){	
 				MapPtr insts = xnew<Map>();
 				for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-					insts->set_at(code->symbol(core->instance_variable_symbol_offset+i), iv->variable(i, core));
+					insts->set_at(code->identifier(core->instance_variable_identifier_offset+i), iv->variable(i, core));
 				}
 
 				return insts;
@@ -368,8 +368,8 @@ void Any::instance_serial_load(const ClassPtr& p, const AnyPtr& v) const{
 				ClassCore* core = p->core();
 				if(core->instance_variable_size!=0){	
 					for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-						StringPtr str = code->symbol(core->instance_variable_symbol_offset+i);
-						iv->set_variable(i, core, insts->at(code->symbol(core->instance_variable_symbol_offset+i)));
+						StringPtr str = code->identifier(core->instance_variable_identifier_offset+i);
+						iv->set_variable(i, core, insts->at(code->identifier(core->instance_variable_identifier_offset+i)));
 					}
 				}
 			}

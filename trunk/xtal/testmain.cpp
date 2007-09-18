@@ -107,17 +107,16 @@ int main(int argc, char** argv){
 			
 AnyPtr ret = Xsrc((
 
-x: 555;
-d: 5555;
 {
-	x: fun(y: d) y;
-	x().p;
-
-	[[4, 8, 6], [7, 6]]{
-		it{
-			it.p;
-		}
+	switch(103){
+		case(100){ 1.p; }
+		case(101){ 2.p; }
+		case(102){ 3.p; }
+		case(102){ 4.p; }
+		case(104, 103){ 5.p; }
+		case(105){ 6.p; }
 	}
+	
 }
 
 ))();
@@ -126,7 +125,7 @@ d: 5555;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

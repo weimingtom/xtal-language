@@ -155,7 +155,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
 				stream_->put_u16(p->block_core_table_[i].lineno);			
-				stream_->put_u16(p->block_core_table_[i].variable_symbol_offset);
+				stream_->put_u16(p->block_core_table_[i].variable_identifier_offset);
 				stream_->put_u16(p->block_core_table_[i].variable_size);
 			}
 
@@ -163,10 +163,10 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
 				stream_->put_u16(p->class_core_table_[i].lineno);			
-				stream_->put_u16(p->class_core_table_[i].variable_symbol_offset);
+				stream_->put_u16(p->class_core_table_[i].variable_identifier_offset);
 				stream_->put_u16(p->class_core_table_[i].variable_size);
 
-				stream_->put_u16(p->class_core_table_[i].instance_variable_symbol_offset);
+				stream_->put_u16(p->class_core_table_[i].instance_variable_identifier_offset);
 				stream_->put_u16(p->class_core_table_[i].instance_variable_size);			
 				stream_->put_u8(p->class_core_table_[i].mixins);			
 			}
@@ -175,7 +175,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
 				stream_->put_u16(p->xfun_core_table_[i].lineno);			
-				stream_->put_u16(p->xfun_core_table_[i].variable_symbol_offset);
+				stream_->put_u16(p->xfun_core_table_[i].variable_identifier_offset);
 				stream_->put_u16(p->xfun_core_table_[i].variable_size);		
 
 				stream_->put_u16(p->xfun_core_table_[i].pc);			
@@ -198,7 +198,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 			MapPtr map = xnew<Map>();
 			map->set_at("source", p->source_file_name_);
-			map->set_at("symbols", p->symbol_table_);
+			map->set_at("identifiers", p->identifier_table_);
 			map->set_at("values", p->value_table_);
 
 			inner_serialize(map);
@@ -356,7 +356,7 @@ AnyPtr Serializer::inner_deserialize(){
 			for(int_t i=0; i<sz; ++i){
 				p->block_core_table_[i].lineno = stream_->get_u16();			
 				p->block_core_table_[i].kind = stream_->get_u16();			
-				p->block_core_table_[i].variable_symbol_offset = stream_->get_u16();
+				p->block_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->block_core_table_[i].variable_size = stream_->get_u16();
 			}
 
@@ -365,10 +365,10 @@ AnyPtr Serializer::inner_deserialize(){
 			for(int_t i=0; i<sz; ++i){
 				p->class_core_table_[i].lineno = stream_->get_u16();			
 				p->class_core_table_[i].kind = stream_->get_u16();			
-				p->class_core_table_[i].variable_symbol_offset = stream_->get_u16();
+				p->class_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->class_core_table_[i].variable_size = stream_->get_u16();
 
-				p->class_core_table_[i].instance_variable_symbol_offset = stream_->get_u16();
+				p->class_core_table_[i].instance_variable_identifier_offset = stream_->get_u16();
 				p->class_core_table_[i].instance_variable_size = stream_->get_u16();
 				p->class_core_table_[i].mixins = stream_->get_u8();
 			}
@@ -378,7 +378,7 @@ AnyPtr Serializer::inner_deserialize(){
 			for(int_t i=0; i<sz; ++i){
 				p->xfun_core_table_[i].lineno = stream_->get_u16();			
 				p->xfun_core_table_[i].kind = stream_->get_u16();			
-				p->xfun_core_table_[i].variable_symbol_offset = stream_->get_u16();
+				p->xfun_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->xfun_core_table_[i].variable_size = stream_->get_u16();
 
 				p->xfun_core_table_[i].pc = stream_->get_u16();		
@@ -407,7 +407,7 @@ AnyPtr Serializer::inner_deserialize(){
 
 			MapPtr map(cast<MapPtr>(inner_deserialize()));
 			p->source_file_name_ = cast<StringPtr>(map->at("source"));
-			p->symbol_table_ = cast<ArrayPtr>(map->at("symbols"));
+			p->identifier_table_ = cast<ArrayPtr>(map->at("identifiers"));
 			p->value_table_ = cast<ArrayPtr>(map->at("values"));
 			
 			ret->set_object_name("<filelocal>", 1, null);	

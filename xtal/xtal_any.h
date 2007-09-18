@@ -100,58 +100,17 @@ protected:
 
 public:
 
-	friend int_t type(const Innocence& v){ 
-		return v.type_; 
-	}
-	
-	friend int_t ivalue(const Innocence& v){ 
-		XTAL_ASSERT(type(v)==TYPE_INT);
-		return v.value_; 
-	}
-	
-	friend float_t fvalue(const Innocence& v){ 
-		XTAL_ASSERT(type(v)==TYPE_FLOAT); 
-		return v.fvalue_; 
-	}
-	
-	friend Base* pvalue(const Innocence& v){ 
-		XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
-		return v.pvalue_; 
-	}
-
-	friend uint_t rawvalue(const Innocence& v){
-		return (uint_t)(v.value_);
-	}
-	
-	friend bool raweq(const Innocence& a, const Innocence& b){
-		return a.type_==b.type_ && a.value_==b.value_;
-	}
-
-	friend bool rawne(const Innocence& a, const Innocence& b){
-		return !raweq(a, b);
-	}
-	
-	friend bool rawlt(const Innocence& a, const Innocence& b){
-		if(a.type_<b.type_)
-			return true;
-		if(b.type_<a.type_)
-			return false;
-		return a.value_<b.value_;
-	}
-
-	friend void swap(Innocence& a, Innocence& b){
-		std::swap(a.type_, b.type_);
-		std::swap(a.value_, b.value_);
-	}
-
-	friend void set_null_force(Innocence& v){
-		v.type_ = TYPE_NULL;
-		v.value_ = 0;
-	}
-
-	friend void copy_innocence(Innocence& v, const Innocence& u){
-		v = u;
-	}
+	friend int_t type(const Innocence& v);
+	friend int_t ivalue(const Innocence& v);
+	friend float_t fvalue(const Innocence& v);
+	friend Base* pvalue(const Innocence& v);
+	friend uint_t rawvalue(const Innocence& v);
+	friend bool raweq(const Innocence& a, const Innocence& b);
+	friend bool rawne(const Innocence& a, const Innocence& b);
+	friend bool rawlt(const Innocence& a, const Innocence& b);
+	friend void swap(Innocence& a, Innocence& b);
+	friend void set_null_force(Innocence& v);
+	friend void copy_innocence(Innocence& v, const Innocence& u);
 
 public:
 
@@ -179,6 +138,58 @@ protected:
 	};
 };
 
+inline int_t type(const Innocence& v){ 
+	return v.type_; 
+}
+
+inline int_t ivalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_INT);
+	return v.value_; 
+}
+
+inline float_t fvalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
+	return v.fvalue_; 
+}
+
+inline Base* pvalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
+	return v.pvalue_; 
+}
+
+inline uint_t rawvalue(const Innocence& v){
+	return (uint_t)(v.value_);
+}
+
+inline bool raweq(const Innocence& a, const Innocence& b){
+	return a.type_==b.type_ && a.value_==b.value_;
+}
+
+inline bool rawne(const Innocence& a, const Innocence& b){
+	return !raweq(a, b);
+}
+
+inline bool rawlt(const Innocence& a, const Innocence& b){
+	if(a.type_<b.type_)
+		return true;
+	if(b.type_<a.type_)
+		return false;
+	return a.value_<b.value_;
+}
+
+inline void swap(Innocence& a, Innocence& b){
+	std::swap(a.type_, b.type_);
+	std::swap(a.value_, b.value_);
+}
+
+inline void set_null_force(Innocence& v){
+	v.type_ = TYPE_NULL;
+	v.value_ = 0;
+}
+
+inline void copy_innocence(Innocence& v, const Innocence& u){
+	v = u;
+}
 
 /**
 * @brief any

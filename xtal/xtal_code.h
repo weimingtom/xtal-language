@@ -30,9 +30,9 @@ public:
 	/**
 	* @brief シンボルテーブルからi番目のシンボルを取り出す。
 	*/
-	const InternedStringPtr& symbol(int_t i){
-		XTAL_ASSERT(i<(int_t)symbol_table_->size());
-		return (const InternedStringPtr&)symbol_table_->at(i);
+	const InternedStringPtr& identifier(int_t i){
+		XTAL_ASSERT(i<(int_t)identifier_table_->size());
+		return (const InternedStringPtr&)identifier_table_->at(i);
 	}
 
 	/**
@@ -101,7 +101,7 @@ private:
 
 	typedef AC<inst_t>::vector code_t;
 	code_t code_;
-	ArrayPtr symbol_table_;
+	ArrayPtr identifier_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
 	ClassPtr filelocal_;
@@ -112,7 +112,7 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & symbol_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_;
+		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_;
 	}
 
 private:

@@ -25,19 +25,22 @@ CodeBuilder::~CodeBuilder(){
 }
 
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
+	error_= &errorimpl_;
+	error_->init(source_file_name);
+
 	result_ = xnew<Code>();
 	result_->source_file_name_ = source_file_name;
 	result_->except_core_table_.push_back(ExceptCore());
 
-	lines_.push(1);
+	linenos_.push(1);
 	var_begin(VarFrame::BLOCK);
 	fun_begin(KIND_FUN, true, 0, 0, 0);
 
-	ExprPtr ep = parser_.parse(stream, source_file_name);
+	ExprPtr ep = parser_.parse(stream, error_);
 
-	result_->symbol_table_ = xnew<Array>();
-	symbol_map_ = xnew<Map>();
-	register_symbol("");
+	result_->identifier_table_ = xnew<Array>();
+	identifier_map_ = xnew<Map>();
+	register_identifier("");
 
 	result_->value_table_ = xnew<Array>();
 	value_map_ = xnew<Map>();
@@ -52,16 +55,15 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	fun_end(0);
 	var_end();
 
-	parser_.release();
 	CodePtr retval = result_;
 	result_ = null;
 
-	//if(errors->size()==0){
+	if(error_->errors->size()==0){
 		retval->reset_core();
 		return retval;
-	//}else{
-	//	return null;
-	//}
+	}else{
+		return null;
+	}
 }
 
 void CodeBuilder::interactive_compile(){
@@ -70,7 +72,7 @@ void CodeBuilder::interactive_compile(){
 
 void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	if(t.op==255){
-		error(line(), Xt("Xtal Compile Error 1027"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
 
 	size_t cur = result_->code_.size();
@@ -79,7 +81,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 }
 
 ArrayPtr CodeBuilder::errors(){
-	return xnew<Array>();
+	return error_->errors;
 }
 
 bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
@@ -94,7 +96,7 @@ bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
 
 		return true;
 	}else{
-		put_inst(InstSetGlobalVariable(register_symbol(var)));
+		put_inst(InstSetGlobalVariable(register_identifier(var)));
 		return false;
 	}
 }
@@ -104,7 +106,7 @@ void CodeBuilder::put_define_local_code(const InternedStringPtr& var){
 	if(info.pos>=0){
 		put_set_local_code(var);
 	}else{
-		put_inst(InstDefineGlobalVariable(register_symbol(var)));
+		put_inst(InstDefineGlobalVariable(register_identifier(var)));
 	}
 }
 
@@ -120,7 +122,7 @@ bool CodeBuilder::put_local_code(const InternedStringPtr& var){
 
 		return true;
 	}else{
-		put_inst(InstGlobalVariable(register_symbol(var)));
+		put_inst(InstGlobalVariable(register_identifier(var)));
 		return false;
 	}
 }
@@ -132,15 +134,15 @@ void CodeBuilder::put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_
 	
 	if(if_defined){
 		if(tail){
-			put_inst(InstSendIfDefined_T(0, 0, need_result_count, pvar ? 0 : register_symbol(var)));
+			put_inst(InstSendIfDefined_T(0, 0, need_result_count, pvar ? 0 : register_identifier(var)));
 		}else{
-			put_inst(InstSendIfDefined(0, 0, need_result_count, pvar ? 0 : register_symbol(var)));
+			put_inst(InstSendIfDefined(0, 0, need_result_count, pvar ? 0 : register_identifier(var)));
 		}
 	}else{
 		if(tail){
-			put_inst(InstSend_T(0, 0, need_result_count, pvar ? 0 : register_symbol(var)));
+			put_inst(InstSend_T(0, 0, need_result_count, pvar ? 0 : register_identifier(var)));
 		}else{
-			put_inst(InstSend(0, 0, need_result_count, pvar ? 0 : register_symbol(var))); 
+			put_inst(InstSend(0, 0, need_result_count, pvar ? 0 : register_identifier(var))); 
 		}
 	}
 }
@@ -150,20 +152,20 @@ void CodeBuilder::put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, 
 		compile(bin(0, EXPR_CAT, string(0, KIND_STRING, "set_"), pvar));
 	}	
 	
-	InternedStringPtr symbol_number = xnew<String>("set_", 4)->cat(var);
+	InternedStringPtr identifier_number = xnew<String>("set_", 4)->cat(var);
 	bool tail = false;
 
 	if(if_defined){
 		if(tail){
-			put_inst(InstSendIfDefined_T(1, 0, 0, pvar ? 0 : register_symbol(symbol_number)));
+			put_inst(InstSendIfDefined_T(1, 0, 0, pvar ? 0 : register_identifier(identifier_number)));
 		}else{
-			put_inst(InstSendIfDefined(1, 0, 0, pvar ? 0 : register_symbol(symbol_number)));
+			put_inst(InstSendIfDefined(1, 0, 0, pvar ? 0 : register_identifier(identifier_number)));
 		}
 	}else{
 		if(tail){
-			put_inst(InstSend_T(1, 0, 0, pvar ? 0 : register_symbol(symbol_number)));
+			put_inst(InstSend_T(1, 0, 0, pvar ? 0 : register_identifier(identifier_number)));
 		}else{
-			put_inst(InstSend(1, 0, 0, pvar ? 0 : register_symbol(symbol_number))); 
+			put_inst(InstSend(1, 0, 0, pvar ? 0 : register_identifier(identifier_number))); 
 		}
 	}
 }
@@ -175,11 +177,11 @@ void CodeBuilder::put_member_code(const InternedStringPtr& var, ExprPtr pvar, bo
 	
 	if(if_defined){
 		InstMemberIfDefined member;
-		member.symbol_number = pvar ? 0 : register_symbol(var);
+		member.identifier_number = pvar ? 0 : register_identifier(var);
 		put_inst(member);
 	}else{
 		InstMember member;
-		member.symbol_number = pvar ? 0 : register_symbol(var);
+		member.identifier_number = pvar ? 0 : register_identifier(var);
 		put_inst(member);
 	}
 }
@@ -190,7 +192,7 @@ void CodeBuilder::put_define_member_code(const InternedStringPtr& var, ExprPtr p
 	}
 
 	InstDefineMember member;
-	member.symbol_number = pvar ? 0 : register_symbol(var);
+	member.identifier_number = pvar ? 0 : register_identifier(var);
 	put_inst(member);
 }
 
@@ -205,7 +207,7 @@ int_t CodeBuilder::lookup_instance_variable(const InternedStringPtr& key){
 			ret++;
 		}
 	}
-	error(line(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(key))));
+	error_->error(lineno(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(key))));
 	return 0;
 }
 
@@ -228,7 +230,7 @@ void CodeBuilder::set_label(int_t labelno){
 
 void CodeBuilder::set_jump(int_t offset, int_t labelno){
 	FunFrame::Label::From f;
-	f.line = lines_.top();
+	f.lineno = linenos_.top();
 	f.pos = code_size();
 	f.set_pos = f.pos + offset/sizeof(inst_t);
 	fun_frames_.top().labels[labelno].froms.push_back(f);
@@ -277,10 +279,10 @@ void CodeBuilder::put_if_code(ExprPtr e, int_t label_if, int_t label_if2){
 	if(is_comp_bin(e)){
 
 		if(is_comp_bin(e->bin_lhs())){
-			error(line(), Xt("Xtal Compile Error 1025"));
+			error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 		}
 		if(is_comp_bin(e->bin_rhs())){
-			error(line(), Xt("Xtal Compile Error 1025"));
+			error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 		}
 		
 		compile(e->bin_lhs());
@@ -326,13 +328,13 @@ void CodeBuilder::block_begin(){
 
 	BlockCore core;
 	core.variable_size = vf.entrys.size();
-	core.variable_symbol_offset = result_->symbol_table_->size();
-	core.lineno = lines_.top();
+	core.variable_identifier_offset = result_->identifier_table_->size();
+	core.lineno = linenos_.top();
 
 	vf.block_core_num = block_core_num;
 
 	for(int_t i=0; i<vf.entrys.size(); ++i){
-		result_->symbol_table_->push_back(vf.entrys[i].name);
+		result_->identifier_table_->push_back(vf.entrys[i].name);
 	}
 
 	if(vf.entrys.size()){
@@ -363,9 +365,9 @@ void CodeBuilder::fun_begin(int_t kind, bool have_args, int_t offset, u8 min_par
 	VarFrame& vf = var_frames_.top();
 
 	FunCore core;
-	core.variable_symbol_offset = result_->symbol_table_->size();
+	core.variable_identifier_offset = result_->identifier_table_->size();
 	core.pc = code_size()+offset;
-	core.lineno = lines_.top();
+	core.lineno = linenos_.top();
 	core.kind = kind;
 	core.min_param_count = min_param_count;
 	core.max_param_count = max_param_count;
@@ -374,7 +376,7 @@ void CodeBuilder::fun_begin(int_t kind, bool have_args, int_t offset, u8 min_par
 	core.variable_size = vf.entrys.size();
 
 	for(int_t i=0; i<vf.entrys.size(); ++i){
-		result_->symbol_table_->push_back(vf.entrys[i].name);
+		result_->identifier_table_->push_back(vf.entrys[i].name);
 	}
 
 	result_->xfun_core_table_.push_back(core);
@@ -398,10 +400,10 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 
 void CodeBuilder::compile_bin(ExprPtr e){
 	if(is_comp_bin(e->bin_lhs())){
-		error(line(), Xt("Xtal Compile Error 1013"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
 	}
 	if(is_comp_bin(e->bin_rhs())){
-		error(line(), Xt("Xtal Compile Error 1013"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
 	}
 	
 	compile(e->bin_lhs());
@@ -414,10 +416,10 @@ void CodeBuilder::compile_bin(ExprPtr e){
 
 void CodeBuilder::compile_comp_bin(ExprPtr e){
 	if(is_comp_bin(e->bin_lhs())){
-		error(line(), Xt("Xtal Compile Error 1025"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 	if(is_comp_bin(e->bin_rhs())){
-		error(line(), Xt("Xtal Compile Error 1025"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 	
 	compile(e->bin_lhs());
@@ -499,7 +501,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 		}else{
-			put_inst(InstGlobalVariable(register_symbol(term->lvar_name())));
+			put_inst(InstGlobalVariable(register_identifier(term->lvar_name())));
 			put_inst(inst);
 			put_set_local_code(term->lvar_name());
 		}
@@ -544,7 +546,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 	ExprPtr e = ep(p);
 	
 	
-	lines_.push(e->lineno());
+	linenos_.push(e->lineno());
 	result_->set_lineno_info(e->lineno());
 
 	switch(e->type()){
@@ -720,9 +722,9 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 			compile(e->send_term());
 
 			/*
-			int_t block_first = com_->register_ident(InternedStringPtr("block_first")); 
-			int_t block_next = com_->register_ident(InternedStringPtr("block_next")); 
-			int_t block_break = com_->register_ident(InternedStringPtr("block_break")); 
+			int_t block_first = com_->register_identifier(InternedStringPtr("block_first")); 
+			int_t block_next = com_->register_identifier(InternedStringPtr("block_next")); 
+			int_t block_break = com_->register_identifier(InternedStringPtr("block_break")); 
 
 			if(e->var==block_first && !info.tail){
 				put_inst(InstSendIterFirst(info.need_result_count));
@@ -765,7 +767,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 
 				int_t send_name = 0;
 				if(!e2->send_pname()){
-					send_name = register_symbol(e2->send_name());
+					send_name = register_identifier(e2->send_name());
 				}
 
 				if(e2->send_q()){
@@ -870,7 +872,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 					}
 				}else{
 					if(minv!=-1){
-						error(line(), Xt("Xtal Compile Error 1001"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 					}
 				}
 				maxv++;
@@ -953,7 +955,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 			block->set_scope_stmts(stmts);
 			fun->set_fun_body(block);
 
-			e->class_stmts()->push_front(cdefine(0, KIND_PUBLIC, Xid(__INITIALIZE__), null_(0), fun));
+			e->class_stmts()->push_front(cdefine(0, KIND_PUBLIC, Xid(_initialize_), null_(0), fun));
 
 
 			Xfor(v, e->class_mixins()){
@@ -986,20 +988,20 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 			int_t class_core_num = result_->class_core_table_.size();
 
 			ClassCore core;
-			core.lineno = lines_.top();
+			core.lineno = linenos_.top();
 			core.kind = e->class_kind();
 			core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
 			core.variable_size = vf.entrys.size();
 			core.instance_variable_size = e->class_ivars() ? e->class_ivars()->size() : 0;
 			
-			core.variable_symbol_offset = result_->symbol_table_->size();
+			core.variable_identifier_offset = result_->identifier_table_->size();
 			for(int_t i=0; i<vf.entrys.size(); ++i){
-				result_->symbol_table_->push_back(vf.entrys[i].name);
+				result_->identifier_table_->push_back(vf.entrys[i].name);
 			}
 
-			core.instance_variable_symbol_offset = result_->symbol_table_->size();
+			core.instance_variable_identifier_offset = result_->identifier_table_->size();
 			Xfor2(k, v, e->class_ivars()){
-				result_->symbol_table_->push_back(k->to_s()->intern());
+				result_->identifier_table_->push_back(k->to_s()->intern());
 			}
 
 			put_inst(InstClassBegin(class_core_num));
@@ -1013,7 +1015,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 						compile(v1->cdefine_term());
 						compile(v1->cdefine_ns());
 						LVarInfo info = var_find(v1->cdefine_name(), true);
-						put_inst(InstDefineClassMember(info.pos, register_symbol(v1->cdefine_name()), v1->cdefine_accessibility()));
+						put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
 					}
 				}
 			}
@@ -1025,7 +1027,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 	}
 	
 	result_->set_lineno_info(e->lineno());
-	lines_.pop();
+	linenos_.pop();
 
 	if(info.need_result_count!=result_count){
 		put_inst(InstAdjustResult(result_count, info.need_result_count));
@@ -1039,11 +1041,11 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 	ExprPtr e = ep(p);
 
-	if(debug::is_enabled() && lines_.top()!=e->lineno()){
+	if(debug::is_enabled() && linenos_.top()!=e->lineno()){
 		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
 
-	lines_.push(e->lineno());
+	linenos_.push(e->lineno());
 	result_->set_lineno_info(e->lineno());
 
 	switch(e->type()){
@@ -1061,7 +1063,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile(e->bin_rhs());
 				
 				if(e->bin_rhs()->type()==EXPR_FUN || e->bin_rhs()->type()==EXPR_CLASS){
-					put_inst(InstSetName(register_symbol(e->bin_lhs()->lvar_name())));
+					put_inst(InstSetName(register_identifier(e->bin_lhs()->lvar_name())));
 				}
 
 				put_define_local_code(e->bin_lhs()->lvar_name());
@@ -1070,12 +1072,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile(e->bin_rhs());
 
 				if(e->bin_lhs()->member_name() && (e->bin_rhs()->type()==EXPR_FUN || e->bin_rhs()->type()==EXPR_CLASS)){
-					put_inst(InstSetName(register_symbol(e->bin_lhs()->member_name())));
+					put_inst(InstSetName(register_identifier(e->bin_lhs()->member_name())));
 				}
 
 				put_define_member_code(e->bin_lhs()->member_name(), e->bin_lhs()->member_pname());
 			}else{
-				error(line(), Xt("Xtal Compile Error 1012"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1012"));
 			}
 		}
 		
@@ -1096,7 +1098,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile(e->bin_lhs()->bin_rhs());
 				put_inst(InstSetAt());
 			}else{
-				error(line(), Xt("Xtal Compile Error 1012"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1012"));
 			}
 		}
 
@@ -1131,7 +1133,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t exprs_size = e->yield_exprs()->size();
 			put_inst(InstYield(exprs_size));
 			if(exprs_size>=256){
-				error(line(), Xt("Xtal Compile Error 1022"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1022"));
 			}
 		}
 
@@ -1179,7 +1181,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				}else{
 					put_inst(InstReturn(exprs_size));
 					if(exprs_size>=256){
-						error(line(), Xt("Xtal Compile Error 1022"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1022"));
 					}
 				}	
 			}
@@ -1200,7 +1202,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile(e->assert_exprs()->at(1));
 				compile(e->assert_exprs()->at(2));
 			}else{
-				error(line(), Xt("Xtal Compile Error 1016"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1016"));
 			}
 			
 			put_inst(InstAssert());
@@ -1383,7 +1385,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 						compile(v->member_term());
 						put_define_member_code(v->member_name(), v->member_pname());
 					}else{
-						error(line(), Xt("Xtal Compile Error 1008"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1008"));
 					}
 				}
 			}else{
@@ -1401,7 +1403,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 						compile(v->bin_rhs());
 						put_inst(InstSetAt());
 					}else{
-						error(line(), Xt("Xtal Compile Error 1008"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1008"));
 					}
 				}
 			}
@@ -1409,7 +1411,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_BREAK){
 			if(fun_frame().loops.empty()){
-				error(line(), Xt("Xtal Compile Error 1007"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1007"));
 			}else{
 				InternedStringPtr name = e->break_label();
 				if(name){
@@ -1425,7 +1427,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					}
 
 					if(!found){
-						error(line(), Xt("Xtal Compile Error 1005"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1005"));
 					}
 				}else{
 					bool found = false;
@@ -1440,7 +1442,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					}
 
 					if(!found){
-						error(line(), Xt("Xtal Compile Error 1005"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1005"));
 					}
 				}
 			}
@@ -1448,7 +1450,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_CONTINUE){
 			if(fun_frame().loops.empty()){
-				error(line(), Xt("Xtal Compile Error 1006"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
 			}else{
 				InternedStringPtr name = e->continue_label();
 				if(name){
@@ -1464,7 +1466,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					}
 
 					if(!found){
-						error(line(), Xt("Xtal Compile Error 1004"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1004"));
 					}
 				}else{
 					bool found = false;
@@ -1479,7 +1481,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					}
 
 					if(!found){
-						error(line(), Xt("Xtal Compile Error 1004"));
+						error_->error(lineno(), Xt("Xtal Compile Error 1004"));
 					}
 				}
 			}
@@ -1521,7 +1523,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	}
 
 	result_->set_lineno_info(e->lineno());
-	lines_.pop();
+	linenos_.pop();
 }
 
 }

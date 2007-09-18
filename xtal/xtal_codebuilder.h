@@ -33,11 +33,11 @@ public:
 	void compile(const AnyPtr& p, const CompileInfo& info = CompileInfo());
 	void compile_stmt(const AnyPtr& p);	
 	
-	int_t register_symbol(const InternedStringPtr& v){
-		if(const AnyPtr& pos = symbol_map_->at(v)){ return pos->to_i(); }
-		result_->symbol_table_->push_back(v);
-		symbol_map_->set_at(v, result_->symbol_table_->size()-1);
-		return result_->symbol_table_->size()-1;
+	int_t register_identifier(const InternedStringPtr& v){
+		if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
+		result_->identifier_table_->push_back(v);
+		identifier_map_->set_at(v, result_->identifier_table_->size()-1);
+		return result_->identifier_table_->size()-1;
 	}
 
 	int_t register_value(const AnyPtr& v){
@@ -47,9 +47,9 @@ public:
 		return result_->value_table_->size()-1;
 	}
 
-	int_t append_symbol(const InternedStringPtr& ident){
-		result_->symbol_table_->push_back(ident);
-		return result_->symbol_table_->size()-1;
+	int_t append_identifier(const InternedStringPtr& identifier){
+		result_->identifier_table_->push_back(identifier);
+		return result_->identifier_table_->size()-1;
 	}
 
 	int_t append_value(const AnyPtr& v){
@@ -58,7 +58,7 @@ public:
 	}
 	
 	MapPtr value_map_;
-	MapPtr symbol_map_;
+	MapPtr identifier_map_;
 
 	/**
 	* コンパイルエラーを取得する。
@@ -135,7 +135,7 @@ public:
 		struct Label{
 			int_t pos;
 			struct From{
-				int_t line;
+				int_t lineno;
 				int_t pos;
 				int_t set_pos;
 			};
@@ -302,16 +302,16 @@ public:
 
 	FunFrame& fun_frame();
 
-	int_t line(){ return lines_.top(); }
+	int_t lineno(){ return linenos_.top(); }
 
 	int_t class_core_num(){
 		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
 	}
 
-	void error(const AnyPtr&, const AnyPtr&){
-	}
-
 private:
+
+	CompileError errorimpl_;
+	CompileError* error_;
 	
 	Parser parser_;
 	CodePtr result_;
@@ -321,7 +321,7 @@ private:
 	Stack<ClassFrame> class_frames_;
 
 	PODStack<int_t> label_names_;
-	PODStack<int_t> lines_;
+	PODStack<int_t> linenos_;
 
 private:
 	CodeBuilder(const CodeBuilder&);

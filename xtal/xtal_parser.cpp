@@ -11,6 +11,711 @@
 
 namespace xtal{
 
+#define c2(C1, C2) ((C2)<<8 | (C1))
+#define c3(C1, C2, C3) ((C3)<<16 | (C2)<<8 | (C1))
+#define c4(C1, C2, C3, C4) ((C4)<<24 | (C3)<<16 | (C2)<<8 | (C1))
+
+
+void CompileError::init(const StringPtr& file_name){
+	errors = xnew<Array>();
+	source_file_name = file_name;
+}
+
+void CompileError::error(int_t lineno, const AnyPtr& message){
+	if(errors->size()<10){
+		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)")(
+			Named("file", source_file_name),
+			Named("lineno", lineno),
+			Named("message", message)
+		));
+	}
+}
+
+Reader::Reader()
+	:stream_(null){
+	pos_ = 0;
+	read_ = 0;
+}
+
+int_t Reader::read(){
+	int_t ret = peek();
+	++pos_;
+	return ret;
+}
+
+int_t Reader::peek(){
+	if(pos_==read_){
+		read_ += stream_->read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
+
+		if(pos_==read_){
+			return -1;
+		}
+	}
+	return buf_[pos_ & BUF_MASK];
+}
+
+bool Reader::eat(int_t ch){
+	if(peek()==ch){
+		read();
+		return true;
+	}
+	return false;
+}
+
+void Reader::putback(int_t ch){
+	pos_--;
+	buf_[pos_ & BUF_MASK]=ch;
+}
+
+int_t Reader::position(){
+	return pos_;
+}
+
+void Reader::set_position(int_t pos){
+	XTAL_ASSERT((int_t)pos_ >= pos);
+	XTAL_ASSERT(pos_-pos < BUF_SIZE);
+	pos_ = pos;
+}
+
+
+Lexer::Lexer(){
+	set_lineno(1);
+	read_ = 0;
+	pos_ = 0;
+	mode_ = NORMAL_MODE;
+}
+
+void Lexer::init(const StreamPtr& stream, CompileError* error){
+	reader_.set_stream(stream);
+	error_ = error;
+	
+	keyword_map_ = xnew<Map>();
+	keyword_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
+	keyword_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
+	keyword_map_->set_at(Xid(else), (int_t)Token::KEYWORD_ELSE);
+	keyword_map_->set_at(Xid(fun), (int_t)Token::KEYWORD_FUN);
+	keyword_map_->set_at(Xid(method), (int_t)Token::KEYWORD_METHOD);
+	keyword_map_->set_at(Xid(do), (int_t)Token::KEYWORD_DO);
+	keyword_map_->set_at(Xid(while), (int_t)Token::KEYWORD_WHILE);
+	keyword_map_->set_at(Xid(continue), (int_t)Token::KEYWORD_CONTINUE);
+	keyword_map_->set_at(Xid(break), (int_t)Token::KEYWORD_BREAK);
+	keyword_map_->set_at(Xid(fiber), (int_t)Token::KEYWORD_FIBER);
+	keyword_map_->set_at(Xid(yield), (int_t)Token::KEYWORD_YIELD);
+	keyword_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
+	keyword_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
+	keyword_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
+	keyword_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
+	keyword_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
+	keyword_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
+	keyword_map_->set_at(Xid(try), (int_t)Token::KEYWORD_TRY);
+	keyword_map_->set_at(Xid(catch), (int_t)Token::KEYWORD_CATCH);
+	keyword_map_->set_at(Xid(finally), (int_t)Token::KEYWORD_FINALLY);
+	keyword_map_->set_at(Xid(throw), (int_t)Token::KEYWORD_THROW);
+	keyword_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
+	keyword_map_->set_at(Xid(import), (int_t)Token::KEYWORD_IMPORT);
+	keyword_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
+	keyword_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
+	keyword_map_->set_at(Xid(current_context), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
+	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
+	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
+	keyword_map_->set_at(Xid(export), (int_t)Token::KEYWORD_EXPORT);
+	keyword_map_->set_at(Xid(unittest), (int_t)Token::KEYWORD_UNITTEST);
+	keyword_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
+	keyword_map_->set_at(Xid(pure), (int_t)Token::KEYWORD_PURE);
+	keyword_map_->set_at(Xid(nobreak), (int_t)Token::KEYWORD_NOBREAK);
+	keyword_map_->set_at(Xid(switch), (int_t)Token::KEYWORD_SWITCH);
+	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
+	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
+	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
+}
+
+Token Lexer::read(){
+	Token ret = peek();
+	++pos_;
+	return ret;
+}
+
+Token Lexer::peek(){
+	if(pos_==read_){
+		do_read();
+		if(pos_==read_){
+			return Token(Token::TYPE_TOKEN, (int_t)-1, (int_t)0);
+		}
+	}
+	return buf_[pos_ & BUF_MASK];
+}
+
+void Lexer::push(int_t v){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_TOKEN, v, left_space_ | test_right_space(reader_.peek()));
+	read_++;
+}
+	
+void Lexer::push_int(int_t v){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_INT, v, left_space_ | test_right_space(reader_.peek()));
+	read_++;
+}
+
+void Lexer::push_float(float_t v){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_FLOAT, v, left_space_ | test_right_space(reader_.peek()));
+	read_++;
+}
+	
+void Lexer::push_keyword(const InternedStringPtr& v, int_t num){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_KEYWORD, v, left_space_ | test_right_space(reader_.peek()), num);
+	read_++;
+}
+	
+void Lexer::push_identifier(const InternedStringPtr& v){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_IDENTIFIER, v, left_space_ | test_right_space(reader_.peek()));
+	read_++;
+}
+
+void Lexer::push_direct(int_t v){
+	buf_[read_ & BUF_MASK] = Token(Token::TYPE_TOKEN, v, 0);
+	read_++;
+}
+
+void Lexer::putback(){
+	pos_--;
+}
+
+void Lexer::putback(const Token& ch){
+	pos_--;
+	buf_[pos_ & BUF_MASK] = ch;
+}
+
+void Lexer::set_string_mode(){
+	mode_ = STRING_MODE;
+}
+	
+void Lexer::set_normal_mode(){
+	mode_ = NORMAL_MODE;
+}
+	
+InternedStringPtr Lexer::parse_identifier(){
+	string_t buf;
+
+	int len = ch_len(reader_.peek());
+	while(len--){
+		buf += read_from_reader();
+	}
+
+	while(test_ident_rest(reader_.peek())){
+		len = ch_len(reader_.peek());
+		while(len--){
+			buf += read_from_reader();
+		}
+	}
+	
+	return InternedStringPtr(buf.c_str(), buf.size());
+}
+
+int_t Lexer::parse_integer(){
+	int_t ret = 0;
+	while(1){
+		if(test_digit(reader_.peek())){
+			ret *= 10;
+			ret += read_from_reader()-'0';
+		}else if(reader_.peek()=='_'){
+			read_from_reader();
+		}else{
+			break;
+		}
+	}
+	return ret;
+}
+
+int_t Lexer::parse_hex(){
+	int_t ret = 0;
+	while(1){
+		if(test_digit(reader_.peek())){
+			ret *= 16;
+			ret += read_from_reader()-'0';
+		}else if(test_range(reader_.peek(), 'a', 'f')){
+			ret *= 16;
+			ret += read_from_reader()-'a';
+		}else if(test_range(reader_.peek(), 'A', 'F')){
+			ret *= 16;
+			ret += read_from_reader()-'A';
+		}else if(reader_.peek()=='_'){
+			read_from_reader();
+		}else{
+			break;
+		}
+	}
+
+	if(test_ident_rest(reader_.peek())){
+		error_->error(lineno(), Xt("Xtal Compile Error 1015"));
+	}
+
+	return ret;		
+}
+
+int_t Lexer::parse_bin(){
+	int ret = 0;
+	while(1){
+		if(test_range(reader_.peek(), '0', '1')){
+			ret *= 2;
+			ret += read_from_reader()-'0';
+		}else if(reader_.peek()=='_'){
+			read_from_reader();
+		}else{
+			break;
+		}
+	}
+
+	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
+		error_->error(lineno(), Xt("Xtal Compile Error 1020"));
+	}
+
+	return ret;
+}
+
+void Lexer::parse_number_suffix(int_t val){
+	if(eat_from_reader('K')){
+		push_int(val*1024);
+	}else if(eat_from_reader('M')){
+		push_int(val*1024*1024);	
+	}else if(eat_from_reader('G')){
+		push_int(val*1024*1024*1024);	
+	}else if(eat_from_reader('f') || eat_from_reader('F')){
+		push_float((float_t)val);	
+	}else{
+
+		if(test_ident_rest(reader_.peek())){
+			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
+		}
+
+		push_int(val);
+	}
+}
+
+void Lexer::parse_number_suffix(float_t val){
+	if(eat_from_reader('K')){
+		push_float(val*1024);	
+	}else if(eat_from_reader('M')){
+		push_float(val*1024*1024);	
+	}else if(eat_from_reader('G')){
+		push_float(val*1024*1024*1024);	
+	}else if(eat_from_reader('f') || eat_from_reader('F')){
+		push_float(val);	
+	}else{
+	
+		if(test_ident_rest(reader_.peek())){
+			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
+		}
+
+		push_float(val);
+	}
+}
+
+void Lexer::parse_number(){
+	if(eat_from_reader('0')){
+		if(eat_from_reader('x') || eat_from_reader('X')){
+			push_int(parse_hex());
+			return;
+		}else if(eat_from_reader('b') || eat_from_reader('B')){
+			push_int(parse_bin());
+			return;
+		}
+	}
+	
+	int_t ival = parse_integer();
+	
+	if(eat_from_reader('.')){
+		if(test_digit(reader_.peek())){
+			float_t scale = 1;
+			while(eat_from_reader('0')){
+				scale /= 10;
+			}
+			float_t fval = 0;
+			int_t after_the_decimal_point = parse_integer();
+			while(after_the_decimal_point!=0){
+				fval+=after_the_decimal_point%10;
+				fval/=10;
+				after_the_decimal_point/=10;
+			}
+			fval *= scale;
+			fval += ival;
+			int_t e = 1;
+			if(eat_from_reader('e') || eat_from_reader('E')){
+				if(eat_from_reader('-')){
+					e=-1;
+				}else{
+					eat_from_reader('+');
+				}
+				if(!test_digit(reader_.peek())){
+					error_->error(lineno(), Xt("Xtal Compile Error 1014"));
+				}
+				e *= parse_integer();
+				{
+					using namespace std;
+					fval *= (float_t)pow((float_t)10, (float_t)e);
+				}
+			}
+			parse_number_suffix(fval);
+		}else{
+			putback_to_reader('.');
+			push_int(ival);
+		}
+	}else{
+		parse_number_suffix(ival);
+	}
+}
+	
+int_t Lexer::read_from_reader(){
+	int_t ch = reader_.read();
+	if(recording_){
+		recorded_string_ += (char_t)ch;
+	}
+	return ch;
+}
+
+bool Lexer::eat_from_reader(int_t ch){
+	if(reader_.eat(ch)){
+		if(recording_){
+			recorded_string_ += (char_t)ch;
+		}
+		return true;
+	}
+	return false;
+}
+
+void Lexer::putback_to_reader(int_t ch){
+	if(recording_){
+		recorded_string_.resize(recorded_string_.size()-1);
+	}
+	reader_.putback(ch);
+}
+
+void Lexer::do_read(){
+	left_space_ = 0;
+	
+	if(mode_==STRING_MODE){
+		int_t ch = read_from_reader();
+		if(ch=='\r'){
+			eat_from_reader('\n');
+			set_lineno(lineno()+1);
+			ch = '\n';
+		}else if(ch=='\n'){
+			set_lineno(lineno()+1);
+		}
+		push_direct(ch);
+		return;
+	}
+
+	do{
+
+		int_t ch = read_from_reader();
+		
+		switch(ch){
+
+			XTAL_DEFAULT{
+				if(ch!=-1 && test_ident_first(ch)){
+					putback_to_reader(ch);
+					InternedStringPtr identifier = parse_identifier();
+					if(const AnyPtr& key = keyword_map_->at(identifier)){
+						push_keyword(identifier, ivalue(key));
+					}else{
+						push_identifier(identifier);
+					}
+				}else if(test_digit(ch)){
+					putback_to_reader(ch);
+					parse_number();
+					return;
+				}else{
+					push(ch);
+				}
+			}
+			
+			XTAL_CASE('+'){
+				if(eat_from_reader('+')){
+					push(c2('+', '+'));
+				}else if(eat_from_reader('=')){
+					push(c2('+', '='));
+				}else{
+					push('+');
+				}
+			}
+			
+			XTAL_CASE('-'){
+				if(eat_from_reader('-')){
+					push(c2('-', '-'));
+				}else if(eat_from_reader('=')){
+					push(c2('-', '='));
+				}else{
+					push('-');
+				}
+			}
+			
+			XTAL_CASE('~'){
+				if(eat_from_reader('=')){
+					push(c2('~', '='));
+				}else{
+					push('~');
+				}
+			}
+			
+			XTAL_CASE('*'){
+				if(eat_from_reader('=')){
+					push(c2('*', '='));
+				}else{
+					push('*');
+				}
+			}
+			
+			XTAL_CASE('/'){
+				if(eat_from_reader('=')){
+					push(c2('/', '='));
+				}else if(eat_from_reader('/')){
+					while(1){
+						int_t ch = read_from_reader();
+						if(ch=='\r'){
+							eat_from_reader('\n');
+							set_lineno(lineno()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch=='\n'){
+							set_lineno(lineno()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch==-1){
+							break;
+						}
+					}
+					continue;
+				}else if(eat_from_reader('*')){
+					while(1){
+						int_t ch = read_from_reader();
+						if(ch=='\r'){
+							eat_from_reader('\n');
+							set_lineno(lineno()+1);
+						}else if(ch=='\n'){
+							set_lineno(lineno()+1);
+						}else if(ch=='*'){
+							if(eat_from_reader('/')){
+								left_space_ = Token::FLAG_LEFT_SPACE;
+								break;
+							}
+						}else if(ch==-1){
+							error_->error(lineno(), Xt("Xtal Compile Error 1021"));
+							break;
+						}
+					}
+					continue;
+				}else{
+					push('/');
+				}
+			}			
+			
+			XTAL_CASE('#'){
+				if(eat_from_reader('!')){
+					while(1){
+						int_t ch = read_from_reader();
+						if(ch=='\r'){
+							eat_from_reader('\n');
+							set_lineno(lineno()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch=='\n'){
+							set_lineno(lineno()+1);
+							left_space_ = Token::FLAG_LEFT_SPACE;
+							break;
+						}else if(ch==-1){
+							break;
+						}
+					}
+					continue;
+				}else{
+					push('#');
+				}
+			}			
+			
+			XTAL_CASE('%'){
+				if(eat_from_reader('=')){
+					push(c2('%', '='));
+				}else{
+					push('%');
+				}
+			}
+			
+			XTAL_CASE('&'){
+				if(eat_from_reader('&')){
+					push(c2('&', '&'));
+				}else{
+					push('&');
+				}
+			}
+			
+			XTAL_CASE('|'){
+				if(eat_from_reader('|')){
+					push(c2('|', '|'));
+				}else{
+					push('|');
+				}
+			}
+						
+			XTAL_CASE('>'){
+				if(eat_from_reader('>')){
+					if(eat_from_reader('>')){
+						if(eat_from_reader('=')){
+							push(c3('>','3','='));
+						}else{
+							push(c3('>','>','>'));
+						}
+					}else{
+						push(c2('>','>'));
+					}
+				}else if(eat_from_reader('=')){
+					push(c2('>', '='));
+				}else{
+					push('>');
+				}
+			}
+			
+			XTAL_CASE('<'){
+				if(eat_from_reader('<')){
+					if(eat_from_reader('=')){
+						push(c3('<','<','='));
+					}else{
+						push(c2('<','<'));
+					}
+				}else if(eat_from_reader('=')){
+					push(c2('<', '='));
+				}else{
+					push('<');
+				}
+			}
+			
+			XTAL_CASE('='){
+				if(eat_from_reader('=')){
+					if(eat_from_reader('=')){
+						push(c3('=', '=', '='));
+					}else{
+						push(c2('=', '='));
+					}
+				}else{
+					push('=');
+				}
+			}
+			
+			XTAL_CASE('!'){
+				if(eat_from_reader('=')){
+					if(eat_from_reader('=')){
+						push(c3('!', '=', '='));
+					}else{
+						push(c2('!', '='));
+					}
+				}else if(eat_from_reader('i')){
+					if(eat_from_reader('s')){
+						if(!test_ident_rest(reader_.peek())){
+							push(c3('!', 'i', 's'));
+						}else{
+							putback_to_reader('s');
+							putback_to_reader('i');
+							push('!');
+						}
+					}else{
+						putback_to_reader(ch);
+						push('!');
+					}
+				}else{
+					push('!');
+				}
+			}
+			
+			XTAL_CASE('.'){
+				if(eat_from_reader('.')){
+					if(eat_from_reader('.')){
+						push(c3('.', '.', '.'));
+					}else{
+						push(c2('.', '.'));
+					}
+				}else if(eat_from_reader('?')){
+					push(c2('.', '?'));
+				}else{
+					push('.');
+				}
+			}
+
+			XTAL_CASE('"'){ //"
+				push('"'); //"
+			}
+			
+			XTAL_CASE(':'){
+				if(eat_from_reader(':')){
+					if(eat_from_reader('?')){
+						push(c3(':', ':', '?'));
+					}else{
+						push(c2(':', ':'));
+					}
+				}else{
+					push(':');
+				}
+			}
+
+			XTAL_CASE(';'){ push(';'); }
+			XTAL_CASE('{'){ push('{'); }
+			XTAL_CASE('}'){ push('}'); }
+			XTAL_CASE('['){ push('['); }
+			XTAL_CASE(']'){ push(']'); }
+			XTAL_CASE('('){ push('('); }
+			XTAL_CASE(')'){ push(')'); }
+
+			XTAL_CASE4(' ', '\t', '\r', '\n'){
+				putback_to_reader(ch);
+				deplete_space();
+				left_space_ = Token::FLAG_LEFT_SPACE;
+				continue;
+			}
+
+			XTAL_CASE(-1){
+				push(-1);
+			}
+		}
+			
+		break;
+	}while(1);
+
+}
+
+void Lexer::deplete_space(){
+	while(1){
+		int_t ch = read_from_reader();
+		if(ch=='\r'){
+			eat_from_reader('\n');
+			set_lineno(lineno()+1);
+		}else if(ch=='\n'){
+			set_lineno(lineno()+1);
+		}else if(ch==' ' || ch=='\t'){
+			
+		}else{
+			putback_to_reader(ch);
+			return;
+		}
+	}
+}
+
+int_t Lexer::test_right_space(int_t ch){
+	if(test_space(ch)){
+		return Token::FLAG_RIGHT_SPACE;
+	}
+	return 0;
+}
+	
+void Lexer::begin_record(){
+	recording_ = true;
+	recorded_string_ = "";
+}
+
+string_t Lexer::end_record(){
+	recording_ = false;
+	if(!recorded_string_.empty()){
+		recorded_string_.resize(recorded_string_.size()-1);
+	}
+	return recorded_string_;
+}
+
 
 enum{//Expressions priority
 	
@@ -69,21 +774,19 @@ enum{//Expressions priority
 };
 
 
-#define c2(C1, C2) ((C2)<<8 | (C1))
-#define c3(C1, C2, C3) ((C3)<<16 | (C2)<<8 | (C1))
-#define c4(C1, C2, C3, C4) ((C4)<<24 | (C3)<<16 | (C2)<<8 | (C1))
+
 
 Parser::Parser(){
 	expr_end_flag_ = false;
 }
 
-ExprPtr Parser::parse(const StreamPtr& stream, const StringPtr& source_file_name){
-	lexer_.init(stream, source_file_name);
-	com_ = lexer_.common();
+ExprPtr Parser::parse(const StreamPtr& stream, CompileError* error){
+	error_ = error;
+	lexer_.init(stream, error_);
 
 	ExprPtr p = parse_top_level();
 
-	if(com_->errors->size()!=0){
+	if(error_->errors->size()!=0){
 		return null;
 	}
 	return p;
@@ -114,21 +817,13 @@ ExprPtr Parser::interactive_parse(){
 	*/
 	return null;
 }
-
-LPCCommon* Parser::common(){
-	return com_;
-}
-
-void Parser::release(){
-
-}
 	
 void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	printf("\n\n '%c' '%s'\n", ch, lexer_.token2str(lexer_.peek())->to_s()->c_str());
-	com_->error(line(), Xt("Xtal Compile Error 1002")(Named("char", lexer_.token2str(lexer_.peek()))));
+	Token tok = lexer_.peek();
+	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named("char", lexer_.peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){
@@ -145,7 +840,7 @@ bool Parser::eat(int_t ch){
 bool Parser::eat(Token::Keyword kw){
 	Token n = lexer_.peek();
 	if(n.type() == Token::TYPE_KEYWORD){
-		if(n.ivalue()==kw){
+		if(n.keyword_number()==kw){
 			lexer_.read();
 			return true;
 		}
@@ -168,7 +863,7 @@ StringPtr Parser::parse_string(int_t open, int_t close){
 			++depth;
 		}
 		if(ch==-1){
-			com_->error(line(), Xt("Xtal Compile Error 1011"));
+			error_->error(lineno(), Xt("Xtal Compile Error 1011"));
 			break;
 		}
 		if(ch=='\\'){
@@ -224,7 +919,7 @@ ExprPtr Parser::parse_term(){
 
 	ExprPtr ret = null;
 	int_t r_space = ch.right_space() ? PRI_MAX : 0;
-	int_t ln = line();
+	int_t ln = lineno();
 
 	switch(ch.type()){
 		XTAL_NODEFAULT;
@@ -247,7 +942,7 @@ ExprPtr Parser::parse_term(){
 					}
 				}
 
-				XTAL_CASE('_'){ ret = ivar(line(), parse_ident()); }
+				XTAL_CASE('_'){ ret = ivar(lineno(), parse_identifier()); }
 
 				XTAL_CASE('"'){ lexer_.set_string_mode(); ret = string(ln, KIND_STRING, parse_string('"', '"')); }
 				
@@ -260,7 +955,7 @@ ExprPtr Parser::parse_term(){
 						switch(open){
 						case 't':
 							if(kind!=KIND_STRING){
-								com_->error(line(), Xt("Xtal Compile Error 1017"));
+								error_->error(lineno(), Xt("Xtal Compile Error 1017"));
 							}
 							kind = KIND_TEXT;
 							open = lexer_.read().ivalue();
@@ -268,7 +963,7 @@ ExprPtr Parser::parse_term(){
 
 						case 'f':
 							if(kind!=KIND_STRING){
-								com_->error(line(), Xt("Xtal Compile Error 1017"));
+								error_->error(lineno(), Xt("Xtal Compile Error 1017"));
 							}
 							kind = KIND_FORMAT;
 							open = lexer_.read().ivalue();
@@ -288,7 +983,7 @@ ExprPtr Parser::parse_term(){
 
 						default:
 							close = open;
-							com_->error(line(), Xt("Xtal Compile Error 1017"));
+							error_->error(lineno(), Xt("Xtal Compile Error 1017"));
 							break;
 						}
 
@@ -310,7 +1005,7 @@ ExprPtr Parser::parse_term(){
 		}
 
 		XTAL_CASE(Token::TYPE_KEYWORD){
-			switch(ch.ivalue()){
+			switch(ch.keyword_number()){
 
 				XTAL_DEFAULT{}
 				
@@ -332,7 +1027,7 @@ ExprPtr Parser::parse_term(){
 		
 		XTAL_CASE(Token::TYPE_INT){ ret = int_(ln, ch.ivalue()); }
 		XTAL_CASE(Token::TYPE_FLOAT){ ret = float_(ln, ch.fvalue()); }
-		XTAL_CASE(Token::TYPE_IDENT){ ret = lvar(ln, (InternedStringPtr&)com_->ident_table->at(ch.ivalue())); }
+		XTAL_CASE(Token::TYPE_IDENTIFIER){ ret = lvar(ln, ch.identifier()); }
 	}
 
 	if(!ret){
@@ -350,7 +1045,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 
 	ExprPtr ret;
 
-	int_t ln = line();
+	int_t ln = lineno();
 	int_t r_space = (ch.right_space()) ? PRI_MAX : 0;
 	int_t l_space = (ch.left_space()) ? PRI_MAX : 0;
 
@@ -359,7 +1054,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 		XTAL_DEFAULT{}
 		
 		XTAL_CASE(Token::TYPE_KEYWORD){
-			switch(ch.ivalue()){
+			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_IS){ if(pri < PRI_IS - l_space){ ret = bin(EXPR_IS, ln, lhs, parse_expr(PRI_IS - r_space)); } }
@@ -401,7 +1096,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							ret = member_e(ln, lhs, parse_expr_must());
 							expect(')');
 						}else{
-							ret = member(ln, lhs, parse_ident_or_keyword());
+							ret = member(ln, lhs, parse_identifier_or_keyword());
 						}
 					}
 				}
@@ -412,7 +1107,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							ret = member_eq(ln, lhs, parse_expr_must());
 							expect(')');
 						}else{
-							ret = member_q(ln, lhs, parse_ident_or_keyword());
+							ret = member_q(ln, lhs, parse_identifier_or_keyword());
 						}
 					}
 				}
@@ -423,7 +1118,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							ret = send_e(ln, lhs, parse_expr_must());
 							expect(')');
 						}else{
-							ret = send(ln, lhs, parse_ident_or_keyword());
+							ret = send(ln, lhs, parse_identifier_or_keyword());
 						}
 					}
 				}
@@ -434,7 +1129,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							ret = send_eq(ln, lhs, parse_expr_must());
 							expect(')');
 						}else{
-							ret = send_q(ln, lhs, parse_ident_or_keyword());
+							ret = send_q(ln, lhs, parse_identifier_or_keyword());
 						}
 					}
 				}
@@ -471,13 +1166,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 	return ret;
 }
 
-
-InternedStringPtr Parser::to_id(int_t ident){
-	return (InternedStringPtr&)com_->ident_table->at(ident);
-}
-
 ExprPtr Parser::parse_each(const InternedStringPtr& label, ExprPtr lhs){
-	int_t ln = lexer_.line();	
+	int_t ln = lexer_.lineno();	
 
 	ArrayPtr params = xnew<Array>();
 	params->push_back(lvar(0, Xid(iterator)));
@@ -485,10 +1175,10 @@ ExprPtr Parser::parse_each(const InternedStringPtr& label, ExprPtr lhs){
 	if(eat('|')){ // ブロックパラメータ
 		while(true){
 			Token ch = lexer_.peek();
-			if(ch.type()==ch.TYPE_IDENT){
+			if(ch.type()==ch.TYPE_IDENTIFIER){
 				discard = false;
 				lexer_.read();
-				params->push_back(lvar(0, to_id(ch.ivalue())));
+				params->push_back(lvar(0, ch.identifier()));
 				if(!eat(',')){
 					expect('|');
 					break;
@@ -505,7 +1195,7 @@ ExprPtr Parser::parse_each(const InternedStringPtr& label, ExprPtr lhs){
 	}
 
 	if(discard){
-		params->push_back(lvar(0, Xid(dummy_block_parameter)));
+		params->push_back(lvar(0, Xid(_dummy_block_parameter_)));
 	}
 
 	ArrayPtr scope_stmts = xnew<Array>();
@@ -524,22 +1214,22 @@ ExprPtr Parser::parse_each(const InternedStringPtr& label, ExprPtr lhs){
 }
 
 ExprPtr Parser::parse_loop(){
-	if(InternedStringPtr ident = parse_var()){
+	if(InternedStringPtr identifier = parse_var()){
 		Token ch = lexer_.read(); // :の次を読み取る
 		if(ch.type()==Token::TYPE_KEYWORD){
-			switch(ch.ivalue()){
+			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
-				XTAL_CASE(Token::KEYWORD_FOR){ return parse_for(ident); }
-				XTAL_CASE(Token::KEYWORD_WHILE){ return parse_while(ident); }
+				XTAL_CASE(Token::KEYWORD_FOR){ return parse_for(identifier); }
+				XTAL_CASE(Token::KEYWORD_WHILE){ return parse_while(identifier); }
 			}
 		}
 
 		lexer_.putback(ch);
 		if(ExprPtr lhs = parse_expr()){
 			if(!expr_end_flag_ && eat('{')){
-				return parse_each(ident, lhs);
+				return parse_each(identifier, lhs);
 			}else{
-				return define(0, lvar(0, ident), lhs);
+				return define(0, lvar(0, identifier), lhs);
 			}
 		}
 
@@ -551,7 +1241,7 @@ ExprPtr Parser::parse_loop(){
 
 ExprPtr Parser::parse_assign_stmt(){
 
-	int_t ln = line();
+	int_t ln = lineno();
 	Token ch = lexer_.read();
 
 	if(ch.type()==Token::TYPE_TOKEN){
@@ -585,7 +1275,7 @@ ExprPtr Parser::parse_assign_stmt(){
 						ArrayPtr left_exprs = parse_exprs(&discard);
 						left_exprs->push_front(lhs);
 						if(discard){
-							left_exprs->push_back(lvar(0, Xid(dummy_lhs_parameter)));
+							left_exprs->push_back(lvar(0, Xid(_dummy_lhs_parameter_)));
 						}
 						
 						if(eat('=')){
@@ -593,7 +1283,7 @@ ExprPtr Parser::parse_assign_stmt(){
 						}else if(eat(':')){
 							return massign(ln, left_exprs, parse_exprs(), true);
 						}else{
-							com_->error(line(), Xt("Xtal Compile Error 1001"));
+							error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 						}
 						
 						return null;
@@ -645,16 +1335,16 @@ ExprPtr Parser::parse_stmt(){
 			XTAL_DEFAULT{}
 
 			XTAL_CASE(Token::TYPE_KEYWORD){
-				switch(ch.ivalue()){
+				switch(ch.keyword_number()){
 					XTAL_CASE(Token::KEYWORD_THROW){	
 						ExprPtr temp = xnew<Expr>();
 						temp->set_type(EXPR_THROW);
 						temp->set_throw_expr(parse_expr_must());
 						ret = temp;
 					}				
-					XTAL_CASE(Token::KEYWORD_RETURN){ ret = return_(line(), parse_exprs()); }
-					XTAL_CASE(Token::KEYWORD_CONTINUE){ ret = continue_(line(), parse_ident()); }
-					XTAL_CASE(Token::KEYWORD_BREAK){ ret = break_(line(), parse_ident()); }
+					XTAL_CASE(Token::KEYWORD_RETURN){ ret = return_(lineno(), parse_exprs()); }
+					XTAL_CASE(Token::KEYWORD_CONTINUE){ ret = continue_(lineno(), parse_identifier()); }
+					XTAL_CASE(Token::KEYWORD_BREAK){ ret = break_(lineno(), parse_identifier()); }
 					XTAL_CASE(Token::KEYWORD_FOR){ ret = parse_for(); }
 					XTAL_CASE(Token::KEYWORD_WHILE){ ret = parse_while(); }
 					XTAL_CASE(Token::KEYWORD_SWITCH){ ret = parse_switch(); }
@@ -662,14 +1352,14 @@ ExprPtr Parser::parse_stmt(){
 
 					XTAL_CASE(Token::KEYWORD_TRY){ ret = parse_try(); }
 					XTAL_CASE(Token::KEYWORD_ASSERT){ ret = parse_assert(); }
-					XTAL_CASE(Token::KEYWORD_YIELD){ ret = yield(line(), parse_exprs()); }
+					XTAL_CASE(Token::KEYWORD_YIELD){ ret = yield(lineno(), parse_exprs()); }
 				}
 			}
 			
 			XTAL_CASE(Token::TYPE_TOKEN){
 				switch(ch.ivalue()){
 					XTAL_CASE('{'){ ret = parse_scope(); }
-					XTAL_CASE(';'){ return null_(line()); }
+					XTAL_CASE(';'){ return null_(lineno()); }
 				}
 			}
 		}
@@ -691,13 +1381,13 @@ ExprPtr Parser::parse_stmt(){
 ExprPtr Parser::parse_stmt_must(){
 	ExprPtr ret = parse_stmt();
 	if(!ret){
-		com_->error(line(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 	}
 	return ret;
 }
 
 ExprPtr Parser::parse_assert(){
-	int_t ln = line();
+	int_t ln = lineno();
 	ArrayPtr exprs = xnew<Array>();
 
 	lexer_.begin_record();
@@ -748,26 +1438,26 @@ ArrayPtr Parser::parse_stmts(){
 	return ret;
 }
 
-InternedStringPtr Parser::parse_ident(){
-	if(lexer_.peek().type()==Token::TYPE_IDENT){
-		return to_id(lexer_.read().ivalue());
+InternedStringPtr Parser::parse_identifier(){
+	if(lexer_.peek().type()==Token::TYPE_IDENTIFIER){
+		return lexer_.read().identifier();
 	}
 	return null;
 }
 
-InternedStringPtr Parser::parse_ident_or_keyword(){
-	if(lexer_.peek().type()==Token::TYPE_IDENT){
-		return to_id(lexer_.read().ivalue());
+InternedStringPtr Parser::parse_identifier_or_keyword(){
+	if(lexer_.peek().type()==Token::TYPE_IDENTIFIER){
+		return lexer_.read().identifier();
 	}else if(lexer_.peek().type()==Token::TYPE_KEYWORD){
-		return lexer_.keyword2id(lexer_.read().ivalue());
+		return lexer_.read().identifier();
 	}
 	return null;
 }
 
 InternedStringPtr Parser::parse_var(){
-	if(InternedStringPtr ident = parse_ident()){
+	if(InternedStringPtr identifier = parse_identifier()){
 		if(eat(':')){ 
-			return ident; 
+			return identifier; 
 		}else{
 			lexer_.putback();
 		}
@@ -776,7 +1466,7 @@ InternedStringPtr Parser::parse_var(){
 }
 	
 ExprPtr Parser::parse_for(const InternedStringPtr& label){
-	int_t ln = line();
+	int_t ln = lineno();
 
 	ArrayPtr scope_stmts = xnew<Array>();
 	expect('(');
@@ -804,7 +1494,7 @@ ExprPtr Parser::parse_for(const InternedStringPtr& label){
 }
 
 ExprPtr Parser::parse_top_level(){
-	ExprPtr etoplevel = toplevel(line(), xnew<Array>(), null);
+	ExprPtr etoplevel = toplevel(lineno(), xnew<Array>(), null);
 
 	while(1){
 		while(eat(';')){}
@@ -812,15 +1502,15 @@ ExprPtr Parser::parse_top_level(){
 			etoplevel->toplevel_stmts()->push_back(p);
 		}else if(eat(Token::KEYWORD_EXPORT)){
 			if(InternedStringPtr name = parse_var()){
-				int_t ln = line();
+				int_t ln = lineno();
 				etoplevel->toplevel_stmts()->push_back(define(ln, lvar(ln, Xid(export)), parse_expr_must()));
 				etoplevel->toplevel_stmts()->push_back(lvar(ln, Xid(export)));
 			}else{
-				int_t ln = line();
+				int_t ln = lineno();
 				etoplevel->toplevel_stmts()->push_back(define(ln, lvar(ln, Xid(export)), parse_expr_must()));
 			}
 			eat(';');
-			etoplevel->set_toplevel_export(lvar(line(), Xid(export)));
+			etoplevel->set_toplevel_export(lvar(lineno(), Xid(export)));
 		}else{
 			break;
 		}
@@ -831,7 +1521,7 @@ ExprPtr Parser::parse_top_level(){
 }
 
 ExprPtr Parser::parse_scope(){
-	int_t ln = line();
+	int_t ln = lineno();
 	ExprPtr ret = scope(ln, parse_stmts());
 	expect('}');
 	expr_end_flag_ = true;
@@ -839,7 +1529,7 @@ ExprPtr Parser::parse_scope(){
 }
 
 ExprPtr Parser::parse_class(int_t kind){
-	ExprPtr eclass = class_(line(), kind, null, xnew<Array>(), xnew<Map>());
+	ExprPtr eclass = class_(lineno(), kind, null, xnew<Array>(), xnew<Map>());
 
 	if(eat('(')){
 		eclass->set_class_mixins(parse_exprs());
@@ -859,21 +1549,21 @@ ExprPtr Parser::parse_class(int_t kind){
 			accessibility = KIND_PUBLIC;
 		}
 
-		if(InternedStringPtr var = parse_ident()){ // メンバ定義
+		if(InternedStringPtr var = parse_identifier()){ // メンバ定義
 			if(eat('@')){
 				ExprPtr ns = parse_expr();
 				expect(':');
-				int_t ln = line();
+				int_t ln = lineno();
 				eclass->class_stmts()->push_back(cdefine(ln, accessibility<0 ? KIND_PUBLIC : accessibility, var, ns, parse_expr_must()));
 			}else{
 				expect(':');
-				int_t ln = line();
-				eclass->class_stmts()->push_back(cdefine(ln, accessibility<0 ? KIND_PUBLIC : accessibility, var, null_(line()), parse_expr_must()));
+				int_t ln = lineno();
+				eclass->class_stmts()->push_back(cdefine(ln, accessibility<0 ? KIND_PUBLIC : accessibility, var, null_(lineno()), parse_expr_must()));
 			}
 			eat(';');
 			
 		}else if(eat('_')){// インスタンス変数定義
-			if(InternedStringPtr var = parse_ident()){
+			if(InternedStringPtr var = parse_identifier()){
 				
 				if(eat(':')){ // 初期値込み
 					eclass->class_ivars()->set_at(var, parse_expr_must());
@@ -884,18 +1574,18 @@ ExprPtr Parser::parse_class(int_t kind){
 
 				if(accessibility!=-1){ // 可触性が付いているので、アクセッサを定義する
 					eclass->class_stmts()->push_back(
-						cdefine(line(), accessibility, var, null_(line()), 
-							fun(line(), KIND_METHOD, null, false, 
-								return_(line(), make_array(ivar(line(), var))))));
+						cdefine(lineno(), accessibility, var, null_(lineno()), 
+							fun(lineno(), KIND_METHOD, null, false, 
+								return_(lineno(), make_array(ivar(lineno(), var))))));
 			
 					InternedStringPtr var2 = xnew<String>("set_")->cat(var);
 					eclass->class_stmts()->push_back(
-						cdefine(line(), accessibility, var2, null_(line()), 
-							fun(line(), KIND_METHOD, make_map(Xid(value), null), false, 
-								assign(line(), ivar(line(), var), lvar(line(), Xid(value))))));
+						cdefine(lineno(), accessibility, var2, null_(lineno()), 
+							fun(lineno(), KIND_METHOD, make_map(Xid(value), null), false, 
+								assign(lineno(), ivar(lineno(), var), lvar(lineno(), Xid(value))))));
 				}
 			}else{
-				com_->error(line(), Xt("Xtal Compile Error 1001"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 			}
 		}else{
 			break;
@@ -908,13 +1598,13 @@ ExprPtr Parser::parse_class(int_t kind){
 }
 
 ExprPtr Parser::parse_try(){
-	ExprPtr etry = try_(line(), null, null, null, null);
+	ExprPtr etry = try_(lineno(), null, null, null, null);
 
 	etry->set_try_body(parse_stmt_must());
 	
 	if(eat(Token::KEYWORD_CATCH)){
 		expect('(');
-		etry->set_try_catch_var(parse_ident());
+		etry->set_try_catch_var(parse_identifier());
 		expect(')');
 		etry->set_try_catch(parse_stmt_must());
 	}
@@ -930,7 +1620,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 	bool lambda = kind==KIND_LAMBDA;
 	
 	MapPtr params = xnew<Map>();
-	ExprPtr efun = fun(line(), kind, params, false, null);
+	ExprPtr efun = fun(lineno(), kind, params, false, null);
 
 	int_t inst_assign_list_count = 0;
 	InternedStringPtr inst_assign_list[255];
@@ -950,7 +1640,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			}
 			
 			if(eat('_')){
-				if(InternedStringPtr var = parse_ident()){
+				if(InternedStringPtr var = parse_identifier()){
 					if(!lambda && eat(':')){
 						params->set_at(var, parse_expr_must());
 					}else{
@@ -959,9 +1649,9 @@ ExprPtr Parser::parse_fun(int_t kind){
 					if(inst_assign_list_count<255)
 						inst_assign_list[inst_assign_list_count++] = var;
 				}else{
-					com_->error(line(), Xt("Xtal Compile Error 1001"));
+					error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 				}
-			}else if(InternedStringPtr var = parse_ident()){
+			}else if(InternedStringPtr var = parse_identifier()){
 				if(!lambda && eat(':')){
 					params->set_at(var, parse_expr_must());
 				}else{
@@ -971,7 +1661,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			
 			if(eat(',')){
 				if(lambda && eat('|')){
-					params->set_at(Xid(dummy_fun_parameter), null);
+					params->set_at(Xid(_dummy_fun_parameter_), null);
 					break;
 				}
 			}
@@ -982,7 +1672,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 		if(eat('{')){
 			efun->set_fun_body(parse_scope());
 		}else{
-			int_t ln = line();
+			int_t ln = lineno();
 			efun->set_fun_body(return_(ln, make_array(parse_expr_must())));
 		}
 	}else{
@@ -990,15 +1680,15 @@ ExprPtr Parser::parse_fun(int_t kind){
 		ArrayPtr scope_stmts = xnew<Array>();
 		for(int_t i=0; i<inst_assign_list_count; ++i){
 			InternedStringPtr var = inst_assign_list[i];
-			scope_stmts->push_back(assign(line(), ivar(line(), var), lvar(line(), var)));
+			scope_stmts->push_back(assign(lineno(), ivar(lineno(), var), lvar(lineno(), var)));
 		}
 
 		if(eat('{')){
-			int_t ln = line();
+			int_t ln = lineno();
 			scope_stmts->push_back(parse_scope());
 			efun->set_fun_body(scope(ln, scope_stmts));
 		}else{
-			int_t ln = line();
+			int_t ln = lineno();
 			scope_stmts->push_back(return_(ln, make_array(parse_expr_must())));
 			efun->set_fun_body(scope(ln, scope_stmts));
 		}
@@ -1010,7 +1700,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 ExprPtr Parser::parse_call(ExprPtr lhs){
 	ArrayPtr ordered = xnew<Array>();
 	MapPtr named = xnew<Map>();
-	ExprPtr ecall = call(line(), lhs, ordered, named, false);
+	ExprPtr ecall = call(lineno(), lhs, ordered, named, false);
 	while(true){
 
 		if(InternedStringPtr var = parse_var()){
@@ -1068,7 +1758,7 @@ ExprPtr Parser::parse_expr(int_t pri){
 ExprPtr Parser::parse_expr_must(int_t pri){
 	ExprPtr ret = parse_expr(pri);
 	if(!ret){
-		com_->error(line(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 	}
 	return ret;
 }
@@ -1082,12 +1772,12 @@ ExprPtr Parser::parse_expr_must(){
 
 ExprPtr Parser::parse_if(){
 	expect('(');
-	ExprPtr eif = if_(line(), null, null, null);
+	ExprPtr eif = if_(lineno(), null, null, null);
 	if(InternedStringPtr var = parse_var()){
-		ExprPtr escope = scope(line(), xnew<Array>());
-		escope->push_back(define(line(), lvar(line(), var), parse_expr_must()));
+		ExprPtr escope = scope(lineno(), xnew<Array>());
+		escope->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
 		expect(')');
-		eif->set_if_cond(lvar(line(), var));
+		eif->set_if_cond(lvar(lineno(), var));
 		eif->set_if_body(parse_stmt_must());
 		if(eat(Token::KEYWORD_ELSE)){
 			eif->set_if_else(parse_stmt_must());
@@ -1107,12 +1797,12 @@ ExprPtr Parser::parse_if(){
 
 ExprPtr Parser::parse_while(const InternedStringPtr& label){
 	expect('(');
-	ExprPtr efor = for_(line(), label, null, null, null, null, null);
+	ExprPtr efor = for_(lineno(), label, null, null, null, null, null);
 	if(InternedStringPtr var = parse_var()){
-		ExprPtr escope = scope(line(), xnew<Array>());
-		escope->push_back(define(line(), lvar(line(), var), parse_expr_must()));
+		ExprPtr escope = scope(lineno(), xnew<Array>());
+		escope->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
 		expect(')');
-		efor->set_for_cond(lvar(line(), var));
+		efor->set_for_cond(lvar(lineno(), var));
 		efor->set_for_body(parse_stmt_must());
 		if(eat(Token::KEYWORD_ELSE)){
 			efor->set_for_else(parse_stmt_must());
@@ -1135,80 +1825,88 @@ ExprPtr Parser::parse_while(const InternedStringPtr& label){
 }
 
 ExprPtr Parser::parse_switch(){
-	/*
+	ArrayPtr scope_stmts = xnew<Array>();
+	ExprPtr ret = scope(lineno(), scope_stmts);
 	expect('(');
-	e.block_begin();
-		int_t var = parse_var();
-		if(!var){
-			var = com_->register_ident(InternedStringPtr("__SWITCH__"));
-		}
-		
-		e.block_add(e.define(e.lvar(var), parse_expr_must()));
-		expect(')');
-		expect('{');
-		
-		ExprPtr if_stmt = 0;
-		ExprPtr first = 0;
-		ExprPtr default_stmt = 0;
-		while(true){
-			if(eat(Token::KEYWORD_CASE)){
-			
-				IfExprPtr temp = XTAL_NEW IfStmt(lexer_.line());
-				
-				if(if_stmt){
-					if_stmt->else_stmt = temp;
-					if_stmt = temp;
-				}else{
-					if_stmt = temp;
-					first = temp;
-				}
-				
-				expect('(');
-				
-				while(true){
-					if(temp->cond_expr){
-						temp->cond_expr = e.oror(temp->cond_expr,
-							bin_comp(InstEq::NUMBER, e.lvar(var), parse_expr_must()));
-					}else{
-						temp->cond_expr = bin_comp(InstEq::NUMBER, e.lvar(var), parse_expr_must());
-					}
-					
-					if(eat(',')){
-						if(eat(')'))
-							break;
-					}else{
-						if(eat(')'))
-							break;
-					}
-				}
-							
-				temp->body_stmt = parse_stmt();
 
-			}else if(eat(Token::KEYWORD_DEFAULT)){
-				if(default_stmt){
-					com_->error(line(), Xt("Xtal Compile Error 1018")());					
-				}
-				default_stmt = parse_stmt();
-			}else{
-				expect('}');
-				break;
-			}
-		}
+	InternedStringPtr var = parse_var();
+	if(!var){
+		var = Xid(_switch_);
+	}
+	
+	{
+		int_t ln = lineno();
+		scope_stmts->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
+	}
+
+	expect(')');
+	expect('{');
+	
+	ExprPtr if_stmt;
+	ExprPtr first;
+	ExprPtr default_stmt;
+	while(true){
+		if(eat(Token::KEYWORD_CASE)){
 		
-		if(if_stmt){
-			if_stmt->else_stmt = default_stmt;
-			e.block_add(first);
-		}else{
-			if(default_stmt){
-				e.block_add(default_stmt);
+			ExprPtr temp = if_(lineno(), null, null, null);
+			
+			if(if_stmt){
+				if_stmt->set_if_else(temp);
+				if_stmt = temp;
+			}else{
+				if_stmt = temp;
+				first = temp;
 			}
+			
+			expect('(');
+			
+			while(true){
+				if(temp->if_cond()){
+					int_t ln = lineno();
+					temp->set_if_cond(bin(EXPR_OROR, ln, temp->if_cond(), bin(EXPR_EQ, ln, lvar(ln, var), parse_expr_must())));
+				}else{
+					int_t ln = lineno();
+					temp->set_if_cond(bin(EXPR_EQ, ln, lvar(ln, var), parse_expr_must()));
+				}
+				
+				if(eat(',')){
+					if(eat(')')){
+						break;
+					}
+				}else{
+					if(eat(')')){
+						break;
+					}
+				}
+			}
+						
+			temp->set_if_body(parse_stmt());
+
+		}else if(eat(Token::KEYWORD_DEFAULT)){
+			if(default_stmt){
+				error_->error(lineno(), Xt("Xtal Compile Error 1018")());					
+			}
+			default_stmt = parse_stmt();
+		}else{
+			expect('}');
+			break;
 		}
-		*/
-	return null;
+	}
+	
+	if(if_stmt){
+		if_stmt->set_if_else(default_stmt);
+		scope_stmts->push_back(first);
+	}else{
+		if(default_stmt){
+			scope_stmts->push_back(default_stmt);
+		}
+	}
+
+	return ret;
 }
 
 ExprPtr Parser::parse_array(){
-	int_t ln = line();
+	int_t ln = lineno();
 	
 	if(eat(']')){//empty array
 		return array(ln, null);

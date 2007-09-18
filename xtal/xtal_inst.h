@@ -531,14 +531,14 @@ XTAL_DEF_INST_4(44, Send,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(45, SendIfDefined,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(46, Call,
@@ -557,14 +557,14 @@ XTAL_DEF_INST_4(48, Send_A,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(49, SendIfDefined_A,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(50, Call_A,
@@ -583,14 +583,14 @@ XTAL_DEF_INST_4(52, Send_T,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(53, SendIfDefined_T,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(54, Call_T,
@@ -609,14 +609,14 @@ XTAL_DEF_INST_4(56, Send_AT,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(57, SendIfDefined_AT,
         inst_u8_t, ordered_arg_count,
         inst_u8_t, named_arg_count,
         inst_u8_t, need_result_count,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(58, Call_AT,
@@ -761,7 +761,7 @@ XTAL_DEF_INST_0(121, UshrAssign);
 * stack [] -> [value]
 */
 XTAL_DEF_INST_1(122, GlobalVariable,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -770,7 +770,7 @@ XTAL_DEF_INST_1(122, GlobalVariable,
 * stack [value] -> []
 */
 XTAL_DEF_INST_1(123, SetGlobalVariable,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -779,7 +779,7 @@ XTAL_DEF_INST_1(123, SetGlobalVariable,
 * stack [value] -> []
 */
 XTAL_DEF_INST_1(124, DefineGlobalVariable,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -788,7 +788,7 @@ XTAL_DEF_INST_1(124, DefineGlobalVariable,
 * stack [object] -> [result]
 */
 XTAL_DEF_INST_1(125, Member,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -797,7 +797,7 @@ XTAL_DEF_INST_1(125, Member,
 * stack [object] -> [result]
 */
 XTAL_DEF_INST_1(126, MemberIfDefined,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -806,17 +806,17 @@ XTAL_DEF_INST_1(126, MemberIfDefined,
 * stack [object, value] -> []
 */
 XTAL_DEF_INST_1(127, DefineMember,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(128, DefineClassMember,
         inst_u16_t, number,
-		inst_u16_t, symbol_number,
+		inst_u16_t, identifier_number,
 		inst_u8_t, accessibility
 );
 
 XTAL_DEF_INST_1(129, SetName,
-        inst_u16_t, symbol_number
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_2(130, Once,

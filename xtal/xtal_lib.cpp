@@ -227,9 +227,17 @@ builtin::CompileError: class(StandardError){
 	Xsrc((
 
 Iterator::p: method(){
-	a: this.to_a;
-	a.to_s.p;
-	return a.each;
+	m: MemoryStream();
+	m.put_s("<[");
+	a: this.take(6).to_a;
+	m.put_s(a.take(5).join(","));
+	if(a.length==6){
+		m.put_s(" ...]>")
+	}else{
+		m.put_s("]>");
+	}
+	m.to_s.p;
+	return a.chain(this);
 }
 
 Iterator::to_s: method(){

@@ -562,15 +562,15 @@ public:
 	const CodePtr& code();
 	const CodePtr& prev_code();
 
-	const InternedStringPtr& symbol(int_t n){ 
-		return ff().pcode->symbol(n); 
+	const InternedStringPtr& identifier(int_t n){ 
+		return ff().pcode->identifier(n); 
 	}
 
-	const InternedStringPtr& prev_symbol(int_t n){ 
-		return prev_ff().pcode->symbol(n); 
+	const InternedStringPtr& prev_identifier(int_t n){ 
+		return prev_ff().pcode->identifier(n); 
 	}
 
-	const InternedStringPtr& symbol_ex(int_t n);
+	const InternedStringPtr& identifier_ex(int_t n);
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
 

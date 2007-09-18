@@ -11,6 +11,14 @@
 
 namespace xtal{ namespace peg{
 
+
+class Match : public Base{
+public:
+	AnyPtr results();
+	bool success();
+	bool full();
+};
+
 /**
 * @brief peg::Parserの読み取り元
 */
@@ -89,7 +97,6 @@ private:
 	StringPtr newline_ch_;
 	uint_t lineno_;
 	ArrayPtr errors_;
-	bool eof_;
 
 public:
 
@@ -104,7 +111,8 @@ public:
 
 		newline_ch_ = "\n";
 		lineno_ = 1;
-		eof_ = false;
+
+		results_ = xnew<Array>();
 	}
 
 	/**
@@ -184,6 +192,14 @@ public:
 		return lineno_;
 	}
 
+	void error(const AnyPtr& text){
+
+	}
+
+	AnyPtr errors(){
+		return errors_->each();
+	}
+
 	const AnyPtr& peek(uint_t n = 0){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = bufsize - 1;
@@ -194,7 +210,7 @@ public:
 			if(!backtrack_stack_.empty()){
 				uint_t mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
 
-				if(rpos<=mpos && ((rpos+n)&bufmask)>=mpos){
+				if(rpos<=mpos && ((rpos+n)&bufmask)>mpos){
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
 					buf_->resize(bufsize*2);
 					bufsize = buf_->size();
@@ -231,6 +247,13 @@ public:
 		return  ret;
 	}
 
+	void putback(const AnyPtr& v){
+		uint_t bufsize = buf_->size();
+		uint_t bufmask = bufsize - 1;
+		pos_--;
+		buf_[pos_ & bufmask] = v;
+	}
+
 	bool eat(const AnyPtr& value){
 		const AnyPtr& ret = peek();
 		if(raweq(ret, value)){
@@ -243,6 +266,10 @@ public:
 	bool eof(){
 		peek(1);
 		return pos_==read_;
+	}
+
+	bool success(){
+		
 	}
 
 	void skip(uint_t n){
@@ -265,6 +292,12 @@ public:
 		}
 	}
 
+	AnyPtr pop_result(){
+		AnyPtr temp = results_->back();
+		results_->pop_back();
+		return temp;
+	}
+
 	void begin_join(){
 		if(ignore_nest_)
 			return;
@@ -281,10 +314,12 @@ public:
 		if(join_nest_==0){
 			Backtrack& data = backtrack_stack_.top();
 			mm_->clear();
-			for(int_t i=data.value_pos, sz=results_->size(); i<sz; ++i){
-				mm_->put_s(results_->at(i)->to_s());
+			if(int_t size = results_->size()){
+				for(int_t i=data.value_pos; i<size; ++i){
+					mm_->put_s(results_->at(i)->to_s());
+				}
+				results_->erase(data.value_pos, results_->size()-data.value_pos);
 			}
-			results_->erase(data.value_pos, results_->size()-data.value_pos);
 			results_->push_back(mm_->to_s());
 		}
 		unmark();
@@ -388,10 +423,12 @@ public:
 		:stream_(stream){}
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max){
+		max = 1;
 		for(int_t i=0; i<max; ++i){
 			if(stream_->eof())
 				return i;
 			buffer[i] = stream_->get_s(1);
+			//printf("%s", buffer[i]->to_s()->c_str());
 		}
 		return max;
 	}
@@ -424,11 +461,8 @@ class Parser : public Base{
 public:
 
 	enum{
-		STRING,
 		TRY_STRING,
-		CH,
 		TRY_CH,
-		CH_SET,
 		TRY_CH_SET,
 		END,
 		ANY,
@@ -444,10 +478,15 @@ public:
 		NODE,
 		TRY,
 		VAL,
+		NOT,
+		TEST,
+		ASCII,
 		LINE_NUMBER,
 	};
 
 public:
+
+	
 
 	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
 
@@ -483,6 +522,10 @@ public:
 
 	static ParserPtr val(const AnyPtr& v);
 
+	static ParserPtr not(const AnyPtr& v);
+	
+	static ParserPtr test(const AnyPtr& v);
+
 	bool parse_string(const StringPtr& source, const ArrayPtr& ret);
 
 	bool parse(const LexerPtr& lex);
@@ -509,8 +552,29 @@ extern ParserPtr space;
 extern ParserPtr digit;
 extern ParserPtr any;
 extern ParserPtr eos;
+extern ParserPtr ascii;
 
-ParserPtr to_parser(const AnyPtr& a);
+inline ParserPtr operator |(const AnyPtr& a, const AnyPtr& b){ return Parser::select(a, b); }
+inline ParserPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return Parser::followed(a, b); }
+inline ParserPtr operator -(const AnyPtr& a){ return Parser::ignore(a); }
+inline ParserPtr operator *(const AnyPtr& a, int_t n){ return Parser::repeat(a, n); }
+inline ParserPtr join(const AnyPtr& a){ return Parser::join(a); }
+inline ParserPtr val(const AnyPtr& a){ return Parser::val(a); }
+inline ParserPtr ch_set(const StringPtr& a){ return Parser::ch_set(a); }
+inline ParserPtr not(const AnyPtr& a){ return Parser::not(a); }
+inline ParserPtr test(const AnyPtr& a){ return Parser::test(a); }
+
+ParserPtr P(const AnyPtr& a);
+
+inline LexerPtr parse_lexer(const AnyPtr& pattern, const LexerPtr& lex){
+	P(pattern)->parse(lex);
+	return lex;
+}
+
+inline LexerPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){
+	return parse_lexer(pattern, xnew<CharLexer>(xnew<StringStream>(string->to_s())));
+}
+
 
 }}
 

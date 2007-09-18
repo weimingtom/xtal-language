@@ -121,14 +121,12 @@ public:
 	int_t register_value(const AnyPtr& v);
 	int_t append_ident(const InternedStringPtr& ident);
 	int_t append_value(const AnyPtr& v);
-	int_t append_once();
 	
 	int_t line;
 	ArrayPtr errors;
 	ArrayPtr ident_table;
 	MapPtr ident_map;
 	ArrayPtr value_table;
-	ArrayPtr once_table;
 	StringPtr source_file_name;
 };
 

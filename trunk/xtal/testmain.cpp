@@ -107,35 +107,18 @@ int main(int argc, char** argv){
 			
 AnyPtr ret = Xsrc((
 
-filelocal.inherit(peg);
+x: 555;
+d: 5555;
+{
+	x: fun(y: d) y;
+	x().p;
 
-vvv: (alpha | digit);
-var: join(vvv*1) >> node("VVV", 1);
-
-//var: str("aiueo") | str("byack") | str("clkue") | str("dwerae") | str("clc") | str("cl") | str("kue");
-
-sep: -ch_set(":-");
-pe: var >> (sep >> var)*0;
-
-src: "byack-clc:aiwerawer69787ueo:byacAk-aiueo:cl:kue:dwerae:";
-mm: MemoryStream();
-1 {
-  mm.put_s(src);
+	[[4, 8, 6], [7, 6]]{
+		it{
+			it.p;
+		}
+	}
 }
-mm.put_s("aiue7o");
-mm.size/1024.0 .p;
-
-"start".p;
-ret: [];
-t: clock();
-if((pe).parse_string(mm.to_s, ret)){
-  (clock()-t).p;
-  "ok".p;
-  ret.p;
-}
-
-export mm;
-
 
 ))();
 
@@ -143,7 +126,7 @@ export mm;
 		
 int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("%g\n", (clock()-c)/1000.0f);		

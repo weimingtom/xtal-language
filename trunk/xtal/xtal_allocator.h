@@ -197,63 +197,6 @@ struct AC{
 		>::type multimap;
 };
 
-
-/*
-* スタック型のメモリアロケータ。
-* STLのアロケータには適合しない。
-*/
-//*
-class RegionAlloc{
-	u8* begin_;
-	u8* pos_;
-	u8* end_;
-	size_t alloced_size_;
-public:
-
-	RegionAlloc(size_t first_buffer_size = 1024);
-
-	~RegionAlloc();
-
-	void* allocate(size_t size);
-
-	void release();
-
-private:
-
-	void add_chunk(size_t minsize);
-
-private:
-
-	RegionAlloc(const RegionAlloc&);
-	RegionAlloc& operator =(const RegionAlloc&);
-
-};
-
-/*/
-class RegionAlloc{
-	std::vector<void*> alloced_;
-public:
-
-	RegionAlloc(size_t first_buffer_size = 1024);
-
-	~RegionAlloc();
-
-	void* allocate(size_t size);
-
-	void release();
-
-private:
-
-	void add_chunk(size_t minsize);
-
-private:
-
-	RegionAlloc(const RegionAlloc&);
-	RegionAlloc& operator =(const RegionAlloc&);
-
-};
-//*/
-
 /**
 * @brief とてもシンプルなメモリ管理機構
 *

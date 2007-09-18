@@ -18,6 +18,7 @@ ParserPtr digit;
 ParserPtr success;
 ParserPtr fail;
 ParserPtr lineno;
+ParserPtr ascii;
 
 }
 
@@ -36,6 +37,7 @@ void uninitialize_peg(){
 	success = null;
 	fail = null;
 	lineno = null;
+	ascii = null;
 }
 
 }
@@ -86,6 +88,7 @@ void initialize_peg(){
 	success = xnew<Parser>(Parser::SUCCESS);
 	fail = xnew<Parser>(Parser::FAIL);
 	lineno = xnew<Parser>(Parser::LINE_NUMBER);
+	ascii = xnew<Parser>(Parser::ASCII);
 
 	peg->def("any", any);
 	peg->def("eof", eof);
@@ -97,6 +100,7 @@ void initialize_peg(){
 	peg->def("success", success);
 	peg->def("fail", fail);
 	peg->def("lineno", lineno);
+	peg->def("ascii", ascii);
 	peg->fun("str", &Parser::str);
 	peg->fun("ch_set", &Parser::ch_set);
 	peg->fun("join", &Parser::join)->param(null, Named("sep", ""));
@@ -128,11 +132,8 @@ MapPtr Parser::make_ch_map(const ParserPtr& p, const ParserPtr& pp){
 	
 	switch(p->type_){
 		XTAL_DEFAULT{}
-		XTAL_CASE(CH){ return make_ch_map2(ptr_cast<String>(p->param1_), pp); }
-		XTAL_CASE(STRING){ return make_ch_map2(ptr_cast<String>(ptr_cast<Array>(p->param2_)->at(0)), pp); }
 		XTAL_CASE(TRY_CH){ return make_ch_map2(ptr_cast<String>(p->param1_), pp); }
 		XTAL_CASE(TRY_STRING){ return make_ch_map2(ptr_cast<String>(ptr_cast<Array>(p->param2_)->at(0)), pp); }
-		XTAL_CASE(CH_SET){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
 		XTAL_CASE(TRY_CH_SET){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
 		XTAL_CASE(CH_MAP){ return make_ch_map2(ptr_cast<Map>(p->param1_), pp); }
 		XTAL_CASE(FOLLOWED){ return make_ch_map(ptr_cast<Parser>(ptr_cast<Array>(p->param1_)->at(0)), pp); }
@@ -154,23 +155,24 @@ ParserPtr Parser::str(const StringPtr& str){
 		return xnew<Parser>(SUCCESS);
 	}
 	if(data->size()==1){
-		return xnew<Parser>(CH, data->at(0));
+		return xnew<Parser>(TRY_CH, data->at(0));
 	}
-	return xnew<Parser>(STRING, str, data);
+	return xnew<Parser>(TRY_STRING, str, data);
 }
 
 ParserPtr Parser::ch_set(const StringPtr& str){
 	MapPtr data = xnew<Map>();
 	StringStreamPtr ss = xnew<StringStream>(str);
 	while(!ss->eof()){
-		data->set_at(ss->get_s(1), true);
+		StringPtr temp = ss->get_s(1);
+		data->set_at(temp, temp);
 	}
 
-	return xnew<Parser>(CH_SET, data);
+	return xnew<Parser>(TRY_CH_SET, data);
 }
 
 ParserPtr Parser::repeat(const AnyPtr& a, int_t n){
-	ParserPtr p = to_parser(a);
+	ParserPtr p = P(a);
 	if(n==0){
 		return xnew<Parser>(REPEAT, try_(p));
 	}
@@ -192,16 +194,16 @@ ParserPtr Parser::repeat(const AnyPtr& a, int_t n){
 }
 
 ParserPtr Parser::ignore(const AnyPtr& a){
-	ParserPtr p = to_parser(a);
+	ParserPtr p = P(a);
 	return xnew<Parser>(IGNORE, p);
 }
 
 ParserPtr Parser::select(const AnyPtr& a, const AnyPtr& b){
-	ParserPtr lhs = to_parser(a);
-	ParserPtr rhs = to_parser(b);
+	ParserPtr lhs = P(a);
+	ParserPtr rhs = P(b);
 
-	if(lhs->type_==CH_SET && rhs->type_==CH_SET){
-		return xnew<Parser>(CH_SET, ptr_cast<Map>(lhs->param1_)->cat(ptr_cast<Map>(rhs->param1_)));
+	if(lhs->type_==TRY_CH_SET && rhs->type_==TRY_CH_SET){
+		return xnew<Parser>(TRY_CH_SET, ptr_cast<Map>(lhs->param1_)->cat(ptr_cast<Map>(rhs->param1_)));
 	}
 
 	/*
@@ -238,10 +240,10 @@ ParserPtr Parser::select(const AnyPtr& a, const AnyPtr& b){
 }
 
 ParserPtr Parser::followed(const AnyPtr& a, const AnyPtr& b){
-	ParserPtr lhs = to_parser(a);
-	ParserPtr rhs = to_parser(b);
+	ParserPtr lhs = P(a);
+	ParserPtr rhs = P(b);
 
-	if(lhs->type_==STRING && rhs->type_==STRING){
+	if(lhs->type_==TRY_STRING && rhs->type_==TRY_STRING){
 		return str(ptr_cast<String>(lhs->param1_)->cat(ptr_cast<String>(rhs->param1_)));
 	}
 
@@ -262,24 +264,20 @@ ParserPtr Parser::followed(const AnyPtr& a, const AnyPtr& b){
 }
 
 ParserPtr Parser::join(const AnyPtr& a){
-	ParserPtr p = to_parser(a);
+	ParserPtr p = P(a);
 	return xnew<Parser>(JOIN, p);
 }
 
 ParserPtr Parser::array(const AnyPtr& a){
-	ParserPtr p = to_parser(a);
+	ParserPtr p = P(a);
 	return xnew<Parser>(ARRAY, p);
 }
 
 ParserPtr Parser::try_(const AnyPtr& a){
-	ParserPtr p = to_parser(a);
+	ParserPtr p = P(a);
 	switch(p->type_){
 		XTAL_DEFAULT{ return xnew<Parser>(TRY, p); }
 		
-		XTAL_CASE(CH){ return xnew<Parser>(TRY_CH, p->param1_, p->param2_); }
-		XTAL_CASE(STRING){ return xnew<Parser>(TRY_STRING, p->param1_, p->param2_); }
-		XTAL_CASE(CH_SET){ return xnew<Parser>(TRY_CH_SET, p->param1_, p->param2_); }
-
 		XTAL_CASE(TRY){ return p; }
 		XTAL_CASE(TRY_CH){ return p; }
 		XTAL_CASE(TRY_STRING){ return p; }
@@ -297,6 +295,14 @@ ParserPtr Parser::node(const AnyPtr& tag, int_t n){
 
 ParserPtr Parser::val(const AnyPtr& v){
 	return xnew<Parser>(VAL, v);
+}
+	
+ParserPtr Parser::not(const AnyPtr& v){
+	return xnew<Parser>(NOT, P(v));
+}
+	
+ParserPtr Parser::test(const AnyPtr& v){
+	return xnew<Parser>(TEST, P(v));
 }
 
 bool Parser::parse_string(const StringPtr& source, const ArrayPtr& ret){
@@ -333,17 +339,6 @@ bool Parser::parse(const LexerPtr& lex){
 	switch(type_){
 		XTAL_NODEFAULT;
 
-		XTAL_CASE(STRING){
-			const ArrayPtr& data = static_ptr_cast<Array>(param2_);
-			for(uint_t i=0, sz=data->size(); i<sz; ++i){
-				if(rawne(lex->read(), data->at(i))){
-					PARSER_RETURN(false);
-				}
-			}
-			lex->push_result(param1_);
-			PARSER_RETURN(true);
-		}
-
 		XTAL_CASE(TRY_STRING){
 			const ArrayPtr& data = static_ptr_cast<Array>(param2_);
 			for(uint_t i=0, sz=data->size(); i<sz; ++i){
@@ -356,28 +351,10 @@ bool Parser::parse(const LexerPtr& lex){
 			PARSER_RETURN(true);
 		}
 
-		XTAL_CASE(CH){
-			if(raweq(lex->read(), param1_)){
-				lex->push_result(param1_);
-				PARSER_RETURN(true);
-			}
-			PARSER_RETURN(false);
-		}
-
 		XTAL_CASE(TRY_CH){
 			if(raweq(lex->peek(), param1_)){
 				lex->push_result(param1_);
-				lex->read();
-				PARSER_RETURN(true);
-			}
-			PARSER_RETURN(false);
-		}
-
-		XTAL_CASE(CH_SET){
-			const MapPtr& data = static_ptr_cast<Map>(param1_);
-			const AnyPtr& s = lex->read();
-			if(data->at(s)){
-				lex->push_result(s);
+				lex->skip(1);
 				PARSER_RETURN(true);
 			}
 			PARSER_RETURN(false);
@@ -501,6 +478,43 @@ bool Parser::parse(const LexerPtr& lex){
 			lex->push_result(lex->lineno());
 			PARSER_RETURN(true);
 		}
+
+		XTAL_CASE(FAIL){
+			PARSER_RETURN(false);
+		}
+
+		XTAL_CASE(SUCCESS){
+			PARSER_RETURN(true);
+		}
+
+		XTAL_CASE(NOT){
+			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+			lex->mark();
+			bool ret = p->parse(lex);
+			lex->unmark_and_backtrack();
+			PARSER_RETURN(!ret);
+		}
+
+		XTAL_CASE(TEST){
+			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
+			lex->mark();
+			bool ret = p->parse(lex);
+			lex->unmark_and_backtrack();
+			PARSER_RETURN(ret);
+		}
+
+		XTAL_CASE(ASCII){
+			if(lex->eof()){
+				PARSER_RETURN(false);
+			}
+
+			StringPtr str = lex->peek()->to_s();
+			if(str->length()==1 && str->c_str()[0]<128){
+				lex->push_result(str);
+				PARSER_RETURN(true);
+			}
+			PARSER_RETURN(false);
+		}
 	}
 
 end:
@@ -512,7 +526,7 @@ end:
 	return success;
 }
 
-ParserPtr to_parser(const AnyPtr& a){
+ParserPtr P(const AnyPtr& a){
 	if(const StringPtr& ret = ptr_as<String>(a)){
 		return Parser::str(ret);
 	}	

@@ -743,6 +743,13 @@ public:
 	const inst_t* FunThrowNull(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
+	const inst_t* FunSendToI(const inst_t* pc);
+	const inst_t* FunSendToF(const inst_t* pc);
+	const inst_t* FunSendToS(const inst_t* pc);
+	const inst_t* FunSendToA(const inst_t* pc);
+	const inst_t* FunSendToM(const inst_t* pc);
+	const inst_t* FunSendLength(const inst_t* pc);
+	const inst_t* FunSendSize(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
@@ -757,7 +764,7 @@ private:
 	inst_t throw_unsupported_error_code_;
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
-	inst_t throw_nop_code_;
+	inst_t throw_null_code_;
 	
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;

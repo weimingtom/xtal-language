@@ -241,6 +241,13 @@ StringPtr Code::inspect(){
 		XTAL_CASE(InstThrowNull::NUMBER){ temp = ((InstThrowNull*)pc)->inspect(); sz = InstThrowNull::ISIZE; }
 		XTAL_CASE(InstAssert::NUMBER){ temp = ((InstAssert*)pc)->inspect(); sz = InstAssert::ISIZE; }
 		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(); sz = InstBreakPoint::ISIZE; }
+		XTAL_CASE(InstSendToI::NUMBER){ temp = ((InstSendToI*)pc)->inspect(); sz = InstSendToI::ISIZE; }
+		XTAL_CASE(InstSendToF::NUMBER){ temp = ((InstSendToF*)pc)->inspect(); sz = InstSendToF::ISIZE; }
+		XTAL_CASE(InstSendToS::NUMBER){ temp = ((InstSendToS*)pc)->inspect(); sz = InstSendToS::ISIZE; }
+		XTAL_CASE(InstSendToA::NUMBER){ temp = ((InstSendToA*)pc)->inspect(); sz = InstSendToA::ISIZE; }
+		XTAL_CASE(InstSendToM::NUMBER){ temp = ((InstSendToM*)pc)->inspect(); sz = InstSendToM::ISIZE; }
+		XTAL_CASE(InstSendLength::NUMBER){ temp = ((InstSendLength*)pc)->inspect(); sz = InstSendLength::ISIZE; }
+		XTAL_CASE(InstSendSize::NUMBER){ temp = ((InstSendSize*)pc)->inspect(); sz = InstSendSize::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
 

@@ -283,6 +283,14 @@ StringPtr Any::to_s() const{
 	return ptr_cast<String>((*this).send(Xid(to_s)));
 }
 
+ArrayPtr Any::to_a() const{
+	return ptr_cast<Array>((*this).send(Xid(to_a)));
+}
+
+MapPtr Any::to_m() const{
+	return ptr_cast<Map>((*this).send(Xid(to_m)));
+}
+
 StringPtr Any::object_name() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name()); }

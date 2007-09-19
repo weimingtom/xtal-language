@@ -60,6 +60,18 @@ public:
 	StringPtr to_s();
 
 	/**
+	* @brief 配列に変換して返す。
+	*
+	*/
+	ArrayPtr to_a();
+
+	/**
+	* @brief 連想配列に変換して返す。
+	*
+	*/
+	MapPtr to_m();
+
+	/**
 	* @brief clsクラスのインスタンスか調べる。
 	*
 	*/

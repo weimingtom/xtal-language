@@ -259,7 +259,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
-				, return nop);
+				, return null);
 			}
 		}
 
@@ -271,7 +271,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
-				, return nop);			
+				, return null);			
 			}
 		}
 

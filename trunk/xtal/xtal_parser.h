@@ -22,7 +22,7 @@ public:
 		TYPE_INT = 1,
 		TYPE_FLOAT = 2,
 		TYPE_IDENTIFIER = 3,
-		TYPE_KEYWORD = 4,
+		TYPE_KEYWORD = 4
 	};
 	
 	enum Keyword{
@@ -199,15 +199,6 @@ public:
 	void putback(const Token& ch);
 	
 	/**
-	* @brief 文字列を直接読むモードに変更する
-	*/
-	void set_string_mode();
-	
-	/**
-	* @brief 文字列をトークンで返すモードに変更する
-	*/
-	void set_normal_mode();
-
 	/**
 	* @brief 現在の行数を返す
 	*/
@@ -226,7 +217,11 @@ public:
 	/**
 	* @brief 文字列の記録を終了して、それを返す。
 	*/
-	string_t end_record();
+	StringPtr end_record();
+
+	int_t read_direct();
+
+	StringPtr read_string(int_t open, int_t close);
 
 private:
 	
@@ -237,7 +232,6 @@ private:
 	void push_float(float_t v);
 	void push_keyword(const InternedStringPtr& v, int_t num);
 	void push_identifier(const InternedStringPtr& v);
-	void push_direct(int_t v);
 
 	void deplete_space();
 
@@ -272,9 +266,6 @@ private:
 	uint_t lineno_;
 
 	CompileError* error_;
-	
-	enum{ NORMAL_MODE, STRING_MODE };
-	int_t mode_;
 };
 
 class Parser{
@@ -297,8 +288,6 @@ private:
 	bool eat(int_t ch);
 	bool eat(Token::Keyword kw);
 
-	StringPtr parse_string(int_t open, int_t close);
-	ExprPtr string2expr(string_t &str);
 	ExprPtr parse_pre_expr(int_t code, int_t expr_priority);
 	ExprPtr parse_post_expr(int_t code, int_t pri, int_t space, ExprPtr lhs, bool left, int_t expr_priority);
 	ExprPtr parse_bin_expr(int_t code, int_t pri, int_t space, ExprPtr lhs, bool left, int_t expr_priority);
@@ -311,8 +300,6 @@ private:
 	ExprPtr parse_each(const InternedStringPtr& label, ExprPtr lhs);
 	ArrayPtr parse_stmts();
 	ArrayPtr parse_exprs(bool* discard = 0);
-	ExprPtr parse_define_local_stmt();
-	ExprPtr parse_define_local_or_expr();
 	InternedStringPtr parse_var();
 	InternedStringPtr parse_identifier();
 	InternedStringPtr parse_identifier_or_keyword();
@@ -346,9 +333,7 @@ private:
 public:
 
 	Lexer lexer_;
-
 	bool expr_end_flag_;
-
 	CompileError* error_;
 
 };

@@ -19,7 +19,7 @@ VMachine::VMachine(){
 	throw_unsupported_error_code_ = InstThrowUnsupportedError::NUMBER;
 	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
-	throw_nop_code_ = InstThrowNull::NUMBER;
+	throw_null_code_ = InstThrowNull::NUMBER;
 	resume_pc_ = 0;
 }
 
@@ -454,7 +454,7 @@ void VMachine::exit_fiber(){
 		yield_result_count_ = 0;
 		ff().called_pc = resume_pc_;
 		resume_pc_ = 0;
-		execute_inner(&throw_nop_code_);
+		execute_inner(&throw_null_code_);
 	}XTAL_CATCH(e){
 		(void)e;
 	}
@@ -823,7 +823,14 @@ void VMachine::execute_inner(const inst_t* start){
 		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowNull);
 		XTAL_COPY_LABEL_ADDRESS(143, LabelAssert);
 		XTAL_COPY_LABEL_ADDRESS(144, LabelBreakPoint);
-		XTAL_COPY_LABEL_ADDRESS(145, LabelMAX);
+		XTAL_COPY_LABEL_ADDRESS(145, LabelSendToI);
+		XTAL_COPY_LABEL_ADDRESS(146, LabelSendToF);
+		XTAL_COPY_LABEL_ADDRESS(147, LabelSendToS);
+		XTAL_COPY_LABEL_ADDRESS(148, LabelSendToA);
+		XTAL_COPY_LABEL_ADDRESS(149, LabelSendToM);
+		XTAL_COPY_LABEL_ADDRESS(150, LabelSendLength);
+		XTAL_COPY_LABEL_ADDRESS(151, LabelSendSize);
+		XTAL_COPY_LABEL_ADDRESS(152, LabelMAX);
 //}}LABELS}
 	}
 #else
@@ -2202,6 +2209,35 @@ XTAL_VM_SWITCH{
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
+
+	XTAL_VM_CASE(SendToI){
+		switch(type(get())){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set((int_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+		}
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_i)));
+	}
+
+	XTAL_VM_CASE(SendToF){
+		switch(type(get())){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set((float_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+		}
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_f)));
+	}
+
+	XTAL_VM_CASE(SendToS){
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_s)));
+	}
+
+	XTAL_VM_CASE(SendToA){
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_a)));
+	}
+
+	XTAL_VM_CASE(SendToM){
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_m)));
+	}
+
 
 	XTAL_VM_CASE(MAX){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

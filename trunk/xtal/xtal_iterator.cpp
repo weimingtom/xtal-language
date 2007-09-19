@@ -31,6 +31,13 @@ void DelegateToIterator::call(const VMachinePtr& vm){
 	vm->get_arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 
+void IteratorClass::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
+	Class::def(name, value, accessibility, ns);
+	if(rawne(Xid(p), name)){
+		Enumerator()->def(name, xnew<DelegateToIterator>(name), accessibility, ns);
+	}
+}
+
 void block_break(AnyPtr& target){
 	if(target){
 		const VMachinePtr& vm = vmachine();

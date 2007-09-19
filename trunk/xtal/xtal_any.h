@@ -319,6 +319,8 @@ public:
 
 	void instance_serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
+	const AnyPtr& self() const{ return *(AnyPtr*)this; }
+
 public:
 
 	AnyPtr send(const InternedStringPtr& name) const;

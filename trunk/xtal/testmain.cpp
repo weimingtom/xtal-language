@@ -105,20 +105,9 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 			
-AnyPtr ret = Xsrc((
+AnyPtr ret = Xsrc
+((
 
-	10.times.with_prev[:][].p;
-
-{
-	switch(103){
-		case(100){ 1.'p ' }
-		case(101){ 2.p }
-		case(102){ 3.p; }
-		case(102){ 4.p; }
-		case(104, 103){ 5.'p'; }
-		case(105){ 6.p; }
-	}
-}
 
 ))();
 

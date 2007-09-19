@@ -23,6 +23,7 @@ void initialize_any(){
 		ClassPtr p = new_cpp_class<Any>("Any");
 		p->method("class", &Any::get_class);
 		p->method("get_class", &Any::get_class);
+		p->method("self", &Any::self);
 		p->method("object_name", &Any::object_name);
 		p->method("instance_serial_save", &Any::instance_serial_save);
 		p->method("instance_serial_load", &Any::instance_serial_load);

@@ -1017,8 +1017,15 @@ ExprPtr Parser::parse_term(){
 }
 
 ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
-	if(expr_end_flag_)
-		return null;
+	if(expr_end_flag_){
+		Token ch = lexer_.peek();
+
+		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
+		
+		}else{
+			return null;
+		}
+	}
 
 	Token ch = lexer_.read();
 

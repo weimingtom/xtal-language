@@ -112,7 +112,7 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_;
+		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_ & once_table_;
 	}
 
 private:

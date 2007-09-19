@@ -865,6 +865,14 @@ XTAL_DEF_INST_1(144, BreakPoint,
         inst_u8_t, type
 );
 
-XTAL_DEF_INST_0(145, MAX);
+XTAL_DEF_INST_0(145, SendToI);
+XTAL_DEF_INST_0(146, SendToF);
+XTAL_DEF_INST_0(147, SendToS);
+XTAL_DEF_INST_0(148, SendToA);
+XTAL_DEF_INST_0(149, SendToM);
+XTAL_DEF_INST_0(150, SendLength);
+XTAL_DEF_INST_0(151, SendSize);
+
+XTAL_DEF_INST_0(152, MAX);
 
 }

@@ -262,6 +262,18 @@ public:
 	*
 	*/
 	StringPtr to_s() const;
+
+	/**
+	* @brief 配列に変換して返す。
+	*
+	*/
+	ArrayPtr to_a() const;
+
+	/**
+	* @brief 連想配列に変換して返す。
+	*
+	*/
+	MapPtr to_m() const;
 	
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。

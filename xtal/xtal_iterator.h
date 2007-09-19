@@ -15,10 +15,7 @@ public:
 
 class IteratorClass : public Class{
 public:
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
-		Class::def(name, value, accessibility, ns);
-		Enumerator()->def(name, xnew<DelegateToIterator>(name), accessibility, ns);
-	}
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns);
 };
 
 void block_next(AnyPtr& target, AnyPtr& value, bool first);

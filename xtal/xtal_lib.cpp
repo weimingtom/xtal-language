@@ -483,7 +483,7 @@ Iterator::inject: method(init, fn){
 
 Iterator::with_prev: method{
 	return fiber{
-		prev: nop;
+		prev: null;
 		this{
 			yield prev, it;
 			prev = it;

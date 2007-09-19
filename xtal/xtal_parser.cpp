@@ -82,7 +82,6 @@ Lexer::Lexer(){
 	set_lineno(1);
 	read_ = 0;
 	pos_ = 0;
-	mode_ = NORMAL_MODE;
 }
 
 void Lexer::init(const StreamPtr& stream, CompileError* error){
@@ -170,11 +169,6 @@ void Lexer::push_identifier(const InternedStringPtr& v){
 	read_++;
 }
 
-void Lexer::push_direct(int_t v){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_TOKEN, v, 0);
-	read_++;
-}
-
 void Lexer::putback(){
 	pos_--;
 }
@@ -184,14 +178,6 @@ void Lexer::putback(const Token& ch){
 	buf_[pos_ & BUF_MASK] = ch;
 }
 
-void Lexer::set_string_mode(){
-	mode_ = STRING_MODE;
-}
-	
-void Lexer::set_normal_mode(){
-	mode_ = NORMAL_MODE;
-}
-	
 InternedStringPtr Lexer::parse_identifier(){
 	string_t buf;
 
@@ -391,19 +377,6 @@ void Lexer::putback_to_reader(int_t ch){
 void Lexer::do_read(){
 	left_space_ = 0;
 	
-	if(mode_==STRING_MODE){
-		int_t ch = read_from_reader();
-		if(ch=='\r'){
-			eat_from_reader('\n');
-			set_lineno(lineno()+1);
-			ch = '\n';
-		}else if(ch=='\n'){
-			set_lineno(lineno()+1);
-		}
-		push_direct(ch);
-		return;
-	}
-
 	do{
 
 		int_t ch = read_from_reader();
@@ -654,6 +627,10 @@ void Lexer::do_read(){
 				}
 			}
 
+			XTAL_CASE('\''){
+				push_identifier(read_string('\'', '\''));
+			}
+
 			XTAL_CASE(';'){ push(';'); }
 			XTAL_CASE('{'){ push('{'); }
 			XTAL_CASE('}'){ push('}'); }
@@ -708,12 +685,89 @@ void Lexer::begin_record(){
 	recorded_string_ = "";
 }
 
-string_t Lexer::end_record(){
+StringPtr Lexer::end_record(){
 	recording_ = false;
 	if(!recorded_string_.empty()){
 		recorded_string_.resize(recorded_string_.size()-1);
 	}
-	return recorded_string_;
+	return xnew<String>(recorded_string_.c_str(), recorded_string_.size());
+}
+
+int_t Lexer::read_direct(){
+	return read_from_reader();
+}
+
+StringPtr Lexer::read_string(int_t open, int_t close){
+	string_t str;
+	int_t depth = 1;
+	while(1){
+		int_t ch = read_from_reader();
+		if(ch==close){
+			--depth;
+			if(depth==0){
+				break;
+			}
+		}
+		if(ch==open){
+			++depth;
+		}
+		if(ch==-1){
+			error_->error(lineno(), Xt("Xtal Compile Error 1011"));
+			break;
+		}
+		if(ch=='\\'){
+			switch(reader_.peek()){
+				XTAL_DEFAULT{ 
+					str+='\\';
+					str+=(char_t)reader_.peek(); 
+				}
+				
+				XTAL_CASE('n'){ str+='\n'; }
+				XTAL_CASE('r'){ str+='\r'; }
+				XTAL_CASE('t'){ str+='\t'; }
+				XTAL_CASE('f'){ str+='\f'; }
+				XTAL_CASE('b'){ str+='\b'; }
+				XTAL_CASE('\\'){ str+='\\'; }
+				XTAL_CASE('"'){ str+='"'; } 
+				
+				XTAL_CASE('\r'){ 
+					if(reader_.peek()=='\n'){
+						read_from_reader();
+					}
+
+					str+='\r';
+					str+='\n';
+					set_lineno(lineno()+1);
+				}
+				
+				XTAL_CASE('\n'){ 
+					str+='\n';
+					set_lineno(lineno()+1);
+				}
+			}
+			read_from_reader();
+		}else{
+			if(ch=='\r'){
+				if(reader_.peek()=='\n'){
+					read_from_reader();
+				}
+
+				str+='\r';
+				str+='\n';
+				set_lineno(lineno()+1);
+			}else if(ch=='\n'){
+				str+='\n';
+				set_lineno(lineno()+1);
+			}else{
+				str+=(char_t)ch;
+				for(int_t i=1, size = ch_len((char_t)ch); i<size; ++i){
+					str+=(char_t)read_from_reader();
+				}
+			}
+		}	
+	}
+
+	return xnew<String>(str.c_str(), str.size());
 }
 
 
@@ -848,71 +902,6 @@ bool Parser::eat(Token::Keyword kw){
 	return false;
 }
 	
-StringPtr Parser::parse_string(int_t open, int_t close){
-	string_t str;
-	int_t depth = 1;
-	while(1){
-		int_t ch = lexer_.read().ivalue();
-		if(ch==close){
-			--depth;
-			if(depth==0){
-				break;
-			}
-		}
-		if(ch==open){
-			++depth;
-		}
-		if(ch==-1){
-			error_->error(lineno(), Xt("Xtal Compile Error 1011"));
-			break;
-		}
-		if(ch=='\\'){
-			switch(lexer_.peek().ivalue()){
-				XTAL_DEFAULT{ 
-					str+='\\';
-					str+=(char_t)lexer_.peek().ivalue(); 
-				}
-				
-				XTAL_CASE('n'){ str+='\n'; }
-				XTAL_CASE('r'){ str+='\r'; }
-				XTAL_CASE('t'){ str+='\t'; }
-				XTAL_CASE('f'){ str+='\f'; }
-				XTAL_CASE('b'){ str+='\b'; }
-				XTAL_CASE('\\'){ str+='\\'; }
-				XTAL_CASE('"'){ str+='"'; } 
-				
-				XTAL_CASE('\r'){ 
-					if(lexer_.peek().ivalue()=='\n')
-						lexer_.read().ivalue();
-					str+='\r';
-					str+='\n';
-				}
-				
-				XTAL_CASE('\n'){ 
-					str+='\n';
-				}
-			}
-			lexer_.read();
-		}else{
-			if(ch=='\r'){
-				if(lexer_.peek().ivalue()=='\n')
-					lexer_.read();
-				str+='\r';
-				str+='\n';
-			}else if(ch=='\n'){
-				str+='\n';
-			}else{
-				str+=(char_t)ch;
-				for(int_t i=1, size = ch_len((char_t)ch); i<size; ++i){
-					str+=(char_t)lexer_.read().ivalue();
-				}
-			}
-		}	
-	}
-	lexer_.set_normal_mode();
-	return xnew<String>(str);
-}
-
 ExprPtr Parser::parse_term(){
 	
 	Token ch = lexer_.read();
@@ -944,31 +933,24 @@ ExprPtr Parser::parse_term(){
 
 				XTAL_CASE('_'){ ret = ivar(lineno(), parse_identifier()); }
 
-				XTAL_CASE('"'){ lexer_.set_string_mode(); ret = string(ln, KIND_STRING, parse_string('"', '"')); }
+				XTAL_CASE('"'){ ret = string(ln, KIND_STRING, lexer_.read_string('"', '"')); }
 				
 				XTAL_CASE('%'){
-					lexer_.set_string_mode();
-					int_t open = lexer_.read().ivalue();
-					int_t close = 0;
+					int_t ch = lexer_.read_direct();
 					int_t kind = KIND_STRING;
-					for(;;){
-						switch(open){
-						case 't':
-							if(kind!=KIND_STRING){
-								error_->error(lineno(), Xt("Xtal Compile Error 1017"));
-							}
-							kind = KIND_TEXT;
-							open = lexer_.read().ivalue();
-							continue;
 
-						case 'f':
-							if(kind!=KIND_STRING){
-								error_->error(lineno(), Xt("Xtal Compile Error 1017"));
-							}
-							kind = KIND_FORMAT;
-							open = lexer_.read().ivalue();
-							continue;
+					if(ch=='t'){
+						kind = KIND_TEXT;
+						ch = lexer_.read_direct();
+					}else if(ch=='f'){
+						kind = KIND_FORMAT;
+						ch = lexer_.read_direct();
+					}
 
+					int_t open = ch;
+					int_t close = 0;
+
+					switch(open){
 						case '!': case '?': case '"': case '&': //"
 						case '#': case '\'':case '|': case ':':
 						case '^': case '+': case '-': case '*':
@@ -985,12 +967,9 @@ ExprPtr Parser::parse_term(){
 							close = open;
 							error_->error(lineno(), Xt("Xtal Compile Error 1017"));
 							break;
-						}
-
-						break;
 					}
 				
-					ret = string(ln, kind, parse_string(open, close));
+					ret = string(ln, kind, lexer_.read_string(open, close));
 				}
 				
 				XTAL_CASE(c3('.','.','.')){ ret = args(ln); }
@@ -1150,9 +1129,20 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				}
 
 				XTAL_CASE('['){
-					if(pri < PRI_AT - l_space){
-						ret = bin(EXPR_AT, ln, lhs, parse_expr_must());
+					if(eat(':')){
 						expect(']');
+						if(pri < PRI_TO_M - l_space){
+							ret = send(lineno(), lhs, Xid(to_m));
+						}
+					}else if(eat(']')){
+						if(pri < PRI_TO_A - l_space){
+							ret = send(lineno(), lhs, Xid(to_a));
+						}
+					}else{
+						if(pri < PRI_AT - l_space){
+							ret = bin(EXPR_AT, ln, lhs, parse_expr_must());
+							expect(']');
+						}
 					}
 				}
 			}
@@ -1392,7 +1382,7 @@ ExprPtr Parser::parse_assert(){
 
 	lexer_.begin_record();
 	if(ExprPtr ep = parse_expr()){
-		StringPtr ref_str(xnew<String>(lexer_.end_record()));
+		StringPtr ref_str = lexer_.end_record();
 		exprs->push_back(ep);
 		exprs->push_back(string(ln, KIND_STRING, ref_str));
 		if(eat(',')){

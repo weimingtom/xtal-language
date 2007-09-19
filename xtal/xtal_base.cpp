@@ -42,7 +42,15 @@ float_t Base::to_f(){
 }
 
 StringPtr Base::to_s(){
-	return cast<StringPtr>(send(Xid(to_s)));
+	return ptr_cast<String>(send(Xid(to_s)));
+}
+
+ArrayPtr Base::to_a(){
+	return ptr_cast<Array>(send(Xid(to_a)));
+}
+
+MapPtr Base::to_m(){
+	return ptr_cast<Map>(send(Xid(to_m)));
 }
 
 AnyPtr Base::p(){

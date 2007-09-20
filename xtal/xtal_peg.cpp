@@ -87,7 +87,7 @@ void initialize_peg(){
 	digit = Parser::ch_set("0123456789");
 	success = xnew<Parser>(Parser::SUCCESS);
 	fail = xnew<Parser>(Parser::FAIL);
-	lineno = xnew<Parser>(Parser::LINE_NUMBER);
+	lineno = xnew<Parser>(Parser::LINENO);
 	ascii = xnew<Parser>(Parser::ASCII);
 
 	peg->def("any", any);
@@ -474,7 +474,7 @@ bool Parser::parse(const LexerPtr& lex){
 			PARSER_RETURN(true);
 		}
 
-		XTAL_CASE(LINE_NUMBER){
+		XTAL_CASE(LINENO){
 			lex->push_result(lex->lineno());
 			PARSER_RETURN(true);
 		}

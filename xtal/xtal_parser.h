@@ -123,7 +123,7 @@ public:
 	* @brief 次の要素が引数chと同じだったら読み進める。
 	* @param ch この値と次の要素が等しい場合に読み進める。
 	* @retval true 次の要素はchと同じで、読み進めた。
-	* @retval false 次の要素はchと異なり、読み進めなかった。
+	* @retval false 次の要素はchと異なり、読み進められなかった。
 	*/
 	bool eat(int_t ch);
 
@@ -131,16 +131,6 @@ public:
 	* @brief 要素を一つ戻す。
 	*/
 	void putback(int_t ch);
-	
-	/**
-	* @brief ポジションの取得。
-	*/
-	int_t position();
-	
-	/**
-	* @brief ポジションをposの位置に戻す。
-	*/
-	void set_position(int_t pos);
 
 private:
 
@@ -257,7 +247,7 @@ private:
 	string_t recorded_string_;
 	bool recording_;
 
-	enum{ BUF_SIZE = 1024, BUF_MASK = BUF_SIZE-1 };
+	enum{ BUF_SIZE = 64, BUF_MASK = BUF_SIZE-1 };
 	Token buf_[BUF_SIZE];
 
 	uint_t pos_;
@@ -323,12 +313,7 @@ private:
 	ExprPtr parse_try();
 	int_t parse_number_suffix();
 	ExprPtr parse_number();
-	ExprPtr parse_return();
-	ExprPtr parse_continue();
-	ExprPtr parse_break();
 	ExprPtr parse_while(const InternedStringPtr& label = 0);
-	ExprPtr parse_using();
-	ExprPtr parse_throw();
 		
 public:
 

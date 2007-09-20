@@ -23,7 +23,7 @@ void CompileError::init(const StringPtr& file_name){
 
 void CompileError::error(int_t lineno, const AnyPtr& message){
 	if(errors->size()<10){
-		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)")(
+		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)s")(
 			Named("file", source_file_name),
 			Named("lineno", lineno),
 			Named("message", message)
@@ -65,16 +65,6 @@ bool Reader::eat(int_t ch){
 void Reader::putback(int_t ch){
 	pos_--;
 	buf_[pos_ & BUF_MASK]=ch;
-}
-
-int_t Reader::position(){
-	return pos_;
-}
-
-void Reader::set_position(int_t pos){
-	XTAL_ASSERT((int_t)pos_ >= pos);
-	XTAL_ASSERT(pos_-pos < BUF_SIZE);
-	pos_ = pos;
 }
 
 
@@ -1682,7 +1672,10 @@ ExprPtr Parser::parse_fun(int_t kind){
 
 		if(eat('{')){
 			int_t ln = lineno();
-			scope_stmts->push_back(parse_scope());
+			ExprPtr scp = parse_scope();
+			if(!scp->scope_stmts()->empty()){
+				scope_stmts->push_back(scp);
+			}
 			efun->set_fun_body(scope(ln, scope_stmts));
 		}else{
 			int_t ln = lineno();

@@ -446,16 +446,7 @@ private:
 typedef SmartPtr<Lexer> LexerPtr;
 
 class Parser;
-
-// ‰‰ŽZŽq‚Ì‚½‚ß‚É‹­‚¢typedef‚Æ‚µ‚ÄŒ^’è‹`
-class ParserPtr : public SmartPtr<Parser>{
-public:
-	ParserPtr(const SmartPtr<Parser>& p = null)
-		:SmartPtr<Parser>(p){}
-
-	ParserPtr(const Null& p)
-		:SmartPtr<Parser>(p){}
-};
+typedef SmartPtr<Parser> ParserPtr;
 
 class Parser : public Base{
 public:
@@ -481,12 +472,11 @@ public:
 		NOT,
 		TEST,
 		ASCII,
-		LINE_NUMBER,
+		LINENO,
+		ACT,
 	};
 
 public:
-
-	
 
 	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
 
@@ -529,6 +519,8 @@ public:
 	bool parse_string(const StringPtr& source, const ArrayPtr& ret);
 
 	bool parse(const LexerPtr& lex);
+
+	static ParserPtr act(const AnyPtr& fn);
 
 private:
 

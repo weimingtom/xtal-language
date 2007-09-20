@@ -396,7 +396,7 @@ void thread_entry(const ThreadPtr& thread){
 			thread->callback()->call(vm);
 			vm->cleanup_call();
 		}XTAL_CATCH(e){
-			std::cout << e << std::endl;
+			fprintf(stderr, "%s\n", e->to_s()->c_str());
 		}
 
 

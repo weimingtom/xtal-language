@@ -1,9 +1,6 @@
 
 #include "xtal.h"
 
-#include <iostream>
-#include <iomanip>
-
 #include <cmath>
 #include <stdio.h>
 
@@ -34,7 +31,7 @@ CodePtr compile_file(const StringPtr& file_name){
 
 CodePtr compile(const StringPtr& source){
 	CodeBuilder cb;
-	MemoryStreamPtr ms(xnew<MemoryStream>(source->c_str(), source->buffer_size()));
+	StringStreamPtr ms(xnew<StringStream>(source));
 	if(CodePtr fun =  cb.compile(ms, "<eval>")){
 		return fun;
 	}

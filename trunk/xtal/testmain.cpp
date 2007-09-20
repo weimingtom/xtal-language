@@ -45,7 +45,7 @@ static void handle_argv(char** argv){
 #include "xtal_peg.h"
 
 void debug_line(const SmartPtr<debug::Info>& info){
-	std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
+	//std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
 
 	/*if(info->local_variables()){
 		Xfor2(key, value, info->local_variables()->members()){
@@ -108,6 +108,14 @@ int main(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
+ //split("::" | "," | ".");
+	
+ 10.times[].r_each.map(|x| x*2)[].p;
+
+class{ _x;
+foo: method(){ return _x; }
+set_foo: method(_x){}
+}
 
 ))();
 

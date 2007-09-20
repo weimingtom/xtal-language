@@ -1,7 +1,5 @@
 
 #include <vector>
-#include <iostream>
-#include <fstream>
 
 #include "xtal.h"
 
@@ -172,6 +170,7 @@ struct IsCacheTable{
 		uint_t mutate_count;
 		uint_t target_class;
 		uint_t klass;
+		bool result;
 	};
 
 	enum{ CACHE_MAX = 512, CACHE_MASK = CACHE_MAX-1 };
@@ -199,18 +198,16 @@ struct IsCacheTable{
 
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
 			hit_++;
-			return true;
+			return unit.result;
 		}else{
 			miss_++;
-			if(static_ptr_cast<Class>(ap(target_class))->is_inherited(static_ptr_cast<Class>(ap(klass)))){
-				// キャッシュに保存
-				unit.target_class = itarget_class;
-				unit.klass = iklass;
-				unit.mutate_count = global_mutate_count;
-				return true;
-			}
-
-			return false;
+				
+			// キャッシュに保存
+			unit.target_class = itarget_class;
+			unit.klass = iklass;
+			unit.mutate_count = global_mutate_count;
+			unit.result = static_ptr_cast<Class>(ap(target_class))->is_inherited(static_ptr_cast<Class>(ap(klass)));
+			return unit.result;
 		}
 	}
 };

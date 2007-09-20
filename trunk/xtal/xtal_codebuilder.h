@@ -107,10 +107,11 @@ public:
 	*/
 	void break_off(int_t to);
 	
-	void compile_bin(ExprPtr e);
-	void compile_comp_bin(ExprPtr e);
+	void compile_bin(const ExprPtr& e);
+	void compile_comp_bin(const ExprPtr& e);
 	void compile_op_assign(const ExprPtr& e);
 	void compile_incdec(const ExprPtr& e);
+	void compile_loop_control_statement(const ExprPtr& e);
 
 	void put_inst2(const Inst& t, uint_t sz);
 
@@ -145,10 +146,9 @@ public:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			InternedStringPtr name; // ラベル名
+			InternedStringPtr label; // ラベル名
 			int_t frame_count; // フレームの数
-			int_t break_label; // break_labelの番号
-			int_t continue_label; // continue_labelの番号
+			int_t control_statement_label[2]; // breakとcontinueのラベル番号
 			bool have_label; // 対応するラベルを持っているか
 		};
 		
@@ -162,8 +162,6 @@ public:
 		PODStack<Finally> finallys;
 
 		bool used_args_object;
-
-
 	};
 
 	struct VarFrame{

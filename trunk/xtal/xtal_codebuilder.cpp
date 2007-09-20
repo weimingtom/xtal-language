@@ -307,11 +307,11 @@ void CodeBuilder::put_if_code(ExprPtr e, int_t label_if, int_t label_if2){
 	}
 }
 
-void CodeBuilder::push_loop(int break_labelno, int continue_labelno, const InternedStringPtr& name, bool have_label){
+void CodeBuilder::push_loop(int break_labelno, int continue_labelno, const InternedStringPtr& label, bool have_label){
 	FunFrame::Loop loop;
-	loop.break_label = break_labelno;
-	loop.continue_label = continue_labelno;
-	loop.name = name;
+	loop.control_statement_label[0] = break_labelno;
+	loop.control_statement_label[1] = continue_labelno;
+	loop.label = label;
 	loop.frame_count = var_frames_.size();
 	loop.have_label = have_label;
 	fun_frames_.top().loops.push(loop);
@@ -398,7 +398,7 @@ CodeBuilder::FunFrame &CodeBuilder::fun_frame(){
 }
 
 
-void CodeBuilder::compile_bin(ExprPtr e){
+void CodeBuilder::compile_bin(const ExprPtr& e){
 	if(is_comp_bin(e->bin_lhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
 	}
@@ -414,7 +414,7 @@ void CodeBuilder::compile_bin(ExprPtr e){
 	put_inst(inst);
 }
 
-void CodeBuilder::compile_comp_bin(ExprPtr e){
+void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	if(is_comp_bin(e->bin_lhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
@@ -530,6 +530,56 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	}
 }
 
+void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
+
+	InternedStringPtr label;
+	int_t label_kind;
+
+	if(e->type()==EXPR_BREAK){
+		label = e->break_label();
+		label_kind = 0;
+	}else if(e->type()==EXPR_CONTINUE){
+		label = e->continue_label();
+		label_kind = 1;
+	}
+
+	if(fun_frame().loops.empty()){
+		error_->error(lineno(), Xt("Xtal Compile Error 1006"));
+	}else{
+		if(label){
+			bool found = false;
+			for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
+				if(raweq(fun_frame().loops[i].label, label)){
+					break_off(fun_frame().loops[i].frame_count);
+					set_jump(offsetof(InstGoto, address), fun_frame().loops[i].control_statement_label[label_kind]);
+					put_inst(InstGoto());
+					found = true;
+					break;
+				}
+			}
+
+			if(!found){
+				error_->error(lineno(), Xt("Xtal Compile Error 1004"));
+			}
+		}else{
+			bool found = false;
+			for(size_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
+				if(!fun_frame().loops[i].have_label){
+					break_off(fun_frame().loops[i].frame_count);
+					set_jump(offsetof(InstGoto, address), fun_frame().loops[i].control_statement_label[label_kind]);
+					put_inst(InstGoto());		
+					found = true;
+					break;
+				}
+			}
+
+			if(!found){
+				error_->error(lineno(), Xt("Xtal Compile Error 1004"));
+			}
+		}
+	}
+}
+
 void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 
 	int_t result_count = 1;
@@ -633,10 +683,6 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_IS){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_NIS){ compile_comp_bin(e); }
-
-		XTAL_CASE(EXPR_POP){
-			
-		}
 
 		XTAL_CASE(EXPR_Q){
 			int_t label_if = reserve_label();
@@ -743,7 +789,7 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_CALL){
 			
-			Xfor(v, e->call_ordered()->each()){
+			Xfor(v, e->call_ordered()){
 				compile(ptr_cast<Expr>(v));
 			}
 
@@ -813,26 +859,20 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 
 			var_set_on_heap();
 
-			/*
-			if(e->kind==KIND_METHOD){
+			if(e->fun_kind()==KIND_METHOD){
 
 				// ゲッタか？
-				if(e->params.size==0){
-					if(BlockStmt* p = stmt_cast<BlockStmt>(e->stmt)){
-						if(p->stmts.size==1){
-							if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(p->stmts.head->value)){
-								if(p2->exprs.size==1){
-									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-										put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_core_num()));
-										break;
-									}
-								}
-							}
-						}
-					}else if(ReturnStmt* p2 = stmt_cast<ReturnStmt>(e->stmt)){
-						if(p2->exprs.size==1){
-							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->exprs.head->value)){
-								put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(p3->var), class_core_num()));
+				if(!e->fun_params() || e->fun_params()->size()==0){
+					ExprPtr body = e->fun_body();
+					if(body->type()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
+						body = ep(body->scope_stmts()->front());
+					}
+
+					if(body->type()==EXPR_RETURN){
+						if(body->return_exprs() && body->return_exprs()->size()==1){
+							body = ep(body->return_exprs()->front());
+							if(body->type()==EXPR_IVAR){
+								put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(body->ivar_name()), class_core_num()));
 								break;
 							}
 						}
@@ -840,27 +880,26 @@ void CodeBuilder::compile(const AnyPtr& p, const CompileInfo& info){
 				}
 
 				// セッタか？
-				if(e->params.size==1){
-					if(!e->params.head->value){
-						if(BlockStmt* p = stmt_cast<BlockStmt>(e->stmt)){
-							if(p->stmts.size==1){
-								if(AssignStmt* p2 = stmt_cast<AssignStmt>(p->stmts.head->value)){
-									if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
-										put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_core_num()));
-										break;
-									}
-								}
-							}
-						}else if(AssignStmt* p2 = stmt_cast<AssignStmt>(e->stmt)){
-							if(InstanceVariableExpr* p3 = expr_cast<InstanceVariableExpr>(p2->lhs)){
-								put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(p3->var), class_core_num()));
-								break;
-							}
+				if(e->fun_params() && e->fun_params()->size()==1){
+					ExprPtr body = e->fun_body();
+					if(body->type()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
+						body = ep(body->scope_stmts()->front());
+					}
+
+					if(body->type()==EXPR_ASSIGN){
+						ExprPtr lhs = body->bin_lhs();
+						ExprPtr rhs = body->bin_rhs();
+
+						InternedStringPtr key;
+						Xfor2(k, v, e->fun_params()){ key = ptr_cast<String>(k); }
+
+						if(lhs->type()==EXPR_IVAR && rhs->type()==EXPR_LVAR && raweq(rhs->lvar_name(), key)){
+							put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(lhs->ivar_name()), class_core_num()));
+							break;
 						}
 					}
 				}
 			}
-			*/
 
 			int_t minv = -1, maxv = 0;
 			Xfor2(k, v, e->fun_params()){
@@ -1053,10 +1092,6 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_DEFAULT{
 			compile(e, 0);
 		}
-
-		XTAL_CASE(EXPR_PUSH){
-			compile(e->una_term());
-		}
 		
 		XTAL_CASE(EXPR_DEFINE){
 			if(e->bin_lhs()->type()==EXPR_LVAR){
@@ -1118,15 +1153,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_INC){ compile_incdec(e); }
 		XTAL_CASE(EXPR_DEC){ compile_incdec(e); }
 
-		/*
-		XTAL_CASE(UnaStmt){
-			compile(e->expr);
-			put_inst(Inst(e->code));
-		}
-		*/
-		
 		XTAL_CASE(EXPR_YIELD){
-			Xfor(v, e->yield_exprs()->each()){
+			Xfor(v, e->yield_exprs()){
 				compile(v);
 			}
 
@@ -1410,81 +1438,11 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_BREAK){
-			if(fun_frame().loops.empty()){
-				error_->error(lineno(), Xt("Xtal Compile Error 1007"));
-			}else{
-				InternedStringPtr name = e->break_label();
-				if(name){
-					bool found = false;
-					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
-						if(raweq(fun_frame().loops[i].name, name)){
-							break_off(fun_frame().loops[i].frame_count);
-							set_jump(offsetof(InstGoto, address), fun_frame().loops[i].break_label);
-							put_inst(InstGoto());
-							found = true;
-							break;
-						}
-					}
-
-					if(!found){
-						error_->error(lineno(), Xt("Xtal Compile Error 1005"));
-					}
-				}else{
-					bool found = false;
-					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
-						if(!fun_frame().loops[i].have_label){
-							break_off(fun_frame().loops[i].frame_count);
-							set_jump(offsetof(InstGoto, address), fun_frame().loops[i].break_label);
-							put_inst(InstGoto());
-							found = true;
-							break;
-						}
-					}
-
-					if(!found){
-						error_->error(lineno(), Xt("Xtal Compile Error 1005"));
-					}
-				}
-			}
+			compile_loop_control_statement(e);
 		}	
 
 		XTAL_CASE(EXPR_CONTINUE){
-			if(fun_frame().loops.empty()){
-				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
-			}else{
-				InternedStringPtr name = e->continue_label();
-				if(name){
-					bool found = false;
-					for(int_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
-						if(raweq(fun_frame().loops[i].name, name)){
-							break_off(fun_frame().loops[i].frame_count);
-							set_jump(offsetof(InstGoto, address), fun_frame().loops[i].continue_label);
-							put_inst(InstGoto());
-							found = true;
-							break;
-						}
-					}
-
-					if(!found){
-						error_->error(lineno(), Xt("Xtal Compile Error 1004"));
-					}
-				}else{
-					bool found = false;
-					for(size_t i = 0, last = fun_frame().loops.size(); i<last; ++i){
-						if(!fun_frame().loops[i].have_label){
-							break_off(fun_frame().loops[i].frame_count);
-							set_jump(offsetof(InstGoto, address), fun_frame().loops[i].continue_label);
-							put_inst(InstGoto());		
-							found = true;
-							break;
-						}
-					}
-
-					if(!found){
-						error_->error(lineno(), Xt("Xtal Compile Error 1004"));
-					}
-				}
-			}
+			compile_loop_control_statement(e);
 		}	
 		
 		XTAL_CASE(EXPR_SCOPE){
@@ -1502,7 +1460,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			var_begin(VarFrame::SCOPE);
 			var_define(e->toplevel_stmts());
 			block_begin();{
-				Xfor(v, e->toplevel_stmts()->each()){
+				Xfor(v, e->toplevel_stmts()){
 					compile_stmt(v);
 				}
 				

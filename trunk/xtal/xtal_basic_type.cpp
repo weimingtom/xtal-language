@@ -38,7 +38,7 @@ namespace{
 			return (int_t)fvalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return 0);
 	}
 
 	float_t Float_to_f(const AnyPtr& p){
@@ -46,7 +46,7 @@ namespace{
 			return fvalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return 0);
 	}
 
 	StringPtr Float_to_s(const AnyPtr& p){
@@ -56,7 +56,7 @@ namespace{
 			return xnew<String>(buf);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return null);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return null);
 	}
 }
 

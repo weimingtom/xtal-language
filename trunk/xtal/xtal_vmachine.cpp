@@ -607,7 +607,6 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 #include "xtal.h"
 
 #include <map>
-#include <fstream>
 #include <math.h>
 
 #include "xtal_fun.h"

@@ -1,5 +1,5 @@
 
-export [
+return [
 	"Xtal Compile Error 1001":"invalid syntax",
 	"Xtal Compile Error 1002":"unexpected character '%(char)s'",
 	"Xtal Compile Error 1003":"expected ';'",

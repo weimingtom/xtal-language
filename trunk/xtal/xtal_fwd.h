@@ -225,6 +225,7 @@ class Stream;
 class MemoryStream;
 class FileStream;
 class StringStream;
+class InteractiveStream;
 class Fun;
 class Method;
 class Fiber;
@@ -250,6 +251,7 @@ typedef SmartPtr<Stream> StreamPtr;
 typedef SmartPtr<MemoryStream> MemoryStreamPtr;
 typedef SmartPtr<FileStream> FileStreamPtr;
 typedef SmartPtr<StringStream> StringStreamPtr;
+typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
 typedef SmartPtr<Fun> FunPtr;
 typedef SmartPtr<Fiber> FiberPtr;
 typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
@@ -276,12 +278,19 @@ class Float;
 
 struct BlockCore{
 	BlockCore()
-		:lineno(0), kind(0), variable_identifier_offset(0), variable_size(0){}
+		:kind(0), flags(0), lineno(0), variable_identifier_offset(0), variable_size(0){}
 
+	u8 kind;
+	u8 flags;
 	u16 lineno;
-	u16 kind;
 	u16 variable_identifier_offset;
 	u16 variable_size;
+
+	enum{
+		FLAG_SCOPE_CHAIN = 1<<0,
+
+		FLAG_USED_BIT = 1
+	};
 };
 
 struct ClassCore : public BlockCore{
@@ -295,23 +304,28 @@ struct ClassCore : public BlockCore{
 
 struct FunCore : public BlockCore{
 	FunCore()
-		:pc(0), max_stack(256), min_param_count(0), max_param_count(0), used_args_object(0), on_heap(0){}
+		:pc(0), max_stack(256), min_param_count(0), max_param_count(0){}
 
-	u16 pc;
+	u32 pc;
 	u16 max_stack;
 	u8 min_param_count;
 	u8 max_param_count;
-	u8 used_args_object;
-	u8 on_heap;
+
+	enum{
+		FLAG_EXTENDABLE_PARAM = 1<<(BlockCore::FLAG_USED_BIT+0),
+		FLAG_ON_HEAP = 1<<(BlockCore::FLAG_USED_BIT+1),
+
+		FLAG_USED_BIT = BlockCore::FLAG_USED_BIT+2
+	};
 };
 
 struct ExceptCore{
-	ExceptCore(u16 catch_pc = 0, u16 finally_pc = 0, u16 end_pc = 0)
-		:catch_pc(catch_pc), finally_pc(finally_pc), end_pc(end_pc){}
+	ExceptCore()
+		:catch_pc(0), finally_pc(0), end_pc(0){}
 
-	u16 catch_pc;
-	u16 finally_pc;
-	u16 end_pc;
+	u32 catch_pc;
+	u32 finally_pc;
+	u32 end_pc;
 };
 
 extern BlockCore empty_block_core;

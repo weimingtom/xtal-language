@@ -53,7 +53,7 @@ CodePtr compile(const StringPtr& source);
 * @brief file_nameファイルをコンパイルして実行する。
 *
 * @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でexportされた値
+* @return スクリプト内でreturnされた値
 */
 AnyPtr load(const StringPtr& file_name);
 
@@ -61,7 +61,7 @@ AnyPtr load(const StringPtr& file_name);
 * @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
 *
 * @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でexportされた値
+* @return スクリプト内でreturnされた値
 */
 AnyPtr load_and_save(const StringPtr& file_name);
 

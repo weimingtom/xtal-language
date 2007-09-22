@@ -134,7 +134,7 @@ Fun::Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCor
 
 void Fun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
-	if(n<core_->min_param_count || (!core_->used_args_object && n>core_->max_param_count)){
+	if(n<core_->min_param_count || (!(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM) && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
@@ -143,7 +143,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 				)
 			), return);
 		}else{
-			if(core_->used_args_object){
+			if(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM){
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1005")(
 						Named("name", object_name()),

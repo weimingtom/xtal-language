@@ -1133,7 +1133,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -1144,7 +1144,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -1155,7 +1155,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -1164,7 +1164,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(CallCallee){ // 6
 		Innocence fn = fun();
 		Innocence self = ff().self();
-		push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+		push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 		carry_over((Fun*)pvalue(fn));
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
@@ -1174,7 +1174,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -1185,7 +1185,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -1196,7 +1196,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -1205,7 +1205,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(CallCallee_A){ // 6
 		Innocence fn = fun();
 		Innocence self = ff().self();
-		push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+		push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 		carry_over((Fun*)pvalue(fn));
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
@@ -1215,7 +1215,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -1226,7 +1226,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -1237,7 +1237,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -1246,7 +1246,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(CallCallee_T){ // 6
 		Innocence fn = fun();
 		Innocence self = ff().self();
-		recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+		recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 		carry_over((Fun*)pvalue(fn));
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
@@ -1256,7 +1256,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -1267,7 +1267,7 @@ XTAL_VM_SWITCH{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -1278,7 +1278,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -1287,18 +1287,20 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(CallCallee_AT){ // 6
 		Innocence fn = fun();
 		Innocence self = ff().self();
-		recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+		recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 		carry_over((Fun*)pvalue(fn));
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
-	XTAL_VM_CASE(BlockBegin){ // 4
+	XTAL_VM_CASE(BlockBegin){ XTAL_VM_CONTINUE(FunBlockBegin(pc)); /*
 		FunFrame& f = ff(); 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			f.outer(xnew<Frame>(f.outer(), code(), f.pcode->block_core(inst.core_number)));
+			BlockCore* core = f.pcode->block_core(inst.core_number);
+			const FramePtr& outer = (core->flags&BlockCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
+			f.outer(xnew<Frame>(outer, code(), core));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
+	}*/ }
 
 	XTAL_VM_CASE(BlockBeginDirect){ // 4
 		FunFrame& f = ff(); 
@@ -2010,20 +2012,21 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassCore* p = ff().pcode->class_core(inst.core_number);
+			ClassCore* core = ff().pcode->class_core(inst.core_number);
+			const FramePtr& outer = (core->flags&ClassCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
 			ClassPtr cp;
 
-			switch(p->kind){
+			switch(core->kind){
 				XTAL_CASE(KIND_CLASS){
-					cp = xnew<Class>(ff().outer(), code(), p);
+					cp = xnew<Class>(outer, code(), core);
 				}
 
 				XTAL_CASE(KIND_SINGLETON){
-					cp = xnew<Singleton>(ff().outer(), code(), p);
+					cp = xnew<Singleton>(outer, code(), core);
 				}
 			}
 			
-			int_t n = p->mixins;
+			int_t n = core->mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
@@ -2081,24 +2084,14 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
 		int_t table_n = inst.core_number, end = inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			switch(code()->fun_core(table_n)->kind){
+			FunCore* core = code()->fun_core(table_n);
+			const FramePtr& outer = ff().outer();
+			switch(core->kind){
 				XTAL_NODEFAULT;
-				
-				XTAL_CASE(KIND_FUN){ 
-					push(xnew<Fun>(ff().outer(), ff().self(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_LAMBDA){ 
-					push(xnew<Lambda>(ff().outer(), ff().self(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_METHOD){ 
-					push(xnew<Method>(ff().outer(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_FIBER){ 
-					push(xnew<Fiber>(ff().outer(), ff().self(), code(), code()->fun_core(table_n)));
-				}
+				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), core)); }
+				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), core)); }
 			}
 		}
 		XTAL_VM_CONTINUE(pc + end);
@@ -2209,34 +2202,33 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
 
-	XTAL_VM_CASE(SendToI){
+	XTAL_VM_CASE(SendToI){ XTAL_VM_CONTINUE(FunSendToI(pc)); /*
 		switch(type(get())){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set((int_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
 		}
 		XTAL_VM_CONTINUE(send1(pc, Xid(to_i)));
-	}
+	}*/ }
 
-	XTAL_VM_CASE(SendToF){
+	XTAL_VM_CASE(SendToF){ XTAL_VM_CONTINUE(FunSendToF(pc)); /*
 		switch(type(get())){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){ set((float_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
 		}
 		XTAL_VM_CONTINUE(send1(pc, Xid(to_f)));
-	}
+	}*/ }
 
-	XTAL_VM_CASE(SendToS){
+	XTAL_VM_CASE(SendToS){ // 2
 		XTAL_VM_CONTINUE(send1(pc, Xid(to_s)));
 	}
 
-	XTAL_VM_CASE(SendToA){
+	XTAL_VM_CASE(SendToA){ // 2
 		XTAL_VM_CONTINUE(send1(pc, Xid(to_a)));
 	}
 
-	XTAL_VM_CASE(SendToM){
+	XTAL_VM_CASE(SendToM){ // 2
 		XTAL_VM_CONTINUE(send1(pc, Xid(to_m)));
 	}
-
 
 	XTAL_VM_CASE(MAX){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -2344,7 +2336,7 @@ const inst_t* VMachine::FunSend(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -2356,7 +2348,7 @@ const inst_t* VMachine::FunSendIfDefined(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -2368,7 +2360,7 @@ const inst_t* VMachine::FunCall(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -2380,7 +2372,7 @@ const inst_t* VMachine::FunSend_A(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -2392,7 +2384,7 @@ const inst_t* VMachine::FunSendIfDefined_A(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -2404,7 +2396,7 @@ const inst_t* VMachine::FunCall_A(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff_args(pc + inst.ISIZE, inst.need_result_count, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			push_ff_args(pc + inst.ISIZE, inst.need_result, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -2416,7 +2408,7 @@ const inst_t* VMachine::FunSend_T(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -2428,7 +2420,7 @@ const inst_t* VMachine::FunSendIfDefined_T(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -2440,7 +2432,7 @@ const inst_t* VMachine::FunCall_T(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -2452,7 +2444,7 @@ const inst_t* VMachine::FunSend_AT(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -2464,7 +2456,7 @@ const inst_t* VMachine::FunSendIfDefined_AT(const inst_t* pc){
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
@@ -2476,10 +2468,21 @@ const inst_t* VMachine::FunCall_AT(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			recycle_ff_args(pc + inst.ISIZE, inst.ordered_arg_count, inst.named_arg_count, ap(self));
+			recycle_ff_args(pc + inst.ISIZE, inst.ordered, inst.named, ap(self));
 			ap(target)->call(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
+}
+
+const inst_t* VMachine::FunBlockBegin(const inst_t* pc){
+		XTAL_VM_DEF_INST(BlockBegin);
+		FunFrame& f = ff(); 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			BlockCore* core = f.pcode->block_core(inst.core_number);
+			const FramePtr& outer = (core->flags&BlockCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
+			f.outer(xnew<Frame>(outer, code(), core));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
 const inst_t* VMachine::FunIfEq(const inst_t* pc){
@@ -3081,20 +3084,21 @@ const inst_t* VMachine::FunSetName(const inst_t* pc){
 const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassCore* p = ff().pcode->class_core(inst.core_number);
+			ClassCore* core = ff().pcode->class_core(inst.core_number);
+			const FramePtr& outer = (core->flags&ClassCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
 			ClassPtr cp;
 
-			switch(p->kind){
+			switch(core->kind){
 				XTAL_CASE(KIND_CLASS){
-					cp = xnew<Class>(ff().outer(), code(), p);
+					cp = xnew<Class>(outer, code(), core);
 				}
 
 				XTAL_CASE(KIND_SINGLETON){
-					cp = xnew<Singleton>(ff().outer(), code(), p);
+					cp = xnew<Singleton>(outer, code(), core);
 				}
 			}
 			
-			int_t n = p->mixins;
+			int_t n = core->mixins;
 			for(int_t i = 0; i<n; ++i){
 				cp->inherit_strict(ptr_cast<Class>(pop()));
 			}
@@ -3124,24 +3128,14 @@ const inst_t* VMachine::FunMakeFun(const inst_t* pc){
 		XTAL_VM_DEF_INST(MakeFun);
 		int_t table_n = inst.core_number, end = inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			switch(code()->fun_core(table_n)->kind){
+			FunCore* core = code()->fun_core(table_n);
+			const FramePtr& outer = ff().outer();
+			switch(core->kind){
 				XTAL_NODEFAULT;
-				
-				XTAL_CASE(KIND_FUN){ 
-					push(xnew<Fun>(ff().outer(), ff().self(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_LAMBDA){ 
-					push(xnew<Lambda>(ff().outer(), ff().self(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_METHOD){ 
-					push(xnew<Method>(ff().outer(), code(), code()->fun_core(table_n))); 
-				}
-
-				XTAL_CASE(KIND_FIBER){ 
-					push(xnew<Fiber>(ff().outer(), ff().self(), code(), code()->fun_core(table_n)));
-				}
+				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), core)); }
+				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), core)); }
 			}
 		}
 		XTAL_VM_CONTINUE(pc + end);
@@ -3206,6 +3200,24 @@ const inst_t* VMachine::FunBreakPoint(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
+const inst_t* VMachine::FunSendToI(const inst_t* pc){
+		XTAL_VM_DEF_INST(SendToI);
+		switch(type(get())){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ set((int_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+		}
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_i)));
+}
+
+const inst_t* VMachine::FunSendToF(const inst_t* pc){
+		XTAL_VM_DEF_INST(SendToF);
+		switch(type(get())){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ set((float_t)fvalue(get())); XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ XTAL_VM_CONTINUE(pc + inst.ISIZE); }
+		}
+		XTAL_VM_CONTINUE(send1(pc, Xid(to_f)));
+}
+
 //}}FUNS}
 	
 void VMachine::carry_over(Fun* fun){
@@ -3221,13 +3233,13 @@ void VMachine::carry_over(Fun* fun){
 		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
-	if(fun->used_args_object()){
+	if(fun->extendable_param()){
 		f.arguments(make_args(fun));
 	}
 	
 	FunCore* core = fun->core();
 	if(int_t size = core->variable_size){
-		if(core->on_heap){
+		if(core->flags & FunCore::FLAG_ON_HEAP){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
 			Frame* frame = f.outer().get();
 			for(int_t n = 0; n<size; ++n){
@@ -3260,7 +3272,7 @@ void VMachine::mv_carry_over(Fun* fun){
 		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
-	if(fun->used_args_object()){
+	if(fun->extendable_param()){
 		f.arguments(make_args(fun));
 	}
 	
@@ -3271,7 +3283,7 @@ void VMachine::mv_carry_over(Fun* fun){
 	int_t size = core->variable_size;
 	adjust_result(f.ordered_arg_count, size);
 	if(size){
-		if(core->on_heap){
+		if(core->flags & FunCore::FLAG_ON_HEAP){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
 			Frame* frame = f.outer().get();
 			for(int_t n = 0; n<size; ++n){
@@ -3571,6 +3583,10 @@ void VMachine::after_gc(){
 
 void VMachine::print_info(){
 	printf("stack size %d\n", stack_.size());
+	for(int_t i=0; i<stack_.size(); ++i){
+		printf("\tstack value %d = %d\n", i, ap(stack_[i])->to_s()->c_str());
+	}
+
 	printf("fun_frames size %d\n", fun_frames_.size());
 	printf("except_frames size %d\n", except_frames_.size());
 }

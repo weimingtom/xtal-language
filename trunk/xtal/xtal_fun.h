@@ -40,7 +40,7 @@ public:
 	const inst_t* source();
 	const InternedStringPtr& param_name_at(size_t i);
 	int_t param_size(){ return core_->variable_size; }	
-	bool used_args_object(){ return core_->used_args_object!=0; }
+	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
 	int_t defined_file_lineno(){ return core_->lineno; }
 	FunCore* core(){ return core_; }
 	void set_core(FunCore* fc){ core_ = fc; }

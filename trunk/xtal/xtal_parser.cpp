@@ -101,13 +101,11 @@ void Lexer::init(const StreamPtr& stream, CompileError* error){
 	keyword_map_->set_at(Xid(finally), (int_t)Token::KEYWORD_FINALLY);
 	keyword_map_->set_at(Xid(throw), (int_t)Token::KEYWORD_THROW);
 	keyword_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
-	keyword_map_->set_at(Xid(import), (int_t)Token::KEYWORD_IMPORT);
 	keyword_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
 	keyword_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
 	keyword_map_->set_at(Xid(current_context), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
 	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
 	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
-	keyword_map_->set_at(Xid(export), (int_t)Token::KEYWORD_EXPORT);
 	keyword_map_->set_at(Xid(unittest), (int_t)Token::KEYWORD_UNITTEST);
 	keyword_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
 	keyword_map_->set_at(Xid(pure), (int_t)Token::KEYWORD_PURE);
@@ -828,40 +826,28 @@ ExprPtr Parser::parse(const StreamPtr& stream, CompileError* error){
 	error_ = error;
 	lexer_.init(stream, error_);
 
-	ExprPtr p = parse_top_level();
+	ExprPtr p = parse_toplevel();
 
 	if(error_->errors->size()!=0){
 		return null;
 	}
+
 	return p;
 }
 
-void Parser::begin_interactive_parsing(const StreamPtr& stream){
-	/*
-	lexer_.init(stream, "<ix>");
-	com_ = lexer_.common();
+ExprPtr Parser::parse_stmt(const StreamPtr& stream, CompileError* error){
+	error_ = error;
+	lexer_.init(stream, error_);
 
-	e.toplevel_begin();
-	*/
-}
+	ExprPtr p = parse_stmt();
 
-ExprPtr Parser::interactive_parse(){
-	/*
-	if(eat(';'))
-		return e.null_();
-	
-	if(ExprPtr p = parse_stmt())
-		return p;
-
-	Token tok = lexer_.read();
-	if(tok.type()==Token::TYPE_TOKEN && tok.ivalue()==-1)
+	if(error_->errors->size()!=0){
 		return null;
+	}
 
-	return e.null_();
-	*/
-	return null;
+	return p;
 }
-	
+
 void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
@@ -908,8 +894,8 @@ ExprPtr Parser::parse_term(){
 
 				XTAL_DEFAULT{}
 
-				XTAL_CASE('('){ ret = parse_expr(); expect(')'); }
-				XTAL_CASE('['){ ret = parse_array(); }
+				XTAL_CASE('('){ ret = parse_expr(); expect(')'); expr_end_flag_ = false; }
+				XTAL_CASE('['){ ret = parse_array();  expr_end_flag_ = false; }
 				XTAL_CASE('|'){ ret = parse_fun(KIND_LAMBDA); }
 
 				XTAL_CASE(c2('|', '|')){
@@ -1011,7 +997,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 		Token ch = lexer_.peek();
 
 		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
-		
+			expr_end_flag_ = false;
 		}else{
 			return null;
 		}
@@ -1480,31 +1466,11 @@ ExprPtr Parser::parse_for(const InternedStringPtr& label){
 	return scope(ln, scope_stmts);
 }
 
-ExprPtr Parser::parse_top_level(){
-	ExprPtr etoplevel = toplevel(lineno(), xnew<Array>(), null);
-
-	while(1){
-		while(eat(';')){}
-		if(ExprPtr p = parse_stmt()){
-			etoplevel->toplevel_stmts()->push_back(p);
-		}else if(eat(Token::KEYWORD_EXPORT)){
-			if(InternedStringPtr name = parse_var()){
-				int_t ln = lineno();
-				etoplevel->toplevel_stmts()->push_back(define(ln, lvar(ln, Xid(export)), parse_expr_must()));
-				etoplevel->toplevel_stmts()->push_back(lvar(ln, Xid(export)));
-			}else{
-				int_t ln = lineno();
-				etoplevel->toplevel_stmts()->push_back(define(ln, lvar(ln, Xid(export)), parse_expr_must()));
-			}
-			eat(';');
-			etoplevel->set_toplevel_export(lvar(lineno(), Xid(export)));
-		}else{
-			break;
-		}
-	}
-	
+ExprPtr Parser::parse_toplevel(){
+	int_t ln = lineno();
+	ExprPtr ret = scope(ln, parse_stmts());
 	expect(-1);
-	return etoplevel;
+	return ret;
 }
 
 ExprPtr Parser::parse_scope(){
@@ -1621,7 +1587,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			}
 				
 			if(!lambda && eat(c3('.','.','.'))){
-				efun->set_fun_have_args(true);
+				efun->set_fun_extendable_param(true);
 				expect(')');
 				break;
 			}

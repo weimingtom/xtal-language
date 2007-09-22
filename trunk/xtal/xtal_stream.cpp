@@ -568,8 +568,8 @@ void InteractiveStream::close(){
 	}
 }
 
-void InteractiveStream::set_continue_stmt(bool b){
-	continue_stmt_ = b;
+void InteractiveStream::terminate_statement(){
+	continue_stmt_ = false;
 }
 
 

@@ -50,13 +50,11 @@ public:
 		KEYWORD_FINALLY,
 		KEYWORD_THROW,
 		KEYWORD_CLASS,
-		KEYWORD_IMPORT,
 		KEYWORD_CALLEE,
 		KEYWORD_THIS,
 		KEYWORD_CURRENT_CONTEXT,
 		KEYWORD_DOFUN,
 		KEYWORD_IS,
-		KEYWORD_EXPORT,
 		KEYWORD_UNITTEST,
 		KEYWORD_ASSERT,
 		KEYWORD_PURE,
@@ -265,9 +263,7 @@ public:
 
 	ExprPtr parse(const StreamPtr& stream, CompileError* error);
 
-	void begin_interactive_parsing(const StreamPtr& stream);
-
-	ExprPtr interactive_parse();
+	ExprPtr parse_stmt(const StreamPtr& stream, CompileError* error);
 
 private:
 
@@ -295,7 +291,7 @@ private:
 	InternedStringPtr parse_identifier_or_keyword();
 	ExprPtr parse_if();
 	ExprPtr parse_term();
-	ExprPtr parse_top_level();
+	ExprPtr parse_toplevel();
 	ExprPtr parse_scope();
 	ExprPtr parse_switch();
 	ExprPtr parse_frame(int_t kind);
@@ -320,7 +316,6 @@ public:
 	Lexer lexer_;
 	bool expr_end_flag_;
 	CompileError* error_;
-
 };
 
 

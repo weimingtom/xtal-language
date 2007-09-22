@@ -73,7 +73,7 @@
 *
 * @code
 * AnyPtr src = Xsrc((
-*   export [0, 2, 3, 4];
+*   return [0, 2, 3, 4];
 * ));
 * @endcode
 */

@@ -533,6 +533,7 @@ public:
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v);
+
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
 		ExceptCore* core;
@@ -562,14 +563,8 @@ public:
 	const CodePtr& code();
 	const CodePtr& prev_code();
 
-	const InternedStringPtr& identifier(int_t n){ 
-		return ff().pcode->identifier(n); 
-	}
-
-	const InternedStringPtr& prev_identifier(int_t n){ 
-		return prev_ff().pcode->identifier(n); 
-	}
-
+	const InternedStringPtr& identifier(int_t n){ return ff().pcode->identifier(n); }
+	const InternedStringPtr& prev_identifier(int_t n){ return prev_ff().pcode->identifier(n); }
 	const InternedStringPtr& identifier_ex(int_t n);
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
@@ -578,9 +573,7 @@ public:
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
 	
-	const VMachinePtr& myself(){ 
-		return *(const VMachinePtr*)&myself_;
-	}
+	const VMachinePtr& myself(){ return *(const VMachinePtr*)&myself_; }
 
 private:
 

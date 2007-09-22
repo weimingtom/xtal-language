@@ -339,7 +339,7 @@ public:
 
 	virtual void close();
 
-	void set_continue_stmt(bool b);
+	void terminate_statement();
 
 private:
 	int_t line_;

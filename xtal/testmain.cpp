@@ -104,21 +104,23 @@ int main(int argc, char** argv){
 			path = temp->join(sep)->to_s();
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
-			
+	
+/*
 AnyPtr ret = Xsrc
 ((
 
  //split("::" | "," | ".");
 	
- 10.times[].r_each.map(|x| x*2)[].p;
+ compile("a:[5, 6, 7]; if(0)a.map(|e| e*2)[].p;").inspect.p;
 
-class{ _x;
-foo: method(){ return _x; }
-set_foo: method(_x){}
-}
+x: 111;
+(fun(x:x){
+	10.p;
+	x.p;
+})();
 
 ))();
-
+*/
 		//handle_argv(argv);
 		
 int c;
@@ -164,13 +166,14 @@ int c;
 
 		//*
 
-		load("../test/test_empty.xtal");
+		/*load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");
 		load("../test/test_float.xtal");
 		load("../test/test_class.xtal");
-		load("../test/test_multiple_values.xtal");
+		load("../test/test_multiple_values.xtal");*/
+		compile_file("../test/test_except.xtal")->inspect()->p();
 		load("../test/test_except.xtal");
-		load("../test/test_fiber.xtal");
+		/*load("../test/test_fiber.xtal");
 		load("../test/test_fun.xtal");
 		load("../test/test_iter.xtal");
 		load("../test/test_fib.xtal");
@@ -182,7 +185,7 @@ int c;
 		load("../test/test_op_assign.xtal");
 		load("../test/test_inc.xtal");
 		load("../test/test_toplevel.xtal");
-		load("../test/test_serialize.xtal");
+		//load("../test/test_serialize.xtal");
 		
 		//*/
 #endif

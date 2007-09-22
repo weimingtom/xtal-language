@@ -182,8 +182,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_u16(p->xfun_core_table_[i].max_stack);			
 				stream_->put_u8(p->xfun_core_table_[i].min_param_count);
 				stream_->put_u8(p->xfun_core_table_[i].max_param_count);
-				stream_->put_u8(p->xfun_core_table_[i].used_args_object);
-				stream_->put_u8(p->xfun_core_table_[i].on_heap);
+				stream_->put_u8(p->xfun_core_table_[i].flags);
 			}
 
 			sz = p->lineno_table_.size();
@@ -355,7 +354,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->block_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->block_core_table_[i].lineno = stream_->get_u16();			
-				p->block_core_table_[i].kind = stream_->get_u16();			
+				p->block_core_table_[i].kind = stream_->get_u8();			
 				p->block_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->block_core_table_[i].variable_size = stream_->get_u16();
 			}
@@ -364,7 +363,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->class_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->class_core_table_[i].lineno = stream_->get_u16();			
-				p->class_core_table_[i].kind = stream_->get_u16();			
+				p->class_core_table_[i].kind = stream_->get_u8();			
 				p->class_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->class_core_table_[i].variable_size = stream_->get_u16();
 
@@ -377,7 +376,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->xfun_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->xfun_core_table_[i].lineno = stream_->get_u16();			
-				p->xfun_core_table_[i].kind = stream_->get_u16();			
+				p->xfun_core_table_[i].kind = stream_->get_u8();			
 				p->xfun_core_table_[i].variable_identifier_offset = stream_->get_u16();
 				p->xfun_core_table_[i].variable_size = stream_->get_u16();
 
@@ -385,8 +384,7 @@ AnyPtr Serializer::inner_deserialize(){
 				p->xfun_core_table_[i].max_stack = stream_->get_u16();			
 				p->xfun_core_table_[i].min_param_count = stream_->get_u8();
 				p->xfun_core_table_[i].max_param_count = stream_->get_u8();
-				p->xfun_core_table_[i].used_args_object = stream_->get_u8();
-				p->xfun_core_table_[i].on_heap = stream_->get_u8();
+				p->xfun_core_table_[i].flags = stream_->get_u8();
 			}
 
 			sz = stream_->get_u32();

@@ -1,5 +1,5 @@
 
-export [
+return [
 	"Xtal Compile Error 1001":"構文エラーです。",
 	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
 	"Xtal Compile Error 1003":"';' がありません。",

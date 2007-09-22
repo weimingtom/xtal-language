@@ -12,13 +12,20 @@ namespace xtal{
 class CodeBuilder{
 public:
 
-	CodeBuilder();
-
-	~CodeBuilder();
+	CodeBuilder(){}
 	
 	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = "anonymous");
 
 	void interactive_compile();
+
+	/**
+	* コンパイルエラーを取得する。
+	*/
+	ArrayPtr errors();
+
+private:
+
+	CodePtr compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
@@ -30,7 +37,7 @@ public:
 			:need_result_count(need_result_count), tail(tail){}
 	};
 
-	void compile(const AnyPtr& p, const CompileInfo& info = CompileInfo());
+	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
 	void compile_stmt(const AnyPtr& p);	
 	
 	int_t register_identifier(const InternedStringPtr& v){
@@ -59,11 +66,6 @@ public:
 	
 	MapPtr value_map_;
 	MapPtr identifier_map_;
-
-	/**
-	* コンパイルエラーを取得する。
-	*/
-	ArrayPtr errors();
 		
 	/**
 	* ラベル番号を予約し、返す。
@@ -112,6 +114,9 @@ public:
 	void compile_op_assign(const ExprPtr& e);
 	void compile_incdec(const ExprPtr& e);
 	void compile_loop_control_statement(const ExprPtr& e);
+	void compile_class(const ExprPtr& e);
+	void compile_block(const ExprPtr& e);
+	void compile_fun(const ExprPtr& e);
 
 	void put_inst2(const Inst& t, uint_t sz);
 
@@ -161,7 +166,7 @@ public:
 
 		PODStack<Finally> finallys;
 
-		bool used_args_object;
+		bool extendable_param;
 	};
 
 	struct VarFrame{
@@ -189,6 +194,7 @@ public:
 		};
 
 		int_t kind;
+		bool scope_chain;
 	};
 
 	struct ClassFrame{
@@ -199,6 +205,12 @@ public:
 		AC<Entry>::vector entrys;
 		int_t class_core_num;
 	};
+
+	void scope_chain(int_t var_frame_size){
+		for(int_t i=0; i<var_frame_size; ++i){
+			var_frames_[i].scope_chain = true;
+		}
+	}
 
 	struct LVarInfo{
 		VarFrame* var_frame;
@@ -214,6 +226,7 @@ public:
 					if(define){ vf.entrys[vf.entrys.size()-1-j].initialized = true; }
 					if(vf.fun_frames_size!=fun_frames_.size() || vf.entrys[vf.entrys.size()-1-j].initialized){
 						ret.var_frame = &vf;
+						scope_chain(i);
 						return ret;
 					}
 				}
@@ -224,13 +237,14 @@ public:
 		return ret;
 	}
 
-	void var_begin(int_t kind){
+	void var_begin(int_t kind, int_t addsz=0){
 		VarFrame& vf = var_frames_.push();
 		vf.entrys.clear();
 		vf.directs.clear();
 		vf.block_core_num = 0;
 		vf.kind = kind;
-		vf.fun_frames_size = fun_frames_.size();
+		vf.fun_frames_size = fun_frames_.size()+addsz;
+		vf.scope_chain = false;
 	}
 
 	void var_define(const ArrayPtr& stmts){
@@ -273,12 +287,13 @@ public:
 		vf.directs.push_back(d);
 	}
 
-	void var_set_on_heap(){
-		for(uint_t i=0; i<var_frames_.size(); ++i){
+	void var_set_on_heap(int_t i=0){
+		if(i<var_frames_.size())
+		//for(uint_t i=0; i<var_frames_.size(); ++i){
 			if(var_frames_[i].kind==VarFrame::SCOPE){
 				var_frames_[i].kind = VarFrame::BLOCK;
 			}
-		}
+		//}
 	}
 
 	void var_end(){
@@ -295,11 +310,6 @@ public:
 	void block_begin();
 	void block_end();
 	
-	void fun_begin(int_t kind, bool have_args, int_t offset, u8 min_param_count, u8 max_param_count);
-	void fun_end(int_t n);
-
-	FunFrame& fun_frame();
-
 	int_t lineno(){ return linenos_.top(); }
 
 	int_t class_core_num(){
@@ -317,6 +327,10 @@ private:
 	Stack<FunFrame> fun_frames_;
 	Stack<VarFrame> var_frames_;
 	Stack<ClassFrame> class_frames_;
+
+	FunFrame& ff(){ return fun_frames_.top(); }
+	VarFrame& vf(){ return var_frames_.top(); }
+	ClassFrame& cf(){ return class_frames_.top(); }
 
 	PODStack<int_t> label_names_;
 	PODStack<int_t> linenos_;

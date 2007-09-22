@@ -26,7 +26,7 @@ CodePtr compile_file(const StringPtr& file_name){
 	}
 	fs->close();
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()), return null);
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()->to_a()), return null);
 }
 
 CodePtr compile(const StringPtr& source){
@@ -36,7 +36,7 @@ CodePtr compile(const StringPtr& source){
 		return fun;
 	}
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()), return null);
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()->to_a()), return null);
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -61,7 +61,7 @@ AnyPtr source(const char_t* src, int_t size, const char_t* file){
 		return fun;
 	}
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()), return null);
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()->to_a()), return null);
 }
 
 void ix(){

@@ -83,8 +83,7 @@ enum{
 	EXPR_BREAK,
 	EXPR_CONTINUE,
 	EXPR_SCOPE,
-	EXPR_CLASS,
-	EXPR_TOPLEVEL
+	EXPR_CLASS
 };
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
@@ -158,7 +157,7 @@ public:
 
 	XTAL_DEF_MEMBER(2, int_t, fun_kind);
 	XTAL_DEF_MEMBER(3, MapPtr, fun_params);
-	XTAL_DEF_MEMBER(4, bool, fun_have_args);
+	XTAL_DEF_MEMBER(4, bool, fun_extendable_param);
 	XTAL_DEF_MEMBER(5, ExprPtr, fun_body);
 
 	XTAL_DEF_MEMBER(2, ArrayPtr, massign_lhs_exprs);
@@ -199,10 +198,6 @@ public:
 	XTAL_DEF_MEMBER(3, ArrayPtr, class_mixins);
 	XTAL_DEF_MEMBER(4, ArrayPtr, class_stmts);
 	XTAL_DEF_MEMBER(5, MapPtr, class_ivars);
-
-	XTAL_DEF_MEMBER(2, ArrayPtr, toplevel_stmts);
-	XTAL_DEF_MEMBER(3, ExprPtr, toplevel_export);
-
 };
 
 
@@ -223,7 +218,7 @@ inline ExprPtr scope(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXP
 inline ExprPtr class_(int_t lineno, int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return Expr::make(EXPR_CLASS, lineno, 3)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
 inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPtr& name, const ExprPtr& ns, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(ns)->set_cdefine_term(term); }
 
-inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool have_args, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_have_args(have_args)->set_fun_body(body); }
+inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool extendable_param, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
 
 inline ExprPtr bin(int_t expr_type, int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return Expr::make(expr_type, lineno, 4)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
 inline ExprPtr una(int_t expr_type, int_t lineno, const ExprPtr& term){ return Expr::make(expr_type, lineno, 3)->set_una_term(term); }
@@ -267,8 +262,6 @@ inline ExprPtr massign(int_t lineno, const ArrayPtr& lhs, const ArrayPtr& rhs, b
 
 inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lineno, lhs, rhs); }
 inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lineno, lhs, rhs); }
-
-inline ExprPtr toplevel(int_t lineno, const ArrayPtr& stmts, const ExprPtr& export_){ return Expr::make(EXPR_TOPLEVEL, lineno, 4)->set_toplevel_stmts(stmts)->set_toplevel_export(export_); }
 
 inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }
 inline ExprPtr map(int_t lineno, const MapPtr& exprs){ return Expr::make(EXPR_MAP, lineno, 3)->set_map_values(exprs); }

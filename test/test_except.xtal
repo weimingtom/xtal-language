@@ -12,6 +12,7 @@
 	assert temp==100;
 }
 
+
 {
 	temp : 0;
 	e : fun(){

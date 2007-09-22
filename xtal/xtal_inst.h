@@ -6,59 +6,43 @@
 
 namespace xtal{
 
-#ifdef XTAL_USE_WORD_CODE
-
-typedef int_t inst_i8_t;
-typedef int_t inst_i16_t;
-typedef uint_t inst_u8_t;
-typedef uint_t inst_u16_t;
-typedef uint_t inst_t;
-
-#else
-
-typedef i8 inst_i8_t;
-
-struct inst_i16_t{
-	u8 values[2];
-	
-	inst_i16_t(){}
-
-	inst_i16_t(int_t value){
-		values[0] = (value>>8) & 0xff;
-		values[1] = (value>>0) & 0xff;
-	}
-	
-	operator i16() const{
-		return (i16)(values[0]<<8 | values[1]);
-	}
-};
-	
-typedef u8 inst_u8_t;
-
-struct inst_u16_t{
-	u8 values[2];
-	
-	inst_u16_t(){}
-
-	inst_u16_t(uint_t value){
-		values[0] = (value>>8) & 0xff;
-		values[1] = (value>>0) & 0xff;
-	}
-	
-	operator u16() const{
-		return (u16)(values[0]<<8 | values[1]);
-	}
-};
+struct Inst;
 
 typedef u8 inst_t;
+typedef i8 inst_i8_t;
+typedef u8 inst_u8_t;
 
-#endif
+template<class T, int Kind>
+struct inst_16_t{
+	u8 values[2];
+	
+	inst_16_t(){}
 
-typedef inst_i16_t inst_address_t;
+	inst_16_t(T value){
+		values[0] = (value>>8) & 0xff;
+		values[1] = (value>>0) & 0xff;
+	}
+	
+	operator T() const{
+		return (T)(values[0]<<8 | values[1]);
+	}
+};
 
+typedef inst_16_t<i16, 0> inst_i16_t;
+typedef inst_16_t<u16, 0> inst_u16_t;
+typedef inst_16_t<i16, 1> inst_address_t;
+
+
+inline AnyPtr inst_inspect(i8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline AnyPtr inst_inspect(u8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline AnyPtr inst_inspect(inst_i16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline AnyPtr inst_inspect(inst_u16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+
+AnyPtr inst_inspect(inst_address_t value, Inst* inst, const CodePtr& code);
 
 struct Inst{
 	inst_t op;
+
 	Inst(inst_t v = 0)
 		:op(v){}
 
@@ -83,7 +67,7 @@ struct Inst{
 		Inst##InstName(){\
 			op = N;\
 		}\
-		StringPtr inspect(){\
+		StringPtr inspect(const CodePtr& code){\
 			return xnew<String>("" #InstName ":");\
 		}\
 	}
@@ -103,10 +87,10 @@ struct Inst{
 			op = N;\
 			checked_assign(MemberName1, m1);\
 		}\
-		StringPtr inspect(){\
+		StringPtr inspect(const CodePtr& code){\
 			return format("" #InstName ": "\
 					#MemberName1 "=%s")\
-				((int_t)MemberName1)->to_s();\
+				(inst_inspect(MemberName1, this, code))->to_s();\
 		}\
 	}
 
@@ -127,11 +111,11 @@ struct Inst{
 			checked_assign(MemberName1, m1);\
 			checked_assign(MemberName2, m2);\
 		}\
-		StringPtr inspect(){\
+		StringPtr inspect(const CodePtr& code){\
 			return format("" #InstName ": "\
 					#MemberName1 "=%s, "\
 					#MemberName2 "=%s")\
-				((int_t)MemberName1, (int_t)MemberName2)->to_s();\
+				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code))->to_s();\
 		}\
 	}
 	
@@ -154,12 +138,12 @@ struct Inst{
 			checked_assign(MemberName2, m2);\
 			checked_assign(MemberName3, m3);\
 		}\
-		StringPtr inspect(){\
+		StringPtr inspect(const CodePtr& code){\
 			return format("" #InstName ": "\
 					#MemberName1 "=%s, "\
 					#MemberName2 "=%s, "\
 					#MemberName3 "=%s")\
-				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3)->to_s();\
+				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code))->to_s();\
 		}\
 	}
 	
@@ -188,13 +172,13 @@ struct Inst{
 			checked_assign(MemberName3, m3);\
 			checked_assign(MemberName4, m4);\
 		}\
-		StringPtr inspect(){\
+		StringPtr inspect(const CodePtr& code){\
 			return format("" #InstName ": "\
 					#MemberName1 "=%s, "\
 					#MemberName2 "=%s, "\
 					#MemberName3 "=%s, "\
 					#MemberName4 "=%s")\
-				((int_t)MemberName1, (int_t)MemberName2, (int_t)MemberName3, (int_t)MemberName4)->to_s();\
+				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code), inst_inspect(MemberName4, this, code))->to_s();\
 		}\
 	}
 	
@@ -528,107 +512,107 @@ XTAL_DEF_INST_0(43, CheckUnsupported);
 // A=args flag, T=tail flag
 
 XTAL_DEF_INST_4(44, Send,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(45, SendIfDefined,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(46, Call,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_3(47, CallCallee,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_4(48, Send_A,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(49, SendIfDefined_A,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(50, Call_A,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_3(51, CallCallee_A,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_4(52, Send_T,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(53, SendIfDefined_T,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(54, Call_T,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_3(55, CallCallee_T,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_4(56, Send_AT,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(57, SendIfDefined_AT,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count,
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result,
         inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_3(58, Call_AT,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_3(59, CallCallee_AT,
-        inst_u8_t, ordered_arg_count,
-        inst_u8_t, named_arg_count,
-        inst_u8_t, need_result_count
+        inst_u8_t, ordered,
+        inst_u8_t, named,
+        inst_u8_t, need_result
 );
 
 XTAL_DEF_INST_1(60, BlockBegin,

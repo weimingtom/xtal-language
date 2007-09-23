@@ -72,12 +72,7 @@ Lexer::Lexer(){
 	set_lineno(1);
 	read_ = 0;
 	pos_ = 0;
-}
 
-void Lexer::init(const StreamPtr& stream, CompileError* error){
-	reader_.set_stream(stream);
-	error_ = error;
-	
 	keyword_map_ = xnew<Map>();
 	keyword_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
 	keyword_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
@@ -114,6 +109,11 @@ void Lexer::init(const StreamPtr& stream, CompileError* error){
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
 	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
+}
+
+void Lexer::init(const StreamPtr& stream, CompileError* error){
+	reader_.set_stream(stream);
+	error_ = error;
 }
 
 Token Lexer::read(){
@@ -839,7 +839,11 @@ ExprPtr Parser::parse_stmt(const StreamPtr& stream, CompileError* error){
 	error_ = error;
 	lexer_.init(stream, error_);
 
-	ExprPtr p = parse_stmt();
+	ExprPtr p = parse_stmt_must();
+
+	if(!p){
+		lexer_.read();
+	}
 
 	if(error_->errors->size()!=0){
 		return null;
@@ -852,7 +856,7 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	Token tok = lexer_.peek();
+	Token tok = lexer_.read();
 	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named("char", lexer_.peek().to_s())));
 }
 

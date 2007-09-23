@@ -49,6 +49,7 @@ void CodeBuilder::interactive_compile(){
 
 		if(!e){
 			stderr_stream()->put_s(error_->errors->join("\n"));
+			stderr_stream()->put_s("\n");
 			error_->errors->clear();
 		}else{
 
@@ -63,26 +64,36 @@ void CodeBuilder::interactive_compile(){
 			ff().var_frame_count = var_frames_.size();
 			ff().extendable_param = true;
 
+			int_t last_code_size = code_size();
 			compile_stmt(e);
-			process_labels();
 
-			fun_frames_.downsize(1);
+			if(error_->errors->size()!=0){
+				result_->code_.resize(last_code_size);
+				stderr_stream()->put_s(error_->errors->join("\n"));
+				stderr_stream()->put_s("\n");
+				error_->errors->clear();				
+			}else{
 
-			put_inst(InstReturn0());
-			put_inst(InstThrow());
-			result_->reset_core();
+				process_labels();
 
-			XTAL_TRY{
-				vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
-			}XTAL_CATCH(e){
-				printf("%s\n", e->to_s()->c_str());
+				fun_frames_.downsize(1);
+
+				put_inst(InstReturn0());
+				put_inst(InstThrow());
+				result_->reset_core();
+
+				XTAL_TRY{
+					vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
+				}XTAL_CATCH(e){
+					printf("%s\n", e->to_s()->c_str());
+				}
+
+				for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn0))/sizeof(inst_t); ++i){
+					result_->code_.pop_back();
+				}
+
+				pc_pos = result_->code_.size();
 			}
-
-			for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn0))/sizeof(inst_t); ++i){
-				result_->code_.pop_back();
-			}
-
-			pc_pos = result_->code_.size();
 		}
 	}
 }
@@ -301,6 +312,7 @@ int_t CodeBuilder::lookup_instance_variable(const InternedStringPtr& key){
 			ret++;
 		}
 	}
+
 	error_->error(lineno(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(key))));
 	return 0;
 }
@@ -1247,8 +1259,8 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			}
 
 			bool have_args = e->call_have_args();
-			int_t ordered = e->call_ordered()->size();
-			int_t named = e->call_named()->size();
+			int_t ordered = e->call_ordered() ? e->call_ordered()->size() : 0;
+			int_t named = e->call_named() ? e->call_named()->size() : 0;
 
 			if(e->call_term()->type()==EXPR_SEND){ // a.b(); メッセージ送信式
 

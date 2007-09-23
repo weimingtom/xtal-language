@@ -1293,6 +1293,8 @@ ExprPtr Parser::parse_assign_stmt(){
 				}
 			}
 		}
+
+		return lhs;
 	}
 
 	return null;
@@ -1304,6 +1306,7 @@ ExprPtr Parser::parse_stmt(){
 
 	if(ExprPtr p = parse_loop()){
 		ret = p;
+		 eat(';'); 
 	}else{
 
 		Token ch = lexer_.read();
@@ -1313,23 +1316,25 @@ ExprPtr Parser::parse_stmt(){
 
 			XTAL_CASE(Token::TYPE_KEYWORD){
 				switch(ch.keyword_number()){
+			
+					XTAL_CASE(Token::KEYWORD_WHILE){ ret = parse_while(); }
+					XTAL_CASE(Token::KEYWORD_SWITCH){ ret = parse_switch(); }
+					XTAL_CASE(Token::KEYWORD_IF){ ret = parse_if(); }
+					XTAL_CASE(Token::KEYWORD_TRY){ ret = parse_try(); }
+
 					XTAL_CASE(Token::KEYWORD_THROW){	
 						ExprPtr temp = xnew<Expr>();
 						temp->set_type(EXPR_THROW);
 						temp->set_throw_expr(parse_expr_must());
 						ret = temp;
-					}				
-					XTAL_CASE(Token::KEYWORD_RETURN){ ret = return_(lineno(), parse_exprs()); }
-					XTAL_CASE(Token::KEYWORD_CONTINUE){ ret = continue_(lineno(), parse_identifier()); }
-					XTAL_CASE(Token::KEYWORD_BREAK){ ret = break_(lineno(), parse_identifier()); }
+						 eat(';'); 
+					}	
+					XTAL_CASE(Token::KEYWORD_RETURN){ ret = return_(lineno(), parse_exprs());  eat(';'); }
+					XTAL_CASE(Token::KEYWORD_CONTINUE){ ret = continue_(lineno(), parse_identifier());  eat(';'); }
+					XTAL_CASE(Token::KEYWORD_BREAK){ ret = break_(lineno(), parse_identifier());  eat(';'); }
 					XTAL_CASE(Token::KEYWORD_FOR){ ret = parse_for(); }
-					XTAL_CASE(Token::KEYWORD_WHILE){ ret = parse_while(); }
-					XTAL_CASE(Token::KEYWORD_SWITCH){ ret = parse_switch(); }
-					XTAL_CASE(Token::KEYWORD_IF){ ret = parse_if(); }
-
-					XTAL_CASE(Token::KEYWORD_TRY){ ret = parse_try(); }
-					XTAL_CASE(Token::KEYWORD_ASSERT){ ret = parse_assert(); }
-					XTAL_CASE(Token::KEYWORD_YIELD){ ret = yield(lineno(), parse_exprs()); }
+					XTAL_CASE(Token::KEYWORD_ASSERT){ ret = parse_assert();  eat(';'); }
+					XTAL_CASE(Token::KEYWORD_YIELD){ ret = yield(lineno(), parse_exprs()); eat(';'); }
 				}
 			}
 			
@@ -1343,14 +1348,10 @@ ExprPtr Parser::parse_stmt(){
 		
 		if(!ret){
 			lexer_.putback();
-
-			if(ExprPtr stmt = parse_assign_stmt()){
-				return stmt;
-			}
+			ret = parse_assign_stmt();
+			eat(';');
 		}
 	}
-
-	eat(';');
 
 	return ret;
 }
@@ -1867,6 +1868,7 @@ ExprPtr Parser::parse_switch(){
 			default_stmt = parse_stmt();
 		}else{
 			expect('}');
+			expr_end_flag_ = true;
 			break;
 		}
 	}

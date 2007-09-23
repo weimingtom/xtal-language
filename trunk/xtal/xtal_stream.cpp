@@ -545,8 +545,9 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 	}else{
 		stdout_stream()->put_s(Xf("ix:%03d>")(line_)->to_s());
 	}
+
 	continue_stmt_ = true;
-	if(fgets((char*)p, size, fp_)){
+	if(fgets((char*)p, size, stdin)){
 		uint_t sz = strlen((char*)p);
 		if(sz!=size-1){
 			line_++;

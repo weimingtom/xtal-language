@@ -1517,7 +1517,10 @@ ExprPtr Parser::parse_class(int_t kind){
 			
 		}else if(eat('_')){// インスタンス変数定義
 			if(InternedStringPtr var = parse_identifier()){
-				
+				if(eclass->class_ivars()->at(var)){
+					error_->error(lineno(), Xt("Xtal Compile Error 1024")(var));
+				}
+
 				if(eat(':')){ // 初期値込み
 					eclass->class_ivars()->set_at(var, parse_expr_must());
 				}else{
@@ -1594,21 +1597,31 @@ ExprPtr Parser::parse_fun(int_t kind){
 			
 			if(eat('_')){
 				if(InternedStringPtr var = parse_identifier()){
+					if(rawne(params->at(var), null)){
+						error_->error(lineno(), Xt("Xtal Compile Error 1026")(var));
+					}
+
 					if(!lambda && eat(':')){
 						params->set_at(var, parse_expr_must());
 					}else{
-						params->set_at(var, null);
+						params->set_at(var, false);
 					}
-					if(inst_assign_list_count<255)
+
+					if(inst_assign_list_count<255){
 						inst_assign_list[inst_assign_list_count++] = var;
+					}
 				}else{
 					error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 				}
 			}else if(InternedStringPtr var = parse_identifier()){
+				if(rawne(params->at(var), null)){
+					error_->error(lineno(), Xt("Xtal Compile Error 1026")(var));
+				}
+
 				if(!lambda && eat(':')){
 					params->set_at(var, parse_expr_must());
 				}else{
-					params->set_at(var, null);
+					params->set_at(var, false);
 				}
 			}
 			
@@ -1617,6 +1630,11 @@ ExprPtr Parser::parse_fun(int_t kind){
 					params->set_at(Xid(_dummy_fun_parameter_), null);
 					break;
 				}
+			}else if(eat(lambda ? '|' : ')')){
+				break;
+			}else{
+				error_->error(lineno(), Xt("Xtal Compile Error 1010"));
+				break;
 			}
 		}
 	}

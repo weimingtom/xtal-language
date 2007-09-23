@@ -105,7 +105,7 @@ int main(int argc, char** argv){
 			add_get_text_map(cast<MapPtr>(load(path)));
 		}
 	
-/*
+
 AnyPtr ret = Xsrc
 ((
 
@@ -113,14 +113,11 @@ AnyPtr ret = Xsrc
 	
  compile("a:[5, 6, 7]; if(0)a.map(|e| e*2)[].p;").inspect.p;
 
-x: 111;
-(fun(x:x){
-	10.p;
-	x.p;
-})();
+test: fun(aaaa, b, aaaa){ aaaa.p; b.p; }
+fun(111);
 
 ))();
-*/
+
 		//handle_argv(argv);
 		
 int c;
@@ -166,14 +163,13 @@ int c;
 
 		//*
 
-		/*load("../test/test_empty.xtal");
+		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");
 		load("../test/test_float.xtal");
 		load("../test/test_class.xtal");
-		load("../test/test_multiple_values.xtal");*/
-		compile_file("../test/test_except.xtal")->inspect()->p();
+		load("../test/test_multiple_values.xtal");
 		load("../test/test_except.xtal");
-		/*load("../test/test_fiber.xtal");
+		load("../test/test_fiber.xtal");
 		load("../test/test_fun.xtal");
 		load("../test/test_iter.xtal");
 		load("../test/test_fib.xtal");

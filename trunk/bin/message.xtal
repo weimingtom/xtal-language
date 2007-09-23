@@ -3,10 +3,9 @@ return [
 	"Xtal Compile Error 1001":"構文エラーです。",
 	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
 	"Xtal Compile Error 1003":"';' がありません。",
-	"Xtal Compile Error 1004":"continue文に対応するループ文がありません。",
-	"Xtal Compile Error 1005":"break文に対応するループ文がありません。",
-	"Xtal Compile Error 1006":"不正なcontinue文です。",
-	"Xtal Compile Error 1007":"不正なbreak文です。",
+
+	"Xtal Compile Error 1006":"不正なbreak文、またはcontinue文です。",
+
 	"Xtal Compile Error 1008":"不正な多重代入文です。",
 	"Xtal Compile Error 1009":"定義されていない変数 '%(name)s' に代入しようとしました 。",
 	"Xtal Compile Error 1010":"不正な数字リテラルのサフィックスです。",
@@ -18,15 +17,15 @@ return [
 	"Xtal Compile Error 1016":"assert文の引数の数が不正です。",
 	"Xtal Compile Error 1017":"不正な%%記法リテラルです。",
 	"Xtal Compile Error 1018":"default節が重複定義されました。",
-	"Xtal Compile Error 1019":"exportは一つのファイルで一つのみ許可されます。",
+
 	"Xtal Compile Error 1020":"不正な2進数値リテラルのサフィックスです。",
 	"Xtal Compile Error 1021":"コメントの途中でファイルが終わりました。",
 	"Xtal Compile Error 1022":"関数から返せる多値の最大は255個です。",
 	"Xtal Compile Error 1023":"定義されていないインスタンス変数名 '%(name)s' を参照しています。",
 	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
 	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
-	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が重複定義されました",
-	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました",
+	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。",
+	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました。",
 	
 	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
 	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",

@@ -174,8 +174,8 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	memcpy(&result_->code_[cur], &t, sz);
 }
 
-ArrayPtr CodeBuilder::errors(){
-	return error_->errors;
+AnyPtr CodeBuilder::errors(){
+	return error_->errors->each();
 }
 
 bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
@@ -401,38 +401,122 @@ void CodeBuilder::put_if_code(ExprPtr e, int_t label_if, int_t label_if2){
 	}
 }
 
-void CodeBuilder::push_loop(int break_labelno, int continue_labelno, const InternedStringPtr& label, bool have_label){
-	FunFrame::Loop loop;
-	loop.control_statement_label[0] = break_labelno;
-	loop.control_statement_label[1] = continue_labelno;
-	loop.label = label;
-	loop.frame_count = var_frames_.size();
-	loop.have_label = have_label;
-	ff().loops.push(loop);
+void CodeBuilder::scope_chain(int_t var_frame_size){
+	for(int_t i=0; i<var_frame_size; ++i){
+		var_frames_[i].scope_chain = true;
+	}
 }
 
-void CodeBuilder::pop_loop(){
-	ff().loops.pop();
+CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define){
+	LVarInfo ret = {0, 0};
+	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
+		VarFrame& vf = var_frames_[i];
+		for(size_t j = 0, jlast = vf.entrys.size(); j<jlast; ++j){
+			if(raweq(vf.entrys[vf.entrys.size()-1-j].name, key)){
+				if(define){ vf.entrys[vf.entrys.size()-1-j].initialized = true; }
+				if(vf.fun_frames_size!=fun_frames_.size() || vf.entrys[vf.entrys.size()-1-j].initialized){
+					ret.var_frame = &vf;
+					scope_chain(i);
+					return ret;
+				}
+			}
+			ret.pos++;
+		}
+	}
+	ret.pos = -1;
+	return ret;
+}
+
+void CodeBuilder::var_begin(int_t kind){
+	var_frames_.push();
+	vf().entrys.clear();
+	vf().directs.clear();
+	vf().block_core_num = 0;
+	vf().kind = kind;
+	vf().fun_frames_size = fun_frames_.size();
+	vf().scope_chain = false;
+}
+
+void CodeBuilder::var_define(const ArrayPtr& stmts){
+	Xfor(v0, stmts->each()){
+		if(!v0){
+			continue;
+		}
+
+		ExprPtr v = ep(v0);
+		if(ep(v)->type()==EXPR_DEFINE){
+			if(v->bin_lhs()->type()==EXPR_LVAR){
+				var_define(v->bin_lhs()->lvar_name());
+			}
+		}else if(v->type()==EXPR_MASSIGN){
+			if(v->massign_define()){
+				Xfor(v1, v->massign_lhs_exprs()){
+					ExprPtr vv = ep(v1);
+					if(vv->type()==EXPR_LVAR){
+						var_define(vv->lvar_name());
+					}			
+				}
+			}
+		}
+	}
+}
+
+void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility, bool define){
+	for(size_t j = 0, jlast = vf().entrys.size(); j<jlast; ++j){
+		if(raweq(vf().entrys[vf().entrys.size()-1-j].name, name)){
+			error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
+			return;
+		}
+	}
+
+	VarFrame::Entry entry;
+	entry.name = name;
+	entry.constant = false;
+	entry.initialized = define;
+	entry.accessibility = accessibility;
+	vf().entrys.push_back(entry);
+}
+
+void CodeBuilder::var_set_direct(VarFrame& vf){
+	VarFrame::Direct d;
+	d.pos = code_size();
+	vf.directs.push_back(d);
+}
+
+void CodeBuilder::var_set_on_heap(int_t i){
+	if(i<var_frames_.size()){
+		if(var_frames_[i].kind==VarFrame::SCOPE){
+			var_frames_[i].kind = VarFrame::BLOCK;
+		}
+	}
+}
+
+void CodeBuilder::var_end(){
+	if(vf().kind==VarFrame::SCOPE){
+		for(uint_t i=0; i<vf().directs.size(); ++i){
+			Inst* p = (Inst*)&result_->code_[vf().directs[i].pos];
+			p->op += 1;
+		}
+	}
+	var_frames_.downsize(1);
 }
 
 void CodeBuilder::block_begin(){
-	VarFrame& vf = var_frames_.top();
-
 	int_t block_core_num = result_->block_core_table_.size();
 
 	BlockCore core;
-	core.variable_size = vf.entrys.size();
+	core.variable_size = vf().entrys.size();
 	core.variable_identifier_offset = result_->identifier_table_->size();
 	core.lineno = linenos_.top();
 
-	vf.block_core_num = block_core_num;
+	vf().block_core_num = block_core_num;
 
-	for(int_t i=0; i<vf.entrys.size(); ++i){
-		result_->identifier_table_->push_back(vf.entrys[i].name);
+	for(int_t i=0; i<vf().entrys.size(); ++i){
+		result_->identifier_table_->push_back(vf().entrys[i].name);
 	}
 
-	if(vf.entrys.size()){
-		var_set_direct(var_frames_.top());
+	if(vf().entrys.size()){
+		var_set_direct(vf());
 		put_inst(InstBlockBegin(block_core_num));
 	}
 
@@ -440,19 +524,18 @@ void CodeBuilder::block_begin(){
 }
 
 void CodeBuilder::block_end(){
-	VarFrame& vf = var_frames_.top();
-	if(vf.entrys.size()){
-		var_set_direct(var_frames_.top());
-		put_inst(InstBlockEnd(vf.block_core_num));
+	if(vf().entrys.size()){
+		var_set_direct(vf());
+		put_inst(InstBlockEnd(vf().block_core_num));
 	}
 
-	if(var_frames_.top().kind!=VarFrame::SCOPE){
-		result_->block_core_table_[vf.block_core_num].flags |= FunCore::FLAG_ON_HEAP;
+	if(vf().kind!=VarFrame::SCOPE){
+		result_->block_core_table_[vf().block_core_num].flags |= FunCore::FLAG_ON_HEAP;
 	}
 
-	if(var_frames_.top().scope_chain){
-		result_->block_core_table_[vf.block_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
-		if(var_frames_.top().kind!=VarFrame::SCOPE){
+	if(vf().scope_chain){
+		result_->block_core_table_[vf().block_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		if(vf().kind!=VarFrame::SCOPE){
 			var_set_on_heap(1);
 		}
 	}
@@ -622,7 +705,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("Xtal Compile Error 1004"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
 			}
 		}else{
 			bool found = false;
@@ -637,7 +720,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("Xtal Compile Error 1004"));
+				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
 			}
 		}
 	}
@@ -645,10 +728,89 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 
 void CodeBuilder::compile_class(const ExprPtr& e){
 
-}
+	// インスタンス変数を暗黙的初期化するメソッドを定義する
+	{
+		ExprPtr init_method = fun(e->lineno(), KIND_METHOD, null, false, null);
+		ArrayPtr stmts = xnew<Array>();
+		ExprPtr block = scope(e->lineno(), stmts);
+		Xfor2(k, v, e->class_ivars()){
+			if(v){
+				stmts->push_back(Expr::make(EXPR_ASSIGN)->set_bin_lhs(Expr::make(EXPR_IVAR)->set_ivar_name(k->to_s()->intern()))->set_bin_rhs(ptr_cast<Expr>(v)));
+			}
+		}
+		init_method->set_fun_body(block);
+		e->class_stmts()->push_front(cdefine(0, KIND_PUBLIC, Xid(_initialize_), null_(0), init_method));
+	}
 
-void CodeBuilder::compile_block(const ExprPtr& e){
+	// 継承
+	Xfor(v, e->class_mixins()){
+		compile_expr(v);
+	}
 
+	// 変数フレームを作成
+	var_begin(VarFrame::CLASS);
+
+	// 変数を定義
+	Xfor(v, e->class_stmts()){
+		ExprPtr v1 = ep(v);
+		if(v1->type()==EXPR_CDEFINE){
+			var_define(v1->cdefine_name());
+		}
+	}
+
+	class_frames_.push();
+	cf().entrys.clear();
+	cf().class_core_num = result_->class_core_table_.size();
+
+	Xfor2(k, v, e->class_ivars()){
+		ClassFrame::Entry entry;
+		entry.name = k->to_s()->intern();
+		cf().entrys.push_back(entry);
+	}
+
+	int_t class_core_num = result_->class_core_table_.size();
+
+	ClassCore core;
+	core.lineno = linenos_.top();
+	core.kind = e->class_kind();
+	core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
+	core.variable_size = vf().entrys.size();
+	core.instance_variable_size = e->class_ivars() ? e->class_ivars()->size() : 0;
+	
+	core.variable_identifier_offset = result_->identifier_table_->size();
+	for(int_t i=0; i<vf().entrys.size(); ++i){
+		result_->identifier_table_->push_back(vf().entrys[i].name);
+	}
+
+	core.instance_variable_identifier_offset = result_->identifier_table_->size();
+	Xfor2(k, v, e->class_ivars()){
+		result_->identifier_table_->push_back(k->to_s()->intern());
+	}
+
+	put_inst(InstClassBegin(class_core_num));
+	result_->class_core_table_.push_back(core);
+
+	{
+		Xfor(v, e->class_stmts()){
+			ExprPtr v1 = ep(v);
+			if(v1->type()==EXPR_CDEFINE){					
+				compile_expr(v1->cdefine_term());
+				compile_expr(v1->cdefine_ns());
+				LVarInfo info = var_find(v1->cdefine_name(), true);
+				put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
+			}
+		}
+	}
+
+	if(var_frames_.top().scope_chain){
+		result_->class_core_table_[class_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		var_set_on_heap(1);
+	}
+
+	put_inst(InstClassEnd());
+	class_frames_.pop();
+
+	var_end();
 }
 
 void CodeBuilder::compile_fun(const ExprPtr& e){
@@ -807,6 +969,63 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	var_end();
 }
 
+void CodeBuilder::compile_for(const ExprPtr& e){
+	int_t label_cond = reserve_label();
+	int_t label_cond_end = reserve_label();
+	int_t label_if = reserve_label();
+	int_t label_if2 = reserve_label();
+	int_t label_end = reserve_label();
+	
+	if(e->for_cond()){
+		put_if_code(e->for_cond(), label_if, label_if2);
+	}
+
+	set_jump(offsetof(InstGoto, address), label_cond_end);
+	put_inst(InstGoto());
+
+	if(e->for_next()){
+		set_label(label_cond);
+		compile_stmt(e->for_next());
+	}else{
+		set_label(label_cond);
+	}
+
+	if(e->for_cond()){
+		if(e->for_else()){
+			put_if_code(e->for_cond(), label_end, label_end);
+		}else{
+			put_if_code(e->for_cond(), label_if, label_if2);
+		}
+	}
+	
+	set_label(label_cond_end);
+
+	FunFrame::Loop loop;
+	loop.control_statement_label[0] = label_end;
+	loop.control_statement_label[1] = label_cond;
+	loop.label = e->for_label();
+	loop.frame_count = var_frames_.size();
+	loop.have_label = false;
+	ff().loops.push(loop);
+
+	compile_stmt(e->for_body());
+	
+	ff().loops.pop();
+	
+	set_jump(offsetof(InstGoto, address), label_cond);
+	put_inst(InstGoto());			
+
+	set_label(label_if);
+	set_label(label_if2);
+	if(e->for_nobreak()){
+		compile_stmt(e->for_nobreak());
+	}else{
+		compile_stmt(e->for_else());
+	}
+
+	set_label(label_end);
+}
+
 void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 	int_t result_count = 1;
@@ -823,8 +1042,10 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	ExprPtr e = ep(p);
 	
 	
-	linenos_.push(e->lineno());
-	result_->set_lineno_info(e->lineno());
+	if(e->lineno()!=0){
+		linenos_.push(e->lineno());
+		result_->set_lineno_info(e->lineno());
+	}
 
 	switch(e->type()){
 
@@ -1100,96 +1321,14 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		}
 
 		XTAL_CASE(EXPR_CLASS){
-
-			ExprPtr fun = Expr::make(EXPR_FUN);
-			fun->set_fun_kind(KIND_METHOD);
-			ExprPtr block = Expr::make(EXPR_SCOPE);
-			ArrayPtr stmts = xnew<Array>();
-			Xfor2(k, v, e->class_ivars()){
-				if(v){
-					stmts->push_back(Expr::make(EXPR_ASSIGN)->set_bin_lhs(Expr::make(EXPR_IVAR)->set_ivar_name(k->to_s()->intern()))->set_bin_rhs(ptr_cast<Expr>(v)));
-				}
-			}
-			block->set_scope_stmts(stmts);
-			fun->set_fun_body(block);
-
-			e->class_stmts()->push_front(cdefine(0, KIND_PUBLIC, Xid(_initialize_), null_(0), fun));
-
-
-			Xfor(v, e->class_mixins()){
-				compile_expr(v);
-			}
-
-			var_begin(VarFrame::CLASS);
-
-			Xfor(v, e->class_stmts()){
-				ExprPtr v1 = ep(v);
-				if(v1->type()==EXPR_CDEFINE){
-					var_define(v1->cdefine_name());
-				}
-			}
-
-			ClassFrame& cf = class_frames_.push();
-			cf.entrys.clear();
-			cf.class_core_num = result_->class_core_table_.size();
-
-			Xfor2(k, v, e->class_ivars()){
-				ClassFrame::Entry entry;
-				entry.name = k->to_s()->intern();
-				cf.entrys.push_back(entry);
-			}
-
-
-			VarFrame& vf = var_frames_.top();
-
-			int_t class_core_num = result_->class_core_table_.size();
-
-			ClassCore core;
-			core.lineno = linenos_.top();
-			core.kind = e->class_kind();
-			core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
-			core.variable_size = vf.entrys.size();
-			core.instance_variable_size = e->class_ivars() ? e->class_ivars()->size() : 0;
-			
-			core.variable_identifier_offset = result_->identifier_table_->size();
-			for(int_t i=0; i<vf.entrys.size(); ++i){
-				result_->identifier_table_->push_back(vf.entrys[i].name);
-			}
-
-			core.instance_variable_identifier_offset = result_->identifier_table_->size();
-			Xfor2(k, v, e->class_ivars()){
-				result_->identifier_table_->push_back(k->to_s()->intern());
-			}
-
-			put_inst(InstClassBegin(class_core_num));
-			result_->class_core_table_.push_back(core);
-
-			{
-
-				Xfor(v, e->class_stmts()){
-					ExprPtr v1 = ep(v);
-					if(v1->type()==EXPR_CDEFINE){					
-						compile_expr(v1->cdefine_term());
-						compile_expr(v1->cdefine_ns());
-						LVarInfo info = var_find(v1->cdefine_name(), true);
-						put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
-					}
-				}
-			}
-
-			if(var_frames_.top().scope_chain){
-				result_->class_core_table_[class_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
-				var_set_on_heap(1);
-			}
-
-			put_inst(InstClassEnd());
-			class_frames_.pop();
-			var_end();
+			compile_class(e);
 		}
 	}
 	
-	result_->set_lineno_info(e->lineno());
-	linenos_.pop();
+	if(e->lineno()!=0){
+		result_->set_lineno_info(e->lineno());
+		linenos_.pop();
+	}
 
 	if(info.need_result_count!=result_count){
 		put_inst(InstAdjustResult(result_count, info.need_result_count));
@@ -1207,8 +1346,10 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
 
-	linenos_.push(e->lineno());
-	result_->set_lineno_info(e->lineno());
+	if(e->lineno()!=0){
+		linenos_.push(e->lineno());
+		result_->set_lineno_info(e->lineno());
+	}
 
 	switch(e->type()){
 
@@ -1393,8 +1534,10 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				var_begin(VarFrame::SCOPE);
 				var_define(e->try_catch_var(), 0, true);
 				block_begin();
+
 				put_set_local_code(e->try_catch_var());
 				compile_stmt(e->try_catch());
+				
 				block_end();
 				var_end();
 
@@ -1447,51 +1590,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_FOR){
-			int_t label_cond = reserve_label();
-			int_t label_cond_end = reserve_label();
-			int_t label_if = reserve_label();
-			int_t label_if2 = reserve_label();
-			int_t label_end = reserve_label();
-			
-			if(e->for_cond()){
-				put_if_code(e->for_cond(), label_if, label_if2);
-			}
-	
-			set_jump(offsetof(InstGoto, address), label_cond_end);
-			put_inst(InstGoto());
-
-			if(e->for_next()){
-				set_label(label_cond);
-				compile_stmt(e->for_next());
-			}else{
-				set_label(label_cond);
-			}
-
-			if(e->for_cond()){
-				if(e->for_else()){
-					put_if_code(e->for_cond(), label_end, label_end);
-				}else{
-					put_if_code(e->for_cond(), label_if, label_if2);
-				}
-			}
-			
-			set_label(label_cond_end);
-			push_loop(label_end, label_cond, e->for_label());
-			compile_stmt(e->for_body());
-			pop_loop(); 
-			
-			set_jump(offsetof(InstGoto, address), label_cond);
-			put_inst(InstGoto());			
-
-			set_label(label_if);
-			set_label(label_if2);
-			if(e->for_nobreak()){
-				compile_stmt(e->for_nobreak());
-			}else{
-				compile_stmt(e->for_else());
-			}
-
-			set_label(label_end);
+			compile_for(e);
 		}
 
 		XTAL_CASE(EXPR_MASSIGN){
@@ -1575,8 +1674,10 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 	}
 
-	result_->set_lineno_info(e->lineno());
-	linenos_.pop();
+	if(e->lineno()!=0){
+		result_->set_lineno_info(e->lineno());
+		linenos_.pop();
+	}
 }
 
 }

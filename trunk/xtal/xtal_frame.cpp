@@ -188,11 +188,7 @@ void Class::inherit_strict(const ClassPtr& md){
 }
 
 AnyPtr Class::inherited_classes(){
-	ArrayPtr bases = xnew<Array>();
-	for(int_t i=0; i<mixins_->size(); ++i){
-		bases->push_back(mixins_->at(i));
-	}
-	return bases;
+	return mixins_->each();
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){

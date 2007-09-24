@@ -126,39 +126,39 @@ int c;
 		/*		
 		c = clock();
 		load("../bench/vec.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);		
+		printf("vec %g\n", (clock()-c)/1000.0f);		
 		
 		c = clock();
 		load("../bench/inst.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("inst %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		full_gc();
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("full_gc %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/loop.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("loop %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/nested_loops.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("nested_loops %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/fib.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("fib %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/loop_iter.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("loop_iter %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/array_for.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("array_for %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
 		load("../bench/array_each.xtal");
-		printf("%g\n", (clock()-c)/1000.0f);
+		printf("array_each %g\n\n", (clock()-c)/1000.0f);
 
 		//*/
 

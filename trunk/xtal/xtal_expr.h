@@ -162,12 +162,9 @@ public:
 	XTAL_DEF_MEMBER(4, bool, fun_extendable_param);
 	XTAL_DEF_MEMBER(5, ExprPtr, fun_body);
 
-	XTAL_DEF_MEMBER(4, ExprPtr, define_final);
-
 	XTAL_DEF_MEMBER(2, ArrayPtr, massign_lhs_exprs);
 	XTAL_DEF_MEMBER(3, ArrayPtr, massign_rhs_exprs);
 	XTAL_DEF_MEMBER(4, bool, massign_define);
-	XTAL_DEF_MEMBER(5, bool, massign_final);
 
 	XTAL_DEF_MEMBER(2, InternedStringPtr, ivar_name);
 
@@ -269,7 +266,7 @@ inline ExprPtr if_(int_t lineno, const ExprPtr& cond,const ExprPtr& body, const 
 	
 inline ExprPtr massign(int_t lineno, const ArrayPtr& lhs, const ArrayPtr& rhs, bool define){ return Expr::make(EXPR_MASSIGN, lineno, 5)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs)->set_massign_define(define); }
 
-inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs, bool final = false){ return bin(EXPR_DEFINE, lineno, lhs, rhs)->set_define_final(true); }
+inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lineno, lhs, rhs); }
 inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lineno, lhs, rhs); }
 
 inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }

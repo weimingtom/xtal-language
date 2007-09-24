@@ -37,7 +37,7 @@ private:
 			:need_result_count(need_result_count), tail(tail){}
 	};
 
-	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
+	AnyPtr compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
 	void compile_stmt(const AnyPtr& p);	
 
 	int_t reserve_label();
@@ -47,7 +47,7 @@ private:
 
 	bool put_local_code(const InternedStringPtr& var);
 	bool put_set_local_code(const InternedStringPtr& var);
-	void put_define_local_code(const InternedStringPtr& var);
+	void put_define_local_code(const InternedStringPtr& var, const AnyPtr& val = nop);
 	void put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined);
 	void put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
 	void put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
@@ -55,7 +55,8 @@ private:
 	int_t lookup_instance_variable(const InternedStringPtr& key);
 	void put_set_instance_variable_code(const InternedStringPtr& var);
 	void put_instance_variable_code(const InternedStringPtr& var);
-	void put_if_code(ExprPtr cond, int_t label_if, int_t label_if2);
+	void put_val_code(const AnyPtr& val);
+	void put_if_code(const ExprPtr& cond, int_t label_if, int_t label_if2);
 	void break_off(int_t to);
 	
 	void compile_bin(const ExprPtr& e);
@@ -66,6 +67,12 @@ private:
 	void compile_class(const ExprPtr& e);
 	void compile_fun(const ExprPtr& e);
 	void compile_for(const ExprPtr& e);
+
+	AnyPtr do_bin(const ExprPtr& e, const InternedStringPtr& name, bool swap = false);
+	AnyPtr do_not(const AnyPtr& e);
+	AnyPtr do_expr(const AnyPtr& e);
+	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name);
+	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name, const AnyPtr& b);
 
 	void put_inst2(const Inst& t, uint_t sz);
 
@@ -118,6 +125,7 @@ private:
 			bool constant;
 			bool initialized;
 			int_t accessibility;
+			AnyPtr value;
 		};
 
 		AC<Entry>::vector entries;
@@ -156,7 +164,7 @@ private:
 	};
 
 	void scope_chain(int_t var_frame_size);
-	LVarInfo var_find(const InternedStringPtr& key, bool define = false);
+	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
 	void var_define(const InternedStringPtr& name, int_t accessibility = 0, bool define = false, bool constant = false);

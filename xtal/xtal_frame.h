@@ -484,6 +484,7 @@ public:
 };
 
 
+
 struct CppClassHolderList{
 	ClassPtr value;
 	CppClassHolderList* next;

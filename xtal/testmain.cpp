@@ -113,7 +113,9 @@ AnyPtr ret = Xsrc
 	
  compile("a:[5, 6, 7]; if(0)a.map(|e| e*2)[].p;").inspect.p;
 
-test: fun(aaaa, b, aaaaa){ aaaa.p; b.p; }
+
+test: fun(aaaa, b, aaaaa){ aaaa.p; b.p; }.p;
+test(5, 6, 7);
 
 ))();
 

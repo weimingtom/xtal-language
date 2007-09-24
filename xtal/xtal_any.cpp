@@ -153,7 +153,7 @@ struct MemberCacheTable{
 			miss_++;
 
 			if(type(target_class)!=TYPE_BASE)
-				return null;
+				return nop;
 
 			unit.member = pvalue(target_class)->do_member(member_name, ap(self), ap(ns));
 			unit.target_class = itarget_class;
@@ -239,7 +239,8 @@ void Any::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessib
 void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, name);
-	if(const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns)){
+	const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns);
+	if(rawne(ret, nop)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);
 	}
@@ -314,6 +315,7 @@ const ClassPtr& Any::get_class() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_NULL){ return get_cpp_class<Null>(); }
+		XTAL_CASE(TYPE_NOP){ return get_cpp_class<Nop>(); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->get_class(); }
 		XTAL_CASE(TYPE_INT){ return get_cpp_class<Int>(); }
 		XTAL_CASE(TYPE_FLOAT){ return get_cpp_class<Float>(); }

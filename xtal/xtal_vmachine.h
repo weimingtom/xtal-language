@@ -579,7 +579,8 @@ private:
 
 	const inst_t* send1(const inst_t* pc, const InternedStringPtr& name);
 	const inst_t* send2(const inst_t* pc, const InternedStringPtr& name);
-	const inst_t* send2r(const inst_t* pc, const InternedStringPtr& name);
+	const inst_t* send2_r(const inst_t* pc, const InternedStringPtr& name);
+	const inst_t* send2_q(const inst_t* pc, const InternedStringPtr& name);
 
 	void set_local_variable(int_t pos, const Innocence&);
 	const AnyPtr& local_variable(int_t pos);
@@ -593,6 +594,7 @@ public:
 //{DECLS{{
 	const inst_t* FunNop(const inst_t* pc);
 	const inst_t* FunPushNull(const inst_t* pc);
+	const inst_t* FunPushNop(const inst_t* pc);
 	const inst_t* FunPushTrue(const inst_t* pc);
 	const inst_t* FunPushFalse(const inst_t* pc);
 	const inst_t* FunPushInt1Byte(const inst_t* pc);
@@ -669,8 +671,8 @@ public:
 	const inst_t* FunIfRawNe(const inst_t* pc);
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfNis(const inst_t* pc);
-	const inst_t* FunIfArgIsNull(const inst_t* pc);
-	const inst_t* FunIfArgIsNullDirect(const inst_t* pc);
+	const inst_t* FunIfArgIsNop(const inst_t* pc);
+	const inst_t* FunIfArgIsNopDirect(const inst_t* pc);
 	const inst_t* FunPos(const inst_t* pc);
 	const inst_t* FunNeg(const inst_t* pc);
 	const inst_t* FunCom(const inst_t* pc);
@@ -733,7 +735,7 @@ public:
 	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
-	const inst_t* FunThrowNull(const inst_t* pc);
+	const inst_t* FunThrowNop(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunSendToI(const inst_t* pc);
@@ -757,7 +759,7 @@ private:
 	inst_t throw_unsupported_error_code_;
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
-	inst_t throw_null_code_;
+	inst_t throw_nop_code_;
 	
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;

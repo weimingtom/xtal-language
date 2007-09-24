@@ -384,7 +384,6 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idto_a;
 extern InternedStringPtr idinitialize;
 extern InternedStringPtr idonce;
-extern InternedStringPtr idexport;
 extern InternedStringPtr iddo;
 extern InternedStringPtr idstring;
 extern InternedStringPtr idfalse;
@@ -406,7 +405,6 @@ extern InternedStringPtr idvalue;
 extern InternedStringPtr iddefault;
 extern InternedStringPtr idcase;
 extern InternedStringPtr idto_s;
-extern InternedStringPtr idimport;
 extern InternedStringPtr idop_shr;
 extern InternedStringPtr idpure;
 extern InternedStringPtr idfinally;
@@ -425,6 +423,7 @@ extern InternedStringPtr idop_mod_assign;
 extern InternedStringPtr idset_at;
 extern InternedStringPtr idbreak;
 extern InternedStringPtr idop_mod;
+extern InternedStringPtr idnop;
 extern InternedStringPtr idto_i;
 extern InternedStringPtr idop_or;
 extern InternedStringPtr idtry;
@@ -476,6 +475,8 @@ extern InternedStringPtr idif;
 extern InternedStringPtr idp;
 }
 //}}ID}
+
+
 
 
 

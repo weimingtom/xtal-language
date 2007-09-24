@@ -13,8 +13,6 @@
 
 namespace xtal{
 
-extern AnyPtr once_value_none_;
-
 enum{
 	SERIALIZE_VERSION1 = 1,
 	SERIALIZE_VERSION2 = 0,
@@ -397,7 +395,7 @@ AnyPtr Serializer::inner_deserialize(){
 			sz = stream_->get_u32();
 			p->once_table_ = xnew<Array>(sz);
 			for(uint_t i=0; i<sz; ++i){
-				p->once_table_->set_at(i, once_value_none_);
+				p->once_table_->set_at(i, nop);
 			}
 
 			FunPtr ret(xnew<Fun>(null, null, p, &p->xfun_core_table_[0]));

@@ -152,17 +152,17 @@ typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > stri
 */
 enum PrimitiveType{
 	TYPE_NULL = 0,
+	TYPE_NOP = 1,
 
-	TYPE_FALSE = 1,
-	TYPE_TRUE = 2,
+	TYPE_FALSE = 2,
+	TYPE_TRUE = 3,
 	
-	TYPE_BASE = 3,
+	TYPE_BASE = 4,
 	
-	TYPE_INT = 4,
-	TYPE_FLOAT = 5,
+	TYPE_INT = 5,
+	TYPE_FLOAT = 6,
 	
-	TYPE_SMALL_STRING = 6,
-	
+	TYPE_SMALL_STRING = 7,
 
 	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
 	TYPE_SHIFT = 3
@@ -335,6 +335,9 @@ extern ExceptCore empty_except_core;
 
 class Null;
 extern Null null;
+
+class Nop;
+extern Nop nop;
 
 class True;
 class False;

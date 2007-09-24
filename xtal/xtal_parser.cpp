@@ -88,6 +88,7 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
 	keyword_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
 	keyword_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
+	keyword_map_->set_at(Xid(nop), (int_t)Token::KEYWORD_NOP);
 	keyword_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
 	keyword_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
 	keyword_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
@@ -977,6 +978,7 @@ ExprPtr Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_DOFUN){ ret = call(ln, parse_fun(KIND_FUN), null, null, false); }
 				XTAL_CASE(Token::KEYWORD_CALLEE){ ret = callee(ln); }
 				XTAL_CASE(Token::KEYWORD_NULL){ ret = null_(ln); }
+				XTAL_CASE(Token::KEYWORD_NOP){ ret = nop_(ln); }
 				XTAL_CASE(Token::KEYWORD_TRUE){ ret = true_(ln); }
 				XTAL_CASE(Token::KEYWORD_FALSE){ ret = false_(ln); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = this_(ln); }
@@ -1473,7 +1475,7 @@ ExprPtr Parser::parse_for(const InternedStringPtr& label){
 
 ExprPtr Parser::parse_toplevel(){
 	int_t ln = lineno();
-	ExprPtr ret = scope(ln, parse_stmts());
+	ExprPtr ret = toplevel(ln, parse_stmts());
 	expect(-1);
 	return ret;
 }
@@ -1523,7 +1525,7 @@ ExprPtr Parser::parse_class(int_t kind){
 		}else if(eat('_')){// インスタンス変数定義
 			if(InternedStringPtr var = parse_identifier()){
 				if(eclass->class_ivars()->at(var)){
-					error_->error(lineno(), Xt("Xtal Compile Error 1024")(var));
+					error_->error(lineno(), Xt("Xtal Compile Error 1024")(Named("name", var)));
 				}
 
 				if(eat(':')){ // 初期値込み
@@ -1602,14 +1604,14 @@ ExprPtr Parser::parse_fun(int_t kind){
 			
 			if(eat('_')){
 				if(InternedStringPtr var = parse_identifier()){
-					if(rawne(params->at(var), null)){
-						error_->error(lineno(), Xt("Xtal Compile Error 1026")(var));
+					if(rawne(params->at(var), nop)){
+						error_->error(lineno(), Xt("Xtal Compile Error 1026")(Named("name", var)));
 					}
 
 					if(!lambda && eat(':')){
 						params->set_at(var, parse_expr_must());
 					}else{
-						params->set_at(var, false);
+						params->set_at(var, null);
 					}
 
 					if(inst_assign_list_count<255){
@@ -1619,14 +1621,14 @@ ExprPtr Parser::parse_fun(int_t kind){
 					error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 				}
 			}else if(InternedStringPtr var = parse_identifier()){
-				if(rawne(params->at(var), null)){
-					error_->error(lineno(), Xt("Xtal Compile Error 1026")(var));
+				if(rawne(params->at(var), nop)){
+					error_->error(lineno(), Xt("Xtal Compile Error 1026")(Named("name", var)));
 				}
 
 				if(!lambda && eat(':')){
 					params->set_at(var, parse_expr_must());
 				}else{
-					params->set_at(var, false);
+					params->set_at(var, null);
 				}
 			}
 			

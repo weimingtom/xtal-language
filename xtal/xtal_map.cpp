@@ -137,7 +137,7 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 		}
 		p = p->next;
 	}
-	return null;
+	return nop;
 }
 
 void Map::set_at(const AnyPtr& akey, const AnyPtr& value){

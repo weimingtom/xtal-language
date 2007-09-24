@@ -17,6 +17,8 @@ return [
 	"Xtal Compile Error 1016":"assert文の引数の数が不正です。",
 	"Xtal Compile Error 1017":"不正な%%記法リテラルです。",
 	"Xtal Compile Error 1018":"default節が重複定義されました。",
+	
+	"Xtal Compile Error 1019":"'%(name)s'は代入不可能です。", ////
 
 	"Xtal Compile Error 1020":"不正な2進数値リテラルのサフィックスです。",
 	"Xtal Compile Error 1021":"コメントの途中でファイルが終わりました。",

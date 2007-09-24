@@ -107,7 +107,7 @@ private:
 			int_t finally_label;
 		};
 
-		PODStack<Finally> finallys;
+		PODStack<Finally> finallies;
 
 		bool extendable_param;
 	};
@@ -120,7 +120,7 @@ private:
 			int_t accessibility;
 		};
 
-		AC<Entry>::vector entrys;
+		AC<Entry>::vector entries;
 		
 		struct Direct{
 			int_t pos;
@@ -145,12 +145,13 @@ private:
 			InternedStringPtr name;
 		};
 
-		AC<Entry>::vector entrys;
+		AC<Entry>::vector entries;
 		int_t class_core_num;
 	};
 
 	struct LVarInfo{
 		VarFrame* var_frame;
+		VarFrame::Entry* entry;
 		int_t pos;
 	};
 
@@ -158,7 +159,7 @@ private:
 	LVarInfo var_find(const InternedStringPtr& key, bool define = false);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
-	void var_define(const InternedStringPtr& name, int_t accessibility = 0, bool define = false);
+	void var_define(const InternedStringPtr& name, int_t accessibility = 0, bool define = false, bool constant = false);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();

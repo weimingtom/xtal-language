@@ -14,9 +14,6 @@
 
 namespace xtal{
 
-extern AnyPtr once_value_none_;
-
-
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
 	error_= &errorimpl_;
 	error_->init(source_file_name);
@@ -35,10 +32,15 @@ void CodeBuilder::interactive_compile(){
 		StreamPtr ss = xnew<StringStream>(";");
 		ExprPtr e = parser_.parse_stmt(ss, error_);
 		compile_toplevel(e, "<ix>");
-		for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn0))/sizeof(inst_t); ++i){
-			result_->code_.pop_back();
-		}
+		result_->code_.clear();
 	}
+
+	result_->xfun_core_table_.reserve(10000);
+	result_->class_core_table_.reserve(10000);
+	result_->block_core_table_.reserve(10000);
+	result_->except_core_table_.reserve(10000);
+
+	result_->first_fun()->set_core(&result_->xfun_core_table_[0]);
 
 	int_t pc_pos = 0;
 	InteractiveStreamPtr stream = xnew<InteractiveStream>();
@@ -60,7 +62,7 @@ void CodeBuilder::interactive_compile(){
 			fun_frames_.push();	
 			ff().labels.clear();
 			ff().loops.clear();
-			ff().finallys.clear();
+			ff().finallies.clear();
 			ff().var_frame_count = var_frames_.size();
 			ff().extendable_param = true;
 
@@ -68,19 +70,21 @@ void CodeBuilder::interactive_compile(){
 			compile_stmt(e);
 
 			if(error_->errors->size()!=0){
-				result_->code_.resize(last_code_size);
 				stderr_stream()->put_s(error_->errors->join("\n"));
 				stderr_stream()->put_s("\n");
 				error_->errors->clear();				
+				result_->code_.resize(last_code_size);
+				fun_frames_.downsize(1);
 			}else{
 
 				process_labels();
 
 				fun_frames_.downsize(1);
 
+				result_->inspect_range(last_code_size, code_size())->p();
+
 				put_inst(InstReturn0());
 				put_inst(InstThrow());
-				result_->reset_core();
 
 				XTAL_TRY{
 					vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
@@ -112,7 +116,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	register_value(null);
 	
 	result_->once_table_ = xnew<Array>();
-	result_->once_table_->push_back(once_value_none_);
+	result_->once_table_->push_back(nop);
 
 	linenos_.push(1);
 
@@ -120,7 +124,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	fun_frames_.push();	
 	ff().labels.clear();
 	ff().loops.clear();
-	ff().finallys.clear();
+	ff().finallies.clear();
 	ff().var_frame_count = var_frames_.size();
 	ff().extendable_param = true;
 
@@ -167,7 +171,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	var_end();
 
 	if(error_->errors->size()==0){
-		result_->reset_core();
+		result_->first_fun()->set_core(&result_->xfun_core_table_[0]);
 		return result_;
 	}else{
 		result_ = null;
@@ -192,6 +196,10 @@ AnyPtr CodeBuilder::errors(){
 bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
+		if(info.entry->constant){
+			error_->error(lineno(), Xt("Xtal Compile Error 1019")(Named("name", var)));
+		}
+
 		if(info.pos<=0xff){
 			var_set_direct(*info.var_frame);
 			put_inst(InstSetLocalVariable1Byte(info.pos));
@@ -208,8 +216,14 @@ bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
 
 void CodeBuilder::put_define_local_code(const InternedStringPtr& var){
 	LVarInfo info = var_find(var, true);
+
 	if(info.pos>=0){
-		put_set_local_code(var);
+		if(info.pos<=0xff){
+			var_set_direct(*info.var_frame);
+			put_inst(InstSetLocalVariable1Byte(info.pos));
+		}else{
+			put_inst(InstSetLocalVariable2Byte(info.pos));
+		}
 	}else{
 		put_inst(InstDefineGlobalVariable(register_identifier(var)));
 	}
@@ -305,8 +319,8 @@ int_t CodeBuilder::lookup_instance_variable(const InternedStringPtr& key){
 	if(!class_frames_.empty()){
 		int ret = 0;
 		ClassFrame& cf = class_frames_.top();
-		for(size_t i = 0, last = cf.entrys.size(); i<last; ++i){
-			if(raweq(cf.entrys[i].name, key)){
+		for(size_t i = 0, last = cf.entries.size(); i<last; ++i){
+			if(raweq(cf.entries[i].name, key)){
 				return ret;
 			}
 			ret++;
@@ -356,8 +370,8 @@ void CodeBuilder::process_labels(){
 
 void CodeBuilder::break_off(int_t n){
 	for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)n; scope_count--){
-		for(uint_t k = 0; k<ff().finallys.size(); ++k){
-			if((uint_t)ff().finallys[k].frame_count==scope_count){
+		for(uint_t k = 0; k<ff().finallies.size(); ++k){
+			if((uint_t)ff().finallies[k].frame_count==scope_count){
 				int_t label = reserve_label();
 				set_jump(offsetof(InstPushGoto, address), label);
 				put_inst(InstPushGoto());
@@ -367,7 +381,7 @@ void CodeBuilder::break_off(int_t n){
 		}
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.entrys.size() && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::BLOCK)){
+		if(vf.entries.size() && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::BLOCK)){
 			var_set_direct(vf);
 			put_inst(InstBlockEnd(vf.block_core_num));
 		}
@@ -420,14 +434,16 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 }
 
 CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define){
-	LVarInfo ret = {0, 0};
+	LVarInfo ret = {0, 0, 0};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
-		for(size_t j = 0, jlast = vf.entrys.size(); j<jlast; ++j){
-			if(raweq(vf.entrys[vf.entrys.size()-1-j].name, key)){
-				if(define){ vf.entrys[vf.entrys.size()-1-j].initialized = true; }
-				if(vf.fun_frames_size!=fun_frames_.size() || vf.entrys[vf.entrys.size()-1-j].initialized){
+		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
+			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
+			if(raweq(entry.name, key)){
+				if(define){ entry.initialized = true; }
+				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized){
 					ret.var_frame = &vf;
+					ret.entry = &entry;
 					scope_chain(i);
 					return ret;
 				}
@@ -441,7 +457,7 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool d
 
 void CodeBuilder::var_begin(int_t kind){
 	var_frames_.push();
-	vf().entrys.clear();
+	vf().entries.clear();
 	vf().directs.clear();
 	vf().block_core_num = 0;
 	vf().kind = kind;
@@ -473,9 +489,9 @@ void CodeBuilder::var_define(const ArrayPtr& stmts){
 	}
 }
 
-void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility, bool define){
-	for(size_t j = 0, jlast = vf().entrys.size(); j<jlast; ++j){
-		if(raweq(vf().entrys[vf().entrys.size()-1-j].name, name)){
+void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility, bool define, bool constant){
+	for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
+		if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
 			error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
 			return;
 		}
@@ -483,10 +499,10 @@ void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility,
 
 	VarFrame::Entry entry;
 	entry.name = name;
-	entry.constant = false;
+	entry.constant = constant;
 	entry.initialized = define;
 	entry.accessibility = accessibility;
-	vf().entrys.push_back(entry);
+	vf().entries.push_back(entry);
 }
 
 void CodeBuilder::var_set_direct(VarFrame& vf){
@@ -517,17 +533,17 @@ void CodeBuilder::block_begin(){
 	int_t block_core_num = result_->block_core_table_.size();
 
 	BlockCore core;
-	core.variable_size = vf().entrys.size();
+	core.variable_size = vf().entries.size();
 	core.variable_identifier_offset = result_->identifier_table_->size();
 	core.lineno = linenos_.top();
 
 	vf().block_core_num = block_core_num;
 
-	for(int_t i=0; i<vf().entrys.size(); ++i){
-		result_->identifier_table_->push_back(vf().entrys[i].name);
+	for(int_t i=0; i<vf().entries.size(); ++i){
+		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
-	if(vf().entrys.size()){
+	if(vf().entries.size()){
 		var_set_direct(vf());
 		put_inst(InstBlockBegin(block_core_num));
 	}
@@ -536,7 +552,7 @@ void CodeBuilder::block_begin(){
 }
 
 void CodeBuilder::block_end(){
-	if(vf().entrys.size()){
+	if(vf().entries.size()){
 		var_set_direct(vf());
 		put_inst(InstBlockEnd(vf().block_core_num));
 	}
@@ -766,18 +782,18 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	Xfor(v, e->class_stmts()){
 		ExprPtr v1 = ep(v);
 		if(v1->type()==EXPR_CDEFINE){
-			var_define(v1->cdefine_name());
+			var_define(v1->cdefine_name(), v1->cdefine_accessibility(), true, true);
 		}
 	}
 
 	class_frames_.push();
-	cf().entrys.clear();
+	cf().entries.clear();
 	cf().class_core_num = result_->class_core_table_.size();
 
 	Xfor2(k, v, e->class_ivars()){
 		ClassFrame::Entry entry;
 		entry.name = k->to_s()->intern();
-		cf().entrys.push_back(entry);
+		cf().entries.push_back(entry);
 	}
 
 	int_t class_core_num = result_->class_core_table_.size();
@@ -786,12 +802,12 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	core.lineno = linenos_.top();
 	core.kind = e->class_kind();
 	core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
-	core.variable_size = vf().entrys.size();
+	core.variable_size = vf().entries.size();
 	core.instance_variable_size = e->class_ivars() ? e->class_ivars()->size() : 0;
 	
 	core.variable_identifier_offset = result_->identifier_table_->size();
-	for(int_t i=0; i<vf().entrys.size(); ++i){
-		result_->identifier_table_->push_back(vf().entrys[i].name);
+	for(int_t i=0; i<vf().entries.size(); ++i){
+		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
 	core.instance_variable_identifier_offset = result_->identifier_table_->size();
@@ -891,7 +907,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	fun_frames_.push();	
 	ff().labels.clear();
 	ff().loops.clear();
-	ff().finallys.clear();
+	ff().finallies.clear();
 	ff().var_frame_count = var_frames_.size();
 	ff().extendable_param = e->fun_extendable_param();
 
@@ -911,10 +927,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	core.flags = e->fun_extendable_param() ? FunCore::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
-	core.variable_size = vf().entrys.size();
+	core.variable_size = vf().entries.size();
 	core.variable_identifier_offset = result_->identifier_table_->size();
-	for(int_t i=0; i<vf().entrys.size(); ++i){
-		result_->identifier_table_->push_back(vf().entrys[i].name);
+	for(int_t i=0; i<vf().entries.size(); ++i){
+		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
 	int_t fun_core_table_number = result_->xfun_core_table_.size();
@@ -935,9 +951,9 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 			if(v){
 				int_t label = reserve_label();
 				
-				set_jump(offsetof(InstIfArgIsNull, address), label);
+				set_jump(offsetof(InstIfArgIsNop, address), label);
 				var_set_direct(vf());
-				put_inst(InstIfArgIsNull(e->fun_params()->size()-1-i, 0));
+				put_inst(InstIfArgIsNop(e->fun_params()->size()-1-i, 0));
 
 				compile_expr(v);
 				
@@ -1064,6 +1080,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_NODEFAULT;
 
 		XTAL_CASE(EXPR_NULL){ put_inst(InstPushNull()); }
+		XTAL_CASE(EXPR_NOP){ put_inst(InstPushNop()); }
 		XTAL_CASE(EXPR_TRUE){ put_inst(InstPushTrue()); }
 		XTAL_CASE(EXPR_FALSE){ put_inst(InstPushFalse()); }
 		XTAL_CASE(EXPR_THIS){ put_inst(InstPushThis()); }
@@ -1214,7 +1231,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			
 			set_jump(offsetof(InstOnce, address), label_end);
 			int_t num = result_->once_table_->size();
-			result_->once_table_->push_back(once_value_none_);
+			result_->once_table_->push_back(nop);
 			put_inst(InstOnce(0, num));
 						
 			compile_expr(e->una_term());
@@ -1444,8 +1461,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_RETURN){	
 			bool have_finally = false;
 			for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)ff().var_frame_count+1; scope_count--){
-				for(uint_t k = 0; k<(uint_t)ff().finallys.size(); ++k){
-					if((uint_t)ff().finallys[k].frame_count==scope_count){
+				for(uint_t k = 0; k<(uint_t)ff().finallies.size(); ++k){
+					if((uint_t)ff().finallies[k].frame_count==scope_count){
 						have_finally = true;
 					}
 				}
@@ -1519,7 +1536,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			CodeBuilder::FunFrame::Finally exc;
 			exc.frame_count = var_frames_.size();
 			exc.finally_label = finally_label;
-			ff().finallys.push(exc);
+			ff().finallies.push(exc);
 
 			compile_stmt(e->try_body());
 			
@@ -1541,7 +1558,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				CodeBuilder::FunFrame::Finally exc;
 				exc.frame_count = var_frames_.size();
 				exc.finally_label = finally_label;
-				ff().finallys.push(exc);
+				ff().finallies.push(exc);
 
 				var_begin(VarFrame::SCOPE);
 				var_define(e->try_catch_var(), 0, true);
@@ -1554,7 +1571,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				var_end();
 
 				put_inst(InstTryEnd());
-				ff().finallys.pop();
+				ff().finallies.pop();
 
 				result_->except_core_table_[core2].finally_pc = code_size();
 				result_->except_core_table_[core2].end_pc = code_size();
@@ -1567,7 +1584,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			// finally節のコードを埋め込む
 			compile_stmt(e->try_finally());
 			
-			ff().finallys.pop();
+			ff().finallies.pop();
 
 			put_inst(InstPopGoto());
 
@@ -1683,6 +1700,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				}
 			}block_end();
 			var_end();
+		}
+
+		XTAL_CASE(EXPR_TOPLEVEL){
+			Xfor(v, e->toplevel_stmts()){
+				compile_stmt(v);
+			}
 		}
 	}
 

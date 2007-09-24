@@ -88,6 +88,7 @@ public:
 	}
 
 	StringPtr inspect();
+	StringPtr inspect_range(int_t start, int_t end);
 
 	virtual void call(const VMachinePtr& vm);
 
@@ -96,8 +97,6 @@ private:
 	friend class CodeBuilder;
 	friend class VMachine;
 	friend class Serializer;
-
-	void reset_core();
 
 	typedef AC<inst_t>::vector code_t;
 	code_t code_;

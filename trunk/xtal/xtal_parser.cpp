@@ -1475,7 +1475,8 @@ ExprPtr Parser::parse_for(const InternedStringPtr& label){
 
 ExprPtr Parser::parse_toplevel(){
 	int_t ln = lineno();
-	ExprPtr ret = toplevel(ln, parse_stmts());
+	ExprPtr ret = scope(ln, parse_stmts());
+	//ExprPtr ret = toplevel(ln, parse_stmts());
 	expect(-1);
 	return ret;
 }

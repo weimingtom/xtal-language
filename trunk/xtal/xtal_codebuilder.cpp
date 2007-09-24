@@ -463,11 +463,11 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool d
 		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
 			if(raweq(entry.name, key)){
-				if(define){ entry.initialized = true; }
-				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized){
+				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
 					ret.var_frame = &vf;
 					ret.entry = &entry;
 					if(!traceless){
+						if(define){ entry.initialized = true; }
 						scope_chain(i);
 					}
 					return ret;
@@ -528,6 +528,7 @@ void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility,
 	entry.initialized = define;
 	entry.accessibility = accessibility;
 	entry.value = nop;
+	entry.noassign = true;
 	vf().entries.push_back(entry);
 }
 
@@ -851,9 +852,10 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
 			if(v1->type()==EXPR_CDEFINE){					
-				compile_expr(v1->cdefine_term());
+				AnyPtr val = compile_expr(v1->cdefine_term());
 				compile_expr(v1->cdefine_ns());
 				LVarInfo info = var_find(v1->cdefine_name(), true);
+				info.entry->value = val;
 				put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
 			}
 		}
@@ -1050,12 +1052,12 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	// ループ本体をコンパイル
 	compile_stmt(e->for_body());
 
-	set_label(label_cond);
-
 	// next部をコンパイル
 	if(e->for_next()){
 		compile_stmt(e->for_next());
 	}
+
+	set_label(label_cond);
 
 	// 条件式をコンパイル
 	if(e->for_cond()){
@@ -1064,6 +1066,11 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 
 	// ループ本体をコンパイル
 	compile_stmt(e->for_body());
+
+	// next部をコンパイル
+	if(e->for_next()){
+		compile_stmt(e->for_next());
+	}
 
 	// label_cond部分にジャンプ
 	set_jump(offsetof(InstGoto, address), label_cond);
@@ -1414,6 +1421,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 	ExprPtr e = ep(p);
 
+
 	if(debug::is_enabled() && linenos_.top()!=e->lineno()){
 		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
@@ -1454,7 +1462,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		
 		XTAL_CASE(EXPR_ASSIGN){
 			if(e->bin_lhs()->type()==EXPR_LVAR){
-				compile_expr(e->bin_rhs());
+				AnyPtr val = compile_expr(e->bin_rhs());
 				put_set_local_code(e->bin_lhs()->lvar_name());
 			}else if(e->bin_lhs()->type()==EXPR_IVAR){
 				compile_expr(e->bin_rhs());
@@ -1747,6 +1755,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_SCOPE){
 			var_begin(VarFrame::SCOPE);
 			var_define(e->scope_stmts());
+			check_lvar_assign_stmt(e);
 			block_begin();{
 				Xfor(v, e->scope_stmts()){
 					compile_stmt(v);
@@ -1964,7 +1973,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_LVAR){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
-			if(info.pos>=0 && info.var_frame->fun_frames_size==fun_frames_.size()){
+			if(info.pos>=0 && (info.var_frame->fun_frames_size==fun_frames_.size() || info.entry->noassign)){
 				return info.entry->value;
 			}
 			return nop;
@@ -1984,6 +1993,84 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 	}
 
 	return nop;
+}
+
+void CodeBuilder::check_lvar_assign(const ExprPtr& e){
+	if(e->type()==EXPR_LVAR){
+		LVarInfo info = var_find(e->lvar_name(), true, true);
+		if(info.pos>=0){
+			info.entry->noassign = false;
+		}
+	}
+}
+
+void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
+
+	if(!p)
+		return;
+
+	ExprPtr e = ep(p);
+
+	switch(e->type()){
+	case EXPR_ASSIGN:
+	case EXPR_ADD_ASSIGN:
+	case EXPR_SUB_ASSIGN:
+	case EXPR_MUL_ASSIGN:
+	case EXPR_DIV_ASSIGN:
+	case EXPR_MOD_ASSIGN:
+	case EXPR_OR_ASSIGN:
+	case EXPR_AND_ASSIGN:
+	case EXPR_XOR_ASSIGN:
+	case EXPR_SHR_ASSIGN:
+	case EXPR_SHL_ASSIGN:
+	case EXPR_USHR_ASSIGN:
+		check_lvar_assign(e->bin_lhs());
+		break;
+
+	case EXPR_INC:
+	case EXPR_DEC:
+		check_lvar_assign(e->una_term());
+		break;
+
+	case EXPR_MASSIGN:
+		if(!e->massign_define()){
+			Xfor(v, e->massign_lhs_exprs()){
+				if(v){ check_lvar_assign(ep(v)); }
+			}
+		}
+		break;
+
+	case EXPR_TRY:
+		check_lvar_assign_stmt(e->try_body());
+		check_lvar_assign_stmt(e->try_catch());
+		check_lvar_assign_stmt(e->try_finally());
+		break;
+
+	
+	case EXPR_IF:
+		check_lvar_assign_stmt(e->if_body());
+		check_lvar_assign_stmt(e->if_else());
+			break;
+
+	case EXPR_FOR:
+		check_lvar_assign_stmt(e->for_body());
+		check_lvar_assign_stmt(e->for_else());
+		check_lvar_assign_stmt(e->for_next());
+		check_lvar_assign_stmt(e->for_nobreak());
+		break;
+		
+	case EXPR_SCOPE:
+		Xfor(v, e->scope_stmts()){
+			check_lvar_assign_stmt(v);
+		}
+		break;
+
+	case EXPR_TOPLEVEL:
+		Xfor(v, e->toplevel_stmts()){
+			check_lvar_assign_stmt(v);
+		}
+		break;
+	}
 }
 
 }

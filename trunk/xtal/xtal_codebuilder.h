@@ -123,6 +123,7 @@ private:
 		struct Entry{
 			InternedStringPtr name;
 			bool constant;
+			bool noassign;
 			bool initialized;
 			int_t accessibility;
 			AnyPtr value;
@@ -171,6 +172,9 @@ private:
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();
+
+	void check_lvar_assign(const ExprPtr& e);
+	void check_lvar_assign_stmt(const AnyPtr& p);
 
 	void block_begin();
 	void block_end();

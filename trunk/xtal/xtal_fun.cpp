@@ -222,6 +222,8 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 			vm_ = null;
 			alive_ = false;
 		}
+	}else{
+		vm->return_result();
 	}
 }
 

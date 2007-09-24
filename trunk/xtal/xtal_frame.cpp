@@ -233,7 +233,7 @@ const AnyPtr& Class::any_member(const InternedStringPtr& name, const AnyPtr& ns)
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}
-	return null;
+	return nop;
 }
 
 const AnyPtr& Class::bases_member(const InternedStringPtr& name){
@@ -242,7 +242,7 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 			return ret;
 		}
 	}
-	return null;
+	return nop;
 }
 
 const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
@@ -259,7 +259,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
-				, return null);
+				, return nop);
 			}
 		}
 
@@ -271,7 +271,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
-				, return null);			
+				, return nop);			
 			}
 		}
 
@@ -411,7 +411,7 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, 
 				return rawdef(name, load(file_name), ns);
 			}
 		}
-		return null;
+		return nop;
 
 		/* 指定した名前をフォルダーとみなす
 		ArrayPtr next = path_.clone();

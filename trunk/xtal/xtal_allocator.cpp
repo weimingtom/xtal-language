@@ -78,7 +78,7 @@ void set_memory(void* memory, size_t size){
 void* user_malloc(size_t size){
 	void* ret = user_malloc_nothrow(size);
 	if(!ret){
-		XTAL_THROW(AnyPtr(null), return 0);
+		XTAL_THROW(AnyPtr(nop), return 0);
 	}
 	return ret;
 } 

@@ -3,6 +3,7 @@
 namespace xtal{
 
 Null null;
+Nop nop;
 
 namespace{
 
@@ -80,6 +81,7 @@ void initialize_basic_type(){
 	builtin()->def("Int", new_cpp_class<Int>());
 	builtin()->def("Float", new_cpp_class<Float>());
 	builtin()->def("Null", new_cpp_class<Null>());
+	builtin()->def("Nop", new_cpp_class<Nop>());
 	builtin()->def("True", new_cpp_class<True>());
 	builtin()->def("False", new_cpp_class<False>());
 }

@@ -187,12 +187,17 @@ inline const AnyPtr& ap(const Innocence& v){
 }
 
 class Null : public AnyPtr{};
+class Nop : public AnyPtr{public: Nop():AnyPtr(TYPE_NOP){} };
 
-inline bool operator ==(const AnyPtr& a, const Null&){ return !a; }
-inline bool operator !=(const AnyPtr& a, const Null&){ return a; }
-inline bool operator ==(const Null&, const AnyPtr& a){ return !a; }
-inline bool operator !=(const Null&, const AnyPtr& a){ return a; }
+inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }
+inline bool operator !=(const AnyPtr& a, const Null&){ return rawne(a, null); }
+inline bool operator ==(const Null&, const AnyPtr& a){ return raweq(a, null); }
+inline bool operator !=(const Null&, const AnyPtr& a){ return rawne(a, null); }
 
+inline bool operator ==(const AnyPtr& a, const Nop&){ return raweq(a, nop); }
+inline bool operator !=(const AnyPtr& a, const Nop&){ return rawne(a, nop); }
+inline bool operator ==(const Nop&, const AnyPtr& a){ return raweq(a, nop); }
+inline bool operator !=(const Nop&, const AnyPtr& a){ return rawne(a, nop); }
 
 template<class T>
 struct SmartPtrCtor1{

@@ -7,6 +7,7 @@ namespace xtal{
 
 enum{
 	EXPR_NULL,
+	EXPR_NOP,
 	EXPR_TRUE,
 	EXPR_FALSE,
 	EXPR_CALLEE,
@@ -83,7 +84,8 @@ enum{
 	EXPR_BREAK,
 	EXPR_CONTINUE,
 	EXPR_SCOPE,
-	EXPR_CLASS
+	EXPR_CLASS,
+	EXPR_TOPLEVEL
 };
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
@@ -160,9 +162,12 @@ public:
 	XTAL_DEF_MEMBER(4, bool, fun_extendable_param);
 	XTAL_DEF_MEMBER(5, ExprPtr, fun_body);
 
+	XTAL_DEF_MEMBER(4, ExprPtr, define_final);
+
 	XTAL_DEF_MEMBER(2, ArrayPtr, massign_lhs_exprs);
 	XTAL_DEF_MEMBER(3, ArrayPtr, massign_rhs_exprs);
 	XTAL_DEF_MEMBER(4, bool, massign_define);
+	XTAL_DEF_MEMBER(5, bool, massign_final);
 
 	XTAL_DEF_MEMBER(2, InternedStringPtr, ivar_name);
 
@@ -198,6 +203,8 @@ public:
 	XTAL_DEF_MEMBER(3, ArrayPtr, class_mixins);
 	XTAL_DEF_MEMBER(4, ArrayPtr, class_stmts);
 	XTAL_DEF_MEMBER(5, MapPtr, class_ivars);
+
+	XTAL_DEF_MEMBER(2, ArrayPtr, toplevel_stmts);
 };
 
 
@@ -215,6 +222,7 @@ inline ExprPtr break_(int_t lineno, const InternedStringPtr& label){ return Expr
 inline ExprPtr yield(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_YIELD, lineno, 3)->set_yield_exprs(exprs); }
 inline ExprPtr assert_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ASSERT, lineno, 3)->set_assert_exprs(exprs); }
 inline ExprPtr scope(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_SCOPE, lineno, 3)->set_scope_stmts(stmts); }
+inline ExprPtr toplevel(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_TOPLEVEL, lineno, 3)->set_toplevel_stmts(stmts); }
 inline ExprPtr class_(int_t lineno, int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return Expr::make(EXPR_CLASS, lineno, 3)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
 inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPtr& name, const ExprPtr& ns, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(ns)->set_cdefine_term(term); }
 
@@ -231,6 +239,7 @@ inline ExprPtr int_(int_t lineno, int_t value){ return Expr::make(EXPR_INT, line
 inline ExprPtr float_(int_t lineno, float_t value){ return Expr::make(EXPR_FLOAT, lineno, 3)->set_float_value(value); }
 
 inline ExprPtr null_(int_t lineno){ return Expr::make(EXPR_NULL, lineno); }
+inline ExprPtr nop_(int_t lineno){ return Expr::make(EXPR_NOP, lineno); }
 inline ExprPtr true_(int_t lineno){ return Expr::make(EXPR_TRUE, lineno); }
 inline ExprPtr false_(int_t lineno){ return Expr::make(EXPR_FALSE, lineno); }
 inline ExprPtr this_(int_t lineno){ return Expr::make(EXPR_THIS, lineno); }
@@ -260,7 +269,7 @@ inline ExprPtr if_(int_t lineno, const ExprPtr& cond,const ExprPtr& body, const 
 	
 inline ExprPtr massign(int_t lineno, const ArrayPtr& lhs, const ArrayPtr& rhs, bool define){ return Expr::make(EXPR_MASSIGN, lineno, 5)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs)->set_massign_define(define); }
 
-inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lineno, lhs, rhs); }
+inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs, bool final = false){ return bin(EXPR_DEFINE, lineno, lhs, rhs)->set_define_final(true); }
 inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lineno, lhs, rhs); }
 
 inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }

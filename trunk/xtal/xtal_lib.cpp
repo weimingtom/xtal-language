@@ -234,7 +234,7 @@ Iterator::p: method(){
 		m.put_s("]>");
 	}
 	m.to_s.p;
-	return a.chain(this);
+	return chain(a.each, this);
 }
 
 Iterator::to_s: method(){
@@ -576,6 +576,10 @@ Null::to_s: method{
 
 Null::block_first: method{
 	return null;
+}
+
+Nop::to_s: method{
+	return "nop";
 }
 
 True::to_s: method{

@@ -28,7 +28,6 @@ assert 2!==1;
 assert "Test" is String;
 assert 150 !is String;
 
-isa : null;
-
+isa: false;
 assert !isa;
 

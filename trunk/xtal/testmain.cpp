@@ -111,8 +111,9 @@ AnyPtr ret = Xsrc
 
  //split("::" | "," | ".");
 	
- compile("for(i:0; i<10; i=i+1)i.p;").inspect.p;
-for(i:0; i<10; i=i+1)i.p;
+ compile("DEBUG: true; if(DEBUG){ 5555.p(); }").inspect.p;
+ compile("DEBUG: false; if(!DEBUG){ 5555.p(); }").inspect.p;
+
 
 
 test: fun(aaaa, b, aaaaa){ aaaa.p; b.p; }.p;

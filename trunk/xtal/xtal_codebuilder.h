@@ -47,7 +47,7 @@ private:
 
 	bool put_local_code(const InternedStringPtr& var);
 	bool put_set_local_code(const InternedStringPtr& var);
-	void put_define_local_code(const InternedStringPtr& var, const AnyPtr& val = nop);
+	void put_define_local_code(const InternedStringPtr& var, const AnyPtr& val = nop, int_t code_pos = 0);
 	void put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined);
 	void put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
 	void put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
@@ -73,7 +73,7 @@ private:
 	AnyPtr do_expr(const AnyPtr& e);
 	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name);
 	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name, const AnyPtr& b);
-
+	
 	void put_inst2(const Inst& t, uint_t sz);
 
 	template<class T>
@@ -122,11 +122,14 @@ private:
 	struct VarFrame{
 		struct Entry{
 			InternedStringPtr name;
-			bool constant;
-			bool noassign;
-			bool initialized;
-			int_t accessibility;
 			AnyPtr value;
+			bool constant;
+			bool initialized;
+			bool referenced;
+			bool assigned;
+			int_t accessibility;
+			int_t code_pos;
+			int_t code_size;
 		};
 
 		AC<Entry>::vector entries;
@@ -172,6 +175,7 @@ private:
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();
+	//int_t erase_not_referenced_lvar_code();
 
 	void check_lvar_assign(const ExprPtr& e);
 	void check_lvar_assign_stmt(const AnyPtr& p);
@@ -208,7 +212,44 @@ private:
 		result_->value_table_->push_back(v);
 		return result_->value_table_->size()-1;
 	}
-	
+
+	/*
+	void erase_dead_code(int_t pos, int_t size){
+		std::sort(addresses_.begin(), addresses_.end());
+		for(int_t i=0, sz=addresses_.size(); i<sz; ++i){
+			int_t address = addresses_[i];
+			inst_address_t& ref = *(inst_address_t*)&result_->code_[address];
+
+			// アドレスが書いてある所が削除対象
+			if(pos<=address && pos+size>address){
+				// アドレスリストから削除する
+				addresses_.erase(i);
+			}
+			// 相対アドレスを縮める処理
+			else if(ref<0){
+				if(address > pos+size && address+ref < pos+size){
+					if(address+ref > pos){
+						ref = ref + (size - (address+ref - pos));
+					}else{
+						ref = ref + (size);
+					}
+				}
+			}else{
+				if(address < pos+size && address+ref > pos+size){
+					if(address > pos){
+						ref = ref - (size - (address - pos));
+					}else{
+						ref = ref - (size);
+					}
+				}
+			}
+
+			if(result_->)
+		}
+
+		result_->code_.erase(result_->code_.begin()+pos, result_->code_.begin()+pos+size);
+	}
+	*/
 
 private:
 	MapPtr value_map_;
@@ -230,6 +271,7 @@ private:
 
 	PODStack<int_t> label_names_;
 	PODStack<int_t> linenos_;
+	//PODStack<int_t> addresses_;
 
 private:
 	CodeBuilder(const CodeBuilder&);

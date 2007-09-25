@@ -216,7 +216,7 @@ bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
 	}
 }
 
-void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const AnyPtr& val){
+void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const AnyPtr& val, int_t code_pos){
 	LVarInfo info = var_find(var, true);
 
 	if(info.pos>=0){
@@ -228,6 +228,8 @@ void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const AnyP
 		}
 
 		info.entry->value = val;
+		info.entry->code_pos = code_pos;
+		info.entry->code_size = code_size()-code_pos;
 		
 	}else{
 		put_inst(InstDefineGlobalVariable(register_identifier(var)));
@@ -243,6 +245,8 @@ bool CodeBuilder::put_local_code(const InternedStringPtr& var){
 		}else{
 			put_inst(InstLocalVariable2Byte(info.pos));
 		}		
+
+		info.entry->referenced = true;
 
 		return true;
 	}else{
@@ -350,7 +354,8 @@ void CodeBuilder::process_labels(){
 		FunFrame::Label &l = ff().labels[i];
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
-			inst_i16_t& buf = *(inst_i16_t*)&result_->code_[f.set_pos];
+			//addresses_.push(f.set_pos);
+			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.pos;
 		}
 	}
@@ -524,11 +529,14 @@ void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility,
 
 	VarFrame::Entry entry;
 	entry.name = name;
+	entry.value = nop;
 	entry.constant = constant;
 	entry.initialized = define;
 	entry.accessibility = accessibility;
-	entry.value = nop;
-	entry.noassign = true;
+	entry.assigned = false;
+	entry.referenced = false;
+	entry.code_pos = 0;
+	entry.code_size = 0;
 	vf().entries.push_back(entry);
 }
 
@@ -547,14 +555,32 @@ void CodeBuilder::var_set_on_heap(int_t i){
 }
 
 void CodeBuilder::var_end(){
+	// ローカル変数の命令を、ダイレクト系へ変更する
 	if(vf().kind==VarFrame::SCOPE){
 		for(uint_t i=0; i<vf().directs.size(); ++i){
 			Inst* p = (Inst*)&result_->code_[vf().directs[i].pos];
 			p->op += 1;
 		}
+		vf().directs.clear();
+
+		//erase_not_referenced_lvar_code();
 	}
 	var_frames_.downsize(1);
 }
+
+/*
+int_t CodeBuilder::erase_not_referenced_lvar_code(){
+	int_t n = 0;
+	for(int_t i=0; i<vf().entries.size(); ++i){
+		VarFrame::Entry& entry = vf().entries[i];
+		if(!entry.referenced && entry.code_pos!=0 && entry.code_size!=0){
+			erase_dead_code(entry.code_pos, entry.code_size);
+			++n;
+		}
+	}
+	return n;
+}
+*/
 
 void CodeBuilder::block_begin(){
 	int_t block_core_num = result_->block_core_table_.size();
@@ -1034,11 +1060,12 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	int_t label_if2_q = reserve_label();
 	int_t label_if = reserve_label();
 	int_t label_if2 = reserve_label();
-	int_t label_end = reserve_label();
+	int_t label_break = reserve_label();
+	int_t label_continue = reserve_label();
 
 	FunFrame::Loop loop;
-	loop.control_statement_label[0] = label_end;
-	loop.control_statement_label[1] = label_cond;
+	loop.control_statement_label[0] = label_break;
+	loop.control_statement_label[1] = label_continue;
 	loop.label = e->for_label();
 	loop.frame_count = var_frames_.size();
 	loop.have_label = false;
@@ -1067,6 +1094,8 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	// ループ本体をコンパイル
 	compile_stmt(e->for_body());
 
+	set_label(label_continue);
+
 	// next部をコンパイル
 	if(e->for_next()){
 		compile_stmt(e->for_next());
@@ -1090,12 +1119,11 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 		compile_stmt(e->for_nobreak());
 	}
 
-	set_label(label_end);
+	set_label(label_break);
 }
 
 AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
-	int_t result_count = 1;
 
 	if(!p){
 		if(info.need_result_count==1){
@@ -1109,11 +1137,13 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	ExprPtr e = ep(p);
 
 	AnyPtr val = do_expr(e);
-
 	if(rawne(val, nop)){
-		put_val_code(val);
-		if(info.need_result_count!=result_count){
-			put_inst(InstAdjustResult(result_count, info.need_result_count));
+		if(info.need_result_count!=0){
+			put_val_code(val);
+
+			if(info.need_result_count!=1){
+				put_inst(InstAdjustResult(1, info.need_result_count));
+			}
 		}
 		return val;
 	}
@@ -1123,6 +1153,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		result_->set_lineno_info(e->lineno());
 	}
 
+	int_t result_count = 1;
 	switch(e->type()){
 
 		XTAL_NODEFAULT;
@@ -1421,7 +1452,6 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 	ExprPtr e = ep(p);
 
-
 	if(debug::is_enabled() && linenos_.top()!=e->lineno()){
 		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
@@ -1439,13 +1469,15 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		
 		XTAL_CASE(EXPR_DEFINE){
 			if(e->bin_lhs()->type()==EXPR_LVAR){
+				int_t code_pos = code_size();
+
 				AnyPtr val = compile_expr(e->bin_rhs());
 				
 				if(e->bin_rhs()->type()==EXPR_FUN || e->bin_rhs()->type()==EXPR_CLASS){
 					put_inst(InstSetName(register_identifier(e->bin_lhs()->lvar_name())));
 				}
 
-				put_define_local_code(e->bin_lhs()->lvar_name(), val);
+				put_define_local_code(e->bin_lhs()->lvar_name(), val, code_pos);
 			}else if(e->bin_lhs()->type()==EXPR_MEMBER){
 				compile_expr(e->bin_lhs()->member_term());
 				compile_expr(e->bin_rhs());
@@ -1973,7 +2005,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_LVAR){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
-			if(info.pos>=0 && (info.var_frame->fun_frames_size==fun_frames_.size() || info.entry->noassign)){
+			if(info.pos>=0 && (info.var_frame->fun_frames_size==fun_frames_.size() || !info.entry->assigned)){
 				return info.entry->value;
 			}
 			return nop;
@@ -1999,7 +2031,7 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 	if(e->type()==EXPR_LVAR){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
-			info.entry->noassign = false;
+			info.entry->assigned = true;
 		}
 	}
 }

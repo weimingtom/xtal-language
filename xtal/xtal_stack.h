@@ -483,6 +483,13 @@ public:
 		return current_;
 	}
 
+	void erase(size_t i){
+		for(size_t j = i; j != 0; --j){
+			memcpy((*this)[j], (*this)[j-1], one_size_);
+		}
+		downsize(1);
+	}
+
 	void resize(size_t newsize);
 
 	void downsize(size_t ds){
@@ -592,6 +599,7 @@ public:
 	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
 	void upsize_unchecked(size_t us){ impl_.upsize_unchecked(us); }
 	void upsize(size_t us){ impl_.upsize(us); }
+	void erase(size_t i){ impl_.erase(i); }
 	size_t size() const{ return impl_.size(); }
 	size_t capacity() const{ return impl_.capacity(); }
 	void reserve(size_t capa){ impl_.reserve(capa); }

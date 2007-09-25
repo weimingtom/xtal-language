@@ -69,8 +69,7 @@ struct PointSelf : public Base{
 	}
 };
 
-int main(int argc, char** argv){
-
+int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	try{
@@ -111,7 +110,7 @@ AnyPtr ret = Xsrc
 
  //split("::" | "," | ".");
 	
- compile("DEBUG: true; if(DEBUG){ 5555.p(); }").inspect.p;
+ compile("DEBUG: true; if(DEBUG+10){ 5555.p(); }").inspect.p;
  compile("DEBUG: false; if(!DEBUG){ 5555.p(); }").inspect.p;
 
 
@@ -199,4 +198,9 @@ int c;
 	uninitialize();
 
 	return 0;
+}
+
+int main(int argc, char** argv){
+	int ret = main2(argc, argv);
+	return ret;
 }

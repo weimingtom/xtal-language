@@ -189,6 +189,10 @@ private:
 
 	// Š‘®ƒNƒ‰ƒX
 	Innocence class_;
+
+#ifdef XTAL_DEBUG
+	uint_t new_count_;
+#endif
 	
 private:
 

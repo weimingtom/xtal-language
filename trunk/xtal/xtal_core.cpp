@@ -203,6 +203,8 @@ void uninitialize(){
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		int n = objects_current_-objects_begin_;
 		//print_alive_objects();
+		Base* p = objects_begin_[0];
+
 		XTAL_ASSERT(false); // ‘S•”ŠJ•ú‚Å‚«‚Ä‚È‚¢
 	}
 
@@ -412,11 +414,21 @@ void* Base::operator new(size_t size){
 		}
 	}
 
+
 	Base* p = static_cast<Base*>(user_malloc(size));
 	*objects_current_++ = p;
 	
 	p->ref_count_ = 1;
 	p->class_ = null;
+
+#ifdef XTAL_DEBUG
+	static uint_t new_count = 0;
+	p->new_count_ = new_count++;
+
+	if(p->new_count_==7217){
+		p->new_count_ = p->new_count_;
+	}
+#endif
 	
 	return p;
 }

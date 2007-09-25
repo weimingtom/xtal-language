@@ -851,7 +851,7 @@ void VMachine::execute_inner(const inst_t* start){
 #endif
 
 	const inst_t* pc = start;
-	int_t stack_size = stack_.size();
+	int_t stack_size = stack_.size() - ff().args_stack_size();
 	int_t fun_frames_size = fun_frames_.size();
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{

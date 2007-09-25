@@ -300,8 +300,9 @@ public:
 public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
-		:SmartPtr<Any>(NC(), new T()){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T();
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -320,8 +321,9 @@ public:
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0)
-		:SmartPtr<Any>(NC(), new T(a0)){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T(a0);
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -342,8 +344,9 @@ public:
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(NC(), new T(a0, a1)){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T(a0, a1);
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -364,8 +367,9 @@ public:
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(NC(), new T(a0, a1, a2)){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T(a0, a1, a2);
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -386,8 +390,9 @@ public:
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(NC(), new T(a0, a1, a2, a3)){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T(a0, a1, a2, a3);
 		p->set_class(new_cpp_class<T>());
 	}
 
@@ -408,8 +413,9 @@ public:
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(NC(), new T(a0, a1, a2, a3, a4)){
+		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
 		T* p = (T*)pvalue(*this);
+		new(p) T(a0, a1, a2, a3, a4);
 		p->set_class(new_cpp_class<T>());
 	}
 

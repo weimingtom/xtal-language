@@ -806,64 +806,60 @@ XTAL_DEF_INST_3(129, DefineClassMember,
 		inst_u8_t, accessibility
 );
 
-XTAL_DEF_INST_1(130, SetName,
-        inst_u16_t, identifier_number
-);
-
-XTAL_DEF_INST_2(131, Once,
+XTAL_DEF_INST_2(130, Once,
         inst_address_t, address,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(132, SetOnce,
+XTAL_DEF_INST_1(131, SetOnce,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(133, ClassBegin,
+XTAL_DEF_INST_1(132, ClassBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(134, ClassEnd);
+XTAL_DEF_INST_0(133, ClassEnd);
 
-XTAL_DEF_INST_0(135, MakeArray);
+XTAL_DEF_INST_0(134, MakeArray);
 
-XTAL_DEF_INST_0(136, ArrayAppend);
+XTAL_DEF_INST_0(135, ArrayAppend);
 
-XTAL_DEF_INST_0(137, MakeMap);
+XTAL_DEF_INST_0(136, MakeMap);
 
-XTAL_DEF_INST_0(138, MapInsert);
+XTAL_DEF_INST_0(137, MapInsert);
 
-XTAL_DEF_INST_2(139, MakeFun,
+XTAL_DEF_INST_2(138, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(140, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(139, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(141, Throw);
+XTAL_DEF_INST_0(140, Throw);
 
-XTAL_DEF_INST_0(142, ThrowUnsupportedError);
+XTAL_DEF_INST_0(141, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(143, ThrowNop);
+XTAL_DEF_INST_0(142, ThrowNop);
 
-XTAL_DEF_INST_0(144, Assert);
+XTAL_DEF_INST_0(143, Assert);
 
-XTAL_DEF_INST_1(145, BreakPoint,
+XTAL_DEF_INST_1(144, BreakPoint,
         inst_u8_t, type
 );
 
-XTAL_DEF_INST_0(146, SendToI);
-XTAL_DEF_INST_0(147, SendToF);
-XTAL_DEF_INST_0(148, SendToS);
-XTAL_DEF_INST_0(149, SendToA);
-XTAL_DEF_INST_0(150, SendToM);
-XTAL_DEF_INST_0(151, SendLength);
-XTAL_DEF_INST_0(152, SendSize);
+XTAL_DEF_INST_0(145, SendToI);
+XTAL_DEF_INST_0(146, SendToF);
+XTAL_DEF_INST_0(147, SendToS);
+XTAL_DEF_INST_0(148, SendToA);
+XTAL_DEF_INST_0(149, SendToM);
+XTAL_DEF_INST_0(150, SendLength);
+XTAL_DEF_INST_0(151, SendSize);
 
-XTAL_DEF_INST_0(153, MAX);
+XTAL_DEF_INST_0(152, MAX);
 
 }

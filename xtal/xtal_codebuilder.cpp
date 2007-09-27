@@ -80,6 +80,9 @@ void CodeBuilder::interactive_compile(){
 				process_labels();
 
 				fun_frames_.downsize(1);
+				
+				if(code_size()==0)
+					continue;
 
 				result_->inspect_range(last_code_size, code_size())->p();
 
@@ -134,7 +137,6 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	// 関数コアを作成
 	FunCore core;
 	core.pc = 0;
-	core.lineno = linenos_.top();
 	core.kind = KIND_FUN;
 	core.min_param_count = 0;
 	core.max_param_count = 0;
@@ -216,22 +218,43 @@ bool CodeBuilder::put_set_local_code(const InternedStringPtr& var){
 	}
 }
 
-void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const AnyPtr& val, int_t code_pos){
+void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const ExprPtr& rhs){
 	LVarInfo info = var_find(var, true);
 
 	if(info.pos>=0){
-		if(info.pos<=0xff){
-			var_set_direct(*info.var_frame);
-			put_inst(InstSetLocalVariable1Byte(info.pos));
-		}else{
-			put_inst(InstSetLocalVariable2Byte(info.pos));
-		}
 
-		info.entry->value = val;
-		info.entry->code_pos = code_pos;
-		info.entry->code_size = code_size()-code_pos;
+		if(rhs){
+			AnyPtr val = info.entry->initialized ? info.entry->value : do_expr(rhs);
+
+			if(raweq(val, nop) || info.entry->assigned){
+
+				if(raweq(val, nop)){
+					compile_expr(rhs);
+				}else{
+					put_val_code(val);
+				}
+
+				if(info.pos<=0xff){
+					var_set_direct(*info.var_frame);
+					put_inst(InstSetLocalVariable1Byte(info.pos));
+				}else{
+					put_inst(InstSetLocalVariable2Byte(info.pos));
+				}
+			}
+
+			info.entry->value = val;
+
+		}else{
+			if(info.pos<=0xff){
+				var_set_direct(*info.var_frame);
+				put_inst(InstSetLocalVariable1Byte(info.pos));
+			}else{
+				put_inst(InstSetLocalVariable2Byte(info.pos));
+			}
+		}
 		
 	}else{
+		compile_expr(rhs);
 		put_inst(InstDefineGlobalVariable(register_identifier(var)));
 	}
 }
@@ -375,7 +398,7 @@ void CodeBuilder::break_off(int_t n){
 		}
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.entries.size() && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::BLOCK)){
+		if(vf.real_entry_num!=0 && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::BLOCK)){
 			var_set_direct(vf);
 			put_inst(InstBlockEnd(vf.block_core_num));
 		}
@@ -478,7 +501,10 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool d
 					return ret;
 				}
 			}
-			ret.pos++;
+
+			if(!entry.removed){
+				ret.pos++;
+			}
 		}
 	}
 	ret.pos = -1;
@@ -504,7 +530,7 @@ void CodeBuilder::var_define(const ArrayPtr& stmts){
 		ExprPtr v = ep(v0);
 		if(ep(v)->type()==EXPR_DEFINE){
 			if(v->bin_lhs()->type()==EXPR_LVAR){
-				var_define(v->bin_lhs()->lvar_name());
+				var_define(v->bin_lhs()->lvar_name(), v->bin_rhs());
 			}
 		}else if(v->type()==EXPR_MASSIGN){
 			if(v->massign_define()){
@@ -519,7 +545,7 @@ void CodeBuilder::var_define(const ArrayPtr& stmts){
 	}
 }
 
-void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility, bool define, bool constant){
+void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign){
 	for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 		if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
 			error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
@@ -529,14 +555,14 @@ void CodeBuilder::var_define(const InternedStringPtr& name, int_t accessibility,
 
 	VarFrame::Entry entry;
 	entry.name = name;
+	entry.expr = expr;
 	entry.value = nop;
 	entry.constant = constant;
 	entry.initialized = define;
 	entry.accessibility = accessibility;
-	entry.assigned = false;
+	entry.assigned = assign;
 	entry.referenced = false;
-	entry.code_pos = 0;
-	entry.code_size = 0;
+	entry.removed = false;
 	vf().entries.push_back(entry);
 }
 
@@ -547,7 +573,7 @@ void CodeBuilder::var_set_direct(VarFrame& vf){
 }
 
 void CodeBuilder::var_set_on_heap(int_t i){
-	if(i<var_frames_.size()){
+	if(i<(int_t)var_frames_.size()){
 		if(var_frames_[i].kind==VarFrame::SCOPE){
 			var_frames_[i].kind = VarFrame::BLOCK;
 		}
@@ -562,41 +588,42 @@ void CodeBuilder::var_end(){
 			p->op += 1;
 		}
 		vf().directs.clear();
-
-		//erase_not_referenced_lvar_code();
 	}
 	var_frames_.downsize(1);
 }
-
-/*
-int_t CodeBuilder::erase_not_referenced_lvar_code(){
-	int_t n = 0;
-	for(int_t i=0; i<vf().entries.size(); ++i){
-		VarFrame::Entry& entry = vf().entries[i];
-		if(!entry.referenced && entry.code_pos!=0 && entry.code_size!=0){
-			erase_dead_code(entry.code_pos, entry.code_size);
-			++n;
-		}
-	}
-	return n;
-}
-*/
 
 void CodeBuilder::block_begin(){
 	int_t block_core_num = result_->block_core_table_.size();
 
 	BlockCore core;
-	core.variable_size = vf().entries.size();
-	core.variable_identifier_offset = result_->identifier_table_->size();
-	core.lineno = linenos_.top();
+	core.pc = code_size();
 
+	int_t real_entry_num = vf().entries.size();
+
+	for(uint_t i=0; i<vf().entries.size(); ++i){
+		VarFrame::Entry& entry = vf().entries[i];
+
+		// 変数を消せるか調べる
+		if(entry.expr && !entry.assigned){
+			entry.value = do_expr(entry.expr);
+			if(rawne(entry.value, nop)){
+				entry.initialized = true;
+				entry.removed = true;
+				real_entry_num--;
+			}
+		}
+	}
+
+	vf().real_entry_num = real_entry_num;
 	vf().block_core_num = block_core_num;
 
-	for(int_t i=0; i<vf().entries.size(); ++i){
+	core.variable_size = real_entry_num;
+	core.variable_identifier_offset = result_->identifier_table_->size();
+	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
-	if(vf().entries.size()){
+	if(vf().real_entry_num!=0){
 		var_set_direct(vf());
 		put_inst(InstBlockBegin(block_core_num));
 	}
@@ -605,7 +632,7 @@ void CodeBuilder::block_begin(){
 }
 
 void CodeBuilder::block_end(){
-	if(vf().entries.size()){
+	if(vf().real_entry_num!=0){
 		var_set_direct(vf());
 		put_inst(InstBlockEnd(vf().block_core_num));
 	}
@@ -838,7 +865,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	Xfor(v, e->class_stmts()){
 		ExprPtr v1 = ep(v);
 		if(v1->type()==EXPR_CDEFINE){
-			var_define(v1->cdefine_name(), v1->cdefine_accessibility(), true, true);
+			var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), true, true);
 		}
 	}
 
@@ -855,14 +882,14 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	int_t class_core_num = result_->class_core_table_.size();
 
 	ClassCore core;
-	core.lineno = linenos_.top();
+	core.pc = code_size();
 	core.kind = e->class_kind();
 	core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
 	core.variable_size = vf().entries.size();
 	core.instance_variable_size = e->class_ivars() ? e->class_ivars()->size() : 0;
 	
 	core.variable_identifier_offset = result_->identifier_table_->size();
-	for(int_t i=0; i<vf().entries.size(); ++i){
+	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
@@ -977,7 +1004,6 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	// 関数コアを作成
 	FunCore core;
 	core.pc = code_size() + InstMakeFun::ISIZE;
-	core.lineno = linenos_.top();
 	core.kind = e->fun_kind();
 	core.min_param_count = minv;
 	core.max_param_count = maxv;
@@ -986,7 +1012,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	// 引数の名前を識別子テーブルに順番に乗せる
 	core.variable_size = vf().entries.size();
 	core.variable_identifier_offset = result_->identifier_table_->size();
-	for(int_t i=0; i<vf().entries.size(); ++i){
+	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
@@ -1320,6 +1346,15 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			set_label(label_end);	
 		}
 
+		XTAL_CASE(EXPR_STATIC){
+			AnyPtr val = do_expr_static(e->una_term());
+			if(raweq(val, nop)){
+				error_->error(lineno(), "static error");
+			}else{
+				put_inst(InstValue(register_value(val)));
+			}
+		}
+
 		XTAL_CASE(EXPR_SEND){
 			compile_expr(e->send_term());
 
@@ -1469,22 +1504,11 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		
 		XTAL_CASE(EXPR_DEFINE){
 			if(e->bin_lhs()->type()==EXPR_LVAR){
-				int_t code_pos = code_size();
+				put_define_local_code(e->bin_lhs()->lvar_name(), e->bin_rhs());
 
-				AnyPtr val = compile_expr(e->bin_rhs());
-				
-				if(e->bin_rhs()->type()==EXPR_FUN || e->bin_rhs()->type()==EXPR_CLASS){
-					put_inst(InstSetName(register_identifier(e->bin_lhs()->lvar_name())));
-				}
-
-				put_define_local_code(e->bin_lhs()->lvar_name(), val, code_pos);
 			}else if(e->bin_lhs()->type()==EXPR_MEMBER){
 				compile_expr(e->bin_lhs()->member_term());
 				compile_expr(e->bin_rhs());
-
-				if(e->bin_lhs()->member_name() && (e->bin_rhs()->type()==EXPR_FUN || e->bin_rhs()->type()==EXPR_CLASS)){
-					put_inst(InstSetName(register_identifier(e->bin_lhs()->member_name())));
-				}
 
 				put_define_member_code(e->bin_lhs()->member_name(), e->bin_lhs()->member_pname());
 			}else{
@@ -1644,7 +1668,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				ff().finallies.push(exc);
 
 				var_begin(VarFrame::SCOPE);
-				var_define(e->try_catch_var(), 0, true);
+				var_define(e->try_catch_var(), null, 0, true, false, true);
 				block_begin();
 
 				put_set_local_code(e->try_catch_var());
@@ -1826,21 +1850,33 @@ AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const InternedStringPtr& name, bool
 }
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const InternedStringPtr& name){
+	AnyPtr ret = nop;
 	XTAL_TRY{
-		return a->send(name);
+		VMachinePtr vm = vmachine();
+		vm->setup_call();
+		a->rawsend(vm, name, null, null, false);
+		if(!vm->processed()){ vm->return_result(nop); }
+		ret = vm->result_and_cleanup_call();
 	}XTAL_CATCH(e){
 		(void)e;
-		return nop;
+		ret = nop;
 	}
+	return ret;
 }
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const InternedStringPtr& name, const AnyPtr& b){
+	AnyPtr ret = nop;
 	XTAL_TRY{
-		return a->send(name, b);
+		VMachinePtr vm = vmachine();
+		vm->setup_call(1, b);
+		a->rawsend(vm, name, null, null, false);
+		if(!vm->processed()){ vm->return_result(nop); }
+		ret = vm->result_and_cleanup_call();
 	}XTAL_CATCH(e){
 		(void)e;
-		return nop;
+		ret = nop;
 	}
+	return ret;
 }
 
 AnyPtr CodeBuilder::do_not(const AnyPtr& v){
@@ -1874,7 +1910,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			if(e->string_kind()==KIND_TEXT){
 				return nop;
 			}else if(e->string_kind()==KIND_FORMAT){
-				return nop;
+				return format(e->string_value()->c_str());;
 			}else{
 				return e->string_value();
 			}
@@ -1942,9 +1978,13 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_Q){
 			XTAL_CB_DO_EXPR(cond, e->q_cond());
-			XTAL_CB_DO_EXPR(qtrue, e->q_true());
-			XTAL_CB_DO_EXPR(qfalse, e->q_false());
-			return cond ? qtrue : qfalse;
+			if(cond){
+				XTAL_CB_DO_EXPR(qtrue, e->q_true());
+				return qtrue;
+			}else{
+				XTAL_CB_DO_EXPR(qfalse, e->q_false());
+				return qfalse;
+			}
 		}
 		
 		XTAL_CASE(EXPR_AT){
@@ -1955,15 +1995,17 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_ANDAND){
 			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			if(lhs){ return rhs; }
+			if(lhs){
+				XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
+				return rhs;
+			}
 			return lhs;
 		}
 
 		XTAL_CASE(EXPR_OROR){
 			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
 			if(lhs){ return lhs; }
+			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
 			return rhs;
 		}
 
@@ -1991,6 +2033,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			return nop;
 		}
 
+		XTAL_CASE(EXPR_STATIC){
+			return do_expr_static(e->una_term());
+		}
+
 		XTAL_CASE(EXPR_SEND){
 			return nop;
 		}
@@ -2005,8 +2051,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_LVAR){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
-			if(info.pos>=0 && (info.var_frame->fun_frames_size==fun_frames_.size() || !info.entry->assigned)){
-				return info.entry->value;
+			if(info.pos>=0){
+				if((info.var_frame->fun_frames_size==fun_frames_.size() || !info.entry->assigned)){
+					return info.entry->value;
+				}
 			}
 			return nop;
 		}
@@ -2016,7 +2064,18 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_MEMBER){
-			return nop;
+			XTAL_CB_DO_EXPR(term, e->member_term());
+			XTAL_TRY{
+				if(e->member_pname()){
+					XTAL_CB_DO_EXPR(name, e->member_pname());
+					return term->member(cast<StringPtr>(name), null, null, false);
+				}else{
+					return term->member(e->member_name(), null, null, false);
+				}
+			}XTAL_CATCH(e){
+				(void)e;
+				return nop;
+			}
 		}
 
 		XTAL_CASE(EXPR_CLASS){
@@ -2047,6 +2106,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	case EXPR_ASSIGN:
 	case EXPR_ADD_ASSIGN:
 	case EXPR_SUB_ASSIGN:
+	case EXPR_CAT_ASSIGN:
 	case EXPR_MUL_ASSIGN:
 	case EXPR_DIV_ASSIGN:
 	case EXPR_MOD_ASSIGN:
@@ -2103,6 +2163,295 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 		}
 		break;
 	}
+}
+
+#define XTAL_CB_DO_EXPR_STATIC(name, expr) AnyPtr name = do_expr_static(expr); if(raweq(name, nop)) return nop;
+
+AnyPtr CodeBuilder::do_bin_static(const ExprPtr& e, const InternedStringPtr& name, bool swap){
+	if(is_comp_bin(e->bin_lhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
+	if(is_comp_bin(e->bin_rhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
+
+	XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+	XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+
+	if(swap){
+		return do_send(rhs, name, lhs);
+	}else{
+		return do_send(lhs, name, rhs);
+	}
+}
+
+AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
+
+	if(!p){
+		return null;
+	}
+
+	ExprPtr e = ep(p);
+
+	switch(e->type()){
+
+		XTAL_DEFAULT{
+			AnyPtr val = do_expr(e);
+			if(rawne(val, nop)){
+				return val;
+			}
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_ARRAY){
+			ArrayPtr values = xnew<Array>();
+			Xfor(v, e->array_values()){
+				XTAL_CB_DO_EXPR_STATIC(temp, v);
+				values->push_back(temp);
+			}
+			return values;
+		}
+
+		XTAL_CASE(EXPR_MAP){
+			MapPtr values = xnew<Map>();
+			Xfor2(k, v, e->map_values()){
+				XTAL_CB_DO_EXPR_STATIC(temp, v);
+				values->set_at(k, temp);
+			}
+			return values;
+		}
+
+		XTAL_CASE(EXPR_ADD){ return do_bin_static(e, Xid(op_add)); }
+		XTAL_CASE(EXPR_SUB){ return do_bin_static(e, Xid(op_sub)); }
+		XTAL_CASE(EXPR_CAT){ return do_bin_static(e, Xid(op_cat)); }
+		XTAL_CASE(EXPR_MUL){ return do_bin_static(e, Xid(op_mul)); }
+		XTAL_CASE(EXPR_DIV){ return do_bin_static(e, Xid(op_div)); }
+		XTAL_CASE(EXPR_MOD){ return do_bin_static(e, Xid(op_mod)); }
+		XTAL_CASE(EXPR_OR){ return do_bin_static(e, Xid(op_or)); }
+		XTAL_CASE(EXPR_AND){ return do_bin_static(e, Xid(op_and)); }
+		XTAL_CASE(EXPR_XOR){ return do_bin_static(e, Xid(op_xor)); }
+		XTAL_CASE(EXPR_SHR){ return do_bin_static(e, Xid(op_shr)); }
+		XTAL_CASE(EXPR_SHL){ return do_bin_static(e, Xid(op_shl)); }
+		XTAL_CASE(EXPR_USHR){ return do_bin_static(e, Xid(op_ushr)); }
+
+		XTAL_CASE(EXPR_EQ){ return do_bin_static(e, Xid(op_eq)); }
+		XTAL_CASE(EXPR_NE){ return do_not(do_bin_static(e, Xid(op_eq))); }
+		XTAL_CASE(EXPR_LT){ return do_bin_static(e, Xid(op_lt)); }
+		XTAL_CASE(EXPR_GT){ return do_bin_static(e, Xid(op_lt), true); }
+		XTAL_CASE(EXPR_LE){ return do_not(do_bin_static(e, Xid(op_lt), true)); }
+		XTAL_CASE(EXPR_GE){ return do_not(do_bin_static(e, Xid(op_lt))); }
+
+		XTAL_CASE(EXPR_RAWEQ){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			return raweq(lhs, rhs);
+		}
+
+		XTAL_CASE(EXPR_RAWNE){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			return rawne(lhs, rhs);
+		}
+
+		XTAL_CASE(EXPR_IS){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			if(ClassPtr cp = ptr_as<Class>(rhs)){
+				return lhs->is(cp);
+			}else{
+				return nop;
+			}
+		}
+
+		XTAL_CASE(EXPR_NIS){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			if(ClassPtr cp = ptr_as<Class>(rhs)){
+				return !lhs->is(cp);
+			}else{
+				return nop;
+			}
+		}
+
+		XTAL_CASE(EXPR_Q){
+			XTAL_CB_DO_EXPR_STATIC(cond, e->q_cond());
+			if(cond){
+				XTAL_CB_DO_EXPR_STATIC(qtrue, e->q_true());
+				return qtrue;
+			}else{
+				XTAL_CB_DO_EXPR_STATIC(qfalse, e->q_false());
+				return qfalse;
+			}
+		}
+		
+		XTAL_CASE(EXPR_AT){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			return do_send(lhs, Xid(op_at), rhs);
+		}
+
+		XTAL_CASE(EXPR_ANDAND){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			if(lhs){
+				XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+				return rhs;
+			}
+			return lhs;
+		}
+
+		XTAL_CASE(EXPR_OROR){
+			XTAL_CB_DO_EXPR_STATIC(lhs, e->bin_lhs());
+			if(lhs){ return lhs; }
+			XTAL_CB_DO_EXPR_STATIC(rhs, e->bin_rhs());
+			return rhs;
+		}
+
+		XTAL_CASE(EXPR_POS){
+			XTAL_CB_DO_EXPR_STATIC(term, e->una_term());
+			return do_send(term, Xid(op_pos));
+		}
+
+		XTAL_CASE(EXPR_NEG){
+			XTAL_CB_DO_EXPR_STATIC(term, e->una_term());
+			return do_send(term, Xid(op_neg));
+		}
+
+		XTAL_CASE(EXPR_COM){
+			XTAL_CB_DO_EXPR_STATIC(term, e->una_term());
+			return do_send(term, Xid(op_com));
+		}
+
+		XTAL_CASE(EXPR_NOT){
+			XTAL_CB_DO_EXPR_STATIC(term, e->una_term());
+			return !term;
+		}
+
+		XTAL_CASE(EXPR_ONCE){
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_STATIC){
+			return do_expr_static(e->una_term());
+		}
+
+		XTAL_CASE(EXPR_SEND){
+			XTAL_CB_DO_EXPR_STATIC(term, e->send_term());
+
+			AnyPtr ret = nop;
+			XTAL_TRY{
+				InternedStringPtr name = e->send_name();
+				if(e->send_pname()){
+					XTAL_CB_DO_EXPR_STATIC(nametemp, e->send_pname());
+					name = cast<InternedStringPtr>(nametemp);
+				}
+
+				VMachinePtr vm = vmachine();
+				vm->setup_call();
+				term->rawsend(vm, name, null, null, false);
+				if(!vm->processed()){ vm->return_result(nop); }
+				ret = vm->result_and_cleanup_call();
+			}XTAL_CATCH(e){
+				(void)e;
+				ret = nop;
+			}
+			return ret;
+		}
+
+		XTAL_CASE(EXPR_CALL){
+			if(e->call_have_args()){
+				return nop;
+			}
+
+			ArrayPtr ordered = xnew<Array>();
+			Xfor(v, e->call_ordered()){
+				XTAL_CB_DO_EXPR_STATIC(temp, v);
+				ordered->push_back(temp);
+			}
+
+			MapPtr named = xnew<Map>();
+			Xfor2(k, v, e->call_named()){
+				XTAL_CB_DO_EXPR_STATIC(temp, v);
+				named->set_at(k, temp);
+			}
+
+			AnyPtr ret = nop;
+			XTAL_TRY{
+				VMachinePtr vm = vmachine();
+				if(e->call_term()->type()==EXPR_SEND){
+					ExprPtr send_expr = e->call_term();
+					XTAL_CB_DO_EXPR_STATIC(term, send_expr->send_term());
+
+					InternedStringPtr name = send_expr->send_name();
+					if(e->send_pname()){
+						XTAL_CB_DO_EXPR_STATIC(nametemp, send_expr->send_pname());
+						name = cast<InternedStringPtr>(nametemp);
+					}
+
+					vm->setup_call();
+					vm->push_ordered_args(ordered);
+					vm->push_named_args(named);
+					term->rawsend(vm, name, null, null, false);
+				}else{
+					XTAL_CB_DO_EXPR_STATIC(term, e->call_term());
+
+					vm->setup_call();
+					vm->push_ordered_args(ordered);
+					vm->push_named_args(named);
+					term->call(vm);
+				}
+
+				if(!vm->processed()){ vm->return_result(nop); }
+				ret = vm->result_and_cleanup_call(0);
+			}XTAL_CATCH(e){
+				(void)e;
+				ret = nop;
+			}
+			return ret;
+		}
+
+		XTAL_CASE(EXPR_FUN){
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_LVAR){
+			LVarInfo info = var_find(e->lvar_name(), false, true);
+			if(info.pos>=0){
+				//if(rawne(info.entry->value, nop)){
+				//	info.entry->constant = true;
+				//}
+				return info.entry->value;
+			}else{
+				XTAL_TRY{
+					return builtin()->member(e->lvar_name());
+				}XTAL_CATCH(e){
+					(void)e;
+					return nop;
+				}
+			}
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_IVAR){
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_MEMBER){
+			XTAL_CB_DO_EXPR_STATIC(term, e->member_term());
+			XTAL_TRY{
+				if(e->member_pname()){
+					XTAL_CB_DO_EXPR_STATIC(name, e->member_pname());
+					return term->member(cast<StringPtr>(name));
+				}else{
+					return term->member(e->member_name());
+				}
+			}XTAL_CATCH(e){
+				(void)e;
+				return nop;
+			}
+		}
+
+		XTAL_CASE(EXPR_CLASS){
+			return nop;
+		}
+	}
+
+	return nop;
 }
 
 }

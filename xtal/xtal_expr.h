@@ -65,6 +65,7 @@ enum{
 	EXPR_YIELD,
 	EXPR_ASSERT,
 	EXPR_ONCE,
+	EXPR_STATIC,
 	EXPR_THROW,
 	EXPR_Q,
 	EXPR_TRY,
@@ -245,6 +246,7 @@ inline ExprPtr args(int_t lineno){ return Expr::make(EXPR_ARGS, lineno); }
 inline ExprPtr callee(int_t lineno){ return Expr::make(EXPR_CALLEE, lineno); }
 
 inline ExprPtr once(int_t lineno, const ExprPtr& term){ return una(EXPR_ONCE, lineno, term); }
+inline ExprPtr static_(int_t lineno, const ExprPtr& term){ return una(EXPR_STATIC, lineno, term); }
 
 inline ExprPtr call(int_t lineno, const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, bool have_args){ return Expr::make(EXPR_CALL, lineno, 6)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_have_args(have_args); }
 

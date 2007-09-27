@@ -110,7 +110,9 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
 	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
-}
+	keyword_map_->set_at(Xid(static), (int_t)Token::KEYWORD_STATIC);
+}	
+
 
 void Lexer::init(const StreamPtr& stream, CompileError* error){
 	reader_.set_stream(stream);
@@ -810,6 +812,7 @@ enum{//Expressions priority
 		PRI_TO_M = PRI_AT,
 
 	PRI_ONCE,
+		PRI_STATIC = PRI_ONCE,
 
 	PRI_END_,
 
@@ -970,6 +973,7 @@ ExprPtr Parser::parse_term(){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_ONCE){ ret = once(ln, parse_expr_must(PRI_ONCE - r_space*2)); }
+				XTAL_CASE(Token::KEYWORD_STATIC){ ret = static_(ln, parse_expr_must(PRI_STATIC - r_space*2)); }
 				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class(KIND_CLASS); }
 				XTAL_CASE(Token::KEYWORD_SINGLETON){ ret = parse_class(KIND_SINGLETON); }
 				XTAL_CASE(Token::KEYWORD_FUN){ ret = parse_fun(KIND_FUN); }

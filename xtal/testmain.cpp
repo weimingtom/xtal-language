@@ -110,8 +110,10 @@ AnyPtr ret = Xsrc
 
  //split("::" | "," | ".");
 	
- compile("DEBUG: true; if(DEBUG+10){ 5555.p(); }").inspect.p;
+ compile("DEBUG: true; if(!!DEBUG){ 5555.p(); }").inspect.p;
  compile("DEBUG: false; if(!DEBUG){ 5555.p(); }").inspect.p;
+ compile("(static math)::abs(-15).p;").inspect.p;
+ compile("math::abs(-15).p;").inspect.p;
 
 
 
@@ -120,6 +122,9 @@ test(5, 6, 7);
 
 ))();
 
+		int n = sizeof(n);
+		n = n;
+
 		//handle_argv(argv);
 		
 int c;
@@ -127,7 +132,7 @@ int c;
 		/*		
 		c = clock();
 		load("../bench/vec.xtal");
-		printf("vec %g\n", (clock()-c)/1000.0f);		
+		printf("vec %g\n\n", (clock()-c)/1000.0f);		
 		
 		c = clock();
 		load("../bench/inst.xtal");
@@ -167,12 +172,14 @@ int c;
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");
+		//compile_file("../test/test_float.xtal")->inspect()->p();
 		load("../test/test_float.xtal");
 		load("../test/test_class.xtal");
 		load("../test/test_multiple_values.xtal");
 		load("../test/test_except.xtal");
 		load("../test/test_fiber.xtal");
 		load("../test/test_fun.xtal");
+		//compile_file("../test/test_iter.xtal")->inspect()->p();
 		load("../test/test_iter.xtal");
 		load("../test/test_fib.xtal");
 		load("../test/test_calc.xtal");
@@ -183,7 +190,7 @@ int c;
 		load("../test/test_op_assign.xtal");
 		load("../test/test_inc.xtal");
 		load("../test/test_toplevel.xtal");
-		//load("../test/test_serialize.xtal");
+		//load("../test/test_serialize.xtal");*/
 		
 		//*/
 #endif

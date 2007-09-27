@@ -278,11 +278,11 @@ class Float;
 
 struct BlockCore{
 	BlockCore()
-		:kind(0), flags(0), lineno(0), variable_identifier_offset(0), variable_size(0){}
+		:pc(0), kind(0), flags(0), variable_identifier_offset(0), variable_size(0){}
 
+	u32 pc;
 	u8 kind;
 	u8 flags;
-	u16 lineno;
 	u16 variable_identifier_offset;
 	u16 variable_size;
 
@@ -304,9 +304,8 @@ struct ClassCore : public BlockCore{
 
 struct FunCore : public BlockCore{
 	FunCore()
-		:pc(0), max_stack(256), min_param_count(0), max_param_count(0){}
+		:max_stack(256), min_param_count(0), max_param_count(0){}
 
-	u32 pc;
 	u16 max_stack;
 	u8 min_param_count;
 	u8 max_param_count;

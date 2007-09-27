@@ -20,14 +20,14 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
@@ -84,7 +84,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。

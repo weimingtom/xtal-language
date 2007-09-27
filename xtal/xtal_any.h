@@ -222,7 +222,7 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null) const;
+	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true) const;
 
 	/**
 	* @brief nameメンバを取得する。
@@ -231,7 +231,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null) const;
+	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true) const;
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。

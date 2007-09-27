@@ -232,7 +232,7 @@ public:
 	* @param name 取り出したいメンバの名前
 	* @param self 可視性を判定するためのオブジェクト
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = null, const AnyPtr& ns = null);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = null, const AnyPtr& ns = null, bool inherited_too = true);
 
 	/**
 	* @brief メンバを再設定する
@@ -439,7 +439,7 @@ public:
 
 	Lib(const ArrayPtr& path);
 	
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too = true);
 
 	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns);
 

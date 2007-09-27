@@ -47,7 +47,7 @@ private:
 
 	bool put_local_code(const InternedStringPtr& var);
 	bool put_set_local_code(const InternedStringPtr& var);
-	void put_define_local_code(const InternedStringPtr& var, const AnyPtr& val = nop, int_t code_pos = 0);
+	void put_define_local_code(const InternedStringPtr& var, const ExprPtr& val = null);
 	void put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined);
 	void put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
 	void put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
@@ -73,7 +73,10 @@ private:
 	AnyPtr do_expr(const AnyPtr& e);
 	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name);
 	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name, const AnyPtr& b);
-	
+
+	AnyPtr do_bin_static(const ExprPtr& e, const InternedStringPtr& name, bool swap = false);
+	AnyPtr do_expr_static(const AnyPtr& p);	
+
 	void put_inst2(const Inst& t, uint_t sz);
 
 	template<class T>
@@ -122,17 +125,18 @@ private:
 	struct VarFrame{
 		struct Entry{
 			InternedStringPtr name;
+			ExprPtr expr;
 			AnyPtr value;
 			bool constant;
 			bool initialized;
 			bool referenced;
 			bool assigned;
+			bool removed;
 			int_t accessibility;
-			int_t code_pos;
-			int_t code_size;
 		};
 
 		AC<Entry>::vector entries;
+		int_t real_entry_num;
 		
 		struct Direct{
 			int_t pos;
@@ -171,7 +175,7 @@ private:
 	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
-	void var_define(const InternedStringPtr& name, int_t accessibility = 0, bool define = false, bool constant = false);
+	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();

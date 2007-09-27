@@ -213,7 +213,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstMemberIfDefined::NUMBER){ temp = ((InstMemberIfDefined*)pc)->inspect(code); sz = InstMemberIfDefined::ISIZE; }
 		XTAL_CASE(InstDefineMember::NUMBER){ temp = ((InstDefineMember*)pc)->inspect(code); sz = InstDefineMember::ISIZE; }
 		XTAL_CASE(InstDefineClassMember::NUMBER){ temp = ((InstDefineClassMember*)pc)->inspect(code); sz = InstDefineClassMember::ISIZE; }
-		XTAL_CASE(InstSetName::NUMBER){ temp = ((InstSetName*)pc)->inspect(code); sz = InstSetName::ISIZE; }
 		XTAL_CASE(InstOnce::NUMBER){ temp = ((InstOnce*)pc)->inspect(code); sz = InstOnce::ISIZE; }
 		XTAL_CASE(InstSetOnce::NUMBER){ temp = ((InstSetOnce*)pc)->inspect(code); sz = InstSetOnce::ISIZE; }
 		XTAL_CASE(InstClassBegin::NUMBER){ temp = ((InstClassBegin*)pc)->inspect(code); sz = InstClassBegin::ISIZE; }

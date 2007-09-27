@@ -149,6 +149,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_i8(p->code_[i]);
 			}
 			
+			/*
 			sz = p->block_core_table_.size();
 			stream_->put_u32(sz);
 			for(int_t i=0; i<sz; ++i){
@@ -199,7 +200,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			map->set_at("values", p->value_table_);
 
 			inner_serialize(map);
-
+*/
 			return;
 		}
 
@@ -347,7 +348,7 @@ AnyPtr Serializer::inner_deserialize(){
 			for(int_t i=0; i<sz; ++i){
 				p->code_[i] = stream_->get_u8();
 			}
-			
+			/*
 			sz = stream_->get_u16();
 			p->block_core_table_.resize(sz);
 			for(int_t i=0; i<sz; ++i){
@@ -408,6 +409,7 @@ AnyPtr Serializer::inner_deserialize(){
 			
 			ret->set_object_name("<filelocal>", 1, null);	
 			return ret;
+			*/
 		}
 	}
 	return null;

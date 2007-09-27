@@ -241,7 +241,7 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 	return nop;
 }
 
-const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
+const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -274,13 +274,17 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 		return members_->at(it->second.num);
 	}
 	
-	for(int_t i = mixins_->size(); i>0; --i){
-		if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, self)){
-			return ret;
+	// 継承しているクラスを順次検索
+	if(inherited_too){
+		for(int_t i = mixins_->size(); i>0; --i){
+			if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, self)){
+				return ret;
+			}
 		}
-	}
 
-	return get_cpp_class<Any>()->any_member(name, ns);
+		return get_cpp_class<Any>()->any_member(name, ns);
+	}
+	return nop;
 }
 
 void Class::set_member(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
@@ -394,7 +398,7 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
+const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){

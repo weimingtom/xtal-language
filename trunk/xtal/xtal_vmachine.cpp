@@ -5,6 +5,7 @@
 #include "xtal_fun.h"
 #include "xtal_code.h"
 #include "xtal_frame.h"
+#include "xtal_macro.h"
 
 namespace xtal{
 
@@ -185,6 +186,18 @@ void VMachine::push_arg(const InternedStringPtr& name, const AnyPtr& value){
 	ff().named_arg_count++;
 	push(name);
 	push(value);
+}
+
+void VMachine::push_ordered_args(const ArrayPtr& p){ 
+	Xfor(v, p){
+		push_arg(v);
+	}
+}
+
+void VMachine::push_named_args(const MapPtr& p){ 
+	Xfor2(k, v, p){
+		push_arg(cast<InternedStringPtr>(k), v);
+	}
 }
 	
 const AnyPtr& VMachine::result(int_t pos){
@@ -820,30 +833,29 @@ void VMachine::execute_inner(const inst_t* start){
 		XTAL_COPY_LABEL_ADDRESS(127, LabelMemberIfDefined);
 		XTAL_COPY_LABEL_ADDRESS(128, LabelDefineMember);
 		XTAL_COPY_LABEL_ADDRESS(129, LabelDefineClassMember);
-		XTAL_COPY_LABEL_ADDRESS(130, LabelSetName);
-		XTAL_COPY_LABEL_ADDRESS(131, LabelOnce);
-		XTAL_COPY_LABEL_ADDRESS(132, LabelSetOnce);
-		XTAL_COPY_LABEL_ADDRESS(133, LabelClassBegin);
-		XTAL_COPY_LABEL_ADDRESS(134, LabelClassEnd);
-		XTAL_COPY_LABEL_ADDRESS(135, LabelMakeArray);
-		XTAL_COPY_LABEL_ADDRESS(136, LabelArrayAppend);
-		XTAL_COPY_LABEL_ADDRESS(137, LabelMakeMap);
-		XTAL_COPY_LABEL_ADDRESS(138, LabelMapInsert);
-		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeFun);
-		XTAL_COPY_LABEL_ADDRESS(140, LabelMakeInstanceVariableAccessor);
-		XTAL_COPY_LABEL_ADDRESS(141, LabelThrow);
-		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowUnsupportedError);
-		XTAL_COPY_LABEL_ADDRESS(143, LabelThrowNop);
-		XTAL_COPY_LABEL_ADDRESS(144, LabelAssert);
-		XTAL_COPY_LABEL_ADDRESS(145, LabelBreakPoint);
-		XTAL_COPY_LABEL_ADDRESS(146, LabelSendToI);
-		XTAL_COPY_LABEL_ADDRESS(147, LabelSendToF);
-		XTAL_COPY_LABEL_ADDRESS(148, LabelSendToS);
-		XTAL_COPY_LABEL_ADDRESS(149, LabelSendToA);
-		XTAL_COPY_LABEL_ADDRESS(150, LabelSendToM);
-		XTAL_COPY_LABEL_ADDRESS(151, LabelSendLength);
-		XTAL_COPY_LABEL_ADDRESS(152, LabelSendSize);
-		XTAL_COPY_LABEL_ADDRESS(153, LabelMAX);
+		XTAL_COPY_LABEL_ADDRESS(130, LabelOnce);
+		XTAL_COPY_LABEL_ADDRESS(131, LabelSetOnce);
+		XTAL_COPY_LABEL_ADDRESS(132, LabelClassBegin);
+		XTAL_COPY_LABEL_ADDRESS(133, LabelClassEnd);
+		XTAL_COPY_LABEL_ADDRESS(134, LabelMakeArray);
+		XTAL_COPY_LABEL_ADDRESS(135, LabelArrayAppend);
+		XTAL_COPY_LABEL_ADDRESS(136, LabelMakeMap);
+		XTAL_COPY_LABEL_ADDRESS(137, LabelMapInsert);
+		XTAL_COPY_LABEL_ADDRESS(138, LabelMakeFun);
+		XTAL_COPY_LABEL_ADDRESS(139, LabelMakeInstanceVariableAccessor);
+		XTAL_COPY_LABEL_ADDRESS(140, LabelThrow);
+		XTAL_COPY_LABEL_ADDRESS(141, LabelThrowUnsupportedError);
+		XTAL_COPY_LABEL_ADDRESS(142, LabelThrowNop);
+		XTAL_COPY_LABEL_ADDRESS(143, LabelAssert);
+		XTAL_COPY_LABEL_ADDRESS(144, LabelBreakPoint);
+		XTAL_COPY_LABEL_ADDRESS(145, LabelSendToI);
+		XTAL_COPY_LABEL_ADDRESS(146, LabelSendToF);
+		XTAL_COPY_LABEL_ADDRESS(147, LabelSendToS);
+		XTAL_COPY_LABEL_ADDRESS(148, LabelSendToA);
+		XTAL_COPY_LABEL_ADDRESS(149, LabelSendToM);
+		XTAL_COPY_LABEL_ADDRESS(150, LabelSendLength);
+		XTAL_COPY_LABEL_ADDRESS(151, LabelSendSize);
+		XTAL_COPY_LABEL_ADDRESS(152, LabelMAX);
 //}}LABELS}
 	}
 #else
@@ -2009,13 +2021,6 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
 
-	XTAL_VM_CASE(SetName){ XTAL_VM_CONTINUE(FunSetName(pc)); /*
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			get()->set_object_name(identifier(inst.identifier_number), 1, null);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
-
 	XTAL_VM_CASE(Once){ // 5
 		const AnyPtr& ret = ff().pcode->once_value(inst.value_number);
 		if(rawne(ret, nop)){
@@ -3092,14 +3097,6 @@ const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
 			downsize(2);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachine::FunSetName(const inst_t* pc){
-		XTAL_VM_DEF_INST(SetName);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			get()->set_object_name(identifier(inst.identifier_number), 1, null);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 
 const inst_t* VMachine::FunClassBegin(const inst_t* pc){

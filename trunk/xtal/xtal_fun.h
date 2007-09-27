@@ -5,6 +5,42 @@
 
 namespace xtal{
 
+// 引数オブジェクト
+class Arguments : public Base{
+public:
+
+	Arguments(){
+		ordered_ = xnew<Array>();
+		named_ = xnew<Map>();
+	}
+
+	const AnyPtr& op_at(const AnyPtr& index){
+		if(type(index)==TYPE_INT){
+			return ordered_->at(index->to_i());
+		}
+		return named_->at(index); 
+	}
+	
+	int_t length(){
+		return ordered_->length();
+	}
+	
+	AnyPtr ordered_arguments(){
+		return ordered_->each();
+	}
+	
+	AnyPtr named_arguments(){
+		return named_->each();
+	}
+
+public:
+
+	ArrayPtr ordered_;
+	MapPtr named_;
+
+	virtual void visit_members(Visitor& m);
+};
+
 class InstanceVariableGetter : public HaveName{
 public:
 
@@ -41,10 +77,10 @@ public:
 	const InternedStringPtr& param_name_at(size_t i);
 	int_t param_size(){ return core_->variable_size; }	
 	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
-	int_t defined_file_lineno(){ return core_->lineno; }
 	FunCore* core(){ return core_; }
 	void set_core(FunCore* fc){ core_ = fc; }
 	void check_arg(const VMachinePtr& vm);
+	virtual StringPtr object_name();
 
 public:
 		
@@ -53,8 +89,8 @@ public:
 protected:
 
 	FramePtr outer_;
-	AnyPtr this_;
 	CodePtr code_;
+	AnyPtr this_;
 	FunCore* core_;
 	
 	virtual void visit_members(Visitor& m){
@@ -123,42 +159,6 @@ private:
 		Fun::visit_members(m);
 		m & vm_;
 	}
-};
-
-// 引数オブジェクト
-class Arguments : public Base{
-public:
-
-	Arguments(){
-		ordered_ = xnew<Array>();
-		named_ = xnew<Map>();
-	}
-
-	const AnyPtr& op_at(const AnyPtr& index){
-		if(type(index)==TYPE_INT){
-			return ordered_->at(index->to_i());
-		}
-		return named_->at(index); 
-	}
-	
-	int_t length(){
-		return ordered_->length();
-	}
-	
-	AnyPtr ordered_arguments(){
-		return ordered_->each();
-	}
-	
-	AnyPtr named_arguments(){
-		return named_->each();
-	}
-
-public:
-
-	ArrayPtr ordered_;
-	MapPtr named_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 }

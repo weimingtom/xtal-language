@@ -139,12 +139,12 @@ struct MemberCacheTable{
 		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
-	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& self, const Innocence& ns){
-		uint_t itarget_class = rawvalue(target_class);
+	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& self, const Innocence& ns, bool inherited_too){
+		uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
 		uint_t imember_name = rawvalue(member_name);
 		uint_t ins = rawvalue(ns);
 
-		uint_t hash = (itarget_class>>3) ^ (imember_name>>2) ^ ins + imember_name ^ type(member_name);
+		uint_t hash = itarget_class ^ (imember_name>>2) ^ ins + imember_name ^ type(member_name);
 		Unit& unit = table_[hash & CACHE_MASK];
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(member_name, unit.member_name) && ins==unit.ns){
 			hit_++;
@@ -222,8 +222,8 @@ void print_result_of_cache(){
 	is_cache_table.print_result();
 }
 
-const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
-	return member_cache_table.cache(*this, name, self, ns);
+const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too) const{
+	return member_cache_table.cache(*this, name, self, ns, inherited_too);
 }
 
 void Any::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns) const{
@@ -236,10 +236,10 @@ void Any::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessib
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns) const{
+void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, name);
-	const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns);
+	const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns, inherited_too);
 	if(rawne(ret, nop)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);

@@ -132,6 +132,14 @@ Fun::Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCor
 	:outer_(outer), this_(athis), code_(code), core_(core){
 }
 
+StringPtr Fun::object_name(){
+	if(!name_){
+		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
+	}
+
+	return HaveName::object_name();
+}
+
 void Fun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<core_->min_param_count || (!(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM) && n>core_->max_param_count)){

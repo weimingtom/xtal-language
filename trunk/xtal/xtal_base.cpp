@@ -73,13 +73,13 @@ void Base::call(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){ 
+const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){ 
 	return nop;
 }
 
 
-const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){ 
-	return ap(Innocence(this))->member(name, self, ns); 
+const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){ 
+	return ap(Innocence(this))->member(name, self, ns, inherited_too); 
 }
 
 void Base::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
@@ -93,8 +93,8 @@ AnyPtr Base::send(const InternedStringPtr& name){
 	return vm->result_and_cleanup_call();
 }
 
-void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns){
-	ap(Innocence(this))->rawsend(vm, name, self, ns);
+void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
+	ap(Innocence(this))->rawsend(vm, name, self, ns, inherited_too);
 }
 
 StringPtr Base::object_name(){ 
@@ -137,10 +137,14 @@ void Base::visit_members(Visitor& m){
 }
 
 StringPtr HaveName::object_name(){
-	if(!name_)
+	if(!name_){
 		return xnew<String>("<instance of ")->cat(get_class()->object_name())->cat(">");
-	if(!parent_)
+	}
+
+	if(!parent_){
 		return name_;
+	}
+
 	if(LibPtr lib = ptr_as<Lib>(parent_)){
 		lib = lib;
 	}

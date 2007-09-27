@@ -45,7 +45,19 @@ public:
 	*
 	*/
 	void push_arg(const Named& p){ push_arg(p.name, p.value); }
-		
+
+	/**
+	* @brief 引数を配列の要素数積む。
+	*
+	*/
+	void push_ordered_args(const ArrayPtr& p);
+
+	/**
+	* @brief 名前つき引数を連想配列の要素数積む。
+	*
+	*/
+	void push_named_args(const MapPtr& p);
+
 	/**
 	* @brief pos番目の戻り値を得る。
 	*
@@ -722,7 +734,6 @@ public:
 	const inst_t* FunMemberIfDefined(const inst_t* pc);
 	const inst_t* FunDefineMember(const inst_t* pc);
 	const inst_t* FunDefineClassMember(const inst_t* pc);
-	const inst_t* FunSetName(const inst_t* pc);
 	const inst_t* FunOnce(const inst_t* pc);
 	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);

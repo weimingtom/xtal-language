@@ -77,7 +77,8 @@ struct Inst{
 		enum{ \
 			NUMBER = N,\
 			SIZE = sizeof(Inst) + sizeof(MemberType1),\
-			ISIZE = SIZE/sizeof(inst_t)\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
 		};\
 		MemberType1 MemberName1;\
 		Inst##InstName(){\
@@ -99,7 +100,9 @@ struct Inst{
 		enum{ \
 			NUMBER = N,\
 			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2),\
-			ISIZE = SIZE/sizeof(inst_t)\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\
@@ -124,7 +127,10 @@ struct Inst{
 		enum{ \
 			NUMBER = N,\
 			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2) + sizeof(MemberType3),\
-			ISIZE = SIZE/sizeof(inst_t)\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\

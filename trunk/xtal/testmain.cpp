@@ -108,20 +108,7 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
- //split("::" | "," | ".");
-	
- compile("DEBUG: true; if(!!DEBUG){ 5555.p(); }").inspect.p;
- compile("DEBUG: false; if(!DEBUG){ 5555.p(); }").inspect.p;
- compile("(static math)::abs(-15).p;").inspect.p;
- compile("math::abs(-15).p;").inspect.p;
 
-3.times{
-  if(first_step){
-    "a".p;
-  }else{
-    "b".p;
-  }
-}
 
 ))();
 

@@ -1,0 +1,277 @@
+xtal_allocator.o: ../xtal/xtal_allocator.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h
+xtal_any.o: ../xtal/xtal_any.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_fun.h ../xtal/xtal_macro.h
+xtal_array.o: ../xtal/xtal_array.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_base.o: ../xtal/xtal_base.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_basic_type.o: ../xtal/xtal_basic_type.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h
+xtal_cast.o: ../xtal/xtal_cast.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_cfun.o: ../xtal/xtal_cfun.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_ch.o: ../xtal/xtal_ch.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_code.o: ../xtal/xtal_code.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h ../xtal/xtal_fun.h
+xtal_codebuilder.o: ../xtal/xtal_codebuilder.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h ../xtal/xtal_codebuilder.h \
+  ../xtal/xtal_expr.h ../xtal/xtal_parser.h ../xtal/xtal_macro.h \
+  ../xtal/xtal_fun.h
+xtal_core.o: ../xtal/xtal_core.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_debug.o: ../xtal/xtal_debug.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_except.o: ../xtal/xtal_except.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_expr.o: ../xtal/xtal_expr.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_expr.h ../xtal/xtal_macro.h
+xtal_format.o: ../xtal/xtal_format.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_frame.o: ../xtal/xtal_frame.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_fun.o: ../xtal/xtal_fun.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_fun.h ../xtal/xtal_macro.h
+xtal_iterator.o: ../xtal/xtal_iterator.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_lib.o: ../xtal/xtal_lib.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_codebuilder.h ../xtal/xtal_expr.h \
+  ../xtal/xtal_parser.h ../xtal/xtal_macro.h ../xtal/xtal_fun.h \
+  ../xtal/xtal_serializer.h
+xtal_map.o: ../xtal/xtal_map.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h
+xtal_math.o: ../xtal/xtal_math.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_parser.o: ../xtal/xtal_parser.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_parser.h ../xtal/xtal_expr.h \
+  ../xtal/xtal_macro.h
+xtal_peg.o: ../xtal/xtal_peg.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_serializer.o: ../xtal/xtal_serializer.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h ../xtal/xtal_serializer.h \
+  ../xtal/xtal_macro.h ../xtal/xtal_fun.h
+xtal_smartptr.o: ../xtal/xtal_smartptr.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h
+xtal_stack.o: ../xtal/xtal_stack.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_stream.o: ../xtal/xtal_stream.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_serializer.h ../xtal/xtal_macro.h
+xtal_string.o: ../xtal/xtal_string.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h ../xtal/xtal_macro.h ../xtal/xtal_peg.h
+xtal_thread.o: ../xtal/xtal_thread.cpp ../xtal/xtal.h ../xtal/xtal_fwd.h \
+  ../xtal/xtal_utility.h ../xtal/xtal_any.h ../xtal/xtal_array.h \
+  ../xtal/xtal_smartptr.h ../xtal/xtal_base.h ../xtal/xtal_allocator.h \
+  ../xtal/xtal_map.h ../xtal/xtal_string.h ../xtal/xtal_cfun.h \
+  ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h ../xtal/xtal_inst.h \
+  ../xtal/xtal_lib.h ../xtal/xtal_cast.h ../xtal/xtal_code.h \
+  ../xtal/xtal_debug.h ../xtal/xtal_thread.h ../xtal/xtal_frame.h \
+  ../xtal/xtal_iterator.h ../xtal/xtal_ch.h ../xtal/xtal_stream.h \
+  ../xtal/xtal_except.h
+xtal_vmachine.o: ../xtal/xtal_vmachine.cpp ../xtal/xtal.h \
+  ../xtal/xtal_fwd.h ../xtal/xtal_utility.h ../xtal/xtal_any.h \
+  ../xtal/xtal_array.h ../xtal/xtal_smartptr.h ../xtal/xtal_base.h \
+  ../xtal/xtal_allocator.h ../xtal/xtal_map.h ../xtal/xtal_string.h \
+  ../xtal/xtal_cfun.h ../xtal/xtal_vmachine.h ../xtal/xtal_stack.h \
+  ../xtal/xtal_inst.h ../xtal/xtal_lib.h ../xtal/xtal_cast.h \
+  ../xtal/xtal_code.h ../xtal/xtal_debug.h ../xtal/xtal_thread.h \
+  ../xtal/xtal_frame.h ../xtal/xtal_iterator.h ../xtal/xtal_ch.h \
+  ../xtal/xtal_stream.h ../xtal/xtal_except.h ../xtal/xtal_fun.h \
+  ../xtal/xtal_macro.h

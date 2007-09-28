@@ -115,10 +115,13 @@ AnyPtr ret = Xsrc
  compile("(static math)::abs(-15).p;").inspect.p;
  compile("math::abs(-15).p;").inspect.p;
 
-
-
-test: fun(aaaa, b, aaaaa){ aaaa.p; b.p; }.p;
-test(5, 6, 7);
+3.times{
+  if(first_step){
+    "a".p;
+  }else{
+    "b".p;
+  }
+}
 
 ))();
 

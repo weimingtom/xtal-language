@@ -908,11 +908,11 @@ InternedStringPtr id_switch_;
 InternedStringPtr idop_mod_assign;
 InternedStringPtr idset_at;
 InternedStringPtr idbreak;
+InternedStringPtr idtry;
 InternedStringPtr idop_mod;
 InternedStringPtr idnop;
 InternedStringPtr idto_i;
 InternedStringPtr idop_or;
-InternedStringPtr idtry;
 InternedStringPtr idcontinue;
 InternedStringPtr iditerator;
 InternedStringPtr idthrow;
@@ -944,6 +944,7 @@ InternedStringPtr idstatic;
 InternedStringPtr idswitch;
 InternedStringPtr idop_sub;
 InternedStringPtr idop_ushr;
+InternedStringPtr idfirst_step;
 InternedStringPtr idblock_break;
 InternedStringPtr id_dummy_fun_parameter_;
 InternedStringPtr id_dummy_block_parameter_;
@@ -1014,11 +1015,11 @@ id::id_switch_ = null;
 id::idop_mod_assign = null;
 id::idset_at = null;
 id::idbreak = null;
+id::idtry = null;
 id::idop_mod = null;
 id::idnop = null;
 id::idto_i = null;
 id::idop_or = null;
-id::idtry = null;
 id::idcontinue = null;
 id::iditerator = null;
 id::idthrow = null;
@@ -1050,6 +1051,7 @@ id::idstatic = null;
 id::idswitch = null;
 id::idop_sub = null;
 id::idop_ushr = null;
+id::idfirst_step = null;
 id::idblock_break = null;
 id::id_dummy_fun_parameter_ = null;
 id::id_dummy_block_parameter_ = null;
@@ -1121,11 +1123,11 @@ id::id_switch_ = InternedStringPtr("_switch_", 8);
 id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13);
 id::idset_at = InternedStringPtr("set_at", 6);
 id::idbreak = InternedStringPtr("break", 5);
+id::idtry = InternedStringPtr("try", 3);
 id::idop_mod = InternedStringPtr("op_mod", 6);
 id::idnop = InternedStringPtr("nop", 3);
 id::idto_i = InternedStringPtr("to_i", 4);
 id::idop_or = InternedStringPtr("op_or", 5);
-id::idtry = InternedStringPtr("try", 3);
 id::idcontinue = InternedStringPtr("continue", 8);
 id::iditerator = InternedStringPtr("iterator", 8);
 id::idthrow = InternedStringPtr("throw", 5);
@@ -1157,6 +1159,7 @@ id::idstatic = InternedStringPtr("static", 6);
 id::idswitch = InternedStringPtr("switch", 6);
 id::idop_sub = InternedStringPtr("op_sub", 6);
 id::idop_ushr = InternedStringPtr("op_ushr", 7);
+id::idfirst_step = InternedStringPtr("first_step", 10);
 id::idblock_break = InternedStringPtr("block_break", 11);
 id::id_dummy_fun_parameter_ = InternedStringPtr("_dummy_fun_parameter_", 21);
 id::id_dummy_block_parameter_ = InternedStringPtr("_dummy_block_parameter_", 23);
@@ -1175,6 +1178,9 @@ id::idif = InternedStringPtr("if", 2);
 id::idp = InternedStringPtr("p", 1);
 }
 //}}ID}
+
+
+
 
 
 

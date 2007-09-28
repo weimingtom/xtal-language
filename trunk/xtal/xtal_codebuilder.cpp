@@ -1081,6 +1081,17 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_for(const ExprPtr& e){
+	
+	var_begin(VarFrame::SCOPE);
+	var_define(Xid(first_step), true_(0));
+	block_begin();
+	
+	{
+		LVarInfo info = var_find(Xid(first_step));
+		info.entry->removed = true;
+		info.entry->constant = true;
+	}
+
 	int_t label_cond = reserve_label();
 	int_t label_if_q = reserve_label();
 	int_t label_if2_q = reserve_label();
@@ -1111,6 +1122,11 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	}
 
 	set_label(label_cond);
+
+	{
+		LVarInfo info = var_find(Xid(first_step));
+		info.entry->value = false;
+	}
 
 	// 条件式をコンパイル
 	if(e->for_cond()){
@@ -1146,6 +1162,9 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	}
 
 	set_label(label_break);
+
+	block_end();
+	var_end();
 }
 
 AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){

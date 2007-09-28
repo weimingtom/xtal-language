@@ -422,11 +422,11 @@ extern InternedStringPtr id_switch_;
 extern InternedStringPtr idop_mod_assign;
 extern InternedStringPtr idset_at;
 extern InternedStringPtr idbreak;
+extern InternedStringPtr idtry;
 extern InternedStringPtr idop_mod;
 extern InternedStringPtr idnop;
 extern InternedStringPtr idto_i;
 extern InternedStringPtr idop_or;
-extern InternedStringPtr idtry;
 extern InternedStringPtr idcontinue;
 extern InternedStringPtr iditerator;
 extern InternedStringPtr idthrow;
@@ -458,6 +458,7 @@ extern InternedStringPtr idstatic;
 extern InternedStringPtr idswitch;
 extern InternedStringPtr idop_sub;
 extern InternedStringPtr idop_ushr;
+extern InternedStringPtr idfirst_step;
 extern InternedStringPtr idblock_break;
 extern InternedStringPtr id_dummy_fun_parameter_;
 extern InternedStringPtr id_dummy_block_parameter_;
@@ -476,6 +477,9 @@ extern InternedStringPtr idif;
 extern InternedStringPtr idp;
 }
 //}}ID}
+
+
+
 
 
 

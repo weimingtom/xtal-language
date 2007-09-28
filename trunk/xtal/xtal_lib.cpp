@@ -264,11 +264,8 @@ Iterator::join: method(sep:","){
 			ret.put_s(it.to_s);
 		}
 	}else{
-		first: true;
 		this{
-			if(first){
-				first = false;
-			}else{
+			if(!first_step){
 				ret.put_s(sep);
 			}
 			ret.put_s(it.to_s);
@@ -480,7 +477,7 @@ Iterator::inject: method(init, fn){
 
 Iterator::with_prev: method{
 	return fiber{
-		prev: null;
+		prev: nop;
 		this{
 			yield prev, it;
 			prev = it;

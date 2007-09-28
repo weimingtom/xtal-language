@@ -451,7 +451,7 @@ typedef SmartPtr<Parser> ParserPtr;
 class Parser : public Base{
 public:
 
-	enum{
+	enum Type{
 		TRY_STRING,
 		TRY_CH,
 		TRY_CH_SET,
@@ -478,7 +478,7 @@ public:
 
 public:
 
-	Parser(int_t type = 0, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
+	Parser(Type type = ANY, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
 
 	static MapPtr make_ch_map2(const StringPtr& ch, const ParserPtr& pp);
 
@@ -512,7 +512,7 @@ public:
 
 	static ParserPtr val(const AnyPtr& v);
 
-	static ParserPtr not(const AnyPtr& v);
+	static ParserPtr not_(const AnyPtr& v);
 	
 	static ParserPtr test(const AnyPtr& v);
 
@@ -553,7 +553,7 @@ inline ParserPtr operator *(const AnyPtr& a, int_t n){ return Parser::repeat(a, 
 inline ParserPtr join(const AnyPtr& a){ return Parser::join(a); }
 inline ParserPtr val(const AnyPtr& a){ return Parser::val(a); }
 inline ParserPtr ch_set(const StringPtr& a){ return Parser::ch_set(a); }
-inline ParserPtr not(const AnyPtr& a){ return Parser::not(a); }
+inline ParserPtr not_(const AnyPtr& a){ return Parser::not_(a); }
 inline ParserPtr test(const AnyPtr& a){ return Parser::test(a); }
 
 ParserPtr P(const AnyPtr& a);

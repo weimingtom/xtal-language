@@ -390,7 +390,7 @@ void CodeBuilder::break_off(int_t n){
 		for(uint_t k = 0; k<ff().finallies.size(); ++k){
 			if((uint_t)ff().finallies[k].frame_count==scope_count){
 				int_t label = reserve_label();
-				set_jump(offsetof(InstPushGoto, address), label);
+				set_jump(InstPushGoto::OFFSET_address, label);
 				put_inst(InstPushGoto());
 				put_inst(InstTryEnd());
 				set_label(label);
@@ -451,7 +451,7 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 
 	if(rawne(val, nop)){
 		if(!val){
-			set_jump(offsetof(InstGoto, address), label_if);
+			set_jump(InstGoto::OFFSET_address, label_if);
 			put_inst(InstGoto());
 		}
 	}else if(is_comp_bin(e)){
@@ -459,7 +459,7 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 		compile_expr(e->bin_lhs());
 		compile_expr(e->bin_rhs());
 
-		set_jump(offsetof(InstIfEq, address), label_if);
+		set_jump(InstIfEq::OFFSET_address, label_if);
 		InstIfEq inst;
 		inst.op += e->type()-EXPR_EQ;
 		put_inst(inst);
@@ -468,12 +468,12 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 			put_inst(InstNot());
 		}
 
-		set_jump(offsetof(InstIf, address), label_if2);
+		set_jump(InstIf::OFFSET_address, label_if2);
 		put_inst(InstIf());
 	}else{
 		compile_expr(e);
 
-		set_jump(offsetof(InstIf, address), label_if);
+		set_jump(InstIf::OFFSET_address, label_if);
 		put_inst(InstIf());
 	}
 }
@@ -620,7 +620,10 @@ void CodeBuilder::block_begin(){
 	core.variable_size = real_entry_num;
 	core.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
-		result_->identifier_table_->push_back(vf().entries[i].name);
+		VarFrame::Entry& entry = vf().entries[i];
+		if(!entry.removed){	
+			result_->identifier_table_->push_back(entry.name);
+		}
 	}
 
 	if(vf().real_entry_num!=0){
@@ -808,7 +811,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			for(int_t i = 0, last = ff().loops.size(); i<last; ++i){
 				if(raweq(ff().loops[i].label, label)){
 					break_off(ff().loops[i].frame_count);
-					set_jump(offsetof(InstGoto, address), ff().loops[i].control_statement_label[label_kind]);
+					set_jump(InstGoto::OFFSET_address, ff().loops[i].control_statement_label[label_kind]);
 					put_inst(InstGoto());
 					found = true;
 					break;
@@ -823,7 +826,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			for(size_t i = 0, last = ff().loops.size(); i<last; ++i){
 				if(!ff().loops[i].have_label){
 					break_off(ff().loops[i].frame_count);
-					set_jump(offsetof(InstGoto, address), ff().loops[i].control_statement_label[label_kind]);
+					set_jump(InstGoto::OFFSET_address, ff().loops[i].control_statement_label[label_kind]);
 					put_inst(InstGoto());		
 					found = true;
 					break;
@@ -1020,7 +1023,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	result_->xfun_core_table_.push_back(core);
 
 	int_t fun_end_label = reserve_label();
-	set_jump(offsetof(InstMakeFun, address), fun_end_label);
+	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
 	put_inst(InstMakeFun(fun_core_table_number, 0));
 	
 	if(debug::is_enabled()){
@@ -1034,7 +1037,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 			if(v){
 				int_t label = reserve_label();
 				
-				set_jump(offsetof(InstIfArgIsNop, address), label);
+				set_jump(InstIfArgIsNop::OFFSET_address, label);
 				var_set_direct(vf());
 				put_inst(InstIfArgIsNop(e->fun_params()->size()-1-i, 0));
 
@@ -1144,7 +1147,7 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	}
 
 	// label_cond部分にジャンプ
-	set_jump(offsetof(InstGoto, address), label_cond);
+	set_jump(InstGoto::OFFSET_address, label_cond);
 	put_inst(InstGoto());
 	
 	ff().loops.pop();
@@ -1291,12 +1294,12 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 			compile_expr(e->q_cond());
 
-			set_jump(offsetof(InstIf, address), label_if);
+			set_jump(InstIf::OFFSET_address, label_if);
 			put_inst(InstIf());
 
 			compile_expr(e->q_true());
 
-			set_jump(offsetof(InstGoto, address), label_end);
+			set_jump(InstGoto::OFFSET_address, label_end);
 			put_inst(InstGoto());
 
 			set_label(label_if);
@@ -1319,7 +1322,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 			put_inst(InstDup());
 			
-			set_jump(offsetof(InstIf, address), label_if);
+			set_jump(InstIf::OFFSET_address, label_if);
 			put_inst(InstIf());
 
 			put_inst(InstPop());
@@ -1335,7 +1338,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 			put_inst(InstDup());
 			
-			set_jump(offsetof(InstUnless, address), label_if);
+			set_jump(InstUnless::OFFSET_address, label_if);
 			put_inst(InstUnless());
 			
 			put_inst(InstPop());
@@ -1353,7 +1356,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_ONCE){
 			int_t label_end = reserve_label();
 			
-			set_jump(offsetof(InstOnce, address), label_end);
+			set_jump(InstOnce::OFFSET_address, label_end);
 			int_t num = result_->once_table_->size();
 			result_->once_table_->push_back(nop);
 			put_inst(InstOnce(0, num));
@@ -1666,7 +1669,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			compile_stmt(e->try_body());
 			
-			set_jump(offsetof(InstPushGoto, address), end_label);
+			set_jump(InstPushGoto::OFFSET_address, end_label);
 			put_inst(InstPushGoto());
 			put_inst(InstTryEnd());
 
@@ -1742,7 +1745,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile_stmt(e->if_body());
 				
 				if(e->if_else()){
-					set_jump(offsetof(InstGoto, address), label_end);
+					set_jump(InstGoto::OFFSET_address, label_end);
 					put_inst(InstGoto());
 				}
 				

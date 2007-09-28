@@ -622,7 +622,7 @@ public:
 	}
 
 	virtual void sleep(float_t sec){
-		usleep(sec*1000*1000);
+		usleep((useconds_t)(sec*1000*1000));
 	}
 
 	virtual void current_thread_id(Thread::ID& id){

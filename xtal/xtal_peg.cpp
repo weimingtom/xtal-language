@@ -111,7 +111,7 @@ void initialize_peg(){
 
 namespace peg{
 
-Parser::Parser(int_t type, const AnyPtr& p1, const AnyPtr& p2)
+Parser::Parser(Type type, const AnyPtr& p1, const AnyPtr& p2)
 	:type_(type), cacheable_(false), param1_(p1), param2_(p2){}
 
 MapPtr Parser::make_ch_map2(const StringPtr& ch, const ParserPtr& pp){
@@ -297,7 +297,7 @@ ParserPtr Parser::val(const AnyPtr& v){
 	return xnew<Parser>(VAL, v);
 }
 	
-ParserPtr Parser::not(const AnyPtr& v){
+ParserPtr Parser::not_(const AnyPtr& v){
 	return xnew<Parser>(NOT, P(v));
 }
 	
@@ -509,7 +509,7 @@ bool Parser::parse(const LexerPtr& lex){
 			}
 
 			StringPtr str = lex->peek()->to_s();
-			if(str->length()==1 && str->c_str()[0]<128){
+			if(str->length()==1 && ((u8)str->c_str()[0])<128){
 				lex->push_result(str);
 				PARSER_RETURN(true);
 			}

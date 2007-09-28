@@ -13,7 +13,7 @@
 namespace xtal{
 
 static uint_t make_hashcode(const char_t* str, uint_t size){
-	uint_t hash = 2166136261;
+	uint_t hash = 2166136261U;
 	for(uint_t i=0; i<size; ++i){
 		hash = hash*137 ^ str[i];
 	}
@@ -21,7 +21,7 @@ static uint_t make_hashcode(const char_t* str, uint_t size){
 }
 
 static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
-	hash = 2166136261;
+	hash = 2166136261U;
 	length = 0;
 
 	for(uint_t i=0; i<size; ++i){
@@ -42,7 +42,7 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 }
 
 static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
-	hash = 2166136261;
+	hash = 2166136261U;
 	length = 0;
 	size = 0;
 	for(uint_t i=0; str[i]; ++i){

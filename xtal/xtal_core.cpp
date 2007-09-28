@@ -20,7 +20,7 @@ void initialize_thread();
 void initialize_math();
 void initialize_stream();
 void initialize_builtin();
-void initialize_peg();
+//void initialize_peg();
 void initialize_except();
 void initialize_iterator();
 
@@ -155,7 +155,7 @@ void initialize(){
 	initialize_format();
 	initialize_math();
 	initialize_stream();
-	initialize_peg();
+//	initialize_peg();
 	initialize_thread();
 	
 	atexit(&uninitialize); // uninitialize

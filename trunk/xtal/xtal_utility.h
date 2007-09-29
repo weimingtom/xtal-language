@@ -58,12 +58,12 @@
 #endif
 
 #ifdef XTAL_NO_EXCEPT
-#	define XTAL_THROW(e, ret) do{ ::xtal::vmachine()->set_except(e); ::xtal::except_handler()(e, __FILE__, __LINE__); ret; }while(0)
+#	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::vmachine()->set_except(temp); ::xtal::except_handler()(temp, __FILE__, __LINE__); ret; }while(0)
 #	define XTAL_TRY 
 #	define XTAL_CATCH(e) if(::xtal::AnyPtr e = ::xtal::vmachine()->catch_except())
 #	define XTAL_CHECK_EXCEPT(ret) do{ if(::xtal::AnyPtr e = ::xtal::vmachine()->except()) ret; }while(0)
 #else
-#	define XTAL_THROW(e, ret) do{ ::xtal::except_handler()(e, __FILE__, __LINE__); throw e; }while(0)
+#	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::except_handler()(temp, __FILE__, __LINE__); throw temp; }while(0)
 #	define XTAL_TRY try
 #	define XTAL_CATCH(e) catch(const ::xtal::AnyPtr& e)
 #	define XTAL_CHECK_EXCEPT(ret)

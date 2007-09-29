@@ -902,7 +902,15 @@ ExprPtr Parser::parse_term(){
 
 				XTAL_DEFAULT{}
 
-				XTAL_CASE('('){ ret = parse_expr(); expect(')'); expr_end_flag_ = false; }
+				XTAL_CASE('('){ 
+					ret = parse_expr();
+					if(ret->type()==EXPR_SEND){
+						ret = bracket(ln, ret);
+					}
+					expect(')'); 
+					expr_end_flag_ = false; 
+				}
+
 				XTAL_CASE('['){ ret = parse_array();  expr_end_flag_ = false; }
 				XTAL_CASE('|'){ ret = parse_fun(KIND_LAMBDA); }
 
@@ -1118,6 +1126,10 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				XTAL_CASE('('){
 					if(pri < PRI_CALL - l_space){
 						ret = parse_call(lhs);
+					}else{
+						if(lhs->type()==EXPR_SEND){
+							ret = bracket(ln, lhs);
+						}
 					}
 				}
 

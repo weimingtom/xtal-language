@@ -165,7 +165,7 @@ struct MemberCacheTable{
 	}
 };
 
-struct IsCacheTable{
+struct IsInheritedCacheTable{
 	struct Unit{
 		uint_t mutate_count;
 		uint_t target_class;
@@ -180,13 +180,13 @@ struct IsCacheTable{
 	int_t hit_;
 	int_t miss_;
 
-	IsCacheTable(){
+	IsInheritedCacheTable(){
 		hit_ = 0;
 		miss_ = 0;
 	}
 
 	void print_result(){
-		printf("IsCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+		printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
 	bool cache(const Innocence& target_class, const Innocence& klass){
@@ -214,12 +214,12 @@ struct IsCacheTable{
 
 namespace{
 	MemberCacheTable member_cache_table;
-	IsCacheTable is_cache_table;
+	IsInheritedCacheTable is_inherited_cache_table;
 }
 
 void print_result_of_cache(){
 	member_cache_table.print_result();
-	is_cache_table.print_result();
+	is_inherited_cache_table.print_result();
 }
 
 const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too) const{
@@ -338,7 +338,7 @@ bool Any::is(const ClassPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
 	if(klass->is_cpp_class() && type(*this)==TYPE_BASE && pvalue(*this)->is_xtal_instance()) return false;
-	return is_cache_table.cache(my_class, klass);
+	return is_inherited_cache_table.cache(my_class, klass);
 }
 
 AnyPtr Any::p() const{

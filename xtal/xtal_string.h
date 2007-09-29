@@ -310,19 +310,19 @@ struct Named2{
 	AnyPtr value;
 
 	Named2(const char* name)
-		:name(name){}
+		:name(name), value(nop){}
 
 	Named2(const InternedStringPtr& name)
-		:name(name), value(null){}
+		:name(name), value(nop){}
 
 	Named2(const InternedStringPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
 	Named2()
-		:name(null), value(null){}
+		:name(null), value(nop){}
 
 	Named2(const Null&)
-		:name(null), value(null){}
+		:name(null), value(nop){}
 };
 
 /**

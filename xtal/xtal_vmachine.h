@@ -592,7 +592,7 @@ public:
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	const inst_t* pop_ff(){ return fun_frames_.pop().poped_pc; }
 
-	void push_args(int_t named_arg_count);
+	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
 
 	FunFrame& ff(){ return fun_frames_.top(); }
 	FunFrame& prev_ff(){ return fun_frames_[1]; }

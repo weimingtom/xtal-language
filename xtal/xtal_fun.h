@@ -9,9 +9,11 @@ namespace xtal{
 class Arguments : public Base{
 public:
 
-	Arguments(){
-		ordered_ = xnew<Array>();
-		named_ = xnew<Map>();
+	Arguments(const AnyPtr& ordered = nop, const AnyPtr& named = nop){
+		if(ordered){ ordered_ = ptr_cast<Array>(ordered); }
+		else{ ordered_ = xnew<Array>(); }
+		if(named){ named_ = ptr_cast<Map>(named); }
+		else{ named_ = xnew<Map>(); }
 	}
 
 	const AnyPtr& op_at(const AnyPtr& index){

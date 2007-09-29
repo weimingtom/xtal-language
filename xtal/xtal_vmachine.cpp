@@ -521,12 +521,12 @@ void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_
 
 void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self){
 	if(inst.flags&CALL_FLAG_ARGS){
-		push_args(inst.named);
-		const ArgumentsPtr& a = ff().arguments();
+		ArgumentsPtr args = ptr_cast<Arguments>(pop());
+		push_args(args, inst.named);
 		if(inst.flags&CALL_FLAG_TAIL){
-			recycle_ff(pc, a->ordered_->size()+inst.ordered, a->named_->size()+inst.named, self);
+			recycle_ff(pc, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
 		}else{
-			push_ff(pc, inst.need_result, a->ordered_->size()+inst.ordered, a->named_->size()+inst.named, self);
+			push_ff(pc, inst.need_result, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
 		}
 		return;
 	}
@@ -553,14 +553,13 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 	}
 }
 
-void VMachine::push_args(int_t named_arg_count){
-	const ArgumentsPtr& a = ff().arguments();
+void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 	if(!named_arg_count){
-		for(int_t i = 0; i<a->ordered_->size(); ++i){
-			push(a->ordered_->at(i));
+		for(int_t i = 0; i<args->ordered_->size(); ++i){
+			push(args->ordered_->at(i));
 		}
 	}else{
-		int_t usize = a->ordered_->size();
+		int_t usize = args->ordered_->size();
 		upsize(usize);
 		int_t offset = named_arg_count*2;
 		for(int_t i = 0; i<offset; ++i){
@@ -568,11 +567,11 @@ void VMachine::push_args(int_t named_arg_count){
 		}
 
 		for(int_t i = 0; i<usize; ++i){
-			set(offset-1-i, a->ordered_->at(i));
+			set(offset-1-i, args->ordered_->at(i));
 		}
 	}
 
-	a->named_->push_all(myself());
+	args->named_->push_all(myself());
 }
 
 const inst_t* VMachine::send1(const inst_t* pc, const InternedStringPtr& name){

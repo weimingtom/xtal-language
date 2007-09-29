@@ -1412,10 +1412,13 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				compile_expr(ptr_cast<Expr>(v));
 			}
 
-			bool have_args = e->call_have_args();
 			int_t ordered = e->call_ordered() ? e->call_ordered()->size() : 0;
 			int_t named = e->call_named() ? e->call_named()->size() : 0;
-			int_t flags = (info.tail ? CALL_FLAG_TAIL : 0) | (have_args ? CALL_FLAG_ARGS : 0);
+			int_t flags = (info.tail ? CALL_FLAG_TAIL : 0) | (e->call_args() ? CALL_FLAG_ARGS : 0);
+
+			if(e->call_args()){
+				compile_expr(e->call_args());
+			}
 
 			if(e->call_term()->type()==EXPR_SEND){ // a.b(); メッセージ送信式
 
@@ -2361,7 +2364,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_CALL){
-			if(e->call_have_args()){
+			if(e->call_args()){
 				return nop;
 			}
 

@@ -270,6 +270,10 @@ public:
 private:
 
 	int_t lineno(){ return lexer_.lineno(); }
+
+	bool eof(){
+		return eat(-1);
+	}
 	
 	void expect(int_t ch);
 	

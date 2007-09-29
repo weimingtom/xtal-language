@@ -183,7 +183,7 @@ public:
 	XTAL_DEF_MEMBER(2, ExprPtr, call_term);
 	XTAL_DEF_MEMBER(3, ArrayPtr, call_ordered);
 	XTAL_DEF_MEMBER(4, MapPtr, call_named);
-	XTAL_DEF_MEMBER(5, bool, call_have_args);
+	XTAL_DEF_MEMBER(5, ExprPtr, call_args);
 
 	XTAL_DEF_MEMBER(2, InternedStringPtr, lvar_name);
 
@@ -250,7 +250,7 @@ inline ExprPtr once(int_t lineno, const ExprPtr& term){ return una(EXPR_ONCE, li
 inline ExprPtr static_(int_t lineno, const ExprPtr& term){ return una(EXPR_STATIC, lineno, term); }
 inline ExprPtr bracket(int_t lineno, const ExprPtr& term){ return una(EXPR_BRACKET, lineno, term); }
 
-inline ExprPtr call(int_t lineno, const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, bool have_args){ return Expr::make(EXPR_CALL, lineno, 6)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_have_args(have_args); }
+inline ExprPtr call(int_t lineno, const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, const ExprPtr& args){ return Expr::make(EXPR_CALL, lineno, 6)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_args(args); }
 
 inline ExprPtr member(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name); }
 inline ExprPtr member_q(int_t lineno, const ExprPtr& term, const InternedStringPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name)->set_member_q(true); }

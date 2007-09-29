@@ -189,7 +189,7 @@ InternedStringPtr Lexer::parse_identifier(){
 
 int_t Lexer::parse_integer(){
 	int_t ret = 0;
-	while(1){
+	while(true){
 		if(test_digit(reader_.peek())){
 			ret *= 10;
 			ret += read_from_reader()-'0';
@@ -204,7 +204,7 @@ int_t Lexer::parse_integer(){
 
 int_t Lexer::parse_hex(){
 	int_t ret = 0;
-	while(1){
+	while(true){
 		if(test_digit(reader_.peek())){
 			ret *= 16;
 			ret += read_from_reader()-'0';
@@ -230,7 +230,7 @@ int_t Lexer::parse_hex(){
 
 int_t Lexer::parse_bin(){
 	int ret = 0;
-	while(1){
+	while(true){
 		if(test_range(reader_.peek(), '0', '1')){
 			ret *= 2;
 			ret += read_from_reader()-'0';
@@ -432,7 +432,7 @@ void Lexer::do_read(){
 				if(eat_from_reader('=')){
 					push(c2('/', '='));
 				}else if(eat_from_reader('/')){
-					while(1){
+					while(true){
 						int_t ch = read_from_reader();
 						if(ch=='\r'){
 							eat_from_reader('\n');
@@ -449,7 +449,7 @@ void Lexer::do_read(){
 					}
 					continue;
 				}else if(eat_from_reader('*')){
-					while(1){
+					while(true){
 						int_t ch = read_from_reader();
 						if(ch=='\r'){
 							eat_from_reader('\n');
@@ -474,7 +474,7 @@ void Lexer::do_read(){
 			
 			XTAL_CASE('#'){
 				if(eat_from_reader('!')){
-					while(1){
+					while(true){
 						int_t ch = read_from_reader();
 						if(ch=='\r'){
 							eat_from_reader('\n');
@@ -643,12 +643,12 @@ void Lexer::do_read(){
 		}
 			
 		break;
-	}while(1);
+	}while(true);
 
 }
 
 void Lexer::deplete_space(){
-	while(1){
+	while(true){
 		int_t ch = read_from_reader();
 		if(ch=='\r'){
 			eat_from_reader('\n');
@@ -691,7 +691,7 @@ int_t Lexer::read_direct(){
 StringPtr Lexer::read_string(int_t open, int_t close){
 	string_t str;
 	int_t depth = 1;
-	while(1){
+	while(true){
 		int_t ch = read_from_reader();
 		if(ch==close){
 			--depth;
@@ -987,7 +987,7 @@ ExprPtr Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_FUN){ ret = parse_fun(KIND_FUN); }
 				XTAL_CASE(Token::KEYWORD_METHOD){ ret = parse_fun(KIND_METHOD); }
 				XTAL_CASE(Token::KEYWORD_FIBER){ ret = parse_fun(KIND_FIBER); }
-				XTAL_CASE(Token::KEYWORD_DOFUN){ ret = call(ln, parse_fun(KIND_FUN), null, null, false); }
+				XTAL_CASE(Token::KEYWORD_DOFUN){ ret = call(ln, parse_fun(KIND_FUN), null, null, null); }
 				XTAL_CASE(Token::KEYWORD_CALLEE){ ret = callee(ln); }
 				XTAL_CASE(Token::KEYWORD_NULL){ ret = null_(ln); }
 				XTAL_CASE(Token::KEYWORD_NOP){ ret = nop_(ln); }
@@ -1401,7 +1401,7 @@ ExprPtr Parser::parse_assert(){
 	
 ArrayPtr Parser::parse_exprs(bool* discard){
 	ArrayPtr ret = xnew<Array>();
-	while(1){
+	while(true){
 		if(ExprPtr p = parse_expr()){
 			if(discard) *discard = false;
 			ret->push_back(p);
@@ -1419,7 +1419,7 @@ ArrayPtr Parser::parse_exprs(bool* discard){
 
 ArrayPtr Parser::parse_stmts(){
 	ArrayPtr ret = xnew<Array>();
-	while(1){
+	while(true){
 		while(eat(';')){}
 		if(ExprPtr p = parse_stmt()){
 			ret->push_back(p);
@@ -1694,25 +1694,38 @@ ExprPtr Parser::parse_fun(int_t kind){
 ExprPtr Parser::parse_call(ExprPtr lhs){
 	ArrayPtr ordered = xnew<Array>();
 	MapPtr named = xnew<Map>();
-	ExprPtr ecall = call(lineno(), lhs, ordered, named, false);
-	while(true){
+	ExprPtr ecall = call(lineno(), lhs, ordered, named, null);
 
+	bool end = false;
+	while(true){
 		if(InternedStringPtr var = parse_var()){
 			named->set_at(var, parse_expr_must());
 		}else{
-			ordered->push_back(parse_expr());
-		}
-		
-		if(eat(',')){
-			if(eat(')')){
-				break;
+			if(ExprPtr val = parse_expr()){
+				if(val->type()==EXPR_ARGS){
+					if(ExprPtr val2 = parse_expr()){
+						ecall->set_call_args(val2);
+					}else{
+						ecall->set_call_args(val);
+					}
+
+					end = true;
+				}else{
+					ordered->push_back(val);
+				}
+			}else{
+				end = true;
 			}
-		}else{
+		}
+
+		eat(',');
+		if(end){
 			expect(')');
 			break;
 		}
 	}
 
+	/*
 	if(!ordered->empty() && !ordered->back()){
 		ordered->pop_back();
 	}
@@ -1721,6 +1734,7 @@ ExprPtr Parser::parse_call(ExprPtr lhs){
 		ordered->pop_back();
 		ecall->set_call_have_args(true);
 	}
+	*/
 
 	return ecall;
 }

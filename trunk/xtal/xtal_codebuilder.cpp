@@ -1488,6 +1488,11 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_CLASS){
 			compile_class(e);
 		}
+
+		XTAL_CASE(EXPR_BRACKET){
+			compile_expr(e->una_term(), info.need_result_count);
+			result_count = info.need_result_count;
+		}
 	}
 	
 	if(e->lineno()!=0){
@@ -2103,6 +2108,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_CLASS){
 			return nop;
 		}
+
+		XTAL_CASE(EXPR_BRACKET){
+			return nop;
+		}
 	}
 
 	return nop;
@@ -2469,6 +2478,10 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_CLASS){
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_BRACKET){
 			return nop;
 		}
 	}

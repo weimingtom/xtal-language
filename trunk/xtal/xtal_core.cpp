@@ -112,20 +112,20 @@ void initialize(){
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		chain_cpp_class(*holders[i]);
-		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(Class))));
+		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(CppClass))));
 		pvalue(holders[i]->value)->ref_count_ = 1;
 	}
 	
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(holders[i]->value);
 		int_t temp_ref_count = p->ref_count(); 
-		new(p) Class(Class::cpp_class_t());
+		new(p) CppClass();
 		p->add_ref_count(temp_ref_count-1);
 	}
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(holders[i]->value);
-		p->set_class(get_cpp_class<Class>());
+		p->set_class(get_cpp_class<CppClass>());
 	}
 	
 	set_cpp_class<Base>(get_cpp_class<Any>());

@@ -53,7 +53,7 @@ CFunPtr CFun::param(
 
 	pi_.min_param_count = pi_.max_param_count = param_n_;
 	for(int_t i=0; i<param_n_; ++i){
-		if(pi_.params[i].value){
+		if(rawne(pi_.params[i].value, nop)){
 			pi_.min_param_count--;
 		}
 	}

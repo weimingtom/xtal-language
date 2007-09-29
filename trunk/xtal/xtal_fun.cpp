@@ -79,6 +79,7 @@ void initialize_fun(){
 
 	{
 		ClassPtr p = new_cpp_class<Arguments>("Arguments");
+		p->def("new", ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(Named("ordered", null), Named("named", null)));
 		p->method("size", &Arguments::length);
 		p->method("length", &Arguments::length);
 		p->method("op_at", &Arguments::op_at);

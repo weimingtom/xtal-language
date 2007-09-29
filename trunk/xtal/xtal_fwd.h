@@ -327,10 +327,14 @@ struct ExceptCore{
 	u32 end_pc;
 };
 
+class EmptyInstanceVariables;
+
 extern BlockCore empty_block_core;
 extern ClassCore empty_class_core;
 extern FunCore empty_fun_core;
 extern ExceptCore empty_except_core;
+extern EmptyInstanceVariables empty_instance_variables;
+extern uint_t global_mutate_count;
 
 class Null;
 extern Null null;

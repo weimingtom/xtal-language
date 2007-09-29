@@ -173,14 +173,6 @@ void Fun::check_arg(const VMachinePtr& vm){
 	}
 }
 
-const inst_t* Fun::source(){ 
-	return code_->data()+core_->pc; 
-}
-
-const InternedStringPtr& Fun::param_name_at(size_t i){ 
-	return code_->identifier(i+core_->variable_identifier_offset); 
-}
-
 void Fun::call(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=core_->max_param_count)
 		check_arg(vm);

@@ -12,6 +12,41 @@
 
 namespace xtal{
 
+class Fun : public HaveName{
+public:
+
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCore* core);
+
+	const FramePtr& outer(){ return outer_; }
+	const CodePtr& code(){ return code_; }
+	int_t pc(){ return core_->pc; }
+	const inst_t* source(){ return code_->data()+core_->pc; }
+	const InternedStringPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
+	int_t param_size(){ return core_->variable_size; }	
+	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
+	FunCore* core(){ return core_; }
+	void set_core(FunCore* fc){ core_ = fc; }
+	void check_arg(const VMachinePtr& vm);
+	virtual StringPtr object_name();
+
+public:
+		
+	virtual void call(const VMachinePtr& vm);
+	
+protected:
+
+	FramePtr outer_;
+	CodePtr code_;
+	AnyPtr this_;
+	FunCore* core_;
+	
+	virtual void visit_members(Visitor& m){
+		HaveName::visit_members(m);
+		m & outer_ & this_ & code_;
+	}
+
+};
+
 // XTAL仮想マシン
 class VMachine : public GCObserver{
 public:
@@ -508,9 +543,6 @@ public:
 		// デバッグメッセージ出力用のヒント
 		Innocence hint2_;
 
-		Code* pcode;
-		const inst_t* psource;
-
 		void set_null(){
 			set_null_force(fun_); 
 			set_null_force(temp_);
@@ -533,7 +565,7 @@ public:
 			return ordered_arg_count+(named_arg_count<<1);
 		}
 
-		void fun(const Innocence& v);
+		void fun(const Innocence& v){ fun_ = v; }
 		void outer(const Innocence& v){ outer_ = v; }
 		void variable(int_t i, const Innocence& v){ variables_[i] = v; }
 		void self(const Innocence& v){ self_ = v; }
@@ -555,10 +587,9 @@ public:
 		Innocence outer;
 	};
 
-	void push_ff_args(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
-	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
-	void recycle_ff_args(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
+	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
+	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	const inst_t* pop_ff(){ return fun_frames_.pop().poped_pc; }
 
 	void push_args(int_t named_arg_count);
@@ -572,12 +603,15 @@ public:
 	const FramePtr& outer(){ return ff().outer(); }
 	const FramePtr& prev_outer(){ return prev_ff().outer(); }
 
-	const CodePtr& code();
-	const CodePtr& prev_code();
+	const CodePtr& code(){ return fun()->code(); }
+	const CodePtr& prev_code(){ return prev_fun()->code(); }
 
-	const InternedStringPtr& identifier(int_t n){ return ff().pcode->identifier(n); }
-	const InternedStringPtr& prev_identifier(int_t n){ return prev_ff().pcode->identifier(n); }
-	const InternedStringPtr& identifier_ex(int_t n);
+	const InternedStringPtr& identifier(int_t n){ return code()->identifier(n); }
+	const InternedStringPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
+	const InternedStringPtr& identifier_ex(int_t n){ 
+		if(n!=0){ return identifier(n); 
+		}else{ return (const InternedStringPtr&)ap(ff().temp2_ = pop()->to_s()->intern()); }
+	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
 
@@ -649,22 +683,19 @@ public:
 	const inst_t* FunExit(const inst_t* pc);
 	const inst_t* FunValue(const inst_t* pc);
 	const inst_t* FunCheckUnsupported(const inst_t* pc);
+	const inst_t* FunProperty(const inst_t* pc);
+	const inst_t* FunSetProperty(const inst_t* pc);
 	const inst_t* FunSend(const inst_t* pc);
-	const inst_t* FunSendIfDefined(const inst_t* pc);
+	const inst_t* FunSendQ(const inst_t* pc);
 	const inst_t* FunCall(const inst_t* pc);
-	const inst_t* FunCallCallee(const inst_t* pc);
-	const inst_t* FunSend_A(const inst_t* pc);
-	const inst_t* FunSendIfDefined_A(const inst_t* pc);
-	const inst_t* FunCall_A(const inst_t* pc);
-	const inst_t* FunCallCallee_A(const inst_t* pc);
-	const inst_t* FunSend_T(const inst_t* pc);
-	const inst_t* FunSendIfDefined_T(const inst_t* pc);
-	const inst_t* FunCall_T(const inst_t* pc);
-	const inst_t* FunCallCallee_T(const inst_t* pc);
-	const inst_t* FunSend_AT(const inst_t* pc);
-	const inst_t* FunSendIfDefined_AT(const inst_t* pc);
-	const inst_t* FunCall_AT(const inst_t* pc);
-	const inst_t* FunCallCallee_AT(const inst_t* pc);
+	const inst_t* FunMember(const inst_t* pc);
+	const inst_t* FunMemberQ(const inst_t* pc);
+	const inst_t* FunDefineMember(const inst_t* pc);
+	const inst_t* FunGlobalVariable(const inst_t* pc);
+	const inst_t* FunSetGlobalVariable(const inst_t* pc);
+	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
+	const inst_t* FunOnce(const inst_t* pc);
+	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunBlockBegin(const inst_t* pc);
 	const inst_t* FunBlockBeginDirect(const inst_t* pc);
 	const inst_t* FunBlockEnd(const inst_t* pc);
@@ -727,17 +758,9 @@ public:
 	const inst_t* FunShlAssign(const inst_t* pc);
 	const inst_t* FunShrAssign(const inst_t* pc);
 	const inst_t* FunUshrAssign(const inst_t* pc);
-	const inst_t* FunGlobalVariable(const inst_t* pc);
-	const inst_t* FunSetGlobalVariable(const inst_t* pc);
-	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
-	const inst_t* FunMember(const inst_t* pc);
-	const inst_t* FunMemberIfDefined(const inst_t* pc);
-	const inst_t* FunDefineMember(const inst_t* pc);
-	const inst_t* FunDefineClassMember(const inst_t* pc);
-	const inst_t* FunOnce(const inst_t* pc);
-	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);
 	const inst_t* FunClassEnd(const inst_t* pc);
+	const inst_t* FunDefineClassMember(const inst_t* pc);
 	const inst_t* FunMakeArray(const inst_t* pc);
 	const inst_t* FunArrayAppend(const inst_t* pc);
 	const inst_t* FunMakeMap(const inst_t* pc);
@@ -749,13 +772,6 @@ public:
 	const inst_t* FunThrowNop(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
-	const inst_t* FunSendToI(const inst_t* pc);
-	const inst_t* FunSendToF(const inst_t* pc);
-	const inst_t* FunSendToS(const inst_t* pc);
-	const inst_t* FunSendToA(const inst_t* pc);
-	const inst_t* FunSendToM(const inst_t* pc);
-	const inst_t* FunSendLength(const inst_t* pc);
-	const inst_t* FunSendSize(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
@@ -771,7 +787,7 @@ private:
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
 	inst_t throw_nop_code_;
-	
+
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
 

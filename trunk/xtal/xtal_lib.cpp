@@ -652,7 +652,6 @@ Mutex::block_break: method{
 	))();
 
 	Xsrc((
-
 Int::op_add: method(rhs){ return rhs.op_add_r_Int(this); }
 Int::op_add_assign: Int::op_add;
 Int::op_sub: method(rhs){ return rhs.op_sub_r_Int(this); }

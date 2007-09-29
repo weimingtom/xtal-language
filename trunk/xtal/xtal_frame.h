@@ -96,9 +96,6 @@ public:
 		variables_info_.release();
 	}	
 };
-
-extern EmptyInstanceVariables empty_instance_variables;
-extern uint_t global_mutate_count;
 	
 class Frame : public HaveName{
 public:

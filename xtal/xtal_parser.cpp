@@ -1126,10 +1126,6 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				XTAL_CASE('('){
 					if(pri < PRI_CALL - l_space){
 						ret = parse_call(lhs);
-					}else{
-						if(lhs->type()==EXPR_SEND){
-							ret = bracket(ln, lhs);
-						}
 					}
 				}
 

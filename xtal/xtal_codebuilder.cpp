@@ -281,27 +281,28 @@ bool CodeBuilder::put_local_code(const InternedStringPtr& var){
 void CodeBuilder::put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined){
 	if(pvar){ compile_expr(pvar); }	
 	
+	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
 	if(if_defined){
-		if(tail){ put_inst(InstSendIfDefined_T(0, 0, need_result_count, pvar ? 0 : register_identifier(var))); }
-		else{ put_inst(InstSendIfDefined(0, 0, need_result_count, pvar ? 0 : register_identifier(var))); }
+		put_inst(InstSendQ(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
 	}else{
-		if(tail){ put_inst(InstSend_T(0, 0, need_result_count, pvar ? 0 : register_identifier(var))); }
-		else{ put_inst(InstSend(0, 0, need_result_count, pvar ? 0 : register_identifier(var))); }
+		if(need_result_count==1 && flags==0){
+			put_inst(InstProperty(pvar ? 0 : register_identifier(var)));
+		}else{
+			put_inst(InstSend(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
+		}
 	}
 }
 
 void CodeBuilder::put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined){
-	if(pvar){ compile_expr(bin(0, EXPR_CAT, string(0, KIND_STRING, "set_"), pvar)); }	
-	
-	InternedStringPtr identifier_number = xnew<String>("set_", 4)->cat(var);
-	bool tail = false;
+	InternedStringPtr set_var = xnew<String>("set_", 4)->cat(var);
+	ExprPtr set_pvar = pvar ? bin(EXPR_CAT, 0, string(0, KIND_STRING, "set_"), pvar) : pvar;
 
+	if(set_pvar){ compile_expr(set_pvar); }	
+	
 	if(if_defined){
-		if(tail){ put_inst(InstSendIfDefined_T(1, 0, 0, pvar ? 0 : register_identifier(identifier_number))); }
-		else{ put_inst(InstSendIfDefined(1, 0, 0, pvar ? 0 : register_identifier(identifier_number))); }
+		put_inst(InstSendQ(1, 0, 0, 0, set_pvar ? 0 : register_identifier(set_var)));
 	}else{
-		if(tail){ put_inst(InstSend_T(1, 0, 0, pvar ? 0 : register_identifier(identifier_number))); }
-		else{ put_inst(InstSend(1, 0, 0, pvar ? 0 : register_identifier(identifier_number))); }
+		put_inst(InstSetProperty(set_pvar ? 0 : register_identifier(set_var)));
 	}
 }
 
@@ -311,7 +312,7 @@ void CodeBuilder::put_member_code(const InternedStringPtr& var, ExprPtr pvar, bo
 	}
 	
 	if(if_defined){
-		InstMemberIfDefined member;
+		InstMemberQ member;
 		member.identifier_number = pvar ? 0 : register_identifier(var);
 		put_inst(member);
 	}else{
@@ -1414,6 +1415,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			bool have_args = e->call_have_args();
 			int_t ordered = e->call_ordered() ? e->call_ordered()->size() : 0;
 			int_t named = e->call_named() ? e->call_named()->size() : 0;
+			int_t flags = (info.tail ? CALL_FLAG_TAIL : 0) | (have_args ? CALL_FLAG_ARGS : 0);
 
 			if(e->call_term()->type()==EXPR_SEND){ // a.b(); メッセージ送信式
 
@@ -1430,39 +1432,13 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				}
 
 				if(e2->send_q()){
-					if(info.tail){
-						if(have_args){ put_inst(InstSendIfDefined_AT(ordered, named, info.need_result_count, send_name));
-						}else{ put_inst(InstSendIfDefined_T(ordered, named, info.need_result_count, send_name)); }
-					}else{
-						if(have_args){ put_inst(InstSendIfDefined_A(ordered, named, info.need_result_count, send_name));
-						}else{ put_inst(InstSendIfDefined(ordered, named, info.need_result_count, send_name)); }
-					}
+					put_inst(InstSendQ(ordered, named, info.need_result_count, flags, send_name));
 				}else{
-					if(info.tail){
-						if(have_args){ put_inst(InstSend_AT(ordered, named, info.need_result_count, send_name));
-						}else{ put_inst(InstSend_T(ordered, named, info.need_result_count, send_name)); }
-					}else{
-						if(have_args){ put_inst(InstSend_A(ordered, named, info.need_result_count, send_name));
-						}else{ put_inst(InstSend(ordered, named, info.need_result_count, send_name)); }
-					}
-				}
-			}else if(e->call_term()->type()==EXPR_CALLEE){
-				if(info.tail){
-					if(have_args){ put_inst(InstCallCallee_AT(ordered, named, info.need_result_count));
-					}else{ put_inst(InstCallCallee_T(ordered, named, info.need_result_count)); }
-				}else{
-					if(have_args){ put_inst(InstCallCallee_A(ordered, named, info.need_result_count));
-					}else{ put_inst(InstCallCallee(ordered, named, info.need_result_count)); }
+					put_inst(InstSend(ordered, named, info.need_result_count, flags, send_name));
 				}
 			}else{
 				compile_expr(e->call_term());
-				if(info.tail){
-					if(have_args){ put_inst(InstCall_AT(ordered, named, info.need_result_count));
-					}else{ put_inst(InstCall_T(ordered, named, info.need_result_count)); }
-				}else{
-					if(have_args){ put_inst(InstCall_A(ordered, named, info.need_result_count));
-					}else{ put_inst(InstCall(ordered, named, info.need_result_count)); }
-				}
+				put_inst(InstCall(ordered, named, info.need_result_count, flags));
 			}
 
 			result_count = info.need_result_count;

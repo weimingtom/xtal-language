@@ -5,7 +5,7 @@
 
 namespace xtal{
 
-enum{
+enum ExprType{
 	EXPR_NULL,
 	EXPR_NOP,
 	EXPR_TRUE,
@@ -104,10 +104,10 @@ inline ExprPtr ep(const AnyPtr& a){
 
 class Expr : public Array{
 public:
-	static ExprPtr make(int_t type, int_t lineno=0, int_t size=2){
+	static ExprPtr make(ExprType type, int_t lineno=0, int_t size=2){
 		ExprPtr ret = xnew<Expr>();
 		ret->resize(size);
-		ret->set_type(type);
+		ret->set_type((int_t)type);
 		ret->set_lineno(lineno);
 		return ret;
 	}
@@ -227,8 +227,8 @@ inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPt
 
 inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool extendable_param, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
 
-inline ExprPtr bin(int_t expr_type, int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return Expr::make(expr_type, lineno, 4)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
-inline ExprPtr una(int_t expr_type, int_t lineno, const ExprPtr& term){ return Expr::make(expr_type, lineno, 3)->set_una_term(term); }
+inline ExprPtr bin(ExprType expr_type, int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return Expr::make(expr_type, lineno, 4)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
+inline ExprPtr una(ExprType expr_type, int_t lineno, const ExprPtr& term){ return Expr::make(expr_type, lineno, 3)->set_una_term(term); }
 
 inline ExprPtr lvar(int_t lineno, const InternedStringPtr& name){ return Expr::make(EXPR_LVAR, lineno, 3)->set_lvar_name(name); }
 inline ExprPtr ivar(int_t lineno, const InternedStringPtr& name){ return Expr::make(EXPR_IVAR, lineno, 3)->set_ivar_name(name); }

@@ -64,7 +64,7 @@ int main(int argc, char** argv){
 			temp->push_back("message_en.xtal");
 #endif
 			path = temp->join(sep)->to_s();
-			add_get_text_map(cast<MapPtr>(load(path)));
+			add_text_map(cast<MapPtr>(load(path)));
 		}
 
 		handle_argv(argv);

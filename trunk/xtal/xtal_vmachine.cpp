@@ -3240,7 +3240,7 @@ void VMachine::after_gc(){
 
 void VMachine::print_info(){
 	printf("stack size %d\n", stack_.size());
-	for(int_t i=0; i<stack_.size(); ++i){
+	for(uint_t i=0; i<stack_.size(); ++i){
 		printf("\tstack value %d = %d\n", i, ap(stack_[i])->to_s()->c_str());
 	}
 

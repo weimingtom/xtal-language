@@ -342,6 +342,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xtal\xtal_format.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xtal\xtal_frame.h"
 				>
 			</File>

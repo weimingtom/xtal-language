@@ -127,6 +127,16 @@ public:
 	*/
 	bool eat(int_t ch);
 
+	/**
+	* @brief 文字列の記録を開始する
+	*/
+	void begin_record();
+
+	/**
+	* @brief 文字列の記録を終了して、それを返す。
+	*/
+	StringPtr end_record();
+
 private:
 
 	enum{ BUF_SIZE = 1024, BUF_MASK = BUF_SIZE-1 };
@@ -137,6 +147,9 @@ private:
 
 	uint_t pos_;
 	uint_t read_;
+
+	string_t recorded_string_;
+	bool recording_;
 };
 	
 class CompileError{
@@ -193,29 +206,33 @@ public:
 	*/
 	void set_lineno(int_t v){ lineno_ = v; }
 
+	int_t read_direct();
+
+	StringPtr read_string(int_t open, int_t close);
+
 	/**
 	* @brief 文字列の記録を開始する
 	*/
-	void begin_record();
+	void begin_record(){
+		reader_.begin_record();
+	}
 
 	/**
 	* @brief 文字列の記録を終了して、それを返す。
 	*/
-	StringPtr end_record();
-
-	int_t read_direct();
-
-	StringPtr read_string(int_t open, int_t close);
+	StringPtr end_record(){
+		return reader_.end_record();
+	}
 
 private:
 	
 	void do_read();
 
-	void push(int_t v);
-	void push_int(int_t v);
-	void push_float(float_t v);
-	void push_keyword(const InternedStringPtr& v, int_t num);
-	void push_identifier(const InternedStringPtr& v);
+	void push_token(int_t v);
+	void push_int_token(int_t v);
+	void push_float_token(float_t v);
+	void push_keyword_token(const InternedStringPtr& v, int_t num);
+	void push_identifier_token(const InternedStringPtr& v);
 
 	void deplete_space();
 
@@ -229,17 +246,11 @@ private:
 	void parse_number();
 	
 	int_t test_right_space(int_t ch);
-	int_t read_from_reader();
-	bool eat_from_reader(int_t ch);
-	void putback_to_reader(int_t ch);
 
 private:
 
 	Reader reader_;
 	MapPtr keyword_map_;
-
-	string_t recorded_string_;
-	bool recording_;
 
 	enum{ BUF_SIZE = 64, BUF_MASK = BUF_SIZE-1 };
 	Token buf_[BUF_SIZE];

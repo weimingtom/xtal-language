@@ -79,6 +79,19 @@
 #	pragma warning(disable: 4819)
 #endif
 
+
+#if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? "I64" : "")
+#else
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? "ll" : "")
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER>=1400
+#	define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf_s(buffer, buffer_size, format, value)
+#else
+#	define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf(buffer, format, value)
+#endif
+
 namespace xtal{
 
 template<class T>

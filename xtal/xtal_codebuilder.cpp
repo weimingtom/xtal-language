@@ -1240,7 +1240,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){
-				put_inst(InstValue(register_value(get_text(e->string_value()->to_s()->c_str()))));
+				put_inst(InstValue(register_value(text(e->string_value()->to_s()->c_str()))));
 			}else if(e->string_kind()==KIND_FORMAT){
 				put_inst(InstValue(register_value(format(e->string_value()->to_s()->c_str()))));
 			}else{

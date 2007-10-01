@@ -1,5 +1,7 @@
 #include "xtal.h"
 
+#include "xtal_macro.h"
+
 namespace xtal{
 
 Null null;
@@ -25,9 +27,7 @@ namespace{
 
 	StringPtr Int_to_s(const AnyPtr& p){
 		if(type(p)==TYPE_INT){
-			char buf[32];
-			sprintf(buf, "%d", ivalue(p));
-			return xnew<String>(buf);
+			return Xf("%d")(p)->to_s();
 		}
 
 		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return null);
@@ -52,9 +52,7 @@ namespace{
 
 	StringPtr Float_to_s(const AnyPtr& p){
 		if(type(p)==TYPE_FLOAT){
-			char buf[32];
-			sprintf(buf, "%g", fvalue(p));
-			return xnew<String>(buf);
+			return Xf("%g")(p)->to_s();
 		}
 
 		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return null);

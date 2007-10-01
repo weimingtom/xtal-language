@@ -121,6 +121,7 @@ public:
 			}
 
 			read_ += now_read;
+			rpos = read_&bufmask;
 		}
 		
 		return buf_->at((pos_+n)&bufmask);

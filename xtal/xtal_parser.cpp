@@ -35,23 +35,41 @@ Reader::Reader()
 	:stream_(null){
 	pos_ = 0;
 	read_ = 0;
+	recording_ = false;
 }
 
 int_t Reader::read(){
 	int_t ret = peek();
+
+	if(recording_ && ret!=-1){
+		recorded_string_ += (char_t)ret;
+	}
+
 	++pos_;
 	return ret;
 }
 
 int_t Reader::peek(int_t n){
-	if(pos_==read_){
-		read_ += stream_->read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
+	uint_t rpos = read_&BUF_MASK;
+	uint_t ppos = pos_&BUF_MASK;
 
-		if(pos_==read_){
+	while(pos_+n>=read_){
+		uint_t now_read = 0;
+
+		if(ppos>rpos){
+			now_read = stream_->read(&buf_[rpos], ppos-rpos);
+		}else{
+			now_read = stream_->read(&buf_[rpos], BUF_SIZE-rpos);
+		}
+
+		if(now_read==0){
 			return -1;
 		}
+
+		read_ += now_read;
+		rpos = read_&BUF_MASK;
 	}
-	return buf_[pos_ & BUF_MASK];
+	return buf_[(pos_+n) & BUF_MASK];
 }
 
 bool Reader::eat(int_t ch){
@@ -62,11 +80,18 @@ bool Reader::eat(int_t ch){
 	return false;
 }
 
-void Reader::putback(int_t ch){
-	pos_--;
-	buf_[pos_ & BUF_MASK]=ch;
+void Reader::begin_record(){
+	recording_ = true;
+	recorded_string_ = "";
 }
 
+StringPtr Reader::end_record(){
+	recording_ = false;
+	if(!recorded_string_.empty()){
+		recorded_string_.resize(recorded_string_.size()-1);
+	}
+	return xnew<String>(recorded_string_.c_str(), recorded_string_.size());
+}
 
 Lexer::Lexer(){
 	set_lineno(1);
@@ -135,27 +160,27 @@ Token Lexer::peek(){
 	return buf_[pos_ & BUF_MASK];
 }
 
-void Lexer::push(int_t v){
+void Lexer::push_token(int_t v){
 	buf_[read_ & BUF_MASK] = Token(Token::TYPE_TOKEN, v, left_space_ | test_right_space(reader_.peek()));
 	read_++;
 }
 	
-void Lexer::push_int(int_t v){
+void Lexer::push_int_token(int_t v){
 	buf_[read_ & BUF_MASK] = Token(Token::TYPE_INT, v, left_space_ | test_right_space(reader_.peek()));
 	read_++;
 }
 
-void Lexer::push_float(float_t v){
+void Lexer::push_float_token(float_t v){
 	buf_[read_ & BUF_MASK] = Token(Token::TYPE_FLOAT, v, left_space_ | test_right_space(reader_.peek()));
 	read_++;
 }
 	
-void Lexer::push_keyword(const InternedStringPtr& v, int_t num){
+void Lexer::push_keyword_token(const InternedStringPtr& v, int_t num){
 	buf_[read_ & BUF_MASK] = Token(Token::TYPE_KEYWORD, v, left_space_ | test_right_space(reader_.peek()), num);
 	read_++;
 }
 	
-void Lexer::push_identifier(const InternedStringPtr& v){
+void Lexer::push_identifier_token(const InternedStringPtr& v){
 	buf_[read_ & BUF_MASK] = Token(Token::TYPE_IDENTIFIER, v, left_space_ | test_right_space(reader_.peek()));
 	read_++;
 }
@@ -174,13 +199,13 @@ InternedStringPtr Lexer::parse_identifier(){
 
 	int len = ch_len(reader_.peek());
 	while(len--){
-		buf += read_from_reader();
+		buf += reader_.read();
 	}
 
 	while(test_ident_rest(reader_.peek())){
 		len = ch_len(reader_.peek());
 		while(len--){
-			buf += read_from_reader();
+			buf += reader_.read();
 		}
 	}
 	
@@ -192,9 +217,9 @@ int_t Lexer::parse_integer(){
 	while(true){
 		if(test_digit(reader_.peek())){
 			ret *= 10;
-			ret += read_from_reader()-'0';
+			ret += reader_.read()-'0';
 		}else if(reader_.peek()=='_'){
-			read_from_reader();
+			reader_.read();
 		}else{
 			break;
 		}
@@ -207,15 +232,15 @@ int_t Lexer::parse_hex(){
 	while(true){
 		if(test_digit(reader_.peek())){
 			ret *= 16;
-			ret += read_from_reader()-'0';
+			ret += reader_.read()-'0';
 		}else if(test_range(reader_.peek(), 'a', 'f')){
 			ret *= 16;
-			ret += read_from_reader()-'a';
+			ret += reader_.read()-'a';
 		}else if(test_range(reader_.peek(), 'A', 'F')){
 			ret *= 16;
-			ret += read_from_reader()-'A';
+			ret += reader_.read()-'A';
 		}else if(reader_.peek()=='_'){
-			read_from_reader();
+			reader_.read();
 		}else{
 			break;
 		}
@@ -233,9 +258,9 @@ int_t Lexer::parse_bin(){
 	while(true){
 		if(test_range(reader_.peek(), '0', '1')){
 			ret *= 2;
-			ret += read_from_reader()-'0';
+			ret += reader_.read()-'0';
 		}else if(reader_.peek()=='_'){
-			read_from_reader();
+			reader_.read();
 		}else{
 			break;
 		}
@@ -249,62 +274,65 @@ int_t Lexer::parse_bin(){
 }
 
 void Lexer::parse_number_suffix(int_t val){
-	if(eat_from_reader('K')){
-		push_int(val*1024);
-	}else if(eat_from_reader('M')){
-		push_int(val*1024*1024);	
-	}else if(eat_from_reader('G')){
-		push_int(val*1024*1024*1024);	
-	}else if(eat_from_reader('f') || eat_from_reader('F')){
-		push_float((float_t)val);	
+	if(reader_.eat('K')){
+		push_int_token(val*1024);
+	}else if(reader_.eat('M')){
+		push_int_token(val*1024*1024);	
+	}else if(reader_.eat('G')){
+		push_int_token(val*1024*1024*1024);	
+	}else if(reader_.eat('f') || reader_.eat('F')){
+		push_float_token((float_t)val);	
 	}else{
 
 		if(test_ident_rest(reader_.peek())){
 			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
 		}
 
-		push_int(val);
+		push_int_token(val);
 	}
 }
 
 void Lexer::parse_number_suffix(float_t val){
-	if(eat_from_reader('K')){
-		push_float(val*1024);	
-	}else if(eat_from_reader('M')){
-		push_float(val*1024*1024);	
-	}else if(eat_from_reader('G')){
-		push_float(val*1024*1024*1024);	
-	}else if(eat_from_reader('f') || eat_from_reader('F')){
-		push_float(val);	
+	if(reader_.eat('K')){
+		push_float_token(val*1024);	
+	}else if(reader_.eat('M')){
+		push_float_token(val*1024*1024);	
+	}else if(reader_.eat('G')){
+		push_float_token(val*1024*1024*1024);	
+	}else if(reader_.eat('f') || reader_.eat('F')){
+		push_float_token(val);	
 	}else{
 	
 		if(test_ident_rest(reader_.peek())){
 			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
 		}
 
-		push_float(val);
+		push_float_token(val);
 	}
 }
 
 void Lexer::parse_number(){
-	if(eat_from_reader('0')){
-		if(eat_from_reader('x') || eat_from_reader('X')){
-			push_int(parse_hex());
+	if(reader_.eat('0')){
+		if(reader_.eat('x') || reader_.eat('X')){
+			push_int_token(parse_hex());
 			return;
-		}else if(eat_from_reader('b') || eat_from_reader('B')){
-			push_int(parse_bin());
+		}else if(reader_.eat('b') || reader_.eat('B')){
+			push_int_token(parse_bin());
 			return;
 		}
 	}
 	
 	int_t ival = parse_integer();
 	
-	if(eat_from_reader('.')){
-		if(test_digit(reader_.peek())){
+	if(reader_.peek()=='.'){
+		if(test_digit(reader_.peek(1))){
+			reader_.read();
+
 			float_t scale = 1;
-			while(eat_from_reader('0')){
+			while(reader_.eat('0')){
 				scale /= 10;
 			}
+
 			float_t fval = 0;
 			int_t after_the_decimal_point = parse_integer();
 			while(after_the_decimal_point!=0){
@@ -312,19 +340,23 @@ void Lexer::parse_number(){
 				fval/=10;
 				after_the_decimal_point/=10;
 			}
+
 			fval *= scale;
 			fval += ival;
 			int_t e = 1;
-			if(eat_from_reader('e') || eat_from_reader('E')){
-				if(eat_from_reader('-')){
+			if(reader_.eat('e') || reader_.eat('E')){
+				if(reader_.eat('-')){
 					e=-1;
 				}else{
-					eat_from_reader('+');
+					reader_.eat('+');
 				}
+
 				if(!test_digit(reader_.peek())){
 					error_->error(lineno(), Xt("Xtal Compile Error 1014"));
 				}
+
 				e *= parse_integer();
+
 				{
 					using namespace std;
 					fval *= (float_t)pow((float_t)10, (float_t)e);
@@ -332,110 +364,88 @@ void Lexer::parse_number(){
 			}
 			parse_number_suffix(fval);
 		}else{
-			putback_to_reader('.');
-			push_int(ival);
+			push_int_token(ival);
 		}
 	}else{
 		parse_number_suffix(ival);
 	}
 }
 	
-int_t Lexer::read_from_reader(){
-	int_t ch = reader_.read();
-	if(recording_){
-		recorded_string_ += (char_t)ch;
-	}
-	return ch;
-}
-
-bool Lexer::eat_from_reader(int_t ch){
-	if(reader_.eat(ch)){
-		if(recording_){
-			recorded_string_ += (char_t)ch;
-		}
-		return true;
-	}
-	return false;
-}
-
-void Lexer::putback_to_reader(int_t ch){
-	if(recording_){
-		recorded_string_.resize(recorded_string_.size()-1);
-	}
-	reader_.putback(ch);
-}
-
 void Lexer::do_read(){
 	left_space_ = 0;
 	
 	do{
 
-		int_t ch = read_from_reader();
+		int_t ch = reader_.peek();
 		
 		switch(ch){
 
 			XTAL_DEFAULT{
 				if(ch!=-1 && test_ident_first(ch)){
-					putback_to_reader(ch);
 					InternedStringPtr identifier = parse_identifier();
 					if(const AnyPtr& key = keyword_map_->at(identifier)){
-						push_keyword(identifier, ivalue(key));
+						push_keyword_token(identifier, ivalue(key));
 					}else{
-						push_identifier(identifier);
+						push_identifier_token(identifier);
 					}
 				}else if(test_digit(ch)){
-					putback_to_reader(ch);
 					parse_number();
 					return;
 				}else{
-					push(ch);
+					reader_.read();
+					push_token(ch);
 				}
 			}
 			
 			XTAL_CASE('+'){
-				if(eat_from_reader('+')){
-					push(c2('+', '+'));
-				}else if(eat_from_reader('=')){
-					push(c2('+', '='));
+				reader_.read();
+				if(reader_.eat('+')){
+					push_token(c2('+', '+'));
+				}else if(reader_.eat('=')){
+					push_token(c2('+', '='));
 				}else{
-					push('+');
+					push_token('+');
 				}
 			}
 			
 			XTAL_CASE('-'){
-				if(eat_from_reader('-')){
-					push(c2('-', '-'));
-				}else if(eat_from_reader('=')){
-					push(c2('-', '='));
+				reader_.read();
+				if(reader_.eat('-')){
+					push_token(c2('-', '-'));
+				}else if(reader_.eat('=')){
+					push_token(c2('-', '='));
 				}else{
-					push('-');
+					push_token('-');
 				}
 			}
 			
 			XTAL_CASE('~'){
-				if(eat_from_reader('=')){
-					push(c2('~', '='));
+				reader_.read();
+				if(reader_.eat('=')){
+					push_token(c2('~', '='));
 				}else{
-					push('~');
+					push_token('~');
 				}
 			}
 			
 			XTAL_CASE('*'){
-				if(eat_from_reader('=')){
-					push(c2('*', '='));
+				reader_.read();
+				if(reader_.eat('=')){
+					push_token(c2('*', '='));
 				}else{
-					push('*');
+					push_token('*');
 				}
 			}
 			
 			XTAL_CASE('/'){
-				if(eat_from_reader('=')){
-					push(c2('/', '='));
-				}else if(eat_from_reader('/')){
+				reader_.read();
+				if(reader_.eat('=')){
+					push_token(c2('/', '='));
+				}else if(reader_.eat('/')){
 					while(true){
-						int_t ch = read_from_reader();
+						int_t ch = reader_.read();
 						if(ch=='\r'){
-							eat_from_reader('\n');
+							reader_.eat('\n');
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
@@ -448,16 +458,16 @@ void Lexer::do_read(){
 						}
 					}
 					continue;
-				}else if(eat_from_reader('*')){
+				}else if(reader_.eat('*')){
 					while(true){
-						int_t ch = read_from_reader();
+						int_t ch = reader_.read();
 						if(ch=='\r'){
-							eat_from_reader('\n');
+							reader_.eat('\n');
 							set_lineno(lineno()+1);
 						}else if(ch=='\n'){
 							set_lineno(lineno()+1);
 						}else if(ch=='*'){
-							if(eat_from_reader('/')){
+							if(reader_.eat('/')){
 								left_space_ = Token::FLAG_LEFT_SPACE;
 								break;
 							}
@@ -468,16 +478,17 @@ void Lexer::do_read(){
 					}
 					continue;
 				}else{
-					push('/');
+					push_token('/');
 				}
 			}			
 			
 			XTAL_CASE('#'){
-				if(eat_from_reader('!')){
+				reader_.read();
+				if(reader_.eat('!')){
 					while(true){
-						int_t ch = read_from_reader();
+						int_t ch = reader_.read();
 						if(ch=='\r'){
-							eat_from_reader('\n');
+							reader_.eat('\n');
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
@@ -491,154 +502,163 @@ void Lexer::do_read(){
 					}
 					continue;
 				}else{
-					push('#');
+					push_token('#');
 				}
 			}			
 			
 			XTAL_CASE('%'){
-				if(eat_from_reader('=')){
-					push(c2('%', '='));
+				reader_.read();
+				if(reader_.eat('=')){
+					push_token(c2('%', '='));
 				}else{
-					push('%');
+					push_token('%');
 				}
 			}
 			
 			XTAL_CASE('&'){
-				if(eat_from_reader('&')){
-					push(c2('&', '&'));
+				reader_.read();
+				if(reader_.eat('&')){
+					push_token(c2('&', '&'));
 				}else{
-					push('&');
+					push_token('&');
 				}
 			}
 			
 			XTAL_CASE('|'){
-				if(eat_from_reader('|')){
-					push(c2('|', '|'));
+				reader_.read();
+				if(reader_.eat('|')){
+					push_token(c2('|', '|'));
 				}else{
-					push('|');
+					push_token('|');
 				}
 			}
 						
 			XTAL_CASE('>'){
-				if(eat_from_reader('>')){
-					if(eat_from_reader('>')){
-						if(eat_from_reader('=')){
-							push(c3('>','3','='));
+				reader_.read();
+				if(reader_.eat('>')){
+					if(reader_.eat('>')){
+						if(reader_.eat('=')){
+							push_token(c3('>','3','='));
 						}else{
-							push(c3('>','>','>'));
+							push_token(c3('>','>','>'));
 						}
 					}else{
-						push(c2('>','>'));
+						push_token(c2('>','>'));
 					}
-				}else if(eat_from_reader('=')){
-					push(c2('>', '='));
+				}else if(reader_.eat('=')){
+					push_token(c2('>', '='));
 				}else{
-					push('>');
+					push_token('>');
 				}
 			}
 			
 			XTAL_CASE('<'){
-				if(eat_from_reader('<')){
-					if(eat_from_reader('=')){
-						push(c3('<','<','='));
+				reader_.read();
+				if(reader_.eat('<')){
+					if(reader_.eat('=')){
+						push_token(c3('<','<','='));
 					}else{
-						push(c2('<','<'));
+						push_token(c2('<','<'));
 					}
-				}else if(eat_from_reader('=')){
-					push(c2('<', '='));
+				}else if(reader_.eat('=')){
+					push_token(c2('<', '='));
 				}else{
-					push('<');
+					push_token('<');
 				}
 			}
 			
 			XTAL_CASE('='){
-				if(eat_from_reader('=')){
-					if(eat_from_reader('=')){
-						push(c3('=', '=', '='));
+				reader_.read();
+				if(reader_.eat('=')){
+					if(reader_.eat('=')){
+						push_token(c3('=', '=', '='));
 					}else{
-						push(c2('=', '='));
+						push_token(c2('=', '='));
 					}
 				}else{
-					push('=');
+					push_token('=');
 				}
 			}
 			
 			XTAL_CASE('!'){
-				if(eat_from_reader('=')){
-					if(eat_from_reader('=')){
-						push(c3('!', '=', '='));
+				reader_.read();
+				if(reader_.eat('=')){
+					if(reader_.eat('=')){
+						push_token(c3('!', '=', '='));
 					}else{
-						push(c2('!', '='));
+						push_token(c2('!', '='));
 					}
-				}else if(eat_from_reader('i')){
-					if(eat_from_reader('s')){
-						if(!test_ident_rest(reader_.peek())){
-							push(c3('!', 'i', 's'));
+				}else if(reader_.peek()=='i'){
+					if(reader_.peek(1)=='s'){
+						if(!test_ident_rest(reader_.peek(2))){
+							reader_.read();
+							reader_.read();
+							push_token(c3('!', 'i', 's'));
 						}else{
-							putback_to_reader('s');
-							putback_to_reader('i');
-							push('!');
+							push_token('!');
 						}
 					}else{
-						putback_to_reader(ch);
-						push('!');
+						push_token('!');
 					}
 				}else{
-					push('!');
+					push_token('!');
 				}
 			}
 			
 			XTAL_CASE('.'){
-				if(eat_from_reader('.')){
-					if(eat_from_reader('.')){
-						push(c3('.', '.', '.'));
+				reader_.read();
+				if(reader_.eat('.')){
+					if(reader_.eat('.')){
+						push_token(c3('.', '.', '.'));
 					}else{
-						push(c2('.', '.'));
+						push_token(c2('.', '.'));
 					}
-				}else if(eat_from_reader('?')){
-					push(c2('.', '?'));
+				}else if(reader_.eat('?')){
+					push_token(c2('.', '?'));
 				}else{
-					push('.');
+					push_token('.');
 				}
 			}
 
 			XTAL_CASE('"'){ //"
-				push('"'); //"
+				reader_.read();
+				push_token('"'); //"
 			}
 			
 			XTAL_CASE(':'){
-				if(eat_from_reader(':')){
-					if(eat_from_reader('?')){
-						push(c3(':', ':', '?'));
+				reader_.read();
+				if(reader_.eat(':')){
+					if(reader_.eat('?')){
+						push_token(c3(':', ':', '?'));
 					}else{
-						push(c2(':', ':'));
+						push_token(c2(':', ':'));
 					}
 				}else{
-					push(':');
+					push_token(':');
 				}
 			}
 
 			XTAL_CASE('\''){
-				push_identifier(read_string('\'', '\''));
+				reader_.read();
+				push_identifier_token(read_string('\'', '\''));
 			}
 
-			XTAL_CASE(';'){ push(';'); }
-			XTAL_CASE('{'){ push('{'); }
-			XTAL_CASE('}'){ push('}'); }
-			XTAL_CASE('['){ push('['); }
-			XTAL_CASE(']'){ push(']'); }
-			XTAL_CASE('('){ push('('); }
-			XTAL_CASE(')'){ push(')'); }
+			XTAL_CASE(';'){ reader_.read(); push_token(';'); }
+			XTAL_CASE('{'){ reader_.read(); push_token('{'); }
+			XTAL_CASE('}'){ reader_.read(); push_token('}'); }
+			XTAL_CASE('['){ reader_.read(); push_token('['); }
+			XTAL_CASE(']'){ reader_.read(); push_token(']'); }
+			XTAL_CASE('('){ reader_.read(); push_token('('); }
+			XTAL_CASE(')'){ reader_.read(); push_token(')'); }
 
 			XTAL_CASE4(' ', '\t', '\r', '\n'){
-				putback_to_reader(ch);
 				deplete_space();
 				left_space_ = Token::FLAG_LEFT_SPACE;
 				continue;
 			}
 
 			XTAL_CASE(-1){
-				push(-1);
+				push_token(-1);
 			}
 		}
 			
@@ -649,16 +669,17 @@ void Lexer::do_read(){
 
 void Lexer::deplete_space(){
 	while(true){
-		int_t ch = read_from_reader();
+		int_t ch = reader_.peek();
 		if(ch=='\r'){
-			eat_from_reader('\n');
+			reader_.read();
+			reader_.eat('\n');
 			set_lineno(lineno()+1);
 		}else if(ch=='\n'){
+			reader_.read();
 			set_lineno(lineno()+1);
 		}else if(ch==' ' || ch=='\t'){
-			
+			reader_.read();
 		}else{
-			putback_to_reader(ch);
 			return;
 		}
 	}
@@ -670,29 +691,16 @@ int_t Lexer::test_right_space(int_t ch){
 	}
 	return 0;
 }
-	
-void Lexer::begin_record(){
-	recording_ = true;
-	recorded_string_ = "";
-}
-
-StringPtr Lexer::end_record(){
-	recording_ = false;
-	if(!recorded_string_.empty()){
-		recorded_string_.resize(recorded_string_.size()-1);
-	}
-	return xnew<String>(recorded_string_.c_str(), recorded_string_.size());
-}
 
 int_t Lexer::read_direct(){
-	return read_from_reader();
+	return reader_.read();
 }
 
 StringPtr Lexer::read_string(int_t open, int_t close){
 	string_t str;
 	int_t depth = 1;
 	while(true){
-		int_t ch = read_from_reader();
+		int_t ch = reader_.read();
 		if(ch==close){
 			--depth;
 			if(depth==0){
@@ -723,7 +731,7 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				
 				XTAL_CASE('\r'){ 
 					if(reader_.peek()=='\n'){
-						read_from_reader();
+						reader_.read();
 					}
 
 					str+='\r';
@@ -736,11 +744,11 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 					set_lineno(lineno()+1);
 				}
 			}
-			read_from_reader();
+			reader_.read();
 		}else{
 			if(ch=='\r'){
 				if(reader_.peek()=='\n'){
-					read_from_reader();
+					reader_.read();
 				}
 
 				str+='\r';
@@ -752,7 +760,7 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 			}else{
 				str+=(char_t)ch;
 				for(int_t i=1, size = ch_len((char_t)ch); i<size; ++i){
-					str+=(char_t)read_from_reader();
+					str+=(char_t)reader_.read();
 				}
 			}
 		}	

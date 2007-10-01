@@ -146,12 +146,6 @@ const StreamPtr& stderr_stream();
 
 AnyPtr* make_place();
 
-AnyPtr get_text(const char* text);
-AnyPtr format(const char* text);
-
-void set_get_text_map(const MapPtr& map);
-void add_get_text_map(const MapPtr& map);
-MapPtr get_get_text_map();
 
 AnyPtr source(const char* src, int_t size, const char* file);
 

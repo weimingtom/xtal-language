@@ -3,6 +3,7 @@
 
 #include "xtal_lib.h"
 #include "xtal_smartptr.h"
+#include "xtal_format.h"
 
 namespace xtal{
 

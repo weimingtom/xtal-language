@@ -3,6 +3,7 @@
 
 #include "xtal_lib.h"
 #include "xtal_iterator.h"
+#include "xtal_format.h"
 
 /** @addtogroup xmacro */
 /*@{*/
@@ -51,13 +52,13 @@
 
 
 /**
-* @brief get_textを簡単に記述するためのマクロ
+* @brief textを簡単に記述するためのマクロ
 *
 * @code
 * AnyPtr text = Xt("Text %d %s")(10, "test");
 * @endcode
 */
-#define Xt(text) ::xtal::get_text(text) 
+#define Xt(txt) ::xtal::text(txt) 
 
 /**
 * @brief formatを簡単に記述するためのマクロ
@@ -66,7 +67,7 @@
 * AnyPtr fmt = Xf("Text %d %s")(10, "test");
 * @endcode
 */
-#define Xf(text) ::xtal::format(text) 
+#define Xf(txt) ::xtal::format(txt) 
 
 /**
 * @brief Xtalのソースを簡単に記述するためのマクロ

@@ -108,7 +108,10 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
+ filelocal.inherit(builtin::peg);
 
+lex: parse_string((ch_set("te") | -str("s"))*0, "testtesttest");
+lex.results.p;
 
 ))();
 
@@ -119,7 +122,7 @@ AnyPtr ret = Xsrc
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

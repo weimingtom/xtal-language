@@ -36,3 +36,19 @@
 	assert foo(7, 8)[1]==8;
 }
 
+{
+	foo: fun(a, ...){
+		return a;
+	}
+
+	assert foo(5, 6, 7)==5;
+}
+
+{
+	foo: fun(...){
+		return ...[0];
+	}
+
+	assert foo(...Arguments([5, 6, 7]))==5;
+}
+

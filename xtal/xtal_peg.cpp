@@ -63,7 +63,7 @@ void initialize_peg(){
 
 	{
 		ClassPtr p = new_cpp_class<Lexer>("Lexer");
-
+		p->method("results", &Lexer::results);
 		peg->def("Lexer", p);
 	}
 
@@ -90,6 +90,8 @@ void initialize_peg(){
 	lineno = xnew<Parser>(Parser::LINENO);
 	ascii = xnew<Parser>(Parser::ASCII);
 
+	peg->fun("parse_string", parse_string);
+
 	peg->def("any", any);
 	peg->def("eof", eof);
 	peg->def("alpha", alpha);
@@ -112,7 +114,7 @@ void initialize_peg(){
 namespace peg{
 
 Parser::Parser(Type type, const AnyPtr& p1, const AnyPtr& p2)
-	:type_(type), cacheable_(false), param1_(p1), param2_(p2){}
+	:type_(type), param1_(p1), param2_(p2){}
 
 MapPtr Parser::make_ch_map2(const StringPtr& ch, const ParserPtr& pp){
 	MapPtr data = xnew<Map>();
@@ -178,7 +180,7 @@ ParserPtr Parser::repeat(const AnyPtr& a, int_t n){
 	}
 
 	if(n<0){
-		p = select(p, success());
+		p = select(p, success);
 		ParserPtr pp = p;
 		for(int_t i=1; i<-n; ++i){
 			pp = followed(pp, p);
@@ -321,20 +323,6 @@ void Parser::visit_members(Visitor& m){
 bool Parser::parse(const LexerPtr& lex){
 
 	bool success;
-	Lexer::CacheInfo cache_info;
-
-	if(cacheable_){
-		if(lex->fetch_cache(this, success, cache_info)){
-			return success;
-		}
-	}else{
-		if(lex->judge_cache(this)){
-			cacheable_ = true;
-			if(lex->fetch_cache(this, success, cache_info)){
-				return success;
-			}
-		}
-	}
 
 	switch(type_){
 		XTAL_NODEFAULT;
@@ -411,38 +399,36 @@ bool Parser::parse(const LexerPtr& lex){
 
 		XTAL_CASE(JOIN){
 			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-			lex->begin_join();				
+			Lexer::Mark mark = lex->begin_join();				
 			if(p->parse(lex)){
-				lex->end_join(true);
+				lex->end_join(mark);
 				PARSER_RETURN(true);
 			}
-			lex->end_join(false);
+			lex->end_join(mark, true);
 			PARSER_RETURN(false);
 		}
 
 		XTAL_CASE(ARRAY){
 			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-
-			const ArrayPtr& temp = lex->results();
-			uint_t size = temp->size();
+			Lexer::Mark mark = lex->begin_array();
 			if(p->parse(lex)){
-				lex->noreflect_cache(size);
-				temp->push_back(temp->splice(size, temp->size()-size));
+				lex->end_array(mark);
 				PARSER_RETURN(true);
 			}
+			lex->end_array(mark, true);
 			PARSER_RETURN(false);
 		}
 
 		XTAL_CASE(TRY){
 			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-			lex->mark();
+			Lexer::Mark mark = lex->mark();
 
 			if(p->parse(lex)){
-				lex->unmark();
+				lex->unmark(mark);
 				PARSER_RETURN(true);
 			}
 
-			lex->unmark_and_backtrack();
+			lex->unmark(mark);
 			PARSER_RETURN(false);
 		}
 
@@ -489,17 +475,17 @@ bool Parser::parse(const LexerPtr& lex){
 
 		XTAL_CASE(NOT){
 			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-			lex->mark();
+			Lexer::Mark mark = lex->mark();
 			bool ret = p->parse(lex);
-			lex->unmark_and_backtrack();
+			lex->unmark(mark, ret);
 			PARSER_RETURN(!ret);
 		}
 
 		XTAL_CASE(TEST){
 			const ParserPtr& p = static_ptr_cast<Parser>(param1_);
-			lex->mark();
+			Lexer::Mark mark = lex->mark();
 			bool ret = p->parse(lex);
-			lex->unmark_and_backtrack();
+			lex->unmark(mark, !ret);
 			PARSER_RETURN(ret);
 		}
 
@@ -518,10 +504,6 @@ bool Parser::parse(const LexerPtr& lex){
 	}
 
 end:
-
-	if(cacheable_){
-		lex->store_cache(this, success, cache_info);
-	}
 
 	return success;
 }

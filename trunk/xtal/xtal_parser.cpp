@@ -43,7 +43,7 @@ int_t Reader::read(){
 	return ret;
 }
 
-int_t Reader::peek(){
+int_t Reader::peek(int_t n){
 	if(pos_==read_){
 		read_ += stream_->read(&buf_[pos_ & BUF_MASK], BUF_SIZE-(pos_ & BUF_MASK));
 

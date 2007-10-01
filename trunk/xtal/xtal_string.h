@@ -236,6 +236,7 @@ private:
 	enum{
 		ROPE = 1<<0,
 		INTERNED = 1<<1,
+
 	};
 	uint_t flags_;
 

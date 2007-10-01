@@ -23,87 +23,19 @@ public:
 * @brief peg::Parserの読み取り元
 */
 class Lexer : public Base{
-private: 
-	
-	struct Cache{
-		const void* ptr;
-		bool success;
-		uint_t flags;
-		uint_t read_pos;
-		uint_t read_end;
-		uint_t value_pos;
-		uint_t value_end;
-	};
+public:
 
-	struct Backtrack{
+	struct Mark{
 		uint_t read_pos;
 		uint_t value_pos;
 		uint_t lineno;
 	};
 
-	PODStack<Cache> cache_stack_;
-	PODStack<Backtrack> backtrack_stack_;
-	
-	enum{ CACHE_MAX = 64 };
-
-	struct CacheUnit{
-
-		CacheUnit(){
-			key.ptr = 0;
-		}
-
-		struct Key{
-			const void* ptr;
-			uint_t read_pos;
-			uint_t flags;
-		};
-
-		struct Value{
-			ArrayPtr results;
-			uint_t value_pos;
-			uint_t value_end;
-			uint_t read_pos;
-			bool success;
-		};
-
-		Key key;
-		Value value;
-	};
-
-	CacheUnit cache_table_[CACHE_MAX];
-
-	enum{ CACHE_JUDGE_MAX = 16 };
-
-	struct CacheJudgeUnit{
-		CacheJudgeUnit(){
-			ptr = 0;
-		}
-
-		const void* ptr;
-		uint_t read_pos;
-	};
-
-	CacheJudgeUnit cache_judge_table_[CACHE_JUDGE_MAX];
-
-	struct Comp{
-		bool operator()(const Cache& a, uint_t b) const{ return a.value_pos < b; }
-		bool operator()(uint_t a, const Cache& b) const{ return a < b.value_pos; }
-		bool operator()(const Cache& a, const Cache& b) const{ return a.value_pos < b.value_pos; }
-	};
-
-	MemoryStreamPtr mm_;
-	int_t join_nest_;
-	int_t ignore_nest_;
-	StringPtr newline_ch_;
-	uint_t lineno_;
-	ArrayPtr errors_;
-
-public:
-
 	Lexer(){
 		buf_ = xnew<Array>(64);
 		pos_ = 0;
 		read_ = 0;
+		marked_ = ~0;
 
 		mm_ = xnew<MemoryStream>();
 		join_nest_ = 0;
@@ -119,71 +51,27 @@ public:
 	* @brief 現在の位置をマークする
 	*
 	*/
-	void mark(){
-		Backtrack& data = backtrack_stack_.push();
-		data.read_pos = pos_;
-		data.value_pos = results_->size();
-		data.lineno = lineno_;
+	Mark mark(){
+		Mark mark;
+		mark.read_pos = pos_;
+		mark.value_pos = results_->size();
+		mark.lineno = lineno_;
+		return mark;
 	}
 
 	/**
 	* @brief マークを消す
 	*/
-	void unmark(){
-		Backtrack& data = backtrack_stack_.pop();
-		noreflect_cache(data.value_pos);
-	}
-
-	/**
-	* @brief マークを消してバックトラックする
-	*/
-	void unmark_and_backtrack(){
-		Backtrack& data = backtrack_stack_.pop();
-		pos_ = data.read_pos;
-		lineno_ = data.lineno;
-		reflect_cache(data.value_pos);
-		results_->resize(data.value_pos);
-	}
-
-	void noreflect_cache(uint_t n){
-		Cache* it = std::lower_bound(cache_stack_.begin(), cache_stack_.end(), n, Comp());
-		Cache* end = cache_stack_.end();
-
-		if(it==end)
-			return;
-
-		uint_t len = end - it;
-		cache_stack_.resize(cache_stack_.size() - len);
-	}
-
-	void reflect_cache(uint_t n){
-		Cache* beg = cache_stack_.begin();
-		Cache* it = std::lower_bound(cache_stack_.begin(), cache_stack_.end(), n, Comp());
-		Cache* end = cache_stack_.end();
-
-		if(it==end)
-			return;
-
-		uint_t len = end - it;
-
-		uint_t begin = n;
-		ArrayPtr array = (ignore_nest_ || results_->size()==begin) ? ArrayPtr(null) : results_->slice(begin, results_->size()-begin);
-
-		for(; it!=end; it++){
-			uint_t hash = (((uint_t)it->ptr)>>3) ^ it->read_pos ^ it->flags;
-			CacheUnit& unit = cache_table_[hash & (CACHE_MAX-1)];
-
-			unit.key.ptr = it->ptr;
-			unit.key.read_pos = it->read_pos;
-			unit.key.flags = it->flags;
-			unit.value.success = it->success;
-			unit.value.read_pos = it->read_end;
-			unit.value.value_pos = it->value_pos-begin;
-			unit.value.value_end = it->value_end-begin;
-			unit.value.results = array;
+	void unmark(const Mark& mark, bool fail = false){
+		if(mark.read_pos==marked_){
+			marked_ = ~0;
 		}
 
-		cache_stack_.resize(cache_stack_.size() - len);
+		if(fail){
+			pos_ = mark.read_pos;
+			results_->resize(mark.value_pos);
+			lineno_ = mark.lineno;
+		}
 	}
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
@@ -207,8 +95,8 @@ public:
 
 		while(pos_+n >= read_){
 			uint_t now_read = 0;
-			if(!backtrack_stack_.empty()){
-				uint_t mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
+			if(marked_ != ~0){
+				uint_t mpos = marked_&bufmask;
 
 				if(rpos<=mpos && ((rpos+n)&bufmask)>mpos){
 					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
@@ -216,7 +104,7 @@ public:
 					bufsize = buf_->size();
 					bufmask = bufsize - 1;
 					rpos = read_&bufmask;
-					mpos = backtrack_stack_.reverse_at(0).read_pos&bufmask;
+					mpos = marked_&bufmask;
 				}
 
 				if(mpos>rpos){
@@ -247,12 +135,14 @@ public:
 		return  ret;
 	}
 
+	/*
 	void putback(const AnyPtr& v){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = bufsize - 1;
 		pos_--;
 		buf_[pos_ & bufmask] = v;
 	}
+	*/
 
 	bool eat(const AnyPtr& value){
 		const AnyPtr& ret = peek();
@@ -263,13 +153,12 @@ public:
 		return false;
 	}
 
+	/**
+	* @brief 一つ先読みし、終了しているか調べる
+	*/
 	bool eof(){
 		peek(1);
 		return pos_==read_;
-	}
-
-	bool success(){
-		
 	}
 
 	void skip(uint_t n){
@@ -298,31 +187,37 @@ public:
 		return temp;
 	}
 
-	void begin_join(){
-		if(ignore_nest_)
-			return;
-
-		mark();
+	Mark begin_join(){
 		join_nest_++;
+		return mark();
 	}
 
-	void end_join(bool b){
-		if(ignore_nest_)
-			return;
+	void end_join(const Mark& mark, bool fail = false){
 		join_nest_--;
-
-		if(join_nest_==0){
-			Backtrack& data = backtrack_stack_.top();
+		int_t diff = results_->size() - mark.value_pos;
+		if(join_nest_==0 && ignore_nest_==0 && diff>0){
 			mm_->clear();
 			if(int_t size = results_->size()){
-				for(int_t i=data.value_pos; i<size; ++i){
+				for(int_t i=mark.value_pos; i<size; ++i){
 					mm_->put_s(results_->at(i)->to_s());
 				}
-				results_->erase(data.value_pos, results_->size()-data.value_pos);
+				results_->erase(mark.value_pos, diff);
 			}
 			results_->push_back(mm_->to_s());
 		}
-		unmark();
+		unmark(mark, fail);
+	}
+
+	Mark begin_array(){
+		return mark();
+	}
+
+	void end_array(const Mark& mark, bool fail = false){
+		int_t diff = results_->size() - mark.value_pos;
+		if(diff>=0){
+			results_->push_back(results_->splice(mark.value_pos, diff));
+		}
+		unmark(mark, fail);
 	}
 
 	void begin_ignore(){
@@ -331,62 +226,6 @@ public:
 
 	void end_ignore(){
 		ignore_nest_--;
-	}
-
-	struct CacheInfo{
-		uint_t read_pos;
-		uint_t value_pos;
-	};
-
-	bool fetch_cache(const void* ptr, bool& success, CacheInfo& cache_info){
-		if(backtrack_stack_.empty())
-			return false;
-
-		uint_t flags = ignore_nest_!=0;
-		uint_t hash = (((uint_t)ptr)>>3) ^ pos_ ^ flags;
-		CacheUnit& unit = cache_table_[hash & (CACHE_MAX-1)];
-		if(ptr==unit.key.ptr && pos_==unit.key.read_pos && flags==unit.key.flags){
-			success = unit.value.success;
-			pos_ = unit.value.read_pos;
-			if(!ignore_nest_){
-				for(uint_t i=unit.value.value_pos, sz=unit.value.value_end; i<sz; ++i){
-					results_->push_back(unit.value.results->at(i));
-				}
-			}
-			return true;
-		}
-		
-		cache_info.read_pos = pos_;
-		cache_info.value_pos = results_->size();
-		return false;
-	}
-
-	void store_cache(const void* ptr, bool success, CacheInfo& cache_info){
-		if(backtrack_stack_.empty())
-			return;
-
-		Cache& data = cache_stack_.push();
-		data.ptr = ptr;
-		data.success = success;
-		data.read_pos = cache_info.read_pos;
-		data.read_end = pos_;
-		data.value_pos = cache_info.value_pos;
-		data.value_end = results_->size();
-		cache_stack_.push(data);
-	}
-
-	bool judge_cache(const void* ptr){
-		uint_t hash = (((uint_t)ptr)>>3) ^ pos_;
-		CacheJudgeUnit& unit = cache_judge_table_[hash & (CACHE_JUDGE_MAX-1)];
-
-		// 審判キャッシュに同じデータがあるのなら、キャッシュすべきだろう
-		if(ptr==unit.ptr && pos_==unit.read_pos){
-			return true;
-		}else{
-			unit.ptr = ptr;
-			unit.read_pos = pos_;
-			return false;
-		}
 	}
 
 	const ArrayPtr& results(){
@@ -402,18 +241,21 @@ protected:
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
 		m & buf_;
-
-		for(int_t i=0; i<CACHE_MAX; ++i){
-			m & cache_table_[i].value.results;
-		}
 	}
 
 private:
-
+	
+	MemoryStreamPtr mm_;
+	int_t join_nest_;
+	int_t ignore_nest_;
+	StringPtr newline_ch_;
+	ArrayPtr errors_;
 	ArrayPtr results_;
 	ArrayPtr buf_;
 	uint_t pos_;
 	uint_t read_;
+	uint_t lineno_;
+	uint_t marked_;
 };
 
 class CharLexer : public Lexer{
@@ -428,7 +270,6 @@ public:
 			if(stream_->eof())
 				return i;
 			buffer[i] = stream_->get_s(1);
-			//printf("%s", buffer[i]->to_s()->c_str());
 		}
 		return max;
 	}
@@ -527,7 +368,6 @@ private:
 	// 仮想関数ベースはやめた
 
 	int_t type_;
-	bool cacheable_;
 	AnyPtr param1_;
 	AnyPtr param2_;
 
@@ -537,14 +377,14 @@ private:
 
 extern ParserPtr success;
 extern ParserPtr fail;
-extern ParserPtr alpha;
-extern ParserPtr ualpha;
-extern ParserPtr lalpha;
-extern ParserPtr space;
-extern ParserPtr digit;
-extern ParserPtr any;
-extern ParserPtr eos;
-extern ParserPtr ascii;
+extern ParserPtr eof;
+extern ParserPtr ch_alpha;
+extern ParserPtr ch_ualpha;
+extern ParserPtr ch_lalpha;
+extern ParserPtr ch_space;
+extern ParserPtr ch_digit;
+extern ParserPtr ch_any;
+extern ParserPtr ch_ascii;
 
 inline ParserPtr operator |(const AnyPtr& a, const AnyPtr& b){ return Parser::select(a, b); }
 inline ParserPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return Parser::followed(a, b); }

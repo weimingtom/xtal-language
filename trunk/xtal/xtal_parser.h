@@ -117,7 +117,7 @@ public:
 	/**
 	* @brief 次の要素を読む。
 	*/
-	int_t peek();
+	int_t peek(int_t n=0);
 
 	/**
 	* @brief 次の要素が引数chと同じだったら読み進める。
@@ -126,11 +126,6 @@ public:
 	* @retval false 次の要素はchと異なり、読み進められなかった。
 	*/
 	bool eat(int_t ch);
-
-	/**
-	* @brief 要素を一つ戻す。
-	*/
-	void putback(int_t ch);
 
 private:
 
@@ -188,7 +183,6 @@ public:
 	*/
 	void putback(const Token& ch);
 	
-	/**
 	/**
 	* @brief 現在の行数を返す
 	*/
@@ -252,7 +246,7 @@ private:
 
 	uint_t pos_;
 	uint_t read_;
-	int_t left_space_;
+	uint_t left_space_;
 	uint_t lineno_;
 
 	CompileError* error_;

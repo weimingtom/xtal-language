@@ -189,7 +189,7 @@ void Format::set(const char* str){
 
 	const char* begin = str;
 	char buf[256];
-	int bufpos = 0, n = 0;
+	int_t bufpos = 0, n = 0;
 	while(true){
 		if(str[0]=='%'){
 			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
@@ -212,7 +212,7 @@ void Format::set(const char* str){
 
 					buf[bufpos++] = 0;
 				}else{
-					bufpos = sprintf(buf, "%d", n++);
+					bufpos = XTAL_SPRINTF(buf, 256-bufpos, "%d", (u32)n++);
 				}
 
 				SmartPtr<FormatSpecifier> ret = xnew<FormatSpecifier>();
@@ -268,7 +268,7 @@ void Format::call(const VMachinePtr& vm){
 						}
 					}
 					fs->make_format_specifier(spec, 's');
-					sprintf(pcbuf, spec, str->c_str());
+					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, str->c_str());
 					buf += pcbuf;
 				}
 
@@ -278,13 +278,13 @@ void Format::call(const VMachinePtr& vm){
 
 				XTAL_CASE(TYPE_INT){
 					fs->make_format_specifier(spec, fs->change_int_type());
-					sprintf(pcbuf, spec, ivalue(a));
+					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, ivalue(a));
 					buf += pcbuf;
 				}
 				
 				XTAL_CASE(TYPE_FLOAT){
 					fs->make_format_specifier(spec, fs->change_float_type());
-					sprintf(pcbuf, spec, fvalue(a));
+					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, fvalue(a));
 					buf += pcbuf;
 				}
 			}

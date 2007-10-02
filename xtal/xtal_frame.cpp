@@ -25,17 +25,11 @@ public:
 		:frame_(a), it_(frame_->map_members_->begin()){
 	}
 
-	AnyPtr reset(){
-		it_ = frame_->map_members_->begin();
-		return SmartPtr<MembersIter>::from_this(this);
-	}
-
 	void block_next(const VMachinePtr& vm){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
 			vm->return_result(SmartPtr<MembersIter>::from_this(this), it_->first.key, it_->first.ns, frame_->members_->at(it_->second.num));
 			++it_;
 		}else{
-			reset();
 			vm->return_result(null);
 		}
 	}
@@ -48,8 +42,6 @@ void initialize_frame(){
 	{
 		ClassPtr p = new_cpp_class<MembersIter>("ClassMembersIter");
 		p->inherit(Iterator());
-		p->method("reset", &MembersIter::reset);
-		p->method("block_first", &MembersIter::block_next);
 		p->method("block_next", &MembersIter::block_next);
 	}
 

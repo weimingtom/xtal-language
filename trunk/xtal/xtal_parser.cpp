@@ -1207,7 +1207,9 @@ ExprPtr Parser::parse_each(const InternedStringPtr& label, ExprPtr lhs){
 		efor->set_for_nobreak(parse_stmt_must());
 	}
 
-	scope_stmts->push_back(try_(0, efor, null, null, send_q(0, lvar(0, Xid(iterator)), Xid(block_break))));
+	ExprPtr catch_stmt = if_(0, una(EXPR_NOT, 0, call(0, send_q(0, lvar(0, Xid(iterator)), Xid(block_catch)), make_array(lvar(0, Xid(e))), null, null)), una(EXPR_THROW, 0, lvar(0, Xid(e))), null);
+	scope_stmts->push_back(try_(0, efor, Xid(e), catch_stmt, send_q(0, lvar(0, Xid(iterator)), Xid(block_break))));
+	//scope_stmts->push_back(try_(0, efor, null, null, send_q(0, lvar(0, Xid(iterator)), Xid(block_break))));
 
 	return scope(0, scope_stmts);
 }

@@ -108,11 +108,12 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
+ /*
  filelocal.inheriyt(builtin::peg);
 
 lex: parse_string((ch_set("te") | -str("s"))*0, "testtesttest");
 lex.results.p;
-
+*/
 ))();
 
 		int n = sizeof(n);

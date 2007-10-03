@@ -412,8 +412,8 @@ public:
 
 	void mv_carry_over(Fun* fun);
 
-	const inst_t* resume_pc(){ 
-		return resume_pc_; 
+	const inst_t* resume_pc(){
+		return resume_pc_;
 	}
 
 	void present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result);

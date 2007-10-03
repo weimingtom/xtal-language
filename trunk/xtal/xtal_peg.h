@@ -5,24 +5,12 @@
 
 #ifdef XTAL_USE_PEG // PEGè„éËÇ≠Ç¢Ç©ÇÀÅ[
 
-#pragma once
-
-#include "xtal_macro.h"
-
 namespace xtal{ namespace peg{
 
-
-class Match : public Base{
-public:
-	AnyPtr results();
-	bool success();
-	bool full();
-};
-
 /**
-* @brief peg::ParserÇÃì«Ç›éÊÇËå≥
+* @brief 
 */
-class Lexer : public Base{
+class Scanner : public Base{
 public:
 
 	struct Mark{
@@ -31,7 +19,7 @@ public:
 		uint_t lineno;
 	};
 
-	Lexer(){
+	Scanner(){
 		buf_ = xnew<Array>(64);
 		pos_ = 0;
 		read_ = 0;
@@ -73,8 +61,6 @@ public:
 			lineno_ = mark.lineno;
 		}
 	}
-
-	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
 	uint_t lineno(){
 		return lineno_;
@@ -136,14 +122,7 @@ public:
 		return  ret;
 	}
 
-	/*
-	void putback(const AnyPtr& v){
-		uint_t bufsize = buf_->size();
-		uint_t bufmask = bufsize - 1;
-		pos_--;
-		buf_[pos_ & bufmask] = v;
-	}
-	*/
+
 
 	bool eat(const AnyPtr& value){
 		const AnyPtr& ret = peek();
@@ -239,6 +218,8 @@ public:
 
 protected:
 
+	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
+
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
 		m & buf_;
@@ -259,14 +240,13 @@ private:
 	uint_t marked_;
 };
 
-class CharLexer : public Lexer{
+class CharScanner : public Scanner{
 public:
 
-	CharLexer(const StreamPtr& stream)
+	CharScanner(const StreamPtr& stream)
 		:stream_(stream){}
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max){
-		max = 1;
 		for(int_t i=0; i<max; ++i){
 			if(stream_->eof())
 				return i;
@@ -284,13 +264,13 @@ private:
 	}
 };
 
+class Scanner;
+typedef SmartPtr<Scanner> ScannerPtr;
 
-typedef SmartPtr<Lexer> LexerPtr;
+class Parts;
+typedef SmartPtr<Parts> PartsPtr;
 
-class Parser;
-typedef SmartPtr<Parser> ParserPtr;
-
-class Parser : public Base{
+class Parts : public Base{
 public:
 
 	enum Type{
@@ -320,49 +300,49 @@ public:
 
 public:
 
-	Parser(Type type = ANY, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
+	Parts(Type type = ANY, const AnyPtr& p1 = null, const AnyPtr& p2 = null);
 
-	static MapPtr make_ch_map2(const StringPtr& ch, const ParserPtr& pp);
+	static MapPtr make_ch_map2(const StringPtr& ch, const PartsPtr& pp);
 
-	static MapPtr make_ch_map2(const MapPtr& ch_map, const ParserPtr& pp);
+	static MapPtr make_ch_map2(const MapPtr& ch_map, const PartsPtr& pp);
 
-	static MapPtr make_ch_map(const ParserPtr& p, const ParserPtr& pp);
+	static MapPtr make_ch_map(const PartsPtr& p, const PartsPtr& pp);
 
-	static ParserPtr str(const StringPtr& str);
+	static PartsPtr str(const StringPtr& str);
 
-	static ParserPtr ch_set(const StringPtr& str);
+	static PartsPtr ch_set(const StringPtr& str);
 
-	static ParserPtr repeat(const AnyPtr& p, int_t n);
+	static PartsPtr repeat(const AnyPtr& p, int_t n);
 
-	static ParserPtr ignore(const AnyPtr& p);
+	static PartsPtr ignore(const AnyPtr& p);
 
-	static ParserPtr select(const AnyPtr& lhs, const AnyPtr& rhs);
+	static PartsPtr select(const AnyPtr& lhs, const AnyPtr& rhs);
 
-	static ParserPtr followed(const AnyPtr& lhs, const AnyPtr& rhs);
+	static PartsPtr followed(const AnyPtr& lhs, const AnyPtr& rhs);
 
-	static ParserPtr join(const AnyPtr& p);
+	static PartsPtr join(const AnyPtr& p);
 
-	static ParserPtr array(const AnyPtr& p);
+	static PartsPtr array(const AnyPtr& p);
 
-	static ParserPtr try_(const AnyPtr& p);
+	static PartsPtr try_(const AnyPtr& p);
 	
-	static ParserPtr ch_map(const MapPtr& data);
+	static PartsPtr ch_map(const MapPtr& data);
 
-	static ParserPtr node(const AnyPtr& tag, int_t n);
+	static PartsPtr node(const AnyPtr& tag, int_t n);
 
-	static ParserPtr error(const AnyPtr& message);
+	static PartsPtr error(const AnyPtr& message);
 
-	static ParserPtr val(const AnyPtr& v);
+	static PartsPtr val(const AnyPtr& v);
 
-	static ParserPtr not_(const AnyPtr& v);
+	static PartsPtr not_(const AnyPtr& v);
 	
-	static ParserPtr test(const AnyPtr& v);
+	static PartsPtr test(const AnyPtr& v);
 
 	bool parse_string(const StringPtr& source, const ArrayPtr& ret);
 
 	bool parse(const LexerPtr& lex);
 
-	static ParserPtr act(const AnyPtr& fn);
+	static PartsPtr act(const AnyPtr& fn);
 
 private:
 
@@ -376,28 +356,28 @@ private:
 
 };
 
-extern ParserPtr success;
-extern ParserPtr fail;
-extern ParserPtr eof;
-extern ParserPtr ch_alpha;
-extern ParserPtr ch_ualpha;
-extern ParserPtr ch_lalpha;
-extern ParserPtr ch_space;
-extern ParserPtr ch_digit;
-extern ParserPtr ch_any;
-extern ParserPtr ch_ascii;
+extern PartsPtr success;
+extern PartsPtr fail;
+extern PartsPtr eof;
+extern PartsPtr ch_alpha;
+extern PartsPtr ch_ualpha;
+extern PartsPtr ch_lalpha;
+extern PartsPtr ch_space;
+extern PartsPtr ch_digit;
+extern PartsPtr ch_any;
+extern PartsPtr ch_ascii;
 
-inline ParserPtr operator |(const AnyPtr& a, const AnyPtr& b){ return Parser::select(a, b); }
-inline ParserPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return Parser::followed(a, b); }
-inline ParserPtr operator -(const AnyPtr& a){ return Parser::ignore(a); }
-inline ParserPtr operator *(const AnyPtr& a, int_t n){ return Parser::repeat(a, n); }
-inline ParserPtr join(const AnyPtr& a){ return Parser::join(a); }
-inline ParserPtr val(const AnyPtr& a){ return Parser::val(a); }
-inline ParserPtr ch_set(const StringPtr& a){ return Parser::ch_set(a); }
-inline ParserPtr not_(const AnyPtr& a){ return Parser::not_(a); }
-inline ParserPtr test(const AnyPtr& a){ return Parser::test(a); }
+inline PartsPtr operator |(const AnyPtr& a, const AnyPtr& b){ return Parts::select(a, b); }
+inline PartsPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return Parts::followed(a, b); }
+inline PartsPtr operator -(const AnyPtr& a){ return Parts::ignore(a); }
+inline PartsPtr operator *(const AnyPtr& a, int_t n){ return Parts::repeat(a, n); }
+inline PartsPtr join(const AnyPtr& a){ return Parts::join(a); }
+inline PartsPtr val(const AnyPtr& a){ return Parts::val(a); }
+inline PartsPtr ch_set(const StringPtr& a){ return Parts::ch_set(a); }
+inline PartsPtr not_(const AnyPtr& a){ return Parts::not_(a); }
+inline PartsPtr test(const AnyPtr& a){ return Parts::test(a); }
 
-ParserPtr P(const AnyPtr& a);
+PartsPtr P(const AnyPtr& a);
 
 inline LexerPtr parse_lexer(const AnyPtr& pattern, const LexerPtr& lex){
 	P(pattern)->parse(lex);

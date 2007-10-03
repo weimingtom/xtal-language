@@ -1,11 +1,19 @@
 
 #include "xtal.h"
 
+#include <math.h>
+
 #include "xtal_vmachine.h"
 #include "xtal_fun.h"
 #include "xtal_code.h"
 #include "xtal_frame.h"
 #include "xtal_macro.h"
+#include "xtal_fun.h"
+#include "xtal_vmachine.h"
+#include "xtal_map.h"
+#include "xtal_macro.h"
+#include "xtal_frame.h"
+#include "xtal_code.h"
 
 namespace xtal{
 
@@ -623,243 +631,33 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 	return_result((ff().instance_variables->variable(number, core)));
 }
 
-}
-
-
-
-
-
-
-#include "xtal.h"
-
-#include <map>
-#include <math.h>
-
-#include "xtal_fun.h"
-#include "xtal_vmachine.h"
-#include "xtal_map.h"
-#include "xtal_macro.h"
-#include "xtal_frame.h"
-#include "xtal_code.h"
-
-
-namespace xtal{
-
-// VC用のジャンプテーブル機構
-// 逆に遅くなるので未使用
-#if 0 && defined(_MSC_VER)
-#	define XTAL_COPY_LABEL_ADDRESS(n, label) {\
-		__asm mov eax, offset label\
-		__asm mov ebx, offset label_table[n*4]\
-		__asm mov [ebx], eax\
-	}
-
-#	define XTAL_GOTO_LABEL_ADDRESS() {\
-		int temp = *pc;\
-		__asm mov eax, temp\
-		__asm jmp dword ptr label_table[eax*4]\
-	}
-
-#	define XTAL_VM_OPT
-#endif
-	
-// GCC用のジャンプテーブル機構
-// 逆に遅くなるので未使用
-#if 0 && defined(__GNUC__)
-#	define XTAL_COPY_LABEL_ADDRESS(n, label) label_table[n] = &&label
-
-#	define XTAL_GOTO_LABEL_ADDRESS() goto *label_table[*pc]
-
-#	define XTAL_VM_OPT
-#endif
-
-
-#ifdef XTAL_VM_OPT
-
-#	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false);
-#	define XTAL_VM_FIRST_CASE(key) Label##key: { Inst##key& inst = *(Inst##key*)pc;
-#	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); Label##key: { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
-#	define XTAL_VM_SWITCH XTAL_GOTO_LABEL_ADDRESS(); 
-#	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
-#	define XTAL_VM_CONTINUE(x) pc = (x); XTAL_GOTO_LABEL_ADDRESS()
-
-#else
-
-#	define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
-#	define XTAL_VM_FIRST_CASE(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
-#	define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
-#	define XTAL_VM_SWITCH switch(*pc)
-#	define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
-#	define XTAL_VM_CONTINUE(x) pc = (x); goto begin
-
-#endif
+#define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
+#define XTAL_VM_CASE_FIRST(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
+#define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
+#define XTAL_VM_SWITCH switch(*pc)
+#define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
+#define XTAL_VM_CONTINUE(x) pc = (x); goto begin
+#define XTAL_VM_EXCEPT(e) last_except_ = e; goto except_catch
+#define XTAL_VM_RETURN return
 
 void VMachine::execute_inner(const inst_t* start){
 
-#ifdef XTAL_VM_OPT
-
-	static void* label_table[InstMAX::NUMBER];
-	bool label_table_initialized = false;
-	if(!label_table_initialized){
-		label_table_initialized = true;
-//{LABELS{{
-		XTAL_COPY_LABEL_ADDRESS(0, LabelNop);
-		XTAL_COPY_LABEL_ADDRESS(1, LabelPushNull);
-		XTAL_COPY_LABEL_ADDRESS(2, LabelPushNop);
-		XTAL_COPY_LABEL_ADDRESS(3, LabelPushTrue);
-		XTAL_COPY_LABEL_ADDRESS(4, LabelPushFalse);
-		XTAL_COPY_LABEL_ADDRESS(5, LabelPushInt1Byte);
-		XTAL_COPY_LABEL_ADDRESS(6, LabelPushInt2Byte);
-		XTAL_COPY_LABEL_ADDRESS(7, LabelPushFloat1Byte);
-		XTAL_COPY_LABEL_ADDRESS(8, LabelPushFloat2Byte);
-		XTAL_COPY_LABEL_ADDRESS(9, LabelPushCallee);
-		XTAL_COPY_LABEL_ADDRESS(10, LabelPushArgs);
-		XTAL_COPY_LABEL_ADDRESS(11, LabelPushThis);
-		XTAL_COPY_LABEL_ADDRESS(12, LabelPushCurrentContext);
-		XTAL_COPY_LABEL_ADDRESS(13, LabelPop);
-		XTAL_COPY_LABEL_ADDRESS(14, LabelDup);
-		XTAL_COPY_LABEL_ADDRESS(15, LabelInsert1);
-		XTAL_COPY_LABEL_ADDRESS(16, LabelInsert2);
-		XTAL_COPY_LABEL_ADDRESS(17, LabelInsert3);
-		XTAL_COPY_LABEL_ADDRESS(18, LabelAdjustResult);
-		XTAL_COPY_LABEL_ADDRESS(19, LabelIf);
-		XTAL_COPY_LABEL_ADDRESS(20, LabelUnless);
-		XTAL_COPY_LABEL_ADDRESS(21, LabelGoto);
-		XTAL_COPY_LABEL_ADDRESS(22, LabelLocalVariableInc);
-		XTAL_COPY_LABEL_ADDRESS(23, LabelLocalVariableIncDirect);
-		XTAL_COPY_LABEL_ADDRESS(24, LabelLocalVariableDec);
-		XTAL_COPY_LABEL_ADDRESS(25, LabelLocalVariableDecDirect);
-		XTAL_COPY_LABEL_ADDRESS(26, LabelLocalVariableInc2Byte);
-		XTAL_COPY_LABEL_ADDRESS(27, LabelLocalVariableDec2Byte);
-		XTAL_COPY_LABEL_ADDRESS(28, LabelLocalVariable1Byte);
-		XTAL_COPY_LABEL_ADDRESS(29, LabelLocalVariable1ByteDirect);
-		XTAL_COPY_LABEL_ADDRESS(30, LabelLocalVariable2Byte);
-		XTAL_COPY_LABEL_ADDRESS(31, LabelSetLocalVariable1Byte);
-		XTAL_COPY_LABEL_ADDRESS(32, LabelSetLocalVariable1ByteDirect);
-		XTAL_COPY_LABEL_ADDRESS(33, LabelSetLocalVariable2Byte);
-		XTAL_COPY_LABEL_ADDRESS(34, LabelInstanceVariable);
-		XTAL_COPY_LABEL_ADDRESS(35, LabelSetInstanceVariable);
-		XTAL_COPY_LABEL_ADDRESS(36, LabelCleanupCall);
-		XTAL_COPY_LABEL_ADDRESS(37, LabelReturn0);
-		XTAL_COPY_LABEL_ADDRESS(38, LabelReturn1);
-		XTAL_COPY_LABEL_ADDRESS(39, LabelReturn2);
-		XTAL_COPY_LABEL_ADDRESS(40, LabelReturn);
-		XTAL_COPY_LABEL_ADDRESS(41, LabelYield);
-		XTAL_COPY_LABEL_ADDRESS(42, LabelExit);
-		XTAL_COPY_LABEL_ADDRESS(43, LabelValue);
-		XTAL_COPY_LABEL_ADDRESS(44, LabelCheckUnsupported);
-		XTAL_COPY_LABEL_ADDRESS(45, LabelProperty);
-		XTAL_COPY_LABEL_ADDRESS(46, LabelSetProperty);
-		XTAL_COPY_LABEL_ADDRESS(47, LabelSend);
-		XTAL_COPY_LABEL_ADDRESS(48, LabelSendQ);
-		XTAL_COPY_LABEL_ADDRESS(49, LabelCall);
-		XTAL_COPY_LABEL_ADDRESS(50, LabelMember);
-		XTAL_COPY_LABEL_ADDRESS(51, LabelMemberQ);
-		XTAL_COPY_LABEL_ADDRESS(52, LabelDefineMember);
-		XTAL_COPY_LABEL_ADDRESS(53, LabelGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(54, LabelSetGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(55, LabelDefineGlobalVariable);
-		XTAL_COPY_LABEL_ADDRESS(56, LabelOnce);
-		XTAL_COPY_LABEL_ADDRESS(57, LabelSetOnce);
-		XTAL_COPY_LABEL_ADDRESS(58, LabelBlockBegin);
-		XTAL_COPY_LABEL_ADDRESS(59, LabelBlockBeginDirect);
-		XTAL_COPY_LABEL_ADDRESS(60, LabelBlockEnd);
-		XTAL_COPY_LABEL_ADDRESS(61, LabelBlockEndDirect);
-		XTAL_COPY_LABEL_ADDRESS(62, LabelTryBegin);
-		XTAL_COPY_LABEL_ADDRESS(63, LabelTryEnd);
-		XTAL_COPY_LABEL_ADDRESS(64, LabelPushGoto);
-		XTAL_COPY_LABEL_ADDRESS(65, LabelPopGoto);
-		XTAL_COPY_LABEL_ADDRESS(66, LabelIfEq);
-		XTAL_COPY_LABEL_ADDRESS(67, LabelIfNe);
-		XTAL_COPY_LABEL_ADDRESS(68, LabelIfLt);
-		XTAL_COPY_LABEL_ADDRESS(69, LabelIfLe);
-		XTAL_COPY_LABEL_ADDRESS(70, LabelIfGt);
-		XTAL_COPY_LABEL_ADDRESS(71, LabelIfGe);
-		XTAL_COPY_LABEL_ADDRESS(72, LabelIfRawEq);
-		XTAL_COPY_LABEL_ADDRESS(73, LabelIfRawNe);
-		XTAL_COPY_LABEL_ADDRESS(74, LabelIfIs);
-		XTAL_COPY_LABEL_ADDRESS(75, LabelIfNis);
-		XTAL_COPY_LABEL_ADDRESS(76, LabelIfArgIsNop);
-		XTAL_COPY_LABEL_ADDRESS(77, LabelIfArgIsNopDirect);
-		XTAL_COPY_LABEL_ADDRESS(78, LabelPos);
-		XTAL_COPY_LABEL_ADDRESS(79, LabelNeg);
-		XTAL_COPY_LABEL_ADDRESS(80, LabelCom);
-		XTAL_COPY_LABEL_ADDRESS(81, LabelNot);
-		XTAL_COPY_LABEL_ADDRESS(82, LabelAt);
-		XTAL_COPY_LABEL_ADDRESS(83, LabelSetAt);
-		XTAL_COPY_LABEL_ADDRESS(84, LabelAdd);
-		XTAL_COPY_LABEL_ADDRESS(85, LabelSub);
-		XTAL_COPY_LABEL_ADDRESS(86, LabelCat);
-		XTAL_COPY_LABEL_ADDRESS(87, LabelMul);
-		XTAL_COPY_LABEL_ADDRESS(88, LabelDiv);
-		XTAL_COPY_LABEL_ADDRESS(89, LabelMod);
-		XTAL_COPY_LABEL_ADDRESS(90, LabelAnd);
-		XTAL_COPY_LABEL_ADDRESS(91, LabelOr);
-		XTAL_COPY_LABEL_ADDRESS(92, LabelXor);
-		XTAL_COPY_LABEL_ADDRESS(93, LabelShl);
-		XTAL_COPY_LABEL_ADDRESS(94, LabelShr);
-		XTAL_COPY_LABEL_ADDRESS(95, LabelUshr);
-		XTAL_COPY_LABEL_ADDRESS(96, LabelEq);
-		XTAL_COPY_LABEL_ADDRESS(97, LabelNe);
-		XTAL_COPY_LABEL_ADDRESS(98, LabelLt);
-		XTAL_COPY_LABEL_ADDRESS(99, LabelLe);
-		XTAL_COPY_LABEL_ADDRESS(100, LabelGt);
-		XTAL_COPY_LABEL_ADDRESS(101, LabelGe);
-		XTAL_COPY_LABEL_ADDRESS(102, LabelRawEq);
-		XTAL_COPY_LABEL_ADDRESS(103, LabelRawNe);
-		XTAL_COPY_LABEL_ADDRESS(104, LabelIs);
-		XTAL_COPY_LABEL_ADDRESS(105, LabelNis);
-		XTAL_COPY_LABEL_ADDRESS(106, LabelInc);
-		XTAL_COPY_LABEL_ADDRESS(107, LabelDec);
-		XTAL_COPY_LABEL_ADDRESS(108, LabelAddAssign);
-		XTAL_COPY_LABEL_ADDRESS(109, LabelSubAssign);
-		XTAL_COPY_LABEL_ADDRESS(110, LabelCatAssign);
-		XTAL_COPY_LABEL_ADDRESS(111, LabelMulAssign);
-		XTAL_COPY_LABEL_ADDRESS(112, LabelDivAssign);
-		XTAL_COPY_LABEL_ADDRESS(113, LabelModAssign);
-		XTAL_COPY_LABEL_ADDRESS(114, LabelAndAssign);
-		XTAL_COPY_LABEL_ADDRESS(115, LabelOrAssign);
-		XTAL_COPY_LABEL_ADDRESS(116, LabelXorAssign);
-		XTAL_COPY_LABEL_ADDRESS(117, LabelShlAssign);
-		XTAL_COPY_LABEL_ADDRESS(118, LabelShrAssign);
-		XTAL_COPY_LABEL_ADDRESS(119, LabelUshrAssign);
-		XTAL_COPY_LABEL_ADDRESS(120, LabelClassBegin);
-		XTAL_COPY_LABEL_ADDRESS(121, LabelClassEnd);
-		XTAL_COPY_LABEL_ADDRESS(122, LabelDefineClassMember);
-		XTAL_COPY_LABEL_ADDRESS(123, LabelMakeArray);
-		XTAL_COPY_LABEL_ADDRESS(124, LabelArrayAppend);
-		XTAL_COPY_LABEL_ADDRESS(125, LabelMakeMap);
-		XTAL_COPY_LABEL_ADDRESS(126, LabelMapInsert);
-		XTAL_COPY_LABEL_ADDRESS(127, LabelMakeFun);
-		XTAL_COPY_LABEL_ADDRESS(128, LabelMakeInstanceVariableAccessor);
-		XTAL_COPY_LABEL_ADDRESS(129, LabelThrow);
-		XTAL_COPY_LABEL_ADDRESS(130, LabelThrowUnsupportedError);
-		XTAL_COPY_LABEL_ADDRESS(131, LabelThrowNop);
-		XTAL_COPY_LABEL_ADDRESS(132, LabelAssert);
-		XTAL_COPY_LABEL_ADDRESS(133, LabelBreakPoint);
-		XTAL_COPY_LABEL_ADDRESS(134, LabelMAX);
-//}}LABELS}
-	}
-#else
-
-#endif
-
 	const inst_t* pc = start;
+
 	int_t stack_size = stack_.size() - ff().args_stack_size();
 	int_t fun_frames_size = fun_frames_.size();
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
 retry:
 XTAL_TRY{
-
 begin:
 XTAL_VM_SWITCH{
-	
-	XTAL_VM_FIRST_CASE(Nop){ 
+
+//{OPS{{
+	XTAL_VM_CASE_FIRST(Nop){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-//{OPS{{
 	XTAL_VM_CASE(PushNull){ // 3
 		push(null); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -1109,19 +907,19 @@ XTAL_VM_SWITCH{
 		yield_result_count_ = inst.results;	
 		if(ff().yieldable){
 			resume_pc_ = pc + inst.ISIZE;
-			return;
+			XTAL_VM_RETURN;
 		}else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
 				last_except_ = builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012"));
 			}
-			goto except_catch;
+			XTAL_VM_EXCEPT(last_except_);
 		}
 	}
 
 	XTAL_VM_CASE(Exit){ // 3
 		resume_pc_ = 0; 
-		return; 
+		XTAL_VM_RETURN;
 	}
 
 	XTAL_VM_CASE(Value){ // 3
@@ -1196,7 +994,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
-	XTAL_VM_CASE(Member){ // 8
+	XTAL_VM_CASE(Member){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
 			const AnyPtr& target = get();
@@ -1204,8 +1002,7 @@ XTAL_VM_SWITCH{
 			if(rawne(ret, nop)){
 				set(ret);
 			}else{
-				last_except_ = unsupported_error(target->object_name(), name);
-				goto except_catch;
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -1231,14 +1028,13 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(GlobalVariable){ // 11
+	XTAL_VM_CASE(GlobalVariable){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const AnyPtr& ret = code()->filelocal()->member(identifier(inst.identifier_number));
 			if(rawne(ret, nop)){
 				push(ret);
 			}else{
-				last_except_ = unsupported_error("filelocal", identifier(inst.identifier_number));
-				goto except_catch;
+				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
@@ -2023,19 +1819,18 @@ XTAL_VM_SWITCH{
 				last_except_ = except;
 			}
 		}
-		goto except_catch; 
+		XTAL_VM_EXCEPT(last_except_);
 	}
 
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2());
 		}
-		goto except_catch;
+		XTAL_VM_EXCEPT(last_except_);
 	}
 
-	XTAL_VM_CASE(ThrowNop){ // 3
-		last_except_ = nop; 
-		goto except_catch; 
+	XTAL_VM_CASE(ThrowNop){ // 2
+		XTAL_VM_EXCEPT(nop); 
 	}
 
 	XTAL_VM_CASE(Assert){ // 10
@@ -2052,7 +1847,7 @@ XTAL_VM_SWITCH{
 		}
 
 		if(failure){
-			goto except_catch; 
+			XTAL_VM_EXCEPT(last_except_); 
 		}
 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -2117,6 +1912,7 @@ except_catch:
 		goto begin;
 	}
 	goto rethrow;
+
 }XTAL_CATCH(e){
 	last_except_ = append_backtrace(pc, e);
 	pc = catch_body(pc, stack_size, fun_frames_size);
@@ -2140,13 +1936,123 @@ return;
 rethrow:
 	pop_ff();
 	XTAL_THROW(ap(last_except_), return);	
-
 }
 
 #undef XTAL_VM_CONTINUE
+#undef XTAL_VM_RETURN
+#undef XTAL_VM_EXCEPT
+
 #define XTAL_VM_CONTINUE(x) return (x)
+#define XTAL_VM_RETURN last_except_ = null; return 0
+#define XTAL_VM_EXCEPT(x) last_except_ = (x); return 0
 
 //{FUNS{{
+const inst_t* VMachine::FunNop(const inst_t* pc){
+		XTAL_VM_DEF_INST(Nop);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushNull(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushNull);
+		push(null); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushNop(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushNop);
+		push(nop); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushTrue(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushTrue);
+		push(Innocence(true)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushFalse(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushFalse);
+		push(Innocence(false)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushInt1Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushInt1Byte);
+		push(Innocence((int_t)inst.value)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushInt2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushInt2Byte);
+		push(Innocence((int_t)inst.value)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushFloat1Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushFloat1Byte);
+		push(Innocence((float_t)inst.value)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushFloat2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushFloat2Byte);
+		push(Innocence((float_t)inst.value)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushCallee(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushCallee);
+		push(fun()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushArgs(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushArgs);
+		push(fun_frames_[0].arguments());
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunPushThis(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushThis);
+		push(ff().self()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPushCurrentContext(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushCurrentContext);
+		push(ff().outer());
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunPop(const inst_t* pc){
+		XTAL_VM_DEF_INST(Pop);
+		downsize(1); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunDup(const inst_t* pc){
+		XTAL_VM_DEF_INST(Dup);
+		dup(); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunInsert1(const inst_t* pc){
+		XTAL_VM_DEF_INST(Insert1);
+		Innocence temp = get(); 
+		set(get(1)); 
+		set(1, temp); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunInsert2(const inst_t* pc){
+		XTAL_VM_DEF_INST(Insert2);
+		Innocence temp = get(); 
+		set(get(1)); 
+		set(1, get(2)); 
+		set(2, temp); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
 const inst_t* VMachine::FunInsert3(const inst_t* pc){
 		XTAL_VM_DEF_INST(Insert3);
 		Innocence temp = get(); 
@@ -2155,6 +2061,27 @@ const inst_t* VMachine::FunInsert3(const inst_t* pc){
 		set(2, get(3)); 
 		set(3, temp); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
+}
+
+const inst_t* VMachine::FunAdjustResult(const inst_t* pc){
+		XTAL_VM_DEF_INST(AdjustResult);
+		adjust_result(inst.result_count, inst.need_result_count);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunIf(const inst_t* pc){
+		XTAL_VM_DEF_INST(If);
+		XTAL_VM_CONTINUE(pc + (pop() ? inst.ISIZE : inst.address));
+}
+
+const inst_t* VMachine::FunUnless(const inst_t* pc){
+		XTAL_VM_DEF_INST(Unless);
+		XTAL_VM_CONTINUE(pc + (!pop() ? inst.ISIZE : inst.address));
+}
+
+const inst_t* VMachine::FunGoto(const inst_t* pc){
+		XTAL_VM_DEF_INST(Goto);
+		XTAL_VM_CONTINUE(pc + inst.address); 
 }
 
 const inst_t* VMachine::FunLocalVariableInc(const inst_t* pc){
@@ -2168,12 +2095,34 @@ const inst_t* VMachine::FunLocalVariableInc(const inst_t* pc){
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
+const inst_t* VMachine::FunLocalVariableIncDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariableIncDirect);
+		Innocence& a = ff().variables_[inst.number];
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ a = Innocence(ivalue(a)+1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ a = Innocence(fvalue(a)+1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_inc));
+		XTAL_VM_CONTINUE(ff().called_pc);
+}
+
 const inst_t* VMachine::FunLocalVariableDec(const inst_t* pc){
 		XTAL_VM_DEF_INST(LocalVariableDec);
 		Innocence a = local_variable(inst.number);
 		switch(type(a)){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){ set_local_variable(inst.number, Innocence(ivalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
 			XTAL_CASE(TYPE_FLOAT){ set_local_variable(inst.number, Innocence(fvalue(a)-1)); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE); }
+		}
+		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
+		XTAL_VM_CONTINUE(ff().called_pc);
+}
+
+const inst_t* VMachine::FunLocalVariableDecDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariableDecDirect);
+		Innocence& a = ff().variables_[inst.number];
+		switch(type(a)){XTAL_DEFAULT;
+			XTAL_CASE(TYPE_INT){ a = Innocence(ivalue(a)-1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
+			XTAL_CASE(TYPE_FLOAT){ a = Innocence(fvalue(a)-1); XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE); }
 		}
 		ap(a)->rawsend(inner_setup_call(pc + inst.ISIZE, 1), Xid(op_dec));
 		XTAL_VM_CONTINUE(ff().called_pc);
@@ -2201,6 +2150,169 @@ const inst_t* VMachine::FunLocalVariableDec2Byte(const inst_t* pc){
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
+const inst_t* VMachine::FunLocalVariable1Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariable1Byte);
+		push(local_variable(inst.number)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunLocalVariable1ByteDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariable1ByteDirect);
+		push(ff().variable(inst.number)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunLocalVariable2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(LocalVariable2Byte);
+		push(local_variable(inst.number)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunSetLocalVariable1Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetLocalVariable1Byte);
+		set_local_variable(inst.number, pop()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunSetLocalVariable1ByteDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetLocalVariable1ByteDirect);
+		ff().variable(inst.number, pop()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunSetLocalVariable2Byte(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetLocalVariable2Byte);
+		set_local_variable(inst.number, pop()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunInstanceVariable(const inst_t* pc){
+		XTAL_VM_DEF_INST(InstanceVariable);
+		FunFrame& f = ff();
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			push(f.instance_variables->variable(inst.number, f.fun()->code()->class_core(inst.core_number)));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunSetInstanceVariable(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetInstanceVariable);
+		FunFrame& f = ff();
+		XTAL_GLOBAL_INTERPRETER_LOCK{ 
+			f.instance_variables->set_variable(inst.number, f.fun()->code()->class_core(inst.core_number), pop());
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunCleanupCall(const inst_t* pc){
+		XTAL_VM_DEF_INST(CleanupCall);
+		XTAL_VM_CONTINUE(pop_ff());
+}
+
+const inst_t* VMachine::FunReturn0(const inst_t* pc){
+		XTAL_VM_DEF_INST(Return0);
+		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
+			push(null);
+		}
+		XTAL_VM_CONTINUE(pop_ff());  
+}
+
+const inst_t* VMachine::FunReturn1(const inst_t* pc){
+		XTAL_VM_DEF_INST(Return1);
+		if(ff().need_result_count!=1){
+			adjust_result(1);
+		}
+		XTAL_VM_CONTINUE(pop_ff());  
+}
+
+const inst_t* VMachine::FunReturn2(const inst_t* pc){
+		XTAL_VM_DEF_INST(Return2);
+		adjust_result(2); 
+		XTAL_VM_CONTINUE(pop_ff()); 
+}
+
+const inst_t* VMachine::FunReturn(const inst_t* pc){
+		XTAL_VM_DEF_INST(Return);
+		adjust_result(inst.results); 
+		XTAL_VM_CONTINUE(pop_ff());  
+}
+
+const inst_t* VMachine::FunYield(const inst_t* pc){
+		XTAL_VM_DEF_INST(Yield);
+		yield_result_count_ = inst.results;	
+		if(ff().yieldable){
+			resume_pc_ = pc + inst.ISIZE;
+			XTAL_VM_RETURN;
+		}else{
+			downsize(yield_result_count_);
+			XTAL_GLOBAL_INTERPRETER_LOCK{ 
+				last_except_ = builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012"));
+			}
+			XTAL_VM_EXCEPT(last_except_);
+		}
+}
+
+const inst_t* VMachine::FunExit(const inst_t* pc){
+		XTAL_VM_DEF_INST(Exit);
+		resume_pc_ = 0; 
+		XTAL_VM_RETURN;
+}
+
+const inst_t* VMachine::FunValue(const inst_t* pc){
+		XTAL_VM_DEF_INST(Value);
+		push(code()->value(inst.value_number)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunCheckUnsupported(const inst_t* pc){
+		XTAL_VM_DEF_INST(CheckUnsupported);
+		FunFrame& f = ff();
+
+		downsize(f.args_stack_size());
+		push(nop);
+		if(f.need_result_count!=1){
+			adjust_result(1);
+		}
+
+		XTAL_VM_CONTINUE(pop_ff());
+}
+
+const inst_t* VMachine::FunProperty(const inst_t* pc){
+		XTAL_VM_DEF_INST(Property);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
+const inst_t* VMachine::FunSetProperty(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetProperty);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
+const inst_t* VMachine::FunSend(const inst_t* pc){
+		XTAL_VM_DEF_INST(Send);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
 const inst_t* VMachine::FunSendQ(const inst_t* pc){
 		XTAL_VM_DEF_INST(SendQ);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2212,6 +2324,67 @@ const inst_t* VMachine::FunSendQ(const inst_t* pc){
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
+const inst_t* VMachine::FunCall(const inst_t* pc){
+		XTAL_VM_DEF_INST(Call);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->call(myself());
+		}
+		XTAL_VM_CONTINUE(ff().called_pc);	
+}
+
+const inst_t* VMachine::FunMember(const inst_t* pc){
+		XTAL_VM_DEF_INST(Member);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			const AnyPtr& ret = target->member(name, ff().self(), null);
+			if(rawne(ret, nop)){
+				set(ret);
+			}else{
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
+			}
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunMemberQ(const inst_t* pc){
+		XTAL_VM_DEF_INST(MemberQ);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			set(target->member(name, ff().self(), null));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
+}
+
+const inst_t* VMachine::FunDefineMember(const inst_t* pc){
+		XTAL_VM_DEF_INST(DefineMember);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& value = get();
+			const AnyPtr& target = get(1);
+			target->def(name, value); 
+			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunGlobalVariable(const inst_t* pc){
+		XTAL_VM_DEF_INST(GlobalVariable);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const AnyPtr& ret = code()->filelocal()->member(identifier(inst.identifier_number));
+			if(rawne(ret, nop)){
+				push(ret);
+			}else{
+				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
+			}
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 
 const inst_t* VMachine::FunSetGlobalVariable(const inst_t* pc){
@@ -2228,6 +2401,82 @@ const inst_t* VMachine::FunDefineGlobalVariable(const inst_t* pc){
 			code()->filelocal()->def(identifier(inst.identifier_number), pop(), KIND_PUBLIC, null);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
+}
+
+const inst_t* VMachine::FunOnce(const inst_t* pc){
+		XTAL_VM_DEF_INST(Once);
+		const AnyPtr& ret = code()->once_value(inst.value_number);
+		if(rawne(ret, nop)){
+			push(ret);
+			XTAL_VM_CONTINUE(pc + inst.address);
+		}else{
+			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		}
+}
+
+const inst_t* VMachine::FunSetOnce(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetOnce);
+		code()->set_once_value(inst.value_number, pop()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunBlockBegin(const inst_t* pc){
+		XTAL_VM_DEF_INST(BlockBegin);
+		FunFrame& f = ff(); 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			BlockCore* core = f.fun()->code()->block_core(inst.core_number);
+			const FramePtr& outer = (core->flags&BlockCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
+			f.outer(xnew<Frame>(outer, code(), core));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunBlockBeginDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(BlockBeginDirect);
+		FunFrame& f = ff(); 
+		f.variables_.upsize(f.fun()->code()->block_core(inst.core_number)->variable_size);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunBlockEnd(const inst_t* pc){
+		XTAL_VM_DEF_INST(BlockEnd);
+		ff().outer(ff().outer()->outer()); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunBlockEndDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(BlockEndDirect);
+		FunFrame& f = ff();
+		f.variables_.downsize(f.fun()->code()->block_core(inst.core_number)->variable_size);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunTryBegin(const inst_t* pc){
+		XTAL_VM_DEF_INST(TryBegin);
+		FunFrame& f = ff(); 
+		ExceptFrame& ef = except_frames_.push();
+		ef.core = &f.fun()->code()->except_core_table_[inst.core_number];
+		ef.fun_frame_count = fun_frames_.size();
+		ef.stack_count = this->stack_size();
+		ef.variable_size = f.variables_.size();
+		ef.outer = f.outer();
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunTryEnd(const inst_t* pc){
+		XTAL_VM_DEF_INST(TryEnd);
+		XTAL_VM_CONTINUE(except_frames_.pop().core->finally_pc + code()->data()); 
+}
+
+const inst_t* VMachine::FunPushGoto(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushGoto);
+		push(Innocence((int_t)((pc+inst.address)-code()->data()))); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunPopGoto(const inst_t* pc){
+		XTAL_VM_DEF_INST(PopGoto);
+		XTAL_VM_CONTINUE(code()->data()+ivalue(pop()));
 }
 
 const inst_t* VMachine::FunIfEq(const inst_t* pc){
@@ -2330,6 +2579,52 @@ const inst_t* VMachine::FunIfGe(const inst_t* pc){
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
+const inst_t* VMachine::FunIfRawEq(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfRawEq);
+		pc += raweq(get(1), get()) ? inst.ISIZE : inst.address;
+		downsize(2);
+		XTAL_VM_CONTINUE(pc);
+}
+
+const inst_t* VMachine::FunIfRawNe(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfRawNe);
+		pc += !raweq(get(1), get()) ? inst.ISIZE : inst.address;
+		downsize(2);
+		XTAL_VM_CONTINUE(pc);
+}
+
+const inst_t* VMachine::FunIfIs(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfIs);
+		pc += get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		downsize(2);
+		XTAL_VM_CONTINUE(pc);
+}
+
+const inst_t* VMachine::FunIfNis(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfNis);
+		pc += !get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		downsize(2);
+		XTAL_VM_CONTINUE(pc);
+}
+
+const inst_t* VMachine::FunIfArgIsNop(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfArgIsNop);
+		if(raweq(local_variable(inst.arg), nop)){
+			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(pc + inst.address); 
+		}
+}
+
+const inst_t* VMachine::FunIfArgIsNopDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfArgIsNopDirect);
+		if(raweq(ff().variable(inst.arg), nop)){
+			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		}else{
+			XTAL_VM_CONTINUE(pc + inst.address); 
+		}
+}
+
 const inst_t* VMachine::FunPos(const inst_t* pc){
 		XTAL_VM_DEF_INST(Pos);
 		switch(type(get())){XTAL_DEFAULT;
@@ -2354,6 +2649,24 @@ const inst_t* VMachine::FunCom(const inst_t* pc){
 			XTAL_CASE(TYPE_INT){ set(Innocence(~ivalue(get()))); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 		}
 		XTAL_VM_CONTINUE(send1(pc+inst.ISIZE, Xid(op_com)));
+}
+
+const inst_t* VMachine::FunNot(const inst_t* pc){
+		XTAL_VM_DEF_INST(Not);
+		set(Innocence(!get())); 
+		XTAL_VM_CONTINUE(pc+inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunAt(const inst_t* pc){
+		XTAL_VM_DEF_INST(At);
+		FunFrame& f = ff();
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			f.temp2_ = pop();
+			Innocence target = f.temp_ = pop();
+			inner_setup_call(pc+inst.ISIZE, 1, ap(f.temp2_));
+			ap(target)->rawsend(myself(), Xid(op_at));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
 const inst_t* VMachine::FunSetAt(const inst_t* pc){
@@ -2397,6 +2710,11 @@ const inst_t* VMachine::FunSub(const inst_t* pc){
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub)));
+}
+
+const inst_t* VMachine::FunCat(const inst_t* pc){
+		XTAL_VM_DEF_INST(Cat);
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_cat)));
 }
 
 const inst_t* VMachine::FunMul(const inst_t* pc){
@@ -2605,6 +2923,34 @@ const inst_t* VMachine::FunGe(const inst_t* pc){
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_lt)));
 }
 
+const inst_t* VMachine::FunRawEq(const inst_t* pc){
+		XTAL_VM_DEF_INST(RawEq);
+		set(1, Innocence(raweq(get(1), get())));
+		downsize(1);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunRawNe(const inst_t* pc){
+		XTAL_VM_DEF_INST(RawNe);
+		set(1, Innocence(rawne(get(1), get())));
+		downsize(1);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunIs(const inst_t* pc){
+		XTAL_VM_DEF_INST(Is);
+		set(1, Innocence(get(1)->is(cast<const ClassPtr&>(get()))));
+		downsize(1);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunNis(const inst_t* pc){
+		XTAL_VM_DEF_INST(Nis);
+		set(1, Innocence(!get(1)->is(cast<const ClassPtr&>(get()))));
+		downsize(1);
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
 const inst_t* VMachine::FunInc(const inst_t* pc){
 		XTAL_VM_DEF_INST(Inc);
 		switch(type(get())){XTAL_DEFAULT;
@@ -2651,6 +2997,11 @@ const inst_t* VMachine::FunSubAssign(const inst_t* pc){
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_sub_assign)));
+}
+
+const inst_t* VMachine::FunCatAssign(const inst_t* pc){
+		XTAL_VM_DEF_INST(CatAssign);
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_cat_assign)));
 }
 
 const inst_t* VMachine::FunMulAssign(const inst_t* pc){
@@ -2801,6 +3152,50 @@ const inst_t* VMachine::FunClassEnd(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 }
 
+const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
+		XTAL_VM_DEF_INST(DefineClassMember);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ClassPtr p = cast<ClassPtr>(ff().outer());
+			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), inst.accessibility, get(), get(1));
+			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMakeArray(const inst_t* pc){
+		XTAL_VM_DEF_INST(MakeArray);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			push(xnew<Array>());
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunArrayAppend(const inst_t* pc){
+		XTAL_VM_DEF_INST(ArrayAppend);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			cast<ArrayPtr>(get(1))->push_back(get()); 
+			downsize(1);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMakeMap(const inst_t* pc){
+		XTAL_VM_DEF_INST(MakeMap);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			push(xnew<Map>());
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMapInsert(const inst_t* pc){
+		XTAL_VM_DEF_INST(MapInsert);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			cast<MapPtr>(get(2))->set_at(get(1), get()); 
+			downsize(2);	
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
 const inst_t* VMachine::FunMakeFun(const inst_t* pc){
 		XTAL_VM_DEF_INST(MakeFun);
 		int_t table_n = inst.core_number, end = inst.address;
@@ -2831,6 +3226,57 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 			push(ret);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunThrow(const inst_t* pc){
+		XTAL_VM_DEF_INST(Throw);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			AnyPtr except = pop();
+			if(!except){
+				except = ap(last_except_);
+			}
+
+			if(!except->is(cast<ClassPtr>(builtin()->member("Exception")))){
+				last_except_ = builtin()->member("RuntimeError")(except);
+			}else{
+				last_except_ = except;
+			}
+		}
+		XTAL_VM_EXCEPT(last_except_);
+}
+
+const inst_t* VMachine::FunThrowUnsupportedError(const inst_t* pc){
+		XTAL_VM_DEF_INST(ThrowUnsupportedError);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2());
+		}
+		XTAL_VM_EXCEPT(last_except_);
+}
+
+const inst_t* VMachine::FunThrowNop(const inst_t* pc){
+		XTAL_VM_DEF_INST(ThrowNop);
+		XTAL_VM_EXCEPT(nop); 
+}
+
+const inst_t* VMachine::FunAssert(const inst_t* pc){
+		XTAL_VM_DEF_INST(Assert);
+		bool failure = false;
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			AnyPtr expr = get(2);
+			if(!expr){
+				failure = true;
+				AnyPtr expr_string = get(1) ? get(1) : AnyPtr("");
+				AnyPtr message = get() ? get() : AnyPtr("");
+				last_except_ = builtin()->member("AssertionFailed")(message, expr_string);
+			}
+			downsize(3);
+		}
+
+		if(failure){
+			XTAL_VM_EXCEPT(last_except_); 
+		}
+
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
 const inst_t* VMachine::FunBreakPoint(const inst_t* pc){
@@ -2874,6 +3320,11 @@ const inst_t* VMachine::FunBreakPoint(const inst_t* pc){
 				}
 			}
 		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMAX(const inst_t* pc){
+		XTAL_VM_DEF_INST(MAX);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
@@ -3154,20 +3605,19 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 				pc = pop_ff();
 				e = append_backtrace(pc, e);
 			}
-			resize(stack_size);
+			stack_.downsize_n(stack_size);
 			last_except_ = e;
 			return 0;
 		}
 
 		ExceptFrame& ef = except_frames_.top();
-
 		while((size_t)ef.fun_frame_count<fun_frames_.size()){
 			hook_return(pc);
 			pc = pop_ff();
 			e = append_backtrace(pc, e);
 
 			if(pc==&end_code_){
-				resize(stack_size);
+				stack_.downsize_n(stack_size);
 				last_except_ = e;
 				return 0;
 			}
@@ -3190,10 +3640,10 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 			push(e);
 			push(AnyPtr(code()->size()-1));
 		}
+
 		except_frames_.downsize(1);
 		return pc;
 	}
-
 	return 0;
 }
 

@@ -466,16 +466,22 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 		put_inst(inst);
 
 		if(e->type()==EXPR_NE || e->type()==EXPR_LE || e->type()==EXPR_GE){
-			put_inst(InstNot());
+			set_jump(InstUnless::OFFSET_address, label_if2);
+			put_inst(InstUnless());
+		}else{
+			set_jump(InstIf::OFFSET_address, label_if2);
+			put_inst(InstIf());
 		}
-
-		set_jump(InstIf::OFFSET_address, label_if2);
-		put_inst(InstIf());
 	}else{
-		compile_expr(e);
-
-		set_jump(InstIf::OFFSET_address, label_if);
-		put_inst(InstIf());
+		if(e->type()==EXPR_NOT){
+			compile_expr(e->una_term());
+			set_jump(InstUnless::OFFSET_address, label_if);
+			put_inst(InstUnless());
+		}else{
+			compile_expr(e);
+			set_jump(InstIf::OFFSET_address, label_if);
+			put_inst(InstIf());
+		}
 	}
 }
 
@@ -1103,6 +1109,7 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	int_t label_if2 = reserve_label();
 	int_t label_break = reserve_label();
 	int_t label_continue = reserve_label();
+	int_t label_body = reserve_label();
 
 	FunFrame::Loop loop;
 	loop.control_statement_label[0] = label_break;
@@ -1117,28 +1124,17 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 		put_if_code(e->for_cond(), label_if, label_if2);
 	}
 
+	set_label(label_body);
+
 	// ループ本体をコンパイル
 	compile_stmt(e->for_body());
 
-	// next部をコンパイル
-	if(e->for_next()){
-		compile_stmt(e->for_next());
-	}
-
-	set_label(label_cond);
-
+	bool referenced_first_step;
 	{
 		LVarInfo info = var_find(Xid(first_step));
 		info.entry->value = false;
+		referenced_first_step = info.entry->referenced;
 	}
-
-	// 条件式をコンパイル
-	if(e->for_cond()){
-		put_if_code(e->for_cond(), label_if_q, label_if2_q);
-	}
-
-	// ループ本体をコンパイル
-	compile_stmt(e->for_body());
 
 	set_label(label_continue);
 
@@ -1147,9 +1143,25 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 		compile_stmt(e->for_next());
 	}
 
-	// label_cond部分にジャンプ
-	set_jump(InstGoto::OFFSET_address, label_cond);
-	put_inst(InstGoto());
+	set_label(label_cond);
+
+	// 条件式をコンパイル 2回目
+	if(e->for_cond()){
+		put_if_code(e->for_cond(), label_if_q, label_if2_q);
+	}
+
+	if(referenced_first_step){
+		// ループ本体をコンパイル 2回目
+		compile_stmt(e->for_body());
+
+		// label_continue部分にジャンプ
+		set_jump(InstGoto::OFFSET_address, label_continue);
+		put_inst(InstGoto());
+	}else{
+		// label_body部分にジャンプ
+		set_jump(InstGoto::OFFSET_address, label_body);
+		put_inst(InstGoto());
+	}
 	
 	ff().loops.pop();
 	
@@ -2059,6 +2071,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
 			if(info.pos>=0){
 				if((info.var_frame->fun_frames_size==fun_frames_.size() || !info.entry->assigned)){
+					info.entry->referenced = true;
 					return info.entry->value;
 				}
 			}
@@ -2101,6 +2114,7 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
 			info.entry->assigned = true;
+			info.entry->value = nop;
 		}
 	}
 }

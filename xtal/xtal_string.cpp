@@ -857,6 +857,7 @@ StringPtr InternedStringPtr::make(const char* name, uint_t size){
 //{ID{{
 namespace id{
 InternedStringPtr idop_inc;
+InternedStringPtr idblock_catch;
 InternedStringPtr idcallee;
 InternedStringPtr idnew;
 InternedStringPtr idop_shl_assign;
@@ -914,6 +915,7 @@ InternedStringPtr idnop;
 InternedStringPtr idto_i;
 InternedStringPtr idop_or;
 InternedStringPtr idcontinue;
+InternedStringPtr ide;
 InternedStringPtr iditerator;
 InternedStringPtr idthrow;
 InternedStringPtr idop_and;
@@ -964,6 +966,7 @@ InternedStringPtr idp;
 }
 void uninitialize_interned_string(){
 id::idop_inc = null;
+id::idblock_catch = null;
 id::idcallee = null;
 id::idnew = null;
 id::idop_shl_assign = null;
@@ -1021,6 +1024,7 @@ id::idnop = null;
 id::idto_i = null;
 id::idop_or = null;
 id::idcontinue = null;
+id::ide = null;
 id::iditerator = null;
 id::idthrow = null;
 id::idop_and = null;
@@ -1072,6 +1076,7 @@ id::idp = null;
 void initialize_interned_string(){
 register_uninitializer(&uninitialize_interned_string);
 id::idop_inc = InternedStringPtr("op_inc", 6);
+id::idblock_catch = InternedStringPtr("block_catch", 11);
 id::idcallee = InternedStringPtr("callee", 6);
 id::idnew = InternedStringPtr("new", 3);
 id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13);
@@ -1129,6 +1134,7 @@ id::idnop = InternedStringPtr("nop", 3);
 id::idto_i = InternedStringPtr("to_i", 4);
 id::idop_or = InternedStringPtr("op_or", 5);
 id::idcontinue = InternedStringPtr("continue", 8);
+id::ide = InternedStringPtr("e", 1);
 id::iditerator = InternedStringPtr("iterator", 8);
 id::idthrow = InternedStringPtr("throw", 5);
 id::idop_and = InternedStringPtr("op_and", 6);
@@ -1178,6 +1184,7 @@ id::idif = InternedStringPtr("if", 2);
 id::idp = InternedStringPtr("p", 1);
 }
 //}}ID}
+
 
 
 

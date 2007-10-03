@@ -372,6 +372,7 @@ void visit_members(Visitor& m, const Named& p);
 //{ID{{
 namespace id{
 extern InternedStringPtr idop_inc;
+extern InternedStringPtr idblock_catch;
 extern InternedStringPtr idcallee;
 extern InternedStringPtr idnew;
 extern InternedStringPtr idop_shl_assign;
@@ -429,6 +430,7 @@ extern InternedStringPtr idnop;
 extern InternedStringPtr idto_i;
 extern InternedStringPtr idop_or;
 extern InternedStringPtr idcontinue;
+extern InternedStringPtr ide;
 extern InternedStringPtr iditerator;
 extern InternedStringPtr idthrow;
 extern InternedStringPtr idop_and;
@@ -478,6 +480,7 @@ extern InternedStringPtr idif;
 extern InternedStringPtr idp;
 }
 //}}ID}
+
 
 
 

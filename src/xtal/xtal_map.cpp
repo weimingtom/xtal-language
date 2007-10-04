@@ -35,9 +35,9 @@ public:
 		}
 		
 		switch(type_){
-			case 0: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->key, node_->value); break;
-			case 1: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->key); break;
-			case 2: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->value); break;
+			case 0: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.first, node_->pair.second); break;
+			case 1: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.first); break;
+			case 2: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.second); break;
 			default: vm->return_result(null); break;
 		}
 
@@ -87,7 +87,7 @@ void initialize_map(){
 void Map::visit_members(Visitor& m){
 	Base::visit_members(m);
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		m & p->key & p->value;
+		m & p->pair;
 	}
 }	
 
@@ -97,7 +97,7 @@ Map::Map(){
 	used_size_ = 0;
 	ordered_head_ = 0;
 	ordered_tail_ = 0;
-	expand(7);
+	expand(4);
 }
 
 Map::~Map(){
@@ -132,8 +132,8 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 	uint_t hash = calc_offset(key);
 	Node* p = begin_[calc_offset(key)];
 	while(p){
-		if(raweq(p->key, key)){
-			return p->value;
+		if(raweq(p->pair.first, key)){
+			return p->pair.second;
 		}
 		p = p->next;
 	}
@@ -144,8 +144,8 @@ void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
 	const AnyPtr& key = calc_key(akey);
 	Node** p = &begin_[calc_offset(key)];
 	while(*p){
-		if(raweq((*p)->key, key)){
-			(*p)->value = value;
+		if(raweq((*p)->pair.first, key)){
+			(*p)->pair.second = value;
 			return;
 		}
 		p = &(*p)->next;
@@ -165,7 +165,7 @@ void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
 
 	used_size_++;
 	if(rate()>0.8f){
-		expand(17);
+		expand(0);
 	}
 }
 
@@ -175,7 +175,7 @@ void Map::erase(const AnyPtr& akey){
 	Node* p = begin_[hash];
 	Node* prev = 0;
 	while(p){
-		if(raweq(p->key, key)){
+		if(raweq(p->pair.first, key)){
 			if(prev){
 				prev->next = p->next;
 			}else{
@@ -202,14 +202,16 @@ MapPtr Map::cat(const MapPtr& a){
 
 MapPtr Map::cat_assign(const MapPtr& a){
 	for(Node* p = a->ordered_head_; p; p=p->ordered_next){
-		set_at(p->key, p->value);
+		set_at(p->pair.first, p->pair.second);
 	}
 	return MapPtr::from_this(this);
 }
 
 void Map::expand(int_t addsize){
 	Node** oldbegin = begin_;
-	size_ = size_ + size_ + addsize;
+
+	size_ = size_*2 + addsize;
+
 	begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
 	
 	for(uint_t i = 0; i<size_; ++i){
@@ -221,7 +223,7 @@ void Map::expand(int_t addsize){
 	}
 
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		Node** temp = &begin_[calc_offset(p->key)];
+		Node** temp = &begin_[calc_offset(p->pair.first)];
 		while(*temp){
 			temp = &(*temp)->next;
 		}
@@ -242,9 +244,9 @@ StringPtr Map::to_s(){
 			ms->put_s(",");
 		}
 
-		ms->put_s(p->key->to_s());
+		ms->put_s(p->pair.first->to_s());
 		ms->put_s(":");
-		ms->put_s(p->value->to_s());
+		ms->put_s(p->pair.second->to_s());
 	}
 	ms->put_s("]");
 	return ms->to_s();
@@ -277,15 +279,15 @@ AnyPtr Map::values(){
 MapPtr Map::clone(){
 	MapPtr ret(xnew<Map>());
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		ret->set_at(p->key, p->value);
+		ret->set_at(p->pair.first, p->pair.second);
 	}	
 	return ret;
 }
 
 void Map::push_all(const VMachinePtr& vm){
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		vm->push(p->key);
-		vm->push(p->value);
+		vm->push(p->pair.first);
+		vm->push(p->pair.second);
 	}	
 }
 

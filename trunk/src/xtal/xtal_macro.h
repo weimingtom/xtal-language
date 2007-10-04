@@ -20,13 +20,13 @@
 #define Xfor(var, tar) \
 	if(::xtal::BlockValueHolder<1> block_value_holder = tar)\
 	for(::xtal::AnyPtr &var = block_value_holder.values[0]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder.target, var, true); block_value_holder; ::xtal::block_next(block_value_holder.target, var, false))
+	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
 *
 * @code
-* Xfor(key, value, map.send("pairs")){
+* Xfor(key, value, map){
 *   // use key and value
 * }
 * @endcode
@@ -34,7 +34,7 @@
 #define Xfor2(var1, var2, tar) \
 	if(::xtal::BlockValueHolder<2> block_value_holder = tar)\
 	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder.target, var1, var2, true); block_value_holder.target; ::xtal::block_next(block_value_holder.target, var1, var2, false))
+	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -48,7 +48,7 @@
 #define Xfor3(var1, var2, var3, tar) \
 	if(::xtal::BlockValueHolder<3> block_value_holder = tar)\
 	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder.target, var1, var2, var3, true); block_value_holder.target; ::xtal::block_next(block_value_holder.target, var1, var2, var3, false))
+	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
 
 
 /**

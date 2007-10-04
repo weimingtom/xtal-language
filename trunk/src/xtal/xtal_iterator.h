@@ -18,9 +18,13 @@ public:
 	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns);
 };
 
-void block_next(AnyPtr& target, AnyPtr& value, bool first);
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first);
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first);
+
+template<int N>
+struct BlockValueHolder;
+
+void block_next(BlockValueHolder<1>& holder, bool first);
+void block_next(BlockValueHolder<2>& holder, bool first);
+void block_next(BlockValueHolder<3>& holder, bool first);
 void block_break(AnyPtr& target);
 
 template<int N>
@@ -30,6 +34,46 @@ struct BlockValueHolder{
 
 	AnyPtr target;
 	AnyPtr values[N];
+
+	operator bool(){ return target; }
+};
+
+template<>
+struct BlockValueHolder<1>{
+	
+	BlockValueHolder(const AnyPtr& tar=null)
+		:target(tar){
+		array = ptr_as<Array>(tar);
+		if(array){ it = array->begin(); }
+	}
+	
+	~BlockValueHolder(){ block_break(target); }
+
+	AnyPtr target;
+	AnyPtr values[2];
+
+	ArrayPtr array;
+	Array::iterator it;
+
+	operator bool(){ return target; }
+};
+
+template<>
+struct BlockValueHolder<2>{
+	
+	BlockValueHolder(const AnyPtr& tar=null)
+		:target(tar){
+		map = ptr_as<Map>(tar);
+		if(map){ it = map->begin(); }
+	}
+	
+	~BlockValueHolder(){ block_break(target); }
+
+	AnyPtr target;
+	AnyPtr values[2];
+
+	MapPtr map;
+	Map::iterator it;
 
 	operator bool(){ return target; }
 };

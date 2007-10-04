@@ -187,7 +187,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath="..\..\xtal\main.cpp"
+				RelativePath="..\..\src\xtal\main.cpp"
 				>
 			</File>
 		</Filter>

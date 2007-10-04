@@ -237,6 +237,54 @@ public:
 		return values_;
 	}
 
+public:
+
+	class iterator{
+	public:
+		
+		iterator(AnyPtr* p = 0)
+			:p_(p){}
+		
+		AnyPtr& operator *() const{
+			return *p_;
+		}
+
+		AnyPtr* operator ->() const{
+			return p_;
+		}
+
+		iterator& operator ++(){
+			++p_;
+			return *this;
+		}
+
+		iterator operator ++(int){
+			iterator temp(*this);
+			++p_;
+			return *this;
+		}
+
+		friend bool operator ==(iterator a, iterator b){
+			return a.p_ == b.p_;
+		}
+
+		friend bool operator !=(iterator a, iterator b){
+			return a.p_ != b.p_;
+		}
+
+	private:
+		AnyPtr* p_;
+	};
+
+	iterator begin(){
+		return iterator(values_);
+	}
+
+	iterator end(){
+		return iterator(values_ + size_);
+	}
+
+
 protected:
 
 	int_t calc_offset(int_t i);

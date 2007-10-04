@@ -50,33 +50,55 @@ void block_break(AnyPtr& target){
 	}
 }
 
-void block_next(AnyPtr& target, AnyPtr& value1, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(2);
-	target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	vm->cleanup_call();
+void block_next(BlockValueHolder<1>& holder, bool first){
+	if(holder.array){
+		if(holder.it==holder.array->end()){
+			holder.target = null;
+			holder.values[0] = null;
+		}else{
+			holder.values[0] = *holder.it;
+			++holder.it;
+		}
+	}else{
+		const VMachinePtr& vm = vmachine();
+		vm->setup_call(2);
+		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+		holder.target = vm->result(0);
+		holder.values[0] = vm->result(1);
+		vm->cleanup_call();
+	}
 }
 
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(3);
-	target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	value2 = vm->result(2);
-	vm->cleanup_call();
+void block_next(BlockValueHolder<2>& holder, bool first){
+	if(holder.map){
+		if(holder.it==holder.map->end()){
+			holder.target = null;
+			holder.values[0] = null;
+			holder.values[1] = null;
+		}else{
+			holder.values[0] = holder.it->first;
+			holder.values[1] = holder.it->second;
+			++holder.it;
+		}
+	}else{
+		const VMachinePtr& vm = vmachine();
+		vm->setup_call(3);
+		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+		holder.target = vm->result(0);
+		holder.values[0] = vm->result(1);
+		holder.values[1] = vm->result(2);
+		vm->cleanup_call();
+	}
 }
 
-void block_next(AnyPtr& target, AnyPtr& value1, AnyPtr& value2, AnyPtr& value3, bool first){
+void block_next(BlockValueHolder<3>& holder, bool first){
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(4);
-	target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
-	target = vm->result(0);
-	value1 = vm->result(1);
-	value2 = vm->result(2);
-	value3 = vm->result(3);
+	holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+	holder.target = vm->result(0);
+	holder.values[0] = vm->result(1);
+	holder.values[1] = vm->result(2);
+	holder.values[2] = vm->result(3);
 	vm->cleanup_call();
 }
 

@@ -122,8 +122,7 @@ public:
 protected:
 
 	struct Node{
-		AnyPtr key;
-		AnyPtr value;
+		std::pair<AnyPtr, AnyPtr> pair;
 		Node* next;
 		Node* ordered_next;
 		Node* ordered_prev;
@@ -132,8 +131,57 @@ protected:
 			:next(0), ordered_next(0), ordered_prev(0){}
 
 		Node(const AnyPtr& key, const AnyPtr& value)
-			:key(key), value(value), next(0), ordered_next(0), ordered_prev(0){}
+			:pair(key, value), next(0), ordered_next(0), ordered_prev(0){}
 	};
+
+public:
+
+	class iterator{
+	public:
+		
+		iterator(Node* node = 0)
+			:node_(node){}
+		
+		std::pair<AnyPtr, AnyPtr>& operator *() const{
+			return node_->pair;
+		}
+
+		std::pair<AnyPtr, AnyPtr>* operator ->() const{
+			return &node_->pair;
+		}
+
+		iterator& operator ++(){
+			node_ = node_->ordered_next;
+			return *this;
+		}
+
+		iterator operator ++(int){
+			iterator temp(*this);
+			node_ = node_->ordered_next;
+			return *this;
+		}
+
+		friend bool operator ==(iterator a, iterator b){
+			return a.node_ == b.node_;
+		}
+
+		friend bool operator !=(iterator a, iterator b){
+			return a.node_ != b.node_;
+		}
+
+	private:
+		Node* node_;
+	};
+
+	iterator begin(){
+		return iterator(ordered_head_);
+	}
+
+	iterator end(){
+		return iterator(0);
+	}
+
+protected:
 
 	friend class MapIter;
 	friend class MapKeyIter;
@@ -148,7 +196,7 @@ protected:
 	const AnyPtr& calc_key(const AnyPtr& key);
 	
 	uint_t calc_offset(const AnyPtr& key){
-		return ((rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3))) % size_;
+		return ((rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3))) & (size_-1);
 	}
 
 protected:

@@ -177,10 +177,6 @@ protected:
 		InternedStringPtr key;
 		AnyPtr ns;
 
-		friend bool operator <(const Key& a, const Key& b){
-			return rawvalue(a.key) < rawvalue(b.key);
-		}
-
 		friend void visit_members(Visitor& m, const Key& a){
 			m & a.key & a.ns;
 		}
@@ -193,7 +189,18 @@ protected:
 		friend void visit_members(Visitor& m, const Value&){}
 	};
 
-	typedef AC<Key, Value>::map map_t;
+	struct Fun{
+		static uint_t hash(const Key& key){
+			return rawvalue(key.key)>>3;
+		}
+
+		static bool eq(const Key& a, const Key& b){
+			return raweq(a.key, b.key);
+		}
+	};
+
+	typedef Hashtable<Key, Value, Fun> map_t; 
+	map_t table_;
 
 	map_t* map_members_;
 	

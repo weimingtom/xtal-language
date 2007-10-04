@@ -10,7 +10,7 @@ namespace xtal{
 #if 0//def XTAL_DEBUG
 
 struct SizeAndCount{
-	EEE(int a, int b){
+	SizeAndCount(int a, int b){
 		size = a;
 		count = b;
 	}
@@ -40,6 +40,8 @@ void display_debug_memory(){
 		int size = it->second.size;
 		int count = it->second.count;
 	}
+
+	XTAL_ASSERT(mem_map_.empty()); // ‘S•”ŠJ•ú‚Å‚«‚Ä‚È‚¢
 }
 
 #else

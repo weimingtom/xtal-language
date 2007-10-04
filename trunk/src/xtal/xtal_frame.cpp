@@ -99,7 +99,7 @@ Frame::Frame()
 	
 Frame::~Frame(){
 	if(map_members_){
-		map_members_->~map();
+		map_members_->~Hashtable();
 		user_free(map_members_);
 	}
 }
@@ -107,9 +107,8 @@ Frame::~Frame(){
 void Frame::set_class_member(int_t i, const InternedStringPtr& name, int_t accessibility, const AnyPtr& ns, const AnyPtr& value){ 
 	members_->set_at(i, value);
 	Key key = {name, ns};
-	Value& v = (*map_members_)[key];
-	v.flags = accessibility;
-	v.num = i;
+	Value val = {i, accessibility};
+	map_members_->insert(key, val);
 	value->set_object_name(name, object_name_force(), FramePtr::from_this(this));
 	global_mutate_count++;
 }
@@ -204,9 +203,8 @@ void Class::def(const InternedStringPtr& name, const AnyPtr& value, int_t access
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value& v = (*map_members_)[key];
-		v.num = members_->size();
-		v.flags = accessibility;
+		Value val = {members_->size(), accessibility};
+		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_name(name, object_name_force(), ClassPtr::from_this(this));
 	}else{
@@ -422,9 +420,8 @@ const AnyPtr& Lib::rawdef(const InternedStringPtr& name, const AnyPtr& value, co
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value& v = (*map_members_)[key];
-		v.num = members_->size();
-		v.flags = KIND_PUBLIC;
+		Value val = {members_->size(), KIND_PUBLIC};
+		map_members_->insert(key, val);
 		members_->push_back(value);
 		global_mutate_count++;
 		value->set_object_name(name, object_name_force(), LibPtr::from_this(this));

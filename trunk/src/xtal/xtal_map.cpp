@@ -8,7 +8,7 @@ namespace xtal{
 
 class MapIter : public Base{
 	MapPtr map_;
-	Map::Node* node_;
+	Map::iterator node_;
 	int_t type_;
 
 	virtual void visit_members(Visitor& m){
@@ -19,29 +19,23 @@ class MapIter : public Base{
 public:
 
 	MapIter(const MapPtr& m, int_t type)
-		:map_(m), type_(type), node_(0){
-		reset();
-	}
-
-	AnyPtr reset(){
-		node_ = map_->ordered_head_;
-		return SmartPtr<MapIter>::from_this(this);
+		:map_(m), type_(type), node_(m->begin()){
 	}
 	
 	void block_next(const VMachinePtr& vm){
-		if(!node_){
+		if(node_==map_->end()){
 			vm->return_result(null);
 			return;
 		}
 		
 		switch(type_){
-			case 0: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.first, node_->pair.second); break;
-			case 1: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.first); break;
-			case 2: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->pair.second); break;
+			case 0: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->first, node_->second); break;
+			case 1: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->first); break;
+			case 2: vm->return_result(SmartPtr<MapIter>::from_this(this), node_->second); break;
 			default: vm->return_result(null); break;
 		}
 
-		node_ = node_->ordered_next;
+		++node_;
 	}
 };
 
@@ -50,8 +44,6 @@ void initialize_map(){
 	{
 		ClassPtr p = new_cpp_class<MapIter>("MapIter");
 		p->inherit(Iterator());
-		p->method("reset", &MapIter::reset);
-		p->method("block_first", &MapIter::block_next);
 		p->method("block_next", &MapIter::block_next);
 	}
 
@@ -67,6 +59,7 @@ void initialize_map(){
 		p->method("set_at", &Map::set_at);
 		p->method("op_at", &Map::at);
 		p->method("op_set_at", &Map::set_at);
+		p->method("insert", &Map::insert);
 		p->method("each", &Map::pairs);
 		p->method("pairs", &Map::pairs);
 		p->method("keys", &Map::keys);
@@ -86,37 +79,8 @@ void initialize_map(){
 
 void Map::visit_members(Visitor& m){
 	Base::visit_members(m);
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		m & p->pair;
-	}
+	m & table_;
 }	
-
-Map::Map(){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	ordered_head_ = 0;
-	ordered_tail_ = 0;
-	expand(4);
-}
-
-Map::~Map(){
-	clear();
-}
-	
-void Map::clear(){
-	for(Node* p = ordered_head_; p;){
-		Node* next = p->ordered_next;
-		p->~Node();
-		user_free(p);
-		p = next;
-	}
-
-	begin_ = 0;
-	used_size_ = 0;
-	ordered_head_ = 0;
-	ordered_tail_ = 0;
-}
 
 const AnyPtr& Map::calc_key(const AnyPtr& key){
 	if(type(key)==TYPE_BASE){
@@ -129,68 +93,11 @@ const AnyPtr& Map::calc_key(const AnyPtr& key){
 	
 const AnyPtr& Map::at(const AnyPtr& akey){
 	const AnyPtr& key = calc_key(akey);
-	uint_t hash = calc_offset(key);
-	Node* p = begin_[calc_offset(key)];
-	while(p){
-		if(raweq(p->pair.first, key)){
-			return p->pair.second;
-		}
-		p = p->next;
-	}
-	return nop;
-}
-
-void Map::set_at(const AnyPtr& akey, const AnyPtr& value){
-	const AnyPtr& key = calc_key(akey);
-	Node** p = &begin_[calc_offset(key)];
-	while(*p){
-		if(raweq((*p)->pair.first, key)){
-			(*p)->pair.second = value;
-			return;
-		}
-		p = &(*p)->next;
-	}
-
-	*p = (Node*)user_malloc(sizeof(Node));
-	new(*p) Node(key, value);
-
-	if(ordered_tail_){
-		ordered_tail_->ordered_next = *p;
-		(*p)->ordered_prev = ordered_tail_;
-		ordered_tail_ = *p;
+	iterator it = table_.find(key);
+	if(it!=end()){
+		return it->second;
 	}else{
-		ordered_head_ = *p;
-		ordered_tail_ = *p;
-	}
-
-	used_size_++;
-	if(rate()>0.8f){
-		expand(0);
-	}
-}
-
-void Map::erase(const AnyPtr& akey){
-	const AnyPtr& key = calc_key(akey);
-	uint_t hash = calc_offset(key);
-	Node* p = begin_[hash];
-	Node* prev = 0;
-	while(p){
-		if(raweq(p->pair.first, key)){
-			if(prev){
-				prev->next = p->next;
-			}else{
-				begin_[hash] = p->next;
-			}
-
-			if(p->ordered_next) p->ordered_next->ordered_prev = p->ordered_prev;
-			if(p->ordered_prev) p->ordered_prev->ordered_next = p->ordered_next;
-
-			p->~Node();
-			user_free(p);
-			break;
-		}
-		prev = p;
-		p = p->next;
+		return nop;
 	}
 }
 
@@ -201,36 +108,10 @@ MapPtr Map::cat(const MapPtr& a){
 }
 
 MapPtr Map::cat_assign(const MapPtr& a){
-	for(Node* p = a->ordered_head_; p; p=p->ordered_next){
-		set_at(p->pair.first, p->pair.second);
+	for(iterator p = a->begin(); p!=a->end(); ++p){
+		set_at(p->first, p->second);
 	}
 	return MapPtr::from_this(this);
-}
-
-void Map::expand(int_t addsize){
-	Node** oldbegin = begin_;
-
-	size_ = size_*2 + addsize;
-
-	begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
-	
-	for(uint_t i = 0; i<size_; ++i){
-		begin_[i] = 0;
-	}
-
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		p->next = 0;
-	}
-
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		Node** temp = &begin_[calc_offset(p->pair.first)];
-		while(*temp){
-			temp = &(*temp)->next;
-		}
-		*temp = p;
-	}
-
-	user_free(oldbegin);
 }
 
 StringPtr Map::to_s(){
@@ -239,25 +120,25 @@ StringPtr Map::to_s(){
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	ms->put_s("[");
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		if(p!=ordered_head_){
+	for(iterator p = begin(); p!=end(); ++p){
+		if(p!=begin()){
 			ms->put_s(",");
 		}
 
-		ms->put_s(p->pair.first->to_s());
+		ms->put_s(p->first->to_s());
 		ms->put_s(":");
-		ms->put_s(p->pair.second->to_s());
+		ms->put_s(p->second->to_s());
 	}
 	ms->put_s("]");
 	return ms->to_s();
 }
 
-bool Map::op_eq(const MapPtr& other){
-	if(size()!=other->size())
+bool Map::op_eq(const MapPtr& a){
+	if(size()!=a->size())
 		return false;
 	
-	Xfor2(key, value, other){
-		if(at(key)!=value){
+	for(iterator p = a->begin(); p!=a->end(); ++p){
+		if(at(p->first)!=p->second){
 			return false;
 		}
 	}
@@ -278,16 +159,16 @@ AnyPtr Map::values(){
 
 MapPtr Map::clone(){
 	MapPtr ret(xnew<Map>());
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		ret->set_at(p->pair.first, p->pair.second);
+	for(iterator p = begin(); p!=end(); ++p){
+		ret->set_at(p->first, p->second);
 	}	
 	return ret;
 }
 
 void Map::push_all(const VMachinePtr& vm){
-	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		vm->push(p->pair.first);
-		vm->push(p->pair.second);
+	for(iterator p = begin(); p!=end(); ++p){
+		vm->push(p->first);
+		vm->push(p->second);
 	}	
 }
 

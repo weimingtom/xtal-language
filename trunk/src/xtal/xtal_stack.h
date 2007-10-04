@@ -4,7 +4,7 @@
 namespace xtal{
 
 /*
-* VMachinePtrクラスのスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
+* VMachineクラスのスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
 */
 template<class T>
 class Stack{
@@ -317,7 +317,9 @@ void visit_members(Visitor& m, const Stack<T>& value){
 	}
 }
 
-
+/*
+* ポインタ専用スタック
+*/
 template<class T>
 class PStack{
 
@@ -363,7 +365,9 @@ public:
 	void move(PStack<T>& other, size_t sz){ impl_.move((Stack<void*>&)other, sz);}
 };
 
-
+/*
+* POD専用に書き下ろしたスタックのベース部分
+*/
 class PODStackBase{
 
 	void* begin_; // 確保したメモリの先頭の次を指す。
@@ -566,6 +570,9 @@ public:
 	}
 };
 
+/*
+* POD専用に書き下ろしたスタック
+*/
 template<class T>
 class PODStack{
 

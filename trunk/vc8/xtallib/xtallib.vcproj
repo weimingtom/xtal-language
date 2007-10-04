@@ -358,6 +358,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_hashtable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_inst.h"
 				>
 			</File>

@@ -6,6 +6,7 @@
 #include "xtal_string.h"
 #include "xtal_macro.h"
 #include "xtal_stack.h"
+#include "xtal_hashtable.h"
 #include "xtal_peg.h"
 
 #undef XTAL_USE_PEG
@@ -214,80 +215,35 @@ public:
 class StringMgr : public GCObserver{
 public:
 
-	struct Node{
-		uint_t hashcode;
-		const char* str;
+	struct Key{
+		const char_t* str;
 		uint_t size;
-		StringPtr value;
-		Node* next;
-
-		Node()
-			:value(null), next(0){}
 	};
 
+	struct Value{
+		uint_t hashcode;
+		StringPtr value;
+	};
+
+	struct Fun{
+		static uint_t hash(const Key& key){
+			return make_hashcode(key.str, key.size);
+		}
+
+		static bool eq(const Key& a, const Key& b){
+			return a.size==b.size && memcmp(a.str, b.str, a.size)==0;
+		}
+	};
+
+	typedef Hashtable<Key, Value, Fun> table_t; 
+	table_t table_;
 
 	StringMgr(){
-		size_ = 0;
-		begin_ = 0;
-		used_size_ = 0;
 		guard_ = 0;
-		expand(753);
 	}
 
-	virtual ~StringMgr(){
-		for(uint_t i = 0; i<size_; ++i){
-			Node* p = begin_[i];
-			while(p){
-				Node* next = p->next;
-				p->~Node();
-				user_free(p);
-				p = next;
-			}
-		}
-		user_free(begin_);
-	}
-		
 protected:
 
-	float_t rate(){
-		return used_size_/(float_t)size_;
-	}
-	
-	void set_node(Node* node){
-		Node** p = &begin_[node->hashcode % size_];
-		while(*p){
-			p = &(*p)->next;
-		}
-		*p = node;
-	}
-
-	void expand(int_t addsize){
-		Node** oldbegin = begin_;
-		uint_t oldsize = size_;
-
-		size_ = size_ + size_ + addsize;
-		begin_ = (Node**)user_malloc(sizeof(Node*)*size_);
-		for(uint_t i = 0; i<size_; ++i){
-			begin_[i] = 0;
-		}
-
-		for(uint_t i = 0; i<oldsize; ++i){
-			Node* p = oldbegin[i];
-			while(p){
-				Node* next = p->next;
-				set_node(p);
-				p->next = 0;
-				p = next;
-			}
-		}
-		user_free(oldbegin);
-	}
-	
-protected:
-
-	Node** begin_;
-	uint_t size_;
-	uint_t used_size_;
 	int_t guard_;
 
 	struct Guard{
@@ -300,13 +256,8 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		GCObserver::visit_members(m);
-		for(uint_t i = 0; i<size_; ++i){
-			Node* p = begin_[i];
-			while(p){
-				Node* next = p->next;
-				m & p->value;
-				p = next;
-			}
+		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
+			m & it->second.value;
 		}		
 	}
 
@@ -328,37 +279,16 @@ const InternedStringPtr& StringMgr::insert(const char* str, uint_t size){
 const InternedStringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
 	Guard guard(guard_);
 
-	Node** p = &begin_[hashcode % size_];
-	while(*p){
-		if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-			return *(const InternedStringPtr*)&(*p)->value;
-		}
-		p = &(*p)->next;
+	Key key = {str, size};
+	table_t::iterator it = table_.find(key, hashcode);
+	if(it!=table_.end()){
+		return *(const InternedStringPtr*)&it->second.value;
 	}
 
-	*p = (Node*)user_malloc(sizeof(Node));
-	new(*p) Node();
-	
-	(*p)->value = xnew<String>(str, size, hashcode, length, true);
-	(*p)->hashcode = hashcode;
-	(*p)->str = (*p)->value->c_str_direct();
-	(*p)->size = size;
-
-	used_size_++;
-	if(rate()>0.5f){
-		expand(17);
-
-		p = &begin_[hashcode % size_];
-		while(*p){
-			if((*p)->size==size && memcmp((*p)->str, str, size)==0){
-				return *(const InternedStringPtr*)&(*p)->value;
-			}
-			p = &(*p)->next;
-		}
-		return *(const InternedStringPtr*)&(*p)->value;
-	}else{
-		return *(const InternedStringPtr*)&(*p)->value;
-	}
+	Value value = {hashcode, xnew<String>(str, size, hashcode, length, true)};
+	it = table_.insert(key, value, hashcode).first;
+	it->first.str = it->second.value->c_str_direct();
+	return *(const InternedStringPtr*)&it->second.value;
 }
 
 void StringMgr::before_gc(){
@@ -366,27 +296,6 @@ void StringMgr::before_gc(){
 
 	if(guard_){
 		return;
-	}
-
-	for(uint_t i = 0; i<size_; ++i){
-		Node* p = begin_[i];
-		Node* prev = 0;
-		while(p){
-			Node* next = p->next;
-			if(pvalue(p->value)->ref_count()==1){
-				p->~Node();
-				user_free(p);
-				used_size_--;
-				if(prev){
-					prev->next = next;
-				}else{
-					begin_[i] = next;
-				}
-			}else{
-				prev = p;
-			}
-			p = next;
-		}
 	}
 }
 

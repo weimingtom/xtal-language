@@ -3,19 +3,13 @@
 
 #include "xtal_any.h"
 #include "xtal_string.h"
+#include "xtal_hashtable.h"
 
 namespace xtal{
 
 class Map : public Base{
 public:
 
-	/**
-	* @brief 空の連想配列を生成する 
-	*
-	*/
-	Map();
-
-	virtual ~Map();
 		
 	/**
 	* @brief iに対応する要素を返す
@@ -27,20 +21,34 @@ public:
 	* @brief iに対応する要素を設定する
 	*
 	*/	
-	void set_at(const AnyPtr& key, const AnyPtr& value);
+	void set_at(const AnyPtr& key, const AnyPtr& value){
+		insert(key, value);
+	}
+
+	/**
+	* @brief iに対応する要素を設定する
+	*
+	*/	
+	void insert(const AnyPtr& akey, const AnyPtr& value){
+		const AnyPtr& key = calc_key(akey);
+		table_.insert(key, value);
+	}
 
 	/**
 	* @brief keyに対応する値を削除する
 	*
 	*/
-	void erase(const AnyPtr& key);
+	void erase(const AnyPtr& akey){
+		const AnyPtr& key = calc_key(akey);
+		table_.erase(key);
+	}
 
 	/**
 	* @brief 連想配列の容量を返す
 	*
 	*/
 	int_t size(){
-		return used_size_;
+		return table_.size();
 	}
 	
 	/**
@@ -48,7 +56,7 @@ public:
 	*
 	*/
 	int_t length(){
-		return used_size_;
+		return table_.size();
 	}
 
 	/**
@@ -56,7 +64,7 @@ public:
 	*
 	*/
 	bool empty(){
-		return used_size_==0;
+		return table_.empty();
 	}
 
 	/**
@@ -83,25 +91,25 @@ public:
 	bool op_eq(const MapPtr& other);
 		
 	/**
-	* @brief [key, value]を要素とする、PseudoArrayを返す
+	* @brief [key, value]を要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr pairs();
 	
 	/**
-	* @brief keyを要素とする、PseudoArrayを返す
+	* @brief keyを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr keys();
 	
 	/**
-	* @brief valueを要素とする、PseudoArrayを返す
+	* @brief valueを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr values();
 
 	/**
-	* @brief [key, value]を要素とする、PseudoArrayを返す
+	* @brief [key, value]を要素とする、Iteratorを返す
 	*
 	* pairsと同じ
 	*/
@@ -115,97 +123,47 @@ public:
 	*/
 	MapPtr clone();
 
-	void clear();
+	/**
+	* @brief 要素を全て削除する
+	*
+	*/
+	void clear(){
+		table_.clear();
+	}
 	
 	void push_all(const VMachinePtr& vm);
 
 protected:
 
-	struct Node{
-		std::pair<AnyPtr, AnyPtr> pair;
-		Node* next;
-		Node* ordered_next;
-		Node* ordered_prev;
-		
-		Node()
-			:next(0), ordered_next(0), ordered_prev(0){}
+	struct Fun{
+		static uint_t hash(const AnyPtr& key){
+			return (rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3));
+		}
 
-		Node(const AnyPtr& key, const AnyPtr& value)
-			:pair(key, value), next(0), ordered_next(0), ordered_prev(0){}
+		static bool eq(const AnyPtr& a, const AnyPtr& b){
+			return raweq(a, b);
+		}
 	};
+
+	typedef Hashtable<AnyPtr, AnyPtr, Fun> table_t;
+
+	const AnyPtr& calc_key(const AnyPtr& key);
 
 public:
 
-	class iterator{
-	public:
-		
-		iterator(Node* node = 0)
-			:node_(node){}
-		
-		std::pair<AnyPtr, AnyPtr>& operator *() const{
-			return node_->pair;
-		}
-
-		std::pair<AnyPtr, AnyPtr>* operator ->() const{
-			return &node_->pair;
-		}
-
-		iterator& operator ++(){
-			node_ = node_->ordered_next;
-			return *this;
-		}
-
-		iterator operator ++(int){
-			iterator temp(*this);
-			node_ = node_->ordered_next;
-			return *this;
-		}
-
-		friend bool operator ==(iterator a, iterator b){
-			return a.node_ == b.node_;
-		}
-
-		friend bool operator !=(iterator a, iterator b){
-			return a.node_ != b.node_;
-		}
-
-	private:
-		Node* node_;
-	};
+	typedef table_t::iterator iterator;
 
 	iterator begin(){
-		return iterator(ordered_head_);
+		return table_.begin();
 	}
 
 	iterator end(){
-		return iterator(0);
-	}
-
-protected:
-
-	friend class MapIter;
-	friend class MapKeyIter;
-	friend class MapValueIter;
-
-	float_t rate(){
-		return used_size_/(float_t)size_;
+		return table_.end();
 	}
 	
-	void expand(int_t addsize);
-
-	const AnyPtr& calc_key(const AnyPtr& key);
-	
-	uint_t calc_offset(const AnyPtr& key){
-		return ((rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3))) & (size_-1);
-	}
-
 protected:
 
-	Node** begin_;
-	Node* ordered_head_;
-	Node* ordered_tail_;
-	uint_t size_;
-	uint_t used_size_;
+	table_t table_;
 
 	virtual void visit_members(Visitor& m);
 };

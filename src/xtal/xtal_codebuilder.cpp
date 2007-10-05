@@ -529,7 +529,7 @@ void CodeBuilder::var_begin(int_t kind){
 }
 
 void CodeBuilder::var_define(const ArrayPtr& stmts){
-	Xfor(v0, stmts->each()){
+	Xfor(v0, stmts){
 		if(!v0){
 			continue;
 		}

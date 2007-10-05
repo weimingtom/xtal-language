@@ -294,22 +294,27 @@ bool Class::is_inherited(const ClassPtr& v){
 	if(this==pvalue(v)){
 		return true;
 	}
+
 	for(int_t i = mixins_->size(); i>0; --i){
 		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited(v)){
 			return true;
 		}
 	}
+
 	return raweq(v, get_cpp_class<Any>());
 }
 
 bool Class::is_inherited_cpp_class(){
-	if(is_cpp_class())
+	if(is_cpp_class()){
 		return true;
+	}
+
 	for(int_t i = mixins_->size(); i>0; --i){
 		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited_cpp_class()){
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -394,7 +399,7 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, 
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}else{
-		Xfor(var, load_path_list_->each()){
+		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal")->to_s();
 			if(FILE* fp = fopen(file_name->c_str(), "r")){
 				fclose(fp);

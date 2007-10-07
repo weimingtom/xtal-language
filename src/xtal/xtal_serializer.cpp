@@ -92,7 +92,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			StringPtr a = cast<StringPtr>(v);
 			stream_->put_u8(TID);
 			uint_t sz = a->buffer_size();
-			const char* str = a->c_str();
+			const char* str = a->data();
 			stream_->put_i32(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_u8(str[i]);
@@ -120,7 +120,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_u8(TSTRING);
 			}
 			uint_t sz = a->buffer_size();
-			const char* str = a->c_str();
+			const char* str = a->data();
 			stream_->put_i32(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_u8(str[i]);
@@ -284,7 +284,7 @@ AnyPtr Serializer::inner_deserialize(){
 			}
 			p[sz] = 0;
 			if(op==TID){
-				InternedStringPtr ret(p, sz);
+				StringPtr ret(xnew<InternedString>(p, sz));
 				user_free(p);
 				append_value(ret);
 				return ret;
@@ -502,7 +502,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 		}else if(raweq(cls, get_cpp_class<String>())){
 			StringPtr a = cast<StringPtr>(v);
 			stream_->put_i8('"');
-			const u8* src = (const u8*)a->c_str();
+			const u8* src = (const u8*)a->data();
 			size_t size = a->buffer_size();
 			for(size_t i=0; i<size; ++i){
 				u8 ch = src[i];

@@ -240,6 +240,17 @@ public:
 	SmartPtr(typename SmartPtrCtor2<T>::type v)
 		:SmartPtr<Any>(SmartPtrCtor2<T>::call(v)){}
 
+
+private:
+
+	/**
+	* @brief AnyPtrを受け取るコンストラクタ
+	*
+	* このコンストラクタはprivateである。
+	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_as関数を使用すること。
+	*/
+	SmartPtr(const AnyPtr&);
+
 public:
 
 	/**
@@ -471,6 +482,19 @@ struct SmartPtrCtor1<String>{
 		return xnew<String>(v);
 	}
 };
+
+template<>
+struct SmartPtrCtor1<InternedString>{
+	typedef const char* type;
+	static AnyPtr call(type v);
+};
+
+template<>
+struct SmartPtrCtor2<InternedString>{
+	typedef const StringPtr& type;
+	static AnyPtr call(type v);
+};
+
 
 inline void inc_ref_count_force(const Innocence& v){
 	if(type(v)==TYPE_BASE){

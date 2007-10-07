@@ -209,7 +209,7 @@ InternedStringPtr Lexer::parse_identifier(){
 		}
 	}
 	
-	return InternedStringPtr(buf.c_str(), buf.size());
+	return xnew<InternedString>(buf);
 }
 
 int_t Lexer::parse_integer(){
@@ -1312,7 +1312,7 @@ ExprPtr Parser::parse_assign_stmt(){
 					XTAL_CASE(c3('>','3','=')){ return bin(EXPR_USHR_ASSIGN, ln, lhs, parse_expr_must()); }
 
 					XTAL_CASE('{'){
-						return parse_each(0, lhs);
+						return parse_each(null, lhs);
 					}
 				}
 			}
@@ -1674,7 +1674,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			efun->set_fun_body(parse_scope());
 		}else{
 			int_t ln = lineno();
-			efun->set_fun_body(return_(ln, make_array(parse_expr_must())));
+			efun->set_fun_body(return_(ln, parse_exprs()));
 		}
 	}else{
 		
@@ -1693,7 +1693,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			efun->set_fun_body(scope(ln, scope_stmts));
 		}else{
 			int_t ln = lineno();
-			scope_stmts->push_back(return_(ln, make_array(parse_expr_must())));
+			scope_stmts->push_back(return_(ln, parse_exprs()));
 			efun->set_fun_body(scope(ln, scope_stmts));
 		}
 	}

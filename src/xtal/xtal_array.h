@@ -152,17 +152,12 @@ public:
 	*
 	*/
 	void insert(int_t i, const AnyPtr& v);
-	/**
-	* @brief 配列の要素を逆順にする
-	*
-	*/
-	void reverse();
 
 	/**
-	* @brief 配列の要素を逆順にした新しい配列を返す
+	* @brief 配列の要素を逆順にするイテレータを返す
 	*
 	*/
-	ArrayPtr reversed();
+	AnyPtr reverse();
 	
 	/**
 	* @brief 浅いコピーを返す
@@ -220,18 +215,15 @@ public:
 	void clear();
 
 	/**
-	* @brief 要素を最初から持つPseudoArrayを返す
+	* @brief 要素を最初から持つIteratorを返す
 	*
 	*/
 	AnyPtr each();
 
 	/**
-	* @brief 要素を逆順に持つPseudoArrayを返す
-	*
+	* @brief 中身をiteratorで取得できる要素に置き換える
 	*/
-	AnyPtr r_each();
-
-	void assign(const ArrayPtr& other);
+	void assign(const AnyPtr& iterator);
 
 	AnyPtr* data(){
 		return values_;

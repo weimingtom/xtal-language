@@ -316,11 +316,11 @@ private:
 	ExprPtr parse_expr_must(int_t pri);
 	ExprPtr parse_expr_must();
 	ExprPtr parse_array();
-	ExprPtr parse_for(const InternedStringPtr& label = 0);
+	ExprPtr parse_for(const InternedStringPtr& label = null);
 	ExprPtr parse_try();
 	int_t parse_number_suffix();
 	ExprPtr parse_number();
-	ExprPtr parse_while(const InternedStringPtr& label = 0);
+	ExprPtr parse_while(const InternedStringPtr& label = null);
 		
 public:
 

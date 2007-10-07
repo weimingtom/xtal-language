@@ -151,7 +151,7 @@ public:
 public:
 
 	/**
-	* @brief メンバが格納された、PseudoArrayを返す
+	* @brief メンバが格納された、Iteratorを返す
 	*
 	* @code
 	* Xfor2(key, value, frame.members()){
@@ -274,7 +274,7 @@ public:
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief Mix-inされているクラスのPseudoArrayを返す
+	* @brief Mix-inされているクラスのIteratorを返す
 	*
 	*/
 	AnyPtr inherited_classes();

@@ -160,11 +160,11 @@ StringPtr Stream::get_s(int_t length){
 }
 
 uint_t Stream::print(const StringPtr& str){
-	return write(str->c_str(), str->buffer_size());
+	return write(str->data(), str->buffer_size());
 }
 
 void Stream::println(const StringPtr& str){
-	write(str->c_str(), str->buffer_size());
+	write(str->data(), str->buffer_size());
 	write("\n", 1);
 }
 
@@ -433,11 +433,11 @@ MemoryStream::MemoryStream(){
 	capa_ = 0;
 }
 
-MemoryStream::MemoryStream(const void* data, uint_t data_size){
+MemoryStream::MemoryStream(const void* data, uint_t buffer_size){
 	pos_ = 0;
 	capa_ = 0;
-	resize(data_size);
-	memcpy((void*)data_, data, data_size);
+	resize(buffer_size);
+	memcpy((void*)data_, data, buffer_size);
 }
 
 MemoryStream::~MemoryStream(){
@@ -513,7 +513,7 @@ void MemoryStream::resize(uint_t size){
 
 StringStream::StringStream(const StringPtr& str)
 :str_(str ? str : StringPtr("")){
-	data_ = (u8*)str_->c_str();
+	data_ = (u8*)str_->data();
 	size_ = str_->buffer_size();
 	pos_ = 0;
 }

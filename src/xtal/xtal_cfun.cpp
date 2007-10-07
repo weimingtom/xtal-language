@@ -14,7 +14,7 @@ ReturnVoid return_void;
 CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
 	fun_ = f;
 	
-	data_size_ = val_size;
+	buffer_size_ = val_size;
 	data_ = user_malloc(val_size);
 	memcpy(data_, val, val_size);
 	

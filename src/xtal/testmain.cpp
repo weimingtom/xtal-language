@@ -59,7 +59,7 @@ void debug_line(const SmartPtr<debug::Info>& info){
 struct PointSelf : public Base{
 	AnyPtr self;
 
-	PointSelf(){
+	PointSelf(int n = 0){
 		self = AnyPtr::from_this(this);
 	}
 
@@ -77,6 +77,7 @@ int main2(int argc, char** argv){
 		initialize();
 
 		xnew<PointSelf>();
+		xnew<PointSelf>(10);
 
 #if 1
 		//debug::enable();
@@ -108,22 +109,23 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
- /*
- filelocal.inheriyt(builtin::peg);
+ filelocal.inherit(builtin::peg);
 
-lex: parse_string((ch_set("te") | -str("s"))*0, "testtesttest");
-lex.results.p;
-*/
+%f"(%d)"(555).p;
+
+parse_string(ch_alpha(|x| %f"(%s)"(x))*0, "abcdef").results.p;
+
+ "test-te:st-teste".split(peg::ch_set(":-"))[].p;
+ "test-te:st-teste".replace(peg::ch_set(":-"), "!");
+
 ))();
 
-		int n = sizeof(n);
-		n = n;
-
 		//handle_argv(argv);
+
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		
@@ -163,6 +165,7 @@ int c;
 		//*/
 
 		//*
+
 
 		load("../test/test_empty.xtal");
 		load("../test/test_array.xtal");

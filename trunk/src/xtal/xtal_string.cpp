@@ -9,7 +9,6 @@
 #include "xtal_hashtable.h"
 #include "xtal_peg.h"
 
-#undef XTAL_USE_PEG
 
 namespace xtal{
 
@@ -49,11 +48,7 @@ static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 	for(uint_t i=0; str[i]; ++i){
 		int_t len = ch_len(str[i]);
 		if(len<0){
-			if(i + -len > size){
-				len = size - i;
-			}else{
-				len = ch_len2(str+i);
-			}
+			len = ch_len2(str+i);
 		}
 		for(int_t j=0; j<len; ++j){
 			hash = hash*137 ^ str[i+j];
@@ -64,151 +59,91 @@ static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 	}
 }
 
-#ifdef XTAL_USE_PEG
-
-class StringScanIter : public Base{
-	SmartPtr<StringStream> ss_;
-	SmartPtr<peg::CharLexer> lex_;
-	peg::ParserPtr patt_;
-	ArrayPtr ret_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & ss_ & lex_ & patt_ & ret_;
-	}
-
-public:
-
-	StringScanIter(const StringPtr& str, const peg::ParserPtr& patt)
-		:ss_(xnew<StringStream>(str)), lex_(xnew<peg::CharLexer>(ss_)), patt_(patt), ret_(xnew<Array>()){
-	}
-	
-	AnyPtr reset(){
-		ss_->seek(0);
-		lex_ = xnew<peg::CharLexer>(ss_);
-		ret_->clear();
-		return SmartPtr<StringScanIter>::from_this(this);
-	}
-
-	void block_next(const VMachinePtr& vm){
-		/*
-		if(patt_->parse(lex_, ret_)){
-			vm->return_result(SmartPtr<StringScanIter>::from_this(this), ret_->empty() ? null : ret_->front());
-			ret_->clear();
-		}else{
-			vm->return_result(null);	
+static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
+	hash = 2166136261U;
+	length = 0;
+	size = 0;
+	for(uint_t i=0; str[i]; ++i){
+		int_t len = ch_len(str[i]);
+		if(len<0){
+			if(i + -len > Innocence::SMALL_STRING_MAX){
+				len = size - i;
+			}else{
+				len = ch_len2(str+i);
+			}
 		}
-		*/
-	}
-};
 
-void InitString(){
+		for(int_t j=0; j<len; ++j){
+			hash = hash*137 ^ str[i+j];
+		}
 
-	{
-		ClassPtr p = new_cpp_class<StringScanIter>("StringScanIter");
-		p->inherit(PseudoArray());
-		p->method("reset", &StringScanIter::reset);
-		p->method("block_first", &StringScanIter::block_next);
-		p->method("block_next", &StringScanIter::block_next);
-	}
+		length += 1;
+		size += len;
 
-	{
-		ClassPtr p = new_cpp_class<String>("String");
-
-		p->def("new", ctor<String>());
-		p->method("to_i", &String::to_i);
-		p->method("to_f", &String::to_f);
-		p->method("to_s", &String::to_s);
-		p->method("clone", &String::clone);
-
-		//p->method("length", &String::length);
-		//p->method("size", &String::size);
-		p->method("intern", &String::intern);
-
-		p->method("split", &String::split)->param("i", Named("n", 1));
-		p->method("each", &String::each);
-		p->method("replaced", &String::replaced);
-		p->method("scan", &String::scan);
-
-		p->method("op_cat", &String::op_cat);
-		p->method("op_eq", &String::op_eq);
-		p->method("op_lt", &String::op_lt);
-
-		p->method("op_cat_r_String", &String::op_cat_r_String);
-		p->method("op_eq_r_String", &String::op_eq_r_String);
-		p->method("op_lt_r_String", &String::op_lt_r_String);
-		
-		p->method("op_cat_assign", &String::op_cat);
+		if(size==Innocence::SMALL_STRING_MAX){
+			break;
+		}
 	}
 }
 
-#else
-
-class StringSplit : public Base{
-	StringPtr str_, sep_;
-	uint_t index_;
+class StringScanIter : public Base{
+	peg::ScannerPtr scanner_;
+	AnyPtr pattern_;
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & str_ & sep_;
+		m & scanner_ & pattern_;
 	}
 
 public:
 
-	StringSplit(const StringPtr& str, const StringPtr& sep)
-		:str_(str), sep_(sep), index_(0){
+	StringScanIter(const StringPtr& str, const AnyPtr& pattern)
+		:scanner_(xnew<peg::CharScanner>(xnew<StringStream>(str))), pattern_(peg::P(pattern)){
 	}
 	
-	AnyPtr reset(){
-		index_ = 0;
-		return SmartPtr<StringSplit>::from_this(this);
-	}
-
-
 	void block_next(const VMachinePtr& vm){
-		if(str_->buffer_size()<=index_){
-			reset();
-			vm->return_result(null);
-			return;
-		}
-		const char* sep = sep_->c_str();
-		const char* str = str_->c_str();
-		uint_t sepsize = sep_->buffer_size();
-		uint_t strsize = str_->buffer_size();
-
-		if(sep[0]==0){
-			int_t len = ch_len(str[index_]);
-			vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], len));
-			index_ += len;
-			return;
+		if(scanner_->eof()){
+			return vm->return_result(null);
 		}
 
-		for(int_t j=index_, jsz=strsize; j<jsz; j+=ch_len(str[j])){
-			for(int_t i=0, sz=sepsize+1; i<sz; ++i){
-				if(sep[i]==0){
-					vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], j-index_));
-					index_ = j+i;
+		for(;;){
+			peg::parse_scanner(pattern_, scanner_);
+			if(scanner_->success()){
+				vm->return_result(SmartPtr<StringScanIter>::from_this(this), scanner_->pop_result());
+				return;
+			}else{
+				scanner_->read();
+				if(scanner_->eof()){
+					vm->return_result(null);
 					return;
-				}
-				if(str[j+i]==0){
-					vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], j-index_));
-					index_ = j+i;
-					return;
-				}
-				if(str[j+i]!=sep[i]){
-					break;
 				}
 			}
 		}
-		vm->return_result(SmartPtr<StringSplit>::from_this(this), xnew<String>(&str[index_], strsize-index_));
-		index_ = strsize;
 	}
 };
 
+class StringEachIter : public Base{
+	StringStreamPtr ss_;
 
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & ss_;
+	}
 
+public:
 
-#endif
+	StringEachIter(const StringPtr& str)
+		:ss_(xnew<StringStream>(str)){
+	}
+
+	void block_next(const VMachinePtr& vm){
+		if(ss_->eof()){
+			return vm->return_result(null);
+		}
+
+		vm->return_result(ss_->get_s(1));
+	}
+};
 
 ////////////////////////////////////////////////////////////////
 
@@ -223,6 +158,7 @@ public:
 	struct Value{
 		uint_t hashcode;
 		StringPtr value;
+		char_t buf[Innocence::SMALL_STRING_MAX+1];
 	};
 
 	struct Fun{
@@ -263,32 +199,44 @@ protected:
 
 public:
 
-	const InternedStringPtr& insert(const char* str, uint_t size);
-	const InternedStringPtr& insert(const char* str, uint_t size, uint_t hash, uint_t length);
+	const Value& insert(const char* str, uint_t size){
+		uint_t hashcode;
+		uint_t length;
+		make_hashcode_and_length(str, size, hashcode, length);
+		return insert(str, size, hashcode, length);
+	}
+
+	const Value& insert(const char* str){
+		uint_t hashcode;
+		uint_t length;
+		uint_t size;
+		make_size_and_hashcode_and_length(str, size, hashcode, length);
+		return insert(str, size, hashcode, length);
+	}
+
+	const Value& insert(const char* str, uint_t size, uint_t hash, uint_t length);
 
 	virtual void before_gc();
 };
 
-const InternedStringPtr& StringMgr::insert(const char* str, uint_t size){
-	uint_t hashcode;
-	uint_t length;
-	make_hashcode_and_length(str, size, hashcode, length);
-	return insert(str, size, hashcode, length);
-}
-
-const InternedStringPtr& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
+const StringMgr::Value& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
 	Guard guard(guard_);
 
 	Key key = {str, size};
 	table_t::iterator it = table_.find(key, hashcode);
 	if(it!=table_.end()){
-		return *(const InternedStringPtr*)&it->second.value;
+		return it->second;
 	}
 
 	Value value = {hashcode, xnew<String>(str, size, hashcode, length, true)};
+	if(size<=Innocence::SMALL_STRING_MAX){
+		memcpy(value.buf, str, sizeof(char_t)*size);
+		value.buf[size] = 0;
+	}
+
 	it = table_.insert(key, value, hashcode).first;
-	it->first.str = it->second.value->c_str_direct();
-	return *(const InternedStringPtr*)&it->second.value;
+	it->first.str = it->second.value->data();
+	return it->second;
 }
 
 void StringMgr::before_gc(){
@@ -316,11 +264,15 @@ void initialize_string(){
 	str_mgr_ = xnew<StringMgr>();
 
 	{
-		ClassPtr p = new_cpp_class<StringSplit>("StringSplit");
+		ClassPtr p = new_cpp_class<StringScanIter>("StringScanIter");
 		p->inherit(Iterator());
-		p->method("reset", &StringSplit::reset);
-		p->method("block_first", &StringSplit::block_next);
-		p->method("block_next", &StringSplit::block_next);
+		p->method("block_next", &StringScanIter::block_next);
+	}
+	
+	{
+		ClassPtr p = new_cpp_class<StringEachIter>("StringEachIter");
+		p->inherit(Iterator());
+		p->method("block_next", &StringEachIter::block_next);
 	}
 
 	{
@@ -338,6 +290,8 @@ void initialize_string(){
 
 		p->method("split", &String::split)->param("i", Named("n", 1));
 		p->method("each", &String::each);
+		p->method("replace", &String::replace);
+		p->method("scan", &String::scan);
 
 		p->method("op_cat", &String::op_cat);
 		p->method("op_eq", &String::op_eq);
@@ -349,19 +303,21 @@ void initialize_string(){
 		
 		p->method("op_cat_assign", &String::op_cat);
 	}
+
+	set_cpp_class<InternedString>(get_cpp_class<String>());
 }
 
 ////////////////////////////////////////////////////////////////
 
 void String::init_string(const char_t* str, uint_t sz){
-	if(sz<SMALL_STRING_MAX){
+	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
 	}else{
 		uint_t hash, length;
 		make_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
-			set_p(pvalue(str_mgr_->insert(str, sz, hash, length)));
+			set_p(pvalue(str_mgr_->insert(str, sz, hash, length).value));
 		}else{
 			set_p(new LargeString(str, sz, hash, length));
 			pvalue(*this)->set_class(new_cpp_class<String>());
@@ -397,7 +353,7 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	}
 
 	uint_t sz = size1 + size2;
-	if(sz<SMALL_STRING_MAX){
+	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str1, size1);
 		memcpy(&svalue_[size1], str2, size2);
@@ -408,14 +364,46 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	}
 }
 
+String::String(char_t a)
+	:Any(noinit_t()){
+	if(1<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a;
+	}else{
+		init_string(&a, 1);
+	}
+}
+
+String::String(char_t a, char_t b)
+	:Any(noinit_t()){
+	if(2<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a; svalue_[1] = b;
+	}else{
+		char_t buf[2] = {a, b};
+		init_string(buf, 2);
+	}
+}
+
+String::String(char_t a, char_t b, char_t c)
+	:Any(noinit_t()){
+	if(3<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
+	}else{
+		char_t buf[3] = {a, b, c};
+		init_string(buf, 3);
+	}
+}
+
 String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag):Any(noinit_t()){
 	uint_t sz = size;
-	if(sz<SMALL_STRING_MAX){
+	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
 	}else{
 		if(!intern_flag && length<=1){
-			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length)));
+			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length).value));
 		}else{
 			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
 			pvalue(*this)->set_class(new_cpp_class<String>());
@@ -443,12 +431,12 @@ const char* String::c_str(){
 		return ((LargeString*)pvalue(*this))->c_str();
 	}else{
 		uint_t size, hash, length;
-		make_size_and_hashcode_and_length(svalue_, size, hash, length);
-		return ((String*)&str_mgr_->insert(svalue_, size, hash, length))->svalue_;
+		make_size_and_hashcode_and_length_limit(svalue_, size, hash, length);
+		return str_mgr_->insert(svalue_, size, hash, length).buf;
 	}
 }
 
-const char_t* String::c_str_direct(){
+const char_t* String::data(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->c_str();
 	}else{
@@ -460,7 +448,12 @@ uint_t String::buffer_size(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->buffer_size();
 	}else{
-		return strlen(svalue_);
+		for(uint_t i=0; i<=SMALL_STRING_MAX; ++i){
+			if(svalue_[i]=='\0'){
+				return i;
+			}
+		}
+		return SMALL_STRING_MAX;
 	}
 }
 
@@ -485,10 +478,10 @@ StringPtr String::clone(){
 const InternedStringPtr& String::intern(){
 	if(type(*this)==TYPE_BASE){
 		LargeString* p = ((LargeString*)pvalue(*this));
-		if(p->is_interned()) return *(const InternedStringPtr*)this;
-		return str_mgr_->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length());
+		if(p->is_interned()) return static_ptr_cast<InternedString>(ap(*this));
+		return static_ptr_cast<InternedString>(str_mgr_->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length()).value);
 	}else{
-		return *(const InternedStringPtr*)this;
+		return static_ptr_cast<InternedString>(ap(*this));
 	}
 }
 
@@ -512,58 +505,47 @@ float_t String::to_f(){
 	return (float_t)atof(c_str()); 
 }
 
-#ifdef XTAL_USE_PEG
-
 AnyPtr String::split(const AnyPtr& sep){
-	using namespace peg;
-	ParserPtr patt = to_parser(sep);
-	return xnew<StringScanIter>(StringPtr::from_this(this), ~end() >> join((anych() - patt)*0) >> -(patt | end()));
+	return xnew<StringScanIter>(StringPtr::from_this(this), 
+		peg::test(
+			peg::join(
+			peg::more(peg::sub(peg::any, sep), 0)
+			)
+		)
+	);
 }
 
 AnyPtr String::each(){
-	using namespace peg;
-	return xnew<StringScanIter>(StringPtr::from_this(this), peg::anych());
+	return xnew<StringEachIter>(StringPtr::from_this(this));
 }
 	
 AnyPtr String::scan(const AnyPtr& p){
-	using namespace peg;
-	ParserPtr patt = to_parser(p);
-	return xnew<StringScanIter>(StringPtr::from_this(this), -(anych() - patt)*0 >> array(patt));
+	return xnew<StringScanIter>(StringPtr::from_this(this), 
+		peg::join(p)
+	);
 }
 
-AnyPtr String::replaced(const AnyPtr& pattern, const StringPtr& str){
-	using namespace peg;
-	ParserPtr patt = to_parser(pattern);
-	ParserPtr elem = ((anych() - patt)*0);
-	ArrayPtr ret = xnew<Array>();
-	join(elem >> (-patt >> val(str) >> elem)*0)->parse_string(StringPtr::from_this(this), ret);
-	return ret->at(0);
+AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
+	AnyPtr elem = peg::more(peg::sub(peg::any, pattern), 0);
+	peg::ScannerPtr scanner = peg::parse_string(
+		peg::join(peg::more(elem, -1) >> peg::more(peg::ignore(pattern) >> peg::val(str) >> elem, 0)), StringPtr::from_this(this)
+	);
+
+	return scanner->success() ? scanner->pop_result() : "";
 }
 
-
-#else
-
-AnyPtr String::split(const AnyPtr& sep){
-	return xnew<StringSplit>(StringPtr::from_this(this), sep->to_s());
-}
-
-AnyPtr String::each(){
-	return xnew<StringSplit>(StringPtr::from_this(this), "");
-}
-
-#endif
 
 StringPtr String::op_cat_String(const StringPtr& v){
 	uint_t mysize = buffer_size();
 	uint_t vsize = v->buffer_size();
 
-	if(mysize+vsize <= 16 || mysize<SMALL_STRING_MAX || vsize<SMALL_STRING_MAX)
-		return xnew<String>(c_str(), mysize, v->c_str(), vsize);
+	if(mysize+vsize <= 16 || mysize<=SMALL_STRING_MAX || vsize<=SMALL_STRING_MAX)
+		return xnew<String>(data(), mysize, v->data(), vsize);
 	return xnew<String>((LargeString*)pvalue(*this), (LargeString*)pvalue(v));
 }
 
 bool String::op_eq_r_String(const StringPtr& v){ 
-	return v->buffer_size()==buffer_size() && memcmp(v->c_str(), c_str(), buffer_size())==0; 
+	return v->buffer_size()==buffer_size() && memcmp(v->data(), data(), buffer_size())==0; 
 }
 
 bool String::op_lt_r_String(const StringPtr& v){ 
@@ -659,7 +641,7 @@ struct StringKey{
 };
 
 void LargeString::common_init(uint_t size){
-	XTAL_ASSERT(size>=Innocence::SMALL_STRING_MAX);
+	XTAL_ASSERT(size>Innocence::SMALL_STRING_MAX);
 
 	buffer_size_ = size;
 	str_.p = static_cast<char*>(user_malloc(buffer_size_+1));
@@ -742,24 +724,62 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 }
 
 
-InternedStringPtr::InternedStringPtr(const char* name)
-	:StringPtr(!name ? StringPtr(null) : make(name, strlen(name))){}
 
-InternedStringPtr::InternedStringPtr(const char* name, int_t size)
-	:StringPtr(make(name, size)){}
+InternedString::InternedString(const char_t* str)
+	:String(*str_mgr_->insert(str).value){}
 
-InternedStringPtr::InternedStringPtr(const StringPtr& name)
-	:StringPtr(!name ? StringPtr(null) : name->is_interned() ? name : str_mgr_->insert(name->c_str(), name->buffer_size())){}
+InternedString::InternedString(const string_t& str)
+	:String(*str_mgr_->insert(str.c_str(), str.size()).value){}
 
+InternedString::InternedString(const char_t* str, uint_t size)
+	:String(*str_mgr_->insert(str, size).value){}
 
-StringPtr InternedStringPtr::make(const char* name, uint_t size){
-	if(size<Innocence::SMALL_STRING_MAX){
-		String temp(name, size);
-		return StringPtr::from_this(&temp);
+InternedString::InternedString(const char_t* begin, const char_t* last)
+	:String(*str_mgr_->insert(begin, last-begin).value){}
+
+InternedString::InternedString(char_t a)
+	:String(noinit_t()){
+	if(1<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a;
+	}else{
+		*this = InternedString(&a, 1);
 	}
-	return str_mgr_->insert(name, size);
 }
 
+InternedString::InternedString(char_t a, char_t b)
+	:String(noinit_t()){
+	if(2<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a; svalue_[1] = b;
+	}else{
+		char_t buf[2] = {a, b};
+		*this = InternedString(buf, 2);
+	}
+}
+
+InternedString::InternedString(char_t a, char_t b, char_t c)
+	:String(noinit_t()){
+	if(3<=SMALL_STRING_MAX){
+		set_small_string();
+		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
+	}else{
+		char_t buf[3] = {a, b, c};
+		*this = InternedString(buf, 3);
+	}
+}
+
+InternedString::InternedString(const StringPtr& name)
+	:String(*(name ? name->intern() : name)){}
+
+
+AnyPtr SmartPtrCtor1<InternedString>::call(type v){
+	return str_mgr_->insert(v).value;
+}
+
+AnyPtr SmartPtrCtor2<InternedString>::call(type v){
+	return v ? v->intern() : v;
+}
 
 #ifdef XTAL_USE_PREDEFINED_ID
 
@@ -984,115 +1004,116 @@ id::idp = null;
 }
 void initialize_interned_string(){
 register_uninitializer(&uninitialize_interned_string);
-id::idop_inc = InternedStringPtr("op_inc", 6);
-id::idblock_catch = InternedStringPtr("block_catch", 11);
-id::idcallee = InternedStringPtr("callee", 6);
-id::idnew = InternedStringPtr("new", 3);
-id::idop_shl_assign = InternedStringPtr("op_shl_assign", 13);
-id::idop_at = InternedStringPtr("op_at", 5);
-id::idtest = InternedStringPtr("test", 4);
-id::idfor = InternedStringPtr("for", 3);
-id::idserial_new = InternedStringPtr("serial_new", 10);
-id::idop_div_assign = InternedStringPtr("op_div_assign", 13);
-id::idop_mul = InternedStringPtr("op_mul", 6);
-id::idop_xor_assign = InternedStringPtr("op_xor_assign", 13);
-id::idto_a = InternedStringPtr("to_a", 4);
-id::idinitialize = InternedStringPtr("initialize", 10);
-id::idonce = InternedStringPtr("once", 4);
-id::iddo = InternedStringPtr("do", 2);
-id::idstring = InternedStringPtr("string", 6);
-id::idfalse = InternedStringPtr("false", 5);
-id::idop_and_assign = InternedStringPtr("op_and_assign", 13);
-id::idop_add_assign = InternedStringPtr("op_add_assign", 13);
-id::idop_cat_assign = InternedStringPtr("op_cat_assign", 13);
-id::idsingleton = InternedStringPtr("singleton", 9);
-id::idat = InternedStringPtr("at", 2);
-id::idop_shl = InternedStringPtr("op_shl", 6);
-id::idblock_next = InternedStringPtr("block_next", 10);
-id::idyield = InternedStringPtr("yield", 5);
-id::idop_lt_r_String = InternedStringPtr("op_lt_r_String", 14);
-id::idop_shr_assign = InternedStringPtr("op_shr_assign", 13);
-id::idop_cat = InternedStringPtr("op_cat", 6);
-id::idop_neg = InternedStringPtr("op_neg", 6);
-id::idop_dec = InternedStringPtr("op_dec", 6);
-id::idinstance_serial_save = InternedStringPtr("instance_serial_save", 20);
-id::idvalue = InternedStringPtr("value", 5);
-id::iddefault = InternedStringPtr("default", 7);
-id::idcase = InternedStringPtr("case", 4);
-id::idto_s = InternedStringPtr("to_s", 4);
-id::idop_shr = InternedStringPtr("op_shr", 6);
-id::idpure = InternedStringPtr("pure", 4);
-id::idfinally = InternedStringPtr("finally", 7);
-id::idserial_load = InternedStringPtr("serial_load", 11);
-id::idthis = InternedStringPtr("this", 4);
-id::idnull = InternedStringPtr("null", 4);
-id::idop_div = InternedStringPtr("op_div", 6);
-id::idIOError = InternedStringPtr("IOError", 7);
-id::id_dummy_lhs_parameter_ = InternedStringPtr("_dummy_lhs_parameter_", 21);
-id::idcatch = InternedStringPtr("catch", 5);
-id::idop_mul_assign = InternedStringPtr("op_mul_assign", 13);
-id::idmethod = InternedStringPtr("method", 6);
-id::idop_lt = InternedStringPtr("op_lt", 5);
-id::id_switch_ = InternedStringPtr("_switch_", 8);
-id::idop_mod_assign = InternedStringPtr("op_mod_assign", 13);
-id::idset_at = InternedStringPtr("set_at", 6);
-id::idbreak = InternedStringPtr("break", 5);
-id::idtry = InternedStringPtr("try", 3);
-id::idop_mod = InternedStringPtr("op_mod", 6);
-id::idnop = InternedStringPtr("nop", 3);
-id::idto_i = InternedStringPtr("to_i", 4);
-id::idop_or = InternedStringPtr("op_or", 5);
-id::idcontinue = InternedStringPtr("continue", 8);
-id::ide = InternedStringPtr("e", 1);
-id::iditerator = InternedStringPtr("iterator", 8);
-id::idthrow = InternedStringPtr("throw", 5);
-id::idop_and = InternedStringPtr("op_and", 6);
-id::idelse = InternedStringPtr("else", 4);
-id::idfun = InternedStringPtr("fun", 3);
-id::idto_f = InternedStringPtr("to_f", 4);
-id::idop_sub_assign = InternedStringPtr("op_sub_assign", 13);
-id::idlib = InternedStringPtr("lib", 3);
-id::iddofun = InternedStringPtr("dofun", 5);
-id::ideach = InternedStringPtr("each", 4);
-id::idop_set_at = InternedStringPtr("op_set_at", 9);
-id::idclass = InternedStringPtr("class", 5);
-id::idop_com = InternedStringPtr("op_com", 6);
-id::idop_pos = InternedStringPtr("op_pos", 6);
-id::idop_add = InternedStringPtr("op_add", 6);
-id::idop_ushr_assign = InternedStringPtr("op_ushr_assign", 14);
-id::idop_eq_r_String = InternedStringPtr("op_eq_r_String", 14);
-id::idop_cat_r_String = InternedStringPtr("op_cat_r_String", 15);
-id::idnobreak = InternedStringPtr("nobreak", 7);
-id::idcurrent_context = InternedStringPtr("current_context", 15);
-id::idto_m = InternedStringPtr("to_m", 4);
-id::idreturn = InternedStringPtr("return", 6);
-id::idop_eq = InternedStringPtr("op_eq", 5);
-id::idfiber = InternedStringPtr("fiber", 5);
-id::idop_or_assign = InternedStringPtr("op_or_assign", 12);
-id::idserial_save = InternedStringPtr("serial_save", 11);
-id::idstatic = InternedStringPtr("static", 6);
-id::idswitch = InternedStringPtr("switch", 6);
-id::idop_sub = InternedStringPtr("op_sub", 6);
-id::idop_ushr = InternedStringPtr("op_ushr", 7);
-id::idfirst_step = InternedStringPtr("first_step", 10);
-id::idblock_break = InternedStringPtr("block_break", 11);
-id::id_dummy_fun_parameter_ = InternedStringPtr("_dummy_fun_parameter_", 21);
-id::id_dummy_block_parameter_ = InternedStringPtr("_dummy_block_parameter_", 23);
-id::idunittest = InternedStringPtr("unittest", 8);
-id::idop_xor = InternedStringPtr("op_xor", 6);
-id::idblock_first = InternedStringPtr("block_first", 11);
-id::idtrue = InternedStringPtr("true", 4);
-id::idop_call = InternedStringPtr("op_call", 7);
-id::id_initialize_ = InternedStringPtr("_initialize_", 12);
-id::idis = InternedStringPtr("is", 2);
-id::idwhile = InternedStringPtr("while", 5);
-id::idit = InternedStringPtr("it", 2);
-id::idassert = InternedStringPtr("assert", 6);
-id::idxtal = InternedStringPtr("xtal", 4);
-id::idif = InternedStringPtr("if", 2);
-id::idp = InternedStringPtr("p", 1);
+id::idop_inc = InternedStringPtr("op_inc");
+id::idblock_catch = InternedStringPtr("block_catch");
+id::idcallee = InternedStringPtr("callee");
+id::idnew = InternedStringPtr("new");
+id::idop_shl_assign = InternedStringPtr("op_shl_assign");
+id::idop_at = InternedStringPtr("op_at");
+id::idtest = InternedStringPtr("test");
+id::idfor = InternedStringPtr("for");
+id::idserial_new = InternedStringPtr("serial_new");
+id::idop_div_assign = InternedStringPtr("op_div_assign");
+id::idop_mul = InternedStringPtr("op_mul");
+id::idop_xor_assign = InternedStringPtr("op_xor_assign");
+id::idto_a = InternedStringPtr("to_a");
+id::idinitialize = InternedStringPtr("initialize");
+id::idonce = InternedStringPtr("once");
+id::iddo = InternedStringPtr("do");
+id::idstring = InternedStringPtr("string");
+id::idfalse = InternedStringPtr("false");
+id::idop_and_assign = InternedStringPtr("op_and_assign");
+id::idop_add_assign = InternedStringPtr("op_add_assign");
+id::idop_cat_assign = InternedStringPtr("op_cat_assign");
+id::idsingleton = InternedStringPtr("singleton");
+id::idat = InternedStringPtr("at");
+id::idop_shl = InternedStringPtr("op_shl");
+id::idblock_next = InternedStringPtr("block_next");
+id::idyield = InternedStringPtr("yield");
+id::idop_lt_r_String = InternedStringPtr("op_lt_r_String");
+id::idop_shr_assign = InternedStringPtr("op_shr_assign");
+id::idop_cat = InternedStringPtr("op_cat");
+id::idop_neg = InternedStringPtr("op_neg");
+id::idop_dec = InternedStringPtr("op_dec");
+id::idinstance_serial_save = InternedStringPtr("instance_serial_save");
+id::idvalue = InternedStringPtr("value");
+id::iddefault = InternedStringPtr("default");
+id::idcase = InternedStringPtr("case");
+id::idto_s = InternedStringPtr("to_s");
+id::idop_shr = InternedStringPtr("op_shr");
+id::idpure = InternedStringPtr("pure");
+id::idfinally = InternedStringPtr("finally");
+id::idserial_load = InternedStringPtr("serial_load");
+id::idthis = InternedStringPtr("this");
+id::idnull = InternedStringPtr("null");
+id::idop_div = InternedStringPtr("op_div");
+id::idIOError = InternedStringPtr("IOError");
+id::id_dummy_lhs_parameter_ = InternedStringPtr("_dummy_lhs_parameter_");
+id::idcatch = InternedStringPtr("catch");
+id::idop_mul_assign = InternedStringPtr("op_mul_assign");
+id::idmethod = InternedStringPtr("method");
+id::idop_lt = InternedStringPtr("op_lt");
+id::id_switch_ = InternedStringPtr("_switch_");
+id::idop_mod_assign = InternedStringPtr("op_mod_assign");
+id::idset_at = InternedStringPtr("set_at");
+id::idbreak = InternedStringPtr("break");
+id::idtry = InternedStringPtr("try");
+id::idop_mod = InternedStringPtr("op_mod");
+id::idnop = InternedStringPtr("nop");
+id::idto_i = InternedStringPtr("to_i");
+id::idop_or = InternedStringPtr("op_or");
+id::idcontinue = InternedStringPtr("continue");
+id::ide = InternedStringPtr("e");
+id::iditerator = InternedStringPtr("iterator");
+id::idthrow = InternedStringPtr("throw");
+id::idop_and = InternedStringPtr("op_and");
+id::idelse = InternedStringPtr("else");
+id::idfun = InternedStringPtr("fun");
+id::idto_f = InternedStringPtr("to_f");
+id::idop_sub_assign = InternedStringPtr("op_sub_assign");
+id::idlib = InternedStringPtr("lib");
+id::iddofun = InternedStringPtr("dofun");
+id::ideach = InternedStringPtr("each");
+id::idop_set_at = InternedStringPtr("op_set_at");
+id::idclass = InternedStringPtr("class");
+id::idop_com = InternedStringPtr("op_com");
+id::idop_pos = InternedStringPtr("op_pos");
+id::idop_add = InternedStringPtr("op_add");
+id::idop_ushr_assign = InternedStringPtr("op_ushr_assign");
+id::idop_eq_r_String = InternedStringPtr("op_eq_r_String");
+id::idop_cat_r_String = InternedStringPtr("op_cat_r_String");
+id::idnobreak = InternedStringPtr("nobreak");
+id::idcurrent_context = InternedStringPtr("current_context");
+id::idto_m = InternedStringPtr("to_m");
+id::idreturn = InternedStringPtr("return");
+id::idop_eq = InternedStringPtr("op_eq");
+id::idfiber = InternedStringPtr("fiber");
+id::idop_or_assign = InternedStringPtr("op_or_assign");
+id::idserial_save = InternedStringPtr("serial_save");
+id::idstatic = InternedStringPtr("static");
+id::idswitch = InternedStringPtr("switch");
+id::idop_sub = InternedStringPtr("op_sub");
+id::idop_ushr = InternedStringPtr("op_ushr");
+id::idfirst_step = InternedStringPtr("first_step");
+id::idblock_break = InternedStringPtr("block_break");
+id::id_dummy_fun_parameter_ = InternedStringPtr("_dummy_fun_parameter_");
+id::id_dummy_block_parameter_ = InternedStringPtr("_dummy_block_parameter_");
+id::idunittest = InternedStringPtr("unittest");
+id::idop_xor = InternedStringPtr("op_xor");
+id::idblock_first = InternedStringPtr("block_first");
+id::idtrue = InternedStringPtr("true");
+id::idop_call = InternedStringPtr("op_call");
+id::id_initialize_ = InternedStringPtr("_initialize_");
+id::idis = InternedStringPtr("is");
+id::idwhile = InternedStringPtr("while");
+id::idit = InternedStringPtr("it");
+id::idassert = InternedStringPtr("assert");
+id::idxtal = InternedStringPtr("xtal");
+id::idif = InternedStringPtr("if");
+id::idp = InternedStringPtr("p");
 }
 //}}ID}
+
 
 
 

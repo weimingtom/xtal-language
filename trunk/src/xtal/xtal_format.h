@@ -3,10 +3,8 @@
 
 namespace xtal{
 
-TextPtr text(const char* text);
 TextPtr text(const StringPtr& text);
 
-FormatPtr format(const char* text);
 FormatPtr format(const StringPtr& text);
 
 void set_text_map(const MapPtr& map);
@@ -47,9 +45,7 @@ private:
 class Format : public Base{
 public:
 
-	Format();
-	Format(const StringPtr& str);
-	Format(const char* str);
+	Format(const StringPtr& str = "");
 	void set(const char* str);
 	virtual void call(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
@@ -70,7 +66,7 @@ private:
 class Text : public Base{
 public:
 
-	Text(const StringPtr& key);
+	Text(const StringPtr& key = "");
 	virtual void call(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr instance_serial_save();

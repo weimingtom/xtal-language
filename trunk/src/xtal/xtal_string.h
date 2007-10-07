@@ -19,7 +19,7 @@ public:
 	*
 	* @param str NULL終端文字列
 	*/
-	String(const char* str);
+	String(const char_t* str);
 
 	/**
 	* @brief STLの文字列から構築する
@@ -31,66 +31,46 @@ public:
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	String(const char* str, uint_t size);
+	String(const char_t* str, uint_t size);
 	
 	/**
 	* @brief beginからlastまでの文字列で構築する
 	*
 	* [begin, last)
 	*/
-	String(const char* begin, const char* last);
+	String(const char_t* begin, const char_t* last);
 
 	/**
 	* @brief 二つのC文字列から構築する
 	*
 	*/
-	String(const char* str1, uint_t size1, const char* str2, uint_t size2);
+	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
 
-	String(const char* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
+	/**
+	* @brief 1つの文字から構築する
+	*/
+	String(char_t a);
+
+	/**
+	* @brief 2つの文字から構築する
+	*/
+	String(char_t a, char_t b);
+
+	/**
+	* @brief 3つの文字から構築する
+	*/
+	String(char_t a, char_t b, char_t c);
+
+public:
+
+	String(const char_t* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
 	
 	String(LargeString* left, LargeString* right);
 
-	String(char_t a)
-		:Any(noinit_t()){
-		if(1<SMALL_STRING_MAX){
-			set_small_string();
-			svalue_[0] = a;
-		}else{
-			init_string(&a, 1);
-		}
-	}
+protected:
 
-	String(char_t a, char_t b)
-		:Any(noinit_t()){
-		set_small_string();
-		if(2<SMALL_STRING_MAX){
-			set_small_string();
-			svalue_[0] = a;
-			svalue_[1] = a;
-		}else{
-			char_t buf[2];
-			buf[0] = a;
-			buf[1] = b;
-			init_string(buf, 2);
-		}
-	}
-
-	String(char_t a, char_t b, char_t c)
-		:Any(noinit_t()){
-		set_small_string();
-		if(1<SMALL_STRING_MAX){
-			set_small_string();
-			svalue_[0] = a;
-			svalue_[1] = b;
-			svalue_[2] = c;
-		}else{
-			char_t buf[3];
-			buf[0] = a;
-			buf[1] = b;
-			buf[2] = c;
-			init_string(buf, 3);
-		}
-	}
+	String(noinit_t n)
+		:Any(n){}
 
 public:
 
@@ -98,11 +78,19 @@ public:
 	* @brief 0終端の文字列先頭のポインタを返す。
 	*
 	*/
-	const char* c_str();
+	const char_t* c_str();
 
 	/**
-	* @brief 内部バッファサイズを返す。
+	* @brief 文字列先頭のポインタを返す。
 	*
+	* これは0終端文字列が返されるとは限らない。
+	*/
+	const char_t* data();
+
+	/**
+	* @brief データサイズを返す。
+	*
+	* 文字列の長さではなく、バイナリとして見た場合のサイズを返す。
 	*/
 	uint_t buffer_size();
 
@@ -154,14 +142,14 @@ public:
 	StringPtr to_s();
 
 	/**
-	* @brief sepで区切った文字列を要素とするPseudoArrayを返す。
+	* @brief sepで区切った文字列を要素とするIteratorを返す。
 	*
 	* @param sep 文字列かPEGのParser
 	*/ 
 	AnyPtr split(const AnyPtr& sep);
 
 	/**
-	* @brief 一文字づつの文字列を要素とするPseudoArrayを返す。
+	* @brief 一文字づつの文字列を要素とするIteratorを返す。
 	*
 	*/
 	AnyPtr each();
@@ -175,9 +163,9 @@ public:
 	/**
 	* @brief patternと一致する部分を置き換えた新しい文字列を返す
 	*
-	* @param  pattern 置き換える文字列かPEGのParser
+	* @param  pattern 置き換える文字列かPEG
 	*/ 
-	AnyPtr replaced(const AnyPtr& pattern, const StringPtr& str);
+	AnyPtr replace(const AnyPtr& pattern, const StringPtr& str);
 
 	/**
 	* @brief 連結する
@@ -200,8 +188,6 @@ public:
 	bool op_eq_r_String(const StringPtr& v);
 	bool op_lt_r_String(const StringPtr& v);
 
-	const char_t* c_str_direct();
-
 private:
 	void init_string(const char_t* str, uint_t size);
 	int_t calc_offset(int_t pos);
@@ -212,14 +198,14 @@ private:
 class LargeString : public Base{
 public:
 
-	LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2);
-	LargeString(const char* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
+	LargeString(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
+	LargeString(const char_t* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
 	LargeString(LargeString* left, LargeString* right);
 	virtual ~LargeString();
 
 public:
 
-	const char* c_str();
+	const char_t* c_str();
 	uint_t buffer_size(){ return buffer_size_; }
 	uint_t length(){ return length_; }
 	bool is_interned(){ return (flags_ & INTERNED)!=0; }
@@ -241,7 +227,7 @@ private:
 	uint_t flags_;
 
 	struct Str{
-		char* p;
+		char_t* p;
 		uint_t hashcode;
 	};
 
@@ -260,41 +246,60 @@ private:
 };
 
 /**
-* @brief 必ずインターン済みの文字列を保持するためのクラス
+* @brief Intern済みのString
 *
+* これはC++の型システムのために存在する。
 */
-class InternedStringPtr : public StringPtr{
+class InternedString : public String{
 public:
-	
+
 	/**
 	* @brief NUL終端のC文字列から構築する
 	*
-	*/	
-	InternedStringPtr(const char* name = "");
-	
+	* @param str NULL終端文字列
+	*/
+	InternedString(const char_t* str);
+
+	/**
+	* @brief STLの文字列から構築する
+	*
+	*/
+	InternedString(const string_t& str);
+
 	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	InternedStringPtr(const char* name, int_t size);
+	InternedString(const char_t* str, uint_t size);
+	
+	/**
+	* @brief beginからlastまでの文字列で構築する
+	*
+	* [begin, last)
+	*/
+	InternedString(const char_t* begin, const char_t* last);
+
+	/**
+	* @brief 1つの文字から構築する
+	*/
+	InternedString(char_t a);
+
+	/**
+	* @brief 2つの文字から構築する
+	*/
+	InternedString(char_t a, char_t b);
+
+	/**
+	* @brief 3つの文字から構築する
+	*/
+	InternedString(char_t a, char_t b, char_t c);
 
 	/**
 	* @brief Stringから構築する
 	*
 	*/
-	InternedStringPtr(const StringPtr& name);
+	InternedString(const StringPtr& name);
 		
-	/**
-	* @brief 文字列を生成せず、nullを入れる
-	*
-	*/
-	InternedStringPtr(const Null&)
-		:StringPtr(null){}
-
-private:
-
-	static StringPtr make(const char* name, uint_t size);
-
 };
 
 inline bool operator ==(const InternedStringPtr& a, const InternedStringPtr& b){ return raweq(a, b); }
@@ -480,6 +485,7 @@ extern InternedStringPtr idif;
 extern InternedStringPtr idp;
 }
 //}}ID}
+
 
 
 

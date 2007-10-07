@@ -30,8 +30,6 @@ void initialize_any(){
 	builtin()->def("Any", get_cpp_class<Any>());
 }
 
-
-namespace op{
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
 AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
@@ -74,7 +72,6 @@ AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign),
 AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b); return a; }
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b); return a; }
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
-}
 
 Innocence::Innocence(const char_t* str){
 	*this = xnew<String>(str);

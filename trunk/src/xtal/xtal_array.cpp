@@ -83,14 +83,12 @@ void initialize_array(){
 		p->method("to_a", &Array::to_a);
 		p->method("join", &Array::join)->param(Named("sep"));
 		p->method("each", &Array::each);
-		p->method("r_each", &Array::r_each);
 		p->method("clone", &Array::clone);
 		p->method("front", &Array::front);
 		p->method("back", &Array::back);
 		p->method("clear", &Array::clear);
 		p->method("op_eq", &Array::op_eq);
 		p->method("reverse", &Array::reverse);
-		p->method("reversed", &Array::reversed);
 		p->method("assign", &Array::assign);
 	}
 
@@ -257,22 +255,6 @@ ArrayPtr Array::splice(int_t start, int_t n){
 	return ret;
 }
 
-void Array::reverse(){
-	uint_t sz = size();
-	for(uint_t i=0; i<sz/2; ++i){
-		swap(values_[sz-1-i], values_[i]);
-	}
-}
-
-ArrayPtr Array::reversed(){
-	uint_t sz = size();
-	ArrayPtr ret = xnew<Array>(size());
-	for(uint_t i=0; i<sz; ++i){
-		ret->values_[sz-1-i] = values_[i];
-	}
-	return ret;
-}
-
 ArrayPtr Array::clone(){
 	return xnew<Array>(*this);
 }
@@ -338,14 +320,14 @@ AnyPtr Array::each(){
 	return xnew<ArrayIter>(ArrayPtr::from_this(this));
 }
 
-AnyPtr Array::r_each(){
+AnyPtr Array::reverse(){
 	return xnew<ArrayIter>(ArrayPtr::from_this(this), true);
 }
 
-void Array::assign(const ArrayPtr& other){
-	resize(other->size());
-	for(int_t i=0, sz=size(); i<sz; ++i){
-		values_[i] = other->values_[i];
+void Array::assign(const AnyPtr& iterator){
+	clear();
+	Xfor(v, iterator){
+		push_back(v);
 	}
 }
 

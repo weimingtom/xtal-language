@@ -10,8 +10,7 @@
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_NO_PARSER
 //#define XTAL_USE_THREAD_MODEL_2
-//#define XTAL_USE_WORD_CODE
-//#define XTAL_USE_PEG
+#define XTAL_USE_PEG
 
 #define XTAL_USE_PREDEFINED_ID
 
@@ -112,6 +111,7 @@ inline T align_2(T v){
 	v|=v>>4;
 	v|=v>>8;
 	v|=v>>16;
+	v|=v>>32;
 	return v+1;
 }
 

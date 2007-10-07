@@ -663,7 +663,7 @@ public:
 
 protected:
 	void* data_;
-	int_t data_size_;
+	int_t buffer_size_;
 	fun_t fun_;
 	ParamInfo pi_;
 	int_t param_n_;

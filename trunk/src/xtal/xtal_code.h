@@ -32,7 +32,7 @@ public:
 	*/
 	const InternedStringPtr& identifier(int_t i){
 		XTAL_ASSERT(i<(int_t)identifier_table_->size());
-		return (const InternedStringPtr&)identifier_table_->at(i);
+		return static_ptr_cast<InternedString>(identifier_table_->at(i));
 	}
 
 	/**

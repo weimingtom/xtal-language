@@ -574,6 +574,10 @@ void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr,
 }
 
 void CodeBuilder::var_set_direct(VarFrame& vf){
+	if(!vf.directs.empty() && vf.directs.back().pos==code_size()){
+		return;
+	}
+
 	VarFrame::Direct d;
 	d.pos = code_size();
 	vf.directs.push_back(d);
@@ -592,7 +596,21 @@ void CodeBuilder::var_end(){
 	if(vf().kind==VarFrame::SCOPE){
 		for(uint_t i=0; i<vf().directs.size(); ++i){
 			Inst* p = (Inst*)&result_->code_[vf().directs[i].pos];
-			p->op += 1;
+			
+			switch(p->op){
+				default:
+					break;
+
+				case InstLocalVariableInc/*Direct*/::NUMBER:
+				case InstLocalVariableDec/*Direct*/::NUMBER:
+				case InstLocalVariable1Byte/*Direct*/::NUMBER:
+				case InstSetLocalVariable1Byte/*Direct*/::NUMBER:
+				case InstBlockBegin/*Direct*/::NUMBER:
+				case InstBlockEnd/*Direct*/::NUMBER:
+				case InstIfArgIsNop/*Direct*/::NUMBER:
+					p->op += 1;
+					break;
+			}
 		}
 		vf().directs.clear();
 	}
@@ -1252,9 +1270,9 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){
-				put_inst(InstValue(register_value(text(e->string_value()->to_s()->c_str()))));
+				put_inst(InstValue(register_value(text(e->string_value()->to_s()))));
 			}else if(e->string_kind()==KIND_FORMAT){
-				put_inst(InstValue(register_value(format(e->string_value()->to_s()->c_str()))));
+				put_inst(InstValue(register_value(format(e->string_value()->to_s()))));
 			}else{
 				put_inst(InstValue(register_value(e->string_value())));
 			}
@@ -1786,7 +1804,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}
 
 			if(e->massign_define()){
-				Xfor(v1, lhs->r_each()){
+				Xfor(v1, lhs->reverse()){
 					ExprPtr v = ep(v1);
 					if(v->type()==EXPR_LVAR){
 						put_define_local_code(v->lvar_name());
@@ -1798,7 +1816,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					}
 				}
 			}else{
-				Xfor(v1, lhs->r_each()){
+				Xfor(v1, lhs->reverse()){
 					ExprPtr v = ep(v1);
 					if(v->type()==EXPR_LVAR){
 						put_set_local_code(v->lvar_name());
@@ -1928,7 +1946,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			if(e->string_kind()==KIND_TEXT){
 				return nop;
 			}else if(e->string_kind()==KIND_FORMAT){
-				return format(e->string_value()->c_str());;
+				return nop;
 			}else{
 				return e->string_value();
 			}

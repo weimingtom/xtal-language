@@ -257,6 +257,10 @@ Iterator::to_m: method{
 	return ret;
 }
 
+Iterator::reverse: method(){
+	return this[].reverse;
+}
+
 Iterator::join: method(sep:","){
 	ret: MemoryStream();
 	if(sep==""){
@@ -322,7 +326,7 @@ Iterator::break_if: method(pred){
 
 Iterator::take: method(times){
 	if(times<=0)
-		return [];
+		return null;
 
 	return fiber{
 		i: 0;
@@ -508,7 +512,7 @@ Any::serial_save: method{
 	ret: [:];
 	klass: this.class;
 
-	klass.ancestors.to_a.r_each{
+	klass.ancestors.reverse{
 		if(n: this.instance_serial_save(it))
 			ret[it.object_name] = n;
 	}
@@ -523,7 +527,7 @@ Any::serial_save: method{
 Any::serial_load: method(v){
 	klass: this.class;
 
-	klass.ancestors.to_a.r_each{
+	klass.ancestors.reverse{
 		if(n: v[it.object_name]){
 			this.instance_serial_load(it, n);
 		}

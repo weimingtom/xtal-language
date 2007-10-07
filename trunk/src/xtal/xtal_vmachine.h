@@ -316,7 +316,7 @@ public:
 	* @param pos 0縲從amed_arg_count()-1まで
 	*/
 	const InternedStringPtr& arg_name(int_t pos){
-		return (const InternedStringPtr&)get(named_arg_count()*2-1-(pos*2+0));
+		return static_ptr_cast<InternedString>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
 	/**
@@ -610,7 +610,7 @@ public:
 	const InternedStringPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
 	const InternedStringPtr& identifier_ex(int_t n){ 
 		if(n!=0){ return identifier(n); 
-		}else{ return (const InternedStringPtr&)ap(ff().temp2_ = pop()->to_s()->intern()); }
+		}else{ return static_ptr_cast<InternedString>(ap(ff().temp2_ = pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);

@@ -313,6 +313,8 @@ void Text::call(const VMachinePtr& vm){
 			return;
 		}
 	}
+	
+	vm->return_result(key_);
 }
 
 void Text::to_s(const VMachinePtr& vm){

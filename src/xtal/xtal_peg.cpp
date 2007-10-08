@@ -97,12 +97,23 @@ void initialize_peg(){
 	ClassPtr peg =  xnew<Class>("peg");
 
 	{
+		ClassPtr p = get_cpp_class<String>();
+		p->method("op_shr", &followed);
+		p->method("op_mul", &more);
+		p->method("op_sub", &sub);
+		p->method("op_or", &select);
+		p->method("op_com", &ignore);
+		p->method("op_call", &act);
+	}
+
+	{
 		ClassPtr p = new_cpp_class<Parts>("Parts");
 		p->def("new", ctor<Parts>());
 		p->method("op_shr", &followed);
 		p->method("op_mul", &more);
+		p->method("op_sub", &sub);
 		p->method("op_or", &select);
-		p->method("op_neg", &ignore);
+		p->method("op_com", &ignore);
 		p->method("op_call", &act);
 
 		peg->def("Parts", p);
@@ -115,11 +126,19 @@ void initialize_peg(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<CharScanner>("CharScanner");
+		ClassPtr p = new_cpp_class<StreamScanner>("StreamScanner");
 		p->inherit(get_cpp_class<Scanner>());
-		p->def("new", ctor<CharScanner, const StreamPtr&>());
+		p->def("new", ctor<StreamScanner, const StreamPtr&>());
 
-		peg->def("CharScanner", p);
+		peg->def("StreamScanner", p);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<IteratorScanner>("IteratorScanner");
+		p->inherit(get_cpp_class<Scanner>());
+		p->def("new", ctor<IteratorScanner, const AnyPtr&>());
+
+		peg->def("IteratorScanner", p);
 	}
 
 	builtin()->def("peg", peg);
@@ -138,6 +157,8 @@ void initialize_peg(){
 	ch_ascii = xnew<Parts>(PARTS_ASCII);
 
 	peg->fun("parse_string", parse_string);
+	peg->fun("parse_stream", parse_stream);
+	peg->fun("parse_iterator", parse_iterator);
 
 	peg->def("any", any);
 	peg->def("eof", eof);
@@ -160,6 +181,27 @@ void initialize_peg(){
 }
 
 namespace peg{
+
+
+int_t IteratorScanner::do_read(AnyPtr* buffer, int_t max){
+	if(!iter_){
+		return 0;
+	}
+
+	const VMachinePtr& vm = vmachine();
+	for(int_t i=0; i<max; ++i){
+		vm->setup_call(2);
+		iter_->rawsend(vm, Xid(block_next));
+		iter_ = vm->result(0);
+		if(!iter_){
+			vm->cleanup_call();
+			return i;
+		}
+		buffer[i] = vm->result(1);
+		vm->cleanup_call();
+	}
+	return max;
+}
 
 MapPtr make_ch_map2(const StringPtr& ch, const PartsPtr& pp){
 	MapPtr data = xnew<Map>();
@@ -313,7 +355,7 @@ AnyPtr followed(const AnyPtr& a, const AnyPtr& b){
 }
 
 AnyPtr sub(const AnyPtr& a, const AnyPtr& b){
-	return xnew<Parts>(PARTS_SUB, P(a), ignore(b));
+	return xnew<Parts>(PARTS_SUB, P(a), ignore(and_(b)));
 }
 
 AnyPtr join(const AnyPtr& a){

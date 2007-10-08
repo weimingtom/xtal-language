@@ -98,7 +98,7 @@ class StringScanIter : public Base{
 public:
 
 	StringScanIter(const StringPtr& str, const AnyPtr& pattern)
-		:scanner_(xnew<peg::CharScanner>(xnew<StringStream>(str))), pattern_(peg::P(pattern)){
+		:scanner_(xnew<peg::StreamScanner>(xnew<StringStream>(str))), pattern_(peg::P(pattern)){
 	}
 	
 	void block_next(const VMachinePtr& vm){
@@ -141,7 +141,7 @@ public:
 			return vm->return_result(null);
 		}
 
-		vm->return_result(ss_->get_s(1));
+		vm->return_result(SmartPtr<StringEachIter>::from_this(this), ss_->get_s(1));
 	}
 };
 
@@ -507,11 +507,7 @@ float_t String::to_f(){
 
 AnyPtr String::split(const AnyPtr& sep){
 	return xnew<StringScanIter>(StringPtr::from_this(this), 
-		peg::test(
-			peg::join(
-			peg::more(peg::sub(peg::any, sep), 0)
-			)
-		)
+		peg::join((peg::any - sep)*0) >> ~sep*-1
 	);
 }
 
@@ -526,10 +522,10 @@ AnyPtr String::scan(const AnyPtr& p){
 }
 
 AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
-	AnyPtr elem = peg::more(peg::sub(peg::any, pattern), 0);
-	peg::ScannerPtr scanner = peg::parse_string(
-		peg::join(peg::more(elem, -1) >> peg::more(peg::ignore(pattern) >> peg::val(str) >> elem, 0)), StringPtr::from_this(this)
-	);
+	AnyPtr elem = peg::sub(peg::any, pattern)*0;
+	peg::ScannerPtr scanner = peg::parse_string(peg::join(
+		elem >> (~pattern >> peg::val(str) >> elem)*0
+	), StringPtr::from_this(this));
 
 	return scanner->success() ? scanner->pop_result() : "";
 }

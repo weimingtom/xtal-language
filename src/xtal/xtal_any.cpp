@@ -30,6 +30,10 @@ void initialize_any(){
 	builtin()->def("Any", get_cpp_class<Any>());
 }
 
+AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }
+AnyPtr operator -(const AnyPtr& a){ return a->send(Xid(op_neg)); }
+AnyPtr operator ~(const AnyPtr& a){ return a->send(Xid(op_com)); }
+
 AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
 AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
 AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }

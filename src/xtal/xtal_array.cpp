@@ -24,11 +24,6 @@ public:
 	ArrayIter(const ArrayPtr& a, bool reverse = false)
 		:array_(a), index_(-1), reverse_(reverse){
 	}
-
-	AnyPtr reset(){
-		index_ = -1;
-		return SmartPtr<ArrayIter>::from_this(this);
-	}
 			
 	void block_next(const VMachinePtr& vm){
 		++index_;
@@ -38,12 +33,6 @@ public:
 			vm->return_result(null, null);
 		}
 	}
-
-	void remove(){
-		if(-1<=index_ && index_<array_->size()-1){
-			array_->erase(index_+1);
-		}
-	}
 };
 
 
@@ -51,9 +40,7 @@ void initialize_array(){
 	{
 		ClassPtr p = new_cpp_class<ArrayIter>("ArrayIter");
 		p->inherit(Iterator());
-		p->method("reset", &ArrayIter::reset);
 		p->method("block_next", &ArrayIter::block_next);
-		p->method("remove", &ArrayIter::remove);
 	}
 
 	{
@@ -325,10 +312,12 @@ AnyPtr Array::reverse(){
 }
 
 void Array::assign(const AnyPtr& iterator){
-	clear();
+	int_t i = 0;
 	Xfor(v, iterator){
-		push_back(v);
+		set_at(i, v);
+		++i;
 	}
+	resize(i);
 }
 
 int_t Array::calc_offset(int_t i){

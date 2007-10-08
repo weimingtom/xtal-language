@@ -88,20 +88,11 @@ int main2(int argc, char** argv){
 		{
 			StringPtr path(argv[0]);
 
-#ifdef WIN32
-			StringPtr sep("\\");
-#else
-			StringPtr sep("/");
-#endif
-
-			ArrayPtr temp = cast<ArrayPtr>(path->split(sep)->send("to_a"));
+			ArrayPtr temp = cast<ArrayPtr>(path->split(peg::P("\\") | peg::P("/") | peg::P("::"))->send("to_a"));
 			temp->pop_back();
-#ifdef WIN32
 			temp->push_back("message.xtal");
-#else
-			temp->push_back("message_en.xtal");
-#endif
-			path = temp->join(sep)->to_s();
+
+			path = temp->join("/")->to_s();
 			add_text_map(cast<MapPtr>(load(path)));
 		}
 	
@@ -111,13 +102,12 @@ AnyPtr ret = Xsrc
 
  filelocal.inherit(builtin::peg);
 
-%f"(%d)"(555).p;
+"test-te:st-teste".split("-" | ":")[].p;
+ "aa/ai/ii7uuu".scan(peg::ch_alpha*1)[].p;
 
-parse_string(ch_alpha(|x| %f"(%s)"(x))*0, "abcdef").results.p;
+ parse_iterator(join(ch_alpha*1), ["t", "e", "s", "t", "1", "0"].each).results[].p;
 
- "test-te:st-teste".split(peg::ch_set(":-"))[].p;
- "test-te:st-teste".replace(peg::ch_set(":-"), "!");
-
+ //parse_string((any - ch_set(":-"))*0 >> any >> any, "test-test").results[].p;
 ))();
 
 		//handle_argv(argv);

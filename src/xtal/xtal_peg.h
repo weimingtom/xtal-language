@@ -265,7 +265,7 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & buf_;
+		m & buf_ & mm_ & errors_ & results_ & newline_ch_;
 	}
 
 private:
@@ -285,10 +285,10 @@ private:
 	bool success_;
 };
 
-class CharScanner : public Scanner{
+class StreamScanner : public Scanner{
 public:
 
-	CharScanner(const StreamPtr& stream)
+	StreamScanner(const StreamPtr& stream)
 		:stream_(stream){}
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max){
@@ -308,6 +308,23 @@ private:
 	virtual void visit_members(Visitor& m){
 		Scanner::visit_members(m);
 		m & stream_;
+	}
+};
+
+class IteratorScanner : public Scanner{
+public:
+
+	IteratorScanner(const AnyPtr& iter)
+		:iter_(iter){}
+
+	virtual int_t do_read(AnyPtr* buffer, int_t max);
+
+private:
+	AnyPtr iter_;
+
+	virtual void visit_members(Visitor& m){
+		Scanner::visit_members(m);
+		m & iter_;
 	}
 };
 
@@ -352,12 +369,16 @@ AnyPtr P(const AnyPtr& a);
 ScannerPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
 
 inline ScannerPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream){
-	return parse_scanner(pattern, xnew<CharScanner>(stream));
+	return parse_scanner(pattern, xnew<StreamScanner>(stream));
 }
 
 inline ScannerPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){
 	return parse_stream(pattern, xnew<StringStream>(string->to_s()));
 }
 
+inline ScannerPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter){
+	return parse_scanner(pattern, xnew<IteratorScanner>(iter));
+}
 
 }}
+

@@ -277,6 +277,7 @@ void initialize_string(){
 
 	{
 		ClassPtr p = new_cpp_class<String>("String");
+		p->inherit(Enumerator());
 
 		p->def("new", ctor<String>());
 		p->method("to_i", &String::to_i);

@@ -179,6 +179,8 @@ void Format::set(const char* str){
 
 	values_ = xnew<Map>();
 	original_ = xnew<String>(str);
+	param_count_ = 0;
+	have_named_ = false;
 
 	const char* begin = str;
 	char buf[256];
@@ -194,6 +196,11 @@ void Format::set(const char* str){
 				if(str[0]=='('){
 					str++;
 					bufpos = 0;
+					
+					if(!test_digit(str[0])){
+						have_named_ = true;
+					}
+
 					while(str[0]!=0 && str[0]!=')' && bufpos!=255){
 						buf[bufpos++] = str[0];
 						str++;					
@@ -212,6 +219,7 @@ void Format::set(const char* str){
 				str = ret->parse_format(str);
 				values_->set_at(buf, ret);
 				begin = str;
+				param_count_++;
 			}
 		}else if(str[0]=='\0'){
 			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
@@ -223,6 +231,11 @@ void Format::set(const char* str){
 }
 
 void Format::call(const VMachinePtr& vm){
+
+	if(!have_named_){
+		vm->adjust_arg(param_count_);
+	}
+
 	string_t buf;
 	char_t cbuf[256];
 	char_t spec[FormatSpecifier::FORMAT_SPECIFIER_MAX];

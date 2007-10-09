@@ -102,6 +102,15 @@ AnyPtr ret = Xsrc
 
  filelocal.inherit(builtin::peg);
 
+%f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
+
+[10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
+  it.p;
+}
+//=> (a)
+//=> (b)
+//=> (c)
+
 "test-te:st-teste".split("-" | ":")[].p;
  "aa/ai/ii7uuu".scan(peg::ch_alpha*1)[].p;
 

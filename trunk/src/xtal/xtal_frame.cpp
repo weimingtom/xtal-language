@@ -130,6 +130,13 @@ void Frame::make_map_members(){
 	}
 }
 
+StringPtr Frame::object_name(){
+	if(!name_){
+		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
+	}
+
+	return HaveName::object_name();
+}
 
 AnyPtr Frame::members(){
 	return xnew<MembersIter>(FramePtr::from_this(this));

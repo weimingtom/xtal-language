@@ -56,6 +56,8 @@ private:
 
 	MapPtr values_;
 	StringPtr original_;
+	int_t param_count_;
+	bool have_named_;
 	
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);

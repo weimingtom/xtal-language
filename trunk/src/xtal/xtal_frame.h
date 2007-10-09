@@ -148,6 +148,8 @@ public:
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
+	virtual StringPtr object_name();
+
 public:
 
 	/**
@@ -203,7 +205,8 @@ protected:
 	map_t table_;
 
 	map_t* map_members_;
-	
+
+
 	virtual void visit_members(Visitor& m){
 		HaveName::visit_members(m);
 		m & outer_ & code_ & members_;

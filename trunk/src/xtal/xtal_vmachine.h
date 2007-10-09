@@ -342,7 +342,17 @@ public:
 	int_t named_arg_count(){ 
 		return ff().named_arg_count; 
 	}
-		
+	
+	/**
+	* @brief 引数の数を調整する。
+	*
+	*/
+	void adjust_arg(int_t n);
+	
+	/**
+	* @brief 呼び出し元が必要としている戻り値の数。
+	*
+	*/
 	int_t need_result_count(){ 
 		return ff().need_result_count; 
 	}

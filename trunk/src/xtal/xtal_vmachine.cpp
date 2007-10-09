@@ -3392,6 +3392,9 @@ void VMachine::mv_carry_over(Fun* fun){
 	FunCore* core = fun->core();
 	int_t size = core->variable_size;
 	adjust_result(f.ordered_arg_count, size);
+	f.named_arg_count = 0;
+	f.ordered_arg_count = size;
+
 	if(size){
 		if(core->flags & FunCore::FLAG_ON_HEAP){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
@@ -3479,6 +3482,13 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 	}
 }
 
+void VMachine::adjust_arg(int_t n){
+	FunFrame& f = ff();
+	stack_.downsize(f.named_arg_count*2);
+	adjust_result(f.ordered_arg_count, n);
+	f.named_arg_count = 0;
+	f.ordered_arg_count = n;
+}
 
 void VMachine::set_local_variable(int_t pos, const Innocence& value){
 	pos -= ff().variables_.size();

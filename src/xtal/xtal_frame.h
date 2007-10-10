@@ -197,7 +197,7 @@ protected:
 		}
 
 		static bool eq(const Key& a, const Key& b){
-			return raweq(a.key, b.key);
+			return raweq(a.key, b.key) && b.ns->is_inherited(a.ns);
 		}
 	};
 
@@ -268,7 +268,7 @@ public:
 	*
 	* @param md Mix-inされている調べたいクラスオブジェクト
 	*/
-	bool is_inherited(const ClassPtr& md);
+	bool is_inherited(const AnyPtr& md);
 
 	/**
 	* @brief C++のクラスがMix-inされているか調べる

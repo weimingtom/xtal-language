@@ -130,8 +130,8 @@ void initialize(){
 	
 	set_cpp_class<Base>(get_cpp_class<Any>());
 
-	set_cpp_class<Singleton>(get_cpp_class<Class>());
-	set_cpp_class<IteratorClass>(get_cpp_class<Class>());
+	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
+	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
 
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>();

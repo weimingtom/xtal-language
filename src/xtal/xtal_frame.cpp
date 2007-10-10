@@ -297,7 +297,7 @@ void Class::set_member(const InternedStringPtr& name, const AnyPtr& value, const
 	global_mutate_count++;
 }
 
-bool Class::is_inherited(const ClassPtr& v){
+bool Class::is_inherited(const AnyPtr& v){
 	if(this==pvalue(v)){
 		return true;
 	}

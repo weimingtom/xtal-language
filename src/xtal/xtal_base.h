@@ -75,7 +75,7 @@ public:
 	* @brief clsクラスのインスタンスか調べる。
 	*
 	*/
-	bool is(const ClassPtr& klass);
+	bool is(const AnyPtr& klass);
 
 	/**
 	* @brief nameメンバを取得する。

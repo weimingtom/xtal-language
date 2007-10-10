@@ -950,6 +950,18 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
+	XTAL_VM_CASE(PropertyNS){ XTAL_VM_CONTINUE(FunPropertyNS(pc)); /*
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+	}*/ }
+
 	XTAL_VM_CASE(SetProperty){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
@@ -961,25 +973,14 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
-	XTAL_VM_CASE(Send){ // 7
+	XTAL_VM_CASE(SetPropertyNS){ XTAL_VM_CONTINUE(FunSetPropertyNS(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
 			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			ap(target)->rawsend(myself(), sym, ff().self(), null);
-		}
-		XTAL_VM_CONTINUE(ff().called_pc); 	
-	}
-
-	XTAL_VM_CASE(SendQ){ XTAL_VM_CONTINUE(FunSendQ(pc)); /*
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
-			Innocence self = ff().self();
-			Innocence target = ff().temp_ = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			ff().called_pc = &check_unsupported_code_;
-			ap(target)->rawsend(myself(), sym, ff().self(), null);
+			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}*/ }
@@ -994,11 +995,74 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
+	XTAL_VM_CASE(Send){ // 7
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+	}
+
+	XTAL_VM_CASE(SendNS){ XTAL_VM_CONTINUE(FunSendNS(pc)); /*
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+	}*/ }
+
+	XTAL_VM_CASE(SendQ){ XTAL_VM_CONTINUE(FunSendQ(pc)); /*
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ff().called_pc = &check_unsupported_code_;
+			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+	}*/ }
+
+	XTAL_VM_CASE(SendQNS){ XTAL_VM_CONTINUE(FunSendQNS(pc)); /*
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ff().called_pc = &check_unsupported_code_;
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+	}*/ }
+
 	XTAL_VM_CASE(Member){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
 			const AnyPtr& target = get();
 			const AnyPtr& ret = target->member(name, ff().self(), null);
+			if(rawne(ret, nop)){
+				set(ret);
+			}else{
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
+			}
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
+
+	XTAL_VM_CASE(MemberNS){ // 8
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			const AnyPtr& ret = target->member(name, ff().self(), ap(ns));
 			if(rawne(ret, nop)){
 				set(ret);
 			}else{
@@ -1017,6 +1081,16 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
 	}
 
+	XTAL_VM_CASE(MemberQNS){ // 6
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			set(target->member(name, ff().self(), ap(ns)));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
+	}
+
 	XTAL_VM_CASE(DefineMember){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
@@ -1027,6 +1101,18 @@ XTAL_VM_SWITCH{
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
+
+	XTAL_VM_CASE(DefineMemberNS){ XTAL_VM_CONTINUE(FunDefineMemberNS(pc)); /*
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& value = get();
+			const AnyPtr& target = get(1);
+			target->def(name, value, 0, ap(ns)); 
+			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}*/ }
 
 	XTAL_VM_CASE(GlobalVariable){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1227,13 +1313,13 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfIs){ // 4
-		pc += get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		pc += get(1)->is(get()) ? inst.ISIZE : inst.address;
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
 	}
 
 	XTAL_VM_CASE(IfNis){ // 4
-		pc += !get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		pc += !get(1)->is(get()) ? inst.ISIZE : inst.address;
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
 	}
@@ -1541,13 +1627,13 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Is){ // 4
-		set(1, Innocence(get(1)->is(cast<const ClassPtr&>(get()))));
+		set(1, Innocence(get(1)->is(get())));
 		downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(Nis){ // 4
-		set(1, Innocence(!get(1)->is(cast<const ClassPtr&>(get()))));
+		set(1, Innocence(!get(1)->is(get())));
 		downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -1813,7 +1899,7 @@ XTAL_VM_SWITCH{
 				except = ap(last_except_);
 			}
 
-			if(!except->is(cast<ClassPtr>(builtin()->member("Exception")))){
+			if(!except->is(builtin()->member("Exception"))){
 				last_except_ = builtin()->member("RuntimeError")(except);
 			}else{
 				last_except_ = except;
@@ -2289,6 +2375,19 @@ const inst_t* VMachine::FunProperty(const inst_t* pc){
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
 
+const inst_t* VMachine::FunPropertyNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(PropertyNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
 const inst_t* VMachine::FunSetProperty(const inst_t* pc){
 		XTAL_VM_DEF_INST(SetProperty);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2301,6 +2400,30 @@ const inst_t* VMachine::FunSetProperty(const inst_t* pc){
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
 
+const inst_t* VMachine::FunSetPropertyNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(SetPropertyNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
+const inst_t* VMachine::FunCall(const inst_t* pc){
+		XTAL_VM_DEF_INST(Call);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->call(myself());
+		}
+		XTAL_VM_CONTINUE(ff().called_pc);	
+}
+
 const inst_t* VMachine::FunSend(const inst_t* pc){
 		XTAL_VM_DEF_INST(Send);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2309,6 +2432,19 @@ const inst_t* VMachine::FunSend(const inst_t* pc){
 			Innocence target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
 			ap(target)->rawsend(myself(), sym, ff().self(), null);
+		}
+		XTAL_VM_CONTINUE(ff().called_pc); 	
+}
+
+const inst_t* VMachine::FunSendNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(SendNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
+			Innocence self = ff().self();
+			Innocence target = ff().temp_ = pop();
+			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
@@ -2326,15 +2462,18 @@ const inst_t* VMachine::FunSendQ(const inst_t* pc){
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
 
-const inst_t* VMachine::FunCall(const inst_t* pc){
-		XTAL_VM_DEF_INST(Call);
+const inst_t* VMachine::FunSendQNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(SendQNS);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& sym = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = ff().temp_ = pop();
 			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			ap(target)->call(myself());
+			ff().called_pc = &check_unsupported_code_;
+			ap(target)->rawsend(myself(), sym, ff().self(), ap(ns));
 		}
-		XTAL_VM_CONTINUE(ff().called_pc);	
+		XTAL_VM_CONTINUE(ff().called_pc); 	
 }
 
 const inst_t* VMachine::FunMember(const inst_t* pc){
@@ -2343,6 +2482,22 @@ const inst_t* VMachine::FunMember(const inst_t* pc){
 			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
 			const AnyPtr& target = get();
 			const AnyPtr& ret = target->member(name, ff().self(), null);
+			if(rawne(ret, nop)){
+				set(ret);
+			}else{
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
+			}
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunMemberNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(MemberNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			const AnyPtr& ret = target->member(name, ff().self(), ap(ns));
 			if(rawne(ret, nop)){
 				set(ret);
 			}else{
@@ -2362,6 +2517,17 @@ const inst_t* VMachine::FunMemberQ(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
 }
 
+const inst_t* VMachine::FunMemberQNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(MemberQNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& target = get();
+			set(target->member(name, ff().self(), ap(ns)));
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);  
+}
+
 const inst_t* VMachine::FunDefineMember(const inst_t* pc){
 		XTAL_VM_DEF_INST(DefineMember);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2369,6 +2535,19 @@ const inst_t* VMachine::FunDefineMember(const inst_t* pc){
 			const AnyPtr& value = get();
 			const AnyPtr& target = get(1);
 			target->def(name, value); 
+			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+}
+
+const inst_t* VMachine::FunDefineMemberNS(const inst_t* pc){
+		XTAL_VM_DEF_INST(DefineMemberNS);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence ns = pop();
+			const InternedStringPtr& name = identifier_ex(inst.identifier_number);
+			const AnyPtr& value = get();
+			const AnyPtr& target = get(1);
+			target->def(name, value, 0, ap(ns)); 
 			downsize(2);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -2595,14 +2774,14 @@ const inst_t* VMachine::FunIfRawNe(const inst_t* pc){
 
 const inst_t* VMachine::FunIfIs(const inst_t* pc){
 		XTAL_VM_DEF_INST(IfIs);
-		pc += get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		pc += get(1)->is(get()) ? inst.ISIZE : inst.address;
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
 }
 
 const inst_t* VMachine::FunIfNis(const inst_t* pc){
 		XTAL_VM_DEF_INST(IfNis);
-		pc += !get(1)->is(cast<const ClassPtr&>(get())) ? inst.ISIZE : inst.address;
+		pc += !get(1)->is(get()) ? inst.ISIZE : inst.address;
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
 }
@@ -2939,14 +3118,14 @@ const inst_t* VMachine::FunRawNe(const inst_t* pc){
 
 const inst_t* VMachine::FunIs(const inst_t* pc){
 		XTAL_VM_DEF_INST(Is);
-		set(1, Innocence(get(1)->is(cast<const ClassPtr&>(get()))));
+		set(1, Innocence(get(1)->is(get())));
 		downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 
 const inst_t* VMachine::FunNis(const inst_t* pc){
 		XTAL_VM_DEF_INST(Nis);
-		set(1, Innocence(!get(1)->is(cast<const ClassPtr&>(get()))));
+		set(1, Innocence(!get(1)->is(get())));
 		downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
@@ -3236,7 +3415,7 @@ const inst_t* VMachine::FunThrow(const inst_t* pc){
 				except = ap(last_except_);
 			}
 
-			if(!except->is(cast<ClassPtr>(builtin()->member("Exception")))){
+			if(!except->is(builtin()->member("Exception"))){
 				last_except_ = builtin()->member("RuntimeError")(except);
 			}else{
 				last_except_ = except;
@@ -3562,7 +3741,7 @@ ArgumentsPtr VMachine::make_args(Fun* fun){
 AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	if(e){
 		AnyPtr ep = e;
-		if(!ep->is(cast<ClassPtr>(builtin()->member("Exception")))){
+		if(!ep->is(builtin()->member("Exception"))){
 			ep = builtin()->member("RuntimeError")(ep);
 		}
 		if(fun() && code()){

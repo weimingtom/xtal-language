@@ -202,12 +202,39 @@ struct IsInheritedCacheTable{
 			return unit.result;
 		}else{
 			miss_++;
-				
 			// キャッシュに保存
 			unit.target_class = itarget_class;
 			unit.klass = iklass;
 			unit.mutate_count = global_mutate_count;
-			unit.result = static_ptr_cast<Class>(ap(target_class))->is_inherited(static_ptr_cast<Class>(ap(klass)));
+			unit.result = static_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+
+			return unit.result;
+		}
+	}
+
+	bool cache2(const Innocence& target_class, const Innocence& klass){
+		uint_t itarget_class = rawvalue(target_class);
+		uint_t iklass = rawvalue(klass);
+
+		uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+		Unit& unit = table_[hash & CACHE_MASK];
+
+		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+			hit_++;
+			return unit.result;
+		}else{
+			miss_++;
+			// キャッシュに保存
+			unit.target_class = itarget_class;
+			unit.klass = iklass;
+			unit.mutate_count = global_mutate_count;
+	
+			if(const ClassPtr& cls = ptr_as<Class>(ap(target_class))){
+				unit.result = cls->is_inherited(ap(klass));
+			}else{
+				unit.result = false;
+			}
+
 			return unit.result;
 		}
 	}
@@ -335,11 +362,15 @@ uint_t Any::hashcode() const{
 }
 
 
-bool Any::is(const ClassPtr& klass) const{
+bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
-	if(klass->is_cpp_class() && type(*this)==TYPE_BASE && pvalue(*this)->is_xtal_instance()) return false;
 	return is_inherited_cache_table.cache(my_class, klass);
+}
+
+bool Any::is_inherited(const AnyPtr& klass) const{
+	if(raweq(*this, klass)) return true;
+	return is_inherited_cache_table.cache2(*this, klass);
 }
 
 AnyPtr Any::p() const{

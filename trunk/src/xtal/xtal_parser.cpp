@@ -817,7 +817,7 @@ enum{//Expressions priority
 		PRI_CALL = PRI_AT,
 		PRI_NS = PRI_AT,
 		PRI_TO_A = PRI_AT,
-		PRI_TO_M = PRI_AT,
+		PRI_TO_M = PRI_AT,	
 
 	PRI_ONCE,
 		PRI_STATIC = PRI_ONCE,
@@ -1086,6 +1086,11 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}else{
 							ret = member(ln, lhs, parse_identifier_or_keyword());
 						}
+
+						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
+						if(eat('$')){
+							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
+						}
 					}
 				}
 
@@ -1096,6 +1101,11 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							expect(')');
 						}else{
 							ret = member_q(ln, lhs, parse_identifier_or_keyword());
+						}
+
+						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
+						if(eat('$')){
+							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
 				}
@@ -1108,6 +1118,11 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}else{
 							ret = send(ln, lhs, parse_identifier_or_keyword());
 						}
+
+						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
+						if(eat('$')){
+							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
+						}
 					}
 				}
 
@@ -1118,6 +1133,11 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 							expect(')');
 						}else{
 							ret = send_q(ln, lhs, parse_identifier_or_keyword());
+						}
+
+						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
+						if(eat('$')){
+							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
 				}
@@ -1533,8 +1553,8 @@ ExprPtr Parser::parse_class(int_t kind){
 		}
 
 		if(InternedStringPtr var = parse_identifier()){ // メンバ定義
-			if(eat('@')){
-				ExprPtr ns = parse_expr();
+			if(eat('$')){
+				ExprPtr ns = parse_expr_must(PRI_NS);
 				expect(':');
 				int_t ln = lineno();
 				eclass->class_stmts()->push_back(cdefine(ln, accessibility<0 ? KIND_PUBLIC : accessibility, var, ns, parse_expr_must()));

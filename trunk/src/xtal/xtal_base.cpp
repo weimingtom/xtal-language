@@ -109,7 +109,7 @@ void Base::set_object_name(const StringPtr& name, int_t force, const AnyPtr& par
 
 }
 
-bool Base::is(const ClassPtr& klass){
+bool Base::is(const AnyPtr& klass){
 	return ap(Innocence(this))->is(klass);
 }
 

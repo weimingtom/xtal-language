@@ -174,11 +174,13 @@ public:
 	XTAL_DEF_MEMBER(3, InternedStringPtr, member_name);
 	XTAL_DEF_MEMBER(4, ExprPtr, member_pname);
 	XTAL_DEF_MEMBER(5, bool, member_q);
+	XTAL_DEF_MEMBER(6, ExprPtr, member_ns);
 
 	XTAL_DEF_MEMBER(2, ExprPtr, send_term);
 	XTAL_DEF_MEMBER(3, InternedStringPtr, send_name);
 	XTAL_DEF_MEMBER(4, ExprPtr, send_pname);
 	XTAL_DEF_MEMBER(5, bool, send_q);
+	XTAL_DEF_MEMBER(6, ExprPtr, send_ns);
 	
 	XTAL_DEF_MEMBER(2, ExprPtr, call_term);
 	XTAL_DEF_MEMBER(3, ArrayPtr, call_ordered);

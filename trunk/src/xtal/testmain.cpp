@@ -100,7 +100,16 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
- filelocal.inherit(builtin::peg);
+filelocal.inherit(builtin::peg);
+
+C: class{
+a$Iterator: method(){
+			callee.p;
+	   }
+a$Enumerator: method{5.p;}
+}
+[].class.is_inherited(Iterator).p;
+(C::a$([].class)).p;
 
 %f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
 

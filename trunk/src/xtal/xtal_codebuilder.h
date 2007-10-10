@@ -48,10 +48,13 @@ private:
 	bool put_local_code(const InternedStringPtr& var);
 	bool put_set_local_code(const InternedStringPtr& var);
 	void put_define_local_code(const InternedStringPtr& var, const ExprPtr& val = null);
-	void put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined);
-	void put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
-	void put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined);
-	void put_define_member_code(const InternedStringPtr& var, ExprPtr pvar);
+
+	void put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& ns);
+	void put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns);
+
+	void put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns);
+	void put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& ns);
+
 	int_t lookup_instance_variable(const InternedStringPtr& key);
 	void put_set_instance_variable_code(const InternedStringPtr& var);
 	void put_instance_variable_code(const InternedStringPtr& var);
@@ -126,6 +129,7 @@ private:
 		struct Entry{
 			InternedStringPtr name;
 			ExprPtr expr;
+			ExprPtr ns;
 			AnyPtr value;
 			bool constant;
 			bool initialized;
@@ -172,10 +176,10 @@ private:
 	};
 
 	void scope_chain(int_t var_frame_size);
-	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false);
+	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false, const ExprPtr& expr = null);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
-	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false);
+	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, const ExprPtr& ns = null);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();

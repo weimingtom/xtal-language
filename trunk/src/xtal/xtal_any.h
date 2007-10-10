@@ -282,11 +282,17 @@ public:
 	StringPtr object_name() const;
 
 	/**
-	* @brief clsクラスのインスタンスか調べる。
+	* @brief klassクラスのインスタンスか調べる。
 	*
 	*/
-	bool is(const ClassPtr& klass) const;
+	bool is(const AnyPtr& klass) const;
 		
+	/**
+	* @brief klassクラスを継承しているか調べる
+	*
+	*/
+	bool is_inherited(const AnyPtr& klass) const;
+
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。
 	*

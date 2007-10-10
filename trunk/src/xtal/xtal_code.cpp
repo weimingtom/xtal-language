@@ -129,13 +129,20 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstValue::NUMBER){ temp = ((InstValue*)pc)->inspect(code); sz = InstValue::ISIZE; }
 		XTAL_CASE(InstCheckUnsupported::NUMBER){ temp = ((InstCheckUnsupported*)pc)->inspect(code); sz = InstCheckUnsupported::ISIZE; }
 		XTAL_CASE(InstProperty::NUMBER){ temp = ((InstProperty*)pc)->inspect(code); sz = InstProperty::ISIZE; }
+		XTAL_CASE(InstPropertyNS::NUMBER){ temp = ((InstPropertyNS*)pc)->inspect(code); sz = InstPropertyNS::ISIZE; }
 		XTAL_CASE(InstSetProperty::NUMBER){ temp = ((InstSetProperty*)pc)->inspect(code); sz = InstSetProperty::ISIZE; }
-		XTAL_CASE(InstSend::NUMBER){ temp = ((InstSend*)pc)->inspect(code); sz = InstSend::ISIZE; }
-		XTAL_CASE(InstSendQ::NUMBER){ temp = ((InstSendQ*)pc)->inspect(code); sz = InstSendQ::ISIZE; }
+		XTAL_CASE(InstSetPropertyNS::NUMBER){ temp = ((InstSetPropertyNS*)pc)->inspect(code); sz = InstSetPropertyNS::ISIZE; }
 		XTAL_CASE(InstCall::NUMBER){ temp = ((InstCall*)pc)->inspect(code); sz = InstCall::ISIZE; }
+		XTAL_CASE(InstSend::NUMBER){ temp = ((InstSend*)pc)->inspect(code); sz = InstSend::ISIZE; }
+		XTAL_CASE(InstSendNS::NUMBER){ temp = ((InstSendNS*)pc)->inspect(code); sz = InstSendNS::ISIZE; }
+		XTAL_CASE(InstSendQ::NUMBER){ temp = ((InstSendQ*)pc)->inspect(code); sz = InstSendQ::ISIZE; }
+		XTAL_CASE(InstSendQNS::NUMBER){ temp = ((InstSendQNS*)pc)->inspect(code); sz = InstSendQNS::ISIZE; }
 		XTAL_CASE(InstMember::NUMBER){ temp = ((InstMember*)pc)->inspect(code); sz = InstMember::ISIZE; }
+		XTAL_CASE(InstMemberNS::NUMBER){ temp = ((InstMemberNS*)pc)->inspect(code); sz = InstMemberNS::ISIZE; }
 		XTAL_CASE(InstMemberQ::NUMBER){ temp = ((InstMemberQ*)pc)->inspect(code); sz = InstMemberQ::ISIZE; }
+		XTAL_CASE(InstMemberQNS::NUMBER){ temp = ((InstMemberQNS*)pc)->inspect(code); sz = InstMemberQNS::ISIZE; }
 		XTAL_CASE(InstDefineMember::NUMBER){ temp = ((InstDefineMember*)pc)->inspect(code); sz = InstDefineMember::ISIZE; }
+		XTAL_CASE(InstDefineMemberNS::NUMBER){ temp = ((InstDefineMemberNS*)pc)->inspect(code); sz = InstDefineMemberNS::ISIZE; }
 		XTAL_CASE(InstGlobalVariable::NUMBER){ temp = ((InstGlobalVariable*)pc)->inspect(code); sz = InstGlobalVariable::ISIZE; }
 		XTAL_CASE(InstSetGlobalVariable::NUMBER){ temp = ((InstSetGlobalVariable*)pc)->inspect(code); sz = InstSetGlobalVariable::ISIZE; }
 		XTAL_CASE(InstDefineGlobalVariable::NUMBER){ temp = ((InstDefineGlobalVariable*)pc)->inspect(code); sz = InstDefineGlobalVariable::ISIZE; }

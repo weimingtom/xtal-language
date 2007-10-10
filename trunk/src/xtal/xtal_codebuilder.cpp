@@ -278,58 +278,102 @@ bool CodeBuilder::put_local_code(const InternedStringPtr& var){
 	}
 }
 
-void CodeBuilder::put_send_code(const InternedStringPtr& var, ExprPtr pvar, int_t need_result_count, bool tail, bool if_defined){
+void CodeBuilder::put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& ns){
 	if(pvar){ compile_expr(pvar); }	
 	
 	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
-	if(if_defined){
-		put_inst(InstSendQ(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
-	}else{
-		if(need_result_count==1 && flags==0){
-			put_inst(InstProperty(pvar ? 0 : register_identifier(var)));
+
+	if(ns){
+		compile_expr(ns);
+		if(q){
+			put_inst(InstSendQNS(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
 		}else{
-			put_inst(InstSend(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
+			if(need_result_count==1 && flags==0){
+				put_inst(InstPropertyNS(pvar ? 0 : register_identifier(var)));
+			}else{
+				put_inst(InstSendNS(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
+			}
+		}
+	}else{
+		if(q){
+			put_inst(InstSendQ(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
+		}else{
+			if(need_result_count==1 && flags==0){
+				put_inst(InstProperty(pvar ? 0 : register_identifier(var)));
+			}else{
+				put_inst(InstSend(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
+			}
 		}
 	}
 }
 
-void CodeBuilder::put_set_send_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined){
+void CodeBuilder::put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns){
 	InternedStringPtr set_var = xnew<String>("set_", 4)->cat(var);
 	ExprPtr set_pvar = pvar ? bin(EXPR_CAT, 0, string(0, KIND_STRING, "set_"), pvar) : pvar;
 
 	if(set_pvar){ compile_expr(set_pvar); }	
 	
-	if(if_defined){
-		put_inst(InstSendQ(1, 0, 0, 0, set_pvar ? 0 : register_identifier(set_var)));
+	if(ns){
+		compile_expr(ns);
+
+		if(q){
+			put_inst(InstSendQNS(1, 0, 0, 0, set_pvar ? 0 : register_identifier(set_var)));
+		}else{
+			put_inst(InstSetPropertyNS(set_pvar ? 0 : register_identifier(set_var)));
+		}
 	}else{
-		put_inst(InstSetProperty(set_pvar ? 0 : register_identifier(set_var)));
+		if(q){
+			put_inst(InstSendQ(1, 0, 0, 0, set_pvar ? 0 : register_identifier(set_var)));
+		}else{
+			put_inst(InstSetProperty(set_pvar ? 0 : register_identifier(set_var)));
+		}
 	}
 }
 
-void CodeBuilder::put_member_code(const InternedStringPtr& var, ExprPtr pvar, bool if_defined){
+void CodeBuilder::put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns){
 	if(pvar){
 		compile_expr(pvar);
 	}
 	
-	if(if_defined){
-		InstMemberQ member;
-		member.identifier_number = pvar ? 0 : register_identifier(var);
-		put_inst(member);
+	if(ns){
+		compile_expr(ns);
+		if(q){
+			InstMemberQNS member;
+			member.identifier_number = pvar ? 0 : register_identifier(var);
+			put_inst(member);
+		}else{
+			InstMemberNS member;
+			member.identifier_number = pvar ? 0 : register_identifier(var);
+			put_inst(member);
+		}
 	}else{
-		InstMember member;
-		member.identifier_number = pvar ? 0 : register_identifier(var);
-		put_inst(member);
+		if(q){
+			InstMemberQ member;
+			member.identifier_number = pvar ? 0 : register_identifier(var);
+			put_inst(member);
+		}else{
+			InstMember member;
+			member.identifier_number = pvar ? 0 : register_identifier(var);
+			put_inst(member);
+		}
 	}
 }
 
-void CodeBuilder::put_define_member_code(const InternedStringPtr& var, ExprPtr pvar){
+void CodeBuilder::put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& ns){
 	if(pvar){
 		compile_expr(pvar);
 	}
 
-	InstDefineMember member;
-	member.identifier_number = pvar ? 0 : register_identifier(var);
-	put_inst(member);
+	if(ns){
+		compile_expr(ns);
+		InstDefineMemberNS member;
+		member.identifier_number = pvar ? 0 : register_identifier(var);
+		put_inst(member);
+	}else{
+		InstDefineMember member;
+		member.identifier_number = pvar ? 0 : register_identifier(var);
+		put_inst(member);
+	}
 }
 
 int_t CodeBuilder::lookup_instance_variable(const InternedStringPtr& key){
@@ -491,13 +535,13 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 	}
 }
 
-CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define, bool traceless){
+CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define, bool traceless, const ExprPtr& ns){
 	LVarInfo ret = {0, 0, 0};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
 		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
-			if(raweq(entry.name, key)){
+			if(raweq(entry.name, key) && raweq(entry.ns, ns)){
 				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
 					ret.var_frame = &vf;
 					ret.entry = &entry;
@@ -552,11 +596,14 @@ void CodeBuilder::var_define(const ArrayPtr& stmts){
 	}
 }
 
-void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign){
-	for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
-		if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
-			error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
-			return;
+void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign, const ExprPtr& ns){
+
+	if(!ns){
+		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
+			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
+				error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
+				return;
+			}
 		}
 	}
 
@@ -570,6 +617,7 @@ void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr,
 	entry.assigned = assign;
 	entry.referenced = false;
 	entry.removed = false;
+	entry.ns = ns;
 	vf().entries.push_back(entry);
 }
 
@@ -737,11 +785,11 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 	}else if(lhs->type()==EXPR_SEND){
 		compile_expr(lhs->send_term());
 		put_inst(InstDup());
-		put_send_code(lhs->send_name(), lhs->send_pname(), 1, false, lhs->send_q());
+		put_send_code(lhs->send_name(), lhs->send_pname(), 1, false, lhs->send_q(), lhs->send_ns());
 		compile_expr(rhs);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(lhs->send_name(), lhs->send_pname(), lhs->send_q());
+		put_set_send_code(lhs->send_name(), lhs->send_pname(), lhs->send_q(), lhs->send_ns());
 	}else if(lhs->type()==EXPR_AT){
 		compile_expr(lhs->bin_lhs());
 		put_inst(InstDup());
@@ -799,10 +847,10 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	}else if(term->type()==EXPR_SEND){
 		compile_expr(term->send_term());
 		put_inst(InstDup());
-		put_send_code(term->send_name(), term->send_pname(), 1, false, term->send_q());
+		put_send_code(term->send_name(), term->send_pname(), 1, false, term->send_q(), term->send_ns());
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(term->send_name(), term->send_pname(), term->send_q());
+		put_set_send_code(term->send_name(), term->send_pname(), term->send_q(), term->send_ns());
 	}else if(term->type()==EXPR_AT){
 		compile_expr(term->bin_lhs());
 		put_inst(InstDup());
@@ -893,7 +941,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	Xfor(v, e->class_stmts()){
 		ExprPtr v1 = ep(v);
 		if(v1->type()==EXPR_CDEFINE){
-			var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), true, true);
+			var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), false, true, false, v1->cdefine_ns());
 		}
 	}
 
@@ -935,7 +983,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 			if(v1->type()==EXPR_CDEFINE){					
 				AnyPtr val = compile_expr(v1->cdefine_term());
 				compile_expr(v1->cdefine_ns());
-				LVarInfo info = var_find(v1->cdefine_name(), true);
+				LVarInfo info = var_find(v1->cdefine_name(), true, false, v1->cdefine_ns());
 				info.entry->value = val;
 				put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
 			}
@@ -1427,7 +1475,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			}
 			*/
 
-			put_send_code(e->send_name(), e->send_pname(), info.need_result_count, info.tail, e->send_q());
+			put_send_code(e->send_name(), e->send_pname(), info.need_result_count, info.tail, e->send_q(), e->send_ns());
 			result_count = info.need_result_count;
 		}
 
@@ -1464,10 +1512,19 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 					send_name = register_identifier(e2->send_name());
 				}
 
-				if(e2->send_q()){
-					put_inst(InstSendQ(ordered, named, info.need_result_count, flags, send_name));
+				if(e2->send_ns()){
+					compile_expr(e2->send_ns());
+					if(e2->send_q()){
+						put_inst(InstSendQNS(ordered, named, info.need_result_count, flags, send_name));
+					}else{
+						put_inst(InstSendNS(ordered, named, info.need_result_count, flags, send_name));
+					}
 				}else{
-					put_inst(InstSend(ordered, named, info.need_result_count, flags, send_name));
+					if(e2->send_q()){
+						put_inst(InstSendQ(ordered, named, info.need_result_count, flags, send_name));
+					}else{
+						put_inst(InstSend(ordered, named, info.need_result_count, flags, send_name));
+					}
 				}
 			}else{
 				compile_expr(e->call_term());
@@ -1491,7 +1548,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MEMBER){
 			compile_expr(e->member_term());
-			put_member_code(e->member_name(), e->member_pname(), e->member_q());
+			put_member_code(e->member_name(), e->member_pname(), e->member_q(), e->send_ns());
 		}
 
 		XTAL_CASE(EXPR_CLASS){
@@ -1546,7 +1603,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile_expr(e->bin_lhs()->member_term());
 				compile_expr(e->bin_rhs());
 
-				put_define_member_code(e->bin_lhs()->member_name(), e->bin_lhs()->member_pname());
+				put_define_member_code(e->bin_lhs()->member_name(), e->bin_lhs()->member_pname(), e->bin_lhs()->member_ns());
 			}else{
 				error_->error(lineno(), Xt("Xtal Compile Error 1012"));
 			}
@@ -1562,7 +1619,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}else if(e->bin_lhs()->type()==EXPR_SEND){
 				compile_expr(e->bin_rhs());
 				compile_expr(e->bin_lhs()->send_term());
-				put_set_send_code(e->bin_lhs()->send_name(), e->bin_lhs()->send_pname(), e->bin_lhs()->send_q());
+				put_set_send_code(e->bin_lhs()->send_name(), e->bin_lhs()->send_pname(), e->bin_lhs()->send_q(), e->bin_lhs()->send_ns());
 			}else if(e->bin_lhs()->type()==EXPR_AT){
 				compile_expr(e->bin_rhs());
 				compile_expr(e->bin_lhs()->bin_lhs());
@@ -1810,7 +1867,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 						put_define_local_code(v->lvar_name());
 					}else if(v->type()==EXPR_MEMBER){
 						compile_expr(v->member_term());
-						put_define_member_code(v->member_name(), v->member_pname());
+						put_define_member_code(v->member_name(), v->member_pname(), v->member_ns());
 					}else{
 						error_->error(lineno(), Xt("Xtal Compile Error 1008"));
 					}
@@ -1822,7 +1879,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 						put_set_local_code(v->lvar_name());
 					}else if(v->type()==EXPR_SEND){
 						compile_expr(v->send_term());
-						put_set_send_code(v->send_name(), v->send_pname(), v->send_q());
+						put_set_send_code(v->send_name(), v->send_pname(), v->send_q(), v->send_ns());
 					}else if(v->type()==EXPR_IVAR){
 						put_set_instance_variable_code(v->ivar_name());					
 					}else if(v->type()==EXPR_AT){

@@ -1088,7 +1088,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}
 
 						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
-						if(eat('$')){
+						if(eat('#')){
 							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
@@ -1104,7 +1104,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}
 
 						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
-						if(eat('$')){
+						if(eat('#')){
 							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
@@ -1120,7 +1120,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}
 
 						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
-						if(eat('$')){
+						if(eat('#')){
 							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
@@ -1136,7 +1136,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						}
 
 						int_t r_space = (lexer_.peek().right_space() || lexer_.peek().left_space()) ? PRI_MAX : 0;
-						if(eat('$')){
+						if(eat('#')){
 							ret->set_send_ns(parse_expr_must(PRI_NS - r_space));
 						}
 					}
@@ -1553,7 +1553,7 @@ ExprPtr Parser::parse_class(int_t kind){
 		}
 
 		if(InternedStringPtr var = parse_identifier()){ // メンバ定義
-			if(eat('$')){
+			if(eat('#')){
 				ExprPtr ns = parse_expr_must(PRI_NS);
 				expect(':');
 				int_t ln = lineno();

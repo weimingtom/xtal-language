@@ -276,6 +276,7 @@ typedef SmartPtr<Text> TextPtr;
 
 class Base;
 class AtProxy;
+class SendProxy;
 class Visitor;
 class InstanceVariables;
 class Int;

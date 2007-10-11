@@ -104,7 +104,7 @@ Frame::~Frame(){
 	}
 }
 
-void Frame::set_class_member(int_t i, const InternedStringPtr& name, int_t accessibility, const AnyPtr& ns, const AnyPtr& value){ 
+void Frame::set_class_member(int_t i, const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){ 
 	members_->set_at(i, value);
 	Key key = {name, ns};
 	Value val = {i, accessibility};
@@ -206,7 +206,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
-void Class::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
+void Class::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -238,7 +238,7 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 	return nop;
 }
 
-const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
+const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -274,7 +274,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& self
 	// 継承しているクラスを順次検索
 	if(inherited_too){
 		for(int_t i = mixins_->size(); i>0; --i){
-			if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, self)){
+			if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, ns, self)){
 				return ret;
 			}
 		}
@@ -338,7 +338,7 @@ void Class::call(const VMachinePtr& vm){
 	pvalue(instance)->set_class(ClassPtr::from_this(this));
 	init_instance(instance, vm);
 	
-	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
+	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->set_arg_this(instance);
 		if(vm->need_result()){
 			ret->call(vm);
@@ -372,7 +372,7 @@ CppClass::CppClass(const char* name)
 }
 
 void CppClass::call(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(new), ClassPtr::from_this(this), null)){
+	if(const AnyPtr& ret = member(Xid(new), null, ClassPtr::from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
 	}else{
@@ -381,7 +381,7 @@ void CppClass::call(const VMachinePtr& vm){
 }
 
 void CppClass::s_new(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(serial_new), ClassPtr::from_this(this), null)){
+	if(const AnyPtr& ret = member(Xid(serial_new), null, ClassPtr::from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
 	}else{
@@ -400,7 +400,7 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
+const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -424,7 +424,7 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& self, 
 	}
 }
 
-void Lib::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
+void Lib::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
 	rawdef(name, value, ns);
 }
 
@@ -467,7 +467,7 @@ void Singleton::init_singleton(const VMachinePtr& vm){;
 	SingletonPtr instance = SingletonPtr::from_this(this);
 	init_instance(instance, vm);
 	
-	if(const AnyPtr& ret = member(Xid(initialize), vm->ff().self(), null)){
+	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->setup_call(0);
 		vm->set_arg_this(instance);
 		ret->call(vm);

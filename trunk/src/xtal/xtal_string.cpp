@@ -294,15 +294,10 @@ void initialize_string(){
 		p->method("replace", &String::replace);
 		p->method("scan", &String::scan);
 
-		p->method("op_cat", &String::op_cat);
-		p->method("op_eq", &String::op_eq);
-		p->method("op_lt", &String::op_lt);
-
-		p->method("op_cat_r_String", &String::op_cat_r_String);
-		p->method("op_eq_r_String", &String::op_eq_r_String);
-		p->method("op_lt_r_String", &String::op_lt_r_String);
-		
-		p->method("op_cat_assign", &String::op_cat);
+		p->def("op_cat", method(&String::op_cat), get_cpp_class<String>());
+		p->def("op_cat_assign", method(&String::op_cat), get_cpp_class<String>());
+		p->def("op_eq", method(&String::op_eq), get_cpp_class<String>());
+		p->def("op_lt", method(&String::op_lt), get_cpp_class<String>());
 	}
 
 	set_cpp_class<InternedString>(get_cpp_class<String>());
@@ -532,7 +527,7 @@ AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
 }
 
 
-StringPtr String::op_cat_String(const StringPtr& v){
+StringPtr String::op_cat(const StringPtr& v){
 	uint_t mysize = buffer_size();
 	uint_t vsize = v->buffer_size();
 
@@ -541,41 +536,16 @@ StringPtr String::op_cat_String(const StringPtr& v){
 	return xnew<String>((LargeString*)pvalue(*this), (LargeString*)pvalue(v));
 }
 
-bool String::op_eq_r_String(const StringPtr& v){ 
-	return v->buffer_size()==buffer_size() && memcmp(v->data(), data(), buffer_size())==0; 
+bool String::op_eq(const StringPtr& v){ 
+	return buffer_size()==v->buffer_size() && memcmp(data(), v->data(), buffer_size())==0; 
 }
 
-bool String::op_lt_r_String(const StringPtr& v){ 
-	return strcmp(v->c_str(), c_str())<0; 
+bool String::op_lt(const StringPtr& v){ 
+	return strcmp(c_str(), v->c_str())<0; 
 }
 
 StringPtr String::cat(const StringPtr& v){
-	return op_cat_String(v);
-}
-
-StringPtr String::op_cat_r_String(const StringPtr& v){
-	return v->op_cat_String(StringPtr::from_this(this));
-}
-
-void String::op_cat(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_cat_r_String));
-}
-
-void String::op_eq(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_eq_r_String));
-	if(!vm->processed()){
-		vm->return_result(null);
-	}
-}
-
-void String::op_lt(const VMachinePtr& vm){
-	AnyPtr a = vm->arg(0); 
-	vm->recycle_call(StringPtr::from_this(this)); 
-	a->rawsend(vm, Xid(op_lt_r_String));
+	return op_cat(v);
 }
 
 uint_t String::hashcode(){

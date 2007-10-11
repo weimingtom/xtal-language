@@ -177,16 +177,9 @@ public:
 
 public:
 
-	StringPtr op_cat_String(const StringPtr& v);
-	StringPtr op_mul_Int(int_t v);
-
-	void op_cat(const VMachinePtr& vm);
-	void op_eq(const VMachinePtr& vm);
-	void op_lt(const VMachinePtr& vm);
-
-	StringPtr op_cat_r_String(const StringPtr& v);
-	bool op_eq_r_String(const StringPtr& v);
-	bool op_lt_r_String(const StringPtr& v);
+	StringPtr op_cat(const StringPtr& v);
+	bool op_eq(const StringPtr& v);
+	bool op_lt(const StringPtr& v);
 
 private:
 	void init_string(const char_t* str, uint_t size);

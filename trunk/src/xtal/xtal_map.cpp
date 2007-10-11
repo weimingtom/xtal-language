@@ -55,23 +55,20 @@ void initialize_map(){
 		p->method("to_s", &Map::to_s);
 		p->method("size", &Map::size);
 		p->method("length", &Map::length);
-		p->method("at", &Map::at);
-		p->method("set_at", &Map::set_at);
-		p->method("op_at", &Map::at);
-		p->method("op_set_at", &Map::set_at);
 		p->method("insert", &Map::insert);
 		p->method("each", &Map::pairs);
 		p->method("pairs", &Map::pairs);
 		p->method("keys", &Map::keys);
 		p->method("values", &Map::values);
 		p->method("clone", &Map::clone);
-		p->method("op_cat", &Map::cat);
-		p->method("op_cat_assign", &Map::cat_assign);
-		p->method("cat", &Map::cat);
-		p->method("cat_assign", &Map::cat_assign);
 		p->method("erase", &Map::erase);
 		p->method("empty", &Map::empty);
-		p->method("op_eq", &Map::op_eq);
+
+		p->def("op_at", method(&Map::at), get_cpp_class<Any>());
+		p->def("op_set_at", method(&Map::set_at), get_cpp_class<Any>());
+		p->def("op_eq", method(&Map::op_eq), get_cpp_class<Map>());
+		p->def("op_cat", method(&Map::cat), get_cpp_class<Map>());
+		p->def("op_cat_assign", method(&Map::cat_assign), get_cpp_class<Map>());
 	}
 
 	builtin()->def("Map", get_cpp_class<Map>());

@@ -144,7 +144,7 @@ public:
 		members_->set_at(i, value);
 	}
 
-	void set_class_member(int_t i, const InternedStringPtr& name, int_t accessibility, const AnyPtr& ns, const AnyPtr& value);
+	void set_class_member(int_t i, const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility);
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
@@ -230,7 +230,7 @@ public:
 	*
 	* @param name 新しく定義するメンバの名前
 	*/
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility = KIND_PUBLIC, const AnyPtr& ns = null);
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC);
 
 	/**
 	* @brief メンバを取り出す
@@ -239,7 +239,7 @@ public:
 	* @param name 取り出したいメンバの名前
 	* @param self 可視性を判定するためのオブジェクト
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = null, const AnyPtr& ns = null, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& ns = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	/**
 	* @brief メンバを再設定する
@@ -413,7 +413,7 @@ public:
 protected:
 
 	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun){
-		def(name, cfun, KIND_PUBLIC, null);
+		def(name, cfun, null, KIND_PUBLIC);
 		return cfun;
 	}
 
@@ -446,9 +446,9 @@ public:
 
 	Lib(const ArrayPtr& path);
 	
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too = true);
 
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns);
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility);
 
 	void append_load_path(const StringPtr& path){
 		load_path_list_->push_back(path);

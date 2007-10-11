@@ -144,10 +144,10 @@ void initialize(){
 
 	initialize_except();
 	initialize_any();
+	initialize_basic_type();
 	initialize_array();
 	initialize_map();
 	initialize_iterator();
-	initialize_basic_type();
 	initialize_fun();
 	initialize_code();
 	initialize_frame();

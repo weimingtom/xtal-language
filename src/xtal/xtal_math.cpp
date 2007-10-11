@@ -29,7 +29,7 @@ AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
 			}
 		}
 	}
-	return null;// a->send(Xid(op_lt), a, b) ? b : a;
+	return null;
 }
 
 AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
@@ -47,7 +47,7 @@ AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
 			}
 		}
 	}
-	return null;//a->send(Xid(op_lt), a, b) ? a : b;
+	return null;
 }
 
 class Random{

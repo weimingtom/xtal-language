@@ -96,12 +96,17 @@ void initialize_peg(){
 
 	ClassPtr peg =  xnew<Class>("peg");
 
+	new_cpp_class<Parts>("Parts");
+
 	{
 		ClassPtr p = get_cpp_class<String>();
-		p->method("op_shr", &followed);
-		p->method("op_mul", &more);
-		p->method("op_sub", &sub);
-		p->method("op_or", &select);
+		p->def("op_shr", method(&followed), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_shr", method(&followed), get_cpp_class<Parts>(), KIND_PUBLIC);
+		p->def("op_mul", method(&more), get_cpp_class<Int>(), KIND_PUBLIC);
+		p->def("op_sub", method(&sub), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_sub", method(&sub), get_cpp_class<Parts>(), KIND_PUBLIC);
+		p->def("op_or", method(&select), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_or", method(&select), get_cpp_class<Parts>(), KIND_PUBLIC);
 		p->method("op_com", &ignore);
 		p->method("op_call", &act);
 	}
@@ -109,10 +114,13 @@ void initialize_peg(){
 	{
 		ClassPtr p = new_cpp_class<Parts>("Parts");
 		p->def("new", ctor<Parts>());
-		p->method("op_shr", &followed);
-		p->method("op_mul", &more);
-		p->method("op_sub", &sub);
-		p->method("op_or", &select);
+		p->def("op_shr", method(&followed), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_shr", method(&followed), get_cpp_class<Parts>(), KIND_PUBLIC);
+		p->def("op_mul", method(&more), get_cpp_class<Int>(), KIND_PUBLIC);
+		p->def("op_sub", method(&sub), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_sub", method(&sub), get_cpp_class<Parts>(), KIND_PUBLIC);
+		p->def("op_or", method(&select), get_cpp_class<String>(), KIND_PUBLIC);
+		p->def("op_or", method(&select), get_cpp_class<Parts>(), KIND_PUBLIC);
 		p->method("op_com", &ignore);
 		p->method("op_call", &act);
 

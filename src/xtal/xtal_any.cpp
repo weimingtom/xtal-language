@@ -16,6 +16,19 @@
 
 namespace xtal{
 
+namespace{
+
+struct BinOp : public HaveName{
+	InternedStringPtr name;
+	BinOp(const InternedStringPtr& name):name(name){}
+
+	virtual void call(const VMachinePtr& vm){
+		vm->get_arg_this()->rawsend(vm, name, vm->arg(0)->get_class(), vm->get_arg_this());
+	}
+};
+
+}
+
 void initialize_any(){
 	{
 		ClassPtr p = new_cpp_class<Any>("Any");
@@ -25,6 +38,38 @@ void initialize_any(){
 		p->method("object_name", &Any::object_name);
 		p->method("instance_serial_save", &Any::instance_serial_save);
 		p->method("instance_serial_load", &Any::instance_serial_load);
+
+		p->def("op_add", xnew<BinOp>("op_add"));
+		p->def("op_sub", xnew<BinOp>("op_sub"));
+		p->def("op_cat", xnew<BinOp>("op_cat"));
+		p->def("op_mul", xnew<BinOp>("op_mul"));
+		p->def("op_div", xnew<BinOp>("op_div"));
+		p->def("op_mod", xnew<BinOp>("op_mod"));
+		p->def("op_and", xnew<BinOp>("op_and"));
+		p->def("op_or", xnew<BinOp>("op_or"));
+		p->def("op_xor", xnew<BinOp>("op_xor"));
+		p->def("op_shr", xnew<BinOp>("op_shr"));
+		p->def("op_shl", xnew<BinOp>("op_shl"));
+		p->def("op_ushr", xnew<BinOp>("op_ushr"));
+
+		p->def("op_add_assign_assign", xnew<BinOp>("op_add_assign"));
+		p->def("op_sub_assign", xnew<BinOp>("op_sub_assign"));
+		p->def("op_cat_assign", xnew<BinOp>("op_cat_assign"));
+		p->def("op_mul_assign", xnew<BinOp>("op_mul_assign"));
+		p->def("op_div_assign", xnew<BinOp>("op_div_assign"));
+		p->def("op_mod_assign", xnew<BinOp>("op_mod_assign"));
+		p->def("op_and_assign", xnew<BinOp>("op_and_assign"));
+		p->def("op_or_assign", xnew<BinOp>("op_or_assign"));
+		p->def("op_xor_assign", xnew<BinOp>("op_xor_assign"));
+		p->def("op_shr_assign", xnew<BinOp>("op_shr_assign"));
+		p->def("op_shl_assign", xnew<BinOp>("op_shl_assign"));
+		p->def("op_ushr_assign", xnew<BinOp>("op_ushr_assign"));
+
+		p->def("op_eq", xnew<BinOp>("op_eq"));
+		p->def("op_lt", xnew<BinOp>("op_lt"));
+
+		p->def("op_at", xnew<BinOp>("op_at"));
+		p->def("op_set_at", xnew<BinOp>("op_set_at"));
 	}
 
 	builtin()->def("Any", get_cpp_class<Any>());
@@ -34,16 +79,16 @@ AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }
 AnyPtr operator -(const AnyPtr& a){ return a->send(Xid(op_neg)); }
 AnyPtr operator ~(const AnyPtr& a){ return a->send(Xid(op_com)); }
 
-AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
-AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
-AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
-AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_div), b); }
-AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mod), b); }
-AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_or), b); }
-AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and), b); }
-AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b); }
-AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b); }
-AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b); }
+AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b->get_class())(b); }
+AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b->get_class())(b); }
+AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b->get_class())(b); }
+AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_div), b->get_class())(b); }
+AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mod), b->get_class())(b); }
+AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_or), b->get_class())(b); }
+AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and), b->get_class())(b); }
+AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b->get_class())(b); }
+AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b->get_class())(b); }
+AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b->get_class())(b); }
 
 AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){ 
 	if(raweq(a, b))
@@ -51,7 +96,7 @@ AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){
 
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(1, b);
-	a->rawsend(vm, Xid(op_eq));
+	a->rawsend(vm, Xid(op_eq), b->get_class());
 	if(vm->processed() && vm->result()){
 		vm->cleanup_call();
 		return true;
@@ -61,21 +106,21 @@ AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){
 }
 
 AnyPtr operator !=(const AnyPtr& a, const AnyPtr& b){ return !(a==b); }
-AnyPtr operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b); }
+AnyPtr operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b->get_class())(b); }
 AnyPtr operator >(const AnyPtr& a, const AnyPtr& b){ return b<a; }
 AnyPtr operator <=(const AnyPtr& a, const AnyPtr& b){ return !(b<a); }
 AnyPtr operator >=(const AnyPtr& a, const AnyPtr& b){ return !(a<b); }
 
-AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_add_assign), b); return a; }
-AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_sub_assign), b); return a; }
-AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mul_assign), b); return a; }
-AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_div_assign), b); return a; }
-AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mod_assign), b); return a; }
-AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_or_assign), b); return a; }
-AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign), b); return a; }
-AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b); return a; }
-AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b); return a; }
-AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
+AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_add_assign), b->get_class())(b); return a; }
+AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_sub_assign), b->get_class())(b); return a; }
+AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mul_assign), b->get_class())(b); return a; }
+AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_div_assign), b->get_class())(b); return a; }
+AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mod_assign), b->get_class())(b); return a; }
+AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_or_assign), b->get_class())(b); return a; }
+AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign), b->get_class())(b); return a; }
+AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b->get_class())(b); return a; }
+AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b->get_class())(b); return a; }
+AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b->get_class())(b); return a; }
 
 Innocence::Innocence(const char_t* str){
 	*this = xnew<String>(str);
@@ -88,31 +133,8 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
-AnyPtr Any::send(const InternedStringPtr& name) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	rawsend(vm, name);
-	return vm->result_and_cleanup_call();
-}
-const AtProxy& AtProxy::operator =(const AnyPtr& value){
-	obj->send(Xid(set_at), key, value);
-	return *this;
-}
-
-AtProxy Innocence::operator[](const AnyPtr& key) const{
-	return AtProxy(ap(*this), key);
-}
-
-AtProxy::operator const AnyPtr&(){
-	return obj = obj->send(Xid(at), key);
-}
-
-const AnyPtr& AtProxy::operator ->(){
-	return obj = obj->send(Xid(at), key);
-}
-
-const Any& AtProxy::operator *(){
-	return *(obj = obj->send(Xid(at), key));
+SendProxy Any::send(const InternedStringPtr& name, const AnyPtr& ns) const{
+	return SendProxy(ap(*this), name, ns);
 }
 
 struct MemberCacheTable{
@@ -140,7 +162,7 @@ struct MemberCacheTable{
 		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
-	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& self, const Innocence& ns, bool inherited_too){
+	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& ns, const Innocence& self, bool inherited_too){
 		uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
 		uint_t imember_name = rawvalue(member_name);
 		uint_t ins = rawvalue(ns);
@@ -156,7 +178,7 @@ struct MemberCacheTable{
 			if(type(target_class)!=TYPE_BASE)
 				return nop;
 
-			unit.member = pvalue(target_class)->do_member(member_name, ap(self), ap(ns));
+			unit.member = pvalue(target_class)->do_member(member_name, ap(ns), ap(self));
 			unit.target_class = itarget_class;
 			unit.member_name = member_name;
 			unit.ns = ins;
@@ -250,24 +272,24 @@ void print_result_of_cache(){
 	is_inherited_cache_table.print_result();
 }
 
-const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too) const{
-	return member_cache_table.cache(*this, name, self, ns, inherited_too);
+const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too) const{
+	return member_cache_table.cache(*this, name, ns, self, inherited_too);
 }
 
-void Any::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns) const{
+void Any::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility) const{
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
 			value->set_object_name(name, object_name_force(), ap(*this));
-			pvalue(*this)->def(name, value, accessibility, ns);
+			pvalue(*this)->def(name, value, ns, accessibility);
 		}
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too) const{
+void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, name);
-	const AnyPtr& ret = member_cache_table.cache(cls, name, self, ns, inherited_too);
+	const AnyPtr& ret = member_cache_table.cache(cls, name, ns, self, inherited_too);
 	if(rawne(ret, nop)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);

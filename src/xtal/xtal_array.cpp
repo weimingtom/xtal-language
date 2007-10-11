@@ -52,8 +52,6 @@ void initialize_array(){
 		p->method("length", &Array::length);
 		p->method("resize", &Array::resize);
 		p->method("empty", &Array::empty);
-		p->method("op_at", &Array::op_at);
-		p->method("op_set_at", &Array::op_set_at);
 		p->method("slice", &Array::slice)->param("i", Named("n", 1));
 		p->method("splice", &Array::splice)->param("i", Named("n", 1));
 		p->method("pop_back", &Array::pop_back);
@@ -62,10 +60,6 @@ void initialize_array(){
 		p->method("push_front", &Array::push_front);
 		p->method("erase", &Array::erase)->param("i", Named("n", 1));
 		p->method("insert", &Array::insert);
-		p->method("cat", &Array::cat);
-		p->method("cat_assign", &Array::cat_assign);
-		p->method("op_cat", &Array::cat);
-		p->method("op_cat_assign", &Array::cat_assign);
 		p->method("to_s", &Array::to_s);
 		p->method("to_a", &Array::to_a);
 		p->method("join", &Array::join)->param(Named("sep"));
@@ -74,9 +68,14 @@ void initialize_array(){
 		p->method("front", &Array::front);
 		p->method("back", &Array::back);
 		p->method("clear", &Array::clear);
-		p->method("op_eq", &Array::op_eq);
 		p->method("reverse", &Array::reverse);
 		p->method("assign", &Array::assign);
+
+		p->def("op_cat", method(&Array::cat), get_cpp_class<Array>());
+		p->def("op_cat_assign", method(&Array::cat_assign), get_cpp_class<Array>());
+		p->def("op_at", method(&Array::op_at), get_cpp_class<Int>());
+		p->def("op_set_at", method(&Array::op_set_at), get_cpp_class<Int>());
+		p->def("op_eq", method(&Array::op_eq), get_cpp_class<Array>());
 	}
 
 	builtin()->def("Array", get_cpp_class<Array>());

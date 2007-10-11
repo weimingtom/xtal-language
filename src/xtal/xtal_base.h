@@ -17,23 +17,23 @@ public:
 	* @brief nameメンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
-	* @retval null そのメンバは存在しない
-	* @retval 非null nameに対応したメンバ  
+	* @retval nop そのメンバは存在しない
+	* @retval 非nop nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
+	const AnyPtr& member(const InternedStringPtr& name, const AnyPtr& ns = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
+	void rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
 	*
 	*/
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility = 0, const AnyPtr& ns = (const AnyPtr&)null);
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns = (const AnyPtr&)null, int_t accessibility = 0);
 
 	/**
 	* @brief このオブジェクトが所属するクラスを返す。
@@ -84,7 +84,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& self = (const AnyPtr& )null, const AnyPtr& ns = (const AnyPtr& )null, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& ns = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true);
 
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。
@@ -122,22 +122,7 @@ public:
 
 public:
 
-	AnyPtr send(const InternedStringPtr& name);
-
-	template<class A0>
-	AnyPtr send(const InternedStringPtr& name, const A0& a0);
-
-	template<class A0, class A1>
-	AnyPtr send(const InternedStringPtr& name, const A0& a0, const A1& a1);
-
-	template<class A0, class A1, class A2>
-	AnyPtr send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2);
-
-	template<class A0, class A1, class A2, class A3>
-	AnyPtr send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3);
-
-	template<class A0, class A1, class A2, class A3, class A4>
-	AnyPtr send(const InternedStringPtr& name, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4);
+	SendProxy send(const InternedStringPtr& name, const AnyPtr& ns = (const AnyPtr&)null);
 
 public:
 	

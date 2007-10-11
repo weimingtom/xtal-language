@@ -73,28 +73,25 @@ void Base::call(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){ 
+const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){ 
 	return nop;
 }
 
 
-const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){ 
-	return ap(Innocence(this))->member(name, self, ns, inherited_too); 
+const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){ 
+	return ap(Innocence(this))->member(name, ns, self, inherited_too); 
 }
 
-void Base::def(const InternedStringPtr& name, const AnyPtr& value, int_t accessibility, const AnyPtr& ns){
+void Base::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
 
 }
 
-AnyPtr Base::send(const InternedStringPtr& name){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	rawsend(vm, name);
-	return vm->result_and_cleanup_call();
+SendProxy Base::send(const InternedStringPtr& name, const AnyPtr& ns){
+	return SendProxy(ap(Innocence(this)), name, ns);
 }
 
-void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& self, const AnyPtr& ns, bool inherited_too){
-	ap(Innocence(this))->rawsend(vm, name, self, ns, inherited_too);
+void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
+	ap(Innocence(this))->rawsend(vm, name, ns, self, inherited_too);
 }
 
 StringPtr Base::object_name(){ 

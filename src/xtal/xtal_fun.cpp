@@ -82,9 +82,10 @@ void initialize_fun(){
 		p->def("new", ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(Named("ordered", null), Named("named", null)));
 		p->method("size", &Arguments::length);
 		p->method("length", &Arguments::length);
-		p->method("op_at", &Arguments::op_at);
 		p->method("ordered_arguments", &Arguments::ordered_arguments);
 		p->method("named_arguments", &Arguments::named_arguments);
+		
+		p->def("op_at", method(&Arguments::op_at), get_cpp_class<Any>());
 	}
 
 	builtin()->def("Arguments", get_cpp_class<Arguments>());

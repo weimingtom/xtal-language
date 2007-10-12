@@ -129,7 +129,6 @@ private:
 		struct Entry{
 			InternedStringPtr name;
 			ExprPtr expr;
-			ExprPtr ns;
 			AnyPtr value;
 			bool constant;
 			bool initialized;
@@ -137,6 +136,7 @@ private:
 			bool assigned;
 			bool removed;
 			int_t accessibility;
+			int_t number;
 		};
 
 		AC<Entry>::vector entries;
@@ -176,10 +176,10 @@ private:
 	};
 
 	void scope_chain(int_t var_frame_size);
-	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false, const ExprPtr& expr = null);
+	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false, int_t number = -1);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
-	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, const ExprPtr& ns = null);
+	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();

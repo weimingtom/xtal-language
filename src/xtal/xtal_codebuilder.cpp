@@ -535,13 +535,13 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 	}
 }
 
-CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define, bool traceless, const ExprPtr& ns){
+CodeBuilder::LVarInfo CodeBuilder::var_find(const InternedStringPtr& key, bool define, bool traceless, int_t number){
 	LVarInfo ret = {0, 0, 0};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
 		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
-			if(raweq(entry.name, key) && raweq(entry.ns, ns)){
+			if(raweq(entry.name, key) && (number<0 || entry.number<0 || number==entry.number)){
 				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
 					ret.var_frame = &vf;
 					ret.entry = &entry;
@@ -596,9 +596,8 @@ void CodeBuilder::var_define(const ArrayPtr& stmts){
 	}
 }
 
-void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign, const ExprPtr& ns){
-
-	if(!ns){
+void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign, int_t number){
+	if(number<0){
 		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
 				error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
@@ -617,7 +616,7 @@ void CodeBuilder::var_define(const InternedStringPtr& name, const ExprPtr& expr,
 	entry.assigned = assign;
 	entry.referenced = false;
 	entry.removed = false;
-	entry.ns = ns;
+	entry.number = number;
 	vf().entries.push_back(entry);
 }
 
@@ -938,10 +937,17 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	var_begin(VarFrame::CLASS);
 
 	// 変数を定義
-	Xfor(v, e->class_stmts()){
-		ExprPtr v1 = ep(v);
-		if(v1->type()==EXPR_CDEFINE){
-			var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), false, true, false, v1->cdefine_ns());
+	{
+		int_t number = 0;
+		Xfor(v, e->class_stmts()){
+			ExprPtr v1 = ep(v);
+			if(v1->type()==EXPR_CDEFINE){
+				if(v1->cdefine_ns() && v1->cdefine_ns()->type()!=EXPR_NULL){
+					var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), false, true, false, number++);
+				}else{
+					var_define(v1->cdefine_name(), null, v1->cdefine_accessibility(), false, true, false);
+				}
+			}
 		}
 	}
 
@@ -978,14 +984,22 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	result_->class_core_table_.push_back(core);
 
 	{
+		int_t number = 0;
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
 			if(v1->type()==EXPR_CDEFINE){					
 				AnyPtr val = compile_expr(v1->cdefine_term());
 				compile_expr(v1->cdefine_ns());
-				LVarInfo info = var_find(v1->cdefine_name(), true, false, v1->cdefine_ns());
-				info.entry->value = val;
-				put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
+
+				if(v1->cdefine_ns() && v1->cdefine_ns()->type()!=EXPR_NULL){
+					LVarInfo info = var_find(v1->cdefine_name(), true, false, number++);
+					info.entry->value = val;
+					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
+				}else{
+					LVarInfo info = var_find(v1->cdefine_name(), true, false);
+					info.entry->value = val;
+					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_name()), v1->cdefine_accessibility()));
+				}
 			}
 		}
 	}

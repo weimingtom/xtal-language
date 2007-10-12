@@ -4,11 +4,11 @@ Vec2D: class{
 
   initialize: method(_x: 0, _y: 0){}
 
-  op_add: method(v){
+  op_add#this: method(v){
     return Vec2D(_x+v.x, _y+v.y);
   }
   
-  op_add_assign: method(v){
+  op_add_assign#this: method(v){
     _x += v.x;
     _y += v.y;
     return this;

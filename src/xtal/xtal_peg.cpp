@@ -84,7 +84,6 @@ void uninitialize_peg(){
 	ch_space = null;
 	ch_digit = null;
 	ch_ascii = null;
-
 }
 
 }
@@ -94,7 +93,7 @@ void initialize_peg(){
 
 	register_uninitializer(&uninitialize_peg);
 
-	ClassPtr peg =  xnew<Class>("peg");
+	ClassPtr peg = xnew<Class>("peg");
 
 	new_cpp_class<Parts>("Parts");
 
@@ -190,6 +189,16 @@ void initialize_peg(){
 
 namespace peg{
 
+int_t StreamScanner::do_read(AnyPtr* buffer, int_t max){
+	for(int_t i=0; i<max; ++i){
+		if(stream_->eof()){
+			return i;
+		}
+
+		buffer[i] = stream_->get_s(1);
+	}
+	return max;
+}
 
 int_t IteratorScanner::do_read(AnyPtr* buffer, int_t max){
 	if(!iter_){
@@ -736,7 +745,6 @@ struct RegNode{
 	RegNodePtr right; // 右の子
 };
 
-
 class RegParser{
 public:
 	RegParser(const StreamPtr& src);
@@ -948,14 +956,14 @@ public:
 	RegNFA(const StreamPtr& src);
 
 	int match(const ScannerPtr& scanner);
-	bool isHeadType() const { return parser.isHeadType(); }
-	bool isTailType() const { return parser.isTailType(); }
+	bool isHeadType() const { return parser_.isHeadType(); }
+	bool isTailType() const { return parser_.isTailType(); }
 
 private:
 
 	int dfa_match(const ScannerPtr& scanner);
 
-	struct st_ele { int st, ps; };
+	struct st_ele{ int st, ps; };
 	typedef PODStack<st_ele> stack_t;
 
 	void push(stack_t& stack, int curSt, int pos);
@@ -968,41 +976,39 @@ private:
 	void gen_nfa(int entry, const RegNodePtr& t, int exit);
 
 private:
-	RegParser parser;
-	ArrayPtr st;
-	int start, final;
+	RegParser parser_;
+	ArrayPtr st_;
+	int start_, final_;
 };
 
 RegNFA::RegNFA(const StreamPtr& src)
-	:parser(src){
-	st = xnew<Array>();
-	start = gen_state();
-	final = gen_state();
-	gen_nfa(start, parser.root(), final);
+	:parser_(src){
+	st_ = xnew<Array>();
+	start_ = gen_state();
+	final_ = gen_state();
+	gen_nfa(start_, parser_.root(), final_);
 }
 
 inline void RegNFA::add_transition(int from, const AnyPtr& cls, int to){
 	RegTransPtr x = xnew<RegTrans>();
-	RegTransPtr nn = static_ptr_cast<RegTrans>(st->at(from));
-	x->next = nn;
+	x->next = static_ptr_cast<RegTrans>(st_->at(from));
 	x->to = to;
 	x->type = RegTrans::Class;
-	x->cls = P(cls);
-	st->set_at(from, x);
+	x->cls = and_(cls);
+	st_->set_at(from, x);
 }
 
 inline void RegNFA::add_e_transition(int from, int to){
 	RegTransPtr x = xnew<RegTrans>();
-	RegTransPtr nn = static_ptr_cast<RegTrans>(st->at(from));
-	x->next = nn;
+	x->next = static_ptr_cast<RegTrans>(st_->at(from));
 	x->to = to;
 	x->type = RegTrans::Epsilon;
-	st->set_at(from, x);
+	st_->set_at(from, x);
 }
 
 inline int RegNFA::gen_state(){
-	st->push_back(null);
-	return st->size() - 1;
+	st_->push_back(null);
+	return st_->size() - 1;
 }
 
 void RegNFA::gen_nfa(int entry, const RegNodePtr& t, int exit){
@@ -1050,7 +1056,7 @@ void RegNFA::gen_nfa(int entry, const RegNodePtr& t, int exit){
 			add_e_transition(entry, before);
 			add_e_transition(after, exit);
 			add_e_transition(after, before);
-			gen_nfa( before, t->left, after);
+			gen_nfa(before, t->left, after);
 			if(t->type != N_Closure1){
 				add_e_transition(entry, exit);
 			}
@@ -1095,12 +1101,12 @@ RegNFA::st_ele RegNFA::pop(stack_t& stack){
 }
 
 int RegNFA::match(const ScannerPtr& scanner){
-	if(parser.err()){
+	if(parser_.err()){
 		return -1; // エラー状態なのでmatchとかできません
 	}
 
-	if(st->size() <= 31){
-		//return dfa_match(scanner); // 状態数が少なければDFAを使う、かも
+	if(st_->size() <= 31){
+		//return dfa_match(scanner);
 	}
 
 	int matchpos = -1;
@@ -1108,7 +1114,7 @@ int RegNFA::match(const ScannerPtr& scanner){
 	uint_t first_pos = scanner->pos();
 
 	stack_t stack;
-	push(stack, start, 0);
+	push(stack, start_, 0);
 	while(stack.size() > 0){
 		st_ele se = pop(stack);
 		int curSt = se.st;
@@ -1117,7 +1123,7 @@ int RegNFA::match(const ScannerPtr& scanner){
 		scanner->seek(first_pos + pos);
 
 		// マッチ成功してたら記録
-		if(curSt == final){ // 1==終状態
+		if(curSt == final_){ // 1==終状態
 			if(matchpos < pos){
 				matchpos = pos;
 			}
@@ -1125,11 +1131,13 @@ int RegNFA::match(const ScannerPtr& scanner){
 
 		// さらに先の遷移を調べる
 		if(rawne(scanner->peek(matchpos), nop)){
-			for(RegTransPtr tr=static_ptr_cast<RegTrans>(st->at(curSt)); tr!=null; tr=tr->next){
+			for(RegTransPtr tr=static_ptr_cast<RegTrans>(st_->at(curSt)); tr; tr=tr->next){
 				if(tr->type == RegTrans::Epsilon){
 					push(stack, tr->to, pos);
-				}else if(rawne(scanner->peek(), nop) && parse_inner(tr->cls, scanner)){
-					push(stack, tr->to, pos+1);
+				}else if(rawne(scanner->peek(), nop)){
+					if(parse_inner(tr->cls, scanner)){
+						push(stack, tr->to, pos+1);
+					}
 				}
 			}
 		}
@@ -1141,14 +1149,14 @@ int RegNFA::match(const ScannerPtr& scanner){
 int RegNFA::dfa_match(const ScannerPtr& scanner){
 	int matchpos = -1;
 
-	unsigned int StateSet = (1<<start);
+	unsigned int StateSet = (1<<start_);
 	for(int pos=0; StateSet; ++pos){
 		// ε-closure
-		for(uint_t DifSS=StateSet; DifSS;){
+		for(unsigned int DifSS=StateSet; DifSS;){
 			unsigned int NewSS = 0;
 			for(int s=0; (1u<<s)<=DifSS; ++s){
 				if((1u<<s) & DifSS){
-					for(RegTransPtr tr=static_ptr_cast<RegTrans>(st->at(s)); tr!=null; tr=tr->next){
+					for(RegTransPtr tr=static_ptr_cast<RegTrans>(st_->at(s)); tr; tr=tr->next){
 						if(tr->type == RegTrans::Epsilon){
 							NewSS |= 1u << tr->to;
 						}
@@ -1161,7 +1169,7 @@ int RegNFA::dfa_match(const ScannerPtr& scanner){
 		}
 
 		// 受理状態を含んでるかどうか判定
-		if(StateSet & (1<<final)){
+		if(StateSet & (1<<final_)){
 			matchpos = pos;
 		}
 
@@ -1174,13 +1182,15 @@ int RegNFA::dfa_match(const ScannerPtr& scanner){
 		unsigned int NewSS = 0;
 		for(int s=0; (1u<<s)<=StateSet; ++s){
 			if((1u<<s) & StateSet){
-				for(RegTransPtr tr=static_ptr_cast<RegTrans>(st->at(s)); tr!=null; tr=tr->next){
+				for(RegTransPtr tr=static_ptr_cast<RegTrans>(st_->at(s)); tr; tr=tr->next){
 					if(tr->type!=RegTrans::Epsilon && parse_inner(tr->cls, scanner)){
 						NewSS |= 1u << tr->to;
 					}
 				}
 			}
 		}
+
+		scanner->skip(1);
 		StateSet = NewSS;
 	}
 
@@ -1191,14 +1201,15 @@ int RegNFA::dfa_match(const ScannerPtr& scanner){
 bool reg_match(const StreamPtr& src, const ScannerPtr& scanner){
 	RegNFA re(src);
 	Scanner::Mark mark = scanner->mark();
-	Scanner::Mark mark2 = scanner->begin_join();
+	Scanner::Mark mark2 = scanner->begin_record();
 
-	bool ret = re.match(scanner)>=0;
+	int mpos = re.match(scanner);
+	scanner->seek(mpos);
 
-	scanner->end_join(mark2);
-	scanner->unmark(mark, !ret);
+	scanner->end_record(mark2)->p();
+	scanner->unmark(mark, mpos<0);
 
-	return ret;
+	return mpos>=0;
 }
 
 

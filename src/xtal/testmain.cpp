@@ -84,15 +84,6 @@ int main2(int argc, char** argv){
 	try{
 		initialize();
 
-		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aaaaaaabbbbc"));
-		StreamPtr st = xnew<StringStream>(".*b");
-
-		bool b = reg_match(st, ss);
-		
-		if(b){
-			ss->results()->p();
-		}
-
 		xnew<PointSelf>();
 		xnew<PointSelf>(10);
 
@@ -113,6 +104,14 @@ int main2(int argc, char** argv){
 			add_text_map(cast<MapPtr>(load(path)));
 		}
 	
+		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("test"));
+		StreamPtr st = xnew<StringStream>("t(e|s)*t");
+
+		bool b = reg_match(st, ss);
+		
+		if(b){
+			//ss->results()->p();
+		}
 
 AnyPtr ret = Xsrc
 ((

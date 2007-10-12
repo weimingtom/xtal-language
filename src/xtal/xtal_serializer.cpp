@@ -109,7 +109,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		if(ArrayPtr a = as<ArrayPtr>(v)){
 			stream_->put_u8(TARRAY);
 			stream_->put_u32(a->size());
-			for(int_t i=0; i<a->size(); ++i){
+			for(uint_t i=0; i<a->size(); ++i){
 				inner_serialize(a->at(i));
 			}
 			return;
@@ -488,7 +488,7 @@ void Serializer::inner_xtalize(const AnyPtr& v, int_t tab){
 			}else{
 				stream_->put_s("[\n");
 				tab++;
-				for(int_t i=0; i<a->size(); ++i){
+				for(uint_t i=0; i<a->size(); ++i){
 					put_tab(tab);
 					inner_xtalize(a->at(i), tab);
 					stream_->put_s(",\n");

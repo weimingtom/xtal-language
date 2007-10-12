@@ -123,10 +123,10 @@ public:
 	* @brief ヒントの設定
 	*
 	* 例外が起きたときのエラーメッセージのために、
-	* 現在呼び出しているオブジェクトとメソッド名を登録する。
+	* 現在呼び出しているオブジェクトとメソッド名とメンバネームスペースを登録する。
 	*/
-	void set_hint(const AnyPtr& object, const StringPtr& method_name){ 
-		ff().hint(object, method_name);
+	void set_hint(const AnyPtr& object, const StringPtr& method_name, const AnyPtr& ns){ 
+		ff().hint(object, method_name, ns);
 	}
 	
 
@@ -547,11 +547,14 @@ public:
 		// オブジェクト化した引数。
 		Innocence arguments_;
 		
-		// デバッグメッセージ出力用のヒント
+		// デバッグメッセージ出力用のヒント 主にレシーバオブジェクトが格納されている
 		Innocence hint1_;
 		
-		// デバッグメッセージ出力用のヒント
+		// デバッグメッセージ出力用のヒント 主にメンバ名が格納されている
 		Innocence hint2_;
+
+		// デバッグメッセージ出力用のヒント 主にメンバネームスペースが格納されている
+		Innocence hint3_;
 
 		void set_null(){
 			set_null_force(fun_); 
@@ -561,6 +564,7 @@ public:
 			set_null_force(arguments_);
 			set_null_force(hint1_);
 			set_null_force(hint2_);
+			set_null_force(hint3_);
 		}
 
 		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
@@ -570,6 +574,7 @@ public:
 		const ArgumentsPtr& arguments() const{ return static_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint1() const{ return ap(hint1_); }
 		const StringPtr& hint2() const{ return static_ptr_cast<String>(ap(hint2_)); }
+		const StringPtr& hint3() const{ return static_ptr_cast<String>(ap(hint3_)); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
@@ -580,7 +585,7 @@ public:
 		void variable(int_t i, const Innocence& v){ variables_[i] = v; }
 		void self(const Innocence& v){ self_ = v; }
 		void arguments(const Innocence& v){ arguments_ = v; }
-		void hint(const Innocence& v1, const Innocence& v2){ hint1_ = v1; hint2_ = v2; }
+		void hint(const Innocence& v1, const Innocence& v2, const Innocence& v3){ hint1_ = v1; hint2_ = v2; hint3_ = v3; }
 
 		void inc_ref();
 		void dec_ref();

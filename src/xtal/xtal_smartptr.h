@@ -112,7 +112,7 @@ public:
 	SmartPtr(check_xtype<double>::type v){ set_f((float_t)v); }
 	SmartPtr(check_xtype<long double>::type v){ set_f((float_t)v); }
 
-protected:
+public:
 
 	SmartPtr(PT, Base* p)
 		:Innocence(p){
@@ -122,6 +122,8 @@ protected:
 	SmartPtr(NC, Base* p)
 		:Innocence(p){
 	}
+
+protected:
 
 	void inc_ref_count(){
 		if(type(*this)==TYPE_BASE){
@@ -134,13 +136,6 @@ protected:
 			pvalue(*this)->dec_ref_count();
 		}
 	}
-
-public:
-
-	/**
-	* @brief T*からSmartPtr<T>を取り出す。
-	*/
-	static AnyPtr from_this(Base* p){ return AnyPtr(PT(), p); }
 
 public:
 
@@ -254,18 +249,6 @@ private:
 public:
 
 	/**
-	* @brief T*からSmartPtr<T>を取り出す。
-	*/
-	static SmartPtr<T> from_this(T* p){ return from_this2(SmartPtrSelector<InheritedN<T>::value>(), p); }
-
-	/**
-	* @brief T*をカウントせずにスマートポインタに格納する
-	*/
-	static SmartPtr<T> nocount(T* p){ return nocount2(SmartPtrSelector<InheritedN<T>::value>(), p); }
-
-public:
-
-	/**
 	* @brief ->演算子
 	* スマートポインタとして扱うために。
 	*/
@@ -292,13 +275,13 @@ private:
 
 public:
 
-	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_BASE>, T* p){ return SmartPtr<T>(PT(), (Base*)p); }
-	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
-	static SmartPtr<T> from_this2(SmartPtrSelector<INHERITED_OTHER>, T* p){ return SmartPtr<T>(PT(), ((Base*)p - 1)); }
+	SmartPtr(PT pt, SmartPtrSelector<INHERITED_BASE>, T* p):SmartPtr<Any>(pt, (Base*)p){}
+	SmartPtr(PT pt, SmartPtrSelector<INHERITED_INNOCENCE>, T* p):SmartPtr<Any>(*(SmartPtr<Any>*)p){}
+	SmartPtr(PT pt, SmartPtrSelector<INHERITED_OTHER>, T* p):SmartPtr<Any>(PT(), ((Base*)p - 1)){}
 
-	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_BASE>, T* p){ return SmartPtr<T>(NC(), p); }
-	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ return *(SmartPtr<T>*)p; }
-	static SmartPtr<T> nocount2(SmartPtrSelector<INHERITED_OTHER>, T* p){ return SmartPtr<T>(NC(), ((Base*)p - 1)); }
+	SmartPtr(NC nc, SmartPtrSelector<INHERITED_BASE>, T* p):SmartPtr<Any>(nc, (Base*)p){}
+	SmartPtr(NC nc, SmartPtrSelector<INHERITED_INNOCENCE>, T* p):SmartPtr<Any>(*(SmartPtr<Any>*)p){}
+	SmartPtr(NC nc, SmartPtrSelector<INHERITED_OTHER>, T* p):SmartPtr<Any>(nc, ((Base*)p - 1)){}
 
 	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
@@ -444,36 +427,74 @@ public:
 	}
 };
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T>
 SmartPtr<T> xnew(){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>());
 }
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T, class A0>
 SmartPtr<T> xnew(const A0& a0){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0);
 }
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T, class A0, class A1>
 SmartPtr<T> xnew(const A0& a0, const A1& a1){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1);
 }
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T, class A0, class A1, class A2>
 SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2);
 }
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T, class A0, class A1, class A2, class A3>
 SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3);
 }
 
+/**
+* @brief Tオブジェクトを生成する
+*/
 template<class T, class A0, class A1, class A2, class A3, class A4>
 SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 
+
+/**
+* @brief thisポインタをSmartPtr<T>に変換する
+*/
+template<class T>
+inline SmartPtr<T> from_this(T* p){
+	return SmartPtr<T>(PT(), SmartPtrSelector<InheritedN<T>::value>(), p);
+}
+
+inline AnyPtr from_this(Base* p){
+	return AnyPtr(PT(), p);
+}
+
+/**
+* @brief T*を参照カウンタを上げずにSmartPtr<T>に変換する
+*/
+template<class T>
+inline SmartPtr<T> nocount(T* p){
+	return SmartPtr<T>(NC(), SmartPtrSelector<InheritedN<T>::value>(), p);
+}
 
 template<>
 struct SmartPtrCtor1<String>{

@@ -40,7 +40,7 @@ public:
 	* @brief 配列の長さを返す
 	*
 	*/
-	int_t size(){
+	uint_t size(){
 		return size_;
 	}
 
@@ -53,7 +53,7 @@ public:
 	* @brief 配列の長さを返す
 	*
 	*/
-	int_t length(){
+	uint_t length(){
 		return size_;
 	}
 
@@ -195,7 +195,7 @@ public:
 	*
 	*/
 	ArrayPtr to_a(){
-		return ArrayPtr::from_this(this);
+		return from_this(this);
 	}
 
 	bool op_eq(const ArrayPtr& other);

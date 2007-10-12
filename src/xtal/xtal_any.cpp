@@ -288,7 +288,7 @@ void Any::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& 
 
 void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
-	vm->set_hint(cls, name);
+	vm->set_hint(cls, name, ns);
 	const AnyPtr& ret = member_cache_table.cache(cls, name, ns, self, inherited_too);
 	if(rawne(ret, nop)){
 		vm->set_arg_this(ap(*this));

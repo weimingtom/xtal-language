@@ -126,7 +126,7 @@ public:
 				all = false;
 		}
 		if(all){
-			vm->return_result(SmartPtr<ZipIter>::from_this(this), value);
+			vm->return_result(from_this(this), value);
 		}else{
 			vm->return_result(null);
 		}
@@ -166,7 +166,6 @@ void InitZipIter(){
 	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
 	p->inherit(Iterator());
 	p->def("new", ctor<ZipIter, const VMachinePtr&>());
-	p->method("block_first", &ZipIter::block_next);
 	p->method("block_next", &ZipIter::block_next);
 	p->method("block_break", &ZipIter::block_break);
 }

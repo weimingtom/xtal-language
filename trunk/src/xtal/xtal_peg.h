@@ -43,6 +43,11 @@ public:
 		mark.read_pos = pos_;
 		mark.value_pos = results_->size();
 		mark.lineno = lineno_;
+
+		if(~0 == marked_){
+			marked_ = pos_;
+		}
+
 		return mark;
 	}
 
@@ -62,6 +67,9 @@ public:
 	}
 
 	void seek(uint_t pos){
+		if(pos_ < pos){
+			peek(pos - pos_);
+		}
 		pos_ = pos;
 	}
 
@@ -81,6 +89,9 @@ public:
 		return errors_->each();
 	}
 
+	/**
+	* @brief nŒÂæ‚Ì—v‘f‚ğ”`‚«Œ©‚é
+	*/
 	const AnyPtr& peek(uint_t n = 0){
 		uint_t bufsize = buf_->size();
 		uint_t bufmask = bufsize - 1;
@@ -120,6 +131,9 @@ public:
 		return buf_->at((pos_+n)&bufmask);
 	}
 
+	/**
+	* @brief ‚Ğ‚Æ‚Â“Ç‚İæ‚é
+	*/
 	const AnyPtr& read(){
 		const AnyPtr& ret = peek();
 		if(raweq(ret, newline_ch_)){
@@ -129,6 +143,9 @@ public:
 		return  ret;
 	}
 
+	/**
+	* @brief value‚Æ“™‚µ‚¢ê‡‚É“Ç‚İ”ò‚Î‚·
+	*/
 	bool eat(const AnyPtr& value){
 		const AnyPtr& ret = peek();
 		if(raweq(ret, value)){
@@ -146,11 +163,16 @@ public:
 		return pos_==read_;
 	}
 
+	/**
+	* @brief n•¶š“Ç‚İ”ò‚Î‚·
+	*/
 	void skip(uint_t n){
 		for(uint_t i=0; i<n; ++i){
 			read();
 		}
 	}
+
+public:
 
 	void push_result(const AnyPtr& v){
 		if(!ignore_nest_){
@@ -163,6 +185,24 @@ public:
 		results_->pop_back();
 		return temp;
 	}
+
+public:
+
+	Mark begin_record(){
+		return mark();
+	}
+
+	StringPtr end_record(const Mark& mark){
+		uint_t mask = buf_->size()-1;
+		mm_->clear();
+		for(uint_t i=mark.read_pos; i<pos_; ++i){
+			mm_->put_s(buf_->at(i & mask)->to_s());
+		}
+		unmark(mark);
+		return mm_->to_s();
+	}
+
+public:
 
 	Mark begin_join(){
 		join_nest_++;
@@ -299,16 +339,7 @@ public:
 	StreamScanner(const StreamPtr& stream)
 		:stream_(stream){}
 
-	virtual int_t do_read(AnyPtr* buffer, int_t max){
-		for(int_t i=0; i<max; ++i){
-			if(stream_->eof()){
-				return i;
-			}
-
-			buffer[i] = stream_->get_s(1);
-		}
-		return max;
-	}
+	virtual int_t do_read(AnyPtr* buffer, int_t max);
 
 private:
 	StreamPtr stream_;
@@ -359,6 +390,8 @@ AnyPtr not_(const AnyPtr& p);
 AnyPtr sub(const AnyPtr& a, const AnyPtr& b);
 AnyPtr act(const AnyPtr& a, const AnyPtr& b);
 AnyPtr actmv(const AnyPtr& a, const AnyPtr& b);
+
+AnyPtr re(const AnyPtr& pattern);
 
 
 extern AnyPtr success;

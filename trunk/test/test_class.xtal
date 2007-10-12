@@ -3,7 +3,11 @@
 Foo: class{
 	+ _pub: 100;
 	# _pro: 200;
-	- _pri: 300; 
+	- _pri: 300;
+	
+	hoge: 555;
+	
+	foo: fun hoge;
 }
 
 Bar: class(Foo){
@@ -52,6 +56,9 @@ Bar: class(Foo){
 	
 	Bar::pro: method(){ return 200; }
 	assert b.pro==200;
+	
+	assert Bar::hoge==555;
+	assert Bar::foo()==555;
 }
 
 

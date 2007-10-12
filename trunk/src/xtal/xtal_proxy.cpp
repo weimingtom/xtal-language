@@ -6,7 +6,7 @@
 namespace xtal{
 
 const AtProxy& AtProxy::operator =(const AnyPtr& value){
-	obj->send(Xid(set_at))(key, value);
+	obj->send(Xid(set_at), key->get_class())(key, value);
 	return *this;
 }
 
@@ -15,27 +15,21 @@ AtProxy Innocence::operator[](const AnyPtr& key) const{
 }
 
 AtProxy::operator const AnyPtr&(){
-	return obj = obj->send(Xid(at))(key);
+	return obj = obj->send(Xid(op_at), key->get_class())(key);
 }
 
 const AnyPtr& AtProxy::operator ->(){
-	return obj = obj->send(Xid(at))(key);
+	return obj = obj->send(Xid(op_at), key->get_class())(key);
 }
 
-
-SendProxy::operator const AnyPtr&(){
-	return operator()();
-}
-
-const AnyPtr& SendProxy::operator ->(){
-	return operator()();
-}
-
-const AnyPtr& SendProxy::operator()(){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	obj->rawsend(vm, name, ns);
-	return obj = vm->result_and_cleanup_call();
+void SendProxy::execute(){
+	if(name){
+		const VMachinePtr& vm = vmachine();
+		vm->setup_call(1);
+		obj->rawsend(vm, name, ns);
+		name = null;
+		obj = vm->result_and_cleanup_call();
+	}
 }
 
 }

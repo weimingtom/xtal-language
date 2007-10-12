@@ -64,10 +64,16 @@ AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, con
 		));	}
 }
 
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member){
-	return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-		Named("object", name), Named("name", (member ? member : AnyPtr("()")))
-	));
+AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr& ns){
+	if(raweq(ns, null)){
+		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
+			Named("object", name), Named("name", (member ? member : AnyPtr("()")))
+		));
+	}else{
+		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
+			Named("object", name), Named("name", (member ? member : AnyPtr("()"))), Named("ns", ns)
+		));
+	}
 }
 namespace{
 	void default_except_handler(const AnyPtr& except, const char* file, int line){

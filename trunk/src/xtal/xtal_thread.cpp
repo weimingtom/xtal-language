@@ -421,7 +421,7 @@ void Thread::visit_members(Visitor& m){
 }
 
 void Thread::begin_thread(){
-	thread_entry(ThreadPtr::from_this(this));
+	thread_entry(from_this(this));
 	callback_ = null;	
 	dec_ref_count();
 }

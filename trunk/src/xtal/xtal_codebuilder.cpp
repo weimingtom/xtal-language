@@ -1833,12 +1833,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_MASSIGN){
-			int_t pushed_count = 0;
+			uint_t pushed_count = 0;
 
 			ArrayPtr lhs = e->massign_lhs_exprs();
 			ArrayPtr rhs = e->massign_rhs_exprs();
 
-			for(int_t r=0; r<rhs->size(); ++r){	
+			for(uint_t r=0; r<rhs->size(); ++r){	
 				if(r==rhs->size()-1){
 					int_t rrc;
 					if(pushed_count<lhs->size()){

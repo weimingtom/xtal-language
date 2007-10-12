@@ -56,11 +56,18 @@ void debug_line(const SmartPtr<debug::Info>& info){
 
 //#include <crtdbg.h>
 
+
+
+
+namespace xtal{ namespace peg{
+bool reg_match(const StreamPtr& src, const ScannerPtr& scanner);
+}}
+
 struct PointSelf : public Base{
 	AnyPtr self;
 
 	PointSelf(int n = 0){
-		self = AnyPtr::from_this(this);
+		self = from_this(this);
 	}
 
 	virtual void visit_members(Visitor& m){
@@ -72,9 +79,19 @@ struct PointSelf : public Base{
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
-	try{
+	using namespace xtal::peg;
 
+	try{
 		initialize();
+
+		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aaaaaaabbbbc"));
+		StreamPtr st = xnew<StringStream>(".*b");
+
+		bool b = reg_match(st, ss);
+		
+		if(b){
+			ss->results()->p();
+		}
 
 		xnew<PointSelf>();
 		xnew<PointSelf>(10);
@@ -102,10 +119,9 @@ AnyPtr ret = Xsrc
 
 filelocal.inherit(builtin::peg);
 
-
-[4: 10][4].p;
-
 %f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
+
+10.times.reverse[].p;
 
 [10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
   it.p;
@@ -113,6 +129,14 @@ filelocal.inherit(builtin::peg);
 //=> (a)
 //=> (b)
 //=> (c)
+
+mark: class{};
+
+Any::nnn#mark: method(){
+	return "test!!!!!!";
+}
+
+"tetst".nnn#mark.p;
 
 "test-te:st-teste".split("-" | ":")[].p;
  "aa/ai/ii7uuu".scan(peg::ch_alpha*1)[].p;
@@ -198,7 +222,7 @@ int c;
 		fprintf(stderr, "%s\n", e->to_s()->c_str());
 	}
 
-	vmachine().get()->print_info();
+	vmachine()->print_info();
 	print_result_of_cache();
 
 	uninitialize();

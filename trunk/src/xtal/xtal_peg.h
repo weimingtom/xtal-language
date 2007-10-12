@@ -61,6 +61,14 @@ public:
 		}
 	}
 
+	void seek(uint_t pos){
+		pos_ = pos;
+	}
+
+	uint_t pos(){
+		return pos_;
+	}
+
 	uint_t lineno(){
 		return lineno_;
 	}

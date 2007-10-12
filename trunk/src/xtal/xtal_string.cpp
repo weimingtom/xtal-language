@@ -109,7 +109,7 @@ public:
 		for(;;){
 			peg::parse_scanner(pattern_, scanner_);
 			if(scanner_->success()){
-				vm->return_result(SmartPtr<StringScanIter>::from_this(this), scanner_->pop_result());
+				vm->return_result(from_this(this), scanner_->pop_result());
 				return;
 			}else{
 				scanner_->read();
@@ -141,7 +141,7 @@ public:
 			return vm->return_result(null);
 		}
 
-		vm->return_result(SmartPtr<StringEachIter>::from_this(this), ss_->get_s(1));
+		vm->return_result(from_this(this), ss_->get_s(1));
 	}
 };
 
@@ -468,7 +468,7 @@ uint_t String::size(){
 }
 
 StringPtr String::clone(){
-	return StringPtr::from_this(this);
+	return from_this(this);
 }
 
 const InternedStringPtr& String::intern(){
@@ -490,7 +490,7 @@ bool String::is_interned(){
 }
 
 StringPtr String::to_s(){
-	return StringPtr::from_this(this);
+	return from_this(this);
 }
 
 int_t String::to_i(){ 
@@ -502,17 +502,17 @@ float_t String::to_f(){
 }
 
 AnyPtr String::split(const AnyPtr& sep){
-	return xnew<StringScanIter>(StringPtr::from_this(this), 
+	return xnew<StringScanIter>(from_this(this), 
 		peg::join((peg::any - sep)*0) >> ~sep*-1
 	);
 }
 
 AnyPtr String::each(){
-	return xnew<StringEachIter>(StringPtr::from_this(this));
+	return xnew<StringEachIter>(from_this(this));
 }
 	
 AnyPtr String::scan(const AnyPtr& p){
-	return xnew<StringScanIter>(StringPtr::from_this(this), 
+	return xnew<StringScanIter>(from_this(this), 
 		peg::join(p)
 	);
 }
@@ -521,7 +521,7 @@ AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
 	AnyPtr elem = peg::sub(peg::any, pattern)*0;
 	peg::ScannerPtr scanner = peg::parse_string(peg::join(
 		elem >> (~pattern >> peg::val(str) >> elem)*0
-	), StringPtr::from_this(this));
+	), from_this(this));
 
 	return scanner->success() ? scanner->pop_result() : "";
 }

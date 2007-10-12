@@ -430,7 +430,7 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
-				vm->push(FiberPtr::from_this(fun));
+				vm->push(from_this(fun));
 			}else{
 				vm->push(null);
 			}
@@ -563,7 +563,7 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 
 void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 	if(!named_arg_count){
-		for(int_t i = 0; i<args->ordered_->size(); ++i){
+		for(uint_t i = 0; i<args->ordered_->size(); ++i){
 			push(args->ordered_->at(i));
 		}
 	}else{
@@ -1066,7 +1066,7 @@ XTAL_VM_SWITCH{
 			if(rawne(ret, nop)){
 				set(ret);
 			}else{
-				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name, ap(ns)));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -1910,7 +1910,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2());
+			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2(), ff().hint3());
 		}
 		XTAL_VM_EXCEPT(last_except_);
 	}

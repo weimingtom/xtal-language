@@ -58,7 +58,7 @@ CFunPtr CFun::param(
 		}
 	}
 
-	return CFunPtr::from_this(this);
+	return from_this(this);
 }
 
 void CFun::visit_members(Visitor& m){

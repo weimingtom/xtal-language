@@ -319,7 +319,7 @@ xtal_re.o: ../src/xtal/xtal_re.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_frame.h ../src/xtal/xtal_iterator.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_except.h ../src/xtal/xtal_proxy.h \
-  ../src/xtal/xtal_peg.h
+  ../src/xtal/xtal_peg.h ../src/xtal/xtal_macro.h
 xtal_serializer.o: ../src/xtal/xtal_serializer.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_fwd.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_any.h ../src/xtal/xtal_array.h \

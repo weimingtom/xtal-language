@@ -94,16 +94,14 @@ int main2(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 	
-		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aaaÅ@abbbbaabbbb"));
-		StreamPtr st = xnew<StringStream>("a*");
+		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aerawerfÇ†Ç¢Ç§Ç¶Ç®aeer"));
+		StreamPtr st = xnew<StringStream>("\\w+[Ç†-Ç®a]+.");
 
 		bool b = reg_match(st, ss);
 		
 		if(b){
 			//ss->results()->p();
 		}
-
-		//make_range("Ç†", 2, "Ç®", 2)->to_a()->p();
 
 AnyPtr ret = Xsrc
 ((

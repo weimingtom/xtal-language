@@ -116,7 +116,6 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
-
 template<class T>
 struct TypeValue{ 
 	T val; 
@@ -145,6 +144,9 @@ struct Alloc;
 
 typedef char char_t;
 typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
+
+/// unsigned char_t
+typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
 
 
 /**

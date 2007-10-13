@@ -24,7 +24,7 @@ xtal: libxtal ../src/xtal/main.cpp
 	strip --strip-all ../bin/xtal.exe
 
 ix: libxtal ../src/xtal/ixmain.cpp
-	$(CC) -o ../bin/ix.exe ../xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT)
+	$(CC) -o ../bin/ix.exe ../src/xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT)
 	strip --strip-all ../bin/ix.exe
 
 .PHONY : clean

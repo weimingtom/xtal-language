@@ -92,20 +92,9 @@ int main2(int argc, char** argv){
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-
-		{
-			StringPtr path(argv[0]);
-
-			ArrayPtr temp = cast<ArrayPtr>(path->split(peg::P("\\") | peg::P("/") | peg::P("::"))->send("to_a"));
-			temp->pop_back();
-			temp->push_back("message.xtal");
-
-			path = temp->join("/")->to_s();
-			add_text_map(cast<MapPtr>(load(path)));
-		}
 	
-		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("test"));
-		StreamPtr st = xnew<StringStream>("t(e|s)*t");
+		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aaaÅ@abbbbaabbbb"));
+		StreamPtr st = xnew<StringStream>("a*");
 
 		bool b = reg_match(st, ss);
 		
@@ -119,8 +108,6 @@ AnyPtr ret = Xsrc
 filelocal.inherit(builtin::peg);
 
 %f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
-
-10.times.reverse[].p;
 
 [10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
   it.p;

@@ -14,6 +14,7 @@
 
 #define XTAL_USE_PREDEFINED_ID
 
+
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG
 #endif

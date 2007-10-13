@@ -131,6 +131,10 @@ public:
 		table_.clear();
 	}
 	
+	MapPtr to_m(){
+		return from_this(this);
+	}
+
 	void push_all(const VMachinePtr& vm);
 
 protected:

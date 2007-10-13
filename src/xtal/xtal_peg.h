@@ -390,6 +390,7 @@ AnyPtr not_(const AnyPtr& p);
 AnyPtr sub(const AnyPtr& a, const AnyPtr& b);
 AnyPtr act(const AnyPtr& a, const AnyPtr& b);
 AnyPtr actmv(const AnyPtr& a, const AnyPtr& b);
+AnyPtr neg(const AnyPtr& p);
 
 AnyPtr re(const AnyPtr& pattern);
 

@@ -6,7 +6,7 @@
 namespace xtal{
 	
 /**
-* @brief 先頭バイトから、そのマルチバイト文字が何文字かを調べる。
+* @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
 * マイナスの値が返された場合、最低文字数を返す。
 * -2の場合、最低2文字以上の文字で、本当の長さは2文字目を読まないと判断できない、という意味となる。
 */
@@ -19,10 +19,6 @@ int_t ch_len(char_t lead);
 */
 int_t ch_len2(const char_t* str);
 
-
-void set_code_sjis();
-void set_code_euc();
-void set_code_utf8();
 
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;
@@ -60,10 +56,19 @@ inline bool test_delim(int ch){
 	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
 }
 
+void set_code_sjis();
+void set_code_euc();
+void set_code_utf8();
 
-inline int to_lalpha(int ch){
-	using namespace std;
-	return tolower(ch);
-}
+class CodeLib{
+public:
+	virtual ~CodeLib(){}
+	virtual void initialize(){}
+	virtual int_t ch_len(char_t lead) = 0;
+	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
+	//virtual AnyPtr range(const char_t* begin, int_t begin_size, const char_t* end, int_T end_size);
+};
+
+void set_code(CodeLib& lib);
 
 }

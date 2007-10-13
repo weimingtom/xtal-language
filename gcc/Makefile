@@ -4,10 +4,10 @@ OPT = -O3 -DNDEBUG -fno-rtti
 
 .SUFFIXES: .cpp .o 
 
-SRC = $(shell ls ../xtal/xtal_*.cpp)
-OBJ = $(patsubst ../xtal/%.cpp,%.o,$(SRC))
+SRC = $(shell ls ../src/xtal/xtal_*.cpp)
+OBJ = $(patsubst ../src/xtal/%.cpp,%.o,$(SRC))
 
-%.o: ../xtal/%.cpp
+%.o: ../src/xtal/%.cpp
 	$(CC) -c $< $(OPT)
 	
 all: libxtal ix xtal
@@ -19,11 +19,11 @@ libxtal: $(OBJ)
 	ar r libxtal.a $(OBJ)
 	ranlib libxtal.a
 
-xtal: libxtal ../xtal/main.cpp
-	$(CC) -o ../bin/xtal.exe ../xtal/main.cpp libxtal.a -lstdc++ $(OPT)
+xtal: libxtal ../src/xtal/main.cpp
+	$(CC) -o ../bin/xtal.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
 	strip --strip-all ../bin/xtal.exe
 
-ix: libxtal ../xtal/ixmain.cpp
+ix: libxtal ../src/xtal/ixmain.cpp
 	$(CC) -o ../bin/ix.exe ../xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT)
 	strip --strip-all ../bin/ix.exe
 
@@ -32,8 +32,8 @@ ix: libxtal ../xtal/ixmain.cpp
 clean:
 	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe
 
-prof: libxtal ../xtal/main.cpp
-	$(CC) -o ../bin/prof.exe ../xtal/main.cpp libxtal.a -lstdc++ $(OPT)
+prof: libxtal ../src/xtal/main.cpp
+	$(CC) -o ../bin/prof.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
 	../bin/prof.exe ../bench/array_for.xtal
 	gprof ../bin/prof.exe gmon.out -p > prof.txt
 

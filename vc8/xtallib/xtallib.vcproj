@@ -43,7 +43,8 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				ExceptionHandling="1"
 				RuntimeLibrary="1"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="1"
+				PrecompiledHeaderThrough="xtal.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
@@ -172,7 +173,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_basic_type.cpp"
+				RelativePath="..\..\src\xtal\xtal_basictype.cpp"
 				>
 			</File>
 			<File
@@ -205,14 +206,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_except.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\xtal\xtal_expr.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\xtal\xtal_format.cpp"
 				>
 			</File>
 			<File
@@ -252,11 +245,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_serializer.cpp"
+				RelativePath="..\..\src\xtal\xtal_re.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_smartptr.cpp"
+				RelativePath="..\..\src\xtal\xtal_serializer.cpp"
 				>
 			</File>
 			<File
@@ -269,6 +262,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_string.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_text.cpp"
 				>
 			</File>
 			<File
@@ -346,10 +343,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_format.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\xtal\xtal_frame.h"
 				>
 			</File>
@@ -398,6 +391,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_re.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_serializer.h"
 				>
 			</File>
@@ -415,6 +412,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_string.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_text.h"
 				>
 			</File>
 			<File

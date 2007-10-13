@@ -5,6 +5,8 @@
 
 namespace xtal{ namespace peg{
 
+class Parts;
+
 /**
 * @brief 
 */

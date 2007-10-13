@@ -3,9 +3,7 @@
 #include "xtal_peg.h"
 #include "xtal_macro.h"
 	
-namespace xtal{ 
-	
-namespace peg{
+namespace xtal{ namespace peg{
 
 enum PartsType{
 	PARTS_TEST_STRING,

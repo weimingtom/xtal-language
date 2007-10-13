@@ -67,17 +67,25 @@ public:
 AnyPtr CodeLib::make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size){
 	SetPtr set = xnew<Set>();
 
-	u8* a = (u8*)begin;
-	u8* b = (u8*)end;
+	uchar_t* a = (uchar_t*)begin;
+	uchar_t* b = (uchar_t*)end;
 	int_t as = begin_size;
 	int_t bs = end_size;
-	u8 buf[16] = {0};
+	uchar_t buf[16] = {0};
+
+	if(bs < as){
+		return set;
+	}
 	
 	int_t offset = bs - as;
-	memcpy(buf+offset, a, as);
+	memcpy(buf+offset, a, as*sizeof(uchar_t));
+
+	if(memcmp(buf, b, bs)>0){
+		return set;
+	}
 
 	set->set_at((char_t*)(buf+offset), true);
-	while(memcmp(buf, b, bs)!=0){
+	while(memcmp(buf, b, bs*sizeof(uchar_t))!=0){
 		for(int_t i=bs-1; i>=0; --i){
 			buf[i]++;
 			if(buf[i]==0){

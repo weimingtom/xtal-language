@@ -14,7 +14,7 @@ void initialize_basic_type();
 void initialize_code();
 void initialize_frame();
 void initialize_debug();
-void initialize_format();
+void initialize_text();
 void initialize_fun();
 void initialize_thread();
 void initialize_math();
@@ -152,11 +152,11 @@ void initialize(){
 	initialize_code();
 	initialize_frame();
 	initialize_debug();
-	initialize_format();
 	initialize_math();
 	initialize_stream();
 	initialize_peg();
 	initialize_thread();
+	initialize_text();
 	
 	atexit(&uninitialize); // uninitialize
 

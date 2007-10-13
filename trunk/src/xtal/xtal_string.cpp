@@ -737,7 +737,7 @@ InternedString::InternedString(char_t a, char_t b, char_t c)
 }
 
 InternedString::InternedString(const StringPtr& name)
-	:String(*(name ? name->intern() : name)){}
+	:String(*(name ? name->intern() : (const InternedStringPtr&)name)){}
 
 
 AnyPtr SmartPtrCtor1<InternedString>::call(type v){
@@ -745,7 +745,8 @@ AnyPtr SmartPtrCtor1<InternedString>::call(type v){
 }
 
 AnyPtr SmartPtrCtor2<InternedString>::call(type v){
-	return v ? v->intern() : v;
+	if(v) return v;
+	return v->intern();
 }
 
 #ifdef XTAL_USE_PREDEFINED_ID

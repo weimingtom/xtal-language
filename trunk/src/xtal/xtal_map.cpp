@@ -53,6 +53,7 @@ void initialize_map(){
 		
 		p->def("new", ctor<Map>());
 		p->method("to_s", &Map::to_s);
+		p->method("to_m", &Map::to_m);
 		p->method("size", &Map::size);
 		p->method("length", &Map::length);
 		p->method("insert", &Map::insert);

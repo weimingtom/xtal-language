@@ -172,7 +172,7 @@ enum PrimitiveType{
 /**
 * @brief ブロックの種類
 */
-enum{
+enum BlockKind{
 	KIND_BLOCK,
 	KIND_CLASS,
 	KIND_SINGLETON,
@@ -186,7 +186,7 @@ enum{
 /**
 * @brief 文字列の種類
 */
-enum{
+enum StringKind{
 	KIND_STRING,
 	KIND_TEXT,
 	KIND_FORMAT
@@ -195,7 +195,7 @@ enum{
 /**
 * @brief 可触性の種類
 */
-enum{
+enum AccessibilityKind{
 	KIND_PUBLIC = 0,
 	KIND_PROTECTED = 1<<0,
 	KIND_PRIVATE = 1<<1,
@@ -204,7 +204,7 @@ enum{
 /**
 * @brief ブレークポイントの種類
 */
-enum{
+enum BreakPointKind{
 	BREAKPOINT_LINE,
 	BREAKPOINT_CALL,
 	BREAKPOINT_RETURN

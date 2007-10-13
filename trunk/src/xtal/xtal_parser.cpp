@@ -816,8 +816,6 @@ enum{//Expressions priority
 		PRI_MEMBER = PRI_AT,
 		PRI_CALL = PRI_AT,
 		PRI_NS = PRI_AT,
-		PRI_TO_A = PRI_AT,
-		PRI_TO_M = PRI_AT,	
 
 	PRI_ONCE,
 		PRI_STATIC = PRI_ONCE,
@@ -1158,17 +1156,13 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				}
 
 				XTAL_CASE('['){
-					if(eat(':')){
-						expect(']');
-						if(pri < PRI_TO_M - l_space){
+					if(pri < PRI_AT - l_space){
+						if(eat(':')){
+							expect(']');
 							ret = send(lineno(), lhs, Xid(to_m));
-						}
-					}else if(eat(']')){
-						if(pri < PRI_TO_A - l_space){
+						}else if(eat(']')){
 							ret = send(lineno(), lhs, Xid(to_a));
-						}
-					}else{
-						if(pri < PRI_AT - l_space){
+						}else{
 							ret = bin(EXPR_AT, ln, lhs, parse_expr_must());
 							expect(']');
 						}

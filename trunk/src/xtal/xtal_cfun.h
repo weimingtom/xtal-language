@@ -809,8 +809,8 @@ CFunPtr method(R (*f)(C), const Policy&){
 template<class C, class R, class A0, class Policy>
 CFunPtr method(R (*f)(C, A0), const Policy&){
 	enum{ V = IsSame<A0, const VMachinePtr&>::value };
-	if(V)xnew<CFunArgs>(&detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
-	return xnew<CFun>(&detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
+	if(V)return xnew<CFunArgs>(detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
+	return xnew<CFun>(detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1);
 }
 
 template<class C, class R, class A0, class A1, class Policy>

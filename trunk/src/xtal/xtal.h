@@ -34,7 +34,7 @@ namespace xtal{
 #include "xtal_smartptr.h"
 #include "xtal_debug.h"
 #include "xtal_except.h"
-#include "xtal_format.h"
+#include "xtal_text.h"
 #include "xtal_proxy.h"
 
 

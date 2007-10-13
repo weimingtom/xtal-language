@@ -1328,7 +1328,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			}else{ 
 				put_inst(InstValue(register_value(value)));
 			}
-		}
+		} 
 
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){

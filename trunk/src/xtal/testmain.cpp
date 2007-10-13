@@ -1,6 +1,7 @@
 
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_ch.h"
 
 using namespace xtal;
 
@@ -102,12 +103,17 @@ int main2(int argc, char** argv){
 			//ss->results()->p();
 		}
 
+		//make_range("‚ ", 2, "‚¨", 2)->to_a()->p();
+
 AnyPtr ret = Xsrc
 ((
 
+ 
 filelocal.inherit(builtin::peg);
+"33".p;
 
 %f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
+"33".p;
 
 [10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
   it.p;
@@ -139,11 +145,11 @@ int c;
 
 		/*		
 		c = clock();
-		load("../bench/vec.xtal");
+		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		
 		
 		c = clock();
-		load("../bench/inst.xtal");
+		load("../../bench/inst.xtal");
 		printf("inst %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
@@ -151,27 +157,27 @@ int c;
 		printf("full_gc %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/loop.xtal");
+		load("../../bench/loop.xtal");
 		printf("loop %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/nested_loops.xtal");
+		load("../../bench/nested_loops.xtal");
 		printf("nested_loops %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/fib.xtal");
+		load("../../bench/fib.xtal");
 		printf("fib %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/loop_iter.xtal");
+		load("../../bench/loop_iter.xtal");
 		printf("loop_iter %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/array_for.xtal");
+		load("../../bench/array_for.xtal");
 		printf("array_for %g\n\n", (clock()-c)/1000.0f);
 
 		c = clock();
-		load("../bench/array_each.xtal");
+		load("../../bench/array_each.xtal");
 		printf("array_each %g\n\n", (clock()-c)/1000.0f);
 
 		//*/
@@ -179,26 +185,26 @@ int c;
 		//*
 
 
-		load("../test/test_empty.xtal");
-		load("../test/test_array.xtal");
+		load("../../test/test_empty.xtal");
+		load("../../test/test_array.xtal");
 		//compile_file("../test/test_float.xtal")->inspect()->p();
-		load("../test/test_float.xtal");
-		load("../test/test_class.xtal");
-		load("../test/test_multiple_values.xtal");
-		load("../test/test_except.xtal");
-		load("../test/test_fiber.xtal");
-		load("../test/test_fun.xtal");
+		load("../../test/test_float.xtal");
+		load("../../test/test_class.xtal");
+		load("../../test/test_multiple_values.xtal");
+		load("../../test/test_except.xtal");
+		load("../../test/test_fiber.xtal");
+		load("../../test/test_fun.xtal");
 		//compile_file("../test/test_iter.xtal")->inspect()->p();
-		load("../test/test_iter.xtal");
-		load("../test/test_fib.xtal");
-		load("../test/test_calc.xtal");
-		load("../test/test_for.xtal");
-		load("../test/test_if.xtal");
-		load("../test/test_nested_loops.xtal");
-		load("../test/test_assign.xtal");
-		load("../test/test_op_assign.xtal");
-		load("../test/test_inc.xtal");
-		load("../test/test_toplevel.xtal");
+		load("../../test/test_iter.xtal");
+		load("../../test/test_fib.xtal");
+		load("../../test/test_calc.xtal");
+		load("../../test/test_for.xtal");
+		load("../../test/test_if.xtal");
+		load("../../test/test_nested_loops.xtal");
+		load("../../test/test_assign.xtal");
+		load("../../test/test_op_assign.xtal");
+		load("../../test/test_inc.xtal");
+		load("../../test/test_toplevel.xtal");
 		//load("../test/test_serialize.xtal");*/
 		
 		//*/

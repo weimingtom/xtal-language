@@ -72,7 +72,15 @@ void initialize_map(){
 		p->def("op_cat_assign", method(&Map::cat_assign), get_cpp_class<Map>());
 	}
 
+	{
+		ClassPtr p = new_cpp_class<Set>("Set");
+		p->inherit(get_cpp_class<Map>());
+		
+		p->method("each", &Set::each);
+	}
+
 	builtin()->def("Map", get_cpp_class<Map>());
+	builtin()->def("Set", get_cpp_class<Set>());
 }
 
 void Map::visit_members(Visitor& m){

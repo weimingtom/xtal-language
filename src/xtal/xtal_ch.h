@@ -20,6 +20,9 @@ int_t ch_len(char_t lead);
 int_t ch_len2(const char_t* str);
 
 
+AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size);
+
+
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;
 }
@@ -66,7 +69,7 @@ public:
 	virtual void initialize(){}
 	virtual int_t ch_len(char_t lead) = 0;
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	//virtual AnyPtr range(const char_t* begin, int_t begin_size, const char_t* end, int_T end_size);
+	virtual AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size);
 };
 
 void set_code(CodeLib& lib);

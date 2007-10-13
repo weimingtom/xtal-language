@@ -6,13 +6,13 @@ namespace xtal{
 namespace{
 	MapPtr user_text_map_;
 
-	void uninitialize_format(){
+	void uninitialize_text(){
 		user_text_map_ = null;
 	}
 }
 
 void initialize_text(){
-	register_uninitializer(&uninitialize_format);
+	register_uninitializer(&uninitialize_text);
 	user_text_map_ = xnew<Map>();
 
 	{

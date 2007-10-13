@@ -221,6 +221,7 @@ typedef SmartPtr<Any> AnyPtr;
 
 class Array;
 class Map;
+class Set;
 class Stream;
 class MemoryStream;
 class FileStream;
@@ -250,6 +251,7 @@ class Text;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
+typedef SmartPtr<Set> SetPtr;
 typedef SmartPtr<Stream> StreamPtr;
 typedef SmartPtr<MemoryStream> MemoryStreamPtr;
 typedef SmartPtr<FileStream> FileStreamPtr;

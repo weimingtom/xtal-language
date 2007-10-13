@@ -745,8 +745,8 @@ AnyPtr SmartPtrCtor1<InternedString>::call(type v){
 }
 
 AnyPtr SmartPtrCtor2<InternedString>::call(type v){
-	if(v) return v;
-	return v->intern();
+	if(v) return v->intern();
+	return v;
 }
 
 #ifdef XTAL_USE_PREDEFINED_ID

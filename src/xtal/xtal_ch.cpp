@@ -63,6 +63,36 @@ public:
 
 ////////////////////////////////////////////////
 
+
+AnyPtr CodeLib::make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size){
+	SetPtr set = xnew<Set>();
+
+	u8* a = (u8*)begin;
+	u8* b = (u8*)end;
+	int_t as = begin_size;
+	int_t bs = end_size;
+	u8 buf[16] = {0};
+	
+	int_t offset = bs - as;
+	memcpy(buf+offset, a, as);
+
+	set->set_at((char_t*)(buf+offset), true);
+	while(memcmp(buf, b, bs)!=0){
+		for(int_t i=bs-1; i>=0; --i){
+			buf[i]++;
+			if(buf[i]==0){
+				offset = bs - i - 1;
+				continue;
+			}
+			break;
+		}
+
+		set->set_at((char_t*)(buf+offset), true);
+	}
+
+	return set;
+}
+
 namespace{
 
 #ifdef WIN32
@@ -84,6 +114,11 @@ int_t ch_len2(const char_t* str){
 	return code_lib_->ch_len2(str);
 }
 
+AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size){
+	return code_lib_->make_range(begin, begin_size, end, end_size);
+}
+
+
 void set_code_sjis(){
 	static SJISCodeLib code_lib;
 	code_lib_ = &code_lib;
@@ -102,5 +137,5 @@ void set_code_utf8(){
 void set_code(CodeLib& lib){
 	code_lib_ = &lib;
 }
-	
+
 }

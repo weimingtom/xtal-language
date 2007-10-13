@@ -172,5 +172,18 @@ protected:
 	virtual void visit_members(Visitor& m);
 };
 
+
+class Set : public Map{
+public:
+	/**
+	* @brief keyを要素とする、Iteratorを返す
+	*
+	* pairsと同じ
+	*/
+	AnyPtr each(){
+		return keys();
+	}
+};
+
 }//namespace
 

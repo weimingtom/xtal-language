@@ -249,7 +249,7 @@ Stack<T> &Stack<T>::operator =(const Stack<T> &a){
 
 	for(size_t i = 0, last = capacity(); i<last; ++i)
 		begin_[i].~T();
-	deallocate(begin_-1, sizeof(T)*(capacity()+1));
+	deallocate(begin_-1);
 
 	begin_ = newp;
 	current_ = begin_+a.size()-1;

@@ -3853,6 +3853,9 @@ void VMachine::visit_members(Visitor& m){
 }
 
 void VMachine::before_gc(){
+	stack_.fill_over();
+	fun_frames_.fill_over();
+
 	inc_ref_count_force(last_except_);
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){

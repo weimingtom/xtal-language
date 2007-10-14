@@ -16,13 +16,14 @@ public:
 		else{ named_ = xnew<Map>(); }
 	}
 
-	const AnyPtr& op_at(const AnyPtr& index){
-		if(type(index)==TYPE_INT){
-			return ordered_->at(index->to_i());
-		}
-		return named_->at(index); 
+	const AnyPtr& op_at_int(int_t index){
+		return ordered_->at(index);
 	}
-	
+
+	const AnyPtr& op_at_string(const StringPtr& key){
+		return named_->at(key); 
+	}
+
 	int_t length(){
 		return ordered_->length();
 	}

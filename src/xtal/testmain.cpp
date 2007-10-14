@@ -101,6 +101,8 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
  
+C: class{}
+
 filelocal.inherit(builtin::peg);
 "33".p;
 

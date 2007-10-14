@@ -387,7 +387,7 @@ uint_t Any::hashcode() const{
 bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
-	return is_inherited_cache_table.cache(my_class, klass);
+	return is_inherited_cache_table.cache(my_class, klass)!=0;
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{

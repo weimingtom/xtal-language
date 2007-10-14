@@ -5,7 +5,7 @@ namespace xtal{
 
 template<class Key, class Val, class Fun>
 class Hashtable{
-protected:
+public:
 
 	typedef std::pair<Key, Val> pair_t;
 
@@ -21,6 +21,10 @@ protected:
 		Node(const Key& key, const Val& value)
 			:pair(key, value), next(0), ordered_next(0), ordered_prev(0){}
 	};
+
+	typedef Key key_type;
+	typedef Val value_type;
+	typedef Fun fun_type;
 
 public:
 
@@ -55,6 +59,10 @@ public:
 
 		friend bool operator !=(iterator a, iterator b){
 			return a.node_ != b.node_;
+		}
+
+		Node* to_node() const{
+			return node_;
 		}
 
 	private:
@@ -102,7 +110,7 @@ public:
 	*
 	*/
 	iterator find(const Key& key, uint_t hash);
-	
+
 	/**
 	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğİ’è‚·‚é
 	*
@@ -116,6 +124,7 @@ public:
 	*
 	*/	
 	std::pair<iterator, bool> insert(const Key& key, const Val& value, uint_t hash);
+
 	/**
 	* @brief key‚É‘Î‰‚·‚é’l‚ğíœ‚·‚é
 	*

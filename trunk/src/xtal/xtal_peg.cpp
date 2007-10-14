@@ -1291,6 +1291,8 @@ void initialize_peg(){
 		p->method("op_call", &act);
 
 		peg->def("Parts", p);
+
+		set_cpp_class<Re>(p);
 	}
 
 	{

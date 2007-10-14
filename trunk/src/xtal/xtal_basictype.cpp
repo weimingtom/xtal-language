@@ -75,6 +75,7 @@ void initialize_basic_type(){
 		p->method("to_s", &Float_to_s);
 	}
 
+	builtin()->def("MissingNS", new_cpp_class<MissingNS>());
 	builtin()->def("String", new_cpp_class<String>());
 	builtin()->def("Int", new_cpp_class<Int>());
 	builtin()->def("Float", new_cpp_class<Float>());

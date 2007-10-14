@@ -85,7 +85,8 @@ void initialize_fun(){
 		p->method("ordered_arguments", &Arguments::ordered_arguments);
 		p->method("named_arguments", &Arguments::named_arguments);
 		
-		p->def("op_at", method(&Arguments::op_at), get_cpp_class<Any>());
+		p->def("op_at", method(&Arguments::op_at_int), get_cpp_class<Int>());
+		p->def("op_at", method(&Arguments::op_at_string), get_cpp_class<String>());
 	}
 
 	builtin()->def("Arguments", get_cpp_class<Arguments>());

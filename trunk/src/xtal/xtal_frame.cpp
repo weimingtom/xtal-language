@@ -53,10 +53,10 @@ void initialize_frame(){
 		ClassPtr p = new_cpp_class<Class>("Class");
 		p->inherit(get_cpp_class<Frame>());
 		p->method("inherit", &Class::inherit_strict);
-		p->method("is_inherited", &Class::is_inherited);
 		p->method("members", &Class::members);
 		p->method("s_new", &Class::s_new);
 		p->method("inherited_classes", &Class::inherited_classes);
+		p->method("is_inherited", &Any::is_inherited);
 	}
 
 	{
@@ -238,9 +238,10 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 	return nop;
 }
 
-const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
 	Key key = {name, ns};
 	map_t::iterator it = map_members_->find(key);
+
 	if(it!=map_members_->end()){
 		// メンバが見つかった
 
@@ -273,14 +274,41 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, 
 	
 	// 継承しているクラスを順次検索
 	if(inherited_too){
-		for(int_t i = mixins_->size(); i>0; --i){
-			if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name, ns, self)){
+		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
+			const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i))->member(name, ns, self);
+			if(rawne(ret, nop)){
 				return ret;
 			}
 		}
-
-		return get_cpp_class<Any>()->any_member(name, ns);
 	}
+
+	return nop;
+}
+
+const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
+	{
+		const AnyPtr& ret = find_member(name, ns, self, inherited_too);
+		if(rawne(ret, nop)){
+			return ret;
+		}
+	}
+		
+	{
+		const AnyPtr& ret = get_cpp_class<Any>()->any_member(name, ns);
+		if(rawne(ret, nop)){
+			return ret;
+		}
+	}
+
+	if(ns){
+		const AnyPtr& ret = find_member(name, get_cpp_class<MissingNS>(), self, inherited_too);
+		if(rawne(ret, nop)){
+			return ret;
+		}
+
+		return get_cpp_class<Any>()->any_member(name, get_cpp_class<MissingNS>());
+	}
+
 	return nop;
 }
 
@@ -302,8 +330,8 @@ bool Class::is_inherited(const AnyPtr& v){
 		return true;
 	}
 
-	for(int_t i = mixins_->size(); i>0; --i){
-		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited(v)){
+	for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
+		if(mixins_->at(i)->is_inherited(v)){
 			return true;
 		}
 	}
@@ -316,8 +344,8 @@ bool Class::is_inherited_cpp_class(){
 		return true;
 	}
 
-	for(int_t i = mixins_->size(); i>0; --i){
-		if(static_ptr_cast<Class>(mixins_->at(i-1))->is_inherited_cpp_class()){
+	for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
+		if(static_ptr_cast<Class>(mixins_->at(i))->is_inherited_cpp_class()){
 			return true;
 		}
 	}

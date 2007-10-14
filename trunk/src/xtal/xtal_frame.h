@@ -193,11 +193,11 @@ protected:
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return rawvalue(key.key)>>3;
+			return (rawvalue(key.key)>>3) ^ rawvalue(key.ns);
 		}
 
 		static bool eq(const Key& a, const Key& b){
-			return raweq(a.key, b.key) && b.ns->is_inherited(a.ns);
+			return raweq(a.key, b.key) && raweq(a.ns, b.ns);
 		}
 	};
 
@@ -397,6 +397,8 @@ public:
 	const AnyPtr& any_member(const InternedStringPtr& name, const AnyPtr& ns);
 	
 	const AnyPtr& bases_member(const InternedStringPtr& name);
+
+	const AnyPtr& find_member(const InternedStringPtr& name, const AnyPtr& ns = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	ClassCore* core(){
 		return (ClassCore*)core_;

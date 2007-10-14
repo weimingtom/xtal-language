@@ -194,14 +194,19 @@ public:
 		return mark();
 	}
 
-	StringPtr end_record(const Mark& mark){
+	void end_record(const Mark& mark, bool success){
+		if(!success){
+			unmark(mark);
+			return;
+		}
+
 		uint_t mask = buf_->size()-1;
 		mm_->clear();
 		for(uint_t i=mark.read_pos; i<pos_; ++i){
 			mm_->put_s(buf_->at(i & mask)->to_s());
 		}
 		unmark(mark);
-		return mm_->to_s();
+		push_result(mm_->to_s());
 	}
 
 public:
@@ -379,6 +384,7 @@ MapPtr make_ch_map(const AnyPtr& p, const AnyPtr& pp);
 AnyPtr str(const StringPtr& str);
 AnyPtr ch_set(const StringPtr& str);
 AnyPtr ch_map(const MapPtr& data);
+AnyPtr ch_range(const StringPtr& begin, const StringPtr& end);
 AnyPtr more(const AnyPtr& p, int_t n);
 AnyPtr ignore(const AnyPtr& p);
 AnyPtr select(const AnyPtr& lhs, const AnyPtr& rhs);
@@ -393,8 +399,7 @@ AnyPtr sub(const AnyPtr& a, const AnyPtr& b);
 AnyPtr act(const AnyPtr& a, const AnyPtr& b);
 AnyPtr actmv(const AnyPtr& a, const AnyPtr& b);
 AnyPtr neg(const AnyPtr& p);
-
-AnyPtr re(const AnyPtr& pattern);
+AnyPtr re(const StringPtr& pattern);
 
 
 extern AnyPtr success;

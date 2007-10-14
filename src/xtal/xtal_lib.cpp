@@ -507,36 +507,6 @@ Class::ancestors: method fiber{
 	}
 }
 
-Any::serial_save: method{
-	ret: [:];
-	klass: this.class;
-
-	klass.ancestors.reverse{
-		if(n: this.instance_serial_save(it))
-			ret[it.object_name] = n;
-	}
-
-	if(n: this.instance_serial_save(klass)){
-		ret[klass.object_name] = n;
-	}
-
-	return ret;
-}
-
-Any::serial_load: method(v){
-	klass: this.class;
-
-	klass.ancestors.reverse{
-		if(n: v[it.object_name]){
-			this.instance_serial_load(it, n);
-		}
-	}
-
-	if(n: v[klass.object_name]){
-		this.instance_serial_load(klass, n);
-	}
-}
-
 Array::block_first: method{
 	return this.each.block_first;
 }

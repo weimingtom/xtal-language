@@ -93,19 +93,13 @@ int main2(int argc, char** argv){
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-	
-		ScannerPtr ss = xnew<StreamScanner>(xnew<StringStream>("aerawerf‚ ‚¢‚¤‚¦‚¨aeer"));
-		StreamPtr st = xnew<StringStream>("\\w+[‚ -‚¨a]+.");
-
-		bool b = reg_match(st, ss);
-		
-		if(b){
-			//ss->results()->p();
-		}
+			
+		ScannerPtr scan = parse_string(re("\\w+") >> join(ch_range("‚ ", "‚¨")*1), "aerawerf‚ ‚¢‚¤‚¦‚¨aeer");
+		scan->results()->p();	
+		StringPtr("aer::awer/f‚ ‚¢‚¤‚¦‚¨/aeer")->split(re("/|::"))->p();
 
 AnyPtr ret = Xsrc
 ((
-
  
 filelocal.inherit(builtin::peg);
 "33".p;
@@ -116,9 +110,6 @@ filelocal.inherit(builtin::peg);
 [10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
   it.p;
 }
-//=> (a)
-//=> (b)
-//=> (c)
 
 mark: class{};
 
@@ -134,7 +125,12 @@ Any::nnn#mark: method(){
  parse_iterator(join(ch_alpha*1), ["t", "e", "s", "t", "1", "0"].each).results[].p;
 
  //parse_string((any - ch_set(":-"))*0 >> any >> any, "test-test").results[].p;
-))();
+));
+
+		MemoryStreamPtr mm = xnew<MemoryStream>();
+		mm->serialize(ret);
+		mm->seek(0);
+		mm->deserialize()();
 
 		//handle_argv(argv);
 
@@ -203,7 +199,7 @@ int c;
 		load("../../test/test_op_assign.xtal");
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
-		//load("../test/test_serialize.xtal");*/
+		load("../../test/test_serialize.xtal");
 		
 		//*/
 #endif

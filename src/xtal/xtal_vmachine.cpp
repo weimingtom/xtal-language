@@ -2501,7 +2501,7 @@ const inst_t* VMachine::FunMemberNS(const inst_t* pc){
 			if(rawne(ret, nop)){
 				set(ret);
 			}else{
-				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name));
+				XTAL_VM_EXCEPT(unsupported_error(target->object_name(), name, ap(ns)));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -3427,7 +3427,7 @@ const inst_t* VMachine::FunThrow(const inst_t* pc){
 const inst_t* VMachine::FunThrowUnsupportedError(const inst_t* pc){
 		XTAL_VM_DEF_INST(ThrowUnsupportedError);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2());
+			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2(), ff().hint3());
 		}
 		XTAL_VM_EXCEPT(last_except_);
 }

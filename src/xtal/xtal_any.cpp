@@ -36,8 +36,8 @@ void initialize_any(){
 		p->method("get_class", &Any::get_class);
 		p->method("self", &Any::self);
 		p->method("object_name", &Any::object_name);
-		p->method("instance_serial_save", &Any::instance_serial_save);
-		p->method("instance_serial_load", &Any::instance_serial_load);
+		p->method("s_save", &Any::s_save);
+		p->method("s_load", &Any::s_load);
 
 		p->def("op_add", xnew<BinOp>("op_add"));
 		p->def("op_sub", xnew<BinOp>("op_sub"));
@@ -146,7 +146,7 @@ struct MemberCacheTable{
 		Innocence member;
 	};
 
-	enum{ CACHE_MAX = 512, CACHE_MASK = CACHE_MAX-1 };
+	enum{ CACHE_MAX = 1024, CACHE_MASK = CACHE_MAX-1 };
 
 	Unit table_[CACHE_MAX];
 
@@ -400,7 +400,49 @@ AnyPtr Any::p() const{
 	return ap(*this);
 }
 
-AnyPtr Any::instance_serial_save(const ClassPtr& p) const{
+AnyPtr Any::s_save() const{
+	MapPtr ret = xnew<Map>();
+	ClassPtr klass = get_class();
+
+	ArrayPtr ary = klass->send(Xid(ancestors))->to_a();
+	ary->push_back(klass);
+
+	Xfor(it, ary){
+		if(const AnyPtr& member = it->member(Xid(serial_save), null, null, false)){
+			const VMachinePtr& vm = vmachine();
+			vm->setup_call(1);
+			vm->set_arg_this(ap(*this));
+			member->call(vm);
+			ret->set_at(it->object_name(), vm->result_and_cleanup_call());
+		}else{
+			ret->set_at(it->object_name(), serial_save(static_ptr_cast<Class>(it)));
+		}
+	}
+
+	return ret;
+}
+
+void Any::s_load(const AnyPtr& v) const{
+	MapPtr ret = ptr_cast<Map>(v);
+	ClassPtr klass = get_class();
+
+	ArrayPtr ary = klass->send(Xid(ancestors))->to_a();
+	ary->push_back(klass);
+
+	Xfor(it, ary){
+		if(const AnyPtr& member = it->member(Xid(serial_load), null, null, false)){
+			const VMachinePtr& vm = vmachine();
+			vm->setup_call(1, ret->at(it->object_name()));
+			vm->set_arg_this(ap(*this));
+			member->call(vm);
+			vm->cleanup_call();
+		}else{
+			serial_load(static_ptr_cast<Class>(it), ret->at(it->object_name()));
+		}
+	}
+}
+
+AnyPtr Any::serial_save(const ClassPtr& p) const{
 	if(type(*this)!=TYPE_BASE)
 		return null;
 
@@ -420,7 +462,7 @@ AnyPtr Any::instance_serial_save(const ClassPtr& p) const{
 	return null;
 }
 
-void Any::instance_serial_load(const ClassPtr& p, const AnyPtr& v) const{
+void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	if(type(*this)!=TYPE_BASE)
 		return;
 

@@ -71,11 +71,11 @@ void initialize_array(){
 		p->method("reverse", &Array::reverse);
 		p->method("assign", &Array::assign);
 
-		p->def("op_cat", method(&Array::cat), get_cpp_class<Array>());
-		p->def("op_cat_assign", method(&Array::cat_assign), get_cpp_class<Array>());
-		p->def("op_at", method(&Array::op_at), get_cpp_class<Int>());
-		p->def("op_set_at", method(&Array::op_set_at), get_cpp_class<Int>());
-		p->def("op_eq", method(&Array::op_eq), get_cpp_class<Array>());
+		p->method("op_cat", &Array::cat, get_cpp_class<Array>());
+		p->method("op_cat_assign", &Array::cat_assign, get_cpp_class<Array>());
+		p->method("op_at", &Array::op_at, get_cpp_class<Int>());
+		p->method("op_set_at", &Array::op_set_at, get_cpp_class<Int>());
+		p->method("op_eq", &Array::op_eq, get_cpp_class<Array>());
 	}
 
 	builtin()->def("Array", get_cpp_class<Array>());

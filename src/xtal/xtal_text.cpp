@@ -11,89 +11,69 @@ namespace{
 	}
 }
 
-void initialize_text(){
-	register_uninitializer(&uninitialize_text);
-	user_text_map_ = xnew<Map>();
+struct FormatSpecifier{
 
-	{
-		ClassPtr p = new_cpp_class<Format>("Format");
-		p->method("to_s", &Format::to_s);
-		p->method("instance_serial_save", &Format::instance_serial_save);
-		p->method("instance_serial_load", &Format::instance_serial_load);
-		p->def("serial_new", ctor<Format>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Text>("Text");
-		p->method("to_s", &Text::to_s);
-		p->method("instance_serial_save", &Text::instance_serial_save);
-		p->method("instance_serial_load", &Text::instance_serial_load);
-		p->def("serial_new", ctor<Text>());
-	}
-
-	builtin()->def("Format", get_cpp_class<Format>());
-	builtin()->def("Text", get_cpp_class<Text>());
-
-
-add_text_map(Xsrc((
-
-return [
-	"Xtal Compile Error 1001":"構文エラーです。",
-	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
-	"Xtal Compile Error 1003":"';' がありません。",
-
-	"Xtal Compile Error 1006":"不正なbreak文、またはcontinue文です。",
-
-	"Xtal Compile Error 1008":"不正な多重代入文です。",
-	"Xtal Compile Error 1009":"定義されていない変数 '%(name)s' に代入しようとしました 。",
-	"Xtal Compile Error 1010":"不正な数字リテラルのサフィックスです。",
-	"Xtal Compile Error 1011":"文字列リテラルの途中でファイルが終わりました。",
-	"Xtal Compile Error 1012":"不正な代入文の左辺です。",
-	"Xtal Compile Error 1013":"比較演算式の結果を演算しようとしています。",
-	"Xtal Compile Error 1014":"不正な浮動小数点数リテラルです。",
-	"Xtal Compile Error 1015":"不正な16進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1016":"assert文の引数の数が不正です。",
-	"Xtal Compile Error 1017":"不正な%%記法リテラルです。",
-	"Xtal Compile Error 1018":"default節が重複定義されました。",
+	enum{ BUF_MAX = 20, REAL_BUF_MAX = BUF_MAX + 2 };
 	
-	"Xtal Compile Error 1019":"'%(name)s'は代入不可能です。", ////
-
-	"Xtal Compile Error 1020":"不正な2進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1021":"コメントの途中でファイルが終わりました。",
-	"Xtal Compile Error 1022":"関数から返せる多値の最大は255個です。",
-	"Xtal Compile Error 1023":"定義されていないインスタンス変数名 '%(name)s' を参照しています。",
-	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
-	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました。",
+	char_t buf_[REAL_BUF_MAX];
+	char_t type_;
+	int_t pos_, width_, precision_;
 	
-	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1003":"不正なインスタンス変数の参照です。",
-	"Xtal Runtime Error 1004":"型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1005":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1006":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上、%(max)s以下の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1007":"'%(name)s'関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1008":"'%(name)s'はシリアライズできません。",
-	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
-	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' は既に定義されています。",
-	"Xtal Runtime Error 1012":"yieldがfiberの非実行中に実行されました。",
-	"Xtal Runtime Error 1013":"%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。",
-	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",
-	"Xtal Runtime Error 1015":"%(object)s :: '%(name)s' は定義されていません。",
-	"Xtal Runtime Error 1016":"ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1017":"%(object)s :: '%(name)s' は %(accessibility)s です。",
-	"Xtal Runtime Error 1018":"既に閉じられたストリームです。",
-	"Xtal Runtime Error 1019":"C++で定義されたクラスの多重継承は出来ません。",
-	"Xtal Runtime Error 1020":"配列の範囲外アクセスです。",
-	"Xtal Runtime Error 1021":"%(object)s :: '%(name)s # %(ns)s' は定義されていません。",
-	"Xtal Runtime Error 1022":"%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。",
-];
+public:
 
-))()->to_m());
+	enum{ FORMAT_SPECIFIER_MAX = 20 };
+	
+	int_t type();
+	int_t max_buffer_size();
 
-}
+	char_t change_int_type();
+	char_t change_float_type();
+	
+	void make_format_specifier(char_t* dest, char_t type);
+
+	const char_t* parse_format(const char_t* str);
+
+private:
+	
+	const char_t* parse_format_inner(const char_t* str);
+
+};
+
+class Format : public Base{
+public:
+
+	Format(const StringPtr& str = "");
+	void set(const char* str);
+	virtual void call(const VMachinePtr& vm);
+	void to_s(const VMachinePtr& vm);
+	AnyPtr serial_save();
+	void serial_load(const StringPtr& v);
+
+private:
+
+	MapPtr values_;
+	StringPtr original_;
+	int_t param_count_;
+	bool have_named_;
+	
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & values_ & original_;
+	}
+};
+
+class Text : public Base{
+public:
+
+	Text(const StringPtr& key = "");
+	virtual void call(const VMachinePtr& vm);
+	void to_s(const VMachinePtr& vm);
+	AnyPtr serial_save();
+	void serial_load(const StringPtr& v);
+
+private:	
+	StringPtr key_;
+};
 
 
 void set_text_map(const MapPtr& map){
@@ -108,11 +88,11 @@ MapPtr get_text_map(){
 	return user_text_map_;
 }
 
-TextPtr text(const StringPtr& text){
+AnyPtr text(const StringPtr& text){
 	return xnew<Text>(text);
 }
 
-FormatPtr format(const StringPtr& text){
+AnyPtr format(const StringPtr& text){
 	return xnew<Format>(text);
 }
 
@@ -368,11 +348,11 @@ void Format::to_s(const VMachinePtr& vm){
 	call(vm);
 }
 
-AnyPtr Format::instance_serial_save(){
+AnyPtr Format::serial_save(){
 	return original_;
 }
 
-void Format::instance_serial_load(const StringPtr& v){
+void Format::serial_load(const StringPtr& v){
 	set(v->c_str());
 }
 
@@ -394,16 +374,43 @@ void Text::to_s(const VMachinePtr& vm){
 	call(vm);
 }
 
-AnyPtr Text::instance_serial_save(){
+AnyPtr Text::serial_save(){
 	return key_;
 }
 
-void Text::instance_serial_load(const StringPtr& v){
+void Text::serial_load(const StringPtr& v){
 	key_ = v;
 }
 
 
-/*
+///////////////////////////////////////////////////////////////
+
+void initialize_text(){
+	register_uninitializer(&uninitialize_text);
+	user_text_map_ = xnew<Map>();
+
+	{
+		ClassPtr p = new_cpp_class<Format>("Format");
+		p->method("to_s", &Format::to_s);
+		p->method("serial_save", &Format::serial_save);
+		p->method("serial_load", &Format::serial_load);
+		p->def("serial_new", ctor<Format>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Text>("Text");
+		p->method("to_s", &Text::to_s);
+		p->method("serial_save", &Text::serial_save);
+		p->method("serial_load", &Text::serial_load);
+		p->def("serial_new", ctor<Text>());
+	}
+
+	builtin()->def("Format", get_cpp_class<Format>());
+	builtin()->def("Text", get_cpp_class<Text>());
+
+
+add_text_map(Xsrc((
+
 return [
 	"Xtal Compile Error 1001":"構文エラーです。",
 	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
@@ -432,7 +439,7 @@ return [
 	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
 	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
 	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1027":"プログラムが大きすぎて、バイトコードの生成に失敗しました。",
+	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました。",
 	
 	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
 	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
@@ -454,7 +461,12 @@ return [
 	"Xtal Runtime Error 1018":"既に閉じられたストリームです。",
 	"Xtal Runtime Error 1019":"C++で定義されたクラスの多重継承は出来ません。",
 	"Xtal Runtime Error 1020":"配列の範囲外アクセスです。",
+	"Xtal Runtime Error 1021":"%(object)s :: '%(name)s # %(ns)s' は定義されていません。",
+	"Xtal Runtime Error 1022":"%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。",
 ];
-*/
+
+))()->to_m());
+
+}
 
 }

@@ -17,17 +17,15 @@ public:
 
 	AnyPtr deserialize();
 
-	void xtalize(const AnyPtr& v);
-
 private:
 
 	void inner_serialize(const AnyPtr& v);
 	AnyPtr inner_deserialize();
-	void inner_xtalize(const AnyPtr& v, int_t tab);
 
 	bool check_id(const InternedStringPtr& id);
 	void check_id_and_throw(const InternedStringPtr& id);
-	AnyPtr demangle(int_t n);
+	
+	AnyPtr demangle(const AnyPtr& n);
 
 	int_t register_value(const AnyPtr& v, bool& added);
 	int_t append_value(const AnyPtr& v);
@@ -41,7 +39,7 @@ private:
 
 private:
 
-	enum{ SERIAL_NEW, LIB, REF, TNULL, TINT, TFLOAT, TSTRING, TID, TARRAY, TMAP, TFALSE, TTRUE };
+	enum{ SERIAL_NEW, LIB, REF, TNULL, TNOP, TFALSE, TTRUE, TINT, TFLOAT, TSTRING, TARRAY, TMAP };
 
 private:
 

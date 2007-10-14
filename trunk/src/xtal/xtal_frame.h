@@ -288,8 +288,8 @@ public:
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	CFunPtr fun(const InternedStringPtr& name, Fun fun, const Policy& policy){
-		return def_and_return(name, xtal::fun(fun, policy));
+	CFunPtr fun(const InternedStringPtr& name, Fun fun, const AnyPtr& ns, int_t accessibility, const Policy& policy){
+		return def_and_return(name, xtal::fun(fun, policy), ns, accessibility);
 	}
 
 	/**
@@ -298,8 +298,8 @@ public:
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun>
-	CFunPtr fun(const InternedStringPtr& name, Fun f){
-		return fun(name, f, result);
+	CFunPtr fun(const InternedStringPtr& name, Fun f, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
+		return fun(name, f, ns, accessibility, result);
 	}
 
 	/**
@@ -308,8 +308,8 @@ public:
 	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	CFunPtr method(const InternedStringPtr& name, Fun fun, const Policy& policy){
-		return def_and_return(name, xtal::method(fun, policy));
+	CFunPtr method(const InternedStringPtr& name, Fun fun, const AnyPtr& ns, int_t accessibility, const Policy& policy){
+		return def_and_return(name, xtal::method(fun, policy), ns, accessibility);
 	}
 
 	/**
@@ -318,8 +318,8 @@ public:
 	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun>
-	CFunPtr method(const InternedStringPtr& name, Fun fun){
-		return method(name, fun, result);
+	CFunPtr method(const InternedStringPtr& name, Fun fun, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
+		return method(name, fun, ns, accessibility, result);
 	}
 
 	
@@ -328,8 +328,8 @@ public:
 	*
 	*/
 	template<class T, class U, class Policy>
-	CFunPtr getter(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
-		return def_and_return(name, xtal::getter(v, policy));
+	CFunPtr getter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
+		return def_and_return(name, xtal::getter(v, policy), ns, accessibility);
 	}
 	
 	/**
@@ -339,8 +339,8 @@ public:
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class U, class Policy>
-	CFunPtr setter(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
-		return def_and_return(name, xtal::setter(v, policy));
+	CFunPtr setter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
+		return def_and_return(name, xtal::setter(v, policy), ns, accessibility);
 	}
 	
 	/**
@@ -351,9 +351,9 @@ public:
 	* と等しい	
 	*/	
 	template<class T, class U, class Policy>
-	void var(const InternedStringPtr& name, T U::* v, const Policy& policy) const{
-		getter(name, v, policy);
-		setter(String("set_").cat(name), v, policy);
+	void var(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
+		getter(name, v, ns, accessibility, policy);
+		setter(String("set_").cat(name), v, ns, accessibility, policy);
 	}
 	
 	/**
@@ -361,8 +361,8 @@ public:
 	*
 	*/
 	template<class T, class U>
-	CFunPtr getter(const InternedStringPtr& name, T U::* v) const{
-		return getter(name, v, result);
+	CFunPtr getter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
+		return getter(name, v, ns, accessibility, result);
 	}
 	
 	/**
@@ -370,8 +370,8 @@ public:
 	*
 	*/
 	template<class T, class U>
-	CFunPtr setter(const InternedStringPtr& name, T U::* v) const{
-		return setter(name, v, result);
+	CFunPtr setter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
+		return setter(name, v, ns, accessibility, result);
 	}
 	
 	/**
@@ -382,8 +382,8 @@ public:
 	* と等しい	
 	*/	
 	template<class T, class U>
-	void var(const InternedStringPtr& name, T U::* v) const{
-		var(name, v, result);
+	void var(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
+		var(name, v, ns, accessibility, result);
 	}
 
 public:
@@ -397,7 +397,7 @@ public:
 	const AnyPtr& any_member(const InternedStringPtr& name, const AnyPtr& ns);
 	
 	const AnyPtr& bases_member(const InternedStringPtr& name);
-	
+
 	ClassCore* core(){
 		return (ClassCore*)core_;
 	}
@@ -412,8 +412,8 @@ public:
 
 protected:
 
-	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun){
-		def(name, cfun, null, KIND_PUBLIC);
+	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
+		def(name, cfun, ns, accessibility);
 		return cfun;
 	}
 

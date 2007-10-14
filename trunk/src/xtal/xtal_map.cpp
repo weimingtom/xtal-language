@@ -65,11 +65,11 @@ void initialize_map(){
 		p->method("erase", &Map::erase);
 		p->method("empty", &Map::empty);
 
-		p->def("op_at", method(&Map::at), get_cpp_class<Any>());
-		p->def("op_set_at", method(&Map::set_at), get_cpp_class<Any>());
-		p->def("op_eq", method(&Map::op_eq), get_cpp_class<Map>());
-		p->def("op_cat", method(&Map::cat), get_cpp_class<Map>());
-		p->def("op_cat_assign", method(&Map::cat_assign), get_cpp_class<Map>());
+		p->method("op_at", &Map::at, get_cpp_class<Any>());
+		p->method("op_set_at", &Map::set_at, get_cpp_class<Any>());
+		p->method("op_eq", &Map::op_eq, get_cpp_class<Map>());
+		p->method("op_cat", &Map::cat, get_cpp_class<Map>());
+		p->method("op_cat_assign", &Map::cat_assign, get_cpp_class<Map>());
 	}
 
 	{

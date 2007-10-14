@@ -1807,14 +1807,14 @@ ExprPtr Parser::parse_if(){
 	ExprPtr eif = if_(lineno(), null, null, null);
 	if(InternedStringPtr var = parse_var()){
 		ExprPtr escope = scope(lineno(), xnew<Array>());
-		escope->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
+		escope->scope_stmts()->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
 		expect(')');
 		eif->set_if_cond(lvar(lineno(), var));
 		eif->set_if_body(parse_stmt_must());
 		if(eat(Token::KEYWORD_ELSE)){
 			eif->set_if_else(parse_stmt_must());
 		}
-		escope->push_back(eif);
+		escope->scope_stmts()->push_back(eif);
 		return escope;
 	}else{
 		eif->set_if_cond(parse_expr_must());
@@ -1832,7 +1832,7 @@ ExprPtr Parser::parse_while(const InternedStringPtr& label){
 	ExprPtr efor = for_(lineno(), label, null, null, null, null, null);
 	if(InternedStringPtr var = parse_var()){
 		ExprPtr escope = scope(lineno(), xnew<Array>());
-		escope->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
+		escope->scope_stmts()->push_back(define(lineno(), lvar(lineno(), var), parse_expr_must()));
 		expect(')');
 		efor->set_for_cond(lvar(lineno(), var));
 		efor->set_for_body(parse_stmt_must());
@@ -1841,7 +1841,7 @@ ExprPtr Parser::parse_while(const InternedStringPtr& label){
 		}else if(eat(Token::KEYWORD_NOBREAK)){
 			efor->set_for_nobreak(parse_stmt_must());
 		}		
-		escope->push_back(efor);
+		escope->scope_stmts()->push_back(efor);
 		return escope;
 	}else{
 		efor->set_for_cond(parse_expr_must());

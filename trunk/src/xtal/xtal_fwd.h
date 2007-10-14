@@ -248,8 +248,6 @@ class CppClass;
 class Thread;
 class Mutex;
 class Singleton;
-class Format;
-class Text;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -275,8 +273,6 @@ typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
 typedef SmartPtr<Singleton> SingletonPtr;
-typedef SmartPtr<Format> FormatPtr;
-typedef SmartPtr<Text> TextPtr;
 
 class Base;
 class AtProxy;

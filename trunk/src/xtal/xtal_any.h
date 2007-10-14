@@ -321,9 +321,13 @@ public:
 	*/
 	AnyPtr p() const;
 
-	AnyPtr instance_serial_save(const ClassPtr& cls) const;
+	AnyPtr s_save() const;
 
-	void instance_serial_load(const ClassPtr& cls, const AnyPtr& v) const;
+	void s_load(const AnyPtr& v) const;
+
+	AnyPtr serial_save(const ClassPtr& cls) const;
+
+	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
 	const AnyPtr& self() const{ return *(AnyPtr*)this; }
 

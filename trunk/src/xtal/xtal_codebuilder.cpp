@@ -1976,9 +1976,15 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const InternedStringPtr& name, cons
 	XTAL_TRY{
 		VMachinePtr vm = vmachine();
 		vm->setup_call(1, b);
-		a->rawsend(vm, name, null, null, false);
+		a->rawsend(vm, name, b->get_class(), null, false);
 		if(!vm->processed()){ vm->return_result(nop); }
 		ret = vm->result_and_cleanup_call();
+		if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
+			|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>())){
+			return ret;
+		}
+
+		return nop;
 	}XTAL_CATCH(e){
 		(void)e;
 		ret = nop;

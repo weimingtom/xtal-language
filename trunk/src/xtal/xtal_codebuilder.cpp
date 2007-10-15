@@ -246,7 +246,7 @@ void CodeBuilder::put_define_local_code(const InternedStringPtr& var, const Expr
 		}
 		
 	}else{
-		compile_expr(rhs);
+		if(rhs) compile_expr(rhs);
 		put_inst(InstDefineGlobalVariable(register_identifier(var)));
 	}
 }

@@ -98,10 +98,17 @@ int main2(int argc, char** argv){
 		scan->results()->p();	
 		StringPtr("aer::awer/f‚ ‚¢‚¤‚¦‚¨/aeer")->split(re("/|::"))->p();
 
+		
+		//load("start.xtal");
+
 AnyPtr ret = Xsrc
 ((
- 
-C: class{}
+
+C: class{
+	_a;
+	_b;
+	_c;
+}
 
 filelocal.inherit(builtin::peg);
 "33".p;
@@ -182,11 +189,11 @@ int c;
 
 
 		load("../../test/test_empty.xtal");
+		load("../../test/test_multiple_values.xtal");
 		load("../../test/test_array.xtal");
 		//compile_file("../test/test_float.xtal")->inspect()->p();
 		load("../../test/test_float.xtal");
 		load("../../test/test_class.xtal");
-		load("../../test/test_multiple_values.xtal");
 		load("../../test/test_except.xtal");
 		load("../../test/test_fiber.xtal");
 		load("../../test/test_fun.xtal");

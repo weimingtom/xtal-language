@@ -1,8 +1,4 @@
-
 #include "xtal.h"
-#include "xtal_cast.h"
-#include "xtal_frame.h"
-#include "xtal_frame.h"
 
 namespace xtal{
 

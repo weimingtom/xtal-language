@@ -1,12 +1,20 @@
 
 #pragma once
 
+namespace xtal{
+	enum{
+		VERSION1 = 0,
+		VERSION2 = 9,
+		VERSION3 = 7,
+		VERSION4 = 1
+	};
+}
+
 #include "xtal_utility.h"
 
 #include <string>
 #include <algorithm>
 #include <stddef.h>
-
 
 /**
 * 全ての要素はxtal namespaceの中

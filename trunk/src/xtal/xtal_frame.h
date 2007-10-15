@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_any.h"
-#include "xtal_stack.h"
-#include "xtal_cfun.h"
-
 namespace xtal{
 
 class InstanceVariables{

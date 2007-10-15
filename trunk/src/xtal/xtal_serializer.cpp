@@ -1,15 +1,5 @@
-
 #include "xtal.h"
-#include "xtal_serializer.h"
-#include "xtal_any.h"
-#include "xtal_array.h"
-#include "xtal_frame.h"
-#include "xtal_cast.h"
 #include "xtal_macro.h"
-#include "xtal_map.h"
-#include "xtal_fun.h"
-#include "xtal_stream.h"
-#include "xtal_code.h"
 
 namespace xtal{
 

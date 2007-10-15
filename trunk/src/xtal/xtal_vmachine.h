@@ -1,15 +1,6 @@
 
 #pragma once
 
-#include "xtal.h"
-
-#include "xtal_stack.h"
-#include "xtal_inst.h"
-#include "xtal_cast.h"
-#include "xtal_base.h"
-#include "xtal_code.h"
-#include "xtal_debug.h"
-
 namespace xtal{
 
 class Fun : public HaveName{

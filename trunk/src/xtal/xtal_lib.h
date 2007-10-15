@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_fwd.h"
-#include "xtal_any.h"
-#include "xtal_smartptr.h"
-
 namespace xtal{
 
 /**

@@ -1,10 +1,4 @@
-
 #include "xtal.h"
-
-#include <algorithm>
-
-#include "xtal_array.h"
-#include "xtal_stream.h"
 #include "xtal_macro.h"
 
 namespace xtal{

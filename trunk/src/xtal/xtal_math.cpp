@@ -1,7 +1,5 @@
 #include "xtal.h"
 
-#include <cmath>
-
 namespace xtal{
 
 namespace{

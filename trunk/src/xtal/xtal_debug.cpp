@@ -1,8 +1,6 @@
 #include "xtal.h"
 
-namespace xtal{
-
-namespace debug{
+namespace xtal{ namespace debug{
 
 void Info::visit_members(Visitor& m){
 	Base::visit_members(m);

@@ -1,8 +1,4 @@
- 
-#include "xtal.h"
-
-#include "xtal_allocator.h"
-#include "xtal_fwd.h"
+ #include "xtal.h"
 
 namespace xtal{
 

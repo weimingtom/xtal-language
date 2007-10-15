@@ -1,16 +1,8 @@
-
 #include "xtal.h"
+#include "xtal_macro.h"
 
 #ifndef XTAL_NO_PARSER
 
-#include "xtal_codebuilder.h"
-#include "xtal_expr.h"
-#include "xtal_parser.h"
-#include "xtal_code.h"
-#include "xtal_stream.h"
-#include "xtal_fun.h"
-#include "xtal_vmachine.h"
-#include "xtal_code.h"
 
 namespace xtal{
 

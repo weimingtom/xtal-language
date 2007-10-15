@@ -1,6 +1,4 @@
-
 #include "xtal.h"
-#include "xtal_stack.h"
 
 namespace xtal{
 

@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "xtal.h"
-
 namespace xtal{
 	
 /**

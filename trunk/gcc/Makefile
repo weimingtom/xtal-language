@@ -43,5 +43,8 @@ prof: libxtal ../src/xtal/main.cpp
 run: xtal
 	../bin/xtal.exe ../test.xtal
 
+test: xtal
+	../bin/xtal.exe testall.xtal
+
 -include makefile.depend
 

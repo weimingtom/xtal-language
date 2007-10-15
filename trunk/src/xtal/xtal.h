@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef XTAL_H
+#define XTAL_H
 
 namespace xtal{
 	enum{
@@ -37,4 +38,4 @@ namespace xtal{
 #include "xtal_text.h"
 #include "xtal_proxy.h"
 
-
+#endif

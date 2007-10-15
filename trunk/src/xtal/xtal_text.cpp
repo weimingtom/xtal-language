@@ -409,64 +409,61 @@ void initialize_text(){
 	builtin()->def("Text", get_cpp_class<Text>());
 
 
-add_text_map(Xsrc((
-
-return [
-	"Xtal Compile Error 1001":"構文エラーです。",
-	"Xtal Compile Error 1002":"予期せぬ文字 '%(char)s' が検出されました。",
-	"Xtal Compile Error 1003":"';' がありません。",
-
-	"Xtal Compile Error 1006":"不正なbreak文、またはcontinue文です。",
-
-	"Xtal Compile Error 1008":"不正な多重代入文です。",
-	"Xtal Compile Error 1009":"定義されていない変数 '%(name)s' に代入しようとしました 。",
-	"Xtal Compile Error 1010":"不正な数字リテラルのサフィックスです。",
-	"Xtal Compile Error 1011":"文字列リテラルの途中でファイルが終わりました。",
-	"Xtal Compile Error 1012":"不正な代入文の左辺です。",
-	"Xtal Compile Error 1013":"比較演算式の結果を演算しようとしています。",
-	"Xtal Compile Error 1014":"不正な浮動小数点数リテラルです。",
-	"Xtal Compile Error 1015":"不正な16進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1016":"assert文の引数の数が不正です。",
-	"Xtal Compile Error 1017":"不正な%%記法リテラルです。",
-	"Xtal Compile Error 1018":"default節が重複定義されました。",
+	MapPtr tm = xnew<Map>();
 	
-	"Xtal Compile Error 1019":"'%(name)s'は代入不可能です。", ////
+	tm->set_at("Xtal Compile Error 1001", "構文エラーです。");
+	tm->set_at("Xtal Compile Error 1002", "予期せぬ文字 '%(char)s' が検出されました。");
+	tm->set_at("Xtal Compile Error 1003", "';' がありません。");
 
-	"Xtal Compile Error 1020":"不正な2進数値リテラルのサフィックスです。",
-	"Xtal Compile Error 1021":"コメントの途中でファイルが終わりました。",
-	"Xtal Compile Error 1022":"関数から返せる多値の最大は255個です。",
-	"Xtal Compile Error 1023":"定義されていないインスタンス変数名 '%(name)s' を参照しています。",
-	"Xtal Compile Error 1024":"同名のインスタンス変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1025":"比較演算式の結果を最比較しようとしています。",
-	"Xtal Compile Error 1026":"同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。",
-	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました。",
+	tm->set_at("Xtal Compile Error 1006", "不正なbreak文、またはcontinue文です。");
+
+	tm->set_at("Xtal Compile Error 1008", "不正な多重代入文です。");
+	tm->set_at("Xtal Compile Error 1009", "定義されていない変数 '%(name)s' に代入しようとしました 。");
+	tm->set_at("Xtal Compile Error 1010", "不正な数字リテラルのサフィックスです。");
+	tm->set_at("Xtal Compile Error 1011", "文字列リテラルの途中でファイルが終わりました。");
+	tm->set_at("Xtal Compile Error 1012", "不正な代入文の左辺です。");
+	tm->set_at("Xtal Compile Error 1013", "比較演算式の結果を演算しようとしています。");
+	tm->set_at("Xtal Compile Error 1014", "不正な浮動小数点数リテラルです。");
+	tm->set_at("Xtal Compile Error 1015", "不正な16進数値リテラルのサフィックスです。");
+	tm->set_at("Xtal Compile Error 1016", "assert文の引数の数が不正です。");
+	tm->set_at("Xtal Compile Error 1017", "不正な%%記法リテラルです。");
+	tm->set_at("Xtal Compile Error 1018", "default節が重複定義されました。");
 	
-	"Xtal Runtime Error 1001":"'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1003":"不正なインスタンス変数の参照です。",
-	"Xtal Runtime Error 1004":"型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1005":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1006":"'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上、%(max)s以下の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1007":"'%(name)s'関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1008":"'%(name)s'はシリアライズできません。",
-	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
-	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' は既に定義されています。",
-	"Xtal Runtime Error 1012":"yieldがfiberの非実行中に実行されました。",
-	"Xtal Runtime Error 1013":"%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。",
-	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",
-	"Xtal Runtime Error 1015":"%(object)s :: '%(name)s' は定義されていません。",
-	"Xtal Runtime Error 1016":"ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1017":"%(object)s :: '%(name)s' は %(accessibility)s です。",
-	"Xtal Runtime Error 1018":"既に閉じられたストリームです。",
-	"Xtal Runtime Error 1019":"C++で定義されたクラスの多重継承は出来ません。",
-	"Xtal Runtime Error 1020":"配列の範囲外アクセスです。",
-	"Xtal Runtime Error 1021":"%(object)s :: '%(name)s # %(ns)s' は定義されていません。",
-	"Xtal Runtime Error 1022":"%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。",
-];
+	tm->set_at("Xtal Compile Error 1019", "'%(name)s'は代入不可能です。");
 
-))()->to_m());
+	tm->set_at("Xtal Compile Error 1020", "不正な2進数値リテラルのサフィックスです。");
+	tm->set_at("Xtal Compile Error 1021", "コメントの途中でファイルが終わりました。");
+	tm->set_at("Xtal Compile Error 1022", "関数から返せる多値の最大は255個です。");
+	tm->set_at("Xtal Compile Error 1023", "定義されていないインスタンス変数名 '%(name)s' を参照しています。");
+	tm->set_at("Xtal Compile Error 1024", "同名のインスタンス変数名 '%(name)s' が既に定義されています。");
+	tm->set_at("Xtal Compile Error 1025", "比較演算式の結果を最比較しようとしています。");
+	tm->set_at("Xtal Compile Error 1026", "同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。");
+	tm->set_at("Xtal Compile Error 1027", "コードが大きすぎて、バイトコードの生成に失敗しました。");
+	
+	tm->set_at("Xtal Runtime Error 1001", "'%(n)d'番目の引数%(param_name)sの型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。");
+	tm->set_at("Xtal Runtime Error 1002", "evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。");
+	tm->set_at("Xtal Runtime Error 1003", "不正なインスタンス変数の参照です。");
+	tm->set_at("Xtal Runtime Error 1004", "型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。");
+	tm->set_at("Xtal Runtime Error 1005", "'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。");
+	tm->set_at("Xtal Runtime Error 1006", "'%(name)s'関数呼び出しの引数の数が不正です。%(min)s以上、%(max)s以下の引数を受け取る関数に、%(value)s個の引数を渡しました。");
+	tm->set_at("Xtal Runtime Error 1007", "'%(name)s'関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。");
+	tm->set_at("Xtal Runtime Error 1008", "'%(name)s'はシリアライズできません。");
+	tm->set_at("Xtal Runtime Error 1009", "不正なコンパイル済みXtalファイルです。");
+	tm->set_at("Xtal Runtime Error 1010", "コンパイルエラーが発生しました。");
+	tm->set_at("Xtal Runtime Error 1011", "%(object)s :: '%(name)s' は既に定義されています。");
+	tm->set_at("Xtal Runtime Error 1012", "yieldがfiberの非実行中に実行されました。");
+	tm->set_at("Xtal Runtime Error 1013", "%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。");
+	tm->set_at("Xtal Runtime Error 1014", "ファイル '%(name)s' を開けません。");
+	tm->set_at("Xtal Runtime Error 1015", "%(object)s :: '%(name)s' は定義されていません。");
+	tm->set_at("Xtal Runtime Error 1016", "ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。");
+	tm->set_at("Xtal Runtime Error 1017", "%(object)s :: '%(name)s' は %(accessibility)s です。");
+	tm->set_at("Xtal Runtime Error 1018", "既に閉じられたストリームです。");
+	tm->set_at("Xtal Runtime Error 1019", "C++で定義されたクラスの多重継承は出来ません。");
+	tm->set_at("Xtal Runtime Error 1020", "配列の範囲外アクセスです。");
+	tm->set_at("Xtal Runtime Error 1021", "%(object)s :: '%(name)s # %(ns)s' は定義されていません。");
+	tm->set_at("Xtal Runtime Error 1022", "%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。");
 
+	add_text_map(tm);
 }
 
 }

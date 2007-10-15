@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <stddef.h>
 
 #include "xtal_base.h"
 #include "xtal_allocator.h"

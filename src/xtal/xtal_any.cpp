@@ -1,18 +1,5 @@
-
-#include <vector>
-
 #include "xtal.h"
-
-#include "xtal_fwd.h"
-#include "xtal_any.h"
-#include "xtal_frame.h"
-#include "xtal_fun.h"
-#include "xtal_string.h"
-#include "xtal_code.h"
-#include "xtal_frame.h"
 #include "xtal_macro.h"
-#include "xtal_stream.h"
-#include "xtal_vmachine.h"
 
 namespace xtal{
 

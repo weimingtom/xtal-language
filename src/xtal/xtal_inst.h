@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_lib.h"
-#include "xtal_smartptr.h"
-#include "xtal_text.h"
-
 namespace xtal{
 
 struct Inst;

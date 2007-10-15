@@ -1,12 +1,6 @@
 
 #pragma once
 
-#include "xtal_any.h"
-#include "xtal_vmachine.h"
-#include "xtal_cast.h"
-#include "xtal_smartptr.h"
-#include "xtal_string.h"
-
 namespace xtal{
 
 class CFun;	

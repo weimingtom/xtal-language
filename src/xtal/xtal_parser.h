@@ -3,10 +3,6 @@
 
 #ifndef XTAL_NO_PARSER
 
-#include "xtal_ch.h"
-#include "xtal_allocator.h"
-#include "xtal_expr.h"
-
 namespace xtal{
 
 class Token{

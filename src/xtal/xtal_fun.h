@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "xtal_frame.h"
-
 namespace xtal{
 
 // 引数オブジェクト

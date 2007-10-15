@@ -1,14 +1,7 @@
-
 #include "xtal.h"
+#include "xtal_macro.h"
 
 #include <string.h>
-
-#include "xtal_string.h"
-#include "xtal_macro.h"
-#include "xtal_stack.h"
-#include "xtal_hashtable.h"
-#include "xtal_peg.h"
-
 
 namespace xtal{
 

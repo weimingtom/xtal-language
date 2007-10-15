@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_lib.h"
-#include "xtal_iterator.h"
-#include "xtal_text.h"
-
 /** @addtogroup xmacro */
 /*@{*/
 

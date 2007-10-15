@@ -1,8 +1,5 @@
 #include "xtal.h"
-
-#include "xtal_cfun.h"
 #include "xtal_macro.h"
-#include "xtal_vmachine.h"
 
 namespace xtal{
 

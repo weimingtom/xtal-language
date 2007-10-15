@@ -1,7 +1,4 @@
-
 #include "xtal.h"
-
-#include "xtal_map.h"
 #include "xtal_macro.h"
 
 namespace xtal{

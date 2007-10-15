@@ -1,6 +1,4 @@
 #include "xtal.h"
-
-#include "xtal_peg.h"
 #include "xtal_macro.h"
 	
 namespace xtal{ namespace peg{
@@ -1355,7 +1353,7 @@ void initialize_peg(){
 	peg->fun("str", &str);
 	peg->fun("ch_set", &ch_set);
 	peg->fun("join", &join)->param(null, Named("sep", ""));
-	peg->fun("array", &array);
+	//peg->fun("array", &array);
 	peg->fun("val", &val);
 	peg->fun("and", &and_);
 	peg->fun("not", &not_);

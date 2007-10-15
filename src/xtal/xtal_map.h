@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_any.h"
-#include "xtal_string.h"
-#include "xtal_hashtable.h"
-
 namespace xtal{
 
 class Map : public Base{

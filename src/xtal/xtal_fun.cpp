@@ -1,10 +1,4 @@
-
 #include "xtal.h"
-
-#include "xtal_fun.h"
-#include "xtal_vmachine.h"
-#include "xtal_frame.h"
-#include "xtal_code.h"
 #include "xtal_macro.h"
 
 namespace xtal{

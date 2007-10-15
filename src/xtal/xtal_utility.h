@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <cassert>
-
 //#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
 

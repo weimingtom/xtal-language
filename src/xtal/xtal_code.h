@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include "xtal_allocator.h"
-#include "xtal_stack.h"
-#include "xtal_string.h"
-
 namespace xtal{
 
 class Code : public Base{

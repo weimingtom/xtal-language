@@ -1,10 +1,5 @@
-
 #include "xtal.h"
-
-#include "xtal_stream.h"
 #include "xtal_macro.h"
-#include "xtal_code.h"
-#include "xtal_fun.h"
 
 namespace xtal{
 

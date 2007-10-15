@@ -3,10 +3,6 @@
 
 #ifndef XTAL_NO_PARSER
 
-#include "xtal_expr.h"
-#include "xtal_parser.h"
-#include "xtal_macro.h"
-
 namespace xtal{
 
 class CodeBuilder{

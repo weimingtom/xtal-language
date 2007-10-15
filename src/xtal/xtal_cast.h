@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "xtal_smartptr.h"
-
 namespace xtal{
 	
 /**

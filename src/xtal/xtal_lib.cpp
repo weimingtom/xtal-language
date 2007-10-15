@@ -1,17 +1,7 @@
-
 #include "xtal.h"
-
-#include <cmath>
-#include <stdio.h>
-
-#include "xtal_codebuilder.h"
-#include "xtal_fun.h"
-#include "xtal_code.h"
 #include "xtal_macro.h"
-#include "xtal_serializer.h"
-#include "xtal_frame.h"
-#include "xtal_stream.h"
-#include "xtal_smartptr.h"
+
+#include <stdio.h>
 
 namespace xtal{
 

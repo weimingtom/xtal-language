@@ -1,20 +1,6 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stddef.h>
-#include <string.h>
-#include <time.h>
-#include <vector>
-#include <deque>
-#include <list>
-#include <map>
-#include <set>
-
-#include "xtal_fwd.h"
-
 namespace xtal{
 
 /** @addtogroup memory */

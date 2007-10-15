@@ -15,7 +15,10 @@ all: libxtal ix xtal
 depend:
 	g++ -MM -MG $(SRC) >makefile.depend
 
-libxtal: $(OBJ)
+precompile:
+	$(CC) ../src/xtal/xtal.h
+
+libxtal: precompile $(OBJ)
 	ar r libxtal.a $(OBJ)
 	ranlib libxtal.a
 
@@ -30,7 +33,7 @@ ix: libxtal ../src/xtal/ixmain.cpp
 .PHONY : clean
 
 clean:
-	rm *.o *.a ../bin/xtal.exe ../bin/ix.exe
+	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe
 
 prof: libxtal ../src/xtal/main.cpp
 	$(CC) -o ../bin/prof.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)

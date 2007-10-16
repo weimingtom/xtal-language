@@ -55,7 +55,7 @@ struct BlockValueHolder<1>{
 	ArrayPtr array;
 	Array::iterator it;
 
-         	operator bool(){ return target; }
+	operator bool(){ return target; }
 };
 
 template<>

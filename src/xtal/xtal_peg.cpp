@@ -1213,7 +1213,7 @@ bool parse_inner(const AnyPtr& ps, const ScannerPtr& scanner){
 			}
 
 			StringPtr str = scanner->peek()->to_s();
-			if(str->length()==1 && ((u8)str->c_str()[0])<128){
+			if(str->buffer_size()==1 && ((u8)str->data()[0])<128){
 				scanner->push_result(str);
 				return true;
 			}

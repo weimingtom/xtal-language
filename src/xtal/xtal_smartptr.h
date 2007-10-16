@@ -1,14 +1,7 @@
 
 #pragma once
 
-
-#include "xtal_base.h"
-#include "xtal_allocator.h"
-
 namespace xtal{
-
-struct PT{};
-struct NC{};
 
 template<class T>
 class TBase : public Base{
@@ -111,16 +104,14 @@ public:
 	SmartPtr(check_xtype<double>::type v){ set_f((float_t)v); }
 	SmartPtr(check_xtype<long double>::type v){ set_f((float_t)v); }
 
-public:
+private:
 
-	SmartPtr(PT, Base* p)
-		:Innocence(p){
-		p->inc_ref_count();
-	}
-
-	SmartPtr(NC, Base* p)
-		:Innocence(p){
-	}
+	/**
+	* @brief bool値を'true'または'false'に強制的に設定します、を拒否するコンストラクタ
+	*
+	* このコンストラクタはprivateである。
+	*/
+	SmartPtr(void*);
 
 protected:
 
@@ -217,6 +208,11 @@ public:
 	
 	SmartPtr(){}
 
+	explicit SmartPtr(T* p){
+		set_p2(SmartPtrSelector<InheritedN<T>::value>(), p);
+		inc_ref_count();
+	}
+
 	template<class U>
 	SmartPtr(const SmartPtr<U>& p)
 		:SmartPtr<Any>(p){
@@ -234,7 +230,6 @@ public:
 	SmartPtr(typename SmartPtrCtor2<T>::type v)
 		:SmartPtr<Any>(SmartPtrCtor2<T>::call(v)){}
 
-
 private:
 
 	/**
@@ -244,6 +239,13 @@ private:
 	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_as関数を使用すること。
 	*/
 	SmartPtr(const AnyPtr&);
+
+	/**
+	* @brief bool値を'true'または'false'に強制的に設定します、を拒否するコンストラクタ
+	*
+	* このコンストラクタはprivateである。
+	*/
+	SmartPtr(void*);
 
 public:
 
@@ -264,23 +266,11 @@ public:
 	*/
 	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
 
-private:
-
-	SmartPtr(PT pt, Base* p)
-		:SmartPtr<Any>(pt, p){}
-
-	SmartPtr(NC nc, Base* p)
-		:SmartPtr<Any>(nc, p){}
-
 public:
 
-	SmartPtr(PT pt, SmartPtrSelector<INHERITED_BASE>, T* p):SmartPtr<Any>(pt, (Base*)p){}
-	SmartPtr(PT pt, SmartPtrSelector<INHERITED_INNOCENCE>, T* p):SmartPtr<Any>(*(SmartPtr<Any>*)p){}
-	SmartPtr(PT pt, SmartPtrSelector<INHERITED_OTHER>, T* p):SmartPtr<Any>(PT(), ((Base*)p - 1)){}
-
-	SmartPtr(NC nc, SmartPtrSelector<INHERITED_BASE>, T* p):SmartPtr<Any>(nc, (Base*)p){}
-	SmartPtr(NC nc, SmartPtrSelector<INHERITED_INNOCENCE>, T* p):SmartPtr<Any>(*(SmartPtr<Any>*)p){}
-	SmartPtr(NC nc, SmartPtrSelector<INHERITED_OTHER>, T* p):SmartPtr<Any>(nc, ((Base*)p - 1)){}
+	void set_p2(SmartPtrSelector<INHERITED_BASE>, T* p){ set_p((Base*)p); }
+	void set_p2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ *(Innocence*)this = *(Innocence*)p; }
+	void set_p2(SmartPtrSelector<INHERITED_OTHER>, T* p){ set_p(((Base*)p - 1)); }
 
 	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
@@ -292,32 +282,35 @@ public:
 
 public:
 
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T();
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>){
+		T* p = new T();
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
 		:SmartPtr<Any>((SmartPtr<Any>&)T()){}
 
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T;
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 /////////////////////
 
 	template<class A0>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T(a0);
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0){
+		T* p = new T(a0);
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	template<class A0>
@@ -325,22 +318,24 @@ public:
 		:SmartPtr<Any>(ap(T(a0))){}
 
 	template<class A0>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T(a0);
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 /////////////////////
 
 	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T(a0, a1);
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1){
+		T* p = new T(a0, a1);
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	template<class A0, class A1>
@@ -348,22 +343,24 @@ public:
 		:SmartPtr<Any>(ap(T(a0, a1))){}
 
 	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T(a0, a1);
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T(a0, a1, a2);
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2){
+		T* p = new T(a0, a1, a2);
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	template<class A0, class A1, class A2>
@@ -371,22 +368,24 @@ public:
 		:SmartPtr<Any>(ap(T(a0, a1, a2))){}
 
 	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T(a0, a1, a2);
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T(a0, a1, a2, a3);
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
+		T* p = new T(a0, a1, a2, a3);
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	template<class A0, class A1, class A2, class A3>
@@ -394,22 +393,24 @@ public:
 		:SmartPtr<Any>(ap(T(a0, a1, a2, a3))){}
 
 	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T(a0, a1, a2, a3);
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T))){
-		T* p = (T*)pvalue(*this);
-		new(p) T(a0, a1, a2, a3, a4);
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+		T* p = new T(a0, a1, a2, a3, a4);
+		set_p((Base*)p);
+		inc_ref_count();
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 
 	template<class A0, class A1, class A2, class A3, class A4>
@@ -417,12 +418,13 @@ public:
 		:SmartPtr<Any>(ap(T(a0, a1, a2, a3, a4))){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(NC(), (Base*)Base::operator new(sizeof(T) + sizeof(TBase<T>))){
-		TBase<T>* p = (TBase<T>*)pvalue(*this);
-		new(p) TBase<T>();
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+		TBase<T>* p = new(sizeof(T)) TBase<T>();
+		set_p((Base*)p);
+		inc_ref_count();
 		new(p+1) T(a0, a1, a2, a3, a4);
 		p->set_class(new_cpp_class<T>());
+		register_gc(p);
 	}
 };
 
@@ -474,26 +476,6 @@ SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 
-
-/**
-* @brief thisポインタをSmartPtr<T>に変換する
-*/
-template<class T>
-inline SmartPtr<T> from_this(T* p){
-	return SmartPtr<T>(PT(), SmartPtrSelector<InheritedN<T>::value>(), p);
-}
-
-inline AnyPtr from_this(Base* p){
-	return AnyPtr(PT(), p);
-}
-
-/**
-* @brief T*を参照カウンタを上げずにSmartPtr<T>に変換する
-*/
-template<class T>
-inline SmartPtr<T> nocount(T* p){
-	return SmartPtr<T>(NC(), SmartPtrSelector<InheritedN<T>::value>(), p);
-}
 
 template<>
 struct SmartPtrCtor1<String>{

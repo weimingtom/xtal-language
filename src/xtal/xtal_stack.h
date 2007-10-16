@@ -16,7 +16,7 @@ class Stack{
 private:
 
 	struct Buf{
-		char buf[sizeof(T)];
+		char buf[sizeof(T)*2];
 	};
 
 	static Buf buf_;
@@ -235,8 +235,9 @@ Stack<T>::Stack(const Stack<T> &a){
 		end_ = begin_+a.capacity();
 
 		size_t capa = a.capacity();
-		for(size_t i = 0; i<capa; ++i)
+		for(size_t i = 0; i<capa; ++i){
 			new(&begin_[i]) T(a.begin_[i]);
+		}
 	}
 }
 
@@ -245,19 +246,32 @@ Stack<T> &Stack<T>::operator =(const Stack<T> &a){
 	if(this==&a)
 		return *this;
 
-	T* newp = (T*)allocate(sizeof(T)*(a.capacity()+1))+1;
+	if(a.empty()){
+		for(size_t i = 0, last = capacity(); i<last; ++i){
+			begin_[i].~T();
+		}
+		deallocate(begin_-1);
 
-	for(size_t i = 0, last = capacity(); i<last; ++i)
-		begin_[i].~T();
-	deallocate(begin_-1);
+		begin_=(T*)dummy_allocate()+1;
+		current_ = begin_-1;
+		end_ = begin_+0;
+	}else{
+		T* newp = (T*)allocate(sizeof(T)*(a.capacity()+1))+1;
 
-	begin_ = newp;
-	current_ = begin_+a.size()-1;
-	end_ = begin_+a.capacity();
+		for(size_t i = 0, last = capacity(); i<last; ++i){
+			begin_[i].~T();
+		}
+		deallocate(begin_-1);
 
-	size_t capa = a.capacity();
-	for(size_t i = 0; i<capa; ++i)
-		new(&begin_[i]) T(a.begin_[i]);
+		begin_ = newp;
+		current_ = begin_+a.size()-1;
+		end_ = begin_+a.capacity();
+
+		size_t capa = a.capacity();
+		for(size_t i = 0; i<capa; ++i){
+			new(&begin_[i]) T(a.begin_[i]);
+		}
+	}
 
 	return *this;
 }

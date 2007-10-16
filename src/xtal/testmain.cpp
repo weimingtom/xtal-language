@@ -65,7 +65,7 @@ struct PointSelf : public Base{
 	AnyPtr self;
 
 	PointSelf(int n = 0){
-		self = from_this(this);
+		self = SmartPtr<PointSelf>(this);
 	}
 
 	virtual void visit_members(Visitor& m){
@@ -107,6 +107,8 @@ C: class{
 	_c;
 }
 
+100000.times{ C(); }
+
 filelocal.inherit(builtin::peg);
 "33".p;
 
@@ -143,7 +145,7 @@ Any::nnn#mark: method(){
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

@@ -136,8 +136,11 @@ public:
 			
 public:
 	
-	static void* operator new(size_t size);
-	static void operator delete(void* p);
+	static void* operator new(size_t size){ return user_malloc(size); }
+	static void operator delete(void* p){}
+
+	static void* operator new(size_t size, size_t add){ return user_malloc(size+add); }
+	static void operator delete(void* p, size_t add){}
 	
 	static void* operator new(size_t, void* p){ return p; }
 	static void operator delete(void*, void*){}
@@ -174,10 +177,6 @@ private:
 
 	// èäëÆÉNÉâÉX
 	Innocence class_;
-
-#ifdef XTAL_DEBUG
-	uint_t new_count_;
-#endif
 	
 private:
 

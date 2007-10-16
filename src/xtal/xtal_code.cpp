@@ -28,7 +28,7 @@ Code::Code()
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Fun>(null, null, from_this(this), (FunCore*)0);
+	first_fun_ = xnew<Fun>(null, null, CodePtr(this), (FunCore*)0);
 	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
@@ -72,7 +72,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	const inst_t* pc = data()+start;
 	StringPtr temp;
 	MemoryStreamPtr ms(xnew<MemoryStream>());
-	CodePtr code = from_this(this);
+	CodePtr code(this);
 
 	for(; pc < data() + end;){switch(*pc){
 		XTAL_NODEFAULT;

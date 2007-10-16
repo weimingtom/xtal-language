@@ -3,18 +3,22 @@
 
 namespace xtal{
 
-Base::Base():class_(Innocence::noinit_t()){ 
+Base::Base(){
+	ref_count_ = 0;
+	class_ = null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
-Base::Base(const Base& b):class_(Innocence::noinit_t()){
+Base::Base(const Base& b){
+	ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
 
 		class_ = b.class_;
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->inc_ref_count();
+		}
 	}else{
 		instance_variables_ = &empty_instance_variables;
 		class_ = b.class_;
@@ -26,8 +30,9 @@ Base::~Base(){
 		instance_variables_->~InstanceVariables();
 		user_free(instance_variables_);
 
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->dec_ref_count();
+		}
 	}
 }
 
@@ -114,21 +119,23 @@ uint_t Base::hashcode(){
 
 void Base::make_instance_variables(){
 	if(instance_variables_==&empty_instance_variables){
-		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
-		new(instance_variables_) InstanceVariables();
+		InstanceVariables* temp = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
+		new(temp) InstanceVariables();
+		instance_variables_ = temp;
 
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->inc_ref_count();
+		}
 	}
 }
 
 void Base::visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			m & class_;
+		}
+		instance_variables_->visit_members(m);
 	}
-
-	instance_variables_->visit_members(m);
 }
 
 StringPtr HaveName::object_name(){

@@ -26,9 +26,9 @@ public:
 		}
 		
 		switch(type_){
-			case 0: vm->return_result(from_this(this), node_->first, node_->second); break;
-			case 1: vm->return_result(from_this(this), node_->first); break;
-			case 2: vm->return_result(from_this(this), node_->second); break;
+			case 0: vm->return_result(SmartPtr<MapIter>(this), node_->first, node_->second); break;
+			case 1: vm->return_result(SmartPtr<MapIter>(this), node_->first); break;
+			case 2: vm->return_result(SmartPtr<MapIter>(this), node_->second); break;
 			default: vm->return_result(null); break;
 		}
 
@@ -114,7 +114,7 @@ MapPtr Map::cat_assign(const MapPtr& a){
 	for(iterator p = a->begin(); p!=a->end(); ++p){
 		set_at(p->first, p->second);
 	}
-	return from_this(this);
+	return MapPtr(this);
 }
 
 StringPtr Map::to_s(){
@@ -149,15 +149,15 @@ bool Map::op_eq(const MapPtr& a){
 }
 	
 AnyPtr Map::pairs(){
-	return xnew<MapIter>(from_this(this), 0);
+	return xnew<MapIter>(MapPtr(this), 0);
 }
 
 AnyPtr Map::keys(){
-	return xnew<MapIter>(from_this(this), 1);
+	return xnew<MapIter>(MapPtr(this), 1);
 }
 
 AnyPtr Map::values(){
-	return xnew<MapIter>(from_this(this), 2);
+	return xnew<MapIter>(MapPtr(this), 2);
 }
 
 MapPtr Map::clone(){

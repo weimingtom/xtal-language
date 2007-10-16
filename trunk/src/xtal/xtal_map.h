@@ -128,7 +128,7 @@ public:
 	}
 	
 	MapPtr to_m(){
-		return from_this(this);
+		return MapPtr(this);
 	}
 
 	void push_all(const VMachinePtr& vm);
@@ -171,6 +171,7 @@ protected:
 
 class Set : public Map{
 public:
+
 	/**
 	* @brief keyを要素とする、Iteratorを返す
 	*

@@ -420,7 +420,7 @@ void Thread::visit_members(Visitor& m){
 }
 
 void Thread::begin_thread(){
-	thread_entry(from_this(this));
+	thread_entry(ThreadPtr(this));
 	callback_ = null;	
 	dec_ref_count();
 }

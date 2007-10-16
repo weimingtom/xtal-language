@@ -92,7 +92,7 @@ enum ExprType{
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
 	Type Name(){ if(size()<=N) resize(N+1); return as<Type>(at(N)); }\
-	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return from_this(this); }
+	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return ExprPtr(this); }
 
 
 class Expr;

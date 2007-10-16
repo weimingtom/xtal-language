@@ -378,4 +378,6 @@ inline bool exists_cpp_class();
 template<class T>
 inline const ClassPtr& get_cpp_class();
 
+void register_gc(Base* p);
+
 }

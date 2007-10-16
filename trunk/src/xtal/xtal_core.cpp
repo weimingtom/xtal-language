@@ -27,7 +27,8 @@ void display_debug_memory();
 namespace{
 
 	enum{
-		OBJECTS_ALLOCATE_SIZE = 4096
+		OBJECTS_ALLOCATE_SHIFT = 12,
+		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT
 	};
 
 	Base** objects_begin_ = 0;
@@ -111,14 +112,12 @@ void initialize(){
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		chain_cpp_class(*holders[i]);
 		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(CppClass))));
-		pvalue(holders[i]->value)->ref_count_ = 1;
 	}
 	
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(holders[i]->value);
-		int_t temp_ref_count = p->ref_count(); 
 		new(p) CppClass();
-		p->add_ref_count(temp_ref_count-1);
+		p->add_ref_count(1);
 	}
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
@@ -126,6 +125,11 @@ void initialize(){
 		p->set_class(get_cpp_class<CppClass>());
 	}
 	
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(holders[i]->value);
+		register_gc(p);
+	}
+
 	set_cpp_class<Base>(get_cpp_class<Any>());
 
 	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
@@ -277,7 +281,7 @@ struct ConnectedPointer{
 	}
 
 	Base*& operator *(){
-		return objects_list_begin_[pos/OBJECTS_ALLOCATE_SIZE][pos&(OBJECTS_ALLOCATE_SIZE-1)];
+		return objects_list_begin_[pos>>OBJECTS_ALLOCATE_SHIFT][pos&(OBJECTS_ALLOCATE_SIZE-1)];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -397,8 +401,8 @@ void full_gc(){
 		restart_the_world();
 	}
 }
-	
-void* Base::operator new(size_t size){
+
+void register_gc(Base* p){
 	if(objects_current_==objects_end_){
 		gc();
 
@@ -412,29 +416,8 @@ void* Base::operator new(size_t size){
 		}
 	}
 
-
-	Base* p = static_cast<Base*>(user_malloc(size));
 	*objects_current_++ = p;
-	
-	p->ref_count_ = 1;
-	p->class_ = null;
-
-#ifdef XTAL_DEBUG
-	static uint_t new_count = 0;
-	p->new_count_ = new_count++;
-
-	if(p->new_count_==7217){
-		p->new_count_ = p->new_count_;
-	}
-#endif
-	
-	return p;
 }
-
-void Base::operator delete(void* p){
-
-}
-
 
 GCObserver::GCObserver(){
 	if(gcobservers_current_==gcobservers_end_){

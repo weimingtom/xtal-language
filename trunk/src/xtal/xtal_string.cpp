@@ -102,7 +102,7 @@ public:
 		for(;;){
 			peg::parse_scanner(pattern_, scanner_);
 			if(scanner_->success()){
-				vm->return_result(from_this(this), scanner_->pop_result());
+				vm->return_result(SmartPtr<StringScanIter>(this), scanner_->pop_result());
 				return;
 			}else{
 				scanner_->read();
@@ -134,7 +134,7 @@ public:
 			return vm->return_result(null);
 		}
 
-		vm->return_result(from_this(this), ss_->get_s(1));
+		vm->return_result(SmartPtr<StringEachIter>(this), ss_->get_s(1));
 	}
 };
 
@@ -310,7 +310,7 @@ void String::init_string(const char_t* str, uint_t sz){
 		}else{
 			set_p(new LargeString(str, sz, hash, length));
 			pvalue(*this)->set_class(new_cpp_class<String>());
-			pvalue(*this)->dec_ref_count();
+			register_gc(pvalue(*this));
 		}
 	}
 }
@@ -349,7 +349,7 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	}else{
 		set_p(new LargeString(str1, size1, str2, size2));
 		pvalue(*this)->set_class(new_cpp_class<String>());
-		pvalue(*this)->dec_ref_count();
+		register_gc(pvalue(*this));
 	}
 }
 
@@ -396,7 +396,7 @@ String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, boo
 		}else{
 			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
 			pvalue(*this)->set_class(new_cpp_class<String>());
-			pvalue(*this)->dec_ref_count();
+			register_gc(pvalue(*this));
 		}
 	}
 }
@@ -412,7 +412,7 @@ String::String(LargeString* left, LargeString* right):Any(noinit_t()){
 
 	set_p(new LargeString(left, right));
 	pvalue(*this)->set_class(new_cpp_class<String>());
-	pvalue(*this)->dec_ref_count();
+	register_gc(pvalue(*this));
 }
 
 const char* String::c_str(){
@@ -461,7 +461,7 @@ uint_t String::size(){
 }
 
 StringPtr String::clone(){
-	return from_this(this);
+	return StringPtr(this);
 }
 
 const InternedStringPtr& String::intern(){
@@ -483,7 +483,7 @@ bool String::is_interned(){
 }
 
 StringPtr String::to_s(){
-	return from_this(this);
+	return StringPtr(this);
 }
 
 int_t String::to_i(){ 
@@ -495,17 +495,17 @@ float_t String::to_f(){
 }
 
 AnyPtr String::split(const AnyPtr& sep){
-	return xnew<StringScanIter>(from_this(this), 
+	return xnew<StringScanIter>(StringPtr(this), 
 		peg::join((peg::any - sep)*0) >> ~sep*-1
 	);
 }
 
 AnyPtr String::each(){
-	return xnew<StringEachIter>(from_this(this));
+	return xnew<StringEachIter>(StringPtr(this));
 }
 	
 AnyPtr String::scan(const AnyPtr& p){
-	return xnew<StringScanIter>(from_this(this), 
+	return xnew<StringScanIter>(StringPtr(this), 
 		peg::join(p)
 	);
 }
@@ -514,7 +514,7 @@ AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
 	AnyPtr elem = peg::sub(peg::any, pattern)*0;
 	peg::ScannerPtr scanner = peg::parse_string(peg::join(
 		elem >> (~pattern >> peg::val(str) >> elem)*0
-	), from_this(this));
+	), StringPtr(this));
 
 	return scanner->success() ? scanner->pop_result() : "";
 }
@@ -731,7 +731,6 @@ InternedString::InternedString(char_t a, char_t b, char_t c)
 
 InternedString::InternedString(const StringPtr& name)
 	:String(*(name ? name->intern() : (const InternedStringPtr&)name)){}
-
 
 AnyPtr SmartPtrCtor1<InternedString>::call(type v){
 	return str_mgr_->insert(v).value;

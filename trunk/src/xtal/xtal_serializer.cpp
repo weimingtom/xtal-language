@@ -310,7 +310,7 @@ AnyPtr Serializer::inner_deserialize(){
 
 			sz = stream_->get_u16();
 			p->once_table_ = xnew<Array>(sz);
-			for(uint_t i=0; i<sz; ++i){
+			for(int_t i=0; i<sz; ++i){
 				p->once_table_->set_at(i, nop);
 			}
 

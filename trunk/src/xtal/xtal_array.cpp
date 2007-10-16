@@ -22,7 +22,7 @@ public:
 	void block_next(const VMachinePtr& vm){
 		++index_;
 		if(index_<(int_t)array_->size()){
-			vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
+			vm->return_result(SmartPtr<ArrayIter>(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
 		}else{
 			vm->return_result(null, null);
 		}
@@ -249,7 +249,7 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 	for(uint_t i = 0, size = a->size(); i<size; ++i){
 		push_back(a->at(i));
 	}
-	return from_this(this);
+	return ArrayPtr(this);
 }
 
 StringPtr Array::join(const StringPtr& sep){
@@ -297,11 +297,11 @@ bool Array::op_eq(const ArrayPtr& other){
 }
 
 AnyPtr Array::each(){
-	return xnew<ArrayIter>(from_this(this));
+	return xnew<ArrayIter>(ArrayPtr(this));
 }
 
 AnyPtr Array::reverse(){
-	return xnew<ArrayIter>(from_this(this), true);
+	return xnew<ArrayIter>(ArrayPtr(this), true);
 }
 
 void Array::assign(const AnyPtr& iterator){

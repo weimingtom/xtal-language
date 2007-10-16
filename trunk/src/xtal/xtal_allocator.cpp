@@ -3,10 +3,10 @@
 namespace xtal{
 
 
-#if 0//def XTAL_DEBUG
+#if 1//def XTAL_DEBUG
 
 struct SizeAndCount{
-	SizeAndCount(int a, int b){
+	SizeAndCount(int a = 0, int b = 0){
 		size = a;
 		count = b;
 	}
@@ -24,6 +24,7 @@ void* debug_malloc(size_t size){
 }
 
 void debug_free(void* p){
+	memset(p, 0xcd, mem_map_[p].size);
 	free(p);
 	mem_map_.erase(p);
 }
@@ -86,6 +87,9 @@ void* user_malloc_nothrow(size_t size){
 		used_user_malloc_size_ = 0; 
 		gc();
 	}
+	
+	//full_gc();
+
 	used_user_malloc_size_ += size;
 	
 	void* ret = user_malloc_(size);

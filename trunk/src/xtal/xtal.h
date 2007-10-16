@@ -17,6 +17,7 @@
 
 #include "xtal_fwd.h"
 #include "xtal_utility.h"
+#include "xtal_allocator.h"
 #include "xtal_any.h"
 #include "xtal_base.h"
 #include "xtal_smartptr.h"

@@ -424,14 +424,13 @@ void initialize_text(){
 	tm->set_at("Xtal Compile Error 1012", "不正な代入文の左辺です。");
 	tm->set_at("Xtal Compile Error 1013", "比較演算式の結果を演算しようとしています。");
 	tm->set_at("Xtal Compile Error 1014", "不正な浮動小数点数リテラルです。");
-	tm->set_at("Xtal Compile Error 1015", "不正な16進数値リテラルのサフィックスです。");
+	tm->set_at("Xtal Compile Error 1015", "不正な%(n)d進数値リテラルのサフィックスです。");
 	tm->set_at("Xtal Compile Error 1016", "assert文の引数の数が不正です。");
 	tm->set_at("Xtal Compile Error 1017", "不正な%%記法リテラルです。");
 	tm->set_at("Xtal Compile Error 1018", "default節が重複定義されました。");
 	
 	tm->set_at("Xtal Compile Error 1019", "'%(name)s'は代入不可能です。");
 
-	tm->set_at("Xtal Compile Error 1020", "不正な2進数値リテラルのサフィックスです。");
 	tm->set_at("Xtal Compile Error 1021", "コメントの途中でファイルが終わりました。");
 	tm->set_at("Xtal Compile Error 1022", "関数から返せる多値の最大は255個です。");
 	tm->set_at("Xtal Compile Error 1023", "定義されていないインスタンス変数名 '%(name)s' を参照しています。");

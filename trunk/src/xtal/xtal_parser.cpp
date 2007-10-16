@@ -241,7 +241,27 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_.peek())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 16)));
+	}
+
+	return ret;		
+}
+
+int_t Lexer::parse_oct(){
+	int_t ret = 0;
+	while(true){
+		if(test_range(reader_.peek(), '0', '7')){
+			ret *= 8;
+			ret += reader_.read()-'0';
+		}else if(reader_.peek()=='_'){
+			reader_.read();
+		}else{
+			break;
+		}
+	}
+
+	if(test_ident_rest(reader_.peek()) || ('8'<=reader_.peek() && reader_.peek()<='9')){
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 8)));
 	}
 
 	return ret;		
@@ -261,7 +281,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1020"));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 2)));
 	}
 
 	return ret;
@@ -309,6 +329,9 @@ void Lexer::parse_number(){
 	if(reader_.eat('0')){
 		if(reader_.eat('x') || reader_.eat('X')){
 			push_int_token(parse_hex());
+			return;
+		}else if(reader_.eat('o')){
+			push_int_token(parse_oct());
 			return;
 		}else if(reader_.eat('b') || reader_.eat('B')){
 			push_int_token(parse_bin());

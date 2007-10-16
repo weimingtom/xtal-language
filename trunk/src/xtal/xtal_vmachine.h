@@ -517,20 +517,23 @@ public:
 
 		InstanceVariables* instance_variables;
 
+		// スコープがオブジェクト化されてない時のローカル変数領域
+		Stack<Innocence> variables_;
+
 		// 呼び出された関数オブジェクト
 		Innocence fun_; 
 
 		// 一時的に関数オブジェクトかレシーバオブジェクトを置くための場所
-		Innocence temp_;
+		Innocence temp1_;
 
 		// 一時的に何かを置くための場所
 		Innocence temp2_;
 
+		// 一時的に何かを置くための場所
+		Innocence temp3_;
+
 		// スコープの外側のフレームオブジェクト
 		Innocence outer_;
-
-		// スコープがオブジェクト化されてない時のローカル変数領域
-		Stack<Innocence> variables_;
 
 		// 関数が呼ばれたときのthisオブジェクト
 		Innocence self_;
@@ -549,13 +552,15 @@ public:
 
 		void set_null(){
 			set_null_force(fun_); 
-			set_null_force(temp_);
+			set_null_force(temp1_);
 			set_null_force(temp2_);
+			set_null_force(temp3_);
 			set_null_force(outer_);
 			set_null_force(arguments_);
 			set_null_force(hint1_);
 			set_null_force(hint2_);
 			set_null_force(hint3_);
+			//memset(&fun_, 0, (u8*)(&hint3_ + 1) - (u8*)(&fun_));
 		}
 
 		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
@@ -593,6 +598,10 @@ public:
 		Innocence outer;
 	};
 
+	const AnyPtr& pop_and_save1(){ return ap(ff().temp1_ = pop()); }
+	const AnyPtr& pop_and_save2(){ return ap(ff().temp2_ = pop()); }
+
+
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
@@ -616,7 +625,7 @@ public:
 	const InternedStringPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
 	const InternedStringPtr& identifier_ex(int_t n){ 
 		if(n!=0){ return identifier(n); 
-		}else{ return static_ptr_cast<InternedString>(ap(ff().temp2_ = pop()->to_s()->intern())); }
+		}else{ return static_ptr_cast<InternedString>(ap(ff().temp3_ = pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);

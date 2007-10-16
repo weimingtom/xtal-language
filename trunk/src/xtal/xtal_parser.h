@@ -235,6 +235,7 @@ private:
 	InternedStringPtr parse_identifier();
 	int_t parse_integer();
 	int_t parse_hex();
+	int_t parse_oct();
 	int_t parse_bin();
 
 	void parse_number_suffix(int_t val);

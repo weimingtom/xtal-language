@@ -1372,7 +1372,7 @@ XTAL_VM_SWITCH{
 			Innocence key = pop_and_save2();
 			Innocence target = pop_and_save1();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(key));
-			ap(target)->rawsend(myself(), Xid(op_at));
+			ap(target)->rawsend(myself(), Xid(op_at), ap(key)->get_class());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
@@ -1384,7 +1384,7 @@ XTAL_VM_SWITCH{
 			Innocence target = pop_and_save1();
 			Innocence value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, ap(key), ap(value));
-			ap(target)->rawsend(myself(), Xid(op_set_at));
+			ap(target)->rawsend(myself(), Xid(op_set_at), ap(key)->get_class());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -1826,6 +1826,14 @@ XTAL_VM_SWITCH{
 			ClassPtr p = cast<ClassPtr>(ff().outer());
 			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(MakeRange){ // 4
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			set(1, xnew<Range>(get(1), get()));
+			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -2847,7 +2855,7 @@ const inst_t* VMachine::FunAt(const inst_t* pc){
 			Innocence key = pop_and_save2();
 			Innocence target = pop_and_save1();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(key));
-			ap(target)->rawsend(myself(), Xid(op_at));
+			ap(target)->rawsend(myself(), Xid(op_at), ap(key)->get_class());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -2860,7 +2868,7 @@ const inst_t* VMachine::FunSetAt(const inst_t* pc){
 			Innocence target = pop_and_save1();
 			Innocence value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, ap(key), ap(value));
-			ap(target)->rawsend(myself(), Xid(op_set_at));
+			ap(target)->rawsend(myself(), Xid(op_set_at), ap(key)->get_class());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -3341,6 +3349,15 @@ const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
 			ClassPtr p = cast<ClassPtr>(ff().outer());
 			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 			downsize(2);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMakeRange(const inst_t* pc){
+		XTAL_VM_DEF_INST(MakeRange);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			set(1, xnew<Range>(get(1), get()));
+			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }

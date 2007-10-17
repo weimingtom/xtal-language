@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_basictype.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_cast.h"
 				>
 			</File>

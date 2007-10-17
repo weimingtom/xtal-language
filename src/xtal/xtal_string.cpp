@@ -17,17 +17,18 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 	hash = 2166136261U;
 	length = 0;
 
-	for(uint_t i=0; i<size; ++i){
-		int_t len = ch_len(str[i]);
-		if(len<0){
-			if(i + -len > size){
-				len = size - i;
-			}else{
-				len = ch_len2(str+i);
-			}
+	ChMaker chm;
+
+	uint_t i=0;
+	while(i<size){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(i<size){ chm.add(str[i++]); } 
+			else{ break; }
 		}
-		for(int_t j=0; j<len; ++j){
-			hash = hash*137 ^ str[i+j];
+	
+		for(int_t j=0; j<chm.pos; ++j){
+			hash = hash*137 ^ chm.buf[j];
 		}
 
 		length += 1;
@@ -38,17 +39,23 @@ static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 	hash = 2166136261U;
 	length = 0;
 	size = 0;
-	for(uint_t i=0; str[i]; ++i){
-		int_t len = ch_len(str[i]);
-		if(len<0){
-			len = ch_len2(str+i);
+
+	ChMaker chm;
+
+	uint_t i=0;
+	while(str[i]){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(str[i]){ chm.add(str[i++]); } 
+			else{ break; }
 		}
-		for(int_t j=0; j<len; ++j){
-			hash = hash*137 ^ str[i+j];
+	
+		for(int_t j=0; j<chm.pos; ++j){
+			hash = hash*137 ^ chm.buf[j];
 		}
 
 		length += 1;
-		size += len;
+		size += chm.pos;
 	}
 }
 
@@ -56,26 +63,23 @@ static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& s
 	hash = 2166136261U;
 	length = 0;
 	size = 0;
-	for(uint_t i=0; str[i]; ++i){
-		int_t len = ch_len(str[i]);
-		if(len<0){
-			if(i + -len > Innocence::SMALL_STRING_MAX){
-				len = size - i;
-			}else{
-				len = ch_len2(str+i);
-			}
-		}
 
-		for(int_t j=0; j<len; ++j){
-			hash = hash*137 ^ str[i+j];
+	ChMaker chm;
+
+	uint_t i=0;
+	while(str[i] && i<Innocence::SMALL_STRING_MAX){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(str[i] && i<Innocence::SMALL_STRING_MAX){ chm.add(str[i++]); } 
+			else{ break; }
+		}
+	
+		for(int_t j=0; j<chm.pos; ++j){
+			hash = hash*137 ^ chm.buf[j];
 		}
 
 		length += 1;
-		size += len;
-
-		if(size==Innocence::SMALL_STRING_MAX){
-			break;
-		}
+		size += chm.pos;
 	}
 }
 
@@ -287,6 +291,8 @@ void initialize_string(){
 		p->method("replace", &String::replace);
 		p->method("scan", &String::scan);
 
+		p->method("op_inc", &String::op_inc);
+		p->method("op_dec", &String::op_dec);
 		p->method("op_cat", &String::op_cat, get_cpp_class<String>());
 		p->method("op_cat_assign", &String::op_cat, get_cpp_class<String>());
 		p->method("op_eq", &String::op_eq, get_cpp_class<String>());
@@ -519,6 +525,21 @@ AnyPtr String::replace(const AnyPtr& pattern, const StringPtr& str){
 	return scanner->success() ? scanner->pop_result() : "";
 }
 
+StringPtr String::op_inc(){
+	if(length()==1){
+		return ch_inc(data(), buffer_size());
+	}else{
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1023")), return "");		
+	}
+}
+
+StringPtr String::op_dec(){
+	if(length()==1){
+		return ch_dec(data(), buffer_size());
+	}else{
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1023")), return "");		
+	}
+}
 
 StringPtr String::op_cat(const StringPtr& v){
 	uint_t mysize = buffer_size();
@@ -533,8 +554,12 @@ bool String::op_eq(const StringPtr& v){
 	return buffer_size()==v->buffer_size() && memcmp(data(), v->data(), buffer_size())==0; 
 }
 
-bool String::op_lt(const StringPtr& v){ 
-	return strcmp(c_str(), v->c_str())<0; 
+bool String::op_lt(const StringPtr& v){
+	if(length()==1){
+		return ch_cmp(data(), buffer_size(), v->data(), v->buffer_size())<0;
+	}else{
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1023")), return "");		
+	}
 }
 
 StringPtr String::cat(const StringPtr& v){

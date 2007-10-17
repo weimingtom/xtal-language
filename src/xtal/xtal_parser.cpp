@@ -191,16 +191,18 @@ void Lexer::putback(const Token& ch){
 InternedStringPtr Lexer::parse_identifier(){
 	string_t buf;
 
-	int len = ch_len(reader_.peek());
-	while(len--){
-		buf += reader_.read();
+	ChMaker chm;
+	while(!chm.is_completed()){
+		chm.add(reader_.read());
 	}
+	buf.append(chm.buf, chm.buf+chm.pos);
 
 	while(test_ident_rest(reader_.peek())){
-		len = ch_len(reader_.peek());
-		while(len--){
-			buf += reader_.read();
+		chm.clear();
+		while(!chm.is_completed()){
+			chm.add(reader_.read());
 		}
+		buf.append(chm.buf, chm.buf+chm.pos);
 	}
 	
 	return xnew<InternedString>(buf);
@@ -288,13 +290,7 @@ int_t Lexer::parse_bin(){
 }
 
 void Lexer::parse_number_suffix(int_t val){
-	if(reader_.eat('K')){
-		push_int_token(val*1024);
-	}else if(reader_.eat('M')){
-		push_int_token(val*1024*1024);	
-	}else if(reader_.eat('G')){
-		push_int_token(val*1024*1024*1024);	
-	}else if(reader_.eat('f') || reader_.eat('F')){
+	if(reader_.eat('f') || reader_.eat('F')){
 		push_float_token((float_t)val);	
 	}else{
 
@@ -307,13 +303,7 @@ void Lexer::parse_number_suffix(int_t val){
 }
 
 void Lexer::parse_number_suffix(float_t val){
-	if(reader_.eat('K')){
-		push_float_token(val*1024);	
-	}else if(reader_.eat('M')){
-		push_float_token(val*1024*1024);	
-	}else if(reader_.eat('G')){
-		push_float_token(val*1024*1024*1024);	
-	}else if(reader_.eat('f') || reader_.eat('F')){
+	if(reader_.eat('f') || reader_.eat('F')){
 		push_float_token(val);	
 	}else{
 	
@@ -627,6 +617,8 @@ void Lexer::do_read(){
 				if(reader_.eat('.')){
 					if(reader_.eat('.')){
 						push_token(c3('.', '.', '.'));
+					}else if(reader_.eat('<')){
+						push_token(c3('.', '.', '<'));
 					}else{
 						push_token(c2('.', '.'));
 					}
@@ -775,10 +767,12 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				str+='\n';
 				set_lineno(lineno()+1);
 			}else{
-				str+=(char_t)ch;
-				for(int_t i=1, size = ch_len((char_t)ch); i<size; ++i){
-					str+=(char_t)reader_.read();
+				ChMaker chm;
+				chm.add(ch);
+				while(!chm.is_completed()){
+					chm.add(reader_.read());
 				}
+				str.append(chm.buf, chm.buf+chm.pos);
 			}
 		}	
 	}
@@ -833,6 +827,7 @@ enum{//Expressions priority
 		PRI_MEMBER = PRI_AT,
 		PRI_CALL = PRI_AT,
 		PRI_NS = PRI_AT,
+		PRI_RANGE = PRI_AT,
 
 	PRI_ONCE,
 		PRI_STATIC = PRI_ONCE,
@@ -1163,6 +1158,24 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						ret->set_q_true(parse_expr_must());
 						expect(':');
 						ret->set_q_false(parse_expr_must());
+					}
+				}
+
+				XTAL_CASE(c3('.', '.', '<')){
+					if(pri < PRI_RANGE - l_space){
+						ret = bin(EXPR_RANGE, ln, lhs, parse_expr(PRI_RANGE - r_space));
+					}
+				}
+
+				XTAL_CASE(c3('.', '.', '.')){
+					if(pri < PRI_RANGE - l_space){
+						ret = bin(EXPR_RANGE, ln, lhs, parse_expr(PRI_RANGE - r_space));
+					}
+				}
+
+				XTAL_CASE(c2('.', '.')){
+					if(pri < PRI_RANGE - l_space){
+						ret = bin(EXPR_RANGE, ln, lhs, send(ln, parse_expr(PRI_RANGE - r_space), Xid(op_inc)));
 					}
 				}
 

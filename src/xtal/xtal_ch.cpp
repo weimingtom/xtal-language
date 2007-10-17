@@ -61,42 +61,85 @@ public:
 
 ////////////////////////////////////////////////
 
-
-AnyPtr CodeLib::make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size){
-	SetPtr set = xnew<Set>();
-
-	uchar_t* a = (uchar_t*)begin;
-	uchar_t* b = (uchar_t*)end;
-	int_t as = begin_size;
-	int_t bs = end_size;
-	uchar_t buf[16] = {0};
-
-	if(bs < as){
-		return set;
-	}
-	
-	int_t offset = bs - as;
-	memcpy(buf+offset, a, as*sizeof(uchar_t));
-
-	if(memcmp(buf, b, bs)>0){
-		return set;
+InternedStringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
+	if(buffer_size>6){
+		return xnew<InternedString>(data, buffer_size);
 	}
 
-	set->set_at((char_t*)(buf+offset), true);
-	while(memcmp(buf, b, bs*sizeof(uchar_t))!=0){
-		for(int_t i=bs-1; i>=0; --i){
-			buf[i]++;
-			if(buf[i]==0){
-				offset = bs - i - 1;
-				continue;
-			}
-			break;
+	uchar_t buf[8] = {0};
+	memcpy(buf+1, data, buffer_size*sizeof(uchar_t));
+
+	for(int_t i=buffer_size; i>=0; --i){
+		buf[i]++;
+		if(buf[i]==0){
+			continue;
 		}
-
-		set->set_at((char_t*)(buf+offset), true);
+		break;
 	}
 
-	return set;
+	if(buf[0]==0){
+		return xnew<InternedString>((char_t*)buf+1, buffer_size);
+	}else{
+		return xnew<InternedString>((char_t*)buf, buffer_size+1);
+	}
+}
+
+InternedStringPtr CodeLib::ch_dec(const char_t* data, int_t buffer_size){
+	if(buffer_size==0){
+		return xnew<InternedString>(data, buffer_size);
+	}
+
+	uchar_t buf[8] = {0};
+	memcpy(buf, data, buffer_size*sizeof(uchar_t));
+
+	for(int_t i=buffer_size-1; i>=0; --i){
+		buf[i]--;
+		if(buf[i]==(uchar_t)-1){
+			continue;
+		}
+		break;
+	}
+
+	if(buf[0]==0){
+		return xnew<InternedString>((char_t*)buf+1, buffer_size-1);
+	}else{
+		return xnew<InternedString>((char_t*)buf, buffer_size);
+	}
+}
+
+int_t CodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize){
+	if(asize==bsize){
+		for(int_t i=0; i<asize; ++i){
+			if(a[i]<b[i]){
+				return -1;
+			}else if(a[i]>b[i]){
+				return 1;
+			}
+		}
+		return 0;
+	}else if(asize<bsize){
+		return -1;
+	}
+		
+	return 1;
+}
+
+void ChMaker::add(char_t ch){
+	buf[pos++] = ch;
+	if(pos==1){
+		len = ch_len(ch);
+	}else if(pos == -len){
+		len = ch_len2(buf);
+	}
+}
+
+InternedStringPtr ChMaker::to_s(){
+	switch(pos){
+	case 1: return xnew<InternedString>(buf[0]);
+	case 2: return xnew<InternedString>(buf[0], buf[1]);
+	case 3: return xnew<InternedString>(buf[0], buf[1], buf[2]);
+	default: return xnew<InternedString>(&buf[0], pos);
+	}
 }
 
 namespace{
@@ -120,8 +163,16 @@ int_t ch_len2(const char_t* str){
 	return code_lib_->ch_len2(str);
 }
 
-AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size){
-	return code_lib_->make_range(begin, begin_size, end, end_size);
+InternedStringPtr ch_inc(const char_t* data, int_t buffer_size){
+	return code_lib_->ch_inc(data, buffer_size);
+}
+
+InternedStringPtr ch_dec(const char_t* data, int_t buffer_size){
+	return code_lib_->ch_dec(data, buffer_size);
+}
+
+int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
+	return code_lib_->ch_cmp(a, asize, b, bsize);
 }
 
 

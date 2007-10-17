@@ -18,8 +18,11 @@ int_t ch_len(char_t lead);
 int_t ch_len2(const char_t* str);
 
 
-AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size);
+InternedStringPtr ch_inc(const char_t* data, int_t buffer_size);
 
+InternedStringPtr ch_dec(const char_t* data, int_t buffer_size);
+
+int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;
@@ -67,9 +70,36 @@ public:
 	virtual void initialize(){}
 	virtual int_t ch_len(char_t lead) = 0;
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual AnyPtr make_range(const char_t* begin, int_t begin_size, const char_t* end, int_t end_size);
+	virtual InternedStringPtr ch_inc(const char_t* data, int_t buffer_size);
+	virtual InternedStringPtr ch_dec(const char_t* data, int_t buffer_size);
+	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
 };
 
 void set_code(CodeLib& lib);
 
+
+struct ChMaker{
+
+	ChMaker(){
+		pos = 0;
+		len = -1;
+	}
+
+	bool is_completed(){
+		return pos==len;
+	}
+
+	void add(char_t ch);
+
+	InternedStringPtr to_s();
+
+	void clear(){
+		pos = 0;
+		len = -1;
+	}
+
+	int_t pos;
+	int_t len;
+	char_t buf[8];
+};
 }

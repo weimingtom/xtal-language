@@ -208,6 +208,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstClassBegin::NUMBER){ temp = ((InstClassBegin*)pc)->inspect(code); sz = InstClassBegin::ISIZE; }
 		XTAL_CASE(InstClassEnd::NUMBER){ temp = ((InstClassEnd*)pc)->inspect(code); sz = InstClassEnd::ISIZE; }
 		XTAL_CASE(InstDefineClassMember::NUMBER){ temp = ((InstDefineClassMember*)pc)->inspect(code); sz = InstDefineClassMember::ISIZE; }
+		XTAL_CASE(InstMakeRange::NUMBER){ temp = ((InstMakeRange*)pc)->inspect(code); sz = InstMakeRange::ISIZE; }
 		XTAL_CASE(InstMakeArray::NUMBER){ temp = ((InstMakeArray*)pc)->inspect(code); sz = InstMakeArray::ISIZE; }
 		XTAL_CASE(InstArrayAppend::NUMBER){ temp = ((InstArrayAppend*)pc)->inspect(code); sz = InstArrayAppend::ISIZE; }
 		XTAL_CASE(InstMakeMap::NUMBER){ temp = ((InstMakeMap*)pc)->inspect(code); sz = InstMakeMap::ISIZE; }

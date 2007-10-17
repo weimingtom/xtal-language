@@ -109,6 +109,20 @@ C: class{
 
 100.times{ C(); }
 
+"‚ ".."‚¨"[].p;
+
+assert ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern === ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern;
+
+‚ ‚¢‚¤: 1000;
+‚ ‚¢‚¤.p;
+
+ds: MemoryStream();
+ds.put_s("‚Äe‚¢eee‚·");
+ds.seek(0);
+ds.get_s(5).p;
+
+10.times.map(|x|x*10)[][5].p;
+
 filelocal.inherit(builtin::peg);
 "33".p;
 

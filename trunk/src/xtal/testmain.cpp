@@ -107,7 +107,7 @@ C: class{
 	_c;
 }
 
-100000.times{ C(); }
+100.times{ C(); }
 
 filelocal.inherit(builtin::peg);
 "33".p;

@@ -3,7 +3,7 @@
 namespace xtal{
 
 
-#if 1//def XTAL_DEBUG
+#if 0//def XTAL_DEBUG
 
 struct SizeAndCount{
 	SizeAndCount(int a = 0, int b = 0){

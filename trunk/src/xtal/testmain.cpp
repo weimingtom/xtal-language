@@ -116,6 +116,8 @@ assert ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern === ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern;
 ‚ ‚¢‚¤: 1000;
 ‚ ‚¢‚¤.p;
 
+1..3.zip(6..8).map(%f(%d=%d)).to_a.p;
+
 ds: MemoryStream();
 ds.put_s("‚Äe‚¢eee‚·");
 ds.seek(0);

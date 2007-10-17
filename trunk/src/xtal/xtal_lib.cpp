@@ -156,6 +156,7 @@ void InitZipIter(){
 	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
 	p->inherit(Iterator());
 	p->def("new", ctor<ZipIter, const VMachinePtr&>());
+	p->method("block_first", &ZipIter::block_first);
 	p->method("block_next", &ZipIter::block_next);
 	p->method("block_break", &ZipIter::block_break);
 }

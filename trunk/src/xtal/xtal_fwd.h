@@ -10,12 +10,6 @@ namespace xtal{
 	};
 }
 
-#include "xtal_utility.h"
-
-#include <string>
-#include <algorithm>
-#include <stddef.h>
-
 /**
 * 全ての要素はxtal namespaceの中
 */
@@ -256,6 +250,7 @@ class CppClass;
 class Thread;
 class Mutex;
 class Singleton;
+class Range;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -281,6 +276,7 @@ typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
 typedef SmartPtr<Singleton> SingletonPtr;
+typedef SmartPtr<Range> RangePtr;
 
 class Base;
 class AtProxy;

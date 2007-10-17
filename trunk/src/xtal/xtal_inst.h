@@ -846,37 +846,39 @@ XTAL_DEF_INST_3(129, DefineClassMember,
 		inst_u8_t, accessibility
 );
 
-XTAL_DEF_INST_0(130, MakeArray);
+XTAL_DEF_INST_0(130, MakeRange);
 
-XTAL_DEF_INST_0(131, ArrayAppend);
+XTAL_DEF_INST_0(131, MakeArray);
 
-XTAL_DEF_INST_0(132, MakeMap);
+XTAL_DEF_INST_0(132, ArrayAppend);
 
-XTAL_DEF_INST_0(133, MapInsert);
+XTAL_DEF_INST_0(133, MakeMap);
 
-XTAL_DEF_INST_2(134, MakeFun,
+XTAL_DEF_INST_0(134, MapInsert);
+
+XTAL_DEF_INST_2(135, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(135, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(136, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(136, Throw);
+XTAL_DEF_INST_0(137, Throw);
 
-XTAL_DEF_INST_0(137, ThrowUnsupportedError);
+XTAL_DEF_INST_0(138, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(138, ThrowNop);
+XTAL_DEF_INST_0(139, ThrowNop);
 
-XTAL_DEF_INST_0(139, Assert);
+XTAL_DEF_INST_0(140, Assert);
 
-XTAL_DEF_INST_1(140, BreakPoint,
+XTAL_DEF_INST_1(141, BreakPoint,
         inst_u8_t, type
 );
 
-XTAL_DEF_INST_0(141, MAX);
+XTAL_DEF_INST_0(142, MAX);
 
 }

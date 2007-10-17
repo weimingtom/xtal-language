@@ -173,6 +173,8 @@ public:
 
 public:
 
+	StringPtr op_inc();
+	StringPtr op_dec();
 	StringPtr op_cat(const StringPtr& v);
 	bool op_eq(const StringPtr& v);
 	bool op_lt(const StringPtr& v);

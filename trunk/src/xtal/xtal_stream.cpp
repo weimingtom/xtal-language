@@ -121,24 +121,11 @@ StringPtr Stream::get_s(int_t length){
 		return "";
 
 	if(length==1){
-		char_t buf[16];
-		buf[0] = get_ch();
-
-		int_t len = ch_len(buf[0]);
-		if(len<0){
-			for(int_t i=1; i<-len; ++i){
-				buf[i] = get_ch();
-			}
-			int_t len2 = ch_len2(buf);
-			for(int_t i=len; i<len2; ++i){
-				buf[i] = get_ch();
-			}
-		}else{
-			for(int_t i=1; i<len; ++i){
-				buf[i] = get_ch();
-			}
+		ChMaker chm;
+		while(!chm.is_completed()){
+			chm.add(get_ch());
 		}
-		return xnew<String>(buf, len);
+		return chm.to_s();
 	}
 
 	if(length<0){
@@ -361,27 +348,12 @@ StringPtr DataStream::get_s(int_t length){
 	char_t* data = (char_t*)data_;
 
 	if(length==1){
-		uint_t pos = pos_;
-		int_t len = ch_len(data[pos_]);
-		if(len<0){
-			if(pos_ + -len > size_){
-				return "";
-			}
-			len = ch_len2(&data[pos_]);
+		ChMaker chm;
+		while(!chm.is_completed()){
+			if(pos_<size_){ chm.add(data[pos_++]); } 
+			else{ break; }
 		}
-
-		if(pos_ + len > size_){
-			return "";
-		}
-
-		pos_ += len;
-
-		switch(len){
-		case 1: return xnew<String>(data[pos]);
-		case 2: return xnew<String>(data[pos], data[pos+1]);
-		case 3: return xnew<String>(data[pos], data[pos+1], data[pos+2]);
-		default: return xnew<String>((char_t*)&data[pos], len);
-		}
+		return chm.to_s();
 	}
 
 	if(length<0){
@@ -391,34 +363,18 @@ StringPtr DataStream::get_s(int_t length){
 	}
 
 	int_t slen = 0;
-	int_t blen = 0;
-	while(slen<length){
-		if(pos_ + blen >= size_){
-			break;
+	int_t saved = pos_;
+	ChMaker chm;
+	while(slen<length && pos_<size_){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(slen<length && pos_<size_){ chm.add(data[pos_++]); } 
+			else{ break; }
 		}
-
-		int_t len = ch_len(data[pos_ + blen]);
-		if(len<0){
-			if(pos_ + -len > size_){
-				break;
-			}
-			len = ch_len2(&data[pos_ + blen]);
-		}
-
-		if(pos_ + blen + len > size_){
-			break;
-		}
-
-		blen += len;
-		slen++;
+		slen += 1;
 	}
 
-	if(blen==0)
-		return "";
-
-	StringPtr ret = xnew<String>(&data[pos_], blen);
-	pos_ += blen;
-	return ret;	
+	return xnew<String>(&data[saved], pos_ - saved);	
 }
 
 bool DataStream::eof(){

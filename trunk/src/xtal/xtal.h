@@ -3,8 +3,6 @@
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <stddef.h>
 #include <string.h>
 #include <time.h>
 #include <vector>
@@ -14,13 +12,15 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
+#include <string>
 
-#include "xtal_fwd.h"
 #include "xtal_utility.h"
+#include "xtal_fwd.h"
 #include "xtal_allocator.h"
 #include "xtal_any.h"
 #include "xtal_base.h"
 #include "xtal_smartptr.h"
+#include "xtal_basictype.h"
 #include "xtal_array.h"
 #include "xtal_hashtable.h"
 #include "xtal_map.h"

@@ -1433,6 +1433,12 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			set_label(label_if);
 		}
 
+		XTAL_CASE(EXPR_RANGE){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+			put_inst(InstMakeRange());
+		}
+
 		XTAL_CASE(EXPR_POS){ compile_expr(e->una_term()); put_inst(InstPos()); }
 		XTAL_CASE(EXPR_NEG){ compile_expr(e->una_term()); put_inst(InstNeg()); }
 		XTAL_CASE(EXPR_COM){ compile_expr(e->una_term()); put_inst(InstCom()); }
@@ -2113,6 +2119,8 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
 			return rhs;
 		}
+
+		XTAL_CASE(EXPR_RANGE){ return nop; }
 
 		XTAL_CASE(EXPR_POS){
 			XTAL_CB_DO_EXPR(term, e->una_term());

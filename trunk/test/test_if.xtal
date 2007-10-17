@@ -44,9 +44,9 @@
 
 
 {
-	a : "aaa";
+	a : 10;
 	b : fun(){
-		return "bbb";
+		return 1111111;
 	}
 	c : 0;
 
@@ -64,21 +64,21 @@
 	}
 	assert c==55;
 
-	if("a" <= "b"){
+	if(178 <= 178){
 		c = 78;
 	}else{
 		assert false;
 	}
 	assert c==78;
 
-	if("aaa" >= a){
+	if(55 >= a){
 		c = 980;
 	}else{
 		assert false;
 	}
 	assert c==980;
 
-	if("aab" >= a){
+	if(9999 >= a){
 		c = "true";
 	}else{
 		assert false;

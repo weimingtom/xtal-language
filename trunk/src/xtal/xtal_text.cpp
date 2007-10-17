@@ -461,6 +461,7 @@ void initialize_text(){
 	tm->set_at("Xtal Runtime Error 1020", "配列の範囲外アクセスです。");
 	tm->set_at("Xtal Runtime Error 1021", "%(object)s :: '%(name)s # %(ns)s' は定義されていません。");
 	tm->set_at("Xtal Runtime Error 1022", "%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。");
+	tm->set_at("Xtal Runtime Error 1023", "長さが1じゃない文字列をインクリメント、デクリメント、大小比較をすることは出来ません。");
 
 	add_text_map(tm);
 }

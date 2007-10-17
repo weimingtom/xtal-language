@@ -614,6 +614,126 @@ Mutex::block_break: method{
 }
 	))();
 
+
+	Xsrc((
+
+op_add: method(v){ return this + v; }
+Int::op_add#Int: op_add;
+Int::op_add#Float: op_add;
+Float::op_add#Int: op_add;
+Float::op_add#Float: op_add;
+Int::op_add_assign#Int: op_add;
+Int::op_add_assig#Float: op_add;
+Float::op_add_assig#Int: op_add;
+Float::op_add_assig#Float: op_add;
+
+op_sub: method(v){ return this - v; }
+Int::op_sub#Int: op_sub;
+Int::op_sub#Float: op_sub;
+Float::op_sub#Int: op_sub;
+Float::op_sub#Float: op_sub;
+Int::op_sub_assign#Int: op_sub;
+Int::op_sub_assign#Float: op_sub;
+Float::op_sub_assign#Int: op_sub;
+Float::op_sub_assign#Float: op_sub;
+
+op_mul: method(v){ return this * v; }
+Int::op_mul#Int: op_mul;
+Int::op_mul#Float: op_mul;
+Float::op_mul#Int: op_mul;
+Float::op_mul#Float: op_mul;
+Int::op_mul_assign#Int: op_mul;
+Int::op_mul_assign#Float: op_mul;
+Float::op_mul_assign#Int: op_mul;
+Float::op_mul_assign#Float: op_mul;
+
+op_div: method(v){ return this / v; }
+Int::op_div#Int: op_div;
+Int::op_div#Float: op_div;
+Float::op_div#Int: op_div;
+Float::op_div#Float: op_div;
+Int::op_div_assign#Int: op_div;
+Int::op_div_assign#Float: op_div;
+Float::op_div_assign#Int: op_div;
+Float::op_div_assign#Float: op_div;
+
+op_mod: method(v){ return this % v; }
+Int::op_mod#Int: op_mod;
+Int::op_mod#Float: op_mod;
+Float::op_mod#Int: op_mod;
+Float::op_mod#Float: op_mod;
+Int::op_mod_assign#Int: op_mod;
+Int::op_mod_assign#Float: op_mod;
+Float::op_mod_assign#Int: op_mod;
+Float::op_mod_assign#Float: op_mod;
+
+op_and: method(v){ return this & v; }
+Int::op_and#Int: op_and;
+Int::op_and_assign#Int: op_and;
+
+op_or: method(v){ return this | v; }
+Int::op_or#Int: op_or;
+Int::op_or_assign#Int: op_or;
+
+op_xor: method(v){ return this ^ v; }
+Int::op_xor#Int: op_xor;
+Int::op_xor_assign#Int: op_xor;
+
+op_shr: method(v){ return this >> v; }
+Int::op_shr#Int: op_shr;
+Int::op_shr_assign#Int: op_shr;
+
+op_ushr: method(v){ return this >>> v; }
+Int::op_ushr#Int: op_ushr;
+Int::op_ushr_assign#Int: op_ushr;
+
+op_shl: method(v){ return this << v; }
+Int::op_shl#Int: op_shl;
+Int::op_shl_assign#Int: op_shl;
+
+
+op_inc: method{ return this+1; }
+Int::op_inc: op_inc;
+Float::op_inc: op_inc;
+
+op_dec: method{ return this-1; }
+Int::op_dec: op_dec;
+Float::op_dec: op_dec;
+
+op_pos: method{ return +this; }
+Int::op_pos: op_pos;
+Float::op_pos: op_pos;
+
+op_neg: method{ return -this; }
+Int::op_neg: op_neg;
+Float::op_neg: op_neg;
+
+op_com: method{ return ~this; }
+Int::op_com: op_com;
+
+
+op_lt: method(v){ return this < v; }
+Int::op_lt#Int: op_lt;
+Int::op_lt#Float: op_lt;
+Float::op_lt#Int: op_lt;
+Float::op_lt#Float: op_lt;
+Int::op_lt_assign#Int: op_lt;
+Int::op_lt_assign#Float: op_lt;
+Float::op_lt_assign#Int: op_lt;
+Float::op_lt_assign#Float: op_lt;
+
+op_eq: method(v){ return this == v; }
+Int::op_eq#Int: op_eq;
+Int::op_eq#Float: op_eq;
+Float::op_eq#Int: op_eq;
+Float::op_eq#Float: op_eq;
+Int::op_eq_assign#Int: op_eq;
+Int::op_eq_assign#Float: op_eq;
+Float::op_eq_assign#Int: op_eq;
+Float::op_eq_assign#Float: op_eq;
+
+	))();
+
 }
 
 }

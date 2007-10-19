@@ -123,7 +123,7 @@ StringPtr Stream::get_s(int_t length){
 	if(length==1){
 		ChMaker chm;
 		while(!chm.is_completed()){
-			chm.add(get_ch());
+			chm.add(get_ch_code());
 		}
 		return chm.to_s();
 	}

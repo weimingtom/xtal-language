@@ -214,6 +214,17 @@ enum BreakPointKind{
 	BREAKPOINT_RETURN
 };
 
+/**
+* @brief 範囲区間の種類
+*/
+enum RangeKind{
+	RANGE_CLOSED = (0<<1) | (0<<0),
+	RANGE_LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
+	RANGE_LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
+	RANGE_OPEN = (1<<1) | (1<<0),
+};
+
+
 
 template<class T>
 class SmartPtr;
@@ -250,7 +261,9 @@ class CppClass;
 class Thread;
 class Mutex;
 class Singleton;
-class Range;
+class IntRange;
+class FloatRange;
+class ChRange;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -276,7 +289,9 @@ typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
 typedef SmartPtr<Singleton> SingletonPtr;
-typedef SmartPtr<Range> RangePtr;
+typedef SmartPtr<IntRange> IntRangePtr;
+typedef SmartPtr<FloatRange> FloatRangePtr;
+typedef SmartPtr<ChRange> ChRangePtr;
 
 class Base;
 class AtProxy;

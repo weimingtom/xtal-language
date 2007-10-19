@@ -1,10 +1,10 @@
 
-#include <stddef.h>
+#include <cstddef>
 #include <cassert>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <vector>
 #include <deque>
 #include <list>

@@ -1434,9 +1434,9 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		}
 
 		XTAL_CASE(EXPR_RANGE){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-			put_inst(InstMakeRange());
+			compile_expr(e->range_lhs());
+			compile_expr(e->range_rhs());
+			put_inst(InstRange((int_t)e->range_kind()));
 		}
 
 		XTAL_CASE(EXPR_POS){ compile_expr(e->una_term()); put_inst(InstPos()); }

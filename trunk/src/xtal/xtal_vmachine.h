@@ -780,10 +780,10 @@ public:
 	const inst_t* FunShlAssign(const inst_t* pc);
 	const inst_t* FunShrAssign(const inst_t* pc);
 	const inst_t* FunUshrAssign(const inst_t* pc);
+	const inst_t* FunRange(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);
 	const inst_t* FunClassEnd(const inst_t* pc);
 	const inst_t* FunDefineClassMember(const inst_t* pc);
-	const inst_t* FunMakeRange(const inst_t* pc);
 	const inst_t* FunMakeArray(const inst_t* pc);
 	const inst_t* FunArrayAppend(const inst_t* pc);
 	const inst_t* FunMakeMap(const inst_t* pc);

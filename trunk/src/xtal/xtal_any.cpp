@@ -57,6 +57,8 @@ void initialize_any(){
 
 		p->def("op_at", xnew<BinOp>("op_at"));
 		p->def("op_set_at", xnew<BinOp>("op_set_at"));
+
+		p->def("op_range", xnew<BinOp>("op_range"));
 	}
 
 	builtin()->def("Any", get_cpp_class<Any>());

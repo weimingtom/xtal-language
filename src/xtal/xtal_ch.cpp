@@ -61,7 +61,7 @@ public:
 
 ////////////////////////////////////////////////
 
-InternedStringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
+StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 	if(buffer_size>6){
 		return xnew<InternedString>(data, buffer_size);
 	}
@@ -81,29 +81,6 @@ InternedStringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 		return xnew<InternedString>((char_t*)buf+1, buffer_size);
 	}else{
 		return xnew<InternedString>((char_t*)buf, buffer_size+1);
-	}
-}
-
-InternedStringPtr CodeLib::ch_dec(const char_t* data, int_t buffer_size){
-	if(buffer_size==0){
-		return xnew<InternedString>(data, buffer_size);
-	}
-
-	uchar_t buf[8] = {0};
-	memcpy(buf, data, buffer_size*sizeof(uchar_t));
-
-	for(int_t i=buffer_size-1; i>=0; --i){
-		buf[i]--;
-		if(buf[i]==(uchar_t)-1){
-			continue;
-		}
-		break;
-	}
-
-	if(buf[0]==0){
-		return xnew<InternedString>((char_t*)buf+1, buffer_size-1);
-	}else{
-		return xnew<InternedString>((char_t*)buf, buffer_size);
 	}
 }
 
@@ -163,12 +140,8 @@ int_t ch_len2(const char_t* str){
 	return code_lib_->ch_len2(str);
 }
 
-InternedStringPtr ch_inc(const char_t* data, int_t buffer_size){
+StringPtr ch_inc(const char_t* data, int_t buffer_size){
 	return code_lib_->ch_inc(data, buffer_size);
-}
-
-InternedStringPtr ch_dec(const char_t* data, int_t buffer_size){
-	return code_lib_->ch_dec(data, buffer_size);
 }
 
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){

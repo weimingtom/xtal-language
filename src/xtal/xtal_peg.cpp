@@ -182,7 +182,7 @@ AnyPtr ch_set(const StringPtr& str){
 
 AnyPtr ch_range(const StringPtr& begin, const StringPtr& end){
 	MapPtr data = xnew<Map>();
-	Xfor(v, xnew<Range>(begin, end, true)){
+	Xfor(v, xnew<ChRange>(begin, end)){
 		data->set_at(v, true);
 	}
 	return xnew<Parts>(PARTS_TEST_CH_SET, data);
@@ -615,7 +615,7 @@ ReNodePtr ReParser::reclass(){
 				StringPtr ch2 = lex_.GetChar();
 				eat_token();
 
-				Xfor(v, xnew<Range>(ch, ch2)){
+				Xfor(v, xnew<ChRange>(ch, ch2)){
 					set->set_at(v, true);
 				}
 			}

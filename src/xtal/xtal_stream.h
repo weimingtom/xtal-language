@@ -109,11 +109,11 @@ public:
 		return u.f;
 	}
 
-	void put_ch(char_t ch){
+	void put_ch_code(char_t ch){
 		put_t<SelectType<sizeof(char_t)>::uint_t>(ch);
 	}
 
-	char_t get_ch(){
+	char_t get_ch_code(){
 		return get_t<SelectType<sizeof(char_t)>::uint_t>();
 	}
 

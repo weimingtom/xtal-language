@@ -11,7 +11,8 @@ namespace{
 	}
 }
 
-struct FormatSpecifier{
+class FormatSpecifier : public Base{
+public:
 
 	enum{ BUF_MAX = 20, REAL_BUF_MAX = BUF_MAX + 2 };
 	
@@ -29,7 +30,7 @@ public:
 	char_t change_int_type();
 	char_t change_float_type();
 	
-	void make_format_specifier(char_t* dest, char_t type);
+	void make_format_specifier(char_t* dest, char_t type, bool int_type = false);
 
 	const char_t* parse_format(const char_t* str);
 
@@ -130,7 +131,7 @@ int_t FormatSpecifier::max_buffer_size(){
 	return width_ + precision_;
 }
 
-void FormatSpecifier::make_format_specifier(char_t* dest, char_t type){
+void FormatSpecifier::make_format_specifier(char_t* dest, char_t type, bool int_type){
 	*dest++ = '%';
 
 	{ // 書式指定子を埋め込む
@@ -139,7 +140,7 @@ void FormatSpecifier::make_format_specifier(char_t* dest, char_t type){
 		--dest;
 	}
 
-	{ // int_t が64-bitの時に特別な書式指定子を埋め込む
+	if(int_type){ // int_t が64-bitの時に特別な書式指定子を埋め込む
 		const char* src = XTAL_INT_FMT;
 		while(*dest++ = *src++){}
 		--dest;
@@ -323,14 +324,14 @@ void Format::call(const VMachinePtr& vm){
 				}
 
 				XTAL_CASE(TYPE_INT){
-					fs->make_format_specifier(spec, fs->change_int_type());
+					fs->make_format_specifier(spec, fs->change_int_type(), true);
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, ivalue(a));
 					buf += pcbuf;
 				}
 				
 				XTAL_CASE(TYPE_FLOAT){
 					fs->make_format_specifier(spec, fs->change_float_type());
-					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, fvalue(a));
+					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(a));
 					buf += pcbuf;
 				}
 			}
@@ -461,7 +462,9 @@ void initialize_text(){
 	tm->set_at("Xtal Runtime Error 1020", "配列の範囲外アクセスです。");
 	tm->set_at("Xtal Runtime Error 1021", "%(object)s :: '%(name)s # %(ns)s' は定義されていません。");
 	tm->set_at("Xtal Runtime Error 1022", "%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。");
-	tm->set_at("Xtal Runtime Error 1023", "長さが1じゃない文字列をインクリメント、デクリメント、大小比較をすることは出来ません。");
+	tm->set_at("Xtal Runtime Error 1023", "1より長い文字列は範囲演算子に指定できません。");
+	tm->set_at("Xtal Runtime Error 1024", "0除算エラーです。");
+	tm->set_at("Xtal Runtime Error 1025", "ChRangeは閉区間である必要があります。");
 
 	add_text_map(tm);
 }

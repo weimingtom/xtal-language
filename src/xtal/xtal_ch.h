@@ -18,9 +18,9 @@ int_t ch_len(char_t lead);
 int_t ch_len2(const char_t* str);
 
 
-InternedStringPtr ch_inc(const char_t* data, int_t buffer_size);
+StringPtr ch_inc(const char_t* data, int_t buffer_size);
 
-InternedStringPtr ch_dec(const char_t* data, int_t buffer_size);
+StringPtr ch_dec(const char_t* data, int_t buffer_size);
 
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
@@ -70,8 +70,7 @@ public:
 	virtual void initialize(){}
 	virtual int_t ch_len(char_t lead) = 0;
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual InternedStringPtr ch_inc(const char_t* data, int_t buffer_size);
-	virtual InternedStringPtr ch_dec(const char_t* data, int_t buffer_size);
+	virtual StringPtr ch_inc(const char_t* data, int_t buffer_size);
 	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
 };
 

@@ -834,19 +834,21 @@ XTAL_DEF_INST_0(124, ShlAssign);
 XTAL_DEF_INST_0(125, ShrAssign);
 XTAL_DEF_INST_0(126, UshrAssign);
 
-XTAL_DEF_INST_1(127, ClassBegin,
+XTAL_DEF_INST_1(127, Range,
+		inst_u8_t, kind
+);
+
+XTAL_DEF_INST_1(128, ClassBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(128, ClassEnd);
+XTAL_DEF_INST_0(129, ClassEnd);
 
-XTAL_DEF_INST_3(129, DefineClassMember,
+XTAL_DEF_INST_3(130, DefineClassMember,
         inst_u16_t, number,
 		inst_u16_t, identifier_number,
 		inst_u8_t, accessibility
 );
-
-XTAL_DEF_INST_0(130, MakeRange);
 
 XTAL_DEF_INST_0(131, MakeArray);
 

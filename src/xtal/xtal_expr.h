@@ -132,6 +132,10 @@ public:
 	XTAL_DEF_MEMBER(2, int_t, string_kind);
 	XTAL_DEF_MEMBER(3, InternedStringPtr, string_value);
 
+	XTAL_DEF_MEMBER(2, ExprPtr, range_lhs);
+	XTAL_DEF_MEMBER(3, ExprPtr, range_rhs);
+	XTAL_DEF_MEMBER(4, int_t, range_kind);
+
 	XTAL_DEF_MEMBER(2, ArrayPtr, array_values);
 	
 	XTAL_DEF_MEMBER(2, MapPtr, map_values);
@@ -278,6 +282,8 @@ inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ ret
 
 inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }
 inline ExprPtr map(int_t lineno, const MapPtr& exprs){ return Expr::make(EXPR_MAP, lineno, 3)->set_map_values(exprs); }
+
+inline ExprPtr range_(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs, int_t kind){ return Expr::make(EXPR_RANGE, lineno, 5)->set_range_lhs(lhs)->set_range_rhs(rhs)->set_range_kind(kind); }
 
 }
 

@@ -545,7 +545,7 @@ void Lexer::do_read(){
 				if(reader_.eat('>')){
 					if(reader_.eat('>')){
 						if(reader_.eat('=')){
-							push_token(c3('>','3','='));
+							push_token(c4('>','>','>','='));
 						}else{
 							push_token(c3('>','>','>'));
 						}
@@ -569,6 +569,16 @@ void Lexer::do_read(){
 					}
 				}else if(reader_.eat('=')){
 					push_token(c2('<', '='));
+				}else if(reader_.eat('.')){
+					if(!reader_.eat('.')){
+						error_->error(lineno(), Xt("Xtal Compile Error 1001"));					
+					}
+
+					if(reader_.eat('<')){
+						push_token(c4('<', '.', '.', '<'));
+					}else{
+						push_token(c3('<', '.', '.'));
+					}
 				}else{
 					push_token('<');
 				}
@@ -1161,21 +1171,27 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 					}
 				}
 
-				XTAL_CASE(c3('.', '.', '<')){
-					if(pri < PRI_RANGE - l_space){
-						ret = bin(EXPR_RANGE, ln, lhs, parse_expr(PRI_RANGE - r_space));
-					}
-				}
-
-				XTAL_CASE(c3('.', '.', '.')){
-					if(pri < PRI_RANGE - l_space){
-						ret = bin(EXPR_RANGE, ln, lhs, parse_expr(PRI_RANGE - r_space));
-					}
-				}
-
 				XTAL_CASE(c2('.', '.')){
 					if(pri < PRI_RANGE - l_space){
-						ret = bin(EXPR_RANGE, ln, lhs, send(ln, parse_expr(PRI_RANGE - r_space), Xid(op_inc)));
+						ret = range_(ln, lhs, parse_expr(PRI_RANGE - r_space), RANGE_CLOSED);
+					}
+				}
+
+				XTAL_CASE(c3('.', '.', '<')){
+					if(pri < PRI_RANGE - l_space){
+						ret = range_(ln, lhs, parse_expr(PRI_RANGE - r_space), RANGE_LEFT_CLOSED_RIGHT_OPEN);
+					}
+				}
+
+				XTAL_CASE(c3('<', '.', '.')){
+					if(pri < PRI_RANGE - l_space){
+						ret = range_(ln, lhs, parse_expr(PRI_RANGE - r_space), RANGE_LEFT_OPEN_RIGHT_CLOSED);
+					}
+				}
+
+				XTAL_CASE(c4('<', '.', '.', '<')){
+					if(pri < PRI_RANGE - l_space){
+						ret = range_(ln, lhs, parse_expr(PRI_RANGE - r_space), RANGE_OPEN);
 					}
 				}
 
@@ -1353,7 +1369,7 @@ ExprPtr Parser::parse_assign_stmt(){
 					XTAL_CASE(c2('&','=')){ return bin(EXPR_AND_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c3('<','<','=')){ return bin(EXPR_SHL_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c3('>','>','=')){ return bin(EXPR_SHR_ASSIGN, ln, lhs, parse_expr_must()); }
-					XTAL_CASE(c3('>','3','=')){ return bin(EXPR_USHR_ASSIGN, ln, lhs, parse_expr_must()); }
+					XTAL_CASE(c4('>','>','>','=')){ return bin(EXPR_USHR_ASSIGN, ln, lhs, parse_expr_must()); }
 
 					XTAL_CASE('{'){
 						return parse_each(null, lhs);

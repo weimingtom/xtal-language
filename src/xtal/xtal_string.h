@@ -173,8 +173,7 @@ public:
 
 public:
 
-	StringPtr op_inc();
-	StringPtr op_dec();
+	ChRangePtr op_range(const StringPtr& right, int_t kind);
 	StringPtr op_cat(const StringPtr& v);
 	bool op_eq(const StringPtr& v);
 	bool op_lt(const StringPtr& v);
@@ -296,6 +295,34 @@ public:
 inline bool operator ==(const InternedStringPtr& a, const InternedStringPtr& b){ return raweq(a, b); }
 inline bool operator !=(const InternedStringPtr& a, const InternedStringPtr& b){ return rawne(a, b); }
 
+
+class ChRange : public Base{
+public:
+
+	ChRange(const StringPtr& left, const StringPtr& right)
+		:left_(left), right_(right){}
+
+public:
+
+	const StringPtr& left(){ return left_; }
+
+	const StringPtr& right(){ return right_; }
+
+	AnyPtr each();
+
+private:
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & left_ & right_;
+	}
+
+	StringPtr left_;
+	StringPtr right_;
+};
+
+
+
 struct Named2;
 
 /**
@@ -367,7 +394,6 @@ void visit_members(Visitor& m, const Named& p);
 
 //{ID{{
 namespace id{
-extern InternedStringPtr idop_inc;
 extern InternedStringPtr idblock_catch;
 extern InternedStringPtr idcallee;
 extern InternedStringPtr idnew;
@@ -375,6 +401,7 @@ extern InternedStringPtr idop_shl_assign;
 extern InternedStringPtr idop_at;
 extern InternedStringPtr idtest;
 extern InternedStringPtr idfor;
+extern InternedStringPtr idop_inc;
 extern InternedStringPtr idserial_new;
 extern InternedStringPtr idop_div_assign;
 extern InternedStringPtr idop_mul;
@@ -382,9 +409,9 @@ extern InternedStringPtr idop_xor_assign;
 extern InternedStringPtr idto_a;
 extern InternedStringPtr idinitialize;
 extern InternedStringPtr idonce;
+extern InternedStringPtr idfalse;
 extern InternedStringPtr iddo;
 extern InternedStringPtr idstring;
-extern InternedStringPtr idfalse;
 extern InternedStringPtr idancestors;
 extern InternedStringPtr idop_and_assign;
 extern InternedStringPtr idop_add_assign;
@@ -396,11 +423,11 @@ extern InternedStringPtr idyield;
 extern InternedStringPtr idop_shr_assign;
 extern InternedStringPtr idop_cat;
 extern InternedStringPtr idop_neg;
-extern InternedStringPtr idop_dec;
 extern InternedStringPtr idvalue;
 extern InternedStringPtr iddefault;
 extern InternedStringPtr idcase;
 extern InternedStringPtr idto_s;
+extern InternedStringPtr idop_dec;
 extern InternedStringPtr idop_shr;
 extern InternedStringPtr idpure;
 extern InternedStringPtr idfinally;
@@ -457,12 +484,13 @@ extern InternedStringPtr idop_ushr;
 extern InternedStringPtr idfirst_step;
 extern InternedStringPtr idblock_break;
 extern InternedStringPtr idserial_save;
+extern InternedStringPtr idop_range;
 extern InternedStringPtr id_dummy_fun_parameter_;
 extern InternedStringPtr id_dummy_block_parameter_;
 extern InternedStringPtr idunittest;
+extern InternedStringPtr idtrue;
 extern InternedStringPtr idop_xor;
 extern InternedStringPtr idblock_first;
-extern InternedStringPtr idtrue;
 extern InternedStringPtr idop_call;
 extern InternedStringPtr id_initialize_;
 extern InternedStringPtr idis;
@@ -474,6 +502,7 @@ extern InternedStringPtr idif;
 extern InternedStringPtr idp;
 }
 //}}ID}
+
 
 
 

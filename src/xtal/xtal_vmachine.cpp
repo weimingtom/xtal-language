@@ -1,12 +1,18 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
-#include <math.h>
-
 namespace xtal{
 
 inline const InternedStringPtr& isp(const Innocence& v){
 	return (const InternedStringPtr&)v;
+}
+
+template<class T>
+inline T check_zero(T value){
+	if(value==0){
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1024")), return 1);
+	}
+	return value;
 }
 
 VMachine::VMachine(){	
@@ -1438,12 +1444,12 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(Div){ XTAL_VM_CONTINUE(FunDiv(pc)); /*
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div)));
@@ -1453,11 +1459,11 @@ XTAL_VM_SWITCH{
 		using namespace std;
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf((float_t)ivalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fmodf(fvalue(get(1)),(float_t)ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fmodf(fvalue(get(1)), (float_t)ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf(fvalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
@@ -1701,12 +1707,12 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(DivAssign){ XTAL_VM_CONTINUE(FunDivAssign(pc)); /*
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div_assign)));
@@ -1715,7 +1721,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ModAssign){ XTAL_VM_CONTINUE(FunModAssign(pc)); /*
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf((float_t)ivalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
@@ -1780,6 +1786,16 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr_assign)));
 	}*/ }
 
+	XTAL_VM_CASE(Range){ // 6
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence rhs = pop_and_save2();
+			Innocence lhs = pop_and_save1();
+			inner_setup_call(pc+inst.ISIZE, 1, ap(rhs), ap(Innocence((int_t)inst.kind)));
+			ap(lhs)->rawsend(myself(), Xid(op_range), ap(rhs)->get_class());
+		}
+		XTAL_VM_CONTINUE(ff().called_pc);
+	}
+
 	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassCore* core = code()->class_core(inst.core_number);
@@ -1826,14 +1842,6 @@ XTAL_VM_SWITCH{
 			ClassPtr p = cast<ClassPtr>(ff().outer());
 			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 			downsize(2);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(MakeRange){ // 4
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			set(1, xnew<Range>(get(1), get()));
-			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -2927,12 +2935,12 @@ const inst_t* VMachine::FunDiv(const inst_t* pc){
 		XTAL_VM_DEF_INST(Div);
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div)));
@@ -2943,11 +2951,11 @@ const inst_t* VMachine::FunMod(const inst_t* pc){
 		using namespace std;
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf((float_t)ivalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fmodf(fvalue(get(1)),(float_t)ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fmodf(fvalue(get(1)), (float_t)ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf(fvalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
@@ -3214,12 +3222,12 @@ const inst_t* VMachine::FunDivAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(DivAssign);
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(ivalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
-				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / fvalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(fvalue(get(1)) / check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fvalue(get(1)) / check_zero(fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 		}
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_div_assign)));
@@ -3229,7 +3237,7 @@ const inst_t* VMachine::FunModAssign(const inst_t* pc){
 		XTAL_VM_DEF_INST(ModAssign);
 		switch(type(get(1))){XTAL_DEFAULT;
 			XTAL_CASE(TYPE_INT){switch(type(get())){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % ivalue(get()))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
+				XTAL_CASE(TYPE_INT){ set(1, Innocence(ivalue(get(1)) % check_zero(ivalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 				XTAL_CASE(TYPE_FLOAT){ set(1, Innocence(fmodf((float_t)ivalue(get(1)), fvalue(get())))); downsize(1); XTAL_VM_CONTINUE(pc+inst.ISIZE); }
 			}}
 			XTAL_CASE(TYPE_FLOAT){switch(type(get())){XTAL_DEFAULT;
@@ -3300,6 +3308,17 @@ const inst_t* VMachine::FunUshrAssign(const inst_t* pc){
 		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_ushr_assign)));
 }
 
+const inst_t* VMachine::FunRange(const inst_t* pc){
+		XTAL_VM_DEF_INST(Range);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Innocence lhs = pop_and_save1();
+			Innocence rhs = pop_and_save2();
+			inner_setup_call(pc+inst.ISIZE, 1, ap(lhs), ap(Innocence((int_t)inst.kind)));
+			ap(lhs)->rawsend(myself(), Xid(op_range), ap(rhs)->get_class());
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
 const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassBegin);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -3349,15 +3368,6 @@ const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
 			ClassPtr p = cast<ClassPtr>(ff().outer());
 			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 			downsize(2);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachine::FunMakeRange(const inst_t* pc){
-		XTAL_VM_DEF_INST(MakeRange);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			set(1, xnew<Range>(get(1), get()));
-			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }

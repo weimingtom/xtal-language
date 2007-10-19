@@ -82,7 +82,7 @@ protected:
 
 	void set_f(float_t v){
 		type_ = TYPE_FLOAT;
-		fvalue_ = v;
+		*(float_t*)fvalue_bytes = v;
 	}
 
 	void set_b(bool b){
@@ -129,7 +129,7 @@ protected:
 
 	union{
 		int_t value_;
-		float_t fvalue_;
+		byte_t fvalue_bytes[sizeof(float_t)];
 		Base* pvalue_;
 		SmallString svalue_;
 	};
@@ -146,7 +146,7 @@ inline int_t ivalue(const Innocence& v){
 
 inline float_t fvalue(const Innocence& v){ 
 	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
-	return v.fvalue_; 
+	return *(float_t*)v.fvalue_bytes; 
 }
 
 inline Base* pvalue(const Innocence& v){ 

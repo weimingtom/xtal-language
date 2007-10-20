@@ -501,7 +501,7 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 		inst.op += e->type()-EXPR_EQ;
 		put_inst(inst);
 
-		if(e->type()==EXPR_NE || e->type()==EXPR_LE || e->type()==EXPR_GE){
+		if(e->type()==EXPR_NE || e->type()==EXPR_LE || e->type()==EXPR_GE || e->type()==EXPR_NIN){
 			set_jump(InstUnless::OFFSET_address, label_if2);
 			put_inst(InstUnless());
 		}else{
@@ -751,7 +751,7 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	inst.op += e->type() - EXPR_EQ;
 	put_inst(inst);
 
-	if(e->type()==EXPR_NE || e->type()==EXPR_LE || e->type()==EXPR_GE){
+	if(e->type()==EXPR_NE || e->type()==EXPR_LE || e->type()==EXPR_GE || e->type()==EXPR_NIN){
 		put_inst(InstNot());
 	}
 }
@@ -1370,6 +1370,8 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_GE){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin(e); }
+		XTAL_CASE(EXPR_IN){ compile_comp_bin(e); }
+		XTAL_CASE(EXPR_NIN){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_IS){ compile_comp_bin(e); }
 		XTAL_CASE(EXPR_NIS){ compile_comp_bin(e); }
 
@@ -2065,6 +2067,14 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
 			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
 			return rawne(lhs, rhs);
+		}
+
+		XTAL_CASE(EXPR_IN){
+			return nop;
+		}
+
+		XTAL_CASE(EXPR_NIN){
+			return nop;
 		}
 
 		XTAL_CASE(EXPR_IS){

@@ -734,6 +734,8 @@ public:
 	const inst_t* FunIfGe(const inst_t* pc);
 	const inst_t* FunIfRawEq(const inst_t* pc);
 	const inst_t* FunIfRawNe(const inst_t* pc);
+	const inst_t* FunIfIn(const inst_t* pc);
+	const inst_t* FunIfNin(const inst_t* pc);
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfNis(const inst_t* pc);
 	const inst_t* FunIfArgIsNop(const inst_t* pc);
@@ -764,6 +766,8 @@ public:
 	const inst_t* FunGe(const inst_t* pc);
 	const inst_t* FunRawEq(const inst_t* pc);
 	const inst_t* FunRawNe(const inst_t* pc);
+	const inst_t* FunIn(const inst_t* pc);
+	const inst_t* FunNin(const inst_t* pc);
 	const inst_t* FunIs(const inst_t* pc);
 	const inst_t* FunNis(const inst_t* pc);
 	const inst_t* FunInc(const inst_t* pc);

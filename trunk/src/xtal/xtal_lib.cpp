@@ -204,7 +204,6 @@ builtin::CompileError: class(StandardError){
 		Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));
 	}		
 }		
-
 	))();
 
 	Xsrc((
@@ -613,8 +612,22 @@ Mutex::block_break: method{
 	this.unlock;
 	return null;
 }
-	))();
 
+builtin::ClassicIterator: class{
+	_current;
+	_source;
+
+	initialize: method(_source){ _source, _current = _source.block_first; }
+	current: method _current;
+	has_next: method !!_source;
+	is_done: method !_source;
+	next: method{ _source, _current = _source.block_next; }
+	source: method _source;
+}
+
+Iterator::classic: method ClassicIterator(this);
+
+	))();
 
 	Xsrc((
 

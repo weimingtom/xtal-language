@@ -1316,6 +1316,14 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc);
 	}
 
+	XTAL_VM_CASE(IfIn){ // 4
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_in)));
+	}
+
+	XTAL_VM_CASE(IfNin){ // 4
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_in)));
+	}
+
 	XTAL_VM_CASE(IfIs){ // 4
 		pc += get(1)->is(get()) ? inst.ISIZE : inst.address;
 		downsize(2);
@@ -1628,6 +1636,14 @@ XTAL_VM_SWITCH{
 		set(1, Innocence(rawne(get(1), get())));
 		downsize(1);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(In){ // 4
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_in)));
+	}
+
+	XTAL_VM_CASE(Nin){ // 4
+		XTAL_VM_CONTINUE(send2(pc+inst.ISIZE, Xid(op_in)));
 	}
 
 	XTAL_VM_CASE(Is){ // 4
@@ -3311,12 +3327,12 @@ const inst_t* VMachine::FunUshrAssign(const inst_t* pc){
 const inst_t* VMachine::FunRange(const inst_t* pc){
 		XTAL_VM_DEF_INST(Range);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Innocence lhs = pop_and_save1();
 			Innocence rhs = pop_and_save2();
-			inner_setup_call(pc+inst.ISIZE, 1, ap(lhs), ap(Innocence((int_t)inst.kind)));
+			Innocence lhs = pop_and_save1();
+			inner_setup_call(pc+inst.ISIZE, 1, ap(rhs), ap(Innocence((int_t)inst.kind)));
 			ap(lhs)->rawsend(myself(), Xid(op_range), ap(rhs)->get_class());
 		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		XTAL_VM_CONTINUE(ff().called_pc);
 }
 
 const inst_t* VMachine::FunClassBegin(const inst_t* pc){

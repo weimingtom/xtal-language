@@ -121,6 +121,7 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(current_context), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
 	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
 	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
+	keyword_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
 	keyword_map_->set_at(Xid(unittest), (int_t)Token::KEYWORD_UNITTEST);
 	keyword_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
 	keyword_map_->set_at(Xid(pure), (int_t)Token::KEYWORD_PURE);
@@ -614,6 +615,14 @@ void Lexer::do_read(){
 						}else{
 							push_token('!');
 						}
+					}else if(reader_.peek(1)=='n'){
+						if(!test_ident_rest(reader_.peek(2))){
+							reader_.read();
+							reader_.read();
+							push_token(c3('!', 'i', 'n'));
+						}else{
+							push_token('!');
+						}
 					}else{
 						push_token('!');
 					}
@@ -812,6 +821,8 @@ enum{//Expressions priority
 		PRI_GE = PRI_EQ,
 		PRI_RAW_EQ = PRI_EQ,
 		PRI_RAW_NE = PRI_EQ,
+		PRI_IN = PRI_EQ,
+		PRI_NIN = PRI_EQ,
 		PRI_IS = PRI_EQ,
 		PRI_NIS = PRI_EQ,
 
@@ -1066,6 +1077,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_IS){ if(pri < PRI_IS - l_space){ ret = bin(EXPR_IS, ln, lhs, parse_expr(PRI_IS - r_space)); } }
+				XTAL_CASE(Token::KEYWORD_IN){ if(pri < PRI_IS - l_space){ ret = bin(EXPR_IN, ln, lhs, parse_expr(PRI_IN - r_space)); } }
 			}
 		}
 		
@@ -1097,6 +1109,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				XTAL_CASE(c3('=','=','=')){ if(pri < PRI_RAW_EQ - l_space){ ret = bin(EXPR_RAWEQ, ln, lhs, parse_expr(PRI_RAW_EQ - r_space)); } } 
 				XTAL_CASE(c3('!','=','=')){ if(pri < PRI_RAW_NE - l_space){ ret = bin(EXPR_RAWNE, ln, lhs, parse_expr(PRI_RAW_NE - r_space)); } } 
 				XTAL_CASE(c3('!','i','s')){ if(pri < PRI_NIS - l_space){ ret = bin(EXPR_NIS, ln, lhs, parse_expr(PRI_NIS - r_space)); } }
+				XTAL_CASE(c3('!','i','n')){ if(pri < PRI_NIN - l_space){ ret = bin(EXPR_NIN, ln, lhs, parse_expr(EXPR_NIN - r_space)); } }
 
 				XTAL_CASE(c2(':',':')){
 					if(pri < PRI_MEMBER - l_space){

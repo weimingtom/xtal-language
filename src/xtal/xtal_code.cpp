@@ -159,6 +159,8 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstIfGe::NUMBER){ temp = ((InstIfGe*)pc)->inspect(code); sz = InstIfGe::ISIZE; }
 		XTAL_CASE(InstIfRawEq::NUMBER){ temp = ((InstIfRawEq*)pc)->inspect(code); sz = InstIfRawEq::ISIZE; }
 		XTAL_CASE(InstIfRawNe::NUMBER){ temp = ((InstIfRawNe*)pc)->inspect(code); sz = InstIfRawNe::ISIZE; }
+		XTAL_CASE(InstIfIn::NUMBER){ temp = ((InstIfIn*)pc)->inspect(code); sz = InstIfIn::ISIZE; }
+		XTAL_CASE(InstIfNin::NUMBER){ temp = ((InstIfNin*)pc)->inspect(code); sz = InstIfNin::ISIZE; }
 		XTAL_CASE(InstIfIs::NUMBER){ temp = ((InstIfIs*)pc)->inspect(code); sz = InstIfIs::ISIZE; }
 		XTAL_CASE(InstIfNis::NUMBER){ temp = ((InstIfNis*)pc)->inspect(code); sz = InstIfNis::ISIZE; }
 		XTAL_CASE(InstIfArgIsNop::NUMBER){ temp = ((InstIfArgIsNop*)pc)->inspect(code); sz = InstIfArgIsNop::ISIZE; }
@@ -189,6 +191,8 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstGe::NUMBER){ temp = ((InstGe*)pc)->inspect(code); sz = InstGe::ISIZE; }
 		XTAL_CASE(InstRawEq::NUMBER){ temp = ((InstRawEq*)pc)->inspect(code); sz = InstRawEq::ISIZE; }
 		XTAL_CASE(InstRawNe::NUMBER){ temp = ((InstRawNe*)pc)->inspect(code); sz = InstRawNe::ISIZE; }
+		XTAL_CASE(InstIn::NUMBER){ temp = ((InstIn*)pc)->inspect(code); sz = InstIn::ISIZE; }
+		XTAL_CASE(InstNin::NUMBER){ temp = ((InstNin*)pc)->inspect(code); sz = InstNin::ISIZE; }
 		XTAL_CASE(InstIs::NUMBER){ temp = ((InstIs*)pc)->inspect(code); sz = InstIs::ISIZE; }
 		XTAL_CASE(InstNis::NUMBER){ temp = ((InstNis*)pc)->inspect(code); sz = InstNis::ISIZE; }
 		XTAL_CASE(InstInc::NUMBER){ temp = ((InstInc*)pc)->inspect(code); sz = InstInc::ISIZE; }

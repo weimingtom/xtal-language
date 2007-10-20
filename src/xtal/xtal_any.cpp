@@ -5,14 +5,27 @@ namespace xtal{
 
 namespace{
 
-struct BinOp : public HaveName{
-	InternedStringPtr name;
-	BinOp(const InternedStringPtr& name):name(name){}
+	struct BinOp : public HaveName{
+		InternedStringPtr name;
+		BinOp(const InternedStringPtr& name):name(name){}
 
-	virtual void call(const VMachinePtr& vm){
-		vm->get_arg_this()->rawsend(vm, name, vm->arg(0)->get_class(), vm->get_arg_this());
+		virtual void call(const VMachinePtr& vm){
+			vm->get_arg_this()->rawsend(vm, name, vm->arg(0)->get_class(), vm->get_arg_this());
+		}
+	};
+
+	bool op_in_Any_Array(const AnyPtr& v, const ArrayPtr& values){
+		Xfor(v2, values){
+			if(v == v2){
+				return true;
+			}
+		}
+		return false;
 	}
-};
+
+	bool op_in_Any_Set(const AnyPtr& v, const SetPtr& values){
+		return values->at(v);
+	}
 
 }
 
@@ -59,6 +72,8 @@ void initialize_any(){
 		p->def("op_set_at", xnew<BinOp>("op_set_at"));
 
 		p->def("op_range", xnew<BinOp>("op_range"));
+		p->method("op_in", &op_in_Any_Array, new_cpp_class<Array>());
+		p->method("op_in", &op_in_Any_Set, new_cpp_class<Set>());
 	}
 
 	builtin()->def("Any", get_cpp_class<Any>());

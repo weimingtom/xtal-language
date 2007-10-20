@@ -354,6 +354,7 @@ enum ReCharType{
 	P_CH,
 	P_CH_SET,
 	P_NEG_CH_SET,
+	P_PARTS,
 };
 
 struct ReChar{
@@ -404,6 +405,10 @@ struct ReChar{
 					return true;
 				}
 				return false;
+			}
+
+			XTAL_CASE(P_PARTS){
+
 			}
 		}
 

@@ -56,12 +56,24 @@ namespace{
 		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return null);
 	}
 
-	IntRangePtr range_Int(const AnyPtr& left, const AnyPtr& right, int_t kind){
+	IntRangePtr op_range_Int(const AnyPtr& left, const AnyPtr& right, int_t kind){
 		return xnew<IntRange>(left->to_i(), right->to_i(), kind);	
 	}
 
-	FloatRangePtr range_Float(const AnyPtr& left, const AnyPtr& right, int_t kind){
+	FloatRangePtr op_range_Float(const AnyPtr& left, const AnyPtr& right, int_t kind){
 		return xnew<FloatRange>(left->to_f(), right->to_f(), kind);	
+	}
+
+	bool op_in_Int_IntRange(int_t v, const IntRangePtr& range){
+		return range->begin() <= v && v < range->end();
+	}
+
+	bool op_in_Float_IntRange(float_t v, const IntRangePtr& range){
+		return range->begin() <= v && v < range->end();
+	}
+
+	bool op_in_Float_FloatRange(float_t v, const FloatRangePtr& range){
+		return (range->left_closed() ? (range->left() <= v) : (range->left() < v)) && (range->right_closed() ? (v <= range->right()) : (v < range->right()));
 	}
 
 	class IntRangeIter : public Base{
@@ -110,8 +122,10 @@ void initialize_basic_type(){
 		p->method("to_i", &Int_to_i);
 		p->method("to_f", &Int_to_f);
 		p->method("to_s", &Int_to_s);
-		p->method("op_range", &range_Int, get_cpp_class<Int>());
-		p->method("op_range", &range_Float, get_cpp_class<Float>());
+		p->method("op_range", &op_range_Int, get_cpp_class<Int>());
+		p->method("op_range", &op_range_Float, get_cpp_class<Float>());
+		p->method("op_in", &op_in_Int_IntRange, get_cpp_class<IntRange>());
+		p->method("op_in", &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
 	}
 
 	{
@@ -119,8 +133,10 @@ void initialize_basic_type(){
 		p->method("to_i", &Float_to_i);
 		p->method("to_f", &Float_to_f);
 		p->method("to_s", &Float_to_s);
-		p->method("op_range", &range_Float, get_cpp_class<Int>());
-		p->method("op_range", &range_Float, get_cpp_class<Float>());
+		p->method("op_range", &op_range_Float, get_cpp_class<Int>());
+		p->method("op_range", &op_range_Float, get_cpp_class<Float>());
+		p->method("op_in", &op_in_Int_IntRange, get_cpp_class<IntRange>());
+		p->method("op_in", &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
 	}
 
 	{

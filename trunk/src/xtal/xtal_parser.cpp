@@ -440,6 +440,12 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('*', '='));
+				}else if(reader_.eat('*')){
+					if(reader_.eat('=')){
+						push_token(c3('*', '*', '='));
+					}else{
+						push_token(c2('*', '*'));
+					}
 				}else{
 					push_token('*');
 				}
@@ -843,6 +849,8 @@ enum{//Expressions priority
 		PRI_COM = PRI_NEG,
 		PRI_NOT = PRI_NEG,
 
+	PRI_POW,
+
 	PRI_AT,
 		PRI_SEND = PRI_AT,
 		PRI_MEMBER = PRI_AT,
@@ -1092,6 +1100,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 				XTAL_CASE('*'){ if(pri < PRI_MUL - l_space){ ret = bin(EXPR_MUL, ln, lhs, parse_expr(PRI_MUL - r_space)); } } 
 				XTAL_CASE('/'){ if(pri < PRI_DIV - l_space){ ret = bin(EXPR_DIV, ln, lhs, parse_expr(PRI_DIV - r_space)); } } 
 				XTAL_CASE('%'){ if(pri < PRI_MOD - l_space){ ret = bin(EXPR_MOD, ln, lhs, parse_expr(PRI_MOD - r_space)); } } 
+				XTAL_CASE(c2('*', '*')){ if(pri <= PRI_POW - l_space){ ret = bin(EXPR_POW, ln, lhs, parse_expr(PRI_POW - r_space)); } } 
 				XTAL_CASE('^'){ if(pri < PRI_XOR - l_space){ ret = bin(EXPR_XOR, ln, lhs, parse_expr(PRI_XOR - r_space)); } } 
 				XTAL_CASE(c2('&','&')){ if(pri < PRI_ANDAND - l_space){ ret = bin(EXPR_ANDAND, ln, lhs, parse_expr_must(PRI_ANDAND - r_space));} } 
 				XTAL_CASE('&'){ if(pri < PRI_AND - l_space){ ret = bin(EXPR_AND, ln, lhs, parse_expr(PRI_AND - r_space)); } } 
@@ -1377,6 +1386,7 @@ ExprPtr Parser::parse_assign_stmt(){
 					XTAL_CASE(c2('*','=')){ return bin(EXPR_MUL_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c2('/','=')){ return bin(EXPR_DIV_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c2('%','=')){ return bin(EXPR_MOD_ASSIGN, ln, lhs, parse_expr_must()); }
+					XTAL_CASE(c3('*','*','=')){ return bin(EXPR_POW_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c2('^','=')){ return bin(EXPR_XOR_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c2('|','=')){ return bin(EXPR_OR_ASSIGN, ln, lhs, parse_expr_must()); }
 					XTAL_CASE(c2('&','=')){ return bin(EXPR_AND_ASSIGN, ln, lhs, parse_expr_must()); }

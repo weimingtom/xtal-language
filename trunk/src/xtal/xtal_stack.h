@@ -303,7 +303,7 @@ void Stack<T>::upsize_detail(size_t us){
 	for(size_t i = 0; i<oldsize; ++i)
 		new(&newp[i]) T(oldp[i]);
 	for(size_t i = oldsize; i<newcapa; ++i)
-		new(&newp[i]) T();
+		new(&newp[i]) T;
 
 	for(size_t i = 0; i<oldcapa; ++i)
 		oldp[i].~T();

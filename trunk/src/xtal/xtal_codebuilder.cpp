@@ -1355,6 +1355,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_MUL){ compile_bin(e); }
 		XTAL_CASE(EXPR_DIV){ compile_bin(e); }
 		XTAL_CASE(EXPR_MOD){ compile_bin(e); }
+		XTAL_CASE(EXPR_POW){ compile_bin(e); }
 		XTAL_CASE(EXPR_OR){ compile_bin(e); }
 		XTAL_CASE(EXPR_AND){ compile_bin(e); }
 		XTAL_CASE(EXPR_XOR){ compile_bin(e); }
@@ -1650,6 +1651,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_MUL_ASSIGN){ compile_op_assign(e); }
 		XTAL_CASE(EXPR_DIV_ASSIGN){ compile_op_assign(e); }
 		XTAL_CASE(EXPR_MOD_ASSIGN){ compile_op_assign(e); }
+		XTAL_CASE(EXPR_POW_ASSIGN){ compile_op_assign(e); }
 		XTAL_CASE(EXPR_OR_ASSIGN){ compile_op_assign(e); }
 		XTAL_CASE(EXPR_AND_ASSIGN){ compile_op_assign(e); }
 		XTAL_CASE(EXPR_XOR_ASSIGN){ compile_op_assign(e); }
@@ -2043,6 +2045,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_MUL){ return do_bin(e, Xid(op_mul)); }
 		XTAL_CASE(EXPR_DIV){ return do_bin(e, Xid(op_div)); }
 		XTAL_CASE(EXPR_MOD){ return do_bin(e, Xid(op_mod)); }
+		XTAL_CASE(EXPR_POW){ return do_bin(e, Xid(op_pow)); }
 		XTAL_CASE(EXPR_OR){ return do_bin(e, Xid(op_or)); }
 		XTAL_CASE(EXPR_AND){ return do_bin(e, Xid(op_and)); }
 		XTAL_CASE(EXPR_XOR){ return do_bin(e, Xid(op_xor)); }
@@ -2239,6 +2242,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	case EXPR_MUL_ASSIGN:
 	case EXPR_DIV_ASSIGN:
 	case EXPR_MOD_ASSIGN:
+	case EXPR_POW_ASSIGN:
 	case EXPR_OR_ASSIGN:
 	case EXPR_AND_ASSIGN:
 	case EXPR_XOR_ASSIGN:
@@ -2352,6 +2356,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 		XTAL_CASE(EXPR_MUL){ return do_bin_static(e, Xid(op_mul)); }
 		XTAL_CASE(EXPR_DIV){ return do_bin_static(e, Xid(op_div)); }
 		XTAL_CASE(EXPR_MOD){ return do_bin_static(e, Xid(op_mod)); }
+		XTAL_CASE(EXPR_POW){ return do_bin_static(e, Xid(op_pow)); }
 		XTAL_CASE(EXPR_OR){ return do_bin_static(e, Xid(op_or)); }
 		XTAL_CASE(EXPR_AND){ return do_bin_static(e, Xid(op_and)); }
 		XTAL_CASE(EXPR_XOR){ return do_bin_static(e, Xid(op_xor)); }

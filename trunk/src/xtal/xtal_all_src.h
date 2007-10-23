@@ -25,7 +25,7 @@
 #include "xtal_map.cpp"
 #include "xtal_math.cpp"
 #include "xtal_parser.cpp"
-#include "xtal_peg.cpp"
+#include "xtal_xeg.cpp"
 #include "xtal_serializer.cpp"
 #include "xtal_smartptr.cpp"
 #include "xtal_stack.cpp"

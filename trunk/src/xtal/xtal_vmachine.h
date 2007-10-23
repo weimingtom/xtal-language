@@ -752,6 +752,7 @@ public:
 	const inst_t* FunMul(const inst_t* pc);
 	const inst_t* FunDiv(const inst_t* pc);
 	const inst_t* FunMod(const inst_t* pc);
+	const inst_t* FunPow(const inst_t* pc);
 	const inst_t* FunAnd(const inst_t* pc);
 	const inst_t* FunOr(const inst_t* pc);
 	const inst_t* FunXor(const inst_t* pc);
@@ -778,6 +779,7 @@ public:
 	const inst_t* FunMulAssign(const inst_t* pc);
 	const inst_t* FunDivAssign(const inst_t* pc);
 	const inst_t* FunModAssign(const inst_t* pc);
+	const inst_t* FunPowAssign(const inst_t* pc);
 	const inst_t* FunAndAssign(const inst_t* pc);
 	const inst_t* FunOrAssign(const inst_t* pc);
 	const inst_t* FunXorAssign(const inst_t* pc);

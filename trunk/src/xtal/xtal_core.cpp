@@ -18,7 +18,7 @@ void initialize_thread();
 void initialize_math();
 void initialize_stream();
 void initialize_builtin();
-void initialize_peg();
+void initialize_xeg();
 void initialize_except();
 void initialize_iterator();
 
@@ -156,7 +156,7 @@ void initialize(){
 	initialize_debug();
 	initialize_math();
 	initialize_stream();
-	initialize_peg();
+	initialize_xeg();
 	initialize_thread();
 	initialize_text();
 	

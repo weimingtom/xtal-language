@@ -293,15 +293,6 @@ const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, 
 		}
 	}
 
-	if(ns){
-		const AnyPtr& ret = find_member(name, get_cpp_class<MissingNS>(), self, inherited_too);
-		if(rawne(ret, nop)){
-			return ret;
-		}
-
-		return get_cpp_class<Any>()->any_member(name, get_cpp_class<MissingNS>());
-	}
-
 	return nop;
 }
 

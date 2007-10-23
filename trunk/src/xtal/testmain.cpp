@@ -43,7 +43,7 @@ static void handle_argv(char** argv){
 }
 
 
-#include "xtal_peg.h"
+#include "xtal_xeg.h"
 
 void debug_line(const SmartPtr<debug::Info>& info){
 	//std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
@@ -57,9 +57,11 @@ void debug_line(const SmartPtr<debug::Info>& info){
 
 //#include <crtdbg.h>
 
-namespace xtal{ namespace peg{
-bool reg_match(const StreamPtr& src, const ScannerPtr& scanner);
-}}
+namespace xtal{ namespace xeg{
+	
+}
+void test_xeg();
+}
 
 struct PointSelf : public Base{
 	AnyPtr self;
@@ -77,7 +79,7 @@ struct PointSelf : public Base{
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
-	using namespace xtal::peg;
+	using namespace xtal::xeg;
 
 	try{
 		initialize();
@@ -91,64 +93,15 @@ int main2(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 			
-		ScannerPtr scan = parse_string(re("\\w+") >> join(ch_range("‚ ", "‚¨")*1), "aerawerf‚ ‚¢‚¤‚¦‚¨aeer");
-		scan->results()->p();	
-		StringPtr("aer::awer/f‚ ‚¢‚¤‚¦‚¨/aeer")->split(re("/|::"))->p();
-
 		
 		//load("start.xtal");
+
+		test_xeg();
 
 AnyPtr ret = Xsrc
 ((
 
-C: class{
-	_a;
-	_b;
-	_c;
-}
 
-100.times{ C(); }
-
-"‚ ".."‚¨"[].p;
-
-assert ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern === ("‚ ‚¢" ~ "‚¤‚¦‚¢").intern;
-
-‚ ‚¢‚¤: 1000;
-‚ ‚¢‚¤.p;
-
-1..3.zip(6..8).map(%f(%d=%d)).to_a.p;
-
-ds: MemoryStream();
-ds.put_s("‚Äe‚¢eee‚·");
-ds.seek(0);
-ds.get_s(5).p;
-
-10.times.map(|x|x*10)[][5].p;
-
-filelocal.inherit(builtin::peg);
-"33".p;
-
-%f(%(test)s = %(nnn)s)(...Arguments(named:["test":100, "nnn": 200])).p;
-"33".p;
-
-[10, 20, 30].with_index.with_index.map(%f"(%d=%d=%d)"){
-  it.p;
-}
-
-mark: class{};
-
-Any::nnn#mark: method(){
-	return "test!!!!!!";
-}
-
-"tetst".nnn#mark.p;
-
-"test-te:st-teste".split("-" | ":")[].p;
- "aa/ai/ii7uuu".scan(peg::ch_alpha*1)[].p;
-
- parse_iterator(join(ch_alpha*1), ["t", "e", "s", "t", "1", "0"].each).results[].p;
-
- //parse_string((any - ch_set(":-"))*0 >> any >> any, "test-test").results[].p;
 ));
 
 		MemoryStreamPtr mm = xnew<MemoryStream>();

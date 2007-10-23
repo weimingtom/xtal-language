@@ -370,8 +370,6 @@ extern Nop nop;
 class True;
 class False;
 
-class MissingNS{};
-
 struct Result;
 struct ReturnThis;
 struct ReturnVoid;

@@ -238,10 +238,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_peg.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\xtal\xtal_proxy.cpp"
 				>
 			</File>
@@ -271,6 +267,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_vmachine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_xeg.cpp"
 				>
 			</File>
 		</Filter>
@@ -384,10 +384,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_peg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\xtal\xtal_proxy.h"
 				>
 			</File>
@@ -425,6 +421,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_vmachine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_xeg.h"
 				>
 			</File>
 		</Filter>

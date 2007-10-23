@@ -45,6 +45,7 @@ void initialize_any(){
 		p->def("op_mul", xnew<BinOp>("op_mul"));
 		p->def("op_div", xnew<BinOp>("op_div"));
 		p->def("op_mod", xnew<BinOp>("op_mod"));
+		p->def("op_pow", xnew<BinOp>("op_pow"));
 		p->def("op_and", xnew<BinOp>("op_and"));
 		p->def("op_or", xnew<BinOp>("op_or"));
 		p->def("op_xor", xnew<BinOp>("op_xor"));
@@ -58,6 +59,7 @@ void initialize_any(){
 		p->def("op_mul_assign", xnew<BinOp>("op_mul_assign"));
 		p->def("op_div_assign", xnew<BinOp>("op_div_assign"));
 		p->def("op_mod_assign", xnew<BinOp>("op_mod_assign"));
+		p->def("op_pow_assign", xnew<BinOp>("op_pow_assign"));
 		p->def("op_and_assign", xnew<BinOp>("op_and_assign"));
 		p->def("op_or_assign", xnew<BinOp>("op_or_assign"));
 		p->def("op_xor_assign", xnew<BinOp>("op_xor_assign"));

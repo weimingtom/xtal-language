@@ -523,10 +523,10 @@ Int::times: method{
 }
 
 String::gsub: method(pattern, fn){
-	elem: (peg::anych - pattern)*0;
+	elem: (xeg::anych - pattern)*0;
 	split: elem >> (pattern[|| [fn(it)]] >> elem)*0;
 	ret: [];
-	peg::join(split).parse_string(this, ret);
+	xeg::join(split).parse_string(this, ret);
 	return ret[0];
 }
 
@@ -680,6 +680,16 @@ Int::op_mod_assign#Int: op_mod;
 Int::op_mod_assign#Float: op_mod;
 Float::op_mod_assign#Int: op_mod;
 Float::op_mod_assign#Float: op_mod;
+
+op_pow: method(v){ return this ** v; }
+Int::op_pow#Int: op_pow;
+Int::op_pow#Float: op_pow;
+Float::op_pow#Int: op_pow;
+Float::op_pow#Float: op_pow;
+Int::op_pow_assign#Int: op_pow;
+Int::op_pow_assign#Float: op_pow;
+Float::op_pow_assign#Int: op_pow;
+Float::op_pow_assign#Float: op_pow;
 
 op_and: method(v){ return this & v; }
 Int::op_and#Int: op_and;

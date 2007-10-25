@@ -140,7 +140,7 @@ public:
 		members_->set_at(i, value);
 	}
 
-	void set_class_member(int_t i, const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility);
+	void set_class_member(int_t i, const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
@@ -172,11 +172,11 @@ protected:
 	ArrayPtr members_;
 
 	struct Key{
-		InternedStringPtr key;
-		AnyPtr ns;
+		InternedStringPtr primary_key;
+		AnyPtr secondary_key;
 
 		friend void visit_members(Visitor& m, const Key& a){
-			m & a.key & a.ns;
+			m & a.primary_key & a.secondary_key;
 		}
 	};
 
@@ -189,11 +189,11 @@ protected:
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return (rawvalue(key.key)>>3) ^ rawvalue(key.ns);
+			return (rawvalue(key.primary_key)>>3) ^ rawvalue(key.secondary_key);
 		}
 
 		static bool eq(const Key& a, const Key& b){
-			return raweq(a.key, b.key) && raweq(a.ns, b.ns);
+			return raweq(a.primary_key, b.primary_key) && raweq(a.secondary_key, b.secondary_key);
 		}
 	};
 
@@ -226,7 +226,7 @@ public:
 	*
 	* @param name 新しく定義するメンバの名前
 	*/
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC);
+	virtual void def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	/**
 	* @brief メンバを取り出す
@@ -235,7 +235,7 @@ public:
 	* @param name 取り出したいメンバの名前
 	* @param self 可視性を判定するためのオブジェクト
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& ns = null, const AnyPtr& self = null, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	/**
 	* @brief メンバを再設定する
@@ -243,7 +243,7 @@ public:
 	*
 	* @param name 再設定したいメンバの名前
 	*/
-	void set_member(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns);
+	void set_member(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
 	* @brief Mix-inする
@@ -284,8 +284,8 @@ public:
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	CFunPtr fun(const InternedStringPtr& name, Fun fun, const AnyPtr& ns, int_t accessibility, const Policy& policy){
-		return def_and_return(name, xtal::fun(fun, policy), ns, accessibility);
+	CFunPtr fun(const InternedStringPtr& primary_key, Fun fun, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
+		return def_and_return(primary_key, xtal::fun(fun, policy), secondary_key, accessibility);
 	}
 
 	/**
@@ -294,8 +294,8 @@ public:
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun>
-	CFunPtr fun(const InternedStringPtr& name, Fun f, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
-		return fun(name, f, ns, accessibility, result);
+	CFunPtr fun(const InternedStringPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		return fun(primary_key, f, secondary_key, accessibility, result);
 	}
 
 	/**
@@ -304,8 +304,8 @@ public:
 	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	CFunPtr method(const InternedStringPtr& name, Fun fun, const AnyPtr& ns, int_t accessibility, const Policy& policy){
-		return def_and_return(name, xtal::method(fun, policy), ns, accessibility);
+	CFunPtr method(const InternedStringPtr& primary_key, Fun fun, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
+		return def_and_return(primary_key, xtal::method(fun, policy), secondary_key, accessibility);
 	}
 
 	/**
@@ -314,8 +314,8 @@ public:
 	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun>
-	CFunPtr method(const InternedStringPtr& name, Fun fun, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
-		return method(name, fun, ns, accessibility, result);
+	CFunPtr method(const InternedStringPtr& primary_key, Fun fun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		return method(primary_key, fun, secondary_key, accessibility, result);
 	}
 
 	
@@ -324,8 +324,8 @@ public:
 	*
 	*/
 	template<class T, class U, class Policy>
-	CFunPtr getter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
-		return def_and_return(name, xtal::getter(v, policy), ns, accessibility);
+	CFunPtr getter(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy) const{
+		return def_and_return(primary_key, xtal::getter(v, policy), secondary_key, accessibility);
 	}
 	
 	/**
@@ -335,8 +335,8 @@ public:
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class U, class Policy>
-	CFunPtr setter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
-		return def_and_return(name, xtal::setter(v, policy), ns, accessibility);
+	CFunPtr setter(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy) const{
+		return def_and_return(primary_key, xtal::setter(v, policy), secondary_key, accessibility);
 	}
 	
 	/**
@@ -347,9 +347,9 @@ public:
 	* と等しい	
 	*/	
 	template<class T, class U, class Policy>
-	void var(const InternedStringPtr& name, T U::* v, const AnyPtr& ns, int_t accessibility, const Policy& policy) const{
-		getter(name, v, ns, accessibility, policy);
-		setter(String("set_").cat(name), v, ns, accessibility, policy);
+	void var(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy) const{
+		getter(primary_key, v, secondary_key, accessibility, policy);
+		setter(String("set_").cat(primary_key), v, secondary_key, accessibility, policy);
 	}
 	
 	/**
@@ -357,8 +357,8 @@ public:
 	*
 	*/
 	template<class T, class U>
-	CFunPtr getter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
-		return getter(name, v, ns, accessibility, result);
+	CFunPtr getter(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC) const{
+		return getter(primary_key, v, secondary_key, accessibility, result);
 	}
 	
 	/**
@@ -366,8 +366,8 @@ public:
 	*
 	*/
 	template<class T, class U>
-	CFunPtr setter(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
-		return setter(name, v, ns, accessibility, result);
+	CFunPtr setter(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC) const{
+		return setter(primary_key, v, secondary_key, accessibility, result);
 	}
 	
 	/**
@@ -378,8 +378,8 @@ public:
 	* と等しい	
 	*/	
 	template<class T, class U>
-	void var(const InternedStringPtr& name, T U::* v, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC) const{
-		var(name, v, ns, accessibility, result);
+	void var(const InternedStringPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC) const{
+		var(primary_key, v, secondary_key, accessibility, result);
 	}
 
 public:
@@ -390,11 +390,11 @@ public:
 
 	void init_instance(const AnyPtr& self, const VMachinePtr& vm);
 	
-	const AnyPtr& any_member(const InternedStringPtr& name, const AnyPtr& ns);
+	const AnyPtr& any_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key);
 	
-	const AnyPtr& bases_member(const InternedStringPtr& name);
+	const AnyPtr& bases_member(const InternedStringPtr& primary_key);
 
-	const AnyPtr& find_member(const InternedStringPtr& name, const AnyPtr& ns = null, const AnyPtr& self = null, bool inherited_too = true);
+	const AnyPtr& find_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	ClassCore* core(){
 		return (ClassCore*)core_;
@@ -410,8 +410,8 @@ public:
 
 protected:
 
-	CFunPtr def_and_return(const InternedStringPtr& name, const CFunPtr& cfun, const AnyPtr& ns = null, int_t accessibility = KIND_PUBLIC){
-		def(name, cfun, ns, accessibility);
+	CFunPtr def_and_return(const InternedStringPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		def(primary_key, cfun, secondary_key, accessibility);
 		return cfun;
 	}
 
@@ -444,9 +444,9 @@ public:
 
 	Lib(const ArrayPtr& path);
 	
-	virtual const AnyPtr& do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too = true);
 
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility);
+	virtual void def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 
 	void append_load_path(const StringPtr& path){
 		load_path_list_->push_back(path);
@@ -454,7 +454,7 @@ public:
 
 private:
 
-	const AnyPtr& rawdef(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns);
+	const AnyPtr& rawdef(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	StringPtr join_path(const StringPtr& sep);
 

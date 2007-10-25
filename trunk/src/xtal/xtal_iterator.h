@@ -15,7 +15,7 @@ public:
 
 class IteratorClass : public Class{
 public:
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility);
+	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 };
 
 

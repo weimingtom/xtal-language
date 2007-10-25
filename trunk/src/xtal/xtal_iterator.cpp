@@ -29,10 +29,10 @@ void DelegateToIterator::call(const VMachinePtr& vm){
 	vm->get_arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 
-void IteratorClass::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
-	Class::def(name, value, ns, accessibility);
-	if(rawne(Xid(p), name)){
-		Enumerator()->def(name, xnew<DelegateToIterator>(name), ns, accessibility);
+void IteratorClass::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	Class::def(primary_key, value, secondary_key, accessibility);
+	if(rawne(Xid(p), primary_key)){
+		Enumerator()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
 	}
 }
 

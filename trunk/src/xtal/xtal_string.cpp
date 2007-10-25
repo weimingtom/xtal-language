@@ -100,7 +100,7 @@ public:
 	}
 	
 	void block_next(const VMachinePtr& vm){
-		if(scanner_->eof()){
+		if(scanner_->eos()){
 			return vm->return_result(null);
 		}
 
@@ -111,7 +111,7 @@ public:
 				return;
 			}else{
 				scanner_->read();
-				if(scanner_->eof()){
+				if(scanner_->eos()){
 					vm->return_result(null);
 					return;
 				}
@@ -136,7 +136,7 @@ public:
 	}
 
 	void block_next(const VMachinePtr& vm){
-		if(ss_->eof()){
+		if(ss_->eos()){
 			vm->return_result(null);
 			return;
 		}

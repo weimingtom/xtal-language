@@ -76,25 +76,25 @@ void Base::call(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& Base::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){ 
+const AnyPtr& Base::do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){ 
 	return nop;
 }
 
 
-const AnyPtr& Base::member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){ 
-	return ap(Innocence(this))->member(name, ns, self, inherited_too); 
+const AnyPtr& Base::member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){ 
+	return ap(Innocence(this))->member(primary_key, secondary_key, self, inherited_too); 
 }
 
-void Base::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
+void Base::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 
 }
 
-SendProxy Base::send(const InternedStringPtr& name, const AnyPtr& ns){
-	return SendProxy(ap(Innocence(this)), name, ns);
+SendProxy Base::send(const InternedStringPtr& primary_key, const AnyPtr& secondary_key){
+	return SendProxy(ap(Innocence(this)), primary_key, secondary_key);
 }
 
-void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
-	ap(Innocence(this))->rawsend(vm, name, ns, self, inherited_too);
+void Base::rawsend(const VMachinePtr& vm, const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+	ap(Innocence(this))->rawsend(vm, primary_key, secondary_key, self, inherited_too);
 }
 
 StringPtr Base::object_name(){ 
@@ -140,7 +140,7 @@ void Base::visit_members(Visitor& m){
 
 StringPtr HaveName::object_name(){
 	if(!name_){
-		return xnew<String>("<instance of ")->cat(get_class()->object_name())->cat(">");
+		return xnew<String>("instance of ")->cat(get_class()->object_name());
 	}
 
 	if(!parent_){

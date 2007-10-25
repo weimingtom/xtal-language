@@ -140,16 +140,16 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
-SendProxy Any::send(const InternedStringPtr& name, const AnyPtr& ns) const{
-	return SendProxy(ap(*this), name, ns);
+SendProxy Any::send(const InternedStringPtr& primary_key, const AnyPtr& secondary_key) const{
+	return SendProxy(ap(*this), primary_key, secondary_key);
 }
 
 struct MemberCacheTable{
 	struct Unit{
 		uint_t mutate_count;
 		uint_t target_class;
-		uint_t ns;
-		Innocence member_name;
+		uint_t secondary_key;
+		Innocence primary_key;
 		Innocence member;
 	};
 
@@ -169,14 +169,14 @@ struct MemberCacheTable{
 		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
-	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& member_name, const Innocence& ns, const Innocence& self, bool inherited_too){
+	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too){
 		uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
-		uint_t imember_name = rawvalue(member_name);
-		uint_t ins = rawvalue(ns);
+		uint_t iprimary_key = rawvalue(primary_key);
+		uint_t ins = rawvalue(secondary_key);
 
-		uint_t hash = itarget_class ^ (imember_name>>2) ^ ins + imember_name ^ type(member_name);
+		uint_t hash = itarget_class ^ (iprimary_key>>2) ^ ins + iprimary_key ^ type(primary_key);
 		Unit& unit = table_[hash & CACHE_MASK];
-		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(member_name, unit.member_name) && ins==unit.ns){
+		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(primary_key, unit.primary_key) && ins==unit.secondary_key){
 			hit_++;
 			return ap(unit.member);
 		}else{
@@ -185,10 +185,10 @@ struct MemberCacheTable{
 			if(type(target_class)!=TYPE_BASE)
 				return nop;
 
-			unit.member = pvalue(target_class)->do_member(member_name, ap(ns), ap(self));
+			unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self));
 			unit.target_class = itarget_class;
-			unit.member_name = member_name;
-			unit.ns = ins;
+			unit.primary_key = primary_key;
+			unit.secondary_key = ins;
 			unit.mutate_count = global_mutate_count;
 			return ap(unit.member);
 		}
@@ -279,24 +279,24 @@ void print_result_of_cache(){
 	is_inherited_cache_table.print_result();
 }
 
-const AnyPtr& Any::member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too) const{
-	return member_cache_table.cache(*this, name, ns, self, inherited_too);
+const AnyPtr& Any::member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+	return member_cache_table.cache(*this, primary_key, secondary_key, self, inherited_too);
 }
 
-void Any::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility) const{
+void Any::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
-			value->set_object_name(name, object_name_force(), ap(*this));
-			pvalue(*this)->def(name, value, ns, accessibility);
+			value->set_object_name(primary_key, object_name_force(), ap(*this));
+			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
 		}
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too) const{
+void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
-	vm->set_hint(cls, name, ns);
-	const AnyPtr& ret = member_cache_table.cache(cls, name, ns, self, inherited_too);
+	vm->set_hint(cls, primary_key, secondary_key);
+	const AnyPtr& ret = member_cache_table.cache(cls, primary_key, secondary_key, self, inherited_too);
 	if(rawne(ret, nop)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);

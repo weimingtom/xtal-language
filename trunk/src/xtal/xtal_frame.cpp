@@ -20,7 +20,7 @@ public:
 
 	void block_next(const VMachinePtr& vm){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
-			vm->return_result(SmartPtr<MembersIter>(this), it_->first.key, it_->first.ns, frame_->members_->at(it_->second.num));
+			vm->return_result(SmartPtr<MembersIter>(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
 			++it_;
 		}else{
 			vm->return_result(null);
@@ -97,21 +97,21 @@ Frame::~Frame(){
 	}
 }
 
-void Frame::set_class_member(int_t i, const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){ 
+void Frame::set_class_member(int_t i, const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
 	members_->set_at(i, value);
-	Key key = {name, ns};
+	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
-	value->set_object_name(name, object_name_force(), FramePtr(this));
+	value->set_object_name(primary_key, object_name_force(), FramePtr(this));
 	global_mutate_count++;
 }
 	
-void Frame::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent){
+void Frame::set_object_name(const StringPtr& primary_key, int_t force, const AnyPtr& parent){
 	if(object_name_force()<force){
-		HaveName::set_object_name(name, force, parent);
+		HaveName::set_object_name(primary_key, force, parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_name(it->first.key, force, FramePtr(this));
+				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, FramePtr(this));
 			}
 		}
 	}
@@ -199,22 +199,22 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
-void Class::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
-	Key key = {name, ns};
+void Class::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
 		Value val = {members_->size(), accessibility};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		value->set_object_name(name, object_name_force(), ClassPtr(this));
+		value->set_object_name(primary_key, object_name_force(), ClassPtr(this));
 	}else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))), return);
+		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return);
 	}
 	global_mutate_count++;
 }
 
-const AnyPtr& Class::any_member(const InternedStringPtr& name, const AnyPtr& ns){
-	Key key = {name, ns};
+const AnyPtr& Class::any_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
@@ -231,8 +231,8 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 	return nop;
 }
 
-const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
-	Key key = {name, ns};
+const AnyPtr& Class::find_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 
 	if(it!=map_members_->end()){
@@ -245,7 +245,7 @@ const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns
 			}else{
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
-					Named("object", this->object_name()), Named("name", name), Named("accessibility", "private")))
+					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "private")))
 				, return nop);
 			}
 		}
@@ -257,7 +257,7 @@ const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns
 			}else{
 				// アクセスできない
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
-					Named("object", this->object_name()), Named("name", name), Named("accessibility", "protected")))
+					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "protected")))
 				, return nop);			
 			}
 		}
@@ -268,7 +268,7 @@ const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns
 	// 継承しているクラスを順次検索
 	if(inherited_too){
 		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i))->member(name, ns, self);
+			const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i))->member(primary_key, secondary_key, self);
 			if(rawne(ret, nop)){
 				return ret;
 			}
@@ -278,26 +278,46 @@ const AnyPtr& Class::find_member(const InternedStringPtr& name, const AnyPtr& ns
 	return nop;
 }
 
-const AnyPtr& Class::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
 	{
-		const AnyPtr& ret = find_member(name, ns, self, inherited_too);
+		const AnyPtr& ret = find_member(primary_key, secondary_key, self, inherited_too);
 		if(rawne(ret, nop)){
 			return ret;
 		}
 	}
 		
 	{
-		const AnyPtr& ret = get_cpp_class<Any>()->any_member(name, ns);
+		const AnyPtr& ret = get_cpp_class<Any>()->any_member(primary_key, secondary_key);
 		if(rawne(ret, nop)){
 			return ret;
 		}
 	}
 
+	// 見つからなかった。
+
+	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
+	if(const ClassPtr& klass = ptr_as<Class>(secondary_key)){
+		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
+			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), self, inherited_too);
+			if(rawne(ret, nop)){
+				return ret;
+			}
+		}
+
+		{
+			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too);
+			if(rawne(ret, nop)){
+				return ret;
+			}
+		}	
+	}
+
+	// やっぱり見つからなかった。
 	return nop;
 }
 
-void Class::set_member(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
-	Key key = {name, ns};
+void Class::set_member(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
 		XTAL_THROW(builtin()->member("RuntimeError")("undefined"), return);
@@ -412,17 +432,17 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& ns, const AnyPtr& self, bool inherited_too){
-	Key key = {name, ns};
+const AnyPtr& Lib::do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}else{
 		Xfor(var, load_path_list_){
-			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), name, ".xtal")->to_s();
+			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
 			if(FILE* fp = fopen(file_name->c_str(), "r")){
 				fclose(fp);
-				return rawdef(name, load(file_name), ns);
+				return rawdef(primary_key, load(file_name), secondary_key);
 			}
 		}
 		return nop;
@@ -431,27 +451,27 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& name, const AnyPtr& ns, co
 		ArrayPtr next = path_.clone();
 		next.push_back(name);
 		AnyPtr lib = xnew<Lib>(next);
-		return rawdef(name, lib, ns);
+		return rawdef(name, lib, secondary_key);
 		*/
 	}
 }
 
-void Lib::def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns, int_t accessibility){
-	rawdef(name, value, ns);
+void Lib::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	rawdef(primary_key, value, secondary_key);
 }
 
-const AnyPtr& Lib::rawdef(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& ns){
-	Key key = {name, ns};
+const AnyPtr& Lib::rawdef(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
 		Value val = {members_->size(), KIND_PUBLIC};
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		global_mutate_count++;
-		value->set_object_name(name, object_name_force(), ClassPtr(this));
+		value->set_object_name(primary_key, object_name_force(), ClassPtr(this));
 		return members_->back();
 	}else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", name))), return null);
+		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return null);
 	}
 }
 

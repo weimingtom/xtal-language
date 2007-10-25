@@ -97,10 +97,20 @@ int main2(int argc, char** argv){
 		//load("start.xtal");
 
 		test_xeg();
+		/**
+
+		*/
+
+
 
 AnyPtr ret = Xsrc
 ((
 
+Foo: class{}
+Hoge: class(Foo){}
+Any::test#Any: "Any";
+Any::test#Foo: "Foo";
+Foo::test#Int.p;
 
 ));
 

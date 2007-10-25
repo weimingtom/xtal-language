@@ -64,14 +64,14 @@ AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, con
 		));	}
 }
 
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr& ns){
-	if(raweq(ns, null)){
+AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr& secondary_key){
+	if(raweq(secondary_key, null)){
 		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
 			Named("object", name), Named("name", (member ? member : AnyPtr("()")))
 		));
 	}else{
 		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
-			Named("object", name), Named("name", (member ? member : AnyPtr("()"))), Named("ns", ns)
+			Named("object", name), Named("name", (member ? member : AnyPtr("()"))), Named("secondary_key", secondary_key)
 		));
 	}
 }

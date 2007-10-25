@@ -45,11 +45,11 @@ private:
 	bool put_set_local_code(const InternedStringPtr& var);
 	void put_define_local_code(const InternedStringPtr& var, const ExprPtr& val = null);
 
-	void put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& ns);
-	void put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns);
+	void put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
+	void put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
 
-	void put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns);
-	void put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& ns);
+	void put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
+	void put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& secondary_key);
 
 	int_t lookup_instance_variable(const InternedStringPtr& key);
 	void put_set_instance_variable_code(const InternedStringPtr& var);

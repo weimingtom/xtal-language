@@ -21,11 +21,11 @@ const AnyPtr& AtProxy::operator ->(){
 }
 
 void SendProxy::execute(){
-	if(name){
+	if(primary_key){
 		const VMachinePtr& vm = vmachine();
 		vm->setup_call(1);
-		obj->rawsend(vm, name, ns);
-		name = null;
+		obj->rawsend(vm, primary_key, secondary_key);
+		primary_key = null;
 		obj = vm->result_and_cleanup_call();
 	}
 }

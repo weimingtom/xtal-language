@@ -36,7 +36,7 @@ void CodeBuilder::interactive_compile(){
 
 	int_t pc_pos = 0;
 	InteractiveStreamPtr stream = xnew<InteractiveStream>();
-	while(!stream->eof()){
+	while(!stream->eos()){
 
 		ExprPtr e = parser_.parse_stmt(stream, error_);
 		stream->terminate_statement();
@@ -270,13 +270,13 @@ bool CodeBuilder::put_local_code(const InternedStringPtr& var){
 	}
 }
 
-void CodeBuilder::put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& ns){
+void CodeBuilder::put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key){
 	if(pvar){ compile_expr(pvar); }	
 	
 	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
 
-	if(ns){
-		compile_expr(ns);
+	if(secondary_key){
+		compile_expr(secondary_key);
 		if(q){
 			put_inst(InstSendQNS(0, 0, need_result_count, flags, pvar ? 0 : register_identifier(var)));
 		}else{
@@ -299,14 +299,14 @@ void CodeBuilder::put_send_code(const InternedStringPtr& var, const ExprPtr& pva
 	}
 }
 
-void CodeBuilder::put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns){
+void CodeBuilder::put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key){
 	InternedStringPtr set_var = xnew<String>("set_", 4)->cat(var);
 	ExprPtr set_pvar = pvar ? bin(EXPR_CAT, 0, string(0, KIND_STRING, "set_"), pvar) : pvar;
 
 	if(set_pvar){ compile_expr(set_pvar); }	
 	
-	if(ns){
-		compile_expr(ns);
+	if(secondary_key){
+		compile_expr(secondary_key);
 
 		if(q){
 			put_inst(InstSendQNS(1, 0, 0, 0, set_pvar ? 0 : register_identifier(set_var)));
@@ -322,13 +322,13 @@ void CodeBuilder::put_set_send_code(const InternedStringPtr& var, const ExprPtr&
 	}
 }
 
-void CodeBuilder::put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& ns){
+void CodeBuilder::put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key){
 	if(pvar){
 		compile_expr(pvar);
 	}
 	
-	if(ns){
-		compile_expr(ns);
+	if(secondary_key){
+		compile_expr(secondary_key);
 		if(q){
 			InstMemberQNS member;
 			member.identifier_number = pvar ? 0 : register_identifier(var);
@@ -351,13 +351,13 @@ void CodeBuilder::put_member_code(const InternedStringPtr& var, const ExprPtr& p
 	}
 }
 
-void CodeBuilder::put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& ns){
+void CodeBuilder::put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& secondary_key){
 	if(pvar){
 		compile_expr(pvar);
 	}
 
-	if(ns){
-		compile_expr(ns);
+	if(secondary_key){
+		compile_expr(secondary_key);
 		InstDefineMemberNS member;
 		member.identifier_number = pvar ? 0 : register_identifier(var);
 		put_inst(member);
@@ -443,7 +443,7 @@ void CodeBuilder::break_off(int_t n){
 }
 
 static bool is_comp_bin(ExprPtr e){
-	if(EXPR_EQ<=e->type() && e->type()<=EXPR_NIS){
+	if(e && EXPR_EQ<=e->type() && e->type()<=EXPR_NIS){
 		return true;
 	}	
 	return false;

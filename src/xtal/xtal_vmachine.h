@@ -116,8 +116,8 @@ public:
 	* 例外が起きたときのエラーメッセージのために、
 	* 現在呼び出しているオブジェクトとメソッド名とメンバネームスペースを登録する。
 	*/
-	void set_hint(const AnyPtr& object, const StringPtr& method_name, const AnyPtr& ns){ 
-		ff().hint(object, method_name, ns);
+	void set_hint(const AnyPtr& object, const StringPtr& method_name, const AnyPtr& secondary_key){ 
+		ff().hint(object, method_name, secondary_key);
 	}
 	
 

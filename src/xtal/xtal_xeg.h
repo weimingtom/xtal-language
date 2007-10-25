@@ -111,7 +111,7 @@ public:
 	/**
 	* @brief ˆê‚Âæ“Ç‚Ý‚µAI—¹‚µ‚Ä‚¢‚é‚©’²‚×‚é
 	*/
-	bool eof(){
+	bool eos(){
 		return raweq(peek(), nop);
 	}
 
@@ -126,12 +126,6 @@ public:
 
 public:
 
-	void push_result(const AnyPtr& v){
-		//results_->push_back(v);
-	}
-
-public:
-
 	StringPtr capture(int_t begin, int_t end){
 		uint_t mask = buf_->size()-1;
 		mm_->clear();
@@ -139,6 +133,17 @@ public:
 			mm_->put_s(buf_->at(i & mask)->to_s());
 		}
 		return mm_->to_s();
+	}
+
+	bool eat_capture(int_t begin, int_t end){
+		uint_t mask = buf_->size()-1;
+		for(int_t i=begin; i<end; ++i){
+			if(rawne(peek(i-begin), buf_->at(i & mask))){
+				return false;
+			}
+		}
+		skip(end-begin);
+		return true;
 	}
 
 protected:
@@ -220,8 +225,12 @@ public:
 		return lineno_;
 	}
 	
-	AnyPtr children(){
+	AnyPtr each(){
 		return children_ ? children_->each() : null;
+	}
+	
+	AnyPtr op_at(int_t n){
+		return children_ ? children_->at(n) : null;
 	}
 
 private:
@@ -236,10 +245,10 @@ private:
 class MatchResults{
 public:
 
-	MatchResults(const ArrayPtr& captures, const MapPtr& named_captures, const MatchTreeNodePtr& root){
+	MatchResults(const ArrayPtr& captures, const MapPtr& named_captures, const ArrayPtr& nodes){
 		captures_ = captures;
 		named_captures_ = named_captures;
-		root_ = root;
+		nodes_ = nodes;
 	}
 
 	AnyPtr captures(){
@@ -250,14 +259,26 @@ public:
 		return named_captures_ ? named_captures_->each() : null;
 	}
 
-	MatchTreeNodePtr root(){
-		return root_;
+	AnyPtr op_at(int_t key){
+		return captures_ ? captures_->at(key) : null;
+	}
+	
+	AnyPtr op_at(const StringPtr& key){
+		return  named_captures_ ? named_captures_->at(key) : null;
+	}
+
+	AnyPtr nodes(){
+		return nodes_ ? nodes_->each() : null;
+	}
+
+	AnyPtr root(){
+		return nodes_ ? nodes_->at(0) : null;
 	}
 
 private:
 	ArrayPtr captures_;
 	MapPtr named_captures_;
-	MatchTreeNodePtr root_;
+	ArrayPtr nodes_;
 
 	friend class XegExec;
 };

@@ -149,7 +149,7 @@ public:
 
 	virtual uint_t size();
 
-	virtual bool eof(){ return false; }
+	virtual bool eos(){ return false; }
 
 	void block_first(const VMachinePtr& vm);
 
@@ -226,7 +226,7 @@ public:
 
 	virtual void close();
 
-	virtual bool eof();
+	virtual bool eos();
 
 protected:
 
@@ -256,7 +256,7 @@ public:
 
 	virtual void close(){}
 
-	virtual bool eof();
+	virtual bool eos();
 
 	virtual StringPtr get_s(int_t length = -1);
 

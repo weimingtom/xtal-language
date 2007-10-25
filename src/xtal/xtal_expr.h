@@ -234,7 +234,7 @@ inline ExprPtr assert_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(E
 inline ExprPtr scope(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_SCOPE, lineno, 3)->set_scope_stmts(stmts); }
 inline ExprPtr toplevel(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_TOPLEVEL, lineno, 3)->set_toplevel_stmts(stmts); }
 inline ExprPtr class_(int_t lineno, int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return Expr::make(EXPR_CLASS, lineno, 3)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
-inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPtr& name, const ExprPtr& ns, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(ns)->set_cdefine_term(term); }
+inline ExprPtr cdefine(int_t lineno, int_t accessibility, const InternedStringPtr& name, const ExprPtr& secondary_key, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(secondary_key)->set_cdefine_term(term); }
 
 inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool extendable_param, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
 

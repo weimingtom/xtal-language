@@ -460,8 +460,8 @@ void initialize_text(){
 	tm->set_at("Xtal Runtime Error 1018", "既に閉じられたストリームです。");
 	tm->set_at("Xtal Runtime Error 1019", "C++で定義されたクラスの多重継承は出来ません。");
 	tm->set_at("Xtal Runtime Error 1020", "配列の範囲外アクセスです。");
-	tm->set_at("Xtal Runtime Error 1021", "%(object)s :: '%(name)s # %(ns)s' は定義されていません。");
-	tm->set_at("Xtal Runtime Error 1022", "%(object)s :: '%(name)s' # %(ns)s は %(accessibility)s です。");
+	tm->set_at("Xtal Runtime Error 1021", "%(object)s :: '%(name)s # %(secondary_key)s' は定義されていません。");
+	tm->set_at("Xtal Runtime Error 1022", "%(object)s :: '%(name)s' # %(secondary_key)s は %(accessibility)s です。");
 	tm->set_at("Xtal Runtime Error 1023", "1より長い文字列は範囲演算子に指定できません。");
 	tm->set_at("Xtal Runtime Error 1024", "0除算エラーです。");
 	tm->set_at("Xtal Runtime Error 1025", "ChRangeは閉区間である必要があります。");

@@ -59,7 +59,7 @@ void initialize_stream(){
 		p->method("pour_all", &Stream::pour_all);
 		p->method("size", &Stream::size);
 
-		p->method("eof", &Stream::eof);
+		p->method("eos", &Stream::eos);
 
 		p->method("serialize", &Stream::serialize);
 		p->method("deserialize", &Stream::deserialize);
@@ -117,7 +117,7 @@ void initialize_stream(){
 
 
 StringPtr Stream::get_s(int_t length){
-	if(eof())
+	if(eos())
 		return "";
 
 	if(length==1){
@@ -130,7 +130,7 @@ StringPtr Stream::get_s(int_t length){
 
 	if(length<0){
 		MemoryStreamPtr ms = xnew<MemoryStream>();
-		while(!eof()){
+		while(!eos()){
 			ms->put_s(get_s(1));
 		}
 		return ms->to_s();
@@ -278,7 +278,7 @@ void FileStream::close(){
 	}
 }
 
-bool FileStream::eof(){
+bool FileStream::eos(){
 	if(!fp_){ return true; }
 	int ch = getc(fp_);
 	if(feof(fp_)){
@@ -377,7 +377,7 @@ StringPtr DataStream::get_s(int_t length){
 	return xnew<String>(&data[saved], pos_ - saved);	
 }
 
-bool DataStream::eof(){
+bool DataStream::eos(){
 	return pos_>=size_;
 }
 

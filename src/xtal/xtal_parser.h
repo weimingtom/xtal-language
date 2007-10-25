@@ -274,7 +274,7 @@ private:
 
 	int_t lineno(){ return lexer_.lineno(); }
 
-	bool eof(){
+	bool eos(){
 		return eat(-1);
 	}
 	
@@ -290,7 +290,7 @@ private:
 	ExprPtr parse_post(ExprPtr lhs, int_t pri);
 	ExprPtr parse_assign_stmt();
 	ExprPtr parse_stmt();
-	ExprPtr parse_stmt_must();
+	ExprPtr must_parse_stmt();
 	ExprPtr parse_assert();
 	ExprPtr parse_each(const InternedStringPtr& label, ExprPtr lhs);
 	ArrayPtr parse_stmts();
@@ -311,8 +311,8 @@ private:
 	ExprPtr parse_call(ExprPtr lhs);
 	ExprPtr parse_expr(int_t pri);
 	ExprPtr parse_expr();
-	ExprPtr parse_expr_must(int_t pri);
-	ExprPtr parse_expr_must();
+	ExprPtr must_parse_expr(int_t pri);
+	ExprPtr must_parse_expr();
 	ExprPtr parse_array();
 	ExprPtr parse_for(const InternedStringPtr& label = null);
 	ExprPtr parse_try();

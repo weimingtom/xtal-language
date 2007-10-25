@@ -135,7 +135,7 @@ public:
 	StringPtr capture(int_t begin, int_t end){
 		uint_t mask = buf_->size()-1;
 		mm_->clear();
-		for(uint_t i=begin; i<end; ++i){
+		for(int_t i=begin; i<end; ++i){
 			mm_->put_s(buf_->at(i & mask)->to_s());
 		}
 		return mm_->to_s();
@@ -202,19 +202,82 @@ typedef SmartPtr<StreamScanner> StreamScannerPtr;
 typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
 
 
-ScannerPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
 
-inline ScannerPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream){
+class MatchTreeNode;
+typedef SmartPtr<MatchTreeNode> MatchTreeNodePtr;
+
+class MatchResults;
+typedef SmartPtr<MatchResults> MatchResultsPtr;
+
+class MatchTreeNode{
+public:
+
+	AnyPtr id(){
+		return id_;
+	}
+
+	int_t lineno(){
+		return lineno_;
+	}
+	
+	AnyPtr children(){
+		return children_ ? children_->each() : null;
+	}
+
+private:
+	AnyPtr id_;
+	int_t lineno_;
+	ArrayPtr children_;
+
+	friend class XegExec;
+};
+
+
+class MatchResults{
+public:
+
+	MatchResults(const ArrayPtr& captures, const MapPtr& named_captures, const MatchTreeNodePtr& root){
+		captures_ = captures;
+		named_captures_ = named_captures;
+		root_ = root;
+	}
+
+	AnyPtr captures(){
+		return captures_ ? captures_->each() : null;
+	}
+
+	AnyPtr named_captures(){
+		return named_captures_ ? named_captures_->each() : null;
+	}
+
+	MatchTreeNodePtr root(){
+		return root_;
+	}
+
+private:
+	ArrayPtr captures_;
+	MapPtr named_captures_;
+	MatchTreeNodePtr root_;
+
+	friend class XegExec;
+};
+
+
+
+MatchResultsPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
+
+inline MatchResultsPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream){
 	return parse_scanner(pattern, xnew<StreamScanner>(stream));
 }
 
-inline ScannerPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){
+inline MatchResultsPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){
 	return parse_stream(pattern, xnew<StringStream>(string->to_s()));
 }
 
-inline ScannerPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter){
+inline MatchResultsPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter){
 	return parse_scanner(pattern, xnew<IteratorScanner>(iter));
 }
+
 
 }}
 

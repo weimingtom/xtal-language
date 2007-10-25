@@ -107,6 +107,7 @@ AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b){
 		vm->cleanup_call();
 		return true;
 	}
+	vm->return_result();
 	vm->cleanup_call();
 	return false;
 }

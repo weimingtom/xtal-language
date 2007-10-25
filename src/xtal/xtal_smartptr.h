@@ -233,17 +233,17 @@ public:
 private:
 
 	/**
-	* @brief AnyPtrを受け取るコンストラクタ
+	* @brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
-	* このコンストラクタはprivateである。
+	* AnyPtrからの暗黙の変換を拒否するために、privateで定義されている。
 	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_as関数を使用すること。
 	*/
 	SmartPtr(const AnyPtr&);
 
 	/**
-	* @brief bool値を'true'または'false'に強制的に設定します、を拒否するコンストラクタ
+	* @brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
-	* このコンストラクタはprivateである。
+	* 得体の知れないポインタ型からの暗黙の変換を拒否するために、privateで定義されている。
 	*/
 	SmartPtr(void*);
 

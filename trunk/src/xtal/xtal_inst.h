@@ -809,90 +809,88 @@ XTAL_DEF_INST_0(95, Cat);
 XTAL_DEF_INST_0(96, Mul);
 XTAL_DEF_INST_0(97, Div);
 XTAL_DEF_INST_0(98, Mod);
-XTAL_DEF_INST_0(99, Pow);
-XTAL_DEF_INST_0(100, And);
-XTAL_DEF_INST_0(101, Or);
-XTAL_DEF_INST_0(102, Xor);
-XTAL_DEF_INST_0(103, Shl);
-XTAL_DEF_INST_0(104, Shr);
-XTAL_DEF_INST_0(105, Ushr);
+XTAL_DEF_INST_0(99, And);
+XTAL_DEF_INST_0(100, Or);
+XTAL_DEF_INST_0(101, Xor);
+XTAL_DEF_INST_0(102, Shl);
+XTAL_DEF_INST_0(103, Shr);
+XTAL_DEF_INST_0(104, Ushr);
 
-XTAL_DEF_INST_0(106, Eq);
-XTAL_DEF_INST_0(107, Ne);
-XTAL_DEF_INST_0(108, Lt);
-XTAL_DEF_INST_0(109, Le);
-XTAL_DEF_INST_0(110, Gt);
-XTAL_DEF_INST_0(111, Ge);
-XTAL_DEF_INST_0(112, RawEq);
-XTAL_DEF_INST_0(113, RawNe);
-XTAL_DEF_INST_0(114, In);
-XTAL_DEF_INST_0(115, Nin);
-XTAL_DEF_INST_0(116, Is);
-XTAL_DEF_INST_0(117, Nis);
+XTAL_DEF_INST_0(105, Eq);
+XTAL_DEF_INST_0(106, Ne);
+XTAL_DEF_INST_0(107, Lt);
+XTAL_DEF_INST_0(108, Le);
+XTAL_DEF_INST_0(109, Gt);
+XTAL_DEF_INST_0(110, Ge);
+XTAL_DEF_INST_0(111, RawEq);
+XTAL_DEF_INST_0(112, RawNe);
+XTAL_DEF_INST_0(113, In);
+XTAL_DEF_INST_0(114, Nin);
+XTAL_DEF_INST_0(115, Is);
+XTAL_DEF_INST_0(116, Nis);
 
-XTAL_DEF_INST_0(118, Inc);
-XTAL_DEF_INST_0(119, Dec);
-XTAL_DEF_INST_0(120, AddAssign);
-XTAL_DEF_INST_0(121, SubAssign);
-XTAL_DEF_INST_0(122, CatAssign);
-XTAL_DEF_INST_0(123, MulAssign);
-XTAL_DEF_INST_0(124, DivAssign);
-XTAL_DEF_INST_0(125, ModAssign);
-XTAL_DEF_INST_0(126, PowAssign);
-XTAL_DEF_INST_0(127, AndAssign);
-XTAL_DEF_INST_0(128, OrAssign);
-XTAL_DEF_INST_0(129, XorAssign);
-XTAL_DEF_INST_0(130, ShlAssign);
-XTAL_DEF_INST_0(131, ShrAssign);
-XTAL_DEF_INST_0(132, UshrAssign);
+XTAL_DEF_INST_0(117, Inc);
+XTAL_DEF_INST_0(118, Dec);
+XTAL_DEF_INST_0(119, AddAssign);
+XTAL_DEF_INST_0(120, SubAssign);
+XTAL_DEF_INST_0(121, CatAssign);
+XTAL_DEF_INST_0(122, MulAssign);
+XTAL_DEF_INST_0(123, DivAssign);
+XTAL_DEF_INST_0(124, ModAssign);
+XTAL_DEF_INST_0(125, AndAssign);
+XTAL_DEF_INST_0(126, OrAssign);
+XTAL_DEF_INST_0(127, XorAssign);
+XTAL_DEF_INST_0(128, ShlAssign);
+XTAL_DEF_INST_0(129, ShrAssign);
+XTAL_DEF_INST_0(130, UshrAssign);
 
-XTAL_DEF_INST_1(133, Range,
+XTAL_DEF_INST_1(131, Range,
 		inst_u8_t, kind
 );
 
-XTAL_DEF_INST_1(134, ClassBegin,
+XTAL_DEF_INST_1(132, ClassBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(135, ClassEnd);
+XTAL_DEF_INST_0(133, ClassEnd);
 
-XTAL_DEF_INST_3(136, DefineClassMember,
+XTAL_DEF_INST_3(134, DefineClassMember,
         inst_u16_t, number,
 		inst_u16_t, identifier_number,
 		inst_u8_t, accessibility
 );
 
-XTAL_DEF_INST_0(137, MakeArray);
+XTAL_DEF_INST_0(135, MakeArray);
 
-XTAL_DEF_INST_0(138, ArrayAppend);
+XTAL_DEF_INST_0(136, ArrayAppend);
 
-XTAL_DEF_INST_0(139, MakeMap);
+XTAL_DEF_INST_0(137, MakeMap);
 
-XTAL_DEF_INST_0(140, MapInsert);
+XTAL_DEF_INST_0(138, MapInsert);
 
-XTAL_DEF_INST_2(141, MakeFun,
+XTAL_DEF_INST_2(139, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(142, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(140, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(143, Throw);
+XTAL_DEF_INST_0(141, Throw);
 
-XTAL_DEF_INST_0(144, ThrowUnsupportedError);
+XTAL_DEF_INST_0(142, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(145, ThrowNop);
+XTAL_DEF_INST_0(143, ThrowNop);
 
-XTAL_DEF_INST_0(146, Assert);
+XTAL_DEF_INST_0(144, Assert);
 
-XTAL_DEF_INST_1(147, BreakPoint,
+XTAL_DEF_INST_1(145, BreakPoint,
         inst_u8_t, type
 );
 
-XTAL_DEF_INST_0(148, MAX);
+XTAL_DEF_INST_0(146, MAX);
 
 }

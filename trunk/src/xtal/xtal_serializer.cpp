@@ -22,7 +22,7 @@ AnyPtr Serializer::deserialize(){
 	return inner_deserialize();
 }
 
-bool Serializer::check_id(const InternedStringPtr& id){
+bool Serializer::check_id(const IDPtr& id){
 	const char_t* str = id->c_str();
 	if(str[0]=='l' && str[1]=='i' && str[2]=='b' && str[3]==':'){
 		return true;
@@ -30,7 +30,7 @@ bool Serializer::check_id(const InternedStringPtr& id){
 	return false;
 }
 
-void Serializer::check_id_and_throw(const InternedStringPtr& id){
+void Serializer::check_id_and_throw(const IDPtr& id){
 	if(!check_id(id)){
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return false);
 	}
@@ -150,7 +150,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			return;
 		}
 
-		InternedStringPtr id = v->object_name();
+		IDPtr id = v->object_name();
 		if(check_id(id)){
 			stream_->put_u8(LIB);
 			inner_serialize(id);
@@ -232,7 +232,7 @@ AnyPtr Serializer::inner_deserialize(){
 				p[i] = (char_t)stream_->get_u8();
 			}
 			p[sz] = 0;				
-			StringPtr ret = xnew<InternedString>(p, sz);
+			StringPtr ret = xnew<ID>(p, sz);
 			user_free(p);
 			append_value(ret);
 			return ret;
@@ -332,7 +332,7 @@ AnyPtr Serializer::inner_deserialize(){
 AnyPtr Serializer::demangle(const AnyPtr& n){
 	AnyPtr ret;
 	Xfor(v, static_ptr_cast<String>(n)->split("::")){
-		InternedStringPtr id = static_ptr_cast<String>(v)->intern();
+		IDPtr id = static_ptr_cast<String>(v)->intern();
 		if(!ret){
 			if(raweq(id, Xid(lib))){
 				ret = lib();

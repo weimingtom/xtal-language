@@ -41,19 +41,19 @@ private:
 	void set_jump(int_t offset, int_t labelno);
 	void process_labels();
 
-	bool put_local_code(const InternedStringPtr& var);
-	bool put_set_local_code(const InternedStringPtr& var);
-	void put_define_local_code(const InternedStringPtr& var, const ExprPtr& val = null);
+	bool put_local_code(const IDPtr& var);
+	bool put_set_local_code(const IDPtr& var);
+	void put_define_local_code(const IDPtr& var, const ExprPtr& val = null);
 
-	void put_send_code(const InternedStringPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
-	void put_set_send_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
+	void put_send_code(const IDPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
+	void put_set_send_code(const IDPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
 
-	void put_member_code(const InternedStringPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
-	void put_define_member_code(const InternedStringPtr& var, const ExprPtr& pvar, const ExprPtr& secondary_key);
+	void put_member_code(const IDPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
+	void put_define_member_code(const IDPtr& var, const ExprPtr& pvar, const ExprPtr& secondary_key);
 
-	int_t lookup_instance_variable(const InternedStringPtr& key);
-	void put_set_instance_variable_code(const InternedStringPtr& var);
-	void put_instance_variable_code(const InternedStringPtr& var);
+	int_t lookup_instance_variable(const IDPtr& key);
+	void put_set_instance_variable_code(const IDPtr& var);
+	void put_instance_variable_code(const IDPtr& var);
 	void put_val_code(const AnyPtr& val);
 	void put_if_code(const ExprPtr& cond, int_t label_if, int_t label_if2);
 	void break_off(int_t to);
@@ -67,13 +67,13 @@ private:
 	void compile_fun(const ExprPtr& e);
 	void compile_for(const ExprPtr& e);
 
-	AnyPtr do_bin(const ExprPtr& e, const InternedStringPtr& name, bool swap = false);
+	AnyPtr do_bin(const ExprPtr& e, const IDPtr& name, bool swap = false);
 	AnyPtr do_not(const AnyPtr& e);
 	AnyPtr do_expr(const AnyPtr& e);
-	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name);
-	AnyPtr do_send(const AnyPtr& a, const InternedStringPtr& name, const AnyPtr& b);
+	AnyPtr do_send(const AnyPtr& a, const IDPtr& name);
+	AnyPtr do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b);
 
-	AnyPtr do_bin_static(const ExprPtr& e, const InternedStringPtr& name, bool swap = false);
+	AnyPtr do_bin_static(const ExprPtr& e, const IDPtr& name, bool swap = false);
 	AnyPtr do_expr_static(const AnyPtr& p);	
 
 	void put_inst2(const Inst& t, uint_t sz);
@@ -103,7 +103,7 @@ private:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			InternedStringPtr label; // ラベル名
+			IDPtr label; // ラベル名
 			int_t frame_count; // フレームの数
 			int_t control_statement_label[2]; // breakとcontinueのラベル番号
 			bool have_label; // 対応するラベルを持っているか
@@ -123,7 +123,7 @@ private:
 
 	struct VarFrame{
 		struct Entry{
-			InternedStringPtr name;
+			IDPtr name;
 			ExprPtr expr;
 			AnyPtr value;
 			bool constant;
@@ -158,7 +158,7 @@ private:
 
 	struct ClassFrame{
 		struct Entry{
-			InternedStringPtr name;
+			IDPtr name;
 		};
 
 		AC<Entry>::vector entries;
@@ -172,10 +172,10 @@ private:
 	};
 
 	void scope_chain(int_t var_frame_size);
-	LVarInfo var_find(const InternedStringPtr& key, bool define = false, bool traceless = false, int_t number = -1);
+	LVarInfo var_find(const IDPtr& key, bool define = false, bool traceless = false, int_t number = -1);
 	void var_begin(int_t kind);
 	void var_define(const ArrayPtr& stmts);
-	void var_define(const InternedStringPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
+	void var_define(const IDPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();
@@ -193,7 +193,7 @@ private:
 		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
 	}
 
-	int_t register_identifier(const InternedStringPtr& v){
+	int_t register_identifier(const IDPtr& v){
 		if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
 		result_->identifier_table_->push_back(v);
 		identifier_map_->set_at(v, result_->identifier_table_->size()-1);
@@ -207,7 +207,7 @@ private:
 		return result_->value_table_->size()-1;
 	}
 
-	int_t append_identifier(const InternedStringPtr& identifier){
+	int_t append_identifier(const IDPtr& identifier){
 		result_->identifier_table_->push_back(identifier);
 		return result_->identifier_table_->size()-1;
 	}
@@ -276,6 +276,8 @@ private:
 	PODStack<int_t> label_names_;
 	PODStack<int_t> linenos_;
 	//PODStack<int_t> addresses_;
+
+	ExprMaker em;
 
 private:
 	CodeBuilder(const CodeBuilder&);

@@ -12,7 +12,7 @@ public:
 	const CodePtr& code(){ return code_; }
 	int_t pc(){ return core_->pc; }
 	const inst_t* source(){ return code_->data()+core_->pc; }
-	const InternedStringPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
+	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
 	int_t param_size(){ return core_->variable_size; }	
 	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
 	FunCore* core(){ return core_; }
@@ -64,7 +64,7 @@ public:
 	* @brief 名前付き引数を1個積む。
 	*
 	*/
-	void push_arg(const InternedStringPtr& name, const AnyPtr& value);
+	void push_arg(const IDPtr& name, const AnyPtr& value);
 	
 	/**
 	* @brief 名前付き引数を1個積む。
@@ -270,13 +270,13 @@ public:
 	* @brief nameに対応する引数を得る。
 	*
 	*/
-	const AnyPtr& arg(const InternedStringPtr& name);
+	const AnyPtr& arg(const IDPtr& name);
 
 	/**
 	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
 	*
 	*/
-	const AnyPtr& arg(int_t pos, const InternedStringPtr& name);
+	const AnyPtr& arg(int_t pos, const IDPtr& name);
 	
 	const AnyPtr& arg(int_t pos, Fun* names);
 
@@ -292,22 +292,22 @@ public:
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
-	const AnyPtr& arg_default(const InternedStringPtr& name, const AnyPtr& def);
+	const AnyPtr& arg_default(const IDPtr& name, const AnyPtr& def);
 
 	/**
 	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
-	const AnyPtr& arg_default(int_t pos, const InternedStringPtr& name, const AnyPtr& def);
+	const AnyPtr& arg_default(int_t pos, const IDPtr& name, const AnyPtr& def);
 	
 	/**
 	* @brief pos番目の名前指定引数の名前を取得。
 	*
 	* @param pos 0縲從amed_arg_count()-1まで
 	*/
-	const InternedStringPtr& arg_name(int_t pos){
-		return static_ptr_cast<InternedString>(get(named_arg_count()*2-1-(pos*2+0)));
+	const IDPtr& arg_name(int_t pos){
+		return static_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
 	/**
@@ -621,11 +621,11 @@ public:
 	const CodePtr& code(){ return fun()->code(); }
 	const CodePtr& prev_code(){ return prev_fun()->code(); }
 
-	const InternedStringPtr& identifier(int_t n){ return code()->identifier(n); }
-	const InternedStringPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
-	const InternedStringPtr& identifier_ex(int_t n){ 
+	const IDPtr& identifier(int_t n){ return code()->identifier(n); }
+	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
+	const IDPtr& identifier_ex(int_t n){ 
 		if(n!=0){ return identifier(n); 
-		}else{ return static_ptr_cast<InternedString>(ap(ff().temp3_ = pop()->to_s()->intern())); }
+		}else{ return static_ptr_cast<ID>(ap(ff().temp3_ = pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
@@ -638,10 +638,10 @@ public:
 
 private:
 
-	const inst_t* send1(const inst_t* pc, const InternedStringPtr& name);
-	const inst_t* send2(const inst_t* pc, const InternedStringPtr& name);
-	const inst_t* send2_r(const inst_t* pc, const InternedStringPtr& name);
-	const inst_t* send2_q(const inst_t* pc, const InternedStringPtr& name);
+	const inst_t* send1(const inst_t* pc, const IDPtr& name);
+	const inst_t* send2(const inst_t* pc, const IDPtr& name);
+	const inst_t* send2_r(const inst_t* pc, const IDPtr& name);
+	const inst_t* send2_q(const inst_t* pc, const IDPtr& name);
 
 	void set_local_variable(int_t pos, const Innocence&);
 	const AnyPtr& local_variable(int_t pos);
@@ -752,7 +752,6 @@ public:
 	const inst_t* FunMul(const inst_t* pc);
 	const inst_t* FunDiv(const inst_t* pc);
 	const inst_t* FunMod(const inst_t* pc);
-	const inst_t* FunPow(const inst_t* pc);
 	const inst_t* FunAnd(const inst_t* pc);
 	const inst_t* FunOr(const inst_t* pc);
 	const inst_t* FunXor(const inst_t* pc);
@@ -779,7 +778,6 @@ public:
 	const inst_t* FunMulAssign(const inst_t* pc);
 	const inst_t* FunDivAssign(const inst_t* pc);
 	const inst_t* FunModAssign(const inst_t* pc);
-	const inst_t* FunPowAssign(const inst_t* pc);
 	const inst_t* FunAndAssign(const inst_t* pc);
 	const inst_t* FunOrAssign(const inst_t* pc);
 	const inst_t* FunXorAssign(const inst_t* pc);

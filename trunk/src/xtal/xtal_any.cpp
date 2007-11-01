@@ -5,15 +5,6 @@ namespace xtal{
 
 namespace{
 
-	struct BinOp : public HaveName{
-		InternedStringPtr name;
-		BinOp(const InternedStringPtr& name):name(name){}
-
-		virtual void call(const VMachinePtr& vm){
-			vm->get_arg_this()->rawsend(vm, name, vm->arg(0)->get_class(), vm->get_arg_this());
-		}
-	};
-
 	bool op_in_Any_Array(const AnyPtr& v, const ArrayPtr& values){
 		Xfor(v2, values){
 			if(v == v2){
@@ -39,41 +30,39 @@ void initialize_any(){
 		p->method("s_save", &Any::s_save);
 		p->method("s_load", &Any::s_load);
 
-		p->def("op_add", xnew<BinOp>("op_add"));
-		p->def("op_sub", xnew<BinOp>("op_sub"));
-		p->def("op_cat", xnew<BinOp>("op_cat"));
-		p->def("op_mul", xnew<BinOp>("op_mul"));
-		p->def("op_div", xnew<BinOp>("op_div"));
-		p->def("op_mod", xnew<BinOp>("op_mod"));
-		p->def("op_pow", xnew<BinOp>("op_pow"));
-		p->def("op_and", xnew<BinOp>("op_and"));
-		p->def("op_or", xnew<BinOp>("op_or"));
-		p->def("op_xor", xnew<BinOp>("op_xor"));
-		p->def("op_shr", xnew<BinOp>("op_shr"));
-		p->def("op_shl", xnew<BinOp>("op_shl"));
-		p->def("op_ushr", xnew<BinOp>("op_ushr"));
+		p->dual_dispatch_method("op_add");
+		p->dual_dispatch_method("op_sub");
+		p->dual_dispatch_method("op_cat");
+		p->dual_dispatch_method("op_mul");
+		p->dual_dispatch_method("op_div");
+		p->dual_dispatch_method("op_mod");
+		p->dual_dispatch_method("op_and");
+		p->dual_dispatch_method("op_or");
+		p->dual_dispatch_method("op_xor");
+		p->dual_dispatch_method("op_shr");
+		p->dual_dispatch_method("op_shl");
+		p->dual_dispatch_method("op_ushr");
 
-		p->def("op_add_assign_assign", xnew<BinOp>("op_add_assign"));
-		p->def("op_sub_assign", xnew<BinOp>("op_sub_assign"));
-		p->def("op_cat_assign", xnew<BinOp>("op_cat_assign"));
-		p->def("op_mul_assign", xnew<BinOp>("op_mul_assign"));
-		p->def("op_div_assign", xnew<BinOp>("op_div_assign"));
-		p->def("op_mod_assign", xnew<BinOp>("op_mod_assign"));
-		p->def("op_pow_assign", xnew<BinOp>("op_pow_assign"));
-		p->def("op_and_assign", xnew<BinOp>("op_and_assign"));
-		p->def("op_or_assign", xnew<BinOp>("op_or_assign"));
-		p->def("op_xor_assign", xnew<BinOp>("op_xor_assign"));
-		p->def("op_shr_assign", xnew<BinOp>("op_shr_assign"));
-		p->def("op_shl_assign", xnew<BinOp>("op_shl_assign"));
-		p->def("op_ushr_assign", xnew<BinOp>("op_ushr_assign"));
+		p->dual_dispatch_method("op_add_assign");
+		p->dual_dispatch_method("op_sub_assign");
+		p->dual_dispatch_method("op_cat_assign");
+		p->dual_dispatch_method("op_mul_assign");
+		p->dual_dispatch_method("op_div_assign");
+		p->dual_dispatch_method("op_mod_assign");
+		p->dual_dispatch_method("op_and_assign");
+		p->dual_dispatch_method("op_or_assign");
+		p->dual_dispatch_method("op_xor_assign");
+		p->dual_dispatch_method("op_shr_assign");
+		p->dual_dispatch_method("op_shl_assign");
+		p->dual_dispatch_method("op_ushr_assign");
 
-		p->def("op_eq", xnew<BinOp>("op_eq"));
-		p->def("op_lt", xnew<BinOp>("op_lt"));
+		p->dual_dispatch_method("op_eq");
+		p->dual_dispatch_method("op_lt");
 
-		p->def("op_at", xnew<BinOp>("op_at"));
-		p->def("op_set_at", xnew<BinOp>("op_set_at"));
+		p->dual_dispatch_method("op_at");
+		p->dual_dispatch_method("op_set_at");
 
-		p->def("op_range", xnew<BinOp>("op_range"));
+		p->dual_dispatch_method("op_range");
 		p->method("op_in", &op_in_Any_Array, new_cpp_class<Array>());
 		p->method("op_in", &op_in_Any_Set, new_cpp_class<Set>());
 	}
@@ -140,7 +129,7 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
-SendProxy Any::send(const InternedStringPtr& primary_key, const AnyPtr& secondary_key) const{
+SendProxy Any::send(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
 	return SendProxy(ap(*this), primary_key, secondary_key);
 }
 
@@ -169,7 +158,7 @@ struct MemberCacheTable{
 		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
-	const AnyPtr& cache(const Innocence& target_class, const InternedStringPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too){
+	const AnyPtr& cache(const Innocence& target_class, const IDPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too){
 		uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
 		uint_t iprimary_key = rawvalue(primary_key);
 		uint_t ins = rawvalue(secondary_key);
@@ -279,11 +268,11 @@ void print_result_of_cache(){
 	is_inherited_cache_table.print_result();
 }
 
-const AnyPtr& Any::member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	return member_cache_table.cache(*this, primary_key, secondary_key, self, inherited_too);
 }
 
-void Any::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
+void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
@@ -293,7 +282,7 @@ void Any::def(const InternedStringPtr& primary_key, const AnyPtr& value, const A
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, primary_key, secondary_key);
 	const AnyPtr& ret = member_cache_table.cache(cls, primary_key, secondary_key, self, inherited_too);

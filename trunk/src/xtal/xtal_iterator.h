@@ -4,10 +4,10 @@
 namespace xtal{
 
 class DelegateToIterator : public HaveName{
-	InternedStringPtr member_;
+	IDPtr member_;
 public:
 	
-	DelegateToIterator(const InternedStringPtr& name)
+	DelegateToIterator(const IDPtr& name)
 		:member_(name){}
 
 	virtual void call(const VMachinePtr& vm);
@@ -15,7 +15,7 @@ public:
 
 class IteratorClass : public Class{
 public:
-	virtual void def(const InternedStringPtr& name, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
+	virtual void def(const IDPtr& name, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 };
 
 

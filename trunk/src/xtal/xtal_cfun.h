@@ -656,8 +656,13 @@ public:
 	virtual void call(const VMachinePtr& vm);
 
 protected:
-	void* data_;
-	int_t buffer_size_;
+
+	enum{
+		BUFFER_SIZE = 8
+	};
+
+	void* ptr_;
+	u8 buffer_[BUFFER_SIZE];
 	fun_t fun_;
 	ParamInfo pi_;
 	int_t param_n_;
@@ -911,5 +916,30 @@ CFunPtr setter(T C::* v, const Policy&){
 	return xnew<CFun>(&detail::method1<setter, C*, const T&, const T&, Policy>::f, &data, sizeof(data), 1);
 }
 
+
+/**
+* @birief 2重ディスパッチメソッド
+*/
+class DualDispatchMethod : public HaveName{
+public:
+
+	DualDispatchMethod(const IDPtr& primary_key)
+		:primary_key_(primary_key){}
+
+	virtual void call(const VMachinePtr& vm){
+		vm->get_arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class(), vm->get_arg_this());
+	}
+
+private:
+	IDPtr primary_key_;
+};
+
+/**
+* @brief 2重ディスパッチメソッドオブジェクトを生成する
+*
+*/
+inline DualDispatchMethodPtr dual_dispatch_method(const IDPtr& primary_key){
+	return xnew<DualDispatchMethod>(primary_key);
+}
 
 }

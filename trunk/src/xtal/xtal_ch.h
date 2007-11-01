@@ -90,7 +90,7 @@ struct ChMaker{
 
 	void add(char_t ch);
 
-	InternedStringPtr to_s();
+	IDPtr to_s();
 
 	void clear(){
 		pos = 0;

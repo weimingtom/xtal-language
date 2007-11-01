@@ -177,7 +177,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstMul::NUMBER){ temp = ((InstMul*)pc)->inspect(code); sz = InstMul::ISIZE; }
 		XTAL_CASE(InstDiv::NUMBER){ temp = ((InstDiv*)pc)->inspect(code); sz = InstDiv::ISIZE; }
 		XTAL_CASE(InstMod::NUMBER){ temp = ((InstMod*)pc)->inspect(code); sz = InstMod::ISIZE; }
-		XTAL_CASE(InstPow::NUMBER){ temp = ((InstPow*)pc)->inspect(code); sz = InstPow::ISIZE; }
 		XTAL_CASE(InstAnd::NUMBER){ temp = ((InstAnd*)pc)->inspect(code); sz = InstAnd::ISIZE; }
 		XTAL_CASE(InstOr::NUMBER){ temp = ((InstOr*)pc)->inspect(code); sz = InstOr::ISIZE; }
 		XTAL_CASE(InstXor::NUMBER){ temp = ((InstXor*)pc)->inspect(code); sz = InstXor::ISIZE; }
@@ -204,7 +203,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstMulAssign::NUMBER){ temp = ((InstMulAssign*)pc)->inspect(code); sz = InstMulAssign::ISIZE; }
 		XTAL_CASE(InstDivAssign::NUMBER){ temp = ((InstDivAssign*)pc)->inspect(code); sz = InstDivAssign::ISIZE; }
 		XTAL_CASE(InstModAssign::NUMBER){ temp = ((InstModAssign*)pc)->inspect(code); sz = InstModAssign::ISIZE; }
-		XTAL_CASE(InstPowAssign::NUMBER){ temp = ((InstPowAssign*)pc)->inspect(code); sz = InstPowAssign::ISIZE; }
 		XTAL_CASE(InstAndAssign::NUMBER){ temp = ((InstAndAssign*)pc)->inspect(code); sz = InstAndAssign::ISIZE; }
 		XTAL_CASE(InstOrAssign::NUMBER){ temp = ((InstOrAssign*)pc)->inspect(code); sz = InstOrAssign::ISIZE; }
 		XTAL_CASE(InstXorAssign::NUMBER){ temp = ((InstXorAssign*)pc)->inspect(code); sz = InstXorAssign::ISIZE; }

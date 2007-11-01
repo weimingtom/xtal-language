@@ -88,13 +88,13 @@
 * 将来はまた使えるようになる日がくるかもしれない。
 * 
 * @code
-* InternedStringPtr id = Xid(test);
+* IDPtr id = Xid(test);
 * @endcode
 */
-#define Xid(string) ::xtal::InternedStringPtr(#string, sizeof(#string)-1)
+#define Xid(string) ::xtal::IDPtr(#string, sizeof(#string)-1)
 
 #else
 
-#define Xid(string) ((const ::xtal::InternedStringPtr&) ::xtal::id::id##string)
+#define Xid(string) ((const ::xtal::IDPtr&) ::xtal::id::id##string)
 
 #endif

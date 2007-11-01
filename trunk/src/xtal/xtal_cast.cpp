@@ -32,24 +32,24 @@ void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPt
 	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
 }
 
-const InternedStringPtr* CastHelper<const InternedStringPtr*>::as(const AnyPtr& a){ 
+const IDPtr* CastHelper<const IDPtr*>::as(const AnyPtr& a){ 
 	if(String* p = xtal::as<String*>(a)){
 		if(p->is_interned()){
-			return (const InternedStringPtr*)p;
+			return (const IDPtr*)p;
 		}
 	}
 	return 0;
 }
 
-const InternedStringPtr* CastHelper<const InternedStringPtr*>::cast(const AnyPtr& a){
-	if(const InternedStringPtr* p = as(a)){
+const IDPtr* CastHelper<const IDPtr*>::cast(const AnyPtr& a){
+	if(const IDPtr* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(cast_error(a, "interned String"), return 0);
 }
 
-const InternedStringPtr* CastHelper<const InternedStringPtr*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
-	if(const InternedStringPtr* p = as(a)){
+const IDPtr* CastHelper<const IDPtr*>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
+	if(const IDPtr* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(argument_error(a, "interned String", param_num, param_name), return 0);

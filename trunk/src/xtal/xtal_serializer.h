@@ -17,8 +17,8 @@ private:
 	void inner_serialize(const AnyPtr& v);
 	AnyPtr inner_deserialize();
 
-	bool check_id(const InternedStringPtr& id);
-	void check_id_and_throw(const InternedStringPtr& id);
+	bool check_id(const IDPtr& id);
+	void check_id_and_throw(const IDPtr& id);
 	
 	AnyPtr demangle(const AnyPtr& n);
 

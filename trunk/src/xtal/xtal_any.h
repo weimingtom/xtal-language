@@ -219,7 +219,7 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
 	/**
 	* @brief nameメンバを取得する。
@@ -228,13 +228,13 @@ public:
 	* @retval nop そのメンバは存在しない
 	* @retval 非nop nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
 	*
 	*/
-	void def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0) const;
+	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0) const;
 
 	/**
 	* @brief このオブジェクトが所属するクラスを返す。
@@ -330,7 +330,7 @@ public:
 
 public:
 
-	SendProxy send(const InternedStringPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
+	SendProxy send(const IDPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
 
 };
 

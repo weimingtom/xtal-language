@@ -103,7 +103,7 @@ public:
 		}
 	}
 
-	void common(const VMachinePtr& vm, const InternedStringPtr& id){
+	void common(const VMachinePtr& vm, const IDPtr& id){
 		bool all = true;
 		value = xnew<Array>(next->size());
 		for(int_t i = 0, len = next->size(); i<len; ++i){
@@ -118,7 +118,7 @@ public:
 		if(all){
 			vm->return_result(SmartPtr<ZipIter>(this), value);
 		}else{
-			vm->return_result(null);
+			vm->return_result(null, null);
 		}
 	}
 
@@ -131,7 +131,7 @@ public:
 	}
 
 	void block_break(const VMachinePtr& vm){
-		InternedStringPtr id = Xid(block_break);
+		IDPtr id = Xid(block_break);
 		for(int_t i = 0, len = next->size(); i<len; ++i){
 			vm->setup_call(0);
 			next->at(i)->rawsend(vm, id);
@@ -627,6 +627,10 @@ builtin::ClassicIterator: class{
 
 Iterator::classic: method ClassicIterator(this);
 
+String::replace: method(pattern, str){
+	return this.split(pattern).join(str);
+}
+
 	))();
 
 	Xsrc((
@@ -680,16 +684,6 @@ Int::op_mod_assign#Int: op_mod;
 Int::op_mod_assign#Float: op_mod;
 Float::op_mod_assign#Int: op_mod;
 Float::op_mod_assign#Float: op_mod;
-
-op_pow: method(v){ return this ** v; }
-Int::op_pow#Int: op_pow;
-Int::op_pow#Float: op_pow;
-Float::op_pow#Int: op_pow;
-Float::op_pow#Float: op_pow;
-Int::op_pow_assign#Int: op_pow;
-Int::op_pow_assign#Float: op_pow;
-Float::op_pow_assign#Int: op_pow;
-Float::op_pow_assign#Float: op_pow;
 
 op_and: method(v){ return this & v; }
 Int::op_and#Int: op_and;

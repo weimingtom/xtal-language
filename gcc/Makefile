@@ -2,6 +2,9 @@
 CC = g++
 OPT = -O3 -DNDEBUG -fno-rtti
 
+#  -Wall, -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
+
+
 .SUFFIXES: .cpp .o 
 
 SRC = $(shell ls ../src/xtal/xtal_*.cpp)

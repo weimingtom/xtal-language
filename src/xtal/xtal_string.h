@@ -112,7 +112,7 @@ public:
 	* @brief 一意化した文字列を返す。
 	*
 	*/
-	const InternedStringPtr& intern();
+	const IDPtr& intern();
 
 	/**
 	* @brief 一意化されているか返す。
@@ -151,17 +151,10 @@ public:
 	AnyPtr each();
 
 	/**
-	*
+	* @brief patternに順番にマッチした結果を要素とするIteratorを返す。
 	*
 	*/
-	AnyPtr scan(const AnyPtr& p);
-
-	/**
-	* @brief patternと一致する部分を置き換えた新しい文字列を返す
-	*
-	* @param  pattern 置き換える文字列かPEG
-	*/ 
-	AnyPtr replace(const AnyPtr& pattern, const StringPtr& str);
+	AnyPtr scan(const AnyPtr& pattern);
 
 	/**
 	* @brief 連結する
@@ -240,7 +233,7 @@ private:
 *
 * これはC++の型システムのために存在する。
 */
-class InternedString : public String{
+class ID : public String{
 public:
 
 	/**
@@ -248,52 +241,52 @@ public:
 	*
 	* @param str NULL終端文字列
 	*/
-	InternedString(const char_t* str);
+	ID(const char_t* str);
 
 	/**
 	* @brief STLの文字列から構築する
 	*
 	*/
-	InternedString(const string_t& str);
+	ID(const string_t& str);
 
 	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	InternedString(const char_t* str, uint_t size);
+	ID(const char_t* str, uint_t size);
 	
 	/**
 	* @brief beginからlastまでの文字列で構築する
 	*
 	* [begin, last)
 	*/
-	InternedString(const char_t* begin, const char_t* last);
+	ID(const char_t* begin, const char_t* last);
 
 	/**
 	* @brief 1つの文字から構築する
 	*/
-	InternedString(char_t a);
+	ID(char_t a);
 
 	/**
 	* @brief 2つの文字から構築する
 	*/
-	InternedString(char_t a, char_t b);
+	ID(char_t a, char_t b);
 
 	/**
 	* @brief 3つの文字から構築する
 	*/
-	InternedString(char_t a, char_t b, char_t c);
+	ID(char_t a, char_t b, char_t c);
 
 	/**
 	* @brief Stringから構築する
 	*
 	*/
-	InternedString(const StringPtr& name);
+	ID(const StringPtr& name);
 		
 };
 
-inline bool operator ==(const InternedStringPtr& a, const InternedStringPtr& b){ return raweq(a, b); }
-inline bool operator !=(const InternedStringPtr& a, const InternedStringPtr& b){ return rawne(a, b); }
+inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
+inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 
 
 class ChRange : public Base{
@@ -330,16 +323,16 @@ struct Named2;
 *
 */
 struct Named2{
-	InternedStringPtr name;
+	IDPtr name;
 	AnyPtr value;
 
 	Named2(const char* name)
 		:name(name), value(nop){}
 
-	Named2(const InternedStringPtr& name)
+	Named2(const IDPtr& name)
 		:name(name), value(nop){}
 
-	Named2(const InternedStringPtr& name, const AnyPtr& value)
+	Named2(const IDPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
 	Named2()
@@ -355,10 +348,10 @@ struct Named2{
 */
 struct Named : public Named2{
 
-	explicit Named(const InternedStringPtr& name)
+	explicit Named(const IDPtr& name)
 		:Named2(name){}
 
-	Named(const InternedStringPtr& name, const AnyPtr& value)
+	Named(const IDPtr& name, const AnyPtr& value)
 		:Named2(name, value){}
 
 	Named(){}
@@ -370,14 +363,14 @@ struct Named : public Named2{
 * @brief 名前付き引数のトリックのためのクラス
 *
 */
-struct Key : public InternedStringPtr{
+struct Key : public IDPtr{
 	
 	/**
-	* @brief InternedStringPtrから構築する
+	* @brief IDPtrから構築する
 	*
 	*/
-	Key(const InternedStringPtr& name)
-		:InternedStringPtr(name){}
+	Key(const IDPtr& name)
+		:IDPtr(name){}
 	
 	/**
 	* @brief Key("key")=10という書式のための代入演算子
@@ -394,118 +387,118 @@ void visit_members(Visitor& m, const Named& p);
 
 //{ID{{
 namespace id{
-extern InternedStringPtr idop_inc;
-extern InternedStringPtr idblock_catch;
-extern InternedStringPtr idcallee;
-extern InternedStringPtr idnew;
-extern InternedStringPtr idop_shl_assign;
-extern InternedStringPtr idop_at;
-extern InternedStringPtr idtest;
-extern InternedStringPtr idfor;
-extern InternedStringPtr idserial_new;
-extern InternedStringPtr idop_div_assign;
-extern InternedStringPtr idop_mul;
-extern InternedStringPtr idop_xor_assign;
-extern InternedStringPtr idto_a;
-extern InternedStringPtr idinitialize;
-extern InternedStringPtr idonce;
-extern InternedStringPtr iddo;
-extern InternedStringPtr idstring;
-extern InternedStringPtr idfalse;
-extern InternedStringPtr idancestors;
-extern InternedStringPtr idop_and_assign;
-extern InternedStringPtr idop_add_assign;
-extern InternedStringPtr idop_cat_assign;
-extern InternedStringPtr idsingleton;
-extern InternedStringPtr idop_shl;
-extern InternedStringPtr idblock_next;
-extern InternedStringPtr idyield;
-extern InternedStringPtr idop_shr_assign;
-extern InternedStringPtr idop_cat;
-extern InternedStringPtr idop_neg;
-extern InternedStringPtr idop_dec;
-extern InternedStringPtr idvalue;
-extern InternedStringPtr iddefault;
-extern InternedStringPtr idcase;
-extern InternedStringPtr idto_s;
-extern InternedStringPtr idop_shr;
-extern InternedStringPtr idpure;
-extern InternedStringPtr idfinally;
-extern InternedStringPtr idthis;
-extern InternedStringPtr idnull;
-extern InternedStringPtr idop_div;
-extern InternedStringPtr idserial_load;
-extern InternedStringPtr idIOError;
-extern InternedStringPtr id_dummy_lhs_parameter_;
-extern InternedStringPtr idin;
-extern InternedStringPtr idcatch;
-extern InternedStringPtr idop_mul_assign;
-extern InternedStringPtr idmethod;
-extern InternedStringPtr idop_lt;
-extern InternedStringPtr idset_at;
-extern InternedStringPtr id_switch_;
-extern InternedStringPtr idop_mod_assign;
-extern InternedStringPtr idbreak;
-extern InternedStringPtr idtry;
-extern InternedStringPtr idop_mod;
-extern InternedStringPtr idnop;
-extern InternedStringPtr idto_i;
-extern InternedStringPtr idop_or;
-extern InternedStringPtr idcontinue;
-extern InternedStringPtr ide;
-extern InternedStringPtr iditerator;
-extern InternedStringPtr idthrow;
-extern InternedStringPtr idop_and;
-extern InternedStringPtr idelse;
-extern InternedStringPtr idfun;
-extern InternedStringPtr idto_f;
-extern InternedStringPtr idop_sub_assign;
-extern InternedStringPtr idlib;
-extern InternedStringPtr iddofun;
-extern InternedStringPtr ideach;
-extern InternedStringPtr idop_set_at;
-extern InternedStringPtr idop_in;
-extern InternedStringPtr ids_load;
-extern InternedStringPtr idclass;
-extern InternedStringPtr idop_com;
-extern InternedStringPtr idop_pos;
-extern InternedStringPtr idop_add;
-extern InternedStringPtr idop_ushr_assign;
-extern InternedStringPtr idnobreak;
-extern InternedStringPtr idcurrent_context;
-extern InternedStringPtr idto_m;
-extern InternedStringPtr idreturn;
-extern InternedStringPtr idop_eq;
-extern InternedStringPtr idfiber;
-extern InternedStringPtr idop_or_assign;
-extern InternedStringPtr idop_pow_assign;
-extern InternedStringPtr ids_save;
-extern InternedStringPtr idstatic;
-extern InternedStringPtr idswitch;
-extern InternedStringPtr idop_sub;
-extern InternedStringPtr idop_ushr;
-extern InternedStringPtr idfirst_step;
-extern InternedStringPtr idblock_break;
-extern InternedStringPtr idserial_save;
-extern InternedStringPtr idop_range;
-extern InternedStringPtr id_dummy_fun_parameter_;
-extern InternedStringPtr id_dummy_block_parameter_;
-extern InternedStringPtr idunittest;
-extern InternedStringPtr idtrue;
-extern InternedStringPtr idop_xor;
-extern InternedStringPtr idblock_first;
-extern InternedStringPtr idop_call;
-extern InternedStringPtr id_initialize_;
-extern InternedStringPtr idis;
-extern InternedStringPtr idop_pow;
-extern InternedStringPtr idwhile;
-extern InternedStringPtr idit;
-extern InternedStringPtr idassert;
-extern InternedStringPtr idxtal;
-extern InternedStringPtr idif;
-extern InternedStringPtr idp;
+extern IDPtr idop_inc;
+extern IDPtr idblock_catch;
+extern IDPtr idcallee;
+extern IDPtr idnew;
+extern IDPtr idop_shl_assign;
+extern IDPtr idop_at;
+extern IDPtr idtest;
+extern IDPtr idfor;
+extern IDPtr idserial_new;
+extern IDPtr idop_div_assign;
+extern IDPtr idop_mul;
+extern IDPtr idop_xor_assign;
+extern IDPtr idto_a;
+extern IDPtr idinitialize;
+extern IDPtr idonce;
+extern IDPtr iddo;
+extern IDPtr idstring;
+extern IDPtr idfalse;
+extern IDPtr idancestors;
+extern IDPtr idop_and_assign;
+extern IDPtr idop_add_assign;
+extern IDPtr idop_cat_assign;
+extern IDPtr idsingleton;
+extern IDPtr idop_shl;
+extern IDPtr idblock_next;
+extern IDPtr idyield;
+extern IDPtr idop_shr_assign;
+extern IDPtr idop_cat;
+extern IDPtr idop_neg;
+extern IDPtr idop_dec;
+extern IDPtr idvalue;
+extern IDPtr iddefault;
+extern IDPtr idcase;
+extern IDPtr idto_s;
+extern IDPtr idop_shr;
+extern IDPtr idpure;
+extern IDPtr idfinally;
+extern IDPtr idthis;
+extern IDPtr idnull;
+extern IDPtr idop_div;
+extern IDPtr idserial_load;
+extern IDPtr idIOError;
+extern IDPtr id_dummy_lhs_parameter_;
+extern IDPtr idin;
+extern IDPtr idcatch;
+extern IDPtr idop_mul_assign;
+extern IDPtr idmethod;
+extern IDPtr idop_lt;
+extern IDPtr idset_at;
+extern IDPtr id_switch_;
+extern IDPtr idop_mod_assign;
+extern IDPtr idbreak;
+extern IDPtr idtry;
+extern IDPtr idop_mod;
+extern IDPtr idnop;
+extern IDPtr idto_i;
+extern IDPtr idop_or;
+extern IDPtr idcontinue;
+extern IDPtr ide;
+extern IDPtr iditerator;
+extern IDPtr idthrow;
+extern IDPtr idop_and;
+extern IDPtr idelse;
+extern IDPtr idfun;
+extern IDPtr idto_f;
+extern IDPtr idop_sub_assign;
+extern IDPtr idlib;
+extern IDPtr iddofun;
+extern IDPtr ideach;
+extern IDPtr idop_set_at;
+extern IDPtr idop_in;
+extern IDPtr ids_load;
+extern IDPtr idclass;
+extern IDPtr idop_com;
+extern IDPtr idop_pos;
+extern IDPtr idop_add;
+extern IDPtr idop_ushr_assign;
+extern IDPtr idnobreak;
+extern IDPtr idcurrent_context;
+extern IDPtr idto_m;
+extern IDPtr idreturn;
+extern IDPtr idop_eq;
+extern IDPtr idfiber;
+extern IDPtr idop_or_assign;
+extern IDPtr ids_save;
+extern IDPtr idstatic;
+extern IDPtr idswitch;
+extern IDPtr idop_sub;
+extern IDPtr idop_ushr;
+extern IDPtr idfirst_step;
+extern IDPtr idblock_break;
+extern IDPtr idserial_save;
+extern IDPtr idop_range;
+extern IDPtr id_dummy_fun_parameter_;
+extern IDPtr id_dummy_block_parameter_;
+extern IDPtr idunittest;
+extern IDPtr idop_xor;
+extern IDPtr idblock_first;
+extern IDPtr idtrue;
+extern IDPtr idop_call;
+extern IDPtr id_initialize_;
+extern IDPtr idis;
+extern IDPtr idwhile;
+extern IDPtr idit;
+extern IDPtr idassert;
+extern IDPtr idxtal;
+extern IDPtr idif;
+extern IDPtr idp;
 }
 //}}ID}
+
+
 
 
 

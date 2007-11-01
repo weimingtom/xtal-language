@@ -11,9 +11,12 @@ ReturnVoid return_void;
 CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
 	fun_ = f;
 	
-	buffer_size_ = val_size;
-	data_ = user_malloc(val_size);
-	memcpy(data_, val, val_size);
+	if(val_size<=BUFFER_SIZE){
+		ptr_ = buffer_;
+	}else{
+		ptr_ = user_malloc(val_size);
+	}
+	memcpy(ptr_, val, val_size);
 	
 	if(param_n){
 		pi_.params = (Named*)user_malloc(sizeof(Named)*param_n);
@@ -31,8 +34,11 @@ CFun::~CFun(){
 	for(int_t i=0; i<param_n_; ++i){
 		pi_.params[i].~Named();
 	}
-	user_free(data_);
 	user_free(pi_.params);		
+
+	if(ptr_!=buffer_){
+		user_free(ptr_);
+	}
 }
 
 CFunPtr CFun::param(
@@ -69,7 +75,7 @@ void CFun::call(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=pi_.min_param_count){
 		check_arg(vm);
 	}
-	fun_(vm, pi_, data_);
+	fun_(vm, pi_, ptr_);
 }
 
 void CFun::check_arg(const VMachinePtr& vm){
@@ -99,7 +105,7 @@ CFunArgs::CFunArgs(fun_t f, const void* val, int_t val_size, int_t param_n)
 	:CFun(f, val, val_size, param_n){}
 
 void CFunArgs::call(const VMachinePtr& vm){
-	fun_(vm, pi_, data_);
+	fun_(vm, pi_, ptr_);
 }
 
 }

@@ -210,6 +210,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_expr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_frame.cpp"
 				>
 			</File>

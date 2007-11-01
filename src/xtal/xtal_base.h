@@ -20,20 +20,20 @@ public:
 	* @retval nop そのメンバは存在しない
 	* @retval 非nop nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
+	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
 	*
 	*/
-	virtual void def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0);
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0);
 
 	/**
 	* @brief このオブジェクトが所属するクラスを返す。
@@ -84,7 +84,7 @@ public:
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true);
+	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true);
 
 	/**
 	* @brief このオブジェクトに付けられた名前を返す。
@@ -122,7 +122,7 @@ public:
 
 public:
 
-	SendProxy send(const InternedStringPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null);
+	SendProxy send(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null);
 
 public:
 	

@@ -63,7 +63,7 @@ public:
 
 StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 	if(buffer_size>6){
-		return xnew<InternedString>(data, buffer_size);
+		return xnew<ID>(data, buffer_size);
 	}
 
 	uchar_t buf[8] = {0};
@@ -78,9 +78,9 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 	}
 
 	if(buf[0]==0){
-		return xnew<InternedString>((char_t*)buf+1, buffer_size);
+		return xnew<ID>((char_t*)buf+1, buffer_size);
 	}else{
-		return xnew<InternedString>((char_t*)buf, buffer_size+1);
+		return xnew<ID>((char_t*)buf, buffer_size+1);
 	}
 }
 
@@ -110,12 +110,12 @@ void ChMaker::add(char_t ch){
 	}
 }
 
-InternedStringPtr ChMaker::to_s(){
+IDPtr ChMaker::to_s(){
 	switch(pos){
-	case 1: return xnew<InternedString>(buf[0]);
-	case 2: return xnew<InternedString>(buf[0], buf[1]);
-	case 3: return xnew<InternedString>(buf[0], buf[1], buf[2]);
-	default: return xnew<InternedString>(&buf[0], pos);
+	case 1: return xnew<ID>(buf[0]);
+	case 2: return xnew<ID>(buf[0], buf[1]);
+	case 3: return xnew<ID>(buf[0], buf[1], buf[2]);
+	default: return xnew<ID>(&buf[0], pos);
 	}
 }
 

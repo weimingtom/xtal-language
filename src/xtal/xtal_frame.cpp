@@ -23,7 +23,7 @@ public:
 			vm->return_result(SmartPtr<MembersIter>(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
 			++it_;
 		}else{
-			vm->return_result(null);
+			vm->return_result(null, null, null, null);
 		}
 	}
 };
@@ -97,7 +97,7 @@ Frame::~Frame(){
 	}
 }
 
-void Frame::set_class_member(int_t i, const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
+void Frame::set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
 	members_->set_at(i, value);
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
@@ -199,7 +199,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
-void Class::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -213,7 +213,7 @@ void Class::def(const InternedStringPtr& primary_key, const AnyPtr& value, const
 	global_mutate_count++;
 }
 
-const AnyPtr& Class::any_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key){
+const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -222,7 +222,7 @@ const AnyPtr& Class::any_member(const InternedStringPtr& primary_key, const AnyP
 	return nop;
 }
 
-const AnyPtr& Class::bases_member(const InternedStringPtr& name){
+const AnyPtr& Class::bases_member(const IDPtr& name){
 	for(int_t i = mixins_->size(); i>0; --i){
 		if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name)){
 			return ret;
@@ -231,7 +231,7 @@ const AnyPtr& Class::bases_member(const InternedStringPtr& name){
 	return nop;
 }
 
-const AnyPtr& Class::find_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 
@@ -278,7 +278,7 @@ const AnyPtr& Class::find_member(const InternedStringPtr& primary_key, const Any
 	return nop;
 }
 
-const AnyPtr& Class::do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
 	{
 		const AnyPtr& ret = find_member(primary_key, secondary_key, self, inherited_too);
 		if(rawne(ret, nop)){
@@ -316,7 +316,7 @@ const AnyPtr& Class::do_member(const InternedStringPtr& primary_key, const AnyPt
 	return nop;
 }
 
-void Class::set_member(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -432,7 +432,7 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const InternedStringPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -456,11 +456,11 @@ const AnyPtr& Lib::do_member(const InternedStringPtr& primary_key, const AnyPtr&
 	}
 }
 
-void Lib::def(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void Lib::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	rawdef(primary_key, value, secondary_key);
 }
 
-const AnyPtr& Lib::rawdef(const InternedStringPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){

@@ -21,23 +21,55 @@ public:
 
 		mm_ = xnew<MemoryStream>();
 
-		newline_ch_ = "\n";
+		n_ch_ = "\n";
+		r_ch_ = "\r";
+
 		lineno_ = 1;
-
-		results_ = xnew<Map>();
 	}
 
-	void seek(uint_t pos){
-		if(pos_ < pos){
-			peek(pos - pos_);
+	struct Mark{
+		uint_t lineno;
+		uint_t pos;
+	};
+
+	/**
+	* @brief マークをつける
+	*/
+	Mark mark(){
+		Mark mark;
+		mark.lineno = lineno_;
+		mark.pos = pos_;
+		return mark;
+	}
+
+	/**
+	* @brief マークをはずす
+	*/
+	void unmark(const Mark& mark){
+		if(marked_==mark.pos){
+			marked_ = 0;
 		}
-		pos_ = pos;
 	}
 
+	/**
+	* @brief マークを付けた位置に戻る
+	*/
+	void backtrack(const Mark& mark){
+		unmark(mark);
+		pos_ = mark.pos;
+		lineno_ = mark.lineno;
+	}
+
+	/**
+	* @brief 現在の位置を返す
+	*/
 	uint_t pos(){
 		return pos_;
 	}
 
+	/**
+	* @brief 現在の行数を返す
+	*/
 	uint_t lineno(){
 		return lineno_;
 	}
@@ -89,9 +121,14 @@ public:
 	*/
 	const AnyPtr& read(){
 		const AnyPtr& ret = peek();
-		if(raweq(ret, newline_ch_)){
+		if(raweq(ret, r_ch_)){
+			if(rawne(peek(1), n_ch_)){
+				lineno_++;
+			}
+		}else if(raweq(ret, n_ch_)){
 			lineno_++;
 		}
+
 		pos_ += 1;
 		return  ret;
 	}
@@ -109,10 +146,39 @@ public:
 	}
 
 	/**
-	* @brief 一つ先読みし、終了しているか調べる
+	* @brief 一番最初の位置にあるか調べる
+	*/
+	bool bos(){
+		return pos_==0;
+	}
+
+	/**
+	* @brief 終了しているか調べる
 	*/
 	bool eos(){
 		return raweq(peek(), nop);
+	}
+
+	/**
+	* @brief 行頭か調べる
+	*/
+	bool bol(){
+		if(pos_==0){
+			return true;
+		}
+
+		uint_t bufsize = buf_->size();
+		uint_t bufmask = bufsize - 1;
+		const AnyPtr& ch = buf_->at((pos_-1)&bufmask);
+		return raweq(ch, n_ch_) || raweq(ch, r_ch_);
+	}
+
+	/**
+	* @brief 行末か調べる
+	*/
+	bool eol(){
+		const AnyPtr& ch = peek();
+		return raweq(ch, r_ch_) || raweq(ch, n_ch_) || raweq(ch, nop);
 	}
 
 	/**
@@ -124,6 +190,22 @@ public:
 		}
 	}
 
+	/**
+	* @brief 行末を読み飛ばす
+	*/
+	void skip_eol(){
+		const AnyPtr& ch = peek();
+		if(raweq(ch, r_ch_)){
+			if(rawne(peek(1), n_ch_)){
+				skip(2);
+			}else{
+				skip(1);
+			}
+		}else if(raweq(ch, n_ch_)){
+			skip(1);
+		}
+	}
+
 public:
 
 	StringPtr capture(int_t begin, int_t end){
@@ -132,6 +214,18 @@ public:
 		for(int_t i=begin; i<end; ++i){
 			mm_->put_s(buf_->at(i & mask)->to_s());
 		}
+		return mm_->to_s();
+	}
+
+	StringPtr capture(int_t begin){
+		uint_t mask = buf_->size()-1;
+		mm_->clear();
+		int_t saved = pos_;
+		pos_ = begin;
+		while(!eos()){
+			mm_->put_s(read()->to_s());
+		}
+		pos_ = saved;
 		return mm_->to_s();
 	}
 
@@ -152,15 +246,15 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & buf_ & mm_ & results_ & newline_ch_;
+		m & buf_ & mm_;
 	}
 
 private:
 	
 	MemoryStreamPtr mm_;
-	StringPtr newline_ch_;
-	MapPtr results_;
 	ArrayPtr buf_;
+	IDPtr n_ch_;
+	IDPtr r_ch_;
 
 	uint_t pos_;
 	uint_t read_;
@@ -206,50 +300,50 @@ typedef SmartPtr<Scanner> ScannerPtr;
 typedef SmartPtr<StreamScanner> StreamScannerPtr;
 typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
 
+class MatchResult;
+typedef SmartPtr<MatchResult> MatchResultPtr;
+
+class ParseResult;
+typedef SmartPtr<ParseResult> ParseResultPtr;
+
+class TreeNode;
+typedef SmartPtr<TreeNode> TreeNodePtr;
 
 
-class MatchTreeNode;
-typedef SmartPtr<MatchTreeNode> MatchTreeNodePtr;
-
-class MatchResults;
-typedef SmartPtr<MatchResults> MatchResultsPtr;
-
-class MatchTreeNode{
+class TreeNode : public Array{
 public:
 
-	AnyPtr id(){
-		return id_;
+	TreeNode(const AnyPtr& tag=null, int_t lineno=0){
+		tag_ = tag;
+		lineno_ = lineno;
 	}
 
+	AnyPtr tag(){
+		return tag_;
+	}
+
+	void set_tag(const AnyPtr& tag){
+		tag_ = tag;
+	}
+	
 	int_t lineno(){
 		return lineno_;
 	}
-	
-	AnyPtr each(){
-		return children_ ? children_->each() : null;
-	}
-	
-	AnyPtr op_at(int_t n){
-		return children_ ? children_->at(n) : null;
+
+	void set_lineno(int_t lineno){
+		lineno_ = lineno;
 	}
 
 private:
-	AnyPtr id_;
+	AnyPtr tag_;
 	int_t lineno_;
-	ArrayPtr children_;
 
 	friend class XegExec;
 };
 
 
-class MatchResults{
+class MatchResult{
 public:
-
-	MatchResults(const ArrayPtr& captures, const MapPtr& named_captures, const ArrayPtr& nodes){
-		captures_ = captures;
-		named_captures_ = named_captures;
-		nodes_ = nodes;
-	}
 
 	AnyPtr captures(){
 		return captures_ ? captures_->each() : null;
@@ -259,46 +353,124 @@ public:
 		return named_captures_ ? named_captures_->each() : null;
 	}
 
-	AnyPtr op_at(int_t key){
-		return captures_ ? captures_->at(key) : null;
+	AnyPtr at(int_t key){
+		if(key==0){
+			return scanner_->capture(match_begin_, match_end_);
+		}else{
+			return captures_ ? captures_->op_at(key-1) : null;
+		}
 	}
 	
-	AnyPtr op_at(const StringPtr& key){
+	AnyPtr at(const StringPtr& key){
 		return  named_captures_ ? named_captures_->at(key) : null;
 	}
 
-	AnyPtr nodes(){
-		return nodes_ ? nodes_->each() : null;
+	int_t size(){
+		return captures_ ? captures_->size() : 0;
 	}
 
-	AnyPtr root(){
-		return nodes_ ? nodes_->at(0) : null;
+	int_t length(){
+		return captures_ ? captures_->size() : 0;
+	}
+
+	StringPtr match(){
+		return scanner_->capture(match_begin_, match_end_);
+	}
+
+	StringPtr prefix(){
+		return scanner_->capture(begin_, match_begin_);
+	}
+
+	StringPtr suffix(){
+		return scanner_->capture(match_end_);
 	}
 
 private:
+	ScannerPtr scanner_;
 	ArrayPtr captures_;
 	MapPtr named_captures_;
-	ArrayPtr nodes_;
-
+	int_t begin_, match_begin_, match_end_;
 	friend class XegExec;
 };
 
 
+class ParseResult{
+public:
 
-MatchResultsPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
+	ParseResult(const TreeNodePtr& root){
+		root_ = root;
+	}
 
-inline MatchResultsPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream){
-	return parse_scanner(pattern, xnew<StreamScanner>(stream));
-}
+	AnyPtr root(){
+		return root_;
+	}
 
-inline MatchResultsPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){
-	return parse_stream(pattern, xnew<StringStream>(string->to_s()));
-}
+private:
+	TreeNodePtr root_;
+	friend class XegExec;
+};
 
-inline MatchResultsPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter){
-	return parse_scanner(pattern, xnew<IteratorScanner>(iter));
-}
+MatchResultPtr match_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
+MatchResultPtr match_stream(const AnyPtr& pattern, const StreamPtr& stream);
+MatchResultPtr match_string(const AnyPtr& pattern, const AnyPtr& string);
+MatchResultPtr match_iterator(const AnyPtr& pattern, const AnyPtr& iter);
 
+ParseResultPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
+ParseResultPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream);
+ParseResultPtr parse_string(const AnyPtr& pattern, const AnyPtr& string);
+ParseResultPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter);
+
+struct XegExpr; 
+typedef SmartPtr<XegExpr> XegExprPtr;
+
+XegExprPtr expr(const AnyPtr& a);
+XegExprPtr before(const AnyPtr& left);
+XegExprPtr cap(const AnyPtr& left);
+XegExprPtr cap(const IDPtr& name, const AnyPtr& left);
+XegExprPtr node(const AnyPtr& left);
+XegExprPtr node(const IDPtr& name, const AnyPtr& left);
+XegExprPtr splice_node(int_t num, const AnyPtr& left);
+XegExprPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
+XegExprPtr leaf(const AnyPtr& left);
+XegExprPtr backref(const AnyPtr& n);
+
+
+struct XegExpr : public HaveName{
+
+	enum Type{
+		TYPE_TERM, //
+
+		TYPE_CONCAT, // >>
+		TYPE_OR, // |
+
+		TYPE_MORE0, // *0
+		TYPE_MORE1, // *1
+		TYPE_01,  // *-1
+
+		TYPE_EMPTY, // 空
+
+		TYPE_CAP, // キャプチャ
+	};
+
+	XegExpr(int_t type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)
+		:type(type), param1(param1), param2(param2), param3(param3){}
+
+	int_t type;
+	AnyPtr param1;
+	AnyPtr param2;
+	int_t param3;
+
+	virtual void visit_members(Visitor& m){
+		HaveName::visit_members(m);
+		m & param1 & param2;
+	}
+};
+
+extern AnyPtr any;
+extern AnyPtr bos;
+extern AnyPtr eos;
+extern AnyPtr bol;
+extern AnyPtr eol;
 
 }}
 

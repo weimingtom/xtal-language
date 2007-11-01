@@ -21,7 +21,7 @@ public:
 	
 	void block_next(const VMachinePtr& vm){
 		if(node_==map_->end()){
-			vm->return_result(null);
+			vm->return_result(null, null);
 			return;
 		}
 		
@@ -29,7 +29,7 @@ public:
 			case 0: vm->return_result(SmartPtr<MapIter>(this), node_->first, node_->second); break;
 			case 1: vm->return_result(SmartPtr<MapIter>(this), node_->first); break;
 			case 2: vm->return_result(SmartPtr<MapIter>(this), node_->second); break;
-			default: vm->return_result(null); break;
+			default: vm->return_result(null, null); break;
 		}
 
 		++node_;

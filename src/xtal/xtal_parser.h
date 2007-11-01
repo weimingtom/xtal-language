@@ -76,7 +76,7 @@ public:
 	bool right_space() const{ return (flags_ & FLAG_RIGHT_SPACE) != 0; }
 	int_t ivalue() const{ return ::xtal::ivalue((Innocence&)value_); }
 	float_t fvalue() const{ return ::xtal::fvalue(value_); }
-	const InternedStringPtr& identifier() const{ return *(InternedStringPtr*)&value_; }
+	const IDPtr& identifier() const{ return *(IDPtr*)&value_; }
 	u16 keyword_number() const{ return keyword_number_; }
 
 	StringPtr to_s() const{ 
@@ -228,12 +228,12 @@ private:
 	void push_token(int_t v);
 	void push_int_token(int_t v);
 	void push_float_token(float_t v);
-	void push_keyword_token(const InternedStringPtr& v, int_t num);
-	void push_identifier_token(const InternedStringPtr& v);
+	void push_keyword_token(const IDPtr& v, int_t num);
+	void push_identifier_token(const IDPtr& v);
 
 	void deplete_space();
 
-	InternedStringPtr parse_identifier();
+	IDPtr parse_identifier();
 	int_t parse_integer();
 	int_t parse_hex();
 	int_t parse_oct();
@@ -292,12 +292,12 @@ private:
 	ExprPtr parse_stmt();
 	ExprPtr must_parse_stmt();
 	ExprPtr parse_assert();
-	ExprPtr parse_each(const InternedStringPtr& label, ExprPtr lhs);
+	ExprPtr parse_each(const IDPtr& label, ExprPtr lhs);
 	ArrayPtr parse_stmts();
 	ArrayPtr parse_exprs(bool* discard = 0);
-	InternedStringPtr parse_var();
-	InternedStringPtr parse_identifier();
-	InternedStringPtr parse_identifier_or_keyword();
+	IDPtr parse_var();
+	IDPtr parse_identifier();
+	IDPtr parse_identifier_or_keyword();
 	ExprPtr parse_if();
 	ExprPtr parse_term();
 	ExprPtr parse_toplevel();
@@ -314,11 +314,11 @@ private:
 	ExprPtr must_parse_expr(int_t pri);
 	ExprPtr must_parse_expr();
 	ExprPtr parse_array();
-	ExprPtr parse_for(const InternedStringPtr& label = null);
+	ExprPtr parse_for(const IDPtr& label = null);
 	ExprPtr parse_try();
 	int_t parse_number_suffix();
 	ExprPtr parse_number();
-	ExprPtr parse_while(const InternedStringPtr& label = null);
+	ExprPtr parse_while(const IDPtr& label = null);
 		
 public:
 

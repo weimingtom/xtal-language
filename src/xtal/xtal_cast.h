@@ -294,10 +294,10 @@ struct CastHelper<const Any&>{
 
 
 template<>
-struct CastHelper<const InternedStringPtr*>{
-	static const InternedStringPtr* as(const AnyPtr& a);
-	static const InternedStringPtr* cast(const AnyPtr& a);
-	static const InternedStringPtr* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
+struct CastHelper<const IDPtr*>{
+	static const IDPtr* as(const AnyPtr& a);
+	static const IDPtr* cast(const AnyPtr& a);
+	static const IDPtr* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
 };
 
 template<>

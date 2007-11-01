@@ -20,11 +20,11 @@ public:
 
 class SendProxy{
 	AnyPtr obj;
-	InternedStringPtr primary_key;
+	IDPtr primary_key;
 	AnyPtr secondary_key;
 public:
 
-	SendProxy(const AnyPtr& obj, const InternedStringPtr& primary_key, const AnyPtr& secondary_key)
+	SendProxy(const AnyPtr& obj, const IDPtr& primary_key, const AnyPtr& secondary_key)
 		:obj(obj), primary_key(primary_key), secondary_key(secondary_key){}
 
 	~SendProxy(){

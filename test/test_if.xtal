@@ -85,3 +85,49 @@
 	}
 	assert c=="true";
 }
+
+{
+	temp: 0;
+	A: class{}
+	B: class(A){}
+	
+	if(A() is A){
+		temp = 100;
+	}else{
+		assert false;
+	}
+	assert temp==100;
+	
+	
+	if(B() is A){
+		temp = 200;
+	}else{
+		assert false;
+	}
+	assert temp==200;
+	
+	if(A() !is B){
+		temp = 300;
+	}else{
+		assert false;
+	}
+	assert temp==300;
+	
+	f: fun(a) a;
+	 
+	if(A === f(A)){
+		temp = 400;
+	}else{
+		assert false;
+	}
+	assert temp==400;
+	
+	if(A !== f(B)){
+		temp = 500;
+	}else{
+		assert false;
+	}
+	assert temp==500;
+	
+}
+

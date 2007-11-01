@@ -486,13 +486,13 @@ struct SmartPtrCtor1<String>{
 };
 
 template<>
-struct SmartPtrCtor1<InternedString>{
+struct SmartPtrCtor1<ID>{
 	typedef const char* type;
 	static AnyPtr call(type v);
 };
 
 template<>
-struct SmartPtrCtor2<InternedString>{
+struct SmartPtrCtor2<ID>{
 	typedef const StringPtr& type;
 	static AnyPtr call(type v);
 };

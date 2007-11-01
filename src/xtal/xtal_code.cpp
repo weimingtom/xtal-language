@@ -217,6 +217,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstArrayAppend::NUMBER){ temp = ((InstArrayAppend*)pc)->inspect(code); sz = InstArrayAppend::ISIZE; }
 		XTAL_CASE(InstMakeMap::NUMBER){ temp = ((InstMakeMap*)pc)->inspect(code); sz = InstMakeMap::ISIZE; }
 		XTAL_CASE(InstMapInsert::NUMBER){ temp = ((InstMapInsert*)pc)->inspect(code); sz = InstMapInsert::ISIZE; }
+		XTAL_CASE(InstMapSetDefault::NUMBER){ temp = ((InstMapSetDefault*)pc)->inspect(code); sz = InstMapSetDefault::ISIZE; }
 		XTAL_CASE(InstMakeFun::NUMBER){ temp = ((InstMakeFun*)pc)->inspect(code); sz = InstMakeFun::ISIZE; }
 		XTAL_CASE(InstMakeInstanceVariableAccessor::NUMBER){ temp = ((InstMakeInstanceVariableAccessor*)pc)->inspect(code); sz = InstMakeInstanceVariableAccessor::ISIZE; }
 		XTAL_CASE(InstThrow::NUMBER){ temp = ((InstThrow*)pc)->inspect(code); sz = InstThrow::ISIZE; }

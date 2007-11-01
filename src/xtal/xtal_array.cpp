@@ -84,7 +84,7 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(int_t size){
-	capa_ = size + 7;
+	capa_ = size + 3;
 	size_ = size;
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
 	memset(values_, 0, sizeof(AnyPtr)*size_);

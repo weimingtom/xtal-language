@@ -9,6 +9,11 @@ AnyPtr eos;
 AnyPtr bol;
 AnyPtr eol;
 
+AnyPtr alpha;
+AnyPtr degit;
+AnyPtr lower;
+AnyPtr upper;
+
 MapPtr nfa_map_;
 
 void uninitialize_xeg(){
@@ -18,9 +23,13 @@ void uninitialize_xeg(){
 	bol = null;
 	eol = null;
 
+	alpha = null;
+	degit = null;
+	lower = null;
+	upper = null;
+
 	nfa_map_ = null;
 }
-
 
 
 int_t StreamScanner::do_read(AnyPtr* buffer, int_t max){
@@ -112,6 +121,11 @@ public:
 
 	typedef SmartPtr<Trans> TransPtr;
 
+	enum{
+		STATE_START,
+		STATE_FINAL,
+	};
+
 	struct NFA{
 
 		NFA(const XegExprPtr& node);
@@ -146,7 +160,6 @@ public:
 		AC<State>::vector states;
 		int cap_max, named_cap_max;
 		ArrayPtr named_cap_list;
-		int start, final;
 
 		enum{
 			CAPTURE_NONE = 0,
@@ -218,12 +231,12 @@ private:
 
 	bool test(const ScannerPtr& scanner, const XegElemPtr& elem);
 
-	void push(int st, int nodes, const Scanner::Mark& pos);
+	void push(uint_t st, uint_t nodes, const Scanner::State& pos);
 
 	struct StackInfo{ 
-		int state; 
-		int nodes;
-		Scanner::Mark pos; 
+		uint_t state; 
+		uint_t nodes;
+		Scanner::State pos; 
 	};
 	typedef Stack<StackInfo> stack_t;
 
@@ -240,7 +253,7 @@ private:
 	TreeNodePtr root_;
 
 	struct Cap{
-		int begin, end;
+		int_t begin, end;
 	};
 
 	Stack<Info> info_;
@@ -286,7 +299,53 @@ XegExprPtr expr(const AnyPtr& a){
 	return null;
 }
 
-XegExprPtr or_(const AnyPtr& left, const AnyPtr& right){ return xnew<XegExpr>(XegExpr::TYPE_OR, expr(left), expr(right)); }
+XegExprPtr set(const StringPtr& str){
+	SetPtr chset = xnew<Set>();
+	Xfor(v, str){
+		chset->set_at(v, true);
+	}
+	return term(xnew<XegElem>(XegElem::TYPE_CH_SET, chset));
+}
+
+
+XegExprPtr or_(const AnyPtr& left, const AnyPtr& right){
+	XegExprPtr xleft = expr(left);
+	XegExprPtr xright = expr(right);
+
+	if(xleft->type==XegExpr::TYPE_TERM && xright->type==XegExpr::TYPE_TERM){
+		XegElemPtr eleft = ptr_cast<XegElem>(xleft->param1);
+		XegElemPtr eright = ptr_cast<XegElem>(xright->param1);
+
+		if((eleft->type==XegElem::TYPE_CH || eleft->type==XegElem::TYPE_CH_SET) && 
+			(eright->type==XegElem::TYPE_CH || eright->type==XegElem::TYPE_CH_SET)){
+
+			SetPtr chset = xnew<Set>();
+
+			if(eleft->type==XegElem::TYPE_CH){
+				chset->set_at(eleft->param1, true);
+			}
+
+			if(eleft->type==XegElem::TYPE_CH_SET){
+				Xfor(v, eleft->param1){
+					chset->set_at(v, true);
+				}
+			}
+
+			if(eright->type==XegElem::TYPE_CH){
+				chset->set_at(eright->param1, true);
+			}
+
+			if(eright->type==XegElem::TYPE_CH_SET){
+				Xfor(v, eright->param1){
+					chset->set_at(v, true);
+				}
+			}
+			return term(xnew<XegElem>(XegElem::TYPE_CH_SET, chset));
+		}
+	}
+	return xnew<XegExpr>(XegExpr::TYPE_OR, expr(left), expr(right)); 
+}
+
 XegExprPtr concat(const AnyPtr& left, const AnyPtr& right){ return xnew<XegExpr>(XegExpr::TYPE_CONCAT, expr(left), expr(right)); }
 XegExprPtr emp(){ return xnew<XegExpr>(XegExpr::TYPE_EMPTY); }
 
@@ -388,9 +447,9 @@ XegExec::NFA::NFA(const XegExprPtr& node){
 	named_cap_max = 0;
 	named_cap_list = xnew<Array>();
 
-	start = gen_state();
-	final = gen_state();
-	gen_nfa(start, node, final);
+	gen_state(); // start
+	gen_state(); // final
+	gen_nfa(STATE_START, node, STATE_FINAL);
 }
 
 void XegExec::NFA::add_transition(int from, const AnyPtr& ch, int to){
@@ -526,18 +585,18 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 }
 
 
-void XegExec::push(int curSt, int nodes, const Scanner::Mark& pos){
+void XegExec::push(uint_t cur_state, uint_t nodes, const Scanner::State& pos){
 	// ε無限ループ防止策。同じ状態には戻らないように…
 	Info& info = info_.top();
 	for(uint_t i=0, sz=info.stack.size(); i<sz; ++i){
 		if(info.stack[i].pos.pos != pos.pos){
 			break;
-		}else if(info.stack[i].state == curSt){
+		}else if(info.stack[i].state == cur_state){
 			return;
 		}
 	}
 
-	StackInfo temp = {curSt, nodes, pos};
+	StackInfo temp = {cur_state, nodes, pos};
 	info.stack.push(temp);
 }
 
@@ -564,33 +623,32 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 	}
 
 	bool match = false;
-	Scanner::Mark match_pos = {0, 0};
-	Scanner::Mark first_pos = scanner->mark();
+	Scanner::State match_pos = {0, 0};
+	Scanner::State first_pos = scanner->save();
 
-	push(nfa->start, root_->size(), first_pos);
+	push(STATE_START, root_->size(), first_pos);
 
 	while(!info_.top().stack.empty()){
 		StackInfo& se = info_.top().stack.pop();
-		int curSt = se.state;
+		int cur_state = se.state;
 		
 		if(se.nodes<root_->size()){
 			root_->resize(se.nodes);
 		}
 
-		Scanner::Mark pos = se.pos;
-		NFA::State& state = nfa->states[curSt];
+		Scanner::State pos = se.pos;
+		NFA::State& state = nfa->states[cur_state];
 
-		if(curSt == nfa->final) // 1==終状態
-		if(match_pos.pos < pos.pos){
+		if(cur_state == STATE_FINAL && match_pos.pos < pos.pos){
 			match_pos = pos;
 			match = true;
 		}
 
 		bool fail = true;
 		for(const TransPtr* tr=&state.trans; *tr; tr=&(*tr)->next){
-			scanner->backtrack(pos);
+			scanner->load(pos);
 			if(test(scanner, (*tr)->ch)){
-				push((*tr)->to, root_->size(), scanner->mark());
+				push((*tr)->to, root_->size(), scanner->save());
 				fail = false;
 
 				if(state.greed){
@@ -633,7 +691,7 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 	}
 
 	if(match){
-		scanner->backtrack(match_pos);
+		scanner->load(match_pos);
 
 		if(nfa->cap_max!=0){
 			info_.top().cap_values = xnew<Array>();
@@ -677,7 +735,7 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 	}
 
 	root_->resize(nodenum);
-	scanner->backtrack(first_pos);
+	scanner->load(first_pos);
 	return false;
 }
 
@@ -898,6 +956,11 @@ void initialize_xeg(){
 	bol = term(xnew<XegElem>(XegElem::TYPE_BOL));
 	eol = term(xnew<XegElem>(XegElem::TYPE_EOL));
 
+	degit = expr(AnyPtr("0")->send(Xid(op_range))("9", RANGE_CLOSED));
+	lower = expr(AnyPtr("a")->send(Xid(op_range))("z", RANGE_CLOSED));
+	upper = expr(AnyPtr("A")->send(Xid(op_range))("Z", RANGE_CLOSED));
+	alpha = lower | upper;
+
 	nfa_map_ = xnew<Map>();
 
 	xeg->def("any", any);
@@ -906,6 +969,12 @@ void initialize_xeg(){
 	xeg->def("bol", bol);
 	xeg->def("eol", eol);
 
+	xeg->def("degit", degit);
+	xeg->def("lower", lower);
+	xeg->def("upper", upper);
+	xeg->def("alpha", alpha);
+
+	xeg->fun("set", &set);
 	xeg->fun("backref", &backref);
 	xeg->fun("before", &before);
 	xeg->fun("leaf", &leaf);
@@ -922,21 +991,26 @@ void test_xeg(){
 	XegExprPtr paren = expr(Xsrc((  
 	filelocal.inherit(xeg);
 
-	"ete:rwer,aer::ere,".split(":" | ",")[].p;
-	"abcd\nyyt\na780eee\nawer\n45\naweree\n".scan(bol >> cap("a".."z"*1) >> eol){
-		it.p;
-	}
-	
+	"ete:rwer,a-er::ere,".split(set(":,") | "-")[].p;
+	"abcd\nyyt\na780eee\nawer\n45\naweree\n".scan(bol >> cap(alpha*0) >> cap(alpha)>> eol).map(%f(%s %s!!))[].p;
+	d
 	m: (bol >> cap("a".."z"*1) >> eol).match("abcd\nyyt\na780eee\nawer\n45\naweree\n");
 	m[1]~"tette" .p;
 
 	builtin::aaa: bol >> leaf("a".."z"*1) >> eol;
 	builtin::bbb: any;
 
+	mm: MemoryStream();
+	300.times{
+		mm.put_s("abcd\nyyt\na780eee\nawer\n45\naweree\nabcd\nyyt\na780eee\nawer\n45\naweree\n");
+	}
+	mm.size/1024.0 .p;
+	str: mm.to_s();
+
 	t: clock();
-	if(result: ((aaa | any)*0).parse("abcd\nyyt\na780eee\nawer\n45\naweree\n")){
+	if(result: ((aaa | any)*0).parse(str)){
 		(clock()-t).p;
-		result.root.each.to_a.p;
+		//result.root.each.to_a.p;
 	}
 
 	))());

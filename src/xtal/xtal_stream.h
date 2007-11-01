@@ -16,108 +16,6 @@ public:
 	};
 
 	/**
-	* @brief 符号付整数8-bitをストリームに書き込む
-	*/
-	void put_i8(int_t v){
-		put_u8(v);
-	}
-
-	/**
-	* @brief 符号付整数16-bitをストリームに書き込む
-	*/
-	void put_i16(int_t v){
-		put_u16(v);
-	}
-
-	/**
-	* @brief 符号付整数32-bitをストリームに書き込む
-	*/
-	void put_i32(int_t v){
-		put_u32(v);
-	}
-
-	/**
-	* @brief 符号無整数8-bitをストリームに書き込む
-	*/
-	void put_u8(int_t v){
-		struct{ u8 data[1]; } data;
-		data.data[0] = (v>>0)&0xff;
-		write(data.data, 1);
-	}
-
-	/**
-	* @brief 符号無整数16-bitをストリームに書き込む
-	*/
-	void put_u16(int_t v){
-		struct{ u8 data[2]; } data;
-		data.data[0] = (v>>8)&0xff;
-		data.data[1] = (v>>0)&0xff;
-		write(data.data, 2);
-	}
-
-	/**
-	* @brief 符号無整数32-bitをストリームに書き込む
-	*/
-	void put_u32(int_t v){
-		struct{ u8 data[4]; } data;
-		data.data[0] = (v>>24)&0xff;
-		data.data[1] = (v>>16)&0xff;
-		data.data[2] = (v>>8)&0xff;
-		data.data[3] = (v>>0)&0xff;
-		write(data.data, 4);
-	}
-
-	i8 get_i8(){
-		return (i8)get_u8();
-	}
-
-	i16 get_i16(){
-		return (i16)get_u16();
-	}
-
-	i32 get_i32(){
-		return (i32)get_u32();
-	}
-
-	u8 get_u8(){
-		struct{ u8 data[1]; } data;
-		read(data.data, 1);
-		return (u8)data.data[0];
-	}
-
-	u16 get_u16(){
-		struct{ u8 data[2]; } data;
-		read(data.data, 2);
-		return (u16)((data.data[0]<<8) | data.data[1]);
-	}
-
-	u32 get_u32(){
-		struct{ u8 data[4]; } data;
-		read(data.data, 4);
-		return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
-	}
-
-	void put_f32(float_t v){
-		union{ u32 u; f32 f; } u;
-		u.f = v;
-		put_u32(u.u);
-	}
-
-	float_t get_f32(){
-		union{ u32 u; f32 f; } u;
-		u.u = get_u32();
-		return u.f;
-	}
-
-	void put_ch_code(char_t ch){
-		put_t<SelectType<sizeof(char_t)>::uint_t>(ch);
-	}
-
-	char_t get_ch_code(){
-		return get_t<SelectType<sizeof(char_t)>::uint_t>();
-	}
-
-	/**
 	* @brief 文字列strをストリームに流す
 	*/
 	void put_s(const StringPtr& str){
@@ -184,27 +82,322 @@ public:
 
 public:
 
-	template<class T>
-	T get_t(){ return get_t((T*)0); }
+	/**
+	* @brief 符号付整数8-bitをストリームに書き込む
+	*/
+	void put_i8(i8 v){
+		put_u8(v);
+	}
+
+	/**
+	* @brief 符号付整数16-bitをストリームに書き込む
+	*/
+	void put_i16be(i16 v){
+		put_u16be(v);
+	}
+
+	/**
+	* @brief 符号付整数16-bitをストリームに書き込む
+	*/
+	void put_i16le(i16 v){
+		put_u16le(v);
+	}
+
+	/**
+	* @brief 符号付整数32-bitをストリームに書き込む
+	*/
+	void put_i32be(i32 v){
+		put_u32be(v);
+	}
+
+	/**
+	* @brief 符号付整数32-bitをストリームに書き込む
+	*/
+	void put_i32le(i32 v){
+		put_u32le(v);
+	}
+
+	/**
+	* @brief 符号付整数64-bitをストリームに書き込む
+	*/
+	void put_i64be(i64 v){
+		put_u64be(v);
+	}
+
+	/**
+	* @brief 符号付整数64-bitをストリームに書き込む
+	*/
+	void put_i64le(i64 v){
+		put_u64le(v);
+	}
+
+	/**
+	* @brief 符号無整数8-bitをストリームに書き込む
+	*/
+	void put_u8(u8 v){
+		write(&v, 1);
+	}
+
+	/**
+	* @brief 符号無整数16-bitをストリームに書き込む
+	*/
+	void put_u16be(u16 v){
+		struct{ u8 data[2]; } data;
+		data.data[0] = (u8)(v>>8);
+		data.data[1] = (u8)(v>>0);
+		write(data.data, 2);
+	}
+
+	/**
+	* @brief 符号無整数16-bitをストリームに書き込む
+	*/
+	void put_u16le(u16 v){
+		struct{ u8 data[2]; } data;
+		data.data[1] = (u8)(v>>8);
+		data.data[0] = (u8)(v>>0);
+		write(data.data, 2);
+	}
+
+	/**
+	* @brief 符号無整数32-bitをストリームに書き込む
+	*/
+	void put_u32be(u32 v){
+		struct{ u8 data[4]; } data;
+		data.data[0] = (u8)(v>>24);
+		data.data[1] = (u8)(v>>16);
+		data.data[2] = (u8)(v>>8);
+		data.data[3] = (u8)(v>>0);
+		write(data.data, 4);
+	}
+
+	/**
+	* @brief 符号無整数32-bitをストリームに書き込む
+	*/
+	void put_u32le(u32 v){
+		struct{ u8 data[4]; } data;
+		data.data[3] = (u8)(v>>24);
+		data.data[2] = (u8)(v>>16);
+		data.data[1] = (u8)(v>>8);
+		data.data[0] = (u8)(v>>0);
+		write(data.data, 4);
+	}
+
+	/**
+	* @brief 符号無整数64-bitをストリームに書き込む
+	*/
+	void put_u64be(u64 v){
+		struct{ u8 data[8]; } data;
+		data.data[0] = (u8)(v>>56);
+		data.data[1] = (u8)(v>>48);
+		data.data[2] = (u8)(v>>40);
+		data.data[3] = (u8)(v>>32);
+		data.data[4] = (u8)(v>>24);
+		data.data[5] = (u8)(v>>16);
+		data.data[6] = (u8)(v>>8);
+		data.data[7] = (u8)(v>>0);
+		write(data.data, 8);
+	}
+
+	/**
+	* @brief 符号無整数64-bitをストリームに書き込む
+	*/
+	void put_u64le(u64 v){
+		struct{ u8 data[8]; } data;
+		data.data[7] = (u8)(v>>56);
+		data.data[6] = (u8)(v>>48);
+		data.data[5] = (u8)(v>>40);
+		data.data[4] = (u8)(v>>32);
+		data.data[3] = (u8)(v>>24);
+		data.data[2] = (u8)(v>>16);
+		data.data[1] = (u8)(v>>8);
+		data.data[0] = (u8)(v>>0);
+		write(data.data, 8);
+	}
+
+	i8 get_i8(){
+		return (i8)get_u8();
+	}
+
+	i16 get_i16be(){
+		return (i16)get_u16be();
+	}
+
+	i16 get_i16le(){
+		return (i16)get_u16le();
+	}
+
+	i32 get_i32be(){
+		return (i32)get_u32be();
+	}
+
+	i32 get_i32le(){
+		return (i32)get_u32le();
+	}
+
+	i64 get_i64be(){
+		return (i64)get_u64be();
+	}
+
+	i64 get_i64le(){
+		return (i64)get_u64le();
+	}
+
+	u8 get_u8(){
+		struct{ u8 data[1]; } data;
+		read(data.data, 1);
+		return (u8)data.data[0];
+	}
+
+	u16 get_u16be(){
+		struct{ u8 data[2]; } data;
+		read(data.data, 2);
+		return (u16)((data.data[0]<<8) | data.data[1]);
+	}
+
+	u16 get_u16le(){
+		struct{ u8 data[2]; } data;
+		read(data.data, 2);
+		return (u16)((data.data[1]<<8) | data.data[0]);
+	}
+
+	u32 get_u32be(){
+		struct{ u8 data[4]; } data;
+		read(data.data, 4);
+		return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
+	}
+
+	u32 get_u32le(){
+		struct{ u8 data[4]; } data;
+		read(data.data, 4);
+		return (u32)((data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
+	}
+
+	u64 get_u64be(){
+		struct{ u8 data[8]; } data;
+		read(data.data, 8);
+		return (u64)(((u64)data.data[0]<<56) | ((u64)data.data[1]<<48) | ((u64)data.data[2]<<40) | ((u64)data.data[3]<<32) | (data.data[4]<<24) | (data.data[5]<<16) | (data.data[6]<<8) | data.data[7]);
+	}
+
+	u64 get_u64le(){
+		struct{ u8 data[8]; } data;
+		read(data.data, 8);
+		return (u64)(((u64)data.data[7]<<56) | ((u64)data.data[6]<<48) | ((u64)data.data[5]<<40) | ((u64)data.data[4]<<32) | (data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
+	}
+
+	void put_f32be(f32 v){
+		union{ u32 u; f32 f; } u;
+		u.f = v;
+		put_u32be(u.u);
+	}
+
+	void put_f32le(f32 v){
+		union{ u32 u; f32 f; } u;
+		u.f = v;
+		put_u32le(u.u);
+	}
+
+	void put_f64be(f64 v){
+		union{ u64 u; f64 f; } u;
+		u.f = v;
+		put_u64be(u.u);
+	}
+
+	void put_f64le(f64 v){
+		union{ u64 u; f64 f; } u;
+		u.f = v;
+		put_u64le(u.u);
+	}
+
+	f32 get_f32be(){
+		union{ u32 u; f32 f; } u;
+		u.u = get_u32be();
+		return u.f;
+	}
+
+	f32 get_f32le(){
+		union{ u32 u; f32 f; } u;
+		u.u = get_u32le();
+		return u.f;
+	}
+
+	f64 get_f64be(){
+		union{ u64 u; f64 f; } u;
+		u.u = get_u64be();
+		return u.f;
+	}
+
+	f64 get_f64le(){
+		union{ u64 u; f64 f; } u;
+		u.u = get_u64le();
+		return u.f;
+	}
+
+	void put_ch_code_be(char_t ch){
+		put_t_be<SelectType<sizeof(char_t)>::uint_t>(ch);
+	}
+
+	char_t get_ch_code_be(){
+		return get_t_be<SelectType<sizeof(char_t)>::uint_t>();
+	}
+
+public:
 
 	template<class T>
-	void put_t(const T& v){ return put_t(v, (T*)0); }
+	T get_t_be(){ return get_t_be((T*)0); }
 
+	template<class T>
+	void put_t_be(const T& v){ return put_t_be(v, (T*)0); }
+
+	template<class T>
+	T get_t_le(){ return get_t_le((T*)0); }
+
+	template<class T>
+	void put_t_le(const T& v){ return put_t_le(v, (T*)0); }
 private:
 
-	i8 get_t(i8*){ return get_i8(); }
-	i16 get_t(i16*){ return get_i16(); }
-	i32 get_t(i32*){ return get_i32(); }
-	u8 get_t(u8*){ return get_u8(); }
-	u16 get_t(u16*){ return get_u16(); }
-	u32 get_t(u32*){ return get_u32(); }
+	i8 get_t_be(i8*){ return get_i8(); }
+	i16 get_t_be(i16*){ return get_i16be(); }
+	i32 get_t_be(i32*){ return get_i32be(); }
+	i64 get_t_be(i64*){ return get_i64be(); }
+	u8 get_t_be(u8*){ return get_u8(); }
+	u16 get_t_be(u16*){ return get_u16be(); }
+	u32 get_t_be(u32*){ return get_u32be(); }
+	u64 get_t_be(u64*){ return get_u64be(); }
+	f32 get_t_be(f32*){ return get_f32be(); }
+	f64 get_t_be(f64*){ return get_f64be(); }
 
-	void put_t(int_t v, i8*){ put_i8(v); }
-	void put_t(int_t v, i16*){ put_i16(v); }
-	void put_t(int_t v, i32*){ put_i32(v); }
-	void put_t(int_t v, u8*){ put_u8(v); }
-	void put_t(int_t v, u16*){ put_u16(v); }
-	void put_t(int_t v, u32*){ put_u32(v); }
+	void put_t_be(i8 v, i8*){ put_i8(v); }
+	void put_t_be(i16 v, i16*){ put_i16be(v); }
+	void put_t_be(i32 v, i32*){ put_i32be(v); }
+	void put_t_be(i64 v, i64*){ put_i64be(v); }
+	void put_t_be(u8 v, u8*){ put_u8(v); }
+	void put_t_be(u16 v, u16*){ put_u16be(v); }
+	void put_t_be(u32 v, u32*){ put_u32be(v); }
+	void put_t_be(u64 v, u64*){ put_u64be(v); }
+	void put_t_be(f32 v, f32*){ put_f32be(v); }
+	void put_t_be(f64 v, f64*){ put_f64be(v); }
+
+	i8 get_t_le(i8*){ return get_i8(); }
+	i16 get_t_le(i16*){ return get_i16le(); }
+	i32 get_t_le(i32*){ return get_i32le(); }
+	i64 get_t_le(i64*){ return get_i64le(); }
+	u8 get_t_le(u8*){ return get_u8(); }
+	u16 get_t_le(u16*){ return get_u16le(); }
+	u32 get_t_le(u32*){ return get_u32le(); }
+	u64 get_t_le(u64*){ return get_u64le(); }
+	f32 get_t_le(f32*){ return get_f32le(); }
+	f64 get_t_le(f64*){ return get_f64le(); }
+
+	void put_t_le(i8 v, i8*){ put_i8(v); }
+	void put_t_le(i16 v, i16*){ put_i16le(v); }
+	void put_t_le(i32 v, i32*){ put_i32le(v); }
+	void put_t_le(i64 v, i64*){ put_i64le(v); }
+	void put_t_le(u8 v, u8*){ put_u8(v); }
+	void put_t_le(u16 v, u16*){ put_u16le(v); }
+	void put_t_le(u32 v, u32*){ put_u32le(v); }
+	void put_t_le(u64 v, u64*){ put_u64le(v); }
+	void put_t_le(f32 v, f32*){ put_f32le(v); }
+	void put_t_le(f64 v, f64*){ put_f64le(v); }
 };
 
 class FileStream : public Stream{

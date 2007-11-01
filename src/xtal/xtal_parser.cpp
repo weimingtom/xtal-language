@@ -1936,52 +1936,20 @@ ExprPtr Parser::parse_switch(){
 		var = Xid(_switch_);
 	}
 	
-	{
-		int_t ln = lineno();
-		scope_stmts->push_back(em.define(em.lvar(var), must_parse_expr()));
-	}
+	scope_stmts->push_back(em.define(em.lvar(var), must_parse_expr()));
 
 	expect(')');
 	expect('{');
 	
-	ExprPtr if_stmt;
-	ExprPtr first;
+	ExprPtr switch_stmt = em.switch_(em.lvar(var), null, null);
+	MapPtr cases = xnew<Map>();
 	ExprPtr default_stmt;
 	while(true){
 		if(eat(Token::KEYWORD_CASE)){
-		
-			ExprPtr temp = em.if_(null, null, null);
-			
-			if(if_stmt){
-				if_stmt->set_if_else(temp);
-				if_stmt = temp;
-			}else{
-				if_stmt = temp;
-				first = temp;
-			}
-			
 			expect('(');
-			
-			while(true){
-				if(temp->if_cond()){
-					temp->set_if_cond(em.bin(EXPR_OROR, temp->if_cond(), em.bin(EXPR_EQ, em.lvar(var), must_parse_expr())));
-				}else{
-					temp->set_if_cond(em.bin(EXPR_EQ, em.lvar(var), must_parse_expr()));
-				}
-				
-				if(eat(',')){
-					if(eat(')')){
-						break;
-					}
-				}else{
-					if(eat(')')){
-						break;
-					}
-				}
-			}
-						
-			temp->set_if_body(parse_stmt());
-
+			ExprPtr when = must_parse_expr();
+			expect(')');
+			cases->set_at(when, parse_stmt());
 		}else if(eat(Token::KEYWORD_DEFAULT)){
 			if(default_stmt){
 				error_->error(lineno(), Xt("Xtal Compile Error 1018")());					
@@ -1994,15 +1962,7 @@ ExprPtr Parser::parse_switch(){
 		}
 	}
 	
-	if(if_stmt){
-		if_stmt->set_if_else(default_stmt);
-		scope_stmts->push_back(first);
-	}else{
-		if(default_stmt){
-			scope_stmts->push_back(default_stmt);
-		}
-	}
-
+	scope_stmts->push_back(em.switch_(em.lvar(var), cases, default_stmt));
 	return ret;
 }
 

@@ -100,7 +100,7 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 	if(it!=end()){
 		return it->second;
 	}else{
-		return nop;
+		return default_value_;
 	}
 }
 

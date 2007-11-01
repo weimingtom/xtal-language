@@ -868,29 +868,32 @@ XTAL_DEF_INST_0(137, MakeMap);
 
 XTAL_DEF_INST_0(138, MapInsert);
 
-XTAL_DEF_INST_2(139, MakeFun,
+XTAL_DEF_INST_0(139, MapSetDefault);
+
+XTAL_DEF_INST_2(140, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(140, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(141, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(141, Throw);
+XTAL_DEF_INST_0(142, Throw);
 
-XTAL_DEF_INST_0(142, ThrowUnsupportedError);
+XTAL_DEF_INST_0(143, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(143, ThrowNop);
+XTAL_DEF_INST_0(144, ThrowNop);
 
-XTAL_DEF_INST_0(144, Assert);
+XTAL_DEF_INST_0(145, Assert);
 
-XTAL_DEF_INST_1(145, BreakPoint,
+XTAL_DEF_INST_1(146, BreakPoint,
         inst_u8_t, type
 );
 
-XTAL_DEF_INST_0(146, MAX);
+
+XTAL_DEF_INST_0(147, MAX);
 
 }

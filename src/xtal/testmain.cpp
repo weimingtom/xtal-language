@@ -106,6 +106,14 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
+ switch("te" ~ "ste3"){
+	 case("test"){ "awerawer".p; }
+	 case("tes2t"){ "eeee".p; }
+	 case("test2"){ "ffff".p; }
+	 case("test3"){ "wwwwww".p; }
+	 default{ "smile".p; }
+ }
+
 Foo: class{}
 Hoge: class(Foo){}
 Any::test#Any: "Any";
@@ -169,13 +177,13 @@ int c;
 		load("../../test/test_empty.xtal");
 		load("../../test/test_multiple_values.xtal");
 		load("../../test/test_array.xtal");
-		//compile_file("../test/test_float.xtal")->inspect()->p();
+		//compile_file("../../test/test_float.xtal")->inspect()->p();
 		load("../../test/test_float.xtal");
 		load("../../test/test_class.xtal");
 		load("../../test/test_except.xtal");
 		load("../../test/test_fiber.xtal");
 		load("../../test/test_fun.xtal");
-		//compile_file("../test/test_iter.xtal")->inspect()->p();
+		//compile_file("../../test/test_iter.xtal")->inspect()->p();
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");

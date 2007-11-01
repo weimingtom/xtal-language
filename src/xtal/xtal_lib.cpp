@@ -627,10 +627,6 @@ builtin::ClassicIterator: class{
 
 Iterator::classic: method ClassicIterator(this);
 
-String::replace: method(pattern, str){
-	return this.split(pattern).join(str);
-}
-
 	))();
 
 	Xsrc((

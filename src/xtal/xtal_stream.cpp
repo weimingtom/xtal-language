@@ -32,20 +32,6 @@ void initialize_stream(){
 
 	{
 		ClassPtr p = new_cpp_class<Stream>("Stream");
-		p->method("put_i8", &Stream::put_i8);
-		p->method("put_i16", &Stream::put_i16);
-		p->method("put_i32", &Stream::put_i32);
-		p->method("put_u8", &Stream::put_u8);
-		p->method("put_u16", &Stream::put_u16);
-		p->method("put_u32", &Stream::put_u32);
-		p->method("get_i8", &Stream::get_i8);
-		p->method("get_i16", &Stream::get_i16);
-		p->method("get_i32", &Stream::get_i32);
-		p->method("get_u8", &Stream::get_u8);
-		p->method("get_u16", &Stream::get_u16);
-		p->method("get_u32", &Stream::get_u32);
-		p->method("put_f32", &Stream::put_f32);
-		p->method("get_f32", &Stream::get_f32);
 		
 		p->method("get_s", &Stream::get_s)->param(Named("length", -1));
 		p->method("put_s", &Stream::put_s);
@@ -123,7 +109,7 @@ StringPtr Stream::get_s(int_t length){
 	if(length==1){
 		ChMaker chm;
 		while(!chm.is_completed()){
-			chm.add(get_ch_code());
+			chm.add(get_ch_code_be());
 		}
 		return chm.to_s();
 	}

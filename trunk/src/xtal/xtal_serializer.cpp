@@ -55,13 +55,13 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 		XTAL_CASE(TYPE_INT){
 			stream_->put_u8(TINT);
-			stream_->put_i32(ivalue(v));
+			stream_->put_i32be(ivalue(v));
 			return;
 		}
 
 		XTAL_CASE(TYPE_FLOAT){
 			stream_->put_u8(TFLOAT);
-			stream_->put_f32(fvalue(v));
+			stream_->put_f32be(fvalue(v));
 			return;
 		}
 
@@ -84,7 +84,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	if(added){
 		if(ArrayPtr a = as<ArrayPtr>(v)){
 			stream_->put_u8(TARRAY);
-			stream_->put_u32(a->size());
+			stream_->put_u32be(a->size());
 			for(uint_t i=0; i<a->size(); ++i){
 				inner_serialize(a->at(i));
 			}
@@ -93,14 +93,14 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u8(TSTRING);
 			uint_t sz = a->buffer_size();
 			const char* str = a->data();
-			stream_->put_i32(sz);
+			stream_->put_i32be(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_u8(str[i]);
 			}
 			return;
 		}else if(MapPtr a = as<MapPtr>(v)){
 			stream_->put_u8(TMAP);
-			stream_->put_u32(a->size());
+			stream_->put_u32be(a->size());
 			Xfor2(key, value, a){
 				inner_serialize(key);
 				inner_serialize(value);
@@ -115,31 +115,31 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			
 			int_t sz;
 			sz = p->code_.size();
-			stream_->put_u32(sz);
+			stream_->put_u32be(sz);
 			if(sz!=0){ stream_->write(&p->code_[0], sizeof(p->code_[0])*sz); }
 			
 			sz = p->block_core_table_.size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 			if(sz!=0){ stream_->write(&p->block_core_table_[0], sizeof(p->block_core_table_[0])*sz); }
 
 			sz = p->class_core_table_.size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 			if(sz!=0){ stream_->write(&p->class_core_table_[0], sizeof(p->class_core_table_[0])*sz); }
 
 			sz = p->xfun_core_table_.size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 			if(sz!=0){ stream_->write(&p->xfun_core_table_[0], sizeof(p->xfun_core_table_[0])*sz); }
 
 			sz = p->except_core_table_.size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 			if(sz!=0){ stream_->write(&p->except_core_table_[0], sizeof(p->except_core_table_[0])*sz); }
 
 			sz = p->lineno_table_.size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 			if(sz!=0){ stream_->write(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
 
 			sz = p->once_table_->size();
-			stream_->put_u16(sz);
+			stream_->put_u16be(sz);
 
 			MapPtr map = xnew<Map>();
 			map->set_at("source", p->source_file_name_);
@@ -168,7 +168,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	}else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
 		stream_->put_u8(REF);
-		stream_->put_u32(num);
+		stream_->put_u32be(num);
 	}
 }
 
@@ -206,7 +206,7 @@ AnyPtr Serializer::inner_deserialize(){
 		}	
 
 		XTAL_CASE(REF){
-			return values_->at(stream_->get_u32());
+			return values_->at(stream_->get_u32be());
 		}
 
 		XTAL_CASE(TNULL){
@@ -218,15 +218,15 @@ AnyPtr Serializer::inner_deserialize(){
 		}
 
 		XTAL_CASE(TINT){
-			return stream_->get_i32();
+			return stream_->get_i32be();
 		}
 
 		XTAL_CASE(TFLOAT){
-			return stream_->get_f32();
+			return stream_->get_f32be();
 		}
 
 		XTAL_CASE(TSTRING){
-			int_t sz = stream_->get_u32();
+			int_t sz = stream_->get_u32be();
 			char* p = (char*)user_malloc(sz+1);
 			for(int_t i = 0; i<sz; ++i){
 				p[i] = (char_t)stream_->get_u8();
@@ -239,7 +239,7 @@ AnyPtr Serializer::inner_deserialize(){
 		}
 
 		XTAL_CASE(TARRAY){
-			int_t sz = stream_->get_u32();
+			int_t sz = stream_->get_u32be();
 			ArrayPtr ret(xnew<Array>(sz));
 			append_value(ret);
 			for(int_t i = 0; i<sz; ++i){
@@ -249,7 +249,7 @@ AnyPtr Serializer::inner_deserialize(){
 		}
 		
 		XTAL_CASE(TMAP){
-			int_t sz = stream_->get_u32();
+			int_t sz = stream_->get_u32be();
 			MapPtr ret(xnew<Map>());
 			append_value(ret);
 			AnyPtr key;
@@ -284,31 +284,31 @@ AnyPtr Serializer::inner_deserialize(){
 			stream_->get_u8();
 		
 			int_t sz;
-			sz = stream_->get_u32();
+			sz = stream_->get_u32be();
 			p->code_.resize(sz);
 			if(sz!=0){ stream_->read(&p->code_[0], sizeof(p->code_[0])*sz); }
 
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->block_core_table_.resize(sz);
 			if(sz!=0){ stream_->read(&p->block_core_table_[0], sizeof(p->block_core_table_[0])*sz); }
 	
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->class_core_table_.resize(sz);
 			if(sz!=0){ stream_->read(&p->class_core_table_[0], sizeof(p->class_core_table_[0])*sz); }
 
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->xfun_core_table_.resize(sz);
 			if(sz!=0){ stream_->read(&p->xfun_core_table_[0], sizeof(p->xfun_core_table_[0])*sz); }
 
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->except_core_table_.resize(sz);
 			if(sz!=0){ stream_->read(&p->except_core_table_[0], sizeof(p->except_core_table_[0])*sz); }
 
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->lineno_table_.resize(sz);
 			if(sz!=0){ stream_->read(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
 
-			sz = stream_->get_u16();
+			sz = stream_->get_u16be();
 			p->once_table_ = xnew<Array>(sz);
 			for(int_t i=0; i<sz; ++i){
 				p->once_table_->set_at(i, nop);

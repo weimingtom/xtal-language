@@ -96,6 +96,7 @@ enum ExprType{
 	EXPR_BRACKET,
 	EXPR_SCOPE,
 	EXPR_CLASS,
+	EXPR_SWITCH,
 	EXPR_TOPLEVEL
 };
 
@@ -238,6 +239,10 @@ public:
 	XTAL_DEF_MEMBER(2, ArrayPtr, class_stmts);
 	XTAL_DEF_MEMBER(3, MapPtr, class_ivars);
 
+	XTAL_DEF_MEMBER(0, ExprPtr, switch_cond);
+	XTAL_DEF_MEMBER(1, MapPtr, switch_cases);
+	XTAL_DEF_MEMBER(2, ExprPtr, switch_default);
+
 	XTAL_DEF_MEMBER(0, ArrayPtr, toplevel_stmts);
 };
 
@@ -326,77 +331,14 @@ public:
 	ExprPtr array(const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno_)->set_array_values(exprs); }
 	ExprPtr map(const MapPtr& exprs){ return Expr::make(EXPR_MAP, lineno_)->set_map_values(exprs); }
 
+	ExprPtr switch_(const ExprPtr& cond, const MapPtr& cases, const ExprPtr& default_){ return Expr::make(EXPR_SWITCH, lineno_)->set_switch_cond(cond)->set_switch_cases(cases)->set_switch_default(default_); }
+
 	ExprPtr range_(const ExprPtr& lhs, const ExprPtr& rhs, int_t kind){ return Expr::make(EXPR_RANGE, lineno_)->set_range_lhs(lhs)->set_range_rhs(rhs)->set_range_kind(kind); }
 
 private:
 
 	int_t lineno_;
 };
-
-/*
-inline ExprPtr return_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_RETURN, lineno, 3)->set_return_exprs(exprs); }
-inline ExprPtr continue_(int_t lineno, const IDPtr& label){ return Expr::make(EXPR_CONTINUE, lineno, 3)->set_continue_label(label); }
-inline ExprPtr break_(int_t lineno, const IDPtr& label){ return Expr::make(EXPR_BREAK, lineno, 3)->set_break_label(label); }
-inline ExprPtr yield(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_YIELD, lineno, 3)->set_yield_exprs(exprs); }
-inline ExprPtr assert_(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ASSERT, lineno, 3)->set_assert_exprs(exprs); }
-inline ExprPtr scope(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_SCOPE, lineno, 3)->set_scope_stmts(stmts); }
-inline ExprPtr toplevel(int_t lineno, const ArrayPtr& stmts){ return Expr::make(EXPR_TOPLEVEL, lineno, 3)->set_toplevel_stmts(stmts); }
-inline ExprPtr class_(int_t lineno, int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return Expr::make(EXPR_CLASS, lineno, 3)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
-inline ExprPtr cdefine(int_t lineno, int_t accessibility, const IDPtr& name, const ExprPtr& secondary_key, const ExprPtr& term){ return Expr::make(EXPR_CDEFINE, lineno, 6)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(secondary_key)->set_cdefine_term(term); }
-
-inline ExprPtr fun(int_t lineno, int_t kind, const MapPtr& params, bool extendable_param, const ExprPtr& body){ return Expr::make(EXPR_FUN, lineno, 6)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
-
-inline ExprPtr bin(ExprType expr_type, int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return Expr::make(expr_type, lineno, 4)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
-inline ExprPtr una(ExprType expr_type, int_t lineno, const ExprPtr& term){ return Expr::make(expr_type, lineno, 3)->set_una_term(term); }
-
-inline ExprPtr lvar(int_t lineno, const IDPtr& name){ return Expr::make(EXPR_LVAR, lineno, 3)->set_lvar_name(name); }
-inline ExprPtr ivar(int_t lineno, const IDPtr& name){ return Expr::make(EXPR_IVAR, lineno, 3)->set_ivar_name(name); }
-
-inline ExprPtr string(int_t lineno, int_t kind, const IDPtr& value){ return Expr::make(EXPR_STRING, lineno, 4)->set_string_kind(kind)->set_string_value(value); }
-inline ExprPtr int_(int_t lineno, int_t value){ return Expr::make(EXPR_INT, lineno, 3)->set_int_value(value); }
-inline ExprPtr float_(int_t lineno, float_t value){ return Expr::make(EXPR_FLOAT, lineno, 3)->set_float_value(value); }
-
-inline ExprPtr null_(int_t lineno){ return Expr::make(EXPR_NULL, lineno); }
-inline ExprPtr nop_(int_t lineno){ return Expr::make(EXPR_NOP, lineno); }
-inline ExprPtr true_(int_t lineno){ return Expr::make(EXPR_TRUE, lineno); }
-inline ExprPtr false_(int_t lineno){ return Expr::make(EXPR_FALSE, lineno); }
-inline ExprPtr this_(int_t lineno){ return Expr::make(EXPR_THIS, lineno); }
-inline ExprPtr current_context(int_t lineno){ return Expr::make(EXPR_CURRENT_CONTEXT, lineno); }
-inline ExprPtr args(int_t lineno){ return Expr::make(EXPR_ARGS, lineno); }
-inline ExprPtr callee(int_t lineno){ return Expr::make(EXPR_CALLEE, lineno); }
-
-inline ExprPtr once(int_t lineno, const ExprPtr& term){ return una(EXPR_ONCE, lineno, term); }
-inline ExprPtr static_(int_t lineno, const ExprPtr& term){ return una(EXPR_STATIC, lineno, term); }
-inline ExprPtr bracket(int_t lineno, const ExprPtr& term){ return una(EXPR_BRACKET, lineno, term); }
-
-inline ExprPtr call(int_t lineno, const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, const ExprPtr& args){ return Expr::make(EXPR_CALL, lineno, 6)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_args(args); }
-
-inline ExprPtr member(int_t lineno, const ExprPtr& term, const IDPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name); }
-inline ExprPtr member_q(int_t lineno, const ExprPtr& term, const IDPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_name(name)->set_member_q(true); }
-inline ExprPtr member_e(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_pname(name); }
-inline ExprPtr member_eq(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_MEMBER, lineno, 6)->set_member_term(term)->set_member_pname(name)->set_member_q(true); }
-
-inline ExprPtr send(int_t lineno, const ExprPtr& term, const IDPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_name(name); }
-inline ExprPtr send_q(int_t lineno, const ExprPtr& term, const IDPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_name(name)->set_send_q(true); }
-inline ExprPtr send_e(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_pname(name); }
-inline ExprPtr send_eq(int_t lineno, const ExprPtr& term, const ExprPtr& name){ return Expr::make(EXPR_SEND, lineno, 6)->set_send_term(term)->set_send_pname(name)->set_send_q(true); }
-
-inline ExprPtr q(int_t lineno, const ExprPtr& cond, const ExprPtr& true_, const ExprPtr& false_){ return Expr::make(EXPR_Q, lineno, 5)->set_q_cond(cond)->set_q_true(true_)->set_q_false(false_); }
-
-inline ExprPtr try_(int_t lineno, const ExprPtr& body, const IDPtr& catch_var, const ExprPtr& catch_, const ExprPtr& finally_){ return Expr::make(EXPR_TRY, lineno, 6)->set_try_body(body)->set_try_catch_var(catch_var)->set_try_catch(catch_)->set_try_finally(finally_); }
-inline ExprPtr for_(int_t lineno, const IDPtr& label, const ExprPtr& cond, const ExprPtr& next, const ExprPtr& body, const ExprPtr& else_, const ExprPtr& nobreak){ return Expr::make(EXPR_FOR, lineno, 8)->set_for_label(label)->set_for_cond(cond)->set_for_next(next)->set_for_body(body)->set_for_else(else_)->set_for_nobreak(nobreak); }
-inline ExprPtr if_(int_t lineno, const ExprPtr& cond,const ExprPtr& body, const ExprPtr& else_){ return Expr::make(EXPR_IF, lineno, 5)->set_if_cond(cond)->set_if_body(body)->set_if_else(else_); }
-	
-inline ExprPtr massign(int_t lineno, const ArrayPtr& lhs, const ArrayPtr& rhs, bool define){ return Expr::make(EXPR_MASSIGN, lineno, 5)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs)->set_massign_define(define); }
-
-inline ExprPtr define(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lineno, lhs, rhs); }
-inline ExprPtr assign(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lineno, lhs, rhs); }
-
-inline ExprPtr array(int_t lineno, const ArrayPtr& exprs){ return Expr::make(EXPR_ARRAY, lineno, 3)->set_array_values(exprs); }
-inline ExprPtr map(int_t lineno, const MapPtr& exprs){ return Expr::make(EXPR_MAP, lineno, 3)->set_map_values(exprs); }
-
-inline ExprPtr range_(int_t lineno, const ExprPtr& lhs, const ExprPtr& rhs, int_t kind){ return Expr::make(EXPR_RANGE, lineno, 5)->set_range_lhs(lhs)->set_range_rhs(rhs)->set_range_kind(kind); }
-*/
 
 }
 

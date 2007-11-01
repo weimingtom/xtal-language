@@ -792,6 +792,7 @@ public:
 	const inst_t* FunArrayAppend(const inst_t* pc);
 	const inst_t* FunMakeMap(const inst_t* pc);
 	const inst_t* FunMapInsert(const inst_t* pc);
+	const inst_t* FunMapSetDefault(const inst_t* pc);
 	const inst_t* FunMakeFun(const inst_t* pc);
 	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);

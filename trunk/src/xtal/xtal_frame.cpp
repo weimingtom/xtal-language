@@ -304,7 +304,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 			}
 		}
 
-		{
+		if(rawne(get_cpp_class<Any>(), klass)){
 			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too);
 			if(rawne(ret, nop)){
 				return ret;

@@ -28,7 +28,8 @@ namespace{
 
 	enum{
 		OBJECTS_ALLOCATE_SHIFT = 12,
-		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT
+		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
+		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};
 
 	Base** objects_begin_ = 0;
@@ -156,7 +157,6 @@ void initialize(){
 	initialize_debug();
 	initialize_math();
 	initialize_stream();
-	initialize_xeg();
 	initialize_thread();
 	initialize_text();
 	
@@ -165,6 +165,7 @@ void initialize(){
 	enable_gc();
 
 	initialize_builtin();
+	initialize_xeg();
 }
 
 void uninitialize(){
@@ -281,7 +282,7 @@ struct ConnectedPointer{
 	}
 
 	Base*& operator *(){
-		return objects_list_begin_[pos>>OBJECTS_ALLOCATE_SHIFT][pos&(OBJECTS_ALLOCATE_SIZE-1)];
+		return objects_list_begin_[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -389,7 +390,7 @@ void full_gc(){
 				if(first){
 					first = false;
 					objects_begin_ = objects_list_begin_[i];
-					objects_current_ = objects_begin_ + (current.pos&(OBJECTS_ALLOCATE_SIZE-1));
+					objects_current_ = objects_begin_ + (current.pos&OBJECTS_ALLOCATE_MASK);
 					objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 					objects_list_current_ = objects_list_begin_ + i + 1;
 				}else{

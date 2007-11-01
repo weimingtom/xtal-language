@@ -6,6 +6,8 @@ namespace xtal{
 class Map : public Base{
 public:
 
+	Map()
+		:default_value_(nop){}
 		
 	/**
 	* @brief iに対応する要素を返す
@@ -133,6 +135,14 @@ public:
 
 	void push_all(const VMachinePtr& vm);
 
+	const AnyPtr& default_value(){
+		return default_value_;
+	}
+
+	void set_default_value(const AnyPtr& default_value){
+		default_value_ = default_value;
+	}
+
 protected:
 
 	struct Fun{
@@ -164,6 +174,7 @@ public:
 protected:
 
 	table_t table_;
+	AnyPtr default_value_;
 
 	virtual void visit_members(Visitor& m);
 };

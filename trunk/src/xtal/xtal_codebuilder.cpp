@@ -1930,6 +1930,62 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			var_end();
 		}
 
+		XTAL_CASE(EXPR_SWITCH){
+			int_t label_jump = reserve_label();
+			int_t label_end = reserve_label();
+			int_t label_default = reserve_label();
+
+			set_jump(InstOnce::OFFSET_address, label_jump);
+			int_t num = result_->once_table_->size();
+			result_->once_table_->push_back(nop);
+			put_inst(InstOnce(0, num));
+
+			MapPtr jump_map = xnew<Map>();
+			Xfor2(k, v, e->switch_cases()){
+				int_t jump_to = reserve_label();
+				jump_map->set_at(k, jump_to);
+			}
+
+			put_inst(InstMakeMap());
+			Xfor2(k, v, e->switch_cases()){
+				compile_expr(k);
+				set_jump(InstPushGoto::OFFSET_address, jump_map->at(k)->to_i());
+				put_inst(InstPushGoto());
+				put_inst(InstMapInsert());
+			}
+
+			set_jump(InstPushGoto::OFFSET_address, label_default);
+			put_inst(InstPushGoto());
+			put_inst(InstMapSetDefault());
+						
+			put_inst(InstDup());		
+			put_inst(InstSetOnce(num));
+			
+			set_label(label_jump);
+
+			compile_expr(e->switch_cond());
+			put_inst(InstAt());
+			put_inst(InstPopGoto());
+
+			Xfor2(k, v, e->switch_cases()){
+				set_label(jump_map->at(k)->to_i());
+
+				compile_stmt(v);
+				set_jump(InstGoto::OFFSET_address, label_end);
+				put_inst(InstGoto());
+			}
+
+			{
+				set_label(label_default);
+
+				compile_stmt(e->switch_default());
+				set_jump(InstGoto::OFFSET_address, label_end);
+				put_inst(InstGoto());
+			}
+
+			set_label(label_end);	
+		}
+
 		XTAL_CASE(EXPR_TOPLEVEL){
 			Xfor(v, e->toplevel_stmts()){
 				compile_stmt(v);

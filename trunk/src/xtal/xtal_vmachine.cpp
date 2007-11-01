@@ -1145,17 +1145,21 @@ XTAL_VM_SWITCH{
 	}*/ }
 
 	XTAL_VM_CASE(Once){ // 5
-		const AnyPtr& ret = code()->once_value(inst.value_number);
-		if(rawne(ret, nop)){
-			push(ret);
-			XTAL_VM_CONTINUE(pc + inst.address);
-		}else{
-			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const AnyPtr& ret = code()->once_value(inst.value_number);
+			if(rawne(ret, nop)){
+				push(ret);
+				XTAL_VM_CONTINUE(pc + inst.address);
+			}else{
+				XTAL_VM_CONTINUE(pc + inst.ISIZE);
+			}
 		}
 	}
 
 	XTAL_VM_CASE(SetOnce){ // 3
-		code()->set_once_value(inst.value_number, pop()); 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			code()->set_once_value(inst.value_number, pop()); 
+		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1893,6 +1897,14 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
+	XTAL_VM_CASE(MapSetDefault){ // 4
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			cast<MapPtr>(get(1))->set_default_value(get()); 
+			downsize(1);	
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
 	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
 		int_t table_n = inst.core_number, end = inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -2621,18 +2633,22 @@ const inst_t* VMachine::FunDefineGlobalVariable(const inst_t* pc){
 
 const inst_t* VMachine::FunOnce(const inst_t* pc){
 		XTAL_VM_DEF_INST(Once);
-		const AnyPtr& ret = code()->once_value(inst.value_number);
-		if(rawne(ret, nop)){
-			push(ret);
-			XTAL_VM_CONTINUE(pc + inst.address);
-		}else{
-			XTAL_VM_CONTINUE(pc + inst.ISIZE);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const AnyPtr& ret = code()->once_value(inst.value_number);
+			if(rawne(ret, nop)){
+				push(ret);
+				XTAL_VM_CONTINUE(pc + inst.address);
+			}else{
+				XTAL_VM_CONTINUE(pc + inst.ISIZE);
+			}
 		}
 }
 
 const inst_t* VMachine::FunSetOnce(const inst_t* pc){
 		XTAL_VM_DEF_INST(SetOnce);
-		code()->set_once_value(inst.value_number, pop()); 
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			code()->set_once_value(inst.value_number, pop()); 
+		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
 
@@ -3440,6 +3456,15 @@ const inst_t* VMachine::FunMapInsert(const inst_t* pc){
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			cast<MapPtr>(get(2))->set_at(get(1), get()); 
 			downsize(2);	
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+}
+
+const inst_t* VMachine::FunMapSetDefault(const inst_t* pc){
+		XTAL_VM_DEF_INST(MapSetDefault);
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			cast<MapPtr>(get(1))->set_default_value(get()); 
+			downsize(1);	
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }

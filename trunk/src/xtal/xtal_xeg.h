@@ -1,33 +1,38 @@
 
 #pragma once
 
-#include "xtal.h"
-
 namespace xtal{ namespace xeg{
-
-class Parts;
 
 /**
 * @brief 
 */
 class Scanner : public Base{
+
+	enum{
+		ONE_BLOCK_SHIFT = 10,
+		ONE_BLOCK_SIZE = 1<<ONE_BLOCK_SHIFT,
+		ONE_BLOCK_MASK = ONE_BLOCK_SIZE-1
+	};
+
 public:
 
 	Scanner(){
-		buf_ = xnew<Array>(256);
-		pos_ = 0;
-		read_ = 0;
-		marked_ = 0; //~0;
+		num_ = 0;
+		begin_ = 0;
 
 		mm_ = xnew<MemoryStream>();
+		pos_ = 0;
+		read_ = 0;
 
 		n_ch_ = "\n";
 		r_ch_ = "\r";
 
 		lineno_ = 1;
+
+		expand();
 	}
 
-	struct Mark{
+	struct State{
 		uint_t lineno;
 		uint_t pos;
 	};
@@ -35,29 +40,19 @@ public:
 	/**
 	* @brief マークをつける
 	*/
-	Mark mark(){
-		Mark mark;
-		mark.lineno = lineno_;
-		mark.pos = pos_;
-		return mark;
-	}
-
-	/**
-	* @brief マークをはずす
-	*/
-	void unmark(const Mark& mark){
-		if(marked_==mark.pos){
-			marked_ = 0;
-		}
+	State save(){
+		State state;
+		state.lineno = lineno_;
+		state.pos = pos_;
+		return state;
 	}
 
 	/**
 	* @brief マークを付けた位置に戻る
 	*/
-	void backtrack(const Mark& mark){
-		unmark(mark);
-		pos_ = mark.pos;
-		lineno_ = mark.lineno;
+	void load(const State& state){
+		pos_ = state.pos;
+		lineno_ = state.lineno;
 	}
 
 	/**
@@ -78,42 +73,23 @@ public:
 	* @brief n個先の要素を覗き見る
 	*/
 	const AnyPtr& peek(uint_t n = 0){
-		uint_t bufsize = buf_->size();
-		uint_t bufmask = bufsize - 1;
-		uint_t rpos = read_&bufmask;
-
 		while(pos_+n >= read_){
 			uint_t now_read = 0;
-			if(marked_ != ~0){
-				uint_t mpos = marked_&bufmask;
 
-				if(rpos<=mpos && ((rpos+n)&bufmask)>mpos){
-					// マーク中の領域を侵犯しようとしているので、リングバッファを倍に拡大
-					buf_->resize(bufsize*2);
-					bufsize = buf_->size();
-					bufmask = bufsize - 1;
-					rpos = read_&bufmask;
-					mpos = marked_&bufmask;
-				}
-
-				if(mpos>rpos){
-					now_read = do_read(buf_->data()+rpos, mpos-rpos);
-				}else{
-					now_read = do_read(buf_->data()+rpos, bufsize-rpos);
-				}
-			}else{
-				now_read = do_read(buf_->data()+rpos, bufsize-rpos);
+			if((read_>>ONE_BLOCK_SHIFT)==num_){
+				expand();
 			}
+
+			now_read = do_read(&access(read_), ONE_BLOCK_SIZE-(read_&ONE_BLOCK_MASK));
 
 			if(now_read==0){
 				return nop;
 			}
 
 			read_ += now_read;
-			rpos = read_&bufmask;
 		}
 		
-		return buf_->at((pos_+n)&bufmask);
+		return access(pos_+n);
 	}
 
 	/**
@@ -167,9 +143,7 @@ public:
 			return true;
 		}
 
-		uint_t bufsize = buf_->size();
-		uint_t bufmask = bufsize - 1;
-		const AnyPtr& ch = buf_->at((pos_-1)&bufmask);
+		const AnyPtr& ch = access(pos_-1);
 		return raweq(ch, n_ch_) || raweq(ch, r_ch_);
 	}
 
@@ -209,16 +183,14 @@ public:
 public:
 
 	StringPtr capture(int_t begin, int_t end){
-		uint_t mask = buf_->size()-1;
 		mm_->clear();
 		for(int_t i=begin; i<end; ++i){
-			mm_->put_s(buf_->at(i & mask)->to_s());
+			mm_->put_s(access(i)->to_s());
 		}
 		return mm_->to_s();
 	}
 
 	StringPtr capture(int_t begin){
-		uint_t mask = buf_->size()-1;
 		mm_->clear();
 		int_t saved = pos_;
 		pos_ = begin;
@@ -230,9 +202,8 @@ public:
 	}
 
 	bool eat_capture(int_t begin, int_t end){
-		uint_t mask = buf_->size()-1;
 		for(int_t i=begin; i<end; ++i){
-			if(rawne(peek(i-begin), buf_->at(i & mask))){
+			if(rawne(peek(i-begin), access(i))){
 				return false;
 			}
 		}
@@ -246,19 +217,39 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & buf_ & mm_;
+		m & mm_;
+	}
+
+	void expand(){
+		uint_t newnum = num_ + 1;
+		AnyPtr** newp = (AnyPtr**)user_malloc(sizeof(AnyPtr*)*newnum);
+
+		if(begin_){
+			memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
+		}
+
+		newp[num_] = (AnyPtr*)user_malloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+		memset(newp[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+
+		user_free(begin_);
+		begin_ = newp;
+		num_ = newnum;
+	}
+
+	AnyPtr& access(uint_t pos){
+		return begin_[pos>>ONE_BLOCK_SHIFT][pos&ONE_BLOCK_MASK];
 	}
 
 private:
-	
-	MemoryStreamPtr mm_;
-	ArrayPtr buf_;
+
 	IDPtr n_ch_;
 	IDPtr r_ch_;
-
+	
+	MemoryStreamPtr mm_;
+	AnyPtr** begin_;
+	uint_t num_;
 	uint_t pos_;
 	uint_t read_;
-	uint_t marked_;
 	uint_t lineno_;
 };
 

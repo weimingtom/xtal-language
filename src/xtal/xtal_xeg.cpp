@@ -993,7 +993,7 @@ void test_xeg(){
 
 	"ete:rwer,a-er::ere,".split(set(":,") | "-")[].p;
 	"abcd\nyyt\na780eee\nawer\n45\naweree\n".scan(bol >> cap(alpha*0) >> cap(alpha)>> eol).map(%f(%s %s!!))[].p;
-	d
+
 	m: (bol >> cap("a".."z"*1) >> eol).match("abcd\nyyt\na780eee\nawer\n45\naweree\n");
 	m[1]~"tette" .p;
 

@@ -106,6 +106,8 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
+ 10.times.zip("a".."z").map(%f[ %(1)s = %(0)s ])[].p;
+
  switch("te" ~ "ste3"){
 	 case("test"){ "awerawer".p; }
 	 case("tes2t"){ "eeee".p; }

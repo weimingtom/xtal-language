@@ -88,9 +88,11 @@ void global_interpreter_unlock();
 void xlock();
 void xunlock();
 
+void register_thread();
+void unregister_thread();
 
 extern bool thread_enabled_;
-extern int thread_counter_;
+extern int thread_step_counter_;
 
 int check_yield_thread();
 

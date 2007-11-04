@@ -184,13 +184,10 @@ class Set : public Map{
 public:
 
 	/**
-	* @brief keyを要素とする、Iteratorを返す
+	* @brief valueが真なkeyを要素とするIteratorを返す
 	*
-	* pairsと同じ
 	*/
-	AnyPtr each(){
-		return keys();
-	}
+	AnyPtr each();
 };
 
 }//namespace

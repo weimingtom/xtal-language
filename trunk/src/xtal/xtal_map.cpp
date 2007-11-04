@@ -29,6 +29,22 @@ public:
 			case 0: vm->return_result(SmartPtr<MapIter>(this), node_->first, node_->second); break;
 			case 1: vm->return_result(SmartPtr<MapIter>(this), node_->first); break;
 			case 2: vm->return_result(SmartPtr<MapIter>(this), node_->second); break;
+			case 3:
+				for(;;){
+					if(node_->second){
+						vm->return_result(SmartPtr<MapIter>(this), node_->first);
+						++node_;
+						return;
+					}
+
+					++node_;
+
+					if(node_==map_->end()){
+						vm->return_result(null, null);
+						return;
+					}
+				}
+				break;
 			default: vm->return_result(null, null); break;
 		}
 
@@ -174,5 +190,11 @@ void Map::push_all(const VMachinePtr& vm){
 		vm->push(p->second);
 	}	
 }
+
+
+AnyPtr Set::each(){
+	return xnew<MapIter>(MapPtr(this), 3);
+}
+
 
 }

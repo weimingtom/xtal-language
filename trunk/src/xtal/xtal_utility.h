@@ -8,7 +8,6 @@
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_NO_PARSER
 //#define XTAL_USE_THREAD_MODEL_2
-#define XTAL_USE_PEG
 
 #define XTAL_USE_PREDEFINED_ID
 
@@ -49,8 +48,8 @@
 #		define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
 #		define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
 #	else
-#		define XTAL_GLOBAL_INTERPRETER_LOCK if((((-- ::xtal::thread_counter_)==0) ? ::xtal::check_yield_thread():0), true)
-#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if((((-- ::xtal::thread_counter_)==0) ? ::xtal::check_yield_thread():0), true)
+#		define XTAL_GLOBAL_INTERPRETER_LOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
+#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
 #	endif
 #	define XTAL_UNLOCK if(::xtal::XUnlock xunlock = 0)
 #endif

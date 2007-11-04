@@ -238,31 +238,19 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	if(it!=map_members_->end()){
 		// メンバが見つかった
 
-		// しかしprivateが付けられている
+		// privateなメンバは見なかったことにする。
 		if(it->second.flags & KIND_PRIVATE){
-			if(raweq(self->get_class(), this)){
-				return members_->at(it->second.num);
-			}else{
-				// アクセスできない
-				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
-					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "private")))
-				, return nop);
-			}
-		}
 
-		// しかしprotectedが付けられている
-		if(it->second.flags & KIND_PROTECTED){
-			if(self->is(ClassPtr(this))){
-				
-			}else{
-				// アクセスできない
+		}else{
+			// protectedメンバでアクセス権が無いなら例外
+			if(it->second.flags & KIND_PROTECTED && !self->is(ClassPtr(this))){
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "protected")))
 				, return nop);			
 			}
-		}
 
-		return members_->at(it->second.num);
+			return members_->at(it->second.num);
+		}
 	}
 	
 	// 継承しているクラスを順次検索

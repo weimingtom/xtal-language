@@ -87,9 +87,9 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 int_t CodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize){
 	if(asize==bsize){
 		for(int_t i=0; i<asize; ++i){
-			if(a[i]<b[i]){
+			if((uchar_t)a[i]<(uchar_t)b[i]){
 				return -1;
-			}else if(a[i]>b[i]){
+			}else if((uchar_t)a[i]>(uchar_t)b[i]){
 				return 1;
 			}
 		}

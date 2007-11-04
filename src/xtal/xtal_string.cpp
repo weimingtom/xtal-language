@@ -105,13 +105,7 @@ public:
 
 		for(;;){
 			if(xeg::MatchResultPtr result = xeg::match_scanner(pattern_, scanner_)){
-				if(result->size()==0){
-					vm->return_result(SmartPtr<StringScanIter>(this), result->at(0));
-				}else if(result->size()==1){
-					vm->return_result(SmartPtr<StringScanIter>(this), result->at(1));
-				}else{
-					vm->return_result(SmartPtr<StringScanIter>(this), result->captures()->to_a());
-				}
+				vm->return_result(SmartPtr<StringScanIter>(this), result);
 				return;
 			}else{
 				vm->return_result(null, null);

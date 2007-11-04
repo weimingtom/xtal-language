@@ -96,7 +96,7 @@ namespace{
 }
 	
 bool thread_enabled_ = false;
-int thread_counter_ = 500;
+int thread_step_counter_ = 500;
 
 const VMachinePtr& vmachine(){
 	return vmachine_;
@@ -105,11 +105,11 @@ const VMachinePtr& vmachine(){
 int check_yield_thread(){
 
 	if(thread_count_==1){
-		thread_counter_ = 0x7fffffff;
+		thread_step_counter_ = 0x7fffffff;
 		return 1;
 	}
 
-	thread_counter_ = 500;
+	thread_step_counter_ = 500;
 
 	XTAL_UNLOCK{
 		thread_lib_->yield();
@@ -377,33 +377,50 @@ void xunlock(){
 #endif
 
 void thread_entry(const ThreadPtr& thread){
+	register_thread();
+
+	vmachine_table_->register_vmachine();
+	const VMachinePtr& vm(vmachine_);
+
+	XTAL_TRY{
+		vm->setup_call(0);
+		thread->callback()->call(vm);
+		vm->cleanup_call();
+	}XTAL_CATCH(e){
+		fprintf(stderr, "%s\n", e->to_s()->c_str());
+	}
+
+	vm->reset();	
+
+	unregister_thread();
+}
+
+void register_thread(){
+	if(!thread_enabled_)
+		return;
+
 	mutex_->lock();
 	thread_count_++;
-	if(thread_counter_>500){
-		thread_counter_ = 500;
+	if(thread_step_counter_>500){
+		thread_step_counter_ = 500;
 	}
 	mutex_->unlock();
+	
+	vmachine_table_->register_vmachine();
 
-	{
-		GlobalInterpreterLock guard(0);
-
-		vmachine_table_->register_vmachine();
-		const VMachinePtr& vm(vmachine_);
-
-		XTAL_TRY{
-			vm->setup_call(0);
-			thread->callback()->call(vm);
-			vm->cleanup_call();
-		}XTAL_CATCH(e){
-			fprintf(stderr, "%s\n", e->to_s()->c_str());
-		}
-
-
-		vm->reset();	
-		vmachine_table_->remove_vmachine();
-		thread_count_--;
-	}
+	global_interpreter_lock();
 }
+
+void unregister_thread(){
+	if(!thread_enabled_)
+		return;
+
+	vmachine_table_->remove_vmachine();
+	thread_count_--;
+
+	global_interpreter_unlock();
+}
+
 
 
 Thread::Thread(const AnyPtr& callback)

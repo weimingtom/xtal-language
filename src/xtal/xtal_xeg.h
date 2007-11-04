@@ -376,7 +376,11 @@ public:
 		return scanner_->capture(match_end_);
 	}
 
+	AnyPtr errors(){
+		return errors_->each();
+	}
 private:
+	ArrayPtr errors_;
 	ScannerPtr scanner_;
 	ArrayPtr captures_;
 	MapPtr named_captures_;
@@ -388,16 +392,17 @@ private:
 class ParseResult{
 public:
 
-	ParseResult(const TreeNodePtr& root){
-		root_ = root;
-	}
-
 	AnyPtr root(){
 		return root_;
 	}
 
+	AnyPtr errors(){
+		return errors_->each();
+	}
+
 private:
 	TreeNodePtr root_;
+	ArrayPtr errors_;
 	friend class XegExec;
 };
 
@@ -441,6 +446,8 @@ struct XegExpr : public HaveName{
 		TYPE_EMPTY, // ‹ó
 
 		TYPE_CAP, // ƒLƒƒƒvƒ`ƒƒ
+
+		TYPE_DECL, // éŒ¾
 	};
 
 	XegExpr(int_t type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)

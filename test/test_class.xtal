@@ -12,6 +12,11 @@ Foo: class{
 
 Bar: class(Foo){
 	
+	bar: method{
+		return this.pro;
+	}
+	
+	- hoge: 1111;
 }
 
 {
@@ -33,13 +38,6 @@ Bar: class(Foo){
 	}
 	assert temp=="pro";
 	
-	try{
-		a.pri = 10;
-	}catch(e){
-		temp = "pri";
-	}
-	assert temp=="pri";
-	
 	
 	b: Bar();
 	assert b.pub==100;
@@ -54,11 +52,15 @@ Bar: class(Foo){
 	}
 	assert temp=="pro";
 	
+	assert b.bar==200;
+	
 	Bar::pro: method(){ return 200; }
 	assert b.pro==200;
 	
 	assert Bar::hoge==555;
 	assert Bar::foo()==555;
+	
+	assert Bar::hoge==555;
 }
 
 

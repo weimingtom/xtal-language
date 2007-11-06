@@ -955,6 +955,15 @@ ExprPtr Parser::parse_term(){
 				XTAL_CASE('['){ ret = parse_array();  expr_end_flag_ = false; }
 				XTAL_CASE('|'){ ret = parse_fun(KIND_LAMBDA); }
 
+				XTAL_CASE('{'){
+					if(eat('|')){
+						ret = parse_fun(KIND_LAMBDA, true);
+					}else{
+						ret = em.fun(KIND_LAMBDA, make_map(Xid(it), null), false, null); 
+						ret->set_fun_body(parse_scope());
+					}
+				}
+
 				XTAL_CASE(c2('|', '|')){
 					ret = em.fun(KIND_LAMBDA, make_map(Xid(it), null), false, null); 
 					if(eat('{')){
@@ -1681,7 +1690,7 @@ ExprPtr Parser::parse_try(){
 	return etry;
 }
 
-ExprPtr Parser::parse_fun(int_t kind){
+ExprPtr Parser::parse_fun(int_t kind, bool body){
 	ExprMaker em(lineno());
 	bool lambda = kind==KIND_LAMBDA;
 	
@@ -1751,7 +1760,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 
 	if(inst_assign_list_count==0){
 		ExprMaker em(lineno());
-		if(eat('{')){
+		if(body || eat('{')){
 			efun->set_fun_body(parse_scope());
 		}else{
 			int_t ln = lineno();
@@ -1766,7 +1775,7 @@ ExprPtr Parser::parse_fun(int_t kind){
 			scope_stmts->push_back(em.assign(em.ivar(var), em.lvar(var)));
 		}
 
-		if(eat('{')){
+		if(body || eat('{')){
 			ExprPtr scp = parse_scope();
 			if(!scp->scope_stmts()->empty()){
 				scope_stmts->push_back(scp);

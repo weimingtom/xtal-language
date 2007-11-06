@@ -133,6 +133,10 @@ SendProxy Any::send(const IDPtr& primary_key, const AnyPtr& secondary_key) const
 	return SendProxy(ap(*this), primary_key, secondary_key);
 }
 
+const AnyPtr& Any::do_lazy() const{
+	return ((Lazy*)pvalue(*this))->ret = ((Lazy*)pvalue(*this))->value();
+}
+
 struct MemberCacheTable{
 	struct Unit{
 		uint_t mutate_count;
@@ -279,6 +283,9 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 			value->set_object_name(primary_key, object_name_force(), ap(*this));
 			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
 		}
+		XTAL_CASE(TYPE_LAZY){
+			do_lazy()->def(primary_key, value, secondary_key, accessibility);
+		}
 	}
 }
 
@@ -296,6 +303,7 @@ void Any::call(const VMachinePtr& vm) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->call(vm); }
+		XTAL_CASE(TYPE_LAZY){ do_lazy()->call(vm); }
 	}
 }
 
@@ -305,6 +313,7 @@ int_t Any::to_i() const{
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return (int_t)fvalue(*this); }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->to_i(); }
 	}
 	return 0;
 }
@@ -315,15 +324,17 @@ float_t Any::to_f() const{
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return (float_t)ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(*this); }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->to_f(); }
 	}
 	return 0;
 }
 
 StringPtr Any::to_s() const{
-	if(type(*this)==TYPE_SMALL_STRING){
-		return static_ptr_cast<String>(ap(*this));
-	}else if(const StringPtr& ret = ptr_as<String>(ap(*this))){
-		return ret;
+	switch(type(*this)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ if(const StringPtr& ret = ptr_as<String>(ap(*this)))return ret; }
+		XTAL_CASE(TYPE_SMALL_STRING){ static_ptr_cast<String>(ap(*this)); }
+		XTAL_CASE(TYPE_LAZY){ do_lazy()->to_s(); }
 	}
 	return ptr_cast<String>((*this).send(Xid(to_s)));
 }
@@ -340,20 +351,25 @@ StringPtr Any::object_name() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name()); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(); }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->object_name(); }
 	}
 	return null;	
 }
 
 int_t Any::object_name_force() const{
-	if(type(*this)==TYPE_BASE){ 
-		pvalue(*this)->object_name_force(); 
+	switch(type(*this)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name_force();  }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->object_name_force(); }
 	}
 	return 0;
 }
 	
 void Any::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent) const{
-	if(type(*this)==TYPE_BASE){ 
-		pvalue(*this)->set_object_name(name, force, parent); 
+	switch(type(*this)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_name(name, force, parent);  }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->set_object_name(name, force, parent); }
 	}
 }
 
@@ -368,13 +384,16 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<False>(); }
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<True>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->get_class(); }
 	}
 	return get_cpp_class<Any>();
 }
 
 uint_t Any::hashcode() const{
-	if(type(*this)==TYPE_BASE){
-		return pvalue(*this)->hashcode();
+	switch(type(*this)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ pvalue(*this)->hashcode();  }
+		XTAL_CASE(TYPE_LAZY){ return do_lazy()->hashcode(); }
 	}
 	return (uint_t)rawvalue(*this);
 }
@@ -439,8 +458,13 @@ void Any::s_load(const AnyPtr& v) const{
 }
 
 AnyPtr Any::serial_save(const ClassPtr& p) const{
-	if(type(*this)!=TYPE_BASE)
+	if(type(*this)==TYPE_LAZY){
+		return do_lazy()->serial_save(p); 
+	}
+
+	if(type(*this)!=TYPE_BASE){
 		return null;
+	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(CodePtr code = p->code()){
@@ -459,8 +483,14 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 }
 
 void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
-	if(type(*this)!=TYPE_BASE)
+	if(type(*this)==TYPE_LAZY){
+		do_lazy()->serial_load(p, v);
 		return;
+	}
+
+	if(type(*this)!=TYPE_BASE){
+		return;
+	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(MapPtr insts = ptr_as<Map>(v)){
@@ -477,10 +507,27 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	}
 }
 
+AnyPtr fun2lazy(const AnyPtr& value){
+	switch(type(value)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ 
+			AnyPtr ret = xnew<Lazy>(value);
+			((Innocence&)ret).set_lazy();
+			return ret;
+		}
+
+		XTAL_CASE(TYPE_LAZY){ return value; }
+	}
+	return null;
+}
+
 void visit_members(Visitor& m, const AnyPtr& p){
-	if(type(p)==TYPE_BASE){
-		XTAL_ASSERT((int)pvalue(p)->ref_count() >= -m.value());
-		pvalue(p)->add_ref_count(m.value());
+	switch(type(p)){
+		XTAL_DEFAULT{}
+		XTAL_CASE2(TYPE_BASE, TYPE_LAZY){ 
+			XTAL_ASSERT((int)pvalue(p)->ref_count() >= -m.value());
+			pvalue(p)->add_ref_count(m.value());
+		}
 	}
 }
 

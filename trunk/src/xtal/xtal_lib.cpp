@@ -93,73 +93,6 @@ static float_t clock_(){
 	return clock()/(float_t)CLOCKS_PER_SEC;
 }
 	
-class ZipIter : public Base{
-public:
-
-	ZipIter(const VMachinePtr& vm){
-		next = xnew<Array>(vm->ordered_arg_count());
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			next->set_at(i, vm->arg(i));
-		}
-	}
-
-	void common(const VMachinePtr& vm, const IDPtr& id){
-		bool all = true;
-		value = xnew<Array>(next->size());
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			vm->setup_call(2);
-			next->at(i)->rawsend(vm, id);
-			next->set_at(i, vm->result(0));
-			value->set_at(i, vm->result(1));
-			vm->cleanup_call();
-			if(!next->at(i))
-				all = false;
-		}
-		if(all){
-			vm->return_result(SmartPtr<ZipIter>(this), value);
-		}else{
-			vm->return_result(null, null);
-		}
-	}
-
-	void block_first(const VMachinePtr& vm){
-		common(vm, Xid(block_first));
-	}
-	
-	void block_next(const VMachinePtr& vm){
-		common(vm, Xid(block_next));
-	}
-
-	void block_break(const VMachinePtr& vm){
-		IDPtr id = Xid(block_break);
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			vm->setup_call(0);
-			next->at(i)->rawsend(vm, id);
-			if(!vm->processed()){
-				vm->return_result();	
-			}
-			vm->cleanup_call();
-		}
-		vm->return_result();
-	}
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & next & value;
-	}
-
-	ArrayPtr next;
-	ArrayPtr value;
-};
-
-void InitZipIter(){
-	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
-	p->inherit(Iterator());
-	p->def("new", ctor<ZipIter, const VMachinePtr&>());
-	p->method("block_first", &ZipIter::block_first);
-	p->method("block_next", &ZipIter::block_next);
-	p->method("block_break", &ZipIter::block_break);
-}
 
 void initialize_builtin(){
 
@@ -175,12 +108,10 @@ void initialize_builtin(){
 	builtin()->fun("disable_gc", &disable_gc);
 	builtin()->fun("enable_gc", &enable_gc);
 	builtin()->fun("clock", &clock_);
+	builtin()->fun("fun2lazy", &fun2lazy);
 
 	lib()->def("builtin", builtin());
 	
-	InitZipIter();
-	builtin()->def("zip", get_cpp_class<ZipIter>());
-
 	Xsrc((
 
 builtin::StandardError: class(Exception){}

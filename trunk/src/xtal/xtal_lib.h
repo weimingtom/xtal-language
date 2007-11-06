@@ -139,7 +139,6 @@ const StreamPtr& stdin_stream();
 const StreamPtr& stdout_stream();
 const StreamPtr& stderr_stream();
 
-
 AnyPtr* make_place();
 
 

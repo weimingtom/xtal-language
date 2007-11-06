@@ -64,6 +64,7 @@ void initialize_array(){
 		p->method("clear", &Array::clear);
 		p->method("reverse", &Array::reverse);
 		p->method("assign", &Array::assign);
+		p->method("concat", &Array::concat);
 
 		p->method("op_cat", &Array::cat, get_cpp_class<Array>());
 		p->method("op_cat_assign", &Array::cat_assign, get_cpp_class<Array>());
@@ -75,9 +76,18 @@ void initialize_array(){
 	{
 		ClassPtr p = new_cpp_class<MultiValue>("MultiValue");
 		p->inherit(get_cpp_class<Array>());
+
+		p->def("new", ctor<MultiValue, int_t>()->param(Named("size", 0)));
+		p->method("clone", &MultiValue::clone);
+		p->method("to_a", &MultiValue::clone);
+		p->method("to_s", &MultiValue::to_s);
+		p->method("to_mv", &Any::self);
+		p->method("flatten_mv", &MultiValue::flatten_mv);
+		p->member("flatten_all_mv", &MultiValue::flatten_all_mv);
 	}
 
 	builtin()->def("Array", get_cpp_class<Array>());
+	builtin()->def("MultiValue", get_cpp_class<MultiValue>());
 }
 
 
@@ -277,7 +287,7 @@ StringPtr Array::join(const StringPtr& sep){
 StringPtr Array::to_s(){
 	MemoryStreamPtr ret(xnew<MemoryStream>());
 	ret->put_s("[");
-	ret->put_s(join(","));
+	ret->put_s(join(", "));
 	ret->put_s("]");
 	return ret->to_s();
 }
@@ -318,6 +328,12 @@ void Array::assign(const AnyPtr& iterator){
 	resize(i);
 }
 
+void Array::concat(const AnyPtr& iterator){
+	Xfor(v, iterator){
+		push_back(v);
+	}
+}
+
 int_t Array::calc_offset(int_t i){
 	if(i<0){
 		i = size_ + i;
@@ -336,6 +352,56 @@ int_t Array::calc_offset(int_t i){
 
 void Array::throw_index_error(){
 	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1020")), return);
+}
+
+MultiValuePtr MultiValue::clone(){
+	return xnew<MultiValue>(*this);
+}
+
+MultiValuePtr MultiValue::flatten_mv(){
+	if(empty()){ return xnew<MultiValue>(); }
+
+	MultiValuePtr ret = xnew<MultiValue>();
+	ret->concat(ArrayPtr(this));
+	
+	for(;;){
+		if(const MultiValuePtr& mv = ptr_as<MultiValue>(ret->back())){
+			ret->pop_back();
+			ret->concat(mv);
+		}else{
+			if(type(ret->back())==TYPE_UNDEFINED){
+				ret->pop_back();
+			}
+			break;
+		}
+	}
+	return ret;
+}
+
+MultiValuePtr MultiValue::flatten_all_mv(){
+	if(empty()){ return xnew<MultiValue>(); }
+
+	MultiValuePtr ret = xnew<MultiValue>();
+	MultiValuePtr temp(this);
+	
+	for(uint_t i=0; i<temp->size(); ++i){
+		if(const MultiValuePtr& mv = ptr_as<MultiValue>(temp->at(i))){
+			ret->concat(mv->flatten_all_mv());
+		}else{
+			if(type(ret->back())!=TYPE_UNDEFINED){
+				ret->push_back(temp->at(i));
+			}
+		}
+	}
+	return ret;
+}
+
+StringPtr MultiValue::to_s(){
+	MemoryStreamPtr ret(xnew<MemoryStream>());
+	ret->put_s("(");
+	ret->put_s(join(", "));
+	ret->put_s(")");
+	return ret->to_s();
 }
 
 }

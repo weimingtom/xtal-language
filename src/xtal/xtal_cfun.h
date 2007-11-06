@@ -36,7 +36,7 @@ struct ReturnThis{
 	}
 };
 
-struct ReturnVoid{
+struct ReturnUndefined{
 	static void return_result(const VMachinePtr& vm){
 		vm->return_result();
 	}
@@ -881,11 +881,11 @@ template<class T, class A0=void, class A1=void, class A2=void, class A3=void, cl
 class ctor : public CFunPtr{
 	enum{
 		N = 
-		IsNotVoid<A0>::value + 
-		IsNotVoid<A1>::value + 
-		IsNotVoid<A2>::value + 
-		IsNotVoid<A3>::value + 
-		IsNotVoid<A4>::value
+		IsNotUndefined<A0>::value + 
+		IsNotUndefined<A1>::value + 
+		IsNotUndefined<A2>::value + 
+		IsNotUndefined<A3>::value + 
+		IsNotUndefined<A4>::value
 	};
 public:
 	

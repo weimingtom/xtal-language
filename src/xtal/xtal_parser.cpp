@@ -107,7 +107,7 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
 	keyword_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
 	keyword_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
-	keyword_map_->set_at(Xid(nop), (int_t)Token::KEYWORD_NOP);
+	keyword_map_->set_at(Xid(undefined), (int_t)Token::KEYWORD_UNDEFINED);
 	keyword_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
 	keyword_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
 	keyword_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
@@ -1040,7 +1040,7 @@ ExprPtr Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_DOFUN){ ret = em.call(parse_fun(KIND_FUN), null, null, null); }
 				XTAL_CASE(Token::KEYWORD_CALLEE){ ret = em.callee(); }
 				XTAL_CASE(Token::KEYWORD_NULL){ ret = em.null_(); }
-				XTAL_CASE(Token::KEYWORD_NOP){ ret = em.nop_(); }
+				XTAL_CASE(Token::KEYWORD_UNDEFINED){ ret = em.undefined_(); }
 				XTAL_CASE(Token::KEYWORD_TRUE){ ret = em.true_(); }
 				XTAL_CASE(Token::KEYWORD_FALSE){ ret = em.false_(); }
 				XTAL_CASE(Token::KEYWORD_THIS){ ret = em.this_(); }
@@ -1716,7 +1716,7 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 			
 			if(eat('_')){
 				if(IDPtr var = parse_identifier()){
-					if(rawne(params->at(var), nop)){
+					if(rawne(params->at(var), undefined)){
 						error_->error(lineno(), Xt("Xtal Compile Error 1026")(Named("name", var)));
 					}
 
@@ -1733,7 +1733,7 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 					error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 				}
 			}else if(IDPtr var = parse_identifier()){
-				if(rawne(params->at(var), nop)){
+				if(rawne(params->at(var), undefined)){
 					error_->error(lineno(), Xt("Xtal Compile Error 1026")(Named("name", var)));
 				}
 

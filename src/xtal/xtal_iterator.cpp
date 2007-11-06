@@ -29,7 +29,7 @@ public:
 
 	void common(const VMachinePtr& vm, const IDPtr& id){
 		bool all = true;
-		value = xnew<Array>(next->size());
+		value = xnew<MultiValue>(next->size());
 		for(int_t i = 0, len = next->size(); i<len; ++i){
 			vm->setup_call(2);
 			next->at(i)->rawsend(vm, id);

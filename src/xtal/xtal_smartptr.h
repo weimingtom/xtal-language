@@ -158,11 +158,11 @@ public:
 	*
 	*/
 	operator safe_bool() const{
-		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
+		return type((*this)->self())>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 
 	bool operator !() const{
-		return type(*this)<=TYPE_FALSE;
+		return type((*this)->self())<=TYPE_FALSE;
 	}
 
 };
@@ -172,17 +172,17 @@ inline const AnyPtr& ap(const Innocence& v){
 }
 
 class Null : public AnyPtr{};
-class Nop : public AnyPtr{public: Nop():AnyPtr(TYPE_NOP){} };
+class Undefined : public AnyPtr{ public: Undefined():AnyPtr(TYPE_UNDEFINED){} };
 
 inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }
 inline bool operator !=(const AnyPtr& a, const Null&){ return rawne(a, null); }
 inline bool operator ==(const Null&, const AnyPtr& a){ return raweq(a, null); }
 inline bool operator !=(const Null&, const AnyPtr& a){ return rawne(a, null); }
 
-inline bool operator ==(const AnyPtr& a, const Nop&){ return raweq(a, nop); }
-inline bool operator !=(const AnyPtr& a, const Nop&){ return rawne(a, nop); }
-inline bool operator ==(const Nop&, const AnyPtr& a){ return raweq(a, nop); }
-inline bool operator !=(const Nop&, const AnyPtr& a){ return rawne(a, nop); }
+inline bool operator ==(const AnyPtr& a, const Undefined&){ return raweq(a, undefined); }
+inline bool operator !=(const AnyPtr& a, const Undefined&){ return rawne(a, undefined); }
+inline bool operator ==(const Undefined&, const AnyPtr& a){ return raweq(a, undefined); }
+inline bool operator !=(const Undefined&, const AnyPtr& a){ return rawne(a, undefined); }
 
 template<class T>
 struct SmartPtrCtor1{

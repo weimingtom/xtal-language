@@ -78,9 +78,9 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_NODEFAULT;
 
 //{CODE_INSPECT{{
-		XTAL_CASE(InstNop::NUMBER){ temp = ((InstNop*)pc)->inspect(code); sz = InstNop::ISIZE; }
+		XTAL_CASE(InstUndefined::NUMBER){ temp = ((InstUndefined*)pc)->inspect(code); sz = InstUndefined::ISIZE; }
 		XTAL_CASE(InstPushNull::NUMBER){ temp = ((InstPushNull*)pc)->inspect(code); sz = InstPushNull::ISIZE; }
-		XTAL_CASE(InstPushNop::NUMBER){ temp = ((InstPushNop*)pc)->inspect(code); sz = InstPushNop::ISIZE; }
+		XTAL_CASE(InstPushUndefined::NUMBER){ temp = ((InstPushUndefined*)pc)->inspect(code); sz = InstPushUndefined::ISIZE; }
 		XTAL_CASE(InstPushTrue::NUMBER){ temp = ((InstPushTrue*)pc)->inspect(code); sz = InstPushTrue::ISIZE; }
 		XTAL_CASE(InstPushFalse::NUMBER){ temp = ((InstPushFalse*)pc)->inspect(code); sz = InstPushFalse::ISIZE; }
 		XTAL_CASE(InstPushInt1Byte::NUMBER){ temp = ((InstPushInt1Byte*)pc)->inspect(code); sz = InstPushInt1Byte::ISIZE; }
@@ -163,8 +163,8 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstIfNin::NUMBER){ temp = ((InstIfNin*)pc)->inspect(code); sz = InstIfNin::ISIZE; }
 		XTAL_CASE(InstIfIs::NUMBER){ temp = ((InstIfIs*)pc)->inspect(code); sz = InstIfIs::ISIZE; }
 		XTAL_CASE(InstIfNis::NUMBER){ temp = ((InstIfNis*)pc)->inspect(code); sz = InstIfNis::ISIZE; }
-		XTAL_CASE(InstIfArgIsNop::NUMBER){ temp = ((InstIfArgIsNop*)pc)->inspect(code); sz = InstIfArgIsNop::ISIZE; }
-		XTAL_CASE(InstIfArgIsNopDirect::NUMBER){ temp = ((InstIfArgIsNopDirect*)pc)->inspect(code); sz = InstIfArgIsNopDirect::ISIZE; }
+		XTAL_CASE(InstIfArgIsUndefined::NUMBER){ temp = ((InstIfArgIsUndefined*)pc)->inspect(code); sz = InstIfArgIsUndefined::ISIZE; }
+		XTAL_CASE(InstIfArgIsUndefinedDirect::NUMBER){ temp = ((InstIfArgIsUndefinedDirect*)pc)->inspect(code); sz = InstIfArgIsUndefinedDirect::ISIZE; }
 		XTAL_CASE(InstPos::NUMBER){ temp = ((InstPos*)pc)->inspect(code); sz = InstPos::ISIZE; }
 		XTAL_CASE(InstNeg::NUMBER){ temp = ((InstNeg*)pc)->inspect(code); sz = InstNeg::ISIZE; }
 		XTAL_CASE(InstCom::NUMBER){ temp = ((InstCom*)pc)->inspect(code); sz = InstCom::ISIZE; }
@@ -222,7 +222,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstMakeInstanceVariableAccessor::NUMBER){ temp = ((InstMakeInstanceVariableAccessor*)pc)->inspect(code); sz = InstMakeInstanceVariableAccessor::ISIZE; }
 		XTAL_CASE(InstThrow::NUMBER){ temp = ((InstThrow*)pc)->inspect(code); sz = InstThrow::ISIZE; }
 		XTAL_CASE(InstThrowUnsupportedError::NUMBER){ temp = ((InstThrowUnsupportedError*)pc)->inspect(code); sz = InstThrowUnsupportedError::ISIZE; }
-		XTAL_CASE(InstThrowNop::NUMBER){ temp = ((InstThrowNop*)pc)->inspect(code); sz = InstThrowNop::ISIZE; }
+		XTAL_CASE(InstThrowUndefined::NUMBER){ temp = ((InstThrowUndefined*)pc)->inspect(code); sz = InstThrowUndefined::ISIZE; }
 		XTAL_CASE(InstAssert::NUMBER){ temp = ((InstAssert*)pc)->inspect(code); sz = InstAssert::ISIZE; }
 		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(code); sz = InstMAX::ISIZE; }

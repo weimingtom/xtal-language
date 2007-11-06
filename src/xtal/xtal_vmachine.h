@@ -339,6 +339,18 @@ public:
 	*
 	*/
 	void adjust_arg(int_t n);
+
+	/**
+	* @brief 引数の多値を平らにする
+	*
+	*/
+	void flatten_arg();
+
+	/**
+	* @brief  引数の多値を平らにする
+	*
+	*/
+	void flatten_all_arg();
 	
 	/**
 	* @brief 呼び出し元が必要としている戻り値の数。
@@ -653,9 +665,9 @@ private:
 public:
 
 //{DECLS{{
-	const inst_t* FunNop(const inst_t* pc);
+	const inst_t* FunUndefined(const inst_t* pc);
 	const inst_t* FunPushNull(const inst_t* pc);
-	const inst_t* FunPushNop(const inst_t* pc);
+	const inst_t* FunPushUndefined(const inst_t* pc);
 	const inst_t* FunPushTrue(const inst_t* pc);
 	const inst_t* FunPushFalse(const inst_t* pc);
 	const inst_t* FunPushInt1Byte(const inst_t* pc);
@@ -738,8 +750,8 @@ public:
 	const inst_t* FunIfNin(const inst_t* pc);
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfNis(const inst_t* pc);
-	const inst_t* FunIfArgIsNop(const inst_t* pc);
-	const inst_t* FunIfArgIsNopDirect(const inst_t* pc);
+	const inst_t* FunIfArgIsUndefined(const inst_t* pc);
+	const inst_t* FunIfArgIsUndefinedDirect(const inst_t* pc);
 	const inst_t* FunPos(const inst_t* pc);
 	const inst_t* FunNeg(const inst_t* pc);
 	const inst_t* FunCom(const inst_t* pc);
@@ -797,7 +809,7 @@ public:
 	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
-	const inst_t* FunThrowNop(const inst_t* pc);
+	const inst_t* FunThrowUndefined(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
@@ -814,7 +826,7 @@ private:
 	inst_t throw_unsupported_error_code_;
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
-	inst_t throw_nop_code_;
+	inst_t throw_undefined_code_;
 
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;

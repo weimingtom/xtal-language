@@ -396,12 +396,20 @@ Iterator::inject: method(init, fn){
 
 Iterator::with_prev: method{
 	return fiber{
-		prev: nop;
+		prev: undefined;
 		this{
 			yield prev, it;
 			prev = it;
 		}
 	}
+}
+
+Iterator::flatten_param: method fiber{
+	this{ yield it.flatten_mv; }
+}
+
+Iterator::flatten_all_param: method fiber{
+	this{ yield it.flatten_all_mv; }
 }
 
 Int::block_next: method{
@@ -464,8 +472,8 @@ Null::block_first: method{
 	return null;
 }
 
-Nop::to_s: method{
-	return "nop";
+Undefined::to_s: method{
+	return "undefined";
 }
 
 True::to_s: method{
@@ -559,7 +567,8 @@ String::gsub: method(pattern, fn){
 		prefix: it.prefix;
 		mm.put_s(prefix);
 		
-		ordered: [it[0]] ~ it.captures[].p;
+		ordered: [it[0]];
+		ordered.concat(it.captures);
 		named: it.named_captures[:];
 		named["prefix"] = prefix;
 		

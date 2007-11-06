@@ -327,19 +327,19 @@ struct Named2{
 	AnyPtr value;
 
 	Named2(const char* name)
-		:name(name), value(nop){}
+		:name(name), value(undefined){}
 
 	Named2(const IDPtr& name)
-		:name(name), value(nop){}
+		:name(name), value(undefined){}
 
 	Named2(const IDPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
 	Named2()
-		:name(null), value(nop){}
+		:name(null), value(undefined){}
 
 	Named2(const Null&)
-		:name(null), value(nop){}
+		:name(null), value(undefined){}
 };
 
 /**
@@ -441,7 +441,7 @@ extern IDPtr idop_mod_assign;
 extern IDPtr idbreak;
 extern IDPtr idtry;
 extern IDPtr idop_mod;
-extern IDPtr idnop;
+extern IDPtr idundefined;
 extern IDPtr idto_i;
 extern IDPtr idop_or;
 extern IDPtr idcontinue;

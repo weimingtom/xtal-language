@@ -5,6 +5,8 @@ namespace xtal{
 namespace{
 
 AnyPtr abs(const AnyPtr& a){
+	AnyPtr b = a;
+	AnyPtr aaa = fvalue(b)<0 ? -fvalue(b) : b;
 	switch(type(a)){XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? -ivalue(a) : a; }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? -fvalue(a) : a; }

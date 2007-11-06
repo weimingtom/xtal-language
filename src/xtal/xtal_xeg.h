@@ -83,7 +83,7 @@ public:
 			now_read = do_read(&access(read_), ONE_BLOCK_SIZE-(read_&ONE_BLOCK_MASK));
 
 			if(now_read==0){
-				return nop;
+				return undefined;
 			}
 
 			read_ += now_read;
@@ -132,7 +132,7 @@ public:
 	* @brief èIóπÇµÇƒÇ¢ÇÈÇ©í≤Ç◊ÇÈ
 	*/
 	bool eos(){
-		return raweq(peek(), nop);
+		return raweq(peek(), undefined);
 	}
 
 	/**
@@ -152,7 +152,7 @@ public:
 	*/
 	bool eol(){
 		const AnyPtr& ch = peek();
-		return raweq(ch, r_ch_) || raweq(ch, n_ch_) || raweq(ch, nop);
+		return raweq(ch, r_ch_) || raweq(ch, n_ch_) || raweq(ch, undefined);
 	}
 
 	/**

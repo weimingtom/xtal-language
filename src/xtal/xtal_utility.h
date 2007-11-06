@@ -232,9 +232,9 @@ struct IsSame{
 };
 
 template<class T>
-struct IsNotVoid{ enum{ value = 1 }; };
+struct IsNotUndefined{ enum{ value = 1 }; };
 template<>
-struct IsNotVoid<void>{ enum{ value = 0 }; };
+struct IsNotUndefined<void>{ enum{ value = 0 }; };
 
 template<class T>
 struct Ref{
@@ -252,8 +252,5 @@ template<class T, class U>
 struct NumericCalcResultType{
 	typedef typename If<1, T, U>::type type;
 };
-
-
-struct Void{};
 
 }

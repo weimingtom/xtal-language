@@ -156,7 +156,7 @@ typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
 */
 enum PrimitiveType{
 	TYPE_NULL = 0,
-	TYPE_NOP = 1,
+	TYPE_UNDEFINED = 1,
 
 	TYPE_FALSE = 2,
 	TYPE_TRUE = 3,
@@ -267,6 +267,7 @@ class IntRange;
 class FloatRange;
 class ChRange;
 class DualDispatchMethod;
+class MultiValue;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -296,6 +297,7 @@ typedef SmartPtr<IntRange> IntRangePtr;
 typedef SmartPtr<FloatRange> FloatRangePtr;
 typedef SmartPtr<ChRange> ChRangePtr;
 typedef SmartPtr<DualDispatchMethod> DualDispatchMethodPtr;
+typedef SmartPtr<MultiValue> MultiValuePtr;
 
 class Base;
 class AtProxy;
@@ -304,6 +306,7 @@ class Visitor;
 class InstanceVariables;
 class Int;
 class Float;
+class Undefined;
 
 struct BlockCore{
 	BlockCore()
@@ -368,19 +371,19 @@ extern uint_t global_mutate_count;
 class Null;
 extern Null null;
 
-class Nop;
-extern Nop nop;
+class Undefined;
+extern Undefined undefined;
 
 class True;
 class False;
 
 struct Result;
 struct ReturnThis;
-struct ReturnVoid;
+struct ReturnUndefined;
 
 extern Result result;
 extern ReturnThis return_this;
-extern ReturnVoid return_void;
+extern ReturnUndefined return_void;
 
 template<class T>
 const ClassPtr& new_cpp_class(const char* name = "");

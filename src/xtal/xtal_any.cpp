@@ -30,6 +30,9 @@ void initialize_any(){
 		p->method("s_load", &Any::s_load);
 		p->method("lazy", &Any::lazy);
 		p->method("ever_lazy", &Any::ever_lazy);
+		p->method("to_mv", &Any::to_mv);
+		p->method("flatten_mv", &Any::flatten_mv);
+		p->method("flatten_all_mv", &Any::flatten_all_mv);
 
 		p->dual_dispatch_method("op_add");
 		p->dual_dispatch_method("op_sub");
@@ -173,7 +176,7 @@ struct MemberCacheTable{
 			miss_++;
 
 			if(type(target_class)!=TYPE_BASE)
-				return nop;
+				return undefined;
 
 			unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self));
 			unit.target_class = itarget_class;
@@ -290,7 +293,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, primary_key, secondary_key);
 	const AnyPtr& ret = member_cache_table.cache(cls, primary_key, secondary_key, self, inherited_too);
-	if(rawne(ret, nop)){
+	if(rawne(ret, undefined)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);
 	}
@@ -374,7 +377,7 @@ const ClassPtr& Any::get_class() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_NULL){ return get_cpp_class<Null>(); }
-		XTAL_CASE(TYPE_NOP){ return get_cpp_class<Nop>(); }
+		XTAL_CASE(TYPE_UNDEFINED){ return get_cpp_class<Undefined>(); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->get_class(); }
 		XTAL_CASE(TYPE_INT){ return get_cpp_class<Int>(); }
 		XTAL_CASE(TYPE_FLOAT){ return get_cpp_class<Float>(); }
@@ -553,6 +556,26 @@ const AnyPtr& Any::evalute() const{
 	}
 
 	return p->ret;
+}
+
+MultiValuePtr Any::to_mv() const{
+	switch(type(*this)){
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_UNDEFINED){ return xnew<MultiValue>(); }
+		XTAL_CASE(TYPE_LAZY){ return ap(*this)->to_mv(); }
+	}
+	
+	MultiValuePtr ret = xnew<MultiValue>();
+	ret->push_back(ap(*this));
+	return ret;
+}
+
+MultiValuePtr Any::flatten_mv() const{
+	return to_mv()->flatten_mv();
+}
+
+MultiValuePtr Any::flatten_all_mv() const{
+	return to_mv()->flatten_all_mv();
 }
 
 void visit_members(Visitor& m, const AnyPtr& p){

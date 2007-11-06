@@ -83,6 +83,7 @@ int_t CastHelper<int_t>::as(const AnyPtr& a){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
+		XTAL_CASE(TYPE_LAZY){ return as(a->do_lazy()); }
 	}
 	return 0;
 }
@@ -92,6 +93,7 @@ int_t CastHelper<int_t>::cast(const AnyPtr& a){
 		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Int")), return 0); }
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
+		XTAL_CASE(TYPE_LAZY){ return cast(a->do_lazy()); }
 	}
 	return 0;
 }
@@ -101,6 +103,7 @@ int_t CastHelper<int_t>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr
 		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Int"), param_num, param_name), return 0); }
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
+		XTAL_CASE(TYPE_LAZY){ return arg_cast(a->do_lazy(), param_num, param_name); }
 	}
 	return 0;
 }
@@ -110,6 +113,7 @@ float_t CastHelper<float_t>::as(const AnyPtr& a){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
+		XTAL_CASE(TYPE_LAZY){ return as(a->do_lazy()); }
 	}
 	return 0;
 }
@@ -119,6 +123,7 @@ float_t CastHelper<float_t>::cast(const AnyPtr& a){
 		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Float")), return 0); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
+		XTAL_CASE(TYPE_LAZY){ return cast(a->do_lazy()); }
 	}
 	return 0;
 }
@@ -128,6 +133,7 @@ float_t CastHelper<float_t>::arg_cast(const AnyPtr& a, int_t param_num, const An
 		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Float"), param_num, param_name), return 0); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
+		XTAL_CASE(TYPE_LAZY){ return arg_cast(a->do_lazy(), param_num, param_name); }
 	}
 	return 0;
 }

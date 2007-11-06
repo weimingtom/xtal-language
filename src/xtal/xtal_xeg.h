@@ -9,7 +9,7 @@ namespace xtal{ namespace xeg{
 class Scanner : public Base{
 
 	enum{
-		ONE_BLOCK_SHIFT = 10,
+		ONE_BLOCK_SHIFT = 12,
 		ONE_BLOCK_SIZE = 1<<ONE_BLOCK_SHIFT,
 		ONE_BLOCK_MASK = ONE_BLOCK_SIZE-1
 	};
@@ -362,10 +362,6 @@ public:
 
 	int_t length(){
 		return captures_ ? captures_->size() : 0;
-	}
-
-	StringPtr match(){
-		return scanner_->capture(match_begin_, match_end_);
 	}
 
 	StringPtr prefix(){

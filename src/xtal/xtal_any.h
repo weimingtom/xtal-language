@@ -95,6 +95,10 @@ protected:
 		value_ = 0;
 	}
 
+	void set_lazy(){
+		type_ = TYPE_LAZY;
+	}
+
 public:
 
 	friend int_t type(const Innocence& v);
@@ -108,6 +112,7 @@ public:
 	friend void swap(Innocence& a, Innocence& b);
 	friend void set_null_force(Innocence& v);
 	friend void copy_innocence(Innocence& v, const Innocence& u);
+	friend AnyPtr fun2lazy(const AnyPtr& value);
 
 public:
 
@@ -150,7 +155,7 @@ inline float_t fvalue(const Innocence& v){
 }
 
 inline Base* pvalue(const Innocence& v){ 
-	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
+	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL || type(v)==TYPE_LAZY); 
 	return v.pvalue_; 
 }
 
@@ -327,6 +332,8 @@ public:
 	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
 	const AnyPtr& self() const{ return *(AnyPtr*)this; }
+
+	const AnyPtr& do_lazy() const;
 
 public:
 

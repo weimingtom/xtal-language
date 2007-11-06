@@ -307,7 +307,7 @@ private:
 	ExprPtr parse_class(int_t kind);
 	ExprPtr parse_prop();
 	ExprPtr parse_loop();
-	ExprPtr parse_fun(int_t kind);
+	ExprPtr parse_fun(int_t kind, bool body = false);
 	ExprPtr parse_call(ExprPtr lhs);
 	ExprPtr parse_expr(int_t pri);
 	ExprPtr parse_expr();

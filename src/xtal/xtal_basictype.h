@@ -73,4 +73,11 @@ private:
 	int_t kind_;
 };
 
+
+struct Lazy : public Base{
+	AnyPtr value;
+	AnyPtr ret;
+	Lazy(const AnyPtr& v):value(v){}
+};
+
 }

@@ -54,7 +54,6 @@ private:
 
 	MapPtr values_;
 	StringPtr original_;
-	int_t param_count_;
 	bool have_named_;
 	
 	virtual void visit_members(Visitor& m){
@@ -220,7 +219,6 @@ void Format::set(const char* str){
 
 	values_ = xnew<Map>();
 	original_ = xnew<String>(str);
-	param_count_ = 0;
 	have_named_ = false;
 
 	const char* begin = str;
@@ -260,7 +258,6 @@ void Format::set(const char* str){
 				str = ret->parse_format(str);
 				values_->set_at(buf, ret);
 				begin = str;
-				param_count_++;
 			}
 		}else if(str[0]=='\0'){
 			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
@@ -274,7 +271,7 @@ void Format::set(const char* str){
 void Format::call(const VMachinePtr& vm){
 
 	if(!have_named_){
-		vm->adjust_arg(param_count_);
+		vm->flatten_arg();
 	}
 
 	string_t buf;

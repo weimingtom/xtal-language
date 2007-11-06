@@ -5,7 +5,7 @@ namespace xtal{
 
 Result result;
 ReturnThis return_this;
-ReturnVoid return_void;
+ReturnUndefined return_void;
 
 
 CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
@@ -56,7 +56,7 @@ CFunPtr CFun::param(
 
 	pi_.min_param_count = pi_.max_param_count = param_n_;
 	for(int_t i=0; i<param_n_; ++i){
-		if(rawne(pi_.params[i].value, nop)){
+		if(rawne(pi_.params[i].value, undefined)){
 			pi_.min_param_count--;
 		}
 	}

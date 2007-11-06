@@ -131,6 +131,7 @@ protected:
 	union{
 		int_t value_;
 		byte_t fvalue_bytes[sizeof(float_t)];
+		float_t fvalue_;
 		Base* pvalue_;
 		SmallString svalue_;
 	};
@@ -226,8 +227,8 @@ public:
 	* @brief nameメンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
-	* @retval nop そのメンバは存在しない
-	* @retval 非nop nameに対応したメンバ  
+	* @retval undefined そのメンバは存在しない
+	* @retval 非undefined nameに対応したメンバ  
 	*/
 	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
@@ -351,6 +352,12 @@ public:
 		if(type(*this)==TYPE_LAZY){ return evalute(); }
 		return (const AnyPtr&)*this;
 	}
+
+	MultiValuePtr to_mv() const;
+
+	MultiValuePtr flatten_mv() const;
+
+	MultiValuePtr flatten_all_mv() const;
 
 private:
 

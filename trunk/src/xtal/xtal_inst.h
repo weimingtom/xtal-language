@@ -229,7 +229,7 @@ struct Inst{
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_0(0, Nop);
+XTAL_DEF_INST_0(0, Undefined);
 
 /**
 * @brief スタックにnull値をプッシュする。
@@ -239,11 +239,11 @@ XTAL_DEF_INST_0(0, Nop);
 XTAL_DEF_INST_0(1, PushNull);
 
 /**
-* @brief スタックにnop値をプッシュする。
+* @brief スタックにundefined値をプッシュする。
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(2, PushNop);
+XTAL_DEF_INST_0(2, PushUndefined);
 
 /**
 * @brief スタックにtrue値をプッシュする。
@@ -786,12 +786,12 @@ XTAL_DEF_INST_1(84, IfNis,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_2(85, IfArgIsNop,
+XTAL_DEF_INST_2(85, IfArgIsUndefined,
 	inst_u8_t, arg,
 	inst_address_t, address
 );
 
-XTAL_DEF_INST_2(86, IfArgIsNopDirect,
+XTAL_DEF_INST_2(86, IfArgIsUndefinedDirect,
 	inst_u8_t, arg,
 	inst_address_t, address
 );
@@ -885,7 +885,7 @@ XTAL_DEF_INST_0(142, Throw);
 
 XTAL_DEF_INST_0(143, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(144, ThrowNop);
+XTAL_DEF_INST_0(144, ThrowUndefined);
 
 XTAL_DEF_INST_0(145, Assert);
 

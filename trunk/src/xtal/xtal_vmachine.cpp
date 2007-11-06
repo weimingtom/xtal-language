@@ -24,7 +24,7 @@ VMachine::VMachine(){
 	throw_unsupported_error_code_ = InstThrowUnsupportedError::NUMBER;
 	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
-	throw_nop_code_ = InstThrowNop::NUMBER;
+	throw_undefined_code_ = InstThrowUndefined::NUMBER;
 	resume_pc_ = 0;
 }
 
@@ -257,7 +257,7 @@ const AnyPtr& VMachine::arg(int_t pos){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count)
 		return get(f.args_stack_size()-1-pos);
-	return nop;
+	return undefined;
 }
 
 const AnyPtr& VMachine::arg(const IDPtr& name){
@@ -267,7 +267,7 @@ const AnyPtr& VMachine::arg(const IDPtr& name){
 			return get(sz*2-1-(i*2+1));
 		}
 	}
-	return nop;
+	return undefined;
 }
 
 const AnyPtr& VMachine::arg(int_t pos, const IDPtr& name){
@@ -313,7 +313,7 @@ void VMachine::return_result(){
 
 	downsize(f.args_stack_size());
 	for(int_t i=0, sz=f.need_result_count; i<sz; ++i){
-		push(null);
+		push(undefined);
 	}
 
 	f.called_pc = &cleanup_call_code_;
@@ -472,7 +472,7 @@ void VMachine::exit_fiber(){
 		yield_result_count_ = 0;
 		ff().called_pc = resume_pc_;
 		resume_pc_ = 0;
-		execute_inner(&throw_nop_code_);
+		execute_inner(&throw_undefined_code_);
 	}XTAL_CATCH(e){
 		(void)e;
 	}
@@ -652,7 +652,7 @@ begin:
 XTAL_VM_SWITCH{
 
 //{OPS{{
-	XTAL_VM_CASE_FIRST(Nop){ // 2
+	XTAL_VM_CASE_FIRST(Undefined){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -661,8 +661,8 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(PushNop){ // 3
-		push(nop); 
+	XTAL_VM_CASE(PushUndefined){ // 3
+		push(undefined); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -883,7 +883,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Return0){ // 5
 		for(int_t i=0, sz=ff().need_result_count; i<sz; ++i){
-			push(null);
+			push(undefined);
 		}
 		XTAL_VM_CONTINUE(pop_ff());  
 	}
@@ -933,7 +933,7 @@ XTAL_VM_SWITCH{
 		FunFrame& f = ff();
 
 		downsize(f.args_stack_size());
-		push(nop);
+		push(undefined);
 		if(f.need_result_count!=1){
 			adjust_result(1);
 		}
@@ -1050,7 +1050,7 @@ XTAL_VM_SWITCH{
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence target = get();
 			Innocence ret = ap(target)->member(isp(primary_key), null, ff().self());
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				set(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key)));
@@ -1065,7 +1065,7 @@ XTAL_VM_SWITCH{
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence target = get();
 			Innocence ret = ap(target)->member(isp(primary_key), ap(secondary_key), ff().self());
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				set(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key), ap(secondary_key)));
@@ -1119,7 +1119,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(GlobalVariable){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence ret = code()->filelocal()->member(identifier(inst.identifier_number));
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				push(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
@@ -1147,7 +1147,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(Once){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const AnyPtr& ret = code()->once_value(inst.value_number);
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				push(ret);
 				XTAL_VM_CONTINUE(pc + inst.address);
 			}else{
@@ -1340,16 +1340,16 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc);
 	}
 
-	XTAL_VM_CASE(IfArgIsNop){ // 3
-		if(raweq(local_variable(inst.arg), nop)){
+	XTAL_VM_CASE(IfArgIsUndefined){ // 3
+		if(raweq(local_variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
 		}
 	}
 
-	XTAL_VM_CASE(IfArgIsNopDirect){ // 3
-		if(raweq(ff().variable(inst.arg), nop)){
+	XTAL_VM_CASE(IfArgIsUndefinedDirect){ // 3
+		if(raweq(ff().variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
@@ -1958,8 +1958,8 @@ XTAL_VM_SWITCH{
 		XTAL_VM_EXCEPT(last_except_);
 	}
 
-	XTAL_VM_CASE(ThrowNop){ // 2
-		XTAL_VM_EXCEPT(nop); 
+	XTAL_VM_CASE(ThrowUndefined){ // 2
+		XTAL_VM_EXCEPT(undefined); 
 	}
 
 	XTAL_VM_CASE(Assert){ // 10
@@ -2076,8 +2076,8 @@ rethrow:
 #define XTAL_VM_EXCEPT(x) last_except_ = (x); return 0
 
 //{FUNS{{
-const inst_t* VMachine::FunNop(const inst_t* pc){
-		XTAL_VM_DEF_INST(Nop);
+const inst_t* VMachine::FunUndefined(const inst_t* pc){
+		XTAL_VM_DEF_INST(Undefined);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
 
@@ -2087,9 +2087,9 @@ const inst_t* VMachine::FunPushNull(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
 
-const inst_t* VMachine::FunPushNop(const inst_t* pc){
-		XTAL_VM_DEF_INST(PushNop);
-		push(nop); 
+const inst_t* VMachine::FunPushUndefined(const inst_t* pc){
+		XTAL_VM_DEF_INST(PushUndefined);
+		push(undefined); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
 
@@ -2402,7 +2402,7 @@ const inst_t* VMachine::FunCheckUnsupported(const inst_t* pc){
 		FunFrame& f = ff();
 
 		downsize(f.args_stack_size());
-		push(nop);
+		push(undefined);
 		if(f.need_result_count!=1){
 			adjust_result(1);
 		}
@@ -2529,7 +2529,7 @@ const inst_t* VMachine::FunMember(const inst_t* pc){
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence target = get();
 			Innocence ret = ap(target)->member(isp(primary_key), null, ff().self());
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				set(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key)));
@@ -2545,7 +2545,7 @@ const inst_t* VMachine::FunMemberNS(const inst_t* pc){
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence target = get();
 			Innocence ret = ap(target)->member(isp(primary_key), ap(secondary_key), ff().self());
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				set(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key), ap(secondary_key)));
@@ -2604,7 +2604,7 @@ const inst_t* VMachine::FunGlobalVariable(const inst_t* pc){
 		XTAL_VM_DEF_INST(GlobalVariable);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence ret = code()->filelocal()->member(identifier(inst.identifier_number));
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				push(ret);
 			}else{
 				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
@@ -2635,7 +2635,7 @@ const inst_t* VMachine::FunOnce(const inst_t* pc){
 		XTAL_VM_DEF_INST(Once);
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const AnyPtr& ret = code()->once_value(inst.value_number);
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				push(ret);
 				XTAL_VM_CONTINUE(pc + inst.address);
 			}else{
@@ -2849,18 +2849,18 @@ const inst_t* VMachine::FunIfNis(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc);
 }
 
-const inst_t* VMachine::FunIfArgIsNop(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfArgIsNop);
-		if(raweq(local_variable(inst.arg), nop)){
+const inst_t* VMachine::FunIfArgIsUndefined(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfArgIsUndefined);
+		if(raweq(local_variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
 		}
 }
 
-const inst_t* VMachine::FunIfArgIsNopDirect(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfArgIsNopDirect);
-		if(raweq(ff().variable(inst.arg), nop)){
+const inst_t* VMachine::FunIfArgIsUndefinedDirect(const inst_t* pc){
+		XTAL_VM_DEF_INST(IfArgIsUndefinedDirect);
+		if(raweq(ff().variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
@@ -3526,9 +3526,9 @@ const inst_t* VMachine::FunThrowUnsupportedError(const inst_t* pc){
 		XTAL_VM_EXCEPT(last_except_);
 }
 
-const inst_t* VMachine::FunThrowNop(const inst_t* pc){
-		XTAL_VM_DEF_INST(ThrowNop);
-		XTAL_VM_EXCEPT(nop); 
+const inst_t* VMachine::FunThrowUndefined(const inst_t* pc){
+		XTAL_VM_DEF_INST(ThrowUndefined);
+		XTAL_VM_EXCEPT(undefined); 
 }
 
 const inst_t* VMachine::FunAssert(const inst_t* pc){
@@ -3702,10 +3702,10 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		return;
 	}
 
-	// 戻り値が一つも無いのでnullで埋める
+	// 戻り値が一つも無いのでvoidで埋める
 	if(n==0){
 		for(int_t i = 0; i<need_result_count; ++i){
-			push(null);
+			push(undefined);
 		}
 		return;
 	}
@@ -3719,7 +3719,7 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 余った戻り値を多値に直す。
 		int_t size = n-need_result_count+1;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ArrayPtr ret(xnew<MultiValue>(size));
+			MultiValuePtr ret(xnew<MultiValue>(size));
 			for(int_t i=0; i<size; ++i){
 				ret->set_at(i, get(size-1-i));
 			}
@@ -3730,22 +3730,21 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(const ArrayPtr& temp = xtal::ptr_as<Array>(get())){
-				// 配列を展開し埋め込む
-				// 最後の要素の配列を展開する。
-				ArrayPtr ary(temp);
+			if(const MultiValuePtr& temp = xtal::ptr_as<MultiValue>(get())){
+				// 最後の要素の多値を展開し埋め込む
+				MultiValuePtr mv(temp);
 				downsize(1);
 
-				int_t len = ary->size();
+				int_t len = mv->size();
 				for(int_t i=0; i<len; ++i){
-					push(ary->at(i));
+					push(mv->at(i));
 				}
 
 				adjust_result(len-1, need_result_count-n);
 			}else{
-				// 最後の要素が配列ではないので、nullで埋めとく
+				// 最後の要素が配列ではないので、voidで埋めとく
 				for(int_t i = n; i<need_result_count; ++i){
-					push(null);
+					push(undefined);
 				}
 			}
 		}
@@ -3758,6 +3757,36 @@ void VMachine::adjust_arg(int_t n){
 	adjust_result(f.ordered_arg_count, n);
 	f.named_arg_count = 0;
 	f.ordered_arg_count = n;
+}
+
+void VMachine::flatten_arg(){
+	FunFrame& f = ff();
+	adjust_arg(1);
+	if(MultiValuePtr mv = arg(0)->flatten_mv()){
+		downsize(1);
+		for(uint_t i=0; i<mv->size(); ++i){
+			push(mv->at(i));
+		}
+		f.ordered_arg_count = mv->size();
+	}else{
+		downsize(1);
+		f.ordered_arg_count = 0;
+	}
+}
+
+void VMachine::flatten_all_arg(){
+	FunFrame& f = ff();
+	adjust_arg(1);
+	if(MultiValuePtr mv = arg(0)->flatten_all_mv()){
+		downsize(1);
+		for(uint_t i=0; i<mv->size(); ++i){
+			push(mv->at(i));
+		}
+		f.ordered_arg_count = mv->size();
+	}else{
+		downsize(1);
+		f.ordered_arg_count = 0;
+	}
 }
 
 void VMachine::set_local_variable(int_t pos, const Innocence& value){
@@ -3789,7 +3818,7 @@ const AnyPtr& VMachine::local_variable(int_t pos){
 			outer = outer->outer().get();
 		}
 	}
-	return nop;
+	return undefined;
 }
 
 ArgumentsPtr VMachine::make_arguments(){

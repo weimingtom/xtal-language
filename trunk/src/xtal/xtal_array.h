@@ -222,6 +222,8 @@ public:
 	*/
 	void assign(const AnyPtr& iterator);
 
+	void concat(const AnyPtr& iterator);
+
 	AnyPtr* data(){
 		return values_;
 	}
@@ -288,8 +290,18 @@ protected:
 
 class MultiValue : public Array{
 public:
-	MultiValue(int_t size)
+
+	MultiValue(int_t size = 0)
 		:Array(size){}
+
+	MultiValuePtr clone();
+
+	MultiValuePtr flatten_mv();
+
+	MultiValuePtr flatten_all_mv();
+
+	StringPtr to_s();
+
 };
 
 

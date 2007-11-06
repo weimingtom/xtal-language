@@ -219,7 +219,7 @@ const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondar
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}
-	return nop;
+	return undefined;
 }
 
 const AnyPtr& Class::bases_member(const IDPtr& name){
@@ -228,7 +228,7 @@ const AnyPtr& Class::bases_member(const IDPtr& name){
 			return ret;
 		}
 	}
-	return nop;
+	return undefined;
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
@@ -246,7 +246,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 			if(it->second.flags & KIND_PROTECTED && !self->is(ClassPtr(this))){
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "protected")))
-				, return nop);			
+				, return undefined);			
 			}
 
 			return members_->at(it->second.num);
@@ -257,26 +257,26 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	if(inherited_too){
 		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
 			const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i))->member(primary_key, secondary_key, self);
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				return ret;
 			}
 		}
 	}
 
-	return nop;
+	return undefined;
 }
 
 const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
 	{
 		const AnyPtr& ret = find_member(primary_key, secondary_key, self, inherited_too);
-		if(rawne(ret, nop)){
+		if(rawne(ret, undefined)){
 			return ret;
 		}
 	}
 		
 	{
 		const AnyPtr& ret = get_cpp_class<Any>()->any_member(primary_key, secondary_key);
-		if(rawne(ret, nop)){
+		if(rawne(ret, undefined)){
 			return ret;
 		}
 	}
@@ -287,21 +287,21 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	if(const ClassPtr& klass = ptr_as<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
 			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), self, inherited_too);
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				return ret;
 			}
 		}
 
 		if(rawne(get_cpp_class<Any>(), klass)){
 			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too);
-			if(rawne(ret, nop)){
+			if(rawne(ret, undefined)){
 				return ret;
 			}
 		}	
 	}
 
 	// やっぱり見つからなかった。
-	return nop;
+	return undefined;
 }
 
 void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
@@ -433,7 +433,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 				return rawdef(primary_key, load(file_name), secondary_key);
 			}
 		}
-		return nop;
+		return undefined;
 
 		/* 指定した名前をフォルダーとみなす
 		ArrayPtr next = path_.clone();

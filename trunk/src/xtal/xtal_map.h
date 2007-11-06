@@ -7,7 +7,7 @@ class Map : public Base{
 public:
 
 	Map()
-		:default_value_(nop){}
+		:default_value_(undefined){}
 		
 	/**
 	* @brief iに対応する要素を返す

@@ -4,7 +4,7 @@
 namespace xtal{
 
 Null null;
-Nop nop;
+Undefined undefined;
 
 namespace{
 
@@ -76,6 +76,10 @@ namespace{
 		return (range->left_closed() ? (range->left() <= v) : (range->left() < v)) && (range->right_closed() ? (v <= range->right()) : (v < range->right()));
 	}
 
+	AnyPtr to_mv_Undefined(const AnyPtr& v){
+		return xnew<MultiValue>();
+	}
+	
 	class IntRangeIter : public Base{
 	public:
 
@@ -109,12 +113,19 @@ void initialize_basic_type(){
 	builtin()->def("Int", new_cpp_class<Int>());
 	builtin()->def("Float", new_cpp_class<Float>());
 	builtin()->def("Null", new_cpp_class<Null>());
-	builtin()->def("Nop", new_cpp_class<Nop>());
+	builtin()->def("Undefined", new_cpp_class<Undefined>());
 	builtin()->def("True", new_cpp_class<True>());
 	builtin()->def("False", new_cpp_class<False>());
 	builtin()->def("IntRange", new_cpp_class<IntRange>());
 	builtin()->def("FloatRange", new_cpp_class<FloatRange>());
 	builtin()->def("ChRange", new_cpp_class<ChRange>());
+
+
+	{
+		ClassPtr p = new_cpp_class<Undefined>("Undefined");	
+		p->method("to_mv", &to_mv_Undefined);
+	}
+	
 
 	{
 		ClassPtr p = new_cpp_class<Int>("Int");	

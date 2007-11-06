@@ -17,8 +17,8 @@ public:
 	* @brief nameメンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
-	* @retval nop そのメンバは存在しない
-	* @retval 非nop nameに対応したメンバ  
+	* @retval undefined そのメンバは存在しない
+	* @retval 非undefined nameに対応したメンバ  
 	*/
 	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 

@@ -111,7 +111,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	register_value(null);
 	
 	result_->once_table_ = xnew<Array>();
-	result_->once_table_->push_back(nop);
+	result_->once_table_->push_back(undefined);
 
 	linenos_.push(1);
 
@@ -201,7 +201,7 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 			put_inst(InstSetLocalVariable2Byte(info.pos));
 		}
 
-		info.entry->value = nop;
+		info.entry->value = undefined;
 
 		return true;
 	}else{
@@ -218,9 +218,9 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 		if(rhs){
 			AnyPtr val = info.entry->initialized ? info.entry->value : do_expr(rhs);
 
-			if(raweq(val, nop) || info.entry->assigned){
+			if(raweq(val, undefined) || info.entry->assigned){
 
-				if(raweq(val, nop)){
+				if(raweq(val, undefined)){
 					compile_expr(rhs);
 				}else{
 					put_val_code(val);
@@ -488,7 +488,7 @@ void CodeBuilder::put_val_code(const AnyPtr& val){
 void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2){
 	AnyPtr val = do_expr(e);
 
-	if(rawne(val, nop)){
+	if(rawne(val, undefined)){
 		if(!val){
 			set_jump(InstGoto::OFFSET_address, label_if);
 			put_inst(InstGoto());
@@ -603,7 +603,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	VarFrame::Entry entry;
 	entry.name = name;
 	entry.expr = expr;
-	entry.value = nop;
+	entry.value = undefined;
 	entry.constant = constant;
 	entry.initialized = define;
 	entry.accessibility = accessibility;
@@ -648,7 +648,7 @@ void CodeBuilder::var_end(){
 				case InstSetLocalVariable1Byte/*Direct*/::NUMBER:
 				case InstBlockBegin/*Direct*/::NUMBER:
 				case InstBlockEnd/*Direct*/::NUMBER:
-				case InstIfArgIsNop/*Direct*/::NUMBER:
+				case InstIfArgIsUndefined/*Direct*/::NUMBER:
 					p->op += 1;
 					break;
 			}
@@ -672,7 +672,7 @@ void CodeBuilder::block_begin(){
 		// 変数を消せるか調べる
 		if(entry.expr && !entry.assigned){
 			entry.value = do_expr(entry.expr);
-			if(rawne(entry.value, nop)){
+			if(rawne(entry.value, undefined)){
 				entry.initialized = true;
 				entry.removed = true;
 				real_entry_num--;
@@ -825,7 +825,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 
-			info.entry->value = nop;
+			info.entry->value = undefined;
 
 		}else{
 			put_inst(InstGlobalVariable(register_identifier(term->lvar_name())));
@@ -1119,9 +1119,9 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 			if(v){
 				int_t label = reserve_label();
 				
-				set_jump(InstIfArgIsNop::OFFSET_address, label);
+				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
 				var_set_direct(vf());
-				put_inst(InstIfArgIsNop(e->fun_params()->size()-1-i, 0));
+				put_inst(InstIfArgIsUndefined(e->fun_params()->size()-1-i, 0));
 
 				compile_expr(v);
 				
@@ -1267,13 +1267,13 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		}else if(info.need_result_count!=0){
 			put_inst(InstAdjustResult(0, info.need_result_count));
 		}
-		return nop;
+		return undefined;
 	}
 
 	ExprPtr e = ep(p);
 
 	AnyPtr val = do_expr(e);
-	if(rawne(val, nop)){
+	if(rawne(val, undefined)){
 		if(info.need_result_count!=0){
 			put_val_code(val);
 
@@ -1295,7 +1295,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_NODEFAULT;
 
 		XTAL_CASE(EXPR_NULL){ put_inst(InstPushNull()); }
-		XTAL_CASE(EXPR_NOP){ put_inst(InstPushNop()); }
+		XTAL_CASE(EXPR_UNDEFINED){ put_inst(InstPushUndefined()); }
 		XTAL_CASE(EXPR_TRUE){ put_inst(InstPushTrue()); }
 		XTAL_CASE(EXPR_FALSE){ put_inst(InstPushFalse()); }
 		XTAL_CASE(EXPR_THIS){ put_inst(InstPushThis()); }
@@ -1454,7 +1454,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			
 			set_jump(InstOnce::OFFSET_address, label_end);
 			int_t num = result_->once_table_->size();
-			result_->once_table_->push_back(nop);
+			result_->once_table_->push_back(undefined);
 			put_inst(InstOnce(0, num));
 						
 			compile_expr(e->una_term());
@@ -1466,7 +1466,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_STATIC){
 			AnyPtr val = do_expr_static(e->una_term());
-			if(raweq(val, nop)){
+			if(raweq(val, undefined)){
 				error_->error(lineno(), "static error");
 			}else{
 				put_inst(InstValue(register_value(val)));
@@ -1587,7 +1587,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		put_inst(InstAdjustResult(result_count, info.need_result_count));
 	}
 
-	return nop;
+	return undefined;
 }
 
 void CodeBuilder::compile_stmt(const AnyPtr& p){
@@ -1817,7 +1817,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_IF){
 
 			AnyPtr val = do_expr(e->if_cond());
-			if(rawne(val, nop)){
+			if(rawne(val, undefined)){
 				if(val){
 					compile_stmt(e->if_body());
 				}else{
@@ -1937,7 +1937,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			set_jump(InstOnce::OFFSET_address, label_jump);
 			int_t num = result_->once_table_->size();
-			result_->once_table_->push_back(nop);
+			result_->once_table_->push_back(undefined);
 			put_inst(InstOnce(0, num));
 
 			MapPtr jump_map = xnew<Map>();
@@ -1999,7 +1999,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	}
 }
 
-#define XTAL_CB_DO_EXPR(name, expr) AnyPtr name = do_expr(expr); if(raweq(name, nop)) return nop;
+#define XTAL_CB_DO_EXPR(name, expr) AnyPtr name = do_expr(expr); if(raweq(name, undefined)) return undefined;
 
 AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const IDPtr& name, bool swap){
 	if(is_comp_bin(e->bin_lhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
@@ -2016,43 +2016,43 @@ AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const IDPtr& name, bool swap){
 }
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
-	AnyPtr ret = nop;
+	AnyPtr ret = undefined;
 	XTAL_TRY{
 		VMachinePtr vm = vmachine();
 		vm->setup_call();
 		a->rawsend(vm, name, null, null, false);
-		if(!vm->processed()){ vm->return_result(nop); }
+		if(!vm->processed()){ vm->return_result(undefined); }
 		ret = vm->result_and_cleanup_call();
 	}XTAL_CATCH(e){
 		(void)e;
-		ret = nop;
+		ret = undefined;
 	}
 	return ret;
 }
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b){
-	AnyPtr ret = nop;
+	AnyPtr ret = undefined;
 	XTAL_TRY{
 		VMachinePtr vm = vmachine();
 		vm->setup_call(1, b);
 		a->rawsend(vm, name, b->get_class(), null, false);
-		if(!vm->processed()){ vm->return_result(nop); }
+		if(!vm->processed()){ vm->return_result(undefined); }
 		ret = vm->result_and_cleanup_call();
 		if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
 			|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>())){
 			return ret;
 		}
 
-		return nop;
+		return undefined;
 	}XTAL_CATCH(e){
 		(void)e;
-		ret = nop;
+		ret = undefined;
 	}
 	return ret;
 }
 
 AnyPtr CodeBuilder::do_not(const AnyPtr& v){
-	if(raweq(v, nop)) return nop;
+	if(raweq(v, undefined)) return undefined;
 	return !v;
 }
 
@@ -2069,31 +2069,31 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_NODEFAULT;
 
 		XTAL_CASE(EXPR_NULL){ return null; }
-		XTAL_CASE(EXPR_NOP){ return nop; }
+		XTAL_CASE(EXPR_UNDEFINED){ return undefined; }
 		XTAL_CASE(EXPR_TRUE){ return true; }
 		XTAL_CASE(EXPR_FALSE){ return false; }
-		XTAL_CASE(EXPR_THIS){ return nop; }
-		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return nop; }
-		XTAL_CASE(EXPR_CALLEE){ return nop; }
-		XTAL_CASE(EXPR_ARGS){ return nop; }
+		XTAL_CASE(EXPR_THIS){ return undefined; }
+		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return undefined; }
+		XTAL_CASE(EXPR_CALLEE){ return undefined; }
+		XTAL_CASE(EXPR_ARGS){ return undefined; }
 		XTAL_CASE(EXPR_INT){ return e->int_value(); }
 		XTAL_CASE(EXPR_FLOAT){ return e->float_value(); }
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){
-				return nop;
+				return undefined;
 			}else if(e->string_kind()==KIND_FORMAT){
-				return nop;
+				return undefined;
 			}else{
 				return e->string_value();
 			}
 		}
 
 		XTAL_CASE(EXPR_ARRAY){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_MAP){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_ADD){ return do_bin(e, Xid(op_add)); }
@@ -2129,11 +2129,11 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_IN){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_NIN){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_IS){
@@ -2142,7 +2142,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			if(ClassPtr cp = ptr_as<Class>(rhs)){
 				return lhs->is(cp);
 			}else{
-				return nop;
+				return undefined;
 			}
 		}
 
@@ -2152,7 +2152,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			if(ClassPtr cp = ptr_as<Class>(rhs)){
 				return !lhs->is(cp);
 			}else{
-				return nop;
+				return undefined;
 			}
 		}
 
@@ -2189,7 +2189,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			return rhs;
 		}
 
-		XTAL_CASE(EXPR_RANGE){ return nop; }
+		XTAL_CASE(EXPR_RANGE){ return undefined; }
 
 		XTAL_CASE(EXPR_POS){
 			XTAL_CB_DO_EXPR(term, e->una_term());
@@ -2212,7 +2212,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_ONCE){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_STATIC){
@@ -2220,15 +2220,15 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_SEND){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_CALL){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_FUN){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_LVAR){
@@ -2239,11 +2239,11 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 					return info.entry->value;
 				}
 			}
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_IVAR){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_MEMBER){
@@ -2257,20 +2257,20 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 				}
 			}XTAL_CATCH(e){
 				(void)e;
-				return nop;
+				return undefined;
 			}
 		}
 
 		XTAL_CASE(EXPR_CLASS){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_BRACKET){
-			return nop;
+			return undefined;
 		}
 	}
 
-	return nop;
+	return undefined;
 }
 
 void CodeBuilder::check_lvar_assign(const ExprPtr& e){
@@ -2278,7 +2278,7 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
 			info.entry->assigned = true;
-			info.entry->value = nop;
+			info.entry->value = undefined;
 		}
 	}
 }
@@ -2353,7 +2353,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-#define XTAL_CB_DO_EXPR_STATIC(name, expr) AnyPtr name = do_expr_static(expr); if(raweq(name, nop)) return nop;
+#define XTAL_CB_DO_EXPR_STATIC(name, expr) AnyPtr name = do_expr_static(expr); if(raweq(name, undefined)) return undefined;
 
 AnyPtr CodeBuilder::do_bin_static(const ExprPtr& e, const IDPtr& name, bool swap){
 	if(is_comp_bin(e->bin_lhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
@@ -2381,10 +2381,10 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 
 		XTAL_DEFAULT{
 			AnyPtr val = do_expr(e);
-			if(rawne(val, nop)){
+			if(rawne(val, undefined)){
 				return val;
 			}
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_ARRAY){
@@ -2443,7 +2443,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 			if(ClassPtr cp = ptr_as<Class>(rhs)){
 				return lhs->is(cp);
 			}else{
-				return nop;
+				return undefined;
 			}
 		}
 
@@ -2453,7 +2453,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 			if(ClassPtr cp = ptr_as<Class>(rhs)){
 				return !lhs->is(cp);
 			}else{
-				return nop;
+				return undefined;
 			}
 		}
 
@@ -2511,7 +2511,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_ONCE){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_STATIC){
@@ -2521,7 +2521,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 		XTAL_CASE(EXPR_SEND){
 			XTAL_CB_DO_EXPR_STATIC(term, e->send_term());
 
-			AnyPtr ret = nop;
+			AnyPtr ret = undefined;
 			XTAL_TRY{
 				IDPtr name = e->send_name();
 				if(e->send_pname()){
@@ -2532,18 +2532,18 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 				VMachinePtr vm = vmachine();
 				vm->setup_call();
 				term->rawsend(vm, name, null, null, false);
-				if(!vm->processed()){ vm->return_result(nop); }
+				if(!vm->processed()){ vm->return_result(undefined); }
 				ret = vm->result_and_cleanup_call();
 			}XTAL_CATCH(e){
 				(void)e;
-				ret = nop;
+				ret = undefined;
 			}
 			return ret;
 		}
 
 		XTAL_CASE(EXPR_CALL){
 			if(e->call_args()){
-				return nop;
+				return undefined;
 			}
 
 			ArrayPtr ordered = xnew<Array>();
@@ -2558,7 +2558,7 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 				named->set_at(k, temp);
 			}
 
-			AnyPtr ret = nop;
+			AnyPtr ret = undefined;
 			XTAL_TRY{
 				VMachinePtr vm = vmachine();
 				if(e->call_term()->tag()==EXPR_SEND){
@@ -2584,23 +2584,23 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 					term->call(vm);
 				}
 
-				if(!vm->processed()){ vm->return_result(nop); }
+				if(!vm->processed()){ vm->return_result(undefined); }
 				ret = vm->result_and_cleanup_call(0);
 			}XTAL_CATCH(e){
 				(void)e;
-				ret = nop;
+				ret = undefined;
 			}
 			return ret;
 		}
 
 		XTAL_CASE(EXPR_FUN){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_LVAR){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
 			if(info.pos>=0){
-				//if(rawne(info.entry->value, nop)){
+				//if(rawne(info.entry->value, undefined)){
 				//	info.entry->constant = true;
 				//}
 				return info.entry->value;
@@ -2609,14 +2609,14 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 					return builtin()->member(e->lvar_name());
 				}XTAL_CATCH(e){
 					(void)e;
-					return nop;
+					return undefined;
 				}
 			}
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_IVAR){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_MEMBER){
@@ -2630,20 +2630,20 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 				}
 			}XTAL_CATCH(e){
 				(void)e;
-				return nop;
+				return undefined;
 			}
 		}
 
 		XTAL_CASE(EXPR_CLASS){
-			return nop;
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_BRACKET){
-			return nop;
+			return undefined;
 		}
 	}
 
-	return nop;
+	return undefined;
 }
 
 }

@@ -46,8 +46,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			return;
 		}
 		
-		XTAL_CASE(TYPE_NOP){
-			stream_->put_u8(TNOP);
+		XTAL_CASE(TYPE_UNDEFINED){
+			stream_->put_u8(TUNDEFINED);
 			return;
 		}
 
@@ -213,8 +213,8 @@ AnyPtr Serializer::inner_deserialize(){
 			return null;
 		}
 		
-		XTAL_CASE(TNOP){
-			return nop;
+		XTAL_CASE(TUNDEFINED){
+			return undefined;
 		}
 
 		XTAL_CASE(TINT){
@@ -311,7 +311,7 @@ AnyPtr Serializer::inner_deserialize(){
 			sz = stream_->get_u16be();
 			p->once_table_ = xnew<Array>(sz);
 			for(int_t i=0; i<sz; ++i){
-				p->once_table_->set_at(i, nop);
+				p->once_table_->set_at(i, undefined);
 			}
 
 			FunPtr ret(xnew<Fun>(null, null, p, &p->xfun_core_table_[0]));
@@ -351,7 +351,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 
 int_t Serializer::register_value(const AnyPtr& v, bool& added){
 	AnyPtr ret = map_->at(v);
-	if(rawne(ret, nop)){
+	if(rawne(ret, undefined)){
 		added = false;
 	}else{
 		ret = append_value(v);

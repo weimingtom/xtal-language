@@ -7,7 +7,7 @@ namespace xtal{
 
 enum ExprType{
 	EXPR_NULL,
-	EXPR_NOP,
+	EXPR_UNDEFINED,
 	EXPR_TRUE,
 	EXPR_FALSE,
 	EXPR_CALLEE,
@@ -293,7 +293,7 @@ public:
 	ExprPtr float_(float_t value){ return Expr::make(EXPR_FLOAT, lineno_)->set_float_value(value); }
 
 	ExprPtr null_(){ return Expr::make(EXPR_NULL, lineno_); }
-	ExprPtr nop_(){ return Expr::make(EXPR_NOP, lineno_); }
+	ExprPtr undefined_(){ return Expr::make(EXPR_UNDEFINED, lineno_); }
 	ExprPtr true_(){ return Expr::make(EXPR_TRUE, lineno_); }
 	ExprPtr false_(){ return Expr::make(EXPR_FALSE, lineno_); }
 	ExprPtr this_(){ return Expr::make(EXPR_THIS, lineno_); }

@@ -77,7 +77,7 @@ void Base::call(const VMachinePtr& vm){
 }
 
 const AnyPtr& Base::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){ 
-	return nop;
+	return undefined;
 }
 
 

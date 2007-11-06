@@ -76,7 +76,7 @@ void CodeBuilder::interactive_compile(){
 				if(code_size()==0)
 					continue;
 
-				//result_->inspect_range(last_code_size, code_size())->p();
+				result_->inspect_range(last_code_size, code_size())->p();
 
 				put_inst(InstReturn0());
 				put_inst(InstThrow());

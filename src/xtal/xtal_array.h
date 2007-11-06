@@ -286,5 +286,11 @@ protected:
 	virtual void visit_members(Visitor& m);
 };
 
+class MultiValue : public Array{
+public:
+	MultiValue(int_t size)
+		:Array(size){}
+};
+
 
 }

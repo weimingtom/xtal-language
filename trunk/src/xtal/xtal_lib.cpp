@@ -108,7 +108,6 @@ void initialize_builtin(){
 	builtin()->fun("disable_gc", &disable_gc);
 	builtin()->fun("enable_gc", &enable_gc);
 	builtin()->fun("clock", &clock_);
-	builtin()->fun("fun2lazy", &fun2lazy);
 
 	lib()->def("builtin", builtin());
 	
@@ -155,10 +154,6 @@ Iterator::p: method(){
 	}
 	m.to_s.p;
 	return chain(a.each, this);
-}
-
-Iterator::to_s: method(){
-	return "<Iterator>";
 }
 
 Iterator::to_a: method(){
@@ -453,16 +448,16 @@ Int::times: method{
 	}
 }
 
-String::gsub: method(pattern, fn){
-	elem: (xeg::anych - pattern)*0;
-	split: elem >> (pattern[|| [fn(it)]] >> elem)*0;
-	ret: [];
-	xeg::join(split).parse_string(this, ret);
-	return ret[0];
-}
-
 Null::to_s: method{
 	return "null";
+}
+
+Null::to_a: method{
+	return [];
+}
+
+Null::to_m: method{
+	return [:];
 }
 
 Null::block_first: method{
@@ -558,6 +553,22 @@ builtin::ClassicIterator: class{
 
 Iterator::classic: method ClassicIterator(this);
 
+String::gsub: method(pattern, fn){
+	mm: MemoryStream();
+	this.scan(pattern){
+		prefix: it.prefix;
+		mm.put_s(prefix);
+		
+		ordered: [it[0]] ~ it.captures[].p;
+		named: it.named_captures[:];
+		named["prefix"] = prefix;
+		
+		mm.put_s(fn(...Arguments(ordered, named)));
+	}
+	
+	return mm.to_s;
+}
+	
 	))();
 
 	Xsrc((

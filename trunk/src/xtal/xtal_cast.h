@@ -181,11 +181,6 @@ struct CastHelper{
 
 };
 
-inline const AnyPtr& do_lazy(const AnyPtr& a){
-	if(type(a)==TYPE_LAZY){ return a->do_lazy(); }
-	return a;
-}
-
 /**
 * @brief T型に変換する。
 *
@@ -197,7 +192,7 @@ inline const AnyPtr& do_lazy(const AnyPtr& a){
 template<class T> 
 inline typename CastResult<T>::type 
 as(const AnyPtr& a){
-	return CastHelper<T>::as(do_lazy(a));
+	return CastHelper<T>::as(a->self());
 }
 
 /**
@@ -208,7 +203,7 @@ as(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 cast(const AnyPtr& a){
-	return CastHelper<T>::cast(do_lazy(a));
+	return CastHelper<T>::cast(a->self());
 }
 
 /**
@@ -219,7 +214,7 @@ cast(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
-	return CastHelper<T>::arg_cast(do_lazy(a), param_num, param_name);
+	return CastHelper<T>::arg_cast(a->self(), param_num, param_name);
 }
 
 /**
@@ -230,7 +225,7 @@ arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
 template<class T> 
 inline const SmartPtr<T>&
 ptr_as(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::as(do_lazy(a));
+	return CastHelper<const SmartPtr<T>&>::as(a->self());
 }
 
 /**
@@ -241,7 +236,7 @@ ptr_as(const AnyPtr& a){
 template<class T>
 inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::cast(do_lazy(a));
+	return CastHelper<const SmartPtr<T>&>::cast(a->self());
 }
 
 /**

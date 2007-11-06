@@ -95,10 +95,6 @@ protected:
 		value_ = 0;
 	}
 
-	void set_lazy(){
-		type_ = TYPE_LAZY;
-	}
-
 public:
 
 	friend int_t type(const Innocence& v);
@@ -112,7 +108,7 @@ public:
 	friend void swap(Innocence& a, Innocence& b);
 	friend void set_null_force(Innocence& v);
 	friend void copy_innocence(Innocence& v, const Innocence& u);
-	friend AnyPtr fun2lazy(const AnyPtr& value);
+	friend void set_lazy(Innocence& v){ v.type_ = TYPE_LAZY; }
 
 public:
 
@@ -323,6 +319,11 @@ public:
 	*/
 	AnyPtr p() const;
 
+	/**
+	* @brief nameメソッドを呼び出す
+	*/
+	SendProxy send(const IDPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
+
 	AnyPtr s_save() const;
 
 	void s_load(const AnyPtr& v) const;
@@ -331,13 +332,29 @@ public:
 
 	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
-	const AnyPtr& self() const{ return *(AnyPtr*)this; }
+	/**
+	* @brief 遅延オブジェクト化する
+	*/
+	AnyPtr lazy() const;
 
-	const AnyPtr& do_lazy() const;
+	/**
+	* @brief 永遠遅延オブジェクト化する
+	*/
+	AnyPtr ever_lazy() const;
 
-public:
+	/**
+	* @brief 自身を返す。
+	*
+	* もし自身がlazyオブジェクトの場合、評価した結果を返す
+	*/
+	const AnyPtr& self() const{
+		if(type(*this)==TYPE_LAZY){ return evalute(); }
+		return (const AnyPtr&)*this;
+	}
 
-	SendProxy send(const IDPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
+private:
+
+	const AnyPtr& evalute() const;
 
 };
 

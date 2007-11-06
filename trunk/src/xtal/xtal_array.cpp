@@ -72,6 +72,11 @@ void initialize_array(){
 		p->method("op_eq", &Array::op_eq, get_cpp_class<Array>());
 	}
 
+	{
+		ClassPtr p = new_cpp_class<MultiValue>("MultiValue");
+		p->inherit(get_cpp_class<Array>());
+	}
+
 	builtin()->def("Array", get_cpp_class<Array>());
 }
 

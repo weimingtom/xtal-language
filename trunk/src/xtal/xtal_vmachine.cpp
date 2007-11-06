@@ -3716,10 +3716,10 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
 	if(need_result_count<n){
 
-		// 余った戻り値を配列に直す。
+		// 余った戻り値を多値に直す。
 		int_t size = n-need_result_count+1;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ArrayPtr ret(xnew<Array>(size));
+			ArrayPtr ret(xnew<MultiValue>(size));
 			for(int_t i=0; i<size; ++i){
 				ret->set_at(i, get(size-1-i));
 			}
@@ -3729,27 +3729,24 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 	}else{
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
-		if(const ArrayPtr& temp = xtal::as<const ArrayPtr&>(get())){
-
-			int_t len;
-
-			// 配列を展開し埋め込む
-			XTAL_GLOBAL_INTERPRETER_LOCK{
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			if(const ArrayPtr& temp = xtal::ptr_as<Array>(get())){
+				// 配列を展開し埋め込む
 				// 最後の要素の配列を展開する。
 				ArrayPtr ary(temp);
 				downsize(1);
 
-				len = ary->size();
+				int_t len = ary->size();
 				for(int_t i=0; i<len; ++i){
 					push(ary->at(i));
 				}
-			}
 
-			adjust_result(len-1, need_result_count-n);
-		}else{
-			// 最後の要素が配列ではないので、nullで埋めとく
-			for(int_t i = n; i<need_result_count; ++i){
-				push(null);
+				adjust_result(len-1, need_result_count-n);
+			}else{
+				// 最後の要素が配列ではないので、nullで埋めとく
+				for(int_t i = n; i<need_result_count; ++i){
+					push(null);
+				}
 			}
 		}
 	}

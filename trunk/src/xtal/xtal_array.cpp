@@ -79,7 +79,7 @@ void initialize_array(){
 
 		p->def("new", ctor<MultiValue, int_t>()->param(Named("size", 0)));
 		p->method("clone", &MultiValue::clone);
-		p->method("to_a", &MultiValue::clone);
+		p->method("to_a", &Array::clone);
 		p->method("to_s", &MultiValue::to_s);
 		p->method("to_mv", &Any::self);
 		p->method("flatten_mv", &MultiValue::flatten_mv);

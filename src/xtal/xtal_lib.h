@@ -115,9 +115,9 @@ const VMachinePtr& vmachine();
 const ClassPtr& Iterator();
 
 /**
-* @brief Enumeratorクラスを返す
+* @brief Iterableクラスを返す
 */
-const ClassPtr& Enumerator();
+const ClassPtr& Iterable();
 
 /**
 * @brief builtinシングルトンクラスを返す

@@ -945,8 +945,19 @@ ExprPtr Parser::parse_term(){
 
 				XTAL_CASE('('){ 
 					ret = parse_expr();
-					if(ret->tag()==EXPR_SEND){
-						ret = em.bracket(ret);
+					if(ret){
+						if(eat(',')){
+							ArrayPtr mv = parse_exprs();
+							mv->insert(0, ret);
+							ret = em.multi_value(mv);
+						}else{
+							if(ret->tag()==EXPR_SEND){
+								ret = em.bracket(ret);
+							}	
+						}
+					}
+					else{
+						ret = em.undefined_();
 					}
 					expect(')'); 
 					expr_end_flag_ = false; 
@@ -958,7 +969,8 @@ ExprPtr Parser::parse_term(){
 				XTAL_CASE('{'){
 					if(eat('|')){
 						ret = parse_fun(KIND_LAMBDA, true);
-					}else{
+					}
+					else{
 						ret = em.fun(KIND_LAMBDA, make_map(Xid(it), null), false, null); 
 						ret->set_fun_body(parse_scope());
 					}
@@ -968,7 +980,8 @@ ExprPtr Parser::parse_term(){
 					ret = em.fun(KIND_LAMBDA, make_map(Xid(it), null), false, null); 
 					if(eat('{')){
 						ret->set_fun_body(parse_scope());
-					}else{
+					}
+					else{
 						ret->set_fun_body(em.return_(make_array(must_parse_expr())));
 					}
 				}
@@ -984,7 +997,8 @@ ExprPtr Parser::parse_term(){
 					if(ch=='t'){
 						kind = KIND_TEXT;
 						ch = lexer_.read_direct();
-					}else if(ch=='f'){
+					}
+					else if(ch=='f'){
 						kind = KIND_FORMAT;
 						ch = lexer_.read_direct();
 					}
@@ -1066,7 +1080,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 
 		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
 			expr_end_flag_ = false;
-		}else{
+		}
+		else{
 			return null;
 		}
 	}
@@ -1705,6 +1720,9 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 		while(true){
 			
 			if(eat(lambda ? '|' : ')')){
+				if(lambda && params->empty()){
+					params->set_at(Xid(it), null);
+				}
 				break;
 			}
 				
@@ -1908,7 +1926,7 @@ ExprPtr Parser::parse_while(const IDPtr& label){
 	ExprMaker em(lineno());
 	expect('(');
 	ExprPtr efor = em.for_(label, null, null, null, null, null);
-	if(IDPtr var = parse_var()){
+	/*if(IDPtr var = parse_var()){
 		ExprPtr escope = em.scope(xnew<Array>());
 		escope->scope_stmts()->push_back(em.define(em.lvar(var), must_parse_expr()));
 		expect(')');
@@ -1916,22 +1934,25 @@ ExprPtr Parser::parse_while(const IDPtr& label){
 		efor->set_for_body(must_parse_stmt());
 		if(eat(Token::KEYWORD_ELSE)){
 			efor->set_for_else(must_parse_stmt());
-		}else if(eat(Token::KEYWORD_NOBREAK)){
+		}
+		else if(eat(Token::KEYWORD_NOBREAK)){
 			efor->set_for_nobreak(must_parse_stmt());
 		}		
 		escope->scope_stmts()->push_back(efor);
 		return escope;
-	}else{
+	}
+	else{*/
 		efor->set_for_cond(must_parse_expr());
 		expect(')');
 		efor->set_for_body(must_parse_stmt());
 		if(eat(Token::KEYWORD_ELSE)){
 			efor->set_for_else(must_parse_stmt());
-		}else if(eat(Token::KEYWORD_NOBREAK)){
+		}
+		else if(eat(Token::KEYWORD_NOBREAK)){
 			efor->set_for_nobreak(must_parse_stmt());
 		}
 		return efor;		
-	}
+	/*}*/
 }
 
 ExprPtr Parser::parse_switch(){

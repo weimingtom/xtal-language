@@ -330,22 +330,27 @@ AnyPtr Serializer::inner_deserialize(){
 }
 
 AnyPtr Serializer::demangle(const AnyPtr& n){
-	AnyPtr ret;
-	Xfor(v, static_ptr_cast<String>(n)->split("::")){
-		IDPtr id = static_ptr_cast<String>(v)->intern();
+	AnyPtr ret = demangle_map_->at(n);
+	if(ret){
+		return ret;
+	}
+
+	Xfor(v, n->send("split")("::")){
+		IDPtr id = ptr_cast<String>(v)->intern();
 		if(!ret){
 			if(raweq(id, Xid(lib))){
 				ret = lib();
-				map_->set_at(n, ret);
 			}
 		}else{
 			ret = ret->member(id);
-			map_->set_at(n, ret);
 		}
 	}
+
 	if(!ret){
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", n))), return null);
 	}
+
+	demangle_map_->set_at(n, ret);
 	return ret;
 }
 

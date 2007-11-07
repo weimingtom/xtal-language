@@ -1263,7 +1263,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 	if(!p){
 		if(info.need_result_count==1){
-			put_inst(InstPushNull());
+			put_inst(InstPushUndefined());
 		}else if(info.need_result_count!=0){
 			put_inst(InstAdjustResult(0, info.need_result_count));
 		}
@@ -1349,6 +1349,19 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				compile_expr(k);
 				compile_expr(v);
 				put_inst(InstMapInsert());				
+			}
+		}
+
+		XTAL_CASE(EXPR_MULTI_VALUE){
+			if(e->multi_value_exprs()){
+				Xfor(v, e->multi_value_exprs()){
+					compile_expr(v);		
+				}
+				
+				result_count = e->multi_value_exprs()->size();
+			}
+			else{
+				result_count = 0;
 			}
 		}
 
@@ -1628,7 +1641,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		
 		XTAL_CASE(EXPR_ASSIGN){
 			if(e->bin_lhs()->tag()==EXPR_LVAR){
-				AnyPtr val = compile_expr(e->bin_rhs());
+				compile_expr(e->bin_rhs());
 				put_set_local_code(e->bin_lhs()->lvar_name());
 			}else if(e->bin_lhs()->tag()==EXPR_IVAR){
 				compile_expr(e->bin_rhs());
@@ -2096,6 +2109,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			return undefined;
 		}
 
+		XTAL_CASE(EXPR_MULTI_VALUE){
+			return undefined;
+		}
+
 		XTAL_CASE(EXPR_ADD){ return do_bin(e, Xid(op_add)); }
 		XTAL_CASE(EXPR_SUB){ return do_bin(e, Xid(op_sub)); }
 		XTAL_CASE(EXPR_CAT){ return do_bin(e, Xid(op_cat)); }
@@ -2403,6 +2420,10 @@ AnyPtr CodeBuilder::do_expr_static(const AnyPtr& p){
 				values->set_at(k, temp);
 			}
 			return values;
+		}
+
+		XTAL_CASE(EXPR_MULTI_VALUE){
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_ADD){ return do_bin_static(e, Xid(op_add)); }

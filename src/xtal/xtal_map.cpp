@@ -62,7 +62,7 @@ void initialize_map(){
 
 	{
 		ClassPtr p = new_cpp_class<Map>("Map");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 		
 		p->def("new", ctor<Map>());
 		p->method("to_s", &Map::to_s);

@@ -83,71 +83,6 @@ static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& s
 	}
 }
 
-class StringScanIter : public Base{
-	xeg::ScannerPtr scanner_;
-	AnyPtr pattern_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & scanner_ & pattern_;
-	}
-
-public:
-
-	StringScanIter(const StringPtr& str, const AnyPtr& pattern)
-		:scanner_(xnew<xeg::StreamScanner>(xnew<StringStream>(str))), pattern_(pattern){
-	}
-	
-	void block_next(const VMachinePtr& vm){
-		if(scanner_->eos()){
-			return vm->return_result(null, null);
-		}
-
-		for(;;){
-			if(xeg::MatchResultPtr result = xeg::match_scanner(pattern_, scanner_)){
-				vm->return_result(SmartPtr<StringScanIter>(this), result);
-				return;
-			}else{
-				vm->return_result(null, null);
-				return;
-			}
-		}
-	}
-};
-
-class StringSplitIter : public Base{
-	xeg::ScannerPtr scanner_;
-	AnyPtr pattern_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & scanner_ & pattern_;
-	}
-
-public:
-
-	StringSplitIter(const StringPtr& str, const AnyPtr& pattern)
-		:scanner_(xnew<xeg::StreamScanner>(xnew<StringStream>(str))), pattern_(pattern){
-	}
-	
-	void block_next(const VMachinePtr& vm){
-		if(scanner_->eos()){
-			return vm->return_result(null, null);
-		}
-
-		for(;;){
-			if(xeg::MatchResultPtr result = xeg::match_scanner(pattern_, scanner_)){
-				vm->return_result(SmartPtr<StringSplitIter>(this), result->prefix());
-				return;
-			}else{
-				vm->return_result(null, null);
-				return;
-			}
-		}
-	}
-};
-
-
 class StringEachIter : public Base{
 	StringStreamPtr ss_;
 
@@ -320,18 +255,6 @@ void uninitialize_string(){
 void initialize_string(){
 	register_uninitializer(&uninitialize_string);
 	str_mgr_ = xnew<StringMgr>();
-
-	{
-		ClassPtr p = new_cpp_class<StringScanIter>("StringScanIter");
-		p->inherit(Iterator());
-		p->method("block_next", &StringScanIter::block_next);
-	}
-	
-	{
-		ClassPtr p = new_cpp_class<StringSplitIter>("StringSplitIter");
-		p->inherit(Iterator());
-		p->method("block_next", &StringSplitIter::block_next);
-	}
 		
 	{
 		ClassPtr p = new_cpp_class<StringEachIter>("StringEachIter");
@@ -347,7 +270,7 @@ void initialize_string(){
 
 	{
 		ClassPtr p = new_cpp_class<ChRange>("ChRange");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 		p->def("new", ctor<ChRange, const StringPtr&, const StringPtr&>()->param(Named("left", null), Named("right", null)));
 		p->method("left", &ChRange::left);
 		p->method("right", &ChRange::right);
@@ -357,7 +280,7 @@ void initialize_string(){
 
 	{
 		ClassPtr p = new_cpp_class<String>("String");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 
 		p->def("new", ctor<String>());
 		p->method("to_i", &String::to_i);
@@ -369,9 +292,7 @@ void initialize_string(){
 		p->method("size", &String::size);
 		p->method("intern", &String::intern);
 
-		p->method("split", &String::split)->param("i", Named("n", 1));
 		p->method("each", &String::each);
-		p->method("scan", &String::scan);
 
 		p->method("op_range", &String::op_range, get_cpp_class<String>());
 		p->method("op_cat", &String::op_cat, get_cpp_class<String>());
@@ -583,14 +504,6 @@ float_t String::to_f(){
 
 AnyPtr String::each(){
 	return xnew<StringEachIter>(StringPtr(this));
-}
-	
-AnyPtr String::split(const AnyPtr& sep){
-	return  xnew<StringSplitIter>(StringPtr(this), (sep|xeg::eos));
-}
-
-AnyPtr String::scan(const AnyPtr& pattern){
-	return  xnew<StringScanIter>(StringPtr(this), pattern);
 }
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){

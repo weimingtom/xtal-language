@@ -30,6 +30,7 @@ private:
 	void clear(){
 		values_ = xnew<Array>();
 		map_ = xnew<Map>();
+		demangle_map_ = xnew<Map>();
 	}
 
 private:
@@ -39,6 +40,7 @@ private:
 private:
 
 	MapPtr map_;
+	MapPtr demangle_map_;
 	ArrayPtr values_;
 	StreamPtr stream_;
 };

@@ -133,6 +133,13 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
+void Innocence::init_p2(Base* p, const ClassPtr& c){
+	set_p(p);
+	inc_ref_count();
+	p->set_class(c);
+	register_gc(p);
+}
+
 SendProxy Any::send(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
 	return SendProxy(ap(*this), primary_key, secondary_key);
 }

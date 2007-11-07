@@ -138,23 +138,10 @@ public:
 	StringPtr to_s();
 
 	/**
-	* @brief sepで区切った文字列を要素とするIteratorを返す。
-	*
-	* @param sep 文字列かPEGのParser
-	*/ 
-	AnyPtr split(const AnyPtr& sep);
-
-	/**
 	* @brief 一文字づつの文字列を要素とするIteratorを返す。
 	*
 	*/
 	AnyPtr each();
-
-	/**
-	* @brief patternに順番にマッチした結果を要素とするIteratorを返す。
-	*
-	*/
-	AnyPtr scan(const AnyPtr& pattern);
 
 	/**
 	* @brief 連結する

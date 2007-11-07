@@ -99,7 +99,7 @@ void initialize_builtin(){
 	builtin()->def("builtin", builtin());
 
 	builtin()->def("Iterator", Iterator());
-	builtin()->def("Enumerator", Enumerator());
+	builtin()->def("Iterable", Iterable());
 	
 	builtin()->fun("compile_file", &compile_file);
 	builtin()->fun("compile", &compile);
@@ -561,23 +561,66 @@ builtin::ClassicIterator: class{
 
 Iterator::classic: method ClassicIterator(this);
 
+String::scan: method(pattern) fiber{
+	scanner: xeg::create_scanner(this);
+	for(it: scanner.match(pattern); it; it=scanner.match(pattern)){
+		yield it;
+	}
+}
+
+String::split: method(pattern) fiber{
+	scanner: xeg::create_scanner(this);
+	if(prev: scanner.match(pattern)){
+		for(it: prev; it; it=scanner.match(pattern)){
+			yield it.prefix;
+			prev = it;
+		}
+		yield prev.suffix;
+	}
+}
+
 String::gsub: method(pattern, fn){
 	mm: MemoryStream();
-	this.scan(pattern){
+	scanner: xeg::create_scanner(this);
+	if(prev: scanner.match(pattern)){
+		for(it: prev; it; it=scanner.match(pattern)){
+			prefix: it.prefix;
+			mm.put_s(prefix);
+			ordered: [it[0]];
+			ordered.concat(it.captures);
+			named: it.named_captures[:];
+			named["prefix"] = prefix;
+			mm.put_s(fn(...Arguments(ordered, named)));
+			prev = it;
+		}
+		mm.put_s(prev.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+
+String::sub: method(pattern, fn){
+	mm: MemoryStream();
+	scanner: xeg::create_scanner(this);
+	if(it: scanner.match(pattern)){
 		prefix: it.prefix;
+		suffix: it.suffix;
 		mm.put_s(prefix);
-		
 		ordered: [it[0]];
 		ordered.concat(it.captures);
 		named: it.named_captures[:];
 		named["prefix"] = prefix;
-		
+		named["suffix"] = suffix;
 		mm.put_s(fn(...Arguments(ordered, named)));
+		mm.put_s(it.suffix);
+		return mm.to_s;
 	}
-	
-	return mm.to_s;
+	else{
+		return this;
+	}
 }
-	
 	))();
 
 	Xsrc((

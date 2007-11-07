@@ -3,6 +3,8 @@
 
 namespace xtal{
 
+using namespace std;
+
 /** @addtogroup memory */
 /*@{*/
 

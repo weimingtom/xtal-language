@@ -35,7 +35,6 @@ void uninitialize_xeg(){
 	nfa_map_ = null;
 }
 
-
 int_t StreamScanner::do_read(AnyPtr* buffer, int_t max){
 	for(int_t i=0; i<max; ++i){
 		if(stream_->eos()){
@@ -46,6 +45,10 @@ int_t StreamScanner::do_read(AnyPtr* buffer, int_t max){
 	}
 	return max;
 }
+
+
+IteratorScanner::IteratorScanner(const AnyPtr& iter)
+	:iter_(iter->send(Xid(each))){}
 
 int_t IteratorScanner::do_read(AnyPtr* buffer, int_t max){
 	if(!iter_){
@@ -76,12 +79,12 @@ typedef SmartPtr<XegElem> XegElemPtr;
 struct XegElem : public Base{
 
 	enum Type{
-		TYPE_EPSILON, // ãÛ
+		TYPE_EMPTY, // ãÛ
 		TYPE_ANY, // èIóπï∂éöà»äO
-		TYPE_BOS,
-		TYPE_EOS,
-		TYPE_BOL,
-		TYPE_EOL,
+		TYPE_BOS, // beginning of stream
+		TYPE_EOS, // end of stream
+		TYPE_BOL, // beginning of line
+		TYPE_EOL, // end of line
 		TYPE_BACKREF, // å„ï˚éQè∆
 
 		// à»â∫param1ÇÕStringÇ≈Ç†ÇÈéÌóﬁ
@@ -129,10 +132,7 @@ public:
 
 	typedef SmartPtr<Trans> TransPtr;
 
-	enum{
-		STATE_START,
-		STATE_FINAL,
-	};
+	enum{ STATE_START = 0, STATE_FINAL = 1 };
 
 	struct NFA{
 
@@ -319,7 +319,6 @@ XegExprPtr set(const StringPtr& str){
 	return term(xnew<XegElem>(XegElem::TYPE_CH_SET, chset));
 }
 
-
 XegExprPtr or_(const AnyPtr& left, const AnyPtr& right){
 	XegExprPtr xleft = expr(left);
 	XegExprPtr xright = expr(right);
@@ -449,7 +448,7 @@ AnyPtr error(const AnyPtr& fn){ return term(xnew<XegElem>(XegElem::TYPE_ERROR, f
 AnyPtr expect(const AnyPtr& pattern){ return pattern | error(Xf("expect error")); }
 
 XegExec::NFA::NFA(const XegExprPtr& node){
-	e = xnew<XegElem>(XegElem::TYPE_EPSILON);
+	e = xnew<XegElem>(XegElem::TYPE_EMPTY);
 
 	root_node = node;
 	cap_max = 0;
@@ -490,10 +489,10 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 		}
 
 		XTAL_CASE(XegExpr::TYPE_OR){
-			//           left
-			//        ------------->
-			//  entry ----->-------> exit
-			//          e    right
+			//               left
+			//        ----------------->
+			//  entry -----> step -----> exit
+			//          e         right
 
 			int step = gen_state();
 			gen_nfa(entry, t->param1, exit);
@@ -518,7 +517,9 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 			
 			if(t->param3==1){
 				// exitÇ…å¸Ç©Ç§ï˚Ç™óDêÊ
-				if(t->type == XegExpr::TYPE_MORE0){ add_e_transition(entry, exit); }
+				if(t->type == XegExpr::TYPE_MORE0){ 
+					add_e_transition(entry, exit); 
+				}
 				add_e_transition(entry, before);
 
 				add_e_transition(after, exit);
@@ -526,7 +527,9 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 			}else{
 				// beforeÇ…å¸Ç©Ç§ï˚Ç™óDêÊ
 				add_e_transition(entry, before);
-				if(t->type == XegExpr::TYPE_MORE0){ add_e_transition(entry, exit); }
+				if(t->type == XegExpr::TYPE_MORE0){ 
+					add_e_transition(entry, exit); 
+				}
 
 				add_e_transition(after, before);
 				add_e_transition(after, exit);
@@ -599,7 +602,6 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 
 
 void XegExec::push(uint_t cur_state, uint_t nodes, const Scanner::State& pos){
-	// É√ñ≥å¿ÉãÅ[Évñhé~çÙÅBìØÇ∂èÛë‘Ç…ÇÕñﬂÇÁÇ»Ç¢ÇÊÇ§Ç…Åc
 	Info& info = info_.top();
 	for(uint_t i=0, sz=info.stack.size(); i<sz; ++i){
 		if(info.stack[i].pos.pos != pos.pos){
@@ -652,7 +654,7 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 		Scanner::State pos = se.pos;
 		NFA::State& state = nfa->states[cur_state];
 
-		if(cur_state == STATE_FINAL && match_pos.pos < pos.pos){
+		if(cur_state == STATE_FINAL && match_pos.pos <= pos.pos){
 			match_pos = pos;
 			match = true;
 		}
@@ -671,8 +673,9 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 		}
 
 		if(fail){
-			if(match)
+			if(match){
 				break;
+			}
 		}else{
 			switch(state.capture_kind){
 				XTAL_NODEFAULT;
@@ -756,7 +759,7 @@ bool XegExec::test(const ScannerPtr& scanner, const XegElemPtr& elem){
 	switch(elem->type){
 		XTAL_NODEFAULT;
 
-		XTAL_CASE(XegElem::TYPE_EPSILON){
+		XTAL_CASE(XegElem::TYPE_EMPTY){
 			return true;
 		}
 
@@ -888,16 +891,18 @@ bool XegExec::test(const ScannerPtr& scanner, const XegElemPtr& elem){
 	return false;
 }
 
-MatchResultPtr match_scanner(const AnyPtr& pattern, const ScannerPtr& scanner){ return XegExec().match(expr(pattern), scanner); }
-MatchResultPtr match_stream(const AnyPtr& pattern, const StreamPtr& stream){ return match_scanner(pattern, xnew<StreamScanner>(stream)); }
-MatchResultPtr match_string(const AnyPtr& pattern, const AnyPtr& string){ return match_stream(pattern, xnew<StringStream>(string->to_s())); }
-MatchResultPtr match_iterator(const AnyPtr& pattern, const AnyPtr& iter){ return match_scanner(pattern, xnew<IteratorScanner>(iter)); }
+ScannerPtr create_scanner_Scanner(const ScannerPtr& scanner){ return scanner; }
+ScannerPtr create_scanner_Stream(const StreamPtr& stream){ return xnew<StreamScanner>(stream); }
+ScannerPtr create_scanner_String(const StringPtr& string){ return xnew<StreamScanner>(xnew<StringStream>(string)); }
+ScannerPtr create_scanner_Iterator(const AnyPtr& iter){ return xnew<IteratorScanner>(iter); }
 
-ParseResultPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner){ return XegExec().parse(expr(pattern), scanner); }
-ParseResultPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream){ return parse_scanner(pattern, xnew<StreamScanner>(stream)); }
-ParseResultPtr parse_string(const AnyPtr& pattern, const AnyPtr& string){ return parse_stream(pattern, xnew<StringStream>(string->to_s())); }
-ParseResultPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter){ return parse_scanner(pattern, xnew<IteratorScanner>(iter)); }
+MatchResultPtr Scanner::match(const AnyPtr& pattern){
+	return XegExec().match(expr(pattern), ScannerPtr(this));
+}
 
+ParseResultPtr Scanner::parse(const AnyPtr& pattern){
+	return XegExec().parse(expr(pattern), ScannerPtr(this));
+}
 
 void def_common_method(const ClassPtr& p){
 	p->method("op_div", &more_shortest_Int, get_cpp_class<Int>());
@@ -914,18 +919,6 @@ void def_common_method(const ClassPtr& p){
 	p->method("op_shr", &concat, get_cpp_class<XegExpr>());
 	p->method("op_shr", &concat, get_cpp_class<String>());
 	p->method("op_shr", &concat, get_cpp_class<ChRange>());
-
-	p->method("match", &match_scanner, get_cpp_class<Scanner>());
-	p->method("match", &match_stream, get_cpp_class<Stream>());
-	p->method("match", &match_string, get_cpp_class<String>());
-	p->method("match", &match_iterator, Iterator());
-	p->dual_dispatch_method("match");
-
-	p->method("parse", &parse_scanner, get_cpp_class<Scanner>());
-	p->method("parse", &parse_stream, get_cpp_class<Stream>());
-	p->method("parse", &parse_string, get_cpp_class<String>());
-	p->method("parse", &parse_iterator, Iterator());
-	p->dual_dispatch_method("parse");
 }
 
 
@@ -936,6 +929,22 @@ void initialize_xeg(){
 	register_uninitializer(&uninitialize_xeg);
 
 	ClassPtr xeg = xnew<Class>("xeg");
+
+	{
+		ClassPtr p = new_cpp_class<Scanner>("Scanner");
+		p->method("parse", &Scanner::parse);
+		p->method("match", &Scanner::match);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<IteratorScanner>("IteratorScanner");
+		p->inherit(get_cpp_class<Scanner>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<StreamScanner>("StreamScanner");
+		p->inherit(get_cpp_class<Scanner>());
+	}
 
 	{
 		ClassPtr p = new_cpp_class<TreeNode>("TreeNode");
@@ -1022,6 +1031,15 @@ void initialize_xeg(){
 
 	xeg->fun("decl", &decl);
 
+	xeg->dual_dispatch_fun("create_scanner");
+	xeg->fun("create_scanner", &create_scanner_Scanner, get_cpp_class<Scanner>()); 
+	xeg->fun("create_scanner", &create_scanner_Stream, get_cpp_class<Stream>()); 
+	xeg->fun("create_scanner", &create_scanner_String, get_cpp_class<String>()); 
+	xeg->fun("create_scanner", &create_scanner_Iterator, Iterable()); 
+
+	xeg->def("Scanner", new_cpp_class<Scanner>());
+	xeg->def("IteratorScanner", new_cpp_class<IteratorScanner>());
+	xeg->def("StreamScanner", new_cpp_class<StreamScanner>());
 	builtin()->def("xeg", xeg);
 }
 
@@ -1046,9 +1064,8 @@ myexpect: fun(pattern) pattern | error(fun(line:0) line.p);
 		ret.errors[].p;
 	}
 
-
 	"ete:rwer,a-er::ere,".split(set(":,") | "-")[].p;
-	"abcd\nyyt\na780eee\nawer\n45\naweree\n".scan(bol >> cap(alpha*0) >> cap(alpha)>> eol).map(%f(%s %s!!))[].p;
+	"abcd\nyyt\na780eee\nawer\n45\naweree\n".scan(bol >> cap(alpha*0) >> cap(alpha)>> eol).map(|it| it[1], it[2]).map(%f(%s %s!!))[].p;
 
 	m: (bol >> cap("a".."z"*1) >> eol).match("abcd\nyyt\na780eee\nawer\n45\naweree\n");
 	m[1]~"tette" .p;

@@ -157,7 +157,7 @@ void initialize_basic_type(){
 
 	{
 		ClassPtr p = new_cpp_class<IntRange>("IntRange");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 		p->def("new", ctor<IntRange, int_t, int_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
 		p->method("begin", &IntRange::begin);
 		p->method("end", &IntRange::end);
@@ -170,7 +170,7 @@ void initialize_basic_type(){
 
 	{
 		ClassPtr p = new_cpp_class<FloatRange>("FloatRange");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 		p->def("new", ctor<FloatRange, float_t, float_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
 		p->method("left", &FloatRange::left);
 		p->method("right", &FloatRange::right);

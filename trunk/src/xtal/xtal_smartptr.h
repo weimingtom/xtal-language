@@ -89,7 +89,6 @@ public:
 		inc_ref_count();
 	}
 
-
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
 	SmartPtr(check_xtype<int>::type v){ set_i((int_t)v); }
 	SmartPtr(check_xtype<long>::type v){ set_i((int_t)v); }
@@ -112,20 +111,6 @@ private:
 	* このコンストラクタはprivateである。
 	*/
 	SmartPtr(void*);
-
-protected:
-
-	void inc_ref_count(){
-		if(type(*this)==TYPE_BASE){
-			pvalue(*this)->inc_ref_count();
-		}
-	}
-
-	void dec_ref_count(){
-		if(type(*this)==TYPE_BASE){
-			pvalue(*this)->dec_ref_count();
-		}
-	}
 
 public:
 
@@ -164,7 +149,6 @@ public:
 	bool operator !() const{
 		return type((*this)->self())<=TYPE_FALSE;
 	}
-
 };
 
 inline const AnyPtr& ap(const Innocence& v){
@@ -284,10 +268,7 @@ public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>){
 		T* p = new T();
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
@@ -295,11 +276,8 @@ public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T;
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 
 /////////////////////
@@ -307,10 +285,7 @@ public:
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0){
 		T* p = new T(a0);
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	template<class A0>
@@ -320,11 +295,8 @@ public:
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T(a0);
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 
 /////////////////////
@@ -332,10 +304,7 @@ public:
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1){
 		T* p = new T(a0, a1);
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	template<class A0, class A1>
@@ -345,11 +314,8 @@ public:
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T(a0, a1);
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 
 /////////////////////
@@ -357,10 +323,7 @@ public:
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2){
 		T* p = new T(a0, a1, a2);
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	template<class A0, class A1, class A2>
@@ -370,11 +333,8 @@ public:
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T(a0, a1, a2);
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 
 /////////////////////
@@ -382,10 +342,7 @@ public:
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 		T* p = new T(a0, a1, a2, a3);
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	template<class A0, class A1, class A2, class A3>
@@ -395,11 +352,8 @@ public:
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T(a0, a1, a2, a3);
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 
 /////////////////////
@@ -407,10 +361,7 @@ public:
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 		T* p = new T(a0, a1, a2, a3, a4);
-		set_p((Base*)p);
-		inc_ref_count();
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
+		init_p2(p, new_cpp_class<T>());
 	}
 
 	template<class A0, class A1, class A2, class A3, class A4>
@@ -420,11 +371,8 @@ public:
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 		TBase<T>* p = new(sizeof(T)) TBase<T>();
-		set_p((Base*)p);
-		inc_ref_count();
+		init_p2(p, new_cpp_class<T>());
 		new(p+1) T(a0, a1, a2, a3, a4);
-		p->set_class(new_cpp_class<T>());
-		register_gc(p);
 	}
 };
 

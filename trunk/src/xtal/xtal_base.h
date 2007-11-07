@@ -185,6 +185,17 @@ private:
 	friend void initialize();
 };
 
+inline void Innocence::inc_ref_count(){
+	if(type(*this)==TYPE_BASE){
+		pvalue(*this)->inc_ref_count();
+	}
+}
+
+inline void Innocence::dec_ref_count(){
+	if(type(*this)==TYPE_BASE){
+		pvalue(*this)->dec_ref_count();
+	}
+}
 
 class GCObserver : public Base{
 public:

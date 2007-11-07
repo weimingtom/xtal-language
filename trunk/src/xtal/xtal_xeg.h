@@ -3,6 +3,24 @@
 
 namespace xtal{ namespace xeg{
 
+class Scanner;
+typedef SmartPtr<Scanner> ScannerPtr;
+
+class StreamScanner;
+typedef SmartPtr<StreamScanner> StreamScannerPtr;
+
+class IteratorScanner;
+typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
+
+class MatchResult;
+typedef SmartPtr<MatchResult> MatchResultPtr;
+
+class ParseResult;
+typedef SmartPtr<ParseResult> ParseResultPtr;
+
+class TreeNode;
+typedef SmartPtr<TreeNode> TreeNodePtr;
+
 /**
 * @brief 
 */
@@ -180,6 +198,10 @@ public:
 		}
 	}
 
+	MatchResultPtr match(const AnyPtr& pattern);
+
+	ParseResultPtr parse(const AnyPtr& pattern);
+
 public:
 
 	StringPtr capture(int_t begin, int_t end){
@@ -273,8 +295,7 @@ private:
 class IteratorScanner : public Scanner{
 public:
 
-	IteratorScanner(const AnyPtr& iter)
-		:iter_(iter){}
+	IteratorScanner(const AnyPtr& iter);
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max);
 
@@ -286,20 +307,6 @@ private:
 		m & iter_;
 	}
 };
-
-typedef SmartPtr<Scanner> ScannerPtr;
-typedef SmartPtr<StreamScanner> StreamScannerPtr;
-typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
-
-class MatchResult;
-typedef SmartPtr<MatchResult> MatchResultPtr;
-
-class ParseResult;
-typedef SmartPtr<ParseResult> ParseResultPtr;
-
-class TreeNode;
-typedef SmartPtr<TreeNode> TreeNodePtr;
-
 
 class TreeNode : public Array{
 public:
@@ -402,18 +409,13 @@ private:
 	friend class XegExec;
 };
 
-MatchResultPtr match_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
-MatchResultPtr match_stream(const AnyPtr& pattern, const StreamPtr& stream);
-MatchResultPtr match_string(const AnyPtr& pattern, const AnyPtr& string);
-MatchResultPtr match_iterator(const AnyPtr& pattern, const AnyPtr& iter);
-
-ParseResultPtr parse_scanner(const AnyPtr& pattern, const ScannerPtr& scanner);
-ParseResultPtr parse_stream(const AnyPtr& pattern, const StreamPtr& stream);
-ParseResultPtr parse_string(const AnyPtr& pattern, const AnyPtr& string);
-ParseResultPtr parse_iterator(const AnyPtr& pattern, const AnyPtr& iter);
-
 struct XegExpr; 
 typedef SmartPtr<XegExpr> XegExprPtr;
+
+
+ScannerPtr create_scanner_Stream(const StreamPtr& stream);
+ScannerPtr create_scanner_String(const StringPtr& string);
+ScannerPtr create_scanner_Iterator(const AnyPtr& iter);
 
 XegExprPtr expr(const AnyPtr& a);
 XegExprPtr before(const AnyPtr& left);
@@ -431,18 +433,13 @@ struct XegExpr : public HaveName{
 
 	enum Type{
 		TYPE_TERM, //
-
 		TYPE_CONCAT, // >>
 		TYPE_OR, // |
-
 		TYPE_MORE0, // *0
 		TYPE_MORE1, // *1
 		TYPE_01,  // *-1
-
 		TYPE_EMPTY, // ãÛ
-
 		TYPE_CAP, // ÉLÉÉÉvÉ`ÉÉ
-
 		TYPE_DECL, // êÈåæ
 	};
 

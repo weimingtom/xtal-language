@@ -55,8 +55,7 @@ namespace{
 	CppClassHolderList* cpp_class_holder_list_ = 0;
 
 	ClassPtr iterator_;
-	ClassPtr pseudo_array_;
-	ClassPtr enumerator_;
+	ClassPtr Iterable_;
 	ClassPtr builtin_;
 	ClassPtr lib_;
 }
@@ -72,8 +71,8 @@ const ClassPtr& Iterator(){
 	return iterator_;
 }
 
-const ClassPtr& Enumerator(){
-	return enumerator_;
+const ClassPtr& Iterable(){
+	return Iterable_;
 }
 
 const ClassPtr& builtin(){
@@ -139,8 +138,7 @@ void initialize(){
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>();
 	iterator_ = xnew<IteratorClass>();
-	enumerator_ = xnew<Class>();
-	pseudo_array_ = xnew<Class>();
+	Iterable_ = xnew<Class>();
 
 	initialize_string();
 	initialize_interned_string();
@@ -196,8 +194,7 @@ void uninitialize(){
 	builtin_ = null;
 	lib_ = null;
 	iterator_ = null;
-	pseudo_array_ = null;
-	enumerator_ = null;
+	Iterable_ = null;
 
 	full_gc();
 	

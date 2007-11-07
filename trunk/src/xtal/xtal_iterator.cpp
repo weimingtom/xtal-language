@@ -88,6 +88,8 @@ void InitZipIter(){
 void initialize_iterator(){
 	{
 		ClassPtr p = Iterator();
+		p->inherit(Iterable());
+
 		p->fun("each", &Iterator_each);
 		p->fun("block_first", &Iterator_block_first);
 	}
@@ -104,7 +106,7 @@ void DelegateToIterator::call(const VMachinePtr& vm){
 void IteratorClass::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Class::def(primary_key, value, secondary_key, accessibility);
 	if(rawne(Xid(p), primary_key) && rawne(Xid(each), primary_key)){
-		Enumerator()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
+		Iterable()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
 	}
 }
 

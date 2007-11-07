@@ -267,6 +267,7 @@ class IntRange;
 class FloatRange;
 class ChRange;
 class DualDispatchMethod;
+class DualDispatchFun;
 class MultiValue;
 
 typedef SmartPtr<Array> ArrayPtr;
@@ -297,6 +298,7 @@ typedef SmartPtr<IntRange> IntRangePtr;
 typedef SmartPtr<FloatRange> FloatRangePtr;
 typedef SmartPtr<ChRange> ChRangePtr;
 typedef SmartPtr<DualDispatchMethod> DualDispatchMethodPtr;
+typedef SmartPtr<DualDispatchFun> DualDispatchFunPtr;
 typedef SmartPtr<MultiValue> MultiValuePtr;
 
 class Base;

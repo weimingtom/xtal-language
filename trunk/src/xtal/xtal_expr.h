@@ -19,6 +19,7 @@ enum ExprType{
 	EXPR_STRING,
 	EXPR_ARRAY,
 	EXPR_MAP,
+	EXPR_MULTI_VALUE,
 
 	EXPR_ADD,
 	EXPR_SUB,
@@ -169,6 +170,8 @@ public:
 	
 	XTAL_DEF_MEMBER(0, MapPtr, map_values);
 
+	XTAL_DEF_MEMBER(0, ArrayPtr, multi_value_exprs);
+
 	XTAL_DEF_MEMBER(0, ArrayPtr, return_exprs);
 	
 	XTAL_DEF_MEMBER(0, ArrayPtr, yield_exprs);
@@ -300,6 +303,8 @@ public:
 	ExprPtr current_context(){ return Expr::make(EXPR_CURRENT_CONTEXT, lineno_); }
 	ExprPtr args(){ return Expr::make(EXPR_ARGS, lineno_); }
 	ExprPtr callee(){ return Expr::make(EXPR_CALLEE, lineno_); }
+
+	ExprPtr multi_value(const ArrayPtr& exprs){ return Expr::make(EXPR_MULTI_VALUE, lineno_)->set_multi_value_exprs(exprs); }
 
 	ExprPtr once(const ExprPtr& term){ return una(EXPR_ONCE, term); }
 	ExprPtr static_(const ExprPtr& term){ return una(EXPR_STATIC, term); }

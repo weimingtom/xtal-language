@@ -39,7 +39,7 @@ void initialize_array(){
 
 	{
 		ClassPtr p = new_cpp_class<Array>("Array");
-		p->inherit(Enumerator());
+		p->inherit(Iterable());
 
 		p->def("new", ctor<Array, int_t>()->param(Named("size", 0)));
 		p->method("size", &Array::size);
@@ -83,7 +83,7 @@ void initialize_array(){
 		p->method("to_s", &MultiValue::to_s);
 		p->method("to_mv", &Any::self);
 		p->method("flatten_mv", &MultiValue::flatten_mv);
-		p->member("flatten_all_mv", &MultiValue::flatten_all_mv);
+		p->method("flatten_all_mv", &MultiValue::flatten_all_mv);
 	}
 
 	builtin()->def("Array", get_cpp_class<Array>());

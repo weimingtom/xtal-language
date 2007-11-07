@@ -389,6 +389,13 @@ public:
 		def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
 	}
 
+	/**
+	* @brief 2重ディスパッチ関数を定義する。
+	*/
+	void dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
+		def(primary_key, xtal::dual_dispatch_fun(ClassPtr(this), primary_key), null, accessibility);
+	}
+
 public:
 
 	virtual void call(const VMachinePtr& vm);

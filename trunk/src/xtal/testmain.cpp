@@ -96,7 +96,7 @@ int main2(int argc, char** argv){
 		
 		//load("start.xtal");
 
-		test_xeg();
+		//test_xeg();
 		/**
 
 		*/
@@ -106,7 +106,7 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
- 10.times.zip("a".."z").map(%f[ %(1)s = %(0)s ])[].p;
+ //10.times.zip("a".."z").map(%f[ %(1)s = %(0)s ])[].p;
 
  switch("te" ~ "ste3"){
 	 case("test"){ "awerawer".p; }
@@ -134,7 +134,7 @@ Foo::test#Int.p;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

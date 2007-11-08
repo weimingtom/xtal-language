@@ -130,7 +130,6 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
 	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
-	keyword_map_->set_at(Xid(static), (int_t)Token::KEYWORD_STATIC);
 }	
 
 
@@ -1045,7 +1044,6 @@ ExprPtr Parser::parse_term(){
 				XTAL_DEFAULT{}
 				
 				XTAL_CASE(Token::KEYWORD_ONCE){ ret = em.once(must_parse_expr(PRI_ONCE - r_space*2)); }
-				XTAL_CASE(Token::KEYWORD_STATIC){ ret = em.static_(must_parse_expr(PRI_STATIC - r_space*2)); }
 				XTAL_CASE(Token::KEYWORD_CLASS){ ret = parse_class(KIND_CLASS); }
 				XTAL_CASE(Token::KEYWORD_SINGLETON){ ret = parse_class(KIND_SINGLETON); }
 				XTAL_CASE(Token::KEYWORD_FUN){ ret = parse_fun(KIND_FUN); }

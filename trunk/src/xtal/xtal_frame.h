@@ -284,8 +284,8 @@ public:
 	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	const CFunPtr& fun(const IDPtr& primary_key, Fun fun, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, xtal::fun(fun, policy), secondary_key, accessibility);
+	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
+		return def_and_return(primary_key, new_cfun(xtal::detail::fun_impl(f, policy)), secondary_key, accessibility);
 	}
 
 	/**
@@ -304,18 +304,18 @@ public:
 	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	const CFunPtr& method(const IDPtr& primary_key, Fun fun, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, xtal::method(fun, policy), secondary_key, accessibility);
+	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
+		return def_and_return(primary_key, new_cfun(xtal::detail::method_impl(f, policy)), secondary_key, accessibility);
 	}
 
 	/**
 	* @brief 関数を定義する
 	*
-	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
+	* cls.method("name", &Klass::foo); は cls.def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class Fun>
-	const CFunPtr& method(const IDPtr& primary_key, Fun fun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		return method(primary_key, fun, secondary_key, accessibility, result);
+	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		return method(primary_key, f, secondary_key, accessibility, result);
 	}
 
 	
@@ -393,7 +393,7 @@ public:
 	* @brief 2重ディスパッチ関数を定義する。
 	*/
 	void dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
-		def(primary_key, xtal::dual_dispatch_fun(ClassPtr(this), primary_key), null, accessibility);
+		def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
 	}
 
 public:

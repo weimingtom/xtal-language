@@ -473,7 +473,8 @@ void VMachine::exit_fiber(){
 		ff().called_pc = resume_pc_;
 		resume_pc_ = 0;
 		execute_inner(&throw_undefined_code_);
-	}XTAL_CATCH(e){
+	}
+	XTAL_CATCH(e){
 		(void)e;
 	}
 	reset();
@@ -531,7 +532,8 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 		push_args(args, inst.named);
 		if(inst.flags&CALL_FLAG_TAIL){
 			recycle_ff(pc, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
-		}else{
+		}
+		else{
 			push_ff(pc, inst.need_result, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
 		}
 		return;
@@ -544,7 +546,8 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 		f.self(self);
 		//f.poped_pc = pc;
 		f.called_pc = &throw_unsupported_error_code_;
-	}else{
+	}
+	else{
 		FunFrame& f = fun_frames_.push();
 		f.need_result_count = inst.need_result;
 		f.result_count = 0;
@@ -564,7 +567,8 @@ void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 		for(uint_t i = 0; i<args->ordered_->size(); ++i){
 			push(args->ordered_->at(i));
 		}
-	}else{
+	}
+	else{
 		int_t usize = args->ordered_->size();
 		upsize(usize);
 		int_t offset = named_arg_count*2;
@@ -910,7 +914,8 @@ XTAL_VM_SWITCH{
 		if(ff().yieldable){
 			resume_pc_ = pc + inst.ISIZE;
 			XTAL_VM_RETURN;
-		}else{
+		}
+		else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
 				last_except_ = builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012"));
@@ -1052,7 +1057,8 @@ XTAL_VM_SWITCH{
 			Innocence ret = ap(target)->member(isp(primary_key), null, ff().self());
 			if(rawne(ret, undefined)){
 				set(ret);
-			}else{
+			}
+			else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key)));
 			}
 		}
@@ -1067,7 +1073,8 @@ XTAL_VM_SWITCH{
 			Innocence ret = ap(target)->member(isp(primary_key), ap(secondary_key), ff().self());
 			if(rawne(ret, undefined)){
 				set(ret);
-			}else{
+			}
+			else{
 				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key), ap(secondary_key)));
 			}
 		}
@@ -1121,7 +1128,8 @@ XTAL_VM_SWITCH{
 			Innocence ret = code()->filelocal()->member(identifier(inst.identifier_number));
 			if(rawne(ret, undefined)){
 				push(ret);
-			}else{
+			}
+			else{
 				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
 			}
 		}
@@ -1150,7 +1158,8 @@ XTAL_VM_SWITCH{
 			if(rawne(ret, undefined)){
 				push(ret);
 				XTAL_VM_CONTINUE(pc + inst.address);
-			}else{
+			}
+			else{
 				XTAL_VM_CONTINUE(pc + inst.ISIZE);
 			}
 		}

@@ -73,9 +73,6 @@ private:
 	AnyPtr do_send(const AnyPtr& a, const IDPtr& name);
 	AnyPtr do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b);
 
-	AnyPtr do_bin_static(const ExprPtr& e, const IDPtr& name, bool swap = false);
-	AnyPtr do_expr_static(const AnyPtr& p);	
-
 	void put_inst2(const Inst& t, uint_t sz);
 
 	template<class T>

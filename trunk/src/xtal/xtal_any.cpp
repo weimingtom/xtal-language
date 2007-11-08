@@ -20,6 +20,7 @@ namespace{
 }
 
 void initialize_any(){
+		
 	{
 		ClassPtr p = new_cpp_class<Any>("Any");
 		p->method("class", &Any::get_class);
@@ -28,8 +29,6 @@ void initialize_any(){
 		p->method("object_name", &Any::object_name);
 		p->method("s_save", &Any::s_save);
 		p->method("s_load", &Any::s_load);
-		p->method("lazy", &Any::lazy);
-		p->method("ever_lazy", &Any::ever_lazy);
 		p->method("to_mv", &Any::to_mv);
 		p->method("flatten_mv", &Any::flatten_mv);
 		p->method("flatten_all_mv", &Any::flatten_all_mv);
@@ -290,16 +289,13 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 			value->set_object_name(primary_key, object_name_force(), ap(*this));
 			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
 		}
-		XTAL_CASE(TYPE_LAZY){
-			evalute()->def(primary_key, value, secondary_key, accessibility);
-		}
 	}
 }
 
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
 	vm->set_hint(cls, primary_key, secondary_key);
-	const AnyPtr& ret = member_cache_table.cache(cls, primary_key, secondary_key, self, inherited_too);
+	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, self, inherited_too);
 	if(rawne(ret, undefined)){
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);
@@ -310,7 +306,6 @@ void Any::call(const VMachinePtr& vm) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->call(vm); }
-		XTAL_CASE(TYPE_LAZY){ evalute()->call(vm); }
 	}
 }
 
@@ -320,7 +315,6 @@ int_t Any::to_i() const{
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return (int_t)fvalue(*this); }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->to_i(); }
 	}
 	return 0;
 }
@@ -331,7 +325,6 @@ float_t Any::to_f() const{
 		XTAL_CASE(TYPE_NULL){ return 0; }
 		XTAL_CASE(TYPE_INT){ return (float_t)ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(*this); }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->to_f(); }
 	}
 	return 0;
 }
@@ -341,7 +334,6 @@ StringPtr Any::to_s() const{
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ if(const StringPtr& ret = ptr_as<String>(ap(*this)))return ret; }
 		XTAL_CASE(TYPE_SMALL_STRING){ static_ptr_cast<String>(ap(*this)); }
-		XTAL_CASE(TYPE_LAZY){ evalute()->to_s(); }
 	}
 	return ptr_cast<String>((*this).send(Xid(to_s)));
 }
@@ -358,7 +350,6 @@ StringPtr Any::object_name() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name()); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(); }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->object_name(); }
 	}
 	return null;	
 }
@@ -367,7 +358,6 @@ int_t Any::object_name_force() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name_force();  }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->object_name_force(); }
 	}
 	return 0;
 }
@@ -376,7 +366,6 @@ void Any::set_object_name(const StringPtr& name, int_t force, const AnyPtr& pare
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_name(name, force, parent);  }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->set_object_name(name, force, parent); }
 	}
 }
 
@@ -391,7 +380,6 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<False>(); }
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<True>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->get_class(); }
 	}
 	return get_cpp_class<Any>();
 }
@@ -400,7 +388,6 @@ uint_t Any::hashcode() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->hashcode();  }
-		XTAL_CASE(TYPE_LAZY){ return evalute()->hashcode(); }
 	}
 	return (uint_t)rawvalue(*this);
 }
@@ -465,10 +452,6 @@ void Any::s_load(const AnyPtr& v) const{
 }
 
 AnyPtr Any::serial_save(const ClassPtr& p) const{
-	if(type(*this)==TYPE_LAZY){
-		return evalute()->serial_save(p); 
-	}
-
 	if(type(*this)!=TYPE_BASE){
 		return null;
 	}
@@ -490,11 +473,6 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 }
 
 void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
-	if(type(*this)==TYPE_LAZY){
-		evalute()->serial_load(p, v);
-		return;
-	}
-
 	if(type(*this)!=TYPE_BASE){
 		return;
 	}
@@ -514,62 +492,10 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	}
 }
 
-AnyPtr Any::lazy() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ 
-			AnyPtr ret = xnew<Lazy>(ap(*this), Lazy::STATE_BEFORE);
-			set_lazy(ret);
-			return ret;
-		}
-
-		XTAL_CASE(TYPE_LAZY){ return ap(*this); }
-	}
-	return null;
-}
-
-AnyPtr Any::ever_lazy() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ 
-			AnyPtr ret = xnew<Lazy>(ap(*this), Lazy::STATE_EVER);
-			set_lazy(ret);
-			return ret;
-		}
-
-		XTAL_CASE(TYPE_LAZY){ return ap(*this); }
-	}
-	return null;
-}
-
-const AnyPtr& Any::evalute() const{
-	Lazy* p = ((Lazy*)pvalue(*this));
-
-	switch(p->state){
-		XTAL_NODEFAULT;
-		
-		XTAL_CASE(Lazy::STATE_EVER){
-			p->ret = p->value();
-		}
-
-		XTAL_CASE(Lazy::STATE_BEFORE){
-			p->state = Lazy::STATE_AFTER;
-			/*(AnyPtr&)ap(*this) = */p->ret = p->value();
-		}
-
-		XTAL_CASE(Lazy::STATE_AFTER){
-
-		}
-	}
-
-	return p->ret;
-}
-
 MultiValuePtr Any::to_mv() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_UNDEFINED){ return xnew<MultiValue>(); }
-		XTAL_CASE(TYPE_LAZY){ return ap(*this)->to_mv(); }
 	}
 	
 	MultiValuePtr ret = xnew<MultiValue>();
@@ -588,7 +514,7 @@ MultiValuePtr Any::flatten_all_mv() const{
 void visit_members(Visitor& m, const AnyPtr& p){
 	switch(type(p)){
 		XTAL_DEFAULT{}
-		XTAL_CASE2(TYPE_BASE, TYPE_LAZY){ 
+		XTAL_CASE(TYPE_BASE){ 
 			XTAL_ASSERT((int)pvalue(p)->ref_count() >= -m.value());
 			pvalue(p)->add_ref_count(m.value());
 		}

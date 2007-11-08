@@ -8,25 +8,22 @@ ReturnThis return_this;
 ReturnUndefined return_void;
 
 
-CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
+CFun::CFun(fun_t f, void* val, int_t param_n){
 	fun_ = f;
-	
-	if(val_size<=BUFFER_SIZE){
-		ptr_ = buffer_;
-	}else{
-		ptr_ = user_malloc(val_size);
-	}
-	memcpy(ptr_, val, val_size);
-	
+	val_ = val;
+
 	if(param_n){
 		pi_.params = (Named*)user_malloc(sizeof(Named)*param_n);
-	}else{
+	}
+	else{
 		pi_.params = 0;
 	}
+
 	param_n_ = pi_.min_param_count = pi_.max_param_count = param_n;
 	for(int_t i=0; i<param_n; ++i){
 		new(&pi_.params[i]) Named();
 	}
+
 	pi_.fun = this;
 }
 
@@ -35,10 +32,7 @@ CFun::~CFun(){
 		pi_.params[i].~Named();
 	}
 	user_free(pi_.params);		
-
-	if(ptr_!=buffer_){
-		user_free(ptr_);
-	}
+	user_free(val_);
 }
 
 CFunPtr CFun::param(
@@ -61,7 +55,7 @@ CFunPtr CFun::param(
 		}
 	}
 
-	return CFunPtr(this);
+	return from_this(this);
 }
 
 void CFun::visit_members(Visitor& m){
@@ -75,7 +69,7 @@ void CFun::call(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=pi_.min_param_count){
 		check_arg(vm);
 	}
-	fun_(vm, pi_, ptr_);
+	fun_(vm, pi_, val_);
 }
 
 void CFun::check_arg(const VMachinePtr& vm){
@@ -101,11 +95,33 @@ void CFun::check_arg(const VMachinePtr& vm){
 	}
 }
 
-CFunArgs::CFunArgs(fun_t f, const void* val, int_t val_size, int_t param_n)
-	:CFun(f, val, val_size, param_n){}
+CFunArgs::CFunArgs(fun_t f, void* val, int_t param_n)
+	:CFun(f, val, param_n){}
 
 void CFunArgs::call(const VMachinePtr& vm){
-	fun_(vm, pi_, ptr_);
+	fun_(vm, pi_, val_);
+}
+	
+CFunEssence::CFunEssence(CFun::fun_t f, const void* data, int_t val_size, int_t param_n, bool args)
+	:f(f), val(user_malloc(val_size)), param_n(param_n), args(args){
+	memcpy(val, data, val_size);
+}
+
+CFunPtr new_cfun(const CFunEssence& essence){
+	if(essence.args){
+		return xnew<CFunArgs>(essence.f, essence.val, essence.param_n);
+	}
+	else{
+		return xnew<CFun>(essence.f, essence.val, essence.param_n);
+	}
+}
+
+DualDispatchMethodPtr dual_dispatch_method(const IDPtr& primary_key){
+	return xnew<DualDispatchMethod>(primary_key);
+}
+
+DualDispatchFunPtr dual_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key){
+	return xnew<DualDispatchFun>(klass, primary_key);
 }
 
 }

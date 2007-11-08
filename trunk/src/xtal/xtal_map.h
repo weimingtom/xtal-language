@@ -130,7 +130,7 @@ public:
 	}
 	
 	MapPtr to_m(){
-		return MapPtr(this);
+		return from_this(this);
 	}
 
 	void push_all(const VMachinePtr& vm);

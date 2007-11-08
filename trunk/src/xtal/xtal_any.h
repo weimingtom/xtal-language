@@ -108,7 +108,6 @@ public:
 	friend void swap(Innocence& a, Innocence& b);
 	friend void set_null_force(Innocence& v);
 	friend void copy_innocence(Innocence& v, const Innocence& u);
-	friend void set_lazy(Innocence& v){ v.type_ = TYPE_LAZY; }
 
 public:
 
@@ -152,7 +151,7 @@ inline float_t fvalue(const Innocence& v){
 }
 
 inline Base* pvalue(const Innocence& v){ 
-	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL || type(v)==TYPE_LAZY); 
+	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
 	return v.pvalue_; 
 }
 
@@ -334,22 +333,10 @@ public:
 	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
 	/**
-	* @brief 遅延オブジェクト化する
-	*/
-	AnyPtr lazy() const;
-
-	/**
-	* @brief 永遠遅延オブジェクト化する
-	*/
-	AnyPtr ever_lazy() const;
-
-	/**
 	* @brief 自身を返す。
 	*
-	* もし自身がlazyオブジェクトの場合、評価した結果を返す
 	*/
 	const AnyPtr& self() const{
-		if(type(*this)==TYPE_LAZY){ return evalute(); }
 		return (const AnyPtr&)*this;
 	}
 
@@ -358,11 +345,6 @@ public:
 	MultiValuePtr flatten_mv() const;
 
 	MultiValuePtr flatten_all_mv() const;
-
-private:
-
-	const AnyPtr& evalute() const;
-
 };
 
 AnyPtr operator +(const AnyPtr& a);

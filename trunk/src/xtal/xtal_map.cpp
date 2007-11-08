@@ -130,7 +130,7 @@ MapPtr Map::cat_assign(const MapPtr& a){
 	for(iterator p = a->begin(); p!=a->end(); ++p){
 		set_at(p->first, p->second);
 	}
-	return MapPtr(this);
+	return from_this(this);
 }
 
 StringPtr Map::to_s(){
@@ -165,15 +165,15 @@ bool Map::op_eq(const MapPtr& a){
 }
 	
 AnyPtr Map::pairs(){
-	return xnew<MapIter>(MapPtr(this), 0);
+	return xnew<MapIter>(from_this(this), 0);
 }
 
 AnyPtr Map::keys(){
-	return xnew<MapIter>(MapPtr(this), 1);
+	return xnew<MapIter>(from_this(this), 1);
 }
 
 AnyPtr Map::values(){
-	return xnew<MapIter>(MapPtr(this), 2);
+	return xnew<MapIter>(from_this(this), 2);
 }
 
 MapPtr Map::clone(){
@@ -193,7 +193,7 @@ void Map::push_all(const VMachinePtr& vm){
 
 
 AnyPtr Set::each(){
-	return xnew<MapIter>(MapPtr(this), 3);
+	return xnew<MapIter>(from_this(this), 3);
 }
 
 

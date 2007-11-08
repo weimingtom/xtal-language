@@ -24,12 +24,9 @@ class SendProxy{
 	AnyPtr secondary_key;
 public:
 
-	SendProxy(const AnyPtr& obj, const IDPtr& primary_key, const AnyPtr& secondary_key)
-		:obj(obj), primary_key(primary_key), secondary_key(secondary_key){}
+	SendProxy(const AnyPtr& obj, const IDPtr& primary_key, const AnyPtr& secondary_key);
 
-	~SendProxy(){
-		execute();
-	}
+	~SendProxy();
 
 	//const AtProxy& operator =(const AnyPtr& value);
 

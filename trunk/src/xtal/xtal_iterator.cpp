@@ -174,5 +174,16 @@ void block_next(BlockValueHolder<3>& holder, bool first){
 	vm->cleanup_call();
 }
 
+BlockValueHolder<1>::BlockValueHolder(const AnyPtr& tar)
+	:target(tar){
+	array = ptr_as<Array>(tar);
+	if(array){ it = array->begin(); }
+}
+	
+BlockValueHolder<2>::BlockValueHolder(const AnyPtr& tar)
+	:target(tar){
+	map = ptr_as<Map>(tar);
+	if(map){ it = map->begin(); }
+}
 
 }

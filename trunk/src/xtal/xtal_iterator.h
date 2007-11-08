@@ -41,12 +41,7 @@ struct BlockValueHolder{
 template<>
 struct BlockValueHolder<1>{
 	
-	BlockValueHolder(const AnyPtr& tar=null)
-		:target(tar){
-		array = ptr_as<Array>(tar);
-		if(array){ it = array->begin(); }
-	}
-	
+	BlockValueHolder(const AnyPtr& tar=null);
 	~BlockValueHolder(){ block_break(target); }
 
 	AnyPtr target;
@@ -61,12 +56,7 @@ struct BlockValueHolder<1>{
 template<>
 struct BlockValueHolder<2>{
 	
-	BlockValueHolder(const AnyPtr& tar=null)
-		:target(tar){
-		map = ptr_as<Map>(tar);
-		if(map){ it = map->begin(); }
-	}
-	
+	BlockValueHolder(const AnyPtr& tar=null);
 	~BlockValueHolder(){ block_break(target); }
 
 	AnyPtr target;

@@ -133,9 +133,9 @@ AnyPtr Innocence::operator()() const{
 	return vm->result_and_cleanup_call();
 }
 
-void Innocence::init_p2(Base* p, const ClassPtr& c){
-	set_p(p);
-	inc_ref_count();
+SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c)
+	:Innocence(p){
+	p->inc_ref_count();
 	p->set_class(c);
 	register_gc(p);
 }

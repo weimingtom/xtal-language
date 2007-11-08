@@ -199,6 +199,16 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
+const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	def(primary_key, value, secondary_key, accessibility);
+	Key key = {primary_key, secondary_key};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){
+		return members_->at(it->second.num);
+	}
+	return null;
+}
+
 void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
@@ -207,10 +217,11 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_name(primary_key, object_name_force(), ClassPtr(this));
-	}else{
+		global_mutate_count++;
+	}
+	else{
 		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return);
 	}
-	global_mutate_count++;
 }
 
 const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
@@ -502,5 +513,14 @@ void Singleton::call(const VMachinePtr& vm){
 void Singleton::s_new(const VMachinePtr& vm){
 	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 }
+
+const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const char* name){
+	if(!list.value){
+		chain_cpp_class(list);
+		list.value = xnew<CppClass>(name);
+	}
+	return list.value;
+}
+
 
 }

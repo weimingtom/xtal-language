@@ -20,6 +20,13 @@ const AnyPtr& AtProxy::operator ->(){
 	return obj = obj->send(Xid(op_at), key->get_class())(key);
 }
 
+SendProxy::SendProxy(const AnyPtr& obj, const IDPtr& primary_key, const AnyPtr& secondary_key)
+	:obj(obj), primary_key(primary_key), secondary_key(secondary_key){}
+
+SendProxy::~SendProxy(){
+	execute();
+}
+
 void SendProxy::execute(){
 	if(primary_key){
 		const VMachinePtr& vm = vmachine();

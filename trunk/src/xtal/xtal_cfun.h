@@ -589,7 +589,7 @@ template<class C, class T>
 struct setter{
 	T C::* var;
 	setter(T C::* var):var(var){}
-	const T& operator()(C* self,const T& v){ return self->*var = v; }
+	const T& operator()(C* self, const T& v){ return self->*var = v; }
 };
 
 template<int N>
@@ -642,11 +642,11 @@ public:
 	virtual ~CFun();
 
 	CFunPtr param(
-		const Named2& value0 = null, 
-		const Named2& value1 = null,
-		const Named2& value2 = null,
-		const Named2& value3 = null,
-		const Named2& value4 = null
+		const Named2& value0 = null_named, 
+		const Named2& value1 = null_named,
+		const Named2& value2 = null_named,
+		const Named2& value3 = null_named,
+		const Named2& value4 = null_named
 	);
 
 	virtual void visit_members(Visitor& m);
@@ -839,7 +839,7 @@ CFunPtr method(R (*f)(C, A0, A1, A2, A3, A4), const Policy&){
 *
 */
 template<class Fun>
-CFunPtr fun(Fun f){
+inline CFunPtr fun(Fun f){
 	return detail::fun(f, result);
 }
 
@@ -848,7 +848,7 @@ CFunPtr fun(Fun f){
 *
 */
 template<class Fun, class Policy>
-CFunPtr fun(Fun f, const Policy& policy){
+inline CFunPtr fun(Fun f, const Policy& policy){
 	return detail::fun(f, policy);
 }
 
@@ -859,7 +859,7 @@ CFunPtr fun(Fun f, const Policy& policy){
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun>
-CFunPtr method(Fun f){
+inline CFunPtr method(Fun f){
 	return detail::method(f, result);
 }
 
@@ -869,7 +869,7 @@ CFunPtr method(Fun f){
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun, class Policy>
-CFunPtr method(Fun f, const Policy& policy){
+inline CFunPtr method(Fun f, const Policy& policy){
 	return detail::method(f, policy);
 }
 

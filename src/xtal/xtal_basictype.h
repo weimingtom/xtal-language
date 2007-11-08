@@ -78,7 +78,7 @@ struct Lazy : public Base{
 	AnyPtr value;
 	AnyPtr ret;
 
-	enum{
+	enum State{
 		STATE_EVER,
 		STATE_BEFORE,
 		STATE_AFTER,

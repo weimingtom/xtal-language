@@ -309,6 +309,8 @@ class InstanceVariables;
 class Int;
 class Float;
 class Undefined;
+class True;
+class False;
 
 struct BlockCore{
 	BlockCore()
@@ -376,8 +378,8 @@ extern Null null;
 class Undefined;
 extern Undefined undefined;
 
-class True;
-class False;
+struct Named;
+extern Named null_named;
 
 struct Result;
 struct ReturnThis;
@@ -388,7 +390,7 @@ extern ReturnThis return_this;
 extern ReturnUndefined return_void;
 
 template<class T>
-const ClassPtr& new_cpp_class(const char* name = "");
+inline const ClassPtr& new_cpp_class(const char* name = "");
 
 template<class T>
 inline bool exists_cpp_class();

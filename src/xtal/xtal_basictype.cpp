@@ -5,6 +5,7 @@ namespace xtal{
 
 Null null;
 Undefined undefined;
+Named null_named;
 
 namespace{
 

@@ -44,14 +44,28 @@ inline U* as_helper_helper(const AnyPtr& a, const void*, const U*){
 }
 
 
+void throw_cast_error(const AnyPtr& a, const ClassPtr& cls);
+
 // 変換後の型がBaseを継承した型の場合
-void* cast_helper_helper_extend_anyimpl(const AnyPtr& a, const ClassPtr& cls);
+inline void* cast_helper_helper_extend_anyimpl(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)pvalue(a); }
+	throw_cast_error(a, cls);
+	return 0;
+}
 
 // 変換後の型がAnyPtrを継承した型の場合
-void* cast_helper_helper_extend_any(const AnyPtr& a, const ClassPtr& cls);
+inline void* cast_helper_helper_extend_any(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)&a; }
+	throw_cast_error(a, cls);
+	return 0;
+}
 
 // 変換後の型がAnyPtrやBaseを継承していない型の場合
-void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls);
+inline void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	throw_cast_error(a, cls);
+	return 0;
+}
 
 // 変換後の型がSmartPtrの場合
 template<class U, class V>
@@ -78,15 +92,28 @@ inline U* cast_helper_helper(const AnyPtr& a, const void*, const U*){
 }
 
 
+void throw_arg_cast_error(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+
 // 変換後の型がBaseを継承した型の場合
-void* arg_cast_helper_helper_extend_anyimpl(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+inline void* arg_cast_helper_helper_extend_anyimpl(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)pvalue(a); }
+	throw_arg_cast_error(a, param_num, param_name, cls);
+	return 0;
+}
 
 // 変換後の型がAnyPtrを継承した型の場合
-void* arg_cast_helper_helper_extend_any(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+inline void* arg_cast_helper_helper_extend_any(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return (void*)&a; }
+	throw_arg_cast_error(a, param_num, param_name, cls);
+	return 0;
+}
 
 // 変換後の型がAnyPtrやBaseを継承していない型の場合
-void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
-
+inline void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	throw_arg_cast_error(a, param_num, param_name, cls);
+	return 0;
+}
 
 // 変換後の型がSmartPtrの場合
 template<class U, class V>

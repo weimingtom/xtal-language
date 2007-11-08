@@ -2,34 +2,13 @@
 
 namespace xtal{
 
-void* cast_helper_helper_extend_anyimpl(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)pvalue(a); }
-	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
+
+void throw_cast_error(const AnyPtr& a, const ClassPtr& cls){
+	XTAL_THROW(cast_error(a, cls->object_name()), return);
 }
 
-void* cast_helper_helper_extend_any(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)&a; }
-	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
-}
-
-void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
-	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
-}
-
-void* arg_cast_helper_helper_extend_anyimpl(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)pvalue(a); }
-	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
-}
-
-void* arg_cast_helper_helper_extend_any(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)&a; }
-	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
-}
-
-void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
-	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
+void throw_arg_cast_error(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return);
 }
 
 const IDPtr* CastHelper<const IDPtr*>::as(const AnyPtr& a){ 

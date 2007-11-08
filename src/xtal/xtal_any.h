@@ -118,17 +118,6 @@ public:
 
 protected:
 
-
-protected:
-
-	void init_p2(Base* p, const ClassPtr& c);
-
-	void inc_ref_count();
-
-	void dec_ref_count();
-
-protected:
-
 	struct SmallString{
 		char_t buf[SMALL_STRING_MAX];
 

@@ -1,6 +1,6 @@
 
 near: fun(a, b){
-	return math::abs(a-b).p<0.000001;
+	return math::abs(a-b)<0.000001;
 }
 
 assert near(10.5 + 20.5 + 30.5, 61.5);

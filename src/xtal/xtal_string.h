@@ -372,150 +372,127 @@ void visit_members(Visitor& m, const Named& p);
 	
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{ID{{
 namespace id{
-extern IDPtr idop_inc;
-extern IDPtr idblock_catch;
-extern IDPtr idcallee;
-extern IDPtr idnew;
-extern IDPtr idop_shl_assign;
-extern IDPtr idop_at;
-extern IDPtr idtest;
-extern IDPtr idfor;
-extern IDPtr idserial_new;
-extern IDPtr idop_div_assign;
-extern IDPtr idop_mul;
-extern IDPtr idop_xor_assign;
-extern IDPtr idto_a;
-extern IDPtr idinitialize;
-extern IDPtr idonce;
-extern IDPtr iddo;
-extern IDPtr idstring;
-extern IDPtr idfalse;
-extern IDPtr idancestors;
-extern IDPtr idop_and_assign;
-extern IDPtr idop_add_assign;
-extern IDPtr idop_cat_assign;
-extern IDPtr idsingleton;
-extern IDPtr idop_shl;
-extern IDPtr idblock_next;
-extern IDPtr idyield;
-extern IDPtr idop_shr_assign;
-extern IDPtr idop_cat;
-extern IDPtr idop_neg;
-extern IDPtr idop_dec;
-extern IDPtr idvalue;
-extern IDPtr iddefault;
-extern IDPtr idcase;
-extern IDPtr idto_s;
-extern IDPtr idop_shr;
-extern IDPtr idpure;
-extern IDPtr idfinally;
-extern IDPtr idthis;
-extern IDPtr idnull;
-extern IDPtr idop_div;
-extern IDPtr idserial_load;
-extern IDPtr idIOError;
-extern IDPtr id_dummy_lhs_parameter_;
-extern IDPtr idin;
-extern IDPtr idcatch;
-extern IDPtr idop_mul_assign;
-extern IDPtr idmethod;
-extern IDPtr idop_lt;
-extern IDPtr idset_at;
-extern IDPtr id_switch_;
-extern IDPtr idop_mod_assign;
-extern IDPtr idbreak;
-extern IDPtr idtry;
-extern IDPtr idop_mod;
-extern IDPtr idundefined;
-extern IDPtr idto_i;
-extern IDPtr idop_or;
-extern IDPtr idcontinue;
-extern IDPtr ide;
-extern IDPtr iditerator;
-extern IDPtr idthrow;
-extern IDPtr idop_and;
-extern IDPtr idelse;
-extern IDPtr idfun;
-extern IDPtr idto_f;
-extern IDPtr idop_sub_assign;
-extern IDPtr idlib;
-extern IDPtr iddofun;
-extern IDPtr ideach;
-extern IDPtr idop_set_at;
-extern IDPtr idop_in;
-extern IDPtr ids_load;
-extern IDPtr idclass;
-extern IDPtr idop_com;
-extern IDPtr idop_pos;
-extern IDPtr idop_add;
-extern IDPtr idop_ushr_assign;
-extern IDPtr idnobreak;
-extern IDPtr idcurrent_context;
-extern IDPtr idto_m;
-extern IDPtr idreturn;
-extern IDPtr idop_eq;
-extern IDPtr idfiber;
-extern IDPtr idop_or_assign;
-extern IDPtr ids_save;
-extern IDPtr idstatic;
-extern IDPtr idswitch;
-extern IDPtr idop_sub;
-extern IDPtr idop_ushr;
-extern IDPtr idfirst_step;
-extern IDPtr idblock_break;
-extern IDPtr idserial_save;
-extern IDPtr idop_range;
-extern IDPtr id_dummy_fun_parameter_;
-extern IDPtr id_dummy_block_parameter_;
-extern IDPtr idunittest;
-extern IDPtr idop_xor;
-extern IDPtr idblock_first;
-extern IDPtr idtrue;
-extern IDPtr idop_call;
-extern IDPtr id_initialize_;
-extern IDPtr idis;
-extern IDPtr idwhile;
-extern IDPtr idit;
-extern IDPtr idassert;
-extern IDPtr idxtal;
-extern IDPtr idif;
-extern IDPtr idp;
-}
+
+extern IDPtr id_list[];
+
+enum IDEnum{
+//{ID{{
+	idop_inc,
+	idblock_catch,
+	idcallee,
+	idnew,
+	idop_shl_assign,
+	idop_at,
+	idtest,
+	idfor,
+	idserial_new,
+	idop_div_assign,
+	idop_mul,
+	idop_xor_assign,
+	idto_a,
+	idinitialize,
+	idonce,
+	iddo,
+	idstring,
+	idfalse,
+	idancestors,
+	idop_and_assign,
+	idop_add_assign,
+	idop_cat_assign,
+	idsingleton,
+	idop_shl,
+	idblock_next,
+	idyield,
+	idop_shr_assign,
+	idop_cat,
+	idop_neg,
+	idop_dec,
+	idvalue,
+	iddefault,
+	idcase,
+	idto_s,
+	idop_shr,
+	idpure,
+	idfinally,
+	idthis,
+	idnull,
+	idop_div,
+	idserial_load,
+	idIOError,
+	id_dummy_lhs_parameter_,
+	idin,
+	idcatch,
+	idop_mul_assign,
+	idmethod,
+	idop_lt,
+	idset_at,
+	id_switch_,
+	idop_mod_assign,
+	idbreak,
+	idtry,
+	idop_mod,
+	idto_i,
+	idop_or,
+	idcontinue,
+	ide,
+	iditerator,
+	idthrow,
+	idop_and,
+	idundefined,
+	idelse,
+	idfun,
+	idto_f,
+	idop_sub_assign,
+	idlib,
+	iddofun,
+	ideach,
+	idop_set_at,
+	idop_in,
+	ids_load,
+	idclass,
+	idop_com,
+	idop_pos,
+	idop_add,
+	idop_ushr_assign,
+	idnobreak,
+	idcurrent_context,
+	idto_m,
+	idreturn,
+	idop_eq,
+	idfiber,
+	idop_or_assign,
+	ids_save,
+	idswitch,
+	idop_sub,
+	idop_ushr,
+	idfirst_step,
+	idblock_break,
+	idserial_save,
+	idop_range,
+	id_dummy_fun_parameter_,
+	id_dummy_block_parameter_,
+	idunittest,
+	idop_xor,
+	idblock_first,
+	idtrue,
+	idop_call,
+	id_initialize_,
+	idis,
+	idwhile,
+	idit,
+	idassert,
+	idxtal,
+	idif,
+	idp,
 //}}ID}
 
 
 
+	IDMAX
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 #else
 

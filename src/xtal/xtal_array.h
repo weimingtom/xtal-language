@@ -192,7 +192,7 @@ public:
 	*
 	*/
 	ArrayPtr to_a(){
-		return ArrayPtr(this);
+		return from_this(this);
 	}
 
 	bool op_eq(const ArrayPtr& other);

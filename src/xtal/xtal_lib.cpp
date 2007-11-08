@@ -61,11 +61,11 @@ void ix(){
 
 #else
 
-Code compile_file(const StringPtr& file_name){
+CodePtr compile_file(const StringPtr& file_name){
 	return null;
 }
 
-Code compile(const StringPtr& source){
+CodePtr compile(const StringPtr& source){
 	return null;
 }
 

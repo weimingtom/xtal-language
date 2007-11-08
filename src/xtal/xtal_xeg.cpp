@@ -897,11 +897,11 @@ ScannerPtr create_scanner_String(const StringPtr& string){ return xnew<StreamSca
 ScannerPtr create_scanner_Iterator(const AnyPtr& iter){ return xnew<IteratorScanner>(iter); }
 
 MatchResultPtr Scanner::match(const AnyPtr& pattern){
-	return XegExec().match(expr(pattern), ScannerPtr(this));
+	return XegExec().match(expr(pattern), from_this(this));
 }
 
 ParseResultPtr Scanner::parse(const AnyPtr& pattern){
-	return XegExec().parse(expr(pattern), ScannerPtr(this));
+	return XegExec().parse(expr(pattern), from_this(this));
 }
 
 void def_common_method(const ClassPtr& p){

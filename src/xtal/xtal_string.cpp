@@ -135,7 +135,7 @@ private:
 };
 
 AnyPtr ChRange::each(){
-	return xnew<ChRangeIter>(ChRangePtr(this));
+	return xnew<ChRangeIter>(from_this(this));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -469,7 +469,7 @@ uint_t String::size(){
 }
 
 StringPtr String::clone(){
-	return StringPtr(this);
+	return from_this(this);
 }
 
 const IDPtr& String::intern(){
@@ -491,7 +491,7 @@ bool String::is_interned(){
 }
 
 StringPtr String::to_s(){
-	return StringPtr(this);
+	return from_this(this);
 }
 
 int_t String::to_i(){ 
@@ -503,7 +503,7 @@ float_t String::to_f(){
 }
 
 AnyPtr String::each(){
-	return xnew<StringEachIter>(StringPtr(this));
+	return xnew<StringEachIter>(from_this(this));
 }
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
@@ -512,7 +512,7 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	}
 
 	if(length()==1 && right->length()==1){
-		return xnew<ChRange>(StringPtr(this), right);
+		return xnew<ChRange>(from_this(this), right);
 	}else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>("", ""));		
 	}
@@ -730,6 +730,11 @@ ID::ID(char_t a, char_t b, char_t c)
 ID::ID(const StringPtr& name)
 	:String(*(name ? name->intern() : (const IDPtr&)name)){}
 
+
+AnyPtr SmartPtrCtor1<String>::call(type v){
+	return xnew<String>(v);
+}
+
 AnyPtr SmartPtrCtor1<ID>::call(type v){
 	return str_mgr_->insert(v).value;
 }
@@ -741,339 +746,133 @@ AnyPtr SmartPtrCtor2<ID>::call(type v){
 
 #ifdef XTAL_USE_PREDEFINED_ID
 
-//{ID{{
 namespace id{
-IDPtr idop_inc;
-IDPtr idblock_catch;
-IDPtr idcallee;
-IDPtr idnew;
-IDPtr idop_shl_assign;
-IDPtr idop_at;
-IDPtr idtest;
-IDPtr idfor;
-IDPtr idserial_new;
-IDPtr idop_div_assign;
-IDPtr idop_mul;
-IDPtr idop_xor_assign;
-IDPtr idto_a;
-IDPtr idinitialize;
-IDPtr idonce;
-IDPtr iddo;
-IDPtr idstring;
-IDPtr idfalse;
-IDPtr idancestors;
-IDPtr idop_and_assign;
-IDPtr idop_add_assign;
-IDPtr idop_cat_assign;
-IDPtr idsingleton;
-IDPtr idop_shl;
-IDPtr idblock_next;
-IDPtr idyield;
-IDPtr idop_shr_assign;
-IDPtr idop_cat;
-IDPtr idop_neg;
-IDPtr idop_dec;
-IDPtr idvalue;
-IDPtr iddefault;
-IDPtr idcase;
-IDPtr idto_s;
-IDPtr idop_shr;
-IDPtr idpure;
-IDPtr idfinally;
-IDPtr idthis;
-IDPtr idnull;
-IDPtr idop_div;
-IDPtr idserial_load;
-IDPtr idIOError;
-IDPtr id_dummy_lhs_parameter_;
-IDPtr idin;
-IDPtr idcatch;
-IDPtr idop_mul_assign;
-IDPtr idmethod;
-IDPtr idop_lt;
-IDPtr idset_at;
-IDPtr id_switch_;
-IDPtr idop_mod_assign;
-IDPtr idbreak;
-IDPtr idtry;
-IDPtr idop_mod;
-IDPtr idundefined;
-IDPtr idto_i;
-IDPtr idop_or;
-IDPtr idcontinue;
-IDPtr ide;
-IDPtr iditerator;
-IDPtr idthrow;
-IDPtr idop_and;
-IDPtr idelse;
-IDPtr idfun;
-IDPtr idto_f;
-IDPtr idop_sub_assign;
-IDPtr idlib;
-IDPtr iddofun;
-IDPtr ideach;
-IDPtr idop_set_at;
-IDPtr idop_in;
-IDPtr ids_load;
-IDPtr idclass;
-IDPtr idop_com;
-IDPtr idop_pos;
-IDPtr idop_add;
-IDPtr idop_ushr_assign;
-IDPtr idnobreak;
-IDPtr idcurrent_context;
-IDPtr idto_m;
-IDPtr idreturn;
-IDPtr idop_eq;
-IDPtr idfiber;
-IDPtr idop_or_assign;
-IDPtr ids_save;
-IDPtr idstatic;
-IDPtr idswitch;
-IDPtr idop_sub;
-IDPtr idop_ushr;
-IDPtr idfirst_step;
-IDPtr idblock_break;
-IDPtr idserial_save;
-IDPtr idop_range;
-IDPtr id_dummy_fun_parameter_;
-IDPtr id_dummy_block_parameter_;
-IDPtr idunittest;
-IDPtr idop_xor;
-IDPtr idblock_first;
-IDPtr idtrue;
-IDPtr idop_call;
-IDPtr id_initialize_;
-IDPtr idis;
-IDPtr idwhile;
-IDPtr idit;
-IDPtr idassert;
-IDPtr idxtal;
-IDPtr idif;
-IDPtr idp;
+	IDPtr id_list[IDMAX];
 }
+
 void uninitialize_interned_string(){
-id::idop_inc = null;
-id::idblock_catch = null;
-id::idcallee = null;
-id::idnew = null;
-id::idop_shl_assign = null;
-id::idop_at = null;
-id::idtest = null;
-id::idfor = null;
-id::idserial_new = null;
-id::idop_div_assign = null;
-id::idop_mul = null;
-id::idop_xor_assign = null;
-id::idto_a = null;
-id::idinitialize = null;
-id::idonce = null;
-id::iddo = null;
-id::idstring = null;
-id::idfalse = null;
-id::idancestors = null;
-id::idop_and_assign = null;
-id::idop_add_assign = null;
-id::idop_cat_assign = null;
-id::idsingleton = null;
-id::idop_shl = null;
-id::idblock_next = null;
-id::idyield = null;
-id::idop_shr_assign = null;
-id::idop_cat = null;
-id::idop_neg = null;
-id::idop_dec = null;
-id::idvalue = null;
-id::iddefault = null;
-id::idcase = null;
-id::idto_s = null;
-id::idop_shr = null;
-id::idpure = null;
-id::idfinally = null;
-id::idthis = null;
-id::idnull = null;
-id::idop_div = null;
-id::idserial_load = null;
-id::idIOError = null;
-id::id_dummy_lhs_parameter_ = null;
-id::idin = null;
-id::idcatch = null;
-id::idop_mul_assign = null;
-id::idmethod = null;
-id::idop_lt = null;
-id::idset_at = null;
-id::id_switch_ = null;
-id::idop_mod_assign = null;
-id::idbreak = null;
-id::idtry = null;
-id::idop_mod = null;
-id::idundefined = null;
-id::idto_i = null;
-id::idop_or = null;
-id::idcontinue = null;
-id::ide = null;
-id::iditerator = null;
-id::idthrow = null;
-id::idop_and = null;
-id::idelse = null;
-id::idfun = null;
-id::idto_f = null;
-id::idop_sub_assign = null;
-id::idlib = null;
-id::iddofun = null;
-id::ideach = null;
-id::idop_set_at = null;
-id::idop_in = null;
-id::ids_load = null;
-id::idclass = null;
-id::idop_com = null;
-id::idop_pos = null;
-id::idop_add = null;
-id::idop_ushr_assign = null;
-id::idnobreak = null;
-id::idcurrent_context = null;
-id::idto_m = null;
-id::idreturn = null;
-id::idop_eq = null;
-id::idfiber = null;
-id::idop_or_assign = null;
-id::ids_save = null;
-id::idstatic = null;
-id::idswitch = null;
-id::idop_sub = null;
-id::idop_ushr = null;
-id::idfirst_step = null;
-id::idblock_break = null;
-id::idserial_save = null;
-id::idop_range = null;
-id::id_dummy_fun_parameter_ = null;
-id::id_dummy_block_parameter_ = null;
-id::idunittest = null;
-id::idop_xor = null;
-id::idblock_first = null;
-id::idtrue = null;
-id::idop_call = null;
-id::id_initialize_ = null;
-id::idis = null;
-id::idwhile = null;
-id::idit = null;
-id::idassert = null;
-id::idxtal = null;
-id::idif = null;
-id::idp = null;
+	for(int i=0; i<id::IDMAX; ++i){
+		id::id_list[i] = null;
+	}
 }
+
+
 void initialize_interned_string(){
-register_uninitializer(&uninitialize_interned_string);
-id::idop_inc = IDPtr("op_inc");
-id::idblock_catch = IDPtr("block_catch");
-id::idcallee = IDPtr("callee");
-id::idnew = IDPtr("new");
-id::idop_shl_assign = IDPtr("op_shl_assign");
-id::idop_at = IDPtr("op_at");
-id::idtest = IDPtr("test");
-id::idfor = IDPtr("for");
-id::idserial_new = IDPtr("serial_new");
-id::idop_div_assign = IDPtr("op_div_assign");
-id::idop_mul = IDPtr("op_mul");
-id::idop_xor_assign = IDPtr("op_xor_assign");
-id::idto_a = IDPtr("to_a");
-id::idinitialize = IDPtr("initialize");
-id::idonce = IDPtr("once");
-id::iddo = IDPtr("do");
-id::idstring = IDPtr("string");
-id::idfalse = IDPtr("false");
-id::idancestors = IDPtr("ancestors");
-id::idop_and_assign = IDPtr("op_and_assign");
-id::idop_add_assign = IDPtr("op_add_assign");
-id::idop_cat_assign = IDPtr("op_cat_assign");
-id::idsingleton = IDPtr("singleton");
-id::idop_shl = IDPtr("op_shl");
-id::idblock_next = IDPtr("block_next");
-id::idyield = IDPtr("yield");
-id::idop_shr_assign = IDPtr("op_shr_assign");
-id::idop_cat = IDPtr("op_cat");
-id::idop_neg = IDPtr("op_neg");
-id::idop_dec = IDPtr("op_dec");
-id::idvalue = IDPtr("value");
-id::iddefault = IDPtr("default");
-id::idcase = IDPtr("case");
-id::idto_s = IDPtr("to_s");
-id::idop_shr = IDPtr("op_shr");
-id::idpure = IDPtr("pure");
-id::idfinally = IDPtr("finally");
-id::idthis = IDPtr("this");
-id::idnull = IDPtr("null");
-id::idop_div = IDPtr("op_div");
-id::idserial_load = IDPtr("serial_load");
-id::idIOError = IDPtr("IOError");
-id::id_dummy_lhs_parameter_ = IDPtr("_dummy_lhs_parameter_");
-id::idin = IDPtr("in");
-id::idcatch = IDPtr("catch");
-id::idop_mul_assign = IDPtr("op_mul_assign");
-id::idmethod = IDPtr("method");
-id::idop_lt = IDPtr("op_lt");
-id::idset_at = IDPtr("set_at");
-id::id_switch_ = IDPtr("_switch_");
-id::idop_mod_assign = IDPtr("op_mod_assign");
-id::idbreak = IDPtr("break");
-id::idtry = IDPtr("try");
-id::idop_mod = IDPtr("op_mod");
-id::idundefined = IDPtr("undefined");
-id::idto_i = IDPtr("to_i");
-id::idop_or = IDPtr("op_or");
-id::idcontinue = IDPtr("continue");
-id::ide = IDPtr("e");
-id::iditerator = IDPtr("iterator");
-id::idthrow = IDPtr("throw");
-id::idop_and = IDPtr("op_and");
-id::idelse = IDPtr("else");
-id::idfun = IDPtr("fun");
-id::idto_f = IDPtr("to_f");
-id::idop_sub_assign = IDPtr("op_sub_assign");
-id::idlib = IDPtr("lib");
-id::iddofun = IDPtr("dofun");
-id::ideach = IDPtr("each");
-id::idop_set_at = IDPtr("op_set_at");
-id::idop_in = IDPtr("op_in");
-id::ids_load = IDPtr("s_load");
-id::idclass = IDPtr("class");
-id::idop_com = IDPtr("op_com");
-id::idop_pos = IDPtr("op_pos");
-id::idop_add = IDPtr("op_add");
-id::idop_ushr_assign = IDPtr("op_ushr_assign");
-id::idnobreak = IDPtr("nobreak");
-id::idcurrent_context = IDPtr("current_context");
-id::idto_m = IDPtr("to_m");
-id::idreturn = IDPtr("return");
-id::idop_eq = IDPtr("op_eq");
-id::idfiber = IDPtr("fiber");
-id::idop_or_assign = IDPtr("op_or_assign");
-id::ids_save = IDPtr("s_save");
-id::idstatic = IDPtr("static");
-id::idswitch = IDPtr("switch");
-id::idop_sub = IDPtr("op_sub");
-id::idop_ushr = IDPtr("op_ushr");
-id::idfirst_step = IDPtr("first_step");
-id::idblock_break = IDPtr("block_break");
-id::idserial_save = IDPtr("serial_save");
-id::idop_range = IDPtr("op_range");
-id::id_dummy_fun_parameter_ = IDPtr("_dummy_fun_parameter_");
-id::id_dummy_block_parameter_ = IDPtr("_dummy_block_parameter_");
-id::idunittest = IDPtr("unittest");
-id::idop_xor = IDPtr("op_xor");
-id::idblock_first = IDPtr("block_first");
-id::idtrue = IDPtr("true");
-id::idop_call = IDPtr("op_call");
-id::id_initialize_ = IDPtr("_initialize_");
-id::idis = IDPtr("is");
-id::idwhile = IDPtr("while");
-id::idit = IDPtr("it");
-id::idassert = IDPtr("assert");
-id::idxtal = IDPtr("xtal");
-id::idif = IDPtr("if");
-id::idp = IDPtr("p");
-}
+	register_uninitializer(&uninitialize_interned_string);
+
+//{ID{{
+	id::id_list[id::idop_inc] = "op_inc";
+	id::id_list[id::idblock_catch] = "block_catch";
+	id::id_list[id::idcallee] = "callee";
+	id::id_list[id::idnew] = "new";
+	id::id_list[id::idop_shl_assign] = "op_shl_assign";
+	id::id_list[id::idop_at] = "op_at";
+	id::id_list[id::idtest] = "test";
+	id::id_list[id::idfor] = "for";
+	id::id_list[id::idserial_new] = "serial_new";
+	id::id_list[id::idop_div_assign] = "op_div_assign";
+	id::id_list[id::idop_mul] = "op_mul";
+	id::id_list[id::idop_xor_assign] = "op_xor_assign";
+	id::id_list[id::idto_a] = "to_a";
+	id::id_list[id::idinitialize] = "initialize";
+	id::id_list[id::idonce] = "once";
+	id::id_list[id::iddo] = "do";
+	id::id_list[id::idstring] = "string";
+	id::id_list[id::idfalse] = "false";
+	id::id_list[id::idancestors] = "ancestors";
+	id::id_list[id::idop_and_assign] = "op_and_assign";
+	id::id_list[id::idop_add_assign] = "op_add_assign";
+	id::id_list[id::idop_cat_assign] = "op_cat_assign";
+	id::id_list[id::idsingleton] = "singleton";
+	id::id_list[id::idop_shl] = "op_shl";
+	id::id_list[id::idblock_next] = "block_next";
+	id::id_list[id::idyield] = "yield";
+	id::id_list[id::idop_shr_assign] = "op_shr_assign";
+	id::id_list[id::idop_cat] = "op_cat";
+	id::id_list[id::idop_neg] = "op_neg";
+	id::id_list[id::idop_dec] = "op_dec";
+	id::id_list[id::idvalue] = "value";
+	id::id_list[id::iddefault] = "default";
+	id::id_list[id::idcase] = "case";
+	id::id_list[id::idto_s] = "to_s";
+	id::id_list[id::idop_shr] = "op_shr";
+	id::id_list[id::idpure] = "pure";
+	id::id_list[id::idfinally] = "finally";
+	id::id_list[id::idthis] = "this";
+	id::id_list[id::idnull] = "null";
+	id::id_list[id::idop_div] = "op_div";
+	id::id_list[id::idserial_load] = "serial_load";
+	id::id_list[id::idIOError] = "IOError";
+	id::id_list[id::id_dummy_lhs_parameter_] = "_dummy_lhs_parameter_";
+	id::id_list[id::idin] = "in";
+	id::id_list[id::idcatch] = "catch";
+	id::id_list[id::idop_mul_assign] = "op_mul_assign";
+	id::id_list[id::idmethod] = "method";
+	id::id_list[id::idop_lt] = "op_lt";
+	id::id_list[id::idset_at] = "set_at";
+	id::id_list[id::id_switch_] = "_switch_";
+	id::id_list[id::idop_mod_assign] = "op_mod_assign";
+	id::id_list[id::idbreak] = "break";
+	id::id_list[id::idtry] = "try";
+	id::id_list[id::idop_mod] = "op_mod";
+	id::id_list[id::idto_i] = "to_i";
+	id::id_list[id::idop_or] = "op_or";
+	id::id_list[id::idcontinue] = "continue";
+	id::id_list[id::ide] = "e";
+	id::id_list[id::iditerator] = "iterator";
+	id::id_list[id::idthrow] = "throw";
+	id::id_list[id::idop_and] = "op_and";
+	id::id_list[id::idundefined] = "undefined";
+	id::id_list[id::idelse] = "else";
+	id::id_list[id::idfun] = "fun";
+	id::id_list[id::idto_f] = "to_f";
+	id::id_list[id::idop_sub_assign] = "op_sub_assign";
+	id::id_list[id::idlib] = "lib";
+	id::id_list[id::iddofun] = "dofun";
+	id::id_list[id::ideach] = "each";
+	id::id_list[id::idop_set_at] = "op_set_at";
+	id::id_list[id::idop_in] = "op_in";
+	id::id_list[id::ids_load] = "s_load";
+	id::id_list[id::idclass] = "class";
+	id::id_list[id::idop_com] = "op_com";
+	id::id_list[id::idop_pos] = "op_pos";
+	id::id_list[id::idop_add] = "op_add";
+	id::id_list[id::idop_ushr_assign] = "op_ushr_assign";
+	id::id_list[id::idnobreak] = "nobreak";
+	id::id_list[id::idcurrent_context] = "current_context";
+	id::id_list[id::idto_m] = "to_m";
+	id::id_list[id::idreturn] = "return";
+	id::id_list[id::idop_eq] = "op_eq";
+	id::id_list[id::idfiber] = "fiber";
+	id::id_list[id::idop_or_assign] = "op_or_assign";
+	id::id_list[id::ids_save] = "s_save";
+	id::id_list[id::idswitch] = "switch";
+	id::id_list[id::idop_sub] = "op_sub";
+	id::id_list[id::idop_ushr] = "op_ushr";
+	id::id_list[id::idfirst_step] = "first_step";
+	id::id_list[id::idblock_break] = "block_break";
+	id::id_list[id::idserial_save] = "serial_save";
+	id::id_list[id::idop_range] = "op_range";
+	id::id_list[id::id_dummy_fun_parameter_] = "_dummy_fun_parameter_";
+	id::id_list[id::id_dummy_block_parameter_] = "_dummy_block_parameter_";
+	id::id_list[id::idunittest] = "unittest";
+	id::id_list[id::idop_xor] = "op_xor";
+	id::id_list[id::idblock_first] = "block_first";
+	id::id_list[id::idtrue] = "true";
+	id::id_list[id::idop_call] = "op_call";
+	id::id_list[id::id_initialize_] = "_initialize_";
+	id::id_list[id::idis] = "is";
+	id::id_list[id::idwhile] = "while";
+	id::id_list[id::idit] = "it";
+	id::id_list[id::idassert] = "assert";
+	id::id_list[id::idxtal] = "xtal";
+	id::id_list[id::idif] = "if";
+	id::id_list[id::idp] = "p";
 //}}ID}
+
+
+
+}
 
 
 

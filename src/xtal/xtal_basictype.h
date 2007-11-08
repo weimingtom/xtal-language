@@ -73,23 +73,4 @@ private:
 	int_t kind_;
 };
 
-
-struct Lazy : public Base{
-	AnyPtr value;
-	AnyPtr ret;
-
-	enum State{
-		STATE_EVER,
-		STATE_BEFORE,
-		STATE_AFTER,
-	};
-
-	int_t state;
-	Lazy(const AnyPtr& v, int_t s):value(v), state(s){}
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & value & ret;
-	}
-};
-
 }

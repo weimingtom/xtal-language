@@ -12,7 +12,6 @@ void initialize_code(){
 	{
 		ClassPtr p = new_cpp_class<Code>("Code");
 		p->inherit(get_cpp_class<Fun>());
-		p->method("inspect", &Code::inspect);
 	}
 
 	builtin()->def("Code", get_cpp_class<Code>());
@@ -28,7 +27,7 @@ Code::Code()
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Fun>(null, null, CodePtr(this), (FunCore*)0);
+	first_fun_ = xnew<Fun>(null, null, from_this(this), (FunCore*)0);
 	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
@@ -68,6 +67,8 @@ StringPtr Code::inspect(){
 	
 StringPtr Code::inspect_range(int_t start, int_t end){
 
+#ifdef XTAL_DEBUG
+
 	int sz = 0;
 	const inst_t* pc = data()+start;
 	StringPtr temp;
@@ -76,7 +77,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 
 	for(; pc < data() + end;){switch(*pc){
 		XTAL_NODEFAULT;
-
 //{CODE_INSPECT{{
 		XTAL_CASE(InstUndefined::NUMBER){ temp = ((InstUndefined*)pc)->inspect(code); sz = InstUndefined::ISIZE; }
 		XTAL_CASE(InstPushNull::NUMBER){ temp = ((InstPushNull*)pc)->inspect(code); sz = InstPushNull::ISIZE; }
@@ -227,11 +227,16 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(code); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
-
 	} ms->put_s(Xf("%04d:%s\n")((int_t)(pc-data()), temp)->to_s()); pc += sz; }
 
 	ms->seek(0);
 	return ms->get_s(ms->size());
+
+#else
+
+	return "";
+
+#endif
 }
 
 AnyPtr inst_inspect(inst_address_t value, Inst* inst, const CodePtr& code){

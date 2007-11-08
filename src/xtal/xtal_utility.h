@@ -177,7 +177,7 @@ template<class T, class U>
 struct IsInherited{
 	typedef char (&yes)[2];
 	typedef char (&no)[1];
-	static yes test(U*);
+	static yes test(const U*);
 	static no test(...);
 	static T* makeT();
 
@@ -221,6 +221,17 @@ struct IsReference{
 	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
 };
 
+template<class T>
+struct IsPointer{
+	typedef char (&yes)[2];
+	typedef char (&no)[1];
+	template<class U>
+	static yes test(U* (*)());
+	static no test(...);
+
+	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
+};
+
 template<class T, class U>
 struct IsSame{
 	typedef char (&yes)[2];
@@ -232,9 +243,9 @@ struct IsSame{
 };
 
 template<class T>
-struct IsNotUndefined{ enum{ value = 1 }; };
+struct IsNotVoid{ enum{ value = 1 }; };
 template<>
-struct IsNotUndefined<void>{ enum{ value = 0 }; };
+struct IsNotVoid<void>{ enum{ value = 0 }; };
 
 template<class T>
 struct Ref{

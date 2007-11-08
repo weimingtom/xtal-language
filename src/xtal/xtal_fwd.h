@@ -168,10 +168,8 @@ enum PrimitiveType{
 	
 	TYPE_SMALL_STRING = 7,
 
-	TYPE_LAZY = 8,
-
-	TYPE_MASK = (1<<0) | (1<<1) | (1<<2) | (1<<3),
-	TYPE_SHIFT = 4
+	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
+	TYPE_SHIFT = 3
 };
 
 

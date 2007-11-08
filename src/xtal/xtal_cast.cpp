@@ -2,14 +2,49 @@
 
 namespace xtal{
 
-
-void throw_cast_error(const AnyPtr& a, const ClassPtr& cls){
-	XTAL_THROW(cast_error(a, cls->object_name()), return);
+const void* cast_helper_helper_smartptr(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return &a; }
+	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
 }
 
-void throw_arg_cast_error(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return);
+const void* cast_helper_helper_base(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return pvalue(a); }
+	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
 }
+
+const void* cast_helper_helper_innocence(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return &a; }
+	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
+}
+
+const void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	XTAL_THROW(cast_error(a, cls->object_name()), return 0);
+}
+
+////////////////////////////////////////////////////////////////////////
+
+const void* arg_cast_helper_helper_smartptr(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return &a; }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
+}
+
+const void* arg_cast_helper_helper_base(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return pvalue(a); }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
+}
+
+const void* arg_cast_helper_helper_innocence(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return &a; }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
+}
+
+const void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
+	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
+	XTAL_THROW(argument_error(a, cls->object_name(), param_num, param_name), return 0);
+}
+
+////////////////////////////////////////////////////////////////////////
 
 const IDPtr* CastHelper<const IDPtr*>::as(const AnyPtr& a){ 
 	if(String* p = xtal::as<String*>(a)){
@@ -62,7 +97,6 @@ int_t CastHelper<int_t>::as(const AnyPtr& a){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
-		XTAL_CASE(TYPE_LAZY){ return as(a->self()); }
 	}
 	return 0;
 }
@@ -72,7 +106,6 @@ int_t CastHelper<int_t>::cast(const AnyPtr& a){
 		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Int")), return 0); }
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
-		XTAL_CASE(TYPE_LAZY){ return cast(a->self()); }
 	}
 	return 0;
 }
@@ -82,7 +115,6 @@ int_t CastHelper<int_t>::arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr
 		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Int"), param_num, param_name), return 0); }
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
-		XTAL_CASE(TYPE_LAZY){ return arg_cast(a->self(), param_num, param_name); }
 	}
 	return 0;
 }
@@ -92,7 +124,6 @@ float_t CastHelper<float_t>::as(const AnyPtr& a){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
-		XTAL_CASE(TYPE_LAZY){ return as(a->self()); }
 	}
 	return 0;
 }
@@ -102,7 +133,6 @@ float_t CastHelper<float_t>::cast(const AnyPtr& a){
 		XTAL_DEFAULT{ XTAL_THROW(cast_error(a, xnew<String>("Float")), return 0); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
-		XTAL_CASE(TYPE_LAZY){ return cast(a->self()); }
 	}
 	return 0;
 }
@@ -112,7 +142,6 @@ float_t CastHelper<float_t>::arg_cast(const AnyPtr& a, int_t param_num, const An
 		XTAL_DEFAULT{ XTAL_THROW(argument_error(a, xnew<String>("Float"), param_num, param_name), return 0); }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
-		XTAL_CASE(TYPE_LAZY){ return arg_cast(a->self(), param_num, param_name); }
 	}
 	return 0;
 }

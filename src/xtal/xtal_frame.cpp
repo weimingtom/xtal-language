@@ -102,7 +102,7 @@ void Frame::set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& va
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
-	value->set_object_name(primary_key, object_name_force(), FramePtr(this));
+	value->set_object_name(primary_key, object_name_force(), from_this(this));
 	global_mutate_count++;
 }
 	
@@ -111,7 +111,7 @@ void Frame::set_object_name(const StringPtr& primary_key, int_t force, const Any
 		HaveName::set_object_name(primary_key, force, parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, FramePtr(this));
+				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, from_this(this));
 			}
 		}
 	}
@@ -132,7 +132,7 @@ StringPtr Frame::object_name(){
 }
 
 AnyPtr Frame::members(){
-	return xnew<MembersIter>(FramePtr(this));
+	return xnew<MembersIter>(from_this(this));
 }
 
 
@@ -216,7 +216,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		Value val = {members_->size(), accessibility};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		value->set_object_name(primary_key, object_name_force(), ClassPtr(this));
+		value->set_object_name(primary_key, object_name_force(), from_this(this));
 		global_mutate_count++;
 	}
 	else{
@@ -254,7 +254,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 		}else{
 			// protectedメンバでアクセス権が無いなら例外
-			if(it->second.flags & KIND_PROTECTED && !self->is(ClassPtr(this))){
+			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
 					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "protected")))
 				, return undefined);			
@@ -366,7 +366,7 @@ void Class::call(const VMachinePtr& vm){
 		pvalue(instance)->set_xtal_instance_flag();
 	}
 
-	pvalue(instance)->set_class(ClassPtr(this));
+	pvalue(instance)->set_class(from_this(this));
 	init_instance(instance, vm);
 	
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
@@ -392,7 +392,7 @@ void Class::s_new(const VMachinePtr& vm){
 		pvalue(instance)->set_xtal_instance_flag();
 	}
 
-	pvalue(instance)->set_class(ClassPtr(this));
+	pvalue(instance)->set_class(from_this(this));
 	init_instance(instance, vm);
 
 	vm->return_result(instance);
@@ -403,7 +403,7 @@ CppClass::CppClass(const char* name)
 }
 
 void CppClass::call(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(new), null, ClassPtr(this))){
+	if(const AnyPtr& ret = member(Xid(new), null, from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
 	}else{
@@ -412,7 +412,7 @@ void CppClass::call(const VMachinePtr& vm){
 }
 
 void CppClass::s_new(const VMachinePtr& vm){
-	if(const AnyPtr& ret = member(Xid(serial_new), null, ClassPtr(this))){
+	if(const AnyPtr& ret = member(Xid(serial_new), null, from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
 	}else{
@@ -467,7 +467,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		global_mutate_count++;
-		value->set_object_name(primary_key, object_name_force(), ClassPtr(this));
+		value->set_object_name(primary_key, object_name_force(), from_this(this));
 		return members_->back();
 	}else{
 		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return null);
@@ -484,18 +484,18 @@ StringPtr Lib::join_path(const StringPtr& sep){
 
 Singleton::Singleton(const char* name)
 	:Class(name){
-	Base::set_class(SingletonPtr(this));
+	Base::set_class(from_this(this));
 	inherit(get_cpp_class<Class>());
 }
 
 Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 	:Class(outer, code, core){
-	Base::set_class(SingletonPtr(this));
+	Base::set_class(from_this(this));
 	inherit(get_cpp_class<Class>());
 }
 
 void Singleton::init_singleton(const VMachinePtr& vm){;
-	SingletonPtr instance = SingletonPtr(this);
+	SingletonPtr instance = from_this(this);
 	init_instance(instance, vm);
 	
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){

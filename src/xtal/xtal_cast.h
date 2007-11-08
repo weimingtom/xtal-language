@@ -21,158 +21,113 @@ inline typename CastResult<T>::type cast(const AnyPtr& a);
 template<class T>
 inline typename CastResult<T>::type arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name);
 
-	
+
+/////////////////////////////////////////////////////////////////////////////
+
 // 変換後の型がSmartPtrの場合
 template<class U, class V>
-inline SmartPtr<U>* as_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	if(a->is(get_cpp_class<U>())){ return (SmartPtr<U>*)&a; }
+inline const void* as_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
+	if(a->is(get_cpp_class<U>())){ return &a; }
 	return 0;
 }
 
 // 変換後の型がBaseを継承した型の場合
 template<class U>
-inline U* as_helper_helper(const AnyPtr& a, const Base*, const U*){
-	if(a->is(get_cpp_class<U>())){ return (U*)pvalue(a); }
+inline const void* as_helper_helper(const AnyPtr& a, const Base*, const U*){
+	if(a->is(get_cpp_class<U>())){ return pvalue(a); }
 	return 0;
 }
 
-// 変換後の型がAnyPtrやBaseを継承していない型の場合
+// 変換後の型がInnocenceを継承した型の場合
 template<class U>
-inline U* as_helper_helper(const AnyPtr& a, const void*, const U*){
+inline const void* as_helper_helper(const AnyPtr& a, const Innocence*, const U*){
+	if(a->is(get_cpp_class<U>())){ return &a; }
+	return 0;
+}
+
+// 変換後の型がInnocenceやBaseを継承していない型の場合
+template<class U>
+inline const void* as_helper_helper(const AnyPtr& a, const void*, const U*){
 	if(a->is(get_cpp_class<U>())){ return ((SmartPtr<U>&)a).get(); }
 	return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 
-void throw_cast_error(const AnyPtr& a, const ClassPtr& cls);
-
-// 変換後の型がBaseを継承した型の場合
-inline void* cast_helper_helper_extend_anyimpl(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)pvalue(a); }
-	throw_cast_error(a, cls);
-	return 0;
-}
-
-// 変換後の型がAnyPtrを継承した型の場合
-inline void* cast_helper_helper_extend_any(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)&a; }
-	throw_cast_error(a, cls);
-	return 0;
-}
-
-// 変換後の型がAnyPtrやBaseを継承していない型の場合
-inline void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls){
-	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
-	throw_cast_error(a, cls);
-	return 0;
-}
+const void* cast_helper_helper_smartptr(const AnyPtr& a, const ClassPtr& cls);
+const void* cast_helper_helper_base(const AnyPtr& a, const ClassPtr& cls);
+const void* cast_helper_helper_innocence(const AnyPtr& a, const ClassPtr& cls);
+const void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls);
 
 // 変換後の型がSmartPtrの場合
 template<class U, class V>
-inline SmartPtr<U>* cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	return (SmartPtr<U>*)cast_helper_helper_extend_any(a, get_cpp_class<U>());
+inline const void* cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
+	return cast_helper_helper_smartptr(a, get_cpp_class<U>()); 
 }
 
 // 変換後の型がBaseを継承した型の場合
 template<class U>
-inline U* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
-	return (U*)cast_helper_helper_extend_anyimpl(a, get_cpp_class<U>());
+inline const void* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
+	return cast_helper_helper_base(a, get_cpp_class<U>()); 
 }
 	
 // 変換後の型がInnocenceを継承した型の場合
 template<class U>
-inline U* cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
-	return (U*)cast_helper_helper_extend_any(a, get_cpp_class<U>());
+inline const void* cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
+	return cast_helper_helper_innocence(a, get_cpp_class<U>()); 
 }
 	
 // 変換後の型がAnyPtrやBaseを継承していない型の場合
 template<class U>
-inline U* cast_helper_helper(const AnyPtr& a, const void*, const U*){
-	return (U*)cast_helper_helper_other(a, get_cpp_class<U>());
+inline const void* cast_helper_helper(const AnyPtr& a, const void*, const U*){
+	return cast_helper_helper_other(a, get_cpp_class<U>()); 
 }
 
+/////////////////////////////////////////////////////////////////////////////
 
-void throw_arg_cast_error(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
-
-// 変換後の型がBaseを継承した型の場合
-inline void* arg_cast_helper_helper_extend_anyimpl(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)pvalue(a); }
-	throw_arg_cast_error(a, param_num, param_name, cls);
-	return 0;
-}
-
-// 変換後の型がAnyPtrを継承した型の場合
-inline void* arg_cast_helper_helper_extend_any(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return (void*)&a; }
-	throw_arg_cast_error(a, param_num, param_name, cls);
-	return 0;
-}
-
-// 変換後の型がAnyPtrやBaseを継承していない型の場合
-inline void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls){
-	if(a->is(cls)){ return ((SmartPtr<int>&)a).get(); }
-	throw_arg_cast_error(a, param_num, param_name, cls);
-	return 0;
-}
+const void* arg_cast_helper_helper_smartptr(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+const void* arg_cast_helper_helper_base(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+const void* arg_cast_helper_helper_innocence(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
+const void* arg_cast_helper_helper_other(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const ClassPtr& cls);
 
 // 変換後の型がSmartPtrの場合
 template<class U, class V>
-inline SmartPtr<U>* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const SmartPtr<U>*, const V&){
-	return (SmartPtr<U>*)arg_cast_helper_helper_extend_any(a, param_num, param_name, get_cpp_class<U>());
+inline const void* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const SmartPtr<U>*, const V&){
+	return arg_cast_helper_helper_smartptr(a, param_num, param_name, get_cpp_class<U>());
 }
 
 // 変換後の型がBaseを継承した型の場合
 template<class U>
-inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const Base*, const U*){
-	return (U*)arg_cast_helper_helper_extend_anyimpl(a, param_num, param_name, get_cpp_class<U>());
+inline const void* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const Base*, const U*){
+	return arg_cast_helper_helper_base(a, param_num, param_name, get_cpp_class<U>());
 }
 	
 // 変換後の型がInnocenceを継承した型の場合
 template<class U>
-inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const Innocence*, const U*){
-	return (U*)arg_cast_helper_helper_extend_any(a, param_num, param_name, get_cpp_class<U>());
+inline const void* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const Innocence*, const U*){
+	return arg_cast_helper_helper_innocence(a, param_num, param_name, get_cpp_class<U>());
 }
 	
-// 変換後の型がAnyPtrやBaseを継承していない型の場合
+// 変換後の型がInnocenceやBaseを継承していない型の場合
 template<class U>
-inline U* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const void*, const U*){
-	return (U*)arg_cast_helper_helper_other(a, param_num, param_name, get_cpp_class<U>());
+inline const void* arg_cast_helper_helper(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, const void*, const U*){
+	return arg_cast_helper_helper_other(a, param_num, param_name, get_cpp_class<U>());
 }
 
-template<class T>
-struct TypeType{
-	typedef char (&ptr)[1];
-	typedef char (&ref)[2];
-	typedef char (&other)[3];
-
-	static T makeT();
-	
-	template<class U> static ptr testT(U* (*)());
-	template<class U> static ref testT(U& (*)());
-	static other testT(...);
-
-	enum{ 
-		N = sizeof(testT((T (*)())0))-1,
-		value = N==sizeof(ptr) ? 0 : 
-				N==sizeof(ref) ? 1 : 2	
-	};
-};
+#ifdef XTAL_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
 template<class T>
 struct CastHelper{
 
 	// 変換後の型がポインタの場合
 	template<class U> static T as_inner(const AnyPtr& a, U* (*)()){ 
-		return (T)as_helper_helper(a, (U*)0, (U*)0);
-	}
+		return (T)as_helper_helper(a, (U*)0, (U*)0); }
 		
 	template<class U> static T cast_inner(const AnyPtr& a, U* (*)()){ 
-		return (T)cast_helper_helper(a, (U*)0, (U*)0);
-	}	
+		return (T)cast_helper_helper(a, (U*)0, (U*)0); }	
 		
 	template<class U> static T arg_cast_inner(const AnyPtr& a, int_t param_num, const AnyPtr& param_name, U* (*)()){ 
-		return (T)arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0);
-	}
+		return (T)arg_cast_helper_helper(a, param_num, param_name, (U*)0, (U*)0); }
 	
 	
 	// 変換後の型が参照の場合、ポインタ型としてキャストしたあと参照にする
@@ -208,6 +163,55 @@ struct CastHelper{
 
 };
 
+#else
+
+template<class T>
+struct CastHelper{
+
+	// 変換後の型が参照でもポインタでもない場合、ポインタ型としてキャストしたあと実体にする
+	static T as(const AnyPtr& a){ 
+		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
+		
+	static T cast(const AnyPtr& a){ 
+		return *xtal::cast<const T*>(a); }
+		
+	static T arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){ 
+		return *xtal::arg_cast<const T*>(a, param_num, param_name); }
+};
+
+template<class T>
+struct CastHelper<T*>{
+
+	// 変換後の型がポインタの場合
+	static T* as(const AnyPtr& a){ 
+		return (T*)as_helper_helper(a, (T*)0, (T*)0); }
+		
+	static T* cast(const AnyPtr& a){ 
+		return (T*)cast_helper_helper(a, (T*)0, (T*)0); }	
+		
+	static T* arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){ 
+		return (T*)arg_cast_helper_helper(a, param_num, param_name, (T*)0, (T*)0); }
+};
+
+template<class T>
+struct CastHelper<T&>{
+	
+	// 変換後の型が参照の場合、ポインタ型としてキャストしたあと参照にする
+	static T& as(const AnyPtr& a){ 
+		if(T* ret = xtal::as<T*>(a)){ return *ret; }else{ return *(T*)&null;} }
+		
+	static T& cast(const AnyPtr& a){ 
+		return *xtal::cast<T*>(a); }
+		
+	static T& arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){ 
+		return *xtal::arg_cast<T*>(a, param_num, param_name); }
+};
+
+
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 /**
 * @brief T型に変換する。
 *
@@ -219,7 +223,7 @@ struct CastHelper{
 template<class T> 
 inline typename CastResult<T>::type 
 as(const AnyPtr& a){
-	return CastHelper<T>::as(a->self());
+	return CastHelper<T>::as(a);
 }
 
 /**
@@ -230,7 +234,7 @@ as(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 cast(const AnyPtr& a){
-	return CastHelper<T>::cast(a->self());
+	return CastHelper<T>::cast(a);
 }
 
 /**
@@ -241,7 +245,7 @@ cast(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
-	return CastHelper<T>::arg_cast(a->self(), param_num, param_name);
+	return CastHelper<T>::arg_cast(a, param_num, param_name);
 }
 
 /**
@@ -252,7 +256,7 @@ arg_cast(const AnyPtr& a, int_t param_num, const AnyPtr& param_name){
 template<class T> 
 inline const SmartPtr<T>&
 ptr_as(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::as(a->self());
+	return CastHelper<const SmartPtr<T>&>::as(a);
 }
 
 /**
@@ -263,7 +267,7 @@ ptr_as(const AnyPtr& a){
 template<class T>
 inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::cast(a->self());
+	return CastHelper<const SmartPtr<T>&>::cast(a);
 }
 
 /**
@@ -274,6 +278,9 @@ inline const SmartPtr<T>&
 static_ptr_cast(const AnyPtr& a){
 	return *(const SmartPtr<T>*)&a;
 }
+
+
+/////////////////////////////////////////////////////////////////////////////
 
 template<>
 struct CastHelper<AnyPtr*>{

@@ -95,6 +95,6 @@
 
 #else
 
-#define Xid(string) ((const ::xtal::IDPtr&) ::xtal::id::id##string)
+#define Xid(string) ((const ::xtal::IDPtr&) ::xtal::id::id_list[::xtal::id::id##string])
 
 #endif

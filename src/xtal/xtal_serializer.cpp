@@ -32,7 +32,7 @@ bool Serializer::check_id(const IDPtr& id){
 
 void Serializer::check_id_and_throw(const IDPtr& id){
 	if(!check_id(id)){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return false);
+		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("name", id))), return);
 	}
 }
 

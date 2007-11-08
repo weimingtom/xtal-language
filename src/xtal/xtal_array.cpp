@@ -264,7 +264,7 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 	for(uint_t i = 0, size = a->size(); i<size; ++i){
 		push_back(a->at(i));
 	}
-	return ArrayPtr(this);
+	return from_this(this);
 }
 
 StringPtr Array::join(const StringPtr& sep){
@@ -312,11 +312,11 @@ bool Array::op_eq(const ArrayPtr& other){
 }
 
 AnyPtr Array::each(){
-	return xnew<ArrayIter>(ArrayPtr(this));
+	return xnew<ArrayIter>(from_this(this));
 }
 
 AnyPtr Array::reverse(){
-	return xnew<ArrayIter>(ArrayPtr(this), true);
+	return xnew<ArrayIter>(from_this(this), true);
 }
 
 void Array::assign(const AnyPtr& iterator){
@@ -362,7 +362,7 @@ MultiValuePtr MultiValue::flatten_mv(){
 	if(empty()){ return xnew<MultiValue>(); }
 
 	MultiValuePtr ret = xnew<MultiValue>();
-	ret->concat(ArrayPtr(this));
+	ret->concat(from_this(this));
 	
 	for(;;){
 		if(const MultiValuePtr& mv = ptr_as<MultiValue>(ret->back())){

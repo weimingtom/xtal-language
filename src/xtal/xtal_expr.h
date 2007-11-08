@@ -75,7 +75,6 @@ enum ExprType{
 	EXPR_YIELD,
 	EXPR_ASSERT,
 	EXPR_ONCE,
-	EXPR_STATIC,
 	EXPR_THROW,
 	EXPR_Q,
 	EXPR_TRY,
@@ -103,7 +102,7 @@ enum ExprType{
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
 	Type Name(){ if(size()<=N) resize(N+1); return as<Type>(at(N)); }\
-	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return ExprPtr(this); }
+	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return from_this(this); }
 
 
 class Expr;
@@ -307,7 +306,6 @@ public:
 	ExprPtr multi_value(const ArrayPtr& exprs){ return Expr::make(EXPR_MULTI_VALUE, lineno_)->set_multi_value_exprs(exprs); }
 
 	ExprPtr once(const ExprPtr& term){ return una(EXPR_ONCE, term); }
-	ExprPtr static_(const ExprPtr& term){ return una(EXPR_STATIC, term); }
 	ExprPtr bracket(const ExprPtr& term){ return una(EXPR_BRACKET, term); }
 
 	ExprPtr call(const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, const ExprPtr& args){ return Expr::make(EXPR_CALL, lineno_)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_args(args); }

@@ -103,7 +103,7 @@ namespace{
 }
 
 AnyPtr IntRange::each(){
-	return xnew<IntRangeIter>(IntRangePtr(this));
+	return xnew<IntRangeIter>(from_this(this));
 }
 
 

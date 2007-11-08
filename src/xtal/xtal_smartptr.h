@@ -8,10 +8,9 @@ class TBase : public Base{
 	virtual ~TBase(){ ((T*)(this+1))->~T(); }
 };
 
-enum{
+enum InheritedEnum{
 	INHERITED_BASE,
 	INHERITED_INNOCENCE,
-	INHERITED_HAVE_ORIGINAL_CLASS,
 	INHERITED_OTHER,
 };
 
@@ -22,7 +21,6 @@ struct InheritedN{
 			IsInherited<T, Innocence>::value ? INHERITED_INNOCENCE : INHERITED_OTHER
 	};
 };
-
 
 /**
 * @brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
@@ -44,8 +42,6 @@ public:
 		inc_ref_count();
 		return *this;
 	}
-
-	SmartPtr(const Null&){}
 
 	explicit SmartPtr(PrimitiveType type)
 		:Innocence(type){}
@@ -122,9 +118,9 @@ public:
 private:
 
 	/**
-	* @brief bool値を'true'または'false'に強制的に設定します、を拒否するコンストラクタ
+	* @brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
-	* このコンストラクタはprivateである。
+	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
 	*/
 	SmartPtr(void*);
 
@@ -431,12 +427,19 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 }
 
 
+/**
+* @brief thisポインタをSmartPtr<T>に変換する関数
+*/
+template<class T>
+inline SmartPtr<T> from_this(const T* p){
+	return SmartPtr<T>((T*)p);
+}
+
+
 template<>
 struct SmartPtrCtor1<String>{
 	typedef const char* type;
-	static AnyPtr call(type v){
-		return xnew<String>(v);
-	}
+	static AnyPtr call(type v);
 };
 
 template<>

@@ -92,7 +92,8 @@ namespace{
 			if(it_<end_){
 				vm->return_result(SmartPtr<IntRangeIter>(this), it_);
 				++it_;
-			}else{
+			}
+			else{
 				vm->return_result(null, null);
 			}
 		}

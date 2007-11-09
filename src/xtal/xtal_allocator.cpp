@@ -189,7 +189,8 @@ void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& curren
 		current = newbegin+newsize;
 		user_free(begin);
 		begin = newbegin;	
-	}else{
+	}
+	else{
 		user_free(begin);
 		begin = end = current = 0;
 	}

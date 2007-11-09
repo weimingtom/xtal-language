@@ -89,7 +89,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				inner_serialize(a->at(i));
 			}
 			return;
-		}else if(StringPtr a = as<StringPtr>(v)){
+		}
+		else if(StringPtr a = as<StringPtr>(v)){
 			stream_->put_u8(TSTRING);
 			uint_t sz = a->buffer_size();
 			const char* str = a->data();
@@ -98,7 +99,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				stream_->put_u8(str[i]);
 			}
 			return;
-		}else if(MapPtr a = as<MapPtr>(v)){
+		}
+		else if(MapPtr a = as<MapPtr>(v)){
 			stream_->put_u8(TMAP);
 			stream_->put_u32be(a->size());
 			Xfor2(key, value, a){
@@ -106,7 +108,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				inner_serialize(value);
 			}
 			return;
-		}else if(raweq(cls, get_cpp_class<Code>())){
+		}
+		else if(raweq(cls, get_cpp_class<Code>())){
 			CodePtr p = cast<CodePtr>(v);
 			stream_->put_u8('x'); stream_->put_u8('t'); stream_->put_u8('a'); stream_->put_u8('l');
 			stream_->put_u8(SERIALIZE_VERSION1); stream_->put_u8(SERIALIZE_VERSION2); 
@@ -154,7 +157,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		if(check_id(id)){
 			stream_->put_u8(LIB);
 			inner_serialize(id);
-		}else{
+		}
+		else{
 			id = v->get_class()->object_name();
 
 			// serial_newで空オブジェクトを生成するコマンドを埋め込む
@@ -165,7 +169,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			// s_saveでserializableなオブジェクトを取り出しserializeする
 			inner_serialize(v->send(Xid(s_save)));
 		}
-	}else{
+	}
+	else{
 		// 既に保存されているオブジェクトなので参照位置だけ保存する
 		stream_->put_u8(REF);
 		stream_->put_u32be(num);
@@ -341,7 +346,8 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 			if(raweq(id, Xid(lib))){
 				ret = lib();
 			}
-		}else{
+		}
+		else{
 			ret = ret->member(id);
 		}
 	}
@@ -358,7 +364,8 @@ int_t Serializer::register_value(const AnyPtr& v, bool& added){
 	AnyPtr ret = map_->at(v);
 	if(rawne(ret, undefined)){
 		added = false;
-	}else{
+	}
+	else{
 		ret = append_value(v);
 		added = true;
 	}

@@ -82,7 +82,8 @@ void CFun::check_arg(const VMachinePtr& vm){
 					Named("value", n)
 				)
 			), return);
-		}else{
+		}
+		else{
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1006")(
 					Named("name", ap(pi_.fun)->object_name()),

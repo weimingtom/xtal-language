@@ -19,7 +19,8 @@ Base::Base(const Base& b){
 		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->inc_ref_count();
 		}
-	}else{
+	}
+	else{
 		instance_variables_ = &empty_instance_variables;
 		class_ = b.class_;
 	}
@@ -63,7 +64,8 @@ AnyPtr Base::p(){
 void Base::set_class(const ClassPtr& c){
 	if(instance_variables_==&empty_instance_variables){
 		class_ = c;
-	}else{
+	}
+	else{
 		if(type(class_)==TYPE_BASE)
 			pvalue(class_)->dec_ref_count();
 		class_ = c;

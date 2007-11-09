@@ -232,7 +232,8 @@ private:
 		const AnyPtr& temp = nfa_map_->at(node);
 		if(temp){
 			return static_ptr_cast<NFA>(temp);
-		}else{
+		}
+		else{
 			nfa_map_->set_at(node, xnew<NFA>(node));
 			return static_ptr_cast<NFA>(nfa_map_->at(node));
 		}
@@ -300,7 +301,8 @@ XegExprPtr expr(const AnyPtr& a){
 		Xfor(v, p->each()){
 			if(str){
 				str = concat(str, v);
-			}else{
+			}
+			else{
 				str = v;
 			}
 		}
@@ -445,7 +447,6 @@ void set_body(const XegExprPtr& x, const AnyPtr& term){ if(x->type==XegExpr::TYP
 AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return after(sep, 1) >> body >> before(sep); }
 
 AnyPtr error(const AnyPtr& fn){ return term(xnew<XegElem>(XegElem::TYPE_ERROR, fn)); }
-AnyPtr expect(const AnyPtr& pattern){ return pattern | error(Xf("expect error")); }
 
 XegExec::NFA::NFA(const XegExprPtr& node){
 	e = xnew<XegElem>(XegElem::TYPE_EMPTY);
@@ -524,7 +525,8 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 
 				add_e_transition(after, exit);
 				add_e_transition(after, before);
-			}else{
+			}
+			else{
 				// before‚ÉŒü‚©‚¤•û‚ª—Dæ
 				add_e_transition(entry, before);
 				if(t->type == XegExpr::TYPE_MORE0){ 
@@ -553,7 +555,8 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 				// e‚ðŒo—R‚·‚é•û‚ª—Dæ
 				add_e_transition(entry, exit);
 				gen_nfa(entry, t->param1, exit);
-			}else{
+			}
+			else{
 				// left‚ðŒo—R‚·‚é•û‚ª—Dæ
 				gen_nfa(entry, t->param1, exit);
 				add_e_transition(entry, exit);
@@ -580,7 +583,8 @@ void XegExec::NFA::gen_nfa(int entry, const AnyPtr& a, int exit){
 				states[before].capture_index = cap_max;
 				states[after].capture_index = cap_max;
 				cap_max++;		
-			}else{
+			}
+			else{
 				states[before].capture_kind = NAMED_CAPTURE_BEGIN;
 				states[after].capture_kind = NAMED_CAPTURE_END;
 				states[before].capture_name = static_ptr_cast<ID>(t->param2);
@@ -606,7 +610,8 @@ void XegExec::push(uint_t cur_state, uint_t nodes, const Scanner::State& pos){
 	for(uint_t i=0, sz=info.stack.size(); i<sz; ++i){
 		if(info.stack[i].pos.pos != pos.pos){
 			break;
-		}else if(info.stack[i].state == cur_state){
+		}
+		else if(info.stack[i].state == cur_state){
 			return;
 		}
 	}
@@ -676,7 +681,8 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 			if(match){
 				break;
 			}
-		}else{
+		}
+		else{
 			switch(state.capture_kind){
 				XTAL_NODEFAULT;
 				XTAL_CASE(NFA::CAPTURE_NONE){}
@@ -716,15 +722,18 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 
 				if(temp->end>=0 && temp->end-temp->begin>0){
 					info_.top().cap_values->push_back(scanner->capture(temp->begin, temp->end));
-				}else{
+				}
+				else{
 					if(temp->end==temp->begin){
 						info_.top().cap_values->push_back("");
-					}else{
+					}
+					else{
 						info_.top().cap_values->push_back(null);
 					}
 				}
 			}
-		}else{
+		}
+		else{
 			info_.top().cap_values = null;
 		}
 
@@ -735,15 +744,18 @@ bool XegExec::match_inner(const NFAPtr& nfa, const ScannerPtr& scanner){
 
 				if(temp->end>=0 && temp->end-temp->begin>0){
 					info_.top().named_cap_values->set_at(k, scanner->capture(temp->begin, temp->end));
-				}else{
+				}
+				else{
 					if(temp->end==temp->begin){
 						info_.top().cap_values->push_back("");
-					}else{
+					}
+					else{
 						info_.top().cap_values->push_back(null);
 					}
 				}
 			}
-		}else{
+		}
+		else{
 			info_.top().named_cap_values = null;
 		}
 
@@ -860,7 +872,8 @@ bool XegExec::test(const ScannerPtr& scanner, const XegElemPtr& elem){
 					info_.downsize(1);
 					return true;
 				}
-			}else{
+			}
+			else{
 				if(match_inner(nfa, scanner)){
 					info_.downsize(1);
 					return true;
@@ -916,9 +929,11 @@ void def_common_method(const ClassPtr& p){
 	p->method("op_or", &or_, get_cpp_class<XegExpr>());
 	p->method("op_or", &or_, get_cpp_class<String>());
 	p->method("op_or", &or_, get_cpp_class<ChRange>());
+	p->method("op_or", &or_, get_cpp_class<Fun>());
 	p->method("op_shr", &concat, get_cpp_class<XegExpr>());
 	p->method("op_shr", &concat, get_cpp_class<String>());
 	p->method("op_shr", &concat, get_cpp_class<ChRange>());
+	p->method("op_shr", &concat, get_cpp_class<Fun>());
 }
 
 
@@ -986,6 +1001,11 @@ void initialize_xeg(){
 
 	{
 		ClassPtr p = new_cpp_class<String>();
+		def_common_method(p);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Fun>();
 		def_common_method(p);
 	}
 

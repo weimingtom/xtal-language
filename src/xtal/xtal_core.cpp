@@ -390,7 +390,8 @@ void full_gc(){
 					objects_current_ = objects_begin_ + (current.pos&OBJECTS_ALLOCATE_MASK);
 					objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 					objects_list_current_ = objects_list_begin_ + i + 1;
-				}else{
+				}
+				else{
 					user_free(objects_list_begin_[i]);
 				}
 			}

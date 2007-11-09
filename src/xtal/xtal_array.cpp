@@ -23,7 +23,8 @@ public:
 		++index_;
 		if(index_<(int_t)array_->size()){
 			vm->return_result(SmartPtr<ArrayIter>(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
-		}else{
+		}
+		else{
 			vm->return_result(null, null);
 		}
 	}
@@ -158,7 +159,8 @@ void Array::resize(int_t sz){
 			dec_ref_count_force(values_[i]);
 		}
 		size_ = sz;
-	}else if(sz>(int_t)size_){
+	}
+	else if(sz>(int_t)size_){
 		if(sz>(int_t)capa_){
 			uint_t newcapa = sz+capa_;
 			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
@@ -168,7 +170,8 @@ void Array::resize(int_t sz){
 			values_ = newp;
 			size_ = sz;
 			capa_ = newcapa;
-		}else{
+		}
+		else{
 			memset(&values_[size_], 0, sizeof(AnyPtr)*(sz-size_));
 			size_ = sz;
 		}
@@ -204,7 +207,8 @@ void Array::erase(int_t start, int_t n){
 void Array::insert(int_t i, const AnyPtr& v){
 	if(capa_==size_){
 		resize(size_ + 1);
-	}else{
+	}
+	else{
 		size_++;
 	}
 	int_t pos = calc_offset(i);
@@ -216,7 +220,8 @@ void Array::insert(int_t i, const AnyPtr& v){
 void Array::push_back(const AnyPtr& v){
 	if(capa_==size_){
 		resize(size_ + 1);
-	}else{
+	}
+	else{
 		size_++;
 	}
 	copy_innocence(values_[size_-1], v);
@@ -273,7 +278,8 @@ StringPtr Array::join(const StringPtr& sep){
 		for(uint_t i = 0, sz = size(); i<sz; ++i){
 			ret->put_s(at(i)->to_s());
 		}
-	}else{
+	}
+	else{
 		for(uint_t i = 0, sz = size(); i<sz; ++i){
 			ret->put_s(at(i)->to_s());
 			if(i<sz-1){
@@ -341,7 +347,8 @@ int_t Array::calc_offset(int_t i){
 			throw_index_error();
 			return 0;
 		}
-	}else{
+	}
+	else{
 		if((uint_t)i >= size_){
 			throw_index_error();
 			return 0;
@@ -368,7 +375,8 @@ MultiValuePtr MultiValue::flatten_mv(){
 		if(const MultiValuePtr& mv = ptr_as<MultiValue>(ret->back())){
 			ret->pop_back();
 			ret->concat(mv);
-		}else{
+		}
+		else{
 			if(type(ret->back())==TYPE_UNDEFINED){
 				ret->pop_back();
 			}
@@ -387,7 +395,8 @@ MultiValuePtr MultiValue::flatten_all_mv(){
 	for(uint_t i=0; i<temp->size(); ++i){
 		if(const MultiValuePtr& mv = ptr_as<MultiValue>(temp->at(i))){
 			ret->concat(mv->flatten_all_mv());
-		}else{
+		}
+		else{
 			if(type(ret->back())!=TYPE_UNDEFINED){
 				ret->push_back(temp->at(i));
 			}

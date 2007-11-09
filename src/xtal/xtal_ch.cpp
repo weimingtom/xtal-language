@@ -79,7 +79,8 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 
 	if(buf[0]==0){
 		return xnew<ID>((char_t*)buf+1, buffer_size);
-	}else{
+	}
+	else{
 		return xnew<ID>((char_t*)buf, buffer_size+1);
 	}
 }
@@ -89,12 +90,14 @@ int_t CodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize
 		for(int_t i=0; i<asize; ++i){
 			if((uchar_t)a[i]<(uchar_t)b[i]){
 				return -1;
-			}else if((uchar_t)a[i]>(uchar_t)b[i]){
+			}
+			else if((uchar_t)a[i]>(uchar_t)b[i]){
 				return 1;
 			}
 		}
 		return 0;
-	}else if(asize<bsize){
+	}
+	else if(asize<bsize){
 		return -1;
 	}
 		
@@ -105,7 +108,8 @@ void ChMaker::add(char_t ch){
 	buf[pos++] = ch;
 	if(pos==1){
 		len = ch_len(ch);
-	}else if(pos == -len){
+	}
+	else if(pos == -len){
 		len = ch_len2(buf);
 	}
 }

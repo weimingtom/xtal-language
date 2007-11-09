@@ -119,7 +119,8 @@ public:
 			if(rawne(peek(1), n_ch_)){
 				lineno_++;
 			}
-		}else if(raweq(ret, n_ch_)){
+		}
+		else if(raweq(ret, n_ch_)){
 			lineno_++;
 		}
 
@@ -190,10 +191,12 @@ public:
 		if(raweq(ch, r_ch_)){
 			if(rawne(peek(1), n_ch_)){
 				skip(2);
-			}else{
+			}
+			else{
 				skip(1);
 			}
-		}else if(raweq(ch, n_ch_)){
+		}
+		else if(raweq(ch, n_ch_)){
 			skip(1);
 		}
 	}
@@ -354,7 +357,8 @@ public:
 	AnyPtr at(int_t key){
 		if(key==0){
 			return scanner_->capture(match_begin_, match_end_);
-		}else{
+		}
+		else{
 			return captures_ ? captures_->op_at(key-1) : null;
 		}
 	}

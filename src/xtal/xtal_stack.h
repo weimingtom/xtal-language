@@ -229,7 +229,8 @@ Stack<T>::Stack(const Stack<T> &a){
 		begin_=(T*)dummy_allocate()+1;
 		current_ = begin_-1;
 		end_ = begin_+0;
-	}else{
+	}
+	else{
 		begin_=(T*)allocate(sizeof(T)*(a.capacity()+1))+1;
 		current_ = begin_+a.size()-1;
 		end_ = begin_+a.capacity();
@@ -255,7 +256,8 @@ Stack<T> &Stack<T>::operator =(const Stack<T> &a){
 		begin_=(T*)dummy_allocate()+1;
 		current_ = begin_-1;
 		end_ = begin_+0;
-	}else{
+	}
+	else{
 		T* newp = (T*)allocate(sizeof(T)*(a.capacity()+1))+1;
 
 		for(size_t i = 0, last = capacity(); i<last; ++i){

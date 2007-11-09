@@ -310,12 +310,14 @@ void String::init_string(const char_t* str, uint_t sz){
 	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
-	}else{
+	}
+	else{
 		uint_t hash, length;
 		make_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
 			set_p(pvalue(str_mgr_->insert(str, sz, hash, length).value));
-		}else{
+		}
+		else{
 			set_p(new LargeString(str, sz, hash, length));
 			pvalue(*this)->set_class(new_cpp_class<String>());
 			register_gc(pvalue(*this));
@@ -344,7 +346,8 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	if(size1==0){
 		init_string(str2, size2);
 		return;
-	}else if(size2==0){
+	}
+	else if(size2==0){
 		init_string(str1, size1);
 		return;
 	}
@@ -354,7 +357,8 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 		set_small_string();
 		memcpy(svalue_, str1, size1);
 		memcpy(&svalue_[size1], str2, size2);
-	}else{
+	}
+	else{
 		set_p(new LargeString(str1, size1, str2, size2));
 		pvalue(*this)->set_class(new_cpp_class<String>());
 		register_gc(pvalue(*this));
@@ -366,7 +370,8 @@ String::String(char_t a)
 	if(1<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a;
-	}else{
+	}
+	else{
 		init_string(&a, 1);
 	}
 }
@@ -376,7 +381,8 @@ String::String(char_t a, char_t b)
 	if(2<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a; svalue_[1] = b;
-	}else{
+	}
+	else{
 		char_t buf[2] = {a, b};
 		init_string(buf, 2);
 	}
@@ -387,7 +393,8 @@ String::String(char_t a, char_t b, char_t c)
 	if(3<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
-	}else{
+	}
+	else{
 		char_t buf[3] = {a, b, c};
 		init_string(buf, 3);
 	}
@@ -398,10 +405,12 @@ String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, boo
 	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
 		memcpy(svalue_, str, sz);
-	}else{
+	}
+	else{
 		if(!intern_flag && length<=1){
 			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length).value));
-		}else{
+		}
+		else{
 			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
 			pvalue(*this)->set_class(new_cpp_class<String>());
 			register_gc(pvalue(*this));
@@ -413,7 +422,8 @@ String::String(LargeString* left, LargeString* right):Any(noinit_t()){
 	if(left->buffer_size()==0){
 		init_string(right->c_str(), right->buffer_size());
 		return;
-	}else if(right->buffer_size()==0){
+	}
+	else if(right->buffer_size()==0){
 		init_string(left->c_str(), left->buffer_size());
 		return;
 	}
@@ -426,7 +436,8 @@ String::String(LargeString* left, LargeString* right):Any(noinit_t()){
 const char* String::c_str(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->c_str();
-	}else{
+	}
+	else{
 		uint_t size, hash, length;
 		make_size_and_hashcode_and_length_limit(svalue_, size, hash, length);
 		return str_mgr_->insert(svalue_, size, hash, length).buf;
@@ -436,7 +447,8 @@ const char* String::c_str(){
 const char_t* String::data(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->c_str();
-	}else{
+	}
+	else{
 		return svalue_;
 	}
 }
@@ -444,7 +456,8 @@ const char_t* String::data(){
 uint_t String::buffer_size(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->buffer_size();
-	}else{
+	}
+	else{
 		for(uint_t i=0; i<=SMALL_STRING_MAX; ++i){
 			if(svalue_[i]=='\0'){
 				return i;
@@ -457,7 +470,8 @@ uint_t String::buffer_size(){
 uint_t String::length(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->length();
-	}else{
+	}
+	else{
 		uint_t size, hash, length;
 		make_size_and_hashcode_and_length(svalue_, size, hash, length);
 		return length;
@@ -477,7 +491,8 @@ const IDPtr& String::intern(){
 		LargeString* p = ((LargeString*)pvalue(*this));
 		if(p->is_interned()) return static_ptr_cast<ID>(ap(*this));
 		return static_ptr_cast<ID>(str_mgr_->insert(p->c_str(), p->buffer_size(), p->hashcode(), p->length()).value);
-	}else{
+	}
+	else{
 		return static_ptr_cast<ID>(ap(*this));
 	}
 }
@@ -485,7 +500,8 @@ const IDPtr& String::intern(){
 bool String::is_interned(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->is_interned();
-	}else{
+	}
+	else{
 		return true;
 	}
 }
@@ -513,7 +529,8 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 
 	if(length()==1 && right->length()==1){
 		return xnew<ChRange>(from_this(this), right);
-	}else{
+	}
+	else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>("", ""));		
 	}
 }
@@ -542,7 +559,8 @@ StringPtr String::cat(const StringPtr& v){
 uint_t String::hashcode(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->hashcode();
-	}else{
+	}
+	else{
 		return make_hashcode(svalue_, buffer_size());
 	}
 }
@@ -555,7 +573,8 @@ int_t String::calc_offset(int_t i){
 			throw_index_error();
 			return 0;
 		}
-	}else{
+	}
+	else{
 		if((uint_t)i >= sz){
 			throw_index_error();
 			return 0;
@@ -635,7 +654,8 @@ LargeString::LargeString(LargeString* left, LargeString* right){
 LargeString::~LargeString(){
 	if((flags_ & ROPE)==0){
 		user_free(str_.p);
-	}else{
+	}
+	else{
 		rope_.left->dec_ref_count();
 		rope_.right->dec_ref_count();
 	}
@@ -674,7 +694,8 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 			if(stack.empty())
 				return;
 			p = stack.pop();
-		}else{
+		}
+		else{
 			stack.push(p->rope_.right);
 			p = p->rope_.left;
 		}
@@ -700,7 +721,8 @@ ID::ID(char_t a)
 	if(1<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a;
-	}else{
+	}
+	else{
 		*this = ID(&a, 1);
 	}
 }
@@ -710,7 +732,8 @@ ID::ID(char_t a, char_t b)
 	if(2<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a; svalue_[1] = b;
-	}else{
+	}
+	else{
 		char_t buf[2] = {a, b};
 		*this = ID(buf, 2);
 	}
@@ -721,7 +744,8 @@ ID::ID(char_t a, char_t b, char_t c)
 	if(3<=SMALL_STRING_MAX){
 		set_small_string();
 		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
-	}else{
+	}
+	else{
 		char_t buf[3] = {a, b, c};
 		*this = ID(buf, 3);
 	}

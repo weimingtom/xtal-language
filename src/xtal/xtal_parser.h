@@ -82,7 +82,8 @@ public:
 		if(type_==TYPE_TOKEN){
 			char_t buf[4] = {((ivalue()>>0)&0xff), ((ivalue()>>8)&0xff), ((ivalue()>>16)&0xff), 0};
 			return buf;
-		}else{
+		}
+		else{
 			return value_->to_s();
 		}
 	}

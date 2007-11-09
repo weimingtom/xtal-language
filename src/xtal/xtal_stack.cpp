@@ -22,7 +22,8 @@ PODStackBase::PODStackBase(const PODStackBase &a){
 		begin_ = plusp(dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
-	}else{
+	}
+	else{
 		begin_ = plusp(allocate(one_size_*(a.capacity()+1)), 1);
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
@@ -40,7 +41,8 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 		begin_ = plusp(dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
-	}else{
+	}
+	else{
 		void* newp = plusp(allocate(a.one_size_*(a.capacity()+1)), 1);
 		deallocate(minusp(begin_, 1));
 		one_size_ = a.one_size_;

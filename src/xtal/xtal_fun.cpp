@@ -102,7 +102,8 @@ void InstanceVariableGetter::call(const VMachinePtr& vm){
 	InstanceVariables* p;
 	if(type(self)==TYPE_BASE){
 		p = pvalue(self)->instance_variables();
-	}else{
+	}
+	else{
 		p = &empty_instance_variables;
 	}
 	vm->return_result(p->variable(number_, core_));
@@ -117,7 +118,8 @@ void InstanceVariableSetter::call(const VMachinePtr& vm){
 	InstanceVariables* p;
 	if(type(self)==TYPE_BASE){
 		p = pvalue(self)->instance_variables();
-	}else{
+	}
+	else{
 		p = &empty_instance_variables;
 	}
 	p->set_variable(number_, core_, vm->arg(0));
@@ -147,7 +149,8 @@ void Fun::check_arg(const VMachinePtr& vm){
 					Named("value", n)
 				)
 			), return);
-		}else{
+		}
+		else{
 			if(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM){
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1005")(
@@ -156,7 +159,8 @@ void Fun::check_arg(const VMachinePtr& vm){
 						Named("value", n)
 					)
 				), return);
-			}else{
+			}
+			else{
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1006")(
 						Named("name", object_name()),
@@ -211,7 +215,8 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 		if(resume_pc_==0){
 			if(!vm_){ vm_ = vm_mgr_->take_over(); }
 			resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
-		}else{ 
+		}
+		else{ 
 			resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
 		}
 		if(resume_pc_==0){
@@ -219,7 +224,8 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 			vm_ = null;
 			alive_ = false;
 		}
-	}else{
+	}
+	else{
 		vm->return_result();
 	}
 }

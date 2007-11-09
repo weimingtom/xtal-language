@@ -22,7 +22,8 @@ public:
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
 			vm->return_result(SmartPtr<MembersIter>(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
 			++it_;
-		}else{
+		}
+		else{
 			vm->return_result(null, null, null, null);
 		}
 	}
@@ -252,7 +253,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		// privateなメンバは見なかったことにする。
 		if(it->second.flags & KIND_PRIVATE){
 
-		}else{
+		}
+		else{
 			// protectedメンバでアクセス権が無いなら例外
 			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
 				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
@@ -320,7 +322,8 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
 		XTAL_THROW(builtin()->member("RuntimeError")("undefined"), return);
-	}else{
+	}
+	else{
 		members_->set_at(it->second.num, value);
 		//value.set_object_name(name, object_name_force(), this);
 	}
@@ -361,7 +364,8 @@ void Class::call(const VMachinePtr& vm){
 	AnyPtr instance;
 	if(newfun){
 		instance = newfun();
-	}else{
+	}
+	else{
 		instance = xnew<Base>();
 		pvalue(instance)->set_xtal_instance_flag();
 	}
@@ -374,10 +378,12 @@ void Class::call(const VMachinePtr& vm){
 		if(vm->need_result()){
 			ret->call(vm);
 			vm->replace_result(0, instance);
-		}else{
+		}
+		else{
 			ret->call(vm);
 		}
-	}else{
+	}
+	else{
 		vm->return_result(instance);
 	}
 }
@@ -387,7 +393,8 @@ void Class::s_new(const VMachinePtr& vm){
 	AnyPtr instance;
 	if(newfun){
 		instance = newfun();
-	}else{
+	}
+	else{
 		instance = xnew<Base>();
 		pvalue(instance)->set_xtal_instance_flag();
 	}
@@ -406,7 +413,8 @@ void CppClass::call(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), null, from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
-	}else{
+	}
+	else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
@@ -415,7 +423,8 @@ void CppClass::s_new(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(serial_new), null, from_this(this))){
 		ret->call(vm);
 		init_instance(vm->result(), vm);
-	}else{
+	}
+	else{
 		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
@@ -436,7 +445,8 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
-	}else{
+	}
+	else{
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
 			if(FILE* fp = fopen(file_name->c_str(), "r")){
@@ -469,7 +479,8 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		global_mutate_count++;
 		value->set_object_name(primary_key, object_name_force(), from_this(this));
 		return members_->back();
-	}else{
+	}
+	else{
 		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return null);
 	}
 }
@@ -477,7 +488,8 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 StringPtr Lib::join_path(const StringPtr& sep){
 	if(path_->empty()){
 		return sep;
-	}else{
+	}
+	else{
 		return sep->cat(path_->join(sep))->cat(sep);
 	}
 }

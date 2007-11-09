@@ -637,7 +637,8 @@ public:
 	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
 	const IDPtr& identifier_ex(int_t n){ 
 		if(n!=0){ return identifier(n); 
-		}else{ return static_ptr_cast<ID>(ap(ff().temp3_ = pop()->to_s()->intern())); }
+		}
+		else{ return static_ptr_cast<ID>(ap(ff().temp3_ = pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);

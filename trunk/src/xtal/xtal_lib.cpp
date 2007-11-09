@@ -149,7 +149,8 @@ Iterator::p: method(){
 	m.put_s(a.take(5).join(","));
 	if(a.length==6){
 		m.put_s(" ...]>")
-	}else{
+	}
+	else{
 		m.put_s("]>");
 	}
 	m.to_s.p;
@@ -182,7 +183,8 @@ Iterator::join: method(sep:","){
 		this{
 			ret.put_s(it.to_s);
 		}
-	}else{
+	}
+	else{
 		this{
 			if(!first_step){
 				ret.put_s(sep);
@@ -335,7 +337,8 @@ Iterator::max_element: method(pred:null){
 			if(item){
 				if(pred(it, item))
 					item = it;
-			}else{
+			}
+			else{
 				item = it;
 			}
 		}
@@ -346,7 +349,8 @@ Iterator::max_element: method(pred:null){
 		if(item){
 			if(item<it)
 				item = it;
-		}else{
+		}
+		else{
 			item = it;
 		}
 	}
@@ -360,7 +364,8 @@ Iterator::min_element: method(pred:null){
 			if(item){
 				if(pred(it, item))
 					item = it;
-			}else{
+			}
+			else{
 				item = it;
 			}
 		}
@@ -371,7 +376,8 @@ Iterator::min_element: method(pred:null){
 		if(item){
 			if(item>it)
 				item = it;
-		}else{
+		}
+		else{
 			item = it;
 		}
 	}
@@ -491,7 +497,8 @@ builtin::range: fun(first, last, step:1){
 				yield i;
 			}
 		}
-	}else{
+	}
+	else{
 		return fiber{
 			for(i:first; i<last; i+=step){
 				yield i;

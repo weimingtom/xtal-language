@@ -178,7 +178,8 @@ struct MemberCacheTable{
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(primary_key, unit.primary_key) && ins==unit.secondary_key){
 			hit_++;
 			return ap(unit.member);
-		}else{
+		}
+		else{
 			miss_++;
 
 			if(type(target_class)!=TYPE_BASE)
@@ -228,7 +229,8 @@ struct IsInheritedCacheTable{
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
 			hit_++;
 			return unit.result;
-		}else{
+		}
+		else{
 			miss_++;
 			// キャッシュに保存
 			unit.target_class = itarget_class;
@@ -250,7 +252,8 @@ struct IsInheritedCacheTable{
 		if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
 			hit_++;
 			return unit.result;
-		}else{
+		}
+		else{
 			miss_++;
 			// キャッシュに保存
 			unit.target_class = itarget_class;
@@ -259,7 +262,8 @@ struct IsInheritedCacheTable{
 	
 			if(const ClassPtr& cls = ptr_as<Class>(ap(target_class))){
 				unit.result = cls->is_inherited(ap(klass));
-			}else{
+			}
+			else{
 				unit.result = false;
 			}
 
@@ -423,7 +427,8 @@ AnyPtr Any::s_save() const{
 			vm->set_arg_this(ap(*this));
 			member->call(vm);
 			ret->set_at(it->object_name(), vm->result_and_cleanup_call());
-		}else{
+		}
+		else{
 			ret->set_at(it->object_name(), serial_save(static_ptr_cast<Class>(it)));
 		}
 	}
@@ -445,7 +450,8 @@ void Any::s_load(const AnyPtr& v) const{
 			vm->set_arg_this(ap(*this));
 			member->call(vm);
 			vm->cleanup_call();
-		}else{
+		}
+		else{
 			serial_load(static_ptr_cast<Class>(it), ret->at(it->object_name()));
 		}
 	}

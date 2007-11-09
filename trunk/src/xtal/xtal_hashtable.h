@@ -218,7 +218,8 @@ std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val,
 		ordered_tail_->ordered_next = ret;
 		(ret)->ordered_prev = ordered_tail_;
 		ordered_tail_ = ret;
-	}else{
+	}
+	else{
 		ordered_head_ = ret;
 		ordered_tail_ = ret;
 	}
@@ -241,7 +242,8 @@ void Hashtable<Key, Val, Fun>::erase(const Key& key){
 		if(Fun::eq(p->pair.first, key)){
 			if(prev){
 				prev->next = p->next;
-			}else{
+			}
+			else{
 				begin_[pos] = p->next;
 			}
 

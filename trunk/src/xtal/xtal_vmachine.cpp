@@ -214,7 +214,8 @@ const AnyPtr& VMachine::result(int_t pos){
 		if(*f.called_pc==InstCleanupCall::NUMBER){
 			if(pos<f.need_result_count){
 				return get(f.need_result_count-pos-1);
-			}else{
+			}
+			else{
 				return null;
 			}
 		}
@@ -234,7 +235,8 @@ const AnyPtr& VMachine::result(int_t pos){
 
 		if(pos<f.need_result_count){
 			return get(f.need_result_count-pos-1);
-		}else{
+		}
+		else{
 			return null;
 		}
 	}
@@ -429,13 +431,15 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
 				vm->push(FiberPtr(fun));
-			}else{
+			}
+			else{
 				vm->push(null);
 			}
 			vm->push(this, yield_result_count_);
 			downsize(yield_result_count_);
 			vm->adjust_result(yield_result_count_+1);
-		}else{
+		}
+		else{
 			vm->push(this, yield_result_count_);
 			downsize(yield_result_count_);
 			vm->adjust_result(yield_result_count_);
@@ -1237,7 +1241,8 @@ XTAL_VM_SWITCH{
 		if(raweq(get(1), get(0))){
 			downsize(2);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 	}*/ }
@@ -1256,7 +1261,8 @@ XTAL_VM_SWITCH{
 		if(rawne(get(1), get(0))){
 			downsize(2);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+inst.ISIZE+InstUnless::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 	}*/ }
@@ -1352,7 +1358,8 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(IfArgIsUndefined){ // 3
 		if(raweq(local_variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
 		}
 	}
@@ -1360,7 +1367,8 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(IfArgIsUndefinedDirect){ // 3
 		if(raweq(ff().variable(inst.arg), undefined)){
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(pc + inst.address); 
 		}
 	}
@@ -1559,7 +1567,8 @@ XTAL_VM_SWITCH{
 		if(raweq(get(1), get(0))){
 			set(1, Innocence(true)); downsize(1);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 	}*/ }
@@ -1578,7 +1587,8 @@ XTAL_VM_SWITCH{
 		if(rawne(get(1), get(0))){
 			set(1, Innocence(true)); downsize(1);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 	}*/ }
@@ -1953,7 +1963,8 @@ XTAL_VM_SWITCH{
 
 			if(!except->is(builtin()->member("Exception"))){
 				last_except_ = builtin()->member("RuntimeError")(except);
-			}else{
+			}
+			else{
 				last_except_ = except;
 			}
 		}
@@ -2251,7 +2262,8 @@ const inst_t* VMachine::FunIfEq(const inst_t* pc){
 		if(raweq(get(1), get(0))){
 			downsize(2);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 }
@@ -2271,7 +2283,8 @@ const inst_t* VMachine::FunIfNe(const inst_t* pc){
 		if(rawne(get(1), get(0))){
 			downsize(2);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+inst.ISIZE+InstUnless::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 }
@@ -2526,7 +2539,8 @@ const inst_t* VMachine::FunEq(const inst_t* pc){
 		if(raweq(get(1), get(0))){
 			set(1, Innocence(true)); downsize(1);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 }
@@ -2546,7 +2560,8 @@ const inst_t* VMachine::FunNe(const inst_t* pc){
 		if(rawne(get(1), get(0))){
 			set(1, Innocence(true)); downsize(1);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}else{
+		}
+		else{
 			XTAL_VM_CONTINUE(send2_q(pc+inst.ISIZE, Xid(op_eq)));
 		}
 }
@@ -2911,7 +2926,8 @@ void VMachine::carry_over(Fun* fun){
 			for(int_t n = 0; n<size; ++n){
 				frame->set_member_direct(n, arg(n, fun));
 			}
-		}else{
+		}
+		else{
 			f.variables_.upsize(size);
 			Innocence* vars=&f.variables_[size-1];
 			for(int_t n = 0; n<size; ++n){
@@ -2958,7 +2974,8 @@ void VMachine::mv_carry_over(Fun* fun){
 			for(int_t n = 0; n<size; ++n){
 				frame->set_member_direct(n, get(size-1-n));
 			}
-		}else{
+		}
+		else{
 			f.variables_.upsize(size);	
 			Innocence* vars=&f.variables_[size-1];
 			for(int_t n = 0; n<size; ++n){
@@ -3009,7 +3026,8 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 			downsize(size);
 			push(ret);
 		}	
-	}else{
+	}
+	else{
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -3024,7 +3042,8 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 				}
 
 				adjust_result(len-1, need_result_count-n);
-			}else{
+			}
+			else{
 				// 最後の要素が配列ではないので、voidで埋めとく
 				for(int_t i = n; i<need_result_count; ++i){
 					push(undefined);
@@ -3051,7 +3070,8 @@ void VMachine::flatten_arg(){
 			push(mv->at(i));
 		}
 		f.ordered_arg_count = mv->size();
-	}else{
+	}
+	else{
 		downsize(1);
 		f.ordered_arg_count = 0;
 	}
@@ -3066,7 +3086,8 @@ void VMachine::flatten_all_arg(){
 			push(mv->at(i));
 		}
 		f.ordered_arg_count = mv->size();
-	}else{
+	}
+	else{
 		downsize(1);
 		f.ordered_arg_count = 0;
 	}
@@ -3154,7 +3175,8 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 					code()->compliant_lineno(pc),
 					fun()->object_name());
 			}
-		}else{
+		}
+		else{
 			ep->send("append_backtrace")(
 				ff().hint1()->to_s(),
 				ff().hint2()->to_i(),
@@ -3227,7 +3249,8 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 			pc = ef.core->catch_pc + code()->data();
 			push(AnyPtr(ef.core->end_pc));
 			push(e);
-		}else{
+		}
+		else{
 			pc = ef.core->finally_pc + code()->data();
 			push(e);
 			push(AnyPtr(code()->size()-1));

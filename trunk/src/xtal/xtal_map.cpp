@@ -115,7 +115,8 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 	iterator it = table_.find(key);
 	if(it!=end()){
 		return it->second;
-	}else{
+	}
+	else{
 		return default_value_;
 	}
 }

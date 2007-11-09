@@ -55,7 +55,8 @@ AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, con
 			Named("type", from->get_class()->object_name()), 
 			Named("required", to)
 		));
-	}else{
+	}
+	else{
 		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
 			Named("n", param_num+1), 
 			Named("param_name", xnew<String>("")), 
@@ -69,7 +70,8 @@ AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr&
 		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
 			Named("object", name), Named("name", (member ? member : AnyPtr("()")))
 		));
-	}else{
+	}
+	else{
 		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
 			Named("object", name), Named("name", (member ? member : AnyPtr("()"))), Named("secondary_key", secondary_key)
 		));

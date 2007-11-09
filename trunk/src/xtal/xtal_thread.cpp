@@ -144,7 +144,8 @@ void uninitialize_thread(){
 		mutex2_ = null;
 		vmachine_ = null;
 		vmachine_table_ = null;
-	}else{
+	}
+	else{
 		vmachine_ = null;
 	}
 }
@@ -188,7 +189,8 @@ void initialize_thread(){
 		global_interpreter_lock();
 
 		vmachine_table_->register_vmachine();
-	}else{
+	}
+	else{
 		vmachine_ = xnew<VMachine>();
 	}
 
@@ -227,7 +229,8 @@ bool stop_the_world(){
 				printf("ok locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
 			}
 			break;
-		}else{
+		}
+		else{
 			printf("locked=%d, unlocked=%d, count%d\n", thread_locked_count_, thread_unlocked_count_, thread_count_);
 			yield_thread();
 			count++;
@@ -268,14 +271,16 @@ void global_interpreter_lock(){
 
 				thread_locked_count_--;
 				mutex_->lock();
-			}else{
+			}
+			else{
 				break;
 			}
 		}
 
 		// locked状態
 		change_vmachine(id);
-	}else{
+	}
+	else{
 		current_thread_recursive_++;
 	}
 }
@@ -304,7 +309,8 @@ void xlock(){
 
 				mutex_->lock();
 				thread_locked_count_--;
-			}else{
+			}
+			else{
 				thread_unlocked_count_--;
 				break;
 			}
@@ -312,7 +318,8 @@ void xlock(){
 		
 		// locked状態
 		change_vmachine(id);
-	}else{
+	}
+	else{
 		current_thread_recursive_++;
 	}
 }
@@ -342,7 +349,8 @@ void global_interpreter_lock(){
 	if(current_thread_recursive_==0){
 		mutex_->lock();
 		vmachine_table_->change_vmachine(id);
-	}else{
+	}
+	else{
 		current_thread_recursive_++;
 	}
 }
@@ -361,7 +369,8 @@ void xlock(){
 	if(current_thread_recursive_==0){
 		mutex_->lock();
 		vmachine_table_->change_vmachine(id);
-	}else{
+	}
+	else{
 		current_thread_recursive_++;
 	}
 }

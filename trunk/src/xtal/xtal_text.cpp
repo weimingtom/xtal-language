@@ -182,7 +182,8 @@ const char_t* FormatSpecifier::parse_format_inner(const char_t* str){
 			if(pos_ == BUF_MAX){
 				return str;
 			}
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -202,7 +203,8 @@ const char_t* FormatSpecifier::parse_format_inner(const char_t* str){
 				if(pos_ == BUF_MAX){
 					return str;
 				}
-			}else{
+			}
+			else{
 				break;
 			}
 		}
@@ -231,7 +233,8 @@ void Format::set(const char* str){
 			
 			if(str[0]=='%'){
 				begin = str++;
-			}else{
+			}
+			else{
 				if(str[0]=='('){
 					str++;
 					bufpos = 0;
@@ -250,7 +253,8 @@ void Format::set(const char* str){
 					}
 
 					buf[bufpos++] = 0;
-				}else{
+				}
+				else{
 					bufpos = XTAL_SPRINTF(buf, 256-bufpos, "%d", (u32)n++);
 				}
 
@@ -259,10 +263,12 @@ void Format::set(const char* str){
 				values_->set_at(buf, ret);
 				begin = str;
 			}
-		}else if(str[0]=='\0'){
+		}
+		else if(str[0]=='\0'){
 			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
 			break;
-		}else{
+		}
+		else{
 			str++;
 		}
 	}
@@ -282,7 +288,8 @@ void Format::call(const VMachinePtr& vm){
 	Xfor2(k, v, values_){
 		if(type(k)==TYPE_INT){
 			buf += v->to_s()->c_str();
-		}else{
+		}
+		else{
 			AnyPtr a = vm->arg(k->to_s()->intern());
 			if(!a){
 				a = vm->arg(k->to_i());
@@ -293,7 +300,8 @@ void Format::call(const VMachinePtr& vm){
 			if(fs->max_buffer_size()>=256){
 				malloc_size = fs->max_buffer_size() + 1;
 				pcbuf = (char_t*)user_malloc(malloc_size);
-			}else{
+			}
+			else{
 				pcbuf = cbuf;
 			}
 			

@@ -231,15 +231,18 @@ private:
 				if(address > pos+size && address+ref < pos+size){
 					if(address+ref > pos){
 						ref = ref + (size - (address+ref - pos));
-					}else{
+					}
+					else{
 						ref = ref + (size);
 					}
 				}
-			}else{
+			}
+			else{
 				if(address < pos+size && address+ref > pos+size){
 					if(address > pos){
 						ref = ref - (size - (address - pos));
-					}else{
+					}
+					else{
 						ref = ref - (size);
 					}
 				}

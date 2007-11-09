@@ -41,7 +41,8 @@ public:
 		}
 		if(all){
 			vm->return_result(SmartPtr<ZipIter>(this), value);
-		}else{
+		}
+		else{
 			vm->return_result(null, null);
 		}
 	}
@@ -127,11 +128,13 @@ void block_next(BlockValueHolder<1>& holder, bool first){
 		if(holder.it==holder.array->end()){
 			holder.target = null;
 			holder.values[0] = null;
-		}else{
+		}
+		else{
 			holder.values[0] = *holder.it;
 			++holder.it;
 		}
-	}else{
+	}
+	else{
 		const VMachinePtr& vm = vmachine();
 		vm->setup_call(2);
 		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
@@ -147,12 +150,14 @@ void block_next(BlockValueHolder<2>& holder, bool first){
 			holder.target = null;
 			holder.values[0] = null;
 			holder.values[1] = null;
-		}else{
+		}
+		else{
 			holder.values[0] = holder.it->first;
 			holder.values[1] = holder.it->second;
 			++holder.it;
 		}
-	}else{
+	}
+	else{
 		const VMachinePtr& vm = vmachine();
 		vm->setup_call(3);
 		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));

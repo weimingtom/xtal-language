@@ -388,7 +388,8 @@ MemoryStream::~MemoryStream(){
 uint_t MemoryStream::write(const void* p, uint_t size){
 	if(pos_+size>capa_){
 		resize(pos_+size);
-	}else{
+	}
+	else{
 		size_ = pos_+size;
 	}
 
@@ -481,7 +482,8 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 		return 0;
 	if(continue_stmt_){
 		stdout_stream()->put_s(Xf("ix:%03d>    ")(line_)->to_s());
-	}else{
+	}
+	else{
 		stdout_stream()->put_s(Xf("ix:%03d>")(line_)->to_s());
 	}
 

@@ -52,7 +52,8 @@ int_t Reader::peek(int_t n){
 
 		if(ppos>rpos){
 			now_read = stream_->read(&buf_[rpos], ppos-rpos);
-		}else{
+		}
+		else{
 			now_read = stream_->read(&buf_[rpos], BUF_SIZE-rpos);
 		}
 
@@ -214,9 +215,11 @@ int_t Lexer::parse_integer(){
 		if(test_digit(reader_.peek())){
 			ret *= 10;
 			ret += reader_.read()-'0';
-		}else if(reader_.peek()=='_'){
+		}
+		else if(reader_.peek()=='_'){
 			reader_.read();
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -229,15 +232,19 @@ int_t Lexer::parse_hex(){
 		if(test_digit(reader_.peek())){
 			ret *= 16;
 			ret += reader_.read()-'0';
-		}else if(test_range(reader_.peek(), 'a', 'f')){
+		}
+		else if(test_range(reader_.peek(), 'a', 'f')){
 			ret *= 16;
 			ret += reader_.read()-'a';
-		}else if(test_range(reader_.peek(), 'A', 'F')){
+		}
+		else if(test_range(reader_.peek(), 'A', 'F')){
 			ret *= 16;
 			ret += reader_.read()-'A';
-		}else if(reader_.peek()=='_'){
+		}
+		else if(reader_.peek()=='_'){
 			reader_.read();
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -255,9 +262,11 @@ int_t Lexer::parse_oct(){
 		if(test_range(reader_.peek(), '0', '7')){
 			ret *= 8;
 			ret += reader_.read()-'0';
-		}else if(reader_.peek()=='_'){
+		}
+		else if(reader_.peek()=='_'){
 			reader_.read();
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -275,9 +284,11 @@ int_t Lexer::parse_bin(){
 		if(test_range(reader_.peek(), '0', '1')){
 			ret *= 2;
 			ret += reader_.read()-'0';
-		}else if(reader_.peek()=='_'){
+		}
+		else if(reader_.peek()=='_'){
 			reader_.read();
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -292,7 +303,8 @@ int_t Lexer::parse_bin(){
 void Lexer::parse_number_suffix(int_t val){
 	if(reader_.eat('f') || reader_.eat('F')){
 		push_float_token((float_t)val);	
-	}else{
+	}
+	else{
 
 		if(test_ident_rest(reader_.peek())){
 			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
@@ -305,7 +317,8 @@ void Lexer::parse_number_suffix(int_t val){
 void Lexer::parse_number_suffix(float_t val){
 	if(reader_.eat('f') || reader_.eat('F')){
 		push_float_token(val);	
-	}else{
+	}
+	else{
 	
 		if(test_ident_rest(reader_.peek())){
 			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
@@ -320,10 +333,12 @@ void Lexer::parse_number(){
 		if(reader_.eat('x') || reader_.eat('X')){
 			push_int_token(parse_hex());
 			return;
-		}else if(reader_.eat('o')){
+		}
+		else if(reader_.eat('o')){
 			push_int_token(parse_oct());
 			return;
-		}else if(reader_.eat('b') || reader_.eat('B')){
+		}
+		else if(reader_.eat('b') || reader_.eat('B')){
 			push_int_token(parse_bin());
 			return;
 		}
@@ -354,7 +369,8 @@ void Lexer::parse_number(){
 			if(reader_.eat('e') || reader_.eat('E')){
 				if(reader_.eat('-')){
 					e=-1;
-				}else{
+				}
+				else{
 					reader_.eat('+');
 				}
 
@@ -370,10 +386,12 @@ void Lexer::parse_number(){
 				}
 			}
 			parse_number_suffix(fval);
-		}else{
+		}
+		else{
 			push_int_token(ival);
 		}
-	}else{
+	}
+	else{
 		parse_number_suffix(ival);
 	}
 }
@@ -392,13 +410,16 @@ void Lexer::do_read(){
 					IDPtr identifier = parse_identifier();
 					if(const AnyPtr& key = keyword_map_->at(identifier)){
 						push_keyword_token(identifier, ivalue(key));
-					}else{
+					}
+					else{
 						push_identifier_token(identifier);
 					}
-				}else if(test_digit(ch)){
+				}
+				else if(test_digit(ch)){
 					parse_number();
 					return;
-				}else{
+				}
+				else{
 					reader_.read();
 					push_token(ch);
 				}
@@ -408,9 +429,11 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('+')){
 					push_token(c2('+', '+'));
-				}else if(reader_.eat('=')){
+				}
+				else if(reader_.eat('=')){
 					push_token(c2('+', '='));
-				}else{
+				}
+				else{
 					push_token('+');
 				}
 			}
@@ -419,9 +442,11 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('-')){
 					push_token(c2('-', '-'));
-				}else if(reader_.eat('=')){
+				}
+				else if(reader_.eat('=')){
 					push_token(c2('-', '='));
-				}else{
+				}
+				else{
 					push_token('-');
 				}
 			}
@@ -430,7 +455,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('~', '='));
-				}else{
+				}
+				else{
 					push_token('~');
 				}
 			}
@@ -439,7 +465,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('*', '='));
-				}else{
+				}
+				else{
 					push_token('*');
 				}
 			}
@@ -448,7 +475,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('/', '='));
-				}else if(reader_.eat('/')){
+				}
+				else if(reader_.eat('/')){
 					while(true){
 						int_t ch = reader_.read();
 						if(ch=='\r'){
@@ -456,35 +484,42 @@ void Lexer::do_read(){
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
-						}else if(ch=='\n'){
+						}
+						else if(ch=='\n'){
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
-						}else if(ch==-1){
+						}
+						else if(ch==-1){
 							break;
 						}
 					}
 					continue;
-				}else if(reader_.eat('*')){
+				}
+				else if(reader_.eat('*')){
 					while(true){
 						int_t ch = reader_.read();
 						if(ch=='\r'){
 							reader_.eat('\n');
 							set_lineno(lineno()+1);
-						}else if(ch=='\n'){
+						}
+						else if(ch=='\n'){
 							set_lineno(lineno()+1);
-						}else if(ch=='*'){
+						}
+						else if(ch=='*'){
 							if(reader_.eat('/')){
 								left_space_ = Token::FLAG_LEFT_SPACE;
 								break;
 							}
-						}else if(ch==-1){
+						}
+						else if(ch==-1){
 							error_->error(lineno(), Xt("Xtal Compile Error 1021"));
 							break;
 						}
 					}
 					continue;
-				}else{
+				}
+				else{
 					push_token('/');
 				}
 			}			
@@ -499,16 +534,19 @@ void Lexer::do_read(){
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
-						}else if(ch=='\n'){
+						}
+						else if(ch=='\n'){
 							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
-						}else if(ch==-1){
+						}
+						else if(ch==-1){
 							break;
 						}
 					}
 					continue;
-				}else{
+				}
+				else{
 					push_token('#');
 				}
 			}			
@@ -517,7 +555,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('%', '='));
-				}else{
+				}
+				else{
 					push_token('%');
 				}
 			}
@@ -526,7 +565,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('&')){
 					push_token(c2('&', '&'));
-				}else{
+				}
+				else{
 					push_token('&');
 				}
 			}
@@ -535,7 +575,8 @@ void Lexer::do_read(){
 				reader_.read();
 				if(reader_.eat('|')){
 					push_token(c2('|', '|'));
-				}else{
+				}
+				else{
 					push_token('|');
 				}
 			}
@@ -546,15 +587,19 @@ void Lexer::do_read(){
 					if(reader_.eat('>')){
 						if(reader_.eat('=')){
 							push_token(c4('>','>','>','='));
-						}else{
+						}
+						else{
 							push_token(c3('>','>','>'));
 						}
-					}else{
+					}
+					else{
 						push_token(c2('>','>'));
 					}
-				}else if(reader_.eat('=')){
+				}
+				else if(reader_.eat('=')){
 					push_token(c2('>', '='));
-				}else{
+				}
+				else{
 					push_token('>');
 				}
 			}
@@ -564,22 +609,27 @@ void Lexer::do_read(){
 				if(reader_.eat('<')){
 					if(reader_.eat('=')){
 						push_token(c3('<','<','='));
-					}else{
+					}
+					else{
 						push_token(c2('<','<'));
 					}
-				}else if(reader_.eat('=')){
+				}
+				else if(reader_.eat('=')){
 					push_token(c2('<', '='));
-				}else if(reader_.eat('.')){
+				}
+				else if(reader_.eat('.')){
 					if(!reader_.eat('.')){
 						error_->error(lineno(), Xt("Xtal Compile Error 1001"));					
 					}
 
 					if(reader_.eat('<')){
 						push_token(c4('<', '.', '.', '<'));
-					}else{
+					}
+					else{
 						push_token(c3('<', '.', '.'));
 					}
-				}else{
+				}
+				else{
 					push_token('<');
 				}
 			}
@@ -589,10 +639,12 @@ void Lexer::do_read(){
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('=', '=', '='));
-					}else{
+					}
+					else{
 						push_token(c2('=', '='));
 					}
-				}else{
+				}
+				else{
 					push_token('=');
 				}
 			}
@@ -602,30 +654,37 @@ void Lexer::do_read(){
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('!', '=', '='));
-					}else{
+					}
+					else{
 						push_token(c2('!', '='));
 					}
-				}else if(reader_.peek()=='i'){
+				}
+				else if(reader_.peek()=='i'){
 					if(reader_.peek(1)=='s'){
 						if(!test_ident_rest(reader_.peek(2))){
 							reader_.read();
 							reader_.read();
 							push_token(c3('!', 'i', 's'));
-						}else{
+						}
+						else{
 							push_token('!');
 						}
-					}else if(reader_.peek(1)=='n'){
+					}
+					else if(reader_.peek(1)=='n'){
 						if(!test_ident_rest(reader_.peek(2))){
 							reader_.read();
 							reader_.read();
 							push_token(c3('!', 'i', 'n'));
-						}else{
+						}
+						else{
 							push_token('!');
 						}
-					}else{
+					}
+					else{
 						push_token('!');
 					}
-				}else{
+				}
+				else{
 					push_token('!');
 				}
 			}
@@ -635,14 +694,18 @@ void Lexer::do_read(){
 				if(reader_.eat('.')){
 					if(reader_.eat('.')){
 						push_token(c3('.', '.', '.'));
-					}else if(reader_.eat('<')){
+					}
+					else if(reader_.eat('<')){
 						push_token(c3('.', '.', '<'));
-					}else{
+					}
+					else{
 						push_token(c2('.', '.'));
 					}
-				}else if(reader_.eat('?')){
+				}
+				else if(reader_.eat('?')){
 					push_token(c2('.', '?'));
-				}else{
+				}
+				else{
 					push_token('.');
 				}
 			}
@@ -657,10 +720,12 @@ void Lexer::do_read(){
 				if(reader_.eat(':')){
 					if(reader_.eat('?')){
 						push_token(c3(':', ':', '?'));
-					}else{
+					}
+					else{
 						push_token(c2(':', ':'));
 					}
-				}else{
+				}
+				else{
 					push_token(':');
 				}
 			}
@@ -701,12 +766,15 @@ void Lexer::deplete_space(){
 			reader_.read();
 			reader_.eat('\n');
 			set_lineno(lineno()+1);
-		}else if(ch=='\n'){
+		}
+		else if(ch=='\n'){
 			reader_.read();
 			set_lineno(lineno()+1);
-		}else if(ch==' ' || ch=='\t'){
+		}
+		else if(ch==' ' || ch=='\t'){
 			reader_.read();
-		}else{
+		}
+		else{
 			return;
 		}
 	}
@@ -772,7 +840,8 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				}
 			}
 			reader_.read();
-		}else{
+		}
+		else{
 			if(ch=='\r'){
 				if(reader_.peek()=='\n'){
 					reader_.read();
@@ -781,10 +850,12 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				str+='\r';
 				str+='\n';
 				set_lineno(lineno()+1);
-			}else if(ch=='\n'){
+			}
+			else if(ch=='\n'){
 				str+='\n';
 				set_lineno(lineno()+1);
-			}else{
+			}
+			else{
 				ChMaker chm;
 				chm.add(ch);
 				while(!chm.is_completed()){
@@ -949,7 +1020,8 @@ ExprPtr Parser::parse_term(){
 							ArrayPtr mv = parse_exprs();
 							mv->insert(0, ret);
 							ret = em.multi_value(mv);
-						}else{
+						}
+						else{
 							if(ret->tag()==EXPR_SEND){
 								ret = em.bracket(ret);
 							}	
@@ -1140,7 +1212,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						if(eat('(')){
 							ret = em.member_e(lhs, must_parse_expr());
 							expect(')');
-						}else{
+						}
+						else{
 							ret = em.member(lhs, parse_identifier_or_keyword());
 						}
 
@@ -1156,7 +1229,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						if(eat('(')){
 							ret = em.member_eq(lhs, must_parse_expr());
 							expect(')');
-						}else{
+						}
+						else{
 							ret = em.member_q(lhs, parse_identifier_or_keyword());
 						}
 
@@ -1172,7 +1246,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						if(eat('(')){
 							ret = em.send_e(lhs, must_parse_expr());
 							expect(')');
-						}else{
+						}
+						else{
 							ret = em.send(lhs, parse_identifier_or_keyword());
 						}
 
@@ -1188,7 +1263,8 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						if(eat('(')){
 							ret = em.send_eq(lhs, must_parse_expr());
 							expect(')');
-						}else{
+						}
+						else{
 							ret = em.send_q(lhs, parse_identifier_or_keyword());
 						}
 
@@ -1243,9 +1319,11 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 						if(eat(':')){
 							expect(']');
 							ret = em.send(lhs, Xid(to_m));
-						}else if(eat(']')){
+						}
+						else if(eat(']')){
 							ret = em.send(lhs, Xid(to_a));
-						}else{
+						}
+						else{
 							ret = em.bin(EXPR_AT, lhs, must_parse_expr());
 							expect(']');
 						}
@@ -1278,15 +1356,18 @@ ExprPtr Parser::parse_each(const IDPtr& label, ExprPtr lhs){
 				if(!eat(',')){
 					expect('|');
 					break;
-				}else{
+				}
+				else{
 					discard = true;
 				}
-			}else{
+			}
+			else{
 				expect('|');
 				break;
 			}
 		}
-	}else{
+	}
+	else{
 		params->push_back(em.lvar(Xid(it)));
 	}
 
@@ -1300,7 +1381,8 @@ ExprPtr Parser::parse_each(const IDPtr& label, ExprPtr lhs){
 	ExprPtr efor = em.for_(label, em.lvar(Xid(iterator)), em.massign(params, make_array(em.send(em.lvar(Xid(iterator)), Xid(block_next))), false), parse_scope(), null, null);
 	if(eat(Token::KEYWORD_ELSE)){
 		efor->set_for_else(must_parse_stmt());
-	}else if(eat(Token::KEYWORD_NOBREAK)){
+	}
+	else if(eat(Token::KEYWORD_NOBREAK)){
 		efor->set_for_nobreak(must_parse_stmt());
 	}
 
@@ -1327,7 +1409,8 @@ ExprPtr Parser::parse_loop(){
 		if(ExprPtr lhs = parse_expr()){
 			if(!expr_end_flag_ && eat('{')){
 				return parse_each(identifier, lhs);
-			}else{
+			}
+			else{
 				return em.define(em.lvar(identifier), lhs);
 			}
 		}
@@ -1379,9 +1462,11 @@ ExprPtr Parser::parse_assign_stmt(){
 						
 						if(eat('=')){
 							return em.massign(left_exprs, parse_exprs(), false);
-						}else if(eat(':')){
+						}
+						else if(eat(':')){
 							return em.massign(left_exprs, parse_exprs(), true);
-						}else{
+						}
+						else{
 							error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 						}
 						
@@ -1430,7 +1515,8 @@ ExprPtr Parser::parse_stmt(){
 	if(ExprPtr p = parse_loop()){
 		ret = p;
 		 eat(';'); 
-	}else{
+	}
+	else{
 
 		Token ch = lexer_.read();
 
@@ -1500,7 +1586,8 @@ ExprPtr Parser::parse_assert(){
 				exprs->push_back(ep);
 			}
 		}
-	}else{
+	}
+	else{
 		lexer_.end_record();
 	}
 
@@ -1515,10 +1602,12 @@ ArrayPtr Parser::parse_exprs(bool* discard){
 			ret->push_back(p);
 			if(eat(',')){
 				if(discard) *discard = true;
-			}else{
+			}
+			else{
 				break;
 			}
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -1531,7 +1620,8 @@ ArrayPtr Parser::parse_stmts(){
 		while(eat(';')){}
 		if(ExprPtr p = parse_stmt()){
 			ret->push_back(p);
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -1548,7 +1638,8 @@ IDPtr Parser::parse_identifier(){
 IDPtr Parser::parse_identifier_or_keyword(){
 	if(lexer_.peek().type()==Token::TYPE_IDENTIFIER){
 		return lexer_.read().identifier();
-	}else if(lexer_.peek().type()==Token::TYPE_KEYWORD){
+	}
+	else if(lexer_.peek().type()==Token::TYPE_KEYWORD){
 		return lexer_.read().identifier();
 	}
 	return null;
@@ -1558,7 +1649,8 @@ IDPtr Parser::parse_var(){
 	if(IDPtr identifier = parse_identifier()){
 		if(eat(':')){ 
 			return identifier; 
-		}else{
+		}
+		else{
 			lexer_.putback();
 		}
 	}
@@ -1584,7 +1676,8 @@ ExprPtr Parser::parse_for(const IDPtr& label){
 
 	if(eat(Token::KEYWORD_ELSE)){
 		efor->set_for_else(must_parse_stmt());
-	}else if(eat(Token::KEYWORD_NOBREAK)){
+	}
+	else if(eat(Token::KEYWORD_NOBREAK)){
 		efor->set_for_nobreak(must_parse_stmt());
 	}
 
@@ -1624,9 +1717,11 @@ ExprPtr Parser::parse_class(int_t kind){
 		
 		if(eat('#')){// 可触性 protected 指定
 			accessibility = KIND_PROTECTED;
-		}else if(eat('-')){// 可触性 private 指定
+		}
+		else if(eat('-')){// 可触性 private 指定
 			accessibility = KIND_PRIVATE;
-		}else if(eat('+')){// 可触性 public 指定
+		}
+		else if(eat('+')){// 可触性 public 指定
 			accessibility = KIND_PUBLIC;
 		}
 
@@ -1637,14 +1732,16 @@ ExprPtr Parser::parse_class(int_t kind){
 				ExprPtr secondary_key = must_parse_expr(PRI_NS);
 				expect(':');
 				eclass->class_stmts()->push_back(em.cdefine(accessibility<0 ? KIND_PUBLIC : accessibility, var, secondary_key, must_parse_expr()));
-			}else{
+			}
+			else{
 				expect(':');
 				int_t ln = lineno();
 				eclass->class_stmts()->push_back(em.cdefine(accessibility<0 ? KIND_PUBLIC : accessibility, var, em.null_(), must_parse_expr()));
 			}
 			eat(';');
 			
-		}else if(eat('_')){// インスタンス変数定義
+		}
+		else if(eat('_')){// インスタンス変数定義
 			ExprMaker em(lineno());
 			if(IDPtr var = parse_identifier()){
 				if(eclass->class_ivars()->at(var)){
@@ -1653,7 +1750,8 @@ ExprPtr Parser::parse_class(int_t kind){
 
 				if(eat(':')){ // 初期値込み
 					eclass->class_ivars()->set_at(var, must_parse_expr());
-				}else{
+				}
+				else{
 					eclass->class_ivars()->set_at(var, null);
 				}
 				eat(';');
@@ -1670,10 +1768,12 @@ ExprPtr Parser::parse_class(int_t kind){
 							em.fun(KIND_METHOD, make_map(Xid(value), null), false, 
 								em.assign(em.ivar(var), em.lvar(Xid(value))))));
 				}
-			}else{
+			}
+			else{
 				error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 			}
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -1738,24 +1838,28 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 
 					if(!lambda && eat(':')){
 						params->set_at(var, must_parse_expr());
-					}else{
+					}
+					else{
 						params->set_at(var, null);
 					}
 
 					if(inst_assign_list_count<255){
 						inst_assign_list[inst_assign_list_count++] = var;
 					}
-				}else{
+				}
+				else{
 					error_->error(lineno(), Xt("Xtal Compile Error 1001"));
 				}
-			}else if(IDPtr var = parse_identifier()){
+			}
+			else if(IDPtr var = parse_identifier()){
 				if(rawne(params->at(var), undefined)){
 					error_->error(lineno(), Xt("Xtal Compile Error 1026")(Named("name", var)));
 				}
 
 				if(!lambda && eat(':')){
 					params->set_at(var, must_parse_expr());
-				}else{
+				}
+				else{
 					params->set_at(var, null);
 				}
 			}
@@ -1765,9 +1869,11 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 					params->set_at(Xid(_dummy_fun_parameter_), null);
 					break;
 				}
-			}else if(eat(lambda ? '|' : ')')){
+			}
+			else if(eat(lambda ? '|' : ')')){
 				break;
-			}else{
+			}
+			else{
 				error_->error(lineno(), Xt("Xtal Compile Error 1010"));
 				break;
 			}
@@ -1778,11 +1884,13 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 		ExprMaker em(lineno());
 		if(body || eat('{')){
 			efun->set_fun_body(parse_scope());
-		}else{
+		}
+		else{
 			int_t ln = lineno();
 			efun->set_fun_body(em.return_(parse_exprs()));
 		}
-	}else{
+	}
+	else{
 		ExprMaker em(lineno());
 
 		ArrayPtr scope_stmts = xnew<Array>();
@@ -1797,7 +1905,8 @@ ExprPtr Parser::parse_fun(int_t kind, bool body){
 				scope_stmts->push_back(scp);
 			}
 			efun->set_fun_body(em.scope(scope_stmts));
-		}else{
+		}
+		else{
 			scope_stmts->push_back(em.return_(parse_exprs()));
 			efun->set_fun_body(em.scope(scope_stmts));
 		}
@@ -1816,20 +1925,24 @@ ExprPtr Parser::parse_call(ExprPtr lhs){
 	while(true){
 		if(IDPtr var = parse_var()){
 			named->set_at(var, must_parse_expr());
-		}else{
+		}
+		else{
 			if(ExprPtr val = parse_expr()){
 				if(val->tag()==EXPR_ARGS){
 					if(ExprPtr val2 = parse_expr()){
 						ecall->set_call_args(val2);
-					}else{
+					}
+					else{
 						ecall->set_call_args(val);
 					}
 
 					end = true;
-				}else{
+				}
+				else{
 					ordered->push_back(val);
 				}
-			}else{
+			}
+			else{
 				end = true;
 			}
 		}
@@ -1871,7 +1984,8 @@ ExprPtr Parser::parse_expr(int_t pri){
 	while(true){
 		if(ExprPtr ret2 = parse_post(ret, pri)){
 			ret = ret2;
-		}else{
+		}
+		else{
 			break;
 		}
 	}
@@ -1909,7 +2023,8 @@ ExprPtr Parser::parse_if(){
 		}
 		escope->scope_stmts()->push_back(eif);
 		return escope;
-	}else{
+	}
+	else{
 		eif->set_if_cond(must_parse_expr());
 		expect(')');
 		eif->set_if_body(must_parse_stmt());
@@ -1978,12 +2093,14 @@ ExprPtr Parser::parse_switch(){
 			ExprPtr when = must_parse_expr();
 			expect(')');
 			cases->set_at(when, parse_stmt());
-		}else if(eat(Token::KEYWORD_DEFAULT)){
+		}
+		else if(eat(Token::KEYWORD_DEFAULT)){
 			if(default_stmt){
 				error_->error(lineno(), Xt("Xtal Compile Error 1018")());					
 			}
 			default_stmt = parse_stmt();
-		}else{
+		}
+		else{
 			expect('}');
 			expr_end_flag_ = true;
 			break;
@@ -2021,7 +2138,8 @@ ExprPtr Parser::parse_array(){
 					if(!eat(',')){
 						break;
 					}
-				}else{
+				}
+				else{
 					break;
 				}
 			}
@@ -2029,7 +2147,8 @@ ExprPtr Parser::parse_array(){
 
 		expect(']');
 		return emap;
-	}else{//array
+	}
+	else{//array
 		ExprPtr earray = em.array(xnew<Array>());
 		earray->array_values()->push_back(key);
 		if(eat(',')){
@@ -2040,7 +2159,8 @@ ExprPtr Parser::parse_array(){
 					if(!eat(',')){
 						break;
 					}
-				}else{
+				}
+				else{
 					break;
 				}
 			}

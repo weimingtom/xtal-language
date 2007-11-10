@@ -58,6 +58,9 @@ public:
 
 protected:
 
+	explicit SmartPtr(const Innocence& innocence)
+		:Innocence(innocence){}
+
 	SmartPtr(Base* p, const ClassPtr& c);
 
 	void inc_ref_count(){
@@ -211,11 +214,17 @@ public:
 	template<class U>
 	SmartPtr(const SmartPtr<U>& p)
 		:SmartPtr<Any>(p){
-		T* n = (U*)0; // extends test
+		T* n = (U*)0; // inherited test
 	}
 
 	SmartPtr(const SmartPtr<T>& p)
 		:SmartPtr<Any>(p){}
+
+	SmartPtr<T>& operator =(const Null& p){
+		dec_ref_count();
+		*(Innocence*)this = p;
+		return *this;
+	}
 
 	/// nullを受け取るコンストラクタ
 	SmartPtr(const Null&){}
@@ -282,7 +291,7 @@ public:
 		:SmartPtr<Any>(new T(), new_cpp_class<T>()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
-		:SmartPtr<Any>(ap(T())){}
+		:SmartPtr<Any>((const Innocence&)T()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
 		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
@@ -297,7 +306,7 @@ public:
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0)
-		:SmartPtr<Any>(ap(T(a0))){}
+		:SmartPtr<Any>((const Innocence&)T(a0)){}
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
@@ -313,7 +322,7 @@ public:
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(ap(T(a0, a1))){}
+		:SmartPtr<Any>((const Innocence&)T(a0, a1)){}
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
@@ -329,7 +338,7 @@ public:
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(ap(T(a0, a1, a2))){}
+		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2)){}
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
@@ -345,7 +354,7 @@ public:
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(ap(T(a0, a1, a2, a3))){}
+		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2, a3)){}
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
@@ -361,13 +370,14 @@ public:
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(ap(T(a0, a1, a2, a3, a4))){}
+		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2, a3, a4)){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
 		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
 		new(get()) T(a0, a1, a2, a3, a4);
 	}
+
 };
 
 template<class T>
@@ -426,7 +436,6 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 
-
 /**
 * @brief thisポインタをSmartPtr<T>に変換する関数
 */
@@ -435,6 +444,17 @@ inline SmartPtr<T> from_this(const T* p){
 	return SmartPtr<T>((T*)p);
 }
 
+//////////////////////////////////////////////////////////////
+
+#ifndef XTAL_NO_TEMPLATE_PARTIAL_SPECIALIZATION
+
+// SmartPtrの重ね着を禁止する
+template<class T>
+class SmartPtr< SmartPtr<T> >;
+
+#endif
+
+///////////////////////////////////////////////////////////////
 
 template<>
 struct SmartPtrCtor1<String>{

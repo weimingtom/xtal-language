@@ -1,4 +1,6 @@
 
+#include "xtal_utility.h"
+
 #include <cstddef>
 #include <cassert>
 #include <cstdio>
@@ -14,7 +16,6 @@
 #include <algorithm>
 #include <string>
 
-#include "xtal_utility.h"
 #include "xtal_fwd.h"
 #include "xtal_allocator.h"
 #include "xtal_any.h"

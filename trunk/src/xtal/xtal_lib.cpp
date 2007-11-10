@@ -558,7 +558,7 @@ builtin::ClassicIterator: class{
 	_current;
 	_source;
 
-	initialize: method(_source){ _source, _current = _source.block_first; }
+	initialize: method(source){ _source, _current = source.block_first; }
 	current: method _current;
 	has_next: method !!_source;
 	is_done: method !_source;

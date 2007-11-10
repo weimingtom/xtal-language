@@ -20,7 +20,7 @@ public:
 
 	void block_next(const VMachinePtr& vm){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
-			vm->return_result(SmartPtr<MembersIter>(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
+			vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
 			++it_;
 		}
 		else{
@@ -198,6 +198,10 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		members_->at(0)->call(vm);
 		vm->cleanup_call();
 	}
+}
+
+const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const CFunEssence& cfun, const AnyPtr& secondary_key, int_t accessibility){
+	return static_ptr_cast<CFun>(def2(primary_key, new_cfun(cfun), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){

@@ -63,6 +63,8 @@ public:
 	
 	String(LargeString* left, LargeString* right);
 
+	String(const String& s);
+
 protected:
 
 	String(noinit_t n)
@@ -263,6 +265,8 @@ public:
 	* @brief 3つの文字から構築する
 	*/
 	ID(char_t a, char_t b, char_t c);
+
+	ID(const char_t* str, uint_t len, uint_t hashcode, uint_t length);
 
 	/**
 	* @brief Stringから構築する
@@ -486,6 +490,9 @@ enum IDEnum{
 	idif,
 	idp,
 //}}ID}
+
+
+
 
 
 

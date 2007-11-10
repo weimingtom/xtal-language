@@ -26,13 +26,13 @@ public:
 		}
 		
 		switch(type_){
-			case 0: vm->return_result(SmartPtr<MapIter>(this), node_->first, node_->second); break;
-			case 1: vm->return_result(SmartPtr<MapIter>(this), node_->first); break;
-			case 2: vm->return_result(SmartPtr<MapIter>(this), node_->second); break;
+			case 0: vm->return_result(from_this(this), node_->first, node_->second); break;
+			case 1: vm->return_result(from_this(this), node_->first); break;
+			case 2: vm->return_result(from_this(this), node_->second); break;
 			case 3:
 				for(;;){
 					if(node_->second){
-						vm->return_result(SmartPtr<MapIter>(this), node_->first);
+						vm->return_result(from_this(this), node_->first);
 						++node_;
 						return;
 					}

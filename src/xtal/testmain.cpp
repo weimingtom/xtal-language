@@ -76,10 +76,34 @@ struct PointSelf : public Base{
 	}
 };
 
+void foooo(){}
+
+struct AAA{};
+struct BBB{};
+struct CCC{
+	int n;
+};
+
+template<class T>
+BBB operator ,(T, AAA){
+	return BBB();
+}
+
+AAA operator ,(BBB, CCC){
+	return AAA();
+}
+
+AAA operator ,(AAA, CCC){
+	return AAA();
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	using namespace xtal::xeg;
+
+	5, AAA(), CCC();
+
 
 	try{
 		initialize();
@@ -135,7 +159,7 @@ Foo::test#Int.p;
 		
 int c;
 
-		//*		
+		/*		
 		c = clock();
 		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

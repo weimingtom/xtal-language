@@ -285,7 +285,7 @@ public:
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, new_cfun(xtal::detail::fun_impl(f, policy)), secondary_key, accessibility);
+		return def_and_return(primary_key, xtal::fun_impl(f, policy), secondary_key, accessibility);
 	}
 
 	/**
@@ -305,7 +305,7 @@ public:
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, new_cfun(xtal::detail::method_impl(f, policy)), secondary_key, accessibility);
+		return def_and_return(primary_key, method_impl(f, policy), secondary_key, accessibility);
 	}
 
 	/**
@@ -325,7 +325,7 @@ public:
 	*/
 	template<class T, class U, class Policy>
 	const CFunPtr& getter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, xtal::getter(v, policy), secondary_key, accessibility);
+		return def_and_return(primary_key, getter_impl(v, policy), secondary_key, accessibility);
 	}
 	
 	/**
@@ -336,7 +336,7 @@ public:
 	*/
 	template<class T, class U, class Policy>
 	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, xtal::setter(v, policy), secondary_key, accessibility);
+		return def_and_return(primary_key, setter_impl(v, policy), secondary_key, accessibility);
 	}
 	
 	/**
@@ -423,6 +423,8 @@ public:
 	}
 
 protected:
+
+	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunEssence& cfun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		return static_ptr_cast<CFun>(def2(primary_key, cfun, secondary_key, accessibility));

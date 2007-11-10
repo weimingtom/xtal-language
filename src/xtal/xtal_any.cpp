@@ -20,7 +20,7 @@ namespace{
 }
 
 void initialize_any(){
-		
+	
 	{
 		ClassPtr p = new_cpp_class<Any>("Any");
 		p->method("class", &Any::get_class);
@@ -134,7 +134,6 @@ AnyPtr Innocence::operator()() const{
 
 SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c)
 	:Innocence(p){
-	p->inc_ref_count();
 	p->set_class(c);
 	register_gc(p);
 }

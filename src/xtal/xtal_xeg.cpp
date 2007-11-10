@@ -1047,7 +1047,6 @@ void initialize_xeg(){
 	xeg->fun("cap", &cap_vm);
 	xeg->fun("bound", &bound);
 	xeg->fun("error", &error);
-	xeg->fun("expect", &expect);
 
 	xeg->fun("decl", &decl);
 

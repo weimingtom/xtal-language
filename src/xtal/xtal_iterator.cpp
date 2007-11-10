@@ -40,7 +40,7 @@ public:
 				all = false;
 		}
 		if(all){
-			vm->return_result(SmartPtr<ZipIter>(this), value);
+			vm->return_result(from_this(this), value);
 		}
 		else{
 			vm->return_result(null, null);

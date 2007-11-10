@@ -117,7 +117,6 @@ void initialize(){
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(holders[i]->value);
 		new(p) CppClass();
-		p->add_ref_count(1);
 	}
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
@@ -402,6 +401,8 @@ void full_gc(){
 }
 
 void register_gc(Base* p){
+	p->inc_ref_count();
+
 	if(objects_current_==objects_end_){
 		gc();
 

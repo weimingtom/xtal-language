@@ -47,6 +47,12 @@ struct ReturnUndefined{
 	}
 };
 
+struct ReturnNone{
+	static void return_result(const VMachinePtr& vm){}
+
+	template<class T>
+	static void return_result(const VMachinePtr& vm, const T&){}
+};
 
 struct ParamInfo{
 	Named* params;
@@ -55,428 +61,131 @@ struct ParamInfo{
 	Innocence fun;
 };
 
-struct ParamAndVM{
-	ParamAndVM(){}
-};
 
 template<class T, int N>
-inline typename CastResult<T>::type 
-arg_get(const VMachinePtr& vm, const ParamInfo& p){
-	Named& temp = p.params[N];
-	return arg_cast<T>(vm->arg_default(N, temp.name, temp.value), N, temp.name);
+struct arg_getter{
+	static typename CastResult<T>::type 
+	get(const VMachinePtr& vm, const ParamInfo& p){
+		Named& temp = p.params[N];
+		return arg_cast<T>(vm->arg_default(N, temp.name, temp.value), N, temp.name);
+	}
+};
+
+template<class T>
+struct arg_this_getter{
+	static typename CastResult<T>::type 
+	get(const VMachinePtr& vm, const ParamInfo& p){
+		return cast<T>(vm->get_arg_this()); 
+	}
+};
+
+struct arg_getter_vm{
+	static const VMachinePtr& 
+	get(const VMachinePtr& vm, const ParamInfo& p){
+		return vm;
+	}
+};
+
+template<class Policy>
+struct ReturnPolicyTest{
+	const VMachinePtr& vm;
+
+	ReturnPolicyTest(const VMachinePtr& vm)
+		:vm(vm){}
+};
+
+struct ReturnPolicyVoidTest{};
+
+template<class T, class Policy>
+inline int operator ,(const T& val, ReturnPolicyTest<Policy> rp){
+	Policy::return_result(rp.vm, val);
+	return 0;
 }
 
-namespace detail{
+template<class Policy>
+inline int operator ,(ReturnPolicyTest<Policy> rp, ReturnPolicyVoidTest){
+	Policy::return_result(rp.vm);
+	return 0;
+}
 
-template<class R>
-struct fun_R{
-	template<class T, class Policy>
-	struct fun0{
-		static void f(const VMachinePtr& vm, const ParamInfo&, T& fun){
-			Policy::return_result(vm, fun(
-			));
-		}
-	};
-	
-	template<class T, class A0, class Policy>
-	struct fun1{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				arg_get<A0, 0>(vm, p)
-			));
-		}
-
-		static void f_args(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				vm
-			));
-		}
-	};
-
-	template<class T, class A0, class A1, class Policy>
-	struct fun2{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class Policy>
-	struct fun3{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class A3, class Policy>
-	struct fun4{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class A3, class A4, class Policy>
-	struct fun5{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p),
-				arg_get<A4, 4>(vm, p)
-			));
-		}
-	};
-
-
-	template<class T, class C, class Policy>
-	struct method0{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this())
-			));
-		}
-	};
-
-	template<class T, class C, class A0, class Policy>
-	struct method1{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p)
-			));
-		}
-
-		static void f_args(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				vm
-			));
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class Policy>
-	struct method2{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class Policy>
-	struct method3{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class A3, class Policy>
-	struct method4{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p)
-			));
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class A3, class A4, class Policy>
-	struct method5{		
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			Policy::return_result(vm, fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p),
-				arg_get<A4, 4>(vm, p)
-			));
-		}
-	};
-};
-
-template<>
-struct fun_R<void>{
-	template<class T, class Policy>
-	struct fun0{
-		static void f(const VMachinePtr& vm, const ParamInfo&, T& fun){
-			fun(
-			);
-			Policy::return_result(vm);
-		}
-	};
-	
-	template<class T, class A0, class Policy>
-	struct fun1{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				arg_get<A0, 0>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-
-		static void f_args(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				vm
-			);
-		}
-	};
-
-	template<class T, class A0, class A1, class Policy>
-	struct fun2{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class Policy>
-	struct fun3{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class A3, class Policy>
-	struct fun4{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class A0, class A1, class A2, class A3, class A4, class Policy>
-	struct fun5{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p),
-				arg_get<A4, 4>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class C, class Policy>
-	struct method0{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this())
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class C, class A0, class Policy>
-	struct method1{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-
-		static void f_args(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				vm
-			);
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class Policy>
-	struct method2{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class Policy>
-	struct method3{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class A3, class Policy>
-	struct method4{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-
-	template<class T, class C, class A0, class A1, class A2, class A3, class A4, class Policy>
-	struct method5{
-		static void f(const VMachinePtr& vm, const ParamInfo& p, T& fun){
-			fun(
-				cast<C>(vm->get_arg_this()), 
-				arg_get<A0, 0>(vm, p), 
-				arg_get<A1, 1>(vm, p), 
-				arg_get<A2, 2>(vm, p), 
-				arg_get<A3, 3>(vm, p),
-				arg_get<A4, 4>(vm, p)
-			);
-			Policy::return_result(vm);
-		}
-	};
-};
 
 template<class T, class R, class Policy>
 struct fun0{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun0<T, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 	
 template<class T, class R, class A0, class Policy>
 struct fun1{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun1<T, A0, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
-
-	static void f_args(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun1<T, A0, Policy>::f_args(vm, p, *(T*)data);
-	}
-
-	typedef void (*t)(const VMachinePtr&, const ParamInfo&, void*);
-	static t get_f(I2T<1>){ return &f_args; }
-	static t get_f(I2T<0>){ return &f; }
 };
 
 template<class T, class R, class A0, class A1, class Policy>
 struct fun2{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun2<T, A0, A1, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p), 
+			A1::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class Policy>
 struct fun3{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun3<T, A0, A1, A2, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p), 
+			A1::get(vm, p), 
+			A2::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class Policy>
 struct fun4{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun4<T, A0, A1, A2, A3, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p), 
+			A1::get(vm, p), 
+			A2::get(vm, p), 
+			A3::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
 struct fun5{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template fun5<T, A0, A1, A2, A3, A4, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p), 
+			A1::get(vm, p), 
+			A2::get(vm, p), 
+			A3::get(vm, p),
+			A4::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 
-
-template<class T, class C, class R, class Policy>
-struct method0{
+template<class T, class R, class A0, class A1, class A2, class A3, class A4, class A5, class Policy>
+struct fun6{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method0<T, C, Policy>::f(vm, p, *(T*)data);
+		(*(T*)data)(
+			A0::get(vm, p), 
+			A1::get(vm, p), 
+			A2::get(vm, p), 
+			A3::get(vm, p),
+			A4::get(vm, p),
+			A5::get(vm, p)
+		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
 	}
 };
 
-template<class T, class C, class R, class A0, class Policy>
-struct method1{
-	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method1<T, C, A0, Policy>::f(vm, p, *(T*)data);
-	}
-
-	static void f_args(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method1<T, C, A0, Policy>::f_args(vm, p, *(T*)data);
-	}
-
-	typedef void (*t)(const VMachinePtr&, const ParamInfo&, void*);
-	static t get_f(I2T<1>){ return &f_args; }
-	static t get_f(I2T<0>){ return &f; }
-};
-
-template<class T, class C, class R, class A0, class A1, class Policy>
-struct method2{
-	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method2<T, C, A0, A1, Policy>::f(vm, p, *(T*)data);
-	}
-};
-
-template<class T, class C, class R, class A0, class A1, class A2, class Policy>
-struct method3{
-	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method3<T, C, A0, A1, A2, Policy>::f(vm, p, *(T*)data);
-	}
-};
-
-template<class T, class C, class R, class A0, class A1, class A2, class A3, class Policy>
-struct method4{
-	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method4<T, C, A0, A1, A2, A3, Policy>::f(vm, p, *(T*)data);
-	}
-};
-
-template<class T, class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-struct method5{
-	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		fun_R<R>::template method5<T, C, A0, A1, A2, A3, A4, Policy>::f(vm, p, *(T*)data);
-	}
-};
 
 template<class C, class R>
 struct memfun0{
@@ -527,16 +236,16 @@ struct memfun5{
 };
 
 template<class C, class T>
-struct getter{
+struct getter_fun{
 	T C::* var;
-	getter(T C::* var):var(var){}
+	getter_fun(T C::* var):var(var){}
 	const T& operator()(C* self){ return self->*var; }
 };
 
 template<class C, class T>
-struct setter{
+struct setter_fun{
 	T C::* var;
-	setter(T C::* var):var(var){}
+	setter_fun(T C::* var):var(var){}
 	const T& operator()(C* self, const T& v){ return self->*var = v; }
 };
 
@@ -579,7 +288,277 @@ struct ctor_fun<5>{
 	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return xnew<T>(a0, a1, a2, a3, a4); } };
 };
 
+struct CFunEssence{
+	typedef void (*fun_t)(const VMachinePtr&, const ParamInfo&, void* data);
+
+	CFunEssence(fun_t f, const void* val, int_t val_size, int_t param_n, bool args = false);
+
+	fun_t f;
+	void* val;
+	int_t param_n;
+	bool args;
+};
+
+
+template<class R, class Policy>
+inline CFunEssence fun_impl(R (*f)(), Policy){
+	return CFunEssence(&fun0<R (*)(), R, Policy>::f, &f, sizeof(f), 0);
 }
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(I2T<1>, R (*f)(A0), Policy){
+	return CFunEssence(&fun1<R (*)(A0), R, arg_getter_vm, typename If<IsSame<R, void>::value, ReturnNone, Policy>::type>::f, &f, sizeof(f), 0, true);
+}
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(I2T<0>, R (*f)(A0), Policy){
+	return CFunEssence(&fun1<R (*)(A0), R, arg_getter<A0, 0>, Policy>::f, &f, sizeof(f), 1);
+}
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(R (*f)(A0), Policy policy){
+	return fun_impl(I2T<IsSame<A0, const VMachinePtr&>::value>(), f, policy);
+}
+
+template<class R, class A0, class A1, class Policy>
+inline CFunEssence fun_impl(R (*f)(A0, A1), Policy){
+	return CFunEssence(&fun2<R (*)(A0, A1), R, arg_getter<A0, 0>, arg_getter<A1, 1>, Policy>::f, &f, sizeof(f), 2);
+}
+
+template<class R, class A0, class A1, class A2, class Policy>
+inline CFunEssence fun_impl(R (*f)(A0, A1, A2), Policy){
+	return CFunEssence(&fun3<R (*)(A0, A1, A2), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, Policy>::f, &f, sizeof(f), 3);
+}
+
+
+template<class R, class A0, class A1, class A2, class A3, class Policy>
+inline CFunEssence fun_impl(R (*f)(A0, A1, A2, A3), Policy){
+	return CFunEssence(&fun4<R (*)(A0, A1, A2, A3), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, Policy>::f, &f, sizeof(f), 4);
+}
+
+template<class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+inline CFunEssence fun_impl(R (*f)(A0, A1, A2, A3, A4), Policy){
+	return CFunEssence(&fun5<R (*)(A0, A1, A2, A3, A4), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, arg_getter<A4, 4>, Policy>::f, &f, sizeof(f), 5);
+}
+
+//////////////////////////////////////////////////////////////
+
+#ifdef _WIN32
+
+template<class R, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(), Policy){
+	return CFunEssence(&fun0<R __stdcall (*)(), R, Policy>::f, &f, sizeof(f), 0);
+}
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(I2T<1>, R (__stdcall *f)(A0), Policy){
+	return CFunEssence(&fun1<R __stdcall (*)(A0), R, arg_getter_vm, typename If<IsSame<R, void>::value, ReturnNone, Policy>::type>::f, &f, sizeof(f), 0, true);
+}
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(I2T<0>, R (__stdcall *f)(A0), Policy){
+	return CFunEssence(&fun1<R __stdcall (*)(A0), R, arg_getter<A0, 0>, Policy>::f, &f, sizeof(f), 1);
+}
+
+template<class R, class A0, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(A0), Policy policy){
+	return fun_impl(I2T<IsSame<A0, const VMachinePtr&>::value>(), f, policy);
+}
+
+template<class R, class A0, class A1, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(A0, A1), Policy){
+	return CFunEssence(&fun2<R __stdcall (*)(A0, A1), R, arg_getter<A0, 0>, arg_getter<A1, 1>, Policy>::f, &f, sizeof(f), 2);
+}
+
+template<class R, class A0, class A1, class A2, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(A0, A1, A2), Policy){
+	return CFunEssence(&fun3<R __stdcall (*)(A0, A1, A2), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, Policy>::f, &f, sizeof(f), 3);
+}
+
+
+template<class R, class A0, class A1, class A2, class A3, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(A0, A1, A2, A3), Policy){
+	return CFunEssence(&fun4<R __stdcall (*)(A0, A1, A2, A3), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, Policy>::f, &f, sizeof(f), 4);
+}
+
+template<class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+inline CFunEssence fun_impl(R (__stdcall *f)(A0, A1, A2, A3, A4), Policy){
+	return CFunEssence(&fun5<R __stdcall (*)(A0, A1, A2, A3, A4), R, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, arg_getter<A4, 4>, Policy>::f, &f, sizeof(f), 5);
+}
+
+#endif
+
+//////////////////////////////////////////////////////////////
+
+template<class C, class R, class Policy>
+inline CFunEssence method_impl(R (C::*f)(), Policy){
+	typedef memfun0<C, R> memfun;
+	memfun data(f);
+	return CFunEssence(&fun1<memfun, R, arg_this_getter<C*>, Policy>::f, &data, sizeof(data), 0);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<1>, R (C::*f)(A0), Policy){
+	typedef memfun1<C, R, A0> memfun;
+	memfun data(f);
+	return CFunEssence(&fun2<memfun, R, arg_this_getter<C*>, arg_getter_vm, typename If<IsSame<R, void>::value, ReturnNone, Policy>::type>::f, &data, sizeof(data), 0, true);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<0>, R (C::*f)(A0), Policy){
+	typedef memfun1<C, R, A0> memfun;
+	memfun data(f);
+	return CFunEssence(&fun2<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, Policy>::f, &data, sizeof(data), 1);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0), Policy policy){
+	return method_impl(I2T<IsSame<A0, const VMachinePtr&>::value>(), f, policy);
+}
+
+template<class C, class R, class A0, class A1, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1), Policy){
+	typedef memfun2<C, R, A0, A1> memfun;
+	memfun data(f);
+	return CFunEssence(&fun3<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, Policy>::f, &data, sizeof(data), 2);
+}
+
+template<class C, class R, class A0, class A1, class A2, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2), Policy){
+	typedef memfun3<C, R, A0, A1, A2> memfun;
+	memfun data(f);
+	return CFunEssence(&fun4<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, Policy>::f, &data, sizeof(data), 3);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3), Policy){
+	typedef memfun4<C, R, A0, A1, A2, A3> memfun;
+	memfun data(f);
+	return CFunEssence(&fun5<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, Policy>::f, &data, sizeof(data), 4);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3, A4), Policy){
+	typedef memfun5<C, R, A0, A1, A2, A3, A4> memfun;
+	memfun data(f);
+	return CFunEssence(&fun6<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, arg_getter<A4, 4>, Policy>::f, &data, sizeof(data), 5);
+}
+
+//////////////////////////////////////////////////////////////
+
+template<class C, class R, class Policy>
+inline CFunEssence method_impl(R (C::*f)() const, Policy){
+	typedef memfun0<C, R> memfun;
+	memfun data(f);
+	return CFunEssence(&fun1<memfun, R, arg_this_getter<C*>, Policy>::f, &data, sizeof(data), 0);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<1>, R (C::*f)(A0) const, Policy){
+	typedef memfun1<C, R, A0> memfun;
+	memfun data(f);
+	return CFunEssence(&fun2<memfun, R, arg_this_getter<C*>, arg_getter_vm, typename If<IsSame<R, void>::value, ReturnNone, Policy>::type>::f, &data, sizeof(data), 0, true);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<0>, R (C::*f)(A0) const, Policy){
+	typedef memfun1<C, R, A0> memfun;
+	memfun data(f);
+	return CFunEssence(&fun2<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, Policy>::f, &data, sizeof(data), 1);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0) const, Policy policy){
+	return method_impl(I2T<IsSame<A0, const VMachinePtr&>::value>(), f, policy);
+}
+
+template<class C, class R, class A0, class A1, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1) const, Policy){
+	typedef memfun2<C, R, A0, A1> memfun;
+	memfun data(f);
+	return CFunEssence(&fun3<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, Policy>::f, &data, sizeof(data), 2);
+}
+
+template<class C, class R, class A0, class A1, class A2, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2) const, Policy){
+	typedef memfun3<C, R, A0, A1, A2> memfun;
+	memfun data(f);
+	return CFunEssence(&fun4<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, Policy>::f, &data, sizeof(data), 3);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3) const, Policy){
+	typedef memfun4<C, R, A0, A1, A2, A3> memfun;
+	memfun data(f);
+	return CFunEssence(&fun5<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, Policy>::f, &data, sizeof(data), 4);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3, A4) const, Policy){
+	typedef memfun5<C, R, A0, A1, A2, A3, A4> memfun;
+	memfun data(f);
+	return CFunEssence(&fun6<memfun, R, arg_this_getter<C*>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, arg_getter<A4, 4>, Policy>::f, &data, sizeof(data), 5);
+}
+
+//////////////////////////////////////////////////////////////
+
+template<class C, class R, class Policy>
+inline CFunEssence method_impl(R (*f)(C), Policy){
+	return CFunEssence(&fun1<R (*)(C), R, arg_this_getter<C>, Policy>::f, &f, sizeof(f), 0);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<1>, R (*f)(C, A0), Policy){
+	return CFunEssence(&fun2<R (*)(C, A0), R, arg_this_getter<C>, arg_getter_vm, typename If<IsSame<R, void>::value, ReturnNone, Policy>::type>::f, &f, sizeof(f), 0, true);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(I2T<0>, R (*f)(C, A0), Policy){
+	return CFunEssence(&fun2<R (*)(C, A0), R, arg_this_getter<C>, arg_getter<A0, 0>, Policy>::f, &f, sizeof(f), 1);
+}
+
+template<class C, class R, class A0, class Policy>
+inline CFunEssence method_impl(R (*f)(C, A0), Policy policy){
+	return method_impl(I2T<IsSame<A0, const VMachinePtr&>::value>(), f, policy);
+}
+
+template<class C, class R, class A0, class A1, class Policy>
+inline CFunEssence method_impl(R (*f)(C, A0, A1), Policy){
+	return CFunEssence(&fun3<R (*)(C, A0, A1), R, arg_this_getter<C>, arg_getter<A0, 0>, arg_getter<A1, 1>, Policy>::f, &f, sizeof(f), 2);
+}
+
+template<class C, class R, class A0, class A1, class A2, class Policy>
+inline CFunEssence method_impl(R (*f)(C, A0, A1, A2), Policy){
+	return CFunEssence(&fun4<R (*)(C, A0, A1, A2), R, arg_this_getter<C>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, Policy>::f, &f, sizeof(f), 3);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
+inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3), Policy){
+	return CFunEssence(&fun5<R (*)(C, A0, A1, A2, A3), R, arg_this_getter<C>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, Policy>::f, &f, sizeof(f), 4);
+}
+
+template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
+inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3, A4), Policy){
+	return CFunEssence(&fun6<R (*)(C, A0, A1, A2, A3, A4), R, arg_this_getter<C>, arg_getter<A0, 0>, arg_getter<A1, 1>, arg_getter<A2, 2>, arg_getter<A3, 3>, arg_getter<A4, 4>, Policy>::f, &f, sizeof(f), 5);
+}
+
+//////////////////////////////////////////////////////////////
+
+template<class T, class C, class Policy>
+inline CFunEssence getter_impl(T C::* v, Policy){
+	typedef getter<C, T> getter;
+	getter data(v);
+	return CFunEssence(&fun1<getter, const T&, arg_this_getter<C*>, Policy>::f, &data, sizeof(data), 0);
+}
+	
+template<class T, class C, class Policy>
+inline CFunEssence setter_impl(T C::* v, Policy){
+	typedef setter<C, T> setter;
+	setter data(v);
+	return CFunEssence(&fun2<setter, const T&, arg_this_getter<C*>, const T&, Policy>::f, &data, sizeof(data), 1);
+}
+
+//////////////////////////////////////////////////////////////
 
 class CFun : public HaveName{
 public:
@@ -618,170 +597,9 @@ public:
 	virtual void call(const VMachinePtr& vm);
 };
 
-struct CFunEssence{
-	CFunEssence(CFun::fun_t f, const void* val, int_t val_size, int_t param_n, bool args = false);
-
-	CFun::fun_t f;
-	void* val;
-	int_t param_n;
-	bool args;
-};
-
 CFunPtr new_cfun(const CFunEssence& essence);
 
-namespace detail{
-
-template<class R, class Policy>
-inline CFunEssence fun_impl(R (*f)(), const Policy&){
-	return CFunEssence(&detail::fun0<R (*)(), R, Policy>::f, &f, sizeof(f), 0);
-}
-
-template<class R, class A0, class Policy>
-inline CFunEssence fun_impl(R (*f)(A0), const Policy&){
-	const bool V = IsSame<A0, const VMachinePtr&>::value;
-	return CFunEssence(detail::fun1<R (*)(A0), R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1, V);
-}
-
-template<class R, class A0, class A1, class Policy>
-inline CFunEssence fun_impl(R (*f)(A0, A1), const Policy&){
-	return CFunEssence(&detail::fun2<R (*)(A0, A1), R, A0, A1, Policy>::f, &f, sizeof(f), 2);
-}
-
-template<class R, class A0, class A1, class A2, class Policy>
-inline CFunEssence fun_impl(R (*f)(A0, A1, A2), const Policy&){
-	return CFunEssence(&detail::fun3<R (*)(A0, A1, A2), R, A0, A1, A2, Policy>::f, &f, sizeof(f), 3);
-}
-
-
-template<class R, class A0, class A1, class A2, class A3, class Policy>
-inline CFunEssence fun_impl(R (*f)(A0, A1, A2, A3), const Policy&){
-	return CFunEssence(&detail::fun4<R (*)(A0, A1, A2, A3), R, A0, A1, A2, A3, Policy>::f, &f, sizeof(f), 4);
-}
-
-template<class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-inline CFunEssence fun_impl(R (*f)(A0, A1, A2, A3, A4), const Policy&){
-	return CFunEssence(&detail::fun5<R (*)(A0, A1, A2, A3, A4), R, A0, A1, A2, A3, A4, Policy>::f, &f, sizeof(f), 5);
-}
-
-template<class C, class R, class Policy>
-inline CFunEssence method_impl(R (C::*f)(), const Policy&){
-	typedef detail::memfun0<C, R> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method0<memfun, C*, R, Policy>::f, &data, sizeof(data), 0);
-}
-
-template<class C, class R, class A0, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0), const Policy&){
-	const bool V = IsSame<A0, const VMachinePtr&>::value;
-	typedef detail::memfun1<C, R, A0> memfun;
-	memfun data(f);
-	return CFunEssence(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1, V);
-}
-
-template<class C, class R, class A0, class A1, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1), const Policy&){
-	typedef detail::memfun2<C, R, A0, A1> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method2<memfun, C*, R, A0, A1, Policy>::f, &data, sizeof(data), 2);
-}
-
-template<class C, class R, class A0, class A1, class A2, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2), const Policy&){
-	typedef detail::memfun3<C, R, A0, A1, A2> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method3<memfun, C*, R, A0, A1, A2, Policy>::f, &data, sizeof(data), 3);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3), const Policy&){
-	typedef detail::memfun4<C, R, A0, A1, A2, A3> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method4<memfun, C*, R, A0, A1, A2, A3, Policy>::f, &data, sizeof(data), 4);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3, A4), const Policy&){
-	typedef detail::memfun5<C, R, A0, A1, A2, A3, A4> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method5<memfun, C*, R, A0, A1, A2, A3, A4, Policy>::f, &data, sizeof(data), 5);
-}
-
-template<class C, class R, class Policy>
-inline CFunEssence method_impl(R (C::*f)() const, const Policy&){
-	typedef detail::memfun0<C, R> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method0<memfun, C*, R, Policy>::f, &data, sizeof(data), 0);
-}
-
-template<class C, class R, class A0, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0) const, const Policy&){
-	const bool V = IsSame<A0, const VMachinePtr&>::value;
-	typedef detail::memfun1<C, R, A0> memfun;
-	memfun data(f);
-	return CFunEssence(detail::method1<memfun, C*, R, A0, Policy>::get_f(I2T<V>()), &data, sizeof(data), 1, V);
-}
-
-template<class C, class R, class A0, class A1, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1) const, const Policy&){
-	typedef detail::memfun2<C, R, A0, A1> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method2<memfun, C*, R, A0, A1, Policy>::f, &data, sizeof(data), 2);
-}
-
-template<class C, class R, class A0, class A1, class A2, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2) const, const Policy&){
-	typedef detail::memfun3<C, R, A0, A1, A2> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method3<memfun, C*, R, A0, A1, A2, Policy>::f, &data, sizeof(data), 3);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3) const, const Policy&){
-	typedef detail::memfun4<C, R, A0, A1, A2, A3> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method4<memfun, C*, R, A0, A1, A2, A3, Policy>::f, &data, sizeof(data), 4);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-inline CFunEssence method_impl(R (C::*f)(A0, A1, A2, A3, A4) const, const Policy&){
-	typedef detail::memfun5<C, R, A0, A1, A2, A3, A4> memfun;
-	memfun data(f);
-	return CFunEssence(&detail::method5<memfun, C*, R, A0, A1, A2, A3, A4, Policy>::f, &data, sizeof(data), 5);
-}
-
-
-template<class C, class R, class Policy>
-inline CFunEssence method_impl(R (*f)(C), const Policy&){
-	return CFunEssence(&detail::method0<R (*)(C), C, R, Policy>::f, &f, sizeof(f), 0);
-}
-
-template<class C, class R, class A0, class Policy>
-inline CFunEssence method_impl(R (*f)(C, A0), const Policy&){
-	const bool V = IsSame<A0, const VMachinePtr&>::value;
-	return CFunEssence(detail::method1<R (*)(C, A0), C, R, A0, Policy>::get_f(I2T<V>()), &f, sizeof(f), 1, V);
-}
-
-template<class C, class R, class A0, class A1, class Policy>
-inline CFunEssence method_impl(R (*f)(C, A0, A1), const Policy&){
-	return CFunEssence(&detail::method2<R (*)(C, A0, A1), C, R, A0, A1, Policy>::f, &f, sizeof(f), 2);
-}
-
-template<class C, class R, class A0, class A1, class A2, class Policy>
-inline CFunEssence method_impl(R (*f)(C, A0, A1, A2), const Policy&){
-	return CFunEssence(&detail::method3<R (*)(C, A0, A1, A2), C, R, A0, A1, A2, Policy>::f, &f, sizeof(f), 3);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class Policy>
-inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3), const Policy&){
-	return CFunEssence(&detail::method4<R (*)(C, A0, A1, A2, A3), C, R, A0, A1, A2, A3, Policy>::f, &f, sizeof(f), 4);
-}
-
-template<class C, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
-inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3, A4), const Policy&){
-	return CFunEssence(&detail::method5<R (*)(C, A0, A1, A2, A3, A4), C, R, A0, A1, A2, A3, A4, Policy>::f, &f, sizeof(f), 5);
-}
-
-}
+//////////////////////////////////////////////////////////////
 
 /**
 * @brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
@@ -789,7 +607,7 @@ inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3, A4), const Policy&){
 */
 template<class Fun>
 inline CFunPtr fun(Fun f){
-	return new_cfun(detail::fun_impl(f, result));
+	return new_cfun(fun_impl(f, result));
 }
 
 /**
@@ -797,8 +615,8 @@ inline CFunPtr fun(Fun f){
 *
 */
 template<class Fun, class Policy>
-inline CFunPtr fun(Fun f, const Policy& policy){
-	return new_cfun(detail::fun_impl(f, policy));
+inline CFunPtr fun(Fun f, Policy policy){
+	return new_cfun(fun_impl(f, policy));
 }
 
 
@@ -809,7 +627,7 @@ inline CFunPtr fun(Fun f, const Policy& policy){
 */
 template<class Fun>
 inline CFunPtr method(Fun f){
-	return new_cfun(detail::method_impl(f, result));
+	return new_cfun(method_impl(f, result));
 }
 
 /**
@@ -818,8 +636,8 @@ inline CFunPtr method(Fun f){
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun, class Policy>
-inline CFunPtr method(Fun f, const Policy& policy){
-	return new_cfun(detail::method_impl(f, policy));
+inline CFunPtr method(Fun f, Policy policy){
+	return new_cfun(method_impl(f, policy));
 }
 
 /**
@@ -839,7 +657,7 @@ class ctor : public CFunPtr{
 public:
 	
 	ctor()
-		:CFunPtr(fun(&detail::ctor_fun<N>::template inner<T, A0, A1, A2, A3, A4>::make)){}
+		:CFunPtr(fun(&ctor_fun<N>::template inner<T, A0, A1, A2, A3, A4>::make)){}
 };
 
 	
@@ -848,10 +666,8 @@ public:
 *
 */
 template<class T, class C, class Policy>
-CFunPtr getter(T C::* v, const Policy&){
-	typedef detail::getter<C, T> getter;
-	getter data(v);
-	return new_cfun(&detail::method0<getter, C*, const T&, Policy>::f, (const void*)&data, sizeof(data), 0);
+CFunPtr getter(T C::* v, Policy policy){
+	return new_cfun(getter_impl(v, policy));
 }
 	
 /**
@@ -859,10 +675,8 @@ CFunPtr getter(T C::* v, const Policy&){
 *
 */
 template<class T, class C, class Policy>
-CFunPtr setter(T C::* v, const Policy&){
-	typedef detail::setter<C, T> setter;
-	setter data(v);
-	return new_cfun(&detail::method1<setter, C*, const T&, const T&, Policy>::f, (const void*)&data, sizeof(data), 1);
+CFunPtr setter(T C::* v, Policy policy){
+	return new_cfun(setter_impl(v, policy));
 }
 
 

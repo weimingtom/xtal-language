@@ -103,7 +103,7 @@ public:
 			return;
 		}
 
-		vm->return_result(SmartPtr<StringEachIter>(this), ss_->get_s(1));
+		vm->return_result(from_this(this), ss_->get_s(1));
 	}
 };
 
@@ -121,7 +121,7 @@ public:
 
 		StringPtr temp = it_;
 		it_ = ch_inc(it_->data(), it_->buffer_size());
-		vm->return_result(SmartPtr<ChRangeIter>(this), temp);
+		vm->return_result(from_this(this), temp);
 	}
 
 private:
@@ -150,7 +150,7 @@ public:
 
 	struct Value{
 		uint_t hashcode;
-		StringPtr value;
+		IDPtr value;
 		char_t buf[Innocence::SMALL_STRING_MAX+1];
 	};
 
@@ -221,7 +221,7 @@ const StringMgr::Value& StringMgr::insert(const char* str, uint_t size, uint_t h
 		return it->second;
 	}
 
-	Value value = {hashcode, xnew<String>(str, size, hashcode, length, true)};
+	Value value = {hashcode, xnew<ID>(str, size, hashcode, length)};
 	if(size<=Innocence::SMALL_STRING_MAX){
 		memcpy(value.buf, str, sizeof(char_t)*size);
 		value.buf[size] = 0;
@@ -316,6 +316,7 @@ void String::init_string(const char_t* str, uint_t sz){
 		make_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
 			set_p(pvalue(str_mgr_->insert(str, sz, hash, length).value));
+			pvalue(*this)->inc_ref_count();
 		}
 		else{
 			set_p(new LargeString(str, sz, hash, length));
@@ -409,6 +410,7 @@ String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, boo
 	else{
 		if(!intern_flag && length<=1){
 			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length).value));
+			pvalue(*this)->inc_ref_count();
 		}
 		else{
 			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
@@ -431,6 +433,11 @@ String::String(LargeString* left, LargeString* right):Any(noinit_t()){
 	set_p(new LargeString(left, right));
 	pvalue(*this)->set_class(new_cpp_class<String>());
 	register_gc(pvalue(*this));
+}
+
+String::String(const String& s)
+	:Any(s){
+	inc_ref_count_force(s);
 }
 
 const char* String::c_str(){
@@ -751,6 +758,10 @@ ID::ID(char_t a, char_t b, char_t c)
 	}
 }
 
+ID::ID(const char_t* str, uint_t len, uint_t hashcode, uint_t length)
+	:String(str, len, hashcode, length, true){}
+
+
 ID::ID(const StringPtr& name)
 	:String(*(name ? name->intern() : (const IDPtr&)name)){}
 
@@ -785,115 +796,114 @@ void initialize_interned_string(){
 	register_uninitializer(&uninitialize_interned_string);
 
 //{ID{{
-	id::id_list[id::idop_inc] = "op_inc";
-	id::id_list[id::idblock_catch] = "block_catch";
-	id::id_list[id::idcallee] = "callee";
-	id::id_list[id::idnew] = "new";
-	id::id_list[id::idop_shl_assign] = "op_shl_assign";
-	id::id_list[id::idop_at] = "op_at";
-	id::id_list[id::idtest] = "test";
-	id::id_list[id::idfor] = "for";
-	id::id_list[id::idserial_new] = "serial_new";
-	id::id_list[id::idop_div_assign] = "op_div_assign";
-	id::id_list[id::idop_mul] = "op_mul";
-	id::id_list[id::idop_xor_assign] = "op_xor_assign";
-	id::id_list[id::idto_a] = "to_a";
-	id::id_list[id::idinitialize] = "initialize";
-	id::id_list[id::idonce] = "once";
-	id::id_list[id::iddo] = "do";
-	id::id_list[id::idstring] = "string";
-	id::id_list[id::idfalse] = "false";
-	id::id_list[id::idancestors] = "ancestors";
-	id::id_list[id::idop_and_assign] = "op_and_assign";
-	id::id_list[id::idop_add_assign] = "op_add_assign";
-	id::id_list[id::idop_cat_assign] = "op_cat_assign";
-	id::id_list[id::idsingleton] = "singleton";
-	id::id_list[id::idop_shl] = "op_shl";
-	id::id_list[id::idblock_next] = "block_next";
-	id::id_list[id::idyield] = "yield";
-	id::id_list[id::idop_shr_assign] = "op_shr_assign";
-	id::id_list[id::idop_cat] = "op_cat";
-	id::id_list[id::idop_neg] = "op_neg";
-	id::id_list[id::idop_dec] = "op_dec";
-	id::id_list[id::idvalue] = "value";
-	id::id_list[id::iddefault] = "default";
-	id::id_list[id::idcase] = "case";
-	id::id_list[id::idto_s] = "to_s";
-	id::id_list[id::idop_shr] = "op_shr";
-	id::id_list[id::idpure] = "pure";
-	id::id_list[id::idfinally] = "finally";
-	id::id_list[id::idthis] = "this";
-	id::id_list[id::idnull] = "null";
-	id::id_list[id::idop_div] = "op_div";
-	id::id_list[id::idserial_load] = "serial_load";
-	id::id_list[id::idIOError] = "IOError";
-	id::id_list[id::id_dummy_lhs_parameter_] = "_dummy_lhs_parameter_";
-	id::id_list[id::idin] = "in";
-	id::id_list[id::idcatch] = "catch";
-	id::id_list[id::idop_mul_assign] = "op_mul_assign";
-	id::id_list[id::idmethod] = "method";
-	id::id_list[id::idop_lt] = "op_lt";
-	id::id_list[id::idset_at] = "set_at";
-	id::id_list[id::id_switch_] = "_switch_";
-	id::id_list[id::idop_mod_assign] = "op_mod_assign";
-	id::id_list[id::idbreak] = "break";
-	id::id_list[id::idtry] = "try";
-	id::id_list[id::idop_mod] = "op_mod";
-	id::id_list[id::idto_i] = "to_i";
-	id::id_list[id::idop_or] = "op_or";
-	id::id_list[id::idcontinue] = "continue";
-	id::id_list[id::ide] = "e";
-	id::id_list[id::iditerator] = "iterator";
-	id::id_list[id::idthrow] = "throw";
-	id::id_list[id::idop_and] = "op_and";
-	id::id_list[id::idundefined] = "undefined";
-	id::id_list[id::idelse] = "else";
-	id::id_list[id::idfun] = "fun";
-	id::id_list[id::idto_f] = "to_f";
-	id::id_list[id::idop_sub_assign] = "op_sub_assign";
-	id::id_list[id::idlib] = "lib";
-	id::id_list[id::iddofun] = "dofun";
-	id::id_list[id::ideach] = "each";
-	id::id_list[id::idop_set_at] = "op_set_at";
-	id::id_list[id::idop_in] = "op_in";
-	id::id_list[id::ids_load] = "s_load";
-	id::id_list[id::idclass] = "class";
-	id::id_list[id::idop_com] = "op_com";
-	id::id_list[id::idop_pos] = "op_pos";
-	id::id_list[id::idop_add] = "op_add";
-	id::id_list[id::idop_ushr_assign] = "op_ushr_assign";
-	id::id_list[id::idnobreak] = "nobreak";
-	id::id_list[id::idcurrent_context] = "current_context";
-	id::id_list[id::idto_m] = "to_m";
-	id::id_list[id::idreturn] = "return";
-	id::id_list[id::idop_eq] = "op_eq";
-	id::id_list[id::idfiber] = "fiber";
-	id::id_list[id::idop_or_assign] = "op_or_assign";
-	id::id_list[id::ids_save] = "s_save";
-	id::id_list[id::idswitch] = "switch";
-	id::id_list[id::idop_sub] = "op_sub";
-	id::id_list[id::idop_ushr] = "op_ushr";
-	id::id_list[id::idfirst_step] = "first_step";
-	id::id_list[id::idblock_break] = "block_break";
-	id::id_list[id::idserial_save] = "serial_save";
-	id::id_list[id::idop_range] = "op_range";
-	id::id_list[id::id_dummy_fun_parameter_] = "_dummy_fun_parameter_";
-	id::id_list[id::id_dummy_block_parameter_] = "_dummy_block_parameter_";
-	id::id_list[id::idunittest] = "unittest";
-	id::id_list[id::idop_xor] = "op_xor";
-	id::id_list[id::idblock_first] = "block_first";
-	id::id_list[id::idtrue] = "true";
-	id::id_list[id::idop_call] = "op_call";
-	id::id_list[id::id_initialize_] = "_initialize_";
-	id::id_list[id::idis] = "is";
-	id::id_list[id::idwhile] = "while";
-	id::id_list[id::idit] = "it";
-	id::id_list[id::idassert] = "assert";
-	id::id_list[id::idxtal] = "xtal";
-	id::id_list[id::idif] = "if";
-	id::id_list[id::idp] = "p";
+	id::id_list[id::idop_inc] = xnew<ID>("op_inc", 6);
+	id::id_list[id::idblock_catch] = xnew<ID>("block_catch", 11);
+	id::id_list[id::idcallee] = xnew<ID>("callee", 6);
+	id::id_list[id::idnew] = xnew<ID>("new", 3);
+	id::id_list[id::idop_shl_assign] = xnew<ID>("op_shl_assign", 13);
+	id::id_list[id::idop_at] = xnew<ID>("op_at", 5);
+	id::id_list[id::idtest] = xnew<ID>("test", 4);
+	id::id_list[id::idfor] = xnew<ID>("for", 3);
+	id::id_list[id::idserial_new] = xnew<ID>("serial_new", 10);
+	id::id_list[id::idop_div_assign] = xnew<ID>("op_div_assign", 13);
+	id::id_list[id::idop_mul] = xnew<ID>("op_mul", 6);
+	id::id_list[id::idop_xor_assign] = xnew<ID>("op_xor_assign", 13);
+	id::id_list[id::idto_a] = xnew<ID>("to_a", 4);
+	id::id_list[id::idinitialize] = xnew<ID>("initialize", 10);
+	id::id_list[id::idonce] = xnew<ID>("once", 4);
+	id::id_list[id::iddo] = xnew<ID>("do", 2);
+	id::id_list[id::idstring] = xnew<ID>("string", 6);
+	id::id_list[id::idfalse] = xnew<ID>("false", 5);
+	id::id_list[id::idancestors] = xnew<ID>("ancestors", 9);
+	id::id_list[id::idop_and_assign] = xnew<ID>("op_and_assign", 13);
+	id::id_list[id::idop_add_assign] = xnew<ID>("op_add_assign", 13);
+	id::id_list[id::idop_cat_assign] = xnew<ID>("op_cat_assign", 13);
+	id::id_list[id::idsingleton] = xnew<ID>("singleton", 9);
+	id::id_list[id::idop_shl] = xnew<ID>("op_shl", 6);
+	id::id_list[id::idblock_next] = xnew<ID>("block_next", 10);
+	id::id_list[id::idyield] = xnew<ID>("yield", 5);
+	id::id_list[id::idop_shr_assign] = xnew<ID>("op_shr_assign", 13);
+	id::id_list[id::idop_cat] = xnew<ID>("op_cat", 6);
+	id::id_list[id::idop_neg] = xnew<ID>("op_neg", 6);
+	id::id_list[id::idop_dec] = xnew<ID>("op_dec", 6);
+	id::id_list[id::idvalue] = xnew<ID>("value", 5);
+	id::id_list[id::iddefault] = xnew<ID>("default", 7);
+	id::id_list[id::idcase] = xnew<ID>("case", 4);
+	id::id_list[id::idto_s] = xnew<ID>("to_s", 4);
+	id::id_list[id::idop_shr] = xnew<ID>("op_shr", 6);
+	id::id_list[id::idpure] = xnew<ID>("pure", 4);
+	id::id_list[id::idfinally] = xnew<ID>("finally", 7);
+	id::id_list[id::idthis] = xnew<ID>("this", 4);
+	id::id_list[id::idnull] = xnew<ID>("null", 4);
+	id::id_list[id::idop_div] = xnew<ID>("op_div", 6);
+	id::id_list[id::idserial_load] = xnew<ID>("serial_load", 11);
+	id::id_list[id::idIOError] = xnew<ID>("IOError", 7);
+	id::id_list[id::id_dummy_lhs_parameter_] = xnew<ID>("_dummy_lhs_parameter_", 21);
+	id::id_list[id::idin] = xnew<ID>("in", 2);
+	id::id_list[id::idcatch] = xnew<ID>("catch", 5);
+	id::id_list[id::idop_mul_assign] = xnew<ID>("op_mul_assign", 13);
+	id::id_list[id::idmethod] = xnew<ID>("method", 6);
+	id::id_list[id::idop_lt] = xnew<ID>("op_lt", 5);
+	id::id_list[id::idset_at] = xnew<ID>("set_at", 6);
+	id::id_list[id::id_switch_] = xnew<ID>("_switch_", 8);
+	id::id_list[id::idop_mod_assign] = xnew<ID>("op_mod_assign", 13);
+	id::id_list[id::idbreak] = xnew<ID>("break", 5);
+	id::id_list[id::idtry] = xnew<ID>("try", 3);
+	id::id_list[id::idop_mod] = xnew<ID>("op_mod", 6);
+	id::id_list[id::idto_i] = xnew<ID>("to_i", 4);
+	id::id_list[id::idop_or] = xnew<ID>("op_or", 5);
+	id::id_list[id::idcontinue] = xnew<ID>("continue", 8);
+	id::id_list[id::ide] = xnew<ID>("e", 1);
+	id::id_list[id::iditerator] = xnew<ID>("iterator", 8);
+	id::id_list[id::idthrow] = xnew<ID>("throw", 5);
+	id::id_list[id::idop_and] = xnew<ID>("op_and", 6);
+	id::id_list[id::idundefined] = xnew<ID>("undefined", 9);
+	id::id_list[id::idelse] = xnew<ID>("else", 4);
+	id::id_list[id::idfun] = xnew<ID>("fun", 3);
+	id::id_list[id::idto_f] = xnew<ID>("to_f", 4);
+	id::id_list[id::idop_sub_assign] = xnew<ID>("op_sub_assign", 13);
+	id::id_list[id::idlib] = xnew<ID>("lib", 3);
+	id::id_list[id::iddofun] = xnew<ID>("dofun", 5);
+	id::id_list[id::ideach] = xnew<ID>("each", 4);
+	id::id_list[id::idop_set_at] = xnew<ID>("op_set_at", 9);
+	id::id_list[id::idop_in] = xnew<ID>("op_in", 5);
+	id::id_list[id::ids_load] = xnew<ID>("s_load", 6);
+	id::id_list[id::idclass] = xnew<ID>("class", 5);
+	id::id_list[id::idop_com] = xnew<ID>("op_com", 6);
+	id::id_list[id::idop_pos] = xnew<ID>("op_pos", 6);
+	id::id_list[id::idop_add] = xnew<ID>("op_add", 6);
+	id::id_list[id::idop_ushr_assign] = xnew<ID>("op_ushr_assign", 14);
+	id::id_list[id::idnobreak] = xnew<ID>("nobreak", 7);
+	id::id_list[id::idcurrent_context] = xnew<ID>("current_context", 15);
+	id::id_list[id::idto_m] = xnew<ID>("to_m", 4);
+	id::id_list[id::idreturn] = xnew<ID>("return", 6);
+	id::id_list[id::idop_eq] = xnew<ID>("op_eq", 5);
+	id::id_list[id::idfiber] = xnew<ID>("fiber", 5);
+	id::id_list[id::idop_or_assign] = xnew<ID>("op_or_assign", 12);
+	id::id_list[id::ids_save] = xnew<ID>("s_save", 6);
+	id::id_list[id::idswitch] = xnew<ID>("switch", 6);
+	id::id_list[id::idop_sub] = xnew<ID>("op_sub", 6);
+	id::id_list[id::idop_ushr] = xnew<ID>("op_ushr", 7);
+	id::id_list[id::idfirst_step] = xnew<ID>("first_step", 10);
+	id::id_list[id::idblock_break] = xnew<ID>("block_break", 11);
+	id::id_list[id::idserial_save] = xnew<ID>("serial_save", 11);
+	id::id_list[id::idop_range] = xnew<ID>("op_range", 8);
+	id::id_list[id::id_dummy_fun_parameter_] = xnew<ID>("_dummy_fun_parameter_", 21);
+	id::id_list[id::id_dummy_block_parameter_] = xnew<ID>("_dummy_block_parameter_", 23);
+	id::id_list[id::idunittest] = xnew<ID>("unittest", 8);
+	id::id_list[id::idop_xor] = xnew<ID>("op_xor", 6);
+	id::id_list[id::idblock_first] = xnew<ID>("block_first", 11);
+	id::id_list[id::idtrue] = xnew<ID>("true", 4);
+	id::id_list[id::idop_call] = xnew<ID>("op_call", 7);
+	id::id_list[id::id_initialize_] = xnew<ID>("_initialize_", 12);
+	id::id_list[id::idis] = xnew<ID>("is", 2);
+	id::id_list[id::idwhile] = xnew<ID>("while", 5);
+	id::id_list[id::idit] = xnew<ID>("it", 2);
+	id::id_list[id::idassert] = xnew<ID>("assert", 6);
+	id::id_list[id::idxtal] = xnew<ID>("xtal", 4);
+	id::id_list[id::idif] = xnew<ID>("if", 2);
+	id::id_list[id::idp] = xnew<ID>("p", 1);
 //}}ID}
-
 
 
 }

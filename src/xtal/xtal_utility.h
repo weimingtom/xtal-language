@@ -4,7 +4,6 @@
 //#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
 
-// 以下はデバッグ中
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_NO_PARSER
 //#define XTAL_USE_THREAD_MODEL_2

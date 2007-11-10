@@ -22,7 +22,7 @@ public:
 	void block_next(const VMachinePtr& vm){
 		++index_;
 		if(index_<(int_t)array_->size()){
-			vm->return_result(SmartPtr<ArrayIter>(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
+			vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
 		}
 		else{
 			vm->return_result(null, null);
@@ -45,7 +45,7 @@ void initialize_array(){
 		p->def("new", ctor<Array, int_t>()->param(Named("size", 0)));
 		p->method("size", &Array::size);
 		p->method("length", &Array::length);
-		p->method("resize", &Array::resize);
+		p->method("resize", &Array::size);
 		p->method("empty", &Array::empty);
 		p->method("slice", &Array::slice)->param("i", Named("n", 1));
 		p->method("splice", &Array::splice)->param("i", Named("n", 1));

@@ -58,33 +58,63 @@ struct ParamInfo{
 	Named* params;
 	int_t min_param_count;
 	int_t max_param_count;
-	Innocence fun;
 };
 
 
 template<class T, int N>
 struct arg_getter{
-	static typename CastResult<T>::type 
+
+	static const AnyPtr&
 	get(const VMachinePtr& vm, const ParamInfo& p){
-		Named& temp = p.params[N];
-		return arg_cast<T>(vm->arg_default(N, temp.name, temp.value), N, temp.name);
+		return vm->arg_default(N, p.params[N].name, p.params[N].value);
+	}
+
+	static typename CastResult<T>::type 
+	cast(const Innocence& p){
+		return nocheck_cast<T>(ap(p));
+	}
+
+	static uint_t check(const Innocence& p){
+		return !can_cast<T>(ap(p)) << (N+1);
 	}
 };
 
 template<class T>
 struct arg_this_getter{
-	static typename CastResult<T>::type 
+
+	static const AnyPtr&
 	get(const VMachinePtr& vm, const ParamInfo& p){
-		return cast<T>(vm->get_arg_this()); 
+		return vm->get_arg_this();
+	}
+
+	static typename CastResult<T>::type 
+	cast(const Innocence& p){
+		return nocheck_cast<T>(ap(p));
+	}
+
+	static uint_t check(const Innocence& p){
+		return !can_cast<T>(ap(p)) << 0;
 	}
 };
 
 struct arg_getter_vm{
-	static const VMachinePtr& 
+	static const AnyPtr& 
 	get(const VMachinePtr& vm, const ParamInfo& p){
 		return vm;
 	}
+
+	static const VMachinePtr& 
+	cast(const Innocence& p){
+		return *(VMachinePtr*)&p;
+	}
+
+	static uint_t check(const Innocence& p){
+		return 0;
+	}
 };
+
+void check_args(const VMachinePtr& vm, const ParamInfo& p, uint_t flags);
+
 
 template<class Policy>
 struct ReturnPolicyTest{
@@ -101,6 +131,7 @@ inline int operator ,(const T& val, ReturnPolicyTest<Policy> rp){
 	Policy::return_result(rp.vm, val);
 	return 0;
 }
+
 
 template<class Policy>
 inline int operator ,(ReturnPolicyTest<Policy> rp, ReturnPolicyVoidTest){
@@ -120,120 +151,194 @@ struct fun0{
 template<class T, class R, class A0, class Policy>
 struct fun1{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+
+		if(uint_t flags = A0::check(v0)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
 template<class T, class R, class A0, class A1, class Policy>
 struct fun2{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p), 
-			A1::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+		Innocence v1 = A1::get(vm, p);
+
+		if(uint_t flags = A0::check(v0) | A1::check(v1)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0), 
+				A1::cast(v1)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class Policy>
 struct fun3{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p), 
-			A1::get(vm, p), 
-			A2::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+		Innocence v1 = A1::get(vm, p);
+		Innocence v2 = A2::get(vm, p);
+
+		if(uint_t flags = A0::check(v0) | A1::check(v1) | A2::check(v2)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0), 
+				A1::cast(v1), 
+				A2::cast(v2)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class Policy>
 struct fun4{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p), 
-			A1::get(vm, p), 
-			A2::get(vm, p), 
-			A3::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+		Innocence v1 = A1::get(vm, p);
+		Innocence v2 = A2::get(vm, p);
+		Innocence v3 = A3::get(vm, p);
+
+		if(uint_t flags = A0::check(v0) | A1::check(v1) | A2::check(v2) | A3::check(v3)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0), 
+				A1::cast(v1), 
+				A2::cast(v2), 
+				A3::cast(v3)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class A4, class Policy>
 struct fun5{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p), 
-			A1::get(vm, p), 
-			A2::get(vm, p), 
-			A3::get(vm, p),
-			A4::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+		Innocence v1 = A1::get(vm, p);
+		Innocence v2 = A2::get(vm, p);
+		Innocence v3 = A3::get(vm, p);
+		Innocence v4 = A4::get(vm, p);
+
+		if(uint_t flags = A0::check(v0) | A1::check(v1) | A2::check(v2) | A3::check(v3) | A4::check(v4)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0), 
+				A1::cast(v1), 
+				A2::cast(v2), 
+				A3::cast(v3),
+				A4::cast(v4)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
 template<class T, class R, class A0, class A1, class A2, class A3, class A4, class A5, class Policy>
 struct fun6{
 	static void f(const VMachinePtr& vm, const ParamInfo& p, void* data){
-		(*(T*)data)(
-			A0::get(vm, p), 
-			A1::get(vm, p), 
-			A2::get(vm, p), 
-			A3::get(vm, p),
-			A4::get(vm, p),
-			A5::get(vm, p)
-		), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		Innocence v0 = A0::get(vm, p);
+		Innocence v1 = A1::get(vm, p);
+		Innocence v2 = A2::get(vm, p);
+		Innocence v3 = A3::get(vm, p);
+		Innocence v4 = A4::get(vm, p);
+		Innocence v5 = A5::get(vm, p);
+
+		if(uint_t flags = A0::check(v0) | A1::check(v1) | A2::check(v2) | A3::check(v3) | A4::check(v4) | A5::check(v5)){
+			check_args(vm, p, flags);
+		}
+		else{
+			(*(T*)data)(
+				A0::cast(v0), 
+				A1::cast(v1), 
+				A2::cast(v2), 
+				A3::cast(v3),
+				A4::cast(v4),
+				A5::cast(v5)
+			), ReturnPolicyTest<Policy>(vm), ReturnPolicyVoidTest();
+		}
 	}
 };
 
+///////////////////////////////////////////////////////
 
 template<class C, class R>
 struct memfun0{
-	R (C::*fun)();
-	memfun0(R (C::*fun)()):fun(fun){}
-	memfun0(R (C::*fun)() const):fun((R (C::*)())fun){}
+	typedef R (C::*fun_t)();
+	fun_t fun;
+	template<class T> memfun0(T f):fun((fun_t)f){}
 	R operator()(C* self){ return (self->*fun)(); }
 };
 
 template<class C, class R, class A0>
 struct memfun1{
-	R (C::*fun)(A0);
-	memfun1(R (C::*fun)(A0)):fun(fun){}
-	memfun1(R (C::*fun)(A0) const):fun((R (C::*)(A0))fun){}
+	typedef R (C::*fun_t)(A0);
+	fun_t fun;
+	template<class T> memfun1(T f):fun((fun_t)f){}
 	R operator()(C* self, A0 a0){ return (self->*fun)(a0); }
 };
 
 template<class C, class R, class A0, class A1>
 struct memfun2{
-	R (C::*fun)(A0, A1);
-	memfun2(R (C::*fun)(A0, A1)):fun(fun){}
-	memfun2(R (C::*fun)(A0, A1) const):fun((R (C::*)(A0, A1))fun){}
+	typedef R (C::*fun_t)(A0, A1);
+	fun_t fun;
+	template<class T> memfun2(T f):fun((fun_t)f){}
 	R operator()(C* self, A0 a0, A1 a1){ return (self->*fun)(a0, a1); }
 };
 
 template<class C, class R, class A0, class A1, class A2>
 struct memfun3{
-	R (C::*fun)(A0, A1, A2);
-	memfun3(R (C::*fun)(A0, A1, A2)):fun(fun){}
-	memfun3(R (C::*fun)(A0, A1, A2) const):fun((R (C::*)(A0, A1, A2))fun){}
+	typedef R (C::*fun_t)(A0, A1, A2);
+	fun_t fun;
+	template<class T> memfun3(T f):fun((fun_t)f){}
 	R operator()(C* self, A0 a0, A1 a1, A2 a2){ return (self->*fun)(a0, a1, a2); }
 };
 
 template<class C, class R, class A0, class A1, class A2, class A3>
 struct memfun4{
-	R (C::*fun)(A0, A1, A2, A3);
-	memfun4(R (C::*fun)(A0, A1, A2, A3)):fun(fun){}
-	memfun4(R (C::*fun)(A0, A1, A2, A3) const):fun((R (C::*)(A0, A1, A2, A3))fun){}
+	typedef R (C::*fun_t)(A0, A1, A2, A3);
+	fun_t fun;
+	template<class T> memfun4(T f):fun((fun_t)f){}
 	R operator()(C* self, A0 a0, A1 a1, A2 a2, A3 a3){ return (self->*fun)(a0, a1, a2, a3); }
 };
 
 template<class C, class R, class A0, class A1, class A2, class A3, class A4>
 struct memfun5{
-	R (C::*fun)(A0, A1, A2, A3, A4);
-	memfun5(R (C::*fun)(A0, A1, A2, A3, A4)):fun(fun){}
-	memfun5(R (C::*fun)(A0, A1, A2, A3, A4) const):fun((R (C::*)(A0, A1, A2, A3, A4))fun){}
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4);
+	fun_t fun;
+	template<class T> memfun5(T f):fun((fun_t)f){}
 	R operator()(C* self, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return (self->*fun)(a0, a1, a2, a3, a4); }
 };
+
+///////////////////////////////////////////////////////
+
+template<class C, class R, R (C::*fun)()>
+struct static_memfun0 : public Base{
+	R f(const VMachinePtr& vm){ 
+		return (cast<C*>(vm->get_arg_this())->*fun)(); 
+	}
+};
+
+template<class C, class R, class A0, class A1, class A2, class A3, class A4, R (C::*fun)(A0, A1, A2, A3, A4)>
+struct static_memfun5{
+	R operator()(C* self, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return (self->*fun)(a0, a1, a2, a3, a4); }
+};
+
+///////////////////////////////////////////////////////
 
 template<class C, class T>
 struct getter_fun{
@@ -248,6 +353,8 @@ struct setter_fun{
 	setter_fun(T C::* var):var(var){}
 	const T& operator()(C* self, const T& v){ return self->*var = v; }
 };
+
+///////////////////////////////////////////////////////
 
 template<int N>
 struct ctor_fun;
@@ -288,6 +395,8 @@ struct ctor_fun<5>{
 	struct inner{ static SmartPtr<T> make(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ return xnew<T>(a0, a1, a2, a3, a4); } };
 };
 
+///////////////////////////////////////////////////////
+
 struct CFunEssence{
 	typedef void (*fun_t)(const VMachinePtr&, const ParamInfo&, void* data);
 
@@ -297,8 +406,10 @@ struct CFunEssence{
 	void* val;
 	int_t param_n;
 	bool args;
+	//bool (*)(can_cast_fun)(const Any&);
 };
 
+///////////////////////////////////////////////////////
 
 template<class R, class Policy>
 inline CFunEssence fun_impl(R (*f)(), Policy){
@@ -546,14 +657,14 @@ inline CFunEssence method_impl(R (*f)(C, A0, A1, A2, A3, A4), Policy){
 
 template<class T, class C, class Policy>
 inline CFunEssence getter_impl(T C::* v, Policy){
-	typedef getter<C, T> getter;
+	typedef getter_fun<C, T> getter;
 	getter data(v);
 	return CFunEssence(&fun1<getter, const T&, arg_this_getter<C*>, Policy>::f, &data, sizeof(data), 0);
 }
 	
 template<class T, class C, class Policy>
 inline CFunEssence setter_impl(T C::* v, Policy){
-	typedef setter<C, T> setter;
+	typedef setter_fun<C, T> setter;
 	setter data(v);
 	return CFunEssence(&fun2<setter, const T&, arg_this_getter<C*>, const T&, Policy>::f, &data, sizeof(data), 1);
 }
@@ -666,7 +777,7 @@ public:
 *
 */
 template<class T, class C, class Policy>
-CFunPtr getter(T C::* v, Policy policy){
+inline CFunPtr getter(T C::* v, Policy policy){
 	return new_cfun(getter_impl(v, policy));
 }
 	
@@ -675,7 +786,7 @@ CFunPtr getter(T C::* v, Policy policy){
 *
 */
 template<class T, class C, class Policy>
-CFunPtr setter(T C::* v, Policy policy){
+inline CFunPtr setter(T C::* v, Policy policy){
 	return new_cfun(setter_impl(v, policy));
 }
 

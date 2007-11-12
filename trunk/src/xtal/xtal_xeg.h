@@ -413,53 +413,25 @@ private:
 	friend class XegExec;
 };
 
-struct XegExpr; 
-typedef SmartPtr<XegExpr> XegExprPtr;
+struct XegElem; 
+typedef SmartPtr<XegElem> XegElemPtr;
 
 
 ScannerPtr create_scanner_Stream(const StreamPtr& stream);
 ScannerPtr create_scanner_String(const StringPtr& string);
 ScannerPtr create_scanner_Iterator(const AnyPtr& iter);
 
-XegExprPtr expr(const AnyPtr& a);
-XegExprPtr before(const AnyPtr& left);
-XegExprPtr cap(const AnyPtr& left);
-XegExprPtr cap(const IDPtr& name, const AnyPtr& left);
-XegExprPtr node(const AnyPtr& left);
-XegExprPtr node(const IDPtr& name, const AnyPtr& left);
-XegExprPtr splice_node(int_t num, const AnyPtr& left);
-XegExprPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
-XegExprPtr leaf(const AnyPtr& left);
-XegExprPtr backref(const AnyPtr& n);
+XegElemPtr expr(const AnyPtr& a);
+XegElemPtr before(const AnyPtr& left);
+XegElemPtr cap(const AnyPtr& left);
+XegElemPtr cap(const IDPtr& name, const AnyPtr& left);
+XegElemPtr node(const AnyPtr& left);
+XegElemPtr node(const IDPtr& name, const AnyPtr& left);
+XegElemPtr splice_node(int_t num, const AnyPtr& left);
+XegElemPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
+XegElemPtr leaf(const AnyPtr& left);
+XegElemPtr backref(const AnyPtr& n);
 
-
-struct XegExpr : public HaveName{
-
-	enum Type{
-		TYPE_TERM, //
-		TYPE_CONCAT, // >>
-		TYPE_OR, // |
-		TYPE_MORE0, // *0
-		TYPE_MORE1, // *1
-		TYPE_01,  // *-1
-		TYPE_EMPTY, // ãÛ
-		TYPE_CAP, // ÉLÉÉÉvÉ`ÉÉ
-		TYPE_DECL, // êÈåæ
-	};
-
-	XegExpr(int_t type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)
-		:type(type), param1(param1), param2(param2), param3(param3){}
-
-	int_t type;
-	AnyPtr param1;
-	AnyPtr param2;
-	int_t param3;
-
-	virtual void visit_members(Visitor& m){
-		HaveName::visit_members(m);
-		m & param1 & param2;
-	}
-};
 
 extern AnyPtr any;
 extern AnyPtr bos;

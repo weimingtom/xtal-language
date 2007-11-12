@@ -114,10 +114,10 @@ public:
 	* @brief ヒントの設定
 	*
 	* 例外が起きたときのエラーメッセージのために、
-	* 現在呼び出しているオブジェクトとメソッド名とメンバネームスペースを登録する。
+	* 現在呼び出している関数を登録する。
 	*/
-	void set_hint(const AnyPtr& object, const StringPtr& method_name, const AnyPtr& secondary_key){ 
-		ff().hint(object, method_name, secondary_key);
+	void set_hint(const AnyPtr& object){ 
+		ff().hint(object);
 	}
 	
 
@@ -553,14 +553,8 @@ public:
 		// オブジェクト化した引数。
 		Innocence arguments_;
 		
-		// デバッグメッセージ出力用のヒント 主にレシーバオブジェクトが格納されている
-		Innocence hint1_;
-		
-		// デバッグメッセージ出力用のヒント 主にメンバ名が格納されている
-		Innocence hint2_;
-
-		// デバッグメッセージ出力用のヒント 主にメンバネームスペースが格納されている
-		Innocence hint3_;
+		// デバッグメッセージ出力用のヒント
+		Innocence hint_;
 
 		void set_null(){
 			set_null_force(fun_); 
@@ -569,10 +563,7 @@ public:
 			set_null_force(temp3_);
 			set_null_force(outer_);
 			set_null_force(arguments_);
-			set_null_force(hint1_);
-			set_null_force(hint2_);
-			set_null_force(hint3_);
-			//memset(&fun_, 0, (u8*)(&hint3_ + 1) - (u8*)(&fun_));
+			set_null_force(hint_);
 		}
 
 		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
@@ -580,9 +571,7 @@ public:
 		const AnyPtr& variable(int_t i) const{ return ap(variables_[i]); }
 		const AnyPtr& self() const{ return ap(self_); }
 		const ArgumentsPtr& arguments() const{ return static_ptr_cast<Arguments>(ap(arguments_)); }
-		const AnyPtr& hint1() const{ return ap(hint1_); }
-		const StringPtr& hint2() const{ return static_ptr_cast<String>(ap(hint2_)); }
-		const StringPtr& hint3() const{ return static_ptr_cast<String>(ap(hint3_)); }
+		const AnyPtr& hint() const{ return ap(hint_); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
@@ -593,7 +582,7 @@ public:
 		void variable(int_t i, const Innocence& v){ variables_[i] = v; }
 		void self(const Innocence& v){ self_ = v; }
 		void arguments(const Innocence& v){ arguments_ = v; }
-		void hint(const Innocence& v1, const Innocence& v2, const Innocence& v3){ hint1_ = v1; hint2_ = v2; hint3_ = v3; }
+		void hint(const Innocence& v){ hint_ = v; }
 
 		void inc_ref();
 		void dec_ref();
@@ -636,8 +625,7 @@ public:
 	const IDPtr& identifier(int_t n){ return code()->identifier(n); }
 	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
 	const IDPtr& identifier_ex(int_t n){ 
-		if(n!=0){ return identifier(n); 
-		}
+		if(n!=0){ return  static_ptr_cast<ID>(ap(ff().temp3_ = identifier(n)));  }
 		else{ return static_ptr_cast<ID>(ap(ff().temp3_ = pop()->to_s()->intern())); }
 	}
 

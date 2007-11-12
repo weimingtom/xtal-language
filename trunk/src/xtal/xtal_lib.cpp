@@ -177,7 +177,7 @@ Iterator::reverse: method(){
 	return this[].reverse;
 }
 
-Iterator::join: method(sep:","){
+Iterator::join: method(sep: ""){
 	ret: MemoryStream();
 	if(sep==""){
 		this{
@@ -196,7 +196,7 @@ Iterator::join: method(sep:","){
 	return ret.to_s;
 }
 
-Iterator::with_index: method(start:0){
+Iterator::with_index: method(start: 0){
 	return fiber{
 		i: start;
 		this{
@@ -216,12 +216,10 @@ Iterator::collect: method(conv){
 
 Iterator::map: Iterator::collect;
 
-Iterator::select: method(pred){
-	return fiber{
-		this{
-			if(pred(it)){
-				yield it;
-			}
+Iterator::select: method(pred) fiber{
+	this{
+		if(pred(it)){
+			yield it;
 		}
 	}
 }
@@ -261,11 +259,10 @@ Iterator::zip: method(...){
 	return builtin::zip(this, ...);
 }
 
-Iterator::unique: method(pred:null){
-	tag: once class{}
+Iterator::unique: method(pred: null){
 	if(pred){
 		return fiber{
-			prev: tag;
+			prev: undefined;
 			this{
 				if(pred(it, prev)){
 					yield it;
@@ -276,7 +273,7 @@ Iterator::unique: method(pred:null){
 	}
 
 	return fiber{
-		prev: tag;
+		prev: undefined;
 		this{
 			if(prev!=it){
 				yield it;
@@ -312,25 +309,23 @@ Iterator::chain: method(...){
 	return builtin::chain(this, ...);
 }
 
-Iterator::cycle: method{
-	return fiber{
-		temp: [];
-		this{
-			temp.push_back(it);
+Iterator::cycle: method fiber{
+	temp: [];
+	this{
+		temp.push_back(it);
+		yield it;
+	}
+	
+	for(;;){
+		temp{
 			yield it;
-		}
-		
-		for(;;){
-			temp{
-				yield it;
-			}
 		}
 	}
 }
 	))();
 
 	Xsrc((
-Iterator::max_element: method(pred:null){
+Iterator::max_element: method(pred: null){
 	item: null;
 	if(pred){
 		this{
@@ -357,7 +352,7 @@ Iterator::max_element: method(pred:null){
 	return item;
 }
 
-Iterator::min_element: method(pred:null){
+Iterator::min_element: method(pred: null){
 	item: null;
 	if(pred){
 		this{
@@ -400,13 +395,11 @@ Iterator::inject: method(init, fn){
 	return result;
 }
 
-Iterator::with_prev: method{
-	return fiber{
-		prev: undefined;
-		this{
-			yield prev, it;
-			prev = it;
-		}
+Iterator::with_prev: method fiber{
+	prev: undefined;
+	this{
+		yield prev, it;
+		prev = it;
 	}
 }
 
@@ -437,58 +430,29 @@ Class::ancestors: method fiber{
 	}
 }
 
-Array::block_first: method{
-	return this.each.block_first;
-}
-
-Map::block_first: method{
-	return this.each.block_first;
-}
+Array::block_first: method this.each.block_first;
+Map::block_first: method this.each.block_first;
 
 Any::p: method{
 	println(this.to_s);
 	return this;
 }
 
-Any::to_s: method{
-	return this.object_name;
-}
+Any::to_s: method this.object_name;
 
-Int::times: method{
-	return fiber{
-		for(i: 0; i<this; ++i){
-			yield i;
-		}
+Int::times: method fiber{
+	for(i: 0; i<this; ++i){
+		yield i;
 	}
 }
 
-Null::to_s: method{
-	return "null";
-}
-
-Null::to_a: method{
-	return [];
-}
-
-Null::to_m: method{
-	return [:];
-}
-
-Null::block_first: method{
-	return null;
-}
-
-Undefined::to_s: method{
-	return "undefined";
-}
-
-True::to_s: method{
-	return "true";
-}
-
-False::to_s: method{
-	return "false";
-}
+Null::to_s: method "null";
+Null::to_a: method [];
+Null::to_m: method [:];
+Null::block_first: method null;
+Undefined::to_s: method "undefined";
+True::to_s: method "true";
+False::to_s: method "false";
 
 builtin::range: fun(first, last, step:1){
 	if(step==1){
@@ -533,7 +497,8 @@ builtin::open: fun(file_name, mode: "r"){
 	ret: null;
 	try{
 		ret = FileStream(file_name, mode);
-	}catch(e){
+	}
+	catch(e){
 		ret = null;
 	}
 	return ret;

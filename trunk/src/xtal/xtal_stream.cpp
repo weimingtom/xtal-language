@@ -459,7 +459,7 @@ StringStream::StringStream(const StringPtr& str)
 }
 
 uint_t StringStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("StringStream", "write"), return 0);
+	XTAL_THROW(unsupported_error("StringStream::write"), return 0);
 }
 
 
@@ -470,11 +470,11 @@ InteractiveStream::InteractiveStream(){
 }
 
 uint_t InteractiveStream::tell(){
-	XTAL_THROW(unsupported_error("InteractiveStream", "tell"), return 0);
+	XTAL_THROW(unsupported_error("InteractiveStream::tell"), return 0);
 }
 
 uint_t InteractiveStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("InteractiveStream", "write"), return 0);
+	XTAL_THROW(unsupported_error("InteractiveStream::write"), return 0);
 }
 
 uint_t InteractiveStream::read(void* p, uint_t size){
@@ -500,7 +500,7 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 }
 
 void InteractiveStream::seek(int_t offset, int_t whence){
-	XTAL_THROW(unsupported_error("InteractiveStream", "seek"), return);
+	XTAL_THROW(unsupported_error("InteractiveStream::seek"), return);
 }
 
 void InteractiveStream::close(){

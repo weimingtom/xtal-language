@@ -281,7 +281,7 @@ public:
 	/**
 	* @brief 関数を定義する
 	*
-	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
+	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -291,7 +291,7 @@ public:
 	/**
 	* @brief 関数を定義する
 	*
-	* cls.fun("name", &foo); は cls.def("name", xtal::fun(&foo)); と同一
+	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class Fun>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -301,7 +301,7 @@ public:
 	/**
 	* @brief 関数を定義する
 	*
-	* cls.method("name", &foo); は cls.def("name", xtal::method(&foo)); と同一
+	* cls->method("name", &foo); は cls->def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -311,7 +311,7 @@ public:
 	/**
 	* @brief 関数を定義する
 	*
-	* cls.method("name", &Klass::foo); は cls.def("name", xtal::method(&Klass::foo)); と同一
+	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class Fun>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){

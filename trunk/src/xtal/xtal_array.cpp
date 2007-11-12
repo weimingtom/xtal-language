@@ -57,7 +57,7 @@ void initialize_array(){
 		p->method("insert", &Array::insert);
 		p->method("to_s", &Array::to_s);
 		p->method("to_a", &Array::to_a);
-		p->method("join", &Array::join)->param(Named("sep"));
+		p->method("join", &Array::join)->param(Named("sep", ""));
 		p->method("each", &Array::each);
 		p->method("clone", &Array::clone);
 		p->method("front", &Array::front);

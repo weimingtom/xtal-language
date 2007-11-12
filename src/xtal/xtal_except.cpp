@@ -47,35 +47,17 @@ AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
 	));
 }
 
-AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name){
-	if(param_name){
-		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Named("n", param_num+1), 
-			Named("param_name", param_name), 
-			Named("type", from->get_class()->object_name()), 
-			Named("required", to)
-		));
-	}
-	else{
-		return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-			Named("n", param_num+1), 
-			Named("param_name", xnew<String>("")), 
-			Named("type", from->get_class()->object_name()), 
-			Named("required", to)
-		));	}
+AnyPtr argument_error(const AnyPtr& object, int_t no){
+	return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
+		Named("object", object), 
+		Named("no", no)
+	));
 }
 
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr& secondary_key){
-	if(raweq(secondary_key, null)){
-		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-			Named("object", name), Named("name", (member ? member : AnyPtr("()")))
-		));
-	}
-	else{
-		return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
-			Named("object", name), Named("name", (member ? member : AnyPtr("()"))), Named("secondary_key", secondary_key)
-		));
-	}
+AnyPtr unsupported_error(const AnyPtr& object){
+	return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
+		Named("object", object)
+	));
 }
 namespace{
 	void default_except_handler(const AnyPtr& except, const char* file, int line){

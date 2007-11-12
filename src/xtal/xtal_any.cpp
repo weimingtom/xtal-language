@@ -297,7 +297,6 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
-	vm->set_hint(cls, primary_key, secondary_key);
 	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, self, inherited_too);
 	if(rawne(ret, undefined)){
 		vm->set_arg_this(ap(*this));
@@ -306,6 +305,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 }
 
 void Any::call(const VMachinePtr& vm) const{
+	vm->set_hint(ap(*this));
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->call(vm); }

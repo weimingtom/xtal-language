@@ -76,25 +76,18 @@ struct PointSelf : public Base{
 	}
 };
 
-void foooo(){}
-
-struct AAA{};
-struct BBB{};
-struct CCC{
-	int n;
+struct AAA{
+	AAA(){ printf("AAA\n"); }
+	~AAA(){ printf("~AAA\n"); }
 };
 
-template<class T>
-BBB operator ,(T, AAA){
+struct BBB : public AAA{
+	BBB(){ printf("BBB\n"); }
+	~BBB(){ printf("~BBB\n"); }
+};
+
+BBB foo(){
 	return BBB();
-}
-
-AAA operator ,(BBB, CCC){
-	return AAA();
-}
-
-AAA operator ,(AAA, CCC){
-	return AAA();
 }
 
 int main2(int argc, char** argv){
@@ -102,11 +95,12 @@ int main2(int argc, char** argv){
 
 	using namespace xtal::xeg;
 
-	5, AAA(), CCC();
-
-
 	try{
 		initialize();
+
+		{
+			((AAA (*)())foo)();
+		}
 
 		xnew<PointSelf>();
 		xnew<PointSelf>(10);
@@ -120,7 +114,7 @@ int main2(int argc, char** argv){
 		
 		//load("start.xtal");
 
-		//test_xeg();
+		test_xeg();
 		/**
 
 		*/
@@ -159,7 +153,7 @@ Foo::test#Int.p;
 		
 int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

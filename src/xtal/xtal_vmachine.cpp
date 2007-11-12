@@ -590,6 +590,8 @@ void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 
 const inst_t* VMachine::send1(const inst_t* pc, const IDPtr& name){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		ff().temp3_ = name;
+		ff().temp2_ = null;
 		Innocence target = pop_and_save1();
 		Innocence self = ff().self();
 		push_ff(pc, 1, 0, 0, ap(self));
@@ -600,6 +602,8 @@ const inst_t* VMachine::send1(const inst_t* pc, const IDPtr& name){
 
 const inst_t* VMachine::send2(const inst_t* pc, const IDPtr& name){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		ff().temp3_ = name;
+		ff().temp2_ = get()->get_class();
 		const AnyPtr& temp = pop();
 		Innocence target = pop_and_save1();
 		push(temp);
@@ -612,6 +616,8 @@ const inst_t* VMachine::send2(const inst_t* pc, const IDPtr& name){
 
 const inst_t* VMachine::send2_r(const inst_t* pc, const IDPtr& name){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		ff().temp3_ = name;
+		ff().temp2_ = get()->get_class();
 		Innocence target = pop_and_save1();
 		Innocence self = ff().self();
 		push_ff(pc, 1, 1, 0, ap(self));
@@ -622,6 +628,8 @@ const inst_t* VMachine::send2_r(const inst_t* pc, const IDPtr& name){
 
 const inst_t* VMachine::send2_q(const inst_t* pc, const IDPtr& name){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		ff().temp3_ = name;
+		ff().temp2_ = get(1)->get_class();
 		const AnyPtr& temp = pop();
 		Innocence target = pop_and_save1();
 		push(temp);
@@ -952,6 +960,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Property){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp2_ = null;
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target =pop_and_save1();
@@ -975,6 +984,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SetProperty){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp2_ = null;
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = pop_and_save1();
@@ -998,6 +1008,8 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Call){ // 6
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp2_ = null;
+			ff().temp3_ = Xid(op_call);
 			Innocence self = ff().self();
 			Innocence target = pop_and_save1();
 			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
@@ -1008,6 +1020,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Send){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp2_ = null;
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = pop_and_save1();
@@ -1031,6 +1044,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SendQ){ XTAL_VM_CONTINUE(FunSendQ(pc)); /*
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp2_ = null;
 			Innocence primary_key = identifier_ex(inst.identifier_number);
 			Innocence self = ff().self();
 			Innocence target = pop_and_save1();
@@ -1063,7 +1077,7 @@ XTAL_VM_SWITCH{
 				set(ret);
 			}
 			else{
-				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key)));
+				XTAL_VM_EXCEPT(unsupported_error(Xf("%s::%s")(ap(target)->object_name(), isp(primary_key))));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -1079,7 +1093,7 @@ XTAL_VM_SWITCH{
 				set(ret);
 			}
 			else{
-				XTAL_VM_EXCEPT(unsupported_error(ap(target)->object_name(), isp(primary_key), ap(secondary_key)));
+				XTAL_VM_EXCEPT(unsupported_error(Xf("%s::%s#%s")(ap(target)->object_name(), isp(primary_key), ap(secondary_key))));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -1134,7 +1148,7 @@ XTAL_VM_SWITCH{
 				push(ret);
 			}
 			else{
-				XTAL_VM_EXCEPT(unsupported_error("filelocal", identifier(inst.identifier_number)));
+				XTAL_VM_EXCEPT(unsupported_error(Xf("%s::%s")("filelocal", identifier(inst.identifier_number))));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
@@ -1973,7 +1987,12 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 3
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			last_except_ = unsupported_error(ff().hint1()->object_name(), ff().hint2(), ff().hint3());
+			if(ap(prev_ff().temp2_)){
+				last_except_ = unsupported_error(Xf("%s::%s#%s")(ap(prev_ff().temp1_)->get_class()->object_name(), ap(prev_ff().temp3_), ap(prev_ff().temp2_)));
+			}
+			else{
+				last_except_ = unsupported_error(Xf("%s::%s")(ap(prev_ff().temp1_)->get_class()->object_name(), ap(prev_ff().temp3_)));
+			}
 		}
 		XTAL_VM_EXCEPT(last_except_);
 	}
@@ -3177,10 +3196,11 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 			}
 		}
 		else{
-			ep->send("append_backtrace")(
-				ff().hint1()->to_s(),
-				ff().hint2()->to_i(),
-				"C++ function");
+			/*ep->send("append_backtrace")(
+				"C++ function",
+				-1,
+				ap(ff().temp1_)->object_name()
+			);*/
 		}
 		return ep;
 	}
@@ -3327,8 +3347,7 @@ void VMachine::FunFrame::inc_ref(){
 	
 	inc_ref_count_force(self_);
 	inc_ref_count_force(arguments_);
-	inc_ref_count_force(hint1_);
-	inc_ref_count_force(hint2_);
+	inc_ref_count_force(hint_);
 
 	inc_ref_count_force(temp1_);
 	inc_ref_count_force(temp2_);
@@ -3345,8 +3364,7 @@ void VMachine::FunFrame::dec_ref(){
 	
 	dec_ref_count_force(self_);
 	dec_ref_count_force(arguments_);
-	dec_ref_count_force(hint1_);
-	dec_ref_count_force(hint2_);
+	dec_ref_count_force(hint_);
 
 	dec_ref_count_force(temp1_);
 	dec_ref_count_force(temp2_);
@@ -3354,7 +3372,7 @@ void VMachine::FunFrame::dec_ref(){
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
-	m & v.fun_ & v.outer_ & v.arguments_ & v.hint1_ & v.hint2_ & v.self_ & v.temp1_ & v.temp2_ & v.temp3_;
+	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_ & v.temp1_ & v.temp2_ & v.temp3_;
 	for(int_t i=0, size=v.variables_.size(); i<size; ++i){
 		m & v.variable(i);
 	}

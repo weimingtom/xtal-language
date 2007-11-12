@@ -3,8 +3,6 @@
 
 namespace xtal{
 
-using namespace std;
-
 /** @addtogroup memory */
 /*@{*/
 
@@ -42,7 +40,7 @@ void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 void set_memory(void* memory, size_t size);
 
 /**
-* @brief 動的な、ポインタの配列を作成、拡張する関数。
+* @brief 動的なポインタの配列を作成、拡張する関数。
 *
 * 一番最初の作成時は、引数全てがnullである必要がある。
 * @param begin メモリの先頭

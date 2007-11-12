@@ -34,8 +34,8 @@ private:
 };
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
-AnyPtr argument_error(const AnyPtr& from, const AnyPtr& to, int_t param_num, const AnyPtr& param_name);
-AnyPtr unsupported_error(const AnyPtr& name, const AnyPtr& member, const AnyPtr& secondary_key = null);
+AnyPtr argument_error(const AnyPtr& object, int_t no);
+AnyPtr unsupported_error(const AnyPtr& object);
 
 typedef void (*except_handler_t)(const AnyPtr& except, const char* file, int line);
 except_handler_t except_handler();

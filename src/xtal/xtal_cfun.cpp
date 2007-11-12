@@ -6,32 +6,23 @@ namespace xtal{
 Result result;
 ReturnThis return_this;
 ReturnUndefined return_void;
-
+static Named null_params[16];
 
 CFun::CFun(fun_t f, void* val, int_t param_n){
 	fun_ = f;
 	val_ = val;
-
-	if(param_n){
-		pi_.params = (Named*)user_malloc(sizeof(Named)*param_n);
-	}
-	else{
-		pi_.params = 0;
-	}
-
 	param_n_ = pi_.min_param_count = pi_.max_param_count = param_n;
-	for(int_t i=0; i<param_n; ++i){
-		new(&pi_.params[i]) Named();
-	}
-
-	pi_.fun = this;
+	pi_.params = null_params;
 }
 
 CFun::~CFun(){
 	for(int_t i=0; i<param_n_; ++i){
 		pi_.params[i].~Named();
 	}
-	user_free(pi_.params);		
+
+	if(pi_.params!=null_params){
+		user_free(pi_.params);		
+	}
 	user_free(val_);
 }
 
@@ -42,6 +33,15 @@ CFunPtr CFun::param(
 	const Named2& value3,
 	const Named2& value4
 ){
+
+	if(pi_.params==null_params && param_n_!=0){
+		pi_.params = (Named*)user_malloc(sizeof(Named)*param_n_);
+
+		for(int_t i=0; i<param_n_; ++i){
+			new(&pi_.params[i]) Named();
+		}
+	}
+
 	if(param_n_>0)pi_.params[0] = Named(value0.name, value0.value);
 	if(param_n_>1)pi_.params[1] = Named(value1.name, value1.value);
 	if(param_n_>2)pi_.params[2] = Named(value2.name, value2.value);
@@ -63,7 +63,21 @@ void CFun::visit_members(Visitor& m){
 	std::for_each(pi_.params, pi_.params+param_n_, m);
 }
 
-void check_arg(const VMachinePtr& vm);
+
+void check_args(const VMachinePtr& vm, const ParamInfo& p, uint_t flags){
+	for(int_t i=-1; flags!=0; ++i){
+		if(flags&1){
+			if(i==-1){
+				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), -1), return);
+			}
+			else{
+				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), i), return);
+			}
+		}
+
+		flags >>= 1;
+	}
+}
 
 void CFun::call(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=pi_.min_param_count){
@@ -78,7 +92,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 		if(pi_.min_param_count==0 && pi_.max_param_count==0){
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
-					Named("name", ap(pi_.fun)->object_name()),
+					Named("object", vm->ff().hint()->object_name()),
 					Named("value", n)
 				)
 			), return);
@@ -86,7 +100,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 		else{
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1006")(
-					Named("name", ap(pi_.fun)->object_name()),
+					Named("object", vm->ff().hint()->object_name()),
 					Named("min", pi_.min_param_count),
 					Named("max", pi_.max_param_count),
 					Named("value", n)

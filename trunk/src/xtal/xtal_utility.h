@@ -8,7 +8,7 @@
 
 //#define XTAL_NO_PARSER
 #define XTAL_USE_PREDEFINED_ID
-#define XTAL_NO_EXCEPTIONS
+//#define XTAL_NO_EXCEPTIONS
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG

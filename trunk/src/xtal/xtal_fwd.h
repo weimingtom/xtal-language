@@ -118,6 +118,9 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
+typedef std::size_t size_t;
+typedef std::ptrdiff_t ptrdiff_t;
+
 template<class T>
 struct TypeValue{ 
 	T val; 
@@ -378,6 +381,8 @@ extern Undefined undefined;
 
 struct Named;
 extern Named null_named;
+
+struct Param;
 
 struct Result;
 struct ReturnThis;

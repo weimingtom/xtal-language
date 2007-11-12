@@ -1,15 +1,14 @@
 
 #pragma once
 
-//#define XTAL_NO_EXCEPT
 //#define XTAL_NO_THREAD
 
 //#define XTAL_ENFORCE_64_BIT
-//#define XTAL_NO_PARSER
 //#define XTAL_USE_THREAD_MODEL_2
 
+//#define XTAL_NO_PARSER
 #define XTAL_USE_PREDEFINED_ID
-
+#define XTAL_NO_EXCEPTIONS
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG
@@ -53,11 +52,11 @@
 #	define XTAL_UNLOCK if(::xtal::XUnlock xunlock = 0)
 #endif
 
-#ifdef XTAL_NO_EXCEPT
+#ifdef XTAL_NO_EXCEPTIONS
 #	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::vmachine()->set_except(temp); ::xtal::except_handler()(temp, __FILE__, __LINE__); ret; }while(0)
 #	define XTAL_TRY 
-#	define XTAL_CATCH(e) if(::xtal::AnyPtr e = ::xtal::vmachine()->catch_except())
-#	define XTAL_CHECK_EXCEPT(ret) do{ if(::xtal::AnyPtr e = ::xtal::vmachine()->except()) ret; }while(0)
+#	define XTAL_CATCH(e) if(const ::xtal::AnyPtr& e = ::xtal::vmachine()->except())
+#	define XTAL_CHECK_EXCEPT(ret) do{ if(const ::xtal::AnyPtr& e = ::xtal::vmachine()->except()) ret; }while(0)
 #else
 #	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::except_handler()(temp, __FILE__, __LINE__); throw temp; }while(0)
 #	define XTAL_TRY try
@@ -85,7 +84,7 @@
 #if defined(_MSC_VER) && _MSC_VER>=1400
 #	define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf_s(buffer, buffer_size, format, value)
 #else
-#	define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf(buffer, format, value)
+#	define XTAL_SPRINTF(buffer, buffer_size, format, value) std::sprintf(buffer, format, value)
 #endif
 
 namespace xtal{

@@ -90,7 +90,7 @@ void ix(){
 
 
 static float_t clock_(){
-	return clock()/(float_t)CLOCKS_PER_SEC;
+	return std::clock()/(float_t)CLOCKS_PER_SEC;
 }
 	
 

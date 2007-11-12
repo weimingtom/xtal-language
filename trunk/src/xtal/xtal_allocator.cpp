@@ -43,8 +43,8 @@ void display_debug_memory(){
 
 #else
 
-void* (*user_malloc_)(size_t) = &malloc;
-void (*user_free_)(void*) = &free;
+void* (*user_malloc_)(size_t) = &std::malloc;
+void (*user_free_)(void*) = &std::free;
 
 void display_debug_memory(){
 }
@@ -55,7 +55,7 @@ namespace{
 
 
 size_t used_user_malloc_size_ = 0;
-size_t used_user_malloc_threshold_ = 1024*100;
+size_t used_user_malloc_threshold_ = 1024*10;
 
 SimpleMemoryManager smm_;
 
@@ -88,8 +88,6 @@ void* user_malloc_nothrow(size_t size){
 		gc();
 	}
 	
-	//full_gc();
-
 	used_user_malloc_size_ += size;
 	
 	void* ret = user_malloc_(size);
@@ -172,7 +170,7 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 	uint_t size = (uint_t)(end-begin);
 	uint_t newsize = size+addsize+size;
 	void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
-	memcpy(newbegin, begin, sizeof(void*)*size);
+	std::memcpy(newbegin, begin, sizeof(void*)*size);
 	end = newbegin+newsize;
 	current = newbegin+(current-begin);
 	user_free(begin);
@@ -184,7 +182,7 @@ void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& curren
 	uint_t newsize = (uint_t)(current-begin);
 	if(newsize){
 		void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
-		memcpy(newbegin, begin, sizeof(void*)*newsize);
+		std::memcpy(newbegin, begin, sizeof(void*)*newsize);
 		end = newbegin+newsize;
 		current = newbegin+newsize;
 		user_free(begin);

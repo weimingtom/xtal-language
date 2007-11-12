@@ -73,6 +73,12 @@ public:
 	void push_arg(const Named& p){ push_arg(p.name, p.value); }
 
 	/**
+	* @brief 引数を1個積む。
+	*
+	*/
+	void push_arg(const Param& value);
+
+	/**
 	* @brief 引数を配列の要素数積む。
 	*
 	*/
@@ -123,138 +129,35 @@ public:
 
 // 
 
-
-
 	/**
 	* @brief 関数を呼び出す用意をし、同時に引数を1個積む
 	*
 	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1);
+	void setup_call(int_t need_result_count, const Param& a1);
 
 	/**
 	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
 	*
 	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2);
+	void setup_call(int_t need_result_count, const Param& a1, const Param& a2);
 
 	/**
 	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
 	*
 	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3);
+	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3);
 
 	/**
 	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
 	*
 	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4);
+	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4);
 
 	/**
 	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
 	*
 	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const AnyPtr& a5);
-
-
-
-	/**
-	* @brief 関数を呼び出す用意をする。
-	*
-	*/
-	void setup_call(int_t need_result_count, const Named& a1);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を1個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const AnyPtr& a4, const Named& a5);
-
-
-
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を2個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const Named& a1, const Named& a2);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const AnyPtr& a3, const Named& a4, const Named& a5);
-
-
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を3個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2, const Named& a3, const Named& a4, const Named& a5);
-
-
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を4個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4);
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const AnyPtr& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5);
-
-
-
-	/**
-	* @brief 関数を呼び出す用意をし、同時に引数を5個積む
-	*
-	*/
-	void setup_call(int_t need_result_count, const Named& a1, const Named& a2, const Named& a3, const Named& a4, const Named& a5);
+	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5);
 
 public:
 
@@ -403,18 +306,21 @@ public:
 
 public:
 
-	AnyPtr catch_except(){
-		AnyPtr ret = ap(last_except_);
-		last_except_ = null;
-		return ret;
+	const AnyPtr& catch_except(){
+		except_[2] = except();
+		except_[0] = null;
+		except_[1] = null;
+		return ap(except_[2]);
 	}
 
-	AnyPtr except(){
-		return ap(last_except_);
+	const AnyPtr& except(){
+		if(ap(except_[0])) return ap(except_[0]);
+		return ap(except_[1]);
 	}
 
 	void set_except(const AnyPtr& e){
-		last_except_ = e;
+		except_[0] = e;
+		except_[1] = null;
 	}
 
 	void execute_inner(const inst_t* start);
@@ -833,7 +739,7 @@ private:
 	
 	SmartPtr<debug::Info> debug_info_;
 
-	Innocence last_except_;
+	Innocence except_[3];
 
 protected:
 
@@ -847,45 +753,5 @@ public:
 	void print_info();
 
 };
-
-template<class A0>
-AnyPtr Innocence::operator()(const A0& a0) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
-
-template<class A0, class A1>
-AnyPtr Innocence::operator()(const A0& a0, const A1& a1) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0, a1);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
-
-template<class A0, class A1, class A2>
-AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0, a1, a2);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
-
-template<class A0, class A1, class A2, class A3>
-AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0, a1, a2, a3);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
-
-template<class A0, class A1, class A2, class A3, class A4>
-AnyPtr Innocence::operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0, a1, a2, a3, a4);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
 
 }

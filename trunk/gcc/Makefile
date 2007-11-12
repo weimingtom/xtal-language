@@ -1,6 +1,6 @@
 
 CC = g++
-OPT = -O3 -DNDEBUG -fno-rtti
+OPT = -O3 -DNDEBUG -fno-rtti -fno-exceptions
 
 #  -Wall, -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
 

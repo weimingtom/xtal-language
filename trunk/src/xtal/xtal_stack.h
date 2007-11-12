@@ -469,12 +469,12 @@ public:
 
 	void push_unchecked(const void* val){
 		upsize_unchecked(1);
-		memcpy(top(), val, one_size_);
+		std::memcpy(top(), val, one_size_);
 	}
 
 	void push(const void* val){
 		upsize(1);
-		memcpy(top(), val, one_size_);
+		std::memcpy(top(), val, one_size_);
 	}
 
 	void* push_unchecked(){
@@ -504,6 +504,7 @@ public:
 	}
 
 	void erase(size_t i){
+		using namespace std;
 		for(size_t j = i; j != 0; --j){
 			memcpy((*this)[j], (*this)[j-1], one_size_);
 		}

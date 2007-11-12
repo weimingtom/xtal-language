@@ -339,8 +339,8 @@ struct Named2{
 */
 struct Named : public Named2{
 
-	explicit Named(const IDPtr& name)
-		:Named2(name){}
+	Named(const AnyPtr& value)
+		:Named2(null, value){}
 
 	Named(const IDPtr& name, const AnyPtr& value)
 		:Named2(name, value){}
@@ -350,26 +350,19 @@ struct Named : public Named2{
 	Named(const Null&){}
 };
 
-/*
-* @brief 名前付き引数のトリックのためのクラス
-*
-*/
-struct Key : public IDPtr{
+struct Param{
+	IDPtr name;
+	AnyPtr value;
+
+	template<class T>
+	Param(const T& value)
+		:name(null), value(value){}
 	
-	/**
-	* @brief IDPtrから構築する
-	*
-	*/
-	Key(const IDPtr& name)
-		:IDPtr(name){}
-	
-	/**
-	* @brief Key("key")=10という書式のための代入演算子
-	*
-	*/
-	Named operator =(const AnyPtr& value){
-		return Named(*this, value);
-	}
+	Param(const AnyPtr& value)
+		:name(null), value(value){}
+
+	Param(const Named& name)
+		:name(name.name), value(name.value){}
 };
 
 void visit_members(Visitor& m, const Named& p);

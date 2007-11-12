@@ -4,13 +4,14 @@
 int main(int argc, char** argv){
 	using namespace xtal;
  
-	try{
+	XTAL_TRY{
 		set_thread();
 		initialize();
 
 		ix();
 
-	}catch(AnyPtr e){
+	}
+	XTAL_CATCH(e){
 		fprintf(stderr, "%s\n", e->to_s()->c_str());
 	}
 

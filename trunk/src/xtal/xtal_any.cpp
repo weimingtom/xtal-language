@@ -125,13 +125,6 @@ Innocence::Innocence(const char_t* str){
 	*this = xnew<String>(str);
 }
 
-AnyPtr Innocence::operator()() const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
-	ap(*this)->call(vm);
-	return vm->result_and_cleanup_call();
-}
-
 SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c)
 	:Innocence(p){
 	p->set_class(c);
@@ -164,7 +157,7 @@ struct MemberCacheTable{
 	}
 
 	void print_result(){
-		printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+		std::printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
 	const AnyPtr& cache(const Innocence& target_class, const IDPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too){
@@ -215,7 +208,7 @@ struct IsInheritedCacheTable{
 	}
 
 	void print_result(){
-		printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+		std::printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 	}
 
 	bool cache(const Innocence& target_class, const Innocence& klass){

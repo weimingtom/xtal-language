@@ -76,31 +76,14 @@ struct PointSelf : public Base{
 	}
 };
 
-struct AAA{
-	AAA(){ printf("AAA\n"); }
-	~AAA(){ printf("~AAA\n"); }
-};
-
-struct BBB : public AAA{
-	BBB(){ printf("BBB\n"); }
-	~BBB(){ printf("~BBB\n"); }
-};
-
-BBB foo(){
-	return BBB();
-}
-
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	using namespace xtal::xeg;
+	using namespace std;
 
 	try{
 		initialize();
-
-		{
-			((AAA (*)())foo)();
-		}
 
 		xnew<PointSelf>();
 		xnew<PointSelf>(10);

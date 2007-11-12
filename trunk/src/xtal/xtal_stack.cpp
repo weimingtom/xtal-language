@@ -27,7 +27,7 @@ PODStackBase::PODStackBase(const PODStackBase &a){
 		begin_ = plusp(allocate(one_size_*(a.capacity()+1)), 1);
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
-		memcpy(begin_, a.begin_, one_size_*a.capacity());
+		std::memcpy(begin_, a.begin_, one_size_*a.capacity());
 	}
 }
 
@@ -49,7 +49,7 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 		begin_ = newp;
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
-		memcpy(begin_, a.begin_, one_size_*a.capacity());
+		std::memcpy(begin_, a.begin_, one_size_*a.capacity());
 	}
 
 	return *this;
@@ -77,7 +77,7 @@ void PODStackBase::upsize_detail(size_t us){
 	size_t newcapa = 16 + newsize + newsize/2;
 	void* newp = plusp(allocate(one_size_*(newcapa+1)), 1);
 
-	memcpy(newp, oldp, one_size_*oldsize);
+	std::memcpy(newp, oldp, one_size_*oldsize);
 	deallocate(minusp(oldp, 1));
 
 	begin_ = newp;

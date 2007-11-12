@@ -103,7 +103,7 @@ Array::Array(int_t size){
 	capa_ = size + 3;
 	size_ = size;
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
-	memset(values_, 0, sizeof(AnyPtr)*size_);
+	std::memset(values_, 0, sizeof(AnyPtr)*size_);
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end){
@@ -164,15 +164,15 @@ void Array::resize(int_t sz){
 		if(sz>(int_t)capa_){
 			uint_t newcapa = sz+capa_;
 			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
-			memcpy(newp, values_, sizeof(AnyPtr)*size_);
-			memset(&newp[size_], 0, sizeof(AnyPtr)*(sz-size_));
+			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
+			std::memset(&newp[size_], 0, sizeof(AnyPtr)*(sz-size_));
 			user_free(values_);
 			values_ = newp;
 			size_ = sz;
 			capa_ = newcapa;
 		}
 		else{
-			memset(&values_[size_], 0, sizeof(AnyPtr)*(sz-size_));
+			std::memset(&values_[size_], 0, sizeof(AnyPtr)*(sz-size_));
 			size_ = sz;
 		}
 	}
@@ -200,7 +200,7 @@ void Array::erase(int_t start, int_t n){
 
 	size_ -= n;
 	if(size_!=0){
-		memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-pos));
+		std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-pos));
 	}
 }
 
@@ -212,7 +212,7 @@ void Array::insert(int_t i, const AnyPtr& v){
 		size_++;
 	}
 	int_t pos = calc_offset(i);
-	memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-1-pos));
+	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-1-pos));
 	copy_innocence(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }

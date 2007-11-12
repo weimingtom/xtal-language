@@ -84,8 +84,9 @@ void CodeBuilder::interactive_compile(){
 
 				XTAL_TRY{
 					vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
-				}XTAL_CATCH(e){
-					printf("%s\n", e->to_s()->c_str());
+				}
+				XTAL_CATCH(e){
+					std::printf("%s\n", e->to_s()->c_str());
 				}
 
 				for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn0))/sizeof(inst_t); ++i){
@@ -182,7 +183,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 
 	size_t cur = result_->code_.size();
 	result_->code_.resize(cur+sz/sizeof(inst_t));
-	memcpy(&result_->code_[cur], &t, sz);
+	std::memcpy(&result_->code_[cur], &t, sz);
 }
 
 AnyPtr CodeBuilder::errors(){

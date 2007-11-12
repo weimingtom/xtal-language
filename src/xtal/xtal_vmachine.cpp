@@ -553,7 +553,7 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 #define XTAL_VM_RETURN return
 
 #ifdef XTAL_NO_EXCEPTIONS
-#	define XTAL_VM_CHECK_EXCEPT if(type(ap(except_[0]))!=TYPE_NULL){ goto except_catch; }
+#	define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ goto except_catch; }
 #else
 #	define XTAL_VM_CHECK_EXCEPT
 #endif
@@ -1989,13 +1989,12 @@ except_catch:
 	except_[0] = append_backtrace(pc, ap(except_[0]));
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
-		except_[1] = except_[0];
-		except_[0] = null;
 		goto begin;
 	}
 	goto rethrow;
 
-}XTAL_CATCH(e){
+}
+XTAL_CATCH(e){
 	except_[0] = append_backtrace(pc, e);
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
@@ -3224,11 +3223,15 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 			pc = ef.core->catch_pc + code()->data();
 			push(AnyPtr(ef.core->end_pc));
 			push(e);
+			except_[1] = null;
+			except_[0] = null;
 		}
 		else{
 			pc = ef.core->finally_pc + code()->data();
 			push(e);
 			push(AnyPtr(code()->size()-1));
+			except_[1] = except_[0];
+			except_[0] = null;
 		}
 
 		except_frames_.downsize(1);

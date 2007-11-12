@@ -324,7 +324,7 @@ void VMachine::execute(Fun* fun, const inst_t* start_pc){
 }
 
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
-	// çµæœã‚’vmã«æ¸¡ã™
+	// Œ‹‰Ê‚ğvm‚É“n‚·
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
@@ -570,7 +570,7 @@ retry:
 XTAL_TRY{
 begin:
 
-// C++ã®ä¾‹å¤–æ©Ÿèƒ½ã‚’ä½¿ã‚ãªã„å ´åˆã€è¨ˆç®—æ¯ã«ä¾‹å¤–ãŒç™ºç”Ÿã—ã¦ã„ãªã„ã‹èª¿ã¹ã‚‹ã€‚
+// C++‚Ì—áŠO‹@”\‚ğg‚í‚È‚¢ê‡AŒvZ–ˆ‚É—áŠO‚ª”­¶‚µ‚Ä‚¢‚È‚¢‚©’²‚×‚éB
 XTAL_VM_CHECK_EXCEPT;
 
 XTAL_VM_SWITCH{
@@ -1984,7 +1984,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_NODEFAULT;
 }
 
-// ä¾‹å¤–ãŒæŠ•ã’ã‚‰ã‚ŒãŸã‚‰ã“ã“ã«åˆ°é”ã™ã‚‹
+// —áŠO‚ª“Š‚°‚ç‚ê‚½‚ç‚±‚±‚É“’B‚·‚é
 except_catch:
 	except_[0] = append_backtrace(pc, ap(except_[0]));
 	pc = catch_body(pc, stack_size, fun_frames_size);
@@ -2932,7 +2932,7 @@ void VMachine::mv_carry_over(Fun* fun){
 		f.arguments(make_args(fun));
 	}
 	
-	// åå‰ä»˜ãå¼•æ•°ã¯é‚ªé­”
+	// –¼‘O•t‚«ˆø”‚Í×–‚
 	stack_.downsize(f.named_arg_count*2);
 
 	FunCore* core = fun->core();
@@ -2965,18 +2965,18 @@ void VMachine::mv_carry_over(Fun* fun){
 
 void VMachine::adjust_result(int_t n, int_t need_result_count){
 
-	// æˆ»ã‚Šå€¤ã®æ•°ã¨è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ãŒç­‰ã—ã„
+	// –ß‚è’l‚Ì”‚Æ—v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚ª“™‚µ‚¢
 	if(need_result_count==n){
 		return;
 	}
 
-	// æˆ»ã‚Šå€¤ãªã‚“ã¦è¦æ±‚ã—ã¦ãªã„
+	// –ß‚è’l‚È‚ñ‚Ä—v‹‚µ‚Ä‚È‚¢
 	if(need_result_count==0){
 		downsize(n);
 		return;
 	}
 
-	// æˆ»ã‚Šå€¤ãŒä¸€ã¤ã‚‚ç„¡ã„ã®ã§voidã§åŸ‹ã‚ã‚‹
+	// –ß‚è’l‚ªˆê‚Â‚à–³‚¢‚Ì‚Åvoid‚Å–„‚ß‚é
 	if(n==0){
 		for(int_t i = 0; i<need_result_count; ++i){
 			push(undefined);
@@ -2984,13 +2984,13 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		return;
 	}
 
-	// ã“ã®æ™‚ç‚¹ã§ã€nã‚‚need_result_countã‚‚1ä»¥ä¸Š
+	// ‚±‚Ì“_‚ÅAn‚àneed_result_count‚à1ˆÈã
 
 
-	// è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ã®æ–¹ãŒã€é–¢æ•°ãŒè¿”ã™æˆ»ã‚Šå€¤ã‚ˆã‚Šå°‘ãªã„
+	// —v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚Ì•û‚ªAŠÖ”‚ª•Ô‚·–ß‚è’l‚æ‚è­‚È‚¢
 	if(need_result_count<n){
 
-		// ä½™ã£ãŸæˆ»ã‚Šå€¤ã‚’å¤šå€¤ã«ç›´ã™ã€‚
+		// —]‚Á‚½–ß‚è’l‚ğ‘½’l‚É’¼‚·B
 		int_t size = n-need_result_count+1;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			MultiValuePtr ret(xnew<MultiValue>(size));
@@ -3002,11 +3002,11 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		}	
 	}
 	else{
-		// è¦æ±‚ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ã®æ–¹ãŒã€é–¢æ•°ãŒè¿”ã™æˆ»ã‚Šå€¤ã‚ˆã‚Šå¤šã„
+		// —v‹‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”‚Ì•û‚ªAŠÖ”‚ª•Ô‚·–ß‚è’l‚æ‚è‘½‚¢
 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			if(const MultiValuePtr& temp = xtal::ptr_as<MultiValue>(get())){
-				// æœ€å¾Œã®è¦ç´ ã®å¤šå€¤ã‚’å±•é–‹ã—åŸ‹ã‚è¾¼ã‚€
+				// ÅŒã‚Ì—v‘f‚Ì‘½’l‚ğ“WŠJ‚µ–„‚ß‚Ş
 				MultiValuePtr mv(temp);
 				downsize(1);
 
@@ -3018,7 +3018,7 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 				adjust_result(len-1, need_result_count-n);
 			}
 			else{
-				// æœ€å¾Œã®è¦ç´ ãŒé…åˆ—ã§ã¯ãªã„ã®ã§ã€voidã§åŸ‹ã‚ã¨ã
+				// ÅŒã‚Ì—v‘f‚ª”z—ñ‚Å‚Í‚È‚¢‚Ì‚ÅAvoid‚Å–„‚ß‚Æ‚­
 				for(int_t i = n; i<need_result_count; ++i){
 					push(undefined);
 				}
@@ -3187,7 +3187,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 
 		AnyPtr e = except();
 
-		// try .. catch .. finallyæ–‡ã§å›²ã‚ã‚Œã¦ã„ãªã„
+		// try .. catch .. finally•¶‚ÅˆÍ‚í‚ê‚Ä‚¢‚È‚¢
 		if(except_frames_.empty()){
 			while((size_t)fun_frames_size<fun_frames_.size()){
 				hook_return(pc);

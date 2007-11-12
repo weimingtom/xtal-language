@@ -5,7 +5,7 @@
 /*@{*/
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* @brief foreach���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * Xfor(value, array){
@@ -19,7 +19,7 @@
 	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* @brief foreach���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * Xfor(key, value, map){
@@ -33,7 +33,7 @@
 	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* @brief foreach���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * Xfor(v1, v2, v3, hoge.send("each3")){
@@ -48,7 +48,7 @@
 
 
 /**
-* @brief textを簡単に記述するためのマクロ
+* @brief text���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * AnyPtr text = Xt("Text %d %s")(10, "test");
@@ -57,7 +57,7 @@
 #define Xt(txt) ::xtal::text(txt) 
 
 /**
-* @brief formatを簡単に記述するためのマクロ
+* @brief format���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * AnyPtr fmt = Xf("Text %d %s")(10, "test");
@@ -66,7 +66,7 @@
 #define Xf(txt) ::xtal::format(txt) 
 
 /**
-* @brief Xtalのソースを簡単に記述するためのマクロ
+* @brief Xtal�̃\�[�X���ȒP�ɋL�q���邽�߂̃}�N��
 *
 * @code
 * AnyPtr src = Xsrc((
@@ -82,10 +82,10 @@
 #ifndef XTAL_USE_PREDEFINED_ID
 
 /*
-* @brief インターンされた文字列を簡単に記述するためのマクロ
-* XTAL_USE_PREDEFINED_ID が定義されている場合、::xtal::id::id##string という名前の変数の直接アクセスとなる。
-* ある事情により、これはユーザーが使ってはならないマクロとなった。
-* 将来はまた使えるようになる日がくるかもしれない。
+* @brief �C���^�[�����ꂽ��������ȒP�ɋL�q���邽�߂̃}�N��
+* XTAL_USE_PREDEFINED_ID ����`����Ă���ꍇ�A::xtal::id::id##string �Ƃ������O�̕ϐ��̒��ڃA�N�Z�X�ƂȂ�B
+* ���鎖��ɂ��A����̓��[�U�[���g���Ă͂Ȃ�Ȃ��}�N���ƂȂ����B
+* �����͂܂��g����悤�ɂȂ�������邩������Ȃ��B
 * 
 * @code
 * IDPtr id = Xid(test);

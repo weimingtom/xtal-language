@@ -23,7 +23,7 @@ struct InheritedN{
 };
 
 /**
-* @brief ä½•ã®å‹ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã§ã‚‚ä¿æŒã™ã‚‹ç‰¹æ®ŠåŒ–ã•ã‚ŒãŸã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿
+* @brief ‰½‚ÌŒ^‚ÌƒIƒuƒWƒFƒNƒg‚Å‚à•Û‚·‚é“Áê‰»‚³‚ê‚½ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^
 */
 template<>
 class SmartPtr<Any> : public Innocence{
@@ -78,25 +78,25 @@ protected:
 public:
 
 	/**
-	* @brief æ•´æ•°å€¤ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief ®”’l‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
 	*/
 	SmartPtr(int_t v){ set_i(v); }
 	
 	/**
-	* @brief æµ®å‹•å°æ•°ç‚¹æ•°å€¤ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief •‚“®¬”“_”’l‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
 	*/
 	SmartPtr(float_t v){ set_f(v); }
 	
 	/**
-	* @brief æ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief •¶š—ñ‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
 	*/
 	SmartPtr(bool b){ set_b(b); }
 
 	/**
-	* @brief æ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief •¶š—ñ‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
 	*/
 	SmartPtr(const char* str)
@@ -104,7 +104,7 @@ public:
 		inc_ref_count();
 	}
 
-	// åŸºæœ¬å‹ã®æ•´æ•°ã€æµ®å‹•å°æ•°ç‚¹æ•°ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	// Šî–{Œ^‚Ì®”A•‚“®¬”“_”‚©‚ç\’z‚·‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^
 	SmartPtr(check_xtype<int>::type v){ set_i((int_t)v); }
 	SmartPtr(check_xtype<long>::type v){ set_i((int_t)v); }
 	SmartPtr(check_xtype<short>::type v){ set_i((int_t)v); }
@@ -121,28 +121,28 @@ public:
 private:
 
 	/**
-	* @brief æš—é»™ã®å¤‰æ›ã‚’æŠ‘ãˆã‚‹ãŸã‚ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief ˆÃ–Ù‚Ì•ÏŠ·‚ğ—}‚¦‚é‚½‚ß‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
-	* å¾—ä½“ã®çŸ¥ã‚Œãªã„ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰ã®æ§‹ç¯‰ã‚’æ‹’å¦ã™ã‚‹ãŸã‚ã€ã“ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã¯privateã§å®Ÿè£…ã‚‚å­˜åœ¨ã—ãªã„ã€‚
+	* “¾‘Ì‚Ì’m‚ê‚È‚¢ƒ|ƒCƒ“ƒ^‚©‚ç‚Ì\’z‚ğ‹‘”Û‚·‚é‚½‚ßA‚±‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^‚Íprivate‚ÅÀ‘•‚à‘¶İ‚µ‚È‚¢B
 	*/
 	SmartPtr(void*);
 
 public:
 
 	/**
-	* @brief ->æ¼”ç®—å­
-	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
+	* @brief ->‰‰Zq
+	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉƒI[ƒo[ƒ[ƒh‚·‚éB
 	*/
 	Any* operator ->() const{ return get(); }
 	
 	/**
-	* @brief *æ¼”ç®—å­
-	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
+	* @brief *‰‰Zq
+	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉƒI[ƒo[ƒ[ƒh‚·‚éB
 	*/
 	Any& operator *() const{ return *get(); }
 	
 	/**
-	* @brief Tå‹ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—ã™ã‚‹ã€‚
+	* @brief TŒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾‚·‚éB
 	*/
 	Any* get() const{ return (Any*)this; }
 
@@ -154,7 +154,7 @@ private:
 public:
 	
 	/**
-	* @brief boolå‹ã«è‡ªå‹•å¤‰æ›ã™ã‚‹ã€‚
+	* @brief boolŒ^‚É©“®•ÏŠ·‚·‚éB
 	*
 	*/
 	operator safe_bool() const{
@@ -199,7 +199,7 @@ template <int N>
 struct SmartPtrSelector{};
 
 /**
-* @brief Tå‹ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ä¿æŒã™ã‚‹ãŸã‚ã®ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿
+* @brief TŒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ğ•Û‚·‚é‚½‚ß‚ÌƒXƒ}[ƒgƒ|ƒCƒ“ƒ^
 */
 template<class T>
 class SmartPtr : public SmartPtr<Any>{
@@ -226,48 +226,48 @@ public:
 		return *this;
 	}
 
-	/// nullã‚’å—ã‘å–ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	/// null‚ğó‚¯æ‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^
 	SmartPtr(const Null&){}
 
-	/// ç‰¹åˆ¥ãªã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿1
+	/// “Á•Ê‚ÈƒRƒ“ƒXƒgƒ‰ƒNƒ^1
 	SmartPtr(typename SmartPtrCtor1<T>::type v);
 
-	/// ç‰¹åˆ¥ãªã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿2
+	/// “Á•Ê‚ÈƒRƒ“ƒXƒgƒ‰ƒNƒ^2
 	SmartPtr(typename SmartPtrCtor2<T>::type v);
 
 private:
 
 	/**
-	* @brief æš—é»™ã®å¤‰æ›ã‚’æŠ‘ãˆã‚‹ãŸã‚ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief ˆÃ–Ù‚Ì•ÏŠ·‚ğ—}‚¦‚é‚½‚ß‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
-	* AnyPtrã‹ã‚‰ã®æš—é»™ã®å¤‰æ›ã‚’æ‹’å¦ã™ã‚‹ãŸã‚ã«ã€privateã§å®šç¾©ã•ã‚Œã¦ã„ã‚‹ã€‚
-	* AnyPtrã‹ã‚‰SmartPtr<T>ã«å¤‰æ›ã™ã‚‹ã«ã¯ptr_casté–¢æ•°ã€ptr_asé–¢æ•°ã‚’ä½¿ç”¨ã™ã‚‹ã“ã¨ã€‚
+	* AnyPtr‚©‚ç‚ÌˆÃ–Ù‚Ì•ÏŠ·‚ğ‹‘”Û‚·‚é‚½‚ß‚ÉAprivate‚Å’è‹`‚³‚ê‚Ä‚¢‚éB
+	* AnyPtr‚©‚çSmartPtr<T>‚É•ÏŠ·‚·‚é‚É‚Íptr_castŠÖ”Aptr_asŠÖ”‚ğg—p‚·‚é‚±‚ÆB
 	*/
 	SmartPtr(const AnyPtr&);
 
 	/**
-	* @brief æš—é»™ã®å¤‰æ›ã‚’æŠ‘ãˆã‚‹ãŸã‚ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+	* @brief ˆÃ–Ù‚Ì•ÏŠ·‚ğ—}‚¦‚é‚½‚ß‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^B
 	*
-	* å¾—ä½“ã®çŸ¥ã‚Œãªã„ãƒã‚¤ãƒ³ã‚¿å‹ã‹ã‚‰ã®æš—é»™ã®å¤‰æ›ã‚’æ‹’å¦ã™ã‚‹ãŸã‚ã«ã€privateã§å®šç¾©ã•ã‚Œã¦ã„ã‚‹ã€‚
+	* “¾‘Ì‚Ì’m‚ê‚È‚¢ƒ|ƒCƒ“ƒ^Œ^‚©‚ç‚ÌˆÃ–Ù‚Ì•ÏŠ·‚ğ‹‘”Û‚·‚é‚½‚ß‚ÉAprivate‚Å’è‹`‚³‚ê‚Ä‚¢‚éB
 	*/
 	SmartPtr(void*);
 
 public:
 
 	/**
-	* @brief ->æ¼”ç®—å­
-	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã€‚
+	* @brief ->‰‰Zq
+	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉB
 	*/
 	T* operator ->() const{ return get(); }
 	
 	/**
-	* @brief *æ¼”ç®—å­
-	* ã‚¹ãƒãƒ¼ãƒˆãƒã‚¤ãƒ³ã‚¿ã¨ã—ã¦æ‰±ã†ãŸã‚ã«ã€‚
+	* @brief *‰‰Zq
+	* ƒXƒ}[ƒgƒ|ƒCƒ“ƒ^‚Æ‚µ‚Äˆµ‚¤‚½‚ß‚ÉB
 	*/
 	T& operator *() const{ return *get(); }
 	
 	/**
-	* @brief Tå‹ã¸ã®ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—ã™ã‚‹ã€‚
+	* @brief TŒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾‚·‚éB
 	*/
 	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
 
@@ -278,7 +278,7 @@ private:
 	void set_p2(SmartPtrSelector<INHERITED_OTHER>, T* p){ set_p(((Base*)p - 1)); inc_ref_count(); }
 
 	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
-		XTAL_ASSERT(type(*this)!=TYPE_NULL); // ã“ã®ã‚¢ã‚µãƒ¼ã‚·ãƒ§ãƒ³ã§æ­¢ã¾ã‚‹å ´åˆã€nullãƒã‚¤ãƒ³ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹
+		XTAL_ASSERT(type(*this)!=TYPE_NULL); // ‚±‚ÌƒAƒT[ƒVƒ‡ƒ“‚Å~‚Ü‚éê‡Anullƒ|ƒCƒ“ƒ^‚ªŠi”[‚³‚ê‚Ä‚¢‚é
 		return (T*)pvalue(*this); 
 	}
 
@@ -389,7 +389,7 @@ SmartPtr<T>::SmartPtr(typename SmartPtrCtor2<T>::type v)
 	:SmartPtr<Any>(SmartPtrCtor2<T>::call(v)){}
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T>
 inline SmartPtr<T> xnew(){
@@ -397,7 +397,7 @@ inline SmartPtr<T> xnew(){
 }
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T, class A0>
 inline SmartPtr<T> xnew(const A0& a0){
@@ -405,7 +405,7 @@ inline SmartPtr<T> xnew(const A0& a0){
 }
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T, class A0, class A1>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
@@ -413,7 +413,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
 }
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T, class A0, class A1, class A2>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
@@ -421,7 +421,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
 }
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T, class A0, class A1, class A2, class A3>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
@@ -429,7 +429,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 }
 
 /**
-* @brief Tã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹
+* @brief TƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚é
 */
 template<class T, class A0, class A1, class A2, class A3, class A4>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
@@ -437,7 +437,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 }
 
 /**
-* @brief thisãƒã‚¤ãƒ³ã‚¿ã‚’SmartPtr<T>ã«å¤‰æ›ã™ã‚‹é–¢æ•°
+* @brief thisƒ|ƒCƒ“ƒ^‚ğSmartPtr<T>‚É•ÏŠ·‚·‚éŠÖ”
 */
 template<class T>
 inline SmartPtr<T> from_this(const T* p){
@@ -448,7 +448,7 @@ inline SmartPtr<T> from_this(const T* p){
 
 #ifndef XTAL_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
-// SmartPtrã®é‡ã­ç€ã‚’ç¦æ­¢ã™ã‚‹
+// SmartPtr‚Ìd‚Ë’…‚ğ‹Ö~‚·‚é
 template<class T>
 class SmartPtr< SmartPtr<T> >;
 

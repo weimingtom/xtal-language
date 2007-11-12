@@ -10,13 +10,13 @@ public:
 		:default_value_(undefined){}
 		
 	/**
-	* @brief iã«å¯¾å¿œã™ã‚‹è¦ç´ ã‚’è¿”ã™
+	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğ•Ô‚·
 	*
 	*/
 	const AnyPtr& at(const AnyPtr& key);
 	
 	/**
-	* @brief iã«å¯¾å¿œã™ã‚‹è¦ç´ ã‚’è¨­å®šã™ã‚‹
+	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğİ’è‚·‚é
 	*
 	*/	
 	void set_at(const AnyPtr& key, const AnyPtr& value){
@@ -24,7 +24,7 @@ public:
 	}
 
 	/**
-	* @brief iã«å¯¾å¿œã™ã‚‹è¦ç´ ã‚’è¨­å®šã™ã‚‹
+	* @brief i‚É‘Î‰‚·‚é—v‘f‚ğİ’è‚·‚é
 	*
 	*/	
 	void insert(const AnyPtr& akey, const AnyPtr& value){
@@ -33,7 +33,7 @@ public:
 	}
 
 	/**
-	* @brief keyã«å¯¾å¿œã™ã‚‹å€¤ã‚’å‰Šé™¤ã™ã‚‹
+	* @brief key‚É‘Î‰‚·‚é’l‚ğíœ‚·‚é
 	*
 	*/
 	void erase(const AnyPtr& akey){
@@ -42,7 +42,7 @@ public:
 	}
 
 	/**
-	* @brief é€£æƒ³é…åˆ—ã®å®¹é‡ã‚’è¿”ã™
+	* @brief ˜A‘z”z—ñ‚Ì—e—Ê‚ğ•Ô‚·
 	*
 	*/
 	int_t size(){
@@ -50,7 +50,7 @@ public:
 	}
 	
 	/**
-	* @brief é€£æƒ³é…åˆ—ã®å®¹é‡ã‚’è¿”ã™
+	* @brief ˜A‘z”z—ñ‚Ì—e—Ê‚ğ•Ô‚·
 	*
 	*/
 	int_t length(){
@@ -58,7 +58,7 @@ public:
 	}
 
 	/**
-	* @brief ç©ºã‹èª¿ã¹ã‚‹
+	* @brief ‹ó‚©’²‚×‚é
 	*
 	*/
 	bool empty(){
@@ -66,63 +66,63 @@ public:
 	}
 
 	/**
-	* @brief é€£çµã—ãŸé€£æƒ³é…åˆ—ã‚’è¿”ã™
+	* @brief ˜AŒ‹‚µ‚½˜A‘z”z—ñ‚ğ•Ô‚·
 	*
 	*/
 	MapPtr cat(const MapPtr& a);
 
 	/**
-	* @brief è‡ªèº«ã¨é€£çµã—ã€è‡ªèº«ã‚’è¿”ã™
+	* @brief ©g‚Æ˜AŒ‹‚µA©g‚ğ•Ô‚·
 	*
 	*/
 	MapPtr cat_assign(const MapPtr& a);
 
 	/**
-	* @brief ã“ã®é…åˆ—ã®æ–‡å­—åˆ—è¡¨ç¾ã‚’è¿”ã™
+	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
 	*
 	*/
 	StringPtr to_s();
 
 	/**
-	* @brief == ã®å†å®šç¾©
+	* @brief == ‚ÌÄ’è‹`
 	*/
 	bool op_eq(const MapPtr& other);
 		
 	/**
-	* @brief [key, value]ã‚’è¦ç´ ã¨ã™ã‚‹ã€Iteratorã‚’è¿”ã™
+	* @brief [key, value]‚ğ—v‘f‚Æ‚·‚éAIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr pairs();
 	
 	/**
-	* @brief keyã‚’è¦ç´ ã¨ã™ã‚‹ã€Iteratorã‚’è¿”ã™
+	* @brief key‚ğ—v‘f‚Æ‚·‚éAIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr keys();
 	
 	/**
-	* @brief valueã‚’è¦ç´ ã¨ã™ã‚‹ã€Iteratorã‚’è¿”ã™
+	* @brief value‚ğ—v‘f‚Æ‚·‚éAIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr values();
 
 	/**
-	* @brief [key, value]ã‚’è¦ç´ ã¨ã™ã‚‹ã€Iteratorã‚’è¿”ã™
+	* @brief [key, value]‚ğ—v‘f‚Æ‚·‚éAIterator‚ğ•Ô‚·
 	*
-	* pairsã¨åŒã˜
+	* pairs‚Æ“¯‚¶
 	*/
 	AnyPtr each(){
 		return pairs();
 	}
 	
 	/**
-	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™
+	* @brief ó‚¢ƒRƒs[‚ğ•Ô‚·
 	*
 	*/
 	MapPtr clone();
 
 	/**
-	* @brief è¦ç´ ã‚’å…¨ã¦å‰Šé™¤ã™ã‚‹
+	* @brief —v‘f‚ğ‘S‚Äíœ‚·‚é
 	*
 	*/
 	void clear(){
@@ -184,7 +184,7 @@ class Set : public Map{
 public:
 
 	/**
-	* @brief valueãŒçœŸãªkeyã‚’è¦ç´ ã¨ã™ã‚‹Iteratorã‚’è¿”ã™
+	* @brief value‚ª^‚Èkey‚ğ—v‘f‚Æ‚·‚éIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr each();

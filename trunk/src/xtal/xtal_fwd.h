@@ -11,7 +11,7 @@ namespace xtal{
 }
 
 /**
-* å…¨ã¦ã®è¦ç´ ã¯xtal namespaceã®ä¸­
+* ‘S‚Ä‚Ì—v‘f‚Íxtal namespace‚Ì’†
 */
 namespace xtal{
 
@@ -155,7 +155,7 @@ typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
 
 
 /**
-* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªå‹ã®ç¨®é¡
+* @brief ƒvƒŠƒ~ƒeƒBƒu‚ÈŒ^‚Ìí—Ş
 */
 enum PrimitiveType{
 	TYPE_NULL = 0,
@@ -177,7 +177,7 @@ enum PrimitiveType{
 
 
 /**
-* @brief ãƒ–ãƒ­ãƒƒã‚¯ã®ç¨®é¡
+* @brief ƒuƒƒbƒN‚Ìí—Ş
 */
 enum BlockKind{
 	KIND_BLOCK,
@@ -191,7 +191,7 @@ enum BlockKind{
 };
 
 /**
-* @brief æ–‡å­—åˆ—ã®ç¨®é¡
+* @brief •¶š—ñ‚Ìí—Ş
 */
 enum StringKind{
 	KIND_STRING,
@@ -200,7 +200,7 @@ enum StringKind{
 };
 
 /**
-* @brief å¯è§¦æ€§ã®ç¨®é¡
+* @brief ‰ÂG«‚Ìí—Ş
 */
 enum AccessibilityKind{
 	KIND_PUBLIC = 0,
@@ -209,7 +209,7 @@ enum AccessibilityKind{
 };
 
 /**
-* @brief ãƒ–ãƒ¬ãƒ¼ã‚¯ãƒã‚¤ãƒ³ãƒˆã®ç¨®é¡
+* @brief ƒuƒŒ[ƒNƒ|ƒCƒ“ƒg‚Ìí—Ş
 */
 enum BreakPointKind{
 	BREAKPOINT_LINE,
@@ -218,7 +218,7 @@ enum BreakPointKind{
 };
 
 /**
-* @brief ç¯„å›²åŒºé–“ã®ç¨®é¡
+* @brief ”ÍˆÍ‹æŠÔ‚Ìí—Ş
 */
 enum RangeKind{
 	RANGE_CLOSED = (0<<1) | (0<<0),

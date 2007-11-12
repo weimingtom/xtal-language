@@ -15,7 +15,7 @@ public:
 	void interactive_compile();
 
 	/**
-	* ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã‚¨ãƒ©ãƒ¼ã‚’å–å¾—ã™ã‚‹ã€‚
+	* ƒRƒ“ƒpƒCƒ‹ƒGƒ‰[‚ğæ“¾‚·‚éB
 	*/
 	AnyPtr errors();
 
@@ -100,10 +100,10 @@ private:
 		AC<Label>::vector labels;
 		
 		struct Loop{
-			IDPtr label; // ãƒ©ãƒ™ãƒ«å
-			int_t frame_count; // ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ•°
-			int_t control_statement_label[2]; // breakã¨continueã®ãƒ©ãƒ™ãƒ«ç•ªå·
-			bool have_label; // å¯¾å¿œã™ã‚‹ãƒ©ãƒ™ãƒ«ã‚’æŒã£ã¦ã„ã‚‹ã‹
+			IDPtr label; // ƒ‰ƒxƒ‹–¼
+			int_t frame_count; // ƒtƒŒ[ƒ€‚Ì”
+			int_t control_statement_label[2]; // break‚Æcontinue‚Ìƒ‰ƒxƒ‹”Ô†
+			bool have_label; // ‘Î‰‚·‚éƒ‰ƒxƒ‹‚ğ‚Á‚Ä‚¢‚é‚©
 		};
 		
 		Stack<Loop> loops;
@@ -221,12 +221,12 @@ private:
 			int_t address = addresses_[i];
 			inst_address_t& ref = *(inst_address_t*)&result_->code_[address];
 
-			// ã‚¢ãƒ‰ãƒ¬ã‚¹ãŒæ›¸ã„ã¦ã‚ã‚‹æ‰€ãŒå‰Šé™¤å¯¾è±¡
+			// ƒAƒhƒŒƒX‚ª‘‚¢‚Ä‚ ‚éŠ‚ªíœ‘ÎÛ
 			if(pos<=address && pos+size>address){
-				// ã‚¢ãƒ‰ãƒ¬ã‚¹ãƒªã‚¹ãƒˆã‹ã‚‰å‰Šé™¤ã™ã‚‹
+				// ƒAƒhƒŒƒXƒŠƒXƒg‚©‚çíœ‚·‚é
 				addresses_.erase(i);
 			}
-			// ç›¸å¯¾ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’ç¸®ã‚ã‚‹å‡¦ç†
+			// ‘Š‘ÎƒAƒhƒŒƒX‚ğk‚ß‚éˆ—
 			else if(ref<0){
 				if(address > pos+size && address+ref < pos+size){
 					if(address+ref > pos){

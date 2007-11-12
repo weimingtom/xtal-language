@@ -38,7 +38,7 @@ protected:
 
 };
 
-// XTALä»®æƒ³ãƒã‚·ãƒ³
+// XTAL‰¼‘zƒ}ƒVƒ“
 class VMachine : public GCObserver{
 public:
 
@@ -46,70 +46,70 @@ public:
 
 public:
 
-	// é–¢æ•°å‘¼ã³å‡ºã—å´ãŒä½¿ã†ãŸã‚ã®é–¢æ•°ç¾¤
+	// ŠÖ”ŒÄ‚Ño‚µ‘¤‚ªg‚¤‚½‚ß‚ÌŠÖ”ŒQ
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã™ã‚‹ã€‚
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚·‚éB
 	*
 	*/
 	void setup_call(int_t need_result_count = 1);
 
 	/**
-	* @brief å¼•æ•°ã‚’1å€‹ç©ã‚€ã€‚
+	* @brief ˆø”‚ğ1ŒÂÏ‚ŞB
 	*
 	*/
 	void push_arg(const AnyPtr& value);
 	
 	/**
-	* @brief åå‰ä»˜ãå¼•æ•°ã‚’1å€‹ç©ã‚€ã€‚
+	* @brief –¼‘O•t‚«ˆø”‚ğ1ŒÂÏ‚ŞB
 	*
 	*/
 	void push_arg(const IDPtr& name, const AnyPtr& value);
 	
 	/**
-	* @brief åå‰ä»˜ãå¼•æ•°ã‚’1å€‹ç©ã‚€ã€‚
+	* @brief –¼‘O•t‚«ˆø”‚ğ1ŒÂÏ‚ŞB
 	*
 	*/
 	void push_arg(const Named& p){ push_arg(p.name, p.value); }
 
 	/**
-	* @brief å¼•æ•°ã‚’1å€‹ç©ã‚€ã€‚
+	* @brief ˆø”‚ğ1ŒÂÏ‚ŞB
 	*
 	*/
 	void push_arg(const Param& value);
 
 	/**
-	* @brief å¼•æ•°ã‚’é…åˆ—ã®è¦ç´ æ•°ç©ã‚€ã€‚
+	* @brief ˆø”‚ğ”z—ñ‚Ì—v‘f”Ï‚ŞB
 	*
 	*/
 	void push_ordered_args(const ArrayPtr& p);
 
 	/**
-	* @brief åå‰ã¤ãå¼•æ•°ã‚’é€£æƒ³é…åˆ—ã®è¦ç´ æ•°ç©ã‚€ã€‚
+	* @brief –¼‘O‚Â‚«ˆø”‚ğ˜A‘z”z—ñ‚Ì—v‘f”Ï‚ŞB
 	*
 	*/
 	void push_named_args(const MapPtr& p);
 
 	/**
-	* @brief posç•ªç›®ã®æˆ»ã‚Šå€¤ã‚’å¾—ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ì–ß‚è’l‚ğ“¾‚éB
 	*
 	*/
 	const AnyPtr& result(int_t pos = 0);
 
 	/**
-	* @brief å‘¼ã³å‡ºã—ã®å¾Œå§‹æœ«ã‚’ã™ã‚‹ã€‚
+	* @brief ŒÄ‚Ño‚µ‚ÌŒãn––‚ğ‚·‚éB
 	*
 	*/
 	void cleanup_call();	
 
 	/**
-	* @brief posç•ªç›®ã®æˆ»ã‚Šå€¤ã‚’è¿”ã—ã€å‘¼ã³å‡ºã—ã®å¾Œå§‹æœ«ã‚’ã™ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ì–ß‚è’l‚ğ•Ô‚µAŒÄ‚Ño‚µ‚ÌŒãn––‚ğ‚·‚éB
 	*
 	*/
 	AnyPtr result_and_cleanup_call(int_t pos = 0);
 		
 	/**
-	* @brief thisã‚’å·®ã—æ›¿ãˆã‚‹ã€‚
+	* @brief this‚ğ·‚µ‘Ö‚¦‚éB
 	*
 	*/	
 	void set_arg_this(const AnyPtr& self){ 
@@ -117,10 +117,10 @@ public:
 	}
 
 	/**
-	* @brief ãƒ’ãƒ³ãƒˆã®è¨­å®š
+	* @brief ƒqƒ“ƒg‚Ìİ’è
 	*
-	* ä¾‹å¤–ãŒèµ·ããŸã¨ãã®ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ãŸã‚ã«ã€
-	* ç¾åœ¨å‘¼ã³å‡ºã—ã¦ã„ã‚‹é–¢æ•°ã‚’ç™»éŒ²ã™ã‚‹ã€‚
+	* —áŠO‚ª‹N‚«‚½‚Æ‚«‚ÌƒGƒ‰[ƒƒbƒZ[ƒW‚Ì‚½‚ß‚ÉA
+	* Œ»İŒÄ‚Ño‚µ‚Ä‚¢‚éŠÖ”‚ğ“o˜^‚·‚éB
 	*/
 	void set_hint(const AnyPtr& object){ 
 		ff().hint(object);
@@ -130,53 +130,53 @@ public:
 // 
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã—ã€åŒæ™‚ã«å¼•æ•°ã‚’1å€‹ç©ã‚€
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚µA“¯‚Éˆø”‚ğ1ŒÂÏ‚Ş
 	*
 	*/
 	void setup_call(int_t need_result_count, const Param& a1);
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã—ã€åŒæ™‚ã«å¼•æ•°ã‚’2å€‹ç©ã‚€
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚µA“¯‚Éˆø”‚ğ2ŒÂÏ‚Ş
 	*
 	*/
 	void setup_call(int_t need_result_count, const Param& a1, const Param& a2);
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã—ã€åŒæ™‚ã«å¼•æ•°ã‚’3å€‹ç©ã‚€
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚µA“¯‚Éˆø”‚ğ3ŒÂÏ‚Ş
 	*
 	*/
 	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3);
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã—ã€åŒæ™‚ã«å¼•æ•°ã‚’4å€‹ç©ã‚€
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚µA“¯‚Éˆø”‚ğ4ŒÂÏ‚Ş
 	*
 	*/
 	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4);
 
 	/**
-	* @brief é–¢æ•°ã‚’å‘¼ã³å‡ºã™ç”¨æ„ã‚’ã—ã€åŒæ™‚ã«å¼•æ•°ã‚’5å€‹ç©ã‚€
+	* @brief ŠÖ”‚ğŒÄ‚Ño‚·—pˆÓ‚ğ‚µA“¯‚Éˆø”‚ğ5ŒÂÏ‚Ş
 	*
 	*/
 	void setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5);
 
 public:
 
-	// é–¢æ•°å‘¼ã³å‡ºã•ã‚Œå´ãŒä½¿ã†ãŸã‚ã®é–¢æ•°ç¾¤
+	// ŠÖ”ŒÄ‚Ño‚³‚ê‘¤‚ªg‚¤‚½‚ß‚ÌŠÖ”ŒQ
 
 	/**
-	* @brief posç•ªç›®ã®å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB
 	*
 	*/
 	const AnyPtr& arg(int_t pos);
 
 	/**
-	* @brief nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief name‚É‘Î‰‚·‚éˆø”‚ğ“¾‚éB
 	*
 	*/
 	const AnyPtr& arg(const IDPtr& name);
 
 	/**
-	* @brief posç•ªç›®ã®å¼•æ•°ã‚’å¾—ã‚‹ã€‚ã‚‚ã—posç•ªç›®ã®å¼•æ•°ãŒãªã‘ã‚Œã°nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB‚à‚µpos”Ô–Ú‚Ìˆø”‚ª‚È‚¯‚ê‚Îname‚É‘Î‰‚·‚éˆø”‚ğ“¾‚éB
 	*
 	*/
 	const AnyPtr& arg(int_t pos, const IDPtr& name);
@@ -184,37 +184,37 @@ public:
 	const AnyPtr& arg(int_t pos, Fun* names);
 
 	/**
-	* @brief posç•ªç›®ã®å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB
 	*
-	* ã‚‚ã—posç•ªç›®ã®å¼•æ•°ãŒç„¡ã‘ã‚Œã°defã®å€¤ã‚’è¿”ã™ã€‚
+	* ‚à‚µpos”Ô–Ú‚Ìˆø”‚ª–³‚¯‚ê‚Îdef‚Ì’l‚ğ•Ô‚·B
 	*/
 	const AnyPtr& arg_default(int_t pos, const AnyPtr& def);
 
 	/**
-	* @brief nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief name‚É‘Î‰‚·‚éˆø”‚ğ“¾‚éB
 	*
-	* ã‚‚ã—nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ãŒç„¡ã‘ã‚Œã°defã®å€¤ã‚’è¿”ã™ã€‚
+	* ‚à‚µname‚É‘Î‰‚·‚éˆø”‚ª–³‚¯‚ê‚Îdef‚Ì’l‚ğ•Ô‚·B
 	*/
 	const AnyPtr& arg_default(const IDPtr& name, const AnyPtr& def);
 
 	/**
-	* @brief posç•ªç›®ã®å¼•æ•°ã‚’å¾—ã‚‹ã€‚ã‚‚ã—posç•ªç›®ã®å¼•æ•°ãŒãªã‘ã‚Œã°nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ã‚’å¾—ã‚‹ã€‚
+	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB‚à‚µpos”Ô–Ú‚Ìˆø”‚ª‚È‚¯‚ê‚Îname‚É‘Î‰‚·‚éˆø”‚ğ“¾‚éB
 	*
-	* ã‚‚ã—nameã«å¯¾å¿œã™ã‚‹å¼•æ•°ãŒç„¡ã‘ã‚Œã°defã®å€¤ã‚’è¿”ã™ã€‚
+	* ‚à‚µname‚É‘Î‰‚·‚éˆø”‚ª–³‚¯‚ê‚Îdef‚Ì’l‚ğ•Ô‚·B
 	*/
 	const AnyPtr& arg_default(int_t pos, const IDPtr& name, const AnyPtr& def);
 	
 	/**
-	* @brief posç•ªç›®ã®åå‰æŒ‡å®šå¼•æ•°ã®åå‰ã‚’å–å¾—ã€‚
+	* @brief pos”Ô–Ú‚Ì–¼‘Ow’èˆø”‚Ì–¼‘O‚ğæ“¾B
 	*
-	* @param pos 0ç¸²å¾amed_arg_count()-1ã¾ã§
+	* @param pos 0ã€œnamed_arg_count()-1‚Ü‚Å
 	*/
 	const IDPtr& arg_name(int_t pos){
 		return static_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
 	/**
-	* @brief thisã‚’å–å¾—ã€‚
+	* @brief this‚ğæ“¾B
 	*
 	*/
 	const AnyPtr& get_arg_this(){ 
@@ -222,7 +222,7 @@ public:
 	}
 
 	/**
-	* @brief ä½ç½®æŒ‡å®šå¼•æ•°ã®æ•°ã‚’å–å¾—ã€‚
+	* @brief ˆÊ’uw’èˆø”‚Ì”‚ğæ“¾B
 	*
 	*/
 	int_t ordered_arg_count(){ 
@@ -230,7 +230,7 @@ public:
 	}
 	
 	/**
-	* @brief åå‰æŒ‡å®šå¼•æ•°ã®æ•°ã‚’å–å¾—
+	* @brief –¼‘Ow’èˆø”‚Ì”‚ğæ“¾
 	*
 	*/
 	int_t named_arg_count(){ 
@@ -238,25 +238,25 @@ public:
 	}
 	
 	/**
-	* @brief å¼•æ•°ã®æ•°ã‚’èª¿æ•´ã™ã‚‹ã€‚
+	* @brief ˆø”‚Ì”‚ğ’²®‚·‚éB
 	*
 	*/
 	void adjust_arg(int_t n);
 
 	/**
-	* @brief å¼•æ•°ã®å¤šå€¤ã‚’å¹³ã‚‰ã«ã™ã‚‹
+	* @brief ˆø”‚Ì‘½’l‚ğ•½‚ç‚É‚·‚é
 	*
 	*/
 	void flatten_arg();
 
 	/**
-	* @brief  å¼•æ•°ã®å¤šå€¤ã‚’å¹³ã‚‰ã«ã™ã‚‹
+	* @brief  ˆø”‚Ì‘½’l‚ğ•½‚ç‚É‚·‚é
 	*
 	*/
 	void flatten_all_arg();
 	
 	/**
-	* @brief å‘¼ã³å‡ºã—å…ƒãŒå¿…è¦ã¨ã—ã¦ã„ã‚‹æˆ»ã‚Šå€¤ã®æ•°ã€‚
+	* @brief ŒÄ‚Ño‚µŒ³‚ª•K—v‚Æ‚µ‚Ä‚¢‚é–ß‚è’l‚Ì”B
 	*
 	*/
 	int_t need_result_count(){ 
@@ -264,7 +264,7 @@ public:
 	}
 	
 	/**
-	* @brief å‘¼ã³å‡ºã—å…ƒãŒæˆ»ã‚Šå€¤ã‚’å¿…è¦ã¨ã—ã¦ã„ã‚‹ã‹ã©ã†ã‹ã€‚
+	* @brief ŒÄ‚Ño‚µŒ³‚ª–ß‚è’l‚ğ•K—v‚Æ‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©B
 	*
 	*/
 	bool need_result(){ 
@@ -272,16 +272,16 @@ public:
 	}
 	
 	/*
-	* Argumentsã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹ã€‚
-	* return_result()ã‚’å‘¼ã‚“ã å¾Œã¯æ­£å¸¸ãªå€¤ã¯å¾—ã‚‰ã‚Œãªã„ã€‚
+	* ArgumentsƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚éB
+	* return_result()‚ğŒÄ‚ñ‚¾Œã‚Í³í‚È’l‚Í“¾‚ç‚ê‚È‚¢B
 	*/
 	ArgumentsPtr make_arguments();
 	
 	/**
-	* @brief å‘¼ã³å‡ºã—å…ƒã«å¼•æ•°ã®æ•°ã ã‘ã®æˆ»ã‚Šå€¤ã‚’è¿”ã™ã€‚
+	* @brief ŒÄ‚Ño‚µŒ³‚Éˆø”‚Ì”‚¾‚¯‚Ì–ß‚è’l‚ğ•Ô‚·B
 	*
-	* need_result_countã®æ–¹ãŒæ•°ãŒå¤šã„å ´åˆã¯ãã®åˆ†nullãŒè¿”ã•ã‚Œã‚‹ã€‚
-	* need_result_countã®æ–¹ãŒæ•°ãŒå°‘ãªã„å ´åˆã¯è¿”ã—ãŸå€¤ã¯æ¨ã¦ã‚‰ã‚Œã‚‹ã€‚
+	* need_result_count‚Ì•û‚ª”‚ª‘½‚¢ê‡‚Í‚»‚Ì•ªnull‚ª•Ô‚³‚ê‚éB
+	* need_result_count‚Ì•û‚ª”‚ª­‚È‚¢ê‡‚Í•Ô‚µ‚½’l‚ÍÌ‚Ä‚ç‚ê‚éB
 	*/
 	void return_result();
 	void return_result(const AnyPtr& value1);
@@ -291,7 +291,7 @@ public:
 	void return_result_array(const ArrayPtr& values);
 
 	/**
-	* @brief return_resultã‚„carry_overã‚’æ—¢ã«å‘¼ã³å‡ºã—ãŸãªã‚‰trueã‚’ã€ãã†ã§ãªã„ãªã‚‰falseã‚’è¿”ã™ã€‚
+	* @brief return_result‚âcarry_over‚ğŠù‚ÉŒÄ‚Ño‚µ‚½‚È‚çtrue‚ğA‚»‚¤‚Å‚È‚¢‚È‚çfalse‚ğ•Ô‚·B
 	*
 	*/
 	bool processed(){ 
@@ -356,52 +356,52 @@ public:
 
 public:
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã®iç•ªç›®ã®å€¤ã‚’å–å¾—ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚Ìi”Ô–Ú‚Ì’l‚ğæ“¾‚·‚éB
 	const AnyPtr& get(int_t i){ return ap(stack_[i]); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã®0ç•ªç›®ã®å€¤ã‚’å–å¾—ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚Ì0”Ô–Ú‚Ì’l‚ğæ“¾‚·‚éB
 	const AnyPtr& get(){ return ap(stack_.top()); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã®iç•ªç›®ã®å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚Ìi”Ô–Ú‚Ì’l‚ğİ’è‚·‚éB
 	void set(int_t i, const Innocence& v){ stack_[i]=v; }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã®0ç•ªç›®ã®å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚Ì0”Ô–Ú‚Ì’l‚ğİ’è‚·‚éB
 	void set(const Innocence& v){ stack_.top()=v; }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’næ‹¡å¤§ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚ğnŠg‘å‚·‚éB
 	void upsize(int_t n){ stack_.upsize_unchecked(n); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’nç¸®å°ã™ã‚‹
+	// ƒXƒ^ƒbƒN‚ğnk¬‚·‚é
 	void downsize(int_t n){ stack_.downsize(n); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã‚’nå€‹ã«ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚ğnŒÂ‚É‚·‚éB
 	void resize(int_t n){ stack_.resize(n); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã«å€¤vã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚É’lv‚ğƒvƒbƒVƒ…‚·‚éB
 	void push(const Innocence& v){ stack_.push_unchecked(v); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã«å€¤vã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚É’lv‚ğƒvƒbƒVƒ…‚·‚éB
 	void push(const Named& v){ push(v.name); push(v.value); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã‹ã‚‰å€¤ã‚’ãƒãƒƒãƒ—ã™ã‚‹ã€‚
+	// ƒXƒ^ƒbƒN‚©‚ç’l‚ğƒ|ƒbƒv‚·‚éB
 	const AnyPtr& pop(){ return ap(stack_.pop()); }
 
-	// å…ˆé ­ã®å€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// æ“ª‚Ì’l‚ğƒvƒbƒVƒ…‚·‚éB
 	void dup(){ push(get()); }
 
-	// iç•ªç›®ã®å€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// i”Ô–Ú‚Ì’l‚ğƒvƒbƒVƒ…‚·‚éB
 	void dup(int_t i){ push(get(i)); }
 
-	// ã‚¹ã‚¿ãƒƒã‚¯ã®å¤§ãã•ã‚’è¿”ã™ã€‚
+	// ƒXƒ^ƒbƒN‚Ì‘å‚«‚³‚ğ•Ô‚·B
 	int_t stack_size(){ return (int_t)stack_.size(); }
 	
-	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂƒvƒbƒVƒ…‚·‚éB
 	void push(VMachine* src, int_t size){ stack_.push(src->stack_, size); }
 	
-	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂƒvƒbƒVƒ…‚·‚éB
 	void push(VMachine* src, int_t src_offset, int_t size){ stack_.push(src->stack_, src_offset, size); }
 
-	// srcã®ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’sizeå€‹å–ã‚Šé™¤ã„ã¦ã€ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+	// src‚ÌƒXƒ^ƒbƒN‚Ì“à—e‚ğsizeŒÂæ‚èœ‚¢‚ÄAƒvƒbƒVƒ…‚·‚éB
 	void move(VMachine* src, int_t size){ stack_.move(src->stack_, size); }
 	
 public:
@@ -412,54 +412,54 @@ public:
 
 	struct FunFrame{
 
-		// pop_ffã—ãŸã¨ãã¯ã“ã®pcã‹ã‚‰å®Ÿè¡Œã™ã‚‹
+		// pop_ff‚µ‚½‚Æ‚«‚Í‚±‚Ìpc‚©‚çÀs‚·‚é
 		const inst_t* poped_pc;
 
-		// callã—ãŸã¨ãã¯ã“ã®pcã‹ã‚‰å®Ÿè¡Œã™ã‚‹
+		// call‚µ‚½‚Æ‚«‚Í‚±‚Ìpc‚©‚çÀs‚·‚é
 		const inst_t* called_pc;
 
-		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®é †ç•ªæŒ‡å®šå¼•æ•°ã®æ•°
+		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚Ì‡”Ôw’èˆø”‚Ì”
 		int_t ordered_arg_count;
 		
-		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®åå‰æŒ‡å®šå¼•æ•°ã®æ•°
+		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚Ì–¼‘Ow’èˆø”‚Ì”
 		int_t named_arg_count;
 
-		// é–¢æ•°å‘¼ã³å‡ºã—å´ãŒå¿…è¦ã¨ã™ã‚‹æˆ»ã‚Šå€¤ã®æ•°
+		// ŠÖ”ŒÄ‚Ño‚µ‘¤‚ª•K—v‚Æ‚·‚é–ß‚è’l‚Ì”
 		int_t need_result_count;
 
-		// é–¢æ•°ãŒè¿”ã—ãŸæˆ»ã‚Šå€¤ã®æ•°
+		// ŠÖ”‚ª•Ô‚µ‚½–ß‚è’l‚Ì”
 		int_t result_count;
 
-		// yieldãŒå¯èƒ½ã‹ãƒ•ãƒ©ã‚°ã€‚ã“ã®ãƒ•ãƒ©ã‚°ã¯å‘¼ã³å‡ºã—ã‚’è·¨ã„ã§ä¼æ’­ã™ã‚‹ã€‚
+		// yield‚ª‰Â”\‚©ƒtƒ‰ƒOB‚±‚Ìƒtƒ‰ƒO‚ÍŒÄ‚Ño‚µ‚ğŒ×‚¢‚Å“`”d‚·‚éB
 		int_t yieldable;
 
 		InstanceVariables* instance_variables;
 
-		// ã‚¹ã‚³ãƒ¼ãƒ—ãŒã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆåŒ–ã•ã‚Œã¦ãªã„æ™‚ã®ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°é ˜åŸŸ
+		// ƒXƒR[ƒv‚ªƒIƒuƒWƒFƒNƒg‰»‚³‚ê‚Ä‚È‚¢‚Ìƒ[ƒJƒ‹•Ï”—Ìˆæ
 		Stack<Innocence> variables_;
 
-		// å‘¼ã³å‡ºã•ã‚ŒãŸé–¢æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+		// ŒÄ‚Ño‚³‚ê‚½ŠÖ”ƒIƒuƒWƒFƒNƒg
 		Innocence fun_; 
 
-		// ä¸€æ™‚çš„ã«é–¢æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‹ãƒ¬ã‚·ãƒ¼ãƒã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç½®ããŸã‚ã®å ´æ‰€
+		// ˆê“I‚ÉŠÖ”ƒIƒuƒWƒFƒNƒg‚©ƒŒƒV[ƒoƒIƒuƒWƒFƒNƒg‚ğ’u‚­‚½‚ß‚ÌêŠ
 		Innocence temp1_;
 
-		// ä¸€æ™‚çš„ã«ä½•ã‹ã‚’ç½®ããŸã‚ã®å ´æ‰€
+		// ˆê“I‚É‰½‚©‚ğ’u‚­‚½‚ß‚ÌêŠ
 		Innocence temp2_;
 
-		// ä¸€æ™‚çš„ã«ä½•ã‹ã‚’ç½®ããŸã‚ã®å ´æ‰€
+		// ˆê“I‚É‰½‚©‚ğ’u‚­‚½‚ß‚ÌêŠ
 		Innocence temp3_;
 
-		// ã‚¹ã‚³ãƒ¼ãƒ—ã®å¤–å´ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+		// ƒXƒR[ƒv‚ÌŠO‘¤‚ÌƒtƒŒ[ƒ€ƒIƒuƒWƒFƒNƒg
 		Innocence outer_;
 
-		// é–¢æ•°ãŒå‘¼ã°ã‚ŒãŸã¨ãã®thisã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+		// ŠÖ”‚ªŒÄ‚Î‚ê‚½‚Æ‚«‚ÌthisƒIƒuƒWƒFƒNƒg
 		Innocence self_;
 
-		// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆåŒ–ã—ãŸå¼•æ•°ã€‚
+		// ƒIƒuƒWƒFƒNƒg‰»‚µ‚½ˆø”B
 		Innocence arguments_;
 		
-		// ãƒ‡ãƒãƒƒã‚°ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å‡ºåŠ›ç”¨ã®ãƒ’ãƒ³ãƒˆ
+		// ƒfƒoƒbƒOƒƒbƒZ[ƒWo—Í—p‚Ìƒqƒ“ƒg
 		Innocence hint_;
 
 		void set_null(){
@@ -496,7 +496,7 @@ public:
 
 	friend void visit_members(Visitor& m, const FunFrame& v);
 
-	// ä¾‹å¤–ã‚’å‡¦ç†ã™ã‚‹ãŸã‚ã®ãƒ•ãƒ¬ãƒ¼ãƒ 
+	// —áŠO‚ğˆ—‚·‚é‚½‚ß‚ÌƒtƒŒ[ƒ€
 	struct ExceptFrame{
 		ExceptCore* core;
 		int_t stack_count;
@@ -728,13 +728,13 @@ private:
 
 	Innocence myself_;
 
-	// è¨ˆç®—ç”¨ã‚¹ã‚¿ãƒƒã‚¯
+	// ŒvZ—pƒXƒ^ƒbƒN
 	Stack<Innocence> stack_;
 
-	// é–¢æ•°å‘¼ã³å‡ºã—ã®åº¦ã«ç©ã¾ã‚Œã‚‹ãƒ•ãƒ¬ãƒ¼ãƒ 
+	// ŠÖ”ŒÄ‚Ño‚µ‚Ì“x‚ÉÏ‚Ü‚ê‚éƒtƒŒ[ƒ€
 	Stack<FunFrame> fun_frames_;
 
-	// tryã®åº¦ã«ç©ã¾ã‚Œã‚‹ãƒ•ãƒ¬ãƒ¼ãƒ ã€‚
+	// try‚Ì“x‚ÉÏ‚Ü‚ê‚éƒtƒŒ[ƒ€B
 	PODStack<ExceptFrame> except_frames_;
 	
 	SmartPtr<debug::Info> debug_info_;

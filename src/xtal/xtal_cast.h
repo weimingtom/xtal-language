@@ -4,10 +4,10 @@
 namespace xtal{
 	
 /**
-* @brief casté–¢æ•°ã€asé–¢æ•°ã®æˆ»ã‚Šå€¤ã®å‹ã‚’æ±ºå®šã™ã‚‹ãŸã‚ã®ãƒ˜ãƒ«ãƒ‘ãƒ¼ãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆã‚¯ãƒ©ã‚¹
+* @brief castŠÖ”AasŠÖ”‚Ì–ß‚è’l‚ÌŒ^‚ğŒˆ’è‚·‚é‚½‚ß‚Ìƒwƒ‹ƒp[ƒeƒ“ƒvƒŒ[ƒgƒNƒ‰ƒX
 *
-* ã»ã¨ã‚“ã©ã®å ´åˆã€CastResult<T>::typeã¯Tè‡ªèº«ã‚’è¿”ã™ã€‚
-* ç•°ãªã‚‹å ´åˆã¨ã—ã¦ã¯ã€ä¾‹ãˆã°CastResult<const int&>::type ã¯intã‚’è¿”ã™ã€‚
+* ‚Ù‚Æ‚ñ‚Ç‚Ìê‡ACastResult<T>::type‚ÍT©g‚ğ•Ô‚·B
+* ˆÙ‚È‚éê‡‚Æ‚µ‚Ä‚ÍA—á‚¦‚ÎCastResult<const int&>::type ‚Íint‚ğ•Ô‚·B
 */
 template<class T>
 struct CastResult{ typedef T type; };
@@ -26,28 +26,28 @@ inline typename CastResult<T>::type nocheck_cast(const AnyPtr& a);
 
 /////////////////////////////////////////////////////////////////////////////
 
-// å¤‰æ›å¾Œã®å‹ãŒSmartPtrã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
 template<class U, class V>
 inline const void* as_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
 	if(a->is(get_cpp_class<U>())){ return &a; }
 	return 0;
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒBaseã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* as_helper_helper(const AnyPtr& a, const Base*, const U*){
 	if(a->is(get_cpp_class<U>())){ return pvalue(a); }
 	return 0;
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* as_helper_helper(const AnyPtr& a, const Innocence*, const U*){
 	if(a->is(get_cpp_class<U>())){ return &a; }
 	return 0;
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚„Baseã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline const void* as_helper_helper(const AnyPtr& a, const void*, const U*){
 	if(a->is(get_cpp_class<U>())){ return ((SmartPtr<U>&)a).get(); }
@@ -61,25 +61,25 @@ const void* cast_helper_helper_base(const AnyPtr& a, const ClassPtr& cls);
 const void* cast_helper_helper_innocence(const AnyPtr& a, const ClassPtr& cls);
 const void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls);
 
-// å¤‰æ›å¾Œã®å‹ãŒSmartPtrã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
 template<class U, class V>
 inline const void* cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
 	return cast_helper_helper_smartptr(a, get_cpp_class<U>()); 
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒBaseã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return cast_helper_helper_base(a, get_cpp_class<U>()); 
 }
 	
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
 	return cast_helper_helper_innocence(a, get_cpp_class<U>()); 
 }
 	
-// å¤‰æ›å¾Œã®å‹ãŒAnyPtrã‚„Baseã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªAnyPtr‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline const void* cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return cast_helper_helper_other(a, get_cpp_class<U>()); 
@@ -87,25 +87,25 @@ inline const void* cast_helper_helper(const AnyPtr& a, const void*, const U*){
 
 /////////////////////////////////////////////////////////////////////////////
 
-// å¤‰æ›å¾Œã®å‹ãŒSmartPtrã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
 template<class U, class V>
 inline bool can_cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
 	return a->is(get_cpp_class<U>());
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒBaseã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline bool can_cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return a->is(get_cpp_class<U>());
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline bool can_cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
 	return a->is(get_cpp_class<U>());
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚„Baseã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline bool can_cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return a->is(get_cpp_class<U>());
@@ -113,25 +113,25 @@ inline bool can_cast_helper_helper(const AnyPtr& a, const void*, const U*){
 
 /////////////////////////////////////////////////////////////////////////////
 
-// å¤‰æ›å¾Œã®å‹ãŒSmartPtrã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
 template<class U, class V>
 inline const void* nocheck_cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
 	return &a;
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒBaseã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* nocheck_cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return pvalue(a);
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚’ç¶™æ‰¿ã—ãŸå‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* nocheck_cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
 	return &a;
 }
 
-// å¤‰æ›å¾Œã®å‹ãŒInnocenceã‚„Baseã‚’ç¶™æ‰¿ã—ã¦ã„ãªã„å‹ã®å ´åˆ
+// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline const void* nocheck_cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return ((SmartPtr<U>&)a).get();
@@ -144,7 +144,7 @@ inline const void* nocheck_cast_helper_helper(const AnyPtr& a, const void*, cons
 template<class T>
 struct CastHelper{
 
-	// å¤‰æ›å¾Œã®å‹ãŒãƒã‚¤ãƒ³ã‚¿ã®å ´åˆ
+	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
 	template<class U> static T as_inner(const AnyPtr& a, U* (*)()){ 
 		return (T)as_helper_helper(a, (U*)0, (U*)0); }
 		
@@ -152,7 +152,7 @@ struct CastHelper{
 		return (T)cast_helper_helper(a, (U*)0, (U*)0); }	
 		
 	
-	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã®å ´åˆã€ãƒã‚¤ãƒ³ã‚¿å‹ã¨ã—ã¦ã‚­ãƒ£ã‚¹ãƒˆã—ãŸã‚ã¨å‚ç…§ã«ã™ã‚‹
+	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆQÆ‚É‚·‚é
 	template<class U> static T as_inner(const AnyPtr& a, U& (*)()){ 
 		if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
 		
@@ -160,7 +160,7 @@ struct CastHelper{
 		return *xtal::cast<U*>(a); }
 		
 
-	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã§ã‚‚ãƒã‚¤ãƒ³ã‚¿ã§ã‚‚ãªã„å ´åˆã€ãƒã‚¤ãƒ³ã‚¿å‹ã¨ã—ã¦ã‚­ãƒ£ã‚¹ãƒˆã—ãŸã‚ã¨å®Ÿä½“ã«ã™ã‚‹
+	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Å‚àƒ|ƒCƒ“ƒ^‚Å‚à‚È‚¢ê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆÀ‘Ì‚É‚·‚é
 	static T as_inner(const AnyPtr& a, ...){ 
 		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
 		
@@ -182,7 +182,7 @@ struct CastHelper{
 template<class T>
 struct CastHelper{
 
-	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã§ã‚‚ãƒã‚¤ãƒ³ã‚¿ã§ã‚‚ãªã„å ´åˆã€ãƒã‚¤ãƒ³ã‚¿å‹ã¨ã—ã¦ã‚­ãƒ£ã‚¹ãƒˆã—ãŸã‚ã¨å®Ÿä½“ã«ã™ã‚‹
+	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Å‚àƒ|ƒCƒ“ƒ^‚Å‚à‚È‚¢ê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆÀ‘Ì‚É‚·‚é
 	static T as(const AnyPtr& a){ 
 		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
 		
@@ -199,7 +199,7 @@ struct CastHelper{
 template<class T>
 struct CastHelper<T*>{
 
-	// å¤‰æ›å¾Œã®å‹ãŒãƒã‚¤ãƒ³ã‚¿ã®å ´åˆ
+	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
 	static T* as(const AnyPtr& a){ 
 		return (T*)as_helper_helper(a, (T*)0, (T*)0); }
 		
@@ -216,7 +216,7 @@ struct CastHelper<T*>{
 template<class T>
 struct CastHelper<T&>{
 	
-	// å¤‰æ›å¾Œã®å‹ãŒå‚ç…§ã®å ´åˆã€ãƒã‚¤ãƒ³ã‚¿å‹ã¨ã—ã¦ã‚­ãƒ£ã‚¹ãƒˆã—ãŸã‚ã¨å‚ç…§ã«ã™ã‚‹
+	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆQÆ‚É‚·‚é
 	static T& as(const AnyPtr& a){ 
 		if(T* ret = xtal::as<T*>(a)){ return *ret; }else{ return *(T*)&null;} }
 		
@@ -236,12 +236,12 @@ struct CastHelper<T&>{
 //////////////////////////////////////////////////////////////////////////////
 
 /**
-* @brief Tå‹ã«å¤‰æ›ã™ã‚‹ã€‚
+* @brief TŒ^‚É•ÏŠ·‚·‚éB
 *
-* Tã«å¤‰æ›ã§ããªã„å ´åˆã€
-* TãŒãƒã‚¤ãƒ³ã‚¿å‹ãªã‚‰NULLã‚’è¿”ã™ã€‚
-* TãŒå€¤ã‹å‚ç…§ã§ã€AnyPtrã‚’ç¶™æ‰¿ã—ãŸå‹ãªã‚‰xtal::nullã‚’è¿”ã™ã€‚
-* ãã‚Œä»¥å¤–ã®å‹ã®å ´åˆã¯æœªå®šç¾©ã€‚
+* T‚É•ÏŠ·‚Å‚«‚È‚¢ê‡A
+* T‚ªƒ|ƒCƒ“ƒ^Œ^‚È‚çNULL‚ğ•Ô‚·B
+* T‚ª’l‚©QÆ‚ÅAAnyPtr‚ğŒp³‚µ‚½Œ^‚È‚çxtal::null‚ğ•Ô‚·B
+* ‚»‚êˆÈŠO‚ÌŒ^‚Ìê‡‚Í–¢’è‹`B
 */
 template<class T> 
 inline typename CastResult<T>::type 
@@ -250,9 +250,9 @@ as(const AnyPtr& a){
 }
 
 /**
-* @brief Tå‹ã«å¤‰æ›ã™ã‚‹ã€‚
+* @brief TŒ^‚É•ÏŠ·‚·‚éB
 *
-* Tå‹ã«å¤‰æ›ã§ããªã„å ´åˆã€builtin()->member("CastError")ãŒæŠ•ã’ã‚‰ã‚Œã‚‹
+* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin()->member("CastError")‚ª“Š‚°‚ç‚ê‚é
 */
 template<class T>
 inline typename CastResult<T>::type 
@@ -261,7 +261,7 @@ cast(const AnyPtr& a){
 }
 
 /**
-* @brief Tå‹ã«å¤‰æ›ã§ãã‚‹ã‹èª¿ã¹ã‚‹ã€‚
+* @brief TŒ^‚É•ÏŠ·‚Å‚«‚é‚©’²‚×‚éB
 *
 */
 template<class T>
@@ -271,7 +271,7 @@ can_cast(const AnyPtr& a){
 }
 
 /**
-* @brief Tå‹ã«ãƒã‚§ãƒƒã‚¯ç„¡ã—ã§å¤‰æ›ã™ã‚‹ã€‚
+* @brief TŒ^‚Éƒ`ƒFƒbƒN–³‚µ‚Å•ÏŠ·‚·‚éB
 *
 */
 template<class T>
@@ -281,9 +281,9 @@ nocheck_cast(const AnyPtr& a){
 }
 
 /**
-* @brief SmartPtr<T>å‹ã«å¤‰æ›ã™ã‚‹ã€‚
+* @brief SmartPtr<T>Œ^‚É•ÏŠ·‚·‚éB
 *
-* Tã«å¤‰æ›ã§ããªã„å ´åˆxtal::nullã‚’è¿”ã™ã€‚
+* T‚É•ÏŠ·‚Å‚«‚È‚¢ê‡xtal::null‚ğ•Ô‚·B
 */
 template<class T> 
 inline const SmartPtr<T>&
@@ -292,9 +292,9 @@ ptr_as(const AnyPtr& a){
 }
 
 /**
-* @brief SmartPtr<T>å‹ã«å¤‰æ›ã™ã‚‹ã€‚
+* @brief SmartPtr<T>Œ^‚É•ÏŠ·‚·‚éB
 *
-* Tå‹ã«å¤‰æ›ã§ããªã„å ´åˆã€builtin()->member("CastError")ãŒæŠ•ã’ã‚‰ã‚Œã‚‹
+* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin()->member("CastError")‚ª“Š‚°‚ç‚ê‚é
 */
 template<class T>
 inline const SmartPtr<T>&
@@ -303,7 +303,7 @@ ptr_cast(const AnyPtr& a){
 }
 
 /**
-* @brief SmartPtr<T>å‹ã«ã€å®Ÿéš›ã®å‹ãŒã©ã†ã§ã‚ã‚‹ã‹ã‚’ç„¡è¦–ã—ã¦å¼·åˆ¶å¤‰æ›ã™ã‚‹ã€‚
+* @brief SmartPtr<T>Œ^‚ÉAÀÛ‚ÌŒ^‚ª‚Ç‚¤‚Å‚ ‚é‚©‚ğ–³‹‚µ‚Ä‹­§•ÏŠ·‚·‚éB
 */
 template<class T>
 inline const SmartPtr<T>&

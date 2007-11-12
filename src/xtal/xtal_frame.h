@@ -105,7 +105,7 @@ public:
 public:
 	
 	/**
-	* @brief 外側のスコープを表すFrameオブジェクトを返す。
+	* @brief $B30B&$N%9%3!<%W$rI=$9(BFrame$B%*%V%8%'%/%H$rJV$9!#(B
 	*
 	*/
 	const FramePtr& outer(){ 
@@ -117,7 +117,7 @@ public:
 	}
 
 	/**
-	* @brief リテラル時に定義された要素の数を返す。
+	* @brief $B%j%F%i%k;~$KDj5A$5$l$?MWAG$N?t$rJV$9!#(B
 	*
 	*/
 	int_t block_size(){ 
@@ -125,7 +125,7 @@ public:
 	}
 
 	/**
-	* @brief i番目のメンバーをダイレクトに取得。
+	* @brief i$BHVL\$N%a%s%P!<$r%@%$%l%/%H$K<hF@!#(B
 	*
 	*/
 	const AnyPtr& member_direct(int_t i){
@@ -133,7 +133,7 @@ public:
 	}
 
 	/**
-	* @brief i番目のメンバーをダイレクトに設定。
+	* @brief i$BHVL\$N%a%s%P!<$r%@%$%l%/%H$K@_Dj!#(B
 	*
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
@@ -149,7 +149,7 @@ public:
 public:
 
 	/**
-	* @brief メンバが格納された、Iteratorを返す
+	* @brief $B%a%s%P$,3JG<$5$l$?!"(BIterator$B$rJV$9(B
 	*
 	* @code
 	* Xfor2(key, value, frame.members()){
@@ -222,66 +222,66 @@ public:
 public:
 	
 	/**
-	* @brief 新しいメンバを定義する
+	* @brief $B?7$7$$%a%s%P$rDj5A$9$k(B
 	*
-	* @param name 新しく定義するメンバの名前
+	* @param name $B?7$7$/Dj5A$9$k%a%s%P$NL>A0(B
 	*/
 	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	/**
-	* @brief メンバを取り出す
-	* 可触性を考慮して取り出す
+	* @brief $B%a%s%P$r<h$j=P$9(B
+	* $B2D?(@-$r9MN8$7$F<h$j=P$9(B
 	*
-	* @param name 取り出したいメンバの名前
-	* @param self 可視性を判定するためのオブジェクト
+	* @param name $B<h$j=P$7$?$$%a%s%P$NL>A0(B
+	* @param self $B2D;k@-$rH=Dj$9$k$?$a$N%*%V%8%'%/%H(B
 	*/
 	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	/**
-	* @brief メンバを再設定する
-	* Xtalレベルでは禁止されている操作だが、C++レベルでは可能にしておく
+	* @brief $B%a%s%P$r:F@_Dj$9$k(B
+	* Xtal$B%l%Y%k$G$O6X;_$5$l$F$$$kA`:n$@$,!"(BC++$B%l%Y%k$G$O2DG=$K$7$F$*$/(B
 	*
-	* @param name 再設定したいメンバの名前
+	* @param name $B:F@_Dj$7$?$$%a%s%P$NL>A0(B
 	*/
 	void set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
-	* @brief Mix-inする
+	* @brief Mix-in$B$9$k(B
 	*
-	* @param md Mix-inするクラスオブジェクト
+	* @param md Mix-in$B$9$k%/%i%9%*%V%8%'%/%H(B
 	*/
 	void inherit(const ClassPtr& md);
 
 	/**
-	* @brief Mix-inする
+	* @brief Mix-in$B$9$k(B
 	*
-	* @param md Mix-inするクラスオブジェクト
+	* @param md Mix-in$B$9$k%/%i%9%*%V%8%'%/%H(B
 	*/
 	void inherit_strict(const ClassPtr& md);
 
 	/**
-	* @brief Mix-inされているか調べる
+	* @brief Mix-in$B$5$l$F$$$k$+D4$Y$k(B
 	*
-	* @param md Mix-inされている調べたいクラスオブジェクト
+	* @param md Mix-in$B$5$l$F$$$kD4$Y$?$$%/%i%9%*%V%8%'%/%H(B
 	*/
 	bool is_inherited(const AnyPtr& md);
 
 	/**
-	* @brief C++のクラスがMix-inされているか調べる
+	* @brief C++$B$N%/%i%9$,(BMix-in$B$5$l$F$$$k$+D4$Y$k(B
 	*
 	*/
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief Mix-inされているクラスのIteratorを返す
+	* @brief Mix-in$B$5$l$F$$$k%/%i%9$N(BIterator$B$rJV$9(B
 	*
 	*/
 	AnyPtr inherited_classes();
 
 	/**
-	* @brief 関数を定義する
+	* @brief $B4X?t$rDj5A$9$k(B
 	*
-	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
+	* cls->fun("name", &foo); $B$O(B cls->def("name", xtal::fun(&foo)); $B$HF10l(B
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -289,9 +289,9 @@ public:
 	}
 
 	/**
-	* @brief 関数を定義する
+	* @brief $B4X?t$rDj5A$9$k(B
 	*
-	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
+	* cls->fun("name", &foo); $B$O(B cls->def("name", xtal::fun(&foo)); $B$HF10l(B
 	*/
 	template<class Fun>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -299,9 +299,9 @@ public:
 	}
 
 	/**
-	* @brief 関数を定義する
+	* @brief $B4X?t$rDj5A$9$k(B
 	*
-	* cls->method("name", &foo); は cls->def("name", xtal::method(&foo)); と同一
+	* cls->method("name", &foo); $B$O(B cls->def("name", xtal::method(&foo)); $B$HF10l(B
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -309,9 +309,9 @@ public:
 	}
 
 	/**
-	* @brief 関数を定義する
+	* @brief $B4X?t$rDj5A$9$k(B
 	*
-	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
+	* cls->method("name", &Klass::foo); $B$O(B cls->def("name", xtal::method(&Klass::foo)); $B$HF10l(B
 	*/
 	template<class Fun>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -320,7 +320,7 @@ public:
 
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<$r@8@.$7!"Dj5A$9$k(B
 	*
 	*/
 	template<class T, class U, class Policy>
@@ -329,10 +329,10 @@ public:
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%;%C%?!<$r@8@.$7!"Dj5A$9$k(B
 	*
-	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
-	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
+	* Xtal$B$G$O!"(Bobj.name = 10; $B$H$9$k$K$O(Bset_name$B$H(Bset_$B$rA0CV$7$?%a%=%C%I$rDj5A$9$kI,MW$,$"$k$?$a!"(B
+	* $BC1=c$J%;%C%?!<$rDj5A$7$?$$>l9g!"(Bset_xxx$B$H$9$k$3$H$rK:$l$J$$$3$H!#(B
 	*/
 	template<class T, class U, class Policy>
 	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -340,11 +340,11 @@ public:
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<!"%;%C%?!<$rN>J}@8@.$7!"Dj5A$9$k(B
 	*
 	* cls->getter(name, var, policy);
 	* cls->setter(StringPtr("set_")->cat(name), v, policy);
-	* と等しい	
+	* $B$HEy$7$$(B	
 	*/	
 	template<class T, class U, class Policy>
 	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -353,7 +353,7 @@ public:
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<$r@8@.$7!"Dj5A$9$k(B
 	*
 	*/
 	template<class T, class U>
@@ -362,7 +362,7 @@ public:
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%;%C%?!<$r@8@.$7!"Dj5A$9$k(B
 	*
 	*/
 	template<class T, class U>
@@ -371,11 +371,11 @@ public:
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<!"%;%C%?!<$rN>J}@8@.$7!"Dj5A$9$k(B
 	*
 	* cls->getter(name, v);
 	* cls->setter(StringPtr("set_")->cat(name), v);
-	* と等しい	
+	* $B$HEy$7$$(B	
 	*/	
 	template<class T, class U>
 	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -383,14 +383,14 @@ public:
 	}
 
 	/**
-	* @brief 2重ディスパッチメソッドを定義する。
+	* @brief 2$B=E%G%#%9%Q%C%A%a%=%C%I$rDj5A$9$k!#(B
 	*/
 	void dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
 		def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
 	}
 
 	/**
-	* @brief 2重ディスパッチ関数を定義する。
+	* @brief 2$B=E%G%#%9%Q%C%A4X?t$rDj5A$9$k!#(B
 	*/
 	void dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
 		def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
@@ -498,7 +498,7 @@ public:
 
 	void init_singleton(const VMachinePtr& vm);
 
-	// クラスの設定はスルーする
+	// $B%/%i%9$N@_Dj$O%9%k!<$9$k(B
 	void set_class(const ClassPtr&){}
 
 	virtual void call(const VMachinePtr& vm);
@@ -516,7 +516,7 @@ struct CppClassHolderList{
 void chain_cpp_class(CppClassHolderList& link);
 const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const char* name);
 
-// C++のクラスの保持のためのクラス
+// C++$B$N%/%i%9$NJ];}$N$?$a$N%/%i%9(B
 template<class T>
 struct CppClassHolder{
 	static CppClassHolderList value;

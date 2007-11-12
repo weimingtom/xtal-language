@@ -7,60 +7,60 @@ namespace xtal{
 /*@{*/
 
 /**
-* @brief ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒç™»éŒ²ã—ãŸãƒ¡ãƒ¢ãƒªã‚¢ãƒ­ã‚±ãƒ¼ãƒˆé–¢æ•°ã‚’ä½¿ã£ã¦ãƒ¡ãƒ¢ãƒªç¢ºä¿ã™ã‚‹ã€‚
+* @brief ƒ†[ƒU[‚ª“o˜^‚µ‚½ƒƒ‚ƒŠƒAƒƒP[ƒgŠÖ”‚ğg‚Á‚Äƒƒ‚ƒŠŠm•Û‚·‚éB
 *
-* ãƒ¡ãƒ¢ãƒªç¢ºä¿å¤±æ•—ã¯ä¾‹å¤–ã§è¿”ã•ã‚Œã‚‹ã€‚
+* ƒƒ‚ƒŠŠm•Û¸”s‚Í—áŠO‚Å•Ô‚³‚ê‚éB
 */
 void* user_malloc(size_t size);
 
 /**
-* @brief ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒç™»éŒ²ã—ãŸãƒ¡ãƒ¢ãƒªã‚¢ãƒ­ã‚±ãƒ¼ãƒˆé–¢æ•°ã‚’ä½¿ã£ã¦ãƒ¡ãƒ¢ãƒªç¢ºä¿ã™ã‚‹ã€‚
+* @brief ƒ†[ƒU[‚ª“o˜^‚µ‚½ƒƒ‚ƒŠƒAƒƒP[ƒgŠÖ”‚ğg‚Á‚Äƒƒ‚ƒŠŠm•Û‚·‚éB
 *
-* ãƒ¡ãƒ¢ãƒªç¢ºä¿å¤±æ•—ã¯NULLå€¤ã§è¿”ã•ã‚Œã‚‹ã€‚
+* ƒƒ‚ƒŠŠm•Û¸”s‚ÍNULL’l‚Å•Ô‚³‚ê‚éB
 */
 void* user_malloc_nothrow(size_t size);
 
 /**
-* @brief ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒç™»éŒ²ã—ãŸãƒ¡ãƒ¢ãƒªãƒ‡ã‚¢ãƒ­ã‚±ãƒ¼ãƒˆé–¢æ•°ã‚’ä½¿ã£ã¦ãƒ¡ãƒ¢ãƒªè§£æ”¾ã™ã‚‹ã€‚
+* @brief ƒ†[ƒU[‚ª“o˜^‚µ‚½ƒƒ‚ƒŠƒfƒAƒƒP[ƒgŠÖ”‚ğg‚Á‚Äƒƒ‚ƒŠ‰ğ•ú‚·‚éB
 *
 */
 void user_free(void* p);
 
 /**
-* @brief ä½¿ç”¨ã™ã‚‹ãƒ¡ãƒ¢ãƒªã‚¢ãƒ­ã‚±ãƒ¼ãƒˆé–¢æ•°ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief g—p‚·‚éƒƒ‚ƒŠƒAƒƒP[ƒgŠÖ”‚ğİ’è‚·‚éB
 *
 */
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 
 
 /**
-* @brief xtalã§ä½¿ç”¨ã™ã‚‹ãƒ¡ãƒ¢ãƒªãƒ¼ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief xtal‚Åg—p‚·‚éƒƒ‚ƒŠ[‚ğİ’è‚·‚éB
 *
 */
 void set_memory(void* memory, size_t size);
 
 /**
-* @brief å‹•çš„ãªãƒã‚¤ãƒ³ã‚¿ã®é…åˆ—ã‚’ä½œæˆã€æ‹¡å¼µã™ã‚‹é–¢æ•°ã€‚
+* @brief “®“I‚Èƒ|ƒCƒ“ƒ^‚Ì”z—ñ‚ğì¬AŠg’£‚·‚éŠÖ”B
 *
-* ä¸€ç•ªæœ€åˆã®ä½œæˆæ™‚ã¯ã€å¼•æ•°å…¨ã¦ãŒnullã§ã‚ã‚‹å¿…è¦ãŒã‚ã‚‹ã€‚
-* @param begin ãƒ¡ãƒ¢ãƒªã®å…ˆé ­
-* @param end ãƒ¡ãƒ¢ãƒªã®æœ€å¾Œã®ä¸€ã¤æ¬¡
-* @param current ä½¿ç”¨ä¸­ã®è¦ç´ ã®ä¸€ã¤æ¬¡
+* ˆê”ÔÅ‰‚Ìì¬‚ÍAˆø”‘S‚Ä‚ªnull‚Å‚ ‚é•K—v‚ª‚ ‚éB
+* @param begin ƒƒ‚ƒŠ‚Ìæ“ª
+* @param end ƒƒ‚ƒŠ‚ÌÅŒã‚Ìˆê‚ÂŸ
+* @param current g—p’†‚Ì—v‘f‚Ìˆê‚ÂŸ
 */
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize=1024);
 
 /**
-* @brief expand_simple_dynamic_pointer_arrayã§ç”Ÿæˆã—ãŸé…åˆ—ã‚’ã€ä½¿ã‚ã‚Œã¦ã„ã‚‹å®Ÿéš›ã®ã‚µã‚¤ã‚ºã¾ã§ç¸®å°ã™ã‚‹ã€‚
+* @brief expand_simple_dynamic_pointer_array‚Å¶¬‚µ‚½”z—ñ‚ğAg‚í‚ê‚Ä‚¢‚éÀÛ‚ÌƒTƒCƒY‚Ü‚Åk¬‚·‚éB
 *
-* è¦ç´ ãŒä¸€ã¤ã‚‚ç„¡ã„ãªã‚‰(current==beginãªã‚‰)å®Œå…¨ã«è§£æ”¾ã•ã‚Œã‚‹ã€‚
-* @param begin ãƒ¡ãƒ¢ãƒªã®å…ˆé ­
-* @param end ãƒ¡ãƒ¢ãƒªã®æœ€å¾Œã®ä¸€ã¤æ¬¡
-* @param current ä½¿ç”¨ä¸­ã®è¦ç´ ã®ä¸€ã¤æ¬¡
+* —v‘f‚ªˆê‚Â‚à–³‚¢‚È‚ç(current==begin‚È‚ç)Š®‘S‚É‰ğ•ú‚³‚ê‚éB
+* @param begin ƒƒ‚ƒŠ‚Ìæ“ª
+* @param end ƒƒ‚ƒŠ‚ÌÅŒã‚Ìˆê‚ÂŸ
+* @param current g—p’†‚Ì—v‘f‚Ìˆê‚ÂŸ
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
 
 /**
-* @brief user_malloc, user_freeã‚’ä½¿ã†ã€STLã®è¦ä»¶ã«é©åˆã—ãŸã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ã‚¯ãƒ©ã‚¹ã€‚
+* @brief user_malloc, user_free‚ğg‚¤ASTL‚Ì—vŒ‚É“K‡‚µ‚½ƒAƒƒP[ƒ^ƒNƒ‰ƒXB
 *
 */
 template<class T>
@@ -151,13 +151,13 @@ namespace detail{
 
 
 /**
-* Allocã‚¯ãƒ©ã‚¹ã‚’ä½¿ã£ãŸSTLã‚³ãƒ³ãƒ†ãƒŠã‚’ä½¿ã„ã‚„ã™ãã™ã‚‹ãŸã‚ã®ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£
+* AllocƒNƒ‰ƒX‚ğg‚Á‚½STLƒRƒ“ƒeƒi‚ğg‚¢‚â‚·‚­‚·‚é‚½‚ß‚Ìƒ†[ƒeƒBƒŠƒeƒB
 * 
-* Alloc-Container ã®ç•¥
+* Alloc-Container ‚Ì—ª
 * 
-* AC<int>::vector ã¯ std::vector<int, Alloc<int> > ã¨åŒã˜
-* AC<int, float>::map ã¯ std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > ã¨åŒã˜
-* AC<int, float, Comp>::map ã¯ std::map<int, float, Comp, Alloc<std::pair<const int, float> > > ã¨åŒã˜
+* AC<int>::vector ‚Í std::vector<int, Alloc<int> > ‚Æ“¯‚¶
+* AC<int, float>::map ‚Í std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > ‚Æ“¯‚¶
+* AC<int, float, Comp>::map ‚Í std::map<int, float, Comp, Alloc<std::pair<const int, float> > > ‚Æ“¯‚¶
 */
 template<class FIRST, class SECOND = detail::AC_default, class THIRD = detail::AC_default>
 struct AC{
@@ -183,7 +183,7 @@ struct AC{
 };
 
 /**
-* @brief ã¨ã¦ã‚‚ã‚·ãƒ³ãƒ—ãƒ«ãªãƒ¡ãƒ¢ãƒªç®¡ç†æ©Ÿæ§‹
+* @brief ‚Æ‚Ä‚àƒVƒ“ƒvƒ‹‚Èƒƒ‚ƒŠŠÇ—‹@\
 *
 */
 class SimpleMemoryManager{

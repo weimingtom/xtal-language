@@ -4,14 +4,14 @@
 namespace xtal{
 
 /**
-* @brief é…åˆ—
+* @brief ”z—ñ
 *
 */
 class Array : public Base{
 public:
 
 	/**
-	* @brief sizeã®é•·ã•ã®é…åˆ—ã‚’ç”Ÿæˆã™ã‚‹ 
+	* @brief size‚Ì’·‚³‚Ì”z—ñ‚ğ¶¬‚·‚é 
 	*
 	*/
 	Array(int_t size = 0);
@@ -19,22 +19,22 @@ public:
 	Array(const AnyPtr* first, const AnyPtr* end);
 
 	/**
-	* @brief ã‚³ãƒ”ãƒ¼ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã‚’å‚™ãˆã‚‹
+	* @brief ƒRƒs[ƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ğ”õ‚¦‚é
 	*/
 	Array(const Array& v);
 
 	/**
-	* @brief ä»£å…¥æ¼”ç®—å­ã‚’å‚™ãˆã‚‹
+	* @brief ‘ã“ü‰‰Zq‚ğ”õ‚¦‚é
 	*/
 	Array& operator =(const Array& v);
 
 	/**
-	* @brief ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	* @brief ƒfƒXƒgƒ‰ƒNƒ^
 	*/
 	~Array();
 
 	/**
-	* @brief é…åˆ—ã®é•·ã•ã‚’è¿”ã™
+	* @brief ”z—ñ‚Ì’·‚³‚ğ•Ô‚·
 	*
 	*/
 	uint_t size(){
@@ -42,12 +42,12 @@ public:
 	}
 
 	/**
-	* @brief é…åˆ—ã®é•·ã•ã‚’å¤‰æ›´ã™ã‚‹
+	* @brief ”z—ñ‚Ì’·‚³‚ğ•ÏX‚·‚é
 	*/
 	void resize(int_t sz);
 
 	/**
-	* @brief é…åˆ—ã®é•·ã•ã‚’è¿”ã™
+	* @brief ”z—ñ‚Ì’·‚³‚ğ•Ô‚·
 	*
 	*/
 	uint_t length(){
@@ -55,7 +55,7 @@ public:
 	}
 
 	/**
-	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¿”ã™
+	* @brief i”Ô–Ú‚Ì—v‘f‚ğ•Ô‚·
 	*
 	*/
 	const AnyPtr& at(int_t i){
@@ -63,7 +63,7 @@ public:
 	}
 
 	/**
-	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¨­å®šã™ã‚‹
+	* @brief i”Ô–Ú‚Ì—v‘f‚ğİ’è‚·‚é
 	*
 	*/
 	void set_at(int_t i, const AnyPtr& v){
@@ -71,19 +71,19 @@ public:
 	}
 
 	/**
-	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¿”ã™
+	* @brief i”Ô–Ú‚Ì—v‘f‚ğ•Ô‚·
 	*
 	*/
 	const AnyPtr& op_at(int_t i);
 
 	/**
-	* @brief iç•ªç›®ã®è¦ç´ ã‚’è¨­å®šã™ã‚‹
+	* @brief i”Ô–Ú‚Ì—v‘f‚ğİ’è‚·‚é
 	*
 	*/
 	void op_set_at(int_t i, const AnyPtr& v);
 
 	/**
-	* @brief å…ˆé ­ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
+	* @brief æ“ª‚É—v‘f‚ğ’Ç‰Á‚·‚é
 	*
 	*/
 	void push_front(const AnyPtr& v){
@@ -91,7 +91,7 @@ public:
 	}
 
 	/**
-	* @brief å…ˆé ­ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
+	* @brief æ“ª‚Ì—v‘f‚ğíœ‚·‚é
 	*
 	*/
 	void pop_front(){
@@ -99,19 +99,19 @@ public:
 	}
 
 	/**
-	* @brief æœ«å°¾ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
+	* @brief ––”ö‚É—v‘f‚ğ’Ç‰Á‚·‚é
 	*
 	*/
 	void push_back(const AnyPtr& v);
 
 	/**
-	* @brief æœ«å°¾ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
+	* @brief ––”ö‚Ì—v‘f‚ğíœ‚·‚é
 	*
 	*/
 	void pop_back();
 
 	/**
-	* @brief å…ˆé ­ã®è¦ç´ ã‚’è¿”ã™
+	* @brief æ“ª‚Ì—v‘f‚ğ•Ô‚·
 	*
 	*/
 	const AnyPtr& front(){
@@ -119,7 +119,7 @@ public:
 	}
 
 	/**
-	* @brief æœ«å°¾ã®è¦ç´ ã‚’è¿”ã™
+	* @brief ––”ö‚Ì—v‘f‚ğ•Ô‚·
 	*
 	*/
 	const AnyPtr& back(){
@@ -127,68 +127,68 @@ public:
 	}
 
 	/**
-	* @brief iç•ªç›®ã‹ã‚‰nå€‹ã®éƒ¨åˆ†é…åˆ—ã‚’è¿”ã™
+	* @brief i”Ô–Ú‚©‚çnŒÂ‚Ì•”•ª”z—ñ‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr slice(int_t i, int_t n = 1);
 	
 	/**
-	* @brief indexã‹ã‚‰nå€‹ã®éƒ¨åˆ†é…åˆ—ã‚’å‰Šé™¤ã—ã€ãã®éƒ¨åˆ†é…åˆ—ã‚’è¿”ã™
+	* @brief index‚©‚çnŒÂ‚Ì•”•ª”z—ñ‚ğíœ‚µA‚»‚Ì•”•ª”z—ñ‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr splice(int_t i, int_t n = 1);
 
 	/**
-	* @brief iç•ªç›®ã®nå€‹ã®è¦ç´ ã‚’å‰Šé™¤ã™ã‚‹
+	* @brief i”Ô–Ú‚ÌnŒÂ‚Ì—v‘f‚ğíœ‚·‚é
 	*
 	*/
 	void erase(int_t i, int_t n = 1);
 
 	/**
-	* @brief iç•ªç›®ã«è¦ç´ ã‚’è¿½åŠ ã™ã‚‹
+	* @brief i”Ô–Ú‚É—v‘f‚ğ’Ç‰Á‚·‚é
 	*
 	*/
 	void insert(int_t i, const AnyPtr& v);
 
 	/**
-	* @brief é…åˆ—ã®è¦ç´ ã‚’é€†é †ã«ã™ã‚‹ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã‚’è¿”ã™
+	* @brief ”z—ñ‚Ì—v‘f‚ğ‹t‡‚É‚·‚éƒCƒeƒŒ[ƒ^‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr reverse();
 	
 	/**
-	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™
+	* @brief ó‚¢ƒRƒs[‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr clone();
 
 	/**
-	* @brief é€£çµã—ãŸé…åˆ—ã‚’è¿”ã™
+	* @brief ˜AŒ‹‚µ‚½”z—ñ‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr cat(const ArrayPtr& a);
 
 	/**
-	* @brief è‡ªèº«ã‚’é€£çµã—ã€è‡ªèº«ã‚’è¿”ã™
+	* @brief ©g‚ğ˜AŒ‹‚µA©g‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr cat_assign(const ArrayPtr& a);
 	
 	/**
-	* @brief è¦ç´ ã‚’æ–‡å­—åˆ—ã¨ã—ã¦é€£çµã—ãŸçµæœã‚’è¿”ã™
+	* @brief —v‘f‚ğ•¶š—ñ‚Æ‚µ‚Ä˜AŒ‹‚µ‚½Œ‹‰Ê‚ğ•Ô‚·
 	*
-	* @param sep è¦ç´ ã¨è¦ç´ ã®åŒºåˆ‡ã‚Šæ–‡å­—åˆ—
+	* @param sep —v‘f‚Æ—v‘f‚Ì‹æØ‚è•¶š—ñ
 	*/
 	StringPtr join(const StringPtr& sep);
 
 	/**
-	* @brief ã“ã®é…åˆ—ã®æ–‡å­—åˆ—è¡¨ç¾ã‚’è¿”ã™
+	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
 	*
 	*/
 	StringPtr to_s();
 
 	/**
-	* @brief è‡ªèº«ã‚’è¿”ã™
+	* @brief ©g‚ğ•Ô‚·
 	*
 	*/
 	ArrayPtr to_a(){
@@ -198,7 +198,7 @@ public:
 	bool op_eq(const ArrayPtr& other);
 
 	/**
-	* @brief ç©ºã‹èª¿ã¹ã‚‹
+	* @brief ‹ó‚©’²‚×‚é
 	*
 	*/
 	bool empty(){
@@ -206,19 +206,19 @@ public:
 	}
 
 	/**
-	* @brief è¦ç´ ã‚’å…¨ã¦å‰Šé™¤ã™ã‚‹
+	* @brief —v‘f‚ğ‘S‚Äíœ‚·‚é
 	*
 	*/
 	void clear();
 
 	/**
-	* @brief è¦ç´ ã‚’æœ€åˆã‹ã‚‰æŒã¤Iteratorã‚’è¿”ã™
+	* @brief —v‘f‚ğÅ‰‚©‚ç‚ÂIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr each();
 
 	/**
-	* @brief ä¸­èº«ã‚’iteratorã§å–å¾—ã§ãã‚‹è¦ç´ ã«ç½®ãæ›ãˆã‚‹
+	* @brief ’†g‚ğiterator‚Åæ“¾‚Å‚«‚é—v‘f‚É’u‚«Š·‚¦‚é
 	*/
 	void assign(const AnyPtr& iterator);
 

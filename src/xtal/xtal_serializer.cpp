@@ -161,17 +161,17 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		else{
 			id = v->get_class()->object_name();
 
-			// serial_newã§ç©ºã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹ã‚³ãƒãƒ³ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚€
+			// serial_new‚Å‹óƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚éƒRƒ}ƒ“ƒh‚ğ–„‚ß‚Ş
 			stream_->put_u8(SERIAL_NEW);
 			check_id_and_throw(id);
-			inner_serialize(id); // ã‚¯ãƒ©ã‚¹ã®åå‰ã‚’åŸ‹ã‚è¾¼ã‚€
+			inner_serialize(id); // ƒNƒ‰ƒX‚Ì–¼‘O‚ğ–„‚ß‚Ş
 
-			// s_saveã§serializableãªã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å–ã‚Šå‡ºã—serializeã™ã‚‹
+			// s_save‚Åserializable‚ÈƒIƒuƒWƒFƒNƒg‚ğæ‚èo‚µserialize‚·‚é
 			inner_serialize(v->send(Xid(s_save)));
 		}
 	}
 	else{
-		// æ—¢ã«ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãªã®ã§å‚ç…§ä½ç½®ã ã‘ä¿å­˜ã™ã‚‹
+		// Šù‚É•Û‘¶‚³‚ê‚Ä‚¢‚éƒIƒuƒWƒFƒNƒg‚È‚Ì‚ÅQÆˆÊ’u‚¾‚¯•Û‘¶‚·‚é
 		stream_->put_u8(REF);
 		stream_->put_u32be(num);
 	}
@@ -185,12 +185,12 @@ AnyPtr Serializer::inner_deserialize(){
 		XTAL_CASE(SERIAL_NEW){
 			int_t num = append_value(null);
 
-			// serial_newã‚’ã™ã‚‹ã‚¯ãƒ©ã‚¹ã‚’å–ã‚Šå‡ºã™
+			// serial_new‚ğ‚·‚éƒNƒ‰ƒX‚ğæ‚èo‚·
 			ClassPtr c(cast<ClassPtr>(demangle(inner_deserialize())));
 
 			const VMachinePtr& vm = vmachine();
 
-			// serial_newã‚’å‘¼ã³å‡ºã—ã¦ã€ä¿å­˜ã—ã¦ãŠã
+			// serial_new‚ğŒÄ‚Ño‚µ‚ÄA•Û‘¶‚µ‚Ä‚¨‚­
 			vm->setup_call(1);
 			c->s_new(vm);
 			AnyPtr ret = vm->result();

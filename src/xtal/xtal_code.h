@@ -9,7 +9,7 @@ public:
 	Code();
 
 	/**
-	* @brief ã‚³ãƒ¼ãƒ‰ã«å¯¾å¿œã—ãŸã‚½ãƒ¼ã‚¹è¡Œæ•°ã‚’è¿”ã™ã€‚
+	* @brief ƒR[ƒh‚É‘Î‰‚µ‚½ƒ\[ƒXs”‚ğ•Ô‚·B
 	*/
 	int_t compliant_lineno(const inst_t* p);
 		
@@ -24,7 +24,7 @@ public:
 	}
 
 	/**
-	* @brief ã‚·ãƒ³ãƒœãƒ«ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰iç•ªç›®ã®ã‚·ãƒ³ãƒœãƒ«ã‚’å–ã‚Šå‡ºã™ã€‚
+	* @brief ƒVƒ“ƒ{ƒ‹ƒe[ƒuƒ‹‚©‚çi”Ô–Ú‚ÌƒVƒ“ƒ{ƒ‹‚ğæ‚èo‚·B
 	*/
 	const IDPtr& identifier(int_t i){
 		XTAL_ASSERT(i<(int_t)identifier_table_->size());
@@ -32,7 +32,7 @@ public:
 	}
 
 	/**
-	* @brief å€¤ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰iç•ªç›®ã®å€¤ã‚’å–ã‚Šå‡ºã™ã€‚
+	* @brief ’lƒe[ƒuƒ‹‚©‚çi”Ô–Ú‚Ì’l‚ğæ‚èo‚·B
 	*/
 	const AnyPtr& value(int_t i){
 		XTAL_ASSERT(i<(int_t)value_table_->size());
@@ -40,7 +40,7 @@ public:
 	}
 
 	/**
-	* @brief onceãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰iç•ªç›®ã®å€¤ã‚’å–ã‚Šå‡ºã™ã€‚
+	* @brief onceƒe[ƒuƒ‹‚©‚çi”Ô–Ú‚Ì’l‚ğæ‚èo‚·B
 	*/
 	const AnyPtr& once_value(int_t i){
 		XTAL_ASSERT(i<(int_t)once_table_->size());
@@ -48,7 +48,7 @@ public:
 	}
 
 	/**
-	* @brief onceãƒ†ãƒ¼ãƒ–ãƒ«ã®iç•ªç›®ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+	* @brief onceƒe[ƒuƒ‹‚Ìi”Ô–Ú‚É’l‚ğİ’è‚·‚éB
 	*/
 	void set_once_value(int_t i, const AnyPtr& v){
 		XTAL_ASSERT(i<(int_t)once_table_->size());

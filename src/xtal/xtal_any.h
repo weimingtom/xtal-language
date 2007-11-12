@@ -4,9 +4,9 @@
 namespace xtal{
 
 /**
-* @brief ã‚¤ãƒã‚»ãƒ³ã‚¹
+* @brief ƒCƒmƒZƒ“ƒX
 *
-* ä¸€èˆ¬ãƒ¦ãƒ¼ã‚¶ãƒ¼ã¯ã“ã‚Œã‚’ç›´æ¥ä½¿ç”¨ã™ã‚‹ã“ã¨ã¯ç„¡ã„
+* ˆê”Êƒ†[ƒU[‚Í‚±‚ê‚ğ’¼Úg—p‚·‚é‚±‚Æ‚Í–³‚¢
 */
 class Innocence{
 public:
@@ -191,7 +191,7 @@ inline void copy_innocence(Innocence& v, const Innocence& u){
 class Any : public Innocence{
 protected:
 
-	// ç›´æ¥ Anyã‚’ä½œã‚‹ã“ã¨ã¯å‡ºæ¥ãªã„
+	// ’¼Ú Any‚ğì‚é‚±‚Æ‚Ío—ˆ‚È‚¢
 
 	Any(){}
 		
@@ -204,118 +204,118 @@ protected:
 public:
 
 	/**
-	* @brief é–¢æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã¨ã¿ãªã—ã€é–¢æ•°å‘¼ã³å‡ºã—ã‚’ã™ã‚‹ã€‚
+	* @brief ŠÖ”ƒIƒuƒWƒFƒNƒg‚Æ‚İ‚È‚µAŠÖ”ŒÄ‚Ño‚µ‚ğ‚·‚éB
 	*
-	* å¼•æ•°ã‚„æˆ»ã‚Šå€¤ã¯vmã‚’é€šã—ã¦ã‚„ã‚Šå–ã‚Šã™ã‚‹ã€‚
+	* ˆø”‚â–ß‚è’l‚Ívm‚ğ’Ê‚µ‚Ä‚â‚èæ‚è‚·‚éB
 	*/
 	void call(const VMachinePtr& vm) const;
 	
 	/**
-	* @brief nameãƒ¡ã‚½ãƒƒãƒ‰å‘¼ã³å‡ºã—ã‚’ã™ã‚‹
+	* @brief nameƒƒ\ƒbƒhŒÄ‚Ño‚µ‚ğ‚·‚é
 	*
-	* å¼•æ•°ã‚„æˆ»ã‚Šå€¤ã¯vmã‚’é€šã—ã¦ã‚„ã‚Šå–ã‚Šã™ã‚‹ã€‚
+	* ˆø”‚â–ß‚è’l‚Ívm‚ğ’Ê‚µ‚Ä‚â‚èæ‚è‚·‚éB
 	*/
 	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
 	/**
-	* @brief nameãƒ¡ãƒ³ãƒã‚’å–å¾—ã™ã‚‹ã€‚
-	* å¯è§¦æ€§ã‚’è€ƒæ…®ã—ãŸãƒ¡ãƒ³ãƒå–å¾—
+	* @brief nameƒƒ“ƒo‚ğæ“¾‚·‚éB
+	* ‰ÂG«‚ğl—¶‚µ‚½ƒƒ“ƒoæ“¾
 	*
-	* @retval undefined ãã®ãƒ¡ãƒ³ãƒã¯å­˜åœ¨ã—ãªã„
-	* @retval éundefined nameã«å¯¾å¿œã—ãŸãƒ¡ãƒ³ãƒ  
+	* @retval undefined ‚»‚Ìƒƒ“ƒo‚Í‘¶İ‚µ‚È‚¢
+	* @retval ”ñundefined name‚É‘Î‰‚µ‚½ƒƒ“ƒo  
 	*/
 	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
 	/**
-	* @brief nameãƒ¡ãƒ³ãƒã‚’åˆæœŸå€¤valueã§å®šç¾©ã™ã‚‹ã€‚
+	* @brief nameƒƒ“ƒo‚ğ‰Šú’lvalue‚Å’è‹`‚·‚éB
 	*
 	*/
 	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0) const;
 
 	/**
-	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒæ‰€å±ã™ã‚‹ã‚¯ãƒ©ã‚¹ã‚’è¿”ã™ã€‚
+	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚ªŠ‘®‚·‚éƒNƒ‰ƒX‚ğ•Ô‚·B
 	*
 	*/
 	const ClassPtr& get_class() const;
 
 	/**
-	* @brief æ•´æ•°ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
+	* @brief ®”‚É•ÏŠ·‚µ‚Ä•Ô‚·B
 	*
 	*/
 	int_t to_i() const;
 	
 	/**
-	* @brief æµ®å‹•å°æ•°ç‚¹æ•°ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
+	* @brief •‚“®¬”“_”‚É•ÏŠ·‚µ‚Ä•Ô‚·B
 	*
 	*/
 	float_t to_f() const;
 	
 	/**
-	* @brief æ–‡å­—åˆ—ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
+	* @brief •¶š—ñ‚É•ÏŠ·‚µ‚Ä•Ô‚·B
 	*
 	*/
 	StringPtr to_s() const;
 
 	/**
-	* @brief é…åˆ—ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
+	* @brief ”z—ñ‚É•ÏŠ·‚µ‚Ä•Ô‚·B
 	*
 	*/
 	ArrayPtr to_a() const;
 
 	/**
-	* @brief é€£æƒ³é…åˆ—ã«å¤‰æ›ã—ã¦è¿”ã™ã€‚
+	* @brief ˜A‘z”z—ñ‚É•ÏŠ·‚µ‚Ä•Ô‚·B
 	*
 	*/
 	MapPtr to_m() const;
 	
 	/**
-	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã‚’è¿”ã™ã€‚
+	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É•t‚¯‚ç‚ê‚½–¼‘O‚ğ•Ô‚·B
 	*
 	*/
 	StringPtr object_name() const;
 
 	/**
-	* @brief klassã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‹èª¿ã¹ã‚‹ã€‚
+	* @brief klassƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚©’²‚×‚éB
 	*
 	*/
 	bool is(const AnyPtr& klass) const;
 		
 	/**
-	* @brief klassã‚¯ãƒ©ã‚¹ã‚’ç¶™æ‰¿ã—ã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹
+	* @brief klassƒNƒ‰ƒX‚ğŒp³‚µ‚Ä‚¢‚é‚©’²‚×‚é
 	*
 	*/
 	bool is_inherited(const AnyPtr& klass) const;
 
 	/**
-	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã®å¼·ã•ã‚’è¿”ã™ã€‚
+	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É•t‚¯‚ç‚ê‚½–¼‘O‚Ì‹­‚³‚ğ•Ô‚·B
 	*
 	*/
 	int_t object_name_force() const;
 	
 	/**
-	* @brief ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«åå‰ã‚’ã¤ã‘ã‚‹ã€‚
+	* @brief ‚±‚ÌƒIƒuƒWƒFƒNƒg‚É–¼‘O‚ğ‚Â‚¯‚éB
 	*
-	* åå‰ã‚’æŒã¦ãªã„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚„ã€å‰ã«ä»˜ã‘ã‚‰ã‚ŒãŸåå‰ã®æ–¹ãŒå¼·ã„å ´åˆç„¡è¦–ã•ã‚Œã‚‹ã€‚
-	* @param name ã¤ã‘ã‚‹åå‰
-	* @param force åå‰ã®å¼·ã•
-	* @param parent è¦ª
+	* –¼‘O‚ğ‚Ä‚È‚¢ƒIƒuƒWƒFƒNƒg‚âA‘O‚É•t‚¯‚ç‚ê‚½–¼‘O‚Ì•û‚ª‹­‚¢ê‡–³‹‚³‚ê‚éB
+	* @param name ‚Â‚¯‚é–¼‘O
+	* @param force –¼‘O‚Ì‹­‚³
+	* @param parent e
 	*/
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent) const;
 
 	/**
-	* @brief ãƒãƒƒã‚·ãƒ¥å€¤ã‚’è¿”ã™
+	* @brief ƒnƒbƒVƒ…’l‚ğ•Ô‚·
 	*
 	*/
 	uint_t hashcode() const;
 
 	/**
-	* @brief è‡ªèº«ã‚’æ–‡å­—åˆ—åŒ–ã—ã¦printlnã™ã‚‹ã€‚
-	* @return è‡ªèº«ã‚’è¿”ã™ã€‚
+	* @brief ©g‚ğ•¶š—ñ‰»‚µ‚Äprintln‚·‚éB
+	* @return ©g‚ğ•Ô‚·B
 	*/
 	AnyPtr p() const;
 
 	/**
-	* @brief nameãƒ¡ã‚½ãƒƒãƒ‰ã‚’å‘¼ã³å‡ºã™
+	* @brief nameƒƒ\ƒbƒh‚ğŒÄ‚Ño‚·
 	*/
 	SendProxy send(const IDPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
 
@@ -328,7 +328,7 @@ public:
 	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
 
 	/**
-	* @brief è‡ªèº«ã‚’è¿”ã™ã€‚
+	* @brief ©g‚ğ•Ô‚·B
 	*
 	*/
 	const AnyPtr& self() const{

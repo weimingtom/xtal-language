@@ -4,35 +4,35 @@
 namespace xtal{
 	
 /**
-* @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
+* @brief �擪�o�C�g�����āA���̃}���`�o�C�g���������������𒲂ׂ�B
 *
-* マイナスの値が返された場合、最低文字数を返す。
-* -2の場合、最低2文字以上の文字で、本当の長さは2文字目を読まないと判断できない、という意味となる。
+* �}�C�i�X�̒l���Ԃ��ꂽ�ꍇ�A�Œᕶ������Ԃ��B
+* -2�̏ꍇ�A�Œ�2�����ȏ�̕����ŁA�{���̒�����2�����ڂ�ǂ܂Ȃ��Ɣ��f�ł��Ȃ��A�Ƃ����Ӗ��ƂȂ�B
 */
 int_t ch_len(char_t lead);
 
 /**
-* @brief マルチバイト文字が何文字かを調べる。
+* @brief �}���`�o�C�g���������������𒲂ׂ�B
 *
-* int_t ch_len(char_t lead)が呼ばれた後、マイナスの値を返した場合に続けて呼ぶ。
-* ch_lenで-2の値を返した後は、strの先には最低2バイト分のデータを格納すること。
+* int_t ch_len(char_t lead)���Ă΂ꂽ��A�}�C�i�X�̒l��Ԃ����ꍇ�ɑ����ČĂԁB
+* ch_len��-2�̒l��Ԃ�����́Astr�̐�ɂ͍Œ�2�o�C�g���̃f�[�^���i�[���邱�ƁB
 */
 int_t ch_len2(const char_t* str);
 
 
 /**
-* @brief 一つ先の文字を返す
+* @brief ���̕�����Ԃ�
 *
-* 例えば a を渡した場合、b が返る
+* �Ⴆ�� a ��n�����ꍇ�Ab ���Ԃ�
 */
 StringPtr ch_inc(const char_t* data, int_t buffer_size);
 
 /**
-* @brief 文字の大小判定
+* @brief �����̑召����
 *
-* 負の値 a の文字の方がbの文字より小さい
-* 0の値 等しい
-* 正の値 bの文字の方がaの文字より小さい
+* ���̒l a �̕����̕���b�̕�����菬����
+* 0�̒l ������
+* ���̒l b�̕����̕���a�̕�����菬����
 */
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 

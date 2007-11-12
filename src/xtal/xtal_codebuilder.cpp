@@ -117,7 +117,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	linenos_.push(1);
 
-	// é–¢æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ä½œæˆã™ã‚‹
+	// ŠÖ”ƒtƒŒ[ƒ€‚ğì¬‚·‚é
 	fun_frames_.push();	
 	ff().labels.clear();
 	ff().loops.clear();
@@ -125,10 +125,10 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().var_frame_count = var_frames_.size();
 	ff().extendable_param = true;
 
-	// å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ä½œæˆã—ã¦ã€å¼•æ•°ã‚’ç™»éŒ²ã™ã‚‹
+	// •Ï”ƒtƒŒ[ƒ€‚ğì¬‚µ‚ÄAˆø”‚ğ“o˜^‚·‚é
 	var_begin(VarFrame::BLOCK);
 
-	// é–¢æ•°ã‚³ã‚¢ã‚’ä½œæˆ
+	// ŠÖ”ƒRƒA‚ğì¬
 	FunCore core;
 	core.pc = 0;
 	core.kind = KIND_FUN;
@@ -141,7 +141,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	int_t fun_core_table_number = 0;
 	result_->xfun_core_table_.push_back(core);
 
-	// é–¢æ•°æœ¬ä½“ã‚’å‡¦ç†ã™ã‚‹
+	// ŠÖ”–{‘Ì‚ğˆ—‚·‚é
 	compile_stmt(e);
 	
 	break_off(ff().var_frame_count+1);
@@ -160,10 +160,10 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 		var_set_on_heap(1);
 	}
 
-	// é–¢æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ãƒãƒƒãƒ—ã™ã‚‹
+	// ŠÖ”ƒtƒŒ[ƒ€‚ğƒ|ƒbƒv‚·‚é
 	fun_frames_.downsize(1);
 
-	// å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ãƒãƒƒãƒ—ã™ã‚‹
+	// •Ï”ƒtƒŒ[ƒ€‚ğƒ|ƒbƒv‚·‚é
 	var_end();
 
 	if(error_->errors->size()==0){
@@ -666,7 +666,7 @@ void CodeBuilder::var_set_on_heap(int_t i){
 }
 
 void CodeBuilder::var_end(){
-	// ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã®å‘½ä»¤ã‚’ã€ãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆç³»ã¸å¤‰æ›´ã™ã‚‹
+	// ƒ[ƒJƒ‹•Ï”‚Ì–½—ß‚ğAƒ_ƒCƒŒƒNƒgŒn‚Ö•ÏX‚·‚é
 	if(vf().kind==VarFrame::SCOPE){
 		for(uint_t i=0; i<vf().directs.size(); ++i){
 			Inst* p = (Inst*)&result_->code_[vf().directs[i].pos];
@@ -702,7 +702,7 @@ void CodeBuilder::block_begin(){
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		VarFrame::Entry& entry = vf().entries[i];
 
-		// å¤‰æ•°ã‚’æ¶ˆã›ã‚‹ã‹èª¿ã¹ã‚‹
+		// •Ï”‚ğÁ‚¹‚é‚©’²‚×‚é
 		if(entry.expr && !entry.assigned){
 			entry.value = do_expr(entry.expr);
 			if(rawne(entry.value, undefined)){
@@ -955,7 +955,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 void CodeBuilder::compile_class(const ExprPtr& e){
 	ExprMaker em(e->lineno());
 
-	// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°ã‚’æš—é»™çš„åˆæœŸåŒ–ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰ã‚’å®šç¾©ã™ã‚‹
+	// ƒCƒ“ƒXƒ^ƒ“ƒX•Ï”‚ğˆÃ–Ù“I‰Šú‰»‚·‚éƒƒ\ƒbƒh‚ğ’è‹`‚·‚é
 	{
 		ExprPtr init_method = em.fun(KIND_METHOD, null, false, null);
 		ArrayPtr stmts = xnew<Array>();
@@ -969,15 +969,15 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		e->class_stmts()->push_front(em.cdefine(KIND_PUBLIC, Xid(_initialize_), em.null_(), init_method));
 	}
 
-	// ç¶™æ‰¿
+	// Œp³
 	Xfor(v, e->class_mixins()){
 		compile_expr(v);
 	}
 
-	// å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ä½œæˆ
+	// •Ï”ƒtƒŒ[ƒ€‚ğì¬
 	var_begin(VarFrame::CLASS);
 
-	// å¤‰æ•°ã‚’å®šç¾©
+	// •Ï”‚ğ’è‹`
 	{
 		int_t number = 0;
 		Xfor(v, e->class_stmts()){
@@ -1060,10 +1060,10 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 void CodeBuilder::compile_fun(const ExprPtr& e){
 
-	// ã‚²ãƒƒã‚¿ãƒ¼ã€ã¾ãŸã¯ã‚»ãƒƒã‚¿ãƒ¼ç”¨ã®æœ€é©åŒ–ã‚’è¡Œã†
+	// ƒQƒbƒ^[A‚Ü‚½‚ÍƒZƒbƒ^[—p‚ÌÅ“K‰»‚ğs‚¤
 	if(e->fun_kind()==KIND_METHOD){
 
-		// ã‚²ãƒƒã‚¿ã‹ï¼Ÿ
+		// ƒQƒbƒ^‚©H
 		if(!e->fun_params() || e->fun_params()->size()==0){
 			ExprPtr body = e->fun_body();
 			if(body->tag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
@@ -1081,7 +1081,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 			}
 		}
 
-		// ã‚»ãƒƒã‚¿ã‹ï¼Ÿ
+		// ƒZƒbƒ^‚©H
 		if(e->fun_params() && e->fun_params()->size()==1){
 			ExprPtr body = e->fun_body();
 			if(body->tag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
@@ -1103,7 +1103,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		}
 	}
 
-	// å¼•æ•°ã®æœ€å¤§ã¨æœ€ä½ã‚’å–å¾—ã™ã‚‹
+	// ˆø”‚ÌÅ‘å‚ÆÅ’á‚ğæ“¾‚·‚é
 	int_t minv = -1, maxv = 0;
 	{
 		Xfor2(k, v, e->fun_params()){
@@ -1121,7 +1121,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		}
 	}
 
-	// é–¢æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ä½œæˆã™ã‚‹
+	// ŠÖ”ƒtƒŒ[ƒ€‚ğì¬‚·‚é
 	fun_frames_.push();	
 	ff().labels.clear();
 	ff().loops.clear();
@@ -1129,13 +1129,13 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	ff().var_frame_count = var_frames_.size();
 	ff().extendable_param = e->fun_extendable_param();
 
-	// å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ä½œæˆã—ã¦ã€å¼•æ•°ã‚’ç™»éŒ²ã™ã‚‹
+	// •Ï”ƒtƒŒ[ƒ€‚ğì¬‚µ‚ÄAˆø”‚ğ“o˜^‚·‚é
 	var_begin(VarFrame::SCOPE);
 	Xfor2(k, v, e->fun_params()){
 		var_define(k->to_s()->intern());
 	}
 
-	// é–¢æ•°ã‚³ã‚¢ã‚’ä½œæˆ
+	// ŠÖ”ƒRƒA‚ğì¬
 	FunCore core;
 	core.pc = code_size() + InstMakeFun::ISIZE;
 	core.kind = e->fun_kind();
@@ -1143,7 +1143,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	core.max_param_count = maxv;
 	core.flags = e->fun_extendable_param() ? FunCore::FLAG_EXTENDABLE_PARAM : 0;
 
-	// å¼•æ•°ã®åå‰ã‚’è­˜åˆ¥å­ãƒ†ãƒ¼ãƒ–ãƒ«ã«é †ç•ªã«ä¹—ã›ã‚‹
+	// ˆø”‚Ì–¼‘O‚ğ¯•Êqƒe[ƒuƒ‹‚É‡”Ô‚Éæ‚¹‚é
 	core.variable_size = vf().entries.size();
 	core.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
@@ -1161,7 +1161,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		put_inst(InstBreakPoint(BREAKPOINT_CALL));
 	}
 
-	// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆå€¤ã‚’æŒã¤å¼•æ•°ã‚’å‡¦ç†ã™ã‚‹
+	// ƒfƒtƒHƒ‹ƒg’l‚ğ‚Âˆø”‚ğˆ—‚·‚é
 	{
 		int_t i = 0;
 		Xfor2(k, v, e->fun_params()){
@@ -1187,7 +1187,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		}
 	}
 
-	// é–¢æ•°æœ¬ä½“ã‚’å‡¦ç†ã™ã‚‹
+	// ŠÖ”–{‘Ì‚ğˆ—‚·‚é
 	compile_stmt(e->fun_body());
 	
 	break_off(ff().var_frame_count+1);
@@ -1208,10 +1208,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		var_set_on_heap(1);
 	}
 
-	// é–¢æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ãƒãƒƒãƒ—ã™ã‚‹
+	// ŠÖ”ƒtƒŒ[ƒ€‚ğƒ|ƒbƒv‚·‚é
 	fun_frames_.downsize(1);
 
-	// å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ãƒãƒƒãƒ—ã™ã‚‹
+	// •Ï”ƒtƒŒ[ƒ€‚ğƒ|ƒbƒv‚·‚é
 	var_end();
 }
 
@@ -1244,14 +1244,14 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	loop.have_label = false;
 	ff().loops.push(loop);
 
-	// æ¡ä»¶å¼ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«
+	// ğŒ®‚ğƒRƒ“ƒpƒCƒ‹
 	if(e->for_cond()){
 		put_if_code(e->for_cond(), label_if, label_if2);
 	}
 
 	set_label(label_body);
 
-	// ãƒ«ãƒ¼ãƒ—æœ¬ä½“ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«
+	// ƒ‹[ƒv–{‘Ì‚ğƒRƒ“ƒpƒCƒ‹
 	compile_stmt(e->for_body());
 
 	bool referenced_first_step;
@@ -1263,28 +1263,28 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 
 	set_label(label_continue);
 
-	// nextéƒ¨ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«
+	// next•”‚ğƒRƒ“ƒpƒCƒ‹
 	if(e->for_next()){
 		compile_stmt(e->for_next());
 	}
 
 	set_label(label_cond);
 
-	// æ¡ä»¶å¼ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ« 2å›ç›®
+	// ğŒ®‚ğƒRƒ“ƒpƒCƒ‹ 2‰ñ–Ú
 	if(e->for_cond()){
 		put_if_code(e->for_cond(), label_if_q, label_if2_q);
 	}
 
 	if(referenced_first_step){
-		// ãƒ«ãƒ¼ãƒ—æœ¬ä½“ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ« 2å›ç›®
+		// ƒ‹[ƒv–{‘Ì‚ğƒRƒ“ƒpƒCƒ‹ 2‰ñ–Ú
 		compile_stmt(e->for_body());
 
-		// label_continueéƒ¨åˆ†ã«ã‚¸ãƒ£ãƒ³ãƒ—
+		// label_continue•”•ª‚ÉƒWƒƒƒ“ƒv
 		set_jump(InstGoto::OFFSET_address, label_continue);
 		put_inst(InstGoto());
 	}
 	else{
-		// label_bodyéƒ¨åˆ†ã«ã‚¸ãƒ£ãƒ³ãƒ—
+		// label_body•”•ª‚ÉƒWƒƒƒ“ƒv
 		set_jump(InstGoto::OFFSET_address, label_body);
 		put_inst(InstGoto());
 	}
@@ -1580,7 +1580,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				compile_expr(e->call_args());
 			}
 
-			if(e->call_term()->tag()==EXPR_SEND){ // a.b(); ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸é€ä¿¡å¼
+			if(e->call_term()->tag()==EXPR_SEND){ // a.b(); ƒƒbƒZ[ƒW‘—M®
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
@@ -1840,12 +1840,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstPushGoto());
 			put_inst(InstTryEnd());
 
-			// catchç¯€ã®ã‚³ãƒ¼ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚€
+			// catchß‚ÌƒR[ƒh‚ğ–„‚ß‚Ş
 			if(e->try_catch()){
 
 				result_->except_core_table_[core].catch_pc = code_size();
 				
-				// catchç¯€ã®ä¸­ã§ã®ä¾‹å¤–ã«å‚™ãˆã€ä¾‹å¤–ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’æ§‹ç¯‰ã€‚
+				// catchß‚Ì’†‚Å‚Ì—áŠO‚É”õ‚¦A—áŠOƒtƒŒ[ƒ€‚ğ\’zB
 
 				int_t core2 = result_->except_core_table_.size();
 				result_->except_core_table_.push_back(ExceptCore());
@@ -1877,7 +1877,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			result_->except_core_table_[core].finally_pc = code_size();
 
-			// finallyç¯€ã®ã‚³ãƒ¼ãƒ‰ã‚’åŸ‹ã‚è¾¼ã‚€
+			// finallyß‚ÌƒR[ƒh‚ğ–„‚ß‚Ş
 			compile_stmt(e->try_finally());
 			
 			ff().finallies.pop();

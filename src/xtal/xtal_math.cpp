@@ -53,7 +53,7 @@ AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
 class Random{
 public:
 
-	Random(int_t seed=time(0)){ 
+	Random(int_t seed=std::time(0)){ 
 		set_seed(seed); 
 	}
 	

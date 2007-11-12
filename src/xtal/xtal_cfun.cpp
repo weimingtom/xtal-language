@@ -119,7 +119,7 @@ void CFunArgs::call(const VMachinePtr& vm){
 	
 CFunEssence::CFunEssence(CFun::fun_t f, const void* data, int_t val_size, int_t param_n, bool args)
 	:f(f), val(user_malloc(val_size)), param_n(param_n), args(args){
-	memcpy(val, data, val_size);
+	std::memcpy(val, data, val_size);
 }
 
 CFunPtr new_cfun(const CFunEssence& essence){

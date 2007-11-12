@@ -42,14 +42,15 @@ static void handle_argv(char** argv){
 
 int main(int argc, char** argv){
 
-	try{
+	XTAL_TRY{
 
 		set_thread();
 		initialize();
 
 		handle_argv(argv);
 
-	}catch(AnyPtr e){
+	}
+	XTAL_CATCH(e){
 		fprintf(stderr, "%s\n", e->to_s()->c_str());
 	}
 

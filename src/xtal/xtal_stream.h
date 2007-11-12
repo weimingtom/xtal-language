@@ -405,7 +405,7 @@ public:
 
 	FileStream(const StringPtr& filename, const StringPtr& mode);
 
-	FileStream(FILE* fp);
+	FileStream(std::FILE* fp);
 
 	~FileStream();
 
@@ -423,13 +423,13 @@ public:
 
 protected:
 
-	FILE* fp_;
+	std::FILE* fp_;
 };
 
 class StdioStream : public FileStream{
 public:
 
-	StdioStream(FILE* fp)
+	StdioStream(std::FILE* fp)
 		:FileStream(fp){}
 
 	virtual uint_t write(const void* p, uint_t size);
@@ -537,7 +537,7 @@ public:
 private:
 	int_t line_;
 	bool continue_stmt_;
-	FILE* fp_;
+	std::FILE* fp_;
 };
 
 

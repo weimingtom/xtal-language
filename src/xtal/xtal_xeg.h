@@ -250,11 +250,11 @@ protected:
 		AnyPtr** newp = (AnyPtr**)user_malloc(sizeof(AnyPtr*)*newnum);
 
 		if(begin_){
-			memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
+			std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
 		}
 
 		newp[num_] = (AnyPtr*)user_malloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
-		memset(newp[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+		std::memset(newp[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 
 		user_free(begin_);
 		begin_ = newp;

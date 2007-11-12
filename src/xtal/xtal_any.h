@@ -13,20 +13,15 @@ public:
 
 	AnyPtr operator()() const;
 
-	template<class A0>
-	AnyPtr operator()(const A0& a0) const;
+	AnyPtr operator()(const Param& a0) const;
 
-	template<class A0, class A1>
-	AnyPtr operator()(const A0& a0, const A1& a1) const;
+	AnyPtr operator()(const Param& a0, const Param& a1) const;
 
-	template<class A0, class A1, class A2>
-	AnyPtr operator()(const A0& a0, const A1& a1, const A2& a2) const;
+	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2) const;
 
-	template<class A0, class A1, class A2, class A3>
-	AnyPtr operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3) const;
+	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
 
-	template<class A0, class A1, class A2, class A3, class A4>
-	AnyPtr operator()(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
+	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
 
 	AtProxy operator[](const AnyPtr& key) const;
 

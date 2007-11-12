@@ -208,17 +208,17 @@ FileStream::FileStream(const StringPtr& filename, const StringPtr& mode){
 	}
 
 	StringPtr bmode = *str=='t' ? mode : mode->cat("b");
-	fp_ = fopen(filename->c_str(), bmode->c_str());
+	fp_ = std::fopen(filename->c_str(), bmode->c_str());
 	if(!fp_){
 		full_gc();
-		fp_ = fopen(filename->c_str(), bmode->c_str());
+		fp_ = std::fopen(filename->c_str(), bmode->c_str());
 		if(!fp_){
 			XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))), return);
 		}
 	}
 }
 
-FileStream::FileStream(FILE* fp){
+FileStream::FileStream(std::FILE* fp){
 	fp_ = fp;
 }
 
@@ -296,14 +296,14 @@ uint_t DataStream::read(void* p, uint_t size){
 	if(pos_+size>size_){ 
 		uint_t diff = size_-pos_;
 		if(diff>0){
-			memcpy(p, &data_[pos_], diff);
+			std::memcpy(p, &data_[pos_], diff);
 		}
 		pos_ += diff;
 		return diff; 
 	}
 	
 	if(size>0){
-		memcpy(p, &data_[pos_], size);
+		std::memcpy(p, &data_[pos_], size);
 	}
 
 	pos_ += size;
@@ -376,7 +376,7 @@ MemoryStream::MemoryStream(const void* data, uint_t buffer_size){
 	pos_ = 0;
 	capa_ = 0;
 	resize(buffer_size);
-	memcpy((void*)data_, data, buffer_size);
+	std::memcpy((void*)data_, data, buffer_size);
 }
 
 MemoryStream::~MemoryStream(){
@@ -393,7 +393,7 @@ uint_t MemoryStream::write(const void* p, uint_t size){
 		size_ = pos_+size;
 	}
 
-	memcpy((void*)&data_[pos_], p, size);
+	std::memcpy((void*)&data_[pos_], p, size);
 
 	pos_ += size;
 
@@ -441,7 +441,7 @@ void MemoryStream::resize(uint_t size){
 	if(size>capa_){
 		uint_t newcapa = size + capa_;
 		void* newp = user_malloc(newcapa);
-		memcpy(newp, data_, size_);
+		std::memcpy(newp, data_, size_);
 		if(capa_){
 			user_free((void*)data_);
 		}
@@ -489,7 +489,7 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 
 	continue_stmt_ = true;
 	if(fgets((char*)p, size, stdin)){
-		uint_t sz = strlen((char*)p);
+		uint_t sz = std::strlen((char*)p);
 		if(sz!=size-1){
 			line_++;
 		}

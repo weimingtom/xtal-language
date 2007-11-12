@@ -291,7 +291,7 @@ public:
 		:SmartPtr<Any>(new T(), new_cpp_class<T>()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
-		:SmartPtr<Any>((const Innocence&)T()){}
+		:SmartPtr<Any>(T()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
 		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
@@ -306,7 +306,7 @@ public:
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0)
-		:SmartPtr<Any>((const Innocence&)T(a0)){}
+		:SmartPtr<Any>(T(a0)){}
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
@@ -322,7 +322,7 @@ public:
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>((const Innocence&)T(a0, a1)){}
+		:SmartPtr<Any>(T(a0, a1)){}
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
@@ -338,7 +338,7 @@ public:
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2)){}
+		:SmartPtr<Any>(T(a0, a1, a2)){}
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
@@ -354,7 +354,7 @@ public:
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2, a3)){}
+		:SmartPtr<Any>(T(a0, a1, a2, a3)){}
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
@@ -370,7 +370,7 @@ public:
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>((const Innocence&)T(a0, a1, a2, a3, a4)){}
+		:SmartPtr<Any>(T(a0, a1, a2, a3, a4)){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)

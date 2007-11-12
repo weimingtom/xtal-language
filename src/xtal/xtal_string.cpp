@@ -518,11 +518,11 @@ StringPtr String::to_s(){
 }
 
 int_t String::to_i(){ 
-	return atoi(c_str()); 
+	return std::atoi(c_str()); 
 }
 
 float_t String::to_f(){ 
-	return (float_t)atof(c_str()); 
+	return (float_t)std::atof(c_str()); 
 }
 
 AnyPtr String::each(){

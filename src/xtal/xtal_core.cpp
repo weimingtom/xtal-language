@@ -157,7 +157,7 @@ void initialize(){
 	initialize_thread();
 	initialize_text();
 	
-	atexit(&uninitialize); // uninitialize
+	std::atexit(&uninitialize); // uninitialize
 
 	enable_gc();
 

@@ -110,7 +110,7 @@
 				OmitFramePointers="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_SECURE_SCL=0"
 				StringPooling="true"
-				ExceptionHandling="1"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"

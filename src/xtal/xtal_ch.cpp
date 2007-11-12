@@ -67,7 +67,7 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 	}
 
 	uchar_t buf[8] = {0};
-	memcpy(buf+1, data, buffer_size*sizeof(uchar_t));
+	std::memcpy(buf+1, data, buffer_size*sizeof(uchar_t));
 
 	for(int_t i=buffer_size; i>=0; --i){
 		buf[i]++;

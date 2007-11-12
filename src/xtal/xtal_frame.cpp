@@ -453,7 +453,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 	else{
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
-			if(FILE* fp = fopen(file_name->c_str(), "r")){
+			if(std::FILE* fp = std::fopen(file_name->c_str(), "r")){
 				fclose(fp);
 				return rawdef(primary_key, load(file_name), secondary_key);
 			}
@@ -485,7 +485,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		return members_->back();
 	}
 	else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()))), return null);
+		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()))), return undefined);
 	}
 }
 

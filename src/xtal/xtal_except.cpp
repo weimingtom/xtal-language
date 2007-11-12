@@ -61,10 +61,10 @@ AnyPtr unsupported_error(const AnyPtr& object){
 }
 namespace{
 	void default_except_handler(const AnyPtr& except, const char* file, int line){
-#ifdef XTAL_NO_EXCEPT
-		printf("%s(%d):%s\n", file, line, except->to_s()->c_str());
-		exit(1);
-#endif
+//#ifdef XTAL_NO_EXCEPTIONS
+//		printf("%s(%d):%s\n", file, line, except->to_s()->c_str());
+//		exit(1);
+//#endif
 	}
 
 	except_handler_t except_handler_ = &default_except_handler;

@@ -65,10 +65,12 @@ catch(e){
 		try{
 			try{
 				throw "test";
-			}finally{
+			}
+			finally{
 				temp = "finally";
 			}
-		}finally{
+		}
+		finally{
 			temp ~= "2";
 		}
 	}

@@ -175,12 +175,12 @@ public:
 	/**
 	* @brief 読み進める
 	*/
-	Token read();
+	const Token& read();
 
 	/**
 	* @brief 次の要素を読む
 	*/
-	Token peek();
+	const Token& peek();
 
 	/**
 	* @brief 読み込んだ要素を一つ戻す

@@ -1,14 +1,15 @@
 
 #pragma once
 
+
+
 //#define XTAL_NO_THREAD
-
-//#define XTAL_ENFORCE_64_BIT
-//#define XTAL_USE_THREAD_MODEL_2
-
 //#define XTAL_NO_PARSER
 #define XTAL_USE_PREDEFINED_ID
 //#define XTAL_NO_EXCEPTIONS
+
+//#define XTAL_ENFORCE_64_BIT
+//#define XTAL_USE_THREAD_MODEL_2
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG

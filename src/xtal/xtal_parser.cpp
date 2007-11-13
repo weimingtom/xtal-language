@@ -139,17 +139,18 @@ void Lexer::init(const StreamPtr& stream, CompileError* error){
 	error_ = error;
 }
 
-Token Lexer::read(){
-	Token ret = peek();
+const Token& Lexer::read(){
+	const Token& ret = peek();
 	++pos_;
 	return ret;
 }
 
-Token Lexer::peek(){
+const Token& Lexer::peek(){
 	if(pos_==read_){
 		do_read();
 		if(pos_==read_){
-			return Token(Token::TYPE_TOKEN, (int_t)-1, (int_t)0);
+			static Token end(Token::TYPE_TOKEN, (int_t)-1, (int_t)0);
+			return end;
 		}
 	}
 	return buf_[pos_ & BUF_MASK];
@@ -425,7 +426,7 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('+'){
+			XTAL_CASE('+'){ 
 				reader_.read();
 				if(reader_.eat('+')){
 					push_token(c2('+', '+'));
@@ -971,12 +972,12 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	Token tok = lexer_.read();
+	const Token& tok = lexer_.read();
 	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named("char", lexer_.peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){
-	Token n = lexer_.peek();
+	const Token& n = lexer_.peek();
 	if(n.type() == Token::TYPE_TOKEN){
 		if(n.ivalue()==ch){
 			lexer_.read();
@@ -987,7 +988,7 @@ bool Parser::eat(int_t ch){
 }
 
 bool Parser::eat(Token::Keyword kw){
-	Token n = lexer_.peek();
+	const Token& n = lexer_.peek();
 	if(n.type() == Token::TYPE_KEYWORD){
 		if(n.keyword_number()==kw){
 			lexer_.read();
@@ -999,7 +1000,7 @@ bool Parser::eat(Token::Keyword kw){
 	
 ExprPtr Parser::parse_term(){
 	
-	Token ch = lexer_.read();
+	const Token& ch = lexer_.read();
 
 	ExprPtr ret = null;
 	int_t r_space = ch.right_space() ? PRI_MAX : 0;
@@ -1146,7 +1147,7 @@ ExprPtr Parser::parse_term(){
 
 ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 	if(expr_end_flag_){
-		Token ch = lexer_.peek();
+		const Token& ch = lexer_.peek();
 
 		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
 			expr_end_flag_ = false;
@@ -1156,7 +1157,7 @@ ExprPtr Parser::parse_post(ExprPtr lhs, int_t pri){
 		}
 	}
 
-	Token ch = lexer_.read();
+	const Token& ch = lexer_.read();
 
 	ExprPtr ret;
 
@@ -1348,7 +1349,7 @@ ExprPtr Parser::parse_each(const IDPtr& label, ExprPtr lhs){
 	bool discard = false;
 	if(eat('|')){ // ブロックパラメータ
 		while(true){
-			Token ch = lexer_.peek();
+			const Token& ch = lexer_.peek();
 			if(ch.type()==ch.TYPE_IDENTIFIER){
 				discard = false;
 				lexer_.read();
@@ -1396,7 +1397,7 @@ ExprPtr Parser::parse_loop(){
 	ExprMaker em(lexer_.lineno());	
 
 	if(IDPtr identifier = parse_var()){
-		Token ch = lexer_.read(); // :の次を読み取る
+		const Token& ch = lexer_.read(); // :の次を読み取る
 		if(ch.type()==Token::TYPE_KEYWORD){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
@@ -1424,22 +1425,24 @@ ExprPtr Parser::parse_loop(){
 ExprPtr Parser::parse_assign_stmt(){
 
 	ExprMaker em(lineno());
-	Token ch = lexer_.read();
+	{
+		const Token& ch = lexer_.read();
 
-	if(ch.type()==Token::TYPE_TOKEN){
-		switch(ch.ivalue()){
-			XTAL_DEFAULT{}
-			XTAL_CASE(c2('+','+')){ return em.una(EXPR_INC, must_parse_expr()); }
-			XTAL_CASE(c2('-','-')){ return em.una(EXPR_DEC, must_parse_expr()); }
+		if(ch.type()==Token::TYPE_TOKEN){
+			switch(ch.ivalue()){
+				XTAL_DEFAULT{}
+				XTAL_CASE(c2('+','+')){ return em.una(EXPR_INC, must_parse_expr()); }
+				XTAL_CASE(c2('-','-')){ return em.una(EXPR_DEC, must_parse_expr()); }
+			}
 		}
+		lexer_.putback();
 	}
-	lexer_.putback();
 
 	if(ExprPtr lhs = parse_expr()){
 		if(expr_end_flag_)
 			return lhs;
 		
-		ch = lexer_.read();
+		const Token& ch = lexer_.read();
 
 		switch(ch.type()){
 			XTAL_DEFAULT{}
@@ -1518,7 +1521,7 @@ ExprPtr Parser::parse_stmt(){
 	}
 	else{
 
-		Token ch = lexer_.read();
+		const Token& ch = lexer_.read();
 
 		switch(ch.type()){
 			XTAL_DEFAULT{}
@@ -1535,7 +1538,7 @@ ExprPtr Parser::parse_stmt(){
 						ExprPtr temp = xnew<Expr>(EXPR_THROW);
 						temp->set_throw_expr(must_parse_expr());
 						ret = temp;
-						 eat(';'); 
+						eat(';'); 
 					}	
 					XTAL_CASE(Token::KEYWORD_RETURN){ ret = em.return_(parse_exprs());  eat(';'); }
 					XTAL_CASE(Token::KEYWORD_CONTINUE){ ret = em.continue_(parse_identifier());  eat(';'); }
@@ -1953,17 +1956,6 @@ ExprPtr Parser::parse_call(ExprPtr lhs){
 			break;
 		}
 	}
-
-	/*
-	if(!ordered->empty() && !ordered->back()){
-		ordered->pop_back();
-	}
-
-	if(!ordered->empty() && ep(ordered->back())->tag()==EXPR_ARGS){
-		ordered->pop_back();
-		ecall->set_call_have_args(true);
-	}
-	*/
 
 	return ecall;
 }

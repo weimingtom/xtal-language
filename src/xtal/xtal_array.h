@@ -304,5 +304,21 @@ public:
 
 };
 
+inline MultiValuePtr mv(){
+	return xnew<MultiValue>();
+}
+
+inline MultiValuePtr mv(const AnyPtr& v){
+	MultiValuePtr ret = xnew<MultiValue>();
+	ret->push_back(v);
+	return ret;
+}
+
+inline MultiValuePtr mv(const AnyPtr& v1, const AnyPtr& v2){
+	MultiValuePtr ret = xnew<MultiValue>();
+	ret->push_back(v1);
+	ret->push_back(v2);
+	return ret;
+}
 
 }

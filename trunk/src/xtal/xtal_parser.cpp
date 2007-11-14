@@ -426,54 +426,29 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('+'){ 
-				reader_.read();
-				if(reader_.eat('+')){
-					push_token(c2('+', '+'));
-				}
-				else if(reader_.eat('=')){
-					push_token(c2('+', '='));
-				}
-				else{
-					push_token('+');
-				}
+			XTAL_CASE('+'){ reader_.read();
+				if(reader_.eat('+')){ push_token(c2('+', '+')); }
+				else if(reader_.eat('=')){ push_token(c2('+', '=')); }
+				else{ push_token('+'); }
 			}
 			
-			XTAL_CASE('-'){
-				reader_.read();
-				if(reader_.eat('-')){
-					push_token(c2('-', '-'));
-				}
-				else if(reader_.eat('=')){
-					push_token(c2('-', '='));
-				}
-				else{
-					push_token('-');
-				}
+			XTAL_CASE('-'){ reader_.read();
+				if(reader_.eat('-')){ push_token(c2('-', '-')); }
+				else if(reader_.eat('=')){ push_token(c2('-', '=')); }
+				else{ push_token('-'); }
 			}
 			
-			XTAL_CASE('~'){
-				reader_.read();
-				if(reader_.eat('=')){
-					push_token(c2('~', '='));
-				}
-				else{
-					push_token('~');
-				}
+			XTAL_CASE('~'){ reader_.read();
+				if(reader_.eat('=')){ push_token(c2('~', '=')); }
+				else{ push_token('~'); }
 			}
 			
-			XTAL_CASE('*'){
-				reader_.read();
-				if(reader_.eat('=')){
-					push_token(c2('*', '='));
-				}
-				else{
-					push_token('*');
-				}
+			XTAL_CASE('*'){ reader_.read();
+				if(reader_.eat('=')){ push_token(c2('*', '=')); }
+				else{ push_token('*'); }
 			}
 			
-			XTAL_CASE('/'){
-				reader_.read();
+			XTAL_CASE('/'){ reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('/', '='));
 				}
@@ -552,38 +527,22 @@ void Lexer::do_read(){
 				}
 			}			
 			
-			XTAL_CASE('%'){
-				reader_.read();
-				if(reader_.eat('=')){
-					push_token(c2('%', '='));
-				}
-				else{
-					push_token('%');
-				}
+			XTAL_CASE('%'){ reader_.read();
+				if(reader_.eat('=')){ push_token(c2('%', '=')); }
+				else{ push_token('%'); }
 			}
 			
-			XTAL_CASE('&'){
-				reader_.read();
-				if(reader_.eat('&')){
-					push_token(c2('&', '&'));
-				}
-				else{
-					push_token('&');
-				}
+			XTAL_CASE('&'){ reader_.read();
+				if(reader_.eat('&')){ push_token(c2('&', '&')); }
+				else{ push_token('&'); }
 			}
 			
-			XTAL_CASE('|'){
-				reader_.read();
-				if(reader_.eat('|')){
-					push_token(c2('|', '|'));
-				}
-				else{
-					push_token('|');
-				}
+			XTAL_CASE('|'){ reader_.read();
+				if(reader_.eat('|')){ push_token(c2('|', '|')); }
+				else{ push_token('|'); }
 			}
 						
-			XTAL_CASE('>'){
-				reader_.read();
+			XTAL_CASE('>'){ reader_.read();
 				if(reader_.eat('>')){
 					if(reader_.eat('>')){
 						if(reader_.eat('=')){
@@ -605,8 +564,7 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('<'){
-				reader_.read();
+			XTAL_CASE('<'){ reader_.read();
 				if(reader_.eat('<')){
 					if(reader_.eat('=')){
 						push_token(c3('<','<','='));
@@ -635,8 +593,7 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('='){
-				reader_.read();
+			XTAL_CASE('='){ reader_.read();
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('=', '=', '='));
@@ -650,8 +607,7 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('!'){
-				reader_.read();
+			XTAL_CASE('!'){ reader_.read();
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('!', '=', '='));
@@ -690,59 +646,27 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('.'){
-				reader_.read();
+			XTAL_CASE('.'){ reader_.read();
 				if(reader_.eat('.')){
-					if(reader_.eat('.')){
-						push_token(c3('.', '.', '.'));
-					}
-					else if(reader_.eat('<')){
-						push_token(c3('.', '.', '<'));
-					}
-					else{
-						push_token(c2('.', '.'));
-					}
+					if(reader_.eat('.')){ push_token(c3('.', '.', '.')); }
+					else if(reader_.eat('<')){ push_token(c3('.', '.', '<')); }
+					else{ push_token(c2('.', '.')); }
 				}
-				else if(reader_.eat('?')){
-					push_token(c2('.', '?'));
-				}
-				else{
-					push_token('.');
-				}
-			}
-
-			XTAL_CASE('"'){ //"
-				reader_.read();
-				push_token('"'); //"
+				else if(reader_.eat('?')){ push_token(c2('.', '?')); }
+				else{ push_token('.'); }
 			}
 			
-			XTAL_CASE(':'){
-				reader_.read();
+			XTAL_CASE(':'){ reader_.read();
 				if(reader_.eat(':')){
-					if(reader_.eat('?')){
-						push_token(c3(':', ':', '?'));
-					}
-					else{
-						push_token(c2(':', ':'));
-					}
+					if(reader_.eat('?')){ push_token(c3(':', ':', '?')); }
+					else{ push_token(c2(':', ':')); }
 				}
-				else{
-					push_token(':');
-				}
+				else{ push_token(':'); }
 			}
 
-			XTAL_CASE('\''){
-				reader_.read();
+			XTAL_CASE('\''){ reader_.read();
 				push_identifier_token(read_string('\'', '\''));
 			}
-
-			XTAL_CASE(';'){ reader_.read(); push_token(';'); }
-			XTAL_CASE('{'){ reader_.read(); push_token('{'); }
-			XTAL_CASE('}'){ reader_.read(); push_token('}'); }
-			XTAL_CASE('['){ reader_.read(); push_token('['); }
-			XTAL_CASE(']'){ reader_.read(); push_token(']'); }
-			XTAL_CASE('('){ reader_.read(); push_token('('); }
-			XTAL_CASE(')'){ reader_.read(); push_token(')'); }
 
 			XTAL_CASE4(' ', '\t', '\r', '\n'){
 				deplete_space();

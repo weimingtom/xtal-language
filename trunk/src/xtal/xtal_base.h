@@ -39,7 +39,7 @@ public:
 	* @brief このオブジェクトが所属するクラスを返す。
 	*
 	*/
-	const ClassPtr& get_class(){ return (const ClassPtr&)class_; }
+	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
 
 	/**
 	* @brief 整数に変換して返す。
@@ -156,7 +156,7 @@ public:
 	void make_instance_variables();
 
 	uint_t ref_count(){ return ref_count_ & REF_COUNT_MASK; }
-	void add_ref_count(int_t rc){ ref_count_+=rc; }
+	void add_ref_count(int_t rc){ ref_count_ += rc; }
 	void inc_ref_count(){ ++ref_count_; }
 	void dec_ref_count(){ --ref_count_; }
 

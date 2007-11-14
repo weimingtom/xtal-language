@@ -962,7 +962,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		ExprPtr block = em.scope(stmts);
 		Xfor2(k, v, e->class_ivars()){
 			if(v){
-				stmts->push_back(Expr::make(EXPR_ASSIGN)->set_bin_lhs(Expr::make(EXPR_IVAR)->set_ivar_name(k->to_s()->intern()))->set_bin_rhs(ptr_cast<Expr>(v)));
+				stmts->push_back(xnew<Expr>(EXPR_ASSIGN)->set_bin_lhs(xnew<Expr>(EXPR_IVAR)->set_ivar_name(k->to_s()->intern()))->set_bin_rhs(ptr_cast<Expr>(v)));
 			}
 		}
 		init_method->set_fun_body(block);

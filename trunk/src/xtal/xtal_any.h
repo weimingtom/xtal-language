@@ -102,6 +102,7 @@ public:
 	friend bool rawlt(const Innocence& a, const Innocence& b);
 	friend void swap(Innocence& a, Innocence& b);
 	friend void set_null_force(Innocence& v);
+	friend void set_undefined_force(Innocence& v);
 	friend void copy_innocence(Innocence& v, const Innocence& u);
 
 public:
@@ -177,6 +178,11 @@ inline void swap(Innocence& a, Innocence& b){
 
 inline void set_null_force(Innocence& v){
 	v.type_ = TYPE_NULL;
+	v.value_ = 0;
+}
+
+inline void set_undefined_force(Innocence& v){
+	v.type_ = TYPE_UNDEFINED;
 	v.value_ = 0;
 }
 

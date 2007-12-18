@@ -7,6 +7,7 @@ namespace{
 	StreamPtr stdin_stream_;
 	StreamPtr stdout_stream_;
 	StreamPtr stderr_stream_;
+	FileLib* file_lib_ = 0;
 
 	void uninitialize_stream(){
 		stdin_stream_ = null;
@@ -28,6 +29,10 @@ const StreamPtr& stderr_stream(){
 }
 
 void initialize_stream(){
+	if(!file_lib_){
+		set_file();
+	}
+
 	register_uninitializer(&uninitialize_stream);
 
 	{
@@ -76,18 +81,12 @@ void initialize_stream(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<FileStream>("FileStream");
-		p->inherit(get_cpp_class<Stream>());
-		p->def("new", ctor<FileStream, const StringPtr&, const StringPtr&>()->param(Named("name"), Named("mode", "r")));
-	}
-
-	{
 		ClassPtr p = new_cpp_class<StdioStream>("StdioStream");
-		p->inherit(get_cpp_class<FileStream>());
+		p->inherit(get_cpp_class<Stream>());
 	}
 
 	builtin()->def("Stream", get_cpp_class<Stream>());
-	builtin()->def("FileStream", get_cpp_class<FileStream>());
+	builtin()->def("StdioStream", get_cpp_class<StdioStream>());
 	builtin()->def("MemoryStream", get_cpp_class<MemoryStream>());
 	builtin()->def("StringStream", get_cpp_class<StringStream>());
 
@@ -99,8 +98,6 @@ void initialize_stream(){
 	builtin()->def("stdout", stdout_stream());
 	builtin()->def("stderr", stderr_stream());
 }
-
-
 
 StringPtr Stream::get_s(int_t length){
 	if(eos())
@@ -139,22 +136,22 @@ void Stream::println(const StringPtr& str){
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
-	xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+	UserMallocGuard umg(size*sizeof(xtal::u8));
+	xtal::u8* buf = (xtal::u8*)umg.get();
 	uint_t len = in_stream->read(buf, size);
 	write(buf, len);
-	user_free(buf);
 	return len;
 }
 
 uint_t Stream::pour_all(const StreamPtr& in_stream){
 	uint_t size = 1024*10, len, sum = 0;
-	xtal::u8* buf = (xtal::u8*)user_malloc(size*sizeof(xtal::u8));
+	UserMallocGuard umg(size*sizeof(xtal::u8));
+	xtal::u8* buf = (xtal::u8*)umg.get();
 	do{
 		len = in_stream->read(buf, size);
 		sum += len;
 		write(buf, len);
 	}while(len==size);
-	user_free(buf);
 	return sum;
 }
 
@@ -197,89 +194,7 @@ AnyPtr Stream::dextalize(){
 	return null;
 }
 
-
-FileStream::FileStream(const StringPtr& filename, const StringPtr& mode){
-	const char_t* str = mode->c_str();
-	while(*str){
-		if(*str=='t'){
-			break;
-		}
-		str++;
-	}
-
-	StringPtr bmode = *str=='t' ? mode : mode->cat("b");
-	fp_ = std::fopen(filename->c_str(), bmode->c_str());
-	if(!fp_){
-		full_gc();
-		fp_ = std::fopen(filename->c_str(), bmode->c_str());
-		if(!fp_){
-			XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", filename))), return);
-		}
-	}
-}
-
-FileStream::FileStream(std::FILE* fp){
-	fp_ = fp;
-}
-
-FileStream::~FileStream(){
-	close();
-}
-
-uint_t FileStream::tell(){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	return ftell(fp_);
-}
-
-uint_t FileStream::write(const void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	XTAL_UNLOCK{
-		return fwrite(p, 1, size, fp_);
-	}
-	return 0;
-}
-
-uint_t FileStream::read(void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	XTAL_UNLOCK{
-		return fread(p, 1, size, fp_);
-	}
-	return 0;
-}
-
-void FileStream::seek(int_t offset, int_t whence){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return); }
-
-	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
-	fseek(fp_, offset, wh);
-}
-
-void FileStream::close(){
-	if(fp_){
-		fclose(fp_);
-		fp_ = 0;
-	}
-}
-
-bool FileStream::eos(){
-	if(!fp_){ return true; }
-	int ch = getc(fp_);
-	if(feof(fp_)){
-		return true;
-	}
-	ungetc(ch, fp_);
-	return false;
-}
-
-uint_t StdioStream::write(const void* p, uint_t size){
-	uint_t ret = FileStream::write(p, size);
-	fflush(fp_);
-	return ret;
-}
-
+/////////////////////////////////////////////////////////////////
 
 DataStream::DataStream(){
 	static u8 temp = 0;
@@ -367,6 +282,8 @@ bool DataStream::eos(){
 	return pos_>=size_;
 }
 
+///////////////////////////////////////////////////////////////
+
 MemoryStream::MemoryStream(){
 	pos_ = 0;
 	capa_ = 0;
@@ -451,17 +368,20 @@ void MemoryStream::resize(uint_t size){
 	size_ = size;
 }
 
+//////////////////////////////////////////////////////////////////////////
+
 StringStream::StringStream(const StringPtr& str)
 :str_(str ? str : StringPtr("")){
 	data_ = (u8*)str_->data();
-	size_ = str_->buffer_size();
+	size_ = str_->buffer_size()*sizeof(char_t);
 	pos_ = 0;
 }
 
 uint_t StringStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("StringStream::write"), return 0);
+	XTAL_THROW(unsupported_error(get_cpp_class<StringStream>(), "write", null), return 0);
 }
 
+/////////////////////////////////////////////////////////////////////
 
 InteractiveStream::InteractiveStream(){
 	line_ = 1;
@@ -470,11 +390,11 @@ InteractiveStream::InteractiveStream(){
 }
 
 uint_t InteractiveStream::tell(){
-	XTAL_THROW(unsupported_error("InteractiveStream::tell"), return 0);
+	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), "tell", null), return 0);
 }
 
 uint_t InteractiveStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error("InteractiveStream::write"), return 0);
+	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), "write", null), return 0);
 }
 
 uint_t InteractiveStream::read(void* p, uint_t size){
@@ -500,7 +420,7 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 }
 
 void InteractiveStream::seek(int_t offset, int_t whence){
-	XTAL_THROW(unsupported_error("InteractiveStream::seek"), return);
+	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), "seek", null), return 0);
 }
 
 void InteractiveStream::close(){
@@ -514,5 +434,109 @@ void InteractiveStream::terminate_statement(){
 	continue_stmt_ = false;
 }
 
+///////////////////////////////////////////////////////////
+
+StdioStream::StdioStream(std::FILE* fp){
+	fp_ = fp;
+}
+
+StdioStream::~StdioStream(){
+	close();
+}
+
+uint_t StdioStream::tell(){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+
+	return ftell(fp_);
+}
+
+uint_t StdioStream::write(const void* p, uint_t size){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+
+	XTAL_UNLOCK{
+		uint_t ret = fwrite(p, 1, size, fp_);
+		fflush(fp_);
+		return ret;
+	}
+	return 0;
+}
+
+uint_t StdioStream::read(void* p, uint_t size){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+
+	XTAL_UNLOCK{
+		return fread(p, 1, size, fp_);
+	}
+	return 0;
+}
+
+void StdioStream::seek(int_t offset, int_t whence){
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return); }
+
+	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
+	fseek(fp_, offset, wh);
+}
+
+void StdioStream::close(){
+	if(fp_){
+		fclose(fp_);
+		fp_ = 0;
+	}
+}
+
+bool StdioStream::eos(){
+	if(!fp_){ return true; }
+	int ch = getc(fp_);
+	if(feof(fp_)){
+		return true;
+	}
+	ungetc(ch, fp_);
+	return false;
+}
+
+class CStdioFileLib : public FileLib{
+public:
+
+	virtual void initialize(){}
+
+	virtual StreamPtr open(const char_t* file_name, const char_t* flags){
+#ifdef XTAL_USE_WCHAR
+		return xnew<StdioStream>(_wfopen(file_name, flags));
+#else
+		return xnew<StdioStream>(std::fopen(file_name, flags));
+#endif
+	}
+
+} cstdio_file_lib;
+
+void set_file(){
+	file_lib_ = &cstdio_file_lib;
+}
+
+void set_file(FileLib& lib){
+	file_lib_ = &lib;
+}
+
+StreamPtr open(const StringPtr& file_name, const StringPtr& aflags){
+	const char_t* flags = aflags->c_str();
+	char_t flags_temp[16];
+	bool text = false;
+	uint_t i = 0;
+	for(; flags[i]!=0 && i<10; ++i){
+		if(flags[i]=='t'){
+			text = true;
+		}
+		else{
+			flags_temp[i] = flags[i];
+		}
+	}
+
+	if(!text){
+		flags_temp[i++] = 'b';
+	}
+	flags_temp[i++] = 0;
+	
+	return file_lib_->open(file_name->c_str(), flags_temp);
+}
 
 }

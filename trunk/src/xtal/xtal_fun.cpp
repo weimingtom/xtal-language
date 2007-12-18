@@ -131,12 +131,12 @@ Fun::Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCor
 	:outer_(outer), this_(athis), code_(code), core_(core){
 }
 
-StringPtr Fun::object_name(){
+StringPtr Fun::object_name(uint_t depth){
 	if(!name_){
-		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
+		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
 	}
 
-	return HaveName::object_name();
+	return HaveName::object_name(depth);
 }
 
 void Fun::check_arg(const VMachinePtr& vm){
@@ -145,7 +145,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
 			XTAL_THROW(builtin()->member("ArgumentError")(
 				Xt("Xtal Runtime Error 1007")(
-					Named("name", object_name()),
+					Named("object", object_name()),
 					Named("value", n)
 				)
 			), return);
@@ -154,7 +154,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 			if(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM){
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1005")(
-						Named("name", object_name()),
+						Named("object", object_name()),
 						Named("min", core_->min_param_count),
 						Named("value", n)
 					)
@@ -163,7 +163,7 @@ void Fun::check_arg(const VMachinePtr& vm){
 			else{
 				XTAL_THROW(builtin()->member("ArgumentError")(
 					Xt("Xtal Runtime Error 1006")(
-						Named("name", object_name()),
+						Named("object", object_name()),
 						Named("min", core_->min_param_count),
 						Named("max", core_->max_param_count),
 						Named("value", n)

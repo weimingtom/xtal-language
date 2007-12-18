@@ -8,7 +8,7 @@
 
 {
 	foo: fun(){ return 0, 1, 2, 3, 4; }
-	a, b,: foo();
+	a, b, dummy: foo();
 	assert a==0;
 	assert b==1;
 }

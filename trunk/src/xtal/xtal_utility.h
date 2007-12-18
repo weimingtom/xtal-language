@@ -10,6 +10,7 @@
 
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
+//#define XTAL_USE_WCHAR
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG
@@ -75,18 +76,37 @@
 #	pragma warning(disable: 4819)
 #endif
 
+#ifdef XTAL_USE_WCHAR
+#	define XTAL_STRING(x) L##x
+#else 
+#	define XTAL_STRING(x) x
+#endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
-#	define XTAL_INT_FMT (sizeof(int_t)==8 ? "I64" : "")
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("I64") : XTAL_STRING(""))
 #else
-#	define XTAL_INT_FMT (sizeof(int_t)==8 ? "ll" : "")
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("ll") : XTAL_STRING(""))
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER>=1400
-#	define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf_s(buffer, buffer_size, format, value)
+#ifdef XTAL_USE_WCHAR
+
+#	if defined(_MSC_VER) && _MSC_VER>=1400
+#		define XTAL_SPRINTF(buffer, buffer_size, format, value) swprintf_s(buffer, buffer_size, format, value)
+#	else
+#		define XTAL_SPRINTF(buffer, buffer_size, format, value) std::swprintf(buffer, format, value)
+#	endif
+
 #else
-#	define XTAL_SPRINTF(buffer, buffer_size, format, value) std::sprintf(buffer, format, value)
+
+#	if defined(_MSC_VER) && _MSC_VER>=1400
+#		define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf_s(buffer, buffer_size, format, value)
+#	else
+#		define XTAL_SPRINTF(buffer, buffer_size, format, value) std::sprintf(buffer, format, value)
+#	endif
+
 #endif
+
+
 
 namespace xtal{
 

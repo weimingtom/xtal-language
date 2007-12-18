@@ -96,7 +96,7 @@ public:
 class Frame : public HaveName{
 public:
 	
-	Frame(const FramePtr& outer, const CodePtr& code, BlockCore* core);
+	Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core);
 	
 	Frame();
 		
@@ -105,7 +105,7 @@ public:
 public:
 	
 	/**
-	* @brief $B30B&$N%9%3!<%W$rI=$9(BFrame$B%*%V%8%'%/%H$rJV$9!#(B
+	* @brief ŠO‘¤‚ÌƒXƒR[ƒv‚ğ•\‚·FrameƒIƒuƒWƒFƒNƒg‚ğ•Ô‚·B
 	*
 	*/
 	const FramePtr& outer(){ 
@@ -117,7 +117,7 @@ public:
 	}
 
 	/**
-	* @brief $B%j%F%i%k;~$KDj5A$5$l$?MWAG$N?t$rJV$9!#(B
+	* @brief ƒŠƒeƒ‰ƒ‹‚É’è‹`‚³‚ê‚½—v‘f‚Ì”‚ğ•Ô‚·B
 	*
 	*/
 	int_t block_size(){ 
@@ -125,7 +125,7 @@ public:
 	}
 
 	/**
-	* @brief i$BHVL\$N%a%s%P!<$r%@%$%l%/%H$K<hF@!#(B
+	* @brief i”Ô–Ú‚Ìƒƒ“ƒo[‚ğƒ_ƒCƒŒƒNƒg‚Éæ“¾B
 	*
 	*/
 	const AnyPtr& member_direct(int_t i){
@@ -133,7 +133,7 @@ public:
 	}
 
 	/**
-	* @brief i$BHVL\$N%a%s%P!<$r%@%$%l%/%H$K@_Dj!#(B
+	* @brief i”Ô–Ú‚Ìƒƒ“ƒo[‚ğƒ_ƒCƒŒƒNƒg‚Éİ’èB
 	*
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
@@ -144,12 +144,12 @@ public:
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
-	virtual StringPtr object_name();
+	virtual StringPtr object_name(uint_t depth = -1);
 
 public:
 
 	/**
-	* @brief $B%a%s%P$,3JG<$5$l$?!"(BIterator$B$rJV$9(B
+	* @brief ƒƒ“ƒo‚ªŠi”[‚³‚ê‚½AIterator‚ğ•Ô‚·
 	*
 	* @code
 	* Xfor2(key, value, frame.members()){
@@ -167,7 +167,7 @@ protected:
 
 	FramePtr outer_;
 	CodePtr code_;
-	BlockCore* core_;
+	ScopeCore* core_;
 	
 	ArrayPtr members_;
 
@@ -215,73 +215,78 @@ protected:
 class Class : public Frame{
 public:
 
-	Class(const char* name = "");
+	Class(const StringPtr& name = empty_id);
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassCore* core);
 
 public:
 	
 	/**
-	* @brief $B?7$7$$%a%s%P$rDj5A$9$k(B
+	* @brief V‚µ‚¢ƒƒ“ƒo‚ğ’è‹`‚·‚é
 	*
-	* @param name $B?7$7$/Dj5A$9$k%a%s%P$NL>A0(B
+	* @param name V‚µ‚­’è‹`‚·‚éƒƒ“ƒo‚Ì–¼‘O
 	*/
 	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	/**
-	* @brief $B%a%s%P$r<h$j=P$9(B
-	* $B2D?(@-$r9MN8$7$F<h$j=P$9(B
+	* @brief ƒƒ“ƒo‚ğæ‚èo‚·
+	* ‰ÂG«‚ğl—¶‚µ‚Äæ‚èo‚·
 	*
-	* @param name $B<h$j=P$7$?$$%a%s%P$NL>A0(B
-	* @param self $B2D;k@-$rH=Dj$9$k$?$a$N%*%V%8%'%/%H(B
+	* @param name æ‚èo‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
+	* @param self ‰Â‹«‚ğ”»’è‚·‚é‚½‚ß‚ÌƒIƒuƒWƒFƒNƒg
 	*/
 	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
 
 	/**
-	* @brief $B%a%s%P$r:F@_Dj$9$k(B
-	* Xtal$B%l%Y%k$G$O6X;_$5$l$F$$$kA`:n$@$,!"(BC++$B%l%Y%k$G$O2DG=$K$7$F$*$/(B
+	* @brief ƒƒ“ƒo‚ğÄİ’è‚·‚é
+	* XtalƒŒƒxƒ‹‚Å‚Í‹Ö~‚³‚ê‚Ä‚¢‚é‘€ì‚¾‚ªAC++ƒŒƒxƒ‹‚Å‚Í‰Â”\‚É‚µ‚Ä‚¨‚­
 	*
-	* @param name $B:F@_Dj$7$?$$%a%s%P$NL>A0(B
+	* @param name Äİ’è‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
 	*/
 	void set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
-	* @brief Mix-in$B$9$k(B
+	* @brief Mix-in‚·‚é
 	*
-	* @param md Mix-in$B$9$k%/%i%9%*%V%8%'%/%H(B
+	* @param md Mix-in‚·‚éƒNƒ‰ƒXƒIƒuƒWƒFƒNƒg
 	*/
 	void inherit(const ClassPtr& md);
 
 	/**
-	* @brief Mix-in$B$9$k(B
+	* @brief Mix-in‚·‚é
 	*
-	* @param md Mix-in$B$9$k%/%i%9%*%V%8%'%/%H(B
+	* @param md Mix-in‚·‚éƒNƒ‰ƒXƒIƒuƒWƒFƒNƒg
 	*/
 	void inherit_strict(const ClassPtr& md);
 
 	/**
-	* @brief Mix-in$B$5$l$F$$$k$+D4$Y$k(B
+	* @brief Mix-in‚³‚ê‚Ä‚¢‚é‚©’²‚×‚é
 	*
-	* @param md Mix-in$B$5$l$F$$$kD4$Y$?$$%/%i%9%*%V%8%'%/%H(B
+	* @param md Mix-in‚³‚ê‚Ä‚¢‚é’²‚×‚½‚¢ƒNƒ‰ƒXƒIƒuƒWƒFƒNƒg
 	*/
 	bool is_inherited(const AnyPtr& md);
 
 	/**
-	* @brief C++$B$N%/%i%9$,(BMix-in$B$5$l$F$$$k$+D4$Y$k(B
+	* @brief C++‚ÌƒNƒ‰ƒX‚ªMix-in‚³‚ê‚Ä‚¢‚é‚©’²‚×‚é
 	*
 	*/
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief Mix-in$B$5$l$F$$$k%/%i%9$N(BIterator$B$rJV$9(B
+	* @brief Mix-in‚³‚ê‚Ä‚¢‚éƒNƒ‰ƒX‚ÌIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr inherited_classes();
 
 	/**
-	* @brief $B4X?t$rDj5A$9$k(B
+	* @brief ‹ß‚¢–¼‘O‚Ìƒƒ“ƒo‚ğŒŸõ‚·‚é
+	*/
+	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null);
+	
+	/**
+	* @brief ŠÖ”‚ğ’è‹`‚·‚é
 	*
-	* cls->fun("name", &foo); $B$O(B cls->def("name", xtal::fun(&foo)); $B$HF10l(B
+	* cls->fun("name", &foo); ‚Í cls->def("name", xtal::fun(&foo)); ‚Æ“¯ˆê
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -289,9 +294,9 @@ public:
 	}
 
 	/**
-	* @brief $B4X?t$rDj5A$9$k(B
+	* @brief ŠÖ”‚ğ’è‹`‚·‚é
 	*
-	* cls->fun("name", &foo); $B$O(B cls->def("name", xtal::fun(&foo)); $B$HF10l(B
+	* cls->fun("name", &foo); ‚Í cls->def("name", xtal::fun(&foo)); ‚Æ“¯ˆê
 	*/
 	template<class Fun>
 	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -299,9 +304,9 @@ public:
 	}
 
 	/**
-	* @brief $B4X?t$rDj5A$9$k(B
+	* @brief ŠÖ”‚ğ’è‹`‚·‚é
 	*
-	* cls->method("name", &foo); $B$O(B cls->def("name", xtal::method(&foo)); $B$HF10l(B
+	* cls->method("name", &foo); ‚Í cls->def("name", xtal::method(&foo)); ‚Æ“¯ˆê
 	*/
 	template<class Fun, class Policy>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -309,9 +314,9 @@ public:
 	}
 
 	/**
-	* @brief $B4X?t$rDj5A$9$k(B
+	* @brief ŠÖ”‚ğ’è‹`‚·‚é
 	*
-	* cls->method("name", &Klass::foo); $B$O(B cls->def("name", xtal::method(&Klass::foo)); $B$HF10l(B
+	* cls->method("name", &Klass::foo); ‚Í cls->def("name", xtal::method(&Klass::foo)); ‚Æ“¯ˆê
 	*/
 	template<class Fun>
 	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -320,7 +325,7 @@ public:
 
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<$r@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
 	*
 	*/
 	template<class T, class U, class Policy>
@@ -329,10 +334,10 @@ public:
 	}
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%;%C%?!<$r@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒZƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
 	*
-	* Xtal$B$G$O!"(Bobj.name = 10; $B$H$9$k$K$O(Bset_name$B$H(Bset_$B$rA0CV$7$?%a%=%C%I$rDj5A$9$kI,MW$,$"$k$?$a!"(B
-	* $BC1=c$J%;%C%?!<$rDj5A$7$?$$>l9g!"(Bset_xxx$B$H$9$k$3$H$rK:$l$J$$$3$H!#(B
+	* Xtal‚Å‚ÍAobj.name = 10; ‚Æ‚·‚é‚É‚Íset_name‚Æset_‚ğ‘O’u‚µ‚½ƒƒ\ƒbƒh‚ğ’è‹`‚·‚é•K—v‚ª‚ ‚é‚½‚ßA
+	* ’Pƒ‚ÈƒZƒbƒ^[‚ğ’è‹`‚µ‚½‚¢ê‡Aset_xxx‚Æ‚·‚é‚±‚Æ‚ğ–Y‚ê‚È‚¢‚±‚ÆB
 	*/
 	template<class T, class U, class Policy>
 	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -340,11 +345,11 @@ public:
 	}
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<!"%;%C%?!<$rN>J}@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[AƒZƒbƒ^[‚ğ—¼•û¶¬‚µA’è‹`‚·‚é
 	*
 	* cls->getter(name, var, policy);
 	* cls->setter(StringPtr("set_")->cat(name), v, policy);
-	* $B$HEy$7$$(B	
+	* ‚Æ“™‚µ‚¢	
 	*/	
 	template<class T, class U, class Policy>
 	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
@@ -353,7 +358,7 @@ public:
 	}
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<$r@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
 	*
 	*/
 	template<class T, class U>
@@ -362,7 +367,7 @@ public:
 	}
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%;%C%?!<$r@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒZƒbƒ^[‚ğ¶¬‚µA’è‹`‚·‚é
 	*
 	*/
 	template<class T, class U>
@@ -371,11 +376,11 @@ public:
 	}
 	
 	/**
-	* @brief $B%a%s%PJQ?t$X$N%]%$%s%?$+$i%2%C%?!<!"%;%C%?!<$rN>J}@8@.$7!"Dj5A$9$k(B
+	* @brief ƒƒ“ƒo•Ï”‚Ö‚Ìƒ|ƒCƒ“ƒ^‚©‚çƒQƒbƒ^[AƒZƒbƒ^[‚ğ—¼•û¶¬‚µA’è‹`‚·‚é
 	*
 	* cls->getter(name, v);
 	* cls->setter(StringPtr("set_")->cat(name), v);
-	* $B$HEy$7$$(B	
+	* ‚Æ“™‚µ‚¢	
 	*/	
 	template<class T, class U>
 	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
@@ -383,14 +388,14 @@ public:
 	}
 
 	/**
-	* @brief 2$B=E%G%#%9%Q%C%A%a%=%C%I$rDj5A$9$k!#(B
+	* @brief 2dƒfƒBƒXƒpƒbƒ`ƒƒ\ƒbƒh‚ğ’è‹`‚·‚éB
 	*/
 	void dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
 		def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
 	}
 
 	/**
-	* @brief 2$B=E%G%#%9%Q%C%A4X?t$rDj5A$9$k!#(B
+	* @brief 2dƒfƒBƒXƒpƒbƒ`ŠÖ”‚ğ’è‹`‚·‚éB
 	*/
 	void dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
 		def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
@@ -416,7 +421,7 @@ public:
 	
 	struct cpp_class_t{};
 
-	Class(cpp_class_t, const char* name = "");
+	Class(cpp_class_t, const StringPtr& name = empty_id);
 
 	bool is_cpp_class(){
 		return is_cpp_class_;
@@ -446,7 +451,7 @@ protected:
 class CppClass : public Class{
 public:
 		
-	CppClass(const char* name = "");
+	CppClass(const StringPtr& name = empty_id);
 
 public:
 
@@ -490,7 +495,7 @@ private:
 class Singleton : public Class{
 public:
 
-	Singleton(const char* name = "");
+	Singleton(const StringPtr& name = empty_id);
 
 	Singleton(const FramePtr& outer, const CodePtr& code, ClassCore* core);
 	
@@ -498,7 +503,7 @@ public:
 
 	void init_singleton(const VMachinePtr& vm);
 
-	// $B%/%i%9$N@_Dj$O%9%k!<$9$k(B
+	// ƒNƒ‰ƒX‚Ìİ’è‚ÍƒXƒ‹[‚·‚é
 	void set_class(const ClassPtr&){}
 
 	virtual void call(const VMachinePtr& vm);
@@ -514,9 +519,9 @@ struct CppClassHolderList{
 };
 
 void chain_cpp_class(CppClassHolderList& link);
-const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const char* name);
+const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const StringPtr& name);
 
-// C++$B$N%/%i%9$NJ];}$N$?$a$N%/%i%9(B
+// C++‚ÌƒNƒ‰ƒX‚Ì•Û‚Ì‚½‚ß‚ÌƒNƒ‰ƒX
 template<class T>
 struct CppClassHolder{
 	static CppClassHolderList value;
@@ -527,7 +532,7 @@ CppClassHolderList CppClassHolder<T>::value;
 
 
 template<class T>
-inline const ClassPtr& new_cpp_class(const char* name){
+inline const ClassPtr& new_cpp_class(const StringPtr& name){
 	return new_cpp_class_impl(CppClassHolder<T>::value, name);
 }
 

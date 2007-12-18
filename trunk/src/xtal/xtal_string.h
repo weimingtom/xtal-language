@@ -18,6 +18,13 @@ public:
 	String(const char_t* str);
 
 	/**
+	* @brief NUL終端のC文字列から構築する
+	*
+	* @param str NULL終端文字列
+	*/
+	String(const avoid<char>::type* str);
+
+	/**
 	* @brief STLの文字列から構築する
 	*
 	*/
@@ -233,6 +240,13 @@ public:
 	ID(const char_t* str);
 
 	/**
+	* @brief NUL終端のC文字列から構築する
+	*
+	* @param str NULL終端文字列
+	*/
+	ID(const avoid<char>::type* str);
+
+	/**
 	* @brief STLの文字列から構築する
 	*
 	*/
@@ -279,6 +293,8 @@ public:
 inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
 inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 
+AnyPtr interned_strings();
+int_t shortest_edit_distance(const StringPtr& str1, const StringPtr& str2);
 
 class ChRange : public Base{
 public:
@@ -317,7 +333,10 @@ struct Named2{
 	IDPtr name;
 	AnyPtr value;
 
-	Named2(const char* name)
+	Named2(const char_t* name)
+		:name(name), value(undefined){}
+
+	Named2(const avoid<char>::type* name)
 		:name(name), value(undefined){}
 
 	Named2(const IDPtr& name)
@@ -383,6 +402,7 @@ enum IDEnum{
 	idop_at,
 	idtest,
 	idfor,
+	idmembers,
 	idserial_new,
 	idop_div_assign,
 	idop_mul,
@@ -390,9 +410,9 @@ enum IDEnum{
 	idto_a,
 	idinitialize,
 	idonce,
+	idfalse,
 	iddo,
 	idstring,
-	idfalse,
 	idancestors,
 	idop_and_assign,
 	idop_add_assign,
@@ -405,10 +425,10 @@ enum IDEnum{
 	idop_cat,
 	idop_neg,
 	idop_dec,
-	idvalue,
 	iddefault,
 	idcase,
 	idto_s,
+	idvalue,
 	idop_shr,
 	idpure,
 	idfinally,
@@ -417,14 +437,12 @@ enum IDEnum{
 	idop_div,
 	idserial_load,
 	idIOError,
-	id_dummy_lhs_parameter_,
 	idin,
 	idcatch,
 	idop_mul_assign,
 	idmethod,
 	idop_lt,
 	idset_at,
-	id_switch_,
 	idop_mod_assign,
 	idbreak,
 	idtry,
@@ -467,12 +485,10 @@ enum IDEnum{
 	idblock_break,
 	idserial_save,
 	idop_range,
-	id_dummy_fun_parameter_,
-	id_dummy_block_parameter_,
 	idunittest,
+	idtrue,
 	idop_xor,
 	idblock_first,
-	idtrue,
 	idop_call,
 	id_initialize_,
 	idis,
@@ -483,6 +499,8 @@ enum IDEnum{
 	idif,
 	idp,
 //}}ID}
+
+
 
 
 

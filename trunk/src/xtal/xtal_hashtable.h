@@ -260,6 +260,8 @@ void Hashtable<Key, Val, Fun>::erase(const Key& key){
 
 			p->~Node();
 			user_free(p);
+
+			used_size_--;
 			break;
 		}
 		prev = p;
@@ -274,6 +276,10 @@ void Hashtable<Key, Val, Fun>::clear(){
 		p->~Node();
 		user_free(p);
 		p = next;
+	}
+
+	for(uint_t i = 0; i<size_; ++i){
+		begin_[i] = 0;
 	}
 
 	used_size_ = 0;

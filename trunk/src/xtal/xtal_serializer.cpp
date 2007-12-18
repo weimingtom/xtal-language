@@ -93,7 +93,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		else if(StringPtr a = as<StringPtr>(v)){
 			stream_->put_u8(TSTRING);
 			uint_t sz = a->buffer_size();
-			const char* str = a->data();
+			const char_t* str = a->data();
 			stream_->put_i32be(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_u8(str[i]);
@@ -121,9 +121,9 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u32be(sz);
 			if(sz!=0){ stream_->write(&p->code_[0], sizeof(p->code_[0])*sz); }
 			
-			sz = p->block_core_table_.size();
+			sz = p->scope_core_table_.size();
 			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->block_core_table_[0], sizeof(p->block_core_table_[0])*sz); }
+			if(sz!=0){ stream_->write(&p->scope_core_table_[0], sizeof(p->scope_core_table_[0])*sz); }
 
 			sz = p->class_core_table_.size();
 			stream_->put_u16be(sz);
@@ -232,7 +232,7 @@ AnyPtr Serializer::inner_deserialize(){
 
 		XTAL_CASE(TSTRING){
 			int_t sz = stream_->get_u32be();
-			char* p = (char*)user_malloc(sz+1);
+			char_t* p = (char_t*)user_malloc(sizeof(char_t)*(sz+1));
 			for(int_t i = 0; i<sz; ++i){
 				p[i] = (char_t)stream_->get_u8();
 			}
@@ -294,8 +294,8 @@ AnyPtr Serializer::inner_deserialize(){
 			if(sz!=0){ stream_->read(&p->code_[0], sizeof(p->code_[0])*sz); }
 
 			sz = stream_->get_u16be();
-			p->block_core_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->block_core_table_[0], sizeof(p->block_core_table_[0])*sz); }
+			p->scope_core_table_.resize(sz);
+			if(sz!=0){ stream_->read(&p->scope_core_table_[0], sizeof(p->scope_core_table_[0])*sz); }
 	
 			sz = stream_->get_u16be();
 			p->class_core_table_.resize(sz);

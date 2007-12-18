@@ -90,7 +90,7 @@ public:
 	* @brief このオブジェクトに付けられた名前を返す。
 	*
 	*/
-	virtual StringPtr object_name();
+	virtual StringPtr object_name(uint_t depth = -1);
 		
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。

@@ -27,7 +27,8 @@ public:
 
 protected:
 
-	Innocence(const char* str);
+	Innocence(const char_t* str);
+	Innocence(const avoid<char>::type* str);
 
 public:
 
@@ -40,8 +41,8 @@ public:
 	Innocence(float_t v){ set_f(v); }
 	Innocence(Base* v){ set_p(v); }
 	Innocence(bool b){ set_b(b); }
-	Innocence(check_xtype<int>::type v){ set_i(v); }
-	Innocence(check_xtype<float>::type v){ set_f(v); }
+	Innocence(avoid<int>::type v){ set_i(v); }
+	Innocence(avoid<float>::type v){ set_f(v); }
 	
 	Innocence(PrimitiveType type){
 		type_ = type;
@@ -278,7 +279,7 @@ public:
 	* @brief このオブジェクトに付けられた名前を返す。
 	*
 	*/
-	StringPtr object_name() const;
+	StringPtr object_name(uint_t depth = -1) const;
 
 	/**
 	* @brief klassクラスのインスタンスか調べる。

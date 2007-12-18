@@ -400,42 +400,6 @@ private:
 	void put_t_le(f64 v, f64*){ put_f64le(v); }
 };
 
-class FileStream : public Stream{
-public:
-
-	FileStream(const StringPtr& filename, const StringPtr& mode);
-
-	FileStream(std::FILE* fp);
-
-	~FileStream();
-
-	virtual uint_t tell();
-
-	virtual uint_t write(const void* p, uint_t size);
-
-	virtual uint_t read(void* p, uint_t size);
-
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
-
-	virtual void close();
-
-	virtual bool eos();
-
-protected:
-
-	std::FILE* fp_;
-};
-
-class StdioStream : public FileStream{
-public:
-
-	StdioStream(std::FILE* fp)
-		:FileStream(fp){}
-
-	virtual uint_t write(const void* p, uint_t size);
-
-};
-
 class DataStream : public Stream{
 public:
 
@@ -540,5 +504,39 @@ private:
 	std::FILE* fp_;
 };
 
+class StdioStream : public Stream{
+public:
+
+	StdioStream(std::FILE* fp);
+
+	~StdioStream();
+
+	virtual uint_t tell();
+
+	virtual uint_t write(const void* p, uint_t size);
+
+	virtual uint_t read(void* p, uint_t size);
+
+	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
+
+	virtual void close();
+
+	virtual bool eos();
+
+protected:
+	std::FILE* fp_;
+};
+
+class FileLib{
+public:
+	virtual ~FileLib(){}
+	virtual void initialize() = 0;
+	virtual StreamPtr open(const char_t* file_name, const char_t* flags) = 0;
+};
+
+StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
+
+void set_file(FileLib& lib);
+void set_file();
 
 }

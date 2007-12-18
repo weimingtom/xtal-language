@@ -111,24 +111,33 @@ public:
 	* @brief 文字列から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(const char* str)
+	SmartPtr(const char_t* str)
+		:Innocence(str){
+		inc_ref_count();
+	}
+
+	/**
+	* @brief 文字列から構築するコンストラクタ。
+	*
+	*/
+	SmartPtr(const avoid<char>::type* str)
 		:Innocence(str){
 		inc_ref_count();
 	}
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(check_xtype<int>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<long>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<short>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<char>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<unsigned int>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<unsigned long>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<unsigned short>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<unsigned char>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<signed char>::type v){ set_i((int_t)v); }
-	SmartPtr(check_xtype<float>::type v){ set_f((float_t)v); }
-	SmartPtr(check_xtype<double>::type v){ set_f((float_t)v); }
-	SmartPtr(check_xtype<long double>::type v){ set_f((float_t)v); }
+	SmartPtr(avoid<int>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<long>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<short>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<char>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<unsigned int>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<unsigned long>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<unsigned short>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<unsigned char>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<signed char>::type v){ set_i((int_t)v); }
+	SmartPtr(avoid<float>::type v){ set_f((float_t)v); }
+	SmartPtr(avoid<double>::type v){ set_f((float_t)v); }
+	SmartPtr(avoid<long double>::type v){ set_f((float_t)v); }
 
 private:
 
@@ -207,6 +216,12 @@ struct SmartPtrCtor2{
 	static int_t call(type){ return 0; };
 };
 
+template<class T>
+struct SmartPtrCtor3{
+	struct type{};
+	static int_t call(type){ return 0; };
+};
+
 template <int N>
 struct SmartPtrSelector{};
 
@@ -246,6 +261,9 @@ public:
 
 	/// 特別なコンストラクタ2
 	SmartPtr(typename SmartPtrCtor2<T>::type v);
+
+	/// 特別なコンストラクタ3
+	SmartPtr(typename SmartPtrCtor3<T>::type v);
 
 private:
 
@@ -400,6 +418,10 @@ template<class T>
 SmartPtr<T>::SmartPtr(typename SmartPtrCtor2<T>::type v)
 	:SmartPtr<Any>(SmartPtrCtor2<T>::call(v)){}
 
+template<class T>
+SmartPtr<T>::SmartPtr(typename SmartPtrCtor3<T>::type v)
+	:SmartPtr<Any>(SmartPtrCtor3<T>::call(v)){}
+
 /**
 * @brief Tオブジェクトを生成する
 */
@@ -470,13 +492,19 @@ class SmartPtr< SmartPtr<T> >;
 
 template<>
 struct SmartPtrCtor1<String>{
-	typedef const char* type;
+	typedef const char_t* type;
+	static AnyPtr call(type v);
+};
+
+template<>
+struct SmartPtrCtor2<String>{
+	typedef const avoid<char>::type* type;
 	static AnyPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor1<ID>{
-	typedef const char* type;
+	typedef const char_t* type;
 	static AnyPtr call(type v);
 };
 
@@ -486,6 +514,11 @@ struct SmartPtrCtor2<ID>{
 	static AnyPtr call(type v);
 };
 
+template<>
+struct SmartPtrCtor3<ID>{
+	typedef const avoid<char>::type* type;
+	static AnyPtr call(type v);
+};
 
 inline void inc_ref_count_force(const Innocence& v){
 	if(type(v)==TYPE_BASE){
@@ -560,7 +593,7 @@ public:
 	HaveName()
 		:name_(null), force_(0){}
 
-	virtual StringPtr object_name();
+	virtual StringPtr object_name(uint_t depth = -1);
 
 	virtual int_t object_name_force();
 

@@ -79,6 +79,8 @@ struct PointSelf : public Base{
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
+	setlocale(LC_ALL, "");
+
 	using namespace xtal::xeg;
 	using namespace std;
 
@@ -108,21 +110,7 @@ int main2(int argc, char** argv){
 AnyPtr ret = Xsrc
 ((
 
- //10.times.zip("a".."z").map(%f[ %(1)s = %(0)s ])[].p;
-
- switch("te" ~ "ste3"){
-	 case("test"){ "awerawer".p; }
-	 case("tes2t"){ "eeee".p; }
-	 case("test2"){ "ffff".p; }
-	 case("test3"){ "wwwwww".p; }
-	 default{ "smile".p; }
- }
-
-Foo: class{}
-Hoge: class(Foo){}
-Any::test#Any: "Any";
-Any::test#Foo: "Foo";
-Foo::test#Int.p;
+ Class.flerrewen_mv("xdrtret").p;
 
 ));
 
@@ -132,7 +120,6 @@ Foo::test#Int.p;
 		mm->deserialize()();
 
 		//handle_argv(argv);
-
 		
 int c;
 

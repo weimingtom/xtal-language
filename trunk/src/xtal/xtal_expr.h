@@ -6,6 +6,9 @@
 namespace xtal{
 
 enum ExprType{
+
+	EXPR_LIST,
+
 	EXPR_NULL,
 	EXPR_UNDEFINED,
 	EXPR_TRUE,
@@ -82,14 +85,18 @@ enum ExprType{
 	EXPR_FOR,
 	EXPR_FUN,
 	EXPR_MASSIGN,
+	EXPR_MDEFINE,
 	EXPR_IVAR,
 	EXPR_LVAR,
 	EXPR_MEMBER,
-	EXPR_CALL,
+	EXPR_MEMBER_Q,
 	EXPR_SEND,
+	EXPR_SEND_Q,
+	EXPR_CALL,
 	EXPR_ASSIGN,
 	EXPR_DEFINE,
-	EXPR_CDEFINE,
+	EXPR_CDEFINE_MEMBER,
+	EXPR_CDEFINE_IVAR,
 	EXPR_AT,
 	EXPR_BREAK,
 	EXPR_CONTINUE,
@@ -97,12 +104,16 @@ enum ExprType{
 	EXPR_SCOPE,
 	EXPR_CLASS,
 	EXPR_SWITCH,
-	EXPR_TOPLEVEL
+	EXPR_SWITCH_CASE,
+	EXPR_SWITCH_DEFAULT,
+	EXPR_TOPLEVEL,
+
+	EXPR_MAX
 };
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
-	CastResult<const Type&>::type Name(){ if(size()<=N) resize(N+1); return as<const Type&>(at(N)); }\
-	ExprPtr set_##Name(const Type& v){ if(size()<=N) resize(N+1); set_at(N, v); return from_this(this); }
+	Type Name(){ return as<Type>(at(N)); }\
+	ExprPtr set_##Name(const Type& v){ set_at(N, v);return from_this(this); }
 
 
 class Expr;
@@ -118,7 +129,7 @@ class Expr : public Array{
 
 public:
 
-	Expr(const AnyPtr& tag=null, int_t lineno=0){
+	Expr(const AnyPtr& tag=0, int_t lineno=0){
 		tag_ = tag;
 		lineno_ = lineno;
 	}
@@ -139,6 +150,18 @@ public:
 		lineno_ = lineno;
 	}
 
+	const AnyPtr& at(uint_t i){
+		if(size()<=i)
+			resize(i+1);
+		return Array::at(i);
+	}
+
+	void set_at(uint_t i, const AnyPtr& v){
+		if(size()<=i) 
+			resize(i+1); 
+		Array::set_at(i, v); 
+	}
+
 	XTAL_DEF_MEMBER(0, ExprPtr, una_term);
 
 	XTAL_DEF_MEMBER(0, ExprPtr, bin_lhs);
@@ -155,21 +178,21 @@ public:
 	XTAL_DEF_MEMBER(0, int_t, string_kind);
 	XTAL_DEF_MEMBER(1, IDPtr, string_value);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, range_lhs);
-	XTAL_DEF_MEMBER(1, ExprPtr, range_rhs);
-	XTAL_DEF_MEMBER(2, int_t, range_kind);
+	XTAL_DEF_MEMBER(0, int_t, range_kind);
+	XTAL_DEF_MEMBER(1, ExprPtr, range_lhs);
+	XTAL_DEF_MEMBER(2, ExprPtr, range_rhs);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, array_values);
+	XTAL_DEF_MEMBER(0, ExprPtr, array_values);
 	
-	XTAL_DEF_MEMBER(0, MapPtr, map_values);
+	XTAL_DEF_MEMBER(0, ExprPtr, map_values);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, multi_value_exprs);
+	XTAL_DEF_MEMBER(0, ExprPtr, multi_value_exprs);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, return_exprs);
+	XTAL_DEF_MEMBER(0, ExprPtr, return_exprs);
 	
-	XTAL_DEF_MEMBER(0, ArrayPtr, yield_exprs);
+	XTAL_DEF_MEMBER(0, ExprPtr, yield_exprs);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, assert_exprs);
+	XTAL_DEF_MEMBER(0, ExprPtr, assert_exprs);
 
 	XTAL_DEF_MEMBER(0, ExprPtr, throw_expr);
 
@@ -183,74 +206,68 @@ public:
 	XTAL_DEF_MEMBER(2, ExprPtr, if_else);
 
 	XTAL_DEF_MEMBER(0, IDPtr, for_label);
-	XTAL_DEF_MEMBER(1, ExprPtr, for_cond);
-	XTAL_DEF_MEMBER(2, ExprPtr, for_next);
-	XTAL_DEF_MEMBER(3, ExprPtr, for_body);
-	XTAL_DEF_MEMBER(4, ExprPtr, for_else);
-	XTAL_DEF_MEMBER(5, ExprPtr, for_nobreak);
+	XTAL_DEF_MEMBER(1, ExprPtr, for_init);
+	XTAL_DEF_MEMBER(2, ExprPtr, for_cond);
+	XTAL_DEF_MEMBER(3, ExprPtr, for_next);
+	XTAL_DEF_MEMBER(4, ExprPtr, for_body);
+	XTAL_DEF_MEMBER(5, ExprPtr, for_else);
+	XTAL_DEF_MEMBER(6, ExprPtr, for_nobreak);
 
 	XTAL_DEF_MEMBER(0, int_t, fun_kind);
-	XTAL_DEF_MEMBER(1, MapPtr, fun_params);
-	XTAL_DEF_MEMBER(2, bool, fun_extendable_param);
+	XTAL_DEF_MEMBER(1, ExprPtr, fun_params);
+	XTAL_DEF_MEMBER(2, ExprPtr, fun_extendable_param);
 	XTAL_DEF_MEMBER(3, ExprPtr, fun_body);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, massign_lhs_exprs);
-	XTAL_DEF_MEMBER(1, ArrayPtr, massign_rhs_exprs);
-	XTAL_DEF_MEMBER(2, bool, massign_define);
+	XTAL_DEF_MEMBER(0, ExprPtr, massign_lhs_exprs);
+	XTAL_DEF_MEMBER(1, ExprPtr, massign_rhs_exprs);
+
+	XTAL_DEF_MEMBER(0, ExprPtr, mdefine_lhs_exprs);
+	XTAL_DEF_MEMBER(1, ExprPtr, mdefine_rhs_exprs);
 
 	XTAL_DEF_MEMBER(0, IDPtr, ivar_name);
 
 	XTAL_DEF_MEMBER(0, ExprPtr, member_term);
-	XTAL_DEF_MEMBER(1, IDPtr, member_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, member_pname);
-	XTAL_DEF_MEMBER(3, bool, member_q);
-	XTAL_DEF_MEMBER(4, ExprPtr, member_ns);
+	XTAL_DEF_MEMBER(1, AnyPtr, member_name);
+	XTAL_DEF_MEMBER(2, ExprPtr, member_ns);
 
 	XTAL_DEF_MEMBER(0, ExprPtr, send_term);
-	XTAL_DEF_MEMBER(1, IDPtr, send_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, send_pname);
-	XTAL_DEF_MEMBER(3, bool, send_q);
-	XTAL_DEF_MEMBER(4, ExprPtr, send_ns);
-	
+	XTAL_DEF_MEMBER(1, AnyPtr, send_name);
+	XTAL_DEF_MEMBER(2, ExprPtr, send_ns);
+
 	XTAL_DEF_MEMBER(0, ExprPtr, call_term);
-	XTAL_DEF_MEMBER(1, ArrayPtr, call_ordered);
-	XTAL_DEF_MEMBER(2, MapPtr, call_named);
-	XTAL_DEF_MEMBER(3, ExprPtr, call_args);
+	XTAL_DEF_MEMBER(1, ExprPtr, call_args);
+	XTAL_DEF_MEMBER(2, ExprPtr, call_extendable_arg);
 
 	XTAL_DEF_MEMBER(0, IDPtr, lvar_name);
 
-	XTAL_DEF_MEMBER(0, int_t, cdefine_accessibility);
-	XTAL_DEF_MEMBER(1, IDPtr, cdefine_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, cdefine_ns);
-	XTAL_DEF_MEMBER(3, ExprPtr, cdefine_term);
+	XTAL_DEF_MEMBER(0, AnyPtr, cdefine_member_accessibility);
+	XTAL_DEF_MEMBER(1, IDPtr, cdefine_member_name);
+	XTAL_DEF_MEMBER(2, ExprPtr, cdefine_member_ns);
+	XTAL_DEF_MEMBER(3, ExprPtr, cdefine_member_term);
+
+	XTAL_DEF_MEMBER(0, AnyPtr, cdefine_ivar_accessibility);
+	XTAL_DEF_MEMBER(1, IDPtr, cdefine_ivar_name);
+	XTAL_DEF_MEMBER(2, ExprPtr, cdefine_ivar_term);
 
 	XTAL_DEF_MEMBER(0, IDPtr, break_label);
 
 	XTAL_DEF_MEMBER(0, IDPtr, continue_label);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, scope_stmts);
-
 	XTAL_DEF_MEMBER(0, int_t, class_kind);
-	XTAL_DEF_MEMBER(1, ArrayPtr, class_mixins);
-	XTAL_DEF_MEMBER(2, ArrayPtr, class_stmts);
-	XTAL_DEF_MEMBER(3, MapPtr, class_ivars);
+	XTAL_DEF_MEMBER(1, ExprPtr, class_mixins);
+	XTAL_DEF_MEMBER(2, ExprPtr, class_stmts);
 
 	XTAL_DEF_MEMBER(0, ExprPtr, switch_cond);
-	XTAL_DEF_MEMBER(1, MapPtr, switch_cases);
-	XTAL_DEF_MEMBER(2, ExprPtr, switch_default);
+	XTAL_DEF_MEMBER(1, ExprPtr, switch_cases);
 
-	XTAL_DEF_MEMBER(0, ArrayPtr, toplevel_stmts);
+	XTAL_DEF_MEMBER(0, ExprPtr, scope_stmts);
+	XTAL_DEF_MEMBER(0, ExprPtr, toplevel_stmts);
 };
 
 
-inline ArrayPtr make_array(){ ArrayPtr ret = xnew<Array>(); return ret; }
-inline ArrayPtr make_array(const AnyPtr& v1){ ArrayPtr ret = xnew<Array>(); ret->push_back(v1); return ret; }
-inline ArrayPtr make_array(const AnyPtr& v1, const AnyPtr& v2){ ArrayPtr ret = xnew<Array>(); ret->push_back(v1); ret->push_back(v2); return ret; }
-
-inline MapPtr make_map(){ MapPtr ret = xnew<Map>(); return ret; }
-inline MapPtr make_map(const AnyPtr& k1, const AnyPtr& v1){ MapPtr ret = xnew<Map>(); ret->set_at(k1, v1); return ret; }
-inline MapPtr make_map(const AnyPtr& k1, const AnyPtr& v1, const AnyPtr& k2, const AnyPtr& v2){ MapPtr ret = xnew<Map>();  ret->set_at(k1, v1);  ret->set_at(k2, v2); return ret; }
-
+inline ExprPtr make_exprs(){ ExprPtr ret = xnew<Expr>(); return ret; }
+inline ExprPtr make_exprs(const AnyPtr& v1){ ExprPtr ret = xnew<Expr>(); ret->push_back(v1); return ret; }
+inline ExprPtr make_exprs(const AnyPtr& v1, const AnyPtr& v2){ ExprPtr ret = xnew<Expr>(); ret->push_back(v1); ret->push_back(v2); return ret; }
 
 class ExprMaker{
 public:
@@ -266,17 +283,17 @@ public:
 		lineno_ = ln;
 	}
 
-	ExprPtr return_(const ArrayPtr& exprs){ return xnew<Expr>(EXPR_RETURN, lineno_)->set_return_exprs(exprs); }
+	ExprPtr return_(const ExprPtr& exprs){ return xnew<Expr>(EXPR_RETURN, lineno_)->set_return_exprs(exprs); }
 	ExprPtr continue_(const IDPtr& label){ return xnew<Expr>(EXPR_CONTINUE, lineno_)->set_continue_label(label); }
 	ExprPtr break_(const IDPtr& label){ return xnew<Expr>(EXPR_BREAK, lineno_)->set_break_label(label); }
-	ExprPtr yield(const ArrayPtr& exprs){ return xnew<Expr>(EXPR_YIELD, lineno_)->set_yield_exprs(exprs); }
-	ExprPtr assert_(const ArrayPtr& exprs){ return xnew<Expr>(EXPR_ASSERT, lineno_)->set_assert_exprs(exprs); }
-	ExprPtr scope(const ArrayPtr& stmts){ return xnew<Expr>(EXPR_SCOPE, lineno_)->set_scope_stmts(stmts); }
-	ExprPtr toplevel(const ArrayPtr& stmts){ return xnew<Expr>(EXPR_TOPLEVEL, lineno_)->set_toplevel_stmts(stmts); }
-	ExprPtr class_(int_t kind, const ArrayPtr& mixins, const ArrayPtr& stmts, const MapPtr& ivars){ return xnew<Expr>(EXPR_CLASS, lineno_)->set_class_kind(kind)->set_class_mixins(mixins)->set_class_stmts(stmts)->set_class_ivars(ivars); }
-	ExprPtr cdefine(int_t accessibility, const IDPtr& name, const ExprPtr& secondary_key, const ExprPtr& term){ return xnew<Expr>(EXPR_CDEFINE, lineno_)->set_cdefine_accessibility(accessibility)->set_cdefine_name(name)->set_cdefine_ns(secondary_key)->set_cdefine_term(term); }
+	ExprPtr yield(const ExprPtr& exprs){ return xnew<Expr>(EXPR_YIELD, lineno_)->set_yield_exprs(exprs); }
+	ExprPtr scope(const ExprPtr& stmts){ return xnew<Expr>(EXPR_SCOPE, lineno_)->set_scope_stmts(stmts); }
+	ExprPtr toplevel(const ExprPtr& stmts){ return xnew<Expr>(EXPR_TOPLEVEL, lineno_)->set_toplevel_stmts(stmts); }
 
-	ExprPtr fun(int_t kind, const MapPtr& params, bool extendable_param, const ExprPtr& body){ return xnew<Expr>(EXPR_FUN, lineno_)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
+	ExprPtr cdefine_member(const AnyPtr& accessibility, const IDPtr& name, const ExprPtr& secondary_key, const ExprPtr& term){ return xnew<Expr>(EXPR_CDEFINE_MEMBER, lineno_)->set_cdefine_member_accessibility(accessibility)->set_cdefine_member_name(name)->set_cdefine_member_ns(secondary_key)->set_cdefine_member_term(term); }
+	ExprPtr cdefine_ivar(const AnyPtr& accessibility, const IDPtr& name, const ExprPtr& term){ return xnew<Expr>(EXPR_CDEFINE_IVAR, lineno_)->set_cdefine_ivar_accessibility(accessibility)->set_cdefine_ivar_name(name)->set_cdefine_ivar_term(term); }
+
+	ExprPtr fun(int_t kind, const ExprPtr& params, const ExprPtr& extendable_param, const ExprPtr& body){ return xnew<Expr>(EXPR_FUN, lineno_)->set_fun_kind(kind)->set_fun_params(params)->set_fun_extendable_param(extendable_param)->set_fun_body(body); }
 
 	ExprPtr bin(ExprType expr_type, const ExprPtr& lhs, const ExprPtr& rhs){ return xnew<Expr>(expr_type, lineno_)->set_bin_lhs(lhs)->set_bin_rhs(rhs); }
 	ExprPtr una(ExprType expr_type, const ExprPtr& term){ return xnew<Expr>(expr_type, lineno_)->set_una_term(term); }
@@ -297,22 +314,19 @@ public:
 	ExprPtr args(){ return xnew<Expr>(EXPR_ARGS, lineno_); }
 	ExprPtr callee(){ return xnew<Expr>(EXPR_CALLEE, lineno_); }
 
-	ExprPtr multi_value(const ArrayPtr& exprs){ return xnew<Expr>(EXPR_MULTI_VALUE, lineno_)->set_multi_value_exprs(exprs); }
+	ExprPtr multi_value(const ExprPtr& exprs){ return xnew<Expr>(EXPR_MULTI_VALUE, lineno_)->set_multi_value_exprs(exprs); }
 
 	ExprPtr once(const ExprPtr& term){ return una(EXPR_ONCE, term); }
 	ExprPtr bracket(const ExprPtr& term){ return una(EXPR_BRACKET, term); }
 
-	ExprPtr call(const ExprPtr& term, const ArrayPtr& ordered, const MapPtr& named, const ExprPtr& args){ return xnew<Expr>(EXPR_CALL, lineno_)->set_call_term(term)->set_call_ordered(ordered)->set_call_named(named)->set_call_args(args); }
+	ExprPtr call(const ExprPtr& term, const ExprPtr& args, const ExprPtr& extendable_arg){ 
+		return xnew<Expr>(EXPR_CALL, lineno_)->set_call_term(term)->set_call_args(args)->set_call_extendable_arg(extendable_arg); }
 
-	ExprPtr member(const ExprPtr& term, const IDPtr& name){ return xnew<Expr>(EXPR_MEMBER, lineno_)->set_member_term(term)->set_member_name(name); }
-	ExprPtr member_q(const ExprPtr& term, const IDPtr& name){ return xnew<Expr>(EXPR_MEMBER, lineno_)->set_member_term(term)->set_member_name(name)->set_member_q(true); }
-	ExprPtr member_e(const ExprPtr& term, const ExprPtr& name){ return xnew<Expr>(EXPR_MEMBER, lineno_)->set_member_term(term)->set_member_pname(name); }
-	ExprPtr member_eq(const ExprPtr& term, const ExprPtr& name){ return xnew<Expr>(EXPR_MEMBER, lineno_)->set_member_term(term)->set_member_pname(name)->set_member_q(true); }
+	ExprPtr member(const ExprPtr& term, const AnyPtr& name){ return xnew<Expr>(EXPR_MEMBER, lineno_)->set_member_term(term)->set_member_name(name); }
+	ExprPtr member_q(const ExprPtr& term, const AnyPtr& name){ return xnew<Expr>(EXPR_MEMBER_Q, lineno_)->set_member_term(term)->set_member_name(name); }
 
-	ExprPtr send(const ExprPtr& term, const IDPtr& name){ return xnew<Expr>(EXPR_SEND, lineno_)->set_send_term(term)->set_send_name(name); }
-	ExprPtr send_q(const ExprPtr& term, const IDPtr& name){ return xnew<Expr>(EXPR_SEND, lineno_)->set_send_term(term)->set_send_name(name)->set_send_q(true); }
-	ExprPtr send_e(const ExprPtr& term, const ExprPtr& name){ return xnew<Expr>(EXPR_SEND, lineno_)->set_send_term(term)->set_send_pname(name); }
-	ExprPtr send_eq(const ExprPtr& term, const ExprPtr& name){ return xnew<Expr>(EXPR_SEND, lineno_)->set_send_term(term)->set_send_pname(name)->set_send_q(true); }
+	ExprPtr send(const ExprPtr& term, const AnyPtr& name){ return xnew<Expr>(EXPR_SEND, lineno_)->set_send_term(term)->set_send_name(name); }
+	ExprPtr send_q(const ExprPtr& term, const AnyPtr& name){ return xnew<Expr>(EXPR_SEND_Q, lineno_)->set_send_term(term)->set_send_name(name); }
 
 	ExprPtr q(const ExprPtr& cond, const ExprPtr& true_, const ExprPtr& false_){ return xnew<Expr>(EXPR_Q, lineno_)->set_q_cond(cond)->set_q_true(true_)->set_q_false(false_); }
 
@@ -320,20 +334,78 @@ public:
 	ExprPtr for_(const IDPtr& label, const ExprPtr& cond, const ExprPtr& next, const ExprPtr& body, const ExprPtr& else_, const ExprPtr& nobreak){ return xnew<Expr>(EXPR_FOR, lineno_)->set_for_label(label)->set_for_cond(cond)->set_for_next(next)->set_for_body(body)->set_for_else(else_)->set_for_nobreak(nobreak); }
 	ExprPtr if_(const ExprPtr& cond,const ExprPtr& body, const ExprPtr& else_){ return xnew<Expr>(EXPR_IF, lineno_)->set_if_cond(cond)->set_if_body(body)->set_if_else(else_); }
 		
-	ExprPtr massign(const ArrayPtr& lhs, const ArrayPtr& rhs, bool define){ return xnew<Expr>(EXPR_MASSIGN, lineno_)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs)->set_massign_define(define); }
+	ExprPtr massign(const ExprPtr& lhs, const ExprPtr& rhs){ return xnew<Expr>(EXPR_MASSIGN, lineno_)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs); }
+	ExprPtr mdefine(const ExprPtr& lhs, const ExprPtr& rhs){ return xnew<Expr>(EXPR_MDEFINE, lineno_)->set_massign_lhs_exprs(lhs)->set_massign_rhs_exprs(rhs); }
 
 	ExprPtr define(const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_DEFINE, lhs, rhs); }
 	ExprPtr assign(const ExprPtr& lhs, const ExprPtr& rhs){ return bin(EXPR_ASSIGN, lhs, rhs); }
-
-	ExprPtr array(const ArrayPtr& exprs){ return xnew<Expr>(EXPR_ARRAY, lineno_)->set_array_values(exprs); }
-	ExprPtr map(const MapPtr& exprs){ return xnew<Expr>(EXPR_MAP, lineno_)->set_map_values(exprs); }
-
-	ExprPtr switch_(const ExprPtr& cond, const MapPtr& cases, const ExprPtr& default_){ return xnew<Expr>(EXPR_SWITCH, lineno_)->set_switch_cond(cond)->set_switch_cases(cases)->set_switch_default(default_); }
 
 	ExprPtr range_(const ExprPtr& lhs, const ExprPtr& rhs, int_t kind){ return xnew<Expr>(EXPR_RANGE, lineno_)->set_range_lhs(lhs)->set_range_rhs(rhs)->set_range_kind(kind); }
 
 private:
 
+	int_t lineno_;
+};
+
+
+class ExprBuilder{
+public:
+
+	ExprBuilder(int_t lineno = 0)
+		:lineno_(lineno), root_(xnew<Expr>()){}
+
+	int_t lineno(){
+		return lineno_;
+	}
+
+	void set_lineno(int_t ln){
+		lineno_ = ln;
+	}
+
+	void splice(int_t tag, int_t num){
+		ExprPtr ret = xnew<Expr>(tag);
+		for(uint_t i=root_->size()-num; i<root_->size(); ++i){
+			ret->push_back(root_->at(i));
+		}
+		root_->resize(root_->size()-num);
+		root_->push_back(ret);
+	}
+
+	struct State{
+		int_t lineno;
+		int_t pos;
+	};
+
+	State begin(){
+		State state = {lineno_, root_->size()};
+		return state;
+	}
+
+	void end(int_t tag, const State& state){
+		splice(tag, root_->size()-state.pos);
+	}
+
+	const AnyPtr& back(){
+		return root_->back();
+	}
+
+	void push(const AnyPtr& v){
+		root_->push_back(v);
+	}
+
+	void insert(int_t n, const AnyPtr& v){
+		root_->insert(root_->size()-n, v);
+	}
+
+	AnyPtr pop(){
+		AnyPtr ret = root_->back();
+		root_->pop_back();
+		return ret;
+	}
+
+private:
+	ExprPtr root_;
+	ArrayPtr errors_;
 	int_t lineno_;
 };
 

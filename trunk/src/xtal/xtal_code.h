@@ -63,8 +63,8 @@ public:
 		return filelocal_; 
 	}
 
-	BlockCore* block_core(int_t i){
-		return &block_core_table_[i];
+	ScopeCore* scope_core(int_t i){
+		return &scope_core_table_[i];
 	}
 
 	ClassCore* class_core(int_t i){
@@ -113,7 +113,7 @@ protected:
 private:
 
 	AC<FunCore>::vector xfun_core_table_;
-	AC<BlockCore>::vector block_core_table_;
+	AC<ScopeCore>::vector scope_core_table_;
 	AC<ClassCore>::vector class_core_table_;
 	AC<ExceptCore>::vector except_core_table_;
 

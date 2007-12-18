@@ -42,8 +42,8 @@ public:
 		pos_ = 0;
 		read_ = 0;
 
-		n_ch_ = "\n";
-		r_ch_ = "\r";
+		n_ch_ = XTAL_STRING("\n");
+		r_ch_ = XTAL_STRING("\r");
 
 		lineno_ = 1;
 

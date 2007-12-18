@@ -16,7 +16,7 @@ class Stack{
 private:
 
 	struct Buf{
-		char buf[sizeof(T)*2];
+		u8 buf[sizeof(T)*2];
 	};
 
 	static Buf buf_;
@@ -394,7 +394,7 @@ class PODStackBase{
 private:
 
 	struct Buf{
-		char buf[64];
+		u8 buf[64];
 	};
 
 	static Buf buf_;
@@ -414,11 +414,11 @@ private:
 	}
 
 	void* plusp(const void* p, size_t v) const{
-		return (char*)p + v*one_size_;
+		return (u8*)p + v*one_size_;
 	}
 	
 	void* minusp(const void* p, size_t v) const{
-		return (char*)p - v*one_size_;
+		return (u8*)p - v*one_size_;
 	}
 
 	void* addp(void*& p, size_t v){
@@ -506,7 +506,7 @@ public:
 	void erase(size_t i){
 		using namespace std;
 		for(size_t j = i; j != 0; --j){
-			memcpy((*this)[j], (*this)[j-1], one_size_);
+			std::memcpy((*this)[j], (*this)[j-1], one_size_);
 		}
 		downsize(1);
 	}
@@ -533,11 +533,11 @@ public:
 	}
 
 	size_t size() const{
-		return ((char*)plusp(current_, 1) - (char*)begin_)/one_size_;
+		return ((u8*)plusp(current_, 1) - (u8*)begin_)/one_size_;
 	}
 
 	size_t capacity() const{
-		return ((char*)end_ - (char*)begin_)/one_size_;
+		return ((u8*)end_ - (u8*)begin_)/one_size_;
 	}
 
 	void reserve(size_t capa);

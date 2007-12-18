@@ -83,6 +83,24 @@ static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& s
 	}
 }
 
+static uint_t string_length(const char_t* str){
+	uint_t ret = 0;
+	while(*str++){
+		ret++;
+	}
+	return ret;
+}
+
+static int_t string_compare(const char_t* a, const char_t* b){
+	while(*a!=*b){
+		if(!*a)
+			return 0;
+		a++;
+		b++;
+	}
+	return (int_t)*a - (int_t)*b;
+}
+
 class StringEachIter : public Base{
 	StringStreamPtr ss_;
 
@@ -192,14 +210,14 @@ protected:
 
 public:
 
-	const Value& insert(const char* str, uint_t size){
+	const Value& insert(const char_t* str, uint_t size){
 		uint_t hashcode;
 		uint_t length;
 		make_hashcode_and_length(str, size, hashcode, length);
 		return insert(str, size, hashcode, length);
 	}
 
-	const Value& insert(const char* str){
+	const Value& insert(const char_t* str){
 		uint_t hashcode;
 		uint_t length;
 		uint_t size;
@@ -207,12 +225,12 @@ public:
 		return insert(str, size, hashcode, length);
 	}
 
-	const Value& insert(const char* str, uint_t size, uint_t hash, uint_t length);
+	const Value& insert(const char_t* str, uint_t size, uint_t hash, uint_t length);
 
 	virtual void before_gc();
 };
 
-const StringMgr::Value& StringMgr::insert(const char* str, uint_t size, uint_t hashcode, uint_t length){
+const StringMgr::Value& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, uint_t length){
 	Guard guard(guard_);
 
 	Key key = {str, size};
@@ -223,7 +241,7 @@ const StringMgr::Value& StringMgr::insert(const char* str, uint_t size, uint_t h
 
 	Value value = {hashcode, xnew<ID>(str, size, hashcode, length)};
 	if(size<=Innocence::SMALL_STRING_MAX){
-		memcpy(value.buf, str, sizeof(char_t)*size);
+		std::memcpy(value.buf, str, sizeof(char_t)*size);
 		value.buf[size] = 0;
 	}
 
@@ -240,6 +258,7 @@ void StringMgr::before_gc(){
 	}
 }
 
+
 namespace{
 
 SmartPtr<StringMgr> str_mgr_;
@@ -248,6 +267,33 @@ void uninitialize_string(){
 	str_mgr_ = null;
 }
 
+}
+
+class InternedStringIter : public Base{
+	StringMgr::table_t::iterator iter_, last_;
+public:
+
+	InternedStringIter()
+		:iter_(str_mgr_->table_.begin()), last_(str_mgr_->table_.end()){
+	}
+			
+	void block_next(const VMachinePtr& vm){
+		if(iter_!=last_){
+			vm->return_result(from_this(this), iter_->second.value);
+			++iter_;
+		}
+		else{
+			vm->return_result(null, null);
+		}
+	}
+};
+
+AnyPtr interned_strings(){
+	return xnew<InternedStringIter>();
+}
+
+int_t shortest_edit_distance(const StringPtr& str1, const StringPtr& str2){
+	return shortest_edit_distance(str1->data(), str1->buffer_size(), str2->data(), str2->buffer_size());
 }
 
 ////////////////////////////////////////////////////////////////
@@ -277,7 +323,6 @@ void initialize_string(){
 		p->method("each", &ChRange::each);
 	}
 
-
 	{
 		ClassPtr p = new_cpp_class<String>("String");
 		p->inherit(Iterable());
@@ -301,6 +346,12 @@ void initialize_string(){
 		p->method("op_lt", &String::op_lt, get_cpp_class<String>());
 	}
 
+	{
+		ClassPtr p = new_cpp_class<InternedStringIter>("InternedStringIter");
+		p->inherit(Iterator());
+		p->method("block_next", &InternedStringIter::block_next);
+	}
+
 	set_cpp_class<ID>(get_cpp_class<String>());
 }
 
@@ -309,7 +360,7 @@ void initialize_string(){
 void String::init_string(const char_t* str, uint_t sz){
 	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
-		memcpy(svalue_, str, sz);
+		std::memcpy(svalue_, str, sz*sizeof(char_t));
 	}
 	else{
 		uint_t hash, length;
@@ -327,23 +378,33 @@ void String::init_string(const char_t* str, uint_t sz){
 }
 
 
-String::String(const char* str):Any(noinit_t()){
-	init_string(str, strlen(str));
+String::String(const char_t* str):Any(noinit_t()){
+	init_string(str, string_length(str));
+}
+
+String::String(const avoid<char>::type* str):Any(noinit_t()){
+	uint_t n = strlen((char*)str);
+	UserMallocGuard umg(n*sizeof(char_t));
+	char_t* buf = (char_t*)umg.get();
+	for(uint_t i=0; i<n; ++i){
+		buf[i] = str[i];
+	}
+	init_string(buf, n);
 }
 
 String::String(const string_t& str):Any(noinit_t()){
 	init_string(str.c_str(), str.size());
 }
 
-String::String(const char* str, uint_t size):Any(noinit_t()){
+String::String(const char_t* str, uint_t size):Any(noinit_t()){
 	init_string(str, size);
 }
 
-String::String(const char* begin, const char* last):Any(noinit_t()){
+String::String(const char_t* begin, const char_t* last):Any(noinit_t()){
 	init_string(begin, last-begin);
 }
 
-String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):Any(noinit_t()){
+String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2):Any(noinit_t()){
 	if(size1==0){
 		init_string(str2, size2);
 		return;
@@ -356,8 +417,8 @@ String::String(const char* str1, uint_t size1, const char* str2, uint_t size2):A
 	uint_t sz = size1 + size2;
 	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
-		memcpy(svalue_, str1, size1);
-		memcpy(&svalue_[size1], str2, size2);
+		std::memcpy(svalue_, str1, size1*sizeof(char_t));
+		std::memcpy(&svalue_[size1], str2, size2*sizeof(char_t));
 	}
 	else{
 		set_p(new LargeString(str1, size1, str2, size2));
@@ -401,11 +462,11 @@ String::String(char_t a, char_t b, char_t c)
 	}
 }
 
-String::String(const char* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag):Any(noinit_t()){
+String::String(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag):Any(noinit_t()){
 	uint_t sz = size;
 	if(sz<=SMALL_STRING_MAX){
 		set_small_string();
-		memcpy(svalue_, str, sz);
+		std::memcpy(svalue_, str, sz*sizeof(char_t));
 	}
 	else{
 		if(!intern_flag && length<=1){
@@ -440,7 +501,7 @@ String::String(const String& s)
 	inc_ref_count_force(s);
 }
 
-const char* String::c_str(){
+const char_t* String::c_str(){
 	if(type(*this)==TYPE_BASE){
 		return ((LargeString*)pvalue(*this))->c_str();
 	}
@@ -517,11 +578,11 @@ StringPtr String::to_s(){
 	return from_this(this);
 }
 
-int_t String::to_i(){ 
+int_t String::to_i(){
 	return std::atoi(c_str()); 
 }
 
-float_t String::to_f(){ 
+float_t String::to_f(){
 	return (float_t)std::atof(c_str()); 
 }
 
@@ -556,7 +617,7 @@ bool String::op_eq(const StringPtr& v){
 }
 
 bool String::op_lt(const StringPtr& v){
-	return strcmp(c_str(), v->c_str()) < 0;
+	return string_compare(c_str(), v->c_str()) < 0;
 }
 
 StringPtr String::cat(const StringPtr& v){
@@ -609,10 +670,10 @@ void visit_members(Visitor& m, const Named& p){
 }
 
 struct StringKey{
-	const char* str;
+	const char_t* str;
 	int_t size;
 
-	StringKey(const char* str, int_t size)
+	StringKey(const char_t* str, int_t size)
 		:str(str), size(size){}
 
 	friend bool operator <(const StringKey& a, const StringKey& b){
@@ -628,21 +689,21 @@ void LargeString::common_init(uint_t size){
 	XTAL_ASSERT(size>Innocence::SMALL_STRING_MAX);
 
 	buffer_size_ = size;
-	str_.p = static_cast<char*>(user_malloc(buffer_size_+1));
+	str_.p = static_cast<char_t*>(user_malloc(sizeof(char_t)*(buffer_size_+1)));
 	str_.p[buffer_size_] = 0;
 	flags_ = 0;
 }
 
-LargeString::LargeString(const char* str1, uint_t size1, const char* str2, uint_t size2){
+LargeString::LargeString(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2){
 	common_init(size1 + size2);
-	memcpy(str_.p, str1, size1);
-	memcpy(str_.p+size1, str2, size2);
+	std::memcpy(str_.p, str1, size1*sizeof(char_t));
+	std::memcpy(str_.p+size1, str2, size2*sizeof(char_t));
 	make_hashcode_and_length(str_.p, buffer_size_, str_.hashcode, length_);
 }
 
-LargeString::LargeString(const char* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
+LargeString::LargeString(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
 	common_init(size);
-	memcpy(str_.p, str, buffer_size_);
+	std::memcpy(str_.p, str, buffer_size_*sizeof(char_t));
 	str_.hashcode = hashcode;
 	flags_ = intern_flag ? INTERNED : 0;
 	length_ = length;
@@ -668,7 +729,7 @@ LargeString::~LargeString(){
 	}
 }
 
-const char* LargeString::c_str(){ 
+const char_t* LargeString::c_str(){ 
 	if((flags_ & ROPE)!=0)
 		became_unified();
 	return str_.p; 
@@ -696,7 +757,7 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 	PStack<LargeString*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
-			memcpy(&memory[pos], p->str_.p, p->buffer_size_);
+			std::memcpy(&memory[pos], p->str_.p, p->buffer_size_*sizeof(char_t));
 			pos += p->buffer_size_;
 			if(stack.empty())
 				return;
@@ -713,6 +774,18 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 
 ID::ID(const char_t* str)
 	:String(*str_mgr_->insert(str).value){}
+
+ID::ID(const avoid<char>::type* str)	
+	:String(noinit_t()){
+	uint_t n = strlen((char*)str);
+	UserMallocGuard umg(n*sizeof(char_t));
+	char_t* buf = (char_t*)umg.get();
+	for(uint_t i=0; i<n; ++i){
+		buf[i] = str[i];
+	}
+		
+	*this = ID(buf, n);
+}
 
 ID::ID(const string_t& str)
 	:String(*str_mgr_->insert(str.c_str(), str.size()).value){}
@@ -770,6 +843,10 @@ AnyPtr SmartPtrCtor1<String>::call(type v){
 	return xnew<String>(v);
 }
 
+AnyPtr SmartPtrCtor2<String>::call(type v){
+	return xnew<String>(v);
+}
+
 AnyPtr SmartPtrCtor1<ID>::call(type v){
 	return str_mgr_->insert(v).value;
 }
@@ -779,168 +856,147 @@ AnyPtr SmartPtrCtor2<ID>::call(type v){
 	return v;
 }
 
+AnyPtr SmartPtrCtor3<ID>::call(type v){
+	return xnew<ID>(v);
+}
+
 #ifdef XTAL_USE_PREDEFINED_ID
 
 namespace id{
 	IDPtr id_list[IDMAX];
 }
 
+IDPtr empty_id;
+
 void uninitialize_interned_string(){
+	empty_id = null;
 	for(int i=0; i<id::IDMAX; ++i){
 		id::id_list[i] = null;
 	}
 }
 
-
 void initialize_interned_string(){
 	register_uninitializer(&uninitialize_interned_string);
+	
+	empty_id = xnew<ID>("");
 
 //{ID{{
-	id::id_list[id::idop_inc] = xnew<ID>("op_inc", 6);
-	id::id_list[id::idblock_catch] = xnew<ID>("block_catch", 11);
-	id::id_list[id::idcallee] = xnew<ID>("callee", 6);
-	id::id_list[id::idnew] = xnew<ID>("new", 3);
-	id::id_list[id::idop_shl_assign] = xnew<ID>("op_shl_assign", 13);
-	id::id_list[id::idop_at] = xnew<ID>("op_at", 5);
-	id::id_list[id::idtest] = xnew<ID>("test", 4);
-	id::id_list[id::idfor] = xnew<ID>("for", 3);
-	id::id_list[id::idserial_new] = xnew<ID>("serial_new", 10);
-	id::id_list[id::idop_div_assign] = xnew<ID>("op_div_assign", 13);
-	id::id_list[id::idop_mul] = xnew<ID>("op_mul", 6);
-	id::id_list[id::idop_xor_assign] = xnew<ID>("op_xor_assign", 13);
-	id::id_list[id::idto_a] = xnew<ID>("to_a", 4);
-	id::id_list[id::idinitialize] = xnew<ID>("initialize", 10);
-	id::id_list[id::idonce] = xnew<ID>("once", 4);
-	id::id_list[id::iddo] = xnew<ID>("do", 2);
-	id::id_list[id::idstring] = xnew<ID>("string", 6);
-	id::id_list[id::idfalse] = xnew<ID>("false", 5);
-	id::id_list[id::idancestors] = xnew<ID>("ancestors", 9);
-	id::id_list[id::idop_and_assign] = xnew<ID>("op_and_assign", 13);
-	id::id_list[id::idop_add_assign] = xnew<ID>("op_add_assign", 13);
-	id::id_list[id::idop_cat_assign] = xnew<ID>("op_cat_assign", 13);
-	id::id_list[id::idsingleton] = xnew<ID>("singleton", 9);
-	id::id_list[id::idop_shl] = xnew<ID>("op_shl", 6);
-	id::id_list[id::idblock_next] = xnew<ID>("block_next", 10);
-	id::id_list[id::idyield] = xnew<ID>("yield", 5);
-	id::id_list[id::idop_shr_assign] = xnew<ID>("op_shr_assign", 13);
-	id::id_list[id::idop_cat] = xnew<ID>("op_cat", 6);
-	id::id_list[id::idop_neg] = xnew<ID>("op_neg", 6);
-	id::id_list[id::idop_dec] = xnew<ID>("op_dec", 6);
-	id::id_list[id::idvalue] = xnew<ID>("value", 5);
-	id::id_list[id::iddefault] = xnew<ID>("default", 7);
-	id::id_list[id::idcase] = xnew<ID>("case", 4);
-	id::id_list[id::idto_s] = xnew<ID>("to_s", 4);
-	id::id_list[id::idop_shr] = xnew<ID>("op_shr", 6);
-	id::id_list[id::idpure] = xnew<ID>("pure", 4);
-	id::id_list[id::idfinally] = xnew<ID>("finally", 7);
-	id::id_list[id::idthis] = xnew<ID>("this", 4);
-	id::id_list[id::idnull] = xnew<ID>("null", 4);
-	id::id_list[id::idop_div] = xnew<ID>("op_div", 6);
-	id::id_list[id::idserial_load] = xnew<ID>("serial_load", 11);
-	id::id_list[id::idIOError] = xnew<ID>("IOError", 7);
-	id::id_list[id::id_dummy_lhs_parameter_] = xnew<ID>("_dummy_lhs_parameter_", 21);
-	id::id_list[id::idin] = xnew<ID>("in", 2);
-	id::id_list[id::idcatch] = xnew<ID>("catch", 5);
-	id::id_list[id::idop_mul_assign] = xnew<ID>("op_mul_assign", 13);
-	id::id_list[id::idmethod] = xnew<ID>("method", 6);
-	id::id_list[id::idop_lt] = xnew<ID>("op_lt", 5);
-	id::id_list[id::idset_at] = xnew<ID>("set_at", 6);
-	id::id_list[id::id_switch_] = xnew<ID>("_switch_", 8);
-	id::id_list[id::idop_mod_assign] = xnew<ID>("op_mod_assign", 13);
-	id::id_list[id::idbreak] = xnew<ID>("break", 5);
-	id::id_list[id::idtry] = xnew<ID>("try", 3);
-	id::id_list[id::idop_mod] = xnew<ID>("op_mod", 6);
-	id::id_list[id::idto_i] = xnew<ID>("to_i", 4);
-	id::id_list[id::idop_or] = xnew<ID>("op_or", 5);
-	id::id_list[id::idcontinue] = xnew<ID>("continue", 8);
-	id::id_list[id::ide] = xnew<ID>("e", 1);
-	id::id_list[id::iditerator] = xnew<ID>("iterator", 8);
-	id::id_list[id::idthrow] = xnew<ID>("throw", 5);
-	id::id_list[id::idop_and] = xnew<ID>("op_and", 6);
-	id::id_list[id::idundefined] = xnew<ID>("undefined", 9);
-	id::id_list[id::idelse] = xnew<ID>("else", 4);
-	id::id_list[id::idfun] = xnew<ID>("fun", 3);
-	id::id_list[id::idto_f] = xnew<ID>("to_f", 4);
-	id::id_list[id::idop_sub_assign] = xnew<ID>("op_sub_assign", 13);
-	id::id_list[id::idlib] = xnew<ID>("lib", 3);
-	id::id_list[id::iddofun] = xnew<ID>("dofun", 5);
-	id::id_list[id::ideach] = xnew<ID>("each", 4);
-	id::id_list[id::idop_set_at] = xnew<ID>("op_set_at", 9);
-	id::id_list[id::idop_in] = xnew<ID>("op_in", 5);
-	id::id_list[id::ids_load] = xnew<ID>("s_load", 6);
-	id::id_list[id::idclass] = xnew<ID>("class", 5);
-	id::id_list[id::idop_com] = xnew<ID>("op_com", 6);
-	id::id_list[id::idop_pos] = xnew<ID>("op_pos", 6);
-	id::id_list[id::idop_add] = xnew<ID>("op_add", 6);
-	id::id_list[id::idop_ushr_assign] = xnew<ID>("op_ushr_assign", 14);
-	id::id_list[id::idnobreak] = xnew<ID>("nobreak", 7);
-	id::id_list[id::idcurrent_context] = xnew<ID>("current_context", 15);
-	id::id_list[id::idto_m] = xnew<ID>("to_m", 4);
-	id::id_list[id::idreturn] = xnew<ID>("return", 6);
-	id::id_list[id::idop_eq] = xnew<ID>("op_eq", 5);
-	id::id_list[id::idfiber] = xnew<ID>("fiber", 5);
-	id::id_list[id::idop_or_assign] = xnew<ID>("op_or_assign", 12);
-	id::id_list[id::ids_save] = xnew<ID>("s_save", 6);
-	id::id_list[id::idswitch] = xnew<ID>("switch", 6);
-	id::id_list[id::idop_sub] = xnew<ID>("op_sub", 6);
-	id::id_list[id::idop_ushr] = xnew<ID>("op_ushr", 7);
-	id::id_list[id::idfirst_step] = xnew<ID>("first_step", 10);
-	id::id_list[id::idblock_break] = xnew<ID>("block_break", 11);
-	id::id_list[id::idserial_save] = xnew<ID>("serial_save", 11);
-	id::id_list[id::idop_range] = xnew<ID>("op_range", 8);
-	id::id_list[id::id_dummy_fun_parameter_] = xnew<ID>("_dummy_fun_parameter_", 21);
-	id::id_list[id::id_dummy_block_parameter_] = xnew<ID>("_dummy_block_parameter_", 23);
-	id::id_list[id::idunittest] = xnew<ID>("unittest", 8);
-	id::id_list[id::idop_xor] = xnew<ID>("op_xor", 6);
-	id::id_list[id::idblock_first] = xnew<ID>("block_first", 11);
-	id::id_list[id::idtrue] = xnew<ID>("true", 4);
-	id::id_list[id::idop_call] = xnew<ID>("op_call", 7);
-	id::id_list[id::id_initialize_] = xnew<ID>("_initialize_", 12);
-	id::id_list[id::idis] = xnew<ID>("is", 2);
-	id::id_list[id::idwhile] = xnew<ID>("while", 5);
-	id::id_list[id::idit] = xnew<ID>("it", 2);
-	id::id_list[id::idassert] = xnew<ID>("assert", 6);
-	id::id_list[id::idxtal] = xnew<ID>("xtal", 4);
-	id::id_list[id::idif] = xnew<ID>("if", 2);
-	id::id_list[id::idp] = xnew<ID>("p", 1);
+	id::id_list[id::idop_inc] = xnew<ID>((const char*)XTAL_STRING("op_inc"), 6);
+	id::id_list[id::idblock_catch] = xnew<ID>((const char*)XTAL_STRING("block_catch"), 11);
+	id::id_list[id::idcallee] = xnew<ID>((const char*)XTAL_STRING("callee"), 6);
+	id::id_list[id::idnew] = xnew<ID>((const char*)XTAL_STRING("new"), 3);
+	id::id_list[id::idop_shl_assign] = xnew<ID>((const char*)XTAL_STRING("op_shl_assign"), 13);
+	id::id_list[id::idop_at] = xnew<ID>((const char*)XTAL_STRING("op_at"), 5);
+	id::id_list[id::idtest] = xnew<ID>((const char*)XTAL_STRING("test"), 4);
+	id::id_list[id::idfor] = xnew<ID>((const char*)XTAL_STRING("for"), 3);
+	id::id_list[id::idmembers] = xnew<ID>((const char*)XTAL_STRING("members"), 7);
+	id::id_list[id::idserial_new] = xnew<ID>((const char*)XTAL_STRING("serial_new"), 10);
+	id::id_list[id::idop_div_assign] = xnew<ID>((const char*)XTAL_STRING("op_div_assign"), 13);
+	id::id_list[id::idop_mul] = xnew<ID>((const char*)XTAL_STRING("op_mul"), 6);
+	id::id_list[id::idop_xor_assign] = xnew<ID>((const char*)XTAL_STRING("op_xor_assign"), 13);
+	id::id_list[id::idto_a] = xnew<ID>((const char*)XTAL_STRING("to_a"), 4);
+	id::id_list[id::idinitialize] = xnew<ID>((const char*)XTAL_STRING("initialize"), 10);
+	id::id_list[id::idonce] = xnew<ID>((const char*)XTAL_STRING("once"), 4);
+	id::id_list[id::idfalse] = xnew<ID>((const char*)XTAL_STRING("false"), 5);
+	id::id_list[id::iddo] = xnew<ID>((const char*)XTAL_STRING("do"), 2);
+	id::id_list[id::idstring] = xnew<ID>((const char*)XTAL_STRING("string"), 6);
+	id::id_list[id::idancestors] = xnew<ID>((const char*)XTAL_STRING("ancestors"), 9);
+	id::id_list[id::idop_and_assign] = xnew<ID>((const char*)XTAL_STRING("op_and_assign"), 13);
+	id::id_list[id::idop_add_assign] = xnew<ID>((const char*)XTAL_STRING("op_add_assign"), 13);
+	id::id_list[id::idop_cat_assign] = xnew<ID>((const char*)XTAL_STRING("op_cat_assign"), 13);
+	id::id_list[id::idsingleton] = xnew<ID>((const char*)XTAL_STRING("singleton"), 9);
+	id::id_list[id::idop_shl] = xnew<ID>((const char*)XTAL_STRING("op_shl"), 6);
+	id::id_list[id::idblock_next] = xnew<ID>((const char*)XTAL_STRING("block_next"), 10);
+	id::id_list[id::idyield] = xnew<ID>((const char*)XTAL_STRING("yield"), 5);
+	id::id_list[id::idop_shr_assign] = xnew<ID>((const char*)XTAL_STRING("op_shr_assign"), 13);
+	id::id_list[id::idop_cat] = xnew<ID>((const char*)XTAL_STRING("op_cat"), 6);
+	id::id_list[id::idop_neg] = xnew<ID>((const char*)XTAL_STRING("op_neg"), 6);
+	id::id_list[id::idop_dec] = xnew<ID>((const char*)XTAL_STRING("op_dec"), 6);
+	id::id_list[id::iddefault] = xnew<ID>((const char*)XTAL_STRING("default"), 7);
+	id::id_list[id::idcase] = xnew<ID>((const char*)XTAL_STRING("case"), 4);
+	id::id_list[id::idto_s] = xnew<ID>((const char*)XTAL_STRING("to_s"), 4);
+	id::id_list[id::idvalue] = xnew<ID>((const char*)XTAL_STRING("value"), 5);
+	id::id_list[id::idop_shr] = xnew<ID>((const char*)XTAL_STRING("op_shr"), 6);
+	id::id_list[id::idpure] = xnew<ID>((const char*)XTAL_STRING("pure"), 4);
+	id::id_list[id::idfinally] = xnew<ID>((const char*)XTAL_STRING("finally"), 7);
+	id::id_list[id::idthis] = xnew<ID>((const char*)XTAL_STRING("this"), 4);
+	id::id_list[id::idnull] = xnew<ID>((const char*)XTAL_STRING("null"), 4);
+	id::id_list[id::idop_div] = xnew<ID>((const char*)XTAL_STRING("op_div"), 6);
+	id::id_list[id::idserial_load] = xnew<ID>((const char*)XTAL_STRING("serial_load"), 11);
+	id::id_list[id::idIOError] = xnew<ID>((const char*)XTAL_STRING("IOError"), 7);
+	id::id_list[id::idin] = xnew<ID>((const char*)XTAL_STRING("in"), 2);
+	id::id_list[id::idcatch] = xnew<ID>((const char*)XTAL_STRING("catch"), 5);
+	id::id_list[id::idop_mul_assign] = xnew<ID>((const char*)XTAL_STRING("op_mul_assign"), 13);
+	id::id_list[id::idmethod] = xnew<ID>((const char*)XTAL_STRING("method"), 6);
+	id::id_list[id::idop_lt] = xnew<ID>((const char*)XTAL_STRING("op_lt"), 5);
+	id::id_list[id::idset_at] = xnew<ID>((const char*)XTAL_STRING("set_at"), 6);
+	id::id_list[id::idop_mod_assign] = xnew<ID>((const char*)XTAL_STRING("op_mod_assign"), 13);
+	id::id_list[id::idbreak] = xnew<ID>((const char*)XTAL_STRING("break"), 5);
+	id::id_list[id::idtry] = xnew<ID>((const char*)XTAL_STRING("try"), 3);
+	id::id_list[id::idop_mod] = xnew<ID>((const char*)XTAL_STRING("op_mod"), 6);
+	id::id_list[id::idto_i] = xnew<ID>((const char*)XTAL_STRING("to_i"), 4);
+	id::id_list[id::idop_or] = xnew<ID>((const char*)XTAL_STRING("op_or"), 5);
+	id::id_list[id::idcontinue] = xnew<ID>((const char*)XTAL_STRING("continue"), 8);
+	id::id_list[id::ide] = xnew<ID>((const char*)XTAL_STRING("e"), 1);
+	id::id_list[id::iditerator] = xnew<ID>((const char*)XTAL_STRING("iterator"), 8);
+	id::id_list[id::idthrow] = xnew<ID>((const char*)XTAL_STRING("throw"), 5);
+	id::id_list[id::idop_and] = xnew<ID>((const char*)XTAL_STRING("op_and"), 6);
+	id::id_list[id::idundefined] = xnew<ID>((const char*)XTAL_STRING("undefined"), 9);
+	id::id_list[id::idelse] = xnew<ID>((const char*)XTAL_STRING("else"), 4);
+	id::id_list[id::idfun] = xnew<ID>((const char*)XTAL_STRING("fun"), 3);
+	id::id_list[id::idto_f] = xnew<ID>((const char*)XTAL_STRING("to_f"), 4);
+	id::id_list[id::idop_sub_assign] = xnew<ID>((const char*)XTAL_STRING("op_sub_assign"), 13);
+	id::id_list[id::idlib] = xnew<ID>((const char*)XTAL_STRING("lib"), 3);
+	id::id_list[id::iddofun] = xnew<ID>((const char*)XTAL_STRING("dofun"), 5);
+	id::id_list[id::ideach] = xnew<ID>((const char*)XTAL_STRING("each"), 4);
+	id::id_list[id::idop_set_at] = xnew<ID>((const char*)XTAL_STRING("op_set_at"), 9);
+	id::id_list[id::idop_in] = xnew<ID>((const char*)XTAL_STRING("op_in"), 5);
+	id::id_list[id::ids_load] = xnew<ID>((const char*)XTAL_STRING("s_load"), 6);
+	id::id_list[id::idclass] = xnew<ID>((const char*)XTAL_STRING("class"), 5);
+	id::id_list[id::idop_com] = xnew<ID>((const char*)XTAL_STRING("op_com"), 6);
+	id::id_list[id::idop_pos] = xnew<ID>((const char*)XTAL_STRING("op_pos"), 6);
+	id::id_list[id::idop_add] = xnew<ID>((const char*)XTAL_STRING("op_add"), 6);
+	id::id_list[id::idop_ushr_assign] = xnew<ID>((const char*)XTAL_STRING("op_ushr_assign"), 14);
+	id::id_list[id::idnobreak] = xnew<ID>((const char*)XTAL_STRING("nobreak"), 7);
+	id::id_list[id::idcurrent_context] = xnew<ID>((const char*)XTAL_STRING("current_context"), 15);
+	id::id_list[id::idto_m] = xnew<ID>((const char*)XTAL_STRING("to_m"), 4);
+	id::id_list[id::idreturn] = xnew<ID>((const char*)XTAL_STRING("return"), 6);
+	id::id_list[id::idop_eq] = xnew<ID>((const char*)XTAL_STRING("op_eq"), 5);
+	id::id_list[id::idfiber] = xnew<ID>((const char*)XTAL_STRING("fiber"), 5);
+	id::id_list[id::idop_or_assign] = xnew<ID>((const char*)XTAL_STRING("op_or_assign"), 12);
+	id::id_list[id::ids_save] = xnew<ID>((const char*)XTAL_STRING("s_save"), 6);
+	id::id_list[id::idswitch] = xnew<ID>((const char*)XTAL_STRING("switch"), 6);
+	id::id_list[id::idop_sub] = xnew<ID>((const char*)XTAL_STRING("op_sub"), 6);
+	id::id_list[id::idop_ushr] = xnew<ID>((const char*)XTAL_STRING("op_ushr"), 7);
+	id::id_list[id::idfirst_step] = xnew<ID>((const char*)XTAL_STRING("first_step"), 10);
+	id::id_list[id::idblock_break] = xnew<ID>((const char*)XTAL_STRING("block_break"), 11);
+	id::id_list[id::idserial_save] = xnew<ID>((const char*)XTAL_STRING("serial_save"), 11);
+	id::id_list[id::idop_range] = xnew<ID>((const char*)XTAL_STRING("op_range"), 8);
+	id::id_list[id::idunittest] = xnew<ID>((const char*)XTAL_STRING("unittest"), 8);
+	id::id_list[id::idtrue] = xnew<ID>((const char*)XTAL_STRING("true"), 4);
+	id::id_list[id::idop_xor] = xnew<ID>((const char*)XTAL_STRING("op_xor"), 6);
+	id::id_list[id::idblock_first] = xnew<ID>((const char*)XTAL_STRING("block_first"), 11);
+	id::id_list[id::idop_call] = xnew<ID>((const char*)XTAL_STRING("op_call"), 7);
+	id::id_list[id::id_initialize_] = xnew<ID>((const char*)XTAL_STRING("_initialize_"), 12);
+	id::id_list[id::idis] = xnew<ID>((const char*)XTAL_STRING("is"), 2);
+	id::id_list[id::idwhile] = xnew<ID>((const char*)XTAL_STRING("while"), 5);
+	id::id_list[id::idit] = xnew<ID>((const char*)XTAL_STRING("it"), 2);
+	id::id_list[id::idassert] = xnew<ID>((const char*)XTAL_STRING("assert"), 6);
+	id::id_list[id::idxtal] = xnew<ID>((const char*)XTAL_STRING("xtal"), 4);
+	id::id_list[id::idif] = xnew<ID>((const char*)XTAL_STRING("if"), 2);
+	id::id_list[id::idp] = xnew<ID>((const char*)XTAL_STRING("p"), 1);
 //}}ID}
+
+
 
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #else
 
-void initialize_interned_string(){}
+void initialize_interned_string(){
+	empty_id = xnew<ID>("");
+}
 
 #endif
 

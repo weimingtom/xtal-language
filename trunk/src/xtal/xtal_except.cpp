@@ -54,11 +54,45 @@ AnyPtr argument_error(const AnyPtr& object, int_t no){
 	));
 }
 
-AnyPtr unsupported_error(const AnyPtr& object){
-	return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-		Named("object", object)
-	));
+AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key){
+
+	IDPtr pick;
+
+	if(ClassPtr klass = ptr_as<Class>(target)){
+		pick = klass->find_near_member(primary_key, secondary_key);
+		if(raweq(pick, primary_key)){
+			pick = null;
+		}
+	}
+
+	if(pick){
+		if(secondary_key){
+			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
+				Named("object", Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key)),
+				Named("pick", pick)
+			));	
+		}
+		else{
+			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
+				Named("object", Xf("%s::%s")(target->object_name(), primary_key)),
+				Named("pick", pick)
+			));	
+		}
+	}
+	else{
+		if(secondary_key){
+			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
+				Named("object", Xf("%s::%s#s")(target->object_name(), primary_key, secondary_key))
+			));
+		}
+		else{
+			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
+				Named("object", Xf("%s::%s")(target->object_name(), primary_key))
+			));		
+		}
+	}
 }
+
 namespace{
 	void default_except_handler(const AnyPtr& except, const char* file, int line){
 //#ifdef XTAL_NO_EXCEPTIONS

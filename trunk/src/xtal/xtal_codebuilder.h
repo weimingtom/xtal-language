@@ -10,7 +10,7 @@ public:
 
 	CodeBuilder(){}
 	
-	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = "anonymous");
+	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
 	void interactive_compile();
 
@@ -45,11 +45,11 @@ private:
 	bool put_set_local_code(const IDPtr& var);
 	void put_define_local_code(const IDPtr& var, const ExprPtr& val = null);
 
-	void put_send_code(const IDPtr& var, const ExprPtr& pvar, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
-	void put_set_send_code(const IDPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
+	void put_send_code(const AnyPtr& var, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
+	void put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
 
-	void put_member_code(const IDPtr& var, const ExprPtr& pvar, bool q, const ExprPtr& secondary_key);
-	void put_define_member_code(const IDPtr& var, const ExprPtr& pvar, const ExprPtr& secondary_key);
+	void put_member_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
+	void put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key);
 
 	int_t lookup_instance_variable(const IDPtr& key);
 	void put_set_instance_variable_code(const IDPtr& var);
@@ -140,13 +140,13 @@ private:
 		};
 
 		AC<Direct>::vector directs;
-		int_t block_core_num;
+		int_t scope_core_num;
 		int_t fun_frames_size;
 
 		enum{
 			SCOPE,
 			CLASS,
-			BLOCK		
+			FRAME		
 		};
 
 		int_t kind;
@@ -171,7 +171,8 @@ private:
 	void scope_chain(int_t var_frame_size);
 	LVarInfo var_find(const IDPtr& key, bool define = false, bool traceless = false, int_t number = -1);
 	void var_begin(int_t kind);
-	void var_define(const ArrayPtr& stmts);
+	void var_define_stmts(const ExprPtr& stmts);
+	void var_define_stmt(const AnyPtr& stmt);
 	void var_define(const IDPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
@@ -181,8 +182,8 @@ private:
 	void check_lvar_assign(const ExprPtr& e);
 	void check_lvar_assign_stmt(const AnyPtr& p);
 
-	void block_begin();
-	void block_end();
+	void scope_begin();
+	void scope_end();
 	
 	int_t lineno(){ return linenos_.top(); }
 

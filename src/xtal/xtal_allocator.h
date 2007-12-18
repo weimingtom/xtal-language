@@ -127,6 +127,19 @@ struct Alloc<void> {
 	Alloc<void>& operator=(const Alloc<U>&){ return* this; }
 };
 
+struct UserMallocGuard{
+	void* p;
+	UserMallocGuard():p(0){}
+	UserMallocGuard(uint_t size):p(user_malloc(size)){}
+	~UserMallocGuard(){ user_free(p); }
+	
+	void malloc(size_t size){ user_free(p); p = user_malloc(size); }
+	void* get(){ return p; }
+	void* release(){ void* ret = p; p = 0; return ret; }
+private:
+	UserMallocGuard(const UserMallocGuard&);
+	void operator =(const UserMallocGuard&);
+};
 
 namespace detail{
 	struct AC_default{};
@@ -194,7 +207,7 @@ public:
 		Chunk* prev;
 		int used;
 		
-		size_t size(){ return (char*)next - (char*)buf(); }
+		size_t size(){ return (u8*)next - (u8*)buf(); }
 		void* buf(){ return this+1; }
 	};
 

@@ -87,6 +87,11 @@ void initialize_array(){
 		p->method("flatten_all_mv", &MultiValue::flatten_all_mv);
 	}
 
+	{
+		ClassPtr p = new_cpp_class<Expr>("Expr");
+		p->inherit(get_cpp_class<Array>());		
+	}
+
 	builtin()->def("Array", get_cpp_class<Array>());
 	builtin()->def("MultiValue", get_cpp_class<MultiValue>());
 }

@@ -311,6 +311,24 @@ static_ptr_cast(const AnyPtr& a){
 	return *(const SmartPtr<T>*)&a;
 }
 
+/**
+* @brief
+*/
+template<class T>
+inline typename CastResult<T>::type 
+tricky_cast(const AnyPtr& a, void (*f)(T)){
+	return cast<T>(a);
+}
+
+/**
+* @brief
+*/
+template<class T>
+inline typename CastResult<T>::type 
+tricky_as(const AnyPtr& a, void (*f)(T)){
+	return as<T>(a);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 template<>
@@ -372,11 +390,11 @@ struct CastHelper<const IDPtr*>{
 };
 
 template<>
-struct CastHelper<const char*>{
-	static const char* as(const AnyPtr& a);
-	static const char* cast(const AnyPtr& a);
+struct CastHelper<const char_t*>{
+	static const char_t* as(const AnyPtr& a);
+	static const char_t* cast(const AnyPtr& a);
 	static bool can_cast(const AnyPtr& a);
-	static const char* nocheck_cast(const AnyPtr& a);
+	static const char_t* nocheck_cast(const AnyPtr& a);
 };
 
 
@@ -422,15 +440,15 @@ XTAL_CAST_HELPER(bool);
 
 #define XTAL_CAST_HELPER(Type, Type2) \
 template<>\
-struct CastHelper<check_xtype<Type>::type>{\
+struct CastHelper<avoid<Type>::type>{\
 	static Type as(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::as(a); }\
 	static Type cast(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::cast(a); }\
 	static bool can_cast(const AnyPtr& a){ return xtal::CastHelper<Type2>::can_cast(a); }\
 	static Type nocheck_cast(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::nocheck_cast(a); }\
 };\
-template<> struct CastResult<check_xtype<const Type&> >{ typedef Type type; };\
+template<> struct CastResult<avoid<const Type&> >{ typedef Type type; };\
 template<>\
-struct CastHelper<check_xtype<const Type&> >{\
+struct CastHelper<avoid<const Type&> >{\
 	static Type as(const AnyPtr& a){ return xtal::as<Type>(a); }\
 	static Type cast(const AnyPtr& a){ return xtal::cast<Type>(a); }\
 	static bool can_cast(const AnyPtr& a){ return xtal::can_cast<Type>(a); }\

@@ -18,7 +18,7 @@ public:
 	FunCore* core(){ return core_; }
 	void set_core(FunCore* fc){ core_ = fc; }
 	void check_arg(const VMachinePtr& vm);
-	virtual StringPtr object_name();
+	virtual StringPtr object_name(uint_t depth = -1);
 
 public:
 		
@@ -433,6 +433,7 @@ public:
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
+		// thisが持つインスタンス変数へのポインタ
 		InstanceVariables* instance_variables;
 
 		// スコープがオブジェクト化されてない時のローカル変数領域
@@ -597,9 +598,6 @@ public:
 	const inst_t* FunInstanceVariable(const inst_t* pc);
 	const inst_t* FunSetInstanceVariable(const inst_t* pc);
 	const inst_t* FunCleanupCall(const inst_t* pc);
-	const inst_t* FunReturn0(const inst_t* pc);
-	const inst_t* FunReturn1(const inst_t* pc);
-	const inst_t* FunReturn2(const inst_t* pc);
 	const inst_t* FunReturn(const inst_t* pc);
 	const inst_t* FunYield(const inst_t* pc);
 	const inst_t* FunExit(const inst_t* pc);

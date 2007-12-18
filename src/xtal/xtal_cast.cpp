@@ -58,7 +58,7 @@ const char_t* CastHelper<const char_t*>::as(const AnyPtr& a){
 }
 
 const char_t* CastHelper<const char_t*>::cast(const AnyPtr& a){
-	if(const char* p = as(a)){
+	if(const char_t* p = as(a)){
 		return p;
 	}
 	XTAL_THROW(cast_error(a, get_cpp_class<String>()->object_name()), return 0);

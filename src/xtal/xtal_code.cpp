@@ -4,7 +4,7 @@
 namespace xtal{
 
 FunCore empty_xfun_core;
-BlockCore empty_block_core;
+ScopeCore empty_scope_core;
 ClassCore empty_class_core;
 ExceptCore empty_except_core;
 
@@ -115,9 +115,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstInstanceVariable::NUMBER){ temp = ((InstInstanceVariable*)pc)->inspect(code); sz = InstInstanceVariable::ISIZE; }
 		XTAL_CASE(InstSetInstanceVariable::NUMBER){ temp = ((InstSetInstanceVariable*)pc)->inspect(code); sz = InstSetInstanceVariable::ISIZE; }
 		XTAL_CASE(InstCleanupCall::NUMBER){ temp = ((InstCleanupCall*)pc)->inspect(code); sz = InstCleanupCall::ISIZE; }
-		XTAL_CASE(InstReturn0::NUMBER){ temp = ((InstReturn0*)pc)->inspect(code); sz = InstReturn0::ISIZE; }
-		XTAL_CASE(InstReturn1::NUMBER){ temp = ((InstReturn1*)pc)->inspect(code); sz = InstReturn1::ISIZE; }
-		XTAL_CASE(InstReturn2::NUMBER){ temp = ((InstReturn2*)pc)->inspect(code); sz = InstReturn2::ISIZE; }
 		XTAL_CASE(InstReturn::NUMBER){ temp = ((InstReturn*)pc)->inspect(code); sz = InstReturn::ISIZE; }
 		XTAL_CASE(InstYield::NUMBER){ temp = ((InstYield*)pc)->inspect(code); sz = InstYield::ISIZE; }
 		XTAL_CASE(InstExit::NUMBER){ temp = ((InstExit*)pc)->inspect(code); sz = InstExit::ISIZE; }

@@ -122,6 +122,20 @@ typedef std::size_t size_t;
 typedef std::ptrdiff_t ptrdiff_t;
 
 template<class T>
+struct Alloc;
+
+#ifdef XTAL_USE_WCHAR
+typedef wchar_t char_t;
+#else
+typedef char char_t;
+#endif
+
+typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
+
+/// unsigned char_t
+typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
+
+template<class T>
 struct TypeValue{ 
 	T val; 
 	TypeValue(T val):val(val){} 
@@ -129,29 +143,21 @@ struct TypeValue{
 };
 
 template<class T>
-struct check_xtype{ typedef T type; };
+struct avoid{ typedef T type; };
 
 template<>
-struct check_xtype<int_t>{ typedef TypeValue<int_t> type; };
+struct avoid<int_t>{ typedef TypeValue<int_t> type; };
 
 template<>
-struct check_xtype<float_t>{ typedef TypeValue<float_t> type; };
+struct avoid<float_t>{ typedef TypeValue<float_t> type; };
 
+template<>
+struct avoid<char_t>{ typedef TypeValue<char_t> type; };
 
 template<class T>
 struct IsFloat{ enum{ value = 0 }; };
 template<>
 struct IsFloat<float_t>{ enum{ value = 1 }; };
-
-
-template<class T>
-struct Alloc;
-
-typedef char char_t;
-typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
-
-/// unsigned char_t
-typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
 
 
 /**
@@ -242,7 +248,6 @@ class Map;
 class Set;
 class Stream;
 class MemoryStream;
-class FileStream;
 class StringStream;
 class InteractiveStream;
 class Fun;
@@ -276,7 +281,6 @@ typedef SmartPtr<Map> MapPtr;
 typedef SmartPtr<Set> SetPtr;
 typedef SmartPtr<Stream> StreamPtr;
 typedef SmartPtr<MemoryStream> MemoryStreamPtr;
-typedef SmartPtr<FileStream> FileStreamPtr;
 typedef SmartPtr<StringStream> StringStreamPtr;
 typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
 typedef SmartPtr<Fun> FunPtr;
@@ -313,8 +317,8 @@ class Undefined;
 class True;
 class False;
 
-struct BlockCore{
-	BlockCore()
+struct ScopeCore{
+	ScopeCore()
 		:pc(0), kind(0), flags(0), variable_identifier_offset(0), variable_size(0){}
 
 	u32 pc;
@@ -330,7 +334,7 @@ struct BlockCore{
 	};
 };
 
-struct ClassCore : public BlockCore{
+struct ClassCore : public ScopeCore{
 	ClassCore(u16 offset = 0, u16 size = 0)
 		:instance_variable_identifier_offset(offset), instance_variable_size(size){}
 
@@ -339,7 +343,7 @@ struct ClassCore : public BlockCore{
 	u8 mixins;
 };
 
-struct FunCore : public BlockCore{
+struct FunCore : public ScopeCore{
 	FunCore()
 		:max_stack(256), min_param_count(0), max_param_count(0){}
 
@@ -348,10 +352,10 @@ struct FunCore : public BlockCore{
 	u8 max_param_count;
 
 	enum{
-		FLAG_EXTENDABLE_PARAM = 1<<(BlockCore::FLAG_USED_BIT+0),
-		FLAG_ON_HEAP = 1<<(BlockCore::FLAG_USED_BIT+1),
+		FLAG_EXTENDABLE_PARAM = 1<<(ScopeCore::FLAG_USED_BIT+0),
+		FLAG_ON_HEAP = 1<<(ScopeCore::FLAG_USED_BIT+1),
 
-		FLAG_USED_BIT = BlockCore::FLAG_USED_BIT+2
+		FLAG_USED_BIT = ScopeCore::FLAG_USED_BIT+2
 	};
 };
 
@@ -366,12 +370,15 @@ struct ExceptCore{
 
 class EmptyInstanceVariables;
 
-extern BlockCore empty_block_core;
+extern ScopeCore empty_scope_core;
 extern ClassCore empty_class_core;
 extern FunCore empty_fun_core;
 extern ExceptCore empty_except_core;
 extern EmptyInstanceVariables empty_instance_variables;
 extern uint_t global_mutate_count;
+
+extern IDPtr empty_id;
+
 
 class Null;
 extern Null null;
@@ -393,7 +400,7 @@ extern ReturnThis return_this;
 extern ReturnUndefined return_void;
 
 template<class T>
-inline const ClassPtr& new_cpp_class(const char* name = "");
+inline const ClassPtr& new_cpp_class(const StringPtr& name = empty_id);
 
 template<class T>
 inline bool exists_cpp_class();

@@ -99,8 +99,8 @@ void Base::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr
 	ap(Innocence(this))->rawsend(vm, primary_key, secondary_key, self, inherited_too);
 }
 
-StringPtr Base::object_name(){ 
-	return xnew<String>("instance of ")->cat(get_class()->object_name());
+StringPtr Base::object_name(uint_t depth){
+	return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
 }
 
 int_t Base::object_name_force(){ 
@@ -140,18 +140,15 @@ void Base::visit_members(Visitor& m){
 	}
 }
 
-StringPtr HaveName::object_name(){
+StringPtr HaveName::object_name(uint_t depth){
 	if(!name_){
-		return xnew<String>("instance of ")->cat(get_class()->object_name());
+		return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
 	}
 
-	if(!parent_){
+	if(!parent_ || depth==0){
 		return name_;
 	}
 
-	if(LibPtr lib = ptr_as<Lib>(parent_)){
-		lib = lib;
-	}
 	return parent_->object_name()->cat("::")->cat(name_);
 }
 

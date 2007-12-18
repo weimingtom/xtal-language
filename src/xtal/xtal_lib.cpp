@@ -9,7 +9,7 @@ namespace xtal{
 
 CodePtr compile_file(const StringPtr& file_name){
 	CodeBuilder cb;
-	FileStreamPtr fs(xnew<FileStream>(file_name, "r"));
+	StreamPtr fs = open(file_name, "r");
 	if(CodePtr fun = cb.compile(fs, file_name)){
 		fs->close();
 		return fun;
@@ -37,16 +37,16 @@ AnyPtr load(const StringPtr& file_name){
 
 AnyPtr load_and_save(const StringPtr& file_name){
 	AnyPtr ret = compile_file(file_name);
-	FileStreamPtr fs(xnew<FileStream>(file_name->cat("c"), "w"));
+	StreamPtr fs = open(file_name->cat("c"), "w");
 	fs->serialize(ret);
 	fs->close();
 	gc();
 	return ret();
 }
 
-AnyPtr source(const char_t* src, int_t size, const char_t* file){
+AnyPtr source(const char_t* src, int_t size, const char* file){
 	CodeBuilder cb;
-	MemoryStreamPtr ms(xnew<MemoryStream>(src, size));
+	StringStreamPtr ms(xnew<StringStream>(xnew<String>(src, size)));
 	if(AnyPtr fun = cb.compile(ms, file)){
 		return fun;
 	}
@@ -77,7 +77,7 @@ AnyPtr load_and_save(const StringPtr& file_name){
 	return null;
 }
 
-AnyPtr source(const char* src, int_t size, const char* file){
+AnyPtr source(const char_t* src, int_t size, const char_t* file){
 	return null;
 }
 
@@ -92,7 +92,7 @@ void ix(){
 static float_t clock_(){
 	return std::clock()/(float_t)CLOCKS_PER_SEC;
 }
-	
+
 
 void initialize_builtin(){
 
@@ -108,6 +108,8 @@ void initialize_builtin(){
 	builtin()->fun("disable_gc", &disable_gc);
 	builtin()->fun("enable_gc", &enable_gc);
 	builtin()->fun("clock", &clock_);
+	builtin()->fun("open", &open)->param("file_name", Named("mode", "r"));
+	builtin()->fun("interned_strings", &interned_strings);
 
 	lib()->def("builtin", builtin());
 	
@@ -142,7 +144,7 @@ builtin::CompileError: class(StandardError){
 
 	Xsrc((
 
-Iterator::p: method(){
+Iterator::p: method{
 	m: MemoryStream();
 	m.put_s("<[");
 	a: this.take(6).to_a;
@@ -157,7 +159,7 @@ Iterator::p: method(){
 	return chain(a.each, this);
 }
 
-Iterator::to_a: method(){
+Iterator::to_a: method{
 	ret: [];
 	this{
 		ret.push_back(it); 
@@ -173,7 +175,7 @@ Iterator::to_m: method{
 	return ret;
 }
 
-Iterator::reverse: method(){
+Iterator::reverse: method{
 	return this[].reverse;
 }
 
@@ -421,11 +423,37 @@ Int::block_first: Int::block_next;
 
 	Xsrc((
 
-Class::ancestors: method fiber{
-	this.inherited_classes{
-		yield it;
-		it.ancestors{
+Class::ancestors: method{
+	if(this===Any){
+		return null;
+	}			
+	
+	return fiber{
+		this.inherited_classes{
 			yield it;
+			it.ancestors{
+				yield it;
+			}
+		}
+
+		yield Any;
+	}
+}
+
+Class::members: method(inherited_too: true){
+	if(!inherited_too){
+		return Frame::members();
+	}
+
+	return fiber{
+		this.members(false){
+			yield it;
+		}
+
+		this.ancestors{
+			it.members(false){
+				yield it;
+			}
 		}
 	}
 }
@@ -491,17 +519,6 @@ Arguments::pairs: Arguments::each;
 
 Fun::call: method(...){
 	return this(...);
-}
-
-builtin::open: fun(file_name, mode: "r"){
-	ret: null;
-	try{
-		ret = FileStream(file_name, mode);
-	}
-	catch(e){
-		ret = null;
-	}
-	return ret;
 }
 
 Mutex::block_first: method{
@@ -671,6 +688,9 @@ op_shl: method(v){ return this << v; }
 Int::op_shl#Int: op_shl;
 Int::op_shl_assign#Int: op_shl;
 
+	))();
+
+	Xsrc((
 
 op_inc: method{ return this+1; }
 Int::op_inc: op_inc;
@@ -684,9 +704,9 @@ op_pos: method{ return +this; }
 Int::op_pos: op_pos;
 Float::op_pos: op_pos;
 
-op_neg: method{ return -this; }
-Int::op_neg: op_neg;
-Float::op_neg: op_neg;
+//op_neg: method{ return -this; }
+//Int::op_neg: op_neg;
+//Float::op_neg: op_neg;
 
 op_com: method{ return ~this; }
 Int::op_com: op_com;

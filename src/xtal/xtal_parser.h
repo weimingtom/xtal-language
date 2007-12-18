@@ -140,7 +140,7 @@ private:
 
 	StreamPtr stream_;
 
-	char buf_[BUF_SIZE];
+	char_t buf_[BUF_SIZE];
 
 	uint_t pos_;
 	uint_t read_;
@@ -283,45 +283,42 @@ private:
 	bool eat(int_t ch);
 	bool eat(Token::Keyword kw);
 
-	ExprPtr parse_pre_expr(int_t code, int_t expr_priority);
-	ExprPtr parse_post_expr(int_t code, int_t pri, int_t space, ExprPtr lhs, bool left, int_t expr_priority);
-	ExprPtr parse_bin_expr(int_t code, int_t pri, int_t space, ExprPtr lhs, bool left, int_t expr_priority);
-	ExprPtr parse_bin_comp_expr(int_t code, int_t pri, int_t space, ExprPtr lhs, bool left, int_t expr_priority);
-	ExprPtr parse_post(ExprPtr lhs, int_t pri);
-	ExprPtr parse_assign_stmt();
-	ExprPtr parse_stmt();
-	ExprPtr must_parse_stmt();
-	ExprPtr parse_assert();
-	ExprPtr parse_each(const IDPtr& label, ExprPtr lhs);
-	ArrayPtr parse_stmts();
-	ArrayPtr parse_exprs(bool* discard = 0);
-	IDPtr parse_var();
-	IDPtr parse_identifier();
-	IDPtr parse_identifier_or_keyword();
-	ExprPtr parse_if();
-	ExprPtr parse_term();
-	ExprPtr parse_toplevel();
-	ExprPtr parse_scope();
-	ExprPtr parse_switch();
-	ExprPtr parse_frame(int_t kind);
-	ExprPtr parse_class(int_t kind);
-	ExprPtr parse_prop();
-	ExprPtr parse_loop();
-	ExprPtr parse_fun(int_t kind, bool body = false);
-	ExprPtr parse_call(ExprPtr lhs);
-	ExprPtr parse_expr(int_t pri);
-	ExprPtr parse_expr();
-	ExprPtr must_parse_expr(int_t pri);
-	ExprPtr must_parse_expr();
-	ExprPtr parse_array();
-	ExprPtr parse_for(const IDPtr& label = null);
-	ExprPtr parse_try();
-	int_t parse_number_suffix();
-	ExprPtr parse_number();
-	ExprPtr parse_while(const IDPtr& label = null);
-		
+	bool parse_term_n();
+	bool parse_expr_n(int_t pri);
+	bool parse_expr_n();
+	void must_parse_expr_n(int_t pri);
+	bool parse_post(int_t pri);
+	void must_parse_expr_n();
+
+	void must_parse_identifier_n();
+	bool parse_identifier_n();
+	void parse_identifier_or_keyword_n();
+	bool parse_var_n();
+
+	void parse_if_n();
+	void must_parse_stmt_n();
+	void parse_try_n();
+	bool parse_stmt_n();
+	void parse_stmts_n();
+	void parse_assert_n();
+	void parse_exprs_n(bool one = false);
+	bool parse_assign_stmt_n();
+	void parse_array_n();
+	void parse_each_n();
+	void parse_while_n();
+	void parse_for_n();
+	bool parse_loop_n();
+	void parse_switch_n();
+	void parse_class_n(int_t kind);
+	void parse_scope_n();
+	void parse_lambda_n(bool noparam = false);
+	void parse_fun_n(int_t kind);
+	void parse_call_n();		
+	void parse_toplevel_n();
+
 public:
 
+	ExprBuilder eb_;
 	Lexer lexer_;
 	bool expr_end_flag_;
 	CompileError* error_;

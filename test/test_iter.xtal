@@ -55,7 +55,7 @@
 }
 
 {
-	assert [5, 7, 66, 8, 2].with_index.find(|x,|x==2)[1]==66;
+	assert [5, 7, 66, 8, 2].with_index.find(|x,dummy|x==2)[1]==66;
 }
 
 

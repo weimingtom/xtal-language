@@ -26,7 +26,7 @@ void initialize_any(){
 		p->method("class", &Any::get_class);
 		p->method("get_class", &Any::get_class);
 		p->method("self", &Any::self);
-		p->method("object_name", &Any::object_name);
+		p->method("object_name", &Any::object_name)->param(Named("depth", -1));
 		p->method("s_save", &Any::s_save);
 		p->method("s_load", &Any::s_load);
 		p->method("to_mv", &Any::to_mv);
@@ -122,6 +122,10 @@ AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign)
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b->get_class())(b); return a; }
 
 Innocence::Innocence(const char_t* str){
+	*this = xnew<String>(str);
+}
+
+Innocence::Innocence(const avoid<char>::type* str){
 	*this = xnew<String>(str);
 }
 
@@ -342,10 +346,10 @@ MapPtr Any::to_m() const{
 	return ptr_cast<Map>((*this).send(Xid(to_m)));
 }
 
-StringPtr Any::object_name() const{
+StringPtr Any::object_name(uint_t depth) const{
 	switch(type(*this)){
-		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name()); }
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(); }
+		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name(depth)); }
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(depth); }
 	}
 	return null;	
 }

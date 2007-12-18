@@ -41,16 +41,17 @@ void initialize_frame(){
 
 	{
 		ClassPtr p = new_cpp_class<Frame>("Frame");
+		p->method("members", &Frame::members);
 	}
 
 	{
 		ClassPtr p = new_cpp_class<Class>("Class");
 		p->inherit(get_cpp_class<Frame>());
 		p->method("inherit", &Class::inherit_strict);
-		p->method("members", &Class::members);
 		p->method("s_new", &Class::s_new);
 		p->method("inherited_classes", &Class::inherited_classes);
 		p->method("is_inherited", &Any::is_inherited);
+		p->method("find_near_member", &Class::find_near_member)->param("primary_key", Named("secondary_key", null));
 	}
 
 	{
@@ -65,6 +66,7 @@ void initialize_frame(){
 		p->method("append_load_path", &Lib::append_load_path);
 	}
 
+	builtin()->def("Frame", get_cpp_class<Frame>());
 	builtin()->def("Class", get_cpp_class<Class>());
 	builtin()->def("CppClass", get_cpp_class<CppClass>());
 	builtin()->def("lib", lib());
@@ -81,7 +83,7 @@ int_t InstanceVariables::find_core_inner(ClassCore* core){
 	XTAL_THROW(builtin()->member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")), return 0);
 }
 
-Frame::Frame(const FramePtr& outer, const CodePtr& code, BlockCore* core)
+Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core)
 	:outer_(outer), code_(code), core_(core ? core : &empty_class_core), members_(xnew<Array>(core_->variable_size)), map_members_(0){
 	if(debug::is_enabled()){
 		make_map_members();	
@@ -124,12 +126,12 @@ void Frame::make_map_members(){
 	}
 }
 
-StringPtr Frame::object_name(){
+StringPtr Frame::object_name(uint_t depth){
 	if(!name_){
-		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
+		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
 	}
 
-	return HaveName::object_name();
+	return HaveName::object_name(depth);
 }
 
 AnyPtr Frame::members(){
@@ -143,14 +145,14 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassCore* core)
 	make_map_members();
 }
 
-Class::Class(const char* name)
+Class::Class(const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
 	set_object_name(name, 1, null);
 	is_cpp_class_ = false;
 	make_map_members();
 }
 
-Class::Class(cpp_class_t, const char* name)
+Class::Class(cpp_class_t, const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
 	set_object_name(name, 1, null);
 	is_cpp_class_ = true;
@@ -198,6 +200,25 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		members_->at(0)->call(vm);
 		vm->cleanup_call();
 	}
+}
+
+IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
+	int_t minv = 0xffffff;
+	IDPtr minid = null;
+	Xfor(v, send(Xid(members))){
+		IDPtr id = ptr_cast<ID>(v[0]);
+		if(raweq(primary_key, id)){
+			return id;
+		}
+
+		int_t dist = shortest_edit_distance(primary_key, id);
+		if(dist<minv){
+			minv = dist;
+			minid = id;
+		}
+	}
+
+	return minid;
 }
 
 const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const CFunEssence& cfun, const AnyPtr& secondary_key, int_t accessibility){
@@ -409,7 +430,7 @@ void Class::s_new(const VMachinePtr& vm){
 	vm->return_result(instance);
 }
 
-CppClass::CppClass(const char* name)
+CppClass::CppClass(const StringPtr& name)
 	:Class(cpp_class_t(), name){
 }
 
@@ -453,10 +474,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 	else{
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
-			if(std::FILE* fp = std::fopen(file_name->c_str(), "r")){
-				fclose(fp);
-				return rawdef(primary_key, load(file_name), secondary_key);
-			}
+			return rawdef(primary_key, load(file_name), secondary_key);
 		}
 		return undefined;
 
@@ -498,7 +516,7 @@ StringPtr Lib::join_path(const StringPtr& sep){
 	}
 }
 
-Singleton::Singleton(const char* name)
+Singleton::Singleton(const StringPtr& name)
 	:Class(name){
 	Base::set_class(from_this(this));
 	inherit(get_cpp_class<Class>());
@@ -530,7 +548,7 @@ void Singleton::s_new(const VMachinePtr& vm){
 	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
 }
 
-const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const char* name){
+const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const StringPtr& name){
 	if(!list.value){
 		chain_cpp_class(list);
 		list.value = xnew<CppClass>(name);

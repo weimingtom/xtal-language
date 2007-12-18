@@ -65,7 +65,7 @@ struct Inst{
 			op = N;\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return xnew<String>("" #InstName ":");\
+			return xnew<String>(XTAL_STRING(#InstName) XTAL_STRING(":"));\
 		}\
 	}
 
@@ -86,8 +86,9 @@ struct Inst{
 			checked_assign(MemberName1, m1);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format("" #InstName ": "\
-					#MemberName1 "=%s")\
+			return format(\
+					XTAL_STRING(#InstName) XTAL_STRING(": ")\
+					XTAL_STRING(#MemberName1) XTAL_STRING("=%s"))\
 				(inst_inspect(MemberName1, this, code))->to_s();\
 		}\
 	}
@@ -112,9 +113,10 @@ struct Inst{
 			checked_assign(MemberName2, m2);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format("" #InstName ": "\
-					#MemberName1 "=%s, "\
-					#MemberName2 "=%s")\
+			return format(\
+					XTAL_STRING(#InstName) XTAL_STRING(": ")\
+					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName2) XTAL_STRING("=%s"))\
 				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code))->to_s();\
 		}\
 	}
@@ -142,10 +144,11 @@ struct Inst{
 			checked_assign(MemberName3, m3);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format("" #InstName ": "\
-					#MemberName1 "=%s, "\
-					#MemberName2 "=%s, "\
-					#MemberName3 "=%s")\
+			return format(\
+					XTAL_STRING(#InstName) XTAL_STRING(": ")\
+					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName3) XTAL_STRING("=%s"))\
 				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code))->to_s();\
 		}\
 	}
@@ -176,11 +179,12 @@ struct Inst{
 			checked_assign(MemberName4, m4);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format("" #InstName ": "\
-					#MemberName1 "=%s, "\
-					#MemberName2 "=%s, "\
-					#MemberName3 "=%s, "\
-					#MemberName4 "=%s")\
+			return format(\
+					XTAL_STRING(#InstName) XTAL_STRING(": ")\
+					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName3) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName4) XTAL_STRING("=%s"))\
 				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code), inst_inspect(MemberName4, this, code))->to_s();\
 		}\
 	}
@@ -214,12 +218,13 @@ struct Inst{
 			checked_assign(MemberName5, m5);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format("" #InstName ": "\
-					#MemberName1 "=%s, "\
-					#MemberName2 "=%s, "\
-					#MemberName3 "=%s, "\
-					#MemberName4 "=%s, "\
-					#MemberName5 "=%s")\
+			return format(\
+					XTAL_STRING(#InstName) XTAL_STRING(": ")\
+					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName3) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName4) XTAL_STRING("=%s, ")\
+					XTAL_STRING(#MemberName5) XTAL_STRING("=%s"))\
 				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code), inst_inspect(MemberName4, this, code), inst_inspect(MemberName5, this, code))->to_s();\
 		}\
 	}
@@ -504,30 +509,9 @@ XTAL_DEF_INST_0(36, CleanupCall);
 /**
 * @brief 関数から抜ける
 *
-* stack [] -> []
-*/
-XTAL_DEF_INST_0(37, Return0);
-
-/**
-* @brief 関数から抜ける
-*
-* stack [value1] -> []
-*/
-XTAL_DEF_INST_0(38, Return1);
-
-/**
-* @brief 関数から抜ける
-*
-* stack [value1, value2] -> []
-*/
-XTAL_DEF_INST_0(39, Return2);
-
-/**
-* @brief 関数から抜ける
-*
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(40, Return,
+XTAL_DEF_INST_1(37, Return,
         inst_u8_t, results
 );
 
@@ -536,7 +520,7 @@ XTAL_DEF_INST_1(40, Return,
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(41, Yield,
+XTAL_DEF_INST_1(38, Yield,
         inst_u16_t, results
 );
 
@@ -545,32 +529,32 @@ XTAL_DEF_INST_1(41, Yield,
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_0(42, Exit);
+XTAL_DEF_INST_0(39, Exit);
 
 /**
 * @brief 値テーブルから値を取り出す
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(43, Value,
+XTAL_DEF_INST_1(40, Value,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_0(44, CheckUnsupported);
+XTAL_DEF_INST_0(41, CheckUnsupported);
 
-XTAL_DEF_INST_1(45, Property,
+XTAL_DEF_INST_1(42, Property,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_1(46, PropertyNS,
+XTAL_DEF_INST_1(43, PropertyNS,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_1(47, SetProperty,
+XTAL_DEF_INST_1(44, SetProperty,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_1(48, SetPropertyNS,
+XTAL_DEF_INST_1(45, SetPropertyNS,
         inst_u16_t, identifier_number
 );
 
@@ -582,14 +566,14 @@ enum{
 	CALL_FLAG_ARGS = 1<<CALL_FLAG_ARGS_SHIFT,
 };
 
-XTAL_DEF_INST_4(49, Call,
+XTAL_DEF_INST_4(46, Call,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
 		inst_u8_t, flags
 );
 
-XTAL_DEF_INST_5(50, Send,
+XTAL_DEF_INST_5(47, Send,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
@@ -597,7 +581,7 @@ XTAL_DEF_INST_5(50, Send,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_5(51, SendNS,
+XTAL_DEF_INST_5(48, SendNS,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
@@ -605,7 +589,7 @@ XTAL_DEF_INST_5(51, SendNS,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_5(52, SendQ,
+XTAL_DEF_INST_5(49, SendQ,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
@@ -613,7 +597,7 @@ XTAL_DEF_INST_5(52, SendQ,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_5(53, SendQNS,
+XTAL_DEF_INST_5(50, SendQNS,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
@@ -626,7 +610,7 @@ XTAL_DEF_INST_5(53, SendQNS,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_1(54, Member,
+XTAL_DEF_INST_1(51, Member,
         inst_u16_t, identifier_number
 );
 
@@ -635,7 +619,7 @@ XTAL_DEF_INST_1(54, Member,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_1(55, MemberNS,
+XTAL_DEF_INST_1(52, MemberNS,
         inst_u16_t, identifier_number
 );
 
@@ -644,7 +628,7 @@ XTAL_DEF_INST_1(55, MemberNS,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_1(56, MemberQ,
+XTAL_DEF_INST_1(53, MemberQ,
         inst_u16_t, identifier_number
 );
 
@@ -653,7 +637,7 @@ XTAL_DEF_INST_1(56, MemberQ,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_1(57, MemberQNS,
+XTAL_DEF_INST_1(54, MemberQNS,
         inst_u16_t, identifier_number
 );
 
@@ -662,7 +646,7 @@ XTAL_DEF_INST_1(57, MemberQNS,
 *
 * stack [object, value] -> []
 */
-XTAL_DEF_INST_1(58, DefineMember,
+XTAL_DEF_INST_1(55, DefineMember,
         inst_u16_t, identifier_number
 );
 
@@ -671,7 +655,7 @@ XTAL_DEF_INST_1(58, DefineMember,
 *
 * stack [object, value] -> []
 */
-XTAL_DEF_INST_1(59, DefineMemberNS,
+XTAL_DEF_INST_1(56, DefineMemberNS,
         inst_u16_t, identifier_number
 );
 
@@ -680,7 +664,7 @@ XTAL_DEF_INST_1(59, DefineMemberNS,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(60, GlobalVariable,
+XTAL_DEF_INST_1(57, GlobalVariable,
         inst_u16_t, identifier_number
 );
 /**
@@ -688,7 +672,7 @@ XTAL_DEF_INST_1(60, GlobalVariable,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_1(61, SetGlobalVariable,
+XTAL_DEF_INST_1(58, SetGlobalVariable,
         inst_u16_t, identifier_number
 );
 
@@ -697,203 +681,203 @@ XTAL_DEF_INST_1(61, SetGlobalVariable,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_1(62, DefineGlobalVariable,
+XTAL_DEF_INST_1(59, DefineGlobalVariable,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_2(63, Once,
+XTAL_DEF_INST_2(60, Once,
         inst_address_t, address,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(64, SetOnce,
+XTAL_DEF_INST_1(61, SetOnce,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(65, BlockBegin,
+XTAL_DEF_INST_1(62, BlockBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_1(66, BlockBeginDirect,
+XTAL_DEF_INST_1(63, BlockBeginDirect,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_1(67, BlockEnd,
+XTAL_DEF_INST_1(64, BlockEnd,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_1(68, BlockEndDirect,
+XTAL_DEF_INST_1(65, BlockEndDirect,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_1(69, TryBegin,
+XTAL_DEF_INST_1(66, TryBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(70, TryEnd);
+XTAL_DEF_INST_0(67, TryEnd);
 
-XTAL_DEF_INST_1(71, PushGoto,
+XTAL_DEF_INST_1(68, PushGoto,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_0(72, PopGoto);
+XTAL_DEF_INST_0(69, PopGoto);
 
-XTAL_DEF_INST_1(73, IfEq,
+XTAL_DEF_INST_1(70, IfEq,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(74, IfNe,
+XTAL_DEF_INST_1(71, IfNe,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(75, IfLt,
+XTAL_DEF_INST_1(72, IfLt,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(76, IfLe,
+XTAL_DEF_INST_1(73, IfLe,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(77, IfGt,
+XTAL_DEF_INST_1(74, IfGt,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(78, IfGe,
+XTAL_DEF_INST_1(75, IfGe,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(79, IfRawEq,
+XTAL_DEF_INST_1(76, IfRawEq,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(80, IfRawNe,
+XTAL_DEF_INST_1(77, IfRawNe,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(81, IfIn,
+XTAL_DEF_INST_1(78, IfIn,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(82, IfNin,
+XTAL_DEF_INST_1(79, IfNin,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(83, IfIs,
+XTAL_DEF_INST_1(80, IfIs,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_1(84, IfNis,
+XTAL_DEF_INST_1(81, IfNis,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_2(85, IfArgIsUndefined,
+XTAL_DEF_INST_2(82, IfArgIsUndefined,
 	inst_u8_t, arg,
 	inst_address_t, address
 );
 
-XTAL_DEF_INST_2(86, IfArgIsUndefinedDirect,
+XTAL_DEF_INST_2(83, IfArgIsUndefinedDirect,
 	inst_u8_t, arg,
 	inst_address_t, address
 );
 
-XTAL_DEF_INST_0(87, Pos);
-XTAL_DEF_INST_0(88, Neg);
-XTAL_DEF_INST_0(89, Com);
-XTAL_DEF_INST_0(90, Not);
+XTAL_DEF_INST_0(84, Pos);
+XTAL_DEF_INST_0(85, Neg);
+XTAL_DEF_INST_0(86, Com);
+XTAL_DEF_INST_0(87, Not);
 
-XTAL_DEF_INST_0(91, At);
-XTAL_DEF_INST_0(92, SetAt);
-XTAL_DEF_INST_0(93, Add);
-XTAL_DEF_INST_0(94, Sub);
-XTAL_DEF_INST_0(95, Cat);
-XTAL_DEF_INST_0(96, Mul);
-XTAL_DEF_INST_0(97, Div);
-XTAL_DEF_INST_0(98, Mod);
-XTAL_DEF_INST_0(99, And);
-XTAL_DEF_INST_0(100, Or);
-XTAL_DEF_INST_0(101, Xor);
-XTAL_DEF_INST_0(102, Shl);
-XTAL_DEF_INST_0(103, Shr);
-XTAL_DEF_INST_0(104, Ushr);
+XTAL_DEF_INST_0(88, At);
+XTAL_DEF_INST_0(89, SetAt);
+XTAL_DEF_INST_0(90, Add);
+XTAL_DEF_INST_0(91, Sub);
+XTAL_DEF_INST_0(92, Cat);
+XTAL_DEF_INST_0(93, Mul);
+XTAL_DEF_INST_0(94, Div);
+XTAL_DEF_INST_0(95, Mod);
+XTAL_DEF_INST_0(96, And);
+XTAL_DEF_INST_0(97, Or);
+XTAL_DEF_INST_0(98, Xor);
+XTAL_DEF_INST_0(99, Shl);
+XTAL_DEF_INST_0(100, Shr);
+XTAL_DEF_INST_0(101, Ushr);
 
-XTAL_DEF_INST_0(105, Eq);
-XTAL_DEF_INST_0(106, Ne);
-XTAL_DEF_INST_0(107, Lt);
-XTAL_DEF_INST_0(108, Le);
-XTAL_DEF_INST_0(109, Gt);
-XTAL_DEF_INST_0(110, Ge);
-XTAL_DEF_INST_0(111, RawEq);
-XTAL_DEF_INST_0(112, RawNe);
-XTAL_DEF_INST_0(113, In);
-XTAL_DEF_INST_0(114, Nin);
-XTAL_DEF_INST_0(115, Is);
-XTAL_DEF_INST_0(116, Nis);
+XTAL_DEF_INST_0(102, Eq);
+XTAL_DEF_INST_0(103, Ne);
+XTAL_DEF_INST_0(104, Lt);
+XTAL_DEF_INST_0(105, Le);
+XTAL_DEF_INST_0(106, Gt);
+XTAL_DEF_INST_0(107, Ge);
+XTAL_DEF_INST_0(108, RawEq);
+XTAL_DEF_INST_0(109, RawNe);
+XTAL_DEF_INST_0(110, In);
+XTAL_DEF_INST_0(111, Nin);
+XTAL_DEF_INST_0(112, Is);
+XTAL_DEF_INST_0(113, Nis);
 
-XTAL_DEF_INST_0(117, Inc);
-XTAL_DEF_INST_0(118, Dec);
-XTAL_DEF_INST_0(119, AddAssign);
-XTAL_DEF_INST_0(120, SubAssign);
-XTAL_DEF_INST_0(121, CatAssign);
-XTAL_DEF_INST_0(122, MulAssign);
-XTAL_DEF_INST_0(123, DivAssign);
-XTAL_DEF_INST_0(124, ModAssign);
-XTAL_DEF_INST_0(125, AndAssign);
-XTAL_DEF_INST_0(126, OrAssign);
-XTAL_DEF_INST_0(127, XorAssign);
-XTAL_DEF_INST_0(128, ShlAssign);
-XTAL_DEF_INST_0(129, ShrAssign);
-XTAL_DEF_INST_0(130, UshrAssign);
+XTAL_DEF_INST_0(114, Inc);
+XTAL_DEF_INST_0(115, Dec);
+XTAL_DEF_INST_0(116, AddAssign);
+XTAL_DEF_INST_0(117, SubAssign);
+XTAL_DEF_INST_0(118, CatAssign);
+XTAL_DEF_INST_0(119, MulAssign);
+XTAL_DEF_INST_0(120, DivAssign);
+XTAL_DEF_INST_0(121, ModAssign);
+XTAL_DEF_INST_0(122, AndAssign);
+XTAL_DEF_INST_0(123, OrAssign);
+XTAL_DEF_INST_0(124, XorAssign);
+XTAL_DEF_INST_0(125, ShlAssign);
+XTAL_DEF_INST_0(126, ShrAssign);
+XTAL_DEF_INST_0(127, UshrAssign);
 
-XTAL_DEF_INST_1(131, Range,
+XTAL_DEF_INST_1(128, Range,
 		inst_u8_t, kind
 );
 
-XTAL_DEF_INST_1(132, ClassBegin,
+XTAL_DEF_INST_1(129, ClassBegin,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(133, ClassEnd);
+XTAL_DEF_INST_0(130, ClassEnd);
 
-XTAL_DEF_INST_3(134, DefineClassMember,
+XTAL_DEF_INST_3(131, DefineClassMember,
         inst_u16_t, number,
 		inst_u16_t, identifier_number,
 		inst_u8_t, accessibility
 );
 
-XTAL_DEF_INST_0(135, MakeArray);
+XTAL_DEF_INST_0(132, MakeArray);
 
-XTAL_DEF_INST_0(136, ArrayAppend);
+XTAL_DEF_INST_0(133, ArrayAppend);
 
-XTAL_DEF_INST_0(137, MakeMap);
+XTAL_DEF_INST_0(134, MakeMap);
 
-XTAL_DEF_INST_0(138, MapInsert);
+XTAL_DEF_INST_0(135, MapInsert);
 
-XTAL_DEF_INST_0(139, MapSetDefault);
+XTAL_DEF_INST_0(136, MapSetDefault);
 
-XTAL_DEF_INST_2(140, MakeFun,
+XTAL_DEF_INST_2(137, MakeFun,
         inst_u16_t, core_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(141, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(138, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, core_number
 );
 
-XTAL_DEF_INST_0(142, Throw);
+XTAL_DEF_INST_0(139, Throw);
 
-XTAL_DEF_INST_0(143, ThrowUnsupportedError);
+XTAL_DEF_INST_0(140, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(144, ThrowUndefined);
+XTAL_DEF_INST_0(141, ThrowUndefined);
 
-XTAL_DEF_INST_0(145, Assert);
+XTAL_DEF_INST_0(142, Assert);
 
-XTAL_DEF_INST_1(146, BreakPoint,
+XTAL_DEF_INST_1(143, BreakPoint,
         inst_u8_t, type
 );
 
 
-XTAL_DEF_INST_0(147, MAX);
+XTAL_DEF_INST_0(144, MAX);
 
 }

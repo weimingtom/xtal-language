@@ -24,7 +24,7 @@ class EUCCodeLib : public CodeLib{
 public:
 	int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
-		if(c==0) return 0;
+		if(c==0) return 1;
 		if(c&0x80){
 			return 2;
 		}
@@ -39,7 +39,7 @@ class UTF8CodeLib : public CodeLib{
 public:
 	int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
-		if(c==0) return 0;
+		if(c==0) return 1;
 		if((c&0x80) && (c&0x40)){
 			if(c&0x20){
 				if(c&0x10){
@@ -58,6 +58,17 @@ public:
 		return 1;
 	}
 };
+
+////////////////////////////////////////////////
+// wchar
+
+class WCharCodeLib : public CodeLib{
+public:
+	int_t ch_len(char_t ch){
+		return 1;
+	}
+};
+
 
 ////////////////////////////////////////////////
 
@@ -125,12 +136,16 @@ IDPtr ChMaker::to_s(){
 
 namespace{
 
-#ifdef WIN32
-	SJISCodeLib default_code_lib_;
-#elif defined(__linux__)
-	EUCCodeLib default_code_lib_;
+#ifdef XTAL_USE_WCHAR
+	WCharCodeLib default_code_lib_;
 #else
+#	ifdef WIN32
+	SJISCodeLib default_code_lib_;
+#	elif defined(__linux__)
+	EUCCodeLib default_code_lib_;
+#	else
 	UTF8CodeLib default_code_lib_;
+#	endif
 #endif
 
 	CodeLib* code_lib_ = &default_code_lib_;
@@ -170,6 +185,74 @@ void set_code_utf8(){
 
 void set_code(CodeLib& lib){
 	code_lib_ = &lib;
+}
+
+int shortest_edit_distance_helper_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, uint_t k, uint_t x){
+	uint_t y = x-k;
+	while(x<size1 && y<size2 && (*((u8*)data1+x-1)==*((u8*)data2+y-1))){
+		++x;
+		++y;
+	}
+	return x;
+}
+
+int shortest_edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, int* buf){
+	const int offset = size2+1;
+	const int delta = size1-size2;
+	int k;
+	int p;
+	for(p=0;;++p){
+		for(k=-p; k<delta; ++k){
+			buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+		}
+
+		for(k=delta+p; k>delta; --k){
+			buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+		}
+
+		k = delta;
+		buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+
+		if(buf[delta+offset]==size1){
+			break;
+		}
+	}
+
+	return p+delta;
+}
+
+int_t shortest_edit_distance(const void* data1, uint_t size1, const void* data2, uint_t size2){
+	const int buf_size = 128+6;
+	int buf[buf_size];
+	int* fp = 0;
+
+	if(size1==0){
+		return size2;
+	}
+
+	if(size2==0){
+		return size1;
+	}
+	
+	if(size1+size2+6<buf_size){
+		fp = &buf[0];
+	}
+	else{
+		fp = (int*)user_malloc(sizeof(int)*(size1+size2+6));
+	}
+		
+	std::fill(fp, fp+buf_size, 0);
+
+	if(size1<size2){
+		return shortest_edit_distance_helper(data2, size2, data1, size1, fp);
+	}
+	else{
+		return shortest_edit_distance_helper(data1, size1, data2, size2, fp);
+	}
+
+	if(fp!=&buf[0]){
+		user_free(fp);
+	}
 }
 
 }

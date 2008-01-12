@@ -30,8 +30,9 @@ private:
 	}
 
 	static void deallocate(void* p){
-		if(p==&buf_)
+		if(p==&buf_){
 			return;
+		}
 		user_free(p);
 	}
 
@@ -283,10 +284,12 @@ void Stack<T>::resize(size_t newsize){
 	XTAL_ASSERT(newsize>=0);
 
 	size_t oldsize = size();
-	if(newsize>oldsize)
+	if(newsize>oldsize){
 		upsize(newsize-oldsize);
-	else
+	}
+	else{
 		downsize_n(newsize);
+	}
 }
 
 template<class T>
@@ -302,13 +305,18 @@ void Stack<T>::upsize_detail(size_t us){
 	size_t newcapa = 16 + newsize + newsize/2;
 	T* newp = (T*)allocate(sizeof(T)*(newcapa+1))+1;
 
-	for(size_t i = 0; i<oldsize; ++i)
+	for(size_t i = 0; i<oldsize; ++i){
 		new(&newp[i]) T(oldp[i]);
-	for(size_t i = oldsize; i<newcapa; ++i)
-		new(&newp[i]) T;
+	}
 
-	for(size_t i = 0; i<oldcapa; ++i)
+	for(size_t i = oldsize; i<newcapa; ++i){
+		new(&newp[i]) T;
+	}
+
+	for(size_t i = 0; i<oldcapa; ++i){
 		oldp[i].~T();
+	}
+
 	deallocate(oldp-1);
 
 	begin_ = newp;
@@ -319,8 +327,10 @@ void Stack<T>::upsize_detail(size_t us){
 
 template<class T>
 void Stack<T>::reserve(size_t capa){
-	if(capa<=capacity())
+	if(capa<=capacity()){
 		return;
+	}
+
 	size_t diff = capa-size();
 	upsize(diff);
 	downsize(diff);
@@ -408,8 +418,9 @@ private:
 	}
 
 	static void deallocate(void* p){
-		if(p==&buf_)
+		if(p==&buf_){
 			return;
+		}
 		user_free(p);
 	}
 

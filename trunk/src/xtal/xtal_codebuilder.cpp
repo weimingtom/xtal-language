@@ -123,6 +123,8 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().loops.clear();
 	ff().finallies.clear();
 	ff().var_frame_count = var_frames_.size();
+	ff().stack_count = 0;
+	ff().max_stack_count = 0;
 	ff().extendable_param = true;
 
 	// 変数フレームを作成して、引数を登録する
@@ -176,6 +178,10 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	}
 }
 
+AnyPtr CodeBuilder::errors(){
+	return error_->errors->each();
+}
+
 void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	if(t.op==255){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
@@ -184,10 +190,6 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	size_t cur = result_->code_.size();
 	result_->code_.resize(cur+sz/sizeof(inst_t));
 	std::memcpy(&result_->code_[cur], &t, sz);
-}
-
-AnyPtr CodeBuilder::errors(){
-	return error_->errors->each();
 }
 
 bool CodeBuilder::put_set_local_code(const IDPtr& var){
@@ -282,15 +284,40 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 	}
 }
 
+int_t CodeBuilder::register_identifier_or_compile_expr(const AnyPtr& var){
+	if(const IDPtr& id = ptr_as<ID>(var)){ 
+		return register_identifier(id);
+	}
+	compile_expr(ep(var)); 
+	return 0;
+}
+
+int_t CodeBuilder::register_identifier(const IDPtr& v){
+	if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
+	result_->identifier_table_->push_back(v);
+	identifier_map_->set_at(v, result_->identifier_table_->size()-1);
+	return result_->identifier_table_->size()-1;
+}
+
+int_t CodeBuilder::register_value(const AnyPtr& v){
+	if(const AnyPtr& pos = value_map_->at(v)){ return pos->to_i(); }
+	result_->value_table_->push_back(v);
+	value_map_->set_at(v, result_->value_table_->size()-1);
+	return result_->value_table_->size()-1;
+}
+
+int_t CodeBuilder::append_identifier(const IDPtr& identifier){
+	result_->identifier_table_->push_back(identifier);
+	return result_->identifier_table_->size()-1;
+}
+
+int_t CodeBuilder::append_value(const AnyPtr& v){
+	result_->value_table_->push_back(v);
+	return result_->value_table_->size()-1;
+}
+
 void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key){
-	int_t key = 0;
-	if(ptr_as<Expr>(var)){ 
-		compile_expr(ptr_as<Expr>(var)); 
-	}
-	else{
-		key = register_identifier(ptr_as<ID>(var));
-	}
-	
+	int_t key = register_identifier_or_compile_expr(var);
 	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
 
 	if(secondary_key){
@@ -323,11 +350,14 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 }
 
 void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key){
-	ExprMaker em;
-
 	int_t key = 0;
 	if(ptr_as<Expr>(var)){ 
-		compile_expr(em.bin(EXPR_CAT, em.string(KIND_STRING, "set_"), ptr_as<Expr>(var))); 
+		eb_.push(KIND_STRING);
+		eb_.push("set_");
+		eb_.splice(EXPR_STRING, 2);
+		eb_.push(ep(var));
+		eb_.splice(EXPR_CAT, 2);
+		compile_expr(eb_.pop()); 
 	}
 	else{
 		key = register_identifier(xnew<String>("set_")->cat(ptr_as<ID>(var)));
@@ -354,24 +384,14 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 }
 
 void CodeBuilder::put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key){
-	int_t key = 0;
-	if(ptr_as<Expr>(var)){ 
-		compile_expr(ptr_as<Expr>(var)); 
-	}
-	else{
-		key = register_identifier(ptr_as<ID>(var));
-	}
+	int_t key = register_identifier_or_compile_expr(var);
 
 	if(secondary_key){
 		compile_expr(secondary_key);
-		InstDefineMemberNS member;
-		member.identifier_number = key;
-		put_inst(member);
+		put_inst(InstDefineMemberNS(key));
 	}
 	else{
-		InstDefineMember member;
-		member.identifier_number = key;
-		put_inst(member);
+		put_inst(InstDefineMember(key));
 	}
 }
 
@@ -421,7 +441,6 @@ void CodeBuilder::process_labels(){
 		FunFrame::Label &l = ff().labels[i];
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
-			//addresses_.push(f.set_pos);
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.pos;
 		}
@@ -736,10 +755,7 @@ int_t CodeBuilder::code_size(){
 }
 
 void CodeBuilder::compile_bin(const ExprPtr& e){
-	if(is_comp_bin(e->bin_lhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
-	}
-	if(is_comp_bin(e->bin_rhs())){
+	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
 	}
 	
@@ -752,10 +768,7 @@ void CodeBuilder::compile_bin(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_comp_bin(const ExprPtr& e){
-	if(is_comp_bin(e->bin_lhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
-	}
-	if(is_comp_bin(e->bin_rhs())){
+	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 	
@@ -950,46 +963,84 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_class(const ExprPtr& e){
-	ExprMaker em(e->lineno());
-
 	// インスタンス変数を暗黙的初期化するメソッドを定義する
 	{
-		ExprPtr init_method = em.fun(KIND_METHOD, null, null, null);
 		ExprPtr stmts = xnew<Expr>();
-		ExprPtr block = em.scope(stmts);
-
 		MapPtr ivar_map = xnew<Map>();
 		Xfor_as(const ExprPtr& v, e->class_stmts()->clone()){
 			if(v->tag()==EXPR_CDEFINE_IVAR){
 				if(v->cdefine_ivar_term()){
-					stmts->push_back(em.assign(em.ivar(v->cdefine_ivar_name()), v->cdefine_ivar_term()));
+					eb_.push(v->cdefine_ivar_name());
+					eb_.splice(EXPR_IVAR, 1);
+					eb_.push(v->cdefine_ivar_term());
+					eb_.splice(EXPR_ASSIGN, 2);
+					stmts->push_back(eb_.pop());
 				}
 
 				// 可触性が付いているので、アクセッサを定義する
 				if(v->cdefine_ivar_accessibility()){ 
 					IDPtr var = v->cdefine_ivar_name();
-					e->class_stmts()->push_back(
-						em.cdefine_member(v->cdefine_ivar_accessibility(), var, null, 
-							em.fun(KIND_METHOD, null, null, 
-								em.return_(make_exprs(em.ivar(var))))));
-			
+					eb_.push(v->cdefine_ivar_accessibility());
+					eb_.push(var);
+					eb_.push(null);
+					
+					eb_.push(KIND_METHOD);
+					eb_.push(null);
+					eb_.push(null);
+					eb_.push(var);
+					eb_.splice(EXPR_IVAR, 1);
+					eb_.splice(0, 1);
+					eb_.splice(EXPR_RETURN, 1);
+					eb_.splice(EXPR_FUN, 4);
+
+					eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+
+					e->class_stmts()->push_back(eb_.pop());
+
 					IDPtr var2 = xnew<String>("set_")->cat(var);
-					e->class_stmts()->push_back(
-						em.cdefine_member(v->cdefine_ivar_accessibility(), var2, null, 
-							em.fun(KIND_METHOD, make_exprs(make_exprs(em.lvar(Xid(value)), null)), null, 
-								em.assign(em.ivar(var), em.lvar(Xid(value))))));
+					eb_.push(v->cdefine_ivar_accessibility());
+					eb_.push(var2);
+					eb_.push(null);
+
+					eb_.push(KIND_METHOD);
+					eb_.push(Xid(value));
+					eb_.splice(EXPR_LVAR, 1);
+					eb_.push(null);
+					eb_.splice(0, 2);
+					eb_.splice(0, 1);
+					eb_.push(null);
+					eb_.push(var);
+					eb_.splice(EXPR_IVAR, 1);
+					eb_.push(Xid(value));
+					eb_.splice(EXPR_LVAR, 1);
+					eb_.splice(EXPR_ASSIGN, 2);
+					eb_.splice(EXPR_FUN, 4);
+
+					eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+
+					e->class_stmts()->push_back(eb_.pop());
 				}
 			}
 		}
 
-		init_method->set_fun_body(block);
-		e->class_stmts()->push_front(em.cdefine_member(KIND_PUBLIC, Xid(_initialize_), null, init_method));
+		eb_.push(KIND_PUBLIC);
+		eb_.push(Xid(_initialize_));
+		eb_.push(null);
+
+		eb_.push(KIND_METHOD);
+		eb_.push(null);
+		eb_.push(null);
+		eb_.push(stmts);
+		eb_.splice(EXPR_SCOPE, 1);
+		eb_.splice(EXPR_FUN, 4);
+
+		eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+
+		e->class_stmts()->push_front(eb_.pop());
 	}
 
 	// 継承
-	Xfor(v, e->class_mixins()){
-		compile_expr(v);
-	}
+	int_t mixins = compile_exprs(e->class_mixins());
 
 	// 変数フレームを作成
 	var_begin(VarFrame::CLASS);
@@ -1029,7 +1080,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	ClassCore core;
 	core.pc = code_size();
 	core.kind = e->class_kind();
-	core.mixins = e->class_mixins() ? e->class_mixins()->size() : 0;
+	core.mixins = mixins;
 	core.variable_size = vf().entries.size();
 	core.instance_variable_size = ivar_num;
 	
@@ -1165,6 +1216,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	ff().loops.clear();
 	ff().finallies.clear();
 	ff().var_frame_count = var_frames_.size();
+	ff().stack_count = 0;
+	ff().max_stack_count = 0;
 	ff().extendable_param = e->fun_extendable_param();
 
 
@@ -1201,7 +1254,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	int_t fun_end_label = reserve_label();
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
 	put_inst(InstMakeFun(fun_core_table_number, 0));
-	
+
 	if(debug::is_enabled()){
 		put_inst(InstBreakPoint(BREAKPOINT_CALL));
 	}
@@ -1236,12 +1289,21 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	Xfor_as(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
 		if(v->tag()==EXPR_IVAR){
-			compile_stmt(em.assign(v, em.lvar(v->ivar_name())));
+			eb_.push(v);
+			eb_.push(v->ivar_name());
+			eb_.splice(EXPR_LVAR, 1);
+			eb_.splice(EXPR_ASSIGN, 2);
+			compile_stmt(eb_.pop());
 		}
 	}
 
+	add_stack_count(e->fun_params() ? e->fun_params()->size() : 0);
+	add_stack_count(e->fun_params() ? -(int_t)e->fun_params()->size() : 0);
+
 	// 関数本体を処理する
 	compile_stmt(e->fun_body());
+
+	XTAL_ASSERT(ff().stack_count==0);
 	
 	break_off(ff().var_frame_count+1);
 	if(debug::is_enabled()){
@@ -1269,10 +1331,9 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_for(const ExprPtr& e){
-	ExprMaker em(e->lineno());
 	var_begin(VarFrame::SCOPE);
 	var_define_stmt(e->for_init());
-	var_define(Xid(first_step), em.true_());
+	var_define(Xid(first_step), xnew<Expr>(EXPR_TRUE));
 	check_lvar_assign_stmt(e);
 	scope_begin();
 	
@@ -1366,6 +1427,15 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	var_end();
 }
 
+int_t CodeBuilder::compile_exprs(const ExprPtr& e){
+	int_t count = 0;
+	Xfor(v, e){
+		compile_expr(v);
+		count++;
+	}
+	return count;
+}
+
 AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	if(!p){
 		if(info.need_result_count==1){
@@ -1375,6 +1445,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		else if(info.need_result_count!=0){
 			put_inst(InstAdjustResult(0, info.need_result_count));
 		}
+
 		return undefined;
 	}
 
@@ -1389,6 +1460,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				put_inst(InstAdjustResult(1, info.need_result_count));
 			}
 		}
+
 		return val;
 	}
 	
@@ -1402,7 +1474,6 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_NODEFAULT;
 
-		XTAL_CASE(EXPR_NULL){ put_inst(InstPushNull()); }
 		XTAL_CASE(EXPR_UNDEFINED){ put_inst(InstPushUndefined()); }
 		XTAL_CASE(EXPR_TRUE){ put_inst(InstPushTrue()); }
 		XTAL_CASE(EXPR_FALSE){ put_inst(InstPushFalse()); }
@@ -1639,14 +1710,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
-
-				int_t key = 0;
-				if(ptr_as<Expr>(e2->send_name())){
-					compile_expr(ptr_as<Expr>(e2->send_name()));
-				}
-				else{
-					key = register_identifier(ptr_as<ID>(e2->send_name()));
-				}
+				int_t key = register_identifier_or_compile_expr(e2->send_name());
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
@@ -1660,14 +1724,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
-
-				int_t key = 0;
-				if(ptr_as<Expr>(e2->send_name())){
-					compile_expr(ptr_as<Expr>(e2->send_name()));
-				}
-				else{
-					key = register_identifier(ptr_as<ID>(e2->send_name()));
-				}
+				int_t key = register_identifier_or_compile_expr(e2->send_name());
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
@@ -1699,48 +1756,27 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MEMBER){
 			compile_expr(e->member_term());
+			int_t key = register_identifier_or_compile_expr(e->member_name());
 
-			int_t key = 0;
-			if(const ExprPtr& evar = ptr_as<Expr>(e->member_name())){ 
-				compile_expr(evar); 
-			}
-			else{
-				key = register_identifier(ptr_as<ID>(e->member_name()));
-			}
-			
 			if(e->member_ns()){
 				compile_expr(e->member_ns());
-				InstMemberNS member;
-				member.identifier_number = key;
-				put_inst(member);
+				put_inst(InstMemberNS(key));
 			}
 			else{
-				InstMember member;
-				member.identifier_number = key;
-				put_inst(member);
+				put_inst(InstMember(key));
 			}	
 		}
 
 		XTAL_CASE(EXPR_MEMBER_Q){
 			compile_expr(e->member_term());
-			int_t key = 0;
-			if(const ExprPtr& evar = ptr_as<Expr>(e->member_name())){ 
-				compile_expr(evar); 
-			}
-			else{
-				key = register_identifier(ptr_as<ID>(e->member_name()));
-			}
+			int_t key = register_identifier_or_compile_expr(e->member_name());
 			
 			if(e->member_ns()){
 				compile_expr(e->member_ns());
-				InstMemberQNS member;
-				member.identifier_number = key;
-				put_inst(member);
+				put_inst(InstMemberQNS(key));
 			}
 			else{
-				InstMemberQ member;
-				member.identifier_number = key;
-				put_inst(member);
+				put_inst(InstMemberQ(key));
 			}	
 		}
 
@@ -1752,6 +1788,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			compile_expr(e->una_term(), info.need_result_count);
 			result_count = info.need_result_count;
 		}
+
 	}
 	
 	if(e->lineno()!=0){
@@ -1768,18 +1805,19 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 void CodeBuilder::compile_stmt(const AnyPtr& p){
 
-	if(!p)
+	if(!p){
 		return;
+	}
 
 	ExprPtr e = ep(p);
-
-	if(debug::is_enabled() && linenos_.top()!=e->lineno()){
-		put_inst(InstBreakPoint(BREAKPOINT_LINE));
-	}
 
 	if(e->lineno()!=0){
 		linenos_.push(e->lineno());
 		result_->set_lineno_info(e->lineno());
+	}
+
+	if(debug::is_enabled() && linenos_[1]!=e->lineno()){
+		put_inst(InstBreakPoint(BREAKPOINT_LINE));
 	}
 
 	switch(e->tag()){
@@ -1851,11 +1889,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		XTAL_CASE(EXPR_DEC){ compile_incdec(e); }
 
 		XTAL_CASE(EXPR_YIELD){
-			Xfor(v, e->yield_exprs()){
-				compile_expr(v);
-			}
-
-			int_t exprs_size = e->yield_exprs()->size();
+			int_t exprs_size = compile_exprs(e->yield_exprs());
 			put_inst(InstYield(exprs_size));
 			if(exprs_size>=256){
 				error_->error(lineno(), Xt("Xtal Compile Error 1022"));
@@ -1875,56 +1909,37 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
 			if(!have_finally && exprs_size==1){
 				ExprPtr front = ep(e->return_exprs()->front());
-				if(front->tag()==EXPR_CALL){
-					compile_expr(front, CompileInfo(1, true));
-					break;
-				}
-				else if(front->tag()==EXPR_SEND){
-					compile_expr(front, CompileInfo(1, true));
-					break;
-				}
-				else if(front->tag()==EXPR_SEND_Q){
+				if(front->tag()==EXPR_CALL || front->tag()==EXPR_SEND || front->tag()==EXPR_SEND_Q){
 					compile_expr(front, CompileInfo(1, true));
 					break;
 				}
 			}
 
-			Xfor(v, e->return_exprs()){
-				compile_expr(v);
-			}
+			compile_exprs(e->return_exprs());
 			
-			{
-				break_off(ff().var_frame_count+1);
+			break_off(ff().var_frame_count+1);
 
-				if(debug::is_enabled()){
-					put_inst(InstBreakPoint(BREAKPOINT_RETURN));
-				}
-
-				{
-					put_inst(InstReturn(exprs_size));
-					if(exprs_size>=256){
-						error_->error(lineno(), Xt("Xtal Compile Error 1022"));
-					}
-				}	
+			if(debug::is_enabled()){
+				put_inst(InstBreakPoint(BREAKPOINT_RETURN));
 			}
+
+			put_inst(InstReturn(exprs_size));
+			if(exprs_size>=256){
+				error_->error(lineno(), Xt("Xtal Compile Error 1022"));
+			}	
 		}
 
 		XTAL_CASE(EXPR_ASSERT){		
-			int_t exprs_size = e->assert_exprs()->size();
+			int_t exprs_size = compile_exprs(e->assert_exprs());
 			if(exprs_size==1){
-				compile_expr(e->assert_exprs()->at(0));
 				put_inst(InstValue(0));
 				put_inst(InstValue(0));	
 			}
 			else if(exprs_size==2){
-				compile_expr(e->assert_exprs()->at(0));
-				compile_expr(e->assert_exprs()->at(1));
 				put_inst(InstValue(0));
 			}
 			else if(exprs_size==3){
-				compile_expr(e->assert_exprs()->at(0));
-				compile_expr(e->assert_exprs()->at(1));
-				compile_expr(e->assert_exprs()->at(2));
+
 			}
 			else{
 				error_->error(lineno(), Xt("Xtal Compile Error 1016"));
@@ -2118,7 +2133,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					error_->error(lineno(), Xt("Xtal Compile Error 1008"));
 				}
 			}
-	}
+		}
 
 		XTAL_CASE(EXPR_MDEFINE){
 			uint_t pushed_count = 0;
@@ -2253,11 +2268,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				put_inst(InstGoto());
 			}
 
-			{
-				compile_stmt(default_case);
-				set_jump(InstGoto::OFFSET_address, label_end);
-				put_inst(InstGoto());
-			}
+			compile_stmt(default_case);
+			set_jump(InstGoto::OFFSET_address, label_end);
+			put_inst(InstGoto());
 
 			set_label(label_end);	
 
@@ -2283,8 +2296,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 #define XTAL_CB_DO_EXPR(name, expr) AnyPtr name = do_expr(expr); if(raweq(name, undefined)) return undefined;
 
 AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const IDPtr& name, bool swap){
-	if(is_comp_bin(e->bin_lhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
-	if(is_comp_bin(e->bin_rhs())){ error_->error(lineno(), Xt("Xtal Compile Error 1025")); }
+	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){ 
+		error_->error(lineno(), Xt("Xtal Compile Error 1025")); 
+	}
 
 	XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
 	XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
@@ -2305,7 +2319,8 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
 		a->rawsend(vm, name, null, null, false);
 		if(!vm->processed()){ vm->return_result(undefined); }
 		ret = vm->result_and_cleanup_call();
-	}XTAL_CATCH(e){
+	}
+	XTAL_CATCH(e){
 		(void)e;
 		ret = undefined;
 	}
@@ -2326,7 +2341,8 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b)
 		}
 
 		return undefined;
-	}XTAL_CATCH(e){
+	}
+	XTAL_CATCH(e){
 		(void)e;
 		ret = undefined;
 	}
@@ -2581,9 +2597,9 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 }
 
 void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
-
-	if(!p)
+	if(!p){
 		return;
+	}
 
 	ExprPtr e = ep(p);
 
@@ -2625,7 +2641,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	case EXPR_IF:
 		check_lvar_assign_stmt(e->if_body());
 		check_lvar_assign_stmt(e->if_else());
-			break;
+		break;
 
 	case EXPR_FOR:
 		check_lvar_assign_stmt(e->for_init());

@@ -144,7 +144,7 @@ public:
 		
 	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
-	virtual StringPtr object_name(uint_t depth = -1);
+	virtual StringPtr object_name(int_t depth = -1);
 
 public:
 

@@ -36,7 +36,7 @@ StringPtr ch_inc(const char_t* data, int_t buffer_size);
 */
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
-int_t shortest_edit_distance(const void* data1, uint_t size1, const void* data2, uint_t size2);
+uint_t edit_distance(const void* data1, uint_t size1, const void* data2, uint_t size2);
 
 inline bool test_range(int ch, int begin, int end){
 	return begin<=ch && ch<=end;

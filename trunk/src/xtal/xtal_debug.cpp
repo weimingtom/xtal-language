@@ -67,6 +67,17 @@ void initialize_debug(){
 
 	enable_count_ = 0;
 
+	ClassPtr debug = xnew<Singleton>("debug");
+	debug->fun("enable", &enable);
+	debug->fun("disable", &disable);
+	debug->fun("is_enabled", &is_enabled);
+	debug->fun("line_hook", &line_hook);
+	debug->fun("call_hook", &call_hook);
+	debug->fun("return_hook", &return_hook);
+	debug->fun("set_line_hook", &set_line_hook);
+	debug->fun("set_call_hook", &set_call_hook);
+	debug->fun("set_return_hook", &set_return_hook);
+
 	{
 		ClassPtr p = new_cpp_class<Info>("Info");
 		p->method("clone", &Info::clone);
@@ -82,7 +93,11 @@ void initialize_debug(){
 		p->def("LINE", BREAKPOINT_LINE);
 		p->def("CALL", BREAKPOINT_CALL);
 		p->def("RETURN", BREAKPOINT_RETURN);
+
+		debug->def("Info", p);
 	}
+
+	builtin()->def("debug", debug);
 }
 
 }

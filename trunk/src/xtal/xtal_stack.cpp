@@ -32,8 +32,9 @@ PODStackBase::PODStackBase(const PODStackBase &a){
 }
 
 PODStackBase &PODStackBase::operator =(const PODStackBase &a){
-	if(this==&a)
+	if(this==&a){
 		return *this;
+	}
 
 	if(a.capacity()==0){
 		deallocate(minusp(begin_, 1));
@@ -59,10 +60,12 @@ void PODStackBase::resize(size_t newsize){
 	XTAL_ASSERT(newsize>=0);
 
 	size_t oldsize = size();
-	if(newsize>oldsize)
+	if(newsize>oldsize){
 		upsize(newsize-oldsize);
-	else
+	}
+	else{
 		downsize_n(newsize);
+	}
 }
 
 void PODStackBase::upsize_detail(size_t us){
@@ -86,8 +89,10 @@ void PODStackBase::upsize_detail(size_t us){
 }
 
 void PODStackBase::reserve(size_t capa){
-	if(capa<=capacity())
+	if(capa<=capacity()){
 		return;
+	}
+
 	size_t diff = capa-size();
 	upsize(diff);
 	downsize(diff);

@@ -99,7 +99,7 @@ void Base::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr
 	ap(Innocence(this))->rawsend(vm, primary_key, secondary_key, self, inherited_too);
 }
 
-StringPtr Base::object_name(uint_t depth){
+StringPtr Base::object_name(int_t depth){
 	return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
 }
 
@@ -140,7 +140,7 @@ void Base::visit_members(Visitor& m){
 	}
 }
 
-StringPtr HaveName::object_name(uint_t depth){
+StringPtr HaveName::object_name(int_t depth){
 	if(!name_){
 		return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
 	}

@@ -550,6 +550,24 @@ builtin::ClassicIterator: class{
 
 Iterator::classic: method ClassicIterator(this);
 
+Stream::scan: method(pattern) fiber{
+	scanner: xeg::create_scanner(this);
+	for(it: scanner.match(pattern); it; it=scanner.match(pattern)){
+		yield it;
+	}
+}
+
+Stream::split: method(pattern) fiber{
+	scanner: xeg::create_scanner(this);
+	if(prev: scanner.match(pattern)){
+		for(it: prev; it; it=scanner.match(pattern)){
+			yield it.prefix;
+			prev = it;
+		}
+		yield prev.suffix;
+	}
+}
+
 String::scan: method(pattern) fiber{
 	scanner: xeg::create_scanner(this);
 	for(it: scanner.match(pattern); it; it=scanner.match(pattern)){

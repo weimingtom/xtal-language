@@ -16,6 +16,7 @@
 #include "xtal_core.cpp"
 #include "xtal_debug.cpp"
 #include "xtal_except.cpp"
+#include "xtal_expr.cpp"
 #include "xtal_frame.cpp"
 #include "xtal_fun.cpp"
 #include "xtal_iterator.cpp"

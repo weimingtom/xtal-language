@@ -5,8 +5,8 @@ namespace xtal{
 	enum{
 		VERSION1 = 0,
 		VERSION2 = 9,
-		VERSION3 = 7,
-		VERSION4 = 1
+		VERSION3 = 9,
+		VERSION4 = 0
 	};
 }
 

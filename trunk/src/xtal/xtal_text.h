@@ -9,7 +9,7 @@ AnyPtr format(const StringPtr& text);
 
 void set_text_map(const MapPtr& map);
 
-void add_text_map(const MapPtr& map);
+void append_text_map(const MapPtr& map);
 
 MapPtr get_text_map();
 

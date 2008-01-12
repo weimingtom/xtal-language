@@ -1,6 +1,6 @@
 
 CC = g++
-OPT = -O3 -DNDEBUG -fno-rtti -fno-exceptions -DXTAL_NO_EXCEPTIONS
+OPT = -O3 -DNDEBUG -fno-rtti -fno-exceptions -DXTAL_NO_EXCEPTIONS -mno-cygwin
 
 #  -Wall, -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
 
@@ -49,5 +49,9 @@ run: xtal
 test: xtal
 	../bin/xtal.exe testall.xtal
 
+checkdll:
+	$ objdump -p ../bin/xtal.exe | grep "DLL Name"
+	$ objdump -p ../bin/ix.exe | grep "DLL Name"
+	
 -include makefile.depend
 

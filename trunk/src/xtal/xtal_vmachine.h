@@ -18,7 +18,7 @@ public:
 	FunCore* core(){ return core_; }
 	void set_core(FunCore* fc){ core_ = fc; }
 	void check_arg(const VMachinePtr& vm);
-	virtual StringPtr object_name(uint_t depth = -1);
+	virtual StringPtr object_name(int_t depth = -1);
 
 public:
 		
@@ -348,7 +348,6 @@ public:
 public:
 
 	void adjust_result(int_t n){		
-		ff().result_count = n;
 		adjust_result(n, ff().need_result_count);
 	}
 
@@ -426,9 +425,6 @@ public:
 
 		// 関数呼び出し側が必要とする戻り値の数
 		int_t need_result_count;
-
-		// 関数が返した戻り値の数
-		int_t result_count;
 
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;

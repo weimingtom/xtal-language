@@ -187,72 +187,52 @@ void set_code(CodeLib& lib){
 	code_lib_ = &lib;
 }
 
-int shortest_edit_distance_helper_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, uint_t k, uint_t x){
+void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, int* buf, uint_t k, int offset){
+#ifdef max
+#	undef max
+#endif
+	uint_t x = std::max(buf[k-1+offset]+1, buf[k+1+offset]);
 	uint_t y = x-k;
-	while(x<size1 && y<size2 && (*((u8*)data1+x-1)==*((u8*)data2+y-1))){
+	while(x<size1 && y<size2 && ((u8*)data1)[x-1]==((u8*)data2)[y-1]){
 		++x;
 		++y;
 	}
-	return x;
+	buf[k+offset] = x;
 }
 
-int shortest_edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, int* buf){
-	const int offset = size2+1;
-	const int delta = size1-size2;
-	int k;
-	int p;
-	for(p=0;;++p){
-		for(k=-p; k<delta; ++k){
-			buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+uint_t edit_distance(const void* data1, uint_t data_size1, const void* data2, uint_t data_size2){
+	if(data_size1<data_size2){
+		return edit_distance(data2, data_size2, data1, data_size1);
+	}
+
+	uint_t size1 = data_size1 + 1;
+	uint_t size2 = data_size2 + 1;
+
+	int buf_size = size1+size2+6;
+	int* buf = (int*)user_malloc(sizeof(int)*buf_size);
+	
+	for(int i=0; i<buf_size; ++i){
+		buf[i] = 0;
+	}
+
+	int offset = size2+1, delta = size1-size2;
+	for(int p=0;;++p){
+		for(int k=-p; k<delta; ++k){
+			edit_distance_helper(data1, size1, data2, size2, buf, k, offset);
 		}
 
-		for(k=delta+p; k>delta; --k){
-			buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+		for(int k=delta+p; k>delta; --k){
+			edit_distance_helper(data1, size1, data2, size2, buf, k, offset);
 		}
 
-		k = delta;
-		buf[k+offset] = shortest_edit_distance_helper_helper(data1, size1, data2, size2, k, std::max(buf[k-1+offset]+1, buf[k+1+offset]));
+		edit_distance_helper(data1, size1, data2, size2, buf, delta, offset);
 
 		if(buf[delta+offset]==size1){
-			break;
+			user_free(buf);
+			return p+delta;
 		}
 	}
-
-	return p+delta;
-}
-
-int_t shortest_edit_distance(const void* data1, uint_t size1, const void* data2, uint_t size2){
-	const int buf_size = 128+6;
-	int buf[buf_size];
-	int* fp = 0;
-
-	if(size1==0){
-		return size2;
-	}
-
-	if(size2==0){
-		return size1;
-	}
-	
-	if(size1+size2+6<buf_size){
-		fp = &buf[0];
-	}
-	else{
-		fp = (int*)user_malloc(sizeof(int)*(size1+size2+6));
-	}
-		
-	std::fill(fp, fp+buf_size, 0);
-
-	if(size1<size2){
-		return shortest_edit_distance_helper(data2, size2, data1, size1, fp);
-	}
-	else{
-		return shortest_edit_distance_helper(data1, size1, data2, size2, fp);
-	}
-
-	if(fp!=&buf[0]){
-		user_free(fp);
-	}
+	return 0;
 }
 
 }

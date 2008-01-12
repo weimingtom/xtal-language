@@ -294,7 +294,7 @@ inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
 inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 
 AnyPtr interned_strings();
-int_t shortest_edit_distance(const StringPtr& str1, const StringPtr& str2);
+int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
 
 class ChRange : public Base{
 public:

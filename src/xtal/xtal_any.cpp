@@ -346,7 +346,7 @@ MapPtr Any::to_m() const{
 	return ptr_cast<Map>((*this).send(Xid(to_m)));
 }
 
-StringPtr Any::object_name(uint_t depth) const{
+StringPtr Any::object_name(int_t depth) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name(depth)); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(depth); }

@@ -278,43 +278,43 @@ private:
 		return eat(-1);
 	}
 	
+	const Token& lexer_read();
+	const Token& lexer_peek();
+
 	void expect(int_t ch);
-	
 	bool eat(int_t ch);
 	bool eat(Token::Keyword kw);
 
-	bool parse_term_n();
-	bool parse_expr_n(int_t pri);
-	bool parse_expr_n();
-	void must_parse_expr_n(int_t pri);
+	bool parse_term();
+	bool parse_expr(int_t pri);
+	bool parse_expr();
+	void must_parse_expr(int_t pri);
 	bool parse_post(int_t pri);
-	void must_parse_expr_n();
-
-	void must_parse_identifier_n();
-	bool parse_identifier_n();
-	void parse_identifier_or_keyword_n();
-	bool parse_var_n();
-
-	void parse_if_n();
-	void must_parse_stmt_n();
-	void parse_try_n();
-	bool parse_stmt_n();
-	void parse_stmts_n();
-	void parse_assert_n();
-	void parse_exprs_n(bool one = false);
-	bool parse_assign_stmt_n();
-	void parse_array_n();
-	void parse_each_n();
-	void parse_while_n();
-	void parse_for_n();
-	bool parse_loop_n();
-	void parse_switch_n();
-	void parse_class_n(int_t kind);
-	void parse_scope_n();
-	void parse_lambda_n(bool noparam = false);
-	void parse_fun_n(int_t kind);
-	void parse_call_n();		
-	void parse_toplevel_n();
+	void must_parse_expr();
+	void must_parse_identifier();
+	bool parse_identifier();
+	void parse_identifier_or_keyword();
+	bool parse_var();
+	void parse_if();
+	void must_parse_stmt();
+	void parse_try();
+	bool parse_stmt();
+	void parse_stmts();
+	void parse_assert();
+	void parse_exprs(bool one = false);
+	bool parse_assign_stmt();
+	void parse_array();
+	void parse_each();
+	void parse_while();
+	void parse_for();
+	bool parse_loop();
+	void parse_switch();
+	void parse_class(int_t kind);
+	void parse_scope();
+	void parse_lambda(bool noparam = false);
+	void parse_fun(int_t kind);
+	void parse_call();		
+	void parse_toplevel();
 
 public:
 

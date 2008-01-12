@@ -292,8 +292,8 @@ AnyPtr interned_strings(){
 	return xnew<InternedStringIter>();
 }
 
-int_t shortest_edit_distance(const StringPtr& str1, const StringPtr& str2){
-	return shortest_edit_distance(str1->data(), str1->buffer_size(), str2->data(), str2->buffer_size());
+int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
+	return edit_distance(str1->data(), str1->buffer_size(), str2->data(), str2->buffer_size());
 }
 
 ////////////////////////////////////////////////////////////////

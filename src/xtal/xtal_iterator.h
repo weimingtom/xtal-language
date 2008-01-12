@@ -29,7 +29,7 @@ void block_break(AnyPtr& target);
 
 template<int N>
 struct BlockValueHolder{
-	BlockValueHolder(const AnyPtr& tar=null):target(tar){}
+	BlockValueHolder(const AnyPtr& tar = null):target(tar){}
 	~BlockValueHolder(){ block_break(target); }
 
 	AnyPtr target;
@@ -41,7 +41,7 @@ struct BlockValueHolder{
 template<>
 struct BlockValueHolder<1>{
 	
-	BlockValueHolder(const AnyPtr& tar=null);
+	BlockValueHolder(const AnyPtr& tar = null);
 	~BlockValueHolder(){ block_break(target); }
 
 	AnyPtr target;
@@ -56,7 +56,7 @@ struct BlockValueHolder<1>{
 template<>
 struct BlockValueHolder<2>{
 	
-	BlockValueHolder(const AnyPtr& tar=null);
+	BlockValueHolder(const AnyPtr& tar = null);
 	~BlockValueHolder(){ block_break(target); }
 
 	AnyPtr target;

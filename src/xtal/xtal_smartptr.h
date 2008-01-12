@@ -593,7 +593,7 @@ public:
 	HaveName()
 		:name_(null), force_(0){}
 
-	virtual StringPtr object_name(uint_t depth = -1);
+	virtual StringPtr object_name(int_t depth = -1);
 
 	virtual int_t object_name_force();
 

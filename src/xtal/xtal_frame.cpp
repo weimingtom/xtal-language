@@ -126,7 +126,7 @@ void Frame::make_map_members(){
 	}
 }
 
-StringPtr Frame::object_name(uint_t depth){
+StringPtr Frame::object_name(int_t depth){
 	if(!name_){
 		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
 	}
@@ -211,7 +211,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 			return id;
 		}
 
-		int_t dist = shortest_edit_distance(primary_key, id);
+		int_t dist = edit_distance(primary_key, id);
 		if(dist<minv){
 			minv = dist;
 			minid = id;

@@ -129,18 +129,6 @@ public:
 	}
 
 	/**
-	* @brief valueと等しい場合に読み飛ばす
-	*/
-	bool eat(const AnyPtr& value){
-		const AnyPtr& ret = peek();
-		if(raweq(ret, value)){
-			read();
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	* @brief 一番最初の位置にあるか調べる
 	*/
 	bool bos(){
@@ -171,7 +159,7 @@ public:
 	*/
 	bool eol(){
 		const AnyPtr& ch = peek();
-		return raweq(ch, r_ch_) || raweq(ch, n_ch_) || raweq(ch, undefined);
+		return raweq(ch, r_ch_) || raweq(ch, n_ch_);
 	}
 
 	/**
@@ -189,7 +177,7 @@ public:
 	void skip_eol(){
 		const AnyPtr& ch = peek();
 		if(raweq(ch, r_ch_)){
-			if(rawne(peek(1), n_ch_)){
+			if(raweq(peek(1), n_ch_)){
 				skip(2);
 			}
 			else{
@@ -399,8 +387,8 @@ private:
 class ParseResult{
 public:
 
-	AnyPtr root(){
-		return root_;
+	AnyPtr tree(){
+		return tree_;
 	}
 
 	AnyPtr errors(){
@@ -408,36 +396,60 @@ public:
 	}
 
 private:
-	TreeNodePtr root_;
+	TreeNodePtr tree_;
 	ArrayPtr errors_;
 	friend class XegExec;
 };
-
-struct XegElem; 
-typedef SmartPtr<XegElem> XegElemPtr;
-
 
 ScannerPtr create_scanner_Stream(const StreamPtr& stream);
 ScannerPtr create_scanner_String(const StringPtr& string);
 ScannerPtr create_scanner_Iterator(const AnyPtr& iter);
 
-XegElemPtr expr(const AnyPtr& a);
-XegElemPtr before(const AnyPtr& left);
-XegElemPtr cap(const AnyPtr& left);
-XegElemPtr cap(const IDPtr& name, const AnyPtr& left);
-XegElemPtr node(const AnyPtr& left);
-XegElemPtr node(const IDPtr& name, const AnyPtr& left);
-XegElemPtr splice_node(int_t num, const AnyPtr& left);
-XegElemPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
-XegElemPtr leaf(const AnyPtr& left);
-XegElemPtr backref(const AnyPtr& n);
+AnyPtr before(const AnyPtr& elem);
 
+AnyPtr after(const AnyPtr& elem, int_t back);
+
+AnyPtr eq(const AnyPtr& elem);
+
+AnyPtr eql(const AnyPtr& elem);
+
+/**
+* @brief 後方参照
+*/
+AnyPtr back_ref(const AnyPtr& no);
+
+/**
+* @brief キャプチャ
+*/
+AnyPtr cap(const AnyPtr& elem);
+
+/**
+* @brief 名前つきキャプチャ
+*/
+AnyPtr cap(const IDPtr& name, const AnyPtr& elem);
+
+AnyPtr error(const AnyPtr& fn);
+
+AnyPtr error_fail(const AnyPtr& fn);
+
+AnyPtr node(const AnyPtr& elem);
+AnyPtr node(const IDPtr& name, const AnyPtr& elem);
+AnyPtr splice_node(int_t num, const AnyPtr& elem);
+AnyPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& elem);
+AnyPtr leaf(const AnyPtr& left);
 
 extern AnyPtr any;
 extern AnyPtr bos;
 extern AnyPtr eos;
 extern AnyPtr bol;
 extern AnyPtr eol;
+extern AnyPtr empty;
+extern AnyPtr alpha;
+extern AnyPtr degit;
+extern AnyPtr lower;
+extern AnyPtr upper;
+extern AnyPtr word;
+extern AnyPtr ascii;
 
 }}
 

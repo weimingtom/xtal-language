@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include "xtal_any.h"
-#include "xtal_cast.h"
-
 namespace xtal{
 
 class Stream : public Base{
@@ -353,6 +350,7 @@ public:
 
 	template<class T>
 	void put_t_le(const T& v){ return put_t_le(v, (T*)0); }
+
 private:
 
 	i8 get_t_be(i8*){ return get_i8(); }

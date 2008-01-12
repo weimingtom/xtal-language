@@ -80,7 +80,7 @@ void set_text_map(const MapPtr& map){
 	user_text_map_ = map;
 }
 
-void add_text_map(const MapPtr& map){
+void append_text_map(const MapPtr& map){
 	user_text_map_ = user_text_map_->cat(map);
 }
 
@@ -471,8 +471,10 @@ void initialize_text(){
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1023"), XTAL_STRING("1より長い文字列は範囲演算子に指定できません。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1024"), XTAL_STRING("0除算エラーです。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1025"), XTAL_STRING("ChRangeは閉区間である必要があります。"));
+	tm->set_at(XTAL_STRING("Xtal Runtime Error 1026"), XTAL_STRING("Xeg要素に変換できません。"));
+	tm->set_at(XTAL_STRING("Xtal Runtime Error 1027"), XTAL_STRING("反転できないXeg要素です。"));
 
-	add_text_map(tm);
+	append_text_map(tm);
 }
 
 }

@@ -16,6 +16,10 @@
 #	define XTAL_DEBUG
 #endif
 
+#ifdef XTAL_NO_EXCEPT
+#	define XTAL_NO_EXCEPTIONS
+#endif
+
 #ifdef XTAL_DEBUG
 #	define XTAL_ASSERT(expr) assert(expr)
 #else

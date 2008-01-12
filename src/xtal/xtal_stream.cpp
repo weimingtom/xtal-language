@@ -90,13 +90,20 @@ void initialize_stream(){
 	builtin()->def("MemoryStream", get_cpp_class<MemoryStream>());
 	builtin()->def("StringStream", get_cpp_class<StringStream>());
 
-	stdin_stream_ = xnew<StdioStream>(stdin);
-	stdout_stream_ = xnew<StdioStream>(stdout);
-	stderr_stream_ = xnew<StdioStream>(stderr);
+	if(stdin){
+		stdin_stream_ = xnew<StdioStream>(stdin);
+		builtin()->def("stdin", stdin_stream());
+	}
 
-	builtin()->def("stdin", stdin_stream());
-	builtin()->def("stdout", stdout_stream());
-	builtin()->def("stderr", stderr_stream());
+	if(stdout){
+		stdout_stream_ = xnew<StdioStream>(stdout);
+		builtin()->def("stdout", stdout_stream());
+	}
+
+	if(stderr){
+		stderr_stream_ = xnew<StdioStream>(stderr);
+		builtin()->def("stderr", stderr_stream());
+	}
 }
 
 StringPtr Stream::get_s(int_t length){
@@ -420,7 +427,7 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 }
 
 void InteractiveStream::seek(int_t offset, int_t whence){
-	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), "seek", null), return 0);
+	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), "seek", null), return);
 }
 
 void InteractiveStream::close(){
@@ -501,10 +508,13 @@ public:
 
 	virtual StreamPtr open(const char_t* file_name, const char_t* flags){
 #ifdef XTAL_USE_WCHAR
+		FILE* fp = _wfopen(file_name, flags);
 		return xnew<StdioStream>(_wfopen(file_name, flags));
 #else
-		return xnew<StdioStream>(std::fopen(file_name, flags));
+		FILE* fp = std::fopen(file_name, flags);
 #endif
+		if(!fp){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named("name", file_name))), return null); }
+		return xnew<StdioStream>(fp);
 	}
 
 } cstdio_file_lib;

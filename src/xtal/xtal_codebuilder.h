@@ -14,9 +14,6 @@ public:
 
 	void interactive_compile();
 
-	/**
-	* コンパイルエラーを取得する。
-	*/
 	AnyPtr errors();
 
 private:
@@ -66,6 +63,7 @@ private:
 	void compile_class(const ExprPtr& e);
 	void compile_fun(const ExprPtr& e);
 	void compile_for(const ExprPtr& e);
+	int_t compile_exprs(const ExprPtr& e);
 
 	AnyPtr do_bin(const ExprPtr& e, const IDPtr& name, bool swap = false);
 	AnyPtr do_not(const AnyPtr& e);
@@ -83,6 +81,9 @@ private:
 	int_t code_size();
 			
 	struct FunFrame{
+
+		int_t stack_count;
+		int_t max_stack_count;
 
 		int_t var_frame_count;
 		int_t fun_core_num;
@@ -168,7 +169,6 @@ private:
 		int_t pos;
 	};
 
-	void scope_chain(int_t var_frame_size);
 	LVarInfo var_find(const IDPtr& key, bool define = false, bool traceless = false, int_t number = -1);
 	void var_begin(int_t kind);
 	void var_define_stmts(const ExprPtr& stmts);
@@ -177,84 +177,33 @@ private:
 	void var_set_direct(VarFrame& vf);
 	void var_set_on_heap(int_t i=0);
 	void var_end();
-	//int_t erase_not_referenced_lvar_code();
 
 	void check_lvar_assign(const ExprPtr& e);
 	void check_lvar_assign_stmt(const AnyPtr& p);
 
 	void scope_begin();
 	void scope_end();
-	
+	void scope_chain(int_t var_frame_size);
+
+	void add_stack_count(int_t i){
+		FunFrame& f = fun_frames_.top();
+		f.stack_count += i;
+		if(f.stack_count>f.max_stack_count){
+			f.max_stack_count = f.stack_count;
+		}
+	}
+
 	int_t lineno(){ return linenos_.top(); }
 
 	int_t class_core_num(){
 		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
 	}
 
-	int_t register_identifier(const IDPtr& v){
-		if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
-		result_->identifier_table_->push_back(v);
-		identifier_map_->set_at(v, result_->identifier_table_->size()-1);
-		return result_->identifier_table_->size()-1;
-	}
-
-	int_t register_value(const AnyPtr& v){
-		if(const AnyPtr& pos = value_map_->at(v)){ return pos->to_i(); }
-		result_->value_table_->push_back(v);
-		value_map_->set_at(v, result_->value_table_->size()-1);
-		return result_->value_table_->size()-1;
-	}
-
-	int_t append_identifier(const IDPtr& identifier){
-		result_->identifier_table_->push_back(identifier);
-		return result_->identifier_table_->size()-1;
-	}
-
-	int_t append_value(const AnyPtr& v){
-		result_->value_table_->push_back(v);
-		return result_->value_table_->size()-1;
-	}
-
-	/*
-	void erase_dead_code(int_t pos, int_t size){
-		std::sort(addresses_.begin(), addresses_.end());
-		for(int_t i=0, sz=addresses_.size(); i<sz; ++i){
-			int_t address = addresses_[i];
-			inst_address_t& ref = *(inst_address_t*)&result_->code_[address];
-
-			// アドレスが書いてある所が削除対象
-			if(pos<=address && pos+size>address){
-				// アドレスリストから削除する
-				addresses_.erase(i);
-			}
-			// 相対アドレスを縮める処理
-			else if(ref<0){
-				if(address > pos+size && address+ref < pos+size){
-					if(address+ref > pos){
-						ref = ref + (size - (address+ref - pos));
-					}
-					else{
-						ref = ref + (size);
-					}
-				}
-			}
-			else{
-				if(address < pos+size && address+ref > pos+size){
-					if(address > pos){
-						ref = ref - (size - (address - pos));
-					}
-					else{
-						ref = ref - (size);
-					}
-				}
-			}
-
-			if(result_->)
-		}
-
-		result_->code_.erase(result_->code_.begin()+pos, result_->code_.begin()+pos+size);
-	}
-	*/
+	int_t register_identifier_or_compile_expr(const AnyPtr& var);
+	int_t register_identifier(const IDPtr& v);
+	int_t register_value(const AnyPtr& v);
+	int_t append_identifier(const IDPtr& identifier);
+	int_t append_value(const AnyPtr& v);
 
 private:
 	MapPtr value_map_;
@@ -276,9 +225,8 @@ private:
 
 	PODStack<int_t> label_names_;
 	PODStack<int_t> linenos_;
-	//PODStack<int_t> addresses_;
 
-	ExprMaker em;
+	ExprBuilder eb_;
 
 private:
 	CodeBuilder(const CodeBuilder&);

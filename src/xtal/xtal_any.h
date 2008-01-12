@@ -279,7 +279,7 @@ public:
 	* @brief このオブジェクトに付けられた名前を返す。
 	*
 	*/
-	StringPtr object_name(uint_t depth = -1) const;
+	StringPtr object_name(int_t depth = -1) const;
 
 	/**
 	* @brief klassクラスのインスタンスか調べる。

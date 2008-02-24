@@ -74,7 +74,7 @@ namespace{
 	}
 
 	bool op_in_Float_FloatRange(float_t v, const FloatRangePtr& range){
-		return (range->left_closed() ? (range->left() <= v) : (range->left() < v)) && (range->right_closed() ? (v <= range->right()) : (v < range->right()));
+		return (range->is_left_closed() ? (range->left() <= v) : (range->left() < v)) && (range->is_right_closed() ? (v <= range->right()) : (v < range->right()));
 	}
 
 	AnyPtr to_mv_Undefined(const AnyPtr& v){
@@ -107,8 +107,6 @@ AnyPtr IntRange::each(){
 	return xnew<IntRangeIter>(from_this(this));
 }
 
-
-
 void initialize_basic_type(){
 
 	builtin()->def("String", new_cpp_class<String>());
@@ -128,7 +126,6 @@ void initialize_basic_type(){
 		p->method("to_mv", &to_mv_Undefined);
 	}
 	
-
 	{
 		ClassPtr p = new_cpp_class<Int>("Int");	
 		p->method("to_i", &Int_to_i);
@@ -158,26 +155,27 @@ void initialize_basic_type(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<IntRange>("IntRange");
+		ClassPtr p = new_cpp_class<Range>("Range");
 		p->inherit(Iterable());
+		p->def("new", ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
+		p->method("left", &Range::left);
+		p->method("right", &Range::right);
+		p->method("kind", &Range::kind);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<IntRange>("IntRange");
+		p->inherit(get_cpp_class<Range>());
 		p->def("new", ctor<IntRange, int_t, int_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
 		p->method("begin", &IntRange::begin);
 		p->method("end", &IntRange::end);
-		p->method("left", &IntRange::left);
-		p->method("right", &IntRange::right);
-		p->method("left_closed", &IntRange::left_closed);
-		p->method("right_closed", &IntRange::right_closed);
 		p->method("each", &IntRange::each);
 	}
 
 	{
 		ClassPtr p = new_cpp_class<FloatRange>("FloatRange");
-		p->inherit(Iterable());
+		p->inherit(get_cpp_class<Range>());
 		p->def("new", ctor<FloatRange, float_t, float_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
-		p->method("left", &FloatRange::left);
-		p->method("right", &FloatRange::right);
-		p->method("left_closed", &FloatRange::left_closed);
-		p->method("right_closed", &FloatRange::right_closed);
 	}
 
 }

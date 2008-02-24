@@ -71,7 +71,7 @@ struct arg_getter{
 
 	static typename CastResult<T>::type 
 	cast(const Innocence& p){
-		return nocheck_cast<T>(ap(p));
+		return unchecked_cast<T>(ap(p));
 	}
 
 	static uint_t check(const Innocence& p){
@@ -89,7 +89,7 @@ struct arg_this_getter{
 
 	static typename CastResult<T>::type 
 	cast(const Innocence& p){
-		return nocheck_cast<T>(ap(p));
+		return unchecked_cast<T>(ap(p));
 	}
 
 	static uint_t check(const Innocence& p){

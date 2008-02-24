@@ -5,6 +5,15 @@
 
 using namespace xtal;
 
+/*
+swichにdefaultがあるとおかしくなるバグを修正
+xeg追加
+連想配列リテラルを記述するとコンパイルできなくなるバグ修正
+String::splitに""を渡すと一文字づつとなる仕様を削除。代わりにString::eachを使う
+
+Xfor_castマクロのバグを修正
+*/
+
 static void print_usage(){
 	fprintf(stderr,
 		"usage: xtal [options] [script [args]].\n"
@@ -445,7 +454,7 @@ void sol(){
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "japanese");
 
 	using namespace xtal::xeg;
 	using namespace std;
@@ -465,25 +474,25 @@ int main2(int argc, char** argv){
 		
 		//load("start.xtal");
 
-		test_xeg();
+		//test_xeg();
 		/**
 
 		*/
 
+		ArrayPtr a = xnew<Array>();
+		Xfor(v, a){
+			printf("a\n");
+		}
 
-
+		AnyPtr(XTAL_STRING("こんにちは"))->p();
 
 AnyPtr ret = Xsrc
 ((
 
+ [10:20].p;
+	"apepeppepe".each[].p;//.split("pp")[].p;
 
-));
-int n = edit_distance("len", 3, "lem", 3);
-
-		MemoryStreamPtr mm = xnew<MemoryStream>();
-		mm->serialize(ret);
-		mm->seek(0);
-		mm->deserialize()();
+))();
 
 		//handle_argv(argv);
 		
@@ -530,17 +539,36 @@ int c;
 
 		//*
 
-
+#ifdef XTAL_USE_WCHAR
+		load("../../test-utf16le/test_empty.xtal");
+		load("../../test-utf16le/test_multiple_values.xtal");
+		load("../../test-utf16le/test_array.xtal");
+		load("../../test-utf16le/test_float.xtal");
+		load("../../test-utf16le/test_class.xtal");
+		load("../../test-utf16le/test_except.xtal");
+		load("../../test-utf16le/test_fiber.xtal");
+		load("../../test-utf16le/test_fun.xtal");
+		load("../../test-utf16le/test_iter.xtal");
+		load("../../test-utf16le/test_fib.xtal");
+		load("../../test-utf16le/test_calc.xtal");
+		load("../../test-utf16le/test_for.xtal");
+		load("../../test-utf16le/test_if.xtal");
+		load("../../test-utf16le/test_nested_loops.xtal");
+		load("../../test-utf16le/test_assign.xtal");
+		load("../../test-utf16le/test_op_assign.xtal");
+		load("../../test-utf16le/test_inc.xtal");
+		load("../../test-utf16le/test_toplevel.xtal");
+		load("../../test-utf16le/test_serialize.xtal");
+#else
 		load("../../test/test_empty.xtal");
 		load("../../test/test_multiple_values.xtal");
 		load("../../test/test_array.xtal");
-		//compile_file("../../test/test_float.xtal")->inspect()->p();
+		load("../../test/test_map.xtal");
 		load("../../test/test_float.xtal");
 		load("../../test/test_class.xtal");
 		load("../../test/test_except.xtal");
 		load("../../test/test_fiber.xtal");
 		load("../../test/test_fun.xtal");
-		//compile_file("../../test/test_iter.xtal")->inspect()->p();
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
 		load("../../test/test_calc.xtal");
@@ -552,12 +580,14 @@ int c;
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
 		load("../../test/test_serialize.xtal");
+#endif
 		
 		//*/
 #endif
 
 	}catch(AnyPtr e){
-		fprintf(stderr, "%s\n", e->to_s()->c_str());
+		stderr_stream()->put_s(e->to_s());
+		stderr_stream()->put_s("\n");
 	}
 
 	vmachine()->print_info();

@@ -38,7 +38,8 @@ void initialize_stream(){
 	{
 		ClassPtr p = new_cpp_class<Stream>("Stream");
 		
-		p->method("get_s", &Stream::get_s)->param(Named("length", -1));
+		p->method("get_s", &Stream::get_s)->param("length");
+		p->method("get_s_all", &Stream::get_s_all);
 		p->method("put_s", &Stream::put_s);
 
 		p->method("print", &Stream::print);
@@ -78,6 +79,7 @@ void initialize_stream(){
 		ClassPtr p = new_cpp_class<StringStream>("StringStream");
 		p->inherit(get_cpp_class<Stream>());
 		p->def("new", ctor<StringStream, const StringPtr&>());
+		p->method("to_s", &StringStream::to_s);
 	}
 
 	{
@@ -106,40 +108,45 @@ void initialize_stream(){
 	}
 }
 
-StringPtr Stream::get_s(int_t length){
+StringPtr Stream::get_s(uint_t length){
 	if(eos())
 		return "";
 
 	if(length==1){
+		char_t ch;
 		ChMaker chm;
 		while(!chm.is_completed()){
-			chm.add(get_ch_code_be());
+			read(&ch, sizeof(char_t));
+			chm.add(ch);
 		}
 		return chm.to_s();
 	}
 
-	if(length<0){
-		MemoryStreamPtr ms = xnew<MemoryStream>();
-		while(!eos()){
-			ms->put_s(get_s(1));
-		}
-		return ms->to_s();
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	for(uint_t i=0; i<length; ++i){
+		ms->put_s(get_s(1));
 	}
+	return ms->to_s();
+}
+
+StringPtr Stream::get_s_all(){
+	if(eos())
+		return "";
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
-	for(int_t i=0; i<length; ++i){
+	while(!eos()){
 		ms->put_s(get_s(1));
 	}
 	return ms->to_s();
 }
 
 uint_t Stream::print(const StringPtr& str){
-	return write(str->data(), str->buffer_size());
+	return write(str->data(), str->data_size()*sizeof(char_t));
 }
 
 void Stream::println(const StringPtr& str){
-	write(str->data(), str->buffer_size());
-	write("\n", 1);
+	write(str->data(), str->data_size()*sizeof(char_t));
+	write(XTAL_STRING("\n"), sizeof(char_t)*1);
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
@@ -249,40 +256,45 @@ void DataStream::seek(int_t offset, int_t whence){
 	}
 }
 
-StringPtr DataStream::get_s(int_t length){
+StringPtr DataStream::get_s(uint_t length){
 	if(pos_ >= size_)
 		return "";
 
-	char_t* data = (char_t*)data_;
-
 	if(length==1){
+		char_t ch;
 		ChMaker chm;
 		while(!chm.is_completed()){
-			if(pos_<size_){ chm.add(data[pos_++]); } 
-			else{ break; }
+			read(&ch, sizeof(char_t));
+			chm.add(ch);
 		}
 		return chm.to_s();
 	}
 
-	if(length<0){
-		StringPtr ret = xnew<String>((char_t*)&data[pos_], size_ - pos_);
-		pos_ = size_;
-		return ret;
-	}
+	uint_t saved = pos_;
 
-	int_t slen = 0;
-	int_t saved = pos_;
+	uint_t slen = 0;
+	char_t ch;
 	ChMaker chm;
-	while(slen<length && pos_<size_){
+	while(slen<length){
 		chm.clear();
 		while(!chm.is_completed()){
-			if(slen<length && pos_<size_){ chm.add(data[pos_++]); } 
-			else{ break; }
+			read(&ch, sizeof(char_t));
+			chm.add(ch);
 		}
 		slen += 1;
 	}
 
-	return xnew<String>(&data[saved], pos_ - saved);	
+	return xnew<String>((char_t*)&data_[saved], (pos_ - saved)/sizeof(char_t));	
+}
+
+StringPtr DataStream::get_s_all(){
+	if(pos_ >= size_)
+		return "";
+
+	char_t* data = (char_t*)data_;
+	StringPtr ret = xnew<String>((char_t*)&data[pos_], size_ - pos_);
+	pos_ = size_;
+	return ret;
 }
 
 bool DataStream::eos(){
@@ -296,11 +308,11 @@ MemoryStream::MemoryStream(){
 	capa_ = 0;
 }
 
-MemoryStream::MemoryStream(const void* data, uint_t buffer_size){
+MemoryStream::MemoryStream(const void* data, uint_t data_size){
 	pos_ = 0;
 	capa_ = 0;
-	resize(buffer_size);
-	std::memcpy((void*)data_, data, buffer_size);
+	resize(data_size);
+	std::memcpy((void*)data_, data, data_size);
 }
 
 MemoryStream::~MemoryStream(){
@@ -353,7 +365,7 @@ uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
 }
 
 StringPtr MemoryStream::to_s(){
-	return xnew<String>((char_t*)data_, size_);
+	return xnew<String>((char_t*)data_, size_/sizeof(char_t));
 }
 
 void MemoryStream::clear(){
@@ -380,7 +392,7 @@ void MemoryStream::resize(uint_t size){
 StringStream::StringStream(const StringPtr& str)
 :str_(str ? str : StringPtr("")){
 	data_ = (u8*)str_->data();
-	size_ = str_->buffer_size()*sizeof(char_t);
+	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
 }
 
@@ -461,7 +473,13 @@ uint_t StdioStream::write(const void* p, uint_t size){
 	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	XTAL_UNLOCK{
-		uint_t ret = fwrite(p, 1, size, fp_);
+#ifdef XTAL_USE_WCHAR
+		char_t buf[256];
+		XTAL_SPRINTF(buf, 256, L"%%.%ds", size/sizeof(char_t));
+		uint_t ret = fwprintf(fp_, buf, p);
+#else
+		uint_t ret = fwrite(p, size, 1, fp_);
+#endif
 		fflush(fp_);
 		return ret;
 	}
@@ -509,7 +527,6 @@ public:
 	virtual StreamPtr open(const char_t* file_name, const char_t* flags){
 #ifdef XTAL_USE_WCHAR
 		FILE* fp = _wfopen(file_name, flags);
-		return xnew<StdioStream>(_wfopen(file_name, flags));
 #else
 		FILE* fp = std::fopen(file_name, flags);
 #endif

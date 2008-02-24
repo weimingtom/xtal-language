@@ -97,7 +97,7 @@ public:
 	*
 	* 文字列の長さではなく、バイナリとして見た場合のサイズを返す。
 	*/
-	uint_t buffer_size();
+	uint_t data_size();
 
 	/**
 	* @brief 文字列の長さを返す。
@@ -185,7 +185,7 @@ public:
 public:
 
 	const char_t* c_str();
-	uint_t buffer_size(){ return buffer_size_; }
+	uint_t data_size(){ return data_size_; }
 	uint_t length(){ return length_; }
 	bool is_interned(){ return (flags_ & INTERNED)!=0; }
 	uint_t hashcode();
@@ -220,7 +220,7 @@ private:
 		Rope rope_;
 	};
 
-	uint_t buffer_size_;
+	uint_t data_size_;
 	uint_t length_;
 };
 
@@ -296,29 +296,19 @@ inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 AnyPtr interned_strings();
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
 
-class ChRange : public Base{
+class ChRange : public Range{
 public:
 
 	ChRange(const StringPtr& left, const StringPtr& right)
-		:left_(left), right_(right){}
+		:Range(left, right, CLOSED){}
 
 public:
 
-	const StringPtr& left(){ return left_; }
+	const StringPtr& left(){ return static_ptr_cast<String>(left_); }
 
-	const StringPtr& right(){ return right_; }
+	const StringPtr& right(){ return static_ptr_cast<String>(right_); }
 
 	AnyPtr each();
-
-private:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & left_ & right_;
-	}
-
-	StringPtr left_;
-	StringPtr right_;
 };
 
 

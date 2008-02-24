@@ -421,6 +421,7 @@ void CodeBuilder::put_instance_variable_code(const IDPtr& var){
 
 int_t CodeBuilder::reserve_label(){
 	ff().labels.resize(fun_frames_.top().labels.size()+1);
+	ff().labels[ff().labels.size()-1].pos = -1;
 	return ff().labels.size()-1;
 }
 
@@ -439,10 +440,12 @@ void CodeBuilder::set_jump(int_t offset, int_t labelno){
 void CodeBuilder::process_labels(){
 	for(size_t i = 0; i<ff().labels.size(); ++i){
 		FunFrame::Label &l = ff().labels[i];
+		XTAL_ASSERT(l.pos!=-1);
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.pos;
+			//XTAL_ASSERT(l.pos - f.pos > -1000);
 		}
 	}
 	ff().labels.clear();
@@ -1255,9 +1258,6 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
 	put_inst(InstMakeFun(fun_core_table_number, 0));
 
-	if(debug::is_enabled()){
-		put_inst(InstBreakPoint(BREAKPOINT_CALL));
-	}
 
 	// デフォルト値を持つ引数を処理する
 	{
@@ -1306,9 +1306,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	XTAL_ASSERT(ff().stack_count==0);
 	
 	break_off(ff().var_frame_count+1);
-	if(debug::is_enabled()){
-		put_inst(InstBreakPoint(BREAKPOINT_RETURN));
-	}
+
 	put_inst(InstReturn(0));
 	set_label(fun_end_label);
 
@@ -1530,7 +1528,7 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MAP){
 			put_inst(InstMakeMap());
-			Xfor_cast(const ArrayPtr& v, e->map_values()){
+			Xfor_as(const ArrayPtr& v, e->map_values()){
 				compile_expr(v->at(0));
 				compile_expr(v->at(1));
 				put_inst(InstMapInsert());				
@@ -1814,10 +1812,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	if(e->lineno()!=0){
 		linenos_.push(e->lineno());
 		result_->set_lineno_info(e->lineno());
-	}
-
-	if(debug::is_enabled() && linenos_[1]!=e->lineno()){
-		put_inst(InstBreakPoint(BREAKPOINT_LINE));
+		if(linenos_[1]!=e->lineno()){
+			put_inst(InstNop());
+		}
 	}
 
 	switch(e->tag()){
@@ -1918,10 +1915,6 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			compile_exprs(e->return_exprs());
 			
 			break_off(ff().var_frame_count+1);
-
-			if(debug::is_enabled()){
-				put_inst(InstBreakPoint(BREAKPOINT_RETURN));
-			}
 
 			put_inst(InstReturn(exprs_size));
 			if(exprs_size>=256){
@@ -2267,6 +2260,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				set_jump(InstGoto::OFFSET_address, label_end);
 				put_inst(InstGoto());
 			}
+
+			set_label(label_default);
 
 			compile_stmt(default_case);
 			set_jump(InstGoto::OFFSET_address, label_end);

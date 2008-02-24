@@ -69,16 +69,16 @@ void set_return_hook(const AnyPtr& hook);
 /**
 * @brief set_line_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
 */
-AnyPtr line_hook();
+const AnyPtr& line_hook();
 
 /**
 * @brief set_call_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
 */
-AnyPtr call_hook();
+const AnyPtr& call_hook();
 
 /**
 * @brief set_return_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
 */
-AnyPtr return_hook();
+const AnyPtr& return_hook();
 
 }}

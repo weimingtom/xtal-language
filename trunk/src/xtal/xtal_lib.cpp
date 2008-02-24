@@ -16,7 +16,7 @@ CodePtr compile_file(const StringPtr& file_name){
 	}
 	fs->close();
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(file_name), cb.errors()->to_a()), return null);
+	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(Named("name", file_name)), cb.errors()->to_a()), return null);
 }
 
 CodePtr compile(const StringPtr& source){
@@ -266,7 +266,7 @@ Iterator::unique: method(pred: null){
 		return fiber{
 			prev: undefined;
 			this{
-				if(pred(it, prev)){
+				if(!pred(it, prev)){
 					yield it;
 					prev = it;
 				}
@@ -551,56 +551,56 @@ builtin::ClassicIterator: class{
 Iterator::classic: method ClassicIterator(this);
 
 Stream::scan: method(pattern) fiber{
-	scanner: xeg::create_scanner(this);
-	for(it: scanner.match(pattern); it; it=scanner.match(pattern)){
-		yield it;
+	exec: xeg::Executor(this);
+	while(exec.match(pattern)){
+		yield exec;
 	}
 }
 
 Stream::split: method(pattern) fiber{
-	scanner: xeg::create_scanner(this);
-	if(prev: scanner.match(pattern)){
-		for(it: prev; it; it=scanner.match(pattern)){
-			yield it.prefix;
-			prev = it;
+	exec: xeg::Executor(this);
+	if(exec.match(pattern)){
+		yield exec.prefix;
+		while(exec.match(pattern)){
+			yield exec.prefix;
 		}
-		yield prev.suffix;
+		yield exec.suffix;
+	}
+	else{
+		yield this.to_s;
 	}
 }
 
-String::scan: method(pattern) fiber{
-	scanner: xeg::create_scanner(this);
-	for(it: scanner.match(pattern); it; it=scanner.match(pattern)){
-		yield it;
-	}
+String::scan: method(pattern){
+	return StringStream(this).scan(pattern);
 }
 
-String::split: method(pattern) fiber{
-	scanner: xeg::create_scanner(this);
-	if(prev: scanner.match(pattern)){
-		for(it: prev; it; it=scanner.match(pattern)){
-			yield it.prefix;
-			prev = it;
-		}
-		yield prev.suffix;
-	}
+String::split: method(pattern){
+	return StringStream(this).split(pattern);
 }
 
 String::gsub: method(pattern, fn){
 	mm: MemoryStream();
-	scanner: xeg::create_scanner(this);
-	if(prev: scanner.match(pattern)){
-		for(it: prev; it; it=scanner.match(pattern)){
-			prefix: it.prefix;
+	exec: xeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		mm.put_s(prefix);
+		ordered: [exec[0]];
+		ordered.concat(exec.captures);
+		named: exec.named_captures[:];
+		named["prefix"] = prefix;
+		mm.put_s(fn(...Arguments(ordered, named)));
+
+		while(exec.match(pattern)){
+			prefix: exec.prefix;
 			mm.put_s(prefix);
-			ordered: [it[0]];
-			ordered.concat(it.captures);
-			named: it.named_captures[:];
+			ordered: [exec[0]];
+			ordered.concat(exec.captures);
+			named: exec.named_captures[:];
 			named["prefix"] = prefix;
 			mm.put_s(fn(...Arguments(ordered, named)));
-			prev = it;
 		}
-		mm.put_s(prev.suffix);
+		mm.put_s(exec.suffix);
 		return mm.to_s;
 	}
 	else{
@@ -610,18 +610,18 @@ String::gsub: method(pattern, fn){
 
 String::sub: method(pattern, fn){
 	mm: MemoryStream();
-	scanner: xeg::create_scanner(this);
-	if(it: scanner.match(pattern)){
-		prefix: it.prefix;
-		suffix: it.suffix;
+	exec: xeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		suffix: exec.suffix;
 		mm.put_s(prefix);
-		ordered: [it[0]];
-		ordered.concat(it.captures);
-		named: it.named_captures[:];
+		ordered: [exec[0]];
+		ordered.concat(exec.captures);
+		named: exec.named_captures[:];
 		named["prefix"] = prefix;
 		named["suffix"] = suffix;
 		mm.put_s(fn(...Arguments(ordered, named)));
-		mm.put_s(it.suffix);
+		mm.put_s(exec.suffix);
 		return mm.to_s;
 	}
 	else{
@@ -722,9 +722,9 @@ op_pos: method{ return +this; }
 Int::op_pos: op_pos;
 Float::op_pos: op_pos;
 
-//op_neg: method{ return -this; }
-//Int::op_neg: op_neg;
-//Float::op_neg: op_neg;
+op_neg: method{ return -this; }
+Int::op_neg: op_neg;
+Float::op_neg: op_neg;
 
 op_com: method{ return ~this; }
 Int::op_com: op_com;

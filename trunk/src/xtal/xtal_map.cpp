@@ -89,6 +89,7 @@ void initialize_map(){
 		ClassPtr p = new_cpp_class<Set>("Set");
 		p->inherit(get_cpp_class<Map>());
 		
+		p->def("new", ctor<Set>());
 		p->method("each", &Set::each);
 	}
 

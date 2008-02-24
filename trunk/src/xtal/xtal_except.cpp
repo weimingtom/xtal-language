@@ -82,7 +82,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	else{
 		if(secondary_key){
 			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-				Named("object", Xf("%s::%s#s")(target->object_name(), primary_key, secondary_key))
+				Named("object", Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key))
 			));
 		}
 		else{

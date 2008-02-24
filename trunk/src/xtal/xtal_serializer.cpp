@@ -92,11 +92,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 		else if(StringPtr a = as<StringPtr>(v)){
 			stream_->put_u8(TSTRING);
-			uint_t sz = a->buffer_size();
+			uint_t sz = a->data_size();
 			const char_t* str = a->data();
 			stream_->put_i32be(sz);
 			for(size_t i=0; i<sz; ++i){
-				stream_->put_u8(str[i]);
+				stream_->put_ch_code_be(str[i]);
 			}
 			return;
 		}
@@ -234,10 +234,10 @@ AnyPtr Serializer::inner_deserialize(){
 			int_t sz = stream_->get_u32be();
 			char_t* p = (char_t*)user_malloc(sizeof(char_t)*(sz+1));
 			for(int_t i = 0; i<sz; ++i){
-				p[i] = (char_t)stream_->get_u8();
+				p[i] = (char_t)stream_->get_ch_code_be();
 			}
 			p[sz] = 0;				
-			StringPtr ret = xnew<ID>(p, sz);
+			IDPtr ret = xnew<ID>(p, sz);
 			user_free(p);
 			append_value(ret);
 			return ret;

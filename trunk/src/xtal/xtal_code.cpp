@@ -78,7 +78,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	for(; pc < data() + end;){switch(*pc){
 		XTAL_NODEFAULT;
 //{CODE_INSPECT{{
-		XTAL_CASE(InstUndefined::NUMBER){ temp = ((InstUndefined*)pc)->inspect(code); sz = InstUndefined::ISIZE; }
+		XTAL_CASE(InstNop::NUMBER){ temp = ((InstNop*)pc)->inspect(code); sz = InstNop::ISIZE; }
 		XTAL_CASE(InstPushNull::NUMBER){ temp = ((InstPushNull*)pc)->inspect(code); sz = InstPushNull::ISIZE; }
 		XTAL_CASE(InstPushUndefined::NUMBER){ temp = ((InstPushUndefined*)pc)->inspect(code); sz = InstPushUndefined::ISIZE; }
 		XTAL_CASE(InstPushTrue::NUMBER){ temp = ((InstPushTrue*)pc)->inspect(code); sz = InstPushTrue::ISIZE; }
@@ -221,7 +221,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstThrowUnsupportedError::NUMBER){ temp = ((InstThrowUnsupportedError*)pc)->inspect(code); sz = InstThrowUnsupportedError::ISIZE; }
 		XTAL_CASE(InstThrowUndefined::NUMBER){ temp = ((InstThrowUndefined*)pc)->inspect(code); sz = InstThrowUndefined::ISIZE; }
 		XTAL_CASE(InstAssert::NUMBER){ temp = ((InstAssert*)pc)->inspect(code); sz = InstAssert::ISIZE; }
-		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(code); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
 	} ms->put_s(Xf("%04d:%s\n")((int_t)(pc-data()), temp)->to_s()); pc += sz; }

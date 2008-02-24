@@ -44,7 +44,7 @@ bool CastHelper<const IDPtr*>::can_cast(const AnyPtr& a){
 	return as(a)!=0;
 }
 
-const IDPtr* CastHelper<const IDPtr*>::nocheck_cast(const AnyPtr& a){ 
+const IDPtr* CastHelper<const IDPtr*>::unchecked_cast(const AnyPtr& a){ 
 	return (const IDPtr*)&a;
 }
 
@@ -68,7 +68,7 @@ bool CastHelper<const char_t*>::can_cast(const AnyPtr& a){
 	return as(a)!=0;
 }
 
-const char_t* CastHelper<const char_t*>::nocheck_cast(const AnyPtr& a){ 
+const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 
 	return static_ptr_cast<String>(a)->c_str();
 }
 
@@ -101,7 +101,7 @@ bool CastHelper<int_t>::can_cast(const AnyPtr& a){
 	return false;
 }
 
-int_t CastHelper<int_t>::nocheck_cast(const AnyPtr& a){
+int_t CastHelper<int_t>::unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
@@ -139,7 +139,7 @@ bool CastHelper<float_t>::can_cast(const AnyPtr& a){
 	return false;
 }
 
-float_t CastHelper<float_t>::nocheck_cast(const AnyPtr& a){
+float_t CastHelper<float_t>::unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }

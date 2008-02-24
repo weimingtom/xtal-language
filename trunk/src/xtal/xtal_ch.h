@@ -25,7 +25,7 @@ int_t ch_len2(const char_t* str);
 *
 * —á‚¦‚Î a ‚ğ“n‚µ‚½ê‡Ab ‚ª•Ô‚é
 */
-StringPtr ch_inc(const char_t* data, int_t buffer_size);
+StringPtr ch_inc(const char_t* data, int_t data_size);
 
 /**
 * @brief •¶š‚Ì‘å¬”»’è
@@ -78,18 +78,20 @@ void set_code_sjis();
 void set_code_euc();
 void set_code_utf8();
 
+void set_code_utf16();
+void set_code_utf32();
+
 class CodeLib{
 public:
 	virtual ~CodeLib(){}
 	virtual void initialize(){}
 	virtual int_t ch_len(char_t lead) = 0;
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual StringPtr ch_inc(const char_t* data, int_t buffer_size);
+	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
 	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
 };
 
 void set_code(CodeLib& lib);
-
 
 struct ChMaker{
 

@@ -545,7 +545,7 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 #define XTAL_VM_SWITCH switch(*pc)
 #define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #define XTAL_VM_CONTINUE(x) pc = (x); goto begin
-#define XTAL_VM_EXCEPT(e) except_[0] = e; goto except_catch
+#define XTAL_VM_EXCEPT(e) set_except_0(e); goto except_catch
 #define XTAL_VM_RETURN return
 
 #ifdef XTAL_NO_EXCEPTIONS
@@ -559,7 +559,12 @@ void VMachine::execute_inner(const inst_t* start){
 	const inst_t* pc = start;
 
 	int_t stack_size = stack_.size() - ff().args_stack_size();
+
+	XTAL_ASSERT(stack_size>=0);
+
 	int_t fun_frames_size = fun_frames_.size();
+
+	debug_ = debug::is_enabled();
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
 retry:
@@ -572,7 +577,10 @@ XTAL_VM_CHECK_EXCEPT;
 XTAL_VM_SWITCH{
 
 //{OPS{{
-	XTAL_VM_CASE_FIRST(Undefined){ // 2
+	XTAL_VM_CASE_FIRST(Nop){ // 2
+		if(debug_ && debug::is_enabled()){
+			debug_hook(pc, BREAKPOINT_LINE);
+		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -802,6 +810,10 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Return){ // 3
+		if(debug_ && debug::is_enabled()){
+			debug_hook(pc, BREAKPOINT_RETURN);
+		}
+
 		if(ff().need_result_count!=inst.results){
 			adjust_result(inst.results); 
 		}
@@ -817,7 +829,7 @@ XTAL_VM_SWITCH{
 		else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
-				except_[0] = builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012"));
+				set_except_0(builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012")));
 			}
 			XTAL_VM_EXCEPT(except_[0]);
 		}
@@ -1123,6 +1135,8 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(PushGoto){ // 3
+		//printf("-----------------------\n%d\n", (int_t)((pc+inst.address)-code()->data()));
+		//XTAL_ASSERT((int_t)((pc+inst.address)-code()->data())>=0);
 		push(Innocence((int_t)((pc+inst.address)-code()->data()))); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -1308,6 +1322,8 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(At){ // 7
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp3_ = Xid(op_at);
+			ff().temp2_ = null;
 			Innocence key = pop_and_save2();
 			Innocence target = pop_and_save1();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(key));
@@ -1319,6 +1335,8 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(SetAt){ XTAL_VM_CONTINUE(FunSetAt(pc)); /*
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp3_ = Xid(op_set_at);
+			ff().temp2_ = null;
 			Innocence key = pop_and_save2();
 			Innocence target = pop_and_save1();
 			Innocence value = pop();
@@ -1866,10 +1884,10 @@ XTAL_VM_SWITCH{
 			}
 
 			if(!except->is(builtin()->member("Exception"))){
-				except_[0] = builtin()->member("RuntimeError")(except);
+				set_except_0(builtin()->member("RuntimeError")(except));
 			}
 			else{
-				except_[0] = except;
+				set_except_0(except);
 			}
 		}
 		XTAL_VM_EXCEPT(except_[0]);
@@ -1878,10 +1896,10 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			if(ap(prev_ff().temp2_)){
-				except_[0] = unsupported_error(ap(prev_ff().temp1_)->get_class(), isp(prev_ff().temp3_), ap(prev_ff().temp2_));
+				set_except_0(unsupported_error(ap(prev_ff().temp1_)->get_class(), isp(prev_ff().temp3_), ap(prev_ff().temp2_)));
 			}
 			else{
-				except_[0] = unsupported_error(ap(prev_ff().temp1_)->get_class(), isp(prev_ff().temp3_), null);
+				set_except_0(unsupported_error(ap(prev_ff().temp1_)->get_class(), isp(prev_ff().temp3_), null));
 			}
 		}
 		XTAL_VM_EXCEPT(except_[0]);
@@ -1899,7 +1917,7 @@ XTAL_VM_SWITCH{
 				failure = true;
 				AnyPtr expr_string = get(1) ? get(1) : AnyPtr("");
 				AnyPtr message = get() ? get() : AnyPtr("");
-				except_[0] = builtin()->member("AssertionFailed")(message, expr_string);
+				set_except_0(builtin()->member("AssertionFailed")(message, expr_string));
 			}
 			downsize(3);
 		}
@@ -1910,49 +1928,6 @@ XTAL_VM_SWITCH{
 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
-
-	XTAL_VM_CASE(BreakPoint){ XTAL_VM_CONTINUE(FunBreakPoint(pc)); /*
-		if(debug::is_enabled()){
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				int_t kind = inst.type;
-				
-				if(!debug_info_) debug_info_ = xnew<debug::Info>();
-				debug_info_->set_kind(kind);
-				debug_info_->set_line(code()->compliant_lineno(pc));
-				debug_info_->set_file_name(code()->source_file_name());
-				debug_info_->set_fun_name(fun()->object_name());
-				debug_info_->set_local_variables(ff().outer());
-
-				struct guard{
-					guard(){ debug::disable(); }
-					~guard(){ debug::enable(); }
-				} g;
-			
-				switch(kind){
-					XTAL_NODEFAULT;
-					
-					XTAL_CASE(BREAKPOINT_LINE){
-						if(AnyPtr hook = debug::line_hook()){
-							hook(debug_info_);
-						}
-					}
-
-					XTAL_CASE(BREAKPOINT_CALL){
-						if(AnyPtr hook = debug::call_hook()){
-							hook(debug_info_);
-						}				
-					}
-
-					XTAL_CASE(BREAKPOINT_RETURN){
-						if(AnyPtr hook = debug::return_hook()){
-							hook(debug_info_);
-						}				
-					}
-				}
-			}
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}*/ }
 
 	XTAL_VM_CASE(MAX){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1965,7 +1940,7 @@ XTAL_VM_SWITCH{
 
 // —áŠO‚ª“Š‚°‚ç‚ê‚½‚ç‚±‚±‚É“ž’B‚·‚é
 except_catch:
-	except_[0] = append_backtrace(pc, ap(except_[0]));
+	set_except_0(append_backtrace(pc, ap(except_[0])));
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
 		goto begin;
@@ -1974,7 +1949,7 @@ except_catch:
 
 }
 XTAL_CATCH(e){
-	except_[0] = append_backtrace(pc, e);
+	set_except_0(append_backtrace(pc, e));
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
 		goto retry;
@@ -1983,7 +1958,7 @@ XTAL_CATCH(e){
 }
 #ifndef XTAL_NO_EXCEPTIONS
 catch(...){
-	except_[0] = null;
+	set_except_0(null);
 	catch_body(start, stack_size, fun_frames_size);
 	pop_ff();
 	throw;
@@ -2331,6 +2306,8 @@ const inst_t* VMachine::FunSetAt(const inst_t* pc){
 		XTAL_VM_DEF_INST(SetAt);
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			ff().temp3_ = Xid(op_set_at);
+			ff().temp2_ = null;
 			Innocence key = pop_and_save2();
 			Innocence target = pop_and_save1();
 			Innocence value = pop();
@@ -2807,50 +2784,6 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
 
-const inst_t* VMachine::FunBreakPoint(const inst_t* pc){
-		XTAL_VM_DEF_INST(BreakPoint);
-		if(debug::is_enabled()){
-			XTAL_GLOBAL_INTERPRETER_LOCK{
-				int_t kind = inst.type;
-				
-				if(!debug_info_) debug_info_ = xnew<debug::Info>();
-				debug_info_->set_kind(kind);
-				debug_info_->set_line(code()->compliant_lineno(pc));
-				debug_info_->set_file_name(code()->source_file_name());
-				debug_info_->set_fun_name(fun()->object_name());
-				debug_info_->set_local_variables(ff().outer());
-
-				struct guard{
-					guard(){ debug::disable(); }
-					~guard(){ debug::enable(); }
-				} g;
-			
-				switch(kind){
-					XTAL_NODEFAULT;
-					
-					XTAL_CASE(BREAKPOINT_LINE){
-						if(AnyPtr hook = debug::line_hook()){
-							hook(debug_info_);
-						}
-					}
-
-					XTAL_CASE(BREAKPOINT_CALL){
-						if(AnyPtr hook = debug::call_hook()){
-							hook(debug_info_);
-						}				
-					}
-
-					XTAL_CASE(BREAKPOINT_RETURN){
-						if(AnyPtr hook = debug::return_hook()){
-							hook(debug_info_);
-						}				
-					}
-				}
-			}
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
 //}}FUNS}
 	
 void VMachine::carry_over(Fun* fun){
@@ -2891,6 +2824,12 @@ void VMachine::carry_over(Fun* fun){
 	int_t max_stack = core->max_stack;
 	stack_.upsize(max_stack);
 	stack_.downsize(max_stack + f.args_stack_size());
+	f.ordered_arg_count = f.named_arg_count = 0;
+
+	debug_ = debug::is_enabled();
+	if(debug_){
+		debug_hook(f.called_pc, BREAKPOINT_CALL);
+	}
 }
 
 void VMachine::mv_carry_over(Fun* fun){
@@ -2916,9 +2855,9 @@ void VMachine::mv_carry_over(Fun* fun){
 	FunCore* core = fun->core();
 	int_t size = core->variable_size;
 	adjust_result(f.ordered_arg_count, size);
-	f.named_arg_count = 0;
 	f.ordered_arg_count = size;
-
+	f.named_arg_count = 0;
+	
 	if(size){
 		if(core->flags & FunCore::FLAG_ON_HEAP){
 			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
@@ -2939,6 +2878,12 @@ void VMachine::mv_carry_over(Fun* fun){
 	int_t max_stack = core->max_stack;
 	stack_.upsize(max_stack);
 	stack_.downsize(max_stack + size);
+	f.ordered_arg_count = 0;
+
+	debug_ = debug::is_enabled();
+	if(debug_){
+		debug_hook(f.called_pc, BREAKPOINT_CALL);
+	}
 }
 
 void VMachine::adjust_result(int_t n, int_t need_result_count){
@@ -3140,23 +3085,45 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	return e;
 }
 
-void VMachine::hook_return(const inst_t* pc){
-	if(debug::is_enabled() && fun() && code()){
-		if(!debug_info_) debug_info_ = xnew<debug::Info>();
-		debug_info_->set_kind(BREAKPOINT_RETURN);
-		debug_info_->set_line(code()->compliant_lineno(pc));
-		debug_info_->set_file_name(code()->source_file_name());
-		debug_info_->set_fun_name(fun()->object_name());
-		debug_info_->set_local_variables(ff().outer());
+void VMachine::set_except_0(const Innocence& e){
+	except_[0] = e;
+}
 
-		struct guard{
-			guard(){ debug::disable(); }
-			~guard(){ debug::enable(); }
-		} g;
-	
-		if(AnyPtr hook = debug::return_hook()){
-			hook(debug_info_);
-		}				
+void VMachine::debug_hook(const inst_t* pc, int_t kind){
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		if((kind==BREAKPOINT_LINE && debug::line_hook()) || (kind==BREAKPOINT_RETURN && debug::return_hook()) || (kind==BREAKPOINT_CALL && debug::call_hook())){			
+			if(!debug_info_) debug_info_ = xnew<debug::Info>();
+			debug_info_->set_kind(kind);
+			debug_info_->set_line(code()->compliant_lineno(pc));
+			debug_info_->set_file_name(code()->source_file_name());
+			debug_info_->set_fun_name(fun()->object_name());
+			debug_info_->set_local_variables(ff().outer());
+
+			struct guard{
+				guard(){ debug::disable(); }
+				~guard(){ debug::enable(); }
+			} g;
+		
+			switch(kind){
+				XTAL_CASE(BREAKPOINT_LINE){
+					if(const AnyPtr& hook = debug::line_hook()){
+						hook(debug_info_);
+					}
+				}
+
+				XTAL_CASE(BREAKPOINT_RETURN){
+					if(const AnyPtr& hook = debug::return_hook()){
+						hook(debug_info_);
+					}
+				}
+
+				XTAL_CASE(BREAKPOINT_CALL){
+					if(const AnyPtr& hook = debug::call_hook()){
+						hook(debug_info_);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -3168,24 +3135,24 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 		// try .. catch .. finally•¶‚ÅˆÍ‚í‚ê‚Ä‚¢‚È‚¢
 		if(except_frames_.empty()){
 			while((size_t)fun_frames_size<fun_frames_.size()){
-				hook_return(pc);
+				debug_hook(pc, BREAKPOINT_RETURN);
 				pc = pop_ff();
 				e = append_backtrace(pc, e);
 			}
 			stack_.downsize_n(stack_size);
-			except_[0] = e;
+			set_except_0(e);
 			return 0;
 		}
 
 		ExceptFrame& ef = except_frames_.top();
 		while((size_t)ef.fun_frame_count<fun_frames_.size()){
-			hook_return(pc);
+			debug_hook(pc, BREAKPOINT_RETURN);
 			pc = pop_ff();
 			e = append_backtrace(pc, e);
 
 			if(pc==&end_code_){
 				stack_.downsize_n(stack_size);
-				except_[0] = e;
+				set_except_0(e);
 				return 0;
 			}
 		}
@@ -3197,7 +3164,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 			}
 		}
 
-		stack_.downsize_n(ef.stack_count);
+		stack_.resize(ef.stack_count);
 		if(ef.core->catch_pc && e){
 			pc = ef.core->catch_pc + code()->data();
 			push(AnyPtr(ef.core->end_pc));

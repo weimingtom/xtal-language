@@ -675,6 +675,17 @@ void Lexer::do_read(){
 				continue;
 			}
 
+#ifdef XTAL_USE_WCHAR
+			/*
+			XTAL_CASE((char_t)0xFEFF){
+				continue;
+			}
+
+			XTAL_CASE((char_t)0xFFFE){
+				continue;
+			}
+			*/
+#else
 			XTAL_CASE((char_t)239){
 				if(reader_.peek(1)==(char_t)187 && reader_.peek(2)==(char_t)191){
 					reader_.read();
@@ -684,6 +695,7 @@ void Lexer::do_read(){
 				}
 				push_token(ch);
 			}
+#endif
 
 			XTAL_CASE(-1){
 				push_token(-1);
@@ -1610,7 +1622,7 @@ void Parser::must_parse_stmt(){
 void Parser::parse_assert(){
 	lexer_.begin_record();
 	if(parse_expr()){
-		StringPtr ref_str = lexer_.end_record();
+		IDPtr ref_str = lexer_.end_record();
 		eb_.push(KIND_STRING);
 		eb_.push(ref_str);
 		eb_.splice(EXPR_STRING, 2);

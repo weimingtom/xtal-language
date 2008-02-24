@@ -123,14 +123,17 @@ public:
 	}
 
 	void downsize_n(size_t newsize){
+		XTAL_ASSERT(newsize<=size());
 		current_ = begin_-1+newsize;
 	}
 
 	void upsize_unchecked(size_t us){
+		XTAL_ASSERT(current_+us>current_);
 		current_+=us;
 	}
 
 	void upsize(size_t us){		
+		XTAL_ASSERT(current_+us>current_);
 		current_+=us;
 		if(current_>=end_)
 			upsize_detail(us);

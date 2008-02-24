@@ -323,6 +323,8 @@ public:
 		except_[1] = null;
 	}
 
+	void set_except_0(const Innocence& e);
+
 	void execute_inner(const inst_t* start);
 
 	void execute(Fun* fun, const inst_t* start_pc);
@@ -552,7 +554,7 @@ private:
 
 	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
 
-	void hook_return(const inst_t* pc);
+	void debug_hook(const inst_t* pc, int_t kind);
 
 public:
 
@@ -734,6 +736,8 @@ private:
 	SmartPtr<debug::Info> debug_info_;
 
 	Innocence except_[3];
+
+	int_t debug_;
 
 protected:
 

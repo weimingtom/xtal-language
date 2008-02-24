@@ -40,15 +40,15 @@ void set_return_hook(const AnyPtr& hook){
 	return_hook_ = hook;
 }
 
-AnyPtr line_hook(){
+const AnyPtr& line_hook(){
 	return line_hook_;
 }
 
-AnyPtr call_hook(){
+const AnyPtr& call_hook(){
 	return call_hook_;
 }
 
-AnyPtr return_hook(){
+const AnyPtr& return_hook(){
 	return return_hook_;
 }
 

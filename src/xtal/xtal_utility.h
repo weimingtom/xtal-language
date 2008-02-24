@@ -1,16 +1,14 @@
 
 #pragma once
 
-
-
 //#define XTAL_NO_THREAD
 //#define XTAL_NO_PARSER
 #define XTAL_USE_PREDEFINED_ID
 //#define XTAL_NO_EXCEPTIONS
+//#define XTAL_USE_WCHAR
 
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
-//#define XTAL_USE_WCHAR
 
 #if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG))
 #	define XTAL_DEBUG
@@ -95,17 +93,17 @@
 #ifdef XTAL_USE_WCHAR
 
 #	if defined(_MSC_VER) && _MSC_VER>=1400
-#		define XTAL_SPRINTF(buffer, buffer_size, format, value) swprintf_s(buffer, buffer_size, format, value)
+#		define XTAL_SPRINTF(buffer, data_size, format, value) swprintf_s(buffer, data_size, format, value)
 #	else
-#		define XTAL_SPRINTF(buffer, buffer_size, format, value) std::swprintf(buffer, format, value)
+#		define XTAL_SPRINTF(buffer, data_size, format, value) std::swprintf(buffer, format, value)
 #	endif
 
 #else
 
 #	if defined(_MSC_VER) && _MSC_VER>=1400
-#		define XTAL_SPRINTF(buffer, buffer_size, format, value) sprintf_s(buffer, buffer_size, format, value)
+#		define XTAL_SPRINTF(buffer, data_size, format, value) sprintf_s(buffer, data_size, format, value)
 #	else
-#		define XTAL_SPRINTF(buffer, buffer_size, format, value) std::sprintf(buffer, format, value)
+#		define XTAL_SPRINTF(buffer, data_size, format, value) std::sprintf(buffer, format, value)
 #	endif
 
 #endif

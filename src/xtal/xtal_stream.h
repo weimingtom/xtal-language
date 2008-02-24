@@ -16,13 +16,15 @@ public:
 	* @brief 文字列strをストリームに流す
 	*/
 	void put_s(const StringPtr& str){
-		write(str->data(), str->buffer_size());
+		write(str->data(), str->data_size()*sizeof(char_t));
 	}
 
 	/**
 	* @brief length文字分ストリームから取り出し、文字列として返す。
 	*/
-	virtual StringPtr get_s(int_t length = -1);
+	virtual StringPtr get_s(uint_t length);
+
+	virtual StringPtr get_s_all();
 
 	uint_t print(const StringPtr& str);
 
@@ -337,6 +339,14 @@ public:
 		return get_t_be<SelectType<sizeof(char_t)>::uint_t>();
 	}
 
+	void put_ch_code_le(char_t ch){
+		put_t_le<SelectType<sizeof(char_t)>::uint_t>(ch);
+	}
+
+	char_t get_ch_code_le(){
+		return get_t_le<SelectType<sizeof(char_t)>::uint_t>();
+	}
+
 public:
 
 	template<class T>
@@ -413,7 +423,9 @@ public:
 
 	virtual bool eos();
 
-	virtual StringPtr get_s(int_t length = -1);
+	virtual StringPtr get_s(uint_t length);
+
+	virtual StringPtr get_s_all();
 
 	virtual uint_t size(){
 		return size_;
@@ -435,7 +447,7 @@ public:
 
 	MemoryStream();
 	
-	MemoryStream(const void* data, uint_t buffer_size);
+	MemoryStream(const void* data, uint_t data_size);
 
 	~MemoryStream();
 	

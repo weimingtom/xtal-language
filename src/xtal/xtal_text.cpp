@@ -309,13 +309,13 @@ void Format::call(const VMachinePtr& vm){
 				XTAL_DEFAULT{
 					StringPtr str = a->to_s();
 					
-					if(str->buffer_size()>=256){
-						if(str->buffer_size()>malloc_size){
+					if(str->data_size()>=256){
+						if(str->data_size()>malloc_size){
 							if(malloc_size!=0){
 								user_free(pcbuf);
 							}
 							
-							malloc_size = str->buffer_size() + fs->max_buffer_size() + 1;
+							malloc_size = str->data_size() + fs->max_buffer_size() + 1;
 							pcbuf = (char_t*)user_malloc(malloc_size);
 						}
 					}
@@ -472,7 +472,6 @@ void initialize_text(){
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1024"), XTAL_STRING("0除算エラーです。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1025"), XTAL_STRING("ChRangeは閉区間である必要があります。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1026"), XTAL_STRING("Xeg要素に変換できません。"));
-	tm->set_at(XTAL_STRING("Xtal Runtime Error 1027"), XTAL_STRING("反転できないXeg要素です。"));
 
 	append_text_map(tm);
 }

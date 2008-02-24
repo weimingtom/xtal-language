@@ -279,7 +279,7 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 
 StringPtr Array::join(const StringPtr& sep){
 	MemoryStreamPtr ret(xnew<MemoryStream>());
-	if(sep->buffer_size()==0){
+	if(sep->data_size()==0){
 		for(uint_t i = 0, sz = size(); i<sz; ++i){
 			ret->put_s(at(i)->to_s());
 		}
@@ -333,10 +333,13 @@ AnyPtr Array::reverse(){
 void Array::assign(const AnyPtr& iterator){
 	int_t i = 0;
 	Xfor(v, iterator){
+		if(i>=size_){
+			resize(i+1);
+		}
+
 		set_at(i, v);
 		++i;
 	}
-	resize(i);
 }
 
 void Array::concat(const AnyPtr& iterator){

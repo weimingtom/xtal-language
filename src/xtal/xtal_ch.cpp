@@ -60,27 +60,41 @@ public:
 };
 
 ////////////////////////////////////////////////
-// wchar
+// utf16
 
-class WCharCodeLib : public CodeLib{
+class UTF16CodeLib : public CodeLib{
+public:
+
+	bool is_surrogate(unsigned int v){
+		return (v & ~((1 << 11) - 1)) == 0xD800;
+	}
+
+	int_t ch_len(char_t ch){
+		return is_surrogate(ch) ? 2 : 1;
+	}
+};
+
+////////////////////////////////////////////////
+// utf32
+
+class UTF32CodeLib : public CodeLib{
 public:
 	int_t ch_len(char_t ch){
 		return 1;
 	}
 };
 
-
 ////////////////////////////////////////////////
 
-StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
-	if(buffer_size>6){
-		return xnew<ID>(data, buffer_size);
+StringPtr CodeLib::ch_inc(const char_t* data, int_t data_size){
+	if(data_size>6){
+		return xnew<ID>(data, data_size);
 	}
 
 	uchar_t buf[8] = {0};
-	std::memcpy(buf+1, data, buffer_size*sizeof(uchar_t));
+	std::memcpy(buf+1, data, data_size*sizeof(uchar_t));
 
-	for(int_t i=buffer_size; i>=0; --i){
+	for(int_t i=data_size; i>=0; --i){
 		buf[i]++;
 		if(buf[i]==0){
 			continue;
@@ -89,10 +103,10 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t buffer_size){
 	}
 
 	if(buf[0]==0){
-		return xnew<ID>((char_t*)buf+1, buffer_size);
+		return xnew<ID>((char_t*)buf+1, data_size);
 	}
 	else{
-		return xnew<ID>((char_t*)buf, buffer_size+1);
+		return xnew<ID>((char_t*)buf, data_size+1);
 	}
 }
 
@@ -137,7 +151,13 @@ IDPtr ChMaker::to_s(){
 namespace{
 
 #ifdef XTAL_USE_WCHAR
-	WCharCodeLib default_code_lib_;
+#	ifdef WIN32
+	UTF16CodeLib default_code_lib_;
+#	elif defined(__linux__)
+	UTF32CodeLib default_code_lib_;
+#	else
+	UTF32CodeLib default_code_lib_;
+#	endif
 #else
 #	ifdef WIN32
 	SJISCodeLib default_code_lib_;
@@ -159,8 +179,8 @@ int_t ch_len2(const char_t* str){
 	return code_lib_->ch_len2(str);
 }
 
-StringPtr ch_inc(const char_t* data, int_t buffer_size){
-	return code_lib_->ch_inc(data, buffer_size);
+StringPtr ch_inc(const char_t* data, int_t data_size){
+	return code_lib_->ch_inc(data, data_size);
 }
 
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
@@ -180,6 +200,16 @@ void set_code_euc(){
 
 void set_code_utf8(){
 	static UTF8CodeLib code_lib;
+	code_lib_ = &code_lib;
+}
+
+void set_code_utf16(){
+	static UTF16CodeLib code_lib;
+	code_lib_ = &code_lib;
+}
+
+void set_code_utf32(){
+	static UTF32CodeLib code_lib;
 	code_lib_ = &code_lib;
 }
 

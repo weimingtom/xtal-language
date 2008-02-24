@@ -51,7 +51,8 @@ int main(int argc, char** argv){
 
 	}
 	XTAL_CATCH(e){
-		fprintf(stderr, "%s\n", e->to_s()->c_str());
+		stderr_stream()->put_s(e->to_s());
+		stderr_stream()->put_s("\n");
 	}
 
 	uninitialize();

@@ -331,7 +331,7 @@ AnyPtr Array::reverse(){
 }
 
 void Array::assign(const AnyPtr& iterator){
-	int_t i = 0;
+	uint_t i = 0;
 	Xfor(v, iterator){
 		if(i>=size_){
 			resize(i+1);

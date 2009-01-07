@@ -20,7 +20,7 @@ public:
 	}
 
 	int_t size(){
-		return code_.size();
+		return (int_t)code_.size();
 	}
 
 	/**

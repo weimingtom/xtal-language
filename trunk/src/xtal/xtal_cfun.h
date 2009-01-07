@@ -652,7 +652,7 @@ template<class T, class C, class Policy>
 inline CFunEssence setter_impl(T C::* v, Policy){
 	typedef setter_fun<C, T> setter;
 	setter data(v);
-	return CFunEssence(&fun2<setter, const T&, arg_this_getter<C*>, const T&, Policy>::f, &data, sizeof(data), 1);
+	return CFunEssence(&fun2<setter, const T&, arg_this_getter<C*>, arg_getter<const T&, 0>, Policy>::f, &data, sizeof(data), 1);
 }
 
 //////////////////////////////////////////////////////////////

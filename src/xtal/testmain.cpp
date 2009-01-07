@@ -72,29 +72,6 @@ int main2(int argc, char** argv){
 		//debug::set_line_hook(fun(&debug_line));
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
-			
-		
-		//load("start.xtal");
-
-		//test_xeg();
-		/**
-
-		*/
-
-		ArrayPtr a = xnew<Array>();
-		Xfor(v, a){
-			printf("a\n");
-		}
-
-		AnyPtr(XTAL_STRING("‚±‚ñ‚É‚¿‚Í"))->p();
-
-AnyPtr ret = Xsrc
-((
-
- [10:20].p;
-	"apepeppepe".each[].p;//.split("pp")[].p;
-
-))();
 
 		//handle_argv(argv);
 		
@@ -139,7 +116,7 @@ int c;
 
 		//*/
 
-		/*
+		//*
 
 #ifdef XTAL_USE_WCHAR
 		load("../../test-utf16le/test_empty.xtal");

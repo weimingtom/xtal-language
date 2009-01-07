@@ -75,6 +75,8 @@ protected:
 
 	SmartPtr(Base* p, const ClassPtr& c);
 
+	SmartPtr(Singleton* p, const ClassPtr& c);
+
 	void inc_ref_count(){
 		if(type(*this)==TYPE_BASE){
 			pvalue(*this)->inc_ref_count();

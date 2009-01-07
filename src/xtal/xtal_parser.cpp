@@ -236,11 +236,11 @@ int_t Lexer::parse_hex(){
 		}
 		else if(test_range(reader_.peek(), 'a', 'f')){
 			ret *= 16;
-			ret += reader_.read()-'a';
+			ret += reader_.read()-'a' + 10;
 		}
 		else if(test_range(reader_.peek(), 'A', 'F')){
 			ret *= 16;
-			ret += reader_.read()-'A';
+			ret += reader_.read()-'A' + 10;
 		}
 		else if(reader_.peek()=='_'){
 			reader_.read();

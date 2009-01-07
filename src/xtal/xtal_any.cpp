@@ -135,6 +135,11 @@ SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c)
 	register_gc(p);
 }
 
+SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c)
+	:Innocence(p){
+	register_gc(p);
+}
+
 SendProxy Any::send(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
 	return SendProxy(ap(*this), primary_key, secondary_key);
 }

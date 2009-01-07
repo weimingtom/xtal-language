@@ -19,6 +19,12 @@ Bar: class(Foo){
 	- hoge: 1111;
 }
 
+Singleton: singleton{
+	bar : fun(){
+		return "aaa";
+	}
+}
+
 {
 	a: Foo();
 	assert a.pub==100;
@@ -61,6 +67,10 @@ Bar: class(Foo){
 	assert Bar::foo()==555;
 	
 	assert Bar::hoge==555;
+	
+	assert Singleton.class===Singleton;
+	assert Singleton::bar()=="aaa";
+	assert Singleton.bar=="aaa";
 }
 
 

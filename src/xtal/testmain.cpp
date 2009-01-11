@@ -44,17 +44,25 @@ static void handle_argv(char** argv){
 
 #include "xtal_xeg.h"
 
-void debug_line(const SmartPtr<debug::Info>& info){
+void debug_break_point(const SmartPtr<debug::Info>& info){
+	puts("break point");
 	//std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
 
 	/*if(info->local_variables()){
-		Xfor2(key, value, info->local_variables()->members()){
-			std::cout << Xf("key=%s, value=%s\n")(key, value);
+		Xfor3(key, key2, value, info->local_variables()->members()){
+			(Xf("key=%s, value=%s\n")(key, value))->p();
 		}
 	}*/
 }
 
 //#include <crtdbg.h>
+
+class A{
+public:
+  void foo(int n){
+    printf("%d\n", n);
+  }
+};
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
@@ -66,6 +74,18 @@ int main2(int argc, char** argv){
 
 	try{
 		initialize();
+
+		ClassPtr class_a = new_cpp_class<A>("A");
+		class_a->def("new", ctor<A>());
+		class_a->method("foo", &A::foo);
+
+		debug::enable();
+		debug::set_break_point_hook(fun(&debug_break_point));    
+
+		CodePtr p = compile_file("../../testx/test.xtal");
+		p->add_break_point(6);
+
+		p();
 
 #if 1
 		//debug::enable();

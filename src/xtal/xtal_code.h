@@ -88,6 +88,23 @@ public:
 
 	virtual void call(const VMachinePtr& vm);
 
+	void insert_code(inst_t* p, inst_t* code, int_t size);
+
+	void erase_code(inst_t* p, int_t size);
+
+	bool add_break_point(int_t lineno);
+
+	void remove_break_point(int_t lineno);
+
+protected:
+
+	void insert_erase_common(inst_t* p, int_t size);
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_ & once_table_;
+	}
+
 private:
 
 	friend class CodeBuilder;
@@ -103,12 +120,6 @@ private:
 	StringPtr source_file_name_;
 	FunPtr first_fun_;
 
-protected:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_ & once_table_;
-	}
 
 private:
 
@@ -118,15 +129,15 @@ private:
 	AC<ExceptCore>::vector except_core_table_;
 
 	struct LineNumberTable{
-		u16 start_pc;
-		u16 lineno;
+		u32 start_pc;
+		u32 lineno;
 	};
 
 	struct LineNumberCmp{
-		bool operator ()(const LineNumberTable& lnt, int_t pc){
+		bool operator ()(const LineNumberTable& lnt, uint_t pc){
 			return lnt.start_pc<pc;
 		}
-		bool operator ()(int_t pc, const LineNumberTable& lnt){
+		bool operator ()(uint_t pc, const LineNumberTable& lnt){
 			return pc<lnt.start_pc;
 		}
 		bool operator ()(const LineNumberTable& l, const LineNumberTable& r){
@@ -137,7 +148,7 @@ private:
 	AC<LineNumberTable>::vector lineno_table_;
 
 	struct AddressJump{
-		u16 pos;
+		u32 pos;
 	};
 
 	AC<AddressJump>::vector address_jump_table_;

@@ -83,6 +83,8 @@ void* user_malloc(size_t size){
 } 
 
 void* user_malloc_nothrow(size_t size){
+	//full_gc();
+
 	if(used_user_malloc_size_ > used_user_malloc_threshold_){
 		used_user_malloc_size_ = 0; 
 		gc();

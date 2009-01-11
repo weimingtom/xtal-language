@@ -202,7 +202,7 @@ protected:
 	};
 
 	typedef Hashtable<Key, Value, Fun> map_t; 
-	map_t table_;
+	//map_t table_;
 
 	map_t* map_members_;
 

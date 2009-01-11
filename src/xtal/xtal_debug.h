@@ -33,10 +33,11 @@ private:
 	FramePtr local_variables_;
 };
 
+typedef SmartPtr<Info> InfoPr;
+
 
 /**
 * @brief デバッグ機能を有効にする
-* デバッグ機能を有効化した状態でスクリプトをコンパイルするとデバッグ機能が埋め込まれる。
 * デバッグ機能はデフォルトでは無効になっている。
 */
 void enable();
@@ -52,9 +53,9 @@ void disable();
 bool is_enabled();
 
 /**
-* @brief 行が実行される度に呼び出されるフック関数を登録する
+* @brief ブレークポイントがある度に呼び出されるフック関数を登録する
 */
-void set_line_hook(const AnyPtr& hook);
+void set_break_point_hook(const AnyPtr& hook);
 
 /**
 * @brief 関数呼び出しされる度に呼び出されるフック関数を登録する
@@ -67,9 +68,9 @@ void set_call_hook(const AnyPtr& hook);
 void set_return_hook(const AnyPtr& hook);
 
 /**
-* @brief set_line_hook関数で登録した関数を取得する
+* @brief set_break_point_hook関数で登録した関数を取得する
 */
-const AnyPtr& line_hook();
+const AnyPtr& break_point_hook();
 
 /**
 * @brief set_call_hook関数で登録した関数を取得する

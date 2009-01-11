@@ -330,9 +330,9 @@ public:
 	void set_except_0(const Innocence& e);
 
 	void set_unsuported_error_info(const Innocence& target, const Innocence& primary_key, const Innocence& secondary_key){
-		target_ = target;
-		primary_key_ = primary_key;
-		secondary_key_ = secondary_key;
+		ff().target_ = target;
+		ff().primary_key_ = primary_key;
+		ff().secondary_key_ = secondary_key;
 	}
 
 	void execute_inner(const inst_t* start);
@@ -462,11 +462,23 @@ public:
 		// デバッグメッセージ出力用のヒント
 		Innocence hint_;
 
+		// UnsuportedErrorのためにtargetをおくところ
+		Innocence target_;
+
+		// UnsuportedErrorのためにprimary_keyをおくところ
+		Innocence primary_key_;
+
+		// UnsuportedErrorのためにsecondary_keyをおくところ
+		Innocence secondary_key_;
+
 		void set_null(){
 			set_null_force(fun_); 
 			set_null_force(outer_);
 			set_null_force(arguments_);
 			set_null_force(hint_);
+			set_null_force(target_);
+			set_null_force(primary_key_);
+			set_null_force(secondary_key_);
 		}
 
 		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
@@ -696,6 +708,7 @@ public:
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
 	const inst_t* FunThrowUndefined(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
+	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
@@ -729,16 +742,6 @@ private:
 	SmartPtr<debug::Info> debug_info_;
 
 	Innocence except_[3];
-
-	// UnsuportedErrorのためにtargetをおくところ
-	Innocence target_;
-
-	// UnsuportedErrorのためにprimary_keyをおくところ
-	Innocence primary_key_;
-
-	// UnsuportedErrorのためにsecondary_keyをおくところ
-	Innocence secondary_key_;
-
 
 	int_t debug_;
 

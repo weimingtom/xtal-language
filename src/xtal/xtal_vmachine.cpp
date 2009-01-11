@@ -415,7 +415,6 @@ void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named
 }
 
 void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
-	int nnnn = fun_frames_.size(); // debugcode
 	FunFrame& f = fun_frames_.push();
 	f.need_result_count = need_result_count;
 	f.ordered_arg_count = ordered_arg_count;
@@ -571,9 +570,6 @@ XTAL_VM_SWITCH{
 
 //{OPS{{
 	XTAL_VM_CASE_FIRST(Nop){ // 3
-		if(debug_ && debug::is_enabled()){
-			debug_hook(pc, BREAKPOINT_LINE);
-		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1031,7 +1027,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence secondary_key = null;
 			Innocence primary_key = identifier_or_pop(inst.identifier_number);
-			Innocence value = pop();
+			AnyPtr value = pop();
 			Innocence target = pop();
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->def(isp(primary_key), ap(value));
@@ -1043,7 +1039,7 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Innocence secondary_key = pop();
 			Innocence primary_key = identifier_or_pop(inst.identifier_number);
-			Innocence value = pop();
+			AnyPtr value = pop();
 			Innocence target = pop();
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->def(isp(primary_key), ap(value), ap(secondary_key), KIND_PUBLIC); 
@@ -1102,8 +1098,8 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(BlockBegin){ // 6
-		FunFrame& f = ff(); 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			FunFrame& f = ff(); 
 			ScopeCore* core = f.fun()->code()->scope_core(inst.core_number);
 			const FramePtr& outer = (core->flags&ScopeCore::FLAG_SCOPE_CHAIN) ? ff().outer() : static_ptr_cast<Frame>(null);
 			f.outer(xnew<Frame>(outer, code(), core));
@@ -1906,11 +1902,12 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(ap(secondary_key_)){
-				set_except_0(unsupported_error(ap(target_)->get_class(), isp(primary_key_), ap(secondary_key_)));
+			FunFrame& f = ff();
+			if(ap(f.secondary_key_)){
+				set_except_0(unsupported_error(ap(f.target_)->get_class(), isp(f.primary_key_), ap(f.secondary_key_)));
 			}
 			else{
-				set_except_0(unsupported_error(ap(target_)->get_class(), isp(primary_key_), null));
+				set_except_0(unsupported_error(ap(f.target_)->get_class(), isp(f.primary_key_), null));
 			}
 		}
 		XTAL_VM_EXCEPT(except_[0]);
@@ -1937,6 +1934,13 @@ XTAL_VM_SWITCH{
 			XTAL_VM_EXCEPT(except_[0]); 
 		}
 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(BreakPoint){ // 2
+		if(debug_ && debug::is_enabled()){
+			debug_hook(pc, BREAKPOINT);
+		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
@@ -2215,7 +2219,7 @@ void VMachine::set_local_variable(int_t pos, const Innocence& value){
 				outer->set_member_direct(variables_size-1-pos, ap(value));
 				return;
 			}
-			pos-=variables_size;
+			pos -= variables_size;
 			outer = outer->outer().get();
 		}
 	}
@@ -2306,8 +2310,8 @@ void VMachine::set_except_0(const Innocence& e){
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		if((kind==BREAKPOINT_LINE && debug::line_hook()) || (kind==BREAKPOINT_RETURN && debug::return_hook()) || (kind==BREAKPOINT_CALL && debug::call_hook())){			
-			if(!debug_info_) debug_info_ = xnew<debug::Info>();
+		if((kind==BREAKPOINT && debug::break_point_hook()) || (kind==BREAKPOINT_RETURN && debug::return_hook()) || (kind==BREAKPOINT_CALL && debug::call_hook())){			
+			if(!debug_info_){ debug_info_ = xnew<debug::Info>(); }
 			debug_info_->set_kind(kind);
 			debug_info_->set_line(code()->compliant_lineno(pc));
 			debug_info_->set_file_name(code()->source_file_name());
@@ -2320,8 +2324,8 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 			} g;
 		
 			switch(kind){
-				XTAL_CASE(BREAKPOINT_LINE){
-					if(const AnyPtr& hook = debug::line_hook()){
+				XTAL_CASE(BREAKPOINT){
+					if(const AnyPtr& hook = debug::break_point_hook()){
 						hook(debug_info_);
 					}
 				}
@@ -2404,7 +2408,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
-	m & debug_info_ & except_[0] & except_[1] & except_[2] & target_ & primary_key_ & secondary_key_;
+	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		m & stack_[i];
@@ -2423,10 +2427,6 @@ void VMachine::before_gc(){
 	inc_ref_count_force(except_[1]);
 	inc_ref_count_force(except_[2]);
 
-	inc_ref_count_force(target_);
-	inc_ref_count_force(primary_key_);
-	inc_ref_count_force(secondary_key_);
-
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		inc_ref_count_force(stack_[i]);
 	}
@@ -2440,10 +2440,6 @@ void VMachine::after_gc(){
 	dec_ref_count_force(except_[0]);
 	dec_ref_count_force(except_[1]);
 	dec_ref_count_force(except_[2]);
-
-	dec_ref_count_force(target_);
-	dec_ref_count_force(primary_key_);
-	dec_ref_count_force(secondary_key_);
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		dec_ref_count_force(stack_[i]);
@@ -2477,6 +2473,10 @@ void VMachine::FunFrame::inc_ref(){
 	inc_ref_count_force(self_);
 	inc_ref_count_force(arguments_);
 	inc_ref_count_force(hint_);
+
+	inc_ref_count_force(target_);
+	inc_ref_count_force(primary_key_);
+	inc_ref_count_force(secondary_key_);
 }
 
 void VMachine::FunFrame::dec_ref(){
@@ -2490,10 +2490,14 @@ void VMachine::FunFrame::dec_ref(){
 	dec_ref_count_force(self_);
 	dec_ref_count_force(arguments_);
 	dec_ref_count_force(hint_);
+
+	dec_ref_count_force(target_);
+	dec_ref_count_force(primary_key_);
+	dec_ref_count_force(secondary_key_);
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
-	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_;
+	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 	for(int_t i=0, size=v.variables_.size(); i<size; ++i){
 		m & v.variable(i);
 	}

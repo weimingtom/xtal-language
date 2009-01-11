@@ -99,6 +99,10 @@ public:
 	Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core);
 	
 	Frame();
+
+	Frame(const Frame& frame);
+
+	Frame& operator=(const Frame& frame);
 		
 	~Frame();
 
@@ -218,6 +222,8 @@ public:
 	Class(const StringPtr& name = empty_id);
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassCore* core);
+
+	void overwrite(const ClassPtr& p);
 
 public:
 	

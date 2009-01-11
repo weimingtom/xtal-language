@@ -128,9 +128,13 @@ public:
 	
 	Base();
 
+protected:
+
 	Base(const Base& b);
 
 	Base& operator =(const Base& b);
+
+public:
 
 	virtual ~Base();
 			

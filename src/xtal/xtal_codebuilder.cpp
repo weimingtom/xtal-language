@@ -444,7 +444,10 @@ void CodeBuilder::process_labels(){
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
-			buf = l.pos - f.pos;
+			buf = l.pos - f.set_pos; //l.pos - f.pos;
+
+			//Code::AddressJump address_jump = {f.set_pos, };
+			//result_->address_jump_table_.push_back();
 			//XTAL_ASSERT(l.pos - f.pos > -1000);
 		}
 	}

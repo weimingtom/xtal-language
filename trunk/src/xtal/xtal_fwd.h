@@ -218,7 +218,7 @@ enum AccessibilityKind{
 * @brief ブレークポイントの種類
 */
 enum BreakPointKind{
-	BREAKPOINT_LINE,
+	BREAKPOINT,
 	BREAKPOINT_CALL,
 	BREAKPOINT_RETURN
 };

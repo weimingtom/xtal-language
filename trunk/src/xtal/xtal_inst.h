@@ -873,6 +873,8 @@ XTAL_DEF_INST_0(141, ThrowUndefined);
 
 XTAL_DEF_INST_0(142, Assert);
 
-XTAL_DEF_INST_0(143, MAX);
+XTAL_DEF_INST_0(143, BreakPoint);
+
+XTAL_DEF_INST_0(144, MAX);
 
 }

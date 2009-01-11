@@ -64,6 +64,70 @@ void Code::call(const VMachinePtr& vm){
 StringPtr Code::inspect(){
 	return inspect_range(0, size());
 }
+
+void Code::insert_code(inst_t* p, inst_t* code, int_t size){
+	insert_erase_common(p, size);
+	code_.insert(code_.begin()+(p-&code_[0]), code, code+size);
+}
+
+void Code::erase_code(inst_t* p, int_t size){
+	insert_erase_common(p, -size);
+	code_.erase(code_.begin()+(p-&code_[0]), code_.begin()+(p-&code_[0])+size);
+}
+
+bool Code::add_break_point(int_t lineno){
+	for(uint_t i=0; i<lineno_table_.size(); ++i){
+		if(lineno_table_[i].lineno==lineno){
+			if(code_[lineno_table_[i].start_pc]!=InstBreakPoint::NUMBER){
+				InstBreakPoint break_point;
+				insert_code(&code_[lineno_table_[i].start_pc], (inst_t*)&break_point, sizeof(InstBreakPoint));
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+void Code::remove_break_point(int_t lineno){
+	for(uint_t i=0; i<lineno_table_.size(); ++i){
+		if(lineno_table_[i].lineno==lineno){
+			if(code_[lineno_table_[i].start_pc]==InstBreakPoint::NUMBER){
+				erase_code(&code_[lineno_table_[i].start_pc], sizeof(InstBreakPoint));
+			}
+			return;
+		}
+	}
+}
+
+void Code::insert_erase_common(inst_t* p, int_t size){
+	uint_t pos = p - &code_[0];
+	for(uint_t i=0; i<address_jump_table_.size(); ++i){
+		uint_t start = address_jump_table_[i].pos;
+		inst_address_t& address = *(inst_address_t*)&code_[start];
+		uint_t end = start + address;
+
+		if(start<end){
+			if(start<pos && pos<=end){
+				address = address + size;
+			}
+		}
+		else{
+			if(end<=pos && pos<start){
+				address = address - size;
+			}
+		}
+
+		if(start>=pos){
+			address_jump_table_[i].pos += size;
+		}
+	}
+
+	for(uint_t i=0; i<lineno_table_.size(); ++i){
+		if(lineno_table_[i].start_pc>pos){
+			lineno_table_[i].start_pc += size;
+		}
+	}
+}
 	
 StringPtr Code::inspect_range(int_t start, int_t end){
 
@@ -221,6 +285,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstThrowUnsupportedError::NUMBER){ temp = ((InstThrowUnsupportedError*)pc)->inspect(code); sz = InstThrowUnsupportedError::ISIZE; }
 		XTAL_CASE(InstThrowUndefined::NUMBER){ temp = ((InstThrowUndefined*)pc)->inspect(code); sz = InstThrowUndefined::ISIZE; }
 		XTAL_CASE(InstAssert::NUMBER){ temp = ((InstAssert*)pc)->inspect(code); sz = InstAssert::ISIZE; }
+		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(code); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
 	} ms->put_s(Xf("%04d:%s\n")((int_t)(pc-data()), temp)->to_s()); pc += sz; }

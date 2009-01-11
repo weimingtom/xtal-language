@@ -446,8 +446,9 @@ void CodeBuilder::process_labels(){
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.set_pos; //l.pos - f.pos;
 
-			//Code::AddressJump address_jump = {f.set_pos, };
-			//result_->address_jump_table_.push_back();
+			Code::AddressJump address_jump = {f.set_pos};
+			result_->address_jump_table_.push_back(address_jump);
+
 			//XTAL_ASSERT(l.pos - f.pos > -1000);
 		}
 	}
@@ -1815,9 +1816,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	if(e->lineno()!=0){
 		linenos_.push(e->lineno());
 		result_->set_lineno_info(e->lineno());
-		if(linenos_[1]!=e->lineno()){
-			put_inst(InstNop());
-		}
+		//if(linenos_[1]!=e->lineno()){
+		//	put_inst(InstNop());
+		//}
 	}
 
 	switch(e->tag()){

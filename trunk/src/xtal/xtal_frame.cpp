@@ -86,16 +86,13 @@ int_t InstanceVariables::find_core_inner(ClassCore* core){
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core)
 	:outer_(outer), code_(code), core_(core ? core : &empty_class_core), members_(xnew<Array>(core_->variable_size)), map_members_(0){
-	if(debug::is_enabled()){
-		make_map_members();	
-	}
 }
 
 Frame::Frame()
 	:outer_(null), code_(null), core_(&empty_class_core), members_(xnew<Array>()), map_members_(0){}
 	
 Frame::Frame(const Frame& v)
-	:HaveName(v), outer_(v.outer_), code_(v.code_), core_(v.core_), members_(v.members_), table_(v.table_), map_members_(0){
+	:HaveName(v), outer_(v.outer_), code_(v.code_), core_(v.core_), members_(v.members_), map_members_(0){
 
 	if(v.map_members_){
 		make_map_members();
@@ -115,7 +112,6 @@ Frame& Frame::operator=(const Frame& v){
 	core_ = v.core_;
 
 	members_ = v.members_;
-	table_ = v.table_;
 
 	if(v.map_members_){
 		make_map_members();
@@ -174,6 +170,15 @@ StringPtr Frame::object_name(int_t depth){
 }
 
 AnyPtr Frame::members(){
+	if(!map_members_ && code_ && core_){
+		make_map_members();
+		for(int_t i=0; i<core_->variable_size; ++i){
+			Key key = {code_->identifier(core_->variable_identifier_offset+i), null};
+			Value value = {i, 0};
+			map_members_->insert(key, value);
+		}
+	}
+
 	return xnew<MembersIter>(from_this(this));
 }
 

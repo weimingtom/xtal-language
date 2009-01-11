@@ -135,6 +135,12 @@ private:
 	};
 
 	AC<LineNumberTable>::vector lineno_table_;
+
+	struct AddressJump{
+		u16 pos;
+	};
+
+	AC<AddressJump>::vector address_jump_table_;
 };
 
 }

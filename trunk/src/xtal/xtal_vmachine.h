@@ -126,6 +126,10 @@ public:
 		ff().hint(object);
 	}
 	
+	void send_error(){
+		ff().set_null();
+		fun_frames_.push(fun_frames_.top());
+	}
 
 // 
 
@@ -325,6 +329,12 @@ public:
 
 	void set_except_0(const Innocence& e);
 
+	void set_unsuported_error_info(const Innocence& target, const Innocence& primary_key, const Innocence& secondary_key){
+		target_ = target;
+		primary_key_ = primary_key;
+		secondary_key_ = secondary_key;
+	}
+
 	void execute_inner(const inst_t* start);
 
 	void execute(Fun* fun, const inst_t* start_pc);
@@ -440,15 +450,6 @@ public:
 		// 呼び出された関数オブジェクト
 		Innocence fun_; 
 
-		// 一時的に関数オブジェクトかレシーバオブジェクトを置くための場所
-		Innocence temp1_;
-
-		// 一時的に何かを置くための場所
-		Innocence temp2_;
-
-		// 一時的に何かを置くための場所
-		Innocence temp3_;
-
 		// スコープの外側のフレームオブジェクト
 		Innocence outer_;
 
@@ -463,9 +464,6 @@ public:
 
 		void set_null(){
 			set_null_force(fun_); 
-			set_null_force(temp1_);
-			set_null_force(temp2_);
-			set_null_force(temp3_);
 			set_null_force(outer_);
 			set_null_force(arguments_);
 			set_null_force(hint_);
@@ -504,10 +502,6 @@ public:
 		Innocence outer;
 	};
 
-	const AnyPtr& pop_and_save1(){ return ap(ff().temp1_ = pop()); }
-	const AnyPtr& pop_and_save2(){ return ap(ff().temp2_ = pop()); }
-
-
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
@@ -529,9 +523,9 @@ public:
 
 	const IDPtr& identifier(int_t n){ return code()->identifier(n); }
 	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
-	const IDPtr& identifier_ex(int_t n){ 
-		if(n!=0){ return  static_ptr_cast<ID>(ap(ff().temp3_ = identifier(n)));  }
-		else{ return static_ptr_cast<ID>(ap(ff().temp3_ = pop()->to_s()->intern())); }
+	const IDPtr& identifier_or_pop(int_t n){ 
+		if(n!=0){ return  static_ptr_cast<ID>(ap(identifier(n)));  }
+		else{ return static_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
@@ -559,7 +553,7 @@ private:
 public:
 
 //{DECLS{{
-	const inst_t* FunUndefined(const inst_t* pc);
+	const inst_t* FunNop(const inst_t* pc);
 	const inst_t* FunPushNull(const inst_t* pc);
 	const inst_t* FunPushUndefined(const inst_t* pc);
 	const inst_t* FunPushTrue(const inst_t* pc);
@@ -702,7 +696,6 @@ public:
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
 	const inst_t* FunThrowUndefined(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
-	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
@@ -736,6 +729,16 @@ private:
 	SmartPtr<debug::Info> debug_info_;
 
 	Innocence except_[3];
+
+	// UnsuportedErrorのためにtargetをおくところ
+	Innocence target_;
+
+	// UnsuportedErrorのためにprimary_keyをおくところ
+	Innocence primary_key_;
+
+	// UnsuportedErrorのためにsecondary_keyをおくところ
+	Innocence secondary_key_;
+
 
 	int_t debug_;
 

@@ -304,6 +304,9 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 		vm->set_arg_this(ap(*this));
 		ret->call(vm);
 	}
+	else{
+		vm->set_unsuported_error_info(*this, primary_key, secondary_key);
+	}
 }
 
 void Any::call(const VMachinePtr& vm) const{

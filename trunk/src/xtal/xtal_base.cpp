@@ -26,6 +26,37 @@ Base::Base(const Base& b){
 	}
 }
 
+Base& Base::operator =(const Base& b){
+	if(this==&b){ return *this; }
+
+	if(b.instance_variables_!=&empty_instance_variables){
+		*instance_variables_ = *b.instance_variables_;		
+
+		if(type(class_)==TYPE_BASE){
+			pvalue(class_)->dec_ref_count();
+		}
+		class_ = b.class_;
+		if(type(class_)==TYPE_BASE){
+			pvalue(class_)->inc_ref_count();
+		}
+	}
+	else{
+		if(instance_variables_!=&empty_instance_variables){
+			instance_variables_->~InstanceVariables();
+			user_free(instance_variables_);
+
+			if(type(class_)==TYPE_BASE){
+				pvalue(class_)->dec_ref_count();
+			}
+
+			class_ = null;
+			instance_variables_ = &empty_instance_variables; 
+		}
+	}
+
+	return *this;
+}
+
 Base::~Base(){
 	if(instance_variables_!=&empty_instance_variables){
 		instance_variables_->~InstanceVariables();
@@ -66,11 +97,13 @@ void Base::set_class(const ClassPtr& c){
 		class_ = c;
 	}
 	else{
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->dec_ref_count();
+		}
 		class_ = c;
-		if(type(class_)==TYPE_BASE)
+		if(type(class_)==TYPE_BASE){
 			pvalue(class_)->inc_ref_count();
+		}
 	}
 }
 	

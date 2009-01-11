@@ -48,6 +48,7 @@ void initialize_frame(){
 		ClassPtr p = new_cpp_class<Class>("Class");
 		p->inherit(get_cpp_class<Frame>());
 		p->method("inherit", &Class::inherit_strict);
+		p->method("overwrite", &Class::overwrite);
 		p->method("s_new", &Class::s_new);
 		p->method("inherited_classes", &Class::inherited_classes);
 		p->method("is_inherited", &Any::is_inherited);
@@ -93,6 +94,44 @@ Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core)
 Frame::Frame()
 	:outer_(null), code_(null), core_(&empty_class_core), members_(xnew<Array>()), map_members_(0){}
 	
+Frame::Frame(const Frame& v)
+	:HaveName(v), outer_(v.outer_), code_(v.code_), core_(v.core_), members_(v.members_), table_(v.table_), map_members_(0){
+
+	if(v.map_members_){
+		make_map_members();
+		*map_members_ = *v.map_members_;
+	}
+
+	global_mutate_count++;
+}
+
+Frame& Frame::operator=(const Frame& v){
+	if(this==&v){ return *this; }
+
+	HaveName::operator=(v);
+
+	outer_ = v.outer_;
+	code_ = v.code_;
+	core_ = v.core_;
+
+	members_ = v.members_;
+	table_ = v.table_;
+
+	if(v.map_members_){
+		make_map_members();
+		*map_members_ = *v.map_members_;
+	}
+	else{
+		map_members_->~Hashtable();
+		user_free(map_members_);
+		map_members_ = 0;
+	}
+
+	global_mutate_count++;
+
+	return *this;
+}
+
 Frame::~Frame(){
 	if(map_members_){
 		map_members_->~Hashtable();
@@ -157,6 +196,14 @@ Class::Class(cpp_class_t, const StringPtr& name)
 	set_object_name(name, 1, null);
 	is_cpp_class_ = true;
 	make_map_members();
+}
+
+void Class::overwrite(const ClassPtr& p){
+	if(!is_cpp_class_){
+		operator=(*p);
+		mixins_ = p->mixins_;
+		global_mutate_count++;
+	}
 }
 
 

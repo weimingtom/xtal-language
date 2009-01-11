@@ -95,6 +95,10 @@ public:
 	*/
 	Hashtable();
 
+	Hashtable(const Hashtable<Key, Val, Fun>& v);
+
+	Hashtable<Key, Val, Fun>& operator=(const Hashtable<Key, Val, Fun>& v);
+
 	~Hashtable();
 		
 	/**
@@ -179,6 +183,30 @@ Hashtable<Key, Val, Fun>::Hashtable(){
 	ordered_head_ = 0;
 	ordered_tail_ = 0;
 	expand(4);
+}
+
+template<class Key, class Val, class Fun>
+Hashtable<Key, Val, Fun>::Hashtable(const Hashtable<Key, Val, Fun>& v){
+	size_ = 0;
+	begin_ = 0;
+	used_size_ = 0;
+	ordered_head_ = 0;
+	ordered_tail_ = 0;
+	expand(4);
+
+	for(const_iterator it=v.begin(); it!=v.end(); ++it){
+		insert(it->first, it->second);
+	}
+}
+
+template<class Key, class Val, class Fun>
+Hashtable<Key, Val, Fun>& Hashtable<Key, Val, Fun>::operator=(const Hashtable<Key, Val, Fun>& v){
+	if(this==&v){ return *this; }
+	clear();
+	for(const_iterator it=v.begin(); it!=v.end(); ++it){
+		insert(it->first, it->second);
+	}
+	return *this;
 }
 
 template<class Key, class Val, class Fun>

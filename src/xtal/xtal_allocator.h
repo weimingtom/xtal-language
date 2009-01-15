@@ -26,18 +26,25 @@ void* user_malloc_nothrow(size_t size);
 */
 void user_free(void* p);
 
+void* so_malloc(size_t size);
+
+void so_free(void* p, size_t size);
+
 /**
 * @brief 使用するメモリアロケート関数を設定する。
 *
 */
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
 
-
 /**
-* @brief xtalで使用するメモリーを設定する。
+* @brief 使用するメモリーを設定する。
 *
 */
-void set_memory(void* memory, size_t size);
+//void set_memory(void* memory, size_t size);
+
+void initialize_memory();
+
+void release_memory();
 
 /**
 * @brief 動的なポインタの配列を作成、拡張する関数。
@@ -196,38 +203,182 @@ struct AC{
 };
 
 /**
-* @brief とてもシンプルなメモリ管理機構
+* @brief メモリ管理機構
 *
 */
-class SimpleMemoryManager{
-public:
-	
-	struct Chunk{
-		Chunk* next;
-		Chunk* prev;
-		int used;
-		
+class RBTreeAllocator{
+	class Node{
+	public:
+		Node* next;
+		Node* prev;
+
+		Node* left;
+		Node* right;
+
+		uint_t flag;
+
+		enum{
+			COLOR_RED = 1<<31
+		};
+
+		uint_t used(){ return flag&~COLOR_RED; }
+		bool red(){ return (flag&COLOR_RED)!=0; }
+		void set_red(){ flag|=COLOR_RED; }
+		void set_black(){ flag&=~COLOR_RED; }
+		void set_same_color(Node* a){ if(a->red()){ set_red(); }else{ set_black(); } }
+		void flip(){ flag^=COLOR_RED; }
 		size_t size(){ return (u8*)next - (u8*)buf(); }
 		void* buf(){ return this+1; }
 	};
 
-	SimpleMemoryManager(){ head_ = begin_ = end_ = 0; }
+public:
+
+	RBTreeAllocator();
 	
 	void init(void* begin, void* end);
 
 	void* malloc(size_t size);
+
 	void free(void* p);
 
-	Chunk* begin(){ return begin_; }
-	Chunk* end(){ return end_; }
+	void release();
 
-	Chunk* to_chunk(void* p){ return (Chunk*)p-1; }
-	void add_ref(void* p){ to_chunk(p)->used++; }
+	void debug_print();
+
+private:
+	
+	void* malloc(Node* node, size_t size);
+
+	void insert(Node* newnode);
+
+	Node* insert(Node* h , Node* newnode);
+
+	void erase(Node* erasenode);
+
+	Node* erase(Node* h , Node* erasenode);
+
+	Node* erase_min(Node* h);
+
+	Node* move_red_left(Node* h);
+
+	Node* move_red_right(Node* h);
+
+	Node* fixup(Node* h);
+
+	Node* rotate_left(Node* h);
+
+	Node* rotate_right(Node* h);
+	
+	bool right_leaning(Node* h){
+		return h==end_ ? false : h->right->red() && !h->left->red();
+	}
+
+	void flip(Node* h){
+		XTAL_ASSERT(h!=end_);
+		XTAL_ASSERT(h->left!=end_);
+		XTAL_ASSERT(h->right!=end_);
+		h->flip();
+		h->left->flip();
+		h->right->flip();
+	}
+
+private:
+
+	Node* begin(){ return begin_; }
+	Node* end(){ return end_; }
+
+	Node* to_node(void* p){ return (Node*)p-1; }
+	void add_ref(void* p){ to_node(p)->flag++; }
 	
 private:
-	Chunk* head_;
-	Chunk* begin_;
-	Chunk* end_;
+
+	Node* head_;
+	Node* begin_;
+	Node* end_;
+	Node* root_;
+
+	uint_t count_;
+};
+
+class FixedAllocator{
+
+	struct Chunk{
+
+		typedef void* data_t;
+
+		uint_t blocks_;
+		uint_t blocks_available_;
+		data_t* first_available_block_;
+		Chunk* next_;
+		//data_t buf_[blocks_];
+
+		void init(uint_t blocks,uint_t block_size);
+
+		void* malloc();
+
+		void free(void* p);
+
+		data_t* buf(){
+			return reinterpret_cast<data_t*>(this+1);
+		}
+	};
+
+public:
+	
+	typedef Chunk::data_t data_t;
+
+private:
+
+	int_t blocks_;
+	data_t* free_data_;
+	Chunk* first_chunk_;
+	Chunk* last_chunk_;
+
+public:
+
+	FixedAllocator();
+
+	void init(size_t block_size);
+
+	void* malloc(size_t block_size);
+
+	void free(void* p, size_t block_size);
+
+	void release(size_t block_size);
+
+private:
+
+	void add_chunk(size_t block_size);
+
+	void* malloc_impl(size_t block_size);
+
+	void free_impl(void* p, size_t block_size);
+};
+
+class SmallObjectAllocator{	
+
+	typedef FixedAllocator::data_t data_t;
+
+public:
+
+	enum{
+		POOL_SIZE = 32,
+		HANDLE_MAX_SIZE = POOL_SIZE*sizeof(data_t)
+	};
+
+public:
+
+	void init();
+	
+	void* malloc(size_t size);
+
+	void free(void* p, size_t size);
+
+	void release();
+
+private:
+
+	FixedAllocator pool_[POOL_SIZE];
 };
 
 /*@}*/

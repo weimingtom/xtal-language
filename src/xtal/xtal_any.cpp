@@ -3,6 +3,9 @@
 
 namespace xtal{
 
+nodeleter_t nodeleter;
+deleter_t deleter;
+
 namespace{
 
 	bool op_in_Any_Array(const AnyPtr& v, const ArrayPtr& values){
@@ -129,13 +132,23 @@ Innocence::Innocence(const avoid<char>::type* str){
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c)
+SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
+	return ap_copy(*this, p);
+}
+
+void SmartPtr<Any>::set_p_with_class(Base* p, const ClassPtr& c){
+	Innocence::set_p(p);
+	p->set_class(c);
+	register_gc(p);
+}
+
+SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, with_class_t)
 	:Innocence(p){
 	p->set_class(c);
 	register_gc(p);
 }
 
-SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c)
+SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, with_class_t)
 	:Innocence(p){
 	register_gc(p);
 }

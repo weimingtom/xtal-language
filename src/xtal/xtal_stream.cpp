@@ -50,6 +50,7 @@ void initialize_stream(){
 		p->method("pour", &Stream::pour);
 		p->method("pour_all", &Stream::pour_all);
 		p->method("size", &Stream::size);
+		p->method("close", &Stream::close);
 
 		p->method("eos", &Stream::eos);
 

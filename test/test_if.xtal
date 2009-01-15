@@ -129,5 +129,31 @@
 	}
 	assert temp==500;
 	
+	if(1!=2){
+		temp = 1;
+	}
+	assert(temp==1);
+	
+	if(1!=2){
+		temp = 3;
+	}
+	else{
+		temp = 10;
+	}
+	assert(temp==3);
+		
+	if(2>=2){
+		temp = 2;
+	}
+	assert(temp==2);
+	
+	if(3<=2){
+		temp = 5;
+	}
+	else{
+		temp = 7
+	}
+	assert(temp==7);
+		
 }
 

@@ -143,7 +143,7 @@ public:
 	* @brief 連想配列の容量を返す
 	*
 	*/
-	int_t size(){
+	uint_t size(){
 		return used_size_;
 	}
 

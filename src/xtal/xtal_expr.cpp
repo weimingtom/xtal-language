@@ -2,6 +2,10 @@
 
 namespace xtal{
 
+const ExprPtr& ep(const AnyPtr& a){
+	return ptr_cast<Expr>(a);
+}
+
 const AnyPtr& Expr::at(uint_t i){
 	if(size()<=i)
 		resize(i+1);

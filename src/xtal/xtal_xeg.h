@@ -26,7 +26,7 @@ public:
 		lineno_ = lineno;
 	}
 
-	AnyPtr tag(){
+	const AnyPtr& tag(){
 		return tag_;
 	}
 
@@ -155,7 +155,7 @@ private:
 		SState pos; 
 	};
 
-	typedef Stack<StackInfo> stack_t;
+	typedef PODStack<StackInfo> stack_t;
 
 	struct Cap{
 		int_t begin, end;

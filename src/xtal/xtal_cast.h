@@ -22,7 +22,7 @@ template<class T>
 inline bool can_cast(const AnyPtr& a);
 
 template<class T>
-inline typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
+typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -265,8 +265,7 @@ cast(const AnyPtr& a){
 *
 */
 template<class T>
-inline bool 
-can_cast(const AnyPtr& a){
+inline bool can_cast(const AnyPtr& a){
 	return CastHelper<T>::can_cast(a);
 }
 

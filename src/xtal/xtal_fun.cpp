@@ -88,6 +88,13 @@ void initialize_fun(){
 	builtin()->def("Fiber", get_cpp_class<Fiber>());
 }
 
+Arguments::Arguments(const AnyPtr& ordered, const AnyPtr& named){
+	if(ordered){ ordered_ = ptr_cast<Array>(ordered); }
+	else{ ordered_ = xnew<Array>(); }
+	if(named){ named_ = ptr_cast<Map>(named); }
+	else{ named_ = xnew<Map>(); }
+}
+
 void Arguments::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & ordered_ & named_;

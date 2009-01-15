@@ -112,16 +112,14 @@ enum ExprType{
 };
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
-	CastResult<Type>::type Name(){ return as<Type>(at(N)); }\
-	void set_##Name(const Type& v){ set_at(N, v); }
+	CastResult<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
+	void set_##Name(Type v){ set_at(N, v); }
 
 
 class Expr;
 typedef SmartPtr<Expr> ExprPtr;
 
-inline const ExprPtr& ep(const AnyPtr& a){
-	return ptr_cast<Expr>(a);
-}
+const ExprPtr& ep(const AnyPtr& a);
 
 class Expr : public Array{
 	AnyPtr tag_;
@@ -154,105 +152,105 @@ public:
 
 	void set_at(uint_t i, const AnyPtr& v);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, una_term);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, una_term);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, bin_lhs);
-	XTAL_DEF_MEMBER(1, ExprPtr, bin_rhs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, bin_lhs);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, bin_rhs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, q_cond);
-	XTAL_DEF_MEMBER(1, ExprPtr, q_true);
-	XTAL_DEF_MEMBER(2, ExprPtr, q_false);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, q_cond);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, q_true);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, q_false);
 
 	XTAL_DEF_MEMBER(0, int_t, int_value);
 
 	XTAL_DEF_MEMBER(0, float_t, float_value);
 
 	XTAL_DEF_MEMBER(0, int_t, string_kind);
-	XTAL_DEF_MEMBER(1, IDPtr, string_value);
+	XTAL_DEF_MEMBER(1, const IDPtr&, string_value);
 
 	XTAL_DEF_MEMBER(0, int_t, range_kind);
-	XTAL_DEF_MEMBER(1, ExprPtr, range_lhs);
-	XTAL_DEF_MEMBER(2, ExprPtr, range_rhs);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, range_lhs);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, range_rhs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, array_values);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, array_values);
 	
-	XTAL_DEF_MEMBER(0, ExprPtr, map_values);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, map_values);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, multi_value_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, multi_value_exprs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, return_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, return_exprs);
 	
-	XTAL_DEF_MEMBER(0, ExprPtr, yield_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, yield_exprs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, assert_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, assert_exprs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, throw_expr);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, throw_expr);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, try_body);
-	XTAL_DEF_MEMBER(1, IDPtr, try_catch_var);
-	XTAL_DEF_MEMBER(2, ExprPtr, try_catch);
-	XTAL_DEF_MEMBER(3, ExprPtr, try_finally);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, try_body);
+	XTAL_DEF_MEMBER(1, const IDPtr&, try_catch_var);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, try_catch);
+	XTAL_DEF_MEMBER(3, const ExprPtr&, try_finally);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, if_cond);
-	XTAL_DEF_MEMBER(1, ExprPtr, if_body);
-	XTAL_DEF_MEMBER(2, ExprPtr, if_else);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, if_cond);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, if_body);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, if_else);
 
-	XTAL_DEF_MEMBER(0, IDPtr, for_label);
-	XTAL_DEF_MEMBER(1, ExprPtr, for_init);
-	XTAL_DEF_MEMBER(2, ExprPtr, for_cond);
-	XTAL_DEF_MEMBER(3, ExprPtr, for_next);
-	XTAL_DEF_MEMBER(4, ExprPtr, for_body);
-	XTAL_DEF_MEMBER(5, ExprPtr, for_else);
-	XTAL_DEF_MEMBER(6, ExprPtr, for_nobreak);
+	XTAL_DEF_MEMBER(0, const IDPtr&, for_label);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, for_init);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, for_cond);
+	XTAL_DEF_MEMBER(3, const ExprPtr&, for_next);
+	XTAL_DEF_MEMBER(4, const ExprPtr&, for_body);
+	XTAL_DEF_MEMBER(5, const ExprPtr&, for_else);
+	XTAL_DEF_MEMBER(6, const ExprPtr&, for_nobreak);
 
 	XTAL_DEF_MEMBER(0, int_t, fun_kind);
-	XTAL_DEF_MEMBER(1, ExprPtr, fun_params);
-	XTAL_DEF_MEMBER(2, ExprPtr, fun_extendable_param);
-	XTAL_DEF_MEMBER(3, ExprPtr, fun_body);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, fun_params);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, fun_extendable_param);
+	XTAL_DEF_MEMBER(3, const ExprPtr&, fun_body);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, massign_lhs_exprs);
-	XTAL_DEF_MEMBER(1, ExprPtr, massign_rhs_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, massign_lhs_exprs);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, massign_rhs_exprs);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, mdefine_lhs_exprs);
-	XTAL_DEF_MEMBER(1, ExprPtr, mdefine_rhs_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, mdefine_lhs_exprs);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, mdefine_rhs_exprs);
 
-	XTAL_DEF_MEMBER(0, IDPtr, ivar_name);
-	XTAL_DEF_MEMBER(0, IDPtr, lvar_name);
+	XTAL_DEF_MEMBER(0, const IDPtr&, ivar_name);
+	XTAL_DEF_MEMBER(0, const IDPtr&, lvar_name);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, member_term);
-	XTAL_DEF_MEMBER(1, AnyPtr, member_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, member_ns);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, member_term);
+	XTAL_DEF_MEMBER(1, const AnyPtr&, member_name);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, member_ns);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, send_term);
-	XTAL_DEF_MEMBER(1, AnyPtr, send_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, send_ns);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, send_term);
+	XTAL_DEF_MEMBER(1, const AnyPtr&, send_name);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, send_ns);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, call_term);
-	XTAL_DEF_MEMBER(1, ExprPtr, call_args);
-	XTAL_DEF_MEMBER(2, ExprPtr, call_extendable_arg);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, call_term);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, call_args);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, call_extendable_arg);
 
-	XTAL_DEF_MEMBER(0, AnyPtr, cdefine_member_accessibility);
-	XTAL_DEF_MEMBER(1, IDPtr, cdefine_member_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, cdefine_member_ns);
-	XTAL_DEF_MEMBER(3, ExprPtr, cdefine_member_term);
+	XTAL_DEF_MEMBER(0, const AnyPtr&, cdefine_member_accessibility);
+	XTAL_DEF_MEMBER(1, const IDPtr&, cdefine_member_name);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, cdefine_member_ns);
+	XTAL_DEF_MEMBER(3, const ExprPtr&, cdefine_member_term);
 
-	XTAL_DEF_MEMBER(0, AnyPtr, cdefine_ivar_accessibility);
-	XTAL_DEF_MEMBER(1, IDPtr, cdefine_ivar_name);
-	XTAL_DEF_MEMBER(2, ExprPtr, cdefine_ivar_term);
+	XTAL_DEF_MEMBER(0, const AnyPtr&, cdefine_ivar_accessibility);
+	XTAL_DEF_MEMBER(1, const IDPtr&, cdefine_ivar_name);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, cdefine_ivar_term);
 
-	XTAL_DEF_MEMBER(0, IDPtr, break_label);
+	XTAL_DEF_MEMBER(0, const IDPtr&, break_label);
 
-	XTAL_DEF_MEMBER(0, IDPtr, continue_label);
+	XTAL_DEF_MEMBER(0, const IDPtr&, continue_label);
 
 	XTAL_DEF_MEMBER(0, int_t, class_kind);
-	XTAL_DEF_MEMBER(1, ExprPtr, class_mixins);
-	XTAL_DEF_MEMBER(2, ExprPtr, class_stmts);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, class_mixins);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, class_stmts);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, switch_cond);
-	XTAL_DEF_MEMBER(1, ExprPtr, switch_cases);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, switch_cond);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, switch_cases);
 
-	XTAL_DEF_MEMBER(0, ExprPtr, scope_stmts);
-	XTAL_DEF_MEMBER(0, ExprPtr, toplevel_stmts);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, scope_stmts);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);
 };
 
 class ExprBuilder{

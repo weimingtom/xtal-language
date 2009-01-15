@@ -3,15 +3,38 @@
 
 namespace xtal{
 
+template<uint_t Size>
+struct UserTypeBuffer{
+	union{
+		u8 buf[Size];
+		int_t dummy;
+	};
+
+	template<class T>
+	void operator()(T* p){
+		p->~T();
+	}
+};
+
 template<class T>
-class TBase : public Base{
-	virtual ~TBase(){ ((T*)(this+1))->~T(); }
+struct UserTypeHolder : public Base{
+	UserTypeHolder(){}
+	UserTypeHolder(T* p):ptr(p){}
+	T* ptr;
+};
+
+template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
+struct UserTypeHolderSub : public UserTypeHolder<T>{
+	UserTypeHolderSub(){}
+	UserTypeHolderSub(T* p, Deleter f):UserTypeHolder<T>(p), fun(f){}
+	virtual ~UserTypeHolderSub(){ fun(this->ptr); }
+	Deleter fun;
 };
 
 enum InheritedEnum{
 	INHERITED_BASE,
 	INHERITED_INNOCENCE,
-	INHERITED_OTHER,
+	INHERITED_OTHER
 };
 
 template<class T>
@@ -22,6 +45,23 @@ struct InheritedN{
 	};
 };
 
+struct nodeleter_t{
+	template<class T>
+	void operator()(T* p){
+		p->~T();
+	}
+};
+
+struct deleter_t{
+	template<class T>
+	void operator()(T* p){
+		delete p;
+	}
+};
+
+extern nodeleter_t nodeleter;
+extern deleter_t deleter;
+
 /**
 * @brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
 */
@@ -30,6 +70,12 @@ class SmartPtr<Any> : public Innocence{
 public:
 	
 	SmartPtr(){}
+
+	template<class T, class Deleter>
+	SmartPtr(T* p, Deleter deleter){
+		UserTypeHolderSub<T, Deleter>* holder = new UserTypeHolderSub<T, Deleter>(p, deleter);
+		set_p_with_class(holder, new_cpp_class<T>());
+	}
 
 	SmartPtr(const SmartPtr<Any>& p)
 		:Innocence(p){
@@ -48,12 +94,7 @@ public:
 		return *this;
 	}
 
-	SmartPtr<Any>& operator =(const SmartPtr<Any>& p){
-		dec_ref_count();
-		*(Innocence*)this = p;
-		inc_ref_count();
-		return *this;
-	}
+	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
 
 	explicit SmartPtr(PrimitiveType type)
 		:Innocence(type){}
@@ -73,9 +114,13 @@ protected:
 	explicit SmartPtr(const Innocence& innocence)
 		:Innocence(innocence){}
 
-	SmartPtr(Base* p, const ClassPtr& c);
+	struct with_class_t{};
 
-	SmartPtr(Singleton* p, const ClassPtr& c);
+	SmartPtr(Base* p, const ClassPtr& c, with_class_t);
+
+	SmartPtr(Singleton* p, const ClassPtr& c, with_class_t);
+
+	void set_p_with_class(Base* p, const ClassPtr& c);
 
 	void inc_ref_count(){
 		if(type(*this)==TYPE_BASE){
@@ -169,6 +214,19 @@ public:
 	*/
 	Any* get() const{ return (Any*)this; }
 
+public:
+
+	friend inline const AnyPtr& ap(const Innocence& v){
+		return (const AnyPtr&)v;
+	}
+
+	friend inline SmartPtr<Any>& ap_copy(SmartPtr<Any>& a, const SmartPtr<Any>& b){
+		a.dec_ref_count();
+		*(Innocence*)&a = b;
+		a.inc_ref_count();
+		return a;
+	}
+
 private:
 
 	struct dummy_bool_tag{ void safe_true(dummy_bool_tag){} };
@@ -189,9 +247,6 @@ public:
 	}
 };
 
-inline const AnyPtr& ap(const Innocence& v){
-	return (const AnyPtr&)v;
-}
 
 class Null : public AnyPtr{};
 class Undefined : public AnyPtr{ public: Undefined():AnyPtr(TYPE_UNDEFINED){} };
@@ -236,9 +291,9 @@ public:
 	
 	SmartPtr(){}
 
-	explicit SmartPtr(T* p){
-		set_p2(SmartPtrSelector<InheritedN<T>::value>(), p);
-	}
+	template<class Deleter>
+	SmartPtr(T* p, Deleter deleter)
+		:SmartPtr<Any>(p, deleter){}
 
 	template<class U>
 	SmartPtr(const SmartPtr<U>& p)
@@ -267,6 +322,18 @@ public:
 	/// 特別なコンストラクタ3
 	SmartPtr(typename SmartPtrCtor3<T>::type v);
 
+public:
+
+	SmartPtr(T* p, SmartPtrSelector<INHERITED_BASE>){ 
+		set_p((Base*)p); 
+		p->inc_ref_count(); 
+	}
+
+	SmartPtr(T* p, SmartPtrSelector<INHERITED_INNOCENCE>){ 
+		*(Innocence*)this = *(Innocence*)p; 
+		inc_ref_count();
+	}
+
 private:
 
 	/**
@@ -281,8 +348,19 @@ private:
 	* @brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
 	* 得体の知れないポインタ型からの暗黙の変換を拒否するために、privateで定義されている。
+	*
+	* Baseクラスを継承していないAというクラスを持たせたい場合、
+	* SmartPtr<A> p = xnew<A>(); 
+	* とxnewで作り出すか、
+	* SmartPtr<A> p = SmartPtr<A>(new A, deleter);
+	* とコンストラクタにnewで生成したポインタとdeleterを渡すか
+	* static A static_a;
+	* SmartPtr<A> p = SmartPtr<A>(&static_a, nodeleter);
+	* と寿命が長いオブジェクトへのポインタとnodeleterを渡すか、
+	* この三つの方法のどれかをする必要がある。
 	*/
 	SmartPtr(void*);
+	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, T* p);
 
 public:
 
@@ -305,36 +383,39 @@ public:
 
 private:
 
-	void set_p2(SmartPtrSelector<INHERITED_BASE>, T* p){ set_p((Base*)p); p->inc_ref_count(); }
-	void set_p2(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ *(Innocence*)this = *(Innocence*)p; inc_ref_count();}
-	void set_p2(SmartPtrSelector<INHERITED_OTHER>, T* p){ set_p(((Base*)p - 1)); inc_ref_count(); }
-
 	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
 		return (T*)pvalue(*this); 
 	}
 
-	T* get2(SmartPtrSelector<INHERITED_INNOCENCE>) const{ return (T*)this; }
-	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ return (T*)((Base*)pvalue(*this) + 1); }
+	T* get2(SmartPtrSelector<INHERITED_INNOCENCE>) const{ 
+		return (T*)this; 
+	}
+
+	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ 
+		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
+	}
 
 public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
-		:SmartPtr<Any>(new T(), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(), new_cpp_class<T>(), with_class_t()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
 		:SmartPtr<Any>(T()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T;
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T;
 	}
 
 /////////////////////
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0)
-		:SmartPtr<Any>(new T(a0), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(a0), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0)
@@ -342,15 +423,17 @@ public:
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T(a0);
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T(a0);
 	}
 
 /////////////////////
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new T(a0, a1), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(a0, a1), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1)
@@ -358,15 +441,17 @@ public:
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T(a0, a1);
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T(a0, a1);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new T(a0, a1, a2), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(a0, a1, a2), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2)
@@ -374,15 +459,17 @@ public:
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T(a0, a1, a2);
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T(a0, a1, a2);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(a0, a1, a2, a3), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
@@ -390,15 +477,17 @@ public:
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T(a0, a1, a2, a3);
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T(a0, a1, a2, a3);
 	}
 
 /////////////////////
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), new_cpp_class<T>()){}
+		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
@@ -406,8 +495,10 @@ public:
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new(sizeof(T)) TBase<T>(), new_cpp_class<T>()){
-		new(get()) T(a0, a1, a2, a3, a4);
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
+		p->ptr = (T*)&p->fun;
+		new(p->ptr) T(a0, a1, a2, a3, a4);
 	}
 
 };
@@ -477,7 +568,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 */
 template<class T>
 inline SmartPtr<T> from_this(const T* p){
-	return SmartPtr<T>((T*)p);
+	return SmartPtr<T>((T*)p, SmartPtrSelector<InheritedN<T>::value>());
 }
 
 //////////////////////////////////////////////////////////////

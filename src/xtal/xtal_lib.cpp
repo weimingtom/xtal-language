@@ -44,10 +44,10 @@ AnyPtr load_and_save(const StringPtr& file_name){
 	return ret();
 }
 
-AnyPtr source(const char_t* src, int_t size, const char* file){
+CodePtr source(const char_t* src, int_t size, const char* file){
 	CodeBuilder cb;
 	StringStreamPtr ms(xnew<StringStream>(xnew<String>(src, size)));
-	if(AnyPtr fun = cb.compile(ms, file)){
+	if(CodePtr fun = cb.compile(ms, file)){
 		return fun;
 	}
 

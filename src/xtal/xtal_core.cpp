@@ -95,6 +95,7 @@ void chain_cpp_class(CppClassHolderList& link){
 
 void initialize(){
 	if(is_initialized()){ return; } 
+	initialize_memory();
 
 	set_thread();
 
@@ -215,6 +216,8 @@ void uninitialize(){
 
 	empty_instance_variables.uninit();
 
+	release_memory();
+
 	//
 	display_debug_memory();
 }
@@ -260,7 +263,7 @@ void gc(){
 		}
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
-			user_free(*it);
+			so_free(*it, ivalue((*it)->class_));
 		}
 
 		objects_current_ = objects_alive;
@@ -370,7 +373,7 @@ void full_gc(){
 				}
 
 				for(ConnectedPointer it = alive; it!=current; ++it){
-					user_free(*it);
+					so_free(*it, ivalue((*it)->class_));
 				}
 
 				current = alive;

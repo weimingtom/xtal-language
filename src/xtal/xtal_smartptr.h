@@ -47,9 +47,7 @@ struct InheritedN{
 
 struct nodeleter_t{
 	template<class T>
-	void operator()(T* p){
-		p->~T();
-	}
+	void operator()(T* p){}
 };
 
 struct deleter_t{

@@ -3,6 +3,8 @@
 #include "xtal_macro.h"
 #include "xtal_ch.h"
 
+#include <stdio.h>
+
 using namespace xtal;
 
 static void print_usage(){
@@ -59,33 +61,39 @@ void debug_break_point(const SmartPtr<debug::Info>& info){
 
 class A{
 public:
-  void foo(int n){
-    printf("%d\n", n);
+	int n;
+  void foo(int m){
+    printf("%d\n", n+m);
   }
 };
+
+int memory_block[1024*1000/4];
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	setlocale(LC_ALL, "japanese");
+	//set_memory(memory_block, 1024*1000);
 
 	using namespace xtal::xeg;
 	using namespace std;
 
+
 	try{
 		initialize();
+			
+		A* aaaa = new A();
+		aaaa->n = 11111;
+		SmartPtr<A> aaa = SmartPtr<A>(aaaa, deleter);
+		//aaa->foo();
+		aaa = aaa;
+		lib()->def("aa", aaa);
+		lib()->def("printA", fun(&printA));
 
-		ClassPtr class_a = new_cpp_class<A>("A");
-		class_a->def("new", ctor<A>());
-		class_a->method("foo", &A::foo);
-
-		debug::enable();
-		debug::set_break_point_hook(fun(&debug_break_point));    
-
-		CodePtr p = compile_file("../../testx/test.xtal");
-		p->add_break_point(6);
-
-		p();
+		Xsrc((
+			"‚ ‚ ".length.p;
+			//lib::printA(lib::aa, 5);
+		))();
 
 #if 1
 		//debug::enable();
@@ -179,6 +187,7 @@ int c;
 		load("../../test/test_inc.xtal");
 		load("../../test/test_toplevel.xtal");
 		load("../../test/test_serialize.xtal");
+		load("../../test/test_string.xtal");
 #endif
 		
 		//*/
@@ -192,7 +201,9 @@ int c;
 	vmachine()->print_info();
 	print_result_of_cache();
 
+	printf("-------------------\n");
 	uninitialize();
+	printf("-------------------\n");
 
 	return 0;
 }

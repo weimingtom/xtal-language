@@ -31,7 +31,7 @@ public:
 	/**
 	* @brief デストラクタ
 	*/
-	~Array();
+	virtual ~Array();
 
 	/**
 	* @brief 配列の長さを返す

@@ -30,7 +30,8 @@ private:
 			:need_result_count(need_result_count), tail(tail){}
 	};
 
-	AnyPtr compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
+	bool compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret);
+	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
 	void compile_stmt(const AnyPtr& p);	
 
 	int_t reserve_label();
@@ -81,7 +82,6 @@ private:
 	int_t code_size();
 			
 	struct FunFrame{
-
 		int_t stack_count;
 		int_t max_stack_count;
 

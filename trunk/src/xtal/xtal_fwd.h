@@ -211,7 +211,7 @@ enum StringKind{
 enum AccessibilityKind{
 	KIND_PUBLIC = 0,
 	KIND_PROTECTED = 1<<0,
-	KIND_PRIVATE = 1<<1,
+	KIND_PRIVATE = 1<<1
 };
 
 /**
@@ -230,7 +230,7 @@ enum RangeKind{
 	RANGE_CLOSED = (0<<1) | (0<<0),
 	RANGE_LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
 	RANGE_LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
-	RANGE_OPEN = (1<<1) | (1<<0),
+	RANGE_OPEN = (1<<1) | (1<<0)
 };
 
 
@@ -400,7 +400,7 @@ extern ReturnThis return_this;
 extern ReturnUndefined return_void;
 
 template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name = empty_id);
+inline const ClassPtr& new_cpp_class(const StringPtr& name = (const StringPtr&)empty_id);
 
 template<class T>
 inline bool exists_cpp_class();

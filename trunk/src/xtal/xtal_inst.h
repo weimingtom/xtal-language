@@ -16,12 +16,12 @@ struct inst_16_t{
 	inst_16_t(){}
 
 	inst_16_t(T value){
-		values[0] = (value>>8) & 0xff;
-		values[1] = (value>>0) & 0xff;
+		values[0] = (u8)(value>>8);
+		values[1] = (u8)(value>>0);
 	}
 	
 	operator T() const{
-		return (T)(values[0]<<8 | values[1]);
+		return (T)((values[0]<<8) | values[1]);
 	}
 };
 
@@ -35,7 +35,33 @@ inline AnyPtr inst_inspect(u8 value, Inst* inst, const CodePtr& code){ return (i
 inline AnyPtr inst_inspect(inst_i16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
 inline AnyPtr inst_inspect(inst_u16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
 
-AnyPtr inst_inspect(inst_address_t value, Inst* inst, const CodePtr& code);
+AnyPtr inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code);
+
+StringPtr make_inst_string(const char* InstName);
+
+StringPtr make_inst_string(const char* InstName, 
+						const char* MemberName1, const AnyPtr& MemberValue1);
+
+StringPtr make_inst_string(const char* InstName, 
+						const char* MemberName1, const AnyPtr& MemberValue1,
+						const char* MemberName2, const AnyPtr& MemberValue2);
+
+StringPtr make_inst_string(const char* InstName, 
+						const char* MemberName1, const AnyPtr& MemberValue1,
+						const char* MemberName2, const AnyPtr& MemberValue2,
+						const char* MemberName3, const AnyPtr& MemberValue3);
+StringPtr make_inst_string(const char* InstName, 
+						const char* MemberName1, const AnyPtr& MemberValue1,
+						const char* MemberName2, const AnyPtr& MemberValue2,
+						const char* MemberName3, const AnyPtr& MemberValue3,
+						const char* MemberName4, const AnyPtr& MemberValue4);
+
+StringPtr make_inst_string(const char* InstName, 
+						const char* MemberName1, const AnyPtr& MemberValue1,
+						const char* MemberName2, const AnyPtr& MemberValue2,
+						const char* MemberName3, const AnyPtr& MemberValue3,
+						const char* MemberName4, const AnyPtr& MemberValue4,
+						const char* MemberName5, const AnyPtr& MemberValue5);
 
 struct Inst{
 	inst_t op;
@@ -49,7 +75,7 @@ struct Inst{
 
 	template<class T>
 	void checked_assign(T& ref, int v){
-		ref = v;
+		ref = (T)v;
 		if((int)ref != v){ op = 0xff; }
 	}
 };
@@ -65,7 +91,8 @@ struct Inst{
 			op = N;\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return xnew<String>(XTAL_STRING(#InstName) XTAL_STRING(":"));\
+			return make_inst_string(\
+					XTAL_STRING(#InstName));\
 		}\
 	}
 
@@ -75,7 +102,7 @@ struct Inst{
 			NUMBER = N,\
 			SIZE = sizeof(Inst) + sizeof(MemberType1),\
 			ISIZE = SIZE/sizeof(inst_t),\
-			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t)\
 		};\
 		MemberType1 MemberName1;\
 		Inst##InstName(){\
@@ -86,10 +113,9 @@ struct Inst{
 			checked_assign(MemberName1, m1);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format(\
-					XTAL_STRING(#InstName) XTAL_STRING(": ")\
-					XTAL_STRING(#MemberName1) XTAL_STRING("=%s"))\
-				(inst_inspect(MemberName1, this, code))->to_s();\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code));\
 		}\
 	}
 
@@ -100,7 +126,7 @@ struct Inst{
 			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2),\
 			ISIZE = SIZE/sizeof(inst_t),\
 			OFFSET_##MemberName1 = sizeof(inst_t),\
-			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1)\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\
@@ -113,11 +139,10 @@ struct Inst{
 			checked_assign(MemberName2, m2);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format(\
-					XTAL_STRING(#InstName) XTAL_STRING(": ")\
-					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName2) XTAL_STRING("=%s"))\
-				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code))->to_s();\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code));\
 		}\
 	}
 	
@@ -129,7 +154,7 @@ struct Inst{
 			ISIZE = SIZE/sizeof(inst_t),\
 			OFFSET_##MemberName1 = sizeof(inst_t),\
 			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
-			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2)\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\
@@ -144,12 +169,11 @@ struct Inst{
 			checked_assign(MemberName3, m3);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format(\
-					XTAL_STRING(#InstName) XTAL_STRING(": ")\
-					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName3) XTAL_STRING("=%s"))\
-				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code))->to_s();\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code));\
 		}\
 	}
 	
@@ -162,7 +186,7 @@ struct Inst{
 			OFFSET_##MemberName1 = sizeof(inst_t),\
 			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
 			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
-			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
+			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3)\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\
@@ -179,13 +203,12 @@ struct Inst{
 			checked_assign(MemberName4, m4);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format(\
-					XTAL_STRING(#InstName) XTAL_STRING(": ")\
-					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName3) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName4) XTAL_STRING("=%s"))\
-				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code), inst_inspect(MemberName4, this, code))->to_s();\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code));\
 		}\
 	}
 
@@ -199,7 +222,7 @@ struct Inst{
 			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
 			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
 			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
-			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4),\
+			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4)\
 		};\
 		MemberType1 MemberName1;\
 		MemberType2 MemberName2;\
@@ -218,54 +241,53 @@ struct Inst{
 			checked_assign(MemberName5, m5);\
 		}\
 		StringPtr inspect(const CodePtr& code){\
-			return format(\
-					XTAL_STRING(#InstName) XTAL_STRING(": ")\
-					XTAL_STRING(#MemberName1) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName2) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName3) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName4) XTAL_STRING("=%s, ")\
-					XTAL_STRING(#MemberName5) XTAL_STRING("=%s"))\
-				(inst_inspect(MemberName1, this, code), inst_inspect(MemberName2, this, code), inst_inspect(MemberName3, this, code), inst_inspect(MemberName4, this, code), inst_inspect(MemberName5, this, code))->to_s();\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
 		}\
 	}
 
 /**
-* @brief ä½•ã‚‚ã—ãªã„ã€‚
+* @brief ‰½‚à‚µ‚È‚¢B
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(0, Nop);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«nullå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Énull’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(1, PushNull);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«undefinedå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éundefined’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(2, PushUndefined);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«trueå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Étrue’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(3, PushTrue);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«falseå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éfalse’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(4, PushFalse);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«intå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éint’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
@@ -274,7 +296,7 @@ XTAL_DEF_INST_1(5, PushInt1Byte,
 );
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«intå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éint’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
@@ -283,7 +305,7 @@ XTAL_DEF_INST_1(6, PushInt2Byte,
 );
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«floatå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éfloat’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
@@ -292,7 +314,7 @@ XTAL_DEF_INST_1(7, PushFloat1Byte,
 );
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«floatå€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚Éfloat’l‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
@@ -301,70 +323,70 @@ XTAL_DEF_INST_1(8, PushFloat2Byte,
 );
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«ç¾åœ¨å®Ÿè¡Œä¸­ã®é–¢æ•°ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚ÉŒ»ÝŽÀs’†‚ÌŠÖ”‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(9, PushCallee);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ã«Argumentsã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒN‚ÉArgumentsƒIƒuƒWƒFƒNƒg‚ðƒvƒbƒVƒ…‚·‚éB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(10, PushArgs);
 
 /**
-* @brief ç¾åœ¨ã®thisã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«ç©ã‚€ã€‚
+* @brief Œ»Ý‚Ìthis‚ðƒXƒ^ƒbƒN‚ÉÏ‚ÞB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(11, PushThis);
 
 /**
-* @brief ç¾åœ¨ã®æ–‡è„ˆã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«ç©ã‚€ã€‚
+* @brief Œ»Ý‚Ì•¶–¬‚ðƒXƒ^ƒbƒN‚ÉÏ‚ÞB
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(12, PushCurrentContext);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã‚’ãƒãƒƒãƒ—ã™ã‚‹
+* @brief ƒXƒ^ƒbƒNƒgƒbƒv‚ðƒ|ƒbƒv‚·‚é
 *
 * stack [value] -> []
 */
 XTAL_DEF_INST_0(13, Pop);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®å€¤ã‚’ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹
+* @brief ƒXƒ^ƒbƒNƒgƒbƒv‚Ì’l‚ðƒvƒbƒVƒ…‚·‚é
 *
 * stack [value] -> [value, value2]
 */
 XTAL_DEF_INST_0(14, Dup);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®å€¤ã‚’ä¸€ã¤å‰ã«å…¥ã‚Œã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒNƒgƒbƒv‚Ì’l‚ðˆê‚Â‘O‚É“ü‚ê‚éB
 *
 * stack [value1, value2] -> [value2, value1]
 */
 XTAL_DEF_INST_0(15, Insert1);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®å€¤ã‚’äºŒã¤å‰ã«å…¥ã‚Œã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒNƒgƒbƒv‚Ì’l‚ð“ñ‚Â‘O‚É“ü‚ê‚éB
 *
 * stack [value1, value2, value3] -> [value3, value1, value2]
 */
 XTAL_DEF_INST_0(16, Insert2);
 
 /**
-* @brief ã‚¹ã‚¿ãƒƒã‚¯ãƒˆãƒƒãƒ—ã®å€¤ã‚’ä¸‰ã¤å‰ã«å…¥ã‚Œã‚‹ã€‚
+* @brief ƒXƒ^ƒbƒNƒgƒbƒv‚Ì’l‚ðŽO‚Â‘O‚É“ü‚ê‚éB
 *
 * stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
 */
 XTAL_DEF_INST_0(17, Insert3);
 
 /**
-* @brief å€¤ã®æ•°ã‚’èª¿æ•´ã™ã‚‹
+* @brief ’l‚Ì”‚ð’²®‚·‚é
 *
 * stack [] -> []
 */
@@ -374,7 +396,7 @@ XTAL_DEF_INST_2(18, AdjustResult,
 );
 
 /**
-* @brief æ¡ä»¶åˆ†å²
+* @brief ðŒ•ªŠò
 *
 * stack [value] -> []
 */
@@ -383,7 +405,7 @@ XTAL_DEF_INST_1(19, If,
 );
 
 /**
-* @brief æ¡ä»¶åˆ†å²
+* @brief ðŒ•ªŠò
 *
 * stack [value] -> []
 */
@@ -392,7 +414,7 @@ XTAL_DEF_INST_1(20, Unless,
 );
 
 /**
-* @brief ç„¡æ¡ä»¶åˆ†å²
+* @brief –³ðŒ•ªŠò
 *
 * stack [] -> []
 */
@@ -426,7 +448,7 @@ XTAL_DEF_INST_1(27, LocalVariableDec2Byte,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚ðŽæ‚èo‚·B
 *
 * stack [] -> [value]
 */
@@ -435,7 +457,7 @@ XTAL_DEF_INST_1(28, LocalVariable1Byte,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚ðŽæ‚èo‚·B
 *
 * stack [] -> [value]
 */
@@ -444,7 +466,7 @@ XTAL_DEF_INST_1(29, LocalVariable1ByteDirect,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚ðŽæ‚èo‚·B
 *
 * stack [] -> [value]
 */
@@ -453,7 +475,7 @@ XTAL_DEF_INST_1(30, LocalVariable2Byte,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚É’l‚ðÝ’è‚·‚éB
 *
 * stack [value] -> []
 */
@@ -462,7 +484,7 @@ XTAL_DEF_INST_1(31, SetLocalVariable1Byte,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚É’l‚ðÝ’è‚·‚éB
 *
 * stack [value] -> []
 */
@@ -471,7 +493,7 @@ XTAL_DEF_INST_1(32, SetLocalVariable1ByteDirect,
 );
 
 /**
-* @brief ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief ƒ[ƒJƒ‹•Ï”‚É’l‚ðÝ’è‚·‚éB
 *
 * stack [value] -> []
 */
@@ -480,7 +502,7 @@ XTAL_DEF_INST_1(33, SetLocalVariable2Byte,
 );
 
 /**
-* @brief ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°ã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒCƒ“ƒXƒ^ƒ“ƒX•Ï”‚ðŽæ‚èo‚·B
 *
 * stack [] -> [value]
 */
@@ -490,7 +512,7 @@ XTAL_DEF_INST_2(34, InstanceVariable,
 );
 
 /**
-* @brief ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°ã«å€¤ã‚’è¨­å®šã™ã‚‹ã€‚
+* @brief ƒCƒ“ƒXƒ^ƒ“ƒX•Ï”‚É’l‚ðÝ’è‚·‚éB
 *
 * stack [value] -> []
 */
@@ -500,14 +522,14 @@ XTAL_DEF_INST_2(35, SetInstanceVariable,
 );
 
 /**
-* @brief é–¢æ•°å‘¼ã³å‡ºã—ã®å¾Œå§‹æœ«ã‚’ã™ã‚‹
+* @brief ŠÖ”ŒÄ‚Ño‚µ‚ÌŒãŽn––‚ð‚·‚é
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(36, CleanupCall);
 
 /**
-* @brief é–¢æ•°ã‹ã‚‰æŠœã‘ã‚‹
+* @brief ŠÖ”‚©‚ç”²‚¯‚é
 *
 * stack [value1, value2, ...valueN] -> []
 */
@@ -516,7 +538,7 @@ XTAL_DEF_INST_1(37, Return,
 );
 
 /**
-* @brief fiberã®å®Ÿè¡Œã‚’ä¸€æ™‚ä¸­æ–­ã™ã‚‹
+* @brief fiber‚ÌŽÀs‚ðˆêŽž’†’f‚·‚é
 *
 * stack [value1, value2, ...valueN] -> []
 */
@@ -525,14 +547,14 @@ XTAL_DEF_INST_1(38, Yield,
 );
 
 /**
-* @brief ä»®æƒ³ãƒžã‚·ãƒ³ã®ãƒ«ãƒ¼ãƒ—ã‹ã‚‰è„±å‡ºã™ã‚‹ã€‚
+* @brief ‰¼‘zƒ}ƒVƒ“‚Ìƒ‹[ƒv‚©‚ç’Eo‚·‚éB
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(39, Exit);
 
 /**
-* @brief å€¤ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰å€¤ã‚’å–ã‚Šå‡ºã™
+* @brief ’lƒe[ƒuƒ‹‚©‚ç’l‚ðŽæ‚èo‚·
 *
 * stack [] -> [value]
 */
@@ -606,7 +628,7 @@ XTAL_DEF_INST_5(50, SendQNS,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ðŽæ‚èo‚·B
 *
 * stack [object] -> [result]
 */
@@ -615,7 +637,7 @@ XTAL_DEF_INST_1(51, Member,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ðŽæ‚èo‚·B
 *
 * stack [object] -> [result]
 */
@@ -624,7 +646,7 @@ XTAL_DEF_INST_1(52, MemberNS,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ðŽæ‚èo‚·B
 *
 * stack [object] -> [result]
 */
@@ -633,7 +655,7 @@ XTAL_DEF_INST_1(53, MemberQ,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ðŽæ‚èo‚·B
 *
 * stack [object] -> [result]
 */
@@ -642,7 +664,7 @@ XTAL_DEF_INST_1(54, MemberQNS,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å®šç¾©ã™ã‚‹ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ð’è‹`‚·‚éB
 *
 * stack [object, value] -> []
 */
@@ -651,7 +673,7 @@ XTAL_DEF_INST_1(55, DefineMember,
 );
 
 /**
-* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ¡ãƒ³ãƒã‚’å®šç¾©ã™ã‚‹ã€‚
+* @brief ƒIƒuƒWƒFƒNƒg‚Ìƒƒ“ƒo‚ð’è‹`‚·‚éB
 *
 * stack [object, value] -> []
 */
@@ -660,7 +682,7 @@ XTAL_DEF_INST_1(56, DefineMemberNS,
 );
 
 /**
-* @brief ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ã‚’å–ã‚Šå‡ºã™ã€‚
+* @brief ƒOƒ[ƒoƒ‹•Ï”‚ðŽæ‚èo‚·B
 *
 * stack [] -> [value]
 */
@@ -668,7 +690,7 @@ XTAL_DEF_INST_1(57, GlobalVariable,
         inst_u16_t, identifier_number
 );
 /**
-* @brief ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ã«è¨­å®šã™ã‚‹ã€‚
+* @brief ƒOƒ[ƒoƒ‹•Ï”‚ÉÝ’è‚·‚éB
 *
 * stack [value] -> []
 */
@@ -677,7 +699,7 @@ XTAL_DEF_INST_1(58, SetGlobalVariable,
 );
 
 /**
-* @brief ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ã‚’å®šç¾©ã™ã‚‹ã€‚
+* @brief ƒOƒ[ƒoƒ‹•Ï”‚ð’è‹`‚·‚éB
 *
 * stack [value] -> []
 */

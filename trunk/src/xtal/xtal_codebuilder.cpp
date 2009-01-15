@@ -1113,7 +1113,11 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
 			if(v1->tag()==EXPR_CDEFINE_MEMBER){					
-				AnyPtr val = compile_expr(v1->cdefine_member_term());
+				AnyPtr val;
+				if(!compile_expr(v1->cdefine_member_term(), CompileInfo(), val)){
+					compile_expr(v1->cdefine_member_term());
+				}
+
 				compile_expr(v1->cdefine_member_ns());
 
 				if(v1->cdefine_member_ns()){
@@ -1438,17 +1442,18 @@ int_t CodeBuilder::compile_exprs(const ExprPtr& e){
 	return count;
 }
 
-AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
+bool CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret){
 	if(!p){
 		if(info.need_result_count==1){
 			put_inst(InstPushNull());
-			return null;
+			ret = null;
+			return true;
 		}
 		else if(info.need_result_count!=0){
 			put_inst(InstAdjustResult(0, info.need_result_count));
 		}
-
-		return undefined;
+		ret = undefined;
+		return true;
 	}
 
 	ExprPtr e = ep(p);
@@ -1462,9 +1467,21 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				put_inst(InstAdjustResult(1, info.need_result_count));
 			}
 		}
-
-		return val;
+		ret = val;
+		return true;
 	}
+
+	ret = undefined;
+	return false;
+}
+	
+void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
+	AnyPtr val;
+	if(compile_expr(p, info, val)){
+		return;
+	}	
+
+	ExprPtr e = ep(p);
 	
 	if(e->lineno()!=0){
 		linenos_.push(e->lineno());
@@ -1801,8 +1818,6 @@ AnyPtr CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	if(info.need_result_count!=result_count){
 		put_inst(InstAdjustResult(result_count, info.need_result_count));
 	}
-
-	return undefined;
 }
 
 void CodeBuilder::compile_stmt(const AnyPtr& p){

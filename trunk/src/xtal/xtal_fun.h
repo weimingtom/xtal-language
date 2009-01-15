@@ -7,12 +7,7 @@ namespace xtal{
 class Arguments : public Base{
 public:
 
-	Arguments(const AnyPtr& ordered = undefined, const AnyPtr& named = undefined){
-		if(ordered){ ordered_ = ptr_cast<Array>(ordered); }
-		else{ ordered_ = xnew<Array>(); }
-		if(named){ named_ = ptr_cast<Map>(named); }
-		else{ named_ = xnew<Map>(); }
-	}
+	Arguments(const AnyPtr& ordered = undefined, const AnyPtr& named = undefined);
 
 	const AnyPtr& op_at_int(int_t index){
 		return ordered_->at(index);

@@ -28,7 +28,7 @@ public:
 		CLOSED = (0<<1) | (0<<0),
 		LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
 		LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
-		OPEN = (1<<1) | (1<<0),
+		OPEN = (1<<1) | (1<<0)
 	};
 
 protected:

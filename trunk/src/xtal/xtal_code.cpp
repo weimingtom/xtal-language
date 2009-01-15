@@ -137,7 +137,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	const inst_t* pc = data()+start;
 	StringPtr temp;
 	MemoryStreamPtr ms(xnew<MemoryStream>());
-	CodePtr code(this);
+	CodePtr code(from_this(this));
 
 	for(; pc < data() + end;){switch(*pc){
 		XTAL_NODEFAULT;
@@ -298,10 +298,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	return "";
 
 #endif
-}
-
-AnyPtr inst_inspect(inst_address_t value, Inst* inst, const CodePtr& code){
-	return (int_t)(((inst_t*)inst - code->data()) + value);
 }
 
 }

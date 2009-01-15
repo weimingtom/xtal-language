@@ -5,7 +5,7 @@
 
 namespace xtal{
 
-static uint_t make_hashcode(const char_t* str, uint_t size){
+static uint_t make_string_hashcode(const char_t* str, uint_t size){
 	uint_t hash = 2166136261U;
 	for(uint_t i=0; i<size; ++i){
 		hash = hash*137 ^ str[i];
@@ -13,7 +13,7 @@ static uint_t make_hashcode(const char_t* str, uint_t size){
 	return hash;
 }
 
-static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
+static void make_string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
 	hash = 2166136261U;
 	length = 0;
 
@@ -35,7 +35,7 @@ static void make_hashcode_and_length(const char_t* str, uint_t size, uint_t& has
 	}
 }
 
-static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
+static void make_string_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
 	hash = 2166136261U;
 	length = 0;
 	size = 0;
@@ -59,7 +59,7 @@ static void make_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 	}
 }
 
-static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
+static void make_small_string_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
 	hash = 2166136261U;
 	length = 0;
 	size = 0;
@@ -83,7 +83,22 @@ static void make_size_and_hashcode_and_length_limit(const char_t* str, uint_t& s
 	}
 }
 
-static uint_t string_length(const char_t* str){
+static uint_t count_small_string_length(const char_t* str){
+	ChMaker chm;
+	uint_t length = 0;
+	uint_t i=0;
+	while(str[i] && i<Innocence::SMALL_STRING_MAX){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(str[i] && i<Innocence::SMALL_STRING_MAX){ chm.add(str[i++]); } 
+			else{ break; }
+		}
+		length += 1;
+	}
+	return length;
+}
+
+static uint_t string_size_z(const char_t* str){
 	uint_t ret = 0;
 	while(*str++){
 		ret++;
@@ -93,8 +108,9 @@ static uint_t string_length(const char_t* str){
 
 static int_t string_compare(const char_t* a, const char_t* b){
 	while(*a!=*b){
-		if(!*a)
+		if(!*a){
 			return 0;
+		}
 		a++;
 		b++;
 	}
@@ -174,7 +190,7 @@ public:
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return make_hashcode(key.str, key.size);
+			return make_string_hashcode(key.str, key.size);
 		}
 
 		static bool eq(const Key& a, const Key& b){
@@ -213,7 +229,7 @@ public:
 	const Value& insert(const char_t* str, uint_t size){
 		uint_t hashcode;
 		uint_t length;
-		make_hashcode_and_length(str, size, hashcode, length);
+		make_string_hashcode_and_length(str, size, hashcode, length);
 		return insert(str, size, hashcode, length);
 	}
 
@@ -221,7 +237,7 @@ public:
 		uint_t hashcode;
 		uint_t length;
 		uint_t size;
-		make_size_and_hashcode_and_length(str, size, hashcode, length);
+		make_string_size_and_hashcode_and_length(str, size, hashcode, length);
 		return insert(str, size, hashcode, length);
 	}
 
@@ -364,7 +380,7 @@ void String::init_string(const char_t* str, uint_t sz){
 	}
 	else{
 		uint_t hash, length;
-		make_hashcode_and_length(str, sz, hash, length);
+		make_string_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
 			set_p(pvalue(str_mgr_->insert(str, sz, hash, length).value));
 			pvalue(*this)->inc_ref_count();
@@ -379,7 +395,7 @@ void String::init_string(const char_t* str, uint_t sz){
 
 
 String::String(const char_t* str):Any(noinit_t()){
-	init_string(str, string_length(str));
+	init_string(str, string_size_z(str));
 }
 
 String::String(const avoid<char>::type* str):Any(noinit_t()){
@@ -507,7 +523,7 @@ const char_t* String::c_str(){
 	}
 	else{
 		uint_t size, hash, length;
-		make_size_and_hashcode_and_length_limit(svalue_, size, hash, length);
+		make_small_string_size_and_hashcode_and_length(svalue_, size, hash, length);
 		return str_mgr_->insert(svalue_, size, hash, length).buf;
 	}
 }
@@ -540,9 +556,7 @@ uint_t String::length(){
 		return ((LargeString*)pvalue(*this))->length();
 	}
 	else{
-		uint_t size, hash, length;
-		make_size_and_hashcode_and_length(svalue_, size, hash, length);
-		return length;
+		return count_small_string_length(svalue_);
 	}
 }
 
@@ -667,7 +681,7 @@ uint_t String::hashcode(){
 		return ((LargeString*)pvalue(*this))->hashcode();
 	}
 	else{
-		return make_hashcode(svalue_, data_size());
+		return make_string_hashcode(svalue_, data_size());
 	}
 }
 
@@ -736,7 +750,7 @@ LargeString::LargeString(const char_t* str1, uint_t size1, const char_t* str2, u
 	common_init(size1 + size2);
 	std::memcpy(str_.p, str1, size1*sizeof(char_t));
 	std::memcpy(str_.p+size1, str2, size2*sizeof(char_t));
-	make_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
+	make_string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
 }
 
 LargeString::LargeString(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
@@ -788,7 +802,7 @@ void LargeString::became_unified(){
 	rope_.right->dec_ref_count();
 	str_.p = memory;
 	flags_ = 0;
-	make_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
+	make_string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
 }
 
 void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){

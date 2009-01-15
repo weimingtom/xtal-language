@@ -45,7 +45,7 @@ void initialize_array(){
 		p->def("new", ctor<Array, int_t>()->param(Named("size", 0)));
 		p->method("size", &Array::size);
 		p->method("length", &Array::length);
-		p->method("resize", &Array::size);
+		p->method("resize", &Array::resize);
 		p->method("empty", &Array::empty);
 		p->method("slice", &Array::slice)->param("i", Named("n", 1));
 		p->method("splice", &Array::splice)->param("i", Named("n", 1));
@@ -398,7 +398,7 @@ MultiValuePtr MultiValue::flatten_all_mv(){
 	if(empty()){ return xnew<MultiValue>(); }
 
 	MultiValuePtr ret = xnew<MultiValue>();
-	MultiValuePtr temp(this);
+	MultiValuePtr temp(from_this(this));
 	
 	for(uint_t i=0; i<temp->size(); ++i){
 		if(const MultiValuePtr& mv = ptr_as<MultiValue>(temp->at(i))){

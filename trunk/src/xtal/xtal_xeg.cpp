@@ -71,6 +71,8 @@ public:
 
 	Scanner();
 
+	~Scanner();
+
 	typedef Executor::SState State;
 
 	/**
@@ -206,6 +208,13 @@ Scanner::Scanner(){
 	lineno_ = 1;
 
 	expand();
+}
+
+Scanner::~Scanner(){
+	for(uint_t i=0; i<num_; ++i){
+		user_free(begin_[i]);
+	}
+	user_free(begin_);
 }
 
 const AnyPtr& Scanner::peek(uint_t n){

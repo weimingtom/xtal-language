@@ -90,7 +90,7 @@ namespace{
 
 		void block_next(const VMachinePtr& vm){
 			if(it_<end_){
-				vm->return_result(SmartPtr<IntRangeIter>(this), it_);
+				vm->return_result(from_this(this), it_);
 				++it_;
 			}
 			else{

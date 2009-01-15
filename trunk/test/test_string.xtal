@@ -1,0 +1,13 @@
+
+{
+	assert "test".length==4;
+	assert ("te"~"st").length==4;
+	assert ("te"~"st")=="test";
+	assert "‚ ".length==1;
+	assert "‚É‚É".length==2;
+	assert "i‚¨".length==2;
+	assert "‚¨i‚¢".length==3;
+	assert "‚Ä‚¢‚·‚Ä‚¢".length==5;
+	assert "ewrwer‚¨".length==7;
+
+}

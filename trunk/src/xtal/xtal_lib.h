@@ -142,7 +142,7 @@ const StreamPtr& stderr_stream();
 AnyPtr* make_place();
 
 
-AnyPtr source(const char_t* src, int_t size, const char* file);
+CodePtr source(const char_t* src, int_t size, const char* file);
 
 
 /*@}*/

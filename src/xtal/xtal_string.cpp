@@ -684,6 +684,23 @@ uint_t String::hashcode(){
 		return make_string_hashcode(svalue_, data_size());
 	}
 }
+	
+AnyPtr String::split(const AnyPtr& pattern){
+	using namespace xeg;
+	ArrayPtr ret = xnew<Array>();
+	ExecutorPtr exec(xnew<Executor>(from_this(this)));
+	if(exec->match(pattern)){
+		ret->push_back(exec->prefix());
+		while(exec->match(pattern)){
+			ret->push_back(exec->prefix());
+		}
+		ret->push_back(exec->suffix());
+	}
+	else{
+		ret->push_back(from_this(this));
+	}
+	return ret;
+}
 
 int_t String::calc_offset(int_t i){
 	uint_t sz = data_size();

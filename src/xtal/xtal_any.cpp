@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-nodeleter_t nodeleter;
+undeleter_t undeleter;
 deleter_t deleter;
 
 namespace{
@@ -199,11 +199,14 @@ struct MemberCacheTable{
 			if(type(target_class)!=TYPE_BASE)
 				return undefined;
 
-			unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self));
-			unit.target_class = itarget_class;
-			unit.primary_key = primary_key;
-			unit.secondary_key = ins;
-			unit.mutate_count = global_mutate_count;
+			bool nocache = false;
+			unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
+			if(!nocache){
+				unit.target_class = itarget_class;
+				unit.primary_key = primary_key;
+				unit.secondary_key = ins;
+				unit.mutate_count = global_mutate_count;
+			}
 			return ap(unit.member);
 		}
 	}
@@ -457,7 +460,7 @@ void Any::s_load(const AnyPtr& v) const{
 	MapPtr ret = ptr_cast<Map>(v);
 	ClassPtr klass = get_class();
 
-	ArrayPtr ary = klass->send(Xid(ancestors))->to_a();
+	ArrayPtr ary = klass->ancestors()->to_a();
 	ary->push_back(klass);
 
 	Xfor(it, ary){

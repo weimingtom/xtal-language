@@ -6,7 +6,7 @@ namespace xtal{
 		VERSION1 = 0,
 		VERSION2 = 9,
 		VERSION3 = 9,
-		VERSION4 = 0
+		VERSION4 = 1
 	};
 }
 
@@ -220,7 +220,8 @@ enum AccessibilityKind{
 enum BreakPointKind{
 	BREAKPOINT,
 	BREAKPOINT_CALL,
-	BREAKPOINT_RETURN
+	BREAKPOINT_RETURN,
+	BREAKPOINT_THROW
 };
 
 /**

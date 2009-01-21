@@ -123,7 +123,7 @@ void block_break(AnyPtr& target){
 	}
 }
 
-void block_next(BlockValueHolder1& holder, bool first){
+bool block_next(BlockValueHolder1& holder, bool first){
 	if(holder.array){
 		if(holder.it==holder.array->end()){
 			holder.target = null;
@@ -142,9 +142,10 @@ void block_next(BlockValueHolder1& holder, bool first){
 		holder.values[0] = vm->result(1);
 		vm->cleanup_call();
 	}
+	return holder.target;
 }
 
-void block_next(BlockValueHolder2& holder, bool first){
+bool block_next(BlockValueHolder2& holder, bool first){
 	if(holder.map){
 		if(holder.it==holder.map->end()){
 			holder.target = null;
@@ -166,9 +167,10 @@ void block_next(BlockValueHolder2& holder, bool first){
 		holder.values[1] = vm->result(2);
 		vm->cleanup_call();
 	}
+	return holder.target;
 }
 
-void block_next(BlockValueHolder3& holder, bool first){
+bool block_next(BlockValueHolder3& holder, bool first){
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(4);
 	holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
@@ -177,86 +179,53 @@ void block_next(BlockValueHolder3& holder, bool first){
 	holder.values[1] = vm->result(2);
 	holder.values[2] = vm->result(3);
 	vm->cleanup_call();
+	return holder.target;
 }
 
-BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar)
+BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar, bool& not_end)
 	:target(tar){
+	not_end = tar;
 	array = ptr_as<Array>(tar);
+	if(array){ it = array->begin(); }
+}
+
+BlockValueHolder1::BlockValueHolder1(const ArrayPtr& tar, bool& not_end)
+	:target(tar){
+	not_end = tar;
+	array = tar;
 	if(array){ it = array->begin(); }
 }
 
 BlockValueHolder1::~BlockValueHolder1(){ 
 	block_break(target); 
 }
-
-BlockValueHolder1::BlockValueHolder1(const BlockValueHolder1& a){
-	target = a.target;
-	values[0] = a.values[0];
-
-	array = a.array;
-	it = a.it;
-}
-
-BlockValueHolder1& BlockValueHolder1::operator=(const BlockValueHolder1& a){
-	target = a.target;
-	values[0] = a.values[0];
-
-	array = a.array;
-	it = a.it;
-	return *this;
-}
 	
-BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar)
+BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar, bool& not_end)
 	:target(tar){
+	not_end = tar;
 	map = ptr_as<Map>(tar);
 	if(map){ it = map->begin(); }
 }
+
+BlockValueHolder2::BlockValueHolder2(const MapPtr& tar, bool& not_end)
+	:target(tar){
+	not_end = tar;
+	map = tar;
+	if(map){ it = map->begin(); }
+}
+
 
 BlockValueHolder2::~BlockValueHolder2(){ 
 	block_break(target); 
 }
 
-BlockValueHolder2::BlockValueHolder2(const BlockValueHolder2& a){
-	target = a.target;
-	values[0] = a.values[0];
-	values[1] = a.values[1];
-
-	map = a.map;
-	it = a.it;
-}
-
-BlockValueHolder2& BlockValueHolder2::operator=(const BlockValueHolder2& a){
-	target = a.target;
-	values[0] = a.values[0];
-	values[1] = a.values[1];
-
-	map = a.map;
-	it = a.it;
-	return *this;
-}
-
-BlockValueHolder3::BlockValueHolder3(const AnyPtr& tar)
+BlockValueHolder3::BlockValueHolder3(const AnyPtr& tar, bool& not_end)
 	:target(tar){
+	not_end = tar;
 }
 
 BlockValueHolder3::~BlockValueHolder3(){ 
 	block_break(target); 
 }
-
-BlockValueHolder3::BlockValueHolder3(const BlockValueHolder3& a){
-	target = a.target;
-	values[0] = a.values[0];
-	values[1] = a.values[1];
-	values[2] = a.values[2];
-}
-
-BlockValueHolder3& BlockValueHolder3::operator=(const BlockValueHolder3& a){
-	target = a.target;
-	values[0] = a.values[0];
-	values[1] = a.values[1];
-	values[2] = a.values[2];
-	return *this;
-}
-
 
 }

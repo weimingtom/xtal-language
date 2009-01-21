@@ -26,36 +26,6 @@ typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
 
 /////////////////////////////////////////////////////////////////////////////
 
-// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
-template<class U, class V>
-inline const void* as_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	if(a->is(get_cpp_class<U>())){ return &a; }
-	return 0;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* as_helper_helper(const AnyPtr& a, const Base*, const U*){
-	if(a->is(get_cpp_class<U>())){ return pvalue(a); }
-	return 0;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* as_helper_helper(const AnyPtr& a, const Innocence*, const U*){
-	if(a->is(get_cpp_class<U>())){ return &a; }
-	return 0;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
-template<class U>
-inline const void* as_helper_helper(const AnyPtr& a, const void*, const U*){
-	if(a->is(get_cpp_class<U>())){ return ((SmartPtr<U>&)a).get(); }
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
 const void* cast_helper_helper_smartptr(const AnyPtr& a, const ClassPtr& cls);
 const void* cast_helper_helper_base(const AnyPtr& a, const ClassPtr& cls);
 const void* cast_helper_helper_innocence(const AnyPtr& a, const ClassPtr& cls);
@@ -184,7 +154,7 @@ struct CastHelper{
 
 	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Å‚àƒ|ƒCƒ“ƒ^‚Å‚à‚È‚¢ê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆÀ‘Ì‚É‚·‚é
 	static T as(const AnyPtr& a){ 
-		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
+		if(can_cast(a)){ return unchecked_cast(a); }else{ return *(const T*)&null;} }
 		
 	static T cast(const AnyPtr& a){ 
 		return *xtal::cast<const T*>(a); }
@@ -201,7 +171,7 @@ struct CastHelper<T*>{
 
 	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
 	static T* as(const AnyPtr& a){ 
-		return (T*)as_helper_helper(a, (T*)0, (T*)0); }
+		if(can_cast(a)){ return unchecked_cast(a); }else{ return 0;} }
 		
 	static T* cast(const AnyPtr& a){ 
 		return (T*)cast_helper_helper(a, (T*)0, (T*)0); }	
@@ -218,7 +188,7 @@ struct CastHelper<T&>{
 	
 	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆQÆ‚É‚·‚é
 	static T& as(const AnyPtr& a){ 
-		if(T* ret = xtal::as<T*>(a)){ return *ret; }else{ return *(T*)&null;} }
+		if(can_cast(a)){ return unchecked_cast(a); }else{ return *(T*)&null;} }
 		
 	static T& cast(const AnyPtr& a){ 
 		return *xtal::cast<T*>(a); }

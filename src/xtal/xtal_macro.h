@@ -14,9 +14,10 @@
 * @endcode
 */
 #define Xfor(var, tar) \
-	if(::xtal::BlockValueHolder1 block_value_holder = AnyPtr(tar))\
-	for(::xtal::AnyPtr &var = block_value_holder.values[0]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder1 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(const ::xtal::AnyPtr &var = block_value_holder.values[0]; not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -28,9 +29,10 @@
 * @endcode
 */
 #define Xfor2(var1, var2, tar) \
-	if(::xtal::BlockValueHolder2 block_value_holder = AnyPtr(tar))\
-	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder2 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(const ::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))
 
 /**
 * @brief foreachを簡単に記述するためのマクロ
@@ -42,9 +44,10 @@
 * @endcode
 */
 #define Xfor3(var1, var2, var3, tar) \
-	if(::xtal::BlockValueHolder3 block_value_holder = AnyPtr(tar))\
-	for(::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; block_value_holder;)\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder3 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(const ::xtal::AnyPtr &var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))
 
 
 /**
@@ -58,8 +61,9 @@
 * @endcode
 */
 #define Xfor_cast(var, tar) \
-	if(::xtal::BlockValueHolder1 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder1 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var##e))0))
 
 /**
@@ -73,8 +77,9 @@
 * @endcode
 */
 #define Xfor2_cast(var1, var2, tar) \
-	if(::xtal::BlockValueHolder2 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder2 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var1 = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var1##e))0))\
 	if(var2 = ::xtal::tricky_cast(block_value_holder.values[1], (void (*)(var2##e))0))
 
@@ -89,8 +94,9 @@
 * @endcode
 */
 #define Xfor3_cast(var1, var2, var3, tar) \
-	if(::xtal::BlockValueHolder3 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder3 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var1 = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var1##e))0))\
 	if(var2 = ::xtal::tricky_cast(block_value_holder.values[1], (void (*)(var2##e))0))\
 	if(var3 = ::xtal::tricky_cast(block_value_holder.values[2], (void (*)(var3##e))0))
@@ -107,8 +113,9 @@
 * @endcode
 */
 #define Xfor_as(var, tar) \
-	if(::xtal::BlockValueHolder1 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder1 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var = ::xtal::tricky_as(block_value_holder.values[0], (void (*)(var##e))0))
 
 /**
@@ -122,9 +129,10 @@
 * }
 * @endcode
 */
-#define Xfor2_as(var, tar) \
-	if(::xtal::BlockValueHolder2 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+#define Xfor2_as(var1, var2, tar) \
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder2 block_value_holder(tar, not_end); not_en; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var1 = ::xtal::tricky_as(block_value_holder.values[0], (void (*)(var1##e))0))\
 	if(var2 = ::xtal::tricky_as(block_value_holder.values[1], (void (*)(var2##e))0))
 
@@ -140,8 +148,9 @@
 * @endcode
 */
 #define Xfor3_as(var1, var2, var3, tar) \
-	if(::xtal::BlockValueHolder3 block_value_holder = AnyPtr(tar))\
-	for(::xtal::block_next(block_value_holder, true); block_value_holder; ::xtal::block_next(block_value_holder, false))\
+	if(bool not_end = true)\
+	for(::xtal::BlockValueHolder3 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false))\
 	if(var1 = ::xtal::tricky_as(block_value_holder.values[0], (void (*)(var1##e))0))\
 	if(var2 = ::xtal::tricky_as(block_value_holder.values[1], (void (*)(var2##e))0))\
 	if(var3 = ::xtal::tricky_as(block_value_holder.values[2], (void (*)(var3##e))0))
@@ -164,6 +173,8 @@
 */
 #define Xf(txt) ::xtal::format(XTAL_STRING(txt)) 
 
+#ifndef XTAL_NO_PARSER
+
 /**
 * @brief Xtalのソースを簡単に記述するためのマクロ
 *
@@ -174,6 +185,14 @@
 * @endcode
 */
 #define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(XTAL_STRING(#text))/sizeof(char_t)-3, __FILE__)
+
+#endif
+
+#ifdef XTAL_USE_COMPILED_EMB
+#define Xemb(text, compiled_text) ::xtal::compiled_source(compiled_text, sizeof(compiled_text)-1, __FILE__)
+#else
+#define Xemb(text, compiled_text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(XTAL_STRING(#text))/sizeof(char_t)-3, __FILE__)
+#endif
 
 /*@}*/
 

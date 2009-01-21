@@ -3,6 +3,8 @@
 
 using namespace xtal;
 
+#ifndef XTAL_NO_PARSER
+
 static void print_usage(){
 	fprintf(stdout,
 		"usage: xtal [options] [script [args]].\n"
@@ -43,12 +45,10 @@ static void handle_argv(char** argv){
 int main(int argc, char** argv){
 
 	XTAL_TRY{
-
 		set_thread();
 		initialize();
 
 		handle_argv(argv);
-
 	}
 	XTAL_CATCH(e){
 		stderr_stream()->put_s(e->to_s());
@@ -59,3 +59,12 @@ int main(int argc, char** argv){
 
 	return 0;
 }
+
+#else
+
+int main(int argc, char** argv){
+	puts("xtal no parser");
+	return 0;
+}
+
+#endif

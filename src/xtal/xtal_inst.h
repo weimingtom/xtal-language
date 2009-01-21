@@ -74,11 +74,14 @@ struct Inst{
 	}
 
 	template<class T>
-	void checked_assign(T& ref, int v){
-		ref = (T)v;
-		if((int)ref != v){ op = 0xff; }
-	}
+	void checked_assign(T& ref, int v);
 };
+
+template<class T>
+void Inst::checked_assign(T& ref, int v){
+	ref = (T)v;
+	if((int)ref != v){ op = 0xff; }
+}
 
 #define XTAL_DEF_INST_0(N, InstName) \
 	struct Inst##InstName : public Inst{\
@@ -92,7 +95,7 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName));\
+					(#InstName));\
 		}\
 	}
 
@@ -114,8 +117,8 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName),\
-					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code));\
+					(#InstName),\
+					(#MemberName1), inst_inspect(MemberName1, this, code));\
 		}\
 	}
 
@@ -140,9 +143,9 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName),\
-					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
-					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code));\
+					(#InstName),\
+					(#MemberName1), inst_inspect(MemberName1, this, code),\
+					(#MemberName2), inst_inspect(MemberName2, this, code));\
 		}\
 	}
 	
@@ -170,10 +173,10 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName),\
-					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
-					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
-					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code));\
+					(#InstName),\
+					(#MemberName1), inst_inspect(MemberName1, this, code),\
+					(#MemberName2), inst_inspect(MemberName2, this, code),\
+					(#MemberName3), inst_inspect(MemberName3, this, code));\
 		}\
 	}
 	
@@ -204,11 +207,11 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName),\
-					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
-					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
-					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
-					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code));\
+					(#InstName),\
+					(#MemberName1), inst_inspect(MemberName1, this, code),\
+					(#MemberName2), inst_inspect(MemberName2, this, code),\
+					(#MemberName3), inst_inspect(MemberName3, this, code),\
+					(#MemberName4), inst_inspect(MemberName4, this, code));\
 		}\
 	}
 
@@ -242,12 +245,12 @@ struct Inst{
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					XTAL_STRING(#InstName),\
-					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
-					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
-					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
-					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
-					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
+					(#InstName),\
+					(#MemberName1), inst_inspect(MemberName1, this, code),\
+					(#MemberName2), inst_inspect(MemberName2, this, code),\
+					(#MemberName3), inst_inspect(MemberName3, this, code),\
+					(#MemberName4), inst_inspect(MemberName4, this, code),\
+					(#MemberName5), inst_inspect(MemberName5, this, code));\
 		}\
 	}
 
@@ -893,10 +896,13 @@ XTAL_DEF_INST_0(140, ThrowUnsupportedError);
 
 XTAL_DEF_INST_0(141, ThrowUndefined);
 
-XTAL_DEF_INST_0(142, Assert);
+XTAL_DEF_INST_1(142, IfDebug,
+		inst_address_t, address);
 
-XTAL_DEF_INST_0(143, BreakPoint);
+XTAL_DEF_INST_0(143, Assert);
 
-XTAL_DEF_INST_0(144, MAX);
+XTAL_DEF_INST_0(144, BreakPoint);
+
+XTAL_DEF_INST_0(145, MAX);
 
 }

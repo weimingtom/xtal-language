@@ -178,6 +178,10 @@ void Serializer::inner_serialize(const AnyPtr& v){
 }
 
 AnyPtr Serializer::inner_deserialize(){
+	if(stream_->eos()){
+		return undefined;
+	}
+
 	int_t op = stream_->get_u8();
 	switch(op){
 		XTAL_NODEFAULT;
@@ -326,9 +330,9 @@ AnyPtr Serializer::inner_deserialize(){
 			p->source_file_name_ = cast<StringPtr>(map->at("source"));
 			p->identifier_table_ = cast<ArrayPtr>(map->at("identifiers"));
 			p->value_table_ = cast<ArrayPtr>(map->at("values"));
-			
 			ret->set_object_name("<filelocal>", 1, null);	
-			return ret;
+			p->first_fun_ = ret;
+			return p;
 		}
 	}
 	return null;
@@ -340,7 +344,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 		return ret;
 	}
 
-	Xfor(v, n->send("split")("::")){
+	Xfor(v, n->to_s()->split("::")){
 		IDPtr id = ptr_cast<String>(v)->intern();
 		if(!ret){
 			if(raweq(id, Xid(lib))){

@@ -160,6 +160,8 @@ public:
 
 	uint_t hashcode();
 
+	AnyPtr split(const AnyPtr& pattern);
+
 public:
 
 	ChRangePtr op_range(const StringPtr& right, int_t kind);

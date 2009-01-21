@@ -182,7 +182,9 @@ public:
 	
 	XTAL_DEF_MEMBER(0, const ExprPtr&, yield_exprs);
 
-	XTAL_DEF_MEMBER(0, const ExprPtr&, assert_exprs);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, assert_cond);
+	XTAL_DEF_MEMBER(1, const ExprPtr&, assert_string);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, assert_message);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, throw_expr);
 
@@ -309,4 +311,12 @@ private:
 
 }
 
+#else
+
+namespace xtal{
+
+class Expr : public Array{
+};
+
+}
 #endif

@@ -1,6 +1,8 @@
 
 #include "xtal.h"
 
+#ifndef XTAL_NO_PARSER
+
 int main(int argc, char** argv){
 	using namespace xtal;
  
@@ -9,7 +11,6 @@ int main(int argc, char** argv){
 		initialize();
 
 		ix();
-
 	}
 	XTAL_CATCH(e){
 		stderr_stream()->put_s(e->to_s());
@@ -19,3 +20,12 @@ int main(int argc, char** argv){
 	uninitialize();
 	return 0;
 }
+
+#else
+
+int main(int argc, char** argv){
+	puts("xtal no parser");
+	return 0;
+}
+
+#endif

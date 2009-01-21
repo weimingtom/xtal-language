@@ -141,6 +141,24 @@ StringPtr Stream::get_s_all(){
 	return ms->to_s();
 }
 
+uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
+	for(uint_t i=0; i<max; ++i){
+		if(eos()){
+			return i;
+		}
+
+		char_t ch;
+		ChMaker chm;
+		while(!chm.is_completed()){
+			read(&ch, sizeof(char_t));
+			chm.add(ch);
+		}
+	
+		buffer[i] = chm.to_s();
+	}
+	return max;
+}
+
 uint_t Stream::print(const StringPtr& str){
 	return write(str->data(), str->data_size()*sizeof(char_t));
 }
@@ -211,18 +229,27 @@ AnyPtr Stream::dextalize(){
 
 /////////////////////////////////////////////////////////////////
 
-DataStream::DataStream(){
+PointerStream::PointerStream(const void* data, uint_t size){
 	static u8 temp = 0;
-	data_ = &temp;
-	size_ = 0;
+	if(data){
+		data_ = (u8*)data;
+	}
+	else{
+		data_ = &temp;
+	}
+	size_ = size;
 	pos_ = 0;
 }
 	
-uint_t DataStream::tell(){
+uint_t PointerStream::tell(){
 	return pos_;
 }
 
-uint_t DataStream::read(void* p, uint_t size){
+uint_t PointerStream::write(const void* p, uint_t size){
+	XTAL_THROW(unsupported_error(get_class(), "write", null), return 0);
+}
+
+uint_t PointerStream::read(void* p, uint_t size){
 	if(pos_+size>size_){ 
 		uint_t diff = size_-pos_;
 		if(diff>0){
@@ -240,7 +267,7 @@ uint_t DataStream::read(void* p, uint_t size){
 	return size;
 }
 
-void DataStream::seek(int_t offset, int_t whence){
+void PointerStream::seek(int_t offset, int_t whence){
 	switch(whence){
 	case XSEEK_END:
 		pos_ = size_-offset;
@@ -257,7 +284,7 @@ void DataStream::seek(int_t offset, int_t whence){
 	}
 }
 
-StringPtr DataStream::get_s(uint_t length){
+StringPtr PointerStream::get_s(uint_t length){
 	if(pos_ >= size_)
 		return "";
 
@@ -288,7 +315,7 @@ StringPtr DataStream::get_s(uint_t length){
 	return xnew<String>((char_t*)&data_[saved], (pos_ - saved)/sizeof(char_t));	
 }
 
-StringPtr DataStream::get_s_all(){
+StringPtr PointerStream::get_s_all(){
 	if(pos_ >= size_)
 		return "";
 
@@ -298,7 +325,7 @@ StringPtr DataStream::get_s_all(){
 	return ret;
 }
 
-bool DataStream::eos(){
+bool PointerStream::eos(){
 	return pos_>=size_;
 }
 
@@ -395,10 +422,6 @@ StringStream::StringStream(const StringPtr& str)
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
-}
-
-uint_t StringStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error(get_cpp_class<StringStream>(), "write", null), return 0);
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@ namespace{
 	AnyPtr break_point_hook_;
 	AnyPtr call_hook_;
 	AnyPtr return_hook_;
+	AnyPtr throw_hook_;
 }
 
 void enable(){
@@ -40,6 +41,10 @@ void set_return_hook(const AnyPtr& hook){
 	return_hook_ = hook;
 }
 
+void set_throw_hook(const AnyPtr& hook){
+	throw_hook_ = hook;
+}
+
 const AnyPtr& break_point_hook(){
 	return break_point_hook_;
 }
@@ -52,6 +57,10 @@ const AnyPtr& return_hook(){
 	return return_hook_;
 }
 
+const AnyPtr& throw_hook(){
+	return throw_hook_;
+}
+
 }
 
 void uninitialize_debug(){
@@ -59,6 +68,7 @@ void uninitialize_debug(){
 	break_point_hook_ = null;
 	call_hook_ = null;
 	return_hook_ = null;
+	throw_hook_ = null;
 }
 
 void initialize_debug(){
@@ -74,9 +84,11 @@ void initialize_debug(){
 	debug->fun("break_point_hook", &break_point_hook);
 	debug->fun("call_hook", &call_hook);
 	debug->fun("return_hook", &return_hook);
+	debug->fun("throw_hook", &throw_hook);
 	debug->fun("set_break_point_hook", &set_break_point_hook);
 	debug->fun("set_call_hook", &set_call_hook);
 	debug->fun("set_return_hook", &set_return_hook);
+	debug->fun("set_throw_hook", &set_throw_hook);
 
 	{
 		ClassPtr p = new_cpp_class<Info>("Info");
@@ -93,6 +105,7 @@ void initialize_debug(){
 		p->def("BREAKPOINT", BREAKPOINT);
 		p->def("CALL", BREAKPOINT_CALL);
 		p->def("RETURN", BREAKPOINT_RETURN);
+		p->def("RETURN_THROW", BREAKPOINT_THROW);
 
 		debug->def("Info", p);
 	}

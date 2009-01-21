@@ -7,92 +7,31 @@
 
 using namespace xtal;
 
-static void print_usage(){
-	fprintf(stderr,
-		"usage: xtal [options] [script [args]].\n"
-		"Available options are:\n"
-		"  -v       show version information\n"
-	);
+void debug_throw(const debug::InfoPtr& info){
+//	puts("throw");
 }
 
-static void handle_argv(char** argv){
-	int i;
-	for(i=1; argv[i]!=0; i++){
-		if(argv[i][0]!='-')
-			break;
+#ifndef XTAL_NO_PARSER
 
-		switch(argv[i][1]){
-		case 'v':
-			fprintf(stdout, "xtal %d.%d.%d.%d\n", VERSION1, VERSION2, VERSION3, VERSION4);
-			break;
-
-		default:
-			print_usage();
-			return;
-		}
-	
-	}
-
-	if(argv[i]!=0){
-		ArrayPtr arg_list(xnew<Array>());
-		const char *filename = argv[i++];
-		for(i=1; argv[i]!=0; i++){
-			arg_list->push_back(argv[i]);
-		}
-		builtin()->def("argv", arg_list);
-		load(filename);
-	}
-}
-
-#include "xtal_xeg.h"
-
-void debug_break_point(const SmartPtr<debug::Info>& info){
-	puts("break point");
-	//std::cout << Xf("kind=%d, line=%s, file=%s, fun=%s\n")(info->kind(), info->line(), info->file_name(), info->fun_name());
-
-	/*if(info->local_variables()){
-		Xfor3(key, key2, value, info->local_variables()->members()){
-			(Xf("key=%s, value=%s\n")(key, value))->p();
-		}
-	}*/
-}
-
-//#include <crtdbg.h>
-
-class A{
-public:
-	int n;
-  void foo(int m){
-    printf("%d\n", n+m);
-  }
-};
-
-int memory_block[1024*1000/4];
+char memory_block[1024*1000*5];
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	setlocale(LC_ALL, "japanese");
-	//set_memory(memory_block, 1024*1000);
+	//set_memory(memory_block, 1024*1000*5);
 
-	using namespace xtal::xeg;
 	using namespace std;
-
 
 	try{
 		initialize();
-			
-		A* aaaa = new A();
-		aaaa->n = 11111;
-		SmartPtr<A> aaa = SmartPtr<A>(aaaa, deleter);
-		//aaa->foo();
-		aaa = aaa;
-		lib()->def("aa", aaa);
-		lib()->def("printA", fun(&printA));
+		
+		debug::enable();
+		debug::set_throw_hook(fun(&debug_throw));
 
 		Xsrc((
-			"‚ ‚ ".length.p;
-			//lib::printA(lib::aa, 5);
+			n: fun(i){ return i+10; }
+			assert n(4), "ee";
 		))();
 
 #if 1
@@ -101,9 +40,7 @@ int main2(int argc, char** argv){
 		//debug::set_call_hook(fun(&debug_line));
 		//debug::set_return_hook(fun(&debug_line));
 
-		//handle_argv(argv);
-		
-int c;
+		int c;
 
 		/*		
 		c = clock();
@@ -145,6 +82,7 @@ int c;
 		//*/
 
 		//*
+		debug::enable();
 
 #ifdef XTAL_USE_WCHAR
 		load("../../test-utf16le/test_empty.xtal");
@@ -193,7 +131,8 @@ int c;
 		//*/
 #endif
 
-	}catch(AnyPtr e){
+	}
+	catch(AnyPtr e){
 		stderr_stream()->put_s(e->to_s());
 		stderr_stream()->put_s("\n");
 	}
@@ -212,3 +151,25 @@ int main(int argc, char** argv){
 	int ret = main2(argc, argv);
 	return ret;
 }
+
+#else
+
+int main(int argc, char** argv){
+	try{
+		initialize();
+	}
+	catch(AnyPtr e){
+		stderr_stream()->put_s(e->to_s());
+		stderr_stream()->put_s("\n");
+	}
+
+	vmachine()->print_info();
+	print_result_of_cache();
+
+	printf("-------------------\n");
+	uninitialize();
+	printf("-------------------\n");
+	return 0;
+}
+
+#endif

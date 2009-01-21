@@ -26,6 +26,8 @@ public:
 
 	virtual StringPtr get_s_all();
 
+	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max);
+
 	uint_t print(const StringPtr& str);
 
 	void println(const StringPtr& str);
@@ -408,12 +410,14 @@ private:
 	void put_t_le(f64 v, f64*){ put_f64le(v); }
 };
 
-class DataStream : public Stream{
+class PointerStream : public Stream{
 public:
 
-	DataStream();
+	PointerStream(const void* data = 0, uint_t size = 0);
 		
 	virtual uint_t tell();
+
+	virtual uint_t write(const void* p, uint_t size);
 
 	virtual uint_t read(void* p, uint_t size);
 
@@ -442,14 +446,14 @@ protected:
 	uint_t pos_;
 };
 
-class MemoryStream : public DataStream{
+class MemoryStream : public PointerStream{
 public:
 
 	MemoryStream();
 	
 	MemoryStream(const void* data, uint_t data_size);
 
-	~MemoryStream();
+	virtual ~MemoryStream();
 	
 	virtual uint_t write(const void* p, uint_t size);
 
@@ -470,13 +474,11 @@ protected:
 	uint_t capa_;
 };
 
-class StringStream : public DataStream{
+class StringStream : public PointerStream{
 public:
 
 	StringStream(const StringPtr& str);
 		
-	virtual uint_t write(const void* p, uint_t size);
-
 	StringPtr to_s(){
 		return str_;
 	}
@@ -484,7 +486,7 @@ public:
 private:
 
 	virtual void visit_members(Visitor& m){
-		DataStream::visit_members(m);
+		PointerStream::visit_members(m);
 		m & str_;
 	}
 

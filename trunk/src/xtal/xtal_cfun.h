@@ -66,20 +66,16 @@ struct arg_getter{
 	enum{ value = 0 };
 
 	static const AnyPtr&
-	get(const VMachinePtr& vm, const ParamInfo& p, uint_t& flags, int N);
-
+	get(const VMachinePtr& vm, const ParamInfo& p, uint_t& flags, int N){
+		const AnyPtr& a = vm->arg_default(N, p.params[N]);
+		flags |= (can_cast<T>(a)^1) << (N+1);
+		return a;
+	}
 	static typename CastResult<T>::type 
 	cast(const AnyPtr& p){
 		return unchecked_cast<T>(p);
 	}
 };
-
-template<class T>
-inline const AnyPtr& arg_getter<T>::get(const VMachinePtr& vm, const ParamInfo& p, uint_t& flags, int N){
-	const AnyPtr& a = vm->arg_default(N, p.params[N].name, p.params[N].value);
-	flags |= (can_cast<T>(a)^1) << (N+1);
-	return a;
-}
 
 template<class T>
 struct arg_this_getter{
@@ -657,7 +653,7 @@ template<class T, class C, class Policy>
 inline CFunEssence setter_impl(T C::* v, Policy){
 	typedef setter_fun<C, T> setter;
 	setter data(v);
-	return CFunEssence(&fun2<setter, arg_this_getter<C*>, arg_getter<const T&, 0>, Policy>::f, &data, sizeof(data), 1);
+	return CFunEssence(&fun2<setter, arg_this_getter<C*>, arg_getter<const T&>, Policy>::f, &data, sizeof(data), 1);
 }
 
 //////////////////////////////////////////////////////////////

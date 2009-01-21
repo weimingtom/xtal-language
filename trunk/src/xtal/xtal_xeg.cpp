@@ -328,14 +328,7 @@ public:
 		:stream_(stream){}
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max){
-		for(int_t i=0; i<max; ++i){
-			if(stream_->eos()){
-				return i;
-			}
-
-			buffer[i] = stream_->get_s(1);
-		}
-		return max;
+		return stream_->read_charactors(buffer, max);
 	}
 
 private:
@@ -1321,27 +1314,6 @@ void initialize_xeg(){
 
 	xeg->def("Executor", new_cpp_class<Executor>());
 	builtin()->def("xeg", xeg);
-}
-
-void test_xeg(){
-	using namespace xeg;
-	
-	ElementPtr paren = elem(Xsrc((  
-	filelocal.inherit(xeg);
-
-myexpect: fun(pattern) pattern | error(%f(line=%(line)s expect error));
-//myexpect: fun(pattern) pattern | error(fun(line:0) line.p);
-
-	pattern: eql("a") >> myexpect("b");
-
-	"erwedrgadrtreabew\naer".scan(pattern){
-		it[0].p;
-		it.errors[].p;
-	}
-
-	"ete:rwer,a-er::ere,".split("::" | set(":,") | "-")[].p;
-
-	))());
 }
 
 }

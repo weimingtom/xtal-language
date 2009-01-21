@@ -162,8 +162,8 @@ void initialize(){
 
 	enable_gc();
 
-	initialize_builtin();
 	initialize_xeg();
+	initialize_builtin();
 }
 
 void uninitialize(){

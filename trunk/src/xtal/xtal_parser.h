@@ -285,11 +285,13 @@ private:
 	bool eat(int_t ch);
 	bool eat(Token::Keyword kw);
 
+	bool cmp_pri(int_t pri, int_t op, int_t r_space, int_t l_space);
+
 	bool parse_term();
-	bool parse_expr(int_t pri);
+	bool parse_expr(int_t pri, int_t space);
 	bool parse_expr();
-	void must_parse_expr(int_t pri);
-	bool parse_post(int_t pri);
+	void must_parse_expr(int_t pri, int_t space);
+	bool parse_post(int_t pri, int_t space);
 	void must_parse_expr();
 	void must_parse_identifier();
 	bool parse_identifier();

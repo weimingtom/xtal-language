@@ -209,6 +209,20 @@ public:
 	const AnyPtr& arg_default(int_t pos, const IDPtr& name, const AnyPtr& def);
 	
 	/**
+	* @brief nameに対応する引数を得る。
+	*
+	* もしnameに対応する引数が無ければdefの値を返す。
+	*/
+	const AnyPtr& arg_default(const Named& name_and_def);
+
+	/**
+	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
+	*
+	* もしnameに対応する引数が無ければdefの値を返す。
+	*/
+	const AnyPtr& arg_default(int_t pos, const Named& name_and_def);
+
+	/**
 	* @brief pos番目の名前指定引数の名前を取得。
 	*
 	* @param pos 0縲從amed_arg_count()-1まで
@@ -707,6 +721,7 @@ public:
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
 	const inst_t* FunThrowUndefined(const inst_t* pc);
+	const inst_t* FunIfDebug(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);

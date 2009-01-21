@@ -1,5 +1,7 @@
 #include "xtal.h"
 
+#ifndef XTAL_NO_PARSER
+
 namespace xtal{
 
 const ExprPtr& ep(const AnyPtr& a){
@@ -28,3 +30,5 @@ void ExprBuilder::splice(int_t tag, int_t num){
 }
 
 }
+
+#endif

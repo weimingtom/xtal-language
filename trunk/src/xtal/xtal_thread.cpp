@@ -25,6 +25,7 @@ namespace{
 
 	struct VMachineTable : public Base{
 		AC<VMachineTableUnit>::vector table;
+		//SmartPtr<TArray<VMachineTableUnit> > table;
 
 		inline void change_vmachine(const Thread::ID& id){
 			if(!current_vmachine_id_.is_valid() || !thread_lib_->equal_thread_id(current_vmachine_id_, id)){

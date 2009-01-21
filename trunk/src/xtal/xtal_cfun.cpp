@@ -8,6 +8,21 @@ ReturnThis return_this;
 ReturnUndefined return_void;
 static Named null_params[16];
 
+void check_args(const VMachinePtr& vm, const ParamInfo& p, uint_t flags){
+	for(int_t i=-1; flags!=0; ++i){
+		if(flags&1){
+			if(i==-1){
+				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), -1), return);
+			}
+			else{
+				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), i), return);
+			}
+		}
+
+		flags >>= 1;
+	}
+}
+
 CFun::CFun(fun_t f, void* val, int_t param_n){
 	fun_ = f;
 	val_ = val;
@@ -63,29 +78,6 @@ void CFun::visit_members(Visitor& m){
 	std::for_each(pi_.params, pi_.params+param_n_, m);
 }
 
-
-void check_args(const VMachinePtr& vm, const ParamInfo& p, uint_t flags){
-	for(int_t i=-1; flags!=0; ++i){
-		if(flags&1){
-			if(i==-1){
-				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), -1), return);
-			}
-			else{
-				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), i), return);
-			}
-		}
-
-		flags >>= 1;
-	}
-}
-
-void CFun::call(const VMachinePtr& vm){
-	if(vm->ordered_arg_count()!=pi_.min_param_count){
-		check_arg(vm);
-	}
-	fun_(vm, pi_, val_);
-}
-
 void CFun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<pi_.min_param_count || n>pi_.max_param_count){
@@ -108,6 +100,13 @@ void CFun::check_arg(const VMachinePtr& vm){
 			), return);
 		}
 	}
+}
+
+void CFun::call(const VMachinePtr& vm){
+	if(vm->ordered_arg_count()!=pi_.min_param_count){
+		check_arg(vm);
+	}
+	fun_(vm, pi_, val_);
 }
 
 CFunArgs::CFunArgs(fun_t f, void* val, int_t param_n)

@@ -58,6 +58,7 @@ private:
 	
 	void compile_bin(const ExprPtr& e);
 	void compile_comp_bin(const ExprPtr& e);
+	void compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label);
 	void compile_op_assign(const ExprPtr& e);
 	void compile_incdec(const ExprPtr& e);
 	void compile_loop_control_statement(const ExprPtr& e);

@@ -356,7 +356,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	return undefined;
 }
 
-const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){
 	{
 		const AnyPtr& ret = find_member(primary_key, secondary_key, self, inherited_too);
 		if(rawne(ret, undefined)){
@@ -376,14 +376,14 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
 	if(const ClassPtr& klass = ptr_as<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), self, inherited_too);
+			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), self, inherited_too, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
 		}
 
 		if(rawne(get_cpp_class<Any>(), klass)){
-			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too);
+			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -482,6 +482,24 @@ void Class::s_new(const VMachinePtr& vm){
 	vm->return_result(instance);
 }
 
+AnyPtr Class::ancestors(){
+	if(from_this(this)==get_cpp_class<Any>()){
+		return null;
+	}			
+	
+	ArrayPtr ret = xnew<Array>();
+	Xfor_cast(const ClassPtr& it, inherited_classes()){
+		ret->push_back(it);
+
+		Xfor(it2, it->ancestors()){
+			ret->push_back(it2);
+		}
+	}
+
+	ret->push_back(get_cpp_class<Any>());
+	return ret;
+}
+
 CppClass::CppClass(const StringPtr& name)
 	:Class(cpp_class_t(), name){
 }
@@ -517,17 +535,19 @@ Lib::Lib(const ArrayPtr& path)
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
 		return members_->at(it->second.num);
 	}
 	else{
+#ifndef XTAL_NO_PARSER
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
 			return rawdef(primary_key, load(file_name), secondary_key);
 		}
+#endif
 		return undefined;
 
 		/* 指定した名前をフォルダーとみなす

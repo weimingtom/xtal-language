@@ -45,7 +45,7 @@ struct InheritedN{
 	};
 };
 
-struct nodeleter_t{
+struct undeleter_t{
 	template<class T>
 	void operator()(T* p){}
 };
@@ -57,7 +57,7 @@ struct deleter_t{
 	}
 };
 
-extern nodeleter_t nodeleter;
+extern undeleter_t undeleter;
 extern deleter_t deleter;
 
 /**
@@ -353,8 +353,8 @@ private:
 	* SmartPtr<A> p = SmartPtr<A>(new A, deleter);
 	* とコンストラクタにnewで生成したポインタとdeleterを渡すか
 	* static A static_a;
-	* SmartPtr<A> p = SmartPtr<A>(&static_a, nodeleter);
-	* と寿命が長いオブジェクトへのポインタとnodeleterを渡すか、
+	* SmartPtr<A> p = SmartPtr<A>(&static_a, undeleter);
+	* と寿命が長いオブジェクトへのポインタとundeleterを渡すか、
 	* この三つの方法のどれかをする必要がある。
 	*/
 	SmartPtr(void*);

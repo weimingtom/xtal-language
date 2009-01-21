@@ -33,7 +33,7 @@ private:
 	FramePtr local_variables_;
 };
 
-typedef SmartPtr<Info> InfoPr;
+typedef SmartPtr<Info> InfoPtr;
 
 
 /**
@@ -68,6 +68,11 @@ void set_call_hook(const AnyPtr& hook);
 void set_return_hook(const AnyPtr& hook);
 
 /**
+* @brief —áŠO‚©throw‚³‚ê‚é“x‚ÉŒÄ‚Ño‚³‚ê‚éƒtƒbƒNŠÖ”‚ğ“o˜^‚·‚é
+*/
+void set_throw_hook(const AnyPtr& hook);
+
+/**
 * @brief set_break_point_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
 */
 const AnyPtr& break_point_hook();
@@ -81,5 +86,10 @@ const AnyPtr& call_hook();
 * @brief set_return_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
 */
 const AnyPtr& return_hook();
+
+/**
+* @brief set_throw_hookŠÖ”‚Å“o˜^‚µ‚½ŠÖ”‚ğæ“¾‚·‚é
+*/
+const AnyPtr& throw_hook();
 
 }}

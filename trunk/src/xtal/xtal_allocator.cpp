@@ -201,6 +201,10 @@ void RBTreeAllocator::init(void* begin, void* end){
 	begin_->left = end_;
 	begin_->right = end_;
 
+	XTAL_ASSERT(!end_->red());
+
+	count_ = 1;
+
 	root_ = end_;
 	insert(begin_);
 }
@@ -209,18 +213,14 @@ void* RBTreeAllocator::malloc(size_t size){
 	size = ((size+(8-1)) & ~(8-1)) + sizeof(Node);
 
 	Node* node = root_;
-	Node* near = node;
+	Node* near = end_;
 	while(node!=end_){
-		if(size<node->size()){
+		if(size<=node->size()){
 			near = node;
 			node = node->left;
 		}
-		else if(size>node->size()){
-			node = node->right;
-		}
 		else{
-			near = node;
-			break;
+			node = node->right;
 		}
 	}
 
@@ -228,10 +228,15 @@ void* RBTreeAllocator::malloc(size_t size){
 		return malloc(near, size);
 	}
 	
+	debug_print();
+
 	return 0;
 }
 
 void* RBTreeAllocator::malloc(Node* node, size_t size){
+	uint_t nodesize = node->size();
+	XTAL_ASSERT(node->size()>=size);
+
 	erase(node);
 
 	Node* newnode = (Node*)(((u8*)node->buf())+size-sizeof(Node));
@@ -251,35 +256,32 @@ void RBTreeAllocator::free(void* p){
 		Node* node = to_node(p);
 		node->flag--;
 		if(node->used()==0){
-			insert(node);
-
 			if(node->prev->used()==0){
 				erase(node->prev);
-				erase(node);
-				insert(node->prev);
 				node->prev->next = node->next;
 				node->next->prev = node->prev;
 				node = node->prev;
 			}
 		
 			if(node->next->used()==0){
-				erase(node);
 				erase(node->next);
-				insert(node);
 				node->next->next->prev = node;
 				node->next = node->next->next;
 			}
+			insert(node);
 		}		
 	}
 }
 
 void RBTreeAllocator::insert(Node* newnode){
+	newnode->flag = count_++;
 	newnode->set_red();
 	newnode->right = end_;
 	newnode->left = end_;
 
 	root_ = insert(root_, newnode);
 	root_->set_black();
+	check();
 }
 
 RBTreeAllocator::Node* RBTreeAllocator::insert(Node* h , Node* newnode){
@@ -287,11 +289,7 @@ RBTreeAllocator::Node* RBTreeAllocator::insert(Node* h , Node* newnode){
 		return newnode; 
 	}
 	
-	if(h->left->red() && h->right->red()){
-		flip(h);
-	}
-	
-	if(newnode->size() < h->size()){
+	if(newnode->size() < h->size() || (newnode->size()==h->size() && newnode->used() < h->used())){
 		h->left = insert(h->left, newnode);
 	}
 	else{
@@ -301,65 +299,76 @@ RBTreeAllocator::Node* RBTreeAllocator::insert(Node* h , Node* newnode){
 	if(h->right->red() && !h->left->red()){
 		h = rotate_left(h);
 	}
-	else if(h->left->red() && h->left->left->red()){
+	
+	if(h->left->red() && h->left->left->red()){
 		h = rotate_right(h);
 	}
 
+	if(h->left->red() && h->right->red()){
+		flip_colors(h);
+	}
+	
 	return h;
 }
 
 void RBTreeAllocator::erase(Node* erasenode){
 	root_ = erase(root_ , erasenode);
 	root_->set_black();
+	check();
 }
 
 RBTreeAllocator::Node* RBTreeAllocator::erase(Node* h , Node* erasenode){
-	XTAL_ASSERT(h!=end_);
-	if(erasenode->size() < h->size()){
+	if(erasenode->size() < h->size() || (erasenode->size()==h->size() && erasenode->used() < h->used())){
 		if(!h->left->red() && !h->left->left->red()){
 			h = move_red_left(h);
 		}
 		h->left = erase(h->left, erasenode);
 	}
 	else{
-		if(h->left->red() && !h->right->red()){
+		if(h->left->red()){
 			h = rotate_right(h);
 		}
-		else if(erasenode==h && h->right==end_){
+		
+		if(erasenode==h && h->right==end_){
 			return end_;
 		}
 
-		Node* h2 = h;
 		if(!h->right->red() && !h->right->left->red()){
-			h2 = move_red_right(h);
+			int sizeeee = erasenode->size();
+			h = move_red_right(h);
 		}
 
-		if(h2==h && erasenode==h){
-			Node* left = h->right;
-			Node* left_parent = h;
-			while(left->left!=end_){
-				left_parent = left;
-				left = left->left;
+		if(erasenode==h){
+			Node* min_node = h->right;
+			Node* min_node_parent = h;
+			while(min_node->left!=end_){
+				min_node_parent = min_node;
+				min_node = min_node->left;
 			}
 
-			XTAL_ASSERT(left!=end_);
+			std::swap(min_node->left, h->left);
+			std::swap(min_node->right, h->right);
 
-			std::swap(left->left, h->left);
-			std::swap(left->right, h->right);
-			std::swap(left->flag, h->flag);
+			bool n = min_node->red();
+			bool m = h->red();
 
-			if(left_parent==h){
-				left->right = h;
+			std::swap(min_node->flag, h->flag);
+
+			if(n){ min_node->set_red(); }else{ min_node->set_black(); }
+			if(m){ h->set_red(); }else{ h->set_black(); }
+
+			if(min_node_parent==h){
+				min_node->right = h;
 			}
 			else{
-				left_parent->left = h; 
+				min_node_parent->left = h; 
 			}
 
-			h = left;
+			h = min_node;
 
 			h->right = erase_min(h->right);
-		}else{
-			h = h2;
+		}
+		else{
 			h->right = erase(h->right , erasenode);
 		}
 	}
@@ -380,23 +389,20 @@ RBTreeAllocator::Node* RBTreeAllocator::erase_min(Node* h){
 }
 
 RBTreeAllocator::Node* RBTreeAllocator::move_red_right(Node* h){
-	flip(h);
+	flip_colors(h);
 	if(h->left->left->red()){
 		h = rotate_right(h);
-		flip(h);
+		flip_colors(h);
 	}
 	return h;
 }
 
 RBTreeAllocator::Node* RBTreeAllocator::move_red_left(Node* h){
-	flip(h);
+	flip_colors(h);
 	if(h->right->left->red()){
 		h->right = rotate_right(h->right);
 		h = rotate_left(h);
-		if(right_leaning(h->right)){
-			h->right = rotate_left(h->right);
-		}
-		flip(h);
+		flip_colors(h);
 	}
 	return h;
 }
@@ -404,9 +410,6 @@ RBTreeAllocator::Node* RBTreeAllocator::move_red_left(Node* h){
 RBTreeAllocator::Node* RBTreeAllocator::fixup(Node* h){
 	if(h->right->red()){
 		h = rotate_left(h);
-		if(right_leaning(h->left)){
-			h->left = rotate_left(h->left);
-		}
 	}
 
 	if(h->left->red() && h->left->left->red()){
@@ -414,7 +417,7 @@ RBTreeAllocator::Node* RBTreeAllocator::fixup(Node* h){
 	}
 
 	if(h->left->red() && h->right->red()){
-		flip(h);
+		flip_colors(h);
 	}
 
 	return h;
@@ -425,6 +428,7 @@ RBTreeAllocator::Node* RBTreeAllocator::rotate_left(Node* h){
 	h->right = x->left;
 	x->left = h;
 	x->set_same_color(x->left);
+	XTAL_ASSERT(x->left!=end_);
 	x->left->set_red();
 	return x;
 }
@@ -434,6 +438,7 @@ RBTreeAllocator::Node* RBTreeAllocator::rotate_right(Node* h){
 	h->left = x->right;
 	x->right = h;
 	x->set_same_color(x->right);
+	XTAL_ASSERT(x->right!=end_);
 	x->right->set_red();
 	return x;
 }
@@ -442,6 +447,50 @@ void RBTreeAllocator::release(){
 	XTAL_ASSERT(root_==end_);
 	head_ = begin_ = end_ = root_ = 0; 
 }
+
+void RBTreeAllocator::check(){
+	std::vector<Node*> nodes, next_nodes;
+	nodes.push_back(root_);
+
+	while(true){
+		bool all_end = true;
+		for(uint_t i=0; i<nodes.size(); ++i){
+			if(nodes[i]==end_){
+				
+			}
+			else{
+				next_nodes.push_back(nodes[i]->left);
+				next_nodes.push_back(nodes[i]->right);
+
+				if(nodes[i]->left!=end_){
+					if(nodes[i]->left->size()>nodes[i]->size()){
+						debug_print();
+						return;
+					}
+				}
+
+				if(nodes[i]->right!=end_){
+					if(nodes[i]->right->size()<nodes[i]->size()){
+						debug_print();
+						return;
+					}
+				}
+
+				if(nodes[i]->left!=end_ || nodes[i]->right!=end_){
+					all_end = false;
+				}
+			}
+		}
+
+		nodes = next_nodes;
+		next_nodes.clear();
+
+		if(all_end){
+			break;
+		}
+	}
+}
+
 
 void RBTreeAllocator::debug_print(){
 	for(Node* it = begin_; it!=end_; it = it->next){
@@ -624,9 +673,6 @@ void* SmallObjectAllocator::malloc(size_t size){
 	if(size>HANDLE_MAX_SIZE){
 		return user_malloc(size);
 	}else{
-		if(size==0){
-			size=1;
-		}
 		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
 		return pool_[wsize-1].malloc(wsize);
 	}
@@ -636,8 +682,8 @@ void SmallObjectAllocator::free(void* p, size_t size){
 	if(size>HANDLE_MAX_SIZE){
 		user_free(p/*, size*/);
 	}else{
-		if(size==0){
-			size = 1;
+		if(p==0){
+			return;
 		}
 		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
 		pool_[wsize-1].free(p, wsize);

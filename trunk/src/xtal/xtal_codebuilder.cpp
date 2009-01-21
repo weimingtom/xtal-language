@@ -791,6 +791,50 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	}
 }
 
+void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label){
+	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
+		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
+	}
+	
+	if(str){ compile_expr(str); }
+	else{ put_inst(InstValue(register_value(""))); }
+
+	compile_expr(e->bin_lhs());
+	put_inst(InstDup());
+	compile_expr(e->bin_rhs());
+	put_inst(InstDup());
+	put_inst(InstInsert2());
+
+	InstEq inst;
+	inst.op += e->tag() - EXPR_EQ;
+	put_inst(inst);
+
+	if(e->tag()==EXPR_NE || e->tag()==EXPR_LE || e->tag()==EXPR_GE || e->tag()==EXPR_NIN){
+		put_inst(InstNot());
+	}
+
+	int_t pop_label = reserve_label();
+
+	set_jump(InstUnless::OFFSET_address, pop_label);
+	put_inst(InstUnless());
+
+	if(mes){ compile_expr(mes); }
+	else{ put_inst(InstValue(register_value(""))); }
+
+	put_inst(InstValue(register_value(f)));
+	put_inst(InstCall(4, 0, 1, 0));
+	put_inst(InstAssert());
+
+	set_jump(InstGoto::OFFSET_address, label);
+	put_inst(InstGoto());
+
+	set_label(pop_label);
+
+	put_inst(InstPop());
+	put_inst(InstPop());
+	put_inst(InstPop());
+}
+
 void CodeBuilder::compile_op_assign(const ExprPtr& e){
 	ExprPtr lhs = e->bin_lhs();
 	ExprPtr rhs = e->bin_rhs();
@@ -1942,22 +1986,56 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_ASSERT){		
-			int_t exprs_size = compile_exprs(e->assert_exprs());
-			if(exprs_size==1){
-				put_inst(InstValue(0));
-				put_inst(InstValue(0));	
-			}
-			else if(exprs_size==2){
-				put_inst(InstValue(0));
-			}
-			else if(exprs_size==3){
+			int_t label_if = reserve_label();
+			int_t label_if2 = reserve_label();
 
+			set_jump(InstIfDebug::OFFSET_address, label_if);
+			put_inst(InstIfDebug());
+			
+			if(ExprPtr e2 = e->assert_cond()){
+				switch(e2->tag()){
+				XTAL_DEFAULT{ 
+					compile_expr(e2); 
+					set_jump(InstUnless::OFFSET_address, label_if2);
+					put_inst(InstUnless());
+
+					if(e->assert_string()){ compile_expr(e->assert_string()); }
+					else{ put_inst(InstValue(register_value(""))); }
+					if(e->assert_message()){ compile_expr(e->assert_message()); }
+					else{ put_inst(InstValue(register_value(""))); }
+					
+					put_inst(InstValue(register_value(Xf("%s : %s"))));
+					put_inst(InstCall(2, 0, 1, 0));
+					put_inst(InstAssert());
+				}
+
+				XTAL_CASE(EXPR_EQ){ compile_comp_bin_assert(Xf("%s : ![%s == %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_NE){ compile_comp_bin_assert(Xf("%s : ![%s !=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_LT){ compile_comp_bin_assert(Xf("%s : ![%s <  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_GT){ compile_comp_bin_assert(Xf("%s : ![%s >  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_LE){ compile_comp_bin_assert(Xf("%s : ![%s <=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_GE){ compile_comp_bin_assert(Xf("%s : ![%s >=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin_assert(Xf("%s : ![%s ===  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_RAWNE){ compile_comp_bin_assert(Xf("%s : ![%s !==  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_IN){ compile_comp_bin_assert(Xf("%s : ![%s in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_NIN){ compile_comp_bin_assert(Xf("%s : ![%s !in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_IS){ compile_comp_bin_assert(Xf("%s : ![%s is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				XTAL_CASE(EXPR_NIS){ compile_comp_bin_assert(Xf("%s : ![%s !is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+				}
 			}
 			else{
-				error_->error(lineno(), Xt("Xtal Compile Error 1016"));
+				if(e->assert_string()){ compile_expr(e->assert_string()); }
+				else{ put_inst(InstValue(register_value(""))); }
+				if(e->assert_message()){ compile_expr(e->assert_message()); }
+				else{ put_inst(InstValue(register_value(""))); }
+				
+				put_inst(InstValue(register_value(Xf("%s : %s"))));
+				put_inst(InstCall(2, 0, 1, 0));
+				put_inst(InstAssert());
 			}
-			
-			put_inst(InstAssert());
+	
+			set_label(label_if);
+			set_label(label_if2);
 		}
 
 		XTAL_CASE(EXPR_TRY){

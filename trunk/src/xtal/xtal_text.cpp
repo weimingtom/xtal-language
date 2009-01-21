@@ -446,6 +446,7 @@ void initialize_text(){
 	tm->set_at(XTAL_STRING("Xtal Compile Error 1025"), XTAL_STRING("比較演算式の結果を最比較しようとしています。"));
 	tm->set_at(XTAL_STRING("Xtal Compile Error 1026"), XTAL_STRING("同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。"));
 	tm->set_at(XTAL_STRING("Xtal Compile Error 1027"), XTAL_STRING("コードが大きすぎて、バイトコードの生成に失敗しました。"));
+	tm->set_at(XTAL_STRING("Xtal Compile Error 1028"), XTAL_STRING("演算子の前後の空白と演算子の優先順位が一致していません。想定している優先順位と異なっている可能性があります。"));
 	
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1001"), XTAL_STRING("%(object)s 関数呼び出しの '%(no)s'番目の引数の型が不正です。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1002"), XTAL_STRING("evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。"));

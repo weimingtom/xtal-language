@@ -27,6 +27,8 @@ void register_uninitializer(void (*uninitializer)());
 /** @addtogroup lib */
 /*@{*/
 
+#ifndef XTAL_NO_PARSER
+
 /**
 * @brief file_nameファイルをコンパイルする。
 *
@@ -65,6 +67,12 @@ AnyPtr load_and_save(const StringPtr& file_name);
 * @brief interactive xtalの実行
 */
 void ix();
+
+CodePtr source(const char_t* src, int_t size, const char* file);
+
+#endif
+
+CodePtr compiled_source(const void* src, int_t size, const char* file);
 
 /**
 * @brief ガーベジコレクションを実行する
@@ -141,11 +149,38 @@ const StreamPtr& stderr_stream();
 
 AnyPtr* make_place();
 
-
-CodePtr source(const char_t* src, int_t size, const char* file);
-
-
 /*@}*/
 
+/*
+struct Environment{
+	StreamPtr stdin_stream_;
+	StreamPtr stdout_stream_;
+	StreamPtr stderr_stream_;
+
+	ClassPtr iterator_;
+	ClassPtr Iterable_;
+	ClassPtr builtin_;
+	ClassPtr lib_;
+
+	int_t enable_count_;
+	AnyPtr break_point_hook_;
+	AnyPtr call_hook_;
+	AnyPtr return_hook_;
+	AnyPtr throw_hook_;
+
+	SmartPtr<VMachineMgr> vm_mgr_;
+	
+	SmartPtr<StringMgr> str_mgr_;
+
+	MapPtr user_text_map_;
+
+	AnyPtr except_;
+};
+
+get_cpp_class<T>(current_environment())
+cast<T>(a, a->environment());
+
+environment->xnew<T>();
+*/
 }
 

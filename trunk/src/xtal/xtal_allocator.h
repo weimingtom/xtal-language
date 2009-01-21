@@ -218,7 +218,7 @@ class RBTreeAllocator{
 		uint_t flag;
 
 		enum{
-			COLOR_RED = 1<<31
+			COLOR_RED = 1<<30
 		};
 
 		uint_t used(){ return flag&~COLOR_RED; }
@@ -226,7 +226,7 @@ class RBTreeAllocator{
 		void set_red(){ flag|=COLOR_RED; }
 		void set_black(){ flag&=~COLOR_RED; }
 		void set_same_color(Node* a){ if(a->red()){ set_red(); }else{ set_black(); } }
-		void flip(){ flag^=COLOR_RED; }
+		void flip_color(){ flag^=COLOR_RED; }
 		size_t size(){ return (u8*)next - (u8*)buf(); }
 		void* buf(){ return this+1; }
 	};
@@ -268,19 +268,17 @@ private:
 	Node* rotate_left(Node* h);
 
 	Node* rotate_right(Node* h);
-	
-	bool right_leaning(Node* h){
-		return h==end_ ? false : h->right->red() && !h->left->red();
-	}
 
-	void flip(Node* h){
+	void flip_colors(Node* h){
 		XTAL_ASSERT(h!=end_);
 		XTAL_ASSERT(h->left!=end_);
 		XTAL_ASSERT(h->right!=end_);
-		h->flip();
-		h->left->flip();
-		h->right->flip();
+		h->flip_color();
+		h->left->flip_color();
+		h->right->flip_color();
 	}
+
+	void check();
 
 private:
 

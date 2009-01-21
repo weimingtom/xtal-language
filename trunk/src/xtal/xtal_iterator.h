@@ -20,54 +20,41 @@ public:
 
 struct BlockValueHolder1{
 	
-	BlockValueHolder1(const AnyPtr& tar = null);
+	BlockValueHolder1(const AnyPtr& tar, bool& not_end);
+	BlockValueHolder1(const ArrayPtr& tar, bool& not_end);
 	~BlockValueHolder1();
-
-	BlockValueHolder1(const BlockValueHolder1&);
-	BlockValueHolder1& operator=(const BlockValueHolder1&);
 
 	AnyPtr target;
 	AnyPtr values[1];
 
 	ArrayPtr array;
 	Array::iterator it;
-
-	operator bool(){ return target; }
 };
 
 struct BlockValueHolder2{
 	
-	BlockValueHolder2(const AnyPtr& tar = null);
+	BlockValueHolder2(const AnyPtr& tar, bool& not_end);
+	BlockValueHolder2(const MapPtr& tar, bool& not_end);
 	~BlockValueHolder2();
-
-	BlockValueHolder2(const BlockValueHolder2&);
-	BlockValueHolder2& operator=(const BlockValueHolder2&);
 
 	AnyPtr target;
 	AnyPtr values[2];
 
 	MapPtr map;
 	Map::iterator it;
-
-	operator bool(){ return target; }
 };
 
 struct BlockValueHolder3{
-	BlockValueHolder3(const AnyPtr& tar = null);
+	BlockValueHolder3(const AnyPtr& tar, bool& not_end);
 	~BlockValueHolder3();
-
-	BlockValueHolder3(const BlockValueHolder3&);
-	BlockValueHolder3& operator=(const BlockValueHolder3&);
 
 	AnyPtr target;
 	AnyPtr values[3];
-
-	operator bool(){ return target; }
 };
 
-void block_next(BlockValueHolder1& holder, bool first);
-void block_next(BlockValueHolder2& holder, bool first);
-void block_next(BlockValueHolder3& holder, bool first);
+bool block_next(BlockValueHolder1& holder, bool first);
+bool block_next(BlockValueHolder2& holder, bool first);
+bool block_next(BlockValueHolder3& holder, bool first);
 void block_break(AnyPtr& target);
 
 }

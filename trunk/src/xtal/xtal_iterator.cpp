@@ -78,12 +78,12 @@ public:
 };
 
 void InitZipIter(){
-	ClassPtr p = new_cpp_class<ZipIter>("ZipIter");
+	ClassPtr p = new_cpp_class<ZipIter>(Xid(ZipIter));
 	p->inherit(Iterator());
-	p->def("new", ctor<ZipIter, const VMachinePtr&>());
-	p->method("block_first", &ZipIter::block_first);
-	p->method("block_next", &ZipIter::block_next);
-	p->method("block_break", &ZipIter::block_break);
+	p->def(Xid(new), ctor<ZipIter, const VMachinePtr&>());
+	p->method(Xid(block_first), &ZipIter::block_first);
+	p->method(Xid(block_next), &ZipIter::block_next);
+	p->method(Xid(block_break), &ZipIter::block_break);
 }
 
 void initialize_iterator(){
@@ -91,12 +91,12 @@ void initialize_iterator(){
 		ClassPtr p = Iterator();
 		p->inherit(Iterable());
 
-		p->fun("each", &Iterator_each);
-		p->fun("block_first", &Iterator_block_first);
+		p->fun(Xid(each), &Iterator_each);
+		p->fun(Xid(block_first), &Iterator_block_first);
 	}
 
 	InitZipIter();
-	builtin()->def("zip", get_cpp_class<ZipIter>());
+	builtin()->def(Xid(zip), get_cpp_class<ZipIter>());
 
 }
 

@@ -210,8 +210,8 @@ private:
 	MapPtr value_map_;
 	MapPtr identifier_map_;
 
-	CompileError errorimpl_;
-	CompileError* error_;
+	CompileErrors errorimpl_;
+	CompileErrors* error_;
 	
 	Parser parser_;
 	CodePtr result_;

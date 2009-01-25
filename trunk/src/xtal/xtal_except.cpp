@@ -6,14 +6,14 @@ namespace xtal{
 void initialize_except(){
 	{
 		ClassPtr p = new_cpp_class<Exception>();
-		p->def("new", ctor<Exception>()->param(Named("message", "")));
-		p->method("initialize", &Exception::initialize)->param(Named("message", ""));
-		p->method("to_s", &Exception::to_s);
-		p->method("message", &Exception::message);
-		p->method("backtrace", &Exception::backtrace);
-		p->method("append_backtrace", &Exception::append_backtrace);
+		p->def(Xid(new), ctor<Exception>()->param(Named(Xid(message), empty_id)));
+		p->method(Xid(initialize), &Exception::initialize)->param(Named(Xid(message), empty_id));
+		p->method(Xid(to_s), &Exception::to_s);
+		p->method(Xid(message), &Exception::message);
+		p->method(Xid(backtrace), &Exception::backtrace);
+		p->method(Xid(append_backtrace), &Exception::append_backtrace);
 
-		builtin()->def("Exception", p);
+		builtin()->def(Xid(Exception), p);
 	}
 }
 
@@ -28,7 +28,7 @@ void Exception::initialize(const AnyPtr& message){
 
 void Exception::append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name){
 	backtrace_->push_back(Xf("\t%(file)s:%(line)d: in %(function_name)s")(
-		Named("file", file), Named("line", line), Named("function_name", function_name)));
+		Named(Xid(file), file), Named(Xid(line), line), Named(Xid(function_name), function_name)));
 }
 
 StringPtr Exception::to_s(){
@@ -42,15 +42,15 @@ StringPtr Exception::to_s(){
 }
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
-	return builtin()->member("CastError")(Xt("Xtal Runtime Error 1004")(
-		Named("type", from->get_class()->object_name()), Named("required", to)
+	return builtin()->member(Xid(CastError))(Xt("Xtal Runtime Error 1004")(
+		Named(Xid(type), from->get_class()->object_name()), Named(Xid(required), to)
 	));
 }
 
 AnyPtr argument_error(const AnyPtr& object, int_t no){
-	return builtin()->member("ArgumentError")(Xt("Xtal Runtime Error 1001")(
-		Named("object", object), 
-		Named("no", no)
+	return builtin()->member(Xid(ArgumentError))(Xt("Xtal Runtime Error 1001")(
+		Named(Xid(object), object), 
+		Named(Xid(no), no)
 	));
 }
 
@@ -67,27 +67,27 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 
 	if(pick){
 		if(secondary_key){
-			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
-				Named("object", Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key)),
-				Named("pick", pick)
+			return UnsupportedError()(Xt("Xtal Runtime Error 1021")(
+				Named(Xid(object), Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key)),
+				Named(Xid(pick), pick)
 			));	
 		}
 		else{
-			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1021")(
-				Named("object", Xf("%s::%s")(target->object_name(), primary_key)),
-				Named("pick", pick)
+			return UnsupportedError()(Xt("Xtal Runtime Error 1021")(
+				Named(Xid(object), Xf("%s::%s")(target->object_name(), primary_key)),
+				Named(Xid(pick), pick)
 			));	
 		}
 	}
 	else{
 		if(secondary_key){
-			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-				Named("object", Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key))
+			return UnsupportedError()(Xt("Xtal Runtime Error 1015")(
+				Named(Xid(object), Xf("%s::%s#%s")(target->object_name(), primary_key, secondary_key))
 			));
 		}
 		else{
-			return builtin()->member("UnsupportedError")(Xt("Xtal Runtime Error 1015")(
-				Named("object", Xf("%s::%s")(target->object_name(), primary_key))
+			return UnsupportedError()(Xt("Xtal Runtime Error 1015")(
+				Named(Xid(object), Xf("%s::%s")(target->object_name(), primary_key))
 			));		
 		}
 	}

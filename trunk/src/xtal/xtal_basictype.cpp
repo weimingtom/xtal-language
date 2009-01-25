@@ -6,6 +6,7 @@ namespace xtal{
 Null null;
 Undefined undefined;
 Named null_named;
+IDPtr empty_id;
 
 namespace{
 
@@ -14,7 +15,7 @@ namespace{
 			return ivalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Int)), return 0);
 	}
 
 	float_t Int_to_f(const AnyPtr& p){
@@ -22,7 +23,7 @@ namespace{
 			return (float_t)ivalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Int)), return 0);
 	}
 
 	StringPtr Int_to_s(const AnyPtr& p){
@@ -30,7 +31,7 @@ namespace{
 			return Xf("%d")(p)->to_s();
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Int"), return null);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Int)), return null);
 	}
 
 	int_t Float_to_i(const AnyPtr& p){
@@ -38,7 +39,7 @@ namespace{
 			return (int_t)fvalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Float)), return 0);
 	}
 
 	float_t Float_to_f(const AnyPtr& p){
@@ -46,7 +47,7 @@ namespace{
 			return fvalue(p);
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return 0);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Float)), return 0);
 	}
 
 	StringPtr Float_to_s(const AnyPtr& p){
@@ -54,7 +55,7 @@ namespace{
 			return Xf("%g")(p)->to_s();
 		}
 
-		XTAL_THROW(cast_error(p->get_class()->object_name(), "Float"), return null);
+		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Float)), return null);
 	}
 
 	IntRangePtr op_range_Int(const AnyPtr& left, const AnyPtr& right, int_t kind){
@@ -109,73 +110,73 @@ AnyPtr IntRange::each(){
 
 void initialize_basic_type(){
 
-	builtin()->def("String", new_cpp_class<String>());
-	builtin()->def("Int", new_cpp_class<Int>());
-	builtin()->def("Float", new_cpp_class<Float>());
-	builtin()->def("Null", new_cpp_class<Null>());
-	builtin()->def("Undefined", new_cpp_class<Undefined>());
-	builtin()->def("True", new_cpp_class<True>());
-	builtin()->def("False", new_cpp_class<False>());
-	builtin()->def("IntRange", new_cpp_class<IntRange>());
-	builtin()->def("FloatRange", new_cpp_class<FloatRange>());
-	builtin()->def("ChRange", new_cpp_class<ChRange>());
+	builtin()->def(Xid(String), new_cpp_class<String>());
+	builtin()->def(Xid(Int), new_cpp_class<Int>());
+	builtin()->def(Xid(Float), new_cpp_class<Float>());
+	builtin()->def(Xid(Null), new_cpp_class<Null>());
+	builtin()->def(Xid(Undefined), new_cpp_class<Undefined>());
+	builtin()->def(Xid(True), new_cpp_class<True>());
+	builtin()->def(Xid(False), new_cpp_class<False>());
+	builtin()->def(Xid(IntRange), new_cpp_class<IntRange>());
+	builtin()->def(Xid(FloatRange), new_cpp_class<FloatRange>());
+	builtin()->def(Xid(ChRange), new_cpp_class<ChRange>());
 
 
 	{
-		ClassPtr p = new_cpp_class<Undefined>("Undefined");	
-		p->method("to_mv", &to_mv_Undefined);
+		ClassPtr p = new_cpp_class<Undefined>(Xid(Undefined));	
+		p->method(Xid(to_mv), &to_mv_Undefined);
 	}
 	
 	{
-		ClassPtr p = new_cpp_class<Int>("Int");	
-		p->method("to_i", &Int_to_i);
-		p->method("to_f", &Int_to_f);
-		p->method("to_s", &Int_to_s);
-		p->method("op_range", &op_range_Int, get_cpp_class<Int>());
-		p->method("op_range", &op_range_Float, get_cpp_class<Float>());
-		p->method("op_in", &op_in_Int_IntRange, get_cpp_class<IntRange>());
-		p->method("op_in", &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
+		ClassPtr p = new_cpp_class<Int>(Xid(Int));	
+		p->method(Xid(to_i), &Int_to_i);
+		p->method(Xid(to_f), &Int_to_f);
+		p->method(Xid(to_s), &Int_to_s);
+		p->method(Xid(op_range), &op_range_Int, get_cpp_class<Int>());
+		p->method(Xid(op_range), &op_range_Float, get_cpp_class<Float>());
+		p->method(Xid(op_in), &op_in_Int_IntRange, get_cpp_class<IntRange>());
+		p->method(Xid(op_in), &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Float>("Float");
-		p->method("to_i", &Float_to_i);
-		p->method("to_f", &Float_to_f);
-		p->method("to_s", &Float_to_s);
-		p->method("op_range", &op_range_Float, get_cpp_class<Int>());
-		p->method("op_range", &op_range_Float, get_cpp_class<Float>());
-		p->method("op_in", &op_in_Int_IntRange, get_cpp_class<IntRange>());
-		p->method("op_in", &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
+		ClassPtr p = new_cpp_class<Float>(Xid(Float));
+		p->method(Xid(to_i), &Float_to_i);
+		p->method(Xid(to_f), &Float_to_f);
+		p->method(Xid(to_s), &Float_to_s);
+		p->method(Xid(op_range), &op_range_Float, get_cpp_class<Int>());
+		p->method(Xid(op_range), &op_range_Float, get_cpp_class<Float>());
+		p->method(Xid(op_in), &op_in_Int_IntRange, get_cpp_class<IntRange>());
+		p->method(Xid(op_in), &op_in_Float_FloatRange, get_cpp_class<FloatRange>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<IntRangeIter>("IntRangeIter");
+		ClassPtr p = new_cpp_class<IntRangeIter>(Xid(IntRangeIter));
 		p->inherit(Iterator());
-		p->method("block_next", &IntRangeIter::block_next);
+		p->method(Xid(block_next), &IntRangeIter::block_next);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Range>("Range");
+		ClassPtr p = new_cpp_class<Range>(Xid(Range));
 		p->inherit(Iterable());
-		p->def("new", ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
-		p->method("left", &Range::left);
-		p->method("right", &Range::right);
-		p->method("kind", &Range::kind);
+		p->def(Xid(new), ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(Named(Xid(left), null), Named(Xid(right), null), Named(Xid(kind), 0)));
+		p->method(Xid(left), &Range::left);
+		p->method(Xid(right), &Range::right);
+		p->method(Xid(kind), &Range::kind);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<IntRange>("IntRange");
+		ClassPtr p = new_cpp_class<IntRange>(Xid(IntRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def("new", ctor<IntRange, int_t, int_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
-		p->method("begin", &IntRange::begin);
-		p->method("end", &IntRange::end);
-		p->method("each", &IntRange::each);
+		p->def(Xid(new), ctor<IntRange, int_t, int_t, int_t>()->param(Named(Xid(left), null), Named(Xid(right), null), Named(Xid(kind), 0)));
+		p->method(Xid(begin), &IntRange::begin);
+		p->method(Xid(end), &IntRange::end);
+		p->method(Xid(each), &IntRange::each);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<FloatRange>("FloatRange");
+		ClassPtr p = new_cpp_class<FloatRange>(Xid(FloatRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def("new", ctor<FloatRange, float_t, float_t, int_t>()->param(Named("left", null), Named("right", null), Named("kind", 0)));
+		p->def(Xid(new), ctor<FloatRange, float_t, float_t, int_t>()->param(Named(Xid(left), null), Named(Xid(right), null), Named(Xid(kind), 0)));
 	}
 
 }

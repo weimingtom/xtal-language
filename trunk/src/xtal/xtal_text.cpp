@@ -396,23 +396,23 @@ void initialize_text(){
 	user_text_map_ = xnew<Map>();
 
 	{
-		ClassPtr p = new_cpp_class<Format>("Format");
-		p->method("to_s", &Format::to_s);
-		p->method("serial_save", &Format::serial_save);
-		p->method("serial_load", &Format::serial_load);
-		p->def("serial_new", ctor<Format>());
+		ClassPtr p = new_cpp_class<Format>(Xid(Format));
+		p->method(Xid(to_s), &Format::to_s);
+		p->method(Xid(serial_save), &Format::serial_save);
+		p->method(Xid(serial_load), &Format::serial_load);
+		p->def(Xid(serial_new), ctor<Format>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Text>("Text");
-		p->method("to_s", &Text::to_s);
-		p->method("serial_save", &Text::serial_save);
-		p->method("serial_load", &Text::serial_load);
-		p->def("serial_new", ctor<Text>());
+		ClassPtr p = new_cpp_class<Text>(Xid(Text));
+		p->method(Xid(to_s), &Text::to_s);
+		p->method(Xid(serial_save), &Text::serial_save);
+		p->method(Xid(serial_load), &Text::serial_load);
+		p->def(Xid(serial_new), ctor<Text>());
 	}
 
-	builtin()->def("Format", get_cpp_class<Format>());
-	builtin()->def("Text", get_cpp_class<Text>());
+	builtin()->def(Xid(Format), get_cpp_class<Format>());
+	builtin()->def(Xid(Text), get_cpp_class<Text>());
 
 
 	MapPtr tm = xnew<Map>();

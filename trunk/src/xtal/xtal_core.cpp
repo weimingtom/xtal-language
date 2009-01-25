@@ -5,7 +5,6 @@ namespace xtal{
 
 void initialize_any();
 void initialize_string();
-void initialize_interned_string();
 void initialize_map();
 void initialize_array();
 void initialize_basic_type();
@@ -83,6 +82,18 @@ const ClassPtr& lib(){
 	return lib_;
 }
 
+const ClassPtr& RuntimeError(){
+	return ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
+}
+
+const ClassPtr& CompileError(){
+	return ptr_cast<Class>(builtin()->member(Xid(CompileError)));
+}
+
+const ClassPtr& UnsupportedError(){
+	return ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
+}
+
 bool is_initialized(){
 	return objects_begin_!=0;
 }
@@ -141,7 +152,6 @@ void initialize(){
 	Iterable_ = xnew<Class>();
 
 	initialize_string();
-	initialize_interned_string();
 
 	initialize_except();
 	initialize_any();

@@ -149,7 +149,7 @@ private:
 	bool recording_;
 };
 	
-class CompileError{
+class CompileErrors{
 public:	
 
 	void init(const StringPtr& source_file_name);
@@ -170,7 +170,7 @@ public:
 	/**
 	* @brief 初期化
 	*/
-	void init(const StreamPtr& stream, CompileError* error);
+	void init(const StreamPtr& stream, CompileErrors* error);
 	
 	/**
 	* @brief 読み進める
@@ -258,7 +258,7 @@ private:
 	uint_t left_space_;
 	uint_t lineno_;
 
-	CompileError* error_;
+	CompileErrors* error_;
 };
 
 class Parser{
@@ -266,9 +266,9 @@ public:
 
 	Parser();
 
-	ExprPtr parse(const StreamPtr& stream, CompileError* error);
+	ExprPtr parse(const StreamPtr& stream, CompileErrors* error);
 
-	ExprPtr parse_stmt(const StreamPtr& stream, CompileError* error);
+	ExprPtr parse_stmt(const StreamPtr& stream, CompileErrors* error);
 
 private:
 
@@ -323,7 +323,7 @@ public:
 	ExprBuilder eb_;
 	Lexer lexer_;
 	bool expr_end_flag_;
-	CompileError* error_;
+	CompileErrors* error_;
 };
 
 

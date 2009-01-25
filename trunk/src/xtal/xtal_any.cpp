@@ -25,55 +25,55 @@ namespace{
 void initialize_any(){
 	
 	{
-		ClassPtr p = new_cpp_class<Any>("Any");
-		p->method("class", &Any::get_class);
-		p->method("get_class", &Any::get_class);
-		p->method("self", &Any::self);
-		p->method("object_name", &Any::object_name)->param(Named("depth", -1));
-		p->method("s_save", &Any::s_save);
-		p->method("s_load", &Any::s_load);
-		p->method("to_mv", &Any::to_mv);
-		p->method("flatten_mv", &Any::flatten_mv);
-		p->method("flatten_all_mv", &Any::flatten_all_mv);
+		ClassPtr p = new_cpp_class<Any>(Xid(Any));
+		p->method(Xid(class), &Any::get_class);
+		p->method(Xid(get_class), &Any::get_class);
+		p->method(Xid(self), &Any::self);
+		p->method(Xid(object_name), &Any::object_name)->param(Named(Xid(depth), -1));
+		p->method(Xid(s_save), &Any::s_save);
+		p->method(Xid(s_load), &Any::s_load);
+		p->method(Xid(to_mv), &Any::to_mv);
+		p->method(Xid(flatten_mv), &Any::flatten_mv);
+		p->method(Xid(flatten_all_mv), &Any::flatten_all_mv);
 
-		p->dual_dispatch_method("op_add");
-		p->dual_dispatch_method("op_sub");
-		p->dual_dispatch_method("op_cat");
-		p->dual_dispatch_method("op_mul");
-		p->dual_dispatch_method("op_div");
-		p->dual_dispatch_method("op_mod");
-		p->dual_dispatch_method("op_and");
-		p->dual_dispatch_method("op_or");
-		p->dual_dispatch_method("op_xor");
-		p->dual_dispatch_method("op_shr");
-		p->dual_dispatch_method("op_shl");
-		p->dual_dispatch_method("op_ushr");
+		p->dual_dispatch_method(Xid(op_add));
+		p->dual_dispatch_method(Xid(op_sub));
+		p->dual_dispatch_method(Xid(op_cat));
+		p->dual_dispatch_method(Xid(op_mul));
+		p->dual_dispatch_method(Xid(op_div));
+		p->dual_dispatch_method(Xid(op_mod));
+		p->dual_dispatch_method(Xid(op_and));
+		p->dual_dispatch_method(Xid(op_or));
+		p->dual_dispatch_method(Xid(op_xor));
+		p->dual_dispatch_method(Xid(op_shr));
+		p->dual_dispatch_method(Xid(op_shl));
+		p->dual_dispatch_method(Xid(op_ushr));
 
-		p->dual_dispatch_method("op_add_assign");
-		p->dual_dispatch_method("op_sub_assign");
-		p->dual_dispatch_method("op_cat_assign");
-		p->dual_dispatch_method("op_mul_assign");
-		p->dual_dispatch_method("op_div_assign");
-		p->dual_dispatch_method("op_mod_assign");
-		p->dual_dispatch_method("op_and_assign");
-		p->dual_dispatch_method("op_or_assign");
-		p->dual_dispatch_method("op_xor_assign");
-		p->dual_dispatch_method("op_shr_assign");
-		p->dual_dispatch_method("op_shl_assign");
-		p->dual_dispatch_method("op_ushr_assign");
+		p->dual_dispatch_method(Xid(op_add_assign));
+		p->dual_dispatch_method(Xid(op_sub_assign));
+		p->dual_dispatch_method(Xid(op_cat_assign));
+		p->dual_dispatch_method(Xid(op_mul_assign));
+		p->dual_dispatch_method(Xid(op_div_assign));
+		p->dual_dispatch_method(Xid(op_mod_assign));
+		p->dual_dispatch_method(Xid(op_and_assign));
+		p->dual_dispatch_method(Xid(op_or_assign));
+		p->dual_dispatch_method(Xid(op_xor_assign));
+		p->dual_dispatch_method(Xid(op_shr_assign));
+		p->dual_dispatch_method(Xid(op_shl_assign));
+		p->dual_dispatch_method(Xid(op_ushr_assign));
 
-		p->dual_dispatch_method("op_eq");
-		p->dual_dispatch_method("op_lt");
+		p->dual_dispatch_method(Xid(op_eq));
+		p->dual_dispatch_method(Xid(op_lt));
 
-		p->dual_dispatch_method("op_at");
-		p->dual_dispatch_method("op_set_at");
+		p->dual_dispatch_method(Xid(op_at));
+		p->dual_dispatch_method(Xid(op_set_at));
 
-		p->dual_dispatch_method("op_range");
-		p->method("op_in", &op_in_Any_Array, new_cpp_class<Array>());
-		p->method("op_in", &op_in_Any_Set, new_cpp_class<Set>());
+		p->dual_dispatch_method(Xid(op_range));
+		p->method(Xid(op_in), &op_in_Any_Array, new_cpp_class<Array>());
+		p->method(Xid(op_in), &op_in_Any_Set, new_cpp_class<Set>());
 	}
 
-	builtin()->def("Any", get_cpp_class<Any>());
+	builtin()->def(Xid(Any), get_cpp_class<Any>());
 }
 
 AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }

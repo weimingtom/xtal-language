@@ -10,7 +10,7 @@ inline const IDPtr& isp(const Innocence& v){
 template<class T>
 inline T check_zero(T value){
 	if(value==0){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1024")), return 1);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1024")), return 1);
 	}
 	return value;
 }
@@ -836,7 +836,7 @@ XTAL_VM_SWITCH{
 		else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
-				XTAL_VM_EXCEPT(builtin()->member("YieldError")(Xt("Xtal Runtime Error 1012")));
+				XTAL_VM_EXCEPT(builtin()->member(Xid(YieldError))(Xt("Xtal Runtime Error 1012")));
 			}
 		}
 	}
@@ -1907,8 +1907,8 @@ XTAL_VM_SWITCH{
 				except = ap(except_[0]);
 			}
 
-			if(!except->is(builtin()->member("Exception"))){
-				XTAL_VM_EXCEPT(builtin()->member("RuntimeError")(except));
+			if(!except->is(builtin()->member(Xid(Exception)))){
+				XTAL_VM_EXCEPT(RuntimeError()(except));
 			}
 			else{
 				XTAL_VM_EXCEPT(except);
@@ -1939,7 +1939,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(Assert){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			AnyPtr message = pop();
-			XTAL_VM_EXCEPT(builtin()->member("AssertionFailed")(message)); 
+			XTAL_VM_EXCEPT(builtin()->member(Xid(AssertionFailed))(message)); 
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -3124,19 +3124,19 @@ ArgumentsPtr VMachine::make_args(Fun* fun){
 AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	if(e){
 		AnyPtr ep = e;
-		if(!ep->is(builtin()->member("Exception"))){
-			ep = builtin()->member("RuntimeError")(ep);
+		if(!ep->is(builtin()->member(Xid(Exception)))){
+			ep = RuntimeError()(ep);
 		}
 		if(fun() && code()){
 			if((pc != code()->data()+code()->size()-1)){
-				ep->send("append_backtrace")(
+				ep->send(Xid(append_backtrace))(
 					code()->source_file_name(),
 					code()->compliant_lineno(pc),
 					fun()->object_name());
 			}
 		}
 		else{
-			/*ep->send("append_backtrace")(
+			/*ep->send(Xid(append_backtrace))(
 				"C++ function",
 				-1,
 				ap(ff().temp1_)->object_name()

@@ -3,7 +3,6 @@
 
 //#define XTAL_NO_THREAD
 //#define XTAL_NO_PARSER
-#define XTAL_USE_PREDEFINED_ID
 //#define XTAL_USE_WCHAR
 //#define XTAL_USE_COMPILED_EMB
 

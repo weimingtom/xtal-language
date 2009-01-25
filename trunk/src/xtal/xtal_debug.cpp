@@ -1,4 +1,5 @@
 #include "xtal.h"
+#include "xtal_macro.h"
 
 namespace xtal{ namespace debug{
 
@@ -77,40 +78,40 @@ void initialize_debug(){
 
 	enable_count_ = 0;
 
-	ClassPtr debug = xnew<Singleton>("debug");
-	debug->fun("enable", &enable);
-	debug->fun("disable", &disable);
-	debug->fun("is_enabled", &is_enabled);
-	debug->fun("break_point_hook", &break_point_hook);
-	debug->fun("call_hook", &call_hook);
-	debug->fun("return_hook", &return_hook);
-	debug->fun("throw_hook", &throw_hook);
-	debug->fun("set_break_point_hook", &set_break_point_hook);
-	debug->fun("set_call_hook", &set_call_hook);
-	debug->fun("set_return_hook", &set_return_hook);
-	debug->fun("set_throw_hook", &set_throw_hook);
+	ClassPtr debug = xnew<Singleton>(Xid(debug));
+	debug->fun(Xid(enable), &enable);
+	debug->fun(Xid(disable), &disable);
+	debug->fun(Xid(is_enabled), &is_enabled);
+	debug->fun(Xid(break_point_hook), &break_point_hook);
+	debug->fun(Xid(call_hook), &call_hook);
+	debug->fun(Xid(return_hook), &return_hook);
+	debug->fun(Xid(throw_hook), &throw_hook);
+	debug->fun(Xid(set_break_point_hook), &set_break_point_hook);
+	debug->fun(Xid(set_call_hook), &set_call_hook);
+	debug->fun(Xid(set_return_hook), &set_return_hook);
+	debug->fun(Xid(set_throw_hook), &set_throw_hook);
 
 	{
-		ClassPtr p = new_cpp_class<Info>("Info");
-		p->method("clone", &Info::clone);
-		p->method("kind", &Info::kind);
-		p->method("line", &Info::line);
-		p->method("fun_name", &Info::fun_name);
-		p->method("file_name", &Info::file_name);
-		p->method("set_kind", &Info::set_kind);
-		p->method("set_line", &Info::line);
-		p->method("set_fun_name", &Info::set_fun_name);
-		p->method("set_file_name", &Info::set_file_name);
+		ClassPtr p = new_cpp_class<Info>(Xid(Info));
+		p->method(Xid(clone), &Info::clone);
+		p->method(Xid(kind), &Info::kind);
+		p->method(Xid(line), &Info::line);
+		p->method(Xid(fun_name), &Info::fun_name);
+		p->method(Xid(file_name), &Info::file_name);
+		p->method(Xid(set_kind), &Info::set_kind);
+		p->method(Xid(set_line), &Info::line);
+		p->method(Xid(set_fun_name), &Info::set_fun_name);
+		p->method(Xid(set_file_name), &Info::set_file_name);
 
-		p->def("BREAKPOINT", BREAKPOINT);
-		p->def("CALL", BREAKPOINT_CALL);
-		p->def("RETURN", BREAKPOINT_RETURN);
-		p->def("RETURN_THROW", BREAKPOINT_THROW);
+		p->def(Xid(BREAKPOINT), BREAKPOINT);
+		p->def(Xid(CALL), BREAKPOINT_CALL);
+		p->def(Xid(RETURN), BREAKPOINT_RETURN);
+		p->def(Xid(RETURN_THROW), BREAKPOINT_THROW);
 
-		debug->def("Info", p);
+		debug->def(Xid(Info), p);
 	}
 
-	builtin()->def("debug", debug);
+	builtin()->def(Xid(debug), debug);
 }
 
 }

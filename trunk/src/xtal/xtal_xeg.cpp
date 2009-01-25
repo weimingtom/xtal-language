@@ -1023,7 +1023,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_ERROR){
 			if(errors_){
-				errors_->push_back(e->param1(Named("line", scanner_->lineno())));
+				errors_->push_back(e->param1(Named(Xid(line), scanner_->lineno())));
 			}
 			return !e->inv;
 		}
@@ -1069,7 +1069,7 @@ ElementPtr elem(const AnyPtr& a){
 		return xnew<Element>(Element::TYPE_CALL, p);
 	}
 
-	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1026")), return null);
+	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1026")), return null);
 	return null;
 }
 
@@ -1205,22 +1205,22 @@ AnyPtr eql(const AnyPtr& e){ return xnew<Element>(Element::TYPE_EQL, e); }
 ////////////////////////////////////////////////////////////////////////
 
 void def_common_methods(const ClassPtr& p){
-	p->method("op_div", &more_shortest_Int, get_cpp_class<Int>());
-	p->method("op_div", &more_shortest_IntRange, get_cpp_class<IntRange>());
-	p->method("op_mul", &more_normal_Int, get_cpp_class<Int>());
-	p->method("op_mul", &more_normal_IntRange, get_cpp_class<IntRange>());
-	p->method("op_mod", &more_greed_Int, get_cpp_class<Int>());
-	p->method("op_mod", &more_greed_IntRange, get_cpp_class<IntRange>());
-	p->method("op_com", &inv);
+	p->method(Xid(op_div), &more_shortest_Int, get_cpp_class<Int>());
+	p->method(Xid(op_div), &more_shortest_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_mul), &more_normal_Int, get_cpp_class<Int>());
+	p->method(Xid(op_mul), &more_normal_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_mod), &more_greed_Int, get_cpp_class<Int>());
+	p->method(Xid(op_mod), &more_greed_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_com), &inv);
 	
-	p->method("op_or", &select, get_cpp_class<Element>());
-	p->method("op_or", &select, get_cpp_class<String>());
-	p->method("op_or", &select, get_cpp_class<ChRange>());
-	p->method("op_or", &select, get_cpp_class<Fun>());
-	p->method("op_shr", &concat, get_cpp_class<Element>());
-	p->method("op_shr", &concat, get_cpp_class<String>());
-	p->method("op_shr", &concat, get_cpp_class<ChRange>());
-	p->method("op_shr", &concat, get_cpp_class<Fun>());
+	p->method(Xid(op_or), &select, get_cpp_class<Element>());
+	p->method(Xid(op_or), &select, get_cpp_class<String>());
+	p->method(Xid(op_or), &select, get_cpp_class<ChRange>());
+	p->method(Xid(op_or), &select, get_cpp_class<Fun>());
+	p->method(Xid(op_shr), &concat, get_cpp_class<Element>());
+	p->method(Xid(op_shr), &concat, get_cpp_class<String>());
+	p->method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
+	p->method(Xid(op_shr), &concat, get_cpp_class<Fun>());
 }
 
 }
@@ -1229,38 +1229,38 @@ void initialize_xeg(){
 	using namespace xeg;
 	register_uninitializer(&uninitialize_xeg);
 
-	ClassPtr xeg = xnew<Singleton>("xeg");
+	ClassPtr xeg = xnew<Singleton>(Xid(xeg));
 
 	{
-		ClassPtr p = new_cpp_class<Executor>("Executor");
-		p->def("new", ctor<Executor, const AnyPtr&>()->param(Named("stream_or_iterator", "")));
-		p->method("reset", &Executor::reset);
-		p->method("parse", &Executor::parse);
-		p->method("match", &Executor::match);
+		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
+		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(Named(Xid(stream_or_iterator), "")));
+		p->method(Xid(reset), &Executor::reset);
+		p->method(Xid(parse), &Executor::parse);
+		p->method(Xid(match), &Executor::match);
 
-		p->method("captures", &Executor::captures);
-		p->method("named_captures", &Executor::named_captures);
-		p->method("op_at", (AnyPtr (Executor::*)(int_t))&Executor::at, get_cpp_class<Int>());
-		p->method("op_at", (AnyPtr (Executor::*)(const StringPtr&))&Executor::at, get_cpp_class<String>());
-		p->method("prefix", &Executor::prefix);
-		p->method("suffix", &Executor::suffix);
-		p->method("errors", &Executor::errors);
-		p->method("read", &Executor::read);
-		p->method("peek", &Executor::peek)->param(Named("n", 0));
-		p->method("tree", &Executor::tree);
+		p->method(Xid(captures), &Executor::captures);
+		p->method(Xid(named_captures), &Executor::named_captures);
+		p->method(Xid(op_at), (AnyPtr (Executor::*)(int_t))&Executor::at, get_cpp_class<Int>());
+		p->method(Xid(op_at), (AnyPtr (Executor::*)(const StringPtr&))&Executor::at, get_cpp_class<String>());
+		p->method(Xid(prefix), &Executor::prefix);
+		p->method(Xid(suffix), &Executor::suffix);
+		p->method(Xid(errors), &Executor::errors);
+		p->method(Xid(read), &Executor::read);
+		p->method(Xid(peek), &Executor::peek)->param(Named(Xid(n), 0));
+		p->method(Xid(tree), &Executor::tree);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<TreeNode>("TreeNode");
+		ClassPtr p = new_cpp_class<TreeNode>(Xid(TreeNode));
 		p->inherit(get_cpp_class<Array>());
-		p->method("tag", &TreeNode::tag);
-		p->method("lineno", &TreeNode::lineno);
+		p->method(Xid(tag), &TreeNode::tag);
+		p->method(Xid(lineno), &TreeNode::lineno);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Element>("Element");
+		ClassPtr p = new_cpp_class<Element>(Xid(Element));
 		def_common_methods(p);
-		p->method("set_body", &set_body);
+		p->method(Xid(set_body), &set_body);
 	}
 
 	{
@@ -1276,44 +1276,44 @@ void initialize_xeg(){
 	eol = xnew<Element>(Element::TYPE_EOL);
 	empty = xnew<Element>(Element::TYPE_EMPTY);
 	degit = elem(AnyPtr("0")->send(Xid(op_range))("9", RANGE_CLOSED));
-	lower = elem(AnyPtr("a")->send(Xid(op_range))("z", RANGE_CLOSED));
-	upper = elem(AnyPtr("A")->send(Xid(op_range))("Z", RANGE_CLOSED));
+	lower = elem(AnyPtr(Xid(a))->send(Xid(op_range))(Xid(z), RANGE_CLOSED));
+	upper = elem(AnyPtr(Xid(A))->send(Xid(op_range))(Xid(Z), RANGE_CLOSED));
 	alpha = lower | upper;
-	word = alpha | degit | "_";
+	word = alpha | degit | Xid(_);
 	ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range))(xnew<String>((char_t)127), RANGE_CLOSED));
 
 	nfa_map = xnew<Map>();
 
-	xeg->def("any", any);
-	xeg->def("bos", bos);
-	xeg->def("eos", eos);
-	xeg->def("bol", bol);
-	xeg->def("eol", eol);
-	xeg->def("empty", empty);
-	xeg->def("degit", degit);
-	xeg->def("lower", lower);
-	xeg->def("upper", upper);
-	xeg->def("alpha", alpha);
-	xeg->def("word", word);
-	xeg->def("ascii", ascii);
+	xeg->def(Xid(any), any);
+	xeg->def(Xid(bos), bos);
+	xeg->def(Xid(eos), eos);
+	xeg->def(Xid(bol), bol);
+	xeg->def(Xid(eol), eol);
+	xeg->def(Xid(empty), empty);
+	xeg->def(Xid(degit), degit);
+	xeg->def(Xid(lower), lower);
+	xeg->def(Xid(upper), upper);
+	xeg->def(Xid(alpha), alpha);
+	xeg->def(Xid(word), word);
+	xeg->def(Xid(ascii), ascii);
 	
-	xeg->fun("set", &set);
-	xeg->fun("back_ref", &back_ref);
-	xeg->fun("before", &before);
-	xeg->fun("after", &after);
-	xeg->fun("leaf", &leaf);
-	xeg->fun("node", &node_vm);
-	xeg->fun("splice_node", &splice_node_vm);
-	xeg->fun("cap", &cap_vm);
-	xeg->fun("bound", &bound);
-	xeg->fun("eq", &eq);
-	xeg->fun("eql", &eql);
-	xeg->fun("error", &error);
+	xeg->fun(Xid(set), &set);
+	xeg->fun(Xid(back_ref), &back_ref);
+	xeg->fun(Xid(before), &before);
+	xeg->fun(Xid(after), &after);
+	xeg->fun(Xid(leaf), &leaf);
+	xeg->fun(Xid(node), &node_vm);
+	xeg->fun(Xid(splice_node), &splice_node_vm);
+	xeg->fun(Xid(cap), &cap_vm);
+	xeg->fun(Xid(bound), &bound);
+	xeg->fun(Xid(eq), &eq);
+	xeg->fun(Xid(eql), &eql);
+	xeg->fun(Xid(error), &error);
 
-	xeg->fun("decl", &decl);
+	xeg->fun(Xid(decl), &decl);
 
-	xeg->def("Executor", new_cpp_class<Executor>());
-	builtin()->def("xeg", xeg);
+	xeg->def(Xid(Executor), new_cpp_class<Executor>());
+	builtin()->def(Xid(xeg), xeg);
 }
 
 }

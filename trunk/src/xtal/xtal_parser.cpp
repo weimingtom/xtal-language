@@ -10,17 +10,17 @@ namespace xtal{
 #define c4(C1, C2, C3, C4) ((C4)<<24 | (C3)<<16 | (C2)<<8 | (C1))
 
 
-void CompileError::init(const StringPtr& file_name){
+void CompileErrors::init(const StringPtr& file_name){
 	errors = xnew<Array>();
 	source_file_name = file_name;
 }
 
-void CompileError::error(int_t lineno, const AnyPtr& message){
+void CompileErrors::error(int_t lineno, const AnyPtr& message){
 	if(errors->size()<10){
 		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)s")(
-			Named("file", source_file_name),
-			Named("lineno", lineno),
-			Named("message", message)
+			Named(Xid(file), source_file_name),
+			Named(Xid(lineno), lineno),
+			Named(Xid(message), message)
 		));
 	}
 }
@@ -134,7 +134,7 @@ Lexer::Lexer(){
 }	
 
 
-void Lexer::init(const StreamPtr& stream, CompileError* error){
+void Lexer::init(const StreamPtr& stream, CompileErrors* error){
 	reader_.set_stream(stream);
 	error_ = error;
 }
@@ -251,7 +251,7 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_.peek())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 16)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 16)));
 	}
 
 	return ret;		
@@ -273,7 +273,7 @@ int_t Lexer::parse_oct(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('8'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 8)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 8)));
 	}
 
 	return ret;		
@@ -295,7 +295,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named("n", 2)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 2)));
 	}
 
 	return ret;
@@ -886,7 +886,7 @@ Parser::Parser(){
 	expr_end_flag_ = false;
 }
 
-ExprPtr Parser::parse(const StreamPtr& stream, CompileError* error){
+ExprPtr Parser::parse(const StreamPtr& stream, CompileErrors* error){
 	error_ = error;
 	lexer_.init(stream, error_);
 
@@ -899,7 +899,7 @@ ExprPtr Parser::parse(const StreamPtr& stream, CompileError* error){
 	return ep(eb_.pop());
 }
 
-ExprPtr Parser::parse_stmt(const StreamPtr& stream, CompileError* error){
+ExprPtr Parser::parse_stmt(const StreamPtr& stream, CompileErrors* error){
 	error_ = error;
 	lexer_.init(stream, error_);
 
@@ -929,7 +929,7 @@ void Parser::expect(int_t ch){
 		return;
 	}		
 	const Token& tok = lexer_read();
-	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named("char", lexer_peek().to_s())));
+	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named(Xid(char), lexer_peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){

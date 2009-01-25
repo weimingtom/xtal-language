@@ -82,20 +82,20 @@ void CFun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<pi_.min_param_count || n>pi_.max_param_count){
 		if(pi_.min_param_count==0 && pi_.max_param_count==0){
-			XTAL_THROW(builtin()->member("ArgumentError")(
+			XTAL_THROW(builtin()->member(Xid(ArgumentError))(
 				Xt("Xtal Runtime Error 1007")(
-					Named("object", vm->ff().hint()->object_name()),
-					Named("value", n)
+					Named(Xid(object), vm->ff().hint()->object_name()),
+					Named(Xid(value), n)
 				)
 			), return);
 		}
 		else{
-			XTAL_THROW(builtin()->member("ArgumentError")(
+			XTAL_THROW(builtin()->member(Xid(ArgumentError))(
 				Xt("Xtal Runtime Error 1006")(
-					Named("object", vm->ff().hint()->object_name()),
-					Named("min", pi_.min_param_count),
-					Named("max", pi_.max_param_count),
-					Named("value", n)
+					Named(Xid(object), vm->ff().hint()->object_name()),
+					Named(Xid(min), pi_.min_param_count),
+					Named(Xid(max), pi_.max_param_count),
+					Named(Xid(value), n)
 				)
 			), return);
 		}

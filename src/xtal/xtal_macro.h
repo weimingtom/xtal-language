@@ -196,23 +196,12 @@
 
 /*@}*/
 
-
-#ifndef XTAL_USE_PREDEFINED_ID
-
 /*
 * @brief インターンされた文字列を簡単に記述するためのマクロ
-* XTAL_USE_PREDEFINED_ID が定義されている場合、::xtal::id::id##string という名前の変数の直接アクセスとなる。
-* ある事情により、これはユーザーが使ってはならないマクロとなった。
-* 将来はまた使えるようになる日がくるかもしれない。
-* 
+*
 * @code
 * IDPtr id = Xid(test);
 * @endcode
 */
-#define Xid(string) ::xtal::IDPtr(#string, sizeof(#string)-1)
+#define Xid(text) (::xtal::string_literal_to_id(XTAL_STRING(#text)))
 
-#else
-
-#define Xid(string) ((const ::xtal::IDPtr&) ::xtal::id::id_list[::xtal::id::id##string])
-
-#endif

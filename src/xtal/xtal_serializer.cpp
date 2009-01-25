@@ -32,7 +32,7 @@ bool Serializer::check_id(const IDPtr& id){
 
 void Serializer::check_id_and_throw(const IDPtr& id){
 	if(!check_id(id)){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("object", id))), return);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1008")(Named(Xid(object), id))), return);
 	}
 }
 
@@ -145,9 +145,9 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u16be(sz);
 
 			MapPtr map = xnew<Map>();
-			map->set_at("source", p->source_file_name_);
-			map->set_at("identifiers", p->identifier_table_);
-			map->set_at("values", p->value_table_);
+			map->set_at(Xid(source), p->source_file_name_);
+			map->set_at(Xid(identifiers), p->identifier_table_);
+			map->set_at(Xid(values), p->value_table_);
 			inner_serialize(map);
 
 			return;
@@ -281,12 +281,12 @@ AnyPtr Serializer::inner_deserialize(){
 			CodePtr p = xnew<Code>();
 
 			if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")), return null);
+				XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1009")), return null);
 			}
 
 			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
 			if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
-				XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1009")), return null);
+				XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1009")), return null);
 			}
 			
 			stream_->get_u8();
@@ -327,9 +327,9 @@ AnyPtr Serializer::inner_deserialize(){
 			append_value(ret);
 
 			MapPtr map(cast<MapPtr>(inner_deserialize()));
-			p->source_file_name_ = cast<StringPtr>(map->at("source"));
-			p->identifier_table_ = cast<ArrayPtr>(map->at("identifiers"));
-			p->value_table_ = cast<ArrayPtr>(map->at("values"));
+			p->source_file_name_ = cast<StringPtr>(map->at(Xid(source)));
+			p->identifier_table_ = cast<ArrayPtr>(map->at(Xid(identifiers)));
+			p->value_table_ = cast<ArrayPtr>(map->at(Xid(values)));
 			ret->set_object_name("<filelocal>", 1, null);	
 			p->first_fun_ = ret;
 			return p;
@@ -357,7 +357,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	}
 
 	if(!ret){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1008")(Named("object", n))), return null);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1008")(Named(Xid(object), n))), return null);
 	}
 
 	demangle_map_->set_at(n, ret);

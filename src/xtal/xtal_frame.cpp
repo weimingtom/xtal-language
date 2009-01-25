@@ -34,44 +34,44 @@ uint_t global_mutate_count = 0;
 
 void initialize_frame(){
 	{
-		ClassPtr p = new_cpp_class<MembersIter>("ClassMembersIter");
+		ClassPtr p = new_cpp_class<MembersIter>(Xid(ClassMembersIter));
 		p->inherit(Iterator());
-		p->method("block_next", &MembersIter::block_next);
+		p->method(Xid(block_next), &MembersIter::block_next);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Frame>("Frame");
-		p->method("members", &Frame::members);
+		ClassPtr p = new_cpp_class<Frame>(Xid(Frame));
+		p->method(Xid(members), &Frame::members);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Class>("Class");
+		ClassPtr p = new_cpp_class<Class>(Xid(Class));
 		p->inherit(get_cpp_class<Frame>());
-		p->method("inherit", &Class::inherit_strict);
-		p->method("overwrite", &Class::overwrite);
-		p->method("s_new", &Class::s_new);
-		p->method("inherited_classes", &Class::inherited_classes);
-		p->method("is_inherited", &Any::is_inherited);
-		p->method("find_near_member", &Class::find_near_member)->param("primary_key", Named("secondary_key", null));
+		p->method(Xid(inherit), &Class::inherit_strict);
+		p->method(Xid(overwrite), &Class::overwrite);
+		p->method(Xid(s_new), &Class::s_new);
+		p->method(Xid(inherited_classes), &Class::inherited_classes);
+		p->method(Xid(is_inherited), &Any::is_inherited);
+		p->method(Xid(find_near_member), &Class::find_near_member)->param(Xid(primary_key), Named(Xid(secondary_key), null));
 	}
 
 	{
-		ClassPtr p = new_cpp_class<CppClass>("CppClass");
+		ClassPtr p = new_cpp_class<CppClass>(Xid(CppClass));
 		p->inherit(get_cpp_class<Class>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Lib>("Lib");
+		ClassPtr p = new_cpp_class<Lib>(Xid(Lib));
 		p->inherit(get_cpp_class<Class>());
-		p->def("new", ctor<Lib>());
-		p->method("append_load_path", &Lib::append_load_path);
+		p->def(Xid(new), ctor<Lib>());
+		p->method(Xid(append_load_path), &Lib::append_load_path);
 	}
 
-	builtin()->def("Frame", get_cpp_class<Frame>());
-	builtin()->def("Class", get_cpp_class<Class>());
-	builtin()->def("CppClass", get_cpp_class<CppClass>());
-	builtin()->def("lib", lib());
-	builtin()->def("Lib", get_cpp_class<Lib>());
+	builtin()->def(Xid(Frame), get_cpp_class<Frame>());
+	builtin()->def(Xid(Class), get_cpp_class<Class>());
+	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
+	builtin()->def(Xid(lib), lib());
+	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
 }
 
 int_t InstanceVariables::find_core_inner(ClassCore* core){
@@ -81,7 +81,7 @@ int_t InstanceVariables::find_core_inner(ClassCore* core){
 			return variables_info_[0].pos;
 		}	
 	}
-	XTAL_THROW(builtin()->member("InstanceVariableError")(Xt("Xtal Runtime Error 1003")), return 0);
+	XTAL_THROW(builtin()->member(Xid(InstanceVariableError))(Xt("Xtal Runtime Error 1003")), return 0);
 }
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core)
@@ -223,7 +223,7 @@ void Class::inherit(const ClassPtr& md){
 void Class::inherit_strict(const ClassPtr& md){
 	
 	if(md->is_cpp_class() && is_inherited_cpp_class()){
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1019")), return);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1019")), return);
 	}
 
 	if(is_inherited(md))
@@ -298,7 +298,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		global_mutate_count++;
 	}
 	else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()), Named("name", primary_key))), return);
+		XTAL_THROW(builtin()->member(Xid(RedefinedError))(Xt("Xtal Runtime Error 1011")(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))), return);
 	}
 }
 
@@ -334,8 +334,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		else{
 			// protectedメンバでアクセス権が無いなら例外
 			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
-				XTAL_THROW(builtin()->member("AccessibilityError")(Xt("Xtal Runtime Error 1017")(
-					Named("object", this->object_name()), Named("name", primary_key), Named("accessibility", "protected")))
+				XTAL_THROW(builtin()->member(Xid(AccessibilityError))(Xt("Xtal Runtime Error 1017")(
+					Named(Xid(object), this->object_name()), Named(Xid(name), primary_key), Named(Xid(accessibility), Xid(protected))))
 				, return undefined);			
 			}
 
@@ -398,7 +398,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		XTAL_THROW(builtin()->member("RuntimeError")("undefined"), return);
+		XTAL_THROW(RuntimeError()(Xid(undefined)), return);
 	}
 	else{
 		members_->set_at(it->second.num, value);
@@ -510,7 +510,7 @@ void CppClass::call(const VMachinePtr& vm){
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
 
@@ -520,7 +520,7 @@ void CppClass::s_new(const VMachinePtr& vm){
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
 	}
 }
 
@@ -575,7 +575,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		return members_->back();
 	}
 	else{
-		XTAL_THROW(builtin()->member("RedefinedError")(Xt("Xtal Runtime Error 1011")(Named("object", this->object_name()))), return undefined);
+		XTAL_THROW(builtin()->member(Xid(RedefinedError))(Xt("Xtal Runtime Error 1011")(Named(Xid(object), this->object_name()))), return undefined);
 	}
 }
 
@@ -617,7 +617,7 @@ void Singleton::call(const VMachinePtr& vm){
 }
 
 void Singleton::s_new(const VMachinePtr& vm){
-	XTAL_THROW(builtin()->member("RuntimeError")(Xt("Xtal Runtime Error 1013")(object_name())), return);
+	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
 }
 
 const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const StringPtr& name){

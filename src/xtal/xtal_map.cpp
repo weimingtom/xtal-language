@@ -55,46 +55,46 @@ public:
 
 void initialize_map(){
 	{
-		ClassPtr p = new_cpp_class<MapIter>("MapIter");
+		ClassPtr p = new_cpp_class<MapIter>(Xid(MapIter));
 		p->inherit(Iterator());
-		p->method("block_next", &MapIter::block_next);
+		p->method(Xid(block_next), &MapIter::block_next);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Map>("Map");
+		ClassPtr p = new_cpp_class<Map>(Xid(Map));
 		p->inherit(Iterable());
 		
-		p->def("new", ctor<Map>());
-		p->method("to_s", &Map::to_s);
-		p->method("to_m", &Map::to_m);
-		p->method("size", &Map::size);
-		p->method("length", &Map::length);
-		p->method("insert", &Map::insert);
-		p->method("each", &Map::pairs);
-		p->method("pairs", &Map::pairs);
-		p->method("keys", &Map::keys);
-		p->method("values", &Map::values);
-		p->method("clone", &Map::clone);
-		p->method("erase", &Map::erase);
-		p->method("empty", &Map::empty);
+		p->def(Xid(new), ctor<Map>());
+		p->method(Xid(to_s), &Map::to_s);
+		p->method(Xid(to_m), &Map::to_m);
+		p->method(Xid(size), &Map::size);
+		p->method(Xid(length), &Map::length);
+		p->method(Xid(insert), &Map::insert);
+		p->method(Xid(each), &Map::pairs);
+		p->method(Xid(pairs), &Map::pairs);
+		p->method(Xid(keys), &Map::keys);
+		p->method(Xid(values), &Map::values);
+		p->method(Xid(clone), &Map::clone);
+		p->method(Xid(erase), &Map::erase);
+		p->method(Xid(empty), &Map::empty);
 
-		p->method("op_at", &Map::at, get_cpp_class<Any>());
-		p->method("op_set_at", &Map::set_at, get_cpp_class<Any>());
-		p->method("op_eq", &Map::op_eq, get_cpp_class<Map>());
-		p->method("op_cat", &Map::cat, get_cpp_class<Map>());
-		p->method("op_cat_assign", &Map::cat_assign, get_cpp_class<Map>());
+		p->method(Xid(op_at), &Map::at, get_cpp_class<Any>());
+		p->method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
+		p->method(Xid(op_eq), &Map::op_eq, get_cpp_class<Map>());
+		p->method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
+		p->method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Set>("Set");
+		ClassPtr p = new_cpp_class<Set>(Xid(Set));
 		p->inherit(get_cpp_class<Map>());
 		
-		p->def("new", ctor<Set>());
-		p->method("each", &Set::each);
+		p->def(Xid(new), ctor<Set>());
+		p->method(Xid(each), &Set::each);
 	}
 
-	builtin()->def("Map", get_cpp_class<Map>());
-	builtin()->def("Set", get_cpp_class<Set>());
+	builtin()->def(Xid(Map), get_cpp_class<Map>());
+	builtin()->def(Xid(Set), get_cpp_class<Set>());
 }
 
 void Map::visit_members(Visitor& m){

@@ -106,7 +106,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	result_->identifier_table_ = xnew<Array>();
 	identifier_map_ = xnew<Map>();
-	register_identifier("");
+	register_identifier(empty_id);
 
 	result_->value_table_ = xnew<Array>();
 	value_map_ = xnew<Map>();
@@ -196,7 +196,7 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
 		if(info.entry->constant){
-			error_->error(lineno(), Xt("Xtal Compile Error 1019")(Named("name", var)));
+			error_->error(lineno(), Xt("Xtal Compile Error 1019")(Named(Xid(name), var)));
 		}
 
 		if(info.pos<=0xff){
@@ -353,14 +353,14 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 	int_t key = 0;
 	if(ptr_as<Expr>(var)){ 
 		eb_.push(KIND_STRING);
-		eb_.push("set_");
+		eb_.push(Xid(set_));
 		eb_.splice(EXPR_STRING, 2);
 		eb_.push(ep(var));
 		eb_.splice(EXPR_CAT, 2);
 		compile_expr(eb_.pop()); 
 	}
 	else{
-		key = register_identifier(xnew<String>("set_")->cat(ptr_as<ID>(var)));
+		key = register_identifier(Xid(set_)->cat(ptr_as<ID>(var)));
 	}
 	
 	if(secondary_key){
@@ -407,7 +407,7 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 		}
 	}
 
-	error_->error(lineno(), Xt("Xtal Compile Error 1023")(Named("name", xnew<String>("_")->cat(key))));
+	error_->error(lineno(), Xt("Xtal Compile Error 1023")(Named(Xid(name), Xid(_)->cat(key))));
 	return 0;
 }
 
@@ -797,7 +797,7 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	}
 	
 	if(str){ compile_expr(str); }
-	else{ put_inst(InstValue(register_value(""))); }
+	else{ put_inst(InstValue(register_value(empty_id))); }
 
 	compile_expr(e->bin_lhs());
 	put_inst(InstDup());
@@ -819,7 +819,7 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	put_inst(InstUnless());
 
 	if(mes){ compile_expr(mes); }
-	else{ put_inst(InstValue(register_value(""))); }
+	else{ put_inst(InstValue(register_value(empty_id))); }
 
 	put_inst(InstValue(register_value(f)));
 	put_inst(InstCall(4, 0, 1, 0));
@@ -1048,7 +1048,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 					e->class_stmts()->push_back(eb_.pop());
 
-					IDPtr var2 = xnew<String>("set_")->cat(var);
+					IDPtr var2 = Xid(set_)->cat(var);
 					eb_.push(v->cdefine_ivar_accessibility());
 					eb_.push(var2);
 					eb_.push(null);
@@ -2000,9 +2000,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					put_inst(InstUnless());
 
 					if(e->assert_string()){ compile_expr(e->assert_string()); }
-					else{ put_inst(InstValue(register_value(""))); }
+					else{ put_inst(InstValue(register_value(empty_id))); }
 					if(e->assert_message()){ compile_expr(e->assert_message()); }
-					else{ put_inst(InstValue(register_value(""))); }
+					else{ put_inst(InstValue(register_value(empty_id))); }
 					
 					put_inst(InstValue(register_value(Xf("%s : %s"))));
 					put_inst(InstCall(2, 0, 1, 0));
@@ -2025,9 +2025,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}
 			else{
 				if(e->assert_string()){ compile_expr(e->assert_string()); }
-				else{ put_inst(InstValue(register_value(""))); }
+				else{ put_inst(InstValue(register_value(empty_id))); }
 				if(e->assert_message()){ compile_expr(e->assert_message()); }
-				else{ put_inst(InstValue(register_value(""))); }
+				else{ put_inst(InstValue(register_value(empty_id))); }
 				
 				put_inst(InstValue(register_value(Xf("%s : %s"))));
 				put_inst(InstCall(2, 0, 1, 0));

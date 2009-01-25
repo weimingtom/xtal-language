@@ -9,14 +9,14 @@ namespace xtal{
 
 CodePtr compile_file(const StringPtr& file_name){
 	CodeBuilder cb;
-	StreamPtr fs = open(file_name, "r");
+	StreamPtr fs = open(file_name, Xid(r));
 	if(CodePtr fun = cb.compile(fs, file_name)){
 		fs->close();
 		return fun;
 	}
 	fs->close();
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1016")(Named("name", file_name)), cb.errors()->to_a()), return null);
+	XTAL_THROW(CompileError()(Xt("Xtal Runtime Error 1016")(Named(Xid(name), file_name)), cb.errors()->to_a()), return null);
 }
 
 CodePtr compile(const StringPtr& source){
@@ -26,7 +26,7 @@ CodePtr compile(const StringPtr& source){
 		return fun;
 	}
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1002")(), cb.errors()->to_a()), return null);
+	XTAL_THROW(CompileError()(Xt("Xtal Runtime Error 1002")(), cb.errors()->to_a()), return null);
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -37,7 +37,7 @@ AnyPtr load(const StringPtr& file_name){
 
 AnyPtr load_and_save(const StringPtr& file_name){
 	AnyPtr ret = compile_file(file_name);
-	StreamPtr fs = open(file_name->cat("c"), "w");
+	StreamPtr fs = open(file_name->cat(Xid(c)), Xid(w));
 	fs->serialize(ret);
 	fs->close();
 	gc();
@@ -51,7 +51,7 @@ CodePtr source(const char_t* src, int_t size, const char* file){
 		return fun;
 	}
 
-	XTAL_THROW(builtin()->member("CompileError")(Xt("Xtal Runtime Error 1010")(), cb.errors()->to_a()), return null);
+	XTAL_THROW(CompileError()(Xt("Xtal Runtime Error 1010")(), cb.errors()->to_a()), return null);
 }
 
 void ix(){
@@ -75,25 +75,25 @@ static float_t clock_(){
 
 void initialize_builtin(){
 
-	builtin()->def("builtin", builtin());
+	builtin()->def(Xid(builtin), builtin());
 
-	builtin()->def("Iterator", Iterator());
-	builtin()->def("Iterable", Iterable());
+	builtin()->def(Xid(Iterator), Iterator());
+	builtin()->def(Xid(Iterable), Iterable());
 	
 #ifndef XTAL_NO_PARSER
-	builtin()->fun("compile_file", &compile_file);
-	builtin()->fun("compile", &compile);
+	builtin()->fun(Xid(compile_file), &compile_file);
+	builtin()->fun(Xid(compile), &compile);
 #endif
 
-	builtin()->fun("gc", &gc);
-	builtin()->fun("full_gc", &full_gc);
-	builtin()->fun("disable_gc", &disable_gc);
-	builtin()->fun("enable_gc", &enable_gc);
-	builtin()->fun("clock", &clock_);
-	builtin()->fun("open", &open)->param("file_name", Named("mode", "r"));
-	builtin()->fun("interned_strings", &interned_strings);
+	builtin()->fun(Xid(gc), &gc);
+	builtin()->fun(Xid(full_gc), &full_gc);
+	builtin()->fun(Xid(disable_gc), &disable_gc);
+	builtin()->fun(Xid(enable_gc), &enable_gc);
+	builtin()->fun(Xid(clock), &clock_);
+	builtin()->fun(Xid(open), &open)->param(Xid(file_name), Named(Xid(mode), Xid(r)));
+	builtin()->fun(Xid(interned_strings), &interned_strings);
 
-	lib()->def("builtin", builtin());
+	lib()->def(Xid(builtin), builtin());
 	
 	Xemb((
 
@@ -681,13 +681,13 @@ Int::times: method fiber{
 	}
 }
 
-Null::to_s: method "null";
+Null::to_s: method Xid(null);
 Null::to_a: method [];
 Null::to_m: method [:];
 Null::block_first: method null;
-Undefined::to_s: method "undefined";
-True::to_s: method "true";
-False::to_s: method "false";
+Undefined::to_s: method Xid(undefined);
+True::to_s: method Xid(true);
+False::to_s: method Xid(false);
 
 builtin::range: fun(first, last, step:1){
 	if(step==1){
@@ -795,7 +795,7 @@ String::gsub: method(pattern, fn){
 		ordered: [exec[0]];
 		ordered.concat(exec.captures);
 		named: exec.named_captures[:];
-		named["prefix"] = prefix;
+		named[Xid(prefix)] = prefix;
 		mm.put_s(fn(...Arguments(ordered, named)));
 
 		while(exec.match(pattern)){
@@ -804,7 +804,7 @@ String::gsub: method(pattern, fn){
 			ordered: [exec[0]];
 			ordered.concat(exec.captures);
 			named: exec.named_captures[:];
-			named["prefix"] = prefix;
+			named[Xid(prefix)] = prefix;
 			mm.put_s(fn(...Arguments(ordered, named)));
 		}
 		mm.put_s(exec.suffix);
@@ -825,8 +825,8 @@ String::sub: method(pattern, fn){
 		ordered: [exec[0]];
 		ordered.concat(exec.captures);
 		named: exec.named_captures[:];
-		named["prefix"] = prefix;
-		named["suffix"] = suffix;
+		named[Xid(prefix)] = prefix;
+		named[Xid(suffix)] = suffix;
 		mm.put_s(fn(...Arguments(ordered, named)));
 		mm.put_s(exec.suffix);
 		return mm.to_s;

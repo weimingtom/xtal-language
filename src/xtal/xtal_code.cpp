@@ -10,19 +10,19 @@ ExceptCore empty_except_core;
 
 void initialize_code(){
 	{
-		ClassPtr p = new_cpp_class<Code>("Code");
+		ClassPtr p = new_cpp_class<Code>(Xid(Code));
 		p->inherit(get_cpp_class<Fun>());
 	}
 
-	builtin()->def("Code", get_cpp_class<Code>());
+	builtin()->def(Xid(Code), get_cpp_class<Code>());
 }
 
 
 Code::Code()
-	:filelocal_(xnew<Singleton>("filelocal")), source_file_name_("<noname>"){
+	:filelocal_(xnew<Singleton>(Xid(filelocal))), source_file_name_("<noname>"){
 	set_object_name("<filelocal>", 1, null);
 	filelocal_->inherit(builtin());
-	filelocal_->def("filelocal", filelocal_);
+	filelocal_->def(Xid(filelocal), filelocal_);
 
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();

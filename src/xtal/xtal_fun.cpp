@@ -47,45 +47,45 @@ void initialize_fun(){
 	vm_mgr_ = xnew<VMachineMgr>();
 
 	{
-		ClassPtr p = new_cpp_class<Fun>("Fun");
+		ClassPtr p = new_cpp_class<Fun>(Xid(Fun));
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Method>("Method");
+		ClassPtr p = new_cpp_class<Method>(Xid(Method));
 		p->inherit(get_cpp_class<Fun>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Fiber>("Fiber");
+		ClassPtr p = new_cpp_class<Fiber>(Xid(Fiber));
 		p->inherit(get_cpp_class<Fun>());
 		p->inherit(Iterator());
-		p->method("reset", &Fiber::reset);
-		p->method("block_first", &Fiber::block_next);
-		p->method("block_next", &Fiber::block_next);
-		p->method("halt", &Fiber::halt);
-		p->method("is_alive", &Fiber::is_alive);
+		p->method(Xid(reset), &Fiber::reset);
+		p->method(Xid(block_first), &Fiber::block_next);
+		p->method(Xid(block_next), &Fiber::block_next);
+		p->method(Xid(halt), &Fiber::halt);
+		p->method(Xid(is_alive), &Fiber::is_alive);
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Lambda>("Lambda");
+		ClassPtr p = new_cpp_class<Lambda>(Xid(Lambda));
 		p->inherit(get_cpp_class<Fun>());
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Arguments>("Arguments");
-		p->def("new", ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(Named("ordered", null), Named("named", null)));
-		p->method("size", &Arguments::length);
-		p->method("length", &Arguments::length);
-		p->method("ordered_arguments", &Arguments::ordered_arguments);
-		p->method("named_arguments", &Arguments::named_arguments);
+		ClassPtr p = new_cpp_class<Arguments>(Xid(Arguments));
+		p->def(Xid(new), ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(Named(Xid(ordered), null), Named(Xid(named), null)));
+		p->method(Xid(size), &Arguments::length);
+		p->method(Xid(length), &Arguments::length);
+		p->method(Xid(ordered_arguments), &Arguments::ordered_arguments);
+		p->method(Xid(named_arguments), &Arguments::named_arguments);
 		
-		p->def("op_at", method(&Arguments::op_at_int), get_cpp_class<Int>());
-		p->def("op_at", method(&Arguments::op_at_string), get_cpp_class<String>());
+		p->def(Xid(op_at), method(&Arguments::op_at_int), get_cpp_class<Int>());
+		p->def(Xid(op_at), method(&Arguments::op_at_string), get_cpp_class<String>());
 	}
 
-	builtin()->def("Arguments", get_cpp_class<Arguments>());
-	builtin()->def("Fun", get_cpp_class<Fun>());
-	builtin()->def("Fiber", get_cpp_class<Fiber>());
+	builtin()->def(Xid(Arguments), get_cpp_class<Arguments>());
+	builtin()->def(Xid(Fun), get_cpp_class<Fun>());
+	builtin()->def(Xid(Fiber), get_cpp_class<Fiber>());
 }
 
 Arguments::Arguments(const AnyPtr& ordered, const AnyPtr& named){
@@ -150,30 +150,30 @@ void Fun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<core_->min_param_count || (!(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM) && n>core_->max_param_count)){
 		if(core_->min_param_count==0 && core_->max_param_count==0){
-			XTAL_THROW(builtin()->member("ArgumentError")(
+			XTAL_THROW(builtin()->member(Xid(ArgumentError))(
 				Xt("Xtal Runtime Error 1007")(
-					Named("object", object_name()),
-					Named("value", n)
+					Named(Xid(object), object_name()),
+					Named(Xid(value), n)
 				)
 			), return);
 		}
 		else{
 			if(core_->flags&FunCore::FLAG_EXTENDABLE_PARAM){
-				XTAL_THROW(builtin()->member("ArgumentError")(
+				XTAL_THROW(builtin()->member(Xid(ArgumentError))(
 					Xt("Xtal Runtime Error 1005")(
-						Named("object", object_name()),
-						Named("min", core_->min_param_count),
-						Named("value", n)
+						Named(Xid(object), object_name()),
+						Named(Xid(min), core_->min_param_count),
+						Named(Xid(value), n)
 					)
 				), return);
 			}
 			else{
-				XTAL_THROW(builtin()->member("ArgumentError")(
+				XTAL_THROW(builtin()->member(Xid(ArgumentError))(
 					Xt("Xtal Runtime Error 1006")(
-						Named("object", object_name()),
-						Named("min", core_->min_param_count),
-						Named("max", core_->max_param_count),
-						Named("value", n)
+						Named(Xid(object), object_name()),
+						Named(Xid(min), core_->min_param_count),
+						Named(Xid(max), core_->max_param_count),
+						Named(Xid(value), n)
 					)
 				), return);
 			}

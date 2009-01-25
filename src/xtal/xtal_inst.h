@@ -30,38 +30,38 @@ typedef inst_16_t<u16, 0> inst_u16_t;
 typedef inst_16_t<i16, 1> inst_address_t;
 
 
-inline AnyPtr inst_inspect(i8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline AnyPtr inst_inspect(u8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline AnyPtr inst_inspect(inst_i16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline AnyPtr inst_inspect(inst_u16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline int_t inst_inspect(i8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline int_t inst_inspect(u8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline int_t inst_inspect(inst_i16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline int_t inst_inspect(inst_u16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
 
-AnyPtr inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code);
+int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code);
 
-StringPtr make_inst_string(const char* InstName);
+StringPtr make_inst_string(const char_t* InstName);
 
-StringPtr make_inst_string(const char* InstName, 
-						const char* MemberName1, const AnyPtr& MemberValue1);
+StringPtr make_inst_string(const char_t* InstName, 
+						const char_t* MemberName1, int_t MemberValue1);
 
-StringPtr make_inst_string(const char* InstName, 
-						const char* MemberName1, const AnyPtr& MemberValue1,
-						const char* MemberName2, const AnyPtr& MemberValue2);
+StringPtr make_inst_string(const char_t* InstName, 
+						const char_t* MemberName1, int_t MemberValue1,
+						const char_t* MemberName2, int_t MemberValue2);
 
-StringPtr make_inst_string(const char* InstName, 
-						const char* MemberName1, const AnyPtr& MemberValue1,
-						const char* MemberName2, const AnyPtr& MemberValue2,
-						const char* MemberName3, const AnyPtr& MemberValue3);
-StringPtr make_inst_string(const char* InstName, 
-						const char* MemberName1, const AnyPtr& MemberValue1,
-						const char* MemberName2, const AnyPtr& MemberValue2,
-						const char* MemberName3, const AnyPtr& MemberValue3,
-						const char* MemberName4, const AnyPtr& MemberValue4);
+StringPtr make_inst_string(const char_t* InstName, 
+						const char_t* MemberName1, int_t MemberValue1,
+						const char_t* MemberName2, int_t MemberValue2,
+						const char_t* MemberName3, int_t MemberValue3);
+StringPtr make_inst_string(const char_t* InstName, 
+						const char_t* MemberName1, int_t MemberValue1,
+						const char_t* MemberName2, int_t MemberValue2,
+						const char_t* MemberName3, int_t MemberValue3,
+						const char_t* MemberName4, int_t MemberValue4);
 
-StringPtr make_inst_string(const char* InstName, 
-						const char* MemberName1, const AnyPtr& MemberValue1,
-						const char* MemberName2, const AnyPtr& MemberValue2,
-						const char* MemberName3, const AnyPtr& MemberValue3,
-						const char* MemberName4, const AnyPtr& MemberValue4,
-						const char* MemberName5, const AnyPtr& MemberValue5);
+StringPtr make_inst_string(const char_t* InstName, 
+						const char_t* MemberName1, int_t MemberValue1,
+						const char_t* MemberName2, int_t MemberValue2,
+						const char_t* MemberName3, int_t MemberValue3,
+						const char_t* MemberName4, int_t MemberValue4,
+						const char_t* MemberName5, int_t MemberValue5);
 
 struct Inst{
 	inst_t op;
@@ -95,7 +95,7 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName));\
+					XTAL_STRING(#InstName));\
 		}\
 	}
 
@@ -117,8 +117,8 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName),\
-					(#MemberName1), inst_inspect(MemberName1, this, code));\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code));\
 		}\
 	}
 
@@ -143,9 +143,9 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName),\
-					(#MemberName1), inst_inspect(MemberName1, this, code),\
-					(#MemberName2), inst_inspect(MemberName2, this, code));\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code));\
 		}\
 	}
 	
@@ -173,10 +173,10 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName),\
-					(#MemberName1), inst_inspect(MemberName1, this, code),\
-					(#MemberName2), inst_inspect(MemberName2, this, code),\
-					(#MemberName3), inst_inspect(MemberName3, this, code));\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code));\
 		}\
 	}
 	
@@ -207,11 +207,11 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName),\
-					(#MemberName1), inst_inspect(MemberName1, this, code),\
-					(#MemberName2), inst_inspect(MemberName2, this, code),\
-					(#MemberName3), inst_inspect(MemberName3, this, code),\
-					(#MemberName4), inst_inspect(MemberName4, this, code));\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code));\
 		}\
 	}
 
@@ -245,12 +245,12 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 		StringPtr inspect(const CodePtr& code){\
 			return make_inst_string(\
-					(#InstName),\
-					(#MemberName1), inst_inspect(MemberName1, this, code),\
-					(#MemberName2), inst_inspect(MemberName2, this, code),\
-					(#MemberName3), inst_inspect(MemberName3, this, code),\
-					(#MemberName4), inst_inspect(MemberName4, this, code),\
-					(#MemberName5), inst_inspect(MemberName5, this, code));\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
 		}\
 	}
 

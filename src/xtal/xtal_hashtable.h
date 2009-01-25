@@ -100,6 +100,8 @@ public:
 	Hashtable<Key, Val, Fun>& operator=(const Hashtable<Key, Val, Fun>& v);
 
 	~Hashtable();
+
+	void destroy();
 		
 	/**
 	* @brief i‚É‘Î‰ž‚·‚é—v‘f‚ð•Ô‚·
@@ -154,6 +156,8 @@ public:
 	bool empty(){
 		return used_size_==0;
 	}
+
+	Val& operator [](const Key& key);
 
 	void clear();
 
@@ -216,6 +220,17 @@ Hashtable<Key, Val, Fun>::~Hashtable(){
 }
 
 template<class Key, class Val, class Fun>
+void Hashtable<Key, Val, Fun>::destroy(){
+	clear();
+	so_free(begin_, sizeof(Node*)*size_);
+	size_ = 0;
+	begin_ = 0;
+	used_size_ = 0;
+	ordered_head_ = 0;
+	ordered_tail_ = 0;
+}
+
+template<class Key, class Val, class Fun>
 typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::find(const Key& key, uint_t hash){
 	Node* p = begin_[hash & (size_-1)];
 	while(p){
@@ -225,6 +240,39 @@ typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::find(const
 		p = p->next;
 	}
 	return end();
+}
+
+template<class Key, class Val, class Fun>
+Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
+	uint_t hash = Fun::hash(key);
+	Node** p = &begin_[hash & (size_-1)];
+	while(*p){
+		if(Fun::eq((*p)->pair.first, key)){
+			return (*p)->pair.second;
+		}
+		p = &(*p)->next;
+	}
+
+	*p = (Node*)so_malloc(sizeof(Node));
+	Node* ret = *p;
+	new(ret) Node(key, Val());
+
+	if(ordered_tail_){
+		ordered_tail_->ordered_next = ret;
+		(ret)->ordered_prev = ordered_tail_;
+		ordered_tail_ = ret;
+	}
+	else{
+		ordered_head_ = ret;
+		ordered_tail_ = ret;
+	}
+
+	used_size_++;
+	if(rate()>0.8f){
+		expand(0);
+	}
+
+	return ret->pair.second;
 }
 
 template<class Key, class Val, class Fun>

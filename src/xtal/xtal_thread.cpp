@@ -1,4 +1,5 @@
 #include "xtal.h"
+#include "xtal_macro.h"
 
 namespace xtal{
 
@@ -162,22 +163,22 @@ void initialize_thread(){
 	{
 		ClassPtr p = new_cpp_class<Thread>();
 		if(thread_lib_){
-			p->def("new", fun(&create_thread));
+			p->def(Xid(new), fun(&create_thread));
 		}
 
-		p->method("join", &Thread::join);
-		p->fun("yield", &yield_thread);
-		p->fun("sleep", &sleep_thread);
+		p->method(Xid(join), &Thread::join);
+		p->fun(Xid(yield), &yield_thread);
+		p->fun(Xid(sleep), &sleep_thread);
 	}
 
 	{
 		ClassPtr p = new_cpp_class<Mutex>();
 		if(thread_lib_){
-			p->def("new", fun(&create_mutex));
+			p->def(Xid(new), fun(&create_mutex));
 		}
 
-		p->method("lock", &lock_mutex);
-		p->method("unlock", &Mutex::unlock);
+		p->method(Xid(lock), &lock_mutex);
+		p->method(Xid(unlock), &Mutex::unlock);
 	}
 
 	if(thread_lib_){
@@ -195,8 +196,8 @@ void initialize_thread(){
 		vmachine_ = xnew<VMachine>();
 	}
 
-	builtin()->def("Thread", get_cpp_class<Thread>());
-	builtin()->def("Mutex", get_cpp_class<Mutex>());
+	builtin()->def(Xid(Thread), get_cpp_class<Thread>());
+	builtin()->def(Xid(Mutex), get_cpp_class<Mutex>());
 
 }
 

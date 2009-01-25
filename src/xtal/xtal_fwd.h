@@ -378,9 +378,6 @@ extern ExceptCore empty_except_core;
 extern EmptyInstanceVariables empty_instance_variables;
 extern uint_t global_mutate_count;
 
-extern IDPtr empty_id;
-
-
 class Null;
 extern Null null;
 
@@ -389,6 +386,8 @@ extern Undefined undefined;
 
 struct Named;
 extern Named null_named;
+
+extern IDPtr empty_id;
 
 struct Param;
 

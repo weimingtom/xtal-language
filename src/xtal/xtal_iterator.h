@@ -10,7 +10,7 @@ public:
 	DelegateToIterator(const IDPtr& name)
 		:member_(name){}
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 };
 
 class IteratorClass : public Class{

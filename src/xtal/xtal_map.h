@@ -133,6 +133,13 @@ public:
 		return from_this(this);
 	}
 
+	/**
+	* @brief ’†g‚ğiterator‚Åæ“¾‚Å‚«‚é—v‘f‚É’u‚«Š·‚¦‚é
+	*/
+	void assign(const AnyPtr& iterator);
+
+	void concat(const AnyPtr& iterator);
+
 	void push_all(const VMachinePtr& vm);
 
 	const AnyPtr& default_value(){

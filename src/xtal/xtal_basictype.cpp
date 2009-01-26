@@ -6,7 +6,16 @@ namespace xtal{
 Null null;
 Undefined undefined;
 Named null_named;
-IDPtr empty_id;
+IDPtr empty_id((IDPtr&)Innocence(TYPE_SMALL_STRING));
+
+FunCore empty_xfun_core;
+ScopeCore empty_scope_core;
+ClassCore empty_class_core;
+ExceptCore empty_except_core;
+EmptyInstanceVariables empty_instance_variables;
+
+undeleter_t undeleter;
+deleter_t deleter;
 
 namespace{
 
@@ -28,7 +37,7 @@ namespace{
 
 	StringPtr Int_to_s(const AnyPtr& p){
 		if(type(p)==TYPE_INT){
-			return Xf("%d")(p)->to_s();
+			return Xf("%d")->call(p)->to_s();
 		}
 
 		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Int)), return null);
@@ -52,7 +61,7 @@ namespace{
 
 	StringPtr Float_to_s(const AnyPtr& p){
 		if(type(p)==TYPE_FLOAT){
-			return Xf("%g")(p)->to_s();
+			return Xf("%g")->call(p)->to_s();
 		}
 
 		XTAL_THROW(cast_error(p->get_class()->object_name(), Xid(Float)), return null);
@@ -107,6 +116,9 @@ namespace{
 AnyPtr IntRange::each(){
 	return xnew<IntRangeIter>(from_this(this));
 }
+
+
+///////////////////////////////////
 
 void initialize_basic_type(){
 

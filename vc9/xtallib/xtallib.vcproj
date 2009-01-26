@@ -208,6 +208,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_environment.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_except.cpp"
 				>
 			</File>
@@ -245,10 +249,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_parser.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\xtal\xtal_proxy.cpp"
 				>
 			</File>
 			<File
@@ -346,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_environment.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_except.h"
 				>
 			</File>
@@ -391,10 +395,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_parser.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\xtal\xtal_proxy.h"
 				>
 			</File>
 			<File

@@ -4,114 +4,12 @@
 namespace xtal{
 
 namespace{
-	StreamPtr stdin_stream_;
-	StreamPtr stdout_stream_;
-	StreamPtr stderr_stream_;
 	FileLib* file_lib_ = 0;
-
-	void uninitialize_stream(){
-		stdin_stream_ = null;
-		stdout_stream_ = null;
-		stderr_stream_ = null;
-	}
-}
-
-const StreamPtr& stdin_stream(){
-	return stdin_stream_;
-}
-
-const StreamPtr& stdout_stream(){
-	return stdout_stream_;
-}
-
-const StreamPtr& stderr_stream(){
-	return stderr_stream_;
-}
-
-void initialize_stream(){
-	if(!file_lib_){
-		set_file();
-	}
-
-	register_uninitializer(&uninitialize_stream);
-
-	{
-		ClassPtr p = new_cpp_class<Stream>(Xid(Stream));
-		
-		p->method(Xid(get_s), &Stream::get_s)->param(Xid(length));
-		p->method(Xid(get_s_all), &Stream::get_s_all);
-		p->method(Xid(put_s), &Stream::put_s);
-
-		p->method(Xid(print), &Stream::print);
-		p->method(Xid(println), &Stream::println);
-
-		p->method(Xid(seek), &Stream::seek)->param(null, Named(Xid(whence), Stream::XSEEK_SET));
-		p->method(Xid(tell), &Stream::tell);
-		p->method(Xid(pour), &Stream::pour);
-		p->method(Xid(pour_all), &Stream::pour_all);
-		p->method(Xid(size), &Stream::size);
-		p->method(Xid(close), &Stream::close);
-
-		p->method(Xid(eos), &Stream::eos);
-
-		p->method(Xid(serialize), &Stream::serialize);
-		p->method(Xid(deserialize), &Stream::deserialize);
-		p->method(Xid(xtalize), &Stream::xtalize);
-		p->method(Xid(dextalize), &Stream::dextalize);
-
-		p->method(Xid(block_first), &Stream::block_first);
-		p->method(Xid(block_next), &Stream::block_next);
-		p->method(Xid(block_break), &Stream::block_break);
-
-		p->def(Xid(SEEK_SET), Stream::XSEEK_SET);
-		p->def(Xid(SEEK_CUR), Stream::XSEEK_CUR);
-		p->def(Xid(SEEK_END), Stream::XSEEK_END);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
-		p->inherit(get_cpp_class<Stream>());
-		p->def(Xid(new), ctor<MemoryStream>());
-		p->method(Xid(to_s), &MemoryStream::to_s);
-		p->method(Xid(resize), &MemoryStream::resize);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<StringStream>(Xid(StringStream));
-		p->inherit(get_cpp_class<Stream>());
-		p->def(Xid(new), ctor<StringStream, const StringPtr&>());
-		p->method(Xid(to_s), &StringStream::to_s);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<StdioStream>(Xid(StdioStream));
-		p->inherit(get_cpp_class<Stream>());
-	}
-
-	builtin()->def(Xid(Stream), get_cpp_class<Stream>());
-	builtin()->def(Xid(StdioStream), get_cpp_class<StdioStream>());
-	builtin()->def(Xid(MemoryStream), get_cpp_class<MemoryStream>());
-	builtin()->def(Xid(StringStream), get_cpp_class<StringStream>());
-
-	if(stdin){
-		stdin_stream_ = xnew<StdioStream>(stdin);
-		builtin()->def(Xid(stdin), stdin_stream());
-	}
-
-	if(stdout){
-		stdout_stream_ = xnew<StdioStream>(stdout);
-		builtin()->def(Xid(stdout), stdout_stream());
-	}
-
-	if(stderr){
-		stderr_stream_ = xnew<StdioStream>(stderr);
-		builtin()->def(Xid(stderr), stderr_stream());
-	}
 }
 
 StringPtr Stream::get_s(uint_t length){
 	if(eos())
-		return "";
+		return empty_id;
 
 	if(length==1){
 		char_t ch;
@@ -132,7 +30,7 @@ StringPtr Stream::get_s(uint_t length){
 
 StringPtr Stream::get_s_all(){
 	if(eos())
-		return "";
+		return empty_id;
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	while(!eos()){
@@ -317,7 +215,7 @@ StringPtr PointerStream::get_s(uint_t length){
 
 StringPtr PointerStream::get_s_all(){
 	if(pos_ >= size_)
-		return "";
+		return empty_id;
 
 	char_t* data = (char_t*)data_;
 	StringPtr ret = xnew<String>((char_t*)&data[pos_], size_ - pos_);
@@ -418,7 +316,7 @@ void MemoryStream::resize(uint_t size){
 //////////////////////////////////////////////////////////////////////////
 
 StringStream::StringStream(const StringPtr& str)
-:str_(str ? str : StringPtr("")){
+:str_(str ? str : empty_id){
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
@@ -444,10 +342,10 @@ uint_t InteractiveStream::read(void* p, uint_t size){
 	if(!fp_)
 		return 0;
 	if(continue_stmt_){
-		stdout_stream()->put_s(Xf("ix:%03d>    ")(line_)->to_s());
+		stdout_stream()->put_s(Xf("ix:%03d>    ")->call(line_)->to_s());
 	}
 	else{
-		stdout_stream()->put_s(Xf("ix:%03d>")(line_)->to_s());
+		stdout_stream()->put_s(Xf("ix:%03d>")->call(line_)->to_s());
 	}
 
 	continue_stmt_ = true;
@@ -488,13 +386,13 @@ StdioStream::~StdioStream(){
 }
 
 uint_t StdioStream::tell(){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	return ftell(fp_);
 }
 
 uint_t StdioStream::write(const void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	XTAL_UNLOCK{
 #ifdef XTAL_USE_WCHAR
@@ -511,7 +409,7 @@ uint_t StdioStream::write(const void* p, uint_t size){
 }
 
 uint_t StdioStream::read(void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return 0); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
 
 	XTAL_UNLOCK{
 		return fread(p, 1, size, fp_);
@@ -520,7 +418,7 @@ uint_t StdioStream::read(void* p, uint_t size){
 }
 
 void StdioStream::seek(int_t offset, int_t whence){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1018")), return); }
+	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return); }
 
 	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
 	fseek(fp_, offset, wh);
@@ -554,7 +452,7 @@ public:
 #else
 		FILE* fp = std::fopen(file_name, flags);
 #endif
-		if(!fp){ XTAL_THROW(builtin()->member(Xid(IOError))(Xt("Xtal Runtime Error 1014")(Named(Xid(name), file_name))), return null); }
+		if(!fp){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1014")->call(Named(Xid(name), file_name))), return null); }
 		return xnew<StdioStream>(fp);
 	}
 
@@ -588,6 +486,82 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& aflags){
 	flags_temp[i++] = 0;
 	
 	return file_lib_->open(file_name->c_str(), flags_temp);
+}
+
+void initialize_stream(){
+	if(!file_lib_){
+		set_file();
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Stream>(Xid(Stream));
+		
+		p->method(Xid(get_s), &Stream::get_s)->param(Xid(length));
+		p->method(Xid(get_s_all), &Stream::get_s_all);
+		p->method(Xid(put_s), &Stream::put_s);
+
+		p->method(Xid(print), &Stream::print);
+		p->method(Xid(println), &Stream::println);
+
+		p->method(Xid(seek), &Stream::seek)->param(null, Named(Xid(whence), Stream::XSEEK_SET));
+		p->method(Xid(tell), &Stream::tell);
+		p->method(Xid(pour), &Stream::pour);
+		p->method(Xid(pour_all), &Stream::pour_all);
+		p->method(Xid(size), &Stream::size);
+		p->method(Xid(close), &Stream::close);
+
+		p->method(Xid(eos), &Stream::eos);
+
+		p->method(Xid(serialize), &Stream::serialize);
+		p->method(Xid(deserialize), &Stream::deserialize);
+		p->method(Xid(xtalize), &Stream::xtalize);
+		p->method(Xid(dextalize), &Stream::dextalize);
+
+		p->method(Xid(block_first), &Stream::block_first);
+		p->method(Xid(block_next), &Stream::block_next);
+		p->method(Xid(block_break), &Stream::block_break);
+
+		p->def(Xid(SEEK_SET), Stream::XSEEK_SET);
+		p->def(Xid(SEEK_CUR), Stream::XSEEK_CUR);
+		p->def(Xid(SEEK_END), Stream::XSEEK_END);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
+		p->inherit(get_cpp_class<Stream>());
+		p->def(Xid(new), ctor<MemoryStream>());
+		p->method(Xid(to_s), &MemoryStream::to_s);
+		p->method(Xid(resize), &MemoryStream::resize);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<StringStream>(Xid(StringStream));
+		p->inherit(get_cpp_class<Stream>());
+		p->def(Xid(new), ctor<StringStream, const StringPtr&>());
+		p->method(Xid(to_s), &StringStream::to_s);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<StdioStream>(Xid(StdioStream));
+		p->inherit(get_cpp_class<Stream>());
+	}
+
+	builtin()->def(Xid(Stream), get_cpp_class<Stream>());
+	builtin()->def(Xid(StdioStream), get_cpp_class<StdioStream>());
+	builtin()->def(Xid(MemoryStream), get_cpp_class<MemoryStream>());
+	builtin()->def(Xid(StringStream), get_cpp_class<StringStream>());
+
+	if(stdin){
+		builtin()->def(Xid(stdin), xnew<StdioStream>(stdin));
+	}
+
+	if(stdout){
+		builtin()->def(Xid(stdout), xnew<StdioStream>(stdout));
+	}
+
+	if(stderr){
+		builtin()->def(Xid(stderr), xnew<StdioStream>(stderr));
+	}
 }
 
 }

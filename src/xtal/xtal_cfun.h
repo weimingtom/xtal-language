@@ -10,12 +10,21 @@ struct Result{
 		vm->return_result();
 	}
 
-	static void return_result2(const VMachinePtr& vm, const AnyPtr& ret, Bool<true>){
+	static void return_result2(const VMachinePtr& vm, const AnyPtr& ret, Bool<1>){
 		vm->return_result(ret);
 	}
-
+	/*
+	static void return_result2(const VMachinePtr& vm, int_t ret, Bool<1>){
+		vm->return_result(ap(Innocence(ret)));
+	}
+	
+	static void return_result2(const VMachinePtr& vm, uint_t ret, Bool<1>){
+		vm->return_result(ap(Innocence((int_t)ret)));
+	}
+	*/
+		
 	template<class T>
-	static void return_result2(const VMachinePtr& vm, const T& ret, Bool<false>){
+	static void return_result2(const VMachinePtr& vm, const T& ret, Bool<0>){
 		vm->return_result(xnew<T>(ret));
 	}
 
@@ -387,7 +396,7 @@ struct ctor_fun<5>{
 struct CFunEssence{
 	typedef void (*fun_t)(const VMachinePtr&, const ParamInfo&, void* data);
 
-	CFunEssence(fun_t f, const void* val, int_t val_size, int_t param_n, bool args = false);
+	CFunEssence(const fun_t& f, const void* val, int_t val_size, int_t param_n, bool args = false);
 
 	fun_t f;
 	void* val;
@@ -678,7 +687,7 @@ public:
 
 	void check_arg(const VMachinePtr& vm);
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 
 protected:
 	void* val_;
@@ -692,7 +701,7 @@ public:
 
 	CFunArgs(fun_t f, void* val, int_t param_n);
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 };
 
 CFunPtr new_cfun(const CFunEssence& essence);
@@ -787,7 +796,7 @@ public:
 	DualDispatchMethod(const IDPtr& primary_key)
 		:primary_key_(primary_key){}
 
-	virtual void call(const VMachinePtr& vm){
+	virtual void rawcall(const VMachinePtr& vm){
 		vm->get_arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class(), vm->get_arg_this());
 	}
 
@@ -810,8 +819,8 @@ public:
 	DualDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
 		:klass_(klass), primary_key_(primary_key){}
 
-	virtual void call(const VMachinePtr& vm){
-		klass_->member(primary_key_, vm->arg(0)->get_class(), vm->get_arg_this())->call(vm);
+	virtual void rawcall(const VMachinePtr& vm){
+		klass_->member(primary_key_, vm->arg(0)->get_class(), vm->get_arg_this())->rawcall(vm);
 	}
 
 private:

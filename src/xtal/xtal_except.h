@@ -6,11 +6,11 @@ namespace xtal{
 class Exception : public Base{
 public:
 
-	Exception(const AnyPtr& message = "");
+	Exception(const AnyPtr& message = empty_id);
 
-	void initialize(const AnyPtr& message = "");
+	void initialize(const AnyPtr& message = empty_id);
 
-	void append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name="");
+	void append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name = empty_id);
 
 	StringPtr to_s();
 

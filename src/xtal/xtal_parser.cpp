@@ -17,7 +17,7 @@ void CompileErrors::init(const StringPtr& file_name){
 
 void CompileErrors::error(int_t lineno, const AnyPtr& message){
 	if(errors->size()<10){
-		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)s")(
+		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)s")->call(
 			Named(Xid(file), source_file_name),
 			Named(Xid(lineno), lineno),
 			Named(Xid(message), message)
@@ -251,7 +251,7 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_.peek())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 16)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 16)));
 	}
 
 	return ret;		
@@ -273,7 +273,7 @@ int_t Lexer::parse_oct(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('8'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 8)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 8)));
 	}
 
 	return ret;		
@@ -295,7 +295,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")(Named(Xid(n), 2)));
+		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 2)));
 	}
 
 	return ret;
@@ -929,7 +929,7 @@ void Parser::expect(int_t ch){
 		return;
 	}		
 	const Token& tok = lexer_read();
-	error_->error(lineno(), Xt("Xtal Compile Error 1002")(Named(Xid(char), lexer_peek().to_s())));
+	error_->error(lineno(), Xt("Xtal Compile Error 1002")->call(Named(Xid(char), lexer_peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){

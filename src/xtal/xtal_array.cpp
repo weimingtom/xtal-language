@@ -30,73 +30,6 @@ public:
 	}
 };
 
-
-void initialize_array(){
-	{
-		ClassPtr p = new_cpp_class<ArrayIter>(Xid(ArrayIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &ArrayIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Array>(Xid(Array));
-		p->inherit(Iterable());
-
-		p->def(Xid(new), ctor<Array, int_t>()->param(Named(Xid(size), 0)));
-		p->method(Xid(size), &Array::size);
-		p->method(Xid(length), &Array::length);
-		p->method(Xid(resize), &Array::resize);
-		p->method(Xid(empty), &Array::empty);
-		p->method(Xid(slice), &Array::slice)->param(Xid(i), Named(Xid(n), 1));
-		p->method(Xid(splice), &Array::splice)->param(Xid(i), Named(Xid(n), 1));
-		p->method(Xid(pop_back), &Array::pop_back);
-		p->method(Xid(push_back), &Array::push_back);
-		p->method(Xid(pop_front), &Array::pop_front);
-		p->method(Xid(push_front), &Array::push_front);
-		p->method(Xid(erase), &Array::erase)->param(Xid(i), Named(Xid(n), 1));
-		p->method(Xid(insert), &Array::insert);
-		p->method(Xid(to_s), &Array::to_s);
-		p->method(Xid(to_a), &Array::to_a);
-		p->method(Xid(join), &Array::join)->param(Named(Xid(sep), empty_id));
-		p->method(Xid(each), &Array::each);
-		p->method(Xid(clone), &Array::clone);
-		p->method(Xid(front), &Array::front);
-		p->method(Xid(back), &Array::back);
-		p->method(Xid(clear), &Array::clear);
-		p->method(Xid(reverse), &Array::reverse);
-		p->method(Xid(assign), &Array::assign);
-		p->method(Xid(concat), &Array::concat);
-
-		p->method(Xid(op_cat), &Array::cat, get_cpp_class<Array>());
-		p->method(Xid(op_cat_assign), &Array::cat_assign, get_cpp_class<Array>());
-		p->method(Xid(op_at), &Array::op_at, get_cpp_class<Int>());
-		p->method(Xid(op_set_at), &Array::op_set_at, get_cpp_class<Int>());
-		p->method(Xid(op_eq), &Array::op_eq, get_cpp_class<Array>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<MultiValue>(Xid(MultiValue));
-		p->inherit(get_cpp_class<Array>());
-
-		p->def(Xid(new), ctor<MultiValue, int_t>()->param(Named(Xid(size), 0)));
-		p->method(Xid(clone), &MultiValue::clone);
-		p->method(Xid(to_a), &Array::clone);
-		p->method(Xid(to_s), &MultiValue::to_s);
-		p->method(Xid(to_mv), &Any::self);
-		p->method(Xid(flatten_mv), &MultiValue::flatten_mv);
-		p->method(Xid(flatten_all_mv), &MultiValue::flatten_all_mv);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Expr>(Xid(Expr));
-		p->inherit(get_cpp_class<Array>());		
-	}
-
-	builtin()->def(Xid(Array), get_cpp_class<Array>());
-	builtin()->def(Xid(MultiValue), get_cpp_class<MultiValue>());
-}
-
-
 void Array::visit_members(Visitor& m){
 	Base::visit_members(m);
 	for(uint_t i=0; i<size_; ++i){
@@ -331,6 +264,8 @@ AnyPtr Array::reverse(){
 }
 
 void Array::assign(const AnyPtr& iterator){
+	clear();
+
 	uint_t i = 0;
 	Xfor(v, iterator){
 		if(i>=size_){
@@ -366,7 +301,7 @@ int_t Array::calc_offset(int_t i){
 }
 
 void Array::throw_index_error(){
-	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1020")), return);
+	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1020")), return);
 }
 
 MultiValuePtr MultiValue::clone(){
@@ -419,6 +354,74 @@ StringPtr MultiValue::to_s(){
 	ret->put_s(join(", "));
 	ret->put_s(")");
 	return ret->to_s();
+}
+
+//////////////////////////////////////////////
+
+void initialize_array(){
+	
+	{
+		ClassPtr p = new_cpp_class<ArrayIter>(Xid(ArrayIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &ArrayIter::block_next);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Array>(Xid(Array));
+		p->inherit(Iterable());
+
+		p->def(Xid(new), ctor<Array, int_t>()->param(Named(Xid(size), 0)));
+		p->method(Xid(size), &Array::size);
+		p->method(Xid(length), &Array::size);
+		p->method(Xid(resize), &Array::resize);
+		p->method(Xid(empty), &Array::empty);
+		p->method(Xid(slice), &Array::slice)->param(Xid(i), Named(Xid(n), 1));
+		p->method(Xid(splice), &Array::splice)->param(Xid(i), Named(Xid(n), 1));
+		p->method(Xid(pop_back), &Array::pop_back);
+		p->method(Xid(push_back), &Array::push_back);
+		p->method(Xid(pop_front), &Array::pop_front);
+		p->method(Xid(push_front), &Array::push_front);
+		p->method(Xid(erase), &Array::erase)->param(Xid(i), Named(Xid(n), 1));
+		p->method(Xid(insert), &Array::insert);
+		p->method(Xid(to_s), &Array::to_s);
+		p->method(Xid(to_a), &Array::to_a);
+		p->method(Xid(join), &Array::join)->param(Named(Xid(sep), empty_id));
+		p->method(Xid(each), &Array::each);
+		p->method(Xid(clone), &Array::clone);
+		p->method(Xid(front), &Array::front);
+		p->method(Xid(back), &Array::back);
+		p->method(Xid(clear), &Array::clear);
+		p->method(Xid(reverse), &Array::reverse);
+		p->method(Xid(assign), &Array::assign);
+		p->method(Xid(concat), &Array::concat);
+
+		p->method(Xid(op_cat), &Array::cat, get_cpp_class<Array>());
+		p->method(Xid(op_cat_assign), &Array::cat_assign, get_cpp_class<Array>());
+		p->method(Xid(op_at), &Array::op_at, get_cpp_class<Int>());
+		p->method(Xid(op_set_at), &Array::op_set_at, get_cpp_class<Int>());
+		p->method(Xid(op_eq), &Array::op_eq, get_cpp_class<Array>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<MultiValue>(Xid(MultiValue));
+		p->inherit(get_cpp_class<Array>());
+
+		p->def(Xid(new), ctor<MultiValue, int_t>()->param(Named(Xid(size), 0)));
+		p->method(Xid(clone), &MultiValue::clone);
+		p->method(Xid(to_a), &Array::clone);
+		p->method(Xid(to_s), &MultiValue::to_s);
+		p->method(Xid(to_mv), &Any::self);
+		p->method(Xid(flatten_mv), &MultiValue::flatten_mv);
+		p->method(Xid(flatten_all_mv), &MultiValue::flatten_all_mv);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Expr>(Xid(Expr));
+		p->inherit(get_cpp_class<Array>());		
+	}
+
+	builtin()->def(Xid(Array), get_cpp_class<Array>());
+	builtin()->def(Xid(MultiValue), get_cpp_class<MultiValue>());
 }
 
 }

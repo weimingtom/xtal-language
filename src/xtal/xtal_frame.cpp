@@ -29,51 +29,6 @@ public:
 	}
 };
 
-EmptyInstanceVariables empty_instance_variables;
-uint_t global_mutate_count = 0;
-
-void initialize_frame(){
-	{
-		ClassPtr p = new_cpp_class<MembersIter>(Xid(ClassMembersIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &MembersIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Frame>(Xid(Frame));
-		p->method(Xid(members), &Frame::members);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Class>(Xid(Class));
-		p->inherit(get_cpp_class<Frame>());
-		p->method(Xid(inherit), &Class::inherit_strict);
-		p->method(Xid(overwrite), &Class::overwrite);
-		p->method(Xid(s_new), &Class::s_new);
-		p->method(Xid(inherited_classes), &Class::inherited_classes);
-		p->method(Xid(is_inherited), &Any::is_inherited);
-		p->method(Xid(find_near_member), &Class::find_near_member)->param(Xid(primary_key), Named(Xid(secondary_key), null));
-	}
-
-	{
-		ClassPtr p = new_cpp_class<CppClass>(Xid(CppClass));
-		p->inherit(get_cpp_class<Class>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Lib>(Xid(Lib));
-		p->inherit(get_cpp_class<Class>());
-		p->def(Xid(new), ctor<Lib>());
-		p->method(Xid(append_load_path), &Lib::append_load_path);
-	}
-
-	builtin()->def(Xid(Frame), get_cpp_class<Frame>());
-	builtin()->def(Xid(Class), get_cpp_class<Class>());
-	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
-	builtin()->def(Xid(lib), lib());
-	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
-}
-
 int_t InstanceVariables::find_core_inner(ClassCore* core){
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].core==core){
@@ -81,7 +36,7 @@ int_t InstanceVariables::find_core_inner(ClassCore* core){
 			return variables_info_[0].pos;
 		}	
 	}
-	XTAL_THROW(builtin()->member(Xid(InstanceVariableError))(Xt("Xtal Runtime Error 1003")), return 0);
+	XTAL_THROW(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")), return 0);
 }
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeCore* core)
@@ -99,7 +54,7 @@ Frame::Frame(const Frame& v)
 		*map_members_ = *v.map_members_;
 	}
 
-	global_mutate_count++;
+	inc_global_mutate_count();
 }
 
 Frame& Frame::operator=(const Frame& v){
@@ -123,7 +78,7 @@ Frame& Frame::operator=(const Frame& v){
 		map_members_ = 0;
 	}
 
-	global_mutate_count++;
+	inc_global_mutate_count();
 
 	return *this;
 }
@@ -141,7 +96,7 @@ void Frame::set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& va
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
 	value->set_object_name(primary_key, object_name_force(), from_this(this));
-	global_mutate_count++;
+	inc_global_mutate_count();
 }
 	
 void Frame::set_object_name(const StringPtr& primary_key, int_t force, const AnyPtr& parent){
@@ -163,7 +118,7 @@ void Frame::make_map_members(){
 
 StringPtr Frame::object_name(int_t depth){
 	if(!name_){
-		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
+		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")->call(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
 	}
 
 	return HaveName::object_name(depth);
@@ -207,7 +162,7 @@ void Class::overwrite(const ClassPtr& p){
 	if(!is_cpp_class_){
 		operator=(*p);
 		mixins_ = p->mixins_;
-		global_mutate_count++;
+		inc_global_mutate_count();
 	}
 }
 
@@ -217,20 +172,20 @@ void Class::inherit(const ClassPtr& md){
 		return;
 
 	mixins_->push_back(md);
-	global_mutate_count++;
+	inc_global_mutate_count();
 }
 
 void Class::inherit_strict(const ClassPtr& md){
 	
 	if(md->is_cpp_class() && is_inherited_cpp_class()){
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1019")), return);
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1019")), return);
 	}
 
 	if(is_inherited(md))
 		return;
 
 	mixins_->push_back(md);
-	global_mutate_count++;
+	inc_global_mutate_count();
 }
 
 AnyPtr Class::inherited_classes(){
@@ -249,7 +204,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		vm->setup_call(0);
 		vm->set_arg_this(self);
 		// 先頭のメソッドはインスタンス変数初期化関数
-		members_->at(0)->call(vm);
+		members_->at(0)->rawcall(vm);
 		vm->cleanup_call();
 	}
 }
@@ -258,7 +213,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
 	Xfor(v, send(Xid(members))){
-		IDPtr id = ptr_cast<ID>(v[0]);
+		IDPtr id = ptr_cast<ID>(v->send(Xid(at), 0));
 		if(raweq(primary_key, id)){
 			return id;
 		}
@@ -295,10 +250,10 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_name(primary_key, object_name_force(), from_this(this));
-		global_mutate_count++;
+		inc_global_mutate_count();
 	}
 	else{
-		XTAL_THROW(builtin()->member(Xid(RedefinedError))(Xt("Xtal Runtime Error 1011")(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))), return);
+		XTAL_THROW(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))), return);
 	}
 }
 
@@ -334,7 +289,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		else{
 			// protectedメンバでアクセス権が無いなら例外
 			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
-				XTAL_THROW(builtin()->member(Xid(AccessibilityError))(Xt("Xtal Runtime Error 1017")(
+				XTAL_THROW(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
 					Named(Xid(object), this->object_name()), Named(Xid(name), primary_key), Named(Xid(accessibility), Xid(protected))))
 				, return undefined);			
 			}
@@ -398,14 +353,14 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		XTAL_THROW(RuntimeError()(Xid(undefined)), return);
+		XTAL_THROW(RuntimeError()->call(Xid(undefined)), return);
 	}
 	else{
 		members_->set_at(it->second.num, value);
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
-	global_mutate_count++;
+	inc_global_mutate_count();
 }
 
 bool Class::is_inherited(const AnyPtr& v){
@@ -436,11 +391,11 @@ bool Class::is_inherited_cpp_class(){
 	return false;
 }
 
-void Class::call(const VMachinePtr& vm){
+void Class::rawcall(const VMachinePtr& vm){
 	const AnyPtr& newfun = bases_member(Xid(new));
 	AnyPtr instance;
 	if(newfun){
-		instance = newfun();
+		instance = newfun->call();
 	}
 	else{
 		instance = xnew<Base>();
@@ -453,11 +408,11 @@ void Class::call(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->set_arg_this(instance);
 		if(vm->need_result()){
-			ret->call(vm);
+			ret->rawcall(vm);
 			vm->replace_result(0, instance);
 		}
 		else{
-			ret->call(vm);
+			ret->rawcall(vm);
 		}
 	}
 	else{
@@ -469,7 +424,7 @@ void Class::s_new(const VMachinePtr& vm){
 	const AnyPtr& newfun = bases_member(Xid(serial_new));
 	AnyPtr instance;
 	if(newfun){
-		instance = newfun();
+		instance = newfun->call();
 	}
 	else{
 		instance = xnew<Base>();
@@ -504,23 +459,23 @@ CppClass::CppClass(const StringPtr& name)
 	:Class(cpp_class_t(), name){
 }
 
-void CppClass::call(const VMachinePtr& vm){
+void CppClass::rawcall(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), null, from_this(this))){
-		ret->call(vm);
+		ret->rawcall(vm);
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
 	}
 }
 
 void CppClass::s_new(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(serial_new), null, from_this(this))){
-		ret->call(vm);
+		ret->rawcall(vm);
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
 	}
 }
 
@@ -544,7 +499,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 	else{
 #ifndef XTAL_NO_PARSER
 		Xfor(var, load_path_list_){
-			StringPtr file_name = Xf("%s%s%s%s")(var, join_path("/"), primary_key, ".xtal")->to_s();
+			StringPtr file_name = Xf("%s%s%s%s")->call(var, join_path("/"), primary_key, ".xtal")->to_s();
 			return rawdef(primary_key, load(file_name), secondary_key);
 		}
 #endif
@@ -570,12 +525,12 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		Value val = {members_->size(), KIND_PUBLIC};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		global_mutate_count++;
+		inc_global_mutate_count();
 		value->set_object_name(primary_key, object_name_force(), from_this(this));
 		return members_->back();
 	}
 	else{
-		XTAL_THROW(builtin()->member(Xid(RedefinedError))(Xt("Xtal Runtime Error 1011")(Named(Xid(object), this->object_name()))), return undefined);
+		XTAL_THROW(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()))), return undefined);
 	}
 }
 
@@ -607,26 +562,67 @@ void Singleton::init_singleton(const VMachinePtr& vm){;
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->setup_call(0);
 		vm->set_arg_this(instance);
-		ret->call(vm);
+		ret->rawcall(vm);
 		vm->cleanup_call();
 	}
 }
 
-void Singleton::call(const VMachinePtr& vm){
+void Singleton::rawcall(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
 void Singleton::s_new(const VMachinePtr& vm){
-	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1013")(object_name())), return);
+	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
 }
 
-const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const StringPtr& name){
-	if(!list.value){
-		chain_cpp_class(list);
-		list.value = xnew<CppClass>(name);
+CppSingleton::CppSingleton(const StringPtr& name)
+	:Class(name){
+	Base::set_class(from_this(this));
+	inherit(get_cpp_class<Class>());
+}
+
+
+
+void initialize_frame(){
+	{
+		ClassPtr p = new_cpp_class<MembersIter>(Xid(ClassMembersIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &MembersIter::block_next);
 	}
-	return list.value;
-}
 
+	{
+		ClassPtr p = new_cpp_class<Frame>(Xid(Frame));
+		p->method(Xid(members), &Frame::members);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Class>(Xid(Class));
+		p->inherit(get_cpp_class<Frame>());
+		p->method(Xid(inherit), &Class::inherit_strict);
+		p->method(Xid(overwrite), &Class::overwrite);
+		p->method(Xid(s_new), &Class::s_new);
+		p->method(Xid(inherited_classes), &Class::inherited_classes);
+		p->method(Xid(is_inherited), &Any::is_inherited);
+		p->method(Xid(find_near_member), &Class::find_near_member)->param(Xid(primary_key), Named(Xid(secondary_key), null));
+	}
+
+	{
+		ClassPtr p = new_cpp_class<CppClass>(Xid(CppClass));
+		p->inherit(get_cpp_class<Class>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Lib>(Xid(Lib));
+		p->inherit(get_cpp_class<Class>());
+		p->def(Xid(new), ctor<Lib>());
+		p->method(Xid(append_load_path), &Lib::append_load_path);
+	}
+
+	builtin()->def(Xid(Frame), get_cpp_class<Frame>());
+	builtin()->def(Xid(Class), get_cpp_class<Class>());
+	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
+	builtin()->def(Xid(lib), lib());
+	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
+}
 
 }

@@ -7,10 +7,8 @@ AnyPtr text(const StringPtr& text);
 
 AnyPtr format(const StringPtr& text);
 
-void set_text_map(const MapPtr& map);
+void assign_text_map(const AnyPtr& map_iter);
 
-void append_text_map(const MapPtr& map);
-
-MapPtr get_text_map();
+void append_text_map(const AnyPtr& map_iter);
 
 }

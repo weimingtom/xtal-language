@@ -325,64 +325,6 @@ const IDPtr& string_literal_to_id(const char_t* str){
 	return str_mgr_->insert_literal_string(str);
 }
 
-////////////////////////////////////////////////////////////////
-
-void initialize_string(){
-	register_uninitializer(&uninitialize_string);
-	str_mgr_ = xnew<StringMgr>();
-		
-	{
-		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &StringEachIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<ChRangeIter>(Xid(ChRangeIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &ChRangeIter::block_next);
-	}
-
-	{
-		new_cpp_class<Range>(Xid(Range));
-
-		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
-		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->param(Named(Xid(left), null), Named(Xid(right), null)));
-		p->method(Xid(each), &ChRange::each);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<String>(Xid(String));
-		p->inherit(Iterable());
-
-		p->def(Xid(new), ctor<String>());
-		p->method(Xid(to_i), &String::to_i);
-		p->method(Xid(to_f), &String::to_f);
-		p->method(Xid(to_s), &String::to_s);
-		p->method(Xid(clone), &String::clone);
-
-		p->method(Xid(length), &String::length);
-		p->method(Xid(size), &String::size);
-		p->method(Xid(intern), &String::intern);
-
-		p->method(Xid(each), &String::each);
-
-		p->method(Xid(op_range), &String::op_range, get_cpp_class<String>());
-		p->method(Xid(op_cat), &String::op_cat, get_cpp_class<String>());
-		p->method(Xid(op_cat_assign), &String::op_cat, get_cpp_class<String>());
-		p->method(Xid(op_eq), &String::op_eq, get_cpp_class<String>());
-		p->method(Xid(op_lt), &String::op_lt, get_cpp_class<String>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<InternedStringIter>(Xid(InternedStringIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &InternedStringIter::block_next);
-	}
-
-	set_cpp_class<ID>(get_cpp_class<String>());
-}
 
 ////////////////////////////////////////////////////////////////
 
@@ -658,14 +600,14 @@ AnyPtr String::each(){
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1025")), return xnew<ChRange>("", ""));		
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1025")), return xnew<ChRange>(empty_id, empty_id));		
 	}
 
 	if(length()==1 && right->length()==1){
 		return xnew<ChRange>(from_this(this), right);
 	}
 	else{
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>("", ""));		
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>(empty_id, empty_id));		
 	}
 }
 
@@ -735,7 +677,7 @@ int_t String::calc_offset(int_t i){
 }
 
 void String::throw_index_error(){
-	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1020")), return);
+	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1020")), return);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -941,6 +883,63 @@ AnyPtr SmartPtrCtor2<ID>::call(type v){
 
 AnyPtr SmartPtrCtor3<ID>::call(type v){
 	return xnew<ID>(v);
+}
+
+void initialize_string(){
+	register_uninitializer(&uninitialize_string);
+	str_mgr_ = xnew<StringMgr>();
+		
+	{
+		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &StringEachIter::block_next);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<ChRangeIter>(Xid(ChRangeIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &ChRangeIter::block_next);
+	}
+
+	{
+		new_cpp_class<Range>(Xid(Range));
+
+		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
+		p->inherit(get_cpp_class<Range>());
+		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->param(Named(Xid(left), null), Named(Xid(right), null)));
+		p->method(Xid(each), &ChRange::each);
+	}
+
+	{
+		ClassPtr p = new_cpp_class<String>(Xid(String));
+		p->inherit(Iterable());
+
+		p->def(Xid(new), ctor<String>());
+		p->method(Xid(to_i), &String::to_i);
+		p->method(Xid(to_f), &String::to_f);
+		p->method(Xid(to_s), &String::to_s);
+		p->method(Xid(clone), &String::clone);
+
+		p->method(Xid(length), &String::length);
+		p->method(Xid(size), &String::size);
+		p->method(Xid(intern), &String::intern);
+
+		p->method(Xid(each), &String::each);
+
+		p->method(Xid(op_range), &String::op_range, get_cpp_class<String>());
+		p->method(Xid(op_cat), &String::op_cat, get_cpp_class<String>());
+		p->method(Xid(op_cat_assign), &String::op_cat, get_cpp_class<String>());
+		p->method(Xid(op_eq), &String::op_eq, get_cpp_class<String>());
+		p->method(Xid(op_lt), &String::op_lt, get_cpp_class<String>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<InternedStringIter>(Xid(InternedStringIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &InternedStringIter::block_next);
+	}
+
+	set_cpp_class<ID>(get_cpp_class<String>());
 }
 
 

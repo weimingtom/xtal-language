@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-class Base{
+class Base : public Any{
 public:
 
 	/**
@@ -11,7 +11,7 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 	
 	/**
 	* @brief nameメンバを取得する。
@@ -121,10 +121,6 @@ public:
 	AnyPtr p();
 
 public:
-
-	SendProxy send(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null);
-
-public:
 	
 	Base();
 
@@ -145,7 +141,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		((Base*)p)->class_ = Innocence((int_t)size);
+		if(p){ ((Base*)p)->class_ = Innocence((int_t)size); }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }
@@ -154,29 +150,31 @@ public:
 public:
 
 	enum{
-		XTAL_INSTANCE_FLAG_BIT = 1 << (sizeof(uint_t)*8-1),
-		REF_COUNT_MASK = ~(XTAL_INSTANCE_FLAG_BIT)
+		XTAL_INSTANCE_FLAG_SHIFT = TYPE_SHIFT+1,
+		XTAL_INSTANCE_FLAG_BIT = 1<<(XTAL_INSTANCE_FLAG_SHIFT),
+		REF_COUNT_SHIFT = XTAL_INSTANCE_FLAG_SHIFT+1,
+		REF_COUNT_MASK = ~((1<<XTAL_INSTANCE_FLAG_SHIFT)-1)
 	};
 
 	InstanceVariables* instance_variables(){ return instance_variables_; }
 	void make_instance_variables();
 
-	uint_t ref_count(){ return ref_count_ & REF_COUNT_MASK; }
-	void add_ref_count(int_t rc){ ref_count_ += rc; }
-	void inc_ref_count(){ ++ref_count_; }
-	void dec_ref_count(){ --ref_count_; }
+	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
+	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
+	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
+	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
 
 	void set_class(const ClassPtr& c);
 
 	virtual void visit_members(Visitor& m);
 
-	bool is_xtal_instance(){ return (ref_count_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
-	void set_xtal_instance_flag(){ ref_count_ |= XTAL_INSTANCE_FLAG_BIT; }
+	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
+	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
 	
 private:
 
 	// 参照カウンタ値
-	uint_t ref_count_;
+	//uint_t ref_count_;
 
 	// インスタンス変数テーブル
 	InstanceVariables* instance_variables_;

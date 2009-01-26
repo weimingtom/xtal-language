@@ -3,11 +3,6 @@
 
 namespace xtal{
 
-FunCore empty_xfun_core;
-ScopeCore empty_scope_core;
-ClassCore empty_class_core;
-ExceptCore empty_except_core;
-
 void initialize_code(){
 	{
 		ClassPtr p = new_cpp_class<Code>(Xid(Code));
@@ -57,8 +52,8 @@ int_t Code::compliant_lineno(const inst_t* p){
 	return 0;
 }
 
-void Code::call(const VMachinePtr& vm){
-	first_fun_->call(vm);
+void Code::rawcall(const VMachinePtr& vm){
+	first_fun_->rawcall(vm);
 }
 
 StringPtr Code::inspect(){
@@ -289,7 +284,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }
 		XTAL_CASE(InstMAX::NUMBER){ temp = ((InstMAX*)pc)->inspect(code); sz = InstMAX::ISIZE; }
 //}}CODE_INSPECT}
-	} ms->put_s(Xf("%04d:%s\n")((int_t)(pc-data()), temp)->to_s()); pc += sz; }
+	} ms->put_s(Xf("%04d:%s\n")->call((int_t)(pc-data()), temp)->to_s()); pc += sz; }
 
 	ms->seek(0);
 	return ms->get_s(ms->size());

@@ -3,14 +3,6 @@
 
 namespace xtal{
 
-namespace{
-	MapPtr user_text_map_;
-
-	void uninitialize_text(){
-		user_text_map_ = null;
-	}
-}
-
 class FormatSpecifier : public Base{
 public:
 
@@ -43,9 +35,9 @@ private:
 class Format : public Base{
 public:
 
-	Format(const StringPtr& str = "");
+	Format(const StringPtr& str = empty_id);
 	void set(const char_t* str);
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
 	void serial_load(const StringPtr& v);
@@ -65,8 +57,8 @@ private:
 class Text : public Base{
 public:
 
-	Text(const StringPtr& key = "");
-	virtual void call(const VMachinePtr& vm);
+	Text(const StringPtr& key = empty_id);
+	virtual void rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
 	void serial_load(const StringPtr& v);
@@ -76,16 +68,14 @@ private:
 };
 
 
-void set_text_map(const MapPtr& map){
-	user_text_map_ = map;
+void assign_text_map(const AnyPtr& map){
+	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
+	m->assign(map);
 }
 
-void append_text_map(const MapPtr& map){
-	user_text_map_ = user_text_map_->cat(map);
-}
-
-MapPtr get_text_map(){
-	return user_text_map_;
+void append_text_map(const AnyPtr& map){
+	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
+	m->concat(map);
 }
 
 AnyPtr text(const StringPtr& text){
@@ -274,7 +264,7 @@ void Format::set(const char_t* str){
 	}
 }
 
-void Format::call(const VMachinePtr& vm){
+void Format::rawcall(const VMachinePtr& vm){
 
 	if(!have_named_){
 		vm->flatten_arg();
@@ -351,7 +341,7 @@ void Format::call(const VMachinePtr& vm){
 }
 
 void Format::to_s(const VMachinePtr& vm){
-	call(vm);
+	rawcall(vm);
 }
 
 AnyPtr Format::serial_save(){
@@ -365,10 +355,11 @@ void Format::serial_load(const StringPtr& v){
 Text::Text(const StringPtr& key)
 	:key_(key){}
 
-void Text::call(const VMachinePtr& vm){
-	if(user_text_map_){
-		if(const AnyPtr& value=user_text_map_->at(key_)){
-			xnew<Format>(value->to_s())->call(vm);
+void Text::rawcall(const VMachinePtr& vm){
+	MapPtr m = ptr_as<Map>(builtin()->member(Xid(_text_map)));
+	if(m){
+		if(const AnyPtr& value=m->at(key_)){
+			xnew<Format>(value->to_s())->rawcall(vm);
 			return;
 		}
 	}
@@ -377,7 +368,7 @@ void Text::call(const VMachinePtr& vm){
 }
 
 void Text::to_s(const VMachinePtr& vm){
-	call(vm);
+	rawcall(vm);
 }
 
 AnyPtr Text::serial_save(){
@@ -391,9 +382,9 @@ void Text::serial_load(const StringPtr& v){
 
 ///////////////////////////////////////////////////////////////
 
+
 void initialize_text(){
-	register_uninitializer(&uninitialize_text);
-	user_text_map_ = xnew<Map>();
+	builtin()->def(Xid(_text_map), xnew<Map>());
 
 	{
 		ClassPtr p = new_cpp_class<Format>(Xid(Format));
@@ -414,6 +405,10 @@ void initialize_text(){
 	builtin()->def(Xid(Format), get_cpp_class<Format>());
 	builtin()->def(Xid(Text), get_cpp_class<Text>());
 
+	builtin()->fun(Xid(assign_text_map), &assign_text_map);
+	builtin()->fun(Xid(append_text_map), &append_text_map);
+	builtin()->fun(Xid(format), &format);
+	builtin()->fun(Xid(text), &text);
 
 	MapPtr tm = xnew<Map>();
 	

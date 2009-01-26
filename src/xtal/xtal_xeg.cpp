@@ -3,56 +3,6 @@
 	
 namespace xtal{ namespace xeg{
 
-AnyPtr any;
-AnyPtr bos;
-AnyPtr eos;
-AnyPtr bol;
-AnyPtr eol;
-AnyPtr empty;
-AnyPtr alpha;
-AnyPtr degit;
-AnyPtr lower;
-AnyPtr upper;
-AnyPtr word;
-AnyPtr ascii;
-
-MapPtr nfa_map;
-
-void uninitialize_xeg(){
-	any = null;
-	bos = null;
-	eos = null;
-	bol = null;
-	eol = null;
-	empty = null;
-	alpha = null;
-	degit = null;
-	lower = null;
-	upper = null;
-	word = null;
-	ascii = null;
-
-	nfa_map = null;
-}
-
-class Scanner;
-typedef SmartPtr<Scanner> ScannerPtr;
-
-class StreamScanner;
-typedef SmartPtr<StreamScanner> StreamScannerPtr;
-
-class IteratorScanner;
-typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
-
-struct Element;
-typedef SmartPtr<Element> ElementPtr;
-
-struct Trans;
-typedef SmartPtr<Trans> TransPtr;
-
-struct NFA;
-typedef SmartPtr<NFA> NFAPtr;
-
 AnyPtr concat(const AnyPtr&, const AnyPtr&);
 ElementPtr elem(const AnyPtr& a);
 
@@ -425,14 +375,16 @@ struct Element : public Base{
 	int_t param3;
 	bool inv;
 
-	Element(Type type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)
-		:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
+	Element(Type type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0);
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
 		m & param1 & param2;
 	}
 };
+
+Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
+	:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -666,14 +618,18 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////
 
-const NFAPtr& fetch_nfa(const ElementPtr& node){
-	const AnyPtr& temp = nfa_map->at(node);
+const NFAPtr& Executor::fetch_nfa(const ElementPtr& node){
+	if(!nfa_map_){
+		nfa_map_ = xnew<Map>();	
+	}
+	
+	const AnyPtr& temp = nfa_map_->at(node);
 	if(temp){
 		return static_ptr_cast<NFA>(temp);
 	}
 	else{
-		nfa_map->set_at(node, xnew<NFA>(node));
-		return static_ptr_cast<NFA>(nfa_map->at(node));
+		nfa_map_->set_at(node, xnew<NFA>(node));
+		return static_ptr_cast<NFA>(nfa_map_->at(node));
 	}
 }
 
@@ -864,7 +820,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				}
 				else{
 					if(temp->end==temp->begin){
-						cap_values_->push_back("");
+						cap_values_->push_back(empty_id);
 					}
 					else{
 						cap_values_->push_back(null);
@@ -882,7 +838,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				}
 				else{
 					if(temp->end==temp->begin){
-						cap_values_->push_back("");
+						cap_values_->push_back(empty_id);
 					}
 					else{
 						cap_values_->push_back(null);
@@ -952,7 +908,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_CALL){
 			if(scanner_->eos()){ return e->inv; }
-			AnyPtr ret = e->param1(from_this(this));
+			AnyPtr ret = e->param1->call(from_this(this));
 			return (ret || raweq(ret, undefined))!=e->inv;
 		}
 
@@ -1023,7 +979,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_ERROR){
 			if(errors_){
-				errors_->push_back(e->param1(Named(Xid(line), scanner_->lineno())));
+				errors_->push_back(e->param1->call(Named(Xid(line), scanner_->lineno())));
 			}
 			return !e->inv;
 		}
@@ -1048,6 +1004,10 @@ ElementPtr elem(const AnyPtr& a){
 	}
 
 	if(const StringPtr& p = ptr_as<String>(a)){
+		if(p->length()==0){
+			return xnew<Element>(Element::TYPE_EMPTY);
+		}
+		
 		if(p->length()==1){
 			return xnew<Element>(Element::TYPE_EQL, p);
 		}
@@ -1069,7 +1029,7 @@ ElementPtr elem(const AnyPtr& a){
 		return xnew<Element>(Element::TYPE_CALL, p);
 	}
 
-	XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1026")), return null);
+	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1026")), return null);
 	return null;
 }
 
@@ -1135,7 +1095,7 @@ AnyPtr more_Int(const AnyPtr& left, int_t n, int_t kind = 0){
 AnyPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind = 0){
 	if(range->begin()<=0){
 		int n = -(range->end()-1);
-		return n < 0 ? more_Int(left, n, kind) : empty;
+		return n < 0 ? more_Int(left, n, kind) : xnew<Element>(Element::TYPE_EMPTY);
 	}
 
 	return concat(left, more_IntRange(left, xnew<IntRange>(range->begin()-1, range->end()-1, RANGE_LEFT_CLOSED_RIGHT_OPEN), kind));
@@ -1201,7 +1161,7 @@ AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return after(sep, 1) >> bod
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
 AnyPtr eq(const AnyPtr& e){ return xnew<Element>(Element::TYPE_EQ, e); }
 AnyPtr eql(const AnyPtr& e){ return xnew<Element>(Element::TYPE_EQL, e); }
-
+	
 ////////////////////////////////////////////////////////////////////////
 
 void def_common_methods(const ClassPtr& p){
@@ -1227,13 +1187,11 @@ void def_common_methods(const ClassPtr& p){
 
 void initialize_xeg(){
 	using namespace xeg;
-	register_uninitializer(&uninitialize_xeg);
-
 	ClassPtr xeg = xnew<Singleton>(Xid(xeg));
 
 	{
 		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
-		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(Named(Xid(stream_or_iterator), "")));
+		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(Named(Xid(stream_or_iterator), empty_id)));
 		p->method(Xid(reset), &Executor::reset);
 		p->method(Xid(parse), &Executor::parse);
 		p->method(Xid(match), &Executor::match);
@@ -1269,20 +1227,18 @@ void initialize_xeg(){
 		def_common_methods(new_cpp_class<Fun>());
 	}
 
-	any = xnew<Element>(Element::TYPE_ANY);
-	bos = xnew<Element>(Element::TYPE_BOS);
-	eos = xnew<Element>(Element::TYPE_EOS);
-	bol = xnew<Element>(Element::TYPE_BOL);
-	eol = xnew<Element>(Element::TYPE_EOL);
-	empty = xnew<Element>(Element::TYPE_EMPTY);
-	degit = elem(AnyPtr("0")->send(Xid(op_range))("9", RANGE_CLOSED));
-	lower = elem(AnyPtr(Xid(a))->send(Xid(op_range))(Xid(z), RANGE_CLOSED));
-	upper = elem(AnyPtr(Xid(A))->send(Xid(op_range))(Xid(Z), RANGE_CLOSED));
-	alpha = lower | upper;
-	word = alpha | degit | Xid(_);
-	ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range))(xnew<String>((char_t)127), RANGE_CLOSED));
-
-	nfa_map = xnew<Map>();
+	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
+	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
+	AnyPtr eos = xnew<Element>(Element::TYPE_EOS);
+	AnyPtr bol = xnew<Element>(Element::TYPE_BOL);
+	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
+	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
+	AnyPtr degit = elem(AnyPtr("0")->send(Xid(op_range), "9", RANGE_CLOSED));
+	AnyPtr lower = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
+	AnyPtr upper = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
+	AnyPtr alpha = lower | upper;
+	AnyPtr word = alpha | degit | Xid(_);
+	AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
 
 	xeg->def(Xid(any), any);
 	xeg->def(Xid(bos), bos);

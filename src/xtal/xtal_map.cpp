@@ -52,51 +52,6 @@ public:
 	}
 };
 
-
-void initialize_map(){
-	{
-		ClassPtr p = new_cpp_class<MapIter>(Xid(MapIter));
-		p->inherit(Iterator());
-		p->method(Xid(block_next), &MapIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Map>(Xid(Map));
-		p->inherit(Iterable());
-		
-		p->def(Xid(new), ctor<Map>());
-		p->method(Xid(to_s), &Map::to_s);
-		p->method(Xid(to_m), &Map::to_m);
-		p->method(Xid(size), &Map::size);
-		p->method(Xid(length), &Map::length);
-		p->method(Xid(insert), &Map::insert);
-		p->method(Xid(each), &Map::pairs);
-		p->method(Xid(pairs), &Map::pairs);
-		p->method(Xid(keys), &Map::keys);
-		p->method(Xid(values), &Map::values);
-		p->method(Xid(clone), &Map::clone);
-		p->method(Xid(erase), &Map::erase);
-		p->method(Xid(empty), &Map::empty);
-
-		p->method(Xid(op_at), &Map::at, get_cpp_class<Any>());
-		p->method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
-		p->method(Xid(op_eq), &Map::op_eq, get_cpp_class<Map>());
-		p->method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
-		p->method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Set>(Xid(Set));
-		p->inherit(get_cpp_class<Map>());
-		
-		p->def(Xid(new), ctor<Set>());
-		p->method(Xid(each), &Set::each);
-	}
-
-	builtin()->def(Xid(Map), get_cpp_class<Map>());
-	builtin()->def(Xid(Set), get_cpp_class<Set>());
-}
-
 void Map::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & table_;
@@ -185,6 +140,20 @@ MapPtr Map::clone(){
 	}	
 	return ret;
 }
+	
+void Map::assign(const AnyPtr& iterator){
+	clear();
+
+	Xfor2(k, v, iterator){
+		set_at(k, v);
+	}
+}
+	
+void Map::concat(const AnyPtr& iterator){
+	Xfor2(k, v, iterator){
+		set_at(k, v);
+	}
+}
 
 void Map::push_all(const VMachinePtr& vm){
 	for(iterator p = begin(); p!=end(); ++p){
@@ -198,5 +167,49 @@ AnyPtr Set::each(){
 	return xnew<MapIter>(from_this(this), 3);
 }
 
+void initialize_map(){
+	{
+		ClassPtr p = new_cpp_class<MapIter>(Xid(MapIter));
+		p->inherit(Iterator());
+		p->method(Xid(block_next), &MapIter::block_next);
+	}
 
+	{
+		ClassPtr p = new_cpp_class<Map>(Xid(Map));
+		p->inherit(Iterable());
+		
+		p->def(Xid(new), ctor<Map>());
+		p->method(Xid(to_s), &Map::to_s);
+		p->method(Xid(to_m), &Map::to_m);
+		p->method(Xid(size), &Map::size);
+		p->method(Xid(length), &Map::length);
+		p->method(Xid(insert), &Map::insert);
+		p->method(Xid(each), &Map::pairs);
+		p->method(Xid(pairs), &Map::pairs);
+		p->method(Xid(keys), &Map::keys);
+		p->method(Xid(values), &Map::values);
+		p->method(Xid(clone), &Map::clone);
+		p->method(Xid(erase), &Map::erase);
+		p->method(Xid(empty), &Map::empty);
+		p->method(Xid(assign), &Map::assign);
+		p->method(Xid(concat), &Map::concat);
+
+		p->method(Xid(op_at), &Map::at, get_cpp_class<Any>());
+		p->method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
+		p->method(Xid(op_eq), &Map::op_eq, get_cpp_class<Map>());
+		p->method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
+		p->method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<Set>(Xid(Set));
+		p->inherit(get_cpp_class<Map>());
+		
+		p->def(Xid(new), ctor<Set>());
+		p->method(Xid(each), &Set::each);
+	}
+
+	builtin()->def(Xid(Map), get_cpp_class<Map>());
+	builtin()->def(Xid(Set), get_cpp_class<Set>());
+}
 }

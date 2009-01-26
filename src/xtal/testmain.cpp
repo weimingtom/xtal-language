@@ -7,7 +7,7 @@
 
 using namespace xtal;
 
-void debug_throw(const debug::InfoPtr& info){
+void debug_throw(const DebugInfoPtr& info){
 //	puts("throw");
 }
 
@@ -26,19 +26,21 @@ int main2(int argc, char** argv){
 	try{
 		initialize();
 		
-		debug::enable();
-		debug::set_throw_hook(fun(&debug_throw));
+		debug()->enable();
+		debug()->set_throw_hook(fun(&debug_throw));
+
+		ArrayPtr xx = xnew<Array>(0);
 
 		Xsrc((
-			n: fun(i){ return i+10; }
-			assert n(4), "ee";
-		))();
+			{
+				i: 5;
+				f: fun(){}
+				j: 6 + i;
+				(j+5).p;
+			}
+		))->inspect()->p();
 
 #if 1
-		//debug::enable();
-		//debug::set_line_hook(fun(&debug_line));
-		//debug::set_call_hook(fun(&debug_line));
-		//debug::set_return_hook(fun(&debug_line));
 
 		int c;
 
@@ -82,7 +84,7 @@ int main2(int argc, char** argv){
 		//*/
 
 		//*
-		debug::enable();
+		debug()->enable();
 
 #ifdef XTAL_USE_WCHAR
 		load("../../test-utf16le/test_empty.xtal");
@@ -138,7 +140,6 @@ int main2(int argc, char** argv){
 	}
 
 	vmachine()->print_info();
-	print_result_of_cache();
 
 	printf("-------------------\n");
 	uninitialize();

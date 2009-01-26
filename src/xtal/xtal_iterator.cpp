@@ -78,7 +78,7 @@ public:
 };
 
 void InitZipIter(){
-	ClassPtr p = new_cpp_class<ZipIter>(Xid(ZipIter));
+	ClassPtr p = new_cpp_class<ZipIter>();
 	p->inherit(Iterator());
 	p->def(Xid(new), ctor<ZipIter, const VMachinePtr&>());
 	p->method(Xid(block_first), &ZipIter::block_first);
@@ -100,7 +100,7 @@ void initialize_iterator(){
 
 }
 
-void DelegateToIterator::call(const VMachinePtr& vm){
+void DelegateToIterator::rawcall(const VMachinePtr& vm){
 	vm->get_arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 

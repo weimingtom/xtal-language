@@ -10,7 +10,7 @@ inline const IDPtr& isp(const Innocence& v){
 template<class T>
 inline T check_zero(T value){
 	if(value==0){
-		XTAL_THROW(RuntimeError()(Xt("Xtal Runtime Error 1024")), return 1);
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
 	}
 	return value;
 }
@@ -555,7 +555,7 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 #define XTAL_VM_SWITCH switch(*pc)
 #define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
-#define XTAL_VM_EXCEPT(e) do{ set_except_0(e); if(debug_ && debug::is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
+#define XTAL_VM_EXCEPT(e) do{ set_except_0(e); if(debug_enable_ && debug_->is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
 #define XTAL_VM_RETURN return
 
 #ifdef XTAL_NO_EXCEPTIONS
@@ -567,14 +567,18 @@ void VMachine::return_result_instance_variable(int_t number, ClassCore* core){
 void VMachine::execute_inner(const inst_t* start){
 
 	const inst_t* pc = start;
-
 	int_t stack_size = stack_.size() - ff().args_stack_size();
-
-	XTAL_ASSERT(stack_size>=0);
-
 	int_t fun_frames_size = fun_frames_.size();
 
-	debug_ = debug::is_enabled();
+	if(const AnyPtr& d = builtin()->member(Xid(debug))){
+		debug_ = static_ptr_cast<Debug>(d);
+		debug_enable_ = debug_->is_enabled();
+	}
+	else{
+		debug_enable_ = false;
+	}
+
+	XTAL_ASSERT(stack_size>=0);
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
 retry:
@@ -817,7 +821,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Return){ // 4
-		if(debug_ && debug::is_enabled()){
+		if(debug_enable_ && debug_->is_enabled()){
 			debug_hook(pc, BREAKPOINT_RETURN);
 		}
 
@@ -836,7 +840,7 @@ XTAL_VM_SWITCH{
 		else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
-				XTAL_VM_EXCEPT(builtin()->member(Xid(YieldError))(Xt("Xtal Runtime Error 1012")));
+				XTAL_VM_EXCEPT(builtin()->member(Xid(YieldError))->call(Xt("Xtal Runtime Error 1012")));
 			}
 		}
 	}
@@ -1908,7 +1912,7 @@ XTAL_VM_SWITCH{
 			}
 
 			if(!except->is(builtin()->member(Xid(Exception)))){
-				XTAL_VM_EXCEPT(RuntimeError()(except));
+				XTAL_VM_EXCEPT(RuntimeError()->call(except));
 			}
 			else{
 				XTAL_VM_EXCEPT(except);
@@ -1933,19 +1937,19 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfDebug){ // 2
-		XTAL_VM_CONTINUE(pc + ((debug_ || debug::is_enabled()) ? inst.ISIZE : inst.OFFSET_address + inst.address));
+		XTAL_VM_CONTINUE(pc + ((debug_enable_ || debug_->is_enabled()) ? inst.ISIZE : inst.OFFSET_address + inst.address));
 	}
 
 	XTAL_VM_CASE(Assert){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			AnyPtr message = pop();
-			XTAL_VM_EXCEPT(builtin()->member(Xid(AssertionFailed))(message)); 
+			XTAL_VM_EXCEPT(builtin()->member(Xid(AssertionFailed))->call(message)); 
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(BreakPoint){ // 3
-		if(debug_ && debug::is_enabled()){
+		if(debug_enable_ && debug_->is_enabled()){
 			debug_hook(pc, BREAKPOINT);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -2131,7 +2135,7 @@ const inst_t* VMachine::FunCall(const inst_t* pc){
 			Innocence target = pop();
 			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
 			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->call(myself());
+			ap(target)->rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
 }
@@ -2888,8 +2892,8 @@ void VMachine::carry_over(Fun* fun){
 	stack_.downsize(max_stack + f.args_stack_size());
 	f.ordered_arg_count = f.named_arg_count = 0;
 
-	debug_ = debug::is_enabled();
-	if(debug_){
+	debug_enable_ = debug_ && debug_->is_enabled();
+	if(debug_enable_){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
 }
@@ -2942,8 +2946,8 @@ void VMachine::mv_carry_over(Fun* fun){
 	stack_.downsize(max_stack + size);
 	f.ordered_arg_count = 0;
 
-	debug_ = debug::is_enabled();
-	if(debug_){
+	debug_enable_ = debug_ && debug_->is_enabled();
+	if(debug_enable_){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
 }
@@ -3125,11 +3129,11 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	if(e){
 		AnyPtr ep = e;
 		if(!ep->is(builtin()->member(Xid(Exception)))){
-			ep = RuntimeError()(ep);
+			ep = RuntimeError()-call(ep);
 		}
 		if(fun() && code()){
 			if((pc != code()->data()+code()->size()-1)){
-				ep->send(Xid(append_backtrace))(
+				ep->send(Xid(append_backtrace),
 					code()->source_file_name(),
 					code()->compliant_lineno(pc),
 					fun()->object_name());
@@ -3153,12 +3157,12 @@ void VMachine::set_except_0(const Innocence& e){
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		if((kind==BREAKPOINT && debug::break_point_hook()) || 
-			(kind==BREAKPOINT_RETURN && debug::return_hook()) || 
-			(kind==BREAKPOINT_CALL && debug::call_hook()) ||
-			(kind==BREAKPOINT_THROW && debug::throw_hook())){
+		if((kind==BREAKPOINT && debug_->break_point_hook()) || 
+			(kind==BREAKPOINT_RETURN && debug_->return_hook()) || 
+			(kind==BREAKPOINT_CALL && debug_->call_hook()) ||
+			(kind==BREAKPOINT_THROW && debug_->throw_hook())){
 
-			if(!debug_info_){ debug_info_ = xnew<debug::Info>(); }
+			if(!debug_info_){ debug_info_ = xnew<DebugInfo>(); }
 			debug_info_->set_kind(kind);
 			debug_info_->set_line(code()->compliant_lineno(pc));
 			debug_info_->set_file_name(code()->source_file_name());
@@ -3166,32 +3170,33 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 			debug_info_->set_local_variables(ff().outer());
 
 			struct guard{
-				guard(){ debug::disable(); }
-				~guard(){ debug::enable(); }
-			} g;
+				const SmartPtr<Debug>& debug_;
+				guard(const SmartPtr<Debug>& debug):debug_(debug){ debug_->disable(); }
+				~guard(){ debug_->enable(); }
+			} g(debug_);
 		
 			switch(kind){
 				XTAL_CASE(BREAKPOINT){
-					if(const AnyPtr& hook = debug::break_point_hook()){
-						hook(debug_info_);
+					if(const AnyPtr& hook = debug_->break_point_hook()){
+						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_RETURN){
-					if(const AnyPtr& hook = debug::return_hook()){
-						hook(debug_info_);
+					if(const AnyPtr& hook = debug_->return_hook()){
+						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_CALL){
-					if(const AnyPtr& hook = debug::call_hook()){
-						hook(debug_info_);
+					if(const AnyPtr& hook = debug_->call_hook()){
+						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_THROW){
-					if(const AnyPtr& hook = debug::throw_hook()){
-						hook(debug_info_);
+					if(const AnyPtr& hook = debug_->throw_hook()){
+						hook->call(debug_info_);
 					}
 				}
 			}

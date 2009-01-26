@@ -196,7 +196,7 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
 		if(info.entry->constant){
-			error_->error(lineno(), Xt("Xtal Compile Error 1019")(Named(Xid(name), var)));
+			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
 		}
 
 		if(info.pos<=0xff){
@@ -407,7 +407,7 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 		}
 	}
 
-	error_->error(lineno(), Xt("Xtal Compile Error 1023")(Named(Xid(name), Xid(_)->cat(key))));
+	error_->error(lineno(), Xt("Xtal Compile Error 1023")->call(Named(Xid(name), Xid(_)->cat(key))));
 	return 0;
 }
 
@@ -633,7 +633,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	if(number<0){
 		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
-				error_->error(lineno(), Xt("Xtal Compile Error 1026")(name));
+				error_->error(lineno(), Xt("Xtal Compile Error 1026")->call(name));
 				return;
 			}
 		}
@@ -1015,6 +1015,8 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 
 void CodeBuilder::compile_class(const ExprPtr& e){
 	// インスタンス変数を暗黙的初期化するメソッドを定義する
+
+	int_t method_kind = e->class_kind()==KIND_SINGLETON ? KIND_FUN : KIND_METHOD;
 	{
 		ExprPtr stmts = xnew<Expr>();
 		MapPtr ivar_map = xnew<Map>();
@@ -1035,7 +1037,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 					eb_.push(var);
 					eb_.push(null);
 					
-					eb_.push(KIND_METHOD);
+					eb_.push(method_kind);
 					eb_.push(null);
 					eb_.push(null);
 					eb_.push(var);
@@ -1053,7 +1055,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 					eb_.push(var2);
 					eb_.push(null);
 
-					eb_.push(KIND_METHOD);
+					eb_.push(method_kind);
 					eb_.push(Xid(value));
 					eb_.splice(EXPR_LVAR, 1);
 					eb_.push(null);
@@ -1078,7 +1080,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		eb_.push(Xid(_initialize_));
 		eb_.push(null);
 
-		eb_.push(KIND_METHOD);
+		eb_.push(method_kind);
 		eb_.push(null);
 		eb_.push(null);
 		eb_.push(stmts);

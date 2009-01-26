@@ -344,36 +344,35 @@ struct Named2{
 		:name(null), value(undefined){}
 };
 
+struct Param : public Named2{
+	template<class T>
+	Param(const T& value)
+		:Named2(null, value){}
+	
+	Param(const AnyPtr& value)
+		:Named2(null, value){}
+
+	Param(const IDPtr& name, const AnyPtr& value)
+		:Named2(name, value){}
+
+	Param(){}
+};
+
 /**
 * @brief 名前付き引数のトリックのためのクラス
 *
 */
-struct Named : public Named2{
+struct Named : public Param{
 
 	Named(const AnyPtr& value)
-		:Named2(null, value){}
+		:Param(null, value){}
 
 	Named(const IDPtr& name, const AnyPtr& value)
-		:Named2(name, value){}
+		:Param(name, value){}
 
 	Named(){}
 
 	Named(const Null&){}
-};
-
-struct Param{
-	IDPtr name;
-	AnyPtr value;
-
-	template<class T>
-	Param(const T& value)
-		:name(null), value(value){}
-	
-	Param(const AnyPtr& value)
-		:name(null), value(value){}
-
-	Param(const Named& name)
-		:name(name.name), value(name.value){}
 };
 
 void visit_members(Visitor& m, const Named& p);

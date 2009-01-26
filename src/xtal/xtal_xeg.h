@@ -15,6 +15,24 @@ typedef SmartPtr<Scanner> ScannerPtr;
 class Executor;
 typedef SmartPtr<Executor> ExecutorPtr;
 
+class Scanner;
+typedef SmartPtr<Scanner> ScannerPtr;
+
+class StreamScanner;
+typedef SmartPtr<StreamScanner> StreamScannerPtr;
+
+class IteratorScanner;
+typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
+
+struct Element;
+typedef SmartPtr<Element> ElementPtr;
+
+struct Trans;
+typedef SmartPtr<Trans> TransPtr;
+
+struct NFA;
+typedef SmartPtr<NFA> NFAPtr;
+	
 /**
 * @brief ç\ï∂ñÿÇÃÉmÅ[Éh
 */
@@ -142,6 +160,8 @@ public:
 	};
 
 private:
+	
+	const NFAPtr& fetch_nfa(const ElementPtr& node);
 
 	bool match_inner(const AnyPtr& nfa);
 
@@ -162,6 +182,8 @@ private:
 	};
 
 	stack_t stack_;
+	
+	MapPtr nfa_map_;
 
 	ArrayPtr cap_;
 	MapPtr named_cap_;
@@ -179,7 +201,7 @@ private:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & tree_ & errors_ & cap_ & named_cap_ & cap_values_ & named_cap_values_;
+		m & nfa_map_ & tree_ & errors_ & cap_ & named_cap_ & cap_values_ & named_cap_values_;
 	}
 };
 
@@ -213,19 +235,6 @@ AnyPtr node(const IDPtr& name, const AnyPtr& elem);
 AnyPtr splice_node(int_t num, const AnyPtr& elem);
 AnyPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& elem);
 AnyPtr leaf(const AnyPtr& left);
-
-extern AnyPtr any;
-extern AnyPtr bos;
-extern AnyPtr eos;
-extern AnyPtr bol;
-extern AnyPtr eol;
-extern AnyPtr empty;
-extern AnyPtr alpha;
-extern AnyPtr degit;
-extern AnyPtr lower;
-extern AnyPtr upper;
-extern AnyPtr word;
-extern AnyPtr ascii;
 
 }}
 

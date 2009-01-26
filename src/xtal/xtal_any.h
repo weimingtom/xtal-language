@@ -9,22 +9,6 @@ namespace xtal{
 * 一般ユーザーはこれを直接使用することは無い
 */
 class Innocence{
-public:
-
-	AnyPtr operator()() const;
-
-	AnyPtr operator()(const Param& a0) const;
-
-	AnyPtr operator()(const Param& a0, const Param& a1) const;
-
-	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2) const;
-
-	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
-
-	AnyPtr operator()(const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
-
-	AtProxy operator[](const AnyPtr& key) const;
-
 protected:
 
 	Innocence(const char_t* str);
@@ -134,7 +118,7 @@ protected:
 };
 
 inline int_t type(const Innocence& v){ 
-	return v.type_; 
+	return v.type_ & TYPE_MASK; 
 }
 
 inline int_t ivalue(const Innocence& v){ 
@@ -157,7 +141,7 @@ inline uint_t rawvalue(const Innocence& v){
 }
 
 inline bool raweq(const Innocence& a, const Innocence& b){
-	return a.type_==b.type_ && a.value_==b.value_;
+	return type(a)==type(b) && a.value_==b.value_;
 }
 
 inline bool rawne(const Innocence& a, const Innocence& b){
@@ -165,16 +149,11 @@ inline bool rawne(const Innocence& a, const Innocence& b){
 }
 
 inline bool rawlt(const Innocence& a, const Innocence& b){
-	if(a.type_<b.type_)
+	if(type(a)<type(b))
 		return true;
-	if(b.type_<a.type_)
+	if(type(b)<type(a))
 		return false;
 	return a.value_<b.value_;
-}
-
-inline void swap(Innocence& a, Innocence& b){
-	std::swap(a.type_, b.type_);
-	std::swap(a.value_, b.value_);
 }
 
 inline void set_null_force(Innocence& v){
@@ -215,7 +194,7 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void call(const VMachinePtr& vm) const;
+	void rawcall(const VMachinePtr& vm) const;
 	
 	/**
 	* @brief nameメソッド呼び出しをする
@@ -321,10 +300,6 @@ public:
 	*/
 	AnyPtr p() const;
 
-	/**
-	* @brief nameメソッドを呼び出す
-	*/
-	SendProxy send(const IDPtr& name, const AnyPtr& secondary_key = (const AnyPtr&)null) const;
 
 	AnyPtr s_save() const;
 
@@ -347,6 +322,43 @@ public:
 	MultiValuePtr flatten_mv() const;
 
 	MultiValuePtr flatten_all_mv() const;
+	
+public:
+
+	/**
+	* @brief primary_keyメソッドを呼び出す
+	*/
+	AnyPtr send(const IDPtr& primary_key) const;
+	AnyPtr send(const IDPtr& primary_key, const Param& a0) const;
+	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1) const;
+	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2) const;
+	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
+	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+	
+public:
+
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const;	
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0) const;
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1) const;
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2) const;
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+	
+public:
+
+	AnyPtr call() const;
+	AnyPtr call(const Param& a0) const;
+	AnyPtr call(const Param& a0, const Param& a1) const;
+	AnyPtr call(const Param& a0, const Param& a1, const Param& a2) const;
+	AnyPtr call(const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
+	AnyPtr call(const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+
+private:
+
+	// call(VMachinePtr)がコンパイルエラーとなるように
+	struct aaa{ aaa(const VMachinePtr& vm); };
+	void call(aaa) const;
+
 };
 
 AnyPtr operator +(const AnyPtr& a);
@@ -364,12 +376,12 @@ AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b);
 AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b);
 AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b);
 
-AnyPtr operator ==(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator !=(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator <(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator >=(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator >(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator <=(const AnyPtr& a, const AnyPtr& b);
+bool operator ==(const AnyPtr& a, const AnyPtr& b);
+bool operator !=(const AnyPtr& a, const AnyPtr& b);
+bool operator <(const AnyPtr& a, const AnyPtr& b);
+bool operator >=(const AnyPtr& a, const AnyPtr& b);
+bool operator >(const AnyPtr& a, const AnyPtr& b);
+bool operator <=(const AnyPtr& a, const AnyPtr& b);
 
 AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b);
@@ -381,7 +393,5 @@ AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
-
-void print_result_of_cache();
 
 }

@@ -9,14 +9,16 @@ const ExprPtr& ep(const AnyPtr& a){
 }
 
 const AnyPtr& Expr::at(uint_t i){
-	if(size()<=i)
+	if(size()<=i){
 		resize(i+1);
+	}
 	return Array::at(i);
 }
 
 void Expr::set_at(uint_t i, const AnyPtr& v){
-	if(size()<=i) 
-		resize(i+1); 
+	if(size()<=i){
+		resize(i+1);
+	}
 	Array::set_at(i, v); 
 }
 

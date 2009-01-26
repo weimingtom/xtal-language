@@ -42,7 +42,7 @@ public:
 
 	InstanceVariableGetter(int_t number, ClassCore* core);
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 
 private:
 	int_t number_;
@@ -54,7 +54,7 @@ public:
 
 	InstanceVariableSetter(int_t number, ClassCore* core);
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 
 private:
 	int_t number_;
@@ -70,7 +70,7 @@ public:
 
 public:
 	
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 };
 
 class Method : public Fun{
@@ -82,7 +82,7 @@ public:
 
 public:
 	
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 };
 
 class Fiber : public Fun{
@@ -98,7 +98,7 @@ public:
 
 	void halt();
 
-	void call(const VMachinePtr& vm){
+	void rawcall(const VMachinePtr& vm){
 		call_helper(vm, false);
 	}
 

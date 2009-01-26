@@ -82,16 +82,16 @@ void CFun::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<pi_.min_param_count || n>pi_.max_param_count){
 		if(pi_.min_param_count==0 && pi_.max_param_count==0){
-			XTAL_THROW(builtin()->member(Xid(ArgumentError))(
-				Xt("Xtal Runtime Error 1007")(
+			XTAL_THROW(builtin()->member(Xid(ArgumentError))->call(
+				Xt("Xtal Runtime Error 1007")->call(
 					Named(Xid(object), vm->ff().hint()->object_name()),
 					Named(Xid(value), n)
 				)
 			), return);
 		}
 		else{
-			XTAL_THROW(builtin()->member(Xid(ArgumentError))(
-				Xt("Xtal Runtime Error 1006")(
+			XTAL_THROW(builtin()->member(Xid(ArgumentError))->call(
+				Xt("Xtal Runtime Error 1006")->call(
 					Named(Xid(object), vm->ff().hint()->object_name()),
 					Named(Xid(min), pi_.min_param_count),
 					Named(Xid(max), pi_.max_param_count),
@@ -102,7 +102,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 	}
 }
 
-void CFun::call(const VMachinePtr& vm){
+void CFun::rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=pi_.min_param_count){
 		check_arg(vm);
 	}
@@ -112,11 +112,11 @@ void CFun::call(const VMachinePtr& vm){
 CFunArgs::CFunArgs(fun_t f, void* val, int_t param_n)
 	:CFun(f, val, param_n){}
 
-void CFunArgs::call(const VMachinePtr& vm){
+void CFunArgs::rawcall(const VMachinePtr& vm){
 	fun_(vm, pi_, val_);
 }
 	
-CFunEssence::CFunEssence(CFun::fun_t f, const void* data, int_t val_size, int_t param_n, bool args)
+CFunEssence::CFunEssence(const fun_t& f, const void* data, int_t val_size, int_t param_n, bool args)
 	:f(f), val(user_malloc(val_size)), param_n(param_n), args(args){
 	std::memcpy(val, data, val_size);
 }

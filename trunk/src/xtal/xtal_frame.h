@@ -315,7 +315,7 @@ public:
 	* cls->method("name", &foo); は cls->def("name", xtal::method(&foo)); と同一
 	*/
 	template<class Fun, class Policy>
-	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
+	const CFunPtr& method(const IDPtr& primary_key, const Fun& f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
 		return def_and_return(primary_key, method_impl(f, policy), secondary_key, accessibility);
 	}
 
@@ -325,7 +325,7 @@ public:
 	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class Fun>
-	const CFunPtr& method(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const CFunPtr& method(const IDPtr& primary_key, const Fun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		return method(primary_key, f, secondary_key, accessibility, result);
 	}
 
@@ -411,7 +411,7 @@ public:
 
 public:
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 	
 	virtual void s_new(const VMachinePtr& vm);
 
@@ -463,7 +463,7 @@ public:
 
 public:
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 
 	virtual void s_new(const VMachinePtr& vm);
 };
@@ -514,53 +514,21 @@ public:
 	// クラスの設定はスルーする
 	void set_class(const ClassPtr&){}
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 	
 	virtual void s_new(const VMachinePtr& vm);
 };
 
+class CppSingleton : public Class{
+public:
+		
+	CppSingleton(const StringPtr& name = empty_id);
 
+public:
 
-struct CppClassHolderList{
-	ClassPtr value;
-	CppClassHolderList* next;
+	// クラスの設定はスルーする
+	void set_class(const ClassPtr&){}
+
 };
-
-void chain_cpp_class(CppClassHolderList& link);
-const ClassPtr& new_cpp_class_impl(CppClassHolderList& list, const StringPtr& name);
-
-// C++のクラスの保持のためのクラス
-template<class T>
-struct CppClassHolder{
-	static CppClassHolderList value;
-};
-
-template<class T>
-CppClassHolderList CppClassHolder<T>::value;
-
-
-template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name){
-	return new_cpp_class_impl(CppClassHolder<T>::value, name);
-}
-
-template<class T>
-inline bool exists_cpp_class(){
-	return CppClassHolder<T>::value.value;
-}
-
-template<class T>
-inline const ClassPtr& get_cpp_class(){
-	XTAL_ASSERT(exists_cpp_class<T>());
-	return CppClassHolder<T>::value.value;
-}
-
-template<class T>
-void set_cpp_class(const ClassPtr& cls){
-	if(!CppClassHolder<T>::value.value){
-		chain_cpp_class(CppClassHolder<T>::value);
-	}
-	CppClassHolder<T>::value.value = cls;
-}
 
 }

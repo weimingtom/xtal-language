@@ -45,6 +45,45 @@ struct InheritedN{
 	};
 };
 
+template<class T>
+struct SmartPtrCtor1{
+	struct type{};
+	static int_t call(type){ return 0; };
+};
+
+template<class T>
+struct SmartPtrCtor2{
+	struct type{};
+	static int_t call(type){ return 0; };
+};
+
+template<class T>
+struct SmartPtrCtor3{
+	struct type{};
+	static int_t call(type){ return 0; };
+};
+
+template <int N>
+struct SmartPtrSelector{};
+
+template<class T>
+struct XNewEssence0{};
+
+template<class T, class A0>
+struct XNewEssence1{
+	A0 a0;
+	XNewEssence1(const A0& a0)
+		:a0(a0){}
+};
+
+template<class T, class A0, class A1>
+struct XNewEssence2{
+	A0 a0;
+	A1 a1;
+	XNewEssence2(const A0& a0, const A1& a1)
+		:a0(a0), a1(a1){}
+};
+
 struct undeleter_t{
 	template<class T>
 	void operator()(T* p){}
@@ -118,6 +157,8 @@ protected:
 
 	SmartPtr(Singleton* p, const ClassPtr& c, with_class_t);
 
+	SmartPtr(CppSingleton* p, const ClassPtr& c, with_class_t);
+
 	void set_p_with_class(Base* p, const ClassPtr& c);
 
 	void inc_ref_count(){
@@ -184,15 +225,6 @@ public:
 	SmartPtr(avoid<double>::type v){ set_f((float_t)v); }
 	SmartPtr(avoid<long double>::type v){ set_f((float_t)v); }
 
-private:
-
-	/**
-	* @brief 暗黙の変換を抑えるためのコンストラクタ。
-	*
-	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
-	*/
-	SmartPtr(void*);
-
 public:
 
 	/**
@@ -243,6 +275,121 @@ public:
 	bool operator !() const{
 		return type((*this)->self())<=TYPE_FALSE;
 	}
+
+public:
+
+	template<class U>
+	SmartPtr(XNewEssence0<U>)
+		:Innocence(Innocence::noinit_t()){
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>());
+	}
+	
+	template<class U>
+	SmartPtr& operator= (XNewEssence0<U>){
+		dec_ref_count();
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>());
+		return *this;
+	}
+
+public:
+
+	template<class U, class A0>
+	SmartPtr(const XNewEssence1<U, A0>& x)
+		:Innocence(Innocence::noinit_t()){
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0);
+	}
+	
+	template<class U, class A0>
+	SmartPtr& operator= (const XNewEssence1<U, A0>& x){
+		dec_ref_count();
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0);
+		return *this;
+	}
+
+public:
+
+	template<class U, class A0, class A1>
+	SmartPtr(const XNewEssence2<U, A0, A1>& x)
+		:Innocence(Innocence::noinit_t()){
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0, x.a1);
+	}
+	
+	template<class U, class A0, class A1>
+	SmartPtr& operator= (const XNewEssence2<U, A0, A1>& x){
+		dec_ref_count();
+		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0, x.a1);
+		return *this;
+	}
+
+protected:
+
+	template<class U>
+	void gene(SmartPtrSelector<INHERITED_BASE>){
+		set_p_with_class(new U(), new_cpp_class<U>());
+	}
+
+	template<class U>
+	void gene(SmartPtrSelector<INHERITED_INNOCENCE>){
+		Innocence::operator =(U());
+	}
+
+	template<class U>
+	void gene(SmartPtrSelector<INHERITED_OTHER>){
+		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
+		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
+		p->ptr = (U*)&p->fun;
+		new(p->ptr) U;
+	}
+
+protected:
+
+	template<class U, class A0>
+	void gene(SmartPtrSelector<INHERITED_BASE>, const A0& a0){
+		set_p_with_class(new U(a0), new_cpp_class<U>());
+	}
+
+	template<class U, class A0>
+	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0){
+		Innocence::operator =(U(a0));
+	}
+
+	template<class U, class A0>
+	void gene(SmartPtrSelector<INHERITED_OTHER>, const A0& a0){
+		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
+		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
+		p->ptr = (U*)&p->fun;
+		new(p->ptr) U(a0);
+	}
+
+protected:
+
+	template<class U, class A0, class A1>
+	void gene(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1){
+		set_p_with_class(new U(a0, a1), new_cpp_class<U>());
+	}
+
+	template<class U, class A0, class A1>
+	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1){
+		Innocence::operator =(U(a0, a1));
+	}
+
+	template<class U, class A0, class A1>
+	void gene(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1){
+		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
+		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
+		p->ptr = (U*)&p->fun;
+		new(p->ptr) U(a0, a1);
+	}
+
+private:
+
+	/**
+	* @brief 暗黙の変換を抑えるためのコンストラクタ。
+	*
+	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
+	*/
+	SmartPtr(void*);
+
 };
 
 
@@ -259,26 +406,6 @@ inline bool operator !=(const AnyPtr& a, const Undefined&){ return rawne(a, unde
 inline bool operator ==(const Undefined&, const AnyPtr& a){ return raweq(a, undefined); }
 inline bool operator !=(const Undefined&, const AnyPtr& a){ return rawne(a, undefined); }
 
-template<class T>
-struct SmartPtrCtor1{
-	struct type{};
-	static int_t call(type){ return 0; };
-};
-
-template<class T>
-struct SmartPtrCtor2{
-	struct type{};
-	static int_t call(type){ return 0; };
-};
-
-template<class T>
-struct SmartPtrCtor3{
-	struct type{};
-	static int_t call(type){ return 0; };
-};
-
-template <int N>
-struct SmartPtrSelector{};
 
 /**
 * @brief T型へのポインタを保持するためのスマートポインタ
@@ -322,12 +449,12 @@ public:
 
 public:
 
-	SmartPtr(T* p, SmartPtrSelector<INHERITED_BASE>){ 
+	SmartPtr(SmartPtrSelector<INHERITED_BASE>, T* p){ 
 		set_p((Base*)p); 
-		p->inc_ref_count(); 
+		p->inc_ref_count();
 	}
 
-	SmartPtr(T* p, SmartPtrSelector<INHERITED_INNOCENCE>){ 
+	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ 
 		*(Innocence*)this = *(Innocence*)p; 
 		inc_ref_count();
 	}
@@ -392,6 +519,51 @@ private:
 
 	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ 
 		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
+	}
+
+public:
+
+	template<class U>
+	SmartPtr(XNewEssence0<U> x)
+		:SmartPtr<Any>(x){
+		T* n = (U*)0; // inherited test
+	}
+	
+	template<class U>
+	SmartPtr& operator= (XNewEssence0<U> x){
+		T* n = (U*)0; // inherited test
+		SmartPtr<Any>::operator =(x);
+		return *this;
+	}
+
+public:
+
+	template<class U, class A0>
+	SmartPtr(const XNewEssence1<U, A0>& x)
+		:SmartPtr<Any>(x){
+		T* n = (U*)0; // inherited test
+	}
+	
+	template<class U, class A0>
+	SmartPtr& operator= (const XNewEssence1<U, A0>& x){
+		T* n = (U*)0; // inherited test
+		SmartPtr<Any>::operator =(x);
+		return *this;
+	}
+
+public:
+
+	template<class U, class A0, class A1>
+	SmartPtr(const XNewEssence2<U, A0, A1>& x)
+		:SmartPtr<Any>(x){
+		T* n = (U*)0; // inherited test
+	}
+	
+	template<class U, class A0, class A1>
+	SmartPtr& operator= (const XNewEssence2<U, A0, A1>& x){
+		T* n = (U*)0; // inherited test
+		SmartPtr<Any>::operator =(x);
+		return *this;
 	}
 
 public:
@@ -561,12 +733,50 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
 
+//////////////////////////////////////////////////////////////
+
+/**
+* @brief Tオブジェクトを生成する
+*/
+template<class T>
+inline XNewEssence0<T> xnew_lazy(){
+	return XNewEssence0<T>();
+}
+
+/**
+* @brief Tオブジェクトを生成する
+*/
+template<class T, class A0>
+inline XNewEssence1<T, A0> xnew_lazy(const A0& a0){
+	return XNewEssence1<T, A0>(a0);
+}
+
+/**
+* @brief Tオブジェクトを生成する
+*/
+template<class T, class A0, class A1>
+inline XNewEssence2<T, A0, A1> xnew_lazy(const A0& a0, const A1& a1){
+	return XNewEssence2<T, A0, A1>(a0, a1);
+}
+
+//////////////////////////////////////////////////////////////
+
+template<class T>
+inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p){
+	return *(SmartPtr<T>*)(Innocence*)p;
+}
+
+template<class T>
+inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_INNOCENCE>, const T* p){
+	return *(SmartPtr<T>*)(Innocence*)p; 
+}
+
 /**
 * @brief thisポインタをSmartPtr<T>に変換する関数
 */
 template<class T>
-inline SmartPtr<T> from_this(const T* p){
-	return SmartPtr<T>((T*)p, SmartPtrSelector<InheritedN<T>::value>());
+inline const SmartPtr<T>& from_this(const T* p){
+	return from_this(SmartPtrSelector<InheritedN<T>::value>(), p);
 }
 
 //////////////////////////////////////////////////////////////

@@ -43,6 +43,12 @@ namespace{
 	GCObserver** gcobservers_current_ = 0;
 	GCObserver** gcobservers_end_ = 0;
 
+	Environment** environments_begin_ = 0;
+	Environment** environments_current_ = 0;
+	Environment** environments_end_ = 0;
+
+	Environment* current_environment_;
+
 	uint_t cycle_count_ = 0;
 
 	struct UninitializerList{
@@ -51,12 +57,6 @@ namespace{
 	};
 
 	UninitializerList* uninitializer_list_ = 0;
-	CppClassHolderList* cpp_class_holder_list_ = 0;
-
-	ClassPtr iterator_;
-	ClassPtr Iterable_;
-	ClassPtr builtin_;
-	ClassPtr lib_;
 }
 
 void register_uninitializer(void (*uninitializer)()){
@@ -66,50 +66,91 @@ void register_uninitializer(void (*uninitializer)()){
 	uninitializer_list_ = p;
 }
 
-const ClassPtr& Iterator(){
-	return iterator_;
-}
-
-const ClassPtr& Iterable(){
-	return Iterable_;
-}
-
-const ClassPtr& builtin(){
-	return builtin_;
-}
-
-const ClassPtr& lib(){
-	return lib_;
-}
-
-const ClassPtr& RuntimeError(){
-	return ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
-}
-
-const ClassPtr& CompileError(){
-	return ptr_cast<Class>(builtin()->member(Xid(CompileError)));
-}
-
-const ClassPtr& UnsupportedError(){
-	return ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
-}
-
 bool is_initialized(){
 	return objects_begin_!=0;
 }
 
-void chain_cpp_class(CppClassHolderList& link){
-	link.next = cpp_class_holder_list_;
-	cpp_class_holder_list_ = &link;
+Environment* environment(){
+	return current_environment_;
 }
 
+void Environment::initialize(){
+
+	global_mutate_count_ = 0;
+
+	ClassPtr* holders[] = { 
+		&cpp_class_map_.insert(&CppClassSymbol<Any>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<Class>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<CppClass>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<Array>::value, null).first->second,
+	};
+
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		*holders[i] = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(CppClass))));
+	}
+	
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		new(p) CppClass();
+	}
+
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		p->set_class(get_cpp_class<CppClass>());
+	}
+	
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		register_gc(p);
+	}
+
+//////////
+
+	set_cpp_class<Base>(get_cpp_class<Any>());
+	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
+	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
+
+	builtin_ = xnew<Singleton>();
+	lib_ = xnew<Lib>();
+	Iterator_ = xnew<IteratorClass>();
+	Iterable_ = xnew<Class>();
+
+	vm_list_ = xnew<Array>();
+}
+
+void Environment::uninitialize(){
+	for(cpp_class_map_t::iterator it=cpp_class_map_.begin(); it!=cpp_class_map_.end(); ++it){
+		it->second = null;
+	}
+
+	cpp_class_map_.destroy();
+}
+
+Environment* new_environment(){
+	if(environments_current_==environments_end_){
+		expand_simple_dynamic_pointer_array((void**&)environments_begin_, (void**&)environments_end_, (void**&)environments_current_, 16);
+	}
+	Environment* p = (Environment*)user_malloc(sizeof(Environment));
+	new(p) Environment();
+
+	if(!current_environment_){
+		current_environment_ = p;
+	}
+
+	p->initialize();
+	return *environments_current_++ = p;
+}
+
+void delete_environment(Environment* p){
+	p->~Environment();
+	user_free(p);	
+}
 
 void initialize(){
 	if(is_initialized()){ return; } 
+
 	initialize_memory();
-
 	set_thread();
-
 	disable_gc();
 
 	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
@@ -118,38 +159,7 @@ void initialize(){
 
 	empty_instance_variables.init();
 
-	// 生成の際お互いに必要となる、Any, Class, CppClass, Array を特別な方法で生成
-	CppClassHolderList* holders[] = { &CppClassHolder<Any>::value, &CppClassHolder<Class>::value, &CppClassHolder<CppClass>::value, &CppClassHolder<Array>::value };
-
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		chain_cpp_class(*holders[i]);
-		holders[i]->value = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(CppClass))));
-	}
-	
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(holders[i]->value);
-		new(p) CppClass();
-	}
-
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(holders[i]->value);
-		p->set_class(get_cpp_class<CppClass>());
-	}
-	
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(holders[i]->value);
-		register_gc(p);
-	}
-
-	set_cpp_class<Base>(get_cpp_class<Any>());
-
-	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
-	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
-
-	builtin_ = xnew<Singleton>();
-	lib_ = xnew<Lib>();
-	iterator_ = xnew<IteratorClass>();
-	Iterable_ = xnew<Class>();
+	Environment* env = new_environment();
 
 	initialize_string();
 
@@ -190,21 +200,12 @@ void uninitialize(){
 			user_free(p);
 		}
 	}
-
-	{
-		CppClassHolderList* next=0;
-		for(CppClassHolderList* p = cpp_class_holder_list_; p; p=next){
-			next = p->next;
-			cpp_class_holder_list_ = next;
-			p->value = null;
-		}
-
+		
+	for(Environment** it = environments_begin_; it!=environments_current_; ++it){
+		(*it)->~Environment();
+		user_free(*it);
 	}
-
-	builtin_ = null;
-	lib_ = null;
-	iterator_ = null;
-	Iterable_ = null;
+	environments_current_ = environments_begin_;
 
 	full_gc();
 	
@@ -220,6 +221,7 @@ void uninitialize(){
 
 	objects_list_current_ = objects_list_begin_;
 
+	fit_simple_dynamic_pointer_array((void**&)environments_begin_, (void**&)environments_end_, (void**&)environments_current_);
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);

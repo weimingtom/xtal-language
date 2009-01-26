@@ -86,7 +86,7 @@ public:
 	StringPtr inspect();
 	StringPtr inspect_range(int_t start, int_t end);
 
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 
 	void insert_code(inst_t* p, inst_t* code, int_t size);
 

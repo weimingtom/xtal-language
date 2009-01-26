@@ -3,14 +3,18 @@
 
 namespace xtal{
 
-Base::Base(){
-	ref_count_ = 0;
+Base::Base()
+	:Any(noinit_t()){
+	set_p(this);
+	//ref_count_ = 0;
 	class_ = null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
-Base::Base(const Base& b){
-	ref_count_ = 0;
+Base::Base(const Base& b)
+	:Any(noinit_t()){
+	set_p(this);
+	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
@@ -107,7 +111,7 @@ void Base::set_class(const ClassPtr& c){
 	}
 }
 	
-void Base::call(const VMachinePtr& vm){
+void Base::rawcall(const VMachinePtr& vm){
 	ap(Innocence(this))->rawsend(vm, Xid(op_call));
 }
 
@@ -122,10 +126,6 @@ const AnyPtr& Base::member(const IDPtr& primary_key, const AnyPtr& secondary_key
 
 void Base::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 
-}
-
-SendProxy Base::send(const IDPtr& primary_key, const AnyPtr& secondary_key){
-	return SendProxy(ap(Innocence(this)), primary_key, secondary_key);
 }
 
 void Base::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){

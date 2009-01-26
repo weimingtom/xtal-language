@@ -22,7 +22,7 @@ public:
 
 public:
 		
-	virtual void call(const VMachinePtr& vm);
+	virtual void rawcall(const VMachinePtr& vm);
 	
 protected:
 
@@ -754,11 +754,13 @@ private:
 	// tryの度に積まれるフレーム。
 	PODStack<ExceptFrame> except_frames_;
 	
-	SmartPtr<debug::Info> debug_info_;
-
 	Innocence except_[3];
 
-	int_t debug_;
+	SmartPtr<DebugInfo> debug_info_;
+
+	SmartPtr<Debug> debug_;
+
+	int_t debug_enable_;
 
 protected:
 

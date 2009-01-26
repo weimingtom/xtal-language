@@ -177,8 +177,8 @@ enum PrimitiveType{
 	
 	TYPE_SMALL_STRING = 7,
 
-	TYPE_MASK = (1<<0) | (1<<1) | (1<<2),
-	TYPE_SHIFT = 3
+	TYPE_SHIFT = 3,
+	TYPE_MASK = (1<<TYPE_SHIFT)-1
 };
 
 
@@ -267,6 +267,7 @@ class Frame;
 class Class;
 class Lib;
 class CppClass;
+class CppSingleton;
 class Thread;
 class Mutex;
 class Singleton;
@@ -276,6 +277,8 @@ class ChRange;
 class DualDispatchMethod;
 class DualDispatchFun;
 class MultiValue;
+class Debug;
+class DebugInfo;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -308,8 +311,6 @@ typedef SmartPtr<DualDispatchFun> DualDispatchFunPtr;
 typedef SmartPtr<MultiValue> MultiValuePtr;
 
 class Base;
-class AtProxy;
-class SendProxy;
 class Visitor;
 class InstanceVariables;
 class Int;
@@ -370,24 +371,19 @@ struct ExceptCore{
 };
 
 class EmptyInstanceVariables;
+class Null;
+class Undefined;
+struct Named;
 
 extern ScopeCore empty_scope_core;
 extern ClassCore empty_class_core;
-extern FunCore empty_fun_core;
+extern FunCore empty_xfun_core;
 extern ExceptCore empty_except_core;
 extern EmptyInstanceVariables empty_instance_variables;
-extern uint_t global_mutate_count;
-
-class Null;
-extern Null null;
-
-class Undefined;
-extern Undefined undefined;
-
-struct Named;
-extern Named null_named;
-
 extern IDPtr empty_id;
+extern Null null;
+extern Undefined undefined;
+extern Named null_named;
 
 struct Param;
 

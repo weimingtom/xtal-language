@@ -1,7 +1,7 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 	
-namespace xtal{ namespace xeg{
+namespace xtal{ namespace xpeg{
 
 AnyPtr concat(const AnyPtr&, const AnyPtr&);
 ElementPtr elem(const AnyPtr& a);
@@ -678,13 +678,30 @@ bool Executor::parse(const AnyPtr& pattern){
 	return match_inner(fetch_nfa(elem(pattern)));
 }
 
+AnyPtr Executor::captures(){
+	return  cap_values_ ? cap_values_->each() : null;
+}
+
+AnyPtr Executor::named_captures(){
+	return  named_cap_values_ ? named_cap_values_->each() : null;
+}
+
 AnyPtr Executor::at(int_t key){
 	if(key==0){
 		return static_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
 	}
 	else{
-		return cap_values_ ? cap_values_->op_at(key-1) : null;
+		if(key<0){
+			key += 1;
+		}else{
+			key -= 1;
+		}
+		return cap_values_ ? cap_values_->op_at(key) : null;
 	}
+}
+
+AnyPtr Executor::at(const StringPtr& key){
+	return  named_cap_values_ ? named_cap_values_->at(key) : null;
 }
 
 StringPtr Executor::prefix(){
@@ -1185,9 +1202,9 @@ void def_common_methods(const ClassPtr& p){
 
 }
 
-void initialize_xeg(){
-	using namespace xeg;
-	ClassPtr xeg = xnew<Singleton>(Xid(xeg));
+void initialize_xpeg(){
+	using namespace xpeg;
+	ClassPtr xpeg = xnew<Singleton>(Xid(xpeg));
 
 	{
 		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
@@ -1240,36 +1257,36 @@ void initialize_xeg(){
 	AnyPtr word = alpha | degit | Xid(_);
 	AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
 
-	xeg->def(Xid(any), any);
-	xeg->def(Xid(bos), bos);
-	xeg->def(Xid(eos), eos);
-	xeg->def(Xid(bol), bol);
-	xeg->def(Xid(eol), eol);
-	xeg->def(Xid(empty), empty);
-	xeg->def(Xid(degit), degit);
-	xeg->def(Xid(lower), lower);
-	xeg->def(Xid(upper), upper);
-	xeg->def(Xid(alpha), alpha);
-	xeg->def(Xid(word), word);
-	xeg->def(Xid(ascii), ascii);
+	xpeg->def(Xid(any), any);
+	xpeg->def(Xid(bos), bos);
+	xpeg->def(Xid(eos), eos);
+	xpeg->def(Xid(bol), bol);
+	xpeg->def(Xid(eol), eol);
+	xpeg->def(Xid(empty), empty);
+	xpeg->def(Xid(degit), degit);
+	xpeg->def(Xid(lower), lower);
+	xpeg->def(Xid(upper), upper);
+	xpeg->def(Xid(alpha), alpha);
+	xpeg->def(Xid(word), word);
+	xpeg->def(Xid(ascii), ascii);
 	
-	xeg->fun(Xid(set), &set);
-	xeg->fun(Xid(back_ref), &back_ref);
-	xeg->fun(Xid(before), &before);
-	xeg->fun(Xid(after), &after);
-	xeg->fun(Xid(leaf), &leaf);
-	xeg->fun(Xid(node), &node_vm);
-	xeg->fun(Xid(splice_node), &splice_node_vm);
-	xeg->fun(Xid(cap), &cap_vm);
-	xeg->fun(Xid(bound), &bound);
-	xeg->fun(Xid(eq), &eq);
-	xeg->fun(Xid(eql), &eql);
-	xeg->fun(Xid(error), &error);
+	xpeg->fun(Xid(set), &set);
+	xpeg->fun(Xid(back_ref), &back_ref);
+	xpeg->fun(Xid(before), &before);
+	xpeg->fun(Xid(after), &after);
+	xpeg->fun(Xid(leaf), &leaf);
+	xpeg->fun(Xid(node), &node_vm);
+	xpeg->fun(Xid(splice_node), &splice_node_vm);
+	xpeg->fun(Xid(cap), &cap_vm);
+	xpeg->fun(Xid(bound), &bound);
+	xpeg->fun(Xid(eq), &eq);
+	xpeg->fun(Xid(eql), &eql);
+	xpeg->fun(Xid(error), &error);
 
-	xeg->fun(Xid(decl), &decl);
+	xpeg->fun(Xid(decl), &decl);
 
-	xeg->def(Xid(Executor), new_cpp_class<Executor>());
-	builtin()->def(Xid(xeg), xeg);
+	xpeg->def(Xid(Executor), new_cpp_class<Executor>());
+	builtin()->def(Xid(xpeg), xpeg);
 }
 
 }

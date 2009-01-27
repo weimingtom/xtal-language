@@ -280,7 +280,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_xeg.cpp"
+				RelativePath="..\..\src\xtal\xtal_xpeg.cpp"
 				>
 			</File>
 		</Filter>
@@ -434,7 +434,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_xeg.h"
+				RelativePath="..\..\src\xtal\xtal_xpeg.h"
 				>
 			</File>
 		</Filter>

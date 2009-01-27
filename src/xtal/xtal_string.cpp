@@ -642,7 +642,7 @@ uint_t String::hashcode(){
 }
 	
 AnyPtr String::split(const AnyPtr& pattern){
-	using namespace xeg;
+	using namespace xpeg;
 	ArrayPtr ret = xnew<Array>();
 	ExecutorPtr exec(xnew<Executor>(from_this(this)));
 	if(exec->match(pattern)){

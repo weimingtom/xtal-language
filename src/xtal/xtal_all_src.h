@@ -32,6 +32,6 @@
 #include "xtal_text.cpp"
 #include "xtal_thread.cpp"
 #include "xtal_vmachine.cpp"
-#include "xtal_xeg.cpp"
+#include "xtal_xpeg.cpp"
 #include "xtal_inst.cpp"
 

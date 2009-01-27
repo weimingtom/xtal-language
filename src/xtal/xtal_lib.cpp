@@ -758,14 +758,14 @@ builtin::ClassicIterator: class{
 Iterator::classic: method ClassicIterator(this);
 
 Stream::scan: method(pattern) fiber{
-	exec: xeg::Executor(this);
+	exec: xpeg::Executor(this);
 	while(exec.match(pattern)){
 		yield exec;
 	}
 }
 
 Stream::split: method(pattern) fiber{
-	exec: xeg::Executor(this);
+	exec: xpeg::Executor(this);
 	if(exec.match(pattern)){
 		yield exec.prefix;
 		while(exec.match(pattern)){
@@ -788,7 +788,7 @@ String::split: method(pattern){
 
 String::gsub: method(pattern, fn){
 	mm: MemoryStream();
-	exec: xeg::Executor(StringStream(this));
+	exec: xpeg::Executor(StringStream(this));
 	if(exec.match(pattern)){
 		prefix: exec.prefix;
 		mm.put_s(prefix);
@@ -817,7 +817,7 @@ String::gsub: method(pattern, fn){
 
 String::sub: method(pattern, fn){
 	mm: MemoryStream();
-	exec: xeg::Executor(StringStream(this));
+	exec: xpeg::Executor(StringStream(this));
 	if(exec.match(pattern)){
 		prefix: exec.prefix;
 		suffix: exec.suffix;

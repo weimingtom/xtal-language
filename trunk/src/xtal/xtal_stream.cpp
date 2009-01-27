@@ -316,7 +316,7 @@ void MemoryStream::resize(uint_t size){
 //////////////////////////////////////////////////////////////////////////
 
 StringStream::StringStream(const StringPtr& str)
-:str_(str ? str : empty_id){
+:str_(str ? str : static_ptr_cast<String>(empty_id)){
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;

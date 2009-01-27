@@ -6,7 +6,7 @@ namespace xtal{
 Null null;
 Undefined undefined;
 Named null_named;
-IDPtr empty_id((IDPtr&)Innocence(TYPE_SMALL_STRING));
+IDPtr empty_id(static_ptr_cast<ID>(ap(Innocence(TYPE_SMALL_STRING))));
 
 FunCore empty_xfun_core;
 ScopeCore empty_scope_core;

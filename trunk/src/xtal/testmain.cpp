@@ -32,13 +32,23 @@ int main2(int argc, char** argv){
 		ArrayPtr xx = xnew<Array>(0);
 
 		Xsrc((
-			{
-				i: 5;
-				f: fun(){}
-				j: 6 + i;
-				(j+5).p;
+			f: fun(){
+				return callee();
 			}
 		))->inspect()->p();
+
+		Xsrc((/*
+			filelocal.inherit(xpeg);
+camma: ",";
+space: (" " | "\t")*0;
+value: cap(alpha*1);
+line: (value >> space >> camma)*1 >> value*-1;
+
+		"a,b,cser,d,eeeee".scan(alpha*1){
+			it[0].p;
+		}
+*/
+		))->call();
 
 #if 1
 

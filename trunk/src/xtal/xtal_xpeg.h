@@ -1,7 +1,7 @@
 
 #pragma once
 
-namespace xtal{ namespace xeg{
+namespace xtal{ namespace xpeg{
 
 class MatchResult;
 typedef SmartPtr<MatchResult> MatchResultPtr;
@@ -93,30 +93,22 @@ public:
 	/**
 	* @brief キャプチャされた値のイテレータを取得する。
 	*/
-	AnyPtr captures(){
-		return cap_values_->each();
-	}
+	AnyPtr captures();
 
 	/**
 	* @brief 名前つきキャプチャされた値のイテレータを取得する。
 	*/
-	AnyPtr named_captures(){
-		return named_cap_values_->each();
-	}
+	AnyPtr named_captures();
 
 	/**
 	* @brief キャプチャされた値を得る
-	* 0はマッチした文字列全体を取得できる。
-	* 1～はcap関数でキャプチャした文字列を取得できる。
 	*/
 	AnyPtr at(int_t key);
 	
 	/**
 	* @brief 名前つきキャプチャされた値を得る。
 	*/
-	AnyPtr at(const StringPtr& key){
-		return  named_cap_values_->at(key);
-	}
+	AnyPtr at(const StringPtr& key);
 
 	/**
 	* @brief マッチした部分から前の文字列を取得する。

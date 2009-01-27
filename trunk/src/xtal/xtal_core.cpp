@@ -17,7 +17,7 @@ void initialize_thread();
 void initialize_math();
 void initialize_stream();
 void initialize_builtin();
-void initialize_xeg();
+void initialize_xpeg();
 void initialize_except();
 void initialize_iterator();
 
@@ -182,7 +182,7 @@ void initialize(){
 
 	enable_gc();
 
-	initialize_xeg();
+	initialize_xpeg();
 	initialize_builtin();
 }
 

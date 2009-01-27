@@ -213,7 +213,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
 	Xfor(v, send(Xid(members))){
-		IDPtr id = ptr_cast<ID>(v->send(Xid(at), 0));
+		IDPtr id = ptr_cast<ID>(v->send(Xid(op_at), 0));
 		if(raweq(primary_key, id)){
 			return id;
 		}

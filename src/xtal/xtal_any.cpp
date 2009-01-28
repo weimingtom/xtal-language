@@ -526,6 +526,8 @@ void initialize_any(){
 		p->dual_dispatch_method(Xid(op_at));
 		p->dual_dispatch_method(Xid(op_set_at));
 
+		p->dual_dispatch_method(Xid(op_call));
+
 		p->dual_dispatch_method(Xid(op_range));
 		p->method(Xid(op_in), &op_in_Any_Array, new_cpp_class<Array>());
 		p->method(Xid(op_in), &op_in_Any_Set, new_cpp_class<Set>());

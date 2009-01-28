@@ -90,26 +90,18 @@ public:
 	*/
 	bool parse(const AnyPtr& pattern);
 
+public:
+
 	/**
-	* @brief キャプチャされた値のイテレータを取得する。
+	* @brief キャプチャされた文字列を列挙するイテレータを取得する。
 	*/
 	AnyPtr captures();
 
 	/**
-	* @brief 名前つきキャプチャされた値のイテレータを取得する。
+	* @brief キャプチャされた文字列を得る。
 	*/
-	AnyPtr named_captures();
-
-	/**
-	* @brief キャプチャされた値を得る
-	*/
-	AnyPtr at(int_t key);
+	StringPtr at(const StringPtr& key);
 	
-	/**
-	* @brief 名前つきキャプチャされた値を得る。
-	*/
-	AnyPtr at(const StringPtr& key);
-
 	/**
 	* @brief マッチした部分から前の文字列を取得する。
 	*/
@@ -119,6 +111,30 @@ public:
 	* @brief マッチした部分から後の文字列を取得する。
 	*/
 	StringPtr suffix();
+	
+public:
+
+	/**
+	* @brief キャプチャされた値の配列のイテレータを取得する。
+	*/
+	AnyPtr captures_values();
+
+	/**
+	* @brief キャプチャされた値の配列を得る。
+	*/
+	AnyPtr call(const StringPtr& key);
+
+	/**
+	* @brief マッチした部分から前の値の配列のイテレータを取得する。
+	*/
+	AnyPtr prefix_values();
+
+	/**
+	* @brief マッチした部分から後の値の配列のイテレータを取得する。
+	*/
+	AnyPtr suffix_values();
+
+public:
 
 	/**
 	* @brief 発生したエラーのイテレータを取得する。
@@ -177,11 +193,7 @@ private:
 	
 	MapPtr nfa_map_;
 
-	ArrayPtr cap_;
-	MapPtr named_cap_;
-
-	ArrayPtr cap_values_;
-	MapPtr named_cap_values_;
+	MapPtr cap_;
 
 	TreeNodePtr tree_;
 	ArrayPtr errors_;
@@ -193,7 +205,7 @@ private:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & nfa_map_ & tree_ & errors_ & cap_ & named_cap_ & cap_values_ & named_cap_values_;
+		m & nfa_map_ & tree_ & errors_ & cap_;
 	}
 };
 
@@ -201,19 +213,12 @@ AnyPtr before(const AnyPtr& elem);
 
 AnyPtr after(const AnyPtr& elem, int_t back);
 
-AnyPtr eq(const AnyPtr& elem);
-
-AnyPtr eql(const AnyPtr& elem);
+AnyPtr pred(const AnyPtr& elem);
 
 /**
 * @brief 後方参照
 */
 AnyPtr back_ref(const AnyPtr& no);
-
-/**
-* @brief キャプチャ
-*/
-AnyPtr cap(const AnyPtr& elem);
 
 /**
 * @brief 名前つきキャプチャ
@@ -227,6 +232,7 @@ AnyPtr node(const IDPtr& name, const AnyPtr& elem);
 AnyPtr splice_node(int_t num, const AnyPtr& elem);
 AnyPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& elem);
 AnyPtr leaf(const AnyPtr& left);
+AnyPtr leafs(const AnyPtr& left);
 
 }}
 

@@ -778,6 +778,13 @@ Stream::split: method(pattern) fiber{
 	}
 }
 
+Iterator::scan: method(pattern) fiber{
+	exec: xpeg::Executor(this);
+	while(exec.match(pattern)){
+		yield exec;
+	}	
+}
+
 String::scan: method(pattern){
 	return StringStream(this).scan(pattern);
 }

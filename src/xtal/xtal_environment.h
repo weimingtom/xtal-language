@@ -265,6 +265,8 @@ const ClassPtr& CompileError();
 
 const ClassPtr& UnsupportedError();
 
+const ClassPtr& ArgumentError();
+
 inline void inc_global_mutate_count(){
 	environment()->inc_global_mutate_count();
 }

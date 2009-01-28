@@ -117,6 +117,10 @@ const ClassPtr& UnsupportedError(){
 	return ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
 }
 
+const ClassPtr& ArgumentError(){
+	return ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
+}
+
 const StreamPtr& stdin_stream(){
 	return ptr_cast<Stream>(builtin()->member(Xid(stdin)));
 }

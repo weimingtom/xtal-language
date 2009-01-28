@@ -110,6 +110,10 @@ public:
 
 public:
 
+	ArrayPtr capture_values(int_t begin, int_t end);
+	
+	ArrayPtr capture_values(int_t begin);
+	
 	StringPtr capture(int_t begin, int_t end);
 
 	StringPtr capture(int_t begin);
@@ -226,6 +230,25 @@ void Scanner::skip_eol(){
 	}
 }
 
+ArrayPtr Scanner::capture_values(int_t begin, int_t end){
+	ArrayPtr ret = xnew<Array>();
+	for(int_t i=begin; i<end; ++i){
+		ret->push_back(access(i));
+	}
+	return ret;
+}
+
+ArrayPtr Scanner::capture_values(int_t begin){
+	ArrayPtr ret = xnew<Array>();
+	int_t saved = pos_;
+	pos_ = begin;
+	while(!eos()){
+		ret->push_back(read());
+	}
+	pos_ = saved;
+	return ret;
+}
+	
 StringPtr Scanner::capture(int_t begin, int_t end){
 	mm_->clear();
 	for(int_t i=begin; i<end; ++i){
@@ -340,21 +363,18 @@ struct Element : public Base{
 
 		// ˆÈ‰ºparam1‚ÍAny
 		TYPE_EQL,
-
-		TYPE_EQ,
-
+		TYPE_PRED,
 		TYPE_CALL,
 
 		// ˆÈ‰ºparam1‚ÍSet‚Å‚ ‚éŽí—Þ
 		TYPE_CH_SET,
 
 		// ˆÈ‰ºparam1‚ÍElement‚Å‚ ‚éŽí—Þ
+		TYPE_GREED,
 		TYPE_BEFORE,
 		TYPE_AFTER,
-
 		TYPE_LEAF,
 		TYPE_NODE,
-
 		TYPE_ERROR,
 
 		////////////////////////////////
@@ -423,16 +443,12 @@ struct NFA : public Base{
 	struct State{
 		TransPtr trans;
 		int_t capture_kind;
-		int_t capture_index;
 		IDPtr capture_name;
-		bool greed;
 	};
 
 	int gen_state(){
 		State state;
 		state.capture_kind = 0;
-		state.capture_index = 0;
-		state.greed = false;
 		states.push_back(state);
 		return states.size() - 1;
 	}
@@ -440,15 +456,13 @@ struct NFA : public Base{
 	ElementPtr e;
 	ElementPtr root_node;
 	AC<State>::vector states;
-	uint_t cap_max, named_cap_max;
-	ArrayPtr named_cap_list;
+	uint_t cap_max_;
+	ArrayPtr cap_list_;
 
 	enum{
 		CAPTURE_NONE = 0,
 		CAPTURE_BEGIN = 1,
 		CAPTURE_END = 2,
-		NAMED_CAPTURE_BEGIN = 3,
-		NAMED_CAPTURE_END = 4,
 	};
 };
 	
@@ -458,9 +472,8 @@ NFA::NFA(const ElementPtr& node){
 	e = xnew<Element>(Element::TYPE_INVALID);
 
 	root_node = node;
-	cap_max = 0;
-	named_cap_max = 0;
-	named_cap_list = xnew<Array>();
+	cap_max_ = 0;
+	cap_list_ = xnew<Array>();
 
 	gen_state(); // NFA_STATE_START
 	gen_state(); // NFA_STATE_FINAL
@@ -473,6 +486,14 @@ void NFA::add_transition(int from, const AnyPtr& ch, int to){
 	x->ch = ptr_cast<Element>(ch);
 	x->next = states[from].trans;
 	states[from].trans = x;
+
+	/*
+	TransPtr* temp = &states[from].trans;
+	while(*temp){
+		temp = &(*temp)->next;
+	}
+	*temp = x;
+	*/
 }
 
 void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
@@ -525,7 +546,7 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 			int before = gen_state();
 			int after = gen_state();
 			
-			if(t->param3==1){
+			if(t->param3==1 || t->param3==2){
 				// exit‚ÉŒü‚©‚¤•û‚ª—Dæ
 				if(t->type == Element::TYPE_MORE0){ add_e_transition(entry, exit); }
 				add_e_transition(entry, before);
@@ -546,11 +567,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 			// before‚©‚çafter‚Ö‚Ì‘JˆÚ 
 			gen_nfa(before, t->param1, after, depth+1);
-
-			if(t->param3==2){
-				states[entry].greed = true;
-				states[after].greed = true;
-			}
 		}
 
 		XTAL_CASE(Element::TYPE_01){
@@ -570,10 +586,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 				gen_nfa(entry, t->param1, exit, depth+1);
 				add_e_transition(entry, exit);
 			}
-
-			if(t->param3==2){
-				states[entry].greed = true;
-			}
 		}
 
 		XTAL_CASE(Element::TYPE_EMPTY){
@@ -588,21 +600,12 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 			int before = gen_state();
 			int after = gen_state();
 
-			if(t->param3==0){
-				states[before].capture_kind = CAPTURE_BEGIN;
-				states[after].capture_kind = CAPTURE_END;
-				states[before].capture_index = cap_max;
-				states[after].capture_index = cap_max;
-				cap_max++;		
-			}
-			else{
-				states[before].capture_kind = NAMED_CAPTURE_BEGIN;
-				states[after].capture_kind = NAMED_CAPTURE_END;
-				states[before].capture_name = static_ptr_cast<ID>(t->param2);
-				states[after].capture_name = static_ptr_cast<ID>(t->param2);
-				named_cap_list->push_back(t->param2);
-				named_cap_max++;
-			}
+			states[before].capture_kind = CAPTURE_BEGIN;
+			states[after].capture_kind = CAPTURE_END;
+			states[before].capture_name = static_ptr_cast<ID>(t->param2);
+			states[after].capture_name = static_ptr_cast<ID>(t->param2);
+			cap_list_->push_back(t->param2);
+			cap_max_++;
 
 			add_e_transition(entry, before);
 			gen_nfa(before, t->param1, after, depth+1);
@@ -634,7 +637,6 @@ const NFAPtr& Executor::fetch_nfa(const ElementPtr& node){
 }
 
 void Executor::reset(const AnyPtr& stream_or_iterator){
-
 	if(stream_or_iterator->is(get_cpp_class<Stream>())){
 		scanner_ = xnew<StreamScanner>(ptr_cast<Stream>(stream_or_iterator));
 	}
@@ -645,10 +647,7 @@ void Executor::reset(const AnyPtr& stream_or_iterator){
 		scanner_ = xnew<IteratorScanner>(stream_or_iterator);
 	}
 
-	cap_ = xnew<Array>();
-	named_cap_ = xnew<Map>();
-	cap_values_ = xnew<Array>();
-	named_cap_values_ = xnew<Map>();
+	cap_ = xnew<Map>();
 	tree_ = xnew<TreeNode>();
 	errors_ = xnew<Array>();
 	begin_ = 0;
@@ -657,13 +656,19 @@ void Executor::reset(const AnyPtr& stream_or_iterator){
 }
 
 bool Executor::match(const AnyPtr& pattern){
+	cap_->clear();
+	errors_->clear();
+	tree_->clear();
+	tree_->set_tag(null);
+	tree_->set_lineno(0);
+
 	const NFAPtr& nfa = fetch_nfa(elem(pattern));
 	begin_ = scanner_->pos();
 	for(;;){
 		match_begin_ = scanner_->pos();
 		if(match_inner(nfa)){
 			match_end_ = scanner_->pos();
-			return true;
+			return errors_->empty();
 		}
 
 		if(scanner_->eos()){
@@ -675,33 +680,77 @@ bool Executor::match(const AnyPtr& pattern){
 }
 
 bool Executor::parse(const AnyPtr& pattern){
-	return match_inner(fetch_nfa(elem(pattern)));
+	cap_->clear();
+	errors_->clear();
+	tree_->clear();
+	tree_->set_tag(null);
+	tree_->set_lineno(0);
+
+	return match_inner(fetch_nfa(elem(pattern))) && errors_->empty();
 }
 
 AnyPtr Executor::captures(){
-	return  cap_values_ ? cap_values_->each() : null;
+	MapPtr ret = xnew<Map>();
+
+	ret->set_at(empty_id, at(empty_id));
+	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+		ret->set_at(k, at(k));
+	}
+
+	return ret->each();
 }
 
-AnyPtr Executor::named_captures(){
-	return  named_cap_values_ ? named_cap_values_->each() : null;
+AnyPtr Executor::captures_values(){
+	MapPtr ret = xnew<Map>();
+
+	ret->set_at(empty_id, at(empty_id));
+	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+		ret->set_at(k, call(k));
+	}
+
+	return ret->each();
 }
 
-AnyPtr Executor::at(int_t key){
-	if(key==0){
+StringPtr Executor::at(const StringPtr& key){
+	if(raweq(key, empty_id)){
 		return static_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
 	}
 	else{
-		if(key<0){
-			key += 1;
-		}else{
-			key -= 1;
+		const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(key));
+
+		if(temp->end>=0 && temp->end-temp->begin>0){
+			return scanner_->capture(temp->begin, temp->end);
 		}
-		return cap_values_ ? cap_values_->op_at(key) : null;
+		else{
+			if(temp->end==temp->begin){
+				return empty_id;
+			}
+			else{
+				return null;
+			}
+		}
 	}
 }
 
-AnyPtr Executor::at(const StringPtr& key){
-	return  named_cap_values_ ? named_cap_values_->at(key) : null;
+AnyPtr Executor::call(const StringPtr& key){
+	if(raweq(key, empty_id)){
+		return static_ptr_cast<Scanner>(scanner_)->capture_values(match_begin_, match_end_);
+	}
+	else{		
+		const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(key));
+
+		if(temp->end>=0 && temp->end-temp->begin>0){
+			return scanner_->capture_values(temp->begin, temp->end);
+		}
+		else{
+			if(temp->end==temp->begin){
+				return xnew<Array>();
+			}
+			else{
+				return null;
+			}
+		}
+	}
 }
 
 StringPtr Executor::prefix(){
@@ -710,6 +759,14 @@ StringPtr Executor::prefix(){
 
 StringPtr Executor::suffix(){
 	return static_ptr_cast<Scanner>(scanner_)->capture(match_end_);
+}
+
+AnyPtr Executor::prefix_values(){
+	return static_ptr_cast<Scanner>(scanner_)->capture_values(begin_, match_begin_)->each();
+}
+
+AnyPtr Executor::suffix_values(){
+	return static_ptr_cast<Scanner>(scanner_)->capture_values(match_end_)->each();
 }
 
 const AnyPtr& Executor::read(){
@@ -741,15 +798,8 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	uint_t mins = stack_.size();
 	uint_t minc = cap_->size();
 
-	if(minc<nfa->cap_max){
-		cap_->resize(nfa->cap_max);
-		for(int_t i=minc, sz=nfa->cap_max; i<sz; ++i){
-			cap_->set_at(i, xnew<Cap>());
-		}
-	}
-
-	for(uint_t i=0, sz=nfa->named_cap_list->size(); i<sz; ++i){
-		named_cap_->set_at(nfa->named_cap_list->at(i), xnew<Cap>());
+	for(uint_t i=0, sz=nfa->cap_list_->size(); i<sz; ++i){
+		cap_->set_at(nfa->cap_list_->at(i), xnew<Cap>());
 	}
 
 	bool match = false;
@@ -781,10 +831,6 @@ bool Executor::match_inner(const AnyPtr& anfa){
 			if(test((*tr)->ch)){
 				push(mins, (*tr)->to, tree_->size(), scanner_->save());
 				fail = false;
-
-				if(state.greed){
-					break;
-				}
 			}
 		}
 
@@ -799,24 +845,13 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				XTAL_CASE(NFA::CAPTURE_NONE){}
 
 				XTAL_CASE(NFA::CAPTURE_BEGIN){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_index));
+					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_name));
 					temp->begin = pos.pos;
 					temp->end = -1;
 				}
 
 				XTAL_CASE(NFA::CAPTURE_END){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_index));
-					temp->end = pos.pos;
-				}
-
-				XTAL_CASE(NFA::NAMED_CAPTURE_BEGIN){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(named_cap_->at(state.capture_name));
-					temp->begin = pos.pos;
-					temp->end = -1;
-				}
-
-				XTAL_CASE(NFA::NAMED_CAPTURE_END){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(named_cap_->at(state.capture_name));
+					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_name));
 					temp->end = pos.pos;
 				}
 			}
@@ -827,43 +862,6 @@ bool Executor::match_inner(const AnyPtr& anfa){
 
 	if(match){
 		scanner_->load(match_pos);
-
-		if(nfa->cap_max!=0){
-			Xfor(v, cap_){
-				const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(v);
-
-				if(temp->end>=0 && temp->end-temp->begin>0){
-					cap_values_->push_back(scanner_->capture(temp->begin, temp->end));
-				}
-				else{
-					if(temp->end==temp->begin){
-						cap_values_->push_back(empty_id);
-					}
-					else{
-						cap_values_->push_back(null);
-					}
-				}
-			}
-		}
-
-		if(nfa->named_cap_max!=0){
-			Xfor2(k, v, named_cap_){
-				const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(v);
-
-				if(temp->end>=0 && temp->end-temp->begin>0){
-					named_cap_values_->set_at(k, scanner_->capture(temp->begin, temp->end));
-				}
-				else{
-					if(temp->end==temp->begin){
-						cap_values_->push_back(empty_id);
-					}
-					else{
-						cap_values_->push_back(null);
-					}
-				}
-			}
-		}
-
 		return true;
 	}
 
@@ -906,14 +904,14 @@ bool Executor::test(const AnyPtr& ae){
 			scanner_->skip_eol();
 			return !e->inv;
 		}
-	
-		XTAL_CASE(Element::TYPE_EQ){
-			if(scanner_->read()==e->param1){ return !e->inv; }
-			return e->inv;
-		}
 
 		XTAL_CASE(Element::TYPE_EQL){
 			if(raweq(scanner_->read(), e->param1)){ return !e->inv; }
+			return e->inv;
+		}
+		
+		XTAL_CASE(Element::TYPE_PRED){
+			if(e->param1->call(scanner_->read())){ return !e->inv; }
 			return e->inv;
 		}
 
@@ -927,6 +925,11 @@ bool Executor::test(const AnyPtr& ae){
 			if(scanner_->eos()){ return e->inv; }
 			AnyPtr ret = e->param1->call(from_this(this));
 			return (ret || raweq(ret, undefined))!=e->inv;
+		}
+
+		XTAL_CASE(Element::TYPE_GREED){
+			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			return match_inner(nfa)!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_BEFORE){
@@ -953,7 +956,12 @@ bool Executor::test(const AnyPtr& ae){
 			int_t pos = scanner_->pos();
 			if(match_inner(nfa)){
 				if(tree_){
-					tree_->push_back(scanner_->capture(pos, scanner_->pos()));
+					if(e->param3!=0){
+						tree_->push_back(scanner_->capture_values(pos, scanner_->pos()));
+					}
+					else{
+						tree_->push_back(scanner_->capture(pos, scanner_->pos()));
+					}
 				}
 				return !e->inv;
 			}
@@ -987,7 +995,7 @@ bool Executor::test(const AnyPtr& ae){
 		XTAL_CASE(Element::TYPE_BACKREF){
 			const SmartPtr<Cap>& temp = type(e->param1)==TYPE_INT
 				? static_ptr_cast<Cap>(cap_->at(ivalue(e->param1)))
-				: static_ptr_cast<Cap>(named_cap_->at(e->param1));
+				: static_ptr_cast<Cap>(cap_->at(e->param1));
 			if(temp && temp->end>=0 && temp->end-temp->begin>0){
 				return (scanner_->eat_capture(temp->begin, temp->end))!=e->inv;
 			}
@@ -1120,10 +1128,12 @@ AnyPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind = 
 
 AnyPtr more_normal_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 0); }
 AnyPtr more_shortest_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 1); }
-AnyPtr more_greed_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 2); }
+//AnyPtr more_greed_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 2); }
+AnyPtr more_greed_Int(const AnyPtr& left, int_t n){ return xnew<Element>(Element::TYPE_GREED, more_normal_Int(left, n)); }
 AnyPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 0); }
 AnyPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 1); }
-AnyPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 2); }
+//AnyPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 2); }
+AnyPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return xnew<Element>(Element::TYPE_GREED, more_normal_IntRange(left, range)); }
 
 AnyPtr inv(const AnyPtr& left){
 	ElementPtr e = elem(left);
@@ -1135,15 +1145,22 @@ AnyPtr inv(const AnyPtr& left){
 AnyPtr before(const AnyPtr& left){ return xnew<Element>(Element::TYPE_BEFORE, elem(left)); }
 AnyPtr after(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_AFTER, elem(left), null, back); }
 
-AnyPtr cap(const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left)); }
 AnyPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
 
 void cap_vm(const VMachinePtr& vm){
-	if(vm->named_arg_count()!=0){ vm->return_result(cap(vm->arg_name(0), vm->arg(vm->arg_name(0)))); }
-	else{ 
-		if(vm->ordered_arg_count()==2){ vm->return_result(cap(ptr_cast<ID>(vm->arg(0)), vm->arg(1))); }
-		else{ vm->return_result(cap(vm->arg(0))); }
+	int n = vm->named_arg_count();
+	int m = vm->ordered_arg_count();
+	if(vm->named_arg_count()==1 && vm->ordered_arg_count()==0){ 
+		vm->return_result(cap(vm->arg_name(0), vm->arg(vm->arg_name(0)))); 
+		return;
 	}
+	
+	if(vm->ordered_arg_count()==2 && vm->named_arg_count()==0){ 
+		vm->return_result(cap(ptr_cast<ID>(vm->arg(0)), vm->arg(1)));
+		return;
+	}
+
+	XTAL_THROW(ArgumentError()->call(Xt("Xtal Runtime Error 1027")),return);
 }
 
 AnyPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
@@ -1169,6 +1186,7 @@ void splice_node_vm(const VMachinePtr& vm){
 }
 
 AnyPtr leaf(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left)); }
+AnyPtr leafs(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left), null, 1); }
 AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n); }
 
 AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
@@ -1176,18 +1194,17 @@ void set_body(const ElementPtr& x, const AnyPtr& term){ if(x->type==Element::TYP
 
 AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return after(sep, 1) >> body >> before(sep); }
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
-AnyPtr eq(const AnyPtr& e){ return xnew<Element>(Element::TYPE_EQ, e); }
-AnyPtr eql(const AnyPtr& e){ return xnew<Element>(Element::TYPE_EQL, e); }
+AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
 ////////////////////////////////////////////////////////////////////////
 
 void def_common_methods(const ClassPtr& p){
-	p->method(Xid(op_div), &more_shortest_Int, get_cpp_class<Int>());
-	p->method(Xid(op_div), &more_shortest_IntRange, get_cpp_class<IntRange>());
-	p->method(Xid(op_mul), &more_normal_Int, get_cpp_class<Int>());
-	p->method(Xid(op_mul), &more_normal_IntRange, get_cpp_class<IntRange>());
-	p->method(Xid(op_mod), &more_greed_Int, get_cpp_class<Int>());
-	p->method(Xid(op_mod), &more_greed_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
+	p->method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
+	p->method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
+	p->method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
+	p->method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
 	p->method(Xid(op_com), &inv);
 	
 	p->method(Xid(op_or), &select, get_cpp_class<Element>());
@@ -1214,11 +1231,13 @@ void initialize_xpeg(){
 		p->method(Xid(match), &Executor::match);
 
 		p->method(Xid(captures), &Executor::captures);
-		p->method(Xid(named_captures), &Executor::named_captures);
-		p->method(Xid(op_at), (AnyPtr (Executor::*)(int_t))&Executor::at, get_cpp_class<Int>());
-		p->method(Xid(op_at), (AnyPtr (Executor::*)(const StringPtr&))&Executor::at, get_cpp_class<String>());
+		p->method(Xid(captures_values), &Executor::captures_values);		
+		p->method(Xid(op_at), &Executor::at, get_cpp_class<String>());
+		p->method(Xid(op_call), &Executor::call, get_cpp_class<String>());
 		p->method(Xid(prefix), &Executor::prefix);
 		p->method(Xid(suffix), &Executor::suffix);
+		p->method(Xid(prefix_values), &Executor::prefix_values);
+		p->method(Xid(suffix_values), &Executor::suffix_values);
 		p->method(Xid(errors), &Executor::errors);
 		p->method(Xid(read), &Executor::read);
 		p->method(Xid(peek), &Executor::peek)->param(Named(Xid(n), 0));
@@ -1279,8 +1298,7 @@ void initialize_xpeg(){
 	xpeg->fun(Xid(splice_node), &splice_node_vm);
 	xpeg->fun(Xid(cap), &cap_vm);
 	xpeg->fun(Xid(bound), &bound);
-	xpeg->fun(Xid(eq), &eq);
-	xpeg->fun(Xid(eql), &eql);
+	xpeg->fun(Xid(pred), &pred);
 	xpeg->fun(Xid(error), &error);
 
 	xpeg->fun(Xid(decl), &decl);

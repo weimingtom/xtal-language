@@ -468,6 +468,7 @@ void initialize_text(){
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1024"), XTAL_STRING("0除算エラーです。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1025"), XTAL_STRING("ChRangeは閉区間である必要があります。"));
 	tm->set_at(XTAL_STRING("Xtal Runtime Error 1026"), XTAL_STRING("Xeg要素に変換できません。"));
+	tm->set_at(XTAL_STRING("Xtal Runtime Error 1027"), XTAL_STRING("cap関数の引数が不正です。cap(name: value)というように名前付き引数にするか、cap(\"name\", value)というように呼んでください。"));
 
 	append_text_map(tm);
 }

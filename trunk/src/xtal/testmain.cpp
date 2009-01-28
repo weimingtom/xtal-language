@@ -32,22 +32,20 @@ int main2(int argc, char** argv){
 		ArrayPtr xx = xnew<Array>(0);
 
 		Xsrc((
-			f: fun(){
-				return callee();
-			}
-		))->inspect()->p();
+		//	[][0];
 
-		Xsrc((/*
+		))->call();
+
+		Xsrc((
 			filelocal.inherit(xpeg);
-camma: ",";
-space: (" " | "\t")*0;
-value: cap(alpha*1);
-line: (value >> space >> camma)*1 >> value*-1;
 
-		"a,b,cser,d,eeeee".scan(alpha*1){
-			it[0].p;
+		[0,32,45,53,23,23,1123,43,45,3].each.scan(pred(|x|x==45) >> cap(n: any)){
+			it("n")[0].p;
 		}
-*/
+
+		//"ak,byy,cser,dy,oioieeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".scan(cap(n:alpha/1) >> alpha >> "eee"){
+		//	it["n"].p;
+		//}
 		))->call();
 
 #if 1

@@ -517,7 +517,7 @@ const inst_t* VMachine::send2(const inst_t* pc, const IDPtr& name){
 		const AnyPtr& temp = pop();
 		Innocence target = pop();
 		push(temp);
-		ap(target)->rawsend(myself(), name, get()->get_class(), ff().self());
+		ap(target)->rawsend(myself(), name, null, ff().self());
 	}
 	return ff().called_pc;
 }
@@ -527,7 +527,7 @@ const inst_t* VMachine::send2_r(const inst_t* pc, const IDPtr& name){
 		Innocence self = ff().self();
 		push_ff(pc, 1, 1, 0, ap(self));
 		Innocence target = pop();
-		ap(target)->rawsend(myself(), name, get()->get_class(), ff().self());
+		ap(target)->rawsend(myself(), name, null, ff().self());
 	}
 	return ff().called_pc;
 }
@@ -540,7 +540,7 @@ const inst_t* VMachine::send2_q(const inst_t* pc, const IDPtr& name){
 		Innocence target = pop();
 		push(temp);
 		ff().called_pc = &check_unsupported_code_;
-		ap(target)->rawsend(myself(), name, get()->get_class(), ff().self());
+		ap(target)->rawsend(myself(), name, null, ff().self());
 	}
 	return ff().called_pc;
 }
@@ -1354,7 +1354,7 @@ XTAL_VM_SWITCH{
 			Innocence target = pop();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(key));
 			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), Xid(op_at), ap(key)->get_class());
+			ap(target)->rawsend(myself(), Xid(op_at), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -1369,7 +1369,7 @@ XTAL_VM_SWITCH{
 			Innocence value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, ap(key), ap(value));
 			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), Xid(op_set_at), ap(key)->get_class());
+			ap(target)->rawsend(myself(), Xid(op_set_at), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}*/ }
@@ -1781,7 +1781,7 @@ XTAL_VM_SWITCH{
 			Innocence rhs = pop();
 			Innocence lhs = pop();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(rhs), ap(Innocence((int_t)inst.kind)));
-			ap(lhs)->rawsend(myself(), Xid(op_range), ap(rhs)->get_class());
+			ap(lhs)->rawsend(myself(), Xid(op_range), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 	}
@@ -2362,7 +2362,7 @@ const inst_t* VMachine::FunAt(const inst_t* pc){
 			Innocence target = pop();
 			inner_setup_call(pc+inst.ISIZE, 1, ap(key));
 			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), Xid(op_at), ap(key)->get_class());
+			ap(target)->rawsend(myself(), Xid(op_at), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -2378,7 +2378,7 @@ const inst_t* VMachine::FunSetAt(const inst_t* pc){
 			Innocence value = pop();
 			inner_setup_call(pc+inst.ISIZE, 0, ap(key), ap(value));
 			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), Xid(op_set_at), ap(key)->get_class());
+			ap(target)->rawsend(myself(), Xid(op_set_at), null);
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
 }
@@ -3164,9 +3164,16 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 
 			if(!debug_info_){ debug_info_ = xnew<DebugInfo>(); }
 			debug_info_->set_kind(kind);
-			debug_info_->set_line(code()->compliant_lineno(pc));
-			debug_info_->set_file_name(code()->source_file_name());
-			debug_info_->set_fun_name(fun()->object_name());
+			if(fun()){
+				debug_info_->set_line(code()->compliant_lineno(pc));
+				debug_info_->set_file_name(code()->source_file_name());
+				debug_info_->set_fun_name(fun()->object_name());
+			}
+			else{
+				debug_info_->set_line(0);
+				debug_info_->set_file_name("?");
+				debug_info_->set_fun_name("?");
+			}
 			debug_info_->set_local_variables(ff().outer());
 
 			struct guard{

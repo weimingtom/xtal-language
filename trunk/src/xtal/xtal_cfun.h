@@ -797,7 +797,9 @@ public:
 		:primary_key_(primary_key){}
 
 	virtual void rawcall(const VMachinePtr& vm){
-		vm->get_arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class(), vm->get_arg_this());
+		if(vm->ordered_arg_count()>0){
+			vm->get_arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class(), vm->get_arg_this());
+		}
 	}
 
 private:

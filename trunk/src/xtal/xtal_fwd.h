@@ -387,14 +387,6 @@ extern Named null_named;
 
 struct Param;
 
-struct Result;
-struct ReturnThis;
-struct ReturnUndefined;
-
-extern Result result;
-extern ReturnThis return_this;
-extern ReturnUndefined return_void;
-
 template<class T>
 inline const ClassPtr& new_cpp_class(const StringPtr& name = (const StringPtr&)empty_id);
 

@@ -6,7 +6,6 @@
 //#define XTAL_USE_WCHAR
 //#define XTAL_USE_COMPILED_EMB
 
-
 //#define XTAL_NO_EXCEPTIONS
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
@@ -52,13 +51,13 @@
 #	define XTAL_UNLOCK 
 #else
 #	ifdef XTAL_USE_THREAD_MODEL_2
-#		define XTAL_GLOBAL_INTERPRETER_LOCK if(::xtal::GlobalInterpreterLock global_interpreger_lock = 0)
-#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if(::xtal::GlobalInterpreterUnlock global_interpreger_unlock = 0)
+#		define XTAL_GLOBAL_INTERPRETER_LOCK if(const ::xtal::GlobalInterpreterLock& global_interpreger_lock = 0)
+#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if(const ::xtal::GlobalInterpreterUnlock& global_interpreger_unlock = 0)
 #	else
 #		define XTAL_GLOBAL_INTERPRETER_LOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
 #		define XTAL_GLOBAL_INTERPRETER_UNLOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
 #	endif
-#	define XTAL_UNLOCK if(::xtal::XUnlock xunlock = 0)
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
 #endif
 
 #ifdef XTAL_NO_EXCEPTIONS
@@ -88,6 +87,8 @@
 #else 
 #	define XTAL_STRING(x) x
 #endif
+
+#define XTAL_ID(text) (::xtal::string_literal_to_id(XTAL_STRING(#text)))
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
 #	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("I64") : XTAL_STRING(""))
@@ -267,6 +268,11 @@ struct IsSame{
 
 	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
 };
+
+template<class T>
+struct IsVoid{ enum{ value = 0 }; };
+template<>
+struct IsVoid<void>{ enum{ value = 1 }; };
 
 template<class T>
 struct IsNotVoid{ enum{ value = 1 }; };

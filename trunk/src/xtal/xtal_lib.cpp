@@ -681,13 +681,13 @@ Int::times: method fiber{
 	}
 }
 
-Null::to_s: method Xid(null);
+Null::to_s: method "null";
 Null::to_a: method [];
 Null::to_m: method [:];
 Null::block_first: method null;
-Undefined::to_s: method Xid(undefined);
-True::to_s: method Xid(true);
-False::to_s: method Xid(false);
+Undefined::to_s: method "undefined";
+True::to_s: method "true";
+False::to_s: method "false";
 
 builtin::range: fun(first, last, step:1){
 	if(step==1){
@@ -799,19 +799,19 @@ String::gsub: method(pattern, fn){
 	if(exec.match(pattern)){
 		prefix: exec.prefix;
 		mm.put_s(prefix);
-		ordered: [exec[0]];
+		ordered: [exec[""]];
 		ordered.concat(exec.captures);
 		named: exec.named_captures[:];
-		named[Xid(prefix)] = prefix;
+		named["prefix"] = prefix;
 		mm.put_s(fn(...Arguments(ordered, named)));
 
 		while(exec.match(pattern)){
 			prefix: exec.prefix;
 			mm.put_s(prefix);
-			ordered: [exec[0]];
+			ordered: [exec[""]];
 			ordered.concat(exec.captures);
 			named: exec.named_captures[:];
-			named[Xid(prefix)] = prefix;
+			named["prefix"] = prefix;
 			mm.put_s(fn(...Arguments(ordered, named)));
 		}
 		mm.put_s(exec.suffix);
@@ -829,11 +829,11 @@ String::sub: method(pattern, fn){
 		prefix: exec.prefix;
 		suffix: exec.suffix;
 		mm.put_s(prefix);
-		ordered: [exec[0]];
+		ordered: [exec[""]];
 		ordered.concat(exec.captures);
 		named: exec.named_captures[:];
-		named[Xid(prefix)] = prefix;
-		named[Xid(suffix)] = suffix;
+		named["prefix"] = prefix;
+		named["suffix"] = suffix;
 		mm.put_s(fn(...Arguments(ordered, named)));
 		mm.put_s(exec.suffix);
 		return mm.to_s;

@@ -364,9 +364,6 @@ struct Param : public Named2{
 */
 struct Named : public Param{
 
-	Named(const AnyPtr& value)
-		:Param(null, value){}
-
 	Named(const IDPtr& name, const AnyPtr& value)
 		:Param(name, value){}
 

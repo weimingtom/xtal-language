@@ -289,34 +289,18 @@ public:
 	*/
 	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null);
 	
-	/**
-	* @brief 関数を定義する
-	*
-	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
-	*/
-	template<class Fun, class Policy>
-	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, xtal::fun_impl(f, policy), secondary_key, accessibility);
-	}
+public:
 
 	/**
 	* @brief 関数を定義する
 	*
 	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
-	template<class Fun>
-	const CFunPtr& fun(const IDPtr& primary_key, Fun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		return fun(primary_key, f, secondary_key, accessibility, result);
-	}
-
-	/**
-	* @brief 関数を定義する
-	*
-	* cls->method("name", &foo); は cls->def("name", xtal::method(&foo)); と同一
-	*/
-	template<class Fun, class Policy>
-	const CFunPtr& method(const IDPtr& primary_key, const Fun& f, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, method_impl(f, policy), secondary_key, accessibility);
+	template<class TFun>
+	const CFunPtr& fun(const IDPtr& primary_key, TFun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef cfun_holder<TFun> fun_t;
+		fun_t fun(f);
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 	}
 
 	/**
@@ -324,19 +308,34 @@ public:
 	*
 	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
-	template<class Fun>
-	const CFunPtr& method(const IDPtr& primary_key, const Fun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		return method(primary_key, f, secondary_key, accessibility, result);
+	template<class TFun>
+	const CFunPtr& method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef cmemfun_holder<TFun> fun_t;
+		fun_t fun(f);
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 	}
 
-	
+	template<class TFun, TFun fun_s>
+	const CFunPtr& method_static(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
+		typedef cmemfun_holder_static<TFun, fun_s> fun_t;
+		fun_t fun;
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, 0, fun_t::PARAMS2);
+	}
+
+	template<class TFun, TFun fun_s>
+	const CFunPtr& method_static(const IDPtr& primary_key){
+		typedef cmemfun_holder_static<TFun, fun_s> fun_t;
+		fun_t fun;
+		return def_and_return(primary_key, &cfun<fun_t::PARAMS, fun_t>::f, &fun, 0, fun_t::PARAMS2);
+	}
+
 	/**
 	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
 	*
 	*/
 	template<class T, class U, class Policy>
-	const CFunPtr& getter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, getter_impl(v, policy), secondary_key, accessibility);
+	const CFunPtr& getter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
+		return def_and_return(primary_key, ::xtal::getter(v), secondary_key, accessibility);
 	}
 	
 	/**
@@ -346,8 +345,8 @@ public:
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class U, class Policy>
-	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		return def_and_return(primary_key, setter_impl(v, policy), secondary_key, accessibility);
+	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
+		return def_and_return(primary_key, ::xtal::setter(v), secondary_key, accessibility);
 	}
 	
 	/**
@@ -357,40 +356,10 @@ public:
 	* cls->setter(StringPtr("set_")->cat(name), v, policy);
 	* と等しい	
 	*/	
-	template<class T, class U, class Policy>
-	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility, const Policy& policy){
-		getter(primary_key, v, secondary_key, accessibility, policy);
-		setter(String("set_").cat(primary_key), v, secondary_key, accessibility, policy);
-	}
-	
-	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
-	*
-	*/
 	template<class T, class U>
-	const CFunPtr& getter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		return getter(primary_key, v, secondary_key, accessibility, result);
-	}
-	
-	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
-	*
-	*/
-	template<class T, class U>
-	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		return setter(primary_key, v, secondary_key, accessibility, result);
-	}
-	
-	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
-	*
-	* cls->getter(name, v);
-	* cls->setter(StringPtr("set_")->cat(name), v);
-	* と等しい	
-	*/	
-	template<class T, class U>
-	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		var(primary_key, v, secondary_key, accessibility, result);
+	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
+		getter(primary_key, v, secondary_key, accessibility);
+		setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
 	}
 
 	/**
@@ -437,14 +406,14 @@ public:
 
 protected:
 
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunEssence& cfun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
-
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key, int_t accessibility){
 		return static_ptr_cast<CFun>(def2(primary_key, cfun, secondary_key, accessibility));
 	}
 
-	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
+	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);
+	const CFunPtr& def_and_return(const IDPtr& primary_key, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);
 
+	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	ArrayPtr mixins_;
 	bool is_cpp_class_;

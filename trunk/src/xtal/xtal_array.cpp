@@ -37,7 +37,7 @@ void Array::visit_members(Visitor& m){
 	}
 }
 
-Array::Array(int_t size){
+Array::Array(uint_t size){
 	capa_ = size + 3;
 	size_ = size;
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
@@ -89,17 +89,17 @@ void Array::clear(){
 	size_ = 0;
 }
 
-void Array::resize(int_t sz){
+void Array::resize(uint_t sz){
 	if(sz<0) sz = 0;
 
-	if(sz<(int_t)size_){
+	if(sz<size_){
 		for(uint_t i=sz; i<size_; ++i){
 			dec_ref_count_force(values_[i]);
 		}
 		size_ = sz;
 	}
-	else if(sz>(int_t)size_){
-		if(sz>(int_t)capa_){
+	else if(sz>size_){
+		if(sz>capa_){
 			uint_t newcapa = sz+capa_;
 			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
 			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
@@ -371,16 +371,19 @@ void initialize_array(){
 		p->inherit(Iterable());
 
 		p->def(Xid(new), ctor<Array, int_t>()->param(Named(Xid(size), 0)));
-		p->method(Xid(size), &Array::size);
-		p->method(Xid(length), &Array::size);
-		p->method(Xid(resize), &Array::resize);
-		p->method(Xid(empty), &Array::empty);
-		p->method(Xid(slice), &Array::slice)->param(Xid(i), Named(Xid(n), 1));
-		p->method(Xid(splice), &Array::splice)->param(Xid(i), Named(Xid(n), 1));
-		p->method(Xid(pop_back), &Array::pop_back);
-		p->method(Xid(push_back), &Array::push_back);
-		p->method(Xid(pop_front), &Array::pop_front);
-		p->method(Xid(push_front), &Array::push_front);
+		
+		
+		p->method_static<uint_t (Array::*)(), &Array::size>(Xid(size));
+		p->method_static<uint_t (Array::*)(), &Array::size>(Xid(length));
+		p->method_static<void (Array::*)(uint_t), &Array::resize>(Xid(resize));
+		p->method_static<bool (Array::*)(), &Array::empty>(Xid(empty));
+		p->method_static<ArrayPtr (Array::*)(int_t, int_t), &Array::slice>(Xid(slice))->params(Xid(i), null, Xid(n), 1);
+		p->method_static<ArrayPtr (Array::*)(int_t, int_t), &Array::splice>(Xid(splice))->params(Xid(i), null, Xid(n), 1);
+		p->method_static<void (Array::*)(), &Array::pop_back>(Xid(pop_back));
+		p->method_static<void (Array::*)(), &Array::pop_front>(Xid(pop_front));
+		p->method_static<void (Array::*)(const AnyPtr&), &Array::push_back>(Xid(push_back));
+		p->method_static<void (Array::*)(const AnyPtr&), &Array::push_front>(Xid(push_front));
+
 		p->method(Xid(erase), &Array::erase)->param(Xid(i), Named(Xid(n), 1));
 		p->method(Xid(insert), &Array::insert);
 		p->method(Xid(to_s), &Array::to_s);

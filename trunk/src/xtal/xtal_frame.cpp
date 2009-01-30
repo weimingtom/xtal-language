@@ -228,8 +228,14 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	return minid;
 }
 
-const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const CFunEssence& cfun, const AnyPtr& secondary_key, int_t accessibility){
-	return static_ptr_cast<CFun>(def2(primary_key, new_cfun(cfun), secondary_key, accessibility));
+const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
+	return static_ptr_cast<CFun>(def2(primary_key, 
+		xnew<CFun>(fun, val, val_size, param_n), secondary_key, accessibility));
+}
+
+const CFunPtr& Class::def_and_return(const IDPtr& primary_key, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
+	return static_ptr_cast<CFun>(def2(primary_key, 
+		xnew<CFun>(fun, val, val_size, param_n), null, KIND_PUBLIC));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){

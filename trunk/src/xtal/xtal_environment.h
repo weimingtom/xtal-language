@@ -188,7 +188,7 @@ void set_environment(Environment* e);
 * 既に生成されている場合、生成済みのクラスを返す。
 */
 template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name){
+const ClassPtr& new_cpp_class(const StringPtr& name){
 	return environment()->new_cpp_class<T>(name);
 }
 
@@ -197,7 +197,7 @@ inline const ClassPtr& new_cpp_class(const StringPtr& name){
 * 既に生成されている場合、生成済みのクラスを返す。
 */
 template<class T>
-inline const ClassPtr& new_cpp_singleton(){
+const ClassPtr& new_cpp_singleton(){
 	return environment()->new_cpp_singleton<T>();
 }
 
@@ -205,7 +205,7 @@ inline const ClassPtr& new_cpp_singleton(){
 * @brief 既にnew_cpp_class<T>()で生成させれているか調べる。
 */
 template<class T>
-inline bool exists_cpp_class(){
+bool exists_cpp_class(){
 	return environment()->exists_cpp_class<T>();
 }
 
@@ -213,7 +213,7 @@ inline bool exists_cpp_class(){
 * @brief new_cpp_class<T>()で生成されたクラスを取得する。
 */
 template<class T>
-inline const ClassPtr& get_cpp_class(){
+const ClassPtr& get_cpp_class(){
 	return environment()->get_cpp_class<T>();
 }
 
@@ -221,7 +221,7 @@ inline const ClassPtr& get_cpp_class(){
 * @brief get_cpp_class<T>などで返されるクラスを設定する。
 */
 template<class T>
-inline void set_cpp_class(const ClassPtr& cls){
+void set_cpp_class(const ClassPtr& cls){
 	return environment()->set_cpp_class<T>(cls);
 }
 

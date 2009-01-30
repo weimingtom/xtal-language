@@ -109,46 +109,6 @@ inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const void*, co
 
 /////////////////////////////////////////////////////////////////////////////
 
-#ifdef XTAL_NO_TEMPLATE_PARTIAL_SPECIALIZATION
-
-template<class T>
-struct CastHelper{
-
-	// 変換後の型がポインタの場合
-	template<class U> static T as_inner(const AnyPtr& a, U* (*)()){ 
-		return (T)as_helper_helper(a, (U*)0, (U*)0); }
-		
-	template<class U> static T cast_inner(const AnyPtr& a, U* (*)()){ 
-		return (T)cast_helper_helper(a, (U*)0, (U*)0); }	
-		
-	
-	// 変換後の型が参照の場合、ポインタ型としてキャストしたあと参照にする
-	template<class U> static T as_inner(const AnyPtr& a, U& (*)()){ 
-		if(U* ret = xtal::as<U*>(a)){ return *ret; }else{ return *(U*)&null;} }
-		
-	template<class U> static T cast_inner(const AnyPtr& a, U& (*)()){ 
-		return *xtal::cast<U*>(a); }
-		
-
-	// 変換後の型が参照でもポインタでもない場合、ポインタ型としてキャストしたあと実体にする
-	static T as_inner(const AnyPtr& a, ...){ 
-		if(const T* ret = xtal::as<const T*>(a)){ return *ret; }else{ return *(const T*)&null;} }
-		
-	static T cast_inner(const AnyPtr& a, ...){ 
-		return *xtal::cast<const T*>(a); }
-		
-
-
-	static T as(const AnyPtr& a){ 
-		return as_inner(a, (T (*)())0); }
-		
-	static T cast(const AnyPtr& a){ 
-		return cast_inner(a, (T (*)())0); }
-		
-};
-
-#else
-
 template<class T>
 struct CastHelper{
 
@@ -199,9 +159,6 @@ struct CastHelper<T&>{
 	static T& unchecked_cast(const AnyPtr& a){ 
 		return *xtal::unchecked_cast<T*>(a); }
 };
-
-
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 

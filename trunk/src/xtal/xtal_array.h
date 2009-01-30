@@ -14,7 +14,7 @@ public:
 	* @brief sizeの長さの配列を生成する 
 	*
 	*/
-	Array(int_t size = 0);
+	Array(uint_t size = 0);
 
 	Array(const AnyPtr* first, const AnyPtr* end);
 
@@ -44,7 +44,7 @@ public:
 	/**
 	* @brief 配列の長さを変更する
 	*/
-	void resize(int_t sz);
+	void resize(uint_t sz);
 
 	/**
 	* @brief 配列の長さを返す

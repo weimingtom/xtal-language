@@ -17,16 +17,24 @@ protected:
 public:
 
 	Innocence(){ type_ = TYPE_NULL; pvalue_ = 0; }
-	Innocence(u8 v){ set_i(v); }
-	Innocence(u16 v){ set_i(v); }
-	Innocence(i8 v){ set_i(v); }
-	Innocence(i16 v){ set_i(v); }
 	Innocence(int_t v){ set_i(v); }
 	Innocence(float_t v){ set_f(v); }
 	Innocence(Base* v){ set_p(v); }
 	Innocence(bool b){ set_b(b); }
-	Innocence(avoid<int>::type v){ set_i(v); }
-	Innocence(avoid<float>::type v){ set_f(v); }
+
+	// 基本型の整数、浮動小数点数から構築するコンストラクタ
+	Innocence(avoid<int>::type v){ set_i((int_t)v); }
+	Innocence(avoid<long>::type v){ set_i((int_t)v); }
+	Innocence(avoid<short>::type v){ set_i((int_t)v); }
+	Innocence(avoid<char>::type v){ set_i((int_t)v); }
+	Innocence(avoid<unsigned int>::type v){ set_i((int_t)v); }
+	Innocence(avoid<unsigned long>::type v){ set_i((int_t)v); }
+	Innocence(avoid<unsigned short>::type v){ set_i((int_t)v); }
+	Innocence(avoid<unsigned char>::type v){ set_i((int_t)v); }
+	Innocence(avoid<signed char>::type v){ set_i((int_t)v); }
+	Innocence(avoid<float>::type v){ set_f((float_t)v); }
+	Innocence(avoid<double>::type v){ set_f((float_t)v); }
+	Innocence(avoid<long double>::type v){ set_f((float_t)v); }
 	
 	Innocence(PrimitiveType type){
 		type_ = type;
@@ -116,59 +124,6 @@ protected:
 		SmallString svalue_;
 	};
 };
-
-inline int_t type(const Innocence& v){ 
-	return v.type_ & TYPE_MASK; 
-}
-
-inline int_t ivalue(const Innocence& v){ 
-	XTAL_ASSERT(type(v)==TYPE_INT);
-	return v.value_; 
-}
-
-inline float_t fvalue(const Innocence& v){ 
-	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
-	return *(float_t*)v.fvalue_bytes; 
-}
-
-inline Base* pvalue(const Innocence& v){ 
-	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
-	return v.pvalue_; 
-}
-
-inline uint_t rawvalue(const Innocence& v){
-	return (uint_t)(v.value_);
-}
-
-inline bool raweq(const Innocence& a, const Innocence& b){
-	return type(a)==type(b) && a.value_==b.value_;
-}
-
-inline bool rawne(const Innocence& a, const Innocence& b){
-	return !raweq(a, b);
-}
-
-inline bool rawlt(const Innocence& a, const Innocence& b){
-	if(type(a)<type(b))
-		return true;
-	if(type(b)<type(a))
-		return false;
-	return a.value_<b.value_;
-}
-
-inline void set_null_force(Innocence& v){
-	v.type_ = TYPE_NULL;
-	v.value_ = 0;
-}
-
-inline void set_undefined_force(Innocence& v){
-	v.type_ = TYPE_UNDEFINED;
-	v.value_ = 0;
-}
-
-inline void copy_innocence(Innocence& v, const Innocence& u){
-	v = u;
-}
 
 /**
 * @brief any
@@ -325,41 +280,164 @@ public:
 	
 public:
 
-	/**
-	* @brief primary_keyメソッドを呼び出す
-	*/
+	/// @brief primary_keyメソッドを呼び出す
 	AnyPtr send(const IDPtr& primary_key) const;
-	AnyPtr send(const IDPtr& primary_key, const Param& a0) const;
-	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1) const;
-	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2) const;
-	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
-	AnyPtr send(const IDPtr& primary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
-	
-public:
 
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const;	
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0) const;
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1) const;
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2) const;
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
-	
-public:
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const;
 
+	/// @brief 関数を呼び出す
 	AnyPtr call() const;
-	AnyPtr call(const Param& a0) const;
-	AnyPtr call(const Param& a0, const Param& a1) const;
-	AnyPtr call(const Param& a0, const Param& a1, const Param& a2) const;
-	AnyPtr call(const Param& a0, const Param& a1, const Param& a2, const Param& a3) const;
-	AnyPtr call(const Param& a0, const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+
+//{REPEAT{{
+/*
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr call(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
+*/
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 >
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 ) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 >
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 ) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 >
+	AnyPtr call(const A0& a0 ) const;
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 , class A1>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 , class A1>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 , class A1>
+	AnyPtr call(const A0& a0 , const A1& a1) const;
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 , class A1, class A2>
+	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2) const;
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
+
+	/// @brief primary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
+
+	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
+
+	/// @brief 関数を呼び出す
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
+
+//}}REPEAT}
 
 private:
 
 	// call(VMachinePtr)がコンパイルエラーとなるように
-	struct aaa{ aaa(const VMachinePtr& vm); };
-	void call(aaa) const;
+	struct cmpitle_error{ cmpitle_error(const VMachinePtr& vm); };
+	void call(cmpitle_error) const;
 
 };
+
+inline int_t type(const Innocence& v){ 
+	return v.type_ & TYPE_MASK; 
+}
+
+inline int_t ivalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_INT);
+	return v.value_; 
+}
+
+inline float_t fvalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
+	return *(float_t*)v.fvalue_bytes; 
+}
+
+inline Base* pvalue(const Innocence& v){ 
+	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
+	return v.pvalue_; 
+}
+
+inline uint_t rawvalue(const Innocence& v){
+	return (uint_t)(v.value_);
+}
+
+inline bool raweq(const Innocence& a, const Innocence& b){
+	return type(a)==type(b) && a.value_==b.value_;
+}
+
+inline bool rawne(const Innocence& a, const Innocence& b){
+	return !raweq(a, b);
+}
+
+inline bool rawlt(const Innocence& a, const Innocence& b){
+	if(type(a)<type(b))
+		return true;
+	if(type(b)<type(a))
+		return false;
+	return a.value_<b.value_;
+}
+
+inline void set_null_force(Innocence& v){
+	v.type_ = TYPE_NULL;
+	v.value_ = 0;
+}
+
+inline void set_undefined_force(Innocence& v){
+	v.type_ = TYPE_UNDEFINED;
+	v.value_ = 0;
+}
+
+inline void copy_innocence(Innocence& v, const Innocence& u){
+	v = u;
+}
 
 AnyPtr operator +(const AnyPtr& a);
 AnyPtr operator -(const AnyPtr& a);

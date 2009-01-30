@@ -13,7 +13,10 @@ void debug_throw(const DebugInfoPtr& info){
 
 #ifndef XTAL_NO_PARSER
 
+//}}REPEAT}
+
 char memory_block[1024*1000*5];
+
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
@@ -29,15 +32,10 @@ int main2(int argc, char** argv){
 		debug()->enable();
 		debug()->set_throw_hook(fun(&debug_throw));
 
-		ArrayPtr xx = xnew<Array>(0);
-
-		Xsrc((
-		//	[][0];
-
-		))->call();
-
 		Xsrc((
 			filelocal.inherit(xpeg);
+
+			[4].empty.p;
 
 		[0,32,45,53,23,23,1123,43,45,3].each.scan(pred(|x|x==45) >> cap(n: any)){
 			it("n")[0].p;

@@ -3,32 +3,26 @@
 
 namespace xtal{
 
-Result result;
-ReturnThis return_this;
-ReturnUndefined return_void;
 static Named null_params[16];
+static char dummy_address;
 
-void check_args(const VMachinePtr& vm, const ParamInfo& p, uint_t flags){
-	for(int_t i=-1; flags!=0; ++i){
-		if(flags&1){
-			if(i==-1){
-				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), -1), return);
-			}
-			else{
-				XTAL_THROW(argument_error(vm->ff().hint()->object_name(), i), return);
-			}
-		}
-
-		flags >>= 1;
-	}
+CFunPtr new_cfun(void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
+	return xnew<CFun>(fun, val, val_size, param_n);
 }
 
-CFun::CFun(fun_t f, void* val, int_t param_n){
+CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
 	fun_ = f;
-	val_ = val;
+	if(val_size==0){
+		val_ = &dummy_address;
+	}
+	else{
+		val_ = user_malloc(val_size);
+		std::memcpy(val_, val, val_size);
+	}
 	param_n_ = pi_.min_param_count = pi_.max_param_count = param_n;
 	pi_.params = null_params;
 }
+
 
 CFun::~CFun(){
 	for(int_t i=0; i<param_n_; ++i){
@@ -38,18 +32,27 @@ CFun::~CFun(){
 	if(pi_.params!=null_params){
 		user_free(pi_.params);		
 	}
-	user_free(val_);
+
+	if(val_!=&dummy_address){
+		user_free(val_);
+	}
 }
 
-CFunPtr CFun::param(
-	const Named2& value0, 
-	const Named2& value1,
-	const Named2& value2,
-	const Named2& value3,
-	const Named2& value4
-){
+const CFunPtr& CFun::param(
+		const Named2& value0, 
+		const Named2& value1,
+		const Named2& value2,
+		const Named2& value3,
+		const Named2& value4,
+		const Named2& value5,
+		const Named2& value6,
+		const Named2& value7,
+		const Named2& value8,
+		const Named2& value9,
+		const Named2& value10
+	){
 
-	if(pi_.params==null_params && param_n_!=0){
+	if(pi_.params==null_params && param_n_>0){
 		pi_.params = (Named*)user_malloc(sizeof(Named)*param_n_);
 
 		for(int_t i=0; i<param_n_; ++i){
@@ -62,6 +65,12 @@ CFunPtr CFun::param(
 	if(param_n_>2)pi_.params[2] = Named(value2.name, value2.value);
 	if(param_n_>3)pi_.params[3] = Named(value3.name, value3.value);
 	if(param_n_>4)pi_.params[4] = Named(value4.name, value4.value);
+	if(param_n_>5)pi_.params[5] = Named(value5.name, value5.value);
+	if(param_n_>6)pi_.params[6] = Named(value6.name, value6.value);
+	if(param_n_>7)pi_.params[7] = Named(value7.name, value7.value);
+	if(param_n_>8)pi_.params[8] = Named(value8.name, value8.value);
+	if(param_n_>9)pi_.params[9] = Named(value9.name, value9.value);
+	if(param_n_>10)pi_.params[10] = Named(value10.name, value10.value);
 
 	pi_.min_param_count = pi_.max_param_count = param_n_;
 	for(int_t i=0; i<param_n_; ++i){
@@ -73,9 +82,44 @@ CFunPtr CFun::param(
 	return from_this(this);
 }
 
+//{REPEAT{{
+/*
+const CFunPtr& CFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const AnyPtr& value`i`#){
+	return param(#REPEAT_COMMA#Named(key`i`, value`i`)#);
+}
+*/
+
+const CFunPtr& CFun::params(){
+	return param();
+}
+
+const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0){
+	return param(Named(key0, value0));
+}
+
+const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1){
+	return param(Named(key0, value0), Named(key1, value1));
+}
+
+const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2){
+	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2));
+}
+
+const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3){
+	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2), Named(key3, value3));
+}
+
+const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3, const IDPtr& key4, const AnyPtr& value4){
+	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2), Named(key3, value3), Named(key4, value4));
+}
+
+//}}REPEAT}
+
 void CFun::visit_members(Visitor& m){
 	HaveName::visit_members(m);
-	std::for_each(pi_.params, pi_.params+param_n_, m);
+	if(param_n_>0){
+		std::for_each(pi_.params, pi_.params+param_n_, m);
+	}
 }
 
 void CFun::check_arg(const VMachinePtr& vm){
@@ -102,31 +146,31 @@ void CFun::check_arg(const VMachinePtr& vm){
 	}
 }
 
+void CFun::check_args(ParamInfoAndVM& pvm){
+	for(int_t i=-1; pvm.flags!=0; ++i){
+		if(pvm.flags&1){
+			if(i==-1){
+				XTAL_THROW(argument_error(pvm.vm->ff().hint()->object_name(), -1), return);
+			}
+			else{
+				XTAL_THROW(argument_error(pvm.vm->ff().hint()->object_name(), i), return);
+			}
+		}
+
+		pvm.flags >>= 1;
+	}
+}
+
+
 void CFun::rawcall(const VMachinePtr& vm){
-	if(vm->ordered_arg_count()!=pi_.min_param_count){
+	if(param_n_>=0 && vm->ordered_arg_count()!=pi_.min_param_count){
 		check_arg(vm);
 	}
-	fun_(vm, pi_, val_);
-}
 
-CFunArgs::CFunArgs(fun_t f, void* val, int_t param_n)
-	:CFun(f, val, param_n){}
-
-void CFunArgs::rawcall(const VMachinePtr& vm){
-	fun_(vm, pi_, val_);
-}
-	
-CFunEssence::CFunEssence(const fun_t& f, const void* data, int_t val_size, int_t param_n, bool args)
-	:f(f), val(user_malloc(val_size)), param_n(param_n), args(args){
-	std::memcpy(val, data, val_size);
-}
-
-CFunPtr new_cfun(const CFunEssence& essence){
-	if(essence.args){
-		return xnew<CFunArgs>(essence.f, essence.val, essence.param_n);
-	}
-	else{
-		return xnew<CFun>(essence.f, essence.val, essence.param_n);
+	ParamInfoAndVM pvm(pi_, vm, val_);
+	fun_(pvm);
+	if(pvm.flags){
+		check_args(pvm);
 	}
 }
 

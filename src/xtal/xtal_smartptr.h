@@ -781,13 +781,9 @@ inline const SmartPtr<T>& from_this(const T* p){
 
 //////////////////////////////////////////////////////////////
 
-#ifndef XTAL_NO_TEMPLATE_PARTIAL_SPECIALIZATION
-
-// SmartPtrの重ね着を禁止する
+// SmartPtrの重ね着をコンパイルエラーとするための定義
 template<class T>
 class SmartPtr< SmartPtr<T> >;
-
-#endif
 
 ///////////////////////////////////////////////////////////////
 

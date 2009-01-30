@@ -28,45 +28,6 @@ VMachine::VMachine(){
 	resume_pc_ = 0;
 }
 
-void VMachine::setup_call(int_t need_result_count){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a1){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-	push_arg(a1);
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a1, const Param& a2){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-	push_arg(a1); 
-	push_arg(a2);
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-	push_arg(a1); 
-	push_arg(a2); 
-	push_arg(a3);
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-	push_arg(a1); 
-	push_arg(a2); 
-	push_arg(a3); 
-	push_arg(a4);
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-	push_arg(a1); 
-	push_arg(a2); 
-	push_arg(a3); 
-	push_arg(a4);
-	push_arg(a5);
-}
-
 void VMachine::push_arg(const AnyPtr& value){
 	XTAL_ASSERT(named_arg_count() == 0);
 	ff().ordered_arg_count++;
@@ -79,15 +40,6 @@ void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
 	push(value);
 }
 	
-void VMachine::push_arg(const Param& value){ 
-	if(value.name){ 
-		push_arg(value.name, value.value); 
-	}
-	else{ 
-		push_arg(value.value); 
-	} 
-}
-
 void VMachine::push_ordered_args(const ArrayPtr& p){ 
 	Xfor(v, p){
 		push_arg(v);
@@ -430,6 +382,10 @@ void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named
 	f.self(self);
 	//f.poped_pc = pc;
 	f.called_pc = &throw_unsupported_error_code_;
+}
+
+void VMachine::push_ff(int_t need_result_count){
+	push_ff(&end_code_, need_result_count, 0, 0, null);
 }
 
 void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){

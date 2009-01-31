@@ -18,6 +18,10 @@ void debug_throw(const DebugInfoPtr& info){
 char memory_block[1024*1000*5];
 
 
+struct A{
+	int a;
+};
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -32,19 +36,15 @@ int main2(int argc, char** argv){
 		debug()->enable();
 		debug()->set_throw_hook(fun(&debug_throw));
 
+		ArrayPtr a = xnew<Array>(10);
+
 		Xsrc((
 			filelocal.inherit(xpeg);
 
-			assert 0 + 9 == 10;
-			(9, 0, 7).p;
+			"abcdef".scan(any >> lookahead("c")){
+				it[""].p;
+			}
 
-		[0,32,45,53,23,23,1123,43,45,3].each.scan(pred(|x|x==45) >> cap(n: any)){
-			it("n")[0].p;
-		}
-
-		//"ak,byy,cser,dy,oioieeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".scan(cap(n:alpha/1) >> alpha >> "eee"){
-		//	it["n"].p;
-		//}
 		))->call();
 
 #if 1

@@ -29,6 +29,7 @@ void initialize_thread_script();
 void initialize_frame_script();
 void initialize_array_script();
 void initialize_map_script();
+void initialize_text_script();
 
 void display_debug_memory();
 
@@ -202,6 +203,7 @@ void initialize(){
 	initialize_frame_script();
 	initialize_array_script();
 	initialize_map_script();
+	initialize_text_script();
 }
 
 void uninitialize(){

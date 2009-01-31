@@ -911,6 +911,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 		
 		XTAL_CASE(Element::TYPE_PRED){
+			if(scanner_->eos()){ return false; }
 			if(e->param1->call(scanner_->read())){ return !e->inv; }
 			return e->inv;
 		}
@@ -922,7 +923,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_CALL){
-			if(scanner_->eos()){ return e->inv; }
+			if(scanner_->eos()){ return false; }
 			AnyPtr ret = e->param1->call(from_this(this));
 			return (ret || raweq(ret, undefined))!=e->inv;
 		}

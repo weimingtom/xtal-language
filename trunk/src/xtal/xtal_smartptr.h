@@ -33,7 +33,7 @@ struct UserTypeHolderSub : public UserTypeHolder<T>{
 
 enum InheritedEnum{
 	INHERITED_BASE,
-	INHERITED_INNOCENCE,
+	INHERITED_ANY,
 	INHERITED_OTHER
 };
 
@@ -41,7 +41,7 @@ template<class T>
 struct InheritedN{
 	enum{
 		value = IsInherited<T, Base>::value ? INHERITED_BASE : 
-			IsInherited<T, Any>::value ? INHERITED_INNOCENCE : INHERITED_OTHER
+			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
 
@@ -329,7 +329,7 @@ protected:
 	}
 
 	template<class U>
-	void gene(SmartPtrSelector<INHERITED_INNOCENCE>){
+	void gene(SmartPtrSelector<INHERITED_ANY>){
 		Any::operator =(U());
 	}
 
@@ -349,7 +349,7 @@ protected:
 	}
 
 	template<class U, class A0>
-	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0){
+	void gene(SmartPtrSelector<INHERITED_ANY>, const A0& a0){
 		Any::operator =(U(a0));
 	}
 
@@ -369,7 +369,7 @@ protected:
 	}
 
 	template<class U, class A0, class A1>
-	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1){
+	void gene(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1){
 		Any::operator =(U(a0, a1));
 	}
 
@@ -454,7 +454,7 @@ public:
 		p->inc_ref_count();
 	}
 
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ 
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, T* p){ 
 		*(Any*)this = *(Any*)p; 
 		inc_ref_count();
 	}
@@ -487,6 +487,21 @@ private:
 	SmartPtr(void*);
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, T* p);
 
+private:
+
+	T* get2(const SmartPtrSelector<INHERITED_BASE>&) const{ 
+		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		return (T*)pvalue(*this); 
+	}
+
+	T* get2(const SmartPtrSelector<INHERITED_ANY>&) const{ 
+		return (T*)this; 
+	}
+
+	T* get2(const SmartPtrSelector<INHERITED_OTHER>&) const{ 
+		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
+	}
+
 public:
 
 	/**
@@ -505,21 +520,6 @@ public:
 	* @brief T型へのポインタを取得する。
 	*/
 	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
-
-private:
-
-	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
-		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
-		return (T*)pvalue(*this); 
-	}
-
-	T* get2(SmartPtrSelector<INHERITED_INNOCENCE>) const{ 
-		return (T*)this; 
-	}
-
-	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ 
-		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
-	}
 
 public:
 
@@ -571,7 +571,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
 		:SmartPtr<Any>(new T(), new_cpp_class<T>(), with_class_t()){}
 
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>)
 		:SmartPtr<Any>(T()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
@@ -588,7 +588,7 @@ public:
 		:SmartPtr<Any>(new T(a0), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0>
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0)
 		:SmartPtr<Any>(T(a0)){}
 
 	template<class A0>
@@ -606,7 +606,7 @@ public:
 		:SmartPtr<Any>(new T(a0, a1), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1)
 		:SmartPtr<Any>(T(a0, a1)){}
 
 	template<class A0, class A1>
@@ -624,7 +624,7 @@ public:
 		:SmartPtr<Any>(new T(a0, a1, a2), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2)
 		:SmartPtr<Any>(T(a0, a1, a2)){}
 
 	template<class A0, class A1, class A2>
@@ -642,7 +642,7 @@ public:
 		:SmartPtr<Any>(new T(a0, a1, a2, a3), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
 		:SmartPtr<Any>(T(a0, a1, a2, a3)){}
 
 	template<class A0, class A1, class A2, class A3>
@@ -660,7 +660,7 @@ public:
 		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), new_cpp_class<T>(), with_class_t()){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
 		:SmartPtr<Any>(T(a0, a1, a2, a3, a4)){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
@@ -767,7 +767,7 @@ inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p
 }
 
 template<class T>
-inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_INNOCENCE>, const T* p){
+inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_ANY>, const T* p){
 	return *(SmartPtr<T>*)(Any*)p; 
 }
 

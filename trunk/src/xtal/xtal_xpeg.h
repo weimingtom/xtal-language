@@ -66,7 +66,7 @@ private:
 };
 
 /**
-* @brief Šg’£³‹K•\Œ»‚ğÀs‚·‚é
+* @brief PEG‚ğÀs‚·‚é
 */
 class Executor : public Base{
 public:
@@ -209,9 +209,9 @@ private:
 	}
 };
 
-AnyPtr before(const AnyPtr& elem);
+AnyPtr lookahead(const AnyPtr& elem);
 
-AnyPtr after(const AnyPtr& elem, int_t back);
+AnyPtr lookbehind(const AnyPtr& elem, int_t back);
 
 AnyPtr pred(const AnyPtr& elem);
 

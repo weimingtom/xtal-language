@@ -1443,7 +1443,7 @@ struct ctor : public CFunPtr{
 template<class T, class C>
 inline CFunPtr getter(T C::* v){
 	typedef getter_holder<C, T> fun_t;
-	fun_t fun;
+	fun_t fun(v);
 	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 }
 	
@@ -1454,7 +1454,7 @@ inline CFunPtr getter(T C::* v){
 template<class T, class C>
 inline CFunPtr setter(T C::* v){
 	typedef setter_holder<C, T> fun_t;
-	fun_t fun;
+	fun_t fun(v);
 	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 }
 

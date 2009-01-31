@@ -371,8 +371,8 @@ struct Element : public Base{
 
 		// ˆÈ‰ºparam1‚ÍElement‚Å‚ ‚éŽí—Þ
 		TYPE_GREED,
-		TYPE_BEFORE,
-		TYPE_AFTER,
+		TYPE_LOOKAHEAD,
+		TYPE_LOOKBEHIND,
 		TYPE_LEAF,
 		TYPE_NODE,
 		TYPE_ERROR,
@@ -933,7 +933,7 @@ bool Executor::test(const AnyPtr& ae){
 			return match_inner(nfa)!=e->inv;
 		}
 
-		XTAL_CASE(Element::TYPE_BEFORE){
+		XTAL_CASE(Element::TYPE_LOOKAHEAD){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			Scanner::State state = scanner_->save();
 			bool ret = match_inner(nfa);
@@ -941,7 +941,7 @@ bool Executor::test(const AnyPtr& ae){
 			return ret!=e->inv;
 		}
 
-		XTAL_CASE(Element::TYPE_AFTER){
+		XTAL_CASE(Element::TYPE_LOOKBEHIND){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			Scanner::State state = scanner_->save();
 			Scanner::State fict_state = state;
@@ -1143,8 +1143,8 @@ AnyPtr inv(const AnyPtr& left){
 	return ret;
 }
 
-AnyPtr before(const AnyPtr& left){ return xnew<Element>(Element::TYPE_BEFORE, elem(left)); }
-AnyPtr after(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_AFTER, elem(left), null, back); }
+AnyPtr lookahead(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LOOKAHEAD, elem(left)); }
+AnyPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), null, back); }
 
 AnyPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
 
@@ -1193,7 +1193,7 @@ AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n)
 AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
 void set_body(const ElementPtr& x, const AnyPtr& term){ if(x->type==Element::TYPE_DECL) x->param1 = elem(term); }
 
-AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return after(sep, 1) >> body >> before(sep); }
+AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return lookbehind(sep, 1) >> body >> lookahead(sep); }
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
 AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
@@ -1271,9 +1271,9 @@ void initialize_xpeg(){
 	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
 	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
 	AnyPtr degit = elem(AnyPtr("0")->send(Xid(op_range), "9", RANGE_CLOSED));
-	AnyPtr lower = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
-	AnyPtr upper = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
-	AnyPtr alpha = lower | upper;
+	AnyPtr lalpha = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
+	AnyPtr ualpha = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
+	AnyPtr alpha = lalpha | ualpha;
 	AnyPtr word = alpha | degit | Xid(_);
 	AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
 
@@ -1284,16 +1284,16 @@ void initialize_xpeg(){
 	xpeg->def(Xid(eol), eol);
 	xpeg->def(Xid(empty), empty);
 	xpeg->def(Xid(degit), degit);
-	xpeg->def(Xid(lower), lower);
-	xpeg->def(Xid(upper), upper);
+	xpeg->def(Xid(lalpha), lalpha);
+	xpeg->def(Xid(ualpha), ualpha);
 	xpeg->def(Xid(alpha), alpha);
 	xpeg->def(Xid(word), word);
 	xpeg->def(Xid(ascii), ascii);
 	
 	xpeg->fun(Xid(set), &set);
 	xpeg->fun(Xid(back_ref), &back_ref);
-	xpeg->fun(Xid(before), &before);
-	xpeg->fun(Xid(after), &after);
+	xpeg->fun(Xid(lookahead), &lookahead);
+	xpeg->fun(Xid(lookbehind), &lookbehind);
 	xpeg->fun(Xid(leaf), &leaf);
 	xpeg->fun(Xid(node), &node_vm);
 	xpeg->fun(Xid(splice_node), &splice_node_vm);

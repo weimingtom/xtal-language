@@ -340,9 +340,11 @@ public:
 	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
 	*
 	*/
-	template<class T, class U, class Policy>
-	const CFunPtr& getter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
-		return def_and_return(primary_key, ::xtal::getter(v), secondary_key, accessibility);
+	template<class T, class C>
+	const CFunPtr& getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef getter_holder<C, T> fun_t;
+		fun_t fun(v);
+		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 	}
 	
 	/**
@@ -351,20 +353,22 @@ public:
 	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
-	template<class T, class U, class Policy>
-	const CFunPtr& setter(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
-		return def_and_return(primary_key, ::xtal::setter(v), secondary_key, accessibility);
+	template<class T, class C>
+	const CFunPtr& setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef setter_holder<C, T> fun_t;
+		fun_t fun(v);
+		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 	}
 	
 	/**
 	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
 	*
-	* cls->getter(name, var, policy);
-	* cls->setter(StringPtr("set_")->cat(name), v, policy);
+	* cls->getter(primary_key, var, policy);
+	* cls->setter(StringPtr("set_")->cat(primary_key), v, policy);
 	* と等しい	
 	*/	
 	template<class T, class U>
-	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key, int_t accessibility){
+	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		getter(primary_key, v, secondary_key, accessibility);
 		setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
 	}
@@ -412,10 +416,6 @@ public:
 	}
 
 protected:
-
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key, int_t accessibility){
-		return unchecked_ptr_cast<CFun>(def2(primary_key, cfun, secondary_key, accessibility));
-	}
 
 	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);
 	const CFunPtr& def_and_return(const IDPtr& primary_key, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);

@@ -43,9 +43,9 @@ inline const void* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return cast_helper_helper_base(a, get_cpp_class<U>()); 
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
-inline const void* cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
+inline const void* cast_helper_helper(const AnyPtr& a, const Any*, const U*){
 	return cast_helper_helper_innocence(a, get_cpp_class<U>()); 
 }
 	
@@ -69,13 +69,13 @@ inline bool can_cast_helper_helper(const AnyPtr& a, const Base*, const U*){
 	return a->is(get_cpp_class<U>());
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
-inline bool can_cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
+inline bool can_cast_helper_helper(const AnyPtr& a, const Any*, const U*){
 	return a->is(get_cpp_class<U>());
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline bool can_cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return a->is(get_cpp_class<U>());
@@ -95,13 +95,13 @@ inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const Base*, co
 	return pvalue(a);
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚ğŒp³‚µ‚½Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
-inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const Innocence*, const U*){
+inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const Any*, const U*){
 	return &a;
 }
 
-// •ÏŠ·Œã‚ÌŒ^‚ªInnocence‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return ((SmartPtr<U>&)a).get();
@@ -233,7 +233,7 @@ ptr_cast(const AnyPtr& a){
 */
 template<class T>
 inline const SmartPtr<T>&
-static_ptr_cast(const AnyPtr& a){
+unchecked_ptr_cast(const AnyPtr& a){
 	return *(const SmartPtr<T>*)&a;
 }
 

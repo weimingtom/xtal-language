@@ -187,7 +187,7 @@ void initialize_fun(){
 
 	{
 		ClassPtr p = new_cpp_class<Arguments>(Xid(Arguments));
-		p->def(Xid(new), ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(Named(Xid(ordered), null), Named(Xid(named), null)));
+		p->def(Xid(new), ctor<Arguments, const AnyPtr&, const AnyPtr&>()->params(Xid(ordered), null, Xid(named), null));
 		p->method(Xid(size), &Arguments::length);
 		p->method(Xid(length), &Arguments::length);
 		p->method(Xid(ordered_arguments), &Arguments::ordered_arguments);
@@ -200,6 +200,30 @@ void initialize_fun(){
 	builtin()->def(Xid(Arguments), get_cpp_class<Arguments>());
 	builtin()->def(Xid(Fun), get_cpp_class<Fun>());
 	builtin()->def(Xid(Fiber), get_cpp_class<Fiber>());
+}
+
+void initialize_fun_script(){
+	Xemb((
+
+Arguments::each: method{
+	return fiber{ 
+		this.ordered_arguments.with_index{ |i, v|
+			yield i, v;
+		}
+		this.named_arguments{ |i, v|
+			yield i, v;
+		}
+	}
+}
+
+Arguments::pairs: Arguments::each;
+
+Fun::call: method(...){
+	return this(...);
+}
+	),
+		""
+	)->call();
 }
 
 }

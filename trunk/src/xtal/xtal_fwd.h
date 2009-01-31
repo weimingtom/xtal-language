@@ -130,8 +130,6 @@ typedef wchar_t char_t;
 typedef char char_t;
 #endif
 
-typedef std::basic_string<char_t, std::char_traits<char_t>, Alloc<char_t> > string_t;
-
 /// unsigned char_t
 typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
 
@@ -384,8 +382,6 @@ extern IDPtr empty_id;
 extern Null null;
 extern Undefined undefined;
 extern Named null_named;
-
-struct Param;
 
 template<class T>
 inline const ClassPtr& new_cpp_class(const StringPtr& name = (const StringPtr&)empty_id);

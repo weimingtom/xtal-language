@@ -105,8 +105,8 @@ public:
 			uint_t mutate_count;
 			uint_t target_class;
 			uint_t secondary_key;
-			Innocence primary_key;
-			Innocence member;
+			Any primary_key;
+			Any member;
 		};
 
 		enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
@@ -125,7 +125,7 @@ public:
 			std::printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 		}
 
-		const AnyPtr& cache(const Innocence& target_class, const IDPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too, uint_t global_mutate_count);
+		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
 	};
 
 	struct IsInheritedCacheTable{
@@ -152,9 +152,9 @@ public:
 			std::printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 		}
 
-		bool cache_is(const Innocence& target_class, const Innocence& klass, uint_t global_mutate_count);
+		bool cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count);
 
-		bool cache_is_inherited(const Innocence& target_class, const Innocence& klass, uint_t global_mutate_count);
+		bool cache_is_inherited(const Any& target_class, const Any& klass, uint_t global_mutate_count);
 	};
 
 	MemberCacheTable member_cache_table_;
@@ -162,15 +162,15 @@ public:
 	IsInheritedCacheTable is_inherited_cache_table_;
 	uint_t global_mutate_count_;
 
-	const AnyPtr& cache_member(const Innocence& target_class, const IDPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too){
+	const AnyPtr& cache_member(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too){
 		return member_cache_table_.cache(target_class, primary_key, secondary_key, self, inherited_too, global_mutate_count_);
 	}
 
-	bool cache_is(const Innocence& target_class, const Innocence& klass){
+	bool cache_is(const Any& target_class, const Any& klass){
 		return is_cache_table_.cache_is(target_class, klass, global_mutate_count_);
 	}
 
-	bool cache_is_inherited(const Innocence& target_class, const Innocence& klass){
+	bool cache_is_inherited(const Any& target_class, const Any& klass){
 		return is_inherited_cache_table_.cache_is_inherited(target_class, klass, global_mutate_count_);
 	}
 

@@ -35,7 +35,8 @@ int main2(int argc, char** argv){
 		Xsrc((
 			filelocal.inherit(xpeg);
 
-			[4].empty.p;
+			assert 0 + 9 == 10;
+			(9, 0, 7).p;
 
 		[0,32,45,53,23,23,1123,43,45,3].each.scan(pred(|x|x==45) >> cap(n: any)){
 			it("n")[0].p;

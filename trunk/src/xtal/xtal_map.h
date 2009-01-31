@@ -78,12 +78,6 @@ public:
 	MapPtr cat_assign(const MapPtr& a);
 
 	/**
-	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
-	*
-	*/
-	StringPtr to_s();
-
-	/**
 	* @brief == ‚ÌÄ’è‹`
 	*/
 	bool op_eq(const MapPtr& other);

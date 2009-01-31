@@ -3,16 +3,6 @@
 
 namespace xtal{
 
-void initialize_code(){
-	{
-		ClassPtr p = new_cpp_class<Code>(Xid(Code));
-		p->inherit(get_cpp_class<Fun>());
-	}
-
-	builtin()->def(Xid(Code), get_cpp_class<Code>());
-}
-
-
 Code::Code()
 	:filelocal_(xnew<Singleton>(Xid(filelocal))), source_file_name_("<noname>"){
 	set_object_name("<filelocal>", 1, null);
@@ -294,6 +284,15 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	return "";
 
 #endif
+}
+
+void initialize_code(){
+	{
+		ClassPtr p = new_cpp_class<Code>(Xid(Code));
+		p->inherit(get_cpp_class<Fun>());
+	}
+
+	builtin()->def(Xid(Code), get_cpp_class<Code>());
 }
 
 }

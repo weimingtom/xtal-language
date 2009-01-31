@@ -252,7 +252,7 @@ public:
 	* @param pos 0縲從amed_arg_count()-1まで
 	*/
 	const IDPtr& arg_name(int_t pos){
-		return static_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
+		return unchecked_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
 	/**
@@ -365,9 +365,9 @@ public:
 		except_[1] = null;
 	}
 
-	void set_except_0(const Innocence& e);
+	void set_except_0(const Any& e);
 
-	void set_unsuported_error_info(const Innocence& target, const Innocence& primary_key, const Innocence& secondary_key){
+	void set_unsuported_error_info(const Any& target, const Any& primary_key, const Any& secondary_key){
 		ff().target_ = target;
 		ff().primary_key_ = primary_key;
 		ff().secondary_key_ = secondary_key;
@@ -412,10 +412,10 @@ public:
 	const AnyPtr& get(){ return ap(stack_.top()); }
 
 	// スタックのi番目の値を設定する。
-	void set(int_t i, const Innocence& v){ stack_[i]=v; }
+	void set(int_t i, const Any& v){ stack_[i]=v; }
 
 	// スタックの0番目の値を設定する。
-	void set(const Innocence& v){ stack_.top()=v; }
+	void set(const Any& v){ stack_.top()=v; }
 
 	// スタックをn拡大する。
 	void upsize(int_t n){ stack_.upsize_unchecked(n); }
@@ -427,7 +427,7 @@ public:
 	void resize(int_t n){ stack_.resize(n); }
 
 	// スタックに値vをプッシュする。
-	void push(const Innocence& v){ stack_.push_unchecked(v); }
+	void push(const Any& v){ stack_.push_unchecked(v); }
 
 	// スタックに値vをプッシュする。
 	void push(const Named& v){ push(v.name); push(v.value); }
@@ -483,31 +483,31 @@ public:
 		InstanceVariables* instance_variables;
 
 		// スコープがオブジェクト化されてない時のローカル変数領域
-		Stack<Innocence> variables_;
+		Stack<Any> variables_;
 
 		// 呼び出された関数オブジェクト
-		Innocence fun_; 
+		Any fun_; 
 
 		// スコープの外側のフレームオブジェクト
-		Innocence outer_;
+		Any outer_;
 
 		// 関数が呼ばれたときのthisオブジェクト
-		Innocence self_;
+		Any self_;
 
 		// オブジェクト化した引数。
-		Innocence arguments_;
+		Any arguments_;
 		
 		// デバッグメッセージ出力用のヒント
-		Innocence hint_;
+		Any hint_;
 
 		// UnsuportedErrorのためにtargetをおくところ
-		Innocence target_;
+		Any target_;
 
 		// UnsuportedErrorのためにprimary_keyをおくところ
-		Innocence primary_key_;
+		Any primary_key_;
 
 		// UnsuportedErrorのためにsecondary_keyをおくところ
-		Innocence secondary_key_;
+		Any secondary_key_;
 
 		void set_null(){
 			set_null_force(fun_); 
@@ -519,23 +519,23 @@ public:
 			set_null_force(secondary_key_);
 		}
 
-		const FunPtr& fun() const{ return static_ptr_cast<Fun>(ap(fun_)); }
-		const FramePtr& outer() const{ return static_ptr_cast<Frame>(ap(outer_)); }
+		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
+		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& variable(int_t i) const{ return ap(variables_[i]); }
 		const AnyPtr& self() const{ return ap(self_); }
-		const ArgumentsPtr& arguments() const{ return static_ptr_cast<Arguments>(ap(arguments_)); }
+		const ArgumentsPtr& arguments() const{ return unchecked_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint() const{ return ap(hint_); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
 		}
 
-		void fun(const Innocence& v){ fun_ = v; }
-		void outer(const Innocence& v){ outer_ = v; }
-		void variable(int_t i, const Innocence& v){ variables_[i] = v; }
-		void self(const Innocence& v){ self_ = v; }
-		void arguments(const Innocence& v){ arguments_ = v; }
-		void hint(const Innocence& v){ hint_ = v; }
+		void fun(const Any& v){ fun_ = v; }
+		void outer(const Any& v){ outer_ = v; }
+		void variable(int_t i, const Any& v){ variables_[i] = v; }
+		void self(const Any& v){ self_ = v; }
+		void arguments(const Any& v){ arguments_ = v; }
+		void hint(const Any& v){ hint_ = v; }
 
 		void inc_ref();
 		void dec_ref();
@@ -549,7 +549,7 @@ public:
 		int_t stack_count;
 		int_t fun_frame_count;
 		int_t variable_size;
-		Innocence outer;
+		Any outer;
 	};
 
 	void push_ff(int_t need_result_count);
@@ -575,8 +575,8 @@ public:
 	const IDPtr& identifier(int_t n){ return code()->identifier(n); }
 	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
 	const IDPtr& identifier_or_pop(int_t n){ 
-		if(n!=0){ return  static_ptr_cast<ID>(ap(identifier(n)));  }
-		else{ return static_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
+		if(n!=0){ return  unchecked_ptr_cast<ID>(ap(identifier(n)));  }
+		else{ return unchecked_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
 	}
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
@@ -594,7 +594,7 @@ private:
 	const inst_t* send2_r(const inst_t* pc, const IDPtr& name);
 	const inst_t* send2_q(const inst_t* pc, const IDPtr& name);
 
-	void set_local_variable(int_t pos, const Innocence&);
+	void set_local_variable(int_t pos, const Any&);
 	const AnyPtr& local_variable(int_t pos);
 
 	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
@@ -768,10 +768,10 @@ private:
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
 
-	Innocence myself_;
+	Any myself_;
 
 	// 計算用スタック
-	Stack<Innocence> stack_;
+	Stack<Any> stack_;
 
 	// 関数呼び出しの度に積まれるフレーム
 	Stack<FunFrame> fun_frames_;
@@ -779,7 +779,7 @@ private:
 	// tryの度に積まれるフレーム。
 	PODStack<ExceptFrame> except_frames_;
 	
-	Innocence except_[3];
+	Any except_[3];
 
 	SmartPtr<DebugInfo> debug_info_;
 

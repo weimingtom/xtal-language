@@ -201,6 +201,28 @@ void initialize_thread(){
 
 }
 
+void initialize_thread_script(){
+	Xemb((
+
+Mutex::block_first: method{
+	this.lock;
+	return this;
+}
+
+Mutex::block_next: method{
+	this.unlock;
+	return null;
+}
+
+Mutex::block_break: method{
+	this.unlock;
+	return null;
+}
+	),
+		""
+	)->call();
+}
+
 void set_thread(ThreadLib& lib){
 	thread_lib_temp_ = &lib;
 }

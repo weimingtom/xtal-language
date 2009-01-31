@@ -270,14 +270,14 @@ void Format::rawcall(const VMachinePtr& vm){
 		vm->flatten_arg();
 	}
 
-	string_t buf;
+	MemoryStreamPtr ms = xnew<MemoryStream>();
 	char_t cbuf[256];
 	char_t spec[FormatSpecifier::FORMAT_SPECIFIER_MAX];
 	char_t* pcbuf;
 	
 	Xfor2(k, v, values_){
 		if(type(k)==TYPE_INT){
-			buf += v->to_s()->c_str();
+			ms->put_s(v->to_s());
 		}
 		else{
 			AnyPtr a = vm->arg(k->to_s()->intern());
@@ -311,23 +311,23 @@ void Format::rawcall(const VMachinePtr& vm){
 					}
 					fs->make_format_specifier(spec, 's');
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, str->c_str());
-					buf += pcbuf;
+					ms->put_s(pcbuf);
 				}
 
 				XTAL_CASE(TYPE_NULL){
-					buf += XTAL_STRING("<null>");
+					ms->put_s(XTAL_STRING("<null>"));
 				}
 
 				XTAL_CASE(TYPE_INT){
 					fs->make_format_specifier(spec, fs->change_int_type(), true);
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, ivalue(a));
-					buf += pcbuf;
+					ms->put_s(pcbuf);
 				}
 				
 				XTAL_CASE(TYPE_FLOAT){
 					fs->make_format_specifier(spec, fs->change_float_type());
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(a));
-					buf += pcbuf;
+					ms->put_s(pcbuf);
 				}
 			}
 			
@@ -337,7 +337,7 @@ void Format::rawcall(const VMachinePtr& vm){
 		}
 	}
 
-	vm->return_result(xnew<String>(buf));
+	vm->return_result(ms->to_s());
 }
 
 void Format::to_s(const VMachinePtr& vm){

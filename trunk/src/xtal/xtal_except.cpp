@@ -104,8 +104,8 @@ void set_except_handler(except_handler_t handler){
 void initialize_except(){
 	{
 		ClassPtr p = new_cpp_class<Exception>();
-		p->def(Xid(new), ctor<Exception>()->param(Named(Xid(message), empty_id)));
-		p->method(Xid(initialize), &Exception::initialize)->param(Named(Xid(message), empty_id));
+		p->def(Xid(new), ctor<Exception>()->params(Xid(message), empty_id));
+		p->method(Xid(initialize), &Exception::initialize)->params(Xid(message), empty_id);
 		p->method(Xid(to_s), &Exception::to_s);
 		p->method(Xid(message), &Exception::message);
 		p->method(Xid(backtrace), &Exception::backtrace);

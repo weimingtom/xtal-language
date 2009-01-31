@@ -77,29 +77,6 @@ public:
 	ArrayPtr value;
 };
 
-void InitZipIter(){
-	ClassPtr p = new_cpp_class<ZipIter>();
-	p->inherit(Iterator());
-	p->def(Xid(new), ctor<ZipIter, const VMachinePtr&>());
-	p->method(Xid(block_first), &ZipIter::block_first);
-	p->method(Xid(block_next), &ZipIter::block_next);
-	p->method(Xid(block_break), &ZipIter::block_break);
-}
-
-void initialize_iterator(){
-	{
-		ClassPtr p = Iterator();
-		p->inherit(Iterable());
-
-		p->fun(Xid(each), &Iterator_each);
-		p->fun(Xid(block_first), &Iterator_block_first);
-	}
-
-	InitZipIter();
-	builtin()->def(Xid(zip), get_cpp_class<ZipIter>());
-
-}
-
 void DelegateToIterator::rawcall(const VMachinePtr& vm){
 	vm->get_arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
@@ -226,6 +203,332 @@ BlockValueHolder3::BlockValueHolder3(const AnyPtr& tar, bool& not_end)
 
 BlockValueHolder3::~BlockValueHolder3(){ 
 	block_break(target); 
+}
+
+
+///
+
+void InitZipIter(){
+	ClassPtr p = new_cpp_class<ZipIter>();
+	p->inherit(Iterator());
+	p->def(Xid(new), ctor<ZipIter, const VMachinePtr&>());
+	p->method(Xid(block_first), &ZipIter::block_first);
+	p->method(Xid(block_next), &ZipIter::block_next);
+	p->method(Xid(block_break), &ZipIter::block_break);
+}
+
+void initialize_iterator(){
+	{
+		ClassPtr p = Iterator();
+		p->inherit(Iterable());
+
+		p->fun(Xid(each), &Iterator_each);
+		p->fun(Xid(block_first), &Iterator_block_first);
+	}
+
+	InitZipIter();
+	builtin()->def(Xid(zip), get_cpp_class<ZipIter>());
+}
+
+void initialize_iterator_script(){
+
+	Xemb((
+
+Iterator::scan: method(pattern) fiber{
+	exec: xpeg::Executor(this);
+	while(exec.match(pattern)){
+		yield exec;
+	}	
+}
+
+Iterator::p: method{
+	m: MemoryStream();
+	m.put_s("<[");
+	a: this.take(6).to_a;
+	m.put_s(a.take(5).join(","));
+	if(a.length==6){
+		m.put_s(" ...]>")
+	}
+	else{
+		m.put_s("]>");
+	}
+	m.to_s.p;
+	return chain(a.each, this);
+}
+
+Iterator::to_a: method{
+	ret: [];
+	this{
+		ret.push_back(it); 
+	}
+	return ret;
+}
+
+Iterator::to_m: method{
+	ret: [:];
+	this{ |key, value|
+		ret[key] = value; 
+	}
+	return ret;
+}
+
+Iterator::reverse: method{
+	return this[].reverse;
+}
+
+Iterator::join: method(sep: ""){
+	ret: MemoryStream();
+	if(sep==""){
+		this{
+			ret.put_s(it.to_s);
+		}
+	}
+	else{
+		this{
+			if(!first_step){
+				ret.put_s(sep);
+			}
+			ret.put_s(it.to_s);
+		}
+	}
+		
+	return ret.to_s;
+}
+
+Iterator::with_index: method(start: 0){
+	return fiber{
+		i: start;
+		this{
+			yield i, it;
+			++i;
+		}
+	}
+}
+
+Iterator::collect: method(conv){
+	return fiber{
+		this{
+			yield conv(it);
+		}
+	}
+}
+
+Iterator::map: Iterator::collect;
+
+Iterator::select: method(pred) fiber{
+	this{
+		if(pred(it)){
+			yield it;
+		}
+	}
+}
+
+Iterator::filter: Iterator::select;
+
+Iterator::break_if: method(pred){
+	return fiber{
+		this{
+			if(pred(it))
+				break;
+			yield it;
+		}
+	}
+}
+
+Iterator::take: method(times){
+	if(times<=0)
+		return null;
+
+	return fiber{
+		i: 0;
+		this{
+			yield it;
+			i++;
+
+			if(i>=times)
+				break;
+		}
+	}
+}
+
+Iterator::zip: method(...){
+	return builtin::zip(this, ...);
+}
+
+Iterator::unique: method(pred: null){
+	if(pred){
+		return fiber{
+			prev: undefined;
+			this{
+				if(!pred(it, prev)){
+					yield it;
+					prev = it;
+				}
+			}
+		}
+	}
+
+	return fiber{
+		prev: undefined;
+		this{
+			if(prev!=it){
+				yield it;
+				prev = it;
+			}
+		}
+	}
+}
+
+builtin::chain: fun(...){
+	arg: ...;
+	return fiber{
+		arg.ordered_arguments{
+			it{
+				yield it;
+			}
+		}
+	}
+}
+
+Iterator::chain: method(...){
+	return builtin::chain(this, ...);
+}
+
+Iterator::cycle: method fiber{
+	temp: [];
+	this{
+		temp.push_back(it);
+		yield it;
+	}
+	
+	for(;;){
+		temp{
+			yield it;
+		}
+	}
+}
+
+Iterator::max_element: method(pred: null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}
+			else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item<it)
+				item = it;
+		}
+		else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::min_element: method(pred: null){
+	item: null;
+	if(pred){
+		this{
+			if(item){
+				if(pred(it, item))
+					item = it;
+			}
+			else{
+				item = it;
+			}
+		}
+		return item;
+	}
+
+	this{
+		if(item){
+			if(item>it)
+				item = it;
+		}
+		else{
+			item = it;
+		}
+	}
+	return item;
+}
+
+Iterator::find: method(pred){
+	this{
+		if(pred(it)){
+			return it;
+		}
+	}
+}
+
+Iterator::inject: method(init, fn){
+	result: init;
+	this{
+		result = fn(result, it);
+	}
+	return result;
+}
+
+Iterator::with_prev: method fiber{
+	prev: undefined;
+	this{
+		yield prev, it;
+		prev = it;
+	}
+}
+
+Iterator::flatten_param: method fiber{
+	this{ yield it.flatten_mv; }
+}
+
+Iterator::flatten_all_param: method fiber{
+	this{ yield it.flatten_all_mv; }
+}
+
+builtin::ClassicIterator: class{
+	_current;
+	_source;
+
+	initialize: method(source){ _source, _current = source.block_first; }
+	current: method _current;
+	has_next: method !!_source;
+	is_done: method !_source;
+	next: method{ _source, _current = _source.block_next; }
+	source: method _source;
+}
+
+Iterator::classic: method ClassicIterator(this);
+
+builtin::range: fun(first, last, step:1){
+	if(step==1){
+		return fiber{
+			for(i:first; i<last; i++){
+				yield i;
+			}
+		}
+	}
+	else{
+		return fiber{
+			for(i:first; i<last; i+=step){
+				yield i;
+			}
+		}
+	}
+}
+	),
+""
+)->call();
+
+
 }
 
 }

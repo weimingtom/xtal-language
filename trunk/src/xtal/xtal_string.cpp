@@ -67,10 +67,10 @@ static void make_small_string_size_and_hashcode_and_length(const char_t* str, ui
 	ChMaker chm;
 
 	uint_t i=0;
-	while(str[i] && i<Innocence::SMALL_STRING_MAX){
+	while(str[i] && i<Any::SMALL_STRING_MAX){
 		chm.clear();
 		while(!chm.is_completed()){
-			if(str[i] && i<Innocence::SMALL_STRING_MAX){ chm.add(str[i++]); } 
+			if(str[i] && i<Any::SMALL_STRING_MAX){ chm.add(str[i++]); } 
 			else{ break; }
 		}
 	
@@ -363,10 +363,6 @@ String::String(const avoid<char>::type* str):Any(noinit_t()){
 	init_string(buf, n);
 }
 
-String::String(const string_t& str):Any(noinit_t()){
-	init_string(str.c_str(), str.size());
-}
-
 String::String(const char_t* str, uint_t size):Any(noinit_t()){
 	init_string(str, size);
 }
@@ -527,11 +523,11 @@ StringPtr String::clone(){
 const IDPtr& String::intern(){
 	if(type(*this)==TYPE_BASE){
 		LargeString* p = ((LargeString*)pvalue(*this));
-		if(p->is_interned()) return static_ptr_cast<ID>(ap(*this));
-		return static_ptr_cast<ID>(str_mgr_->insert(p->c_str(), p->data_size(), p->hashcode(), p->length()));
+		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
+		return unchecked_ptr_cast<ID>(str_mgr_->insert(p->c_str(), p->data_size(), p->hashcode(), p->length()));
 	}
 	else{
-		return static_ptr_cast<ID>(ap(*this));
+		return unchecked_ptr_cast<ID>(ap(*this));
 	}
 }
 
@@ -711,7 +707,7 @@ struct StringKey{
 };
 
 void LargeString::common_init(uint_t size){
-	XTAL_ASSERT(size>=Innocence::SMALL_STRING_MAX);
+	XTAL_ASSERT(size>=Any::SMALL_STRING_MAX);
 
 	data_size_ = size;
 	str_.p = static_cast<char_t*>(user_malloc(sizeof(char_t)*(data_size_+1)));
@@ -812,9 +808,6 @@ ID::ID(const avoid<char>::type* str)
 	*this = ID(buf, n);
 }
 
-ID::ID(const string_t& str)
-	:String(*str_mgr_->insert(str.c_str(), str.size())){}
-
 ID::ID(const char_t* str, uint_t size)
 	:String(*str_mgr_->insert(str, size)){}
 
@@ -906,7 +899,7 @@ void initialize_string(){
 
 		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->param(Named(Xid(left), null), Named(Xid(right), null)));
+		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->params(Xid(left), null, Xid(right), null));
 		p->method(Xid(each), &ChRange::each);
 	}
 
@@ -942,5 +935,70 @@ void initialize_string(){
 	set_cpp_class<ID>(get_cpp_class<String>());
 }
 
+void initialize_string_script(){
+	Xemb((
+
+String::scan: method(pattern){
+	return StringStream(this).scan(pattern);
+}
+
+String::split: method(pattern){
+	return StringStream(this).split(pattern);
+}
+
+String::gsub: method(pattern, fn){
+	mm: MemoryStream();
+	exec: xpeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		mm.put_s(prefix);
+		ordered: [exec[""]];
+		ordered.concat(exec.captures);
+		named: exec.named_captures[:];
+		named["prefix"] = prefix;
+		mm.put_s(fn(...Arguments(ordered, named)));
+
+		while(exec.match(pattern)){
+			prefix: exec.prefix;
+			mm.put_s(prefix);
+			ordered: [exec[""]];
+			ordered.concat(exec.captures);
+			named: exec.named_captures[:];
+			named["prefix"] = prefix;
+			mm.put_s(fn(...Arguments(ordered, named)));
+		}
+		mm.put_s(exec.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+
+String::sub: method(pattern, fn){
+	mm: MemoryStream();
+	exec: xpeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		suffix: exec.suffix;
+		mm.put_s(prefix);
+		ordered: [exec[""]];
+		ordered.concat(exec.captures);
+		named: exec.named_captures[:];
+		named["prefix"] = prefix;
+		named["suffix"] = suffix;
+		mm.put_s(fn(...Arguments(ordered, named)));
+		mm.put_s(exec.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+	),
+""
+)->call();
+
+}
 
 }

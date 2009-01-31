@@ -28,7 +28,7 @@ public:
 	*/
 	const IDPtr& identifier(int_t i){
 		XTAL_ASSERT(i<(int_t)identifier_table_->size());
-		return static_ptr_cast<ID>(identifier_table_->at(i));
+		return unchecked_ptr_cast<ID>(identifier_table_->at(i));
 	}
 
 	/**

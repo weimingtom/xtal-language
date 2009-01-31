@@ -4,45 +4,44 @@
 namespace xtal{
 
 /**
-* @brief イノセンス
+* @brief any
 *
-* 一般ユーザーはこれを直接使用することは無い
 */
-class Innocence{
+class Any{
 protected:
 
-	Innocence(const char_t* str);
-	Innocence(const avoid<char>::type* str);
+	Any(const char_t* str);
+	Any(const avoid<char>::type* str);
 
 public:
 
-	Innocence(){ type_ = TYPE_NULL; pvalue_ = 0; }
-	Innocence(int_t v){ set_i(v); }
-	Innocence(float_t v){ set_f(v); }
-	Innocence(Base* v){ set_p(v); }
-	Innocence(bool b){ set_b(b); }
+	Any(){ type_ = TYPE_NULL; pvalue_ = 0; }
+	Any(int_t v){ set_i(v); }
+	Any(float_t v){ set_f(v); }
+	Any(Base* v){ set_p(v); }
+	Any(bool b){ set_b(b); }
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	Innocence(avoid<int>::type v){ set_i((int_t)v); }
-	Innocence(avoid<long>::type v){ set_i((int_t)v); }
-	Innocence(avoid<short>::type v){ set_i((int_t)v); }
-	Innocence(avoid<char>::type v){ set_i((int_t)v); }
-	Innocence(avoid<unsigned int>::type v){ set_i((int_t)v); }
-	Innocence(avoid<unsigned long>::type v){ set_i((int_t)v); }
-	Innocence(avoid<unsigned short>::type v){ set_i((int_t)v); }
-	Innocence(avoid<unsigned char>::type v){ set_i((int_t)v); }
-	Innocence(avoid<signed char>::type v){ set_i((int_t)v); }
-	Innocence(avoid<float>::type v){ set_f((float_t)v); }
-	Innocence(avoid<double>::type v){ set_f((float_t)v); }
-	Innocence(avoid<long double>::type v){ set_f((float_t)v); }
+	Any(avoid<int>::type v){ set_i((int_t)v); }
+	Any(avoid<long>::type v){ set_i((int_t)v); }
+	Any(avoid<short>::type v){ set_i((int_t)v); }
+	Any(avoid<char>::type v){ set_i((int_t)v); }
+	Any(avoid<unsigned int>::type v){ set_i((int_t)v); }
+	Any(avoid<unsigned long>::type v){ set_i((int_t)v); }
+	Any(avoid<unsigned short>::type v){ set_i((int_t)v); }
+	Any(avoid<unsigned char>::type v){ set_i((int_t)v); }
+	Any(avoid<signed char>::type v){ set_i((int_t)v); }
+	Any(avoid<float>::type v){ set_f((float_t)v); }
+	Any(avoid<double>::type v){ set_f((float_t)v); }
+	Any(avoid<long double>::type v){ set_f((float_t)v); }
 	
-	Innocence(PrimitiveType type){
+	Any(PrimitiveType type){
 		type_ = type;
 		value_ = 0;
 	}
 
 	struct noinit_t{};
-	Innocence(noinit_t){}
+	Any(noinit_t){}
 	
 protected:
 
@@ -85,18 +84,18 @@ protected:
 
 public:
 
-	friend int_t type(const Innocence& v);
-	friend int_t ivalue(const Innocence& v);
-	friend float_t fvalue(const Innocence& v);
-	friend Base* pvalue(const Innocence& v);
-	friend uint_t rawvalue(const Innocence& v);
-	friend bool raweq(const Innocence& a, const Innocence& b);
-	friend bool rawne(const Innocence& a, const Innocence& b);
-	friend bool rawlt(const Innocence& a, const Innocence& b);
-	friend void swap(Innocence& a, Innocence& b);
-	friend void set_null_force(Innocence& v);
-	friend void set_undefined_force(Innocence& v);
-	friend void copy_innocence(Innocence& v, const Innocence& u);
+	friend int_t type(const Any& v);
+	friend int_t ivalue(const Any& v);
+	friend float_t fvalue(const Any& v);
+	friend Base* pvalue(const Any& v);
+	friend uint_t rawvalue(const Any& v);
+	friend bool raweq(const Any& a, const Any& b);
+	friend bool rawne(const Any& a, const Any& b);
+	friend bool rawlt(const Any& a, const Any& b);
+	friend void swap(Any& a, Any& b);
+	friend void set_null_force(Any& v);
+	friend void set_undefined_force(Any& v);
+	friend void copy_innocence(Any& v, const Any& u);
 
 public:
 
@@ -123,24 +122,6 @@ protected:
 		Base* pvalue_;
 		SmallString svalue_;
 	};
-};
-
-/**
-* @brief any
-*
-*/
-class Any : public Innocence{
-protected:
-
-	// 直接 Anyを作ることは出来ない
-
-	Any(){}
-		
-	Any(noinit_t n):Innocence(n){}
-
-	Any(const Any& v):Innocence(v){}
-	
-	~Any(){}
 
 public:
 
@@ -386,38 +367,38 @@ private:
 
 };
 
-inline int_t type(const Innocence& v){ 
+inline int_t type(const Any& v){ 
 	return v.type_ & TYPE_MASK; 
 }
 
-inline int_t ivalue(const Innocence& v){ 
+inline int_t ivalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_INT);
 	return v.value_; 
 }
 
-inline float_t fvalue(const Innocence& v){ 
+inline float_t fvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
 	return *(float_t*)v.fvalue_bytes; 
 }
 
-inline Base* pvalue(const Innocence& v){ 
+inline Base* pvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
 	return v.pvalue_; 
 }
 
-inline uint_t rawvalue(const Innocence& v){
+inline uint_t rawvalue(const Any& v){
 	return (uint_t)(v.value_);
 }
 
-inline bool raweq(const Innocence& a, const Innocence& b){
+inline bool raweq(const Any& a, const Any& b){
 	return type(a)==type(b) && a.value_==b.value_;
 }
 
-inline bool rawne(const Innocence& a, const Innocence& b){
+inline bool rawne(const Any& a, const Any& b){
 	return !raweq(a, b);
 }
 
-inline bool rawlt(const Innocence& a, const Innocence& b){
+inline bool rawlt(const Any& a, const Any& b){
 	if(type(a)<type(b))
 		return true;
 	if(type(b)<type(a))
@@ -425,17 +406,17 @@ inline bool rawlt(const Innocence& a, const Innocence& b){
 	return a.value_<b.value_;
 }
 
-inline void set_null_force(Innocence& v){
+inline void set_null_force(Any& v){
 	v.type_ = TYPE_NULL;
 	v.value_ = 0;
 }
 
-inline void set_undefined_force(Innocence& v){
+inline void set_undefined_force(Any& v){
 	v.type_ = TYPE_UNDEFINED;
 	v.value_ = 0;
 }
 
-inline void copy_innocence(Innocence& v, const Innocence& u){
+inline void copy_innocence(Any& v, const Any& u){
 	v = u;
 }
 

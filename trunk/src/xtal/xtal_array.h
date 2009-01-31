@@ -182,12 +182,6 @@ public:
 	StringPtr join(const StringPtr& sep);
 
 	/**
-	* @brief ‚±‚Ì”z—ñ‚Ì•¶š—ñ•\Œ»‚ğ•Ô‚·
-	*
-	*/
-	StringPtr to_s();
-
-	/**
 	* @brief ©g‚ğ•Ô‚·
 	*
 	*/
@@ -300,9 +294,6 @@ public:
 	MultiValuePtr flatten_mv();
 
 	MultiValuePtr flatten_all_mv();
-
-	StringPtr to_s();
-
 };
 
 inline MultiValuePtr mv(){

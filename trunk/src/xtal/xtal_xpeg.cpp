@@ -497,7 +497,7 @@ void NFA::add_transition(int from, const AnyPtr& ch, int to){
 }
 
 void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
-	const ElementPtr& t = static_ptr_cast<Element>(a);
+	const ElementPtr& t = unchecked_ptr_cast<Element>(a);
 
 	switch(t->type){
 		XTAL_DEFAULT{
@@ -602,8 +602,8 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 			states[before].capture_kind = CAPTURE_BEGIN;
 			states[after].capture_kind = CAPTURE_END;
-			states[before].capture_name = static_ptr_cast<ID>(t->param2);
-			states[after].capture_name = static_ptr_cast<ID>(t->param2);
+			states[before].capture_name = unchecked_ptr_cast<ID>(t->param2);
+			states[after].capture_name = unchecked_ptr_cast<ID>(t->param2);
 			cap_list_->push_back(t->param2);
 			cap_max_++;
 
@@ -628,11 +628,11 @@ const NFAPtr& Executor::fetch_nfa(const ElementPtr& node){
 	
 	const AnyPtr& temp = nfa_map_->at(node);
 	if(temp){
-		return static_ptr_cast<NFA>(temp);
+		return unchecked_ptr_cast<NFA>(temp);
 	}
 	else{
 		nfa_map_->set_at(node, xnew<NFA>(node));
-		return static_ptr_cast<NFA>(nfa_map_->at(node));
+		return unchecked_ptr_cast<NFA>(nfa_map_->at(node));
 	}
 }
 
@@ -713,10 +713,10 @@ AnyPtr Executor::captures_values(){
 
 StringPtr Executor::at(const StringPtr& key){
 	if(raweq(key, empty_id)){
-		return static_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
+		return unchecked_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
 	}
 	else{
-		const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(key));
+		const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key));
 
 		if(temp->end>=0 && temp->end-temp->begin>0){
 			return scanner_->capture(temp->begin, temp->end);
@@ -734,10 +734,10 @@ StringPtr Executor::at(const StringPtr& key){
 
 AnyPtr Executor::call(const StringPtr& key){
 	if(raweq(key, empty_id)){
-		return static_ptr_cast<Scanner>(scanner_)->capture_values(match_begin_, match_end_);
+		return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(match_begin_, match_end_);
 	}
 	else{		
-		const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(key));
+		const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key));
 
 		if(temp->end>=0 && temp->end-temp->begin>0){
 			return scanner_->capture_values(temp->begin, temp->end);
@@ -754,19 +754,19 @@ AnyPtr Executor::call(const StringPtr& key){
 }
 
 StringPtr Executor::prefix(){
-	return static_ptr_cast<Scanner>(scanner_)->capture(begin_, match_begin_);
+	return unchecked_ptr_cast<Scanner>(scanner_)->capture(begin_, match_begin_);
 }
 
 StringPtr Executor::suffix(){
-	return static_ptr_cast<Scanner>(scanner_)->capture(match_end_);
+	return unchecked_ptr_cast<Scanner>(scanner_)->capture(match_end_);
 }
 
 AnyPtr Executor::prefix_values(){
-	return static_ptr_cast<Scanner>(scanner_)->capture_values(begin_, match_begin_)->each();
+	return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(begin_, match_begin_)->each();
 }
 
 AnyPtr Executor::suffix_values(){
-	return static_ptr_cast<Scanner>(scanner_)->capture_values(match_end_)->each();
+	return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(match_end_)->each();
 }
 
 const AnyPtr& Executor::read(){
@@ -792,7 +792,7 @@ void Executor::push(uint_t mins, uint_t cur_state, uint_t nodes, const SState& p
 }
 
 bool Executor::match_inner(const AnyPtr& anfa){
-	const NFAPtr& nfa = static_ptr_cast<NFA>(anfa);
+	const NFAPtr& nfa = unchecked_ptr_cast<NFA>(anfa);
 
 	int_t nodenum = tree_->size();
 	uint_t mins = stack_.size();
@@ -845,13 +845,13 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				XTAL_CASE(NFA::CAPTURE_NONE){}
 
 				XTAL_CASE(NFA::CAPTURE_BEGIN){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_name));
+					const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(state.capture_name));
 					temp->begin = pos.pos;
 					temp->end = -1;
 				}
 
 				XTAL_CASE(NFA::CAPTURE_END){
-					const SmartPtr<Cap>& temp = static_ptr_cast<Cap>(cap_->at(state.capture_name));
+					const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(state.capture_name));
 					temp->end = pos.pos;
 				}
 			}
@@ -872,7 +872,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 }
 
 bool Executor::test(const AnyPtr& ae){
-	const ElementPtr& e = static_ptr_cast<Element>(ae);
+	const ElementPtr& e = unchecked_ptr_cast<Element>(ae);
 
 	switch(e->type){
 		XTAL_NODEFAULT;
@@ -916,7 +916,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_CH_SET){
-			const MapPtr& data = static_ptr_cast<Map>(e->param1);
+			const MapPtr& data = unchecked_ptr_cast<Map>(e->param1);
 			if(data->at(scanner_->read())){ return !e->inv; }
 			return e->inv;
 		}
@@ -928,12 +928,12 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_GREED){
-			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			return match_inner(nfa)!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_BEFORE){
-			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			Scanner::State state = scanner_->save();
 			bool ret = match_inner(nfa);
 			scanner_->load(state);
@@ -941,7 +941,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_AFTER){
-			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			Scanner::State state = scanner_->save();
 			Scanner::State fict_state = state;
 			fict_state.pos = fict_state.pos > (uint_t)e->param3 ? fict_state.pos-e->param3 : 0;
@@ -952,7 +952,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_LEAF){
-			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			int_t pos = scanner_->pos();
 			if(match_inner(nfa)){
 				if(tree_){
@@ -969,7 +969,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_NODE){
-			const NFAPtr& nfa = fetch_nfa(static_ptr_cast<Element>(e->param1));
+			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			int_t pos = scanner_->pos();
 			if(tree_){
 				int_t nodenum = tree_->size() - e->param3;
@@ -994,8 +994,8 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_BACKREF){
 			const SmartPtr<Cap>& temp = type(e->param1)==TYPE_INT
-				? static_ptr_cast<Cap>(cap_->at(ivalue(e->param1)))
-				: static_ptr_cast<Cap>(cap_->at(e->param1));
+				? unchecked_ptr_cast<Cap>(cap_->at(ivalue(e->param1)))
+				: unchecked_ptr_cast<Cap>(cap_->at(e->param1));
 			if(temp && temp->end>=0 && temp->end-temp->begin>0){
 				return (scanner_->eat_capture(temp->begin, temp->end))!=e->inv;
 			}
@@ -1225,7 +1225,7 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
-		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(Named(Xid(stream_or_iterator), empty_id)));
+		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->params(Xid(stream_or_iterator), empty_id));
 		p->method(Xid(reset), &Executor::reset);
 		p->method(Xid(parse), &Executor::parse);
 		p->method(Xid(match), &Executor::match);
@@ -1240,7 +1240,7 @@ void initialize_xpeg(){
 		p->method(Xid(suffix_values), &Executor::suffix_values);
 		p->method(Xid(errors), &Executor::errors);
 		p->method(Xid(read), &Executor::read);
-		p->method(Xid(peek), &Executor::peek)->param(Named(Xid(n), 0));
+		p->method(Xid(peek), &Executor::peek)->params(Xid(n), 0);
 		p->method(Xid(tree), &Executor::tree);
 	}
 

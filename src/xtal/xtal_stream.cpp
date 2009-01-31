@@ -316,7 +316,7 @@ void MemoryStream::resize(uint_t size){
 //////////////////////////////////////////////////////////////////////////
 
 StringStream::StringStream(const StringPtr& str)
-:str_(str ? str : static_ptr_cast<String>(empty_id)){
+:str_(str ? str : unchecked_ptr_cast<String>(empty_id)){
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
@@ -496,14 +496,14 @@ void initialize_stream(){
 	{
 		ClassPtr p = new_cpp_class<Stream>(Xid(Stream));
 		
-		p->method(Xid(get_s), &Stream::get_s)->param(Xid(length));
+		p->method(Xid(get_s), &Stream::get_s);
 		p->method(Xid(get_s_all), &Stream::get_s_all);
 		p->method(Xid(put_s), &Stream::put_s);
 
 		p->method(Xid(print), &Stream::print);
 		p->method(Xid(println), &Stream::println);
 
-		p->method(Xid(seek), &Stream::seek)->param(null, Named(Xid(whence), Stream::XSEEK_SET));
+		p->method(Xid(seek), &Stream::seek)->params(null, null, Xid(whence), Stream::XSEEK_SET);
 		p->method(Xid(tell), &Stream::tell);
 		p->method(Xid(pour), &Stream::pour);
 		p->method(Xid(pour_all), &Stream::pour_all);
@@ -562,6 +562,34 @@ void initialize_stream(){
 	if(stderr){
 		builtin()->def(Xid(stderr), xnew<StdioStream>(stderr));
 	}
+}
+
+void initialize_stream_script(){
+	Xemb((
+
+Stream::scan: method(pattern) fiber{
+	exec: xpeg::Executor(this);
+	while(exec.match(pattern)){
+		yield exec;
+	}
+}
+
+Stream::split: method(pattern) fiber{
+	exec: xpeg::Executor(this);
+	if(exec.match(pattern)){
+		yield exec.prefix;
+		while(exec.match(pattern)){
+			yield exec.prefix;
+		}
+		yield exec.suffix;
+	}
+	else{
+		yield this.to_s;
+	}
+}
+	),
+		""
+	)->call();
 }
 
 }

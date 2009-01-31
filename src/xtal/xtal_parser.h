@@ -73,7 +73,7 @@ public:
 	int_t type() const{ return type_; }
 	bool left_space() const{ return (flags_ & FLAG_LEFT_SPACE) != 0; }
 	bool right_space() const{ return (flags_ & FLAG_RIGHT_SPACE) != 0; }
-	int_t ivalue() const{ return ::xtal::ivalue((Innocence&)value_); }
+	int_t ivalue() const{ return ::xtal::ivalue((Any&)value_); }
 	float_t fvalue() const{ return ::xtal::fvalue(value_); }
 	const IDPtr& identifier() const{ return *(IDPtr*)&value_; }
 	u16 keyword_number() const{ return keyword_number_; }
@@ -145,7 +145,7 @@ private:
 	uint_t pos_;
 	uint_t read_;
 
-	string_t recorded_string_;
+	MemoryStreamPtr recorded_ms_;
 	bool recording_;
 };
 	
@@ -249,6 +249,7 @@ private:
 
 	Reader reader_;
 	MapPtr keyword_map_;
+	MemoryStreamPtr ms_;
 
 	enum{ BUF_SIZE = 64, BUF_MASK = BUF_SIZE-1 };
 	Token buf_[BUF_SIZE];

@@ -209,31 +209,9 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 	}
 	return from_this(this);
 }
-
+	
 StringPtr Array::join(const StringPtr& sep){
-	MemoryStreamPtr ret(xnew<MemoryStream>());
-	if(sep->data_size()==0){
-		for(uint_t i = 0, sz = size(); i<sz; ++i){
-			ret->put_s(at(i)->to_s());
-		}
-	}
-	else{
-		for(uint_t i = 0, sz = size(); i<sz; ++i){
-			ret->put_s(at(i)->to_s());
-			if(i<sz-1){
-				ret->put_s(sep);
-			}
-		}
-	}
-	return ret->to_s();
-}
-
-StringPtr Array::to_s(){
-	MemoryStreamPtr ret(xnew<MemoryStream>());
-	ret->put_s("[");
-	ret->put_s(join(", "));
-	ret->put_s("]");
-	return ret->to_s();
+	return ptr_cast<String>(send(Xid(join), sep));
 }
 
 bool Array::op_eq(const ArrayPtr& other){
@@ -348,14 +326,6 @@ MultiValuePtr MultiValue::flatten_all_mv(){
 	return ret;
 }
 
-StringPtr MultiValue::to_s(){
-	MemoryStreamPtr ret(xnew<MemoryStream>());
-	ret->put_s("(");
-	ret->put_s(join(", "));
-	ret->put_s(")");
-	return ret->to_s();
-}
-
 //////////////////////////////////////////////
 
 void initialize_array(){
@@ -370,8 +340,7 @@ void initialize_array(){
 		ClassPtr p = new_cpp_class<Array>(Xid(Array));
 		p->inherit(Iterable());
 
-		p->def(Xid(new), ctor<Array, int_t>()->param(Named(Xid(size), 0)));
-		
+		p->def(Xid(new), ctor<Array, int_t>()->params(Xid(size), 0));
 		
 		p->method_static<uint_t (Array::*)(), &Array::size>(Xid(size));
 		p->method_static<uint_t (Array::*)(), &Array::size>(Xid(length));
@@ -384,11 +353,9 @@ void initialize_array(){
 		p->method_static<void (Array::*)(const AnyPtr&), &Array::push_back>(Xid(push_back));
 		p->method_static<void (Array::*)(const AnyPtr&), &Array::push_front>(Xid(push_front));
 
-		p->method(Xid(erase), &Array::erase)->param(Xid(i), Named(Xid(n), 1));
+		p->method(Xid(erase), &Array::erase)->params(Xid(i), null, Xid(n), 1);
 		p->method(Xid(insert), &Array::insert);
-		p->method(Xid(to_s), &Array::to_s);
 		p->method(Xid(to_a), &Array::to_a);
-		p->method(Xid(join), &Array::join)->param(Named(Xid(sep), empty_id));
 		p->method(Xid(each), &Array::each);
 		p->method(Xid(clone), &Array::clone);
 		p->method(Xid(front), &Array::front);
@@ -409,10 +376,9 @@ void initialize_array(){
 		ClassPtr p = new_cpp_class<MultiValue>(Xid(MultiValue));
 		p->inherit(get_cpp_class<Array>());
 
-		p->def(Xid(new), ctor<MultiValue, int_t>()->param(Named(Xid(size), 0)));
+		p->def(Xid(new), ctor<MultiValue, int_t>()->params(Xid(size), 0));
 		p->method(Xid(clone), &MultiValue::clone);
 		p->method(Xid(to_a), &Array::clone);
-		p->method(Xid(to_s), &MultiValue::to_s);
 		p->method(Xid(to_mv), &Any::self);
 		p->method(Xid(flatten_mv), &MultiValue::flatten_mv);
 		p->method(Xid(flatten_all_mv), &MultiValue::flatten_all_mv);
@@ -425,6 +391,42 @@ void initialize_array(){
 
 	builtin()->def(Xid(Array), get_cpp_class<Array>());
 	builtin()->def(Xid(MultiValue), get_cpp_class<MultiValue>());
+}
+
+void initialize_array_script(){
+Xemb((
+	Array::block_first: method this.each.block_first;
+
+Array::join: method(sep: ""){
+	sep = sep.to_s;
+	ms: MemoryStream();
+	if(sep===""){
+		this.each{
+			ms.put_s(it.to_s);
+		}
+	}
+	else{
+		this.each{
+			if(!first_step){
+				ms.put_s(sep);
+			}
+			ms.put_s(it.to_s);
+		}
+	}
+	return ms.to_s;
+}
+
+Array::to_s: method{
+	return %f([%s])(this.join(", "));
+}
+MultiValue::to_s: method{
+	return %f((%s))(this.join(", "));
+}
+
+),
+""
+)->call();
+
 }
 
 }

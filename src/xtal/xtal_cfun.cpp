@@ -84,8 +84,8 @@ const CFunPtr& CFun::param(
 
 //{REPEAT{{
 /*
-const CFunPtr& CFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const AnyPtr& value`i`#){
-	return param(#REPEAT_COMMA#Named(key`i`, value`i`)#);
+const CFunPtr& CFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#){
+	return param(#REPEAT_COMMA#Named(key`i`, ap(value`i`))#);
 }
 */
 
@@ -93,24 +93,24 @@ const CFunPtr& CFun::params(){
 	return param();
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0){
-	return param(Named(key0, value0));
+const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0){
+	return param(Named(key0, ap(value0)));
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1){
-	return param(Named(key0, value0), Named(key1, value1));
+const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1){
+	return param(Named(key0, ap(value0)), Named(key1, ap(value1)));
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2){
-	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2));
+const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2){
+	return param(Named(key0, ap(value0)), Named(key1, ap(value1)), Named(key2, ap(value2)));
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3){
-	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2), Named(key3, value3));
+const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3){
+	return param(Named(key0, ap(value0)), Named(key1, ap(value1)), Named(key2, ap(value2)), Named(key3, ap(value3)));
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3, const IDPtr& key4, const AnyPtr& value4){
-	return param(Named(key0, value0), Named(key1, value1), Named(key2, value2), Named(key3, value3), Named(key4, value4));
+const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4){
+	return param(Named(key0, ap(value0)), Named(key1, ap(value1)), Named(key2, ap(value2)), Named(key3, ap(value3)), Named(key4, ap(value4)));
 }
 
 //}}REPEAT}

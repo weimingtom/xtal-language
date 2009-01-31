@@ -12,22 +12,6 @@ public:
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	virtual void rawcall(const VMachinePtr& vm);
-	
-	/**
-	* @brief nameメンバを取得する。
-	* 可触性を考慮したメンバ取得
-	*
-	* @retval undefined そのメンバは存在しない
-	* @retval 非undefined nameに対応したメンバ  
-	*/
-	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
-
-	/**
-	* @brief nameメソッド呼び出しをする
-	*
-	* 引数や戻り値はvmを通してやり取りする。
-	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr& )null, const AnyPtr& self = (const AnyPtr& )null, bool inherited_too = true);
 
 	/**
 	* @brief nameメンバを初期値valueで定義する。
@@ -40,42 +24,6 @@ public:
 	*
 	*/
 	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
-
-	/**
-	* @brief 整数に変換して返す。
-	*
-	*/
-	int_t to_i();
-	
-	/**
-	* @brief 浮動小数点数に変換して返す。
-	*
-	*/
-	float_t to_f();
-	
-	/**
-	* @brief 文字列に変換して返す。
-	*
-	*/
-	StringPtr to_s();
-
-	/**
-	* @brief 配列に変換して返す。
-	*
-	*/
-	ArrayPtr to_a();
-
-	/**
-	* @brief 連想配列に変換して返す。
-	*
-	*/
-	MapPtr to_m();
-
-	/**
-	* @brief clsクラスのインスタンスか調べる。
-	*
-	*/
-	bool is(const AnyPtr& klass);
 
 	/**
 	* @brief nameメンバを取得する。
@@ -114,12 +62,6 @@ public:
 	*/
 	virtual uint_t hashcode();
 
-	/**
-	* @brief 自身を文字列化してprintlnする。
-	* @return 自身を返す。
-	*/
-	AnyPtr p();
-
 public:
 	
 	Base();
@@ -141,7 +83,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		if(p){ ((Base*)p)->class_ = Innocence((int_t)size); }
+		if(p){ ((Base*)p)->class_ = Any((int_t)size); }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }
@@ -180,7 +122,7 @@ private:
 	InstanceVariables* instance_variables_;
 
 	// 所属クラス
-	Innocence class_;
+	Any class_;
 	
 private:
 

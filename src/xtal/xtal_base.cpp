@@ -72,30 +72,6 @@ Base::~Base(){
 	}
 }
 
-int_t Base::to_i(){
-	return cast<int_t>(send(Xid(to_i)));
-}
-
-float_t Base::to_f(){
-	return cast<float_t>(send(Xid(to_f)));
-}
-
-StringPtr Base::to_s(){
-	return ptr_cast<String>(send(Xid(to_s)));
-}
-
-ArrayPtr Base::to_a(){
-	return ptr_cast<Array>(send(Xid(to_a)));
-}
-
-MapPtr Base::to_m(){
-	return ptr_cast<Map>(send(Xid(to_m)));
-}
-
-AnyPtr Base::p(){
-	return send(Xid(p));
-}
-
 void Base::set_class(const ClassPtr& c){
 	if(instance_variables_==&empty_instance_variables){
 		class_ = c;
@@ -112,24 +88,15 @@ void Base::set_class(const ClassPtr& c){
 }
 	
 void Base::rawcall(const VMachinePtr& vm){
-	ap(Innocence(this))->rawsend(vm, Xid(op_call));
+	ap(Any(this))->rawsend(vm, Xid(op_call));
 }
 
 const AnyPtr& Base::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){ 
 	return undefined;
 }
 
-
-const AnyPtr& Base::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){ 
-	return ap(Innocence(this))->member(primary_key, secondary_key, self, inherited_too); 
-}
-
 void Base::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 
-}
-
-void Base::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
-	ap(Innocence(this))->rawsend(vm, primary_key, secondary_key, self, inherited_too);
 }
 
 StringPtr Base::object_name(int_t depth){
@@ -144,12 +111,8 @@ void Base::set_object_name(const StringPtr& name, int_t force, const AnyPtr& par
 
 }
 
-bool Base::is(const AnyPtr& klass){
-	return ap(Innocence(this))->is(klass);
-}
-
 uint_t Base::hashcode(){
-	return (uint_t)this;
+	return ((uint_t)this)>>2;
 }
 
 void Base::make_instance_variables(){

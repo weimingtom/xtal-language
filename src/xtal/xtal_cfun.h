@@ -10,8 +10,8 @@ struct ReturnResult{
 		vm->return_result();
 	}
 
-	static void return_result2(const VMachinePtr& vm, const Innocence& ret, Bool<1>){
-		vm->return_result(ap(ret));
+	static void return_result2(const VMachinePtr& vm, const AnyPtr& ret, Bool<1>){
+		vm->return_result(ret);
 	}
 		
 	template<class T>
@@ -1343,20 +1343,20 @@ public:
 public:
 //{REPEAT{{
 /*
-	const CFunPtr& params(#REPEAT_COMMA#const IDPtr& key`i`, const AnyPtr& value`i`#);
+	const CFunPtr& params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#);
 */
 
 	const CFunPtr& params();
 
-	const CFunPtr& params(const IDPtr& key0, const AnyPtr& value0);
+	const CFunPtr& params(const IDPtr& key0, const Any& value0);
 
-	const CFunPtr& params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1);
+	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1);
 
-	const CFunPtr& params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2);
+	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2);
 
-	const CFunPtr& params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3);
+	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3);
 
-	const CFunPtr& params(const IDPtr& key0, const AnyPtr& value0, const IDPtr& key1, const AnyPtr& value1, const IDPtr& key2, const AnyPtr& value2, const IDPtr& key3, const AnyPtr& value3, const IDPtr& key4, const AnyPtr& value4);
+	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4);
 
 //}}REPEAT}
 public:

@@ -52,11 +52,11 @@ AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_xor_assign)
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shr_assign), b->get_class(), b); return a; }
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shl_assign), b->get_class(), b); return a; }
 
-Innocence::Innocence(const char_t* str){
+Any::Any(const char_t* str){
 	*this = xnew<String>(str);
 }
 
-Innocence::Innocence(const avoid<char>::type* str){
+Any::Any(const avoid<char>::type* str){
 	*this = xnew<String>(str);
 }
 
@@ -65,24 +65,24 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 }
 
 void SmartPtr<Any>::set_p_with_class(Base* p, const ClassPtr& c){
-	Innocence::set_p(p);
+	Any::set_p(p);
 	p->set_class(c);
 	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, with_class_t)
-	:Innocence(p){
+	:Any(p){
 	p->set_class(c);
 	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, with_class_t)
-	:Innocence(p){
+	:Any(p){
 	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, with_class_t)
-	:Innocence(p){
+	:Any(p){
 	register_gc(p);
 }
 
@@ -144,7 +144,7 @@ StringPtr Any::to_s() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ if(const StringPtr& ret = ptr_as<String>(ap(*this)))return ret; }
-		XTAL_CASE(TYPE_SMALL_STRING){ static_ptr_cast<String>(ap(*this)); }
+		XTAL_CASE(TYPE_SMALL_STRING){ unchecked_ptr_cast<String>(ap(*this)); }
 	}
 	return ptr_cast<String>((*this).send(Xid(to_s)));
 }
@@ -236,7 +236,7 @@ AnyPtr Any::s_save() const{
 			ret->set_at(it->object_name(), vm->result_and_cleanup_call());
 		}
 		else{
-			ret->set_at(it->object_name(), serial_save(static_ptr_cast<Class>(it)));
+			ret->set_at(it->object_name(), serial_save(unchecked_ptr_cast<Class>(it)));
 		}
 	}
 
@@ -259,7 +259,7 @@ void Any::s_load(const AnyPtr& v) const{
 			vm->cleanup_call();
 		}
 		else{
-			serial_load(static_ptr_cast<Class>(it), ret->at(it->object_name()));
+			serial_load(unchecked_ptr_cast<Class>(it), ret->at(it->object_name()));
 		}
 	}
 }
@@ -360,7 +360,7 @@ void initialize_any(){
 		p->method(Xid(class), &Any::get_class);
 		p->method(Xid(get_class), &Any::get_class);
 		p->method(Xid(self), &Any::self);
-		p->method(Xid(object_name), &Any::object_name)->param(Named(Xid(depth), -1));
+		p->method(Xid(object_name), &Any::object_name)->params(Xid(depth), -1);
 		p->method(Xid(s_save), &Any::s_save);
 		p->method(Xid(s_load), &Any::s_load);
 		p->method(Xid(to_mv), &Any::to_mv);

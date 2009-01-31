@@ -90,25 +90,6 @@ MapPtr Map::cat_assign(const MapPtr& a){
 	return from_this(this);
 }
 
-StringPtr Map::to_s(){
-	if(empty())
-		return xnew<String>("[:]");
-
-	MemoryStreamPtr ms = xnew<MemoryStream>();
-	ms->put_s("[");
-	for(iterator p = begin(); p!=end(); ++p){
-		if(p!=begin()){
-			ms->put_s(",");
-		}
-
-		ms->put_s(p->first->to_s());
-		ms->put_s(":");
-		ms->put_s(p->second->to_s());
-	}
-	ms->put_s("]");
-	return ms->to_s();
-}
-
 bool Map::op_eq(const MapPtr& a){
 	if(size()!=a->size())
 		return false;
@@ -162,7 +143,6 @@ void Map::push_all(const VMachinePtr& vm){
 	}	
 }
 
-
 AnyPtr Set::each(){
 	return xnew<MapIter>(from_this(this), 3);
 }
@@ -179,7 +159,6 @@ void initialize_map(){
 		p->inherit(Iterable());
 		
 		p->def(Xid(new), ctor<Map>());
-		p->method(Xid(to_s), &Map::to_s);
 		p->method(Xid(to_m), &Map::to_m);
 		p->method(Xid(size), &Map::size);
 		p->method(Xid(length), &Map::length);
@@ -212,4 +191,38 @@ void initialize_map(){
 	builtin()->def(Xid(Map), get_cpp_class<Map>());
 	builtin()->def(Xid(Set), get_cpp_class<Set>());
 }
+
+void initialize_map_script(){
+Xemb((
+	
+Map::block_first: method this.each.block_first;
+
+Map::to_s: method{
+	if(this.empty){
+		return "[:]";
+	}
+
+	ms: MemoryStream();
+	ms.put_s("[");
+	this.each{ |k, v|
+		if(!first_step){
+			ms.put_s(",");
+		}
+
+		ms.put_s(k.to_s);
+		ms.put_s(":");
+		ms.put_s(v.to_s);
+	}
+	ms.put_s("]");
+	return ms.to_s;
+}
+
+Set::to_s: method{
+	return this.each_key[].to_s;
+}
+	),
+	""
+	)->call();
+}
+
 }

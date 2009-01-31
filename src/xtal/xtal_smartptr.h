@@ -41,7 +41,7 @@ template<class T>
 struct InheritedN{
 	enum{
 		value = IsInherited<T, Base>::value ? INHERITED_BASE : 
-			IsInherited<T, Innocence>::value ? INHERITED_INNOCENCE : INHERITED_OTHER
+			IsInherited<T, Any>::value ? INHERITED_INNOCENCE : INHERITED_OTHER
 	};
 };
 
@@ -103,7 +103,7 @@ extern deleter_t deleter;
 * @brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
 */
 template<>
-class SmartPtr<Any> : public Innocence{
+class SmartPtr<Any> : public Any{
 public:
 	
 	SmartPtr(){}
@@ -115,7 +115,7 @@ public:
 	}
 
 	SmartPtr(const SmartPtr<Any>& p)
-		:Innocence(p){
+		:Any(p){
 		inc_ref_count();
 	}
 
@@ -134,22 +134,22 @@ public:
 	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
 
 	explicit SmartPtr(PrimitiveType type)
-		:Innocence(type){}
+		:Any(type){}
 
 	explicit SmartPtr(Base* p)
-		:Innocence(p){
+		:Any(p){
 		p->inc_ref_count();
 	}
 
 	~SmartPtr(){
 		dec_ref_count();
-		//*(Innocence*)this = Innocence();
+		//*(Any*)this = Any();
 	}
 
 protected:
 
-	explicit SmartPtr(const Innocence& innocence)
-		:Innocence(innocence){}
+	explicit SmartPtr(const Any& innocence)
+		:Any(innocence){}
 
 	struct with_class_t{};
 
@@ -198,7 +198,7 @@ public:
 	*
 	*/
 	SmartPtr(const char_t* str)
-		:Innocence(str){
+		:Any(str){
 		inc_ref_count();
 	}
 
@@ -207,7 +207,7 @@ public:
 	*
 	*/
 	SmartPtr(const avoid<char>::type* str)
-		:Innocence(str){
+		:Any(str){
 		inc_ref_count();
 	}
 
@@ -246,13 +246,13 @@ public:
 
 public:
 
-	friend inline const AnyPtr& ap(const Innocence& v){
+	friend inline const AnyPtr& ap(const Any& v){
 		return (const AnyPtr&)v;
 	}
 
 	friend inline SmartPtr<Any>& ap_copy(SmartPtr<Any>& a, const SmartPtr<Any>& b){
 		a.dec_ref_count();
-		*(Innocence*)&a = b;
+		*(Any*)&a = b;
 		a.inc_ref_count();
 		return a;
 	}
@@ -280,7 +280,7 @@ public:
 
 	template<class U>
 	SmartPtr(XNewEssence0<U>)
-		:Innocence(Innocence::noinit_t()){
+		:Any(Any::noinit_t()){
 		gene<U>(SmartPtrSelector<InheritedN<U>::value>());
 	}
 	
@@ -295,7 +295,7 @@ public:
 
 	template<class U, class A0>
 	SmartPtr(const XNewEssence1<U, A0>& x)
-		:Innocence(Innocence::noinit_t()){
+		:Any(Any::noinit_t()){
 		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0);
 	}
 	
@@ -310,7 +310,7 @@ public:
 
 	template<class U, class A0, class A1>
 	SmartPtr(const XNewEssence2<U, A0, A1>& x)
-		:Innocence(Innocence::noinit_t()){
+		:Any(Any::noinit_t()){
 		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0, x.a1);
 	}
 	
@@ -330,7 +330,7 @@ protected:
 
 	template<class U>
 	void gene(SmartPtrSelector<INHERITED_INNOCENCE>){
-		Innocence::operator =(U());
+		Any::operator =(U());
 	}
 
 	template<class U>
@@ -350,7 +350,7 @@ protected:
 
 	template<class U, class A0>
 	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0){
-		Innocence::operator =(U(a0));
+		Any::operator =(U(a0));
 	}
 
 	template<class U, class A0>
@@ -370,7 +370,7 @@ protected:
 
 	template<class U, class A0, class A1>
 	void gene(SmartPtrSelector<INHERITED_INNOCENCE>, const A0& a0, const A1& a1){
-		Innocence::operator =(U(a0, a1));
+		Any::operator =(U(a0, a1));
 	}
 
 	template<class U, class A0, class A1>
@@ -455,7 +455,7 @@ public:
 	}
 
 	SmartPtr(SmartPtrSelector<INHERITED_INNOCENCE>, T* p){ 
-		*(Innocence*)this = *(Innocence*)p; 
+		*(Any*)this = *(Any*)p; 
 		inc_ref_count();
 	}
 
@@ -763,12 +763,12 @@ inline XNewEssence2<T, A0, A1> xnew_lazy(const A0& a0, const A1& a1){
 
 template<class T>
 inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p){
-	return *(SmartPtr<T>*)(Innocence*)p;
+	return *(SmartPtr<T>*)(Any*)p;
 }
 
 template<class T>
 inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_INNOCENCE>, const T* p){
-	return *(SmartPtr<T>*)(Innocence*)p; 
+	return *(SmartPtr<T>*)(Any*)p; 
 }
 
 /**
@@ -817,13 +817,13 @@ struct SmartPtrCtor3<ID>{
 	static AnyPtr call(type v);
 };
 
-inline void inc_ref_count_force(const Innocence& v){
+inline void inc_ref_count_force(const Any& v){
 	if(type(v)==TYPE_BASE){
 		pvalue(v)->inc_ref_count();
 	}
 }
 
-inline void dec_ref_count_force(const Innocence& v){
+inline void dec_ref_count_force(const Any& v){
 	if(type(v)==TYPE_BASE){
 		pvalue(v)->dec_ref_count();
 	}
@@ -876,10 +876,10 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 }
 
 inline void visit_members(Visitor& m, Base* p){
-	m & ap(Innocence(p));
+	m & ap(Any(p));
 }
 
-inline void visit_members(Visitor& m, const Innocence& p){
+inline void visit_members(Visitor& m, const Any& p){
 	m & ap(p);
 }
 

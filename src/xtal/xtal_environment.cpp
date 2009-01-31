@@ -13,7 +13,7 @@ VMachinePtr Environment::vm_take_over(){
 	if(vm_list_->empty()){
 		vm_list_->push_back(xnew<VMachine>());
 	}
-	VMachinePtr vm = static_ptr_cast<VMachine>(vm_list_->back());
+	VMachinePtr vm = unchecked_ptr_cast<VMachine>(vm_list_->back());
 	vm_list_->pop_back();
 	return vm;
 }
@@ -23,7 +23,7 @@ void Environment::vm_take_back(const VMachinePtr& vm){
 	vm_list_->push_back(vm);
 }
 
-const AnyPtr& Environment::MemberCacheTable::cache(const Innocence& target_class, const IDPtr& primary_key, const Innocence& secondary_key, const Innocence& self, bool inherited_too, uint_t global_mutate_count){
+const AnyPtr& Environment::MemberCacheTable::cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count){
 	uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
 	uint_t iprimary_key = rawvalue(primary_key);
 	uint_t ins = rawvalue(secondary_key);
@@ -52,7 +52,7 @@ const AnyPtr& Environment::MemberCacheTable::cache(const Innocence& target_class
 	}
 }
 
-bool Environment::IsInheritedCacheTable::cache_is(const Innocence& target_class, const Innocence& klass, uint_t global_mutate_count){
+bool Environment::IsInheritedCacheTable::cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count){
 	uint_t itarget_class = rawvalue(target_class);
 	uint_t iklass = rawvalue(klass);
 
@@ -69,13 +69,13 @@ bool Environment::IsInheritedCacheTable::cache_is(const Innocence& target_class,
 		unit.target_class = itarget_class;
 		unit.klass = iklass;
 		unit.mutate_count = global_mutate_count;
-		unit.result = static_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+		unit.result = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
 
 		return unit.result;
 	}
 }
 
-bool Environment::IsInheritedCacheTable::cache_is_inherited(const Innocence& target_class, const Innocence& klass, uint_t global_mutate_count){
+bool Environment::IsInheritedCacheTable::cache_is_inherited(const Any& target_class, const Any& klass, uint_t global_mutate_count){
 	uint_t itarget_class = rawvalue(target_class);
 	uint_t iklass = rawvalue(klass);
 

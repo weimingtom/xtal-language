@@ -7,7 +7,7 @@ void initialize_any();
 void initialize_string();
 void initialize_map();
 void initialize_array();
-void initialize_basic_type();
+void initialize_basictype();
 void initialize_code();
 void initialize_frame();
 void initialize_debug();
@@ -20,6 +20,15 @@ void initialize_builtin();
 void initialize_xpeg();
 void initialize_except();
 void initialize_iterator();
+
+void initialize_basictype_script();
+void initialize_iterator_script();
+void initialize_string_script();
+void initialize_stream_script();
+void initialize_thread_script();
+void initialize_frame_script();
+void initialize_array_script();
+void initialize_map_script();
 
 void display_debug_memory();
 
@@ -86,7 +95,7 @@ void Environment::initialize(){
 	};
 
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		*holders[i] = (ClassPtr&)ap(Innocence((Class*)Base::operator new(sizeof(CppClass))));
+		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
 	}
 	
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
@@ -165,7 +174,7 @@ void initialize(){
 
 	initialize_except();
 	initialize_any();
-	initialize_basic_type();
+	initialize_basictype();
 	initialize_array();
 	initialize_map();
 	initialize_iterator();
@@ -184,6 +193,15 @@ void initialize(){
 
 	initialize_xpeg();
 	initialize_builtin();
+
+	initialize_basictype_script();
+	initialize_iterator_script();
+	initialize_string_script();
+	initialize_stream_script();
+	initialize_thread_script();
+	initialize_frame_script();
+	initialize_array_script();
+	initialize_map_script();
 }
 
 void uninitialize(){

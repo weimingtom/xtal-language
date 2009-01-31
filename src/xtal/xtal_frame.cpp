@@ -194,7 +194,7 @@ AnyPtr Class::inherited_classes(){
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	for(int_t i = mixins_->size(); i>0; --i){
-		static_ptr_cast<Class>(mixins_->at(i-1))->init_instance(self, vm);
+		unchecked_ptr_cast<Class>(mixins_->at(i-1))->init_instance(self, vm);
 	}
 	
 	if(core()->instance_variable_size){
@@ -229,12 +229,12 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 }
 
 const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
-	return static_ptr_cast<CFun>(def2(primary_key, 
+	return unchecked_ptr_cast<CFun>(def2(primary_key, 
 		xnew<CFun>(fun, val, val_size, param_n), secondary_key, accessibility));
 }
 
 const CFunPtr& Class::def_and_return(const IDPtr& primary_key, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
-	return static_ptr_cast<CFun>(def2(primary_key, 
+	return unchecked_ptr_cast<CFun>(def2(primary_key, 
 		xnew<CFun>(fun, val, val_size, param_n), null, KIND_PUBLIC));
 }
 
@@ -274,7 +274,7 @@ const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondar
 
 const AnyPtr& Class::bases_member(const IDPtr& name){
 	for(int_t i = mixins_->size(); i>0; --i){
-		if(const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i-1))->member(name)){
+		if(const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i-1))->member(name)){
 			return ret;
 		}
 	}
@@ -307,7 +307,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	// 継承しているクラスを順次検索
 	if(inherited_too){
 		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = static_ptr_cast<Class>(mixins_->at(i))->member(primary_key, secondary_key, self);
+			const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i))->member(primary_key, secondary_key, self);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -389,7 +389,7 @@ bool Class::is_inherited_cpp_class(){
 	}
 
 	for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-		if(static_ptr_cast<Class>(mixins_->at(i))->is_inherited_cpp_class()){
+		if(unchecked_ptr_cast<Class>(mixins_->at(i))->is_inherited_cpp_class()){
 			return true;
 		}
 	}
@@ -574,7 +574,7 @@ void Singleton::init_singleton(const VMachinePtr& vm){;
 }
 
 void Singleton::rawcall(const VMachinePtr& vm){
-	ap(Innocence(this))->rawsend(vm, Xid(op_call));
+	ap(Any(this))->rawsend(vm, Xid(op_call));
 }
 
 void Singleton::s_new(const VMachinePtr& vm){
@@ -609,7 +609,7 @@ void initialize_frame(){
 		p->method(Xid(s_new), &Class::s_new);
 		p->method(Xid(inherited_classes), &Class::inherited_classes);
 		p->method(Xid(is_inherited), &Any::is_inherited);
-		p->method(Xid(find_near_member), &Class::find_near_member)->param(Xid(primary_key), Named(Xid(secondary_key), null));
+		p->method(Xid(find_near_member), &Class::find_near_member)->params(Xid(primary_key), null, Xid(secondary_key), null);
 	}
 
 	{
@@ -629,6 +629,48 @@ void initialize_frame(){
 	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
 	builtin()->def(Xid(lib), lib());
 	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
+}
+
+void initialize_frame_script(){
+	Xemb((
+Class::ancestors: method{
+	if(this===Any){
+		return null;
+	}			
+	
+	return fiber{
+		this.inherited_classes{
+			yield it;
+			it.ancestors{
+				yield it;
+			}
+		}
+
+		yield Any;
+	}
+}
+
+Class::members: method(inherited_too: true){
+	if(!inherited_too){
+		return Frame::members();
+	}
+
+	return fiber{
+		this.members(false){
+			yield it;
+		}
+
+		this.ancestors{
+			it.members(false){
+				yield it;
+			}
+		}
+	}
+}
+	),
+""
+)->call();
+
 }
 
 }

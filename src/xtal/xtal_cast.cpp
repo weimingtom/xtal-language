@@ -70,7 +70,7 @@ bool CastHelper<const char_t*>::can_cast(const AnyPtr& a){
 }
 
 const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 
-	return static_ptr_cast<String>(a)->c_str();
+	return unchecked_ptr_cast<String>(a)->c_str();
 }
 
 ////////////////////////////////////////////////////////////

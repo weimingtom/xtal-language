@@ -297,9 +297,16 @@ public:
 	* cls->fun("name", &foo); ‚Í cls->def("name", xtal::fun(&foo)); ‚Æ“¯ˆê
 	*/
 	template<class TFun>
-	const CFunPtr& fun(const IDPtr& primary_key, TFun f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const CFunPtr& fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cfun_holder<TFun> fun_t;
 		fun_t fun(f);
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
+	}
+
+	template<class TFun, TFun fun_s>
+	const CFunPtr& fun_static(const IDPtr& primary_key, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef cfun_holder_static<TFun, fun_s> fun_t;
+		fun_t fun;
 		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
 	}
 
@@ -407,7 +414,7 @@ public:
 protected:
 
 	const CFunPtr& def_and_return(const IDPtr& primary_key, const CFunPtr& cfun, const AnyPtr& secondary_key, int_t accessibility){
-		return static_ptr_cast<CFun>(def2(primary_key, cfun, secondary_key, accessibility));
+		return unchecked_ptr_cast<CFun>(def2(primary_key, cfun, secondary_key, accessibility));
 	}
 
 	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);

@@ -25,12 +25,6 @@ public:
 	String(const avoid<char>::type* str);
 
 	/**
-	* @brief STLの文字列から構築する
-	*
-	*/
-	String(const string_t& str);
-
-	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
@@ -249,12 +243,6 @@ public:
 	ID(const avoid<char>::type* str);
 
 	/**
-	* @brief STLの文字列から構築する
-	*
-	*/
-	ID(const string_t& str);
-
-	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
@@ -306,9 +294,9 @@ public:
 
 public:
 
-	const StringPtr& left(){ return static_ptr_cast<String>(left_); }
+	const StringPtr& left(){ return unchecked_ptr_cast<String>(left_); }
 
-	const StringPtr& right(){ return static_ptr_cast<String>(right_); }
+	const StringPtr& right(){ return unchecked_ptr_cast<String>(right_); }
 
 	AnyPtr each();
 };
@@ -344,28 +332,14 @@ struct Named2{
 		:name(null), value(undefined){}
 };
 
-struct Param : public Named2{
-	template<class T>
-	Param(const T& value)
-		:Named2(null, value){}
-	
-	Param(const AnyPtr& value)
-		:Named2(null, value){}
-
-	Param(const IDPtr& name, const AnyPtr& value)
-		:Named2(name, value){}
-
-	Param(){}
-};
-
 /**
 * @brief 名前付き引数のトリックのためのクラス
 *
 */
-struct Named : public Param{
+struct Named : public Named2{
 
 	Named(const IDPtr& name, const AnyPtr& value)
-		:Param(name, value){}
+		:Named2(name, value){}
 
 	Named(){}
 

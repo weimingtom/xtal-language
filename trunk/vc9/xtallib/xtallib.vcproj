@@ -168,6 +168,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_anyptr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_array.cpp"
 				>
 			</File>
@@ -280,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_vmachine2.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_xpeg.cpp"
 				>
 			</File>
@@ -307,6 +315,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_any.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_anyptr.h"
 				>
 			</File>
 			<File

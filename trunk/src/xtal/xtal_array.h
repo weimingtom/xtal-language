@@ -206,7 +206,7 @@ public:
 	void clear();
 
 	/**
-	* @brief —v‘f‚ğÅ‰‚©‚ç‚ÂIterator‚ğ•Ô‚·
+	* @brief —v‘f‚ğÅ‰‚©‚ç”½•œ‚Å‚«‚éIterator‚ğ•Ô‚·
 	*
 	*/
 	AnyPtr each();
@@ -279,6 +279,25 @@ protected:
 	AnyPtr* values_;
 	uint_t size_;
 	uint_t capa_;
+
+	virtual void visit_members(Visitor& m);
+};
+
+class ArrayIter : public Base{
+public:
+
+	ArrayIter(const ArrayPtr& a, bool reverse = false);
+			
+	void block_next(const VMachinePtr& vm);
+
+public:
+
+	bool block_next_direct(AnyPtr& ret);
+
+private:
+	ArrayPtr array_;
+	int_t index_;
+	bool reverse_;
 
 	virtual void visit_members(Visitor& m);
 };

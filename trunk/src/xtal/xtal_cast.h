@@ -49,7 +49,7 @@ inline const void* cast_helper_helper(const AnyPtr& a, const Any*, const U*){
 	return cast_helper_helper_innocence(a, get_cpp_class<U>()); 
 }
 	
-// •ÏŠ·Œã‚ÌŒ^‚ªAnyPtr‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
 inline const void* cast_helper_helper(const AnyPtr& a, const void*, const U*){
 	return cast_helper_helper_other(a, get_cpp_class<U>()); 

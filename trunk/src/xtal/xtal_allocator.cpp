@@ -25,12 +25,14 @@ void rbtree_alloc_free(void* p){
 #if 0//def XTAL_DEBUG
 
 struct SizeAndCount{
-	SizeAndCount(int a = 0, int b = 0){
+	SizeAndCount(int a = 0, int b = 0, bool c = false){
 		size = a;
 		count = b;
+		small = c;
 	}
 	int size;
 	int count;
+	bool small;
 };
 
 std::map<void*, SizeAndCount> mem_map_;
@@ -38,14 +40,30 @@ int gcounter = 0;
 
 void* debug_malloc(size_t size){
 	void* ret = malloc(size);
-	if(gcounter==18150){
-		gcounter = gcounter;
-	}
 	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
 	return ret;
 }
 
 void debug_free(void* p){
+	if(!p){ return; }
+	XTAL_ASSERT(mem_map_.find(p)!=mem_map_.end());
+	XTAL_ASSERT(!mem_map_[p].small);
+	memset(p, 0xcd, mem_map_[p].size);
+	free(p);
+	mem_map_.erase(p);
+}
+
+void* so_malloc(size_t size){
+	void* ret = malloc(size);
+	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++, true)));
+	return ret;
+}
+
+void so_free(void* p, size_t size){
+	if(!p){ return; }
+	XTAL_ASSERT(mem_map_.find(p)!=mem_map_.end());
+	XTAL_ASSERT(mem_map_[p].small);
+	XTAL_ASSERT(size==mem_map_[p].size);
 	memset(p, 0xcd, mem_map_[p].size);
 	free(p);
 	mem_map_.erase(p);
@@ -73,6 +91,15 @@ void display_debug_memory(){
 	//printf("-------------------\n");
 	//rbtree_alloc_.debug_print();
 }
+
+void* so_malloc(size_t size){
+	return so_alloc_.malloc(size);
+}
+
+void so_free(void* p, size_t size){
+	so_alloc_.free(p, size);
+}
+
 
 #endif
 
@@ -113,13 +140,6 @@ void user_free(void* p){
 	user_free_(p);
 }
 
-void* so_malloc(size_t size){
-	return so_alloc_.malloc(size);
-}
-
-void so_free(void* p, size_t size){
-	so_alloc_.free(p, size);
-}
 
 void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*)){
 	XTAL_ASSERT(used_user_malloc_size_==0);
@@ -534,7 +554,7 @@ void RBTreeAllocator::debug_print(){
 
 void FixedAllocator::Chunk::init(uint_t blocks, uint_t block_size){
 	blocks_available_ = blocks_ = blocks;
-	data_t*p = buf();
+	data_t* p = buf();
 	for(uint_t i=0; i<blocks; p+=block_size,++i){
 		*p = p+block_size;
 	}
@@ -692,7 +712,7 @@ void SmallObjectAllocator::free(void* p, size_t size){
 
 void SmallObjectAllocator::release(){
 	for(int i=0; i<POOL_SIZE; ++i){
-		pool_[i].release(sizeof(data_t)*(i+1));
+		pool_[i].release(i+1);
 	}	
 }
 

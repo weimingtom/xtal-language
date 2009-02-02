@@ -5,7 +5,7 @@
 
 namespace xtal{
 
-static uint_t make_string_hashcode(const char_t* str, uint_t size){
+uint_t string_hashcode(const char_t* str, uint_t size){
 	uint_t hash = 2166136261U;
 	for(uint_t i=0; i<size; ++i){
 		hash = hash*137 ^ str[i];
@@ -13,7 +13,7 @@ static uint_t make_string_hashcode(const char_t* str, uint_t size){
 	return hash;
 }
 
-static void make_string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
+void string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
 	hash = 2166136261U;
 	length = 0;
 
@@ -35,7 +35,7 @@ static void make_string_hashcode_and_length(const char_t* str, uint_t size, uint
 	}
 }
 
-static void make_string_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
+void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
 	hash = 2166136261U;
 	length = 0;
 	size = 0;
@@ -59,31 +59,7 @@ static void make_string_size_and_hashcode_and_length(const char_t* str, uint_t& 
 	}
 }
 
-static void make_small_string_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
-	hash = 2166136261U;
-	length = 0;
-	size = 0;
-
-	ChMaker chm;
-
-	uint_t i=0;
-	while(str[i] && i<Any::SMALL_STRING_MAX){
-		chm.clear();
-		while(!chm.is_completed()){
-			if(str[i] && i<Any::SMALL_STRING_MAX){ chm.add(str[i++]); } 
-			else{ break; }
-		}
-	
-		for(int_t j=0; j<chm.pos; ++j){
-			hash = hash*137 ^ chm.buf[j];
-		}
-
-		length += 1;
-		size += chm.pos;
-	}
-}
-
-static uint_t count_string_length(const char_t* str){
+uint_t string_length(const char_t* str){
 	ChMaker chm;
 	uint_t length = 0;
 	uint_t i=0;
@@ -98,7 +74,7 @@ static uint_t count_string_length(const char_t* str){
 	return length;
 }
 
-static uint_t string_size_z(const char_t* str){
+uint_t string_data_size(const char_t* str){
 	uint_t ret = 0;
 	while(*str++){
 		ret++;
@@ -174,157 +150,9 @@ AnyPtr ChRange::each(){
 
 ////////////////////////////////////////////////////////////////
 
-class StringMgr : public GCObserver{
-public:
-
-	struct Key{
-		const char_t* str;
-		uint_t size;
-		uint_t hashcode;
-	};
-
-	struct Fun{
-		static uint_t hash(const Key& key){
-			return key.hashcode;
-		}
-
-		static bool eq(const Key& a, const Key& b){
-			return a.hashcode==b.hashcode && a.size==b.size && memcmp(a.str, b.str, a.size*sizeof(char_t))==0;
-		}
-	};
-
-	typedef Hashtable<Key, IDPtr, Fun> table_t; 
-	table_t table_;
-
-	struct Fun2{
-		static uint_t hash(const void* key){
-			return ((uint_t)key)>>3;
-		}
-
-		static bool eq(const void* a, const void* b){
-			return a==b;
-		}
-	};
-
-	typedef Hashtable<const void*, IDPtr, Fun2> table2_t; 
-	table2_t table2_;
-
-	StringMgr(){
-		guard_ = 0;
-	}
-
-protected:
-
-	int_t guard_;
-
-	struct Guard{
-		int_t& count;
-		Guard(int_t& c):count(c){ count++; }
-		~Guard(){ count--; }
-	private:
-		void operator=(const Guard&);
-	};
-
-	virtual void visit_members(Visitor& m){
-		GCObserver::visit_members(m);
-		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
-			m & it->second;
-		}		
-	}
-
-public:
-
-	const IDPtr& insert(const char_t* str, uint_t size){
-		uint_t hashcode, length;
-		make_string_hashcode_and_length(str, size, hashcode, length);
-		return insert(str, size, hashcode, length);
-	}
-
-	const IDPtr& insert(const char_t* str){
-		uint_t hashcode, length, size;
-		make_string_size_and_hashcode_and_length(str, size, hashcode, length);
-		return insert(str, size, hashcode, length);
-	}
-
-	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash, uint_t length);
-
-	const IDPtr& insert_literal_string(const char_t* str){
-		IDPtr& ret = table2_[str];
-		if(!ret){
-			uint_t hashcode, length, size;
-			make_string_size_and_hashcode_and_length(str, size, hashcode, length);
-			ret = insert(str, size, hashcode, length);
-		}
-		return ret;
-	}
-
-	virtual void before_gc();
-};
-
-const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, uint_t length){
-	Guard guard(guard_);
-
-	Key key = {str, size, hashcode};
-	table_t::iterator it = table_.find(key, hashcode);
-	if(it!=table_.end()){
-		return it->second;
-	}
-
-	it = table_.insert(key, xnew<ID>(str, size, hashcode, length), hashcode).first;
-	it->first.str = it->second->data();
-	return it->second;
-}
-
-void StringMgr::before_gc(){
-	return;
-
-	if(guard_){
-		return;
-	}
-}
-
-
-namespace{
-
-SmartPtr<StringMgr> str_mgr_;
-
-void uninitialize_string(){
-	str_mgr_ = null;
-}
-
-}
-
-class InternedStringIter : public Base{
-	StringMgr::table_t::iterator iter_, last_;
-public:
-
-	InternedStringIter()
-		:iter_(str_mgr_->table_.begin()), last_(str_mgr_->table_.end()){
-	}
-			
-	void block_next(const VMachinePtr& vm){
-		if(iter_!=last_){
-			vm->return_result(from_this(this), iter_->second);
-			++iter_;
-		}
-		else{
-			vm->return_result(null, null);
-		}
-	}
-};
-
-AnyPtr interned_strings(){
-	return xnew<InternedStringIter>();
-}
-
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 	return edit_distance(str1->data(), str1->data_size()*sizeof(char_t), str2->data(), str2->data_size()*sizeof(char_t));
 }
-
-const IDPtr& string_literal_to_id(const char_t* str){
-	return str_mgr_->insert_literal_string(str);
-}
-
 
 ////////////////////////////////////////////////////////////////
 
@@ -335,9 +163,9 @@ void String::init_string(const char_t* str, uint_t sz){
 	}
 	else{
 		uint_t hash, length;
-		make_string_hashcode_and_length(str, sz, hash, length);
+		string_hashcode_and_length(str, sz, hash, length);
 		if(length<=1){
-			set_p(pvalue(str_mgr_->insert(str, sz, hash, length)));
+			set_p(pvalue(xtal::intern(str, sz, hash, length)));
 			pvalue(*this)->inc_ref_count();
 		}
 		else{
@@ -350,7 +178,7 @@ void String::init_string(const char_t* str, uint_t sz){
 
 
 String::String(const char_t* str):Any(noinit_t()){
-	init_string(str, string_size_z(str));
+	init_string(str, string_data_size(str));
 }
 
 String::String(const avoid<char>::type* str):Any(noinit_t()){
@@ -437,7 +265,7 @@ String::String(const char_t* str, uint_t size, uint_t hashcode, uint_t length, b
 	}
 	else{
 		if(!intern_flag && length<=1){
-			set_p(pvalue(str_mgr_->insert(str, sz, hashcode, length)));
+			set_p(pvalue(xtal::intern(str, sz, hashcode, length)));
 			pvalue(*this)->inc_ref_count();
 		}
 		else{
@@ -474,8 +302,8 @@ const char_t* String::c_str(){
 	}
 	else{
 		uint_t size, hash, length;
-		make_string_size_and_hashcode_and_length(svalue_, size, hash, length);
-		return str_mgr_->insert(svalue_, size, hash, length)->data();
+		string_data_size_and_hashcode_and_length(svalue_, size, hash, length);
+		return xtal::intern(svalue_, size, hash, length)->data();
 	}
 }
 
@@ -508,7 +336,7 @@ uint_t String::length(){
 		return ((LargeString*)pvalue(*this))->length();
 	}
 	else{
-		return count_string_length(svalue_);
+		return string_length(svalue_);
 	}
 }
 
@@ -524,7 +352,7 @@ const IDPtr& String::intern(){
 	if(type(*this)==TYPE_BASE){
 		LargeString* p = ((LargeString*)pvalue(*this));
 		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
-		return unchecked_ptr_cast<ID>(str_mgr_->insert(p->c_str(), p->data_size(), p->hashcode(), p->length()));
+		return unchecked_ptr_cast<ID>(xtal::intern(p->c_str(), p->data_size(), p->hashcode(), p->length()));
 	}
 	else{
 		return unchecked_ptr_cast<ID>(ap(*this));
@@ -633,7 +461,7 @@ uint_t String::hashcode(){
 		return ((LargeString*)pvalue(*this))->hashcode();
 	}
 	else{
-		return make_string_hashcode(svalue_, data_size());
+		return string_hashcode(svalue_, data_size());
 	}
 }
 	
@@ -719,7 +547,7 @@ LargeString::LargeString(const char_t* str1, uint_t size1, const char_t* str2, u
 	common_init(size1 + size2);
 	std::memcpy(str_.p, str1, size1*sizeof(char_t));
 	std::memcpy(str_.p+size1, str2, size2*sizeof(char_t));
-	make_string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
+	string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
 }
 
 LargeString::LargeString(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
@@ -771,7 +599,7 @@ void LargeString::became_unified(){
 	rope_.right->dec_ref_count();
 	str_.p = memory;
 	flags_ = 0;
-	make_string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
+	string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
 }
 
 void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
@@ -794,7 +622,7 @@ void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
 
 
 ID::ID(const char_t* str)
-	:String(*str_mgr_->insert(str)){}
+	:String(*xtal::intern(str)){}
 
 ID::ID(const avoid<char>::type* str)	
 	:String(noinit_t()){
@@ -809,10 +637,10 @@ ID::ID(const avoid<char>::type* str)
 }
 
 ID::ID(const char_t* str, uint_t size)
-	:String(*str_mgr_->insert(str, size)){}
+	:String(*xtal::intern(str, size)){}
 
 ID::ID(const char_t* begin, const char_t* last)
-	:String(*str_mgr_->insert(begin, last-begin)){}
+	:String(*xtal::intern(begin, last-begin)){}
 
 ID::ID(char_t a)
 	:String(noinit_t()){
@@ -866,7 +694,7 @@ AnyPtr SmartPtrCtor2<String>::call(type v){
 }
 
 AnyPtr SmartPtrCtor1<ID>::call(type v){
-	return str_mgr_->insert(v);
+	return intern(v);
 }
 
 AnyPtr SmartPtrCtor2<ID>::call(type v){
@@ -878,10 +706,7 @@ AnyPtr SmartPtrCtor3<ID>::call(type v){
 	return xnew<ID>(v);
 }
 
-void initialize_string(){
-	register_uninitializer(&uninitialize_string);
-	str_mgr_ = xnew<StringMgr>();
-		
+void initialize_string(){		
 	{
 		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
 		p->inherit(Iterator());
@@ -925,13 +750,13 @@ void initialize_string(){
 		p->method(Xid(op_eq), &String::op_eq, get_cpp_class<String>());
 		p->method(Xid(op_lt), &String::op_lt, get_cpp_class<String>());
 	}
-
+/*
 	{
 		ClassPtr p = new_cpp_class<InternedStringIter>(Xid(InternedStringIter));
 		p->inherit(Iterator());
 		p->method(Xid(block_next), &InternedStringIter::block_next);
 	}
-
+*/
 	set_cpp_class<ID>(get_cpp_class<String>());
 }
 

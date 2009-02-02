@@ -87,4 +87,28 @@ public:
 	AnyPtr each();
 };
 
+class HaveName : public Base{
+public:
+
+	HaveName()
+		:name_(null), force_(0){}
+
+	virtual StringPtr object_name(int_t depth = -1);
+
+	virtual int_t object_name_force();
+
+	virtual void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
+
+protected:
+
+	StringPtr name_;
+	AnyPtr parent_;
+	int_t force_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & name_ & parent_;
+	}	
+};
+
 }

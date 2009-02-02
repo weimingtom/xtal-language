@@ -498,7 +498,7 @@ void initialize_stream(){
 		
 		p->method(Xid(get_s), &Stream::get_s);
 		p->method(Xid(get_s_all), &Stream::get_s_all);
-		p->method(Xid(put_s), &Stream::put_s);
+		p->method(Xid(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
 
 		p->method(Xid(print), &Stream::print);
 		p->method(Xid(println), &Stream::println);

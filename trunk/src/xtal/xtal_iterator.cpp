@@ -20,62 +20,74 @@ void Iterator_block_first(const VMachinePtr& vm){
 class ZipIter : public Base{
 public:
 
-	ZipIter(const VMachinePtr& vm){
-		next = xnew<Array>(vm->ordered_arg_count());
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			next->set_at(i, vm->arg(i));
-		}
-	}
+	ZipIter(const VMachinePtr& vm);
 
-	void common(const VMachinePtr& vm, const IDPtr& id){
-		bool all = true;
-		value = xnew<MultiValue>(next->size());
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			vm->setup_call(2);
-			next->at(i)->rawsend(vm, id);
-			next->set_at(i, vm->result(0));
-			value->set_at(i, vm->result(1));
-			vm->cleanup_call();
-			if(!next->at(i))
-				all = false;
-		}
-		if(all){
-			vm->return_result(from_this(this), value);
-		}
-		else{
-			vm->return_result(null, null);
-		}
-	}
+	void common(const VMachinePtr& vm, const IDPtr& id);
 
-	void block_first(const VMachinePtr& vm){
-		common(vm, Xid(block_first));
-	}
+	void block_first(const VMachinePtr& vm);
 	
-	void block_next(const VMachinePtr& vm){
-		common(vm, Xid(block_next));
-	}
+	void block_next(const VMachinePtr& vm);
 
-	void block_break(const VMachinePtr& vm){
-		IDPtr id = Xid(block_break);
-		for(int_t i = 0, len = next->size(); i<len; ++i){
-			vm->setup_call(0);
-			next->at(i)->rawsend(vm, id);
-			if(!vm->processed()){
-				vm->return_result();	
-			}
-			vm->cleanup_call();
-		}
-		vm->return_result();
-	}
+	void block_break(const VMachinePtr& vm);
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & next & value;
-	}
+	virtual void visit_members(Visitor& m);
 
 	ArrayPtr next;
 	ArrayPtr value;
 };
+
+ZipIter::ZipIter(const VMachinePtr& vm){
+	next = xnew<Array>(vm->ordered_arg_count());
+	for(int_t i = 0, len = next->size(); i<len; ++i){
+		next->set_at(i, vm->arg(i));
+	}
+}
+
+void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
+	bool all = true;
+	value = xnew<MultiValue>(next->size());
+	for(int_t i = 0, len = next->size(); i<len; ++i){
+		vm->setup_call(2);
+		next->at(i)->rawsend(vm, id);
+		next->set_at(i, vm->result(0));
+		value->set_at(i, vm->result(1));
+		vm->cleanup_call();
+		if(!next->at(i))
+			all = false;
+	}
+	if(all){
+		vm->return_result(from_this(this), value);
+	}
+	else{
+		vm->return_result(null, null);
+	}
+}
+
+void ZipIter::block_first(const VMachinePtr& vm){
+	common(vm, Xid(block_first));
+}
+
+void ZipIter::block_next(const VMachinePtr& vm){
+	common(vm, Xid(block_next));
+}
+
+void ZipIter::block_break(const VMachinePtr& vm){
+	IDPtr id = Xid(block_break);
+	for(int_t i = 0, len = next->size(); i<len; ++i){
+		vm->setup_call(0);
+		next->at(i)->rawsend(vm, id);
+		if(!vm->processed()){
+			vm->return_result();	
+		}
+		vm->cleanup_call();
+	}
+	vm->return_result();
+}
+
+void ZipIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & next & value;
+}
 
 void DelegateToIterator::rawcall(const VMachinePtr& vm){
 	vm->get_arg_this()->send(Xid(each))->rawsend(vm, member_);
@@ -101,14 +113,9 @@ void block_break(AnyPtr& target){
 }
 
 bool block_next(BlockValueHolder1& holder, bool first){
-	if(holder.array){
-		if(holder.it==holder.array->end()){
+	if(holder.it){
+		if(!holder.it->block_next_direct(holder.values[0])){
 			holder.target = null;
-			holder.values[0] = null;
-		}
-		else{
-			holder.values[0] = *holder.it;
-			++holder.it;
 		}
 	}
 	else{
@@ -123,16 +130,9 @@ bool block_next(BlockValueHolder1& holder, bool first){
 }
 
 bool block_next(BlockValueHolder2& holder, bool first){
-	if(holder.map){
-		if(holder.it==holder.map->end()){
+	if(holder.it){
+		if(!holder.it->block_next_direct(holder.values[0], holder.values[1])){
 			holder.target = null;
-			holder.values[0] = null;
-			holder.values[1] = null;
-		}
-		else{
-			holder.values[0] = holder.it->first;
-			holder.values[1] = holder.it->second;
-			++holder.it;
 		}
 	}
 	else{
@@ -162,15 +162,18 @@ bool block_next(BlockValueHolder3& holder, bool first){
 BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	array = ptr_as<Array>(tar);
-	if(array){ it = array->begin(); }
+	const ArrayPtr& array = ptr_as<Array>(tar);
+	if(array){ it = unchecked_ptr_cast<ArrayIter>(array->each()); }
+	else{ 
+		it = ptr_as<ArrayIter>(tar); 
+	}
 }
 
 BlockValueHolder1::BlockValueHolder1(const ArrayPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	array = tar;
-	if(array){ it = array->begin(); }
+	const ArrayPtr& array = tar;
+	if(array){ it = unchecked_ptr_cast<ArrayIter>(array->each()); }
 }
 
 BlockValueHolder1::~BlockValueHolder1(){ 
@@ -180,17 +183,19 @@ BlockValueHolder1::~BlockValueHolder1(){
 BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	map = ptr_as<Map>(tar);
-	if(map){ it = map->begin(); }
+	const MapPtr& map = ptr_as<Map>(tar);
+	if(map){ it = unchecked_ptr_cast<MapIter>(map->each()); }
+	else{ 
+		it = ptr_as<MapIter>(tar); 
+	}
 }
 
 BlockValueHolder2::BlockValueHolder2(const MapPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	map = tar;
-	if(map){ it = map->begin(); }
+	const MapPtr& map = tar;
+	if(map){ it = unchecked_ptr_cast<MapIter>(map->each()); }
 }
-
 
 BlockValueHolder2::~BlockValueHolder2(){ 
 	block_break(target); 
@@ -204,7 +209,6 @@ BlockValueHolder3::BlockValueHolder3(const AnyPtr& tar, bool& not_end)
 BlockValueHolder3::~BlockValueHolder3(){ 
 	block_break(target); 
 }
-
 
 ///
 

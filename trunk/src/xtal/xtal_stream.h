@@ -20,6 +20,13 @@ public:
 	}
 
 	/**
+	* @brief 文字列strをストリームに流す
+	*/
+	void put_s(const char_t* str){
+		write(str, string_data_size(str));
+	}
+
+	/**
 	* @brief length文字分ストリームから取り出し、文字列として返す。
 	*/
 	virtual StringPtr get_s(uint_t length);

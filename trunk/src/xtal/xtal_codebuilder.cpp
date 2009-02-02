@@ -106,7 +106,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	result_->identifier_table_ = xnew<Array>();
 	identifier_map_ = xnew<Map>();
-	register_identifier(empty_id);
+	regster_identifier(empty_id);
 
 	result_->value_table_ = xnew<Array>();
 	value_map_ = xnew<Map>();
@@ -212,7 +212,7 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		put_inst(InstSetGlobalVariable(register_identifier(var)));
+		put_inst(InstSetGlobalVariable(regster_identifier(var)));
 		return false;
 	}
 }
@@ -259,7 +259,7 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 	}
 	else{
 		if(rhs) compile_expr(rhs);
-		put_inst(InstDefineGlobalVariable(register_identifier(var)));
+		put_inst(InstDefineGlobalVariable(regster_identifier(var)));
 	}
 }
 
@@ -279,20 +279,20 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		put_inst(InstGlobalVariable(register_identifier(var)));
+		put_inst(InstGlobalVariable(regster_identifier(var)));
 		return false;
 	}
 }
 
-int_t CodeBuilder::register_identifier_or_compile_expr(const AnyPtr& var){
+int_t CodeBuilder::regster_identifier_or_compile_expr(const AnyPtr& var){
 	if(const IDPtr& id = ptr_as<ID>(var)){ 
-		return register_identifier(id);
+		return regster_identifier(id);
 	}
 	compile_expr(ep(var)); 
 	return 0;
 }
 
-int_t CodeBuilder::register_identifier(const IDPtr& v){
+int_t CodeBuilder::regster_identifier(const IDPtr& v){
 	if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
 	result_->identifier_table_->push_back(v);
 	identifier_map_->set_at(v, result_->identifier_table_->size()-1);
@@ -317,7 +317,7 @@ int_t CodeBuilder::append_value(const AnyPtr& v){
 }
 
 void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key){
-	int_t key = register_identifier_or_compile_expr(var);
+	int_t key = regster_identifier_or_compile_expr(var);
 	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
 
 	if(secondary_key){
@@ -360,7 +360,7 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 		compile_expr(eb_.pop()); 
 	}
 	else{
-		key = register_identifier(Xid(set_)->cat(ptr_as<ID>(var)));
+		key = regster_identifier(Xid(set_)->cat(ptr_as<ID>(var)));
 	}
 	
 	if(secondary_key){
@@ -384,7 +384,7 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 }
 
 void CodeBuilder::put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key){
-	int_t key = register_identifier_or_compile_expr(var);
+	int_t key = regster_identifier_or_compile_expr(var);
 
 	if(secondary_key){
 		compile_expr(secondary_key);
@@ -921,7 +921,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 
 		}
 		else{
-			put_inst(InstGlobalVariable(register_identifier(term->lvar_name())));
+			put_inst(InstGlobalVariable(regster_identifier(term->lvar_name())));
 			put_inst(inst);
 			put_set_local_code(term->lvar_name());
 		}
@@ -1169,12 +1169,12 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 				if(v1->cdefine_member_ns()){
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
 					info.entry->value = val;
-					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 				else{
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
 					info.entry->value = val;
-					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 			}
 		}
@@ -1775,7 +1775,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
-				int_t key = register_identifier_or_compile_expr(e2->send_name());
+				int_t key = regster_identifier_or_compile_expr(e2->send_name());
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
@@ -1789,7 +1789,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
-				int_t key = register_identifier_or_compile_expr(e2->send_name());
+				int_t key = regster_identifier_or_compile_expr(e2->send_name());
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
@@ -1821,7 +1821,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MEMBER){
 			compile_expr(e->member_term());
-			int_t key = register_identifier_or_compile_expr(e->member_name());
+			int_t key = regster_identifier_or_compile_expr(e->member_name());
 
 			if(e->member_ns()){
 				compile_expr(e->member_ns());
@@ -1834,7 +1834,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MEMBER_Q){
 			compile_expr(e->member_term());
-			int_t key = register_identifier_or_compile_expr(e->member_name());
+			int_t key = regster_identifier_or_compile_expr(e->member_name());
 			
 			if(e->member_ns()){
 				compile_expr(e->member_ns());

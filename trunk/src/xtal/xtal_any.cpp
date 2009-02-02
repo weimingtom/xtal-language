@@ -3,7 +3,6 @@
 
 namespace xtal{
 
-
 AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }
 AnyPtr operator -(const AnyPtr& a){ return a->send(Xid(op_neg)); }
 AnyPtr operator ~(const AnyPtr& a){ return a->send(Xid(op_com)); }
@@ -58,32 +57,6 @@ Any::Any(const char_t* str){
 
 Any::Any(const avoid<char>::type* str){
 	*this = xnew<String>(str);
-}
-
-SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
-	return ap_copy(*this, p);
-}
-
-void SmartPtr<Any>::set_p_with_class(Base* p, const ClassPtr& c){
-	Any::set_p(p);
-	p->set_class(c);
-	register_gc(p);
-}
-
-SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, with_class_t)
-	:Any(p){
-	p->set_class(c);
-	register_gc(p);
-}
-
-SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, with_class_t)
-	:Any(p){
-	register_gc(p);
-}
-
-SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, with_class_t)
-	:Any(p){
-	register_gc(p);
 }
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
@@ -270,7 +243,7 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
-		if(CodePtr code = p->code()){
+		if(const CodePtr& code = p->code()){
 			ClassCore* core = p->core();
 			if(core->instance_variable_size!=0){	
 				MapPtr insts = xnew<Map>();
@@ -291,8 +264,8 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
-		if(MapPtr insts = ptr_as<Map>(v)){
-			if(CodePtr code = p->code()){
+		if(const MapPtr& insts = ptr_as<Map>(v)){
+			if(const CodePtr& code = p->code()){
 				ClassCore* core = p->core();
 				if(core->instance_variable_size!=0){	
 					for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){

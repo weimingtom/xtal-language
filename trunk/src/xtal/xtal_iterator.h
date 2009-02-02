@@ -27,8 +27,7 @@ struct BlockValueHolder1{
 	AnyPtr target;
 	AnyPtr values[1];
 
-	ArrayPtr array;
-	Array::iterator it;
+	SmartPtr<ArrayIter> it;
 };
 
 struct BlockValueHolder2{
@@ -40,8 +39,7 @@ struct BlockValueHolder2{
 	AnyPtr target;
 	AnyPtr values[2];
 
-	MapPtr map;
-	Map::iterator it;
+	SmartPtr<MapIter> it;
 };
 
 struct BlockValueHolder3{

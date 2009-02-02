@@ -45,6 +45,7 @@ struct ParamInfoAndVM{
 	const VMachinePtr& vm;
 	uint_t flags;
 	const void* data;
+
 	ParamInfoAndVM(const ParamInfo& p, const VMachinePtr& vm, const void* data)
 		:p(p), vm(vm), flags(0), data(data){}
 };
@@ -90,9 +91,6 @@ struct arg_getter_vm{
 		return *(VMachinePtr*)&p;
 	}
 };
-
-void check_args(ParamInfoAndVM& pvm, uint_t flags);
-
 
 template<class Policy>
 struct ReturnPolicyTest{

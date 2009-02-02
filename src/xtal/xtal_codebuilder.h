@@ -200,8 +200,8 @@ private:
 		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
 	}
 
-	int_t register_identifier_or_compile_expr(const AnyPtr& var);
-	int_t register_identifier(const IDPtr& v);
+	int_t regster_identifier_or_compile_expr(const AnyPtr& var);
+	int_t regster_identifier(const IDPtr& v);
 	int_t register_value(const AnyPtr& v);
 	int_t append_identifier(const IDPtr& identifier);
 	int_t append_value(const AnyPtr& v);

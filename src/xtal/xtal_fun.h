@@ -61,6 +61,41 @@ private:
 	ClassCore* core_;
 };
 
+class Fun : public HaveName{
+public:
+
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCore* core);
+
+	const FramePtr& outer(){ return outer_; }
+	const CodePtr& code(){ return code_; }
+	int_t pc(){ return core_->pc; }
+	const inst_t* source(){ return code_->data()+core_->pc; }
+	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
+	int_t param_size(){ return core_->variable_size; }	
+	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
+	FunCore* core(){ return core_; }
+	void set_core(FunCore* fc){ core_ = fc; }
+	void check_arg(const VMachinePtr& vm);
+	virtual StringPtr object_name(int_t depth = -1);
+
+public:
+		
+	virtual void rawcall(const VMachinePtr& vm);
+	
+protected:
+
+	FramePtr outer_;
+	CodePtr code_;
+	AnyPtr this_;
+	FunCore* core_;
+	
+	virtual void visit_members(Visitor& m){
+		HaveName::visit_members(m);
+		m & outer_ & this_ & code_;
+	}
+
+};
+
 class Lambda : public Fun{
 public:
 
@@ -89,6 +124,8 @@ class Fiber : public Fun{
 public:
 
 	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core);
+
+	virtual void finalize();
 			
 public:
 

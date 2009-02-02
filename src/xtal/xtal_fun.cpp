@@ -118,8 +118,12 @@ void Method::rawcall(const VMachinePtr& vm){
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
 	:Fun(outer, th, code, core), vm_(null), resume_pc_(0), alive_(true){
+	set_finalizer_flag();
 }
 
+void Fiber::finalize(){
+	halt();
+}
 
 void Fiber::halt(){
 	if(resume_pc_!=0){

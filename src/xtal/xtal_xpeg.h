@@ -213,6 +213,8 @@ AnyPtr lookahead(const AnyPtr& elem);
 
 AnyPtr lookbehind(const AnyPtr& elem, int_t back);
 
+AnyPtr bound(const AnyPtr& body, const AnyPtr& sep);
+
 AnyPtr pred(const AnyPtr& elem);
 
 /**

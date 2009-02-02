@@ -994,9 +994,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_BACKREF){
-			const SmartPtr<Cap>& temp = type(e->param1)==TYPE_INT
-				? unchecked_ptr_cast<Cap>(cap_->at(ivalue(e->param1)))
-				: unchecked_ptr_cast<Cap>(cap_->at(e->param1));
+			const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(e->param1));
 			if(temp && temp->end>=0 && temp->end-temp->begin>0){
 				return (scanner_->eat_capture(temp->begin, temp->end))!=e->inv;
 			}

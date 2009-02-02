@@ -33,20 +33,30 @@ int main2(int argc, char** argv){
 	try{
 		initialize();
 		
-		debug()->enable();
-		debug()->set_throw_hook(fun(&debug_throw));
+		//debug()->enable();
+		//debug()->set_throw_hook(fun(&debug_throw));
 
 		ArrayPtr a = xnew<Array>(10);
 
 		Xsrc((
 			filelocal.inherit(xpeg);
-
-			"abcdef".scan(any >> lookahead("c")){
-				it[""].p;
+			{
+				fib: fiber{
+					try{
+						"begin".p;
+						yield;
+					}
+					finally{
+						"end".p;
+					}
+				}
+				
+				fib();
 			}
-
 		))->call();
-
+		
+		gc();
+		full_gc();
 #if 1
 
 		int c;

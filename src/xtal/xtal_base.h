@@ -20,12 +20,6 @@ public:
 	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0);
 
 	/**
-	* @brief このオブジェクトが所属するクラスを返す。
-	*
-	*/
-	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
-
-	/**
 	* @brief nameメンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
@@ -62,6 +56,14 @@ public:
 	*/
 	virtual uint_t hashcode();
 
+	virtual void finalize(){}
+
+	/**
+	* @brief このオブジェクトが所属するクラスを返す。
+	*
+	*/
+	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
+
 public:
 	
 	Base();
@@ -92,14 +94,24 @@ public:
 public:
 
 	enum{
-		XTAL_INSTANCE_FLAG_SHIFT = TYPE_SHIFT+1,
-		XTAL_INSTANCE_FLAG_BIT = 1<<(XTAL_INSTANCE_FLAG_SHIFT),
+		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
+		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
+
+		XTAL_INSTANCE_FLAG_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
+		XTAL_INSTANCE_FLAG_BIT = 1<<XTAL_INSTANCE_FLAG_SHIFT,
+
 		REF_COUNT_SHIFT = XTAL_INSTANCE_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<XTAL_INSTANCE_FLAG_SHIFT)-1)
+		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
 	};
 
 	InstanceVariables* instance_variables(){ return instance_variables_; }
 	void make_instance_variables();
+
+	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
+	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
+
+	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
+	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
 
 	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
 	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
@@ -110,9 +122,6 @@ public:
 
 	virtual void visit_members(Visitor& m);
 
-	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
-	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
-	
 private:
 
 	// 参照カウンタ値
@@ -139,6 +148,18 @@ public:
 	virtual void before_gc(){}
 	virtual void after_gc(){}
 };
+
+inline void inc_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->inc_ref_count();
+	}
+}
+
+inline void dec_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->dec_ref_count();
+	}
+}
 
 }
 

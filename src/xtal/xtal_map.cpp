@@ -3,58 +3,9 @@
 
 namespace xtal{
 
-class MapIter : public Base{
-	MapPtr map_;
-	Map::iterator node_;
-	int_t type_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & map_;
-	}
-
-public:
-
-	MapIter(const MapPtr& m, int_t type)
-		:map_(m), type_(type), node_(m->begin()){
-	}
-	
-	void block_next(const VMachinePtr& vm){
-		if(node_==map_->end()){
-			vm->return_result(null, null);
-			return;
-		}
-		
-		switch(type_){
-			case 0: vm->return_result(from_this(this), node_->first, node_->second); break;
-			case 1: vm->return_result(from_this(this), node_->first); break;
-			case 2: vm->return_result(from_this(this), node_->second); break;
-			case 3:
-				for(;;){
-					if(node_->second){
-						vm->return_result(from_this(this), node_->first);
-						++node_;
-						return;
-					}
-
-					++node_;
-
-					if(node_==map_->end()){
-						vm->return_result(null, null);
-						return;
-					}
-				}
-				break;
-			default: vm->return_result(null, null); break;
-		}
-
-		++node_;
-	}
-};
-
 void Map::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & table_;
+	m & table_ & default_value_;
 }	
 
 const AnyPtr& Map::calc_key(const AnyPtr& key){
@@ -143,9 +94,108 @@ void Map::push_all(const VMachinePtr& vm){
 	}	
 }
 
+//////////////////////////////////////////////////////////
+
+MapIter::MapIter(const MapPtr& m, int_t type)
+	:map_(m), type_(type), node_(m->begin()){
+}
+
+void MapIter::block_next(const VMachinePtr& vm){
+	if(node_==map_->end()){
+		if(type_==0){
+			vm->return_result(null, null, null);
+		}
+		else{
+			vm->return_result(null, null);
+		}
+		return;
+	}
+	
+	switch(type_){
+		case 0: vm->return_result(from_this(this), node_->first, node_->second); break;
+		case 1: vm->return_result(from_this(this), node_->first); break;
+		case 2: vm->return_result(from_this(this), node_->second); break;
+		case 3:
+			for(;;){
+				if(node_->second){
+					vm->return_result(from_this(this), node_->first);
+					++node_;
+					return;
+				}
+
+				++node_;
+
+				if(node_==map_->end()){
+					vm->return_result(null, null);
+					return;
+				}
+			}
+			break;
+		default: vm->return_result(null, null); break;
+	}
+
+	++node_;
+}
+
+bool MapIter::block_next_direct(AnyPtr& rkey, AnyPtr& rval){
+	if(node_==map_->end()){
+		rkey = null;
+		rval = null;
+		return false;
+	}
+	
+	switch(type_){
+		case 0:
+			rkey = node_->first;
+			rval = node_->second;
+			break;
+		case 1: 
+			rkey = node_->first;
+			rval = null;
+			break;
+
+		case 2: 
+			rkey = node_->second;
+			rval = null;
+			break;
+
+		case 3:
+			for(;;){
+				if(node_->second){
+					rkey = node_->first;
+					rval = null;
+					++node_;
+					return true;
+				}
+
+				++node_;
+
+				if(node_==map_->end()){
+					rkey = null;
+					rval = null;
+					return false;
+				}
+			}
+			break;
+		default: break;
+	}
+
+	++node_;
+	return true;
+}
+
+void MapIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & map_;
+}
+
+//////////////////////////////////////////////////////////
+
 AnyPtr Set::each(){
 	return xnew<MapIter>(from_this(this), 3);
 }
+
+//////////////////////////////////////////////////////////
 
 void initialize_map(){
 	{

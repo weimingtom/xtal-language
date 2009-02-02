@@ -118,6 +118,30 @@ AnyPtr IntRange::each(){
 }
 
 
+StringPtr HaveName::object_name(int_t depth){
+	if(!name_){
+		return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
+	}
+
+	if(!parent_ || depth==0){
+		return name_;
+	}
+
+	return parent_->object_name()->cat("::")->cat(name_);
+}
+
+int_t HaveName::object_name_force(){
+	return force_;
+}
+
+void HaveName::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent){
+	if(!name_ || force_<force){
+		name_ = name;
+		force_ = force;
+		parent_ = parent;
+	}
+}
+
 ///////////////////////////////////
 
 void initialize_basictype(){

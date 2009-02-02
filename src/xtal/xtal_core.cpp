@@ -30,6 +30,7 @@ void initialize_frame_script();
 void initialize_array_script();
 void initialize_map_script();
 void initialize_text_script();
+void initialize_except_scrpt();
 
 void display_debug_memory();
 
@@ -82,58 +83,6 @@ bool is_initialized(){
 
 Environment* environment(){
 	return current_environment_;
-}
-
-void Environment::initialize(){
-
-	global_mutate_count_ = 0;
-
-	ClassPtr* holders[] = { 
-		&cpp_class_map_.insert(&CppClassSymbol<Any>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<Class>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<CppClass>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<Array>::value, null).first->second,
-	};
-
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
-	}
-	
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
-		new(p) CppClass();
-	}
-
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
-		p->set_class(get_cpp_class<CppClass>());
-	}
-	
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
-		register_gc(p);
-	}
-
-//////////
-
-	set_cpp_class<Base>(get_cpp_class<Any>());
-	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
-	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
-
-	builtin_ = xnew<Singleton>();
-	lib_ = xnew<Lib>();
-	Iterator_ = xnew<IteratorClass>();
-	Iterable_ = xnew<Class>();
-
-	vm_list_ = xnew<Array>();
-}
-
-void Environment::uninitialize(){
-	for(cpp_class_map_t::iterator it=cpp_class_map_.begin(); it!=cpp_class_map_.end(); ++it){
-		it->second = null;
-	}
-
-	cpp_class_map_.destroy();
 }
 
 Environment* new_environment(){
@@ -190,11 +139,10 @@ void initialize(){
 	
 	std::atexit(&uninitialize); // uninitialize
 
-	enable_gc();
-
 	initialize_xpeg();
 	initialize_builtin();
 
+	initialize_except_scrpt();
 	initialize_basictype_script();
 	initialize_iterator_script();
 	initialize_string_script();
@@ -204,12 +152,15 @@ void initialize(){
 	initialize_array_script();
 	initialize_map_script();
 	initialize_text_script();
+
+	enable_gc();
 }
 
 void uninitialize(){
 	if(!is_initialized()){ return; } 
 
 	gc();
+	full_gc();
 
 	{
 		UninitializerList* next=0;
@@ -220,6 +171,7 @@ void uninitialize(){
 			user_free(p);
 		}
 	}
+
 		
 	for(Environment** it = environments_begin_; it!=environments_current_; ++it){
 		(*it)->~Environment();
@@ -229,12 +181,13 @@ void uninitialize(){
 
 	full_gc();
 	
-	if(objects_current_-objects_begin_ != 0){
+	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+	if(n != 0){
 		//fprintf(stderr, "finished gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
-		int n = objects_current_-objects_begin_;
 		//print_alive_objects();
 		Base* p = objects_begin_[0];
+		uint_t count = p->ref_count();
 
 		XTAL_ASSERT(false); // 全部開放できてない
 	}
@@ -281,7 +234,7 @@ void gc(){
 		Base** objects_alive = objects_begin_;
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
-			if((*it)->ref_count()!=0){
+			if((*it)->ref_count()!=0 || (*it)->have_finalizer()){
 				std::swap(*it, *objects_alive++);
 			}
 		}
@@ -350,83 +303,148 @@ void full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
+				
+		while(true){			
+			ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+			ConnectedPointer begin = 0;
 
-		ConnectedPointer prev_oc;
-		ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
-		ConnectedPointer begin = 0;
-		
-		do{
-			
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
 			}
 
-			prev_oc = current;
-
-			{
+			{ // 参照カウンタを減らす
 				Visitor m(-1);	
 				for(ConnectedPointer it = begin; it!=current; ++it){
 					(*it)->visit_members(m);
 				}
+
+				// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
 			}
+		
+			ConnectedPointer alive = begin;
 
-			{
-				ConnectedPointer alive = begin;
+			{ // 生存者を見つける
+				// 生存者と手をつないでる人も生存者というふうに関係を洗い出す
 
-				{
-					Visitor m(1);
-					bool end = false;
-					while(!end){
-						end = true;
-						for(ConnectedPointer it = alive; it!=current; ++it){
-							if((*it)->ref_count()!=0){
-								end = false;
-								(*it)->visit_members(m);
-								std::swap(*it, *alive++);
-							}
+				Visitor m(1);
+				bool end = false;
+				while(!end){
+					end = true;
+					for(ConnectedPointer it = alive; it!=current; ++it){
+						if((*it)->ref_count()!=0){
+							end = false;
+							(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
+							std::swap(*it, *alive++);
 						}
 					}
 				}
-	
+			}
 
-				{// 
-					Visitor m(1);
-					for(ConnectedPointer it = alive; it!=current; ++it){
-						(*it)->visit_members(m);
+			// begin ～ aliveまでのオブジェクトは生存確定
+			// alive ～ currentまでのオブジェクトは死亡予定
+
+
+			{// 死者も、参照カウンタを元に戻す
+				Visitor m(1);
+				for(ConnectedPointer it = alive; it!=current; ++it){
+					(*it)->visit_members(m);
+				}
+			}
+
+			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+				(*it)->after_gc();
+			}
+
+			{
+				bool exists_have_finalizer = false;
+				// 死者のfinalizerを走らせる
+				for(ConnectedPointer it = alive; it!=current; ++it){
+					if((*it)->have_finalizer()){
+						exists_have_finalizer = true;
+						(*it)->finalize();
 					}
 				}
 
-				for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-					(*it)->after_gc();
-				}
+				if(exists_have_finalizer){
+					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
+					current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
 
-				for(ConnectedPointer it = alive; it!=current; ++it){
-					delete *it;
-				}
+					// 死者が生き返ったかも知れないのでチェックする
 
-				for(ConnectedPointer it = alive; it!=current; ++it){
-					so_free(*it, ivalue((*it)->class_));
-				}
+					for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+						(*it)->before_gc();
+					}
 
-				current = alive;
+					{ // 参照カウンタを減らす
+						Visitor m(-1);	
+						for(ConnectedPointer it = alive; it!=current; ++it){
+							(*it)->visit_members(m);
+						}
+					}
+					
+					{ // 死者の中から復活した者を見つける
+						Visitor m(1);
+						bool end = false;
+						while(!end){
+							end = true;
+							for(ConnectedPointer it = alive; it!=current; ++it){
+								if((*it)->ref_count()!=0){
+									end = false;
+									(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
+									std::swap(*it, *alive++);
+								}
+							}
+						}
+					}
+
+					// begin ～ aliveまでのオブジェクトは生存確定
+					// alive ～ currentまでのオブジェクトは死亡確定
+
+
+					{// 死者も、参照カウンタを元に戻す
+						Visitor m(1);
+						for(ConnectedPointer it = alive; it!=current; ++it){
+							(*it)->visit_members(m);
+						}
+					}
+
+					for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+						(*it)->after_gc();
+					}
+				}
 			}
 
-		}while(prev_oc!=current);
+			for(ConnectedPointer it = alive; it!=current; ++it){
+				delete *it;
+			}
 
-		int_t list_count = objects_list_current_ - objects_list_begin_;
-		bool first = true;
-		for(int_t i=0; i<list_count; ++i){
-			int_t pos = (i+1)*OBJECTS_ALLOCATE_SIZE;
-			if(current.pos<pos){
-				if(first){
-					first = false;
-					objects_begin_ = objects_list_begin_[i];
-					objects_current_ = objects_begin_ + (current.pos&OBJECTS_ALLOCATE_MASK);
-					objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
-					objects_list_current_ = objects_list_begin_ + i + 1;
-				}
-				else{
-					user_free(objects_list_begin_[i]);
+			for(ConnectedPointer it = alive; it!=current; ++it){
+				so_free(*it, ivalue((*it)->class_));
+			}
+			
+			if(current==alive){
+				break;
+			}
+
+			current = alive;
+
+			{
+				int_t list_count = objects_list_current_ - objects_list_begin_;
+				bool first = true;
+				for(int_t i=0; i<list_count; ++i){
+					int_t pos = (i+1)*OBJECTS_ALLOCATE_SIZE;
+					if(current.pos<pos){
+						if(first){
+							first = false;
+							objects_begin_ = objects_list_begin_[i];
+							objects_current_ = objects_begin_ + (current.pos&OBJECTS_ALLOCATE_MASK);
+							objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
+							objects_list_current_ = objects_list_begin_ + i + 1;
+						}
+						else{
+							user_free(objects_list_begin_[i]);
+						}
+					}
 				}
 			}
 		}

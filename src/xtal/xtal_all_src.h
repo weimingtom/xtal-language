@@ -34,4 +34,4 @@
 #include "xtal_vmachine.cpp"
 #include "xtal_xpeg.cpp"
 #include "xtal_inst.cpp"
-
+#include "xtal_anyptr.cpp"

@@ -3,33 +3,6 @@
 
 namespace xtal{
 
-class ArrayIter : public Base{
-	ArrayPtr array_;
-	int_t index_;
-	bool reverse_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & array_;
-	}
-
-public:
-
-	ArrayIter(const ArrayPtr& a, bool reverse = false)
-		:array_(a), index_(-1), reverse_(reverse){
-	}
-			
-	void block_next(const VMachinePtr& vm){
-		++index_;
-		if(index_<(int_t)array_->size()){
-			vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
-		}
-		else{
-			vm->return_result(null, null);
-		}
-	}
-};
-
 void Array::visit_members(Visitor& m){
 	Base::visit_members(m);
 	for(uint_t i=0; i<size_; ++i){
@@ -281,6 +254,41 @@ int_t Array::calc_offset(int_t i){
 void Array::throw_index_error(){
 	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1020")), return);
 }
+
+//////////////////////////////////////////////////
+
+ArrayIter::ArrayIter(const ArrayPtr& a, bool reverse)
+	:array_(a), index_(-1), reverse_(reverse){
+}
+		
+void ArrayIter::block_next(const VMachinePtr& vm){
+	++index_;
+	if(index_<(int_t)array_->size()){
+		vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
+	}
+	else{
+		vm->return_result(null, null);
+	}
+}
+	
+bool ArrayIter::block_next_direct(AnyPtr& ret){
+	++index_;
+	if(index_<(int_t)array_->size()){
+		ret = array_->at(reverse_ ? array_->size()-1-index_ : index_);
+		return true;
+	}
+	else{
+		ret = null;
+		return false;
+	}
+}
+
+void ArrayIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & array_;
+}
+
+//////////////////////////////////////////////////
 
 MultiValuePtr MultiValue::clone(){
 	return xnew<MultiValue>(*this);

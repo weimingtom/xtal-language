@@ -177,6 +177,8 @@ public:
 	void inc_global_mutate_count(){
 		global_mutate_count_++;
 	}
+
+	AnyPtr string_mgr_;
 };
 
 Environment* environment();
@@ -270,5 +272,10 @@ const ClassPtr& ArgumentError();
 inline void inc_global_mutate_count(){
 	environment()->inc_global_mutate_count();
 }
+
+const IDPtr& intern_literal(const char_t* str);
+const IDPtr& intern(const char_t* str);
+const IDPtr& intern(const char_t* str, uint_t data_size);
+const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash, uint_t length);
 
 }

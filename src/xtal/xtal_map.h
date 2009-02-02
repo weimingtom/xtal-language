@@ -180,6 +180,24 @@ protected:
 	virtual void visit_members(Visitor& m);
 };
 
+class MapIter : public Base{
+public:
+
+	MapIter(const MapPtr& m, int_t type);
+	
+	void block_next(const VMachinePtr& vm);
+
+public:
+
+	bool block_next_direct(AnyPtr& rkey, AnyPtr& rval);
+
+private:
+	MapPtr map_;
+	Map::iterator node_;
+	int_t type_;
+
+	virtual void visit_members(Visitor& m);
+};
 
 class Set : public Map{
 public:

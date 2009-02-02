@@ -3,41 +3,6 @@
 
 namespace xtal{
 
-class Fun : public HaveName{
-public:
-
-	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCore* core);
-
-	const FramePtr& outer(){ return outer_; }
-	const CodePtr& code(){ return code_; }
-	int_t pc(){ return core_->pc; }
-	const inst_t* source(){ return code_->data()+core_->pc; }
-	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
-	int_t param_size(){ return core_->variable_size; }	
-	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
-	FunCore* core(){ return core_; }
-	void set_core(FunCore* fc){ core_ = fc; }
-	void check_arg(const VMachinePtr& vm);
-	virtual StringPtr object_name(int_t depth = -1);
-
-public:
-		
-	virtual void rawcall(const VMachinePtr& vm);
-	
-protected:
-
-	FramePtr outer_;
-	CodePtr code_;
-	AnyPtr this_;
-	FunCore* core_;
-	
-	virtual void visit_members(Visitor& m){
-		HaveName::visit_members(m);
-		m & outer_ & this_ & code_;
-	}
-
-};
-
 // XTAL仮想マシン
 class VMachine : public GCObserver{
 public:
@@ -569,15 +534,12 @@ public:
 	const FramePtr& outer(){ return ff().outer(); }
 	const FramePtr& prev_outer(){ return prev_ff().outer(); }
 
-	const CodePtr& code(){ return fun()->code(); }
-	const CodePtr& prev_code(){ return prev_fun()->code(); }
+	const CodePtr& code();
+	const CodePtr& prev_code();
 
-	const IDPtr& identifier(int_t n){ return code()->identifier(n); }
-	const IDPtr& prev_identifier(int_t n){ return prev_code()->identifier(n); }
-	const IDPtr& identifier_or_pop(int_t n){ 
-		if(n!=0){ return  unchecked_ptr_cast<ID>(ap(identifier(n)));  }
-		else{ return unchecked_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
-	}
+	const IDPtr& identifier(int_t n);
+	const IDPtr& prev_identifier(int_t n);
+	const IDPtr& identifier_or_pop(int_t n);
 
 	void return_result_instance_variable(int_t number, ClassCore* core);
 
@@ -593,6 +555,8 @@ private:
 	const inst_t* send2(const inst_t* pc, const IDPtr& name);
 	const inst_t* send2_r(const inst_t* pc, const IDPtr& name);
 	const inst_t* send2_q(const inst_t* pc, const IDPtr& name);
+
+	const inst_t* push_except();
 
 	void set_local_variable(int_t pos, const Any&);
 	const AnyPtr& local_variable(int_t pos);
@@ -760,15 +724,17 @@ private:
 private:
 
 	inst_t end_code_;
+	inst_t throw_code_;
 	inst_t throw_unsupported_error_code_;
+	inst_t throw_undefined_code_;
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
-	inst_t throw_undefined_code_;
 
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
 
 	Any myself_;
+	Any result_temp_;
 
 	// 計算用スタック
 	Stack<Any> stack_;

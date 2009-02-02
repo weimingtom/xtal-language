@@ -7,6 +7,7 @@
 //#define XTAL_USE_COMPILED_EMB
 
 //#define XTAL_NO_EXCEPTIONS
+
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 
@@ -88,7 +89,7 @@
 #	define XTAL_STRING(x) x
 #endif
 
-#define XTAL_ID(text) (::xtal::string_literal_to_id(XTAL_STRING(#text)))
+#define XTAL_ID(text) (::xtal::intern_literal(XTAL_STRING(#text)))
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
 #	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("I64") : XTAL_STRING(""))

@@ -285,6 +285,11 @@ inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 
 AnyPtr interned_strings();
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
+uint_t string_hashcode(const char_t* str, uint_t size);
+void string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length);
+void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length);
+uint_t string_length(const char_t* str);
+uint_t string_data_size(const char_t* str);
 
 class ChRange : public Range{
 public:
@@ -347,7 +352,5 @@ struct Named : public Named2{
 };
 
 void visit_members(Visitor& m, const Named& p);
-
-const IDPtr& string_literal_to_id(const char_t* str);
 	
 }

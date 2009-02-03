@@ -3,32 +3,81 @@
 
 namespace xtal{
 
+bool thread_enabled_ = false;
+int thread_step_counter_ = 500;
+
 namespace{
-	int thread_count_ = 1;
-	int thread_locked_count_ = 0;
-	int thread_unlocked_count_ = 0;
-	bool stop_the_world_ = false;
-	Thread::ID current_thread_id_;
-	Thread::ID current_vmachine_id_;
-	Thread::ID stop_the_world_thread_id_;
-	int current_thread_recursive_ = 0;
 	ThreadLib* thread_lib_temp_ = 0;
 	ThreadLib* thread_lib_ = 0;
 
-	MutexPtr mutex_;
-	MutexPtr mutex2_;
-	VMachinePtr vmachine_;
+	ThreadPtr create_thread(const AnyPtr& fun){
+		return thread_lib_->create_thread(fun);
+	}
 
-	struct VMachineTableUnit{
-		Thread::ID id;
-		AnyPtr vm;
-	};
+	MutexPtr create_mutex(){
+		return thread_lib_->create_mutex();
+	}
 
-	struct VMachineTable : public Base{
+	void lock_mutex(const MutexPtr& self){
+		XTAL_UNLOCK{
+			self->lock();
+		}
+	}
+
+	struct ThreadMgr : public Base{
+		struct VMachineTableUnit{
+			Thread::ID id;
+			AnyPtr vm;
+		};		
+		
 		AC<VMachineTableUnit>::vector table;
-		//SmartPtr<TArray<VMachineTableUnit> > table;
 
-		inline void change_vmachine(const Thread::ID& id){
+		int thread_count_;
+		int thread_locked_count_;
+		int thread_unlocked_count_;
+		bool stop_the_world_;
+		Thread::ID current_thread_id_;
+		Thread::ID current_vmachine_id_;
+		Thread::ID stop_the_world_thread_id_;
+		int current_thread_recursive_;
+
+		MutexPtr mutex_;
+		MutexPtr mutex2_;
+		VMachinePtr vmachine_;
+
+		ThreadMgr(bool use_thread){
+			thread_count_ = 1;
+			thread_locked_count_ = 0;
+			thread_unlocked_count_ = 0;
+			stop_the_world_ = false;
+			current_thread_recursive_ = 0;
+
+			if(use_thread){
+				mutex_ = create_mutex(); 
+				mutex2_ = create_mutex(); 
+
+				thread_enabled_ = true;
+				global_interpreter_lock();
+
+				register_vmachine();
+			}
+			else{
+				vmachine_ = xnew<VMachine>();
+			}
+		}
+
+		~ThreadMgr(){
+			global_interpreter_unlock();
+			thread_enabled_ = false;
+			thread_lib_ = 0;
+			table.clear();
+
+			mutex_ = null;
+			mutex2_ = null;
+			vmachine_ = null;
+		}
+
+		void change_vmachine(const Thread::ID& id){
 			if(!current_vmachine_id_.is_valid() || !thread_lib_->equal_thread_id(current_vmachine_id_, id)){
 				for(uint_t i=0; i<table.size(); ++i){
 					VMachineTableUnit& unit = table[i];
@@ -74,39 +123,108 @@ namespace{
 			}
 		}
 
-		void clear(){
-			table.clear();
+		void global_interpreter_lock(){
+			Thread::ID id;
+			thread_lib_->current_thread_id(id);
+			if(current_thread_recursive_==0){
+				mutex_->lock();
+				change_vmachine(id);
+			}
+			else{
+				current_thread_recursive_++;
+			}
 		}
+
+		void global_interpreter_unlock(){
+			current_thread_recursive_--;
+			if(current_thread_recursive_==0){
+				current_thread_id_.invalid();
+				mutex_->unlock();
+			}
+		}
+
+		void xlock(){
+			Thread::ID id;
+			thread_lib_->current_thread_id(id);
+			if(current_thread_recursive_==0){
+				mutex_->lock();
+				change_vmachine(id);
+			}
+			else{
+				current_thread_recursive_++;
+			}
+		}
+
+		void xunlock(){
+			current_thread_recursive_--;
+			if(current_thread_recursive_==0){
+				current_thread_id_.invalid();
+				mutex_->unlock();
+			}
+		}
+
+		void thread_entry(const ThreadPtr& thread){
+			register_thread();
+
+			register_vmachine();
+			const VMachinePtr& vm(vmachine_);
+
+			XTAL_TRY{
+				vm->setup_call(0);
+				thread->callback()->rawcall(vm);
+				vm->cleanup_call();
+			}
+			XTAL_CATCH(e){
+				fprintf(stderr, "%s\n", e->to_s()->c_str());
+			}
+
+			vm->reset();	
+
+			unregister_thread();
+		}
+
+		void register_thread(){
+			if(!thread_enabled_)
+				return;
+
+			mutex_->lock();
+			thread_count_++;
+			if(thread_step_counter_>500){
+				thread_step_counter_ = 500;
+			}
+			mutex_->unlock();
+			
+			register_vmachine();
+
+			global_interpreter_lock();
+		}
+
+		void unregister_thread(){
+			if(!thread_enabled_)
+				return;
+
+			remove_vmachine();
+			thread_count_--;
+
+			global_interpreter_unlock();
+		}
+
 	};
 
-	SmartPtr<VMachineTable> vmachine_table_;
+	SmartPtr<ThreadMgr> thread_mgr_;
 
-	ThreadPtr create_thread(const AnyPtr& fun){
-		return thread_lib_->create_thread(fun);
+	void uninitialize_thread(){
+		thread_mgr_ = null;
 	}
-
-	MutexPtr create_mutex(){
-		return thread_lib_->create_mutex();
-	}
-
-	void lock_mutex(const MutexPtr& self){
-		XTAL_UNLOCK{
-			self->lock();
-		}
-	}
-
 }
 	
-bool thread_enabled_ = false;
-int thread_step_counter_ = 500;
-
 const VMachinePtr& vmachine(){
-	return vmachine_;
+	return thread_mgr_->vmachine_;
 }
 
 int check_yield_thread(){
 
-	if(thread_count_==1){
+	if(thread_mgr_->thread_count_==1){
 		thread_step_counter_ = 0x7fffffff;
 		return 1;
 	}
@@ -135,29 +253,11 @@ void sleep_thread(float_t sec){
 	}
 }
 
-void uninitialize_thread(){
-	if(thread_lib_){
-		global_interpreter_unlock();
-		thread_enabled_ = false;
-		thread_lib_ = 0;
-		vmachine_table_->clear();
-
-		mutex_ = null;
-		mutex2_ = null;
-		vmachine_ = null;
-		vmachine_table_ = null;
-	}
-	else{
-		vmachine_ = null;
-	}
-}
-
 void initialize_thread(){
 	register_uninitializer(&uninitialize_thread);
 
 	if(thread_lib_temp_){
 		thread_lib_ = thread_lib_temp_;
-		vmachine_table_ = xnew<VMachineTable>();
 	}
 
 	{
@@ -183,17 +283,10 @@ void initialize_thread(){
 
 	if(thread_lib_){
 		thread_lib_->initialize();
-
-		mutex_ = create_mutex(); 
-		mutex2_ = create_mutex(); 
-
-		thread_enabled_ = true;
-		global_interpreter_lock();
-
-		vmachine_table_->register_vmachine();
+		thread_mgr_ = xnew<ThreadMgr>(true);
 	}
 	else{
-		vmachine_ = xnew<VMachine>();
+		thread_mgr_ = xnew<ThreadMgr>(false);
 	}
 
 	builtin()->def(Xid(Thread), get_cpp_class<Thread>());
@@ -376,92 +469,34 @@ void restart_the_world(){
 }
 
 void global_interpreter_lock(){
-	Thread::ID id;
-	thread_lib_->current_thread_id(id);
-	if(current_thread_recursive_==0){
-		mutex_->lock();
-		vmachine_table_->change_vmachine(id);
-	}
-	else{
-		current_thread_recursive_++;
-	}
+	thread_mgr_->global_interpreter_lock();
 }
 
 void global_interpreter_unlock(){
-	current_thread_recursive_--;
-	if(current_thread_recursive_==0){
-		current_thread_id_.invalid();
-		mutex_->unlock();
-	}
+	thread_mgr_->global_interpreter_unlock();
 }
 
 void xlock(){
-	Thread::ID id;
-	thread_lib_->current_thread_id(id);
-	if(current_thread_recursive_==0){
-		mutex_->lock();
-		vmachine_table_->change_vmachine(id);
-	}
-	else{
-		current_thread_recursive_++;
-	}
+	thread_mgr_->xlock();
 }
 
 void xunlock(){
-	current_thread_recursive_--;
-	if(current_thread_recursive_==0){
-		current_thread_id_.invalid();
-		mutex_->unlock();
-	}
+	thread_mgr_->xunlock();
 }
 
 #endif
 
 void thread_entry(const ThreadPtr& thread){
-	register_thread();
-
-	vmachine_table_->register_vmachine();
-	const VMachinePtr& vm(vmachine_);
-
-	XTAL_TRY{
-		vm->setup_call(0);
-		thread->callback()->rawcall(vm);
-		vm->cleanup_call();
-	}XTAL_CATCH(e){
-		fprintf(stderr, "%s\n", e->to_s()->c_str());
-	}
-
-	vm->reset();	
-
-	unregister_thread();
+	thread_mgr_->thread_entry(thread);
 }
 
 void register_thread(){
-	if(!thread_enabled_)
-		return;
-
-	mutex_->lock();
-	thread_count_++;
-	if(thread_step_counter_>500){
-		thread_step_counter_ = 500;
-	}
-	mutex_->unlock();
-	
-	vmachine_table_->register_vmachine();
-
-	global_interpreter_lock();
+	thread_mgr_->register_thread();
 }
 
 void unregister_thread(){
-	if(!thread_enabled_)
-		return;
-
-	vmachine_table_->remove_vmachine();
-	thread_count_--;
-
-	global_interpreter_unlock();
+	thread_mgr_->unregister_thread();
 }
-
 
 
 Thread::Thread(const AnyPtr& callback)

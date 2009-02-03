@@ -3,6 +3,18 @@
 
 namespace xtal{
 
+SmartPtr<Any>& SmartPtr<Any>::operator =(const Null&){
+	dec_ref_count();
+	set_null_force(*this);
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const Undefined&){
+	dec_ref_count();
+	set_undefined_force(*this);
+	return *this;
+}
+
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	return ap_copy(*this, p);
 }

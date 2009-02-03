@@ -243,8 +243,9 @@ const AnyPtr& Environment::MemberCacheTable::cache(const Any& target_class, cons
 	else{
 		miss_++;
 
-		if(type(target_class)!=TYPE_BASE)
+		if(type(target_class)!=TYPE_BASE){
 			return undefined;
+		}
 
 		bool nocache = false;
 		unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);

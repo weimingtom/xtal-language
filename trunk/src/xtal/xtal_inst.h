@@ -567,6 +567,22 @@ XTAL_DEF_INST_1(40, Value,
 
 XTAL_DEF_INST_0(41, CheckUnsupported);
 
+enum{
+	
+};
+
+enum{
+	CALL_FLAG_TAIL_SHIFT = 0,
+	CALL_FLAG_ARGS_SHIFT = 1,
+	CALL_FLAG_NS_SHIFT = 2,
+	CALL_FLAG_Q_SHIFT = 3,
+
+	CALL_FLAG_TAIL = 1<<CALL_FLAG_TAIL_SHIFT,
+	CALL_FLAG_ARGS = 1<<CALL_FLAG_ARGS_SHIFT,
+	CALL_FLAG_NS = 1<<CALL_FLAG_NS_SHIFT,
+	CALL_FLAG_Q = 1<<CALL_FLAG_Q_SHIFT
+};
+
 XTAL_DEF_INST_1(42, Property,
         inst_u16_t, identifier_number
 );
@@ -582,14 +598,6 @@ XTAL_DEF_INST_1(44, SetProperty,
 XTAL_DEF_INST_1(45, SetPropertyNS,
         inst_u16_t, identifier_number
 );
-
-enum{
-	CALL_FLAG_TAIL_SHIFT = 0,
-	CALL_FLAG_ARGS_SHIFT = 1,
-
-	CALL_FLAG_TAIL = 1<<CALL_FLAG_TAIL_SHIFT,
-	CALL_FLAG_ARGS = 1<<CALL_FLAG_ARGS_SHIFT,
-};
 
 XTAL_DEF_INST_4(46, Call,
         inst_u8_t, ordered,

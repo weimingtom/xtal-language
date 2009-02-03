@@ -54,14 +54,12 @@ int main2(int argc, char** argv){
 				fib();
 			}
 		))->call();
-		
-		gc();
-		full_gc();
+
 #if 1
 
 		int c;
 
-		/*		
+		//*		
 		c = clock();
 		load("../../bench/vec.xtal");
 		printf("vec %g\n\n", (clock()-c)/1000.0f);		

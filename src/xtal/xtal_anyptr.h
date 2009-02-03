@@ -119,17 +119,9 @@ public:
 		inc_ref_count();
 	}
 
-	SmartPtr<Any>& operator =(const Null&){
-		dec_ref_count();
-		set_null_force(*this);
-		return *this;
-	}
+	SmartPtr<Any>& operator =(const Null&);
 
-	SmartPtr<Any>& operator =(const Undefined&){
-		dec_ref_count();
-		set_undefined_force(*this);
-		return *this;
-	}
+	SmartPtr<Any>& operator =(const Undefined&);
 
 	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
 

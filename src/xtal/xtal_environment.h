@@ -179,6 +179,9 @@ public:
 	}
 
 	AnyPtr string_mgr_;
+
+////////////////////////////////////
+
 };
 
 Environment* environment();

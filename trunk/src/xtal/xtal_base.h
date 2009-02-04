@@ -33,6 +33,12 @@ public:
 	*
 	*/
 	virtual StringPtr object_name(int_t depth = -1);
+
+	/**
+	* @brief このオブジェクトに付けられた名前の親の名前からなるリストを返す。
+	*
+	*/
+	virtual ArrayPtr object_name_list();
 		
 	/**
 	* @brief このオブジェクトに付けられた名前の強さを返す。
@@ -56,7 +62,13 @@ public:
 	*/
 	virtual uint_t hashcode();
 
-	virtual void finalize(){}
+	/**
+	* @brief ファイナライザ
+	*
+	* full_gc時に、死ぬ予定のオブジェクトとなった時に破棄をするための関数。
+	* ただし、set_finalizer_flag()を呼んでいなければ呼ばれることはない。
+	*/
+	virtual void finalize();
 
 	/**
 	* @brief このオブジェクトが所属するクラスを返す。
@@ -135,18 +147,7 @@ private:
 	
 private:
 
-	friend void gc();
-	friend void full_gc();
-	friend void initialize();
-};
-
-class GCObserver : public Base{
-public:
-	GCObserver();
-	GCObserver(const GCObserver& v);
-	virtual ~GCObserver();
-	virtual void before_gc(){}
-	virtual void after_gc(){}
+	friend class Core;
 };
 
 inline void inc_ref_count_force(const Any& v){

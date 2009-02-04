@@ -63,20 +63,20 @@ public:
 		return filelocal_; 
 	}
 
-	ScopeCore* scope_core(int_t i){
-		return &scope_core_table_[i];
+	ScopeInfo* scope_info(int_t i){
+		return &scope_info_table_[i];
 	}
 
-	ClassCore* class_core(int_t i){
-		return &class_core_table_[i];
+	ClassInfo* class_info(int_t i){
+		return &class_info_table_[i];
 	}
 
-	FunCore* fun_core(int_t i){
-		return &xfun_core_table_[i];
+	FunInfo* fun_info(int_t i){
+		return &xfun_info_table_[i];
 	}	
 
-	ExceptCore* except_core(int_t i){
-		return &except_core_table_[i];
+	ExceptInfo* except_info(int_t i){
+		return &except_info_table_[i];
 	}
 
 	FunPtr first_fun(){
@@ -123,10 +123,10 @@ private:
 
 private:
 
-	AC<FunCore>::vector xfun_core_table_;
-	AC<ScopeCore>::vector scope_core_table_;
-	AC<ClassCore>::vector class_core_table_;
-	AC<ExceptCore>::vector except_core_table_;
+	AC<FunInfo>::vector xfun_info_table_;
+	AC<ScopeInfo>::vector scope_info_table_;
+	AC<ClassInfo>::vector class_info_table_;
+	AC<ExceptInfo>::vector except_info_table_;
 
 	struct LineNumberTable{
 		u32 start_pc;

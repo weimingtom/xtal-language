@@ -55,8 +55,8 @@
 #		define XTAL_GLOBAL_INTERPRETER_LOCK if(const ::xtal::GlobalInterpreterLock& global_interpreger_lock = 0)
 #		define XTAL_GLOBAL_INTERPRETER_UNLOCK if(const ::xtal::GlobalInterpreterUnlock& global_interpreger_unlock = 0)
 #	else
-#		define XTAL_GLOBAL_INTERPRETER_LOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
-#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if((((-- ::xtal::thread_step_counter_)==0) ? ::xtal::check_yield_thread():0), true)
+#		define XTAL_GLOBAL_INTERPRETER_LOCK
+#		define XTAL_GLOBAL_INTERPRETER_UNLOCK
 #	endif
 #	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
 #endif

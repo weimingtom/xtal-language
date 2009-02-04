@@ -96,6 +96,8 @@ public:
 	virtual StringPtr object_name(int_t depth = -1);
 
 	virtual int_t object_name_force();
+	
+	virtual ArrayPtr object_name_list();
 
 	virtual void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
 
@@ -110,5 +112,16 @@ protected:
 		m & name_ & parent_;
 	}	
 };
+
+
+class GCObserver : public Base{
+public:
+	GCObserver();
+	GCObserver(const GCObserver& v);
+	virtual ~GCObserver();
+	virtual void before_gc(){}
+	virtual void after_gc(){}
+};
+
 
 }

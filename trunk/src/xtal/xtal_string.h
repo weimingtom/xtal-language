@@ -353,4 +353,74 @@ struct Named : public Named2{
 
 void visit_members(Visitor& m, const Named& p);
 	
+/**
+* @breif 文字列を管理するクラス
+*/
+class StringMgr : public GCObserver{
+public:
+
+	struct Key{
+		const char_t* str;
+		uint_t size;
+		uint_t hashcode;
+	};
+
+	struct Fun{
+		static uint_t hash(const Key& key){
+			return key.hashcode;
+		}
+
+		static bool eq(const Key& a, const Key& b){
+			return a.hashcode==b.hashcode && a.size==b.size && std::memcmp(a.str, b.str, a.size*sizeof(char_t))==0;
+		}
+	};
+
+	typedef Hashtable<Key, IDPtr, Fun> table_t; 
+	table_t table_;
+
+	struct Fun2{
+		static uint_t hash(const void* key){
+			return ((uint_t)key)>>3;
+		}
+
+		static bool eq(const void* a, const void* b){
+			return a==b;
+		}
+	};
+
+	typedef Hashtable<const void*, IDPtr, Fun2> table2_t; 
+	table2_t table2_;
+
+	StringMgr(){
+		guard_ = 0;
+	}
+
+protected:
+
+	int_t guard_;
+
+	struct Guard{
+		int_t& count;
+		Guard(int_t& c):count(c){ count++; }
+		~Guard(){ count--; }
+	private:
+		void operator=(const Guard&);
+	};
+
+	virtual void visit_members(Visitor& m);
+public:
+
+	const IDPtr& insert(const char_t* str, uint_t size);
+
+	const IDPtr& insert(const char_t* str);
+
+	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash, uint_t length);
+
+	const IDPtr& insert_literal(const char_t* str);
+
+	AnyPtr interned_strings();
+
+	virtual void before_gc();
+};
+
 }

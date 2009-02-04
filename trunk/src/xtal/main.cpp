@@ -43,20 +43,18 @@ static void handle_argv(char** argv){
 }
 
 int main(int argc, char** argv){
+/*
+	Core core;
+	core.initialize(defalt_core_setting);
 
 	XTAL_TRY{
-		set_thread();
-		initialize();
-
 		handle_argv(argv);
 	}
 	XTAL_CATCH(e){
 		stderr_stream()->put_s(e->to_s());
 		stderr_stream()->put_s("\n");
 	}
-
-	uninitialize();
-
+*/
 	return 0;
 }
 

@@ -16,9 +16,6 @@ private:
 
 	void inner_serialize(const AnyPtr& v);
 	AnyPtr inner_deserialize();
-
-	bool check_id(const IDPtr& id);
-	void check_id_and_throw(const IDPtr& id);
 	
 	AnyPtr demangle(const AnyPtr& n);
 
@@ -30,7 +27,6 @@ private:
 	void clear(){
 		values_ = xnew<Array>();
 		map_ = xnew<Map>();
-		demangle_map_ = xnew<Map>();
 	}
 
 private:
@@ -40,7 +36,6 @@ private:
 private:
 
 	MapPtr map_;
-	MapPtr demangle_map_;
 	ArrayPtr values_;
 	StreamPtr stream_;
 };

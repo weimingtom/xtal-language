@@ -51,6 +51,31 @@ AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_xor_assign)
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shr_assign), b->get_class(), b); return a; }
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shl_assign), b->get_class(), b); return a; }
 
+
+/// @brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call();
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// @brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call();
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// @brief 関数を呼び出す
+AnyPtr Any::call() const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call();
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
 Any::Any(const char_t* str){
 	*this = xnew<String>(str);
 }
@@ -60,7 +85,7 @@ Any::Any(const avoid<char>::type* str){
 }
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
-	return environment()->cache_member(*this, primary_key, secondary_key, self, inherited_too);
+	return core()->cache_member(*this, primary_key, secondary_key, self, inherited_too);
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
@@ -83,6 +108,18 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 	else{
 		vm->set_unsuported_error_info(*this, primary_key, secondary_key);
 	}
+}
+
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
+	const ClassPtr& cls = get_class();
+	const AnyPtr& ret = ap(cls)->member(primary_key, null, null, true);
+	if(rawne(ret, undefined)){
+		vm->set_arg_this(ap(*this));
+		ret->rawcall(vm);
+	}
+	else{
+		vm->set_unsuported_error_info(*this, primary_key, null);
+	}	
 }
 
 void Any::rawcall(const VMachinePtr& vm) const{
@@ -138,6 +175,14 @@ StringPtr Any::object_name(int_t depth) const{
 	return null;	
 }
 
+ArrayPtr Any::object_name_list() const{
+	switch(type(*this)){
+		XTAL_DEFAULT{ return null; }
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name_list(); }
+	}
+	return null;
+}
+
 int_t Any::object_name_force() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
@@ -180,12 +225,12 @@ uint_t Any::hashcode() const{
 bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
-	return environment()->cache_is(my_class, klass);
+	return core()->cache_is(my_class, klass);
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{
 	if(raweq(*this, klass)) return true;
-	return environment()->cache_is_inherited(*this, klass);
+	return core()->cache_is_inherited(*this, klass);
 }
 
 AnyPtr Any::p() const{
@@ -244,7 +289,7 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(const CodePtr& code = p->code()){
-			ClassCore* core = p->core();
+			ClassInfo* core = p->core();
 			if(core->instance_variable_size!=0){	
 				MapPtr insts = xnew<Map>();
 				for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
@@ -266,7 +311,7 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(const MapPtr& insts = ptr_as<Map>(v)){
 			if(const CodePtr& code = p->code()){
-				ClassCore* core = p->core();
+				ClassInfo* core = p->core();
 				if(core->instance_variable_size!=0){	
 					for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
 						StringPtr str = code->identifier(core->instance_variable_identifier_offset+i);
@@ -330,53 +375,56 @@ void initialize_any(){
 	
 	{
 		ClassPtr p = new_cpp_class<Any>(Xid(Any));
-		p->method(Xid(class), &Any::get_class);
-		p->method(Xid(get_class), &Any::get_class);
-		p->method(Xid(self), &Any::self);
-		p->method(Xid(object_name), &Any::object_name)->params(Xid(depth), -1);
-		p->method(Xid(s_save), &Any::s_save);
-		p->method(Xid(s_load), &Any::s_load);
-		p->method(Xid(to_mv), &Any::to_mv);
-		p->method(Xid(flatten_mv), &Any::flatten_mv);
-		p->method(Xid(flatten_all_mv), &Any::flatten_all_mv);
+		p->def_method(Xid(class), &Any::get_class);
+		p->def_method(Xid(get_class), &Any::get_class);
+		p->def_method(Xid(self), &Any::self);
+		p->def_method(Xid(object_name), &Any::object_name)->params(Xid(depth), -1);
+		p->def_method(Xid(object_name_list), &Any::object_name_list);
+		p->def_method(Xid(s_save), &Any::s_save);
+		p->def_method(Xid(s_load), &Any::s_load);
+		p->def_method(Xid(to_mv), &Any::to_mv);
+		p->def_method(Xid(flatten_mv), &Any::flatten_mv);
+		p->def_method(Xid(flatten_all_mv), &Any::flatten_all_mv);
 
-		p->dual_dispatch_method(Xid(op_add));
-		p->dual_dispatch_method(Xid(op_sub));
-		p->dual_dispatch_method(Xid(op_cat));
-		p->dual_dispatch_method(Xid(op_mul));
-		p->dual_dispatch_method(Xid(op_div));
-		p->dual_dispatch_method(Xid(op_mod));
-		p->dual_dispatch_method(Xid(op_and));
-		p->dual_dispatch_method(Xid(op_or));
-		p->dual_dispatch_method(Xid(op_xor));
-		p->dual_dispatch_method(Xid(op_shr));
-		p->dual_dispatch_method(Xid(op_shl));
-		p->dual_dispatch_method(Xid(op_ushr));
+		p->def_dual_dispatch_method(Xid(op_add));
+		p->def_dual_dispatch_method(Xid(op_sub));
+		p->def_dual_dispatch_method(Xid(op_cat));
+		p->def_dual_dispatch_method(Xid(op_mul));
+		p->def_dual_dispatch_method(Xid(op_div));
+		p->def_dual_dispatch_method(Xid(op_mod));
+		p->def_dual_dispatch_method(Xid(op_and));
+		p->def_dual_dispatch_method(Xid(op_or));
+		p->def_dual_dispatch_method(Xid(op_xor));
+		p->def_dual_dispatch_method(Xid(op_shr));
+		p->def_dual_dispatch_method(Xid(op_shl));
+		p->def_dual_dispatch_method(Xid(op_ushr));
 
-		p->dual_dispatch_method(Xid(op_add_assign));
-		p->dual_dispatch_method(Xid(op_sub_assign));
-		p->dual_dispatch_method(Xid(op_cat_assign));
-		p->dual_dispatch_method(Xid(op_mul_assign));
-		p->dual_dispatch_method(Xid(op_div_assign));
-		p->dual_dispatch_method(Xid(op_mod_assign));
-		p->dual_dispatch_method(Xid(op_and_assign));
-		p->dual_dispatch_method(Xid(op_or_assign));
-		p->dual_dispatch_method(Xid(op_xor_assign));
-		p->dual_dispatch_method(Xid(op_shr_assign));
-		p->dual_dispatch_method(Xid(op_shl_assign));
-		p->dual_dispatch_method(Xid(op_ushr_assign));
+		p->def_dual_dispatch_method(Xid(op_add_assign));
+		p->def_dual_dispatch_method(Xid(op_sub_assign));
+		p->def_dual_dispatch_method(Xid(op_cat_assign));
+		p->def_dual_dispatch_method(Xid(op_mul_assign));
+		p->def_dual_dispatch_method(Xid(op_div_assign));
+		p->def_dual_dispatch_method(Xid(op_mod_assign));
+		p->def_dual_dispatch_method(Xid(op_and_assign));
+		p->def_dual_dispatch_method(Xid(op_or_assign));
+		p->def_dual_dispatch_method(Xid(op_xor_assign));
+		p->def_dual_dispatch_method(Xid(op_shr_assign));
+		p->def_dual_dispatch_method(Xid(op_shl_assign));
+		p->def_dual_dispatch_method(Xid(op_ushr_assign));
 
-		p->dual_dispatch_method(Xid(op_eq));
-		p->dual_dispatch_method(Xid(op_lt));
+		p->def_dual_dispatch_method(Xid(op_eq));
+		p->def_dual_dispatch_method(Xid(op_lt));
 
-		p->dual_dispatch_method(Xid(op_at));
-		p->dual_dispatch_method(Xid(op_set_at));
+		p->def_dual_dispatch_method(Xid(op_at));
+		p->def_dual_dispatch_method(Xid(op_set_at));
 
-		p->dual_dispatch_method(Xid(op_call));
+		p->def_dual_dispatch_method(Xid(op_call));
 
-		p->dual_dispatch_method(Xid(op_range));
-		p->method(Xid(op_in), &op_in_Any_Array, new_cpp_class<Array>());
-		p->method(Xid(op_in), &op_in_Any_Set, new_cpp_class<Set>());
+		p->def_dual_dispatch_method(Xid(op_range));
+
+		p->def_dual_dispatch_method(Xid(op_in));
+		p->def_method(Xid(op_in), &op_in_Any_Array, new_cpp_class<Array>());
+		p->def_method(Xid(op_in), &op_in_Any_Set, new_cpp_class<Set>());
 	}
 
 	builtin()->def(Xid(Any), get_cpp_class<Any>());

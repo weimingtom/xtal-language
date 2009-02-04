@@ -5,11 +5,8 @@
 
 int main(int argc, char** argv){
 	using namespace xtal;
- 
+ /*
 	XTAL_TRY{
-		set_thread();
-		initialize();
-
 		ix();
 	}
 	XTAL_CATCH(e){
@@ -17,7 +14,7 @@ int main(int argc, char** argv){
 		stderr_stream()->put_s("\n");
 	}
 
-	uninitialize();
+*/
 	return 0;
 }
 

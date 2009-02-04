@@ -3,179 +3,40 @@
 
 namespace xtal{
 
-/**
-* @brief xtalシステムを初期化する
-*/
-void initialize();
+class Lib : public Class{
+public:
 
-/**
-* @brief xtalシステムを破棄する
-*/
-void uninitialize();
+	Lib(bool most_top_level=false);
 
-/**
-* @brief xtalシステムが初期化済みか調べる
-*/
-bool is_initialized();
-
-/**
-* @brief uninitializeの時にコールバックされる破棄関数を登録する
-*/
-void register_uninitializer(void (*uninitializer)());
-
-
-/** @addtogroup lib */
-/*@{*/
-
-#ifndef XTAL_NO_PARSER
-
-/**
-* @brief file_nameファイルをコンパイルする。
-*
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return 実行できる関数オブジェクト
-* この戻り値をserializeすると、バイトコード形式で保存される。
-*/
-CodePtr compile_file(const StringPtr& file_name);
-
-/**
-* @brief source文字列をコンパイルする。
-*
-* @param source Xtalスクリプトが記述された文字列
-* @return 実行できる関数オブジェクト
-* この戻り値をserializeすると、バイトコード形式で保存される。
-*/
-CodePtr compile(const StringPtr& source);
-
-/**
-* @brief file_nameファイルをコンパイルして実行する。
-*
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でreturnされた値
-*/
-AnyPtr load(const StringPtr& file_name);
-
-/**
-* @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
-*
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でreturnされた値
-*/
-AnyPtr load_and_save(const StringPtr& file_name);
-
-/**
-* @brief interactive xtalの実行
-*/
-void ix();
-
-CodePtr source(const char_t* src, int_t size, const char* file);
-
-#endif
-
-CodePtr compiled_source(const void* src, int_t size, const char* file);
-
-/**
-* @brief ガーベジコレクションを実行する
-*
-* さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
-* 例えば循環参照はこれでは検知できない。
-* ゲームで使用する場合、毎フレームこれを呼ぶことを推奨する。
-*/
-void gc();
-
-/**
-* @brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
-*
-* 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
-* 循環参照も検知できる。
-* ゲームで使用する場合、シーンの切り替え時など、節目節目に呼ぶことを推奨する。
-*/
-void full_gc();
-
-
-/**
-* @brief ガーベジコレクションを無効化する
-*
-* gcやfull_gcの呼び出しを無効化する関数。
-* 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
-*/
-void disable_gc();
-
-/**
-* @brief ガーベジコレクションを有効化する
-*
-* disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
-* 
-*/
-void enable_gc();
-
-/**
-* @brief VMachinePtrオブジェクトを返す
-*
-* グローバルなVMachinePtrオブジェクトを返す。
-* スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
-*/
-const VMachinePtr& vmachine();
-
-/**
-* @brief Iteratorクラスを返す
-*/
-const ClassPtr& Iterator();
-
-/**
-* @brief Iterableクラスを返す
-*/
-const ClassPtr& Iterable();
-
-/**
-* @brief builtinシングルトンクラスを返す
-*/
-const ClassPtr& builtin();
-
-/**
-* @brief libクラスを返す
-*/
-const ClassPtr& lib();
-
-/**
-* @brief グローバルに存在する仮想マシンオブジェクトを取得する
-*/
-const VMachinePtr& vmachine();
-
-AnyPtr* make_place();
-
-/*@}*/
-
-/*
-struct Environment{
-	StreamPtr stdin_stream_;
-	StreamPtr stdout_stream_;
-	StreamPtr stderr_stream_;
-
-	ClassPtr iterator_;
-	ClassPtr Iterable_;
-	ClassPtr builtin_;
-	ClassPtr lib_;
-
-	int_t enable_count_;
-	AnyPtr break_point_hook_;
-	AnyPtr call_hook_;
-	AnyPtr return_hook_;
-	AnyPtr throw_hook_;
-
-	SmartPtr<VMachineMgr> vm_mgr_;
+	Lib(const ArrayPtr& path);
 	
-	SmartPtr<StringMgr> str_mgr_;
+	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache);
 
-	MapPtr user_text_map_;
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
-	AnyPtr except_;
+	void append_load_path(const StringPtr& path){
+		load_path_list_->push_back(path);
+	}
+
+	virtual ArrayPtr object_name_list();
+
+private:
+
+	const AnyPtr& rawdef(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
+
+	StringPtr join_path(const StringPtr& sep);
+
+private:
+
+	ArrayPtr load_path_list_;
+	ArrayPtr path_;
+	bool most_top_level_;
+
+	virtual void visit_members(Visitor& m){
+		Class::visit_members(m);
+		m & path_ & load_path_list_;
+	}
 };
 
-get_cpp_class<T>(current_environment())
-cast<T>(a, a->environment());
-
-environment->xnew<T>();
-*/
 }
 

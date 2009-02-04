@@ -26,12 +26,12 @@ void CodeBuilder::interactive_compile(){
 		result_->code_.clear();
 	}
 
-	result_->xfun_core_table_.reserve(10000);
-	result_->class_core_table_.reserve(10000);
-	result_->scope_core_table_.reserve(10000);
-	result_->except_core_table_.reserve(10000);
+	result_->xfun_info_table_.reserve(10000);
+	result_->class_info_table_.reserve(10000);
+	result_->scope_info_table_.reserve(10000);
+	result_->except_info_table_.reserve(10000);
 
-	result_->first_fun()->set_core(&result_->xfun_core_table_[0]);
+	result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
 
 	int_t pc_pos = 0;
 	InteractiveStreamPtr stream = xnew<InteractiveStream>();
@@ -102,7 +102,7 @@ void CodeBuilder::interactive_compile(){
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
 	result_ = xnew<Code>();
 	result_->source_file_name_ = source_file_name;
-	result_->except_core_table_.push_back(ExceptCore());
+	result_->except_info_table_.push_back(ExceptInfo());
 
 	result_->identifier_table_ = xnew<Array>();
 	identifier_map_ = xnew<Map>();
@@ -131,17 +131,17 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	var_begin(VarFrame::FRAME);
 
 	// 関数コアを作成
-	FunCore core;
+	FunInfo core;
 	core.pc = 0;
 	core.kind = KIND_FUN;
 	core.min_param_count = 0;
 	core.max_param_count = 0;
-	core.flags = FunCore::FLAG_EXTENDABLE_PARAM;
+	core.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
 	core.variable_size = 0;
 	core.variable_identifier_offset = 0;
 
-	int_t fun_core_table_number = 0;
-	result_->xfun_core_table_.push_back(core);
+	int_t fun_info_table_number = 0;
+	result_->xfun_info_table_.push_back(core);
 
 	// 関数本体を処理する
 	compile_stmt(e);
@@ -154,11 +154,11 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	process_labels();
 	
 	if(vf().kind!=VarFrame::SCOPE){
-		result_->xfun_core_table_[fun_core_table_number].flags |= FunCore::FLAG_ON_HEAP;
+		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_ON_HEAP;
 	}
 
 	if(vf().scope_chain){
-		result_->xfun_core_table_[fun_core_table_number].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 		var_set_on_heap(1);
 	}
 
@@ -169,7 +169,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	var_end();
 
 	if(error_->errors->size()==0){
-		result_->first_fun()->set_core(&result_->xfun_core_table_[0]);
+		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
 		return result_;
 	}
 	else{
@@ -323,24 +323,24 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 	if(secondary_key){
 		compile_expr(secondary_key);
 		if(q){
-			put_inst(InstSendQNS(0, 0, need_result_count, flags, key));
+			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
 		}
 		else{
 			if(need_result_count==1 && flags==0){
-				put_inst(InstPropertyNS(key));
+				put_inst(InstProperty(key, CALL_FLAG_NS));
 			}
 			else{
-				put_inst(InstSendNS(0, 0, need_result_count, flags, key));
+				put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS, key));
 			}
 		}
 	}
 	else{
 		if(q){
-			put_inst(InstSendQ(0, 0, need_result_count, flags, key));
+			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_Q, key));
 		}
 		else{
 			if(need_result_count==1 && flags==0){
-				put_inst(InstProperty(key));
+				put_inst(InstProperty(key, CALL_FLAG_NONE));
 			}
 			else{
 				put_inst(InstSend(0, 0, need_result_count, flags, key));
@@ -367,18 +367,18 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 		compile_expr(secondary_key);
 
 		if(q){
-			put_inst(InstSendQNS(1, 0, 0, 0, key));
+			put_inst(InstSend(1, 0, 0, CALL_FLAG_NS | CALL_FLAG_Q, key));
 		}
 		else{
-			put_inst(InstSetPropertyNS(key));
+			put_inst(InstSetProperty(key, CALL_FLAG_NS));
 		}
 	}
 	else{
 		if(q){
-			put_inst(InstSendQ(1, 0, 0, 0, key));
+			put_inst(InstSend(1, 0, 0, CALL_FLAG_Q, key));
 		}
 		else{
-			put_inst(InstSetProperty(key));
+			put_inst(InstSetProperty(key, CALL_FLAG_NONE));
 		}
 	}
 }
@@ -388,10 +388,10 @@ void CodeBuilder::put_define_member_code(const AnyPtr& var, const ExprPtr& secon
 
 	if(secondary_key){
 		compile_expr(secondary_key);
-		put_inst(InstDefineMemberNS(key));
+		put_inst(InstDefineMember(key, CALL_FLAG_NS));
 	}
 	else{
-		put_inst(InstDefineMember(key));
+		put_inst(InstDefineMember(key, CALL_FLAG_NONE));
 	}
 }
 
@@ -412,11 +412,11 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 }
 
 void CodeBuilder::put_set_instance_variable_code(const IDPtr& var){
-	put_inst(InstSetInstanceVariable(lookup_instance_variable(var), class_core_num()));
+	put_inst(InstSetInstanceVariable(lookup_instance_variable(var), class_info_num()));
 }
 
 void CodeBuilder::put_instance_variable_code(const IDPtr& var){
-	put_inst(InstInstanceVariable(lookup_instance_variable(var), class_core_num()));
+	put_inst(InstInstanceVariable(lookup_instance_variable(var), class_info_num()));
 }
 
 int_t CodeBuilder::reserve_label(){
@@ -470,7 +470,7 @@ void CodeBuilder::break_off(int_t n){
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
 		if(vf.real_entry_num!=0 && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::FRAME)){
 			var_set_direct(vf);
-			put_inst(InstBlockEnd(vf.scope_core_num));
+			put_inst(InstBlockEnd(vf.scope_info_num));
 		}
 	}
 }
@@ -599,7 +599,7 @@ void CodeBuilder::var_begin(int_t kind){
 	var_frames_.push();
 	vf().entries.clear();
 	vf().directs.clear();
-	vf().scope_core_num = 0;
+	vf().scope_info_num = 0;
 	vf().kind = kind;
 	vf().fun_frames_size = fun_frames_.size();
 	vf().scope_chain = false;
@@ -698,9 +698,9 @@ void CodeBuilder::var_end(){
 }
 
 void CodeBuilder::scope_begin(){
-	int_t scope_core_num = result_->scope_core_table_.size();
+	int_t scope_info_num = result_->scope_info_table_.size();
 
-	ScopeCore core;
+	ScopeInfo core;
 	core.pc = code_size();
 
 	int_t real_entry_num = vf().entries.size();
@@ -720,7 +720,7 @@ void CodeBuilder::scope_begin(){
 	}
 
 	vf().real_entry_num = real_entry_num;
-	vf().scope_core_num = scope_core_num;
+	vf().scope_info_num = scope_info_num;
 
 	core.variable_size = real_entry_num;
 	core.variable_identifier_offset = result_->identifier_table_->size();
@@ -733,24 +733,24 @@ void CodeBuilder::scope_begin(){
 
 	if(vf().real_entry_num!=0){
 		var_set_direct(vf());
-		put_inst(InstBlockBegin(scope_core_num));
+		put_inst(InstBlockBegin(scope_info_num));
 	}
 
-	result_->scope_core_table_.push_back(core);
+	result_->scope_info_table_.push_back(core);
 }
 
 void CodeBuilder::scope_end(){
 	if(vf().real_entry_num!=0){
 		var_set_direct(vf());
-		put_inst(InstBlockEnd(vf().scope_core_num));
+		put_inst(InstBlockEnd(vf().scope_info_num));
 	}
 
 	if(vf().kind!=VarFrame::SCOPE){
-		result_->scope_core_table_[vf().scope_core_num].flags |= FunCore::FLAG_ON_HEAP;
+		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_ON_HEAP;
 	}
 
 	if(vf().scope_chain){
-		result_->scope_core_table_[vf().scope_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 		if(vf().kind!=VarFrame::SCOPE){
 			var_set_on_heap(1);
 		}
@@ -1116,7 +1116,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 	class_frames_.push();
 	cf().entries.clear();
-	cf().class_core_num = result_->class_core_table_.size();
+	cf().class_info_num = result_->class_info_table_.size();
 
 	int_t ivar_num = 0;
 	Xfor_as(const ExprPtr& v, e->class_stmts()){
@@ -1128,9 +1128,9 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		}
 	}
 
-	int_t class_core_num = result_->class_core_table_.size();
+	int_t class_info_num = result_->class_info_table_.size();
 
-	ClassCore core;
+	ClassInfo core;
 	core.pc = code_size();
 	core.kind = e->class_kind();
 	core.mixins = mixins;
@@ -1151,8 +1151,8 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		}
 	}
 
-	put_inst(InstClassBegin(class_core_num));
-	result_->class_core_table_.push_back(core);
+	put_inst(InstClassBegin(class_info_num));
+	result_->class_info_table_.push_back(core);
 
 	{
 		int_t number = 0;
@@ -1181,7 +1181,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	}
 
 	if(var_frames_.top().scope_chain){
-		result_->class_core_table_[class_core_num].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		result_->class_info_table_[class_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 		var_set_on_heap(1);
 	}
 
@@ -1232,7 +1232,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 				if(body->return_exprs() && body->return_exprs()->size()==1){
 					body = ep(body->return_exprs()->front());
 					if(body->tag()==EXPR_IVAR){
-						put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(body->ivar_name()), class_core_num()));
+						put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(body->ivar_name()), class_info_num()));
 						return;
 					}
 				}
@@ -1260,7 +1260,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 				}
 
 				if(key && lhs->tag()==EXPR_IVAR && rhs->tag()==EXPR_LVAR && raweq(rhs->lvar_name(), key)){
-					put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(lhs->ivar_name()), class_core_num()));
+					put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(lhs->ivar_name()), class_info_num()));
 					return;
 				}
 			}
@@ -1291,12 +1291,12 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	}
 
 	// 関数コアを作成
-	FunCore core;
+	FunInfo core;
 	core.pc = code_size() + InstMakeFun::ISIZE;
 	core.kind = e->fun_kind();
 	core.min_param_count = minv;
 	core.max_param_count = maxv;
-	core.flags = e->fun_extendable_param() ? FunCore::FLAG_EXTENDABLE_PARAM : 0;
+	core.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
 	core.variable_size = vf().entries.size();
@@ -1305,12 +1305,12 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
-	int_t fun_core_table_number = result_->xfun_core_table_.size();
-	result_->xfun_core_table_.push_back(core);
+	int_t fun_info_table_number = result_->xfun_info_table_.size();
+	result_->xfun_info_table_.push_back(core);
 
 	int_t fun_end_label = reserve_label();
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
-	put_inst(InstMakeFun(fun_core_table_number, 0));
+	put_inst(InstMakeFun(fun_info_table_number, 0));
 
 
 	// デフォルト値を持つ引数を処理する
@@ -1367,11 +1367,11 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	process_labels();
 	
 	if(vf().kind!=VarFrame::SCOPE){
-		result_->xfun_core_table_[fun_core_table_number].flags |= FunCore::FLAG_ON_HEAP;
+		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_ON_HEAP;
 	}
 
 	if(vf().scope_chain){
-		result_->xfun_core_table_[fun_core_table_number].flags |= FunCore::FLAG_SCOPE_CHAIN;
+		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 		var_set_on_heap(1);
 	}
 
@@ -1779,7 +1779,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
-					put_inst(InstSendNS(ordered, named, info.need_result_count, flags, key));
+					put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS, key));
 				}
 				else{
 					put_inst(InstSend(ordered, named, info.need_result_count, flags, key));
@@ -1793,10 +1793,10 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 				if(e2->send_ns()){
 					compile_expr(e2->send_ns());
-					put_inst(InstSendQNS(ordered, named, info.need_result_count, flags, key));
+					put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
 				}
 				else{
-					put_inst(InstSendQ(ordered, named, info.need_result_count, flags, key));
+					put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_Q, key));
 				}
 			}
 			else{
@@ -1825,10 +1825,10 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 			if(e->member_ns()){
 				compile_expr(e->member_ns());
-				put_inst(InstMemberNS(key));
+				put_inst(InstMember(key, CALL_FLAG_NS));
 			}
 			else{
-				put_inst(InstMember(key));
+				put_inst(InstMember(key, CALL_FLAG_NONE));
 			}	
 		}
 
@@ -1838,10 +1838,10 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			
 			if(e->member_ns()){
 				compile_expr(e->member_ns());
-				put_inst(InstMemberQNS(key));
+				put_inst(InstMember(key, CALL_FLAG_NS | CALL_FLAG_Q));
 			}
 			else{
-				put_inst(InstMemberQ(key));
+				put_inst(InstMember(key, CALL_FLAG_Q));
 			}	
 		}
 
@@ -2044,8 +2044,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t finally_label = reserve_label();
 			int_t end_label = reserve_label();
 
-			int_t core = result_->except_core_table_.size();
-			result_->except_core_table_.push_back(ExceptCore());
+			int_t core = result_->except_info_table_.size();
+			result_->except_info_table_.push_back(ExceptInfo());
 			put_inst(InstTryBegin(core));
 
 			CodeBuilder::FunFrame::Finally exc;
@@ -2062,12 +2062,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			// catch節のコードを埋め込む
 			if(e->try_catch()){
 
-				result_->except_core_table_[core].catch_pc = code_size();
+				result_->except_info_table_[core].catch_pc = code_size();
 				
 				// catch節の中での例外に備え、例外フレームを構築。
 
-				int_t core2 = result_->except_core_table_.size();
-				result_->except_core_table_.push_back(ExceptCore());
+				int_t core2 = result_->except_info_table_.size();
+				result_->except_info_table_.push_back(ExceptInfo());
 				put_inst(InstTryBegin(core2));
 
 				CodeBuilder::FunFrame::Finally exc;
@@ -2090,13 +2090,13 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				put_inst(InstTryEnd());
 				ff().finallies.pop();
 
-				result_->except_core_table_[core2].finally_pc = code_size();
-				result_->except_core_table_[core2].end_pc = code_size();
+				result_->except_info_table_[core2].finally_pc = code_size();
+				result_->except_info_table_[core2].end_pc = code_size();
 			}
 			
 			set_label(finally_label);
 
-			result_->except_core_table_[core].finally_pc = code_size();
+			result_->except_info_table_[core].finally_pc = code_size();
 
 			// finally節のコードを埋め込む
 			compile_stmt(e->try_finally());
@@ -2106,7 +2106,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstPopGoto());
 
 			set_label(end_label);
-			result_->except_core_table_[core].end_pc = code_size();
+			result_->except_info_table_[core].end_pc = code_size();
 		}
 
 		XTAL_CASE(EXPR_THROW){

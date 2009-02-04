@@ -89,6 +89,10 @@ public:
 
 public:
 
+	struct no_use_memory_t{};
+	
+	Hashtable(no_use_memory_t);
+
 	/**
 	* @brief 空のハッシュテーブルを生成する 
 	*
@@ -161,9 +165,6 @@ public:
 
 	void clear();
 
-
-protected:
-
 	float_t rate(){
 		return used_size_/(float_t)size_;
 	}
@@ -178,6 +179,15 @@ protected:
 	uint_t size_;
 	uint_t used_size_;
 };
+
+template<class Key, class Val, class Fun>
+Hashtable<Key, Val, Fun>::Hashtable(no_use_memory_t){
+	size_ = 0;
+	begin_ = 0;
+	used_size_ = 0;
+	ordered_head_ = 0;
+	ordered_tail_ = 0;
+}
 
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::Hashtable(){

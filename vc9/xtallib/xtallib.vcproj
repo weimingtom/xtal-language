@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_class.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_code.cpp"
 				>
 			</File>
@@ -209,10 +213,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_debug.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\xtal\xtal_environment.cpp"
 				>
 			</File>
 			<File
@@ -346,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_class.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_code.h"
 				>
 			</File>
@@ -354,11 +358,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_debug.h"
+				RelativePath="..\..\src\xtal\xtal_core.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_environment.h"
+				RelativePath="..\..\src\xtal\xtal_debug.h"
 				>
 			</File>
 			<File

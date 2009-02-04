@@ -249,17 +249,11 @@ public:
 		return a;
 	}
 
-private:
+public:
 
 	struct dummy_bool_tag{ void safe_true(dummy_bool_tag){} };
 	typedef void (dummy_bool_tag::*safe_bool)(dummy_bool_tag);
 
-public:
-	
-	/**
-	* @brief boolŒ^‚ÉŽ©“®•ÏŠ·‚·‚éB
-	*
-	*/
 	operator safe_bool() const{
 		return type((*this)->self())>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}

@@ -10,6 +10,8 @@ void initialize_array();
 void initialize_basictype();
 void initialize_code();
 void initialize_frame();
+void initialize_class();
+void initialize_lib();
 void initialize_debug();
 void initialize_text();
 void initialize_fun();
@@ -26,13 +28,17 @@ void initialize_iterator_script();
 void initialize_string_script();
 void initialize_stream_script();
 void initialize_thread_script();
-void initialize_frame_script();
+void initialize_class_script();
 void initialize_array_script();
 void initialize_map_script();
 void initialize_text_script();
-void initialize_except_scrpt();
+void initialize_except_script();
 
 void display_debug_memory();
+
+static float_t clock_(){
+	return std::clock()/(float_t)CLOCKS_PER_SEC;
+}
 
 namespace{
 
@@ -42,171 +48,16 @@ namespace{
 		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};
 
-	Base** objects_begin_ = 0;
-	Base** objects_current_ = 0;
-	Base** objects_end_ = 0;
-
-	Base*** objects_list_begin_ = 0;
-	Base*** objects_list_current_ = 0;
-	Base*** objects_list_end_ = 0;
-
-	GCObserver** gcobservers_begin_ = 0;
-	GCObserver** gcobservers_current_ = 0;
-	GCObserver** gcobservers_end_ = 0;
-
-	Environment** environments_begin_ = 0;
-	Environment** environments_current_ = 0;
-	Environment** environments_end_ = 0;
-
-	Environment* current_environment_;
-
-	uint_t cycle_count_ = 0;
-
-	struct UninitializerList{
-		UninitializerList* next;
-		void (*uninitialize)();
-	};
-
-	UninitializerList* uninitializer_list_ = 0;
+	Core* current_core_;
 }
 
-void register_uninitializer(void (*uninitializer)()){
-	UninitializerList* p = (UninitializerList*)user_malloc(sizeof(UninitializerList));
-	p->uninitialize = uninitializer;
-	p->next = uninitializer_list_;
-	uninitializer_list_ = p;
+Core* core(){
+	return current_core_;
 }
 
-bool is_initialized(){
-	return objects_begin_!=0;
+void set_core(Core* core){
+	current_core_ = core;
 }
-
-Environment* environment(){
-	return current_environment_;
-}
-
-Environment* new_environment(){
-	if(environments_current_==environments_end_){
-		expand_simple_dynamic_pointer_array((void**&)environments_begin_, (void**&)environments_end_, (void**&)environments_current_, 16);
-	}
-	Environment* p = (Environment*)user_malloc(sizeof(Environment));
-	new(p) Environment();
-
-	if(!current_environment_){
-		current_environment_ = p;
-	}
-
-	p->initialize();
-	return *environments_current_++ = p;
-}
-
-void delete_environment(Environment* p){
-	p->~Environment();
-	user_free(p);	
-}
-
-void initialize(){
-	if(is_initialized()){ return; } 
-
-	initialize_memory();
-	set_thread();
-	disable_gc();
-
-	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
-	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
-	*objects_list_current_++ = objects_begin_;
-
-	empty_instance_variables.init();
-
-	Environment* env = new_environment();
-
-	initialize_string();
-
-	initialize_except();
-	initialize_any();
-	initialize_basictype();
-	initialize_array();
-	initialize_map();
-	initialize_iterator();
-	initialize_fun();
-	initialize_code();
-	initialize_frame();
-	initialize_debug();
-	initialize_math();
-	initialize_stream();
-	initialize_thread();
-	initialize_text();
-	
-	std::atexit(&uninitialize); // uninitialize
-
-	initialize_xpeg();
-	initialize_builtin();
-
-	initialize_except_scrpt();
-	initialize_basictype_script();
-	initialize_iterator_script();
-	initialize_string_script();
-	initialize_stream_script();
-	initialize_thread_script();
-	initialize_frame_script();
-	initialize_array_script();
-	initialize_map_script();
-	initialize_text_script();
-
-	enable_gc();
-}
-
-void uninitialize(){
-	if(!is_initialized()){ return; } 
-
-	gc();
-	full_gc();
-
-	{
-		UninitializerList* next=0;
-		for(UninitializerList* p = uninitializer_list_; p; p=next){
-			next = p->next;
-			uninitializer_list_ = next;
-			p->uninitialize();
-			user_free(p);
-		}
-	}
-
-		
-	for(Environment** it = environments_begin_; it!=environments_current_; ++it){
-		(*it)->~Environment();
-		user_free(*it);
-	}
-	environments_current_ = environments_begin_;
-
-	full_gc();
-	
-	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
-	if(n != 0){
-		//fprintf(stderr, "finished gc\n");
-		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
-		//print_alive_objects();
-		Base* p = objects_begin_[0];
-		uint_t count = p->ref_count();
-
-		XTAL_ASSERT(false); // 全部開放できてない
-	}
-
-	objects_list_current_ = objects_list_begin_;
-
-	fit_simple_dynamic_pointer_array((void**&)environments_begin_, (void**&)environments_end_, (void**&)environments_current_);
-	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
-	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
-	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
-
-	empty_instance_variables.uninit();
-
-	release_memory();
-
-	//
-	display_debug_memory();
-}
-
 
 struct CycleCounter{
 	uint_t* p;
@@ -214,15 +65,15 @@ struct CycleCounter{
 	~CycleCounter(){ *p-=1; }
 };
 
-void enable_gc(){
+void Core::enable_gc(){
 	cycle_count_++;
 }
 
-void disable_gc(){
+void Core::disable_gc(){
 	cycle_count_--;
 }
 
-void gc(){
+void Core::gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
@@ -260,13 +111,13 @@ void gc(){
 
 struct ConnectedPointer{
 	int_t pos;
+	Base**** bp;
 
-	ConnectedPointer(int_t p = 0){
-		pos = p;
-	}
+	ConnectedPointer(int_t p, Base***& pp)
+		:pos(p), bp(&pp){}
 
 	Base*& operator *(){
-		return objects_list_begin_[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
+		return (*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -275,7 +126,7 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator ++(int){
-		ConnectedPointer temp(pos);
+		ConnectedPointer temp(pos, *bp);
 		++pos;
 		return temp; 
 	}
@@ -285,7 +136,7 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator --(int){
-		ConnectedPointer temp(pos);
+		ConnectedPointer temp(pos, *bp);
 		--pos;
 		return temp; 
 	}
@@ -299,14 +150,14 @@ struct ConnectedPointer{
 	}
 };
 
-void full_gc(){
+void Core::full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
 				
 		while(true){			
-			ConnectedPointer current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
-			ConnectedPointer begin = 0;
+			ConnectedPointer current((objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_), objects_list_begin_);
+			ConnectedPointer begin(0, objects_list_begin_);
 
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
@@ -367,7 +218,7 @@ void full_gc(){
 
 				if(exists_have_finalizer){
 					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
-					current = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+					current = ConnectedPointer((objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_), objects_list_begin_);
 
 					// 死者が生き返ったかも知れないのでチェックする
 
@@ -453,7 +304,7 @@ void full_gc(){
 	}
 }
 
-void register_gc(Base* p){
+void Core::register_gc(Base* p){
 	p->inc_ref_count();
 
 	if(objects_current_==objects_end_){
@@ -472,29 +323,478 @@ void register_gc(Base* p){
 	*objects_current_++ = p;
 }
 
-GCObserver::GCObserver(){
+void Core::register_gc_observer(GCObserver* p){
 	if(gcobservers_current_==gcobservers_end_){
 		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	}
-	*gcobservers_current_++ = this;
+	*gcobservers_current_++ = p;
 }
 
-GCObserver::GCObserver(const GCObserver& v)
-:Base(v){
-	if(gcobservers_current_==gcobservers_end_){
-		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
-	}
-	*gcobservers_current_++ = this;
-}
-	
-GCObserver::~GCObserver(){
-	for(GCObserver** p = gcobservers_begin_; p!=gcobservers_current_; ++p){
-		if(*p==this){
-			std::swap(*p, *--gcobservers_current_);
+void Core::unregister_gc_observer(GCObserver* p){
+	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+		if(*it==p){
+			std::swap(*it, *--gcobservers_current_);
 			break;
 		}
 	}
 }
 
+void Core::initialize(CoreSetting* setting){
+	set_core(this);
+
+	objects_begin_  = 0;
+	objects_current_ = 0;
+	objects_end_ = 0;
+
+	objects_list_begin_ = 0;
+	objects_list_current_ = 0;
+	objects_list_end_ = 0;
+
+	gcobservers_begin_ = 0;
+	gcobservers_current_ = 0;
+	gcobservers_end_ = 0;
+
+	cycle_count_ = 0;
+
+	initialize_memory();
+	disable_gc();
+
+	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
+	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+	*objects_list_current_++ = objects_begin_;
+
+	empty_instance_variables.init();
+
+	cpp_class_map_.expand(4);
+
+//////////////////
+
+	global_mutate_count_ = 0;
+
+	ClassPtr* holders[] = { 
+		&cpp_class_map_.insert(&CppClassSymbol<Any>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<Class>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<CppClass>::value, null).first->second,
+		&cpp_class_map_.insert(&CppClassSymbol<Array>::value, null).first->second,
+	};
+
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
+	}
+	
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		new(p) CppClass();
+	}
+
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		p->set_class(get_cpp_class<CppClass>());
+	}
+	
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		register_gc(p);
+	}
+
+//////////
+
+	set_cpp_class<Base>(get_cpp_class<Any>());
+	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
+	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
+
+	builtin_ = xnew<Singleton>();
+	lib_ = xnew<Lib>(true);
+	lib_->append_load_path(".");
+	Iterator_ = xnew<IteratorClass>();
+	Iterable_ = xnew<Class>();
+
+	vm_list_ = xnew<Array>();
+
+	string_mgr_ = xnew<StringMgr>();
+
+
+/////////////////////
+
+	initialize_string();
+
+	id_op_list_[id_op_call] = Xid(op_call);
+	id_op_list_[id_op_pos] = Xid(op_pos);
+	id_op_list_[id_op_neg] = Xid(op_neg);
+	id_op_list_[id_op_com] = Xid(op_com);
+	id_op_list_[id_op_at] = Xid(op_at);
+	id_op_list_[id_op_set_at] = Xid(op_set_at);
+	id_op_list_[id_op_range] = Xid(op_range);
+	id_op_list_[id_op_add] = Xid(op_add);
+	id_op_list_[id_op_cat] = Xid(op_cat);
+	id_op_list_[id_op_sub] = Xid(op_sub);
+	id_op_list_[id_op_mul] = Xid(op_mul);
+	id_op_list_[id_op_div] = Xid(op_div);
+	id_op_list_[id_op_mod] = Xid(op_mod);
+	id_op_list_[id_op_and] = Xid(op_and);
+	id_op_list_[id_op_or] = Xid(op_or);
+	id_op_list_[id_op_xor] = Xid(op_xor);
+	id_op_list_[id_op_shl] = Xid(op_shl);
+	id_op_list_[id_op_shr] = Xid(op_shr);
+	id_op_list_[id_op_ushr] = Xid(op_ushr);
+	id_op_list_[id_op_eq] = Xid(op_eq);
+	id_op_list_[id_op_lt] = Xid(op_lt);
+	id_op_list_[id_op_in] = Xid(op_in);
+	id_op_list_[id_op_inc] = Xid(op_inc);
+	id_op_list_[id_op_dec] = Xid(op_dec);
+	id_op_list_[id_op_add_assign] = Xid(op_add_assign);
+	id_op_list_[id_op_cat_assign] = Xid(op_cat_assign);
+	id_op_list_[id_op_sub_assign] = Xid(op_sub_assign);
+	id_op_list_[id_op_mul_assign] = Xid(op_mul_assign);
+	id_op_list_[id_op_div_assign] = Xid(op_div_assign);
+	id_op_list_[id_op_mod_assign] = Xid(op_mod_assign);
+	id_op_list_[id_op_and_assign] = Xid(op_and_assign);
+	id_op_list_[id_op_or_assign] = Xid(op_or_assign);
+	id_op_list_[id_op_xor_assign] = Xid(op_xor_assign);
+	id_op_list_[id_op_shl_assign] = Xid(op_shl_assign);
+	id_op_list_[id_op_shr_assign] = Xid(op_shr_assign);
+	id_op_list_[id_op_ushr_assign] = Xid(op_ushr_assign);
+
+	initialize_except();
+	initialize_any();
+	initialize_basictype();
+	initialize_array();
+	initialize_map();
+	initialize_iterator();
+	initialize_fun();
+	initialize_code();
+	initialize_frame();
+	initialize_class();
+	initialize_lib();
+	initialize_debug();
+	initialize_math();
+	initialize_stream();
+
+	initialize_thread();
+	setting->thread_lib->initialize();
+	thread_mgr_ = xnew<ThreadMgr>(setting->thread_lib);
+
+	initialize_text();
+	
+	initialize_xpeg();
+
+////////////////////////
+
+	builtin()->def(Xid(builtin), builtin());
+
+	builtin()->def(Xid(Iterator), Iterator());
+	builtin()->def(Xid(Iterable), Iterable());
+	
+#ifndef XTAL_NO_PARSER
+	builtin()->def_fun(Xid(compile_file), &compile_file);
+	builtin()->def_fun(Xid(compile), &compile);
+#endif
+
+	builtin()->def_fun(Xid(gc), &::xtal::gc);
+	builtin()->def_fun(Xid(full_gc), &::xtal::full_gc);
+	builtin()->def_fun(Xid(disable_gc), &::xtal::disable_gc);
+	builtin()->def_fun(Xid(enable_gc), &::xtal::enable_gc);
+	builtin()->def_fun(Xid(clock), &clock_);
+	builtin()->def_fun(Xid(open), &open)->params(Xid(file_name), null, Xid(mode), Xid(r));
+	builtin()->def_fun(Xid(interned_strings), &interned_strings);
+
+	lib()->def(Xid(builtin), builtin());
+
+	Xemb((
+
+builtin::print: fun(...){
+	....ordered_arguments{
+		stdout.print(it.to_s);
+	}
+}
+
+builtin::println: fun(...){
+	print(...);
+	print("\n");
+}
+
+builtin::load: fun(file_name, ...){
+	code: compile_file(file_name);
+	return code(...);
+}
+
+	),
+"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x4b\x39\x00\x01\x89\x00\x01\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x02\x0b\x25\x01\x25\x00\x37\x00\x03\x39\x00\x01\x89\x00\x02\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x05\x39\x00\x01\x89"
+"\x00\x03\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x06\x25\x00\x8b\x00\x03\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x20\x00\x00\x00\x00\x00\x04\x00\x00\x00\x12\x00\x38\x00\x00\x00\x00\x00\x06\x00\x00\x00\x12\x00\x00\x00\x00"
+"\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x00\x00\x05\x00\x04\x00\x00\x00\x00\x00\x00\x01\x00\x00\x38\x00\x00\x00\x05\x00\x06\x00\x00\x00\x00\x00\x00\x01\x00"
+"\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00"
+"\x00\x13\x00\x00\x00\x06\x00\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x18\x00\x00\x00\x08\x00\x00\x00\x1b\x00\x00\x00\x0b\x00\x00\x00\x20\x00\x00\x00\x09\x00\x00\x00\x28\x00\x00\x00\x0a\x00\x00\x00\x2b\x00\x00\x00\x0b\x00\x00\x00\x30\x00\x00\x00\x10\x00\x00"
+"\x00\x30\x00\x00\x00\x0d\x00\x00\x00\x33\x00\x00\x00\x10\x00\x00\x00\x38\x00\x00\x00\x0e\x00\x00\x00\x40\x00\x00\x00\x0f\x00\x00\x00\x43\x00\x00\x00\x10\x00\x00\x00\x48\x00\x00\x00\x11\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75"
+"\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x07\x09\x00\x00\x00\x00\x09\x00\x00\x00\x05\x4d\x75\x74\x65\x78\x09\x00\x00"
+"\x00\x04\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00\x00\x06\x75\x6e\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b"
+"\x09\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
+)->call();
+
+////////////////////////
+
+	initialize_except_script();
+	initialize_basictype_script();
+	initialize_iterator_script();
+	initialize_string_script();
+	initialize_stream_script();
+	initialize_thread_script();
+	initialize_class_script();
+	initialize_array_script();
+	initialize_map_script();
+	initialize_text_script();
+
+	enable_gc();
+}
+
+void Core::uninitialize(){
+	if(!objects_begin_){ return; }
+	
+	full_gc();
+
+	thread_mgr_->destroy();
+	Iterator_ = null;
+	Iterable_ = null;
+	builtin_ = null;
+	lib_ = null;
+	vm_list_ = null;
+
+	string_mgr_ = null;
+
+	full_gc();
+
+	for(int i=0; i<id_op_MAX; ++i){
+		id_op_list_[i] = null;
+	}
+
+	thread_mgr_ = null;
+
+	full_gc();
+
+	for(cpp_class_map_t::iterator it=cpp_class_map_.begin(); it!=cpp_class_map_.end(); ++it){
+		it->second = null;
+	}
+
+	cpp_class_map_.destroy();
+	full_gc();
+	
+	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+	if(n != 0){
+		//fprintf(stderr, "finished gc\n");
+		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
+		//print_alive_objects();
+		Base* p = objects_begin_[0];
+		uint_t count = p->ref_count();
+
+		XTAL_ASSERT(false); // 全部開放できてない
+	}
+
+	objects_list_current_ = objects_list_begin_;
+
+	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
+	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
+	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+
+	empty_instance_variables.uninit();
+
+	release_memory();
+
+	//
+	display_debug_memory();
+}
+
+const ClassPtr& Core::new_cpp_class(const StringPtr& name, void* key){
+	ClassPtr& p = cpp_class_map_[key];
+	if(!p){ p = xnew<CppClass>(name); }
+	return p;
+}
+	
+VMachinePtr Core::vm_take_over(){
+	if(vm_list_->empty()){
+		vm_list_->push_back(xnew<VMachine>());
+	}
+	VMachinePtr vm = unchecked_ptr_cast<VMachine>(vm_list_->back());
+	vm_list_->pop_back();
+	return vm;
+}
+
+void Core::vm_take_back(const VMachinePtr& vm){
+	vm->reset();
+	vm_list_->push_back(vm);
+}
+
+const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count){
+	uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
+	uint_t iprimary_key = rawvalue(primary_key);
+	uint_t ins = rawvalue(secondary_key);
+
+	uint_t hash = itarget_class ^ (iprimary_key>>2) ^ ins + iprimary_key ^ type(primary_key);
+	Unit& unit = table_[hash & CACHE_MASK];
+	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(primary_key, unit.primary_key) && ins==unit.secondary_key){
+		hit_++;
+		return ap(unit.member);
+	}
+	else{
+		miss_++;
+
+		if(type(target_class)!=TYPE_BASE){
+			return undefined;
+		}
+
+		bool nocache = false;
+		unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
+		if(!nocache){
+			unit.target_class = itarget_class;
+			unit.primary_key = primary_key;
+			unit.secondary_key = ins;
+			unit.mutate_count = global_mutate_count;
+		}
+		return ap(unit.member);
+	}
+}
+
+bool Core::IsInheritedCacheTable::cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count){
+	uint_t itarget_class = rawvalue(target_class);
+	uint_t iklass = rawvalue(klass);
+
+	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+	Unit& unit = table_[hash & CACHE_MASK];
+
+	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+		hit_++;
+		return unit.result;
+	}
+	else{
+		miss_++;
+		// キャッシュに保存
+		unit.target_class = itarget_class;
+		unit.klass = iklass;
+		unit.mutate_count = global_mutate_count;
+		unit.result = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+
+		return unit.result;
+	}
+}
+
+bool Core::IsInheritedCacheTable::cache_is_inherited(const Any& target_class, const Any& klass, uint_t global_mutate_count){
+	uint_t itarget_class = rawvalue(target_class);
+	uint_t iklass = rawvalue(klass);
+
+	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+	Unit& unit = table_[hash & CACHE_MASK];
+
+	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+		hit_++;
+		return unit.result;
+	}
+	else{
+		miss_++;
+		// キャッシュに保存
+		unit.target_class = itarget_class;
+		unit.klass = iklass;
+		unit.mutate_count = global_mutate_count;
+
+		if(const ClassPtr& cls = ptr_as<Class>(ap(target_class))){
+			unit.result = cls->is_inherited(ap(klass));
+		}
+		else{
+			unit.result = false;
+		}
+
+		return unit.result;
+	}
+}
+
+
+const ClassPtr& RuntimeError(){
+	return ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
+}
+
+const ClassPtr& CompileError(){
+	return ptr_cast<Class>(builtin()->member(Xid(CompileError)));
+}
+
+const ClassPtr& UnsupportedError(){
+	return ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
+}
+
+const ClassPtr& ArgumentError(){
+	return ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
+}
+
+const StreamPtr& stdin_stream(){
+	return ptr_cast<Stream>(builtin()->member(Xid(stdin)));
+}
+
+const StreamPtr& stdout_stream(){
+	return ptr_cast<Stream>(builtin()->member(Xid(stdout)));
+}
+
+const StreamPtr& stderr_stream(){
+	return ptr_cast<Stream>(builtin()->member(Xid(stderr)));
+}
+
+#ifndef XTAL_NO_PARSER
+
+CodePtr compile_file(const StringPtr& file_name){
+	CodeBuilder cb;
+	StreamPtr fs = open(file_name, Xid(r));
+	if(CodePtr fun = cb.compile(fs, file_name)){
+		fs->close();
+		return fun;
+	}
+	fs->close();
+
+	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()), return null);
+}
+
+CodePtr compile(const StringPtr& source){
+	CodeBuilder cb;
+	StringStreamPtr ms(xnew<StringStream>(source));
+	if(CodePtr fun =  cb.compile(ms, "<eval>")){
+		return fun;
+	}
+
+	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()), return null);
+}
+
+AnyPtr load(const StringPtr& file_name){
+	AnyPtr ret = compile_file(file_name)->call();
+	gc();
+	return ret;
+}
+
+AnyPtr load_and_save(const StringPtr& file_name){
+	AnyPtr ret = compile_file(file_name);
+	StreamPtr fs = open(file_name->cat(Xid(c)), Xid(w));
+	fs->serialize(ret);
+	fs->close();
+	gc();
+	return ret->call();
+}
+
+CodePtr source(const char_t* src, int_t size, const char* file){
+	CodeBuilder cb;
+	StreamPtr ms(xnew<PointerStream>(src, size));
+	if(CodePtr fun = cb.compile(ms, file)){
+		return fun;
+	}
+
+	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()), return null);
+}
+
+void ix(){
+	CodeBuilder cb;
+	cb.interactive_compile();
+}
+
+#endif
+
+CodePtr compiled_source(const void* src, int_t size, const char* file){
+	StreamPtr ms(xnew<PointerStream>(src, size));
+	if(CodePtr fun = ptr_cast<Code>(ms->deserialize())){
+		return fun;
+	}
+	return null;
+}
 
 }

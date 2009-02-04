@@ -6,6 +6,8 @@ namespace xtal{
 VMachine::VMachine(){	
 	myself_ = this;
 
+	id_ = core()->id_op_list();
+
 	stack_.reserve(32);
 
 	end_code_ = InstExit::NUMBER;
@@ -428,7 +430,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
-	m & debug_info_ & debug_ & except_[0] & except_[1] & except_[2] & result_temp_;
+	m & debug_info_ & debug_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		m & stack_[i];
@@ -454,8 +456,6 @@ void VMachine::before_gc(){
 	inc_ref_count_force(except_[1]);
 	inc_ref_count_force(except_[2]);
 
-	inc_ref_count_force(result_temp_);
-
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		inc_ref_count_force(stack_[i]);
 	}
@@ -476,8 +476,6 @@ void VMachine::after_gc(){
 	dec_ref_count_force(except_[0]);
 	dec_ref_count_force(except_[1]);
 	dec_ref_count_force(except_[2]);
-
-	dec_ref_count_force(result_temp_);
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		dec_ref_count_force(stack_[i]);

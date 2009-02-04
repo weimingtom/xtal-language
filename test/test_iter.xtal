@@ -8,7 +8,7 @@
 
 
 {
-	ret : range(5, 10).each.collect(|x| x*2).join(",");
+	ret : range(5, 10)[].each.collect(|x| x*2).join(",");
 	assert ret=="10,12,14,16,18";
 }
 

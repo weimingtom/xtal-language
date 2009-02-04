@@ -111,6 +111,14 @@ void Base::set_object_name(const StringPtr& name, int_t force, const AnyPtr& par
 
 }
 
+ArrayPtr Base::object_name_list(){
+	return null;
+}
+
+void Base::finalize(){
+
+}
+
 uint_t Base::hashcode(){
 	return ((uint_t)this)>>2;
 }

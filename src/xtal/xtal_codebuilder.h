@@ -87,7 +87,7 @@ private:
 		int_t max_stack_count;
 
 		int_t var_frame_count;
-		int_t fun_core_num;
+		int_t fun_info_num;
 
 		struct Label{
 			int_t pos;
@@ -142,7 +142,7 @@ private:
 		};
 
 		AC<Direct>::vector directs;
-		int_t scope_core_num;
+		int_t scope_info_num;
 		int_t fun_frames_size;
 
 		enum{
@@ -161,7 +161,7 @@ private:
 		};
 
 		AC<Entry>::vector entries;
-		int_t class_core_num;
+		int_t class_info_num;
 	};
 
 	struct LVarInfo{
@@ -196,8 +196,8 @@ private:
 
 	int_t lineno(){ return linenos_.top(); }
 
-	int_t class_core_num(){
-		return class_frames_.empty() ? 0 : class_frames_.top().class_core_num;
+	int_t class_info_num(){
+		return class_frames_.empty() ? 0 : class_frames_.top().class_info_num;
 	}
 
 	int_t regster_identifier_or_compile_expr(const AnyPtr& var);

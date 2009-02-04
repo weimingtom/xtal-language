@@ -317,8 +317,8 @@ class Undefined;
 class True;
 class False;
 
-struct ScopeCore{
-	ScopeCore()
+struct ScopeInfo{
+	ScopeInfo()
 		:pc(0), kind(0), flags(0), variable_identifier_offset(0), variable_size(0){}
 
 	u32 pc;
@@ -334,8 +334,8 @@ struct ScopeCore{
 	};
 };
 
-struct ClassCore : public ScopeCore{
-	ClassCore(u16 offset = 0, u16 size = 0)
+struct ClassInfo : public ScopeInfo{
+	ClassInfo(u16 offset = 0, u16 size = 0)
 		:instance_variable_identifier_offset(offset), instance_variable_size(size){}
 
 	u16 instance_variable_identifier_offset;
@@ -343,8 +343,8 @@ struct ClassCore : public ScopeCore{
 	u8 mixins;
 };
 
-struct FunCore : public ScopeCore{
-	FunCore()
+struct FunInfo : public ScopeInfo{
+	FunInfo()
 		:max_stack(256), min_param_count(0), max_param_count(0){}
 
 	u16 max_stack;
@@ -352,15 +352,15 @@ struct FunCore : public ScopeCore{
 	u8 max_param_count;
 
 	enum{
-		FLAG_EXTENDABLE_PARAM = 1<<(ScopeCore::FLAG_USED_BIT+0),
-		FLAG_ON_HEAP = 1<<(ScopeCore::FLAG_USED_BIT+1),
+		FLAG_EXTENDABLE_PARAM = 1<<(ScopeInfo::FLAG_USED_BIT+0),
+		FLAG_ON_HEAP = 1<<(ScopeInfo::FLAG_USED_BIT+1),
 
-		FLAG_USED_BIT = ScopeCore::FLAG_USED_BIT+2
+		FLAG_USED_BIT = ScopeInfo::FLAG_USED_BIT+2
 	};
 };
 
-struct ExceptCore{
-	ExceptCore()
+struct ExceptInfo{
+	ExceptInfo()
 		:catch_pc(0), finally_pc(0), end_pc(0){}
 
 	u32 catch_pc;
@@ -373,10 +373,10 @@ class Null;
 class Undefined;
 struct Named;
 
-extern ScopeCore empty_scope_core;
-extern ClassCore empty_class_core;
-extern FunCore empty_xfun_core;
-extern ExceptCore empty_except_core;
+extern ScopeInfo empty_scope_info;
+extern ClassInfo empty_class_info;
+extern FunInfo empty_xfun_info;
+extern ExceptInfo empty_except_info;
 extern EmptyInstanceVariables empty_instance_variables;
 extern IDPtr empty_id;
 extern Null null;
@@ -391,7 +391,5 @@ inline bool exists_cpp_class();
 
 template<class T>
 inline const ClassPtr& get_cpp_class();
-
-void register_gc(Base* p);
 
 }

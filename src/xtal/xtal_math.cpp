@@ -101,19 +101,19 @@ struct Math{
 
 		ClassPtr math = xnew<Singleton>(Xid(math));
 		
-		math->fun(Xid(acos), (float (*)(float))&acosf);
-		math->fun(Xid(asin), (float (*)(float))&asinf);
-		math->fun(Xid(atan), (float (*)(float))&atanf);
-		math->fun(Xid(atan2), (float (*)(float, float))&atan2f);
-		math->fun(Xid(ceil), (float (*)(float))&ceilf);
-		math->fun(Xid(cos), (float (*)(float))&cosf);
-		math->fun(Xid(exp), (float (*)(float))&expf);
-		math->fun(Xid(floor), (float (*)(float))&floorf);
-		math->fun(Xid(log), (float (*)(float))&logf);
-		math->fun(Xid(pow), (float (*)(float, float))&powf);
-		math->fun(Xid(sin), (float (*)(float))&sinf);
-		math->fun(Xid(sqrt), (float (*)(float))&sqrtf);
-		math->fun(Xid(tan), (float (*)(float))&tanf);
+		math->def_fun(Xid(acos), (float (*)(float))&acosf);
+		math->def_fun(Xid(asin), (float (*)(float))&asinf);
+		math->def_fun(Xid(atan), (float (*)(float))&atanf);
+		math->def_fun(Xid(atan2), (float (*)(float, float))&atan2f);
+		math->def_fun(Xid(ceil), (float (*)(float))&ceilf);
+		math->def_fun(Xid(cos), (float (*)(float))&cosf);
+		math->def_fun(Xid(exp), (float (*)(float))&expf);
+		math->def_fun(Xid(floor), (float (*)(float))&floorf);
+		math->def_fun(Xid(log), (float (*)(float))&logf);
+		math->def_fun(Xid(pow), (float (*)(float, float))&powf);
+		math->def_fun(Xid(sin), (float (*)(float))&sinf);
+		math->def_fun(Xid(sqrt), (float (*)(float))&sqrtf);
+		math->def_fun(Xid(tan), (float (*)(float))&tanf);
 		math->def(Xid(PI), (float_t)3.14159265358979);
 		math->def(Xid(E), (float_t)2.71828182845905);
 
@@ -125,19 +125,19 @@ struct Math{
 
 		ClassPtr math = xnew<Singleton>(Xid(math));
 
-		math->fun(Xid(acos), (double (*)(double))&acos);
-		math->fun(Xid(asin), (double (*)(double))&asin);
-		math->fun(Xid(atan), (double (*)(double))&atan);
-		math->fun(Xid(atan2), (double (*)(double, double))&atan2);
-		math->fun(Xid(ceil), (double (*)(double))&ceil);
-		math->fun(Xid(cos), (double (*)(double))&cos);
-		math->fun(Xid(exp), (double (*)(double))&exp);
-		math->fun(Xid(floor), (double (*)(double))&floor);
-		math->fun(Xid(log), (double (*)(double))&log);
-		math->fun(Xid(pow), (double (*)(double, double))&pow);
-		math->fun(Xid(sin), (double (*)(double))&sin);
-		math->fun(Xid(sqrt), (double (*)(double))&sqrt);
-		math->fun(Xid(tan), (double (*)(double))&tan);
+		math->def_fun(Xid(acos), (double (*)(double))&acos);
+		math->def_fun(Xid(asin), (double (*)(double))&asin);
+		math->def_fun(Xid(atan), (double (*)(double))&atan);
+		math->def_fun(Xid(atan2), (double (*)(double, double))&atan2);
+		math->def_fun(Xid(ceil), (double (*)(double))&ceil);
+		math->def_fun(Xid(cos), (double (*)(double))&cos);
+		math->def_fun(Xid(exp), (double (*)(double))&exp);
+		math->def_fun(Xid(floor), (double (*)(double))&floor);
+		math->def_fun(Xid(log), (double (*)(double))&log);
+		math->def_fun(Xid(pow), (double (*)(double, double))&pow);
+		math->def_fun(Xid(sin), (double (*)(double))&sin);
+		math->def_fun(Xid(sqrt), (double (*)(double))&sqrt);
+		math->def_fun(Xid(tan), (double (*)(double))&tan);
 		math->def(Xid(PI), (float_t)3.14159265358979);
 		math->def(Xid(E), (float_t)2.71828182845905);
 
@@ -147,11 +147,11 @@ struct Math{
 
 void initialize_math(){
 	ClassPtr math(Math<float_t>::make((float_t*)0));
-	math->fun(Xid(abs), &abs);
-	math->fun(Xid(max), &max_);
-	math->fun(Xid(min), &min_);
-	math->fun(Xid(random), &random);
-	math->fun(Xid(random_range), &random_range);
+	math->def_fun(Xid(abs), &abs);
+	math->def_fun(Xid(max), &max_);
+	math->def_fun(Xid(min), &min_);
+	math->def_fun(Xid(random), &random);
+	math->def_fun(Xid(random_range), &random_range);
 	builtin()->def(Xid(math), math);
 }
 

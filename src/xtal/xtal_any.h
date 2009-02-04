@@ -88,6 +88,7 @@ public:
 	friend int_t ivalue(const Any& v);
 	friend float_t fvalue(const Any& v);
 	friend Base* pvalue(const Any& v);
+	friend uint_t rawtype(const Any& v);
 	friend uint_t rawvalue(const Any& v);
 	friend bool raweq(const Any& a, const Any& b);
 	friend bool rawne(const Any& a, const Any& b);
@@ -137,7 +138,8 @@ public:
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const;
 
 	/**
 	* @brief nameメンバを取得する。
@@ -213,6 +215,8 @@ public:
 	*
 	*/
 	int_t object_name_force() const;
+
+	ArrayPtr object_name_list() const;
 	
 	/**
 	* @brief このオブジェクトに名前をつける。
@@ -384,6 +388,10 @@ inline float_t fvalue(const Any& v){
 inline Base* pvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
 	return v.pvalue_; 
+}
+
+inline uint_t rawtype(const Any& v){
+	return (uint_t)(v.type_);
 }
 
 inline uint_t rawvalue(const Any& v){

@@ -40,41 +40,41 @@ public:
 class InstanceVariableGetter : public HaveName{
 public:
 
-	InstanceVariableGetter(int_t number, ClassCore* core);
+	InstanceVariableGetter(int_t number, ClassInfo* info);
 
 	virtual void rawcall(const VMachinePtr& vm);
 
 private:
 	int_t number_;
-	ClassCore* core_;
+	ClassInfo* info_;
 };
 
 class InstanceVariableSetter : public HaveName{
 public:
 
-	InstanceVariableSetter(int_t number, ClassCore* core);
+	InstanceVariableSetter(int_t number, ClassInfo* info);
 
 	virtual void rawcall(const VMachinePtr& vm);
 
 private:
 	int_t number_;
-	ClassCore* core_;
+	ClassInfo* info_;
 };
 
 class Fun : public HaveName{
 public:
 
-	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunCore* core);
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core);
 
 	const FramePtr& outer(){ return outer_; }
 	const CodePtr& code(){ return code_; }
-	int_t pc(){ return core_->pc; }
-	const inst_t* source(){ return code_->data()+core_->pc; }
-	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+core_->variable_identifier_offset); }
-	int_t param_size(){ return core_->variable_size; }	
-	bool extendable_param(){ return (core_->flags&FunCore::FLAG_EXTENDABLE_PARAM)!=0; }
-	FunCore* core(){ return core_; }
-	void set_core(FunCore* fc){ core_ = fc; }
+	int_t pc(){ return info_->pc; }
+	const inst_t* source(){ return code_->data()+info_->pc; }
+	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+info_->variable_identifier_offset); }
+	int_t param_size(){ return info_->variable_size; }	
+	bool extendable_param(){ return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; }
+	FunInfo* info(){ return info_; }
+	void set_info(FunInfo* fc){ info_ = fc; }
 	void check_arg(const VMachinePtr& vm);
 	virtual StringPtr object_name(int_t depth = -1);
 
@@ -87,7 +87,7 @@ protected:
 	FramePtr outer_;
 	CodePtr code_;
 	AnyPtr this_;
-	FunCore* core_;
+	FunInfo* info_;
 	
 	virtual void visit_members(Visitor& m){
 		HaveName::visit_members(m);
@@ -99,7 +99,7 @@ protected:
 class Lambda : public Fun{
 public:
 
-	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core)
+	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core)
 		:Fun(outer, th, code, core){
 	}
 
@@ -111,7 +111,7 @@ public:
 class Method : public Fun{
 public:
 
-	Method(const FramePtr& outer, const CodePtr& code, FunCore* core)
+	Method(const FramePtr& outer, const CodePtr& code, FunInfo* core)
 		:Fun(outer, null, code, core){
 	}
 
@@ -123,7 +123,7 @@ public:
 class Fiber : public Fun{
 public:
 
-	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunCore* core);
+	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core);
 
 	virtual void finalize();
 			

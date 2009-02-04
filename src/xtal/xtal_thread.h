@@ -28,12 +28,18 @@ public:
 
 public:
 
-	Thread(const AnyPtr& callback);
+	Thread();
 
 public:
+	
+	virtual void start() = 0;
 
 	virtual void join() = 0;
 	
+	void set_callback(const AnyPtr& a){
+		callback_ = a;
+	}
+
 	AnyPtr callback(){
 		return callback_;
 	}
@@ -63,7 +69,7 @@ class ThreadLib{
 public:
 	virtual ~ThreadLib();
 	virtual void initialize() = 0;
-	virtual ThreadPtr create_thread(const AnyPtr& callback) = 0;
+	virtual ThreadPtr create_thread() = 0;
 	virtual MutexPtr create_mutex() = 0;
 	virtual void yield() = 0;
 	virtual void sleep(float_t sec) = 0;
@@ -71,11 +77,87 @@ public:
 	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b) = 0;
 };
 
+class ThreadMgr : public Base{
+public:
+
+	ThreadMgr(ThreadLib* lib = 0);
+
+	~ThreadMgr();
+
+	void destroy();
+
+public:
+
+	void change_vmachine(const Thread::ID& id);
+
+	void register_vmachine();
+
+	void remove_vmachine();
+
+	void global_interpreter_lock();
+
+	void global_interpreter_unlock();
+
+	void xlock();
+
+	void xunlock();
+
+	void thread_entry(const ThreadPtr& thread);
+
+	void register_thread();
+
+	void unregister_thread();
+
+	void check_yield_thread();
+
+	void yield_thread();
+
+	void sleep_thread(float_t sec);
+
+	bool thread_enabled(){
+		return thread_enabled_;
+	}
+
+	const VMachinePtr& vmachine();
+
+	ThreadPtr create_thread(const AnyPtr& fun);
+
+	MutexPtr create_mutex();
+
+	void lock_mutex(const MutexPtr& self);
+
+	virtual void visit_members(Visitor& m);
+
+private:
+
+	struct VMachineTableUnit{
+		Thread::ID id;
+		AnyPtr vm;
+	};		
+	
+	AC<VMachineTableUnit>::vector table;
+
+	int thread_count_;
+	int thread_locked_count_;
+	int thread_unlocked_count_;
+	bool stop_the_world_;
+
+	Thread::ID current_thread_id_;
+	Thread::ID current_vmachine_id_;
+	Thread::ID stop_the_world_thread_id_;
+	int current_thread_recursive_;
+
+	MutexPtr mutex_;
+	MutexPtr mutex2_;
+	VMachinePtr vmachine_;
+
+	bool thread_enabled_;
+
+	ThreadLib* thread_lib_;
+};
+
 void InitThread();
 void UninitThread();
-
-void set_thread(ThreadLib& lib);
-void set_thread();
 
 bool stop_the_world();
 void restart_the_world();
@@ -89,26 +171,23 @@ void xunlock();
 void register_thread();
 void unregister_thread();
 
-extern bool thread_enabled_;
-extern int thread_step_counter_;
-
-int check_yield_thread();
+void check_yield_thread();
 
 struct GlobalInterpreterLock{
-	GlobalInterpreterLock(int){ if(thread_enabled_)global_interpreter_lock(); }
-	~GlobalInterpreterLock(){ if(thread_enabled_)global_interpreter_unlock(); }
+	GlobalInterpreterLock(int){ global_interpreter_lock(); }
+	~GlobalInterpreterLock(){ global_interpreter_unlock(); }
 	operator bool() const{ return true; }
 };
 
 struct GlobalInterpreterUnlock{
-	GlobalInterpreterUnlock(int){ if(thread_enabled_)global_interpreter_unlock(); }
-	~GlobalInterpreterUnlock(){ if(thread_enabled_)global_interpreter_lock(); }
+	GlobalInterpreterUnlock(int){ global_interpreter_unlock(); }
+	~GlobalInterpreterUnlock(){ global_interpreter_lock(); }
 	operator bool() const{ return true; }
 };
 
 struct XUnlock{
-	XUnlock(int){ if(thread_enabled_)xunlock(); }
-	~XUnlock(){ if(thread_enabled_)xlock(); }
+	XUnlock(int){ xunlock(); }
+	~XUnlock(){ xlock(); }
 	operator bool() const{ return true; }
 };
 

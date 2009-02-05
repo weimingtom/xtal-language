@@ -513,6 +513,7 @@ public:
 		Any outer;
 	};
 
+	void push_ff(int_t need_result_count);
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);

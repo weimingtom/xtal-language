@@ -420,10 +420,6 @@ public:
 	
 public:
 
-	const VMachinePtr& inner_setup_call(const inst_t* pc, int_t need_result_count);
-	const VMachinePtr& inner_setup_call(const inst_t* pc, int_t need_result_count, const AnyPtr& a1);
-	const VMachinePtr& inner_setup_call(const inst_t* pc, int_t need_result_count, const AnyPtr& a1, const AnyPtr& a2);
-
 	struct FunFrame{
 
 		// pop_ffÇµÇΩÇ∆Ç´ÇÕÇ±ÇÃpcÇ©ÇÁé¿çsÇ∑ÇÈ
@@ -517,7 +513,6 @@ public:
 		Any outer;
 	};
 
-	void push_ff(int_t need_result_count);
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
@@ -550,11 +545,20 @@ public:
 	const VMachinePtr& myself(){ return *(const VMachinePtr*)&myself_; }
 
 private:
+	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target);
+	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget);
 
-	const inst_t* send1(const inst_t* pc, const IDPtr& name);
-	const inst_t* send2(const inst_t* pc, const IDPtr& name);
-	const inst_t* send2_r(const inst_t* pc, const IDPtr& name);
-	const inst_t* send2_q(const inst_t* pc, const IDPtr& name);
+	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0);
+	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0);
+
+	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1);
+	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1);
+
+	const inst_t* inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0);
+	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0);
+
+	const inst_t* inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1);
+	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1);
 
 	const inst_t* push_except();
 
@@ -706,6 +710,20 @@ public:
 	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
+	
+	const inst_t* OpAdd(const inst_t* pc, int_t op);
+	const inst_t* OpSub(const inst_t* pc, int_t op);
+	const inst_t* OpMul(const inst_t* pc, int_t op);
+	const inst_t* OpDiv(const inst_t* pc, int_t op);
+	const inst_t* OpMod(const inst_t* pc, int_t op);
+	const inst_t* OpAnd(const inst_t* pc, int_t op);
+	const inst_t* OpOr(const inst_t* pc, int_t op);
+	const inst_t* OpXor(const inst_t* pc, int_t op);
+	const inst_t* OpShl(const inst_t* pc, int_t op);
+	const inst_t* OpShr(const inst_t* pc, int_t op);
+	const inst_t* OpUshr(const inst_t* pc, int_t op);
+	const inst_t* OpInc(const inst_t* pc, int_t op);
+	const inst_t* OpDec(const inst_t* pc, int_t op);
 
 private:
 

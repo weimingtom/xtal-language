@@ -158,6 +158,9 @@ void Core::full_gc(){
 		while(true){			
 			ConnectedPointer current((objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_), objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
+			if(current==begin){
+				break;
+			}
 
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
@@ -356,8 +359,8 @@ void Core::initialize(CoreSetting* setting){
 
 	cycle_count_ = 0;
 
-	initialize_memory();
 	disable_gc();
+	initialize_memory();
 
 	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
 	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);

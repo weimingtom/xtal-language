@@ -143,6 +143,10 @@ void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named
 	f.called_pc = &throw_unsupported_error_code_;
 }
 
+void VMachine::push_ff(int_t need_result_count){
+	push_ff(&end_code_, need_result_count, 0, 0, null);
+}
+
 void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
 	FunFrame& f = fun_frames_.push();
 	f.need_result_count = need_result_count;

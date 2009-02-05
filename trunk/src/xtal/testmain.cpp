@@ -134,13 +134,11 @@ int main2(int argc, char** argv){
 
 		ArrayPtr a = xnew<Array>(10);
 
-		Xsrc((/*
-			f: fiber{
-				yield 9;
-				yield 10;
-			}
-
-			f().p;*/
+		Xsrc((
+		//{
+i: "";
+			++i;
+		//}			
 		))->call();
 
 #if 1
@@ -211,9 +209,11 @@ int main2(int argc, char** argv){
 		load("../../test-utf16le/test_serialize.xtal");
 #else
 		load("../../test/test_empty.xtal");
+		load("../../test/test_calc.xtal");
 		load("../../test/test_multiple_values.xtal");
 		load("../../test/test_array.xtal");
 		load("../../test/test_map.xtal");
+		//compile_file("../../test/test_float.xtal")->inspect()->p();
 		load("../../test/test_float.xtal");
 		load("../../test/test_class.xtal");
 		load("../../test/test_except.xtal");
@@ -221,7 +221,6 @@ int main2(int argc, char** argv){
 		load("../../test/test_fun.xtal");
 		load("../../test/test_iter.xtal");
 		load("../../test/test_fib.xtal");
-		load("../../test/test_calc.xtal");
 		load("../../test/test_for.xtal");
 		load("../../test/test_if.xtal");
 		load("../../test/test_nested_loops.xtal");

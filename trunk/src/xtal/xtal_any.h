@@ -43,7 +43,7 @@ public:
 	struct noinit_t{};
 	Any(noinit_t){}
 	
-protected:
+public:
 
 	void set_null(){
 		type_ = TYPE_NULL;

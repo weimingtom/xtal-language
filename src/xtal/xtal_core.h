@@ -3,16 +3,13 @@
 
 namespace xtal{
 
-template<class T>
-struct CppClassSymbol{
-	static int_t value;
-};
-
-template<class T>
-int_t CppClassSymbol<T>::value;
-
 struct CoreSetting{
 	ThreadLib* thread_lib;
+	StreamLib* stream_lib;
+	FilesystemLib* filesystem_lib;
+	AllocatorLib* allocator_lib;
+
+	CoreSetting();
 };
 
 class Core{
@@ -25,9 +22,25 @@ public:
 		uninitialize();
 	}
 
-	void initialize(CoreSetting* setting=0);
+	void initialize(const CoreSetting& setting);
 
 	void uninitialize();
+
+public:
+
+	void* user_malloc(size_t size);
+
+	void* user_malloc_nothrow(size_t size);
+
+	void user_free(void* p);
+
+	void* so_malloc(size_t size);
+
+	void so_free(void* p, size_t size);
+
+	const SmartPtr<Filesystem>& filesystem(){
+		return filesystem_;
+	}
 
 public:
 
@@ -40,7 +53,9 @@ public:
 	void full_gc();
 
 	void register_gc(Base* p);
+
 	void register_gc_observer(GCObserver* p);
+
 	void unregister_gc_observer(GCObserver* p);
 
 public:
@@ -61,15 +76,15 @@ public:
 	}
 
 	template<class T>
-	const ClassPtr& new_cpp_class(const StringPtr& name){
+	const ClassPtr& new_cpp_class(const StringPtr& name = empty_string){
 		return new_cpp_class(name, &CppClassSymbol<T>::value);
 	}
 
 	template<class T>
-	const ClassPtr& new_cpp_singleton(){
+	const SmartPtr<T>& new_cpp_singleton(){
 		ClassPtr& p = cpp_class_map_[&CppClassSymbol<T>::value];
-		if(!p){ p = xnew<T>();}
-		return p;
+		if(!p){ p = xnew<T>(); }
+		return unchecked_ptr_cast<T>(p);
 	}
 
 	template<class T>
@@ -179,6 +194,15 @@ public:
 	}
 
 private:
+
+	void bind();
+	void exec_script();
+	
+private:
+
+	SmallObjectAllocator so_alloc_;
+	CoreSetting setting_;
+
 	Base** objects_begin_ ;
 	Base** objects_current_;
 	Base** objects_end_;
@@ -207,6 +231,8 @@ private:
 
 	typedef Hashtable<void*, ClassPtr, KeyFun> cpp_class_map_t;
 	cpp_class_map_t cpp_class_map_;
+
+	SmartPtr<Filesystem> filesystem_;
 
 	ClassPtr Iterator_;
 	ClassPtr Iterable_;
@@ -237,7 +263,7 @@ private:
 		}
 
 		void print_result(){
-			std::printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+			//std::printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 		}
 
 		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
@@ -264,7 +290,7 @@ private:
 		}
 
 		void print_result(){
-			std::printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+			//std::printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
 		}
 
 		bool cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count);
@@ -277,16 +303,54 @@ private:
 	IsInheritedCacheTable is_inherited_cache_table_;
 	uint_t global_mutate_count_;
 
-
 	SmartPtr<StringMgr> string_mgr_;
 	SmartPtr<ThreadMgr> thread_mgr_;
-
 };
 
 Core* core();
 
 void set_core(Core* e);
 
+
+/**
+* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
+*
+* メモリ確保失敗は例外で返される。
+*/
+inline void* user_malloc(size_t size){
+	return core()->user_malloc(size);
+}
+
+/**
+* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
+*
+* メモリ確保失敗はNULL値で返される。
+*/
+inline void* user_malloc_nothrow(size_t size){
+	return core()->user_malloc_nothrow(size);
+}
+
+/**
+* @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
+*
+*/
+inline void user_free(void* p){
+	return core()->user_free(p);
+}
+
+/**
+* @brief 小さいオブジェクト用にメモリをアロケートする。
+*/
+inline void* so_malloc(size_t size){
+	return core()->so_malloc(size);
+}
+
+/**
+* @brief 小さいオブジェクト用のメモリを解放する。
+*/
+inline void so_free(void* p, size_t size){
+	return core()->so_free(p, size);
+}
 
 /**
 * @brief ガーベジコレクションを実行する
@@ -344,7 +408,7 @@ const ClassPtr& new_cpp_class(const StringPtr& name){
 * 既に生成されている場合、生成済みのクラスを返す。
 */
 template<class T>
-const ClassPtr& new_cpp_singleton(){
+const SmartPtr<T>& new_cpp_singleton(){
 	return core()->new_cpp_singleton<T>();
 }
 
@@ -454,12 +518,12 @@ inline void sleep_thread(float_t sec){
 	return core()->thread_mgr()->sleep_thread(sec);
 }
 
-inline ThreadPtr create_thread(const AnyPtr& callback_fun){
-	return core()->thread_mgr()->create_thread(callback_fun);
+inline ThreadPtr new_thread(const AnyPtr& callback_fun){
+	return core()->thread_mgr()->new_thread(callback_fun);
 }
 
-inline MutexPtr create_mutex(){
-	return core()->thread_mgr()->create_mutex();
+inline MutexPtr new_mutex(){
+	return core()->thread_mgr()->new_mutex();
 }
 
 inline void lock_mutex(const MutexPtr& p){
@@ -475,9 +539,6 @@ inline void lock_mutex(const MutexPtr& p){
 inline const VMachinePtr& vmachine(){
 	return core()->thread_mgr()->vmachine();
 }
-
-/** @addtogroup lib */
-/*@{*/
 
 #ifndef XTAL_NO_PARSER
 
@@ -525,10 +586,6 @@ CodePtr source(const char_t* src, int_t size, const char* file);
 #endif
 
 CodePtr compiled_source(const void* src, int_t size, const char* file);
-
-//AnyPtr* make_place();
-
-/*@}*/
 
 /////////////////////////////
 

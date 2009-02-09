@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 	
+#ifndef XTAL_NO_XPEG
+
 namespace xtal{ namespace xpeg{
 
 AnyPtr concat(const AnyPtr&, const AnyPtr&);
@@ -723,7 +725,7 @@ StringPtr Executor::at(const StringPtr& key){
 		}
 		else{
 			if(temp->end==temp->begin){
-				return empty_id;
+				return empty_string;
 			}
 			else{
 				return null;
@@ -1224,7 +1226,7 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
-		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->params(Xid(stream_or_iterator), empty_id));
+		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->params(Xid(stream_or_iterator), empty_string));
 		p->def_method(Xid(reset), &Executor::reset);
 		p->def_method(Xid(parse), &Executor::parse);
 		p->def_method(Xid(match), &Executor::match);
@@ -1307,3 +1309,13 @@ void initialize_xpeg(){
 }
 
 }
+
+#else
+
+namespace xtal{
+	
+void initialize_xpeg(){}
+
+}
+
+#endif

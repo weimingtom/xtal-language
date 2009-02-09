@@ -132,6 +132,7 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
 	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
+	keyword_map_->set_at(Xid(debug), (int_t)Token::KEYWORD_DEBUG);
 }	
 
 
@@ -528,19 +529,26 @@ void Lexer::do_read(){
 					push_token('#');
 				}
 			}			
-			
+				
+			XTAL_CASE('^'){ reader_.read();
+				if(reader_.eat('=')){ push_token(c2('^', '=')); }
+				else{ push_token('^'); }
+			}
+
 			XTAL_CASE('%'){ reader_.read();
 				if(reader_.eat('=')){ push_token(c2('%', '=')); }
 				else{ push_token('%'); }
 			}
 			
 			XTAL_CASE('&'){ reader_.read();
-				if(reader_.eat('&')){ push_token(c2('&', '&')); }
+				if(reader_.eat('=')){ push_token(c2('&', '=')); }
+				else if(reader_.eat('&')){ push_token(c2('&', '&')); }
 				else{ push_token('&'); }
 			}
 			
 			XTAL_CASE('|'){ reader_.read();
-				if(reader_.eat('|')){ push_token(c2('|', '|')); }
+				if(reader_.eat('=')){ push_token(c2('|', '=')); }
+				else if(reader_.eat('|')){ push_token(c2('|', '|')); }
 				else{ push_token('|'); }
 			}
 						
@@ -834,6 +842,8 @@ enum{//Expressions priority
 
 	PRI_LOOP,
 
+	PRI_CATCH,
+
 	PRI_Q,
 
 	PRI_OROR,
@@ -1078,6 +1088,7 @@ bool Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_TRUE){ eb_.splice(EXPR_TRUE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_FALSE){ eb_.splice(EXPR_FALSE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_THIS){ eb_.splice(EXPR_THIS, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_DEBUG){ eb_.splice(EXPR_DEBUG, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ eb_.splice(EXPR_CURRENT_CONTEXT, 0); return true; }
 
 				XTAL_CASE(Token::KEYWORD_DOFUN){ 
@@ -1134,6 +1145,16 @@ bool Parser::parse_post(int_t pri, int_t space){
 				
 				XTAL_CASE(Token::KEYWORD_IS){ if(cmp_pri(pri, PRI_IS, space, l_space)){ must_parse_expr(PRI_IS, r_space); eb_.splice(EXPR_IS, 2); return true; } }
 				XTAL_CASE(Token::KEYWORD_IN){ if(cmp_pri(pri, PRI_IN, space, l_space)){ must_parse_expr(PRI_IN, r_space); eb_.splice(EXPR_IN, 2); return true; } }
+				XTAL_CASE(Token::KEYWORD_CATCH){ 
+					if(cmp_pri(pri, PRI_CATCH, space, l_space)){
+						expect('(');
+						must_parse_identifier();
+						expect(')');
+						must_parse_expr(PRI_CATCH, r_space); 
+						eb_.splice(EXPR_CATCH, 3);
+						return true; 
+					} 
+				}
 			}
 		}
 		

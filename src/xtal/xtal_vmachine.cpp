@@ -7,8 +7,14 @@ inline const IDPtr& isp(const Any& v){
 	return (const IDPtr&)v;
 }
 
-template<class T>
-inline T check_zero(T value){
+static int_t check_zero(int_t value){
+	if(value==0){
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
+	}
+	return value;
+}
+
+static float_t check_zero(float_t value){
 	if(value==0){
 		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
 	}
@@ -23,19 +29,6 @@ inline const IDPtr& VMachine::prev_identifier(int_t n){ return prev_code()->iden
 inline const IDPtr& VMachine::identifier_or_pop(int_t n){ 
 	if(n!=0){ return  unchecked_ptr_cast<ID>(ap(identifier(n)));  }
 	else{ return unchecked_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
-}
-
-void VMachine::recycle_call(){
-	FunFrame& f = ff();
-	downsize(f.ordered_arg_count+f.named_arg_count*2);
-	f.ordered_arg_count = 0;
-	f.named_arg_count = 0;
-	f.called_pc = &throw_unsupported_error_code_;
-}
-
-void VMachine::recycle_call(const AnyPtr& a1){
-	recycle_call();
-	push_arg(a1);
 }
 
 void VMachine::execute(Fun* fun, const inst_t* start_pc){
@@ -63,75 +56,17 @@ void VMachine::execute(Fun* fun, const inst_t* start_pc){
 
 }
 
-void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
-	// 結果をvmに渡す
-	if(vm->need_result()){
-		if(add_succ_or_fail_result){
-			if(resume_pc_!=0){
-				vm->push(from_this(fun));
-			}
-			else{
-				vm->push(null);
-			}
-			vm->push(this, yield_result_count_);
-			downsize(yield_result_count_);
-			vm->adjust_result(yield_result_count_+1);
-		}
-		else{
-			vm->push(this, yield_result_count_);
-			downsize(yield_result_count_);
-			vm->adjust_result(yield_result_count_);
-		}
-	}
+void VMachine::recycle_call(){
+	FunFrame& f = ff();
+	downsize(f.ordered_arg_count+f.named_arg_count*2);
+	f.ordered_arg_count = 0;
+	f.named_arg_count = 0;
+	f.called_pc = &throw_unsupported_error_code_;
 }
 
-const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
-	yield_result_count_ = 0;
-	push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
-	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-	resume_pc_ = 0;
-	carry_over(fun);
-	ff().yieldable = true;
-	execute_inner(ff().called_pc);
-	present_for_vm(fun, vm, add_succ_or_fail_result);
-	vm->ff().called_pc = &cleanup_call_code_;
-	return resume_pc_;
-}
-
-const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm, bool add_succ_or_fail_result){
-	yield_result_count_ = 0;
-	ff().called_pc = pc;
-	resume_pc_ = 0;
-	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-	execute_inner(ff().called_pc);
-	present_for_vm(fun, vm, add_succ_or_fail_result);
-	vm->ff().called_pc = &cleanup_call_code_;
-	return resume_pc_;
-}
-
-void VMachine::exit_fiber(){
-	XTAL_TRY{
-		yield_result_count_ = 0;
-		ff().called_pc = resume_pc_;
-		resume_pc_ = 0;
-		execute_inner(&throw_undefined_code_);
-	}
-	XTAL_CATCH(e){
-		(void)e;
-	}
-	reset();
-}
-
-void VMachine::reset(){
-	stack_.resize(0);
-	except_frames_.resize(0);
-	fun_frames_.resize(0);
-
-	except_[0] = null;
-	except_[1] = null;
-	except_[2] = null;
-	debug_info_ = null;
-	debug_ = null;
+void VMachine::recycle_call(const AnyPtr& a1){
+	recycle_call();
+	push_arg(a1);
 }
 
 void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
@@ -219,43 +154,167 @@ void VMachine::return_result_instance_variable(int_t number, ClassInfo* core){
 	return_result((ff().instance_variables->variable(number, core)));
 }
 
-void VMachine::adjust_arg(int_t n){
+void VMachine::carry_over(Fun* fun){
 	FunFrame& f = ff();
+	
+	f.fun(fun);
+	f.outer(fun->outer());
+	f.variables_.clear();
+	f.called_pc = fun->source();
+	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
+	
+	if(type(f.self())==TYPE_BASE){
+		f.instance_variables = pvalue(f.self())->instance_variables();
+	}
+
+	if(fun->extendable_param()){
+		f.arguments(make_args(fun));
+	}
+	
+	FunInfo* info = fun->info();
+	if(int_t size = info->variable_size){
+		if(info->flags & FunInfo::FLAG_ON_HEAP){
+			f.outer(xnew<Frame>(f.outer(), fun->code(), info));
+			Frame* frame = f.outer().get();
+			for(int_t n = 0; n<size; ++n){
+				frame->set_member_direct(n, arg(n, fun));
+			}
+		}
+		else{
+			f.variables_.upsize(size);
+			Any* vars=&f.variables_[size-1];
+			for(int_t n = 0; n<size; ++n){
+				vars[n] = arg(n, fun);
+			}
+		}
+	}
+	
+	int_t max_stack = info->max_stack;
+	stack_.upsize(max_stack);
+	stack_.downsize(max_stack + f.args_stack_size());
+	f.ordered_arg_count = f.named_arg_count = 0;
+
+	debug_enable_ = debug_ && debug_->is_enabled();
+	if(debug_enable_){
+		debug_hook(f.called_pc, BREAKPOINT_CALL);
+	}
+}
+
+void VMachine::mv_carry_over(Fun* fun){
+	FunFrame& f = ff();
+	
+	f.fun(fun);
+	f.outer(fun->outer());
+	f.variables_.clear();
+	f.called_pc = fun->source();
+	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
+
+	if(type(f.self())==TYPE_BASE){
+		f.instance_variables = pvalue(f.self())->instance_variables();
+	}
+
+	if(fun->extendable_param()){
+		f.arguments(make_args(fun));
+	}
+	
+	// 名前付き引数は邪魔
 	stack_.downsize(f.named_arg_count*2);
-	adjust_result(f.ordered_arg_count, n);
+
+	FunInfo* core = fun->info();
+	int_t size = core->variable_size;
+	adjust_result(f.ordered_arg_count, size);
+	f.ordered_arg_count = size;
 	f.named_arg_count = 0;
-	f.ordered_arg_count = n;
+	
+	if(size){
+		if(core->flags & FunInfo::FLAG_ON_HEAP){
+			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
+			Frame* frame = f.outer().get();
+			for(int_t n = 0; n<size; ++n){
+				frame->set_member_direct(n, get(size-1-n));
+			}
+		}
+		else{
+			f.variables_.upsize(size);	
+			Any* vars=&f.variables_[size-1];
+			for(int_t n = 0; n<size; ++n){
+				vars[n] = get(size-1-n);
+			}
+		}
+	}	
+	
+	int_t max_stack = core->max_stack;
+	stack_.upsize(max_stack);
+	stack_.downsize(max_stack + size);
+	f.ordered_arg_count = 0;
+
+	debug_enable_ = debug_ && debug_->is_enabled();
+	if(debug_enable_){
+		debug_hook(f.called_pc, BREAKPOINT_CALL);
+	}
 }
 
-void VMachine::flatten_arg(){
-	FunFrame& f = ff();
-	adjust_arg(1);
-	if(MultiValuePtr mv = arg(0)->flatten_mv()){
-		downsize(1);
-		for(uint_t i=0; i<mv->size(); ++i){
-			push(mv->at(i));
-		}
-		f.ordered_arg_count = mv->size();
-	}
-	else{
-		downsize(1);
-		f.ordered_arg_count = 0;
-	}
-}
+void VMachine::adjust_result(int_t n, int_t need_result_count){
 
-void VMachine::flatten_all_arg(){
-	FunFrame& f = ff();
-	adjust_arg(1);
-	if(MultiValuePtr mv = arg(0)->flatten_all_mv()){
-		downsize(1);
-		for(uint_t i=0; i<mv->size(); ++i){
-			push(mv->at(i));
+	// 戻り値の数と要求している戻り値の数が等しい
+	if(need_result_count==n){
+		return;
+	}
+
+	// 戻り値なんて要求してない
+	if(need_result_count==0){
+		downsize(n);
+		return;
+	}
+
+	// 戻り値が一つも無いのでundefinedで埋める
+	if(n==0){
+		for(int_t i = 0; i<need_result_count; ++i){
+			push(undefined);
 		}
-		f.ordered_arg_count = mv->size();
+		return;
+	}
+
+	// この時点で、nもneed_result_countも1以上
+
+
+	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
+	if(need_result_count<n){
+
+		// 余った戻り値を多値に直す。
+		int_t size = n-need_result_count+1;
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			MultiValuePtr ret(xnew<MultiValue>(size));
+			for(int_t i=0; i<size; ++i){
+				ret->set_at(i, get(size-1-i));
+			}
+			downsize(size);
+			push(ret);
+		}	
 	}
 	else{
-		downsize(1);
-		f.ordered_arg_count = 0;
+		// 要求している戻り値の数の方が、関数が返す戻り値より多い
+
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			if(const MultiValuePtr& temp = xtal::ptr_as<MultiValue>(get())){
+				// 最後の要素の多値を展開し埋め込む
+				MultiValuePtr mv(temp);
+				downsize(1);
+
+				int_t len = mv->size();
+				for(int_t i=0; i<len; ++i){
+					push(mv->at(i));
+				}
+
+				adjust_result(len-1, need_result_count-n);
+			}
+			else{
+				// 最後の要素が配列ではないので、undefinedで埋めとく
+				for(int_t i = n; i<need_result_count; ++i){
+					push(undefined);
+				}
+			}
+		}
 	}
 }
 
@@ -458,6 +517,11 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
+	XTAL_VM_CASE(PushTrueAndSkip){ // 3
+		push(Any(true)); 
+		XTAL_VM_CONTINUE(pc + inst.ISIZE + InstPushFalse::ISIZE); 
+	}
+
 	XTAL_VM_CASE(PushInt1Byte){ // 3
 		push(Any((int_t)inst.value)); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -484,7 +548,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(PushArgs){ // 3
-		push(fun_frames_[0].arguments());
+		push(ff().arguments());
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
@@ -523,30 +587,18 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(Insert3){ XTAL_VM_CONTINUE(FunInsert3(pc)); /*
+	XTAL_VM_CASE(Insert3){ // 12
 		Any temp = get(); 
 		set(get(1)); 
 		set(1, get(2)); 
 		set(2, get(3)); 
 		set(3, temp); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+	}
 
 	XTAL_VM_CASE(AdjustResult){ // 3
 		adjust_result(inst.result_count, inst.need_result_count);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(If){ // 2
-		XTAL_VM_CONTINUE(pc + (pop() ? inst.ISIZE : inst.OFFSET_address + inst.address));
-	}
-
-	XTAL_VM_CASE(Unless){ // 2
-		XTAL_VM_CONTINUE(pc + (!pop() ? inst.ISIZE : inst.OFFSET_address + inst.address));
-	}
-
-	XTAL_VM_CASE(Goto){ // 2
-		XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
 	}
 
 	XTAL_VM_CASE(LocalVariableInc){ // 8
@@ -756,7 +808,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pop_ff());
 	}
 
-	XTAL_VM_CASE(Property){ XTAL_VM_CONTINUE(FunProperty(pc)); /*
+	XTAL_VM_CASE(Property){ // 9
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -767,9 +819,9 @@ XTAL_VM_SWITCH{
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
 		}
 		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-	}*/ }
+	}
 
-	XTAL_VM_CASE(SetProperty){ XTAL_VM_CONTINUE(FunSetProperty(pc)); /*
+	XTAL_VM_CASE(SetProperty){ // 9
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -780,9 +832,9 @@ XTAL_VM_SWITCH{
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
 		}
 		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-	}*/ }
+	}
 
-	XTAL_VM_CASE(Call){ XTAL_VM_CONTINUE(FunCall(pc)); /*
+	XTAL_VM_CASE(Call){ // 9
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = null;
 			Any primary_key = id_[Core::id_op_call];
@@ -793,9 +845,9 @@ XTAL_VM_SWITCH{
 			ap(target)->rawcall(myself());
 		}
 		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));	
-	}*/ }
+	}
 
-	XTAL_VM_CASE(Send){ XTAL_VM_CONTINUE(FunSend(pc)); /*
+	XTAL_VM_CASE(Send){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -807,7 +859,7 @@ XTAL_VM_SWITCH{
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
 		}
 		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-	}*/ }
+	}
 
 	XTAL_VM_CASE(Member){ // 11
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -833,7 +885,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(DefineMember){ XTAL_VM_CONTINUE(FunDefineMember(pc)); /*
+	XTAL_VM_CASE(DefineMember){ // 8
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -841,56 +893,6 @@ XTAL_VM_SWITCH{
 			Any target = pop();
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->def(isp(primary_key), ap(value), ap(secondary_key), KIND_PUBLIC);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}*/ }
-
-	XTAL_VM_CASE(GlobalVariable){ // 11
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any ret = code()->filelocal()->member(identifier(inst.identifier_number));
-			XTAL_VM_CHECK_EXCEPT;
-			if(rawne(ret, undefined)){
-				push(ret);
-			}
-			else{
-				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), null));
-			}
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}
-
-	XTAL_VM_CASE(SetGlobalVariable){ // 4
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			code()->filelocal()->set_member(identifier(inst.identifier_number), get(), null);
-			downsize(1);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(DefineGlobalVariable){ // 4
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			code()->filelocal()->def(identifier(inst.identifier_number), get(), null, KIND_PUBLIC);
-			downsize(1);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(Once){ // 5
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			const AnyPtr& ret = code()->once_value(inst.value_number);
-			if(rawne(ret, undefined)){
-				push(ret);
-				XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address);
-			}
-			else{
-				XTAL_VM_CONTINUE(pc + inst.ISIZE);
-			}
-		}
-	}
-
-	XTAL_VM_CASE(SetOnce){ // 3
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			code()->set_once_value(inst.value_number, pop()); 
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -948,7 +950,19 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(code()->data()+ivalue(pop()));
 	}
 
-	XTAL_VM_CASE(IfEq){ XTAL_VM_CONTINUE(FunIfEq(pc)); /*
+	XTAL_VM_CASE(If){ // 2
+		XTAL_VM_CONTINUE(pc + (pop() ? inst.ISIZE : inst.OFFSET_address + inst.address));
+	}
+
+	XTAL_VM_CASE(Unless){ // 2
+		XTAL_VM_CONTINUE(pc + (!pop() ? inst.ISIZE : inst.OFFSET_address + inst.address));
+	}
+
+	XTAL_VM_CASE(Goto){ // 2
+		XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
+	}
+
+	XTAL_VM_CASE(IfEq){ // 16
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -974,9 +988,9 @@ XTAL_VM_SWITCH{
 				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
 			}
 		}
-	}*/ }
+	}
 
-	XTAL_VM_CASE(IfNe){ XTAL_VM_CONTINUE(FunIfNe(pc)); /*
+	XTAL_VM_CASE(IfNe){ // 16
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -1002,9 +1016,9 @@ XTAL_VM_SWITCH{
 				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
 			}
 		}
-	}*/ }
+	}
 
-	XTAL_VM_CASE(IfLt){ XTAL_VM_CONTINUE(FunIfLt(pc)); /*
+	XTAL_VM_CASE(IfLt){ // 14
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -1024,9 +1038,9 @@ XTAL_VM_SWITCH{
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
 		}
-	}*/ }
+	}
 
-	XTAL_VM_CASE(IfLe){ XTAL_VM_CONTINUE(FunIfLe(pc)); /*
+	XTAL_VM_CASE(IfLe){ // 14
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -1046,9 +1060,9 @@ XTAL_VM_SWITCH{
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
 		}
-	}*/ }
+	}
 
-	XTAL_VM_CASE(IfGt){ XTAL_VM_CONTINUE(FunIfGt(pc)); /*
+	XTAL_VM_CASE(IfGt){ // 14
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -1068,9 +1082,9 @@ XTAL_VM_SWITCH{
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
 		}
-	}*/ }
+	}
 
-	XTAL_VM_CASE(IfGe){ XTAL_VM_CONTINUE(FunIfGe(pc)); /*
+	XTAL_VM_CASE(IfGe){ // 14
 		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 		uint_t abtype = atype | btype;
@@ -1090,7 +1104,7 @@ XTAL_VM_SWITCH{
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
 		}
-	}*/ }
+	}
 
 	XTAL_VM_CASE(IfRawEq){ // 4
 		pc += raweq(get(1), get()) ? (int)(inst.ISIZE+InstIf::ISIZE) : (int)(inst.OFFSET_address+inst.address);
@@ -1240,190 +1254,6 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, Core::id_op_ushr));
 	}
 
-	XTAL_VM_CASE(Eq){ XTAL_VM_CONTINUE(FunEq(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) == ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue == bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			if(raweq(a, b)){
-				set(1, Any(true)); 
-				downsize(1);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-	}*/ }
-
-	XTAL_VM_CASE(Ne){ XTAL_VM_CONTINUE(FunNe(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) != ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue != bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			if(rawne(a, b)){
-				set(1, Any(true)); 
-				downsize(1);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-	}*/ }
-
-	XTAL_VM_CASE(Lt){ XTAL_VM_CONTINUE(FunLt(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) < ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue < bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-	}*/ }
-
-	XTAL_VM_CASE(Le){ XTAL_VM_CONTINUE(FunLe(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) <= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue <= bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-	}*/ }
-
-	XTAL_VM_CASE(Gt){ XTAL_VM_CONTINUE(FunGt(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) > ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue > bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-	}*/ }
-
-	XTAL_VM_CASE(Ge){ XTAL_VM_CONTINUE(FunGe(pc)); /*
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) >= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue >= bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-	}*/ }
-
-	XTAL_VM_CASE(RawEq){ // 4
-		set(1, Any(raweq(get(1), get())));
-		downsize(1);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(RawNe){ // 4
-		set(1, Any(rawne(get(1), get())));
-		downsize(1);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(In){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_in], 1, 0));
-	}
-
-	XTAL_VM_CASE(Nin){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_in], 1, 0));
-	}
-
-	XTAL_VM_CASE(Is){ // 4
-		set(1, Any(get(1)->is(get())));
-		downsize(1);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
-	XTAL_VM_CASE(Nis){ // 4
-		set(1, Any(!get(1)->is(get())));
-		downsize(1);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
-
 	XTAL_VM_CASE(Inc){ // 2
 		XTAL_VM_CONTINUE(OpInc(pc+inst.ISIZE, Core::id_op_inc));
 	}
@@ -1480,18 +1310,69 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, Core::id_op_ushr_assign));
 	}
 
-	XTAL_VM_CASE(Range){ XTAL_VM_CONTINUE(FunRange(pc)); /*
+	XTAL_VM_CASE(Range){ // 8
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any rhs = pop();
 			Any lhs = pop();
 			push(ap(rhs)); push(ap(Any((int_t)inst.kind)));
 			push_ff(pc+inst.ISIZE, 1, 2, 0, null);
+			set_unsuported_error_info(ap(lhs), id_[Core::id_op_range], null);
 			ap(lhs)->rawsend(myself(), id_[Core::id_op_range], null);
 		}
 		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));
-	}*/ }
+	}
 
-	XTAL_VM_CASE(ClassBegin){ XTAL_VM_CONTINUE(FunClassBegin(pc)); /*
+	XTAL_VM_CASE(GlobalVariable){ // 11
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			Any ret = code()->filelocal()->member(identifier(inst.identifier_number));
+			XTAL_VM_CHECK_EXCEPT;
+			if(rawne(ret, undefined)){
+				push(ret);
+			}
+			else{
+				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), null));
+			}
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
+	}
+
+	XTAL_VM_CASE(SetGlobalVariable){ // 4
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			code()->filelocal()->set_member(identifier(inst.identifier_number), get(), null);
+			downsize(1);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(DefineGlobalVariable){ // 4
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			code()->filelocal()->def(identifier(inst.identifier_number), get(), null, KIND_PUBLIC);
+			downsize(1);
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(Once){ // 5
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			const AnyPtr& ret = code()->once_value(inst.value_number);
+			if(rawne(ret, undefined)){
+				push(ret);
+				XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address);
+			}
+			else{
+				XTAL_VM_CONTINUE(pc + inst.ISIZE);
+			}
+		}
+	}
+
+	XTAL_VM_CASE(SetOnce){ // 3
+		XTAL_GLOBAL_INTERPRETER_LOCK{
+			code()->set_once_value(inst.value_number, pop()); 
+		}
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
+
+	XTAL_VM_CASE(ClassBegin){ // 14
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassInfo* core = code()->class_info(inst.core_number);
 			const FramePtr& outer = (core->flags&ClassInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
@@ -1518,9 +1399,9 @@ XTAL_VM_SWITCH{
 			ff().outer(cp);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}*/ }
+	}
 
-	XTAL_VM_CASE(ClassEnd){ XTAL_VM_CONTINUE(FunClassEnd(pc)); /*
+	XTAL_VM_CASE(ClassEnd){ // 12
 		if(raweq(ff().outer()->get_class(), ff().outer())){
 			Singleton* singleton = (Singleton*)pvalue(ff().outer());
 			singleton->init_singleton(myself());
@@ -1530,7 +1411,7 @@ XTAL_VM_SWITCH{
 		ff().outer(ff().outer()->outer());
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-	}*/ }
+	}
 
 	XTAL_VM_CASE(DefineClassMember){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1579,7 +1460,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
+	XTAL_VM_CASE(MakeFun){ // 10
 		int_t table_n = inst.core_number, end = inst.OFFSET_address + inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunInfo* core = code()->fun_info(table_n);
@@ -1593,9 +1474,9 @@ XTAL_VM_SWITCH{
 			}
 		}
 		XTAL_VM_CONTINUE(pc + end);
-	}*/ }
+	}
 
-	XTAL_VM_CASE(MakeInstanceVariableAccessor){ XTAL_VM_CONTINUE(FunMakeInstanceVariableAccessor(pc)); /*
+	XTAL_VM_CASE(MakeInstanceVariableAccessor){ // 7
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			AnyPtr ret;
 			switch(inst.type){
@@ -1607,7 +1488,7 @@ XTAL_VM_SWITCH{
 			push(ret);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}*/ }
+	}
 
 	XTAL_VM_CASE(Throw){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1646,9 +1527,9 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Assert){ // 4
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			AnyPtr message = pop();
-			XTAL_VM_EXCEPT(builtin()->member(Xid(AssertionFailed))->call(message)); 
+		debug_hook(pc, BREAKPOINT_ASSERT);
+		if(ap(except_[0])){
+			XTAL_VM_EXCEPT(ap(except_[0]));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -1721,481 +1602,6 @@ rethrow:
 */
 
 //{FUNS{{
-const inst_t* VMachine::FunInsert3(const inst_t* pc){
-		XTAL_VM_DEF_INST(Insert3);
-		Any temp = get(); 
-		set(get(1)); 
-		set(1, get(2)); 
-		set(2, get(3)); 
-		set(3, temp); 
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-}
-
-const inst_t* VMachine::FunProperty(const inst_t* pc){
-		XTAL_VM_DEF_INST(Property);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
-		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-}
-
-const inst_t* VMachine::FunSetProperty(const inst_t* pc){
-		XTAL_VM_DEF_INST(SetProperty);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
-		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-}
-
-const inst_t* VMachine::FunCall(const inst_t* pc){
-		XTAL_VM_DEF_INST(Call);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = null;
-			Any primary_key = id_[Core::id_op_call];
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawcall(myself());
-		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));	
-}
-
-const inst_t* VMachine::FunSend(const inst_t* pc){
-		XTAL_VM_DEF_INST(Send);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			if(inst.flags&CALL_FLAG_Q) ff().called_pc = &check_unsupported_code_;
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
-		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
-}
-
-const inst_t* VMachine::FunDefineMember(const inst_t* pc){
-		XTAL_VM_DEF_INST(DefineMember);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			AnyPtr value = pop();
-			Any target = pop();
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->def(isp(primary_key), ap(value), ap(secondary_key), KIND_PUBLIC);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-}
-
-const inst_t* VMachine::FunIfEq(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfEq);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) == ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue == bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			if(raweq(a, b)){
-				downsize(2);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-}
-
-const inst_t* VMachine::FunIfNe(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfNe);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) != ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue != bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			if(rawne(a, b)){
-				downsize(2);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstUnless::ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-}
-
-const inst_t* VMachine::FunIfLt(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfLt);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) < ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue < bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-}
-
-const inst_t* VMachine::FunIfLe(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfLe);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) <= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue <= bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-}
-
-const inst_t* VMachine::FunIfGt(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfGt);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) > ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue > bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-}
-
-const inst_t* VMachine::FunIfGe(const inst_t* pc){
-		XTAL_VM_DEF_INST(IfGe);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) >= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue >= bfvalue;
-			}
-			downsize(2); 
-			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-}
-
-const inst_t* VMachine::FunEq(const inst_t* pc){
-		XTAL_VM_DEF_INST(Eq);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) == ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue == bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			if(raweq(a, b)){
-				set(1, Any(true)); 
-				downsize(1);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-}
-
-const inst_t* VMachine::FunNe(const inst_t* pc){
-		XTAL_VM_DEF_INST(Ne);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) != ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue != bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			if(rawne(a, b)){
-				set(1, Any(true)); 
-				downsize(1);
-				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-			}
-			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
-			}
-		}
-}
-
-const inst_t* VMachine::FunLt(const inst_t* pc){
-		XTAL_VM_DEF_INST(Lt);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) < ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue < bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-}
-
-const inst_t* VMachine::FunLe(const inst_t* pc){
-		XTAL_VM_DEF_INST(Le);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) <= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue <= bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-}
-
-const inst_t* VMachine::FunGt(const inst_t* pc){
-		XTAL_VM_DEF_INST(Gt);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) > ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue > bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
-		}
-}
-
-const inst_t* VMachine::FunGe(const inst_t* pc){
-		XTAL_VM_DEF_INST(Ge);
-		const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		if(abtype<2){
-			bool ret;
-			if(abtype==0){
-				ret = ivalue(a) >= ivalue(b);
-			}
-			else{
-				float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-				float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-				ret = afvalue >= bfvalue;
-			}
-			set(1, Any(ret));
-			downsize(1); 
-			XTAL_VM_CONTINUE(pc+inst.ISIZE+InstNot::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
-		}
-}
-
-const inst_t* VMachine::FunRange(const inst_t* pc){
-		XTAL_VM_DEF_INST(Range);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any rhs = pop();
-			Any lhs = pop();
-			push(ap(rhs)); push(ap(Any((int_t)inst.kind)));
-			push_ff(pc+inst.ISIZE, 1, 2, 0, null);
-			ap(lhs)->rawsend(myself(), id_[Core::id_op_range], null);
-		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));
-}
-
-const inst_t* VMachine::FunClassBegin(const inst_t* pc){
-		XTAL_VM_DEF_INST(ClassBegin);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassInfo* core = code()->class_info(inst.core_number);
-			const FramePtr& outer = (core->flags&ClassInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
-			ClassPtr cp;
-
-			switch(core->kind){
-				XTAL_CASE(KIND_CLASS){
-					cp = xnew<Class>(outer, code(), core);
-				}
-
-				XTAL_CASE(KIND_SINGLETON){
-					cp = xnew<Singleton>(outer, code(), core);
-				}
-			}
-			
-			int_t n = core->mixins;
-			for(int_t i = 0; i<n; ++i){
-				cp->inherit_strict(ptr_cast<Class>(pop()));
-			}
-
-			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
-			ff().fun(prev_fun());
-
-			ff().outer(cp);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-}
-
-const inst_t* VMachine::FunClassEnd(const inst_t* pc){
-		XTAL_VM_DEF_INST(ClassEnd);
-		if(raweq(ff().outer()->get_class(), ff().outer())){
-			Singleton* singleton = (Singleton*)pvalue(ff().outer());
-			singleton->init_singleton(myself());
-		}
-
-		push(ff().outer());
-		ff().outer(ff().outer()->outer());
-		pop_ff();
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
-}
-
-const inst_t* VMachine::FunMakeFun(const inst_t* pc){
-		XTAL_VM_DEF_INST(MakeFun);
-		int_t table_n = inst.core_number, end = inst.OFFSET_address + inst.address;
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			FunInfo* core = code()->fun_info(table_n);
-			const FramePtr& outer = ff().outer();
-			switch(core->kind){
-				XTAL_NODEFAULT;
-				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), core)); }
-				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), core)); }
-			}
-		}
-		XTAL_VM_CONTINUE(pc + end);
-}
-
-const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
-		XTAL_VM_DEF_INST(MakeInstanceVariableAccessor);
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			AnyPtr ret;
-			switch(inst.type){
-				XTAL_NODEFAULT;
-
-				XTAL_CASE(0){ ret = xnew<InstanceVariableGetter>(inst.number, code()->class_info(inst.core_number)); }
-				XTAL_CASE(1){ ret = xnew<InstanceVariableSetter>(inst.number, code()->class_info(inst.core_number)); }
-			}
-			push(ret);
-		}
-		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-}
-
 //}}FUNS}
 	
 const inst_t* VMachine::OpAdd(const inst_t* pc, int_t op){
@@ -2426,170 +1832,6 @@ const inst_t* VMachine::OpDec(const inst_t* pc, int_t op){
 	}
 	else{
 		return inner_send_from_stack(pc, 1, id_[op], 0);
-	}
-}
-
-void VMachine::carry_over(Fun* fun){
-	FunFrame& f = ff();
-	
-	f.fun(fun);
-	f.outer(fun->outer());
-	f.variables_.clear();
-	f.called_pc = fun->source();
-	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
-	
-	if(type(f.self())==TYPE_BASE){
-		f.instance_variables = pvalue(f.self())->instance_variables();
-	}
-
-	if(fun->extendable_param()){
-		f.arguments(make_args(fun));
-	}
-	
-	FunInfo* info = fun->info();
-	if(int_t size = info->variable_size){
-		if(info->flags & FunInfo::FLAG_ON_HEAP){
-			f.outer(xnew<Frame>(f.outer(), fun->code(), info));
-			Frame* frame = f.outer().get();
-			for(int_t n = 0; n<size; ++n){
-				frame->set_member_direct(n, arg(n, fun));
-			}
-		}
-		else{
-			f.variables_.upsize(size);
-			Any* vars=&f.variables_[size-1];
-			for(int_t n = 0; n<size; ++n){
-				vars[n] = arg(n, fun);
-			}
-		}
-	}
-	
-	int_t max_stack = info->max_stack;
-	stack_.upsize(max_stack);
-	stack_.downsize(max_stack + f.args_stack_size());
-	f.ordered_arg_count = f.named_arg_count = 0;
-
-	debug_enable_ = debug_ && debug_->is_enabled();
-	if(debug_enable_){
-		debug_hook(f.called_pc, BREAKPOINT_CALL);
-	}
-}
-
-void VMachine::mv_carry_over(Fun* fun){
-	FunFrame& f = ff();
-	
-	f.fun(fun);
-	f.outer(fun->outer());
-	f.variables_.clear();
-	f.called_pc = fun->source();
-	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
-
-	if(type(f.self())==TYPE_BASE){
-		f.instance_variables = pvalue(f.self())->instance_variables();
-	}
-
-	if(fun->extendable_param()){
-		f.arguments(make_args(fun));
-	}
-	
-	// 名前付き引数は邪魔
-	stack_.downsize(f.named_arg_count*2);
-
-	FunInfo* core = fun->info();
-	int_t size = core->variable_size;
-	adjust_result(f.ordered_arg_count, size);
-	f.ordered_arg_count = size;
-	f.named_arg_count = 0;
-	
-	if(size){
-		if(core->flags & FunInfo::FLAG_ON_HEAP){
-			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
-			Frame* frame = f.outer().get();
-			for(int_t n = 0; n<size; ++n){
-				frame->set_member_direct(n, get(size-1-n));
-			}
-		}
-		else{
-			f.variables_.upsize(size);	
-			Any* vars=&f.variables_[size-1];
-			for(int_t n = 0; n<size; ++n){
-				vars[n] = get(size-1-n);
-			}
-		}
-	}	
-	
-	int_t max_stack = core->max_stack;
-	stack_.upsize(max_stack);
-	stack_.downsize(max_stack + size);
-	f.ordered_arg_count = 0;
-
-	debug_enable_ = debug_ && debug_->is_enabled();
-	if(debug_enable_){
-		debug_hook(f.called_pc, BREAKPOINT_CALL);
-	}
-}
-
-void VMachine::adjust_result(int_t n, int_t need_result_count){
-
-	// 戻り値の数と要求している戻り値の数が等しい
-	if(need_result_count==n){
-		return;
-	}
-
-	// 戻り値なんて要求してない
-	if(need_result_count==0){
-		downsize(n);
-		return;
-	}
-
-	// 戻り値が一つも無いのでundefinedで埋める
-	if(n==0){
-		for(int_t i = 0; i<need_result_count; ++i){
-			push(undefined);
-		}
-		return;
-	}
-
-	// この時点で、nもneed_result_countも1以上
-
-
-	// 要求している戻り値の数の方が、関数が返す戻り値より少ない
-	if(need_result_count<n){
-
-		// 余った戻り値を多値に直す。
-		int_t size = n-need_result_count+1;
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			MultiValuePtr ret(xnew<MultiValue>(size));
-			for(int_t i=0; i<size; ++i){
-				ret->set_at(i, get(size-1-i));
-			}
-			downsize(size);
-			push(ret);
-		}	
-	}
-	else{
-		// 要求している戻り値の数の方が、関数が返す戻り値より多い
-
-		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(const MultiValuePtr& temp = xtal::ptr_as<MultiValue>(get())){
-				// 最後の要素の多値を展開し埋め込む
-				MultiValuePtr mv(temp);
-				downsize(1);
-
-				int_t len = mv->size();
-				for(int_t i=0; i<len; ++i){
-					push(mv->at(i));
-				}
-
-				adjust_result(len-1, need_result_count-n);
-			}
-			else{
-				// 最後の要素が配列ではないので、undefinedで埋めとく
-				for(int_t i = n; i<need_result_count; ++i){
-					push(undefined);
-				}
-			}
-		}
 	}
 }
 

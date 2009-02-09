@@ -143,8 +143,14 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(core);
 
+	var_begin(VarFrame::SCOPE);
+	scope_begin();	
+
 	// 関数本体を処理する
 	compile_stmt(e);
+
+	scope_end();
+	var_end();
 	
 	break_off(ff().var_frame_count+1);
 
@@ -554,6 +560,10 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 			set_jump(InstUnless::OFFSET_address, label_if);
 			put_inst(InstUnless());
 		}
+		else if(e->tag()==EXPR_DEBUG){
+			set_jump(InstIfDebug::OFFSET_address, label_if);
+			put_inst(InstIfDebug());
+		}
 		else{
 			compile_expr(e);
 			set_jump(InstIf::OFFSET_address, label_if);
@@ -778,7 +788,20 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
+
+	int_t label_if = reserve_label();
+	int_t label_if2 = reserve_label();
+
+	put_if_code(e, label_if, label_if2);
+
+	put_inst(InstPushTrueAndSkip());
+
+	set_label(label_if);
+	set_label(label_if2);
+
+	put_inst(InstPushFalse());
 	
+	/*
 	compile_expr(e->bin_lhs());
 	compile_expr(e->bin_rhs());
 
@@ -789,6 +812,7 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	if(e->tag()==EXPR_NE || e->tag()==EXPR_LE || e->tag()==EXPR_GE || e->tag()==EXPR_NIN){
 		put_inst(InstNot());
 	}
+	//*/
 }
 
 void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label){
@@ -796,9 +820,37 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 	
-	if(str){ compile_expr(str); }
-	else{ put_inst(InstValue(register_value(empty_id))); }
+	{
+		int_t label_if = reserve_label();
+		int_t label_if2 = reserve_label();
 
+		put_if_code(e, label_if, label_if2);
+
+		put_inst(InstPushTrueAndSkip());
+
+		set_label(label_if);
+		set_label(label_if2);
+
+		put_inst(InstPushFalse());
+	}
+
+	set_jump(InstUnless::OFFSET_address, label);
+	put_inst(InstUnless());
+
+	if(str){ compile_expr(str); }
+	else{ put_inst(InstValue(register_value(empty_string))); }
+
+	compile_expr(e->bin_lhs());
+	compile_expr(e->bin_rhs());
+
+	if(mes){ compile_expr(mes); }
+	else{ put_inst(InstValue(register_value(empty_string))); }
+
+	put_inst(InstValue(register_value(f)));
+	put_inst(InstCall(4, 0, 1, 0));
+	put_inst(InstAssert());
+
+	/*
 	compile_expr(e->bin_lhs());
 	put_inst(InstDup());
 	compile_expr(e->bin_rhs());
@@ -833,6 +885,7 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	put_inst(InstPop());
 	put_inst(InstPop());
 	put_inst(InstPop());
+	*/
 }
 
 void CodeBuilder::compile_op_assign(const ExprPtr& e){
@@ -1543,6 +1596,20 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_TRUE){ put_inst(InstPushTrue()); }
 		XTAL_CASE(EXPR_FALSE){ put_inst(InstPushFalse()); }
 		XTAL_CASE(EXPR_THIS){ put_inst(InstPushThis()); }
+
+		XTAL_CASE(EXPR_DEBUG){
+			int_t label_if = reserve_label();
+			int_t label_end = reserve_label();
+			set_jump(InstIfDebug::OFFSET_address, label_if);
+			put_inst(InstIfDebug());
+			put_inst(InstGlobalVariable(regster_identifier(Xid(debug))));
+			set_jump(InstGoto::OFFSET_address, label_end);
+			put_inst(InstGoto());
+			set_label(label_if);
+			put_inst(InstPushUndefined());
+			set_label(label_end);
+		}
+
 		XTAL_CASE(EXPR_CURRENT_CONTEXT){ put_inst(InstPushCurrentContext()); var_set_on_heap(); }
 		XTAL_CASE(EXPR_CALLEE){ put_inst(InstPushCallee()); }
 		XTAL_CASE(EXPR_ARGS){ put_inst(InstPushArgs()); }
@@ -1660,6 +1727,39 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			compile_expr(e->q_false());
 			
 			set_label(label_end);
+		}
+
+		XTAL_CASE(EXPR_CATCH){
+			int_t end_label = reserve_label();
+
+			int_t core = result_->except_info_table_.size();
+			result_->except_info_table_.push_back(ExceptInfo());
+			put_inst(InstTryBegin(core));
+
+			compile_expr(e->catch_body());
+
+			put_inst(InstTryEnd());
+
+			// catch節のコードを埋め込む
+			{
+				result_->except_info_table_[core].catch_pc = code_size();
+
+				// 例外を受け取るために変数スコープを構築
+				var_begin(VarFrame::SCOPE);
+				var_define(e->catch_catch_var(), null, 0, true, false, true);
+				scope_begin();
+
+				put_set_local_code(e->catch_catch_var());
+				put_inst(InstPop());
+				compile_expr(e->catch_catch());
+				
+				scope_end();
+				var_end();
+			}
+				
+			set_label(end_label);
+			result_->except_info_table_[core].finally_pc = code_size();
+			result_->except_info_table_[core].end_pc = code_size();
 		}
 		
 		XTAL_CASE(EXPR_AT){
@@ -1978,7 +2078,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}
 
 			compile_exprs(e->return_exprs());
-			
+		
 			break_off(ff().var_frame_count+1);
 
 			put_inst(InstReturn(exprs_size));
@@ -2002,9 +2102,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					put_inst(InstUnless());
 
 					if(e->assert_string()){ compile_expr(e->assert_string()); }
-					else{ put_inst(InstValue(register_value(empty_id))); }
+					else{ put_inst(InstValue(register_value(empty_string))); }
 					if(e->assert_message()){ compile_expr(e->assert_message()); }
-					else{ put_inst(InstValue(register_value(empty_id))); }
+					else{ put_inst(InstValue(register_value(empty_string))); }
 					
 					put_inst(InstValue(register_value(Xf("%s : %s"))));
 					put_inst(InstCall(2, 0, 1, 0));
@@ -2027,9 +2127,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}
 			else{
 				if(e->assert_string()){ compile_expr(e->assert_string()); }
-				else{ put_inst(InstValue(register_value(empty_id))); }
+				else{ put_inst(InstValue(register_value(empty_string))); }
 				if(e->assert_message()){ compile_expr(e->assert_message()); }
-				else{ put_inst(InstValue(register_value(empty_id))); }
+				else{ put_inst(InstValue(register_value(empty_string))); }
 				
 				put_inst(InstValue(register_value(Xf("%s : %s"))));
 				put_inst(InstCall(2, 0, 1, 0));
@@ -2430,7 +2530,7 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b)
 		if(!vm->processed()){ vm->return_result(undefined); }
 		ret = vm->result_and_cleanup_call();
 		if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
-			|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>())){
+			|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>()) || ret->is(get_cpp_class<Bool>())){
 			return ret;
 		}
 
@@ -2465,6 +2565,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_TRUE){ return true; }
 		XTAL_CASE(EXPR_FALSE){ return false; }
 		XTAL_CASE(EXPR_THIS){ return undefined; }
+		XTAL_CASE(EXPR_DEBUG){ return undefined; }
 		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return undefined; }
 		XTAL_CASE(EXPR_CALLEE){ return undefined; }
 		XTAL_CASE(EXPR_ARGS){ return undefined; }
@@ -2509,7 +2610,9 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 		XTAL_CASE(EXPR_EQ){ return do_bin(e, Xid(op_eq)); }
 		XTAL_CASE(EXPR_NE){ return do_not(do_bin(e, Xid(op_eq))); }
-		XTAL_CASE(EXPR_LT){ return do_bin(e, Xid(op_lt)); }
+		XTAL_CASE(EXPR_LT){ 
+			return do_bin(e, Xid(op_lt)); 
+		}
 		XTAL_CASE(EXPR_GT){ return do_bin(e, Xid(op_lt), true); }
 		XTAL_CASE(EXPR_LE){ return do_not(do_bin(e, Xid(op_lt), true)); }
 		XTAL_CASE(EXPR_GE){ return do_not(do_bin(e, Xid(op_lt))); }
@@ -2554,6 +2657,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			else{
 				return undefined;
 			}
+		}
+
+		XTAL_CASE(EXPR_CATCH){
+			return undefined;
 		}
 
 		XTAL_CASE(EXPR_Q){

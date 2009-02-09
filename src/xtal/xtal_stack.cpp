@@ -4,7 +4,6 @@ namespace xtal{
 
 PODStackBase::Buf PODStackBase::buf_;
 
-
 PODStackBase::PODStackBase(size_t onesize){
 	one_size_ = onesize;
 	begin_ = plusp(dummy_allocate(), 1);

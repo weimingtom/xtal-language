@@ -10,23 +10,11 @@ public:
 
 	InstanceVariables(uninit_t){}
 
-	InstanceVariables()		
-		:variables_(xnew<Array>()){
-		VariablesInfo vi;
-		vi.core = 0;
-		vi.pos = 0;
-		variables_info_.push(vi);
-	}
+	InstanceVariables();
 			
-	~InstanceVariables(){}
+	~InstanceVariables();
 		
-	void init_variables(ClassInfo* core){
-		VariablesInfo vi;
-		vi.core = core;
-		vi.pos = (int_t)variables_->size();
-		variables_->resize(vi.pos+core->instance_variable_size);
-		variables_info_.push(vi);
-	}
+	void init_variables(ClassInfo* core);
 
 	const AnyPtr& variable(int_t index, ClassInfo* core){
 		return variables_->at(find_core(core) + index);
@@ -43,18 +31,7 @@ public:
 		return find_core_inner(core);
 	}
 
-	bool is_included(ClassInfo* core){
-		VariablesInfo& info = variables_info_.top();
-		if(info.core == core)
-			return true;
-		for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
-			if(variables_info_[i].core==core){
-				std::swap(variables_info_[0], variables_info_[i]);
-				return true;
-			}	
-		}
-		return false;
-	}
+	bool is_included(ClassInfo* core);
 
 	int_t find_core_inner(ClassInfo* core);
 
@@ -79,24 +56,18 @@ protected:
 
 class EmptyInstanceVariables : public InstanceVariables{
 public:
-	EmptyInstanceVariables():InstanceVariables(uninit_t()){}
 
-	void init(){
-		VariablesInfo vi;
-		vi.core = 0;
-		vi.pos = 0;
-		variables_info_.push(vi);
-	}
+	EmptyInstanceVariables();
 
-	void uninit(){
-		variables_info_.release();
-	}	
+	~EmptyInstanceVariables();
+
+	static VariablesInfo vi;
 };
 	
 class Class : public Frame{
 public:
 
-	Class(const StringPtr& name = empty_id);
+	Class(const StringPtr& name = empty_string);
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core);
 
@@ -247,109 +218,12 @@ public:
 	/**
 	* @brief 2重ディスパッチメソッドを定義する。
 	*/
-	void def_dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
-		def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
-	}
+	void def_dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 	/**
 	* @brief 2重ディスパッチ関数を定義する。
 	*/
-	void def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
-		def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
-	}
-public:
-
-#if 0
-	/**
-	* @brief 関数を定義する
-	*
-	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
-	*/
-	template<class TFun>
-	const CFunPtr& fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef cfun_holder<TFun> fun_t;
-		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-
-	template<class TFun, TFun fun_s>
-	const CFunPtr& fun_static(const IDPtr& primary_key, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef cfun_holder_static<TFun, fun_s> fun_t;
-		fun_t fun;
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-
-	/**
-	* @brief 関数を定義する
-	*
-	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
-	*/
-	template<class TFun>
-	const CFunPtr& method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef cmemfun_holder<TFun> fun_t;
-		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-
-	template<class TFun, TFun fun_s>
-	const CFunPtr& method_static(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
-		typedef cmemfun_holder_static<TFun, fun_s> fun_t;
-		fun_t fun;
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, 0, fun_t::PARAMS2);
-	}
-
-	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
-	*
-	*/
-	template<class T, class C>
-	const CFunPtr& getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef getter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-	
-	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
-	*
-	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
-	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
-	*/
-	template<class T, class C>
-	const CFunPtr& setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef setter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-	
-	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
-	*
-	* cls->getter(primary_key, var, policy);
-	* cls->setter(StringPtr("set_")->cat(primary_key), v, policy);
-	* と等しい	
-	*/	
-	template<class T, class U>
-	void var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		getter(primary_key, v, secondary_key, accessibility);
-		setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
-	}
-
-	/**
-	* @brief 2重ディスパッチメソッドを定義する。
-	*/
-	void dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
-		def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
-	}
-
-	/**
-	* @brief 2重ディスパッチ関数を定義する。
-	*/
-	void dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC){
-		def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
-	}
-
-#endif
+	void def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 public:
 
@@ -371,7 +245,7 @@ public:
 	
 	struct cpp_class_t{};
 
-	Class(cpp_class_t, const StringPtr& name = empty_id);
+	Class(cpp_class_t, const StringPtr& name = empty_string);
 
 	bool is_cpp_class(){
 		return is_cpp_class_;
@@ -396,7 +270,7 @@ protected:
 class CppClass : public Class{
 public:
 		
-	CppClass(const StringPtr& name = empty_id);
+	CppClass(const StringPtr& name = empty_string);
 
 public:
 
@@ -408,7 +282,7 @@ public:
 class Singleton : public Class{
 public:
 
-	Singleton(const StringPtr& name = empty_id);
+	Singleton(const StringPtr& name = empty_string);
 
 	Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* core);
 	
@@ -427,7 +301,7 @@ public:
 class CppSingleton : public Class{
 public:
 		
-	CppSingleton(const StringPtr& name = empty_id);
+	CppSingleton(const StringPtr& name = empty_string);
 
 public:
 

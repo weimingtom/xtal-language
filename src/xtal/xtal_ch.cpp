@@ -7,7 +7,7 @@ namespace xtal{
 
 class SJISCodeLib : public CodeLib{
 public:
-	int_t ch_len(char_t ch){
+	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
 		if(c==0) return 0;
 		if((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)){
@@ -22,7 +22,7 @@ public:
 
 class EUCCodeLib : public CodeLib{
 public:
-	int_t ch_len(char_t ch){
+	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
 		if(c==0) return 1;
 		if(c&0x80){
@@ -37,7 +37,7 @@ public:
 
 class UTF8CodeLib : public CodeLib{
 public:
-	int_t ch_len(char_t ch){
+	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
 		if(c==0) return 1;
 		if((c&0x80) && (c&0x40)){
@@ -69,7 +69,7 @@ public:
 		return (v & ~((1 << 11) - 1)) == 0xD800;
 	}
 
-	int_t ch_len(char_t ch){
+	virtual int_t ch_len(char_t ch){
 		return is_surrogate(ch) ? 2 : 1;
 	}
 };
@@ -79,7 +79,7 @@ public:
 
 class UTF32CodeLib : public CodeLib{
 public:
-	int_t ch_len(char_t ch){
+	virtual int_t ch_len(char_t ch){
 		return 1;
 	}
 };
@@ -139,13 +139,15 @@ void ChMaker::add(char_t ch){
 	}
 }
 
-IDPtr ChMaker::to_s(){
+const IDPtr& ChMaker::to_s(){
 	switch(pos){
-	case 1: return xnew<ID>(buf[0]);
-	case 2: return xnew<ID>(buf[0], buf[1]);
-	case 3: return xnew<ID>(buf[0], buf[1], buf[2]);
-	default: return xnew<ID>(&buf[0], pos);
+	case 1: temp = xnew<ID>(buf[0]);
+	case 2: temp = xnew<ID>(buf[0], buf[1]);
+	case 3: temp = xnew<ID>(buf[0], buf[1], buf[2]);
+	default: temp = xnew<ID>(&buf[0], pos);
 	}
+
+	return temp;
 }
 
 namespace{

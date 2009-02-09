@@ -1,4 +1,4 @@
-
+inherit(lib::test);
 
 Foo: class{
 	+ _pub: 100;
@@ -23,54 +23,77 @@ Singleton: singleton{
 	bar : fun(){
 		return "aaa";
 	}
+	
+	op_call: method{
+		return 156;
+	}
 }
 
-{
-	a: Foo();
-	assert a.pub==100;
+TestFoo: class{
+	_obj;
 	
-	a.pub = 10;
-	assert a.pub==10;
-	
-	a.pub += 10;
-	assert a.pub==20;
-	
-	temp: null;
-	
-	try{
-		a.pro = 10;
-	}catch(e){
-		temp = "pro";
+	setup#Before: method{
+		_obj = Foo();
 	}
-	assert temp=="pro";
 	
-	
-	b: Bar();
-	assert b.pub==100;
-	
-	Bar::pub: method(){ return 200; }
-	assert b.pub==200;
-	
-	try{
-		b.pro = 10;
-	}catch(e){
-		temp = "pro";
+	eq#Test: method{
+		assert _obj.pub==100;
+		assert _obj.pub()==100;
 	}
-	assert temp=="pro";
 	
-	assert b.bar==200;
+	add#Test: method{
+		_obj.pub = 10;
+		_obj.pub += 10;
+		assert _obj.pub==20;
+	}
 	
-	Bar::pro: method(){ return 200; }
-	assert b.pro==200;
+	pro#Test: method{
+		assert _obj.pro && false catch(e) true; 
+	}
 	
-	assert Bar::hoge==555;
-	assert Bar::foo()==555;
-	
-	assert Bar::hoge==555;
-	
-	assert Singleton.class===Singleton;
-	assert Singleton::bar()=="aaa";
-	assert Singleton.bar=="aaa";
+	pri#Test: method{
+		assert _obj.pri && false catch(e) true; 
+	}
 }
+
+TestBar: class{
+	_obj;
+	
+	setup#Before: method{
+		_obj = Bar();
+	}
+	
+	def#Test: method{
+		Bar::pub: method 200;
+		assert _obj.pub==200;
+	}
+
+	bar#Test: method{
+		assert _obj.bar==200;
+	}
+	
+	def2#Test: method{
+		Bar::pro: method 200;
+		assert _obj.pro==200;
+	}
+	
+	check#Test: method{
+		assert Bar::hoge==555;
+		assert Bar::foo()==555;
+	}
+}
+
+TestSingleton: class{
+	test#Test: method{
+		assert Singleton.class===Singleton;
+		assert Singleton::bar()=="aaa";
+		assert Singleton.bar=="aaa";
+	}
+	
+	call#Test: method{
+		assert Singleton()==156;
+	}
+}
+
 
 

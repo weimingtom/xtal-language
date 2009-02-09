@@ -1,14 +1,18 @@
 
-fib : fun(i){
+inherit(lib::test);
+
+fib: fun(i){
 	if(i<2){
 		return 1;
-	}else{
+	}
+	else{
 		return callee(i-2) + callee(i-1);
 	}
 }
 
-fib2 : fiber{
-  i : 1; j : 1;
+fib2: fiber{
+  i: 1; 
+  j: 1;
   while (true) {
     yield i;
     i, j = j, i + j;

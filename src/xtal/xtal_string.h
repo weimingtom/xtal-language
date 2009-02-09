@@ -154,8 +154,6 @@ public:
 
 	uint_t hashcode();
 
-	AnyPtr split(const AnyPtr& pattern);
-
 public:
 
 	ChRangePtr op_range(const StringPtr& right, int_t kind);
@@ -306,6 +304,33 @@ public:
 	AnyPtr each();
 };
 
+class StringEachIter : public Base{
+	StringStreamPtr ss_;
+
+	virtual void visit_members(Visitor& m);
+
+public:
+
+	StringEachIter(const StringPtr& str)
+		:ss_(xnew<StringStream>(str)){
+	}
+
+	void block_next(const VMachinePtr& vm);
+};
+
+class ChRangeIter : public Base{
+public:
+
+	ChRangeIter(const ChRangePtr& range)
+		:it_(range->left()), end_(range->right()){}
+
+	void block_next(const VMachinePtr& vm);
+private:
+
+	virtual void visit_members(Visitor& m);
+
+	StringPtr it_, end_;
+};
 
 
 struct Named2;
@@ -348,7 +373,7 @@ struct Named : public Named2{
 
 	Named(){}
 
-	Named(const Null&){}
+	//Named(const Null&){}
 };
 
 void visit_members(Visitor& m, const Named& p);
@@ -421,6 +446,17 @@ public:
 	AnyPtr interned_strings();
 
 	virtual void before_gc();
+};
+
+class InternedStringIter : public Base{
+	StringMgr::table_t::iterator iter_, last_;
+public:
+
+	InternedStringIter(StringMgr::table_t::iterator begin, StringMgr::table_t::iterator end)
+		:iter_(begin), last_(end){
+	}
+			
+	void block_next(const VMachinePtr& vm);
 };
 
 }

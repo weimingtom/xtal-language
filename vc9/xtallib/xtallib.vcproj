@@ -184,6 +184,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_bind.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_cast.cpp"
 				>
 			</File>
@@ -221,6 +225,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_expr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_filesystem.cpp"
 				>
 			</File>
 			<File
@@ -291,11 +299,6 @@
 				RelativePath="..\..\src\xtal\xtal_xpeg.cpp"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="リソース ファイル"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-			>
 		</Filter>
 		<Filter
 			Name="ヘッダー ファイル"
@@ -374,6 +377,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_filesystem.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_frame.h"
 				>
 			</File>
@@ -418,6 +425,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_setting.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_smartptr.h"
 				>
 			</File>
@@ -453,6 +464,35 @@
 				RelativePath="..\..\src\xtal\xtal_xpeg.h"
 				>
 			</File>
+			<Filter
+				Name="xtal_lib"
+				>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_cstdiostream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_posixfilesystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_pthread.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_winfilesystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_winthread.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="リソース ファイル"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 		</Filter>
 		<File
 			RelativePath="ReadMe.txt"

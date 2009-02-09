@@ -3,48 +3,29 @@
 
 namespace xtal{
 
-/** @addtogroup memory */
-/*@{*/
-
-/**
-* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
-*
-* メモリ確保失敗は例外で返される。
-*/
-void* user_malloc(size_t size);
+inline void* user_malloc(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 * メモリ確保失敗はNULL値で返される。
 */
-void* user_malloc_nothrow(size_t size);
-
+inline void* user_malloc_nothrow(size_t size);
 /**
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
-void user_free(void* p);
-
-void* so_malloc(size_t size);
-
-void so_free(void* p, size_t size);
+inline void user_free(void* p);
 
 /**
-* @brief 使用するメモリアロケート関数を設定する。
-*
+* @brief 小さいオブジェクト用にメモリをアロケートする。
 */
-void set_user_malloc(void* (*malloc)(size_t), void (*free)(void*));
+inline void* so_malloc(size_t size);
 
 /**
-* @brief 使用するメモリーを設定する。
-*
+* @brief 小さいオブジェクト用のメモリを解放する。
 */
-//void set_memory(void* memory, size_t size);
-
-void initialize_memory();
-
-void release_memory();
+inline void so_free(void* p, size_t size);
 
 /**
 * @brief 動的なポインタの配列を作成、拡張する関数。
@@ -65,7 +46,6 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 * @param current 使用中の要素の一つ次
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
-
 /**
 * @brief user_malloc, user_freeを使う、STLの要件に適合したアロケータクラス。
 *
@@ -188,10 +168,6 @@ struct AC{
 		std::set<FIRST, std::less<FIRST>, Alloc<FIRST> >,
 		std::set<FIRST, SECOND, Alloc<FIRST> >
 		>::type set;
-	typedef typename detail::AC_IfDefault<SECOND,
-		std::basic_string<FIRST, std::char_traits<FIRST>, Alloc<FIRST> >,
-		std::basic_string<FIRST, SECOND, Alloc<FIRST> >
-		>::type string;
 	typedef typename detail::AC_IfDefault<THIRD,
 		std::map<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
 		std::map<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
@@ -200,102 +176,6 @@ struct AC{
 		std::multimap<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
 		std::multimap<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
 		>::type multimap;
-};
-
-/**
-* @brief メモリ管理機構
-*
-*/
-class RBTreeAllocator{
-	class Node{
-	public:
-		Node* next;
-		Node* prev;
-
-		Node* left;
-		Node* right;
-
-		uint_t flag;
-
-		enum{
-			COLOR_RED = 1<<30
-		};
-
-		uint_t used(){ return flag&~COLOR_RED; }
-		bool red(){ return (flag&COLOR_RED)!=0; }
-		void set_red(){ flag|=COLOR_RED; }
-		void set_black(){ flag&=~COLOR_RED; }
-		void set_same_color(Node* a){ if(a->red()){ set_red(); }else{ set_black(); } }
-		void flip_color(){ flag^=COLOR_RED; }
-		size_t size(){ return (u8*)next - (u8*)buf(); }
-		void* buf(){ return this+1; }
-	};
-
-public:
-
-	RBTreeAllocator();
-	
-	void init(void* begin, void* end);
-
-	void* malloc(size_t size);
-
-	void free(void* p);
-
-	void release();
-
-	void debug_print();
-
-private:
-	
-	void* malloc(Node* node, size_t size);
-
-	void insert(Node* newnode);
-
-	Node* insert(Node* h , Node* newnode);
-
-	void erase(Node* erasenode);
-
-	Node* erase(Node* h , Node* erasenode);
-
-	Node* erase_min(Node* h);
-
-	Node* move_red_left(Node* h);
-
-	Node* move_red_right(Node* h);
-
-	Node* fixup(Node* h);
-
-	Node* rotate_left(Node* h);
-
-	Node* rotate_right(Node* h);
-
-	void flip_colors(Node* h){
-		XTAL_ASSERT(h!=end_);
-		XTAL_ASSERT(h->left!=end_);
-		XTAL_ASSERT(h->right!=end_);
-		h->flip_color();
-		h->left->flip_color();
-		h->right->flip_color();
-	}
-
-	void check();
-
-private:
-
-	Node* begin(){ return begin_; }
-	Node* end(){ return end_; }
-
-	Node* to_node(void* p){ return (Node*)p-1; }
-	void add_ref(void* p){ to_node(p)->flag++; }
-	
-private:
-
-	Node* head_;
-	Node* begin_;
-	Node* end_;
-	Node* root_;
-
-	uint_t count_;
 };
 
 class FixedAllocator{
@@ -379,7 +259,20 @@ private:
 	FixedAllocator pool_[POOL_SIZE];
 };
 
-/*@}*/
+class AllocatorLib{
+public:
+	virtual ~AllocatorLib(){}
+	virtual void initialize() = 0;
+	virtual void* malloc(std::size_t size) = 0;
+	virtual void free(void* p) = 0;
+};
 
+class CStdAllocatorLib : public AllocatorLib{
+public:
+	virtual ~CStdAllocatorLib(){}
+	virtual void initialize(){}
+	virtual void* malloc(std::size_t size){ return std::malloc(size); }
+	virtual void free(void* p){ std::free(p); }
+};
 
 }//namespace 

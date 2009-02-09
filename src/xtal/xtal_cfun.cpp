@@ -21,6 +21,8 @@ CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n){
 	}
 	param_n_ = pi_.min_param_count = pi_.max_param_count = param_n;
 	pi_.params = null_params;
+
+	this_ = undefined;
 }
 
 
@@ -117,12 +119,13 @@ const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& k
 
 void CFun::visit_members(Visitor& m){
 	HaveName::visit_members(m);
+	m & this_;
 	if(param_n_>0){
 		std::for_each(pi_.params, pi_.params+param_n_, m);
 	}
 }
 
-void CFun::check_arg(const VMachinePtr& vm){
+void CFun::check_arg_num(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<pi_.min_param_count || n>pi_.max_param_count){
 		if(pi_.min_param_count==0 && pi_.max_param_count==0){
@@ -146,7 +149,7 @@ void CFun::check_arg(const VMachinePtr& vm){
 	}
 }
 
-void CFun::check_args(ParamInfoAndVM& pvm){
+void CFun::check_args_type(ParamInfoAndVM& pvm){
 	for(int_t i=-1; pvm.flags!=0; ++i){
 		if(pvm.flags&1){
 			if(i==-1){
@@ -164,13 +167,17 @@ void CFun::check_args(ParamInfoAndVM& pvm){
 
 void CFun::rawcall(const VMachinePtr& vm){
 	if(param_n_>=0 && vm->ordered_arg_count()!=pi_.min_param_count){
-		check_arg(vm);
+		check_arg_num(vm);
+	}
+
+	if(rawne(this_, undefined)){
+		vm->set_arg_this(this_);
 	}
 
 	ParamInfoAndVM pvm(pi_, vm, val_);
 	fun_(pvm);
 	if(pvm.flags){
-		check_args(pvm);
+		check_args_type(pvm);
 	}
 }
 

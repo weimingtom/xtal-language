@@ -26,7 +26,7 @@ struct UserTypeHolder : public Base{
 template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
 struct UserTypeHolderSub : public UserTypeHolder<T>{
 	UserTypeHolderSub(){}
-	UserTypeHolderSub(T* p, Deleter f):UserTypeHolder<T>(p), fun(f){}
+	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder<T>(p), fun(f){}
 	virtual ~UserTypeHolderSub(){ fun(this->ptr); }
 	Deleter fun;
 };
@@ -73,7 +73,8 @@ enum InheritedEnum{
 template<class T>
 struct InheritedN{
 	enum{
-		value = IsInherited<T, Base>::value ? INHERITED_BASE : 
+		value = 
+			IsInherited<T, Base>::value ? INHERITED_BASE : 
 			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
@@ -109,7 +110,7 @@ public:
 	SmartPtr(){}
 
 	template<class T, class Deleter>
-	SmartPtr(T* p, Deleter deleter){
+	SmartPtr(T* p, const Deleter& deleter){
 		UserTypeHolderSub<T, Deleter>* holder = new UserTypeHolderSub<T, Deleter>(p, deleter);
 		set_p_with_class(holder, new_cpp_class<T>());
 	}
@@ -118,6 +119,9 @@ public:
 		:Any(p){
 		inc_ref_count();
 	}
+
+	/// nullを受け取るコンストラクタ
+	SmartPtr(const Null&){}
 
 	SmartPtr<Any>& operator =(const Null&);
 
@@ -171,19 +175,19 @@ public:
 	* @brief 整数値から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(int_t v){ set_i(v); }
+	SmartPtr(int_t v):Any(v){}
 	
 	/**
 	* @brief 浮動小数点数値から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(float_t v){ set_f(v); }
+	SmartPtr(float_t v):Any(v){}
 	
 	/**
-	* @brief 文字列から構築するコンストラクタ。
+	* @brief booleanから構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(bool b){ set_b(b); }
+	SmartPtr(bool v):Any(v){}
 
 	/**
 	* @brief 文字列から構築するコンストラクタ。
@@ -204,18 +208,18 @@ public:
 	}
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(avoid<int>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<long>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<short>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<char>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<unsigned int>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<unsigned long>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<unsigned short>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<unsigned char>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<signed char>::type v){ set_i((int_t)v); }
-	SmartPtr(avoid<float>::type v){ set_f((float_t)v); }
-	SmartPtr(avoid<double>::type v){ set_f((float_t)v); }
-	SmartPtr(avoid<long double>::type v){ set_f((float_t)v); }
+	SmartPtr(avoid<int>::type v):Any(v){}
+	SmartPtr(avoid<long>::type v):Any(v){}
+	SmartPtr(avoid<short>::type v):Any(v){}
+	SmartPtr(avoid<char>::type v):Any(v){}
+	SmartPtr(avoid<unsigned int>::type v):Any(v){}
+	SmartPtr(avoid<unsigned long>::type v):Any(v){}
+	SmartPtr(avoid<unsigned short>::type v):Any(v){}
+	SmartPtr(avoid<unsigned char>::type v):Any(v){}
+	SmartPtr(avoid<signed char>::type v):Any(v){}
+	SmartPtr(avoid<float>::type v):Any(v){}
+	SmartPtr(avoid<double>::type v):Any(v){}
+	SmartPtr(avoid<long double>::type v):Any(v){}
 
 public:
 
@@ -379,7 +383,18 @@ private:
 };
 
 
-class Null : public AnyPtr{};
+class Null : public Any{
+public:
+	template<class T>
+	operator const SmartPtr<T>&() const{
+		return *(SmartPtr<T>*)this;
+	}
+
+	operator const SmartPtr<Any>&() const{
+		return *(SmartPtr<Any>*)this;
+	}
+};
+
 class Undefined : public AnyPtr{ public: Undefined():AnyPtr(TYPE_UNDEFINED){} };
 
 inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }

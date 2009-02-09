@@ -3,13 +3,9 @@
 
 namespace xtal{
 
-namespace{
-	FileLib* file_lib_ = 0;
-}
-
 StringPtr Stream::get_s(uint_t length){
 	if(eos())
-		return empty_id;
+		return empty_string;
 
 	if(length==1){
 		char_t ch;
@@ -30,7 +26,7 @@ StringPtr Stream::get_s(uint_t length){
 
 StringPtr Stream::get_s_all(){
 	if(eos())
-		return empty_id;
+		return empty_string;
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	while(!eos()){
@@ -184,7 +180,7 @@ void PointerStream::seek(int_t offset, int_t whence){
 
 StringPtr PointerStream::get_s(uint_t length){
 	if(pos_ >= size_)
-		return empty_id;
+		return empty_string;
 
 	if(length==1){
 		char_t ch;
@@ -215,7 +211,7 @@ StringPtr PointerStream::get_s(uint_t length){
 
 StringPtr PointerStream::get_s_all(){
 	if(pos_ >= size_)
-		return empty_id;
+		return empty_string;
 
 	char_t* data = (char_t*)data_;
 	StringPtr ret = xnew<String>((char_t*)&data[pos_], size_ - pos_);
@@ -316,7 +312,7 @@ void MemoryStream::resize(uint_t size){
 //////////////////////////////////////////////////////////////////////////
 
 StringStream::StringStream(const StringPtr& str)
-:str_(str ? str : unchecked_ptr_cast<String>(empty_id)){
+:str_(str ? str : empty_string){
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
@@ -373,231 +369,6 @@ void InteractiveStream::close(){
 
 void InteractiveStream::terminate_statement(){
 	continue_stmt_ = false;
-}
-
-///////////////////////////////////////////////////////////
-
-StdioStream::StdioStream(std::FILE* fp){
-	fp_ = fp;
-}
-
-StdioStream::~StdioStream(){
-	close();
-}
-
-uint_t StdioStream::tell(){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	return ftell(fp_);
-}
-
-uint_t StdioStream::write(const void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	XTAL_UNLOCK{
-#ifdef XTAL_USE_WCHAR
-		char_t buf[256];
-		XTAL_SPRINTF(buf, 256, L"%%.%ds", size/sizeof(char_t));
-		uint_t ret = fwprintf(fp_, buf, p);
-#else
-		uint_t ret = fwrite(p, size, 1, fp_);
-#endif
-		fflush(fp_);
-		return ret;
-	}
-	return 0;
-}
-
-uint_t StdioStream::read(void* p, uint_t size){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return 0); }
-
-	XTAL_UNLOCK{
-		return fread(p, 1, size, fp_);
-	}
-	return 0;
-}
-
-void StdioStream::seek(int_t offset, int_t whence){
-	if(!fp_){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1018")), return); }
-
-	int wh = whence==XSEEK_END ? SEEK_END : whence==XSEEK_CUR ? SEEK_CUR : SEEK_SET;
-	fseek(fp_, offset, wh);
-}
-
-void StdioStream::close(){
-	if(fp_){
-		fclose(fp_);
-		fp_ = 0;
-	}
-}
-
-bool StdioStream::eos(){
-	if(!fp_){ return true; }
-	int ch = getc(fp_);
-	if(feof(fp_)){
-		return true;
-	}
-	ungetc(ch, fp_);
-	return false;
-}
-
-class CStdioFileLib : public FileLib{
-public:
-
-	virtual void initialize(){}
-
-	virtual StreamPtr open(const char_t* file_name, const char_t* flags){
-#ifdef XTAL_USE_WCHAR
-		FILE* fp = _wfopen(file_name, flags);
-#else
-		FILE* fp = std::fopen(file_name, flags);
-#endif
-		if(!fp){ XTAL_THROW(builtin()->member(Xid(IOError))->call(Xt("Xtal Runtime Error 1014")->call(Named(Xid(name), file_name))), return null); }
-		return xnew<StdioStream>(fp);
-	}
-
-} cstdio_file_lib;
-
-void set_file(){
-	file_lib_ = &cstdio_file_lib;
-}
-
-void set_file(FileLib& lib){
-	file_lib_ = &lib;
-}
-
-StreamPtr open(const StringPtr& file_name, const StringPtr& aflags){
-	const char_t* flags = aflags->c_str();
-	char_t flags_temp[16];
-	bool text = false;
-	uint_t i = 0;
-	for(; flags[i]!=0 && i<10; ++i){
-		if(flags[i]=='t'){
-			text = true;
-		}
-		else{
-			flags_temp[i] = flags[i];
-		}
-	}
-
-	if(!text){
-		flags_temp[i++] = 'b';
-	}
-	flags_temp[i++] = 0;
-	
-	return file_lib_->open(file_name->c_str(), flags_temp);
-}
-
-void initialize_stream(){
-	if(!file_lib_){
-		set_file();
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Stream>(Xid(Stream));
-		
-		p->def_method(Xid(get_s), &Stream::get_s);
-		p->def_method(Xid(get_s_all), &Stream::get_s_all);
-		p->def_method(Xid(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
-
-		p->def_method(Xid(print), &Stream::print);
-		p->def_method(Xid(println), &Stream::println);
-
-		p->def_method(Xid(seek), &Stream::seek)->params(null, null, Xid(whence), Stream::XSEEK_SET);
-		p->def_method(Xid(tell), &Stream::tell);
-		p->def_method(Xid(pour), &Stream::pour);
-		p->def_method(Xid(pour_all), &Stream::pour_all);
-		p->def_method(Xid(size), &Stream::size);
-		p->def_method(Xid(close), &Stream::close);
-
-		p->def_method(Xid(eos), &Stream::eos);
-
-		p->def_method(Xid(serialize), &Stream::serialize);
-		p->def_method(Xid(deserialize), &Stream::deserialize);
-		p->def_method(Xid(xtalize), &Stream::xtalize);
-		p->def_method(Xid(dextalize), &Stream::dextalize);
-
-		p->def_method(Xid(block_first), &Stream::block_first);
-		p->def_method(Xid(block_next), &Stream::block_next);
-		p->def_method(Xid(block_break), &Stream::block_break);
-
-		p->def(Xid(SEEK_SET), Stream::XSEEK_SET);
-		p->def(Xid(SEEK_CUR), Stream::XSEEK_CUR);
-		p->def(Xid(SEEK_END), Stream::XSEEK_END);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
-		p->inherit(get_cpp_class<Stream>());
-		p->def(Xid(new), ctor<MemoryStream>());
-		p->def_method(Xid(to_s), &MemoryStream::to_s);
-		p->def_method(Xid(resize), &MemoryStream::resize);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<StringStream>(Xid(StringStream));
-		p->inherit(get_cpp_class<Stream>());
-		p->def(Xid(new), ctor<StringStream, const StringPtr&>());
-		p->def_method(Xid(to_s), &StringStream::to_s);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<StdioStream>(Xid(StdioStream));
-		p->inherit(get_cpp_class<Stream>());
-	}
-
-	builtin()->def(Xid(Stream), get_cpp_class<Stream>());
-	builtin()->def(Xid(StdioStream), get_cpp_class<StdioStream>());
-	builtin()->def(Xid(MemoryStream), get_cpp_class<MemoryStream>());
-	builtin()->def(Xid(StringStream), get_cpp_class<StringStream>());
-
-	if(stdin){
-		builtin()->def(Xid(stdin), xnew<StdioStream>(stdin));
-	}
-
-	if(stdout){
-		builtin()->def(Xid(stdout), xnew<StdioStream>(stdout));
-	}
-
-	if(stderr){
-		builtin()->def(Xid(stderr), xnew<StdioStream>(stderr));
-	}
-}
-
-void initialize_stream_script(){
-	Xemb((
-
-Stream::scan: method(pattern) fiber{
-	exec: xpeg::Executor(this);
-	while(exec.match(pattern)){
-		yield exec;
-	}
-}
-
-Stream::split: method(pattern) fiber{
-	exec: xpeg::Executor(this);
-	if(exec.match(pattern)){
-		yield exec.prefix;
-		while(exec.match(pattern)){
-			yield exec.prefix;
-		}
-		yield exec.suffix;
-	}
-	else{
-		yield this.to_s;
-	}
-}
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x4b\x39\x00\x01\x89\x00\x01\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x02\x0b\x25\x01\x25\x00\x37\x00\x03\x39\x00\x01\x89\x00\x02\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x05\x39\x00\x01\x89"
-"\x00\x03\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x06\x25\x00\x8b\x00\x03\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x20\x00\x00\x00\x00\x00\x04\x00\x00\x00\x12\x00\x38\x00\x00\x00\x00\x00\x06\x00\x00\x00\x12\x00\x00\x00\x00"
-"\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x00\x00\x05\x00\x04\x00\x00\x00\x00\x00\x00\x01\x00\x00\x38\x00\x00\x00\x05\x00\x06\x00\x00\x00\x00\x00\x00\x01\x00"
-"\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00"
-"\x00\x13\x00\x00\x00\x06\x00\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x18\x00\x00\x00\x08\x00\x00\x00\x1b\x00\x00\x00\x0b\x00\x00\x00\x20\x00\x00\x00\x09\x00\x00\x00\x28\x00\x00\x00\x0a\x00\x00\x00\x2b\x00\x00\x00\x0b\x00\x00\x00\x30\x00\x00\x00\x10\x00\x00"
-"\x00\x30\x00\x00\x00\x0d\x00\x00\x00\x33\x00\x00\x00\x10\x00\x00\x00\x38\x00\x00\x00\x0e\x00\x00\x00\x40\x00\x00\x00\x0f\x00\x00\x00\x43\x00\x00\x00\x10\x00\x00\x00\x48\x00\x00\x00\x11\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75"
-"\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x07\x09\x00\x00\x00\x00\x09\x00\x00\x00\x05\x4d\x75\x74\x65\x78\x09\x00\x00"
-"\x00\x04\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00\x00\x06\x75\x6e\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b"
-"\x09\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
-)->call();
 }
 
 }

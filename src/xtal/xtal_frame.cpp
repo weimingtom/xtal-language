@@ -3,31 +3,30 @@
 
 namespace xtal{
 
-class MembersIter : public Base{
-	FramePtr frame_;
-	Frame::map_t::iterator it_;
+void MembersIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & frame_;
+}
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & frame_;
-	}
-
-public:
-
-	MembersIter(const FramePtr& a)
-		:frame_(a), it_(frame_->map_members_->begin()){
-	}
-
-	void block_next(const VMachinePtr& vm){
+void MembersIter::block_next(const VMachinePtr& vm){
+	while(true){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
-			vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
-			++it_;
+			if(it_->second.flags==0){
+				vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
+				++it_;
+				return;
+			}
+			else{
+				++it_;
+			}
 		}
 		else{
 			vm->return_result(null, null, null, null);
+			return;
 		}
 	}
-};
+}
+
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* core)
 	:outer_(outer), code_(code), core_(core ? core : &empty_class_info), members_(xnew<Array>(core_->variable_size)), map_members_(0){
@@ -125,21 +124,6 @@ AnyPtr Frame::members(){
 	}
 
 	return xnew<MembersIter>(from_this(this));
-}
-
-void initialize_frame(){
-	{
-		ClassPtr p = new_cpp_class<MembersIter>(Xid(ClassMembersIter));
-		p->inherit(Iterator());
-		p->def_method(Xid(block_next), &MembersIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Frame>(Xid(Frame));
-		p->def_method(Xid(members), &Frame::members);
-	}
-
-	builtin()->def(Xid(Frame), get_cpp_class<Frame>());
 }
 
 }

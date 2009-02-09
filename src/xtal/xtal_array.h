@@ -200,6 +200,14 @@ public:
 	}
 
 	/**
+	* @brief ‹ó‚©’²‚×‚é
+	*
+	*/
+	bool is_empty(){
+		return size_ == 0;
+	}
+
+	/**
 	* @brief —v‘f‚ğ‘S‚Äíœ‚·‚é
 	*
 	*/

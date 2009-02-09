@@ -7,16 +7,16 @@ AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }
 AnyPtr operator -(const AnyPtr& a){ return a->send(Xid(op_neg)); }
 AnyPtr operator ~(const AnyPtr& a){ return a->send(Xid(op_com)); }
 
-AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_add), b->get_class(), b); }
-AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_sub), b->get_class(), b); }
-AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_mul), b->get_class(), b); }
-AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_div), b->get_class(), b); }
-AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_mod), b->get_class(), b); }
-AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_or), b->get_class(), b); }
-AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_and), b->get_class(), b); }
-AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_xor), b->get_class(), b); }
-AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_shr), b->get_class(), b); }
-AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_shl), b->get_class(), b); }
+AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
+AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
+AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
+AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_div), b); }
+AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mod), b); }
+AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_or), b); }
+AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and), b); }
+AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b); }
+AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b); }
+AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b); }
 
 bool operator ==(const AnyPtr& a, const AnyPtr& b){ 
 	if(raweq(a, b))
@@ -24,7 +24,7 @@ bool operator ==(const AnyPtr& a, const AnyPtr& b){
 
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(1, b);
-	a->rawsend(vm, Xid(op_eq), b->get_class());
+	a->rawsend(vm, Xid(op_eq));
 	if(vm->processed() && vm->result()){
 		vm->cleanup_call();
 		return true;
@@ -35,21 +35,21 @@ bool operator ==(const AnyPtr& a, const AnyPtr& b){
 }
 
 bool operator !=(const AnyPtr& a, const AnyPtr& b){ return !(a==b); }
-bool operator <(const AnyPtr& a, const AnyPtr& b){ return a->send2(Xid(op_lt), b->get_class(), b); }
+bool operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b); }
 bool operator >(const AnyPtr& a, const AnyPtr& b){ return b<a; }
 bool operator <=(const AnyPtr& a, const AnyPtr& b){ return !(b<a); }
 bool operator >=(const AnyPtr& a, const AnyPtr& b){ return !(a<b); }
 
-AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_add_assign), b->get_class(), b); return a; }
-AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_sub_assign), b->get_class(), b); return a; }
-AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_mul_assign), b->get_class(), b); return a; }
-AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_div_assign), b->get_class(), b); return a; }
-AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_mod_assign), b->get_class(), b); return a; }
-AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_or_assign), b->get_class(), b); return a; }
-AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_and_assign), b->get_class(), b); return a; }
-AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_xor_assign), b->get_class(), b); return a; }
-AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shr_assign), b->get_class(), b); return a; }
-AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send2(Xid(op_shl_assign), b->get_class(), b); return a; }
+AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_add_assign), b); return a; }
+AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_sub_assign), b); return a; }
+AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mul_assign), b); return a; }
+AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_div_assign), b); return a; }
+AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mod_assign), b); return a; }
+AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_or_assign), b); return a; }
+AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign), b); return a; }
+AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b); return a; }
+AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b); return a; }
+AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
 
 
 /// @brief primary_keyメソッドを呼び出す
@@ -106,7 +106,19 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 		ret->rawcall(vm);
 	}
 	else{
-		vm->set_unsuported_error_info(*this, primary_key, secondary_key);
+		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, self, inherited_too);
+		if(rawne(ret, undefined)){
+			vm->set_arg_this(ap(*this));
+			ArgumentsPtr args = vm->make_arguments();
+			vm->recycle_call();
+			vm->push_arg(primary_key);
+			vm->push_arg(secondary_key);
+			vm->push_arg(args);
+			ret->rawcall(vm);
+		}
+		else{
+			vm->set_unsuported_error_info(*this, primary_key, secondary_key);
+		}
 	}
 }
 
@@ -118,7 +130,19 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 		ret->rawcall(vm);
 	}
 	else{
-		vm->set_unsuported_error_info(*this, primary_key, null);
+		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, null, true);
+		if(rawne(ret, undefined)){
+			vm->set_arg_this(ap(*this));
+			ArgumentsPtr args = vm->make_arguments();
+			vm->recycle_call();
+			vm->push_arg(primary_key);
+			vm->push_arg(null);
+			vm->push_arg(args);
+			ret->rawcall(vm);
+		}
+		else{
+			vm->set_unsuported_error_info(*this, primary_key, null);
+		}
 	}	
 }
 
@@ -152,11 +176,24 @@ float_t Any::to_f() const{
 
 StringPtr Any::to_s() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ if(const StringPtr& ret = ptr_as<String>(ap(*this)))return ret; }
-		XTAL_CASE(TYPE_SMALL_STRING){ unchecked_ptr_cast<String>(ap(*this)); }
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_NULL){ return Xid(null); }
+		XTAL_CASE(TYPE_UNDEFINED){ return Xid(undefined); }
+
+		XTAL_CASE(TYPE_BASE){ 
+			if(const StringPtr& ret = ptr_as<String>(ap(*this))){
+				return ret; 
+			}
+			return ptr_cast<String>((*this).send(Xid(to_s)));
+		}
+
+		XTAL_CASE(TYPE_INT){ return Xf("%d")->call(ap(*this))->to_s(); }
+		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
+		XTAL_CASE(TYPE_FALSE){ return Xid(true); }
+		XTAL_CASE(TYPE_TRUE){ return Xid(false); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 	}
-	return ptr_cast<String>((*this).send(Xid(to_s)));
+	return empty_string;
 }
 
 ArrayPtr Any::to_a() const{
@@ -206,8 +243,8 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->get_class(); }
 		XTAL_CASE(TYPE_INT){ return get_cpp_class<Int>(); }
 		XTAL_CASE(TYPE_FLOAT){ return get_cpp_class<Float>(); }
-		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<False>(); }
-		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<True>(); }
+		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<Bool>(); }
+		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<Bool>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
 	}
 	return get_cpp_class<Any>();
@@ -350,84 +387,6 @@ void visit_members(Visitor& m, const AnyPtr& p){
 			pvalue(p)->add_ref_count(m.value());
 		}
 	}
-}
-
-
-//////////////////////////////////
-
-namespace{
-
-	bool op_in_Any_Array(const AnyPtr& v, const ArrayPtr& values){
-		Xfor(v2, values){
-			if(v == v2){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool op_in_Any_Set(const AnyPtr& v, const SetPtr& values){
-		return values->at(v);
-	}
-}
-
-void initialize_any(){
-	
-	{
-		ClassPtr p = new_cpp_class<Any>(Xid(Any));
-		p->def_method(Xid(class), &Any::get_class);
-		p->def_method(Xid(get_class), &Any::get_class);
-		p->def_method(Xid(self), &Any::self);
-		p->def_method(Xid(object_name), &Any::object_name)->params(Xid(depth), -1);
-		p->def_method(Xid(object_name_list), &Any::object_name_list);
-		p->def_method(Xid(s_save), &Any::s_save);
-		p->def_method(Xid(s_load), &Any::s_load);
-		p->def_method(Xid(to_mv), &Any::to_mv);
-		p->def_method(Xid(flatten_mv), &Any::flatten_mv);
-		p->def_method(Xid(flatten_all_mv), &Any::flatten_all_mv);
-
-		p->def_dual_dispatch_method(Xid(op_add));
-		p->def_dual_dispatch_method(Xid(op_sub));
-		p->def_dual_dispatch_method(Xid(op_cat));
-		p->def_dual_dispatch_method(Xid(op_mul));
-		p->def_dual_dispatch_method(Xid(op_div));
-		p->def_dual_dispatch_method(Xid(op_mod));
-		p->def_dual_dispatch_method(Xid(op_and));
-		p->def_dual_dispatch_method(Xid(op_or));
-		p->def_dual_dispatch_method(Xid(op_xor));
-		p->def_dual_dispatch_method(Xid(op_shr));
-		p->def_dual_dispatch_method(Xid(op_shl));
-		p->def_dual_dispatch_method(Xid(op_ushr));
-
-		p->def_dual_dispatch_method(Xid(op_add_assign));
-		p->def_dual_dispatch_method(Xid(op_sub_assign));
-		p->def_dual_dispatch_method(Xid(op_cat_assign));
-		p->def_dual_dispatch_method(Xid(op_mul_assign));
-		p->def_dual_dispatch_method(Xid(op_div_assign));
-		p->def_dual_dispatch_method(Xid(op_mod_assign));
-		p->def_dual_dispatch_method(Xid(op_and_assign));
-		p->def_dual_dispatch_method(Xid(op_or_assign));
-		p->def_dual_dispatch_method(Xid(op_xor_assign));
-		p->def_dual_dispatch_method(Xid(op_shr_assign));
-		p->def_dual_dispatch_method(Xid(op_shl_assign));
-		p->def_dual_dispatch_method(Xid(op_ushr_assign));
-
-		p->def_dual_dispatch_method(Xid(op_eq));
-		p->def_dual_dispatch_method(Xid(op_lt));
-
-		p->def_dual_dispatch_method(Xid(op_at));
-		p->def_dual_dispatch_method(Xid(op_set_at));
-
-		p->def_dual_dispatch_method(Xid(op_call));
-
-		p->def_dual_dispatch_method(Xid(op_range));
-
-		p->def_dual_dispatch_method(Xid(op_in));
-		p->def_method(Xid(op_in), &op_in_Any_Array, new_cpp_class<Array>());
-		p->def_method(Xid(op_in), &op_in_Any_Set, new_cpp_class<Set>());
-	}
-
-	builtin()->def(Xid(Any), get_cpp_class<Any>());
 }
 
 }

@@ -80,15 +80,4 @@ StringPtr Lib::join_path(const StringPtr& sep){
 	}
 }
 
-void initialize_lib(){
-	{
-		ClassPtr p = new_cpp_class<Lib>(Xid(Lib));
-		p->inherit(get_cpp_class<Class>());
-		p->def(Xid(new), ctor<Lib>());
-		p->def_method(Xid(append_load_path), &Lib::append_load_path);
-	}
-	builtin()->def(Xid(lib), lib());
-	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
-}
-
 }

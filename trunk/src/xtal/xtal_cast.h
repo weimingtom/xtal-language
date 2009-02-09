@@ -22,143 +22,326 @@ template<class T>
 inline bool can_cast(const AnyPtr& a);
 
 template<class T>
-typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
+inline typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
+
+template<class T>
+inline const ClassPtr& get_class();
 
 /////////////////////////////////////////////////////////////////////////////
 
-const void* cast_helper_helper_smartptr(const AnyPtr& a, const ClassPtr& cls);
-const void* cast_helper_helper_base(const AnyPtr& a, const ClassPtr& cls);
-const void* cast_helper_helper_innocence(const AnyPtr& a, const ClassPtr& cls);
-const void* cast_helper_helper_other(const AnyPtr& a, const ClassPtr& cls);
-
-// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
-template<class U, class V>
-inline const void* cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	return cast_helper_helper_smartptr(a, get_cpp_class<U>()); 
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* cast_helper_helper(const AnyPtr& a, const Base*, const U*){
-	return cast_helper_helper_base(a, get_cpp_class<U>()); 
-}
-	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* cast_helper_helper(const AnyPtr& a, const Any*, const U*){
-	return cast_helper_helper_innocence(a, get_cpp_class<U>()); 
-}
-	
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
-template<class U>
-inline const void* cast_helper_helper(const AnyPtr& a, const void*, const U*){
-	return cast_helper_helper_other(a, get_cpp_class<U>()); 
-}
+void cast_failed(const AnyPtr& a, const ClassPtr& cls);
 
 /////////////////////////////////////////////////////////////////////////////
 
 // •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
 template<class U, class V>
-inline bool can_cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	return a->is(get_cpp_class<U>());
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline bool can_cast_helper_helper(const AnyPtr& a, const Base*, const U*){
-	return a->is(get_cpp_class<U>());
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline bool can_cast_helper_helper(const AnyPtr& a, const Any*, const U*){
-	return a->is(get_cpp_class<U>());
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
-template<class U>
-inline bool can_cast_helper_helper(const AnyPtr& a, const void*, const U*){
-	return a->is(get_cpp_class<U>());
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
-template<class U, class V>
-inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
+inline const void* unchecked_cast_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
 	return &a;
 }
 
 // •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
-inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const Base*, const U*){
+inline const void* unchecked_cast_helper(const AnyPtr& a, const Base*, const U*){
 	return pvalue(a);
 }
 
 // •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
-inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const Any*, const U*){
+inline const void* unchecked_cast_helper(const AnyPtr& a, const Any*, const U*){
 	return &a;
 }
 
 // •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
 template<class U>
-inline const void* unchecked_cast_helper_helper(const AnyPtr& a, const void*, const U*){
+inline const void* unchecked_cast_helper(const AnyPtr& a, const void*, const U*){
 	return ((SmartPtr<U>&)a).get();
+}
+	
+/////////////////////////////////////////////////////////////////////////////
+
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
+template<class U, class V>
+inline const ClassPtr& get_class_helper(const SmartPtr<U>*, const V&){
+	return get_cpp_class<U>();
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const ClassPtr& get_class_helper(const Base*, const U*){
+	return get_cpp_class<U>();
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const ClassPtr& get_class_helper(const Any*, const U*){
+	return get_cpp_class<U>();
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+template<class U>
+inline const ClassPtr& get_class_helper(const void*, const U*){
+	return get_cpp_class<U>();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
+template<class U, class V>
+inline const void* get_null_helper(const SmartPtr<U>*, const V&){
+	return &null;
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const void* get_null_helper(const Base*, const U*){
+	return 0;
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const void* get_null_helper(const Any*, const U*){
+	return &null;
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
+template<class U>
+inline const void* get_null_helper(const void*, const U*){
+	return U();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 template<class T>
 struct CastHelper{
-
 	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Å‚àƒ|ƒCƒ“ƒ^‚Å‚à‚È‚¢ê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆÀ‘Ì‚É‚·‚é
-	static T as(const AnyPtr& a){ 
-		if(can_cast(a)){ return unchecked_cast(a); }else{ return *(const T*)&null;} }
-		
-	static T cast(const AnyPtr& a){ 
-		return *xtal::cast<const T*>(a); }
-		
+	
 	static bool can_cast(const AnyPtr& a){ 
-		return xtal::can_cast<const T*>(a); }
+		return a->is(get_class());
+	}
 
 	static T unchecked_cast(const AnyPtr& a){ 
-		return *xtal::unchecked_cast<const T*>(a); }
-};
+		return *CastHelper<const T*>::unchecked_cast(a); 
+	}
+	
+	static const ClassPtr& get_class(){ 
+		return CastHelper<const T*>::get_class(); 
+	}
 
-template<class T>
-struct CastHelper<T*>{
-
-	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
-	static T* as(const AnyPtr& a){ 
-		if(can_cast(a)){ return unchecked_cast(a); }else{ return 0;} }
-		
-	static T* cast(const AnyPtr& a){ 
-		return (T*)cast_helper_helper(a, (T*)0, (T*)0); }	
-		
-	static bool can_cast(const AnyPtr& a){ 
-		return can_cast_helper_helper(a, (T*)0, (T*)0); }	
-
-	static T* unchecked_cast(const AnyPtr& a){ 
-		return (T*)unchecked_cast_helper_helper(a, (T*)0, (T*)0); }	
+	static T get_null(){ 
+		return *CastHelper<const T*>::get_null();
+	}
 };
 
 template<class T>
 struct CastHelper<T&>{
-	
 	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆQÆ‚É‚·‚é
-	static T& as(const AnyPtr& a){ 
-		if(can_cast(a)){ return unchecked_cast(a); }else{ return *(T*)&null;} }
+	
+	static bool can_cast(const AnyPtr& a){ 
+		return a->is(get_class());
+	}
+	
+	static T& unchecked_cast(const AnyPtr& a){ 
+		return *CastHelper<const T*>::unchecked_cast(a); 
+	}
+	
+	static const ClassPtr& get_class(){ 
+		return CastHelper<const T*>::get_class(); 
+	}
+
+	static T& get_null(){ 
+		return *CastHelper<const T*>::get_null();
+	}
+};
+
+template<class T>
+struct CastHelper<T*>{
+	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
+
+	static bool can_cast(const AnyPtr& a){ 
+		return a->is(get_class());
+	}
+
+	static T* unchecked_cast(const AnyPtr& a){ 
+		return (T*)unchecked_cast_helper(a, (T*)0, (T*)0); 
+	}	
+	
+	static const ClassPtr& get_class(){ 
+		return get_class_helper((T*)0, (T*)0); 
+	}
+
+	static T* get_null(){ 
+		return (T*)get_null_helper((T*)0, (T*)0);
+	}
+};
+
+template<class T>
+struct CastHelperHelper{
+	static T as(const AnyPtr& a){
+		if(can_cast(a)){
+			return unchecked_cast(a);
+		}
+		else{
+			return get_null();
+		}
+	}
 		
-	static T& cast(const AnyPtr& a){ 
-		return *xtal::cast<T*>(a); }
+	static T cast(const AnyPtr& a){ 
+		if(can_cast(a)){
+			return unchecked_cast(a);
+		}
+		else{
+			cast_failed(a, get_class());
+			return get_null();
+		}
+	}
 		
 	static bool can_cast(const AnyPtr& a){ 
-		return xtal::can_cast<T*>(a); }
+		return CastHelper<T>::can_cast(a); 
+	}
 
-	static T& unchecked_cast(const AnyPtr& a){ 
-		return *xtal::unchecked_cast<T*>(a); }
+	static T unchecked_cast(const AnyPtr& a){ 
+		return CastHelper<T>::unchecked_cast(a); 
+	}
+	
+	static const ClassPtr& get_class(){ 
+		return CastHelper<T>::get_class();
+	}
+
+	static T get_null(){ 
+		return CastHelper<T>::get_null();
+	}
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+template<>
+struct CastHelper<const AnyPtr*>{
+	static bool can_cast(const AnyPtr& a){ return true; }
+	static const AnyPtr* unchecked_cast(const AnyPtr& a){ return (AnyPtr*)&a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Any>(); }
+	static const AnyPtr* get_null(){ return (AnyPtr*)&null; }
+};
+
+template<>
+struct CastHelper<const Any*>{
+	static bool can_cast(const AnyPtr& a){ return true; }
+	static const Any* unchecked_cast(const AnyPtr& a){ return (Any*)&a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Any>(); }
+	static const Any* get_null(){ return (Any*)&null; }
+};
+
+template<>
+struct CastHelper<const char_t*>{
+	static bool can_cast(const AnyPtr& a){ return a->is(get_class()); }
+	static const char_t* unchecked_cast(const AnyPtr& a);
+	static const ClassPtr& get_class(){ return get_cpp_class<String>(); }
+	static const Any* get_null(){ return 0; }
+};
+
+template<>
+struct CastHelper<const IDPtr*>{
+	static bool can_cast(const AnyPtr& a);
+	static const IDPtr* unchecked_cast(const AnyPtr& a);
+	static const ClassPtr& get_class(){ return get_cpp_class<String>(); }
+	static const IDPtr* get_null(){ return (IDPtr*)&null; }
+};
+
+
+template<>
+struct CastHelperHelper<const Int*>{
+	static bool can_cast(const AnyPtr& a){ return type(a)==TYPE_INT; }
+	static const Int* unchecked_cast(const AnyPtr& a){ return (const Int*)&a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Int>(); }
+	static const Int* get_null(){ return (Int*)&null; }
+};
+
+template<>
+struct CastHelper<const Float*>{
+	static bool can_cast(const AnyPtr& a){ return type(a)==TYPE_FLOAT; }
+	static const Float* unchecked_cast(const AnyPtr& a){ return (const Float*)&a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Float>(); }
+	static const Float* get_null(){ return (Float*)&null; }
+};
+
+template<>
+struct CastHelper<const Bool*>{
+	static bool can_cast(const AnyPtr& a){ return type(a)==TYPE_TRUE || type(a)==TYPE_FALSE; }
+	static const Bool* unchecked_cast(const AnyPtr& a){ return (const Bool*)&a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Bool>(); }
+	static const Bool* get_null(){ return (Bool*)&null; }
+};
+
+template<>
+struct CastHelper<int_t>{
+	static bool can_cast(const AnyPtr& a);
+	static int_t unchecked_cast(const AnyPtr& a);
+	static const ClassPtr& get_class(){ return get_cpp_class<Int>(); }
+	static int_t get_null(){ return 0; }
+};
+
+template<>
+struct CastHelper<float_t>{
+	static bool can_cast(const AnyPtr& a);
+	static float_t unchecked_cast(const AnyPtr& a);
+	static const ClassPtr& get_class(){ return get_cpp_class<Float>(); }
+	static float_t get_null(){ return 0; }
+};
+
+template<>
+struct CastHelper<bool>{
+	static bool can_cast(const AnyPtr& a){ return true; }
+	static bool unchecked_cast(const AnyPtr& a){ return a; }
+	static const ClassPtr& get_class(){ return get_cpp_class<Bool>(); }
+	static bool get_null(){ return false; }
+};
+
+#define XTAL_CAST_HELPER(Type, XType) \
+template<> struct CastResult<const Type&>{ typedef Type type; };\
+template<>\
+struct CastHelper<const Type&>{\
+	static bool can_cast(const AnyPtr& a){ return CastHelper<Type>::can_cast(a); }\
+	static Type unchecked_cast(const AnyPtr& a){ return CastHelper<Type>::unchecked_cast(a); }\
+	static const ClassPtr& get_class(){ return get_cpp_class<XType>(); }\
+	static Type get_null(){ return 0; }\
+}
+
+XTAL_CAST_HELPER(int_t, Int);
+XTAL_CAST_HELPER(float_t, Float);
+XTAL_CAST_HELPER(bool, Bool);
+
+#undef XTAL_CAST_HELPER
+
+#define XTAL_CAST_HELPER(Type, Type2, XType) \
+template<>\
+struct CastHelper<avoid<Type>::type>{\
+	static bool can_cast(const AnyPtr& a){ return CastHelper<Type2>::can_cast(a); }\
+	static Type unchecked_cast(const AnyPtr& a){ return (Type)CastHelper<Type2>::unchecked_cast(a); }\
+	static const ClassPtr& get_class(){ return get_cpp_class<XType>(); }\
+	static Type get_null(){ return 0; }\
+};\
+template<> struct CastResult<avoid<const Type&> >{ typedef Type type; };\
+template<>\
+struct CastHelper<const avoid<Type>::type&>{\
+	static bool can_cast(const AnyPtr& a){ return CastHelper<Type>::can_cast(a); }\
+	static Type unchecked_cast(const AnyPtr& a){ return CastHelper<Type>::unchecked_cast(a); }\
+	static const ClassPtr& get_class(){ return get_cpp_class<XType>(); }\
+	static Type get_null(){ return 0; }\
+}
+
+XTAL_CAST_HELPER(int, int_t, Int);
+XTAL_CAST_HELPER(unsigned int, int_t, Int);
+XTAL_CAST_HELPER(long, int_t, Int);
+XTAL_CAST_HELPER(unsigned long, int_t, Int);
+XTAL_CAST_HELPER(short, int_t, Int);
+XTAL_CAST_HELPER(unsigned short, int_t, Int);
+XTAL_CAST_HELPER(char, int_t, Int);
+XTAL_CAST_HELPER(signed char, int_t, Int);
+XTAL_CAST_HELPER(unsigned char, int_t, Int);
+XTAL_CAST_HELPER(float, float_t, Float);
+XTAL_CAST_HELPER(double, float_t, Float);
+XTAL_CAST_HELPER(long double, float_t, Float);
+
+#undef XTAL_CAST_HELPER
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -173,7 +356,7 @@ struct CastHelper<T&>{
 template<class T> 
 inline typename CastResult<T>::type 
 as(const AnyPtr& a){
-	return CastHelper<T>::as(a);
+	return CastHelperHelper<T>::as(a);
 }
 
 /**
@@ -184,7 +367,7 @@ as(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 cast(const AnyPtr& a){
-	return CastHelper<T>::cast(a);
+	return CastHelperHelper<T>::cast(a);
 }
 
 /**
@@ -193,7 +376,7 @@ cast(const AnyPtr& a){
 */
 template<class T>
 inline bool can_cast(const AnyPtr& a){
-	return CastHelper<T>::can_cast(a);
+	return CastHelperHelper<T>::can_cast(a);
 }
 
 /**
@@ -203,7 +386,7 @@ inline bool can_cast(const AnyPtr& a){
 template<class T>
 inline typename CastResult<T>::type 
 unchecked_cast(const AnyPtr& a){
-	return CastHelper<T>::unchecked_cast(a);
+	return CastHelperHelper<T>::unchecked_cast(a);
 }
 
 /**
@@ -214,7 +397,7 @@ unchecked_cast(const AnyPtr& a){
 template<class T> 
 inline const SmartPtr<T>&
 ptr_as(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::as(a);
+	return CastHelperHelper<const SmartPtr<T>&>::as(a);
 }
 
 /**
@@ -225,7 +408,7 @@ ptr_as(const AnyPtr& a){
 template<class T>
 inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
-	return CastHelper<const SmartPtr<T>&>::cast(a);
+	return CastHelperHelper<const SmartPtr<T>&>::cast(a);
 }
 
 /**
@@ -238,156 +421,24 @@ unchecked_ptr_cast(const AnyPtr& a){
 }
 
 template<class T>
+inline const ClassPtr& 
+get_class(){
+	return CastHelperHelper<T>::get_class();
+}
+
+	
+//////////////////////////////////////////
+
+template<class T>
 inline typename CastResult<T>::type 
 tricky_cast(const AnyPtr& a, void (*f)(T)){
-	return cast<T>(a);
+	return CastHelperHelper<T>::cast(a);
 }
 
 template<class T>
 inline typename CastResult<T>::type 
 tricky_as(const AnyPtr& a, void (*f)(T)){
-	return as<T>(a);
+	return CastHelperHelper<T>::as(a);
 }
-
-/////////////////////////////////////////////////////////////////////////////
-
-template<>
-struct CastHelper<AnyPtr*>{
-	static AnyPtr* as(const AnyPtr& a){ return (AnyPtr*)&a; }
-	static AnyPtr* cast(const AnyPtr& a){ return (AnyPtr*)&a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static AnyPtr* unchecked_cast(const AnyPtr& a){ return (AnyPtr*)&a; }
-};
-
-template<>
-struct CastHelper<const AnyPtr*>{
-	static const AnyPtr* as(const AnyPtr& a){ return (AnyPtr*)&a; }
-	static const AnyPtr* cast(const AnyPtr& a){ return (AnyPtr*)&a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static AnyPtr* unchecked_cast(const AnyPtr& a){ return (AnyPtr*)&a; }
-};
-
-template<>
-struct CastHelper<const AnyPtr&>{
-	static const AnyPtr& as(const AnyPtr& a){ return (AnyPtr&)a; }
-	static const AnyPtr& cast(const AnyPtr& a){ return (AnyPtr&)a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static const AnyPtr& unchecked_cast(const AnyPtr& a){ return (AnyPtr&)a; }
-};
-
-template<>
-struct CastHelper<Any*>{
-	static Any* as(const AnyPtr& a){ return (Any*)&a; }
-	static Any* cast(const AnyPtr& a){ return (Any*)&a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static Any* unchecked_cast(const AnyPtr& a){ return (Any*)&a; }
-};
-
-template<>
-struct CastHelper<const Any*>{
-	static const Any* as(const AnyPtr& a){ return (Any*)&a; }
-	static const Any* cast(const AnyPtr& a){ return (Any*)&a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static const Any* unchecked_cast(const AnyPtr& a){ return (Any*)&a; }
-};
-
-
-template<>
-struct CastHelper<const Any&>{
-	static Any& as(const AnyPtr& a){ return *(Any*)&a; }
-	static Any& cast(const AnyPtr& a){ return *(Any*)&a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static Any& unchecked_cast(const AnyPtr& a){ return *(Any*)&a; }
-};
-
-
-template<>
-struct CastHelper<const IDPtr*>{
-	static const IDPtr* as(const AnyPtr& a);
-	static const IDPtr* cast(const AnyPtr& a);
-	static bool can_cast(const AnyPtr& a);
-	static const IDPtr* unchecked_cast(const AnyPtr& a);
-};
-
-template<>
-struct CastHelper<const char_t*>{
-	static const char_t* as(const AnyPtr& a);
-	static const char_t* cast(const AnyPtr& a);
-	static bool can_cast(const AnyPtr& a);
-	static const char_t* unchecked_cast(const AnyPtr& a);
-};
-
-
-template<>
-struct CastHelper<int_t>{
-	static int_t as(const AnyPtr& a);
-	static int_t cast(const AnyPtr& a);
-	static bool can_cast(const AnyPtr& a);
-	static int_t unchecked_cast(const AnyPtr& a);
-};
-
-template<>
-struct CastHelper<float_t>{
-	static float_t as(const AnyPtr& a);
-	static float_t cast(const AnyPtr& a);
-	static bool can_cast(const AnyPtr& a);
-	static float_t unchecked_cast(const AnyPtr& a);
-};
-
-template<>
-struct CastHelper<bool>{
-	static bool as(const AnyPtr& a){ return a; }
-	static bool cast(const AnyPtr& a){ return a; }
-	static bool can_cast(const AnyPtr& a){ return true; }
-	static bool unchecked_cast(const AnyPtr& a){ return a; }
-};
-
-#define XTAL_CAST_HELPER(Type) \
-template<> struct CastResult<const Type&>{ typedef Type type; };\
-template<>\
-struct CastHelper<const Type&>{\
-	static Type as(const AnyPtr& a){ return xtal::as<Type>(a); }\
-	static Type cast(const AnyPtr& a){ return xtal::cast<Type>(a); }\
-	static bool can_cast(const AnyPtr& a){ return xtal::can_cast<Type>(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return xtal::unchecked_cast<Type>(a); }\
-}
-
-XTAL_CAST_HELPER(int_t);
-XTAL_CAST_HELPER(float_t);
-XTAL_CAST_HELPER(bool);
-
-#undef XTAL_CAST_HELPER
-
-#define XTAL_CAST_HELPER(Type, Type2) \
-template<>\
-struct CastHelper<avoid<Type>::type>{\
-	static Type as(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::as(a); }\
-	static Type cast(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::cast(a); }\
-	static bool can_cast(const AnyPtr& a){ return xtal::CastHelper<Type2>::can_cast(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return (Type)xtal::CastHelper<Type2>::unchecked_cast(a); }\
-};\
-template<> struct CastResult<avoid<const Type&> >{ typedef Type type; };\
-template<>\
-struct CastHelper<avoid<const Type&> >{\
-	static Type as(const AnyPtr& a){ return xtal::as<Type>(a); }\
-	static Type cast(const AnyPtr& a){ return xtal::cast<Type>(a); }\
-	static bool can_cast(const AnyPtr& a){ return xtal::can_cast<Type>(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return (Type)xtal::unchecked_cast<Type2>(a); }\
-}
-
-XTAL_CAST_HELPER(int, int_t);
-XTAL_CAST_HELPER(unsigned int, int_t);
-XTAL_CAST_HELPER(long, int_t);
-XTAL_CAST_HELPER(unsigned long, int_t);
-XTAL_CAST_HELPER(short, int_t);
-XTAL_CAST_HELPER(unsigned short, int_t);
-XTAL_CAST_HELPER(char, int_t);
-XTAL_CAST_HELPER(signed char, int_t);
-XTAL_CAST_HELPER(unsigned char, int_t);
-XTAL_CAST_HELPER(float, float_t);
-XTAL_CAST_HELPER(double, float_t);
-XTAL_CAST_HELPER(long double, float_t);
-
-#undef XTAL_CAST_HELPER
 
 }

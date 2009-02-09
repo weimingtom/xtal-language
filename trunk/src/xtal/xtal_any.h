@@ -461,4 +461,5 @@ AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
 
+
 }

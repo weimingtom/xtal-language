@@ -599,6 +599,21 @@ public:
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
 	}
+
+public:
+
+	void attach(void* p){
+		begin_ = plusp(p, 1);
+		current_ = minusp(begin_, 1);
+		end_ = begin_;
+		addp(current_, 1);
+	}
+
+	void detach(){
+		begin_ = plusp(dummy_allocate(), 1);
+		current_ = minusp(begin_, 1);
+		end_ = begin_;
+	}
 };
 
 /*
@@ -650,6 +665,10 @@ public:
 	bool empty() const{ return impl_.empty();}
 	void clear(){ impl_.clear(); }
 	void release(){ impl_.release(); }
+
+public:
+	void attach(T* p){ impl_.attach(p); }
+	void detach(){ impl_.detach(); }
 };
 
 }

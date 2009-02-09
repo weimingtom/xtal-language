@@ -10,18 +10,18 @@ struct ReturnResult{
 		vm->return_result();
 	}
 
-	static void return_result2(const VMachinePtr& vm, const AnyPtr& ret, Bool<1>){
+	static void return_result2(const VMachinePtr& vm, const AnyPtr& ret, TypeBool<1>){
 		vm->return_result(ret);
 	}
 		
 	template<class T>
-	static void return_result2(const VMachinePtr& vm, const T& ret, Bool<0>){
+	static void return_result2(const VMachinePtr& vm, const T& ret, TypeBool<0>){
 		vm->return_result(xnew<T>(ret));
 	}
 
 	template<class T>
 	static void return_result(const VMachinePtr& vm, const T& ret){
-		return_result2(vm, ret, Bool<Convertible<T, AnyPtr>::value>());
+		return_result2(vm, ret, TypeBool<Convertible<T, AnyPtr>::value>());
 	}
 };
 
@@ -1361,16 +1361,22 @@ public:
 
 	virtual void visit_members(Visitor& m);
 
-	void check_arg(const VMachinePtr& vm);
-	void check_args(ParamInfoAndVM& pvm);
+	void check_arg_num(const VMachinePtr& vm);
+	void check_args_type(ParamInfoAndVM& pvm);
 
 	virtual void rawcall(const VMachinePtr& vm);
+
+	const CFunPtr& bind_this(const AnyPtr& t){
+		this_ = t;
+		return from_this(this);
+	}
 
 protected:
 	void* val_;
 	fun_t fun_;
 	ParamInfo pi_;
 	int_t param_n_;
+	AnyPtr this_;
 };
 
 CFunPtr new_cfun(void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);

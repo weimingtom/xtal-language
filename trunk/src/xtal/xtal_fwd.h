@@ -219,7 +219,8 @@ enum BreakPointKind{
 	BREAKPOINT,
 	BREAKPOINT_CALL,
 	BREAKPOINT_RETURN,
-	BREAKPOINT_THROW
+	BREAKPOINT_THROW,
+	BREAKPOINT_ASSERT
 };
 
 /**
@@ -277,6 +278,7 @@ class DualDispatchFun;
 class MultiValue;
 class Debug;
 class DebugInfo;
+struct ParamInfoAndVM;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -314,8 +316,7 @@ class InstanceVariables;
 class Int;
 class Float;
 class Undefined;
-class True;
-class False;
+class Bool;
 
 struct ScopeInfo{
 	ScopeInfo()
@@ -379,12 +380,13 @@ extern FunInfo empty_xfun_info;
 extern ExceptInfo empty_except_info;
 extern EmptyInstanceVariables empty_instance_variables;
 extern IDPtr empty_id;
+extern StringPtr empty_string;
 extern Null null;
 extern Undefined undefined;
 extern Named null_named;
 
 template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name = (const StringPtr&)empty_id);
+inline const ClassPtr& new_cpp_class(const StringPtr& name = empty_string);
 
 template<class T>
 inline bool exists_cpp_class();

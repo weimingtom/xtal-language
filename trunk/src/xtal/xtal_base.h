@@ -76,6 +76,7 @@ public:
 	*/
 	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
 
+
 public:
 	
 	Base();

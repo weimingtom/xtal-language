@@ -19,8 +19,8 @@ ThreadMgr::ThreadMgr(ThreadLib* lib){
 	thread_lib_ = lib;
 
 	if(lib){
-		mutex_ = create_mutex(); 
-		mutex2_ = create_mutex(); 
+		mutex_ = new_mutex(); 
+		mutex2_ = new_mutex(); 
 
 		thread_enabled_ = true;
 		global_interpreter_lock();
@@ -212,15 +212,15 @@ void ThreadMgr::sleep_thread(float_t sec){
 	}
 }
 
-ThreadPtr ThreadMgr::create_thread(const AnyPtr& fun){
-	ThreadPtr ret = thread_lib_->create_thread();
+ThreadPtr ThreadMgr::new_thread(const AnyPtr& fun){
+	ThreadPtr ret = thread_lib_->new_thread();
 	ret->set_callback(fun);
 	ret->start();
 	return ret;
 }
 
-MutexPtr ThreadMgr::create_mutex(){
-	return thread_lib_->create_mutex();
+MutexPtr ThreadMgr::new_mutex(){
+	return thread_lib_->new_mutex();
 }
 
 void ThreadMgr::lock_mutex(const MutexPtr& self){
@@ -229,56 +229,6 @@ void ThreadMgr::lock_mutex(const MutexPtr& self){
 	}
 }
 
-void initialize_thread(){
-	{
-		ClassPtr p = new_cpp_class<Thread>();
-		p->def(Xid(new), fun(&create_thread));
-		p->def_method(Xid(join), &Thread::join);
-		p->def_fun(Xid(yield), &yield_thread);
-		p->def_fun(Xid(sleep), &sleep_thread);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Mutex>();
-		p->def(Xid(new), fun(&create_mutex));
-		p->def_method(Xid(lock), &lock_mutex);
-		p->def_method(Xid(unlock), &Mutex::unlock);
-	}
-
-	builtin()->def(Xid(Thread), get_cpp_class<Thread>());
-	builtin()->def(Xid(Mutex), get_cpp_class<Mutex>());
-}
-
-void initialize_thread_script(){
-	Xemb((
-
-Mutex::block_first: method{
-	this.lock;
-	return this;
-}
-
-Mutex::block_next: method{
-	this.unlock;
-	return null;
-}
-
-Mutex::block_break: method{
-	this.unlock;
-	return null;
-}
-
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x4b\x39\x00\x01\x89\x00\x01\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x02\x0b\x25\x01\x25\x00\x37\x00\x03\x39\x00\x01\x89\x00\x02\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x05\x39\x00\x01\x89"
-"\x00\x03\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x06\x25\x00\x8b\x00\x03\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x20\x00\x00\x00\x00\x00\x04\x00\x00\x00\x12\x00\x38\x00\x00\x00\x00\x00\x06\x00\x00\x00\x12\x00\x00\x00\x00"
-"\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x00\x00\x05\x00\x04\x00\x00\x00\x00\x00\x00\x01\x00\x00\x38\x00\x00\x00\x05\x00\x06\x00\x00\x00\x00\x00\x00\x01\x00"
-"\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00"
-"\x00\x13\x00\x00\x00\x06\x00\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x18\x00\x00\x00\x08\x00\x00\x00\x1b\x00\x00\x00\x0b\x00\x00\x00\x20\x00\x00\x00\x09\x00\x00\x00\x28\x00\x00\x00\x0a\x00\x00\x00\x2b\x00\x00\x00\x0b\x00\x00\x00\x30\x00\x00\x00\x10\x00\x00"
-"\x00\x30\x00\x00\x00\x0d\x00\x00\x00\x33\x00\x00\x00\x10\x00\x00\x00\x38\x00\x00\x00\x0e\x00\x00\x00\x40\x00\x00\x00\x0f\x00\x00\x00\x43\x00\x00\x00\x10\x00\x00\x00\x48\x00\x00\x00\x11\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75"
-"\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x07\x09\x00\x00\x00\x00\x09\x00\x00\x00\x05\x4d\x75\x74\x65\x78\x09\x00\x00"
-"\x00\x04\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00\x00\x06\x75\x6e\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b"
-"\x09\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
-)->call();
-}
 
 #ifdef XTAL_USE_THREAD_MODEL_2
 
@@ -469,230 +419,4 @@ void Thread::begin_thread(){
 	dec_ref_count();
 }
 
-ThreadLib::~ThreadLib(){
 }
-
-}
-
-//#define XTAL_USE_PTHREAD
-
-#if defined(_WIN32) && (defined(_MT) || defined(__GNUC__)) && !defined(XTAL_USE_PTHREAD)
-
-#ifndef _MT
-#	define _MT
-#endif
-
-#include <windows.h>
-#include <process.h>
-
-namespace xtal{
-
-class WinMutex : public Mutex{
-	CRITICAL_SECTION sect_;
-public:
-	WinMutex(){
-		InitializeCriticalSection(&sect_);
-	}
-	
-	~WinMutex(){
-		DeleteCriticalSection(&sect_);
-	}
-	
-	virtual void lock(){
-		EnterCriticalSection(&sect_);
-	}
-	
-	virtual void unlock(){
-		LeaveCriticalSection(&sect_);
-	}
-};
-
-class WinThread : public Thread{
-	HANDLE id_;
-	
-	static unsigned int WINAPI entry(void* self){
-		((WinThread*)self)->begin_thread();
-		return 0;
-	}
-	
-public:
-
-	WinThread(){
-		id_ = (HANDLE)-1;
-	}
-
-	~WinThread(){
-		if(id_!=(HANDLE)-1){
-			CloseHandle(id_);
-		}
-	}
-
-	virtual void start(){
-		id_ = (HANDLE)_beginthreadex(0, 0, &entry, this, 0, 0);
-	}
-
-	virtual void join(){
-		XTAL_UNLOCK{
-			WaitForSingleObject(id_, INFINITE);
-		}
-	}
-};
-
-
-class WinThreadLib : public ThreadLib{
-public:
-
-	virtual void initialize(){
-		{
-			ClassPtr p = new_cpp_class<WinThread>();
-			p->inherit(get_cpp_class<Thread>());
-		}
-
-		{
-			ClassPtr p = new_cpp_class<WinMutex>();
-			p->inherit(get_cpp_class<Mutex>());
-		}
-	}
-
-	virtual ThreadPtr create_thread(){
-		return xnew<WinThread>();
-	}
-
-	virtual MutexPtr create_mutex(){
-		return xnew<WinMutex>();
-	}
-
-	virtual void yield(){
-		Sleep(0);
-	}
-
-	virtual void sleep(float_t sec){
-		Sleep((DWORD)(1000*sec));
-	}
-
-	virtual void current_thread_id(Thread::ID& id){
-		id.set(GetCurrentThreadId());
-	}
-
-	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){
-		return a.get<uint_t>() == b.get<uint_t>();
-	}
-
-} win_thread_lib;
-
-}
-
-#elif defined(XTAL_USE_PTHREAD) || defined(__CYGWIN__) 
-
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/time.h>
-
-namespace xtal{
-
-class PThreadMutex : public Mutex{
-	pthread_mutex_t mutex_;
-public:
-	PThreadMutex(){
-		pthread_mutex_init(&mutex_, 0);
-	}
-	
-	~PThreadMutex(){
-		pthread_mutex_destroy(&mutex_);
-	}
-	
-	virtual void lock(){
-		pthread_mutex_lock(&mutex_);
-	}
-	
-	virtual void unlock(){
-		pthread_mutex_unlock(&mutex_);
-	}
-};
-
-class PThread : public Thread{
-	pthread_t id_;
-	
-	static void* entry(void* self){
-		((PThread*)self)->begin_thread();
-		return 0;
-	}
-	
-public:
-
-	PThread(const AnyPtr& callback)
-		:Thread(callback){
-		pthread_create(&id_, 0, entry, this);
-	}
-
-	~PThread(){
-		pthread_detach(id_);
-	}
-
-	virtual void join(){
-		void* p = 0;
-		XTAL_UNLOCK{
-			pthread_join(id_, &p);
-		}
-	}
-};
-
-
-class PThreadLib : public ThreadLib{
-public:
-
-	virtual void initialize(){
-		{
-			ClassPtr p = new_cpp_class<PThread>();
-			p->inherit(get_cpp_class<Thread>());
-		}
-
-		{
-			ClassPtr p = new_cpp_class<PThreadMutex>();
-			p->inherit(get_cpp_class<Mutex>());
-		}
-	}
-
-	virtual ThreadPtr create_thread(const AnyPtr& callback){
-		return xnew<PThread>(callback);
-	}
-
-	virtual MutexPtr create_mutex(){
-		return xnew<PThreadMutex>();
-	}
-
-	virtual void yield(){
-		sched_yield();
-	}
-
-	virtual void sleep(float_t sec){
-		usleep((useconds_t)(sec*1000*1000));
-	}
-
-	virtual void current_thread_id(Thread::ID& id){
-		id.set(pthread_self());
-	}
-
-	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){
-		return pthread_equal(a.get<pthread_t>(), b.get<pthread_t>())!=0;
-	}
-
-} pthread_lib;
-
-void set_thread(){
-	set_thread(pthread_lib);
-}
-
-}
-
-#else
-
-namespace xtal{
-
-void set_thread(){
-	
-}
-
-}
-
-#endif

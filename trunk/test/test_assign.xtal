@@ -1,6 +1,4 @@
-multi : fun(){
-	return 77, 88;
-}
+
 
 {
 	i, j : 5, 8;
@@ -15,7 +13,7 @@ multi : fun(){
 	assert k==5;
 	assert l==8;
 	
-	l, k = multi();
+	l, k = dofun{ return 77, 88; }
 	assert l==77;
 	assert k==88;
 		
@@ -32,7 +30,7 @@ multi : fun(){
 	assert a[0]==150;
 	assert a[1]==99;
 	
-	a[0], a[1] = multi();
+	a[0], a[1] = dofun{ return 77, 88; }
 	assert a[0]==77;
 	assert a[1]==88;
 }
@@ -56,7 +54,7 @@ multi : fun(){
 	assert c.x==200;
 	assert c.y==50;
 	
-	c.x, c.y = multi();
+	c.x, c.y = dofun{ return 77, 88; }
 	assert c.x==77;
 	assert c.y==88;
 }

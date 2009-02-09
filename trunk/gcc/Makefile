@@ -34,10 +34,14 @@ ix: libxtal ../src/xtal/ixmain.cpp
 	$(CC) -o ../bin/ix.exe ../src/xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT)
 	strip --strip-all ../bin/ix.exe
 
+testxtal: libxtal ../src/xtal/testmain.cpp
+	$(CC) -o ../bin/test.exe ../src/xtal/testmain.cpp libxtal.a -lstdc++ $(OPT)
+	strip --strip-all ../bin/test.exe
+	
 .PHONY : clean
 
 clean:
-	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe
+	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe ../bin/test.exe
 
 prof: libxtal ../src/xtal/main.cpp
 	$(CC) -o ../bin/prof.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
@@ -45,10 +49,10 @@ prof: libxtal ../src/xtal/main.cpp
 	gprof ../bin/prof.exe gmon.out -p > prof.txt
 
 run: xtal
-	../bin/xtal.exe ../test.xtal
+	../bin/xtal.exe 
 
-test: xtal
-	../bin/xtal.exe testall.xtal
+test: testxtal
+	../bin/test.exe
 
 checkdll:
 	$ objdump -p ../bin/xtal.exe | grep "DLL Name"

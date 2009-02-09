@@ -1,5 +1,7 @@
 
 #include "xtal.h"
+#include "xtal_lib/xtal_winthread.h"
+#include "xtal_lib/xtal_cstdiostream.h"
 
 using namespace xtal;
 
@@ -43,9 +45,15 @@ static void handle_argv(char** argv){
 }
 
 int main(int argc, char** argv){
-/*
+
+	CStdioStreamLib stream_lib;
+	WinThreadLib win_thread_lib;
+	CoreSetting setting;
+	setting.thread_lib = &win_thread_lib;
+	setting.stream_lib = &stream_lib;
+
 	Core core;
-	core.initialize(defalt_core_setting);
+	core.initialize(setting);
 
 	XTAL_TRY{
 		handle_argv(argv);
@@ -54,7 +62,7 @@ int main(int argc, char** argv){
 		stderr_stream()->put_s(e->to_s());
 		stderr_stream()->put_s("\n");
 	}
-*/
+
 	return 0;
 }
 

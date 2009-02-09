@@ -295,7 +295,8 @@ public:
 	void return_result(const AnyPtr& value1, const AnyPtr& value2);
 	void return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3);
 	void return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3, const AnyPtr& value4);
-	void return_result_array(const ArrayPtr& values);
+
+	void return_result_mv(const MultiValuePtr& values);
 
 	/**
 	* @brief return_resultÇ‚carry_overÇä˘Ç…åƒÇ—èoÇµÇΩÇ»ÇÁtrueÇÅAÇªÇ§Ç≈Ç»Ç¢Ç»ÇÁfalseÇï‘Ç∑ÅB
@@ -568,6 +569,7 @@ private:
 
 	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
 
+	void make_debug_info(const inst_t* pc, int_t kind);
 	void debug_hook(const inst_t* pc, int_t kind);
 
 public:
@@ -578,6 +580,7 @@ public:
 	const inst_t* FunPushUndefined(const inst_t* pc);
 	const inst_t* FunPushTrue(const inst_t* pc);
 	const inst_t* FunPushFalse(const inst_t* pc);
+	const inst_t* FunPushTrueAndSkip(const inst_t* pc);
 	const inst_t* FunPushInt1Byte(const inst_t* pc);
 	const inst_t* FunPushInt2Byte(const inst_t* pc);
 	const inst_t* FunPushFloat1Byte(const inst_t* pc);
@@ -592,9 +595,6 @@ public:
 	const inst_t* FunInsert2(const inst_t* pc);
 	const inst_t* FunInsert3(const inst_t* pc);
 	const inst_t* FunAdjustResult(const inst_t* pc);
-	const inst_t* FunIf(const inst_t* pc);
-	const inst_t* FunUnless(const inst_t* pc);
-	const inst_t* FunGoto(const inst_t* pc);
 	const inst_t* FunLocalVariableInc(const inst_t* pc);
 	const inst_t* FunLocalVariableIncDirect(const inst_t* pc);
 	const inst_t* FunLocalVariableDec(const inst_t* pc);
@@ -621,11 +621,6 @@ public:
 	const inst_t* FunSend(const inst_t* pc);
 	const inst_t* FunMember(const inst_t* pc);
 	const inst_t* FunDefineMember(const inst_t* pc);
-	const inst_t* FunGlobalVariable(const inst_t* pc);
-	const inst_t* FunSetGlobalVariable(const inst_t* pc);
-	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
-	const inst_t* FunOnce(const inst_t* pc);
-	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunBlockBegin(const inst_t* pc);
 	const inst_t* FunBlockBeginDirect(const inst_t* pc);
 	const inst_t* FunBlockEnd(const inst_t* pc);
@@ -634,6 +629,9 @@ public:
 	const inst_t* FunTryEnd(const inst_t* pc);
 	const inst_t* FunPushGoto(const inst_t* pc);
 	const inst_t* FunPopGoto(const inst_t* pc);
+	const inst_t* FunIf(const inst_t* pc);
+	const inst_t* FunUnless(const inst_t* pc);
+	const inst_t* FunGoto(const inst_t* pc);
 	const inst_t* FunIfEq(const inst_t* pc);
 	const inst_t* FunIfNe(const inst_t* pc);
 	const inst_t* FunIfLt(const inst_t* pc);
@@ -666,18 +664,6 @@ public:
 	const inst_t* FunShl(const inst_t* pc);
 	const inst_t* FunShr(const inst_t* pc);
 	const inst_t* FunUshr(const inst_t* pc);
-	const inst_t* FunEq(const inst_t* pc);
-	const inst_t* FunNe(const inst_t* pc);
-	const inst_t* FunLt(const inst_t* pc);
-	const inst_t* FunLe(const inst_t* pc);
-	const inst_t* FunGt(const inst_t* pc);
-	const inst_t* FunGe(const inst_t* pc);
-	const inst_t* FunRawEq(const inst_t* pc);
-	const inst_t* FunRawNe(const inst_t* pc);
-	const inst_t* FunIn(const inst_t* pc);
-	const inst_t* FunNin(const inst_t* pc);
-	const inst_t* FunIs(const inst_t* pc);
-	const inst_t* FunNis(const inst_t* pc);
 	const inst_t* FunInc(const inst_t* pc);
 	const inst_t* FunDec(const inst_t* pc);
 	const inst_t* FunAddAssign(const inst_t* pc);
@@ -693,6 +679,11 @@ public:
 	const inst_t* FunShrAssign(const inst_t* pc);
 	const inst_t* FunUshrAssign(const inst_t* pc);
 	const inst_t* FunRange(const inst_t* pc);
+	const inst_t* FunGlobalVariable(const inst_t* pc);
+	const inst_t* FunSetGlobalVariable(const inst_t* pc);
+	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
+	const inst_t* FunOnce(const inst_t* pc);
+	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);
 	const inst_t* FunClassEnd(const inst_t* pc);
 	const inst_t* FunDefineClassMember(const inst_t* pc);

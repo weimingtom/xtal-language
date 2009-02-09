@@ -66,6 +66,14 @@ public:
 	}
 
 	/**
+	* @brief 空か調べる
+	*
+	*/
+	bool is_empty(){
+		return table_.empty();
+	}
+
+	/**
 	* @brief 連結した連想配列を返す
 	*
 	*/

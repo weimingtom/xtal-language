@@ -3,10 +3,67 @@
 
 namespace xtal{
 
-class Int : public Any{};
-class Float : public Any{};
-class True : public Any{};
-class False : public Any{};
+class Int : public Any{
+public:
+
+	Int(int_t val = 0)
+		:Any(val){}
+
+public:
+	
+	int_t to_i(){
+		return ivalue(*this);
+	}
+
+	float_t to_f(){
+		return (float_t)ivalue(*this);
+	}
+
+	StringPtr to_s(){
+		return Any::to_s();
+	}
+
+	bool op_in(const IntRangePtr& range);
+
+	bool op_in(const FloatRangePtr& range);
+
+	IntRangePtr op_range(int_t right, int_t kind);
+
+	FloatRangePtr op_range(float_t right, int_t kind);
+};
+
+class Float : public Any{
+public:
+
+	Float(float_t val = 0)
+		:Any(val){}
+
+public:
+
+	int_t to_i(){
+		return (int_t)fvalue(*this);
+	}
+
+	float_t to_f(){
+		return fvalue(*this);
+	}
+
+	StringPtr to_s(){
+		return Any::to_s();
+	}
+
+	bool op_in(const IntRangePtr& range);
+
+	bool op_in(const FloatRangePtr& range);
+
+	FloatRangePtr op_range(int_t right, int_t kind);
+
+	FloatRangePtr op_range(float_t right, int_t kind);
+};
+
+
+
+class Bool : public Any{};
 
 class Range : public Base{
 public:
@@ -70,6 +127,19 @@ public:
 	int_t right(){ return ivalue(right_); }
 
 	AnyPtr each();
+};
+
+class IntRangeIter : public Base{
+public:
+
+	IntRangeIter(const IntRangePtr& range)
+		:it_(range->begin()), end_(range->end()){
+	}
+
+	void block_next(const VMachinePtr& vm);
+
+private:
+	int_t it_, end_;
 };
 
 class FloatRange : public Range{

@@ -19,6 +19,18 @@ VMachine::VMachine(){
 	resume_pc_ = 0;
 }
 
+void VMachine::reset(){
+	stack_.resize(0);
+	except_frames_.resize(0);
+	fun_frames_.resize(0);
+
+	except_[0] = null;
+	except_[1] = null;
+	except_[2] = null;
+	debug_info_ = null;
+	debug_ = null;
+}
+
 void VMachine::push_arg(const AnyPtr& value){
 	XTAL_ASSERT(named_arg_count() == 0);
 	ff().ordered_arg_count++;
@@ -228,7 +240,7 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const A
 	f.called_pc = &cleanup_call_code_;
 }
 
-void VMachine::return_result_array(const ArrayPtr& values){
+void VMachine::return_result_mv(const MultiValuePtr& values){
 	FunFrame& f = ff();
 
 	downsize(f.args_stack_size());
@@ -244,6 +256,105 @@ void VMachine::return_result_array(const ArrayPtr& values){
 void VMachine::replace_result(int_t pos, const AnyPtr& v){
 	result(0);
 	set(ff().need_result_count-pos-1, v);
+}
+
+void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
+	// Œ‹‰Ê‚ðvm‚É“n‚·
+	if(vm->need_result()){
+		if(add_succ_or_fail_result){
+			if(resume_pc_!=0){
+				vm->push(from_this(fun));
+			}
+			else{
+				vm->push(null);
+			}
+			vm->push(this, yield_result_count_);
+			downsize(yield_result_count_);
+			vm->adjust_result(yield_result_count_+1);
+		}
+		else{
+			vm->push(this, yield_result_count_);
+			downsize(yield_result_count_);
+			vm->adjust_result(yield_result_count_);
+		}
+	}
+}
+
+const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
+	yield_result_count_ = 0;
+	push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
+	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+	resume_pc_ = 0;
+	carry_over(fun);
+	ff().yieldable = true;
+	execute_inner(ff().called_pc);
+	present_for_vm(fun, vm, add_succ_or_fail_result);
+	vm->ff().called_pc = &cleanup_call_code_;
+	return resume_pc_;
+}
+
+const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm, bool add_succ_or_fail_result){
+	yield_result_count_ = 0;
+	ff().called_pc = pc;
+	resume_pc_ = 0;
+	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+	execute_inner(ff().called_pc);
+	present_for_vm(fun, vm, add_succ_or_fail_result);
+	vm->ff().called_pc = &cleanup_call_code_;
+	return resume_pc_;
+}
+
+void VMachine::exit_fiber(){
+	XTAL_TRY{
+		yield_result_count_ = 0;
+		ff().called_pc = resume_pc_;
+		resume_pc_ = 0;
+		execute_inner(&throw_undefined_code_);
+	}
+	XTAL_CATCH(e){
+		(void)e;
+	}
+	reset();
+}
+
+void VMachine::adjust_arg(int_t n){
+	FunFrame& f = ff();
+	stack_.downsize(f.named_arg_count*2);
+	adjust_result(f.ordered_arg_count, n);
+	f.named_arg_count = 0;
+	f.ordered_arg_count = n;
+}
+
+void VMachine::flatten_arg(){
+	FunFrame& f = ff();
+	adjust_arg(1);
+	if(MultiValuePtr mv = arg(0)->flatten_mv()){
+		downsize(1);
+		for(uint_t i=0; i<mv->size(); ++i){
+			push(mv->at(i));
+		}
+		f.ordered_arg_count = mv->size();
+	}
+	else{
+		downsize(1);
+		f.ordered_arg_count = 0;
+	}
+}
+
+void VMachine::flatten_all_arg(){
+	FunFrame& f = ff();
+	adjust_arg(1);
+	if(MultiValuePtr mv = arg(0)->flatten_all_mv()){
+		downsize(1);
+		for(uint_t i=0; i<mv->size(); ++i){
+			push(mv->at(i));
+		}
+		f.ordered_arg_count = mv->size();
+	}
+	else{
+		downsize(1);
+		f.ordered_arg_count = 0;
+	}
 }
 
 ArgumentsPtr VMachine::make_arguments(){
@@ -289,11 +400,11 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 		if(!ep->is(builtin()->member(Xid(Exception)))){
 			ep = RuntimeError()-call(ep);
 		}
-		if(fun() && code()){
-			if((pc != code()->data()+code()->size()-1)){
+		if(fun() &&  fun()->code()){
+			if((pc !=  fun()->code()->data()+ fun()->code()->size()-1)){
 				ep->send(Xid(append_backtrace),
-					code()->source_file_name(),
-					code()->compliant_lineno(pc),
+					 fun()->code()->source_file_name(),
+					 fun()->code()->compliant_lineno(pc),
 					fun()->object_name());
 			}
 		}
@@ -312,28 +423,34 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 void VMachine::set_except_0(const Any& e){
 	except_[0] = e;
 }
+	
+void VMachine::make_debug_info(const inst_t* pc, int_t kind){
+	if(!debug_info_){ debug_info_ = xnew<DebugInfo>(); }
+	debug_info_->set_kind(kind);
+	if(fun()){
+		debug_info_->set_line( fun()->code()->compliant_lineno(pc));
+		debug_info_->set_file_name( fun()->code()->source_file_name());
+		debug_info_->set_fun_name(fun()->object_name());
+	}
+	else{
+		debug_info_->set_line(0);
+		debug_info_->set_file_name("?");
+		debug_info_->set_fun_name("?");
+	}
+
+	if(kind==BREAKPOINT_ASSERT){
+		debug_info_->set_message(pop()->to_s());
+	}
+	else{
+		debug_info_->set_message(empty_string);
+	}
+
+	debug_info_->set_local_variables(ff().outer());
+}
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		if((kind==BREAKPOINT && debug_->break_point_hook()) || 
-			(kind==BREAKPOINT_RETURN && debug_->return_hook()) || 
-			(kind==BREAKPOINT_CALL && debug_->call_hook()) ||
-			(kind==BREAKPOINT_THROW && debug_->throw_hook())){
-
-			if(!debug_info_){ debug_info_ = xnew<DebugInfo>(); }
-			debug_info_->set_kind(kind);
-			if(fun()){
-				debug_info_->set_line(code()->compliant_lineno(pc));
-				debug_info_->set_file_name(code()->source_file_name());
-				debug_info_->set_fun_name(fun()->object_name());
-			}
-			else{
-				debug_info_->set_line(0);
-				debug_info_->set_file_name("?");
-				debug_info_->set_fun_name("?");
-			}
-			debug_info_->set_local_variables(ff().outer());
-
+		{
 			struct guard{
 				const SmartPtr<Debug>& debug_;
 				guard(const SmartPtr<Debug>& debug):debug_(debug){ debug_->disable(); }
@@ -343,25 +460,39 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 			switch(kind){
 				XTAL_CASE(BREAKPOINT){
 					if(const AnyPtr& hook = debug_->break_point_hook()){
+						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_RETURN){
 					if(const AnyPtr& hook = debug_->return_hook()){
+						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_CALL){
 					if(const AnyPtr& hook = debug_->call_hook()){
+						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_THROW){
 					if(const AnyPtr& hook = debug_->throw_hook()){
+						make_debug_info(pc, kind);
 						hook->call(debug_info_);
+					}
+				}
+
+				XTAL_CASE(BREAKPOINT_ASSERT){
+					if(const AnyPtr& hook = debug_->assert_hook()){
+						make_debug_info(pc, kind);
+						hook->call(debug_info_);
+					}
+					else{
+						set_except(builtin()->member(Xid(AssertionFailed))->call(pop()->to_s()));
 					}
 				}
 			}
@@ -408,16 +539,16 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 
 		stack_.resize(ef.stack_count);
 		if(ef.core->catch_pc && e){
-			pc = ef.core->catch_pc + code()->data();
+			pc = ef.core->catch_pc +  fun()->code()->data();
 			push(AnyPtr(ef.core->end_pc));
 			push(e);
 			except_[1] = null;
 			except_[0] = null;
 		}
 		else{
-			pc = ef.core->finally_pc + code()->data();
+			pc = ef.core->finally_pc +  fun()->code()->data();
 			push(e);
-			push(AnyPtr(code()->size()-1));
+			push(AnyPtr(fun()->code()->size()-1));
 			except_[1] = except_[0];
 			except_[0] = null;
 		}

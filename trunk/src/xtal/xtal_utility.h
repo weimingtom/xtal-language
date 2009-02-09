@@ -1,15 +1,9 @@
 
 #pragma once
 
-//#define XTAL_NO_THREAD
-//#define XTAL_NO_PARSER
-//#define XTAL_USE_WCHAR
-//#define XTAL_USE_COMPILED_EMB
-
-//#define XTAL_NO_EXCEPTIONS
-
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
+//#define XTAL_USE_COMPILED_EMB
 
 #ifdef XTAL_NO_PARSER
 #	define XTAL_USE_COMPILED_EMB
@@ -162,6 +156,13 @@ struct static_ntz{
 	};
 };
 
+template<class T>
+struct CppClassSymbol{
+	static int value;
+};
+
+template<class T>
+int CppClassSymbol<T>::value;
 
 // 最低限のメタプログラミング下地
 
@@ -188,7 +189,7 @@ struct If{
 
 
 template<bool>
-struct Bool{};
+struct TypeBool{};
 
 template<class T, class U>
 struct Convertible{

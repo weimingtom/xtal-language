@@ -3,6 +3,37 @@
 
 namespace xtal{
 
+InstanceVariables::InstanceVariables()		
+	:variables_(xnew<Array>()){
+	VariablesInfo vi;
+	vi.core = 0;
+	vi.pos = 0;
+	variables_info_.push(vi);
+}
+		
+InstanceVariables::~InstanceVariables(){}
+	
+void InstanceVariables::init_variables(ClassInfo* core){
+	VariablesInfo vi;
+	vi.core = core;
+	vi.pos = (int_t)variables_->size();
+	variables_->resize(vi.pos+core->instance_variable_size);
+	variables_info_.push(vi);
+}
+
+bool InstanceVariables::is_included(ClassInfo* core){
+	VariablesInfo& info = variables_info_.top();
+	if(info.core == core)
+		return true;
+	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
+		if(variables_info_[i].core==core){
+			std::swap(variables_info_[0], variables_info_[i]);
+			return true;
+		}	
+	}
+	return false;
+}
+
 int_t InstanceVariables::find_core_inner(ClassInfo* core){
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].core==core){
@@ -13,6 +44,22 @@ int_t InstanceVariables::find_core_inner(ClassInfo* core){
 	XTAL_THROW(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")), return 0);
 }
 
+EmptyInstanceVariables::EmptyInstanceVariables()
+	:InstanceVariables(uninit_t()){
+	vi.core = 0;
+	vi.pos = 0;
+	variables_info_.attach(&vi);
+//	VariablesInfo info = variables_info_.top();
+//	info = info;
+}
+
+EmptyInstanceVariables::~EmptyInstanceVariables(){
+	variables_info_.detach();
+}
+
+InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
+
+///////////////////////////////////////
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 	:Frame(outer, code, core), mixins_(xnew<Array>()){
@@ -102,6 +149,14 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	}
 
 	return minid;
+}
+
+void Class::def_dual_dispatch_method(const IDPtr& primary_key, int_t accessibility){
+	def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
+}
+
+void Class::def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
+	def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
 }
 
 const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
@@ -394,77 +449,5 @@ CppSingleton::CppSingleton(const StringPtr& name)
 	inherit(get_cpp_class<Class>());
 }
 
-
-
-void initialize_class(){
-	{
-		ClassPtr p = new_cpp_class<Class>(Xid(Class));
-		p->inherit(get_cpp_class<Frame>());
-		p->def_method(Xid(inherit), &Class::inherit_strict);
-		p->def_method(Xid(overwrite), &Class::overwrite);
-		p->def_method(Xid(s_new), &Class::s_new);
-		p->def_method(Xid(inherited_classes), &Class::inherited_classes);
-		p->def_method(Xid(is_inherited), &Any::is_inherited);
-		p->def_method(Xid(find_near_member), &Class::find_near_member)->params(Xid(primary_key), null, Xid(secondary_key), null);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<CppClass>(Xid(CppClass));
-		p->inherit(get_cpp_class<Class>());
-	}
-
-	builtin()->def(Xid(Class), get_cpp_class<Class>());
-	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
-}
-
-void initialize_class_script(){
-	Xemb((
-Class::ancestors: method{
-	if(this===Any){
-		return null;
-	}			
-	
-	return fiber{
-		this.inherited_classes{
-			yield it;
-			it.ancestors{
-				yield it;
-			}
-		}
-
-		yield Any;
-	}
-}
-
-Class::members: method(inherited_too: true){
-	if(!inherited_too){
-		return Frame::members();
-	}
-
-	return fiber{
-		this.members(false){
-			yield it;
-		}
-
-		this.ancestors{
-			it.members(false){
-				yield it;
-			}
-		}
-	}
-}
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x4b\x39\x00\x01\x89\x00\x01\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x02\x0b\x25\x01\x25\x00\x37\x00\x03\x39\x00\x01\x89\x00\x02\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x05\x39\x00\x01\x89"
-"\x00\x03\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x06\x25\x00\x8b\x00\x03\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x20\x00\x00\x00\x00\x00\x04\x00\x00\x00\x12\x00\x38\x00\x00\x00\x00\x00\x06\x00\x00\x00\x12\x00\x00\x00\x00"
-"\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x00\x00\x05\x00\x04\x00\x00\x00\x00\x00\x00\x01\x00\x00\x38\x00\x00\x00\x05\x00\x06\x00\x00\x00\x00\x00\x00\x01\x00"
-"\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00"
-"\x00\x13\x00\x00\x00\x06\x00\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x18\x00\x00\x00\x08\x00\x00\x00\x1b\x00\x00\x00\x0b\x00\x00\x00\x20\x00\x00\x00\x09\x00\x00\x00\x28\x00\x00\x00\x0a\x00\x00\x00\x2b\x00\x00\x00\x0b\x00\x00\x00\x30\x00\x00\x00\x10\x00\x00"
-"\x00\x30\x00\x00\x00\x0d\x00\x00\x00\x33\x00\x00\x00\x10\x00\x00\x00\x38\x00\x00\x00\x0e\x00\x00\x00\x40\x00\x00\x00\x0f\x00\x00\x00\x43\x00\x00\x00\x10\x00\x00\x00\x48\x00\x00\x00\x11\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75"
-"\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x07\x09\x00\x00\x00\x00\x09\x00\x00\x00\x05\x4d\x75\x74\x65\x78\x09\x00\x00"
-"\x00\x04\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00\x00\x06\x75\x6e\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b"
-"\x09\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
-)->call();
-
-}
 
 }

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#ifndef XTAL_NO_XPEG
+
 namespace xtal{ namespace xpeg{
 
 class MatchResult;
@@ -238,3 +240,4 @@ AnyPtr leafs(const AnyPtr& left);
 
 }}
 
+#endif

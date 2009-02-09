@@ -60,21 +60,21 @@ public:
 
 	Mutex();
 
-	virtual void lock() = 0;
-	virtual void unlock() = 0;
+	virtual void lock(){}
+	virtual void unlock(){}
 };
 
 
 class ThreadLib{
 public:
-	virtual ~ThreadLib();
-	virtual void initialize() = 0;
-	virtual ThreadPtr create_thread() = 0;
-	virtual MutexPtr create_mutex() = 0;
-	virtual void yield() = 0;
-	virtual void sleep(float_t sec) = 0;
-	virtual void current_thread_id(Thread::ID& id) = 0;
-	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b) = 0;
+	virtual ~ThreadLib(){}
+	virtual void initialize(){}
+	virtual ThreadPtr new_thread(){ return null; }
+	virtual MutexPtr new_mutex(){ return xnew<Mutex>(); }
+	virtual void yield(){}
+	virtual void sleep(float_t sec){}
+	virtual void current_thread_id(Thread::ID& id){ id.set(0); }
+	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){ return true; }
 };
 
 class ThreadMgr : public Base{
@@ -120,9 +120,9 @@ public:
 
 	const VMachinePtr& vmachine();
 
-	ThreadPtr create_thread(const AnyPtr& fun);
+	ThreadPtr new_thread(const AnyPtr& fun);
 
-	MutexPtr create_mutex();
+	MutexPtr new_mutex();
 
 	void lock_mutex(const MutexPtr& self);
 

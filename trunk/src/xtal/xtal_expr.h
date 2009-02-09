@@ -16,6 +16,7 @@ enum ExprType{
 	EXPR_CALLEE,
 	EXPR_ARGS,
 	EXPR_THIS,
+	EXPR_DEBUG,
 	EXPR_CURRENT_CONTEXT,
 	EXPR_INT,
 	EXPR_FLOAT,
@@ -65,6 +66,8 @@ enum ExprType{
 
 	EXPR_ANDAND,
 	EXPR_OROR,
+
+	EXPR_CATCH,
 
 	EXPR_INC,
 	EXPR_DEC,
@@ -192,6 +195,10 @@ public:
 	XTAL_DEF_MEMBER(1, const IDPtr&, try_catch_var);
 	XTAL_DEF_MEMBER(2, const ExprPtr&, try_catch);
 	XTAL_DEF_MEMBER(3, const ExprPtr&, try_finally);
+
+	XTAL_DEF_MEMBER(0, const ExprPtr&, catch_body);
+	XTAL_DEF_MEMBER(1, const IDPtr&, catch_catch_var);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, catch_catch);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, if_cond);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, if_body);

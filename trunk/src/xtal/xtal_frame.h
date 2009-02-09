@@ -126,4 +126,19 @@ protected:
 	}
 };
 
+class MembersIter : public Base{
+	FramePtr frame_;
+	Frame::map_t::iterator it_;
+
+	virtual void visit_members(Visitor& m);
+
+public:
+
+	MembersIter(const FramePtr& a)
+		:frame_(a), it_(frame_->map_members_->begin()){
+	}
+
+	void block_next(const VMachinePtr& vm);
+};
+
 }

@@ -106,7 +106,7 @@ struct ChMaker{
 
 	void add(char_t ch);
 
-	IDPtr to_s();
+	const IDPtr& to_s();
 
 	void clear(){
 		pos = 0;
@@ -116,6 +116,7 @@ struct ChMaker{
 	int_t pos;
 	int_t len;
 	char_t buf[8];
+	IDPtr temp;
 };
 
 }

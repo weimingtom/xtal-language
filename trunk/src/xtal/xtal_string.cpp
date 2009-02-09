@@ -93,56 +93,36 @@ static int_t string_compare(const char_t* a, const char_t* b){
 	return (int_t)*a - (int_t)*b;
 }
 
-class StringEachIter : public Base{
-	StringStreamPtr ss_;
+void StringEachIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & ss_;
+}
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & ss_;
+void StringEachIter::block_next(const VMachinePtr& vm){
+	if(ss_->eos()){
+		vm->return_result(null, null);
+		return;
 	}
 
-public:
+	vm->return_result(from_this(this), ss_->get_s(1));
+}
 
-	StringEachIter(const StringPtr& str)
-		:ss_(xnew<StringStream>(str)){
+
+void ChRangeIter::block_next(const VMachinePtr& vm){
+	if(ch_cmp(it_->data(), it_->data_size(), end_->data(), end_->data_size())>0){
+		vm->return_result(null, null);
+		return;
 	}
 
-	void block_next(const VMachinePtr& vm){
-		if(ss_->eos()){
-			vm->return_result(null, null);
-			return;
-		}
+	StringPtr temp = it_;
+	it_ = ch_inc(it_->data(), it_->data_size());
+	vm->return_result(from_this(this), temp);
+}
 
-		vm->return_result(from_this(this), ss_->get_s(1));
-	}
-};
-
-class ChRangeIter : public Base{
-public:
-
-	ChRangeIter(const ChRangePtr& range)
-		:it_(range->left()), end_(range->right()){}
-
-	void block_next(const VMachinePtr& vm){
-		if(ch_cmp(it_->data(), it_->data_size(), end_->data(), end_->data_size())>0){
-			vm->return_result(null, null);
-			return;
-		}
-
-		StringPtr temp = it_;
-		it_ = ch_inc(it_->data(), it_->data_size());
-		vm->return_result(from_this(this), temp);
-	}
-
-private:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & it_ & end_;
-	}
-
-	StringPtr it_, end_;
-};
+void ChRangeIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & it_ & end_;
+}
 
 AnyPtr ChRange::each(){
 	return xnew<ChRangeIter>(from_this(this));
@@ -424,14 +404,14 @@ AnyPtr String::each(){
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1025")), return xnew<ChRange>(empty_id, empty_id));		
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1025")), return xnew<ChRange>(empty_string, empty_string));		
 	}
 
 	if(length()==1 && right->length()==1){
 		return xnew<ChRange>(from_this(this), right);
 	}
 	else{
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>(empty_id, empty_id));		
+		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>(empty_string, empty_string));		
 	}
 }
 
@@ -465,23 +445,6 @@ uint_t String::hashcode(){
 	}
 }
 	
-AnyPtr String::split(const AnyPtr& pattern){
-	using namespace xpeg;
-	ArrayPtr ret = xnew<Array>();
-	ExecutorPtr exec(xnew<Executor>(from_this(this)));
-	if(exec->match(pattern)){
-		ret->push_back(exec->prefix());
-		while(exec->match(pattern)){
-			ret->push_back(exec->prefix());
-		}
-		ret->push_back(exec->suffix());
-	}
-	else{
-		ret->push_back(from_this(this));
-	}
-	return ret;
-}
-
 int_t String::calc_offset(int_t i){
 	uint_t sz = data_size();
 	if(i<0){
@@ -760,157 +723,18 @@ void StringMgr::before_gc(){
 	}
 }
 
-class InternedStringIter : public Base{
-	StringMgr::table_t::iterator iter_, last_;
-public:
-
-	InternedStringIter(StringMgr::table_t::iterator begin, StringMgr::table_t::iterator end)
-		:iter_(begin), last_(end){
+void InternedStringIter::block_next(const VMachinePtr& vm){
+	if(iter_!=last_){
+		vm->return_result(from_this(this), iter_->second);
+		++iter_;
 	}
-			
-	void block_next(const VMachinePtr& vm){
-		if(iter_!=last_){
-			vm->return_result(from_this(this), iter_->second);
-			++iter_;
-		}
-		else{
-			vm->return_result(null, null);
-		}
+	else{
+		vm->return_result(null, null);
 	}
-};
+}
 
 AnyPtr StringMgr::interned_strings(){
 	return xnew<InternedStringIter>(table_.begin(), table_.end());
-}
-
-///////////////////////////////////////////
-
-void initialize_string(){		
-	{
-		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
-		p->inherit(Iterator());
-		p->def_method(Xid(block_next), &StringEachIter::block_next);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<ChRangeIter>(Xid(ChRangeIter));
-		p->inherit(Iterator());
-		p->def_method(Xid(block_next), &ChRangeIter::block_next);
-	}
-
-	{
-		new_cpp_class<Range>(Xid(Range));
-
-		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
-		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->params(Xid(left), null, Xid(right), null));
-		p->def_method(Xid(each), &ChRange::each);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<String>(Xid(String));
-		p->inherit(Iterable());
-
-		p->def(Xid(new), ctor<String>());
-		p->def_method(Xid(to_i), &String::to_i);
-		p->def_method(Xid(to_f), &String::to_f);
-		p->def_method(Xid(to_s), &String::to_s);
-		p->def_method(Xid(clone), &String::clone);
-
-		p->def_method(Xid(length), &String::length);
-		p->def_method(Xid(size), &String::size);
-		p->def_method(Xid(intern), &String::intern);
-
-		p->def_method(Xid(each), &String::each);
-
-		p->def_method(Xid(op_range), &String::op_range, get_cpp_class<String>());
-		p->def_method(Xid(op_cat), &String::op_cat, get_cpp_class<String>());
-		p->def_method(Xid(op_cat_assign), &String::op_cat, get_cpp_class<String>());
-		p->def_method(Xid(op_eq), &String::op_eq, get_cpp_class<String>());
-		p->def_method(Xid(op_lt), &String::op_lt, get_cpp_class<String>());
-	}
-
-	{
-		ClassPtr p = new_cpp_class<InternedStringIter>(Xid(InternedStringIter));
-		p->inherit(Iterator());
-		p->def_method(Xid(block_next), &InternedStringIter::block_next);
-	}
-
-	set_cpp_class<ID>(get_cpp_class<String>());
-}
-
-void initialize_string_script(){
-	Xemb((
-
-String::scan: method(pattern){
-	return StringStream(this).scan(pattern);
-}
-
-String::split: method(pattern){
-	return StringStream(this).split(pattern);
-}
-
-String::gsub: method(pattern, fn){
-	mm: MemoryStream();
-	exec: xpeg::Executor(StringStream(this));
-	if(exec.match(pattern)){
-		prefix: exec.prefix;
-		mm.put_s(prefix);
-		ordered: [exec[""]];
-		ordered.concat(exec.captures);
-		named: exec.named_captures[:];
-		named["prefix"] = prefix;
-		mm.put_s(fn(...Arguments(ordered, named)));
-
-		while(exec.match(pattern)){
-			prefix: exec.prefix;
-			mm.put_s(prefix);
-			ordered: [exec[""]];
-			ordered.concat(exec.captures);
-			named: exec.named_captures[:];
-			named["prefix"] = prefix;
-			mm.put_s(fn(...Arguments(ordered, named)));
-		}
-		mm.put_s(exec.suffix);
-		return mm.to_s;
-	}
-	else{
-		return this;
-	}
-}
-
-String::sub: method(pattern, fn){
-	mm: MemoryStream();
-	exec: xpeg::Executor(StringStream(this));
-	if(exec.match(pattern)){
-		prefix: exec.prefix;
-		suffix: exec.suffix;
-		mm.put_s(prefix);
-		ordered: [exec[""]];
-		ordered.concat(exec.captures);
-		named: exec.named_captures[:];
-		named["prefix"] = prefix;
-		named["suffix"] = suffix;
-		mm.put_s(fn(...Arguments(ordered, named)));
-		mm.put_s(exec.suffix);
-		return mm.to_s;
-	}
-	else{
-		return this;
-	}
-}
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x4b\x39\x00\x01\x89\x00\x01\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x02\x0b\x25\x01\x25\x00\x37\x00\x03\x39\x00\x01\x89\x00\x02\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x05\x39\x00\x01\x89"
-"\x00\x03\x00\x0f\x0b\x2f\x00\x00\x00\x00\x00\x04\x01\x25\x01\x25\x00\x37\x00\x06\x25\x00\x8b\x00\x03\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x20\x00\x00\x00\x00\x00\x04\x00\x00\x00\x12\x00\x38\x00\x00\x00\x00\x00\x06\x00\x00\x00\x12\x00\x00\x00\x00"
-"\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x20\x00\x00\x00\x05\x00\x04\x00\x00\x00\x00\x00\x00\x01\x00\x00\x38\x00\x00\x00\x05\x00\x06\x00\x00\x00\x00\x00\x00\x01\x00"
-"\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x04\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00"
-"\x00\x13\x00\x00\x00\x06\x00\x00\x00\x18\x00\x00\x00\x0b\x00\x00\x00\x18\x00\x00\x00\x08\x00\x00\x00\x1b\x00\x00\x00\x0b\x00\x00\x00\x20\x00\x00\x00\x09\x00\x00\x00\x28\x00\x00\x00\x0a\x00\x00\x00\x2b\x00\x00\x00\x0b\x00\x00\x00\x30\x00\x00\x00\x10\x00\x00"
-"\x00\x30\x00\x00\x00\x0d\x00\x00\x00\x33\x00\x00\x00\x10\x00\x00\x00\x38\x00\x00\x00\x0e\x00\x00\x00\x40\x00\x00\x00\x0f\x00\x00\x00\x43\x00\x00\x00\x10\x00\x00\x00\x48\x00\x00\x00\x11\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75"
-"\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x07\x09\x00\x00\x00\x00\x09\x00\x00\x00\x05\x4d\x75\x74\x65\x78\x09\x00\x00"
-"\x00\x04\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00\x00\x06\x75\x6e\x6c\x6f\x63\x6b\x09\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b"
-"\x09\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
-)->call();
-
 }
 
 }

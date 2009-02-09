@@ -19,3 +19,4 @@ load("../test/test_op_assign.xtal");
 load("../test/test_serialize.xtal");
 load("../test/test_toplevel.xtal");
 
+"ok".p;

@@ -12,7 +12,7 @@ Code::Code()
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Fun>(null, null, from_this(this), (FunInfo*)0);
+	first_fun_ = xnew<Fun>(null, filelocal_, from_this(this), (FunInfo*)0);
 	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
@@ -132,6 +132,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstPushUndefined::NUMBER){ temp = ((InstPushUndefined*)pc)->inspect(code); sz = InstPushUndefined::ISIZE; }
 		XTAL_CASE(InstPushTrue::NUMBER){ temp = ((InstPushTrue*)pc)->inspect(code); sz = InstPushTrue::ISIZE; }
 		XTAL_CASE(InstPushFalse::NUMBER){ temp = ((InstPushFalse*)pc)->inspect(code); sz = InstPushFalse::ISIZE; }
+		XTAL_CASE(InstPushTrueAndSkip::NUMBER){ temp = ((InstPushTrueAndSkip*)pc)->inspect(code); sz = InstPushTrueAndSkip::ISIZE; }
 		XTAL_CASE(InstPushInt1Byte::NUMBER){ temp = ((InstPushInt1Byte*)pc)->inspect(code); sz = InstPushInt1Byte::ISIZE; }
 		XTAL_CASE(InstPushInt2Byte::NUMBER){ temp = ((InstPushInt2Byte*)pc)->inspect(code); sz = InstPushInt2Byte::ISIZE; }
 		XTAL_CASE(InstPushFloat1Byte::NUMBER){ temp = ((InstPushFloat1Byte*)pc)->inspect(code); sz = InstPushFloat1Byte::ISIZE; }
@@ -146,9 +147,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstInsert2::NUMBER){ temp = ((InstInsert2*)pc)->inspect(code); sz = InstInsert2::ISIZE; }
 		XTAL_CASE(InstInsert3::NUMBER){ temp = ((InstInsert3*)pc)->inspect(code); sz = InstInsert3::ISIZE; }
 		XTAL_CASE(InstAdjustResult::NUMBER){ temp = ((InstAdjustResult*)pc)->inspect(code); sz = InstAdjustResult::ISIZE; }
-		XTAL_CASE(InstIf::NUMBER){ temp = ((InstIf*)pc)->inspect(code); sz = InstIf::ISIZE; }
-		XTAL_CASE(InstUnless::NUMBER){ temp = ((InstUnless*)pc)->inspect(code); sz = InstUnless::ISIZE; }
-		XTAL_CASE(InstGoto::NUMBER){ temp = ((InstGoto*)pc)->inspect(code); sz = InstGoto::ISIZE; }
 		XTAL_CASE(InstLocalVariableInc::NUMBER){ temp = ((InstLocalVariableInc*)pc)->inspect(code); sz = InstLocalVariableInc::ISIZE; }
 		XTAL_CASE(InstLocalVariableIncDirect::NUMBER){ temp = ((InstLocalVariableIncDirect*)pc)->inspect(code); sz = InstLocalVariableIncDirect::ISIZE; }
 		XTAL_CASE(InstLocalVariableDec::NUMBER){ temp = ((InstLocalVariableDec*)pc)->inspect(code); sz = InstLocalVariableDec::ISIZE; }
@@ -175,11 +173,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstSend::NUMBER){ temp = ((InstSend*)pc)->inspect(code); sz = InstSend::ISIZE; }
 		XTAL_CASE(InstMember::NUMBER){ temp = ((InstMember*)pc)->inspect(code); sz = InstMember::ISIZE; }
 		XTAL_CASE(InstDefineMember::NUMBER){ temp = ((InstDefineMember*)pc)->inspect(code); sz = InstDefineMember::ISIZE; }
-		XTAL_CASE(InstGlobalVariable::NUMBER){ temp = ((InstGlobalVariable*)pc)->inspect(code); sz = InstGlobalVariable::ISIZE; }
-		XTAL_CASE(InstSetGlobalVariable::NUMBER){ temp = ((InstSetGlobalVariable*)pc)->inspect(code); sz = InstSetGlobalVariable::ISIZE; }
-		XTAL_CASE(InstDefineGlobalVariable::NUMBER){ temp = ((InstDefineGlobalVariable*)pc)->inspect(code); sz = InstDefineGlobalVariable::ISIZE; }
-		XTAL_CASE(InstOnce::NUMBER){ temp = ((InstOnce*)pc)->inspect(code); sz = InstOnce::ISIZE; }
-		XTAL_CASE(InstSetOnce::NUMBER){ temp = ((InstSetOnce*)pc)->inspect(code); sz = InstSetOnce::ISIZE; }
 		XTAL_CASE(InstBlockBegin::NUMBER){ temp = ((InstBlockBegin*)pc)->inspect(code); sz = InstBlockBegin::ISIZE; }
 		XTAL_CASE(InstBlockBeginDirect::NUMBER){ temp = ((InstBlockBeginDirect*)pc)->inspect(code); sz = InstBlockBeginDirect::ISIZE; }
 		XTAL_CASE(InstBlockEnd::NUMBER){ temp = ((InstBlockEnd*)pc)->inspect(code); sz = InstBlockEnd::ISIZE; }
@@ -188,6 +181,9 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstTryEnd::NUMBER){ temp = ((InstTryEnd*)pc)->inspect(code); sz = InstTryEnd::ISIZE; }
 		XTAL_CASE(InstPushGoto::NUMBER){ temp = ((InstPushGoto*)pc)->inspect(code); sz = InstPushGoto::ISIZE; }
 		XTAL_CASE(InstPopGoto::NUMBER){ temp = ((InstPopGoto*)pc)->inspect(code); sz = InstPopGoto::ISIZE; }
+		XTAL_CASE(InstIf::NUMBER){ temp = ((InstIf*)pc)->inspect(code); sz = InstIf::ISIZE; }
+		XTAL_CASE(InstUnless::NUMBER){ temp = ((InstUnless*)pc)->inspect(code); sz = InstUnless::ISIZE; }
+		XTAL_CASE(InstGoto::NUMBER){ temp = ((InstGoto*)pc)->inspect(code); sz = InstGoto::ISIZE; }
 		XTAL_CASE(InstIfEq::NUMBER){ temp = ((InstIfEq*)pc)->inspect(code); sz = InstIfEq::ISIZE; }
 		XTAL_CASE(InstIfNe::NUMBER){ temp = ((InstIfNe*)pc)->inspect(code); sz = InstIfNe::ISIZE; }
 		XTAL_CASE(InstIfLt::NUMBER){ temp = ((InstIfLt*)pc)->inspect(code); sz = InstIfLt::ISIZE; }
@@ -220,18 +216,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstShl::NUMBER){ temp = ((InstShl*)pc)->inspect(code); sz = InstShl::ISIZE; }
 		XTAL_CASE(InstShr::NUMBER){ temp = ((InstShr*)pc)->inspect(code); sz = InstShr::ISIZE; }
 		XTAL_CASE(InstUshr::NUMBER){ temp = ((InstUshr*)pc)->inspect(code); sz = InstUshr::ISIZE; }
-		XTAL_CASE(InstEq::NUMBER){ temp = ((InstEq*)pc)->inspect(code); sz = InstEq::ISIZE; }
-		XTAL_CASE(InstNe::NUMBER){ temp = ((InstNe*)pc)->inspect(code); sz = InstNe::ISIZE; }
-		XTAL_CASE(InstLt::NUMBER){ temp = ((InstLt*)pc)->inspect(code); sz = InstLt::ISIZE; }
-		XTAL_CASE(InstLe::NUMBER){ temp = ((InstLe*)pc)->inspect(code); sz = InstLe::ISIZE; }
-		XTAL_CASE(InstGt::NUMBER){ temp = ((InstGt*)pc)->inspect(code); sz = InstGt::ISIZE; }
-		XTAL_CASE(InstGe::NUMBER){ temp = ((InstGe*)pc)->inspect(code); sz = InstGe::ISIZE; }
-		XTAL_CASE(InstRawEq::NUMBER){ temp = ((InstRawEq*)pc)->inspect(code); sz = InstRawEq::ISIZE; }
-		XTAL_CASE(InstRawNe::NUMBER){ temp = ((InstRawNe*)pc)->inspect(code); sz = InstRawNe::ISIZE; }
-		XTAL_CASE(InstIn::NUMBER){ temp = ((InstIn*)pc)->inspect(code); sz = InstIn::ISIZE; }
-		XTAL_CASE(InstNin::NUMBER){ temp = ((InstNin*)pc)->inspect(code); sz = InstNin::ISIZE; }
-		XTAL_CASE(InstIs::NUMBER){ temp = ((InstIs*)pc)->inspect(code); sz = InstIs::ISIZE; }
-		XTAL_CASE(InstNis::NUMBER){ temp = ((InstNis*)pc)->inspect(code); sz = InstNis::ISIZE; }
 		XTAL_CASE(InstInc::NUMBER){ temp = ((InstInc*)pc)->inspect(code); sz = InstInc::ISIZE; }
 		XTAL_CASE(InstDec::NUMBER){ temp = ((InstDec*)pc)->inspect(code); sz = InstDec::ISIZE; }
 		XTAL_CASE(InstAddAssign::NUMBER){ temp = ((InstAddAssign*)pc)->inspect(code); sz = InstAddAssign::ISIZE; }
@@ -247,6 +231,11 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstShrAssign::NUMBER){ temp = ((InstShrAssign*)pc)->inspect(code); sz = InstShrAssign::ISIZE; }
 		XTAL_CASE(InstUshrAssign::NUMBER){ temp = ((InstUshrAssign*)pc)->inspect(code); sz = InstUshrAssign::ISIZE; }
 		XTAL_CASE(InstRange::NUMBER){ temp = ((InstRange*)pc)->inspect(code); sz = InstRange::ISIZE; }
+		XTAL_CASE(InstGlobalVariable::NUMBER){ temp = ((InstGlobalVariable*)pc)->inspect(code); sz = InstGlobalVariable::ISIZE; }
+		XTAL_CASE(InstSetGlobalVariable::NUMBER){ temp = ((InstSetGlobalVariable*)pc)->inspect(code); sz = InstSetGlobalVariable::ISIZE; }
+		XTAL_CASE(InstDefineGlobalVariable::NUMBER){ temp = ((InstDefineGlobalVariable*)pc)->inspect(code); sz = InstDefineGlobalVariable::ISIZE; }
+		XTAL_CASE(InstOnce::NUMBER){ temp = ((InstOnce*)pc)->inspect(code); sz = InstOnce::ISIZE; }
+		XTAL_CASE(InstSetOnce::NUMBER){ temp = ((InstSetOnce*)pc)->inspect(code); sz = InstSetOnce::ISIZE; }
 		XTAL_CASE(InstClassBegin::NUMBER){ temp = ((InstClassBegin*)pc)->inspect(code); sz = InstClassBegin::ISIZE; }
 		XTAL_CASE(InstClassEnd::NUMBER){ temp = ((InstClassEnd*)pc)->inspect(code); sz = InstClassEnd::ISIZE; }
 		XTAL_CASE(InstDefineClassMember::NUMBER){ temp = ((InstDefineClassMember*)pc)->inspect(code); sz = InstDefineClassMember::ISIZE; }
@@ -275,15 +264,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	return "";
 
 #endif
-}
-
-void initialize_code(){
-	{
-		ClassPtr p = new_cpp_class<Code>(Xid(Code));
-		p->inherit(get_cpp_class<Fun>());
-	}
-
-	builtin()->def(Xid(Code), get_cpp_class<Code>());
 }
 
 }

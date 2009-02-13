@@ -457,7 +457,7 @@ struct NFA : public Base{
 
 	ElementPtr e;
 	ElementPtr root_node;
-	AC<State>::vector states;
+	ArrayList<State> states;
 	uint_t cap_max_;
 	ArrayPtr cap_list_;
 
@@ -488,14 +488,6 @@ void NFA::add_transition(int from, const AnyPtr& ch, int to){
 	x->ch = ptr_cast<Element>(ch);
 	x->next = states[from].trans;
 	states[from].trans = x;
-
-	/*
-	TransPtr* temp = &states[from].trans;
-	while(*temp){
-		temp = &(*temp)->next;
-	}
-	*temp = x;
-	*/
 }
 
 void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
@@ -694,7 +686,7 @@ bool Executor::parse(const AnyPtr& pattern){
 AnyPtr Executor::captures(){
 	MapPtr ret = xnew<Map>();
 
-	ret->set_at(empty_id, at(empty_id));
+	ret->set_at(empty_id, at(empty_string));
 	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
 		ret->set_at(k, at(k));
 	}
@@ -705,7 +697,7 @@ AnyPtr Executor::captures(){
 AnyPtr Executor::captures_values(){
 	MapPtr ret = xnew<Map>();
 
-	ret->set_at(empty_id, at(empty_id));
+	ret->set_at(empty_id, at(empty_string));
 	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
 		ret->set_at(k, call(k));
 	}
@@ -1055,7 +1047,7 @@ ElementPtr elem(const AnyPtr& a){
 		return xnew<Element>(Element::TYPE_CALL, p);
 	}
 
-	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1026")), return null);
+	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1026")));
 	return null;
 }
 
@@ -1161,7 +1153,7 @@ void cap_vm(const VMachinePtr& vm){
 		return;
 	}
 
-	XTAL_THROW(ArgumentError()->call(Xt("Xtal Runtime Error 1027")),return);
+	XTAL_SET_EXCEPT(ArgumentError()->call(Xt("Xtal Runtime Error 1027")));
 }
 
 AnyPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
@@ -1193,7 +1185,7 @@ AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n)
 AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
 void set_body(const ElementPtr& x, const AnyPtr& term){ if(x->type==Element::TYPE_DECL) x->param1 = elem(term); }
 
-AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return lookbehind(sep, 1) >> body >> lookahead(sep); }
+//AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return lookbehind(sep, 1) >> body >> lookahead(sep); }
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
 AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
@@ -1250,6 +1242,8 @@ void initialize_xpeg(){
 		p->inherit(get_cpp_class<Array>());
 		p->def_method(Xid(tag), &TreeNode::tag);
 		p->def_method(Xid(lineno), &TreeNode::lineno);
+		p->def_method(Xid(set_tag), &TreeNode::set_tag);
+		p->def_method(Xid(set_lineno), &TreeNode::set_lineno);
 	}
 
 	{
@@ -1259,9 +1253,26 @@ void initialize_xpeg(){
 	}
 
 	{
-		def_common_methods(new_cpp_class<ChRange>());
-		def_common_methods(new_cpp_class<String>());
-		def_common_methods(new_cpp_class<Fun>());
+		ClassPtr classes[3] = {new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
+		for(int i=0; i<3; ++i){
+			ClassPtr p = classes[i];
+			p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
+			p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
+			p->def_method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
+			p->def_method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
+			p->def_method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
+			p->def_method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
+			p->def_method(Xid(op_com), &inv);
+			
+			p->def_method(Xid(op_or), &select, get_cpp_class<Element>());
+			p->def_method(Xid(op_or), &select, get_cpp_class<String>());
+			p->def_method(Xid(op_or), &select, get_cpp_class<ChRange>());
+			p->def_method(Xid(op_or), &select, get_cpp_class<Fun>());
+			p->def_method(Xid(op_shr), &concat, get_cpp_class<Element>());
+			p->def_method(Xid(op_shr), &concat, get_cpp_class<String>());
+			p->def_method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
+			p->def_method(Xid(op_shr), &concat, get_cpp_class<Fun>());
+		}
 	}
 
 	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
@@ -1273,8 +1284,8 @@ void initialize_xpeg(){
 	AnyPtr degit = elem(AnyPtr("0")->send(Xid(op_range), "9", RANGE_CLOSED));
 	AnyPtr lalpha = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
 	AnyPtr ualpha = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
-	AnyPtr alpha = lalpha | ualpha;
-	AnyPtr word = alpha | degit | Xid(_);
+	//AnyPtr alpha = lalpha | ualpha;
+	//AnyPtr word = alpha | degit | Xid(_);
 	AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
 
 	xpeg->def(Xid(any), any);
@@ -1285,9 +1296,9 @@ void initialize_xpeg(){
 	xpeg->def(Xid(empty), empty);
 	xpeg->def(Xid(degit), degit);
 	xpeg->def(Xid(lalpha), lalpha);
-	xpeg->def(Xid(ualpha), ualpha);
-	xpeg->def(Xid(alpha), alpha);
-	xpeg->def(Xid(word), word);
+	//xpeg->def(Xid(ualpha), ualpha);
+	//xpeg->def(Xid(alpha), alpha);
+	//xpeg->def(Xid(word), word);
 	xpeg->def(Xid(ascii), ascii);
 	
 	xpeg->def_fun(Xid(set), &set);
@@ -1298,7 +1309,7 @@ void initialize_xpeg(){
 	xpeg->def_fun(Xid(node), &node_vm);
 	xpeg->def_fun(Xid(splice_node), &splice_node_vm);
 	xpeg->def_fun(Xid(cap), &cap_vm);
-	xpeg->def_fun(Xid(bound), &bound);
+	//xpeg->def_fun(Xid(bound), &bound);
 	xpeg->def_fun(Xid(pred), &pred);
 	xpeg->def_fun(Xid(error), &error);
 

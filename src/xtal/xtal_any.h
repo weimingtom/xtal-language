@@ -8,11 +8,6 @@ namespace xtal{
 *
 */
 class Any{
-protected:
-
-	Any(const char_t* str);
-	Any(const avoid<char>::type* str);
-
 public:
 
 	Any(){ type_ = TYPE_NULL; pvalue_ = 0; }
@@ -428,6 +423,7 @@ inline void copy_innocence(Any& v, const Any& u){
 	v = u;
 }
 
+/*
 AnyPtr operator +(const AnyPtr& a);
 AnyPtr operator -(const AnyPtr& a);
 AnyPtr operator ~(const AnyPtr& a);
@@ -460,6 +456,6 @@ AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
 AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
-
+*/
 
 }

@@ -15,51 +15,6 @@ namespace xtal{
 */
 namespace xtal{
 
-template<int N>
-struct SelectType{
-	typedef typename If<sizeof(signed char)==N,
-		signed char,
-		typename If<sizeof(signed short)==N, 
-			signed short int,
-			typename If<sizeof(signed int)==N,
-				signed int,
-				typename If<sizeof(signed long)==N,
-					signed long int,
-					typename If<sizeof(signed long long)==N,
-						signed long long int,
-						void
-					>::type
-				>::type
-			>::type
-		>::type
-	>::type int_t;
-
-	typedef typename If<sizeof(unsigned char)==N,
-		unsigned char,
-		typename If<sizeof(unsigned short)==N, 
-			unsigned short int,
-			typename If<sizeof(unsigned int)==N,
-				unsigned int,
-				typename If<sizeof(unsigned long)==N,
-					unsigned long int,
-					typename If<sizeof(unsigned long long)==N,
-						unsigned long long int,
-						void
-					>::type
-				>::type
-			>::type
-		>::type
-	>::type uint_t;
-
-	typedef typename If<sizeof(float)==N,
-		float,
-		typename If<sizeof(double)==N, 
-			double,
-			void
-		>::type
-	>::type float_t;
-};
-
 /// 1-byte uint
 typedef SelectType<1>::uint_t u8;
 
@@ -278,7 +233,7 @@ class DualDispatchFun;
 class MultiValue;
 class Debug;
 class DebugInfo;
-struct ParamInfoAndVM;
+class Exception;
 
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
@@ -309,6 +264,7 @@ typedef SmartPtr<ChRange> ChRangePtr;
 typedef SmartPtr<DualDispatchMethod> DualDispatchMethodPtr;
 typedef SmartPtr<DualDispatchFun> DualDispatchFunPtr;
 typedef SmartPtr<MultiValue> MultiValuePtr;
+typedef SmartPtr<Exception> ExceptionPtr;
 
 class Base;
 class Visitor;
@@ -385,13 +341,21 @@ extern Null null;
 extern Undefined undefined;
 extern Named null_named;
 
-template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name = empty_string);
+struct ParamInfo;
+struct VMAndData;
 
 template<class T>
-inline bool exists_cpp_class();
+struct CppClassSymbol{
+	static int value;
+};
 
 template<class T>
-inline const ClassPtr& get_cpp_class();
+int CppClassSymbol<T>::value = 0xc1a55;
+
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
 
 }

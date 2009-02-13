@@ -24,20 +24,24 @@ void Code::set_lineno_info(int_t line){
 }
 
 int_t Code::compliant_lineno(const inst_t* p){
-	AC<LineNumberTable>::vector::const_iterator it=
-		std::lower_bound(
-			lineno_table_.begin(),
-			lineno_table_.end(),
-			static_cast<int_t>(p-data()),
-			LineNumberCmp()
-		);
+	if(!lineno_table_.empty()){
+		LineNumberTable* begin = &lineno_table_[0];
+		LineNumberTable* end = begin+lineno_table_.size();
+		LineNumberTable* it=
+			std::lower_bound(
+				begin,
+				end,
+				static_cast<int_t>(p-data()),
+				LineNumberCmp()
+			);
 
-	if(it!=lineno_table_.end()){
-		if(it==lineno_table_.begin()){
-			return 1;
+		if(it!=end){
+			if(it==begin){
+				return 1;
+			}
+			--it;
+			return it->lineno;
 		}
-		--it;
-		return it->lineno;
 	}
 	return 0;
 }
@@ -52,12 +56,12 @@ StringPtr Code::inspect(){
 
 void Code::insert_code(inst_t* p, inst_t* code, int_t size){
 	insert_erase_common(p, size);
-	code_.insert(code_.begin()+(p-&code_[0]), code, code+size);
+	code_.insert(p-&code_[0], code, size);
 }
 
 void Code::erase_code(inst_t* p, int_t size){
 	insert_erase_common(p, -size);
-	code_.erase(code_.begin()+(p-&code_[0]), code_.begin()+(p-&code_[0])+size);
+	code_.erase(p-&code_[0], size);
 }
 
 bool Code::add_break_point(int_t lineno){
@@ -110,6 +114,38 @@ void Code::insert_erase_common(inst_t* p, int_t size){
 	for(uint_t i=0; i<lineno_table_.size(); ++i){
 		if(lineno_table_[i].start_pc>pos){
 			lineno_table_[i].start_pc += size;
+		}
+	}
+
+	for(uint_t i=0; i<xfun_info_table_.size(); ++i){
+		if(xfun_info_table_[i].pc>pos){
+			xfun_info_table_[i].pc += size;
+		}
+	}
+
+	for(uint_t i=0; i<scope_info_table_.size(); ++i){
+		if(scope_info_table_[i].pc>pos){
+			scope_info_table_[i].pc += size;
+		}
+	}
+
+	for(uint_t i=0; i<class_info_table_.size(); ++i){
+		if(class_info_table_[i].pc>pos){
+			class_info_table_[i].pc += size;
+		}
+	}
+
+	for(uint_t i=0; i<except_info_table_.size(); ++i){
+		if(except_info_table_[i].catch_pc>pos){
+			except_info_table_[i].catch_pc += size;
+		}
+
+		if(except_info_table_[i].finally_pc>pos){
+			except_info_table_[i].finally_pc += size;
+		}
+
+		if(except_info_table_[i].end_pc>pos){
+			except_info_table_[i].end_pc += size;
 		}
 	}
 }

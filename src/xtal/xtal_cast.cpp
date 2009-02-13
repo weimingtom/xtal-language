@@ -4,7 +4,7 @@
 namespace xtal{
 
 void cast_failed(const AnyPtr& a, const ClassPtr& cls){
-	XTAL_THROW(cast_error(a, cls->object_name()), return);
+	XTAL_SET_EXCEPT(cast_error(a, cls->object_name()));
 }
 
 ////////////////////////////////////////////////////////////////////////

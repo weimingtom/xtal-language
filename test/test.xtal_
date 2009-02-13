@@ -1,0 +1,57 @@
+
+lib::test: singleton{
+	Test: "Test";
+	Before: "Before";
+	After: "After";
+	
+	run_files: fun(files){
+		files{
+			run_file(it);
+		}
+	}
+	
+	run_file: fun(file){
+		try{
+			enable_debug();
+			code: compile_file(file);
+			code();
+			%f!run file %s!(file).p;
+			code.filelocal.members{ |name, name2, mem|
+				if(mem is Class){
+					tests: [];
+					befores: [];
+					afters: [];
+					
+					mem.members{ |name, name2, mem|
+						if(name2 === Test){ tests.push_back(name); }
+						if(name2 === Before){ befores.push_back(name); }
+						if(name2 === After){ afters.push_back(name); }
+					}
+					
+					if(!tests.is_empty){
+						obj: mem();
+						tests{
+							befores{ obj.(it)#Before; }
+							obj.(it)#Test;
+							afters{ obj.(it)#After; }
+							%f!\t%s!(it).p;
+						}
+					}
+				}
+			}
+		}
+		finally{
+			disable_debug();
+		}
+	}
+	
+	run_dir: method(dir){
+		run_files(filesystem
+					::entries(dir)
+					.select(|x| x.match(once ".xtal" >> xpeg::eos))
+					.map(|x| dir ~ x)
+			);
+	}
+}
+
+

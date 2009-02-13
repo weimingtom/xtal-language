@@ -164,7 +164,7 @@ void Format::set(const char_t* str){
 					str++;
 					bufpos = 0;
 					
-					if(!test_digit(str[0])){
+					if(!('0'<=str[0] && str[0]<='9')){
 						have_named_ = true;
 					}
 

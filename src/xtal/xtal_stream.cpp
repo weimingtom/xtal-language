@@ -3,6 +3,25 @@
 
 namespace xtal{
 
+uint_t Stream::tell(){
+	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(tell), null));
+	return 0;
+}
+
+uint_t Stream::write(const void* p, uint_t size){
+	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(write), null));
+	return 0;
+}
+
+uint_t Stream::read(void* p, uint_t size){
+	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(read), null));
+	return 0;
+}
+
+void Stream::seek(int_t offset, int_t whence){
+	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(seek), null));
+}
+
 StringPtr Stream::get_s(uint_t length){
 	if(eos())
 		return empty_string;
@@ -137,10 +156,6 @@ PointerStream::PointerStream(const void* data, uint_t size){
 	
 uint_t PointerStream::tell(){
 	return pos_;
-}
-
-uint_t PointerStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error(get_class(), Xid(write), null), return 0);
 }
 
 uint_t PointerStream::read(void* p, uint_t size){
@@ -316,59 +331,6 @@ StringStream::StringStream(const StringPtr& str)
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
-}
-
-/////////////////////////////////////////////////////////////////////
-
-InteractiveStream::InteractiveStream(){
-	line_ = 1;
-	continue_stmt_ = false;
-	fp_ = stdin;
-}
-
-uint_t InteractiveStream::tell(){
-	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), Xid(tell), null), return 0);
-}
-
-uint_t InteractiveStream::write(const void* p, uint_t size){
-	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), Xid(write), null), return 0);
-}
-
-uint_t InteractiveStream::read(void* p, uint_t size){
-	if(!fp_)
-		return 0;
-	if(continue_stmt_){
-		stdout_stream()->put_s(Xf("ix:%03d>    ")->call(line_)->to_s());
-	}
-	else{
-		stdout_stream()->put_s(Xf("ix:%03d>")->call(line_)->to_s());
-	}
-
-	continue_stmt_ = true;
-	if(fgets((char*)p, size, stdin)){
-		uint_t sz = std::strlen((char*)p);
-		if(sz!=size-1){
-			line_++;
-		}
-		return sz;
-	}
-	fp_ = 0;
-	return 0;
-}
-
-void InteractiveStream::seek(int_t offset, int_t whence){
-	XTAL_THROW(unsupported_error(get_cpp_class<InteractiveStream>(), Xid(seek), null), return);
-}
-
-void InteractiveStream::close(){
-	if(fp_){
-		fclose(fp_);
-		fp_ = 0;
-	}
-}
-
-void InteractiveStream::terminate_statement(){
-	continue_stmt_ = false;
 }
 
 }

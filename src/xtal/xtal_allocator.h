@@ -1,31 +1,34 @@
 
 #pragma once
 
+#include <map>
+
 namespace xtal{
 
-inline void* user_malloc(size_t size);
+void* user_malloc(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 * メモリ確保失敗はNULL値で返される。
 */
-inline void* user_malloc_nothrow(size_t size);
+void* user_malloc_nothrow(size_t size);
+
 /**
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
-inline void user_free(void* p);
+void user_free(void* p);
 
 /**
 * @brief 小さいオブジェクト用にメモリをアロケートする。
 */
-inline void* so_malloc(size_t size);
+void* so_malloc(size_t size);
 
 /**
 * @brief 小さいオブジェクト用のメモリを解放する。
 */
-inline void so_free(void* p, size_t size);
+void so_free(void* p, size_t size);
 
 /**
 * @brief 動的なポインタの配列を作成、拡張する関数。
@@ -46,136 +49,46 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 * @param current 使用中の要素の一つ次
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
+
 /**
-* @brief user_malloc, user_freeを使う、STLの要件に適合したアロケータクラス。
-*
+* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
-template<class T>
-struct Alloc{
-
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
-    typedef T* pointer;
-    typedef const T* const_pointer;
-    typedef T &reference;
-    typedef const T &const_reference;
-    typedef T value_type;
-
-	template<class U>
-	struct rebind{ typedef Alloc<U> other; };
-
-    Alloc(){}
-	template<class U>
-	Alloc(const Alloc<U>&){}
-	template<class U>
-	Alloc<T>& operator=(const Alloc<U>&){ return* this; }
-	Alloc(const Alloc<T>&){}
-    Alloc<T>& operator=(const Alloc<T>&){ return* this; }
-
-    pointer address(reference x) const{ return &x; }
-    const_pointer address(const_reference x) const{ return &x; }
-
-    pointer allocate(size_type n, const void* = 0){ return static_cast<pointer>(user_malloc(sizeof(T)*n)); }
-    void deallocate(pointer p, size_type n){ user_free(p); }
-	
-	void construct(pointer p, const T& val){ new(p) T(val); }
-    void destroy(pointer p){ p->~T(); p = 0; }
-	
-    size_type max_size() const{ return 0xffffffffU/sizeof(T); }
-};
-
-template<class T, class U> 
-inline bool operator==(const Alloc<T>&, const Alloc<U>&){	
-	return true;
-}
-
-template<class T, class U> 
-inline bool operator!=(const Alloc<T>&, const Alloc<U>&){	
-	return false;
-}
-
-template<>
-struct Alloc<void> {
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
-    typedef void* pointer;
-    typedef const void* const_pointer;
-    typedef void value_type;
-
-	template<class U>
-	struct rebind{ typedef Alloc<U> other; };
-
-    Alloc(){}
-	Alloc(const Alloc<void> &){}
-    Alloc<void>& operator=(const Alloc<void>&){ return* this; }
-	template<class U>
-	Alloc(const Alloc<U>&){}
-	template<class U>
-	Alloc<void>& operator=(const Alloc<U>&){ return* this; }
-};
-
 struct UserMallocGuard{
-	void* p;
 	UserMallocGuard():p(0){}
 	UserMallocGuard(uint_t size):p(user_malloc(size)){}
 	~UserMallocGuard(){ user_free(p); }
 	
 	void malloc(size_t size){ user_free(p); p = user_malloc(size); }
+
 	void* get(){ return p; }
+
 	void* release(){ void* ret = p; p = 0; return ret; }
 private:
-	UserMallocGuard(const UserMallocGuard&);
-	void operator =(const UserMallocGuard&);
+	void* p;
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(UserMallocGuard);
 };
 
-namespace detail{
-	struct AC_default{};
-
-	template<class>
-	struct AC_If{
-		template<class T, class U>
-		struct inner{ typedef U type; };
-	};
-	
-	template<>
-	struct AC_If<AC_default>{
-		template<class T, class U>
-		struct inner{ typedef T type; };
-	};
-	
-	template<class T, class Then, class Else>
-	struct AC_IfDefault{
-		typedef typename AC_If<T>::template inner<Then, Else>::type type;
-	};
-}
-
-
 /**
-* Allocクラスを使ったSTLコンテナを使いやすくするためのユーティリティ
-* 
-* Alloc-Container の略
-* 
-* AC<int>::vector は std::vector<int, Alloc<int> > と同じ
-* AC<int, float>::map は std::map<int, float, std::less<int>, Alloc<std::pair<const int, float> > > と同じ
-* AC<int, float, Comp>::map は std::map<int, float, Comp, Alloc<std::pair<const int, float> > > と同じ
+* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
-template<class FIRST, class SECOND = detail::AC_default, class THIRD = detail::AC_default>
-struct AC{
-	typedef std::vector<FIRST, Alloc<FIRST> > vector;
-	typedef std::deque<FIRST, Alloc<FIRST> > deque;
-	typedef std::list<FIRST, Alloc<FIRST> > list;
-	typedef typename detail::AC_IfDefault<SECOND,
-		std::set<FIRST, std::less<FIRST>, Alloc<FIRST> >,
-		std::set<FIRST, SECOND, Alloc<FIRST> >
-		>::type set;
-	typedef typename detail::AC_IfDefault<THIRD,
-		std::map<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
-		std::map<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
-		>::type map;
-	typedef typename detail::AC_IfDefault<THIRD,
-		std::multimap<FIRST, SECOND, std::less<FIRST>, Alloc<std::pair<const FIRST, SECOND> > >,
-		std::multimap<FIRST, SECOND, THIRD, Alloc<std::pair<const FIRST, SECOND> > >
-		>::type multimap;
+struct SOMallocGuard{
+	SOMallocGuard():p(0){}
+	SOMallocGuard(uint_t size):p(so_malloc(size)), sz(size){}
+	~SOMallocGuard(){ so_free(p, sz); }
+	
+	void malloc(size_t size){ so_free(p, sz); p = so_malloc(size); sz = size; }
+
+	void* get(){ return p; }
+
+	void* release(){ void* ret = p; p = 0; return ret; }
+
+	uint_t size(){ return sz; }
+private:
+	void* p;
+	uint_t sz;
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(SOMallocGuard);
 };
 
 class FixedAllocator{
@@ -231,6 +144,8 @@ private:
 	void* malloc_impl(size_t block_size);
 
 	void free_impl(void* p, size_t block_size);
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(FixedAllocator);
 };
 
 class SmallObjectAllocator{	
@@ -262,14 +177,6 @@ private:
 class AllocatorLib{
 public:
 	virtual ~AllocatorLib(){}
-	virtual void initialize() = 0;
-	virtual void* malloc(std::size_t size) = 0;
-	virtual void free(void* p) = 0;
-};
-
-class CStdAllocatorLib : public AllocatorLib{
-public:
-	virtual ~CStdAllocatorLib(){}
 	virtual void initialize(){}
 	virtual void* malloc(std::size_t size){ return std::malloc(size); }
 	virtual void free(void* p){ std::free(p); }

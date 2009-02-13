@@ -1,8 +1,6 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
-#include <string.h>
-
 namespace xtal{
 
 uint_t string_hashcode(const char_t* str, uint_t size){
@@ -27,8 +25,8 @@ void string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, ui
 			else{ break; }
 		}
 	
-		for(int_t j=0; j<chm.pos; ++j){
-			hash = hash*137 ^ chm.buf[j];
+		for(int_t j=0; j<chm.pos(); ++j){
+			hash = hash*137 ^ chm.at(j);
 		}
 
 		length += 1;
@@ -50,12 +48,12 @@ void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 			else{ break; }
 		}
 	
-		for(int_t j=0; j<chm.pos; ++j){
-			hash = hash*137 ^ chm.buf[j];
+		for(int_t j=0; j<chm.pos(); ++j){
+			hash = hash*137 ^ chm.at(j);
 		}
 
 		length += 1;
-		size += chm.pos;
+		size += chm.pos();
 	}
 }
 
@@ -96,6 +94,10 @@ static int_t string_compare(const char_t* a, const char_t* b){
 void StringEachIter::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & ss_;
+}
+
+StringEachIter::StringEachIter(const StringPtr& str)
+	:ss_(xnew<StringStream>(str)){
 }
 
 void StringEachIter::block_next(const VMachinePtr& vm){
@@ -162,7 +164,7 @@ String::String(const char_t* str):Any(noinit_t()){
 }
 
 String::String(const avoid<char>::type* str):Any(noinit_t()){
-	uint_t n = strlen((char*)str);
+	uint_t n = std::strlen((char*)str);
 	UserMallocGuard umg(n*sizeof(char_t));
 	char_t* buf = (char_t*)umg.get();
 	for(uint_t i=0; i<n; ++i){
@@ -404,14 +406,16 @@ AnyPtr String::each(){
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1025")), return xnew<ChRange>(empty_string, empty_string));		
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1025")));
+		return xnew<ChRange>(empty_string, empty_string);
 	}
 
 	if(length()==1 && right->length()==1){
 		return xnew<ChRange>(from_this(this), right);
 	}
 	else{
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1023")), return xnew<ChRange>(empty_string, empty_string));		
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1023")));
+		return xnew<ChRange>(empty_string, empty_string);
 	}
 }
 
@@ -425,7 +429,7 @@ StringPtr String::op_cat(const StringPtr& v){
 }
 
 bool String::op_eq(const StringPtr& v){ 
-	return data_size()==v->data_size() && memcmp(data(), v->data(), data_size()*sizeof(char_t))==0; 
+	return data_size()==v->data_size() && std::memcmp(data(), v->data(), data_size()*sizeof(char_t))==0; 
 }
 
 bool String::op_lt(const StringPtr& v){
@@ -464,7 +468,7 @@ int_t String::calc_offset(int_t i){
 }
 
 void String::throw_index_error(){
-	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1020")), return);
+	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1020")));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -493,7 +497,7 @@ struct StringKey{
 			return true;
 		if(a.size>b.size)
 			return false;
-		return memcmp(a.str, b.str, a.size)<0;
+		return std::memcmp(a.str, b.str, a.size)<0;
 	}
 };
 
@@ -566,7 +570,7 @@ void LargeString::became_unified(){
 }
 
 void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
-	PStack<LargeString*> stack;
+	PODStack<LargeString*> stack;
 	for(;;){
 		if((p->flags_ & ROPE)==0){
 			std::memcpy(&memory[pos], p->str_.p, p->data_size_*sizeof(char_t));
@@ -589,7 +593,7 @@ ID::ID(const char_t* str)
 
 ID::ID(const avoid<char>::type* str)	
 	:String(noinit_t()){
-	uint_t n = strlen((char*)str);
+		uint_t n = std::strlen((char*)str);
 	UserMallocGuard umg(n*sizeof(char_t));
 	char_t* buf = (char_t*)umg.get();
 	for(uint_t i=0; i<n; ++i){

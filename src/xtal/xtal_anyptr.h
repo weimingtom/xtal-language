@@ -24,11 +24,10 @@ struct UserTypeHolder : public Base{
 };
 
 template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
-struct UserTypeHolderSub : public UserTypeHolder<T>{
+struct UserTypeHolderSub : public UserTypeHolder<T>, public Deleter{
 	UserTypeHolderSub(){}
-	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder<T>(p), fun(f){}
-	virtual ~UserTypeHolderSub(){ fun(this->ptr); }
-	Deleter fun;
+	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder<T>(p), Deleter(f){}
+	virtual ~UserTypeHolderSub(){ Deleter::operator()(this->ptr); }
 };
 
 struct undeleter_t{
@@ -121,7 +120,7 @@ public:
 	}
 
 	/// nullを受け取るコンストラクタ
-	SmartPtr(const Null&){}
+	//SmartPtr(const Null&){}
 
 	SmartPtr<Any>& operator =(const Null&);
 
@@ -193,19 +192,13 @@ public:
 	* @brief 文字列から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(const char_t* str)
-		:Any(str){
-		inc_ref_count();
-	}
+	SmartPtr(const char_t* str);
 
 	/**
 	* @brief 文字列から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(const avoid<char>::type* str)
-		:Any(str){
-		inc_ref_count();
-	}
+	SmartPtr(const avoid<char>::type* str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
 	SmartPtr(avoid<int>::type v):Any(v){}
@@ -388,10 +381,6 @@ public:
 	template<class T>
 	operator const SmartPtr<T>&() const{
 		return *(SmartPtr<T>*)this;
-	}
-
-	operator const SmartPtr<Any>&() const{
-		return *(SmartPtr<Any>*)this;
 	}
 };
 

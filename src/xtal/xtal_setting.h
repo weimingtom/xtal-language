@@ -26,7 +26,7 @@
 //#define XTAL_USE_WCHAR
 
 /**
-* @brief C++例外使用off
+* @brief C++例外on
 */
-//#define XTAL_NO_EXCEPTIONS
+//#define XTAL_USE_CPP_EXCEPTIONS
 

@@ -8,15 +8,17 @@ namespace xtal{
 class CodeBuilder{
 public:
 
-	CodeBuilder(){}
+	CodeBuilder();
+
+	~CodeBuilder();
 	
 	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
-	void interactive_compile();
+	void interactive_compile(const StreamPtr& stream);
 
 	AnyPtr errors();
 
-private:
+public:
 
 	CodePtr compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
@@ -96,10 +98,10 @@ private:
 				int_t pos;
 				int_t set_pos;
 			};
-			AC<From>::vector froms;
+			PODArrayList<From> froms;
 		};
 		
-		AC<Label>::vector labels;
+		ArrayList<Label> labels;
 		
 		struct Loop{
 			IDPtr label; // ƒ‰ƒxƒ‹–¼
@@ -134,14 +136,14 @@ private:
 			int_t number;
 		};
 
-		AC<Entry>::vector entries;
+		ArrayList<Entry> entries;
 		int_t real_entry_num;
 		
 		struct Direct{
 			int_t pos;
 		};
 
-		AC<Direct>::vector directs;
+		PODArrayList<Direct> directs;
 		int_t scope_info_num;
 		int_t fun_frames_size;
 
@@ -160,7 +162,7 @@ private:
 			IDPtr name;
 		};
 
-		AC<Entry>::vector entries;
+		ArrayList<Entry> entries;
 		int_t class_info_num;
 	};
 
@@ -230,8 +232,7 @@ private:
 	ExprBuilder eb_;
 
 private:
-	CodeBuilder(const CodeBuilder&);
-	CodeBuilder& operator=(const CodeBuilder&);
+	XTAL_DISALLOW_COPY_AND_ASSIGN(CodeBuilder);
 };
 
 }

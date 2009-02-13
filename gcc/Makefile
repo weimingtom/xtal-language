@@ -1,6 +1,6 @@
 
 CC = g++
-OPT = -O3 -DNDEBUG -fno-rtti -mno-cygwin
+OPT = -O3 -DNDEBUG -fno-rtti -mno-cygwin -fno-exceptions -DXTAL_NO_EXCEPTIONS 
 
 # -fno-exceptions -DXTAL_NO_EXCEPTIONS 
 #  -Wall, -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs

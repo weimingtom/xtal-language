@@ -40,18 +40,6 @@ MapPtr Map::cat_assign(const MapPtr& a){
 	}
 	return from_this(this);
 }
-
-bool Map::op_eq(const MapPtr& a){
-	if(size()!=a->size())
-		return false;
-	
-	for(iterator p = a->begin(); p!=a->end(); ++p){
-		if(at(p->first)!=p->second){
-			return false;
-		}
-	}
-	return true;
-}
 	
 AnyPtr Map::pairs(){
 	return xnew<MapIter>(from_this(this), 0);

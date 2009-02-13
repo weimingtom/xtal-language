@@ -2,7 +2,7 @@
 
 namespace xtal{
 
-	StreamPtr Filesystem::open(const StringPtr& file_name, const StringPtr& aflags){
+StreamPtr Filesystem::open(const StringPtr& file_name, const StringPtr& aflags){
 	const char_t* flags = aflags->c_str();
 	char_t flags_temp[16];
 	bool text = false;

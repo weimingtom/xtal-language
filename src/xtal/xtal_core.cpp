@@ -1,6 +1,80 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+//#define XTAL_DEBUG_ALLOC
+
+#ifdef XTAL_DEBUG_ALLOC
+#include <map>
+
+struct SizeAndCount{
+	SizeAndCount(int a = 0, int b = 0){
+		size = a;
+		count = b;
+	}
+	int size;
+	int count;
+};
+
+std::map<void*, SizeAndCount> mem_map_;
+std::map<void*, SizeAndCount> so_mem_map_;
+int gcounter = 0;
+
+void* debug_malloc(size_t size){
+	void* ret = malloc(size);
+	if(gcounter==18150){
+		gcounter = gcounter;
+	}
+	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+	return ret;
+}
+
+void debug_free(void* p){
+	if(p){
+		XTAL_ASSERT(mem_map_[p].size);
+		memset(p, 0xcd, mem_map_[p].size);
+		free(p);
+		mem_map_.erase(p);
+	}
+}
+
+void* debug_so_malloc(size_t size){
+	void* ret = malloc(size);
+	if(gcounter==18150){
+		gcounter = gcounter;
+	}
+	so_mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+	return ret;
+}
+
+void debug_so_free(void* p, size_t sz){
+	if(p){
+		XTAL_ASSERT(so_mem_map_[p].size==sz);
+		memset(p, 0xcd, so_mem_map_[p].size);
+		free(p);
+		so_mem_map_.erase(p);
+	}
+}
+
+void display_debug_memory(){
+	for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
+		int size = it->second.size;
+		int count = it->second.count;
+		size = size;
+	}
+
+	XTAL_ASSERT(mem_map_.empty()); // 全部開放できてない
+
+	for(std::map<void*, SizeAndCount>::iterator it=so_mem_map_.begin(); it!=so_mem_map_.end(); ++it){
+		int size = it->second.size;
+		int count = it->second.count;
+		size = size;
+	}
+
+	XTAL_ASSERT(so_mem_map_.empty()); // 全部開放できてない
+}
+
+#endif
+
 namespace xtal{
 
 void initialize_math();
@@ -31,7 +105,8 @@ namespace{
 	ThreadLib empty_thread_lib;
 	StreamLib empty_stream_lib;
 	FilesystemLib empty_filesystem_lib;
-	CStdAllocatorLib cstd_allocator_lib;
+	AllocatorLib cstd_allocator_lib;
+	ChCodeLib ascii_chcode_lib;
 }
 
 CoreSetting::CoreSetting(){
@@ -39,6 +114,7 @@ CoreSetting::CoreSetting(){
 	stream_lib = &empty_stream_lib;
 	filesystem_lib = &empty_filesystem_lib;
 	allocator_lib = &cstd_allocator_lib;
+	chcode_lib = &ascii_chcode_lib;
 }
 
 void Core::initialize(const CoreSetting& setting){
@@ -73,6 +149,8 @@ void Core::initialize(const CoreSetting& setting){
 
 	global_mutate_count_ = 0;
 
+	set_cpp_class(null, &CppClassSymbol<void>::value);
+
 	ClassPtr* holders[] = { 
 		&cpp_class_map_.insert(&CppClassSymbol<Any>::value, null).first->second,
 		&cpp_class_map_.insert(&CppClassSymbol<Class>::value, null).first->second,
@@ -83,7 +161,12 @@ void Core::initialize(const CoreSetting& setting){
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
 	}
-	
+
+	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+		Base* p = pvalue(*holders[i]);
+		new(p) Base();
+	}
+		
 	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(*holders[i]);
 		new(p) CppClass();
@@ -204,8 +287,11 @@ void Core::uninitialize(){
 		//fprintf(stderr, "finished gc\n");
 		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
 		//print_alive_objects();
-		Base* p = objects_begin_[0];
-		uint_t count = p->ref_count();
+
+		for(int i=0; i<n; ++i){
+			Base* p = objects_begin_[i];
+			uint_t count = p->ref_count();
+		}
 
 		XTAL_ASSERT(false); // 全部開放できてない
 	}
@@ -215,27 +301,46 @@ void Core::uninitialize(){
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+
+	so_alloc_.release();
+
+#ifdef XTAL_DEBUG_ALLOC
+	display_debug_memory();
+#endif
+
 }
 
 ////////////////////////////////////
 
 void* Core::so_malloc(size_t size){
+#ifdef XTAL_DEBUG_ALLOC
+	return debug_so_malloc(size);
+#endif
+
 	return so_alloc_.malloc(size);
 }
 
 void Core::so_free(void* p, size_t size){
+#ifdef XTAL_DEBUG_ALLOC
+	return debug_so_free(p, size);
+#endif
+
 	so_alloc_.free(p, size);
 }
 
 void* Core::user_malloc(size_t size){
 	void* ret = user_malloc_nothrow(size);
 	if(!ret){
-		XTAL_THROW(AnyPtr(undefined), return 0);
+		
 	}
 	return ret;
 } 
 
 void* Core::user_malloc_nothrow(size_t size){
+#ifdef XTAL_DEBUG_ALLOC
+	return debug_malloc(size);
+#endif
+
 	//full_gc();
 		
 	void* ret = setting_.allocator_lib->malloc(size);
@@ -254,6 +359,10 @@ void* Core::user_malloc_nothrow(size_t size){
 } 
 
 void Core::user_free(void* p){
+#ifdef XTAL_DEBUG_ALLOC
+	return debug_free(p);
+#endif
+
 	setting_.allocator_lib->free(p);
 }
 
@@ -297,7 +406,7 @@ void Core::gc(){
 		}
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
-			so_free(*it, ivalue((*it)->class_));
+			so_free(*it, (*it)->value_);
 		}
 
 		objects_current_ = objects_alive;
@@ -471,7 +580,7 @@ void Core::full_gc(){
 			}
 
 			for(ConnectedPointer it = alive; it!=current; ++it){
-				so_free(*it, ivalue((*it)->class_));
+				so_free(*it, (*it)->value_);
 			}
 			
 			if(current==alive){
@@ -674,14 +783,15 @@ const StreamPtr& stderr_stream(){
 
 CodePtr compile_file(const StringPtr& file_name){
 	CodeBuilder cb;
-	StreamPtr fs = open(file_name, Xid(r));
-	if(CodePtr fun = cb.compile(fs, file_name)){
+	if(StreamPtr fs = open(file_name, Xid(r))){
+		if(CodePtr fun = cb.compile(fs, file_name)){
+			fs->close();
+			return fun;
+		}
 		fs->close();
-		return fun;
+		XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
 	}
-	fs->close();
-
-	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()), return null);
+	return null;
 }
 
 CodePtr compile(const StringPtr& source){
@@ -691,22 +801,30 @@ CodePtr compile(const StringPtr& source){
 		return fun;
 	}
 
-	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()), return null);
+	XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
+	return null;
 }
 
 AnyPtr load(const StringPtr& file_name){
-	AnyPtr ret = compile_file(file_name)->call();
-	gc();
-	return ret;
+	if(CodePtr code = compile_file(file_name)){
+		gc();
+		return code->call();
+	}
+	return null;
 }
 
 AnyPtr load_and_save(const StringPtr& file_name){
-	AnyPtr ret = compile_file(file_name);
-	StreamPtr fs = open(file_name->cat(Xid(c)), Xid(w));
-	fs->serialize(ret);
-	fs->close();
-	gc();
-	return ret->call();
+	if(CodePtr code = compile_file(file_name)){
+		StreamPtr fs = open(file_name->cat(Xid(c)), Xid(w));
+		fs->serialize(code);
+		fs->close();
+		XTAL_CHECK_EXCEPT(e){
+			return null;
+		}
+		gc();
+		return code->call();
+	}
+	return null;
 }
 
 CodePtr source(const char_t* src, int_t size, const char* file){
@@ -716,12 +834,8 @@ CodePtr source(const char_t* src, int_t size, const char* file){
 		return fun;
 	}
 
-	XTAL_THROW(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()), return null);
-}
-
-void ix(){
-	CodeBuilder cb;
-	cb.interactive_compile();
+	XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
+	return null;
 }
 
 #endif

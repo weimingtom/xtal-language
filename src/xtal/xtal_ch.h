@@ -3,6 +3,17 @@
 
 namespace xtal{
 	
+
+class ChCodeLib{
+public:
+	virtual ~ChCodeLib(){}
+	virtual void initialize(){}
+	virtual int_t ch_len(char_t lead){ return 1; }
+	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
+	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
+	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
+};
+
 /**
 * @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
 *
@@ -38,85 +49,48 @@ int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
 uint_t edit_distance(const void* data1, uint_t size1, const void* data2, uint_t size2);
 
-inline bool test_range(int ch, int begin, int end){
-	return begin<=ch && ch<=end;
-}
-
-inline bool test_digit(int ch){
-	return test_range(ch, '0', '9');
-}
-
-inline bool test_lalpha(int ch){
-	return test_range(ch, 'a', 'z');
-}
-
-inline bool test_ualpha(int ch){
-	return test_range(ch, 'A', 'Z');
-}
-
-inline bool test_alpha(int ch){
-	return test_lalpha(ch) || test_ualpha(ch);
-}
-
-inline bool test_space(int ch){
-	return ch==' ' || ch=='\t' || ch=='\n' || ch=='\r';
-}
-
-inline bool test_ident_first(int ch){
-	return test_alpha(ch) || ch_len(ch)>1;
-}
-
-inline bool test_ident_rest(int ch){
-	return test_ident_first(ch) || test_digit(ch) || ch=='_';
-}
-
-inline bool test_delim(int ch){
-	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
-}
-
-void set_code_sjis();
-void set_code_euc();
-void set_code_utf8();
-
-void set_code_utf16();
-void set_code_utf32();
-
-class CodeLib{
+/**
+* @brief マルチバイト文字を組み立てるためのユーティリティクラス
+*/
+class ChMaker{
 public:
-	virtual ~CodeLib(){}
-	virtual void initialize(){}
-	virtual int_t ch_len(char_t lead) = 0;
-	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
-	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
-};
-
-void set_code(CodeLib& lib);
-
-struct ChMaker{
 
 	ChMaker(){
-		pos = 0;
-		len = -1;
+		pos_ = 0;
+		len_ = -1;
 	}
 
 	bool is_completed(){
-		return pos==len;
+		return pos_==len_;
 	}
 
 	void add(char_t ch);
 
 	const IDPtr& to_s();
 
-	void clear(){
-		pos = 0;
-		len = -1;
+	int_t pos(){
+		return pos_;
 	}
 
-	int_t pos;
-	int_t len;
-	char_t buf[8];
-	IDPtr temp;
+	char_t at(int_t i){
+		return buf_[i];
+	}
+
+	const char_t* data(){
+		return buf_;
+	}
+
+	void clear(){
+		pos_ = 0;
+		len_ = -1;
+	}
+
+private:
+
+	int_t pos_;
+	int_t len_;
+	char_t buf_[8];
+	IDPtr temp_;
 };
 
 }

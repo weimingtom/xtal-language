@@ -84,6 +84,7 @@ public:
 	}
 
 	StringPtr inspect();
+
 	StringPtr inspect_range(int_t start, int_t end);
 
 	virtual void rawcall(const VMachinePtr& vm);
@@ -111,8 +112,9 @@ private:
 	friend class VMachine;
 	friend class Serializer;
 
-	typedef AC<inst_t>::vector code_t;
+	typedef PODArrayList<inst_t> code_t;
 	code_t code_;
+
 	ArrayPtr identifier_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
@@ -123,10 +125,10 @@ private:
 
 private:
 
-	AC<FunInfo>::vector xfun_info_table_;
-	AC<ScopeInfo>::vector scope_info_table_;
-	AC<ClassInfo>::vector class_info_table_;
-	AC<ExceptInfo>::vector except_info_table_;
+	PODArrayList<FunInfo> xfun_info_table_;
+	PODArrayList<ScopeInfo> scope_info_table_;
+	PODArrayList<ClassInfo> class_info_table_;
+	PODArrayList<ExceptInfo> except_info_table_;
 
 	struct LineNumberTable{
 		u32 start_pc;
@@ -145,13 +147,13 @@ private:
 		}
 	};
 
-	AC<LineNumberTable>::vector lineno_table_;
+	PODArrayList<LineNumberTable> lineno_table_;
 
 	struct AddressJump{
 		u32 pos;
 	};
 
-	AC<AddressJump>::vector address_jump_table_;
+	PODArrayList<AddressJump> address_jump_table_;
 };
 
 }

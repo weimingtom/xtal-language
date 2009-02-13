@@ -38,6 +38,8 @@ private:
 	MapPtr map_;
 	ArrayPtr values_;
 	StreamPtr stream_;
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(Serializer);
 };
 
 }

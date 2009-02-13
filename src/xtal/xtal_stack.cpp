@@ -2,7 +2,26 @@
 
 namespace xtal{
 
-PODStackBase::Buf PODStackBase::buf_;
+namespace{
+	int stack_dummy_buf[16] = {0};
+}
+
+void* stack_dummy_allocate(){
+	return stack_dummy_buf;
+}
+
+void* stack_allocate(size_t size){
+	return user_malloc(size);
+}
+
+void stack_deallocate(void* p){
+	if(stack_dummy_buf==p){
+		return;
+	}
+	XTAL_ASSERT(!((char*)stack_dummy_buf-64 <= (char*)p && (char*)p <= (char*)stack_dummy_buf+64));
+	user_free(p);
+}
+
 
 PODStackBase::PODStackBase(size_t onesize){
 	one_size_ = onesize;
@@ -87,6 +106,28 @@ void PODStackBase::upsize_detail(size_t us){
 	end_ = plusp(begin_, newcapa);
 }
 
+void PODStackBase::erase(size_t i, size_t n){
+	std::memmove((*this)[i], (*this)[i-n], one_size_*(i+1-n));
+	downsize(n);
+}	
+
+void PODStackBase::insert(size_t i, const void* v, size_t n){
+	upsize(n);
+	std::memmove((*this)[i], (*this)[i+n], one_size_*(i+1-n));
+	std::memcpy((*this)[i], v, one_size_*n);
+}
+
+void PODStackBase::reverse_erase(size_t i, size_t n){
+	std::memmove(reverse_at(i), reverse_at(i+n), one_size_*(size()+1-n));
+	downsize(n);
+}	
+
+void PODStackBase::reverse_insert(size_t i, const void* v, size_t n){
+	upsize(n);
+	std::memmove(reverse_at(i+n), reverse_at(i), one_size_*(size()+1-n));
+	std::memcpy(reverse_at(i), v, one_size_*n);
+}
+
 void PODStackBase::reserve(size_t capa){
 	if(capa<=capacity()){
 		return;
@@ -95,6 +136,106 @@ void PODStackBase::reserve(size_t capa){
 	size_t diff = capa-size();
 	upsize(diff);
 	downsize(diff);
+}
+
+void PODStackBase::release(){
+	deallocate(minusp(begin_, 1));
+	begin_ = plusp(dummy_allocate(), 1);
+	current_ = minusp(begin_, 1);
+	end_ = begin_;
+}
+
+void PODStackBase::attach(void* p){
+	begin_ = plusp(p, 1);
+	current_ = minusp(begin_, 1);
+	end_ = begin_;
+	addp(current_, 1);
+}
+
+void PODStackBase::detach(){
+	begin_ = plusp(dummy_allocate(), 1);
+	current_ = minusp(begin_, 1);
+	end_ = begin_;
+}
+
+
+//////////////////////////
+
+StackBase::StackBase(size_t onesize,
+	void (*ctor)(void* p),
+	void (*copy_ctor)(void* p, const void* q),
+	void (*dtor)(void* p))
+	:impl_(onesize), ctor_(ctor), copy_ctor_(copy_ctor), dtor_(dtor){} 
+
+StackBase::StackBase(const StackBase& v)
+	:impl_(v.impl_){
+	for(size_t i=0, sz=size(); i<sz; ++i){
+		copy_ctor_((*this)[i], v[i]);
+	}
+}
+
+StackBase& StackBase::operator =(const StackBase& v){
+	if(this==&v){
+		return *this;
+	}
+
+	impl_ = v.impl_;
+
+	for(size_t i=0, sz=size(); i<sz; ++i){
+		copy_ctor_((*this)[i], v[i]);
+	}
+
+	return *this;
+}
+
+StackBase::~StackBase(){
+	release();
+}
+
+void StackBase::erase(size_t i){
+	dtor_((*this)[i]);
+	for(size_t j = i; j != 0; --j){
+		copy_ctor_((*this)[j], (*this)[j-1]);
+		dtor_((*this)[j-1]);
+	}
+	impl_.downsize(1);
+}
+	
+void StackBase::insert(size_t i, const void* v){
+	impl_.upsize(1);
+	for(size_t j = 0; j != i; ++j){
+		copy_ctor_((*this)[j], (*this)[j+1]);
+		dtor_((*this)[j+1]);
+	}
+	copy_ctor_((*this)[i], v);		
+}
+
+void StackBase::resize(size_t newsize){
+	if(newsize>size()){
+		upsize(newsize-size());
+	}
+	else if(newsize<size()){
+		downsize(size()-newsize);
+	}
+}
+
+void StackBase::downsize(size_t ds){
+	for(size_t i=0; i<ds; ++i){
+		dtor_((*this)[i]);
+	}
+	impl_.downsize(ds);
+}
+
+void StackBase::upsize(size_t us){
+	impl_.upsize(us);
+	for(size_t i=0; i<us; ++i){
+		ctor_((*this)[i]);
+	}		
+}
+
+void StackBase::release(){
+	clear();
+	impl_.release();
 }
 
 }

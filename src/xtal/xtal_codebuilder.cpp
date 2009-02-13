@@ -4,6 +4,10 @@
 #ifndef XTAL_NO_PARSER
 
 namespace xtal{
+	
+CodeBuilder::CodeBuilder(){}
+
+CodeBuilder::~CodeBuilder(){}
 
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
 	error_= &errorimpl_;
@@ -15,7 +19,7 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	return compile_toplevel(e, source_file_name);
 }
 
-void CodeBuilder::interactive_compile(){
+void CodeBuilder::interactive_compile(const StreamPtr& stream){
 	error_= &errorimpl_;
 	error_->init("<ix>");
 
@@ -34,11 +38,10 @@ void CodeBuilder::interactive_compile(){
 	result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
 
 	int_t pc_pos = 0;
-	InteractiveStreamPtr stream = xnew<InteractiveStream>();
 	while(!stream->eos()){
 
 		ExprPtr e = parser_.parse_stmt(stream, error_);
-		stream->terminate_statement();
+		stream->flush();
 
 		if(!e){
 			stderr_stream()->put_s(error_->errors->join("\n"));
@@ -82,11 +85,11 @@ void CodeBuilder::interactive_compile(){
 				put_inst(InstReturn(0));
 				put_inst(InstThrow());
 
-				XTAL_TRY{
-					vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
-				}
-				XTAL_CATCH(e){
-					std::printf("%s\n", e->to_s()->c_str());
+				vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
+				
+				XTAL_CATCH_EXCEPT(e){
+					stderr_stream()->put_s(e->to_s());
+					stderr_stream()->put_s("\n");
 				}
 
 				for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn))/sizeof(inst_t); ++i){
@@ -2507,15 +2510,14 @@ AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const IDPtr& name, bool swap){
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
 	AnyPtr ret = undefined;
-	XTAL_TRY{
-		VMachinePtr vm = vmachine();
-		vm->setup_call();
-		a->rawsend(vm, name, null, null, false);
-		if(!vm->processed()){ vm->return_result(undefined); }
-		ret = vm->result_and_cleanup_call();
-	}
-	XTAL_CATCH(e){
-		(void)e;
+
+	VMachinePtr vm = vmachine();
+	vm->setup_call();
+	a->rawsend(vm, name, null, null, false);
+	if(!vm->processed()){ vm->return_result(undefined); }
+	ret = vm->result_and_cleanup_call();
+
+	XTAL_CATCH_EXCEPT(e){
 		ret = undefined;
 	}
 	return ret;
@@ -2523,23 +2525,20 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
 	
 AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b){
 	AnyPtr ret = undefined;
-	XTAL_TRY{
-		VMachinePtr vm = vmachine();
-		vm->setup_call(1, b);
-		a->rawsend(vm, name, b->get_class(), null, false);
-		if(!vm->processed()){ vm->return_result(undefined); }
-		ret = vm->result_and_cleanup_call();
-		if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
-			|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>()) || ret->is(get_cpp_class<Bool>())){
-			return ret;
-		}
-
-		return undefined;
+	VMachinePtr vm = vmachine();
+	vm->setup_call(1, b);
+	a->rawsend(vm, name, b->get_class(), null, false);
+	if(!vm->processed()){ vm->return_result(undefined); }
+	ret = vm->result_and_cleanup_call();
+	if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
+		|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>()) || ret->is(get_cpp_class<Bool>())){
+		return ret;
 	}
-	XTAL_CATCH(e){
-		(void)e;
+
+	XTAL_CATCH_EXCEPT(e){
 		ret = undefined;
 	}
+
 	return ret;
 }
 
@@ -2757,17 +2756,15 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_MEMBER){
 			XTAL_CB_DO_EXPR(term, e->member_term());
 			XTAL_CB_DO_EXPR(ns, e->member_ns());
-			XTAL_TRY{
-				if(ptr_as<Expr>(e->member_name())){
+		
+			if(ptr_as<Expr>(e->member_name())){
+				return undefined;
+			}
+			else{
+				AnyPtr ret = term->member(ptr_as<ID>(e->member_name()), ns, null, false);
+				XTAL_CATCH_EXCEPT(e){
 					return undefined;
 				}
-				else{
-					return term->member(ptr_as<ID>(e->member_name()), ns, null, false);
-				}
-			}
-			XTAL_CATCH(e){
-				(void)e;
-				return undefined;
 			}
 		}		
 		

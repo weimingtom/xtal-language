@@ -1720,7 +1720,8 @@ const inst_t* VMachine::OpMod(const inst_t* pc, int_t op){
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(std::fmodf(afvalue, check_zero(bfvalue)));
+			using namespace std;
+			ret.set_f(fmodf(afvalue, check_zero(bfvalue)));
 		}
 		set(1, ret);
 		downsize(1); 

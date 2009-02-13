@@ -404,7 +404,7 @@ inline void enable_gc(){
 * 既に生成されている場合、生成済みのクラスを返す。
 */
 template<class T>
-const ClassPtr& new_cpp_class(const StringPtr& name=empty_string){
+const ClassPtr& new_cpp_class(const StringPtr& name){
 	return core()->new_cpp_class<T>(name);
 }
 

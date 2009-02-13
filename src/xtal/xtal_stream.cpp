@@ -72,11 +72,13 @@ uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
 	return max;
 }
 
-uint_t Stream::print(const StringPtr& str){
+uint_t Stream::print(const AnyPtr& value){
+	StringPtr str = value->to_s(); 
 	return write(str->data(), str->data_size()*sizeof(char_t));
 }
 
-void Stream::println(const StringPtr& str){
+void Stream::println(const AnyPtr& value){
+	StringPtr str = value->to_s(); 
 	write(str->data(), str->data_size()*sizeof(char_t));
 	write(XTAL_STRING("\n"), sizeof(char_t)*1);
 }

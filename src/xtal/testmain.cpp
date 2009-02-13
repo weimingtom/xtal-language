@@ -50,61 +50,65 @@ int main2(int argc, char** argv){
 
 	/*		
 	c = clock();
-	load("../../bench/vec.xtal");
+	load("../bench/vec.xtal");
 	printf("vec %g\n\n", (clock()-c)/1000.0f);		
 	
 	c = clock();
-	load("../../bench/inst.xtal");
+	load("../bench/inst.xtal");
 	printf("inst %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/gc.xtal");
+	load("../bench/gc.xtal");
 	printf("gc %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/loop.xtal");
+	load("../bench/loop.xtal");
 	printf("loop %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/nested_loops.xtal");
+	load("../bench/nested_loops.xtal");
 	printf("nested_loops %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/fib.xtal");
+	load("../bench/fib.xtal");
 	printf("fib %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/loop_iter.xtal");
+	load("../bench/loop_iter.xtal");
 	printf("loop_iter %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/array_for.xtal");
+	load("../bench/array_for.xtal");
 	printf("array_for %g\n\n", (clock()-c)/1000.0f);
 
 	c = clock();
-	load("../../bench/array_each.xtal");
+	load("../bench/array_each.xtal");
 	printf("array_each %g\n\n", (clock()-c)/1000.0f);
 
 	//*/
 
 	//*
-	CodePtr code = compile_file("../../test/test.xtal_");
+	CodePtr code = compile_file("../test/test.xtal_");
+	XTAL_CATCH_EXCEPT(e){
+		stderr_stream()->println(e);
+		return 1;
+	}
 
 	code->call();
 
 	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->put_s(e->to_s());
-		stderr_stream()->put_s("\n");
+		stderr_stream()->println(e);
+		return 1;
 	}
 
-	lib()->member("test")->send("run_dir", "../../test/");
+	lib()->member("test")->send("run_dir", "../test/");
 	
 	//*/
 #endif
 
 	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->put_s(e->to_s());
-		stderr_stream()->put_s("\n");
+		stderr_stream()->println(e);
+		return 1;
 	}
 
 	vmachine()->print_info();

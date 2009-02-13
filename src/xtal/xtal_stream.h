@@ -35,9 +35,9 @@ public:
 
 	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max);
 
-	uint_t print(const StringPtr& str);
+	uint_t print(const AnyPtr& value);
 
-	void println(const StringPtr& str);
+	void println(const AnyPtr& value);
 
 	virtual uint_t tell();
 

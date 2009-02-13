@@ -423,39 +423,4 @@ inline void copy_innocence(Any& v, const Any& u){
 	v = u;
 }
 
-/*
-AnyPtr operator +(const AnyPtr& a);
-AnyPtr operator -(const AnyPtr& a);
-AnyPtr operator ~(const AnyPtr& a);
-
-AnyPtr operator +(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator -(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator *(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator /(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator %(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator |(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator &(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b);
-AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b);
-
-bool operator ==(const AnyPtr& a, const AnyPtr& b);
-bool operator !=(const AnyPtr& a, const AnyPtr& b);
-bool operator <(const AnyPtr& a, const AnyPtr& b);
-bool operator >=(const AnyPtr& a, const AnyPtr& b);
-bool operator >(const AnyPtr& a, const AnyPtr& b);
-bool operator <=(const AnyPtr& a, const AnyPtr& b);
-
-AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b);
-AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b);
-*/
-
 }

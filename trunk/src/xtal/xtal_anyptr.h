@@ -382,6 +382,11 @@ public:
 	operator const SmartPtr<T>&() const{
 		return *(SmartPtr<T>*)this;
 	}
+
+	template<class T>
+	operator SmartPtr<T>() const{
+		return *(SmartPtr<T>*)this;
+	}
 };
 
 class Undefined : public AnyPtr{ public: Undefined():AnyPtr(TYPE_UNDEFINED){} };

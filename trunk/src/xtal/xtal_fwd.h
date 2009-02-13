@@ -358,4 +358,7 @@ template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
 
+template<class T>
+const ClassPtr& new_cpp_class(const StringPtr& name=empty_string);
+
 }

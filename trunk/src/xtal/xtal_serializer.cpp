@@ -147,7 +147,8 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		else{
 			name_list = v->get_class()->object_name_list();
 			if(!name_list){
-				XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), v->object_name()))), return);
+				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), v->object_name()))));
+				return;
 			}
 
 			// serial_newで空オブジェクトを生成するコマンドを埋め込む
@@ -271,12 +272,14 @@ AnyPtr Serializer::inner_deserialize(){
 			CodePtr p = xnew<Code>();
 
 			if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-				XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1009")), return null);
+				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1009")));
+				return null;
 			}
 
 			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
 			if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
-				XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1009")), return null);
+				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1009")));
+				return null;
 			}
 			
 			stream_->get_u8();
@@ -346,7 +349,8 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	}
 
 	if(!ret){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), n))), return null);
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), n))));
+		return null;
 	}
 
 	return ret;

@@ -7,7 +7,7 @@ Base::Base()
 	:Any(noinit_t()){
 	set_p(this);
 	//ref_count_ = 0;
-	class_ = null;
+	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
@@ -20,8 +20,8 @@ Base::Base(const Base& b)
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
 
 		class_ = b.class_;
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->inc_ref_count();
+		if(get_class()){
+			class_->inc_ref_count();
 		}
 	}
 	else{
@@ -36,12 +36,12 @@ Base& Base::operator =(const Base& b){
 	if(b.instance_variables_!=&empty_instance_variables){
 		*instance_variables_ = *b.instance_variables_;		
 
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->dec_ref_count();
+		if(get_class()){
+			class_->dec_ref_count();
 		}
 		class_ = b.class_;
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->inc_ref_count();
+		if(get_class()){
+			class_->inc_ref_count();
 		}
 	}
 	else{
@@ -49,11 +49,11 @@ Base& Base::operator =(const Base& b){
 			instance_variables_->~InstanceVariables();
 			user_free(instance_variables_);
 
-			if(type(class_)==TYPE_BASE){
-				pvalue(class_)->dec_ref_count();
+			if(get_class()){
+				class_->dec_ref_count();
 			}
 
-			class_ = null;
+			class_ = (Class*)&null;
 			instance_variables_ = &empty_instance_variables; 
 		}
 	}
@@ -66,23 +66,23 @@ Base::~Base(){
 		instance_variables_->~InstanceVariables();
 		user_free(instance_variables_);
 
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->dec_ref_count();
+		if(get_class()){
+			class_->dec_ref_count();
 		}
 	}
 }
 
 void Base::set_class(const ClassPtr& c){
 	if(instance_variables_==&empty_instance_variables){
-		class_ = c;
+		class_ = c.get();
 	}
 	else{
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->dec_ref_count();
+		if(get_class()){
+			class_->dec_ref_count();
 		}
-		class_ = c;
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->inc_ref_count();
+		class_ = c.get();
+		if(get_class()){
+			class_->inc_ref_count();
 		}
 	}
 }
@@ -129,17 +129,15 @@ void Base::make_instance_variables(){
 		new(temp) InstanceVariables();
 		instance_variables_ = temp;
 
-		if(type(class_)==TYPE_BASE){
-			pvalue(class_)->inc_ref_count();
+		if(get_class()){
+			class_->inc_ref_count();
 		}
 	}
 }
 
 void Base::visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
-		if(type(class_)==TYPE_BASE){
-			m & class_;
-		}
+		m & get_class();
 		instance_variables_->visit_members(m);
 	}
 }

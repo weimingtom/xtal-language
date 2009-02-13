@@ -7,15 +7,16 @@ class Thread : public Base{
 public:
 
 	class ID{
-		struct Dummy{ void* dummy[4]; } dummy_;
+		struct Dummy{ int_t dummy[4]; } dummy_;
 		bool valid_;
 	public:
 		ID(){ valid_ = false; }
 
 		template<class T>
 		void set(const T& v){
-			XTAL_ASSERT(sizeof(v)<=sizeof(dummy_));
+			XTAL_ASSERT(sizeof(v)<=sizeof(dummy_)-sizeof(int_t));
 			valid_ = true;
+			dummy_.dummy[0] = dummy_.dummy[1] = dummy_.dummy[2] = dummy_.dummy[3] = 0;
 			(T&)dummy_ = v;
 		}
 
@@ -23,7 +24,10 @@ public:
 		const T& get() const{ return (const T&)dummy_; }
 
 		void invalid(){ valid_ = false; }
+
 		bool is_valid() const{ return valid_; }
+
+		const IDPtr& intern() const;
 	};
 
 public:
@@ -69,7 +73,7 @@ class ThreadLib{
 public:
 	virtual ~ThreadLib(){}
 	virtual void initialize(){}
-	virtual ThreadPtr new_thread(){ return null; }
+	virtual ThreadPtr new_thread(){ return ThreadPtr(); }
 	virtual MutexPtr new_mutex(){ return xnew<Mutex>(); }
 	virtual void yield(){}
 	virtual void sleep(float_t sec){}
@@ -94,10 +98,6 @@ public:
 
 	void remove_vmachine();
 
-	void global_interpreter_lock();
-
-	void global_interpreter_unlock();
-
 	void xlock();
 
 	void xunlock();
@@ -108,7 +108,9 @@ public:
 
 	void unregister_thread();
 
-	void check_yield_thread();
+	void global_interpreter_lock();
+
+	void global_interpreter_unlock();
 
 	void yield_thread();
 
@@ -130,12 +132,7 @@ public:
 
 private:
 
-	struct VMachineTableUnit{
-		Thread::ID id;
-		AnyPtr vm;
-	};		
-	
-	AC<VMachineTableUnit>::vector table;
+	MapPtr vm_map_;
 
 	int thread_count_;
 	int thread_locked_count_;
@@ -156,34 +153,14 @@ private:
 	ThreadLib* thread_lib_;
 };
 
-void InitThread();
-void UninitThread();
-
 bool stop_the_world();
 void restart_the_world();
-
-void global_interpreter_lock();
-void global_interpreter_unlock();
 
 void xlock();
 void xunlock();
 
 void register_thread();
 void unregister_thread();
-
-void check_yield_thread();
-
-struct GlobalInterpreterLock{
-	GlobalInterpreterLock(int){ global_interpreter_lock(); }
-	~GlobalInterpreterLock(){ global_interpreter_unlock(); }
-	operator bool() const{ return true; }
-};
-
-struct GlobalInterpreterUnlock{
-	GlobalInterpreterUnlock(int){ global_interpreter_unlock(); }
-	~GlobalInterpreterUnlock(){ global_interpreter_lock(); }
-	operator bool() const{ return true; }
-};
 
 struct XUnlock{
 	XUnlock(int){ xunlock(); }

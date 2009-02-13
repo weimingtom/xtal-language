@@ -149,14 +149,7 @@ public:
 	const CFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cfun_holder<TFun> fun_t;
 		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-
-	template<class TFun, TFun fun_s>
-	const CFunPtr& def_fun_static(const IDPtr& primary_key, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef cfun_holder_static<TFun, fun_s> fun_t;
-		fun_t fun;
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
 	}
 
 	/**
@@ -168,14 +161,7 @@ public:
 	const CFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cmemfun_holder<TFun> fun_t;
 		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
-	}
-
-	template<class TFun, TFun fun_s>
-	const CFunPtr& def_method_static(const IDPtr& primary_key, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
-		typedef cmemfun_holder_static<TFun, fun_s> fun_t;
-		fun_t fun;
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, 0, fun_t::PARAMS2);
+		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
 	}
 
 	/**
@@ -186,7 +172,7 @@ public:
 	const CFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
+		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
 	}
 	
 	/**
@@ -199,7 +185,7 @@ public:
 	const CFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2);
+		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
 	}
 	
 	/**
@@ -253,7 +239,7 @@ public:
 
 protected:
 
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n);
+	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 

@@ -11,7 +11,8 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(uint_t size){
-	capa_ = size + 3;
+	capa_ = size + 3; // todo overflow check
+
 	size_ = size;
 	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
 	std::memset(values_, 0, sizeof(AnyPtr)*size_);
@@ -32,11 +33,16 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 
 Array::Array(const Array& v){
 	size_ = capa_ = ((Array&)v).size();
-	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
-	
-	for(uint_t i=0; i<size_; ++i){
-		copy_innocence(values_[i], v.values_[i]);
-		inc_ref_count_force(values_[i]);
+	if(size_>0){
+		values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+		
+		for(uint_t i=0; i<size_; ++i){
+			copy_innocence(values_[i], v.values_[i]);
+			inc_ref_count_force(values_[i]);
+		}
+	}
+	else{
+		values_ = 0;
 	}
 }
 
@@ -63,30 +69,40 @@ void Array::clear(){
 }
 
 void Array::resize(uint_t sz){
-	if(sz<0) sz = 0;
-
 	if(sz<size_){
-		for(uint_t i=sz; i<size_; ++i){
-			dec_ref_count_force(values_[i]);
-		}
-		size_ = sz;
+		downsize(size_-sz);
 	}
 	else if(sz>size_){
-		if(sz>capa_){
-			uint_t newcapa = sz+capa_;
-			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
-			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
-			std::memset(&newp[size_], 0, sizeof(AnyPtr)*(sz-size_));
-			user_free(values_);
-			values_ = newp;
-			size_ = sz;
-			capa_ = newcapa;
-		}
-		else{
-			std::memset(&values_[size_], 0, sizeof(AnyPtr)*(sz-size_));
-			size_ = sz;
-		}
+		upsize(sz-size_);
 	}
+}
+
+void Array::upsize(uint_t sz){
+	if(size_+sz>capa_){  // todo overflow check
+		uint_t newcapa = size_+sz+capa_;
+		AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
+		std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
+		std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
+		user_free(values_);
+		values_ = newp;
+		size_ += sz;
+		capa_ = newcapa;
+	}
+	else{
+		std::memset(&values_[size_], 0, sizeof(AnyPtr)*sz);
+		size_ += sz;
+	}
+}
+
+void Array::downsize(uint_t sz){
+	if(sz>size_){
+		sz = size_;
+	}
+
+	for(uint_t i=size_-sz; i<size_; ++i){
+		dec_ref_count_force(values_[i]);
+	}
+	size_ -= sz;
 }
 
 const AnyPtr& Array::op_at(int_t i){
@@ -106,31 +122,29 @@ void Array::erase(int_t start, int_t n){
 	}
 
 	for(int_t i=0; i<n; ++i){
-		dec_ref_count_force(values_[pos + i]);
+		dec_ref_count_force(values_[pos+i]);
 	}
 
+	std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-(pos+n)));
 	size_ -= n;
-	if(size_!=0){
-		std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-pos));
-	}
 }
 
 void Array::insert(int_t i, const AnyPtr& v){
 	if(capa_==size_){
-		resize(size_ + 1);
+		upsize(1);
 	}
 	else{
 		size_++;
 	}
 	int_t pos = calc_offset(i);
-	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-1-pos));
+	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
 	copy_innocence(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }
 
 void Array::push_back(const AnyPtr& v){
 	if(capa_==size_){
-		resize(size_ + 1);
+		upsize(1);
 	}
 	else{
 		size_++;
@@ -252,7 +266,7 @@ int_t Array::calc_offset(int_t i){
 }
 
 void Array::throw_index_error(){
-	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1020")), return);
+	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1020")));
 }
 
 //////////////////////////////////////////////////

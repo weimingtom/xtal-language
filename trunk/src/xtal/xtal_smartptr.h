@@ -22,8 +22,8 @@ public:
 		T* n = (U*)0; // inherited test
 	}
 
-	SmartPtr(const SmartPtr<T>& p)
-		:SmartPtr<Any>(p){}
+	//SmartPtr(const SmartPtr<T>& p)
+	//	:SmartPtr<Any>(p){}
 
 	SmartPtr<T>& operator =(const Null&){
 		dec_ref_count();
@@ -32,7 +32,7 @@ public:
 	}
 
 	/// nullを受け取るコンストラクタ
-	SmartPtr(const Null&){}
+	//SmartPtr(const Null&){}
 
 	/// 特別なコンストラクタ1
 	SmartPtr(typename SmartPtrCtor1<T>::type v);
@@ -63,7 +63,7 @@ private:
 	* AnyPtrからの暗黙の変換を拒否するために、privateで定義されている。
 	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_as関数を使用すること。
 	*/
-	SmartPtr(const AnyPtr&);
+	//SmartPtr(const AnyPtr&);
 
 	/**
 	* @brief 暗黙の変換を抑えるためのコンストラクタ。
@@ -78,23 +78,23 @@ private:
 	* static A static_a;
 	* SmartPtr<A> p = SmartPtr<A>(&static_a, undeleter);
 	* と寿命が長いオブジェクトへのポインタとundeleterを渡すか、
-	* この三つの方法のどれかをする必要がある。
+	* または独自のdeleterを定義して渡す方法をとること。
 	*/
 	SmartPtr(void*);
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, T* p);
 
 private:
 
-	T* get2(const SmartPtrSelector<INHERITED_BASE>&) const{ 
+	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
 		return (T*)pvalue(*this); 
 	}
 
-	T* get2(const SmartPtrSelector<INHERITED_ANY>&) const{ 
+	T* get2(SmartPtrSelector<INHERITED_ANY>) const{ 
 		return (T*)this; 
 	}
 
-	T* get2(const SmartPtrSelector<INHERITED_OTHER>&) const{ 
+	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ 
 		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
 	}
 
@@ -173,7 +173,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->buf;
 		new(p->ptr) T;
 	}
 
@@ -191,7 +191,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0);
 	}
 
@@ -209,7 +209,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1);
 	}
 
@@ -227,7 +227,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1, a2);
 	}
 
@@ -263,7 +263,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1, a2, a3, a4);
 	}
 
@@ -359,12 +359,12 @@ inline XNewEssence2<T, A0, A1> xnew_lazy(const A0& a0, const A1& a1){
 
 template<class T>
 inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p){
-	return *(SmartPtr<T>*)(Any*)p;
+	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 
 template<class T>
 inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_ANY>, const T* p){
-	return *(SmartPtr<T>*)(Any*)p; 
+	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 
 /**
@@ -437,21 +437,6 @@ public:
 		return *this;
 	}
 };
-
-template<class Key, class T, class Pr, class A>
-void visit_members(Visitor& m, const std::map<Key, T, Pr, A>& value){
-	std::for_each(value.begin(), value.end(), m);
-}
-
-template<class T, class A>
-void visit_members(Visitor& m, const std::vector<T, A>& value){
-	std::for_each(value.begin(), value.end(), m);
-}
-
-template<class T, class A>
-void visit_members(Visitor& m, const std::deque<T, A>& value){
-	std::for_each(value.begin(), value.end(), m);
-}
 
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){

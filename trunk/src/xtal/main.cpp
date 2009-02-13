@@ -55,10 +55,9 @@ int main(int argc, char** argv){
 	Core core;
 	core.initialize(setting);
 
-	XTAL_TRY{
-		handle_argv(argv);
-	}
-	XTAL_CATCH(e){
+	handle_argv(argv);
+	
+	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->put_s(e->to_s());
 		stderr_stream()->put_s("\n");
 	}

@@ -84,11 +84,6 @@ public:
 	*
 	*/
 	MapPtr cat_assign(const MapPtr& a);
-
-	/**
-	* @brief == ‚ÌÄ’è‹`
-	*/
-	bool op_eq(const MapPtr& other);
 		
 	/**
 	* @brief [key, value]‚ğ—v‘f‚Æ‚·‚éAIterator‚ğ•Ô‚·

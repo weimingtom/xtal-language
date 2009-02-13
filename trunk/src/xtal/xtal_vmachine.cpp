@@ -7,20 +7,6 @@ inline const IDPtr& isp(const Any& v){
 	return (const IDPtr&)v;
 }
 
-static int_t check_zero(int_t value){
-	if(value==0){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
-	}
-	return value;
-}
-
-static float_t check_zero(float_t value){
-	if(value==0){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
-	}
-	return value;
-}
-
 inline const CodePtr& VMachine::code(){ return fun()->code(); }
 inline const CodePtr& VMachine::prev_code(){ return prev_fun()->code(); }
 
@@ -356,20 +342,31 @@ const AnyPtr& VMachine::local_variable(int_t pos){
 #define XTAL_VM_SWITCH switch(*pc)
 #define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
-#define XTAL_VM_EXCEPT(e) do{ set_except_0(e); if(debug_enable_ && debug_->is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
+#define XTAL_VM_EXCEPT(e) do{ except_[0] = e; if(debug_enable_ && debug_->is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
 #define XTAL_VM_RETURN return
 
-#ifdef XTAL_NO_EXCEPTIONS
-#	define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except() : (pc))
-#	define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ goto except_catch; }
-#else
-#	define XTAL_VM_CHECK_EXCEPT_PC(pc) (pc)
-#	define XTAL_VM_CHECK_EXCEPT
-#endif
+#define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except() : (pc))
+#define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ goto except_catch; }
+
+#define XTAL_CHECK_YIELD if(--thread_yield_count_!=0){ yield_thread(); thread_yield_count_ = 500; }
 
 const inst_t* VMachine::push_except(){
 	push(except_[0]);
 	return &throw_code_;
+}
+
+static int_t check_zero(int_t value){
+	if(value==0){
+		//XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
+	}
+	return value;
+}
+
+static float_t check_zero(float_t value){
+	if(value==0){
+		//XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
+	}
+	return value;
 }
 
 const inst_t* VMachine::inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target){
@@ -475,6 +472,13 @@ void VMachine::execute_inner(const inst_t* start){
 	int_t stack_size = stack_.size() - ff().args_stack_size();
 	int_t fun_frames_size = fun_frames_.size();
 
+	// 例外がクリアされていないなら実行できない
+	/*if(ap(except_[0])){
+		stack_.downsize_n(stack_size);
+		pop_ff();
+		return;
+	}*/
+
 	if(const AnyPtr& d = builtin()->member(Xid(debug))){
 		debug_ = unchecked_ptr_cast<Debug>(d);
 		debug_enable_ = debug_->is_enabled();
@@ -483,11 +487,19 @@ void VMachine::execute_inner(const inst_t* start){
 		debug_enable_ = false;
 	}
 
+	thread_yield_count_ = 100;
+
 	XTAL_ASSERT(stack_size>=0);
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
 retry:
-XTAL_TRY{
+
+#ifdef XTAL_USE_CPP_EXCEPTION
+try{
+#else 
+{
+#endif
+
 begin:
 
 XTAL_VM_SWITCH{
@@ -817,8 +829,9 @@ XTAL_VM_SWITCH{
 			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			XTAL_VM_CHECK_EXCEPT;
 		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
+		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
 	XTAL_VM_CASE(SetProperty){ // 9
@@ -830,8 +843,9 @@ XTAL_VM_SWITCH{
 			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			XTAL_VM_CHECK_EXCEPT;
 		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
+		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
 	XTAL_VM_CASE(Call){ // 9
@@ -843,8 +857,9 @@ XTAL_VM_SWITCH{
 			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->rawcall(myself());
+			XTAL_VM_CHECK_EXCEPT;
 		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));	
+		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
 	XTAL_VM_CASE(Send){ // 10
@@ -857,8 +872,9 @@ XTAL_VM_SWITCH{
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			if(inst.flags&CALL_FLAG_Q) ff().called_pc = &check_unsupported_code_;
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			XTAL_VM_CHECK_EXCEPT;
 		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc)); 	
+		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
 	XTAL_VM_CASE(Member){ // 11
@@ -868,12 +884,12 @@ XTAL_VM_SWITCH{
 			Any target = get();
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			Any ret = ap(target)->member(isp(primary_key), ap(secondary_key), ff().self());
+			XTAL_VM_CHECK_EXCEPT;
 
 			if(inst.flags&CALL_FLAG_Q){
 				set(ret);
 			}
 			else{
-				XTAL_VM_CHECK_EXCEPT;
 				if(rawne(ret, undefined)){
 					set(ret);
 				}
@@ -893,6 +909,7 @@ XTAL_VM_SWITCH{
 			Any target = pop();
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->def(isp(primary_key), ap(value), ap(secondary_key), KIND_PUBLIC);
+			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -959,6 +976,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Goto){ // 2
+		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
 	}
 
@@ -1318,18 +1336,19 @@ XTAL_VM_SWITCH{
 			push_ff(pc+inst.ISIZE, 1, 2, 0, null);
 			set_unsuported_error_info(ap(lhs), id_[Core::id_op_range], null);
 			ap(lhs)->rawsend(myself(), id_[Core::id_op_range], null);
+			XTAL_VM_CHECK_EXCEPT;
 		}
-		XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc));
+		XTAL_VM_CONTINUE(ff().called_pc);
 	}
 
 	XTAL_VM_CASE(GlobalVariable){ // 11
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any ret = code()->filelocal()->member(identifier(inst.identifier_number));
-			XTAL_VM_CHECK_EXCEPT;
 			if(rawne(ret, undefined)){
 				push(ret);
 			}
 			else{
+				XTAL_VM_CHECK_EXCEPT;
 				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), null));
 			}
 		}
@@ -1339,6 +1358,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(SetGlobalVariable){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			code()->filelocal()->set_member(identifier(inst.identifier_number), get(), null);
+			XTAL_VM_CHECK_EXCEPT;
 			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1347,6 +1367,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(DefineGlobalVariable){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			code()->filelocal()->def(identifier(inst.identifier_number), get(), null, KIND_PUBLIC);
+			XTAL_VM_CHECK_EXCEPT;
 			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1552,23 +1573,32 @@ XTAL_VM_SWITCH{
 
 // 例外が投げられたらここに到達する
 except_catch:
-	set_except_0(append_backtrace(pc, ap(except_[0])));
+	// 例外にバックトレースを追加する
+	except_[0] = append_backtrace(pc, ap(except_[0]));
+
+	// Xtalソース内でキャッチ等あるか調べる
 	pc = catch_body(pc, stack_size, fun_frames_size);
+
+	// Xtalソース内でキャッチ等されたなら最初に戻る
 	if(pc){
 		goto begin;
 	}
-	goto rethrow;
 
+	// Xtalで記述された部分から抜け出す
+	pop_ff();
+	return;
 }
-XTAL_CATCH(e){
+
+#ifdef XTAL_USE_CPP_EXCEPTION
+catch(const AnyPtr& e){
 	set_except_0(append_backtrace(pc, e));
 	pc = catch_body(pc, stack_size, fun_frames_size);
 	if(pc){
 		goto retry;
 	}
-	goto rethrow;	
+	pop_ff();
+	return;
 }
-#ifndef XTAL_NO_EXCEPTIONS
 catch(...){
 	set_except_0(null);
 	catch_body(start, stack_size, fun_frames_size);
@@ -1578,28 +1608,10 @@ catch(...){
 #endif
 }
 
-return;
-
-rethrow:
-	pop_ff();
-	XTAL_THROW(ap(except_[0]), return);	
 }
 
 #undef XTAL_VM_CONTINUE
 #define XTAL_VM_CONTINUE(x) return (x)
-
-/*
-#undef XTAL_VM_RETURN
-#define XTAL_VM_RETURN last_except_ = null; return 0
-
-#undef XTAL_VM_EXCEPT
-#define XTAL_VM_EXCEPT(x) last_except_ = (x); return 0
-
-#ifdef XTAL_NO_EXCEPTIONS
-#	undef XTAL_VM_CHECK_EXCEPT
-#	define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ return 0; }
-#endif
-*/
 
 //{FUNS{{
 //}}FUNS}
@@ -1708,7 +1720,7 @@ const inst_t* VMachine::OpMod(const inst_t* pc, int_t op){
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(fmodf(afvalue, check_zero(bfvalue)));
+			ret.set_f(std::fmodf(afvalue, check_zero(bfvalue)));
 		}
 		set(1, ret);
 		downsize(1); 

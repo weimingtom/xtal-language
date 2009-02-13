@@ -39,15 +39,17 @@ public:
 
 	void println(const StringPtr& str);
 
-	virtual uint_t tell() = 0;
+	virtual uint_t tell();
 
-	virtual uint_t write(const void* p, uint_t size) = 0;
+	virtual uint_t write(const void* p, uint_t size);
 
-	virtual uint_t read(void* p, uint_t size) = 0;
+	virtual uint_t read(void* p, uint_t size);
 
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET) = 0;
+	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
 
-	virtual void close() = 0;
+	virtual void close(){}
+
+	virtual void flush(){}
 
 	virtual uint_t pour(const StreamPtr& in_stream, uint_t size);
 
@@ -424,8 +426,6 @@ public:
 		
 	virtual uint_t tell();
 
-	virtual uint_t write(const void* p, uint_t size);
-
 	virtual uint_t read(void* p, uint_t size);
 
 	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
@@ -500,38 +500,14 @@ private:
 	StringPtr str_;
 };
 
-class InteractiveStream : public Stream{
-public:
-
-	InteractiveStream();
-	
-	virtual uint_t tell();
-
-	virtual uint_t write(const void* p, uint_t size);
-
-	virtual uint_t read(void* p, uint_t size);
-
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
-
-	virtual void close();
-
-	void terminate_statement();
-
-private:
-	int_t line_;
-	bool continue_stmt_;
-	std::FILE* fp_;
-};
-
-
 class StreamLib{
 public:
 	virtual ~StreamLib(){}
 	virtual void initialize(){}
 
-	virtual StreamPtr new_stdin_stream(){ return null; }
-	virtual StreamPtr new_stdout_stream(){ return null; }
-	virtual StreamPtr new_stderr_stream(){ return null; }
+	virtual StreamPtr new_stdin_stream(){ return StreamPtr(); }
+	virtual StreamPtr new_stdout_stream(){ return StreamPtr(); }
+	virtual StreamPtr new_stderr_stream(){ return StreamPtr(); }
 };
 
 class FilesystemLib{
@@ -539,8 +515,8 @@ public:
 	virtual ~FilesystemLib(){}
 	virtual void initialize(){}
 	
-	virtual AnyPtr entries(const StringPtr& path){ return null; }
-	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){ return null; } 
+	virtual AnyPtr entries(const StringPtr& path){ return AnyPtr(); }
+	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){ return StreamPtr(); } 
 	virtual bool is_directory(const StringPtr& path){ return false; }
 };
 

@@ -41,7 +41,8 @@ int_t InstanceVariables::find_core_inner(ClassInfo* core){
 			return variables_info_[0].pos;
 		}	
 	}
-	XTAL_THROW(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")), return 0);
+	XTAL_SET_EXCEPT(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")));
+	return 0;
 }
 
 EmptyInstanceVariables::EmptyInstanceVariables()
@@ -101,11 +102,13 @@ void Class::inherit(const ClassPtr& md){
 void Class::inherit_strict(const ClassPtr& md){
 	
 	if(md->is_cpp_class() && is_inherited_cpp_class()){
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1019")), return);
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1019")));
+		return;
 	}
 
-	if(is_inherited(md))
+	if(is_inherited(md)){
 		return;
+	}
 
 	mixins_->push_back(md);
 	inc_global_mutate_count();
@@ -159,9 +162,9 @@ void Class::def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility)
 	def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
 }
 
-const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(ParamInfoAndVM& pvm), const void* val, int_t val_size, int_t param_n){
+const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types){
 	return unchecked_ptr_cast<CFun>(def2(primary_key, 
-		xnew<CFun>(fun, val, val_size, param_n), secondary_key, accessibility));
+		xnew<CFun>(fun, val, val_size, param_n, param_types), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
@@ -185,7 +188,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		inc_global_mutate_count();
 	}
 	else{
-		XTAL_THROW(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))), return);
+		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
 	}
 }
 
@@ -221,9 +224,10 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		else{
 			// protectedメンバでアクセス権が無いなら例外
 			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
-				XTAL_THROW(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
+				XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
 					Named(Xid(object), this->object_name()), Named(Xid(name), primary_key), Named(Xid(accessibility), Xid(protected))))
-				, return undefined);			
+				);
+				return undefined;
 			}
 
 			return members_->at(it->second.num);
@@ -285,7 +289,8 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		XTAL_THROW(RuntimeError()->call(Xid(undefined)), return);
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xid(undefined)));
+		return;
 	}
 	else{
 		members_->set_at(it->second.num, value);
@@ -370,7 +375,7 @@ void Class::s_new(const VMachinePtr& vm){
 }
 
 AnyPtr Class::ancestors(){
-	if(from_this(this)==get_cpp_class<Any>()){
+	if(raweq(from_this(this), get_cpp_class<Any>())){
 		return null;
 	}			
 	
@@ -394,10 +399,13 @@ CppClass::CppClass(const StringPtr& name)
 void CppClass::rawcall(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(new), null, from_this(this))){
 		ret->rawcall(vm);
+		if(vm->except()){
+			return;
+		}
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
+		vm->set_except(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 	}
 }
 
@@ -407,7 +415,7 @@ void CppClass::s_new(const VMachinePtr& vm){
 		init_instance(vm->result(), vm);
 	}
 	else{
-		XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
+		vm->set_except(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 	}
 }
 
@@ -440,7 +448,7 @@ void Singleton::rawcall(const VMachinePtr& vm){
 }
 
 void Singleton::s_new(const VMachinePtr& vm){
-	XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())), return);
+	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 }
 
 CppSingleton::CppSingleton(const StringPtr& name)

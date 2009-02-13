@@ -3,14 +3,6 @@
 
 #include <cstddef>
 #include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <vector>
-#include <deque>
-#include <list>
-#include <map>
-#include <set>
 #include <cmath>
 #include <algorithm>
 
@@ -29,8 +21,8 @@
 #include "xtal_string.h"
 #include "xtal_text.h"
 #include "xtal_inst.h"
-#include "xtal_code.h"
 #include "xtal_stack.h"
+#include "xtal_code.h"
 #include "xtal_vmachine.h"
 #include "xtal_fun.h"
 #include "xtal_thread.h"
@@ -39,17 +31,17 @@
 #include "xtal_cfun.h"
 #include "xtal_class.h"
 #include "xtal_filesystem.h"
+#include "xtal_ch.h"
 #include "xtal_core.h"
 #include "xtal_thread.h"
 #include "xtal_lib.h"
 #include "xtal_debug.h"
 #include "xtal_iterator.h"
-#include "xtal_ch.h"
-#include "xtal_smartptr.h"
 #include "xtal_except.h"
 #include "xtal_expr.h"
 #include "xtal_parser.h"
 #include "xtal_codebuilder.h"
 #include "xtal_xpeg.h"
 #include "xtal_serializer.h"
+#include "xtal_anyinline.h"
 

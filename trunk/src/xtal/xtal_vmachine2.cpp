@@ -81,6 +81,11 @@ const AnyPtr& VMachine::result(int_t pos){
 
 		f.poped_pc = temp;
 		f.called_pc = &cleanup_call_code_;
+		
+		if(ap(except_[0])){
+			f.need_result_count = 0;
+			return undefined;
+		}
 
 		if(pos<f.need_result_count){
 			return get(f.need_result_count-pos-1);
@@ -179,6 +184,16 @@ const AnyPtr& VMachine::arg_default(int_t pos, const Named& name_and_def){
 		return get(f.args_stack_size()-1-pos);
 	}
 	return arg_default(name_and_def);
+}
+
+void VMachine::adjust_args(const ParamInfo& p, int_t num){
+	FunFrame& f = ff();
+	int_t offset = f.named_arg_count*2;
+	for(int_t i=f.ordered_arg_count; i<num; ++i){
+		stack_.insert(offset, arg_default(p.params[i]));
+		f.ordered_arg_count++;
+	}
+	stack_.downsize(offset);
 }
 
 void VMachine::return_result(){
@@ -282,7 +297,7 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	yield_result_count_ = 0;
-	push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->get_arg_this());
+	push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->arg_this());
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	resume_pc_ = 0;
 	carry_over(fun);
@@ -305,15 +320,10 @@ const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm,
 }
 
 void VMachine::exit_fiber(){
-	XTAL_TRY{
-		yield_result_count_ = 0;
-		ff().called_pc = resume_pc_;
-		resume_pc_ = 0;
-		execute_inner(&throw_undefined_code_);
-	}
-	XTAL_CATCH(e){
-		(void)e;
-	}
+	yield_result_count_ = 0;
+	ff().called_pc = resume_pc_;
+	resume_pc_ = 0;
+	execute_inner(&throw_undefined_code_);
 	reset();
 }
 
@@ -398,7 +408,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	if(e){
 		AnyPtr ep = e;
 		if(!ep->is(builtin()->member(Xid(Exception)))){
-			ep = RuntimeError()-call(ep);
+			ep = RuntimeError()->call(ep);
 		}
 		if(fun() &&  fun()->code()){
 			if((pc !=  fun()->code()->data()+ fun()->code()->size()-1)){

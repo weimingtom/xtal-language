@@ -33,10 +33,12 @@ AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
 	));
 }
 
-AnyPtr argument_error(const AnyPtr& object, int_t no){
+AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type){
 	return builtin()->member(Xid(ArgumentError))->call(Xt("Xtal Runtime Error 1001")->call(
 		Named(Xid(object), object), 
-		Named(Xid(no), no)
+		Named(Xid(no), no),
+		Named(Xid(required), required->object_name()),
+		Named(Xid(type), type->object_name())
 	));
 }
 
@@ -78,28 +80,6 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 		}
 	}
 }
-
-namespace{
-	void default_except_handler(const AnyPtr& except, const char* file, int line){
-//#ifdef XTAL_NO_EXCEPTIONS
-//		printf("%s(%d):%s\n", file, line, except->to_s()->c_str());
-//		exit(1);
-//#endif
-	}
-
-	except_handler_t except_handler_ = &default_except_handler;
-	AnyPtr except_;
-}
-
-
-except_handler_t except_handler(){
-	return except_handler_;
-}
-
-void set_except_handler(except_handler_t handler){
-	except_handler_ = handler;
-}
-
 
 void initialize_except(){
 	{

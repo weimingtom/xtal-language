@@ -6,16 +6,27 @@ namespace xtal{
 namespace{
 
 void Iterator_each(const VMachinePtr& vm){
-	vm->return_result(vm->get_arg_this());
+	vm->return_result(vm->arg_this());
 }
 
 void Iterator_block_first(const VMachinePtr& vm){
-	vm->get_arg_this()->rawsend(vm, Xid(block_next));
+	vm->arg_this()->rawsend(vm, Xid(block_next));
 }
 
 }
 
 void Core::bind(){
+
+	builtin()->def(Xid(String), new_cpp_class<String>());
+	builtin()->def(Xid(Int), new_cpp_class<Int>());
+	builtin()->def(Xid(Float), new_cpp_class<Float>());
+	builtin()->def(Xid(Null), new_cpp_class<Null>());
+	builtin()->def(Xid(Undefined), new_cpp_class<Undefined>());
+	builtin()->def(Xid(Bool), new_cpp_class<Bool>());
+	builtin()->def(Xid(IntRange), new_cpp_class<IntRange>());
+	builtin()->def(Xid(FloatRange), new_cpp_class<FloatRange>());
+	builtin()->def(Xid(ChRange), new_cpp_class<ChRange>());
+
 
 	{
 		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
@@ -139,17 +150,6 @@ void Core::bind(){
 
 ///////////////////
 
-	builtin()->def(Xid(String), new_cpp_class<String>());
-	builtin()->def(Xid(Int), new_cpp_class<Int>());
-	builtin()->def(Xid(Float), new_cpp_class<Float>());
-	builtin()->def(Xid(Null), new_cpp_class<Null>());
-	builtin()->def(Xid(Undefined), new_cpp_class<Undefined>());
-	builtin()->def(Xid(Bool), new_cpp_class<Bool>());
-	builtin()->def(Xid(IntRange), new_cpp_class<IntRange>());
-	builtin()->def(Xid(FloatRange), new_cpp_class<FloatRange>());
-	builtin()->def(Xid(ChRange), new_cpp_class<ChRange>());
-
-
 	{
 		ClassPtr p = new_cpp_class<Undefined>(Xid(Undefined));	
 		p->def_method(Xid(to_mv), &Any::to_mv);
@@ -219,17 +219,17 @@ void Core::bind(){
 
 		p->def(Xid(new), ctor<Array, int_t>()->params(Xid(size), 0));
 		
-		p->def_method_static<uint_t (Array::*)(), &Array::size>(Xid(size));
-		p->def_method_static<uint_t (Array::*)(), &Array::size>(Xid(length));
-		p->def_method_static<void (Array::*)(uint_t), &Array::resize>(Xid(resize));
-		p->def_method_static<bool (Array::*)(), &Array::empty>(Xid(empty));
-		p->def_method_static<bool (Array::*)(), &Array::is_empty>(Xid(is_empty));
-		p->def_method_static<ArrayPtr (Array::*)(int_t, int_t), &Array::slice>(Xid(slice))->params(Xid(i), null, Xid(n), 1);
-		p->def_method_static<ArrayPtr (Array::*)(int_t, int_t), &Array::splice>(Xid(splice))->params(Xid(i), null, Xid(n), 1);
-		p->def_method_static<void (Array::*)(), &Array::pop_back>(Xid(pop_back));
-		p->def_method_static<void (Array::*)(), &Array::pop_front>(Xid(pop_front));
-		p->def_method_static<void (Array::*)(const AnyPtr&), &Array::push_back>(Xid(push_back));
-		p->def_method_static<void (Array::*)(const AnyPtr&), &Array::push_front>(Xid(push_front));
+		p->def_method(Xid(size), &Array::size);
+		p->def_method(Xid(length), &Array::size);
+		p->def_method(Xid(resize), &Array::resize);
+		p->def_method(Xid(empty), &Array::empty);
+		p->def_method(Xid(is_empty), &Array::is_empty);
+		p->def_method(Xid(slice), &Array::slice)->params(Xid(i), null, Xid(n), 1);
+		p->def_method(Xid(splice), &Array::splice)->params(Xid(i), null, Xid(n), 1);
+		p->def_method(Xid(pop_back), &Array::pop_back);
+		p->def_method(Xid(pop_front), &Array::pop_front);
+		p->def_method(Xid(push_back), &Array::push_back);
+		p->def_method(Xid(push_front), &Array::push_front);
 
 		p->def_method(Xid(erase), &Array::erase)->params(Xid(i), null, Xid(n), 1);
 		p->def_method(Xid(insert), &Array::insert);
@@ -243,6 +243,7 @@ void Core::bind(){
 		p->def_method(Xid(assign), &Array::assign);
 		p->def_method(Xid(concat), &Array::concat);
 
+		p->def_method(Xid(op_to_a), &Array::to_a);
 		p->def_method(Xid(op_cat), &Array::cat, get_cpp_class<Array>());
 		p->def_method(Xid(op_cat_assign), &Array::cat_assign, get_cpp_class<Array>());
 		p->def_method(Xid(op_at), &Array::op_at, get_cpp_class<Int>());
@@ -298,9 +299,9 @@ void Core::bind(){
 		p->def_method(Xid(assign), &Map::assign);
 		p->def_method(Xid(concat), &Map::concat);
 
+		p->def_method(Xid(op_to_m), &Map::to_m);
 		p->def_method(Xid(op_at), &Map::at, get_cpp_class<Any>());
 		p->def_method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
-		p->def_method(Xid(op_eq), &Map::op_eq, get_cpp_class<Map>());
 		p->def_method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
 		p->def_method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
 	}
@@ -748,14 +749,17 @@ Any::p: method{
 	return this;
 }
 
+Any::to_a: method this.op_to_a;
+Any::to_m: method this.op_to_m;
+
 Int::times: method fiber{
 	for(i: 0; i<this; ++i){
 		yield i;
 	}
 }
 
-Null::to_a: method [];
-Null::to_m: method [:];
+Null::op_to_a: method [];
+Null::op_to_m: method [:];
 Null::block_first: method null;
 Undefined::to_s: method "undefined";
 Bool::block_next: method{
@@ -966,7 +970,7 @@ Iterator::scan: method(pattern) fiber{
 Iterator::ip: method(n:3){
 	m: MemoryStream();
 	m.put_s("<[");
-	a: this.take(n+1).to_a;
+	a: this.take(n+1)[];
 	m.put_s(a.take(n).join(","));
 	if(a.length==n+1){
 		m.put_s(" ...]>")
@@ -978,7 +982,7 @@ Iterator::ip: method(n:3){
 	return chain(a.each, this);
 }
 
-Iterator::to_a: method{
+Iterator::op_to_a: method{
 	ret: [];
 	this{
 		ret.push_back(it); 
@@ -986,7 +990,7 @@ Iterator::to_a: method{
 	return ret;
 }
 
-Iterator::to_m: method{
+Iterator::op_to_m: method{
 	ret: [:];
 	this{ |key, value|
 		ret[key] = value; 
@@ -1748,6 +1752,44 @@ MultiValue::to_s: method{
 "\x00\x00\x00\x1e\x0b\x00\x00\x00\x02\x02\x00\x00\x00\x20\x03\x02\x00\x00\x00\x21\x09\x00\x00\x00\x04\x28\x25\x73\x29"
 )->call();
 
+	Xemb((
+
+Arguments::each: method{
+	return fiber{ 
+		this.ordered_arguments.with_index{ |i, v|
+			yield i, v;
+		}
+		this.named_arguments{ |i, v|
+			yield i, v;
+		}
+	}
+}
+
+Arguments::pairs: Arguments::each;
+
+Fun::call: method(...){
+	return this(...);
+}
+	),
+"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x01\x11\x68\x00\x01\x75\x00\x01\x00\xe1\x75\x00\x02\x00\xd8\x2f\x00\x02\x0c\x28\x00\x05\x00\x28\x00\x06\x00\x2b\x00\x00\x03\x00\x00\x07\x1e\x00\x1e\x01\x1e\x02\x32\x00\x01\x1b\x02\x36\x00\x1f\x1b\x01\x1b\x00\x24\x02"
+"\x1b\x02\x2b\x00\x00\x03\x00\x00\x08\x1e\x00\x1e\x01\x1e\x02\x1b\x02\x36\x00\x05\x38\xff\xe5\x34\x00\x2a\x33\x32\x00\x02\x2f\x00\x05\x1e\x00\x1b\x00\x1b\x03\x2b\x01\x00\x01\x08\x00\x0a\x37\x00\x05\x1b\x00\x77\x31\x00\x05\x33\x1b\x02\x2b\x00\x00\x00\x08\x00"
+"\x0b\x35\x31\x00\x02\x2f\x00\x06\x0c\x28\x00\x0f\x00\x2b\x00\x00\x03\x00\x00\x07\x1e\x00\x1e\x01\x1e\x02\x32\x00\x03\x1b\x02\x36\x00\x1f\x1b\x01\x1b\x00\x24\x02\x1b\x02\x2b\x00\x00\x03\x00\x00\x08\x1e\x00\x1e\x01\x1e\x02\x1b\x02\x36\x00\x05\x38\xff\xe5\x34"
+"\x00\x2a\x33\x32\x00\x04\x2f\x00\x09\x1e\x00\x1b\x00\x1b\x03\x2b\x01\x00\x01\x08\x00\x0a\x37\x00\x05\x1b\x00\x77\x31\x00\x09\x33\x1b\x02\x2b\x00\x00\x00\x08\x00\x0b\x35\x31\x00\x06\x23\x00\x23\x01\x23\x00\x2d\x00\x11\x00\x68\x00\x01\x68\x00\x01\x2c\x00\x11"
+"\x00\x2d\x00\x12\x00\x68\x00\x13\x75\x00\x03\x00\x0b\x0b\x0c\x2a\x00\x00\x01\x03\x23\x00\x2d\x00\x14\x00\x23\x00\x77\x00\x0b\x08\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x0d\x00\x00\x00\x00\x00\x02\x00\x00\x00\x12\x00\x0d\x00\x00\x00\x00\x00\x02\x00\x03"
+"\x00\x12\x00\x29\x00\x00\x00\x00\x01\x08\x00\x00\x00\x12\x00\x2e\x00\x00\x00\x00\x01\x08\x00\x00\x00\x12\x00\x52\x00\x00\x00\x00\x01\x09\x00\x01\x00\x12\x00\x79\x00\x00\x00\x00\x00\x0c\x00\x03\x00\x12\x00\x91\x00\x00\x00\x00\x01\x10\x00\x00\x00\x12\x00\x96"
+"\x00\x00\x00\x00\x01\x10\x00\x00\x00\x12\x00\xba\x00\x00\x00\x00\x01\x10\x00\x01\x00\x12\x00\x01\x01\x00\x00\x00\x00\x14\x00\x00\x00\x12\x00\x00\x00\x00\x04\x00\x00\x00\x00\x03\x06\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x08\x00\x00\x00\x05\x00\x02\x00\x00"
+"\x00\x00\x00\x00\x01\x00\x00\x0d\x00\x00\x00\x06\x00\x02\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x01\x00\x00\x05\x02\x14\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x4f\x00\x00\x00\x6c\x00\x00\x00\x76\x00\x00"
+"\x00\x00\x00\x00\x00\x6c\x00\x00\x00\x6c\x00\x00\x00\xb7\x00\x00\x00\xd4\x00\x00\x00\xde\x00\x00\x00\x00\x00\x00\x00\xd4\x00\x00\x00\xd4\x00\x00\x00\x00\x1f\x00\x00\x00\x00\x13\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x03"
+"\x00\x00\x00\x0c\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x0d\x00\x00\x00\x08\x00\x00\x00\x10\x00\x00\x00\x05\x00\x00\x00\x26\x00\x00\x00\x08\x00\x00\x00\x29\x00\x00\x00\x05\x00\x00\x00\x2e\x00\x00\x00\x07\x00\x00\x00\x2e\x00\x00\x00\x06\x00\x00\x00\x34"
+"\x00\x00\x00\x07\x00\x00\x00\x34\x00\x00\x00\x05\x00\x00\x00\x4b\x00\x00\x00\x08\x00\x00\x00\x79\x00\x00\x00\x0b\x00\x00\x00\x7c\x00\x00\x00\x08\x00\x00\x00\x8e\x00\x00\x00\x0b\x00\x00\x00\x91\x00\x00\x00\x08\x00\x00\x00\x96\x00\x00\x00\x0a\x00\x00\x00\x96"
+"\x00\x00\x00\x09\x00\x00\x00\x9c\x00\x00\x00\x0a\x00\x00\x00\x9c\x00\x00\x00\x08\x00\x00\x00\xb3\x00\x00\x00\x0b\x00\x00\x00\xe5\x00\x00\x00\x0c\x00\x00\x00\xeb\x00\x00\x00\x0e\x00\x00\x00\xf9\x00\x00\x00\x12\x00\x00\x00\xf9\x00\x00\x00\x10\x00\x00\x00\xfc"
+"\x00\x00\x00\x12\x00\x00\x00\x01\x01\x00\x00\x11\x00\x00\x00\x08\x01\x00\x00\x12\x00\x00\x00\x0e\x01\x00\x00\x13\x00\x00\x00\x00\x01\x0b\x00\x00\x00\x03\x09\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x09\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f"
+"\x69\x6e\x2e\x78\x74\x61\x6c\x09\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x0a\x00\x00\x00\x15\x09\x00\x00\x00\x00\x09\x00\x00\x00\x09\x41\x72\x67\x75\x6d\x65\x6e\x74\x73\x09\x00\x00\x00\x08\x69\x74\x65\x72\x61\x74\x6f\x72\x09\x00\x00\x00"
+"\x01\x69\x09\x00\x00\x00\x01\x76\x09\x00\x00\x00\x11\x6f\x72\x64\x65\x72\x65\x64\x5f\x61\x72\x67\x75\x6d\x65\x6e\x74\x73\x09\x00\x00\x00\x0a\x77\x69\x74\x68\x5f\x69\x6e\x64\x65\x78\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x09\x00\x00"
+"\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x09\x00\x00\x00\x01\x65\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x63\x61\x74\x63\x68\x09\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b\x02\x00\x00\x00\x08\x02\x00\x00\x00\x09\x02\x00\x00\x00"
+"\x0a\x09\x00\x00\x00\x0f\x6e\x61\x6d\x65\x64\x5f\x61\x72\x67\x75\x6d\x65\x6e\x74\x73\x02\x00\x00\x00\x0f\x09\x00\x00\x00\x04\x65\x61\x63\x68\x09\x00\x00\x00\x05\x70\x61\x69\x72\x73\x09\x00\x00\x00\x03\x46\x75\x6e\x09\x00\x00\x00\x04\x63\x61\x6c\x6c\x09\x00"
+"\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x0a\x00\x00\x00\x01\x03"
+)->call();
 
 Xemb((
 	
@@ -1832,13 +1874,13 @@ append_text_map([
 	"Xtal Compile Error 1027":"コードが大きすぎて、バイトコードの生成に失敗しました。",
 	"Xtal Compile Error 1028":"演算子の前後の空白と演算子の優先順位が一致していません。想定している優先順位と異なっている可能性があります。",
 	
-	"Xtal Runtime Error 1001":"%(object)s 関数呼び出しの '%(no)s'番目の引数の型が不正です。",
+	"Xtal Runtime Error 1001":"'%(object)s' 関数呼び出しの '%(no)s'番目の引数の型が不正です。'%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
 	"Xtal Runtime Error 1002":"evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。",
 	"Xtal Runtime Error 1003":"不正なインスタンス変数の参照です。",
 	"Xtal Runtime Error 1004":"型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。",
-	"Xtal Runtime Error 1005":"'%(object)s' 関数呼び出しの引数の数が不正です。%(min)s以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1006":"'%(object)s' 関数呼び出しの引数の数が不正です。%(min)s以上、%(max)s以下の引数を受け取る関数に、%(value)s個の引数を渡しました。",
-	"Xtal Runtime Error 1007":"'%(object)s' 関数呼び出しの引数の数が不正です。引数を取らない関数に、%(value)s個の引数を渡しました。",
+	"Xtal Runtime Error 1005":"'%(object)s' 関数呼び出しの引数の数が不正です。'%(min)s'以上の引数を受け取る関数に、%(value)s個の引数を渡しました。",
+	"Xtal Runtime Error 1006":"'%(object)s' 関数呼び出しの引数の数が不正です。'%(min)s'以上、'%(max)s'以下の引数を受け取る関数に、'%(value)s'個の引数を渡しました。",
+	"Xtal Runtime Error 1007":"'%(object)s' 関数呼び出しの引数の数が不正です。引数を取らない関数に、'%(value)s'個の引数を渡しました。",
 	"Xtal Runtime Error 1008":"'%(object)s'はシリアライズできません。",
 	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
 	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",

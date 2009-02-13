@@ -175,6 +175,7 @@ void* SmallObjectAllocator::malloc(size_t size){
 		return user_malloc(size);
 	}else{
 		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
+		if(wsize==0){ return 0; }
 		return pool_[wsize-1].malloc(wsize);
 	}
 }
@@ -186,8 +187,9 @@ void SmallObjectAllocator::free(void* p, size_t size){
 		if(p==0){
 			return;
 		}
-		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
-		pool_[wsize-1].free(p, wsize);
+		if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
+			pool_[wsize-1].free(p, wsize);
+		}
 	}
 }
 

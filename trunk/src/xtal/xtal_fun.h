@@ -75,7 +75,7 @@ public:
 	bool extendable_param(){ return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; }
 	FunInfo* info(){ return info_; }
 	void set_info(FunInfo* fc){ info_ = fc; }
-	void check_arg(const VMachinePtr& vm);
+	bool check_arg(const VMachinePtr& vm);
 	virtual StringPtr object_name(int_t depth = -1);
 
 public:

@@ -311,9 +311,7 @@ class StringEachIter : public Base{
 
 public:
 
-	StringEachIter(const StringPtr& str)
-		:ss_(xnew<StringStream>(str)){
-	}
+	StringEachIter(const StringPtr& str);
 
 	void block_next(const VMachinePtr& vm);
 };
@@ -332,8 +330,6 @@ private:
 	StringPtr it_, end_;
 };
 
-
-struct Named2;
 
 /**
 * @brief 名前付き引数のトリックのためのクラス
@@ -356,10 +352,10 @@ struct Named2{
 		:name(name), value(value){}
 
 	Named2()
-		:name(null), value(undefined){}
+		:value(undefined){}
 
 	Named2(const Null&)
-		:name(null), value(undefined){}
+		:value(undefined){}
 };
 
 /**
@@ -372,8 +368,6 @@ struct Named : public Named2{
 		:Named2(name, value){}
 
 	Named(){}
-
-	//Named(const Null&){}
 };
 
 void visit_members(Visitor& m, const Named& p);

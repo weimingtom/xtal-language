@@ -47,6 +47,16 @@ public:
 	void resize(uint_t sz);
 
 	/**
+	* @brief ”z—ñ‚ðsz•ª’·‚­‚·‚é
+	*/
+	void upsize(uint_t sz);
+
+	/**
+	* @brief ”z—ñ‚ðsz•ª’Z‚­‚·‚é
+	*/
+	void downsize(uint_t sz);
+
+	/**
 	* @brief ”z—ñ‚Ì’·‚³‚ð•Ô‚·
 	*
 	*/

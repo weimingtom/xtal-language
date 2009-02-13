@@ -3,55 +3,6 @@
 
 namespace xtal{
 
-AnyPtr operator +(const AnyPtr& a){ return a->send(Xid(op_pos)); }
-AnyPtr operator -(const AnyPtr& a){ return a->send(Xid(op_neg)); }
-AnyPtr operator ~(const AnyPtr& a){ return a->send(Xid(op_com)); }
-
-AnyPtr operator +(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_add), b); }
-AnyPtr operator -(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_sub), b); }
-AnyPtr operator *(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mul), b); }
-AnyPtr operator /(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_div), b); }
-AnyPtr operator %(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_mod), b); }
-AnyPtr operator |(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_or), b); }
-AnyPtr operator &(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_and), b); }
-AnyPtr operator ^(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_xor), b); }
-AnyPtr operator >>(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shr), b); }
-AnyPtr operator <<(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_shl), b); }
-
-bool operator ==(const AnyPtr& a, const AnyPtr& b){ 
-	if(raweq(a, b))
-		return true;
-
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, b);
-	a->rawsend(vm, Xid(op_eq));
-	if(vm->processed() && vm->result()){
-		vm->cleanup_call();
-		return true;
-	}
-	vm->return_result();
-	vm->cleanup_call();
-	return false;
-}
-
-bool operator !=(const AnyPtr& a, const AnyPtr& b){ return !(a==b); }
-bool operator <(const AnyPtr& a, const AnyPtr& b){ return a->send(Xid(op_lt), b); }
-bool operator >(const AnyPtr& a, const AnyPtr& b){ return b<a; }
-bool operator <=(const AnyPtr& a, const AnyPtr& b){ return !(b<a); }
-bool operator >=(const AnyPtr& a, const AnyPtr& b){ return !(a<b); }
-
-AnyPtr& operator +=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_add_assign), b); return a; }
-AnyPtr& operator -=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_sub_assign), b); return a; }
-AnyPtr& operator *=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mul_assign), b); return a; }
-AnyPtr& operator /=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_div_assign), b); return a; }
-AnyPtr& operator %=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_mod_assign), b); return a; }
-AnyPtr& operator |=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_or_assign), b); return a; }
-AnyPtr& operator &=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_and_assign), b); return a; }
-AnyPtr& operator ^=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_xor_assign), b); return a; }
-AnyPtr& operator >>=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shr_assign), b); return a; }
-AnyPtr& operator <<=(AnyPtr& a, const AnyPtr& b){ a = a->send(Xid(op_shl_assign), b); return a; }
-
-
 /// @brief primary_keyメソッドを呼び出す
 AnyPtr Any::send(const IDPtr& primary_key) const{
 	const VMachinePtr& vm = vmachine();
@@ -74,14 +25,6 @@ AnyPtr Any::call() const{
 	vm->setup_call();
 	rawcall(vm);
 	return vm->result_and_cleanup_call();
-}
-
-Any::Any(const char_t* str){
-	*this = xnew<String>(str);
-}
-
-Any::Any(const avoid<char>::type* str){
-	*this = xnew<String>(str);
 }
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
@@ -197,11 +140,11 @@ StringPtr Any::to_s() const{
 }
 
 ArrayPtr Any::to_a() const{
-	return ptr_cast<Array>((*this).send(Xid(to_a)));
+	return ptr_cast<Array>((*this).send(Xid(op_to_a)));
 }
 
 MapPtr Any::to_m() const{
-	return ptr_cast<Map>((*this).send(Xid(to_m)));
+	return ptr_cast<Map>((*this).send(Xid(op_to_m)));
 }
 
 StringPtr Any::object_name(int_t depth) const{

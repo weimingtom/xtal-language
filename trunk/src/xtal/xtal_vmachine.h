@@ -214,17 +214,28 @@ public:
 	/**
 	* @brief pos番目の名前指定引数の名前を取得。
 	*
-	* @param pos 0縲從amed_arg_count()-1まで
+	* @param pos 0からnamed_arg_count()-1まで
 	*/
 	const IDPtr& arg_name(int_t pos){
 		return unchecked_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
+	}
+
+	void adjust_args(const ParamInfo& p, int_t num);
+
+	/**
+	* @brief pos番目の引数を得る。
+	*
+	* adjust_argsを読んだ後だけ使える
+	*/
+	const AnyPtr& arg_unchecked(int_t pos){
+		return get(ff().ordered_arg_count-1-pos);
 	}
 
 	/**
 	* @brief thisを取得。
 	*
 	*/
-	const AnyPtr& get_arg_this(){ 
+	const AnyPtr& arg_this(){ 
 		return ff().self(); 
 	}
 
@@ -327,8 +338,10 @@ public:
 	}
 
 	void set_except(const AnyPtr& e){
-		except_[0] = e;
-		except_[1] = null;
+		if(!ap(except_[0])){
+			except_[0] = e;
+			except_[1] = null;
+		}
 	}
 
 	void set_except_0(const Any& e);
@@ -445,7 +458,7 @@ public:
 		InstanceVariables* instance_variables;
 
 		// スコープがオブジェクト化されてない時のローカル変数領域
-		Stack<Any> variables_;
+		FastStack<Any> variables_;
 
 		// 呼び出された関数オブジェクト
 		Any fun_; 
@@ -739,10 +752,10 @@ private:
 	const IDPtr* id_;
 
 	// 計算用スタック
-	Stack<Any> stack_;
+	FastStack<Any> stack_;
 
 	// 関数呼び出しの度に積まれるフレーム
-	Stack<FunFrame> fun_frames_;
+	FastStack<FunFrame> fun_frames_;
 
 	// tryの度に積まれるフレーム。
 	PODStack<ExceptFrame> except_frames_;
@@ -754,6 +767,8 @@ private:
 	SmartPtr<Debug> debug_;
 
 	int_t debug_enable_;
+
+	int_t thread_yield_count_;
 
 protected:
 

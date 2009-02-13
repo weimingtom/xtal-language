@@ -5,7 +5,7 @@ namespace xtal{
 ////////////////////////////////////////////////
 // sjis
 
-class SJISCodeLib : public CodeLib{
+class SJISChCodeLib : public ChCodeLib{
 public:
 	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
@@ -20,7 +20,7 @@ public:
 ////////////////////////////////////////////////
 // euc
 
-class EUCCodeLib : public CodeLib{
+class EUCChCodeLib : public ChCodeLib{
 public:
 	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
@@ -35,7 +35,7 @@ public:
 ////////////////////////////////////////////////
 // utf8
 
-class UTF8CodeLib : public CodeLib{
+class UTF8ChCodeLib : public ChCodeLib{
 public:
 	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
@@ -62,7 +62,7 @@ public:
 ////////////////////////////////////////////////
 // utf16
 
-class UTF16CodeLib : public CodeLib{
+class UTF16ChCodeLib : public ChCodeLib{
 public:
 
 	bool is_surrogate(unsigned int v){
@@ -77,7 +77,7 @@ public:
 ////////////////////////////////////////////////
 // utf32
 
-class UTF32CodeLib : public CodeLib{
+class UTF32ChCodeLib : public ChCodeLib{
 public:
 	virtual int_t ch_len(char_t ch){
 		return 1;
@@ -86,7 +86,7 @@ public:
 
 ////////////////////////////////////////////////
 
-StringPtr CodeLib::ch_inc(const char_t* data, int_t data_size){
+StringPtr ChCodeLib::ch_inc(const char_t* data, int_t data_size){
 	if(data_size>6){
 		return xnew<ID>(data, data_size);
 	}
@@ -110,7 +110,7 @@ StringPtr CodeLib::ch_inc(const char_t* data, int_t data_size){
 	}
 }
 
-int_t CodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize){
+int_t ChCodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize){
 	if(asize==bsize){
 		for(int_t i=0; i<asize; ++i){
 			if((uchar_t)a[i]<(uchar_t)b[i]){
@@ -130,100 +130,46 @@ int_t CodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize
 }
 
 void ChMaker::add(char_t ch){
-	buf[pos++] = ch;
-	if(pos==1){
-		len = ch_len(ch);
+	buf_[pos_++] = ch;
+	if(pos_==1){
+		len_ = ch_len(ch);
 	}
-	else if(pos == -len){
-		len = ch_len2(buf);
+	else if(pos_ == -len_){
+		len_ = ch_len2(buf_);
 	}
 }
 
 const IDPtr& ChMaker::to_s(){
-	switch(pos){
-	case 1: temp = xnew<ID>(buf[0]);
-	case 2: temp = xnew<ID>(buf[0], buf[1]);
-	case 3: temp = xnew<ID>(buf[0], buf[1], buf[2]);
-	default: temp = xnew<ID>(&buf[0], pos);
+	switch(pos_){
+	case 1: temp_ = xnew<ID>(buf_[0]);
+	case 2: temp_ = xnew<ID>(buf_[0], buf_[1]);
+	case 3: temp_ = xnew<ID>(buf_[0], buf_[1], buf_[2]);
+	default: temp_ = xnew<ID>(&buf_[0], pos_);
 	}
 
-	return temp;
-}
-
-namespace{
-
-#ifdef XTAL_USE_WCHAR
-#	ifdef WIN32
-	UTF16CodeLib default_code_lib_;
-#	elif defined(__linux__)
-	UTF32CodeLib default_code_lib_;
-#	else
-	UTF32CodeLib default_code_lib_;
-#	endif
-#else
-#	ifdef WIN32
-	SJISCodeLib default_code_lib_;
-#	elif defined(__linux__)
-	EUCCodeLib default_code_lib_;
-#	else
-	UTF8CodeLib default_code_lib_;
-#	endif
-#endif
-
-	CodeLib* code_lib_ = &default_code_lib_;
+	return temp_;
 }
 
 int_t ch_len(char_t lead){
-	return code_lib_->ch_len(lead);
+	return core()->chcode_lib()->ch_len(lead);
 }
 
 int_t ch_len2(const char_t* str){
-	return code_lib_->ch_len2(str);
+	return core()->chcode_lib()->ch_len2(str);
 }
 
 StringPtr ch_inc(const char_t* data, int_t data_size){
-	return code_lib_->ch_inc(data, data_size);
+	return core()->chcode_lib()->ch_inc(data, data_size);
 }
 
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
-	return code_lib_->ch_cmp(a, asize, b, bsize);
-}
-
-
-void set_code_sjis(){
-	static SJISCodeLib code_lib;
-	code_lib_ = &code_lib;
-}
-
-void set_code_euc(){
-	static EUCCodeLib code_lib;
-	code_lib_ = &code_lib;
-}
-
-void set_code_utf8(){
-	static UTF8CodeLib code_lib;
-	code_lib_ = &code_lib;
-}
-
-void set_code_utf16(){
-	static UTF16CodeLib code_lib;
-	code_lib_ = &code_lib;
-}
-
-void set_code_utf32(){
-	static UTF32CodeLib code_lib;
-	code_lib_ = &code_lib;
-}
-
-void set_code(CodeLib& lib){
-	code_lib_ = &lib;
+	return core()->chcode_lib()->ch_cmp(a, asize, b, bsize);
 }
 
 void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, int* buf, uint_t k, int offset){
-#ifdef max
-#	undef max
-#endif
-	uint_t x = std::max(buf[k-1+offset]+1, buf[k+1+offset]);
+	uint_t v1 = buf[k-1+offset]+1;
+	uint_t v2 = buf[k+1+offset];
+	uint_t x = v1>v2 ? v1 : v2;
 	uint_t y = x-k;
 	while(x<size1 && y<size2 && ((u8*)data1)[x-1]==((u8*)data2)[y-1]){
 		++x;

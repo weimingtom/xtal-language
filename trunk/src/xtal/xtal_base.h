@@ -74,8 +74,7 @@ public:
 	* @brief このオブジェクトが所属するクラスを返す。
 	*
 	*/
-	const ClassPtr& get_class(){ return *(const ClassPtr*)&class_; }
-
+	const ClassPtr& get_class();
 
 public:
 	
@@ -98,7 +97,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		if(p){ ((Base*)p)->class_ = Any((int_t)size); }
+		if(p){ ((Base*)p)->value_ = (int_t)size; }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }
@@ -144,7 +143,7 @@ private:
 	InstanceVariables* instance_variables_;
 
 	// 所属クラス
-	Any class_;
+	Class* class_;
 	
 private:
 

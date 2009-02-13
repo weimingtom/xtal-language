@@ -9,6 +9,42 @@ namespace xtal{
 #define c3(C1, C2, C3) ((C3)<<16 | (C2)<<8 | (C1))
 #define c4(C1, C2, C3, C4) ((C4)<<24 | (C3)<<16 | (C2)<<8 | (C1))
 
+inline bool test_range(int ch, int begin, int end){
+	return begin<=ch && ch<=end;
+}
+
+inline bool test_digit(int ch){
+	return test_range(ch, '0', '9');
+}
+
+inline bool test_lalpha(int ch){
+	return test_range(ch, 'a', 'z');
+}
+
+inline bool test_ualpha(int ch){
+	return test_range(ch, 'A', 'Z');
+}
+
+inline bool test_alpha(int ch){
+	return test_lalpha(ch) || test_ualpha(ch);
+}
+
+inline bool test_space(int ch){
+	return ch==' ' || ch=='\t' || ch=='\n' || ch=='\r';
+}
+
+inline bool test_ident_first(int ch){
+	return test_alpha(ch) || ch_len(ch)>1;
+}
+
+inline bool test_ident_rest(int ch){
+	return test_ident_first(ch) || test_digit(ch) || ch=='_';
+}
+
+inline bool test_delim(int ch){
+	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
+}
+
 
 void CompileErrors::init(const StringPtr& file_name){
 	errors = xnew<Array>();
@@ -199,14 +235,14 @@ IDPtr Lexer::parse_identifier(){
 	while(!chm.is_completed()){
 		chm.add(reader_.read());
 	}
-	ms_->write(chm.buf, chm.pos*sizeof(char_t));
+	ms_->write(chm.data(), chm.pos()*sizeof(char_t));
 
 	while(test_ident_rest(reader_.peek())){
 		chm.clear();
 		while(!chm.is_completed()){
 			chm.add(reader_.read());
 		}
-		ms_->write(chm.buf, chm.pos*sizeof(char_t));
+		ms_->write(chm.data(), chm.pos()*sizeof(char_t));
 	}
 	
 	return ms_->to_s();
@@ -827,7 +863,7 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				while(!chm.is_completed()){
 					chm.add(reader_.read());
 				}
-				ms_->write(chm.buf, chm.pos*sizeof(char_t));
+				ms_->write(chm.data(), chm.pos()*sizeof(char_t));
 			}
 		}	
 	}
@@ -1253,12 +1289,12 @@ bool Parser::parse_post(int_t pri, int_t space){
 					if(cmp_pri(pri, PRI_AT, space, l_space)){
 						if(eat(':')){
 							expect(']');
-							eb_.push(Xid(to_m));
+							eb_.push(Xid(op_to_m));
 							eb_.push(null);
 							eb_.splice(EXPR_SEND, 3);
 						}
 						else if(eat(']')){
-							eb_.push(Xid(to_a));
+							eb_.push(Xid(op_to_a));
 							eb_.push(null);
 							eb_.splice(EXPR_SEND, 3);
 						}

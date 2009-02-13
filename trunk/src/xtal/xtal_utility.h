@@ -13,10 +13,6 @@
 #	define XTAL_DEBUG
 #endif
 
-#ifdef XTAL_NO_EXCEPT
-#	define XTAL_NO_EXCEPTIONS
-#endif
-
 #ifdef XTAL_DEBUG
 #	define XTAL_ASSERT(expr) assert(expr)
 #else
@@ -33,6 +29,8 @@
 #	endif
 #endif
 
+#define XTAL_DISALLOW_COPY_AND_ASSIGN(ClassName) ClassName(const ClassName&); void operator=(const ClassName&)
+
 #define XTAL_DEFAULT default:
 #define XTAL_CASE(key) break; case key:
 #define XTAL_CASE1(key) break; case key:
@@ -45,27 +43,26 @@
 #	define XTAL_GLOBAL_INTERPRETER_UNLOCK 
 #	define XTAL_UNLOCK 
 #else
-#	ifdef XTAL_USE_THREAD_MODEL_2
-#		define XTAL_GLOBAL_INTERPRETER_LOCK if(const ::xtal::GlobalInterpreterLock& global_interpreger_lock = 0)
-#		define XTAL_GLOBAL_INTERPRETER_UNLOCK if(const ::xtal::GlobalInterpreterUnlock& global_interpreger_unlock = 0)
-#	else
-#		define XTAL_GLOBAL_INTERPRETER_LOCK
-#		define XTAL_GLOBAL_INTERPRETER_UNLOCK
-#	endif
+#	define XTAL_GLOBAL_INTERPRETER_LOCK
+#	define XTAL_GLOBAL_INTERPRETER_UNLOCK
 #	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
 #endif
 
-#ifdef XTAL_NO_EXCEPTIONS
-#	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::vmachine()->set_except(temp); ::xtal::except_handler()(temp, __FILE__, __LINE__); ret; }while(0)
-#	define XTAL_TRY 
-#	define XTAL_CATCH(e) if(const ::xtal::AnyPtr& e = ::xtal::vmachine()->except())
-#	define XTAL_CHECK_EXCEPT(ret) do{ if(const ::xtal::AnyPtr& e = ::xtal::vmachine()->except()) ret; }while(0)
-#else
-#	define XTAL_THROW(e, ret) do{ ::xtal::AnyPtr temp = (e); ::xtal::except_handler()(temp, __FILE__, __LINE__); throw temp; }while(0)
-#	define XTAL_TRY try
-#	define XTAL_CATCH(e) catch(const ::xtal::AnyPtr& e)
-#	define XTAL_CHECK_EXCEPT(ret)
-#endif
+/**
+* @brief 例外を設定する
+*/
+#define XTAL_SET_EXCEPT(e) ::xtal::vmachine()->set_except(e)
+
+/**
+* @brief 例外が送出されているなら取り出す
+*/
+#define XTAL_CATCH_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->catch_except()))
+
+/**
+* @brief 例外が送出されているか調べる
+*/
+#define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->except()))
+
 
 #ifdef __GNUC__
 #	define XTAL_NOINLINE __attribute__((noinline)) 
@@ -156,14 +153,6 @@ struct static_ntz{
 	};
 };
 
-template<class T>
-struct CppClassSymbol{
-	static int value;
-};
-
-template<class T>
-int CppClassSymbol<T>::value;
-
 // 最低限のメタプログラミング下地
 
 template<bool>
@@ -188,8 +177,8 @@ struct If{
 };
 
 
-template<bool>
-struct TypeBool{};
+template<int>
+struct TypeIntType{};
 
 template<class T, class U>
 struct Convertible{
@@ -296,6 +285,51 @@ inline Ref<T> ref(T& r){
 template<class T, class U>
 struct NumericCalcResultType{
 	typedef typename If<1, T, U>::type type;
+};
+
+template<int N>
+struct SelectType{
+	typedef typename If<sizeof(signed char)==N,
+		signed char,
+		typename If<sizeof(signed short)==N, 
+			signed short int,
+			typename If<sizeof(signed int)==N,
+				signed int,
+				typename If<sizeof(signed long)==N,
+					signed long int,
+					typename If<sizeof(signed long long)==N,
+						signed long long int,
+						void
+					>::type
+				>::type
+			>::type
+		>::type
+	>::type int_t;
+
+	typedef typename If<sizeof(unsigned char)==N,
+		unsigned char,
+		typename If<sizeof(unsigned short)==N, 
+			unsigned short int,
+			typename If<sizeof(unsigned int)==N,
+				unsigned int,
+				typename If<sizeof(unsigned long)==N,
+					unsigned long int,
+					typename If<sizeof(unsigned long long)==N,
+						unsigned long long int,
+						void
+					>::type
+				>::type
+			>::type
+		>::type
+	>::type uint_t;
+
+	typedef typename If<sizeof(float)==N,
+		float,
+		typename If<sizeof(double)==N, 
+			double,
+			void
+		>::type
+	>::type float_t;
 };
 
 }

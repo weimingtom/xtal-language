@@ -8,6 +8,7 @@ struct CoreSetting{
 	StreamLib* stream_lib;
 	FilesystemLib* filesystem_lib;
 	AllocatorLib* allocator_lib;
+	ChCodeLib* chcode_lib;
 
 	CoreSetting();
 };
@@ -40,6 +41,10 @@ public:
 
 	const SmartPtr<Filesystem>& filesystem(){
 		return filesystem_;
+	}
+
+	ChCodeLib* chcode_lib(){
+		return setting_.chcode_lib;
 	}
 
 public:
@@ -399,7 +404,7 @@ inline void enable_gc(){
 * 既に生成されている場合、生成済みのクラスを返す。
 */
 template<class T>
-const ClassPtr& new_cpp_class(const StringPtr& name){
+const ClassPtr& new_cpp_class(const StringPtr& name=empty_string){
 	return core()->new_cpp_class<T>(name);
 }
 
@@ -506,10 +511,6 @@ inline bool thread_enabled(){
 	return core()->thread_mgr()->thread_enabled();
 }
 
-inline void check_yield_thread(){
-	return core()->thread_mgr()->check_yield_thread();
-}
-
 inline void yield_thread(){
 	return core()->thread_mgr()->yield_thread();
 }
@@ -576,211 +577,43 @@ AnyPtr load(const StringPtr& file_name);
 */
 AnyPtr load_and_save(const StringPtr& file_name);
 
-/**
-* @brief interactive xtalの実行
-*/
-void ix();
-
 CodePtr source(const char_t* src, int_t size, const char* file);
 
 #endif
 
 CodePtr compiled_source(const void* src, int_t size, const char* file);
 
-/////////////////////////////
-
-//{REPEAT{{
-/*
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 #COMMA_REPEAT#class A`i+1`#>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 #COMMA_REPEAT#a`i+1`#);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 #COMMA_REPEAT#class A`i+1`#>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 #COMMA_REPEAT#a`i+1`#);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 #COMMA_REPEAT#class A`i+1`#>
-inline AnyPtr Any::call(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 #COMMA_REPEAT#a`i+1`#);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
+/**
+* @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
+*
+* マイナスの値が返された場合、最低文字数を返す。
+* -2の場合、最低2文字以上の文字で、本当の長さは2文字目を読まないと判断できない、という意味となる。
 */
+int_t ch_len(char_t lead);
 
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 >
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 ) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 );
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
+/**
+* @brief マルチバイト文字が何文字かを調べる。
+*
+* int_t ch_len(char_t lead)が呼ばれた後、マイナスの値を返した場合に続けて呼ぶ。
+* ch_lenで-2の値を返した後は、strの先には最低2バイト分のデータを格納すること。
+*/
+int_t ch_len2(const char_t* str);
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 >
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 ) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 );
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
 
-/// @brief 関数を呼び出す
-template<class A0 >
-inline AnyPtr Any::call(const A0& a0 ) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 );
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
+/**
+* @brief 一つ先の文字を返す
+*
+* 例えば a を渡した場合、b が返る
+*/
+StringPtr ch_inc(const char_t* data, int_t data_size);
 
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 , class A1>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 , class A1>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 , class A1>
-inline AnyPtr Any::call(const A0& a0 , const A1& a1) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 , class A1, class A2>
-inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 , class A1, class A2, class A3>
-inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3, class A4>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3, class A4>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 , class A1, class A2, class A3, class A4>
-inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3, class A4, class A5>
-inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4, a5);
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief primary_key#secondary_keyメソッドを呼び出す
-template<class A0 , class A1, class A2, class A3, class A4, class A5>
-inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4, a5);
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();
-}
-
-/// @brief 関数を呼び出す
-template<class A0 , class A1, class A2, class A3, class A4, class A5>
-inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1, a0 , a1, a2, a3, a4, a5);
-	rawcall(vm);
-	return vm->result_and_cleanup_call();
-}
-
-//}}REPEAT}
+/**
+* @brief 文字の大小判定
+*
+* 負の値 a の文字の方がbの文字より小さい
+* 0の値 等しい
+* 正の値 bの文字の方がaの文字より小さい
+*/
+int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
 }

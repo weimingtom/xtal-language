@@ -74,7 +74,7 @@ public:
 	void overwrite(const ClassPtr& p);
 
 public:
-	
+
 	/**
 	* @brief 新しいメンバを定義する
 	*
@@ -143,25 +143,25 @@ public:
 	/**
 	* @brief 関数を定義する
 	*
-	* cls->fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
+	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class TFun>
 	const CFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cfun_holder<TFun> fun_t;
 		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
 	* @brief 関数を定義する
 	*
-	* cls->method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
+	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class TFun>
 	const CFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cmemfun_holder<TFun> fun_t;
 		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, &cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
@@ -172,7 +172,7 @@ public:
 	const CFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+		return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
@@ -185,14 +185,14 @@ public:
 	const CFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+		return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
 	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
 	*
-	* cls->getter(primary_key, var, policy);
-	* cls->setter(StringPtr("set_")->cat(primary_key), v, policy);
+	* cls->def_getter(primary_key, var, policy);
+	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
 	* と等しい	
 	*/	
 	template<class T, class U>
@@ -239,7 +239,7 @@ public:
 
 protected:
 
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun_t)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types);
+	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 

@@ -758,7 +758,7 @@ private:
 	FastStack<FunFrame> fun_frames_;
 
 	// tryの度に積まれるフレーム。
-	PODStack<ExceptFrame> except_frames_;
+	FastStack<ExceptFrame> except_frames_;
 	
 	Any except_[3];
 

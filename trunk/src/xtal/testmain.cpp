@@ -7,6 +7,8 @@
 #include "xtal_lib/xtal_winfilesystem.h"
 #include "xtal_lib/xtal_chcode.h"
 
+#include "time.h"
+
 using namespace xtal;
 
 #ifndef XTAL_NO_PARSER
@@ -87,7 +89,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	//*
+	/*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

@@ -15,10 +15,28 @@ void Iterator_block_first(const VMachinePtr& vm){
 
 }
 
-struct BindInfo{
-	const char_t* name;
+/*
+struct BindMemfunData{
+	int_t val[4];
+	int_t val_size;
+	param_types_holder_n* pth;
 
+	template<class TFun>
+	BindFunData(const TFun& v){
+		typedef cmemfun_holder<TFun> fun_t;
+		*(fun_t*)data = fun_t(v);
+		size = sizeof(T);
+		pth = &fun_param_holder<fun_t>::value;
+	}
 };
+
+struct BindFunInfo{
+	const char_t* name;
+	BindFunData bind_fun_data;
+	CppClassSymbolData* ccsd;
+	int_t accessibility;
+};
+*/
 
 void Core::bind(){
 
@@ -31,7 +49,6 @@ void Core::bind(){
 	builtin()->def(Xid(IntRange), new_cpp_class<IntRange>());
 	builtin()->def(Xid(FloatRange), new_cpp_class<FloatRange>());
 	builtin()->def(Xid(ChRange), new_cpp_class<ChRange>());
-
 
 	{
 		ClassPtr p = new_cpp_class<StringEachIter>(Xid(StringEachIter));
@@ -137,17 +154,12 @@ void Core::bind(){
 		p->def_dual_dispatch_method(Xid(op_shr_assign));
 		p->def_dual_dispatch_method(Xid(op_shl_assign));
 		p->def_dual_dispatch_method(Xid(op_ushr_assign));
-
 		p->def_dual_dispatch_method(Xid(op_eq));
 		p->def_dual_dispatch_method(Xid(op_lt));
-
 		p->def_dual_dispatch_method(Xid(op_at));
 		p->def_dual_dispatch_method(Xid(op_set_at));
-
 		p->def_dual_dispatch_method(Xid(op_call));
-
 		p->def_dual_dispatch_method(Xid(op_range));
-
 		p->def_dual_dispatch_method(Xid(op_in));
 
 		builtin()->def(Xid(Any), get_cpp_class<Any>());	

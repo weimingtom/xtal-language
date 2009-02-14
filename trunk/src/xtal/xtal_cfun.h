@@ -101,6 +101,86 @@ inline int operator ,(ReturnPolicyTest<Policy> rp, ReturnPolicyVoidTest){
 
 ///////////////////////////////////////////////////////
 
+template<int N, class Fun>
+struct cfun{};
+
+//{REPEAT{{
+/*
+template<class Fun>
+struct cfun<`n`, Fun>{
+	static void f(VMAndData& pvm){
+		#REPEAT#typedef typename Fun::ARG`i` A`i`;#
+		(*(Fun*)pvm.data)(
+			#REPEAT_COMMA#A`i`::cast(pvm.vm)#
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+*/
+
+template<class Fun>
+struct cfun<0, Fun>{
+	static void f(VMAndData& pvm){
+		
+		(*(Fun*)pvm.data)(
+			
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<1, Fun>{
+	static void f(VMAndData& pvm){
+		typedef typename Fun::ARG0 A0;
+		(*(Fun*)pvm.data)(
+			A0::cast(pvm.vm)
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<2, Fun>{
+	static void f(VMAndData& pvm){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;
+		(*(Fun*)pvm.data)(
+			A0::cast(pvm.vm), A1::cast(pvm.vm)
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<3, Fun>{
+	static void f(VMAndData& pvm){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;
+		(*(Fun*)pvm.data)(
+			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm)
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<4, Fun>{
+	static void f(VMAndData& pvm){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;
+		(*(Fun*)pvm.data)(
+			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm)
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<5, Fun>{
+	static void f(VMAndData& pvm){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;
+		(*(Fun*)pvm.data)(
+			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm), A4::cast(pvm.vm)
+		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
+	}
+};
+
+//}}REPEAT}
+
+///////////////////////////////////////////////////////
+
 template<class Fun>
 struct cfun_holder{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
@@ -114,6 +194,24 @@ struct cmemfun_holder{
 template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, class A5=void, class A6=void, class A7=void, class A8=void, class A9=void>
 struct ctor_fun{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
+};
+
+struct param_types_holder_n{
+	void (*fun)(VMAndData& pvm);
+	int param_n;
+	void** param_types;
+};
+
+template<class Fun>
+struct fun_param_holder{
+	static param_types_holder_n value;
+};
+
+template<class Fun>
+param_types_holder_n fun_param_holder<Fun>::value = {
+	&cfun<Fun::PARAMS, Fun>::f,
+	Fun::PARAMS2,
+	Fun::types(),
 };
 
 //{REPEAT{{
@@ -1051,93 +1149,13 @@ struct setter_holder{
 	const T& operator()(C* self, const T& v){ return self->*var = v; }
 };
 
-///////////////////////////////////////////////////////
-
-template<int N, class Fun>
-struct cfun{};
-
-//{REPEAT{{
-/*
-template<class Fun>
-struct cfun<`n`, Fun>{
-	static void f(VMAndData& pvm){
-		#REPEAT#typedef typename Fun::ARG`i` A`i`;#
-		(*(Fun*)pvm.data)(
-			#REPEAT_COMMA#A`i`::cast(pvm.vm)#
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-*/
-
-template<class Fun>
-struct cfun<0, Fun>{
-	static void f(VMAndData& pvm){
-		
-		(*(Fun*)pvm.data)(
-			
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<1, Fun>{
-	static void f(VMAndData& pvm){
-		typedef typename Fun::ARG0 A0;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm)
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<2, Fun>{
-	static void f(VMAndData& pvm){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm)
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<3, Fun>{
-	static void f(VMAndData& pvm){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm)
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<4, Fun>{
-	static void f(VMAndData& pvm){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm)
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<5, Fun>{
-	static void f(VMAndData& pvm){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm), A4::cast(pvm.vm)
-		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
-	}
-};
-
-//}}REPEAT}
-
 //////////////////////////////////////////////////////////////
 
 class CFun : public HaveName{
 public:
 	typedef void (*fun_t)(VMAndData& pvm);
 
-	CFun(fun_t f, const void* val, int_t val_size, int_t param_n, void** param_types);
+	CFun(const param_types_holder_n& pth, const void* val, int_t val_size);
 	
 	virtual ~CFun();
 
@@ -1191,6 +1209,7 @@ protected:
 };
 
 CFunPtr new_cfun(void (*fun)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types);
+CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_size);
 
 //////////////////////////////////////////////////////////////
 
@@ -1202,7 +1221,7 @@ template<class Fun>
 inline CFunPtr fun(const Fun& f){
 	typedef cfun_holder<Fun> fun_t;
 	fun_t fun(f);
-	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 /**
@@ -1214,7 +1233,7 @@ template<class Fun>
 inline CFunPtr method(const Fun& f){
 	typedef cmemfun_holder<Fun> fun_t;
 	fun_t fun(f);
-	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 /**
@@ -1226,7 +1245,7 @@ struct ctor : public CFunPtr{
 	typedef ctor_fun<T, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_t;
 	ctor(){
 		fun_t fun;
-		CFunPtr::operator =(new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types()));
+		CFunPtr::operator =(new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun)));
 	}
 };
 
@@ -1239,7 +1258,7 @@ template<class T, class C>
 inline CFunPtr getter(T C::* v){
 	typedef getter_holder<C, T> fun_t;
 	fun_t fun(v);
-	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 	
 /**
@@ -1250,7 +1269,7 @@ template<class T, class C>
 inline CFunPtr setter(T C::* v){
 	typedef setter_holder<C, T> fun_t;
 	fun_t fun(v);
-	return new_cfun(&cfun<fun_t::PARAMS, fun_t>::f, &fun, sizeof(fun), fun_t::PARAMS2, fun_t::types());
+	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 

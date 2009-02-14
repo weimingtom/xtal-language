@@ -587,9 +587,6 @@ void VMachine::visit_members(Visitor& m){
 }
 
 void VMachine::before_gc(){
-	stack_.fill_over(null);
-	fun_frames_.fill_over();
-
 	inc_ref_count_force(debug_info_);
 	inc_ref_count_force(debug_);
 
@@ -608,6 +605,23 @@ void VMachine::before_gc(){
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
 		inc_ref_count_force(except_frames_[i].outer);
 	}
+
+	// Žg‚í‚ê‚Ä‚¢‚È‚¢•”•ª‚ðnull‚Å“h‚è‚Â‚Ô‚·
+	for(int_t i=stack_.size(), size=stack_.capacity(); i<size; ++i){
+		stack_.reverse_at_unchecked(i).set_null();
+	}
+
+	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
+		fun_frames_.reverse_at_unchecked(i).set_null();
+		for(int_t j=0, jsize=fun_frames_.reverse_at_unchecked(i).variables_.capacity(); j<jsize; ++j){
+			fun_frames_.reverse_at_unchecked(i).variables_.reverse_at_unchecked(j).set_null();
+		}
+	}
+
+	for(int_t i=except_frames_.size(), size=except_frames_.capacity(); i<size; ++i){
+		except_frames_.reverse_at_unchecked(i).outer.set_null();
+	}
+
 }
 
 void VMachine::after_gc(){

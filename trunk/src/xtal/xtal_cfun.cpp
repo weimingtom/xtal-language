@@ -5,23 +5,24 @@ namespace xtal{
 
 static Named null_params[16];
 
-CFunPtr new_cfun(void (*fun)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types){
-	return xnew<CFun>(fun, val, val_size, param_n, param_types);
+CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_size){
+	return xnew<CFun>(pth, val, val_size);
 }
 
-CFun::CFun(fun_t f, const void* val, int_t val_size, int_t param_n, void** param_types){
-	fun_ = f;
+
+CFun::CFun(const param_types_holder_n& pth, const void* val, int_t val_size){
+	fun_ = pth.fun;
 	val_ = so_malloc(val_size);
 	val_size_ = val_size;
 	std::memcpy(val_, val, val_size);
-	param_n_ = pi_.min_param_count = pi_.max_param_count = param_n;
+	param_n_ = pi_.min_param_count = pi_.max_param_count = pth.param_n;
 	pi_.params = null_params;
 	this_ = undefined;
  
 	int_t pn = (param_n_<0 ? -param_n_-1 : param_n_) + 1;
 	param_types_ = (Class**)so_malloc(sizeof(Class*)*pn);
 	for(int_t i=0; i<pn; ++i){
-		const ClassPtr& cls = core()->get_cpp_class(param_types[i]);
+		const ClassPtr& cls = core()->get_cpp_class(pth.param_types[i]);
 		if(raweq(cls, get_cpp_class<Any>()) || raweq(cls, get_cpp_class<void>())){
 			param_types_[i] = 0;
 		}

@@ -162,9 +162,8 @@ void Class::def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility)
 	def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
 }
 
-const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, void (*fun)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types){
-	return unchecked_ptr_cast<CFun>(def2(primary_key, 
-		xnew<CFun>(fun, val, val_size, param_n, param_types), secondary_key, accessibility));
+const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
+	return unchecked_ptr_cast<CFun>(def2(primary_key, xnew<CFun>(pth, val, val_size), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){

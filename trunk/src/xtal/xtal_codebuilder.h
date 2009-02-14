@@ -145,7 +145,7 @@ public:
 
 		PODArrayList<Direct> directs;
 		int_t scope_info_num;
-		int_t fun_frames_size;
+		uint_t fun_frames_size;
 
 		enum{
 			SCOPE,

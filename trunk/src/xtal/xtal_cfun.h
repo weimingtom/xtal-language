@@ -1299,8 +1299,8 @@ private:
 		m & klass_;
 	}
 
-	IDPtr primary_key_;
 	AnyPtr klass_;
+	IDPtr primary_key_;
 };
 
 /**

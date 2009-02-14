@@ -92,7 +92,7 @@ void PODStackBase::upsize_detail(size_t us){
 	subp(current_, us);
 
 	size_t oldsize = size();
-	size_t oldcapa = capacity();
+	//size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	void* oldp = begin_;
 	size_t newcapa = 16 + newsize + newsize/2;

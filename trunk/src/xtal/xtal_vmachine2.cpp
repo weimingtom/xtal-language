@@ -635,7 +635,7 @@ void VMachine::after_gc(){
 void VMachine::print_info(){
 	std::printf("stack size %d\n", stack_.size());
 	for(uint_t i=0; i<stack_.size(); ++i){
-		std::printf("\tstack value %d = %d\n", i, ap(stack_[i])->to_s()->c_str());
+		std::printf("\tstack value %d = %s\n", i, ap(stack_[i])->to_s()->c_str());
 	}
 
 	std::printf("fun_frames size %d\n", fun_frames_.size());

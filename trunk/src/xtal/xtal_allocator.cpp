@@ -14,7 +14,7 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 }
 
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current){
-	uint_t size = (uint_t)(end-begin);
+	//uint_t size = (uint_t)(end-begin);
 	uint_t newsize = (uint_t)(current-begin);
 	if(newsize){
 		void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);

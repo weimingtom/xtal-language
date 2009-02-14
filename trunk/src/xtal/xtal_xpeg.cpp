@@ -688,6 +688,7 @@ AnyPtr Executor::captures(){
 
 	ret->set_at(empty_id, at(empty_string));
 	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+		XTAL_UNUSED_VAR(v);
 		ret->set_at(k, at(k));
 	}
 
@@ -699,6 +700,7 @@ AnyPtr Executor::captures_values(){
 
 	ret->set_at(empty_id, at(empty_string));
 	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+		XTAL_UNUSED_VAR(v);
 		ret->set_at(k, call(k));
 	}
 
@@ -790,7 +792,6 @@ bool Executor::match_inner(const AnyPtr& anfa){
 
 	int_t nodenum = tree_->size();
 	uint_t mins = stack_.size();
-	uint_t minc = cap_->size();
 
 	for(uint_t i=0, sz=nfa->cap_list_->size(); i<sz; ++i){
 		cap_->set_at(nfa->cap_list_->at(i), xnew<Cap>());
@@ -870,6 +871,17 @@ bool Executor::test(const AnyPtr& ae){
 
 	switch(e->type){
 		XTAL_NODEFAULT;
+
+		case Element::TYPE_CONCAT:
+		case Element::TYPE_OR:
+		case Element::TYPE_MORE0:
+		case Element::TYPE_MORE1:
+		case Element::TYPE_01:
+		case Element::TYPE_EMPTY:
+		case Element::TYPE_CAP:
+		case Element::TYPE_DECL:
+			XTAL_ASSERT(false);
+			break;
 
 		XTAL_CASE(Element::TYPE_INVALID){
 			return !e->inv;
@@ -965,7 +977,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_NODE){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			int_t pos = scanner_->pos();
+			//int_t pos = scanner_->pos();
 			if(tree_){
 				int_t nodenum = tree_->size() - e->param3;
 				if(nodenum<0){ nodenum = 0; }
@@ -1141,8 +1153,6 @@ AnyPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element:
 AnyPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
 
 void cap_vm(const VMachinePtr& vm){
-	int n = vm->named_arg_count();
-	int m = vm->ordered_arg_count();
 	if(vm->named_arg_count()==1 && vm->ordered_arg_count()==0){ 
 		vm->return_result(cap(vm->arg_name(0), vm->arg(vm->arg_name(0)))); 
 		return;
@@ -1189,27 +1199,6 @@ void set_body(const ElementPtr& x, const AnyPtr& term){ if(x->type==Element::TYP
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
 AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
-////////////////////////////////////////////////////////////////////////
-
-void def_common_methods(const ClassPtr& p){
-	p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
-	p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
-	p->def_method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
-	p->def_method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
-	p->def_method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
-	p->def_method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
-	p->def_method(Xid(op_com), &inv);
-	
-	p->def_method(Xid(op_or), &select, get_cpp_class<Element>());
-	p->def_method(Xid(op_or), &select, get_cpp_class<String>());
-	p->def_method(Xid(op_or), &select, get_cpp_class<ChRange>());
-	p->def_method(Xid(op_or), &select, get_cpp_class<Fun>());
-	p->def_method(Xid(op_shr), &concat, get_cpp_class<Element>());
-	p->def_method(Xid(op_shr), &concat, get_cpp_class<String>());
-	p->def_method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
-	p->def_method(Xid(op_shr), &concat, get_cpp_class<Fun>());
-}
-
 }
 
 void initialize_xpeg(){
@@ -1248,13 +1237,12 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = new_cpp_class<Element>(Xid(Element));
-		def_common_methods(p);
 		p->def_method(Xid(set_body), &set_body);
 	}
 
 	{
-		ClassPtr classes[3] = {new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
-		for(int i=0; i<3; ++i){
+		ClassPtr classes[4] = {new_cpp_class<Element>(), new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
+		for(int i=0; i<4; ++i){
 			ClassPtr p = classes[i];
 			p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
 			p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());

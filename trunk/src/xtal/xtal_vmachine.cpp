@@ -338,9 +338,9 @@ const AnyPtr& VMachine::local_variable(int_t pos){
 
 #define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
 #define XTAL_VM_CASE_FIRST(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
-#define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc;
+#define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc; XTAL_UNUSED_VAR(inst);
 #define XTAL_VM_SWITCH switch(*pc)
-#define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc
+#define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc; XTAL_UNUSED_VAR(inst)
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
 #define XTAL_VM_EXCEPT(e) do{ except_[0] = e; if(debug_enable_ && debug_->is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
 #define XTAL_VM_RETURN return
@@ -492,9 +492,9 @@ void VMachine::execute_inner(const inst_t* start){
 	XTAL_ASSERT(stack_size>=0);
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
-retry:
 
 #ifdef XTAL_USE_CPP_EXCEPTION
+retry:
 try{
 #else 
 {

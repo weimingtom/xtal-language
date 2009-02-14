@@ -69,7 +69,7 @@ public:
 	Token(){}
 	
 	Token(int_t type, const AnyPtr& value, int_t flags, int_t keyword_number = 0)
-		:type_((u8)type), flags_((u8)flags), value_(value), keyword_number_(keyword_number){}
+		:type_((u8)type), flags_((u8)flags), keyword_number_(keyword_number), value_(value){}
 
 	int_t type() const{ return type_; }
 	bool left_space() const{ return (flags_ & FLAG_LEFT_SPACE) != 0; }

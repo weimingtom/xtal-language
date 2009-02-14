@@ -984,7 +984,6 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	const Token& tok = lexer_read();
 	error_->error(lineno(), Xt("Xtal Compile Error 1002")->call(Named(Xid(char), lexer_peek().to_s())));
 }
 

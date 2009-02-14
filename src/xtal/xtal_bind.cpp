@@ -15,6 +15,11 @@ void Iterator_block_first(const VMachinePtr& vm){
 
 }
 
+struct BindInfo{
+	const char_t* name;
+
+};
+
 void Core::bind(){
 
 	builtin()->def(Xid(String), new_cpp_class<String>());

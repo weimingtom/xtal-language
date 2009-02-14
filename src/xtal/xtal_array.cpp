@@ -31,7 +31,8 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 	}
 }
 
-Array::Array(const Array& v){
+Array::Array(const Array& v)
+:Base(v){
 	size_ = capa_ = ((Array&)v).size();
 	if(size_>0){
 		values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);

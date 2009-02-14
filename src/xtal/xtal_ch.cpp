@@ -166,7 +166,7 @@ int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
 	return core()->chcode_lib()->ch_cmp(a, asize, b, bsize);
 }
 
-void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, int* buf, uint_t k, int offset){
+void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, uint_t* buf, uint_t k, int_t offset){
 	uint_t v1 = buf[k-1+offset]+1;
 	uint_t v2 = buf[k+1+offset];
 	uint_t x = v1>v2 ? v1 : v2;
@@ -186,20 +186,20 @@ uint_t edit_distance(const void* data1, uint_t data_size1, const void* data2, ui
 	uint_t size1 = data_size1 + 1;
 	uint_t size2 = data_size2 + 1;
 
-	int buf_size = size1+size2+6;
-	int* buf = (int*)user_malloc(sizeof(int)*buf_size);
+	uint_t buf_size = size1+size2+6;
+	uint_t* buf = (uint_t*)user_malloc(sizeof(uint_t)*buf_size);
 	
-	for(int i=0; i<buf_size; ++i){
+	for(uint_t i=0; i<buf_size; ++i){
 		buf[i] = 0;
 	}
 
-	int offset = size2+1, delta = size1-size2;
-	for(int p=0;;++p){
-		for(int k=-p; k<delta; ++k){
+	int_t offset = size2+1, delta = size1-size2;
+	for(int_t p=0;;++p){
+		for(int_t k=-p; k<delta; ++k){
 			edit_distance_helper(data1, size1, data2, size2, buf, k, offset);
 		}
 
-		for(int k=delta+p; k>delta; --k){
+		for(int_t k=delta+p; k>delta; --k){
 			edit_distance_helper(data1, size1, data2, size2, buf, k, offset);
 		}
 

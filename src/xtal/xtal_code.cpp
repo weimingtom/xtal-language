@@ -16,7 +16,7 @@ Code::Code()
 	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
-void Code::set_lineno_info(int_t line){
+void Code::set_lineno_info(uint_t line){
 	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
 		return;
 	LineNumberTable lnt={(u16)code_.size(), (u16)line};
@@ -64,7 +64,7 @@ void Code::erase_code(inst_t* p, int_t size){
 	code_.erase(p-&code_[0], size);
 }
 
-bool Code::add_break_point(int_t lineno){
+bool Code::add_break_point(uint_t lineno){
 	for(uint_t i=0; i<lineno_table_.size(); ++i){
 		if(lineno_table_[i].lineno==lineno){
 			if(code_[lineno_table_[i].start_pc]!=InstBreakPoint::NUMBER){
@@ -77,7 +77,7 @@ bool Code::add_break_point(int_t lineno){
 	return false;
 }
 
-void Code::remove_break_point(int_t lineno){
+void Code::remove_break_point(uint_t lineno){
 	for(uint_t i=0; i<lineno_table_.size(); ++i){
 		if(lineno_table_[i].lineno==lineno){
 			if(code_[lineno_table_[i].start_pc]==InstBreakPoint::NUMBER){

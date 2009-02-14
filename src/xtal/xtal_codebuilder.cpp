@@ -92,7 +92,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 					stderr_stream()->put_s("\n");
 				}
 
-				for(int_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn))/sizeof(inst_t); ++i){
+				for(uint_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn))/sizeof(inst_t); ++i){
 					result_->code_.pop_back();
 				}
 
@@ -588,7 +588,7 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
 			if(raweq(entry.name, key) && (number<0 || entry.number<0 || number==entry.number)){
-				if(vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
+				if((uint_t)vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
 					ret.var_frame = &vf;
 					ret.entry = &entry;
 					if(!traceless){
@@ -1019,7 +1019,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 
 void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	IDPtr label;
-	int_t label_kind;
+	int_t label_kind = 0;
 
 	if(e->tag()==EXPR_BREAK){
 		label = e->break_label();
@@ -2431,12 +2431,14 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			MapPtr jump_map = xnew<Map>();
 			Xfor2(k, v, case_map){
+				XTAL_UNUSED_VAR(v);
 				int_t jump_to = reserve_label();
 				jump_map->set_at(k, jump_to);
 			}
 
 			put_inst(InstMakeMap());
 			Xfor2(k, v, case_map){
+				XTAL_UNUSED_VAR(v);
 				compile_expr(k);
 				set_jump(InstPushGoto::OFFSET_address, jump_map->at(k)->to_i());
 				put_inst(InstPushGoto());
@@ -2518,6 +2520,7 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
 	ret = vm->result_and_cleanup_call();
 
 	XTAL_CATCH_EXCEPT(e){
+		XTAL_UNUSED_VAR(e);
 		ret = undefined;
 	}
 	return ret;
@@ -2536,6 +2539,7 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b)
 	}
 
 	XTAL_CATCH_EXCEPT(e){
+		XTAL_UNUSED_VAR(e);
 		ret = undefined;
 	}
 
@@ -2763,6 +2767,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			else{
 				AnyPtr ret = term->member(ptr_as<ID>(e->member_name()), ns, null, false);
 				XTAL_CATCH_EXCEPT(e){
+					XTAL_UNUSED_VAR(e);
 					return undefined;
 				}
 			}

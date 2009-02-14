@@ -45,7 +45,7 @@
 #else
 #	define XTAL_GLOBAL_INTERPRETER_LOCK
 #	define XTAL_GLOBAL_INTERPRETER_UNLOCK
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)if(xunlock)
 #endif
 
 /**
@@ -63,6 +63,8 @@
 */
 #define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->except()))
 
+
+#define XTAL_UNUSED_VAR(x) (void)x
 
 #ifdef __GNUC__
 #	define XTAL_NOINLINE __attribute__((noinline)) 

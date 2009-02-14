@@ -85,8 +85,8 @@ public:
 protected:
 
 	FramePtr outer_;
-	CodePtr code_;
 	AnyPtr this_;
+	CodePtr code_;
 	FunInfo* info_;
 	
 	virtual void visit_members(Visitor& m){

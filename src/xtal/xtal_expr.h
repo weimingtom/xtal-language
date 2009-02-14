@@ -266,7 +266,7 @@ class ExprBuilder{
 public:
 
 	ExprBuilder(int_t lineno = 0)
-		:lineno_(lineno), root_(xnew<Expr>()){}
+		:root_(xnew<Expr>()), lineno_(lineno){}
 
 	int_t lineno(){
 		return lineno_;

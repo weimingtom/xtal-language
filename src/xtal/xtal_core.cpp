@@ -158,26 +158,26 @@ void Core::initialize(const CoreSetting& setting){
 		&cpp_class_map_.insert(&CppClassSymbol<Array>::value, null).first->second,
 	};
 
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
 	}
 
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(*holders[i]);
 		new(p) Base();
 	}
 		
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(*holders[i]);
 		new(p) CppClass();
 	}
 
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(*holders[i]);
 		p->set_class(get_cpp_class<CppClass>());
 	}
 	
-	for(int i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
+	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
 		Base* p = pvalue(*holders[i]);
 		register_gc(p);
 	}
@@ -291,6 +291,7 @@ void Core::uninitialize(){
 		for(int i=0; i<n; ++i){
 			Base* p = objects_begin_[i];
 			uint_t count = p->ref_count();
+			count = count;
 		}
 
 		XTAL_ASSERT(false); // ‘S•”ŠJ•ú‚Å‚«‚Ä‚È‚¢
@@ -440,6 +441,7 @@ struct ConnectedPointer{
 
 	ConnectedPointer& operator --(){
 		--pos;
+		return *this;
 	}
 
 	ConnectedPointer operator --(int){
@@ -819,6 +821,7 @@ AnyPtr load_and_save(const StringPtr& file_name){
 		fs->serialize(code);
 		fs->close();
 		XTAL_CHECK_EXCEPT(e){
+			XTAL_UNUSED_VAR(e);
 			return null;
 		}
 		gc();

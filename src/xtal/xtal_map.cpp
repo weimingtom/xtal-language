@@ -85,7 +85,7 @@ void Map::push_all(const VMachinePtr& vm){
 //////////////////////////////////////////////////////////
 
 MapIter::MapIter(const MapPtr& m, int_t type)
-	:map_(m), type_(type), node_(m->begin()){
+	:map_(m), node_(m->begin()), type_(type){
 }
 
 void MapIter::block_next(const VMachinePtr& vm){

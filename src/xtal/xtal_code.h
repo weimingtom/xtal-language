@@ -13,7 +13,7 @@ public:
 	*/
 	int_t compliant_lineno(const inst_t* p);
 		
-	void set_lineno_info(int_t line);
+	void set_lineno_info(uint_t line);
 
 	const inst_t* data(){
 		return &code_[0];
@@ -93,9 +93,9 @@ public:
 
 	void erase_code(inst_t* p, int_t size);
 
-	bool add_break_point(int_t lineno);
+	bool add_break_point(uint_t lineno);
 
-	void remove_break_point(int_t lineno);
+	void remove_break_point(uint_t lineno);
 
 protected:
 

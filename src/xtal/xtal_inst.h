@@ -30,10 +30,10 @@ typedef inst_16_t<u16, 0> inst_u16_t;
 typedef inst_16_t<i16, 1> inst_address_t;
 
 
-inline int_t inst_inspect(i8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline int_t inst_inspect(u8 value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline int_t inst_inspect(inst_i16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
-inline int_t inst_inspect(inst_u16_t value, Inst* inst, const CodePtr& code){ return (int_t)value; }
+inline int_t inst_inspect(i8 value, Inst*, const CodePtr&){ return (int_t)value; }
+inline int_t inst_inspect(u8 value, Inst*, const CodePtr&){ return (int_t)value; }
+inline int_t inst_inspect(inst_i16_t value, Inst*, const CodePtr&){ return (int_t)value; }
+inline int_t inst_inspect(inst_u16_t value, Inst*, const CodePtr&){ return (int_t)value; }
 
 int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code);
 
@@ -93,7 +93,7 @@ void Inst::checked_assign(T& ref, int v){
 		Inst##InstName(){\
 			op = N;\
 		}\
-		StringPtr inspect(const CodePtr& code){\
+		StringPtr inspect(const CodePtr&){\
 			return make_inst_string(\
 					XTAL_STRING(#InstName));\
 		}\

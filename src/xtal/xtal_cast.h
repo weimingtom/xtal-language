@@ -174,14 +174,14 @@ struct CastHelperHelper{
 
 template<>
 struct CastHelper<const AnyPtr*>{
-	static bool can_cast(const AnyPtr& a){ return true; }
+	static bool can_cast(const AnyPtr&){ return true; }
 	static const AnyPtr* unchecked_cast(const AnyPtr& a){ return (AnyPtr*)&a; }
 	static const AnyPtr* get_null(){ return (AnyPtr*)&null; }
 };
 
 template<>
 struct CastHelper<const Any*>{
-	static bool can_cast(const AnyPtr& a){ return true; }
+	static bool can_cast(const AnyPtr&){ return true; }
 	static const Any* unchecked_cast(const AnyPtr& a){ return (Any*)&a; }
 	static const Any* get_null(){ return (Any*)&null; }
 };
@@ -238,7 +238,7 @@ struct CastHelper<float_t>{
 
 template<>
 struct CastHelper<bool>{
-	static bool can_cast(const AnyPtr& a){ return true; }
+	static bool can_cast(const AnyPtr&){ return true; }
 	static bool unchecked_cast(const AnyPtr& a){ return a; }
 	static bool get_null(){ return false; }
 };

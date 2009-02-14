@@ -1,5 +1,5 @@
 
-#pragma
+#pragma once
 
 namespace xtal{
 

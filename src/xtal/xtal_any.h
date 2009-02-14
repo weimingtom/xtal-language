@@ -40,6 +40,11 @@ public:
 	
 public:
 
+	void set_nullt(){
+		type_ = TYPE_NULL;
+		pvalue_ = 0;
+	}
+
 	void set_null(){
 		type_ = TYPE_NULL;
 		pvalue_ = 0;

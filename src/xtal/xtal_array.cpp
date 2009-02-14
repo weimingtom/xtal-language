@@ -11,11 +11,16 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(uint_t size){
-	capa_ = size + 3; // todo overflow check
-
+	capa_ = size; // todo buffer overflow
 	size_ = size;
-	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
-	std::memset(values_, 0, sizeof(AnyPtr)*size_);
+
+	if(capa_!=0){
+		values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+		std::memset(values_, 0, sizeof(AnyPtr)*size_);
+	}
+	else{
+		values_ = 0;
+	}
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end){
@@ -79,15 +84,28 @@ void Array::resize(uint_t sz){
 }
 
 void Array::upsize(uint_t sz){
-	if(size_+sz>capa_){  // todo overflow check
-		uint_t newcapa = size_+sz+capa_;
-		AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
-		std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
-		std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
-		user_free(values_);
-		values_ = newp;
-		size_ += sz;
-		capa_ = newcapa;
+	if(sz==0){
+		return;
+	}
+
+	if(size_+sz>capa_){ // todo overflow check
+		if(capa_!=0){
+			uint_t newcapa = size_+sz+capa_+3;
+			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
+			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
+			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
+			user_free(values_);
+			values_ = newp;
+			size_ += sz;
+			capa_ = newcapa;
+		}
+		else{
+			uint_t newcapa = 3+sz; // todo overflow check
+			values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
+			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
+			size_ = sz;
+			capa_ = newcapa;
+		}
 	}
 	else{
 		std::memset(&values_[size_], 0, sizeof(AnyPtr)*sz);
@@ -107,16 +125,30 @@ void Array::downsize(uint_t sz){
 }
 
 const AnyPtr& Array::op_at(int_t i){
+	i = calc_offset(i);
+	if(i<0){
+		return undefined;
+	}
+
 	return values_[calc_offset(i)];
 
 }
 
 void Array::op_set_at(int_t i, const AnyPtr& v){
-	values_[calc_offset(i)] = v;
+	i = calc_offset(i);
+	if(i<0){
+		return;
+	}
+
+	values_[i] = v;
 }
 
 void Array::erase(int_t start, int_t n){
-	int pos = calc_offset(start);
+	int_t pos = calc_offset(start);
+	if(pos<0){
+		return;
+	}
+
 	if(n<0 || (uint_t)(n + pos)>size_){
 		throw_index_error();
 		return;
@@ -138,6 +170,10 @@ void Array::insert(int_t i, const AnyPtr& v){
 		size_++;
 	}
 	int_t pos = calc_offset(i);
+	if(pos<0){
+		return;
+	}
+
 	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
 	copy_innocence(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
@@ -167,6 +203,10 @@ ArrayPtr Array::slice(int_t start, int_t n){
 	}
 
 	int_t pos = calc_offset(start);
+	if(pos<0){
+		return null;
+	}
+
 	if(n<0 || (uint_t)(n + pos)>size_){
 		throw_index_error();
 		return null;
@@ -254,13 +294,13 @@ int_t Array::calc_offset(int_t i){
 		i = size_ + i;
 		if(i<0){
 			throw_index_error();
-			return 0;
+			return -1;
 		}
 	}
 	else{
 		if((uint_t)i >= size_){
 			throw_index_error();
-			return 0;
+			return -1;
 		}
 	}
 	return i;

@@ -926,7 +926,13 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(BlockBeginDirect){ // 4
 		FunFrame& f = ff(); 
-		f.variables_.upsize(f.fun()->code()->scope_info(inst.core_number)->variable_size);
+		uint_t size = f.fun()->code()->scope_info(inst.core_number)->variable_size;
+		f.variables_.upsize(size);
+//#ifdef XTAL_DEBUG
+		for(uint_t i=0; i<size; ++i){
+			f.variables_[i].set_nullt();
+		}
+//#endif
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 

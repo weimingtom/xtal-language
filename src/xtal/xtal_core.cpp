@@ -1,76 +1,122 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
-//#define XTAL_DEBUG_ALLOC
+#define XTAL_DEBUG_ALLOC 0
 
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC!=0
 #include <map>
 
 struct SizeAndCount{
 	SizeAndCount(int a = 0, int b = 0){
 		size = a;
 		count = b;
+		free = false;
 	}
 	int size;
 	int count;
+	bool free;
 };
 
+namespace{
 std::map<void*, SizeAndCount> mem_map_;
 std::map<void*, SizeAndCount> so_mem_map_;
-int gcounter = 0;
+int gcounter = 1;
+int max_used_memory = 0;
+int used_memory = 0;
+}
 
 void* debug_malloc(size_t size){
+	//	xtal::full_gc();
 	void* ret = malloc(size);
-	if(gcounter==18150){
+	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+	used_memory += size;
+
+	if(gcounter==35){
 		gcounter = gcounter;
 	}
-	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+
+	if(max_used_memory<used_memory){
+		max_used_memory = used_memory+1024; 
+		xtal::full_gc();
+		printf("max used memory %dKB\n", max_used_memory/1024);
+	}
+		
+	memset(ret, 0xdd,size);
+
 	return ret;
 }
 
 void debug_free(void* p){
 	if(p){
-		XTAL_ASSERT(mem_map_[p].size);
+		int gcount = mem_map_[p].count;
+		XTAL_ASSERT(!mem_map_[p].free);
 		memset(p, 0xcd, mem_map_[p].size);
-		free(p);
-		mem_map_.erase(p);
+		used_memory -= mem_map_[p].size;
+		mem_map_[p].free = true;
+		//free(p);
+		//mem_map_.erase(p);
 	}
 }
 
 void* debug_so_malloc(size_t size){
+//	xtal::full_gc();
 	void* ret = malloc(size);
-	if(gcounter==18150){
+	so_mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+	used_memory += size;
+	
+	if(gcounter==35){
 		gcounter = gcounter;
 	}
-	so_mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
+
+	if(max_used_memory<used_memory){
+		max_used_memory = used_memory+1024; 
+		xtal::full_gc();
+		printf("max used memory %dKB\n", max_used_memory/1024);
+	}
+
+	memset(ret, 0xdd,size);
+
 	return ret;
 }
 
 void debug_so_free(void* p, size_t sz){
 	if(p){
+		int gcount = so_mem_map_[p].count;
+		XTAL_ASSERT(!so_mem_map_[p].free);
 		XTAL_ASSERT(so_mem_map_[p].size==sz);
 		memset(p, 0xcd, so_mem_map_[p].size);
-		free(p);
-		so_mem_map_.erase(p);
+		used_memory -= so_mem_map_[p].size;
+		so_mem_map_[p].free = true;
+		//free(p);
+		//so_mem_map_.erase(p);
 	}
 }
 
 void display_debug_memory(){
+	bool allfree = true;
 	for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
 		int size = it->second.size;
 		int count = it->second.count;
 		size = size;
+		if(!it->second.free){
+			allfree = false;
+		}
 	}
 
-	XTAL_ASSERT(mem_map_.empty()); // 全部開放できてない
+	XTAL_ASSERT(allfree); // 全部開放できてない
 
 	for(std::map<void*, SizeAndCount>::iterator it=so_mem_map_.begin(); it!=so_mem_map_.end(); ++it){
 		int size = it->second.size;
 		int count = it->second.count;
 		size = size;
+		if(!it->second.free){
+			allfree = false;
+		}
 	}
 
-	XTAL_ASSERT(so_mem_map_.empty()); // 全部開放できてない
+	XTAL_ASSERT(allfree); // 全部開放できてない
+
+	XTAL_ASSERT(used_memory==0);
 }
 
 #endif
@@ -314,7 +360,7 @@ void Core::uninitialize(){
 ////////////////////////////////////
 
 void* Core::so_malloc(size_t size){
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC==2
 	return debug_so_malloc(size);
 #endif
 
@@ -322,7 +368,7 @@ void* Core::so_malloc(size_t size){
 }
 
 void Core::so_free(void* p, size_t size){
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC==2
 	return debug_so_free(p, size);
 #endif
 
@@ -338,7 +384,7 @@ void* Core::user_malloc(size_t size){
 } 
 
 void* Core::user_malloc_nothrow(size_t size){
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC!=0
 	return debug_malloc(size);
 #endif
 
@@ -360,7 +406,7 @@ void* Core::user_malloc_nothrow(size_t size){
 } 
 
 void Core::user_free(void* p){
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC!=0
 	return debug_free(p);
 #endif
 

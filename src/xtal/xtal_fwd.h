@@ -344,13 +344,15 @@ extern Named null_named;
 struct ParamInfo;
 struct VMAndData;
 
+struct CppClassSymbolData{ int value; };
+
 template<class T>
 struct CppClassSymbol{
-	static int value;
+	static CppClassSymbolData value;
 };
 
 template<class T>
-int CppClassSymbol<T>::value = 0xc1a55;
+CppClassSymbolData CppClassSymbol<T>::value = {0xc1a55};
 
 template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};

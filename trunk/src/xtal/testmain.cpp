@@ -38,6 +38,10 @@ int main2(int argc, char** argv){
 	Core core;
 	core.initialize(setting);
 
+	Xfor(v, interned_strings()){
+		v->p();
+	}
+
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
 

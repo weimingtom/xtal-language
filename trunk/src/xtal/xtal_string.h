@@ -195,7 +195,6 @@ private:
 	enum{
 		ROPE = 1<<0,
 		INTERNED = 1<<1,
-
 	};
 	uint_t flags_;
 
@@ -222,6 +221,7 @@ private:
 * @brief Intern済みのString
 *
 * これはC++の型システムのために存在する。
+* XtalにおいてIntern済みStringはString型である。
 */
 class ID : public String{
 public:

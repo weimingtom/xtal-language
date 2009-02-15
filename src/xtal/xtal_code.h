@@ -79,7 +79,7 @@ public:
 		return &except_info_table_[i];
 	}
 
-	FunPtr first_fun(){
+	MethodPtr first_fun(){
 		return first_fun_;
 	}
 
@@ -120,8 +120,7 @@ private:
 	ArrayPtr once_table_;
 	ClassPtr filelocal_;
 	StringPtr source_file_name_;
-	FunPtr first_fun_;
-
+	MethodPtr first_fun_;
 
 private:
 

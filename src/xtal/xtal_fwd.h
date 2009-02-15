@@ -243,6 +243,7 @@ typedef SmartPtr<MemoryStream> MemoryStreamPtr;
 typedef SmartPtr<StringStream> StringStreamPtr;
 typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
 typedef SmartPtr<Fun> FunPtr;
+typedef SmartPtr<Method> MethodPtr;
 typedef SmartPtr<Fiber> FiberPtr;
 typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
 typedef SmartPtr<InstanceVariableSetter> InstanceVariableSetterPtr;

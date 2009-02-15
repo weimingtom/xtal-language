@@ -316,7 +316,7 @@ AnyPtr Serializer::inner_deserialize(){
 				p->once_table_->set_at(i, undefined);
 			}
 
-			FunPtr ret(xnew<Fun>(null, null, p, &p->xfun_info_table_[0]));
+			MethodPtr ret(xnew<Method>(null, p, &p->xfun_info_table_[0]));
 			append_value(ret);
 
 			MapPtr map(cast<MapPtr>(inner_deserialize()));

@@ -92,10 +92,10 @@ void PODStackBase::upsize_detail(size_t us){
 	subp(current_, us);
 
 	size_t oldsize = size();
-	//size_t oldcapa = capacity();
+	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	void* oldp = begin_;
-	size_t newcapa = 16 + newsize + newsize/2;
+	size_t newcapa = 2 + us + oldcapa + oldcapa/2;
 	void* newp = plusp(allocate(one_size_*(newcapa+1)), 1);
 
 	std::memcpy(newp, oldp, one_size_*oldsize);

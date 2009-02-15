@@ -11,11 +11,11 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(uint_t size){
-	capa_ = size; // todo buffer overflow
+	capa_ = size+3; // todo buffer overflow
 	size_ = size;
 
 	if(capa_!=0){
-		values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
 		std::memset(values_, 0, sizeof(AnyPtr)*size_);
 	}
 	else{
@@ -28,7 +28,7 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 
 	capa_ = size;
 	size_ = size;
-	values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+	values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
 
 	for(int_t i=0; i<size; ++i){
 		copy_innocence(values_[i], first[i]);
@@ -39,8 +39,8 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 Array::Array(const Array& v)
 :Base(v){
 	size_ = capa_ = ((Array&)v).size();
-	if(size_>0){
-		values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*capa_);
+	if(capa_!=0){
+		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
 		
 		for(uint_t i=0; i<size_; ++i){
 			copy_innocence(values_[i], v.values_[i]);
@@ -64,7 +64,7 @@ Array::~Array(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
-	user_free(values_);
+	so_free(values_, sizeof(AnyPtr)*capa_);
 }
 
 void Array::clear(){
@@ -91,17 +91,17 @@ void Array::upsize(uint_t sz){
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
 			uint_t newcapa = size_+sz+capa_+3;
-			AnyPtr* newp = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
+			AnyPtr* newp = (AnyPtr*)so_malloc(sizeof(AnyPtr)*newcapa);
 			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
 			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
-			user_free(values_);
+			so_free(values_, sizeof(AnyPtr)*capa_);
 			values_ = newp;
 			size_ += sz;
 			capa_ = newcapa;
 		}
 		else{
 			uint_t newcapa = 3+sz; // todo overflow check
-			values_ = (AnyPtr*)user_malloc(sizeof(AnyPtr)*newcapa);
+			values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*newcapa);
 			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
 			size_ = sz;
 			capa_ = newcapa;
@@ -130,7 +130,8 @@ const AnyPtr& Array::op_at(int_t i){
 		return undefined;
 	}
 
-	return values_[calc_offset(i)];
+	XTAL_ASSERT(0<=i && (uint_t)i<size_);
+	return values_[i];
 
 }
 
@@ -140,10 +141,15 @@ void Array::op_set_at(int_t i, const AnyPtr& v){
 		return;
 	}
 
+	XTAL_ASSERT(0<=i && (uint_t)i<size_);
 	values_[i] = v;
 }
 
 void Array::erase(int_t start, int_t n){
+	if(n==0){
+		return;
+	}
+
 	int_t pos = calc_offset(start);
 	if(pos<0){
 		return;
@@ -158,6 +164,9 @@ void Array::erase(int_t start, int_t n){
 		dec_ref_count_force(values_[pos+i]);
 	}
 
+	XTAL_ASSERT(0<=pos && (uint_t)pos<size_);
+	XTAL_ASSERT(0<=pos+n && (uint_t)pos+n<size_);
+
 	std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-(pos+n)));
 	size_ -= n;
 }
@@ -169,8 +178,10 @@ void Array::insert(int_t i, const AnyPtr& v){
 	else{
 		size_++;
 	}
+
 	int_t pos = calc_offset(i);
 	if(pos<0){
+		size_--;
 		return;
 	}
 
@@ -275,7 +286,7 @@ void Array::assign(const AnyPtr& iterator){
 	uint_t i = 0;
 	Xfor(v, iterator){
 		if(i>=size_){
-			resize(i+1);
+			upsize(1);
 		}
 
 		set_at(i, v);

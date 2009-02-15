@@ -61,10 +61,10 @@ private:
 	ClassInfo* info_;
 };
 
-class Fun : public HaveName{
+class Method : public HaveName{
 public:
 
-	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core);
+	Method(const FramePtr& outer, const CodePtr& code, FunInfo* core);
 
 	const FramePtr& outer(){ return outer_; }
 	const CodePtr& code(){ return code_; }
@@ -85,15 +85,36 @@ public:
 protected:
 
 	FramePtr outer_;
-	AnyPtr this_;
 	CodePtr code_;
 	FunInfo* info_;
 	
 	virtual void visit_members(Visitor& m){
 		HaveName::visit_members(m);
-		m & outer_ & this_ & code_;
+		m & outer_ & code_;
 	}
 
+};
+
+class Fun : public Method{
+public:
+
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core)
+		:Method(outer, code, core), this_(athis){
+	}
+
+
+public:
+	
+	virtual void rawcall(const VMachinePtr& vm);
+
+protected:
+
+	virtual void visit_members(Visitor& m){
+		Method::visit_members(m);
+		m & this_;
+	}
+
+	AnyPtr this_;
 };
 
 class Lambda : public Fun{
@@ -101,18 +122,6 @@ public:
 
 	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core)
 		:Fun(outer, th, code, core){
-	}
-
-public:
-	
-	virtual void rawcall(const VMachinePtr& vm);
-};
-
-class Method : public Fun{
-public:
-
-	Method(const FramePtr& outer, const CodePtr& code, FunInfo* core)
-		:Fun(outer, null, code, core){
 	}
 
 public:

@@ -174,7 +174,7 @@ public:
 	*/
 	const AnyPtr& arg(int_t pos, const IDPtr& name);
 	
-	const AnyPtr& arg(int_t pos, Fun* names);
+	const AnyPtr& arg(int_t pos, Method* names);
 
 	/**
 	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB
@@ -220,7 +220,7 @@ public:
 		return unchecked_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
-	void adjust_args(const ParamInfo& p, int_t num);
+	void adjust_args(const Named* params, int_t num);
 
 	/**
 	* @brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB
@@ -354,11 +354,11 @@ public:
 
 	void execute_inner(const inst_t* start);
 
-	void execute(Fun* fun, const inst_t* start_pc);
+	void execute(Method* fun, const inst_t* start_pc);
 
-	void carry_over(Fun* fun);
+	void carry_over(Method* fun);
 
-	void mv_carry_over(Fun* fun);
+	void mv_carry_over(Method* fun);
 
 	const inst_t* resume_pc(){
 		return resume_pc_;
@@ -553,7 +553,7 @@ public:
 
 	void return_result_instance_variable(int_t number, ClassInfo* core);
 
-	ArgumentsPtr make_args(Fun* fun);
+	ArgumentsPtr make_args(Method* fun);
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
 	

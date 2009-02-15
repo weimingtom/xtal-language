@@ -94,13 +94,14 @@ void Class::overwrite(const ClassPtr& p){
 void Class::inherit(const ClassPtr& md){
 	if(is_inherited(md))
 		return;
+	
+	XTAL_ASSERT(md);
 
 	mixins_->push_back(md);
 	inc_global_mutate_count();
 }
 
 void Class::inherit_strict(const ClassPtr& md){
-	
 	if(md->is_cpp_class() && is_inherited_cpp_class()){
 		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1019")));
 		return;
@@ -109,6 +110,8 @@ void Class::inherit_strict(const ClassPtr& md){
 	if(is_inherited(md)){
 		return;
 	}
+
+	XTAL_ASSERT(md);
 
 	mixins_->push_back(md);
 	inc_global_mutate_count();

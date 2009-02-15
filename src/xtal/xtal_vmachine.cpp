@@ -17,7 +17,7 @@ inline const IDPtr& VMachine::identifier_or_pop(int_t n){
 	else{ return unchecked_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
 }
 
-void VMachine::execute(Fun* fun, const inst_t* start_pc){
+void VMachine::execute(Method* fun, const inst_t* start_pc){
 	setup_call(0);
 	carry_over(fun);
 	const inst_t* temp;
@@ -140,7 +140,7 @@ void VMachine::return_result_instance_variable(int_t number, ClassInfo* core){
 	return_result((ff().instance_variables->variable(number, core)));
 }
 
-void VMachine::carry_over(Fun* fun){
+void VMachine::carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
@@ -186,7 +186,7 @@ void VMachine::carry_over(Fun* fun){
 	}
 }
 
-void VMachine::mv_carry_over(Fun* fun){
+void VMachine::mv_carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
@@ -1417,7 +1417,9 @@ XTAL_VM_SWITCH{
 			
 			int_t n = core->mixins;
 			for(int_t i = 0; i<n; ++i){
-				cp->inherit_strict(ptr_cast<Class>(pop()));
+				const ClassPtr& cls = ptr_cast<Class>(pop());
+				XTAL_VM_CHECK_EXCEPT;
+				cp->inherit_strict(cls);
 			}
 
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);

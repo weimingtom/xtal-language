@@ -204,19 +204,19 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 bool CodeBuilder::put_set_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
-		if(info.entry->constant){
+		if(entry(info).constant){
 			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
 		}
 
 		if(info.pos<=0xff){
-			var_set_direct(*info.var_frame);
+			var_set_direct(var_frame(info));
 			put_inst(InstSetLocalVariable1Byte(info.pos));
 		}
 		else{
 			put_inst(InstSetLocalVariable2Byte(info.pos));
 		}
 
-		info.entry->value = undefined;
+		entry(info).value = undefined;
 
 		return true;
 	}
@@ -232,9 +232,9 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 	if(info.pos>=0){
 
 		if(rhs){
-			AnyPtr val = info.entry->initialized ? info.entry->value : do_expr(rhs);
+			AnyPtr val = entry(info).initialized ? entry(info).value : do_expr(rhs);
 
-			if(raweq(val, undefined) || info.entry->assigned){
+			if(raweq(val, undefined) || entry(info).assigned){
 
 				if(raweq(val, undefined)){
 					compile_expr(rhs);
@@ -244,7 +244,7 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 				}
 
 				if(info.pos<=0xff){
-					var_set_direct(*info.var_frame);
+					var_set_direct(var_frame(info));
 					put_inst(InstSetLocalVariable1Byte(info.pos));
 				}
 				else{
@@ -252,12 +252,12 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 				}
 			}
 
-			info.entry->value = val;
+			entry(info).value = val;
 
 		}
 		else{
 			if(info.pos<=0xff){
-				var_set_direct(*info.var_frame);
+				var_set_direct(var_frame(info));
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 			else{
@@ -276,14 +276,14 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
 		if(info.pos<=0xff){
-			var_set_direct(*info.var_frame);
+			var_set_direct(var_frame(info));
 			put_inst(InstLocalVariable1Byte(info.pos));
 		}
 		else{
 			put_inst(InstLocalVariable2Byte(info.pos));
 		}		
 
-		info.entry->referenced = true;
+		entry(info).referenced = true;
 
 		return true;
 	}
@@ -589,8 +589,8 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
 			if(raweq(entry.name, key) && (number<0 || entry.number<0 || number==entry.number)){
 				if((uint_t)vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
-					ret.var_frame = &vf;
-					ret.entry = &entry;
+					ret.var_frame = var_frames_.size()-1-i;
+					ret.entry = vf.entries.size()-1-j;
 					if(!traceless){
 						if(define){ entry.initialized = true; }
 						scope_chain(i);
@@ -962,18 +962,18 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 			}
 			else{
 				if(e->tag() == EXPR_INC){
-					var_set_direct(*info.var_frame);
+					var_set_direct(var_frame(info));
 					put_inst(InstLocalVariableInc(info.pos));
 				}
 				else{
-					var_set_direct(*info.var_frame);
+					var_set_direct(var_frame(info));
 					put_inst(InstLocalVariableDec(info.pos));
 				}
-				var_set_direct(*info.var_frame);
+				var_set_direct(var_frame(info));
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 
-			info.entry->value = undefined;
+			entry(info).value = undefined;
 
 		}
 		else{
@@ -1224,12 +1224,12 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 				if(v1->cdefine_member_ns()){
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
-					info.entry->value = val;
+					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 				else{
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
-					info.entry->value = val;
+					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 			}
@@ -1447,8 +1447,8 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	
 	{
 		LVarInfo info = var_find(Xid(first_step));
-		info.entry->removed = true;
-		info.entry->constant = true;
+		entry(info).removed = true;
+		entry(info).constant = true;
 	}
 
 	int_t label_cond = reserve_label();
@@ -1483,8 +1483,8 @@ void CodeBuilder::compile_for(const ExprPtr& e){
 	bool referenced_first_step;
 	{
 		LVarInfo info = var_find(Xid(first_step));
-		info.entry->value = false;
-		referenced_first_step = info.entry->referenced;
+		entry(info).value = false;
+		referenced_first_step = entry(info).referenced;
 	}
 
 	set_label(label_continue);
@@ -2745,9 +2745,9 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_LVAR){
 			LVarInfo info = var_find(e->lvar_name(), false, true);
 			if(info.pos>=0){
-				if((info.var_frame->fun_frames_size==fun_frames_.size() || !info.entry->assigned)){
-					info.entry->referenced = true;
-					return info.entry->value;
+				if((var_frame(info).fun_frames_size==fun_frames_.size() || !entry(info).assigned)){
+					entry(info).referenced = true;
+					return entry(info).value;
 				}
 			}
 			return undefined;
@@ -2793,8 +2793,8 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 	if(e->tag()==EXPR_LVAR){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
-			info.entry->assigned = true;
-			info.entry->value = undefined;
+			entry(info).assigned = true;
+			entry(info).value = undefined;
 		}
 	}
 }

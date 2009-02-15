@@ -49,6 +49,8 @@ public:
 
 public:
 
+	void expand_objects_list();
+
 	void enable_gc();
 
 	void disable_gc();
@@ -219,6 +221,8 @@ private:
 	GCObserver** gcobservers_begin_;
 	GCObserver** gcobservers_current_;
 	GCObserver** gcobservers_end_;
+
+	uint_t objects_count_;
 
 	uint_t cycle_count_;
 

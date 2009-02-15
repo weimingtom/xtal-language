@@ -170,7 +170,7 @@ void CFun::rawcall(const VMachinePtr& vm){
 			}
 		}
 
-		vm->adjust_args(pi_, param_n_);
+		vm->adjust_args(pi_.params, param_n_);
 
 		for(int_t i=0; i<param_n_; ++i){
 			const AnyPtr& arg = vm->arg_unchecked(i);

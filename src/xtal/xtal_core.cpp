@@ -23,11 +23,13 @@ std::map<void*, SizeAndCount> so_mem_map_;
 int gcounter = 1;
 int max_used_memory = 0;
 int used_memory = 0;
+const char debugstring[]= "awerwoeekrlwsekrlewskrkerswer";
 }
 
 void* debug_malloc(size_t size){
-	//	xtal::full_gc();
-	void* ret = malloc(size);
+	//xtal::full_gc();
+	//xtal::gc();
+	void* ret = malloc(size + sizeof(debugstring));
 	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
 	used_memory += size;
 
@@ -35,13 +37,18 @@ void* debug_malloc(size_t size){
 		gcounter = gcounter;
 	}
 
+	if(size>10000){
+		size = size;
+	}
+	
 	if(max_used_memory<used_memory){
 		max_used_memory = used_memory+1024; 
 		xtal::full_gc();
 		printf("max used memory %dKB\n", max_used_memory/1024);
 	}
 		
-	memset(ret, 0xdd,size);
+	memset(ret, 0xda, size);
+	memcpy((char*)ret+size, debugstring, sizeof(debugstring));
 
 	return ret;
 }
@@ -50,9 +57,12 @@ void debug_free(void* p){
 	if(p){
 		int gcount = mem_map_[p].count;
 		XTAL_ASSERT(!mem_map_[p].free);
-		memset(p, 0xcd, mem_map_[p].size);
 		used_memory -= mem_map_[p].size;
 		mem_map_[p].free = true;
+
+		XTAL_ASSERT(memcmp((char*)p+mem_map_[p].size, debugstring, sizeof(debugstring))==0);
+		memset(p, 0xcd, mem_map_[p].size);
+
 		//free(p);
 		//mem_map_.erase(p);
 	}
@@ -74,7 +84,7 @@ void* debug_so_malloc(size_t size){
 		printf("max used memory %dKB\n", max_used_memory/1024);
 	}
 
-	memset(ret, 0xdd,size);
+	memset(ret, 0xdd, size);
 
 	return ret;
 }
@@ -129,7 +139,7 @@ void initialize_xpeg();
 namespace{
 
 	enum{
-		OBJECTS_ALLOCATE_SHIFT = 12,
+		OBJECTS_ALLOCATE_SHIFT = 9,
 		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
 		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};
@@ -168,10 +178,6 @@ void Core::initialize(const CoreSetting& setting){
 
 	setting_ = setting;
 
-	objects_begin_  = 0;
-	objects_current_ = 0;
-	objects_end_ = 0;
-
 	objects_list_begin_ = 0;
 	objects_list_current_ = 0;
 	objects_list_end_ = 0;
@@ -180,14 +186,16 @@ void Core::initialize(const CoreSetting& setting){
 	gcobservers_current_ = 0;
 	gcobservers_end_ = 0;
 
+	objects_count_ = 0;
+
 	cycle_count_ = 0;
 
 	disable_gc();
 	so_alloc_.init();
 
-	expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
-	expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
-	*objects_list_current_++ = objects_begin_;
+	expand_objects_list();
+	objects_begin_ = objects_current_ = *objects_list_current_++;
+	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
 	cpp_class_map_.expand(4);
 
@@ -245,6 +253,7 @@ void Core::initialize(const CoreSetting& setting){
 	string_mgr_ = xnew<StringMgr>();
 
 /////////////////////
+	enable_gc();
 
 	bind();
 
@@ -252,9 +261,6 @@ void Core::initialize(const CoreSetting& setting){
 	initialize_math();
 
 ////////////////////////
-	enable_gc();
-////////////////////////
-
 
 	id_op_list_[id_op_call] = Xid(op_call);
 	id_op_list_[id_op_pos] = Xid(op_pos);
@@ -343,15 +349,21 @@ void Core::uninitialize(){
 		XTAL_ASSERT(false); // 全部開放できてない
 	}
 
+	for(Base*** it=objects_list_begin_; it!=objects_list_end_; ++it){
+		Base** begin = *it;
+		Base** current = *it;
+		Base** end = *it+OBJECTS_ALLOCATE_SIZE;
+		fit_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current);
+	}
+
 	objects_list_current_ = objects_list_begin_;
 
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
-	fit_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 
 	so_alloc_.release();
 
-#ifdef XTAL_DEBUG_ALLOC
+#if XTAL_DEBUG_ALLOC!=0
 	display_debug_memory();
 #endif
 
@@ -363,7 +375,6 @@ void* Core::so_malloc(size_t size){
 #if XTAL_DEBUG_ALLOC==2
 	return debug_so_malloc(size);
 #endif
-
 	return so_alloc_.malloc(size);
 }
 
@@ -389,7 +400,8 @@ void* Core::user_malloc_nothrow(size_t size){
 #endif
 
 	//full_gc();
-		
+	//xtal::gc();
+
 	void* ret = setting_.allocator_lib->malloc(size);
 
 	if(!ret){
@@ -426,6 +438,19 @@ void Core::enable_gc(){
 void Core::disable_gc(){
 	cycle_count_--;
 }
+	
+void Core::expand_objects_list(){
+	if(objects_list_current_==objects_list_end_){
+		expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_, 4);
+		for(Base*** it=objects_list_current_; it!=objects_list_end_; ++it){
+			Base** begin = 0;
+			Base** current = 0;
+			Base** end = 0;
+			expand_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current, OBJECTS_ALLOCATE_SIZE);
+			*it = begin;
+		}
+	}
+}
 
 void Core::gc(){
 	if(cycle_count_!=0){ return; }
@@ -454,8 +479,10 @@ void Core::gc(){
 
 		for(Base** it = objects_alive; it!=objects_current_; ++it){
 			so_free(*it, (*it)->value_);
+			*it = 0;
 		}
 
+		objects_count_ -= objects_current_-objects_alive;
 		objects_current_ = objects_alive;
 
 		restart_the_world();
@@ -497,10 +524,12 @@ struct ConnectedPointer{
 	}
 
 	friend bool operator==(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos==b.pos;
 	}
 
 	friend bool operator!=(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos!=b.pos;
 	}
 };
@@ -511,7 +540,7 @@ void Core::full_gc(){
 		CycleCounter cc(&cycle_count_);
 				
 		while(true){			
-			ConnectedPointer current((objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_), objects_list_begin_);
+			ConnectedPointer current(objects_count_, objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
 			if(current==begin){
 				break;
@@ -520,7 +549,7 @@ void Core::full_gc(){
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
 			}
-
+			
 			{ // 参照カウンタを減らす
 				Visitor m(-1);	
 				for(ConnectedPointer it = begin; it!=current; ++it){
@@ -576,7 +605,8 @@ void Core::full_gc(){
 
 				if(exists_have_finalizer){
 					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
-					current = ConnectedPointer((objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_), objects_list_begin_);
+					current = ConnectedPointer(objects_count_, objects_list_begin_);
+					begin = ConnectedPointer(0, objects_list_begin_);
 
 					// 死者が生き返ったかも知れないのでチェックする
 
@@ -629,56 +659,44 @@ void Core::full_gc(){
 
 			for(ConnectedPointer it = alive; it!=current; ++it){
 				so_free(*it, (*it)->value_);
+				*it = 0;
 			}
 			
+			{
+				objects_count_ = alive.pos;
+				objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
+				objects_begin_ = *objects_list_current_;
+				objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
+				objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
+
+				expand_objects_list();
+				objects_list_current_++;
+				XTAL_ASSERT(objects_list_current_<=objects_list_end_);
+			}
+
 			if(current==alive){
 				break;
 			}
 
 			current = alive;
-
-			{
-				int_t list_count = objects_list_current_ - objects_list_begin_;
-				bool first = true;
-				for(int_t i=0; i<list_count; ++i){
-					int_t pos = (i+1)*OBJECTS_ALLOCATE_SIZE;
-					if(current.pos<pos){
-						if(first){
-							first = false;
-							objects_begin_ = objects_list_begin_[i];
-							objects_current_ = objects_begin_ + (current.pos&OBJECTS_ALLOCATE_MASK);
-							objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
-							objects_list_current_ = objects_list_begin_ + i + 1;
-						}
-						else{
-							user_free(objects_list_begin_[i]);
-						}
-					}
-				}
-			}
 		}
-		
+
 		restart_the_world();
 	}
 }
 
 void Core::register_gc(Base* p){
+	CycleCounter cc(&cycle_count_);
 	p->inc_ref_count();
 
 	if(objects_current_==objects_end_){
-		gc();
-
-		if(objects_current_==objects_end_){
-			if(objects_list_current_==objects_list_end_){
-				expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
-			}
-			objects_begin_ = objects_current_ = objects_end_ = 0;
-			expand_simple_dynamic_pointer_array((void**&)objects_begin_, (void**&)objects_end_, (void**&)objects_current_, OBJECTS_ALLOCATE_SIZE);
-			*objects_list_current_++ = objects_begin_;
-		}
+		expand_objects_list();
+		objects_begin_ = objects_current_ = *objects_list_current_++;
+		objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 	}
 
 	*objects_current_++ = p;
+	objects_count_++;
 }
 
 void Core::register_gc_observer(GCObserver* p){

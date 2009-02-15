@@ -167,10 +167,18 @@ public:
 	};
 
 	struct LVarInfo{
-		VarFrame* var_frame;
-		VarFrame::Entry* entry;
+		int_t var_frame;
+		int_t entry;
 		int_t pos;
 	};
+
+	VarFrame& var_frame(const LVarInfo& vi){
+		return var_frames_.reverse_at(vi.var_frame);
+	}
+
+	VarFrame::Entry& entry(const LVarInfo& vi){
+		return var_frames_.reverse_at(vi.var_frame).entries[vi.entry];
+	}
 
 	LVarInfo var_find(const IDPtr& key, bool define = false, bool traceless = false, int_t number = -1);
 	void var_begin(int_t kind);

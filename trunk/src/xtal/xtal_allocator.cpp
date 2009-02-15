@@ -43,6 +43,7 @@ void FixedAllocator::Chunk::init(uint_t blocks, uint_t block_size){
 }
 
 void* FixedAllocator::Chunk::malloc(){
+	XTAL_ASSERT(blocks_available_>0);
 	data_t* ret = first_available_block_;
 	first_available_block_ = static_cast<data_t*>(*ret);
 	--blocks_available_;
@@ -50,7 +51,8 @@ void* FixedAllocator::Chunk::malloc(){
 }
 
 void FixedAllocator::Chunk::free(void* p){
-	data_t *dp = static_cast<data_t*>(p);
+	XTAL_ASSERT(blocks_available_<=blocks_);
+	data_t* dp = static_cast<data_t*>(p);
 	*dp = first_available_block_;
 	first_available_block_ = dp;
 	++blocks_available_;
@@ -72,6 +74,9 @@ void FixedAllocator::init(size_t block_size){
 }
 
 void FixedAllocator::add_chunk(size_t block_size){
+//	if(block_size==8)
+//	printf("addc size%d, blocks%d\n", block_size, blocks_);
+
 	Chunk *new_chunk = (Chunk*)user_malloc_nothrow(sizeof(Chunk)+(block_size)*blocks_*sizeof(data_t));
 	while(!new_chunk){
 		blocks_ /= 2;
@@ -91,6 +96,14 @@ void FixedAllocator::add_chunk(size_t block_size){
 }
 
 void* FixedAllocator::malloc(size_t block_size){	
+	if(free_data_){
+		void* ret = free_data_;
+		free_data_ = static_cast<data_t*>(*free_data_);
+		return ret;
+	}
+
+	gc();
+
 	if(free_data_){
 		void* ret = free_data_;
 		free_data_ = static_cast<data_t*>(*free_data_);
@@ -145,6 +158,8 @@ void* FixedAllocator::malloc_impl(size_t block_size){
 			prev = p;
 		}
 	}
+//	if(block_size==8)
+//	printf("c malloc size%d, blocks%d, blocks_available%d\n", block_size, first_chunk_->blocks_, first_chunk_->blocks_available_);
 	return first_chunk_->malloc();
 }
 
@@ -182,7 +197,7 @@ void* SmallObjectAllocator::malloc(size_t size){
 
 void SmallObjectAllocator::free(void* p, size_t size){
 	if(size>HANDLE_MAX_SIZE){
-		user_free(p/*, size*/);
+		user_free(p);
 	}else{
 		if(p==0){
 			return;

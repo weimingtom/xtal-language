@@ -291,7 +291,7 @@ void FastStack<T>::upsize_detail(size_t us){
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
-	size_t newcapa = 16 + newsize + newsize/2;
+	size_t newcapa = 4 + us + oldcapa + oldcapa/2;
 	T* newp = (T*)allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i){

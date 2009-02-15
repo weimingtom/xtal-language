@@ -134,7 +134,7 @@ const AnyPtr& VMachine::arg(int_t pos, const IDPtr& name){
 	return arg(name);
 }
 
-const AnyPtr& VMachine::arg(int_t pos, Fun* names){
+const AnyPtr& VMachine::arg(int_t pos, Method* names){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count){
 		return get(f.args_stack_size()-1-pos);
@@ -186,11 +186,11 @@ const AnyPtr& VMachine::arg_default(int_t pos, const Named& name_and_def){
 	return arg_default(name_and_def);
 }
 
-void VMachine::adjust_args(const ParamInfo& p, int_t num){
+void VMachine::adjust_args(const Named* params, int_t num){
 	FunFrame& f = ff();
 	int_t offset = f.named_arg_count*2;
 	for(int_t i=f.ordered_arg_count; i<num; ++i){
-		stack_.insert(offset, arg_default(p.params[i]));
+		stack_.insert(offset, arg_default(params[i]));
 		f.ordered_arg_count++;
 	}
 	stack_.downsize(offset);
@@ -380,7 +380,7 @@ ArgumentsPtr VMachine::make_arguments(){
 	return p;
 }
 
-ArgumentsPtr VMachine::make_args(Fun* fun){
+ArgumentsPtr VMachine::make_args(Method* fun){
 	ArgumentsPtr p = xnew<Arguments>();
 
 	for(int_t i = fun->param_size(), size = ff().ordered_arg_count; i<size; ++i){

@@ -29,6 +29,12 @@ int main2(int argc, char** argv){
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.chcode_lib = &sjis_chcode_lib;
 
+	int aaa1 = sizeof(Any);
+	int aaa2 = sizeof(Base);
+	int aaa3 = sizeof(LargeString);
+	int aaa4 = sizeof(Array);
+	int aaa5 = sizeof(Map);
+
 	Core core;
 	core.initialize(setting);
 
@@ -89,7 +95,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

@@ -40,12 +40,6 @@ struct ReturnNone{
 	}
 };
 
-struct ParamInfo{
-	Named* params;
-	int_t min_param_count;
-	int_t max_param_count;
-};
-
 struct VMAndData{
 	const VMachinePtr& vm;
 	const void* data;
@@ -1200,6 +1194,12 @@ protected:
 
 	void* val_;
 	int_t val_size_;
+
+	struct ParamInfo{
+		Named* params;
+		i16 min_param_count;
+		i16 max_param_count;
+	};
 
 	ParamInfo pi_;
 	int_t param_n_;

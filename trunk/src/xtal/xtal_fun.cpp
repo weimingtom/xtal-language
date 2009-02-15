@@ -49,11 +49,11 @@ void InstanceVariableSetter::rawcall(const VMachinePtr& vm){
 }
 
 
-Fun::Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core)
-	:outer_(outer), this_(athis), code_(code), info_(core){
+Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* core)
+	:outer_(outer), code_(code), info_(core){
 }
 
-StringPtr Fun::object_name(int_t depth){
+StringPtr Method::object_name(int_t depth){
 	if(!name_){
 		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")->call(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+info_->pc))), 1, parent_);
 	}
@@ -61,7 +61,7 @@ StringPtr Fun::object_name(int_t depth){
 	return HaveName::object_name(depth);
 }
 
-bool Fun::check_arg(const VMachinePtr& vm){
+bool Method::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<info_->min_param_count || (!(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM) && n>info_->max_param_count)){
 		if(info_->min_param_count==0 && info_->max_param_count==0){
@@ -100,6 +100,16 @@ bool Fun::check_arg(const VMachinePtr& vm){
 	return true;
 }
 
+void Method::rawcall(const VMachinePtr& vm){
+	if(vm->ordered_arg_count()!=info_->max_param_count){
+		if(!check_arg(vm)){
+			return;
+		}
+	}
+
+	vm->carry_over(this);
+}
+
 void Fun::rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=info_->max_param_count){
 		if(!check_arg(vm)){
@@ -115,14 +125,6 @@ void Lambda::rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
 	vm->mv_carry_over(this);
 }
-
-
-void Method::rawcall(const VMachinePtr& vm){
-	if(vm->ordered_arg_count()!=info_->max_param_count)
-		check_arg(vm);
-	vm->carry_over(this);
-}
-
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core)
 	:Fun(outer, th, code, core), vm_(null), resume_pc_(0), alive_(true){

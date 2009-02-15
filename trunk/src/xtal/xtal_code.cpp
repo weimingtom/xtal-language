@@ -12,7 +12,7 @@ Code::Code()
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Fun>(null, filelocal_, from_this(this), (FunInfo*)0);
+	first_fun_ = xnew<Method>(null, from_this(this), (FunInfo*)0);
 	first_fun_->set_object_name("<toplevel>", 1, null);
 }
 
@@ -47,6 +47,7 @@ int_t Code::compliant_lineno(const inst_t* p){
 }
 
 void Code::rawcall(const VMachinePtr& vm){
+	vm->set_arg_this(filelocal_);
 	first_fun_->rawcall(vm);
 }
 

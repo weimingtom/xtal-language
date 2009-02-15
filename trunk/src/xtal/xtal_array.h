@@ -69,6 +69,7 @@ public:
 	*
 	*/
 	const AnyPtr& at(int_t i){
+		XTAL_ASSERT(0<=i && (uint_t)i<size_);
 		return values_[i];
 	}
 
@@ -77,6 +78,7 @@ public:
 	*
 	*/
 	void set_at(int_t i, const AnyPtr& v){
+		XTAL_ASSERT(0<=i && (uint_t)i<size_);
 		values_[i] = v;
 	}
 

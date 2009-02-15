@@ -358,14 +358,13 @@ void Core::bind(){
 
 
 ///////////////////
-
 	{
-		ClassPtr p = new_cpp_class<Fun>(Xid(Fun));
+		ClassPtr p = new_cpp_class<Method>(Xid(Method));
 	}
 
 	{
-		ClassPtr p = new_cpp_class<Method>(Xid(Method));
-		p->inherit(get_cpp_class<Fun>());
+		ClassPtr p = new_cpp_class<Fun>(Xid(Fun));
+		p->inherit(get_cpp_class<Method>());
 	}
 
 	{

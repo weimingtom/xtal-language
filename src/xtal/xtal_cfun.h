@@ -192,8 +192,9 @@ struct ctor_fun{
 
 struct param_types_holder_n{
 	void (*fun)(VMAndData& pvm);
-	int param_n;
-	void** param_types;
+	void** param_types; // thisと引数の型を表すクラスシンボルへのポインタ
+	u8 param_n; // 引数の数
+	u8 extendable; // 可変長かどうか
 };
 
 template<class Fun>
@@ -204,8 +205,9 @@ struct fun_param_holder{
 template<class Fun>
 param_types_holder_n fun_param_holder<Fun>::value = {
 	&cfun<Fun::PARAMS, Fun>::f,
-	Fun::PARAMS2,
 	Fun::types(),
+	Fun::PARAM_N,
+	Fun::EXTENDABLE,
 };
 
 //{REPEAT{{
@@ -224,7 +226,7 @@ void* param_types_holder`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
 
 template<class R #COMMA_REPEAT#class A`i`#>
 struct cfun_holder<R (*)(#REPEAT_COMMA#A`i`#)>{
-	enum{ PARAMS = `n`, PARAMS2 = `n` };
+	enum{ PARAMS = `n`, PARAM_N = `n`, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(#REPEAT_COMMA#A`i`#);
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i`;#
 	typedef ReturnResult Result;
@@ -239,7 +241,7 @@ struct cfun_holder<R (*)(#REPEAT_COMMA#A`i`#)>{
 #ifdef _WIN32
 template<class R #COMMA_REPEAT#class A`i`#>
 struct cfun_holder<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
-	enum{ PARAMS = `n`, PARAMS2 = `n` };
+	enum{ PARAMS = `n`, PARAM_N = `n`, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(#REPEAT_COMMA#A`i`#);
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i`;#
 	typedef ReturnResult Result;
@@ -255,7 +257,7 @@ struct cfun_holder<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
 
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#)>{
-	enum{ PARAMS = `n+1`, PARAMS2 = `n` };
+	enum{ PARAMS = `n+1`, PARAM_N = `n`, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(#REPEAT_COMMA#A`i`#);
 	typedef ArgThisGetter<C*> ARG0;
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i+1`;#
@@ -270,7 +272,7 @@ struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#)>{
 
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#) const>{
-	enum{ PARAMS = `n+1`, PARAMS2 = `n` };
+	enum{ PARAMS = `n+1`, PARAM_N = `n`, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(#REPEAT_COMMA#A`i`#) const;
 	typedef ArgThisGetter<C*> ARG0;
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i+1`;#
@@ -285,7 +287,7 @@ struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#) const>{
 
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (*)(C #COMMA_REPEAT#A`i`#)>{
-	enum{ PARAMS = `n+1`, PARAMS2 = `n` };
+	enum{ PARAMS = `n+1`, PARAM_N = `n`, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C #COMMA_REPEAT#A`i`#);
 	typedef ArgThisGetter<C> ARG0;
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i+1`;#
@@ -301,7 +303,7 @@ struct cmemfun_holder<R (*)(C #COMMA_REPEAT#A`i`#)>{
 #ifdef _WIN32
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (__stdcall *)(C #COMMA_REPEAT#A`i`#)>{
-	enum{ PARAMS = `n+1`, PARAMS2 = `n` };
+	enum{ PARAMS = `n+1`, PARAM_N = `n`, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C #COMMA_REPEAT#A`i`#);
 	typedef ArgThisGetter<C> ARG0;
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i+1`;#
@@ -317,7 +319,7 @@ struct cmemfun_holder<R (__stdcall *)(C #COMMA_REPEAT#A`i`#)>{
 
 template<class T #COMMA_REPEAT#class A`i`#>
 struct ctor_fun<T #COMMA_REPEAT#A`i`#>{
-	enum{ PARAMS = `n`, PARAMS2 = `n` };
+	enum{ PARAMS = `n`, PARAM_N = `n`, METHOD = 0, EXTENDABLE = 0 };
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i`;#
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder`n`<void #COMMA_REPEAT#A`i`#>::values; }
@@ -342,7 +344,7 @@ void* param_types_holder0<C >::values[0+1] = {
 
 template<class R >
 struct cfun_holder<R (*)()>{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
+	enum{ PARAMS = 0, PARAM_N = 0, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)();
 	
 	typedef ReturnResult Result;
@@ -357,7 +359,7 @@ struct cfun_holder<R (*)()>{
 #ifdef _WIN32
 template<class R >
 struct cfun_holder<R (__stdcall *)()>{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
+	enum{ PARAMS = 0, PARAM_N = 0, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)();
 	
 	typedef ReturnResult Result;
@@ -373,7 +375,7 @@ struct cfun_holder<R (__stdcall *)()>{
 
 template<class C, class R >
 struct cmemfun_holder<R (C::*)()>{
-	enum{ PARAMS = 1, PARAMS2 = 0 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)();
 	typedef ArgThisGetter<C*> ARG0;
 	
@@ -388,7 +390,7 @@ struct cmemfun_holder<R (C::*)()>{
 
 template<class C, class R >
 struct cmemfun_holder<R (C::*)() const>{
-	enum{ PARAMS = 1, PARAMS2 = 0 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)() const;
 	typedef ArgThisGetter<C*> ARG0;
 	
@@ -403,7 +405,7 @@ struct cmemfun_holder<R (C::*)() const>{
 
 template<class C, class R >
 struct cmemfun_holder<R (*)(C )>{
-	enum{ PARAMS = 1, PARAMS2 = 0 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C );
 	typedef ArgThisGetter<C> ARG0;
 	
@@ -419,7 +421,7 @@ struct cmemfun_holder<R (*)(C )>{
 #ifdef _WIN32
 template<class C, class R >
 struct cmemfun_holder<R (__stdcall *)(C )>{
-	enum{ PARAMS = 1, PARAMS2 = 0 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C );
 	typedef ArgThisGetter<C> ARG0;
 	
@@ -435,7 +437,7 @@ struct cmemfun_holder<R (__stdcall *)(C )>{
 
 template<class T >
 struct ctor_fun<T >{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
+	enum{ PARAMS = 0, PARAM_N = 0, METHOD = 0, EXTENDABLE = 0 };
 	
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder0<void >::values; }
@@ -459,7 +461,7 @@ void* param_types_holder1<C , A0>::values[1+1] = {
 
 template<class R , class A0>
 struct cfun_holder<R (*)(A0)>{
-	enum{ PARAMS = 1, PARAMS2 = 1 };
+	enum{ PARAMS = 1, PARAM_N = 1, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(A0);
 	typedef ArgGetter<A0, 0> ARG0;
 	typedef ReturnResult Result;
@@ -474,7 +476,7 @@ struct cfun_holder<R (*)(A0)>{
 #ifdef _WIN32
 template<class R , class A0>
 struct cfun_holder<R (__stdcall *)(A0)>{
-	enum{ PARAMS = 1, PARAMS2 = 1 };
+	enum{ PARAMS = 1, PARAM_N = 1, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(A0);
 	typedef ArgGetter<A0, 0> ARG0;
 	typedef ReturnResult Result;
@@ -490,7 +492,7 @@ struct cfun_holder<R (__stdcall *)(A0)>{
 
 template<class C, class R , class A0>
 struct cmemfun_holder<R (C::*)(A0)>{
-	enum{ PARAMS = 2, PARAMS2 = 1 };
+	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;
@@ -505,7 +507,7 @@ struct cmemfun_holder<R (C::*)(A0)>{
 
 template<class C, class R , class A0>
 struct cmemfun_holder<R (C::*)(A0) const>{
-	enum{ PARAMS = 2, PARAMS2 = 1 };
+	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;
@@ -520,7 +522,7 @@ struct cmemfun_holder<R (C::*)(A0) const>{
 
 template<class C, class R , class A0>
 struct cmemfun_holder<R (*)(C , A0)>{
-	enum{ PARAMS = 2, PARAMS2 = 1 };
+	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C , A0);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;
@@ -536,7 +538,7 @@ struct cmemfun_holder<R (*)(C , A0)>{
 #ifdef _WIN32
 template<class C, class R , class A0>
 struct cmemfun_holder<R (__stdcall *)(C , A0)>{
-	enum{ PARAMS = 2, PARAMS2 = 1 };
+	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C , A0);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;
@@ -552,7 +554,7 @@ struct cmemfun_holder<R (__stdcall *)(C , A0)>{
 
 template<class T , class A0>
 struct ctor_fun<T , A0>{
-	enum{ PARAMS = 1, PARAMS2 = 1 };
+	enum{ PARAMS = 1, PARAM_N = 1, METHOD = 0, EXTENDABLE = 0 };
 	typedef ArgGetter<A0, 0> ARG0;
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder1<void , A0>::values; }
@@ -576,7 +578,7 @@ void* param_types_holder2<C , A0, A1>::values[2+1] = {
 
 template<class R , class A0, class A1>
 struct cfun_holder<R (*)(A0, A1)>{
-	enum{ PARAMS = 2, PARAMS2 = 2 };
+	enum{ PARAMS = 2, PARAM_N = 2, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(A0, A1);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;
 	typedef ReturnResult Result;
@@ -591,7 +593,7 @@ struct cfun_holder<R (*)(A0, A1)>{
 #ifdef _WIN32
 template<class R , class A0, class A1>
 struct cfun_holder<R (__stdcall *)(A0, A1)>{
-	enum{ PARAMS = 2, PARAMS2 = 2 };
+	enum{ PARAMS = 2, PARAM_N = 2, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(A0, A1);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;
 	typedef ReturnResult Result;
@@ -607,7 +609,7 @@ struct cfun_holder<R (__stdcall *)(A0, A1)>{
 
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (C::*)(A0, A1)>{
-	enum{ PARAMS = 3, PARAMS2 = 2 };
+	enum{ PARAMS = 3, PARAM_N = 2, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;
@@ -622,7 +624,7 @@ struct cmemfun_holder<R (C::*)(A0, A1)>{
 
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (C::*)(A0, A1) const>{
-	enum{ PARAMS = 3, PARAMS2 = 2 };
+	enum{ PARAMS = 3, PARAM_N = 2, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;
@@ -637,7 +639,7 @@ struct cmemfun_holder<R (C::*)(A0, A1) const>{
 
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (*)(C , A0, A1)>{
-	enum{ PARAMS = 3, PARAMS2 = 2 };
+	enum{ PARAMS = 3, PARAM_N = 2, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C , A0, A1);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;
@@ -653,7 +655,7 @@ struct cmemfun_holder<R (*)(C , A0, A1)>{
 #ifdef _WIN32
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1)>{
-	enum{ PARAMS = 3, PARAMS2 = 2 };
+	enum{ PARAMS = 3, PARAM_N = 2, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C , A0, A1);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;
@@ -669,7 +671,7 @@ struct cmemfun_holder<R (__stdcall *)(C , A0, A1)>{
 
 template<class T , class A0, class A1>
 struct ctor_fun<T , A0, A1>{
-	enum{ PARAMS = 2, PARAMS2 = 2 };
+	enum{ PARAMS = 2, PARAM_N = 2, METHOD = 0, EXTENDABLE = 0 };
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder2<void , A0, A1>::values; }
@@ -693,7 +695,7 @@ void* param_types_holder3<C , A0, A1, A2>::values[3+1] = {
 
 template<class R , class A0, class A1, class A2>
 struct cfun_holder<R (*)(A0, A1, A2)>{
-	enum{ PARAMS = 3, PARAMS2 = 3 };
+	enum{ PARAMS = 3, PARAM_N = 3, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(A0, A1, A2);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;
 	typedef ReturnResult Result;
@@ -708,7 +710,7 @@ struct cfun_holder<R (*)(A0, A1, A2)>{
 #ifdef _WIN32
 template<class R , class A0, class A1, class A2>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2)>{
-	enum{ PARAMS = 3, PARAMS2 = 3 };
+	enum{ PARAMS = 3, PARAM_N = 3, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(A0, A1, A2);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;
 	typedef ReturnResult Result;
@@ -724,7 +726,7 @@ struct cfun_holder<R (__stdcall *)(A0, A1, A2)>{
 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (C::*)(A0, A1, A2)>{
-	enum{ PARAMS = 4, PARAMS2 = 3 };
+	enum{ PARAMS = 4, PARAM_N = 3, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;
@@ -739,7 +741,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2)>{
 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (C::*)(A0, A1, A2) const>{
-	enum{ PARAMS = 4, PARAMS2 = 3 };
+	enum{ PARAMS = 4, PARAM_N = 3, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;
@@ -754,7 +756,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2) const>{
 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (*)(C , A0, A1, A2)>{
-	enum{ PARAMS = 4, PARAMS2 = 3 };
+	enum{ PARAMS = 4, PARAM_N = 3, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C , A0, A1, A2);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;
@@ -770,7 +772,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2)>{
 #ifdef _WIN32
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2)>{
-	enum{ PARAMS = 4, PARAMS2 = 3 };
+	enum{ PARAMS = 4, PARAM_N = 3, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;
@@ -786,7 +788,7 @@ struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2)>{
 
 template<class T , class A0, class A1, class A2>
 struct ctor_fun<T , A0, A1, A2>{
-	enum{ PARAMS = 3, PARAMS2 = 3 };
+	enum{ PARAMS = 3, PARAM_N = 3, METHOD = 0, EXTENDABLE = 0 };
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder3<void , A0, A1, A2>::values; }
@@ -810,7 +812,7 @@ void* param_types_holder4<C , A0, A1, A2, A3>::values[4+1] = {
 
 template<class R , class A0, class A1, class A2, class A3>
 struct cfun_holder<R (*)(A0, A1, A2, A3)>{
-	enum{ PARAMS = 4, PARAMS2 = 4 };
+	enum{ PARAMS = 4, PARAM_N = 4, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(A0, A1, A2, A3);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;
 	typedef ReturnResult Result;
@@ -825,7 +827,7 @@ struct cfun_holder<R (*)(A0, A1, A2, A3)>{
 #ifdef _WIN32
 template<class R , class A0, class A1, class A2, class A3>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3)>{
-	enum{ PARAMS = 4, PARAMS2 = 4 };
+	enum{ PARAMS = 4, PARAM_N = 4, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(A0, A1, A2, A3);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;
 	typedef ReturnResult Result;
@@ -841,7 +843,7 @@ struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3)>{
 
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3)>{
-	enum{ PARAMS = 5, PARAMS2 = 4 };
+	enum{ PARAMS = 5, PARAM_N = 4, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2, A3);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;
@@ -856,7 +858,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2, A3)>{
 
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3) const>{
-	enum{ PARAMS = 5, PARAMS2 = 4 };
+	enum{ PARAMS = 5, PARAM_N = 4, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2, A3) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;
@@ -871,7 +873,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2, A3) const>{
 
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (*)(C , A0, A1, A2, A3)>{
-	enum{ PARAMS = 5, PARAMS2 = 4 };
+	enum{ PARAMS = 5, PARAM_N = 4, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C , A0, A1, A2, A3);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;
@@ -887,7 +889,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3)>{
 #ifdef _WIN32
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3)>{
-	enum{ PARAMS = 5, PARAMS2 = 4 };
+	enum{ PARAMS = 5, PARAM_N = 4, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;
@@ -903,7 +905,7 @@ struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3)>{
 
 template<class T , class A0, class A1, class A2, class A3>
 struct ctor_fun<T , A0, A1, A2, A3>{
-	enum{ PARAMS = 4, PARAMS2 = 4 };
+	enum{ PARAMS = 4, PARAM_N = 4, METHOD = 0, EXTENDABLE = 0 };
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder4<void , A0, A1, A2, A3>::values; }
@@ -927,7 +929,7 @@ void* param_types_holder5<C , A0, A1, A2, A3, A4>::values[5+1] = {
 
 template<class R , class A0, class A1, class A2, class A3, class A4>
 struct cfun_holder<R (*)(A0, A1, A2, A3, A4)>{
-	enum{ PARAMS = 5, PARAMS2 = 5 };
+	enum{ PARAMS = 5, PARAM_N = 5, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (*fun_t)(A0, A1, A2, A3, A4);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;
 	typedef ReturnResult Result;
@@ -942,7 +944,7 @@ struct cfun_holder<R (*)(A0, A1, A2, A3, A4)>{
 #ifdef _WIN32
 template<class R , class A0, class A1, class A2, class A3, class A4>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4)>{
-	enum{ PARAMS = 5, PARAMS2 = 5 };
+	enum{ PARAMS = 5, PARAM_N = 5, METHOD = 0, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4);
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;
 	typedef ReturnResult Result;
@@ -958,7 +960,7 @@ struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4)>{
 
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4)>{
-	enum{ PARAMS = 6, PARAMS2 = 5 };
+	enum{ PARAMS = 6, PARAM_N = 5, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2, A3, A4);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;
@@ -973,7 +975,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4)>{
 
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4) const>{
-	enum{ PARAMS = 6, PARAMS2 = 5 };
+	enum{ PARAMS = 6, PARAM_N = 5, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (C::*fun_t)(A0, A1, A2, A3, A4) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;
@@ -988,7 +990,7 @@ struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4) const>{
 
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4)>{
-	enum{ PARAMS = 6, PARAMS2 = 5 };
+	enum{ PARAMS = 6, PARAM_N = 5, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (*fun_t)(C , A0, A1, A2, A3, A4);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;
@@ -1004,7 +1006,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4)>{
 #ifdef _WIN32
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4)>{
-	enum{ PARAMS = 6, PARAMS2 = 5 };
+	enum{ PARAMS = 6, PARAM_N = 5, METHOD = 1, EXTENDABLE = 0 };
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;
@@ -1020,7 +1022,7 @@ struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4)>{
 
 template<class T , class A0, class A1, class A2, class A3, class A4>
 struct ctor_fun<T , A0, A1, A2, A3, A4>{
-	enum{ PARAMS = 5, PARAMS2 = 5 };
+	enum{ PARAMS = 5, PARAM_N = 5, METHOD = 0, EXTENDABLE = 0 };
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;
 	typedef ReturnResult Result;
 	static void** types(){ return param_types_holder5<void , A0, A1, A2, A3, A4>::values; }
@@ -1035,7 +1037,7 @@ struct ctor_fun<T , A0, A1, A2, A3, A4>{
 
 template<class R>
 struct cfun_holder<R (*)(const VMachinePtr&)>{
-	enum{ PARAMS = 1, PARAMS2 = -1 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 0, EXTENDABLE = 1 };
 	typedef R (*fun_t)(const VMachinePtr&);
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
@@ -1049,7 +1051,7 @@ struct cfun_holder<R (*)(const VMachinePtr&)>{
 
 template<class T>
 struct ctor_fun<T , const VMachinePtr&>{
-	enum{ PARAMS = 1, PARAMS2 = -1 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 0, EXTENDABLE = 1 };
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
 	static void** types(){ return param_types_holder0<void>::values; }
@@ -1061,7 +1063,7 @@ struct ctor_fun<T , const VMachinePtr&>{
 
 template<class R>
 struct cmemfun_holder<R (*)(const VMachinePtr&)>{
-	enum{ PARAMS = 1, PARAMS2 = -1 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
 	typedef R (*fun_t)(const VMachinePtr&);
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
@@ -1075,7 +1077,7 @@ struct cmemfun_holder<R (*)(const VMachinePtr&)>{
 
 template<class R, class C>
 struct cmemfun_holder<R (*)(C, const VMachinePtr&)>{
-	enum{ PARAMS = 1, PARAMS2 = -2 };
+	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
 	typedef R (*fun_t)(C, const VMachinePtr&);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetterVM ARG1;
@@ -1090,7 +1092,7 @@ struct cmemfun_holder<R (*)(C, const VMachinePtr&)>{
 
 template<class C>
 struct cmemfun_holder<void (C::*)(const VMachinePtr&)>{
-	enum{ PARAMS = 2, PARAMS2 = -2 };
+	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
 	typedef void (C::*fun_t)(const VMachinePtr&);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetterVM ARG1; 
@@ -1105,7 +1107,7 @@ struct cmemfun_holder<void (C::*)(const VMachinePtr&)>{
 
 template<class C>
 struct cmemfun_holder<void (C::*)(const VMachinePtr&) const>{
-	enum{ PARAMS = 2, PARAMS2 = -2 };
+	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
 	typedef void (C::*fun_t)(const VMachinePtr&) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetterVM ARG1; 
@@ -1122,7 +1124,7 @@ struct cmemfun_holder<void (C::*)(const VMachinePtr&) const>{
 
 template<class C, class T>
 struct getter_holder{
-	enum{ PARAMS = 1, PARAMS2 = 0 };
+	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
 	static void** types(){ return param_types_holder0<C>::addr(); }
@@ -1133,7 +1135,7 @@ struct getter_holder{
 
 template<class C, class T>
 struct setter_holder{
-	enum{ PARAMS = 2, PARAMS2 = 1 };
+	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<const T&, 0> ARG1;
@@ -1185,25 +1187,16 @@ public:
 
 private:
 
-	void make_params_place();
-
-	void check_params();
+	void set_param(uint_t n, const IDPtr& key, const Any& value);
 
 protected:
 	fun_t fun_;
+	void* data_;
 
-	void* val_;
-	int_t val_size_;
-
-	struct ParamInfo{
-		Named* params;
-		i16 min_param_count;
-		i16 max_param_count;
-	};
-
-	ParamInfo pi_;
-	int_t param_n_;
-	Class** param_types_;
+	u8 param_n_;
+	u8 min_param_count_;
+	u8 max_param_count_;
+	u8 val_size_;
 
 	AnyPtr this_;
 };

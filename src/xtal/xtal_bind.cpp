@@ -106,7 +106,7 @@ void Core::bind(){
 
 	{
 		ClassPtr p = new_cpp_class<Exception>();
-		p->def(Xid(new), ctor<Exception>()->params(Xid(message), empty_string));
+		p->def(Xid(new), ctor<Exception, const StringPtr&>()->params(Xid(message), empty_string));
 		p->def_method(Xid(initialize), &Exception::initialize)->params(Xid(message), empty_string);
 		p->def_method(Xid(to_s), &Exception::to_s);
 		p->def_method(Xid(message), &Exception::message);

@@ -703,6 +703,12 @@ const IDPtr& StringMgr::insert_literal(const char_t* str){
 		ret = insert(str, size, hashcode, length);
 	}
 	return ret;
+	/*
+	uint_t hashcode, length, size;
+	string_data_size_and_hashcode_and_length(str, size, hashcode, length);
+	IDPtr& ret = table2_[str];
+	return insert(str, size, hashcode, length);
+	*/
 }
 
 const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, uint_t length){
@@ -713,6 +719,13 @@ const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, 
 	if(it!=table_.end()){
 		return it->second;
 	}
+/*
+	static int countn = 0;
+	static int countsize = 0;
+	countn ++;
+	countsize += size;
+	printf("string %d %d\n", countn, countsize);
+*/
 
 	it = table_.insert(key, xnew<ID>(str, size, hashcode, length), hashcode).first;
 	it->first.str = it->second->data();

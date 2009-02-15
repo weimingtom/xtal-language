@@ -69,7 +69,6 @@ void debug_free(void* p){
 }
 
 void* debug_so_malloc(size_t size){
-//	xtal::full_gc();
 	void* ret = malloc(size);
 	so_mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
 	used_memory += size;
@@ -139,7 +138,7 @@ void initialize_xpeg();
 namespace{
 
 	enum{
-		OBJECTS_ALLOCATE_SHIFT = 9,
+		OBJECTS_ALLOCATE_SHIFT = 10,
 		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
 		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};

@@ -5,6 +5,7 @@
 
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>
+#include <typeinfo>
 
 struct SizeAndCount{
 	SizeAndCount(int a = 0, int b = 0){
@@ -37,13 +38,12 @@ void* debug_malloc(size_t size){
 		gcounter = gcounter;
 	}
 
-	if(size>10000){
+	if(size>5000){
 		size = size;
 	}
 	
 	if(max_used_memory<used_memory){
 		max_used_memory = used_memory+1024; 
-		xtal::full_gc();
 		printf("max used memory %dKB\n", max_used_memory/1024);
 	}
 		
@@ -79,7 +79,6 @@ void* debug_so_malloc(size_t size){
 
 	if(max_used_memory<used_memory){
 		max_used_memory = used_memory+1024; 
-		xtal::full_gc();
 		printf("max used memory %dKB\n", max_used_memory/1024);
 	}
 
@@ -138,7 +137,7 @@ void initialize_xpeg();
 namespace{
 
 	enum{
-		OBJECTS_ALLOCATE_SHIFT = 10,
+		OBJECTS_ALLOCATE_SHIFT = 8,
 		OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
 		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};
@@ -190,7 +189,6 @@ void Core::initialize(const CoreSetting& setting){
 	cycle_count_ = 0;
 
 	disable_gc();
-	so_alloc_.init();
 
 	expand_objects_list();
 	objects_begin_ = objects_current_ = *objects_list_current_++;
@@ -537,6 +535,7 @@ void Core::full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
+		//printf("used memory %dKB\n", used_memory/1024);
 				
 		while(true){			
 			ConnectedPointer current(objects_count_, objects_list_begin_);
@@ -653,6 +652,7 @@ void Core::full_gc(){
 			}
 
 			for(ConnectedPointer it = alive; it!=current; ++it){
+				//printf("delete %s\n", typeid(**it).name());
 				delete *it;
 			}
 
@@ -680,6 +680,17 @@ void Core::full_gc(){
 			current = alive;
 		}
 
+		/*{
+			ConnectedPointer current(objects_count_, objects_list_begin_);
+			ConnectedPointer begin(0, objects_list_begin_);
+
+			for(ConnectedPointer it = begin; it!=current; ++it){
+				if(typeid(**it)==typeid(Code))
+				printf("alive %s\n", typeid(**it).name());
+			}
+		}*/
+
+//		printf("used memory %dKB\n", used_memory/1024);
 		restart_the_world();
 	}
 }
@@ -847,34 +858,55 @@ const StreamPtr& stderr_stream(){
 #ifndef XTAL_NO_PARSER
 
 CodePtr compile_file(const StringPtr& file_name){
-	CodeBuilder cb;
-	if(StreamPtr fs = open(file_name, Xid(r))){
-		if(CodePtr fun = cb.compile(fs, file_name)){
-			fs->close();
-			return fun;
+	CodePtr ret;
+
+	{
+		if(StreamPtr fs = open(file_name, Xid(r))){
+			CodeBuilder cb;
+			if(CodePtr fun = cb.compile(fs, file_name)){
+				fs->close();
+				ret = fun;
+			}
+			else{
+				fs->close();
+				XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
+				return null;
+			}
 		}
-		fs->close();
-		XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
+		else{
+			return null;
+		}
 	}
-	return null;
+
+	full_gc();
+	return ret;
 }
 
 CodePtr compile(const StringPtr& source){
-	CodeBuilder cb;
-	StringStreamPtr ms(xnew<StringStream>(source));
-	if(CodePtr fun =  cb.compile(ms, "<eval>")){
-		return fun;
+	CodePtr ret;
+
+	{
+		CodeBuilder cb;
+		StringStreamPtr ms(xnew<StringStream>(source));
+		if(CodePtr fun =  cb.compile(ms, "<eval>")){
+			ret = fun;
+		}
+		else{
+			XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
+			return null;
+		}
 	}
 
-	XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
-	return null;
+	full_gc();
+	return ret;
 }
 
 AnyPtr load(const StringPtr& file_name){
+	AnyPtr ret;
 	if(CodePtr code = compile_file(file_name)){
-		gc();
-		return code->call();
+		ret = code->call();
 	}
+	gc();
 	return null;
 }
 
@@ -894,14 +926,22 @@ AnyPtr load_and_save(const StringPtr& file_name){
 }
 
 CodePtr source(const char_t* src, int_t size, const char* file){
-	CodeBuilder cb;
-	StreamPtr ms(xnew<PointerStream>(src, size));
-	if(CodePtr fun = cb.compile(ms, file)){
-		return fun;
+	CodePtr ret;
+
+	{
+		CodeBuilder cb;
+		StreamPtr ms(xnew<PointerStream>(src, size));
+		if(CodePtr fun = cb.compile(ms, file)){
+			ret = fun;
+		}
+		else{
+			XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
+			return null;
+		}
 	}
 
-	XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
-	return null;
+	full_gc();
+	return ret;
 }
 
 #endif
@@ -909,6 +949,7 @@ CodePtr source(const char_t* src, int_t size, const char* file){
 CodePtr compiled_source(const void* src, int_t size, const char* file){
 	StreamPtr ms(xnew<PointerStream>(src, size));
 	if(CodePtr fun = ptr_cast<Code>(ms->deserialize())){
+		gc();
 		return fun;
 	}
 	return null;

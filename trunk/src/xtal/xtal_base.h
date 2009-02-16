@@ -3,7 +3,39 @@
 
 namespace xtal{
 
-class Base : public Any{
+class RefCountingBase : public Any{
+public:
+	
+	RefCountingBase()
+		:Any(noinit_t()){}
+
+public:
+
+	enum{
+		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
+		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
+
+		XTAL_INSTANCE_FLAG_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
+		XTAL_INSTANCE_FLAG_BIT = 1<<XTAL_INSTANCE_FLAG_SHIFT,
+
+		REF_COUNT_SHIFT = XTAL_INSTANCE_FLAG_SHIFT+1,
+		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
+	};
+
+	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
+	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
+
+	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
+	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
+
+	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
+	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
+	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
+	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
+
+};
+
+class Base : public RefCountingBase{
 public:
 
 	/**
@@ -54,7 +86,7 @@ public:
 	* @param force 名前の強さ
 	* @param parent 親
 	*/
-	virtual void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
+	virtual void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0);
 
 	/**
 	* @brief ハッシュ値を返す
@@ -105,30 +137,8 @@ public:
 
 public:
 
-	enum{
-		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
-		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
-
-		XTAL_INSTANCE_FLAG_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		XTAL_INSTANCE_FLAG_BIT = 1<<XTAL_INSTANCE_FLAG_SHIFT,
-
-		REF_COUNT_SHIFT = XTAL_INSTANCE_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
-	};
-
 	InstanceVariables* instance_variables(){ return instance_variables_; }
 	void make_instance_variables();
-
-	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
-	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
-
-	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
-	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
-
-	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
-	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
-	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
-	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
 
 	void set_class(const ClassPtr& c);
 

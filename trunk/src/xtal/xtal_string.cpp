@@ -2,7 +2,6 @@
 #include "xtal_macro.h"
 
 namespace xtal{
-
 uint_t string_hashcode(const char_t* str, uint_t size){
 	uint_t hash = 2166136261U;
 	for(uint_t i=0; i<size; ++i){
@@ -11,31 +10,8 @@ uint_t string_hashcode(const char_t* str, uint_t size){
 	return hash;
 }
 
-void string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length){
+void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash){
 	hash = 2166136261U;
-	length = 0;
-
-	ChMaker chm;
-
-	uint_t i=0;
-	while(i<size){
-		chm.clear();
-		while(!chm.is_completed()){
-			if(i<size){ chm.add(str[i++]); } 
-			else{ break; }
-		}
-	
-		for(int_t j=0; j<chm.pos(); ++j){
-			hash = hash*137 ^ chm.at(j);
-		}
-
-		length += 1;
-	}
-}
-
-void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length){
-	hash = 2166136261U;
-	length = 0;
 	size = 0;
 
 	ChMaker chm;
@@ -52,7 +28,6 @@ void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, u
 			hash = hash*137 ^ chm.at(j);
 		}
 
-		length += 1;
 		size += chm.pos();
 	}
 }
@@ -90,6 +65,14 @@ static int_t string_compare(const char_t* a, const char_t* b){
 	}
 	return (int_t)*a - (int_t)*b;
 }
+
+static void string_copy(char_t* a, const char_t* b, uint_t size){
+	while(size!=0){
+		*a++ = *b++;
+		size--;
+	}
+}
+
 
 void StringEachIter::visit_members(Visitor& m){
 	Base::visit_members(m);
@@ -141,47 +124,62 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 void String::init_string(const char_t* str, uint_t sz){
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
+		string_copy(svalue_, str, sz);
+	}
+	else{
+		StringData* sd = new StringData(sz);
+		sd->set_class(get_cpp_class<String>());
+		string_copy(sd->buf(), str, sz);
+		set_p(sd);
+		core()->register_gc(sd);
+	}
+}
+
+String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag)
+:Any(noinit_t()){
+	uint_t sz = size;
+	if(sz<SMALL_STRING_MAX){
+		set_small_string();
 		std::memcpy(svalue_, str, sz*sizeof(char_t));
 	}
 	else{
-		uint_t hash, length;
-		string_hashcode_and_length(str, sz, hash, length);
-		if(length<=1){
-			set_p(pvalue(xtal::intern(str, sz, hash, length)));
+		if(!intern_flag && string_length(str)==1){
+			set_p(pvalue(xtal::intern(str, sz, hashcode)));
 			pvalue(*this)->inc_ref_count();
 		}
 		else{
-			set_p(new LargeString(str, sz, hash, length));
-			pvalue(*this)->set_class(new_cpp_class<String>());
-			core()->register_gc(pvalue(*this));
+			StringData* sd = new StringData(sz);
+			string_copy(sd->buf(), str, sz);
+			sd->set_interned();
+			sd->set_class(new_cpp_class<String>());
+			set_p(sd);
+			core()->register_gc(sd);
 		}
 	}
 }
 
-
-String::String(const char_t* str):Any(noinit_t()){
+String::String(const char_t* str)
+:Any(noinit_t()){
 	init_string(str, string_data_size(str));
 }
 
-String::String(const avoid<char>::type* str):Any(noinit_t()){
-	uint_t n = std::strlen((char*)str);
-	UserMallocGuard umg(n*sizeof(char_t));
-	char_t* buf = (char_t*)umg.get();
-	for(uint_t i=0; i<n; ++i){
-		buf[i] = (char_t)str[i];
-	}
-	init_string(buf, n);
+String::String(const avoid<char>::type* str)
+:Any(noinit_t()){
+	//todo
 }
 
-String::String(const char_t* str, uint_t size):Any(noinit_t()){
+String::String(const char_t* str, uint_t size)
+:Any(noinit_t()){
 	init_string(str, size);
 }
 
-String::String(const char_t* begin, const char_t* last):Any(noinit_t()){
+String::String(const char_t* begin, const char_t* last)
+:Any(noinit_t()){
 	init_string(begin, last-begin);
 }
 
-String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2):Any(noinit_t()){
+String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2)
+:Any(noinit_t()){
 	if(size1==0){
 		init_string(str2, size2);
 		return;
@@ -194,13 +192,16 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
-		std::memcpy(svalue_, str1, size1*sizeof(char_t));
-		std::memcpy(&svalue_[size1], str2, size2*sizeof(char_t));
+		string_copy(svalue_, str1, size1);
+		string_copy(&svalue_[size1], str2, size2);
 	}
 	else{
-		set_p(new LargeString(str1, size1, str2, size2));
-		pvalue(*this)->set_class(new_cpp_class<String>());
-		core()->register_gc(pvalue(*this));
+		StringData* sd = new StringData(sz);
+		sd->set_class(get_cpp_class<String>());
+		string_copy(sd->buf(), str1, size1);
+		string_copy(sd->buf()+size1, str2, size2);
+		set_p(sd);
+		core()->register_gc(sd);
 	}
 }
 
@@ -239,59 +240,30 @@ String::String(char_t a, char_t b, char_t c)
 	}
 }
 
-String::String(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag):Any(noinit_t()){
-	uint_t sz = size;
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		std::memcpy(svalue_, str, sz*sizeof(char_t));
-	}
-	else{
-		if(!intern_flag && length<=1){
-			set_p(pvalue(xtal::intern(str, sz, hashcode, length)));
-			pvalue(*this)->inc_ref_count();
-		}
-		else{
-			set_p(new LargeString(str, sz, hashcode, length, intern_flag));
-			pvalue(*this)->set_class(new_cpp_class<String>());
-			core()->register_gc(pvalue(*this));
-		}
-	}
-}
-
-String::String(LargeString* left, LargeString* right):Any(noinit_t()){
-	if(left->data_size()==0){
-		init_string(right->c_str(), right->data_size());
-		return;
-	}
-	else if(right->data_size()==0){
-		init_string(left->c_str(), left->data_size());
-		return;
-	}
-
-	set_p(new LargeString(left, right));
-	pvalue(*this)->set_class(new_cpp_class<String>());
-	core()->register_gc(pvalue(*this));
-}
-
 String::String(const String& s)
 	:Any(s){
 	inc_ref_count_force(s);
 }
 
+uint_t String::length(){
+	return string_length(c_str());
+}
+
 const char_t* String::c_str(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->c_str();
+		return ((StringData*)pvalue(*this))->buf();
 	}
 	else{
-		uint_t size, hash, length;
-		string_data_size_and_hashcode_and_length(svalue_, size, hash, length);
-		return xtal::intern(svalue_, size, hash, length)->data();
+		return svalue_;
+		uint_t size, hash;
+		string_data_size_and_hashcode(svalue_, size, hash);
+		return xtal::intern(svalue_, size, hash)->data();
 	}
 }
 
 const char_t* String::data(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->c_str();
+		return ((StringData*)pvalue(*this))->buf();
 	}
 	else{
 		return svalue_;
@@ -300,7 +272,7 @@ const char_t* String::data(){
 
 uint_t String::data_size(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->data_size();
+		return ((StringData*)pvalue(*this))->data_size();
 	}
 	else{
 		for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
@@ -313,28 +285,15 @@ uint_t String::data_size(){
 	}
 }
 
-uint_t String::length(){
-	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->length();
-	}
-	else{
-		return string_length(svalue_);
-	}
-}
-
-uint_t String::size(){
-	return length();
-}
-
 StringPtr String::clone(){
 	return from_this(this);
 }
 
 const IDPtr& String::intern(){
 	if(type(*this)==TYPE_BASE){
-		LargeString* p = ((LargeString*)pvalue(*this));
+		StringData* p = ((StringData*)pvalue(*this));
 		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
-		return unchecked_ptr_cast<ID>(xtal::intern(p->c_str(), p->data_size(), p->hashcode(), p->length()));
+		return xtal::intern(p->buf(), p->data_size());
 	}
 	else{
 		return unchecked_ptr_cast<ID>(ap(*this));
@@ -343,7 +302,7 @@ const IDPtr& String::intern(){
 
 bool String::is_interned(){
 	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->is_interned();
+		return ((StringData*)pvalue(*this))->is_interned();
 	}
 	else{
 		return true;
@@ -423,13 +382,11 @@ StringPtr String::op_cat(const StringPtr& v){
 	uint_t mysize = data_size();
 	uint_t vsize = v->data_size();
 
-	if(mysize+vsize <= 16 || mysize<SMALL_STRING_MAX || vsize<SMALL_STRING_MAX)
-		return xnew<String>(data(), mysize, v->data(), vsize);
-	return xnew<String>((LargeString*)pvalue(*this), (LargeString*)pvalue(v));
+	return xnew<String>(c_str(), data_size(), v->c_str(), v->data_size());
 }
 
 bool String::op_eq(const StringPtr& v){ 
-	return data_size()==v->data_size() && std::memcmp(data(), v->data(), data_size()*sizeof(char_t))==0; 
+	return data_size()==v->data_size() && string_compare(data(), v->data())==0; 
 }
 
 bool String::op_lt(const StringPtr& v){
@@ -440,153 +397,7 @@ StringPtr String::cat(const StringPtr& v){
 	return op_cat(v);
 }
 
-uint_t String::hashcode(){
-	if(type(*this)==TYPE_BASE){
-		return ((LargeString*)pvalue(*this))->hashcode();
-	}
-	else{
-		return string_hashcode(svalue_, data_size());
-	}
-}
-	
-int_t String::calc_offset(int_t i){
-	uint_t sz = data_size();
-	if(i<0){
-		i = sz + i;
-		if(i<0){
-			throw_index_error();
-			return 0;
-		}
-	}
-	else{
-		if((uint_t)i >= sz){
-			throw_index_error();
-			return 0;
-		}
-	}
-	return i;
-}
-
-void String::throw_index_error(){
-	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1020")));
-}
-
 ////////////////////////////////////////////////////////////////
-
-
-void LargeString::visit_members(Visitor& m){
-	Base::visit_members(m);
-	if((flags_ & ROPE)!=0){
-		m & rope_.left & rope_.right;
-	}
-}
-
-void visit_members(Visitor& m, const Named& p){
-	m & p.name & p.value;
-}
-
-struct StringKey{
-	const char_t* str;
-	int_t size;
-
-	StringKey(const char_t* str, int_t size)
-		:str(str), size(size){}
-
-	friend bool operator <(const StringKey& a, const StringKey& b){
-		if(a.size<b.size)
-			return true;
-		if(a.size>b.size)
-			return false;
-		return std::memcmp(a.str, b.str, a.size)<0;
-	}
-};
-
-void LargeString::common_init(uint_t size){
-	XTAL_ASSERT(size>=Any::SMALL_STRING_MAX);
-
-	data_size_ = size;
-	str_.p = static_cast<char_t*>(user_malloc(sizeof(char_t)*(data_size_+1)));
-	str_.p[data_size_] = 0;
-	flags_ = 0;
-}
-
-LargeString::LargeString(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2){
-	common_init(size1 + size2);
-	std::memcpy(str_.p, str1, size1*sizeof(char_t));
-	std::memcpy(str_.p+size1, str2, size2*sizeof(char_t));
-	string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
-}
-
-LargeString::LargeString(const char_t* str, uint_t size, uint_t hashcode, uint_t length, bool intern_flag){
-	common_init(size);
-	std::memcpy(str_.p, str, data_size_*sizeof(char_t));
-	str_.hashcode = hashcode;
-	flags_ = intern_flag ? INTERNED : 0;
-	length_ = length;
-}
-
-LargeString::LargeString(LargeString* left, LargeString* right){
-	left->inc_ref_count();
-	right->inc_ref_count();
-	rope_.left = left;
-	rope_.right = right;
-	data_size_ = left->data_size() + right->data_size();
-	flags_ = ROPE;
-	length_ = left->length() + right->length();
-}
-
-LargeString::~LargeString(){
-	if((flags_ & ROPE)==0){
-		user_free(str_.p);
-	}
-	else{
-		rope_.left->dec_ref_count();
-		rope_.right->dec_ref_count();
-	}
-}
-
-const char_t* LargeString::c_str(){ 
-	if((flags_ & ROPE)!=0)
-		became_unified();
-	return str_.p; 
-}
-
-uint_t LargeString::hashcode(){ 
-	if((flags_ & ROPE)!=0)
-		became_unified();
-	return str_.hashcode; 
-}
-
-void LargeString::became_unified(){
-	uint_t pos = 0;
-	char_t* memory = (char_t*)user_malloc(sizeof(char_t)*(data_size_+1));
-	write_to_memory(this, memory, pos);
-	memory[pos] = 0;
-	rope_.left->dec_ref_count();
-	rope_.right->dec_ref_count();
-	str_.p = memory;
-	flags_ = 0;
-	string_hashcode_and_length(str_.p, data_size_, str_.hashcode, length_);
-}
-
-void LargeString::write_to_memory(LargeString* p, char_t* memory, uint_t& pos){
-	PODStack<LargeString*> stack;
-	for(;;){
-		if((p->flags_ & ROPE)==0){
-			std::memcpy(&memory[pos], p->str_.p, p->data_size_*sizeof(char_t));
-			pos += p->data_size_;
-			if(stack.empty())
-				return;
-			p = stack.pop();
-		}
-		else{
-			stack.push(p->rope_.right);
-			p = p->rope_.left;
-		}
-	}
-}
-
-
 
 ID::ID(const char_t* str)
 	:String(*xtal::intern(str)){}
@@ -644,8 +455,8 @@ ID::ID(char_t a, char_t b, char_t c)
 	}
 }
 
-ID::ID(const char_t* str, uint_t len, uint_t hashcode, uint_t length)
-	:String(str, len, hashcode, length, true){}
+ID::ID(const char_t* str, uint_t len, uint_t hashcode)
+	:String(str, len, hashcode, true){}
 
 
 ID::ID(const StringPtr& name)
@@ -684,34 +495,26 @@ void StringMgr::visit_members(Visitor& m){
 }
 
 const IDPtr& StringMgr::insert(const char_t* str, uint_t size){
-	uint_t hashcode, length;
-	string_hashcode_and_length(str, size, hashcode, length);
-	return insert(str, size, hashcode, length);
+	return insert(str, size, string_hashcode(str, size));
 }
 
 const IDPtr& StringMgr::insert(const char_t* str){
-	uint_t hashcode, length, size;
-	string_data_size_and_hashcode_and_length(str, size, hashcode, length);
-	return insert(str, size, hashcode, length);
+	uint_t hashcode, size;
+	string_data_size_and_hashcode(str, size, hashcode);
+	return insert(str, size, hashcode);
 }
 
 const IDPtr& StringMgr::insert_literal(const char_t* str){
 	IDPtr& ret = table2_[str];
 	if(!ret){
-		uint_t hashcode, length, size;
-		string_data_size_and_hashcode_and_length(str, size, hashcode, length);
-		ret = insert(str, size, hashcode, length);
+		uint_t hashcode, size;
+		string_data_size_and_hashcode(str, size, hashcode);
+		ret = insert(str, size, hashcode);
 	}
 	return ret;
-	/*
-	uint_t hashcode, length, size;
-	string_data_size_and_hashcode_and_length(str, size, hashcode, length);
-	IDPtr& ret = table2_[str];
-	return insert(str, size, hashcode, length);
-	*/
 }
 
-const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, uint_t length){
+const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode){
 	Guard guard(guard_);
 
 	Key key = {str, size, hashcode};
@@ -727,7 +530,7 @@ const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode, 
 	printf("string %d %d\n", countn, countsize);
 */
 
-	it = table_.insert(key, xnew<ID>(str, size, hashcode, length), hashcode).first;
+	it = table_.insert(key, xnew<ID>(str, size, hashcode), hashcode).first;
 	it->first.str = it->second->data();
 	return it->second;
 }

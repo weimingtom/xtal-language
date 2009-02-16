@@ -56,7 +56,7 @@ public:
 
 	void set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 		
-	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
+	void set_object_name(const StringPtr& name, int_t force, Frame* parent);
 
 	virtual StringPtr object_name(int_t depth = -1);
 

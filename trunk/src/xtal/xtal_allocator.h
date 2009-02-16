@@ -92,44 +92,29 @@ private:
 };
 
 class FixedAllocator{
+public:
+
+	typedef void* data_t;	
 
 	struct Chunk{
-
-		typedef void* data_t;
-
-		uint_t blocks_;
-		uint_t blocks_available_;
-		data_t* first_available_block_;
-		Chunk* next_;
+		Chunk* next;
 		//data_t buf_[blocks_];
 
-		void init(uint_t blocks,uint_t block_size);
-
-		void* malloc();
-
-		void free(void* p);
+		data_t* init(uint_t blocks, uint_t block_size, data_t* out);
 
 		data_t* buf(){
 			return reinterpret_cast<data_t*>(this+1);
 		}
 	};
 
-public:
-	
-	typedef Chunk::data_t data_t;
-
 private:
 
-	int_t blocks_;
 	data_t* free_data_;
-	Chunk* first_chunk_;
-	Chunk* last_chunk_;
+	Chunk* chunk_;
 
 public:
 
 	FixedAllocator();
-
-	void init(size_t block_size);
 
 	void* malloc(size_t block_size);
 
@@ -140,10 +125,6 @@ public:
 private:
 
 	void add_chunk(size_t block_size);
-
-	void* malloc_impl(size_t block_size);
-
-	void free_impl(void* p, size_t block_size);
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(FixedAllocator);
 };
@@ -160,8 +141,6 @@ public:
 	};
 
 public:
-
-	void init();
 	
 	void* malloc(size_t size);
 

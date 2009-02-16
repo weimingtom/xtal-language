@@ -82,6 +82,12 @@ public:
 		value_ = 0;
 	}
 
+	void set_p(int_t type, const RefCountingBase* p){
+		XTAL_ASSERT(p!=0);
+		type_ = type;
+		pvalue_ = (Base*)p;
+	}
+
 public:
 
 	friend int_t type(const Any& v);
@@ -121,6 +127,7 @@ protected:
 		byte_t fvalue_bytes[sizeof(float_t)];
 		float_t fvalue_;
 		Base* pvalue_;
+		RefCountingBase* rcpvalue_;
 		SmallString svalue_;
 	};
 
@@ -226,7 +233,7 @@ public:
 	* @param force 名前の強さ
 	* @param parent 親
 	*/
-	void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent) const;
+	void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0) const;
 
 	/**
 	* @brief ハッシュ値を返す

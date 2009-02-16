@@ -120,7 +120,7 @@ enum PrimitiveType{
 	TYPE_NULL = 0,
 	TYPE_UNDEFINED = 1,
 
-	TYPE_FALSE = 2,
+	TYPE_FALSE = 2, // Ç±Ç±Ç©ÇÁè„ÇÕÅAifÇ»Ç«Ç≈ãUÇ∆ï]âøÇ≥ÇÍÇÈ
 	TYPE_TRUE = 3,
 	
 	TYPE_BASE = 4,
@@ -130,7 +130,9 @@ enum PrimitiveType{
 	
 	TYPE_SMALL_STRING = 7,
 
-	TYPE_SHIFT = 3,
+	TYPE_STRING = 8,
+
+	TYPE_SHIFT = 4,
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
 };
 
@@ -268,12 +270,15 @@ typedef SmartPtr<MultiValue> MultiValuePtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 
 class Base;
-class Visitor;
-class InstanceVariables;
+class RefCountingBase;
+
 class Int;
 class Float;
 class Undefined;
 class Bool;
+
+class Visitor;
+class InstanceVariables;
 
 struct ScopeInfo{
 	ScopeInfo()

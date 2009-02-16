@@ -323,7 +323,7 @@ AnyPtr Serializer::inner_deserialize(){
 			p->source_file_name_ = cast<StringPtr>(map->at(Xid(source)));
 			p->identifier_table_ = cast<ArrayPtr>(map->at(Xid(identifiers)));
 			p->value_table_ = cast<ArrayPtr>(map->at(Xid(values)));
-			ret->set_object_name("<filelocal>", 1, null);	
+			ret->set_object_name("<filelocal>", 1, 0);	
 			p->first_fun_ = ret;
 			return p;
 		}

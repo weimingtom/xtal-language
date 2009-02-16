@@ -82,7 +82,6 @@ void Core::bind(){
 		p->def_method(Xid(clone), &String::clone);
 
 		p->def_method(Xid(length), &String::length);
-		p->def_method(Xid(size), &String::size);
 		p->def_method(Xid(intern), &String::intern);
 
 		p->def_method(Xid(each), &String::each);

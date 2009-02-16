@@ -161,7 +161,13 @@ class HaveName : public Base{
 public:
 
 	HaveName()
-		:name_(null), force_(0){}
+		:name_(null), parent_(0), force_(0){}
+
+	HaveName(const HaveName& a);
+
+	HaveName& operator=(const HaveName& a);
+
+	~HaveName();
 
 	virtual StringPtr object_name(int_t depth = -1);
 
@@ -169,12 +175,12 @@ public:
 	
 	virtual ArrayPtr object_name_list();
 
-	virtual void set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent);
+	virtual void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0);
 
 protected:
 
 	StringPtr name_;
-	AnyPtr parent_;
+	Frame* parent_;
 	int_t force_;
 
 	virtual void visit_members(Visitor& m){

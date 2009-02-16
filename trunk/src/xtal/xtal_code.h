@@ -59,7 +59,7 @@ public:
 		return source_file_name_; 
 	}
 
-	const ClassPtr& filelocal(){ 
+	const SingletonPtr& filelocal(){ 
 		return filelocal_; 
 	}
 
@@ -118,7 +118,7 @@ private:
 	ArrayPtr identifier_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
-	ClassPtr filelocal_;
+	SingletonPtr filelocal_;
 	StringPtr source_file_name_;
 	MethodPtr first_fun_;
 

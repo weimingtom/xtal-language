@@ -159,7 +159,7 @@ protected:
 		}
 	};
 
-	typedef Hashtable<AnyPtr, AnyPtr, Fun> table_t;
+	typedef OrderedHashtable<AnyPtr, AnyPtr, Fun> table_t;
 
 	const AnyPtr& calc_key(const AnyPtr& key);
 

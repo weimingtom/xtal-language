@@ -3,16 +3,14 @@
 
 namespace xtal{
 
-Base::Base()
-	:Any(noinit_t()){
+Base::Base(){
 	set_p(this);
 	//ref_count_ = 0;
 	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
-Base::Base(const Base& b)
-	:Any(noinit_t()){
+Base::Base(const Base& b){
 	set_p(this);
 	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
@@ -107,7 +105,7 @@ int_t Base::object_name_force(){
 	return 0;
 }
 
-void Base::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent){
+void Base::set_object_name(const StringPtr& name, int_t force, Frame* parent){
 
 }
 

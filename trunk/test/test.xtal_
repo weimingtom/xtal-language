@@ -12,7 +12,7 @@ lib::test: singleton{
 	
 	run_file: fun(file){
 		try{
-			enable_debug();
+			//enable_debug();
 			code: compile_file(file);
 			code();
 			%f!run file %s!(file).p;
@@ -41,7 +41,7 @@ lib::test: singleton{
 			}
 		}
 		finally{
-			disable_debug();
+			//disable_debug();
 		}
 	}
 	

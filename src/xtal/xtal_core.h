@@ -503,8 +503,8 @@ inline const IDPtr& intern(const char_t* str, uint_t data_size){
 	return core()->string_mgr()->insert(str, data_size);
 }
 
-inline const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash, uint_t length){
-	return core()->string_mgr()->insert(str, data_size, hash, length);
+inline const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash){
+	return core()->string_mgr()->insert(str, data_size, hash);
 }
 
 inline AnyPtr interned_strings(){

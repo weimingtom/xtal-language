@@ -66,6 +66,21 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 	}
 }
 
+HaveName::HaveName(const HaveName& a)
+:Base(a), name_(a.name_), parent_(0), force_(0){
+}
+
+HaveName& HaveName::operator=(const HaveName& a){
+	Base::operator=(a);
+	return *this;
+}
+
+HaveName::~HaveName(){
+	if(parent_){
+		parent_->dec_ref_count();
+	}
+}
+
 StringPtr HaveName::object_name(int_t depth){
 	if(!name_){
 		return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
@@ -79,7 +94,7 @@ StringPtr HaveName::object_name(int_t depth){
 }
 
 ArrayPtr HaveName::object_name_list(){
-	if(!name_){
+	if(!name_ || parent_==0){
 		return null;
 	}
 
@@ -95,11 +110,17 @@ int_t HaveName::object_name_force(){
 	return force_;
 }
 
-void HaveName::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent){
+void HaveName::set_object_name(const StringPtr& name, int_t force, Frame* parent){
 	if(!name_ || force_<force){
 		name_ = name;
 		force_ = force;
+		if(parent_){
+			parent_->dec_ref_count();
+		}
 		parent_ = parent;
+		if(parent_){
+			parent_->inc_ref_count();
+		}
 	}
 }
 

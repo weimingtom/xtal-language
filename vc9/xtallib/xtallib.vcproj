@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				ExceptionHandling="0"
 				RuntimeLibrary="1"
-				RuntimeTypeInfo="false"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"
 				WarningLevel="3"

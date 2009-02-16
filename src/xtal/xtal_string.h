@@ -3,8 +3,6 @@
 
 namespace xtal{
 
-class LargeString;
-
 class String : public Any{
 public:
 
@@ -60,10 +58,8 @@ public:
 
 public:
 
-	String(const char_t* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
+	String(const char_t* str, uint_t len, uint_t hashcode, bool intern_flag = false);
 	
-	String(LargeString* left, LargeString* right);
-
 	String(const String& s);
 
 protected:
@@ -92,12 +88,6 @@ public:
 	* 文字列の長さではなく、バイナリとして見た場合のサイズを返す。
 	*/
 	uint_t data_size();
-
-	/**
-	* @brief 文字列の長さを返す。
-	*
-	*/
-	uint_t size();
 
 	/**
 	* @brief 文字列の長さを返す。
@@ -152,70 +142,59 @@ public:
 	*/
 	StringPtr cat(const StringPtr& v);
 
-	uint_t hashcode();
-
 public:
 
 	ChRangePtr op_range(const StringPtr& right, int_t kind);
+	
 	StringPtr op_cat(const StringPtr& v);
+	
 	bool op_eq(const StringPtr& v);
+
 	bool op_lt(const StringPtr& v);
 
 private:
 	void init_string(const char_t* str, uint_t size);
-	int_t calc_offset(int_t pos);
-	void throw_index_error();
-
 };
 
-class LargeString : public Base{
+class StringData : public Base{
+	enum{
+		INTERNED = 1<<0,
+		SIZE_SHIFT = 1
+	};
+
+	char_t* buf_;
+	uint_t data_size_;
 public:
 
-	LargeString(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
-	LargeString(const char_t* str, uint_t len, uint_t hashcode, uint_t length, bool intern_flag = false);
-	LargeString(LargeString* left, LargeString* right);
-	virtual ~LargeString();
+	StringData(uint_t size){
+		data_size_ = size<<SIZE_SHIFT;
+		buf_ = (char_t*)so_malloc(size+1);
+		buf_[size] = 0;
+	}
 
-public:
+	~StringData(){
+		so_free(buf_, data_size()+1);
+	}
 
-	const char_t* c_str();
-	uint_t data_size(){ return data_size_; }
-	uint_t length(){ return length_; }
-	bool is_interned(){ return (flags_ & INTERNED)!=0; }
-	uint_t hashcode();
+	uint_t data_size(){
+		return data_size_>>SIZE_SHIFT;
+	}
+
+	char_t* buf(){ return buf_; }
+
+	bool is_interned(){
+		return (data_size_&INTERNED)!=0;
+	}
+
+	void set_interned(){
+		data_size_ |= INTERNED;
+	}
 
 private:
 	
-	void common_init(uint_t len);
-	void became_unified();
-	void write_to_memory(LargeString* p, char_t* memory, uint_t& pos);
-
-	virtual void visit_members(Visitor& m);
-
-	enum{
-		ROPE = 1<<0,
-		INTERNED = 1<<1,
-	};
-	uint_t flags_;
-
-	struct Str{
-		char_t* p;
-		uint_t hashcode;
-	};
-
-	struct Rope{
-		LargeString* left;
-		LargeString* right;
-	};
-
-	union{
-		Str str_;
-		Rope rope_;
-	};
-
-	uint_t data_size_;
-	uint_t length_;
+	XTAL_DISALLOW_COPY_AND_ASSIGN(StringData);
 };
+
 
 /**
 * @brief Intern済みのString
@@ -268,7 +247,7 @@ public:
 	*/
 	ID(char_t a, char_t b, char_t c);
 
-	ID(const char_t* str, uint_t len, uint_t hashcode, uint_t length);
+	ID(const char_t* str, uint_t len, uint_t hashcode);
 
 	/**
 	* @brief Stringから構築する
@@ -284,8 +263,7 @@ inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 AnyPtr interned_strings();
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
 uint_t string_hashcode(const char_t* str, uint_t size);
-void string_hashcode_and_length(const char_t* str, uint_t size, uint_t& hash, uint_t& length);
-void string_data_size_and_hashcode_and_length(const char_t* str, uint_t& size, uint_t& hash, uint_t& length);
+void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash, uint_t& length);
 uint_t string_length(const char_t* str);
 uint_t string_data_size(const char_t* str);
 
@@ -370,7 +348,9 @@ struct Named : public Named2{
 	Named(){}
 };
 
-void visit_members(Visitor& m, const Named& p);
+inline void visit_members(Visitor& m, const Named& p){
+	m & p.name & p.value;
+}
 	
 /**
 * @breif 文字列を管理するクラス
@@ -433,7 +413,7 @@ public:
 
 	const IDPtr& insert(const char_t* str);
 
-	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash, uint_t length);
+	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash);
 
 	const IDPtr& insert_literal(const char_t* str);
 

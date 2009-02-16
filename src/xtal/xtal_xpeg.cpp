@@ -14,7 +14,7 @@ ElementPtr elem(const AnyPtr& a);
 class Scanner : public Base{
 
 	enum{
-		ONE_BLOCK_SHIFT = 12,
+		ONE_BLOCK_SHIFT = 8,
 		ONE_BLOCK_SIZE = 1<<ONE_BLOCK_SHIFT,
 		ONE_BLOCK_MASK = ONE_BLOCK_SIZE-1
 	};

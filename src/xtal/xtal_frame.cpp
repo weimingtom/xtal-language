@@ -84,16 +84,16 @@ void Frame::set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& va
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
-	value->set_object_name(primary_key, object_name_force(), from_this(this));
+	value->set_object_name(primary_key, object_name_force(), this);
 	inc_global_mutate_count();
 }
 	
-void Frame::set_object_name(const StringPtr& primary_key, int_t force, const AnyPtr& parent){
+void Frame::set_object_name(const StringPtr& primary_key, int_t force, Frame* parent){
 	if(object_name_force()<force){
 		HaveName::set_object_name(primary_key, force, parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, from_this(this));
+				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, this);
 			}
 		}
 	}

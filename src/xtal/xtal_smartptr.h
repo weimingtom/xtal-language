@@ -448,7 +448,9 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 }
 
 inline void visit_members(Visitor& m, Base* p){
-	m & ap(Any(p));
+	if(p){		
+		m & ap(Any(p));
+	}
 }
 
 inline void visit_members(Visitor& m, const Any& p){

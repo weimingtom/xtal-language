@@ -70,14 +70,14 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 
 Class::Class(const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	set_object_name(name, 1, null);
+	set_object_name(name, 1, 0);
 	is_cpp_class_ = false;
 	make_map_members();
 }
 
 Class::Class(cpp_class_t, const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	set_object_name(name, 1, null);
+	set_object_name(name, 1, 0);
 	is_cpp_class_ = true;
 	make_map_members();
 }
@@ -186,7 +186,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		Value val = {members_->size(), accessibility};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		value->set_object_name(primary_key, object_name_force(), from_this(this));
+		value->set_object_name(primary_key, object_name_force(), this);
 		inc_global_mutate_count();
 	}
 	else{

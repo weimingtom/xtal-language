@@ -35,7 +35,7 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
-			value->set_object_name(primary_key, object_name_force(), ap(*this));
+			value->set_object_name(primary_key, 0, 0);
 			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
 		}
 	}
@@ -135,6 +135,7 @@ StringPtr Any::to_s() const{
 		XTAL_CASE(TYPE_FALSE){ return Xid(true); }
 		XTAL_CASE(TYPE_TRUE){ return Xid(false); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
+		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 	}
 	return empty_string;
 }
@@ -171,7 +172,7 @@ int_t Any::object_name_force() const{
 	return 0;
 }
 	
-void Any::set_object_name(const StringPtr& name, int_t force, const AnyPtr& parent) const{
+void Any::set_object_name(const StringPtr& name, int_t force, Frame* parent) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_name(name, force, parent);  }
@@ -189,6 +190,7 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<Bool>(); }
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<Bool>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
+		XTAL_CASE(TYPE_STRING){ return get_cpp_class<String>(); }
 	}
 	return get_cpp_class<Any>();
 }

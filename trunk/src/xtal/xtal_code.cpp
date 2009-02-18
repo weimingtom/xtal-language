@@ -5,7 +5,8 @@ namespace xtal{
 
 Code::Code()
 	:filelocal_(xnew<Singleton>(Xid(filelocal))), source_file_name_("<noname>"){
-	set_object_name("<filelocal>", 1, 0);
+	filelocal_->set_object_name("filelocal");
+	filelocal_->set_object_parent(null, 500);
 	filelocal_->inherit(builtin());
 	filelocal_->def(Xid(filelocal), filelocal_);
 
@@ -13,7 +14,6 @@ Code::Code()
 	value_table_ = xnew<Array>();
 
 	first_fun_ = xnew<Method>(null, from_this(this), (FunInfo*)0);
-	first_fun_->set_object_name("<toplevel>", 1, 0);
 }
 
 void Code::set_lineno_info(uint_t line){

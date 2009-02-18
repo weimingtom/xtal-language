@@ -94,6 +94,11 @@ private:
 		return (T*)pvalue(*this); 
 	}
 
+	T* get2(SmartPtrSelector<INHERITED_RCBASE>) const{ 
+		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		return (T*)rcpvalue(*this); 
+	}
+
 	T* get2(SmartPtrSelector<INHERITED_ANY>) const{ 
 		return (T*)this; 
 	}
@@ -123,59 +128,17 @@ public:
 
 public:
 
-	template<class U>
-	SmartPtr(XNewEssence0<U> x)
-		:SmartPtr<Any>(x){
-		T* n = (U*)0; // inherited test
-	}
-	
-	template<class U>
-	SmartPtr& operator= (XNewEssence0<U> x){
-		T* n = (U*)0; // inherited test
-		SmartPtr<Any>::operator =(x);
-		return *this;
-	}
-
-public:
-
-	template<class U, class A0>
-	SmartPtr(const XNewEssence1<U, A0>& x)
-		:SmartPtr<Any>(x){
-		T* n = (U*)0; // inherited test
-	}
-	
-	template<class U, class A0>
-	SmartPtr& operator= (const XNewEssence1<U, A0>& x){
-		T* n = (U*)0; // inherited test
-		SmartPtr<Any>::operator =(x);
-		return *this;
-	}
-
-public:
-
-	template<class U, class A0, class A1>
-	SmartPtr(const XNewEssence2<U, A0, A1>& x)
-		:SmartPtr<Any>(x){
-		T* n = (U*)0; // inherited test
-	}
-	
-	template<class U, class A0, class A1>
-	SmartPtr& operator= (const XNewEssence2<U, A0, A1>& x){
-		T* n = (U*)0; // inherited test
-		SmartPtr<Any>::operator =(x);
-		return *this;
-	}
-
-public:
-
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
-		:SmartPtr<Any>(new T(), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(), new_cpp_class<T>(), special_ctor_t()){}
+
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>)
+		:SmartPtr<Any>(new T(), T::TYPE, special_ctor_t()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>)
-		:SmartPtr<Any>(T()){}
+		:SmartPtr<Any>(T(), special_ctor_t()){}
 
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)p->buf;
 		new(p->ptr) T;
@@ -185,15 +148,19 @@ public:
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0)
-		:SmartPtr<Any>(new T(a0), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(a0), new_cpp_class<T>(), special_ctor_t()){}
+
+	template<class A0>
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0)
+		:SmartPtr<Any>(new T(a0), T::TYPE, special_ctor_t()){}
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0)
-		:SmartPtr<Any>(T(a0)){}
+		:SmartPtr<Any>(T(a0), special_ctor_t()){}
 
 	template<class A0>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0);
@@ -203,15 +170,19 @@ public:
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new T(a0, a1), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(a0, a1), new_cpp_class<T>(), special_ctor_t()){}
+
+	template<class A0, class A1>
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1)
+		:SmartPtr<Any>(new T(a0, a1), T::TYPE, special_ctor_t()){}
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(T(a0, a1)){}
+		:SmartPtr<Any>(T(a0, a1), special_ctor_t()){}
 
 	template<class A0, class A1>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1);
@@ -221,15 +192,19 @@ public:
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new T(a0, a1, a2), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(a0, a1, a2), new_cpp_class<T>(), special_ctor_t()){}
+
+	template<class A0, class A1, class A2>
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2)
+		:SmartPtr<Any>(new T(a0, a1, a2), T::TYPE, special_ctor_t()){}
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(T(a0, a1, a2)){}
+		:SmartPtr<Any>(T(a0, a1, a2), special_ctor_t()){}
 
 	template<class A0, class A1, class A2>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1, a2);
@@ -239,15 +214,19 @@ public:
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(a0, a1, a2, a3), new_cpp_class<T>(), special_ctor_t()){}
+
+	template<class A0, class A1, class A2, class A3>
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
+		:SmartPtr<Any>(new T(a0, a1, a2, a3), T::TYPE, special_ctor_t()){}
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(T(a0, a1, a2, a3)){}
+		:SmartPtr<Any>(T(a0, a1, a2, a3), special_ctor_t()){}
 
 	template<class A0, class A1, class A2, class A3>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)&p->fun;
 		new(p->ptr) T(a0, a1, a2, a3);
@@ -257,15 +236,19 @@ public:
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), new_cpp_class<T>(), with_class_t()){}
+		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), new_cpp_class<T>(), special_ctor_t()){}
+
+	template<class A0, class A1, class A2, class A3, class A4>
+	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), T::TYPE, special_ctor_t()){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(T(a0, a1, a2, a3, a4)){}
+		:SmartPtr<Any>(T(a0, a1, a2, a3, a4), special_ctor_t()){}
 
 	template<class A0, class A1, class A2, class A3, class A4>
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), with_class_t()){
+		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
 		p->ptr = (T*)p->buf;
 		new(p->ptr) T(a0, a1, a2, a3, a4);
@@ -335,34 +318,13 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 
 //////////////////////////////////////////////////////////////
 
-/**
-* @brief Tオブジェクトを生成する
-*/
-template<class T>
-inline XNewEssence0<T> xnew_lazy(){
-	return XNewEssence0<T>();
-}
-
-/**
-* @brief Tオブジェクトを生成する
-*/
-template<class T, class A0>
-inline XNewEssence1<T, A0> xnew_lazy(const A0& a0){
-	return XNewEssence1<T, A0>(a0);
-}
-
-/**
-* @brief Tオブジェクトを生成する
-*/
-template<class T, class A0, class A1>
-inline XNewEssence2<T, A0, A1> xnew_lazy(const A0& a0, const A1& a1){
-	return XNewEssence2<T, A0, A1>(a0, a1);
-}
-
-//////////////////////////////////////////////////////////////
-
 template<class T>
 inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p){
+	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
+}
+
+template<class T>
+inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_RCBASE>, const T* p){
 	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 

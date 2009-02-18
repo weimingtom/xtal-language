@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-class DelegateToIterator : public HaveName{
+class DelegateToIterator : public HaveParent{
 	IDPtr member_;
 public:
 	

@@ -4,13 +4,14 @@
 namespace xtal{
 
 void Array::visit_members(Visitor& m){
-	Base::visit_members(m);
 	for(uint_t i=0; i<size_; ++i){
 		m & values_[i];
 	}
 }
 
 Array::Array(uint_t size){
+	set_p(TYPE_ARRAY, this);
+
 	capa_ = size+3; // todo buffer overflow
 	size_ = size;
 
@@ -24,6 +25,8 @@ Array::Array(uint_t size){
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end){
+	set_p(TYPE_ARRAY, this);
+
 	int_t size = end-first;
 
 	capa_ = size;
@@ -37,7 +40,9 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 }
 
 Array::Array(const Array& v)
-:Base(v){
+:RefCountingBase(v){
+	set_p(TYPE_ARRAY, this);
+
 	size_ = capa_ = ((Array&)v).size();
 	if(capa_!=0){
 		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);

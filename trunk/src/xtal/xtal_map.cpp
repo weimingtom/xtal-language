@@ -9,8 +9,8 @@ void Map::visit_members(Visitor& m){
 }	
 
 const AnyPtr& Map::calc_key(const AnyPtr& key){
-	if(type(key)==TYPE_BASE){
-		if(const StringPtr& str = as<const StringPtr&>(key)){
+	if(type(key)==TYPE_STRING){
+		if(const StringPtr& str = unchecked_ptr_cast<String>(key)){
 			return str->intern();
 		}
 	}

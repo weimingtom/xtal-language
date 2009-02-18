@@ -11,38 +11,38 @@ void* stack_dummy_allocate(){
 }
 
 void* stack_allocate(size_t size){
-	return user_malloc(size);
+	return so_malloc(size);
 }
 
-void stack_deallocate(void* p){
+void stack_deallocate(void* p, size_t size){
 	if(stack_dummy_buf==p){
 		return;
 	}
 	XTAL_ASSERT(!((char*)stack_dummy_buf-64 <= (char*)p && (char*)p <= (char*)stack_dummy_buf+64));
-	user_free(p);
+	so_free(p, size);
 }
 
 
 PODStackBase::PODStackBase(size_t onesize){
 	one_size_ = onesize;
-	begin_ = plusp(dummy_allocate(), 1);
+	begin_ = plusp(stack_dummy_allocate(), 1);
 	current_ = minusp(begin_, 1);
 	end_ = begin_;
 }
 
 PODStackBase::~PODStackBase(){
-	deallocate(minusp(begin_, 1));
+	stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
 }
 
 PODStackBase::PODStackBase(const PODStackBase &a){
 	one_size_ = a.one_size_;
 	if(a.capacity()==0){
-		begin_ = plusp(dummy_allocate(), 1);
+		begin_ = plusp(stack_dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
 	}
 	else{
-		begin_ = plusp(allocate(one_size_*(a.capacity()+1)), 1);
+		begin_ = plusp(stack_allocate(one_size_*(a.capacity()+1)), 1);
 		current_ = plusp(begin_, a.size()-1);
 		end_ = plusp(begin_, a.capacity());
 		std::memcpy(begin_, a.begin_, one_size_*a.capacity());
@@ -55,15 +55,15 @@ PODStackBase &PODStackBase::operator =(const PODStackBase &a){
 	}
 
 	if(a.capacity()==0){
-		deallocate(minusp(begin_, 1));
+		stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
 		one_size_ = a.one_size_;
-		begin_ = plusp(dummy_allocate(), 1);
+		begin_ = plusp(stack_dummy_allocate(), 1);
 		current_ = minusp(begin_, 1);
 		end_ = begin_;
 	}
 	else{
-		void* newp = plusp(allocate(a.one_size_*(a.capacity()+1)), 1);
-		deallocate(minusp(begin_, 1));
+		void* newp = plusp(stack_allocate(a.one_size_*(a.capacity()+1)), 1);
+		stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
 		one_size_ = a.one_size_;
 		begin_ = newp;
 		current_ = plusp(begin_, a.size()-1);
@@ -96,10 +96,10 @@ void PODStackBase::upsize_detail(size_t us){
 	size_t newsize = oldsize+us;
 	void* oldp = begin_;
 	size_t newcapa = 2 + us + oldcapa + oldcapa/2;
-	void* newp = plusp(allocate(one_size_*(newcapa+1)), 1);
+	void* newp = plusp(stack_allocate(one_size_*(newcapa+1)), 1);
 
 	std::memcpy(newp, oldp, one_size_*oldsize);
-	deallocate(minusp(oldp, 1));
+	stack_deallocate(minusp(oldp, 1), one_size_*(oldcapa+1));
 
 	begin_ = newp;
 	current_ = plusp(begin_, newsize-1);
@@ -139,8 +139,8 @@ void PODStackBase::reserve(size_t capa){
 }
 
 void PODStackBase::release(){
-	deallocate(minusp(begin_, 1));
-	begin_ = plusp(dummy_allocate(), 1);
+	stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
+	begin_ = plusp(stack_dummy_allocate(), 1);
 	current_ = minusp(begin_, 1);
 	end_ = begin_;
 }
@@ -153,7 +153,7 @@ void PODStackBase::attach(void* p){
 }
 
 void PODStackBase::detach(){
-	begin_ = plusp(dummy_allocate(), 1);
+	begin_ = plusp(stack_dummy_allocate(), 1);
 	current_ = minusp(begin_, 1);
 	end_ = begin_;
 }

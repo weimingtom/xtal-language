@@ -128,9 +128,8 @@ void String::init_string(const char_t* str, uint_t sz){
 	}
 	else{
 		StringData* sd = new StringData(sz);
-		sd->set_class(get_cpp_class<String>());
 		string_copy(sd->buf(), str, sz);
-		set_p(sd);
+		set_p(TYPE_STRING, sd);
 		core()->register_gc(sd);
 	}
 }
@@ -140,19 +139,18 @@ String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag
 	uint_t sz = size;
 	if(sz<SMALL_STRING_MAX){
 		set_small_string();
-		std::memcpy(svalue_, str, sz*sizeof(char_t));
+		string_copy(svalue_, str, sz);
 	}
 	else{
 		if(!intern_flag && string_length(str)==1){
-			set_p(pvalue(xtal::intern(str, sz, hashcode)));
-			pvalue(*this)->inc_ref_count();
+			set_p(TYPE_STRING, rcpvalue(xtal::intern(str, sz, hashcode)));
+			rcpvalue(*this)->inc_ref_count();
 		}
 		else{
 			StringData* sd = new StringData(sz);
 			string_copy(sd->buf(), str, sz);
 			sd->set_interned();
-			sd->set_class(new_cpp_class<String>());
-			set_p(sd);
+			set_p(TYPE_STRING, sd);
 			core()->register_gc(sd);
 		}
 	}
@@ -197,10 +195,9 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 	}
 	else{
 		StringData* sd = new StringData(sz);
-		sd->set_class(get_cpp_class<String>());
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
-		set_p(sd);
+		set_p(TYPE_STRING, sd);
 		core()->register_gc(sd);
 	}
 }
@@ -250,8 +247,8 @@ uint_t String::length(){
 }
 
 const char_t* String::c_str(){
-	if(type(*this)==TYPE_BASE){
-		return ((StringData*)pvalue(*this))->buf();
+	if(type(*this)==TYPE_STRING){
+		return ((StringData*)rcpvalue(*this))->buf();
 	}
 	else{
 		return svalue_;
@@ -262,8 +259,8 @@ const char_t* String::c_str(){
 }
 
 const char_t* String::data(){
-	if(type(*this)==TYPE_BASE){
-		return ((StringData*)pvalue(*this))->buf();
+	if(type(*this)==TYPE_STRING){
+		return ((StringData*)rcpvalue(*this))->buf();
 	}
 	else{
 		return svalue_;
@@ -271,8 +268,8 @@ const char_t* String::data(){
 }
 
 uint_t String::data_size(){
-	if(type(*this)==TYPE_BASE){
-		return ((StringData*)pvalue(*this))->data_size();
+	if(type(*this)==TYPE_STRING){
+		return ((StringData*)rcpvalue(*this))->data_size();
 	}
 	else{
 		for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
@@ -290,8 +287,8 @@ StringPtr String::clone(){
 }
 
 const IDPtr& String::intern(){
-	if(type(*this)==TYPE_BASE){
-		StringData* p = ((StringData*)pvalue(*this));
+	if(type(*this)==TYPE_STRING){
+		StringData* p = ((StringData*)rcpvalue(*this));
 		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
 		return xtal::intern(p->buf(), p->data_size());
 	}
@@ -301,8 +298,8 @@ const IDPtr& String::intern(){
 }
 
 bool String::is_interned(){
-	if(type(*this)==TYPE_BASE){
-		return ((StringData*)pvalue(*this))->is_interned();
+	if(type(*this)==TYPE_STRING){
+		return ((StringData*)rcpvalue(*this))->is_interned();
 	}
 	else{
 		return true;

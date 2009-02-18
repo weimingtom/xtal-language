@@ -27,24 +27,24 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	return ap_copy(*this, p);
 }
 
-void SmartPtr<Any>::set_p_with_class(Base* p, const ClassPtr& c){
-	Any::set_p(p);
-	p->set_class(c);
+SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)
+	:Any(noinit_t()){
+	set_p(type, p);
 	core()->register_gc(p);
 }
 
-SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, with_class_t)
+SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
 	p->set_class(c);
 	core()->register_gc(p);
 }
 
-SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, with_class_t)
+SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
 	core()->register_gc(p);
 }
 
-SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, with_class_t)
+SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
 	core()->register_gc(p);
 }

@@ -9,21 +9,19 @@ public:
 	RefCountingBase()
 		:Any(noinit_t()){}
 
+#ifdef XTAL_DEBUG
+//	virtual ~RefCountingBase(){}
+#endif
+
 public:
 
 	enum{
 		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
 		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
 
-		XTAL_INSTANCE_FLAG_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		XTAL_INSTANCE_FLAG_BIT = 1<<XTAL_INSTANCE_FLAG_SHIFT,
-
-		REF_COUNT_SHIFT = XTAL_INSTANCE_FLAG_SHIFT+1,
+		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
 		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
 	};
-
-	bool is_xtal_instance(){ return (type_ & XTAL_INSTANCE_FLAG_BIT)!=0; }
-	void set_xtal_instance_flag(){ type_ |= XTAL_INSTANCE_FLAG_BIT; }
 
 	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
 	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
@@ -32,6 +30,19 @@ public:
 	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
 	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
 	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
+
+public:
+
+	static void* operator new(size_t size){ 
+		return so_malloc(size);
+	}
+
+	static void operator delete(void* p){
+	}
+	
+private:
+
+	friend class Core;
 
 };
 
@@ -61,38 +72,25 @@ public:
 	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache);
 
 	/**
-	* @brief このオブジェクトに付けられた名前を返す。
+	* @brief このオブジェクトがメンバとなっている親のクラスを返す。
 	*
 	*/
-	virtual StringPtr object_name(int_t depth = -1);
+	virtual const ClassPtr& object_parent();
 
 	/**
-	* @brief このオブジェクトに付けられた名前の親の名前からなるリストを返す。
+	* @brief このオブジェクトに関連付けられた親のクラスの強さを返す。
 	*
 	*/
-	virtual ArrayPtr object_name_list();
-		
-	/**
-	* @brief このオブジェクトに付けられた名前の強さを返す。
-	*
-	*/
-	virtual int_t object_name_force();
+	virtual int_t object_parent_force();
 	
 	/**
-	* @brief このオブジェクトに名前をつける。
+	* @brief このオブジェクトに親を設定する。
 	*
-	* 名前を持てないオブジェクトや、前に付けられた名前の方が強い場合無視される。
-	* @param name つける名前
-	* @param force 名前の強さ
+	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
 	* @param parent 親
+	* @param force 親の強さ
 	*/
-	virtual void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0);
-
-	/**
-	* @brief ハッシュ値を返す
-	*
-	*/
-	virtual uint_t hashcode();
+	virtual void set_object_parent(const ClassPtr& parent, int_t force);
 
 	/**
 	* @brief ファイナライザ
@@ -154,23 +152,11 @@ private:
 
 	// 所属クラス
 	Class* class_;
-	
+
 private:
 
 	friend class Core;
 };
-
-inline void inc_ref_count_force(const Any& v){
-	if(type(v)==TYPE_BASE){
-		pvalue(v)->inc_ref_count();
-	}
-}
-
-inline void dec_ref_count_force(const Any& v){
-	if(type(v)==TYPE_BASE){
-		pvalue(v)->dec_ref_count();
-	}
-}
 
 }
 

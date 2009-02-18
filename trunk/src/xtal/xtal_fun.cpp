@@ -53,14 +53,6 @@ Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* core)
 	:outer_(outer), code_(code), info_(core){
 }
 
-StringPtr Method::object_name(int_t depth){
-	if(!name_){
-		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")->call(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+info_->pc))), 1, parent_);
-	}
-
-	return HaveName::object_name(depth);
-}
-
 bool Method::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<info_->min_param_count || (!(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM) && n>info_->max_param_count)){

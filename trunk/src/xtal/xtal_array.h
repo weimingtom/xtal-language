@@ -7,8 +7,9 @@ namespace xtal{
 * @brief 配列
 *
 */
-class Array : public Base{
+class Array : public RefCountingBase{
 public:
+	enum{ TYPE = TYPE_ARRAY };
 
 	/**
 	* @brief sizeの長さの配列を生成する 
@@ -31,7 +32,16 @@ public:
 	/**
 	* @brief デストラクタ
 	*/
-	virtual ~Array();
+	~Array();
+
+
+	/**
+	* @brief 配列の長さを返す
+	*
+	*/
+	uint_t length(){
+		return size_;
+	}
 
 	/**
 	* @brief 配列の長さを返す
@@ -55,14 +65,6 @@ public:
 	* @brief 配列をsz分短くする
 	*/
 	void downsize(uint_t sz);
-
-	/**
-	* @brief 配列の長さを返す
-	*
-	*/
-	uint_t length(){
-		return size_;
-	}
 
 	/**
 	* @brief i番目の要素を返す
@@ -238,12 +240,9 @@ public:
 
 	void concat(const AnyPtr& iterator);
 
-	/*
-	AnyPtr* data(){
-		return values_;
-	}
-	*/
 public:
+
+	void visit_members(Visitor& m);
 
 	class iterator{
 	public:
@@ -299,8 +298,6 @@ protected:
 	AnyPtr* values_;
 	uint_t size_;
 	uint_t capa_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 class ArrayIter : public Base{
@@ -325,8 +322,12 @@ private:
 class MultiValue : public Array{
 public:
 
+	enum{ TYPE = TYPE_MULTI_VALUE };
+
 	MultiValue(int_t size = 0)
-		:Array(size){}
+		:Array(size){
+		set_p(TYPE_MULTI_VALUE, this);
+	}
 
 	MultiValuePtr clone();
 

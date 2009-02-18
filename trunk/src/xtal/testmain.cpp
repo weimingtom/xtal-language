@@ -32,23 +32,27 @@ int main2(int argc, char** argv){
 	Core core;
 	core.initialize(setting);
 
-	Xfor(v, interned_strings()){
-	//	v->p();
-	}
 
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
 
+	//*
 	Xsrc((
-
-		))->call(); //->inspect()->p();
-
-	/*
+		{
+			A: class{}
+			A.p;
+			builtin::A: A;
+			A.p;
+		}
+		))->call();
+	//*/
+	
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->put_s(e->to_s());
 		stderr_stream()->put_s("\n");
+		return 1;
 	}
-	*/
+
 
 #if 1
 
@@ -93,7 +97,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

@@ -6,27 +6,27 @@ namespace xtal{
 InstanceVariables::InstanceVariables()		
 	:variables_(xnew<Array>()){
 	VariablesInfo vi;
-	vi.core = 0;
+	vi.class_info = 0;
 	vi.pos = 0;
 	variables_info_.push(vi);
 }
 		
 InstanceVariables::~InstanceVariables(){}
 	
-void InstanceVariables::init_variables(ClassInfo* core){
+void InstanceVariables::init_variables(ClassInfo* class_info){
 	VariablesInfo vi;
-	vi.core = core;
+	vi.class_info = class_info;
 	vi.pos = (int_t)variables_->size();
-	variables_->resize(vi.pos+core->instance_variable_size);
+	variables_->resize(vi.pos+class_info->instance_variable_size);
 	variables_info_.push(vi);
 }
 
-bool InstanceVariables::is_included(ClassInfo* core){
+bool InstanceVariables::is_included(ClassInfo* class_info){
 	VariablesInfo& info = variables_info_.top();
-	if(info.core == core)
+	if(info.class_info == class_info)
 		return true;
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
-		if(variables_info_[i].core==core){
+		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
 			return true;
 		}	
@@ -34,9 +34,9 @@ bool InstanceVariables::is_included(ClassInfo* core){
 	return false;
 }
 
-int_t InstanceVariables::find_core_inner(ClassInfo* core){
+int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
-		if(variables_info_[i].core==core){
+		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
 			return variables_info_[0].pos;
 		}	
@@ -47,11 +47,9 @@ int_t InstanceVariables::find_core_inner(ClassInfo* core){
 
 EmptyInstanceVariables::EmptyInstanceVariables()
 	:InstanceVariables(uninit_t()){
-	vi.core = 0;
+	vi.class_info = 0;
 	vi.pos = 0;
 	variables_info_.attach(&vi);
-//	VariablesInfo info = variables_info_.top();
-//	info = info;
 }
 
 EmptyInstanceVariables::~EmptyInstanceVariables(){
@@ -64,57 +62,70 @@ InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 	:Frame(outer, code, core), mixins_(xnew<Array>()){
-	is_cpp_class_ = false;
+	is_native_ = false;
+	is_final_ = false;
 	make_map_members();
 }
 
 Class::Class(const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	set_object_name(name, 1, 0);
-	is_cpp_class_ = false;
+	set_object_name(name);
+	is_native_ = false;
+	is_final_ = false;
 	make_map_members();
 }
 
 Class::Class(cpp_class_t, const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	set_object_name(name, 1, 0);
-	is_cpp_class_ = true;
+	set_object_name(name);
+	is_native_ = true;
+	is_final_ = false;
 	make_map_members();
 }
 
 void Class::overwrite(const ClassPtr& p){
-	if(!is_cpp_class_){
+	if(!is_native_){
 		operator=(*p);
 		mixins_ = p->mixins_;
 		inc_global_mutate_count();
 	}
 }
 
-
-void Class::inherit(const ClassPtr& md){
-	if(is_inherited(md))
+void Class::inherit(const ClassPtr& cls){
+	if(is_inherited(cls))
 		return;
 	
-	XTAL_ASSERT(md);
-
-	mixins_->push_back(md);
+	mixins_->push_back(cls);
 	inc_global_mutate_count();
 }
 
-void Class::inherit_strict(const ClassPtr& md){
-	if(md->is_cpp_class() && is_inherited_cpp_class()){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1019")));
+void Class::inherit_first(const ClassPtr& cls){
+	if(cls->is_native()){
+		if(is_inherited_cpp_class()){
+			XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1019")));
+			return;
+		}
+	}
+
+	if(cls->is_final()){
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1028")->call(Named(Xid(name), cls->object_name()))));
 		return;
 	}
 
-	if(is_inherited(md)){
+	if(is_inherited(cls)){
 		return;
 	}
 
-	XTAL_ASSERT(md);
-
-	mixins_->push_back(md);
+	mixins_->push_back(cls);
 	inc_global_mutate_count();
+}
+
+void Class::inherit_strict(const ClassPtr& cls){
+	if(cls->is_native()){
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1029")->call(Named(Xid(name), cls->object_name()))));
+	}
+
+	inherit_first(cls);
 }
 
 AnyPtr Class::inherited_classes(){
@@ -126,9 +137,9 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		unchecked_ptr_cast<Class>(mixins_->at(i-1))->init_instance(self, vm);
 	}
 	
-	if(core()->instance_variable_size){
+	if(info()->instance_variable_size){
 		pvalue(self)->make_instance_variables();
-		pvalue(self)->instance_variables()->init_variables(core());
+		pvalue(self)->instance_variables()->init_variables(info());
 
 		vm->setup_call(0);
 		vm->set_arg_this(self);
@@ -186,7 +197,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		Value val = {members_->size(), accessibility};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		value->set_object_name(primary_key, object_name_force(), this);
+		value->set_object_parent(from_this(this), object_parent_force());
 		inc_global_mutate_count();
 	}
 	else{
@@ -302,6 +313,56 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	inc_global_mutate_count();
 }
 
+void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
+	members_->set_at(i, value);
+	Key key = {primary_key, secondary_key};
+	Value val = {i, accessibility};
+	map_members_->insert(key, val);
+	value->set_object_parent(from_this(this), object_parent_force());
+	inc_global_mutate_count();
+}
+
+void Class::set_object_parent(const ClassPtr& parent, int_t force){
+	if(object_parent_force()<force){
+		HaveParent::set_object_parent(parent, force);
+		if(map_members_){
+			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
+				members_->at(it->second.num)->set_object_parent(from_this(this), force);
+			}
+		}
+	}
+}
+
+MultiValuePtr Class::child_object_name(const AnyPtr& a){
+	if(map_members_){
+		for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
+			if(raweq(members_->at(it->second.num), a)){
+				return mv(it->first.primary_key, it->first.secondary_key);
+			}
+		}
+	}
+	return null;
+}
+
+StringPtr Class::object_name(){
+	if(const ClassPtr& parent = object_parent()){
+		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
+			if(raweq(myname->at(1), null)){
+				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
+			}
+			else{
+				return Xf("%s::%s#%s")->call(parent->object_name(), myname->at(0), myname->at(1))->to_s();
+			}
+		}
+	}
+
+	return name_;
+}
+
+void Class::set_object_name(const StringPtr& name){
+	name_ = name;
+}
+
 bool Class::is_inherited(const AnyPtr& v){
 	if(this==pvalue(v)){
 		return true;
@@ -317,7 +378,7 @@ bool Class::is_inherited(const AnyPtr& v){
 }
 
 bool Class::is_inherited_cpp_class(){
-	if(is_cpp_class()){
+	if(is_native()){
 		return true;
 	}
 
@@ -332,17 +393,26 @@ bool Class::is_inherited_cpp_class(){
 
 void Class::rawcall(const VMachinePtr& vm){
 	const AnyPtr& newfun = bases_member(Xid(new));
+	
+	XTAL_CHECK_EXCEPT(e){ return; }
+
 	AnyPtr instance;
 	if(newfun){
 		instance = newfun->call();
 	}
 	else{
 		instance = xnew<Base>();
-		pvalue(instance)->set_xtal_instance_flag();
 	}
 
-	pvalue(instance)->set_class(from_this(this));
+	XTAL_CHECK_EXCEPT(e){ return; }
+
+	if(type(instance)==TYPE_BASE){
+		pvalue(instance)->set_class(from_this(this));
+	}
+
 	init_instance(instance, vm);
+
+	XTAL_CHECK_EXCEPT(e){ return; }
 	
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->set_arg_this(instance);
@@ -367,11 +437,12 @@ void Class::s_new(const VMachinePtr& vm){
 	}
 	else{
 		instance = xnew<Base>();
-		pvalue(instance)->set_xtal_instance_flag();
 	}
 
-	pvalue(instance)->set_class(from_this(this));
-	init_instance(instance, vm);
+	if(type(instance)==TYPE_BASE){
+		pvalue(instance)->set_class(from_this(this));
+		init_instance(instance, vm);
+	}
 
 	vm->return_result(instance);
 }

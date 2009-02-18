@@ -14,7 +14,7 @@ Base::Base(const Base& b){
 	set_p(this);
 	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
-		instance_variables_ = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
+		instance_variables_ = (InstanceVariables*)so_malloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
 
 		class_ = b.class_;
@@ -45,7 +45,7 @@ Base& Base::operator =(const Base& b){
 	else{
 		if(instance_variables_!=&empty_instance_variables){
 			instance_variables_->~InstanceVariables();
-			user_free(instance_variables_);
+			so_free(instance_variables_, sizeof(InstanceVariables));
 
 			if(get_class()){
 				class_->dec_ref_count();
@@ -62,7 +62,7 @@ Base& Base::operator =(const Base& b){
 Base::~Base(){
 	if(instance_variables_!=&empty_instance_variables){
 		instance_variables_->~InstanceVariables();
-		user_free(instance_variables_);
+		so_free(instance_variables_, sizeof(InstanceVariables));
 
 		if(get_class()){
 			class_->dec_ref_count();
@@ -97,33 +97,25 @@ void Base::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& seco
 
 }
 
-StringPtr Base::object_name(int_t depth){
-	return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
+const ClassPtr& Base::object_parent(){
+	return null;
 }
 
-int_t Base::object_name_force(){ 
+int_t Base::object_parent_force(){ 
 	return 0;
 }
 
-void Base::set_object_name(const StringPtr& name, int_t force, Frame* parent){
+void Base::set_object_parent(const ClassPtr& parent, int_t force){
 
-}
-
-ArrayPtr Base::object_name_list(){
-	return null;
 }
 
 void Base::finalize(){
 
 }
 
-uint_t Base::hashcode(){
-	return ((uint_t)this)>>2;
-}
-
 void Base::make_instance_variables(){
 	if(instance_variables_==&empty_instance_variables){
-		InstanceVariables* temp = (InstanceVariables*)user_malloc(sizeof(InstanceVariables));
+		InstanceVariables* temp = (InstanceVariables*)so_malloc(sizeof(InstanceVariables));
 		new(temp) InstanceVariables();
 		instance_variables_ = temp;
 

@@ -1028,7 +1028,7 @@ bool Parser::parse_term(){
 							eb_.splice(EXPR_MULTI_VALUE, 1);
 						}
 						else{
-							if(ep(eb_.back())->tag()==EXPR_SEND){
+							if(ep(eb_.back())->itag()==EXPR_SEND){
 								eb_.splice(EXPR_BRACKET, 1);
 							}	
 						}

@@ -224,7 +224,7 @@ void Format::rawcall(const VMachinePtr& vm){
 			size_t malloc_size = 0;
 			if(fs->max_buffer_size()>=256){
 				malloc_size = fs->max_buffer_size() + 1;
-				pcbuf = (char_t*)user_malloc(malloc_size);
+				pcbuf = (char_t*)so_malloc(malloc_size);
 			}
 			else{
 				pcbuf = cbuf;
@@ -241,7 +241,7 @@ void Format::rawcall(const VMachinePtr& vm){
 							}
 							
 							malloc_size = str->data_size() + fs->max_buffer_size() + 1;
-							pcbuf = (char_t*)user_malloc(malloc_size);
+							pcbuf = (char_t*)so_malloc(malloc_size);
 						}
 					}
 					fs->make_format_specifier(spec, 's');
@@ -250,7 +250,7 @@ void Format::rawcall(const VMachinePtr& vm){
 				}
 
 				XTAL_CASE(TYPE_NULL){
-					ms->put_s(XTAL_STRING("<null>"));
+					ms->put_s(XTAL_STRING("null"));
 				}
 
 				XTAL_CASE(TYPE_INT){
@@ -267,7 +267,7 @@ void Format::rawcall(const VMachinePtr& vm){
 			}
 			
 			if(malloc_size!=0){
-				user_free(pcbuf);
+				so_free(pcbuf, malloc_size);
 			}
 		}
 	}

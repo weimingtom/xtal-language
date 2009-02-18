@@ -18,8 +18,6 @@ public:
 		load_path_list_->push_back(path);
 	}
 
-	virtual ArrayPtr object_name_list();
-
 private:
 
 	const AnyPtr& rawdef(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);

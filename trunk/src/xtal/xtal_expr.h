@@ -124,31 +124,12 @@ typedef SmartPtr<Expr> ExprPtr;
 
 const ExprPtr& ep(const AnyPtr& a);
 
-class Expr : public Array{
-	AnyPtr tag_;
-	int_t lineno_;
-
+class Expr : public xpeg::TreeNode{
 public:
 
 	Expr(const AnyPtr& tag=0, int_t lineno=0){
-		tag_ = tag;
-		lineno_ = lineno;
-	}
-
-	int_t tag(){
-		return ivalue(tag_);
-	}
-
-	void set_tag(int_t tag){
-		tag_ = tag;
-	}
-	
-	int_t lineno(){
-		return lineno_;
-	}
-
-	void set_lineno(int_t lineno){
-		lineno_ = lineno;
+		set_tag(tag);
+		set_lineno(lineno);
 	}
 
 	const AnyPtr& at(uint_t i);

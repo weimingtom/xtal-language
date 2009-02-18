@@ -133,7 +133,7 @@ const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& k
 //}}REPEAT}
 
 void CFun::visit_members(Visitor& m){
-	HaveName::visit_members(m);
+	HaveParent::visit_members(m);
 	m & this_;
 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
@@ -182,9 +182,11 @@ void CFun::rawcall(const VMachinePtr& vm){
 
 		{
 			const AnyPtr& arg = vm->arg_this();
-			if(param_types[0] && !arg->is(from_this(param_types[0]))){
-				vm->set_except(argument_error(vm->ff().hint()->object_name(), 0, from_this(param_types[0]), arg->get_class()));
-				return;
+			if(param_types[0]){
+				if(!arg->is(from_this(param_types[0]))){
+					vm->set_except(argument_error(vm->ff().hint()->object_name(), 0, from_this(param_types[0]), arg->get_class()));
+					return;
+				}
 			}
 		}
 
@@ -192,9 +194,12 @@ void CFun::rawcall(const VMachinePtr& vm){
 
 		for(int_t i=0; i<param_n_; ++i){
 			const AnyPtr& arg = vm->arg_unchecked(i);
-			if(param_types[i+1] && !arg->is(from_this(param_types[i+1]))){
-				vm->set_except(argument_error(vm->ff().hint()->object_name(), i+1, from_this(param_types[i+1]), arg->get_class()));
-				return;
+
+			if(param_types[i+1]){
+				if(!arg->is(from_this(param_types[i+1]))){ 
+					vm->set_except(argument_error(vm->ff().hint()->object_name(), i+1, from_this(param_types[i+1]), arg->get_class()));
+					return;
+				}
 			}
 		}
 	}

@@ -40,14 +40,21 @@ typedef SmartPtr<NFA> NFAPtr;
 */
 class TreeNode : public Array{
 public:
+	enum{ TYPE = TYPE_TREE_NODE };
 
 	TreeNode(const AnyPtr& tag=null, int_t lineno=0){
+		set_p(TYPE_TREE_NODE, this);
+
 		tag_ = tag;
 		lineno_ = lineno;
 	}
 
 	const AnyPtr& tag(){
 		return tag_;
+	}
+
+	int_t itag(){
+		return ivalue(tag_);
 	}
 
 	void set_tag(const AnyPtr& tag){

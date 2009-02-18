@@ -35,7 +35,6 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
-			value->set_object_name(primary_key, 0, 0);
 			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
 		}
 	}
@@ -119,14 +118,14 @@ float_t Any::to_f() const{
 
 StringPtr Any::to_s() const{
 	switch(type(*this)){
-		XTAL_NODEFAULT;
+		XTAL_DEFAULT{
+			return ptr_cast<String>((*this).send(Xid(to_s)));
+		}
+
 		XTAL_CASE(TYPE_NULL){ return Xid(null); }
 		XTAL_CASE(TYPE_UNDEFINED){ return Xid(undefined); }
 
 		XTAL_CASE(TYPE_BASE){ 
-			if(const StringPtr& ret = ptr_as<String>(ap(*this))){
-				return ret; 
-			}
 			return ptr_cast<String>((*this).send(Xid(to_s)));
 		}
 
@@ -148,35 +147,84 @@ MapPtr Any::to_m() const{
 	return ptr_cast<Map>((*this).send(Xid(op_to_m)));
 }
 
-StringPtr Any::object_name(int_t depth) const{
+const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{ return StringPtr("instance of ")->cat(get_class()->object_name(depth)); }
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name(depth); }
+		XTAL_DEFAULT{}
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
 	}
 	return null;	
 }
 
-ArrayPtr Any::object_name_list() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{ return null; }
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name_list(); }
-	}
-	return null;
-}
-
-int_t Any::object_name_force() const{
+int_t Any::object_parent_force() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_name_force();  }
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent_force();  }
 	}
 	return 0;
 }
 	
-void Any::set_object_name(const StringPtr& name, int_t force, Frame* parent) const{
+void Any::set_object_parent(const ClassPtr& parent, int_t force) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_name(name, force, parent);  }
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_parent(parent, force);  }
 	}
+}
+
+ArrayPtr Any::object_name_list() const{
+	if(const ClassPtr& parent = object_parent()){
+		ArrayPtr ret = parent->object_name_list();
+		ret->push_back(parent->child_object_name(ap(*this)));
+		return ret;
+	}
+	else if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+		ArrayPtr ret = xnew<Array>();
+		ret->push_back(mv(cls->object_name(), null));
+		return ret;
+	}
+	return xnew<Array>();
+}
+
+StringPtr Any::object_name() const{
+	switch(type(*this)){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_NULL){ return Xid(null); }
+		XTAL_CASE(TYPE_UNDEFINED){ return Xid(undefined); }
+		XTAL_CASE(TYPE_INT){ return Xf("%d")->call(ap(*this))->to_s(); }
+		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
+		XTAL_CASE(TYPE_FALSE){ return Xid(true); }
+		XTAL_CASE(TYPE_TRUE){ return Xid(false); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
+		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
+	}
+
+	// 親がいるなら、親が名前を知っている
+	if(const ClassPtr& parent = object_parent()){
+		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
+			if(raweq(myname->at(1), null)){
+				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
+			}
+			else{
+				return Xf("%s::%s#%s")->call(parent->object_name(), myname->at(0), myname->at(1))->to_s();
+			}
+		}
+	}
+
+	// クラスの場合、自身が名前を保持してるかも
+	if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+		if(StringPtr name = cls->object_name()){
+			return name;
+		}
+		
+		// 保持していないなら、その定義位置を表示しとこう
+		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), cls->code()->source_file_name(), cls->code()->compliant_lineno(cls->code()->data()+cls->info()->pc))->to_s();
+	}
+
+	// メソッドの場合、その定義位置を表示しとこう
+	if(const MethodPtr& mtd = ptr_as<Method>(ap(*this))){
+		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), mtd->code()->source_file_name(), mtd->code()->compliant_lineno(mtd->code()->data()+mtd->info()->pc))->to_s();
+	}
+
+	return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
 }
 
 const ClassPtr& Any::get_class() const{
@@ -191,6 +239,9 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<Bool>(); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
 		XTAL_CASE(TYPE_STRING){ return get_cpp_class<String>(); }
+		XTAL_CASE(TYPE_ARRAY){ return get_cpp_class<Array>(); }
+		XTAL_CASE(TYPE_MULTI_VALUE){ return get_cpp_class<MultiValue>(); }
+		XTAL_CASE(TYPE_TREE_NODE){ return get_cpp_class<xpeg::TreeNode>(); }
 	}
 	return get_cpp_class<Any>();
 }
@@ -233,10 +284,10 @@ AnyPtr Any::s_save() const{
 			vm->setup_call(1);
 			vm->set_arg_this(ap(*this));
 			member->rawcall(vm);
-			ret->set_at(it->object_name(), vm->result_and_cleanup_call());
+			ret->set_at(it, vm->result_and_cleanup_call());
 		}
 		else{
-			ret->set_at(it->object_name(), serial_save(unchecked_ptr_cast<Class>(it)));
+			ret->set_at(it, serial_save(unchecked_ptr_cast<Class>(it)));
 		}
 	}
 
@@ -253,13 +304,13 @@ void Any::s_load(const AnyPtr& v) const{
 	Xfor(it, ary){
 		if(const AnyPtr& member = it->member(Xid(serial_load), null, null, false)){
 			const VMachinePtr& vm = vmachine();
-			vm->setup_call(1, ret->at(it->object_name()));
+			vm->setup_call(1, ret->at(it));
 			vm->set_arg_this(ap(*this));
 			member->rawcall(vm);
 			vm->cleanup_call();
 		}
 		else{
-			serial_load(unchecked_ptr_cast<Class>(it), ret->at(it->object_name()));
+			serial_load(unchecked_ptr_cast<Class>(it), ret->at(it));
 		}
 	}
 }
@@ -271,11 +322,11 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(const CodePtr& code = p->code()){
-			ClassInfo* core = p->core();
-			if(core->instance_variable_size!=0){	
+			ClassInfo* info = p->info();
+			if(info->instance_variable_size!=0){	
 				MapPtr insts = xnew<Map>();
-				for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-					insts->set_at(code->identifier(core->instance_variable_identifier_offset+i), iv->variable(i, core));
+				for(int_t i=0; i<(int_t)info->instance_variable_size; ++i){
+					insts->set_at(code->identifier(info->instance_variable_identifier_offset+i), iv->variable(i, info));
 				}
 
 				return insts;
@@ -293,11 +344,11 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
 		if(const MapPtr& insts = ptr_as<Map>(v)){
 			if(const CodePtr& code = p->code()){
-				ClassInfo* core = p->core();
-				if(core->instance_variable_size!=0){	
-					for(int_t i=0; i<(int_t)core->instance_variable_size; ++i){
-						StringPtr str = code->identifier(core->instance_variable_identifier_offset+i);
-						iv->set_variable(i, core, insts->at(code->identifier(core->instance_variable_identifier_offset+i)));
+				ClassInfo* info = p->info();
+				if(info->instance_variable_size!=0){	
+					for(int_t i=0; i<(int_t)info->instance_variable_size; ++i){
+						StringPtr str = code->identifier(info->instance_variable_identifier_offset+i);
+						iv->set_variable(i, info, insts->at(code->identifier(info->instance_variable_identifier_offset+i)));
 					}
 				}
 			}
@@ -324,13 +375,93 @@ MultiValuePtr Any::flatten_all_mv() const{
 	return to_mv()->flatten_all_mv();
 }
 
-void visit_members(Visitor& m, const AnyPtr& p){
-	switch(type(p)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ 
-			XTAL_ASSERT((int)pvalue(p)->ref_count() >= -m.value());
-			pvalue(p)->add_ref_count(m.value());
+void Any::visit_members(Visitor& m) const{
+	switch(type(*this)){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_BASE){ pvalue(*this)->visit_members(m); }
+
+		XTAL_CASE(TYPE_ARRAY){ 
+			((Array*)rcpvalue(*this))->visit_members(m); 
 		}
+
+		XTAL_CASE(TYPE_MULTI_VALUE){ 
+			((MultiValue*)rcpvalue(*this))->visit_members(m); 
+		}
+
+		XTAL_CASE(TYPE_TREE_NODE){ 
+			using namespace xpeg;
+			((TreeNode*)rcpvalue(*this))->visit_members(m); 
+		}
+	}
+}
+
+void Any::destroy() const{
+	switch(type(*this)){
+		XTAL_NODEFAULT;
+
+		XTAL_CASE(TYPE_BASE){
+			delete pvalue(*this);
+		}
+
+		XTAL_CASE(TYPE_STRING){ 
+			((StringData*)rcpvalue(*this))->~StringData(); 
+			rcpvalue(*this)->value_ = sizeof(StringData); 
+		}
+
+		XTAL_CASE(TYPE_ARRAY){ 
+			((Array*)rcpvalue(*this))->~Array(); 
+			rcpvalue(*this)->value_ = sizeof(Array); 
+		}
+
+		XTAL_CASE(TYPE_MULTI_VALUE){ 
+			((MultiValue*)rcpvalue(*this))->~MultiValue(); 
+			rcpvalue(*this)->value_ = sizeof(MultiValue); 
+		}
+
+		XTAL_CASE(TYPE_TREE_NODE){ 
+			using namespace xpeg;
+			((TreeNode*)rcpvalue(*this))->~TreeNode(); 
+			rcpvalue(*this)->value_ = sizeof(TreeNode); 
+		}
+	}
+}
+
+void Any::object_free(){
+	if(type(*this)==TYPE_BASE){
+		so_free(static_cast<Base*>(this), value_);
+	}
+	else if(type(*this)>TYPE_BASE){
+		so_free(this, value_);
+	}
+}
+
+void visit_members(Visitor& m, const AnyPtr& p){
+	if(type(p)==TYPE_BASE){
+		XTAL_ASSERT((int)pvalue(p)->ref_count() >= -m.value());
+		pvalue(p)->add_ref_count(m.value());
+	}
+	else if(type(p)>TYPE_BASE){
+		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
+		rcpvalue(p)->add_ref_count(m.value());
+	}
+}
+
+
+void inc_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->inc_ref_count();
+	}
+	else if(type(v)>TYPE_BASE){
+		rcpvalue(v)->inc_ref_count();		
+	}
+}
+
+void dec_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->dec_ref_count();
+	}
+	else if(type(v)>TYPE_BASE){
+		rcpvalue(v)->dec_ref_count();		
 	}
 }
 

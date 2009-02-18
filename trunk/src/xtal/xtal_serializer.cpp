@@ -24,8 +24,9 @@ AnyPtr Serializer::deserialize(){
 
 void Serializer::inner_serialize(const AnyPtr& v){
 	
+	// 基本型かチェック
 	switch(type(v)){
-		XTAL_NODEFAULT;
+		XTAL_DEFAULT;
 
 		XTAL_CASE(TYPE_NULL){
 			stream_->put_u8(TNULL);
@@ -60,24 +61,23 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			stream_->put_u8(TTRUE);
 			return;
 		}
-
-		XTAL_CASE(TYPE_SMALL_STRING){}
 	}
 
 	const ClassPtr& cls = v->get_class();
-	bool added = false;
-	int_t num = register_value(v, added);
-	if(added){
-		if(const ArrayPtr& a = as<ArrayPtr>(v)){
-			stream_->put_u8(TARRAY);
-			stream_->put_u32be(a->size());
-			for(uint_t i=0; i<a->size(); ++i){
-				inner_serialize(a->at(i));
-			}
-			return;
-		}
-		else if(const StringPtr& a = as<StringPtr>(v)){
-			stream_->put_u8(TSTRING);
+	int_t num = register_value(v);
+	if(num>=0){
+		// 既に保存されているオブジェクトなので参照位置だけ保存する
+		stream_->put_u8(REF);
+		stream_->put_u32be(num);
+		return;
+	}
+	
+	switch(type(v)){
+		XTAL_DEFAULT;
+
+		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_STRING){
+			const StringPtr& a = unchecked_ptr_cast<String>(v);
+			stream_->put_u8(a->is_interned() ? TID : TSTRING);
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();
 			stream_->put_i32be(sz);
@@ -86,85 +86,87 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			}
 			return;
 		}
-		else if(const MapPtr& a = as<MapPtr>(v)){
-			stream_->put_u8(TMAP);
+
+		XTAL_CASE2(TYPE_ARRAY, TYPE_MULTI_VALUE){
+			const ArrayPtr& a = unchecked_ptr_cast<Array>(v);
+			stream_->put_u8(type(v)==TYPE_ARRAY ? TARRAY : TMULTI_VALUE);
 			stream_->put_u32be(a->size());
-			Xfor2(key, value, a){
-				inner_serialize(key);
-				inner_serialize(value);
+			for(uint_t i=0; i<a->size(); ++i){
+				inner_serialize(a->at(i));
 			}
 			return;
-		}
-		else if(raweq(cls, get_cpp_class<Code>())){
-			CodePtr p = cast<CodePtr>(v);
-			stream_->put_u8('x'); stream_->put_u8('t'); stream_->put_u8('a'); stream_->put_u8('l');
-			stream_->put_u8(SERIALIZE_VERSION1); stream_->put_u8(SERIALIZE_VERSION2); 
-			stream_->put_u8(0); 
-			stream_->put_u8(0);
-			
-			int_t sz;
-			sz = p->code_.size();
-			stream_->put_u32be(sz);
-			if(sz!=0){ stream_->write(&p->code_[0], sizeof(p->code_[0])*sz); }
-			
-			sz = p->scope_info_table_.size();
-			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->scope_info_table_[0], sizeof(p->scope_info_table_[0])*sz); }
-
-			sz = p->class_info_table_.size();
-			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->class_info_table_[0], sizeof(p->class_info_table_[0])*sz); }
-
-			sz = p->xfun_info_table_.size();
-			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->xfun_info_table_[0], sizeof(p->xfun_info_table_[0])*sz); }
-
-			sz = p->except_info_table_.size();
-			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->except_info_table_[0], sizeof(p->except_info_table_[0])*sz); }
-
-			sz = p->lineno_table_.size();
-			stream_->put_u16be(sz);
-			if(sz!=0){ stream_->write(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
-
-			sz = p->once_table_->size();
-			stream_->put_u16be(sz);
-
-			MapPtr map = xnew<Map>();
-			map->set_at(Xid(source), p->source_file_name_);
-			map->set_at(Xid(identifiers), p->identifier_table_);
-			map->set_at(Xid(values), p->value_table_);
-			inner_serialize(map);
-
-			return;
-		}
-
-		ArrayPtr name_list = v->object_name_list();
-		if(name_list){
-			stream_->put_u8(LIB);
-			inner_serialize(name_list);
-		}
-		else{
-			name_list = v->get_class()->object_name_list();
-			if(!name_list){
-				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), v->object_name()))));
-				return;
-			}
-
-			// serial_newで空オブジェクトを生成するコマンドを埋め込む
-			stream_->put_u8(SERIAL_NEW);
-
-			// クラスの名前を埋め込む
-			inner_serialize(name_list); 
-
-			// s_saveでserializableなオブジェクトを取り出しserializeする
-			inner_serialize(v->send(Xid(s_save)));
 		}
 	}
+	
+	if(const MapPtr& a = as<MapPtr>(v)){
+		stream_->put_u8(TMAP);
+		stream_->put_u32be(a->size());
+		Xfor2(key, value, a){
+			inner_serialize(key);
+			inner_serialize(value);
+		}
+		return;
+	}
+
+	if(raweq(cls, get_cpp_class<Code>())){
+		CodePtr p = cast<CodePtr>(v);
+		stream_->put_u8('x'); stream_->put_u8('t'); stream_->put_u8('a'); stream_->put_u8('l');
+		stream_->put_u8(SERIALIZE_VERSION1); stream_->put_u8(SERIALIZE_VERSION2); 
+		stream_->put_u8(0); 
+		stream_->put_u8(0);
+		
+		int_t sz;
+		sz = p->code_.size();
+		stream_->put_u32be(sz);
+		if(sz!=0){ stream_->write(&p->code_[0], sizeof(p->code_[0])*sz); }
+		
+		sz = p->scope_info_table_.size();
+		stream_->put_u16be(sz);
+		if(sz!=0){ stream_->write(&p->scope_info_table_[0], sizeof(p->scope_info_table_[0])*sz); }
+
+		sz = p->class_info_table_.size();
+		stream_->put_u16be(sz);
+		if(sz!=0){ stream_->write(&p->class_info_table_[0], sizeof(p->class_info_table_[0])*sz); }
+
+		sz = p->xfun_info_table_.size();
+		stream_->put_u16be(sz);
+		if(sz!=0){ stream_->write(&p->xfun_info_table_[0], sizeof(p->xfun_info_table_[0])*sz); }
+
+		sz = p->except_info_table_.size();
+		stream_->put_u16be(sz);
+		if(sz!=0){ stream_->write(&p->except_info_table_[0], sizeof(p->except_info_table_[0])*sz); }
+
+		sz = p->lineno_table_.size();
+		stream_->put_u16be(sz);
+		if(sz!=0){ stream_->write(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
+
+		sz = p->once_table_->size();
+		stream_->put_u16be(sz);
+
+		MapPtr map = xnew<Map>();
+		map->set_at(Xid(source), p->source_file_name_);
+		map->set_at(Xid(identifiers), p->identifier_table_);
+		map->set_at(Xid(values), p->value_table_);
+		inner_serialize(map);
+
+		return;
+	}
+	
+	// 名前で保存したら読込できそうか
+	ArrayPtr name_list = v->object_name_list();
+	if(name_list && !name_list->is_empty()){
+		stream_->put_u8(NAME);
+		inner_serialize(name_list);
+	}
 	else{
-		// 既に保存されているオブジェクトなので参照位置だけ保存する
-		stream_->put_u8(REF);
-		stream_->put_u32be(num);
+		// serial_newで空オブジェクトを生成するコマンドを埋め込む
+		stream_->put_u8(SERIAL_NEW);
+
+		// クラスを埋め込む
+		inner_serialize(v->get_class()); 
+
+		// s_saveでserializableなオブジェクトを取り出しserializeする
+		inner_serialize(v->send(Xid(s_save)));
 	}
 }
 
@@ -175,13 +177,13 @@ AnyPtr Serializer::inner_deserialize(){
 
 	int_t op = stream_->get_u8();
 	switch(op){
-		XTAL_NODEFAULT;
+		XTAL_DEFAULT;
 
 		XTAL_CASE(SERIAL_NEW){
 			int_t num = append_value(null);
 
 			// serial_newをするクラスを取り出す
-			ClassPtr c(cast<ClassPtr>(demangle(inner_deserialize())));
+			ClassPtr c(cast<ClassPtr>(inner_deserialize()));
 
 			const VMachinePtr& vm = vmachine();
 
@@ -199,7 +201,7 @@ AnyPtr Serializer::inner_deserialize(){
 			return ret;
 		}
 
-		XTAL_CASE(LIB){
+		XTAL_CASE(NAME){
 			int_t num = append_value(null);
 			values_->set_at(num, demangle(inner_deserialize()));
 			return values_->at(num);
@@ -225,22 +227,28 @@ AnyPtr Serializer::inner_deserialize(){
 			return stream_->get_f32be();
 		}
 
-		XTAL_CASE(TSTRING){
+		XTAL_CASE2(TSTRING, TID){
 			int_t sz = stream_->get_u32be();
-			char_t* p = (char_t*)user_malloc(sizeof(char_t)*(sz+1));
+			char_t* p = (char_t*)so_malloc(sizeof(char_t)*(sz+1));
 			for(int_t i = 0; i<sz; ++i){
 				p[i] = (char_t)stream_->get_ch_code_be();
 			}
-			p[sz] = 0;				
+			p[sz] = 0;	
 			IDPtr ret = xnew<ID>(p, sz);
-			user_free(p);
+			so_free(p, sizeof(char_t)*(sz+1));
 			append_value(ret);
 			return ret;
 		}
 
-		XTAL_CASE(TARRAY){
+		XTAL_CASE2(TARRAY, TMULTI_VALUE){
 			int_t sz = stream_->get_u32be();
-			ArrayPtr ret(xnew<Array>(sz));
+			ArrayPtr ret;
+			if(op==TARRAY){
+				ret = xnew<Array>(sz);
+			}else{
+				ret = xnew<MultiValue>(sz);
+			}
+
 			append_value(ret);
 			for(int_t i = 0; i<sz; ++i){
 				ret->set_at(i, inner_deserialize());
@@ -323,7 +331,6 @@ AnyPtr Serializer::inner_deserialize(){
 			p->source_file_name_ = cast<StringPtr>(map->at(Xid(source)));
 			p->identifier_table_ = cast<ArrayPtr>(map->at(Xid(identifiers)));
 			p->value_table_ = cast<ArrayPtr>(map->at(Xid(values)));
-			ret->set_object_name("<filelocal>", 1, 0);	
 			p->first_fun_ = ret;
 			return p;
 		}
@@ -333,10 +340,9 @@ AnyPtr Serializer::inner_deserialize(){
 
 AnyPtr Serializer::demangle(const AnyPtr& n){
 	AnyPtr ret;
-	Xfor(v, n){
-		IDPtr id = ptr_cast<String>(v)->intern();
+	Xfor_cast(const MultiValuePtr& mv, n){
 		if(first_step){
-			if(raweq(id, Xid(lib))){
+			if(raweq(mv->at(0), Xid(lib))){
 				ret = lib();
 			}
 			else{
@@ -344,7 +350,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 			}
 		}
 		else{
-			ret = ret->member(id);
+			ret = ret->member(ptr_cast<ID>(mv->at(0)), mv->at(1));
 		}
 	}
 
@@ -356,28 +362,28 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	return ret;
 }
 
-int_t Serializer::register_value(const AnyPtr& v, bool& added){
+int_t Serializer::register_value(const AnyPtr& v){
 	AnyPtr ret = map_->at(v);
 	if(rawne(ret, undefined)){
-		added = false;
+		return ret->to_i();
 	}
 	else{
 		ret = append_value(v);
-		added = true;
+		return -1;
 	}
-	return ret->to_i();
 }
 
 int_t Serializer::append_value(const AnyPtr& v){
-	int_t ret = (int_t)values_->size();
+	uint_t ret = values_->size();
 	map_->set_at(v, ret);
 	values_->push_back(v);
 	return ret;
 }
 
 void Serializer::put_tab(int_t tab){
-	while(tab--)
+	while(tab--){
 		stream_->put_s("\t");
+	}
 }
 
 

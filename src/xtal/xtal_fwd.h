@@ -123,14 +123,18 @@ enum PrimitiveType{
 	TYPE_FALSE = 2, // Ç±Ç±Ç©ÇÁè„ÇÕÅAifÇ»Ç«Ç≈ãUÇ∆ï]âøÇ≥ÇÍÇÈ
 	TYPE_TRUE = 3,
 	
-	TYPE_BASE = 4,
+	TYPE_INT = 4,
+	TYPE_FLOAT = 5,
 	
-	TYPE_INT = 5,
-	TYPE_FLOAT = 6,
-	
-	TYPE_SMALL_STRING = 7,
+	TYPE_SMALL_STRING = 6,
+
+	TYPE_BASE = 7,
 
 	TYPE_STRING = 8,
+	
+	TYPE_ARRAY = 9,
+	TYPE_MULTI_VALUE = 10,
+	TYPE_TREE_NODE = 11,
 
 	TYPE_SHIFT = 4,
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
@@ -298,11 +302,11 @@ struct ScopeInfo{
 };
 
 struct ClassInfo : public ScopeInfo{
-	ClassInfo(u16 offset = 0, u16 size = 0)
-		:instance_variable_identifier_offset(offset), instance_variable_size(size){}
+	ClassInfo(u16 size = 0, u16 offset = 0)
+		:instance_variable_size(size), instance_variable_identifier_offset(offset){}
 
-	u16 instance_variable_identifier_offset;
 	u16 instance_variable_size;
+	u16 instance_variable_identifier_offset;
 	u8 mixins;
 };
 

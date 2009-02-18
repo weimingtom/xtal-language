@@ -1147,7 +1147,7 @@ struct setter_holder{
 
 //////////////////////////////////////////////////////////////
 
-class CFun : public HaveName{
+class CFun : public HaveParent{
 public:
 	typedef void (*fun_t)(VMAndData& pvm);
 
@@ -1201,7 +1201,6 @@ protected:
 	AnyPtr this_;
 };
 
-CFunPtr new_cfun(void (*fun)(VMAndData& pvm), const void* val, int_t val_size, int_t param_n, void** param_types);
 CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_size);
 
 //////////////////////////////////////////////////////////////
@@ -1269,7 +1268,7 @@ inline CFunPtr setter(T C::* v){
 /**
 * @birief 2重ディスパッチメソッド
 */
-class DualDispatchMethod : public HaveName{
+class DualDispatchMethod : public HaveParent{
 public:
 
 	DualDispatchMethod(const IDPtr& primary_key)
@@ -1294,7 +1293,7 @@ DualDispatchMethodPtr dual_dispatch_method(const IDPtr& primary_key);
 /**
 * @birief 2重ディスパッチ関数
 */
-class DualDispatchFun : public HaveName{
+class DualDispatchFun : public HaveParent{
 public:
 
 	DualDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
@@ -1307,7 +1306,7 @@ public:
 private:
 
 	virtual void visit_members(Visitor& m){
-		HaveName::visit_members(m);
+		HaveParent::visit_members(m);
 		m & klass_;
 	}
 

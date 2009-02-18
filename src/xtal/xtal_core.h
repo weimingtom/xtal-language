@@ -59,7 +59,7 @@ public:
 
 	void full_gc();
 
-	void register_gc(Base* p);
+	void register_gc(RefCountingBase* p);
 
 	void register_gc_observer(GCObserver* p);
 
@@ -210,13 +210,13 @@ private:
 	SmallObjectAllocator so_alloc_;
 	CoreSetting setting_;
 
-	Base** objects_begin_ ;
-	Base** objects_current_;
-	Base** objects_end_;
+	RefCountingBase** objects_begin_ ;
+	RefCountingBase** objects_current_;
+	RefCountingBase** objects_end_;
 
-	Base*** objects_list_begin_;
-	Base*** objects_list_current_;
-	Base*** objects_list_end_;
+	RefCountingBase*** objects_list_begin_;
+	RefCountingBase*** objects_list_current_;
+	RefCountingBase*** objects_list_end_;
 
 	GCObserver** gcobservers_begin_;
 	GCObserver** gcobservers_current_;

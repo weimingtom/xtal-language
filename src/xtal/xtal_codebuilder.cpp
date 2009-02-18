@@ -50,7 +50,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 		}
 		else{
 
-			if(e->tag()==EXPR_RETURN){
+			if(e->itag()==EXPR_RETURN){
 				break;
 			}
 
@@ -485,7 +485,7 @@ void CodeBuilder::break_off(int_t n){
 }
 
 static bool is_comp_bin(ExprPtr e){
-	if(e && EXPR_EQ<=e->tag() && e->tag()<=EXPR_NIS){
+	if(e && EXPR_EQ<=e->itag() && e->itag()<=EXPR_NIS){
 		return true;
 	}	
 	return false;
@@ -545,10 +545,10 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 
 		set_jump(InstIfEq::OFFSET_address, label_if);
 		InstIfEq inst;
-		inst.op += e->tag()-EXPR_EQ;
+		inst.op += e->itag()-EXPR_EQ;
 		put_inst(inst);
 
-		if(e->tag()==EXPR_NE || e->tag()==EXPR_LE || e->tag()==EXPR_GE || e->tag()==EXPR_NIN){
+		if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
 			set_jump(InstUnless::OFFSET_address, label_if2);
 			put_inst(InstUnless());
 		}
@@ -558,12 +558,12 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 		}
 	}
 	else{
-		if(e->tag()==EXPR_NOT){
+		if(e->itag()==EXPR_NOT){
 			compile_expr(e->una_term());
 			set_jump(InstUnless::OFFSET_address, label_if);
 			put_inst(InstUnless());
 		}
-		else if(e->tag()==EXPR_DEBUG){
+		else if(e->itag()==EXPR_DEBUG){
 			set_jump(InstIfDebug::OFFSET_address, label_if);
 			put_inst(InstIfDebug());
 		}
@@ -626,15 +626,15 @@ void CodeBuilder::var_define_stmts(const ExprPtr& stmts){
 
 void CodeBuilder::var_define_stmt(const AnyPtr& stmt){
 	if(ExprPtr v = ptr_as<Expr>(stmt)){
-		if(v->tag()==EXPR_DEFINE){
-			if(v->bin_lhs()->tag()==EXPR_LVAR){
+		if(v->itag()==EXPR_DEFINE){
+			if(v->bin_lhs()->itag()==EXPR_LVAR){
 				var_define(v->bin_lhs()->lvar_name(), v->bin_rhs());
 			}
 		}
-		else if(v->tag()==EXPR_MDEFINE){
+		else if(v->itag()==EXPR_MDEFINE){
 			Xfor(v1, v->mdefine_lhs_exprs()){
 				ExprPtr vv = ep(v1);
-				if(vv->tag()==EXPR_LVAR){
+				if(vv->itag()==EXPR_LVAR){
 					var_define(vv->lvar_name());
 				}			
 			}
@@ -783,7 +783,7 @@ void CodeBuilder::compile_bin(const ExprPtr& e){
 	compile_expr(e->bin_rhs());
 
 	InstAdd inst;
-	inst.op += e->tag() - EXPR_ADD;
+	inst.op += e->itag() - EXPR_ADD;
 	put_inst(inst);
 }
 
@@ -809,10 +809,10 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	compile_expr(e->bin_rhs());
 
 	InstEq inst;
-	inst.op += e->tag() - EXPR_EQ;
+	inst.op += e->itag() - EXPR_EQ;
 	put_inst(inst);
 
-	if(e->tag()==EXPR_NE || e->tag()==EXPR_LE || e->tag()==EXPR_GE || e->tag()==EXPR_NIN){
+	if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
 		put_inst(InstNot());
 	}
 	//*/
@@ -861,10 +861,10 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	put_inst(InstInsert2());
 
 	InstEq inst;
-	inst.op += e->tag() - EXPR_EQ;
+	inst.op += e->itag() - EXPR_EQ;
 	put_inst(inst);
 
-	if(e->tag()==EXPR_NE || e->tag()==EXPR_LE || e->tag()==EXPR_GE || e->tag()==EXPR_NIN){
+	if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
 		put_inst(InstNot());
 	}
 
@@ -896,21 +896,21 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 	ExprPtr rhs = e->bin_rhs();
 
 	InstAddAssign inst;
-	inst.op += e->tag() - EXPR_ADD_ASSIGN;
+	inst.op += e->itag() - EXPR_ADD_ASSIGN;
 
-	if(lhs->tag()==EXPR_LVAR){
+	if(lhs->itag()==EXPR_LVAR){
 		put_local_code(lhs->lvar_name());
 		compile_expr(rhs);
 		put_inst(inst);
 		put_set_local_code(lhs->lvar_name());
 	}
-	else if(lhs->tag()==EXPR_IVAR){
+	else if(lhs->itag()==EXPR_IVAR){
 		put_instance_variable_code(lhs->ivar_name());
 		compile_expr(rhs);
 		put_inst(inst);
 		put_set_instance_variable_code(lhs->ivar_name());
 	}
-	else if(lhs->tag()==EXPR_SEND){
+	else if(lhs->itag()==EXPR_SEND){
 		compile_expr(lhs->send_term());
 		put_inst(InstDup());
 		put_send_code(lhs->send_name(), 1, false, false, lhs->send_ns());
@@ -919,7 +919,7 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 		put_inst(InstInsert1());
 		put_set_send_code(lhs->send_name(), false, lhs->send_ns());
 	}
-	else if(lhs->tag()==EXPR_SEND_Q){
+	else if(lhs->itag()==EXPR_SEND_Q){
 		compile_expr(lhs->send_term());
 		put_inst(InstDup());
 		put_send_code(lhs->send_name(), 1, false, true, lhs->send_ns());
@@ -928,7 +928,7 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 		put_inst(InstInsert1());
 		put_set_send_code(lhs->send_name(), true, lhs->send_ns());
 	}
-	else if(lhs->tag()==EXPR_AT){
+	else if(lhs->itag()==EXPR_AT){
 		compile_expr(lhs->bin_lhs());
 		put_inst(InstDup());
 		compile_expr(lhs->bin_rhs());
@@ -946,13 +946,13 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	ExprPtr term = e->una_term();
 
 	InstInc inst;
-	inst.op += e->tag() - EXPR_INC;
+	inst.op += e->itag() - EXPR_INC;
 
-	if(term->tag()==EXPR_LVAR){
+	if(term->itag()==EXPR_LVAR){
 		LVarInfo info = var_find(term->lvar_name());
 		if(info.pos>=0){
 			if(info.pos>=256){
-				if(e->tag() == EXPR_INC){
+				if(e->itag() == EXPR_INC){
 					put_inst(InstLocalVariableInc2Byte(info.pos));
 				}
 				else{
@@ -961,7 +961,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 				put_inst(InstSetLocalVariable2Byte(info.pos));
 			}
 			else{
-				if(e->tag() == EXPR_INC){
+				if(e->itag() == EXPR_INC){
 					var_set_direct(var_frame(info));
 					put_inst(InstLocalVariableInc(info.pos));
 				}
@@ -983,12 +983,12 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 		}
 
 	}
-	else if(term->tag()==EXPR_IVAR){
+	else if(term->itag()==EXPR_IVAR){
 		put_instance_variable_code(term->ivar_name());
 		put_inst(inst);
 		put_set_instance_variable_code(term->ivar_name());
 	}
-	else if(term->tag()==EXPR_SEND){
+	else if(term->itag()==EXPR_SEND){
 		compile_expr(term->send_term());
 		put_inst(InstDup());
 		put_send_code(term->send_name(), 1, false, false, term->send_ns());
@@ -996,7 +996,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 		put_inst(InstInsert1());
 		put_set_send_code(term->send_name(), false, term->send_ns());
 	}
-	else if(term->tag()==EXPR_SEND_Q){
+	else if(term->itag()==EXPR_SEND_Q){
 		compile_expr(term->send_term());
 		put_inst(InstDup());
 		put_send_code(term->send_name(), 1, false, true, term->send_ns());
@@ -1004,7 +1004,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 		put_inst(InstInsert1());
 		put_set_send_code(term->send_name(), true, term->send_ns());
 	}
-	else if(term->tag()==EXPR_AT){
+	else if(term->itag()==EXPR_AT){
 		compile_expr(term->bin_lhs());
 		put_inst(InstDup());
 		compile_expr(term->bin_rhs());
@@ -1021,11 +1021,11 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	IDPtr label;
 	int_t label_kind = 0;
 
-	if(e->tag()==EXPR_BREAK){
+	if(e->itag()==EXPR_BREAK){
 		label = e->break_label();
 		label_kind = 0;
 	}
-	else if(e->tag()==EXPR_CONTINUE){
+	else if(e->itag()==EXPR_CONTINUE){
 		label = e->continue_label();
 		label_kind = 1;
 	}
@@ -1077,7 +1077,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		ExprPtr stmts = xnew<Expr>();
 		MapPtr ivar_map = xnew<Map>();
 		Xfor_as(const ExprPtr& v, e->class_stmts()->clone()){
-			if(v->tag()==EXPR_CDEFINE_IVAR){
+			if(v->itag()==EXPR_CDEFINE_IVAR){
 				if(v->cdefine_ivar_term()){
 					eb_.push(v->cdefine_ivar_name());
 					eb_.splice(EXPR_IVAR, 1);
@@ -1159,7 +1159,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		int_t number = 0;
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
-			if(v1->tag()==EXPR_CDEFINE_MEMBER){
+			if(v1->itag()==EXPR_CDEFINE_MEMBER){
 				if(v1->cdefine_member_ns()){
 					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false);
 				}
@@ -1176,7 +1176,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 	int_t ivar_num = 0;
 	Xfor_as(const ExprPtr& v, e->class_stmts()){
-		if(v->tag()==EXPR_CDEFINE_IVAR){
+		if(v->itag()==EXPR_CDEFINE_IVAR){
 			ClassFrame::Entry entry;
 			entry.name = v->cdefine_ivar_name();
 			cf().entries.push_back(entry);
@@ -1200,7 +1200,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 	core.instance_variable_identifier_offset = result_->identifier_table_->size();
 	Xfor_as(const ExprPtr& v, e->class_stmts()){
-		if(v->tag()==EXPR_CDEFINE_IVAR){
+		if(v->itag()==EXPR_CDEFINE_IVAR){
 			if(v->cdefine_ivar_term()){
 				result_->identifier_table_->push_back(v->cdefine_ivar_name());
 			}			
@@ -1214,7 +1214,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		int_t number = 0;
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
-			if(v1->tag()==EXPR_CDEFINE_MEMBER){					
+			if(v1->itag()==EXPR_CDEFINE_MEMBER){					
 				AnyPtr val;
 				if(!compile_expr(v1->cdefine_member_term(), CompileInfo(), val)){
 					compile_expr(v1->cdefine_member_term());
@@ -1254,7 +1254,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 
 	Xfor_as(const ExprPtr& v, e->fun_params()){
 
-		if(!v->at(0) || (ep(v->at(0))->tag()!=EXPR_LVAR && ep(v->at(0))->tag()!=EXPR_IVAR)){
+		if(!v->at(0) || (ep(v->at(0))->itag()!=EXPR_LVAR && ep(v->at(0))->itag()!=EXPR_IVAR)){
 			error_->error(lineno(), Xt("Xtal Compile Error 1004"));
 			return;
 		}
@@ -1280,14 +1280,14 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		// ゲッタか？
 		if(ordered==0 && named==0){
 			ExprPtr body = e->fun_body();
-			if(body->tag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
+			if(body->itag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
 				body = ep(body->scope_stmts()->front());
 			}
 
-			if(body->tag()==EXPR_RETURN){
+			if(body->itag()==EXPR_RETURN){
 				if(body->return_exprs() && body->return_exprs()->size()==1){
 					body = ep(body->return_exprs()->front());
-					if(body->tag()==EXPR_IVAR){
+					if(body->itag()==EXPR_IVAR){
 						put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(body->ivar_name()), class_info_num()));
 						return;
 					}
@@ -1298,24 +1298,24 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		// セッタか？
 		if(ordered==1 && named==0){
 			ExprPtr body = e->fun_body();
-			if(body->tag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
+			if(body->itag()==EXPR_SCOPE && body->scope_stmts() && body->scope_stmts()->size()==1){
 				body = ep(body->scope_stmts()->front());
 			}
 
-			if(body->tag()==EXPR_ASSIGN){
+			if(body->itag()==EXPR_ASSIGN){
 				ExprPtr lhs = body->bin_lhs();
 				ExprPtr rhs = body->bin_rhs();
 
 				IDPtr key;
 				ExprPtr arg = ep(e->fun_params()->at(0));
-				if(arg->tag()==EXPR_LVAR){
+				if(arg->itag()==EXPR_LVAR){
 					key = arg->lvar_name();
 				}
-				else if(arg->tag()==EXPR_IVAR){
+				else if(arg->itag()==EXPR_IVAR){
 					key = arg->ivar_name();
 				}
 
-				if(key && lhs->tag()==EXPR_IVAR && rhs->tag()==EXPR_LVAR && raweq(rhs->lvar_name(), key)){
+				if(key && lhs->itag()==EXPR_IVAR && rhs->itag()==EXPR_LVAR && raweq(rhs->lvar_name(), key)){
 					put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(lhs->ivar_name()), class_info_num()));
 					return;
 				}
@@ -1338,10 +1338,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	var_begin(VarFrame::SCOPE);
 	Xfor_as(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
-		if(v->tag()==EXPR_LVAR){
+		if(v->itag()==EXPR_LVAR){
 			var_define(v->lvar_name());
 		}
-		else if(v->tag()==EXPR_IVAR){
+		else if(v->itag()==EXPR_IVAR){
 			var_define(v->ivar_name());
 		}
 	}
@@ -1398,7 +1398,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	// 引数にインスタンス変数がある場合に、特別な処理を入れる
 	Xfor_as(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
-		if(v->tag()==EXPR_IVAR){
+		if(v->itag()==EXPR_IVAR){
 			eb_.push(v);
 			eb_.push(v->ivar_name());
 			eb_.splice(EXPR_LVAR, 1);
@@ -1591,7 +1591,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	}
 
 	int_t result_count = 1;
-	switch(e->tag()){
+	switch(e->itag()){
 
 		XTAL_NODEFAULT;
 
@@ -1874,7 +1874,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				compile_expr(e->call_extendable_arg());
 			}
 
-			if(e->call_term()->tag()==EXPR_SEND){ // a.b(); メッセージ送信式
+			if(e->call_term()->itag()==EXPR_SEND){ // a.b(); メッセージ送信式
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
@@ -1888,7 +1888,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 					put_inst(InstSend(ordered, named, info.need_result_count, flags, key));
 				}
 			}
-			else if(e->call_term()->tag()==EXPR_SEND_Q){ // a.?b(); メッセージ送信式
+			else if(e->call_term()->itag()==EXPR_SEND_Q){ // a.?b(); メッセージ送信式
 
 				ExprPtr e2 = e->call_term();
 				compile_expr(e2->send_term());
@@ -1985,18 +1985,18 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		//}
 	}
 
-	switch(e->tag()){
+	switch(e->itag()){
 
 		XTAL_DEFAULT{
 			compile_expr(e, 0);
 		}
 		
 		XTAL_CASE(EXPR_DEFINE){
-			if(e->bin_lhs()->tag()==EXPR_LVAR){
+			if(e->bin_lhs()->itag()==EXPR_LVAR){
 				put_define_local_code(e->bin_lhs()->lvar_name(), e->bin_rhs());
 
 			}
-			else if(e->bin_lhs()->tag()==EXPR_MEMBER){
+			else if(e->bin_lhs()->itag()==EXPR_MEMBER){
 				compile_expr(e->bin_lhs()->member_term());
 				compile_expr(e->bin_rhs());
 
@@ -2008,25 +2008,25 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 		
 		XTAL_CASE(EXPR_ASSIGN){
-			if(e->bin_lhs()->tag()==EXPR_LVAR){
+			if(e->bin_lhs()->itag()==EXPR_LVAR){
 				compile_expr(e->bin_rhs());
 				put_set_local_code(e->bin_lhs()->lvar_name());
 			}
-			else if(e->bin_lhs()->tag()==EXPR_IVAR){
+			else if(e->bin_lhs()->itag()==EXPR_IVAR){
 				compile_expr(e->bin_rhs());
 				put_set_instance_variable_code(e->bin_lhs()->ivar_name());
 			}
-			else if(e->bin_lhs()->tag()==EXPR_SEND){
+			else if(e->bin_lhs()->itag()==EXPR_SEND){
 				compile_expr(e->bin_rhs());
 				compile_expr(e->bin_lhs()->send_term());
 				put_set_send_code(e->bin_lhs()->send_name(), false, e->bin_lhs()->send_ns());
 			}
-			else if(e->bin_lhs()->tag()==EXPR_SEND_Q){
+			else if(e->bin_lhs()->itag()==EXPR_SEND_Q){
 				compile_expr(e->bin_rhs());
 				compile_expr(e->bin_lhs()->send_term());
 				put_set_send_code(e->bin_lhs()->send_name(), true, e->bin_lhs()->send_ns());
 			}
-			else if(e->bin_lhs()->tag()==EXPR_AT){
+			else if(e->bin_lhs()->itag()==EXPR_AT){
 				compile_expr(e->bin_rhs());
 				compile_expr(e->bin_lhs()->bin_lhs());
 				compile_expr(e->bin_lhs()->bin_rhs());
@@ -2074,7 +2074,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
 			if(!have_finally && exprs_size==1){
 				ExprPtr front = ep(e->return_exprs()->front());
-				if(front->tag()==EXPR_CALL || front->tag()==EXPR_SEND || front->tag()==EXPR_SEND_Q){
+				if(front->itag()==EXPR_CALL || front->itag()==EXPR_SEND || front->itag()==EXPR_SEND_Q){
 					compile_expr(front, CompileInfo(1, true));
 					break;
 				}
@@ -2098,7 +2098,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstIfDebug());
 			
 			if(ExprPtr e2 = e->assert_cond()){
-				switch(e2->tag()){
+				switch(e2->itag()){
 				XTAL_DEFAULT{ 
 					compile_expr(e2); 
 					set_jump(InstUnless::OFFSET_address, label_if2);
@@ -2221,7 +2221,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			ExprPtr cond = e->if_cond();
 
 			// 条件式の部分が変数定義式である場合
-			if(cond->tag()==EXPR_DEFINE && cond->bin_lhs()->tag()==EXPR_LVAR){
+			if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 				// スコープを形成する
 				var_begin(VarFrame::SCOPE);
 				var_define(cond->bin_lhs()->lvar_name());
@@ -2305,21 +2305,21 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			Xfor(v1, lhs->reverse()){
 				ExprPtr v = ep(v1);
-				if(v->tag()==EXPR_LVAR){
+				if(v->itag()==EXPR_LVAR){
 					put_set_local_code(v->lvar_name());
 				}
-				else if(v->tag()==EXPR_SEND){
+				else if(v->itag()==EXPR_SEND){
 					compile_expr(v->send_term());
 					put_set_send_code(v->send_name(), false, v->send_ns());
 				}
-				else if(v->tag()==EXPR_SEND_Q){
+				else if(v->itag()==EXPR_SEND_Q){
 					compile_expr(v->send_term());
 					put_set_send_code(v->send_name(), true, v->send_ns());
 				}
-				else if(v->tag()==EXPR_IVAR){
+				else if(v->itag()==EXPR_IVAR){
 					put_set_instance_variable_code(v->ivar_name());					
 				}
-				else if(v->tag()==EXPR_AT){
+				else if(v->itag()==EXPR_AT){
 					compile_expr(v->bin_lhs());
 					compile_expr(v->bin_rhs());
 					put_inst(InstSetAt());
@@ -2362,10 +2362,10 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			Xfor(v1, lhs->reverse()){
 				ExprPtr v = ep(v1);
-				if(v->tag()==EXPR_LVAR){
+				if(v->itag()==EXPR_LVAR){
 					put_define_local_code(v->lvar_name());
 				}
-				else if(v->tag()==EXPR_MEMBER){
+				else if(v->itag()==EXPR_MEMBER){
 					compile_expr(v->member_term());
 					put_define_member_code(v->member_name(), v->member_ns());
 				}
@@ -2395,7 +2395,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			ExprPtr cond = e->switch_cond();
 
 			// 条件式の部分が変数定義式である場合
-			if(cond->tag()==EXPR_DEFINE && cond->bin_lhs()->tag()==EXPR_LVAR){
+			if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 				// スコープを形成する
 				var_begin(VarFrame::SCOPE);
 				var_define(cond->bin_lhs()->lvar_name());
@@ -2419,12 +2419,12 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			MapPtr case_map = xnew<Map>();
 			ExprPtr default_case;
 			Xfor_as(const ExprPtr& v, e->switch_cases()){
-				if(v->tag()==EXPR_SWITCH_CASE){
+				if(v->itag()==EXPR_SWITCH_CASE){
 					Xfor_as(const ExprPtr& k, v->at(0)){
 						case_map->set_at(k, v->at(1));
 					}
 				}
-				else if(v->tag()==EXPR_SWITCH_DEFAULT){
+				else if(v->itag()==EXPR_SWITCH_DEFAULT){
 					default_case = ep(v->at(0));
 				}
 			}
@@ -2559,7 +2559,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 	ExprPtr e = ep(p);
 
-	switch(e->tag()){
+	switch(e->itag()){
 
 		XTAL_NODEFAULT;
 
@@ -2790,7 +2790,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 }
 
 void CodeBuilder::check_lvar_assign(const ExprPtr& e){
-	if(e->tag()==EXPR_LVAR){
+	if(e->itag()==EXPR_LVAR){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
 			entry(info).assigned = true;
@@ -2806,7 +2806,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 
 	ExprPtr e = ep(p);
 
-	switch(e->tag()){
+	switch(e->itag()){
 	case EXPR_ASSIGN:
 	case EXPR_ADD_ASSIGN:
 	case EXPR_SUB_ASSIGN:

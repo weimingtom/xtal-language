@@ -156,7 +156,7 @@ private:
 	void init_string(const char_t* str, uint_t size);
 };
 
-class StringData : public Base{
+class StringData : public RefCountingBase{
 	enum{
 		INTERNED = 1<<0,
 		SIZE_SHIFT = 1
@@ -167,6 +167,7 @@ class StringData : public Base{
 public:
 
 	StringData(uint_t size){
+		set_p(TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
 		buf_ = (char_t*)so_malloc(size+1);
 		buf_[size] = 0;

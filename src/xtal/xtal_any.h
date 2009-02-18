@@ -85,7 +85,7 @@ public:
 	void set_p(int_t type, const RefCountingBase* p){
 		XTAL_ASSERT(p!=0);
 		type_ = type;
-		pvalue_ = (Base*)p;
+		rcpvalue_ = (RefCountingBase*)p;
 	}
 
 public:
@@ -94,6 +94,7 @@ public:
 	friend int_t ivalue(const Any& v);
 	friend float_t fvalue(const Any& v);
 	friend Base* pvalue(const Any& v);
+	friend RefCountingBase* rcpvalue(const Any& v);
 	friend uint_t rawtype(const Any& v);
 	friend uint_t rawvalue(const Any& v);
 	friend bool raweq(const Any& a, const Any& b);
@@ -103,6 +104,9 @@ public:
 	friend void set_null_force(Any& v);
 	friend void set_undefined_force(Any& v);
 	friend void copy_innocence(Any& v, const Any& u);
+
+	friend void inc_ref_count_force(const Any& v);
+	friend void dec_ref_count_force(const Any& v);
 
 public:
 
@@ -198,12 +202,6 @@ public:
 	*
 	*/
 	MapPtr to_m() const;
-	
-	/**
-	* @brief このオブジェクトに付けられた名前を返す。
-	*
-	*/
-	StringPtr object_name(int_t depth = -1) const;
 
 	/**
 	* @brief klassクラスのインスタンスか調べる。
@@ -216,24 +214,31 @@ public:
 	*
 	*/
 	bool is_inherited(const AnyPtr& klass) const;
-
-	/**
-	* @brief このオブジェクトに付けられた名前の強さを返す。
-	*
-	*/
-	int_t object_name_force() const;
-
-	ArrayPtr object_name_list() const;
 	
 	/**
-	* @brief このオブジェクトに名前をつける。
+	* @brief このオブジェクトがメンバとなっている親のクラスを返す。
 	*
-	* 名前を持てないオブジェクトや、前に付けられた名前の方が強い場合無視される。
-	* @param name つける名前
-	* @param force 名前の強さ
-	* @param parent 親
 	*/
-	void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0) const;
+	const ClassPtr& object_parent() const;
+
+	/**
+	* @brief このオブジェクトに関連付けられた親のクラスの強さを返す。
+	*
+	*/
+	int_t object_parent_force() const;
+	
+	/**
+	* @brief このオブジェクトに親を設定する。
+	*
+	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
+	* @param parent 親
+	* @param force 親の強さ
+	*/
+	void set_object_parent(const ClassPtr& parent, int_t force) const;
+
+	StringPtr object_name() const;
+
+	ArrayPtr object_name_list() const;
 
 	/**
 	* @brief ハッシュ値を返す
@@ -269,7 +274,13 @@ public:
 	MultiValuePtr flatten_mv() const;
 
 	MultiValuePtr flatten_all_mv() const;
+
+	void visit_members(Visitor& m) const;
+
+	void destroy() const;
 	
+	void object_free();
+
 public:
 
 	/// @brief primary_keyメソッドを呼び出す
@@ -395,6 +406,11 @@ inline float_t fvalue(const Any& v){
 inline Base* pvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
 	return v.pvalue_; 
+}
+
+inline RefCountingBase* rcpvalue(const Any& v){ 
+	XTAL_ASSERT(type(v)>TYPE_BASE || type(v)==TYPE_NULL); 
+	return v.rcpvalue_; 
 }
 
 inline uint_t rawtype(const Any& v){

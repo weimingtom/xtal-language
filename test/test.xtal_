@@ -12,10 +12,12 @@ lib::test: singleton{
 	
 	run_file: fun(file){
 		try{
-			//enable_debug();
+			enable_debug();
 			code: compile_file(file);
 			code();
+			
 			%f!run file %s!(file).p;
+
 			code.filelocal.members{ |name, name2, mem|
 				if(mem is Class){
 					tests: [];
@@ -41,7 +43,7 @@ lib::test: singleton{
 			}
 		}
 		finally{
-			//disable_debug();
+			disable_debug();
 		}
 	}
 	
@@ -54,4 +56,4 @@ lib::test: singleton{
 	}
 }
 
-
+"load test.xtal_".p;

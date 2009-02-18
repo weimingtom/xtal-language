@@ -45,26 +45,9 @@ struct deleter_t{
 extern undeleter_t undeleter;
 extern deleter_t deleter;
 
-template<class T>
-struct XNewEssence0{};
-
-template<class T, class A0>
-struct XNewEssence1{
-	A0 a0;
-	XNewEssence1(const A0& a0)
-		:a0(a0){}
-};
-
-template<class T, class A0, class A1>
-struct XNewEssence2{
-	A0 a0;
-	A1 a1;
-	XNewEssence2(const A0& a0, const A1& a1)
-		:a0(a0), a1(a1){}
-};
-
 enum InheritedEnum{
 	INHERITED_BASE,
+	INHERITED_RCBASE,
 	INHERITED_ANY,
 	INHERITED_OTHER
 };
@@ -74,6 +57,7 @@ struct InheritedN{
 	enum{
 		value = 
 			IsInherited<T, Base>::value ? INHERITED_BASE : 
+			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
 			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
@@ -130,7 +114,7 @@ public:
 
 	explicit SmartPtr(PrimitiveType type)
 		:Any(type){}
-
+	
 	explicit SmartPtr(Base* p)
 		:Any(p){
 		p->inc_ref_count();
@@ -143,29 +127,25 @@ public:
 
 protected:
 
-	explicit SmartPtr(const Any& innocence)
-		:Any(innocence){}
+	struct special_ctor_t{};
 
-	struct with_class_t{};
+	SmartPtr(const Any& a, special_ctor_t)
+		:Any(a){}
 
-	SmartPtr(Base* p, const ClassPtr& c, with_class_t);
+	SmartPtr(RefCountingBase* p, int_t type, special_ctor_t);
 
-	SmartPtr(Singleton* p, const ClassPtr& c, with_class_t);
+	SmartPtr(Base* p, const ClassPtr& c, special_ctor_t);
 
-	SmartPtr(CppSingleton* p, const ClassPtr& c, with_class_t);
+	SmartPtr(Singleton* p, const ClassPtr& c, special_ctor_t);
 
-	void set_p_with_class(Base* p, const ClassPtr& c);
+	SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t);
 
 	void inc_ref_count(){
-		if(type(*this)==TYPE_BASE){
-			pvalue(*this)->inc_ref_count();
-		}
+		inc_ref_count_force(*this);
 	}
 
 	void dec_ref_count(){
-		if(type(*this)==TYPE_BASE){
-			pvalue(*this)->dec_ref_count();
-		}
+		dec_ref_count_force(*this);
 	}
 
 public:
@@ -257,111 +237,6 @@ public:
 
 	bool operator !() const{
 		return type((*this)->self())<=TYPE_FALSE;
-	}
-
-public:
-
-	template<class U>
-	SmartPtr(XNewEssence0<U>)
-		:Any(Any::noinit_t()){
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>());
-	}
-	
-	template<class U>
-	SmartPtr& operator= (XNewEssence0<U>){
-		dec_ref_count();
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>());
-		return *this;
-	}
-
-public:
-
-	template<class U, class A0>
-	SmartPtr(const XNewEssence1<U, A0>& x)
-		:Any(Any::noinit_t()){
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0);
-	}
-	
-	template<class U, class A0>
-	SmartPtr& operator= (const XNewEssence1<U, A0>& x){
-		dec_ref_count();
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0);
-		return *this;
-	}
-
-public:
-
-	template<class U, class A0, class A1>
-	SmartPtr(const XNewEssence2<U, A0, A1>& x)
-		:Any(Any::noinit_t()){
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0, x.a1);
-	}
-	
-	template<class U, class A0, class A1>
-	SmartPtr& operator= (const XNewEssence2<U, A0, A1>& x){
-		dec_ref_count();
-		gene<U>(SmartPtrSelector<InheritedN<U>::value>(), x.a0, x.a1);
-		return *this;
-	}
-
-protected:
-
-	template<class U>
-	void gene(SmartPtrSelector<INHERITED_BASE>){
-		set_p_with_class(new U(), new_cpp_class<U>());
-	}
-
-	template<class U>
-	void gene(SmartPtrSelector<INHERITED_ANY>){
-		Any::operator =(U());
-	}
-
-	template<class U>
-	void gene(SmartPtrSelector<INHERITED_OTHER>){
-		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
-		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
-		p->ptr = (U*)&p->fun;
-		new(p->ptr) U;
-	}
-
-protected:
-
-	template<class U, class A0>
-	void gene(SmartPtrSelector<INHERITED_BASE>, const A0& a0){
-		set_p_with_class(new U(a0), new_cpp_class<U>());
-	}
-
-	template<class U, class A0>
-	void gene(SmartPtrSelector<INHERITED_ANY>, const A0& a0){
-		Any::operator =(U(a0));
-	}
-
-	template<class U, class A0>
-	void gene(SmartPtrSelector<INHERITED_OTHER>, const A0& a0){
-		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
-		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
-		p->ptr = (U*)&p->fun;
-		new(p->ptr) U(a0);
-	}
-
-protected:
-
-	template<class U, class A0, class A1>
-	void gene(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1){
-		set_p_with_class(new U(a0, a1), new_cpp_class<U>());
-	}
-
-	template<class U, class A0, class A1>
-	void gene(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1){
-		Any::operator =(U(a0, a1));
-	}
-
-	template<class U, class A0, class A1>
-	void gene(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1){
-		set_p_with_class(new UserTypeHolderSub<U>(), new_cpp_class<U>());
-		UserTypeHolderSub<U>* p = ((UserTypeHolderSub<U>*)pvalue(*this));
-		p->ptr = (U*)&p->fun;
-		new(p->ptr) U(a0, a1);
 	}
 
 private:

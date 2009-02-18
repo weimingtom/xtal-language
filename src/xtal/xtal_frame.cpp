@@ -28,15 +28,15 @@ void MembersIter::block_next(const VMachinePtr& vm){
 }
 
 
-Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* core)
-	:outer_(outer), code_(code), core_(core ? core : &empty_class_info), members_(xnew<Array>(core_->variable_size)), map_members_(0){
+Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
+	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), members_(xnew<Array>(scope_info_->variable_size)), map_members_(0){
 }
 
 Frame::Frame()
-	:outer_(null), code_(null), core_(&empty_class_info), members_(xnew<Array>()), map_members_(0){}
+	:outer_(null), code_(null), scope_info_(&empty_class_info), members_(xnew<Array>()), map_members_(0){}
 	
 Frame::Frame(const Frame& v)
-	:HaveName(v), outer_(v.outer_), code_(v.code_), core_(v.core_), members_(v.members_), map_members_(0){
+	:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), members_(v.members_), map_members_(0){
 
 	if(v.map_members_){
 		make_map_members();
@@ -49,11 +49,11 @@ Frame::Frame(const Frame& v)
 Frame& Frame::operator=(const Frame& v){
 	if(this==&v){ return *this; }
 
-	HaveName::operator=(v);
+	HaveParent::operator=(v);
 
 	outer_ = v.outer_;
 	code_ = v.code_;
-	core_ = v.core_;
+	scope_info_ = v.scope_info_;
 
 	members_ = v.members_;
 
@@ -63,7 +63,7 @@ Frame& Frame::operator=(const Frame& v){
 	}
 	else{
 		map_members_->~Hashtable();
-		user_free(map_members_);
+		so_free(map_members_, sizeof(map_t));
 		map_members_ = 0;
 	}
 
@@ -75,49 +75,21 @@ Frame& Frame::operator=(const Frame& v){
 Frame::~Frame(){
 	if(map_members_){
 		map_members_->~Hashtable();
-		user_free(map_members_);
+		so_free(map_members_, sizeof(map_t));
 	}
-}
-
-void Frame::set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
-	members_->set_at(i, value);
-	Key key = {primary_key, secondary_key};
-	Value val = {i, accessibility};
-	map_members_->insert(key, val);
-	value->set_object_name(primary_key, object_name_force(), this);
-	inc_global_mutate_count();
 }
 	
-void Frame::set_object_name(const StringPtr& primary_key, int_t force, Frame* parent){
-	if(object_name_force()<force){
-		HaveName::set_object_name(primary_key, force, parent);
-		if(map_members_){
-			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_name(it->first.primary_key, force, this);
-			}
-		}
-	}
-}
-
 void Frame::make_map_members(){
 	if(!map_members_){
-		map_members_ = new(user_malloc(sizeof(map_t))) map_t();
+		map_members_ = new(so_malloc(sizeof(map_t))) map_t();
 	}
-}
-
-StringPtr Frame::object_name(int_t depth){
-	if(!name_){
-		set_object_name(ptr_cast<String>(Xf("<(%s):%s:%d>")->call(get_class()->object_name(depth), code_->source_file_name(), code_->compliant_lineno(code_->data()+core_->pc))), 1, parent_);
-	}
-
-	return HaveName::object_name(depth);
 }
 
 AnyPtr Frame::members(){
-	if(!map_members_ && code_ && core_){
+	if(!map_members_ && code_ && scope_info_){
 		make_map_members();
-		for(int_t i=0; i<core_->variable_size; ++i){
-			Key key = {code_->identifier(core_->variable_identifier_offset+i), null};
+		for(int_t i=0; i<scope_info_->variable_size; ++i){
+			Key key = {code_->identifier(scope_info_->variable_identifier_offset+i), null};
 			Value value = {i, 0};
 			map_members_->insert(key, value);
 		}

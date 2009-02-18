@@ -1228,6 +1228,7 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = new_cpp_class<TreeNode>(Xid(TreeNode));
+		p->set_final();
 		p->inherit(get_cpp_class<Array>());
 		p->def_method(Xid(tag), &TreeNode::tag);
 		p->def_method(Xid(lineno), &TreeNode::lineno);
@@ -1241,25 +1242,27 @@ void initialize_xpeg(){
 	}
 
 	{
+		ClassPtr p = xnew<Class>();
+		p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
+		p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
+		p->def_method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
+		p->def_method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
+		p->def_method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
+		p->def_method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
+		p->def_method(Xid(op_com), &inv);
+		
+		p->def_method(Xid(op_or), &select, get_cpp_class<Element>());
+		p->def_method(Xid(op_or), &select, get_cpp_class<String>());
+		p->def_method(Xid(op_or), &select, get_cpp_class<ChRange>());
+		p->def_method(Xid(op_or), &select, get_cpp_class<Fun>());
+		p->def_method(Xid(op_shr), &concat, get_cpp_class<Element>());
+		p->def_method(Xid(op_shr), &concat, get_cpp_class<String>());
+		p->def_method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
+		p->def_method(Xid(op_shr), &concat, get_cpp_class<Fun>());
+
 		ClassPtr classes[4] = {new_cpp_class<Element>(), new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
 		for(int i=0; i<4; ++i){
-			ClassPtr p = classes[i];
-			p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
-			p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
-			p->def_method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
-			p->def_method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
-			p->def_method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
-			p->def_method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
-			p->def_method(Xid(op_com), &inv);
-			
-			p->def_method(Xid(op_or), &select, get_cpp_class<Element>());
-			p->def_method(Xid(op_or), &select, get_cpp_class<String>());
-			p->def_method(Xid(op_or), &select, get_cpp_class<ChRange>());
-			p->def_method(Xid(op_or), &select, get_cpp_class<Fun>());
-			p->def_method(Xid(op_shr), &concat, get_cpp_class<Element>());
-			p->def_method(Xid(op_shr), &concat, get_cpp_class<String>());
-			p->def_method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
-			p->def_method(Xid(op_shr), &concat, get_cpp_class<Fun>());
+			classes[i]->inherit(p);
 		}
 	}
 

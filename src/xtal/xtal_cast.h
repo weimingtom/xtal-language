@@ -45,6 +45,12 @@ inline const void* unchecked_cast_helper(const AnyPtr& a, const Base*, const U*)
 	return pvalue(a);
 }
 
+// •ÏŠ·Œã‚ÌŒ^‚ªRefCountingBaseBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const void* unchecked_cast_helper(const AnyPtr& a, const RefCountingBase*, const U*){
+	return rcpvalue(a);
+}
+
 // •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* unchecked_cast_helper(const AnyPtr& a, const Any*, const U*){
@@ -68,6 +74,12 @@ inline const void* get_null_helper(const SmartPtr<U>*, const V&){
 // •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
 template<class U>
 inline const void* get_null_helper(const Base*, const U*){
+	return 0;
+}
+
+// •ÏŠ·Œã‚ÌŒ^‚ªRefCountingBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
+template<class U>
+inline const void* get_null_helper(const RefCountingBase*, const U*){
 	return 0;
 }
 

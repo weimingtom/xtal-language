@@ -37,7 +37,7 @@ public:
 	virtual void visit_members(Visitor& m);
 };
 
-class InstanceVariableGetter : public HaveName{
+class InstanceVariableGetter : public HaveParent{
 public:
 
 	InstanceVariableGetter(int_t number, ClassInfo* info);
@@ -49,7 +49,7 @@ private:
 	ClassInfo* info_;
 };
 
-class InstanceVariableSetter : public HaveName{
+class InstanceVariableSetter : public HaveParent{
 public:
 
 	InstanceVariableSetter(int_t number, ClassInfo* info);
@@ -61,7 +61,7 @@ private:
 	ClassInfo* info_;
 };
 
-class Method : public HaveName{
+class Method : public HaveParent{
 public:
 
 	Method(const FramePtr& outer, const CodePtr& code, FunInfo* core);
@@ -76,7 +76,6 @@ public:
 	FunInfo* info(){ return info_; }
 	void set_info(FunInfo* fc){ info_ = fc; }
 	bool check_arg(const VMachinePtr& vm);
-	virtual StringPtr object_name(int_t depth = -1);
 
 public:
 		
@@ -89,7 +88,7 @@ protected:
 	FunInfo* info_;
 	
 	virtual void visit_members(Visitor& m){
-		HaveName::visit_members(m);
+		HaveParent::visit_members(m);
 		m & outer_ & code_;
 	}
 

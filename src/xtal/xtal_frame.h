@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-class Frame : public HaveName{
+class Frame : public HaveParent{
 public:
 	
 	Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* core);
@@ -35,7 +35,7 @@ public:
 	*
 	*/
 	int_t block_size(){ 
-		return core_->variable_size; 
+		return scope_info_->variable_size; 
 	}
 
 	/**
@@ -53,13 +53,7 @@ public:
 	void set_member_direct(int_t i, const AnyPtr& value){
 		members_->set_at(i, value);
 	}
-
-	void set_class_member(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 		
-	void set_object_name(const StringPtr& name, int_t force, Frame* parent);
-
-	virtual StringPtr object_name(int_t depth = -1);
-
 public:
 
 	/**
@@ -81,7 +75,7 @@ protected:
 
 	FramePtr outer_;
 	CodePtr code_;
-	ScopeInfo* core_;
+	ScopeInfo* scope_info_;
 	
 	ArrayPtr members_;
 
@@ -118,7 +112,7 @@ protected:
 
 
 	virtual void visit_members(Visitor& m){
-		HaveName::visit_members(m);
+		HaveParent::visit_members(m);
 		m & outer_ & code_ & members_;
 		if(map_members_){
 			m & *map_members_;

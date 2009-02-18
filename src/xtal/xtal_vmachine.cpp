@@ -1419,7 +1419,7 @@ XTAL_VM_SWITCH{
 			for(int_t i = 0; i<n; ++i){
 				const ClassPtr& cls = ptr_cast<Class>(pop());
 				XTAL_VM_CHECK_EXCEPT;
-				cp->inherit_strict(cls);
+				cp->inherit_first(cls);
 			}
 
 			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
@@ -1445,7 +1445,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(DefineClassMember){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			const ClassPtr& p = cast<const ClassPtr&>(ff().outer());
-			p->set_class_member(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
+			p->set_member_direct(p->block_size()-1-inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 			downsize(2);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

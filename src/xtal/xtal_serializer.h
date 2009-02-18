@@ -19,7 +19,7 @@ private:
 	
 	AnyPtr demangle(const AnyPtr& n);
 
-	int_t register_value(const AnyPtr& v, bool& added);
+	int_t register_value(const AnyPtr& v);
 	int_t append_value(const AnyPtr& v);
 
 	void put_tab(int_t tab);
@@ -31,7 +31,24 @@ private:
 
 private:
 
-	enum{ SERIAL_NEW, LIB, REF, TNULL, TUNDEFINED, TFALSE, TTRUE, TINT, TFLOAT, TSTRING, TARRAY, TMAP };
+	enum{ 
+		SERIAL_NEW,
+		NAME,
+		FILELOCAL,
+		REF,
+		
+		TNULL = 32, 
+		TUNDEFINED, 
+		TFALSE, 
+		TTRUE, 
+		TINT, 
+		TFLOAT, 
+		TSTRING,
+		TID,
+		TARRAY, 
+		TMULTI_VALUE,
+		TMAP 
+	};
 
 private:
 

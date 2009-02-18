@@ -7,7 +7,7 @@ void* stack_dummy_allocate();
 
 void* stack_allocate(size_t size);
 
-void stack_deallocate(void* p);
+void stack_deallocate(void* p, size_t size);
 
 /*
 * VMachineクラスが使う色々なスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
@@ -24,18 +24,6 @@ class FastStack{
 	T* current_; // スタックトップの要素を指す
 
 private:
-
-	static void* dummy_allocate(){
-		return stack_dummy_allocate();
-	}
-
-	static void* allocate(size_t size){
-		return stack_allocate(size);
-	}
-
-	static void deallocate(void* p){
-		stack_deallocate(p);
-	}
 
 	void upsize_detail(size_t us);
 
@@ -199,7 +187,7 @@ public:
 
 template<class T>
 FastStack<T>::FastStack(){
-	begin_=(T*)dummy_allocate()+1;
+	begin_=(T*)stack_dummy_allocate()+1;
 	current_ = begin_-1;
 	end_ = begin_+0;
 }
@@ -209,18 +197,18 @@ FastStack<T>::~FastStack(){
 	for(size_t i = 0, last = capacity(); i<last; ++i){
 		begin_[i].~T();
 	}
-	deallocate(begin_-1);
+	stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
 }
 
 template<class T>
 FastStack<T>::FastStack(const FastStack<T> &a){
 	if(a.capacity()==0){
-		begin_=(T*)dummy_allocate()+1;
+		begin_=(T*)stack_dummy_allocate()+1;
 		current_ = begin_-1;
 		end_ = begin_+0;
 	}
 	else{
-		begin_=(T*)allocate(sizeof(T)*(a.capacity()+1))+1;
+		begin_=(T*)stack_allocate(sizeof(T)*(a.capacity()+1))+1;
 		current_ = begin_+a.size()-1;
 		end_ = begin_+a.capacity();
 
@@ -241,19 +229,19 @@ FastStack<T> &FastStack<T>::operator =(const FastStack<T> &a){
 		for(size_t i = 0, last = capacity(); i<last; ++i){
 			begin_[i].~T();
 		}
-		deallocate(begin_-1);
+		stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
 
-		begin_=(T*)dummy_allocate()+1;
+		begin_=(T*)stack_dummy_allocate()+1;
 		current_ = begin_-1;
 		end_ = begin_+0;
 	}
 	else{
-		T* newp = (T*)allocate(sizeof(T)*(a.capacity()+1))+1;
+		T* newp = (T*)stack_allocate(sizeof(T)*(a.capacity()+1))+1;
 
 		for(size_t i = 0, last = capacity(); i<last; ++i){
 			begin_[i].~T();
 		}
-		deallocate(begin_-1);
+		stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
 
 		begin_ = newp;
 		current_ = begin_+a.size()-1;
@@ -292,7 +280,7 @@ void FastStack<T>::upsize_detail(size_t us){
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
 	size_t newcapa = 4 + us + oldcapa + oldcapa/2;
-	T* newp = (T*)allocate(sizeof(T)*(newcapa+1))+1;
+	T* newp = (T*)stack_allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i){
 		new(&newp[i]) T(oldp[i]);
@@ -306,7 +294,7 @@ void FastStack<T>::upsize_detail(size_t us){
 		oldp[i].~T();
 	}
 
-	deallocate(oldp-1);
+	stack_deallocate(oldp-1, sizeof(T)*(oldcapa+1));
 
 	begin_ = newp;
 	current_ = begin_+newsize-1;
@@ -344,18 +332,6 @@ protected:
 	int one_size_;
 
 private:
-
-	static void* dummy_allocate(){
-		return stack_dummy_allocate();
-	}
-
-	static void* allocate(size_t size){
-		return stack_allocate(size);
-	}
-
-	static void deallocate(void* p){
-		stack_deallocate(p);
-	}
 
 	void* plusp(const void* p, size_t v) const{
 		return (u8*)p + v*one_size_;

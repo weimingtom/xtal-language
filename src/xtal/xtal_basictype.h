@@ -157,35 +157,32 @@ public:
 	AnyPtr each();
 };
 
-class HaveName : public Base{
+class HaveParent : public Base{
 public:
 
-	HaveName()
-		:name_(null), parent_(0), force_(0){}
+	HaveParent()
+		:parent_(0), force_(0){}
 
-	HaveName(const HaveName& a);
+	HaveParent(const HaveParent& a);
 
-	HaveName& operator=(const HaveName& a);
+	HaveParent& operator=(const HaveParent& a);
 
-	~HaveName();
+	~HaveParent();
 
-	virtual StringPtr object_name(int_t depth = -1);
+	virtual const ClassPtr& object_parent();
 
-	virtual int_t object_name_force();
-	
-	virtual ArrayPtr object_name_list();
+	virtual int_t object_parent_force();
 
-	virtual void set_object_name(const StringPtr& name, int_t force, Frame* parent = 0);
+	virtual void set_object_parent(const ClassPtr& parent, int_t force);
 
 protected:
 
-	StringPtr name_;
-	Frame* parent_;
+	Class* parent_;
 	int_t force_;
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & name_ & parent_;
+		m & parent_;
 	}	
 };
 

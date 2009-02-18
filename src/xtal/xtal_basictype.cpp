@@ -66,60 +66,48 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 	}
 }
 
-HaveName::HaveName(const HaveName& a)
-:Base(a), name_(a.name_), parent_(0), force_(0){
+HaveParent::HaveParent(const HaveParent& a)
+:Base(a), parent_(0), force_(0){
 }
 
-HaveName& HaveName::operator=(const HaveName& a){
+HaveParent& HaveParent::operator=(const HaveParent& a){
 	Base::operator=(a);
 	return *this;
 }
 
-HaveName::~HaveName(){
+HaveParent::~HaveParent(){
 	if(parent_){
 		parent_->dec_ref_count();
 	}
 }
 
-StringPtr HaveName::object_name(int_t depth){
-	if(!name_){
-		return xnew<String>("instance of ")->cat(get_class()->object_name(depth));
+const ClassPtr& HaveParent::object_parent(){
+	if(parent_){
+		return from_this(parent_);
 	}
-
-	if(!parent_ || depth==0){
-		return name_;
-	}
-
-	return parent_->object_name()->cat("::")->cat(name_);
-}
-
-ArrayPtr HaveName::object_name_list(){
-	if(!name_ || parent_==0){
+	else{
 		return null;
 	}
-
-	ArrayPtr ret = parent_->object_name_list();
-	if(ret){
-		ret->push_back(name_);
-	}
-
-	return ret;
 }
 
-int_t HaveName::object_name_force(){
+int_t HaveParent::object_parent_force(){
 	return force_;
 }
 
-void HaveName::set_object_name(const StringPtr& name, int_t force, Frame* parent){
-	if(!name_ || force_<force){
-		name_ = name;
+void HaveParent::set_object_parent(const ClassPtr& parent, int_t force){
+	XTAL_ASSERT(rawne(from_this(this), parent));
+
+	if(!parent || force_<force){
 		force_ = force;
 		if(parent_){
 			parent_->dec_ref_count();
 		}
-		parent_ = parent;
-		if(parent_){
+		if(parent){
+			parent_ = parent.get();
 			parent_->inc_ref_count();
+		}
+		else{
+			parent_ = 0;
 		}
 	}
 }

@@ -14,26 +14,27 @@ public:
 			
 	~InstanceVariables();
 		
-	void init_variables(ClassInfo* core);
+	void init_variables(ClassInfo* class_info);
 
-	const AnyPtr& variable(int_t index, ClassInfo* core){
-		return variables_->at(find_core(core) + index);
+	const AnyPtr& variable(int_t index, ClassInfo* class_info){
+		return variables_->at(find_class_info(class_info) + index);
 	}
 
-	void set_variable(int_t index, ClassInfo* core, const AnyPtr& value){
-		variables_->set_at(find_core(core) + index, value);
+	void set_variable(int_t index, ClassInfo* class_info, const AnyPtr& value){
+		variables_->set_at(find_class_info(class_info) + index, value);
 	}
 
-	int_t find_core(ClassInfo* core){
+	int_t find_class_info(ClassInfo* class_info){
 		VariablesInfo& info = variables_info_.top();
-		if(info.core == core)
+		if(info.class_info == class_info){
 			return info.pos;
-		return find_core_inner(core);
+		}
+		return find_class_info_inner(class_info);
 	}
 
-	bool is_included(ClassInfo* core);
+	bool is_included(ClassInfo* class_info);
 
-	int_t find_core_inner(ClassInfo* core);
+	int_t find_class_info_inner(ClassInfo* class_info);
 
 	bool empty(){
 		return variables_->empty();
@@ -46,7 +47,7 @@ public:
 protected:
 	
 	struct VariablesInfo{
-		ClassInfo* core;
+		ClassInfo* class_info;
 		int_t pos;
 	};
 
@@ -100,18 +101,25 @@ public:
 	void set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
-	* @brief Mix-inする
+	* @brief 継承
 	*
-	* @param md Mix-inするクラスオブジェクト
+	* @param cls 継承するクラスオブジェクト
 	*/
-	void inherit(const ClassPtr& md);
+	void inherit(const ClassPtr& cls);
 
 	/**
-	* @brief Mix-inする
+	* @brief 継承する
 	*
-	* @param md Mix-inするクラスオブジェクト
+	* @param cls 継承するクラスオブジェクト
 	*/
-	void inherit_strict(const ClassPtr& md);
+	void inherit_first(const ClassPtr& cls);
+
+	/**
+	* @brief 継承する
+	*
+	* @param cls 継承するクラスオブジェクト
+	*/
+	void inherit_strict(const ClassPtr& cls);
 
 	/**
 	* @brief Mix-inされているか調べる
@@ -172,7 +180,7 @@ public:
 	const CFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
@@ -185,7 +193,7 @@ public:
 	const CFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
-		return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
@@ -212,6 +220,9 @@ public:
 	void def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 public:
+	struct cpp_class_t{};
+
+	Class(cpp_class_t, const StringPtr& name = empty_string);
 
 	virtual void rawcall(const VMachinePtr& vm);
 	
@@ -219,22 +230,36 @@ public:
 
 	void init_instance(const AnyPtr& self, const VMachinePtr& vm);
 	
+	void set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
+
 	const AnyPtr& any_member(const IDPtr& primary_key, const AnyPtr& secondary_key);
 	
 	const AnyPtr& bases_member(const IDPtr& primary_key);
 
 	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
 
-	ClassInfo* core(){
-		return (ClassInfo*)core_;
+	MultiValuePtr child_object_name(const AnyPtr& a);
+
+	void set_object_name(const StringPtr& name);
+
+	StringPtr object_name();
+
+	void set_object_parent(const ClassPtr& parent, int_t force);
+
+	ClassInfo* info(){
+		return (ClassInfo*)scope_info_;
 	}
 	
-	struct cpp_class_t{};
+	bool is_native(){
+		return is_native_;
+	}
 
-	Class(cpp_class_t, const StringPtr& name = empty_string);
+	bool is_final(){
+		return is_final_;
+	}
 
-	bool is_cpp_class(){
-		return is_cpp_class_;
+	void set_final(){
+		is_final_ = true;
 	}
 
 protected:
@@ -243,8 +268,10 @@ protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
+	StringPtr name_;
 	ArrayPtr mixins_;
-	bool is_cpp_class_;
+	bool is_native_;
+	bool is_final_;
 
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);

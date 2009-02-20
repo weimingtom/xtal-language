@@ -220,31 +220,18 @@ public:
 	*
 	*/
 	const ClassPtr& object_parent() const;
-
-	/**
-	* @brief このオブジェクトに関連付けられた親のクラスの強さを返す。
-	*
-	*/
-	int_t object_parent_force() const;
 	
 	/**
 	* @brief このオブジェクトに親を設定する。
 	*
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
 	* @param parent 親
-	* @param force 親の強さ
 	*/
-	void set_object_parent(const ClassPtr& parent, int_t force) const;
+	void set_object_parent(const ClassPtr& parent) const;
 
 	StringPtr object_name() const;
 
 	ArrayPtr object_name_list() const;
-
-	/**
-	* @brief ハッシュ値を返す
-	*
-	*/
-	uint_t hashcode() const;
 
 	/**
 	* @brief 自身を文字列化してprintlnする。

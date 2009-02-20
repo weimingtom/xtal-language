@@ -2,6 +2,9 @@
 #include "xtal.h"
 #include "xtal_lib/xtal_winthread.h"
 #include "xtal_lib/xtal_cstdiostream.h"
+#include "xtal_lib/xtal_winfilesystem.h"
+#include "xtal_lib/xtal_chcode.h"
+
 
 using namespace xtal;
 
@@ -46,11 +49,16 @@ static void handle_argv(char** argv){
 
 int main(int argc, char** argv){
 
-	CStdioStreamLib stream_lib;
+	CStdioStreamLib cstd_stream_lib;
 	WinThreadLib win_thread_lib;
+	WinFilesystemLib win_filesystem_lib;
+	SJISChCodeLib sjis_chcode_lib;
+
 	CoreSetting setting;
 	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &stream_lib;
+	setting.stream_lib = &cstd_stream_lib;
+	setting.filesystem_lib = &win_filesystem_lib;
+	setting.chcode_lib = &sjis_chcode_lib;
 
 	Core core;
 	core.initialize(setting);

@@ -6,7 +6,7 @@ namespace xtal{
 Code::Code()
 	:filelocal_(xnew<Singleton>(Xid(filelocal))), source_file_name_("<noname>"){
 	filelocal_->set_object_name("filelocal");
-	filelocal_->set_object_parent(null, 500);
+	filelocal_->set_object_force(500);
 	filelocal_->inherit(builtin());
 	filelocal_->def(Xid(filelocal), filelocal_);
 

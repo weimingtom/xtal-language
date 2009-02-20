@@ -1,9 +1,11 @@
 
 #pragma once
 
+//#define XTAL_USE_COMPILED_EMB
+
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
-//#define XTAL_USE_COMPILED_EMB
+//#define XTAL_NO_XPEG
 
 #ifdef XTAL_NO_PARSER
 #	define XTAL_USE_COMPILED_EMB

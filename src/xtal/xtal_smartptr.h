@@ -379,44 +379,4 @@ struct SmartPtrCtor3<ID>{
 	static AnyPtr call(type v);
 };
 
-void visit_members(Visitor& m, const AnyPtr& p);
-
-class Visitor{
-	int_t value_;
-public:	
-
-	Visitor(int_t value){
-		value_ = value;
-	}
-
-	int_t value(){
-		return value_;
-	}
-
-	template<class T> Visitor operator &(const T& value){
-		visit_members(*this, value);
-		return *this;
-	}
-
-	template<class T> Visitor operator ()(const T& value){
-		visit_members(*this, value);
-		return *this;
-	}
-};
-
-template<class F, class S>
-void visit_members(Visitor& m, const std::pair<F, S>& value){
-	m & value.first & value.second;
-}
-
-inline void visit_members(Visitor& m, Base* p){
-	if(p){		
-		m & ap(Any(p));
-	}
-}
-
-inline void visit_members(Visitor& m, const Any& p){
-	m & ap(p);
-}
-
 }

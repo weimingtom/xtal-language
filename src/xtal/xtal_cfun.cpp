@@ -3,11 +3,17 @@
 
 namespace xtal{
 
-CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_size){
-	return xnew<CFun>(pth, val, val_size);
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size){
+	return xnew<NativeFun>(pth, val, val_size);
 }
 
-CFun::CFun(const param_types_holder_n& pth, const void* val, int_t val_size){
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_){
+	return xnew<NativeFunBindedThis>(pth, val, val_size, this_);
+}
+
+NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val_size){
+	set_p(TYPE, this);
+
 	fun_ = pth.fun;
 	if(val_size<sizeof(int_t)){
 		val_size_ = 0;
@@ -33,8 +39,6 @@ CFun::CFun(const param_types_holder_n& pth, const void* val, int_t val_size){
 	// ŠÖ”‚ðƒRƒs[
 	std::memcpy(data_, val, val_size);
 
-	this_ = undefined;
- 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	for(int_t i=0; i<param_n_+1; ++i){
 		const ClassPtr& cls = core()->get_cpp_class(pth.param_types[i]);
@@ -55,7 +59,7 @@ CFun::CFun(const param_types_holder_n& pth, const void* val, int_t val_size){
 }
 
 
-CFun::~CFun(){
+NativeFun::~NativeFun(){
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
 
@@ -67,7 +71,7 @@ CFun::~CFun(){
 	so_free(data_, data_size);
 }
 
-void CFun::set_param(uint_t n, const IDPtr& key, const Any& value){
+void NativeFun::set_param(uint_t n, const IDPtr& key, const Any& value){
 	if(min_param_count_==0 && max_param_count_==255){
 		return;
 	}
@@ -94,47 +98,46 @@ void CFun::set_param(uint_t n, const IDPtr& key, const Any& value){
 
 //{REPEAT{{
 /*
-const CFunPtr& CFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#){
+const NativeFunPtr& NativeFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#){
 	#REPEAT#set_param(`i`, key`i`, ap(value`i`));#
 	return from_this(this);
 }
 */
 
-const CFunPtr& CFun::params(){
+const NativeFunPtr& NativeFun::params(){
 	
 	return from_this(this);
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0){
+const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0){
 	set_param(0, key0, ap(value0));
 	return from_this(this);
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1){
+const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1){
 	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));
 	return from_this(this);
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2){
+const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2){
 	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));
 	return from_this(this);
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3){
+const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3){
 	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));set_param(3, key3, ap(value3));
 	return from_this(this);
 }
 
-const CFunPtr& CFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4){
+const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4){
 	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));set_param(3, key3, ap(value3));set_param(4, key4, ap(value4));
 	return from_this(this);
 }
 
 //}}REPEAT}
 
-void CFun::visit_members(Visitor& m){
-	HaveParent::visit_members(m);
-	m & this_;
+void NativeFun::visit_members(Visitor& m){
+	RefCountingHaveParent::visit_members(m);
 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
@@ -145,7 +148,7 @@ void CFun::visit_members(Visitor& m){
 }
 
 
-void CFun::rawcall(const VMachinePtr& vm){
+void NativeFun::rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=min_param_count_){
 		int_t n = vm->ordered_arg_count();
 		if(n<min_param_count_ || n>max_param_count_){
@@ -170,10 +173,6 @@ void CFun::rawcall(const VMachinePtr& vm){
 				return;
 			}
 		}
-	}
-
-	if(rawne(this_, undefined)){
-		vm->set_arg_this(this_);
 	}
 	
 	{ // check arg type
@@ -208,12 +207,29 @@ void CFun::rawcall(const VMachinePtr& vm){
 	fun_(pvm);
 }
 
-DualDispatchMethodPtr dual_dispatch_method(const IDPtr& primary_key){
-	return xnew<DualDispatchMethod>(primary_key);
+
+NativeFunBindedThis::NativeFunBindedThis(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_)
+:NativeFun(pth, val, val_size), this_(this_){
+	set_p(TYPE, this);
 }
 
-DualDispatchFunPtr dual_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key){
-	return xnew<DualDispatchFun>(klass, primary_key);
+void NativeFunBindedThis::visit_members(Visitor& m){
+	NativeFun::visit_members(m);
+	m & this_;
+}
+
+void NativeFunBindedThis::rawcall(const VMachinePtr& vm){
+	vm->set_arg_this(this_);
+	NativeFun::rawcall(vm);
+}
+
+
+DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key){
+	return xnew<DoubleDispatchMethod>(primary_key);
+}
+
+DoubleDispatchFunPtr double_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key){
+	return xnew<DoubleDispatchFun>(klass, primary_key);
 }
 
 }

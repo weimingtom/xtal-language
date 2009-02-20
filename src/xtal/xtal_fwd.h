@@ -117,24 +117,41 @@ struct IsFloat<float_t>{ enum{ value = 1 }; };
 * @brief プリミティブな型の種類
 */
 enum PrimitiveType{
-	TYPE_NULL = 0,
-	TYPE_UNDEFINED = 1,
+	TYPE_NULL,
+	TYPE_UNDEFINED,
 
-	TYPE_FALSE = 2, // ここから上は、ifなどで偽と評価される
-	TYPE_TRUE = 3,
-	
-	TYPE_INT = 4,
-	TYPE_FLOAT = 5,
-	
-	TYPE_SMALL_STRING = 6,
+	TYPE_FALSE,
+	// ここから上は、ifなどで偽と評価される
 
-	TYPE_BASE = 7,
-
-	TYPE_STRING = 8,
+	// ここから下は、値によらず真と評価される
+	TYPE_TRUE,
 	
-	TYPE_ARRAY = 9,
-	TYPE_MULTI_VALUE = 10,
-	TYPE_TREE_NODE = 11,
+	TYPE_INT,
+	TYPE_FLOAT,
+
+	TYPE_TOKEN,
+	
+	TYPE_SMALL_STRING,
+	// ここから上はimmutableな値型である
+
+	// ここから下は参照型である
+	TYPE_BASE,
+
+	TYPE_STRING,
+	
+	TYPE_ARRAY,
+	TYPE_MULTI_VALUE,
+	TYPE_TREE_NODE,
+
+	TYPE_NATIVE_FUN,
+	TYPE_NATIVE_FUN_BINDED_THIS,
+
+	/*
+	TYPE_METHOD,
+	TYPE_FUN,
+	TYPE_LAMBDA,
+	TYPE_FIBER,
+	*/
 
 	TYPE_SHIFT = 4,
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
@@ -222,7 +239,7 @@ class ID;
 class Code;
 class Arguments;
 class VMachine;
-class CFun;
+class NativeFun;
 class Frame;
 class Class;
 class Lib;
@@ -234,8 +251,8 @@ class Singleton;
 class IntRange;
 class FloatRange;
 class ChRange;
-class DualDispatchMethod;
-class DualDispatchFun;
+class DoubleDispatchMethod;
+class DoubleDispatchFun;
 class MultiValue;
 class Debug;
 class DebugInfo;
@@ -258,7 +275,7 @@ typedef SmartPtr<ID> IDPtr;
 typedef SmartPtr<Code> CodePtr;
 typedef SmartPtr<Arguments> ArgumentsPtr;
 typedef SmartPtr<VMachine> VMachinePtr;
-typedef SmartPtr<CFun> CFunPtr;
+typedef SmartPtr<NativeFun> NativeFunPtr;
 typedef SmartPtr<Frame> FramePtr;
 typedef SmartPtr<Class> ClassPtr;
 typedef SmartPtr<Lib> LibPtr;
@@ -268,8 +285,8 @@ typedef SmartPtr<Singleton> SingletonPtr;
 typedef SmartPtr<IntRange> IntRangePtr;
 typedef SmartPtr<FloatRange> FloatRangePtr;
 typedef SmartPtr<ChRange> ChRangePtr;
-typedef SmartPtr<DualDispatchMethod> DualDispatchMethodPtr;
-typedef SmartPtr<DualDispatchFun> DualDispatchFunPtr;
+typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
+typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
 typedef SmartPtr<MultiValue> MultiValuePtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 

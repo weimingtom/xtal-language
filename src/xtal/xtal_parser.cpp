@@ -160,9 +160,7 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
 	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
 	keyword_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
-	keyword_map_->set_at(Xid(unittest), (int_t)Token::KEYWORD_UNITTEST);
 	keyword_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
-	keyword_map_->set_at(Xid(pure), (int_t)Token::KEYWORD_PURE);
 	keyword_map_->set_at(Xid(nobreak), (int_t)Token::KEYWORD_NOBREAK);
 	keyword_map_->set_at(Xid(switch), (int_t)Token::KEYWORD_SWITCH);
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
@@ -465,29 +463,34 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('+'){ reader_.read();
+			XTAL_CASE('+'){ 
+				reader_.read();
 				if(reader_.eat('+')){ push_token(c2('+', '+')); }
 				else if(reader_.eat('=')){ push_token(c2('+', '=')); }
 				else{ push_token('+'); }
 			}
 			
-			XTAL_CASE('-'){ reader_.read();
+			XTAL_CASE('-'){ 
+				reader_.read();
 				if(reader_.eat('-')){ push_token(c2('-', '-')); }
 				else if(reader_.eat('=')){ push_token(c2('-', '=')); }
 				else{ push_token('-'); }
 			}
 			
-			XTAL_CASE('~'){ reader_.read();
+			XTAL_CASE('~'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('~', '=')); }
 				else{ push_token('~'); }
 			}
 			
-			XTAL_CASE('*'){ reader_.read();
+			XTAL_CASE('*'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('*', '=')); }
 				else{ push_token('*'); }
 			}
 			
-			XTAL_CASE('/'){ reader_.read();
+			XTAL_CASE('/'){ 
+				reader_.read();
 				if(reader_.eat('=')){
 					push_token(c2('/', '='));
 				}
@@ -566,29 +569,34 @@ void Lexer::do_read(){
 				}
 			}			
 				
-			XTAL_CASE('^'){ reader_.read();
+			XTAL_CASE('^'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('^', '=')); }
 				else{ push_token('^'); }
 			}
 
-			XTAL_CASE('%'){ reader_.read();
+			XTAL_CASE('%'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('%', '=')); }
 				else{ push_token('%'); }
 			}
 			
-			XTAL_CASE('&'){ reader_.read();
+			XTAL_CASE('&'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('&', '=')); }
 				else if(reader_.eat('&')){ push_token(c2('&', '&')); }
 				else{ push_token('&'); }
 			}
 			
-			XTAL_CASE('|'){ reader_.read();
+			XTAL_CASE('|'){ 
+				reader_.read();
 				if(reader_.eat('=')){ push_token(c2('|', '=')); }
 				else if(reader_.eat('|')){ push_token(c2('|', '|')); }
 				else{ push_token('|'); }
 			}
 						
-			XTAL_CASE('>'){ reader_.read();
+			XTAL_CASE('>'){ 
+				reader_.read();
 				if(reader_.eat('>')){
 					if(reader_.eat('>')){
 						if(reader_.eat('=')){
@@ -610,7 +618,8 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('<'){ reader_.read();
+			XTAL_CASE('<'){ 
+				reader_.read();
 				if(reader_.eat('<')){
 					if(reader_.eat('=')){
 						push_token(c3('<','<','='));
@@ -639,7 +648,8 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('='){ reader_.read();
+			XTAL_CASE('='){ 
+				reader_.read();
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('=', '=', '='));
@@ -653,7 +663,8 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('!'){ reader_.read();
+			XTAL_CASE('!'){ 
+				reader_.read();
 				if(reader_.eat('=')){
 					if(reader_.eat('=')){
 						push_token(c3('!', '=', '='));
@@ -692,7 +703,8 @@ void Lexer::do_read(){
 				}
 			}
 			
-			XTAL_CASE('.'){ reader_.read();
+			XTAL_CASE('.'){ 
+				reader_.read();
 				if(reader_.eat('.')){
 					if(reader_.eat('.')){ push_token(c3('.', '.', '.')); }
 					else if(reader_.eat('<')){ push_token(c3('.', '.', '<')); }
@@ -702,7 +714,8 @@ void Lexer::do_read(){
 				else{ push_token('.'); }
 			}
 			
-			XTAL_CASE(':'){ reader_.read();
+			XTAL_CASE(':'){ 
+				reader_.read();
 				if(reader_.eat(':')){
 					if(reader_.eat('?')){ push_token(c3(':', ':', '?')); }
 					else{ push_token(c2(':', ':')); }
@@ -710,7 +723,8 @@ void Lexer::do_read(){
 				else{ push_token(':'); }
 			}
 
-			XTAL_CASE('\''){ reader_.read();
+			XTAL_CASE('\''){ 
+				reader_.read();
 				push_identifier_token(read_string('\'', '\''));
 			}
 

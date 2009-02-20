@@ -457,8 +457,6 @@ void CodeBuilder::process_labels(){
 
 			Code::AddressJump address_jump = {f.set_pos};
 			result_->address_jump_table_.push_back(address_jump);
-
-			//XTAL_ASSERT(l.pos - f.pos > -1000);
 		}
 	}
 	ff().labels.clear();
@@ -803,19 +801,6 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 	set_label(label_if2);
 
 	put_inst(InstPushFalse());
-	
-	/*
-	compile_expr(e->bin_lhs());
-	compile_expr(e->bin_rhs());
-
-	InstEq inst;
-	inst.op += e->itag() - EXPR_EQ;
-	put_inst(inst);
-
-	if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
-		put_inst(InstNot());
-	}
-	//*/
 }
 
 void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label){
@@ -852,43 +837,6 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	put_inst(InstValue(register_value(f)));
 	put_inst(InstCall(4, 0, 1, 0));
 	put_inst(InstAssert());
-
-	/*
-	compile_expr(e->bin_lhs());
-	put_inst(InstDup());
-	compile_expr(e->bin_rhs());
-	put_inst(InstDup());
-	put_inst(InstInsert2());
-
-	InstEq inst;
-	inst.op += e->itag() - EXPR_EQ;
-	put_inst(inst);
-
-	if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
-		put_inst(InstNot());
-	}
-
-	int_t pop_label = reserve_label();
-
-	set_jump(InstUnless::OFFSET_address, pop_label);
-	put_inst(InstUnless());
-
-	if(mes){ compile_expr(mes); }
-	else{ put_inst(InstValue(register_value(empty_id))); }
-
-	put_inst(InstValue(register_value(f)));
-	put_inst(InstCall(4, 0, 1, 0));
-	put_inst(InstAssert());
-
-	set_jump(InstGoto::OFFSET_address, label);
-	put_inst(InstGoto());
-
-	set_label(pop_label);
-
-	put_inst(InstPop());
-	put_inst(InstPop());
-	put_inst(InstPop());
-	*/
 }
 
 void CodeBuilder::compile_op_assign(const ExprPtr& e){
@@ -1407,8 +1355,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		}
 	}
 
-	add_stack_count(e->fun_params() ? e->fun_params()->size() : 0);
-	add_stack_count(e->fun_params() ? -(int_t)e->fun_params()->size() : 0);
+	if(e->fun_params()){
+		add_stack_count(e->fun_params()->size());
+		add_stack_count(-(int_t)e->fun_params()->size());
+	}
 
 	// ŠÖ”–{‘Ì‚ðˆ—‚·‚é
 	compile_stmt(e->fun_body());

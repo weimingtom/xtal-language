@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-class CFun;	
+class NativeFun;	
 
 struct ReturnResult{
 	static void return_result(const VMachinePtr& vm){
@@ -1147,43 +1147,40 @@ struct setter_holder{
 
 //////////////////////////////////////////////////////////////
 
-class CFun : public HaveParent{
+class NativeFun : public RefCountingHaveParent{
 public:
+	enum{ TYPE = TYPE_NATIVE_FUN };
+
 	typedef void (*fun_t)(VMAndData& pvm);
 
-	CFun(const param_types_holder_n& pth, const void* val, int_t val_size);
+	NativeFun(const param_types_holder_n& pth, const void* val, int_t val_size);
 	
-	virtual ~CFun();
+	~NativeFun();
 
 public:
 //{REPEAT{{
 /*
-	const CFunPtr& params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#);
+	const NativeFunPtr& params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#);
 */
 
-	const CFunPtr& params();
+	const NativeFunPtr& params();
 
-	const CFunPtr& params(const IDPtr& key0, const Any& value0);
+	const NativeFunPtr& params(const IDPtr& key0, const Any& value0);
 
-	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1);
+	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1);
 
-	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2);
+	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2);
 
-	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3);
+	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3);
 
-	const CFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4);
+	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4);
 
 //}}REPEAT}
 public:
 
-	virtual void visit_members(Visitor& m);
+	void visit_members(Visitor& m);
 
-	virtual void rawcall(const VMachinePtr& vm);
-
-	const CFunPtr& bind_this(const AnyPtr& t){
-		this_ = t;
-		return from_this(this);
-	}
+	void rawcall(const VMachinePtr& vm);
 
 private:
 
@@ -1197,11 +1194,26 @@ protected:
 	u8 min_param_count_;
 	u8 max_param_count_;
 	u8 val_size_;
+};
 
+class NativeFunBindedThis : public NativeFun{
+public:
+	enum{ TYPE = TYPE_NATIVE_FUN_BINDED_THIS };
+
+	NativeFunBindedThis(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_);
+
+public:
+
+	void visit_members(Visitor& m);
+
+	void rawcall(const VMachinePtr& vm);
+
+private:
 	AnyPtr this_;
 };
 
-CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_size);
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size);
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_);
 
 //////////////////////////////////////////////////////////////
 
@@ -1210,10 +1222,10 @@ CFunPtr new_cfun(const param_types_holder_n& pth, const void* val, int_t val_siz
 *
 */
 template<class Fun>
-inline CFunPtr fun(const Fun& f){
+inline NativeFunPtr fun(const Fun& f){
 	typedef cfun_holder<Fun> fun_t;
 	fun_t fun(f);
-	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 /**
@@ -1222,10 +1234,10 @@ inline CFunPtr fun(const Fun& f){
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
 */
 template<class Fun>
-inline CFunPtr method(const Fun& f){
+inline NativeFunPtr method(const Fun& f){
 	typedef cmemfun_holder<Fun> fun_t;
 	fun_t fun(f);
-	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 /**
@@ -1233,11 +1245,11 @@ inline CFunPtr method(const Fun& f){
 *
 */
 template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, class A5=void, class A6=void, class A7=void, class A8=void, class A9=void>
-struct ctor : public CFunPtr{
+struct ctor : public NativeFunPtr{
 	typedef ctor_fun<T, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_t;
 	ctor(){
 		fun_t fun;
-		CFunPtr::operator =(new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun)));
+		NativeFunPtr::operator =(new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun)));
 	}
 };
 
@@ -1247,10 +1259,10 @@ struct ctor : public CFunPtr{
 *
 */
 template<class T, class C>
-inline CFunPtr getter(T C::* v){
+inline NativeFunPtr getter(T C::* v){
 	typedef getter_holder<C, T> fun_t;
 	fun_t fun(v);
-	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 	
 /**
@@ -1258,20 +1270,20 @@ inline CFunPtr getter(T C::* v){
 *
 */
 template<class T, class C>
-inline CFunPtr setter(T C::* v){
+inline NativeFunPtr setter(T C::* v){
 	typedef setter_holder<C, T> fun_t;
 	fun_t fun(v);
-	return new_cfun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 
 /**
 * @birief 2重ディスパッチメソッド
 */
-class DualDispatchMethod : public HaveParent{
+class DoubleDispatchMethod : public HaveParent{
 public:
 
-	DualDispatchMethod(const IDPtr& primary_key)
+	DoubleDispatchMethod(const IDPtr& primary_key)
 		:primary_key_(primary_key){}
 
 	virtual void rawcall(const VMachinePtr& vm){
@@ -1288,15 +1300,15 @@ private:
 * @brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */
-DualDispatchMethodPtr dual_dispatch_method(const IDPtr& primary_key);
+DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key);
 
 /**
 * @birief 2重ディスパッチ関数
 */
-class DualDispatchFun : public HaveParent{
+class DoubleDispatchFun : public HaveParent{
 public:
 
-	DualDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
+	DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
 		:klass_(klass), primary_key_(primary_key){}
 
 	virtual void rawcall(const VMachinePtr& vm){
@@ -1318,6 +1330,6 @@ private:
 * @brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */
-DualDispatchFunPtr dual_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key);
+DoubleDispatchFunPtr double_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key);
 
 }

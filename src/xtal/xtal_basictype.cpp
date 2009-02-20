@@ -67,7 +67,7 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 }
 
 HaveParent::HaveParent(const HaveParent& a)
-:Base(a), parent_(0), force_(0){
+:Base(a), parent_(0){
 }
 
 HaveParent& HaveParent::operator=(const HaveParent& a){
@@ -90,18 +90,52 @@ const ClassPtr& HaveParent::object_parent(){
 	}
 }
 
-int_t HaveParent::object_parent_force(){
-	return force_;
-}
-
-void HaveParent::set_object_parent(const ClassPtr& parent, int_t force){
-	XTAL_ASSERT(rawne(from_this(this), parent));
-
-	if(!parent || force_<force){
-		force_ = force;
+void HaveParent::set_object_parent(const ClassPtr& parent){
+	if(!parent_ || parent_->object_force()<parent->object_force()){
 		if(parent_){
 			parent_->dec_ref_count();
 		}
+
+		if(parent){
+			parent_ = parent.get();
+			parent_->inc_ref_count();
+		}
+		else{
+			parent_ = 0;
+		}
+	}
+}
+
+RefCountingHaveParent::RefCountingHaveParent(const RefCountingHaveParent& a)
+:RefCountingBase(a), parent_(0){
+}
+
+RefCountingHaveParent& RefCountingHaveParent::operator=(const RefCountingHaveParent& a){
+	RefCountingBase::operator=(a);
+	return *this;
+}
+
+RefCountingHaveParent::~RefCountingHaveParent(){
+	if(parent_){
+		parent_->dec_ref_count();
+	}
+}
+
+const ClassPtr& RefCountingHaveParent::object_parent(){
+	if(parent_){
+		return from_this(parent_);
+	}
+	else{
+		return null;
+	}
+}
+
+void RefCountingHaveParent::set_object_parent(const ClassPtr& parent){
+	if(!parent_ || parent_->object_force()<parent->object_force()){
+		if(parent_){
+			parent_->dec_ref_count();
+		}
+
 		if(parent){
 			parent_ = parent.get();
 			parent_->inc_ref_count();

@@ -6,6 +6,7 @@
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>
 #include <typeinfo>
+#include <string>
 
 struct SizeAndCount{
 	SizeAndCount(int a = 0, int b = 0){
@@ -255,6 +256,8 @@ void Core::initialize(const CoreSetting& setting){
 
 	bind();
 
+	print_alive_objects();
+
 	initialize_xpeg();
 	initialize_math();
 
@@ -494,6 +497,37 @@ struct ConnectedPointer{
 	}
 };
 
+void Core::print_alive_objects(){
+#if XTAL_DEBUG_ALLOC!=0
+	full_gc();
+
+	ConnectedPointer current(objects_count_, objects_list_begin_);
+	ConnectedPointer begin(0, objects_list_begin_);
+
+	std::map<std::string, int> table;
+	for(ConnectedPointer it = begin; it!=current; ++it){
+		switch(type(**it)){
+		XTAL_DEFAULT;
+//		XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
+		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; }
+		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
+		XTAL_CASE(TYPE_MULTI_VALUE){ table["MultiValue"]++; }
+		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
+		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ table["NativeFunBindedThis"]++; }
+		}
+	}
+
+	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
+	for(; it!=last; ++it){
+		printf("alive %s %d\n", it->first.c_str(), it->second);
+	}
+
+	printf("used_memory %d\n", used_memory);
+
+#endif
+}
+
 void Core::gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
@@ -600,7 +634,11 @@ void Core::full_gc(){
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
 			}
-			
+
+			if(string_mgr_){
+			//	string_mgr_->gc();
+			}
+
 			{ // 参照カウンタを減らす
 				Visitor m(-1);	
 				for(ConnectedPointer it = begin; it!=current; ++it){

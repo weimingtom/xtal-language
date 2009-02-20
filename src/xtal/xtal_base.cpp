@@ -101,11 +101,7 @@ const ClassPtr& Base::object_parent(){
 	return null;
 }
 
-int_t Base::object_parent_force(){ 
-	return 0;
-}
-
-void Base::set_object_parent(const ClassPtr& parent, int_t force){
+void Base::set_object_parent(const ClassPtr& parent){
 
 }
 

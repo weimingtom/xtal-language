@@ -141,8 +141,11 @@ public:
 	*/
 	void erase(const Key& key);
 
-	void erase(iterator it){
+	iterator erase(iterator it){
+		iterator ret = it;
+		++ret;
 		erase(it->first);
+		return ret;
 	}
 
 	/**
@@ -170,6 +173,16 @@ public:
 	}
 	
 	void expand(int_t addsize);
+
+protected:
+
+	uint_t calc_index(uint_t hash){
+		return calc_index(hash, size_);
+	}
+
+	uint_t calc_index(uint_t hash, uint_t size){
+		return hash & (size-1);
+	}
 
 protected:
 
@@ -242,7 +255,7 @@ void OrderedHashtable<Key, Val, Fun>::destroy(){
 
 template<class Key, class Val, class Fun>
 typename OrderedHashtable<Key, Val, Fun>::iterator OrderedHashtable<Key, Val, Fun>::find(const Key& key, uint_t hash){
-	Node* p = begin_[hash & (size_-1)];
+	Node* p = begin_[calc_index(hash)];
 	while(p){
 		if(Fun::eq(p->pair.first, key)){
 			return iterator(p);
@@ -255,7 +268,7 @@ typename OrderedHashtable<Key, Val, Fun>::iterator OrderedHashtable<Key, Val, Fu
 template<class Key, class Val, class Fun>
 Val& OrderedHashtable<Key, Val, Fun>::operator [](const Key& key){
 	uint_t hash = Fun::hash(key);
-	Node** p = &begin_[hash & (size_-1)];
+	Node** p = &begin_[calc_index(hash)];
 	while(*p){
 		if(Fun::eq((*p)->pair.first, key)){
 			return (*p)->pair.second;
@@ -287,7 +300,7 @@ Val& OrderedHashtable<Key, Val, Fun>::operator [](const Key& key){
 
 template<class Key, class Val, class Fun>
 std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHashtable<Key, Val, Fun>::insert(const Key& key, const Val& value, uint_t hash){
-	Node** p = &begin_[hash & (size_-1)];
+	Node** p = &begin_[calc_index(hash)];
 	while(*p){
 		if(Fun::eq((*p)->pair.first, key)){
 			(*p)->pair.second = value;
@@ -321,7 +334,7 @@ std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHasht
 template<class Key, class Val, class Fun>
 void OrderedHashtable<Key, Val, Fun>::erase(const Key& key){
 	uint_t hash = Fun::hash(key);
-	uint_t pos = hash  & (size_-1);
+	uint_t pos = calc_index(hash);
 	Node* p = begin_[pos];
 	Node* prev = 0;
 	while(p){
@@ -390,7 +403,7 @@ void OrderedHashtable<Key, Val, Fun>::expand(int_t addsize){
 	}
 
 	for(Node* p = ordered_head_; p; p=p->ordered_next){
-		Node** temp = &begin_[Fun::hash(p->pair.first) & (size_-1)];
+		Node** temp = &begin_[calc_index(Fun::hash(p->pair.first))];
 		while(*temp){
 			temp = &(*temp)->next;
 		}
@@ -576,8 +589,11 @@ public:
 	*/
 	void erase(const Key& key);
 
-	void erase(iterator it){
+	iterator erase(iterator it){
+		iterator ret = it;
+		++ret;
 		erase(it->first);
+		return ret;
 	}
 
 	/**
@@ -605,6 +621,16 @@ public:
 	}
 	
 	void expand(int_t addsize);
+
+protected:
+
+	uint_t calc_index(uint_t hash){
+		return calc_index(hash, size_);
+	}
+
+	uint_t calc_index(uint_t hash, uint_t size){
+		return hash & (size-1);
+	}
 
 protected:
 
@@ -667,7 +693,7 @@ void Hashtable<Key, Val, Fun>::destroy(){
 
 template<class Key, class Val, class Fun>
 typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::find(const Key& key, uint_t hash){
-	Node** pp = &begin_[hash & (size_-1)];
+	Node** pp = &begin_[calc_index(hash)];
 	Node* p = *pp;
 	while(p){
 		if(Fun::eq(p->pair.first, key)){
@@ -681,7 +707,7 @@ typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::find(const
 template<class Key, class Val, class Fun>
 Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
 	uint_t hash = Fun::hash(key);
-	Node** p = &begin_[hash & (size_-1)];
+	Node** p = &begin_[calc_index(hash)];
 	while(*p){
 		if(Fun::eq((*p)->pair.first, key)){
 			return (*p)->pair.second;
@@ -703,7 +729,7 @@ Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
 
 template<class Key, class Val, class Fun>
 std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val, Fun>::insert(const Key& key, const Val& value, uint_t hash){
-	Node** p = &begin_[hash & (size_-1)];
+	Node** p = &begin_[calc_index(hash)];
 	while(*p){
 		if(Fun::eq((*p)->pair.first, key)){
 			(*p)->pair.second = value;
@@ -721,13 +747,13 @@ std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val,
 		expand(0);
 	}
 
-	return std::pair<iterator, bool>(iterator(begin_ + (hash & (size_-1)), begin_+size_, ret), true);
+	return std::pair<iterator, bool>(iterator(begin_ + calc_index(hash), begin_+size_, ret), true);
 }
 
 template<class Key, class Val, class Fun>
 void Hashtable<Key, Val, Fun>::erase(const Key& key){
 	uint_t hash = Fun::hash(key);
-	uint_t pos = hash  & (size_-1);
+	uint_t pos = calc_index(hash);
 	Node* p = begin_[pos];
 	Node* prev = 0;
 	while(p){
@@ -776,7 +802,7 @@ void Hashtable<Key, Val, Fun>::expand(int_t addsize){
 	}
 
 	for(iterator it=begin(), last=end(); it!=last; ){
-		Node** p = &begin2[Fun::hash(it->first) & (size2-1)];
+		Node** p = &begin2[calc_index(Fun::hash(it->first), size2)];
 		Node* node = it.to_node();
 		++it;
 		node->next = *p;

@@ -9,27 +9,29 @@ public:
 
 	Arguments(const AnyPtr& ordered = undefined, const AnyPtr& named = undefined);
 
-	const AnyPtr& op_at_int(int_t index){
-		return ordered_->at(index);
-	}
+	const AnyPtr& op_at_int(uint_t index);
 
-	const AnyPtr& op_at_string(const StringPtr& key){
-		return named_->at(key); 
-	}
+	const AnyPtr& op_at_string(const StringPtr& key);
 
-	int_t length(){
-		return ordered_->length();
-	}
+	uint_t length();
 	
-	AnyPtr ordered_arguments(){
-		return ordered_->each();
-	}
+	AnyPtr ordered_arguments();
 	
-	AnyPtr named_arguments(){
-		return named_->each();
-	}
+	AnyPtr named_arguments();
 
 public:
+
+	void add_ordered(const AnyPtr& v);
+
+	void add_named(const AnyPtr& k, const AnyPtr& v);
+
+	void add_named(const VMachinePtr& vm);
+
+	uint_t ordered_size();
+
+	uint_t named_size();
+
+private:
 
 	ArrayPtr ordered_;
 	MapPtr named_;
@@ -100,7 +102,6 @@ public:
 	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core)
 		:Method(outer, code, core), this_(athis){
 	}
-
 
 public:
 	

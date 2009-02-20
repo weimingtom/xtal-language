@@ -37,22 +37,23 @@ int main2(int argc, char** argv){
 		//debug()->set_throw_hook(fun(&debug_throw));
 
 	//*
-	Xsrc((
-		{
-			A: class{}
-			A.p;
-			builtin::A: A;
-			A.p;
-		}
-		))->call();
+	if(CodePtr code = Xsrc((
+
+	))){
+
+	}
 	//*/
 	
 	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->put_s(e->to_s());
-		stderr_stream()->put_s("\n");
+		stderr_stream()->println(e);
 		return 1;
 	}
 
+	core.print_alive_objects();
+
+	Xfor(v, interned_strings()){
+		//v->p();
+	}
 
 #if 1
 
@@ -97,7 +98,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	//*
+	/*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

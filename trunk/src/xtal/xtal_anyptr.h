@@ -250,31 +250,44 @@ private:
 
 };
 
+void visit_members(Visitor& m, const AnyPtr& p);
 
-class Null : public Any{
-public:
-	template<class T>
-	operator const SmartPtr<T>&() const{
-		return *(SmartPtr<T>*)this;
+class Visitor{
+	int_t value_;
+public:	
+
+	Visitor(int_t value){
+		value_ = value;
 	}
 
-	template<class T>
-	operator SmartPtr<T>() const{
-		return *(SmartPtr<T>*)this;
+	int_t value(){
+		return value_;
+	}
+
+	template<class T> Visitor operator &(const T& value){
+		visit_members(*this, value);
+		return *this;
+	}
+
+	template<class T> Visitor operator ()(const T& value){
+		visit_members(*this, value);
+		return *this;
 	}
 };
 
-class Undefined : public AnyPtr{ public: Undefined():AnyPtr(TYPE_UNDEFINED){} };
+template<class F, class S>
+void visit_members(Visitor& m, const std::pair<F, S>& value){
+	m & value.first & value.second;
+}
 
-inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }
-inline bool operator !=(const AnyPtr& a, const Null&){ return rawne(a, null); }
-inline bool operator ==(const Null&, const AnyPtr& a){ return raweq(a, null); }
-inline bool operator !=(const Null&, const AnyPtr& a){ return rawne(a, null); }
+inline void visit_members(Visitor& m, Base* p){
+	if(p){		
+		m & ap(Any(p));
+	}
+}
 
-inline bool operator ==(const AnyPtr& a, const Undefined&){ return raweq(a, undefined); }
-inline bool operator !=(const AnyPtr& a, const Undefined&){ return rawne(a, undefined); }
-inline bool operator ==(const Undefined&, const AnyPtr& a){ return raweq(a, undefined); }
-inline bool operator !=(const Undefined&, const AnyPtr& a){ return rawne(a, undefined); }
-
+inline void visit_members(Visitor& m, const Any& p){
+	m & ap(p);
+}
 
 }//namespace 

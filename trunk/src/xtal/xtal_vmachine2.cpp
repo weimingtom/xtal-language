@@ -371,11 +371,11 @@ ArgumentsPtr VMachine::make_arguments(){
 	ArgumentsPtr p = xnew<Arguments>();
 
 	for(int_t i = 0, size = ordered_arg_count(); i<size; ++i){
-		p->ordered_->push_back(arg(i));
+		p->add_ordered(arg(i));
 	}
 
 	for(int_t i = 0, size = named_arg_count(); i<size; ++i){
-		p->named_->set_at(get(size*2-1-(i*2+0)), get(size*2-1-(i*2+1)));
+		p->add_named(get(size*2-1-(i*2+0)), get(size*2-1-(i*2+1)));
 	}
 	return p;
 }
@@ -383,10 +383,12 @@ ArgumentsPtr VMachine::make_arguments(){
 ArgumentsPtr VMachine::make_args(Method* fun){
 	ArgumentsPtr p = xnew<Arguments>();
 
+	ArrayPtr ordered;
 	for(int_t i = fun->param_size(), size = ff().ordered_arg_count; i<size; ++i){
-		p->ordered_->push_back(get(ff().ordered_arg_count+ff().named_arg_count*2-1-i));
+		p->add_ordered(get(ff().ordered_arg_count+ff().named_arg_count*2-1-i));
 	}
 
+	MapPtr named;
 	IDPtr name;
 	for(int_t i = 0, size = ff().named_arg_count; i<size; ++i){
 		name = (IDPtr&)get(size*2-1-(i*2+0));
@@ -397,7 +399,7 @@ ArgumentsPtr VMachine::make_args(Method* fun){
 			}
 		}
 		if(name){
-			p->named_->set_at(name, get(size*2-1-(i*2+1)));
+			p->add_named(name, get(size*2-1-(i*2+1)));
 		}
 	}
 

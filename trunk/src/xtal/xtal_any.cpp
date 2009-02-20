@@ -93,6 +93,8 @@ void Any::rawcall(const VMachinePtr& vm) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->rawcall(vm); }
+		XTAL_CASE(TYPE_NATIVE_FUN){ unchecked_ptr_cast<NativeFun>(ap(*this))->rawcall(vm); }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->rawcall(vm); }
 	}
 }
 
@@ -151,22 +153,18 @@ const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
+		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->object_parent();  }
 	}
 	return null;	
 }
 
-int_t Any::object_parent_force() const{
+void Any::set_object_parent(const ClassPtr& parent) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent_force();  }
-	}
-	return 0;
-}
-	
-void Any::set_object_parent(const ClassPtr& parent, int_t force) const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_parent(parent, force);  }
+		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_parent(parent);  }
+		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->set_object_parent(parent);  }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->set_object_parent(parent);  }
 	}
 }
 
@@ -212,7 +210,9 @@ StringPtr Any::object_name() const{
 	// クラスの場合、自身が名前を保持してるかも
 	if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
 		if(StringPtr name = cls->object_name()){
-			return name;
+			if(rawne(name, empty_string)){
+				return name;
+			}
 		}
 		
 		// 保持していないなら、その定義位置を表示しとこう
@@ -242,18 +242,11 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_ARRAY){ return get_cpp_class<Array>(); }
 		XTAL_CASE(TYPE_MULTI_VALUE){ return get_cpp_class<MultiValue>(); }
 		XTAL_CASE(TYPE_TREE_NODE){ return get_cpp_class<xpeg::TreeNode>(); }
+		XTAL_CASE(TYPE_NATIVE_FUN){ return get_cpp_class<NativeFun>(); }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return get_cpp_class<NativeFunBindedThis>(); }
 	}
 	return get_cpp_class<Any>();
 }
-
-uint_t Any::hashcode() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ pvalue(*this)->hashcode();  }
-	}
-	return (uint_t)rawvalue(*this);
-}
-
 
 bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
@@ -378,7 +371,9 @@ MultiValuePtr Any::flatten_all_mv() const{
 void Any::visit_members(Visitor& m) const{
 	switch(type(*this)){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ pvalue(*this)->visit_members(m); }
+		XTAL_CASE(TYPE_BASE){ 
+			pvalue(*this)->visit_members(m); 
+		}
 
 		XTAL_CASE(TYPE_ARRAY){ 
 			((Array*)rcpvalue(*this))->visit_members(m); 
@@ -392,6 +387,14 @@ void Any::visit_members(Visitor& m) const{
 			using namespace xpeg;
 			((TreeNode*)rcpvalue(*this))->visit_members(m); 
 		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN){ 
+			unchecked_ptr_cast<NativeFun>(ap(*this))->visit_members(m); 
+		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
+			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->visit_members(m); 
+		}
 	}
 }
 
@@ -404,8 +407,9 @@ void Any::destroy() const{
 		}
 
 		XTAL_CASE(TYPE_STRING){ 
+			uint_t size = StringData::calc_size(((StringData*)rcpvalue(*this))->data_size());
 			((StringData*)rcpvalue(*this))->~StringData(); 
-			rcpvalue(*this)->value_ = sizeof(StringData); 
+			rcpvalue(*this)->value_ = size; 
 		}
 
 		XTAL_CASE(TYPE_ARRAY){ 
@@ -422,6 +426,16 @@ void Any::destroy() const{
 			using namespace xpeg;
 			((TreeNode*)rcpvalue(*this))->~TreeNode(); 
 			rcpvalue(*this)->value_ = sizeof(TreeNode); 
+		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN){ 
+			unchecked_ptr_cast<NativeFun>(ap(*this))->~NativeFun(); 
+			rcpvalue(*this)->value_ = sizeof(NativeFun); 
+		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
+			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->~NativeFunBindedThis(); 
+			rcpvalue(*this)->value_ = sizeof(NativeFunBindedThis); 
 		}
 	}
 }

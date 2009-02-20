@@ -3,6 +3,34 @@
 
 namespace xtal{
 
+class Null : public Any{
+public:
+	template<class T>
+	operator const SmartPtr<T>&() const{
+		return *(SmartPtr<T>*)this;
+	}
+
+	template<class T>
+	operator SmartPtr<T>() const{
+		return *(SmartPtr<T>*)this;
+	}
+};
+
+inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }
+inline bool operator !=(const AnyPtr& a, const Null&){ return rawne(a, null); }
+inline bool operator ==(const Null&, const AnyPtr& a){ return raweq(a, null); }
+inline bool operator !=(const Null&, const AnyPtr& a){ return rawne(a, null); }
+
+class Undefined : public AnyPtr{ 
+public: 
+	Undefined():AnyPtr(TYPE_UNDEFINED){} 
+};
+
+inline bool operator ==(const AnyPtr& a, const Undefined&){ return raweq(a, undefined); }
+inline bool operator !=(const AnyPtr& a, const Undefined&){ return rawne(a, undefined); }
+inline bool operator ==(const Undefined&, const AnyPtr& a){ return raweq(a, undefined); }
+inline bool operator !=(const Undefined&, const AnyPtr& a){ return rawne(a, undefined); }
+
 class Int : public Any{
 public:
 
@@ -61,9 +89,10 @@ public:
 	FloatRangePtr op_range(float_t right, int_t kind);
 };
 
-
-
-class Bool : public Any{};
+class Bool : public Any{
+public: 
+	Bool(bool b):Any(b){} 
+};
 
 class Range : public Base{
 public:
@@ -161,7 +190,7 @@ class HaveParent : public Base{
 public:
 
 	HaveParent()
-		:parent_(0), force_(0){}
+		:parent_(0){}
 
 	HaveParent(const HaveParent& a);
 
@@ -171,17 +200,39 @@ public:
 
 	virtual const ClassPtr& object_parent();
 
-	virtual int_t object_parent_force();
-
-	virtual void set_object_parent(const ClassPtr& parent, int_t force);
+	virtual void set_object_parent(const ClassPtr& parent);
 
 protected:
 
 	Class* parent_;
-	int_t force_;
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
+		m & parent_;
+	}	
+};
+
+class RefCountingHaveParent : public RefCountingBase{
+public:
+
+	RefCountingHaveParent()
+		:parent_(0){}
+
+	RefCountingHaveParent(const RefCountingHaveParent& a);
+
+	RefCountingHaveParent& operator=(const RefCountingHaveParent& a);
+
+	~RefCountingHaveParent();
+
+	const ClassPtr& object_parent();
+
+	void set_object_parent(const ClassPtr& parent);
+
+protected:
+
+	Class* parent_;
+
+	void visit_members(Visitor& m){
 		m & parent_;
 	}	
 };

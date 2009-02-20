@@ -85,10 +85,10 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 		ArgumentsPtr args = ptr_cast<Arguments>(pop());
 		push_args(args, inst.named);
 		if(inst.flags&CALL_FLAG_TAIL){
-			recycle_ff(pc, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
+			recycle_ff(pc, args->ordered_size()+inst.ordered, args->named_size()+inst.named, self);
 		}
 		else{
-			push_ff(pc, inst.need_result, args->ordered_->size()+inst.ordered, args->named_->size()+inst.named, self);
+			push_ff(pc, inst.need_result, args->ordered_size()+inst.ordered, args->named_size()+inst.named, self);
 		}
 		return;
 	}
@@ -116,12 +116,12 @@ void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& sel
 
 void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 	if(!named_arg_count){
-		for(uint_t i = 0; i<args->ordered_->size(); ++i){
-			push(args->ordered_->at(i));
+		for(uint_t i = 0; i<args->ordered_size(); ++i){
+			push(args->op_at_int(i));
 		}
 	}
 	else{
-		int_t usize = args->ordered_->size();
+		int_t usize = args->ordered_size();
 		upsize(usize);
 		int_t offset = named_arg_count*2;
 		for(int_t i = 0; i<offset; ++i){
@@ -129,11 +129,11 @@ void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 		}
 
 		for(int_t i = 0; i<usize; ++i){
-			set(offset-1-i, args->ordered_->at(i));
+			set(offset-1-i, args->op_at_int(i));
 		}
 	}
 
-	args->named_->push_all(myself());
+	args->add_named(myself());
 }
 
 void VMachine::return_result_instance_variable(int_t number, ClassInfo* core){

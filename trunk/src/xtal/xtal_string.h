@@ -6,7 +6,7 @@ namespace xtal{
 class String : public Any{
 public:
 
-	String(){}
+	String();
 
 	/**
 	* @brief NUL終端のC文字列から構築する
@@ -162,26 +162,26 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
-	char_t* buf_;
+	//char_t* buf_;
 	uint_t data_size_;
 public:
 
 	StringData(uint_t size){
 		set_p(TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
-		buf_ = (char_t*)so_malloc(size+1);
-		buf_[size] = 0;
+		//buf_ = (char_t*)so_malloc((size+1)*sizeof(char_t));
+		buf()[size] = 0;
 	}
 
 	~StringData(){
-		so_free(buf_, data_size()+1);
+		//so_free(buf_, (data_size()+1)*sizeof(char_t));
 	}
 
 	uint_t data_size(){
 		return data_size_>>SIZE_SHIFT;
 	}
 
-	char_t* buf(){ return buf_; }
+	char_t* buf(){ return (char_t*)(this+1); }
 
 	bool is_interned(){
 		return (data_size_&INTERNED)!=0;
@@ -189,6 +189,10 @@ public:
 
 	void set_interned(){
 		data_size_ |= INTERNED;
+	}
+
+	static uint_t calc_size(uint_t sz){
+		return sizeof(StringData)+(sz+1)*sizeof(char_t);
 	}
 
 private:
@@ -267,6 +271,8 @@ uint_t string_hashcode(const char_t* str, uint_t size);
 void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash, uint_t& length);
 uint_t string_length(const char_t* str);
 uint_t string_data_size(const char_t* str);
+int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
+void string_copy(char_t* a, const char_t* b, uint_t size);
 
 class ChRange : public Range{
 public:
@@ -356,22 +362,45 @@ inline void visit_members(Visitor& m, const Named& p){
 /**
 * @breif 文字列を管理するクラス
 */
-class StringMgr : public GCObserver{
+class StringMgr : public Base{
 public:
+
+	StringMgr(){
+		guard_ = 0;
+	}
+
+	void gc();
+
+protected:
+
+	virtual void visit_members(Visitor& m);
+
+public:
+
+	const IDPtr& insert(const char_t* str, uint_t size);
+
+	const IDPtr& insert(const char_t* str);
+
+	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash);
+
+	const IDPtr& insert_literal(const char_t* str);
+
+	AnyPtr interned_strings();
+
+private:
 
 	struct Key{
 		const char_t* str;
 		uint_t size;
-		uint_t hashcode;
 	};
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return key.hashcode;
+			return string_hashcode(key.str, key.size);
 		}
 
 		static bool eq(const Key& a, const Key& b){
-			return a.hashcode==b.hashcode && a.size==b.size && std::memcmp(a.str, b.str, a.size*sizeof(char_t))==0;
+			return string_compare(a.str, a.size, b.str, b.size)==0;
 		}
 	};
 
@@ -380,7 +409,7 @@ public:
 
 	struct Fun2{
 		static uint_t hash(const void* key){
-			return ((uint_t)key)>>3;
+			return ((uint_t)key)>>2;
 		}
 
 		static bool eq(const void* a, const void* b){
@@ -390,10 +419,6 @@ public:
 
 	typedef Hashtable<const void*, IDPtr, Fun2> table2_t; 
 	table2_t table2_;
-
-	StringMgr(){
-		guard_ = 0;
-	}
 
 protected:
 
@@ -407,20 +432,7 @@ protected:
 		void operator=(const Guard&);
 	};
 
-	virtual void visit_members(Visitor& m);
-public:
-
-	const IDPtr& insert(const char_t* str, uint_t size);
-
-	const IDPtr& insert(const char_t* str);
-
-	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash);
-
-	const IDPtr& insert_literal(const char_t* str);
-
-	AnyPtr interned_strings();
-
-	virtual void before_gc();
+	friend class InternedStringIter;
 };
 
 class InternedStringIter : public Base{

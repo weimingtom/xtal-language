@@ -2,6 +2,7 @@
 #include "xtal_macro.h"
 
 namespace xtal{
+
 uint_t string_hashcode(const char_t* str, uint_t size){
 	uint_t hash = 2166136261U;
 	for(uint_t i=0; i<size; ++i){
@@ -55,18 +56,20 @@ uint_t string_data_size(const char_t* str){
 	return ret;
 }
 
-static int_t string_compare(const char_t* a, const char_t* b){
-	while(*a!=*b){
-		if(!*a){
-			return 0;
+int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
+	if(asize<bsize){ return -1; }
+	if(bsize<asize){ return 1; }
+
+	for(uint_t i=0; i<asize; ++i){
+		int_t diff = (int_t)a[i] - (int_t)b[i];
+		if(diff!=0){
+			return diff;
 		}
-		a++;
-		b++;
 	}
-	return (int_t)*a - (int_t)*b;
+	return 0;
 }
 
-static void string_copy(char_t* a, const char_t* b, uint_t size){
+void string_copy(char_t* a, const char_t* b, uint_t size){
 	while(size!=0){
 		*a++ = *b++;
 		size--;
@@ -127,11 +130,17 @@ void String::init_string(const char_t* str, uint_t sz){
 		string_copy(svalue_, str, sz);
 	}
 	else{
-		StringData* sd = new StringData(sz);
+		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
+		new(sd) StringData(sz);
 		string_copy(sd->buf(), str, sz);
 		set_p(TYPE_STRING, sd);
 		core()->register_gc(sd);
 	}
+}
+
+String::String()
+:Any(noinit_t()){
+	set_small_string();
 }
 
 String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag)
@@ -147,7 +156,8 @@ String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag
 			rcpvalue(*this)->inc_ref_count();
 		}
 		else{
-			StringData* sd = new StringData(sz);
+			StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
+			new(sd) StringData(sz);
 			string_copy(sd->buf(), str, sz);
 			sd->set_interned();
 			set_p(TYPE_STRING, sd);
@@ -163,7 +173,13 @@ String::String(const char_t* str)
 
 String::String(const avoid<char>::type* str)
 :Any(noinit_t()){
-	//todo
+	uint_t n = std::strlen((char*)str);
+	UserMallocGuard umg(n*sizeof(char_t));
+	char_t* buf = (char_t*)umg.get();
+	for(uint_t i=0; i<n; ++i){
+		buf[i] = str[i];
+	}
+	init_string(buf, n);
 }
 
 String::String(const char_t* str, uint_t size)
@@ -194,7 +210,8 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(&svalue_[size1], str2, size2);
 	}
 	else{
-		StringData* sd = new StringData(sz);
+		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
+		new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
 		set_p(TYPE_STRING, sd);
@@ -252,9 +269,9 @@ const char_t* String::c_str(){
 	}
 	else{
 		return svalue_;
-		uint_t size, hash;
-		string_data_size_and_hashcode(svalue_, size, hash);
-		return xtal::intern(svalue_, size, hash)->data();
+		//uint_t size, hash;
+		//string_data_size_and_hashcode(svalue_, size, hash);
+		//return xtal::intern(svalue_, size, hash)->data();
 	}
 }
 
@@ -383,11 +400,11 @@ StringPtr String::op_cat(const StringPtr& v){
 }
 
 bool String::op_eq(const StringPtr& v){ 
-	return data_size()==v->data_size() && string_compare(data(), v->data())==0; 
+	return string_compare(data(), data_size(), v->data(), v->data_size())==0; 
 }
 
 bool String::op_lt(const StringPtr& v){
-	return string_compare(c_str(), v->c_str()) < 0;
+	return string_compare(data(), data_size(), v->data(), v->data_size()) < 0;
 }
 
 StringPtr String::cat(const StringPtr& v){
@@ -400,14 +417,13 @@ ID::ID(const char_t* str)
 	:String(*xtal::intern(str)){}
 
 ID::ID(const avoid<char>::type* str)	
-	:String(noinit_t()){
-		uint_t n = std::strlen((char*)str);
+	:String(noinit_t()){	
+	uint_t n = std::strlen((char*)str);
 	UserMallocGuard umg(n*sizeof(char_t));
 	char_t* buf = (char_t*)umg.get();
 	for(uint_t i=0; i<n; ++i){
 		buf[i] = str[i];
 	}
-		
 	*this = ID(buf, n);
 }
 
@@ -485,7 +501,7 @@ AnyPtr SmartPtrCtor3<ID>::call(type v){
 ///////////////////////////////////////////
 
 void StringMgr::visit_members(Visitor& m){
-	GCObserver::visit_members(m);
+	Base::visit_members(m);
 	for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
 		m & it->second;
 	}		
@@ -514,7 +530,7 @@ const IDPtr& StringMgr::insert_literal(const char_t* str){
 const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode){
 	Guard guard(guard_);
 
-	Key key = {str, size, hashcode};
+	Key key = {str, size};
 	table_t::iterator it = table_.find(key, hashcode);
 	if(it!=table_.end()){
 		return it->second;
@@ -532,14 +548,6 @@ const IDPtr& StringMgr::insert(const char_t* str, uint_t size, uint_t hashcode){
 	return it->second;
 }
 
-void StringMgr::before_gc(){
-	return;
-
-	if(guard_){
-		return;
-	}
-}
-
 void InternedStringIter::block_next(const VMachinePtr& vm){
 	if(iter_!=last_){
 		vm->return_result(from_this(this), iter_->second);
@@ -552,6 +560,17 @@ void InternedStringIter::block_next(const VMachinePtr& vm){
 
 AnyPtr StringMgr::interned_strings(){
 	return xnew<InternedStringIter>(table_.begin(), table_.end());
+}
+
+void StringMgr::gc(){
+	for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last;){
+		if(type(*it->second)==TYPE_STRING && ((StringData*)rcpvalue(*it->second))->ref_count()==1){
+			it = table_.erase(it);
+		}
+		else{
+			++it;
+		}
+	}
 }
 
 }

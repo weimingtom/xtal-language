@@ -62,6 +62,7 @@ InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 	:Frame(outer, code, core), mixins_(xnew<Array>()){
+	object_force_ = 0;
 	is_native_ = false;
 	is_final_ = false;
 	make_map_members();
@@ -70,6 +71,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 Class::Class(const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
 	set_object_name(name);
+	object_force_ = 0;
 	is_native_ = false;
 	is_final_ = false;
 	make_map_members();
@@ -78,6 +80,7 @@ Class::Class(const StringPtr& name)
 Class::Class(cpp_class_t, const StringPtr& name)
 	:Frame(null, null, 0), mixins_(xnew<Array>()){
 	set_object_name(name);
+	object_force_ = 0;
 	is_native_ = true;
 	is_final_ = false;
 	make_map_members();
@@ -168,16 +171,20 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	return minid;
 }
 
-void Class::def_dual_dispatch_method(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::dual_dispatch_method(primary_key), null, accessibility);
+void Class::def_double_dispatch_method(const IDPtr& primary_key, int_t accessibility){
+	def(primary_key, xtal::double_dispatch_method(primary_key), null, accessibility);
 }
 
-void Class::def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::dual_dispatch_fun(from_this(this), primary_key), null, accessibility);
+void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
+	def(primary_key, xtal::double_dispatch_fun(from_this(this), primary_key), null, accessibility);
 }
 
-const CFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	return unchecked_ptr_cast<CFun>(def2(primary_key, xnew<CFun>(pth, val, val_size), secondary_key, accessibility));
+const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
+	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFun>(pth, val, val_size), secondary_key, accessibility));
+}
+
+const NativeFunPtr& Class::def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
+	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, from_this(this)), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
@@ -197,7 +204,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		Value val = {members_->size(), accessibility};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		value->set_object_parent(from_this(this), object_parent_force());
+		value->set_object_parent(from_this(this));
 		inc_global_mutate_count();
 	}
 	else{
@@ -318,16 +325,17 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
-	value->set_object_parent(from_this(this), object_parent_force());
+	value->set_object_parent(from_this(this));
 	inc_global_mutate_count();
 }
 
-void Class::set_object_parent(const ClassPtr& parent, int_t force){
-	if(object_parent_force()<force){
-		HaveParent::set_object_parent(parent, force);
+void Class::set_object_parent(const ClassPtr& parent){
+	if(object_force_<parent->object_force()){
+		object_force_ = parent->object_force()-1;
+		HaveParent::set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_parent(from_this(this), force);
+				members_->at(it->second.num)->set_object_parent(from_this(this));
 			}
 		}
 	}

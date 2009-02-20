@@ -10,9 +10,9 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(uint_t size){
-	set_p(TYPE_ARRAY, this);
+	set_p(TYPE, this);
 
-	capa_ = size+3; // todo buffer overflow
+	capa_ = size; // todo buffer overflow
 	size_ = size;
 
 	if(capa_!=0){
@@ -25,7 +25,7 @@ Array::Array(uint_t size){
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end){
-	set_p(TYPE_ARRAY, this);
+	set_p(TYPE, this);
 
 	int_t size = end-first;
 
@@ -41,7 +41,7 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 
 Array::Array(const Array& v)
 :RefCountingBase(v){
-	set_p(TYPE_ARRAY, this);
+	set_p(TYPE, this);
 
 	size_ = capa_ = ((Array&)v).size();
 	if(capa_!=0){
@@ -329,13 +329,13 @@ void Array::throw_index_error(){
 //////////////////////////////////////////////////
 
 ArrayIter::ArrayIter(const ArrayPtr& a, bool reverse)
-	:array_(a), index_(-1), reverse_(reverse){
+	:array_(a), index_(0), reverse_(reverse){
 }
 		
 void ArrayIter::block_next(const VMachinePtr& vm){
 	++index_;
-	if(index_<(int_t)array_->size()){
-		vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-1-index_ : index_));
+	if(index_<=array_->size()){
+		vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-index_ : index_-1));
 	}
 	else{
 		vm->return_result(null, null);
@@ -344,8 +344,8 @@ void ArrayIter::block_next(const VMachinePtr& vm){
 	
 bool ArrayIter::block_next_direct(AnyPtr& ret){
 	++index_;
-	if(index_<(int_t)array_->size()){
-		ret = array_->at(reverse_ ? array_->size()-1-index_ : index_);
+	if(index_<=array_->size()){
+		ret = array_->at(reverse_ ? array_->size()-index_ : index_-1);
 		return true;
 	}
 	else{

@@ -16,11 +16,6 @@
 //#define XTAL_NO_PARSER
 
 /**
-* @brief xpeg使用off
-*/
-//#define XTAL_NO_XPEG
-
-/**
 * @brief wchar_t使用on
 */
 //#define XTAL_USE_WCHAR

@@ -5,9 +5,72 @@ namespace xtal{
 
 Arguments::Arguments(const AnyPtr& ordered, const AnyPtr& named){
 	if(ordered){ ordered_ = ptr_cast<Array>(ordered); }
-	else{ ordered_ = xnew<Array>(); }
+	else{ ordered_ = null; }
 	if(named){ named_ = ptr_cast<Map>(named); }
-	else{ named_ = xnew<Map>(); }
+	else{ named_ = null; }
+}
+void Arguments::add_ordered(const AnyPtr& v){
+	if(!ordered_){ ordered_ = xnew<Array>(); }
+	ordered_->push_back(v);
+}
+
+void Arguments::add_named(const AnyPtr& k, const AnyPtr& v){
+	if(!named_){ named_ = xnew<Map>(); }
+	named_->set_at(k, v);
+}
+	
+void Arguments::add_named(const VMachinePtr& vm){
+	if(!named_){ named_ = xnew<Map>(); }
+	named_->push_all(vm);
+}
+
+uint_t Arguments::ordered_size(){
+	if(ordered_){
+		return ordered_->size();
+	}
+	return 0;
+}
+
+uint_t Arguments::named_size(){
+	if(named_){
+		return named_->size();
+	}
+	return 0;
+}
+
+const AnyPtr& Arguments::op_at_int(uint_t index){
+	if(ordered_ && index<ordered_->size()){
+		return ordered_->at(index);
+	}
+	return undefined;
+}
+
+const AnyPtr& Arguments::op_at_string(const StringPtr& key){
+	if(named_){
+		return named_->at(key); 
+	}
+	return undefined;
+}
+
+uint_t Arguments::length(){
+	if(ordered_){
+		return ordered_->length();
+	}
+	return 0;
+}
+
+AnyPtr Arguments::ordered_arguments(){
+	if(ordered_){
+		return ordered_->each();
+	}
+	return null;
+}
+
+AnyPtr Arguments::named_arguments(){
+	if(named_){
+		return named_->each();
+	}
+	return null;
 }
 
 void Arguments::visit_members(Visitor& m){

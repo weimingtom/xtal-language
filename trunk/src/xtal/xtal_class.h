@@ -154,19 +154,19 @@ public:
 	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class TFun>
-	const CFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cfun_holder<TFun> fun_t;
 		fun_t fun(f);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
-	* @brief 関数を定義する
+	* @brief メソッドを定義する
 	*
 	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class TFun>
-	const CFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef cmemfun_holder<TFun> fun_t;
 		fun_t fun(f);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
@@ -177,7 +177,7 @@ public:
 	*
 	*/
 	template<class T, class C>
-	const CFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
@@ -190,7 +190,7 @@ public:
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class C>
-	const CFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
@@ -212,12 +212,63 @@ public:
 	/**
 	* @brief 2重ディスパッチメソッドを定義する。
 	*/
-	void def_dual_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
+	void def_double_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 	/**
 	* @brief 2重ディスパッチ関数を定義する。
 	*/
-	void def_dual_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
+	void def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
+
+
+public:
+
+	/**
+	* @brief メソッドを定義する
+	*
+	*/
+	template<class TFun>
+	const NativeFunPtr& def_singleton_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef cmemfun_holder<TFun> fun_t;
+		fun_t fun(f);
+		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	}
+
+	/**
+	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	*
+	*/
+	template<class T, class C>
+	const NativeFunPtr& def_singleton_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef getter_holder<C, T> fun_t;
+		fun_t fun(v);
+		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	*
+	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
+	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
+	*/
+	template<class T, class C>
+	const NativeFunPtr& def_singleton_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		typedef setter_holder<C, T> fun_t;
+		fun_t fun(v);
+		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	}
+	
+	/**
+	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	*
+	* cls->def_getter(primary_key, var, policy);
+	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
+	* と等しい	
+	*/	
+	template<class T, class U>
+	void def_singleton_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+		def_singleton_getter(primary_key, v, secondary_key, accessibility);
+		def_singleton_setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
+	}
 
 public:
 	struct cpp_class_t{};
@@ -244,18 +295,26 @@ public:
 
 	StringPtr object_name();
 
-	void set_object_parent(const ClassPtr& parent, int_t force);
+	void set_object_parent(const ClassPtr& parent);
+
+	uint_t object_force(){
+		return object_force_;
+	}
+
+	void set_object_force(uint_t force){
+		object_force_ = (u16)force;
+	}
 
 	ClassInfo* info(){
 		return (ClassInfo*)scope_info_;
 	}
 	
 	bool is_native(){
-		return is_native_;
+		return is_native_!=0;
 	}
 
 	bool is_final(){
-		return is_final_;
+		return is_final_!=0;
 	}
 
 	void set_final(){
@@ -264,14 +323,17 @@ public:
 
 protected:
 
-	const CFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
+	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
+
+	const NativeFunPtr& def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	StringPtr name_;
 	ArrayPtr mixins_;
-	bool is_native_;
-	bool is_final_;
+	u16 object_force_;
+	u8 is_native_;
+	u8 is_final_;
 
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);

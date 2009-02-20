@@ -53,9 +53,7 @@ public:
 		KEYWORD_DOFUN,
 		KEYWORD_IS,
 		KEYWORD_IN,
-		KEYWORD_UNITTEST,
 		KEYWORD_ASSERT,
-		KEYWORD_PURE,
 		KEYWORD_NOBREAK,
 		KEYWORD_SWITCH,
 		KEYWORD_CASE,
@@ -72,11 +70,17 @@ public:
 		:type_((u8)type), flags_((u8)flags), keyword_number_(keyword_number), value_(value){}
 
 	int_t type() const{ return type_; }
+
 	bool left_space() const{ return (flags_ & FLAG_LEFT_SPACE) != 0; }
+	
 	bool right_space() const{ return (flags_ & FLAG_RIGHT_SPACE) != 0; }
-	int_t ivalue() const{ return ::xtal::ivalue((Any&)value_); }
-	float_t fvalue() const{ return ::xtal::fvalue(value_); }
+	
+	int_t ivalue() const{ return xtal::ivalue((Any&)value_); }
+	
+	float_t fvalue() const{ return xtal::fvalue(value_); }
+	
 	const IDPtr& identifier() const{ return *(IDPtr*)&value_; }
+	
 	u16 keyword_number() const{ return keyword_number_; }
 
 	StringPtr to_s() const{ 

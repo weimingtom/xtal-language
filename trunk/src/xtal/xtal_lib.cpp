@@ -5,7 +5,7 @@ namespace xtal{
 
 Lib::Lib(bool most_top_level){
 	set_object_name("lib");
-	set_object_parent(null, 1000);
+	set_object_force(1000);
 	load_path_list_ = xnew<Array>();
 	path_ = xnew<Array>();
 	most_top_level_ = most_top_level;
@@ -42,7 +42,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 }
 
 void Lib::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	value->set_object_parent(from_this(this), 1000);
+	value->set_object_parent(from_this(this));
 	rawdef(primary_key, value, secondary_key);
 }
 
@@ -54,7 +54,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		inc_global_mutate_count();
-		value->set_object_parent(from_this(this), 1000);
+		value->set_object_parent(from_this(this));
 		return members_->back();
 	}
 	else{

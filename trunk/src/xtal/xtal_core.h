@@ -39,6 +39,8 @@ public:
 
 	void so_free(void* p, size_t size);
 
+	void print_alive_objects();
+
 	const SmartPtr<Filesystem>& filesystem(){
 		return filesystem_;
 	}

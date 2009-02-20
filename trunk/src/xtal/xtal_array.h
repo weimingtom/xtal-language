@@ -313,7 +313,7 @@ public:
 
 private:
 	ArrayPtr array_;
-	int_t index_;
+	uint_t index_;
 	bool reverse_;
 
 	virtual void visit_members(Visitor& m);

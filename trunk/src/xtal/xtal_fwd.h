@@ -73,8 +73,8 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
-typedef std::size_t size_t;
-typedef std::ptrdiff_t ptrdiff_t;
+//typedef std::size_t size_t;
+//typedef std::ptrdiff_t ptrdiff_t;
 
 template<class T>
 struct Alloc;
@@ -129,7 +129,7 @@ enum PrimitiveType{
 	TYPE_INT,
 	TYPE_FLOAT,
 
-	TYPE_TOKEN,
+	TYPE_SMALL_DATA,
 	
 	TYPE_SMALL_STRING,
 	// Ç±Ç±Ç©ÇÁè„ÇÕimmutableÇ»ílå^Ç≈Ç†ÇÈ

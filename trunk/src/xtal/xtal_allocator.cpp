@@ -49,11 +49,6 @@ FixedAllocator::FixedAllocator(){
 
 void FixedAllocator::add_chunk(size_t block_size){
 	uint_t n = (256/block_size)+4;
-
-//	if(block_size==11){
-//		printf("add chunk %d, %d\n", block_size, sizeof(Chunk)+block_size*n*sizeof(data_t));
-//	}
-
 	Chunk *new_chunk = (Chunk*)user_malloc(sizeof(Chunk)+block_size*n*sizeof(data_t));
 	free_data_ = new_chunk->init(n, block_size, free_data_);
 	new_chunk->next = chunk_;

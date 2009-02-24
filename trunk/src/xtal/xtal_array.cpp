@@ -12,7 +12,7 @@ void Array::visit_members(Visitor& m){
 Array::Array(uint_t size){
 	set_p(TYPE, this);
 
-	capa_ = size; // todo buffer overflow
+	capa_ = size;
 	size_ = size;
 
 	if(capa_!=0){
@@ -34,7 +34,7 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 	values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
 
 	for(int_t i=0; i<size; ++i){
-		copy_innocence(values_[i], first[i]);
+		copy_any(values_[i], first[i]);
 		inc_ref_count_force(values_[i]);
 	}
 }
@@ -48,7 +48,7 @@ Array::Array(const Array& v)
 		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
 		
 		for(uint_t i=0; i<size_; ++i){
-			copy_innocence(values_[i], v.values_[i]);
+			copy_any(values_[i], v.values_[i]);
 			inc_ref_count_force(values_[i]);
 		}
 	}
@@ -191,7 +191,7 @@ void Array::insert(int_t i, const AnyPtr& v){
 	}
 
 	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
-	copy_innocence(values_[pos], v);
+	copy_any(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }
 
@@ -202,7 +202,7 @@ void Array::push_back(const AnyPtr& v){
 	else{
 		size_++;
 	}
-	copy_innocence(values_[size_-1], v);
+	copy_any(values_[size_-1], v);
 	inc_ref_count_force(values_[size_-1]);
 }
 

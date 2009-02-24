@@ -93,7 +93,15 @@ class Bool : public Any{
 public: 
 	Bool(bool b):Any(b){} 
 };
+/*
+class SmallData : public Any{
+public:
+	
+	static SmallDataPtr make_u8u8u8u32();
+	static SmallDataPtr make_u8u16u32();
 
+};
+*/
 class Range : public Base{
 public:
 

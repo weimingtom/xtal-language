@@ -563,12 +563,11 @@ enum{
 
 XTAL_DEF_INST_2(40, Property,
         inst_u16_t, identifier_number,
-		inst_u8_t, flags
+		inst_u8_t, need_result
 );
 
-XTAL_DEF_INST_2(41, SetProperty,
-        inst_u16_t, identifier_number,
-		inst_u8_t, flags
+XTAL_DEF_INST_1(41, SetProperty,
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_4(42, Call,

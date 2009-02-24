@@ -546,8 +546,13 @@ void Core::bind(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
+		ClassPtr p = new_cpp_class<PointerStream>(Xid(PointerStream));
 		p->inherit(get_cpp_class<Stream>());
+	}
+
+	{
+		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
+		p->inherit(get_cpp_class<PointerStream>());
 		p->def(Xid(new), ctor<MemoryStream>());
 		p->def_method(Xid(to_s), &MemoryStream::to_s);
 		p->def_method(Xid(resize), &MemoryStream::resize);

@@ -377,6 +377,28 @@ AnyPtr String::each(){
 	return xnew<StringEachIter>(from_this(this));
 }
 
+bool String::is_ch(){
+	ChMaker chm;
+	const char_t* str = data();
+	uint_t i=0, sz=data_size();
+	for(; i<sz; ++i){
+		chm.add(str[i]);
+		if(chm.is_completed()){
+			return i+1==sz;
+		}
+	}
+	return false;
+}
+
+int_t String::ascii(){
+	if(data_size()==0){
+		return -1;
+	}
+
+	int_t ch = (uchar_t)c_str()[0];
+	return ch<128 ? ch : 255;
+}
+
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){
 		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1025")));

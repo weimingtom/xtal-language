@@ -1,15 +1,10 @@
 #include "xtal.h"
 #include "xtal_macro.h"
-	
-#ifndef XTAL_NO_XPEG
 
 namespace xtal{ namespace xpeg{
 
-AnyPtr concat(const AnyPtr&, const AnyPtr&);
-ElementPtr elem(const AnyPtr& a);
-
 /**
-* @brief 
+* @brief 一文字づつ読んで処理していくのに適したメソッドを提供するクラス
 */
 class Scanner : public Base{
 
@@ -25,7 +20,7 @@ public:
 
 	~Scanner();
 
-	typedef Executor::SState State;
+	typedef Executor::State State;
 
 	/**
 	* @brief マークをつける
@@ -63,52 +58,54 @@ public:
 	* @brief n個先の要素を覗き見る
 	*/
 	const AnyPtr& peek(uint_t n = 0);
-
+	
 	/**
 	* @brief ひとつ読み取る
 	*/
 	const AnyPtr& read();
 
-	/**
-	* @brief 一番最初の位置にあるか調べる
-	*/
 	bool bos(){
-		return pos_==0;
+		return pos()==0;
 	}
 
-	/**
-	* @brief 終了しているか調べる
-	*/
 	bool eos(){
 		return raweq(peek(), undefined);
 	}
 
-	/**
-	* @brief 行頭か調べる
-	*/
-	bool bol();
+	bool bol(){
+		if(pos_==0){
+			return true;
+		}
 
-	/**
-	* @brief 行末か調べる
-	*/
+		const AnyPtr& ch = access(pos_-1);
+		return raweq(ch, n_ch_) || raweq(ch, r_ch_);
+	}
+
 	bool eol(){
 		const AnyPtr& ch = peek();
 		return raweq(ch, r_ch_) || raweq(ch, n_ch_);
 	}
 
-	/**
-	* @brief n文字読み飛ばす
-	*/
 	void skip(uint_t n){
 		for(uint_t i=0; i<n; ++i){
 			read();
 		}
 	}
 
-	/**
-	* @brief 行末を読み飛ばす
-	*/
-	void skip_eol();
+	void skip_eol(){
+		const AnyPtr& ch = peek();
+		if(raweq(ch, r_ch_)){
+			if(raweq(peek(1), n_ch_)){
+				skip(2);
+			}
+			else{
+				skip(1);
+			}
+		}
+		else if(raweq(ch, n_ch_)){
+			skip(1);
+		}
+	}
 
 public:
 
@@ -148,6 +145,41 @@ private:
 	uint_t pos_;
 	uint_t read_;
 	uint_t lineno_;
+};
+
+class StreamScanner : public Scanner{
+public:
+
+	StreamScanner(const StreamPtr& stream)
+		:stream_(stream){}
+
+	virtual int_t do_read(AnyPtr* buffer, int_t max){
+		return stream_->read_charactors(buffer, max);
+	}
+
+private:
+	StreamPtr stream_;
+
+	virtual void visit_members(Visitor& m){
+		Scanner::visit_members(m);
+		m & stream_;
+	}
+};
+
+class IteratorScanner : public Scanner{
+public:
+
+	IteratorScanner(const AnyPtr& iter);
+
+	virtual int_t do_read(AnyPtr* buffer, int_t max);
+
+private:
+	AnyPtr iter_;
+
+	virtual void visit_members(Visitor& m){
+		Scanner::visit_members(m);
+		m & iter_;
+	}
 };
 
 Scanner::Scanner(){
@@ -206,30 +238,6 @@ const AnyPtr& Scanner::read(){
 
 	pos_ += 1;
 	return  ret;
-}
-
-bool Scanner::bol(){
-	if(pos_==0){
-		return true;
-	}
-
-	const AnyPtr& ch = access(pos_-1);
-	return raweq(ch, n_ch_) || raweq(ch, r_ch_);
-}
-
-void Scanner::skip_eol(){
-	const AnyPtr& ch = peek();
-	if(raweq(ch, r_ch_)){
-		if(raweq(peek(1), n_ch_)){
-			skip(2);
-		}
-		else{
-			skip(1);
-		}
-	}
-	else if(raweq(ch, n_ch_)){
-		skip(1);
-	}
 }
 
 ArrayPtr Scanner::capture_values(int_t begin, int_t end){
@@ -296,59 +304,41 @@ void Scanner::expand(){
 	num_ = newnum;
 }
 
-class StreamScanner : public Scanner{
-public:
 
-	StreamScanner(const StreamPtr& stream)
-		:stream_(stream){}
+IteratorScanner::IteratorScanner(const AnyPtr& iter)
+	:iter_(iter->send(Xid(each))){}
 
-	virtual int_t do_read(AnyPtr* buffer, int_t max){
-		return stream_->read_charactors(buffer, max);
+int_t IteratorScanner::do_read(AnyPtr* buffer, int_t max){
+	if(!iter_){
+		return 0;
 	}
 
-private:
-	StreamPtr stream_;
-
-	virtual void visit_members(Visitor& m){
-		Scanner::visit_members(m);
-		m & stream_;
-	}
-};
-
-class IteratorScanner : public Scanner{
-public:
-
-	IteratorScanner(const AnyPtr& iter)
-		:iter_(iter->send(Xid(each))){}
-
-	virtual int_t do_read(AnyPtr* buffer, int_t max){
+	const VMachinePtr& vm = vmachine();
+	for(int_t i=0; i<max; ++i){
+		vm->setup_call(2);
+		iter_->rawsend(vm, Xid(block_next));
+		iter_ = vm->result(0);
 		if(!iter_){
-			return 0;
-		}
-
-		const VMachinePtr& vm = vmachine();
-		for(int_t i=0; i<max; ++i){
-			vm->setup_call(2);
-			iter_->rawsend(vm, Xid(block_next));
-			iter_ = vm->result(0);
-			if(!iter_){
-				vm->cleanup_call();
-				return i;
-			}
-			buffer[i] = vm->result(1);
 			vm->cleanup_call();
+			return i;
 		}
-		return max;
+		buffer[i] = vm->result(1);
+		vm->cleanup_call();
 	}
+	return max;
+}
 
-private:
-	AnyPtr iter_;
 
-	virtual void visit_members(Visitor& m){
-		Scanner::visit_members(m);
-		m & iter_;
-	}
-};
+
+
+
+
+
+
+AnyPtr concat(const AnyPtr&, const AnyPtr&);
+ElementPtr elem(const AnyPtr& a);
+
+
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -643,26 +633,20 @@ void Executor::reset(const AnyPtr& stream_or_iterator){
 
 	cap_ = xnew<Map>();
 	tree_ = xnew<TreeNode>();
-	errors_ = xnew<Array>();
+	errors_ = null;
 	begin_ = 0;
 	match_begin_ = 0;
 	match_end_ = 0;
 }
 
 bool Executor::match(const AnyPtr& pattern){
-	cap_->clear();
-	errors_->clear();
-	tree_->clear();
-	tree_->set_tag(null);
-	tree_->set_lineno(0);
-
 	const NFAPtr& nfa = fetch_nfa(elem(pattern));
 	begin_ = scanner_->pos();
 	for(;;){
 		match_begin_ = scanner_->pos();
 		if(match_inner(nfa)){
 			match_end_ = scanner_->pos();
-			return errors_->empty();
+			return !errors_;
 		}
 
 		if(scanner_->eos()){
@@ -674,12 +658,6 @@ bool Executor::match(const AnyPtr& pattern){
 }
 
 bool Executor::parse(const AnyPtr& pattern){
-	cap_->clear();
-	errors_->clear();
-	tree_->clear();
-	tree_->set_tag(null);
-	tree_->set_lineno(0);
-
 	return match_inner(fetch_nfa(elem(pattern))) && errors_->empty();
 }
 
@@ -773,7 +751,100 @@ const AnyPtr& Executor::peek(uint_t n){
 	return scanner_->peek(n);
 }
 
-void Executor::push(uint_t mins, uint_t cur_state, uint_t nodes, const SState& pos){
+const StringPtr& Executor::peek_s(uint_t n){
+	const AnyPtr& ret = peek(n);
+	if(raweq(ret, undefined)){
+		return empty_string;
+	}
+	return unchecked_ptr_cast<String>(ret);
+}
+
+int_t Executor::peek_ascii(uint_t n){
+	const AnyPtr& ret = peek(n);
+	if(raweq(ret, undefined)){
+		return -1;
+	}
+	return unchecked_ptr_cast<String>(ret)->ascii();
+}
+
+const StringPtr& Executor::read_s(){
+	const AnyPtr& ret = read();
+	if(raweq(ret, undefined)){
+		return empty_string;
+	}
+	return unchecked_ptr_cast<String>(ret);
+}
+
+int_t Executor::read_ascii(){
+	const AnyPtr& ret = read();
+	if(raweq(ret, undefined)){
+		return -1;
+	}
+	return unchecked_ptr_cast<String>(ret)->ascii();		
+}
+
+uint_t Executor::lineno(){
+	return scanner_->lineno();
+}
+
+bool Executor::bos(){
+	return scanner_->bos();
+}
+
+bool Executor::eos(){
+	return scanner_->eos();
+}
+
+bool Executor::bol(){
+	return scanner_->bol();
+}
+
+bool Executor::eol(){
+	return scanner_->eol();
+}
+
+bool Executor::eat(const AnyPtr& v){
+	if(raweq(peek(), v)){
+		skip();
+		return true;
+	}
+	return false;
+}
+
+bool Executor::eat_ascii(int_t ch){
+	if(peek_s()->ascii()==ch){
+		skip();
+		return true;
+	}
+	return false;
+}
+
+void Executor::skip_eol(){
+	return scanner_->skip_eol();
+}
+
+void Executor::skip(uint_t n){
+	scanner_->skip(n);
+}
+
+void Executor::skip(){
+	scanner_->read();
+}
+
+void Executor::error(const AnyPtr& message, int_t line){
+	if(!errors_){
+		errors_ = xnew<Array>();
+	}
+
+	if(errors_->size()<10){
+		errors_->push_back(Xf("%(lineno)d:%(message)s")->call(
+			Named(Xid(lineno), line==0 ? lineno() : line),
+			Named(Xid(message), message)
+		));
+	}
+}
+
+void Executor::push(uint_t mins, uint_t cur_state, uint_t nodes, const State& pos){
 	for(uint_t i=mins, sz=stack_.size(); i<sz; ++i){
 		if(stack_[i].pos.pos != pos.pos){
 			break;
@@ -798,8 +869,8 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	}
 
 	bool match = false;
-	SState match_pos = {0, 0};
-	SState first_pos = scanner_->save();
+	State match_pos = {0, 0};
+	State first_pos = scanner_->save();
 
 	push(mins, NFA_STATE_START, nodenum, first_pos);
 
@@ -807,7 +878,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 		StackInfo& se = stack_.pop();
 		int cur_state = se.state;
 		
-		SState pos = se.pos;
+		State pos = se.pos;
 		NFA::State& state = nfa->states[cur_state];
 
 		if(cur_state == NFA_STATE_FINAL && match_pos.pos <= pos.pos){
@@ -1311,13 +1382,3 @@ void initialize_xpeg(){
 }
 
 }
-
-#else
-
-namespace xtal{
-	
-void initialize_xpeg(){}
-
-}
-
-#endif

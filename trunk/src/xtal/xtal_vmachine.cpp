@@ -242,7 +242,7 @@ void VMachine::mv_carry_over(Method* fun){
 
 void VMachine::adjust_result(int_t n, int_t need_result_count){
 
-	// 戻り値の数と要求している戻り値の数が等しい
+	// 関数が返す戻り値の数と要求している戻り値の数が等しい
 	if(need_result_count==n){
 		return;
 	}
@@ -253,7 +253,7 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		return;
 	}
 
-	// 戻り値が一つも無いのでundefinedで埋める
+	// 関数が返す戻り値が一つも無いのでundefinedで埋める
 	if(n==0){
 		for(int_t i = 0; i<need_result_count; ++i){
 			push(undefined);
@@ -295,7 +295,7 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 				adjust_result(len-1, need_result_count-n);
 			}
 			else{
-				// 最後の要素が配列ではないので、undefinedで埋めとく
+				// 最後の要素が多値ではないので、undefinedで埋めとく
 				for(int_t i = n; i<need_result_count; ++i){
 					push(undefined);
 				}
@@ -820,13 +820,13 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pop_ff());
 	}
 
-	XTAL_VM_CASE(Property){ // 9
+	XTAL_VM_CASE(Property){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
+			Any secondary_key = null;
+			Any primary_key = identifier(inst.identifier_number);
 			Any self = ff().self();
 			Any target = pop();
-			push_ff(pc + inst.ISIZE, 1, 0, 0, ap(self));
+			push_ff(pc + inst.ISIZE, inst.need_result, 0, 0, ap(self));
 			set_unsuported_error_info(target, primary_key, secondary_key);
 			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
 			XTAL_VM_CHECK_EXCEPT;
@@ -834,10 +834,10 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
-	XTAL_VM_CASE(SetProperty){ // 9
+	XTAL_VM_CASE(SetProperty){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
+			Any secondary_key = null;
+			Any primary_key = identifier(inst.identifier_number);
 			Any self = ff().self();
 			Any target = pop();
 			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
@@ -848,7 +848,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc); 	
 	}
 
-	XTAL_VM_CASE(Call){ // 9
+	XTAL_VM_CASE(Call){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = null;
 			Any primary_key = id_[Core::id_op_call];
@@ -862,7 +862,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(ff().called_pc);	
 	}
 
-	XTAL_VM_CASE(Send){ // 10
+	XTAL_VM_CASE(Send){ // 11
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -901,7 +901,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(DefineMember){ // 8
+	XTAL_VM_CASE(DefineMember){ // 9
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
 			Any primary_key = identifier_or_pop(inst.identifier_number);
@@ -924,7 +924,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(BlockBeginDirect){ // 4
+	XTAL_VM_CASE(BlockBeginDirect){ // 8
 		FunFrame& f = ff(); 
 		uint_t size = f.fun()->code()->scope_info(inst.core_number)->variable_size;
 		f.variables_.upsize(size);
@@ -981,7 +981,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + (!pop() ? inst.ISIZE : inst.OFFSET_address + inst.address));
 	}
 
-	XTAL_VM_CASE(Goto){ // 2
+	XTAL_VM_CASE(Goto){ // 3
 		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
 	}
@@ -1334,7 +1334,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, Core::id_op_ushr_assign));
 	}
 
-	XTAL_VM_CASE(Range){ // 8
+	XTAL_VM_CASE(Range){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any rhs = pop();
 			Any lhs = pop();
@@ -1361,7 +1361,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
 	}
 
-	XTAL_VM_CASE(SetGlobalVariable){ // 4
+	XTAL_VM_CASE(SetGlobalVariable){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			code()->filelocal()->set_member(identifier(inst.identifier_number), get(), null);
 			XTAL_VM_CHECK_EXCEPT;
@@ -1370,7 +1370,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(DefineGlobalVariable){ // 4
+	XTAL_VM_CASE(DefineGlobalVariable){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			code()->filelocal()->def(identifier(inst.identifier_number), get(), null, KIND_PUBLIC);
 			XTAL_VM_CHECK_EXCEPT;
@@ -1399,7 +1399,7 @@ XTAL_VM_SWITCH{
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(ClassBegin){ // 14
+	XTAL_VM_CASE(ClassBegin){ // 16
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			ClassInfo* core = code()->class_info(inst.core_number);
 			const FramePtr& outer = (core->flags&ClassInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);

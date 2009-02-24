@@ -1,8 +1,6 @@
 
 #pragma once
 
-#ifndef XTAL_NO_XPEG
-
 namespace xtal{ namespace xpeg{
 
 class MatchResult;
@@ -11,20 +9,8 @@ typedef SmartPtr<MatchResult> MatchResultPtr;
 class TreeNode;
 typedef SmartPtr<TreeNode> TreeNodePtr;
 
-class Scanner;
-typedef SmartPtr<Scanner> ScannerPtr;
-
 class Executor;
 typedef SmartPtr<Executor> ExecutorPtr;
-
-class Scanner;
-typedef SmartPtr<Scanner> ScannerPtr;
-
-class StreamScanner;
-typedef SmartPtr<StreamScanner> StreamScannerPtr;
-
-class IteratorScanner;
-typedef SmartPtr<IteratorScanner> IteratorScannerPtr;
 
 struct Element;
 typedef SmartPtr<Element> ElementPtr;
@@ -34,7 +20,10 @@ typedef SmartPtr<Trans> TransPtr;
 
 struct NFA;
 typedef SmartPtr<NFA> NFAPtr;
-	
+
+class Scanner;
+typedef SmartPtr<Scanner> ScannerPtr;
+
 /**
 * @brief 構文木のノード
 */
@@ -149,8 +138,11 @@ public:
 	* @brief 発生したエラーのイテレータを取得する。
 	*/
 	AnyPtr errors(){
+		if(!errors_) return null;
 		return errors_->each();
 	}
+
+	void error(const AnyPtr& message, int_t lineno = 0);
 
 	/**
 	* @brief 生成した構文木を取得する。
@@ -160,21 +152,102 @@ public:
 	}
 
 	/**
+	* @brief 構文木に要素を追加する
+	*/
+	void push_result(const AnyPtr& a){
+		tree_->push_back(a);
+	}
+
+	AnyPtr pop_result(){
+		AnyPtr ret = tree_->back();
+		tree_->pop_back();
+		return ret;
+	}
+
+	const AnyPtr& back_result(){
+		return tree_->back();
+	}
+
+public:
+
+	/**
 	* @brief 一文字取得する。
 	*/
 	const AnyPtr& read();
+
+	const StringPtr& read_s();
+
+	int_t read_ascii();
 
 	/**
 	* @brief n文字先をのぞき見る。
 	*/
 	const AnyPtr& peek(uint_t n = 0);
 
-public:
+	const StringPtr& peek_s(uint_t n = 0);
 
-	struct SState{
+	int_t peek_ascii(uint_t n = 0);
+
+	struct State{
 		uint_t lineno;
 		uint_t pos;
 	};
+
+	/**
+	* @brief マークをつける
+	*/
+	State save();
+
+	/**
+	* @brief マークを付けた位置に戻る
+	*/
+	void load(const State& state);
+
+	/**
+	* @brief 現在の位置を返す
+	*/
+	uint_t pos();
+
+	/**
+	* @brief 現在の行数を返す
+	*/
+	uint_t lineno();
+
+	/**
+	* @brief 一番最初の位置にあるか調べる
+	*/
+	bool bos();
+
+	/**
+	* @brief 終了しているか調べる
+	*/
+	bool eos();
+
+	/**
+	* @brief 行頭か調べる
+	*/
+	bool bol();
+
+	/**
+	* @brief 行末か調べる
+	*/
+	bool eol();
+
+	/**
+	* @brief n要素読み飛ばす
+	*/
+	void skip(uint_t n);
+
+	void skip();
+
+	/**
+	* @brief 行末を読み飛ばす
+	*/
+	void skip_eol();
+
+	bool eat(const AnyPtr& v);
+
+	bool eat_ascii(int_t ch);
 
 private:
 	
@@ -184,12 +257,12 @@ private:
 
 	bool test(const AnyPtr& elem);
 
-	void push(uint_t mins, uint_t st, uint_t nodes, const SState& pos);
+	void push(uint_t mins, uint_t st, uint_t nodes, const State& pos);
 
 	struct StackInfo{ 
 		uint_t state;
 		uint_t nodes;
-		SState pos; 
+		State pos; 
 	};
 
 	typedef PODStack<StackInfo> stack_t;
@@ -199,9 +272,7 @@ private:
 	};
 
 	stack_t stack_;
-	
 	MapPtr nfa_map_;
-
 	MapPtr cap_;
 
 	TreeNodePtr tree_;
@@ -217,6 +288,7 @@ private:
 		m & nfa_map_ & tree_ & errors_ & cap_;
 	}
 };
+
 
 AnyPtr lookahead(const AnyPtr& elem);
 
@@ -247,4 +319,3 @@ AnyPtr leafs(const AnyPtr& left);
 
 }}
 
-#endif

@@ -39,8 +39,10 @@ int main2(int argc, char** argv){
 	//*
 	if(CodePtr code = Xsrc((
 
-	))){
+		10{ it.p; }
 
+	))){
+		code->inspect()->p();
 	}
 	//*/
 	

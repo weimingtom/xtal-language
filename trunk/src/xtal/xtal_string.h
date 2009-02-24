@@ -142,6 +142,10 @@ public:
 	*/
 	StringPtr cat(const StringPtr& v);
 
+	bool is_ch();
+
+	int_t ascii();
+
 public:
 
 	ChRangePtr op_range(const StringPtr& right, int_t kind);

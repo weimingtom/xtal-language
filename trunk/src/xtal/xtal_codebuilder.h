@@ -216,6 +216,8 @@ public:
 	int_t append_identifier(const IDPtr& identifier);
 	int_t append_value(const AnyPtr& v);
 
+	ExprPtr setup_expr(const ExprPtr& e);
+
 private:
 	MapPtr value_map_;
 	MapPtr identifier_map_;

@@ -335,12 +335,7 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
 		}
 		else{
-			if(need_result_count==1 && flags==0){
-				put_inst(InstProperty(key, CALL_FLAG_NS));
-			}
-			else{
-				put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS, key));
-			}
+			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS, key));
 		}
 	}
 	else{
@@ -348,8 +343,8 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_Q, key));
 		}
 		else{
-			if(need_result_count==1 && flags==0){
-				put_inst(InstProperty(key, CALL_FLAG_NONE));
+			if(flags==0){
+				put_inst(InstProperty(key, need_result_count));
 			}
 			else{
 				put_inst(InstSend(0, 0, need_result_count, flags, key));
@@ -379,7 +374,7 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 			put_inst(InstSend(1, 0, 0, CALL_FLAG_NS | CALL_FLAG_Q, key));
 		}
 		else{
-			put_inst(InstSetProperty(key, CALL_FLAG_NS));
+			put_inst(InstSend(1, 0, 0, CALL_FLAG_NS, key));
 		}
 	}
 	else{
@@ -387,7 +382,7 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 			put_inst(InstSend(1, 0, 0, CALL_FLAG_Q, key));
 		}
 		else{
-			put_inst(InstSetProperty(key, CALL_FLAG_NONE));
+			put_inst(InstSetProperty(key));
 		}
 	}
 }
@@ -858,23 +853,23 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 		put_inst(inst);
 		put_set_instance_variable_code(lhs->ivar_name());
 	}
-	else if(lhs->itag()==EXPR_SEND){
-		compile_expr(lhs->send_term());
+	else if(lhs->itag()==EXPR_PROPERTY){
+		compile_expr(lhs->property_term());
 		put_inst(InstDup());
-		put_send_code(lhs->send_name(), 1, false, false, lhs->send_ns());
+		put_send_code(lhs->property_name(), 1, false, false, lhs->property_ns());
 		compile_expr(rhs);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(lhs->send_name(), false, lhs->send_ns());
+		put_set_send_code(lhs->property_name(), false, lhs->property_ns());
 	}
-	else if(lhs->itag()==EXPR_SEND_Q){
-		compile_expr(lhs->send_term());
+	else if(lhs->itag()==EXPR_PROPERTY_Q){
+		compile_expr(lhs->property_term());
 		put_inst(InstDup());
-		put_send_code(lhs->send_name(), 1, false, true, lhs->send_ns());
+		put_send_code(lhs->property_name(), 1, false, true, lhs->property_ns());
 		compile_expr(rhs);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(lhs->send_name(), true, lhs->send_ns());
+		put_set_send_code(lhs->property_name(), true, lhs->property_ns());
 	}
 	else if(lhs->itag()==EXPR_AT){
 		compile_expr(lhs->bin_lhs());
@@ -936,21 +931,21 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 		put_inst(inst);
 		put_set_instance_variable_code(term->ivar_name());
 	}
-	else if(term->itag()==EXPR_SEND){
-		compile_expr(term->send_term());
+	else if(term->itag()==EXPR_PROPERTY){
+		compile_expr(term->property_term());
 		put_inst(InstDup());
-		put_send_code(term->send_name(), 1, false, false, term->send_ns());
+		put_send_code(term->property_name(), 1, false, false, term->property_ns());
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(term->send_name(), false, term->send_ns());
+		put_set_send_code(term->property_name(), false, term->property_ns());
 	}
-	else if(term->itag()==EXPR_SEND_Q){
-		compile_expr(term->send_term());
+	else if(term->itag()==EXPR_PROPERTY_Q){
+		compile_expr(term->property_term());
 		put_inst(InstDup());
-		put_send_code(term->send_name(), 1, false, true, term->send_ns());
+		put_send_code(term->property_name(), 1, false, true, term->property_ns());
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(term->send_name(), true, term->send_ns());
+		put_set_send_code(term->property_name(), true, term->property_ns());
 	}
 	else if(term->itag()==EXPR_AT){
 		compile_expr(term->bin_lhs());
@@ -1567,31 +1562,33 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_CALLEE){ put_inst(InstPushCallee()); }
 		XTAL_CASE(EXPR_ARGS){ put_inst(InstPushArgs()); }
 
-		XTAL_CASE(EXPR_INT){
-			int_t value = e->int_value();
-			if(value==(i8)value){ 
-				put_inst(InstPushInt1Byte(value));
+		XTAL_CASE(EXPR_NUMBER){
+			AnyPtr nvalue = e->number_value();
+			if(type(nvalue)==TYPE_INT){
+				int_t value = ivalue(nvalue);
+				if(value==(i8)value){ 
+					put_inst(InstPushInt1Byte(value));
+				}
+				else if(value==(i16)value){ 
+					put_inst(InstPushInt2Byte(value));
+				}
+				else{ 
+					put_inst(InstValue(register_value(value)));
+				}
 			}
-			else if(value==(i16)value){ 
-				put_inst(InstPushInt2Byte(value));
-			}
-			else{ 
-				put_inst(InstValue(register_value(value)));
+			else{
+				float_t value = fvalue(nvalue);
+				if(value==(i8)value){ 
+					put_inst(InstPushFloat1Byte((i8)value));
+				}
+				else if(value==(i16)value){ 
+					put_inst(InstPushFloat2Byte((i16)value));
+				}
+				else{ 
+					put_inst(InstValue(register_value(value)));
+				}
 			}
 		}
-
-		XTAL_CASE(EXPR_FLOAT){
-			float_t value = e->float_value();
-			if(value==(i8)value){ 
-				put_inst(InstPushFloat1Byte((i8)value));
-			}
-			else if(value==(i16)value){ 
-				put_inst(InstPushFloat2Byte((i16)value));
-			}
-			else{ 
-				put_inst(InstValue(register_value(value)));
-			}
-		} 
 
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){
@@ -1780,15 +1777,15 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			set_label(label_end);	
 		}
 
-		XTAL_CASE(EXPR_SEND){
-			compile_expr(e->send_term());
-			put_send_code(e->send_name(), info.need_result_count, info.tail, false, e->send_ns());
+		XTAL_CASE(EXPR_PROPERTY){
+			compile_expr(e->property_term());
+			put_send_code(e->property_name(), info.need_result_count, info.tail, false, e->property_ns());
 			result_count = info.need_result_count;
 		}
 
-		XTAL_CASE(EXPR_SEND_Q){
-			compile_expr(e->send_term());
-			put_send_code(e->send_name(), info.need_result_count, info.tail, true, e->send_ns());
+		XTAL_CASE(EXPR_PROPERTY_Q){
+			compile_expr(e->property_term());
+			put_send_code(e->property_name(), info.need_result_count, info.tail, true, e->property_ns());
 			result_count = info.need_result_count;
 		}
 
@@ -1824,28 +1821,28 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				compile_expr(e->call_extendable_arg());
 			}
 
-			if(e->call_term()->itag()==EXPR_SEND){ // a.b(); メッセージ送信式
+			if(e->call_term()->itag()==EXPR_PROPERTY){ // a.b(); メッセージ送信式
 
 				ExprPtr e2 = e->call_term();
-				compile_expr(e2->send_term());
-				int_t key = regster_identifier_or_compile_expr(e2->send_name());
+				compile_expr(e2->property_term());
+				int_t key = regster_identifier_or_compile_expr(e2->property_name());
 
-				if(e2->send_ns()){
-					compile_expr(e2->send_ns());
+				if(e2->property_ns()){
+					compile_expr(e2->property_ns());
 					put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS, key));
 				}
 				else{
 					put_inst(InstSend(ordered, named, info.need_result_count, flags, key));
 				}
 			}
-			else if(e->call_term()->itag()==EXPR_SEND_Q){ // a.?b(); メッセージ送信式
+			else if(e->call_term()->itag()==EXPR_PROPERTY_Q){ // a.?b(); メッセージ送信式
 
 				ExprPtr e2 = e->call_term();
-				compile_expr(e2->send_term());
-				int_t key = regster_identifier_or_compile_expr(e2->send_name());
+				compile_expr(e2->property_term());
+				int_t key = regster_identifier_or_compile_expr(e2->property_name());
 
-				if(e2->send_ns()){
-					compile_expr(e2->send_ns());
+				if(e2->property_ns()){
+					compile_expr(e2->property_ns());
 					put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
 				}
 				else{
@@ -1966,15 +1963,15 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				compile_expr(e->bin_rhs());
 				put_set_instance_variable_code(e->bin_lhs()->ivar_name());
 			}
-			else if(e->bin_lhs()->itag()==EXPR_SEND){
+			else if(e->bin_lhs()->itag()==EXPR_PROPERTY){
 				compile_expr(e->bin_rhs());
-				compile_expr(e->bin_lhs()->send_term());
-				put_set_send_code(e->bin_lhs()->send_name(), false, e->bin_lhs()->send_ns());
+				compile_expr(e->bin_lhs()->property_term());
+				put_set_send_code(e->bin_lhs()->property_name(), false, e->bin_lhs()->property_ns());
 			}
-			else if(e->bin_lhs()->itag()==EXPR_SEND_Q){
+			else if(e->bin_lhs()->itag()==EXPR_PROPERTY_Q){
 				compile_expr(e->bin_rhs());
-				compile_expr(e->bin_lhs()->send_term());
-				put_set_send_code(e->bin_lhs()->send_name(), true, e->bin_lhs()->send_ns());
+				compile_expr(e->bin_lhs()->property_term());
+				put_set_send_code(e->bin_lhs()->property_name(), true, e->bin_lhs()->property_ns());
 			}
 			else if(e->bin_lhs()->itag()==EXPR_AT){
 				compile_expr(e->bin_rhs());
@@ -2024,7 +2021,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
 			if(!have_finally && exprs_size==1){
 				ExprPtr front = ep(e->return_exprs()->front());
-				if(front->itag()==EXPR_CALL || front->itag()==EXPR_SEND || front->itag()==EXPR_SEND_Q){
+				if(front->itag()==EXPR_CALL || front->itag()==EXPR_PROPERTY || front->itag()==EXPR_PROPERTY_Q){
 					compile_expr(front, CompileInfo(1, true));
 					break;
 				}
@@ -2258,13 +2255,13 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				if(v->itag()==EXPR_LVAR){
 					put_set_local_code(v->lvar_name());
 				}
-				else if(v->itag()==EXPR_SEND){
-					compile_expr(v->send_term());
-					put_set_send_code(v->send_name(), false, v->send_ns());
+				else if(v->itag()==EXPR_PROPERTY){
+					compile_expr(v->property_term());
+					put_set_send_code(v->property_name(), false, v->property_ns());
 				}
-				else if(v->itag()==EXPR_SEND_Q){
-					compile_expr(v->send_term());
-					put_set_send_code(v->send_name(), true, v->send_ns());
+				else if(v->itag()==EXPR_PROPERTY_Q){
+					compile_expr(v->property_term());
+					put_set_send_code(v->property_name(), true, v->property_ns());
 				}
 				else if(v->itag()==EXPR_IVAR){
 					put_set_instance_variable_code(v->ivar_name());					
@@ -2367,15 +2364,10 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstOnce(0, num));
 
 			MapPtr case_map = xnew<Map>();
-			ExprPtr default_case;
+			ExprPtr default_case = e->switch_default();
 			Xfor_as(const ExprPtr& v, e->switch_cases()){
-				if(v->itag()==EXPR_SWITCH_CASE){
-					Xfor_as(const ExprPtr& k, v->at(0)){
-						case_map->set_at(k, v->at(1));
-					}
-				}
-				else if(v->itag()==EXPR_SWITCH_DEFAULT){
-					default_case = ep(v->at(0));
+				Xfor_as(const ExprPtr& k, v->at(0)){
+					case_map->set_at(k, v->at(1));
 				}
 			}
 
@@ -2399,7 +2391,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstPushGoto());
 			put_inst(InstMapSetDefault());
 						
-			put_inst(InstDup());		
+			put_inst(InstDup());
 			put_inst(InstSetOnce(num));
 			
 			set_label(label_jump);
@@ -2522,8 +2514,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return undefined; }
 		XTAL_CASE(EXPR_CALLEE){ return undefined; }
 		XTAL_CASE(EXPR_ARGS){ return undefined; }
-		XTAL_CASE(EXPR_INT){ return e->int_value(); }
-		XTAL_CASE(EXPR_FLOAT){ return e->float_value(); }
+		XTAL_CASE(EXPR_NUMBER){ return e->number_value(); }
 		XTAL_CASE(EXPR_STRING){
 			if(e->string_kind()==KIND_TEXT){
 				return undefined;
@@ -2676,11 +2667,11 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			return undefined;
 		}
 
-		XTAL_CASE(EXPR_SEND){
+		XTAL_CASE(EXPR_PROPERTY){
 			return undefined;
 		}
 
-		XTAL_CASE(EXPR_SEND_Q){
+		XTAL_CASE(EXPR_PROPERTY_Q){
 			return undefined;
 		}
 
@@ -2816,6 +2807,118 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 		}
 		break;
 	}
+}
+
+ExprPtr CodeBuilder::setup_expr(const ExprPtr& e){
+/*
+	switch(e->itag()){
+	case EXPR_NULL:
+	case EXPR_UNDEFINED:
+	case EXPR_TRUE:
+	case EXPR_FALSE:
+	case EXPR_CALLEE:
+	case EXPR_ARGS:
+	case EXPR_THIS:
+	case EXPR_DEBUG:
+	case EXPR_CURRENT_CONTEXT:
+	case EXPR_INT:
+	case EXPR_FLOAT:
+	case EXPR_STRING:
+	case EXPR_ARRAY:
+	case EXPR_MAP:
+	case EXPR_MULTI_VALUE:
+
+	case EXPR_ADD:
+	case EXPR_SUB:
+	case EXPR_CAT:
+	case EXPR_MUL:
+	case EXPR_DIV:
+	case EXPR_MOD:
+	case EXPR_AND:
+	case EXPR_OR:
+	case EXPR_XOR:
+	case EXPR_SHL:
+	case EXPR_SHR:
+	case EXPR_USHR:
+
+	case EXPR_ADD_ASSIGN:
+	case EXPR_SUB_ASSIGN:
+	case EXPR_CAT_ASSIGN:
+	case EXPR_MUL_ASSIGN:
+	case EXPR_DIV_ASSIGN:
+	case EXPR_MOD_ASSIGN:
+	case EXPR_AND_ASSIGN:
+	case EXPR_OR_ASSIGN:
+	case EXPR_XOR_ASSIGN:
+	case EXPR_SHL_ASSIGN:
+	case EXPR_SHR_ASSIGN:
+	case EXPR_USHR_ASSIGN:
+
+	case EXPR_EQ:
+	case EXPR_NE:
+	case EXPR_LT:
+	case EXPR_LE:
+	case EXPR_GT:
+	case EXPR_GE:
+	case EXPR_RAWEQ:
+	case EXPR_RAWNE:
+	case EXPR_IN:
+	case EXPR_NIN:
+	case EXPR_IS:
+	case EXPR_NIS:
+
+	case EXPR_ANDAND:
+	case EXPR_OROR:
+		setup_expr(e->bin_lhs, e->bin_rhs());
+		break;
+
+	case EXPR_CATCH:
+		setup_expr(e->at(0), e->at(1));
+		break;
+
+	case EXPR_INC:
+	case EXPR_DEC:
+	case EXPR_POS:
+	case EXPR_NEG:
+	case EXPR_COM:
+	case EXPR_NOT:
+
+	case EXPR_RANGE:
+	case EXPR_RETURN:
+	case EXPR_YIELD:
+	case EXPR_ASSERT:
+	case EXPR_ONCE:
+	case EXPR_THROW:
+	case EXPR_Q:
+	case EXPR_TRY:
+	case EXPR_IF:
+	case EXPR_FOR:
+	case EXPR_FUN:
+	case EXPR_MASSIGN:
+	case EXPR_MDEFINE:
+	case EXPR_IVAR:
+	case EXPR_LVAR:
+	case EXPR_MEMBER:
+	case EXPR_MEMBER_Q:
+	case EXPR_PROPERTY:
+	case EXPR_PROPERTY_Q:
+	case EXPR_CALL:
+	case EXPR_ASSIGN:
+	case EXPR_DEFINE:
+	case EXPR_CDEFINE_MEMBER:
+	case EXPR_CDEFINE_IVAR:
+	case EXPR_AT:
+	case EXPR_BREAK:
+	case EXPR_CONTINUE:
+	case EXPR_BRACKET:
+	case EXPR_SCOPE:
+	case EXPR_CLASS:
+	case EXPR_SWITCH:
+	case EXPR_SWITCH_CASE:
+	case EXPR_SWITCH_DEFAULT:
+	case EXPR_TOPLEVEL:
+*/
+	return null;
 }
 
 }

@@ -5,10 +5,10 @@
 
 namespace xtal{
 
-enum ExprType{
+	enum ExprType{
 
 	EXPR_LIST,
-
+	
 	EXPR_NULL,
 	EXPR_UNDEFINED,
 	EXPR_TRUE,
@@ -18,8 +18,7 @@ enum ExprType{
 	EXPR_THIS,
 	EXPR_DEBUG,
 	EXPR_CURRENT_CONTEXT,
-	EXPR_INT,
-	EXPR_FLOAT,
+	EXPR_NUMBER,
 	EXPR_STRING,
 	EXPR_ARRAY,
 	EXPR_MAP,
@@ -89,12 +88,14 @@ enum ExprType{
 	EXPR_FUN,
 	EXPR_MASSIGN,
 	EXPR_MDEFINE,
+	EXPR_BLOCK_FIRST,
+	EXPR_BLOCK_NEXT,
 	EXPR_IVAR,
 	EXPR_LVAR,
 	EXPR_MEMBER,
 	EXPR_MEMBER_Q,
-	EXPR_SEND,
-	EXPR_SEND_Q,
+	EXPR_PROPERTY,
+	EXPR_PROPERTY_Q,
 	EXPR_CALL,
 	EXPR_ASSIGN,
 	EXPR_DEFINE,
@@ -107,17 +108,15 @@ enum ExprType{
 	EXPR_SCOPE,
 	EXPR_CLASS,
 	EXPR_SWITCH,
-	EXPR_SWITCH_CASE,
-	EXPR_SWITCH_DEFAULT,
 	EXPR_TOPLEVEL,
 
 	EXPR_MAX
 };
 
+
 #define XTAL_DEF_MEMBER(N, Type, Name) \
 	CastResult<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
-	void set_##Name(Type v){ set_at(N, v); }
-
+	const ExprPtr& set_##Name(Type v){ set_at(N, v); return from_this(this); }
 
 class Expr;
 typedef SmartPtr<Expr> ExprPtr;
@@ -136,6 +135,11 @@ public:
 
 	void set_at(uint_t i, const AnyPtr& v);
 
+	const ExprPtr& push(const AnyPtr& v){
+		push_back(v);
+		return from_this(this);
+	}
+
 	XTAL_DEF_MEMBER(0, const ExprPtr&, una_term);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, bin_lhs);
@@ -145,9 +149,7 @@ public:
 	XTAL_DEF_MEMBER(1, const ExprPtr&, q_true);
 	XTAL_DEF_MEMBER(2, const ExprPtr&, q_false);
 
-	XTAL_DEF_MEMBER(0, int_t, int_value);
-
-	XTAL_DEF_MEMBER(0, float_t, float_value);
+	XTAL_DEF_MEMBER(0, const AnyPtr&, number_value);
 
 	XTAL_DEF_MEMBER(0, int_t, string_kind);
 	XTAL_DEF_MEMBER(1, const IDPtr&, string_value);
@@ -205,15 +207,16 @@ public:
 	XTAL_DEF_MEMBER(1, const ExprPtr&, mdefine_rhs_exprs);
 
 	XTAL_DEF_MEMBER(0, const IDPtr&, ivar_name);
+
 	XTAL_DEF_MEMBER(0, const IDPtr&, lvar_name);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, member_term);
 	XTAL_DEF_MEMBER(1, const AnyPtr&, member_name);
 	XTAL_DEF_MEMBER(2, const ExprPtr&, member_ns);
 
-	XTAL_DEF_MEMBER(0, const ExprPtr&, send_term);
-	XTAL_DEF_MEMBER(1, const AnyPtr&, send_name);
-	XTAL_DEF_MEMBER(2, const ExprPtr&, send_ns);
+	XTAL_DEF_MEMBER(0, const ExprPtr&, property_term);
+	XTAL_DEF_MEMBER(1, const AnyPtr&, property_name);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, property_ns);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, call_term);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, call_args);
@@ -238,6 +241,7 @@ public:
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, switch_cond);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, switch_cases);
+	XTAL_DEF_MEMBER(2, const ExprPtr&, switch_default);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, scope_stmts);
 	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);

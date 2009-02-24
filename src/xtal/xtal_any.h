@@ -103,7 +103,7 @@ public:
 	friend void swap(Any& a, Any& b);
 	friend void set_null_force(Any& v);
 	friend void set_undefined_force(Any& v);
-	friend void copy_innocence(Any& v, const Any& u);
+	friend void copy_any(Any& v, const Any& u);
 
 	friend void inc_ref_count_force(const Any& v);
 	friend void dec_ref_count_force(const Any& v);
@@ -434,7 +434,7 @@ inline void set_undefined_force(Any& v){
 	v.value_ = 0;
 }
 
-inline void copy_innocence(Any& v, const Any& u){
+inline void copy_any(Any& v, const Any& u){
 	v = u;
 }
 

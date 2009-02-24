@@ -390,7 +390,9 @@ void Core::so_free(void* p, size_t size){
 void* Core::user_malloc(size_t size){
 	void* ret = user_malloc_nothrow(size);
 	if(!ret){
-		
+		XTAL_ASSERT(false); // メモリーが完全に取得できなかった。
+		// アサートで止めても事態は改善しないんだが、
+		// 例外を使わないとしたら、一体ここはどうしたらいいんだろう？
 	}
 	return ret;
 } 

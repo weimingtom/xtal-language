@@ -60,6 +60,9 @@ public:
 		KEYWORD_DEFAULT,
 		KEYWORD_SINGLETON,
 		KEYWORD_DEBUG,
+		KEYWORD_PUBLIC,
+		KEYWORD_PROTECTED,
+		KEYWORD_PRIVATE,
 
 		KEYWORD_MAX
 	};
@@ -293,18 +296,20 @@ private:
 
 	bool cmp_pri(int_t pri, int_t op, int_t r_space, int_t l_space);
 
+	void parse_secondary_key();
 	bool parse_term();
 	bool parse_expr(int_t pri, int_t space);
 	bool parse_expr();
-	void must_parse_expr(int_t pri, int_t space);
+	void expect_parse_expr(int_t pri, int_t space);
 	bool parse_post(int_t pri, int_t space);
-	void must_parse_expr();
-	void must_parse_identifier();
+	void expect_parse_expr();
+	void expect_parse_identifier();
 	bool parse_identifier();
 	void parse_identifier_or_keyword();
 	bool parse_var();
 	void parse_if();
-	void must_parse_stmt();
+	void expect_parse_stmt();
+	void parse_else_or_nobreak();
 	void parse_try();
 	bool parse_stmt();
 	void parse_stmts();

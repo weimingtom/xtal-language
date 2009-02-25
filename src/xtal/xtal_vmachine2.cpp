@@ -19,6 +19,16 @@ VMachine::VMachine(){
 	resume_pc_ = 0;
 }
 
+VMachine::~VMachine(){
+	fun_frames_.resize(fun_frames_.capacity());
+	for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
+		if(fun_frames_[i]){
+			fun_frames_[i]->~FunFrame();
+			so_free(fun_frames_[i], sizeof(FunFrame));
+		}
+	}
+}
+
 void VMachine::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
@@ -257,14 +267,8 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const A
 
 void VMachine::return_result_mv(const MultiValuePtr& values){
 	FunFrame& f = ff();
-
 	downsize(f.args_stack_size());
-	int_t size = values->size();
-	for(int_t i=0; i<size; ++i){
-		push(values->at(i));
-	}
-	adjust_result(size);
-
+	adjust_result(push_mv(values));
 	f.called_pc = &cleanup_call_code_;
 }
 
@@ -340,10 +344,7 @@ void VMachine::flatten_arg(){
 	adjust_arg(1);
 	if(MultiValuePtr mv = arg(0)->flatten_mv()){
 		downsize(1);
-		for(uint_t i=0; i<mv->size(); ++i){
-			push(mv->at(i));
-		}
-		f.ordered_arg_count = mv->size();
+		f.ordered_arg_count = push_mv(mv);
 	}
 	else{
 		downsize(1);
@@ -356,10 +357,7 @@ void VMachine::flatten_all_arg(){
 	adjust_arg(1);
 	if(MultiValuePtr mv = arg(0)->flatten_all_mv()){
 		downsize(1);
-		for(uint_t i=0; i<mv->size(); ++i){
-			push(mv->at(i));
-		}
-		f.ordered_arg_count = mv->size();
+		f.ordered_arg_count = push_mv(mv);
 	}
 	else{
 		downsize(1);
@@ -580,7 +578,7 @@ void VMachine::visit_members(Visitor& m){
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		m & fun_frames_[i];
+		m & *fun_frames_[i];
 	}
 
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
@@ -601,7 +599,9 @@ void VMachine::before_gc(){
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		fun_frames_[i].inc_ref();
+		if(fun_frames_[i]){
+			fun_frames_[i]->inc_ref();
+		}
 	}
 
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
@@ -614,9 +614,11 @@ void VMachine::before_gc(){
 	}
 
 	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
-		fun_frames_.reverse_at_unchecked(i).set_null();
-		for(int_t j=0, jsize=fun_frames_.reverse_at_unchecked(i).variables_.capacity(); j<jsize; ++j){
-			fun_frames_.reverse_at_unchecked(i).variables_.reverse_at_unchecked(j).set_null();
+		if(fun_frames_.reverse_at_unchecked(i)){
+			fun_frames_.reverse_at_unchecked(i)->set_null();
+			for(int_t j=0, jsize=fun_frames_.reverse_at_unchecked(i)->variables_.capacity(); j<jsize; ++j){
+				fun_frames_.reverse_at_unchecked(i)->variables_.reverse_at_unchecked(j).set_null();
+			}
 		}
 	}
 
@@ -639,7 +641,9 @@ void VMachine::after_gc(){
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		fun_frames_[i].dec_ref();
+		if(fun_frames_[i]){
+			fun_frames_[i]->dec_ref();
+		}
 	}
 
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){

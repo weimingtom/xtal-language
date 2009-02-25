@@ -287,7 +287,7 @@ void FastStack<T>::upsize_detail(size_t us){
 	}
 
 	for(size_t i = oldsize; i<newcapa; ++i){
-		new(&newp[i]) T;
+		new(&newp[i]) T();
 	}
 
 	for(size_t i = 0; i<oldcapa; ++i){

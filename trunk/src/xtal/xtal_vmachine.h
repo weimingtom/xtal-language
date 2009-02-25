@@ -9,6 +9,8 @@ public:
 
 	VMachine();
 
+	~VMachine();
+
 public:
 
 	// 関数呼び出し側が使うための関数群
@@ -431,6 +433,14 @@ public:
 
 	// srcのスタックの内容をsize個取り除いて、プッシュする。
 	void move(VMachine* src, int_t size){ stack_.move(src->stack_, size); }
+
+	int_t push_mv(const MultiValuePtr& mv){
+		int_t size = mv->size();
+		for(int_t i=0; i<size; ++i){
+			push(mv->at(i));
+		}
+		return size;
+	}
 	
 public:
 
@@ -531,12 +541,12 @@ public:
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
 	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
-	const inst_t* pop_ff(){ return fun_frames_.pop().poped_pc; }
+	const inst_t* pop_ff(){ return fun_frames_.pop()->poped_pc; }
 
 	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
 
-	FunFrame& ff(){ return fun_frames_.top(); }
-	FunFrame& prev_ff(){ return fun_frames_[1]; }
+	FunFrame& ff(){ return *fun_frames_.top(); }
+	FunFrame& prev_ff(){ return *fun_frames_[1]; }
 
 	const FunPtr& fun(){ return ff().fun(); }
 	const FunPtr& prev_fun(){ return prev_ff().fun(); }
@@ -755,7 +765,7 @@ private:
 	FastStack<Any> stack_;
 
 	// 関数呼び出しの度に積まれるフレーム
-	FastStack<FunFrame> fun_frames_;
+	FastStack<FunFrame*> fun_frames_;
 
 	// tryの度に積まれるフレーム。
 	FastStack<ExceptFrame> except_frames_;
@@ -763,9 +773,7 @@ private:
 	Any except_[3];
 
 	SmartPtr<DebugInfo> debug_info_;
-
 	SmartPtr<Debug> debug_;
-
 	int_t debug_enable_;
 
 	int_t thread_yield_count_;

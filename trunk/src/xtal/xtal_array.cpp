@@ -361,48 +361,39 @@ void ArrayIter::visit_members(Visitor& m){
 
 //////////////////////////////////////////////////
 
-MultiValuePtr MultiValue::clone(){
-	return xnew<MultiValue>(*this);
+void MultiValue::block_next(const VMachinePtr& vm){
+	if(tail_){
+		vm->return_result(tail_, head_);
+	}
+	else{
+		vm->return_result(0, head_);
+	}
 }
 
-MultiValuePtr MultiValue::flatten_mv(){
-	if(empty()){ return xnew<MultiValue>(); }
-
-	MultiValuePtr ret = xnew<MultiValue>();
-	ret->concat(from_this(this));
-	
-	for(;;){
-		if(const MultiValuePtr& mv = ptr_as<MultiValue>(ret->back())){
-			ret->pop_back();
-			ret->concat(mv);
+int_t MultiValue::size(){
+	const MultiValuePtr* cur = &from_this(this);
+	int_t size = 1;
+	while(true){
+		if(!(*cur)->tail_){
+			return size;
 		}
-		else{
-			if(type(ret->back())==TYPE_UNDEFINED){
-				ret->pop_back();
-			}
+		cur = &(*cur)->tail_;
+		++size;
+	}
+}
+
+const AnyPtr& MultiValue::at(int_t i){
+	const MultiValuePtr* cur = &from_this(this);
+	const AnyPtr* ret = &head_;
+	for(int_t n=0; n<i; ++n){
+		if(!(*cur)->tail_){
+			ret = &undefined;
 			break;
 		}
+		cur = &(*cur)->tail_;
+		ret = &(*cur)->head_;
 	}
-	return ret;
-}
-
-MultiValuePtr MultiValue::flatten_all_mv(){
-	if(empty()){ return xnew<MultiValue>(); }
-
-	MultiValuePtr ret = xnew<MultiValue>();
-	MultiValuePtr temp(from_this(this));
-	
-	for(uint_t i=0; i<temp->size(); ++i){
-		if(const MultiValuePtr& mv = ptr_as<MultiValue>(temp->at(i))){
-			ret->concat(mv->flatten_all_mv());
-		}
-		else{
-			if(type(ret->back())!=TYPE_UNDEFINED){
-				ret->push_back(temp->at(i));
-			}
-		}
-	}
-	return ret;
+	return *ret;
 }
 
 }

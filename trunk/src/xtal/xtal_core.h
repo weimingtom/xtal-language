@@ -27,6 +27,8 @@ public:
 
 	void uninitialize();
 
+	void debug_print();
+
 public:
 
 	void* user_malloc(size_t size);
@@ -257,11 +259,15 @@ private:
 			uint_t mutate_count;
 			uint_t target_class;
 			uint_t secondary_key;
-			Any primary_key;
+			uint_t primary_key;
 			Any member;
 		};
 
-		enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
+		enum{ CACHE_MAX = 257, CACHE_MASK = CACHE_MAX-1 };
+
+		static uint_t calc_index(uint_t hash){
+			return hash % CACHE_MAX;
+		}
 
 		Unit table_[CACHE_MAX];
 
@@ -273,8 +279,12 @@ private:
 			miss_ = 0;
 		}
 
-		void print_result(){
-			//std::printf("MemberCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+		int_t hit_count(){
+			return hit_;
+		}
+
+		int_t miss_count(){
+			return miss_;
 		}
 
 		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
@@ -300,8 +310,12 @@ private:
 			miss_ = 0;
 		}
 
-		void print_result(){
-			//std::printf("IsInheritedCacheTable hit count=%d, miss count=%d, hit rate=%g, miss rate=%g\n", hit_, miss_, hit_/(float)(hit_+miss_), miss_/(float)(hit_+miss_));
+		int_t hit_count(){
+			return hit_;
+		}
+
+		int_t miss_count(){
+			return miss_;
 		}
 
 		bool cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count);

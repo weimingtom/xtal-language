@@ -639,7 +639,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	if(number<0){
 		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
-				error_->error(lineno(), Xt("Xtal Compile Error 1026")->call(name));
+				error_->error(lineno(), Xt("Xtal Compile Error 1026")->call(Named(Xid(name), name)));
 				return;
 			}
 		}
@@ -1104,10 +1104,10 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 			ExprPtr v1 = ep(v);
 			if(v1->itag()==EXPR_CDEFINE_MEMBER){
 				if(v1->cdefine_member_ns()){
-					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false);
+					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false, number++);
 				}
 				else{
-					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false, number++);
+					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false);
 				}
 			}
 		}
@@ -1166,12 +1166,12 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 				compile_expr(v1->cdefine_member_ns());
 
 				if(v1->cdefine_member_ns()){
-					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
+					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
 					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 				else{
-					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
+					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
 					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}

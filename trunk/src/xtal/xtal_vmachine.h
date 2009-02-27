@@ -268,12 +268,6 @@ public:
 	*
 	*/
 	void flatten_arg();
-
-	/**
-	* @brief  引数の多値を平らにする
-	*
-	*/
-	void flatten_all_arg();
 	
 	/**
 	* @brief 呼び出し元が必要としている戻り値の数。
@@ -746,6 +740,8 @@ private:
 	VMachine& operator=(const VMachine&);
 
 private:
+
+	bool using_;
 
 	inst_t end_code_;
 	inst_t throw_code_;

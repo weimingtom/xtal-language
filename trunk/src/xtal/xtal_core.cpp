@@ -300,11 +300,13 @@ void Core::initialize(const CoreSetting& setting){
 	id_op_list_[id_op_shr_assign] = Xid(op_shr_assign);
 	id_op_list_[id_op_ushr_assign] = Xid(op_ushr_assign);
 
+	print_alive_objects();
+
 	exec_script();
 }
 
 void Core::uninitialize(){
-	if(!objects_begin_){ return; }
+	if(!objects_list_begin_){ return; }
 	
 	full_gc();
 
@@ -368,6 +370,26 @@ void Core::uninitialize(){
 	display_debug_memory();
 #endif
 
+}
+
+void Core::debug_print(){
+	{
+		int_t hit = member_cache_table_.hit_count();
+		int_t miss = member_cache_table_.miss_count();
+		printf("member_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
+	}
+
+	{
+		int_t hit = is_cache_table_.hit_count();
+		int_t miss = is_cache_table_.miss_count();
+		printf("is_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
+	}
+
+	{
+		int_t hit = is_inherited_cache_table_.hit_count();
+		int_t miss = is_inherited_cache_table_.miss_count();
+		printf("is_inherited_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
+	}
 }
 
 ////////////////////////////////////
@@ -791,7 +813,7 @@ void Core::register_gc(RefCountingBase* p){
 
 	if(objects_current_==objects_end_){
 		CycleCounter cc(&cycle_count_);
-		gc();
+		//gc();
 		expand_objects_list();
 		objects_begin_ = objects_current_ = *objects_list_current_++;
 		objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
@@ -843,12 +865,17 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 	uint_t ins = rawvalue(secondary_key);
 
 	uint_t hash = itarget_class ^ (iprimary_key>>2) ^ ins + iprimary_key ^ type(primary_key);
-	Unit& unit = table_[hash & CACHE_MASK];
-	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && raweq(primary_key, unit.primary_key) && ins==unit.secondary_key){
+	Unit& unit = table_[calc_index(hash)];
+
+	if(global_mutate_count==unit.mutate_count && 
+		iprimary_key==unit.primary_key && 
+		itarget_class==unit.target_class && 
+		ins==unit.secondary_key){
 		hit_++;
 		return ap(unit.member);
 	}
 	else{
+
 		miss_++;
 
 		if(type(target_class)!=TYPE_BASE){
@@ -859,7 +886,7 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 		unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
 		if(!nocache){
 			unit.target_class = itarget_class;
-			unit.primary_key = primary_key;
+			unit.primary_key = iprimary_key;
 			unit.secondary_key = ins;
 			unit.mutate_count = global_mutate_count;
 		}

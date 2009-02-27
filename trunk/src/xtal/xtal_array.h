@@ -319,38 +319,54 @@ private:
 	virtual void visit_members(Visitor& m);
 };
 
-class MultiValue : public Array{
+class MultiValue : public RefCountingBase{
 public:
-
 	enum{ TYPE = TYPE_MULTI_VALUE };
 
-	MultiValue(int_t size = 0)
-		:Array(size){
-		set_p(TYPE_MULTI_VALUE, this);
+	MultiValue(const AnyPtr& head, const MultiValuePtr& tail = null)
+		:head_(head), tail_(tail){
+		set_p(TYPE, this);
 	}
 
-	MultiValuePtr clone();
+	const AnyPtr& head(){
+		return head_;
+	}
 
-	MultiValuePtr flatten_mv();
+	const MultiValuePtr& tail(){
+		return tail_;
+	}
 
-	MultiValuePtr flatten_all_mv();
+	void block_next(const VMachinePtr& vm);
+
+	int_t size();
+
+	const AnyPtr& at(int_t i);
+
+	void visit_members(Visitor& m){
+		m & head_ & tail_;
+	}
+
+public:
+
+	void set(const AnyPtr& head, const MultiValuePtr& tail = null){
+		head_ = head;
+		tail_ = tail;
+	}
+
+private:
+	AnyPtr head_;
+	MultiValuePtr tail_;
 };
 
-inline MultiValuePtr mv(){
-	return xnew<MultiValue>();
-}
+inline AnyPtr to_mv(const AnyPtr& a){
+	if(type(a)==TYPE_UNDEFINED){
 
-inline MultiValuePtr mv(const AnyPtr& v){
-	MultiValuePtr ret = xnew<MultiValue>();
-	ret->push_back(v);
-	return ret;
+	}
+	return null;
 }
 
 inline MultiValuePtr mv(const AnyPtr& v1, const AnyPtr& v2){
-	MultiValuePtr ret = xnew<MultiValue>();
-	ret->push_back(v1);
-	ret->push_back(v2);
-	return ret;
+	return xnew<MultiValue>(v1, xnew<MultiValue>(v2));
 }
 
 }

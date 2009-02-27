@@ -4,22 +4,33 @@
 namespace xtal{
 
 ZipIter::ZipIter(const VMachinePtr& vm){
-	next = xnew<Array>(vm->ordered_arg_count());
-	for(int_t i = 0, len = next->size(); i<len; ++i){
-		next->set_at(i, vm->arg(i));
+	next_ = xnew<Array>(vm->ordered_arg_count());
+	for(int_t i = 0, len = next_->size(); i<len; ++i){
+		next_->set_at(i, vm->arg(i));
 	}
 }
 
 void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 	bool all = true;
-	value = xnew<MultiValue>(next->size());
-	for(int_t i = 0, len = next->size(); i<len; ++i){
+	MultiValuePtr value;
+	for(int_t i = next_->size()-1; i>=0; --i){
 		vm->setup_call(2);
-		next->at(i)->rawsend(vm, id);
-		next->set_at(i, vm->result(0));
-		value->set_at(i, vm->result(1));
+		next_->at(i)->rawsend(vm, id);
+		next_->set_at(i, vm->result(0));
+		if(type(value)==TYPE_MULTI_VALUE){
+			value = xnew<MultiValue>(vm->result(1), value);
+		}
+		else{
+			AnyPtr ret = vm->result(1);
+			if(type(ret)==TYPE_MULTI_VALUE){
+				value = unchecked_ptr_cast<MultiValue>(ret);
+			}
+			else{
+				value = xnew<MultiValue>(ret);
+			}
+		}
 		vm->cleanup_call();
-		if(!next->at(i))
+		if(!next_->at(i))
 			all = false;
 	}
 	if(all){
@@ -40,9 +51,9 @@ void ZipIter::block_next(const VMachinePtr& vm){
 
 void ZipIter::block_break(const VMachinePtr& vm){
 	IDPtr id = Xid(block_break);
-	for(int_t i = 0, len = next->size(); i<len; ++i){
+	for(int_t i = 0, len = next_->size(); i<len; ++i){
 		vm->setup_call(0);
-		next->at(i)->rawsend(vm, id);
+		next_->at(i)->rawsend(vm, id);
 		if(!vm->processed()){
 			vm->return_result();	
 		}
@@ -53,7 +64,7 @@ void ZipIter::block_break(const VMachinePtr& vm){
 
 void ZipIter::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & next & value;
+	m & next_;
 }
 
 void DelegateToIterator::rawcall(const VMachinePtr& vm){

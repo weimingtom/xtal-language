@@ -8,7 +8,7 @@ inline const VMachinePtr& ThreadMgr::vmachine(){
 }
 
 inline const ClassPtr& Base::get_class(){ 
-	return *static_cast<ClassPtr*>(static_cast<Any*>(class_)); 
+	return from_this(class_); 
 }
 
 //{REPEAT{{

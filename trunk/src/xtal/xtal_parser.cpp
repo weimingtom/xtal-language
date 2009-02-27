@@ -947,6 +947,8 @@ enum{//Expressions priority
 
 	PRI_ONCE,
 
+	PRI_GREED,
+
 	PRI_END_,
 
 	PRI_MAX = PRI_END_-PRI_BEGIN_
@@ -1845,7 +1847,7 @@ void Parser::parse_scope(){
 
 void Parser::parse_secondary_key(){
 	if(eat('#')){ 
-		expect_parse_expr(); 
+		expect_parse_expr(PRI_GREED, 0); 
 	}
 	else{ 
 		eb_.push(null); 
@@ -2130,6 +2132,11 @@ bool Parser::parse_expr(int_t pri, int_t space){
 	if(!parse_term()){
 		return false;
 	}
+	
+	if(pri>=PRI_GREED){ 
+		return true; 
+	}
+
 	while(parse_post(pri, space)){}
 	return true;
 }

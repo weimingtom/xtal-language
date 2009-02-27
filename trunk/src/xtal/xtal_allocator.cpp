@@ -62,7 +62,7 @@ void* FixedAllocator::malloc(size_t block_size){
 		return ret;
 	}
 
-	gc();
+	//gc();
 
 	if(free_data_){
 		void* ret = free_data_;

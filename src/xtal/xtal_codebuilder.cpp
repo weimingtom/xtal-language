@@ -1015,10 +1015,11 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 void CodeBuilder::compile_class(const ExprPtr& e){
 	// インスタンス変数を暗黙的初期化するメソッドを定義する
 
-	int_t method_kind = e->class_kind()==KIND_SINGLETON ? KIND_FUN : KIND_METHOD;
 	{
+		int_t method_kind = e->class_kind()==KIND_SINGLETON ? KIND_FUN : KIND_METHOD;
 		ExprPtr stmts = xnew<Expr>();
 		MapPtr ivar_map = xnew<Map>();
+		bool auto_initialize = false;
 		Xfor_as(const ExprPtr& v, e->class_stmts()->clone()){
 			if(v->itag()==EXPR_CDEFINE_IVAR){
 				if(v->cdefine_ivar_term()){
@@ -1027,6 +1028,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 					eb_.push(v->cdefine_ivar_term());
 					eb_.splice(EXPR_ASSIGN, 2);
 					stmts->push_back(eb_.pop());
+					auto_initialize = true;
 				}
 
 				// 可触性が付いているので、アクセッサを定義する
@@ -1076,15 +1078,20 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		}
 
 		eb_.push(KIND_PUBLIC);
-		eb_.push(Xid(_initialize_));
+		eb_.push(Xid(auto_initialize));
 		eb_.push(null);
 
-		eb_.push(method_kind);
-		eb_.push(null);
-		eb_.push(null);
-		eb_.push(stmts);
-		eb_.splice(EXPR_SCOPE, 1);
-		eb_.splice(EXPR_FUN, 4);
+		if(auto_initialize){
+			eb_.push(method_kind);
+			eb_.push(null);
+			eb_.push(null);
+			eb_.push(stmts);
+			eb_.splice(EXPR_SCOPE, 1);
+			eb_.splice(EXPR_FUN, 4);
+		}
+		else{
+			eb_.splice(EXPR_NULL, 0);
+		}
 
 		eb_.splice(EXPR_CDEFINE_MEMBER, 4);
 

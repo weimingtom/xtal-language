@@ -100,8 +100,6 @@ public:
 		Chunk* next;
 		//data_t buf_[blocks_];
 
-		data_t* init(uint_t blocks, uint_t block_size, data_t* out);
-
 		data_t* buf(){
 			return reinterpret_cast<data_t*>(this+1);
 		}
@@ -111,6 +109,8 @@ private:
 
 	data_t* free_data_;
 	Chunk* chunk_;
+	uint_t all_count_;
+	uint_t used_count_;
 
 public:
 

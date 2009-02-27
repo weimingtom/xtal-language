@@ -33,8 +33,7 @@ public:
 
 	virtual void visit_members(Visitor& m);
 
-	ArrayPtr next;
-	ArrayPtr value;
+	ArrayPtr next_;
 };
 
 struct BlockValueHolder1{

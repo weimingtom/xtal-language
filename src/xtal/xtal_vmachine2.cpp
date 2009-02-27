@@ -3,8 +3,10 @@
 
 namespace xtal{
 
-VMachine::VMachine(){	
+VMachine::VMachine(){
 	myself_ = this;
+
+	using_ = false;
 
 	id_ = core()->id_op_list();
 
@@ -30,6 +32,8 @@ VMachine::~VMachine(){
 }
 
 void VMachine::reset(){
+	using_ = false;
+
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
@@ -342,26 +346,15 @@ void VMachine::adjust_arg(int_t n){
 void VMachine::flatten_arg(){
 	FunFrame& f = ff();
 	adjust_arg(1);
-	if(MultiValuePtr mv = arg(0)->flatten_mv()){
-		downsize(1);
-		f.ordered_arg_count = push_mv(mv);
-	}
-	else{
-		downsize(1);
-		f.ordered_arg_count = 0;
-	}
-}
 
-void VMachine::flatten_all_arg(){
-	FunFrame& f = ff();
-	adjust_arg(1);
-	if(MultiValuePtr mv = arg(0)->flatten_all_mv()){
-		downsize(1);
-		f.ordered_arg_count = push_mv(mv);
-	}
-	else{
+	AnyPtr a = arg(0);
+	if(type(a)==TYPE_UNDEFINED){
 		downsize(1);
 		f.ordered_arg_count = 0;
+	}
+	else if(type(a)==TYPE_MULTI_VALUE){
+		downsize(1);
+		f.ordered_arg_count = push_mv(unchecked_ptr_cast<MultiValue>(a));
 	}
 }
 
@@ -587,6 +580,10 @@ void VMachine::visit_members(Visitor& m){
 }
 
 void VMachine::before_gc(){
+	if(!using_){
+		return;
+	}
+
 	inc_ref_count_force(debug_info_);
 	inc_ref_count_force(debug_);
 
@@ -629,6 +626,10 @@ void VMachine::before_gc(){
 }
 
 void VMachine::after_gc(){
+	if(!using_){
+		return;
+	}
+
 	dec_ref_count_force(debug_info_);
 	dec_ref_count_force(debug_);
 

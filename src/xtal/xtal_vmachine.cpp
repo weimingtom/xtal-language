@@ -71,6 +71,8 @@ void VMachine::push_ff(int_t need_result_count){
 void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
 	FunFrame* fp = fun_frames_.push();
 	if(!fp){
+		using_ = true;
+
 		void* p = so_malloc(sizeof(FunFrame));
 		fp = new(p) FunFrame();
 		fun_frames_.top() = fp;
@@ -286,9 +288,16 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 余った戻り値を多値に直す。
 		int_t size = n-need_result_count+1;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			MultiValuePtr ret(xnew<MultiValue>(size));
-			for(int_t i=0; i<size; ++i){
-				ret->set_at(i, get(size-1-i));
+			MultiValuePtr ret;
+			if(type(get(0))==TYPE_MULTI_VALUE){
+				ret = unchecked_ptr_cast<MultiValue>(get(0));
+			}
+			else{
+				ret = xnew<MultiValue>(get(0));
+			}
+
+			for(int_t i=1; i<size; ++i){
+				ret = xnew<MultiValue>(get(i), ret);
 			}
 			downsize(size);
 			push(ret);
@@ -298,12 +307,40 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(const MultiValuePtr& temp = xtal::ptr_as<MultiValue>(get())){
+			if(type(get(0))==TYPE_MULTI_VALUE){
 				// 最後の要素の多値を展開し埋め込む
-				MultiValuePtr mv(temp);
+				MultiValuePtr mv = unchecked_ptr_cast<MultiValue>(get(0));
 				downsize(1);
-				int_t len = push_mv(mv);
-				adjust_result(len-1, need_result_count-n);
+
+				int len = mv->size();
+
+				const MultiValuePtr* cur = &mv;
+				int_t size = 0;
+				while(true){
+					if((*cur)->tail()){
+						if(need_result_count==n+size){
+							push(*cur);
+							++size;
+							break;
+						}
+
+						push((*cur)->head());
+						++size;		
+						cur = &(*cur)->tail();
+					}
+					else{
+						push((*cur)->head());
+						++size;		
+						while(need_result_count>=n+size){
+							push(undefined);
+							++size;
+						}
+						break;
+					}
+				}
+
+				//int_t len = push_mv(mv);
+				//adjust_result(len-1, need_result_count-n);
 			}
 			else{
 				// 最後の要素が多値ではないので、undefinedで埋めとく
@@ -1549,11 +1586,12 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 4
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff();
+			AnyPtr target_class = ap(f.target_) ? ap(f.target_)->get_class() : null; //  todo
 			if(ap(f.secondary_key_)){
-				XTAL_VM_EXCEPT(unsupported_error(ap(f.target_)->get_class(), isp(f.primary_key_), ap(f.secondary_key_)));
+				XTAL_VM_EXCEPT(unsupported_error(target_class, isp(f.primary_key_), ap(f.secondary_key_)));
 			}
 			else{
-				XTAL_VM_EXCEPT(unsupported_error(ap(f.target_)->get_class(), isp(f.primary_key_), null));
+				XTAL_VM_EXCEPT(unsupported_error(target_class, isp(f.primary_key_), null));
 			}
 		}
 	}

@@ -256,12 +256,6 @@ public:
 		return (const AnyPtr&)*this;
 	}
 
-	MultiValuePtr to_mv() const;
-
-	MultiValuePtr flatten_mv() const;
-
-	MultiValuePtr flatten_all_mv() const;
-
 	void visit_members(Visitor& m) const;
 
 	void destroy() const;

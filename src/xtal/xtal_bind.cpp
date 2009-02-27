@@ -125,9 +125,6 @@ void Core::bind(){
 		p->def_method(Xid(object_name_list), &Any::object_name_list);
 		p->def_method(Xid(s_save), &Any::s_save);
 		p->def_method(Xid(s_load), &Any::s_load);
-		p->def_method(Xid(to_mv), &Any::to_mv);
-		p->def_method(Xid(flatten_mv), &Any::flatten_mv);
-		p->def_method(Xid(flatten_all_mv), &Any::flatten_all_mv);
 
 		p->def_double_dispatch_method(Xid(op_add));
 		p->def_double_dispatch_method(Xid(op_sub));
@@ -170,7 +167,6 @@ void Core::bind(){
 	{
 		ClassPtr p = new_cpp_class<Undefined>(Xid(Undefined));
 		p->set_final();
-		p->def_method(Xid(to_mv), &Any::to_mv);
 	}
 
 	{
@@ -275,19 +271,16 @@ void Core::bind(){
 		p->def_method(Xid(op_at), &Array::op_at, get_cpp_class<Int>());
 		p->def_method(Xid(op_set_at), &Array::op_set_at, get_cpp_class<Int>());
 		p->def_method(Xid(op_eq), &Array::op_eq, get_cpp_class<Array>());
+		p->def_method(Xid(op_call), &Array::op_at, get_cpp_class<Int>());
 	}
 
 	{
 		ClassPtr p = new_cpp_class<MultiValue>(Xid(MultiValue));
 		p->set_final();
-		p->inherit(get_cpp_class<Array>());
-
-		p->def(Xid(new), ctor<MultiValue, int_t>()->params(Xid(size), 0));
-		p->def_method(Xid(clone), &MultiValue::clone);
-		p->def_method(Xid(to_a), &Array::clone);
-		p->def_method(Xid(to_mv), &Any::self);
-		p->def_method(Xid(flatten_mv), &MultiValue::flatten_mv);
-		p->def_method(Xid(flatten_all_mv), &MultiValue::flatten_all_mv);
+		p->inherit(Iterator());
+		p->def_method(Xid(block_next), &MultiValue::block_next);
+		p->def_method(Xid(at), &MultiValue::at);
+		p->def_method(Xid(size), &MultiValue::size);
 	}
 
 	{
@@ -330,6 +323,7 @@ void Core::bind(){
 		p->def_method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
 		p->def_method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
 		p->def_method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
+		p->def_method(Xid(op_call), &Map::at, get_cpp_class<Any>());
 	}
 
 	{
@@ -543,6 +537,9 @@ void Core::bind(){
 		p->def(Xid(SEEK_SET), Stream::XSEEK_SET);
 		p->def(Xid(SEEK_CUR), Stream::XSEEK_CUR);
 		p->def(Xid(SEEK_END), Stream::XSEEK_END);
+
+		p->def_method(Xid(put_u8), &Stream::put_u8);
+
 	}
 
 	{
@@ -574,6 +571,10 @@ void Core::bind(){
 	builtin()->def(Xid(stdout), setting_.stream_lib->new_stdout_stream());
 	builtin()->def(Xid(stderr), setting_.stream_lib->new_stderr_stream());
 
+	{
+		new_cpp_class<InstanceVariableGetter>();
+		new_cpp_class<InstanceVariableSetter>();
+	}
 ///////////////////
 
 	{
@@ -1253,14 +1254,6 @@ Iterator::with_prev: method fiber{
 	}
 }
 
-Iterator::flatten_param: method fiber{
-	this{ yield it.flatten_mv; }
-}
-
-Iterator::flatten_all_param: method fiber{
-	this{ yield it.flatten_all_mv; }
-}
-
 builtin::ClassicIterator: class{
 	_current;
 	_source;
@@ -1931,7 +1924,7 @@ append_text_map([
 	"Xtal Runtime Error 1008":"'%(object)s'はシリアライズできません。",
 	"Xtal Runtime Error 1009":"不正なコンパイル済みXtalファイルです。",
 	"Xtal Runtime Error 1010":"コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1011":"%(object)sは既に定義されています。",
+	"Xtal Runtime Error 1011":"%(object)s :: '%(name)s' は既に定義されています。",
 	"Xtal Runtime Error 1012":"yieldがfiberの非実行中に実行されました。",
 	"Xtal Runtime Error 1013":"%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。",
 	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",

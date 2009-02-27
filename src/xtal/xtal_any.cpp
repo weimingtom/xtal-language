@@ -171,7 +171,9 @@ void Any::set_object_parent(const ClassPtr& parent) const{
 ArrayPtr Any::object_name_list() const{
 	if(const ClassPtr& parent = object_parent()){
 		ArrayPtr ret = parent->object_name_list();
-		ret->push_back(parent->child_object_name(ap(*this)));
+		if(AnyPtr name = parent->child_object_name(ap(*this))){
+			ret->push_back(parent->child_object_name(ap(*this)));
+		}
 		return ret;
 	}
 	else if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
@@ -215,13 +217,27 @@ StringPtr Any::object_name() const{
 			}
 		}
 		
-		// 保持していないなら、その定義位置を表示しとこう
-		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), cls->code()->source_file_name(), cls->code()->compliant_lineno(cls->code()->data()+cls->info()->pc))->to_s();
+		if(cls->code()){
+			// 保持していないなら、その定義位置を表示しとこう
+			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
+				cls->code()->source_file_name(), 
+				cls->code()->compliant_lineno(cls->code()->data()+cls->info()->pc))->to_s();
+		}
+		else{
+			return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+		}
 	}
 
 	// メソッドの場合、その定義位置を表示しとこう
 	if(const MethodPtr& mtd = ptr_as<Method>(ap(*this))){
-		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), mtd->code()->source_file_name(), mtd->code()->compliant_lineno(mtd->code()->data()+mtd->info()->pc))->to_s();
+		if(mtd->code()){
+			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
+				mtd->code()->source_file_name(), 
+				mtd->code()->compliant_lineno(mtd->code()->data()+mtd->info()->pc))->to_s();
+		}
+		else{
+			return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+		}
 	}
 
 	return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
@@ -347,25 +363,6 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 			}
 		}
 	}
-}
-
-MultiValuePtr Any::to_mv() const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_UNDEFINED){ return xnew<MultiValue>(); }
-	}
-	
-	MultiValuePtr ret = xnew<MultiValue>();
-	ret->push_back(ap(*this));
-	return ret;
-}
-
-MultiValuePtr Any::flatten_mv() const{
-	return to_mv()->flatten_mv();
-}
-
-MultiValuePtr Any::flatten_all_mv() const{
-	return to_mv()->flatten_all_mv();
 }
 
 void Any::visit_members(Visitor& m) const{

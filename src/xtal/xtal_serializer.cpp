@@ -87,13 +87,21 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			return;
 		}
 
-		XTAL_CASE2(TYPE_ARRAY, TYPE_MULTI_VALUE){
+		XTAL_CASE(TYPE_ARRAY){
 			const ArrayPtr& a = unchecked_ptr_cast<Array>(v);
-			stream_->put_u8(type(v)==TYPE_ARRAY ? TARRAY : TMULTI_VALUE);
+			stream_->put_u8(TARRAY);
 			stream_->put_u32be(a->size());
 			for(uint_t i=0; i<a->size(); ++i){
 				inner_serialize(a->at(i));
 			}
+			return;
+		}
+
+		XTAL_CASE(TYPE_MULTI_VALUE){
+			const MultiValuePtr& a = unchecked_ptr_cast<MultiValue>(v);
+			stream_->put_u8(TMULTI_VALUE);
+			inner_serialize(a->head());
+			inner_serialize(a->tail());
 			return;
 		}
 	}
@@ -240,19 +248,22 @@ AnyPtr Serializer::inner_deserialize(){
 			return ret;
 		}
 
-		XTAL_CASE2(TARRAY, TMULTI_VALUE){
+		XTAL_CASE(TARRAY){
 			int_t sz = stream_->get_u32be();
-			ArrayPtr ret;
-			if(op==TARRAY){
-				ret = xnew<Array>(sz);
-			}else{
-				ret = xnew<MultiValue>(sz);
-			}
-
+			ArrayPtr ret = xnew<Array>(sz);
 			append_value(ret);
 			for(int_t i = 0; i<sz; ++i){
 				ret->set_at(i, inner_deserialize());
 			}				
+			return ret;
+		}
+
+		XTAL_CASE(TMULTI_VALUE){
+			MultiValuePtr ret = xnew<MultiValue>(null);
+			append_value(ret);
+			AnyPtr head = inner_deserialize();
+			AnyPtr tail = inner_deserialize();
+			ret->set(head, unchecked_ptr_cast<MultiValue>(tail));		
 			return ret;
 		}
 		

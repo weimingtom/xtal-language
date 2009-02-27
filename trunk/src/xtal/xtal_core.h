@@ -263,10 +263,10 @@ private:
 			Any member;
 		};
 
-		enum{ CACHE_MAX = 257, CACHE_MASK = CACHE_MAX-1 };
+		enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
 
 		static uint_t calc_index(uint_t hash){
-			return hash % CACHE_MAX;
+			return hash & CACHE_MASK;
 		}
 
 		Unit table_[CACHE_MAX];

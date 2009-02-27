@@ -867,10 +867,14 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 	uint_t hash = itarget_class ^ (iprimary_key>>2) ^ ins + iprimary_key ^ type(primary_key);
 	Unit& unit = table_[calc_index(hash)];
 
-	if(global_mutate_count==unit.mutate_count && 
-		iprimary_key==unit.primary_key && 
-		itarget_class==unit.target_class && 
-		ins==unit.secondary_key){
+//	if(global_mutate_count==unit.mutate_count && 
+//		iprimary_key==unit.primary_key && 
+//		itarget_class==unit.target_class && 
+//		ins==unit.secondary_key){
+	if(!(((global_mutate_count^unit.mutate_count) | 
+		(iprimary_key^unit.primary_key) | 
+		(itarget_class^unit.target_class) | 
+		(ins^unit.secondary_key)))){
 		hit_++;
 		return ap(unit.member);
 	}

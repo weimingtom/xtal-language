@@ -32,37 +32,37 @@ void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& curren
 
 ///////////////////////////////////////
 
-FixedAllocator::data_t* FixedAllocator::Chunk::init(uint_t blocks, uint_t block_size, data_t* out){
-	next = 0;
-	data_t* p = buf();
-	for(uint_t i=0; i<blocks-1; p+=block_size,++i){
-		*p = p+block_size;
-	}
-	*p = out;
-	return buf();
-}
-
 FixedAllocator::FixedAllocator(){
 	chunk_ = 0;
 	free_data_ = 0;
+
+	all_count_ = 0;
+	used_count_ = 0;
 }
 
 void FixedAllocator::add_chunk(size_t block_size){
-	uint_t n = (256/block_size)+4;
-	Chunk *new_chunk = (Chunk*)user_malloc(sizeof(Chunk)+block_size*n*sizeof(data_t));
-	free_data_ = new_chunk->init(n, block_size, free_data_);
+	uint_t blocks = (256/block_size)+4;
+	all_count_ += blocks;
+	Chunk *new_chunk = (Chunk*)user_malloc(sizeof(Chunk)+block_size*blocks*sizeof(data_t));
+	
+	{
+		new_chunk->next = 0;
+		data_t* p = new_chunk->buf();
+		for(uint_t i=0; i<blocks-1; ++i){
+			data_t* next_block = p+block_size;
+			*p = next_block;
+			p = next_block;
+		}
+		*p = free_data_;
+		free_data_ = new_chunk->buf();
+	}
+
 	new_chunk->next = chunk_;
 	chunk_ = new_chunk;
 }
 
 void* FixedAllocator::malloc(size_t block_size){
-	if(free_data_){
-		void* ret = free_data_;
-		free_data_ = static_cast<data_t*>(*free_data_);
-		return ret;
-	}
-
-	//gc();
+	++used_count_;
 
 	if(free_data_){
 		void* ret = free_data_;
@@ -70,7 +70,11 @@ void* FixedAllocator::malloc(size_t block_size){
 		return ret;
 	}
 
-	add_chunk(block_size);
+	gc();
+
+	if(used_count_>(all_count_>>1)){
+		add_chunk(block_size);
+	}
 
 	{
 		void* ret = free_data_;
@@ -82,6 +86,7 @@ void* FixedAllocator::malloc(size_t block_size){
 void FixedAllocator::free(void* mem, size_t block_size){
 	*static_cast<data_t*>(mem) = free_data_;
 	free_data_ = static_cast<data_t*>(mem);
+	--used_count_;
 }
 	
 void FixedAllocator::release(size_t block_size){

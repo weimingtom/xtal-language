@@ -580,9 +580,9 @@ void VMachine::visit_members(Visitor& m){
 }
 
 void VMachine::before_gc(){
-	if(!using_){
-		return;
-	}
+	//if(!using_){
+	//	return;
+	//}
 
 	inc_ref_count_force(debug_info_);
 	inc_ref_count_force(debug_);
@@ -626,9 +626,9 @@ void VMachine::before_gc(){
 }
 
 void VMachine::after_gc(){
-	if(!using_){
-		return;
-	}
+	//if(!using_){
+	//	return;
+	//}
 
 	dec_ref_count_force(debug_info_);
 	dec_ref_count_force(debug_);

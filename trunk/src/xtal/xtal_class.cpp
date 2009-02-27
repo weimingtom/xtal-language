@@ -144,11 +144,13 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		pvalue(self)->make_instance_variables();
 		pvalue(self)->instance_variables()->init_variables(info());
 
-		vm->setup_call(0);
-		vm->set_arg_this(self);
 		// 先頭のメソッドはインスタンス変数初期化関数
-		members_->at(0)->rawcall(vm);
-		vm->cleanup_call();
+		if(members_->at(0)){
+			vm->setup_call(0);
+			vm->set_arg_this(self);
+			members_->at(0)->rawcall(vm);
+			vm->cleanup_call();
+		}
 	}
 }
 

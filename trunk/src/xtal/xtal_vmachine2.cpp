@@ -96,7 +96,7 @@ const AnyPtr& VMachine::result(int_t pos){
 		f.poped_pc = temp;
 		f.called_pc = &cleanup_call_code_;
 		
-		if(ap(except_[0])){
+		if(type(except_[0])!=TYPE_NULL){
 			f.need_result_count = 0;
 			return undefined;
 		}
@@ -214,8 +214,8 @@ void VMachine::return_result(){
 	FunFrame& f = ff();
 
 	downsize(f.args_stack_size());
-	for(int_t i=0, sz=f.need_result_count; i<sz; ++i){
-		push(undefined);
+	if(f.need_result_count!=f.result_count+0){
+		adjust_result(f.result_count+0);
 	}
 
 	f.called_pc = &cleanup_call_code_;
@@ -226,8 +226,8 @@ void VMachine::return_result(const AnyPtr& value1){
 
 	downsize(f.args_stack_size());
 	push(value1);
-	if(f.need_result_count!=1){
-		adjust_result(1);
+	if(f.need_result_count!=f.result_count+1){
+		adjust_result(f.result_count+1);
 	}
 
 	f.called_pc = &cleanup_call_code_;
@@ -239,7 +239,7 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2){
 	downsize(f.args_stack_size());
 	push(value1);
 	push(value2);
-	adjust_result(2);
+	adjust_result(f.result_count+2);
 
 	f.called_pc = &cleanup_call_code_;
 }
@@ -251,7 +251,7 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const A
 	push(value1);
 	push(value2);
 	push(value3);
-	adjust_result(3);
+	adjust_result(f.result_count+3);
 
 	f.called_pc = &cleanup_call_code_;
 }
@@ -264,7 +264,7 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const A
 	push(value2);
 	push(value3);
 	push(value4);
-	adjust_result(4);
+	adjust_result(f.result_count+4);
 
 	f.called_pc = &cleanup_call_code_;
 }
@@ -276,9 +276,9 @@ void VMachine::return_result_mv(const MultiValuePtr& values){
 	f.called_pc = &cleanup_call_code_;
 }
 
-void VMachine::replace_result(int_t pos, const AnyPtr& v){
-	result(0);
-	set(ff().need_result_count-pos-1, v);
+void VMachine::prereturn_result(const AnyPtr& v){
+	ff().result_count++;
+	stack_.insert(ff().args_stack_size(), v);
 }
 
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){

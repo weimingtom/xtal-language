@@ -427,8 +427,8 @@ void Class::rawcall(const VMachinePtr& vm){
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
 		vm->set_arg_this(instance);
 		if(vm->need_result()){
+			vm->prereturn_result(instance);
 			ret->rawcall(vm);
-			vm->replace_result(0, instance);
 		}
 		else{
 			ret->rawcall(vm);

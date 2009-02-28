@@ -71,6 +71,7 @@ void* FixedAllocator::malloc(size_t block_size){
 	}
 
 	gc();
+	gc();
 
 	if(used_count_>(all_count_>>1)){
 		add_chunk(block_size);

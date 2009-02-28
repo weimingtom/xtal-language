@@ -940,14 +940,13 @@ enum{//Expressions priority
 
 	PRI_AT,
 		PRI_SEND = PRI_AT,
-		PRI_MEMBER = PRI_AT,
 		PRI_CALL = PRI_AT,
-		PRI_NS = PRI_AT,
 		PRI_RANGE = PRI_AT,
 
-	PRI_ONCE,
+	PRI_MEMBER,
+		PRI_NS = PRI_MEMBER,
 
-	PRI_GREED,
+	PRI_ONCE,
 
 	PRI_END_,
 
@@ -1564,40 +1563,35 @@ bool Parser::parse_assign_stmt(){
 				switch(ch.keyword_number()){
 					XTAL_DEFAULT{}
 					XTAL_CASE(Token::KEYWORD_METHOD){
-						expect_parse_identifier();
-						eb_.splice(EXPR_LVAR, 1);
+						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_METHOD);
 						eb_.splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_FUN){
-						expect_parse_identifier();
-						eb_.splice(EXPR_LVAR, 1);
+						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_FUN);
 						eb_.splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_FIBER){
-						expect_parse_identifier();
-						eb_.splice(EXPR_LVAR, 1);
+						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_FIBER);
 						eb_.splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_CLASS){
-						expect_parse_identifier();
-						eb_.splice(EXPR_LVAR, 1);
+						expect_parse_expr(PRI_CALL, 0);
 						parse_class(KIND_CLASS);
 						eb_.splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_SINGLETON){
-						expect_parse_identifier();
-						eb_.splice(EXPR_LVAR, 1);
+						expect_parse_expr(PRI_CALL, 0);
 						parse_class(KIND_SINGLETON);
 						eb_.splice(EXPR_DEFINE, 2);
 						return true;
@@ -1683,6 +1677,8 @@ bool Parser::parse_assign_stmt(){
 }
 
 bool Parser::parse_stmt(){
+	expr_end_flag_ = false; 
+
 	if(parse_loop()){
 		eat(';'); 
 		return true;
@@ -1847,7 +1843,7 @@ void Parser::parse_scope(){
 
 void Parser::parse_secondary_key(){
 	if(eat('#')){ 
-		expect_parse_expr(PRI_GREED, 0); 
+		expect_parse_expr(PRI_NS, 0); 
 	}
 	else{ 
 		eb_.push(null); 
@@ -2133,10 +2129,6 @@ bool Parser::parse_expr(int_t pri, int_t space){
 		return false;
 	}
 	
-	if(pri>=PRI_GREED){ 
-		return true; 
-	}
-
 	while(parse_post(pri, space)){}
 	return true;
 }

@@ -313,7 +313,7 @@ public:
 		return *ff().called_pc!=InstThrowUnsupportedError::NUMBER; 
 	}
 	
-	void replace_result(int_t pos, const AnyPtr& v);
+	void prereturn_result(const AnyPtr& v);
 
 	void recycle_call();
 
@@ -454,6 +454,8 @@ public:
 
 		// 関数呼び出し側が必要とする戻り値の数
 		int_t need_result_count;
+
+		int_t result_count;
 
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;

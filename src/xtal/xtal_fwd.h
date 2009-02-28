@@ -128,8 +128,6 @@ enum PrimitiveType{
 	
 	TYPE_INT,
 	TYPE_FLOAT,
-
-	TYPE_SMALL_DATA,
 	
 	TYPE_SMALL_STRING,
 	// Ç±Ç±Ç©ÇÁè„ÇÕimmutableÇ»ílå^Ç≈Ç†ÇÈ

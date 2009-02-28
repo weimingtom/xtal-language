@@ -20,10 +20,10 @@ all: libxtal ix xtal
 depend:
 	g++ -MM -MG $(SRC) >makefile.depend
 
-precompile:
-	$(CC) ../src/xtal/xtal.h
+../src/xtal/xtal.h.gch: ../src/xtal/xtal.h 
+	$(CC) ../src/xtal/xtal.h $(OPT)
 
-libxtal: precompile $(OBJ)
+libxtal: ../src/xtal/xtal.h.gch $(OBJ)
 	ar r libxtal.a $(OBJ)
 	ranlib libxtal.a
 
@@ -42,12 +42,15 @@ testxtal: libxtal ../src/xtal/testmain.cpp
 .PHONY : clean
 
 clean:
-	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe ../bin/test.exe
+	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe ../bin/test.exe ../bin/prof.exe ../bin/all_in_one.exe
 
 prof: libxtal ../src/xtal/main.cpp
 	$(CC) -o ../bin/prof.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
-	../bin/prof.exe ../bench/array_for.xtal
+	../bin/prof.exe ../bench/ao.xtal
 	gprof ../bin/prof.exe gmon.out -p > prof.txt
+
+all_in_one: 
+	$(CC) -o ../bin/all_in_one.exe ../src/xtal/xtal_lib/xtal_all_in_one.cpp -lstdc++ $(OPT)
 
 run: xtal
 	../bin/xtal.exe 

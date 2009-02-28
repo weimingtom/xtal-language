@@ -40,12 +40,21 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
+	class Foo{
+		
+	}
 
+	fun Foo::test#"e"{
+		callee.p;
+	}
+
+	Foo().test#"e";
+	
 	))){
 		code->call();
 	}
 	
-	if(1){
+	if(0){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		

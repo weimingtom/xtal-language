@@ -45,7 +45,9 @@ public:
 	}
 
 	void visit_members(Visitor& m){
-		m & variables_;
+		for(uint_t i=0; i<variables_.size(); ++i){
+			m & variables_.at(i);
+		}
 	}
 
 protected:

@@ -211,7 +211,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			return;
 		}
 	}
-*/
+//*/
 
 	prev_inst_op_ = t.op;
 

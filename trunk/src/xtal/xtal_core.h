@@ -16,8 +16,7 @@ struct CoreSetting{
 class Core{
 public:
 
-	Core()
-		:cpp_class_map_(cpp_class_map_t::no_use_memory_t()){}
+	Core(){}
 
 	~Core(){
 		uninitialize();
@@ -71,19 +70,26 @@ public:
 
 public:
 
-	const ClassPtr& new_cpp_class(const StringPtr& name, void* key);
+	int_t register_cpp_class(CppClassSymbolData* key);
 
-	bool exists_cpp_class(void* key){
-		return cpp_class_map_.find(key)!=cpp_class_map_.end();
+	const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key);
+
+	bool exists_cpp_class(CppClassSymbolData* key){
+		return key->value>=0 && key->value<class_table_.size() && class_table_[key->value];
 	}
 
-	const ClassPtr& get_cpp_class(void* key){
+	const ClassPtr& get_cpp_class(CppClassSymbolData* key){
 		XTAL_ASSERT(exists_cpp_class(key));
-		return cpp_class_map_.find(key)->second;
+		return from_this(class_table_[key->value]);
 	}
 
-	void set_cpp_class(const ClassPtr& cls, void* key){
-		cpp_class_map_.insert(key, cls);
+	void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
+		int_t index = register_cpp_class(key);
+		if(class_table_[index]){
+			class_table_[index]->dec_ref_count();
+		}
+		class_table_[index] = cls.get();
+		class_table_[index]->inc_ref_count();
 	}
 
 	template<class T>
@@ -93,9 +99,17 @@ public:
 
 	template<class T>
 	const SmartPtr<T>& new_cpp_singleton(){
-		ClassPtr& p = cpp_class_map_[&CppClassSymbol<T>::value];
-		if(!p){ p = xnew<T>(); }
-		return unchecked_ptr_cast<T>(p);
+		int_t index = register_cpp_class(&CppClassSymbol<T>::value);
+
+		if(Class* p = class_table_[index]){
+			return unchecked_ptr_cast<T>(from_this(p));
+		}
+
+		T* p = (T*)Base::operator new(sizeof(T));
+		new(p) T();
+		register_gc(p);
+		class_table_[index] = p;
+		return unchecked_ptr_cast<T>(from_this(class_table_[index]));
 	}
 
 	template<class T>
@@ -228,18 +242,7 @@ private:
 
 	IDPtr id_op_list_[id_op_MAX];
 
-	struct KeyFun{
-		static uint_t hash(const void* p){
-			return reinterpret_cast<uint_t>(p)>>3;
-		}
-
-		static bool eq(const void* a, const void* b){
-			return a==b;
-		}
-	};
-
-	typedef Hashtable<void*, ClassPtr, KeyFun> cpp_class_map_t;
-	cpp_class_map_t cpp_class_map_;
+	PODArrayList<Class*> class_table_;
 
 	SmartPtr<Filesystem> filesystem_;
 

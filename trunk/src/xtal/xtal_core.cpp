@@ -74,7 +74,7 @@ void* debug_so_malloc(size_t size){
 	so_mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter++)));
 	used_memory += size;
 	
-	if(gcounter==35){
+	if(gcounter==1304 || gcounter==1858){
 		gcounter = gcounter;
 	}
 
@@ -196,42 +196,45 @@ void Core::initialize(const CoreSetting& setting){
 	objects_begin_ = objects_current_ = *objects_list_current_++;
 	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
-	cpp_class_map_.expand(4);
-
 //////////////////
 
 	global_mutate_count_ = 0;
 
-	set_cpp_class(null, &CppClassSymbol<void>::value);
-
-	ClassPtr* holders[] = { 
-		&cpp_class_map_.insert(&CppClassSymbol<Any>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<Class>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<CppClass>::value, null).first->second,
-		&cpp_class_map_.insert(&CppClassSymbol<Array>::value, null).first->second,
+	CppClassSymbolData* symbols[] = { 
+		&CppClassSymbol<void>::value,
+		&CppClassSymbol<Any>::value,
+		&CppClassSymbol<Class>::value,
+		&CppClassSymbol<CppClass>::value,
+		&CppClassSymbol<Array>::value,
 	};
 
-	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		*holders[i] = (ClassPtr&)ap(Any((Class*)Base::operator new(sizeof(CppClass))));
+	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
+
+	for(uint_t i=0; i<nsize; ++i){
+		register_cpp_class(symbols[i]);
 	}
 
-	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
+	for(uint_t i=0; i<nsize; ++i){
+		class_table_[i] = (Class*)Base::operator new(sizeof(CppClass));
+	}
+
+	for(uint_t i=0; i<nsize; ++i){
+		Base* p = class_table_[i];
 		new(p) Base();
 	}
 		
-	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
+	for(uint_t i=0; i<nsize; ++i){
+		Base* p = class_table_[i];
 		new(p) CppClass();
 	}
 
-	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
+	for(uint_t i=0; i<nsize; ++i){
+		Base* p = class_table_[i];
 		p->set_class(get_cpp_class<CppClass>());
 	}
 	
-	for(uint_t i=0; i<sizeof(holders)/sizeof(holders[0]); ++i){
-		Base* p = pvalue(*holders[i]);
+	for(uint_t i=0; i<nsize; ++i){
+		Base* p = class_table_[i];
 		register_gc(p);
 	}
 
@@ -330,11 +333,14 @@ void Core::uninitialize(){
 
 	full_gc();
 
-	for(cpp_class_map_t::iterator it=cpp_class_map_.begin(); it!=cpp_class_map_.end(); ++it){
-		it->second = null;
+	for(uint_t i=0; i<class_table_.size(); ++i){
+		if(class_table_[i]){
+			class_table_[i]->dec_ref_count();
+			class_table_[i] = 0;
+		}
 	}
 
-	cpp_class_map_.destroy();
+	class_table_.release();
 	full_gc();
 	
 	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
@@ -345,11 +351,12 @@ void Core::uninitialize(){
 
 		for(int i=0; i<n; ++i){
 			RefCountingBase* p = objects_begin_[i];
+			Base* pp = (Base*)p;
 			uint_t count = p->ref_count();
 			count = count;
 		}
 
-		XTAL_ASSERT(false); // 全部開放できてない
+		//XTAL_ASSERT(false); // 全部開放できてない
 	}
 
 	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){
@@ -833,10 +840,40 @@ void Core::unregister_gc_observer(GCObserver* p){
 	}
 }
 
-const ClassPtr& Core::new_cpp_class(const StringPtr& name, void* key){
-	ClassPtr& p = cpp_class_map_[key];
-	if(!p){ p = xnew<CppClass>(name); }
-	return p;
+int_t Core::register_cpp_class(CppClassSymbolData* key){
+	// 初登録のC++のクラスか
+	if(key->value<0){
+		CppClassSymbolData* tail = &CppClassSymbol<void>::value;
+		if(tail->next){
+			key->value = tail->next->value+1;
+			tail->next->next = key;
+			tail->next = key;
+		}
+		else{
+			tail->next = key;
+			key->value = 0;
+		}
+	}
+
+	if(key->value>=class_table_.size()){
+		while(key->value>=class_table_.size()){
+			class_table_.push_back(0);
+		}
+	}
+
+	return key->value;
+}
+
+const ClassPtr& Core::new_cpp_class(const StringPtr& name, CppClassSymbolData* key){
+	int_t index = register_cpp_class(key);
+
+	if(Class* p = class_table_[index]){
+		return from_this(p);
+	}
+
+	class_table_[index] = xnew<CppClass>(name).get();
+	class_table_[index]->inc_ref_count();
+	return from_this(class_table_[index]);
 }
 	
 VMachinePtr Core::vm_take_over(){

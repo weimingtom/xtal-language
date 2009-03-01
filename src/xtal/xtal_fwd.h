@@ -369,7 +369,10 @@ extern Named null_named;
 struct ParamInfo;
 struct VMAndData;
 
-struct CppClassSymbolData{ int value; };
+struct CppClassSymbolData{ 
+	int value; 
+	CppClassSymbolData* next;
+};
 
 template<class T>
 struct CppClassSymbol{
@@ -377,7 +380,7 @@ struct CppClassSymbol{
 };
 
 template<class T>
-CppClassSymbolData CppClassSymbol<T>::value = {0xc1a55};
+CppClassSymbolData CppClassSymbol<T>::value = {-1, 0};
 
 template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};

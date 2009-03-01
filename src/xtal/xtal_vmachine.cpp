@@ -518,7 +518,9 @@ const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_res
 
 void VMachine::execute_inner(const inst_t* start){
 
-	const inst_t* pc = start;
+	// レジスタ割付されたらいいな
+	register const inst_t* pc = start;
+
 	int_t stack_size = stack_.size() - ff().args_stack_size();
 	int_t fun_frames_size = fun_frames_.size();
 

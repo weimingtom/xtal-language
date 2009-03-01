@@ -192,6 +192,10 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstLocalVariableDec2Byte::NUMBER){ temp = ((InstLocalVariableDec2Byte*)pc)->inspect(code); sz = InstLocalVariableDec2Byte::ISIZE; }
 		XTAL_CASE(InstLocalVariable1Byte::NUMBER){ temp = ((InstLocalVariable1Byte*)pc)->inspect(code); sz = InstLocalVariable1Byte::ISIZE; }
 		XTAL_CASE(InstLocalVariable1ByteDirect::NUMBER){ temp = ((InstLocalVariable1ByteDirect*)pc)->inspect(code); sz = InstLocalVariable1ByteDirect::ISIZE; }
+		XTAL_CASE(InstLocalVariable1ByteX2::NUMBER){ temp = ((InstLocalVariable1ByteX2*)pc)->inspect(code); sz = InstLocalVariable1ByteX2::ISIZE; }
+		XTAL_CASE(InstLocalVariable1ByteX2Direct::NUMBER){ temp = ((InstLocalVariable1ByteX2Direct*)pc)->inspect(code); sz = InstLocalVariable1ByteX2Direct::ISIZE; }
+		XTAL_CASE(InstLocalVariable1ByteX3::NUMBER){ temp = ((InstLocalVariable1ByteX3*)pc)->inspect(code); sz = InstLocalVariable1ByteX3::ISIZE; }
+		XTAL_CASE(InstLocalVariable1ByteX3Direct::NUMBER){ temp = ((InstLocalVariable1ByteX3Direct*)pc)->inspect(code); sz = InstLocalVariable1ByteX3Direct::ISIZE; }
 		XTAL_CASE(InstLocalVariable2Byte::NUMBER){ temp = ((InstLocalVariable2Byte*)pc)->inspect(code); sz = InstLocalVariable2Byte::ISIZE; }
 		XTAL_CASE(InstSetLocalVariable1Byte::NUMBER){ temp = ((InstSetLocalVariable1Byte*)pc)->inspect(code); sz = InstSetLocalVariable1Byte::ISIZE; }
 		XTAL_CASE(InstSetLocalVariable1ByteDirect::NUMBER){ temp = ((InstSetLocalVariable1ByteDirect*)pc)->inspect(code); sz = InstSetLocalVariable1ByteDirect::ISIZE; }

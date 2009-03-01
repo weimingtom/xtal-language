@@ -384,12 +384,6 @@ void Core::debug_print(){
 		int_t miss = is_cache_table_.miss_count();
 		printf("is_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
 	}
-
-	{
-		int_t hit = is_inherited_cache_table_.hit_count();
-		int_t miss = is_inherited_cache_table_.miss_count();
-		printf("is_inherited_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
-	}
 }
 
 ////////////////////////////////////
@@ -898,7 +892,7 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 	}
 }
 
-bool Core::IsInheritedCacheTable::cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count){
+bool Core::IsCacheTable::cache(const Any& target_class, const Any& klass, uint_t global_mutate_count){
 	uint_t itarget_class = rawvalue(target_class);
 	uint_t iklass = rawvalue(klass);
 
@@ -916,35 +910,6 @@ bool Core::IsInheritedCacheTable::cache_is(const Any& target_class, const Any& k
 		unit.klass = iklass;
 		unit.mutate_count = global_mutate_count;
 		unit.result = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
-
-		return unit.result;
-	}
-}
-
-bool Core::IsInheritedCacheTable::cache_is_inherited(const Any& target_class, const Any& klass, uint_t global_mutate_count){
-	uint_t itarget_class = rawvalue(target_class);
-	uint_t iklass = rawvalue(klass);
-
-	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
-	Unit& unit = table_[hash & CACHE_MASK];
-
-	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
-		hit_++;
-		return unit.result;
-	}
-	else{
-		miss_++;
-		// ƒLƒƒƒbƒVƒ…‚É•Û‘¶
-		unit.target_class = itarget_class;
-		unit.klass = iklass;
-		unit.mutate_count = global_mutate_count;
-
-		if(const ClassPtr& cls = ptr_as<Class>(ap(target_class))){
-			unit.result = cls->is_inherited(ap(klass));
-		}
-		else{
-			unit.result = false;
-		}
 
 		return unit.result;
 	}

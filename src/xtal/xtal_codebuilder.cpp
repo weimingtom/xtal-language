@@ -16,6 +16,7 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	if(!e){
 		return null;
 	}
+	prev_inst_op_ = -1;
 	return compile_toplevel(e, source_file_name);
 }
 
@@ -195,6 +196,23 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	if(t.op==255){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
+
+
+	if(t.op==InstLocalVariable1Byte::NUMBER){
+		if(prev_inst_op_==InstLocalVariable1Byte::NUMBER){
+			InstLocalVariable1Byte prev_inst;
+			uint_t prev_op_size = sizeof(InstLocalVariable1Byte);
+			uint_t prev_op_isize = sizeof(InstLocalVariable1Byte)/sizeof(inst_t);
+			memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
+			result_->code_.downsize(prev_op_isize);
+
+			prev_inst_op_ = -1;
+			put_inst(InstLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
+			return;
+		}
+	}
+
+	prev_inst_op_ = t.op;
 
 	size_t cur = result_->code_.size();
 	result_->code_.resize(cur+sz/sizeof(inst_t));
@@ -430,6 +448,7 @@ int_t CodeBuilder::reserve_label(){
 }
 
 void CodeBuilder::set_label(int_t labelno){
+	prev_inst_op_ = -1;
 	ff().labels[labelno].pos = code_size();
 }
 
@@ -690,6 +709,8 @@ void CodeBuilder::var_end(){
 				case InstLocalVariableInc/*Direct*/::NUMBER:
 				case InstLocalVariableDec/*Direct*/::NUMBER:
 				case InstLocalVariable1Byte/*Direct*/::NUMBER:
+				case InstLocalVariable1ByteX2/*Direct*/::NUMBER:
+				case InstLocalVariable1ByteX3/*Direct*/::NUMBER:
 				case InstSetLocalVariable1Byte/*Direct*/::NUMBER:
 				case InstBlockBegin/*Direct*/::NUMBER:
 				case InstBlockEnd/*Direct*/::NUMBER:

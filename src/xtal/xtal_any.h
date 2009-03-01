@@ -370,6 +370,14 @@ private:
 
 };
 
+inline uint_t rawtype(const Any& v){
+	return (uint_t)(v.type_);
+}
+
+inline uint_t rawvalue(const Any& v){
+	return (uint_t)(v.value_);
+}
+
 inline int_t type(const Any& v){ 
 	return v.type_ & TYPE_MASK; 
 }
@@ -394,13 +402,11 @@ inline RefCountingBase* rcpvalue(const Any& v){
 	return v.rcpvalue_; 
 }
 
-inline uint_t rawtype(const Any& v){
-	return (uint_t)(v.type_);
+inline RefCountingBase* rcpvalue2(const Any& v){ 
+	uint_t mask = ~(0-((rawtype(v)>>3)&1));
+	return (RefCountingBase*)(rawvalue(v) - ((((uint_t)(RefCountingBase*)(Base*)1)-1) & mask)); 
 }
 
-inline uint_t rawvalue(const Any& v){
-	return (uint_t)(v.value_);
-}
 
 inline bool raweq(const Any& a, const Any& b){
 	return type(a)==type(b) && a.value_==b.value_;

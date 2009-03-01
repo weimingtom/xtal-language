@@ -272,7 +272,13 @@ bool Any::is(const AnyPtr& klass) const{
 
 bool Any::is_inherited(const AnyPtr& klass) const{
 	if(raweq(*this, klass)) return true;
-	return core()->cache_is_inherited(*this, klass);
+
+	if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+		return cls->is_inherited(klass);
+	}
+	else{
+		return false;
+	}
 }
 
 AnyPtr Any::p() const{
@@ -454,25 +460,6 @@ void visit_members(Visitor& m, const AnyPtr& p){
 	else if(type(p)>TYPE_BASE){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
 		rcpvalue(p)->add_ref_count(m.value());
-	}
-}
-
-
-void inc_ref_count_force(const Any& v){
-	if(type(v)==TYPE_BASE){
-		pvalue(v)->inc_ref_count();
-	}
-	else if(type(v)>TYPE_BASE){
-		rcpvalue(v)->inc_ref_count();		
-	}
-}
-
-void dec_ref_count_force(const Any& v){
-	if(type(v)==TYPE_BASE){
-		pvalue(v)->dec_ref_count();
-	}
-	else if(type(v)>TYPE_BASE){
-		rcpvalue(v)->dec_ref_count();		
 	}
 }
 

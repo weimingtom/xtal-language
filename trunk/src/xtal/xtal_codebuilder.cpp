@@ -197,7 +197,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
 
-
+/*
 	if(t.op==InstLocalVariable1Byte::NUMBER){
 		if(prev_inst_op_==InstLocalVariable1Byte::NUMBER){
 			InstLocalVariable1Byte prev_inst;
@@ -211,6 +211,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			return;
 		}
 	}
+*/
 
 	prev_inst_op_ = t.op;
 

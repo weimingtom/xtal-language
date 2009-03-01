@@ -11,6 +11,25 @@ inline const ClassPtr& Base::get_class(){
 	return from_this(class_); 
 }
 
+inline void inc_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->inc_ref_count();
+	}
+	else if(type(v)>TYPE_BASE){
+		rcpvalue(v)->inc_ref_count();		
+	}
+}
+
+inline void dec_ref_count_force(const Any& v){
+	if(type(v)==TYPE_BASE){
+		pvalue(v)->dec_ref_count();
+	}
+	else if(type(v)>TYPE_BASE){
+		rcpvalue(v)->dec_ref_count();		
+	}
+}
+
+
 //{REPEAT{{
 /*
 /// @brief primary_keyメソッドを呼び出す

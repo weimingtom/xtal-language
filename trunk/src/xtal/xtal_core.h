@@ -138,11 +138,7 @@ public:
 	}
 
 	bool cache_is(const Any& target_class, const Any& klass){
-		return is_cache_table_.cache_is(target_class, klass, global_mutate_count_);
-	}
-
-	bool cache_is_inherited(const Any& target_class, const Any& klass){
-		return is_inherited_cache_table_.cache_is_inherited(target_class, klass, global_mutate_count_);
+		return is_cache_table_.cache(target_class, klass, global_mutate_count_);
 	}
 
 	void inc_global_mutate_count(){
@@ -290,7 +286,7 @@ private:
 		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
 	};
 
-	struct IsInheritedCacheTable{
+	struct IsCacheTable{
 		struct Unit{
 			uint_t mutate_count;
 			uint_t target_class;
@@ -305,7 +301,7 @@ private:
 		int_t hit_;
 		int_t miss_;
 
-		IsInheritedCacheTable(){
+		IsCacheTable(){
 			hit_ = 0;
 			miss_ = 0;
 		}
@@ -318,14 +314,11 @@ private:
 			return miss_;
 		}
 
-		bool cache_is(const Any& target_class, const Any& klass, uint_t global_mutate_count);
-
-		bool cache_is_inherited(const Any& target_class, const Any& klass, uint_t global_mutate_count);
+		bool cache(const Any& target_class, const Any& klass, uint_t global_mutate_count);
 	};
 
 	MemberCacheTable member_cache_table_;
-	IsInheritedCacheTable is_cache_table_;
-	IsInheritedCacheTable is_inherited_cache_table_;
+	IsCacheTable is_cache_table_;
 	uint_t global_mutate_count_;
 
 	SmartPtr<StringMgr> string_mgr_;

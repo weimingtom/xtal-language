@@ -622,6 +622,10 @@ public:
 	const inst_t* FunLocalVariableDec2Byte(const inst_t* pc);
 	const inst_t* FunLocalVariable1Byte(const inst_t* pc);
 	const inst_t* FunLocalVariable1ByteDirect(const inst_t* pc);
+	const inst_t* FunLocalVariable1ByteX2(const inst_t* pc);
+	const inst_t* FunLocalVariable1ByteX2Direct(const inst_t* pc);
+	const inst_t* FunLocalVariable1ByteX3(const inst_t* pc);
+	const inst_t* FunLocalVariable1ByteX3Direct(const inst_t* pc);
 	const inst_t* FunLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunSetLocalVariable1Byte(const inst_t* pc);
 	const inst_t* FunSetLocalVariable1ByteDirect(const inst_t* pc);

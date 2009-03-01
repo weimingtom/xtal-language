@@ -17,11 +17,15 @@ public:
 	void init_variables(ClassInfo* class_info);
 
 	const AnyPtr& variable(int_t index, ClassInfo* class_info){
-		return variables_->at(find_class_info(class_info) + index);
+		int_t i = find_class_info(class_info) + index;
+		if(i<0){ return undefined; }
+		return variables_.at(i);
 	}
 
 	void set_variable(int_t index, ClassInfo* class_info, const AnyPtr& value){
-		variables_->set_at(find_class_info(class_info) + index, value);
+		int_t i = find_class_info(class_info) + index;
+		if(i<0){ return; }
+		variables_.set_at(i, value);
 	}
 
 	int_t find_class_info(ClassInfo* class_info){
@@ -37,7 +41,7 @@ public:
 	int_t find_class_info_inner(ClassInfo* class_info);
 
 	bool empty(){
-		return variables_->empty();
+		return variables_.empty();
 	}
 
 	void visit_members(Visitor& m){
@@ -52,7 +56,7 @@ protected:
 	};
 
 	PODStack<VariablesInfo> variables_info_;
-	ArrayPtr variables_;
+	Array variables_;
 };
 
 class EmptyInstanceVariables : public InstanceVariables{

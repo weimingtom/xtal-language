@@ -18,6 +18,7 @@ int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
+	int iii = (int)(RefCountingBase*)(Base*)1-1;
 
 	CStdioStreamLib cstd_stream_lib;
 	WinThreadLib win_thread_lib;
@@ -40,21 +41,15 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-	class Foo{
-		
-	}
-
-	fun Foo::test#"e"{
-		callee.p;
-	}
-
-	Foo().test#"e";
-	
+		a, b : 1, 20;
+		a.p;
 	))){
 		code->call();
 	}
+
+	//compile_file("../bench/ao.xtal")->inspect()->p();
 	
-	if(0){
+	if(1){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		
@@ -109,7 +104,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

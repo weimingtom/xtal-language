@@ -117,32 +117,32 @@ struct IsFloat<float_t>{ enum{ value = 1 }; };
 * @brief プリミティブな型の種類
 */
 enum PrimitiveType{
-	TYPE_NULL,
-	TYPE_UNDEFINED,
+	TYPE_NULL = 0,
+	TYPE_UNDEFINED = 1,
 
-	TYPE_FALSE,
+	TYPE_FALSE = 2,
 	// ここから上は、ifなどで偽と評価される
 
 	// ここから下は、値によらず真と評価される
-	TYPE_TRUE,
+	TYPE_TRUE = 3,
 	
-	TYPE_INT,
-	TYPE_FLOAT,
+	TYPE_INT = 4,
+	TYPE_FLOAT = 5,
 	
-	TYPE_SMALL_STRING,
+	TYPE_SMALL_STRING = 6,
 	// ここから上はimmutableな値型である
 
 	// ここから下は参照型である
-	TYPE_BASE,
+	TYPE_BASE = 7,
 
-	TYPE_STRING,
+	TYPE_STRING = 8,
 	
-	TYPE_ARRAY,
-	TYPE_MULTI_VALUE,
-	TYPE_TREE_NODE,
+	TYPE_ARRAY = 9,
+	TYPE_MULTI_VALUE = 10,
+	TYPE_TREE_NODE = 11,
 
-	TYPE_NATIVE_FUN,
-	TYPE_NATIVE_FUN_BINDED_THIS,
+	TYPE_NATIVE_FUN = 12,
+	TYPE_NATIVE_FUN_BINDED_THIS = 13,
 
 	/*
 	TYPE_METHOD,

@@ -4,7 +4,7 @@
 namespace xtal{
 
 InstanceVariables::InstanceVariables()		
-	:variables_(xnew<Array>()){
+	:variables_(0){
 	VariablesInfo vi;
 	vi.class_info = 0;
 	vi.pos = 0;
@@ -14,17 +14,20 @@ InstanceVariables::InstanceVariables()
 InstanceVariables::~InstanceVariables(){}
 	
 void InstanceVariables::init_variables(ClassInfo* class_info){
-	VariablesInfo vi;
-	vi.class_info = class_info;
-	vi.pos = (int_t)variables_->size();
-	variables_->resize(vi.pos+class_info->instance_variable_size);
-	variables_info_.push(vi);
+	if(class_info->instance_variable_size){
+		VariablesInfo vi;
+		vi.class_info = class_info;
+		vi.pos = (int_t)variables_.size();
+		variables_.upsize(class_info->instance_variable_size);
+		variables_info_.push(vi);
+	}
 }
 
 bool InstanceVariables::is_included(ClassInfo* class_info){
 	VariablesInfo& info = variables_info_.top();
-	if(info.class_info == class_info)
+	if(info.class_info == class_info){
 		return true;
+	}
 	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
@@ -42,7 +45,7 @@ int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
 		}	
 	}
 	XTAL_SET_EXCEPT(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")));
-	return 0;
+	return -1;
 }
 
 EmptyInstanceVariables::EmptyInstanceVariables()

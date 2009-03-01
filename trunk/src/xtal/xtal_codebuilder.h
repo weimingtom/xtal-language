@@ -241,6 +241,8 @@ private:
 
 	ExprBuilder eb_;
 
+	int_t prev_inst_op_;
+
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(CodeBuilder);
 };

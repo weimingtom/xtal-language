@@ -1158,33 +1158,14 @@ public:
 	~NativeFun();
 
 public:
-//{REPEAT{{
-/*
-	const NativeFunPtr& params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#);
-*/
 
-	const NativeFunPtr& params();
+	const NativeFunPtr& param(int_t i, const IDPtr& key, const Any& value);
 
-	const NativeFunPtr& params(const IDPtr& key0, const Any& value0);
-
-	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1);
-
-	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2);
-
-	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3);
-
-	const NativeFunPtr& params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4);
-
-//}}REPEAT}
 public:
 
 	void visit_members(Visitor& m);
 
 	void rawcall(const VMachinePtr& vm);
-
-private:
-
-	void set_param(uint_t n, const IDPtr& key, const Any& value);
 
 protected:
 	fun_t fun_;

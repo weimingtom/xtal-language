@@ -383,13 +383,15 @@ void Core::debug_print(){
 	{
 		int_t hit = member_cache_table_.hit_count();
 		int_t miss = member_cache_table_.miss_count();
-		printf("member_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
+		int_t collided = member_cache_table_.collided_count();
+		printf("member_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
 	}
 
 	{
 		int_t hit = is_cache_table_.hit_count();
 		int_t miss = is_cache_table_.miss_count();
-		printf("is_cache_table hit=%d, miss=%d, rate=%f\n", hit, miss, hit/(float_t)(hit+miss));
+		int_t collided = is_cache_table_.collided_count();
+		printf("is_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
 	}
 }
 
@@ -911,10 +913,39 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 	}
 	else{
 
+		// 次の番地にあるか調べる
+		Unit& unit2 = table_[calc_index(hash + 1)];
+//	if(global_mutate_count==unit2.mutate_count && 
+//		iprimary_key==unit2.primary_key && 
+//		itarget_class==unit2.target_class && 
+//		ins==unit2.secondary_key){
+		if(!(((global_mutate_count^unit2.mutate_count) | 
+			(iprimary_key^unit2.primary_key) | 
+			(itarget_class^unit2.target_class) | 
+			(ins^unit2.secondary_key)))){
+
+			collided_++;
+
+			//Unit temp = unit;
+			//unit = unit2;
+			//unit2 = temp;
+
+			hit_++;
+			return ap(unit2.member);
+		}
+
 		miss_++;
+		//if(global_mutate_count==unit.mutate_count){
+		//	collided_++;
+		//}
 
 		if(type(target_class)!=TYPE_BASE){
 			return undefined;
+		}
+
+		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
+		if(unit.mutate_count==global_mutate_count){
+			unit2 = unit;
 		}
 
 		bool nocache = false;
@@ -936,12 +967,17 @@ bool Core::IsCacheTable::cache(const Any& target_class, const Any& klass, uint_t
 	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
 	Unit& unit = table_[hash & CACHE_MASK];
 
-	if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+	//if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
+	if(!((global_mutate_count^unit.mutate_count) | (itarget_class^unit.target_class) | (iklass^unit.klass))){
 		hit_++;
 		return unit.result;
 	}
 	else{
 		miss_++;
+		if(global_mutate_count==unit.mutate_count){
+			collided_++;
+		}
+
 		// キャッシュに保存
 		unit.target_class = itarget_class;
 		unit.klass = iklass;

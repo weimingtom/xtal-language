@@ -1278,7 +1278,7 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
-		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->params(Xid(stream_or_iterator), empty_string));
+		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(0, Xid(stream_or_iterator), empty_string));
 		p->def_method(Xid(reset), &Executor::reset);
 		p->def_method(Xid(parse), &Executor::parse);
 		p->def_method(Xid(match), &Executor::match);
@@ -1293,7 +1293,7 @@ void initialize_xpeg(){
 		p->def_method(Xid(suffix_values), &Executor::suffix_values);
 		p->def_method(Xid(errors), &Executor::errors);
 		p->def_method(Xid(read), &Executor::read);
-		p->def_method(Xid(peek), &Executor::peek)->params(Xid(n), 0);
+		p->def_method(Xid(peek), &Executor::peek)->param(0, Xid(n), 0);
 		p->def_method(Xid(tree), &Executor::tree);
 	}
 

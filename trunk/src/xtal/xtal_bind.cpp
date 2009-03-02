@@ -67,7 +67,7 @@ void Core::bind(){
 
 		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>()->params(Xid(left), null, Xid(right), null));
+		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>());
 		p->def_method(Xid(each), &ChRange::each);
 	}
 
@@ -106,8 +106,8 @@ void Core::bind(){
 
 	{
 		ClassPtr p = new_cpp_class<Exception>();
-		p->def(Xid(new), ctor<Exception, const StringPtr&>()->params(Xid(message), empty_string));
-		p->def_method(Xid(initialize), &Exception::initialize)->params(Xid(message), empty_string);
+		p->def(Xid(new), ctor<Exception, const StringPtr&>()->param(0, Xid(message), empty_string));
+		p->def_method(Xid(initialize), &Exception::initialize)->param(0, Xid(message), empty_string);
 		p->def_method(Xid(to_s), &Exception::to_s);
 		p->def_method(Xid(message), &Exception::message);
 		p->def_method(Xid(backtrace), &Exception::backtrace);
@@ -207,7 +207,7 @@ void Core::bind(){
 	{
 		ClassPtr p = new_cpp_class<Range>(Xid(Range));
 		p->inherit(Iterable());
-		p->def(Xid(new), ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->params(Xid(left), null, Xid(right), null, Xid(kind), 0));
+		p->def(Xid(new), ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(2, Xid(kind), 0));
 		p->def_method(Xid(left), &Range::left);
 		p->def_method(Xid(right), &Range::right);
 		p->def_method(Xid(kind), &Range::kind);
@@ -216,7 +216,7 @@ void Core::bind(){
 	{
 		ClassPtr p = new_cpp_class<IntRange>(Xid(IntRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<IntRange, int_t, int_t, int_t>()->params(Xid(left), null, Xid(right), null, Xid(kind), 0));
+		p->def(Xid(new), ctor<IntRange, int_t, int_t, int_t>()->param(2, Xid(kind), 0));
 		p->def_method(Xid(begin), &IntRange::begin);
 		p->def_method(Xid(end), &IntRange::end);
 		p->def_method(Xid(each), &IntRange::each);
@@ -225,7 +225,7 @@ void Core::bind(){
 	{
 		ClassPtr p = new_cpp_class<FloatRange>(Xid(FloatRange));
 		p->inherit(get_cpp_class<Range>());
-		p->def(Xid(new), ctor<FloatRange, float_t, float_t, int_t>()->params(Xid(left), null, Xid(right), null, Xid(kind), 0));
+		p->def(Xid(new), ctor<FloatRange, float_t, float_t, int_t>()->param(2, Xid(kind), 0));
 	}
 
 	{
@@ -239,21 +239,21 @@ void Core::bind(){
 		p->set_final();
 		p->inherit(Iterable());
 
-		p->def(Xid(new), ctor<Array, int_t>()->params(Xid(size), 0));
+		p->def(Xid(new), ctor<Array, int_t>()->param(0, Xid(size), 0));
 		
 		p->def_method(Xid(size), &Array::size);
 		p->def_method(Xid(length), &Array::size);
 		p->def_method(Xid(resize), &Array::resize);
 		p->def_method(Xid(empty), &Array::empty);
 		p->def_method(Xid(is_empty), &Array::is_empty);
-		p->def_method(Xid(slice), &Array::slice)->params(Xid(i), null, Xid(n), 1);
-		p->def_method(Xid(splice), &Array::splice)->params(Xid(i), null, Xid(n), 1);
+		p->def_method(Xid(slice), &Array::slice)->param(1, Xid(n), 1);
+		p->def_method(Xid(splice), &Array::splice)->param(1, Xid(n), 1);
 		p->def_method(Xid(pop_back), &Array::pop_back);
 		p->def_method(Xid(pop_front), &Array::pop_front);
 		p->def_method(Xid(push_back), &Array::push_back);
 		p->def_method(Xid(push_front), &Array::push_front);
 
-		p->def_method(Xid(erase), &Array::erase)->params(Xid(i), null, Xid(n), 1);
+		p->def_method(Xid(erase), &Array::erase)->param(1, Xid(n), 1);
 		p->def_method(Xid(insert), &Array::insert);
 		p->def_method(Xid(to_a), &Array::to_a);
 		p->def_method(Xid(each), &Array::each);
@@ -394,7 +394,7 @@ void Core::bind(){
 
 	{
 		ClassPtr p = new_cpp_class<Arguments>(Xid(Arguments));
-		p->def(Xid(new), ctor<Arguments, const AnyPtr&, const AnyPtr&>()->params(Xid(ordered), null, Xid(named), null));
+		p->def(Xid(new), ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(0, Xid(ordered), null)->param(1, Xid(named), null));
 		p->def_method(Xid(size), &Arguments::length);
 		p->def_method(Xid(length), &Arguments::length);
 		p->def_method(Xid(ordered_arguments), &Arguments::ordered_arguments);
@@ -444,7 +444,7 @@ void Core::bind(){
 		p->def_method(Xid(s_new), &Class::s_new);
 		p->def_method(Xid(inherited_classes), &Class::inherited_classes);
 		p->def_method(Xid(is_inherited), &Any::is_inherited);
-		p->def_method(Xid(find_near_member), &Class::find_near_member)->params(Xid(primary_key), null, Xid(secondary_key), null);
+		p->def_method(Xid(find_near_member), &Class::find_near_member)->param(1, Xid(secondary_key), null);
 	}
 
 	{
@@ -516,7 +516,7 @@ void Core::bind(){
 		p->def_method(Xid(print), &Stream::print);
 		p->def_method(Xid(println), &Stream::println);
 
-		p->def_method(Xid(seek), &Stream::seek)->params(null, null, Xid(whence), Stream::XSEEK_SET);
+		p->def_method(Xid(seek), &Stream::seek)->param(1, Xid(whence), Stream::XSEEK_SET);
 		p->def_method(Xid(tell), &Stream::tell);
 		p->def_method(Xid(pour), &Stream::pour);
 		p->def_method(Xid(pour_all), &Stream::pour_all);
@@ -658,7 +658,7 @@ void Core::bind(){
 	builtin()->def_fun(Xid(disable_gc), &::xtal::disable_gc);
 	builtin()->def_fun(Xid(enable_gc), &::xtal::enable_gc);
 	//builtin()->def_fun(Xid(clock), &clock_);
-	builtin()->def_fun(Xid(open), &xtal::open)->params(Xid(file_name), null, Xid(mode), Xid(r));
+	builtin()->def_fun(Xid(open), &xtal::open)->param(1, Xid(mode), Xid(r));
 	builtin()->def_fun(Xid(interned_strings), &interned_strings);
 
 	lib()->def(Xid(builtin), builtin());

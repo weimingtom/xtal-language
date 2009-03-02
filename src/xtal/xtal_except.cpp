@@ -84,8 +84,8 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 void initialize_except(){
 	{
 		ClassPtr p = new_cpp_class<Exception>();
-		p->def(Xid(new), ctor<Exception>()->params(Xid(message), empty_string));
-		p->def_method(Xid(initialize), &Exception::initialize)->params(Xid(message), empty_string);
+		p->def(Xid(new), ctor<Exception>()->param(0, Xid(message), empty_string));
+		p->def_method(Xid(initialize), &Exception::initialize)->param(0, Xid(message), empty_string);
 		p->def_method(Xid(to_s), &Exception::to_s);
 		p->def_method(Xid(message), &Exception::message);
 		p->def_method(Xid(backtrace), &Exception::backtrace);

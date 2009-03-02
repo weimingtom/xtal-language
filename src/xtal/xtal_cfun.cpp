@@ -71,70 +71,27 @@ NativeFun::~NativeFun(){
 	so_free(data_, data_size);
 }
 
-void NativeFun::set_param(uint_t n, const IDPtr& key, const Any& value){
-	if(min_param_count_==0 && max_param_count_==255){
-		return;
-	}
+const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value){
+
+	// 今のところ、VMachinePtrを引数にする場合、paramは設定でない制限あり
+	XTAL_ASSERT(!(min_param_count_==0 && max_param_count_==255));
 
 	// 名前つきデフォルト引数を与えすぎな場合にassertに失敗する
-	XTAL_ASSERT(n<param_n_);
+	XTAL_ASSERT(i<param_n_);
 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
 
-	if(raweq(params[n].value, undefined)){
-		params[n].name = key;
-		params[n].value = ap(value);
+	// 既に設定済み
+	XTAL_ASSERT(raweq(params[i].name, null) && raweq(params[i].value, undefined));
 
-		if(rawne(value, undefined)){
-			min_param_count_--;
-		}
-	}
-	else{
-		params[n].name = key;
-		params[n].value = ap(value);
-	}
-}
+	params[i].name = key;
+	params[i].value = ap(value);
 
-//{REPEAT{{
-/*
-const NativeFunPtr& NativeFun::params(#REPEAT_COMMA#const IDPtr& key`i`, const Any& value`i`#){
-	#REPEAT#set_param(`i`, key`i`, ap(value`i`));#
+	min_param_count_--;
+
 	return from_this(this);
 }
-*/
-
-const NativeFunPtr& NativeFun::params(){
-	
-	return from_this(this);
-}
-
-const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0){
-	set_param(0, key0, ap(value0));
-	return from_this(this);
-}
-
-const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1){
-	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));
-	return from_this(this);
-}
-
-const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2){
-	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));
-	return from_this(this);
-}
-
-const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3){
-	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));set_param(3, key3, ap(value3));
-	return from_this(this);
-}
-
-const NativeFunPtr& NativeFun::params(const IDPtr& key0, const Any& value0, const IDPtr& key1, const Any& value1, const IDPtr& key2, const Any& value2, const IDPtr& key3, const Any& value3, const IDPtr& key4, const Any& value4){
-	set_param(0, key0, ap(value0));set_param(1, key1, ap(value1));set_param(2, key2, ap(value2));set_param(3, key3, ap(value3));set_param(4, key4, ap(value4));
-	return from_this(this);
-}
-
-//}}REPEAT}
 
 void NativeFun::visit_members(Visitor& m){
 	RefCountingHaveParent::visit_members(m);

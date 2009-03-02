@@ -41,10 +41,16 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-		a, b : 1, 20;
+		a: [10, 9, 8];
+	a.("erase")(1);
 		a.p;
 	))){
 		code->call();
+	}
+
+	XTAL_CATCH_EXCEPT(e){
+		stderr_stream()->println(e);
+		return 1;
 	}
 
 	//compile_file("../bench/ao.xtal")->inspect()->p();
@@ -104,7 +110,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

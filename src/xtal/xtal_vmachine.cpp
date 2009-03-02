@@ -12,10 +12,6 @@ inline const CodePtr& VMachine::prev_code(){ return prev_fun()->code(); }
 
 inline const IDPtr& VMachine::identifier(int_t n){ return code()->identifier(n); }
 inline const IDPtr& VMachine::prev_identifier(int_t n){ return prev_code()->identifier(n); }
-inline const IDPtr& VMachine::identifier_or_pop(int_t n){ 
-	if(n!=0){ return  unchecked_ptr_cast<ID>(ap(identifier(n)));  }
-	else{ return unchecked_ptr_cast<ID>(ap(pop()->to_s()->intern())); }
-}
 
 void VMachine::execute(Method* fun, const inst_t* start_pc){
 	setup_call(0);
@@ -64,6 +60,150 @@ void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named
 	f.called_pc = &throw_unsupported_error_code_;
 }
 
+void VMachine::push_call(const inst_t* pc, int_t need_result_count, 
+		int_t ordered_arg_count, int_t named_arg_count, 
+		int_t flags, int_t identifier_number){
+
+	FunFrame* fp = fun_frames_.push();
+	if(!fp){
+		void* p = so_malloc(sizeof(FunFrame));
+		fp = new(p) FunFrame();
+		fun_frames_.top() = fp;
+	}
+
+	FunFrame& f = *fp;
+
+	f.need_result_count = need_result_count;
+	f.ordered_arg_count = ordered_arg_count;
+	f.named_arg_count = named_arg_count;
+	f.result_count = 0;
+	f.called_pc = &throw_unsupported_error_code_;
+	f.poped_pc = pc;
+	f.instance_variables = &empty_instance_variables;
+
+	f.secondary_key(null);
+	f.primary_key(prev_identifier(identifier_number));
+	f.target(pop());
+
+	f.self(prev_ff().self());
+	f.fun(null);
+	f.outer(null);
+	f.arguments(null);
+	f.hint(null);
+	f.outer(null);
+}
+
+void VMachine::push_call(const inst_t* pc, const InstSend& inst){
+	FunFrame* fp;
+	if((inst.flags&CALL_FLAG_TAIL)==0){
+		fp = fun_frames_.push();
+		if(!fp){
+			void* p = so_malloc(sizeof(FunFrame));
+			fp = new(p) FunFrame();
+			fun_frames_.top() = fp;
+		}
+		fp->poped_pc = pc;
+
+		fp->self(prev_ff().self());
+		fp->fun(null);
+		fp->outer(null);
+		fp->arguments(null);
+		fp->hint(null);
+		fp->outer(null);
+
+		fp->need_result_count = inst.need_result;
+		fp->result_count = 0;
+		fp->instance_variables = &empty_instance_variables;
+	}
+	else{
+		fp = fun_frames_.top();
+	}
+
+	FunFrame& f = *fp;
+
+	f.ordered_arg_count = inst.ordered;
+	f.named_arg_count = inst.named;
+
+	if((inst.flags&CALL_FLAG_Q)==0){
+		f.called_pc = &throw_unsupported_error_code_;
+	}
+	else{
+		f.called_pc = &check_unsupported_code_;
+	}
+
+	if((inst.flags&CALL_FLAG_NS)==0){
+		f.secondary_key(null);
+	}
+	else{
+		f.secondary_key(pop());
+	}
+
+	if((inst.flags&CALL_FLAG_TAIL)==0){
+		int_t n = inst.identifier_number;
+		if(n!=0){ f.primary_key(prev_identifier(n));  }
+		else{ f.primary_key(pop()->to_s()->intern()); }
+	}
+	else{
+		int_t n = inst.identifier_number;
+		if(n!=0){ f.primary_key(identifier(n));  }
+		else{ f.primary_key(pop()->to_s()->intern()); }
+	}
+
+	f.target(pop());
+
+	if((inst.flags&CALL_FLAG_ARGS)!=0){
+		ArgumentsPtr args = ptr_cast<Arguments>(pop());
+		push_args(args, inst.named);
+		f.ordered_arg_count = args->ordered_size()+inst.ordered;
+		f.named_arg_count = args->named_size()+inst.named;
+	}
+}
+
+void VMachine::push_call(const inst_t* pc, const InstCall& inst){
+	FunFrame* fp;
+	if((inst.flags&CALL_FLAG_TAIL)==0){
+		fp = fun_frames_.push();
+		if(!fp){
+			void* p = so_malloc(sizeof(FunFrame));
+			fp = new(p) FunFrame();
+			fun_frames_.top() = fp;
+		}
+		fp->poped_pc = pc;
+
+		fp->self(prev_ff().self());
+		fp->fun(null);
+		fp->outer(null);
+		fp->arguments(null);
+		fp->hint(null);
+		fp->outer(null);
+	
+		fp->need_result_count = inst.need_result;
+		fp->result_count = 0;
+		fp->instance_variables = &empty_instance_variables;
+	}
+	else{
+		fp = fun_frames_.top();
+	}
+
+	FunFrame& f = *fp;
+
+	f.ordered_arg_count = inst.ordered;
+	f.named_arg_count = inst.named;
+
+	f.called_pc = &throw_unsupported_error_code_;
+
+	f.secondary_key(null);
+	f.primary_key(id_[Core::id_op_call]);
+	f.target(pop());
+
+	if((inst.flags&CALL_FLAG_ARGS)!=0){
+		ArgumentsPtr args = ptr_cast<Arguments>(pop());
+		push_args(args, inst.named);
+		f.ordered_arg_count = args->ordered_size()+inst.ordered;
+		f.named_arg_count = args->named_size()+inst.named;
+	}
+}
+
 void VMachine::push_ff(int_t need_result_count){
 	push_ff(&end_code_, need_result_count, 0, 0, null);
 }
@@ -87,8 +227,18 @@ void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_
 	f.called_pc = &throw_unsupported_error_code_;
 	f.poped_pc = pc;
 	f.instance_variables = &empty_instance_variables;
+
 	f.self(self);
-	f.set_null();
+
+	f.fun(null);
+	f.outer(null);
+	f.arguments(null);
+	f.hint(null);
+	f.outer(null);
+
+	f.secondary_key(null);
+	f.primary_key(null);
+	f.target(null);
 }
 
 void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self){
@@ -900,13 +1050,9 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Property){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = null;
-			Any primary_key = identifier(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, inst.need_result, 0, 0, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			push_call(pc + inst.ISIZE, inst.need_result, 0, 0, 0, inst.identifier_number);
+			FunFrame& f = ff();
+			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -914,13 +1060,9 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SetProperty){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = null;
-			Any primary_key = identifier(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, 0, 1, 0, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			push_call(pc + inst.ISIZE, 0, 1, 0, 0, inst.identifier_number);
+			FunFrame& f = ff();
+			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -928,13 +1070,9 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Call){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = null;
-			Any primary_key = id_[Core::id_op_call];
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->rawcall(myself());
+			push_call(pc + inst.ISIZE, inst);
+			FunFrame& f = ff();
+			f.target()->rawcall(myself());
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);	
@@ -942,14 +1080,9 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Send){ // 11
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			Any self = ff().self();
-			Any target = pop();
-			push_ff(pc + inst.ISIZE, (InstCall&)inst, ap(self));
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			if(inst.flags&CALL_FLAG_Q) ff().called_pc = &check_unsupported_code_;
-			ap(target)->rawsend(myself(), isp(primary_key), ap(secondary_key), ff().self());
+			push_call(pc + inst.ISIZE, inst);
+			FunFrame& f = ff();
+			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc); 	
@@ -957,11 +1090,12 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Member){ // 11
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
-			Any target = get();
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			Any ret = ap(target)->member(isp(primary_key), ap(secondary_key), ff().self());
+			FunFrame& f = ff();
+			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : null);
+			if(int_t n = inst.identifier_number){ f.primary_key(identifier(n)); }
+			else{ f.primary_key(pop()->to_s()->intern()); }
+			f.target(get());
+			Any ret = f.target()->member(f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
 
 			if(inst.flags&CALL_FLAG_Q){
@@ -972,7 +1106,7 @@ XTAL_VM_SWITCH{
 					set(ret);
 				}
 				else{
-					XTAL_VM_EXCEPT(unsupported_error(ap(target), isp(primary_key), ap(secondary_key)));
+					XTAL_VM_EXCEPT(unsupported_error(f.target(), f.primary_key(), f.secondary_key()));
 				}
 			}
 		}
@@ -981,16 +1115,18 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(DefineMember){ // 9
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			Any secondary_key = (inst.flags&CALL_FLAG_NS) ? pop() : null;
-			Any primary_key = identifier_or_pop(inst.identifier_number);
+			FunFrame& f = ff();
+			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : null);
+			if(int_t n = inst.identifier_number){ f.primary_key(identifier(n)); }
+			else{ f.primary_key(pop()->to_s()->intern()); }
 			AnyPtr value = pop();
-			Any target = pop();
-			set_unsuported_error_info(target, primary_key, secondary_key);
-			ap(target)->def(isp(primary_key), ap(value), ap(secondary_key), KIND_PUBLIC);
+			f.target(pop());
+			f.target()->def(f.primary_key(), ap(value), f.secondary_key(), KIND_PUBLIC);
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
+
 
 	XTAL_VM_CASE(BlockBegin){ // 6
 		XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -1612,13 +1748,8 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff();
-			AnyPtr target_class = ap(f.target_) ? ap(f.target_)->get_class() : null; //  todo
-			if(ap(f.secondary_key_)){
-				XTAL_VM_EXCEPT(unsupported_error(target_class, isp(f.primary_key_), ap(f.secondary_key_)));
-			}
-			else{
-				XTAL_VM_EXCEPT(unsupported_error(target_class, isp(f.primary_key_), null));
-			}
+			AnyPtr target_class = f.target() ? f.target()->get_class() : null; //  todo
+			XTAL_VM_EXCEPT(unsupported_error(target_class, f.primary_key(), f.secondary_key()));
 		}
 	}
 

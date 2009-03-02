@@ -272,10 +272,12 @@ private:
 
 		int_t hit_;
 		int_t miss_;
+		int_t collided_;
 
 		MemberCacheTable(){
 			hit_ = 0;
 			miss_ = 0;
+			collided_ = 0;
 		}
 
 		int_t hit_count(){
@@ -284,6 +286,10 @@ private:
 
 		int_t miss_count(){
 			return miss_;
+		}
+
+		int_t collided_count(){
+			return collided_;
 		}
 
 		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
@@ -303,10 +309,12 @@ private:
 
 		int_t hit_;
 		int_t miss_;
+		int_t collided_;
 
 		IsCacheTable(){
 			hit_ = 0;
 			miss_ = 0;
+			collided_ = 0;
 		}
 
 		int_t hit_count(){
@@ -315,6 +323,10 @@ private:
 
 		int_t miss_count(){
 			return miss_;
+		}
+		
+		int_t collided_count(){
+			return collided_;
 		}
 
 		bool cache(const Any& target_class, const Any& klass, uint_t global_mutate_count);

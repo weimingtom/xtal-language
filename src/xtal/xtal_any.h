@@ -410,6 +410,7 @@ inline RefCountingBase* rcpvalue2(const Any& v){
 
 inline bool raweq(const Any& a, const Any& b){
 	return type(a)==type(b) && a.value_==b.value_;
+	//return !(((rawtype(a)^rawtype(b))&TYPE_MASK) | (rawvalue(a)^rawvalue(b)));
 }
 
 inline bool rawne(const Any& a, const Any& b){

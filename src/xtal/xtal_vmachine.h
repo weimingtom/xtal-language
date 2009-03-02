@@ -506,6 +506,9 @@ public:
 		const AnyPtr& self() const{ return ap(self_); }
 		const ArgumentsPtr& arguments() const{ return unchecked_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint() const{ return ap(hint_); }
+		const AnyPtr& target() const{ return ap(target_); }
+		const IDPtr& primary_key() const{ return unchecked_ptr_cast<ID>(ap(primary_key_)); }
+		const AnyPtr& secondary_key() const{ return ap(secondary_key_); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
@@ -517,6 +520,9 @@ public:
 		void self(const Any& v){ self_ = v; }
 		void arguments(const Any& v){ arguments_ = v; }
 		void hint(const Any& v){ hint_ = v; }
+		void target(const Any& v){ target_ = v; }
+		void primary_key(const Any& v){ primary_key_ = v; }
+		void secondary_key(const Any& v){ secondary_key_ = v; }
 
 		void inc_ref();
 		void dec_ref();
@@ -532,6 +538,12 @@ public:
 		int_t variable_size;
 		Any outer;
 	};
+
+	void push_call(const inst_t* pc, 
+		int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, 
+		int_t flags, int_t ideitifier_number);
+	void push_call(const inst_t* pc, const InstCall& inst);
+	void push_call(const inst_t* pc, const InstSend& inst);
 
 	void push_ff(int_t need_result_count);
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
@@ -555,7 +567,6 @@ public:
 
 	const IDPtr& identifier(int_t n);
 	const IDPtr& prev_identifier(int_t n);
-	const IDPtr& identifier_or_pop(int_t n);
 
 	void return_result_instance_variable(int_t number, ClassInfo* core);
 

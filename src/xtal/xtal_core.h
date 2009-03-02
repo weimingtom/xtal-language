@@ -105,7 +105,7 @@ public:
 			return unchecked_ptr_cast<T>(from_this(p));
 		}
 
-		T* p = (T*)Base::operator new(sizeof(T));
+		T* p = (T*)so_malloc(sizeof(T));
 		new(p) T();
 		register_gc(p);
 		class_table_[index] = p;

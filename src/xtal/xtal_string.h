@@ -166,26 +166,27 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
-	//char_t* buf_;
+	char_t* buf_;
 	uint_t data_size_;
 public:
 
 	StringData(uint_t size){
 		set_p(TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
-		//buf_ = (char_t*)so_malloc((size+1)*sizeof(char_t));
+		buf_ = (char_t*)so_malloc((size+1)*sizeof(char_t));
 		buf()[size] = 0;
 	}
 
 	~StringData(){
-		//so_free(buf_, (data_size()+1)*sizeof(char_t));
+		so_free(buf_, (data_size()+1)*sizeof(char_t));
 	}
 
 	uint_t data_size(){
 		return data_size_>>SIZE_SHIFT;
 	}
 
-	char_t* buf(){ return (char_t*)(this+1); }
+	//char_t* buf(){ return (char_t*)(this+1); }
+	char_t* buf(){ return buf_; }
 
 	bool is_interned(){
 		return (data_size_&INTERNED)!=0;
@@ -196,7 +197,8 @@ public:
 	}
 
 	static uint_t calc_size(uint_t sz){
-		return sizeof(StringData)+(sz+1)*sizeof(char_t);
+		return sizeof(StringData);
+		//return sizeof(StringData)+(sz+1)*sizeof(char_t);
 	}
 
 private:

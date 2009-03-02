@@ -100,6 +100,8 @@ void Class::overwrite(const ClassPtr& p){
 void Class::inherit(const ClassPtr& cls){
 	if(is_inherited(cls))
 		return;
+
+	XTAL_ASSERT(cls);
 	
 	mixins_->push_back(cls);
 	inc_global_mutate_count();
@@ -121,6 +123,8 @@ void Class::inherit_first(const ClassPtr& cls){
 	if(is_inherited(cls)){
 		return;
 	}
+
+	XTAL_ASSERT(cls);
 
 	mixins_->push_back(cls);
 	inc_global_mutate_count();
@@ -278,6 +282,8 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 		if(rawne(ret, undefined)){
 			return ret;
 		}
+
+		//XTAL_CHECK_EXCEPT(e){ return undefined; }
 	}
 		
 	{
@@ -285,6 +291,8 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 		if(rawne(ret, undefined)){
 			return ret;
 		}
+
+		//XTAL_CHECK_EXCEPT(e){ return undefined; }
 	}
 
 	// å©Ç¬Ç©ÇÁÇ»Ç©Ç¡ÇΩÅB
@@ -298,11 +306,15 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 			}
 		}
 
+		//XTAL_CHECK_EXCEPT(e){ return undefined; }
+
 		if(rawne(get_cpp_class<Any>(), klass)){
 			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
+
+			//XTAL_CHECK_EXCEPT(e){ return undefined; }
 		}	
 	}
 

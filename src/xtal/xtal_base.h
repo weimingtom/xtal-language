@@ -10,7 +10,7 @@ public:
 		:Any(noinit_t()){}
 
 #ifdef XTAL_DEBUG
-//	virtual ~RefCountingBase(){}
+	virtual void dummy(){}
 #endif
 
 public:

@@ -2760,7 +2760,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 }
 
 void CodeBuilder::check_lvar_assign(const ExprPtr& e){
-	if(e->itag()==EXPR_LVAR){
+	if(e && e->itag()==EXPR_LVAR){
 		LVarInfo info = var_find(e->lvar_name(), true, true);
 		if(info.pos>=0){
 			entry(info).assigned = true;
@@ -2774,67 +2774,41 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 		return;
 	}
 
-	ExprPtr e = ep(p);
+	if(type(p)==TYPE_TREE_NODE){
+		ExprPtr e = ep(p);
 
-	switch(e->itag()){
-	case EXPR_ASSIGN:
-	case EXPR_ADD_ASSIGN:
-	case EXPR_SUB_ASSIGN:
-	case EXPR_CAT_ASSIGN:
-	case EXPR_MUL_ASSIGN:
-	case EXPR_DIV_ASSIGN:
-	case EXPR_MOD_ASSIGN:
-	case EXPR_OR_ASSIGN:
-	case EXPR_AND_ASSIGN:
-	case EXPR_XOR_ASSIGN:
-	case EXPR_SHR_ASSIGN:
-	case EXPR_SHL_ASSIGN:
-	case EXPR_USHR_ASSIGN:
-		check_lvar_assign(e->bin_lhs());
-		break;
+		switch(e->itag()){
+		case EXPR_ASSIGN:
+		case EXPR_ADD_ASSIGN:
+		case EXPR_SUB_ASSIGN:
+		case EXPR_CAT_ASSIGN:
+		case EXPR_MUL_ASSIGN:
+		case EXPR_DIV_ASSIGN:
+		case EXPR_MOD_ASSIGN:
+		case EXPR_OR_ASSIGN:
+		case EXPR_AND_ASSIGN:
+		case EXPR_XOR_ASSIGN:
+		case EXPR_SHR_ASSIGN:
+		case EXPR_SHL_ASSIGN:
+		case EXPR_USHR_ASSIGN:
+			check_lvar_assign(e->bin_lhs());
+			break;
 
-	case EXPR_INC:
-	case EXPR_DEC:
-		check_lvar_assign(e->una_term());
-		break;
+		case EXPR_INC:
+		case EXPR_DEC:
+			check_lvar_assign(e->una_term());
+			break;
 
-	case EXPR_MASSIGN:
-		Xfor(v, e->massign_lhs_exprs()){
-			if(v){ check_lvar_assign(ep(v)); }
+		case EXPR_MASSIGN:
+			Xfor(v, e->massign_lhs_exprs()){
+				check_lvar_assign(ep(v));
+			}
+			break;
 		}
-		break;
 
-	case EXPR_TRY:
-		check_lvar_assign_stmt(e->try_body());
-		check_lvar_assign_stmt(e->try_catch());
-		check_lvar_assign_stmt(e->try_finally());
-		break;
-
-	
-	case EXPR_IF:
-		check_lvar_assign_stmt(e->if_body());
-		check_lvar_assign_stmt(e->if_else());
-		break;
-
-	case EXPR_FOR:
-		check_lvar_assign_stmt(e->for_init());
-		check_lvar_assign_stmt(e->for_body());
-		check_lvar_assign_stmt(e->for_else());
-		check_lvar_assign_stmt(e->for_next());
-		check_lvar_assign_stmt(e->for_nobreak());
-		break;
-		
-	case EXPR_SCOPE:
-		Xfor(v, e->scope_stmts()){
+		Xfor(v, e){
 			check_lvar_assign_stmt(v);
 		}
-		break;
-
-	case EXPR_TOPLEVEL:
-		Xfor(v, e->toplevel_stmts()){
-			check_lvar_assign_stmt(v);
-		}
-		break;
 	}
 }
 

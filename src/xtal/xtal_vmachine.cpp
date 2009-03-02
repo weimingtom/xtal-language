@@ -51,15 +51,6 @@ void VMachine::recycle_call(const AnyPtr& a1){
 	push_arg(a1);
 }
 
-void VMachine::recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
-	FunFrame& f = ff();
-	f.ordered_arg_count = ordered_arg_count;
-	f.named_arg_count = named_arg_count;
-	f.self(self);
-	//f.poped_pc = pc;
-	f.called_pc = &throw_unsupported_error_code_;
-}
-
 void VMachine::push_call(const inst_t* pc, int_t need_result_count, 
 		int_t ordered_arg_count, int_t named_arg_count, 
 		int_t flags, int_t identifier_number){
@@ -211,8 +202,6 @@ void VMachine::push_ff(int_t need_result_count){
 void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
 	FunFrame* fp = fun_frames_.push();
 	if(!fp){
-		using_ = true;
-
 		void* p = so_malloc(sizeof(FunFrame));
 		fp = new(p) FunFrame();
 		fun_frames_.top() = fp;
@@ -239,49 +228,6 @@ void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_
 	f.secondary_key(null);
 	f.primary_key(null);
 	f.target(null);
-}
-
-void VMachine::push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self){
-	if(inst.flags&CALL_FLAG_ARGS){
-		ArgumentsPtr args = ptr_cast<Arguments>(pop());
-		push_args(args, inst.named);
-		if(inst.flags&CALL_FLAG_TAIL){
-			recycle_ff(pc, args->ordered_size()+inst.ordered, args->named_size()+inst.named, self);
-		}
-		else{
-			push_ff(pc, inst.need_result, args->ordered_size()+inst.ordered, args->named_size()+inst.named, self);
-		}
-		return;
-	}
-
-	if(inst.flags&CALL_FLAG_TAIL){
-		FunFrame& f = ff();
-		f.ordered_arg_count = inst.ordered;
-		f.named_arg_count = inst.named;
-		f.self(self);
-		//f.poped_pc = pc;
-		f.called_pc = &throw_unsupported_error_code_;
-	}
-	else{
-		FunFrame* fp = fun_frames_.push();
-		if(!fp){
-			void* p = so_malloc(sizeof(FunFrame));
-			fp = new(p) FunFrame();
-			fun_frames_.top() = fp;
-		}
-
-		FunFrame& f = *fp;
-
-		f.need_result_count = inst.need_result;
-		f.ordered_arg_count = inst.ordered;
-		f.named_arg_count = inst.named;
-		f.result_count = 0;
-		f.called_pc = &throw_unsupported_error_code_;
-		f.poped_pc = pc;
-		f.instance_variables = &empty_instance_variables;
-		f.self(self);
-		f.set_null();
-	}
 }
 
 void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
@@ -520,7 +466,7 @@ void VMachine::set_local_variable(int_t pos, const Any& value){
 	}
 }
 
-const AnyPtr& VMachine::local_variable(int_t pos){
+AnyPtr& VMachine::local_variable(int_t pos){
 	pos -= ff().variables_.size();
 	Frame* outer = ff().outer().get();
 	XTAL_GLOBAL_INTERPRETER_LOCK{
@@ -816,109 +762,33 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(LocalVariableInc){ // 8
-		Any a = local_variable(inst.number);
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)+1);
-			}
-			else{
-				a.set_f(fvalue(a)+1);
-			}
-			set_local_variable(inst.number, a); 
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_inc], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_inc, local_variable(inst.number), 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableIncDirect){ // 7
-		Any& a = ff().variables_[inst.number];
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)+1);
-			}
-			else{
-				a.set_f(fvalue(a)+1);
-			}
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_inc], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_inc, ff().variables_[inst.number], 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDec){ // 8
-		Any a = local_variable(inst.number);
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)-1);
-			}
-			else{
-				a.set_f(fvalue(a)-1);
-			}
-			set_local_variable(inst.number, a); 
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_dec], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_dec, local_variable(inst.number), -1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDecDirect){ // 7
-		Any& a = ff().variables_[inst.number];
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)-1);
-			}
-			else{
-				a.set_f(fvalue(a)-1);
-			}
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_dec], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_dec, ff().variables_[inst.number], -1));
 	}
 
 	XTAL_VM_CASE(LocalVariableInc2Byte){ // 8
-		Any a = local_variable(inst.number);
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)+1);
-			}
-			else{
-				a.set_f(fvalue(a)+1);
-			}
-			set_local_variable(inst.number, a); 
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_inc], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_inc, local_variable(inst.number), 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDec2Byte){ // 8
-		Any a = local_variable(inst.number);
-		uint_t atype = type(a)-TYPE_INT;
-		if(atype<2){
-			if(atype==0){
-				a.set_i(ivalue(a)-1);
-			}
-			else{
-				a.set_f(fvalue(a)-1);
-			}
-			set_local_variable(inst.number, a); 
-			XTAL_VM_CONTINUE(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE);
-		}
-		else{
-			XTAL_VM_CONTINUE(inner_send(pc+inst.ISIZE, 1, id_[Core::id_op_dec], null, a));
-		}
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE, pc + inst.ISIZE, 
+			Core::id_op_dec, local_variable(inst.number), -1));
 	}
 
 	XTAL_VM_CASE(LocalVariable1Byte){ // 3
@@ -1489,11 +1359,11 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Inc){ // 2
-		XTAL_VM_CONTINUE(OpInc(pc+inst.ISIZE, Core::id_op_inc));
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, Core::id_op_inc, 1));
 	}
 
 	XTAL_VM_CASE(Dec){ // 2
-		XTAL_VM_CONTINUE(OpDec(pc+inst.ISIZE, Core::id_op_dec));
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, Core::id_op_dec, -1));
 	}
 
 	XTAL_VM_CASE(AddAssign){ // 2
@@ -2025,6 +1895,38 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 
 //}}FUNS}
 	
+const inst_t* VMachine::OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, int_t op, Any& a, int_t constant){
+	uint_t atype = type(a)-TYPE_INT;
+	if(atype<2){
+		if(atype==0){
+			a.set_i(ivalue(a)+constant);
+		}
+		else{
+			a.set_f(fvalue(a)+constant);
+		}
+		return pc1;
+	}
+	else{
+		return inner_send(pc2, 1, id_[op], null, a);
+	}
+}
+
+const inst_t* VMachine::OpAddConstantInt(const inst_t* pc, int_t op, int_t constant){
+	Any& a = get(); uint_t atype = type(a)-TYPE_INT;
+	if(atype<2){
+		if(atype==0){
+			a.set_i(ivalue(a)+constant);
+		}
+		else{
+			a.set_f(fvalue(a)+constant);
+		}
+		return pc;
+	}
+	else{
+		return inner_send_from_stack(pc, 1, id_[op], 0);
+	}
+}
+
 const inst_t* VMachine::OpAdd(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
@@ -2222,38 +2124,6 @@ const inst_t* VMachine::OpUshr(const inst_t* pc, int_t op){
 	}
 	else{
 		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
-	}
-}
-
-const inst_t* VMachine::OpInc(const inst_t* pc, int_t op){
-	const AnyPtr& a = get(); uint_t atype = type(a)-TYPE_INT;
-	if(atype<2){
-		if(atype==0){
-			set(Any(ivalue(a)+1));
-		}
-		else{
-			set(Any(fvalue(a)+1));
-		}
-		return pc;
-	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 0);
-	}
-}
-
-const inst_t* VMachine::OpDec(const inst_t* pc, int_t op){
-	const AnyPtr& a = get(); uint_t atype = type(a)-TYPE_INT;
-	if(atype<2){
-		if(atype==0){
-			set(Any(ivalue(a)-1));
-		}
-		else{
-			set(Any(fvalue(a)-1));
-		}
-		return pc;
-	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 0);
 	}
 }
 

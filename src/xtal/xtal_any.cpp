@@ -48,6 +48,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 		ret->rawcall(vm);
 	}
 	else{
+		XTAL_CHECK_EXCEPT(e){ return; }
 		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, self, inherited_too);
 		if(rawne(ret, undefined)){
 			vm->set_arg_this(ap(*this));
@@ -72,6 +73,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 		ret->rawcall(vm);
 	}
 	else{
+		XTAL_CHECK_EXCEPT(e){ return; }
 		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, null, true);
 		if(rawne(ret, undefined)){
 			vm->set_arg_this(ap(*this));
@@ -401,7 +403,7 @@ void Any::visit_members(Visitor& m) const{
 	}
 }
 
-void Any::destroy() const{
+void Any::destroy(){
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 
@@ -411,34 +413,34 @@ void Any::destroy() const{
 
 		XTAL_CASE(TYPE_STRING){ 
 			uint_t size = StringData::calc_size(((StringData*)rcpvalue(*this))->data_size());
-			((StringData*)rcpvalue(*this))->~StringData(); 
-			rcpvalue(*this)->value_ = size; 
+			unchecked_ptr_cast<StringData>(ap(*this))->~StringData(); 
+			value_ = size; 
 		}
 
 		XTAL_CASE(TYPE_ARRAY){ 
-			((Array*)rcpvalue(*this))->~Array(); 
-			rcpvalue(*this)->value_ = sizeof(Array); 
+			unchecked_ptr_cast<Array>(ap(*this))->~Array(); 
+			value_ = sizeof(Array); 
 		}
 
 		XTAL_CASE(TYPE_MULTI_VALUE){ 
-			((MultiValue*)rcpvalue(*this))->~MultiValue(); 
-			rcpvalue(*this)->value_ = sizeof(MultiValue); 
+			unchecked_ptr_cast<MultiValue>(ap(*this))->~MultiValue(); 
+			value_ = sizeof(MultiValue); 
 		}
 
 		XTAL_CASE(TYPE_TREE_NODE){ 
 			using namespace xpeg;
-			((TreeNode*)rcpvalue(*this))->~TreeNode(); 
-			rcpvalue(*this)->value_ = sizeof(TreeNode); 
+			unchecked_ptr_cast<TreeNode>(ap(*this))->~TreeNode(); 
+			value_ = sizeof(TreeNode); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_FUN){ 
 			unchecked_ptr_cast<NativeFun>(ap(*this))->~NativeFun(); 
-			rcpvalue(*this)->value_ = sizeof(NativeFun); 
+			value_ = sizeof(NativeFun); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
 			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->~NativeFunBindedThis(); 
-			rcpvalue(*this)->value_ = sizeof(NativeFunBindedThis); 
+			value_ = sizeof(NativeFunBindedThis); 
 		}
 	}
 }
@@ -448,7 +450,7 @@ void Any::object_free(){
 		so_free(static_cast<Base*>(this), value_);
 	}
 	else if(type(*this)>TYPE_BASE){
-		so_free(this, value_);
+		so_free(static_cast<RefCountingBase*>(this), value_);
 	}
 }
 

@@ -41,9 +41,26 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-		a: [10, 9, 8];
-	a.("erase")(1);
-		a.p;
+{
+	temp : 0;
+	try{
+		try{
+			try{
+				throw "test";
+			}
+			finally{
+				temp = "finally";
+			}
+		}
+		finally{
+			10.p;
+			temp ~= "2";
+		}
+	}
+	catch(e){
+		(e.message~temp).p;
+	}
+}
 	))){
 		code->call();
 	}
@@ -55,7 +72,7 @@ int main2(int argc, char** argv){
 
 	//compile_file("../bench/ao.xtal")->inspect()->p();
 	
-	if(1){
+	if(0){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		

@@ -258,7 +258,7 @@ public:
 
 	void visit_members(Visitor& m) const;
 
-	void destroy() const;
+	void destroy();
 	
 	void object_free();
 

@@ -4,14 +4,14 @@ Foo: class{
 	+ _pub: 100;
 	# _pro: 200;
 	- _pri: 300;
-	
+		
 	hoge: 555;
 	
 	foo: fun hoge;
 }
 
 Bar: class(Foo){
-	
+
 	bar: method{
 		return this.pro;
 	}

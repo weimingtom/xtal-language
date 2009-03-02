@@ -157,7 +157,7 @@ String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag
 		}
 		else{
 			StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
-			new(sd) StringData(sz);
+			sd = new(sd) StringData(sz);
 			string_copy(sd->buf(), str, sz);
 			sd->set_interned();
 			set_p(TYPE_STRING, sd);
@@ -211,7 +211,7 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 	}
 	else{
 		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
-		new(sd) StringData(sz);
+		sd = new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
 		set_p(TYPE_STRING, sd);

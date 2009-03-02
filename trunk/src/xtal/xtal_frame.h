@@ -42,8 +42,8 @@ public:
 	* @brief i番目のメンバーをダイレクトに取得。
 	*
 	*/
-	const AnyPtr& member_direct(int_t i){
-		return members_->at(i);
+	AnyPtr& member_direct(int_t i){
+		return (AnyPtr&)members_->at(i);
 	}
 
 	/**

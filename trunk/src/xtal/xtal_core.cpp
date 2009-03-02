@@ -401,6 +401,8 @@ void* Core::so_malloc(size_t size){
 #if XTAL_DEBUG_ALLOC==2
 	return debug_so_malloc(size);
 #endif
+	//gc();
+
 	return so_alloc_.malloc(size);
 }
 
@@ -584,10 +586,12 @@ void Core::gc(){
 		}
 
 		for(ConnectedPointer it = alive; it!=current; ++it){
+			XTAL_ASSERT((*it)->ref_count()==0);
 			(*it)->destroy();
 		}
 
 		for(ConnectedPointer it = alive; it!=current; ++it){
+			XTAL_ASSERT((*it)->ref_count()==0);
 			(*it)->object_free();
 			*it = 0;
 		}
@@ -775,6 +779,7 @@ void Core::full_gc(){
 			}
 
 			for(ConnectedPointer it = alive; it!=current; ++it){
+				XTAL_ASSERT((*it)->ref_count()==0);
 				(*it)->object_free();
 				*it = 0;
 			}
@@ -949,14 +954,18 @@ const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr
 		}
 
 		bool nocache = false;
-		unit.member = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
-		if(!nocache){
-			unit.target_class = itarget_class;
-			unit.primary_key = iprimary_key;
-			unit.secondary_key = ins;
-			unit.mutate_count = global_mutate_count;
+		Any ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
+		if(rawne(ret, undefined)){
+			unit.member = ret;
+			if(!nocache){
+				unit.target_class = itarget_class;
+				unit.primary_key = iprimary_key;
+				unit.secondary_key = ins;
+				unit.mutate_count = global_mutate_count;
+			}
+			return ap(unit.member);
 		}
-		return ap(unit.member);
+		return undefined;
 	}
 }
 

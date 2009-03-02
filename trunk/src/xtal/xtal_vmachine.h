@@ -381,10 +381,10 @@ public:
 public:
 
 	// スタックのi番目の値を取得する。
-	const AnyPtr& get(int_t i){ return ap(stack_[i]); }
+	AnyPtr& get(int_t i){ return (AnyPtr&)ap(stack_[i]); }
 
 	// スタックの0番目の値を取得する。
-	const AnyPtr& get(){ return ap(stack_.top()); }
+	AnyPtr& get(){ return (AnyPtr&)ap(stack_.top()); }
 
 	// スタックのi番目の値を設定する。
 	void set(int_t i, const Any& v){ stack_[i]=v; }
@@ -494,6 +494,7 @@ public:
 			set_null_force(fun_); 
 			set_null_force(outer_);
 			set_null_force(arguments_);
+			set_null_force(self_);
 			set_null_force(hint_);
 			set_null_force(target_);
 			set_null_force(primary_key_);
@@ -547,8 +548,6 @@ public:
 
 	void push_ff(int_t need_result_count);
 	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
-	void push_ff(const inst_t* pc, const InstCall& inst, const AnyPtr& self);
-	void recycle_ff(const inst_t* pc, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	const inst_t* pop_ff(){ return fun_frames_.pop()->poped_pc; }
 
 	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
@@ -595,7 +594,7 @@ private:
 	const inst_t* push_except();
 
 	void set_local_variable(int_t pos, const Any&);
-	const AnyPtr& local_variable(int_t pos);
+	AnyPtr& local_variable(int_t pos);
 
 	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
 
@@ -737,6 +736,9 @@ public:
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 	
+	const inst_t* OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, int_t op, Any& a, int_t constant);
+	const inst_t* OpAddConstantInt(const inst_t* pc, int_t op, int_t constant);
+
 	const inst_t* OpAdd(const inst_t* pc, int_t op);
 	const inst_t* OpSub(const inst_t* pc, int_t op);
 	const inst_t* OpMul(const inst_t* pc, int_t op);
@@ -748,8 +750,6 @@ public:
 	const inst_t* OpShl(const inst_t* pc, int_t op);
 	const inst_t* OpShr(const inst_t* pc, int_t op);
 	const inst_t* OpUshr(const inst_t* pc, int_t op);
-	const inst_t* OpInc(const inst_t* pc, int_t op);
-	const inst_t* OpDec(const inst_t* pc, int_t op);
 
 private:
 

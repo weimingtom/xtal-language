@@ -17,7 +17,7 @@ Lib::Lib(const ArrayPtr& path)
 	most_top_level_ = false;
 }
 
-const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){
+const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -53,7 +53,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		Value val = {members_->size(), KIND_PUBLIC};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		inc_global_mutate_count();
+		core()->inc_mutate_count_cache_member();
 		value->set_object_parent(from_this(this));
 		return members_->back();
 	}

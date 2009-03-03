@@ -1,82 +1,87 @@
+inherit(lib::test);
 
-{
-	temp : 0;
-	while(1){
-		try{
-			break;
-		}
-		finally{
-			temp = 100;
-		}
-	}
+class TestExcept{
 	
-	assert temp==100;
-}
-
-
-{
-	temp : 0;
-	e : fun(){
-		try{
-			throw "throw";	
-		}finally{
-			temp = 9999;
-		}
-	}
-
-	try{
-		e();
-	}
-	catch(e){
-		assert e.message=="throw";
-	}
-	finally{
-		temp += 1;
-	}
-	
-	assert temp==10000;
-}
-
-
-try{
-	throw "test";
-}
-catch(e){
-	assert e.message=="test";
-}
-
-{
-	temp : 0;
-	try{
-		try{
-			
-		}finally{
-			temp = "finally";
-		}
-	}
-	catch(e){
-		assert temp=="finally";
-	}
-}
-
-{
-	temp : 0;
-	try{
-		try{
+	try_break#Test{
+		temp : 0;
+		while(1){
 			try{
-				throw "test";
+				break;
 			}
 			finally{
+				temp = 100;
+			}
+		}
+		
+		assert temp==100;
+	}
+
+
+	fun_try#Test{
+		temp : 0;
+		e : fun(){
+			try{
+				throw "throw";	
+			}finally{
+				temp = 9999;
+			}
+		}
+
+		try{
+			e();
+		}
+		catch(e){
+			assert e.message=="throw";
+		}
+		finally{
+			temp += 1;
+		}
+		
+		assert temp==10000;
+	}
+
+	simple#Test{
+		try{
+			throw "test";
+		}
+		catch(e){
+			assert e.message=="test";
+		}
+	}
+
+	try_try#Test{
+		temp : 0;
+		try{
+			try{
+				
+			}finally{
 				temp = "finally";
 			}
 		}
-		finally{
-			temp ~= "2";
+		catch(e){
+			assert temp=="finally";
 		}
 	}
-	catch(e){
-		assert (e.message~temp)=="testfinally2";
-	}
-}
 
+	try_try_try#Test{
+		temp : 0;
+		try{
+			try{
+				try{
+					throw "test";
+				}
+				finally{
+					temp = "finally";
+				}
+			}
+			finally{
+				temp ~= "2";
+			}
+		}
+		catch(e){
+			assert (e.message~temp)=="testfinally2";
+		}
+	}
+
+}
 

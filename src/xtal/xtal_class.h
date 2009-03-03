@@ -91,12 +91,10 @@ public:
 
 	/**
 	* @brief メンバを取り出す
-	* 可触性を考慮して取り出す
 	*
 	* @param name 取り出したいメンバの名前
-	* @param self 可視性を判定するためのオブジェクト
 	*/
-	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache);
+	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* @brief メンバを再設定する
@@ -293,7 +291,7 @@ public:
 	
 	const AnyPtr& bases_member(const IDPtr& primary_key);
 
-	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null, const AnyPtr& self = null, bool inherited_too = true);
+	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	MultiValuePtr child_object_name(const AnyPtr& a);
 

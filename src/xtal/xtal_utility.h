@@ -275,6 +275,21 @@ template<>
 struct IsNotVoid<void>{ enum{ value = 0 }; };
 
 template<class T>
+struct TempHolder{
+	static T temp;
+};
+
+template<class T>
+T TempHolder<T>::temp;
+
+struct Temp{
+	template<class T>
+	operator T&() const{
+		return TempHolder<T>::temp;
+	}
+};
+
+template<class T>
 struct Ref{
 	T& ref;
 	Ref(T& ref):ref(ref){};

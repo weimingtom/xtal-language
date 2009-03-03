@@ -217,7 +217,7 @@ void Format::rawcall(const VMachinePtr& vm){
 		else{
 			AnyPtr a = vm->arg(k->to_s()->intern());
 			if(!a){
-				a = vm->arg(k->to_i());
+				a = !have_named_ ? vm->arg(k->to_i()) : undefined;
 			}
 			
 			SmartPtr<FormatSpecifier> fs = xnew<FormatSpecifier>(*ptr_cast<FormatSpecifier>(v));

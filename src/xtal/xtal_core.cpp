@@ -187,6 +187,7 @@ void Core::initialize(const CoreSetting& setting){
 	gcobservers_end_ = 0;
 
 	objects_count_ = 0;
+	prev_objects_count_ = 0;
 
 	cycle_count_ = 0;
 
@@ -197,8 +198,6 @@ void Core::initialize(const CoreSetting& setting){
 	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
 //////////////////
-
-	global_mutate_count_ = 0;
 
 	CppClassSymbolData* symbols[] = { 
 		&CppClassSymbol<void>::value,
@@ -561,9 +560,9 @@ void Core::gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
-
+		
 		ConnectedPointer current(objects_count_, objects_list_begin_);
-		ConnectedPointer begin(0, objects_list_begin_);
+		ConnectedPointer begin(prev_objects_count_>objects_count_ ? objects_count_ : (prev_objects_count_-prev_objects_count_/4), objects_list_begin_);
 		if(current==begin){
 			restart_the_world();
 			return;
@@ -586,7 +585,6 @@ void Core::gc(){
 		}
 
 		for(ConnectedPointer it = alive; it!=current; ++it){
-			XTAL_ASSERT((*it)->ref_count()==0);
 			(*it)->destroy();
 		}
 
@@ -597,7 +595,7 @@ void Core::gc(){
 		}
 
 		{
-			objects_count_ = alive.pos;
+			prev_objects_count_ = objects_count_ = alive.pos;
 			objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
 			expand_objects_list();
 			objects_begin_ = *objects_list_current_++;
@@ -610,45 +608,6 @@ void Core::gc(){
 	}
 }
 
-/*
-void Core::gc(){
-	if(cycle_count_!=0){ return; }
-	if(stop_the_world()){
-		CycleCounter cc(&cycle_count_);
-
-		for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-			(*it)->before_gc();
-		}
-
-		RefCountingBase** objects_alive = objects_begin_;
-
-		for(RefCountingBase** it = objects_alive; it!=objects_current_; ++it){
-			if((*it)->ref_count()!=0 || (*it)->have_finalizer()){
-				std::swap(*it, *objects_alive++);
-			}
-		}
-
-		for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-			(*it)->after_gc();
-		}
-
-		for(RefCountingBase** it = objects_alive; it!=objects_current_; ++it){
-			(*it)->destroy();
-		}
-
-		for(RefCountingBase** it = objects_alive; it!=objects_current_; ++it){
-			(*it)->object_free();
-			*it = 0;
-		}
-
-		objects_count_ -= objects_current_-objects_alive;
-		objects_current_ = objects_alive;
-
-		restart_the_world();
-	}
-}
-*/
-
 void Core::full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
@@ -656,6 +615,9 @@ void Core::full_gc(){
 		//printf("used memory %dKB\n", used_memory/1024);
 				
 		while(true){			
+			member_cache_table_.clear();
+			is_cache_table_.clear();
+
 			ConnectedPointer current(objects_count_, objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
 			if(current==begin){
@@ -785,7 +747,7 @@ void Core::full_gc(){
 			}
 			
 			{
-				objects_count_ = alive.pos;
+				prev_objects_count_ = objects_count_ = alive.pos;
 				objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
 				expand_objects_list();
 				objects_begin_ = *objects_list_current_++;
@@ -897,103 +859,101 @@ void Core::vm_take_back(const VMachinePtr& vm){
 	vm_list_->push_back(vm);
 }
 
-const AnyPtr& Core::MemberCacheTable::cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count){
-	uint_t itarget_class = rawvalue(target_class) | (uint_t)inherited_too;
-	uint_t iprimary_key = rawvalue(primary_key);
-	uint_t ins = rawvalue(secondary_key);
+const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+	//bool nocache = false;
+	//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
 
-	uint_t hash = itarget_class ^ (iprimary_key>>2) ^ ins + iprimary_key ^ type(primary_key);
+	uint_t itarget_class = rawvalue(target_class);
+	uint_t iprimary_key = rawvalue(primary_key);
+	uint_t isecandary_key = rawvalue(secondary_key);
+
+	uint_t hash = itarget_class ^ (isecandary_key>>2) ^ (iprimary_key>>1);
 	Unit& unit = table_[calc_index(hash)];
 
-//	if(global_mutate_count==unit.mutate_count && 
-//		iprimary_key==unit.primary_key && 
-//		itarget_class==unit.target_class && 
-//		ins==unit.secondary_key){
-	if(!(((global_mutate_count^unit.mutate_count) | 
-		(iprimary_key^unit.primary_key) | 
-		(itarget_class^unit.target_class) | 
-		(ins^unit.secondary_key)))){
+	if(mutate_count_==unit.mutate_count && 
+		raweq(target_class, unit.target_class) &&
+		raweq(primary_key, unit.primary_key) && 
+		raweq(secondary_key, unit.secondary_key)){
 		hit_++;
+		accessibility = unit.accessibility;
 		return ap(unit.member);
 	}
 	else{
 
 		// 次の番地にあるか調べる
 		Unit& unit2 = table_[calc_index(hash + 1)];
-//	if(global_mutate_count==unit2.mutate_count && 
-//		iprimary_key==unit2.primary_key && 
-//		itarget_class==unit2.target_class && 
-//		ins==unit2.secondary_key){
-		if(!(((global_mutate_count^unit2.mutate_count) | 
-			(iprimary_key^unit2.primary_key) | 
-			(itarget_class^unit2.target_class) | 
-			(ins^unit2.secondary_key)))){
-
+		if(mutate_count_==unit2.mutate_count && 
+			raweq(target_class, unit2.target_class) &&
+			raweq(primary_key, unit2.primary_key) && 
+			raweq(secondary_key, unit2.secondary_key)){
 			collided_++;
-
-			//Unit temp = unit;
-			//unit = unit2;
-			//unit2 = temp;
-
 			hit_++;
+			accessibility = unit2.accessibility;
 			return ap(unit2.member);
 		}
 
 		miss_++;
-		//if(global_mutate_count==unit.mutate_count){
-		//	collided_++;
-		//}
 
 		if(type(target_class)!=TYPE_BASE){
 			return undefined;
 		}
 
 		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-		if(unit.mutate_count==global_mutate_count){
+		if(unit.mutate_count==mutate_count_){
 			unit2 = unit;
 		}
 
 		bool nocache = false;
-		Any ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), ap(self), inherited_too, &nocache);
-		if(rawne(ret, undefined)){
+		const AnyPtr& ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), true, accessibility, nocache);
+		//if(rawne(ret, undefined)){
 			unit.member = ret;
 			if(!nocache){
-				unit.target_class = itarget_class;
-				unit.primary_key = iprimary_key;
-				unit.secondary_key = ins;
-				unit.mutate_count = global_mutate_count;
+				unit.target_class = target_class;
+				unit.primary_key = primary_key;
+				unit.secondary_key = secondary_key;
+				unit.accessibility = accessibility;
+				unit.mutate_count = mutate_count_;
+			}
+			else{
+				unit.mutate_count = mutate_count_-1;
 			}
 			return ap(unit.member);
-		}
-		return undefined;
+		//}
+		//return undefined;
 	}
 }
 
-bool Core::IsCacheTable::cache(const Any& target_class, const Any& klass, uint_t global_mutate_count){
+bool Core::IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
+	//return unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
+
 	uint_t itarget_class = rawvalue(target_class);
 	uint_t iklass = rawvalue(klass);
 
 	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
 	Unit& unit = table_[hash & CACHE_MASK];
-
-	//if(global_mutate_count==unit.mutate_count && itarget_class==unit.target_class && iklass==unit.klass){
-	if(!((global_mutate_count^unit.mutate_count) | (itarget_class^unit.target_class) | (iklass^unit.klass))){
+	
+	if(mutate_count_==unit.mutate_count && 
+		raweq(target_class, unit.target_class) && 
+		raweq(klass, unit.klass)){
 		hit_++;
 		return unit.result;
 	}
 	else{
 		miss_++;
-		if(global_mutate_count==unit.mutate_count){
+		if(mutate_count_==unit.mutate_count){
 			collided_++;
 		}
 
-		// キャッシュに保存
-		unit.target_class = itarget_class;
-		unit.klass = iklass;
-		unit.mutate_count = global_mutate_count;
-		unit.result = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+		bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
 
-		return unit.result;
+		// キャッシュに保存
+		if(ret){
+			unit.target_class = target_class;
+			unit.klass = klass;
+			unit.mutate_count = mutate_count_;
+			unit.result = ret;
+		}
+		return ret;
 	}
 }
 

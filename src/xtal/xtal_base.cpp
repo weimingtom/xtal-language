@@ -89,7 +89,7 @@ void Base::rawcall(const VMachinePtr& vm){
 	ap(Any(this))->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& Base::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){ 
+const AnyPtr& Base::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){ 
 	return undefined;
 }
 

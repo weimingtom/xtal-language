@@ -44,6 +44,10 @@ AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, 
 
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key){
 
+	if(!primary_key){
+		return null;
+	}
+
 	IDPtr pick;
 
 	if(const ClassPtr& klass = ptr_as<Class>(target)){

@@ -506,7 +506,14 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 
-		AnyPtr e = except();
+		AnyPtr e;
+		
+		if(ap(except_[0])){
+			e = ap(except_[0]);
+		}
+		else{
+			e = ap(except_[1]);
+		}
 
 		// try .. catch .. finally•¶‚ÅˆÍ‚í‚ê‚Ä‚¢‚È‚¢
 		if(except_frames_.empty()){
@@ -580,9 +587,9 @@ void VMachine::visit_members(Visitor& m){
 }
 
 void VMachine::before_gc(){
-	//if(!using_){
-	//	return;
-	//}
+	if(fun_frames_.empty()){
+		//return;
+	}
 
 	inc_ref_count_force(debug_info_);
 	inc_ref_count_force(debug_);
@@ -591,12 +598,9 @@ void VMachine::before_gc(){
 	inc_ref_count_force(except_[1]);
 	inc_ref_count_force(except_[2]);
 
-//	for(int_t i=0, size=stack_.size(); i<size; ++i){
-//		inc_ref_count_force(stack_[i]);
-//	}
 
-	for(int_t i=0, size=stack_.capacity(); i<size; ++i){
-		inc_ref_count_force(stack_.reverse_at_unchecked(i));
+	for(int_t i=0, size=stack_.size(); i<size; ++i){
+		inc_ref_count_force(stack_[i]);
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
@@ -609,7 +613,7 @@ void VMachine::before_gc(){
 		inc_ref_count_force(except_frames_[i].outer);
 	}
 
-	/*
+	//*
 	// Žg‚í‚ê‚Ä‚¢‚È‚¢•”•ª‚ðnull‚Å“h‚è‚Â‚Ô‚·
 	for(int_t i=stack_.size(), size=stack_.capacity(); i<size; ++i){
 		stack_.reverse_at_unchecked(i).set_null();
@@ -627,13 +631,13 @@ void VMachine::before_gc(){
 	for(int_t i=except_frames_.size(), size=except_frames_.capacity(); i<size; ++i){
 		except_frames_.reverse_at_unchecked(i).outer.set_null();
 	}
-	*/
+	//*/
 }
 
 void VMachine::after_gc(){
-	//if(!using_){
-	//	return;
-	//}
+	if(fun_frames_.empty()){
+		//return;
+	}
 
 	dec_ref_count_force(debug_info_);
 	dec_ref_count_force(debug_);
@@ -642,12 +646,8 @@ void VMachine::after_gc(){
 	dec_ref_count_force(except_[1]);
 	dec_ref_count_force(except_[2]);
 
-	//for(int_t i=0, size=stack_.size(); i<size; ++i){
-	//	dec_ref_count_force(stack_[i]);
-	//}
-
-	for(int_t i=0, size=stack_.capacity(); i<size; ++i){
-		dec_ref_count_force(stack_.reverse_at_unchecked(i));
+	for(int_t i=0, size=stack_.size(); i<size; ++i){
+		dec_ref_count_force(stack_[i]);
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){

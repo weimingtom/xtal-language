@@ -28,7 +28,38 @@ AnyPtr Any::call() const{
 }
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
-	return core()->cache_member(*this, primary_key, secondary_key, self, inherited_too);
+	int_t accessibility = 0;
+	const AnyPtr& ret = inherited_too ?
+		core()->cache_member(ap(*this), primary_key, secondary_key, accessibility) :
+		type(*this)==TYPE_BASE ? pvalue(*this)->do_member(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
+
+	if(accessibility==0){
+		return ret;
+	}
+
+	if(accessibility & KIND_PRIVATE){
+		if(rawne(self->get_class(), *this)){
+			XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
+				Named(Xid(object), object_name()), 
+				Named(Xid(name), primary_key), 
+				Named(Xid(secondary_key), secondary_key), 
+				Named(Xid(accessibility), Xid(private))))
+			);
+			return undefined;
+		}
+	}
+	else if(accessibility & KIND_PROTECTED){
+		if(!self->is(ap(*this))){
+			XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
+				Named(Xid(object), object_name()), 
+				Named(Xid(primary_key), primary_key), 
+				Named(Xid(secondary_key), secondary_key), 
+				Named(Xid(accessibility), Xid(protected))))
+			);
+			return undefined;
+		}
+	}
+	return ret;
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
@@ -68,11 +99,30 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 	const ClassPtr& cls = get_class();
 	const AnyPtr& ret = ap(cls)->member(primary_key, null, null, true);
-	if(rawne(ret, undefined)){
-		vm->set_arg_this(ap(*this));
-		ret->rawcall(vm);
+
+	switch(type(ret)){
+		XTAL_DEFAULT{}
+
+		XTAL_CASE(TYPE_BASE){ 
+			vm->set_arg_this(ap(*this));
+			pvalue(ret)->rawcall(vm); 
+			return;
+		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN){ 
+			vm->set_arg_this(ap(*this));
+			unchecked_ptr_cast<NativeFun>(ret)->rawcall(vm); 
+			return;
+		}
+
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
+			vm->set_arg_this(ap(*this));
+			unchecked_ptr_cast<NativeFunBindedThis>(ret)->rawcall(vm); 
+			return;
+		}
 	}
-	else{
+
+	{
 		XTAL_CHECK_EXCEPT(e){ return; }
 		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, null, true);
 		if(rawne(ret, undefined)){

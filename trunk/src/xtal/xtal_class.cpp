@@ -93,7 +93,6 @@ void Class::overwrite(const ClassPtr& p){
 	if(!is_native_){
 		operator=(*p);
 		mixins_ = p->mixins_;
-		inc_global_mutate_count();
 	}
 }
 
@@ -104,7 +103,7 @@ void Class::inherit(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 	
 	mixins_->push_back(cls);
-	inc_global_mutate_count();
+	core()->inc_mutate_count_cache_is();
 }
 
 void Class::inherit_first(const ClassPtr& cls){
@@ -127,7 +126,7 @@ void Class::inherit_first(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 
 	mixins_->push_back(cls);
-	inc_global_mutate_count();
+	core()->inc_mutate_count_cache_is();
 }
 
 void Class::inherit_strict(const ClassPtr& cls){
@@ -214,7 +213,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_parent(from_this(this));
-		inc_global_mutate_count();
+		core()->inc_mutate_count_cache_member();
 	}
 	else{
 		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
@@ -239,34 +238,21 @@ const AnyPtr& Class::bases_member(const IDPtr& name){
 	return undefined;
 }
 
-const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too){
+const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 
 	if(it!=map_members_->end()){
 		// メンバが見つかった
-
-		// privateなメンバは見なかったことにする。
-		if(it->second.flags & KIND_PRIVATE){
-
-		}
-		else{
-			// protectedメンバでアクセス権が無いなら例外
-			if(it->second.flags & KIND_PROTECTED && !self->is(from_this(this))){
-				XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
-					Named(Xid(object), this->object_name()), Named(Xid(name), primary_key), Named(Xid(accessibility), Xid(protected))))
-				);
-				return undefined;
-			}
-
-			return members_->at(it->second.num);
-		}
+		
+		accessibility = it->second.flags & 0x3;
+		return members_->at(it->second.num);
 	}
 	
 	// 継承しているクラスを順次検索
 	if(inherited_too){
 		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i))->member(primary_key, secondary_key, self);
+			const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i))->do_member(primary_key, secondary_key, true, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -276,9 +262,9 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	return undefined;
 }
 
-const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache){
+const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	{
-		const AnyPtr& ret = find_member(primary_key, secondary_key, self, inherited_too);
+		const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
 		if(rawne(ret, undefined)){
 			return ret;
 		}
@@ -300,7 +286,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
 	if(const ClassPtr& klass = ptr_as<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), self, inherited_too, nocache);
+			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -309,7 +295,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 		//XTAL_CHECK_EXCEPT(e){ return undefined; }
 
 		if(rawne(get_cpp_class<Any>(), klass)){
-			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), self, inherited_too, nocache);
+			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -334,7 +320,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
-	inc_global_mutate_count();
+	core()->inc_mutate_count_cache_member();
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
@@ -343,7 +329,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
 	value->set_object_parent(from_this(this));
-	inc_global_mutate_count();
+	core()->inc_mutate_count_cache_member();
 }
 
 void Class::set_object_parent(const ClassPtr& parent){

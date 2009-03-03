@@ -42,8 +42,6 @@ Frame::Frame(const Frame& v)
 		make_map_members();
 		*map_members_ = *v.map_members_;
 	}
-
-	inc_global_mutate_count();
 }
 
 Frame& Frame::operator=(const Frame& v){
@@ -66,8 +64,6 @@ Frame& Frame::operator=(const Frame& v){
 		so_free(map_members_, sizeof(map_t));
 		map_members_ = 0;
 	}
-
-	inc_global_mutate_count();
 
 	return *this;
 }

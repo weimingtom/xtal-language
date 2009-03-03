@@ -67,12 +67,11 @@ public:
 
 	/**
 	* @brief nameメンバを取得する。
-	* 可触性を考慮したメンバ取得
 	*
 	* @retval null そのメンバは存在しない
 	* @retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too, bool* nocache);
+	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* @brief このオブジェクトがメンバとなっている親のクラスを返す。

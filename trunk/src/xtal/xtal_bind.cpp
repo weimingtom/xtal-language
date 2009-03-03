@@ -1930,7 +1930,7 @@ append_text_map([
 	"Xtal Runtime Error 1014":"ファイル '%(name)s' を開けません。",
 	"Xtal Runtime Error 1015":"%(object)s は定義されていません。",
 	"Xtal Runtime Error 1016":"ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。",
-	"Xtal Runtime Error 1017":"%(object)s は %(accessibility)s です。",
+	"Xtal Runtime Error 1017":"%(object)s :: %(primary_key)s # %(secondary_key)sは %(accessibility)s です。",
 	"Xtal Runtime Error 1018":"既に閉じられたストリームです。",
 	"Xtal Runtime Error 1019":"C++で定義されたクラスの多重継承は出来ません。",
 	"Xtal Runtime Error 1020":"配列の範囲外アクセスです。",

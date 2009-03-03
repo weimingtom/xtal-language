@@ -329,8 +329,7 @@ public:
 	}
 
 	const AnyPtr& except(){
-		if(ap(except_[0])) return ap(except_[0]);
-		return ap(except_[1]);
+		return ap(except_[0]);
 	}
 
 	void set_except(const AnyPtr& e){

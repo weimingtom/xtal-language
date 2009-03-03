@@ -96,5 +96,13 @@ TestInc: class{
 		--a;
 		assert a.i==0;
 	}
+	
+	float_inc#Test{
+		f: 0;
+		100.times{
+			f++;
+		}
+		assert (f+0.5).to_i==100;
+	}
 }
 

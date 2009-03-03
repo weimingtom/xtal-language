@@ -78,7 +78,7 @@ TestBar: class{
 	}
 	
 	check#Test: method{
-		assert Bar::hoge==555;
+		assert Foo::hoge==555;
 		assert Bar::foo()==555;
 	}
 }

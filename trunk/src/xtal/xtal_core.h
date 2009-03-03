@@ -147,16 +147,20 @@ public:
 
 	void vm_take_back(const VMachinePtr& vm);
 
-	const AnyPtr& cache_member(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too){
-		return member_cache_table_.cache(target_class, primary_key, secondary_key, self, inherited_too, global_mutate_count_);
+	const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+		return member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 	}
 
-	bool cache_is(const Any& target_class, const Any& klass){
-		return is_cache_table_.cache(target_class, klass, global_mutate_count_);
+	bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
+		return is_cache_table_.cache(target_class, klass);
 	}
 
-	void inc_global_mutate_count(){
-		global_mutate_count_++;
+	void inc_mutate_count_cache_member(){
+		member_cache_table_.inc_mutate_count();
+	}
+
+	void inc_mutate_count_cache_is(){
+		is_cache_table_.inc_mutate_count();
 	}
 
 	const SmartPtr<StringMgr>& string_mgr(){
@@ -237,6 +241,7 @@ private:
 	GCObserver** gcobservers_end_;
 
 	uint_t objects_count_;
+	uint_t prev_objects_count_;
 
 	uint_t cycle_count_;
 
@@ -256,10 +261,11 @@ private:
 	struct MemberCacheTable{
 		struct Unit{
 			uint_t mutate_count;
-			uint_t target_class;
-			uint_t secondary_key;
-			uint_t primary_key;
-			Any member;
+			uint_t accessibility;
+			AnyPtr target_class;
+			AnyPtr primary_key;
+			AnyPtr secondary_key;
+			AnyPtr member;
 		};
 
 		enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
@@ -273,11 +279,13 @@ private:
 		int_t hit_;
 		int_t miss_;
 		int_t collided_;
+		uint_t mutate_count_;
 
 		MemberCacheTable(){
 			hit_ = 0;
 			miss_ = 0;
 			collided_ = 0;
+			mutate_count_ = 0;
 		}
 
 		int_t hit_count(){
@@ -292,29 +300,50 @@ private:
 			return collided_;
 		}
 
-		const AnyPtr& cache(const Any& target_class, const IDPtr& primary_key, const Any& secondary_key, const Any& self, bool inherited_too, uint_t global_mutate_count);
+		void inc_mutate_count(){
+			mutate_count_++;
+		}
+
+		const AnyPtr& cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
+
+		void clear(){
+			for(int_t i=0; i<CACHE_MAX; ++i){
+				Unit& unit = table_[i];
+				unit.target_class = null;
+				unit.primary_key = null;
+				unit.secondary_key = null;
+				unit.member = null;	
+			}
+			mutate_count_++;
+		}
 	};
 
 	struct IsCacheTable{
 		struct Unit{
 			uint_t mutate_count;
-			uint_t target_class;
-			uint_t klass;
+			AnyPtr target_class;
+			AnyPtr klass;
 			bool result;
 		};
 
 		enum{ CACHE_MAX = 64, CACHE_MASK = CACHE_MAX-1 };
+
+		static uint_t calc_index(uint_t hash){
+			return hash & CACHE_MASK;
+		}
 
 		Unit table_[CACHE_MAX];
 
 		int_t hit_;
 		int_t miss_;
 		int_t collided_;
+		uint_t mutate_count_;
 
 		IsCacheTable(){
 			hit_ = 0;
 			miss_ = 0;
 			collided_ = 0;
+			mutate_count_ = 0;
 		}
 
 		int_t hit_count(){
@@ -329,12 +358,24 @@ private:
 			return collided_;
 		}
 
-		bool cache(const Any& target_class, const Any& klass, uint_t global_mutate_count);
+		void inc_mutate_count(){
+			mutate_count_++;
+		}
+
+		bool cache(const AnyPtr& target_class, const AnyPtr& klass);
+
+		void clear(){
+			for(int_t i=0; i<CACHE_MAX; ++i){
+				Unit& unit = table_[i];
+				unit.target_class = null;
+				unit.klass = null;
+			}
+			mutate_count_++;
+		}
 	};
 
 	MemberCacheTable member_cache_table_;
 	IsCacheTable is_cache_table_;
-	uint_t global_mutate_count_;
 
 	SmartPtr<StringMgr> string_mgr_;
 	SmartPtr<ThreadMgr> thread_mgr_;
@@ -510,10 +551,6 @@ const ClassPtr& CompileError();
 const ClassPtr& UnsupportedError();
 
 const ClassPtr& ArgumentError();
-
-inline void inc_global_mutate_count(){
-	core()->inc_global_mutate_count();
-}
 
 inline const IDPtr& intern_literal(const char_t* str){
 	return core()->string_mgr()->insert_literal(str);

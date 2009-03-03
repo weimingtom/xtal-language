@@ -863,11 +863,11 @@ const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const ID
 	//bool nocache = false;
 	//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
 
-	uint_t itarget_class = rawvalue(target_class);
+	uint_t itarget_class = rawvalue(target_class)>>2;
 	uint_t iprimary_key = rawvalue(primary_key);
-	uint_t isecandary_key = rawvalue(secondary_key);
+	uint_t isecondary_key = rawvalue(secondary_key);
 
-	uint_t hash = itarget_class ^ (isecandary_key>>2) ^ (iprimary_key>>1);
+	uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
 	Unit& unit = table_[calc_index(hash)];
 
 	if(mutate_count_==unit.mutate_count && 

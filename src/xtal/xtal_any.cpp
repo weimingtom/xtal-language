@@ -59,6 +59,7 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 			return undefined;
 		}
 	}
+
 	return ret;
 }
 

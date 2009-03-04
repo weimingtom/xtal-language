@@ -51,10 +51,6 @@ void Code::rawcall(const VMachinePtr& vm){
 	first_fun_->rawcall(vm);
 }
 
-StringPtr Code::inspect(){
-	return inspect_range(0, size());
-}
-
 void Code::insert_code(inst_t* p, inst_t* code, int_t size){
 	insert_erase_common(p, size);
 	code_.insert(p-&code_[0], code, size);
@@ -150,7 +146,27 @@ void Code::insert_erase_common(inst_t* p, int_t size){
 		}
 	}
 }
-	
+
+StringPtr Code::inspect(){
+	MemoryStreamPtr ms(xnew<MemoryStream>());
+
+	ms->put_s("identifier_table\n");
+	for(uint_t i=0; i<identifier_table_->size(); ++i){
+		ms->put_s(Xf("\t%04d:%s\n")->call(i, identifier_table_->at(i))->to_s());
+	}
+
+	ms->put_s("value_table\n");
+	for(uint_t i=0; i<value_table_->size(); ++i){
+		ms->put_s(Xf("\t%04d:%s\n")->call(i, value_table_->at(i))->to_s());
+	}
+
+	ms->put_s("\n");
+	ms->put_s(inspect_range(0, size()));
+
+	ms->seek(0);
+	return ms->get_s(ms->size());
+}
+
 StringPtr Code::inspect_range(int_t start, int_t end){
 
 #ifdef XTAL_DEBUG
@@ -302,7 +318,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 
 #else
 
-	return "";
+	return "no debug info";
 
 #endif
 }

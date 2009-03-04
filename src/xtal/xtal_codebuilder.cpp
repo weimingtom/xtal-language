@@ -249,12 +249,10 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 	LVarInfo info = var_find(var, true);
 
 	if(info.pos>=0){
-
 		if(rhs){
 			AnyPtr val = entry(info).initialized ? entry(info).value : do_expr(rhs);
 
 			if(raweq(val, undefined) || entry(info).assigned){
-
 				if(raweq(val, undefined)){
 					compile_expr(rhs);
 				}
@@ -283,10 +281,11 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 				put_inst(InstSetLocalVariable2Byte(info.pos));
 			}
 		}
-		
 	}
 	else{
-		if(rhs) compile_expr(rhs);
+		if(rhs){
+			compile_expr(rhs);
+		}
 		put_inst(InstDefineGlobalVariable(regster_identifier(var)));
 	}
 }

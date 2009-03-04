@@ -400,7 +400,6 @@ void* Core::so_malloc(size_t size){
 #if XTAL_DEBUG_ALLOC==2
 	return debug_so_malloc(size);
 #endif
-	//gc();
 
 	return so_alloc_.malloc(size);
 }
@@ -427,9 +426,6 @@ void* Core::user_malloc_nothrow(size_t size){
 #if XTAL_DEBUG_ALLOC!=0
 	return debug_malloc(size);
 #endif
-
-	//full_gc();
-	//gc();
 
 	void* ret = setting_.allocator_lib->malloc(size);
 
@@ -824,8 +820,8 @@ int_t Core::register_cpp_class(CppClassSymbolData* key){
 		}
 	}
 
-	if(key->value>=class_table_.size()){
-		while(key->value>=class_table_.size()){
+	if(key->value>=(int_t)class_table_.size()){
+		while(key->value>=(int_t)class_table_.size()){
 			class_table_.push_back(0);
 		}
 	}
@@ -870,10 +866,14 @@ const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const ID
 	uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
 	Unit& unit = table_[calc_index(hash)];
 
-	if(mutate_count_==unit.mutate_count && 
-		raweq(target_class, unit.target_class) &&
-		raweq(primary_key, unit.primary_key) && 
-		raweq(secondary_key, unit.secondary_key)){
+	//if(mutate_count_==unit.mutate_count && 
+	//	raweq(primary_key, unit.primary_key) && 
+	//	raweq(target_class, unit.target_class) &&
+	//	raweq(secondary_key, unit.secondary_key)){
+	if(((mutate_count_^unit.mutate_count) | 
+		rawbitxor(primary_key, unit.primary_key) | 
+		rawbitxor(target_class, unit.target_class) | 
+		rawbitxor(secondary_key, unit.secondary_key))==0){
 		hit_++;
 		accessibility = unit.accessibility;
 		return ap(unit.member);
@@ -881,16 +881,16 @@ const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const ID
 	else{
 
 		// 次の番地にあるか調べる
-		Unit& unit2 = table_[calc_index(hash + 1)];
-		if(mutate_count_==unit2.mutate_count && 
-			raweq(target_class, unit2.target_class) &&
-			raweq(primary_key, unit2.primary_key) && 
-			raweq(secondary_key, unit2.secondary_key)){
-			collided_++;
-			hit_++;
-			accessibility = unit2.accessibility;
-			return ap(unit2.member);
-		}
+		//Unit& unit2 = table_[calc_index(hash + 1)];
+		//if(mutate_count_==unit2.mutate_count && 
+		//	raweq(primary_key, unit2.primary_key) && 
+		//	raweq(target_class, unit2.target_class) &&
+		//	raweq(secondary_key, unit2.secondary_key)){
+		//	collided_++;
+		//	hit_++;
+		//	accessibility = unit2.accessibility;
+		//	return ap(unit2.member);
+		//}
 
 		miss_++;
 
@@ -899,9 +899,9 @@ const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const ID
 		}
 
 		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-		if(unit.mutate_count==mutate_count_){
-			unit2 = unit;
-		}
+		//if(unit.mutate_count==mutate_count_){
+		//	unit2 = unit;
+		//}
 
 		bool nocache = false;
 		const AnyPtr& ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), true, accessibility, nocache);
@@ -939,20 +939,32 @@ bool Core::IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
 		return unit.result;
 	}
 	else{
+		// 次の番地にあるか調べる
+		//Unit& unit2 = table_[calc_index(hash + 1)];
+		//if(mutate_count_==unit2.mutate_count && 
+		//	raweq(target_class, unit2.target_class) && 
+		//	raweq(klass, unit2.klass)){
+		//	collided_++;
+		//	hit_++;
+		//	return unit2.result;
+		//}
+
 		miss_++;
-		if(mutate_count_==unit.mutate_count){
-			collided_++;
-		}
+
+		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
+		//if(unit.mutate_count==mutate_count_){
+		//	unit2 = unit;
+		//}
 
 		bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
 
 		// キャッシュに保存
-		if(ret){
+		//if(ret){
 			unit.target_class = target_class;
 			unit.klass = klass;
 			unit.mutate_count = mutate_count_;
 			unit.result = ret;
-		}
+		//}
 		return ret;
 	}
 }

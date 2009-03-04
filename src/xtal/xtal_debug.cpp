@@ -10,13 +10,18 @@ void DebugInfo::visit_members(Visitor& m){
 
 void Debug::enable(){
 	enable_count_++;
-	if(enable_count_>1){
-		enable_count_ = 1;
-	}
+
+	set_break_point_hook(break_point_hook_);
+	set_call_hook(call_hook_);
+	set_return_hook(return_hook_);
+	set_throw_hook(throw_hook_);
+	set_assert_hook(assert_hook_);
 }
 
 void Debug::disable(){
 	enable_count_--;
+
+	hook_setting_bit_ = 0;
 }
 
 bool Debug::is_enabled(){
@@ -25,22 +30,52 @@ bool Debug::is_enabled(){
 
 void Debug::set_break_point_hook(const AnyPtr& hook){
 	break_point_hook_ = hook;
+	if(hook){
+		hook_setting_bit_ |= BREAKPOINT;
+	}
+	else{
+		hook_setting_bit_ &= ~BREAKPOINT;
+	}
 }
 
 void Debug::set_call_hook(const AnyPtr& hook){
 	call_hook_ = hook;
+	if(hook){
+		hook_setting_bit_ |= BREAKPOINT_CALL;
+	}
+	else{
+		hook_setting_bit_ &= ~BREAKPOINT_CALL;
+	}
 }
 
 void Debug::set_return_hook(const AnyPtr& hook){
 	return_hook_ = hook;
+	if(hook){
+		hook_setting_bit_ |= BREAKPOINT_RETURN;
+	}
+	else{
+		hook_setting_bit_ &= ~BREAKPOINT_RETURN;
+	}
 }
 
 void Debug::set_throw_hook(const AnyPtr& hook){
 	throw_hook_ = hook;
+	if(hook){
+		hook_setting_bit_ |= BREAKPOINT_THROW;
+	}
+	else{
+		hook_setting_bit_ &= ~BREAKPOINT_THROW;
+	}
 }
 
 void Debug::set_assert_hook(const AnyPtr& hook){
 	assert_hook_ = hook;
+	if(hook){
+		hook_setting_bit_ |= BREAKPOINT_ASSERT;
+	}
+	else{
+		hook_setting_bit_ &= ~BREAKPOINT_ASSERT;
+	}
 }
 
 const AnyPtr& Debug::break_point_hook(){
@@ -64,7 +99,7 @@ const AnyPtr& Debug::assert_hook(){
 }
 
 const SmartPtr<Debug>& debug(){
-	return ptr_cast<Debug>(builtin()->member(Xid(debug)));
+	return unchecked_ptr_cast<Debug>(builtin()->member(Xid(debug)));
 }
 
 void enable_debug(){

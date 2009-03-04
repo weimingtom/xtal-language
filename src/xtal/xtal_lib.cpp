@@ -17,13 +17,13 @@ Lib::Lib(const ArrayPtr& path)
 	most_top_level_ = false;
 }
 
-const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
-	if(it!=map_members_->end()){
-		return members_->at(it->second.num);
+const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){	
+	const AnyPtr& ret = Class::do_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
+	if(rawne(ret, undefined)){
+		return ret;
 	}
 	else{
+
 #ifndef XTAL_NO_PARSER
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s%s%s%s")->call(var, join_path("/"), primary_key, ".xtal")->to_s();

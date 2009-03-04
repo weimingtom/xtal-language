@@ -38,22 +38,9 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 
 }
 
-void VMachine::recycle_call(){
-	FunFrame& f = ff();
-	downsize(f.ordered_arg_count+f.named_arg_count*2);
-	f.ordered_arg_count = 0;
-	f.named_arg_count = 0;
-	f.called_pc = &throw_unsupported_error_code_;
-}
-
-void VMachine::recycle_call(const AnyPtr& a1){
-	recycle_call();
-	push_arg(a1);
-}
-
 void VMachine::push_call(const inst_t* pc, int_t need_result_count, 
 		int_t ordered_arg_count, int_t named_arg_count, 
-		int_t flags, int_t identifier_number){
+		const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self){
 
 	FunFrame* fp = fun_frames_.push();
 	if(!fp){
@@ -72,11 +59,11 @@ void VMachine::push_call(const inst_t* pc, int_t need_result_count,
 	f.poped_pc = pc;
 	f.instance_variables = &empty_instance_variables;
 
-	f.secondary_key(null);
-	f.primary_key(prev_identifier(identifier_number));
+	f.secondary_key(secondary_key);
+	f.primary_key(primary_key);
 	f.target(pop());
 
-	f.self(prev_ff().self());
+	f.self(self);
 	f.fun(null);
 	f.outer(null);
 	f.arguments(null);
@@ -195,41 +182,6 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 	}
 }
 
-void VMachine::push_ff(int_t need_result_count){
-	push_ff(&end_code_, need_result_count, 0, 0, null);
-}
-
-void VMachine::push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
-	FunFrame* fp = fun_frames_.push();
-	if(!fp){
-		void* p = so_malloc(sizeof(FunFrame));
-		fp = new(p) FunFrame();
-		fun_frames_.top() = fp;
-	}
-
-	FunFrame& f = *fp;
-
-	f.need_result_count = need_result_count;
-	f.ordered_arg_count = ordered_arg_count;
-	f.named_arg_count = named_arg_count;
-	f.result_count = 0;
-	f.called_pc = &throw_unsupported_error_code_;
-	f.poped_pc = pc;
-	f.instance_variables = &empty_instance_variables;
-
-	f.self(self);
-
-	f.fun(null);
-	f.outer(null);
-	f.arguments(null);
-	f.hint(null);
-	f.outer(null);
-
-	f.secondary_key(null);
-	f.primary_key(null);
-	f.target(null);
-}
-
 void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 	if(!named_arg_count){
 		for(uint_t i = 0; i<args->ordered_size(); ++i){
@@ -296,8 +248,8 @@ void VMachine::carry_over(Method* fun){
 	stack_.downsize(max_stack + f.args_stack_size());
 	f.ordered_arg_count = f.named_arg_count = 0;
 
-	debug_enable_ = debug_ && debug_->is_enabled();
-	if(debug_enable_){
+	hook_setting_bit_ = debug_ ? debug_->hook_setting_bit() : 0;
+	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
 }
@@ -350,8 +302,8 @@ void VMachine::mv_carry_over(Method* fun){
 	stack_.downsize(max_stack + size);
 	f.ordered_arg_count = 0;
 
-	debug_enable_ = debug_ && debug_->is_enabled();
-	if(debug_enable_){
+	hook_setting_bit_ = debug_ ? debug_->hook_setting_bit() : 0;
+	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
 }
@@ -488,7 +440,7 @@ AnyPtr& VMachine::local_variable(int_t pos){
 #define XTAL_VM_SWITCH switch(*pc)
 #define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc; XTAL_UNUSED_VAR(inst)
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
-#define XTAL_VM_EXCEPT(e) do{ except_[0] = e; if(debug_enable_ && debug_->is_enabled()){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
+#define XTAL_VM_EXCEPT(e) do{ except_[0] = e; if(hook_setting_bit_&(1<<BREAKPOINT_THROW)){ debug_hook(pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
 #define XTAL_VM_RETURN return
 
 #define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except() : (pc))
@@ -515,30 +467,16 @@ static float_t check_zero(float_t value){
 	return value;
 }
 
-const inst_t* VMachine::inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any self = ff().self();
-		push_ff(pc, need_result_count, 0, 0, null);
-		set_unsuported_error_info(target, primary_key, secondary_key);
-		ap(target)->rawsend(myself(), primary_key, ap(secondary_key), ap(self));
-	}
-	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
-}
-
 const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget){
 	Any secondary_key = null;
 	Any target = get(ntarget);
 	downsize(1);
-	return inner_send(pc, need_result_count, primary_key, secondary_key, target);
-}
 
-const inst_t* VMachine::inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0){
+	push(target);
+	push_call(pc, need_result_count, 0, 0, primary_key, ap(secondary_key), ff().self());
+	FunFrame& f = ff();
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any self = ff().self();
-		push(a0);
-		push_ff(pc, need_result_count, 1, 0, null);
-		set_unsuported_error_info(target, primary_key, secondary_key);
-		ap(target)->rawsend(myself(), primary_key, ap(secondary_key), ap(self));
+		f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 	}
 	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
 }
@@ -548,17 +486,13 @@ const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_resul
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	downsize(2);
-	return inner_send(pc, need_result_count, primary_key, secondary_key, target, a0);
-}
 
-const inst_t* VMachine::inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0){
+	push(a0);
+	push(target);
+	push_call(pc, need_result_count, 1, 0, primary_key, ap(secondary_key), ff().self());
+	FunFrame& f = ff();
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any self = ff().self();
-		push(a0);
-		push_ff(pc, need_result_count, 1, 0, null);
-		ff().called_pc = &check_unsupported_code_;
-		set_unsuported_error_info(target, primary_key, secondary_key);
-		ap(target)->rawsend(myself(), primary_key, ap(secondary_key), ap(self));
+		f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 	}
 	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
 }
@@ -568,16 +502,14 @@ const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_res
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	downsize(2);
-	return inner_send_q(pc, need_result_count, primary_key, secondary_key, target, a0);
-}
 
-const inst_t* VMachine::inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1){
+	push(a0);
+	push(target);
+	push_call(pc, need_result_count, 1, 0, primary_key, ap(secondary_key), ff().self());
+	FunFrame& f = ff();
+	f.called_pc = &check_unsupported_code_;
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any self = ff().self();
-		push(a0); push(a1);
-		push_ff(pc, need_result_count, 2, 0, null);
-		set_unsuported_error_info(target, primary_key, secondary_key);
-		ap(target)->rawsend(myself(), primary_key, ap(secondary_key), ap(self));
+		f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 	}
 	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
 }
@@ -588,17 +520,13 @@ const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_resul
 	Any a0 = get(na0);
 	Any a1 = get(na1);
 	downsize(3);
-	return inner_send(pc, need_result_count, primary_key, secondary_key, target, a0, a1);
-}
 
-const inst_t* VMachine::inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1){
+	push(a0); push(a1);
+	push(target);
+	push_call(pc, need_result_count, 2, 0, primary_key, ap(secondary_key), ff().self());
+	FunFrame& f = ff();
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		Any self = ff().self();
-		push(a0); push(a1);
-		push_ff(pc, need_result_count, 2, 0, null);
-		ff().called_pc = &check_unsupported_code_;
-		set_unsuported_error_info(target, primary_key, secondary_key);
-		ap(target)->rawsend(myself(), primary_key, ap(secondary_key), ap(self));
+		f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 	}
 	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
 }
@@ -609,7 +537,16 @@ const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_res
 	Any a0 = get(na0);
 	Any a1 = get(na1);
 	downsize(3);
-	return inner_send_q(pc, need_result_count, primary_key, secondary_key, target, a0, a1);
+
+	push(a0); push(a1);
+	push(target);
+	push_call(pc, need_result_count, 2, 0, primary_key, ap(secondary_key), ff().self());
+	FunFrame& f = ff();
+	f.called_pc = &check_unsupported_code_;
+	XTAL_GLOBAL_INTERPRETER_LOCK{
+		f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
+	}
+	return XTAL_VM_CHECK_EXCEPT_PC(ff().called_pc);
 }
 
 void VMachine::execute_inner(const inst_t* start){
@@ -629,10 +566,10 @@ void VMachine::execute_inner(const inst_t* start){
 
 	if(const AnyPtr& d = builtin()->member(Xid(debug))){
 		debug_ = unchecked_ptr_cast<Debug>(d);
-		debug_enable_ = debug_->is_enabled();
+		hook_setting_bit_ = debug_->hook_setting_bit();
 	}
 	else{
-		debug_enable_ = false;
+		hook_setting_bit_ = 0;
 	}
 
 	thread_yield_count_ = 100;
@@ -872,7 +809,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Return){ // 4
-		if(debug_enable_ && debug_->is_enabled()){
+		if(hook_setting_bit_&(1<<BREAKPOINT_RETURN)){
 			debug_hook(pc, BREAKPOINT_RETURN);
 		}
 
@@ -920,7 +857,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Property){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push_call(pc + inst.ISIZE, inst.need_result, 0, 0, 0, inst.identifier_number);
+			push_call(pc + inst.ISIZE, inst.need_result, 0, 0, identifier(inst.identifier_number), null, ff().self());
 			FunFrame& f = ff();
 			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
@@ -930,7 +867,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SetProperty){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push_call(pc + inst.ISIZE, 0, 1, 0, 0, inst.identifier_number);
+			push_call(pc + inst.ISIZE, 0, 1, 0, identifier(inst.identifier_number), null, ff().self());
 			FunFrame& f = ff();
 			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
@@ -1418,9 +1355,10 @@ XTAL_VM_SWITCH{
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			Any rhs = pop();
 			Any lhs = pop();
-			push(ap(rhs)); push(ap(Any((int_t)inst.kind)));
-			push_ff(pc+inst.ISIZE, 1, 2, 0, null);
-			set_unsuported_error_info(ap(lhs), id_[Core::id_op_range], null);
+			push(rhs); 
+			push(Any((int_t)inst.kind));
+			push(lhs);
+			push_call(pc+inst.ISIZE, 1, 2, 0, id_[Core::id_op_range], null, ff().self());
 			ap(lhs)->rawsend(myself(), id_[Core::id_op_range], null);
 			XTAL_VM_CHECK_EXCEPT;
 		}
@@ -1502,9 +1440,10 @@ XTAL_VM_SWITCH{
 				cp->inherit_first(cls);
 			}
 
-			push_ff(pc + inst.ISIZE, 0, 0, 0, cp);
-			ff().fun(prev_fun());
+			push(null);
+			push_call(pc + inst.ISIZE, 0, 0, 0, null, null, cp);
 
+			ff().fun(prev_fun());
 			ff().outer(cp);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1628,7 +1567,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfDebug){ // 2
-		XTAL_VM_CONTINUE(pc + ((debug_enable_ || debug_->is_enabled()) ? inst.ISIZE : inst.OFFSET_address + inst.address));
+		XTAL_VM_CONTINUE(pc + (debug_->is_enabled() ? inst.ISIZE : inst.OFFSET_address + inst.address));
 	}
 
 	XTAL_VM_CASE(Assert){ // 4
@@ -1640,7 +1579,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(BreakPoint){ // 3
-		if(debug_enable_ && debug_->is_enabled()){
+		if(hook_setting_bit_&(1<<BREAKPOINT)){
 			debug_hook(pc, BREAKPOINT);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1907,7 +1846,8 @@ const inst_t* VMachine::OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, i
 		return pc1;
 	}
 	else{
-		return inner_send(pc2, 1, id_[op], null, a);
+		push(a);
+		return inner_send_from_stack(pc2, 1, id_[op], 0);
 	}
 }
 

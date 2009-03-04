@@ -45,6 +45,24 @@ void VMachine::reset(){
 	debug_ = null;
 }
 
+void VMachine::recycle_call(){
+	FunFrame& f = ff();
+	downsize(f.ordered_arg_count+f.named_arg_count*2);
+	f.ordered_arg_count = 0;
+	f.named_arg_count = 0;
+	f.called_pc = &throw_unsupported_error_code_;
+}
+
+void VMachine::recycle_call(const AnyPtr& a1){
+	recycle_call();
+	push_arg(a1);
+}
+
+void VMachine::push_ff(int_t need_result_count){
+	push(null);
+	push_call(&end_code_, need_result_count, 0, 0, null, null, null);
+}
+
 void VMachine::push_arg(const AnyPtr& value){
 	XTAL_ASSERT(named_arg_count() == 0);
 	ff().ordered_arg_count++;
@@ -305,7 +323,8 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	yield_result_count_ = 0;
-	push_ff(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->arg_this());
+	push(null);
+	push_call(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), null, null, vm->arg_this());
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	resume_pc_ = 0;
 	carry_over(fun);
@@ -456,8 +475,9 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 		{
 			struct guard{
 				const SmartPtr<Debug>& debug_;
-				guard(const SmartPtr<Debug>& debug):debug_(debug){ debug_->disable(); }
-				~guard(){ debug_->enable(); }
+				int_t count_;
+				guard(const SmartPtr<Debug>& debug):debug_(debug){ count_ = debug_->disable_force(); }
+				~guard(){ debug_->enable_force(count_); }
 			} g(debug_);
 		
 			switch(kind){

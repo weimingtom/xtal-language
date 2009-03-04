@@ -43,6 +43,7 @@ public:
 
 	Debug(){
 		enable_count_ = 0;
+		hook_setting_bit_ = 0;
 	}
 
 	/**
@@ -57,9 +58,30 @@ public:
 	void disable();
 
 	/**
+	* @brief デバッグ機能を有効にする
+	* デバッグ機能はデフォルトでは無効になっている。
+	*/
+	void enable_force(int_t count){
+		enable_count_ = count;
+	}
+
+	/**
+	* @brief デバッグ機能を強制的に無効にする
+	*/
+	int_t disable_force(){
+		int_t temp = enable_count_;
+		enable_count_ = 0;
+		return temp;
+	}
+
+	/**
 	* @brief デバッグ機能が有効かどうか
 	*/
 	bool is_enabled();
+
+	uint_t hook_setting_bit(){
+		return hook_setting_bit_;
+	}
 
 	/**
 	* @brief ブレークポイントがある度に呼び出されるフック関数を登録する
@@ -114,6 +136,7 @@ public:
 private:
 
 	int_t enable_count_;
+	uint_t hook_setting_bit_;
 	AnyPtr break_point_hook_;
 	AnyPtr call_hook_;
 	AnyPtr return_hook_;
@@ -129,8 +152,15 @@ public:
 
 const SmartPtr<Debug>& debug();
 
+/**
+* @brief デバッグ機能を有効にする
+* デバッグ機能はデフォルトでは無効になっている。
+*/
 void enable_debug();
 
+/**
+* @brief デバッグ機能を無効にする
+*/
 void disable_debug();
 
 }

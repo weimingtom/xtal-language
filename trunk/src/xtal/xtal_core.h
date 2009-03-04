@@ -75,7 +75,7 @@ public:
 	const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key);
 
 	bool exists_cpp_class(CppClassSymbolData* key){
-		return key->value>=0 && key->value<class_table_.size() && class_table_[key->value];
+		return key->value>=0 && key->value<(int_t)class_table_.size() && class_table_[key->value];
 	}
 
 	const ClassPtr& get_cpp_class(CppClassSymbolData* key){
@@ -161,6 +161,7 @@ public:
 
 	void inc_mutate_count_cache_is(){
 		is_cache_table_.inc_mutate_count();
+		member_cache_table_.inc_mutate_count();
 	}
 
 	const SmartPtr<StringMgr>& string_mgr(){

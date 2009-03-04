@@ -11,14 +11,12 @@
 
 using namespace xtal;
 
-
 #ifndef XTAL_NO_PARSER
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
-	int iii = (int)(RefCountingBase*)(Base*)1-1;
 
 	CStdioStreamLib cstd_stream_lib;
 	WinThreadLib win_thread_lib;
@@ -34,18 +32,16 @@ int main2(int argc, char** argv){
 	Core core;
 	core.initialize(setting);
 
-
-
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
 
 	
 	if(CodePtr code = Xsrc((
 {
-
+		"test".p;
 }
 	))){
-		code->call();
+		code->inspect()->p();
 	}
 
 	XTAL_CATCH_EXCEPT(e){

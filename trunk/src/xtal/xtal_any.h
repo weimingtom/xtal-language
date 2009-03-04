@@ -425,6 +425,10 @@ inline bool rawlt(const Any& a, const Any& b){
 	return a.value_<b.value_;
 }
 
+inline uint_t rawbitxor(const Any& a, const Any& b){
+	return ((rawtype(a)^rawtype(b))&TYPE_MASK) | (rawvalue(a)^rawvalue(b));
+}
+
 inline void set_null_force(Any& v){
 	v.type_ = TYPE_NULL;
 	v.value_ = 0;

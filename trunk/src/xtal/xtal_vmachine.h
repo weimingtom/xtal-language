@@ -541,12 +541,10 @@ public:
 
 	void push_call(const inst_t* pc, 
 		int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, 
-		int_t flags, int_t ideitifier_number);
+		const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self);
 	void push_call(const inst_t* pc, const InstCall& inst);
 	void push_call(const inst_t* pc, const InstSend& inst);
-
 	void push_ff(int_t need_result_count);
-	void push_ff(const inst_t* pc, int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 	const inst_t* pop_ff(){ return fun_frames_.pop()->poped_pc; }
 
 	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
@@ -575,19 +573,10 @@ public:
 	const VMachinePtr& myself(){ return *(const VMachinePtr*)&myself_; }
 
 private:
-	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target);
 	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget);
-
-	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0);
 	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0);
-
-	const inst_t* inner_send(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1);
 	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1);
-
-	const inst_t* inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0);
 	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0);
-
-	const inst_t* inner_send_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, const Any& secondary_key, const Any& target, const Any& a0, const Any& a1);
 	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1);
 
 	const inst_t* push_except();
@@ -786,7 +775,7 @@ private:
 
 	SmartPtr<DebugInfo> debug_info_;
 	SmartPtr<Debug> debug_;
-	int_t debug_enable_;
+	int_t hook_setting_bit_;
 
 	int_t thread_yield_count_;
 

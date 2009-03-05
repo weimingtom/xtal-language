@@ -194,7 +194,7 @@ void Fiber::halt(){
 	if(resume_pc_!=0){
 		vm_->exit_fiber();
 		resume_pc_ = 0;
-		core()->vm_take_back(vm_);
+		vmachine_take_back(vm_);
 		vm_ = null;
 		alive_ = false;
 	}
@@ -204,14 +204,14 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 	if(alive_){
 		vm->set_arg_this(this_);
 		if(resume_pc_==0){
-			if(!vm_){ vm_ = core()->vm_take_over(); }
+			if(!vm_){ vm_ = vmachine_take_over(); }
 			resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
 		}
 		else{ 
 			resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
 		}
 		if(resume_pc_==0){
-			core()->vm_take_back(vm_);
+			vmachine_take_back(vm_);
 			vm_ = null;
 			alive_ = false;
 		}

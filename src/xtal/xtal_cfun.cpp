@@ -41,7 +41,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	for(int_t i=0; i<param_n_+1; ++i){
-		const ClassPtr& cls = core()->get_cpp_class(pth.param_types[i]);
+		const ClassPtr& cls = get_cpp_class(pth.param_types[i]);
 		if(raweq(cls, get_cpp_class<Any>()) || raweq(cls, get_cpp_class<void>())){
 			param_types[i] = 0;
 		}

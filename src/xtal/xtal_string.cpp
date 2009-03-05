@@ -134,7 +134,7 @@ void String::init_string(const char_t* str, uint_t sz){
 		new(sd) StringData(sz);
 		string_copy(sd->buf(), str, sz);
 		set_p(TYPE_STRING, sd);
-		core()->register_gc(sd);
+		register_gc(sd);
 	}
 }
 
@@ -161,7 +161,7 @@ String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag
 			string_copy(sd->buf(), str, sz);
 			sd->set_interned();
 			set_p(TYPE_STRING, sd);
-			core()->register_gc(sd);
+			register_gc(sd);
 		}
 	}
 }
@@ -215,7 +215,7 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
 		set_p(TYPE_STRING, sd);
-		core()->register_gc(sd);
+		register_gc(sd);
 	}
 }
 
@@ -522,8 +522,12 @@ AnyPtr SmartPtrCtor3<ID>::call(type v){
 
 ///////////////////////////////////////////
 
+void StringMgr::uninitialize(){
+	table_.destroy();
+	table2_.destroy();
+}
+
 void StringMgr::visit_members(Visitor& m){
-	Base::visit_members(m);
 	for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
 		m & it->second;
 	}		

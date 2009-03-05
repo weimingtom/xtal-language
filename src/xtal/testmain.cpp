@@ -18,20 +18,6 @@ int main2(int argc, char** argv){
 	
 	using namespace std;
 
-	CStdioStreamLib cstd_stream_lib;
-	WinThreadLib win_thread_lib;
-	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
-
-	CoreSetting setting;
-	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &cstd_stream_lib;
-	setting.filesystem_lib = &win_filesystem_lib;
-	setting.chcode_lib = &sjis_chcode_lib;
-
-	Core core;
-	core.initialize(setting);
-
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
 
@@ -51,7 +37,7 @@ int main2(int argc, char** argv){
 
 	//compile_file("../bench/ao.xtal")->inspect()->p();
 	
-	if(1){
+	if(0){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		
@@ -106,7 +92,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
@@ -130,14 +116,28 @@ int main2(int argc, char** argv){
 		return 1;
 	}
 
-	vmachine()->print_info();
-	core.debug_print();
-
 	return 0;
 }
 
 int main(int argc, char** argv){
+	CStdioStreamLib cstd_stream_lib;
+	WinThreadLib win_thread_lib;
+	WinFilesystemLib win_filesystem_lib;
+	SJISChCodeLib sjis_chcode_lib;
+
+	CoreSetting setting;
+	setting.thread_lib = &win_thread_lib;
+	setting.stream_lib = &cstd_stream_lib;
+	setting.filesystem_lib = &win_filesystem_lib;
+	setting.chcode_lib = &sjis_chcode_lib;
+
+	Core core(setting);
+
 	int ret = main2(argc, argv);
+
+	vmachine()->print_info();
+	core.debug_print();
+
 	return ret;
 }
 

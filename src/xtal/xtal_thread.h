@@ -81,14 +81,12 @@ public:
 	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){ return true; }
 };
 
-class ThreadMgr : public Base{
+class ThreadMgr{
 public:
 
-	ThreadMgr(ThreadLib* lib = 0);
+	void initialize(ThreadLib* lib = 0);
 
-	~ThreadMgr();
-
-	void destroy();
+	void uninitialize();
 
 public:
 
@@ -128,7 +126,7 @@ public:
 
 	void lock_mutex(const MutexPtr& self);
 
-	virtual void visit_members(Visitor& m);
+	void visit_members(Visitor& m);
 
 private:
 

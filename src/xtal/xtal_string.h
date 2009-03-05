@@ -368,20 +368,25 @@ inline void visit_members(Visitor& m, const Named& p){
 /**
 * @breif 文字列を管理するクラス
 */
-class StringMgr : public Base{
+class StringMgr{
 public:
 
-	StringMgr(){
+	StringMgr()
+		:table_(table_t::no_use_memory_t()), 
+		table2_(table2_t::no_use_memory_t()){
 		guard_ = 0;
 	}
 
+	void initialize(){
+		table_.expand(4);
+		table2_.expand(4);
+	}
+
+	void uninitialize();
+
 	void gc();
 
-protected:
-
-	virtual void visit_members(Visitor& m);
-
-public:
+	void visit_members(Visitor& m);
 
 	const IDPtr& insert(const char_t* str, uint_t size);
 

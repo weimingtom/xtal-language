@@ -13,46 +13,12 @@ struct CoreSetting{
 	CoreSetting();
 };
 
-class Core{
+class ObjectMgr{
 public:
 
-	Core(){}
-
-	~Core(){
-		uninitialize();
-	}
-
-	void initialize(const CoreSetting& setting);
+	void initialize();
 
 	void uninitialize();
-
-	void debug_print();
-
-public:
-
-	void* user_malloc(size_t size);
-
-	void* user_malloc_nothrow(size_t size);
-
-	void user_free(void* p);
-
-	void* so_malloc(size_t size);
-
-	void so_free(void* p, size_t size);
-
-	void print_alive_objects();
-
-	const SmartPtr<Filesystem>& filesystem(){
-		return filesystem_;
-	}
-
-	ChCodeLib* chcode_lib(){
-		return setting_.chcode_lib;
-	}
-
-public:
-
-	void expand_objects_list();
 
 	void enable_gc();
 
@@ -67,8 +33,6 @@ public:
 	void register_gc_observer(GCObserver* p);
 
 	void unregister_gc_observer(GCObserver* p);
-
-public:
 
 	int_t register_cpp_class(CppClassSymbolData* key);
 
@@ -127,107 +91,9 @@ public:
 		set_cpp_class(cls, &CppClassSymbol<T>::value);
 	}
 
-	const ClassPtr& Iterator(){
-		return Iterator_;
-	}
-
-	const ClassPtr& Iterable(){
-		return Iterable_;
-	}
-
-	const ClassPtr& builtin(){
-		return builtin_;
-	}
-
-	const LibPtr& lib(){
-		return lib_;
-	}
-
-	VMachinePtr vm_take_over();
-
-	void vm_take_back(const VMachinePtr& vm);
-
-	const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-		return member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
-	}
-
-	bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
-		return is_cache_table_.cache(target_class, klass);
-	}
-
-	void inc_mutate_count_cache_member(){
-		member_cache_table_.inc_mutate_count();
-	}
-
-	void inc_mutate_count_cache_is(){
-		is_cache_table_.inc_mutate_count();
-		member_cache_table_.inc_mutate_count();
-	}
-
-	const SmartPtr<StringMgr>& string_mgr(){
-		return string_mgr_;
-	}
-
-	const SmartPtr<ThreadMgr>& thread_mgr(){
-		return thread_mgr_;
-	}
-
-public:
-
-	enum{
-		id_op_call,
-		id_op_pos,
-		id_op_neg,
-		id_op_com,
-		id_op_at,
-		id_op_set_at,
-		id_op_range,
-		id_op_add,
-		id_op_cat,
-		id_op_sub,
-		id_op_mul,
-		id_op_div,
-		id_op_mod,
-		id_op_and,
-		id_op_or,
-		id_op_xor,
-		id_op_shl,
-		id_op_shr,
-		id_op_ushr,
-		id_op_eq,
-		id_op_lt,
-		id_op_in,
-		id_op_inc,
-		id_op_dec,
-		id_op_add_assign,
-		id_op_sub_assign,
-		id_op_cat_assign,
-		id_op_mul_assign,
-		id_op_div_assign,
-		id_op_mod_assign,
-		id_op_and_assign,
-		id_op_or_assign,
-		id_op_xor_assign,
-		id_op_shl_assign,
-		id_op_shr_assign,
-		id_op_ushr_assign,
-
-		id_op_MAX
-	};
-
-	const IDPtr* id_op_list(){
-		return id_op_list_;
-	}
-
 private:
 
-	void bind();
-	void exec_script();
-	
-private:
-
-	SmallObjectAllocator so_alloc_;
-	CoreSetting setting_;
+	void expand_objects_list();
 
 	RefCountingBase** objects_begin_ ;
 	RefCountingBase** objects_current_;
@@ -246,9 +112,205 @@ private:
 
 	uint_t cycle_count_;
 
-	IDPtr id_op_list_[id_op_MAX];
-
 	PODArrayList<Class*> class_table_;
+};
+
+struct MemberCacheTable{
+	struct Unit{
+		uint_t mutate_count;
+		uint_t accessibility;
+		AnyPtr target_class;
+		AnyPtr primary_key;
+		AnyPtr secondary_key;
+		AnyPtr member;
+	};
+
+	enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
+
+	static uint_t calc_index(uint_t hash){
+		return hash & CACHE_MASK;
+	}
+
+	Unit table_[CACHE_MAX];
+
+	int_t hit_;
+	int_t miss_;
+	int_t collided_;
+	uint_t mutate_count_;
+
+	MemberCacheTable(){
+		hit_ = 0;
+		miss_ = 0;
+		collided_ = 0;
+		mutate_count_ = 0;
+	}
+
+	int_t hit_count(){
+		return hit_;
+	}
+
+	int_t miss_count(){
+		return miss_;
+	}
+
+	int_t collided_count(){
+		return collided_;
+	}
+
+	void inc_mutate_count(){
+		mutate_count_++;
+	}
+
+	const AnyPtr& cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
+
+	void clear(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			Unit& unit = table_[i];
+			unit.target_class = null;
+			unit.primary_key = null;
+			unit.secondary_key = null;
+			unit.member = null;	
+		}
+		mutate_count_++;
+	}
+};
+
+struct IsCacheTable{
+	struct Unit{
+		uint_t mutate_count;
+		AnyPtr target_class;
+		AnyPtr klass;
+		bool result;
+	};
+
+	enum{ CACHE_MAX = 64, CACHE_MASK = CACHE_MAX-1 };
+
+	static uint_t calc_index(uint_t hash){
+		return hash & CACHE_MASK;
+	}
+
+	Unit table_[CACHE_MAX];
+
+	int_t hit_;
+	int_t miss_;
+	int_t collided_;
+	uint_t mutate_count_;
+
+	IsCacheTable(){
+		hit_ = 0;
+		miss_ = 0;
+		collided_ = 0;
+		mutate_count_ = 0;
+	}
+
+	int_t hit_count(){
+		return hit_;
+	}
+
+	int_t miss_count(){
+		return miss_;
+	}
+	
+	int_t collided_count(){
+		return collided_;
+	}
+
+	void inc_mutate_count(){
+		mutate_count_++;
+	}
+
+	bool cache(const AnyPtr& target_class, const AnyPtr& klass);
+
+	void clear(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			Unit& unit = table_[i];
+			unit.target_class = null;
+			unit.klass = null;
+		}
+		mutate_count_++;
+	}
+};
+
+struct IDOp{
+enum{
+	id_op_call,
+	id_op_pos,
+	id_op_neg,
+	id_op_com,
+	id_op_at,
+	id_op_set_at,
+	id_op_range,
+	id_op_add,
+	id_op_cat,
+	id_op_sub,
+	id_op_mul,
+	id_op_div,
+	id_op_mod,
+	id_op_and,
+	id_op_or,
+	id_op_xor,
+	id_op_shl,
+	id_op_shr,
+	id_op_ushr,
+	id_op_eq,
+	id_op_lt,
+	id_op_in,
+	id_op_inc,
+	id_op_dec,
+	id_op_add_assign,
+	id_op_sub_assign,
+	id_op_cat_assign,
+	id_op_mul_assign,
+	id_op_div_assign,
+	id_op_mod_assign,
+	id_op_and_assign,
+	id_op_or_assign,
+	id_op_xor_assign,
+	id_op_shl_assign,
+	id_op_shr_assign,
+	id_op_ushr_assign,
+
+	id_op_MAX
+};};
+
+class Core{
+public:
+
+	Core(const CoreSetting& setting)
+		:setting_(setting){
+		initialize(setting);
+	}
+
+	~Core(){
+		uninitialize();
+	}
+
+	void initialize(const CoreSetting& setting);
+
+	void uninitialize();
+
+	void debug_print();
+
+public:
+
+	void print_alive_objects();
+
+public:
+
+public:
+
+	void bind();
+	void exec_script();
+	
+public:
+
+	CoreSetting setting_;
+	SmallObjectAllocator so_alloc_;
+	ObjectMgr object_mgr_;	
+	StringMgr string_mgr_;
+	ThreadMgr thread_mgr_;
+
+	IDPtr id_op_list_[IDOp::id_op_MAX];
 
 	SmartPtr<Filesystem> filesystem_;
 
@@ -259,173 +321,48 @@ private:
 
 	ArrayPtr vm_list_;
 
-	struct MemberCacheTable{
-		struct Unit{
-			uint_t mutate_count;
-			uint_t accessibility;
-			AnyPtr target_class;
-			AnyPtr primary_key;
-			AnyPtr secondary_key;
-			AnyPtr member;
-		};
-
-		enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
-
-		static uint_t calc_index(uint_t hash){
-			return hash & CACHE_MASK;
-		}
-
-		Unit table_[CACHE_MAX];
-
-		int_t hit_;
-		int_t miss_;
-		int_t collided_;
-		uint_t mutate_count_;
-
-		MemberCacheTable(){
-			hit_ = 0;
-			miss_ = 0;
-			collided_ = 0;
-			mutate_count_ = 0;
-		}
-
-		int_t hit_count(){
-			return hit_;
-		}
-
-		int_t miss_count(){
-			return miss_;
-		}
-
-		int_t collided_count(){
-			return collided_;
-		}
-
-		void inc_mutate_count(){
-			mutate_count_++;
-		}
-
-		const AnyPtr& cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
-
-		void clear(){
-			for(int_t i=0; i<CACHE_MAX; ++i){
-				Unit& unit = table_[i];
-				unit.target_class = null;
-				unit.primary_key = null;
-				unit.secondary_key = null;
-				unit.member = null;	
-			}
-			mutate_count_++;
-		}
-	};
-
-	struct IsCacheTable{
-		struct Unit{
-			uint_t mutate_count;
-			AnyPtr target_class;
-			AnyPtr klass;
-			bool result;
-		};
-
-		enum{ CACHE_MAX = 64, CACHE_MASK = CACHE_MAX-1 };
-
-		static uint_t calc_index(uint_t hash){
-			return hash & CACHE_MASK;
-		}
-
-		Unit table_[CACHE_MAX];
-
-		int_t hit_;
-		int_t miss_;
-		int_t collided_;
-		uint_t mutate_count_;
-
-		IsCacheTable(){
-			hit_ = 0;
-			miss_ = 0;
-			collided_ = 0;
-			mutate_count_ = 0;
-		}
-
-		int_t hit_count(){
-			return hit_;
-		}
-
-		int_t miss_count(){
-			return miss_;
-		}
-		
-		int_t collided_count(){
-			return collided_;
-		}
-
-		void inc_mutate_count(){
-			mutate_count_++;
-		}
-
-		bool cache(const AnyPtr& target_class, const AnyPtr& klass);
-
-		void clear(){
-			for(int_t i=0; i<CACHE_MAX; ++i){
-				Unit& unit = table_[i];
-				unit.target_class = null;
-				unit.klass = null;
-			}
-			mutate_count_++;
-		}
-	};
-
 	MemberCacheTable member_cache_table_;
 	IsCacheTable is_cache_table_;
 
-	SmartPtr<StringMgr> string_mgr_;
-	SmartPtr<ThreadMgr> thread_mgr_;
 };
 
 Core* core();
 
 void set_core(Core* e);
 
+inline const IDPtr* id_op_list(){
+	return core()->id_op_list_;
+}
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 * メモリ確保失敗は例外で返される。
 */
-inline void* user_malloc(size_t size){
-	return core()->user_malloc(size);
-}
+void* user_malloc(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 * メモリ確保失敗はNULL値で返される。
 */
-inline void* user_malloc_nothrow(size_t size){
-	return core()->user_malloc_nothrow(size);
-}
+void* user_malloc_nothrow(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
-inline void user_free(void* p){
-	return core()->user_free(p);
-}
+void user_free(void* p);
 
 /**
 * @brief 小さいオブジェクト用にメモリをアロケートする。
 */
-inline void* so_malloc(size_t size){
-	return core()->so_malloc(size);
-}
+void* so_malloc(size_t size);
 
 /**
 * @brief 小さいオブジェクト用のメモリを解放する。
 */
-inline void so_free(void* p, size_t size){
-	return core()->so_free(p, size);
-}
+void so_free(void* p, size_t size);
 
 /**
 * @brief ガーベジコレクションを実行する
@@ -435,7 +372,7 @@ inline void so_free(void* p, size_t size){
 * ゲームで使用する場合、毎フレームこれを呼ぶことを推奨する。
 */
 inline void gc(){
-	return core()->gc();
+	return core()->object_mgr_.gc();
 }
 
 /**
@@ -446,7 +383,9 @@ inline void gc(){
 * ゲームで使用する場合、シーンの切り替え時など、節目節目に呼ぶことを推奨する。
 */
 inline void full_gc(){
-	return core()->full_gc();
+	core()->member_cache_table_.clear();
+	core()->is_cache_table_.clear();
+	return core()->object_mgr_.full_gc();
 }
 
 /**
@@ -456,7 +395,7 @@ inline void full_gc(){
 * 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
 */
 inline void disable_gc(){
-	return core()->disable_gc();
+	return core()->object_mgr_.disable_gc();
 }
 
 /**
@@ -466,7 +405,23 @@ inline void disable_gc(){
 * 
 */
 inline void enable_gc(){
-	return core()->enable_gc();
+	return core()->object_mgr_.enable_gc();
+}
+
+inline void register_gc(RefCountingBase* p){
+	return core()->object_mgr_.register_gc(p);
+}
+
+inline void register_gc_observer(GCObserver* p){
+	return core()->object_mgr_.register_gc_observer(p);
+}
+
+inline void unregister_gc_observer(GCObserver* p){
+	return core()->object_mgr_.unregister_gc_observer(p);
+}
+
+inline const ClassPtr& get_cpp_class(CppClassSymbolData* key){
+	return core()->object_mgr_.get_cpp_class(key);
 }
 
 /**
@@ -475,7 +430,7 @@ inline void enable_gc(){
 */
 template<class T>
 const ClassPtr& new_cpp_class(const StringPtr& name){
-	return core()->new_cpp_class<T>(name);
+	return core()->object_mgr_.new_cpp_class<T>(name);
 }
 
 /**
@@ -484,7 +439,7 @@ const ClassPtr& new_cpp_class(const StringPtr& name){
 */
 template<class T>
 const SmartPtr<T>& new_cpp_singleton(){
-	return core()->new_cpp_singleton<T>();
+	return core()->object_mgr_.new_cpp_singleton<T>();
 }
 
 /**
@@ -492,7 +447,7 @@ const SmartPtr<T>& new_cpp_singleton(){
 */
 template<class T>
 bool exists_cpp_class(){
-	return core()->exists_cpp_class<T>();
+	return core()->object_mgr_.exists_cpp_class<T>();
 }
 
 /**
@@ -500,7 +455,7 @@ bool exists_cpp_class(){
 */
 template<class T>
 const ClassPtr& get_cpp_class(){
-	return core()->get_cpp_class<T>();
+	return core()->object_mgr_.get_cpp_class<T>();
 }
 
 /**
@@ -508,35 +463,57 @@ const ClassPtr& get_cpp_class(){
 */
 template<class T>
 void set_cpp_class(const ClassPtr& cls){
-	return core()->set_cpp_class<T>(cls);
+	return core()->object_mgr_.set_cpp_class<T>(cls);
 }
+
+inline const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+	return core()->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
+}
+
+inline bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
+	return core()->is_cache_table_.cache(target_class, klass);
+}
+
+inline void inc_mutate_count_cache_member(){
+	core()->member_cache_table_.inc_mutate_count();
+}
+
+inline void inc_mutate_count_cache_is(){
+	core()->is_cache_table_.inc_mutate_count();
+	core()->member_cache_table_.inc_mutate_count();
+}
+
+VMachinePtr vmachine_take_over();
+
+void vmachine_take_back(const VMachinePtr& vm);
+
 
 /**
 * @brief Iteratorクラスを返す
 */
 inline const ClassPtr& Iterator(){
-	return core()->Iterator();
+	return core()->Iterator_;
 }
 
 /**
 * @brief Iterableクラスを返す
 */
 inline const ClassPtr& Iterable(){
-	return core()->Iterable();
+	return core()->Iterable_;
 }
 
 /**
 * @brief builtinシングルトンクラスを返す
 */
 inline const ClassPtr& builtin(){
-	return core()->builtin();
+	return core()->builtin_;
 }
 
 /**
 * @brief libクラスを返す
 */
 inline const LibPtr& lib(){
-	return core()->lib();
+	return core()->lib_;
 }
 
 const StreamPtr& stdin_stream();
@@ -554,47 +531,47 @@ const ClassPtr& UnsupportedError();
 const ClassPtr& ArgumentError();
 
 inline const IDPtr& intern_literal(const char_t* str){
-	return core()->string_mgr()->insert_literal(str);
+	return core()->string_mgr_.insert_literal(str);
 }
 
 inline const IDPtr& intern(const char_t* str){
-	return core()->string_mgr()->insert(str);
+	return core()->string_mgr_.insert(str);
 }
 
 inline const IDPtr& intern(const char_t* str, uint_t data_size){
-	return core()->string_mgr()->insert(str, data_size);
+	return core()->string_mgr_.insert(str, data_size);
 }
 
 inline const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash){
-	return core()->string_mgr()->insert(str, data_size, hash);
+	return core()->string_mgr_.insert(str, data_size, hash);
 }
 
 inline AnyPtr interned_strings(){
-	return core()->string_mgr()->interned_strings();
+	return core()->string_mgr_.interned_strings();
 }
 
 inline bool thread_enabled(){
-	return core()->thread_mgr()->thread_enabled();
+	return core()->thread_mgr_.thread_enabled();
 }
 
 inline void yield_thread(){
-	return core()->thread_mgr()->yield_thread();
+	return core()->thread_mgr_.yield_thread();
 }
 
 inline void sleep_thread(float_t sec){
-	return core()->thread_mgr()->sleep_thread(sec);
+	return core()->thread_mgr_.sleep_thread(sec);
 }
 
 inline ThreadPtr new_thread(const AnyPtr& callback_fun){
-	return core()->thread_mgr()->new_thread(callback_fun);
+	return core()->thread_mgr_.new_thread(callback_fun);
 }
 
 inline MutexPtr new_mutex(){
-	return core()->thread_mgr()->new_mutex();
+	return core()->thread_mgr_.new_mutex();
 }
 
 inline void lock_mutex(const MutexPtr& p){
-	return core()->thread_mgr()->lock_mutex(p);
+	return core()->thread_mgr_.lock_mutex(p);
 }
 
 /**
@@ -604,7 +581,7 @@ inline void lock_mutex(const MutexPtr& p){
 * スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
 */
 inline const VMachinePtr& vmachine(){
-	return core()->thread_mgr()->vmachine();
+	return core()->thread_mgr_.vmachine();
 }
 
 #ifndef XTAL_NO_PARSER

@@ -29,14 +29,12 @@ int main(int argc, char** argv){
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.chcode_lib = &sjis_chcode_lib;
 
-	Core core;
-	core.initialize(setting);
+	Core core(setting);
 
 	ix();
 
 	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->put_s(e->to_s());
-		stderr_stream()->put_s("\n");
+		stderr_stream()->println(e);
 	}
 
 	return 0;

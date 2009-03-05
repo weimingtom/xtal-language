@@ -24,7 +24,7 @@ int main2(int argc, char** argv){
 	
 	if(CodePtr code = Xsrc((
 {
-		"test".p;
+		"test".p; 111111111.p;
 }
 	))){
 		code->inspect()->p();
@@ -131,12 +131,14 @@ int main(int argc, char** argv){
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.chcode_lib = &sjis_chcode_lib;
 
-	Core core(setting);
+	initialize(setting);
 
 	int ret = main2(argc, argv);
 
 	vmachine()->print_info();
-	core.debug_print();
+	debug_print();
+
+	uninitialize();
 
 	return ret;
 }

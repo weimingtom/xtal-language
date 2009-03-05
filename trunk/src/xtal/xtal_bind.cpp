@@ -38,7 +38,7 @@ struct BindFunInfo{
 };
 */
 
-void Core::bind(){
+void bind(){
 
 	builtin()->def(Xid(String), new_cpp_class<String>());
 	builtin()->def(Xid(Int), new_cpp_class<Int>());
@@ -566,11 +566,6 @@ void Core::bind(){
 	builtin()->def(Xid(MemoryStream), get_cpp_class<MemoryStream>());
 	builtin()->def(Xid(StringStream), get_cpp_class<StringStream>());
 
-	setting_.stream_lib->initialize();
-	builtin()->def(Xid(stdin), setting_.stream_lib->new_stdin_stream());
-	builtin()->def(Xid(stdout), setting_.stream_lib->new_stdout_stream());
-	builtin()->def(Xid(stderr), setting_.stream_lib->new_stderr_stream());
-
 	{
 		new_cpp_class<InstanceVariableGetter>();
 		new_cpp_class<InstanceVariableSetter>();
@@ -650,7 +645,7 @@ void Core::bind(){
 	lib()->def(Xid(builtin), builtin());
 }
 
-void Core::exec_script(){
+void exec_script(){
 
 	Xemb((
 

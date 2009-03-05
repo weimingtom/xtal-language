@@ -273,37 +273,10 @@ enum{
 	id_op_MAX
 };};
 
-class Core{
-public:
-
-	Core(const CoreSetting& setting)
-		:setting_(setting){
-		initialize(setting);
-	}
-
-	~Core(){
-		uninitialize();
-	}
-
+struct Core{
 	void initialize(const CoreSetting& setting);
-
 	void uninitialize();
-
-	void debug_print();
-
-public:
-
-	void print_alive_objects();
-
-public:
-
-public:
-
-	void bind();
-	void exec_script();
 	
-public:
-
 	CoreSetting setting_;
 	SmallObjectAllocator so_alloc_;
 	ObjectMgr object_mgr_;	
@@ -326,6 +299,13 @@ public:
 
 };
 
+/**
+* @brief Xtal実行環境を初期化する
+*/
+void initialize(const CoreSetting& setting);
+
+void uninitialize();
+
 Core* core();
 
 void set_core(Core* e);
@@ -333,6 +313,14 @@ void set_core(Core* e);
 inline const IDPtr* id_op_list(){
 	return core()->id_op_list_;
 }
+	
+void debug_print();
+
+void print_alive_objects();
+
+void bind();
+
+void exec_script();
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。

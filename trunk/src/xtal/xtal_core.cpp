@@ -468,9 +468,21 @@ bool IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
 	}
 }
 
+void initialize(const CoreSetting& setting){
+	core_ = (Core*)setting.allocator_lib->malloc(sizeof(Core));
+	new(core_) Core();
+	core_->initialize(setting);
+}
+
+void uninitialize(){
+	AllocatorLib* allocacator_lib = core_->setting_.allocator_lib;
+	core_->uninitialize();
+	core_->~Core();
+	allocacator_lib->free(core_);
+	core_ = 0;
+}
 
 void Core::initialize(const CoreSetting& setting){
-	set_core(this);
 	setting_ = setting;
 
 //////////
@@ -506,7 +518,10 @@ void Core::initialize(const CoreSetting& setting){
 	setting_.thread_lib->initialize();
 	thread_mgr_.initialize(setting_.thread_lib);
 
-	print_alive_objects();
+	setting_.stream_lib->initialize();
+	builtin()->def(Xid(stdin), setting_.stream_lib->new_stdin_stream());
+	builtin()->def(Xid(stdout), setting_.stream_lib->new_stdout_stream());
+	builtin()->def(Xid(stderr), setting_.stream_lib->new_stderr_stream());
 
 	initialize_xpeg();
 	initialize_math();
@@ -558,8 +573,6 @@ void Core::initialize(const CoreSetting& setting){
 }
 
 void Core::uninitialize(){
-	if(!Iterator_){ return; }
-	
 	full_gc();
 
 	Iterator_ = null;
@@ -590,18 +603,18 @@ void Core::uninitialize(){
 
 }
 
-void Core::debug_print(){
+void debug_print(){
 	{
-		int_t hit = member_cache_table_.hit_count();
-		int_t miss = member_cache_table_.miss_count();
-		int_t collided = member_cache_table_.collided_count();
+		int_t hit = core()->member_cache_table_.hit_count();
+		int_t miss = core()->member_cache_table_.miss_count();
+		int_t collided = core()->member_cache_table_.collided_count();
 		printf("member_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
 	}
 
 	{
-		int_t hit = is_cache_table_.hit_count();
-		int_t miss = is_cache_table_.miss_count();
-		int_t collided = is_cache_table_.collided_count();
+		int_t hit = core()->is_cache_table_.hit_count();
+		int_t miss = core()->is_cache_table_.miss_count();
+		int_t collided = core()->is_cache_table_.collided_count();
 		printf("is_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
 	}
 }
@@ -680,9 +693,9 @@ struct ConnectedPointer{
 	}
 };
 
-void Core::print_alive_objects(){
+void print_alive_objects(){
 #if XTAL_DEBUG_ALLOC!=0
-	full_gc();
+/*	full_gc();
 
 	ConnectedPointer current(objects_count_, objects_list_begin_);
 	ConnectedPointer begin(0, objects_list_begin_);
@@ -707,7 +720,7 @@ void Core::print_alive_objects(){
 	}
 
 	printf("used_memory %d\n", used_memory);
-
+*/
 #endif
 }
 

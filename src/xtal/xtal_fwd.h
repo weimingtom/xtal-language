@@ -370,8 +370,12 @@ struct ParamInfo;
 struct VMAndData;
 
 struct CppClassSymbolData{ 
-	int value; 
-	CppClassSymbolData* next;
+	CppClassSymbolData(){
+		static unsigned int counter = 0;
+		value = counter++;
+	}
+
+	unsigned int value; 
 };
 
 template<class T>
@@ -380,7 +384,7 @@ struct CppClassSymbol{
 };
 
 template<class T>
-CppClassSymbolData CppClassSymbol<T>::value = {-1, 0};
+CppClassSymbolData CppClassSymbol<T>::value;
 
 template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};

@@ -30,23 +30,23 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)
 	:Any(noinit_t()){
 	set_p(type, p);
-	core()->register_gc(p);
+	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
 	p->set_class(c);
-	core()->register_gc(p);
+	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(Singleton* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
-	core()->register_gc(p);
+	register_gc(p);
 }
 
 SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t)
 	:Any(p){
-	core()->register_gc(p);
+	register_gc(p);
 }
 
 }

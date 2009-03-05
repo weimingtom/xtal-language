@@ -8,7 +8,7 @@ VMachine::VMachine(){
 
 	using_ = false;
 
-	id_ = core()->id_op_list();
+	id_ = id_op_list();
 
 	stack_.reserve(32);
 

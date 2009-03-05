@@ -596,9 +596,6 @@ void Core::bind(){
 		builtin()->def(Xid(Mutex), get_cpp_class<Mutex>());
 	}
 
-	setting_.thread_lib->initialize();
-	thread_mgr_ = xnew<ThreadMgr>(setting_.thread_lib);
-
 ///////////////////
 
 	builtin()->def(Xid(_text_map), xnew<Map>());
@@ -629,17 +626,6 @@ void Core::bind(){
 
 ///////////////////
 
-	{
-		setting_.filesystem_lib->initialize();
-		SmartPtr<Filesystem> p = new_cpp_singleton<Filesystem>();
-		p->initialize(setting_.filesystem_lib);
-		filesystem_ = p;
-		p->def_singleton_method(Xid(open), &Filesystem::open);
-		p->def_singleton_method(Xid(entries), &Filesystem::entries);
-		p->def_singleton_method(Xid(is_directory), &Filesystem::is_directory);
-
-		builtin()->def(Xid(filesystem), p);
-	}
 
 ///////////////////
 

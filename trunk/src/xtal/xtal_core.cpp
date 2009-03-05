@@ -133,6 +133,7 @@ void display_debug_memory(){
 
 namespace xtal{
 
+
 void initialize_math();
 void initialize_xpeg();
 
@@ -144,26 +145,79 @@ namespace{
 		OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 	};
 
-	Core* current_core_;
-}
+	Core* core_;
 
-Core* core(){
-	return current_core_;
-}
-
-void set_core(Core* core){
-	current_core_ = core;
-}
-
-////////////////////////////////////
-
-namespace{
 	ThreadLib empty_thread_lib;
 	StreamLib empty_stream_lib;
 	FilesystemLib empty_filesystem_lib;
 	AllocatorLib cstd_allocator_lib;
 	ChCodeLib ascii_chcode_lib;
 }
+
+Core* core(){
+	return core_;
+}
+
+void set_core(Core* core){
+	core_ = core;
+}
+
+////////////////////////////////////
+
+void* so_malloc(size_t size){
+#if XTAL_DEBUG_ALLOC==2
+	return debug_so_malloc(size);
+#endif
+
+	return core_->so_alloc_.malloc(size);
+}
+
+void so_free(void* p, size_t size){
+#if XTAL_DEBUG_ALLOC==2
+	return debug_so_free(p, size);
+#endif
+
+	core_->so_alloc_.free(p, size);
+}
+
+void* user_malloc(size_t size){
+	void* ret = user_malloc_nothrow(size);
+	if(!ret){
+		XTAL_ASSERT(false); // メモリーが完全に取得できなかった。
+		// アサートで止めても事態は改善しないんだが、
+		// 例外を使わないとしたら、一体ここはどうしたらいいんだろう？
+	}
+	return ret;
+} 
+
+void* user_malloc_nothrow(size_t size){
+#if XTAL_DEBUG_ALLOC!=0
+	return debug_malloc(size);
+#endif
+
+	void* ret = core_->setting_.allocator_lib->malloc(size);
+
+	if(!ret){
+		gc();
+		ret = core_->setting_.allocator_lib->malloc(size);
+
+		if(!ret){
+			full_gc();
+			ret = core_->setting_.allocator_lib->malloc(size);
+		}
+	}
+
+	return ret;
+} 
+
+void user_free(void* p){
+#if XTAL_DEBUG_ALLOC!=0
+	return debug_free(p);
+#endif
+
+	core_->setting_.allocator_lib->free(p);
+}
+
 
 CoreSetting::CoreSetting(){
 	thread_lib = &empty_thread_lib;
@@ -173,22 +227,15 @@ CoreSetting::CoreSetting(){
 	chcode_lib = &ascii_chcode_lib;
 }
 
-void Core::initialize(const CoreSetting& setting){
-	set_core(this);
-
-	setting_ = setting;
-
+void ObjectMgr::initialize(){
 	objects_list_begin_ = 0;
 	objects_list_current_ = 0;
 	objects_list_end_ = 0;
-
 	gcobservers_begin_ = 0;
 	gcobservers_current_ = 0;
 	gcobservers_end_ = 0;
-
 	objects_count_ = 0;
 	prev_objects_count_ = 0;
-
 	cycle_count_ = 0;
 
 	disable_gc();
@@ -196,8 +243,6 @@ void Core::initialize(const CoreSetting& setting){
 	expand_objects_list();
 	objects_begin_ = objects_current_ = *objects_list_current_++;
 	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
-
-//////////////////
 
 	CppClassSymbolData* symbols[] = { 
 		&CppClassSymbol<void>::value,
@@ -236,102 +281,9 @@ void Core::initialize(const CoreSetting& setting){
 		Base* p = class_table_[i];
 		register_gc(p);
 	}
-
-//////////
-
-	set_cpp_class<Base>(get_cpp_class<Any>());
-	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
-	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
-
-	builtin_ = xnew<Singleton>();
-	lib_ = xnew<Lib>(true);
-	lib_->append_load_path(".");
-	Iterator_ = xnew<IteratorClass>();
-	Iterable_ = xnew<Class>();
-
-	vm_list_ = xnew<Array>();
-
-	string_mgr_ = xnew<StringMgr>();
-
-/////////////////////
-	enable_gc();
-
-	bind();
-
-	print_alive_objects();
-
-	initialize_xpeg();
-	initialize_math();
-
-////////////////////////
-
-	id_op_list_[id_op_call] = Xid(op_call);
-	id_op_list_[id_op_pos] = Xid(op_pos);
-	id_op_list_[id_op_neg] = Xid(op_neg);
-	id_op_list_[id_op_com] = Xid(op_com);
-	id_op_list_[id_op_at] = Xid(op_at);
-	id_op_list_[id_op_set_at] = Xid(op_set_at);
-	id_op_list_[id_op_range] = Xid(op_range);
-	id_op_list_[id_op_add] = Xid(op_add);
-	id_op_list_[id_op_cat] = Xid(op_cat);
-	id_op_list_[id_op_sub] = Xid(op_sub);
-	id_op_list_[id_op_mul] = Xid(op_mul);
-	id_op_list_[id_op_div] = Xid(op_div);
-	id_op_list_[id_op_mod] = Xid(op_mod);
-	id_op_list_[id_op_and] = Xid(op_and);
-	id_op_list_[id_op_or] = Xid(op_or);
-	id_op_list_[id_op_xor] = Xid(op_xor);
-	id_op_list_[id_op_shl] = Xid(op_shl);
-	id_op_list_[id_op_shr] = Xid(op_shr);
-	id_op_list_[id_op_ushr] = Xid(op_ushr);
-	id_op_list_[id_op_eq] = Xid(op_eq);
-	id_op_list_[id_op_lt] = Xid(op_lt);
-	id_op_list_[id_op_in] = Xid(op_in);
-	id_op_list_[id_op_inc] = Xid(op_inc);
-	id_op_list_[id_op_dec] = Xid(op_dec);
-	id_op_list_[id_op_add_assign] = Xid(op_add_assign);
-	id_op_list_[id_op_cat_assign] = Xid(op_cat_assign);
-	id_op_list_[id_op_sub_assign] = Xid(op_sub_assign);
-	id_op_list_[id_op_mul_assign] = Xid(op_mul_assign);
-	id_op_list_[id_op_div_assign] = Xid(op_div_assign);
-	id_op_list_[id_op_mod_assign] = Xid(op_mod_assign);
-	id_op_list_[id_op_and_assign] = Xid(op_and_assign);
-	id_op_list_[id_op_or_assign] = Xid(op_or_assign);
-	id_op_list_[id_op_xor_assign] = Xid(op_xor_assign);
-	id_op_list_[id_op_shl_assign] = Xid(op_shl_assign);
-	id_op_list_[id_op_shr_assign] = Xid(op_shr_assign);
-	id_op_list_[id_op_ushr_assign] = Xid(op_ushr_assign);
-
-	print_alive_objects();
-
-	exec_script();
 }
 
-void Core::uninitialize(){
-	if(!objects_list_begin_){ return; }
-	
-	full_gc();
-
-	thread_mgr_->destroy();
-	Iterator_ = null;
-	Iterable_ = null;
-	builtin_ = null;
-	lib_ = null;
-	vm_list_ = null;
-	filesystem_ = null;
-
-	string_mgr_ = null;
-
-	full_gc();
-
-	for(int i=0; i<id_op_MAX; ++i){
-		id_op_list_[i] = null;
-	}
-
-	thread_mgr_ = null;
-
-	full_gc();
-
+void ObjectMgr::uninitialize(){
 	for(uint_t i=0; i<class_table_.size(); ++i){
 		if(class_table_[i]){
 			class_table_[i]->dec_ref_count();
@@ -370,6 +322,266 @@ void Core::uninitialize(){
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 
+}
+
+
+
+const ClassPtr& ObjectMgr::new_cpp_class(const StringPtr& name, CppClassSymbolData* key){
+	int_t index = register_cpp_class(key);
+
+	if(Class* p = class_table_[index]){
+		return from_this(p);
+	}
+
+	class_table_[index] = xnew<CppClass>(name).get();
+	class_table_[index]->inc_ref_count();
+	return from_this(class_table_[index]);
+}
+	
+VMachinePtr vmachine_take_over(){
+	Core* core = xtal::core();
+	if(core->vm_list_->empty()){
+		core->vm_list_->push_back(xnew<VMachine>());
+	}
+	VMachinePtr vm = unchecked_ptr_cast<VMachine>(core->vm_list_->back());
+	core->vm_list_->pop_back();
+	return vm;
+}
+
+void vmachine_take_back(const VMachinePtr& vm){
+	Core* core = xtal::core();
+	vm->reset();
+	core->vm_list_->push_back(vm);
+}
+
+const AnyPtr& MemberCacheTable::cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+	//bool nocache = false;
+	//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
+
+	uint_t itarget_class = rawvalue(target_class)>>2;
+	uint_t iprimary_key = rawvalue(primary_key);
+	uint_t isecondary_key = rawvalue(secondary_key);
+
+	uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
+	Unit& unit = table_[calc_index(hash)];
+
+	//if(mutate_count_==unit.mutate_count && 
+	//	raweq(primary_key, unit.primary_key) && 
+	//	raweq(target_class, unit.target_class) &&
+	//	raweq(secondary_key, unit.secondary_key)){
+	if(((mutate_count_^unit.mutate_count) | 
+		rawbitxor(primary_key, unit.primary_key) | 
+		rawbitxor(target_class, unit.target_class) | 
+		rawbitxor(secondary_key, unit.secondary_key))==0){
+		hit_++;
+		accessibility = unit.accessibility;
+		return ap(unit.member);
+	}
+	else{
+
+		// 次の番地にあるか調べる
+		//Unit& unit2 = table_[calc_index(hash + 1)];
+		//if(mutate_count_==unit2.mutate_count && 
+		//	raweq(primary_key, unit2.primary_key) && 
+		//	raweq(target_class, unit2.target_class) &&
+		//	raweq(secondary_key, unit2.secondary_key)){
+		//	collided_++;
+		//	hit_++;
+		//	accessibility = unit2.accessibility;
+		//	return ap(unit2.member);
+		//}
+
+		miss_++;
+
+		if(type(target_class)!=TYPE_BASE){
+			return undefined;
+		}
+
+		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
+		//if(unit.mutate_count==mutate_count_){
+		//	unit2 = unit;
+		//}
+
+		bool nocache = false;
+		const AnyPtr& ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), true, accessibility, nocache);
+		//if(rawne(ret, undefined)){
+			unit.member = ret;
+			if(!nocache){
+				unit.target_class = target_class;
+				unit.primary_key = primary_key;
+				unit.secondary_key = secondary_key;
+				unit.accessibility = accessibility;
+				unit.mutate_count = mutate_count_;
+			}
+			else{
+				unit.mutate_count = mutate_count_-1;
+			}
+			return ap(unit.member);
+		//}
+		//return undefined;
+	}
+}
+
+bool IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
+	//return unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
+
+	uint_t itarget_class = rawvalue(target_class);
+	uint_t iklass = rawvalue(klass);
+
+	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+	Unit& unit = table_[hash & CACHE_MASK];
+	
+	if(mutate_count_==unit.mutate_count && 
+		raweq(target_class, unit.target_class) && 
+		raweq(klass, unit.klass)){
+		hit_++;
+		return unit.result;
+	}
+	else{
+		// 次の番地にあるか調べる
+		//Unit& unit2 = table_[calc_index(hash + 1)];
+		//if(mutate_count_==unit2.mutate_count && 
+		//	raweq(target_class, unit2.target_class) && 
+		//	raweq(klass, unit2.klass)){
+		//	collided_++;
+		//	hit_++;
+		//	return unit2.result;
+		//}
+
+		miss_++;
+
+		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
+		//if(unit.mutate_count==mutate_count_){
+		//	unit2 = unit;
+		//}
+
+		bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+
+		// キャッシュに保存
+		//if(ret){
+			unit.target_class = target_class;
+			unit.klass = klass;
+			unit.mutate_count = mutate_count_;
+			unit.result = ret;
+		//}
+		return ret;
+	}
+}
+
+
+void Core::initialize(const CoreSetting& setting){
+	set_core(this);
+	setting_ = setting;
+
+//////////
+	
+	string_mgr_.initialize();
+	object_mgr_.initialize();
+
+	set_cpp_class<Base>(get_cpp_class<Any>());
+	set_cpp_class<Singleton>(get_cpp_class<CppClass>());
+	set_cpp_class<IteratorClass>(get_cpp_class<CppClass>());
+
+	builtin_ = xnew<Singleton>();
+	lib_ = xnew<Lib>(true);
+	lib_->append_load_path(".");
+	Iterator_ = xnew<IteratorClass>();
+	Iterable_ = xnew<Class>();
+	vm_list_ = xnew<Array>();
+
+	bind();
+
+	setting_.filesystem_lib->initialize();
+	filesystem_ = new_cpp_singleton<Filesystem>();
+	filesystem_->initialize(setting_.filesystem_lib);
+
+	{
+		filesystem()->def_singleton_method(Xid(open), &Filesystem::open);
+		filesystem()->def_singleton_method(Xid(entries), &Filesystem::entries);
+		filesystem()->def_singleton_method(Xid(is_directory), &Filesystem::is_directory);
+	}
+
+	builtin()->def(Xid(filesystem), filesystem_);
+
+	setting_.thread_lib->initialize();
+	thread_mgr_.initialize(setting_.thread_lib);
+
+	print_alive_objects();
+
+	initialize_xpeg();
+	initialize_math();
+
+	enable_gc();
+
+////////////////////////
+
+	id_op_list_[IDOp::id_op_call] = Xid(op_call);
+	id_op_list_[IDOp::id_op_pos] = Xid(op_pos);
+	id_op_list_[IDOp::id_op_neg] = Xid(op_neg);
+	id_op_list_[IDOp::id_op_com] = Xid(op_com);
+	id_op_list_[IDOp::id_op_at] = Xid(op_at);
+	id_op_list_[IDOp::id_op_set_at] = Xid(op_set_at);
+	id_op_list_[IDOp::id_op_range] = Xid(op_range);
+	id_op_list_[IDOp::id_op_add] = Xid(op_add);
+	id_op_list_[IDOp::id_op_cat] = Xid(op_cat);
+	id_op_list_[IDOp::id_op_sub] = Xid(op_sub);
+	id_op_list_[IDOp::id_op_mul] = Xid(op_mul);
+	id_op_list_[IDOp::id_op_div] = Xid(op_div);
+	id_op_list_[IDOp::id_op_mod] = Xid(op_mod);
+	id_op_list_[IDOp::id_op_and] = Xid(op_and);
+	id_op_list_[IDOp::id_op_or] = Xid(op_or);
+	id_op_list_[IDOp::id_op_xor] = Xid(op_xor);
+	id_op_list_[IDOp::id_op_shl] = Xid(op_shl);
+	id_op_list_[IDOp::id_op_shr] = Xid(op_shr);
+	id_op_list_[IDOp::id_op_ushr] = Xid(op_ushr);
+	id_op_list_[IDOp::id_op_eq] = Xid(op_eq);
+	id_op_list_[IDOp::id_op_lt] = Xid(op_lt);
+	id_op_list_[IDOp::id_op_in] = Xid(op_in);
+	id_op_list_[IDOp::id_op_inc] = Xid(op_inc);
+	id_op_list_[IDOp::id_op_dec] = Xid(op_dec);
+	id_op_list_[IDOp::id_op_add_assign] = Xid(op_add_assign);
+	id_op_list_[IDOp::id_op_cat_assign] = Xid(op_cat_assign);
+	id_op_list_[IDOp::id_op_sub_assign] = Xid(op_sub_assign);
+	id_op_list_[IDOp::id_op_mul_assign] = Xid(op_mul_assign);
+	id_op_list_[IDOp::id_op_div_assign] = Xid(op_div_assign);
+	id_op_list_[IDOp::id_op_mod_assign] = Xid(op_mod_assign);
+	id_op_list_[IDOp::id_op_and_assign] = Xid(op_and_assign);
+	id_op_list_[IDOp::id_op_or_assign] = Xid(op_or_assign);
+	id_op_list_[IDOp::id_op_xor_assign] = Xid(op_xor_assign);
+	id_op_list_[IDOp::id_op_shl_assign] = Xid(op_shl_assign);
+	id_op_list_[IDOp::id_op_shr_assign] = Xid(op_shr_assign);
+	id_op_list_[IDOp::id_op_ushr_assign] = Xid(op_ushr_assign);
+
+	print_alive_objects();
+
+	exec_script();
+}
+
+void Core::uninitialize(){
+	if(!Iterator_){ return; }
+	
+	full_gc();
+
+	Iterator_ = null;
+	Iterable_ = null;
+	builtin_ = null;
+	lib_ = null;
+	vm_list_ = null;
+	filesystem_ = null;
+
+	string_mgr_.uninitialize();
+	for(int i=0; i<IDOp::id_op_MAX; ++i){
+		id_op_list_[i] = null;
+	}
+
+	full_gc();
+
+	thread_mgr_.uninitialize();
+
+	full_gc();
+
+	object_mgr_.uninitialize();
+
 	so_alloc_.release();
 
 #if XTAL_DEBUG_ALLOC!=0
@@ -396,59 +608,6 @@ void Core::debug_print(){
 
 ////////////////////////////////////
 
-void* Core::so_malloc(size_t size){
-#if XTAL_DEBUG_ALLOC==2
-	return debug_so_malloc(size);
-#endif
-
-	return so_alloc_.malloc(size);
-}
-
-void Core::so_free(void* p, size_t size){
-#if XTAL_DEBUG_ALLOC==2
-	return debug_so_free(p, size);
-#endif
-
-	so_alloc_.free(p, size);
-}
-
-void* Core::user_malloc(size_t size){
-	void* ret = user_malloc_nothrow(size);
-	if(!ret){
-		XTAL_ASSERT(false); // メモリーが完全に取得できなかった。
-		// アサートで止めても事態は改善しないんだが、
-		// 例外を使わないとしたら、一体ここはどうしたらいいんだろう？
-	}
-	return ret;
-} 
-
-void* Core::user_malloc_nothrow(size_t size){
-#if XTAL_DEBUG_ALLOC!=0
-	return debug_malloc(size);
-#endif
-
-	void* ret = setting_.allocator_lib->malloc(size);
-
-	if(!ret){
-		gc();
-		ret = setting_.allocator_lib->malloc(size);
-
-		if(!ret){
-			full_gc();
-			ret = setting_.allocator_lib->malloc(size);
-		}
-	}
-
-	return ret;
-} 
-
-void Core::user_free(void* p){
-#if XTAL_DEBUG_ALLOC!=0
-	return debug_free(p);
-#endif
-
-	setting_.allocator_lib->free(p);
-}
 
 struct CycleCounter{
 	uint_t* p;
@@ -456,15 +615,15 @@ struct CycleCounter{
 	~CycleCounter(){ *p-=1; }
 };
 
-void Core::enable_gc(){
+void ObjectMgr::enable_gc(){
 	cycle_count_++;
 }
 
-void Core::disable_gc(){
+void ObjectMgr::disable_gc(){
 	cycle_count_--;
 }
 	
-void Core::expand_objects_list(){
+void ObjectMgr::expand_objects_list(){
 	if(objects_list_current_==objects_list_end_){
 		expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_, 4);
 		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
@@ -552,7 +711,7 @@ void Core::print_alive_objects(){
 #endif
 }
 
-void Core::gc(){
+void ObjectMgr::gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
@@ -604,15 +763,15 @@ void Core::gc(){
 	}
 }
 
-void Core::full_gc(){
+void ObjectMgr::full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
 		CycleCounter cc(&cycle_count_);
 		//printf("used memory %dKB\n", used_memory/1024);
 				
 		while(true){			
-			member_cache_table_.clear();
-			is_cache_table_.clear();
+			//member_cache_table_.clear();
+			//is_cache_table_.clear();
 
 			ConnectedPointer current(objects_count_, objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
@@ -624,9 +783,9 @@ void Core::full_gc(){
 				(*it)->before_gc();
 			}
 
-			if(string_mgr_){
+			//if(string_mgr_){
 			//	string_mgr_->gc();
-			}
+			//}
 
 			{ // 参照カウンタを減らす
 				Visitor m(-1);	
@@ -774,7 +933,7 @@ void Core::full_gc(){
 	}
 }
 
-void Core::register_gc(RefCountingBase* p){
+void ObjectMgr::register_gc(RefCountingBase* p){
 	p->inc_ref_count();
 
 	if(objects_current_==objects_end_){
@@ -789,14 +948,14 @@ void Core::register_gc(RefCountingBase* p){
 	objects_count_++;
 }
 
-void Core::register_gc_observer(GCObserver* p){
+void ObjectMgr::register_gc_observer(GCObserver* p){
 	if(gcobservers_current_==gcobservers_end_){
 		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	}
 	*gcobservers_current_++ = p;
 }
 
-void Core::unregister_gc_observer(GCObserver* p){
+void ObjectMgr::unregister_gc_observer(GCObserver* p){
 	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 		if(*it==p){
 			std::swap(*it, *--gcobservers_current_);
@@ -805,7 +964,7 @@ void Core::unregister_gc_observer(GCObserver* p){
 	}
 }
 
-int_t Core::register_cpp_class(CppClassSymbolData* key){
+int_t ObjectMgr::register_cpp_class(CppClassSymbolData* key){
 	// 初登録のC++のクラスか
 	if(key->value<0){
 		CppClassSymbolData* tail = &CppClassSymbol<void>::value;
@@ -827,146 +986,6 @@ int_t Core::register_cpp_class(CppClassSymbolData* key){
 	}
 
 	return key->value;
-}
-
-const ClassPtr& Core::new_cpp_class(const StringPtr& name, CppClassSymbolData* key){
-	int_t index = register_cpp_class(key);
-
-	if(Class* p = class_table_[index]){
-		return from_this(p);
-	}
-
-	class_table_[index] = xnew<CppClass>(name).get();
-	class_table_[index]->inc_ref_count();
-	return from_this(class_table_[index]);
-}
-	
-VMachinePtr Core::vm_take_over(){
-	if(vm_list_->empty()){
-		vm_list_->push_back(xnew<VMachine>());
-	}
-	VMachinePtr vm = unchecked_ptr_cast<VMachine>(vm_list_->back());
-	vm_list_->pop_back();
-	return vm;
-}
-
-void Core::vm_take_back(const VMachinePtr& vm){
-	vm->reset();
-	vm_list_->push_back(vm);
-}
-
-const AnyPtr& Core::MemberCacheTable::cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	//bool nocache = false;
-	//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
-
-	uint_t itarget_class = rawvalue(target_class)>>2;
-	uint_t iprimary_key = rawvalue(primary_key);
-	uint_t isecondary_key = rawvalue(secondary_key);
-
-	uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
-	Unit& unit = table_[calc_index(hash)];
-
-	//if(mutate_count_==unit.mutate_count && 
-	//	raweq(primary_key, unit.primary_key) && 
-	//	raweq(target_class, unit.target_class) &&
-	//	raweq(secondary_key, unit.secondary_key)){
-	if(((mutate_count_^unit.mutate_count) | 
-		rawbitxor(primary_key, unit.primary_key) | 
-		rawbitxor(target_class, unit.target_class) | 
-		rawbitxor(secondary_key, unit.secondary_key))==0){
-		hit_++;
-		accessibility = unit.accessibility;
-		return ap(unit.member);
-	}
-	else{
-
-		// 次の番地にあるか調べる
-		//Unit& unit2 = table_[calc_index(hash + 1)];
-		//if(mutate_count_==unit2.mutate_count && 
-		//	raweq(primary_key, unit2.primary_key) && 
-		//	raweq(target_class, unit2.target_class) &&
-		//	raweq(secondary_key, unit2.secondary_key)){
-		//	collided_++;
-		//	hit_++;
-		//	accessibility = unit2.accessibility;
-		//	return ap(unit2.member);
-		//}
-
-		miss_++;
-
-		if(type(target_class)!=TYPE_BASE){
-			return undefined;
-		}
-
-		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-		//if(unit.mutate_count==mutate_count_){
-		//	unit2 = unit;
-		//}
-
-		bool nocache = false;
-		const AnyPtr& ret = pvalue(target_class)->do_member(primary_key, ap(secondary_key), true, accessibility, nocache);
-		//if(rawne(ret, undefined)){
-			unit.member = ret;
-			if(!nocache){
-				unit.target_class = target_class;
-				unit.primary_key = primary_key;
-				unit.secondary_key = secondary_key;
-				unit.accessibility = accessibility;
-				unit.mutate_count = mutate_count_;
-			}
-			else{
-				unit.mutate_count = mutate_count_-1;
-			}
-			return ap(unit.member);
-		//}
-		//return undefined;
-	}
-}
-
-bool Core::IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
-	//return unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
-
-	uint_t itarget_class = rawvalue(target_class);
-	uint_t iklass = rawvalue(klass);
-
-	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
-	Unit& unit = table_[hash & CACHE_MASK];
-	
-	if(mutate_count_==unit.mutate_count && 
-		raweq(target_class, unit.target_class) && 
-		raweq(klass, unit.klass)){
-		hit_++;
-		return unit.result;
-	}
-	else{
-		// 次の番地にあるか調べる
-		//Unit& unit2 = table_[calc_index(hash + 1)];
-		//if(mutate_count_==unit2.mutate_count && 
-		//	raweq(target_class, unit2.target_class) && 
-		//	raweq(klass, unit2.klass)){
-		//	collided_++;
-		//	hit_++;
-		//	return unit2.result;
-		//}
-
-		miss_++;
-
-		// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-		//if(unit.mutate_count==mutate_count_){
-		//	unit2 = unit;
-		//}
-
-		bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
-
-		// キャッシュに保存
-		//if(ret){
-			unit.target_class = target_class;
-			unit.klass = klass;
-			unit.mutate_count = mutate_count_;
-			unit.result = ret;
-		//}
-		return ret;
-	}
 }
 
 const ClassPtr& RuntimeError(){

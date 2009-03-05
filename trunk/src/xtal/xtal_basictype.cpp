@@ -147,16 +147,16 @@ void RefCountingHaveParent::set_object_parent(const ClassPtr& parent){
 }
 
 GCObserver::GCObserver(){
-	core()->register_gc_observer(this);
+	register_gc_observer(this);
 }
 
 GCObserver::GCObserver(const GCObserver& v)
 :Base(v){
-	core()->register_gc_observer(this);
+	register_gc_observer(this);
 }
 	
 GCObserver::~GCObserver(){
-	core()->unregister_gc_observer(this);
+	unregister_gc_observer(this);
 }
 
 }

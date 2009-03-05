@@ -30,7 +30,7 @@ AnyPtr Any::call() const{
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
 	int_t accessibility = 0;
 	const AnyPtr& ret = inherited_too ?
-		core()->cache_member(ap(*this), primary_key, secondary_key, accessibility) :
+		cache_member(ap(*this), primary_key, secondary_key, accessibility) :
 		type(*this)==TYPE_BASE ? pvalue(*this)->do_member(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
 
 	if(accessibility==0){
@@ -320,7 +320,7 @@ const ClassPtr& Any::get_class() const{
 bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
-	return core()->cache_is(my_class, klass);
+	return cache_is(my_class, klass);
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{

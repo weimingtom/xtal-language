@@ -171,7 +171,7 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 	f.called_pc = &throw_unsupported_error_code_;
 
 	f.secondary_key(null);
-	f.primary_key(id_[Core::id_op_call]);
+	f.primary_key(id_[IDOp::id_op_call]);
 	f.target(pop());
 
 	if((inst.flags&CALL_FLAG_ARGS)!=0){
@@ -700,32 +700,32 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(LocalVariableInc){ // 8
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_inc, local_variable(inst.number), 1));
+			IDOp::id_op_inc, local_variable(inst.number), 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableIncDirect){ // 7
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_inc, ff().variables_[inst.number], 1));
+			IDOp::id_op_inc, ff().variables_[inst.number], 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDec){ // 8
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1Byte::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_dec, local_variable(inst.number), -1));
+			IDOp::id_op_dec, local_variable(inst.number), -1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDecDirect){ // 7
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable1ByteDirect::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_dec, ff().variables_[inst.number], -1));
+			IDOp::id_op_dec, ff().variables_[inst.number], -1));
 	}
 
 	XTAL_VM_CASE(LocalVariableInc2Byte){ // 8
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_inc, local_variable(inst.number), 1));
+			IDOp::id_op_inc, local_variable(inst.number), 1));
 	}
 
 	XTAL_VM_CASE(LocalVariableDec2Byte){ // 8
 		XTAL_VM_CONTINUE(OpAddConstantInt(pc + inst.ISIZE + InstSetLocalVariable2Byte::ISIZE, pc + inst.ISIZE, 
-			Core::id_op_dec, local_variable(inst.number), -1));
+			IDOp::id_op_dec, local_variable(inst.number), -1));
 	}
 
 	XTAL_VM_CASE(LocalVariable1Byte){ // 3
@@ -1026,7 +1026,7 @@ XTAL_VM_SWITCH{
 				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
 			}
 			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
+				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[IDOp::id_op_eq], 1, 0));
 			}
 		}
 	}*/ }
@@ -1054,7 +1054,7 @@ XTAL_VM_SWITCH{
 				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstUnless::ISIZE);
 			}
 			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
+				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[IDOp::id_op_eq], 1, 0));
 			}
 		}
 	}*/ }
@@ -1077,7 +1077,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 1, 0));
 		}
 	}*/ }
 
@@ -1099,7 +1099,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 0, 1));
 		}
 	}*/ }
 
@@ -1121,7 +1121,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 0, 1));
 		}
 	}*/ }
 
@@ -1143,7 +1143,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 1, 0));
 		}
 	}*/ }
 
@@ -1160,11 +1160,11 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfIn){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_in], 1, 0));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_in], 1, 0));
 	}
 
 	XTAL_VM_CASE(IfNin){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_in], 1, 0));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_in], 1, 0));
 	}
 
 	XTAL_VM_CASE(IfIs){ // 4
@@ -1203,7 +1203,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(pc+inst.ISIZE);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_pos], 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_pos], 0));
 		}
 	}
 
@@ -1219,7 +1219,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(pc+inst.ISIZE);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_neg], 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_neg], 0));
 		}
 	}
 
@@ -1230,7 +1230,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(pc+inst.ISIZE);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_com], 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_com], 0));
 		}
 	}
 
@@ -1240,115 +1240,115 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(At){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_at], 1, 0));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_at], 1, 0));
 	}
 
 	XTAL_VM_CASE(SetAt){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 0, id_[Core::id_op_set_at], 1, 0, 2));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 0, id_[IDOp::id_op_set_at], 1, 0, 2));
 	}
 
 	XTAL_VM_CASE(Add){ // 2
-		XTAL_VM_CONTINUE(OpAdd(pc+inst.ISIZE, Core::id_op_add));
+		XTAL_VM_CONTINUE(OpAdd(pc+inst.ISIZE, IDOp::id_op_add));
 	}
 
 	XTAL_VM_CASE(Sub){ // 2
-		XTAL_VM_CONTINUE(OpSub(pc+inst.ISIZE, Core::id_op_sub));
+		XTAL_VM_CONTINUE(OpSub(pc+inst.ISIZE, IDOp::id_op_sub));
 	}
 
 	XTAL_VM_CASE(Cat){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_cat], 1, 0));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_cat], 1, 0));
 	}
 
 	XTAL_VM_CASE(Mul){ // 2
-		XTAL_VM_CONTINUE(OpMul(pc+inst.ISIZE, Core::id_op_mul));
+		XTAL_VM_CONTINUE(OpMul(pc+inst.ISIZE, IDOp::id_op_mul));
 	}
 
 	XTAL_VM_CASE(Div){ // 2
-		XTAL_VM_CONTINUE(OpDiv(pc+inst.ISIZE, Core::id_op_div));
+		XTAL_VM_CONTINUE(OpDiv(pc+inst.ISIZE, IDOp::id_op_div));
 	}
 
 	XTAL_VM_CASE(Mod){ // 2
-		XTAL_VM_CONTINUE(OpMod(pc+inst.ISIZE, Core::id_op_mod));
+		XTAL_VM_CONTINUE(OpMod(pc+inst.ISIZE, IDOp::id_op_mod));
 	}
 
 	XTAL_VM_CASE(And){ // 2
-		XTAL_VM_CONTINUE(OpAnd(pc+inst.ISIZE, Core::id_op_and));
+		XTAL_VM_CONTINUE(OpAnd(pc+inst.ISIZE, IDOp::id_op_and));
 	}
 
 	XTAL_VM_CASE(Or){ // 2
-		XTAL_VM_CONTINUE(OpOr(pc+inst.ISIZE, Core::id_op_or));
+		XTAL_VM_CONTINUE(OpOr(pc+inst.ISIZE, IDOp::id_op_or));
 	}
 
 	XTAL_VM_CASE(Xor){ // 2
-		XTAL_VM_CONTINUE(OpXor(pc+inst.ISIZE, Core::id_op_xor));
+		XTAL_VM_CONTINUE(OpXor(pc+inst.ISIZE, IDOp::id_op_xor));
 	}
 
 	XTAL_VM_CASE(Shl){ // 2
-		XTAL_VM_CONTINUE(OpShl(pc+inst.ISIZE, Core::id_op_shl));
+		XTAL_VM_CONTINUE(OpShl(pc+inst.ISIZE, IDOp::id_op_shl));
 	}
 
 	XTAL_VM_CASE(Shr){ // 2
-		XTAL_VM_CONTINUE(OpShr(pc+inst.ISIZE, Core::id_op_shr));
+		XTAL_VM_CONTINUE(OpShr(pc+inst.ISIZE, IDOp::id_op_shr));
 	}
 
 	XTAL_VM_CASE(Ushr){ // 2
-		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, Core::id_op_ushr));
+		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, IDOp::id_op_ushr));
 	}
 
 	XTAL_VM_CASE(Inc){ // 2
-		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, Core::id_op_inc, 1));
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, IDOp::id_op_inc, 1));
 	}
 
 	XTAL_VM_CASE(Dec){ // 2
-		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, Core::id_op_dec, -1));
+		XTAL_VM_CONTINUE(OpAddConstantInt(pc+inst.ISIZE, IDOp::id_op_dec, -1));
 	}
 
 	XTAL_VM_CASE(AddAssign){ // 2
-		XTAL_VM_CONTINUE(OpAdd(pc+inst.ISIZE, Core::id_op_add_assign));
+		XTAL_VM_CONTINUE(OpAdd(pc+inst.ISIZE, IDOp::id_op_add_assign));
 	}
 
 	XTAL_VM_CASE(SubAssign){ // 2
-		XTAL_VM_CONTINUE(OpSub(pc+inst.ISIZE, Core::id_op_sub_assign));
+		XTAL_VM_CONTINUE(OpSub(pc+inst.ISIZE, IDOp::id_op_sub_assign));
 	}
 
 	XTAL_VM_CASE(CatAssign){ // 2
-		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_cat_assign], 1, 0));
+		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_cat_assign], 1, 0));
 	}
 
 	XTAL_VM_CASE(MulAssign){ // 2
-		XTAL_VM_CONTINUE(OpMul(pc+inst.ISIZE, Core::id_op_mul_assign));
+		XTAL_VM_CONTINUE(OpMul(pc+inst.ISIZE, IDOp::id_op_mul_assign));
 	}
 
 	XTAL_VM_CASE(DivAssign){ // 2
-		XTAL_VM_CONTINUE(OpDiv(pc+inst.ISIZE, Core::id_op_div_assign));
+		XTAL_VM_CONTINUE(OpDiv(pc+inst.ISIZE, IDOp::id_op_div_assign));
 	}
 
 	XTAL_VM_CASE(ModAssign){ // 2
-		XTAL_VM_CONTINUE(OpMod(pc+inst.ISIZE, Core::id_op_mod_assign));
+		XTAL_VM_CONTINUE(OpMod(pc+inst.ISIZE, IDOp::id_op_mod_assign));
 	}
 
 	XTAL_VM_CASE(AndAssign){ // 2
-		XTAL_VM_CONTINUE(OpAnd(pc+inst.ISIZE, Core::id_op_and_assign));
+		XTAL_VM_CONTINUE(OpAnd(pc+inst.ISIZE, IDOp::id_op_and_assign));
 	}
 
 	XTAL_VM_CASE(OrAssign){ // 2
-		XTAL_VM_CONTINUE(OpOr(pc+inst.ISIZE, Core::id_op_or_assign));
+		XTAL_VM_CONTINUE(OpOr(pc+inst.ISIZE, IDOp::id_op_or_assign));
 	}
 
 	XTAL_VM_CASE(XorAssign){ // 2
-		XTAL_VM_CONTINUE(OpXor(pc+inst.ISIZE, Core::id_op_xor_assign));
+		XTAL_VM_CONTINUE(OpXor(pc+inst.ISIZE, IDOp::id_op_xor_assign));
 	}
 
 	XTAL_VM_CASE(ShlAssign){ // 2
-		XTAL_VM_CONTINUE(OpShl(pc+inst.ISIZE, Core::id_op_shl_assign));
+		XTAL_VM_CONTINUE(OpShl(pc+inst.ISIZE, IDOp::id_op_shl_assign));
 	}
 
 	XTAL_VM_CASE(ShrAssign){ // 2
-		XTAL_VM_CONTINUE(OpShr(pc+inst.ISIZE, Core::id_op_shr_assign));
+		XTAL_VM_CONTINUE(OpShr(pc+inst.ISIZE, IDOp::id_op_shr_assign));
 	}
 
 	XTAL_VM_CASE(UshrAssign){ // 2
-		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, Core::id_op_ushr_assign));
+		XTAL_VM_CONTINUE(OpUshr(pc+inst.ISIZE, IDOp::id_op_ushr_assign));
 	}
 
 	XTAL_VM_CASE(Range){ // 10
@@ -1358,8 +1358,8 @@ XTAL_VM_SWITCH{
 			push(rhs); 
 			push(Any((int_t)inst.kind));
 			push(lhs);
-			push_call(pc+inst.ISIZE, 1, 2, 0, id_[Core::id_op_range], null, ff().self());
-			ap(lhs)->rawsend(myself(), id_[Core::id_op_range], null);
+			push_call(pc+inst.ISIZE, 1, 2, 0, id_[IDOp::id_op_range], null, ff().self());
+			ap(lhs)->rawsend(myself(), id_[IDOp::id_op_range], null);
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
@@ -1661,7 +1661,7 @@ const inst_t* VMachine::FunIfEq(const inst_t* pc){
 				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstIf::ISIZE);
 			}
 			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
+				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[IDOp::id_op_eq], 1, 0));
 			}
 		}
 }
@@ -1690,7 +1690,7 @@ const inst_t* VMachine::FunIfNe(const inst_t* pc){
 				XTAL_VM_CONTINUE(pc+inst.ISIZE+InstUnless::ISIZE);
 			}
 			else{
-				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[Core::id_op_eq], 1, 0));
+				XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[IDOp::id_op_eq], 1, 0));
 			}
 		}
 }
@@ -1714,7 +1714,7 @@ const inst_t* VMachine::FunIfLt(const inst_t* pc){
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 1, 0));
 		}
 }
 
@@ -1737,7 +1737,7 @@ const inst_t* VMachine::FunIfLe(const inst_t* pc){
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 0, 1));
 		}
 }
 
@@ -1760,7 +1760,7 @@ const inst_t* VMachine::FunIfGt(const inst_t* pc){
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstIf::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 0, 1));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 0, 1));
 		}
 }
 
@@ -1783,7 +1783,7 @@ const inst_t* VMachine::FunIfGe(const inst_t* pc){
 			XTAL_VM_CONTINUE(ret ? pc+inst.ISIZE+InstUnless::ISIZE : pc+inst.OFFSET_address+inst.address);
 		}
 		else{
-			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[Core::id_op_lt], 1, 0));
+			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 1, 0));
 		}
 }
 

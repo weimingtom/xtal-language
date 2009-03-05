@@ -7,7 +7,7 @@ const IDPtr& Thread::ID::intern() const{
 	return xtal::intern((char_t*)&dummy_);
 }
 
-ThreadMgr::ThreadMgr(ThreadLib* lib){
+void ThreadMgr::initialize(ThreadLib* lib){
 	thread_enabled_ = false;
 
 	thread_count_ = 1;
@@ -31,11 +31,7 @@ ThreadMgr::ThreadMgr(ThreadLib* lib){
 	thread_enabled_ = false;
 }
 
-ThreadMgr::~ThreadMgr(){
-	vmachine_ = null;
-}
-
-void ThreadMgr::destroy(){
+void ThreadMgr::uninitialize(){
 //	global_interpreter_unlock();
 	thread_enabled_ = false;
 	thread_lib_ = 0;
@@ -43,6 +39,7 @@ void ThreadMgr::destroy(){
 
 	mutex_ = null;
 	mutex2_ = null;
+	vmachine_ = null;
 }
 
 void ThreadMgr::change_vmachine(const Thread::ID& id){
@@ -55,8 +52,6 @@ void ThreadMgr::change_vmachine(const Thread::ID& id){
 }
 
 void ThreadMgr::visit_members(Visitor& m){
-	Base::visit_members(m);
-
 	m & mutex_ & mutex2_ & vmachine_ & vm_map_;
 }
 
@@ -202,23 +197,23 @@ void restart_the_world(){
 }
 
 void xlock(){
-	core()->thread_mgr()->xlock();
+	core()->thread_mgr_.xlock();
 }
 
 void xunlock(){
-	core()->thread_mgr()->xunlock();
+	core()->thread_mgr_.xunlock();
 }
 
 void thread_entry(const ThreadPtr& thread){
-	core()->thread_mgr()->thread_entry(thread);
+	core()->thread_mgr_.thread_entry(thread);
 }
 
 void register_thread(){
-	core()->thread_mgr()->register_thread();
+	core()->thread_mgr_.register_thread();
 }
 
 void unregister_thread(){
-	core()->thread_mgr()->unregister_thread();
+	core()->thread_mgr_.unregister_thread();
 }
 
 

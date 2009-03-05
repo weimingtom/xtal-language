@@ -103,7 +103,7 @@ void Class::inherit(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 	
 	mixins_->push_back(cls);
-	core()->inc_mutate_count_cache_is();
+	inc_mutate_count_cache_is();
 }
 
 void Class::inherit_first(const ClassPtr& cls){
@@ -126,7 +126,7 @@ void Class::inherit_first(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 
 	mixins_->push_back(cls);
-	core()->inc_mutate_count_cache_is();
+	inc_mutate_count_cache_is();
 }
 
 void Class::inherit_strict(const ClassPtr& cls){
@@ -213,7 +213,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_parent(from_this(this));
-		core()->inc_mutate_count_cache_member();
+		inc_mutate_count_cache_member();
 	}
 	else{
 		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
@@ -320,7 +320,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
-	core()->inc_mutate_count_cache_member();
+	inc_mutate_count_cache_member();
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
@@ -329,7 +329,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
 	value->set_object_parent(from_this(this));
-	core()->inc_mutate_count_cache_member();
+	inc_mutate_count_cache_member();
 }
 
 void Class::set_object_parent(const ClassPtr& parent){

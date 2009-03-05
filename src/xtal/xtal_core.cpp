@@ -979,17 +979,6 @@ void ObjectMgr::unregister_gc_observer(GCObserver* p){
 	}
 }
 
-int_t ObjectMgr::register_cpp_class(CppClassSymbolData* key){
-	// ‰“o˜^‚ÌC++‚ÌƒNƒ‰ƒX‚©
-	if(key->value>=class_table_.size()){
-		while(key->value>=(int_t)class_table_.size()){
-			class_table_.push_back(0);
-		}
-	}
-
-	return key->value;
-}
-
 const ClassPtr& RuntimeError(){
 	return ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
 }

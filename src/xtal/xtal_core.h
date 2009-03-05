@@ -34,7 +34,16 @@ public:
 
 	void unregister_gc_observer(GCObserver* p);
 
-	int_t register_cpp_class(CppClassSymbolData* key);
+	int_t ObjectMgr::register_cpp_class(CppClassSymbolData* key){
+		// ‰“o˜^‚ÌC++‚ÌƒNƒ‰ƒX‚©
+		if(key->value>=class_table_.size()){
+			while(key->value>=(int_t)class_table_.size()){
+				class_table_.push_back(0);
+			}
+		}
+
+		return key->value;
+	}
 
 	const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key);
 

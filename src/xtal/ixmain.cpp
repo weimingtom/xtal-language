@@ -29,13 +29,15 @@ int main(int argc, char** argv){
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.chcode_lib = &sjis_chcode_lib;
 
-	Core core(setting);
+	initialize(setting);
 
 	ix();
 
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 	}
+
+	uninitialize();
 
 	return 0;
 }

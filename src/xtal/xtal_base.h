@@ -42,11 +42,6 @@ public:
 	
 	static void* operator new(size_t, void* p){ return p; }
 	static void operator delete(void*, void*){}
-
-private:
-
-	friend class Core;
-
 };
 
 class Base : public RefCountingBase{
@@ -147,10 +142,6 @@ private:
 
 	// Š‘®ƒNƒ‰ƒX
 	Class* class_;
-
-private:
-
-	friend class Core;
 };
 
 }

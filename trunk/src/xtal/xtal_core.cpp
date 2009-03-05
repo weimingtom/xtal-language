@@ -252,33 +252,35 @@ void ObjectMgr::initialize(){
 		&CppClassSymbol<Array>::value,
 	};
 
+
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
+	uint_t table[sizeof(symbols)/sizeof(symbols[0])];
 
 	for(uint_t i=0; i<nsize; ++i){
-		register_cpp_class(symbols[i]);
+		table[i] = register_cpp_class(symbols[i]);
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		class_table_[i] = (Class*)Base::operator new(sizeof(CppClass));
+		class_table_[table[i]] = (Class*)Base::operator new(sizeof(CppClass));
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[i];
+		Base* p = class_table_[table[i]];
 		new(p) Base();
 	}
 		
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[i];
+		Base* p = class_table_[table[i]];
 		new(p) CppClass();
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[i];
+		Base* p = class_table_[table[i]];
 		p->set_class(get_cpp_class<CppClass>());
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[i];
+		Base* p = class_table_[table[i]];
 		register_gc(p);
 	}
 }
@@ -979,20 +981,7 @@ void ObjectMgr::unregister_gc_observer(GCObserver* p){
 
 int_t ObjectMgr::register_cpp_class(CppClassSymbolData* key){
 	// ‰“o˜^‚ÌC++‚ÌƒNƒ‰ƒX‚©
-	if(key->value<0){
-		CppClassSymbolData* tail = &CppClassSymbol<void>::value;
-		if(tail->next){
-			key->value = tail->next->value+1;
-			tail->next->next = key;
-			tail->next = key;
-		}
-		else{
-			tail->next = key;
-			key->value = 0;
-		}
-	}
-
-	if(key->value>=(int_t)class_table_.size()){
+	if(key->value>=class_table_.size()){
 		while(key->value>=(int_t)class_table_.size()){
 			class_table_.push_back(0);
 		}

@@ -1059,7 +1059,7 @@ AnyPtr load(const StringPtr& file_name){
 		ret = code->call();
 	}
 	gc();
-	return null;
+	return ret;
 }
 
 AnyPtr load_and_save(const StringPtr& file_name){

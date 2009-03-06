@@ -228,7 +228,7 @@ public:
 	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
 		:SmartPtr<Any>(new UserTypeHolderSub<T>(), new_cpp_class<T>(), special_ctor_t()){
 		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)&p->fun;
+		p->ptr = (T*)p->fun;
 		new(p->ptr) T(a0, a1, a2, a3);
 	}
 

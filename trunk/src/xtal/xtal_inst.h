@@ -535,7 +535,7 @@ XTAL_DEF_INST_1(35, SetLocalVariable2Byte,
 */
 XTAL_DEF_INST_2(36, InstanceVariable,
         inst_u8_t, number,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 /**
@@ -545,7 +545,7 @@ XTAL_DEF_INST_2(36, InstanceVariable,
 */
 XTAL_DEF_INST_2(37, SetInstanceVariable,
         inst_u8_t, number,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 /**
@@ -650,23 +650,23 @@ XTAL_DEF_INST_2(49, DefineMember,
 );
 
 XTAL_DEF_INST_1(50, BlockBegin,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_1(51, BlockBeginDirect,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_1(52, BlockEnd,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_1(53, BlockEndDirect,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_1(54, TryBegin,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_0(55, TryEnd);
@@ -837,7 +837,7 @@ XTAL_DEF_INST_1(112, SetOnce,
 );
 
 XTAL_DEF_INST_1(113, ClassBegin,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_0(114, ClassEnd);
@@ -859,14 +859,14 @@ XTAL_DEF_INST_0(119, MapInsert);
 XTAL_DEF_INST_0(120, MapSetDefault);
 
 XTAL_DEF_INST_2(121, MakeFun,
-        inst_u16_t, core_number,
+        inst_u16_t, info_number,
 		inst_address_t, address
 );
 
 XTAL_DEF_INST_3(122, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
-        inst_u16_t, core_number
+        inst_u16_t, info_number
 );
 
 XTAL_DEF_INST_0(123, Throw);

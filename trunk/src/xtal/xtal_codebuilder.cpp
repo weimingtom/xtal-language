@@ -137,17 +137,17 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	var_begin(VarFrame::FRAME);
 
 	// 関数コアを作成
-	FunInfo core;
-	core.pc = 0;
-	core.kind = KIND_FUN;
-	core.min_param_count = 0;
-	core.max_param_count = 0;
-	core.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
-	core.variable_size = 0;
-	core.variable_identifier_offset = 0;
+	FunInfo info;
+	info.pc = 0;
+	info.kind = KIND_FUN;
+	info.min_param_count = 0;
+	info.max_param_count = 0;
+	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
+	info.variable_size = 0;
+	info.variable_identifier_offset = 0;
 
 	int_t fun_info_table_number = 0;
-	result_->xfun_info_table_.push_back(core);
+	result_->xfun_info_table_.push_back(info);
 
 	var_begin(VarFrame::SCOPE);
 	scope_begin();	
@@ -729,8 +729,8 @@ void CodeBuilder::var_end(){
 void CodeBuilder::scope_begin(){
 	int_t scope_info_num = result_->scope_info_table_.size();
 
-	ScopeInfo core;
-	core.pc = code_size();
+	ScopeInfo info;
+	info.pc = code_size();
 
 	int_t real_entry_num = vf().entries.size();
 
@@ -751,8 +751,8 @@ void CodeBuilder::scope_begin(){
 	vf().real_entry_num = real_entry_num;
 	vf().scope_info_num = scope_info_num;
 
-	core.variable_size = real_entry_num;
-	core.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_size = real_entry_num;
+	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		VarFrame::Entry& entry = vf().entries[i];
 		if(!entry.removed){	
@@ -765,7 +765,7 @@ void CodeBuilder::scope_begin(){
 		put_inst(InstBlockBegin(scope_info_num));
 	}
 
-	result_->scope_info_table_.push_back(core);
+	result_->scope_info_table_.push_back(info);
 }
 
 void CodeBuilder::scope_end(){
@@ -1159,19 +1159,19 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 	int_t class_info_num = result_->class_info_table_.size();
 
-	ClassInfo core;
-	core.pc = code_size();
-	core.kind = e->class_kind();
-	core.mixins = mixins;
-	core.variable_size = vf().entries.size();
-	core.instance_variable_size = ivar_num;
+	ClassInfo info;
+	info.pc = code_size();
+	info.kind = e->class_kind();
+	info.mixins = mixins;
+	info.variable_size = vf().entries.size();
+	info.instance_variable_size = ivar_num;
 	
-	core.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
-	core.instance_variable_identifier_offset = result_->identifier_table_->size();
+	info.instance_variable_identifier_offset = result_->identifier_table_->size();
 	Xfor_as(const ExprPtr& v, e->class_stmts()){
 		if(v->itag()==EXPR_CDEFINE_IVAR){
 			if(v->cdefine_ivar_term()){
@@ -1181,7 +1181,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	}
 
 	put_inst(InstClassBegin(class_info_num));
-	result_->class_info_table_.push_back(core);
+	result_->class_info_table_.push_back(info);
 
 	{
 		int_t number = 0;
@@ -1320,22 +1320,22 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	}
 
 	// 関数コアを作成
-	FunInfo core;
-	core.pc = code_size() + InstMakeFun::ISIZE;
-	core.kind = e->fun_kind();
-	core.min_param_count = minv;
-	core.max_param_count = maxv;
-	core.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
+	FunInfo info;
+	info.pc = code_size() + InstMakeFun::ISIZE;
+	info.kind = e->fun_kind();
+	info.min_param_count = minv;
+	info.max_param_count = maxv;
+	info.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
-	core.variable_size = vf().entries.size();
-	core.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_size = vf().entries.size();
+	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
 	int_t fun_info_table_number = result_->xfun_info_table_.size();
-	result_->xfun_info_table_.push_back(core);
+	result_->xfun_info_table_.push_back(info);
 
 	int_t fun_end_label = reserve_label();
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
@@ -1712,9 +1712,9 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_CATCH){
 			int_t end_label = reserve_label();
 
-			int_t core = result_->except_info_table_.size();
+			int_t info = result_->except_info_table_.size();
 			result_->except_info_table_.push_back(ExceptInfo());
-			put_inst(InstTryBegin(core));
+			put_inst(InstTryBegin(info));
 
 			compile_expr(e->catch_body());
 
@@ -1722,7 +1722,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 			// catch節のコードを埋め込む
 			{
-				result_->except_info_table_[core].catch_pc = code_size();
+				result_->except_info_table_[info].catch_pc = code_size();
 
 				// 例外を受け取るために変数スコープを構築
 				var_begin(VarFrame::SCOPE);
@@ -1738,8 +1738,8 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			}
 				
 			set_label(end_label);
-			result_->except_info_table_[core].finally_pc = code_size();
-			result_->except_info_table_[core].end_pc = code_size();
+			result_->except_info_table_[info].finally_pc = code_size();
+			result_->except_info_table_[info].end_pc = code_size();
 		}
 		
 		XTAL_CASE(EXPR_AT){
@@ -2124,9 +2124,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			int_t finally_label = reserve_label();
 			int_t end_label = reserve_label();
 
-			int_t core = result_->except_info_table_.size();
+			int_t info = result_->except_info_table_.size();
 			result_->except_info_table_.push_back(ExceptInfo());
-			put_inst(InstTryBegin(core));
+			put_inst(InstTryBegin(info));
 
 			CodeBuilder::FunFrame::Finally exc;
 			exc.frame_count = var_frames_.size();
@@ -2142,13 +2142,13 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			// catch節のコードを埋め込む
 			if(e->try_catch()){
 
-				result_->except_info_table_[core].catch_pc = code_size();
+				result_->except_info_table_[info].catch_pc = code_size();
 				
 				// catch節の中での例外に備え、例外フレームを構築。
 
-				int_t core2 = result_->except_info_table_.size();
+				int_t info2 = result_->except_info_table_.size();
 				result_->except_info_table_.push_back(ExceptInfo());
-				put_inst(InstTryBegin(core2));
+				put_inst(InstTryBegin(info2));
 
 				CodeBuilder::FunFrame::Finally exc;
 				exc.frame_count = var_frames_.size();
@@ -2170,13 +2170,13 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				put_inst(InstTryEnd());
 				ff().finallies.pop();
 
-				result_->except_info_table_[core2].finally_pc = code_size();
-				result_->except_info_table_[core2].end_pc = code_size();
+				result_->except_info_table_[info2].finally_pc = code_size();
+				result_->except_info_table_[info2].end_pc = code_size();
 			}
 			
 			set_label(finally_label);
 
-			result_->except_info_table_[core].finally_pc = code_size();
+			result_->except_info_table_[info].finally_pc = code_size();
 
 			// finally節のコードを埋め込む
 			compile_stmt(e->try_finally());
@@ -2186,7 +2186,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			put_inst(InstPopGoto());
 
 			set_label(end_label);
-			result_->except_info_table_[core].end_pc = code_size();
+			result_->except_info_table_[info].end_pc = code_size();
 		}
 
 		XTAL_CASE(EXPR_THROW){

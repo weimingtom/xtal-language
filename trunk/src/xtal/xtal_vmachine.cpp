@@ -206,8 +206,8 @@ void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
 	args->add_named(myself());
 }
 
-void VMachine::return_result_instance_variable(int_t number, ClassInfo* core){
-	return_result((ff().instance_variables->variable(number, core)));
+void VMachine::return_result_instance_variable(int_t number, ClassInfo* info){
+	return_result((ff().instance_variables->variable(number, info)));
 }
 
 void VMachine::carry_over(Method* fun){
@@ -276,15 +276,15 @@ void VMachine::mv_carry_over(Method* fun){
 	// –¼‘O•t‚«ˆø”‚ÍŽ×–‚
 	stack_.downsize(f.named_arg_count*2);
 
-	FunInfo* core = fun->info();
-	int_t size = core->variable_size;
+	FunInfo* info = fun->info();
+	int_t size = info->variable_size;
 	adjust_result(f.ordered_arg_count, size);
 	f.ordered_arg_count = size;
 	f.named_arg_count = 0;
 	
 	if(size){
-		if(core->flags & FunInfo::FLAG_ON_HEAP){
-			f.outer(xnew<Frame>(f.outer(), fun->code(), core));
+		if(info->flags & FunInfo::FLAG_ON_HEAP){
+			f.outer(xnew<Frame>(f.outer(), fun->code(), info));
 			Frame* frame = f.outer().get();
 			for(int_t n = 0; n<size; ++n){
 				frame->set_member_direct(n, get(size-1-n));
@@ -299,7 +299,7 @@ void VMachine::mv_carry_over(Method* fun){
 		}
 	}	
 	
-	int_t max_stack = core->max_stack;
+	int_t max_stack = info->max_stack;
 	stack_.upsize(max_stack);
 	stack_.downsize(max_stack + size);
 	f.ordered_arg_count = 0;
@@ -792,7 +792,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(InstanceVariable){ // 4
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push(f.instance_variables->variable(inst.number, f.fun()->code()->class_info(inst.core_number)));
+			push(f.instance_variables->variable(inst.number, f.fun()->code()->class_info(inst.info_number)));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -800,7 +800,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(SetInstanceVariable){ // 5
 		FunFrame& f = ff();
 		XTAL_GLOBAL_INTERPRETER_LOCK{ 
-			f.instance_variables->set_variable(inst.number, f.fun()->code()->class_info(inst.core_number), get());
+			f.instance_variables->set_variable(inst.number, f.fun()->code()->class_info(inst.info_number), get());
 			downsize(1);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
@@ -940,16 +940,16 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(BlockBegin){ // 6
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff(); 
-			ScopeInfo* core = f.fun()->code()->scope_info(inst.core_number);
-			const FramePtr& outer = (core->flags&ScopeInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
-			f.outer(xnew<Frame>(outer, code(), core));
+			ScopeInfo* info = f.fun()->code()->scope_info(inst.info_number);
+			const FramePtr& outer = (info->flags&ScopeInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
+			f.outer(xnew<Frame>(outer, code(), info));
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(BlockBeginDirect){ // 8
 		FunFrame& f = ff(); 
-		uint_t size = f.fun()->code()->scope_info(inst.core_number)->variable_size;
+		uint_t size = f.fun()->code()->scope_info(inst.info_number)->variable_size;
 		f.variables_.upsize(size);
 		for(uint_t i=0; i<size; ++i){
 			f.variables_[i].set_nullt();
@@ -964,14 +964,14 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(BlockEndDirect){ // 4
 		FunFrame& f = ff();
-		f.variables_.downsize(f.fun()->code()->scope_info(inst.core_number)->variable_size);
+		f.variables_.downsize(f.fun()->code()->scope_info(inst.info_number)->variable_size);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(TryBegin){ // 9
 		FunFrame& f = ff(); 
 		ExceptFrame& ef = except_frames_.push();
-		ef.core = &f.fun()->code()->except_info_table_[inst.core_number];
+		ef.info = &f.fun()->code()->except_info_table_[inst.info_number];
 		ef.fun_frame_count = fun_frames_.size();
 		ef.stack_count = this->stack_size();
 		ef.variable_size = f.variables_.size();
@@ -980,7 +980,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(TryEnd){ // 2
-		XTAL_VM_CONTINUE(except_frames_.pop().core->finally_pc + code()->data()); 
+		XTAL_VM_CONTINUE(except_frames_.pop().info->finally_pc + code()->data()); 
 	}
 
 	XTAL_VM_CASE(PushGoto){ // 3
@@ -1421,21 +1421,21 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(ClassBegin){ // 16
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			ClassInfo* core = code()->class_info(inst.core_number);
-			const FramePtr& outer = (core->flags&ClassInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
+			ClassInfo* info = code()->class_info(inst.info_number);
+			const FramePtr& outer = (info->flags&ClassInfo::FLAG_SCOPE_CHAIN) ? ff().outer() : unchecked_ptr_cast<Frame>(null);
 			ClassPtr cp;
 
-			switch(core->kind){
+			switch(info->kind){
 				XTAL_CASE(KIND_CLASS){
-					cp = xnew<Class>(outer, code(), core);
+					cp = xnew<Class>(outer, code(), info);
 				}
 
 				XTAL_CASE(KIND_SINGLETON){
-					cp = xnew<Singleton>(outer, code(), core);
+					cp = xnew<Singleton>(outer, code(), info);
 				}
 			}
 			
-			int_t n = core->mixins;
+			int_t n = info->mixins;
 			for(int_t i = 0; i<n; ++i){
 				const ClassPtr& cls = ptr_cast<Class>(pop());
 				XTAL_VM_CHECK_EXCEPT;
@@ -1511,16 +1511,16 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(MakeFun){ XTAL_VM_CONTINUE(FunMakeFun(pc)); /*
-		int_t table_n = inst.core_number, end = inst.OFFSET_address + inst.address;
+		int_t table_n = inst.info_number, end = inst.OFFSET_address + inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			FunInfo* core = code()->fun_info(table_n);
+			FunInfo* info = code()->fun_info(table_n);
 			const FramePtr& outer = ff().outer();
-			switch(core->kind){
+			switch(info->kind){
 				XTAL_NODEFAULT;
-				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), core)); }
-				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), info)); }
+				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), info)); }
+				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), info)); }
+				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), info)); }
 			}
 		}
 		XTAL_VM_CONTINUE(pc + end);
@@ -1532,8 +1532,8 @@ XTAL_VM_SWITCH{
 			switch(inst.type){
 				XTAL_NODEFAULT;
 
-				XTAL_CASE(0){ ret = xnew<InstanceVariableGetter>(inst.number, code()->class_info(inst.core_number)); }
-				XTAL_CASE(1){ ret = xnew<InstanceVariableSetter>(inst.number, code()->class_info(inst.core_number)); }
+				XTAL_CASE(0){ ret = xnew<InstanceVariableGetter>(inst.number, code()->class_info(inst.info_number)); }
+				XTAL_CASE(1){ ret = xnew<InstanceVariableSetter>(inst.number, code()->class_info(inst.info_number)); }
 			}
 			push(ret);
 		}
@@ -1804,16 +1804,16 @@ const inst_t* VMachine::FunClassEnd(const inst_t* pc){
 
 const inst_t* VMachine::FunMakeFun(const inst_t* pc){
 		XTAL_VM_DEF_INST(MakeFun);
-		int_t table_n = inst.core_number, end = inst.OFFSET_address + inst.address;
+		int_t table_n = inst.info_number, end = inst.OFFSET_address + inst.address;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			FunInfo* core = code()->fun_info(table_n);
+			FunInfo* info = code()->fun_info(table_n);
 			const FramePtr& outer = ff().outer();
-			switch(core->kind){
+			switch(info->kind){
 				XTAL_NODEFAULT;
-				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), core)); }
-				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), core)); }
-				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), core)); }
+				XTAL_CASE(KIND_FUN){ push(xnew<Fun>(outer, ff().self(), code(), info)); }
+				XTAL_CASE(KIND_LAMBDA){ push(xnew<Lambda>(outer, ff().self(), code(), info)); }
+				XTAL_CASE(KIND_METHOD){ push(xnew<Method>(outer, code(), info)); }
+				XTAL_CASE(KIND_FIBER){ push(xnew<Fiber>(outer, ff().self(), code(), info)); }
 			}
 		}
 		XTAL_VM_CONTINUE(pc + end);
@@ -1826,8 +1826,8 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 			switch(inst.type){
 				XTAL_NODEFAULT;
 
-				XTAL_CASE(0){ ret = xnew<InstanceVariableGetter>(inst.number, code()->class_info(inst.core_number)); }
-				XTAL_CASE(1){ ret = xnew<InstanceVariableSetter>(inst.number, code()->class_info(inst.core_number)); }
+				XTAL_CASE(0){ ret = xnew<InstanceVariableGetter>(inst.number, code()->class_info(inst.info_number)); }
+				XTAL_CASE(1){ ret = xnew<InstanceVariableSetter>(inst.number, code()->class_info(inst.info_number)); }
 			}
 			push(ret);
 		}

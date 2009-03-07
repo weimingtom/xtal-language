@@ -532,7 +532,7 @@ public:
 
 	// —áŠO‚ğˆ—‚·‚é‚½‚ß‚ÌƒtƒŒ[ƒ€
 	struct ExceptFrame{
-		ExceptInfo* core;
+		ExceptInfo* info;
 		int_t stack_count;
 		int_t fun_frame_count;
 		int_t variable_size;
@@ -564,7 +564,7 @@ public:
 	const IDPtr& identifier(int_t n);
 	const IDPtr& prev_identifier(int_t n);
 
-	void return_result_instance_variable(int_t number, ClassInfo* core);
+	void return_result_instance_variable(int_t number, ClassInfo* info);
 
 	ArgumentsPtr make_args(Method* fun);
 

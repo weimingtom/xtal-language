@@ -76,7 +76,7 @@ public:
 
 	Class(const StringPtr& name = empty_string);
 
-	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core);
+	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
 
 	void overwrite(const ClassPtr& p);
 
@@ -363,7 +363,7 @@ public:
 
 	Singleton(const StringPtr& name = empty_string);
 
-	Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* core);
+	Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
 	
 public:
 

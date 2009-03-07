@@ -112,8 +112,8 @@ void InstanceVariableSetter::rawcall(const VMachinePtr& vm){
 }
 
 
-Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* core)
-	:outer_(outer), code_(code), info_(core){
+Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* info)
+	:outer_(outer), code_(code), info_(info){
 }
 
 bool Method::check_arg(const VMachinePtr& vm){
@@ -181,8 +181,8 @@ void Lambda::rawcall(const VMachinePtr& vm){
 	vm->mv_carry_over(this);
 }
 
-Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core)
-	:Fun(outer, th, code, core), vm_(null), resume_pc_(0), alive_(true){
+Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
+	:Fun(outer, th, code, info), vm_(null), resume_pc_(0), alive_(true){
 	set_finalizer_flag();
 }
 

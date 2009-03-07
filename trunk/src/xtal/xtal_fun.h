@@ -66,7 +66,7 @@ private:
 class Method : public HaveParent{
 public:
 
-	Method(const FramePtr& outer, const CodePtr& code, FunInfo* core);
+	Method(const FramePtr& outer, const CodePtr& code, FunInfo* info);
 
 	const FramePtr& outer(){ return outer_; }
 	const CodePtr& code(){ return code_; }
@@ -99,8 +99,8 @@ protected:
 class Fun : public Method{
 public:
 
-	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* core)
-		:Method(outer, code, core), this_(athis){
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* info)
+		:Method(outer, code, info), this_(athis){
 	}
 
 public:
@@ -120,8 +120,8 @@ protected:
 class Lambda : public Fun{
 public:
 
-	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core)
-		:Fun(outer, th, code, core){
+	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
+		:Fun(outer, th, code, info){
 	}
 
 public:
@@ -132,7 +132,7 @@ public:
 class Fiber : public Fun{
 public:
 
-	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* core);
+	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info);
 
 	virtual void finalize();
 			

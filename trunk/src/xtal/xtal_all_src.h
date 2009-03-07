@@ -13,7 +13,7 @@
 #include "xtal_ch.cpp"
 #include "xtal_code.cpp"
 #include "xtal_codebuilder.cpp"
-#include "xtal_core.cpp"
+#include "xtal_environment.cpp"
 #include "xtal_debug.cpp"
 #include "xtal_except.cpp"
 #include "xtal_expr.cpp"

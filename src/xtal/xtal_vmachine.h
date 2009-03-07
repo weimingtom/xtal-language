@@ -324,7 +324,6 @@ public:
 	const AnyPtr& catch_except(){
 		except_[2] = except();
 		except_[0] = null;
-		except_[1] = null;
 		return ap(except_[2]);
 	}
 
@@ -335,7 +334,9 @@ public:
 	void set_except(const AnyPtr& e){
 		if(!ap(except_[0])){
 			except_[0] = e;
-			except_[1] = null;
+		}
+		else{
+			XTAL_ASSERT(false); // 例外をハンドルせずに次の例外を設定した
 		}
 	}
 

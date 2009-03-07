@@ -1599,7 +1599,8 @@ XTAL_VM_SWITCH{
 // 例外が投げられたらここに到達する
 except_catch:
 	// 例外にバックトレースを追加する
-	except_[0] = append_backtrace(pc, ap(except_[0]));
+	AnyPtr e = catch_except();
+	set_except(append_backtrace(pc, ap(e)));
 
 	// Xtalソース内でキャッチ等あるか調べる
 	pc = catch_body(pc, stack_size, fun_frames_size);

@@ -721,7 +721,7 @@ builtin::RedefinedError: class(StandardError){}
 builtin::AccessibilityError: class(StandardError){}
 builtin::AssertionFailed: class(StandardError){}
 builtin::CompileError: class(StandardError){
-initialize: method(message, errors:[]){
+	initialize(message, errors:[]){
 		Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));
 	}		
 }
@@ -1946,6 +1946,7 @@ append_text_map([
 	"Xtal Runtime Error 1027":"cap関数の引数が不正です。cap(name: value)というように名前付き引数にするか、cap(\"name\", value)というように呼んでください。",
 	"Xtal Runtime Error 1028":"finalマークが付けられたクラス'%(name)s'を継承しようとしました。",
 	"Xtal Runtime Error 1029":"C++で定義されたクラス'%(name)s'は、クラス生成時のみ継承が可能です。",
+	"Xtal Runtime Error 1030":"暗黙の変数参照があります。%(name)s",
 ]);
 	),
 "\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x01\x86\x72\x26\x00\x01\x26\x00\x02\x73\x26\x00\x03\x26\x00\x04\x73\x26\x00\x05\x26\x00\x06\x73\x26\x00\x07\x26\x00\x08\x73\x26\x00\x09\x26\x00\x0a\x73\x26\x00\x0b\x26\x00\x0c\x73\x26\x00\x0d\x26\x00\x0e\x73\x26\x00"

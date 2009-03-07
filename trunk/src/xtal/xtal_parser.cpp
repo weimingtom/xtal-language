@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_parser.h"
+
 #ifndef XTAL_NO_PARSER
 
 namespace xtal{

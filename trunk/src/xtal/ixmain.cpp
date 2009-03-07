@@ -4,6 +4,7 @@
 #include "xtal_lib/xtal_cstdiostream.h"
 #include "xtal_lib/xtal_winfilesystem.h"
 #include "xtal_lib/xtal_chcode.h"
+#include "xtal_codebuilder.h"
 
 #include "xtal_macro.h"
 

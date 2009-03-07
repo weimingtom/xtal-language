@@ -85,7 +85,7 @@ public:
 
 	static void initialize_class(){
 		if(!exists_cpp_class<CStdioFileStream>()){
-			new_cpp_class<CStdioFileStream>()->inherit(get_cpp_class<Stream>());
+			new_cpp_class<CStdioFileStream>()->inherit(cpp_class<Stream>());
 		}
 	}
 

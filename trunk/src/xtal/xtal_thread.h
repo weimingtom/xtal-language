@@ -81,78 +81,10 @@ public:
 	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){ return true; }
 };
 
-class ThreadMgr{
-public:
-
-	void initialize(ThreadLib* lib = 0);
-
-	void uninitialize();
-
-public:
-
-	void change_vmachine(const Thread::ID& id);
-
-	void register_vmachine();
-
-	void remove_vmachine();
-
-	void xlock();
-
-	void xunlock();
-
-	void thread_entry(const ThreadPtr& thread);
-
-	void register_thread();
-
-	void unregister_thread();
-
-	void global_interpreter_lock();
-
-	void global_interpreter_unlock();
-
-	void yield_thread();
-
-	void sleep_thread(float_t sec);
-
-	bool thread_enabled(){
-		return thread_enabled_;
-	}
-
-	const VMachinePtr& vmachine();
-
-	ThreadPtr new_thread(const AnyPtr& fun);
-
-	MutexPtr new_mutex();
-
-	void lock_mutex(const MutexPtr& self);
-
-	void visit_members(Visitor& m);
-
-private:
-
-	MapPtr vm_map_;
-
-	int thread_count_;
-	int thread_locked_count_;
-	int thread_unlocked_count_;
-	bool stop_the_world_;
-
-	Thread::ID current_thread_id_;
-	Thread::ID current_vmachine_id_;
-	Thread::ID stop_the_world_thread_id_;
-	int current_thread_recursive_;
-
-	MutexPtr mutex_;
-	MutexPtr mutex2_;
-	VMachinePtr vmachine_;
-
-	bool thread_enabled_;
-
-	ThreadLib* thread_lib_;
-};
-
 bool stop_the_world();
 void restart_the_world();
+
+void thread_entry(const ThreadPtr& thread);
 
 void xlock();
 void xunlock();

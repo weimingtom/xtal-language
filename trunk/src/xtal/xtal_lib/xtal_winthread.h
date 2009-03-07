@@ -64,8 +64,8 @@ public:
 class WinThreadLib : public ThreadLib{
 public:
 	virtual void initialize(){
-		new_cpp_class<WinThread>()->inherit(get_cpp_class<Thread>());
-		new_cpp_class<WinMutex>()->inherit(get_cpp_class<Mutex>());
+		new_cpp_class<WinThread>()->inherit(cpp_class<Thread>());
+		new_cpp_class<WinMutex>()->inherit(cpp_class<Mutex>());
 	}
 
 	virtual ThreadPtr new_thread(){

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "xtal_parser.h"
+
 #ifndef XTAL_NO_PARSER
 
 namespace xtal{

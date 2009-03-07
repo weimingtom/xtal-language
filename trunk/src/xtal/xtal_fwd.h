@@ -375,7 +375,7 @@ struct CppClassSymbolData{
 		value = counter++;
 	}
 
-	unsigned int value; 
+	unsigned int value;
 };
 
 template<class T>

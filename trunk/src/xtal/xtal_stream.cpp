@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_serializer.h"
+
 namespace xtal{
 
 uint_t Stream::tell(){

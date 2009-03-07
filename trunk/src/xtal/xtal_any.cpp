@@ -299,22 +299,22 @@ StringPtr Any::object_name() const{
 const ClassPtr& Any::get_class() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_NULL){ return get_cpp_class<Null>(); }
-		XTAL_CASE(TYPE_UNDEFINED){ return get_cpp_class<Undefined>(); }
+		XTAL_CASE(TYPE_NULL){ return cpp_class<Null>(); }
+		XTAL_CASE(TYPE_UNDEFINED){ return cpp_class<Undefined>(); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->get_class(); }
-		XTAL_CASE(TYPE_INT){ return get_cpp_class<Int>(); }
-		XTAL_CASE(TYPE_FLOAT){ return get_cpp_class<Float>(); }
-		XTAL_CASE(TYPE_FALSE){ return get_cpp_class<Bool>(); }
-		XTAL_CASE(TYPE_TRUE){ return get_cpp_class<Bool>(); }
-		XTAL_CASE(TYPE_SMALL_STRING){ return get_cpp_class<String>(); }
-		XTAL_CASE(TYPE_STRING){ return get_cpp_class<String>(); }
-		XTAL_CASE(TYPE_ARRAY){ return get_cpp_class<Array>(); }
-		XTAL_CASE(TYPE_MULTI_VALUE){ return get_cpp_class<MultiValue>(); }
-		XTAL_CASE(TYPE_TREE_NODE){ return get_cpp_class<xpeg::TreeNode>(); }
-		XTAL_CASE(TYPE_NATIVE_FUN){ return get_cpp_class<NativeFun>(); }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return get_cpp_class<NativeFunBindedThis>(); }
+		XTAL_CASE(TYPE_INT){ return cpp_class<Int>(); }
+		XTAL_CASE(TYPE_FLOAT){ return cpp_class<Float>(); }
+		XTAL_CASE(TYPE_FALSE){ return cpp_class<Bool>(); }
+		XTAL_CASE(TYPE_TRUE){ return cpp_class<Bool>(); }
+		XTAL_CASE(TYPE_SMALL_STRING){ return cpp_class<String>(); }
+		XTAL_CASE(TYPE_STRING){ return cpp_class<String>(); }
+		XTAL_CASE(TYPE_ARRAY){ return cpp_class<Array>(); }
+		XTAL_CASE(TYPE_MULTI_VALUE){ return cpp_class<MultiValue>(); }
+		XTAL_CASE(TYPE_TREE_NODE){ return cpp_class<xpeg::TreeNode>(); }
+		XTAL_CASE(TYPE_NATIVE_FUN){ return cpp_class<NativeFun>(); }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return cpp_class<NativeFunBindedThis>(); }
 	}
-	return get_cpp_class<Any>();
+	return cpp_class<Any>();
 }
 
 bool Any::is(const AnyPtr& klass) const{

@@ -274,7 +274,7 @@ inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 AnyPtr interned_strings();
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
 uint_t string_hashcode(const char_t* str, uint_t size);
-void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash, uint_t& length);
+void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash);
 uint_t string_length(const char_t* str);
 uint_t string_data_size(const char_t* str);
 int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
@@ -364,97 +364,5 @@ struct Named : public Named2{
 inline void visit_members(Visitor& m, const Named& p){
 	m & p.name & p.value;
 }
-	
-/**
-* @breif 文字列を管理するクラス
-*/
-class StringMgr{
-public:
-
-	StringMgr()
-		:table_(table_t::no_use_memory_t()), 
-		table2_(table2_t::no_use_memory_t()){
-		guard_ = 0;
-	}
-
-	void initialize(){
-		table_.expand(4);
-		table2_.expand(4);
-	}
-
-	void uninitialize();
-
-	void gc();
-
-	void visit_members(Visitor& m);
-
-	const IDPtr& insert(const char_t* str, uint_t size);
-
-	const IDPtr& insert(const char_t* str);
-
-	const IDPtr& insert(const char_t* str, uint_t size, uint_t hash);
-
-	const IDPtr& insert_literal(const char_t* str);
-
-	AnyPtr interned_strings();
-
-private:
-
-	struct Key{
-		const char_t* str;
-		uint_t size;
-	};
-
-	struct Fun{
-		static uint_t hash(const Key& key){
-			return string_hashcode(key.str, key.size);
-		}
-
-		static bool eq(const Key& a, const Key& b){
-			return string_compare(a.str, a.size, b.str, b.size)==0;
-		}
-	};
-
-	typedef Hashtable<Key, IDPtr, Fun> table_t; 
-	table_t table_;
-
-	struct Fun2{
-		static uint_t hash(const void* key){
-			return ((uint_t)key)>>2;
-		}
-
-		static bool eq(const void* a, const void* b){
-			return a==b;
-		}
-	};
-
-	typedef Hashtable<const void*, IDPtr, Fun2> table2_t; 
-	table2_t table2_;
-
-protected:
-
-	int_t guard_;
-
-	struct Guard{
-		int_t& count;
-		Guard(int_t& c):count(c){ count++; }
-		~Guard(){ count--; }
-	private:
-		void operator=(const Guard&);
-	};
-
-	friend class InternedStringIter;
-};
-
-class InternedStringIter : public Base{
-	StringMgr::table_t::iterator iter_, last_;
-public:
-
-	InternedStringIter(StringMgr::table_t::iterator begin, StringMgr::table_t::iterator end)
-		:iter_(begin), last_(end){
-	}
-			
-	void block_next(const VMachinePtr& vm);
-};
 
 }

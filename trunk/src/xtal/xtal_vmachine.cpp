@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_stringspace.h"
+
 namespace xtal{
 
 inline const IDPtr& isp(const Any& v){
@@ -1557,7 +1559,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(ThrowUnsupportedError){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff();
-			AnyPtr target_class = f.target() ? f.target()->get_class() : null; //  todo
+			AnyPtr target_class = f.target() ? f.target()->get_class() : null;
 			XTAL_VM_EXCEPT(unsupported_error(target_class, f.primary_key(), f.secondary_key()));
 		}
 	}

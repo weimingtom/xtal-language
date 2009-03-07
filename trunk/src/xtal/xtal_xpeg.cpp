@@ -621,10 +621,10 @@ const NFAPtr& Executor::fetch_nfa(const ElementPtr& node){
 }
 
 void Executor::reset(const AnyPtr& stream_or_iterator){
-	if(stream_or_iterator->is(get_cpp_class<Stream>())){
+	if(stream_or_iterator->is(cpp_class<Stream>())){
 		scanner_ = xnew<StreamScanner>(ptr_cast<Stream>(stream_or_iterator));
 	}
-	else if(stream_or_iterator->is(get_cpp_class<String>())){
+	else if(stream_or_iterator->is(cpp_class<String>())){
 		scanner_ = xnew<StreamScanner>(xnew<StringStream>(ptr_cast<String>(stream_or_iterator)));
 	}
 	else{
@@ -1285,8 +1285,8 @@ void initialize_xpeg(){
 
 		p->def_method(Xid(captures), &Executor::captures);
 		p->def_method(Xid(captures_values), &Executor::captures_values);		
-		p->def_method(Xid(op_at), &Executor::at, get_cpp_class<String>());
-		p->def_method(Xid(op_call), &Executor::call, get_cpp_class<String>());
+		p->def_method(Xid(op_at), &Executor::at, cpp_class<String>());
+		p->def_method(Xid(op_call), &Executor::call, cpp_class<String>());
 		p->def_method(Xid(prefix), &Executor::prefix);
 		p->def_method(Xid(suffix), &Executor::suffix);
 		p->def_method(Xid(prefix_values), &Executor::prefix_values);
@@ -1300,7 +1300,7 @@ void initialize_xpeg(){
 	{
 		ClassPtr p = new_cpp_class<TreeNode>(Xid(TreeNode));
 		p->set_final();
-		p->inherit(get_cpp_class<Array>());
+		p->inherit(cpp_class<Array>());
 		p->def_method(Xid(tag), &TreeNode::tag);
 		p->def_method(Xid(lineno), &TreeNode::lineno);
 		p->def_method(Xid(set_tag), &TreeNode::set_tag);
@@ -1314,22 +1314,22 @@ void initialize_xpeg(){
 
 	{
 		ClassPtr p = xnew<Class>();
-		p->def_method(Xid(op_mod), &more_shortest_Int, get_cpp_class<Int>());
-		p->def_method(Xid(op_mod), &more_shortest_IntRange, get_cpp_class<IntRange>());
-		p->def_method(Xid(op_div), &more_normal_Int, get_cpp_class<Int>());
-		p->def_method(Xid(op_div), &more_normal_IntRange, get_cpp_class<IntRange>());
-		p->def_method(Xid(op_mul), &more_greed_Int, get_cpp_class<Int>());
-		p->def_method(Xid(op_mul), &more_greed_IntRange, get_cpp_class<IntRange>());
+		p->def_method(Xid(op_mod), &more_shortest_Int, cpp_class<Int>());
+		p->def_method(Xid(op_mod), &more_shortest_IntRange, cpp_class<IntRange>());
+		p->def_method(Xid(op_div), &more_normal_Int, cpp_class<Int>());
+		p->def_method(Xid(op_div), &more_normal_IntRange, cpp_class<IntRange>());
+		p->def_method(Xid(op_mul), &more_greed_Int, cpp_class<Int>());
+		p->def_method(Xid(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
 		p->def_method(Xid(op_com), &inv);
 		
-		p->def_method(Xid(op_or), &select, get_cpp_class<Element>());
-		p->def_method(Xid(op_or), &select, get_cpp_class<String>());
-		p->def_method(Xid(op_or), &select, get_cpp_class<ChRange>());
-		p->def_method(Xid(op_or), &select, get_cpp_class<Fun>());
-		p->def_method(Xid(op_shr), &concat, get_cpp_class<Element>());
-		p->def_method(Xid(op_shr), &concat, get_cpp_class<String>());
-		p->def_method(Xid(op_shr), &concat, get_cpp_class<ChRange>());
-		p->def_method(Xid(op_shr), &concat, get_cpp_class<Fun>());
+		p->def_method(Xid(op_or), &select, cpp_class<Element>());
+		p->def_method(Xid(op_or), &select, cpp_class<String>());
+		p->def_method(Xid(op_or), &select, cpp_class<ChRange>());
+		p->def_method(Xid(op_or), &select, cpp_class<Fun>());
+		p->def_method(Xid(op_shr), &concat, cpp_class<Element>());
+		p->def_method(Xid(op_shr), &concat, cpp_class<String>());
+		p->def_method(Xid(op_shr), &concat, cpp_class<ChRange>());
+		p->def_method(Xid(op_shr), &concat, cpp_class<Fun>());
 
 		ClassPtr classes[4] = {new_cpp_class<Element>(), new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
 		for(int i=0; i<4; ++i){

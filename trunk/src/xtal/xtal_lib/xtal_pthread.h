@@ -58,8 +58,8 @@ class PThreadLib : public ThreadLib{
 public:
 
 	virtual void initialize(){
-		new_cpp_class<PThread>()->inherit(get_cpp_class<Thread>());
-		new_cpp_class<PThreadMutex>()->inherit(get_cpp_class<Mutex>());
+		new_cpp_class<PThread>()->inherit(cpp_class<Thread>());
+		new_cpp_class<PThreadMutex>()->inherit(cpp_class<Mutex>());
 	}
 
 	virtual ThreadPtr new_thread(){

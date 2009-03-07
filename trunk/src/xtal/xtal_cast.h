@@ -25,7 +25,7 @@ template<class T>
 inline typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
 
 template<class T>
-const ClassPtr& get_cpp_class();
+const ClassPtr& cpp_class();
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -102,7 +102,7 @@ struct CastHelper{
 	// 変換後の型が参照でもポインタでもない場合、ポインタ型としてキャストしたあと実体にする
 	
 	static bool can_cast(const AnyPtr& a){ 
-		return a->is(get_cpp_class<T>());
+		return a->is(cpp_class<T>());
 	}
 
 	static T unchecked_cast(const AnyPtr& a){ 
@@ -119,7 +119,7 @@ struct CastHelper<T&>{
 	// 変換後の型が参照の場合、ポインタ型としてキャストしたあと参照にする
 	
 	static bool can_cast(const AnyPtr& a){ 
-		return a->is(get_cpp_class<T>());
+		return a->is(cpp_class<T>());
 	}
 	
 	static T& unchecked_cast(const AnyPtr& a){ 
@@ -136,7 +136,7 @@ struct CastHelper<T*>{
 	// 変換後の型がポインタの場合
 
 	static bool can_cast(const AnyPtr& a){ 
-		return a->is(get_cpp_class<T>());
+		return a->is(cpp_class<T>());
 	}
 
 	static T* unchecked_cast(const AnyPtr& a){ 
@@ -164,7 +164,7 @@ struct CastHelperHelper{
 			return unchecked_cast(a);
 		}
 		else{
-			cast_failed(a, get_cpp_class<T>());
+			cast_failed(a, cpp_class<T>());
 			return get_null();
 		}
 	}
@@ -200,7 +200,7 @@ struct CastHelper<const Any*>{
 
 template<>
 struct CastHelper<const char_t*>{
-	static bool can_cast(const AnyPtr& a){ return a->is(get_cpp_class<String>()); }
+	static bool can_cast(const AnyPtr& a){ return a->is(cpp_class<String>()); }
 	static const char_t* unchecked_cast(const AnyPtr& a);
 	static const Any* get_null(){ return 0; }
 };

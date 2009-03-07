@@ -143,13 +143,13 @@ namespace xtal{
 void initialize_math();
 void initialize_xpeg();
 
-class Core{
+class Environment{
 public:
 
-	void initialize(const CoreSetting& setting);
+	void initialize(const Setting& setting);
 	void uninitialize();
 	
-	CoreSetting setting_;
+	Setting setting_;
 	SmallObjectAllocator so_alloc_;
 	ObjectSpace object_space_;	
 	StringSpace string_space_;
@@ -170,7 +170,7 @@ public:
 
 namespace{
 
-	Core* core_;
+	Environment* core_;
 
 	ThreadLib empty_thread_lib;
 	StreamLib empty_stream_lib;
@@ -179,11 +179,11 @@ namespace{
 	ChCodeLib ascii_chcode_lib;
 }
 
-Core* core(){
+Environment* core(){
 	return core_;
 }
 
-void set_core(Core* core){
+void set_core(Environment* core){
 	core_ = core;
 }
 
@@ -244,7 +244,7 @@ void user_free(void* p){
 }
 
 
-CoreSetting::CoreSetting(){
+Setting::Setting(){
 	thread_lib = &empty_thread_lib;
 	stream_lib = &empty_stream_lib;
 	filesystem_lib = &empty_filesystem_lib;
@@ -253,21 +253,21 @@ CoreSetting::CoreSetting(){
 }
 
 
-void initialize(const CoreSetting& setting){
-	core_ = (Core*)setting.allocator_lib->malloc(sizeof(Core));
-	new(core_) Core();
+void initialize(const Setting& setting){
+	core_ = (Environment*)setting.allocator_lib->malloc(sizeof(Environment));
+	new(core_) Environment();
 	core_->initialize(setting);
 }
 
 void uninitialize(){
 	AllocatorLib* allocacator_lib = core_->setting_.allocator_lib;
 	core_->uninitialize();
-	core_->~Core();
+	core_->~Environment();
 	allocacator_lib->free(core_);
 	core_ = 0;
 }
 
-void Core::initialize(const CoreSetting& setting){
+void Environment::initialize(const Setting& setting){
 	setting_ = setting;
 
 //////////
@@ -318,7 +318,7 @@ void Core::initialize(const CoreSetting& setting){
 	exec_script();
 }
 
-void Core::uninitialize(){
+void Environment::uninitialize(){
 	full_gc();
 
 	Iterator_ = null;
@@ -347,7 +347,7 @@ void Core::uninitialize(){
 }
 	
 VMachinePtr vmachine_take_over(){
-	Core* core = xtal::core();
+	Environment* core = xtal::core();
 	if(core->vm_list_->empty()){
 		core->vm_list_->push_back(xnew<VMachine>());
 	}
@@ -357,7 +357,7 @@ VMachinePtr vmachine_take_over(){
 }
 
 void vmachine_take_back(const VMachinePtr& vm){
-	Core* core = xtal::core();
+	Environment* core = xtal::core();
 	vm->reset();
 	core->vm_list_->push_back(vm);
 }

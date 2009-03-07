@@ -32,7 +32,7 @@
 #include "xtal_class.h"
 #include "xtal_filesystem.h"
 #include "xtal_ch.h"
-#include "xtal_core.h"
+#include "xtal_environment.h"
 #include "xtal_thread.h"
 #include "xtal_lib.h"
 #include "xtal_debug.h"

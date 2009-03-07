@@ -3,22 +3,22 @@
 
 namespace xtal{
 
-struct CoreSetting{
+struct Setting{
 	ThreadLib* thread_lib;
 	StreamLib* stream_lib;
 	FilesystemLib* filesystem_lib;
 	AllocatorLib* allocator_lib;
 	ChCodeLib* chcode_lib;
 
-	CoreSetting();
+	Setting();
 };
 
-class Core;
+class Environment;
 
 /**
 * @brief Xtal実行環境を初期化する。
 */
-void initialize(const CoreSetting& setting);
+void initialize(const Setting& setting);
 
 /**
 * @brief Xtal実行環境を破棄する。
@@ -28,12 +28,12 @@ void uninitialize();
 /**
 * @brief 現在のカレントのXtal実行環境を取得する。
 */
-Core* core();
+Environment* core();
 
 /**
 * @brief カレントのXtal実行環境を設定する。
 */
-void set_core(Core* e);
+void set_core(Environment* e);
 	
 void debug_print();
 

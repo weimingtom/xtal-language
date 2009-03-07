@@ -21,7 +21,7 @@ public:
 		:SmartPtr<Any>(p){
 
 		// 継承関係をここでチェックしている。
-		// ここでコンパイルエラーになる場合、ptr_cast関数、ptr_as関数等を使用して変換する必要がある。
+		// ここでコンパイルエラーになる場合、ptr_cast関数、ptr_cast関数等を使用して変換する必要がある。
 		T* n = (U*)0; 
 		XTAL_UNUSED_VAR(n);
 	}
@@ -65,7 +65,7 @@ private:
 	* @brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
 	* AnyPtrからの暗黙の変換を拒否するために、privateで定義されている。
-	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_as関数を使用すること。
+	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_cast関数を使用すること。
 	*/
 	//SmartPtr(const AnyPtr&);
 

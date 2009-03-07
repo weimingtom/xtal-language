@@ -1350,7 +1350,7 @@ void Parser::parse_else_or_nobreak(){
 
 void Parser::parse_each(){
 	ExprPtr lhs = ep(eb_.pop());
-	IDPtr label = ptr_as<ID>(eb_.pop());
+	IDPtr label = ptr_cast<ID>(eb_.pop());
 
 	ExprPtr params = xnew<Expr>();
 

@@ -50,7 +50,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 
 	IDPtr pick;
 
-	if(const ClassPtr& klass = ptr_as<Class>(target)){
+	if(const ClassPtr& klass = ptr_cast<Class>(target)){
 		pick = klass->find_near_member(primary_key, secondary_key);
 		if(raweq(pick, primary_key)){
 			pick = null;

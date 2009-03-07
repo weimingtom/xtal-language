@@ -108,7 +108,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 	}
 	
-	if(const MapPtr& a = as<MapPtr>(v)){
+	if(const MapPtr& a = ptr_cast<Map>(v)){
 		stream_->put_u8(TMAP);
 		stream_->put_u32be(a->size());
 		Xfor2(key, value, a){

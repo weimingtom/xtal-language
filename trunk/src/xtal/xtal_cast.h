@@ -12,9 +12,6 @@ namespace xtal{
 template<class T>
 struct CastResult{ typedef T type; };
 
-template<class T> 
-inline typename CastResult<T>::type as(const AnyPtr& a);
-	
 template<class T>
 inline typename CastResult<T>::type cast(const AnyPtr& a);
 	
@@ -26,10 +23,6 @@ inline typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
 
 template<class T>
 const ClassPtr& cpp_class();
-
-/////////////////////////////////////////////////////////////////////////////
-
-void cast_failed(const AnyPtr& a, const ClassPtr& cls);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -150,21 +143,11 @@ struct CastHelper<T*>{
 
 template<class T>
 struct CastHelperHelper{
-	static T as(const AnyPtr& a){
-		if(can_cast(a)){
-			return unchecked_cast(a);
-		}
-		else{
-			return get_null();
-		}
-	}
-		
 	static T cast(const AnyPtr& a){ 
 		if(can_cast(a)){
 			return unchecked_cast(a);
 		}
 		else{
-			cast_failed(a, cpp_class<T>());
 			return get_null();
 		}
 	}
@@ -316,17 +299,6 @@ XTAL_CAST_HELPER(long double, float_t, Float);
 * T‚ª’l‚©QÆ‚ÅAAnyPtr‚ğŒp³‚µ‚½Œ^‚È‚çxtal::null‚ğ•Ô‚·B
 * ‚»‚êˆÈŠO‚ÌŒ^‚Ìê‡‚Í–¢’è‹`B
 */
-template<class T> 
-inline typename CastResult<T>::type 
-as(const AnyPtr& a){
-	return CastHelperHelper<T>::as(a);
-}
-
-/**
-* @brief TŒ^‚É•ÏŠ·‚·‚éB
-*
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin()->member("CastError")‚ª“Š‚°‚ç‚ê‚é
-*/
 template<class T>
 inline typename CastResult<T>::type 
 cast(const AnyPtr& a){
@@ -357,17 +329,6 @@ unchecked_cast(const AnyPtr& a){
 *
 * T‚É•ÏŠ·‚Å‚«‚È‚¢ê‡xtal::null‚ğ•Ô‚·B
 */
-template<class T> 
-inline const SmartPtr<T>&
-ptr_as(const AnyPtr& a){
-	return CastHelperHelper<const SmartPtr<T>&>::as(a);
-}
-
-/**
-* @brief SmartPtr<T>Œ^‚É•ÏŠ·‚·‚éB
-*
-* TŒ^‚É•ÏŠ·‚Å‚«‚È‚¢ê‡Abuiltin()->member("CastError")‚ª“Š‚°‚ç‚ê‚é
-*/
 template<class T>
 inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
@@ -389,12 +350,6 @@ template<class T>
 inline typename CastResult<T>::type 
 tricky_cast(const AnyPtr& a, void (*f)(T)){
 	return CastHelperHelper<T>::cast(a);
-}
-
-template<class T>
-inline typename CastResult<T>::type 
-tricky_as(const AnyPtr& a, void (*f)(T)){
-	return CastHelperHelper<T>::as(a);
 }
 
 }

@@ -213,11 +213,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_core.cpp"
+				RelativePath="..\..\src\xtal\xtal_debug.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_debug.cpp"
+				RelativePath="..\..\src\xtal\xtal_environment.cpp"
 				>
 			</File>
 			<File
@@ -258,6 +258,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_math.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_objectspace.cpp"
 				>
 			</File>
 			<File
@@ -342,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_cache.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_cast.h"
 				>
 			</File>
@@ -366,11 +374,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_core.h"
+				RelativePath="..\..\src\xtal\xtal_debug.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_debug.h"
+				RelativePath="..\..\src\xtal\xtal_environment.h"
 				>
 			</File>
 			<File
@@ -422,6 +430,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_objectspace.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_parser.h"
 				>
 			</File>
@@ -450,11 +462,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_stringspace.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_text.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_thread.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_threadspace.h"
 				>
 			</File>
 			<File

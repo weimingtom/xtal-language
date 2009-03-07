@@ -291,7 +291,7 @@ Text::Text(const StringPtr& key)
 	:key_(key){}
 
 void Text::rawcall(const VMachinePtr& vm){
-	MapPtr m = ptr_as<Map>(builtin()->member(Xid(_text_map)));
+	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
 	if(m){
 		if(const AnyPtr& value=m->at(key_)){
 			xnew<Format>(value->to_s())->rawcall(vm);

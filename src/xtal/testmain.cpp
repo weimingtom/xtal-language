@@ -23,11 +23,11 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-{
-		"test".p; 111111111.p;
-}
+		...[0].p;
+		aaa.p;
 	))){
-		code->inspect()->p();
+		code->filelocal()->def("aaa", 101010);
+		code->call(10);
 	}
 
 	XTAL_CATCH_EXCEPT(e){

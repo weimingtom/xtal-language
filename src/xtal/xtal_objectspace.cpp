@@ -11,10 +11,10 @@ enum{
 	OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 };
 
-struct CycleCounter{
+struct ScopeCounter{
 	uint_t* p;
-	CycleCounter(uint_t* p):p(p){ *p+=1; }
-	~CycleCounter(){ *p-=1; }
+	ScopeCounter(uint_t* p):p(p){ *p+=1; }
+	~ScopeCounter(){ *p-=1; }
 };
 
 struct ConnectedPointer{
@@ -227,7 +227,7 @@ void print_alive_objects(){
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
-		CycleCounter cc(&cycle_count_);
+		ScopeCounter cc(&cycle_count_);
 		
 		ConnectedPointer current(objects_count_, objects_list_begin_);
 		ConnectedPointer begin(prev_objects_count_>objects_count_ ? objects_count_ : (prev_objects_count_-prev_objects_count_/4), objects_list_begin_);
@@ -279,7 +279,7 @@ void ObjectSpace::gc(){
 void ObjectSpace::full_gc(){
 	if(cycle_count_!=0){ return; }
 	if(stop_the_world()){
-		CycleCounter cc(&cycle_count_);
+		ScopeCounter cc(&cycle_count_);
 		//printf("used memory %dKB\n", used_memory/1024);
 				
 		while(true){			
@@ -450,7 +450,7 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 	p->inc_ref_count();
 
 	if(objects_current_==objects_end_){
-		CycleCounter cc(&cycle_count_);
+		ScopeCounter cc(&cycle_count_);
 		//gc();
 		expand_objects_list();
 		objects_begin_ = objects_current_ = *objects_list_current_++;

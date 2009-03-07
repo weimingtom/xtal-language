@@ -140,10 +140,10 @@ bool block_next(BlockValueHolder3& holder, bool first){
 BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const ArrayPtr& array = ptr_as<Array>(tar);
+	const ArrayPtr& array = ptr_cast<Array>(tar);
 	if(array){ it = unchecked_ptr_cast<ArrayIter>(array->each()); }
 	else{ 
-		it = ptr_as<ArrayIter>(tar); 
+		it = ptr_cast<ArrayIter>(tar); 
 	}
 }
 
@@ -161,10 +161,10 @@ BlockValueHolder1::~BlockValueHolder1(){
 BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const MapPtr& map = ptr_as<Map>(tar);
+	const MapPtr& map = ptr_cast<Map>(tar);
 	if(map){ it = unchecked_ptr_cast<MapIter>(map->each()); }
 	else{ 
-		it = ptr_as<MapIter>(tar); 
+		it = ptr_cast<MapIter>(tar); 
 	}
 }
 

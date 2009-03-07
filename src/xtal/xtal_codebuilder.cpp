@@ -314,7 +314,7 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 }
 
 int_t CodeBuilder::regster_identifier_or_compile_expr(const AnyPtr& var){
-	if(const IDPtr& id = ptr_as<ID>(var)){ 
+	if(const IDPtr& id = ptr_cast<ID>(var)){ 
 		return regster_identifier(id);
 	}
 	compile_expr(ep(var)); 
@@ -375,7 +375,7 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 
 void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key){
 	int_t key = 0;
-	if(ptr_as<Expr>(var)){ 
+	if(ptr_cast<Expr>(var)){ 
 		eb_.push(KIND_STRING);
 		eb_.push(Xid(set_));
 		eb_.splice(EXPR_STRING, 2);
@@ -384,7 +384,7 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 		compile_expr(eb_.pop()); 
 	}
 	else{
-		key = regster_identifier(Xid(set_)->cat(ptr_as<ID>(var)));
+		key = regster_identifier(Xid(set_)->cat(ptr_cast<ID>(var)));
 	}
 	
 	if(secondary_key){
@@ -639,7 +639,7 @@ void CodeBuilder::var_define_stmts(const ExprPtr& stmts){
 }
 
 void CodeBuilder::var_define_stmt(const AnyPtr& stmt){
-	if(ExprPtr v = ptr_as<Expr>(stmt)){
+	if(ExprPtr v = ptr_cast<Expr>(stmt)){
 		if(v->itag()==EXPR_DEFINE){
 			if(v->bin_lhs()->itag()==EXPR_LVAR){
 				var_define(v->bin_lhs()->lvar_name(), v->bin_rhs());
@@ -1043,7 +1043,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 		ExprPtr stmts = xnew<Expr>();
 		MapPtr ivar_map = xnew<Map>();
 		bool auto_initialize = false;
-		Xfor_as(const ExprPtr& v, e->class_stmts()->clone()){
+		Xfor_cast(const ExprPtr& v, e->class_stmts()->clone()){
 			if(v->itag()==EXPR_CDEFINE_IVAR){
 				if(v->cdefine_ivar_term()){
 					eb_.push(v->cdefine_ivar_name());
@@ -1148,7 +1148,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	cf().class_info_num = result_->class_info_table_.size();
 
 	int_t ivar_num = 0;
-	Xfor_as(const ExprPtr& v, e->class_stmts()){
+	Xfor_cast(const ExprPtr& v, e->class_stmts()){
 		if(v->itag()==EXPR_CDEFINE_IVAR){
 			ClassFrame::Entry entry;
 			entry.name = v->cdefine_ivar_name();
@@ -1172,7 +1172,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	}
 
 	info.instance_variable_identifier_offset = result_->identifier_table_->size();
-	Xfor_as(const ExprPtr& v, e->class_stmts()){
+	Xfor_cast(const ExprPtr& v, e->class_stmts()){
 		if(v->itag()==EXPR_CDEFINE_IVAR){
 			if(v->cdefine_ivar_term()){
 				result_->identifier_table_->push_back(v->cdefine_ivar_name());
@@ -1225,8 +1225,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	int_t ordered = 0;
 	int_t named = 0;
 
-	Xfor_as(const ExprPtr& v, e->fun_params()){
-
+	Xfor_cast(const ExprPtr& v, e->fun_params()){
 		if(!v->at(0) || (ep(v->at(0))->itag()!=EXPR_LVAR && ep(v->at(0))->itag()!=EXPR_IVAR)){
 			error_->error(lineno(), Xt("Xtal Compile Error 1004"));
 			return;
@@ -1309,7 +1308,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 
 	// 変数フレームを作成して、引数を登録する
 	var_begin(VarFrame::SCOPE);
-	Xfor_as(const ExprPtr& v1, e->fun_params()){
+	Xfor_cast(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
 		if(v->itag()==EXPR_LVAR){
 			var_define(v->lvar_name());
@@ -1345,8 +1344,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	// デフォルト値を持つ引数を処理する
 	{
 		int_t i = 0;
-		Xfor_as(const ExprPtr& v1, e->fun_params()){
-			if(const ExprPtr& v = ptr_as<Expr>(v1->at(1))){
+		Xfor_cast(const ExprPtr& v1, e->fun_params()){
+			if(const ExprPtr& v = ptr_cast<Expr>(v1->at(1))){
 				int_t label = reserve_label();
 				
 				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
@@ -1369,7 +1368,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	}
 
 	// 引数にインスタンス変数がある場合に、特別な処理を入れる
-	Xfor_as(const ExprPtr& v1, e->fun_params()){
+	Xfor_cast(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
 		if(v->itag()==EXPR_IVAR){
 			eb_.push(v);
@@ -1642,7 +1641,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 
 		XTAL_CASE(EXPR_MAP){
 			put_inst(InstMakeMap());
-			Xfor_as(const ArrayPtr& v, e->map_values()){
+			Xfor_cast(const ArrayPtr& v, e->map_values()){
 				compile_expr(v->at(0));
 				compile_expr(v->at(1));
 				put_inst(InstMapInsert());				
@@ -1823,7 +1822,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			int_t ordered = 0;
 			int_t named = 0;
 
-			Xfor_as(const ExprPtr& v, e->call_args()){
+			Xfor_cast(const ExprPtr& v, e->call_args()){
 				if(v->at(0)){
 					named++;
 				}
@@ -1837,7 +1836,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				}
 			}
 			
-			Xfor_as(const ExprPtr& v, e->call_args()){
+			Xfor_cast(const ExprPtr& v, e->call_args()){
 				if(v->at(0)){
 					const ExprPtr& k = ptr_cast<Expr>(v->at(0));
 					put_inst(InstValue(register_value(k->lvar_name())));
@@ -2395,8 +2394,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 			MapPtr case_map = xnew<Map>();
 			ExprPtr default_case = e->switch_default();
-			Xfor_as(const ExprPtr& v, e->switch_cases()){
-				Xfor_as(const ExprPtr& k, v->at(0)){
+			Xfor_cast(const ExprPtr& v, e->switch_cases()){
+				Xfor_cast(const ExprPtr& k, v->at(0)){
 					case_map->set_at(k, v->at(1));
 				}
 			}
@@ -2614,7 +2613,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_IS){
 			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
 			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			if(ClassPtr cp = ptr_as<Class>(rhs)){
+			if(ClassPtr cp = ptr_cast<Class>(rhs)){
 				return lhs->is(cp);
 			}
 			else{
@@ -2625,7 +2624,7 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_NIS){
 			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
 			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			if(ClassPtr cp = ptr_as<Class>(rhs)){
+			if(ClassPtr cp = ptr_cast<Class>(rhs)){
 				return !lhs->is(cp);
 			}
 			else{
@@ -2732,11 +2731,11 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 			XTAL_CB_DO_EXPR(term, e->member_term());
 			XTAL_CB_DO_EXPR(ns, e->member_ns());
 		
-			if(ptr_as<Expr>(e->member_name())){
+			if(ptr_cast<Expr>(e->member_name())){
 				return undefined;
 			}
 			else{
-				AnyPtr ret = term->member(ptr_as<ID>(e->member_name()), ns, null, false);
+				AnyPtr ret = term->member(ptr_cast<ID>(e->member_name()), ns, null, false);
 				XTAL_CATCH_EXCEPT(e){
 					XTAL_UNUSED_VAR(e);
 					return undefined;

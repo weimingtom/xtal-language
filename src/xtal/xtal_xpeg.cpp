@@ -665,9 +665,10 @@ AnyPtr Executor::captures(){
 	MapPtr ret = xnew<Map>();
 
 	ret->set_at(empty_id, at(empty_string));
-	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+	Xfor2(k, v, cap_){
 		XTAL_UNUSED_VAR(v);
-		ret->set_at(k, at(k));
+		const StringPtr& k2 = unchecked_ptr_cast<String>(k);
+		ret->set_at(k2, at(k2));
 	}
 
 	return ret->each();
@@ -677,9 +678,10 @@ AnyPtr Executor::captures_values(){
 	MapPtr ret = xnew<Map>();
 
 	ret->set_at(empty_id, at(empty_string));
-	Xfor2_cast(const StringPtr& k, const AnyPtr& v, cap_){
+	Xfor2(k, v, cap_){
 		XTAL_UNUSED_VAR(v);
-		ret->set_at(k, call(k));
+		const StringPtr& k2 = unchecked_ptr_cast<String>(k);
+		ret->set_at(k2, call(k2));
 	}
 
 	return ret->each();
@@ -1092,11 +1094,11 @@ bool Executor::test(const AnyPtr& ae){
 ////////////////////////////////////////////////////////////////////////
 
 ElementPtr elem(const AnyPtr& a){
-	if(const ElementPtr& p = ptr_as<Element>(a)){
+	if(const ElementPtr& p = ptr_cast<Element>(a)){
 		return p;
 	}
 
-	if(const ChRangePtr& p = ptr_as<ChRange>(a)){
+	if(const ChRangePtr& p = ptr_cast<ChRange>(a)){
 		SetPtr chset = xnew<Set>();
 		Xfor(v, p){
 			chset->set_at(v, true);
@@ -1104,7 +1106,7 @@ ElementPtr elem(const AnyPtr& a){
 		return xnew<Element>(Element::TYPE_CH_SET, chset);
 	}
 
-	if(const StringPtr& p = ptr_as<String>(a)){
+	if(const StringPtr& p = ptr_cast<String>(a)){
 		if(p->length()==0){
 			return xnew<Element>(Element::TYPE_EMPTY);
 		}
@@ -1126,7 +1128,7 @@ ElementPtr elem(const AnyPtr& a){
 		return elem(str);
 	}
 
-	if(const FunPtr& p = ptr_as<Fun>(a)){
+	if(const FunPtr& p = ptr_cast<Fun>(a)){
 		return xnew<Element>(Element::TYPE_CALL, p);
 	}
 

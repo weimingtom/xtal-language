@@ -163,7 +163,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
-	Xfor_as(const MultiValuePtr& v, send(Xid(members))){
+	Xfor_cast(const MultiValuePtr& v, send(Xid(members))){
 		IDPtr id = ptr_cast<ID>(v->at(0));
 		if(raweq(primary_key, id)){
 			return id;
@@ -284,7 +284,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	// 見つからなかった。
 
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
-	if(const ClassPtr& klass = ptr_as<Class>(secondary_key)){
+	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
 			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){

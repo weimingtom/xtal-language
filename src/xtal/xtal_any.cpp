@@ -229,7 +229,7 @@ ArrayPtr Any::object_name_list() const{
 		}
 		return ret;
 	}
-	else if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+	else if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 		ArrayPtr ret = xnew<Array>();
 		ret->push_back(mv(cls->object_name(), null));
 		return ret;
@@ -263,7 +263,7 @@ StringPtr Any::object_name() const{
 	}
 
 	// クラスの場合、自身が名前を保持してるかも
-	if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 		if(StringPtr name = cls->object_name()){
 			if(rawne(name, empty_string)){
 				return name;
@@ -282,7 +282,7 @@ StringPtr Any::object_name() const{
 	}
 
 	// メソッドの場合、その定義位置を表示しとこう
-	if(const MethodPtr& mtd = ptr_as<Method>(ap(*this))){
+	if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
 		if(mtd->code()){
 			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
 				mtd->code()->source_file_name(), 
@@ -326,7 +326,7 @@ bool Any::is(const AnyPtr& klass) const{
 bool Any::is_inherited(const AnyPtr& klass) const{
 	if(raweq(*this, klass)) return true;
 
-	if(const ClassPtr& cls = ptr_as<Class>(ap(*this))){
+	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 		return cls->is_inherited(klass);
 	}
 	else{
@@ -410,7 +410,7 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
-		if(const MapPtr& insts = ptr_as<Map>(v)){
+		if(const MapPtr& insts = ptr_cast<Map>(v)){
 			if(const CodePtr& code = p->code()){
 				ClassInfo* info = p->info();
 				if(info->instance_variable_size!=0){	

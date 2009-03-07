@@ -3,10 +3,6 @@
 
 namespace xtal{
 
-void cast_failed(const AnyPtr& a, const ClassPtr& cls){
-	XTAL_SET_EXCEPT(cast_error(a, cls->object_name()));
-}
-
 ////////////////////////////////////////////////////////////////////////
 
 const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 
@@ -14,7 +10,7 @@ const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){
 }
 
 bool CastHelper<const IDPtr*>::can_cast(const AnyPtr& a){
-	if(String* p = xtal::as<String*>(a)){
+	if(String* p = xtal::cast<String*>(a)){
 		if(p->is_interned()){
 			return true;
 		}

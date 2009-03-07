@@ -125,7 +125,7 @@ int main(int argc, char** argv){
 	WinFilesystemLib win_filesystem_lib;
 	SJISChCodeLib sjis_chcode_lib;
 
-	CoreSetting setting;
+	Setting setting;
 	setting.thread_lib = &win_thread_lib;
 	setting.stream_lib = &cstd_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
@@ -151,13 +151,13 @@ int main(int argc, char** argv){
 	WinFilesystemLib win_filesystem_lib;
 	SJISChCodeLib sjis_chcode_lib;
 
-	CoreSetting setting;
+	Setting setting;
 	setting.thread_lib = &win_thread_lib;
 	setting.stream_lib = &cstd_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.chcode_lib = &sjis_chcode_lib;
 
-	Core core;
+	Environment core;
 	core.initialize(setting);
 
 	XTAL_CATCH_EXCEPT(e){

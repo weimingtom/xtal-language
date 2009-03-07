@@ -7,7 +7,10 @@
 
 namespace xtal{
 	
-CodeBuilder::CodeBuilder(){}
+CodeBuilder::CodeBuilder(){
+	global_ref_map_ = xnew<Map>();
+	global_def_map_ = xnew<Map>();
+}
 
 CodeBuilder::~CodeBuilder(){}
 
@@ -180,6 +183,19 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	// 変数フレームをポップする
 	var_end();
 
+	Xfor2(k, v, global_def_map_){
+		if(v){
+			global_ref_map_->set_at(k, false);
+		}
+	}
+
+	Xfor2(k, v, global_ref_map_){
+		if(v){
+			Code::ImplcitInfo info = {k->to_i(), v->to_i()};
+			result_->implicit_table_.push_back(info);
+		}
+	}
+
 	if(error_->errors->size()==0){
 		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
 		return result_;
@@ -242,7 +258,9 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		put_inst(InstSetGlobalVariable(regster_identifier(var)));
+		int_t id = regster_identifier(var);
+		put_inst(InstSetGlobalVariable(id));
+		global_ref_map_->set_at(id, lineno());
 		return false;
 	}
 }
@@ -288,7 +306,10 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 		if(rhs){
 			compile_expr(rhs);
 		}
-		put_inst(InstDefineGlobalVariable(regster_identifier(var)));
+
+		int_t id = regster_identifier(var);
+		put_inst(InstDefineGlobalVariable(id));
+		global_def_map_->set_at(id, lineno());
 	}
 }
 
@@ -308,7 +329,9 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		put_inst(InstGlobalVariable(regster_identifier(var)));
+		int_t id = regster_identifier(var);
+		put_inst(InstGlobalVariable(id));
+		global_ref_map_->set_at(id, lineno());
 		return false;
 	}
 }

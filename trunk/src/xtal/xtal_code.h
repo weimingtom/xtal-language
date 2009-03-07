@@ -97,6 +97,8 @@ public:
 
 	void remove_break_point(uint_t lineno);
 
+	void check_implicit_lookup();
+
 protected:
 
 	void insert_erase_common(inst_t* p, int_t size);
@@ -129,30 +131,37 @@ private:
 	PODArrayList<ClassInfo> class_info_table_;
 	PODArrayList<ExceptInfo> except_info_table_;
 
-	struct LineNumberTable{
+	struct LineNumberInfo{
 		u32 start_pc;
 		u32 lineno;
 	};
 
 	struct LineNumberCmp{
-		bool operator ()(const LineNumberTable& lnt, uint_t pc){
+		bool operator ()(const LineNumberInfo& lnt, uint_t pc){
 			return lnt.start_pc<pc;
 		}
-		bool operator ()(uint_t pc, const LineNumberTable& lnt){
+		bool operator ()(uint_t pc, const LineNumberInfo& lnt){
 			return pc<lnt.start_pc;
 		}
-		bool operator ()(const LineNumberTable& l, const LineNumberTable& r){
+		bool operator ()(const LineNumberInfo& l, const LineNumberInfo& r){
 			return l.start_pc<r.start_pc;
 		}
 	};
 
-	PODArrayList<LineNumberTable> lineno_table_;
+	PODArrayList<LineNumberInfo> lineno_table_;
 
 	struct AddressJump{
 		u32 pos;
 	};
 
 	PODArrayList<AddressJump> address_jump_table_;
+	
+	struct ImplcitInfo{
+		u16 id;
+		u16 lineno;
+	};
+
+	PODArrayList<ImplcitInfo> implicit_table_;
 };
 
 }

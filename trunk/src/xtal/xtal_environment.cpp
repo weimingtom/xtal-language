@@ -209,16 +209,6 @@ void so_free(void* p, size_t size){
 }
 
 void* user_malloc(size_t size){
-	void* ret = user_malloc_nothrow(size);
-	if(!ret){
-		XTAL_ASSERT(false); // メモリーが完全に取得できなかった。
-		// アサートで止めても事態は改善しないんだが、
-		// 例外を使わないとしたら、一体ここはどうしたらいいんだろう？
-	}
-	return ret;
-} 
-
-void* user_malloc_nothrow(size_t size){
 #if XTAL_DEBUG_ALLOC!=0
 	return debug_malloc(size);
 #endif

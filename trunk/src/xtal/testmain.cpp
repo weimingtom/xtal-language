@@ -23,13 +23,13 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-		...[0].p;
-		aaa.p;
+		check_implicit_lookup();
+
 	))){
 		code->filelocal()->def("aaa", 101010);
 		code->call(10);
 	}
-
+	
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 		return 1;

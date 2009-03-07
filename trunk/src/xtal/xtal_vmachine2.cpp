@@ -225,6 +225,7 @@ void VMachine::adjust_args(const Named* params, int_t num){
 		stack_.insert(offset, arg_default(params[i]));
 		f.ordered_arg_count++;
 	}
+	f.named_arg_count = 0;
 	stack_.downsize(offset);
 }
 
@@ -422,9 +423,10 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 		if(!ep->is(builtin()->member(Xid(Exception)))){
 			ep = RuntimeError()->call(ep);
 		}
+
 		if(fun() &&  fun()->code()){
 			if((pc !=  fun()->code()->data()+ fun()->code()->size()-1)){
-				ep->send(Xid(append_backtrace),
+				unchecked_ptr_cast<Exception>(ep)->append_backtrace(
 					 fun()->code()->source_file_name(),
 					 fun()->code()->compliant_lineno(pc),
 					fun()->object_name());
@@ -525,15 +527,7 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 
 const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-
-		AnyPtr e;
-		
-		if(ap(except_[0])){
-			e = ap(except_[0]);
-		}
-		else{
-			e = ap(except_[1]);
-		}
+		AnyPtr e = catch_except();
 
 		// try .. catch .. finally•¶‚ÅˆÍ‚í‚ê‚Ä‚¢‚È‚¢
 		if(except_frames_.empty()){
@@ -572,15 +566,11 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 			pc = ef.info->catch_pc +  fun()->code()->data();
 			push(AnyPtr(ef.info->end_pc));
 			push(e);
-			except_[1] = null;
-			except_[0] = null;
 		}
 		else{
 			pc = ef.info->finally_pc +  fun()->code()->data();
 			push(e);
 			push(AnyPtr(fun()->code()->size()-1));
-			except_[1] = except_[0];
-			except_[0] = null;
 		}
 
 		except_frames_.downsize(1);

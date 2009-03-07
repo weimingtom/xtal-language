@@ -42,16 +42,8 @@ void print_alive_objects();
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
-* メモリ確保失敗は例外で返される。
 */
 void* user_malloc(size_t size);
-
-/**
-* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
-*
-* メモリ確保失敗はNULL値で返される。
-*/
-void* user_malloc_nothrow(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。

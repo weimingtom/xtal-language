@@ -3,12 +3,24 @@
 
 namespace xtal{
 
+namespace{
+
+void filelocal_check_implicit_lookup(const AnyPtr& a){
+	if(CodePtr code = ptr_cast<Code>(a->member(Xid(code)))){
+		code->check_implicit_lookup();
+	}
+}
+
+}
+
 Code::Code()
-	:filelocal_(xnew<Singleton>(Xid(filelocal))), source_file_name_("<noname>"){
-	filelocal_->set_object_name("filelocal");
+	:filelocal_(xnew<Singleton>()), source_file_name_("<noname>"){
+	filelocal_->set_object_name(Xid(filelocal));
 	filelocal_->set_object_force(500);
 	filelocal_->inherit(builtin());
 	filelocal_->def(Xid(filelocal), filelocal_);
+	filelocal_->def(Xid(code), from_this(this));
+	filelocal_->def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
 
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
@@ -19,15 +31,15 @@ Code::Code()
 void Code::set_lineno_info(uint_t line){
 	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
 		return;
-	LineNumberTable lnt={(u16)code_.size(), (u16)line};
+	LineNumberInfo lnt={(u16)code_.size(), (u16)line};
 	lineno_table_.push_back(lnt);
 }
 
 int_t Code::compliant_lineno(const inst_t* p){
 	if(!lineno_table_.empty()){
-		LineNumberTable* begin = &lineno_table_[0];
-		LineNumberTable* end = begin+lineno_table_.size();
-		LineNumberTable* it=
+		LineNumberInfo* begin = &lineno_table_[0];
+		LineNumberInfo* end = begin+lineno_table_.size();
+		LineNumberInfo* it=
 			std::lower_bound(
 				begin,
 				end,
@@ -146,6 +158,26 @@ void Code::insert_erase_common(inst_t* p, int_t size){
 		}
 	}
 }
+	
+void Code::check_implicit_lookup(){
+	ArrayPtr ary;
+	for(uint_t i=0; i<implicit_table_.size(); ++i){
+		IDPtr id = unchecked_ptr_cast<ID>(identifier_table_->at(implicit_table_[i].id));
+		AnyPtr ret = filelocal_->member(id);
+		if(raweq(undefined, ret)){
+			if(!ary){
+				ary = xnew<Array>();
+			}
+			ary->push_back(Xf("%s(%d)")->call(id, implicit_table_[i].lineno));
+		}
+	}
+
+	if(ary){
+		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1030")->call(Named(Xid(name), ary))));
+		//XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1030"), Named(Xid(name), ary)));
+	}
+}
+
 
 StringPtr Code::inspect(){
 	MemoryStreamPtr ms(xnew<MemoryStream>());

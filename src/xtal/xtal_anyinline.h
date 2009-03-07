@@ -3,10 +3,6 @@
 
 namespace xtal{
 
-inline const VMachinePtr& ThreadMgr::vmachine(){
-	return vmachine_;
-}
-
 inline const ClassPtr& Base::get_class(){ 
 	return from_this(class_); 
 }

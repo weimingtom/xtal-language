@@ -68,22 +68,6 @@ const IDPtr& ChMaker::to_s(){
 	return temp_;
 }
 
-int_t ch_len(char_t lead){
-	return core()->setting_.chcode_lib->ch_len(lead);
-}
-
-int_t ch_len2(const char_t* str){
-	return core()->setting_.chcode_lib->ch_len2(str);
-}
-
-StringPtr ch_inc(const char_t* data, int_t data_size){
-	return core()->setting_.chcode_lib->ch_inc(data, data_size);
-}
-
-int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
-	return core()->setting_.chcode_lib->ch_cmp(a, asize, b, bsize);
-}
-
 void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, uint_t* buf, uint_t k, int_t offset){
 	uint_t v1 = buf[k-1+offset]+1;
 	uint_t v2 = buf[k+1+offset];

@@ -103,7 +103,7 @@ void Class::inherit(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 	
 	mixins_->push_back(cls);
-	inc_mutate_count_cache_is();
+	invalidate_cache_is();
 }
 
 void Class::inherit_first(const ClassPtr& cls){
@@ -126,7 +126,7 @@ void Class::inherit_first(const ClassPtr& cls){
 	XTAL_ASSERT(cls);
 
 	mixins_->push_back(cls);
-	inc_mutate_count_cache_is();
+	invalidate_cache_is();
 }
 
 void Class::inherit_strict(const ClassPtr& cls){
@@ -213,7 +213,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		map_members_->insert(key, val);
 		members_->push_back(value);
 		value->set_object_parent(from_this(this));
-		inc_mutate_count_cache_member();
+		invalidate_cache_member();
 	}
 	else{
 		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
@@ -273,7 +273,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	}
 		
 	{
-		const AnyPtr& ret = get_cpp_class<Any>()->any_member(primary_key, secondary_key);
+		const AnyPtr& ret = cpp_class<Any>()->any_member(primary_key, secondary_key);
 		if(rawne(ret, undefined)){
 			return ret;
 		}
@@ -294,8 +294,8 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 
 		//XTAL_CHECK_EXCEPT(e){ return undefined; }
 
-		if(rawne(get_cpp_class<Any>(), klass)){
-			const AnyPtr& ret = do_member(primary_key, get_cpp_class<Any>(), inherited_too, accessibility, nocache);
+		if(rawne(cpp_class<Any>(), klass)){
+			const AnyPtr& ret = do_member(primary_key, cpp_class<Any>(), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -320,7 +320,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
-	inc_mutate_count_cache_member();
+	invalidate_cache_member();
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
@@ -329,7 +329,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
 	value->set_object_parent(from_this(this));
-	inc_mutate_count_cache_member();
+	invalidate_cache_member();
 }
 
 void Class::set_object_parent(const ClassPtr& parent){
@@ -385,7 +385,7 @@ bool Class::is_inherited(const AnyPtr& v){
 		}
 	}
 
-	return raweq(v, get_cpp_class<Any>());
+	return raweq(v, cpp_class<Any>());
 }
 
 bool Class::is_inherited_cpp_class(){
@@ -459,7 +459,7 @@ void Class::s_new(const VMachinePtr& vm){
 }
 
 AnyPtr Class::ancestors(){
-	if(raweq(from_this(this), get_cpp_class<Any>())){
+	if(raweq(from_this(this), cpp_class<Any>())){
 		return null;
 	}			
 	
@@ -472,7 +472,7 @@ AnyPtr Class::ancestors(){
 		}
 	}
 
-	ret->push_back(get_cpp_class<Any>());
+	ret->push_back(cpp_class<Any>());
 	return ret;
 }
 
@@ -506,13 +506,13 @@ void CppClass::s_new(const VMachinePtr& vm){
 Singleton::Singleton(const StringPtr& name)
 	:Class(name){
 	Base::set_class(from_this(this));
-	inherit(get_cpp_class<Class>());
+	inherit(cpp_class<Class>());
 }
 
 Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
 	:Class(outer, code, core){
 	Base::set_class(from_this(this));
-	inherit(get_cpp_class<Class>());
+	inherit(cpp_class<Class>());
 }
 
 void Singleton::init_singleton(const VMachinePtr& vm){;
@@ -538,7 +538,7 @@ void Singleton::s_new(const VMachinePtr& vm){
 CppSingleton::CppSingleton(const StringPtr& name)
 	:Class(name){
 	Base::set_class(from_this(this));
-	inherit(get_cpp_class<Class>());
+	inherit(cpp_class<Class>());
 }
 
 

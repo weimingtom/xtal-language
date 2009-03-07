@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_codebuilder.h"
+
 #ifndef XTAL_NO_PARSER
 
 namespace xtal{
@@ -2503,8 +2505,8 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b)
 	a->rawsend(vm, name, b->get_class(), null, false);
 	if(!vm->processed()){ vm->return_result(undefined); }
 	ret = vm->result_and_cleanup_call();
-	if(ret->is(get_cpp_class<Int>()) || ret->is(get_cpp_class<Float>()) || ret->is(get_cpp_class<String>())
-		|| ret->is(get_cpp_class<Array>()) || ret->is(get_cpp_class<Map>()) || ret->is(get_cpp_class<Bool>())){
+	if(ret->is(cpp_class<Int>()) || ret->is(cpp_class<Float>()) || ret->is(cpp_class<String>())
+		|| ret->is(cpp_class<Array>()) || ret->is(cpp_class<Map>()) || ret->is(cpp_class<Bool>())){
 		return ret;
 	}
 

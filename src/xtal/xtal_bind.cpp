@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_stringspace.h"
+
 namespace xtal{
 
 namespace{
@@ -66,7 +68,7 @@ void bind(){
 		new_cpp_class<Range>(Xid(Range));
 
 		ClassPtr p = new_cpp_class<ChRange>(Xid(ChRange));
-		p->inherit(get_cpp_class<Range>());
+		p->inherit(cpp_class<Range>());
 		p->def(Xid(new), ctor<ChRange, const StringPtr&, const StringPtr&>());
 		p->def_method(Xid(each), &ChRange::each);
 	}
@@ -87,11 +89,11 @@ void bind(){
 
 		p->def_method(Xid(each), &String::each);
 
-		p->def_method(Xid(op_range), &String::op_range, get_cpp_class<String>());
-		p->def_method(Xid(op_cat), &String::op_cat, get_cpp_class<String>());
-		p->def_method(Xid(op_cat_assign), &String::op_cat, get_cpp_class<String>());
-		p->def_method(Xid(op_eq), &String::op_eq, get_cpp_class<String>());
-		p->def_method(Xid(op_lt), &String::op_lt, get_cpp_class<String>());
+		p->def_method(Xid(op_range), &String::op_range, cpp_class<String>());
+		p->def_method(Xid(op_cat), &String::op_cat, cpp_class<String>());
+		p->def_method(Xid(op_cat_assign), &String::op_cat, cpp_class<String>());
+		p->def_method(Xid(op_eq), &String::op_eq, cpp_class<String>());
+		p->def_method(Xid(op_lt), &String::op_lt, cpp_class<String>());
 	}
 
 	{
@@ -100,7 +102,7 @@ void bind(){
 		p->def_method(Xid(block_next), &InternedStringIter::block_next);
 	}
 
-	set_cpp_class<ID>(get_cpp_class<String>());
+	set_cpp_class<ID>(cpp_class<String>());
 
 /////////////////////////////
 
@@ -159,7 +161,7 @@ void bind(){
 		p->def_double_dispatch_method(Xid(op_range));
 		p->def_double_dispatch_method(Xid(op_in));
 
-		builtin()->def(Xid(Any), get_cpp_class<Any>());	
+		builtin()->def(Xid(Any), cpp_class<Any>());	
 	}
 
 ///////////////////
@@ -180,10 +182,10 @@ void bind(){
 		p->def_method(Xid(to_i), &Int::to_i);
 		p->def_method(Xid(to_f), &Int::to_f);
 		p->def_method(Xid(to_s), &Int::to_s);
-		p->def_method(Xid(op_range), (IntRangePtr (Int::*)(int_t, int_t))&Int::op_range, get_cpp_class<Int>());
-		p->def_method(Xid(op_range), (FloatRangePtr (Int::*)(float_t, int_t))&Int::op_range, get_cpp_class<Float>());
-		p->def_method(Xid(op_in), (bool (Int::*)(const IntRangePtr&))&Int::op_in, get_cpp_class<IntRange>());
-		p->def_method(Xid(op_in), (bool (Int::*)(const FloatRangePtr&))&Int::op_in, get_cpp_class<FloatRange>());
+		p->def_method(Xid(op_range), (IntRangePtr (Int::*)(int_t, int_t))&Int::op_range, cpp_class<Int>());
+		p->def_method(Xid(op_range), (FloatRangePtr (Int::*)(float_t, int_t))&Int::op_range, cpp_class<Float>());
+		p->def_method(Xid(op_in), (bool (Int::*)(const IntRangePtr&))&Int::op_in, cpp_class<IntRange>());
+		p->def_method(Xid(op_in), (bool (Int::*)(const FloatRangePtr&))&Int::op_in, cpp_class<FloatRange>());
 	}
 
 	{
@@ -192,10 +194,10 @@ void bind(){
 		p->def_method(Xid(to_i), &Float::to_i);
 		p->def_method(Xid(to_f), &Float::to_f);
 		p->def_method(Xid(to_s), &Float::to_s);
-		p->def_method(Xid(op_range), (FloatRangePtr (Float::*)(int_t, int_t))&Float::op_range, get_cpp_class<Int>());
-		p->def_method(Xid(op_range), (FloatRangePtr (Float::*)(float_t, int_t))&Float::op_range, get_cpp_class<Float>());
-		p->def_method(Xid(op_in), (bool (Float::*)(const IntRangePtr&))&Float::op_in, get_cpp_class<IntRange>());
-		p->def_method(Xid(op_in), (bool (Float::*)(const FloatRangePtr&))&Float::op_in, get_cpp_class<FloatRange>());
+		p->def_method(Xid(op_range), (FloatRangePtr (Float::*)(int_t, int_t))&Float::op_range, cpp_class<Int>());
+		p->def_method(Xid(op_range), (FloatRangePtr (Float::*)(float_t, int_t))&Float::op_range, cpp_class<Float>());
+		p->def_method(Xid(op_in), (bool (Float::*)(const IntRangePtr&))&Float::op_in, cpp_class<IntRange>());
+		p->def_method(Xid(op_in), (bool (Float::*)(const FloatRangePtr&))&Float::op_in, cpp_class<FloatRange>());
 	}
 
 	{
@@ -215,7 +217,7 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<IntRange>(Xid(IntRange));
-		p->inherit(get_cpp_class<Range>());
+		p->inherit(cpp_class<Range>());
 		p->def(Xid(new), ctor<IntRange, int_t, int_t, int_t>()->param(2, Xid(kind), 0));
 		p->def_method(Xid(begin), &IntRange::begin);
 		p->def_method(Xid(end), &IntRange::end);
@@ -224,7 +226,7 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<FloatRange>(Xid(FloatRange));
-		p->inherit(get_cpp_class<Range>());
+		p->inherit(cpp_class<Range>());
 		p->def(Xid(new), ctor<FloatRange, float_t, float_t, int_t>()->param(2, Xid(kind), 0));
 	}
 
@@ -266,12 +268,12 @@ void bind(){
 		p->def_method(Xid(concat), &Array::concat);
 
 		p->def_method(Xid(op_to_a), &Array::to_a);
-		p->def_method(Xid(op_cat), &Array::cat, get_cpp_class<Array>());
-		p->def_method(Xid(op_cat_assign), &Array::cat_assign, get_cpp_class<Array>());
-		p->def_method(Xid(op_at), &Array::op_at, get_cpp_class<Int>());
-		p->def_method(Xid(op_set_at), &Array::op_set_at, get_cpp_class<Int>());
-		p->def_method(Xid(op_eq), &Array::op_eq, get_cpp_class<Array>());
-		p->def_method(Xid(op_call), &Array::op_at, get_cpp_class<Int>());
+		p->def_method(Xid(op_cat), &Array::cat, cpp_class<Array>());
+		p->def_method(Xid(op_cat_assign), &Array::cat_assign, cpp_class<Array>());
+		p->def_method(Xid(op_at), &Array::op_at, cpp_class<Int>());
+		p->def_method(Xid(op_set_at), &Array::op_set_at, cpp_class<Int>());
+		p->def_method(Xid(op_eq), &Array::op_eq, cpp_class<Array>());
+		p->def_method(Xid(op_call), &Array::op_at, cpp_class<Int>());
 	}
 
 	{
@@ -287,8 +289,8 @@ void bind(){
 		set_cpp_class<Expr>(new_cpp_class<xpeg::TreeNode>());
 	}
 
-	builtin()->def(Xid(Array), get_cpp_class<Array>());
-	builtin()->def(Xid(MultiValue), get_cpp_class<MultiValue>());
+	builtin()->def(Xid(Array), cpp_class<Array>());
+	builtin()->def(Xid(MultiValue), cpp_class<MultiValue>());
 
 ///////////////////
 
@@ -319,23 +321,23 @@ void bind(){
 		p->def_method(Xid(concat), &Map::concat);
 
 		p->def_method(Xid(op_to_m), &Map::to_m);
-		p->def_method(Xid(op_at), &Map::at, get_cpp_class<Any>());
-		p->def_method(Xid(op_set_at), &Map::set_at, get_cpp_class<Any>());
-		p->def_method(Xid(op_cat), &Map::cat, get_cpp_class<Map>());
-		p->def_method(Xid(op_cat_assign), &Map::cat_assign, get_cpp_class<Map>());
-		p->def_method(Xid(op_call), &Map::at, get_cpp_class<Any>());
+		p->def_method(Xid(op_at), &Map::at, cpp_class<Any>());
+		p->def_method(Xid(op_set_at), &Map::set_at, cpp_class<Any>());
+		p->def_method(Xid(op_cat), &Map::cat, cpp_class<Map>());
+		p->def_method(Xid(op_cat_assign), &Map::cat_assign, cpp_class<Map>());
+		p->def_method(Xid(op_call), &Map::at, cpp_class<Any>());
 	}
 
 	{
 		ClassPtr p = new_cpp_class<Set>(Xid(Set));
-		p->inherit(get_cpp_class<Map>());
+		p->inherit(cpp_class<Map>());
 		
 		p->def(Xid(new), ctor<Set>());
 		p->def_method(Xid(each), &Set::each);
 	}
 
-	builtin()->def(Xid(Map), get_cpp_class<Map>());
-	builtin()->def(Xid(Set), get_cpp_class<Set>());
+	builtin()->def(Xid(Map), cpp_class<Map>());
+	builtin()->def(Xid(Set), cpp_class<Set>());
 
 ///////////////////
 
@@ -357,7 +359,7 @@ void bind(){
 		p->def_method(Xid(block_break), &ZipIter::block_break);
 	}
 
-	builtin()->def(Xid(zip), get_cpp_class<ZipIter>());
+	builtin()->def(Xid(zip), cpp_class<ZipIter>());
 
 
 ///////////////////
@@ -373,12 +375,12 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<Fun>(Xid(Fun));
-		p->inherit(get_cpp_class<Method>());
+		p->inherit(cpp_class<Method>());
 	}
 
 	{
 		ClassPtr p = new_cpp_class<Fiber>(Xid(Fiber));
-		p->inherit(get_cpp_class<Fun>());
+		p->inherit(cpp_class<Fun>());
 		p->inherit(Iterator());
 		p->def_method(Xid(reset), &Fiber::reset);
 		p->def_method(Xid(block_first), &Fiber::block_next);
@@ -389,7 +391,7 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<Lambda>(Xid(Lambda));
-		p->inherit(get_cpp_class<Fun>());
+		p->inherit(cpp_class<Fun>());
 	}
 
 	{
@@ -400,24 +402,24 @@ void bind(){
 		p->def_method(Xid(ordered_arguments), &Arguments::ordered_arguments);
 		p->def_method(Xid(named_arguments), &Arguments::named_arguments);
 		
-		p->def(Xid(op_at), method(&Arguments::op_at_int), get_cpp_class<Int>());
-		p->def(Xid(op_at), method(&Arguments::op_at_string), get_cpp_class<String>());
+		p->def(Xid(op_at), method(&Arguments::op_at_int), cpp_class<Int>());
+		p->def(Xid(op_at), method(&Arguments::op_at_string), cpp_class<String>());
 	}
 
-	builtin()->def(Xid(Arguments), get_cpp_class<Arguments>());
-	builtin()->def(Xid(Fun), get_cpp_class<Fun>());
-	builtin()->def(Xid(Fiber), get_cpp_class<Fiber>());
+	builtin()->def(Xid(Arguments), cpp_class<Arguments>());
+	builtin()->def(Xid(Fun), cpp_class<Fun>());
+	builtin()->def(Xid(Fiber), cpp_class<Fiber>());
 
 ///////////////////
 
 	{
 		ClassPtr p = new_cpp_class<Code>(Xid(Code));
-		p->inherit(get_cpp_class<Fun>());
+		p->inherit(cpp_class<Fun>());
 		p->def_method(Xid(filelocal), &Code::filelocal);
 		p->def_method(Xid(inspect), &Code::inspect);
 	}
 
-	builtin()->def(Xid(Code), get_cpp_class<Code>());
+	builtin()->def(Xid(Code), cpp_class<Code>());
 
 ///////////////////
 
@@ -432,13 +434,13 @@ void bind(){
 		p->def_method(Xid(members), &Frame::members);
 	}
 
-	builtin()->def(Xid(Frame), get_cpp_class<Frame>());
+	builtin()->def(Xid(Frame), cpp_class<Frame>());
 
 ///////////////////
 
 	{
 		ClassPtr p = new_cpp_class<Class>(Xid(Class));
-		p->inherit(get_cpp_class<Frame>());
+		p->inherit(cpp_class<Frame>());
 		p->def_method(Xid(inherit), &Class::inherit_strict);
 		p->def_method(Xid(overwrite), &Class::overwrite);
 		p->def_method(Xid(s_new), &Class::s_new);
@@ -449,22 +451,22 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<CppClass>(Xid(CppClass));
-		p->inherit(get_cpp_class<Class>());
+		p->inherit(cpp_class<Class>());
 	}
 
-	builtin()->def(Xid(Class), get_cpp_class<Class>());
-	builtin()->def(Xid(CppClass), get_cpp_class<CppClass>());
+	builtin()->def(Xid(Class), cpp_class<Class>());
+	builtin()->def(Xid(CppClass), cpp_class<CppClass>());
 
 ///////////////////
 
 	{
 		ClassPtr p = new_cpp_class<Lib>(Xid(Lib));
-		p->inherit(get_cpp_class<Class>());
+		p->inherit(cpp_class<Class>());
 		p->def(Xid(new), ctor<Lib>());
 		p->def_method(Xid(append_load_path), &Lib::append_load_path);
 	}
 	builtin()->def(Xid(lib), lib());
-	builtin()->def(Xid(Lib), get_cpp_class<Lib>());
+	builtin()->def(Xid(Lib), cpp_class<Lib>());
 
 ///////////////////
 
@@ -544,12 +546,12 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<PointerStream>(Xid(PointerStream));
-		p->inherit(get_cpp_class<Stream>());
+		p->inherit(cpp_class<Stream>());
 	}
 
 	{
 		ClassPtr p = new_cpp_class<MemoryStream>(Xid(MemoryStream));
-		p->inherit(get_cpp_class<PointerStream>());
+		p->inherit(cpp_class<PointerStream>());
 		p->def(Xid(new), ctor<MemoryStream>());
 		p->def_method(Xid(to_s), &MemoryStream::to_s);
 		p->def_method(Xid(resize), &MemoryStream::resize);
@@ -557,14 +559,14 @@ void bind(){
 
 	{
 		ClassPtr p = new_cpp_class<StringStream>(Xid(StringStream));
-		p->inherit(get_cpp_class<Stream>());
+		p->inherit(cpp_class<Stream>());
 		p->def(Xid(new), ctor<StringStream, const StringPtr&>());
 		p->def_method(Xid(to_s), &StringStream::to_s);
 	}
 
-	builtin()->def(Xid(Stream), get_cpp_class<Stream>());
-	builtin()->def(Xid(MemoryStream), get_cpp_class<MemoryStream>());
-	builtin()->def(Xid(StringStream), get_cpp_class<StringStream>());
+	builtin()->def(Xid(Stream), cpp_class<Stream>());
+	builtin()->def(Xid(MemoryStream), cpp_class<MemoryStream>());
+	builtin()->def(Xid(StringStream), cpp_class<StringStream>());
 
 	{
 		new_cpp_class<InstanceVariableGetter>();
@@ -579,7 +581,7 @@ void bind(){
 		p->def_fun(Xid(yield), &yield_thread);
 		p->def_fun(Xid(sleep), &sleep_thread);
 
-		builtin()->def(Xid(Thread), get_cpp_class<Thread>());
+		builtin()->def(Xid(Thread), cpp_class<Thread>());
 	}
 
 	{
@@ -588,7 +590,7 @@ void bind(){
 		p->def_method(Xid(lock), &lock_mutex);
 		p->def_method(Xid(unlock), &Mutex::unlock);
 
-		builtin()->def(Xid(Mutex), get_cpp_class<Mutex>());
+		builtin()->def(Xid(Mutex), cpp_class<Mutex>());
 	}
 
 ///////////////////
@@ -611,8 +613,8 @@ void bind(){
 		p->def(Xid(serial_new), ctor<Text>());
 	}
 
-	builtin()->def(Xid(Format), get_cpp_class<Format>());
-	builtin()->def(Xid(Text), get_cpp_class<Text>());
+	builtin()->def(Xid(Format), cpp_class<Format>());
+	builtin()->def(Xid(Text), cpp_class<Text>());
 
 	builtin()->def_fun(Xid(assign_text_map), &assign_text_map);
 	builtin()->def_fun(Xid(append_text_map), &append_text_map);

@@ -53,7 +53,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		Value val = {members_->size(), KIND_PUBLIC};
 		map_members_->insert(key, val);
 		members_->push_back(value);
-		inc_mutate_count_cache_member();
+		invalidate_cache_member();
 		value->set_object_parent(from_this(this));
 		return members_->back();
 	}

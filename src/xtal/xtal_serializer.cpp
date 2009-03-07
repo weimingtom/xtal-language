@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_serializer.h"
+
 namespace xtal{
 
 enum{
@@ -116,7 +118,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		return;
 	}
 
-	if(raweq(cls, get_cpp_class<Code>())){
+	if(raweq(cls, cpp_class<Code>())){
 		CodePtr p = cast<CodePtr>(v);
 		stream_->put_u8('x'); stream_->put_u8('t'); stream_->put_u8('a'); stream_->put_u8('l');
 		stream_->put_u8(SERIALIZE_VERSION1); stream_->put_u8(SERIALIZE_VERSION2); 

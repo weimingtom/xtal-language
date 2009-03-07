@@ -32,8 +32,4 @@ bool Filesystem::is_directory(const StringPtr& path){
 	return filesystem_lib_->is_directory(path);
 }
 
-const SmartPtr<Filesystem>& filesystem(){
-	return core()->filesystem_;
-}
-
 }

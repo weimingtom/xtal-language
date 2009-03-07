@@ -28,20 +28,16 @@ void uninitialize();
 /**
 * @brief 現在のカレントのXtal実行環境を取得する。
 */
-Environment* core();
+Environment* environment();
 
 /**
 * @brief カレントのXtal実行環境を設定する。
 */
-void set_core(Environment* e);
+void set_environment(Environment* e);
 	
 void debug_print();
 
 void print_alive_objects();
-
-void bind();
-
-void exec_script();
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。

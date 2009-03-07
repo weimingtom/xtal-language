@@ -568,15 +568,15 @@ const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun
 		}
 
 		stack_.resize(ef.stack_count);
-		if(ef.core->catch_pc && e){
-			pc = ef.core->catch_pc +  fun()->code()->data();
-			push(AnyPtr(ef.core->end_pc));
+		if(ef.info->catch_pc && e){
+			pc = ef.info->catch_pc +  fun()->code()->data();
+			push(AnyPtr(ef.info->end_pc));
 			push(e);
 			except_[1] = null;
 			except_[0] = null;
 		}
 		else{
-			pc = ef.core->finally_pc +  fun()->code()->data();
+			pc = ef.info->finally_pc +  fun()->code()->data();
 			push(e);
 			push(AnyPtr(fun()->code()->size()-1));
 			except_[1] = except_[0];

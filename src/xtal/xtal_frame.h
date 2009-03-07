@@ -6,7 +6,7 @@ namespace xtal{
 class Frame : public HaveParent{
 public:
 	
-	Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* core);
+	Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info);
 	
 	Frame();
 

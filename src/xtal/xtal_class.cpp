@@ -63,8 +63,8 @@ InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 
 ///////////////////////////////////////
 
-Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
-	:Frame(outer, code, core), mixins_(xnew<Array>()){
+Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
+	:Frame(outer, code, info), mixins_(xnew<Array>()){
 	object_force_ = 0;
 	is_native_ = false;
 	is_final_ = false;
@@ -509,8 +509,8 @@ Singleton::Singleton(const StringPtr& name)
 	inherit(cpp_class<Class>());
 }
 
-Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* core)
-	:Class(outer, code, core){
+Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
+	:Class(outer, code, info){
 	Base::set_class(from_this(this));
 	inherit(cpp_class<Class>());
 }

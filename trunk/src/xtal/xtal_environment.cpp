@@ -157,6 +157,8 @@ public:
 	ObjectSpace object_space_;	
 	StringSpace string_space_;
 	ThreadSpace thread_space_;
+	MemberCacheTable member_cache_table_;
+	IsCacheTable is_cache_table_;
 
 	SmartPtr<Filesystem> filesystem_;
 
@@ -166,9 +168,15 @@ public:
 	LibPtr lib_;
 
 	ArrayPtr vm_list_;
+	MapPtr text_map_;
 
-	MemberCacheTable member_cache_table_;
-	IsCacheTable is_cache_table_;
+	ClassPtr RuntimeError_;
+	ClassPtr CompileError_;
+	ClassPtr ArgumentError_;
+	ClassPtr UnsupportedError_;
+	StreamPtr stdin_;
+	StreamPtr stdout_;
+	StreamPtr stderr_;
 };
 
 namespace{
@@ -278,6 +286,7 @@ void Environment::initialize(const Setting& setting){
 	Iterator_ = xnew<IteratorClass>();
 	Iterable_ = xnew<Class>();
 	vm_list_ = xnew<Array>();
+	text_map_ = xnew<Map>();
 
 	bind();
 
@@ -297,9 +306,12 @@ void Environment::initialize(const Setting& setting){
 	thread_space_.initialize(setting_.thread_lib);
 
 	setting_.stream_lib->initialize();
-	builtin()->def(Xid(stdin), setting_.stream_lib->new_stdin_stream());
-	builtin()->def(Xid(stdout), setting_.stream_lib->new_stdout_stream());
-	builtin()->def(Xid(stderr), setting_.stream_lib->new_stderr_stream());
+	stdin_ = setting_.stream_lib->new_stdin_stream();
+	stdout_ = setting_.stream_lib->new_stdout_stream();
+	stderr_ = setting_.stream_lib->new_stderr_stream();
+	builtin()->def(Xid(stdin), stdin_);
+	builtin()->def(Xid(stdout), stdout_);
+	builtin()->def(Xid(stderr), stderr_);
 
 	initialize_xpeg();
 	initialize_math();
@@ -309,6 +321,11 @@ void Environment::initialize(const Setting& setting){
 	print_alive_objects();
 
 	exec_script();
+
+	RuntimeError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
+	ArgumentError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
+	CompileError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(CompileError)));
+	UnsupportedError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
 }
 
 void Environment::uninitialize(){
@@ -320,6 +337,14 @@ void Environment::uninitialize(){
 	lib_ = null;
 	vm_list_ = null;
 	filesystem_ = null;
+	RuntimeError_ = null;
+	ArgumentError_ = null;
+	CompileError_ = null;
+	UnsupportedError_ = null;
+	stdin_ = null;
+	stdout_ = null;
+	stderr_ = null;
+	text_map_ = null;
 
 	string_space_.uninitialize();
 
@@ -535,31 +560,35 @@ const SmartPtr<Filesystem>& filesystem(){
 }
 
 const ClassPtr& RuntimeError(){
-	return ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
+	return environment()->RuntimeError_;
 }
 
 const ClassPtr& CompileError(){
-	return ptr_cast<Class>(builtin()->member(Xid(CompileError)));
+	return environment()->CompileError_;
 }
 
 const ClassPtr& UnsupportedError(){
-	return ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
+	return environment()->UnsupportedError_;
 }
 
 const ClassPtr& ArgumentError(){
-	return ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
+	return environment()->ArgumentError_;
 }
 
 const StreamPtr& stdin_stream(){
-	return ptr_cast<Stream>(builtin()->member(Xid(stdin)));
+	return environment()->stdin_;
 }
 
 const StreamPtr& stdout_stream(){
-	return ptr_cast<Stream>(builtin()->member(Xid(stdout)));
+	return environment()->stdout_;
 }
 
 const StreamPtr& stderr_stream(){
-	return ptr_cast<Stream>(builtin()->member(Xid(stderr)));
+	return environment()->stderr_;
+}
+
+const MapPtr& text_map(){
+	return environment()->text_map_;
 }
 
 int_t ch_len(char_t lead){

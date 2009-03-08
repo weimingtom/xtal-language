@@ -4,13 +4,11 @@
 namespace xtal{
 
 void assign_text_map(const AnyPtr& map){
-	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
-	m->assign(map);
+	text_map()->assign(map);
 }
 
 void append_text_map(const AnyPtr& map){
-	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
-	m->concat(map);
+	text_map()->concat(map);
 }
 
 AnyPtr text(const StringPtr& text){
@@ -29,7 +27,7 @@ char_t FormatSpecifier::change_int_type(){
 		break;
 	
 	default:
-		return 'i';
+		return 'd';
 		break;
 	}
 }
@@ -79,7 +77,6 @@ const char_t* FormatSpecifier::parse_format(const char_t* str){
 	precision_ = 0;
 	pos_ = 0;		
 	str = parse_format_inner(str);
-	if(*str) type_ = *str++;
 	buf_[pos_] = '\0';
 	return str;
 }
@@ -135,6 +132,22 @@ const char_t* FormatSpecifier::parse_format_inner(const char_t* str){
 		}
 	}
 
+	char_t type = *str;
+
+	switch(type){
+	case 'i': case 'd': case 'x': case 'X':
+	case 'e': case 'E': case 'g':
+	case 'G': case 'f':
+	case 's':
+		str++;
+		type_ = type;
+		break;
+	
+	default:
+		type_ = 's';
+		break;
+	}
+
 	return str;
 }
 
@@ -143,54 +156,61 @@ Format::Format(const StringPtr& str){
 }
 
 void Format::set(const char_t* str){
-
-	values_ = xnew<Map>();
 	original_ = xnew<String>(str);
-	have_named_ = false;
+	strings_ = xnew<Array>();
 
 	const char_t* begin = str;
-	char_t buf[256];
-	int_t bufpos = 0, n = 0;
+	int_t n = 0;
 	while(true){
 		if(str[0]=='%'){
-			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
+			strings_->push_back(xnew<String>(begin, str));
 			str++;
 			
 			if(str[0]=='%'){
+				strings_->push_back(xnew<String>('%'));
 				begin = str++;
 			}
 			else{
+				AnyPtr key;
 				if(str[0]=='('){
 					str++;
-					bufpos = 0;
+					begin = str;
 					
-					if(!('0'<=str[0] && str[0]<='9')){
-						have_named_ = true;
+					bool number = false;
+					if('0'<=str[0] && str[0]<='9'){
+						number = true;
 					}
 
-					while(str[0]!=0 && str[0]!=')' && bufpos!=255){
-						buf[bufpos++] = str[0];
+					while(str[0]!=0 && str[0]!=')'){
 						str++;					
+					}
+
+					if(number){
+						key = xnew<String>(begin, str);
+						key = key->to_i();
+					}
+					else{
+						key = xnew<ID>(begin, str);
+						have_named_ = true;
 					}
 
 					if(str[0]==')'){
 						str++;
 					}
-
-					buf[bufpos++] = 0;
 				}
 				else{
-					bufpos = XTAL_SPRINTF(buf, 256-bufpos, XTAL_STRING("%d"), (u32)n++);
+					key = n++;
 				}
 
-				SmartPtr<FormatSpecifier> ret = xnew<FormatSpecifier>();
-				str = ret->parse_format(str);
-				values_->set_at(buf, ret);
+				FormatSpecifier fs;
+				str = fs.parse_format(str);
+				strings_->push_back(mv(key, format_specifiers_.size()));
+				format_specifiers_.push_back(fs);
 				begin = str;
 			}
 		}
 		else if(str[0]=='\0'){
-			values_->set_at((int_t)values_->size(), xnew<String>(begin, str));
+			strings_->push_back(xnew<String>(begin, str));
 			break;
 		}
 		else{
@@ -210,20 +230,25 @@ void Format::rawcall(const VMachinePtr& vm){
 	char_t spec[FormatSpecifier::FORMAT_SPECIFIER_MAX];
 	char_t* pcbuf;
 	
-	Xfor2(k, v, values_){
-		if(type(k)==TYPE_INT){
+	Xfor(v, strings_){
+		if(type(v)!=TYPE_MULTI_VALUE){
 			ms->put_s(v->to_s());
 		}
 		else{
-			AnyPtr a = vm->arg(k->to_s()->intern());
-			if(!a){
-				a = !have_named_ ? vm->arg(k->to_i()) : undefined;
+			MultiValuePtr mv = unchecked_ptr_cast<MultiValue>(v);
+			
+			AnyPtr a;
+			if(type(mv->at(0))==TYPE_INT){
+				a = vm->arg(ivalue(mv->at(0)));
+			}
+			else{
+				a = vm->arg(unchecked_ptr_cast<ID>(mv->at(0)));
 			}
 			
-			SmartPtr<FormatSpecifier> fs = xnew<FormatSpecifier>(*ptr_cast<FormatSpecifier>(v));
+			FormatSpecifier& fs = format_specifiers_[ivalue(mv->at(1))];
 			size_t malloc_size = 0;
-			if(fs->max_buffer_size()>=256){
-				malloc_size = fs->max_buffer_size() + 1;
+			if(fs.max_buffer_size()>=256){
+				malloc_size = fs.max_buffer_size() + 1;
 				pcbuf = (char_t*)so_malloc(malloc_size);
 			}
 			else{
@@ -240,11 +265,11 @@ void Format::rawcall(const VMachinePtr& vm){
 								user_free(pcbuf);
 							}
 							
-							malloc_size = str->data_size() + fs->max_buffer_size() + 1;
+							malloc_size = str->data_size() + fs.max_buffer_size() + 1;
 							pcbuf = (char_t*)so_malloc(malloc_size);
 						}
 					}
-					fs->make_format_specifier(spec, 's');
+					fs.make_format_specifier(spec, 's');
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, str->c_str());
 					ms->put_s(pcbuf);
 				}
@@ -254,13 +279,13 @@ void Format::rawcall(const VMachinePtr& vm){
 				}
 
 				XTAL_CASE(TYPE_INT){
-					fs->make_format_specifier(spec, fs->change_int_type(), true);
+					fs.make_format_specifier(spec, fs.change_int_type(), true);
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, ivalue(a));
 					ms->put_s(pcbuf);
 				}
 				
 				XTAL_CASE(TYPE_FLOAT){
-					fs->make_format_specifier(spec, fs->change_float_type());
+					fs.make_format_specifier(spec, fs.change_float_type());
 					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(a));
 					ms->put_s(pcbuf);
 				}
@@ -291,7 +316,7 @@ Text::Text(const StringPtr& key)
 	:key_(key){}
 
 void Text::rawcall(const VMachinePtr& vm){
-	MapPtr m = ptr_cast<Map>(builtin()->member(Xid(_text_map)));
+	MapPtr m = text_map();
 	if(m){
 		if(const AnyPtr& value=m->at(key_)){
 			xnew<Format>(value->to_s())->rawcall(vm);

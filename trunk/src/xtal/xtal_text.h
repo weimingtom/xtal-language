@@ -3,8 +3,10 @@
 
 namespace xtal{
 
-class FormatSpecifier : public Base{
+class FormatSpecifier{
 public:
+
+	FormatSpecifier(){}
 
 	enum{ BUF_MAX = 20, REAL_BUF_MAX = BUF_MAX + 2 };
 	
@@ -44,13 +46,15 @@ public:
 
 private:
 
-	MapPtr values_;
+	ArrayList<FormatSpecifier> format_specifiers_;
+	ArrayPtr strings_;
+
 	StringPtr original_;
 	bool have_named_;
 	
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & values_ & original_;
+		m & strings_ & original_;
 	}
 };
 

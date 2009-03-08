@@ -1,0 +1,35 @@
+inherit(lib::test);
+
+
+class ScopeTest{
+
+	same_name#Test{
+		x: 10;
+		
+		{
+			x: x;
+			assert x==10;
+		}
+	}
+
+	same_name_fun#Test{
+		x: 102;
+		
+		{
+			x: fun x;
+			assert x()===x;
+		}
+	}
+	
+	same_name_class#Test{
+		x: 1000;
+		
+		c: class{
+			x: x;
+		}
+		
+		assert c::x==x;
+	}
+}
+
+

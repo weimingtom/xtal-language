@@ -23,7 +23,7 @@ int main2(int argc, char** argv){
 
 	
 	if(CodePtr code = Xsrc((
-		check_implicit_lookup();
+		//check_implicit_lookup();
 
 	))){
 		code->filelocal()->def("aaa", 101010);

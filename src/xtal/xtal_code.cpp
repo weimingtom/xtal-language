@@ -174,7 +174,6 @@ void Code::check_implicit_lookup(){
 
 	if(ary){
 		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1030")->call(Named(Xid(name), ary))));
-		//XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1030"), Named(Xid(name), ary)));
 	}
 }
 

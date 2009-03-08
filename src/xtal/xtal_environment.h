@@ -248,6 +248,7 @@ void lock_mutex(const MutexPtr& p);
 */
 const VMachinePtr& vmachine();
 
+const MapPtr& text_map();
 
 /**
 * @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。

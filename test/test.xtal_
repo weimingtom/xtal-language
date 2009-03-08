@@ -4,15 +4,22 @@ lib::test: singleton{
 	Before: "Before";
 	After: "After";
 	
+	_ok;
+	_fail;
+	
 	run_files: fun(files){
+		_ok = 0;
+		_fail = 0;
 		files{
 			run_file(it);
 		}
+		
+		printf("ok=%d, fail=%d\n", _ok, _fail);
 	}
 	
 	run_file: fun(file){
 		debug_scope{
-			%f!file %s!(file).p;
+			printf("file %s\n", file);
 			
 			code: compile_file(file);
 			code();
@@ -32,10 +39,17 @@ lib::test: singleton{
 					if(!tests.is_empty){
 						obj: mem();
 						tests{
-							befores{ obj.(it)#Before; }
-							obj.(it)#Test;
-							afters{ obj.(it)#After; }
-							%f!\t%s!(it).p;
+							try{
+								befores{ obj.(it)#Before; }
+								obj.(it)#Test;
+								afters{ obj.(it)#After; }
+								printf("\tok %s\n", it);
+								_ok++;
+							}
+							catch(e){
+								printf("\tfail %s:%s\n", it, e);
+								_fail++;
+							}
 						}
 					}
 				}

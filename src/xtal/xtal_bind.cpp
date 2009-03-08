@@ -595,8 +595,6 @@ void bind(){
 
 ///////////////////
 
-	builtin()->def(Xid(_text_map), xnew<Map>());
-
 	{
 		ClassPtr p = new_cpp_class<Format>(Xid(Format));
 		p->def_method(Xid(to_s), &Format::to_s);
@@ -652,14 +650,19 @@ void exec_script(){
 	Xemb((
 
 builtin::print: fun(...){
-	....ordered_arguments{
-		stdout.print(it.to_s);
-	}
+	return stdout.print(...);
 }
 
 builtin::println: fun(...){
-	print(...);
-	print("\n");
+	return stdout.println(...);
+}
+
+builtin::printf: fun(format_string, ...){
+	return stdout.printf(format_string, ...);
+}
+
+Stream::printf: method(format_string, ...){
+	this.print(format(format_string)(...));
 }
 
 builtin::load: fun(file_name, ...){

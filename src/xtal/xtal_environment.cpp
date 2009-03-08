@@ -145,6 +145,7 @@ void initialize_xpeg();
 
 void bind();
 void exec_script();
+void exec_text();
 
 class Environment{
 public:
@@ -326,6 +327,8 @@ void Environment::initialize(const Setting& setting){
 	ArgumentError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
 	CompileError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(CompileError)));
 	UnsupportedError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
+
+	exec_text();
 }
 
 void Environment::uninitialize(){

@@ -13,6 +13,12 @@ using namespace xtal;
 
 #ifndef XTAL_NO_PARSER
 
+struct AAA{
+	AAA(int a, int b, int c, int e){
+		a = a;
+	}
+};
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -21,6 +27,7 @@ int main2(int argc, char** argv){
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
 
+	xnew<AAA>(0, 9, 8, 2);
 	
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();

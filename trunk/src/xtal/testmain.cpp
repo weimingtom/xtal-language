@@ -130,7 +130,7 @@ int main(int argc, char** argv){
 	CStdioStreamLib cstd_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
+	UTF8ChCodeLib sjis_chcode_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;

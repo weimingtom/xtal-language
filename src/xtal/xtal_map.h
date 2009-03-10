@@ -151,7 +151,7 @@ protected:
 
 	struct Fun{
 		static uint_t hash(const AnyPtr& key){
-			return (rawvalue(key) ^ type(key) ^ (rawvalue(key)>>3));
+			return (rawvalue(key).uvalue ^ type(key) ^ (rawvalue(key).uvalue>>3));
 		}
 
 		static bool eq(const AnyPtr& a, const AnyPtr& b){

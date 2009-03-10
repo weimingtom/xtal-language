@@ -3,6 +3,8 @@
 
 namespace xtal{
 
+class FilesystemLib;
+
 class Filesystem : public CppSingleton{
 	FilesystemLib* filesystem_lib_;
 public:
@@ -19,11 +21,7 @@ public:
 
 };
 
-const SmartPtr<Filesystem>& filesystem();
-
-inline StreamPtr open(const StringPtr& file_name, const StringPtr& flags){
-	return filesystem()->open(file_name, flags);
-}
+StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
 
 }
 

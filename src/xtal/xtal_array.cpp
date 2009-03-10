@@ -10,7 +10,7 @@ void Array::visit_members(Visitor& m){
 }
 
 Array::Array(uint_t size){
-	set_p(TYPE, this);
+	set_pvalue(*this, TYPE, this);
 
 	capa_ = size;
 	size_ = size;
@@ -25,7 +25,7 @@ Array::Array(uint_t size){
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end){
-	set_p(TYPE, this);
+	set_pvalue(*this, TYPE, this);
 
 	int_t size = end-first;
 
@@ -41,7 +41,7 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 
 Array::Array(const Array& v)
 :RefCountingBase(v){
-	set_p(TYPE, this);
+	set_pvalue(*this, TYPE, this);
 
 	size_ = capa_ = ((Array&)v).size();
 	if(capa_!=0){

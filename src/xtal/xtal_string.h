@@ -58,8 +58,11 @@ public:
 
 public:
 
-	String(const char_t* str, uint_t len, uint_t hashcode, bool intern_flag = false);
+	struct make_t{};
+	String(const char_t* str, uint_t size, make_t);
 	
+	String& operator= (const String& s);
+
 	String(const String& s);
 
 protected:
@@ -166,27 +169,31 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
+#ifdef XTAL_DEBUG
 	char_t* buf_;
+#endif
+
 	uint_t data_size_;
 public:
 
 	StringData(uint_t size){
-		set_p(TYPE_STRING, this);
+		set_pvalue(*this, TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
-		buf_ = (char_t*)so_malloc((size+1)*sizeof(char_t));
 		buf()[size] = 0;
+#ifdef XTAL_DEBUG
+		buf_ = buf();
+#endif
 	}
 
-	~StringData(){
-		so_free(buf_, (data_size()+1)*sizeof(char_t));
-	}
+	~StringData(){}
 
 	uint_t data_size(){
 		return data_size_>>SIZE_SHIFT;
 	}
 
-	//char_t* buf(){ return (char_t*)(this+1); }
-	char_t* buf(){ return buf_; }
+	char_t* buf(){ 
+		return (char_t*)(this+1); 
+	}
 
 	bool is_interned(){
 		return (data_size_&INTERNED)!=0;
@@ -197,8 +204,7 @@ public:
 	}
 
 	static uint_t calc_size(uint_t sz){
-		return sizeof(StringData);
-		//return sizeof(StringData)+(sz+1)*sizeof(char_t);
+		return sizeof(StringData)+(sz+1)*sizeof(char_t);
 	}
 
 private:
@@ -258,14 +264,11 @@ public:
 	*/
 	ID(char_t a, char_t b, char_t c);
 
-	ID(const char_t* str, uint_t len, uint_t hashcode);
-
 	/**
 	* @brief Stringから構築する
 	*
 	*/
-	ID(const StringPtr& name);
-		
+	ID(const StringPtr& name);		
 };
 
 inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
@@ -279,6 +282,7 @@ uint_t string_length(const char_t* str);
 uint_t string_data_size(const char_t* str);
 int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 void string_copy(char_t* a, const char_t* b, uint_t size);
+bool string_is_ch(const char_t* str, uint_t size);
 
 class ChRange : public Range{
 public:

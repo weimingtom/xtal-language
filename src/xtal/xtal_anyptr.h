@@ -115,10 +115,10 @@ public:
 	explicit SmartPtr(PrimitiveType type)
 		:Any(type){}
 	
-	explicit SmartPtr(Base* p)
-		:Any(p){
-		p->inc_ref_count();
-	}
+//	explicit SmartPtr(Base* p)
+//		:Any(p){
+//		p->inc_ref_count();
+//	}
 
 	~SmartPtr(){
 		dec_ref_count();
@@ -181,18 +181,18 @@ public:
 	SmartPtr(const avoid<char>::type* str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(avoid<int>::type v):Any(v){}
-	SmartPtr(avoid<long>::type v):Any(v){}
-	SmartPtr(avoid<short>::type v):Any(v){}
-	SmartPtr(avoid<char>::type v):Any(v){}
-	SmartPtr(avoid<unsigned int>::type v):Any(v){}
-	SmartPtr(avoid<unsigned long>::type v):Any(v){}
-	SmartPtr(avoid<unsigned short>::type v):Any(v){}
-	SmartPtr(avoid<unsigned char>::type v):Any(v){}
-	SmartPtr(avoid<signed char>::type v):Any(v){}
-	SmartPtr(avoid<float>::type v):Any(v){}
-	SmartPtr(avoid<double>::type v):Any(v){}
-	SmartPtr(avoid<long double>::type v):Any(v){}
+	SmartPtr(avoid<int>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<long>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<short>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<unsigned int>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<unsigned long>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<unsigned short>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<unsigned char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<signed char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
+	SmartPtr(avoid<float>::type v):Any(noinit_t()){ set_fvalue(*this, v); }
+	SmartPtr(avoid<double>::type v):Any(noinit_t()){ set_fvalue(*this, (float_t)v); }
+	SmartPtr(avoid<long double>::type v):Any(noinit_t()){ set_fvalue(*this, (float_t)v); }
 
 public:
 

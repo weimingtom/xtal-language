@@ -448,7 +448,7 @@ AnyPtr& VMachine::local_variable(int_t pos){
 #define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except() : (pc))
 #define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ goto except_catch; }
 
-#define XTAL_CHECK_YIELD if(--thread_yield_count_!=0){ yield_thread(); thread_yield_count_ = 500; }
+#define XTAL_CHECK_YIELD if(--thread_yield_count_<0){ yield_thread(); thread_yield_count_ = 1000; }
 
 const inst_t* VMachine::push_except(){
 	push(except_[0]);
@@ -566,7 +566,7 @@ void VMachine::execute_inner(const inst_t* start){
 		return;
 	}*/
 
-	if(const AnyPtr& d = builtin()->member(Xid(debug))){
+	if(const AnyPtr& d = debug()){
 		debug_ = unchecked_ptr_cast<Debug>(d);
 		hook_setting_bit_ = debug_->hook_setting_bit();
 	}
@@ -952,7 +952,7 @@ XTAL_VM_SWITCH{
 		uint_t size = f.fun()->code()->scope_info(inst.info_number)->variable_size;
 		f.variables_.upsize(size);
 		for(uint_t i=0; i<size; ++i){
-			f.variables_[i].set_nullt();
+			set_nullt(f.variables_[i]);
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
@@ -1841,10 +1841,10 @@ const inst_t* VMachine::OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, i
 	uint_t atype = type(a)-TYPE_INT;
 	if(atype<2){
 		if(atype==0){
-			a.set_i(ivalue(a)+constant);
+			set_ivalue(a, ivalue(a)+constant);
 		}
 		else{
-			a.set_f(fvalue(a)+constant);
+			set_fvalue(a, fvalue(a)+constant);
 		}
 		return pc1;
 	}
@@ -1858,10 +1858,10 @@ const inst_t* VMachine::OpAddConstantInt(const inst_t* pc, int_t op, int_t const
 	Any& a = get(); uint_t atype = type(a)-TYPE_INT;
 	if(atype<2){
 		if(atype==0){
-			a.set_i(ivalue(a)+constant);
+			set_ivalue(a, ivalue(a)+constant);
 		}
 		else{
-			a.set_f(fvalue(a)+constant);
+			set_fvalue(a, fvalue(a)+constant);
 		}
 		return pc;
 	}
@@ -1877,12 +1877,12 @@ const inst_t* VMachine::OpAdd(const inst_t* pc, int_t op){
 	if(abtype<2){
 		Any ret;
 		if(abtype==0){
-			ret.set_i(ivalue(a) + ivalue(b));
+			set_ivalue(ret, ivalue(a) + ivalue(b));
 		}
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(afvalue + bfvalue);
+			set_fvalue(ret, afvalue + bfvalue);
 		}
 		set(1, ret);
 		downsize(1); 
@@ -1900,12 +1900,12 @@ const inst_t* VMachine::OpSub(const inst_t* pc, int_t op){
 	if(abtype<2){
 		Any ret;
 		if(abtype==0){
-			ret.set_i(ivalue(a) - ivalue(b));
+			set_ivalue(ret, ivalue(a) - ivalue(b));
 		}
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(afvalue - bfvalue);
+			set_fvalue(ret, afvalue - bfvalue);
 		}
 		set(1, ret);
 		downsize(1); 
@@ -1923,12 +1923,12 @@ const inst_t* VMachine::OpMul(const inst_t* pc, int_t op){
 	if(abtype<2){
 		Any ret;
 		if(abtype==0){
-			ret.set_i(ivalue(a) * ivalue(b));
+			set_ivalue(ret, ivalue(a) * ivalue(b));
 		}
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(afvalue * bfvalue);
+			set_fvalue(ret, afvalue * bfvalue);
 		}
 		set(1, ret);
 		downsize(1); 
@@ -1946,12 +1946,12 @@ const inst_t* VMachine::OpDiv(const inst_t* pc, int_t op){
 	if(abtype<2){
 		Any ret;
 		if(abtype==0){
-			ret.set_i(ivalue(a) / check_zero(ivalue(b)));
+			set_ivalue(ret, ivalue(a) / check_zero(ivalue(b)));
 		}
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			ret.set_f(afvalue / check_zero(bfvalue));
+			set_fvalue(ret, afvalue / check_zero(bfvalue));
 		}
 		set(1, ret);
 		downsize(1); 
@@ -1969,13 +1969,13 @@ const inst_t* VMachine::OpMod(const inst_t* pc, int_t op){
 	if(abtype<2){
 		Any ret;
 		if(abtype==0){
-			ret.set_i(ivalue(a) % check_zero(ivalue(b)));
+			set_ivalue(ret, ivalue(a) % check_zero(ivalue(b)));
 		}
 		else{
 			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
 			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
 			using namespace std;
-			ret.set_f(fmodf(afvalue, check_zero(bfvalue)));
+			set_fvalue(ret, fmodf(afvalue, check_zero(bfvalue)));
 		}
 		set(1, ret);
 		downsize(1); 
@@ -2061,7 +2061,7 @@ const inst_t* VMachine::OpUshr(const inst_t* pc, int_t op){
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
 	if(abtype==0){
-		set(1, Any((uint_t)ivalue(a) >> ivalue(b)));
+		set(1, Any((int_t)((uint_t)ivalue(a) >> ivalue(b))));
 		downsize(1);
 		return pc;
 	}

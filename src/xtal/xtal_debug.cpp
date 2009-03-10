@@ -98,10 +98,6 @@ const AnyPtr& Debug::assert_hook(){
 	return assert_hook_;
 }
 
-const SmartPtr<Debug>& debug(){
-	return unchecked_ptr_cast<Debug>(builtin()->member(Xid(debug)));
-}
-
 void enable_debug(){
 	debug()->enable();
 }

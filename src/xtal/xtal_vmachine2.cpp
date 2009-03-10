@@ -6,8 +6,6 @@ namespace xtal{
 VMachine::VMachine(){
 	myself_ = this;
 
-	using_ = false;
-
 	id_ = id_op_list();
 
 	stack_.reserve(32);
@@ -32,8 +30,6 @@ VMachine::~VMachine(){
 }
 
 void VMachine::reset(){
-	using_ = false;
-
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
@@ -588,7 +584,9 @@ void VMachine::visit_members(Visitor& m){
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		m & *fun_frames_[i];
+		if(fun_frames_[i]){
+			m & *fun_frames_[i];
+		}
 	}
 
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
@@ -626,20 +624,20 @@ void VMachine::before_gc(){
 	//*
 	// Žg‚í‚ê‚Ä‚¢‚È‚¢•”•ª‚ðnull‚Å“h‚è‚Â‚Ô‚·
 	for(int_t i=stack_.size(), size=stack_.capacity(); i<size; ++i){
-		stack_.reverse_at_unchecked(i).set_null();
+		set_null(stack_.reverse_at_unchecked(i));
 	}
 
 	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
 		if(fun_frames_.reverse_at_unchecked(i)){
 			fun_frames_.reverse_at_unchecked(i)->set_null();
 			for(int_t j=0, jsize=fun_frames_.reverse_at_unchecked(i)->variables_.capacity(); j<jsize; ++j){
-				fun_frames_.reverse_at_unchecked(i)->variables_.reverse_at_unchecked(j).set_null();
+				set_null(fun_frames_.reverse_at_unchecked(i)->variables_.reverse_at_unchecked(j));
 			}
 		}
 	}
 
 	for(int_t i=except_frames_.size(), size=except_frames_.capacity(); i<size; ++i){
-		except_frames_.reverse_at_unchecked(i).outer.set_null();
+		set_null(except_frames_.reverse_at_unchecked(i).outer);
 	}
 	//*/
 }

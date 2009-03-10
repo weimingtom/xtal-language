@@ -3,6 +3,9 @@
 
 #include "xtal_objectspace.h"
 
+#include <map>
+#include <string>
+
 namespace xtal{
 
 enum{
@@ -130,6 +133,7 @@ void ObjectSpace::uninitialize(){
 	class_table_.release();
 	full_gc();
 	
+	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
 	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
 	if(n != 0){
 		//fprintf(stderr, "finished gc\n");
@@ -160,24 +164,24 @@ void ObjectSpace::uninitialize(){
 
 }
 
-const ClassPtr& ObjectSpace::new_cpp_class(const StringPtr& name, CppClassSymbolData* key){
+const ClassPtr& ObjectSpace::new_cpp_class(CppClassSymbolData* key){
 	int_t index = register_cpp_class(key);
 
 	if(Class* p = class_table_[index]){
 		return from_this(p);
 	}
 
-	class_table_[index] = xnew<CppClass>(name).get();
+	class_table_[index] = xnew<CppClass>().get();
 	class_table_[index]->inc_ref_count();
 	return from_this(class_table_[index]);
 }
 
 void ObjectSpace::enable_gc(){
-	cycle_count_++;
+	cycle_count_--;
 }
 
 void ObjectSpace::disable_gc(){
-	cycle_count_--;
+	cycle_count_++;
 }
 	
 void ObjectSpace::expand_objects_list(){
@@ -193,9 +197,8 @@ void ObjectSpace::expand_objects_list(){
 	}
 }
 
-void print_alive_objects(){
-#if XTAL_DEBUG_ALLOC!=0
-/*	full_gc();
+void ObjectSpace::print_alive_objects(){
+	full_gc();
 
 	ConnectedPointer current(objects_count_, objects_list_begin_);
 	ConnectedPointer begin(0, objects_list_begin_);
@@ -204,7 +207,7 @@ void print_alive_objects(){
 	for(ConnectedPointer it = begin; it!=current; ++it){
 		switch(type(**it)){
 		XTAL_DEFAULT;
-//		XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
+		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
 		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; }
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 		XTAL_CASE(TYPE_MULTI_VALUE){ table["MultiValue"]++; }
@@ -218,21 +221,20 @@ void print_alive_objects(){
 	for(; it!=last; ++it){
 		printf("alive %s %d\n", it->first.c_str(), it->second);
 	}
+	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+	printf("m %d\n", m);
 
-	printf("used_memory %d\n", used_memory);
-*/
-#endif
+	//printf("used_memory %d\n", used_memory);
 }
 
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
-	if(stop_the_world()){
+	{
 		ScopeCounter cc(&cycle_count_);
 		
 		ConnectedPointer current(objects_count_, objects_list_begin_);
 		ConnectedPointer begin(prev_objects_count_>objects_count_ ? objects_count_ : (prev_objects_count_-prev_objects_count_/4), objects_list_begin_);
 		if(current==begin){
-			restart_the_world();
 			return;
 		}
 
@@ -271,16 +273,13 @@ void ObjectSpace::gc(){
 			objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 			XTAL_ASSERT(objects_list_current_<=objects_list_end_);
 		}
-
-		restart_the_world();
 	}
 }
 
 void ObjectSpace::full_gc(){
 	if(cycle_count_!=0){ return; }
-	if(stop_the_world()){
+	{
 		ScopeCounter cc(&cycle_count_);
-		//printf("used memory %dKB\n", used_memory/1024);
 				
 		while(true){			
 			//member_cache_table_.clear();
@@ -441,8 +440,13 @@ void ObjectSpace::full_gc(){
 			}
 		}*/
 
-//		printf("used memory %dKB\n", used_memory/1024);
-		restart_the_world();
+		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
+			RefCountingBase** begin = *it;
+			RefCountingBase** current = *it;
+			RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
+			fit_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current);
+		}
+		fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 	}
 }
 
@@ -451,7 +455,7 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 
 	if(objects_current_==objects_end_){
 		ScopeCounter cc(&cycle_count_);
-		//gc();
+
 		expand_objects_list();
 		objects_begin_ = objects_current_ = *objects_list_current_++;
 		objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;

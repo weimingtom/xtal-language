@@ -50,12 +50,12 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value val = {members_->size(), KIND_PUBLIC};
+		Value val = {members_.size(), KIND_PUBLIC};
 		map_members_->insert(key, val);
-		members_->push_back(value);
+		members_.push_back(value);
 		invalidate_cache_member();
 		value->set_object_parent(from_this(this));
-		return members_->back();
+		return members_.back();
 	}
 	else{
 		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()))));

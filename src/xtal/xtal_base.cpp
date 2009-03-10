@@ -4,14 +4,14 @@
 namespace xtal{
 
 Base::Base(){
-	set_p(this);
+	set_pvalue(*this, this);
 	//ref_count_ = 0;
 	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
 Base::Base(const Base& b){
-	set_p(this);
+	set_pvalue(*this, this);
 	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)so_malloc(sizeof(InstanceVariables));

@@ -12,7 +12,7 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, in
 }
 
 NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val_size){
-	set_p(TYPE, this);
+	set_pvalue(*this, TYPE, this);
 
 	fun_ = pth.fun;
 	if(val_size<sizeof(int_t)){
@@ -167,7 +167,7 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 
 NativeFunBindedThis::NativeFunBindedThis(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_)
 :NativeFun(pth, val, val_size), this_(this_){
-	set_p(TYPE, this);
+	set_pvalue(*this, TYPE, this);
 }
 
 void NativeFunBindedThis::visit_members(Visitor& m){

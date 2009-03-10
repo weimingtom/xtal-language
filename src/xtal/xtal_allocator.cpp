@@ -5,27 +5,27 @@ namespace xtal{
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize){
 	uint_t size = (uint_t)(end-begin);
 	uint_t newsize = size+addsize+size;
-	void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
+	void** newbegin=(void**)xmalloc(sizeof(void*)*newsize);
 	std::memcpy(newbegin, begin, sizeof(void*)*size);
 	end = newbegin+newsize;
 	current = newbegin+(current-begin);
-	user_free(begin);
+	xfree(begin, sizeof(void*)*size);
 	begin = newbegin;	
 }
 
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current){
-	//uint_t size = (uint_t)(end-begin);
+	uint_t size = (uint_t)(end-begin);
 	uint_t newsize = (uint_t)(current-begin);
 	if(newsize){
-		void** newbegin=(void**)user_malloc(sizeof(void*)*newsize);
+		void** newbegin=(void**)xmalloc(sizeof(void*)*newsize);
 		std::memcpy(newbegin, begin, sizeof(void*)*newsize);
 		end = newbegin+newsize;
 		current = newbegin+newsize;
-		user_free(begin);
+		xfree(begin, sizeof(void*)*size);
 		begin = newbegin;	
 	}
 	else{
-		user_free(begin);
+		xfree(begin, sizeof(void*)*size);
 		begin = end = current = 0;
 	}
 }
@@ -38,12 +38,14 @@ FixedAllocator::FixedAllocator(){
 
 	all_count_ = 0;
 	used_count_ = 0;
+
+	cant_fit_ = false;
 }
 
 void FixedAllocator::add_chunk(size_t block_size){
-	uint_t blocks = (256/block_size)+4;
+	uint_t blocks = calc_size(block_size);
 	all_count_ += blocks;
-	Chunk *new_chunk = (Chunk*)user_malloc(sizeof(Chunk)+block_size*blocks*sizeof(data_t));
+	Chunk *new_chunk = (Chunk*)xmalloc(sizeof(Chunk)+block_size*blocks*sizeof(data_t));
 	
 	{
 		new_chunk->next = 0;
@@ -72,6 +74,9 @@ void* FixedAllocator::malloc(size_t block_size){
 
 	gc();
 	gc();
+	gc();
+
+	cant_fit_ = true;
 
 	if(used_count_>(all_count_>>1)){
 		add_chunk(block_size);
@@ -80,6 +85,9 @@ void* FixedAllocator::malloc(size_t block_size){
 	{
 		void* ret = free_data_;
 		free_data_ = static_cast<data_t*>(*free_data_);
+
+		cant_fit_ = false;
+
 		return ret;
 	}
 }
@@ -89,21 +97,85 @@ void FixedAllocator::free(void* mem, size_t block_size){
 	free_data_ = static_cast<data_t*>(mem);
 	--used_count_;
 }
+
+void FixedAllocator::fit(size_t block_size){
+	if(used_count_>(all_count_>>1)){
+		return;
+	}
+
+	if(cant_fit_){
+		return;
+	}
+
+	uint_t blocks = calc_size(block_size);
+
+	for(Chunk* p=chunk_; p; p=p->next){
+		p->head = 0;
+		p->tail = 0;
+		p->count = 0;
+	}
+
+	uint_t buffer_size = sizeof(Chunk)+block_size*blocks*sizeof(data_t);
+	for(data_t* q=free_data_; q;){
+		data_t* next = static_cast<data_t*>(*q);
+		for(Chunk* p=chunk_; p; p=p->next){
+			if((char*)p<(char*)q && (char*)q<(char*)p+buffer_size){
+				p->count++;
+				if(!p->tail){
+					p->tail = q;	
+				}
+				*q = p->head;
+				p->head = q;
+				break;
+			}
+		}
+		q = next;
+	}
+	free_data_ = 0;
+
+	Chunk** prev = &chunk_;
+	for(Chunk* p=chunk_; p;){
+		if(p->count==blocks){
+			*prev = p->next;
+			xfree(p, buffer_size);
+			p = *prev;
+			all_count_ -= blocks;
+		}
+		else{
+			prev = &p->next;
+			p = p->next;
+		}
+	}
+
+	for(Chunk* p=chunk_; p; p=p->next){
+		if(p->head){
+			*p->tail = free_data_;
+			free_data_ = p->head;
+		}
+	}
+}
 	
 void FixedAllocator::release(size_t block_size){
+	fit(block_size);
+
+	XTAL_ASSERT(chunk_==0);
+	XTAL_ASSERT(free_data_==0);
+
+	/*
 	for(Chunk* p=chunk_; p; ){
 		Chunk* next = p->next;
-		user_free(p);
+		xfree(p);
 		p = next;
 	}
 	
 	chunk_ = 0;
 	free_data_ = 0;
+	*/
 }
 
 void* SmallObjectAllocator::malloc(size_t size){
 	if(size>HANDLE_MAX_SIZE){
-		return user_malloc(size);
+		return xmalloc(size);
 	}else{
 		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
 		if(wsize==0){ return 0; }
@@ -113,7 +185,7 @@ void* SmallObjectAllocator::malloc(size_t size){
 
 void SmallObjectAllocator::free(void* p, size_t size){
 	if(size>HANDLE_MAX_SIZE){
-		user_free(p);
+		xfree(p, size);
 	}else{
 		if(p==0){
 			return;
@@ -122,6 +194,12 @@ void SmallObjectAllocator::free(void* p, size_t size){
 			pool_[wsize-1].free(p, wsize);
 		}
 	}
+}
+
+void SmallObjectAllocator::fit(){
+	for(int i=0; i<POOL_SIZE; ++i){
+		pool_[i].fit(i+1);
+	}	
 }
 
 void SmallObjectAllocator::release(){

@@ -78,6 +78,8 @@ public:
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
 
+	virtual ~Class();
+
 	void overwrite(const ClassPtr& p);
 
 public:
@@ -126,9 +128,9 @@ public:
 	void inherit_strict(const ClassPtr& cls);
 
 	/**
-	* @brief Mix-inされているか調べる
+	* @brief 継承されているか調べる
 	*
-	* @param md Mix-inされている調べたいクラスオブジェクト
+	* @param md 継承されている調べたいクラスオブジェクト
 	*/
 	bool is_inherited(const AnyPtr& md);
 
@@ -139,7 +141,7 @@ public:
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief Mix-inされているクラスのIteratorを返す
+	* @brief 継承されているクラスのIteratorを返す
 	*
 	*/
 	AnyPtr inherited_classes();
@@ -223,7 +225,6 @@ public:
 	*/
 	void def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
-
 public:
 
 	/**
@@ -275,9 +276,10 @@ public:
 	}
 
 public:
+
 	struct cpp_class_t{};
 
-	Class(cpp_class_t, const StringPtr& name = empty_string);
+	Class(cpp_class_t);
 
 	virtual void rawcall(const VMachinePtr& vm);
 	
@@ -334,22 +336,53 @@ protected:
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	StringPtr name_;
-	ArrayPtr mixins_;
+	PODArrayList<Class*> inherited_classes_;
 	u16 object_force_;
 	u8 is_native_;
 	u8 is_final_;
 
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);
-		m & mixins_;
+		for(uint_t i=0; i<inherited_classes_.size(); ++i){
+			m & inherited_classes_[i];
+		}
 	}
 
+	friend class ClassInheritedClassesIter;
 };
+
+
+class ClassInheritedClassesIter : public Base{
+public:
+
+	ClassInheritedClassesIter(const ClassPtr& cls)
+		:class_(cls), index_(0){}
+	
+	void block_next(const VMachinePtr& vm){
+		++index_;
+		if(index_<=class_->inherited_classes_.size()){
+			vm->return_result(from_this(this), from_this(class_->inherited_classes_[index_-1]));
+		}
+		else{
+			vm->return_result(null, null);
+		}
+	}
+
+private:
+	ClassPtr class_;
+	uint_t index_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & class_;
+	}
+};
+
 
 class CppClass : public Class{
 public:
 		
-	CppClass(const StringPtr& name = empty_string);
+	CppClass();
 
 public:
 

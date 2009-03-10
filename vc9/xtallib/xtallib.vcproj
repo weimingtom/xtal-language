@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				ExceptionHandling="0"
 				RuntimeLibrary="1"
-				RuntimeTypeInfo="true"
+				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"
 				WarningLevel="3"
@@ -498,6 +498,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\xtal\xtal_lib\xtal_cstdiostream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_errormessage.h"
 					>
 				</File>
 				<File

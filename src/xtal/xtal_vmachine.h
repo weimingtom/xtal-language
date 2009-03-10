@@ -491,14 +491,14 @@ public:
 		Any secondary_key_;
 
 		void set_null(){
-			set_null_force(fun_); 
-			set_null_force(outer_);
-			set_null_force(arguments_);
-			set_null_force(self_);
-			set_null_force(hint_);
-			set_null_force(target_);
-			set_null_force(primary_key_);
-			set_null_force(secondary_key_);
+			xtal::set_null(fun_); 
+			xtal::set_null(outer_);
+			xtal::set_null(arguments_);
+			xtal::set_null(self_);
+			xtal::set_null(hint_);
+			xtal::set_null(target_);
+			xtal::set_null(primary_key_);
+			xtal::set_null(secondary_key_);
 		}
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
@@ -741,14 +741,6 @@ public:
 	const inst_t* OpUshr(const inst_t* pc, int_t op);
 
 private:
-
-	VMachine(const VMachine&);
-	VMachine& operator=(const VMachine&);
-
-private:
-
-	bool using_;
-
 	inst_t end_code_;
 	inst_t throw_code_;
 	inst_t throw_unsupported_error_code_;
@@ -780,6 +772,34 @@ private:
 
 	int_t thread_yield_count_;
 
+public:
+
+	void assign(const VMachinePtr& vm){
+		resume_pc_ = vm->resume_pc_;
+		yield_result_count_ = vm->yield_result_count_;
+
+		stack_ = vm->stack_;
+
+		fun_frames_.resize(vm->fun_frames_.size());
+		for(uint_t i=0; i<vm->fun_frames_.size(); ++i){
+			if(fun_frames_[i]){
+				*fun_frames_[i] = *vm->fun_frames_[i];
+			}
+			else{
+				void* p = so_malloc(sizeof(FunFrame));
+				fun_frames_[i] = new(p) FunFrame(*vm->fun_frames_[i]);
+			}
+		}
+
+		except_frames_ = vm->except_frames_;
+		
+		except_[0] = vm->except_[0];
+		except_[1] = vm->except_[1];
+		except_[2] = vm->except_[2];
+
+		debug_info_ = vm->debug_info_;
+	}
+
 protected:
 
 	virtual void visit_members(Visitor& m);
@@ -790,6 +810,10 @@ protected:
 public:
 
 	void print_info();
+
+private:
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(VMachine);
 
 };
 

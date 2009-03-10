@@ -200,9 +200,9 @@ Scanner::Scanner(){
 
 Scanner::~Scanner(){
 	for(uint_t i=0; i<num_; ++i){
-		user_free(begin_[i]);
+		xfree(begin_[i], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	}
-	user_free(begin_);
+	xfree(begin_, sizeof(AnyPtr*)*num_);
 }
 
 const AnyPtr& Scanner::peek(uint_t n){
@@ -290,16 +290,16 @@ bool Scanner::eat_capture(int_t begin, int_t end){
 
 void Scanner::expand(){
 	uint_t newnum = num_ + 1;
-	AnyPtr** newp = (AnyPtr**)user_malloc(sizeof(AnyPtr*)*newnum);
+	AnyPtr** newp = (AnyPtr**)xmalloc(sizeof(AnyPtr*)*newnum);
 
 	if(begin_){
 		std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
 	}
 
-	newp[num_] = (AnyPtr*)user_malloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	newp[num_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	std::memset(newp[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 
-	user_free(begin_);
+	xfree(begin_, sizeof(AnyPtr*)*num_);
 	begin_ = newp;
 	num_ = newnum;
 }
@@ -1345,12 +1345,12 @@ void initialize_xpeg(){
 	AnyPtr bol = xnew<Element>(Element::TYPE_BOL);
 	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
 	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
-	AnyPtr degit = elem(AnyPtr("0")->send(Xid(op_range), "9", RANGE_CLOSED));
-	AnyPtr lalpha = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
-	AnyPtr ualpha = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
+	//AnyPtr degit = elem(AnyPtr("0")->send(Xid(op_range), "9", RANGE_CLOSED));
+	//AnyPtr lalpha = elem(AnyPtr(Xid(a))->send(Xid(op_range), Xid(z), RANGE_CLOSED));
+	//AnyPtr ualpha = elem(AnyPtr(Xid(A))->send(Xid(op_range), Xid(Z), RANGE_CLOSED));
 	//AnyPtr alpha = lalpha | ualpha;
 	//AnyPtr word = alpha | degit | Xid(_);
-	AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
+	//AnyPtr ascii = elem(xnew<String>((char_t)1)->send(Xid(op_range), xnew<String>((char_t)127), RANGE_CLOSED));
 
 	xpeg->def(Xid(any), any);
 	xpeg->def(Xid(bos), bos);
@@ -1358,12 +1358,12 @@ void initialize_xpeg(){
 	xpeg->def(Xid(bol), bol);
 	xpeg->def(Xid(eol), eol);
 	xpeg->def(Xid(empty), empty);
-	xpeg->def(Xid(degit), degit);
-	xpeg->def(Xid(lalpha), lalpha);
+	//xpeg->def(Xid(degit), degit);
+	//xpeg->def(Xid(lalpha), lalpha);
 	//xpeg->def(Xid(ualpha), ualpha);
 	//xpeg->def(Xid(alpha), alpha);
 	//xpeg->def(Xid(word), word);
-	xpeg->def(Xid(ascii), ascii);
+	//xpeg->def(Xid(ascii), ascii);
 	
 	xpeg->def_fun(Xid(set), &set);
 	xpeg->def_fun(Xid(back_ref), &back_ref);

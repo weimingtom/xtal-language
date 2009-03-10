@@ -31,7 +31,7 @@ public:
 
 	SmartPtr<T>& operator =(const Null&){
 		dec_ref_count();
-		set_null_force(*this);
+		set_null(*this);
 		return *this;
 	}
 

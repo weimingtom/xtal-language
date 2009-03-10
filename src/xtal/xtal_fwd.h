@@ -218,6 +218,7 @@ class Any;
 template<> class SmartPtr<Any>;
 typedef SmartPtr<Any> AnyPtr;
 
+class Environment;
 
 class Array;
 class Map;
@@ -290,6 +291,7 @@ typedef SmartPtr<Exception> ExceptionPtr;
 
 class Base;
 class RefCountingBase;
+class GCObserver;
 
 class Int;
 class Float;
@@ -393,6 +395,25 @@ template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{}
 template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
 
 template<class T>
-const ClassPtr& new_cpp_class(const StringPtr& name=empty_string);
+const ClassPtr& new_cpp_class();
+template<class T>
+const ClassPtr& new_cpp_class(const StringPtr& name);
+
+struct IdentifierData{ 
+	IdentifierData(){
+		static unsigned int counter = 0;
+		value = counter++;
+	}
+
+	unsigned int value;
+};
+
+template<class T>
+struct Identifier{
+	static IdentifierData value;
+};
+
+template<class T>
+IdentifierData Identifier<T>::value;
 
 }

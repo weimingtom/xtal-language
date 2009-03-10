@@ -4,6 +4,7 @@
 #include "xtal_lib/xtal_cstdiostream.h"
 #include "xtal_lib/xtal_winfilesystem.h"
 #include "xtal_lib/xtal_chcode.h"
+#include "xtal_lib/xtal_errormessage.h"
 #include "xtal_codebuilder.h"
 
 #include "xtal_macro.h"
@@ -31,6 +32,7 @@ int main(int argc, char** argv){
 	setting.chcode_lib = &sjis_chcode_lib;
 
 	initialize(setting);
+	bind_error_message();
 
 	ix();
 

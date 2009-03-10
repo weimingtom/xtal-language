@@ -65,7 +65,6 @@ public:
 		FILE* fp = std::fopen(path->c_str(), flags->c_str());
 #endif
 		if(!fp){ 
-			XTAL_SET_EXCEPT(builtin()->member(XTAL_ID(IOError))->call(text("Xtal Runtime Error 1014")->call(Named(XTAL_ID(name), path))));
 			return null; 
 		}
 		return xnew<CStdioFileStream>(fp);

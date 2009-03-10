@@ -258,7 +258,7 @@ MemoryStream::MemoryStream(const void* data, uint_t data_size){
 
 MemoryStream::~MemoryStream(){
 	if(capa_){
-		user_free((void*)data_);
+		xfree((void*)data_, capa_);
 	}
 }
 
@@ -317,10 +317,10 @@ void MemoryStream::clear(){
 void MemoryStream::resize(uint_t size){
 	if(size>capa_){
 		uint_t newcapa = size + capa_;
-		void* newp = user_malloc(newcapa);
+		void* newp = xmalloc(newcapa);
 		std::memcpy(newp, data_, size_);
 		if(capa_){
-			user_free((void*)data_);
+			xfree((void*)data_, capa_);
 		}
 		data_ = (u8*)newp;
 		capa_ = newcapa;

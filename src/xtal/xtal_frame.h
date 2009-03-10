@@ -43,7 +43,7 @@ public:
 	*
 	*/
 	AnyPtr& member_direct(int_t i){
-		return (AnyPtr&)members_->at(i);
+		return (AnyPtr&)members_.at(i);
 	}
 
 	/**
@@ -51,19 +51,14 @@ public:
 	*
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
-		members_->set_at(i, value);
+		members_.set_at(i, value);
 	}
 		
 public:
 
 	/**
 	* @brief メンバが格納された、Iteratorを返す
-	*
-	* @code
-	* Xfor2(key, value, frame.members()){
-	*   puts(Xf("%s %s")(key, value).to_s().c_str());
-	* }
-	* @endcode
+	* ブロックパラメータは(primary_key, secondary_key, value)
 	*/
 	AnyPtr members();
 
@@ -77,7 +72,7 @@ protected:
 	CodePtr code_;
 	ScopeInfo* scope_info_;
 	
-	ArrayPtr members_;
+	Array members_;
 
 	struct Key{
 		IDPtr primary_key;
@@ -97,7 +92,7 @@ protected:
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return (rawvalue(key.primary_key)>>3) ^ rawvalue(key.secondary_key);
+			return (rawvalue(key.primary_key).uvalue>>3) ^ rawvalue(key.secondary_key).uvalue;
 		}
 
 		static bool eq(const Key& a, const Key& b){
@@ -113,7 +108,12 @@ protected:
 
 	virtual void visit_members(Visitor& m){
 		HaveParent::visit_members(m);
-		m & outer_ & code_ & members_;
+		m & outer_ & code_;
+
+		for(uint_t i=0; i<members_.size(); ++i){
+			m & members_.at(i);
+		}
+
 		if(map_members_){
 			m & *map_members_;
 		}

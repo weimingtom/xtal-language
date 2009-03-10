@@ -3,57 +3,48 @@
 
 namespace xtal{
 
+void set_vmachine(const VMachinePtr& vm);
+
 class ThreadSpace{
 public:
 
 	void initialize(ThreadLib* lib){
-		thread_enabled_ = false;
-
-		thread_count_ = 1;
-		thread_locked_count_ = 0;
-		thread_unlocked_count_ = 0;
-		stop_the_world_ = false;
-		current_thread_recursive_ = 0;
 		thread_lib_ = lib;
-		vm_map_ = xnew<Map>();
-		mutex_ = new_mutex(); 
-		thread_enabled_ = true;
-	//	global_interpreter_lock();
-		register_vmachine();
+		environment_ = environment();
+
 		thread_enabled_ = false;
+		registered_thread_ = false;
+		thread_count_ = 1;
+
+		mutex_ = new_mutex(); 
+
+		thread_enabled_ = true;
+
+		register_vmachine();
+		xlock();
 	}
 
 	void uninitialize(){
-	//	global_interpreter_unlock();
+		unregister_vmachine();
+		xunlock();
+		
 		thread_enabled_ = false;
 		thread_lib_ = 0;
-		vm_map_ = null;
 		mutex_ = null;
-		vmachine_ = null;
 	}
 
-	void change_vmachine(const Thread::ID& id){
-		if(!current_vmachine_id_.is_valid() || !thread_lib_->equal_thread_id(current_vmachine_id_, id)){
-			vmachine_ = unchecked_ptr_cast<VMachine>(vm_map_->at(id.intern()));
-			current_vmachine_id_ = id;
+	void join_all_threads(){
+		while(thread_count_!=1){
+			yield_thread();
 		}
-		current_thread_recursive_ = 1;
-		current_thread_id_ = id;
 	}
 
 	void register_vmachine(){
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-
-		vmachine_ = xnew<VMachine>();
-		vm_map_->set_at(id.intern(), vmachine_);
+		set_vmachine(xnew<VMachine>());
 	}
 
-	void remove_vmachine(){
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-
-		vm_map_->erase(id.intern());
+	void unregister_vmachine(){
+		set_vmachine(null);
 	}
 
 	void xlock(){
@@ -61,15 +52,7 @@ public:
 			return;
 		}
 
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-		if(current_thread_recursive_==0){
-			mutex_->lock();
-			change_vmachine(id);
-		}
-		else{
-			current_thread_recursive_++;
-		}
+		mutex_->lock();
 	}
 
 	void xunlock(){
@@ -77,72 +60,41 @@ public:
 			return;
 		}
 
-		current_thread_recursive_--;
-		if(current_thread_recursive_==0){
-			current_thread_id_.invalid();
-			mutex_->unlock();
-		}
+		mutex_->unlock();
 	}
 
 	void thread_entry(const ThreadPtr& thread){
 		register_thread();
 
-		register_vmachine();
-		const VMachinePtr& vm(vmachine_);
-
+		VMachinePtr vm = vmachine();
 		vm->setup_call(0);
 		thread->callback()->rawcall(vm);
 		vm->cleanup_call();
+		vm->reset();
+		vm = null;
 
-		vm->reset();	
 		unregister_thread();
 	}
 
 	void register_thread(){
-		if(!thread_enabled_)
-			return;
+		XTAL_ASSERT(environment()==0);
+		set_environment(environment_);
 
-		mutex_->lock();
+		registered_thread_ = true;
+		xlock();
+		registered_thread_ = false;
 		thread_count_++;
-		mutex_->unlock();
-		
 		register_vmachine();
-
-		global_interpreter_lock();
 	}
 
 	void unregister_thread(){
-		if(!thread_enabled_)
-			return;
-
-		remove_vmachine();
+		unregister_vmachine();
 		thread_count_--;
-
-		global_interpreter_unlock();
-	}
-
-	void global_interpreter_lock(){
-		Thread::ID id;
-		thread_lib_->current_thread_id(id);
-		if(current_thread_recursive_==0){
-			mutex_->lock();
-			change_vmachine(id);
-		}
-		else{
-			current_thread_recursive_++;
-		}
-	}
-
-	void global_interpreter_unlock(){
-		current_thread_recursive_--;
-		if(current_thread_recursive_==0){
-			current_thread_id_.invalid();
-			mutex_->unlock();
-		}
+		xunlock();
 	}
 
 	void yield_thread(){
-		if(thread_count_==1){
+		if(thread_count_==1 && !registered_thread_){
 			return;
 		}
 
@@ -159,6 +111,7 @@ public:
 
 	ThreadPtr new_thread(const AnyPtr& fun){
 		ThreadPtr ret = thread_lib_->new_thread();
+		ret->set_thread_space(this);
 		ret->set_callback(fun);
 		ret->start();
 		return ret;
@@ -174,34 +127,20 @@ public:
 		}
 	}
 
-	const VMachinePtr& ThreadSpace::vmachine(){
-		return vmachine_;
-	}
-
 	bool thread_enabled(){
 		return thread_enabled_;
 	}
 
 private:
-
-	MapPtr vm_map_;
-
 	int thread_count_;
-	int thread_locked_count_;
-	int thread_unlocked_count_;
-	bool stop_the_world_;
-
-	Thread::ID current_thread_id_;
-	Thread::ID current_vmachine_id_;
-	Thread::ID stop_the_world_thread_id_;
-	int current_thread_recursive_;
 
 	MutexPtr mutex_;
-	VMachinePtr vmachine_;
 
 	bool thread_enabled_;
+	bool registered_thread_;
 
 	ThreadLib* thread_lib_;
+	Environment* environment_;
 };
 
 }

@@ -52,9 +52,9 @@ struct MemberCacheTable{
 		//bool nocache = false;
 		//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
 
-		uint_t itarget_class = rawvalue(target_class)>>2;
-		uint_t iprimary_key = rawvalue(primary_key);
-		uint_t isecondary_key = rawvalue(secondary_key);
+		uint_t itarget_class = rawvalue(target_class).uvalue>>2;
+		uint_t iprimary_key = rawvalue(primary_key).uvalue;
+		uint_t isecondary_key = rawvalue(secondary_key).uvalue;
 
 		uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
 		Unit& unit = table_[calc_index(hash)];
@@ -175,8 +175,8 @@ struct IsCacheTable{
 	bool cache(const AnyPtr& target_class, const AnyPtr& klass){
 		//return unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
 
-		uint_t itarget_class = rawvalue(target_class);
-		uint_t iklass = rawvalue(klass);
+		uint_t itarget_class = rawvalue(target_class).uvalue;
+		uint_t iklass = rawvalue(klass).uvalue;
 
 		uint_t hash = (itarget_class>>3) ^ (iklass>>2);
 		Unit& unit = table_[hash & CACHE_MASK];

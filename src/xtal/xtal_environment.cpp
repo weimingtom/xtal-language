@@ -7,6 +7,8 @@
 #include "xtal_cache.h"
 #include "xtal_codebuilder.h"
 
+int used_memory = 0;
+
 #define XTAL_DEBUG_ALLOC 0
 
 #if XTAL_DEBUG_ALLOC!=0
@@ -30,7 +32,6 @@ std::map<void*, SizeAndCount> mem_map_;
 std::map<void*, SizeAndCount> so_mem_map_;
 int gcounter = 1;
 int max_used_memory = 0;
-int used_memory = 0;
 const char debugstring[]= "awerwoeekrlwsekrlewskrkerswer";
 }
 
@@ -145,7 +146,6 @@ void initialize_xpeg();
 
 void bind();
 void exec_script();
-void exec_text();
 
 class Environment{
 public:
@@ -162,6 +162,7 @@ public:
 	IsCacheTable is_cache_table_;
 
 	SmartPtr<Filesystem> filesystem_;
+	SmartPtr<Debug> debug_;
 
 	ClassPtr Iterator_;
 	ClassPtr Iterable_;
@@ -181,8 +182,8 @@ public:
 };
 
 namespace{
-
-	Environment* environment_;
+	XTAL_TLS_PTR(Environment) environment_;
+	XTAL_TLS_PTR(VMachine) vmachine_;
 
 	ThreadLib empty_thread_lib;
 	StreamLib empty_stream_lib;
@@ -198,6 +199,25 @@ Environment* environment(){
 void set_environment(Environment* environment){
 	environment_ = environment;
 }
+
+const VMachinePtr& vmachine(){
+	return from_this(vmachine_);
+}
+
+void set_vmachine(const VMachinePtr& vm){
+	if(vmachine_){
+		vmachine_->dec_ref_count();
+	}
+
+	if(vm){
+		vmachine_ = vm.get();
+		vmachine_->inc_ref_count();
+	}
+	else{
+		vmachine_ = 0;
+	}
+}
+
 
 ////////////////////////////////////
 
@@ -217,7 +237,7 @@ void so_free(void* p, size_t size){
 	environment_->so_alloc_.free(p, size);
 }
 
-void* user_malloc(size_t size){
+void* xmalloc(size_t size){
 #if XTAL_DEBUG_ALLOC!=0
 	return debug_malloc(size);
 #endif
@@ -237,12 +257,12 @@ void* user_malloc(size_t size){
 	return ret;
 } 
 
-void user_free(void* p){
+void xfree(void* p, size_t size){
 #if XTAL_DEBUG_ALLOC!=0
 	return debug_free(p);
 #endif
 
-	environment_->setting_.allocator_lib->free(p);
+	environment_->setting_.allocator_lib->free(p, size);
 }
 
 
@@ -265,7 +285,7 @@ void uninitialize(){
 	AllocatorLib* allocacator_lib = environment_->setting_.allocator_lib;
 	environment_->uninitialize();
 	environment_->~Environment();
-	allocacator_lib->free(environment_);
+	allocacator_lib->free(environment_, sizeof(Environment));
 	environment_ = 0;
 }
 
@@ -290,6 +310,7 @@ void Environment::initialize(const Setting& setting){
 	text_map_ = xnew<Map>();
 
 	bind();
+	full_gc();
 
 	setting_.filesystem_lib->initialize();
 	filesystem_ = new_cpp_singleton<Filesystem>();
@@ -314,24 +335,26 @@ void Environment::initialize(const Setting& setting){
 	builtin()->def(Xid(stdout), stdout_);
 	builtin()->def(Xid(stderr), stderr_);
 
-	initialize_xpeg();
 	initialize_math();
+	initialize_xpeg();
 
 	enable_gc();
 
-	print_alive_objects();
-
 	exec_script();
+
+	full_gc();
 
 	RuntimeError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
 	ArgumentError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
 	CompileError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(CompileError)));
 	UnsupportedError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
 
-	exec_text();
+	debug_ = unchecked_ptr_cast<Debug>(builtin()->member(Xid(debug)));
 }
 
 void Environment::uninitialize(){
+	thread_space_.join_all_threads();
+
 	full_gc();
 
 	Iterator_ = null;
@@ -348,6 +371,7 @@ void Environment::uninitialize(){
 	stdout_ = null;
 	stderr_ = null;
 	text_map_ = null;
+	debug_ = null;
 
 	string_space_.uninitialize();
 
@@ -368,7 +392,7 @@ void Environment::uninitialize(){
 }
 	
 VMachinePtr vmachine_take_over(){
-	Environment* environment = xtal::environment();
+	Environment* environment = xtal::environment_;
 	if(environment->vm_list_->empty()){
 		environment->vm_list_->push_back(xnew<VMachine>());
 	}
@@ -378,236 +402,198 @@ VMachinePtr vmachine_take_over(){
 }
 
 void vmachine_take_back(const VMachinePtr& vm){
-	Environment* environment = xtal::environment();
+	Environment* environment = xtal::environment_;
 	vm->reset();
 	environment->vm_list_->push_back(vm);
 }
 
-void debug_print(){
-	{
-		int_t hit = environment()->member_cache_table_.hit_count();
-		int_t miss = environment()->member_cache_table_.miss_count();
-		int_t collided = environment()->member_cache_table_.collided_count();
-		printf("member_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
-	}
-
-	{
-		int_t hit = environment()->is_cache_table_.hit_count();
-		int_t miss = environment()->is_cache_table_.miss_count();
-		int_t collided = environment()->is_cache_table_.collided_count();
-		printf("is_cache_table hit=%d, miss=%d, collided=%d, rate=%f\n", hit, miss, collided, hit/(float_t)(hit+miss));
-	}
-}
-
 const IDPtr* id_op_list(){
-	return environment()->string_space_.id_op_list();
+	return environment_->string_space_.id_op_list();
 }
 
 void gc(){
-	return environment()->object_space_.gc();
+	return environment_->object_space_.gc();
 }
 
 void full_gc(){
-	environment()->member_cache_table_.clear();
-	environment()->is_cache_table_.clear();
-	return environment()->object_space_.full_gc();
+	environment_->member_cache_table_.clear();
+	environment_->is_cache_table_.clear();
+	environment_->object_space_.full_gc();
+	environment_->so_alloc_.fit();
+	//printf("used_memory %d\n", used_memory/1024);
 }
 
 void disable_gc(){
-	return environment()->object_space_.disable_gc();
+	return environment_->object_space_.disable_gc();
 }
 
 void enable_gc(){
-	return environment()->object_space_.enable_gc();
+	return environment_->object_space_.enable_gc();
 }
 
 void register_gc(RefCountingBase* p){
-	return environment()->object_space_.register_gc(p);
+	return environment_->object_space_.register_gc(p);
 }
 
 void register_gc_observer(GCObserver* p){
-	return environment()->object_space_.register_gc_observer(p);
+	return environment_->object_space_.register_gc_observer(p);
 }
 
 void unregister_gc_observer(GCObserver* p){
-	return environment()->object_space_.unregister_gc_observer(p);
+	return environment_->object_space_.unregister_gc_observer(p);
 }
 
-const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key){
-	return environment()->object_space_.new_cpp_class(name, key);
+const ClassPtr& new_cpp_class(CppClassSymbolData* key){
+	return environment_->object_space_.new_cpp_class(key);
 }
 
 const ClassPtr& cpp_class(CppClassSymbolData* key){
-	return environment()->object_space_.cpp_class(key);
+	return environment_->object_space_.cpp_class(key);
 }
 
 bool exists_cpp_class(CppClassSymbolData* key){
-	return environment()->object_space_.exists_cpp_class(key);
+	return environment_->object_space_.exists_cpp_class(key);
 }
 
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
-	return environment()->object_space_.set_cpp_class(cls, key);
+	return environment_->object_space_.set_cpp_class(cls, key);
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	return environment()->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
+	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 }
 
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
-	return environment()->is_cache_table_.cache(target_class, klass);
+	return environment_->is_cache_table_.cache(target_class, klass);
 }
 
 void invalidate_cache_member(){
-	environment()->member_cache_table_.invalidate();
+	environment_->member_cache_table_.invalidate();
 }
 
 void invalidate_cache_is(){
-	environment()->is_cache_table_.invalidate();
-	environment()->member_cache_table_.invalidate();
-}
-
-const VMachinePtr& vmachine(){
-	return environment()->thread_space_.vmachine();
+	environment_->is_cache_table_.invalidate();
+	environment_->member_cache_table_.invalidate();
 }
 
 const ClassPtr& Iterator(){
-	return environment()->Iterator_;
+	return environment_->Iterator_;
 }
 
 const ClassPtr& Iterable(){
-	return environment()->Iterable_;
+	return environment_->Iterable_;
 }
 
 const ClassPtr& builtin(){
-	return environment()->builtin_;
+	return environment_->builtin_;
 }
 
 const LibPtr& lib(){
-	return environment()->lib_;
+	return environment_->lib_;
 }
 
-const IDPtr& intern_literal(const char_t* str){
-	return environment()->string_space_.insert_literal(str);
+const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata){
+	return environment_->string_space_.insert_literal(str, iddata);
 }
 
 const IDPtr& intern(const char_t* str){
-	return environment()->string_space_.insert(str);
+	return environment_->string_space_.insert(str);
 }
 
 const IDPtr& intern(const char_t* str, uint_t data_size){
-	return environment()->string_space_.insert(str, data_size);
-}
-
-const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash){
-	return environment()->string_space_.insert(str, data_size, hash);
+	return environment_->string_space_.insert(str, data_size);
 }
 
 AnyPtr interned_strings(){
-	return environment()->string_space_.interned_strings();
+	return environment_->string_space_.interned_strings();
 }
 
 bool thread_enabled(){
-	return environment()->thread_space_.thread_enabled();
+	return environment_->thread_space_.thread_enabled();
 }
 
 void yield_thread(){
-	return environment()->thread_space_.yield_thread();
+	return environment_->thread_space_.yield_thread();
 }
 
 void sleep_thread(float_t sec){
-	return environment()->thread_space_.sleep_thread(sec);
+	return environment_->thread_space_.sleep_thread(sec);
 }
 
 ThreadPtr new_thread(const AnyPtr& callback_fun){
-	return environment()->thread_space_.new_thread(callback_fun);
+	return environment_->thread_space_.new_thread(callback_fun);
 }
 
 MutexPtr new_mutex(){
-	return environment()->thread_space_.new_mutex();
+	return environment_->thread_space_.new_mutex();
 }
 
 void lock_mutex(const MutexPtr& p){
-	return environment()->thread_space_.lock_mutex(p);
+	return environment_->thread_space_.lock_mutex(p);
 }
 
 void xlock(){
-	environment()->thread_space_.xlock();
+	environment_->thread_space_.xlock();
 }
 
 void xunlock(){
-	environment()->thread_space_.xunlock();
-}
-
-bool stop_the_world(){
-	return true;
-}
-
-void restart_the_world(){
-
-}
-
-void thread_entry(const ThreadPtr& thread){
-	environment()->thread_space_.thread_entry(thread);
-}
-
-void register_thread(){
-	environment()->thread_space_.register_thread();
-}
-
-void unregister_thread(){
-	environment()->thread_space_.unregister_thread();
+	environment_->thread_space_.xunlock();
 }
 
 const SmartPtr<Filesystem>& filesystem(){
-	return environment()->filesystem_;
+	return environment_->filesystem_;
+}
+
+const SmartPtr<Debug>& debug(){
+	return environment_->debug_;
 }
 
 const ClassPtr& RuntimeError(){
-	return environment()->RuntimeError_;
+	return environment_->RuntimeError_;
 }
 
 const ClassPtr& CompileError(){
-	return environment()->CompileError_;
+	return environment_->CompileError_;
 }
 
 const ClassPtr& UnsupportedError(){
-	return environment()->UnsupportedError_;
+	return environment_->UnsupportedError_;
 }
 
 const ClassPtr& ArgumentError(){
-	return environment()->ArgumentError_;
+	return environment_->ArgumentError_;
 }
 
 const StreamPtr& stdin_stream(){
-	return environment()->stdin_;
+	return environment_->stdin_;
 }
 
 const StreamPtr& stdout_stream(){
-	return environment()->stdout_;
+	return environment_->stdout_;
 }
 
 const StreamPtr& stderr_stream(){
-	return environment()->stderr_;
+	return environment_->stderr_;
 }
 
 const MapPtr& text_map(){
-	return environment()->text_map_;
+	return environment_->text_map_;
 }
 
 int_t ch_len(char_t lead){
-	return environment()->setting_.chcode_lib->ch_len(lead);
+	return environment_->setting_.chcode_lib->ch_len(lead);
 }
 
 int_t ch_len2(const char_t* str){
-	return environment()->setting_.chcode_lib->ch_len2(str);
+	return environment_->setting_.chcode_lib->ch_len2(str);
 }
 
 StringPtr ch_inc(const char_t* data, int_t data_size){
-	return environment()->setting_.chcode_lib->ch_inc(data, data_size);
+	return environment_->setting_.chcode_lib->ch_inc(data, data_size);
 }
 
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
-	return environment()->setting_.chcode_lib->ch_cmp(a, asize, b, bsize);
+	return environment_->setting_.chcode_lib->ch_cmp(a, asize, b, bsize);
 }
 
 #ifndef XTAL_NO_PARSER

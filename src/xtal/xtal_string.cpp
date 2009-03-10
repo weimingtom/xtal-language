@@ -76,6 +76,17 @@ void string_copy(char_t* a, const char_t* b, uint_t size){
 	}
 }
 
+bool string_is_ch(const char_t* str, uint_t size){
+	ChMaker chm;
+	for(uint_t i=0; i<size; ++i){
+		chm.add(str[i]);
+		if(chm.is_completed()){
+			return i+1==size;
+		}
+	}
+	return false;
+}
+
 
 void StringEachIter::visit_members(Visitor& m){
 	Base::visit_members(m);
@@ -124,46 +135,43 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 
 ////////////////////////////////////////////////////////////////
 
-void String::init_string(const char_t* str, uint_t sz){
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		string_copy(svalue_, str, sz);
+void String::init_string(const char_t* str, uint_t size){
+	if(size<SMALL_STRING_MAX){
+		set_svalue(*this);
+		string_copy(value_.svalue, str, size);
 	}
 	else{
-		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
-		new(sd) StringData(sz);
-		string_copy(sd->buf(), str, sz);
-		set_p(TYPE_STRING, sd);
+		if(string_is_ch(str, size)){
+			*this = ID(str, size);
+		}
+		else{
+			StringData* sd = (StringData*)so_malloc(StringData::calc_size(size));
+			new(sd) StringData(size);
+			string_copy(sd->buf(), str, size);
+			set_pvalue(*this, TYPE_STRING, sd);
+			register_gc(sd);
+		}
+	}
+}
+
+String::String(const char_t* str, uint_t size, make_t){
+	if(size<SMALL_STRING_MAX){
+		set_svalue(*this);
+		string_copy(value_.svalue, str, size);
+	}
+	else{
+		StringData* sd = (StringData*)so_malloc(StringData::calc_size(size));
+		new(sd) StringData(size);
+		string_copy(sd->buf(), str, size);
+		set_pvalue(*this, TYPE_STRING, sd);
+		sd->set_interned();
 		register_gc(sd);
 	}
 }
 
 String::String()
 :Any(noinit_t()){
-	set_small_string();
-}
-
-String::String(const char_t* str, uint_t size, uint_t hashcode, bool intern_flag)
-:Any(noinit_t()){
-	uint_t sz = size;
-	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		string_copy(svalue_, str, sz);
-	}
-	else{
-		if(!intern_flag && string_length(str)==1){
-			set_p(TYPE_STRING, rcpvalue(xtal::intern(str, sz, hashcode)));
-			rcpvalue(*this)->inc_ref_count();
-		}
-		else{
-			StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
-			sd = new(sd) StringData(sz);
-			string_copy(sd->buf(), str, sz);
-			sd->set_interned();
-			set_p(TYPE_STRING, sd);
-			register_gc(sd);
-		}
-	}
+	set_svalue(*this);
 }
 
 String::String(const char_t* str)
@@ -205,16 +213,16 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
-		set_small_string();
-		string_copy(svalue_, str1, size1);
-		string_copy(&svalue_[size1], str2, size2);
+		set_svalue(*this);
+		string_copy(value_.svalue, str1, size1);
+		string_copy(&value_.svalue[size1], str2, size2);
 	}
 	else{
 		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
 		sd = new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
-		set_p(TYPE_STRING, sd);
+		set_pvalue(*this, TYPE_STRING, sd);
 		register_gc(sd);
 	}
 }
@@ -222,8 +230,8 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 String::String(char_t a)
 	:Any(noinit_t()){
 	if(1<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a;
+		set_svalue(*this);
+		value_.svalue[0] = a;
 	}
 	else{
 		init_string(&a, 1);
@@ -233,8 +241,8 @@ String::String(char_t a)
 String::String(char_t a, char_t b)
 	:Any(noinit_t()){
 	if(2<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a; svalue_[1] = b;
+		set_svalue(*this);
+		value_.svalue[0] = a; value_.svalue[1] = b;
 	}
 	else{
 		char_t buf[2] = {a, b};
@@ -245,8 +253,8 @@ String::String(char_t a, char_t b)
 String::String(char_t a, char_t b, char_t c)
 	:Any(noinit_t()){
 	if(3<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
+		set_svalue(*this);
+		value_.svalue[0] = a; value_.svalue[1] = b; value_.svalue[2] = c;
 	}
 	else{
 		char_t buf[3] = {a, b, c};
@@ -258,6 +266,17 @@ String::String(const String& s)
 	:Any(s){
 	inc_ref_count_force(s);
 }
+	
+String& String::operator= (const String& s){
+	if(this==&s){
+		return *this;
+	}
+
+	Any::operator=(s);
+	inc_ref_count_force(s);
+
+	return *this;
+}
 
 uint_t String::length(){
 	return string_length(c_str());
@@ -268,10 +287,10 @@ const char_t* String::c_str(){
 		return ((StringData*)rcpvalue(*this))->buf();
 	}
 	else{
-		return svalue_;
+		return value_.svalue;
 		//uint_t size, hash;
-		//string_data_size_and_hashcode(svalue_, size, hash);
-		//return xtal::intern(svalue_, size, hash)->data();
+		//string_data_size_and_hashcode(value_.svalue, size, hash);
+		//return xtal::intern(value_.svalue, size, hash)->data();
 	}
 }
 
@@ -280,7 +299,7 @@ const char_t* String::data(){
 		return ((StringData*)rcpvalue(*this))->buf();
 	}
 	else{
-		return svalue_;
+		return value_.svalue;
 	}
 }
 
@@ -290,7 +309,7 @@ uint_t String::data_size(){
 	}
 	else{
 		for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
-			if(svalue_[i]=='\0'){
+			if(value_.svalue[i]=='\0'){
 				return i;
 			}
 		}
@@ -378,16 +397,7 @@ AnyPtr String::each(){
 }
 
 bool String::is_ch(){
-	ChMaker chm;
-	const char_t* str = data();
-	uint_t i=0, sz=data_size();
-	for(; i<sz; ++i){
-		chm.add(str[i]);
-		if(chm.is_completed()){
-			return i+1==sz;
-		}
-	}
-	return false;
+	return string_is_ch(data(), data_size());
 }
 
 int_t String::ascii(){
@@ -458,8 +468,8 @@ ID::ID(const char_t* begin, const char_t* last)
 ID::ID(char_t a)
 	:String(noinit_t()){
 	if(1<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a;
+		set_svalue(*this);
+		value_.svalue[0] = a;
 	}
 	else{
 		*this = ID(&a, 1);
@@ -469,8 +479,8 @@ ID::ID(char_t a)
 ID::ID(char_t a, char_t b)
 	:String(noinit_t()){
 	if(2<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a; svalue_[1] = b;
+		set_svalue(*this);
+		value_.svalue[0] = a; value_.svalue[1] = b;
 	}
 	else{
 		char_t buf[2] = {a, b};
@@ -481,18 +491,14 @@ ID::ID(char_t a, char_t b)
 ID::ID(char_t a, char_t b, char_t c)
 	:String(noinit_t()){
 	if(3<SMALL_STRING_MAX){
-		set_small_string();
-		svalue_[0] = a; svalue_[1] = b; svalue_[2] = c;
+		set_svalue(*this);
+		value_.svalue[0] = a; value_.svalue[1] = b; value_.svalue[2] = c;
 	}
 	else{
 		char_t buf[3] = {a, b, c};
 		*this = ID(buf, 3);
 	}
 }
-
-ID::ID(const char_t* str, uint_t len, uint_t hashcode)
-	:String(str, len, hashcode, true){}
-
 
 ID::ID(const StringPtr& name)
 	:String(*(name ? name->intern() : (const IDPtr&)name)){}

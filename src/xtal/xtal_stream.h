@@ -500,24 +500,4 @@ private:
 	StringPtr str_;
 };
 
-class StreamLib{
-public:
-	virtual ~StreamLib(){}
-	virtual void initialize(){}
-
-	virtual StreamPtr new_stdin_stream(){ return StreamPtr(); }
-	virtual StreamPtr new_stdout_stream(){ return StreamPtr(); }
-	virtual StreamPtr new_stderr_stream(){ return StreamPtr(); }
-};
-
-class FilesystemLib{
-public:
-	virtual ~FilesystemLib(){}
-	virtual void initialize(){}
-	
-	virtual AnyPtr entries(const StringPtr& path){ return AnyPtr(); }
-	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){ return StreamPtr(); } 
-	virtual bool is_directory(const StringPtr& path){ return false; }
-};
-
 }

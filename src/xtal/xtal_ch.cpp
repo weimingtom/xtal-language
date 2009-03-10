@@ -89,7 +89,7 @@ uint_t edit_distance(const void* data1, uint_t data_size1, const void* data2, ui
 	uint_t size2 = data_size2 + 1;
 
 	uint_t buf_size = size1+size2+6;
-	uint_t* buf = (uint_t*)user_malloc(sizeof(uint_t)*buf_size);
+	uint_t* buf = (uint_t*)xmalloc(sizeof(uint_t)*buf_size);
 	
 	for(uint_t i=0; i<buf_size; ++i){
 		buf[i] = 0;
@@ -108,7 +108,7 @@ uint_t edit_distance(const void* data1, uint_t data_size1, const void* data2, ui
 		edit_distance_helper(data1, size1, data2, size2, buf, delta, offset);
 
 		if(buf[delta+offset]==size1){
-			user_free(buf);
+			xfree(buf, sizeof(uint_t)*buf_size);
 			return p+delta;
 		}
 	}

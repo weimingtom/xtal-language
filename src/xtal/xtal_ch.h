@@ -3,17 +3,6 @@
 
 namespace xtal{
 	
-
-class ChCodeLib{
-public:
-	virtual ~ChCodeLib(){}
-	virtual void initialize(){}
-	virtual int_t ch_len(char_t lead){ return 1; }
-	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
-	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
-};
-
 /**
 * @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
 *

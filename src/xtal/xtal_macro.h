@@ -133,5 +133,5 @@
 * IDPtr id = Xid(test);
 * @endcode
 */
-#define Xid(text) (::xtal::intern_literal(XTAL_STRING(#text)))
+#define Xid(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<class xtal_identifier_##x>::value)
 

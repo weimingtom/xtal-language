@@ -12,7 +12,7 @@ void MembersIter::block_next(const VMachinePtr& vm){
 	while(true){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
 			if(it_->second.flags==0){
-				vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_->at(it_->second.num));
+				vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_.at(it_->second.num));
 				++it_;
 				return;
 			}
@@ -29,14 +29,14 @@ void MembersIter::block_next(const VMachinePtr& vm){
 
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
-	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), members_(xnew<Array>(scope_info_->variable_size)), map_members_(0){
+	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), members_(scope_info_->variable_size), map_members_(0){
 }
 
 Frame::Frame()
-	:outer_(null), code_(null), scope_info_(&empty_class_info), members_(xnew<Array>()), map_members_(0){}
+	:outer_(null), code_(null), scope_info_(&empty_class_info), members_(0), map_members_(0){}
 	
 Frame::Frame(const Frame& v)
-:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), members_(v.members_->clone()), map_members_(0){
+:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), members_(members_), map_members_(0){
 
 	if(v.map_members_){
 		make_map_members();

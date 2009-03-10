@@ -3,6 +3,11 @@
 
 namespace xtal{
 
+void* so_malloc(size_t);
+void register_gc(RefCountingBase* p);
+void register_gc_observer(GCObserver* p);
+void unregister_gc_observer(GCObserver* p);
+
 class RefCountingBase : public Any{
 public:
 	
@@ -117,7 +122,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		if(p){ ((Base*)p)->value_ = (int_t)size; }
+		if(p){ ((Base*)p)->value_.ivalue = (int_t)size; }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }

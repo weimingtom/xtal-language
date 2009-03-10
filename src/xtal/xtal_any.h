@@ -3,138 +3,25 @@
 
 namespace xtal{
 
+enum{
+	SMALL_STRING_MAX = sizeof(int_t) / sizeof(char_t)
+};
+
+union AnyRawValue{
+	int_t ivalue;
+	uint_t uvalue;
+	byte_t fvalue_bytes[sizeof(float_t)];
+	float_t fvalue;
+	Base* pvalue;
+	RefCountingBase* rcpvalue;
+	char_t svalue[SMALL_STRING_MAX];
+};
+
 /**
 * @brief any
 *
 */
 class Any{
-public:
-
-	Any(){ type_ = TYPE_NULL; pvalue_ = 0; }
-	Any(int_t v){ set_i(v); }
-	Any(float_t v){ set_f(v); }
-	Any(Base* v){ set_p(v); }
-	Any(bool b){ set_b(b); }
-
-	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	Any(avoid<int>::type v){ set_i((int_t)v); }
-	Any(avoid<long>::type v){ set_i((int_t)v); }
-	Any(avoid<short>::type v){ set_i((int_t)v); }
-	Any(avoid<char>::type v){ set_i((int_t)v); }
-	Any(avoid<unsigned int>::type v){ set_i((int_t)v); }
-	Any(avoid<unsigned long>::type v){ set_i((int_t)v); }
-	Any(avoid<unsigned short>::type v){ set_i((int_t)v); }
-	Any(avoid<unsigned char>::type v){ set_i((int_t)v); }
-	Any(avoid<signed char>::type v){ set_i((int_t)v); }
-	Any(avoid<float>::type v){ set_f((float_t)v); }
-	Any(avoid<double>::type v){ set_f((float_t)v); }
-	Any(avoid<long double>::type v){ set_f((float_t)v); }
-	
-	Any(PrimitiveType type){
-		type_ = type;
-		value_ = 0;
-	}
-
-	struct noinit_t{};
-	Any(noinit_t){}
-	
-public:
-
-	void set_nullt(){
-		type_ = TYPE_NULL;
-		pvalue_ = 0;
-	}
-
-	void set_null(){
-		type_ = TYPE_NULL;
-		pvalue_ = 0;
-	}
-
-	void set_p(Base* p){
-		XTAL_ASSERT(p!=0);
-		type_ = TYPE_BASE;
-		pvalue_ = p;
-	}
-	
-	void set_p(const Base* p){
-		XTAL_ASSERT(p!=0);
-		type_ = TYPE_BASE;
-		pvalue_ = (Base*)p;
-	}
-
-	void set_i(int_t v){
-		type_ = TYPE_INT;
-		value_ = v;
-	}
-
-	void set_f(float_t v){
-		type_ = TYPE_FLOAT;
-		*(float_t*)fvalue_bytes = v;
-	}
-
-	void set_b(bool b){
-		type_ = TYPE_FALSE + (int)b;
-		value_ = 0;
-	}
-
-	void set_small_string(){
-		type_ = TYPE_SMALL_STRING;
-		value_ = 0;
-	}
-
-	void set_p(int_t type, const RefCountingBase* p){
-		XTAL_ASSERT(p!=0);
-		type_ = type;
-		rcpvalue_ = (RefCountingBase*)p;
-	}
-
-public:
-
-	friend int_t type(const Any& v);
-	friend int_t ivalue(const Any& v);
-	friend float_t fvalue(const Any& v);
-	friend Base* pvalue(const Any& v);
-	friend RefCountingBase* rcpvalue(const Any& v);
-	friend uint_t rawtype(const Any& v);
-	friend uint_t rawvalue(const Any& v);
-	friend bool raweq(const Any& a, const Any& b);
-	friend bool rawne(const Any& a, const Any& b);
-	friend bool rawlt(const Any& a, const Any& b);
-	friend void swap(Any& a, Any& b);
-	friend void set_null_force(Any& v);
-	friend void set_undefined_force(Any& v);
-	friend void copy_any(Any& v, const Any& u);
-
-	friend void inc_ref_count_force(const Any& v);
-	friend void dec_ref_count_force(const Any& v);
-
-public:
-
-	enum{
-		SMALL_STRING_MAX = sizeof(int_t) / sizeof(char_t)
-	};
-
-protected:
-
-	struct SmallString{
-		char_t buf[SMALL_STRING_MAX];
-
-		operator char_t*(){
-			return buf;
-		}
-	};
-
-	int_t type_;
-
-	union{
-		int_t value_;
-		byte_t fvalue_bytes[sizeof(float_t)];
-		float_t fvalue_;
-		Base* pvalue_;
-		RefCountingBase* rcpvalue_;
-		SmallString svalue_;
-	};
-
 public:
 
 	/**
@@ -229,8 +116,15 @@ public:
 	*/
 	void set_object_parent(const ClassPtr& parent) const;
 
+	/**
+	* @brief オブジェクトの名前を返す
+	*/
 	StringPtr object_name() const;
 
+	/**
+	* @brief オブジェクトの名前のリストを返す
+	* 一番最上位の親からの名前のリストを返す
+	*/
 	ArrayPtr object_name_list() const;
 
 	/**
@@ -239,6 +133,15 @@ public:
 	*/
 	AnyPtr p() const;
 
+	/**
+	* @brief 自身を返す。
+	*
+	*/
+	const AnyPtr& self() const{
+		return (const AnyPtr&)*this;
+	}
+
+public:
 
 	AnyPtr s_save() const;
 
@@ -247,14 +150,6 @@ public:
 	AnyPtr serial_save(const ClassPtr& cls) const;
 
 	void serial_load(const ClassPtr& cls, const AnyPtr& v) const;
-
-	/**
-	* @brief 自身を返す。
-	*
-	*/
-	const AnyPtr& self() const{
-		return (const AnyPtr&)*this;
-	}
 
 	void visit_members(Visitor& m) const;
 
@@ -368,49 +263,75 @@ private:
 	struct cmpitle_error{ cmpitle_error(const VMachinePtr& vm); };
 	void call(cmpitle_error) const;
 
+public:
+
+	Any(){ type_ = TYPE_NULL; value_.pvalue = 0; }
+	Any(int_t v){ type_ = TYPE_INT; value_.ivalue = v; }
+	Any(float_t v){ type_ = TYPE_FLOAT; value_.fvalue = v; }
+	Any(bool b){ type_ = TYPE_FALSE + (int)b; value_.ivalue = 0; }
+	Any(const Base* v){ type_ = TYPE_BASE; value_.pvalue = (Base*)v; }
+
+	Any(PrimitiveType type){ type_ = type; value_.ivalue = 0; }
+
+	struct noinit_t{};
+	Any(noinit_t){}
+
+protected:
+
+	int_t type_;
+	AnyRawValue value_;
+
+public:
+
+	friend uint_t rawtype(const Any& v);
+	friend AnyRawValue rawvalue(const Any& v);
+	friend void set_type_value(Any& v, int_t type, AnyRawValue value);
+	friend void inc_ref_count_force(const Any& v);
+	friend void dec_ref_count_force(const Any& v);
 };
+
+/////////////////////////////////////////////////////////
+
 
 inline uint_t rawtype(const Any& v){
 	return (uint_t)(v.type_);
 }
 
-inline uint_t rawvalue(const Any& v){
-	return (uint_t)(v.value_);
+inline int_t type(const Any& v){ 
+	return rawtype(v) & TYPE_MASK; 
 }
 
-inline int_t type(const Any& v){ 
-	return v.type_ & TYPE_MASK; 
+inline AnyRawValue rawvalue(const Any& v){
+	return v.value_;
+}
+
+inline void set_type_value(Any& v, int_t type, AnyRawValue value){
+	v.type_ = type;
+	v.value_ = value;
 }
 
 inline int_t ivalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_INT);
-	return v.value_; 
+	return rawvalue(v).ivalue; 
 }
 
 inline float_t fvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
-	return *(float_t*)v.fvalue_bytes; 
+	return rawvalue(v).fvalue; 
 }
 
 inline Base* pvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
-	return v.pvalue_; 
+	return rawvalue(v).pvalue; 
 }
 
 inline RefCountingBase* rcpvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)>TYPE_BASE || type(v)==TYPE_NULL); 
-	return v.rcpvalue_; 
+	return rawvalue(v).rcpvalue; 
 }
-
-inline RefCountingBase* rcpvalue2(const Any& v){ 
-	uint_t mask = ~(0-((rawtype(v)>>3)&1));
-	return (RefCountingBase*)(rawvalue(v) - ((((uint_t)(RefCountingBase*)(Base*)1)-1) & mask)); 
-}
-
 
 inline bool raweq(const Any& a, const Any& b){
-	return type(a)==type(b) && a.value_==b.value_;
-	//return !(((rawtype(a)^rawtype(b))&TYPE_MASK) | (rawvalue(a)^rawvalue(b)));
+	return type(a)==type(b) && rawvalue(a).ivalue==rawvalue(b).ivalue;
 }
 
 inline bool rawne(const Any& a, const Any& b){
@@ -422,21 +343,58 @@ inline bool rawlt(const Any& a, const Any& b){
 		return true;
 	if(type(b)<type(a))
 		return false;
-	return a.value_<b.value_;
+	return rawvalue(a).ivalue<(int_t)rawvalue(b).ivalue;
 }
 
 inline uint_t rawbitxor(const Any& a, const Any& b){
-	return ((rawtype(a)^rawtype(b))&TYPE_MASK) | (rawvalue(a)^rawvalue(b));
+	return ((rawtype(a)^rawtype(b))&TYPE_MASK) | (rawvalue(a).ivalue^rawvalue(b).ivalue);
 }
 
-inline void set_null_force(Any& v){
-	v.type_ = TYPE_NULL;
-	v.value_ = 0;
+inline void set_nullt(Any& a){
+	AnyRawValue value; value.ivalue = 0;
+	set_type_value(a, TYPE_NULL, value);
 }
 
-inline void set_undefined_force(Any& v){
-	v.type_ = TYPE_UNDEFINED;
-	v.value_ = 0;
+inline void set_null(Any& a){
+	AnyRawValue value; value.ivalue = 0;
+	set_type_value(a, TYPE_NULL, value);
+}
+
+inline void set_undefined(Any& a){
+	AnyRawValue value; value.ivalue = 0;
+	set_type_value(a, TYPE_UNDEFINED, value);
+}
+
+inline void set_pvalue(Any& a, const Base* p){
+	XTAL_ASSERT(p!=0);
+	AnyRawValue value; value.pvalue = (Base*)p;
+	set_type_value(a, TYPE_BASE, value);
+}
+
+inline void set_ivalue(Any& a, int_t v){
+	AnyRawValue value; value.ivalue = v;
+	set_type_value(a, TYPE_INT, value);
+}
+
+inline void set_fvalue(Any& a, float_t v){
+	AnyRawValue value; value.fvalue = v;
+	set_type_value(a, TYPE_FLOAT, value);
+}
+
+inline void set_bvalue(Any& a, bool b){
+	AnyRawValue value; value.ivalue = 0;
+	set_type_value(a, TYPE_FALSE + (int)b, value);
+}
+
+inline void set_svalue(Any& a){
+	AnyRawValue value; value.ivalue = 0;
+	set_type_value(a, TYPE_SMALL_STRING, value);
+}
+
+inline void set_pvalue(Any& a, int_t type, const RefCountingBase* p){
+	XTAL_ASSERT(p!=0);
+	AnyRawValue value; value.rcpvalue = (RefCountingBase*)p;
+	set_type_value(a, type, value);
 }
 
 inline void copy_any(Any& v, const Any& u){

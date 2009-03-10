@@ -60,7 +60,9 @@ public:
 	
 	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){
 		FILE* fp = std::fopen(path->c_str(), flags->c_str());
-		if(!fp){ XTAL_THROW(builtin()->member(XTAL_ID(IOError))->call(text("Xtal Runtime Error 1014")->call(Named(XTAL_ID(name), path))), return null); }
+		if(!fp){ 
+			return null; 
+		}
 		return xnew<CStdioFileStream>(fp);
 	}
 

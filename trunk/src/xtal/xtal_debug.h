@@ -150,17 +150,4 @@ public:
 	}
 };
 
-const SmartPtr<Debug>& debug();
-
-/**
-* @brief デバッグ機能を有効にする
-* デバッグ機能はデフォルトでは無効になっている。
-*/
-void enable_debug();
-
-/**
-* @brief デバッグ機能を無効にする
-*/
-void disable_debug();
-
 }

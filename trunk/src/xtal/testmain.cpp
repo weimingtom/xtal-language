@@ -6,18 +6,13 @@
 #include "xtal_lib/xtal_cstdiostream.h"
 #include "xtal_lib/xtal_winfilesystem.h"
 #include "xtal_lib/xtal_chcode.h"
+#include "xtal_lib/xtal_errormessage.h"
 
 #include "time.h"
 
 using namespace xtal;
 
 #ifndef XTAL_NO_PARSER
-
-struct AAA{
-	AAA(int a, int b, int c, int e){
-		a = a;
-	}
-};
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
@@ -26,17 +21,15 @@ int main2(int argc, char** argv){
 
 		//debug()->enable();
 		//debug()->set_throw_hook(fun(&debug_throw));
-
-	xnew<AAA>(0, 9, 8, 2);
 	
 	if(CodePtr code = Xsrc((
-		//check_implicit_lookup();
+		check_implicit_lookup();
 
 	))){
-		code->filelocal()->def("aaa", 101010);
-		code->call(10);
+		code->call();
 	}
-	
+
+
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 		return 1;
@@ -130,7 +123,7 @@ int main(int argc, char** argv){
 	CStdioStreamLib cstd_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	UTF8ChCodeLib sjis_chcode_lib;
+	SJISChCodeLib sjis_chcode_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
@@ -139,12 +132,11 @@ int main(int argc, char** argv){
 	setting.chcode_lib = &sjis_chcode_lib;
 
 	initialize(setting);
+	bind_error_message();
 
 	int ret = main2(argc, argv);
 
 	vmachine()->print_info();
-	debug_print();
-
 	uninitialize();
 
 	return ret;

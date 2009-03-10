@@ -108,7 +108,7 @@ public:
 	}
 
 	void upsize(size_t us){		
-		XTAL_ASSERT(current_+us>current_);
+		XTAL_ASSERT(current_+us>=current_);
 		current_+=us;
 		if(current_>=end_)
 			upsize_detail(us);
@@ -162,14 +162,18 @@ public:
 	}
 	
 	void push(const FastStack<T>& other, size_t sz){
+		upsize(sz);
+		downsize(sz);
 		for(size_t i = sz; i!=0; --i){
-			push(other[i-1]);
+			push_unchecked(other[i-1]);
 		} 
 	}
 	
 	void push(const FastStack<T>& other, size_t other_offset, size_t sz){
+		upsize(sz);
+		downsize(sz);
 		for(size_t i = sz; i!=0; --i){
-			push(other[other_offset+i-1]);
+			push_unchecked(other[other_offset+i-1]);
 		} 
 	}
 		

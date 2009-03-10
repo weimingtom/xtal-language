@@ -35,7 +35,7 @@ public:
 		return key->value;
 	}
 
-	const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key);
+	const ClassPtr& new_cpp_class(CppClassSymbolData* key);
 
 	bool exists_cpp_class(CppClassSymbolData* key){
 		return key->value<class_table_.size() && class_table_[key->value];
@@ -54,6 +54,8 @@ public:
 		class_table_[index] = cls.get();
 		class_table_[index]->inc_ref_count();
 	}
+
+	void print_alive_objects();
 
 private:
 

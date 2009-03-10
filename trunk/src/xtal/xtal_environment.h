@@ -3,6 +3,54 @@
 
 namespace xtal{
 
+class ChCodeLib{
+public:
+	virtual ~ChCodeLib(){}
+	virtual void initialize(){}
+	virtual int_t ch_len(char_t lead){ return 1; }
+	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
+	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
+	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
+};
+
+class ThreadLib{
+public:
+	virtual ~ThreadLib(){}
+	virtual void initialize(){}
+	virtual ThreadPtr new_thread(){ return ThreadPtr(); }
+	virtual MutexPtr new_mutex(){ return xnew<Mutex>(); }
+	virtual void yield(){}
+	virtual void sleep(float_t sec){}
+};
+
+class StreamLib{
+public:
+	virtual ~StreamLib(){}
+	virtual void initialize(){}
+
+	virtual StreamPtr new_stdin_stream(){ return StreamPtr(); }
+	virtual StreamPtr new_stdout_stream(){ return StreamPtr(); }
+	virtual StreamPtr new_stderr_stream(){ return StreamPtr(); }
+};
+
+class FilesystemLib{
+public:
+	virtual ~FilesystemLib(){}
+	virtual void initialize(){}
+	
+	virtual AnyPtr entries(const StringPtr& path){ return AnyPtr(); }
+	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){ return StreamPtr(); } 
+	virtual bool is_directory(const StringPtr& path){ return false; }
+};
+
+class AllocatorLib{
+public:
+	virtual ~AllocatorLib(){}
+	virtual void initialize(){}
+	virtual void* malloc(std::size_t size){ return std::malloc(size); }
+	virtual void free(void* p, std::size_t size){ std::free(p); }
+};
+
 struct Setting{
 	ThreadLib* thread_lib;
 	StreamLib* stream_lib;
@@ -12,8 +60,6 @@ struct Setting{
 
 	Setting();
 };
-
-class Environment;
 
 /**
 * @brief Xtal実行環境を初期化する。
@@ -34,22 +80,20 @@ Environment* environment();
 * @brief カレントのXtal実行環境を設定する。
 */
 void set_environment(Environment* e);
-	
-void debug_print();
 
-void print_alive_objects();
+/////////////////////////////////////////////////////
 
 /**
 * @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 */
-void* user_malloc(size_t size);
+void* xmalloc(size_t size);
 
 /**
 * @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
-void user_free(void* p);
+void xfree(void* p, size_t size);
 
 /**
 * @brief 小さいオブジェクト用にメモリをアロケートする。
@@ -60,6 +104,50 @@ void* so_malloc(size_t size);
 * @brief 小さいオブジェクト用のメモリを解放する。
 */
 void so_free(void* p, size_t size);
+
+/**
+* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
+*/
+struct UserMallocGuard{
+	UserMallocGuard():p(0){}
+	UserMallocGuard(uint_t size):p(xmalloc(size)),size(size){}
+	~UserMallocGuard(){ xfree(p, size); }
+	
+	void malloc(size_t sz){ xfree(p, size); p = xmalloc(sz); size = sz; }
+
+	void* get(){ return p; }
+
+	void* release(){ void* ret = p; p = 0; size = 0; return ret; }
+private:
+	void* p;
+	uint_t size;
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(UserMallocGuard);
+};
+
+/**
+* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
+*/
+struct SOMallocGuard{
+	SOMallocGuard():p(0){}
+	SOMallocGuard(uint_t size):p(so_malloc(size)), sz(size){}
+	~SOMallocGuard(){ so_free(p, sz); }
+	
+	void malloc(size_t size){ so_free(p, sz); p = so_malloc(size); sz = size; }
+
+	void* get(){ return p; }
+
+	void* release(){ void* ret = p; p = 0; return ret; }
+
+	uint_t size(){ return sz; }
+private:
+	void* p;
+	uint_t sz;
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(SOMallocGuard);
+};
+
+/////////////////////////////////////////////////////
 
 /**
 * @brief ガーベジコレクションを実行する
@@ -92,46 +180,53 @@ void disable_gc();
 */
 void enable_gc();
 
-void register_gc(RefCountingBase* p);
+/////////////////////////////////////////////////////
 
-void register_gc_observer(GCObserver* p);
-
-void unregister_gc_observer(GCObserver* p);
-
+/**
+* @brief keyに対応するC++のクラスのクラスオブジェクトを返す。
+*/
 const ClassPtr& cpp_class(CppClassSymbolData* key);
 
-const ClassPtr& new_cpp_class(const StringPtr& name, CppClassSymbolData* key);
+/**
+* @brief keyに対応するC++のクラスのクラスオブジェクトを生成し、返す。
+*
+* 既に生成されている場合、生成済みのクラスを返す。
+*/
+const ClassPtr& new_cpp_class(CppClassSymbolData* key);
 
+/**
+* @brief 既にkeyに対応するC++のクラスのクラスオブジェクトが生成されているかを返す。
+*/
 bool exists_cpp_class(CppClassSymbolData* key);
 
-const ClassPtr& cpp_class(CppClassSymbolData* key);
-
+/**
+* @brief keyに対応するC++のクラスのクラスオブジェクトを設定する。。
+*/
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
 /**
-* @brief T形をxtalで扱えるクラスを生成し、登録する。
+* @brief T形をxtalで扱えるクラスを生成し、返す。
 * 既に生成されている場合、生成済みのクラスを返す。
+*/
+template<class T>
+inline const ClassPtr& new_cpp_class(){
+	return new_cpp_class(&CppClassSymbol<T>::value);
+}
+
+/**
+* @brief T形をxtalで扱えるクラスを生成し、返す。
+* 既に生成されている場合、生成済みのクラスを返す。
+* @param name オブジェクトの名前
 */
 template<class T>
 inline const ClassPtr& new_cpp_class(const StringPtr& name){
-	return new_cpp_class(name, &CppClassSymbol<T>::value);
+	const ClassPtr& ret = new_cpp_class(&CppClassSymbol<T>::value);
+	ret->set_object_name(name);
+	return ret;
 }
 
 /**
-* @brief T形をxtalで扱えるクラスを生成し、登録する。
-* 既に生成されている場合、生成済みのクラスを返す。
-*/
-template<class T>
-const SmartPtr<T>& new_cpp_singleton(){
-	if(exists_cpp_class<T>()){
-		return unchecked_ptr_cast<T>(cpp_class<T>());
-	}
-	set_cpp_class<T>(xnew<T>());
-	return unchecked_ptr_cast<T>(cpp_class<T>());
-}
-
-/**
-* @brief 既にnew_cpp_class<T>()で生成させれているか調べる。
+* @brief 既にnew_cpp_class<T>()で生成させれているかを返す。
 */
 template<class T>
 inline bool exists_cpp_class(){
@@ -155,6 +250,21 @@ inline void set_cpp_class(const ClassPtr& cls){
 }
 
 /**
+* @brief T形をxtalで扱えるクラスを生成し、登録する。
+* 既に生成されている場合、生成済みのクラスを返す。
+*/
+template<class T>
+const SmartPtr<T>& new_cpp_singleton(){
+	if(exists_cpp_class<T>()){
+		return unchecked_ptr_cast<T>(cpp_class<T>());
+	}
+	set_cpp_class<T>(xnew<T>());
+	return unchecked_ptr_cast<T>(cpp_class<T>());
+}
+
+/////////////////////////////////////////////////////
+
+/**
 * @brief クラスのメンバを取り出す。
 */
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
@@ -174,6 +284,8 @@ void invalidate_cache_member();
 */
 void invalidate_cache_is();
 
+/////////////////////////////////////////////////////
+
 /**
 * @brief VMachineインスタンスをレンタルする。
 */
@@ -183,6 +295,8 @@ VMachinePtr vmachine_take_over();
 * @brief VMachineインスタンスを返却する。
 */
 void vmachine_take_back(const VMachinePtr& vm);
+
+/////////////////////////////////////////////////////
 
 /**
 * @brief Iteratorクラスを返す
@@ -200,31 +314,80 @@ const ClassPtr& Iterable();
 const ClassPtr& builtin();
 
 /**
-* @brief libクラスを返す
+* @brief libオブジェクトを返す
 */
 const LibPtr& lib();
 
+/**
+* @brief stdinストリームオブジェクトを返す
+*/
 const StreamPtr& stdin_stream();
 
+/**
+* @brief stdoutストリームオブジェクトを返す
+*/
 const StreamPtr& stdout_stream();
 
+/**
+* @brief stderrストリームオブジェクトを返す
+*/
 const StreamPtr& stderr_stream();
 
+/**
+* @brief RuntimeErrorクラスを返す
+*/
 const ClassPtr& RuntimeError();
 
+/**
+* @brief CompileErrorクラスを返す
+*/
 const ClassPtr& CompileError();
 
+/**
+* @brief UnsupportedErrorクラスを返す
+*/
 const ClassPtr& UnsupportedError();
 
+/**
+* @brief RuntimeErrorクラスを返す
+*/
 const ClassPtr& ArgumentError();
 
-const IDPtr& intern_literal(const char_t* str);
+/**
+* @brief filesystemシングルトンオブジェクトを返す
+*/
+const SmartPtr<Filesystem>& filesystem();
 
+/**
+* @brief debugシングルトンオブジェクトを返す
+*/
+const SmartPtr<Debug>& debug();
+
+/**
+* @brief デバッグ機能を有効にする
+* デバッグ機能はデフォルトでは無効になっている。
+*/
+void enable_debug();
+
+/**
+* @brief デバッグ機能を無効にする
+*/
+void disable_debug();
+
+/**
+* @brief 文字列リテラルをインターン済みオブジェクトに変換する
+*/
+const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata);
+
+/**
+* @brief 文字列をインターン済みオブジェクトに変換する
+*/
 const IDPtr& intern(const char_t* str);
 
+/**
+* @brief 文字列をインターン済みオブジェクトに変換する
+*/
 const IDPtr& intern(const char_t* str, uint_t data_size);
-
-const IDPtr& intern(const char_t* str, uint_t data_size, uint_t hash);
 
 AnyPtr interned_strings();
 
@@ -241,6 +404,24 @@ MutexPtr new_mutex();
 void lock_mutex(const MutexPtr& p);
 
 /**
+* @brief 環境をロックする
+*/
+void xlock();
+
+/**
+* @brief 環境をアンロックする
+*/
+void xunlock();
+
+struct XUnlock{
+	XUnlock(int){ xunlock(); }
+	~XUnlock(){ xlock(); }
+	operator bool() const{ return true; }
+private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(XUnlock);
+};
+
+/**
 * @brief VMachinePtrオブジェクトを返す
 *
 * グローバルなVMachinePtrオブジェクトを返す。
@@ -248,6 +429,9 @@ void lock_mutex(const MutexPtr& p);
 */
 const VMachinePtr& vmachine();
 
+/**
+* @brief テキストマップを返す
+*/
 const MapPtr& text_map();
 
 /**

@@ -465,43 +465,43 @@ void Any::destroy(){
 		XTAL_CASE(TYPE_STRING){ 
 			uint_t size = StringData::calc_size(((StringData*)rcpvalue(*this))->data_size());
 			unchecked_ptr_cast<StringData>(ap(*this))->~StringData(); 
-			value_ = size; 
+			value_.uvalue = size; 
 		}
 
 		XTAL_CASE(TYPE_ARRAY){ 
 			unchecked_ptr_cast<Array>(ap(*this))->~Array(); 
-			value_ = sizeof(Array); 
+			value_.uvalue = sizeof(Array); 
 		}
 
 		XTAL_CASE(TYPE_MULTI_VALUE){ 
 			unchecked_ptr_cast<MultiValue>(ap(*this))->~MultiValue(); 
-			value_ = sizeof(MultiValue); 
+			value_.uvalue = sizeof(MultiValue); 
 		}
 
 		XTAL_CASE(TYPE_TREE_NODE){ 
 			using namespace xpeg;
 			unchecked_ptr_cast<TreeNode>(ap(*this))->~TreeNode(); 
-			value_ = sizeof(TreeNode); 
+			value_.uvalue = sizeof(TreeNode); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_FUN){ 
 			unchecked_ptr_cast<NativeFun>(ap(*this))->~NativeFun(); 
-			value_ = sizeof(NativeFun); 
+			value_.uvalue = sizeof(NativeFun); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
 			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->~NativeFunBindedThis(); 
-			value_ = sizeof(NativeFunBindedThis); 
+			value_.uvalue = sizeof(NativeFunBindedThis); 
 		}
 	}
 }
 
 void Any::object_free(){
 	if(type(*this)==TYPE_BASE){
-		so_free(static_cast<Base*>(this), value_);
+		so_free(static_cast<Base*>(this), value_.uvalue);
 	}
 	else if(type(*this)>TYPE_BASE){
-		so_free(static_cast<RefCountingBase*>(this), value_);
+		so_free(static_cast<RefCountingBase*>(this), value_.uvalue);
 	}
 }
 

@@ -262,7 +262,7 @@ void Format::rawcall(const VMachinePtr& vm){
 					if(str->data_size()>=256){
 						if(str->data_size()>malloc_size){
 							if(malloc_size!=0){
-								user_free(pcbuf);
+								xfree(pcbuf, malloc_size);
 							}
 							
 							malloc_size = str->data_size() + fs.max_buffer_size() + 1;

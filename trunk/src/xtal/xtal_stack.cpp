@@ -11,7 +11,7 @@ void* stack_dummy_allocate(){
 }
 
 void* stack_allocate(size_t size){
-	return user_malloc(size);
+	return xmalloc(size);
 }
 
 void stack_deallocate(void* p, size_t size){
@@ -19,7 +19,7 @@ void stack_deallocate(void* p, size_t size){
 		return;
 	}
 	XTAL_ASSERT(!((char*)stack_dummy_buf-64 <= (char*)p && (char*)p <= (char*)stack_dummy_buf+64));
-	user_free(p/*, size*/);
+	xfree(p, size);
 }
 
 

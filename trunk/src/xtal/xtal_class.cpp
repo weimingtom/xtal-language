@@ -64,7 +64,8 @@ InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 ///////////////////////////////////////
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
-	:Frame(outer, code, info), mixins_(xnew<Array>()){
+	:Frame(outer, code, info){
+	set_object_name(empty_string);
 	object_force_ = 0;
 	is_native_ = false;
 	is_final_ = false;
@@ -72,7 +73,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 }
 
 Class::Class(const StringPtr& name)
-	:Frame(null, null, 0), mixins_(xnew<Array>()){
+	:Frame(null, null, 0){
 	set_object_name(name);
 	object_force_ = 0;
 	is_native_ = false;
@@ -80,19 +81,25 @@ Class::Class(const StringPtr& name)
 	make_map_members();
 }
 
-Class::Class(cpp_class_t, const StringPtr& name)
-	:Frame(null, null, 0), mixins_(xnew<Array>()){
-	set_object_name(name);
+Class::Class(cpp_class_t)
+	:Frame(null, null, 0){
+	set_object_name(empty_string);
 	object_force_ = 0;
 	is_native_ = true;
 	is_final_ = false;
 	make_map_members();
 }
 
+Class::~Class(){
+	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
+		inherited_classes_[i]->dec_ref_count();
+	}
+}
+
 void Class::overwrite(const ClassPtr& p){
 	if(!is_native_){
 		operator=(*p);
-		mixins_ = p->mixins_;
+		inherited_classes_ = p->inherited_classes_;
 	}
 }
 
@@ -102,7 +109,8 @@ void Class::inherit(const ClassPtr& cls){
 
 	XTAL_ASSERT(cls);
 	
-	mixins_->push_back(cls);
+	inherited_classes_.push_back(cls.get());
+	cls.get()->inc_ref_count();
 	invalidate_cache_is();
 }
 
@@ -125,7 +133,8 @@ void Class::inherit_first(const ClassPtr& cls){
 
 	XTAL_ASSERT(cls);
 
-	mixins_->push_back(cls);
+	inherited_classes_.push_back(cls.get());
+	cls.get()->inc_ref_count();
 	invalidate_cache_is();
 }
 
@@ -138,12 +147,12 @@ void Class::inherit_strict(const ClassPtr& cls){
 }
 
 AnyPtr Class::inherited_classes(){
-	return mixins_->each();
+	return xnew<ClassInheritedClassesIter>(from_this(this));
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
-	for(int_t i = mixins_->size(); i>0; --i){
-		unchecked_ptr_cast<Class>(mixins_->at(i-1))->init_instance(self, vm);
+	for(int_t i = inherited_classes_.size(); i>0; --i){
+		inherited_classes_[i-1]->init_instance(self, vm);
 	}
 	
 	if(info()->instance_variable_size){
@@ -151,10 +160,10 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		pvalue(self)->instance_variables()->init_variables(info());
 
 		// 先頭のメソッドはインスタンス変数初期化関数
-		if(members_->at(0)){
+		if(members_.at(0)){
 			vm->setup_call(0);
 			vm->set_arg_this(self);
-			members_->at(0)->rawcall(vm);
+			members_.at(0)->rawcall(vm);
 			vm->cleanup_call();
 		}
 	}
@@ -200,7 +209,7 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
-		return members_->at(it->second.num);
+		return members_.at(it->second.num);
 	}
 	return null;
 }
@@ -209,9 +218,9 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value val = {members_->size(), accessibility};
+		Value val = {members_.size(), accessibility};
 		map_members_->insert(key, val);
-		members_->push_back(value);
+		members_.push_back(value);
 		value->set_object_parent(from_this(this));
 		invalidate_cache_member();
 	}
@@ -224,14 +233,14 @@ const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondar
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
-		return members_->at(it->second.num);
+		return members_.at(it->second.num);
 	}
 	return undefined;
 }
 
 const AnyPtr& Class::bases_member(const IDPtr& name){
-	for(int_t i = mixins_->size(); i>0; --i){
-		if(const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i-1))->member(name)){
+	for(int_t i = inherited_classes_.size(); i>0; --i){
+		if(const AnyPtr& ret = inherited_classes_[i-1]->member(name)){
 			return ret;
 		}
 	}
@@ -246,13 +255,13 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		// メンバが見つかった
 		
 		accessibility = it->second.flags & 0x3;
-		return members_->at(it->second.num);
+		return members_.at(it->second.num);
 	}
 	
 	// 継承しているクラスを順次検索
 	if(inherited_too){
-		for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = unchecked_ptr_cast<Class>(mixins_->at(i))->do_member(primary_key, secondary_key, true, accessibility, nocache);
+		for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
+			const AnyPtr& ret = inherited_classes_[i]->do_member(primary_key, secondary_key, true, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -285,8 +294,8 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
-		for(int_t i=0, sz=klass->mixins_->size(); i<sz; ++i){
-			const AnyPtr& ret = do_member(primary_key, klass->mixins_->at(i), inherited_too, accessibility, nocache);
+		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
+			const AnyPtr& ret = do_member(primary_key, from_this(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -316,7 +325,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 		return;
 	}
 	else{
-		members_->set_at(it->second.num, value);
+		members_.set_at(it->second.num, value);
 		//value.set_object_name(name, object_name_force(), this);
 	}
 
@@ -324,7 +333,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
-	members_->set_at(i, value);
+	members_.set_at(i, value);
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
@@ -338,7 +347,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 		HaveParent::set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_->at(it->second.num)->set_object_parent(from_this(this));
+				members_.at(it->second.num)->set_object_parent(from_this(this));
 			}
 		}
 	}
@@ -347,7 +356,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 MultiValuePtr Class::child_object_name(const AnyPtr& a){
 	if(map_members_){
 		for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-			if(raweq(members_->at(it->second.num), a)){
+			if(raweq(members_.at(it->second.num), a)){
 				return mv(it->first.primary_key, it->first.secondary_key);
 			}
 		}
@@ -379,8 +388,8 @@ bool Class::is_inherited(const AnyPtr& v){
 		return true;
 	}
 
-	for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-		if(mixins_->at(i)->is_inherited(v)){
+	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
+		if(inherited_classes_[i]->is_inherited(v)){
 			return true;
 		}
 	}
@@ -393,8 +402,8 @@ bool Class::is_inherited_cpp_class(){
 		return true;
 	}
 
-	for(int_t i=0, sz=mixins_->size(); i<sz; ++i){
-		if(unchecked_ptr_cast<Class>(mixins_->at(i))->is_inherited_cpp_class()){
+	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
+		if(inherited_classes_[i]->is_inherited_cpp_class()){
 			return true;
 		}
 	}
@@ -476,8 +485,8 @@ AnyPtr Class::ancestors(){
 	return ret;
 }
 
-CppClass::CppClass(const StringPtr& name)
-	:Class(cpp_class_t(), name){
+CppClass::CppClass()
+	:Class(cpp_class_t()){
 }
 
 void CppClass::rawcall(const VMachinePtr& vm){

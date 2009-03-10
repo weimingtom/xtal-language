@@ -77,13 +77,4 @@ public:
 	virtual void sleep(float_t sec){
 		usleep((useconds_t)(sec*1000*1000));
 	}
-
-	virtual void current_thread_id(Thread::ID& id){
-		id.set(pthread_self());
-	}
-
-	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){
-		return pthread_equal(a.get<pthread_t>(), b.get<pthread_t>())!=0;
-	}
-
 };

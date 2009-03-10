@@ -41,14 +41,13 @@
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
 #ifdef XTAL_NO_THREAD
-#	define XTAL_GLOBAL_INTERPRETER_LOCK
-#	define XTAL_GLOBAL_INTERPRETER_UNLOCK 
 #	define XTAL_UNLOCK 
 #else
-#	define XTAL_GLOBAL_INTERPRETER_LOCK
-#	define XTAL_GLOBAL_INTERPRETER_UNLOCK
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)if(xunlock)
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
 #endif
+
+#define XTAL_GLOBAL_INTERPRETER_LOCK
+#define XTAL_GLOBAL_INTERPRETER_UNLOCK
 
 /**
 * @brief 例外を設定する
@@ -84,8 +83,6 @@
 #	define XTAL_STRING(x) x
 #endif
 
-#define XTAL_ID(text) (::xtal::intern_literal(XTAL_STRING(#text)))
-
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
 #	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("I64") : XTAL_STRING(""))
 #else
@@ -93,24 +90,26 @@
 #endif
 
 #ifdef XTAL_USE_WCHAR
-
 #	if defined(_MSC_VER) && _MSC_VER>=1400
 #		define XTAL_SPRINTF(buffer, data_size, format, value) swprintf_s(buffer, data_size, format, value)
 #	else
 #		define XTAL_SPRINTF(buffer, data_size, format, value) std::swprintf(buffer, format, value)
 #	endif
-
 #else
-
 #	if defined(_MSC_VER) && _MSC_VER>=1400
 #		define XTAL_SPRINTF(buffer, data_size, format, value) sprintf_s(buffer, data_size, format, value)
 #	else
 #		define XTAL_SPRINTF(buffer, data_size, format, value) std::sprintf(buffer, format, value)
 #	endif
-
 #endif
 
+#if defined(_MSC_VER)
+#	define XTAL_TLS_PTR(x) __declspec(thread) x*
+#elif defined(__GNUC__)
+#	define XTAL_TLS_PTR(x) __thread x*
+#endif
 
+#define XTAL_ID(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<class x>::value)
 
 namespace xtal{
 

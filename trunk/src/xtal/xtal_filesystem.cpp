@@ -32,4 +32,12 @@ bool Filesystem::is_directory(const StringPtr& path){
 	return filesystem_lib_->is_directory(path);
 }
 
+StreamPtr open(const StringPtr& path, const StringPtr& flags){
+	StreamPtr ret = filesystem()->open(path, flags);
+	if(!ret){
+		XTAL_SET_EXCEPT(builtin()->member(XTAL_ID(IOError))->call(text("Xtal Runtime Error 1014")->call(Named(XTAL_ID(name), path))));
+	}
+	return ret;
+}
+
 }

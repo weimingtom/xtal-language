@@ -32,7 +32,7 @@ public:
 	enum{ TYPE = TYPE_TREE_NODE };
 
 	TreeNode(const AnyPtr& tag=null, int_t lineno=0){
-		set_p(TYPE_TREE_NODE, this);
+		set_pvalue(*this, TYPE_TREE_NODE, this);
 
 		tag_ = tag;
 		lineno_ = lineno;

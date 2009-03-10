@@ -83,15 +83,6 @@ public:
 	virtual void sleep(float_t sec){
 		Sleep((DWORD)(1000*sec));
 	}
-
-	virtual void current_thread_id(Thread::ID& id){
-		id.set(GetCurrentThreadId());
-	}
-
-	virtual bool equal_thread_id(const Thread::ID& a, const Thread::ID& b){
-		return a.get<uint_t>() == b.get<uint_t>();
-	}
-
 };
 
 }

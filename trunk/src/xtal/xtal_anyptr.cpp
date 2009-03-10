@@ -13,13 +13,13 @@ SmartPtr<Any>::SmartPtr(const avoid<char>::type* str){
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const Null&){
 	dec_ref_count();
-	set_null_force(*this);
+	set_null(*this);
 	return *this;
 }
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const Undefined&){
 	dec_ref_count();
-	set_undefined_force(*this);
+	set_undefined(*this);
 	return *this;
 }
 
@@ -29,7 +29,7 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 
 SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)
 	:Any(noinit_t()){
-	set_p(type, p);
+	set_pvalue(*this, type, p);
 	register_gc(p);
 }
 

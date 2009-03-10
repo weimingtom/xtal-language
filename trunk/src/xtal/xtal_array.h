@@ -325,7 +325,7 @@ public:
 
 	MultiValue(const AnyPtr& head, const MultiValuePtr& tail = null)
 		:head_(head), tail_(tail){
-		set_p(TYPE, this);
+		set_pvalue(*this, TYPE, this);
 	}
 
 	const AnyPtr& head(){

@@ -45,21 +45,18 @@ enum{
 	id_op_MAX
 };};
 
-/**
+/*
 * @breif •¶š—ñ‚ğŠÇ—‚·‚éƒNƒ‰ƒX
 */
 class StringSpace{
 public:
 
 	StringSpace()
-		:table_(table_t::no_use_memory_t()), 
-		table2_(table2_t::no_use_memory_t()){
-		guard_ = 0;
+		:table_(table_t::no_use_memory_t()){
 	}
 
 	void initialize(){
 		table_.expand(4);
-		table2_.expand(4);
 
 		const char_t* ids[] = {
 			XTAL_STRING("op_call"),
@@ -101,13 +98,13 @@ public:
 		};
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
-			id_op_list_[i] = insert_literal(ids[i]);
+			id_op_list_[i] = insert(ids[i]);
 		}
 	}
 
 	void uninitialize(){
 		table_.destroy();
-		table2_.destroy();
+		table2_.release();
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = null;
@@ -120,14 +117,20 @@ public:
 		}		
 	}
 
-	const IDPtr& insert_literal(const char_t* str){
-		IDPtr& ret = table2_[str];
+	const IDPtr& insert_literal(const char_t* str, IdentifierData* iddata){
+		if(iddata->value>=table2_.size()){
+			while(iddata->value>=(int_t)table2_.size()){
+				table2_.push_back(0);
+			}
+		}
+
+		const IDPtr* ret = table2_[iddata->value];
 		if(!ret){
 			uint_t hashcode, size;
 			string_data_size_and_hashcode(str, size, hashcode);
-			ret = insert(str, size, hashcode);
+			ret = &insert(str, size, hashcode);
 		}
-		return ret;
+		return *ret;
 	}
 
 	const IDPtr& insert(const char_t* str, uint_t size){
@@ -141,15 +144,15 @@ public:
 	}
 
 	const IDPtr& insert(const char_t* str, uint_t size, uint_t hashcode){
-		Guard guard(guard_);
-
 		Key key = {str, size};
 		table_t::iterator it = table_.find(key, hashcode);
 		if(it!=table_.end()){
 			return it->second;
 		}
 
-		it = table_.insert(key, xnew<ID>(str, size, hashcode), hashcode).first;
+		StringPtr sp = xnew<String>(str, size, String::make_t());
+		
+		it = table_.insert(key, unchecked_ptr_cast<ID>(sp), hashcode).first;
 		it->first.str = it->second->data();
 		return it->second;
 	}
@@ -203,22 +206,12 @@ private:
 		}
 	};
 
-	typedef Hashtable<const void*, IDPtr, Fun2> table2_t; 
+	typedef PODArrayList<IDPtr*> table2_t; 
 	table2_t table2_;
 
 	IDPtr id_op_list_[IDOp::id_op_MAX];
 
 protected:
-
-	int_t guard_;
-
-	struct Guard{
-		int_t& count;
-		Guard(int_t& c):count(c){ count++; }
-		~Guard(){ count--; }
-	private:
-		void operator=(const Guard&);
-	};
 
 	friend class InternedStringIter;
 };

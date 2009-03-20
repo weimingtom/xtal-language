@@ -786,7 +786,7 @@ public:
 				*fun_frames_[i] = *vm->fun_frames_[i];
 			}
 			else{
-				void* p = so_malloc(sizeof(FunFrame));
+				void* p = xmalloc(sizeof(FunFrame));
 				fun_frames_[i] = new(p) FunFrame(*vm->fun_frames_[i]);
 			}
 		}

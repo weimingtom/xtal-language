@@ -80,6 +80,13 @@ struct SmartPtrCtor3{
 	static int_t call(type){ return 0; };
 };
 
+template<class T>
+struct SmartPtrCtor4{
+	struct type{};
+	static int_t call(type){ return 0; };
+};
+
+
 template <int N>
 struct SmartPtrSelector{};
 
@@ -95,7 +102,7 @@ public:
 	template<class T, class Deleter>
 	SmartPtr(T* p, const Deleter& deleter){
 		UserTypeHolderSub<T, Deleter>* holder = new UserTypeHolderSub<T, Deleter>(p, deleter);
-		set_p_with_class(holder, new_cpp_class<T>());
+		set_p_with_class(holder, cpp_class<T>());
 	}
 
 	SmartPtr(const SmartPtr<Any>& p)
@@ -155,7 +162,13 @@ public:
 	*
 	*/
 	SmartPtr(int_t v):Any(v){}
-	
+
+	/**
+	* @brief 整数値から構築するコンストラクタ。
+	*
+	*/
+	SmartPtr(uint_t v):Any(v){}
+		
 	/**
 	* @brief 浮動小数点数値から構築するコンストラクタ。
 	*
@@ -179,6 +192,12 @@ public:
 	*
 	*/
 	SmartPtr(const avoid<char>::type* str);
+
+	/**
+	* @brief 文字列から構築するコンストラクタ。
+	*
+	*/
+	SmartPtr(const StringLiteral& str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
 	SmartPtr(avoid<int>::type v):Any(noinit_t()){ set_ivalue(*this, v); }

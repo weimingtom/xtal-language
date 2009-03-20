@@ -249,7 +249,7 @@ void Format::rawcall(const VMachinePtr& vm){
 			size_t malloc_size = 0;
 			if(fs.max_buffer_size()>=256){
 				malloc_size = fs.max_buffer_size() + 1;
-				pcbuf = (char_t*)so_malloc(malloc_size);
+				pcbuf = (char_t*)xmalloc(malloc_size);
 			}
 			else{
 				pcbuf = cbuf;
@@ -266,7 +266,7 @@ void Format::rawcall(const VMachinePtr& vm){
 							}
 							
 							malloc_size = str->data_size() + fs.max_buffer_size() + 1;
-							pcbuf = (char_t*)so_malloc(malloc_size);
+							pcbuf = (char_t*)xmalloc(malloc_size);
 						}
 					}
 					fs.make_format_specifier(spec, 's');
@@ -292,7 +292,7 @@ void Format::rawcall(const VMachinePtr& vm){
 			}
 			
 			if(malloc_size!=0){
-				so_free(pcbuf, malloc_size);
+				xfree(pcbuf, malloc_size);
 			}
 		}
 	}
@@ -324,7 +324,7 @@ void Text::rawcall(const VMachinePtr& vm){
 		}
 	}
 	
-	vm->return_result(key_);
+	vm->return_result(key_->cat(vm->make_arguments()->to_s()));
 }
 
 void Text::to_s(const VMachinePtr& vm){

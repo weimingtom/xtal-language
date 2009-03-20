@@ -24,21 +24,8 @@ public:
 
 	void unregister_gc_observer(GCObserver* p);
 
-	int_t ObjectSpace::register_cpp_class(CppClassSymbolData* key){
-		// ‰“o˜^‚ÌC++‚ÌƒNƒ‰ƒX‚©
-		if(key->value>=class_table_.size()){
-			while(key->value>=(int_t)class_table_.size()){
-				class_table_.push_back(0);
-			}
-		}
-
-		return key->value;
-	}
-
-	const ClassPtr& new_cpp_class(CppClassSymbolData* key);
-
 	bool exists_cpp_class(CppClassSymbolData* key){
-		return key->value<class_table_.size() && class_table_[key->value];
+		return class_table_[key->value]!=0;
 	}
 
 	const ClassPtr& cpp_class(CppClassSymbolData* key){
@@ -47,7 +34,7 @@ public:
 	}
 
 	void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
-		int_t index = register_cpp_class(key);
+		int_t index = key->value;
 		if(class_table_[index]){
 			class_table_[index]->dec_ref_count();
 		}

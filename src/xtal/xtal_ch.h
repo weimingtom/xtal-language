@@ -53,9 +53,19 @@ public:
 		return pos_==len_;
 	}
 
-	void add(char_t ch);
+	void add(char_t ch){
+		buf_[pos_++] = ch;
+		if(pos_==1){
+			len_ = ch_len(ch);
+		}
+		else if(pos_ == -len_){
+			len_ = ch_len2(buf_);
+		}
+	}
 
-	const IDPtr& to_s();
+	const IDPtr& to_s(){
+		return temp_ = xnew<ID>(&buf_[0], pos_);
+	}
 
 	int_t pos(){
 		return pos_;

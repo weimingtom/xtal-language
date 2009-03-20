@@ -14,7 +14,7 @@ Base::Base(const Base& b){
 	set_pvalue(*this, this);
 	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
-		instance_variables_ = (InstanceVariables*)so_malloc(sizeof(InstanceVariables));
+		instance_variables_ = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
 
 		class_ = b.class_;
@@ -45,7 +45,7 @@ Base& Base::operator =(const Base& b){
 	else{
 		if(instance_variables_!=&empty_instance_variables){
 			instance_variables_->~InstanceVariables();
-			so_free(instance_variables_, sizeof(InstanceVariables));
+			xfree(instance_variables_, sizeof(InstanceVariables));
 
 			if(get_class()){
 				class_->dec_ref_count();
@@ -62,7 +62,7 @@ Base& Base::operator =(const Base& b){
 Base::~Base(){
 	if(instance_variables_!=&empty_instance_variables){
 		instance_variables_->~InstanceVariables();
-		so_free(instance_variables_, sizeof(InstanceVariables));
+		xfree(instance_variables_, sizeof(InstanceVariables));
 
 		if(get_class()){
 			class_->dec_ref_count();
@@ -111,7 +111,7 @@ void Base::finalize(){
 
 void Base::make_instance_variables(){
 	if(instance_variables_==&empty_instance_variables){
-		InstanceVariables* temp = (InstanceVariables*)so_malloc(sizeof(InstanceVariables));
+		InstanceVariables* temp = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));
 		new(temp) InstanceVariables();
 		instance_variables_ = temp;
 

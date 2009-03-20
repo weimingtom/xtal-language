@@ -70,7 +70,7 @@ public:
 
 	static VariablesInfo vi;
 };
-	
+
 class Class : public Frame{
 public:
 
@@ -316,16 +316,40 @@ public:
 	}
 	
 	bool is_native(){
-		return is_native_!=0;
+		return (flags_&FLAG_NATIVE)!=0;
 	}
 
 	bool is_final(){
-		return is_final_!=0;
+		return (flags_&FLAG_FINAL)!=0;
 	}
 
 	void set_final(){
-		is_final_ = true;
+		flags_ |= FLAG_FINAL;
 	}
+
+	bool is_singleton(){
+		return (flags_&FLAG_SINGLETON)!=0;
+	}
+
+	void prebind();
+
+	void set_prebinder(void (*binder)(const ClassPtr& cls)){
+		prebinder_ = binder;
+	}
+
+	void bind();
+
+	void set_binder(void (*binder)(const ClassPtr& cls)){
+		binder_ = binder;
+	}
+
+	void def_ctor(const AnyPtr& ctor_fun);
+
+	const AnyPtr& ctor();
+
+	void def_serial_ctor(const AnyPtr& ctor_fun);
+
+	const AnyPtr& serial_ctor();
 
 protected:
 
@@ -336,10 +360,21 @@ protected:
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 	StringPtr name_;
+
+	AnyPtr ctor_;
+	AnyPtr serial_ctor_;
+
 	PODArrayList<Class*> inherited_classes_;
+	void (*prebinder_)(const ClassPtr& cls);
+	void (*binder_)(const ClassPtr& cls);
 	u16 object_force_;
-	u8 is_native_;
-	u8 is_final_;
+	u16 flags_;
+
+	enum{
+		FLAG_NATIVE = 1<<0,
+		FLAG_FINAL = 1<<1,
+		FLAG_SINGLETON = 1<<2
+	};
 
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);
@@ -378,19 +413,6 @@ private:
 	}
 };
 
-
-class CppClass : public Class{
-public:
-		
-	CppClass();
-
-public:
-
-	virtual void rawcall(const VMachinePtr& vm);
-
-	virtual void s_new(const VMachinePtr& vm);
-};
-
 class Singleton : public Class{
 public:
 
@@ -413,7 +435,7 @@ public:
 class CppSingleton : public Class{
 public:
 		
-	CppSingleton(const StringPtr& name = empty_string);
+	CppSingleton();
 
 public:
 

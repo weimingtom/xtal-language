@@ -145,7 +145,7 @@ void String::init_string(const char_t* str, uint_t size){
 			*this = ID(str, size);
 		}
 		else{
-			StringData* sd = (StringData*)so_malloc(StringData::calc_size(size));
+			StringData* sd = (StringData*)xmalloc(StringData::calc_size(size));
 			new(sd) StringData(size);
 			string_copy(sd->buf(), str, size);
 			set_pvalue(*this, TYPE_STRING, sd);
@@ -160,7 +160,7 @@ String::String(const char_t* str, uint_t size, make_t){
 		string_copy(value_.svalue, str, size);
 	}
 	else{
-		StringData* sd = (StringData*)so_malloc(StringData::calc_size(size));
+		StringData* sd = (StringData*)xmalloc(StringData::calc_size(size));
 		new(sd) StringData(size);
 		string_copy(sd->buf(), str, size);
 		set_pvalue(*this, TYPE_STRING, sd);
@@ -182,7 +182,7 @@ String::String(const char_t* str)
 String::String(const avoid<char>::type* str)
 :Any(noinit_t()){
 	uint_t n = std::strlen((char*)str);
-	UserMallocGuard umg(n*sizeof(char_t));
+	XMallocGuard umg(n*sizeof(char_t));
 	char_t* buf = (char_t*)umg.get();
 	for(uint_t i=0; i<n; ++i){
 		buf[i] = str[i];
@@ -193,6 +193,11 @@ String::String(const avoid<char>::type* str)
 String::String(const char_t* str, uint_t size)
 :Any(noinit_t()){
 	init_string(str, size);
+}
+
+String::String(const StringLiteral& str)
+:Any(noinit_t()){
+	init_string(str, str.size());
 }
 
 String::String(const char_t* begin, const char_t* last)
@@ -218,7 +223,7 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(&value_.svalue[size1], str2, size2);
 	}
 	else{
-		StringData* sd = (StringData*)so_malloc(StringData::calc_size(sz));
+		StringData* sd = (StringData*)xmalloc(StringData::calc_size(sz));
 		sd = new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
@@ -451,13 +456,16 @@ ID::ID(const char_t* str)
 ID::ID(const avoid<char>::type* str)	
 	:String(noinit_t()){	
 	uint_t n = std::strlen((char*)str);
-	UserMallocGuard umg(n*sizeof(char_t));
+	XMallocGuard umg(n*sizeof(char_t));
 	char_t* buf = (char_t*)umg.get();
 	for(uint_t i=0; i<n; ++i){
 		buf[i] = str[i];
 	}
 	*this = ID(buf, n);
 }
+
+ID::ID(const StringLiteral& str)
+	:String(*xtal::intern(str, str.size())){}
 
 ID::ID(const char_t* str, uint_t size)
 	:String(*xtal::intern(str, size)){}
@@ -512,6 +520,10 @@ AnyPtr SmartPtrCtor2<String>::call(type v){
 	return xnew<String>(v);
 }
 
+AnyPtr SmartPtrCtor3<String>::call(type v){
+	return xnew<String>(v);
+}
+
 AnyPtr SmartPtrCtor1<ID>::call(type v){
 	return intern(v);
 }
@@ -525,5 +537,8 @@ AnyPtr SmartPtrCtor3<ID>::call(type v){
 	return xnew<ID>(v);
 }
 
+AnyPtr SmartPtrCtor4<ID>::call(type v){
+	return xnew<ID>(v);
+}
 
 }

@@ -82,6 +82,13 @@ public:
 		downsize(1);
 	}
 
+	void erase(size_t i, size_t n){
+		for(size_t j = i; j != n-1; --j){
+			(*this)[j] = (*this)[j-n];
+		}
+		downsize(n);
+	}
+
 	void insert(size_t i, const T& v){
 		upsize(1);
 		for(size_t j = 0; j != i; ++j){

@@ -46,7 +46,7 @@ void VMachine::push_call(const inst_t* pc, int_t need_result_count,
 
 	FunFrame* fp = fun_frames_.push();
 	if(!fp){
-		void* p = so_malloc(sizeof(FunFrame));
+		void* p = xmalloc(sizeof(FunFrame));
 		fp = new(p) FunFrame();
 		fun_frames_.top() = fp;
 	}
@@ -78,7 +78,7 @@ void VMachine::push_call(const inst_t* pc, const InstSend& inst){
 	if((inst.flags&CALL_FLAG_TAIL)==0){
 		fp = fun_frames_.push();
 		if(!fp){
-			void* p = so_malloc(sizeof(FunFrame));
+			void* p = xmalloc(sizeof(FunFrame));
 			fp = new(p) FunFrame();
 			fun_frames_.top() = fp;
 		}
@@ -144,7 +144,7 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 	if((inst.flags&CALL_FLAG_TAIL)==0){
 		fp = fun_frames_.push();
 		if(!fp){
-			void* p = so_malloc(sizeof(FunFrame));
+			void* p = xmalloc(sizeof(FunFrame));
 			fp = new(p) FunFrame();
 			fun_frames_.top() = fp;
 		}
@@ -1437,9 +1437,13 @@ XTAL_VM_SWITCH{
 			
 			int_t n = info->mixins;
 			for(int_t i = 0; i<n; ++i){
-				const ClassPtr& cls = ptr_cast<Class>(pop());
-				XTAL_VM_CHECK_EXCEPT;
-				cp->inherit_first(cls);
+				AnyPtr popped = pop();
+				if(const ClassPtr& cls = ptr_cast<Class>(popped)){
+					cp->inherit_first(cls);
+				}
+				else{
+					XTAL_VM_EXCEPT(RuntimeError()->call());
+				}
 			}
 
 			push(null);

@@ -16,7 +16,7 @@ Array::Array(uint_t size){
 	size_ = size;
 
 	if(capa_!=0){
-		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
+		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
 		std::memset(values_, 0, sizeof(AnyPtr)*size_);
 	}
 	else{
@@ -31,7 +31,7 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 
 	capa_ = size;
 	size_ = size;
-	values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
+	values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
 
 	for(int_t i=0; i<size; ++i){
 		copy_any(values_[i], first[i]);
@@ -45,7 +45,7 @@ Array::Array(const Array& v)
 
 	size_ = capa_ = ((Array&)v).size();
 	if(capa_!=0){
-		values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*capa_);
+		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
 		
 		for(uint_t i=0; i<size_; ++i){
 			copy_any(values_[i], v.values_[i]);
@@ -69,7 +69,7 @@ Array::~Array(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
-	so_free(values_, sizeof(AnyPtr)*capa_);
+	xfree(values_, sizeof(AnyPtr)*capa_);
 }
 
 void Array::clear(){
@@ -96,17 +96,17 @@ void Array::upsize(uint_t sz){
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
 			uint_t newcapa = size_+sz+capa_+3;
-			AnyPtr* newp = (AnyPtr*)so_malloc(sizeof(AnyPtr)*newcapa);
+			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
 			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
-			so_free(values_, sizeof(AnyPtr)*capa_);
+			xfree(values_, sizeof(AnyPtr)*capa_);
 			values_ = newp;
 			size_ += sz;
 			capa_ = newcapa;
 		}
 		else{
 			uint_t newcapa = 3+sz; // todo overflow check
-			values_ = (AnyPtr*)so_malloc(sizeof(AnyPtr)*newcapa);
+			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
 			size_ = sz;
 			capa_ = newcapa;

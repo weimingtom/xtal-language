@@ -225,6 +225,13 @@ struct CastHelper<int_t>{
 };
 
 template<>
+struct CastHelper<uint_t>{
+	static bool can_cast(const AnyPtr& a);
+	static uint_t unchecked_cast(const AnyPtr& a);
+	static uint_t get_null(){ return 0; }
+};
+
+template<>
 struct CastHelper<float_t>{
 	static bool can_cast(const AnyPtr& a);
 	static float_t unchecked_cast(const AnyPtr& a);
@@ -245,15 +252,13 @@ struct CastHelper<const Type&>{\
 	static bool can_cast(const AnyPtr& a){ return CastHelper<Type>::can_cast(a); }\
 	static Type unchecked_cast(const AnyPtr& a){ return CastHelper<Type>::unchecked_cast(a); }\
 	static Type get_null(){ return 0; }\
-}
+};\
+template<> struct CppClassSymbol<Type> : public CppClassSymbol<XType>{}
 
 XTAL_CAST_HELPER(int_t, Int);
+XTAL_CAST_HELPER(uint_t, Int);
 XTAL_CAST_HELPER(float_t, Float);
 XTAL_CAST_HELPER(bool, Bool);
-
-template<> struct CppClassSymbol<int_t> : public CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<float_t> : public CppClassSymbol<Float>{};
-template<> struct CppClassSymbol<bool> : public CppClassSymbol<Bool>{};
 
 
 #undef XTAL_CAST_HELPER

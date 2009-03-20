@@ -498,10 +498,10 @@ void Any::destroy(){
 
 void Any::object_free(){
 	if(type(*this)==TYPE_BASE){
-		so_free(static_cast<Base*>(this), value_.uvalue);
+		xfree(static_cast<Base*>(this), value_.uvalue);
 	}
 	else if(type(*this)>TYPE_BASE){
-		so_free(static_cast<RefCountingBase*>(this), value_.uvalue);
+		xfree(static_cast<RefCountingBase*>(this), value_.uvalue);
 	}
 }
 

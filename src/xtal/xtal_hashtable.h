@@ -239,13 +239,13 @@ OrderedHashtable<Key, Val, Fun>& OrderedHashtable<Key, Val, Fun>::operator=(cons
 template<class Key, class Val, class Fun>
 OrderedHashtable<Key, Val, Fun>::~OrderedHashtable(){
 	clear();
-	so_free(begin_, sizeof(Node*)*size_);
+	xfree(begin_, sizeof(Node*)*size_);
 }
 
 template<class Key, class Val, class Fun>
 void OrderedHashtable<Key, Val, Fun>::destroy(){
 	clear();
-	so_free(begin_, sizeof(Node*)*size_);
+	xfree(begin_, sizeof(Node*)*size_);
 	size_ = 0;
 	begin_ = 0;
 	used_size_ = 0;
@@ -276,7 +276,7 @@ Val& OrderedHashtable<Key, Val, Fun>::operator [](const Key& key){
 		p = &(*p)->next;
 	}
 
-	*p = (Node*)so_malloc(sizeof(Node));
+	*p = (Node*)xmalloc(sizeof(Node));
 	Node* ret = *p;
 	new(ret) Node(key, Val());
 
@@ -309,7 +309,7 @@ std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHasht
 		p = &(*p)->next;
 	}
 
-	*p = (Node*)so_malloc(sizeof(Node));
+	*p = (Node*)xmalloc(sizeof(Node));
 	Node* ret = *p;
 	new(ret) Node(key, value);
 
@@ -358,7 +358,7 @@ void OrderedHashtable<Key, Val, Fun>::erase(const Key& key){
 			if(p->ordered_prev) p->ordered_prev->ordered_next = p->ordered_next;
 
 			p->~Node();
-			so_free(p, sizeof(Node));
+			xfree(p, sizeof(Node));
 
 			used_size_--;
 			break;
@@ -373,7 +373,7 @@ void OrderedHashtable<Key, Val, Fun>::clear(){
 	for(Node* p = ordered_head_; p;){
 		Node* next = p->ordered_next;
 		p->~Node();
-		so_free(p, sizeof(Node));
+		xfree(p, sizeof(Node));
 		p = next;
 	}
 
@@ -392,7 +392,7 @@ void OrderedHashtable<Key, Val, Fun>::expand(int_t addsize){
 	uint_t oldsize = size_;
 
 	size_ = size_*2 + addsize;
-	begin_ = (Node**)so_malloc(sizeof(Node*)*size_);
+	begin_ = (Node**)xmalloc(sizeof(Node*)*size_);
 	
 	for(uint_t i = 0; i<size_; ++i){
 		begin_[i] = 0;
@@ -410,7 +410,7 @@ void OrderedHashtable<Key, Val, Fun>::expand(int_t addsize){
 		*temp = p;
 	}
 
-	so_free(oldbegin, sizeof(Node*)*oldsize);
+	xfree(oldbegin, sizeof(Node*)*oldsize);
 }
 
 template<class Key, class Val, class Fun>
@@ -679,13 +679,13 @@ Hashtable<Key, Val, Fun>& Hashtable<Key, Val, Fun>::operator=(const Hashtable<Ke
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::~Hashtable(){
 	clear();
-	so_free(begin_, sizeof(Node*)*size_);
+	xfree(begin_, sizeof(Node*)*size_);
 }
 
 template<class Key, class Val, class Fun>
 void Hashtable<Key, Val, Fun>::destroy(){
 	clear();
-	so_free(begin_, sizeof(Node*)*size_);
+	xfree(begin_, sizeof(Node*)*size_);
 	size_ = 0;
 	begin_ = 0;
 	used_size_ = 0;
@@ -715,7 +715,7 @@ Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
 		p = &(*p)->next;
 	}
 
-	*p = (Node*)so_malloc(sizeof(Node));
+	*p = (Node*)xmalloc(sizeof(Node));
 	Node* ret = *p;
 	new(ret) Node(key, Val());
 
@@ -738,7 +738,7 @@ std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val,
 		p = &(*p)->next;
 	}
 
-	*p = (Node*)so_malloc(sizeof(Node));
+	*p = (Node*)xmalloc(sizeof(Node));
 	Node* ret = *p;
 	new(ret) Node(key, value);
 
@@ -766,7 +766,7 @@ void Hashtable<Key, Val, Fun>::erase(const Key& key){
 			}
 
 			p->~Node();
-			so_free(p, sizeof(Node));
+			xfree(p, sizeof(Node));
 
 			used_size_--;
 			break;
@@ -782,7 +782,7 @@ void Hashtable<Key, Val, Fun>::clear(){
 		Node* node = it.to_node();
 		++it;
 		node->~Node();
-		so_free(node, sizeof(Node));
+		xfree(node, sizeof(Node));
 	}
 
 	for(uint_t i = 0; i<size_; ++i){
@@ -795,7 +795,7 @@ void Hashtable<Key, Val, Fun>::clear(){
 template<class Key, class Val, class Fun>
 void Hashtable<Key, Val, Fun>::expand(int_t addsize){
 	uint_t size2 = size_*2 + addsize;
-	Node** begin2 = (Node**)so_malloc(sizeof(Node*)*size2);
+	Node** begin2 = (Node**)xmalloc(sizeof(Node*)*size2);
 	
 	for(uint_t i=0; i<size2; ++i){
 		begin2[i] = 0;
@@ -808,7 +808,7 @@ void Hashtable<Key, Val, Fun>::expand(int_t addsize){
 		node->next = *p;
 		*p = node;
 	}
-	so_free(begin_, sizeof(Node*)*size_);
+	xfree(begin_, sizeof(Node*)*size_);
 	begin_ = begin2;
 	size_ = size2;
 }

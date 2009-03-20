@@ -267,9 +267,23 @@ public:
 
 	Any(){ type_ = TYPE_NULL; value_.pvalue = 0; }
 	Any(int_t v){ type_ = TYPE_INT; value_.ivalue = v; }
+	Any(uint_t v){ type_ = TYPE_INT; value_.ivalue = v; }
 	Any(float_t v){ type_ = TYPE_FLOAT; value_.fvalue = v; }
 	Any(bool b){ type_ = TYPE_FALSE + (int)b; value_.ivalue = 0; }
 	Any(const Base* v){ type_ = TYPE_BASE; value_.pvalue = (Base*)v; }
+
+	Any(avoid<int>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<long>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<short>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<char>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<unsigned int>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<unsigned long>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<unsigned short>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<unsigned char>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<signed char>::type v){ type_ = TYPE_INT; value_.ivalue = (int_t)v; }
+	Any(avoid<float>::type v){ type_ = TYPE_FLOAT; value_.fvalue = (float_t)v; }
+	Any(avoid<double>::type v){ type_ = TYPE_FLOAT; value_.fvalue = (float_t)v; }
+	Any(avoid<long double>::type v){ type_ = TYPE_FLOAT; value_.fvalue = (float_t)v; }
 
 	Any(PrimitiveType type){ type_ = type; value_.ivalue = 0; }
 

@@ -6,34 +6,36 @@
 
 namespace xtal{
 
-class WinFindNextFileIter : public Base{
+class WinFindNextFile{
 	HANDLE h_;
-	WIN32_FIND_DATAA fd_;
+	WIN32_FIND_DATAA fd_, fd2_;
 public:
 
-	WinFindNextFileIter(const StringPtr& path){
-		StringPtr npath = path->cat("*");
-		h_ = FindFirstFileA(npath->c_str(), &fd_);
+	WinFindNextFile(const char_t* path){
+		char_t path2[MAX_PATH];
+		XTAL_SPRINTF(path2, MAX_PATH, "%s/*", path);
+		h_ = FindFirstFileA(path2, &fd_);
 	}
 	
-	virtual ~WinFindNextFileIter(){
-		block_break();
+	~WinFindNextFile(){
+		stop();
 	}
 	
-	void block_next(const VMachinePtr& vm){
+	const char_t* next(){
 		if(h_==INVALID_HANDLE_VALUE){
-			vm->return_result(null, null);
-			return;
+			return 0;
 		}
-		
-		vm->return_result(from_this(this), fd_.cFileName);
-	
+
+		fd2_ = fd_;
+			
 		if(!FindNextFileA(h_, &fd_)){
-			block_break();
+			stop();
 		}
+
+		return fd2_.cFileName;
 	}
 	
-	void block_break(){
+	void stop(){
 		if(h_!=INVALID_HANDLE_VALUE){
 			FindClose(h_);
 			h_ = INVALID_HANDLE_VALUE;
@@ -43,36 +45,74 @@ public:
 
 class WinFilesystemLib : public FilesystemLib{
 public:
-	virtual void initialize(){
-		CStdioFileStream::initialize_class();
-
-		{
-			ClassPtr p = new_cpp_class<WinFindNextFileIter>(XTAL_ID(WinFindNextFileIter));
-			p->inherit(Iterator());
-			p->def_method(XTAL_ID(block_next), &WinFindNextFileIter::block_next);
-			p->def_method(XTAL_ID(block_break), &WinFindNextFileIter::block_break);
-		}
-	}
-	
-	virtual AnyPtr entries(const StringPtr& path){
-		return xnew<WinFindNextFileIter>(path);
-	}
-	
-	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){
-#ifdef XTAL_USE_WCHAR
-		FILE* fp = _wfopen(path->c_str(), flags->c_str());
-#else
-		FILE* fp = std::fopen(path->c_str(), flags->c_str());
-#endif
-		if(!fp){ 
-			return null; 
-		}
-		return xnew<CStdioFileStream>(fp);
-	}
 
 	virtual bool is_directory(const StringPtr& path){
 		return false;
 	}
+
+	virtual void* new_file_stream(const char_t* path, const char_t* flags){
+		return fopen(path, flags);
+	}
+	
+	virtual void delete_file_stream(void* file_stream_object){
+		fclose((FILE*)file_stream_object);
+	}
+	
+	virtual uint_t read_file_stream(void* file_stream_object, void* dest, uint_t size){
+		return fread(dest, 1, size, (FILE*)file_stream_object);
+	}
+	
+	virtual uint_t write_file_stream(void* file_stream_object, const void* src, uint_t size){
+		return fwrite(src, 1, size, (FILE*)file_stream_object);
+	}
+	
+	virtual void seek_file_stream(void* file_stream_object, uint_t offset){
+		fseek((FILE*)file_stream_object, offset, SEEK_SET);
+	}
+	
+	virtual uint_t tell_file_stream(void* file_stream_object){
+		return ftell((FILE*)file_stream_object);
+	}
+	
+	virtual bool end_file_stream(void* file_stream_object){
+		int ch = getc((FILE*)file_stream_object);
+		if(feof((FILE*)file_stream_object)){
+			return true;
+		}
+		ungetc(ch, (FILE*)file_stream_object);
+		return false;
+	}
+	
+	virtual uint_t size_file_stream(void* file_stream_object){
+		uint_t pos = ftell((FILE*)file_stream_object);
+		fseek((FILE*)file_stream_object, 0, SEEK_END);
+		uint_t len = ftell((FILE*)file_stream_object);
+		fseek((FILE*)file_stream_object, pos, SEEK_SET);
+		return len;
+	}
+
+	virtual void flush_file_stream(void* file_stream_object){
+		fflush((FILE*)file_stream_object);
+	}
+
+	virtual void* new_entries(const char_t* path){
+		void* p = xmalloc(sizeof(WinFindNextFile));
+		return new(p) WinFindNextFile(path);
+	}
+
+	virtual void delete_entries(void* entries_object){
+		((WinFindNextFile*)entries_object)->~WinFindNextFile();
+		xfree(entries_object, sizeof(WinFindNextFile));
+	}
+
+	virtual const char_t* next_entries(void* entries_object){
+		return ((WinFindNextFile*)entries_object)->next();
+	}
+
+	virtual void break_entries(void* entries_object){
+		((WinFindNextFile*)entries_object)->stop();
+	}
+
 };
 
 }

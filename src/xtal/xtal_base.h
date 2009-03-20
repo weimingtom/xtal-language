@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-void* so_malloc(size_t);
+void* xmalloc(size_t);
 void register_gc(RefCountingBase* p);
 void register_gc_observer(GCObserver* p);
 void unregister_gc_observer(GCObserver* p);
@@ -14,9 +14,7 @@ public:
 	RefCountingBase()
 		:Any(noinit_t()){}
 
-#ifdef XTAL_DEBUG
-	virtual void dummy(){}
-#endif
+	XTAL_DEBUG_ONLY(virtual void dummy(){})
 
 public:
 
@@ -39,7 +37,7 @@ public:
 public:
 
 	static void* operator new(size_t size){ 
-		return so_malloc(size);
+		return xmalloc(size);
 	}
 
 	static void operator delete(void* p){
@@ -118,7 +116,7 @@ public:
 public:
 	
 	static void* operator new(size_t size){ 
-		return so_malloc(size);
+		return xmalloc(size);
 	}
 
 	static void operator delete(void* p, size_t size){

@@ -14,6 +14,9 @@ using namespace xtal;
 
 #ifndef XTAL_NO_PARSER
 
+class A{};
+class AA: public A{};
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -24,9 +27,11 @@ int main2(int argc, char** argv){
 	
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-
+		
+		a: Array(size: 10);
+		a.p;
 	))){
-		code->call();
+
 	}
 
 
@@ -106,7 +111,7 @@ int main2(int argc, char** argv){
 		return 1;
 	}
 
-	lib()->member("test")->send("run_dir", "../test/");
+	lib()->member("test")->send("run_dir", "../test");
 	
 	//*/
 #endif
@@ -120,16 +125,16 @@ int main2(int argc, char** argv){
 }
 
 int main(int argc, char** argv){
-	CStdioStreamLib cstd_stream_lib;
+	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
+	SJISChCodeLib sjis_ch_code_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &cstd_stream_lib;
+	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
-	setting.chcode_lib = &sjis_chcode_lib;
+	setting.ch_code_lib = &sjis_ch_code_lib;
 
 	initialize(setting);
 	bind_error_message();
@@ -145,16 +150,16 @@ int main(int argc, char** argv){
 #else
 
 int main(int argc, char** argv){
-	CStdioStreamLib cstd_stream_lib;
+	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
+	SJISChCodeLib sjis_ch_code_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &cstd_stream_lib;
+	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
-	setting.chcode_lib = &sjis_chcode_lib;
+	setting.ch_code_lib = &sjis_ch_code_lib;
 
 	Environment core;
 	core.initialize(setting);

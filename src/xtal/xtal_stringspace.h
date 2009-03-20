@@ -100,6 +100,11 @@ public:
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = insert(ids[i]);
 		}
+
+		static IdentifierData iddata;
+		while(iddata.value>=table2_.size()){
+			table2_.push_back(0);
+		}
 	}
 
 	void uninitialize(){
@@ -118,12 +123,6 @@ public:
 	}
 
 	const IDPtr& insert_literal(const char_t* str, IdentifierData* iddata){
-		if(iddata->value>=table2_.size()){
-			while(iddata->value>=(int_t)table2_.size()){
-				table2_.push_back(0);
-			}
-		}
-
 		const IDPtr* ret = table2_[iddata->value];
 		if(!ret){
 			uint_t hashcode, size;

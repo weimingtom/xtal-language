@@ -43,7 +43,7 @@ public:
 
 class PosixFilesystemLib : public FilesystemLib{
 public:
-	virtual void initialize(){
+	virtual void bind(){
 		CStdioFileStream::initialize_class();
 
 		{

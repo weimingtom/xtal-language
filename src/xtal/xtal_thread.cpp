@@ -6,7 +6,11 @@
 namespace xtal{
 
 Thread::Thread(){
-	inc_ref_count();
+	impl_ = thread_lib()->new_thread();
+}
+
+Thread::~Thread(){
+	thread_lib()->delete_thread(impl_);
 }
 
 void Thread::visit_members(Visitor& m){
@@ -14,15 +18,56 @@ void Thread::visit_members(Visitor& m){
 	m & callback_;
 }
 
+void Thread::start(const AnyPtr& callback){
+	callback_ = callback;
+	env_ = environment();
+	thread_lib()->start_thread(impl_, &trampoline, this);
+}
+
+void Thread::join(){
+	XTAL_UNLOCK{
+		thread_lib()->join_thread(impl_);
+	}
+}
+
+void Thread::trampoline(void* data){
+	((Thread*)data)->begin_thread();
+}
+
 void Thread::begin_thread(){
-	thread_space_->thread_entry(from_this(this));
-	callback_ = null;	
-	dec_ref_count();
+	register_thread(env_);
+
+	VMachinePtr vm = vmachine();
+	vm->setup_call(0);
+	callback_->rawcall(vm);
+	vm->cleanup_call();
+	callback_ = null;
+	vm->reset();
+	vm = null;
+
+	unregister_thread(env_);
 }
 
 Mutex::Mutex(){
-
+	impl_ = thread_lib()->new_mutex();
 }
 
+Mutex::~Mutex(){
+	thread_lib()->delete_mutex(impl_);
+}
+
+void Mutex::lock(){
+	XTAL_UNLOCK{
+		thread_lib()->lock_mutex(impl_);
+	}
+}
+
+void Mutex::unlock(){
+	thread_lib()->unlock_mutex(impl_);
+}
+
+void Mutex::rawlock(){
+	thread_lib()->lock_mutex(impl_);
+}
 
 }

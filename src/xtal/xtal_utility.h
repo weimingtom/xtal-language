@@ -31,6 +31,12 @@
 #	endif
 #endif
 
+#ifdef XTAL_DEBUG
+#	define XTAL_DEBUG_ONLY(x) x
+#else
+#	define XTAL_DEBUG_ONLY(x) 
+#endif
+
 #define XTAL_DISALLOW_COPY_AND_ASSIGN(ClassName) ClassName(const ClassName&); void operator=(const ClassName&)
 
 #define XTAL_DEFAULT default:
@@ -78,9 +84,9 @@
 #endif
 
 #ifdef XTAL_USE_WCHAR
-#	define XTAL_STRING(x) L##x
+#	define XTAL_STRING(x) StringLiteral(L##x, sizeof(x)-1)
 #else 
-#	define XTAL_STRING(x) x
+#	define XTAL_STRING(x) StringLiteral(x, sizeof(x)-1)
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
@@ -103,10 +109,17 @@
 #	endif
 #endif
 
-#if defined(_MSC_VER)
-#	define XTAL_TLS_PTR(x) __declspec(thread) x*
-#elif defined(__GNUC__)
-#	define XTAL_TLS_PTR(x) __thread x*
+#ifdef XTAL_NO_MULTI_THREAD
+#	define XTAL_TLS_PTR(x) x*
+#else
+#	if defined(_MSC_VER)
+#		define XTAL_TLS_PTR(x) __declspec(thread) x*
+#	elif defined(__GNUC__)
+#		define XTAL_TLS_PTR(x) x*
+//#		define XTAL_TLS_PTR(x) __thread x*
+#	else 
+#		error
+#	endif
 #endif
 
 #define XTAL_ID(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<class x>::value)
@@ -349,5 +362,485 @@ struct SelectType{
 		>::type
 	>::type float_t;
 };
+
+
+enum{
+	VERSION1 = 0,
+	VERSION2 = 9,
+	VERSION3 = 9,
+	VERSION4 = 1
+};
+
+/// 1-byte uint
+typedef SelectType<1>::uint_t u8;
+
+/// 2-byte uint
+typedef SelectType<2>::uint_t u16;
+	
+/// 4-byte uint
+typedef SelectType<4>::uint_t u32;
+
+/// 8-byte uint
+typedef SelectType<8>::uint_t u64;
+
+/// 1-byte int
+typedef SelectType<1>::int_t i8;
+
+/// 2-byte int
+typedef SelectType<2>::int_t i16;
+	
+/// 4-byte int
+typedef SelectType<4>::int_t i32;
+
+/// 8-byte int
+typedef SelectType<8>::int_t i64;
+
+/// 4-byte float
+typedef SelectType<4>::float_t f32;
+
+/// 8-byte float
+typedef SelectType<8>::float_t f64;
+
+
+#ifdef XTAL_ENFORCE_64_BIT
+
+/// int
+typedef SelectType<8>::int_t int_t;
+	
+/// float
+typedef SelectType<8>::float_t float_t;
+	
+/// uint
+typedef SelectType<8>::uint_t uint_t;
+
+#else
+
+/// int
+typedef SelectType<sizeof(void*)>::int_t int_t;
+	
+/// float
+typedef SelectType<sizeof(void*)>::float_t float_t;
+	
+/// uint
+typedef SelectType<sizeof(void*)>::uint_t uint_t;
+
+#endif
+
+/// byte
+typedef SelectType<1>::uint_t byte_t;
+
+//typedef std::size_t size_t;
+//typedef std::ptrdiff_t ptrdiff_t;
+
+template<class T>
+struct Alloc;
+
+#ifdef XTAL_USE_WCHAR
+typedef wchar_t char_t;
+#else
+typedef char char_t;
+#endif
+
+/// unsigned char_t
+typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
+
+template<class T>
+struct TypeValue{ 
+	T val; 
+	TypeValue(T val):val(val){} 
+	operator T() const{ return val; }
+};
+
+template<class T>
+struct avoid{ typedef T type; };
+
+template<>
+struct avoid<int_t>{ typedef TypeValue<int_t> type; };
+
+template<>
+struct avoid<uint_t>{ typedef TypeValue<uint_t> type; };
+
+template<>
+struct avoid<float_t>{ typedef TypeValue<float_t> type; };
+
+template<>
+struct avoid<char_t>{ typedef TypeValue<char_t> type; };
+
+template<class T>
+struct IsFloat{ enum{ value = 0 }; };
+
+template<>
+struct IsFloat<float_t>{ enum{ value = 1 }; };
+
+class StringLiteral{
+public:
+
+	StringLiteral(const char_t* str, uint_t size)
+		:str_(str), size_(size){}
+
+	operator const char_t*() const{
+		return str_;
+	}
+
+	uint_t size() const{
+		return size_;
+	}
+
+private:
+	const char_t* str_;
+	uint_t size_;
+};
+
+
+/**
+* @brief プリミティブな型の種類
+*/
+enum PrimitiveType{
+	TYPE_NULL = 0,
+	TYPE_UNDEFINED = 1,
+
+	TYPE_FALSE = 2,
+	// ここから上は、ifなどで偽と評価される
+
+	// ここから下は、値によらず真と評価される
+	TYPE_TRUE = 3,
+	
+	TYPE_INT = 4,
+	TYPE_FLOAT = 5,
+	
+	TYPE_SMALL_STRING = 6,
+	// ここから上はimmutableな値型である
+
+	// ここから下は参照型である
+	TYPE_BASE = 7,
+
+	TYPE_STRING = 8,
+	
+	TYPE_ARRAY = 9,
+	TYPE_MULTI_VALUE = 10,
+	TYPE_TREE_NODE = 11,
+
+	TYPE_NATIVE_FUN = 12,
+	TYPE_NATIVE_FUN_BINDED_THIS = 13,
+
+	/*
+	TYPE_METHOD,
+	TYPE_FUN,
+	TYPE_LAMBDA,
+	TYPE_FIBER,
+	*/
+
+	TYPE_SHIFT = 4,
+	TYPE_MASK = (1<<TYPE_SHIFT)-1
+};
+
+
+/**
+* @brief ブロックの種類
+*/
+enum BlockKind{
+	KIND_BLOCK,
+	KIND_CLASS,
+	KIND_SINGLETON,
+
+	KIND_FUN,
+	KIND_LAMBDA,
+	KIND_METHOD,
+	KIND_FIBER
+};
+
+/**
+* @brief 文字列の種類
+*/
+enum StringKind{
+	KIND_STRING,
+	KIND_TEXT,
+	KIND_FORMAT
+};
+
+/**
+* @brief 可触性の種類
+*/
+enum AccessibilityKind{
+	KIND_PUBLIC = 0,
+	KIND_PROTECTED = 1<<0,
+	KIND_PRIVATE = 1<<1
+};
+
+/**
+* @brief ブレークポイントの種類
+*/
+enum BreakPointKind{
+	BREAKPOINT,
+	BREAKPOINT_CALL,
+	BREAKPOINT_RETURN,
+	BREAKPOINT_THROW,
+	BREAKPOINT_ASSERT
+};
+
+/**
+* @brief 範囲区間の種類
+*/
+enum RangeKind{
+	RANGE_CLOSED = (0<<1) | (0<<0),
+	RANGE_LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
+	RANGE_LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
+	RANGE_OPEN = (1<<1) | (1<<0)
+};
+
+
+
+template<class T>
+class SmartPtr;
+
+class Any;
+template<> class SmartPtr<Any>;
+typedef SmartPtr<Any> AnyPtr;
+
+class Environment;
+
+class Array;
+class Map;
+class Set;
+class Stream;
+class MemoryStream;
+class StringStream;
+class InteractiveStream;
+class Fun;
+class Method;
+class Fiber;
+class InstanceVariableGetter;
+class InstanceVariableSetter;
+class Lambda;
+class String;
+class ID;
+class Code;
+class Arguments;
+class VMachine;
+class NativeFun;
+class Frame;
+class Class;
+class Lib;
+class CppClass;
+class CppSingleton;
+class Thread;
+class Mutex;
+class Singleton;
+class IntRange;
+class FloatRange;
+class ChRange;
+class DoubleDispatchMethod;
+class DoubleDispatchFun;
+class MultiValue;
+class Debug;
+class DebugInfo;
+class Exception;
+class Filesystem;
+
+typedef SmartPtr<Array> ArrayPtr;
+typedef SmartPtr<Map> MapPtr;
+typedef SmartPtr<Set> SetPtr;
+typedef SmartPtr<Stream> StreamPtr;
+typedef SmartPtr<MemoryStream> MemoryStreamPtr;
+typedef SmartPtr<StringStream> StringStreamPtr;
+typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
+typedef SmartPtr<Fun> FunPtr;
+typedef SmartPtr<Method> MethodPtr;
+typedef SmartPtr<Fiber> FiberPtr;
+typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
+typedef SmartPtr<InstanceVariableSetter> InstanceVariableSetterPtr;
+typedef SmartPtr<String> StringPtr;
+typedef SmartPtr<ID> IDPtr;
+typedef SmartPtr<Code> CodePtr;
+typedef SmartPtr<Arguments> ArgumentsPtr;
+typedef SmartPtr<VMachine> VMachinePtr;
+typedef SmartPtr<NativeFun> NativeFunPtr;
+typedef SmartPtr<Frame> FramePtr;
+typedef SmartPtr<Class> ClassPtr;
+typedef SmartPtr<Lib> LibPtr;
+typedef SmartPtr<Thread> ThreadPtr;
+typedef SmartPtr<Mutex> MutexPtr;
+typedef SmartPtr<Singleton> SingletonPtr;
+typedef SmartPtr<IntRange> IntRangePtr;
+typedef SmartPtr<FloatRange> FloatRangePtr;
+typedef SmartPtr<ChRange> ChRangePtr;
+typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
+typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
+typedef SmartPtr<MultiValue> MultiValuePtr;
+typedef SmartPtr<Exception> ExceptionPtr;
+typedef SmartPtr<Filesystem> FilesystemPtr;
+typedef SmartPtr<Debug> DebugPtr;
+typedef SmartPtr<CppClass> CppClassPtr;
+
+class Base;
+class RefCountingBase;
+class GCObserver;
+
+class Int;
+class Float;
+class Undefined;
+class Bool;
+
+class Visitor;
+class InstanceVariables;
+
+struct ScopeInfo{
+	ScopeInfo()
+		:pc(0), kind(0), flags(0), variable_identifier_offset(0), variable_size(0){}
+
+	u32 pc;
+	u8 kind;
+	u8 flags;
+	u16 variable_identifier_offset;
+	u16 variable_size;
+
+	enum{
+		FLAG_SCOPE_CHAIN = 1<<0,
+
+		FLAG_USED_BIT = 1
+	};
+};
+
+struct ClassInfo : public ScopeInfo{
+	ClassInfo(u16 size = 0, u16 offset = 0)
+		:instance_variable_size(size), instance_variable_identifier_offset(offset){}
+
+	u16 instance_variable_size;
+	u16 instance_variable_identifier_offset;
+	u8 mixins;
+};
+
+struct FunInfo : public ScopeInfo{
+	FunInfo()
+		:max_stack(256), min_param_count(0), max_param_count(0){}
+
+	u16 max_stack;
+	u8 min_param_count;
+	u8 max_param_count;
+
+	enum{
+		FLAG_EXTENDABLE_PARAM = 1<<(ScopeInfo::FLAG_USED_BIT+0),
+		FLAG_ON_HEAP = 1<<(ScopeInfo::FLAG_USED_BIT+1),
+
+		FLAG_USED_BIT = ScopeInfo::FLAG_USED_BIT+2
+	};
+};
+
+struct ExceptInfo{
+	ExceptInfo()
+		:catch_pc(0), finally_pc(0), end_pc(0){}
+
+	u32 catch_pc;
+	u32 finally_pc;
+	u32 end_pc;
+};
+
+class EmptyInstanceVariables;
+class Null;
+class Undefined;
+struct Named;
+
+extern ScopeInfo empty_scope_info;
+extern ClassInfo empty_class_info;
+extern FunInfo empty_xfun_info;
+extern ExceptInfo empty_except_info;
+extern EmptyInstanceVariables empty_instance_variables;
+extern IDPtr empty_id;
+extern StringPtr empty_string;
+extern Null null;
+extern Undefined undefined;
+extern Named null_named;
+
+struct ParamInfo;
+struct VMAndData;
+
+typedef void (*bind_class_fun_t)(const ClassPtr&);
+
+struct CppClassSymbolData{ 
+	CppClassSymbolData(){
+		static unsigned int counter = 1;
+		static CppClassSymbolData* prev_data = 0;
+		value = counter++;
+		prev = prev_data;
+		prebind = 0;
+		bind = 0;
+		name = 0;
+		shadow = false;
+		prev_data = this;
+	}
+
+	unsigned int value;
+	CppClassSymbolData* prev;
+	bind_class_fun_t prebind;
+	bind_class_fun_t bind;
+	bool shadow;
+	const char* name;
+};
+
+template<class T>
+struct CppClassSymbol{
+	static CppClassSymbolData& value;
+	static CppClassSymbolData& make();
+};
+
+template<class T>
+CppClassSymbolData& CppClassSymbol<T>::make(){
+	static CppClassSymbolData data;
+	return data;
+}
+
+template<class T>
+CppClassSymbolData& CppClassSymbol<T>::value = CppClassSymbol<T>::make();
+
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+
+struct CppClassBindTemp{
+	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char*& name, const char* given){
+		std::memcpy(&dest, &src, sizeof(src));
+		name = given;
+	}
+};
+
+template<class T>
+struct CppClassBindFun{
+	static void prebind(const ClassPtr&);
+	static void bind(const ClassPtr&);
+
+	static volatile CppClassBindTemp bind_temp;
+	static volatile CppClassBindTemp prebind_temp;
+};
+
+#define XTAL_BIND(ClassName) \
+	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr&);\
+	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::bind_temp(\
+		CppClassSymbol<ClassName>::make().bind, &CppClassBindFun<ClassName>::bind, CppClassSymbol<ClassName>::make().name, #ClassName);\
+	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr& it)
+
+#define XTAL_PREBIND(ClassName) \
+	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr&);\
+	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::prebind_temp(\
+		CppClassSymbol<ClassName>::make().prebind, &CppClassBindFun<ClassName>::prebind, CppClassSymbol<ClassName>::make().name, #ClassName);\
+	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr& it)
+
+struct IdentifierData{ 
+	IdentifierData(){
+		static unsigned int counter = 0;
+		value = counter++;
+	}
+
+	unsigned int value;
+};
+
+template<class T>
+struct Identifier{
+	static IdentifierData value;
+};
+
+template<class T>
+IdentifierData Identifier<T>::value;
 
 }

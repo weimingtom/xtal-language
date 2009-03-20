@@ -6,12 +6,6 @@ namespace xtal{
 class Stream : public Base{
 public:
 
-	enum{
-		XSEEK_SET,
-		XSEEK_CUR,
-		XSEEK_END
-	};
-
 	/**
 	* @brief 文字列strをストリームに流す
 	*/
@@ -24,6 +18,13 @@ public:
 	*/
 	void put_s(const char_t* str){
 		write(str, string_data_size(str));
+	}
+
+	/**
+	* @brief 文字列strをストリームに流す
+	*/
+	void put_s(const StringLiteral& str){
+		write(str, str.size());
 	}
 
 	/**
@@ -45,7 +46,7 @@ public:
 
 	virtual uint_t read(void* p, uint_t size);
 
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
+	virtual void seek(uint_t offset);
 
 	virtual void close(){}
 
@@ -428,7 +429,7 @@ public:
 
 	virtual uint_t read(void* p, uint_t size);
 
-	virtual void seek(int_t offset, int_t whence = XSEEK_SET);
+	virtual void seek(uint_t offset);
 
 	virtual void close(){}
 
@@ -498,6 +499,135 @@ private:
 	}
 
 	StringPtr str_;
+};
+
+class FileStream : public Stream{
+public:
+
+	FileStream(){
+		impl_ = 0;
+	}
+
+	FileStream(const StringPtr& path, const StringPtr& flags){
+		impl_ = 0;
+		open(path, flags);
+	}
+
+	~FileStream(){
+		if(impl_){
+			filesystem_lib()->delete_file_stream(impl_);
+		}
+	}
+
+	void open(const StringPtr& path, const StringPtr& flags);
+
+	virtual void close(){
+		if(impl_){
+			filesystem_lib()->delete_file_stream(impl_);
+			impl_ = 0;
+		}
+	}
+
+	virtual uint_t read(void* dest, uint_t size){
+		if(impl_){
+			return filesystem_lib()->read_file_stream(impl_, dest, size);
+		}
+		return 0;
+	}
+
+	virtual uint_t write(const void* src, uint_t size){
+		if(impl_){
+			return filesystem_lib()->write_file_stream(impl_, src, size);
+		}
+		return 0;
+	}
+
+	virtual void seek(uint_t offset){
+		if(impl_){
+			filesystem_lib()->seek_file_stream(impl_, offset);
+		}
+	}
+
+	virtual uint_t tell(){
+		if(impl_){
+			return filesystem_lib()->tell_file_stream(impl_);
+		}
+		return 0;
+	}
+
+	virtual bool eos(){
+		if(impl_){
+			return filesystem_lib()->end_file_stream(impl_);
+		}
+		return true;
+	}
+
+	virtual uint_t size(){
+		if(impl_){
+			return filesystem_lib()->size_file_stream(impl_);
+		}
+		return 0;
+	}
+
+	virtual void flush(){
+		if(impl_){
+			filesystem_lib()->flush_file_stream(impl_);
+		}
+	}
+
+private:
+	void* impl_;
+};
+
+class StdinStream : public Stream{
+public:
+	StdinStream(){
+		impl_ = std_stream_lib()->new_stdin_stream();
+	}
+
+	~StdinStream(){
+		std_stream_lib()->delete_stdin_stream(impl_);
+	}
+
+	virtual uint_t read(void* p, uint_t size){
+		return std_stream_lib()->read_stdin_stream(impl_, p, size);
+	}
+private:
+	void* impl_;
+};
+
+class StdoutStream : public Stream{
+public:
+	StdoutStream(){
+		impl_ = std_stream_lib()->new_stdout_stream();
+	}
+
+	~StdoutStream(){
+		std_stream_lib()->delete_stdout_stream(impl_);
+	}
+
+	virtual uint_t write(const void* p, uint_t size){
+		return std_stream_lib()->write_stdout_stream(impl_, p, size);
+	}
+private:
+	void* impl_;
+};
+
+class StderrStream : public Stream{
+public:
+	StderrStream(){
+		impl_ = std_stream_lib()->new_stderr_stream();
+	}
+
+	~StderrStream(){
+		std_stream_lib()->delete_stderr_stream(impl_);
+	}
+
+	virtual uint_t write(const void* p, uint_t size){
+		return std_stream_lib()->write_stderr_stream(impl_, p, size);
+	}
+private:
+	void* impl_;
 };
 
 }

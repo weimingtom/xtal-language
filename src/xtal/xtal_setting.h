@@ -25,3 +25,7 @@
 */
 //#define XTAL_USE_CPP_EXCEPTIONS
 
+/**
+* @brief マルチスレッドoff
+*/
+//#define XTAL_NO_MULTI_THREAD

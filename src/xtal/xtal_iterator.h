@@ -36,6 +36,8 @@ public:
 	ArrayPtr next_;
 };
 
+void bind(ZipIter*);
+
 struct BlockValueHolder1{
 	
 	BlockValueHolder1(const AnyPtr& tar, bool& not_end);

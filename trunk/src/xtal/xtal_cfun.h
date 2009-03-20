@@ -220,8 +220,8 @@ struct param_types_holder`n`{
 
 template<class C #COMMA_REPEAT#class A`i`#>
 CppClassSymbolData* param_types_holder`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
-&CppClassSymbol<C>::value,
-#REPEAT#&CppClassSymbol<A`i`>::value,#
+&CppClassSymbol<C>::make(),
+#REPEAT#&CppClassSymbol<A`i`>::make(),#
 };
 
 template<class R #COMMA_REPEAT#class A`i`#>
@@ -338,7 +338,7 @@ struct param_types_holder0{
 
 template<class C >
 CppClassSymbolData* param_types_holder0<C >::values[0+1] = {
-&CppClassSymbol<C>::value,
+&CppClassSymbol<C>::make(),
 
 };
 
@@ -455,8 +455,8 @@ struct param_types_holder1{
 
 template<class C , class A0>
 CppClassSymbolData* param_types_holder1<C , A0>::values[1+1] = {
-&CppClassSymbol<C>::value,
-&CppClassSymbol<A0>::value,
+&CppClassSymbol<C>::make(),
+&CppClassSymbol<A0>::make(),
 };
 
 template<class R , class A0>
@@ -572,8 +572,8 @@ struct param_types_holder2{
 
 template<class C , class A0, class A1>
 CppClassSymbolData* param_types_holder2<C , A0, A1>::values[2+1] = {
-&CppClassSymbol<C>::value,
-&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,
+&CppClassSymbol<C>::make(),
+&CppClassSymbol<A0>::make(),&CppClassSymbol<A1>::make(),
 };
 
 template<class R , class A0, class A1>
@@ -689,8 +689,8 @@ struct param_types_holder3{
 
 template<class C , class A0, class A1, class A2>
 CppClassSymbolData* param_types_holder3<C , A0, A1, A2>::values[3+1] = {
-&CppClassSymbol<C>::value,
-&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,
+&CppClassSymbol<C>::make(),
+&CppClassSymbol<A0>::make(),&CppClassSymbol<A1>::make(),&CppClassSymbol<A2>::make(),
 };
 
 template<class R , class A0, class A1, class A2>
@@ -806,8 +806,8 @@ struct param_types_holder4{
 
 template<class C , class A0, class A1, class A2, class A3>
 CppClassSymbolData* param_types_holder4<C , A0, A1, A2, A3>::values[4+1] = {
-&CppClassSymbol<C>::value,
-&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,
+&CppClassSymbol<C>::make(),
+&CppClassSymbol<A0>::make(),&CppClassSymbol<A1>::make(),&CppClassSymbol<A2>::make(),&CppClassSymbol<A3>::make(),
 };
 
 template<class R , class A0, class A1, class A2, class A3>
@@ -923,8 +923,8 @@ struct param_types_holder5{
 
 template<class C , class A0, class A1, class A2, class A3, class A4>
 CppClassSymbolData* param_types_holder5<C , A0, A1, A2, A3, A4>::values[5+1] = {
-&CppClassSymbol<C>::value,
-&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,
+&CppClassSymbol<C>::make(),
+&CppClassSymbol<A0>::make(),&CppClassSymbol<A1>::make(),&CppClassSymbol<A2>::make(),&CppClassSymbol<A3>::make(),&CppClassSymbol<A4>::make(),
 };
 
 template<class R , class A0, class A1, class A2, class A3, class A4>

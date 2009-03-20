@@ -11,6 +11,10 @@ SmartPtr<Any>::SmartPtr(const avoid<char>::type* str){
 	*this = xnew<String>(str);
 }
 
+SmartPtr<Any>::SmartPtr(const StringLiteral& str){
+	*this = xnew<String>(str);
+}
+
 SmartPtr<Any>& SmartPtr<Any>::operator =(const Null&){
 	dec_ref_count();
 	set_null(*this);

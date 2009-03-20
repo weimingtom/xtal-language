@@ -167,6 +167,17 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	if(name_list && !name_list->is_empty()){
 		stream_->put_u8(NAME);
 		inner_serialize(name_list);
+
+		Xfor_cast(const MultiValuePtr& mv, name_list){
+			if(first_step){
+				if(raweq(mv->at(0), Xid(lib))){
+					break;
+				}
+				else{
+					break;
+				}
+			}
+		}
 	}
 	else{
 		// serial_newで空オブジェクトを生成するコマンドを埋め込む
@@ -193,7 +204,7 @@ AnyPtr Serializer::inner_deserialize(){
 			int_t num = append_value(null);
 
 			// serial_newをするクラスを取り出す
-			ClassPtr c(cast<ClassPtr>(inner_deserialize()));
+			ClassPtr c(ptr_cast<Class>(inner_deserialize()));
 
 			const VMachinePtr& vm = vmachine();
 
@@ -239,13 +250,13 @@ AnyPtr Serializer::inner_deserialize(){
 
 		XTAL_CASE2(TSTRING, TID){
 			int_t sz = stream_->get_u32be();
-			char_t* p = (char_t*)so_malloc(sizeof(char_t)*(sz+1));
+			char_t* p = (char_t*)xmalloc(sizeof(char_t)*(sz+1));
 			for(int_t i = 0; i<sz; ++i){
 				p[i] = (char_t)stream_->get_ch_code_be();
 			}
 			p[sz] = 0;	
 			IDPtr ret = xnew<ID>(p, sz);
-			so_free(p, sizeof(char_t)*(sz+1));
+			xfree(p, sizeof(char_t)*(sz+1));
 			append_value(ret);
 			return ret;
 		}

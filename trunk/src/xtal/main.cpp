@@ -58,22 +58,22 @@ static void handle_argv(char** argv){
 
 int main(int argc, char** argv){
 
-	CStdioStreamLib cstd_stream_lib;
+	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
-	UTF8ChCodeLib utf8_chcode_lib;
-	EUCChCodeLib euc_chcode_lib;
+	SJISChCodeLib sjis_ch_code_lib;
+	UTF8ChCodeLib utf8_ch_code_lib;
+	EUCChCodeLib euc_ch_code_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &cstd_stream_lib;
+	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	
 	switch(kcode){
-	case 's': setting.chcode_lib = &sjis_chcode_lib; break;
-	case 'u': setting.chcode_lib = &utf8_chcode_lib; break;
-	case 'e': setting.chcode_lib = &euc_chcode_lib; break;
+	case 's': setting.ch_code_lib = &sjis_ch_code_lib; break;
+	case 'u': setting.ch_code_lib = &utf8_ch_code_lib; break;
+	case 'e': setting.ch_code_lib = &euc_ch_code_lib; break;
 	}
 
 	initialize(setting);

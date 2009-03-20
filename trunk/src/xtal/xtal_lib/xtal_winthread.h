@@ -10,7 +10,7 @@
 
 namespace xtal{
 
-class WinMutex : public Mutex{
+class WinMutex{
 	CRITICAL_SECTION sect_;
 public:
 	WinMutex(){
@@ -21,18 +21,20 @@ public:
 		DeleteCriticalSection(&sect_);
 	}
 	
-	virtual void lock(){
+	void lock(){
 		EnterCriticalSection(&sect_);
 	}
 	
-	virtual void unlock(){
+	void unlock(){
 		LeaveCriticalSection(&sect_);
 	}
 };
 
-class WinThread : public Thread{
+class WinThread{
 	HANDLE id_;
-	
+	void (*callback_)(void*);
+	void* data_;
+
 	static unsigned int WINAPI entry(void* self){
 		((WinThread*)self)->begin_thread();
 		return 0;
@@ -50,30 +52,58 @@ public:
 		}
 	}
 
-	virtual void start(){
+	void start(void (*callback)(void*), void* data){
+		callback_ = callback;
+		data_ = data;
 		id_ = (HANDLE)_beginthreadex(0, 0, &entry, this, 0, 0);
 	}
 
-	virtual void join(){
-		XTAL_UNLOCK{
-			WaitForSingleObject(id_, INFINITE);
-		}
+	void join(){
+		WaitForSingleObject(id_, INFINITE);
+	}
+
+	void begin_thread(){
+		callback_(data_);
 	}
 };
 
 class WinThreadLib : public ThreadLib{
 public:
-	virtual void initialize(){
-		new_cpp_class<WinThread>()->inherit(cpp_class<Thread>());
-		new_cpp_class<WinMutex>()->inherit(cpp_class<Mutex>());
+
+	virtual void* new_thread(){
+		void* p = xmalloc(sizeof(WinThread));
+		return new(p) WinThread();
 	}
 
-	virtual ThreadPtr new_thread(){
-		return xnew<WinThread>();
+	virtual void delete_thread(void* thread_object){
+		((WinThread*)thread_object)->~WinThread();
+		xfree(thread_object, sizeof(WinThread));
 	}
 
-	virtual MutexPtr new_mutex(){
-		return xnew<WinMutex>();
+	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){
+		((WinThread*)thread_object)->start(callback, data);
+	}
+
+	virtual void join_thread(void* thread_object){
+		((WinThread*)thread_object)->join();
+	}
+
+	virtual void* new_mutex(){
+		void* p = xmalloc(sizeof(WinMutex));
+		return new(p) WinMutex();
+	}
+
+	virtual void delete_mutex(void* mutex_object){
+		((WinMutex*)mutex_object)->~WinMutex();
+		xfree(mutex_object, sizeof(WinMutex));
+	}
+
+	virtual void lock_mutex(void* mutex_object){
+		((WinMutex*)mutex_object)->lock();
+	}
+
+	virtual void unlock_mutex(void* mutex_object){
+		((WinMutex*)mutex_object)->unlock();
 	}
 
 	virtual void yield(){

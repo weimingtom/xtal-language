@@ -357,6 +357,7 @@ struct Element : public Base{
 		TYPE_EQL,
 		TYPE_PRED,
 		TYPE_CALL,
+		TYPE_RANGE,
 
 		// ˆÈ‰ºparam1‚ÍSet‚Å‚ ‚éŽí—Þ
 		TYPE_CH_SET,
@@ -988,6 +989,10 @@ bool Executor::test(const AnyPtr& ae){
 			if(raweq(scanner_->read(), e->param1)){ return !e->inv; }
 			return e->inv;
 		}
+
+		XTAL_CASE(Element::TYPE_RANGE){
+			
+		}
 		
 		XTAL_CASE(Element::TYPE_PRED){
 			if(scanner_->eos()){ return false; }
@@ -1274,13 +1279,13 @@ AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
 }
 
-void initialize_xpeg(){
+void bind_xpeg(const ClassPtr& xpeg){
 	using namespace xpeg;
-	ClassPtr xpeg = xnew<Singleton>(Xid(xpeg));
 
 	{
-		ClassPtr p = new_cpp_class<Executor>(Xid(Executor));
-		p->def(Xid(new), ctor<Executor, const AnyPtr&>()->param(0, Xid(stream_or_iterator), empty_string));
+		ClassPtr p = cpp_class<Executor>();
+		p->set_object_name(Xid(Executor));
+		p->def_ctor(ctor<Executor, const AnyPtr&>()->param(0, Xid(stream_or_iterator), empty_string));
 		p->def_method(Xid(reset), &Executor::reset);
 		p->def_method(Xid(parse), &Executor::parse);
 		p->def_method(Xid(match), &Executor::match);
@@ -1300,17 +1305,8 @@ void initialize_xpeg(){
 	}
 
 	{
-		ClassPtr p = new_cpp_class<TreeNode>(Xid(TreeNode));
-		p->set_final();
-		p->inherit(cpp_class<Array>());
-		p->def_method(Xid(tag), &TreeNode::tag);
-		p->def_method(Xid(lineno), &TreeNode::lineno);
-		p->def_method(Xid(set_tag), &TreeNode::set_tag);
-		p->def_method(Xid(set_lineno), &TreeNode::set_lineno);
-	}
-
-	{
-		ClassPtr p = new_cpp_class<Element>(Xid(Element));
+		ClassPtr p = cpp_class<Element>();
+		p->set_object_name(Xid(Element));
 		p->def_method(Xid(set_body), &set_body);
 	}
 
@@ -1333,7 +1329,7 @@ void initialize_xpeg(){
 		p->def_method(Xid(op_shr), &concat, cpp_class<ChRange>());
 		p->def_method(Xid(op_shr), &concat, cpp_class<Fun>());
 
-		ClassPtr classes[4] = {new_cpp_class<Element>(), new_cpp_class<ChRange>(), new_cpp_class<String>(), new_cpp_class<Fun>()};
+		ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
 		for(int i=0; i<4; ++i){
 			classes[i]->inherit(p);
 		}
@@ -1379,8 +1375,28 @@ void initialize_xpeg(){
 
 	xpeg->def_fun(Xid(decl), &decl);
 
-	xpeg->def(Xid(Executor), new_cpp_class<Executor>());
+	xpeg->def(Xid(Executor), cpp_class<Executor>());
+}
+
+void initialize_xpeg(){
+	using namespace xpeg;
+
+	ClassPtr xpeg = xnew<Singleton>(Xid(xpeg));
+	//bind_xpeg(xpeg);
+	xpeg->set_binder(&bind_xpeg);
+
+	{
+		ClassPtr p = cpp_class<TreeNode>();
+		p->set_final();
+		p->inherit(cpp_class<Array>());
+		p->def_method(Xid(tag), &TreeNode::tag);
+		p->def_method(Xid(lineno), &TreeNode::lineno);
+		p->def_method(Xid(set_tag), &TreeNode::set_tag);
+		p->def_method(Xid(set_lineno), &TreeNode::set_lineno);
+	}
+
 	builtin()->def(Xid(xpeg), xpeg);
 }
+
 
 }

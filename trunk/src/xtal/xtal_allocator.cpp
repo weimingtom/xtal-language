@@ -174,25 +174,17 @@ void FixedAllocator::release(size_t block_size){
 }
 
 void* SmallObjectAllocator::malloc(size_t size){
-	if(size>HANDLE_MAX_SIZE){
-		return xmalloc(size);
-	}else{
-		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
-		if(wsize==0){ return 0; }
-		return pool_[wsize-1].malloc(wsize);
-	}
+	XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
+
+	size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
+	if(wsize==0){ return 0; }
+	return pool_[wsize-1].malloc(wsize);
 }
 
 void SmallObjectAllocator::free(void* p, size_t size){
-	if(size>HANDLE_MAX_SIZE){
-		xfree(p, size);
-	}else{
-		if(p==0){
-			return;
-		}
-		if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
-			pool_[wsize-1].free(p, wsize);
-		}
+	XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
+	if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
+		pool_[wsize-1].free(p, wsize);
 	}
 }
 

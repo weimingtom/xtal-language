@@ -14,22 +14,22 @@
 void ix(){
 	using namespace xtal;
 	CodeBuilder cb;
-	cb.interactive_compile(xnew<InteractiveStream>());
+	//cb.interactive_compile(xnew<InteractiveStream>());
 }
 
 int main(int argc, char** argv){
 	using namespace xtal;
 
-	CStdioStreamLib cstd_stream_lib;
+	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
-	SJISChCodeLib sjis_chcode_lib;
+	SJISChCodeLib sjis_ch_code_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
-	setting.stream_lib = &cstd_stream_lib;
+	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
-	setting.chcode_lib = &sjis_chcode_lib;
+	setting.ch_code_lib = &sjis_ch_code_lib;
 
 	initialize(setting);
 	bind_error_message();

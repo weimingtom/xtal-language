@@ -37,7 +37,27 @@ int_t CastHelper<int_t>::unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
-		XTAL_CASE(TYPE_FLOAT){ return static_cast<int_t>(fvalue(a)); }
+		XTAL_CASE(TYPE_FLOAT){ return static_cast<uint_t>(fvalue(a)); }
+	}
+	return 0;
+}
+
+////////////////////////////////////////////////////////////
+
+bool CastHelper<uint_t>::can_cast(const AnyPtr& a){
+	switch(type(a)){
+		XTAL_DEFAULT{ return false; }
+		XTAL_CASE(TYPE_INT){ return true; }
+		XTAL_CASE(TYPE_FLOAT){ return true; }
+	}
+	return false;
+}
+
+uint_t CastHelper<uint_t>::unchecked_cast(const AnyPtr& a){
+	switch(type(a)){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_INT){ return ivalue(a); }
+		XTAL_CASE(TYPE_FLOAT){ return static_cast<uint_t>(fvalue(a)); }
 	}
 	return 0;
 }

@@ -60,7 +60,7 @@ lib::test: singleton{
 	run_dir: method(dir){
 		run_files(filesystem::entries(dir)
 					.select(|x| x.match(once ".xtal" >> xpeg::eos))
-					.map(|x| dir ~ x)
+					.map(|x| dir ~ "/" ~ x)
 			);
 	}
 }

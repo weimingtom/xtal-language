@@ -86,11 +86,13 @@ class SmallObjectAllocator{
 public:
 
 	enum{
-		POOL_SIZE = 32,
+		POOL_SIZE = 16,
 		HANDLE_MAX_SIZE = POOL_SIZE*sizeof(data_t)
 	};
 
 public:
+
+	SmallObjectAllocator(){}
 	
 	void* malloc(size_t size);
 
@@ -103,6 +105,8 @@ public:
 private:
 
 	FixedAllocator pool_[POOL_SIZE];
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(SmallObjectAllocator);
 };
 
 }//namespace 

@@ -7,10 +7,15 @@ TestArray: class{
 		_obj = [];
 	}
 	
-	is_empty#Test: method{
+	is_empty#Test{
 		assert _obj.is_empty;
 	}
-	
+		
+	named#Test{
+		//obj = Array(size: 10);
+		//assert obj.size==10;
+	}
+
 	push_back#Test: method{
 		_obj.push_back(10);
 		assert _obj.size==1;

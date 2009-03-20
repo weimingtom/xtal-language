@@ -20,7 +20,7 @@ uint_t Stream::read(void* p, uint_t size){
 	return 0;
 }
 
-void Stream::seek(int_t offset, int_t whence){
+void Stream::seek(uint_t offset){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(seek), null));
 }
 
@@ -86,7 +86,7 @@ void Stream::println(const AnyPtr& value){
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
-	UserMallocGuard umg(size*sizeof(xtal::u8));
+	XMallocGuard umg(size*sizeof(xtal::u8));
 	xtal::u8* buf = (xtal::u8*)umg.get();
 	uint_t len = in_stream->read(buf, size);
 	write(buf, len);
@@ -95,7 +95,7 @@ uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){
 
 uint_t Stream::pour_all(const StreamPtr& in_stream){
 	uint_t size = 1024*10, len, sum = 0;
-	UserMallocGuard umg(size*sizeof(xtal::u8));
+	XMallocGuard umg(size*sizeof(xtal::u8));
 	xtal::u8* buf = (xtal::u8*)umg.get();
 	do{
 		len = in_stream->read(buf, size);
@@ -106,11 +106,8 @@ uint_t Stream::pour_all(const StreamPtr& in_stream){
 }
 
 uint_t Stream::size(){
-	uint_t pos = tell();
-	seek(0, XSEEK_END);
-	uint_t len = tell();
-	seek(pos, XSEEK_SET);
-	return len;
+	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(size), null));
+	return 0;
 }
 
 void Stream::block_first(const VMachinePtr& vm){
@@ -180,21 +177,8 @@ uint_t PointerStream::read(void* p, uint_t size){
 	return size;
 }
 
-void PointerStream::seek(int_t offset, int_t whence){
-	switch(whence){
-	case XSEEK_END:
-		pos_ = size_-offset;
-		break;
-	case XSEEK_CUR:
-		pos_ += offset;
-		break;
-	default:
-		if(offset<0){
-			offset = 0;
-		}
-		pos_ = offset;
-		break;
-	}
+void PointerStream::seek(uint_t offset){
+	pos_ = offset;
 }
 
 StringPtr PointerStream::get_s(uint_t length){
@@ -335,6 +319,32 @@ StringStream::StringStream(const StringPtr& str)
 	data_ = (u8*)str_->data();
 	size_ = str_->data_size()*sizeof(char_t);
 	pos_ = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void FileStream::open(const StringPtr& path, const StringPtr& aflags){
+	close();
+
+	const char_t* flags = aflags->c_str();
+	char_t flags_temp[256];
+	bool text = false;
+	uint_t i = 0;
+	for(; flags[i]!=0 && i<10; ++i){
+		if(flags[i]=='t'){
+			text = true;
+		}
+		else{
+			flags_temp[i] = flags[i];
+		}
+	}
+
+	if(!text){
+		flags_temp[i++] = 'b';
+	}
+	flags_temp[i++] = 0;
+
+	impl_ = filesystem_lib()->new_file_stream(path->c_str(), flags_temp);
 }
 
 }

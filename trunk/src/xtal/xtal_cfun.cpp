@@ -34,7 +34,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 	}
 
 	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(Named);
-	data_ = so_malloc(data_size);
+	data_ = xmalloc(data_size);
 
 	// ŠÖ”‚ğƒRƒs[
 	std::memcpy(data_, val, val_size);
@@ -68,7 +68,7 @@ NativeFun::~NativeFun(){
 	}
 
 	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(Named);
-	so_free(data_, data_size);
+	xfree(data_, data_size);
 }
 
 const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value){
@@ -146,7 +146,9 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 			}
 		}
 
-		vm->adjust_args(params, param_n_);
+		if(vm->ordered_arg_count()!=param_n_){
+			vm->adjust_args(params, param_n_);
+		}
 
 		for(int_t i=0; i<param_n_; ++i){
 			const AnyPtr& arg = vm->arg_unchecked(i);

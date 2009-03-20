@@ -24,7 +24,7 @@ VMachine::~VMachine(){
 	for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
 		if(fun_frames_[i]){
 			fun_frames_[i]->~FunFrame();
-			so_free(fun_frames_[i], sizeof(FunFrame));
+			xfree(fun_frames_[i], sizeof(FunFrame));
 		}
 	}
 }
@@ -217,12 +217,27 @@ const AnyPtr& VMachine::arg_default(int_t pos, const Named& name_and_def){
 void VMachine::adjust_args(const Named* params, int_t num){
 	FunFrame& f = ff();
 	int_t offset = f.named_arg_count*2;
-	for(int_t i=f.ordered_arg_count; i<num; ++i){
-		stack_.insert(offset, arg_default(params[i]));
-		f.ordered_arg_count++;
+	int_t k = 0;
+	for(int_t j=f.ordered_arg_count; j<num; ++j){
+		bool hit = false;
+		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
+			if(raweq(get(sz*2-1-(i*2+0)+k), params[j].name)){
+				stack_.push(get(sz*2-1-(i*2+1)+k));
+				hit = true;
+				break;
+			}
+		}
+
+		if(!hit){
+			stack_.push(params[j].value);
+		}
+
+		k++;
 	}
+
+	stack_.erase(k+offset-1, offset);
+	f.ordered_arg_count += k;
 	f.named_arg_count = 0;
-	stack_.downsize(offset);
 }
 
 void VMachine::return_result(){

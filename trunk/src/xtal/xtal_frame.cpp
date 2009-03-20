@@ -61,7 +61,7 @@ Frame& Frame::operator=(const Frame& v){
 	}
 	else{
 		map_members_->~Hashtable();
-		so_free(map_members_, sizeof(map_t));
+		xfree(map_members_, sizeof(map_t));
 		map_members_ = 0;
 	}
 
@@ -71,13 +71,13 @@ Frame& Frame::operator=(const Frame& v){
 Frame::~Frame(){
 	if(map_members_){
 		map_members_->~Hashtable();
-		so_free(map_members_, sizeof(map_t));
+		xfree(map_members_, sizeof(map_t));
 	}
 }
 	
 void Frame::make_map_members(){
 	if(!map_members_){
-		map_members_ = new(so_malloc(sizeof(map_t))) map_t();
+		map_members_ = new(xmalloc(sizeof(map_t))) map_t();
 	}
 }
 

@@ -44,7 +44,7 @@ inline void bind_error_message(){
 		XTAL_STRING("Xtal Runtime Error 1010"), XTAL_STRING("コンパイルエラーが発生しました。"),
 		XTAL_STRING("Xtal Runtime Error 1011"), XTAL_STRING("%(object)s :: '%(name)s' は既に定義されています。"),
 		XTAL_STRING("Xtal Runtime Error 1012"), XTAL_STRING("yieldがfiberの非実行中に実行されました。"),
-		XTAL_STRING("Xtal Runtime Error 1013"), XTAL_STRING("%(object)s :: new 関数が登録されていないため、インスタンスを生成できません。"),
+		XTAL_STRING("Xtal Runtime Error 1013"), XTAL_STRING("%(object)s にコンストラクタが登録されていないため、インスタンスを生成できません。"),
 		XTAL_STRING("Xtal Runtime Error 1014"), XTAL_STRING("ファイル '%(name)s' を開けません。"),
 		XTAL_STRING("Xtal Runtime Error 1015"), XTAL_STRING("%(object)s は定義されていません。"),
 		XTAL_STRING("Xtal Runtime Error 1016"), XTAL_STRING("ファイル '%(name)s' のコンパイル中、コンパイルエラーが発生しました。"),
@@ -61,6 +61,7 @@ inline void bind_error_message(){
 		XTAL_STRING("Xtal Runtime Error 1028"), XTAL_STRING("finalマークが付けられたクラス'%(name)s'を継承しようとしました。"),
 		XTAL_STRING("Xtal Runtime Error 1029"), XTAL_STRING("C++で定義されたクラス'%(name)s'は、クラス生成時のみ継承が可能です。"),
 		XTAL_STRING("Xtal Runtime Error 1030"), XTAL_STRING("暗黙の変数参照があります。%(name)s"),
+		XTAL_STRING("Xtal Runtime Error 1031"), XTAL_STRING("シングルトンクラスはシングルトンクラスでないと継承できません。"),
 	};
 	
 	for(int i=0; i<sizeof(messages)/sizeof(*messages)/2; ++i){

@@ -3,10 +3,17 @@
 
 namespace xtal{
 
+class AllocatorLib{
+public:
+	virtual ~AllocatorLib(){}
+	virtual void* malloc(std::size_t size){ return std::malloc(size); }
+	virtual void free(void* p, std::size_t size){ std::free(p); }
+};
+
 class ChCodeLib{
 public:
 	virtual ~ChCodeLib(){}
-	virtual void initialize(){}
+
 	virtual int_t ch_len(char_t lead){ return 1; }
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
 	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
@@ -16,47 +23,67 @@ public:
 class ThreadLib{
 public:
 	virtual ~ThreadLib(){}
-	virtual void initialize(){}
-	virtual ThreadPtr new_thread(){ return ThreadPtr(); }
-	virtual MutexPtr new_mutex(){ return xnew<Mutex>(); }
+
+	virtual void* new_thread(){ return 0; }
+	virtual void delete_thread(void* thread_object){}
+	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){}
+	virtual void join_thread(void* thread_object){}
+
+	virtual void* new_mutex(){ return 0; }
+	virtual void delete_mutex(void* mutex_object){}
+	virtual void lock_mutex(void* mutex_object){}
+	virtual void unlock_mutex(void* mutex_object){}
+
 	virtual void yield(){}
 	virtual void sleep(float_t sec){}
 };
 
-class StreamLib{
+class StdStreamLib{
 public:
-	virtual ~StreamLib(){}
-	virtual void initialize(){}
+	virtual ~StdStreamLib(){}
 
-	virtual StreamPtr new_stdin_stream(){ return StreamPtr(); }
-	virtual StreamPtr new_stdout_stream(){ return StreamPtr(); }
-	virtual StreamPtr new_stderr_stream(){ return StreamPtr(); }
+	virtual void* new_stdin_stream(){ return 0; }
+	virtual void delete_stdin_stream(void* stdin_stream_object){}
+	virtual uint_t read_stdin_stream(void* stdin_stream_object, void* dest, uint_t size){ return 0; }
+
+	virtual void* new_stdout_stream(){ return 0; }
+	virtual void delete_stdout_stream(void* stdout_stream_object){}
+	virtual uint_t write_stdout_stream(void* stdout_stream_object, const void* src, uint_t size){ return 0; }
+
+	virtual void* new_stderr_stream(){ return 0; }
+	virtual void delete_stderr_stream(void* stderr_stream_object){}
+	virtual uint_t write_stderr_stream(void* stderr_stream_object, const void* src, uint_t size){ return 0; }
 };
 
 class FilesystemLib{
 public:
 	virtual ~FilesystemLib(){}
-	virtual void initialize(){}
-	
-	virtual AnyPtr entries(const StringPtr& path){ return AnyPtr(); }
-	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){ return StreamPtr(); } 
-	virtual bool is_directory(const StringPtr& path){ return false; }
-};
 
-class AllocatorLib{
-public:
-	virtual ~AllocatorLib(){}
-	virtual void initialize(){}
-	virtual void* malloc(std::size_t size){ return std::malloc(size); }
-	virtual void free(void* p, std::size_t size){ std::free(p); }
+	virtual bool is_directory(const StringPtr& path){ return false; }
+
+	virtual void* new_file_stream(const char_t* path, const char_t* flags){ return 0; }
+	virtual void delete_file_stream(void* file_stream_object){}
+	virtual uint_t read_file_stream(void* file_stream_object, void* dest, uint_t size){ return 0; }
+	virtual uint_t write_file_stream(void* file_stream_object, const void* src, uint_t size){ return 0; }
+	virtual void seek_file_stream(void* file_stream_object, uint_t pos){}
+	virtual uint_t tell_file_stream(void* file_stream_object){ return 0; }
+	virtual bool end_file_stream(void* file_stream_object){ return true; }
+	virtual uint_t size_file_stream(void* file_stream_object){ return 0; }
+	virtual void flush_file_stream(void* file_stream_object){}
+
+	virtual void* new_entries(const char_t* path){ return 0; }
+	virtual void delete_entries(void* entries_object){}
+	virtual const char_t* next_entries(void* entries_object){ return 0; }
+	virtual void break_entries(void* entries_object){}
+
 };
 
 struct Setting{
-	ThreadLib* thread_lib;
-	StreamLib* stream_lib;
-	FilesystemLib* filesystem_lib;
 	AllocatorLib* allocator_lib;
-	ChCodeLib* chcode_lib;
+	ChCodeLib* ch_code_lib;
+	ThreadLib* thread_lib;
+	StdStreamLib* std_stream_lib;
+	FilesystemLib* filesystem_lib;
 
 	Setting();
 };
@@ -96,55 +123,22 @@ void* xmalloc(size_t size);
 void xfree(void* p, size_t size);
 
 /**
-* @brief 小さいオブジェクト用にメモリをアロケートする。
-*/
-void* so_malloc(size_t size);
-
-/**
-* @brief 小さいオブジェクト用のメモリを解放する。
-*/
-void so_free(void* p, size_t size);
-
-/**
 * @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
-struct UserMallocGuard{
-	UserMallocGuard():p(0){}
-	UserMallocGuard(uint_t size):p(xmalloc(size)),size(size){}
-	~UserMallocGuard(){ xfree(p, size); }
-	
-	void malloc(size_t sz){ xfree(p, size); p = xmalloc(sz); size = sz; }
-
+struct XMallocGuard{
+	XMallocGuard():p(0){}
+	explicit XMallocGuard(uint_t size):p(xmalloc(size)), sz(size){}
+	~XMallocGuard(){ xfree(p, sz); }
+public:	
+	void malloc(size_t size){ xfree(p, sz); p = xmalloc(size); sz = size; }
 	void* get(){ return p; }
-
-	void* release(){ void* ret = p; p = 0; size = 0; return ret; }
-private:
-	void* p;
-	uint_t size;
-
-	XTAL_DISALLOW_COPY_AND_ASSIGN(UserMallocGuard);
-};
-
-/**
-* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
-*/
-struct SOMallocGuard{
-	SOMallocGuard():p(0){}
-	SOMallocGuard(uint_t size):p(so_malloc(size)), sz(size){}
-	~SOMallocGuard(){ so_free(p, sz); }
-	
-	void malloc(size_t size){ so_free(p, sz); p = so_malloc(size); sz = size; }
-
-	void* get(){ return p; }
-
 	void* release(){ void* ret = p; p = 0; return ret; }
-
 	uint_t size(){ return sz; }
 private:
 	void* p;
 	uint_t sz;
 
-	XTAL_DISALLOW_COPY_AND_ASSIGN(SOMallocGuard);
+	XTAL_DISALLOW_COPY_AND_ASSIGN(XMallocGuard);
 };
 
 /////////////////////////////////////////////////////
@@ -188,53 +182,12 @@ void enable_gc();
 const ClassPtr& cpp_class(CppClassSymbolData* key);
 
 /**
-* @brief keyに対応するC++のクラスのクラスオブジェクトを生成し、返す。
-*
-* 既に生成されている場合、生成済みのクラスを返す。
-*/
-const ClassPtr& new_cpp_class(CppClassSymbolData* key);
-
-/**
-* @brief 既にkeyに対応するC++のクラスのクラスオブジェクトが生成されているかを返す。
-*/
-bool exists_cpp_class(CppClassSymbolData* key);
-
-/**
-* @brief keyに対応するC++のクラスのクラスオブジェクトを設定する。。
+* @brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
 /**
-* @brief T形をxtalで扱えるクラスを生成し、返す。
-* 既に生成されている場合、生成済みのクラスを返す。
-*/
-template<class T>
-inline const ClassPtr& new_cpp_class(){
-	return new_cpp_class(&CppClassSymbol<T>::value);
-}
-
-/**
-* @brief T形をxtalで扱えるクラスを生成し、返す。
-* 既に生成されている場合、生成済みのクラスを返す。
-* @param name オブジェクトの名前
-*/
-template<class T>
-inline const ClassPtr& new_cpp_class(const StringPtr& name){
-	const ClassPtr& ret = new_cpp_class(&CppClassSymbol<T>::value);
-	ret->set_object_name(name);
-	return ret;
-}
-
-/**
-* @brief 既にnew_cpp_class<T>()で生成させれているかを返す。
-*/
-template<class T>
-inline bool exists_cpp_class(){
-	return exists_cpp_class(&CppClassSymbol<T>::value);
-}
-
-/**
-* @brief new_cpp_class<T>()で生成されたクラスを取得する。
+* @brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
 inline const ClassPtr& cpp_class(){
@@ -242,7 +195,7 @@ inline const ClassPtr& cpp_class(){
 }
 
 /**
-* @brief cpp_class<T>などで返されるクラスを設定する。
+* @brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 template<class T>
 inline void set_cpp_class(const ClassPtr& cls){
@@ -250,14 +203,18 @@ inline void set_cpp_class(const ClassPtr& cls){
 }
 
 /**
-* @brief T形をxtalで扱えるクラスを生成し、登録する。
-* 既に生成されている場合、生成済みのクラスを返す。
+* @brief T形をxtalで扱えるクラスを取得する。
 */
 template<class T>
-const SmartPtr<T>& new_cpp_singleton(){
-	if(exists_cpp_class<T>()){
-		return unchecked_ptr_cast<T>(cpp_class<T>());
-	}
+inline const SmartPtr<T>& cpp_singleton(){
+	return unchecked_ptr_cast<T>(cpp_class<T>());
+}
+
+/**
+* @brief T形をxtalで扱えるクラスを生成し、登録する。
+*/
+template<class T>
+inline const SmartPtr<T>& new_cpp_singleton(){
 	set_cpp_class<T>(xnew<T>());
 	return unchecked_ptr_cast<T>(cpp_class<T>());
 }
@@ -275,6 +232,11 @@ const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key,
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass);
 
 /**
+* @brief クラスのコンストラクタがキャッシュされているから調べる。
+*/
+bool cache_ctor(const AnyPtr& target_class, int_t kind);
+
+/**
 * @brief メンバーのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_member();
@@ -283,6 +245,11 @@ void invalidate_cache_member();
 * @brief 継承関係のキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_is();
+
+/**
+* @brief クラスのコンストラクタのキャッシュテーブルに登録されているデータを無効にする。
+*/
+void invalidate_cache_ctor();
 
 /////////////////////////////////////////////////////
 
@@ -356,12 +323,12 @@ const ClassPtr& ArgumentError();
 /**
 * @brief filesystemシングルトンオブジェクトを返す
 */
-const SmartPtr<Filesystem>& filesystem();
+const FilesystemPtr& filesystem();
 
 /**
 * @brief debugシングルトンオブジェクトを返す
 */
-const SmartPtr<Debug>& debug();
+const DebugPtr& debug();
 
 /**
 * @brief デバッグ機能を有効にする
@@ -375,33 +342,24 @@ void enable_debug();
 void disable_debug();
 
 /**
-* @brief 文字列リテラルをインターン済みオブジェクトに変換する
+* @brief 文字列リテラルをインターン済み文字列に変換する
 */
 const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata);
 
 /**
-* @brief 文字列をインターン済みオブジェクトに変換する
+* @brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str);
 
 /**
-* @brief 文字列をインターン済みオブジェクトに変換する
+* @brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str, uint_t data_size);
 
+/**
+* @brief インターン済み文字列を列挙する
+*/
 AnyPtr interned_strings();
-
-bool thread_enabled();
-
-void yield_thread();
-
-void sleep_thread(float_t sec);
-
-ThreadPtr new_thread(const AnyPtr& callback_fun);
-
-MutexPtr new_mutex();
-
-void lock_mutex(const MutexPtr& p);
 
 /**
 * @brief 環境をロックする
@@ -420,6 +378,14 @@ struct XUnlock{
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(XUnlock);
 };
+
+void register_thread(Environment*);
+
+void unregister_thread(Environment*);
+
+ThreadLib* thread_lib();
+StdStreamLib* std_stream_lib();
+FilesystemLib* filesystem_lib();
 
 /**
 * @brief VMachinePtrオブジェクトを返す
@@ -472,6 +438,7 @@ int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 */
 const IDPtr* id_op_list();
 
+StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 
 #ifndef XTAL_NO_PARSER
 

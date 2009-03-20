@@ -228,5 +228,82 @@ struct IsCacheTable{
 	}
 };
 
+struct CtorCacheTable{
+	struct Unit{
+		uint_t mutate_count;
+		AnyPtr target_class;
+		uint_t kind;
+	};
+
+	enum{ CACHE_MAX = 64, CACHE_MASK = CACHE_MAX-1 };
+
+	static uint_t calc_index(uint_t hash){
+		return hash & CACHE_MASK;
+	}
+
+	Unit table_[CACHE_MAX];
+
+	int_t hit_;
+	int_t miss_;
+	int_t collided_;
+	uint_t mutate_count_;
+
+	CtorCacheTable(){
+		hit_ = 0;
+		miss_ = 0;
+		collided_ = 0;
+		mutate_count_ = 0;
+	}
+
+	int_t hit_count(){
+		return hit_;
+	}
+
+	int_t miss_count(){
+		return miss_;
+	}
+	
+	int_t collided_count(){
+		return collided_;
+	}
+
+	void invalidate(){
+		mutate_count_++;
+	}
+
+	bool cache(const AnyPtr& target_class, int_t kind){
+		uint_t itarget_class = rawvalue(target_class).uvalue;
+
+		uint_t hash = (itarget_class>>3) ^ kind*37;
+		Unit& unit = table_[hash & CACHE_MASK];
+		
+		if(mutate_count_==unit.mutate_count && 
+			raweq(target_class, unit.target_class) &&
+			kind==kind){
+			hit_++;
+			return true;
+		}
+		else{
+			miss_++;
+
+			// ƒLƒƒƒbƒVƒ…‚É•Û‘¶
+			{
+				unit.target_class = target_class;
+				unit.kind = kind;
+				unit.mutate_count = mutate_count_;
+			}
+			return false;
+		}
+	}
+
+	void clear(){
+		for(int_t i=0; i<CACHE_MAX; ++i){
+			Unit& unit = table_[i];
+			unit.target_class = null;
+		}
+		mutate_count_++;
+	}
+};
+
 }
 

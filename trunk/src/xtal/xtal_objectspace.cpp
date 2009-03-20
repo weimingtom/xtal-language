@@ -82,23 +82,29 @@ void ObjectSpace::initialize(){
 	objects_begin_ = objects_current_ = *objects_list_current_++;
 	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
+	static CppClassSymbolData key;
+	for(uint_t i=0; i<key.value; ++i){
+		class_table_.push_back(0);
+	}
+
 	CppClassSymbolData* symbols[] = { 
 		&CppClassSymbol<void>::value,
 		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<Class>::value,
 		&CppClassSymbol<CppClass>::value,
 		&CppClassSymbol<Array>::value,
+		&CppClassSymbol<String>::value,
 	};
 
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
 	uint_t table[sizeof(symbols)/sizeof(symbols[0])];
 
 	for(uint_t i=0; i<nsize; ++i){
-		table[i] = register_cpp_class(symbols[i]);
+		table[i] = symbols[i]->value;
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		class_table_[table[i]] = (Class*)Base::operator new(sizeof(CppClass));
+		class_table_[table[i]] = (Class*)Base::operator new(sizeof(Class));
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
@@ -108,17 +114,34 @@ void ObjectSpace::initialize(){
 		
 	for(uint_t i=0; i<nsize; ++i){
 		Base* p = class_table_[table[i]];
-		new(p) CppClass();
+		new(p) Class(Class::cpp_class_t());
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
 		Base* p = class_table_[table[i]];
-		p->set_class(xtal::cpp_class<CppClass>());
+		p->set_class(xtal::cpp_class<Class>());
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
 		Base* p = class_table_[table[i]];
 		register_gc(p);
+	}
+
+	for(uint_t i=0; i<class_table_.size(); ++i){
+		if(!class_table_[i]){
+			class_table_[i] = xnew<Class>(Class::cpp_class_t()).get();
+			class_table_[i]->inc_ref_count();
+		}
+	}
+
+	CppClassSymbolData* prev = key.prev;
+	for(uint_t i=class_table_.size(); i>1; --i){
+		class_table_[i-1]->set_prebinder(prev->prebind);
+		class_table_[i-1]->set_binder(prev->bind);
+		if(prev->name){
+			class_table_[i-1]->set_object_name(prev->name);
+		}
+		prev = prev->prev;
 	}
 }
 
@@ -162,18 +185,6 @@ void ObjectSpace::uninitialize(){
 	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
 	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
 
-}
-
-const ClassPtr& ObjectSpace::new_cpp_class(CppClassSymbolData* key){
-	int_t index = register_cpp_class(key);
-
-	if(Class* p = class_table_[index]){
-		return from_this(p);
-	}
-
-	class_table_[index] = xnew<CppClass>().get();
-	class_table_[index]->inc_ref_count();
-	return from_this(class_table_[index]);
 }
 
 void ObjectSpace::enable_gc(){

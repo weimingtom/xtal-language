@@ -6,7 +6,7 @@ namespace xtal{
 
 StringPtr ChCodeLib::ch_inc(const char_t* data, int_t data_size){
 	if(data_size>6){
-		return xnew<ID>(data, data_size);
+		return xnew<String>(data, data_size);
 	}
 
 	uchar_t buf[8] = {0};
@@ -21,10 +21,10 @@ StringPtr ChCodeLib::ch_inc(const char_t* data, int_t data_size){
 	}
 
 	if(buf[0]==0){
-		return xnew<ID>((char_t*)buf+1, data_size);
+		return xnew<String>((char_t*)buf+1, data_size);
 	}
 	else{
-		return xnew<ID>((char_t*)buf, data_size+1);
+		return xnew<String>((char_t*)buf, data_size+1);
 	}
 }
 
@@ -45,27 +45,6 @@ int_t ChCodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsi
 	}
 		
 	return 1;
-}
-
-void ChMaker::add(char_t ch){
-	buf_[pos_++] = ch;
-	if(pos_==1){
-		len_ = ch_len(ch);
-	}
-	else if(pos_ == -len_){
-		len_ = ch_len2(buf_);
-	}
-}
-
-const IDPtr& ChMaker::to_s(){
-	switch(pos_){
-	case 1: temp_ = xnew<ID>(buf_[0]);
-	case 2: temp_ = xnew<ID>(buf_[0], buf_[1]);
-	case 3: temp_ = xnew<ID>(buf_[0], buf_[1], buf_[2]);
-	default: temp_ = xnew<ID>(&buf_[0], pos_);
-	}
-
-	return temp_;
 }
 
 void edit_distance_helper(const void* data1, uint_t size1, const void* data2, uint_t size2, uint_t* buf, uint_t k, int_t offset){

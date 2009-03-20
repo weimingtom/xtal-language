@@ -10,25 +10,17 @@ public:
 
 	Thread();
 
+	~Thread();
+
 public:
 	
-	virtual void start() = 0;
+	void start(const AnyPtr& a);
 
-	virtual void join() = 0;
-	
-	void set_callback(const AnyPtr& a){
-		callback_ = a;
-	}
-
-	void set_thread_space(ThreadSpace* a){
-		thread_space_ = a;
-	}
-
-	AnyPtr callback(){
-		return callback_;
-	}
+	void join();
 
 protected:
+
+	static void trampoline(void* data);
 
 	void begin_thread();
 
@@ -37,7 +29,8 @@ protected:
 	virtual void visit_members(Visitor& m);
 
 	AnyPtr callback_;
-	ThreadSpace* thread_space_;
+	void* impl_;
+	Environment* env_;
 };
 
 class Mutex : public Base{
@@ -45,8 +38,20 @@ public:
 
 	Mutex();
 
-	virtual void lock(){}
-	virtual void unlock(){}
+	~Mutex();
+
+	void lock();
+
+	void unlock();
+
+	void rawlock();
+
+private:
+	void* impl_;
 };
+
+void yield_thread();
+void sleep_thread(float_t sec);
+
 
 }

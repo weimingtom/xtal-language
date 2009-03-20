@@ -27,7 +27,13 @@ public:
 	*
 	*/
 	String(const char_t* str, uint_t size);
-	
+
+	/**
+	* @brief C文字列リテラルから構築する
+	*
+	*/
+	String(const StringLiteral& str);
+
 	/**
 	* @brief beginからlastまでの文字列で構築する
 	*
@@ -169,9 +175,7 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
-#ifdef XTAL_DEBUG
-	char_t* buf_;
-#endif
+	XTAL_DEBUG_ONLY(char_t* buf_);
 
 	uint_t data_size_;
 public:
@@ -180,9 +184,7 @@ public:
 		set_pvalue(*this, TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
 		buf()[size] = 0;
-#ifdef XTAL_DEBUG
-		buf_ = buf();
-#endif
+		XTAL_DEBUG_ONLY(buf_ = buf());
 	}
 
 	~StringData(){}
@@ -242,6 +244,12 @@ public:
 	*/
 	ID(const char_t* str, uint_t size);
 	
+	/**
+	* @brief C文字列リテラルから構築する
+	*
+	*/
+	ID(const StringLiteral& str);
+
 	/**
 	* @brief beginからlastまでの文字列で構築する
 	*

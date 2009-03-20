@@ -96,10 +96,8 @@ float_t random_range(float_t in, float_t ax){
 
 template<class T>
 struct Math{
-	static ClassPtr make(float*){
+	static void bind(const ClassPtr& math, float*){
 		using namespace std;
-
-		ClassPtr math = xnew<Singleton>(Xid(math));
 		
 		math->def_fun(Xid(acos), (float (*)(float))&acosf);
 		math->def_fun(Xid(asin), (float (*)(float))&asinf);
@@ -116,14 +114,10 @@ struct Math{
 		math->def_fun(Xid(tan), (float (*)(float))&tanf);
 		math->def(Xid(PI), (float_t)3.14159265358979);
 		math->def(Xid(E), (float_t)2.71828182845905);
-
-		return math;
 	}
 
-	static ClassPtr make(double*){
+	static void bind(const ClassPtr& math, double*){
 		using namespace std;
-
-		ClassPtr math = xnew<Singleton>(Xid(math));
 
 		math->def_fun(Xid(acos), (double (*)(double))&acos);
 		math->def_fun(Xid(asin), (double (*)(double))&asin);
@@ -140,18 +134,21 @@ struct Math{
 		math->def_fun(Xid(tan), (double (*)(double))&tan);
 		math->def(Xid(PI), (float_t)3.14159265358979);
 		math->def(Xid(E), (float_t)2.71828182845905);
-
-		return math;
 	}
 };
 
-void initialize_math(){
-	ClassPtr math(Math<float_t>::make((float_t*)0));
+void bind_math(const ClassPtr& math){
+	Math<float_t>::bind(math, (float_t*)0);
 	math->def_fun(Xid(abs), &abs);
 	math->def_fun(Xid(max), &max_);
 	math->def_fun(Xid(min), &min_);
 	math->def_fun(Xid(random), &random);
 	math->def_fun(Xid(random_range), &random_range);
+}
+
+void initialize_math(){
+	ClassPtr math = xnew<Singleton>(Xid(math));
+	math->set_binder(&bind_math);
 	builtin()->def(Xid(math), math);
 }
 

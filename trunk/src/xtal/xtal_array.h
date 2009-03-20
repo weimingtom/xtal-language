@@ -358,12 +358,7 @@ private:
 	MultiValuePtr tail_;
 };
 
-inline AnyPtr to_mv(const AnyPtr& a){
-	if(type(a)==TYPE_UNDEFINED){
-
-	}
-	return null;
-}
+void bind(MultiValue*);
 
 inline MultiValuePtr mv(const AnyPtr& v1, const AnyPtr& v2){
 	return xnew<MultiValue>(v1, xnew<MultiValue>(v2));

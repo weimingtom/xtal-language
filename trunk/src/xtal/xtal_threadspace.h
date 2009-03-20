@@ -16,7 +16,7 @@ public:
 		registered_thread_ = false;
 		thread_count_ = 1;
 
-		mutex_ = new_mutex(); 
+		mutex_ = xnew<Mutex>(); 
 
 		thread_enabled_ = true;
 
@@ -52,7 +52,7 @@ public:
 			return;
 		}
 
-		mutex_->lock();
+		mutex_->rawlock();
 	}
 
 	void xunlock(){
@@ -61,19 +61,6 @@ public:
 		}
 
 		mutex_->unlock();
-	}
-
-	void thread_entry(const ThreadPtr& thread){
-		register_thread();
-
-		VMachinePtr vm = vmachine();
-		vm->setup_call(0);
-		thread->callback()->rawcall(vm);
-		vm->cleanup_call();
-		vm->reset();
-		vm = null;
-
-		unregister_thread();
 	}
 
 	void register_thread(){
@@ -106,24 +93,6 @@ public:
 	void sleep_thread(float_t sec){
 		XTAL_UNLOCK{
 			thread_lib_->sleep(sec);
-		}
-	}
-
-	ThreadPtr new_thread(const AnyPtr& fun){
-		ThreadPtr ret = thread_lib_->new_thread();
-		ret->set_thread_space(this);
-		ret->set_callback(fun);
-		ret->start();
-		return ret;
-	}
-
-	MutexPtr new_mutex(){
-		return thread_lib_->new_mutex();
-	}
-
-	void lock_mutex(const MutexPtr& self){
-		XTAL_UNLOCK{
-			self->lock();
 		}
 	}
 

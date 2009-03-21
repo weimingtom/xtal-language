@@ -6,34 +6,32 @@
 
 namespace xtal{
 
-class DirentIter : public Base{
+class Dirent{
 	DIR* dir_;
 public:
 
-	DirentIter(const StringPtr& path){
+	Dirent(const StringPtr& path){
 		dir_ = opendir(path->c_str());
 	}
 	
-	virtual ~DirentIter(){
-		block_break();
+	~Dirent(){
+		stop();
 	}
 	
-	void block_next(const VMachinePtr& vm){
+	const char_t* next(){
 		if(!dir_){
-			vm->return_result(null, null);
-			return;
+			return 0;
 		}
 		
 		dirent* dp = readdir(dir);
 		if(!dp){
-			vm->return_result(null, null);
-			return;
+			return 0;
 		}
 		
-		vm->return_result(from_this(this), dp->d_name);
+		return dp->d_name;
 	}
 	
-	void block_break(){
+	void stop(){
 		if(dir_){
 			closedir(dir_);
 			dir_ = 0;
@@ -43,32 +41,74 @@ public:
 
 class PosixFilesystemLib : public FilesystemLib{
 public:
-	virtual void bind(){
-		CStdioFileStream::initialize_class();
-
-		{
-			ClassPtr p = new_cpp_class<DirentIter>();
-			p->inherit(Iterator());
-			p->def_method(XTAL_ID(block_next), &DirentIter::block_next);
-			p->def_method(XTAL_ID(block_break), &DirentIter::block_break);
-		}
-	}
-	
-	virtual AnyPtr entries(const StringPtr& path){
-		return xnew<DirentIter>(path);
-	}
-	
-	virtual StreamPtr open(const StringPtr& path, const StringPtr& flags){
-		FILE* fp = std::fopen(path->c_str(), flags->c_str());
-		if(!fp){ 
-			return null; 
-		}
-		return xnew<CStdioFileStream>(fp);
-	}
 
 	virtual bool is_directory(const StringPtr& path){
-		return false;		
+		return false;
 	}
+
+	virtual void* new_file_stream(const char_t* path, const char_t* flags){
+		return fopen(path, flags);
+	}
+	
+	virtual void delete_file_stream(void* file_stream_object){
+		fclose((FILE*)file_stream_object);
+	}
+	
+	virtual uint_t read_file_stream(void* file_stream_object, void* dest, uint_t size){
+		return fread(dest, 1, size, (FILE*)file_stream_object);
+	}
+	
+	virtual uint_t write_file_stream(void* file_stream_object, const void* src, uint_t size){
+		return fwrite(src, 1, size, (FILE*)file_stream_object);
+	}
+	
+	virtual void seek_file_stream(void* file_stream_object, uint_t offset){
+		fseek((FILE*)file_stream_object, offset, SEEK_SET);
+	}
+	
+	virtual uint_t tell_file_stream(void* file_stream_object){
+		return ftell((FILE*)file_stream_object);
+	}
+	
+	virtual bool end_file_stream(void* file_stream_object){
+		int ch = getc((FILE*)file_stream_object);
+		if(feof((FILE*)file_stream_object)){
+			return true;
+		}
+		ungetc(ch, (FILE*)file_stream_object);
+		return false;
+	}
+	
+	virtual uint_t size_file_stream(void* file_stream_object){
+		uint_t pos = ftell((FILE*)file_stream_object);
+		fseek((FILE*)file_stream_object, 0, SEEK_END);
+		uint_t len = ftell((FILE*)file_stream_object);
+		fseek((FILE*)file_stream_object, pos, SEEK_SET);
+		return len;
+	}
+
+	virtual void flush_file_stream(void* file_stream_object){
+		fflush((FILE*)file_stream_object);
+	}
+
+	virtual void* new_entries(const char_t* path){
+		void* p = xmalloc(sizeof(Dirent));
+		return new(p) Dirent(path);
+	}
+
+	virtual void delete_entries(void* entries_object){
+		((Dirent*)entries_object)->~Dirent();
+		xfree(entries_object, sizeof(Dirent));
+	}
+
+	virtual const char_t* next_entries(void* entries_object){
+		return ((Dirent*)entries_object)->next();
+	}
+
+	virtual void break_entries(void* entries_object){
+		((Dirent*)entries_object)->stop();
+	}
+
 };
 
 }

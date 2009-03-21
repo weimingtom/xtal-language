@@ -8,13 +8,15 @@ namespace xtal{
 
 class WinFindNextFile{
 	HANDLE h_;
-	WIN32_FIND_DATAA fd_, fd2_;
+	WIN32_FIND_DATAA fd_;
+	bool first_;
 public:
 
 	WinFindNextFile(const char_t* path){
 		char_t path2[MAX_PATH];
 		XTAL_SPRINTF(path2, MAX_PATH, "%s/*", path);
 		h_ = FindFirstFileA(path2, &fd_);
+		first_ = true;
 	}
 	
 	~WinFindNextFile(){
@@ -26,13 +28,18 @@ public:
 			return 0;
 		}
 
-		fd2_ = fd_;
-			
-		if(!FindNextFileA(h_, &fd_)){
-			stop();
+		if(first_){
+			first_ = false;
+			return fd_.cFileName;
 		}
+		else{	
+			if(!FindNextFileA(h_, &fd_)){
+				stop();
+				return 0;
+			}
 
-		return fd2_.cFileName;
+			return fd_.cFileName;
+		}
 	}
 	
 	void stop(){

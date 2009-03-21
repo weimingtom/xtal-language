@@ -71,10 +71,10 @@ void DelegateToIterator::rawcall(const VMachinePtr& vm){
 	vm->arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 
-void IteratorClass::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void Iterator::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Class::def(primary_key, value, secondary_key, accessibility);
 	if(rawne(Xid(p), primary_key) && rawne(Xid(each), primary_key)){
-		Iterable()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
+		cpp_class<Iterable>()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
 	}
 }
 

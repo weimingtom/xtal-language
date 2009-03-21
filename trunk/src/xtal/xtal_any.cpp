@@ -39,7 +39,7 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 
 	if(accessibility & KIND_PRIVATE){
 		if(rawne(self->get_class(), *this)){
-			XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
+			XTAL_SET_EXCEPT(cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
 				Named(Xid(object), object_name()), 
 				Named(Xid(name), primary_key), 
 				Named(Xid(secondary_key), secondary_key), 
@@ -50,7 +50,7 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 	}
 	else if(accessibility & KIND_PROTECTED){
 		if(!self->is(ap(*this))){
-			XTAL_SET_EXCEPT(builtin()->member(Xid(AccessibilityError))->call(Xt("Xtal Runtime Error 1017")->call(
+			XTAL_SET_EXCEPT(cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
 				Named(Xid(object), object_name()), 
 				Named(Xid(primary_key), primary_key), 
 				Named(Xid(secondary_key), secondary_key), 

@@ -457,14 +457,14 @@ const inst_t* VMachine::push_except(){
 
 static int_t check_zero(int_t value){
 	if(value==0){
-		//XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
+		//XTAL_THROW(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")), return 1);
 	}
 	return value;
 }
 
 static float_t check_zero(float_t value){
 	if(value==0){
-		//XTAL_THROW(RuntimeError()->call(Xt("Xtal Runtime Error 1024")), return 1);
+		//XTAL_THROW(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")), return 1);
 	}
 	return value;
 }
@@ -830,7 +830,7 @@ XTAL_VM_SWITCH{
 		else{
 			downsize(yield_result_count_);
 			XTAL_GLOBAL_INTERPRETER_LOCK{ 
-				XTAL_VM_EXCEPT(builtin()->member(Xid(YieldError))->call(Xt("Xtal Runtime Error 1012")));
+				XTAL_VM_EXCEPT(cpp_class<YieldError>()->call(Xt("Xtal Runtime Error 1012")));
 			}
 		}
 	}
@@ -1442,7 +1442,7 @@ XTAL_VM_SWITCH{
 					cp->inherit_first(cls);
 				}
 				else{
-					XTAL_VM_EXCEPT(RuntimeError()->call());
+					XTAL_VM_EXCEPT(cpp_class<RuntimeError>()->call());
 				}
 			}
 
@@ -1551,8 +1551,8 @@ XTAL_VM_SWITCH{
 				except = ap(except_[0]);
 			}
 
-			if(!except->is(builtin()->member(Xid(Exception)))){
-				XTAL_VM_EXCEPT(RuntimeError()->call(except));
+			if(!except->is(cpp_class<Exception>())){
+				XTAL_VM_EXCEPT(cpp_class<RuntimeError>()->call(except));
 			}
 			else{
 				XTAL_VM_EXCEPT(except);

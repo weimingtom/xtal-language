@@ -416,7 +416,7 @@ int_t String::ascii(){
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1025")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1025")));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 
@@ -424,7 +424,7 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 		return xnew<ChRange>(from_this(this), right);
 	}
 	else{
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1023")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1023")));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 }

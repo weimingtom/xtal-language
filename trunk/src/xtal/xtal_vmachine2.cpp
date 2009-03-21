@@ -431,8 +431,8 @@ ArgumentsPtr VMachine::make_args(Method* fun){
 AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 	if(e){
 		AnyPtr ep = e;
-		if(!ep->is(builtin()->member(Xid(Exception)))){
-			ep = RuntimeError()->call(ep);
+		if(!ep->is(cpp_class<Exception>())){
+			ep = cpp_class<RuntimeError>()->call(ep);
 		}
 
 		if(fun() &&  fun()->code()){
@@ -528,7 +528,7 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 						hook->call(debug_info_);
 					}
 					else{
-						set_except(builtin()->member(Xid(AssertionFailed))->call(pop()->to_s()));
+						set_except(cpp_class<AssertionFailed>()->call(pop()->to_s()));
 					}
 				}
 			}

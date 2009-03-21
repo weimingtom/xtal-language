@@ -47,8 +47,8 @@ StringPtr make_inst_string(const char_t* InstName,
 						const char_t* MemberName3, int_t MemberValue3,
 						const char_t* MemberName4, int_t MemberValue4,
 						const char_t* MemberName5, int_t MemberValue5){					
-	StringPtr temp = format(XTAL_STRING(": %s=%%s, %s=%%s, %s=%%s, %s=%%s, %s=%%s"))->call(MemberName1, MemberName2, MemberName3, MemberName4, MemberName5)->to_s();
-	return StringPtr(InstName)->cat(format(temp)->call(MemberValue1, MemberValue2, MemberValue3, MemberValue4, MemberValue5)->to_s());
+	StringPtr temp = format(XTAL_STRING("%s: %s=%%s, %s=%%s, %s=%%s, %s=%%s, %s=%%s"))->call(InstName, MemberName1, MemberName2, MemberName3, MemberName4, MemberName5)->to_s();
+	return format(temp)->call(MemberValue1, MemberValue2, MemberValue3, MemberValue4, MemberValue5)->to_s();
 }
 
 }

@@ -27,11 +27,10 @@ int main2(int argc, char** argv){
 	
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-		
-		a: Array(size: 10);
-		a.p;
-	))){
 
+		RuntimeError("error").p;
+	))){
+		//code->call();
 	}
 
 

@@ -621,7 +621,6 @@ class NativeFun;
 class Frame;
 class Class;
 class Lib;
-class CppClass;
 class CppSingleton;
 class Thread;
 class Mutex;
@@ -670,7 +669,6 @@ typedef SmartPtr<MultiValue> MultiValuePtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 typedef SmartPtr<Filesystem> FilesystemPtr;
 typedef SmartPtr<Debug> DebugPtr;
-typedef SmartPtr<CppClass> CppClassPtr;
 
 class Base;
 class RefCountingBase;
@@ -765,7 +763,6 @@ struct CppClassSymbolData{
 		prebind = 0;
 		bind = 0;
 		name = 0;
-		shadow = false;
 		prev_data = this;
 	}
 
@@ -773,7 +770,6 @@ struct CppClassSymbolData{
 	CppClassSymbolData* prev;
 	bind_class_fun_t prebind;
 	bind_class_fun_t bind;
-	bool shadow;
 	const char* name;
 };
 
@@ -797,6 +793,9 @@ template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+
+template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
 struct CppClassBindTemp{
 	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char*& name, const char* given){

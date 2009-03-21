@@ -72,12 +72,16 @@ NativeFun::~NativeFun(){
 }
 
 const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value){
+	// iは1始まり
+	XTAL_ASSERT(i!=0);
+
+	// iが引数の数より大きすぎる
+	XTAL_ASSERT(i<=param_n_);
 
 	// 今のところ、VMachinePtrを引数にする場合、paramは設定でない制限あり
 	XTAL_ASSERT(!(min_param_count_==0 && max_param_count_==255));
 
-	// 名前つきデフォルト引数を与えすぎな場合にassertに失敗する
-	XTAL_ASSERT(i<param_n_);
+	i--;
 
 	Class** param_types = (Class**)((char*)data_ +  val_size_);
 	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
@@ -88,7 +92,7 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 	params[i].name = key;
 	params[i].value = ap(value);
 
-	min_param_count_--;
+	min_param_count_ = i;
 
 	return from_this(this);
 }
@@ -110,7 +114,7 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 		int_t n = vm->ordered_arg_count();
 		if(n<min_param_count_ || n>max_param_count_){
 			if(min_param_count_==0 && max_param_count_==0){
-				vm->set_except(builtin()->member(Xid(ArgumentError))->call(
+				vm->set_except(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1007")->call(
 						Named(Xid(object), vm->ff().hint()->object_name()),
 						Named(Xid(value), n)
@@ -119,7 +123,7 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 				return;
 			}
 			else{
-				vm->set_except(builtin()->member(Xid(ArgumentError))->call(
+				vm->set_except(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1006")->call(
 						Named(Xid(object), vm->ff().hint()->object_name()),
 						Named(Xid(min), min_param_count_),

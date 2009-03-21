@@ -58,7 +58,7 @@ const AnyPtr& Lib::rawdef(const IDPtr& primary_key, const AnyPtr& value, const A
 		return members_.back();
 	}
 	else{
-		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()))));
+		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()))));
 		return undefined;
 	}
 }

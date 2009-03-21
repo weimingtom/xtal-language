@@ -33,6 +33,20 @@ private:
 	ArrayPtr backtrace_;
 };
 
+class StandardError;
+class RuntimeError;
+class IOError;
+class LogicError;
+class CastError;
+class ArgumentError;
+class YieldError;
+class InstanceVariableError;
+class UnsupportedError;
+class RedefinedError;
+class AccessibilityError;
+class AssertionFailed;
+class CompileError;
+
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
 AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type);
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key);

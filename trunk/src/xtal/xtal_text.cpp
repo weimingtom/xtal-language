@@ -167,7 +167,7 @@ void Format::set(const char_t* str){
 			str++;
 			
 			if(str[0]=='%'){
-				strings_->push_back(xnew<String>('%'));
+				//strings_->push_back(xnew<String>('%'));
 				begin = str++;
 			}
 			else{

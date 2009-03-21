@@ -323,7 +323,7 @@ int_t Array::calc_offset(int_t i){
 }
 
 void Array::throw_index_error(){
-	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1020")));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1020")));
 }
 
 //////////////////////////////////////////////////

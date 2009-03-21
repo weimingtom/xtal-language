@@ -13,10 +13,12 @@ public:
 	virtual void rawcall(const VMachinePtr& vm);
 };
 
-class IteratorClass : public Class{
+class Iterator : public Class{
 public:
 	virtual void def(const IDPtr& name, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 };
+
+class Iterable;
 
 class ZipIter : public Base{
 public:
@@ -35,8 +37,6 @@ public:
 
 	ArrayPtr next_;
 };
-
-void bind(ZipIter*);
 
 struct BlockValueHolder1{
 	

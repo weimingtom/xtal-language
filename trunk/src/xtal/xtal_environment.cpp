@@ -9,7 +9,7 @@
 
 int used_memory = 0;
 
-#define XTAL_DEBUG_ALLOC 0
+#define XTAL_DEBUG_ALLOC 1
 
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>
@@ -128,18 +128,12 @@ public:
 	FilesystemPtr filesystem_;
 	DebugPtr debug_;
 
-	ClassPtr Iterator_;
-	ClassPtr Iterable_;
 	ClassPtr builtin_;
 	LibPtr lib_;
 
 	ArrayPtr vm_list_;
 	MapPtr text_map_;
 
-	ClassPtr RuntimeError_;
-	ClassPtr CompileError_;
-	ClassPtr ArgumentError_;
-	ClassPtr UnsupportedError_;
 	StreamPtr stdin_;
 	StreamPtr stdout_;
 	StreamPtr stderr_;
@@ -267,15 +261,13 @@ void Environment::initialize(const Setting& setting){
 	object_space_.initialize();
 	string_space_.initialize();
 
-	set_cpp_class<Base>(cpp_class<Any>());
-	set_cpp_class<Singleton>(cpp_class<CppClass>());
-	set_cpp_class<IteratorClass>(cpp_class<CppClass>());
+	set_cpp_class<Iterator>(xnew<Iterator>());
+	cpp_class<Iterator>()->set_class(cpp_class<Class>());
+	cpp_class<Iterator>()->unset_native();
 
 	builtin_ = xnew<Singleton>();
 	lib_ = xnew<Lib>(true);
 	lib_->append_load_path(".");
-	Iterator_ = xnew<IteratorClass>();
-	Iterable_ = xnew<Class>();
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
 
@@ -286,7 +278,7 @@ void Environment::initialize(const Setting& setting){
 	
 	{
 		ClassPtr p = cpp_class<Entries>();
-		p->inherit(Iterator());
+		p->inherit(cpp_class<Iterator>());
 		p->def_method(Xid(block_next), &Entries::block_next);
 		p->def_method(Xid(block_break), &Entries::block_break);
 	}
@@ -313,18 +305,13 @@ void Environment::initialize(const Setting& setting){
 	builtin()->def(Xid(stdout), stdout_);
 	builtin()->def(Xid(stderr), stderr_);
 
-	debug_ = unchecked_ptr_cast<Debug>(builtin()->member(Xid(debug)));
+	debug_ = new_cpp_singleton<Debug>();
 
 	initialize_math();
 	initialize_xpeg();
 
 	enable_gc();
 	exec_script();
-
-	RuntimeError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(RuntimeError)));
-	ArgumentError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(ArgumentError)));
-	CompileError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(CompileError)));
-	UnsupportedError_ = unchecked_ptr_cast<Class>(builtin()->member(Xid(UnsupportedError)));
 
 	full_gc();
 }
@@ -334,16 +321,11 @@ void Environment::uninitialize(){
 
 	full_gc();
 
-	Iterator_ = null;
-	Iterable_ = null;
 	builtin_ = null;
 	lib_ = null;
 	vm_list_ = null;
 	filesystem_ = null;
-	RuntimeError_ = null;
-	ArgumentError_ = null;
-	CompileError_ = null;
-	UnsupportedError_ = null;
+
 	stdin_ = null;
 	stdout_ = null;
 	stderr_ = null;
@@ -450,14 +432,6 @@ void invalidate_cache_ctor(){
 	environment_->ctor_cache_table_.invalidate();
 }
 
-const ClassPtr& Iterator(){
-	return environment_->Iterator_;
-}
-
-const ClassPtr& Iterable(){
-	return environment_->Iterable_;
-}
-
 const ClassPtr& builtin(){
 	return environment_->builtin_;
 }
@@ -526,22 +500,6 @@ const DebugPtr& debug(){
 	return environment_->debug_;
 }
 
-const ClassPtr& RuntimeError(){
-	return environment_->RuntimeError_;
-}
-
-const ClassPtr& CompileError(){
-	return environment_->CompileError_;
-}
-
-const ClassPtr& UnsupportedError(){
-	return environment_->UnsupportedError_;
-}
-
-const ClassPtr& ArgumentError(){
-	return environment_->ArgumentError_;
-}
-
 const StreamPtr& stdin_stream(){
 	return environment_->stdin_;
 }
@@ -592,7 +550,7 @@ CodePtr compile_file(const StringPtr& file_name){
 			}
 			else{
 				fs->close();
-				XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
+				XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
 				return null;
 			}
 		}
@@ -615,7 +573,7 @@ CodePtr compile(const StringPtr& source){
 			ret = fun;
 		}
 		else{
-			XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
 			return null;
 		}
 	}
@@ -658,7 +616,7 @@ CodePtr source(const char_t* src, int_t size, const char* file){
 			ret = fun;
 		}
 		else{
-			XTAL_SET_EXCEPT(CompileError()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
 			return null;
 		}
 	}

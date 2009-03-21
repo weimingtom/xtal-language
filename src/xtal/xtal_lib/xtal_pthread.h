@@ -7,7 +7,7 @@
 
 namespace xtal{
 
-class PThreadMutex : public Mutex{
+class PThreadMutex{
 	pthread_mutex_t mutex_;
 public:
 	PThreadMutex(){
@@ -18,56 +18,96 @@ public:
 		pthread_mutex_destroy(&mutex_);
 	}
 	
-	virtual void lock(){
+	void lock(){
 		pthread_mutex_lock(&mutex_);
 	}
 	
-	virtual void unlock(){
+	void unlock(){
 		pthread_mutex_unlock(&mutex_);
 	}
 };
 
-class PThread : public Thread{
+class PThread{
+	bool start_;
 	pthread_t id_;
-	
+	void (*callback_)(void*);
+	void* data_;
+
 	static void* entry(void* self){
-		((PThread*)self)->begin_thread();
+		((WinThread*)self)->begin_thread();
 		return 0;
 	}
 	
 public:
 
 	PThread(){
-		pthread_create(&id_, 0, entry, this);
+		start_ = false
 	}
 
 	~PThread(){
-		pthread_detach(id_);
+		if(start_){
+			pthread_detach(id_);
+		}
 	}
 
-	virtual void join(){
-		void* p = 0;
-		XTAL_UNLOCK{
+	void start(void (*callback)(void*), void* data){
+		callback_ = callback;
+		data_ = data;
+		start_ = true;
+		pthread_create(&id_, 0, entry, this);
+	}
+
+	void join(){
+		if(start_){
+			void* p = 0;
 			pthread_join(id_, &p);
+		}
+	}
+
+	void begin_thread(){
+		if(start_){
+			callback_(data_);
 		}
 	}
 };
 
-
 class PThreadLib : public ThreadLib{
 public:
 
-	virtual void bind(){
-		new_cpp_class<PThread>()->inherit(cpp_class<Thread>());
-		new_cpp_class<PThreadMutex>()->inherit(cpp_class<Mutex>());
+	virtual void* new_thread(){
+		void* p = xmalloc(sizeof(PThread));
+		return new(p) PThread();
 	}
 
-	virtual ThreadPtr new_thread(){
-		return xnew<PThread>();
+	virtual void delete_thread(void* thread_object){
+		((PThread*)thread_object)->~PThread();
+		xfree(thread_object, sizeof(PThread));
 	}
 
-	virtual MutexPtr new_mutex(){
-		return xnew<PThreadMutex>();
+	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){
+		((PThread*)thread_object)->start(callback, data);
+	}
+
+	virtual void join_thread(void* thread_object){
+		((PThread*)thread_object)->join();
+	}
+
+	virtual void* new_mutex(){
+		void* p = xmalloc(sizeof(PThreadMutex));
+		return new(p) PThreadMutex();
+	}
+
+	virtual void delete_mutex(void* mutex_object){
+		((PThreadMutex*)mutex_object)->~PThreadMutex();
+		xfree(mutex_object, sizeof(PThreadMutex));
+	}
+
+	virtual void lock_mutex(void* mutex_object){
+		((PThreadMutex*)mutex_object)->lock();
+	}
+
+	virtual void unlock_mutex(void* mutex_object){
+		((PThreadMutex*)mutex_object)->unlock();
 	}
 
 	virtual void yield(){

@@ -630,4 +630,25 @@ private:
 	void* impl_;
 };
 
+class InteractiveStream : public Stream{
+public:
+
+	InteractiveStream(){
+		line_ = 1;
+		continue_stmt_ = false;
+	}
+
+	virtual uint_t read(void* p, uint_t size);
+
+	virtual void flush(){
+		continue_stmt_ = false;
+	}
+
+	uint_t read_line(void* p, uint_t size);
+
+private:
+	int_t line_;
+	bool continue_stmt_;
+};
+
 }

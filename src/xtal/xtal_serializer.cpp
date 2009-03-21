@@ -304,13 +304,13 @@ AnyPtr Serializer::inner_deserialize(){
 			CodePtr p = xnew<Code>();
 
 			if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1009")));
+				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
 				return null;
 			}
 
 			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
 			if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
-				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1009")));
+				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
 				return null;
 			}
 			
@@ -379,7 +379,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	}
 
 	if(!ret){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), n))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), n))));
 		return null;
 	}
 

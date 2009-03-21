@@ -28,13 +28,13 @@ StringPtr Exception::to_s(){
 }
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
-	return builtin()->member(Xid(CastError))->call(Xt("Xtal Runtime Error 1004")->call(
+	return cpp_class<CastError>()->call(Xt("Xtal Runtime Error 1004")->call(
 		Named(Xid(type), from->get_class()->object_name()), Named(Xid(required), to)
 	));
 }
 
 AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type){
-	return builtin()->member(Xid(ArgumentError))->call(Xt("Xtal Runtime Error 1001")->call(
+	return cpp_class<ArgumentError>()->call(Xt("Xtal Runtime Error 1001")->call(
 		Named(Xid(object), object), 
 		Named(Xid(no), no),
 		Named(Xid(required), required->object_name()),
@@ -59,13 +59,13 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 
 	if(pick){
 		if(secondary_key){
-			return UnsupportedError()->call(Xt("Xtal Runtime Error 1021")->call(
+			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1021")->call(
 				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key)),
 				Named(Xid(pick), pick)
 			));	
 		}
 		else{
-			return UnsupportedError()->call(Xt("Xtal Runtime Error 1021")->call(
+			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1021")->call(
 				Named(Xid(object), Xf("%s::%s")->call(target->object_name(), primary_key)),
 				Named(Xid(pick), pick)
 			));	
@@ -73,12 +73,12 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	}
 	else{
 		if(secondary_key){
-			return UnsupportedError()->call(Xt("Xtal Runtime Error 1015")->call(
+			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1015")->call(
 				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key))
 			));
 		}
 		else{
-			return UnsupportedError()->call(Xt("Xtal Runtime Error 1015")->call(
+			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1015")->call(
 				Named(Xid(object), Xf("%s::%s")->call(target->object_name(), primary_key))
 			));		
 		}

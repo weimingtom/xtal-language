@@ -120,7 +120,7 @@ bool Method::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<info_->min_param_count || (!(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM) && n>info_->max_param_count)){
 		if(info_->min_param_count==0 && info_->max_param_count==0){
-			XTAL_SET_EXCEPT(builtin()->member(Xid(ArgumentError))->call(
+			XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
 				Xt("Xtal Runtime Error 1007")->call(
 					Named(Xid(object), object_name()),
 					Named(Xid(value), n)
@@ -130,7 +130,7 @@ bool Method::check_arg(const VMachinePtr& vm){
 		}
 		else{
 			if(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM){
-				XTAL_SET_EXCEPT(builtin()->member(Xid(ArgumentError))->call(
+				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1005")->call(
 						Named(Xid(object), object_name()),
 						Named(Xid(min), info_->min_param_count),
@@ -140,7 +140,7 @@ bool Method::check_arg(const VMachinePtr& vm){
 				return false;
 			}
 			else{
-				XTAL_SET_EXCEPT(builtin()->member(Xid(ArgumentError))->call(
+				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1006")->call(
 						Named(Xid(object), object_name()),
 						Named(Xid(min), info_->min_param_count),

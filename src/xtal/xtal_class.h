@@ -314,6 +314,10 @@ public:
 	ClassInfo* info(){
 		return (ClassInfo*)scope_info_;
 	}
+
+	void unset_native(){
+		flags_ &= ~FLAG_NATIVE;
+	}
 	
 	bool is_native(){
 		return (flags_&FLAG_NATIVE)!=0;
@@ -333,14 +337,22 @@ public:
 
 	void prebind();
 
-	void set_prebinder(void (*binder)(const ClassPtr& cls)){
+	void set_prebinder(bind_class_fun_t binder){
 		prebinder_ = binder;
+	}
+
+	bind_class_fun_t prebinder(){
+		return prebinder_;
 	}
 
 	void bind();
 
-	void set_binder(void (*binder)(const ClassPtr& cls)){
+	void set_binder(bind_class_fun_t binder){
 		binder_ = binder;
+	}
+
+	bind_class_fun_t binder(){
+		return binder_;
 	}
 
 	void def_ctor(const AnyPtr& ctor_fun);

@@ -168,12 +168,13 @@ void Code::check_implicit_lookup(){
 			if(!ary){
 				ary = xnew<Array>();
 			}
-			ary->push_back(Xf("%s(%d)")->call(id, implicit_table_[i].lineno));
+
+			ary->push_back(Xf("%s(%d)")->call(unsupported_error(filelocal_, id, null), implicit_table_[i].lineno));
 		}
 	}
 
 	if(ary){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1030")->call(Named(Xid(name), ary))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1030")->call(Named(Xid(name), ary))));
 	}
 }
 

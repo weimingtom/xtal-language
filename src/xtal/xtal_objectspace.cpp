@@ -91,7 +91,6 @@ void ObjectSpace::initialize(){
 		&CppClassSymbol<void>::value,
 		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<Class>::value,
-		&CppClassSymbol<CppClass>::value,
 		&CppClassSymbol<Array>::value,
 		&CppClassSymbol<String>::value,
 	};

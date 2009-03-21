@@ -44,7 +44,7 @@ int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
 			return variables_info_[0].pos;
 		}	
 	}
-	XTAL_SET_EXCEPT(builtin()->member(Xid(InstanceVariableError))->call(Xt("Xtal Runtime Error 1003")));
+	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
 	return -1;
 }
 
@@ -122,21 +122,21 @@ void Class::inherit(const ClassPtr& cls){
 void Class::inherit_first(const ClassPtr& cls){
 	if(cls->is_singleton()){
 		if(!is_singleton()){
-			XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1031")));
+			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1031")));
 			return;
 		}
 	}
 	else{
 		if(cls->is_native()){
 			if(is_inherited_cpp_class()){
-				XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1019")));
+				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1019")));
 				return;
 			}
 		}
 	}
 
 	if(cls->is_final()){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1028")->call(Named(Xid(name), cls->object_name()))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1028")->call(Named(Xid(name), cls->object_name()))));
 		return;
 	}
 
@@ -155,7 +155,7 @@ void Class::inherit_first(const ClassPtr& cls){
 
 void Class::inherit_strict(const ClassPtr& cls){
 	if(cls->is_native()){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1029")->call(Named(Xid(name), cls->object_name()))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1029")->call(Named(Xid(name), cls->object_name()))));
 		return;
 	}
 
@@ -293,7 +293,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		invalidate_cache_member();
 	}
 	else{
-		XTAL_SET_EXCEPT(builtin()->member(Xid(RedefinedError))->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
+		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
 	}
 }
 
@@ -393,7 +393,7 @@ void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		XTAL_SET_EXCEPT(RuntimeError()->call(Xid(undefined)));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xid(undefined)));
 		return;
 	}
 	else{
@@ -492,6 +492,8 @@ bool Class::is_inherited_cpp_class(){
 }
 
 void Class::rawcall(const VMachinePtr& vm){
+	prebind();
+
 	if(is_native()){
 		if(const AnyPtr& ret = ctor()){
 			ret->rawcall(vm);
@@ -501,7 +503,7 @@ void Class::rawcall(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+			vm->set_except(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 		}
 	}
 	else{
@@ -544,7 +546,7 @@ void Class::s_new(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+			vm->set_except(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 		}
 	}
 	else{
@@ -631,7 +633,7 @@ void Singleton::rawcall(const VMachinePtr& vm){
 }
 
 void Singleton::s_new(const VMachinePtr& vm){
-	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
 }
 
 CppSingleton::CppSingleton()

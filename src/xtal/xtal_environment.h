@@ -266,16 +266,6 @@ void vmachine_take_back(const VMachinePtr& vm);
 /////////////////////////////////////////////////////
 
 /**
-* @brief Iteratorクラスを返す
-*/
-const ClassPtr& Iterator();
-
-/**
-* @brief Iterableクラスを返す
-*/
-const ClassPtr& Iterable();
-
-/**
 * @brief builtinシングルトンクラスを返す
 */
 const ClassPtr& builtin();
@@ -299,26 +289,6 @@ const StreamPtr& stdout_stream();
 * @brief stderrストリームオブジェクトを返す
 */
 const StreamPtr& stderr_stream();
-
-/**
-* @brief RuntimeErrorクラスを返す
-*/
-const ClassPtr& RuntimeError();
-
-/**
-* @brief CompileErrorクラスを返す
-*/
-const ClassPtr& CompileError();
-
-/**
-* @brief UnsupportedErrorクラスを返す
-*/
-const ClassPtr& UnsupportedError();
-
-/**
-* @brief RuntimeErrorクラスを返す
-*/
-const ClassPtr& ArgumentError();
 
 /**
 * @brief filesystemシングルトンオブジェクトを返す

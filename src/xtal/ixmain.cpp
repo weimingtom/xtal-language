@@ -14,7 +14,7 @@
 void ix(){
 	using namespace xtal;
 	CodeBuilder cb;
-	//cb.interactive_compile(xnew<InteractiveStream>());
+	cb.interactive_compile(xnew<InteractiveStream>());
 }
 
 int main(int argc, char** argv){

@@ -1137,7 +1137,7 @@ ElementPtr elem(const AnyPtr& a){
 		return xnew<Element>(Element::TYPE_CALL, p);
 	}
 
-	XTAL_SET_EXCEPT(RuntimeError()->call(Xt("Xtal Runtime Error 1026")));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1026")));
 	return null;
 }
 
@@ -1241,7 +1241,7 @@ void cap_vm(const VMachinePtr& vm){
 		return;
 	}
 
-	XTAL_SET_EXCEPT(ArgumentError()->call(Xt("Xtal Runtime Error 1027")));
+	XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(Xt("Xtal Runtime Error 1027")));
 }
 
 AnyPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
@@ -1285,7 +1285,7 @@ void bind_xpeg(const ClassPtr& xpeg){
 	{
 		ClassPtr p = cpp_class<Executor>();
 		p->set_object_name(Xid(Executor));
-		p->def_ctor(ctor<Executor, const AnyPtr&>()->param(0, Xid(stream_or_iterator), empty_string));
+		p->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid(stream_or_iterator), empty_string));
 		p->def_method(Xid(reset), &Executor::reset);
 		p->def_method(Xid(parse), &Executor::parse);
 		p->def_method(Xid(match), &Executor::match);
@@ -1300,7 +1300,7 @@ void bind_xpeg(const ClassPtr& xpeg){
 		p->def_method(Xid(suffix_values), &Executor::suffix_values);
 		p->def_method(Xid(errors), &Executor::errors);
 		p->def_method(Xid(read), &Executor::read);
-		p->def_method(Xid(peek), &Executor::peek)->param(0, Xid(n), 0);
+		p->def_method(Xid(peek), &Executor::peek)->param(1, Xid(n), 0);
 		p->def_method(Xid(tree), &Executor::tree);
 	}
 

@@ -35,6 +35,15 @@ public:
 
 	void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
 		int_t index = key->value;
+		
+		if(class_table_[index]->prebinder()){
+			cls->set_prebinder(class_table_[index]->prebinder());
+		}
+
+		if(class_table_[index]->binder()){
+			cls->set_binder(class_table_[index]->binder());
+		}
+
 		if(class_table_[index]){
 			class_table_[index]->dec_ref_count();
 		}

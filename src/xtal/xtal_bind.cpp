@@ -20,35 +20,33 @@ void Iterator_block_first(const VMachinePtr& vm){
 class ContinuationBlock : public Base{
 public:
 
-	ContinuationBlock(){}
+	ContinuationBlock(){
+		block_ = xnew<VMachine>();
+	}
 
 	void block_first(const VMachinePtr& vm){
-		block_ = xnew<VMachine>();
 		block_->assign(vm);
 		vm->return_result(null);
 	}
 
-	void rawcall(const VMachinePtr& vm){
-		call_ = xnew<VMachine>();
-		call_->assign(vm);
-		vm->assign(block_);
-		vm->return_result(to_smartptr(this));
+	void block_next(const VMachinePtr& vm){
+		swap(*block_, *vm);
+		vm->return_result();
 	}
 
-	void block_next(const VMachinePtr& vm){
-		vm->assign(call_);
-		vm->return_result();
+	void rawcall(const VMachinePtr& vm){
+		swap(*block_, *vm);
+		vm->return_result(to_smartptr(this));
 	}
 
 	void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & block_ & call_;
+		m & block_;
 	}
 
 private:
 
 	VMachinePtr block_;
-	VMachinePtr call_;
 };
 
 /*
@@ -124,15 +122,16 @@ MultiValue::to_s: method{
 );
 }
 
-XTAL_BIND(ContinuationBlock){
+XTAL_PREBIND(ContinuationBlock){
 	it->def_ctor(ctor<ContinuationBlock>());
+}
+
+XTAL_BIND(ContinuationBlock){
 	it->def_method(Xid(block_first), &ContinuationBlock::block_first);
 	it->def_method(Xid(block_next), &ContinuationBlock::block_next);
 	it->def_method(Xid(block_break), &ContinuationBlock::block_next);
 	it->def_method(Xid(block_catch), &ContinuationBlock::block_next);
 	it->def_method(Xid(op_call), &ContinuationBlock::rawcall);
-
-	builtin()->def(Xid(ContinuationBlock), it);
 }
 
 XTAL_PREBIND(String){
@@ -1743,6 +1742,8 @@ void bind(){
 	builtin()->def(Xid(NativeFun), cpp_class<NativeFun>());
 
 	set_cpp_class<NativeFunBindedThis>(cpp_class<NativeFun>());
+
+	builtin()->def(Xid(ContinuationBlock), cpp_class<ContinuationBlock>());
 
 	builtin()->def(Xid(Lib), cpp_class<Lib>());
 

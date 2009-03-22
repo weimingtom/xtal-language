@@ -92,7 +92,9 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 	params[i].name = key;
 	params[i].value = ap(value);
 
-	min_param_count_ = i;
+	if(min_param_count_>i){
+		min_param_count_ = i;
+	}
 
 	return to_smartptr(this);
 }

@@ -415,4 +415,8 @@ inline void copy_any(Any& v, const Any& u){
 	v = u;
 }
 
+inline void swap(Any& a, Any& b){
+	std::swap(a, b);
+}
+
 }

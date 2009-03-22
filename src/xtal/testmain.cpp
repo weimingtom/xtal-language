@@ -10,48 +10,36 @@
 
 #include "time.h"
 
+#include <iostream>
+
 using namespace xtal;
 
 #ifndef XTAL_NO_PARSER
 
-class A{};
-class AA: public A{};
+void debug_throw(const DebugInfoPtr& di){
+	di->exception()->p();
+}
+
+void foo( const AnyPtr& a, const AnyPtr& b )
+{
+	std::cout << "  a:" << (a ? a->to_s()->c_str() : "") << " b:" << (b ? b->to_s()->c_str() : "") << std::endl;
+}
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
 
-		//debug()->enable();
-		//debug()->set_throw_hook(fun(&debug_throw));
+	builtin()->def_fun( Xid(foo), &foo )->param(1,Xid(a),null)->param(2,Xid(b),null); 
+
+
+	enable_debug();
+	debug()->set_throw_hook(fun(&debug_throw));
 	
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-
-		class Foo{
-			public _foo; 
-		}
-
-		foo: Foo();
-		foo.foo = 100;
-		foo.foo.p;
-
-		Foo.overwrite(
-			class{
-				public _poo;
-				public _foo;
-
-				reloaded{
-					_poo = 112;
-				}
-
-				bar{
-					return _foo + _poo;
-				}
-			}
-		);
-		//foo.poo = 111;
-		foo.bar.p;
+foo();
+foo( b:1, a:2 ); 
 	))){
 		code->call();
 	}

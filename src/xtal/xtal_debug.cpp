@@ -5,7 +5,7 @@ namespace xtal{
 
 void DebugInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & file_name_ & fun_name_ & local_variables_;
+	m & file_name_ & fun_name_ & local_variables_frame_;
 }
 
 void Debug::enable(){
@@ -31,50 +31,50 @@ bool Debug::is_enabled(){
 void Debug::set_break_point_hook(const AnyPtr& hook){
 	break_point_hook_ = hook;
 	if(hook){
-		hook_setting_bit_ |= BREAKPOINT;
+		hook_setting_bit_ |= 1<<BREAKPOINT;
 	}
 	else{
-		hook_setting_bit_ &= ~BREAKPOINT;
+		hook_setting_bit_ &= ~(1<<BREAKPOINT);
 	}
 }
 
 void Debug::set_call_hook(const AnyPtr& hook){
 	call_hook_ = hook;
 	if(hook){
-		hook_setting_bit_ |= BREAKPOINT_CALL;
+		hook_setting_bit_ |= 1<<BREAKPOINT_CALL;
 	}
 	else{
-		hook_setting_bit_ &= ~BREAKPOINT_CALL;
+		hook_setting_bit_ &= ~(1<<BREAKPOINT_CALL);
 	}
 }
 
 void Debug::set_return_hook(const AnyPtr& hook){
 	return_hook_ = hook;
 	if(hook){
-		hook_setting_bit_ |= BREAKPOINT_RETURN;
+		hook_setting_bit_ |= 1<<BREAKPOINT_RETURN;
 	}
 	else{
-		hook_setting_bit_ &= ~BREAKPOINT_RETURN;
+		hook_setting_bit_ &= ~(1<<BREAKPOINT_RETURN);
 	}
 }
 
 void Debug::set_throw_hook(const AnyPtr& hook){
 	throw_hook_ = hook;
 	if(hook){
-		hook_setting_bit_ |= BREAKPOINT_THROW;
+		hook_setting_bit_ |= 1<<BREAKPOINT_THROW;
 	}
 	else{
-		hook_setting_bit_ &= ~BREAKPOINT_THROW;
+		hook_setting_bit_ &= ~(1<<BREAKPOINT_THROW);
 	}
 }
 
 void Debug::set_assert_hook(const AnyPtr& hook){
 	assert_hook_ = hook;
 	if(hook){
-		hook_setting_bit_ |= BREAKPOINT_ASSERT;
+		hook_setting_bit_ |= 1<<BREAKPOINT_ASSERT;
 	}
 	else{
-		hook_setting_bit_ &= ~BREAKPOINT_ASSERT;
+		hook_setting_bit_ &= ~(1<<BREAKPOINT_ASSERT);
 	}
 }
 

@@ -10,15 +10,17 @@ public:
 	int_t line(){ return line_; }
 	const StringPtr& file_name(){ return file_name_; }
 	const StringPtr& fun_name(){ return fun_name_; }
-	const StringPtr& message(){ return message_; }
-	const FramePtr& local_variables(){ return local_variables_; }
+	const StringPtr& assertion_message(){ return assertion_message_; }
+	const AnyPtr& exception(){ return exception_; }
+	const FramePtr& local_variables_frame(){ return local_variables_frame_; }
 
 	void set_kind(int_t v){ kind_ = v; }
 	void set_line(int_t v){ line_ = v; }
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
 	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
-	void set_message(const StringPtr& v){ message_ = v; }
-	void set_local_variables(const FramePtr& v){ local_variables_ = v; }
+	void set_assertion_message(const StringPtr& v){ assertion_message_ = v; }
+	void set_exception(const AnyPtr& e){ exception_ = e; }
+	void set_local_variables_frame(const FramePtr& v){ local_variables_frame_ = v; }
 
 	SmartPtr<DebugInfo> clone(){
 		return xnew<DebugInfo>(*this);
@@ -32,8 +34,9 @@ private:
 	int_t line_;
 	StringPtr file_name_;
 	StringPtr fun_name_;
-	StringPtr message_;
-	FramePtr local_variables_;
+	StringPtr assertion_message_;
+	AnyPtr exception_;
+	FramePtr local_variables_frame_;
 };
 
 typedef SmartPtr<DebugInfo> DebugInfoPtr;
@@ -58,7 +61,7 @@ public:
 	void disable();
 
 	/**
-	* @brief デバッグ機能を有効にする
+	* @brief デバッグ機能を強制的に有効にする
 	* デバッグ機能はデフォルトでは無効になっている。
 	*/
 	void enable_force(int_t count){

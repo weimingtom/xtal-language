@@ -529,7 +529,11 @@ StringPtr Class::object_name(){
 		}
 	}
 
-	return name_;
+	if(name_){
+		return name_;
+	}
+
+	return Xid(AnonymousClass);
 }
 
 void Class::set_object_name(const StringPtr& name){

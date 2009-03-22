@@ -800,6 +800,24 @@ public:
 		debug_info_ = vm->debug_info_;
 	}
 
+	friend void swap(VMachine& a, VMachine& b){
+		using namespace std;
+
+		std::swap(a.resume_pc_, b.resume_pc_);
+		std::swap(a.yield_result_count_, b.yield_result_count_);
+
+		swap(a.stack_, b.stack_);
+		swap(a.fun_frames_, b.fun_frames_);
+
+		swap(a.except_frames_, b.except_frames_);
+
+		swap(a.except_[0], b.except_[0]);
+		swap(a.except_[1], b.except_[1]);
+		swap(a.except_[2], b.except_[2]);
+
+		swap(a.debug_info_, b.debug_info_);
+	}
+
 protected:
 
 	virtual void visit_members(Visitor& m);

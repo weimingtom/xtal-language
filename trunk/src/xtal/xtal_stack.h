@@ -194,6 +194,12 @@ public:
 			reverse_at_unchecked(i)=val;
 		}
 	}
+
+	friend void swap(FastStack<T>& a, FastStack<T>& b){
+		std::swap(a.current_, b.current_);
+		std::swap(a.begin_, b.begin_);
+		std::swap(a.end_, b.end_);
+	}
 };
 
 template<class T>
@@ -475,6 +481,14 @@ public:
 
 	void release();
 
+
+	friend void swap(PODStackBase& a, PODStackBase& b){
+		std::swap(a.current_, b.current_);
+		std::swap(a.begin_, b.begin_);
+		std::swap(a.end_, b.end_);
+		std::swap(a.one_size_, b.one_size_);
+	}
+
 public:
 
 	void attach(void* p);
@@ -528,6 +542,10 @@ public:
 	bool empty() const{ return impl_.empty(); }
 	void clear(){ impl_.clear(); }
 	void release(){ impl_.release(); }
+
+	friend void swap(PODStack<T>& a, PODStack<T>& b){
+		swap(a.impl, b.impl);
+	}
 
 public:
 	void attach(T* p){ impl_.attach(p); }

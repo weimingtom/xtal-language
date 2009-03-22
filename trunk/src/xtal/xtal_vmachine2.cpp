@@ -460,7 +460,10 @@ void VMachine::set_except_0(const Any& e){
 }
 	
 void VMachine::make_debug_info(const inst_t* pc, int_t kind){
-	if(!debug_info_){ debug_info_ = xnew<DebugInfo>(); }
+	if(!debug_info_){ 
+		debug_info_ = xnew<DebugInfo>(); 
+	}
+
 	debug_info_->set_kind(kind);
 	if(fun()){
 		debug_info_->set_line( fun()->code()->compliant_lineno(pc));
@@ -474,13 +477,20 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	}
 
 	if(kind==BREAKPOINT_ASSERT){
-		debug_info_->set_message(pop()->to_s());
+		debug_info_->set_assertion_message(pop()->to_s());
 	}
 	else{
-		debug_info_->set_message(empty_string);
+		debug_info_->set_assertion_message(empty_string);
 	}
 
-	debug_info_->set_local_variables(ff().outer());
+	if(kind==BREAKPOINT_THROW){
+		debug_info_->set_exception(ap(except_[0]));
+	}
+	else{
+		debug_info_->set_exception(null);
+	}
+
+	debug_info_->set_local_variables_frame(ff().outer());
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
@@ -492,39 +502,39 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 				guard(const SmartPtr<Debug>& debug):debug_(debug){ count_ = debug_->disable_force(); }
 				~guard(){ debug_->enable_force(count_); }
 			} g(debug_);
+
+			make_debug_info(pc, kind);
+
+			AnyPtr e = ap(except_[0]);
+			except_[0] = null;
 		
 			switch(kind){
 				XTAL_CASE(BREAKPOINT){
 					if(const AnyPtr& hook = debug_->break_point_hook()){
-						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_RETURN){
 					if(const AnyPtr& hook = debug_->return_hook()){
-						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_CALL){
 					if(const AnyPtr& hook = debug_->call_hook()){
-						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_THROW){
 					if(const AnyPtr& hook = debug_->throw_hook()){
-						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_ASSERT){
 					if(const AnyPtr& hook = debug_->assert_hook()){
-						make_debug_info(pc, kind);
 						hook->call(debug_info_);
 					}
 					else{
@@ -532,6 +542,8 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 					}
 				}
 			}
+
+			except_[0] = e;
 		}
 	}
 }

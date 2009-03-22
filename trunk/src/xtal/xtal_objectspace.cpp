@@ -249,6 +249,7 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
+
 	{
 		ScopeCounter cc(&cycle_count_);
 		
@@ -487,7 +488,7 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 
 void ObjectSpace::register_gc_observer(GCObserver* p){
 	if(gcobservers_current_==gcobservers_end_){
-		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
+		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_, 64);
 	}
 	*gcobservers_current_++ = p;
 }

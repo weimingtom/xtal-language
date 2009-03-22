@@ -12,7 +12,7 @@ struct MemberCacheTable{
 		AnyPtr member;
 	};
 
-	enum{ CACHE_MAX = 256, CACHE_MASK = CACHE_MAX-1 };
+	enum{ CACHE_MAX = 128, CACHE_MASK = CACHE_MAX-1 };
 
 	static uint_t calc_index(uint_t hash){
 		return hash & CACHE_MASK;
@@ -231,8 +231,8 @@ struct IsCacheTable{
 struct CtorCacheTable{
 	struct Unit{
 		uint_t mutate_count;
-		AnyPtr target_class;
 		uint_t kind;
+		AnyPtr target_class;
 	};
 
 	enum{ CACHE_MAX = 64, CACHE_MASK = CACHE_MAX-1 };

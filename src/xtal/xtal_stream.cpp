@@ -111,7 +111,7 @@ uint_t Stream::size(){
 }
 
 void Stream::block_first(const VMachinePtr& vm){
-	vm->return_result(from_this(this), from_this(this));
+	vm->return_result(to_smartptr(this), to_smartptr(this));
 }
 
 void Stream::block_next(const VMachinePtr& vm){
@@ -124,12 +124,12 @@ void Stream::block_break(const VMachinePtr& vm){
 }
 
 void Stream::serialize(const AnyPtr& obj){
-	Serializer s(from_this(this));
+	Serializer s(to_smartptr(this));
 	s.serialize(obj);
 }
 
 AnyPtr Stream::deserialize(){
-	Serializer s(from_this(this));
+	Serializer s(to_smartptr(this));
 	return s.deserialize();
 }
 

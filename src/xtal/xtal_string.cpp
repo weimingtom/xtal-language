@@ -103,7 +103,7 @@ void StringEachIter::block_next(const VMachinePtr& vm){
 		return;
 	}
 
-	vm->return_result(from_this(this), ss_->get_s(1));
+	vm->return_result(to_smartptr(this), ss_->get_s(1));
 }
 
 
@@ -115,7 +115,7 @@ void ChRangeIter::block_next(const VMachinePtr& vm){
 
 	StringPtr temp = it_;
 	it_ = ch_inc(it_->data(), it_->data_size());
-	vm->return_result(from_this(this), temp);
+	vm->return_result(to_smartptr(this), temp);
 }
 
 void ChRangeIter::visit_members(Visitor& m){
@@ -124,7 +124,7 @@ void ChRangeIter::visit_members(Visitor& m){
 }
 
 AnyPtr ChRange::each(){
-	return xnew<ChRangeIter>(from_this(this));
+	return xnew<ChRangeIter>(to_smartptr(this));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -324,7 +324,7 @@ uint_t String::data_size(){
 }
 
 StringPtr String::clone(){
-	return from_this(this);
+	return to_smartptr(this);
 }
 
 const IDPtr& String::intern(){
@@ -348,7 +348,7 @@ bool String::is_interned(){
 }
 
 StringPtr String::to_s(){
-	return from_this(this);
+	return to_smartptr(this);
 }
 
 int_t String::to_i(){
@@ -398,7 +398,7 @@ float_t String::to_f(){
 }
 
 AnyPtr String::each(){
-	return xnew<StringEachIter>(from_this(this));
+	return xnew<StringEachIter>(to_smartptr(this));
 }
 
 bool String::is_ch(){
@@ -421,7 +421,7 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	}
 
 	if(length()==1 && right->length()==1){
-		return xnew<ChRange>(from_this(this), right);
+		return xnew<ChRange>(to_smartptr(this), right);
 	}
 	else{
 		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1023")));

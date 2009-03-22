@@ -35,7 +35,7 @@ public:
 
 	void block_next(const VMachinePtr& vm){
 		if(const char_t* next = filesystem_lib()->next_entries(impl_)){
-			vm->return_result(from_this(this), xnew<String>(next));
+			vm->return_result(to_smartptr(this), xnew<String>(next));
 		}
 		else{
 			vm->return_result(null, null);

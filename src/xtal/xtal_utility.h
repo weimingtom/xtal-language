@@ -524,6 +524,9 @@ enum PrimitiveType{
 	TYPE_NATIVE_FUN_BINDED_THIS = 13,
 
 	/*
+	TYPE_FRAME = 14,
+	TYPE_CLASS = 15,
+
 	TYPE_METHOD,
 	TYPE_FUN,
 	TYPE_LAMBDA,
@@ -701,7 +704,7 @@ struct ScopeInfo{
 
 struct ClassInfo : public ScopeInfo{
 	ClassInfo(u16 size = 0, u16 offset = 0)
-		:instance_variable_size(size), instance_variable_identifier_offset(offset){}
+		:instance_variable_size(size), instance_variable_identifier_offset(offset), mixins(0){}
 
 	u16 instance_variable_size;
 	u16 instance_variable_identifier_offset;

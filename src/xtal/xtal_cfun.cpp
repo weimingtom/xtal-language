@@ -94,7 +94,7 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 
 	min_param_count_ = i;
 
-	return from_this(this);
+	return to_smartptr(this);
 }
 
 void NativeFun::visit_members(Visitor& m){
@@ -143,8 +143,8 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 		{
 			const AnyPtr& arg = vm->arg_this();
 			if(param_types[0]){
-				if(!arg->is(from_this(param_types[0]))){
-					vm->set_except(argument_error(vm->ff().hint()->object_name(), 0, from_this(param_types[0]), arg->get_class()));
+				if(!arg->is(to_smartptr(param_types[0]))){
+					vm->set_except(argument_error(vm->ff().hint()->object_name(), 0, to_smartptr(param_types[0]), arg->get_class()));
 					return;
 				}
 			}
@@ -158,8 +158,8 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 			const AnyPtr& arg = vm->arg_unchecked(i);
 
 			if(param_types[i+1]){
-				if(!arg->is(from_this(param_types[i+1]))){ 
-					vm->set_except(argument_error(vm->ff().hint()->object_name(), i+1, from_this(param_types[i+1]), arg->get_class()));
+				if(!arg->is(to_smartptr(param_types[i+1]))){ 
+					vm->set_except(argument_error(vm->ff().hint()->object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
 					return;
 				}
 			}

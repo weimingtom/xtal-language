@@ -19,13 +19,13 @@ Code::Code()
 	filelocal_->set_object_force(500);
 	filelocal_->inherit(builtin());
 	filelocal_->def(Xid(filelocal), filelocal_);
-	filelocal_->def(Xid(code), from_this(this));
+	filelocal_->def(Xid(code), to_smartptr(this));
 	filelocal_->def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
 
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Method>(null, from_this(this), (FunInfo*)0);
+	first_fun_ = xnew<Method>(null, to_smartptr(this), (FunInfo*)0);
 }
 
 void Code::set_lineno_info(uint_t line){
@@ -207,7 +207,7 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 	const inst_t* pc = data()+start;
 	StringPtr temp;
 	MemoryStreamPtr ms(xnew<MemoryStream>());
-	CodePtr code(from_this(this));
+	CodePtr code(to_smartptr(this));
 
 	for(; pc < data() + end;){switch(*pc){
 		XTAL_NODEFAULT;

@@ -83,8 +83,9 @@ void ObjectSpace::initialize(){
 	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
 	static CppClassSymbolData key;
+	class_table_.resize(key.value);
 	for(uint_t i=0; i<key.value; ++i){
-		class_table_.push_back(0);
+		class_table_[i] = 0;
 	}
 
 	CppClassSymbolData* symbols[] = { 
@@ -196,7 +197,7 @@ void ObjectSpace::disable_gc(){
 	
 void ObjectSpace::expand_objects_list(){
 	if(objects_list_current_==objects_list_end_){
-		expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_, 4);
+		expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_, 1);
 		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
 			RefCountingBase** begin = 0;
 			RefCountingBase** current = 0;
@@ -235,6 +236,15 @@ void ObjectSpace::print_alive_objects(){
 	printf("m %d\n", m);
 
 	//printf("used_memory %d\n", used_memory);
+}
+
+uint_t ObjectSpace::alive_object_count(){
+	return (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+}
+
+RefCountingBase* ObjectSpace::alive_object(uint_t i){
+	ConnectedPointer current(i, objects_list_begin_);
+	return *current;
 }
 
 void ObjectSpace::gc(){

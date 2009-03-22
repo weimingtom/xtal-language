@@ -316,7 +316,7 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){
 			if(resume_pc_!=0){
-				vm->push(from_this(fun));
+				vm->push(to_smartptr(fun));
 			}
 			else{
 				vm->push(null);

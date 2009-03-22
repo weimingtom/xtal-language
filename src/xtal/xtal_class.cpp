@@ -28,7 +28,7 @@ bool InstanceVariables::is_included(ClassInfo* class_info){
 	if(info.class_info == class_info){
 		return true;
 	}
-	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
+	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
 			return true;
@@ -38,7 +38,7 @@ bool InstanceVariables::is_included(ClassInfo* class_info){
 }
 
 int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
-	for(int_t i = 1, size = (int_t)variables_info_.size(); i<size; ++i){
+	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
 			return variables_info_[0].pos;
@@ -47,6 +47,24 @@ int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
 	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
 	return -1;
 }
+
+void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
+	for(uint_t i = 0, size = variables_info_.size(); i<size; ++i){
+		if(variables_info_[i].class_info==from){
+			int_t pos = variables_info_[i].pos;
+			variables_info_.erase(i, 1);
+			for(uint_t j = 0, jsize = variables_info_.size(); j<jsize; ++j){
+				if(variables_info_[i].pos>pos){
+					variables_info_[i].pos -= from->instance_variable_size;
+				}
+			}
+			variables_.erase(pos, from->instance_variable_size);
+			init_variables(to);
+			return;
+		}	
+	}
+}
+
 
 EmptyInstanceVariables::EmptyInstanceVariables()
 	:InstanceVariables(uninit_t()){
@@ -100,9 +118,45 @@ Class::~Class(){
 }
 
 void Class::overwrite(const ClassPtr& p){
-	if(!is_native()){
-		operator=(*p);
-		inherited_classes_ = p->inherited_classes_;
+	if(!is_native() && !p->is_native()){
+		for(int_t i=0, sz=p->inherited_classes_.size(); i<sz; ++i){
+			inherit(to_smartptr(p->inherited_classes_[i]));
+		}		
+		
+		if(p->map_members_){
+			for(map_t::iterator it=p->map_members_->begin(), last=p->map_members_->end(); it!=last; ++it){
+				overwrite_member(it->first.primary_key, p->members_.at(it->second.num), it->first.secondary_key, it->second.flags);
+			}
+		}
+
+		for(uint_t i=0; i<alive_object_count(); ++i){
+			AnyPtr obj = to_smartptr(alive_object(i));
+			if(type(obj)==TYPE_BASE){
+				if(obj->is(to_smartptr(this))){
+					AnyPtr data = obj->serial_save(to_smartptr(this));
+					if(pvalue(obj)->instance_variables()){
+						pvalue(obj)->instance_variables()->replace((ClassInfo*)scope_info_, (ClassInfo*)p->scope_info_);
+					}
+					obj->serial_load(p, data);
+
+					{
+						Key key = {Xid(reloaded), null};
+						map_t::iterator it = map_members_->find(key);
+						if(it!=map_members_->end()){
+							const VMachinePtr& vm = vmachine();
+							vm->setup_call(0);
+							vm->set_arg_this(obj);
+							members_.at(it->second.num)->rawcall(vm);
+							vm->cleanup_call();
+						}
+					}
+				}
+			}
+		}
+
+		outer_ = p->outer_;
+		code_ = p->code_;
+		scope_info_ = p->scope_info_;
 	}
 }
 
@@ -163,7 +217,7 @@ void Class::inherit_strict(const ClassPtr& cls){
 }
 
 AnyPtr Class::inherited_classes(){
-	return xnew<ClassInheritedClassesIter>(from_this(this));
+	return xnew<ClassInheritedClassesIter>(to_smartptr(this));
 }
 
 void Class::def_ctor(const AnyPtr& ctor_fun){
@@ -175,7 +229,7 @@ void Class::def_ctor(const AnyPtr& ctor_fun){
 const AnyPtr& Class::ctor(){
 	prebind();
 
-	if(cache_ctor(from_this(this), 0)){
+	if(cache_ctor(to_smartptr(this), 0)){
 		return ctor_;
 	}
 
@@ -201,7 +255,7 @@ void Class::def_serial_ctor(const AnyPtr& ctor_fun){
 const AnyPtr& Class::serial_ctor(){
 	prebind();
 
-	if(cache_ctor(from_this(this), 1)){
+	if(cache_ctor(to_smartptr(this), 1)){
 		return serial_ctor_;
 	}
 
@@ -261,7 +315,7 @@ void Class::def_double_dispatch_method(const IDPtr& primary_key, int_t accessibi
 }
 
 void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::double_dispatch_fun(from_this(this), primary_key), null, accessibility);
+	def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), null, accessibility);
 }
 
 const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
@@ -269,7 +323,7 @@ const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr
 }
 
 const NativeFunPtr& Class::def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, from_this(this)), secondary_key, accessibility));
+	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, to_smartptr(this)), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
@@ -282,6 +336,33 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 	return null;
 }
 
+void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	Key key = {primary_key, secondary_key};
+	map_t::iterator it = map_members_->find(key);
+	if(it==map_members_->end()){
+		Value val = {members_.size(), accessibility};
+		map_members_->insert(key, val);
+		members_.push_back(value);
+		value->set_object_parent(to_smartptr(this));
+		invalidate_cache_member();
+	}
+	else{
+		if(const ClassPtr& dest = ptr_cast<Class>(members_.at(it->second.num))){
+			if(const ClassPtr& src = ptr_cast<Class>(value)){
+				if(!dest->is_native() && !src->is_native()){
+					dest->overwrite(src);
+					invalidate_cache_member();
+					return;
+				}
+			}
+		}
+
+		members_.set_at(it->second.num, value);
+		value->set_object_parent(to_smartptr(this));
+		invalidate_cache_member();
+	}
+}
+
 void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
@@ -289,7 +370,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		Value val = {members_.size(), accessibility};
 		map_members_->insert(key, val);
 		members_.push_back(value);
-		value->set_object_parent(from_this(this));
+		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
 	else{
@@ -367,7 +448,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = do_member(primary_key, from_this(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
+			const AnyPtr& ret = do_member(primary_key, to_smartptr(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -409,7 +490,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
-	value->set_object_parent(from_this(this));
+	value->set_object_parent(to_smartptr(this));
 	invalidate_cache_member();
 }
 
@@ -419,7 +500,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 		HaveParent::set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_.at(it->second.num)->set_object_parent(from_this(this));
+				members_.at(it->second.num)->set_object_parent(to_smartptr(this));
 			}
 		}
 	}
@@ -516,7 +597,7 @@ void Class::rawcall(const VMachinePtr& vm){
 		}
 
 		if(type(instance)==TYPE_BASE){
-			pvalue(instance)->set_class(from_this(this));
+			pvalue(instance)->set_class(to_smartptr(this));
 		}
 
 		init_instance(instance, vm);
@@ -559,7 +640,7 @@ void Class::s_new(const VMachinePtr& vm){
 		}
 
 		if(type(instance)==TYPE_BASE){
-			pvalue(instance)->set_class(from_this(this));
+			pvalue(instance)->set_class(to_smartptr(this));
 			init_instance(instance, vm);
 		}
 
@@ -568,7 +649,7 @@ void Class::s_new(const VMachinePtr& vm){
 }
 
 AnyPtr Class::ancestors(){
-	if(raweq(from_this(this), cpp_class<Any>())){
+	if(raweq(to_smartptr(this), cpp_class<Any>())){
 		return null;
 	}			
 	
@@ -589,7 +670,7 @@ void Class::prebind(){
 	if(prebinder_){
 		void (*temp)(const ClassPtr&) = prebinder_;
 		prebinder_ = 0;
-		temp(from_this(this));
+		temp(to_smartptr(this));
 	}
 }
 
@@ -598,26 +679,26 @@ void Class::bind(){
 		prebind();
 		void (*temp)(const ClassPtr&) = binder_;
 		binder_ = 0;
-		temp(from_this(this));
+		temp(to_smartptr(this));
 	}
 }
 
 Singleton::Singleton(const StringPtr& name)
 	:Class(name){
 	flags_ |= FLAG_SINGLETON;
-	Base::set_class(from_this(this));
+	Base::set_class(to_smartptr(this));
 	inherit(cpp_class<Class>());
 }
 
 Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	:Class(outer, code, info){
 	flags_ |= FLAG_SINGLETON;
-	Base::set_class(from_this(this));
+	Base::set_class(to_smartptr(this));
 	inherit(cpp_class<Class>());
 }
 
 void Singleton::init_singleton(const VMachinePtr& vm){
-	SingletonPtr instance = from_this(this);
+	SingletonPtr instance = to_smartptr(this);
 	init_instance(instance, vm);
 	
 	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
@@ -639,7 +720,7 @@ void Singleton::s_new(const VMachinePtr& vm){
 CppSingleton::CppSingleton()
 :Class(cpp_class_t()){
 	flags_ |= FLAG_SINGLETON;
-	Base::set_class(from_this(this));
+	Base::set_class(to_smartptr(this));
 	inherit(cpp_class<Class>());
 }
 

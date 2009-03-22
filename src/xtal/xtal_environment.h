@@ -174,6 +174,10 @@ void disable_gc();
 */
 void enable_gc();
 
+uint_t alive_object_count();
+
+RefCountingBase* alive_object(uint_t i);
+
 /////////////////////////////////////////////////////
 
 /**

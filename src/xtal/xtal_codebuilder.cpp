@@ -1171,11 +1171,15 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	cf().class_info_num = result_->class_info_table_.size();
 
 	int_t ivar_num = 0;
+	int_t instance_variable_identifier_offset = result_->identifier_table_->size();
 	Xfor_cast(const ExprPtr& v, e->class_stmts()){
 		if(v->itag()==EXPR_CDEFINE_IVAR){
 			ClassFrame::Entry entry;
 			entry.name = v->cdefine_ivar_name();
 			cf().entries.push_back(entry);
+
+			result_->identifier_table_->push_back(entry.name);
+
 			ivar_num++;
 		}
 	}
@@ -1188,20 +1192,13 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	info.mixins = mixins;
 	info.variable_size = vf().entries.size();
 	info.instance_variable_size = ivar_num;
+	info.instance_variable_identifier_offset = instance_variable_identifier_offset;
 	
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
-	info.instance_variable_identifier_offset = result_->identifier_table_->size();
-	Xfor_cast(const ExprPtr& v, e->class_stmts()){
-		if(v->itag()==EXPR_CDEFINE_IVAR){
-			if(v->cdefine_ivar_term()){
-				result_->identifier_table_->push_back(v->cdefine_ivar_name());
-			}			
-		}
-	}
 
 	put_inst(InstClassBegin(class_info_num));
 	result_->class_info_table_.push_back(info);

@@ -1008,7 +1008,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_CALL){
 			if(scanner_->eos()){ return false; }
-			AnyPtr ret = e->param1->call(from_this(this));
+			AnyPtr ret = e->param1->call(to_smartptr(this));
 			return (ret || raweq(ret, undefined))!=e->inv;
 		}
 

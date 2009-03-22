@@ -53,12 +53,12 @@ bool Float::op_in(const FloatRangePtr& range){
 
 
 AnyPtr IntRange::each(){
-	return xnew<IntRangeIter>(from_this(this));
+	return xnew<IntRangeIter>(to_smartptr(this));
 }
 
 void IntRangeIter::block_next(const VMachinePtr& vm){
 	if(it_<end_){
-		vm->return_result(from_this(this), it_);
+		vm->return_result(to_smartptr(this), it_);
 		++it_;
 	}
 	else{
@@ -83,7 +83,7 @@ HaveParent::~HaveParent(){
 
 const ClassPtr& HaveParent::object_parent(){
 	if(parent_){
-		return from_this(parent_);
+		return to_smartptr(parent_);
 	}
 	else{
 		return null;
@@ -123,7 +123,7 @@ RefCountingHaveParent::~RefCountingHaveParent(){
 
 const ClassPtr& RefCountingHaveParent::object_parent(){
 	if(parent_){
-		return from_this(parent_);
+		return to_smartptr(parent_);
 	}
 	else{
 		return null;

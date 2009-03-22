@@ -224,7 +224,7 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 AnyPtr Fiber::reset(){
 	halt();
 	alive_ = true;
-	return from_this(this);
+	return to_smartptr(this);
 }
 
 }

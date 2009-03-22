@@ -4,7 +4,7 @@
 namespace xtal{
 
 inline const ClassPtr& Base::get_class(){ 
-	return from_this(class_); 
+	return to_smartptr(class_); 
 }
 
 inline void inc_ref_count_force(const Any& v){

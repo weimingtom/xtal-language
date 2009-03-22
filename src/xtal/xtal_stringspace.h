@@ -225,7 +225,7 @@ public:
 			
 	void block_next(const VMachinePtr& vm){
 		if(iter_!=last_){
-			vm->return_result(from_this(this), iter_->second);
+			vm->return_result(to_smartptr(this), iter_->second);
 			++iter_;
 		}
 		else{

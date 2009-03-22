@@ -402,10 +402,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_fwd.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\xtal\xtal_hashtable.h"
 				>
 			</File>

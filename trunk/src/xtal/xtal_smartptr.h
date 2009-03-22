@@ -326,26 +326,26 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 //////////////////////////////////////////////////////////////
 
 template<class T>
-inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_BASE>, const T* p){
+inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_BASE>, const T* p){
 	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 
 template<class T>
-inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_RCBASE>, const T* p){
+inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_RCBASE>, const T* p){
 	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 
 template<class T>
-inline const SmartPtr<T>& from_this(SmartPtrSelector<INHERITED_ANY>, const T* p){
+inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_ANY>, const T* p){
 	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
 }
 
 /**
-* @brief thisƒ|ƒCƒ“ƒ^‚ğSmartPtr<T>‚É•ÏŠ·‚·‚éŠÖ”
+* @brief T*‚ğSmartPtr<T>‚É•ÏŠ·‚·‚éŠÖ”
 */
 template<class T>
-inline const SmartPtr<T>& from_this(const T* p){
-	return from_this(SmartPtrSelector<InheritedN<T>::value>(), p);
+inline const SmartPtr<T>& to_smartptr(const T* p){
+	return to_smartptr(SmartPtrSelector<InheritedN<T>::value>(), p);
 }
 
 //////////////////////////////////////////////////////////////

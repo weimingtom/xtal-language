@@ -12,7 +12,7 @@ void MembersIter::block_next(const VMachinePtr& vm){
 	while(true){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
 			if(it_->second.flags==0){
-				vm->return_result(from_this(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_.at(it_->second.num));
+				vm->return_result(to_smartptr(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_.at(it_->second.num));
 				++it_;
 				return;
 			}
@@ -91,7 +91,7 @@ AnyPtr Frame::members(){
 		}
 	}
 
-	return xnew<MembersIter>(from_this(this));
+	return xnew<MembersIter>(to_smartptr(this));
 }
 
 }

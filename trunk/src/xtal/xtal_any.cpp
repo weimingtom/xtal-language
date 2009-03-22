@@ -393,7 +393,7 @@ AnyPtr Any::serial_save(const ClassPtr& p) const{
 			ClassInfo* info = p->info();
 			if(info->instance_variable_size!=0){	
 				MapPtr insts = xnew<Map>();
-				for(int_t i=0; i<(int_t)info->instance_variable_size; ++i){
+				for(uint_t i=0; i<info->instance_variable_size; ++i){
 					insts->set_at(code->identifier(info->instance_variable_identifier_offset+i), iv->variable(i, info));
 				}
 
@@ -414,7 +414,7 @@ void Any::serial_load(const ClassPtr& p, const AnyPtr& v) const{
 			if(const CodePtr& code = p->code()){
 				ClassInfo* info = p->info();
 				if(info->instance_variable_size!=0){	
-					for(int_t i=0; i<(int_t)info->instance_variable_size; ++i){
+					for(uint_t i=0; i<info->instance_variable_size; ++i){
 						StringPtr str = code->identifier(info->instance_variable_identifier_offset+i);
 						iv->set_variable(i, info, insts->at(code->identifier(info->instance_variable_identifier_offset+i)));
 					}

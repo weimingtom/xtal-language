@@ -116,7 +116,7 @@ namespace xtal{
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
 	CastResult<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
-	const ExprPtr& set_##Name(Type v){ set_at(N, v); return from_this(this); }
+	const ExprPtr& set_##Name(Type v){ set_at(N, v); return to_smartptr(this); }
 
 class Expr;
 typedef SmartPtr<Expr> ExprPtr;
@@ -137,7 +137,7 @@ public:
 
 	const ExprPtr& push(const AnyPtr& v){
 		push_back(v);
-		return from_this(this);
+		return to_smartptr(this);
 	}
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, una_term);

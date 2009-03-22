@@ -34,7 +34,7 @@ void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 			all = false;
 	}
 	if(all){
-		vm->return_result(from_this(this), value);
+		vm->return_result(to_smartptr(this), value);
 	}
 	else{
 		vm->return_result(null, null);

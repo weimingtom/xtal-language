@@ -170,9 +170,11 @@ void Array::erase(int_t start, int_t n){
 	}
 
 	XTAL_ASSERT(0<=pos && (uint_t)pos<size_);
-	XTAL_ASSERT(0<=pos+n && (uint_t)pos+n<size_);
+	//XTAL_ASSERT(0<=pos+n && (uint_t)pos+n<size_);
 
-	std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-(pos+n)));
+	if(size_-(pos+n)!=0){
+		std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-(pos+n)));
+	}
 	size_ -= n;
 }
 
@@ -251,7 +253,7 @@ ArrayPtr Array::cat_assign(const ArrayPtr& a){
 	for(uint_t i = 0, size = a->size(); i<size; ++i){
 		push_back(a->at(i));
 	}
-	return from_this(this);
+	return to_smartptr(this);
 }
 	
 StringPtr Array::join(const StringPtr& sep){
@@ -278,11 +280,11 @@ bool Array::op_eq(const ArrayPtr& other){
 }
 
 AnyPtr Array::each(){
-	return xnew<ArrayIter>(from_this(this));
+	return xnew<ArrayIter>(to_smartptr(this));
 }
 
 AnyPtr Array::reverse(){
-	return xnew<ArrayIter>(from_this(this), true);
+	return xnew<ArrayIter>(to_smartptr(this), true);
 }
 
 void Array::assign(const AnyPtr& iterator){
@@ -335,7 +337,7 @@ ArrayIter::ArrayIter(const ArrayPtr& a, bool reverse)
 void ArrayIter::block_next(const VMachinePtr& vm){
 	++index_;
 	if(index_<=array_->size()){
-		vm->return_result(from_this(this), array_->at(reverse_ ? array_->size()-index_ : index_-1));
+		vm->return_result(to_smartptr(this), array_->at(reverse_ ? array_->size()-index_ : index_-1));
 	}
 	else{
 		vm->return_result(null, null);
@@ -371,7 +373,7 @@ void MultiValue::block_next(const VMachinePtr& vm){
 }
 
 int_t MultiValue::size(){
-	const MultiValuePtr* cur = &from_this(this);
+	const MultiValuePtr* cur = &to_smartptr(this);
 	int_t size = 1;
 	while(true){
 		if(!(*cur)->tail_){
@@ -383,7 +385,7 @@ int_t MultiValue::size(){
 }
 
 const AnyPtr& MultiValue::at(int_t i){
-	const MultiValuePtr* cur = &from_this(this);
+	const MultiValuePtr* cur = &to_smartptr(this);
 	const AnyPtr* ret = &head_;
 	for(int_t n=0; n<i; ++n){
 		if(!(*cur)->tail_){

@@ -30,7 +30,7 @@ public:
 
 	const ClassPtr& cpp_class(CppClassSymbolData* key){
 		XTAL_ASSERT(exists_cpp_class(key));
-		return from_this(class_table_[key->value]);
+		return to_smartptr(class_table_[key->value]);
 	}
 
 	void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
@@ -52,6 +52,10 @@ public:
 	}
 
 	void print_alive_objects();
+
+	uint_t alive_object_count();
+
+	RefCountingBase* alive_object(uint_t i);
 
 private:
 

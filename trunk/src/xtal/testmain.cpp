@@ -28,9 +28,32 @@ int main2(int argc, char** argv){
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
 
-		RuntimeError("error").p;
+		class Foo{
+			public _foo; 
+		}
+
+		foo: Foo();
+		foo.foo = 100;
+		foo.foo.p;
+
+		Foo.overwrite(
+			class{
+				public _poo;
+				public _foo;
+
+				reloaded{
+					_poo = 112;
+				}
+
+				bar{
+					return _foo + _poo;
+				}
+			}
+		);
+		//foo.poo = 111;
+		foo.bar.p;
 	))){
-		//code->call();
+		code->call();
 	}
 
 
@@ -96,7 +119,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	//*
+	/*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

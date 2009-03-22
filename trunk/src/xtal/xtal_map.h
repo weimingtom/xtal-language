@@ -127,7 +127,7 @@ public:
 	}
 	
 	MapPtr to_m(){
-		return from_this(this);
+		return to_smartptr(this);
 	}
 
 	/**

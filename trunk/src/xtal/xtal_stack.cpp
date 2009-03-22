@@ -107,7 +107,9 @@ void PODStackBase::upsize_detail(size_t us){
 }
 
 void PODStackBase::erase(size_t i, size_t n){
-	std::memmove((*this)[i], (*this)[i-n], one_size_*(i+1-n));
+	if((i+1-n)!=0){
+		std::memmove((*this)[i], (*this)[i-n], one_size_*(i+1-n));
+	}
 	downsize(n);
 }	
 

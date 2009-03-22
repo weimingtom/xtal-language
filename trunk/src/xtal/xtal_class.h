@@ -40,6 +40,8 @@ public:
 
 	int_t find_class_info_inner(ClassInfo* class_info);
 
+	void replace(ClassInfo* from, ClassInfo* to);
+
 	bool empty(){
 		return variables_.empty();
 	}
@@ -81,6 +83,8 @@ public:
 	virtual ~Class();
 
 	void overwrite(const ClassPtr& p);
+
+	void overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
 public:
 
@@ -408,7 +412,7 @@ public:
 	void block_next(const VMachinePtr& vm){
 		++index_;
 		if(index_<=class_->inherited_classes_.size()){
-			vm->return_result(from_this(this), from_this(class_->inherited_classes_[index_-1]));
+			vm->return_result(to_smartptr(this), to_smartptr(class_->inherited_classes_[index_-1]));
 		}
 		else{
 			vm->return_result(null, null);

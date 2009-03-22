@@ -9,7 +9,7 @@
 
 int used_memory = 0;
 
-#define XTAL_DEBUG_ALLOC 1
+#define XTAL_DEBUG_ALLOC 0
 
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>
@@ -159,7 +159,7 @@ void set_environment(Environment* environment){
 }
 
 const VMachinePtr& vmachine(){
-	return from_this(vmachine_);
+	return to_smartptr(vmachine_);
 }
 
 void set_vmachine(const VMachinePtr& vm){
@@ -266,8 +266,10 @@ void Environment::initialize(const Setting& setting){
 	cpp_class<Iterator>()->unset_native();
 
 	builtin_ = xnew<Singleton>();
+
 	lib_ = xnew<Lib>(true);
 	lib_->append_load_path(".");
+
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
 
@@ -397,6 +399,15 @@ void register_gc_observer(GCObserver* p){
 void unregister_gc_observer(GCObserver* p){
 	return environment_->object_space_.unregister_gc_observer(p);
 }
+
+uint_t alive_object_count(){
+	return environment_->object_space_.alive_object_count();
+}
+
+RefCountingBase* alive_object(uint_t i){
+	return environment_->object_space_.alive_object(i);
+}
+
 
 const ClassPtr& cpp_class(CppClassSymbolData* key){
 	return environment_->object_space_.cpp_class(key);

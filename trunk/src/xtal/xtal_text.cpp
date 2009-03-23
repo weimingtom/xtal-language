@@ -222,7 +222,7 @@ void Format::set(const char_t* str){
 void Format::rawcall(const VMachinePtr& vm){
 
 	if(!have_named_){
-		vm->flatten_arg();
+		vm->flatten_args();
 	}
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();

@@ -1,36 +1,38 @@
+inherit(lib::test);
 
-{
-	foo: fun(){ return 0, 1, 2, 3, 4; }
-	a, b: foo();
-	assert a==0;
-	assert b[]==[1, 2, 3, 4];
+class MVTest{
+
+	mv5#Test{
+		foo: fun(){ return 0, 1, 2, 3, 4; }
+		a, b: foo();
+		assert a==0;
+		assert b[]==[1, 2, 3, 4];
+	}
+
+	mv4#Test{
+		foo: fun(){ return 0, 1, 2, 3, 4; }
+		a, b, dummy: foo();
+		assert a==0;
+		assert b==1;
+	}
+
+	mv3#Test{
+		a, b, c: 0, 1, 2;
+		assert a==0;
+		assert b==1;
+		assert c==2;
+	}
+
+	mv2#Test{
+		a, b, c: 0, 1;
+		assert a==0;
+		assert b==1;
+		assert c===undefined;
+	}
+
+	mvjust#Test{
+		a, b: 1, 2;
+		assert a==1;
+		assert b==2;
+	}
 }
-
-{
-	foo: fun(){ return 0, 1, 2, 3, 4; }
-	a, b, dummy: foo();
-	assert a==0;
-	assert b==1;
-}
-
-{
-	a, b, c: 0, 1, 2;
-	assert a==0;
-	assert b==1;
-	assert c==2;
-}
-
-{
-	a, b, c: 0, 1;
-	assert a==0;
-	assert b==1;
-	assert c===undefined;
-}
-
-
-{
-	a, b: 1, 2;
-	assert a==1;
-	assert b==2;
-}
-

@@ -90,6 +90,9 @@ struct SmartPtrCtor4{
 template <int N>
 struct SmartPtrSelector{};
 
+template<class T>
+inline const ClassPtr& cpp_class();
+
 /**
 * @brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
 */

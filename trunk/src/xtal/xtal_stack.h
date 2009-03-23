@@ -110,7 +110,7 @@ public:
 	}
 
 	void upsize_unchecked(size_t us){
-		XTAL_ASSERT(current_+us>current_);
+		XTAL_ASSERT(current_+us>=current_);
 		current_+=us;
 	}
 

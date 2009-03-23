@@ -1,3 +1,4 @@
+inherit(lib::test);
 
 nod : class{
 
@@ -9,27 +10,27 @@ mod : class(nod){
 	}
 }
 
-filelocal.inherit(mod);
-
-assert foo===mod::foo;
-
-assert foo()=="foo";
+inherit(mod);
 
 nod::bar : fun(){
 	return "bar";
 }
 
-assert bar()=="bar";
-
 mod::bar : fun(){
 	return "mod::bar";
 }
-
-assert bar()=="mod::bar";
 
 filelocal::bar : fun(){
 	return "filelocal::bar";
 }
 
-assert bar()=="filelocal::bar";
+class ToplevelTest{
+	func#Test{
+		assert foo===mod::foo;
+		assert foo()=="foo";
+		assert bar()=="bar";
+		assert bar()=="mod::bar";
+		assert bar()=="filelocal::bar";
+	}
+}
 

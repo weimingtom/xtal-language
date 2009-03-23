@@ -14,7 +14,7 @@ class FibTest{
 	fib2: fun fiber{
 	  i: 1; 
 	  j: 1;
-	  while (true) {
+	  while(true){
 	    yield i;
 	    i, j = j, i + j;
 	  }

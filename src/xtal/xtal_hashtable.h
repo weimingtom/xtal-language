@@ -1,3 +1,5 @@
+#ifndef XTAL_HASHTABLE_H_INCLUDE_GUARD
+#define XTAL_HASHTABLE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -821,3 +823,5 @@ void visit_members(Visitor& m, const Hashtable<Key, Val, Fun>& values){
 }
 
 }
+
+#endif // XTAL_HASHTABLE_H_INCLUDE_GUARD

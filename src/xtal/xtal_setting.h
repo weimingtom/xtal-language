@@ -1,3 +1,5 @@
+#ifndef XTAL_SETTING_H_INCLUDE_GUARD
+#define XTAL_SETTING_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -29,3 +31,4 @@
 * @brief マルチスレッドoff
 */
 #define XTAL_NO_MULTI_THREAD
+#endif // XTAL_SETTING_H_INCLUDE_GUARD

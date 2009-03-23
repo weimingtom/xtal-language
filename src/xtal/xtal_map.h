@@ -1,3 +1,5 @@
+#ifndef XTAL_MAP_H_INCLUDE_GUARD
+#define XTAL_MAP_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -214,3 +216,5 @@ public:
 
 }//namespace
 
+
+#endif // XTAL_MAP_H_INCLUDE_GUARD

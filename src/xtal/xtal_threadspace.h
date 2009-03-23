@@ -1,3 +1,5 @@
+#ifndef XTAL_THREADSPACE_H_INCLUDE_GUARD
+#define XTAL_THREADSPACE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -113,3 +115,5 @@ private:
 };
 
 }
+
+#endif // XTAL_THREADSPACE_H_INCLUDE_GUARD

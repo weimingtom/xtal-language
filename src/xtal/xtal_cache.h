@@ -1,3 +1,5 @@
+#ifndef XTAL_CACHE_H_INCLUDE_GUARD
+#define XTAL_CACHE_H_INCLUDE_GUARD
 #pragma once
 
 namespace xtal{
@@ -307,3 +309,5 @@ struct CtorCacheTable{
 
 }
 
+
+#endif // XTAL_CACHE_H_INCLUDE_GUARD

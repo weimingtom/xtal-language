@@ -1,3 +1,5 @@
+#ifndef XTAL_BASE_H_INCLUDE_GUARD
+#define XTAL_BASE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -149,3 +151,5 @@ private:
 
 }
 
+
+#endif // XTAL_BASE_H_INCLUDE_GUARD

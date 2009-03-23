@@ -1,3 +1,5 @@
+#ifndef XTAL_CODEBUILDER_H_INCLUDE_GUARD
+#define XTAL_CODEBUILDER_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -256,3 +258,5 @@ private:
 
 #endif
 
+
+#endif // XTAL_CODEBUILDER_H_INCLUDE_GUARD

@@ -1,3 +1,5 @@
+#ifndef XTAL_ENVIRONMENT_H_INCLUDE_GUARD
+#define XTAL_ENVIRONMENT_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -457,3 +459,5 @@ CodePtr source(const char_t* src, int_t size, const char* file);
 CodePtr compiled_source(const void* src, int_t size, const char* file);
 
 }
+
+#endif // XTAL_ENVIRONMENT_H_INCLUDE_GUARD

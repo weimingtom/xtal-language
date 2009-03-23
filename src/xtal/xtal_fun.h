@@ -1,3 +1,5 @@
+#ifndef XTAL_FUN_H_INCLUDE_GUARD
+#define XTAL_FUN_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -170,3 +172,5 @@ private:
 
 }
 
+
+#endif // XTAL_FUN_H_INCLUDE_GUARD

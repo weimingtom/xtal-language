@@ -1,3 +1,5 @@
+#ifndef XTAL_TEXT_H_INCLUDE_GUARD
+#define XTAL_TEXT_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -80,3 +82,5 @@ void assign_text_map(const AnyPtr& map_iter);
 void append_text_map(const AnyPtr& map_iter);
 
 }
+
+#endif // XTAL_TEXT_H_INCLUDE_GUARD

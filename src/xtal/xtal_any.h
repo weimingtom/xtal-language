@@ -1,3 +1,5 @@
+#ifndef XTAL_ANY_H_INCLUDE_GUARD
+#define XTAL_ANY_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -420,3 +422,5 @@ inline void swap(Any& a, Any& b){
 }
 
 }
+
+#endif // XTAL_ANY_H_INCLUDE_GUARD

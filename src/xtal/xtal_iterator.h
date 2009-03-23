@@ -1,3 +1,5 @@
+#ifndef XTAL_ITERATOR_H_INCLUDE_GUARD
+#define XTAL_ITERATOR_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -76,3 +78,5 @@ bool block_next(BlockValueHolder3& holder, bool first);
 void block_break(AnyPtr& target);
 
 }
+
+#endif // XTAL_ITERATOR_H_INCLUDE_GUARD

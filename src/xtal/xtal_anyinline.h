@@ -1,3 +1,5 @@
+#ifndef XTAL_ANYINLINE_H_INCLUDE_GUARD
+#define XTAL_ANYINLINE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -221,3 +223,5 @@ inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 //}}REPEAT}
 
 }
+
+#endif // XTAL_ANYINLINE_H_INCLUDE_GUARD

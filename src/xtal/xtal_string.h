@@ -1,3 +1,5 @@
+#ifndef XTAL_STRING_H_INCLUDE_GUARD
+#define XTAL_STRING_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -378,3 +380,5 @@ inline void visit_members(Visitor& m, const Named& p){
 }
 
 }
+
+#endif // XTAL_STRING_H_INCLUDE_GUARD

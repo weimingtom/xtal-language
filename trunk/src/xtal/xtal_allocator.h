@@ -1,3 +1,5 @@
+#ifndef XTAL_ALLOCATOR_H_INCLUDE_GUARD
+#define XTAL_ALLOCATOR_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -110,3 +112,5 @@ private:
 };
 
 }//namespace 
+
+#endif // XTAL_ALLOCATOR_H_INCLUDE_GUARD

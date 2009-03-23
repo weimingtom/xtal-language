@@ -1,3 +1,5 @@
+#ifndef XTAL_INST_H_INCLUDE_GUARD
+#define XTAL_INST_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -885,3 +887,5 @@ XTAL_DEF_INST_0(128, BreakPoint);
 XTAL_DEF_INST_0(129, MAX);
 
 }
+
+#endif // XTAL_INST_H_INCLUDE_GUARD

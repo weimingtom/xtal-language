@@ -1,3 +1,5 @@
+#ifndef XTAL_STRINGSPACE_H_INCLUDE_GUARD
+#define XTAL_STRINGSPACE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -236,3 +238,5 @@ public:
 };
 
 }
+
+#endif // XTAL_STRINGSPACE_H_INCLUDE_GUARD

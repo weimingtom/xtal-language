@@ -1,3 +1,5 @@
+#ifndef XTAL_SMARTPTR_H_INCLUDE_GUARD
+#define XTAL_SMARTPTR_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -399,3 +401,5 @@ struct SmartPtrCtor4<ID>{
 };
 
 }
+
+#endif // XTAL_SMARTPTR_H_INCLUDE_GUARD

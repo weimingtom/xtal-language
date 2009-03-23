@@ -1,3 +1,5 @@
+#ifndef XTAL_DEBUG_H_INCLUDE_GUARD
+#define XTAL_DEBUG_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -154,3 +156,5 @@ public:
 };
 
 }
+
+#endif // XTAL_DEBUG_H_INCLUDE_GUARD

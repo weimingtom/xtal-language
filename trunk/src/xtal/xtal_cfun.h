@@ -1,3 +1,5 @@
+#ifndef XTAL_CFUN_H_INCLUDE_GUARD
+#define XTAL_CFUN_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -1314,3 +1316,5 @@ private:
 DoubleDispatchFunPtr double_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key);
 
 }
+
+#endif // XTAL_CFUN_H_INCLUDE_GUARD

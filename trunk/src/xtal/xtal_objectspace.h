@@ -1,3 +1,5 @@
+#ifndef XTAL_OBJECTSPACE_H_INCLUDE_GUARD
+#define XTAL_OBJECTSPACE_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -82,3 +84,5 @@ private:
 };
 
 }
+
+#endif // XTAL_OBJECTSPACE_H_INCLUDE_GUARD

@@ -1,3 +1,5 @@
+#ifndef XTAL_MACRO_H_INCLUDE_GUARD
+#define XTAL_MACRO_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -135,3 +137,5 @@
 */
 #define Xid(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<class xtal_identifier_##x>::value)
 
+
+#endif // XTAL_MACRO_H_INCLUDE_GUARD

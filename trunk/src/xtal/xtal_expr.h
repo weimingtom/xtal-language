@@ -1,3 +1,5 @@
+#ifndef XTAL_EXPR_H_INCLUDE_GUARD
+#define XTAL_EXPR_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -312,3 +314,5 @@ class Expr : public Array{
 
 }
 #endif
+
+#endif // XTAL_EXPR_H_INCLUDE_GUARD

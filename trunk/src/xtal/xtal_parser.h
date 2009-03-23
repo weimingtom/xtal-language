@@ -1,3 +1,5 @@
+#ifndef XTAL_PARSER_H_INCLUDE_GUARD
+#define XTAL_PARSER_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -342,3 +344,5 @@ public:
 
 #endif
 
+
+#endif // XTAL_PARSER_H_INCLUDE_GUARD

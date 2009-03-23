@@ -1,3 +1,5 @@
+#ifndef XTAL_XPEG_H_INCLUDE_GUARD
+#define XTAL_XPEG_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -319,3 +321,5 @@ AnyPtr leafs(const AnyPtr& left);
 
 }}
 
+
+#endif // XTAL_XPEG_H_INCLUDE_GUARD

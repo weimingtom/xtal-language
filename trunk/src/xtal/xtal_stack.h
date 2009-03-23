@@ -1,3 +1,5 @@
+#ifndef XTAL_STACK_H_INCLUDE_GUARD
+#define XTAL_STACK_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -714,3 +716,5 @@ class PODArrayList : public ArrayList<T, PODStack<T> >{
 	
 }
 
+
+#endif // XTAL_STACK_H_INCLUDE_GUARD

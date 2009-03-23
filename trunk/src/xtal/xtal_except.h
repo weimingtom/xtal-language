@@ -1,3 +1,5 @@
+#ifndef XTAL_EXCEPT_H_INCLUDE_GUARD
+#define XTAL_EXCEPT_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -56,3 +58,5 @@ except_handler_t except_handler();
 void set_except_handler(except_handler_t handler);
 
 }
+
+#endif // XTAL_EXCEPT_H_INCLUDE_GUARD

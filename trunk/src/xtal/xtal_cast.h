@@ -1,3 +1,5 @@
+#ifndef XTAL_CAST_H_INCLUDE_GUARD
+#define XTAL_CAST_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -358,3 +360,5 @@ tricky_cast(const AnyPtr& a, void (*f)(T)){
 }
 
 }
+
+#endif // XTAL_CAST_H_INCLUDE_GUARD

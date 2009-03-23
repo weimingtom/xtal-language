@@ -1,3 +1,5 @@
+#ifndef XTAL_CH_H_INCLUDE_GUARD
+#define XTAL_CH_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -93,3 +95,5 @@ private:
 };
 
 }
+
+#endif // XTAL_CH_H_INCLUDE_GUARD

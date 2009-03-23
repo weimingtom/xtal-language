@@ -1,3 +1,5 @@
+#ifndef XTAL_ALL_SRC_H_INCLUDE_GUARD
+#define XTAL_ALL_SRC_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -5,6 +7,7 @@
 
 #include "xtal_allocator.cpp"
 #include "xtal_any.cpp"
+/*
 #include "xtal_array.cpp"
 #include "xtal_base.cpp"
 #include "xtal_basictype.cpp"
@@ -39,3 +42,5 @@
 #include "xtal_objectspace.cpp"
 #include "xtal_class.cpp"
 #include "xtal_bind.cpp"
+*/
+#endif // XTAL_ALL_SRC_H_INCLUDE_GUARD

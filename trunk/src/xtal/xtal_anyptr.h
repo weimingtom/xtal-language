@@ -1,3 +1,5 @@
+#ifndef XTAL_ANYPTR_H_INCLUDE_GUARD
+#define XTAL_ANYPTR_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -313,3 +315,5 @@ inline void visit_members(Visitor& m, const Any& p){
 }
 
 }//namespace 
+
+#endif // XTAL_ANYPTR_H_INCLUDE_GUARD

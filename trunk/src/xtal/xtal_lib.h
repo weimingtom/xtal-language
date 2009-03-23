@@ -1,3 +1,5 @@
+#ifndef XTAL_LIB_H_INCLUDE_GUARD
+#define XTAL_LIB_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -27,3 +29,5 @@ private:
 
 }
 
+
+#endif // XTAL_LIB_H_INCLUDE_GUARD

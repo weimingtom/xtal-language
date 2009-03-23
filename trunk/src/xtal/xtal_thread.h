@@ -1,3 +1,5 @@
+#ifndef XTAL_THREAD_H_INCLUDE_GUARD
+#define XTAL_THREAD_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -55,3 +57,5 @@ void sleep_thread(float_t sec);
 
 
 }
+
+#endif // XTAL_THREAD_H_INCLUDE_GUARD

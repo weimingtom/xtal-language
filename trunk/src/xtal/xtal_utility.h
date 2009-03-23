@@ -1,3 +1,5 @@
+#ifndef XTAL_UTILITY_H_INCLUDE_GUARD
+#define XTAL_UTILITY_H_INCLUDE_GUARD
 
 #pragma once
 
@@ -844,3 +846,5 @@ template<class T>
 IdentifierData Identifier<T>::value;
 
 }
+
+#endif // XTAL_UTILITY_H_INCLUDE_GUARD

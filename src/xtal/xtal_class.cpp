@@ -411,8 +411,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	
 	// Œp³‚µ‚Ä‚¢‚éƒNƒ‰ƒX‚ğ‡ŸŒŸõ
 	if(inherited_too){
-		for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = inherited_classes_[i]->do_member(primary_key, secondary_key, true, accessibility, nocache);
+		for(int_t i=inherited_classes_.size(); i>0; --i){
+			const AnyPtr& ret = inherited_classes_[i-1]->do_member(primary_key, secondary_key, true, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -529,7 +529,7 @@ StringPtr Class::object_name(){
 		}
 	}
 
-	if(name_){
+	if(name_ && name_->data_size()!=0){
 		return name_;
 	}
 

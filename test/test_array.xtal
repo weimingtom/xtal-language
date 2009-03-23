@@ -10,6 +10,18 @@ TestArray: class{
 	is_empty#Test{
 		assert _obj.is_empty;
 	}
+	
+	indexerror#Test{
+		a: [];
+		ret: "";
+		
+		try{
+			a[5] = 10;
+		}catch(e){
+			ret = "catched";
+		}
+		assert ret == "catched";
+	}
 		
 	named#Test{
 		obj: Array(size: 10);

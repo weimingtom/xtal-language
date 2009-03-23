@@ -15,7 +15,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 	set_pvalue(*this, TYPE, this);
 
 	fun_ = pth.fun;
-	if(val_size<sizeof(int_t)){
+	if(val_size<(int_t)sizeof(int_t)){
 		val_size_ = 0;
 	}
 	else{

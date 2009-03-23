@@ -256,18 +256,12 @@ public:
 	int_t named_arg_count(){ 
 		return ff().named_arg_count; 
 	}
-	
-	/**
-	* @brief 引数の数を調整する。
-	*
-	*/
-	void adjust_arg(int_t n);
 
 	/**
 	* @brief 引数の多値を平らにする
 	*
 	*/
-	void flatten_arg();
+	void flatten_args();
 	
 	/**
 	* @brief 呼び出し元が必要としている戻り値の数。
@@ -303,6 +297,9 @@ public:
 	void return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3);
 	void return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3, const AnyPtr& value4);
 
+	/**
+	* @brief 多値を返す。
+	*/
 	void return_result_mv(const MultiValuePtr& values);
 
 	/**
@@ -312,6 +309,8 @@ public:
 	bool processed(){ 
 		return *ff().called_pc!=InstThrowUnsupportedError::NUMBER; 
 	}
+
+	void return_result_args(const VMachinePtr& vm);
 	
 	void prereturn_result(const AnyPtr& v);
 
@@ -567,7 +566,7 @@ public:
 
 	void return_result_instance_variable(int_t number, ClassInfo* info);
 
-	ArgumentsPtr make_args(Method* fun);
+	ArgumentsPtr inner_make_arguments(Method* fun);
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
 	
@@ -761,7 +760,7 @@ private:
 	// 関数呼び出しの度に積まれるフレーム
 	FastStack<FunFrame*> fun_frames_;
 
-	// tryの度に積まれるフレーム。
+	// tryの度に積まれるフレーム
 	FastStack<ExceptFrame> except_frames_;
 	
 	Any except_[3];

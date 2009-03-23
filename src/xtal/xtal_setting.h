@@ -28,4 +28,4 @@
 /**
 * @brief マルチスレッドoff
 */
-//#define XTAL_NO_MULTI_THREAD
+#define XTAL_NO_MULTI_THREAD

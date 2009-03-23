@@ -1,57 +1,63 @@
-{
-	ret : "";
-	for(i: 0; i<10; ++i){
-		ret ~= i.to_s;
-	}nobreak{
-		ret ~= "!";
-	}
-	
-	assert ret=="0123456789!";
-}
+inherit(lib::test);
 
-{
-	ret : "";
-	for(i: 0; i<10; ++i){
-		ret ~= i.to_s;
-		if(i==5){
-			break;
-		}
-	}else{
-		assert false;
-	}
+class ForTest{
 
-	assert ret=="012345";
-}
-
-
-{
-	ret : "";
-	for(i: 0; i<10; ++i){
-		ret ~= i.to_s;
-		continue;
-	}
-	assert ret=="0123456789";
-}
-
-{
-	ret : "";
-	outer:for(i: 0; i<10; ++i){
-		for(j: 0; j<10; ++j){
+	for_cat#Test{
+		ret : "";
+		for(i: 0; i<10; ++i){
 			ret ~= i.to_s;
-			continue outer;
+		}nobreak{
+			ret ~= "!";
 		}
+		
+		assert ret=="0123456789!";
 	}
-	assert ret=="0123456789";
-}
 
-
-{
-	ret : "";
-	outer:for(i: 0; i<10; ++i){
-		for(j: 0; j<10; ++j){
+	for_break#Test{
+		ret : "";
+		for(i: 0; i<10; ++i){
 			ret ~= i.to_s;
-			break outer;
+			if(i==5){
+				break;
+			}
+		}else{
+			assert false;
 		}
+
+		assert ret=="012345";
 	}
-	assert ret=="0";
+
+	for_continue#Test{
+		ret : "";
+		for(i: 0; i<10; ++i){
+			ret ~= i.to_s;
+			continue;
+			ret ~= "e";
+		}
+		assert ret=="0123456789";
+	}
+
+	for_label_continue#Test{
+		ret : "";
+		outer:for(i: 0; i<10; ++i){
+			for(j: 0; j<10; ++j){
+				ret ~= i.to_s;
+				continue outer;
+				ret ~= "e";
+			}
+		}
+		assert ret=="0123456789";
+	}
+
+	for_label_break#Test{
+		ret : "";
+		outer:for(i: 0; i<10; ++i){
+			for(j: 0; j<10; ++j){
+				ret ~= i.to_s;
+				break outer;
+				ret ~= "e";
+			}
+		}
+		assert ret=="0";
+	}
 }

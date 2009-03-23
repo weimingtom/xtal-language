@@ -46,7 +46,7 @@
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
-#ifdef XTAL_NO_THREAD
+#ifdef XTAL_NO_MULTI_THREAD
 #	define XTAL_UNLOCK 
 #else
 #	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
@@ -115,10 +115,11 @@
 #	if defined(_MSC_VER)
 #		define XTAL_TLS_PTR(x) __declspec(thread) x*
 #	elif defined(__GNUC__)
-#		define XTAL_TLS_PTR(x) x*
-//#		define XTAL_TLS_PTR(x) __thread x*
+#		define XTAL_TLS_PTR(x) __thread x*
 #	else 
-#		error
+#		if !defined(XTAL_TLS_PTR)
+#			error // XTAL_NO_MULTI_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
+#		endif
 #	endif
 #endif
 
@@ -431,9 +432,6 @@ typedef SelectType<1>::uint_t byte_t;
 
 //typedef std::size_t size_t;
 //typedef std::ptrdiff_t ptrdiff_t;
-
-template<class T>
-struct Alloc;
 
 #ifdef XTAL_USE_WCHAR
 typedef wchar_t char_t;

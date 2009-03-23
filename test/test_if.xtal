@@ -1,159 +1,161 @@
+inherit(lib::test);
 
-{
-	a : 10;
-	b : fun(){
-		return 20;
-	}
-	c : 0;
+class IfTest{
 
-	if(a < b()){
-		c = 10;
-	}else{
-		assert false;
-	}
-	assert c==10;
+	test1#Test{
+		a : 10;
+		b : fun(){
+			return 20;
+		}
+		c : 0;
 
-	if(a > b()){
-		assert false;
-	}else{
-		c = 55;
-	}
-	assert c==55;
+		if(a < b()){
+			c = 10;
+		}else{
+			assert false;
+		}
+		assert c==10;
 
-	if(5 <= 20){
-		c = 78;
-	}else{
-		assert false;
-	}
-	assert c==78;
+		if(a > b()){
+			assert false;
+		}else{
+			c = 55;
+		}
+		assert c==55;
 
-	if(10 >= a){
-		c = 980;
-	}else{
-		assert false;
-	}
-	assert c==980;
+		if(5 <= 20){
+			c = 78;
+		}else{
+			assert false;
+		}
+		assert c==78;
 
-	if(11 >= a){
-		c = "true";
-	}else{
-		assert false;
-	}
-	assert c=="true";
-}
+		if(10 >= a){
+			c = 980;
+		}else{
+			assert false;
+		}
+		assert c==980;
 
+		if(11 >= a){
+			c = "true";
+		}else{
+			assert false;
+		}
+		assert c=="true";
+	}
 
-{
-	a : 10;
-	b : fun(){
-		return 1111111;
-	}
-	c : 0;
+	test2#Test{
+		a : 10;
+		b : fun(){
+			return 1111111;
+		}
+		c : 0;
 
-	if(a < b()){
-		c = 10;
-	}else{
-		assert false;
-	}
-	assert c==10;
+		if(a < b()){
+			c = 10;
+		}else{
+			assert false;
+		}
+		assert c==10;
 
-	if(a > b()){
-		assert false;
-	}else{
-		c = 55;
-	}
-	assert c==55;
+		if(a > b()){
+			assert false;
+		}else{
+			c = 55;
+		}
+		assert c==55;
 
-	if(178 <= 178){
-		c = 78;
-	}else{
-		assert false;
-	}
-	assert c==78;
+		if(178 <= 178){
+			c = 78;
+		}else{
+			assert false;
+		}
+		assert c==78;
 
-	if(55 >= a){
-		c = 980;
-	}else{
-		assert false;
-	}
-	assert c==980;
+		if(55 >= a){
+			c = 980;
+		}else{
+			assert false;
+		}
+		assert c==980;
 
-	if(9999 >= a){
-		c = "true";
-	}else{
-		assert false;
+		if(9999 >= a){
+			c = "true";
+		}else{
+			assert false;
+		}
+		assert c=="true";
 	}
-	assert c=="true";
-}
 
-{
-	temp: 0;
-	A: class{}
-	B: class(A){}
-	
-	if(A() is A){
-		temp = 100;
-	}else{
-		assert false;
-	}
-	assert temp==100;
-	
-	
-	if(B() is A){
-		temp = 200;
-	}else{
-		assert false;
-	}
-	assert temp==200;
-	
-	if(A() !is B){
-		temp = 300;
-	}else{
-		assert false;
-	}
-	assert temp==300;
-	
-	f: fun(a) a;
-	 
-	if(A === f(A)){
-		temp = 400;
-	}else{
-		assert false;
-	}
-	assert temp==400;
-	
-	if(A !== f(B)){
-		temp = 500;
-	}else{
-		assert false;
-	}
-	assert temp==500;
-	
-	if(1!=2){
-		temp = 1;
-	}
-	assert(temp==1);
-	
-	if(1!=2){
-		temp = 3;
-	}
-	else{
-		temp = 10;
-	}
-	assert(temp==3);
+	test3#Test{
+		temp: 0;
+		A: class{}
+		B: class(A){}
 		
-	if(2>=2){
-		temp = 2;
-	}
-	assert(temp==2);
-	
-	if(3<=2){
-		temp = 5;
-	}
-	else{
-		temp = 7
-	}
-	assert(temp==7);
+		if(A() is A){
+			temp = 100;
+		}else{
+			assert false;
+		}
+		assert temp==100;
 		
+		
+		if(B() is A){
+			temp = 200;
+		}else{
+			assert false;
+		}
+		assert temp==200;
+		
+		if(A() !is B){
+			temp = 300;
+		}else{
+			assert false;
+		}
+		assert temp==300;
+		
+		f: fun(a) a;
+		 
+		if(A === f(A)){
+			temp = 400;
+		}else{
+			assert false;
+		}
+		assert temp==400;
+		
+		if(A !== f(B)){
+			temp = 500;
+		}else{
+			assert false;
+		}
+		assert temp==500;
+		
+		if(1!=2){
+			temp = 1;
+		}
+		assert(temp==1);
+		
+		if(1!=2){
+			temp = 3;
+		}
+		else{
+			temp = 10;
+		}
+		assert(temp==3);
+			
+		if(2>=2){
+			temp = 2;
+		}
+		assert(temp==2);
+		
+		if(3<=2){
+			temp = 5;
+		}
+		else{
+			temp = 7
+		}
+		assert(temp==7);
+			
+	}
 }
-

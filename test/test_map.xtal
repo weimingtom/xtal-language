@@ -1,34 +1,25 @@
+inherit(lib::test);
 
-
-{
-	a: [:];
-	a[1] = 10;
-	a["test"] = "aaa";
-	assert a[1] == 10;
-	assert a["test"] == "aaa";
-	assert a.size == 2;
-}
-
-{
-	a: [];
-	ret: "";
+class MapTest{
 	
-	try{
-		a[5] = 10;
-	}catch(e){
-		ret = "catched";
+	setkey#Test{
+		a: [:];
+		a[1] = 10;
+		a["test"] = "aaa";
+		assert a[1] == 10;
+		assert a["test"] == "aaa";
+		assert a.size == 2;
 	}
-	assert ret == "catched";
-}
 
-{
-	assert Map().size == 0;
-}
+	size_zero#Test{
+		assert Map().size == 0;
+	}
 
-{
-	a: [5:10, 6:20, 7:30, 8:40];
-	b: a.clone;
-	b[5] = 0;
-	assert b[5] == 0;
-	assert a[5] == 10;
+	clone#Test{
+		a: [5:10, 6:20, 7:30, 8:40];
+		b: a.clone;
+		b[5] = 0;
+		assert b[5] == 0;
+		assert a[5] == 10;
+	}
 }

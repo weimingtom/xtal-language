@@ -306,6 +306,15 @@ void VMachine::return_result_mv(const MultiValuePtr& values){
 	f.called_pc = &cleanup_call_code_;
 }
 
+void VMachine::return_result_args(const VMachinePtr& vm){
+	FunFrame& f = ff();
+	vm->downsize(vm->named_arg_count()*2);
+	push(vm.get(), vm->ordered_arg_count());
+	vm->upsize(vm->named_arg_count()*2);
+	adjust_result(f.result_count+vm->ordered_arg_count());
+	f.called_pc = &cleanup_call_code_;
+}
+
 void VMachine::prereturn_result(const AnyPtr& v){
 	ff().result_count++;
 	stack_.insert(ff().args_stack_size(), v);
@@ -366,17 +375,13 @@ void VMachine::exit_fiber(){
 	reset();
 }
 
-void VMachine::adjust_arg(int_t n){
+void VMachine::flatten_args(){
 	FunFrame& f = ff();
-	stack_.downsize(f.named_arg_count*2);
-	adjust_result(f.ordered_arg_count, n);
-	f.named_arg_count = 0;
-	f.ordered_arg_count = n;
-}
 
-void VMachine::flatten_arg(){
-	FunFrame& f = ff();
-	adjust_arg(1);
+	stack_.downsize(f.named_arg_count*2);
+	adjust_result(f.ordered_arg_count, 1);
+	f.named_arg_count = 0;
+	f.ordered_arg_count = 1;
 
 	AnyPtr a = arg(0);
 	if(type(a)==TYPE_UNDEFINED){
@@ -402,7 +407,7 @@ ArgumentsPtr VMachine::make_arguments(){
 	return p;
 }
 
-ArgumentsPtr VMachine::make_args(Method* fun){
+ArgumentsPtr VMachine::inner_make_arguments(Method* fun){
 	ArgumentsPtr p = xnew<Arguments>();
 
 	ArrayPtr ordered;
@@ -538,7 +543,7 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 						hook->call(debug_info_);
 					}
 					else{
-						set_except(cpp_class<AssertionFailed>()->call(pop()->to_s()));
+						set_except(cpp_class<AssertionFailed>()->call(debug_info_->assertion_message()));
 					}
 				}
 			}

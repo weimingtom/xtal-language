@@ -224,7 +224,7 @@ void VMachine::carry_over(Method* fun){
 	}
 
 	if(fun->extendable_param()){
-		f.arguments(make_args(fun));
+		f.arguments(inner_make_arguments(fun));
 	}
 	
 	FunInfo* info = fun->info();
@@ -270,7 +270,7 @@ void VMachine::mv_carry_over(Method* fun){
 	}
 
 	if(fun->extendable_param()){
-		f.arguments(make_args(fun));
+		f.arguments(inner_make_arguments(fun));
 	}
 	
 	// –¼‘O•t‚«ˆø”‚Í×–‚

@@ -1,13 +1,19 @@
+inherit(lib::test);
 
-near: fun(a, b){
-	return math::abs(a-b)<0.000001;
-}
+class FloatTest{
 
-assert near(10.5 + 20.5 + 30.5, 61.5);
+	near: fun(a, b){
+		return math::abs(a-b)<0.000001;
+	}
+	
+	neart#Test{
+		assert near(10.5 + 20.5 + 30.5, 61.5);	
+	}
 
-{
-	a: 0.75;
-	b: 0.2;
-	c: 0.01;
-	assert near(a*b+c, 0.75*0.2+0.01);
+	neart2#Test{
+		a: 0.75;
+		b: 0.2;
+		c: 0.01;
+		assert near(a*b+c, 0.75*0.2+0.01);
+	}
 }

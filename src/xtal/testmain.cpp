@@ -20,30 +20,24 @@ void debug_throw(const DebugInfoPtr& di){
 	di->exception()->p();
 }
 
-void foo( const AnyPtr& a, const AnyPtr& b )
-{
-	std::cout << "  a:" << (a ? a->to_s()->c_str() : "") << " b:" << (b ? b->to_s()->c_str() : "") << std::endl;
-}
-
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
 
-	builtin()->def_fun( Xid(foo), &foo )->param(1,Xid(a),null)->param(2,Xid(b),null); 
-
-
-	enable_debug();
-	debug()->set_throw_hook(fun(&debug_throw));
+	//enable_debug();
+	//debug()->set_throw_hook(fun(&debug_throw));
 	
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-foo();
-foo( b:1, a:2 ); 
+
+
+
 	))){
 		code->call();
 	}
 
+	load("../struct.xtal");
 
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
@@ -107,7 +101,7 @@ foo( b:1, a:2 );
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

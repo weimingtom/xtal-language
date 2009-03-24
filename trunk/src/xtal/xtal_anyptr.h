@@ -116,25 +116,15 @@ public:
 	}
 
 	/// nullを受け取るコンストラクタ
-	//SmartPtr(const Null&){}
-
-	SmartPtr<Any>& operator =(const Null&);
-
-	SmartPtr<Any>& operator =(const Undefined&);
+	SmartPtr(const NullPtr&){}
 
 	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
 
 	explicit SmartPtr(PrimitiveType type)
 		:Any(type){}
 	
-//	explicit SmartPtr(Base* p)
-//		:Any(p){
-//		p->inc_ref_count();
-//	}
-
 	~SmartPtr(){
 		dec_ref_count();
-		//*(Any*)this = Any();
 	}
 
 protected:
@@ -239,19 +229,6 @@ public:
 
 public:
 
-	friend inline const AnyPtr& ap(const Any& v){
-		return (const AnyPtr&)v;
-	}
-
-	friend inline SmartPtr<Any>& ap_copy(SmartPtr<Any>& a, const SmartPtr<Any>& b){
-		a.dec_ref_count();
-		*(Any*)&a = b;
-		a.inc_ref_count();
-		return a;
-	}
-
-public:
-
 	struct dummy_bool_tag{ void safe_true(dummy_bool_tag){} };
 	typedef void (dummy_bool_tag::*safe_bool)(dummy_bool_tag);
 
@@ -298,6 +275,10 @@ public:
 		return *this;
 	}
 };
+
+inline const AnyPtr& ap(const Any& v){
+	return (const AnyPtr&)v;
+}
 
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){

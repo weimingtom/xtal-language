@@ -379,7 +379,7 @@ struct Element : public Base{
 		TYPE_01,  // *-1
 		TYPE_EMPTY, // ãÛ
 		TYPE_CAP, // ÉLÉÉÉvÉ`ÉÉ
-		TYPE_DECL, // êÈåæ
+		TYPE_DECL // êÈåæ
 	};
 
 	Type type;
@@ -455,7 +455,7 @@ struct NFA : public Base{
 	enum{
 		CAPTURE_NONE = 0,
 		CAPTURE_BEGIN = 1,
-		CAPTURE_END = 2,
+		CAPTURE_END = 2
 	};
 };
 	
@@ -1279,61 +1279,79 @@ AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
 }
 
-void bind_xpeg(const ClassPtr& xpeg){
+class XpegOperator;
+
+XTAL_PREBIND(XpegOperator){
+	it->unset_native();
+}
+
+XTAL_BIND(XpegOperator){
 	using namespace xpeg;
 
-	{
-		ClassPtr p = cpp_class<Executor>();
-		p->set_object_name(Xid(Executor));
-		p->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid(stream_or_iterator), empty_string));
-		p->def_method(Xid(reset), &Executor::reset);
-		p->def_method(Xid(parse), &Executor::parse);
-		p->def_method(Xid(match), &Executor::match);
+	it->def_method(Xid(op_mod), &more_shortest_Int, cpp_class<Int>());
+	it->def_method(Xid(op_mod), &more_shortest_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid(op_div), &more_normal_Int, cpp_class<Int>());
+	it->def_method(Xid(op_div), &more_normal_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid(op_mul), &more_greed_Int, cpp_class<Int>());
+	it->def_method(Xid(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid(op_com), &inv);
+	
+	it->def_method(Xid(op_or), &select, cpp_class<Element>());
+	it->def_method(Xid(op_or), &select, cpp_class<String>());
+	it->def_method(Xid(op_or), &select, cpp_class<ChRange>());
+	it->def_method(Xid(op_or), &select, cpp_class<Fun>());
+	it->def_method(Xid(op_shr), &concat, cpp_class<Element>());
+	it->def_method(Xid(op_shr), &concat, cpp_class<String>());
+	it->def_method(Xid(op_shr), &concat, cpp_class<ChRange>());
+	it->def_method(Xid(op_shr), &concat, cpp_class<Fun>());
+}
 
-		p->def_method(Xid(captures), &Executor::captures);
-		p->def_method(Xid(captures_values), &Executor::captures_values);		
-		p->def_method(Xid(op_at), &Executor::at, cpp_class<String>());
-		p->def_method(Xid(op_call), &Executor::call, cpp_class<String>());
-		p->def_method(Xid(prefix), &Executor::prefix);
-		p->def_method(Xid(suffix), &Executor::suffix);
-		p->def_method(Xid(prefix_values), &Executor::prefix_values);
-		p->def_method(Xid(suffix_values), &Executor::suffix_values);
-		p->def_method(Xid(errors), &Executor::errors);
-		p->def_method(Xid(read), &Executor::read);
-		p->def_method(Xid(peek), &Executor::peek)->param(1, Xid(n), 0);
-		p->def_method(Xid(tree), &Executor::tree);
-	}
+XTAL_BIND(xpeg::Element){
+	using namespace xpeg;
+	it->def_method(Xid(set_body), &set_body);
+}
 
-	{
-		ClassPtr p = cpp_class<Element>();
-		p->set_object_name(Xid(Element));
-		p->def_method(Xid(set_body), &set_body);
-	}
+XTAL_PREBIND(xpeg::TreeNode){
+	using namespace xpeg;
+	it->set_final();
+	it->inherit(cpp_class<Array>());
+}
 
-	{
-		ClassPtr p = xnew<Class>();
-		p->def_method(Xid(op_mod), &more_shortest_Int, cpp_class<Int>());
-		p->def_method(Xid(op_mod), &more_shortest_IntRange, cpp_class<IntRange>());
-		p->def_method(Xid(op_div), &more_normal_Int, cpp_class<Int>());
-		p->def_method(Xid(op_div), &more_normal_IntRange, cpp_class<IntRange>());
-		p->def_method(Xid(op_mul), &more_greed_Int, cpp_class<Int>());
-		p->def_method(Xid(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
-		p->def_method(Xid(op_com), &inv);
-		
-		p->def_method(Xid(op_or), &select, cpp_class<Element>());
-		p->def_method(Xid(op_or), &select, cpp_class<String>());
-		p->def_method(Xid(op_or), &select, cpp_class<ChRange>());
-		p->def_method(Xid(op_or), &select, cpp_class<Fun>());
-		p->def_method(Xid(op_shr), &concat, cpp_class<Element>());
-		p->def_method(Xid(op_shr), &concat, cpp_class<String>());
-		p->def_method(Xid(op_shr), &concat, cpp_class<ChRange>());
-		p->def_method(Xid(op_shr), &concat, cpp_class<Fun>());
+XTAL_BIND(xpeg::TreeNode){
+	using namespace xpeg;
+	it->def_method(Xid(tag), &TreeNode::tag);
+	it->def_method(Xid(lineno), &TreeNode::lineno);
+	it->def_method(Xid(set_tag), &TreeNode::set_tag);
+	it->def_method(Xid(set_lineno), &TreeNode::set_lineno);
+}
 
-		ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
-		for(int i=0; i<4; ++i){
-			classes[i]->inherit(p);
-		}
-	}
+XTAL_PREBIND(xpeg::Executor){
+	using namespace xpeg;
+	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid(stream_or_iterator), empty_string));
+}
+
+XTAL_BIND(xpeg::Executor){
+	using namespace xpeg;
+	it->def_method(Xid(reset), &Executor::reset);
+	it->def_method(Xid(parse), &Executor::parse);
+	it->def_method(Xid(match), &Executor::match);
+
+	it->def_method(Xid(captures), &Executor::captures);
+	it->def_method(Xid(captures_values), &Executor::captures_values);		
+	it->def_method(Xid(op_at), &Executor::at, cpp_class<String>());
+	it->def_method(Xid(op_call), &Executor::call, cpp_class<String>());
+	it->def_method(Xid(prefix), &Executor::prefix);
+	it->def_method(Xid(suffix), &Executor::suffix);
+	it->def_method(Xid(prefix_values), &Executor::prefix_values);
+	it->def_method(Xid(suffix_values), &Executor::suffix_values);
+	it->def_method(Xid(errors), &Executor::errors);
+	it->def_method(Xid(read), &Executor::read);
+	it->def_method(Xid(peek), &Executor::peek)->param(1, Xid(n), 0);
+	it->def_method(Xid(tree), &Executor::tree);
+}
+
+void bind_xpeg(const ClassPtr& xpeg){
+	using namespace xpeg;
 
 	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
 	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
@@ -1385,14 +1403,9 @@ void initialize_xpeg(){
 	//bind_xpeg(xpeg);
 	xpeg->set_binder(&bind_xpeg);
 
-	{
-		ClassPtr p = cpp_class<TreeNode>();
-		p->set_final();
-		p->inherit(cpp_class<Array>());
-		p->def_method(Xid(tag), &TreeNode::tag);
-		p->def_method(Xid(lineno), &TreeNode::lineno);
-		p->def_method(Xid(set_tag), &TreeNode::set_tag);
-		p->def_method(Xid(set_lineno), &TreeNode::set_lineno);
+	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
+	for(int i=0; i<4; ++i){
+		classes[i]->inherit(cpp_class<XpegOperator>());
 	}
 
 	builtin()->def(Xid(xpeg), xpeg);

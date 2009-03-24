@@ -42,7 +42,7 @@ public:
 		return xmalloc(size);
 	}
 
-	static void operator delete(void* p){
+	static void operator delete(void*){
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }

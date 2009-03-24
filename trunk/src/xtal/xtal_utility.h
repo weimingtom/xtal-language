@@ -125,8 +125,6 @@
 #	endif
 #endif
 
-#define XTAL_ID(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<class x>::value)
-
 namespace xtal{
 
 template<class T>
@@ -602,6 +600,8 @@ typedef SmartPtr<Any> AnyPtr;
 
 class Environment;
 
+class Null;
+class Undefined;
 class Array;
 class Map;
 class Set;
@@ -639,6 +639,8 @@ class DebugInfo;
 class Exception;
 class Filesystem;
 
+typedef SmartPtr<Null> NullPtr;
+typedef SmartPtr<Undefined> UndefinedPtr;
 typedef SmartPtr<Array> ArrayPtr;
 typedef SmartPtr<Map> MapPtr;
 typedef SmartPtr<Set> SetPtr;
@@ -737,9 +739,6 @@ struct ExceptInfo{
 };
 
 class EmptyInstanceVariables;
-class Null;
-class Undefined;
-struct Named;
 
 extern ScopeInfo empty_scope_info;
 extern ClassInfo empty_class_info;
@@ -748,9 +747,9 @@ extern ExceptInfo empty_except_info;
 extern EmptyInstanceVariables empty_instance_variables;
 extern IDPtr empty_id;
 extern StringPtr empty_string;
-extern Null null;
-extern Undefined undefined;
-extern Named null_named;
+
+extern NullPtr null;
+extern UndefinedPtr undefined;
 
 struct ParamInfo;
 struct VMAndData;
@@ -803,8 +802,10 @@ template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 struct CppClassBindTemp{
 	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char*& name, const char* given){
 		std::memcpy(&dest, &src, sizeof(src));
+		std::memcpy(&dummy, &src, sizeof(dummy));
 		name = given;
 	}
+	char dummy;
 };
 
 template<class T>
@@ -844,6 +845,8 @@ struct Identifier{
 
 template<class T>
 IdentifierData Identifier<T>::value;
+
+#define XTAL_ID(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
 
 }
 

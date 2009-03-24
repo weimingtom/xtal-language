@@ -3,9 +3,9 @@
 
 namespace xtal{
 
-Null null;
-Undefined undefined;
-Named null_named;
+NullPtr null(unchecked_ptr_cast<Null>(ap(Null())));
+UndefinedPtr undefined(unchecked_ptr_cast<Undefined>(ap(Undefined())));
+
 IDPtr empty_id(unchecked_ptr_cast<ID>(ap(Any(TYPE_SMALL_STRING))));
 StringPtr empty_string(unchecked_ptr_cast<String>(ap(Any(TYPE_SMALL_STRING))));
 
@@ -86,7 +86,7 @@ const ClassPtr& HaveParent::object_parent(){
 		return to_smartptr(parent_);
 	}
 	else{
-		return null;
+		return unchecked_ptr_cast<Class>(null);
 	}
 }
 
@@ -105,6 +105,11 @@ void HaveParent::set_object_parent(const ClassPtr& parent){
 		}
 	}
 }
+
+void HaveParent::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & object_parent();
+}	
 
 RefCountingHaveParent::RefCountingHaveParent(const RefCountingHaveParent& a)
 :RefCountingBase(a), parent_(0){
@@ -126,7 +131,7 @@ const ClassPtr& RefCountingHaveParent::object_parent(){
 		return to_smartptr(parent_);
 	}
 	else{
-		return null;
+		return unchecked_ptr_cast<Class>(null);
 	}
 }
 
@@ -145,6 +150,10 @@ void RefCountingHaveParent::set_object_parent(const ClassPtr& parent){
 		}
 	}
 }
+
+void RefCountingHaveParent::visit_members(Visitor& m){
+	m & object_parent();
+}	
 
 GCObserver::GCObserver(){
 	register_gc_observer(this);

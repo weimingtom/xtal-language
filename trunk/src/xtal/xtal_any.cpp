@@ -209,7 +209,7 @@ const ClassPtr& Any::object_parent() const{
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->object_parent();  }
 	}
-	return null;	
+	return unchecked_ptr_cast<Class>(null);	
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{

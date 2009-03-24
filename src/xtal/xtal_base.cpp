@@ -98,7 +98,7 @@ void Base::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& seco
 }
 
 const ClassPtr& Base::object_parent(){
-	return null;
+	return unchecked_ptr_cast<Class>(null);
 }
 
 void Base::set_object_parent(const ClassPtr& parent){

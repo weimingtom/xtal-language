@@ -58,13 +58,13 @@ void FormatSpecifier::make_format_specifier(char_t* dest, char_t type, bool int_
 
 	{ // 書式指定子を埋め込む
 		const char_t* src = buf_;
-		while(*dest++ = *src++){}
+		while((*dest++ = *src++)!=0){}
 		--dest;
 	}
 
 	if(int_type){ // int_t が64-bitの時に特別な書式指定子を埋め込む
 		const char_t* src = XTAL_INT_FMT;
-		while(*dest++ = *src++){}
+		while((*dest++ = *src++)!=0){}
 		--dest;
 	}
 

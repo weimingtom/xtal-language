@@ -23,13 +23,10 @@ public:
 		:SmartPtr<Any>(p){
 
 		// 継承関係をここでチェックしている。
-		// ここでコンパイルエラーになる場合、ptr_cast関数、ptr_cast関数等を使用して変換する必要がある。
+		// ここでコンパイルエラーになる場合、ptr_cast関数等を使用して変換する必要がある。
 		T* n = (U*)0; 
 		XTAL_UNUSED_VAR(n);
 	}
-
-	//SmartPtr(const SmartPtr<T>& p)
-	//	:SmartPtr<Any>(p){}
 
 	SmartPtr<T>& operator =(const Null&){
 		dec_ref_count();
@@ -38,7 +35,7 @@ public:
 	}
 
 	/// nullを受け取るコンストラクタ
-	//SmartPtr(const Null&){}
+	SmartPtr(const NullPtr&){}
 
 	/// 特別なコンストラクタ1
 	SmartPtr(typename SmartPtrCtor1<T>::type v);

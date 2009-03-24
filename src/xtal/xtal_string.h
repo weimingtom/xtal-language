@@ -177,7 +177,7 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
-	XTAL_DEBUG_ONLY(char_t* buf_);
+	XTAL_DEBUG_ONLY(char_t* buf_;)
 
 	uint_t data_size_;
 public:
@@ -186,7 +186,7 @@ public:
 		set_pvalue(*this, TYPE_STRING, this);
 		data_size_ = size<<SIZE_SHIFT;
 		buf()[size] = 0;
-		XTAL_DEBUG_ONLY(buf_ = buf());
+		XTAL_DEBUG_ONLY(buf_ = buf();)
 	}
 
 	~StringData(){}

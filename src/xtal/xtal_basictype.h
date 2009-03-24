@@ -7,31 +7,13 @@ namespace xtal{
 
 class Null : public Any{
 public:
-	template<class T>
-	operator const SmartPtr<T>&() const{
-		return *(SmartPtr<T>*)this;
-	}
-
-	template<class T>
-	operator SmartPtr<T>() const{
-		return *(SmartPtr<T>*)this;
-	}
+	Null():Any(TYPE_NULL){} 
 };
 
-inline bool operator ==(const AnyPtr& a, const Null&){ return raweq(a, null); }
-inline bool operator !=(const AnyPtr& a, const Null&){ return rawne(a, null); }
-inline bool operator ==(const Null&, const AnyPtr& a){ return raweq(a, null); }
-inline bool operator !=(const Null&, const AnyPtr& a){ return rawne(a, null); }
-
-class Undefined : public AnyPtr{ 
+class Undefined : public Any{ 
 public: 
-	Undefined():AnyPtr(TYPE_UNDEFINED){} 
+	Undefined():Any(TYPE_UNDEFINED){} 
 };
-
-inline bool operator ==(const AnyPtr& a, const Undefined&){ return raweq(a, undefined); }
-inline bool operator !=(const AnyPtr& a, const Undefined&){ return rawne(a, undefined); }
-inline bool operator ==(const Undefined&, const AnyPtr& a){ return raweq(a, undefined); }
-inline bool operator !=(const Undefined&, const AnyPtr& a){ return rawne(a, undefined); }
 
 class Int : public Any{
 public:
@@ -95,15 +77,7 @@ class Bool : public Any{
 public: 
 	Bool(bool b):Any(b){} 
 };
-/*
-class SmallData : public Any{
-public:
-	
-	static SmallDataPtr make_u8u8u8u32();
-	static SmallDataPtr make_u8u16u32();
 
-};
-*/
 class Range : public Base{
 public:
 
@@ -216,10 +190,7 @@ protected:
 
 	Class* parent_;
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & parent_;
-	}	
+	virtual void visit_members(Visitor& m);
 };
 
 class RefCountingHaveParent : public RefCountingBase{
@@ -242,9 +213,7 @@ protected:
 
 	Class* parent_;
 
-	void visit_members(Visitor& m){
-		m & parent_;
-	}	
+	void visit_members(Visitor& m);
 };
 
 

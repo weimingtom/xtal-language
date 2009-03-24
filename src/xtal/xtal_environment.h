@@ -318,9 +318,9 @@ void enable_debug();
 void disable_debug();
 
 /**
-* @brief 文字列リテラルをインターン済み文字列に変換する
+* @brief 文字列をインターン済み文字列に変換する
 */
-const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata);
+const IDPtr& intern(const char_t* str, uint_t data_size);
 
 /**
 * @brief 文字列をインターン済み文字列に変換する
@@ -328,9 +328,16 @@ const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata);
 const IDPtr& intern(const char_t* str);
 
 /**
-* @brief 文字列をインターン済み文字列に変換する
+* @brief 文字列リテラルをインターン済み文字列に変換する
 */
-const IDPtr& intern(const char_t* str, uint_t data_size);
+const IDPtr& intern(const char_t* str, IdentifierData* iddata);
+
+/**
+* @brief 文字列リテラルをインターン済み文字列に変換する
+*/
+inline const IDPtr& intern(const StringLiteral& str){
+	return intern(str, str.size());
+}
 
 /**
 * @brief インターン済み文字列を列挙する

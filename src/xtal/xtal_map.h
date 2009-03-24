@@ -47,7 +47,7 @@ public:
 	* @brief 連想配列の容量を返す
 	*
 	*/
-	int_t size(){
+	uint_t size(){
 		return table_.size();
 	}
 	
@@ -55,7 +55,7 @@ public:
 	* @brief 連想配列の容量を返す
 	*
 	*/
-	int_t length(){
+	uint_t length(){
 		return table_.size();
 	}
 

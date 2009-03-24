@@ -2,65 +2,61 @@
 CC = g++
 OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -mno-cygwin -Wall
 
-
-#  -W -Wstrict-aliasing=2 -Wpointer-arith
-#  -Wall, -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
-
-
 .SUFFIXES: .cpp .o 
 
-SRC = $(shell ls ../src/xtal/xtal_*.cpp)
-OBJ = $(patsubst ../src/xtal/%.cpp,%.o,$(SRC))
+SRCDIR = ../src/xtal
+BINDIR = ../bin
 
-%.o: ../src/xtal/%.cpp
-	$(CC) -c $< $(OPT)
-	
+SRC = $(shell ls $(SRCDIR)/xtal_*.cpp)
+OBJ = $(patsubst $(SRCDIR)/%.cpp,%.o,$(SRC))
+
+%.o: $(SRCDIR)/%.cpp
+	$(CC) -o $@ -c $< $(OPT)
+
 all: libxtal ix xtal
 
 depend:
 	g++ -MM -MG $(SRC) >makefile.depend
 
-../src/xtal/xtal.h.gch: ../src/xtal/xtal.h 
-	$(CC) ../src/xtal/xtal.h $(OPT)
+libxtal: $(OBJ)
+	ar r $(TEMPDIR)/libxtal.a $(OBJ)
+	ranlib $(TEMPDIR)/libxtal.a
 
-libxtal: ../src/xtal/xtal.h.gch $(OBJ)
-	ar r libxtal.a $(OBJ)
-	ranlib libxtal.a
+xtal: libxtal $(SRCDIR)/main.cpp
+	$(CC) -o $(BINDIR)/xtal.exe $(SRCDIR)/main.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+	strip --strip-all $(BINDIR)/xtal.exe
 
-xtal: libxtal ../src/xtal/main.cpp
-	$(CC) -o ../bin/xtal.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
-	strip --strip-all ../bin/xtal.exe
+ix: libxtal $(SRCDIR)/ixmain.cpp
+	$(CC) -o $(BINDIR)/ix.exe $(SRCDIR)/ixmain.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+	strip --strip-all $(BINDIR)/ix.exe
 
-ix: libxtal ../src/xtal/ixmain.cpp
-	$(CC) -o ../bin/ix.exe ../src/xtal/ixmain.cpp libxtal.a -lstdc++ $(OPT)
-	strip --strip-all ../bin/ix.exe
-
-testxtal: libxtal ../src/xtal/testmain.cpp
-	$(CC) -o ../bin/test.exe ../src/xtal/testmain.cpp libxtal.a -lstdc++ $(OPT)
-	strip --strip-all ../bin/test.exe
+testxtal: libxtal $(SRCDIR)/testmain.cpp
+	$(CC) -o $(BINDIR)/test.exe $(SRCDIR)/testmain.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+	strip --strip-all $(BINDIR)/test.exe
 	
-.PHONY : clean
+.PHONY: clean
 
 clean:
-	rm *.o *.a ../src/xtal/xtal.h.gch ../bin/xtal.exe ../bin/ix.exe ../bin/test.exe ../bin/prof.exe ../bin/all_in_one.exe
+	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/all_src.exe
 
-prof: libxtal ../src/xtal/main.cpp
-	$(CC) -o ../bin/prof.exe ../src/xtal/main.cpp libxtal.a -lstdc++ $(OPT)
-	../bin/prof.exe ../bench/ao.xtal
-	gprof ../bin/prof.exe gmon.out -p > prof.txt
+prof: override OPT += -pg
+prof: libxtal $(SRCDIR)/main.cpp
+	$(CC) -o $(BINDIR)/prof.exe $(SRCDIR)/main.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+	$(BINDIR)/prof.exe ../bench/ao.xtal
+	gprof $(BINDIR)/prof.exe gmon.out -p > prof.txt
 
-all_in_one: 
-	$(CC) -o ../bin/all_in_one.exe ../src/xtal/xtal_lib/xtal_all_in_one.cpp -lstdc++ $(OPT)
+all_src: 
+	$(CC) -o $(BINDIR)/all_src.exe ../all_src/all_src.cpp -lstdc++ $(OPT)
 
 run: xtal
-	../bin/xtal.exe 
+	$(BINDIR)/xtal.exe 
 
 test: testxtal
-	../bin/test.exe
+	$(BINDIR)/test.exe
 
 checkdll:
-	$ objdump -p ../bin/xtal.exe | grep "DLL Name"
-	$ objdump -p ../bin/ix.exe | grep "DLL Name"
+	$ objdump -p $(BINDIR)/xtal.exe | grep "DLL Name"
+	$ objdump -p $(BINDIR)/ix.exe | grep "DLL Name"
 	
 -include makefile.depend
 

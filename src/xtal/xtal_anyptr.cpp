@@ -15,20 +15,11 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const Null&){
-	dec_ref_count();
-	set_null(*this);
-	return *this;
-}
-
-SmartPtr<Any>& SmartPtr<Any>::operator =(const Undefined&){
-	dec_ref_count();
-	set_undefined(*this);
-	return *this;
-}
-
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
-	return ap_copy(*this, p);
+	dec_ref_count();
+	*(Any*)this = p;
+	inc_ref_count();
+	return *this;
 }
 
 SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)

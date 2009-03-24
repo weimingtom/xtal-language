@@ -158,9 +158,7 @@ public:
 		return it->second;
 	}
 
-	AnyPtr interned_strings(){
-		return xnew<InternedStringIter>(table_.begin(), table_.end());
-	}
+	AnyPtr interned_strings();
 
 	void gc(){
 		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last;){
@@ -236,6 +234,10 @@ public:
 	}
 
 };
+
+inline AnyPtr StringSpace::interned_strings(){
+	return xnew<InternedStringIter>(table_.begin(), table_.end());
+}
 
 }
 

@@ -1,0 +1,28 @@
+inherit(lib::test);
+
+class ThreadTest{
+	test#Test{
+		ret: [];
+		t1: Thread();
+		t2: Thread();
+		
+		t1.start(fun(){
+			10.times{
+				ret.push_back(it);
+			}
+		});
+		
+		t2.start(fun(){
+			10.times{
+				ret.push_back(it);
+			}
+		});
+		
+		t1.join;
+		t2.join;
+		
+		assert ret.size==20;		
+	}
+}
+
+

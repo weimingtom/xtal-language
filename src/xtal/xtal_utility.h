@@ -9,6 +9,42 @@
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
 
+
+#if !defined(XTAL_NO_MULTI_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_PTHREAD_TLS)
+#include <pthread.h>
+template<class T>
+struct TLSPtr{
+	TLSPtr(){ pthread_key_create(&key); }
+	~TLSPtr(){ pthread_key_delete(&key); }
+	void operator =(T* p){ pthread_setspecific(key, p); }
+	operator T*(){ return static_cast<T*>(pthread_getspecific(key)); }
+	T* operator ->(){ return *this; }
+private:
+	pthread_key_t key;
+	TLSPtr(const TLSPtr&);
+	void operator=(const TLSPtr&);
+};
+#define XTAL_TLS_PTR(x) TLSPtr<x>
+#endif
+
+#if !defined(XTAL_NO_MULTI_THREAD) && !defined(XTAL_TLS_PTR) && defined(_WIN32) && !defined(_MSC_VER)
+#include <windows.h>
+template<class T>
+struct TLSPtr{
+	TLSPtr(){ key = TlsAlloc(); }
+	~TLSPtr(){ TlsFree(key); }
+	void operator =(T* p){ TlsSetValue(key, p); }
+	operator T*(){ return static_cast<T*>(TlsGetValue(key)); }
+	T* operator ->(){ return *this; }
+private:
+	DWORD key;
+	TLSPtr(const TLSPtr&);
+	void operator=(const TLSPtr&);
+};
+#define XTAL_TLS_PTR(x) TLSPtr<x>
+#endif
+
+
 #ifdef XTAL_NO_PARSER
 #	define XTAL_USE_COMPILED_EMB
 #endif
@@ -72,7 +108,6 @@
 */
 #define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->except()))
 
-
 #define XTAL_UNUSED_VAR(x) (void)x
 
 #ifdef __GNUC__
@@ -114,12 +149,12 @@
 #ifdef XTAL_NO_MULTI_THREAD
 #	define XTAL_TLS_PTR(x) x*
 #else
-#	if defined(_MSC_VER)
-#		define XTAL_TLS_PTR(x) __declspec(thread) x*
-#	elif defined(__GNUC__)
-#		define XTAL_TLS_PTR(x) __thread x*
-#	else 
-#		if !defined(XTAL_TLS_PTR)
+#	ifndef XTAL_TLS_PTR
+#		if defined(_MSC_VER)
+#			define XTAL_TLS_PTR(x) __declspec(thread) x*
+#		elif defined(__GNUC__) && !defined(__CYGWIN__)
+#			define XTAL_TLS_PTR(x) __thread x*
+#		else 
 #			error // XTAL_NO_MULTI_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
 #		endif
 #	endif

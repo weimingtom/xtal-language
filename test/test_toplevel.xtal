@@ -28,8 +28,6 @@ class ToplevelTest{
 	func#Test{
 		assert foo===mod::foo;
 		assert foo()=="foo";
-		assert bar()=="bar";
-		assert bar()=="mod::bar";
 		assert bar()=="filelocal::bar";
 	}
 }

@@ -152,7 +152,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
 
-	var_begin(VarFrame::SCOPE);
+	var_begin(VarFrame::DEFAULT);
 	scope_begin();	
 
 	// 関数本体を処理する
@@ -796,7 +796,7 @@ void CodeBuilder::scope_end(){
 		var_set_direct(vf());
 		put_inst(InstBlockEnd(vf().scope_info_num));
 	}
-
+		
 	if(vf().kind!=VarFrame::SCOPE){
 		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_ON_HEAP;
 	}
@@ -1327,7 +1327,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 
 
 	// 変数フレームを作成して、引数を登録する
-	var_begin(VarFrame::SCOPE);
+	var_begin(VarFrame::DEFAULT);
 	Xfor_cast(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
 		if(v->itag()==EXPR_LVAR){
@@ -1433,7 +1433,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_for(const ExprPtr& e){
-	var_begin(VarFrame::SCOPE);
+	var_begin(VarFrame::DEFAULT);
 	var_define_stmt(e->for_init());
 	var_define(Xid(first_step), xnew<Expr>(EXPR_TRUE));
 	check_lvar_assign_stmt(e);
@@ -1744,7 +1744,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 				result_->except_info_table_[info].catch_pc = code_size();
 
 				// 例外を受け取るために変数スコープを構築
-				var_begin(VarFrame::SCOPE);
+				var_begin(VarFrame::DEFAULT);
 				var_define(e->catch_catch_var(), null, 0, true, false, true);
 				scope_begin();
 
@@ -2175,10 +2175,11 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 				ff().finallies.push(exc);
 
 				// 例外を受け取るために変数スコープを構築
-				var_begin(VarFrame::SCOPE);
+				var_begin(VarFrame::DEFAULT);
 				var_define(e->try_catch_var(), null, 0, true, false, true);
 				check_lvar_assign_stmt(e->try_catch());
 				scope_begin();
+				scope_chain(1);
 
 				put_set_local_code(e->try_catch_var());
 				compile_stmt(e->try_catch());
@@ -2219,7 +2220,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			// 条件式の部分が変数定義式である場合
 			if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 				// スコープを形成する
-				var_begin(VarFrame::SCOPE);
+				var_begin(VarFrame::DEFAULT);
 				var_define(cond->bin_lhs()->lvar_name());
 				check_lvar_assign_stmt(e);
 				scope_begin();
@@ -2376,7 +2377,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}	
 		
 		XTAL_CASE(EXPR_SCOPE){
-			var_begin(VarFrame::SCOPE);
+			var_begin(VarFrame::DEFAULT);
 			var_define_stmts(e->scope_stmts());
 			check_lvar_assign_stmt(e);
 			scope_begin();{
@@ -2393,7 +2394,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			// 条件式の部分が変数定義式である場合
 			if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 				// スコープを形成する
-				var_begin(VarFrame::SCOPE);
+				var_begin(VarFrame::DEFAULT);
 				var_define(cond->bin_lhs()->lvar_name());
 				check_lvar_assign_stmt(e);
 				scope_begin();

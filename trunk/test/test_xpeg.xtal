@@ -1,0 +1,42 @@
+inherit(lib::test);
+inherit(xpeg);
+
+class TestXpeg{
+
+	mail#Test{		
+		bs: "\\";
+		dq: "\"";
+		atom: (alpha | degit | set("!#$%&'*+-/=?^_`{|}~"))*1;
+		quotedpair: bs >> set(" \\\"");
+		quoted: dq >> (atom | set("()<>[]:;@,.") | quotedpair)*0 >> dq;
+		dot_atom: atom >> ("." >> atom)*0;
+		local: dot_atom | quoted;
+		domain: local; // fixme
+		mail: bos >> local >> "@" >> domain >> eos;
+				    
+		ok: [
+			"Abc@example.com", 
+			"Abc.123@example.com", 
+			"user+mailbox/department=shipping@example.com", 
+			"!#$%&'*+-/=?^_`.{|}~@example.com", 
+			%!"Abc@def"@example.com!, 
+			%!"Fred\\ Bloggs"@example.com!, 
+			%!"Joe.\\\\Blow"@example.com!, 
+		];
+		
+		ng: [
+			"Abc.@example.com",
+			"Abc..123@example.com",
+			%!ewr"esre"@example.com!,
+			"Abc@example.com.", 
+		];
+		
+		ok.each{
+			assert it.match(mail), it;
+		}
+		
+		ng.each{
+			assert !it.match(mail), it;
+		}
+	}
+}

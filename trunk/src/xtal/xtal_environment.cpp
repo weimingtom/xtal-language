@@ -133,6 +133,7 @@ public:
 
 	ArrayPtr vm_list_;
 	MapPtr text_map_;
+	MapPtr nfa_map_;
 
 	StreamPtr stdin_;
 	StreamPtr stdout_;
@@ -159,7 +160,7 @@ void set_environment(Environment* environment){
 }
 
 const VMachinePtr& vmachine(){
-	return to_smartptr(vmachine_);
+	return to_smartptr((VMachine*)vmachine_);
 }
 
 void set_vmachine(const VMachinePtr& vm){
@@ -272,6 +273,7 @@ void Environment::initialize(const Setting& setting){
 
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
+	nfa_map_ = xnew<Map>();
 
 	bind();
 
@@ -326,6 +328,7 @@ void Environment::uninitialize(){
 	builtin_ = null;
 	lib_ = null;
 	vm_list_ = null;
+	nfa_map_ = null;
 	filesystem_ = null;
 
 	stdin_ = null;
@@ -645,6 +648,21 @@ CodePtr compiled_source(const void* src, int_t size, const char* file){
 		return fun;
 	}
 	return null;
+}
+
+namespace xpeg{
+
+const NFAPtr& fetch_nfa(const ElementPtr& node){
+	const AnyPtr& temp = environment_->nfa_map_->at(node);
+	if(temp){
+		return unchecked_ptr_cast<NFA>(temp);
+	}
+	else{
+		environment_->nfa_map_->set_at(node, xnew<NFA>(node));
+		return unchecked_ptr_cast<NFA>(environment_->nfa_map_->at(node));
+	}
+}
+
 }
 
 }

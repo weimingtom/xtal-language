@@ -413,6 +413,12 @@ int_t String::ascii(){
 	int_t ch = (uchar_t)c_str()[0];
 	return ch<128 ? ch : 255;
 }
+	
+bool String::op_in(const ChRangePtr& range){
+	const char_t* str = c_str();
+	return ch_cmp(str, data_size(), range->left()->c_str(), range->left()->data_size())>=0 &&
+		ch_cmp(str, data_size(), range->right()->c_str(), range->right()->data_size())<=0;
+}
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 	if(kind!=RANGE_CLOSED){

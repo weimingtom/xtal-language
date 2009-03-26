@@ -30,5 +30,11 @@
 /**
 * @brief マルチスレッドoff
 */
-#define XTAL_NO_MULTI_THREAD
+//#define XTAL_NO_MULTI_THREAD
+
+/**
+* @brief pthreadのスレッドローカルストレージを使う
+*/
+//#define XTAL_PTHREAD_TLS
+
 #endif // XTAL_SETTING_H_INCLUDE_GUARD

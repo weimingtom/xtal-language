@@ -264,11 +264,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\test_thread.xtal"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\test_toplevel.xtal"
 				>
 			</File>
 			<File
 				RelativePath="..\..\test\test_var_scope.xtal"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\test_xpeg.xtal"
 				>
 			</File>
 		</Filter>

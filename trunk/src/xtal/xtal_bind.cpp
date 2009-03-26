@@ -1129,6 +1129,8 @@ XTAL_BIND(Debug){
 
 XTAL_PREBIND(Iterable){
 	it->unset_native();
+
+	cpp_class<Iterator>()->bind();
 }
 
 XTAL_BIND(Iterator){

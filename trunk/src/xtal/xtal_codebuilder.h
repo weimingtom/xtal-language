@@ -154,7 +154,9 @@ public:
 		enum{
 			SCOPE,
 			CLASS,
-			FRAME		
+			FRAME,
+			
+			DEFAULT = SCOPE
 		};
 
 		int_t kind;

@@ -153,9 +153,13 @@ public:
 	*/
 	StringPtr cat(const StringPtr& v);
 
+public:
+
 	bool is_ch();
 
 	int_t ascii();
+
+	bool op_in(const ChRangePtr& range);
 
 public:
 

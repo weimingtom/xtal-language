@@ -4,6 +4,7 @@
 #pragma once
 
 #include "xtal.h"
+#include "xtal_macro.h"
 
 #include "xtal_allocator.cpp"
 #include "xtal_any.cpp"

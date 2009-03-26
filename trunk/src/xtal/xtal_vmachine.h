@@ -762,6 +762,9 @@ private:
 	// 関数呼び出しの度に積まれるフレーム
 	FastStack<FunFrame*> fun_frames_;
 
+	// スコープ情報
+	FastStack<ScopeInfo*> scopes_;
+
 	// tryの度に積まれるフレーム
 	FastStack<ExceptFrame> except_frames_;
 	

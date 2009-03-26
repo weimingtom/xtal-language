@@ -544,6 +544,7 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 					}
 					else{
 						set_except(cpp_class<AssertionFailed>()->call(debug_info_->assertion_message()));
+						e = ap(except_[0]);
 					}
 				}
 			}

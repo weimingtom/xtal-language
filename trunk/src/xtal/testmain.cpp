@@ -31,13 +31,13 @@ int main2(int argc, char** argv){
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
 
-
+		
 
 	))){
 		code->call();
 	}
 
-	load("../struct.xtal");
+//	load("../struct.xtal");
 
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

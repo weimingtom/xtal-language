@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "xtal_lib/xtal_cstdiostream.h"
+#include "xtal_cstdiostream.h"
 
 namespace xtal{
 
@@ -25,7 +25,7 @@ public:
 			return 0;
 		}
 		
-		dirent* dp = readdir(dir);
+		dirent* dp = readdir(dir_);
 		if(!dp){
 			return 0;
 		}

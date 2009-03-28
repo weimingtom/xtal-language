@@ -15,12 +15,12 @@
 //#define XTAL_USE_CPP_EXCEPTIONS
 
 
-#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_PTHREAD_TLS)
+#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
 #include <pthread.h>
 template<class T>
 struct TLSPtr{
-	TLSPtr(){ pthread_key_create(&key); }
-	~TLSPtr(){ pthread_key_delete(&key); }
+	TLSPtr(){ pthread_key_create(&key, 0); }
+	~TLSPtr(){ pthread_key_delete(key); }
 	void operator =(T* p){ pthread_setspecific(key, p); }
 	operator T*(){ return static_cast<T*>(pthread_getspecific(key)); }
 	T* operator ->(){ return *this; }

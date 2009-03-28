@@ -28,16 +28,26 @@ int main2(int argc, char** argv){
 	//enable_debug();
 	//debug()->set_throw_hook(fun(&debug_throw));
 	
+	enable_debug();
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
+		{
+			nnn: 10.to_i;
 
-		
+			{
+				nnnm: 10.to_i;
+				current_context.members[].p;
+				current_context.outer.members[].p;
+			}
+
+			mmm: 20.to_i;
+		}
 
 	))){
-		code->call();
+		//code->call();
 	}
 
-//	load("../struct.xtal");
+	//load("../struct.xtal");
 
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

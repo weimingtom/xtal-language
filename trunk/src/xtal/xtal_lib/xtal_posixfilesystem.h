@@ -2,6 +2,8 @@
 #pragma once
 
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "xtal_lib/xtal_cstdiostream.h"
 
 namespace xtal{
@@ -42,8 +44,10 @@ public:
 class PosixFilesystemLib : public FilesystemLib{
 public:
 
-	virtual bool is_directory(const StringPtr& path){
-		return false;
+	virtual bool is_directory(const char_t* path){
+		struct stat sb;
+		stat(path, &sb);
+		return stat(path, &sb)!=-1 && (sb.st_mode & S_IFMT)==S_IFDIR;
 	}
 
 	virtual void* new_file_stream(const char_t* path, const char_t* flags){

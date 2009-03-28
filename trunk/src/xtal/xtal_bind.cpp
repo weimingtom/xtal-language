@@ -788,6 +788,7 @@ XTAL_BIND(MembersIter){
 
 XTAL_BIND(Frame){
 	it->def_method(Xid(members), &Frame::members);
+	it->def_method(Xid(outer), &Frame::outer);
 }
 
 XTAL_PREBIND(Class){
@@ -1023,7 +1024,33 @@ XTAL_BIND(Stream){
 	it->def_method(Xid(block_next), &Stream::block_next);
 	it->def_method(Xid(block_break), &Stream::block_break);
 
-	it->def_method(Xid(put_u8), &Stream::put_u8);
+	it->def_method(Xid(put_i8), &Stream::put_i8);
+
+	it->def_method(Xid(put_i16be), &Stream::put_i16be);
+	it->def_method(Xid(put_i32be), &Stream::put_i32be);
+	it->def_method(Xid(put_i64be), &Stream::put_i64be);
+	it->def_method(Xid(put_f32be), &Stream::put_f32be);
+	it->def_method(Xid(put_f64be), &Stream::put_f64be);
+
+	it->def_method(Xid(put_i16le), &Stream::put_i16le);
+	it->def_method(Xid(put_i32le), &Stream::put_i32le);
+	it->def_method(Xid(put_i64le), &Stream::put_i64le);
+	it->def_method(Xid(put_f32le), &Stream::put_f32le);
+	it->def_method(Xid(put_f64le), &Stream::put_f64be);
+
+	it->def_method(Xid(get_i8), &Stream::get_i8);
+
+	it->def_method(Xid(get_i16be), &Stream::get_i16be);
+	it->def_method(Xid(get_i32be), &Stream::get_i32be);
+	it->def_method(Xid(get_i64be), &Stream::get_i64be);
+	it->def_method(Xid(get_f32be), &Stream::get_f32be);
+	it->def_method(Xid(get_f64be), &Stream::get_f64be);
+
+	it->def_method(Xid(get_i16le), &Stream::get_i16le);
+	it->def_method(Xid(get_i32le), &Stream::get_i32le);
+	it->def_method(Xid(get_i64le), &Stream::get_i64le);
+	it->def_method(Xid(get_f32le), &Stream::get_f32le);
+	it->def_method(Xid(get_f64le), &Stream::get_f64be);
 
 	Xemb((
 Stream::match: method(pattern){
@@ -1129,7 +1156,9 @@ XTAL_BIND(Debug){
 
 XTAL_PREBIND(Iterable){
 	it->unset_native();
+}
 
+XTAL_BIND(Iterable){
 	cpp_class<Iterator>()->bind();
 }
 

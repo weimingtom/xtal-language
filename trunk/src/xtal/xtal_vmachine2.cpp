@@ -4,8 +4,6 @@
 namespace xtal{
 
 VMachine::VMachine(){
-	myself_ = this;
-
 	id_ = id_op_list();
 
 	stack_.reserve(32);
@@ -83,6 +81,31 @@ void VMachine::push_named_args(const MapPtr& p){
 	}
 }
 	
+void VMachine::execute(Method* fun, const inst_t* start_pc){
+	setup_call(0);
+	carry_over(fun);
+	const inst_t* temp;
+
+	{
+		FunFrame& f = ff();
+
+		temp = f.poped_pc;
+		f.poped_pc = &end_code_;
+
+		execute_inner(start_pc ? start_pc : f.called_pc);
+	}
+
+	fun_frames_.upsize(1);
+	scopes_.push(0);
+
+	{
+		FunFrame& f = ff();
+		f.poped_pc = temp;
+		f.called_pc = &cleanup_call_code_;
+	}
+
+}
+
 const AnyPtr& VMachine::result(int_t pos){
 	const inst_t* temp;
 	{
@@ -103,6 +126,7 @@ const AnyPtr& VMachine::result(int_t pos){
 	}
 
 	fun_frames_.upsize(1);
+	scopes_.push(0);
 
 	{
 		FunFrame& f = ff();
@@ -495,17 +519,17 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 		debug_info_->set_exception(null);
 	}
 
-	debug_info_->set_local_variables_frame(ff().outer());
+	debug_info_->set_local_variables_frame(make_outer_outer());
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		{
 			struct guard{
-				const SmartPtr<Debug>& debug_;
+				const SmartPtr<Debug>* debug_;
 				int_t count_;
-				guard(const SmartPtr<Debug>& debug):debug_(debug){ count_ = debug_->disable_force(); }
-				~guard(){ debug_->enable_force(count_); }
+				guard(const SmartPtr<Debug>& debug):debug_(&debug){ count_ = (*debug_)->disable_force(); }
+				~guard(){ (*debug_)->enable_force(count_); }
 			} g(debug_);
 
 			make_debug_info(pc, kind);
@@ -554,58 +578,59 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	}
 }
 
-const inst_t* VMachine::catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size){
+const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
 		AnyPtr e = catch_except();
 
-		// try .. catch .. finally•¶‚ÅˆÍ‚í‚ê‚Ä‚¢‚È‚¢
-		if(except_frames_.empty()){
-			while((size_t)fun_frames_size<fun_frames_.size()){
-				debug_hook(pc, BREAKPOINT_RETURN);
-				pc = pop_ff();
-				e = append_backtrace(pc, e);
-			}
-			stack_.downsize_n(stack_size);
-			set_except_0(e);
-			return 0;
-		}
+		ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
 
-		ExceptFrame& ef = except_frames_.top();
-		while((size_t)ef.fun_frame_count<fun_frames_.size()){
+		// Xtal‚ÌŠÖ”‚ð’Eo‚µ‚Ä‚¢‚­
+		while((size_t)ef.fun_frame_size<fun_frames_.size()){
 			debug_hook(pc, BREAKPOINT_RETURN);
 			pc = pop_ff();
 			e = append_backtrace(pc, e);
 
+			// C‚ÌŠÖ”‚É‚Ô‚Â‚©‚Á‚½
 			if(pc==&end_code_){
-				stack_.downsize_n(stack_size);
-				set_except_0(e);
-				return 0;
+				ef.info = 0;
+				break;
 			}
 		}
 
-		ff().variables_.downsize_n(ef.variable_size);
-		if(ap(ef.outer)){
-			while(!raweq(ef.outer, ff().outer())){
-				ff().outer(ff().outer()->outer());
-			}
+		while(scopes_.size()<ef.scope_size){
+			scopes_.push(0);
 		}
 
-		stack_.resize(ef.stack_count);
-		if(ef.info->catch_pc && e){
-			pc = ef.info->catch_pc +  fun()->code()->data();
-			push(AnyPtr(ef.info->end_pc));
-			push(e);
+		while(scopes_.size()!=ef.scope_size){
+			if(ScopeInfo* scope = scopes_.pop()){
+				variables_.downsize(scope->variable_size);
+			}
+		}
+		ff().outer(ap(ef.outer));
+
+		stack_.resize(ef.stack_size);
+
+		if(ef.info){
+			if(ef.info->catch_pc && e){
+				pc = ef.info->catch_pc +  fun()->code()->data();
+				push(AnyPtr(ef.info->end_pc));
+				push(e);
+			}
+			else{
+				pc = ef.info->finally_pc +  fun()->code()->data();
+				push(e);
+				push(AnyPtr(fun()->code()->size()-1));
+			}
+
+			except_frames_.downsize(1);
+			return pc;
 		}
 		else{
-			pc = ef.info->finally_pc +  fun()->code()->data();
-			push(e);
-			push(AnyPtr(fun()->code()->size()-1));
+			set_except_0(e);
 		}
-
-		except_frames_.downsize(1);
-		return pc;
+		return 0;
 	}
-	return 0;
+	//return 0;
 }
 
 void VMachine::visit_members(Visitor& m){
@@ -620,6 +645,10 @@ void VMachine::visit_members(Visitor& m){
 		if(fun_frames_[i]){
 			m & *fun_frames_[i];
 		}
+	}
+
+	for(int_t i=0, size=variables_.size(); i<size; ++i){
+		m & variables_[i];
 	}
 
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
@@ -663,12 +692,17 @@ void VMachine::before_gc(){
 	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
 		if(fun_frames_.reverse_at_unchecked(i)){
 			fun_frames_.reverse_at_unchecked(i)->set_null();
-			for(int_t j=0, jsize=fun_frames_.reverse_at_unchecked(i)->variables_.capacity(); j<jsize; ++j){
-				set_null(fun_frames_.reverse_at_unchecked(i)->variables_.reverse_at_unchecked(j));
-			}
 		}
 	}
 
+	for(int_t j=variables_.size(), jsize=variables_.capacity(); j<jsize; ++j){
+		set_null(variables_.reverse_at_unchecked(j));
+	}
+
+	for(int_t i=0, size=variables_.size(); i<size; ++i){
+		inc_ref_count_force(variables_[i]);
+	}
+		
 	for(int_t i=except_frames_.size(), size=except_frames_.capacity(); i<size; ++i){
 		set_null(except_frames_.reverse_at_unchecked(i).outer);
 	}
@@ -697,6 +731,10 @@ void VMachine::after_gc(){
 		}
 	}
 
+	for(int_t i=0, size=variables_.size(); i<size; ++i){
+		dec_ref_count_force(variables_[i]);
+	}
+
 	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
 		dec_ref_count_force(except_frames_[i].outer);
 	}
@@ -711,15 +749,13 @@ void VMachine::print_info(){
 
 	std::printf("fun_frames size %d\n", fun_frames_.size());
 	std::printf("except_frames size %d\n", except_frames_.size());
+	std::printf("variables size %d\n", variables_.size());
+	std::printf("scopes size %d\n", scopes_.size());
 }
 
 void VMachine::FunFrame::inc_ref(){
 	inc_ref_count_force(fun_);
 	inc_ref_count_force(outer_);
-	
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		inc_ref_count_force(variables_[i]);
-	}
 	
 	inc_ref_count_force(self_);
 	inc_ref_count_force(arguments_);
@@ -734,10 +770,6 @@ void VMachine::FunFrame::dec_ref(){
 	dec_ref_count_force(fun_);
 	dec_ref_count_force(outer_);
 	
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		dec_ref_count_force(variables_[i]);
-	}
-	
 	dec_ref_count_force(self_);
 	dec_ref_count_force(arguments_);
 	dec_ref_count_force(hint_);
@@ -749,9 +781,6 @@ void VMachine::FunFrame::dec_ref(){
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
 	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
-	for(int_t i=0, size=v.variables_.size(); i<size; ++i){
-		m & v.variable(i);
-	}
 }
 
 }//namespace

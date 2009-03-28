@@ -21,15 +21,15 @@ void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash
 	while(str[i]){
 		chm.clear();
 		while(!chm.is_completed()){
-			if(str[i]){ chm.add(str[i++]); } 
-			else{ break; }
+			if(str[i]){ 
+				hash = hash*137 ^ str[i];
+				size++;
+				chm.add(str[i++]); 
+			} 
+			else{ 
+				break; 
+			}
 		}
-	
-		for(int_t j=0; j<chm.pos(); ++j){
-			hash = hash*137 ^ chm.at(j);
-		}
-
-		size += chm.pos();
 	}
 }
 
@@ -40,8 +40,12 @@ uint_t string_length(const char_t* str){
 	while(str[i]){
 		chm.clear();
 		while(!chm.is_completed()){
-			if(str[i]){ chm.add(str[i++]); } 
-			else{ break; }
+			if(str[i]){ 
+				chm.add(str[i++]); 
+			} 
+			else{ 
+				break; 
+			}
 		}
 		length += 1;
 	}
@@ -61,7 +65,7 @@ int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsiz
 	if(bsize<asize){ return 1; }
 
 	for(uint_t i=0; i<asize; ++i){
-		int_t diff = (int_t)a[i] - (int_t)b[i];
+		int_t diff = (int_t)((uchar_t*)a)[i] - (int_t)((uchar_t*)b)[i];
 		if(diff!=0){
 			return diff;
 		}
@@ -293,9 +297,6 @@ const char_t* String::c_str(){
 	}
 	else{
 		return value_.svalue;
-		//uint_t size, hash;
-		//string_data_size_and_hashcode(value_.svalue, size, hash);
-		//return xtal::intern(value_.svalue, size, hash)->data();
 	}
 }
 
@@ -436,9 +437,6 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 }
 
 StringPtr String::op_cat(const StringPtr& v){
-	uint_t mysize = data_size();
-	uint_t vsize = v->data_size();
-
 	return xnew<String>(c_str(), data_size(), v->c_str(), v->data_size());
 }
 

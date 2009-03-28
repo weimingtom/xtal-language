@@ -8,11 +8,6 @@
 */
 
 /**
-* @brief スレッド使用off
-*/
-//#define XTAL_NO_THREAD
-
-/**
 * @brief パーサ使用off
 */
 //#define XTAL_NO_PARSER
@@ -23,14 +18,9 @@
 //#define XTAL_USE_WCHAR
 
 /**
-* @brief C++例外on
+* @brief スレッド使用off
 */
-//#define XTAL_USE_CPP_EXCEPTIONS
-
-/**
-* @brief マルチスレッドoff
-*/
-//#define XTAL_NO_MULTI_THREAD
+//#define XTAL_NO_THREAD
 
 /**
 * @brief pthreadのスレッドローカルストレージを使う

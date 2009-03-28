@@ -82,12 +82,6 @@ public:
 	void set_hint(const AnyPtr& object){ 
 		ff().hint(object);
 	}
-	
-	void send_error(){
-		ff().set_null();
-		fun_frames_.push(fun_frames_.top());
-	}
-
 // 
 
 	/// @brief 関数を呼び出す用意をし、同時に引数を`i`個積む
@@ -464,8 +458,8 @@ public:
 		// thisが持つインスタンス変数へのポインタ
 		InstanceVariables* instance_variables;
 
-		// スコープがオブジェクト化されてない時のローカル変数領域
-		FastStack<Any> variables_;
+		// この関数で積まれたローカル変数の数
+		uint_t variable_size;
 
 		// 呼び出された関数オブジェクト
 		Any fun_; 
@@ -504,7 +498,6 @@ public:
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
 		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
-		const AnyPtr& variable(int_t i) const{ return ap(variables_[i]); }
 		const AnyPtr& self() const{ return ap(self_); }
 		const ArgumentsPtr& arguments() const{ return unchecked_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint() const{ return ap(hint_); }
@@ -518,7 +511,6 @@ public:
 
 		void fun(const Any& v){ fun_ = v; }
 		void outer(const Any& v){ outer_ = v; }
-		void variable(int_t i, const Any& v){ variables_[i] = v; }
 		void self(const Any& v){ self_ = v; }
 		void arguments(const Any& v){ arguments_ = v; }
 		void hint(const Any& v){ hint_ = v; }
@@ -535,35 +527,49 @@ public:
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
 		ExceptInfo* info;
-		int_t stack_count;
-		int_t fun_frame_count;
-		int_t variable_size;
+		uint_t stack_size;
+		uint_t fun_frame_size;
+		uint_t scope_size;
 		Any outer;
 	};
 
 	void push_call(const inst_t* pc, 
 		int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, 
 		const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self);
+
 	void push_call(const inst_t* pc, const InstCall& inst);
+
 	void push_call(const inst_t* pc, const InstSend& inst);
+
 	void push_ff(int_t need_result_count);
-	const inst_t* pop_ff(){ return fun_frames_.pop()->poped_pc; }
+
+	const inst_t* pop_ff(){
+		if(ScopeInfo* scope = scopes_.pop()){
+			variables_.downsize(scope->variable_size);
+		}
+		return fun_frames_.pop()->poped_pc; 
+	}
 
 	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
 
 	FunFrame& ff(){ return *fun_frames_.top(); }
+
 	FunFrame& prev_ff(){ return *fun_frames_[1]; }
 
 	const FunPtr& fun(){ return ff().fun(); }
+
 	const FunPtr& prev_fun(){ return prev_ff().fun(); }
 
 	const FramePtr& outer(){ return ff().outer(); }
+
 	const FramePtr& prev_outer(){ return prev_ff().outer(); }
 
 	const CodePtr& code();
+
 	const CodePtr& prev_code();
 
 	const IDPtr& identifier(int_t n);
+
 	const IDPtr& prev_identifier(int_t n);
 
 	void return_result_instance_variable(int_t number, ClassInfo* info);
@@ -572,7 +578,7 @@ public:
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
 	
-	const VMachinePtr& myself(){ return *(const VMachinePtr*)&myself_; }
+	const VMachinePtr& myself(){ return to_smartptr(this); }
 
 private:
 	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget);
@@ -583,12 +589,29 @@ private:
 
 	const inst_t* push_except();
 
-	void set_local_variable(int_t pos, const Any&);
-	AnyPtr& local_variable(int_t pos);
+	void set_local_variable_outer(uint_t pos, const Any& value);
 
-	const inst_t* catch_body(const inst_t* pc, int_t stack_size, int_t fun_frames_size);
+	AnyPtr& local_variable_outer(uint_t pos);
+
+	void set_local_variable(uint_t pos, const Any& value){
+		if(pos<ff().variable_size){
+			variables_[pos] = value;
+			return;
+		}
+		set_local_variable_outer(pos - ff().variable_size, value);
+	}
+
+	AnyPtr& local_variable(uint_t pos){
+		if(pos<ff().variable_size){
+			return (AnyPtr&)variables_[pos];
+		}
+		return local_variable_outer(pos - ff().variable_size);
+	}
+
+	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 
 	void make_debug_info(const inst_t* pc, int_t kind);
+
 	void debug_hook(const inst_t* pc, int_t kind);
 
 public:
@@ -615,20 +638,14 @@ public:
 	const inst_t* FunInsert3(const inst_t* pc);
 	const inst_t* FunAdjustResult(const inst_t* pc);
 	const inst_t* FunLocalVariableInc(const inst_t* pc);
-	const inst_t* FunLocalVariableIncDirect(const inst_t* pc);
 	const inst_t* FunLocalVariableDec(const inst_t* pc);
-	const inst_t* FunLocalVariableDecDirect(const inst_t* pc);
 	const inst_t* FunLocalVariableInc2Byte(const inst_t* pc);
 	const inst_t* FunLocalVariableDec2Byte(const inst_t* pc);
 	const inst_t* FunLocalVariable1Byte(const inst_t* pc);
-	const inst_t* FunLocalVariable1ByteDirect(const inst_t* pc);
 	const inst_t* FunLocalVariable1ByteX2(const inst_t* pc);
-	const inst_t* FunLocalVariable1ByteX2Direct(const inst_t* pc);
 	const inst_t* FunLocalVariable1ByteX3(const inst_t* pc);
-	const inst_t* FunLocalVariable1ByteX3Direct(const inst_t* pc);
 	const inst_t* FunLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunSetLocalVariable1Byte(const inst_t* pc);
-	const inst_t* FunSetLocalVariable1ByteDirect(const inst_t* pc);
 	const inst_t* FunSetLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunInstanceVariable(const inst_t* pc);
 	const inst_t* FunSetInstanceVariable(const inst_t* pc);
@@ -645,9 +662,7 @@ public:
 	const inst_t* FunMember(const inst_t* pc);
 	const inst_t* FunDefineMember(const inst_t* pc);
 	const inst_t* FunBlockBegin(const inst_t* pc);
-	const inst_t* FunBlockBeginDirect(const inst_t* pc);
 	const inst_t* FunBlockEnd(const inst_t* pc);
-	const inst_t* FunBlockEndDirect(const inst_t* pc);
 	const inst_t* FunTryBegin(const inst_t* pc);
 	const inst_t* FunTryEnd(const inst_t* pc);
 	const inst_t* FunPushGoto(const inst_t* pc);
@@ -668,7 +683,6 @@ public:
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfNis(const inst_t* pc);
 	const inst_t* FunIfArgIsUndefined(const inst_t* pc);
-	const inst_t* FunIfArgIsUndefinedDirect(const inst_t* pc);
 	const inst_t* FunPos(const inst_t* pc);
 	const inst_t* FunNeg(const inst_t* pc);
 	const inst_t* FunCom(const inst_t* pc);
@@ -742,6 +756,11 @@ public:
 	const inst_t* OpUshr(const inst_t* pc, int_t op);
 
 private:
+
+	const FramePtr& make_outer(ScopeInfo* scope);
+	const FramePtr& make_outer_outer();
+
+private:
 	inst_t end_code_;
 	inst_t throw_code_;
 	inst_t throw_unsupported_error_code_;
@@ -751,8 +770,6 @@ private:
 
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
-
-	Any myself_;
 
 	const IDPtr* id_;
 
@@ -767,6 +784,9 @@ private:
 
 	// tryの度に積まれるフレーム
 	FastStack<ExceptFrame> except_frames_;
+
+	// スコープがオブジェクト化されてない時のローカル変数領域
+	FastStack<Any> variables_;
 	
 	Any except_[3];
 
@@ -795,6 +815,8 @@ public:
 			}
 		}
 
+		variables_ = vm->variables_;
+
 		except_frames_ = vm->except_frames_;
 		
 		except_[0] = vm->except_[0];
@@ -812,6 +834,8 @@ public:
 
 		swap(a.stack_, b.stack_);
 		swap(a.fun_frames_, b.fun_frames_);
+
+		swap(a.variables_, b.variables_);
 
 		swap(a.except_frames_, b.except_frames_);
 

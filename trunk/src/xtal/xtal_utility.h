@@ -9,8 +9,13 @@
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
 
+/**
+* @brief C++例外on
+*/
+//#define XTAL_USE_CPP_EXCEPTIONS
 
-#if !defined(XTAL_NO_MULTI_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_PTHREAD_TLS)
+
+#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_PTHREAD_TLS)
 #include <pthread.h>
 template<class T>
 struct TLSPtr{
@@ -27,7 +32,7 @@ private:
 #define XTAL_TLS_PTR(x) TLSPtr<x>
 #endif
 
-#if !defined(XTAL_NO_MULTI_THREAD) && !defined(XTAL_TLS_PTR) && defined(_WIN32) && !defined(_MSC_VER)
+#if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(_WIN32) && !defined(_MSC_VER)
 #include <windows.h>
 template<class T>
 struct TLSPtr{
@@ -84,7 +89,7 @@ private:
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
-#ifdef XTAL_NO_MULTI_THREAD
+#ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
 #else
 #	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
@@ -118,12 +123,14 @@ private:
 
 #if defined(_MSC_VER) && _MSC_VER>=1400
 #	pragma warning(disable: 4819)
+#	pragma warning(disable: 4127)
+#	pragma warning(disable: 4100)
 #endif
 
 #ifdef XTAL_USE_WCHAR
-#	define XTAL_STRING(x) StringLiteral(L##x, sizeof(x)-1)
+#	define XTAL_STRING(x) ::xtal::StringLiteral(L##x, sizeof(x)-1)
 #else 
-#	define XTAL_STRING(x) StringLiteral(x, sizeof(x)-1)
+#	define XTAL_STRING(x) ::xtal::StringLiteral(x, sizeof(x)-1)
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
@@ -146,7 +153,7 @@ private:
 #	endif
 #endif
 
-#ifdef XTAL_NO_MULTI_THREAD
+#ifdef XTAL_NO_THREAD
 #	define XTAL_TLS_PTR(x) x*
 #else
 #	ifndef XTAL_TLS_PTR
@@ -155,7 +162,7 @@ private:
 #		elif defined(__GNUC__) && !defined(__CYGWIN__)
 #			define XTAL_TLS_PTR(x) __thread x*
 #		else 
-#			error // XTAL_NO_MULTI_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
+#			error // XTAL_NO_THREADを定義しない場合、TLSを実現するためのXTAL_TLS_PTR(x)の実装が必要
 #		endif
 #	endif
 #endif
@@ -509,7 +516,8 @@ class StringLiteral{
 public:
 
 	StringLiteral(const char_t* str, uint_t size)
-		:str_(str), size_(size){}
+		:str_(str), size_(size){
+	}
 
 	operator const char_t*() const{
 		return str_;
@@ -758,9 +766,8 @@ struct FunInfo : public ScopeInfo{
 
 	enum{
 		FLAG_EXTENDABLE_PARAM = 1<<(ScopeInfo::FLAG_USED_BIT+0),
-		FLAG_ON_HEAP = 1<<(ScopeInfo::FLAG_USED_BIT+1),
 
-		FLAG_USED_BIT = ScopeInfo::FLAG_USED_BIT+2
+		FLAG_USED_BIT = ScopeInfo::FLAG_USED_BIT+1
 	};
 };
 
@@ -807,7 +814,7 @@ struct CppClassSymbolData{
 	CppClassSymbolData* prev;
 	bind_class_fun_t prebind;
 	bind_class_fun_t bind;
-	const char* name;
+	const char_t* name;
 };
 
 template<class T>
@@ -835,7 +842,7 @@ template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
 struct CppClassBindTemp{
-	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char*& name, const char* given){
+	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char_t*& name, const char_t* given){
 		std::memcpy(&dest, &src, sizeof(src));
 		std::memcpy(&dummy, &src, sizeof(dummy));
 		name = given;
@@ -855,13 +862,13 @@ struct CppClassBindFun{
 #define XTAL_BIND(ClassName) \
 	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr&);\
 	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::bind_temp(\
-		CppClassSymbol<ClassName>::make().bind, &CppClassBindFun<ClassName>::bind, CppClassSymbol<ClassName>::make().name, #ClassName);\
+		CppClassSymbol<ClassName>::make().bind, &CppClassBindFun<ClassName>::bind, CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
 	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr& it)
 
 #define XTAL_PREBIND(ClassName) \
 	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr&);\
 	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::prebind_temp(\
-		CppClassSymbol<ClassName>::make().prebind, &CppClassBindFun<ClassName>::prebind, CppClassSymbol<ClassName>::make().name, #ClassName);\
+		CppClassSymbol<ClassName>::make().prebind, &CppClassBindFun<ClassName>::prebind, CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
 	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr& it)
 
 struct IdentifierData{ 

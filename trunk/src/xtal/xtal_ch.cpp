@@ -91,7 +91,7 @@ uint_t edit_distance(const void* data1, uint_t data_size1, const void* data2, ui
 			return p+delta;
 		}
 	}
-	return 0;
+//	return 0;
 }
 
 }

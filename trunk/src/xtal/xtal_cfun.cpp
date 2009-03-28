@@ -39,7 +39,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 	// ä÷êîÇÉRÉsÅ[
 	std::memcpy(data_, val, val_size);
 
-	Class** param_types = (Class**)((char*)data_ +  val_size_);
+	Class** param_types = (Class**)((u8*)data_ +  val_size_);
 	for(int_t i=0; i<param_n_+1; ++i){
 		const ClassPtr& cls = cpp_class(pth.param_types[i]);
 		if(raweq(cls, cpp_class<Any>()) || raweq(cls, cpp_class<void>())){
@@ -51,7 +51,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 	}
 
 	if(param_n_){
-		Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
+		Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 		for(int_t i=0; i<param_n_; ++i){
 			new(&params[i]) Named();
 		}
@@ -60,8 +60,8 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 
 
 NativeFun::~NativeFun(){
-	Class** param_types = (Class**)((char*)data_ +  val_size_);
-	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
+	Class** param_types = (Class**)((u8*)data_ +  val_size_);
+	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	for(int_t i=0; i<param_n_; ++i){
 		params[i].~Named();
@@ -83,8 +83,8 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 
 	i--;
 
-	Class** param_types = (Class**)((char*)data_ +  val_size_);
-	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
+	Class** param_types = (Class**)((u8*)data_ +  val_size_);
+	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	// ä˘Ç…ê›íËçœÇ›
 	XTAL_ASSERT(raweq(params[i].name, null) && raweq(params[i].value, undefined));
@@ -102,8 +102,8 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 void NativeFun::visit_members(Visitor& m){
 	RefCountingHaveParent::visit_members(m);
 
-	Class** param_types = (Class**)((char*)data_ +  val_size_);
-	Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
+	Class** param_types = (Class**)((u8*)data_ +  val_size_);
+	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	for(uint_t i=0; i<param_n_; ++i){
 		m & params[i];
@@ -139,8 +139,8 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 	}
 	
 	{ // check arg type
-		Class** param_types = (Class**)((char*)data_ +  val_size_);
-		Named* params = (Named*)((char*)param_types + (param_n_+1)*sizeof(Class*));
+		Class** param_types = (Class**)((u8*)data_ +  val_size_);
+		Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 		{
 			const AnyPtr& arg = vm->arg_this();

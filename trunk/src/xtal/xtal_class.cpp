@@ -470,19 +470,18 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	return undefined;
 }
 
-void Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
 		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xid(undefined)));
-		return;
-	}
-	else{
-		members_.set_at(it->second.num, value);
-		//value.set_object_name(name, object_name_force(), this);
+		return false;
 	}
 
+	members_.set_at(it->second.num, value);
+	value->set_object_parent(to_smartptr(this));
 	invalidate_cache_member();
+	return true;
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 

@@ -12,7 +12,6 @@ enum{
 union AnyRawValue{
 	int_t ivalue;
 	uint_t uvalue;
-	byte_t fvalue_bytes[sizeof(float_t)];
 	float_t fvalue;
 	Base* pvalue;
 	RefCountingBase* rcpvalue;

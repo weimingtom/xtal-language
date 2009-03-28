@@ -143,20 +143,14 @@ public:
 		ArrayList<Entry> entries;
 		int_t real_entry_num;
 		
-		struct Direct{
-			int_t pos;
-		};
-
-		PODArrayList<Direct> directs;
 		int_t scope_info_num;
 		uint_t fun_frames_size;
 
 		enum{
-			SCOPE,
 			CLASS,
 			FRAME,
 			
-			DEFAULT = SCOPE
+			DEFAULT = FRAME
 		};
 
 		int_t kind;
@@ -191,8 +185,6 @@ public:
 	void var_define_stmts(const ExprPtr& stmts);
 	void var_define_stmt(const AnyPtr& stmt);
 	void var_define(const IDPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
-	void var_set_direct(VarFrame& vf);
-	void var_set_on_heap(int_t i=0);
 	void var_end();
 
 	void check_lvar_assign(const ExprPtr& e);

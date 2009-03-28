@@ -110,7 +110,7 @@ public:
 	*
 	* @param name Äİ’è‚µ‚½‚¢ƒƒ“ƒo‚Ì–¼‘O
 	*/
-	void set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
+	bool set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
 	* @brief Œp³

@@ -47,7 +47,7 @@ void* debug_malloc(size_t size){
 
 	gcounter++;
 
-	if(size>3000){
+	if(size>30000){
 		size = size;
 	}
 	
@@ -269,7 +269,7 @@ void Environment::initialize(const Setting& setting){
 	builtin_ = xnew<Singleton>();
 
 	lib_ = xnew<Lib>(true);
-	lib_->append_load_path(".");
+	lib_->append_load_path(XTAL_STRING("."));
 
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
@@ -620,13 +620,13 @@ AnyPtr load_and_save(const StringPtr& file_name){
 	return null;
 }
 
-CodePtr source(const char_t* src, int_t size, const char* file){
+CodePtr source(const char_t* src, int_t size){
 	CodePtr ret;
 
 	{
 		CodeBuilder cb;
-		StreamPtr ms(xnew<PointerStream>(src, size));
-		if(CodePtr fun = cb.compile(ms, file)){
+		StreamPtr ms(xnew<PointerStream>(src, size*sizeof(char_t)));
+		if(CodePtr fun = cb.compile(ms)){
 			ret = fun;
 		}
 		else{
@@ -641,8 +641,8 @@ CodePtr source(const char_t* src, int_t size, const char* file){
 
 #endif
 
-CodePtr compiled_source(const void* src, int_t size, const char* file){
-	StreamPtr ms(xnew<PointerStream>(src, size));
+CodePtr compiled_source(const void* src, int_t size){
+	StreamPtr ms(xnew<PointerStream>(src, size*sizeof(char_t)));
 	if(CodePtr fun = ptr_cast<Code>(ms->deserialize())){
 		gc();
 		return fun;

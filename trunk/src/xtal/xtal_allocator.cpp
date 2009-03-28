@@ -119,7 +119,7 @@ void FixedAllocator::fit(size_t block_size){
 	for(data_t* q=free_data_; q;){
 		data_t* next = static_cast<data_t*>(*q);
 		for(Chunk* p=chunk_; p; p=p->next){
-			if((char*)p<(char*)q && (char*)q<(char*)p+buffer_size){
+			if((u8*)p<(u8*)q && (u8*)q<(u8*)p+buffer_size){
 				p->count++;
 				if(!p->tail){
 					p->tail = q;	

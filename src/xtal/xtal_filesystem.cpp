@@ -11,7 +11,7 @@ AnyPtr Filesystem::entries(const StringPtr& path){
 }
 
 bool Filesystem::is_directory(const StringPtr& path){
-	return filesystem_lib_->is_directory(path);
+	return filesystem_lib_->is_directory(path->c_str());
 }
 
 }

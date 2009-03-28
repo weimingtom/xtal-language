@@ -5,7 +5,7 @@ namespace xtal{
 
 Lib::Lib(bool most_top_level){
 	if(most_top_level){
-		set_object_name("lib");
+		set_object_name(XTAL_STRING("lib"));
 		set_object_force(1000);
 	}
 

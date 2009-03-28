@@ -48,6 +48,9 @@ struct VMAndData{
 
 	VMAndData(const VMachinePtr& vm, const void* data)
 		:vm(vm), data(data){}
+
+private:
+	void operator =(const VMAndData&);
 };
 
 template<class T, int N>
@@ -79,6 +82,9 @@ struct ReturnPolicyTest{
 
 	ReturnPolicyTest(const VMachinePtr& vm)
 		:vm(vm){}
+
+private:
+	void operator =(const ReturnPolicyTest&);
 };
 
 struct ReturnPolicyVoidTest{};
@@ -1129,7 +1135,7 @@ struct getter_holder{
 	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
-	static CppClassSymbolData** types(){ return param_types_holder0<C>::addr(); }
+	static CppClassSymbolData** types(){ return param_types_holder0<C>::values; }
 	T C::* var;
 	getter_holder(T C::* var):var(var){}
 	const T& operator()(C* self){ return self->*var; }
@@ -1141,7 +1147,7 @@ struct setter_holder{
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<const T&, 0> ARG1;
-	static CppClassSymbolData** types(){ return param_types_holder1<C, T>::addr(); }
+	static CppClassSymbolData** types(){ return param_types_holder1<C, T>::values; }
 	T C::* var;
 	setter_holder(T C::* var):var(var){}
 	const T& operator()(C* self, const T& v){ return self->*var = v; }

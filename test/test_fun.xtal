@@ -28,8 +28,9 @@ class FunTest{
 
 	args#Test{
 		foo: fun(...){
+			args: ...;
 			boo: fun(){
-				return ...[0], ...[1];
+				return args[0], args[1];
 			}
 			return boo();
 		}

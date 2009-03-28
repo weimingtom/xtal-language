@@ -28,6 +28,10 @@ public:
 		return outer_; 
 	}
 
+	void set_outer(const FramePtr& outer){
+		outer_ = outer;
+	}
+
 	const CodePtr& code(){ 
 		return code_; 
 	}

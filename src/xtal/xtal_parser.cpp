@@ -97,7 +97,7 @@ int_t Reader::peek(int_t n){
 			now_read = stream_->read(&buf_[rpos], (BUF_SIZE-rpos)*sizeof(char_t));
 		}
 
-		if(now_read==0){
+		if(now_read<sizeof(char_t)){
 			return -1;
 		}
 
@@ -751,7 +751,7 @@ void Lexer::do_read(){
 			*/
 #else
 			XTAL_CASE((char_t)239){
-				if(reader_.peek(1)==(char_t)187 && reader_.peek(2)==(char_t)191){
+				if((uchar_t)reader_.peek(1)==(uchar_t)187 && (uchar_t)reader_.peek(2)==(uchar_t)191){
 					reader_.read();
 					reader_.read();
 					reader_.read();

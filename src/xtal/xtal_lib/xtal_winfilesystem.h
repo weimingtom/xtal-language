@@ -2,20 +2,23 @@
 #pragma once
 
 #include <windows.h>
+#include <stdio.h>
+#include <tchar.h>
+
 #include "xtal_cstdiostream.h"
 
 namespace xtal{
 
 class WinFindNextFile{
 	HANDLE h_;
-	WIN32_FIND_DATAA fd_;
+	WIN32_FIND_DATA fd_;
 	bool first_;
 public:
 
 	WinFindNextFile(const char_t* path){
 		char_t path2[MAX_PATH];
-		XTAL_SPRINTF(path2, MAX_PATH, "%s/*", path);
-		h_ = FindFirstFileA(path2, &fd_);
+		XTAL_SPRINTF(path2, MAX_PATH, XTAL_STRING("%s/*"), path);
+		h_ = FindFirstFile(path2, &fd_);
 		first_ = true;
 	}
 	
@@ -33,7 +36,7 @@ public:
 			return fd_.cFileName;
 		}
 		else{	
-			if(!FindNextFileA(h_, &fd_)){
+			if(!FindNextFile(h_, &fd_)){
 				stop();
 				return 0;
 			}
@@ -53,12 +56,19 @@ public:
 class WinFilesystemLib : public FilesystemLib{
 public:
 
-	virtual bool is_directory(const StringPtr& path){
-		return false;
+	virtual bool is_directory(const char_t* path){
+		WIN32_FIND_DATA fd;
+		HANDLE h = FindFirstFile(path, &fd);
+		if(h==INVALID_HANDLE_VALUE){
+			return false;
+		}
+		bool ret = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)!=0;
+		FindClose(h);
+		return ret;
 	}
 
 	virtual void* new_file_stream(const char_t* path, const char_t* flags){
-		return fopen(path, flags);
+		return _tfopen(path, flags);
 	}
 	
 	virtual void delete_file_stream(void* file_stream_object){

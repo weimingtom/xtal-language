@@ -100,13 +100,13 @@
 * ));
 * @endcode
 */
-#define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3, __FILE__)
+#define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3)
 
 #endif
 
 #ifdef XTAL_USE_COMPILED_EMB
 #define Xemb(text, compiled_text) \
-	if(::xtal::CodePtr code = ::xtal::compiled_source(compiled_text, sizeof(compiled_text)-1, __FILE__)){\
+	if(::xtal::CodePtr code = ::xtal::compiled_source(compiled_text, sizeof(compiled_text)-1)){\
 		code->call();\
 	}\
 	else{\
@@ -116,7 +116,7 @@
 	}
 #else
 #define Xemb(text, compiled_text) \
-	if(::xtal::CodePtr code = ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3, __FILE__)){\
+	if(::xtal::CodePtr code = ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3)){\
 		code->call();\
 	}\
 	else{\
@@ -125,8 +125,6 @@
 		}\
 	}
 #endif
-
-/*@}*/
 
 /*
 * @brief インターンされた文字列を簡単に記述するためのマクロ
@@ -137,5 +135,6 @@
 */
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
 
+/*@}*/
 
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

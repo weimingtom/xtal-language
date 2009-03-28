@@ -158,7 +158,7 @@ int_t Any::to_i() const{
 		XTAL_CASE(TYPE_INT){ return ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return (int_t)fvalue(*this); }
 	}
-	return 0;
+//	return 0;
 }
 
 float_t Any::to_f() const{
@@ -168,7 +168,7 @@ float_t Any::to_f() const{
 		XTAL_CASE(TYPE_INT){ return (float_t)ivalue(*this); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(*this); }
 	}
-	return 0;
+//	return 0;
 }
 
 StringPtr Any::to_s() const{
@@ -191,7 +191,7 @@ StringPtr Any::to_s() const{
 		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 	}
-	return empty_string;
+//	return empty_string;
 }
 
 ArrayPtr Any::to_a() const{
@@ -204,12 +204,12 @@ MapPtr Any::to_m() const{
 
 const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{}
+		XTAL_DEFAULT{ return unchecked_ptr_cast<Class>(null); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->object_parent();  }
 	}
-	return unchecked_ptr_cast<Class>(null);	
+	//return unchecked_ptr_cast<Class>(null);	
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{

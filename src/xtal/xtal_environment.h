@@ -61,7 +61,7 @@ class FilesystemLib{
 public:
 	virtual ~FilesystemLib(){}
 
-	virtual bool is_directory(const StringPtr& path){ return false; }
+	virtual bool is_directory(const char_t* path){ return false; }
 
 	virtual void* new_file_stream(const char_t* path, const char_t* flags){ return 0; }
 	virtual void delete_file_stream(void* file_stream_object){}
@@ -459,11 +459,11 @@ AnyPtr load(const StringPtr& file_name);
 */
 AnyPtr load_and_save(const StringPtr& file_name);
 
-CodePtr source(const char_t* src, int_t size, const char* file);
+CodePtr source(const char_t* src, int_t size);
 
 #endif
 
-CodePtr compiled_source(const void* src, int_t size, const char* file);
+CodePtr compiled_source(const void* src, int_t size);
 
 }
 

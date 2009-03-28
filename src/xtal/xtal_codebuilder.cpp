@@ -168,13 +168,8 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	process_labels();
 	
-	if(vf().kind!=VarFrame::SCOPE){
-		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_ON_HEAP;
-	}
-
 	if(vf().scope_chain){
 		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-		var_set_on_heap(1);
 	}
 
 	// 関数フレームをポップする
@@ -246,7 +241,6 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 		}
 
 		if(info.pos<=0xff){
-			var_set_direct(var_frame(info));
 			put_inst(InstSetLocalVariable1Byte(info.pos));
 		}
 		else{
@@ -281,7 +275,6 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 				}
 
 				if(info.pos<=0xff){
-					var_set_direct(var_frame(info));
 					put_inst(InstSetLocalVariable1Byte(info.pos));
 				}
 				else{
@@ -294,7 +287,6 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 		}
 		else{
 			if(info.pos<=0xff){
-				var_set_direct(var_frame(info));
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 			else{
@@ -317,7 +309,6 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
 		if(info.pos<=0xff){
-			var_set_direct(var_frame(info));
 			put_inst(InstLocalVariable1Byte(info.pos));
 		}
 		else{
@@ -386,7 +377,7 @@ void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool 
 			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_Q, key));
 		}
 		else{
-			if(flags==0){
+			if(flags==0 && key!=0){
 				put_inst(InstProperty(key, need_result_count));
 			}
 			else{
@@ -425,7 +416,12 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 			put_inst(InstSend(1, 0, 0, CALL_FLAG_Q, key));
 		}
 		else{
-			put_inst(InstSetProperty(key));
+			if(key!=0){
+				put_inst(InstSetProperty(key));
+			}
+			else{
+				put_inst(InstSend(1, 0, 0, 0, key));
+			}
 		}
 	}
 }
@@ -514,9 +510,8 @@ void CodeBuilder::break_off(int_t n){
 		}
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.real_entry_num!=0 && (vf.kind==VarFrame::SCOPE || vf.kind==VarFrame::FRAME)){
-			var_set_direct(vf);
-			put_inst(InstBlockEnd(vf.scope_info_num));
+		if(vf.real_entry_num!=0 && vf.kind==VarFrame::FRAME){
+			put_inst(InstBlockEnd());
 		}
 	}
 }
@@ -648,7 +643,6 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 void CodeBuilder::var_begin(int_t kind){
 	var_frames_.push();
 	vf().entries.clear();
-	vf().directs.clear();
 	vf().scope_info_num = 0;
 	vf().kind = kind;
 	vf().fun_frames_size = fun_frames_.size();
@@ -703,49 +697,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	vf().entries.push_back(entry);
 }
 
-void CodeBuilder::var_set_direct(VarFrame& vf){
-	if(!vf.directs.empty() && vf.directs.back().pos==code_size()){
-		return;
-	}
-
-	VarFrame::Direct d;
-	d.pos = code_size();
-	vf.directs.push_back(d);
-}
-
-void CodeBuilder::var_set_on_heap(int_t i){
-	if(i<(int_t)var_frames_.size()){
-		if(var_frames_[i].kind==VarFrame::SCOPE){
-			var_frames_[i].kind = VarFrame::FRAME;
-		}
-	}
-}
-
 void CodeBuilder::var_end(){
-	// ローカル変数の命令を、ダイレクト系へ変更する
-	if(vf().kind==VarFrame::SCOPE){
-		for(uint_t i=0; i<vf().directs.size(); ++i){
-			Inst* p = (Inst*)&result_->code_[vf().directs[i].pos];
-			
-			switch(p->op){
-				default:
-					break;
-
-				case InstLocalVariableInc/*Direct*/::NUMBER:
-				case InstLocalVariableDec/*Direct*/::NUMBER:
-				case InstLocalVariable1Byte/*Direct*/::NUMBER:
-				case InstLocalVariable1ByteX2/*Direct*/::NUMBER:
-				case InstLocalVariable1ByteX3/*Direct*/::NUMBER:
-				case InstSetLocalVariable1Byte/*Direct*/::NUMBER:
-				case InstBlockBegin/*Direct*/::NUMBER:
-				case InstBlockEnd/*Direct*/::NUMBER:
-				case InstIfArgIsUndefined/*Direct*/::NUMBER:
-					p->op += 1;
-					break;
-			}
-		}
-		vf().directs.clear();
-	}
 	var_frames_.downsize(1);
 }
 
@@ -784,7 +736,6 @@ void CodeBuilder::scope_begin(){
 	}
 
 	if(vf().real_entry_num!=0){
-		var_set_direct(vf());
 		put_inst(InstBlockBegin(scope_info_num));
 	}
 
@@ -793,19 +744,11 @@ void CodeBuilder::scope_begin(){
 
 void CodeBuilder::scope_end(){
 	if(vf().real_entry_num!=0){
-		var_set_direct(vf());
-		put_inst(InstBlockEnd(vf().scope_info_num));
+		put_inst(InstBlockEnd());
 	}
 		
-	if(vf().kind!=VarFrame::SCOPE){
-		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_ON_HEAP;
-	}
-
 	if(vf().scope_chain){
 		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-		if(vf().kind!=VarFrame::SCOPE){
-			var_set_on_heap(1);
-		}
 	}
 }
 
@@ -951,14 +894,11 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 			}
 			else{
 				if(e->itag() == EXPR_INC){
-					var_set_direct(var_frame(info));
 					put_inst(InstLocalVariableInc(info.pos));
 				}
 				else{
-					var_set_direct(var_frame(info));
 					put_inst(InstLocalVariableDec(info.pos));
 				}
-				var_set_direct(var_frame(info));
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
 
@@ -1231,7 +1171,6 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 
 	if(var_frames_.top().scope_chain){
 		result_->class_info_table_[class_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-		var_set_on_heap(1);
 	}
 
 	put_inst(InstClassEnd());
@@ -1369,7 +1308,6 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 				int_t label = reserve_label();
 				
 				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
-				var_set_direct(vf());
 				put_inst(InstIfArgIsUndefined(maxv-1-i, 0));
 
 				compile_expr(v);
@@ -1415,14 +1353,9 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	set_label(fun_end_label);
 
 	process_labels();
-	
-	if(vf().kind!=VarFrame::SCOPE){
-		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_ON_HEAP;
-	}
 
 	if(vf().scope_chain){
 		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-		var_set_on_heap(1);
 	}
 
 	// 関数フレームをポップする
@@ -1607,7 +1540,7 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 			set_label(label_end);
 		}
 
-		XTAL_CASE(EXPR_CURRENT_CONTEXT){ put_inst(InstPushCurrentContext()); var_set_on_heap(); }
+		XTAL_CASE(EXPR_CURRENT_CONTEXT){ put_inst(InstPushCurrentContext()); }
 		XTAL_CASE(EXPR_CALLEE){ put_inst(InstPushCallee()); }
 		XTAL_CASE(EXPR_ARGS){ put_inst(InstPushArgs()); }
 
@@ -2058,6 +1991,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_RETURN){	
+			/*
 			bool have_finally = false;
 			for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)ff().var_frame_count+1; scope_count--){
 				for(uint_t k = 0; k<(uint_t)ff().finallies.size(); ++k){
@@ -2075,6 +2009,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 					break;
 				}
 			}
+			*/
+
+			int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
 
 			compile_exprs(e->return_exprs());
 		

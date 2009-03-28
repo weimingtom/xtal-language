@@ -152,7 +152,6 @@ public:
 		}
 
 		StringPtr sp = xnew<String>(str, size, String::make_t());
-		
 		it = table_.insert(key, unchecked_ptr_cast<ID>(sp), hashcode).first;
 		it->first.str = it->second->data();
 		return it->second;
@@ -194,16 +193,6 @@ private:
 
 	typedef Hashtable<Key, IDPtr, Fun> table_t; 
 	table_t table_;
-
-	struct Fun2{
-		static uint_t hash(const void* key){
-			return ((uint_t)key)>>2;
-		}
-
-		static bool eq(const void* a, const void* b){
-			return a==b;
-		}
-	};
 
 	typedef PODArrayList<IDPtr*> table2_t; 
 	table2_t table2_;

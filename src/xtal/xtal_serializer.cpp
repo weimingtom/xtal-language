@@ -43,14 +43,26 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		XTAL_CASE(TYPE_BASE){}
 
 		XTAL_CASE(TYPE_INT){
-			stream_->put_u8(TINT);
-			stream_->put_i32be(ivalue(v));
+			if(sizeof(int_t)==4){
+				stream_->put_u8(TINT32);
+				stream_->put_i32be(ivalue(v));
+			}
+			else{
+				stream_->put_u8(TINT64);
+				stream_->put_i64be(ivalue(v));
+			}
 			return;
 		}
 
 		XTAL_CASE(TYPE_FLOAT){
-			stream_->put_u8(TFLOAT);
-			stream_->put_f32be(fvalue(v));
+			if(sizeof(float_t)==4){
+				stream_->put_u8(TFLOAT32);
+				stream_->put_f32be(fvalue(v));
+			}
+			else{
+				stream_->put_u8(TFLOAT64);
+				stream_->put_f64be(fvalue(v));
+			}
 			return;
 		}
 
@@ -79,13 +91,31 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_STRING){
 			const StringPtr& a = unchecked_ptr_cast<String>(v);
-			stream_->put_u8(a->is_interned() ? TID : TSTRING);
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();
-			stream_->put_i32be(sz);
-			for(size_t i=0; i<sz; ++i){
-				stream_->put_ch_code_be(str[i]);
+
+			if(sizeof(char_t)==1){
+				stream_->put_u8(TSTRING8);
+				stream_->put_i32be(sz);
+				for(size_t i=0; i<sz; ++i){
+					stream_->put_u8(str[i]);
+				}
 			}
+			else if(sizeof(char_t)==2){
+				stream_->put_u8(TSTRING16);
+				stream_->put_i32be(sz);
+				for(size_t i=0; i<sz; ++i){
+					stream_->put_u16be(str[i]);
+				}
+			}
+			else{
+				stream_->put_u8(TSTRING32);
+				stream_->put_i32be(sz);
+				for(size_t i=0; i<sz; ++i){
+					stream_->put_u32be(str[i]);
+				}
+			}
+
 			return;
 		}
 
@@ -240,23 +270,54 @@ AnyPtr Serializer::inner_deserialize(){
 			return undefined;
 		}
 
-		XTAL_CASE(TINT){
-			return stream_->get_i32be();
+		XTAL_CASE(TINT32){
+			return (int_t)stream_->get_i32be();
 		}
 
-		XTAL_CASE(TFLOAT){
-			return stream_->get_f32be();
+		XTAL_CASE(TFLOAT32){
+			return (float_t)stream_->get_f32be();
 		}
 
-		XTAL_CASE2(TSTRING, TID){
+		XTAL_CASE(TINT64){
+			return (int_t)stream_->get_i64be();
+		}
+
+		XTAL_CASE(TFLOAT64){
+			return (float_t)stream_->get_f64be();
+		}
+
+		XTAL_CASE(TSTRING8){
 			int_t sz = stream_->get_u32be();
-			char_t* p = (char_t*)xmalloc(sizeof(char_t)*(sz+1));
+			XMallocGuard guard(sizeof(char_t)*sz);
+			char_t* p = (char_t*)guard.get();
 			for(int_t i = 0; i<sz; ++i){
-				p[i] = (char_t)stream_->get_ch_code_be();
+				p[i] = (char_t)stream_->get_u8();
 			}
-			p[sz] = 0;	
 			IDPtr ret = xnew<ID>(p, sz);
-			xfree(p, sizeof(char_t)*(sz+1));
+			append_value(ret);
+			return ret;
+		}
+
+		XTAL_CASE(TSTRING16){
+			int_t sz = stream_->get_u32be();
+			XMallocGuard guard(sizeof(char_t)*sz);
+			char_t* p = (char_t*)guard.get();
+			for(int_t i = 0; i<sz; ++i){
+				p[i] = (char_t)stream_->get_u16be();
+			}
+			IDPtr ret = xnew<ID>(p, sz);
+			append_value(ret);
+			return ret;
+		}
+
+		XTAL_CASE(TSTRING32){
+			int_t sz = stream_->get_u32be();
+			XMallocGuard guard(sizeof(char_t)*sz);
+			char_t* p = (char_t*)guard.get();
+			for(int_t i = 0; i<sz; ++i){
+				p[i] = (char_t)stream_->get_u32be();
+			}
+			IDPtr ret = xnew<ID>(p, sz);
 			append_value(ret);
 			return ret;
 		}

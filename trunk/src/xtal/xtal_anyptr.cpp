@@ -7,7 +7,7 @@ SmartPtr<Any>::SmartPtr(const char_t* str){
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const avoid<char>::type* str){
+SmartPtr<Any>::SmartPtr(const char8_t* str){
 	*this = xnew<String>(str);
 }
 

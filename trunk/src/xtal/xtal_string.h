@@ -22,7 +22,7 @@ public:
 	*
 	* @param str NULL終端文字列
 	*/
-	String(const avoid<char>::type* str);
+	String(const char8_t* str);
 
 	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
@@ -242,7 +242,7 @@ public:
 	*
 	* @param str NULL終端文字列
 	*/
-	ID(const avoid<char>::type* str);
+	ID(const char8_t* str);
 
 	/**
 	* @brief C文字列からsize分の長さを取り出し構築する
@@ -351,7 +351,7 @@ struct Named2{
 	Named2(const char_t* name)
 		:name(name), value(undefined){}
 
-	Named2(const avoid<char>::type* name)
+	Named2(const char8_t* name)
 		:name(name), value(undefined){}
 
 	Named2(const IDPtr& name)

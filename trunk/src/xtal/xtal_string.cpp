@@ -183,7 +183,7 @@ String::String(const char_t* str)
 	init_string(str, string_data_size(str));
 }
 
-String::String(const avoid<char>::type* str)
+String::String(const char8_t* str)
 :Any(noinit_t()){
 	uint_t n = std::strlen((char*)str);
 	XMallocGuard umg(n*sizeof(char_t));
@@ -457,7 +457,7 @@ StringPtr String::cat(const StringPtr& v){
 ID::ID(const char_t* str)
 	:String(*xtal::intern(str)){}
 
-ID::ID(const avoid<char>::type* str)	
+ID::ID(const char8_t* str)	
 	:String(noinit_t()){	
 	uint_t n = std::strlen((char*)str);
 	XMallocGuard umg(n*sizeof(char_t));

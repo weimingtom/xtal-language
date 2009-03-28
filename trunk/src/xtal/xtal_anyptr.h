@@ -153,24 +153,6 @@ protected:
 public:
 
 	/**
-	* @brief 整数値から構築するコンストラクタ。
-	*
-	*/
-	SmartPtr(int_t v):Any(v){}
-
-	/**
-	* @brief 整数値から構築するコンストラクタ。
-	*
-	*/
-	SmartPtr(uint_t v):Any(v){}
-		
-	/**
-	* @brief 浮動小数点数値から構築するコンストラクタ。
-	*
-	*/
-	SmartPtr(float_t v):Any(v){}
-	
-	/**
 	* @brief booleanから構築するコンストラクタ。
 	*
 	*/
@@ -186,7 +168,7 @@ public:
 	* @brief 文字列から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(const avoid<char>::type* str);
+	SmartPtr(const char8_t* str);
 
 	/**
 	* @brief 文字列から構築するコンストラクタ。
@@ -195,18 +177,19 @@ public:
 	SmartPtr(const StringLiteral& str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(avoid<int>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<long>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<short>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<unsigned int>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<unsigned long>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<unsigned short>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<unsigned char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<signed char>::type v):Any(noinit_t()){ set_ivalue(*this, v); }
-	SmartPtr(avoid<float>::type v):Any(noinit_t()){ set_fvalue(*this, v); }
-	SmartPtr(avoid<double>::type v):Any(noinit_t()){ set_fvalue(*this, (float_t)v); }
-	SmartPtr(avoid<long double>::type v):Any(noinit_t()){ set_fvalue(*this, (float_t)v); }
+	SmartPtr(char v):Any(v){}
+	SmartPtr(signed char v):Any(v){}
+	SmartPtr(unsigned char v):Any(v){}
+	SmartPtr(short v):Any(v){}
+	SmartPtr(unsigned short v):Any(v){}
+	SmartPtr(int v):Any(v){}
+	SmartPtr(unsigned int v):Any(v){}
+	SmartPtr(long v):Any(v){}
+	SmartPtr(unsigned long v):Any(v){}
+
+	SmartPtr(float v):Any(v){}
+	SmartPtr(double v):Any(v){}
+	SmartPtr(long double v):Any(v){}
 
 public:
 

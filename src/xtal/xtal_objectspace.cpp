@@ -156,21 +156,28 @@ void ObjectSpace::uninitialize(){
 	class_table_.release();
 	full_gc();
 	
-	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
-	int n = (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
-	if(n != 0){
+	if(objects_count_ != 0){
 		//fprintf(stderr, "finished gc\n");
-		//fprintf(stderr, " alive object = %d\n", objects_current_-objects_begin_);
+		fprintf(stderr, "exists cycled objects %d\n", objects_count_);
 		//print_alive_objects();
+		
+		// 強制的に開放してしまおう
+		{
+			ConnectedPointer current(objects_count_, objects_list_begin_);
+			ConnectedPointer begin(0, objects_list_begin_);
 
-		for(int i=0; i<n; ++i){
-			RefCountingBase* p = objects_begin_[i];
-			Base* pp = (Base*)p;
-			uint_t count = p->ref_count();
-			count = count;
+			for(ConnectedPointer it = begin; it!=current; ++it){
+				(*it)->destroy();
+			}
+
+			for(ConnectedPointer it = begin; it!=current; ++it){
+				(*it)->object_free();
+			}
 		}
 
-		//XTAL_ASSERT(false); // 全部開放できてない
+		// このassertでとまる場合、オブジェクトをすべて開放できていない。
+		// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
+		XTAL_ASSERT(false);
 	}
 
 	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){

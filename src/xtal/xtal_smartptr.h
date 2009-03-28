@@ -363,7 +363,7 @@ struct SmartPtrCtor1<String>{
 
 template<>
 struct SmartPtrCtor2<String>{
-	typedef const avoid<char>::type* type;
+	typedef const char8_t* type;
 	static AnyPtr call(type v);
 };
 
@@ -387,7 +387,7 @@ struct SmartPtrCtor2<ID>{
 
 template<>
 struct SmartPtrCtor3<ID>{
-	typedef const avoid<char>::type* type;
+	typedef const char8_t* type;
 	static AnyPtr call(type v);
 };
 

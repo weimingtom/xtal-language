@@ -14,12 +14,7 @@ struct ReturnResult{
 
 	template<class T>
 	static void return_result(const VMachinePtr& vm, const T& ret){
-		return_result2(vm, ret, TypeIntType<Convertible<T, AnyPtr>::value+Convertible<T, Any>::value>());
-	}
-
-	template<class T>
-	static void return_result2(const VMachinePtr& vm, const T& ret, TypeIntType<2>){
-		vm->return_result(ap(Any(ret)));
+		return_result2(vm, ret, TypeIntType<Convertible<T, AnyPtr>::value>());
 	}
 
 	template<class T>

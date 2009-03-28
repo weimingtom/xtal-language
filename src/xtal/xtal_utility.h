@@ -476,35 +476,19 @@ typedef SelectType<1>::uint_t byte_t;
 //typedef std::ptrdiff_t ptrdiff_t;
 
 #ifdef XTAL_USE_WCHAR
+
 typedef wchar_t char_t;
+typedef char char8_t;
+
 #else
+
 typedef char char_t;
+typedef signed char char8_t;
+
 #endif
 
 /// unsigned char_t
 typedef SelectType<sizeof(char_t)>::uint_t uchar_t;
-
-template<class T>
-struct TypeValue{ 
-	T val; 
-	TypeValue(T val):val(val){} 
-	operator T() const{ return val; }
-};
-
-template<class T>
-struct avoid{ typedef T type; };
-
-template<>
-struct avoid<int_t>{ typedef TypeValue<int_t> type; };
-
-template<>
-struct avoid<uint_t>{ typedef TypeValue<uint_t> type; };
-
-template<>
-struct avoid<float_t>{ typedef TypeValue<float_t> type; };
-
-template<>
-struct avoid<char_t>{ typedef TypeValue<char_t> type; };
 
 template<class T>
 struct IsFloat{ enum{ value = 0 }; };
@@ -795,6 +779,11 @@ extern UndefinedPtr undefined;
 
 struct ParamInfo;
 struct VMAndData;
+
+template<class T>
+struct ConvertibleToAnyPtr{
+	enum{ value = 0 };
+};
 
 typedef void (*bind_class_fun_t)(const ClassPtr&);
 

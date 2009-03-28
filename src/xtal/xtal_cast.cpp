@@ -24,62 +24,38 @@ const IDPtr* CastHelper<const IDPtr*>::unchecked_cast(const AnyPtr& a){
 
 ////////////////////////////////////////////////////////////
 
-bool CastHelper<int_t>::can_cast(const AnyPtr& a){
+bool Int_can_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return false; }
 		XTAL_CASE(TYPE_INT){ return true; }
 		XTAL_CASE(TYPE_FLOAT){ return true; }
 	}
-//	return false;
 }
 
-int_t CastHelper<int_t>::unchecked_cast(const AnyPtr& a){
+int_t Int_unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return 0; }
 		XTAL_CASE(TYPE_INT){ return ivalue(a); }
 		XTAL_CASE(TYPE_FLOAT){ return static_cast<uint_t>(fvalue(a)); }
 	}
-//	return 0;
 }
 
 ////////////////////////////////////////////////////////////
 
-bool CastHelper<uint_t>::can_cast(const AnyPtr& a){
+bool Float_can_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return false; }
 		XTAL_CASE(TYPE_INT){ return true; }
 		XTAL_CASE(TYPE_FLOAT){ return true; }
 	}
-//	return false;
 }
 
-uint_t CastHelper<uint_t>::unchecked_cast(const AnyPtr& a){
-	switch(type(a)){
-		XTAL_DEFAULT{ return 0; }
-		XTAL_CASE(TYPE_INT){ return ivalue(a); }
-		XTAL_CASE(TYPE_FLOAT){ return static_cast<uint_t>(fvalue(a)); }
-	}
-//	return 0;
-}
-
-////////////////////////////////////////////////////////////
-
-bool CastHelper<float_t>::can_cast(const AnyPtr& a){
-	switch(type(a)){
-		XTAL_DEFAULT{ return false; }
-		XTAL_CASE(TYPE_INT){ return true; }
-		XTAL_CASE(TYPE_FLOAT){ return true; }
-	}
-//	return false;
-}
-
-float_t CastHelper<float_t>::unchecked_cast(const AnyPtr& a){
+float_t Float_unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return 0; }
 		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
 	}
-//	return 0;
 }
 
 ////////////////////////////////////////////////////////////

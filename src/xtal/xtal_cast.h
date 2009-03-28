@@ -220,79 +220,44 @@ struct CastHelper<const Bool*>{
 };
 
 template<>
-struct CastHelper<int_t>{
-	static bool can_cast(const AnyPtr& a);
-	static int_t unchecked_cast(const AnyPtr& a);
-	static int_t get_null(){ return 0; }
-};
-
-template<>
-struct CastHelper<uint_t>{
-	static bool can_cast(const AnyPtr& a);
-	static uint_t unchecked_cast(const AnyPtr& a);
-	static uint_t get_null(){ return 0; }
-};
-
-template<>
-struct CastHelper<float_t>{
-	static bool can_cast(const AnyPtr& a);
-	static float_t unchecked_cast(const AnyPtr& a);
-	static float_t get_null(){ return 0; }
-};
-
-template<>
 struct CastHelper<bool>{
 	static bool can_cast(const AnyPtr&){ return true; }
 	static bool unchecked_cast(const AnyPtr& a){ return a; }
 	static bool get_null(){ return false; }
 };
 
-#define XTAL_CAST_HELPER(Type, XType) \
-template<> struct CastResult<const Type&>{ typedef Type type; };\
-template<>\
-struct CastHelper<const Type&>{\
-	static bool can_cast(const AnyPtr& a){ return CastHelper<Type>::can_cast(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return CastHelper<Type>::unchecked_cast(a); }\
-	static Type get_null(){ return 0; }\
-};\
-template<> struct CppClassSymbol<Type> : public CppClassSymbol<XType>{}
+bool Int_can_cast(const AnyPtr& a);
+int_t Int_unchecked_cast(const AnyPtr& a);
 
-XTAL_CAST_HELPER(int_t, Int);
-XTAL_CAST_HELPER(uint_t, Int);
-XTAL_CAST_HELPER(float_t, Float);
-XTAL_CAST_HELPER(bool, Bool);
+bool Float_can_cast(const AnyPtr& a);
+float_t Float_unchecked_cast(const AnyPtr& a);
 
 
 #undef XTAL_CAST_HELPER
 
-#define XTAL_CAST_HELPER(Type, Type2, XType) \
+#define XTAL_CAST_HELPER(Type, XType) \
 template<>\
-struct CastHelper<avoid<Type>::type>{\
-	static bool can_cast(const AnyPtr& a){ return CastHelper<Type2>::can_cast(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return (Type)CastHelper<Type2>::unchecked_cast(a); }\
+struct CastHelper<Type>{\
+	static bool can_cast(const AnyPtr& a){ return XType##_can_cast(a); }\
+	static Type unchecked_cast(const AnyPtr& a){ return XType##_unchecked_cast(a); }\
 	static Type get_null(){ return 0; }\
 };\
-template<> struct CastResult<avoid<const Type&> >{ typedef Type type; };\
-template<>\
-struct CastHelper<const avoid<Type>::type&>{\
-	static bool can_cast(const AnyPtr& a){ return CastHelper<Type>::can_cast(a); }\
-	static Type unchecked_cast(const AnyPtr& a){ return CastHelper<Type>::unchecked_cast(a); }\
-	static Type get_null(){ return 0; }\
-};\
-template<> struct CppClassSymbol<avoid<Type>::type> : public CppClassSymbol<XType>{}
+template<> struct CppClassSymbol<Type> : public CppClassSymbol<XType>{}
 
-XTAL_CAST_HELPER(int, int_t, Int);
-XTAL_CAST_HELPER(unsigned int, int_t, Int);
-XTAL_CAST_HELPER(long, int_t, Int);
-XTAL_CAST_HELPER(unsigned long, int_t, Int);
-XTAL_CAST_HELPER(short, int_t, Int);
-XTAL_CAST_HELPER(unsigned short, int_t, Int);
-XTAL_CAST_HELPER(char, int_t, Int);
-XTAL_CAST_HELPER(signed char, int_t, Int);
-XTAL_CAST_HELPER(unsigned char, int_t, Int);
-XTAL_CAST_HELPER(float, float_t, Float);
-XTAL_CAST_HELPER(double, float_t, Float);
-XTAL_CAST_HELPER(long double, float_t, Float);
+
+XTAL_CAST_HELPER(char, Int);
+XTAL_CAST_HELPER(signed char, Int);
+XTAL_CAST_HELPER(unsigned char, Int);
+XTAL_CAST_HELPER(short, Int);
+XTAL_CAST_HELPER(unsigned short, Int);
+XTAL_CAST_HELPER(int, Int);
+XTAL_CAST_HELPER(unsigned int, Int);
+XTAL_CAST_HELPER(long, Int);
+XTAL_CAST_HELPER(unsigned long, Int);
+
+XTAL_CAST_HELPER(float, Float);
+XTAL_CAST_HELPER(double, Float);
+XTAL_CAST_HELPER(long double, Float);
 
 #undef XTAL_CAST_HELPER
 

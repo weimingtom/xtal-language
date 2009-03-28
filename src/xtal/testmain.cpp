@@ -47,6 +47,8 @@ int main2(int argc, char** argv){
 		//code->call();
 	}
 
+	static AnyPtr aa = xnew<Array>();
+
 	//load("../struct.xtal");
 
 	XTAL_CATCH_EXCEPT(e){

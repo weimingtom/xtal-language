@@ -1,11 +1,12 @@
 
 CC = g++
-OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -mno-cygwin -Wall
+OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
 
 .SUFFIXES: .cpp .o 
 
 SRCDIR = ../src/xtal
 BINDIR = ../bin
+LIBDIR = ../lib
 
 SRC = $(shell ls $(SRCDIR)/xtal_*.cpp)
 OBJ = $(patsubst $(SRCDIR)/%.cpp,%.o,$(SRC))
@@ -19,20 +20,21 @@ depend:
 	g++ -MM -MG $(SRC) >makefile.depend
 
 libxtal: $(OBJ)
-	ar r $(TEMPDIR)/libxtal.a $(OBJ)
-	ranlib $(TEMPDIR)/libxtal.a
+	ar r $(LIBDIR)/libxtal.a $(OBJ)
+	ranlib $(LIBDIR)/libxtal.a
 
-xtal: libxtal $(SRCDIR)/main.cpp
-	$(CC) -o $(BINDIR)/xtal.exe $(SRCDIR)/main.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+xtal: libxtal xtal.cpp
+	$(CC) -o $(BINDIR)/xtal.exe ./xtal.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
 	strip --strip-all $(BINDIR)/xtal.exe
 
-ix: libxtal $(SRCDIR)/ixmain.cpp
-	$(CC) -o $(BINDIR)/ix.exe $(SRCDIR)/ixmain.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+ix: libxtal ix.cpp
+	$(CC) -o $(BINDIR)/ix.exe ./ix.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
 	strip --strip-all $(BINDIR)/ix.exe
 
-testxtal: libxtal $(SRCDIR)/testmain.cpp
-	$(CC) -o $(BINDIR)/test.exe $(SRCDIR)/testmain.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+test: libxtal test.cpp
+	$(CC) -o $(BINDIR)/test.exe ./test.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
 	strip --strip-all $(BINDIR)/test.exe
+	$(BINDIR)/test.exe 
 	
 .PHONY: clean
 
@@ -41,7 +43,7 @@ clean:
 
 prof: override OPT += -pg
 prof: libxtal $(SRCDIR)/main.cpp
-	$(CC) -o $(BINDIR)/prof.exe $(SRCDIR)/main.cpp $(TEMPDIR)/libxtal.a -lstdc++ $(OPT)
+	$(CC) -o $(BINDIR)/prof.exe ./xtal.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
 	$(BINDIR)/prof.exe ../bench/ao.xtal
 	gprof $(BINDIR)/prof.exe gmon.out -p > prof.txt
 
@@ -50,9 +52,6 @@ all_src:
 
 run: xtal
 	$(BINDIR)/xtal.exe 
-
-test: testxtal
-	$(BINDIR)/test.exe
 
 checkdll:
 	$ objdump -p $(BINDIR)/xtal.exe | grep "DLL Name"

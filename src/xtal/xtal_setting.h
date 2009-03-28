@@ -25,6 +25,6 @@
 /**
 * @brief pthreadのスレッドローカルストレージを使う
 */
-//#define XTAL_PTHREAD_TLS
+//#define XTAL_USE_PTHREAD_TLS
 
 #endif // XTAL_SETTING_H_INCLUDE_GUARD

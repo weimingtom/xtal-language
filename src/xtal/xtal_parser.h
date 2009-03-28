@@ -80,9 +80,9 @@ public:
 	
 	bool right_space() const{ return (flags_ & FLAG_RIGHT_SPACE) != 0; }
 	
-	int_t ivalue() const{ return xtal::ivalue((Any&)value_); }
+	int_t ivalue() const{ return ::xtal::ivalue((Any&)value_); }
 	
-	float_t fvalue() const{ return xtal::fvalue(value_); }
+	float_t fvalue() const{ return ::xtal::fvalue(value_); }
 	
 	const IDPtr& identifier() const{ return *(IDPtr*)&value_; }
 	

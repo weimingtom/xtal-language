@@ -34,14 +34,14 @@ class PThread{
 	void* data_;
 
 	static void* entry(void* self){
-		((WinThread*)self)->begin_thread();
+		((PThread*)self)->begin_thread();
 		return 0;
 	}
 	
 public:
 
 	PThread(){
-		start_ = false
+          start_ = false;
 	}
 
 	~PThread(){
@@ -118,3 +118,5 @@ public:
 		usleep((useconds_t)(sec*1000*1000));
 	}
 };
+
+}

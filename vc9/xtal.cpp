@@ -57,17 +57,17 @@ static void handle_argv(char** argv){
 }
 
 int main(int argc, char** argv){
-	CStdioStdStreamLib cstd_std_stream_lib;
-	WinThreadLib win_thread_lib;
-	WinFilesystemLib win_filesystem_lib;
+	CStdioStdStreamLib std_stream_lib;
+	WinThreadLib thread_lib;
+	WinFilesystemLib filesystem_lib;
 	SJISChCodeLib sjis_ch_code_lib;
 	UTF8ChCodeLib utf8_ch_code_lib;
 	EUCChCodeLib euc_ch_code_lib;
 
 	Setting setting;
-	setting.thread_lib = &win_thread_lib;
-	setting.std_stream_lib = &cstd_std_stream_lib;
-	setting.filesystem_lib = &win_filesystem_lib;
+	setting.thread_lib = &thread_lib;
+	setting.std_stream_lib = &std_stream_lib;
+	setting.filesystem_lib = &filesystem_lib;
 	
 	switch(kcode){
 	case 's': setting.ch_code_lib = &sjis_ch_code_lib; break;

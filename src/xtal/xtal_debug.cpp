@@ -5,7 +5,7 @@ namespace xtal{
 
 void DebugInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & file_name_ & fun_name_ & local_variables_frame_;
+	m & file_name_ & fun_name_ & variables_frame_;
 }
 
 void Debug::enable(){

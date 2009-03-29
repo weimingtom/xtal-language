@@ -1,5 +1,5 @@
 
-CC = g++
+CC = gcc
 OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
 
 .SUFFIXES: .cpp .o 
@@ -17,7 +17,7 @@ OBJ = $(patsubst $(SRCDIR)/%.cpp,%.o,$(SRC))
 all: libxtal ix xtal
 
 depend:
-	g++ -MM -MG $(SRC) >makefile.depend
+	g++ -MM -MG $(SRC) >makefile.depend -DXTAL_NO_THREAD
 
 libxtal: $(OBJ)
 	ar r $(LIBDIR)/libxtal.a $(OBJ)

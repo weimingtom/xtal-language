@@ -430,7 +430,7 @@ public:
 		}
 		return size;
 	}
-	
+
 public:
 
 	struct FunFrame{

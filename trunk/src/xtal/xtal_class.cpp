@@ -294,7 +294,7 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
-	Xfor_cast(const MultiValuePtr& v, send(Xid(members))){
+	Xfor_cast(const MultiValuePtr& v, send(Xid(members_ancestors_too))){
 		IDPtr id = ptr_cast<ID>(v->at(0));
 		if(raweq(primary_key, id)){
 			return id;

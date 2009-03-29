@@ -519,11 +519,15 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 		debug_info_->set_exception(null);
 	}
 
-	debug_info_->set_local_variables_frame(make_outer_outer());
+	debug_info_->set_variables_frame(make_outer_outer());
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
+		if(!debug_->is_enabled()){
+			return;
+		}
+
 		{
 			struct guard{
 				const SmartPtr<Debug>* debug_;
@@ -532,11 +536,11 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 				~guard(){ (*debug_)->enable_force(count_); }
 			} g(debug_);
 
-			make_debug_info(pc, kind);
-
 			AnyPtr e = ap(except_[0]);
 			except_[0] = null;
-		
+
+			make_debug_info(pc, kind);
+
 			switch(kind){
 				XTAL_CASE(BREAKPOINT){
 					if(const AnyPtr& hook = debug_->break_point_hook()){

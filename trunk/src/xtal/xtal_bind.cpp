@@ -822,18 +822,14 @@ Class::ancestors: method{
 	}
 }
 
-Class::members: method(inherited_too: true){
-	if(!inherited_too){
-		return Frame::members();
-	}
-
+Class::members_ancestors_too: method{
 	return fiber{
-		this.members(false){
+		this.members{
 			yield it;
 		}
 
 		this.ancestors{
-			it.members(false){
+			it.members{
 				yield it;
 			}
 		}
@@ -987,10 +983,17 @@ XTAL_BIND(DebugInfo){
 	it->def_method(Xid(line), &DebugInfo::line);
 	it->def_method(Xid(fun_name), &DebugInfo::fun_name);
 	it->def_method(Xid(file_name), &DebugInfo::file_name);
+	it->def_method(Xid(assertion_message), &DebugInfo::assertion_message);
+	it->def_method(Xid(exception), &DebugInfo::exception);
+	it->def_method(Xid(variables_frame), &DebugInfo::variables_frame);
+
 	it->def_method(Xid(set_kind), &DebugInfo::set_kind);
 	it->def_method(Xid(set_line), &DebugInfo::line);
 	it->def_method(Xid(set_fun_name), &DebugInfo::set_fun_name);
 	it->def_method(Xid(set_file_name), &DebugInfo::set_file_name);
+	it->def_method(Xid(set_assertion_message), &DebugInfo::set_assertion_message);
+	it->def_method(Xid(set_exception), &DebugInfo::set_exception);
+	it->def_method(Xid(set_variables_frame), &DebugInfo::set_variables_frame);
 
 	it->def(Xid(BREAKPOINT), BREAKPOINT);
 	it->def(Xid(CALL), BREAKPOINT_CALL);
@@ -1760,6 +1763,7 @@ void bind(){
 	builtin()->def(Xid(Frame), cpp_class<Frame>());
 	builtin()->def(Xid(Class), cpp_class<Class>());
 	builtin()->def(Xid(lib), lib());
+
 	builtin()->def(Xid(NativeFun), cpp_class<NativeFun>());
 
 	set_cpp_class<NativeFunBindedThis>(cpp_class<NativeFun>());

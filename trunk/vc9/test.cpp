@@ -27,22 +27,23 @@ int main2(int argc, char** argv){
 	//debug()->set_throw_hook(fun(&debug_throw));
 	
 	enable_debug();
+		
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-		{
-			nnn: 10.to_i;
+		
+	count: 0;
+	debug.set_call_hook(fun(di){
+		count++;
+		[di.fun_name, count].p;
+	});
 
-			{
-				nnnm: 10.to_i;
-				current_context.members[].p;
-				current_context.outer.members[].p;
-			}
-
-			mmm: 20.to_i;
-		}
+	debug.set_return_hook(fun(di){
+		count--;
+		[di.fun_name, count].p;
+	});
 
 	))){
-		//code->call();
+		code->call();
 	}
 
 	//load("../struct.xtal");

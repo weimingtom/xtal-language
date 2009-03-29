@@ -1,6 +1,8 @@
 
 #include "xtal_setting.h"
 
+#include <cstdio>
+#include <cstring>
 #include <cstddef>
 #include <cassert>
 #include <cmath>

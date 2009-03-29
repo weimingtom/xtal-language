@@ -310,6 +310,7 @@ void Environment::initialize(const Setting& setting){
 	builtin()->def(Xid(stderr), stderr_);
 
 	debug_ = new_cpp_singleton<Debug>();
+	builtin()->def(Xid(debug), debug_);
 
 	initialize_math();
 	initialize_xpeg();

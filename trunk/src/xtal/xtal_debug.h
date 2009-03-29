@@ -14,7 +14,7 @@ public:
 	const StringPtr& fun_name(){ return fun_name_; }
 	const StringPtr& assertion_message(){ return assertion_message_; }
 	const AnyPtr& exception(){ return exception_; }
-	const FramePtr& local_variables_frame(){ return local_variables_frame_; }
+	const FramePtr& variables_frame(){ return variables_frame_; }
 
 	void set_kind(int_t v){ kind_ = v; }
 	void set_line(int_t v){ line_ = v; }
@@ -22,7 +22,7 @@ public:
 	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
 	void set_assertion_message(const StringPtr& v){ assertion_message_ = v; }
 	void set_exception(const AnyPtr& e){ exception_ = e; }
-	void set_local_variables_frame(const FramePtr& v){ local_variables_frame_ = v; }
+	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
 
 	SmartPtr<DebugInfo> clone(){
 		return xnew<DebugInfo>(*this);
@@ -38,7 +38,8 @@ private:
 	StringPtr fun_name_;
 	StringPtr assertion_message_;
 	AnyPtr exception_;
-	FramePtr local_variables_frame_;
+	FramePtr variables_frame_;
+	VMachinePtr vm_;
 };
 
 typedef SmartPtr<DebugInfo> DebugInfoPtr;

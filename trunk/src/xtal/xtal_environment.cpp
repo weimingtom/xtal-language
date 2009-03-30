@@ -279,19 +279,6 @@ void Environment::initialize(const Setting& setting){
 
 	filesystem_ = new_cpp_singleton<Filesystem>();
 	filesystem_->initialize(setting_.filesystem_lib);
-	
-	{
-		ClassPtr p = cpp_class<Entries>();
-		p->inherit(cpp_class<Iterator>());
-		p->def_method(Xid(block_next), &Entries::block_next);
-		p->def_method(Xid(block_break), &Entries::block_break);
-	}
-
-	{
-		filesystem()->def_singleton_method(Xid(open), &Filesystem::open);
-		filesystem()->def_singleton_method(Xid(entries), &Filesystem::entries);
-		filesystem()->def_singleton_method(Xid(is_directory), &Filesystem::is_directory);
-	}
 
 	builtin()->def(Xid(filesystem), filesystem_);
 

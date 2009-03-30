@@ -1717,6 +1717,20 @@ XTAL_PREBIND(CompileError){
 	it->inherit(cpp_class<StandardError>());
 }
 
+XTAL_PREBIND(Entries){
+	it->inherit(cpp_class<Iterator>());
+}
+
+XTAL_BIND(Entries){
+	it->def_method(Xid(block_next), &Entries::block_next);
+	it->def_method(Xid(block_break), &Entries::block_break);
+}
+
+XTAL_BIND(Filesystem){
+	it->def_singleton_method(Xid(open), &Filesystem::open);
+	it->def_singleton_method(Xid(entries), &Filesystem::entries);
+	it->def_singleton_method(Xid(is_directory), &Filesystem::is_directory);
+}
 
 void bind(){
 

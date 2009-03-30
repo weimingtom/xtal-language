@@ -2,6 +2,26 @@
 inherit(lib::test);
 
 class TestFiber{
+
+	except#Test{
+		fib: fiber{
+			yield;
+			a: Array("a");
+		}
+		
+		fib();
+		assert fib() catch(e) true;
+	}
+	
+	except0#Test{
+		fib: fiber{
+			a: Array("a");
+			yield;
+		}
+		
+		assert fib() catch(e) true;
+	}
+		
 	simple#Test{
 		fib : fiber(n){
 			for(i : 0; i<n; ++i){

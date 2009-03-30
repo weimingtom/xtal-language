@@ -345,6 +345,11 @@ void VMachine::prereturn_result(const AnyPtr& v){
 }
 
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
+	if(const AnyPtr& e = catch_except()){
+		vm->set_except(e);
+		return;
+	}
+
 	// Œ‹‰Ê‚ğvm‚É“n‚·
 	if(vm->need_result()){
 		if(add_succ_or_fail_result){

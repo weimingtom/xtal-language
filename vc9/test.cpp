@@ -14,10 +14,6 @@
 
 using namespace xtal;
 
-void debug_throw(const DebugInfoPtr& di){
-	di->exception()->p();
-}
-
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -25,22 +21,22 @@ int main2(int argc, char** argv){
 
 	//enable_debug();
 	//debug()->set_throw_hook(fun(&debug_throw));
-	
-	enable_debug();
-		
+			
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
 		
-	count: 0;
-	debug.set_call_hook(fun(di){
-		count++;
-		[di.fun_name, count].p;
-	});
-
-	debug.set_return_hook(fun(di){
-		count--;
-		[di.fun_name, count].p;
-	});
+		fib: fiber{
+			yield;
+			a: Array("a");
+		}
+		
+		fib();
+		try{
+			fib();
+		}
+		catch(e){
+			e.p;
+		}
 
 	))){
 		code->call();

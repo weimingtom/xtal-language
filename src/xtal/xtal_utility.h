@@ -106,12 +106,12 @@ private:
 /**
 * @brief 例外が送出されているなら取り出す
 */
-#define XTAL_CATCH_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->catch_except()))
+#define XTAL_CATCH_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->catch_except()))
 
 /**
 * @brief 例外が送出されているか調べる
 */
-#define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<Exception>(::xtal::vmachine()->except()))
+#define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->except()))
 
 #define XTAL_UNUSED_VAR(x) (void)x
 

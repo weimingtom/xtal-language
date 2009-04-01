@@ -155,12 +155,18 @@ void ObjectSpace::uninitialize(){
 
 	class_table_.release();
 	full_gc();
-	
+
 	if(objects_count_ != 0){
-		//fprintf(stderr, "finished gc\n");
-		fprintf(stderr, "exists cycled objects %d\n", objects_count_);
-		//print_alive_objects();
-		
+		if(!ignore_memory_assert()){
+			//fprintf(stderr, "finished gc\n");
+			//fprintf(stderr, "exists cycled objects %d\n", objects_count_);
+			//print_alive_objects();
+
+			// このassertでとまる場合、オブジェクトをすべて開放できていない。
+			// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
+			XTAL_ASSERT(false);
+		}
+
 		// 強制的に開放してしまおう
 		{
 			ConnectedPointer current(objects_count_, objects_list_begin_);
@@ -175,9 +181,6 @@ void ObjectSpace::uninitialize(){
 			}
 		}
 
-		// このassertでとまる場合、オブジェクトをすべて開放できていない。
-		// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
-		XTAL_ASSERT(false);
 	}
 
 	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){

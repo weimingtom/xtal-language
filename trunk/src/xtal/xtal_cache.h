@@ -51,6 +51,7 @@ struct MemberCacheTable{
 	}
 
 	const AnyPtr& cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 		//bool nocache = false;
 		//return pvalue(target_class)->do_member(primary_key, secondary_key, true, accessibility, nocache);
 

@@ -7,6 +7,9 @@ namespace xtal{
 
 class ThreadSpace;
 
+/**
+* \brief スレッド
+*/
 class Thread : public Base{
 public:
 
@@ -35,6 +38,9 @@ protected:
 	Environment* env_;
 };
 
+/**
+* \brief ミューテックス
+*/
 class Mutex : public Base{
 public:
 

@@ -8,22 +8,22 @@
 namespace xtal{
 
 /**
-* @brief 動的なポインタの配列を作成、拡張する関数。
+* \brief 動的なポインタの配列を作成、拡張する関数。
 *
 * 一番最初の作成時は、引数全てがnullである必要がある。
-* @param begin メモリの先頭
-* @param end メモリの最後の一つ次
-* @param current 使用中の要素の一つ次
+* \param begin メモリの先頭
+* \param end メモリの最後の一つ次
+* \param current 使用中の要素の一つ次
 */
 void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize=1024);
 
 /**
-* @brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
+* \brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
 *
 * 要素が一つも無いなら(current==beginなら)完全に解放される。
-* @param begin メモリの先頭
-* @param end メモリの最後の一つ次
-* @param current 使用中の要素の一つ次
+* \param begin メモリの先頭
+* \param end メモリの最後の一つ次
+* \param current 使用中の要素の一つ次
 */
 void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
 

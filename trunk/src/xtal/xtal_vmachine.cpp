@@ -18,6 +18,7 @@ inline const IDPtr& VMachine::prev_identifier(int_t n){ return prev_code()->iden
 void VMachine::push_call(const inst_t* pc, int_t need_result_count, 
 		int_t ordered_arg_count, int_t named_arg_count, 
 		const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 
 	FunFrame* fp = fun_frames_.push();
 	if(!fp){
@@ -90,7 +91,7 @@ void VMachine::push_call(const inst_t* pc, const InstSend& inst){
 	}
 
 	if((inst.flags&CALL_FLAG_NS)==0){
-		f.secondary_key(null);
+		f.secondary_key(undefined);
 	}
 	else{
 		f.secondary_key(pop());
@@ -153,7 +154,7 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 
 	f.called_pc = &throw_unsupported_error_code_;
 
-	f.secondary_key(null);
+	f.secondary_key(undefined);
 	f.primary_key(id_[IDOp::id_op_call]);
 	f.target(pop());
 
@@ -400,7 +401,7 @@ static float_t check_zero(float_t value){
 }
 
 const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget){
-	Any secondary_key = null;
+	Any secondary_key = undefined;
 	Any target = get(ntarget);
 	downsize(1);
 
@@ -414,7 +415,7 @@ const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_resul
 }
 
 const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0){
-	Any secondary_key = null;
+	Any secondary_key = undefined;
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	downsize(2);
@@ -430,7 +431,7 @@ const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_resul
 }
 
 const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0){
-	Any secondary_key = null;
+	Any secondary_key = undefined;
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	downsize(2);
@@ -447,7 +448,7 @@ const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_res
 }
 
 const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1){
-	Any secondary_key = null;
+	Any secondary_key = undefined;
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	Any a1 = get(na1);
@@ -464,7 +465,7 @@ const inst_t* VMachine::inner_send_from_stack(const inst_t* pc, int_t need_resul
 }
 
 const inst_t* VMachine::inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1){
-	Any secondary_key = null;
+	Any secondary_key = undefined;
 	Any target = get(ntarget);
 	Any a0 = get(na0);
 	Any a1 = get(na1);
@@ -817,7 +818,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Property){ // 6
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push_call(pc + inst.ISIZE, inst.need_result, 0, 0, identifier(inst.identifier_number), null, ff().self());
+			push_call(pc + inst.ISIZE, inst.need_result, 0, 0, identifier(inst.identifier_number), undefined, ff().self());
 			FunFrame& f = ff();
 			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
@@ -827,7 +828,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SetProperty){ // 6
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			push_call(pc + inst.ISIZE, 0, 1, 0, identifier(inst.identifier_number), null, ff().self());
+			push_call(pc + inst.ISIZE, 0, 1, 0, identifier(inst.identifier_number), undefined, ff().self());
 			FunFrame& f = ff();
 			f.target()->rawsend(myself(), f.primary_key(), f.secondary_key(), f.self());
 			XTAL_VM_CHECK_EXCEPT;
@@ -858,7 +859,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(Member){ // 12
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff();
-			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : null);
+			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : undefined);
 			if(int_t n = inst.identifier_number){ f.primary_key(identifier(n)); }
 			else{ f.primary_key(pop()->to_s()->intern()); }
 			f.target(get());
@@ -883,7 +884,7 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(DefineMember){ // 10
 		XTAL_GLOBAL_INTERPRETER_LOCK{
 			FunFrame& f = ff();
-			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : null);
+			f.secondary_key((inst.flags&CALL_FLAG_NS) ? pop() : undefined);
 			if(int_t n = inst.identifier_number){ f.primary_key(identifier(n)); }
 			else{ f.primary_key(pop()->to_s()->intern()); }
 			AnyPtr value = pop();
@@ -1302,8 +1303,8 @@ XTAL_VM_SWITCH{
 			push(rhs); 
 			push(Any((int_t)inst.kind));
 			push(lhs);
-			push_call(pc+inst.ISIZE, 1, 2, 0, id_[IDOp::id_op_range], null, ff().self());
-			ap(lhs)->rawsend(myself(), id_[IDOp::id_op_range], null);
+			push_call(pc+inst.ISIZE, 1, 2, 0, id_[IDOp::id_op_range], undefined, ff().self());
+			ap(lhs)->rawsend(myself(), id_[IDOp::id_op_range], undefined);
 			XTAL_VM_CHECK_EXCEPT;
 		}
 		XTAL_VM_CONTINUE(ff().called_pc);
@@ -1317,7 +1318,7 @@ XTAL_VM_SWITCH{
 			}
 			else{
 				XTAL_VM_CHECK_EXCEPT;
-				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), null));
+				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), undefined));
 			}
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);;;;;;
@@ -1325,8 +1326,8 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(SetGlobalVariable){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(!code()->filelocal()->set_member(identifier(inst.identifier_number), get(), null)){
-				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), null));
+			if(!code()->filelocal()->set_member(identifier(inst.identifier_number), get(), undefined)){
+				XTAL_VM_EXCEPT(unsupported_error(code()->filelocal(), identifier(inst.identifier_number), undefined));
 			}
 			downsize(1);
 		}
@@ -1335,7 +1336,7 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(DefineGlobalVariable){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			code()->filelocal()->def(identifier(inst.identifier_number), get(), null, KIND_PUBLIC);
+			code()->filelocal()->def(identifier(inst.identifier_number), get(), undefined, KIND_PUBLIC);
 			XTAL_VM_CHECK_EXCEPT;
 			downsize(1);
 		}
@@ -1391,7 +1392,7 @@ XTAL_VM_SWITCH{
 			}
 
 			push(null);
-			push_call(pc + inst.ISIZE, 0, 0, 0, null, null, cp);
+			push_call(pc + inst.ISIZE, 0, 0, 0, null, undefined, cp);
 
 			ff().fun(prev_fun());
 			ff().outer(cp);

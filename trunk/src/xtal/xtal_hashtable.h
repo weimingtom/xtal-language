@@ -96,7 +96,7 @@ public:
 	OrderedHashtable(no_use_memory_t);
 
 	/**
-	* @brief 空のハッシュテーブルを生成する 
+	* \brief 空のハッシュテーブルを生成する 
 	*
 	*/
 	OrderedHashtable();
@@ -110,7 +110,7 @@ public:
 	void destroy();
 		
 	/**
-	* @brief iに対応する要素を返す
+	* \brief iに対応する要素を返す
 	*
 	*/
 	iterator find(const Key& key){
@@ -118,13 +118,13 @@ public:
 	}
 
 	/**
-	* @brief iに対応する要素を返す
+	* \brief iに対応する要素を返す
 	*
 	*/
 	iterator find(const Key& key, uint_t hash);
 
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief iに対応する要素を設定する
 	*
 	*/	
 	std::pair<iterator, bool> insert(const Key& key, const Val& value){
@@ -132,13 +132,13 @@ public:
 	}
 
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief iに対応する要素を設定する
 	*
 	*/	
 	std::pair<iterator, bool> insert(const Key& key, const Val& value, uint_t hash);
 
 	/**
-	* @brief keyに対応する値を削除する
+	* \brief keyに対応する値を削除する
 	*
 	*/
 	void erase(const Key& key);
@@ -151,7 +151,7 @@ public:
 	}
 
 	/**
-	* @brief 連想配列の容量を返す
+	* \brief 連想配列の容量を返す
 	*
 	*/
 	uint_t size(){
@@ -159,7 +159,7 @@ public:
 	}
 
 	/**
-	* @brief 空か調べる
+	* \brief 空か調べる
 	*
 	*/
 	bool empty(){
@@ -544,7 +544,7 @@ public:
 	Hashtable(no_use_memory_t);
 
 	/**
-	* @brief 空のハッシュテーブルを生成する 
+	* \brief 空のハッシュテーブルを生成する 
 	*
 	*/
 	Hashtable();
@@ -558,7 +558,7 @@ public:
 	void destroy();
 		
 	/**
-	* @brief iに対応する要素を返す
+	* \brief iに対応する要素を返す
 	*
 	*/
 	iterator find(const Key& key){
@@ -566,13 +566,13 @@ public:
 	}
 
 	/**
-	* @brief iに対応する要素を返す
+	* \brief iに対応する要素を返す
 	*
 	*/
 	iterator find(const Key& key, uint_t hash);
 
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief iに対応する要素を設定する
 	*
 	*/	
 	std::pair<iterator, bool> insert(const Key& key, const Val& value){
@@ -580,13 +580,13 @@ public:
 	}
 
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief iに対応する要素を設定する
 	*
 	*/	
 	std::pair<iterator, bool> insert(const Key& key, const Val& value, uint_t hash);
 
 	/**
-	* @brief keyに対応する値を削除する
+	* \brief keyに対応する値を削除する
 	*
 	*/
 	void erase(const Key& key);
@@ -599,7 +599,7 @@ public:
 	}
 
 	/**
-	* @brief 連想配列の容量を返す
+	* \brief 連想配列の容量を返す
 	*
 	*/
 	uint_t size(){
@@ -607,7 +607,7 @@ public:
 	}
 
 	/**
-	* @brief 空か調べる
+	* \brief 空か調べる
 	*
 	*/
 	bool empty(){

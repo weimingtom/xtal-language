@@ -27,16 +27,13 @@ int main2(int argc, char** argv){
 		
 		fib: fiber{
 			yield;
-			a: Array("a");
+			"b".p;
 		}
 		
 		fib();
-		try{
-			fib();
-		}
-		catch(e){
-			e.p;
-		}
+		fib();
+
+		println(Array(1000000)); 
 
 	))){
 		code->call();
@@ -148,10 +145,16 @@ int main(int argc, char** argv){
 	initialize(setting);
 	bind_error_message();
 
-	int ret = main2(argc, argv);
+	int ret = 1;
+	XTAL_PROTECT{
+		ret = main2(argc, argv);
 
-	vmachine()->print_info();
-	uninitialize();
+		vmachine()->print_info();
+		uninitialize();
+	}
+	XTAL_OUT_OF_MEMORY{
+		puts("out of memory");
+	}
 
 	return ret;
 }

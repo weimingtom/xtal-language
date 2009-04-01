@@ -5,62 +5,68 @@
 
 namespace xtal{
 
+/**
+* \brief •¶š—ñ
+*/
 class String : public Any{
 public:
 
+	/**
+	* \brief ‹ó•¶š—ñ‚ğ\’z‚·‚é
+	*/
 	String();
 
 	/**
-	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
 	*
-	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
+	* \param str NULLI’[•¶š—ñ
 	*/
 	String(const char_t* str);
 
 	/**
-	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
 	*
-	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
+	* \param str NULLI’[•¶š—ñ
 	*/
 	String(const char8_t* str);
 
 	/**
-	* @brief Cæ–‡å­—åˆ—ã‹ã‚‰sizeåˆ†ã®é•·ã•ã‚’å–ã‚Šå‡ºã—æ§‹ç¯‰ã™ã‚‹
+	* \brief C•¶š—ñ‚©‚çsize•ª‚Ì’·‚³‚ğæ‚èo‚µ\’z‚·‚é
 	*
 	*/
 	String(const char_t* str, uint_t size);
 
 	/**
-	* @brief Cæ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief C•¶š—ñƒŠƒeƒ‰ƒ‹‚©‚ç\’z‚·‚é
 	*
 	*/
 	String(const StringLiteral& str);
 
 	/**
-	* @brief beginã‹ã‚‰lastã¾ã§ã®æ–‡å­—åˆ—ã§æ§‹ç¯‰ã™ã‚‹
+	* \brief begin‚©‚çlast‚Ü‚Å‚Ì•¶š—ñ‚Å\’z‚·‚é
 	*
 	* [begin, last)
 	*/
 	String(const char_t* begin, const char_t* last);
 
 	/**
-	* @brief äºŒã¤ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief “ñ‚Â‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
 	*
 	*/
 	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
 
 	/**
-	* @brief 1ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 1‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	String(char_t a);
 
 	/**
-	* @brief 2ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 2‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	String(char_t a, char_t b);
 
 	/**
-	* @brief 3ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 3‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	String(char_t a, char_t b, char_t c);
 
@@ -81,74 +87,75 @@ protected:
 public:
 
 	/**
-	* @brief 0çµ‚ç«¯ã®æ–‡å­—åˆ—å…ˆé ­ã®ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™ã€‚
+	* \brief 0I’[‚Ì•¶š—ñæ“ª‚Ìƒ|ƒCƒ“ƒ^‚ğ•Ô‚·B
 	*
 	*/
 	const char_t* c_str();
 
 	/**
-	* @brief æ–‡å­—åˆ—å…ˆé ­ã®ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™ã€‚
+	* \brief •¶š—ñæ“ª‚Ìƒ|ƒCƒ“ƒ^‚ğ•Ô‚·B
 	*
-	* ã“ã‚Œã¯0çµ‚ç«¯æ–‡å­—åˆ—ãŒè¿”ã•ã‚Œã‚‹ã¨ã¯é™ã‚‰ãªã„ã€‚
+	* ‚±‚ê‚Í0I’[•¶š—ñ‚ª•Ô‚³‚ê‚é‚Æ‚ÍŒÀ‚ç‚È‚¢B
 	*/
 	const char_t* data();
 
 	/**
-	* @brief ãƒ‡ãƒ¼ã‚¿ã‚µã‚¤ã‚ºã‚’è¿”ã™ã€‚
+	* \brief ƒf[ƒ^ƒTƒCƒY‚ğ•Ô‚·B
 	*
-	* æ–‡å­—åˆ—ã®é•·ã•ã§ã¯ãªãã€ãƒã‚¤ãƒŠãƒªã¨ã—ã¦è¦‹ãŸå ´åˆã®ã‚µã‚¤ã‚ºã‚’è¿”ã™ã€‚
+	* ƒ}ƒ‹ƒ`ƒoƒCƒg•¶š‚ğl—¶‚µ‚È‚¢B
 	*/
 	uint_t data_size();
 
 	/**
-	* @brief æ–‡å­—åˆ—ã®é•·ã•ã‚’è¿”ã™ã€‚
+	* \brief •¶š—ñ‚Ì’·‚³‚ğ•Ô‚·B
 	*
+	* ƒ}ƒ‹ƒ`ƒoƒCƒg•¶š‚ğl—¶‚·‚éB
 	*/
 	uint_t length();
 
 	/*
-	* @brief æµ…ã„ã‚³ãƒ”ãƒ¼ã‚’è¿”ã™ã€‚
+	* \brief ó‚¢ƒRƒs[‚ğ•Ô‚·B
 	*
 	*/
 	StringPtr clone();
 
 	/**
-	* @brief ä¸€æ„åŒ–ã—ãŸæ–‡å­—åˆ—ã‚’è¿”ã™ã€‚
+	* \brief ˆêˆÓ‰»‚µ‚½•¶š—ñ‚ğ•Ô‚·B
 	*
 	*/
 	const IDPtr& intern();
 
 	/**
-	* @brief ä¸€æ„åŒ–ã•ã‚Œã¦ã„ã‚‹ã‹è¿”ã™ã€‚
+	* \brief ˆêˆÓ‰»‚³‚ê‚Ä‚¢‚é‚©•Ô‚·B
 	*/
 	bool is_interned();
 
 	/**
-	* @brief æ•´æ•°ã«å¤‰æ›ã—ãŸçµæœã‚’è¿”ã™ã€‚
+	* \brief ®”‚É•ÏŠ·‚µ‚½Œ‹‰Ê‚ğ•Ô‚·B
 	*
 	*/ 
 	int_t to_i();
 	
 	/**
-	* @brief æµ®å‹•å°æ•°ç‚¹æ•°ã«å¤‰æ›ã—ãŸçµæœã‚’è¿”ã™ã€‚
+	* \brief •‚“®¬”“_”‚É•ÏŠ·‚µ‚½Œ‹‰Ê‚ğ•Ô‚·B
 	*
 	*/ 
 	float_t to_f();
 	
 	/**
-	* @brief è‡ªåˆ†è‡ªèº«ã‚’è¿”ã™ã€‚
+	* \brief ©•ª©g‚ğ•Ô‚·B
 	*
 	*/
 	StringPtr to_s();
 
 	/**
-	* @brief ä¸€æ–‡å­—ã¥ã¤ã®æ–‡å­—åˆ—ã‚’è¦ç´ ã¨ã™ã‚‹Iteratorã‚’è¿”ã™ã€‚
+	* \brief ˆê•¶š‚Ã‚Â‚Ì•¶š—ñ‚ğ—v‘f‚Æ‚·‚éIterator‚ğ•Ô‚·B
 	*
 	*/
 	AnyPtr each();
 
 	/**
-	* @brief é€£çµã™ã‚‹
+	* \brief ˜AŒ‹‚·‚é
 	*
 	*/
 	StringPtr cat(const StringPtr& v);
@@ -222,64 +229,64 @@ private:
 
 
 /**
-* @brief Internæ¸ˆã¿ã®String
+* \brief InternÏ‚İ‚ÌString
 *
-* ã“ã‚Œã¯C++ã®å‹ã‚·ã‚¹ãƒ†ãƒ ã®ãŸã‚ã«å­˜åœ¨ã™ã‚‹ã€‚
-* Xtalã«ãŠã„ã¦Internæ¸ˆã¿Stringã¯Stringå‹ã§ã‚ã‚‹ã€‚
+* ‚±‚ê‚ÍC++‚ÌŒ^ƒVƒXƒeƒ€‚Ì‚½‚ß‚É‘¶İ‚·‚éB
+* Xtal‚É‚¨‚¢‚ÄInternÏ‚İString‚ÍStringŒ^‚Å‚ ‚éB
 */
 class ID : public String{
 public:
 
 	/**
-	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
 	*
-	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
+	* \param str NULLI’[•¶š—ñ
 	*/
 	ID(const char_t* str);
 
 	/**
-	* @brief NULçµ‚ç«¯ã®Cæ–‡å­—åˆ—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief NULI’[‚ÌC•¶š—ñ‚©‚ç\’z‚·‚é
 	*
-	* @param str NULLçµ‚ç«¯æ–‡å­—åˆ—
+	* \param str NULLI’[•¶š—ñ
 	*/
 	ID(const char8_t* str);
 
 	/**
-	* @brief Cæ–‡å­—åˆ—ã‹ã‚‰sizeåˆ†ã®é•·ã•ã‚’å–ã‚Šå‡ºã—æ§‹ç¯‰ã™ã‚‹
+	* \brief C•¶š—ñ‚©‚çsize•ª‚Ì’·‚³‚ğæ‚èo‚µ\’z‚·‚é
 	*
 	*/
 	ID(const char_t* str, uint_t size);
 	
 	/**
-	* @brief Cæ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief C•¶š—ñƒŠƒeƒ‰ƒ‹‚©‚ç\’z‚·‚é
 	*
 	*/
 	ID(const StringLiteral& str);
 
 	/**
-	* @brief beginã‹ã‚‰lastã¾ã§ã®æ–‡å­—åˆ—ã§æ§‹ç¯‰ã™ã‚‹
+	* \brief begin‚©‚çlast‚Ü‚Å‚Ì•¶š—ñ‚Å\’z‚·‚é
 	*
 	* [begin, last)
 	*/
 	ID(const char_t* begin, const char_t* last);
 
 	/**
-	* @brief 1ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 1‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	ID(char_t a);
 
 	/**
-	* @brief 2ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 2‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	ID(char_t a, char_t b);
 
 	/**
-	* @brief 3ã¤ã®æ–‡å­—ã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief 3‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
 	*/
 	ID(char_t a, char_t b, char_t c);
 
 	/**
-	* @brief Stringã‹ã‚‰æ§‹ç¯‰ã™ã‚‹
+	* \brief String‚©‚ç\’z‚·‚é
 	*
 	*/
 	ID(const StringPtr& name);		
@@ -339,44 +346,25 @@ private:
 	StringPtr it_, end_;
 };
 
-
 /**
-* @brief åå‰ä»˜ãå¼•æ•°ã®ãƒˆãƒªãƒƒã‚¯ã®ãŸã‚ã®ã‚¯ãƒ©ã‚¹
+* \brief ŠÖ”ŒÄ‚Ño‚µ‚ÅA–¼‘O•t‚«ˆø”‚Æ‚µ‚Ä“n‚·‚½‚ß‚ÌƒNƒ‰ƒX
 *
 */
-struct Named2{
+struct Named{
 	IDPtr name;
 	AnyPtr value;
 
-	Named2(const char_t* name)
-		:name(name), value(undefined){}
-
-	Named2(const char8_t* name)
-		:name(name), value(undefined){}
-
-	Named2(const IDPtr& name)
-		:name(name), value(undefined){}
-
-	Named2(const IDPtr& name, const AnyPtr& value)
+	/**
+	* \brief –¼‘O‚Æ’l‚ğw’è‚µ‚Ä\’z‚·‚éB
+	*/
+	Named(const IDPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
-	Named2()
-		:value(undefined){}
-
-	Named2(const Null&)
-		:value(undefined){}
-};
-
-/**
-* @brief åå‰ä»˜ãå¼•æ•°ã®ãƒˆãƒªãƒƒã‚¯ã®ãŸã‚ã®ã‚¯ãƒ©ã‚¹
-*
-*/
-struct Named : public Named2{
-
-	Named(const IDPtr& name, const AnyPtr& value)
-		:Named2(name, value){}
-
-	Named(){}
+	/**
+	* \brief ‹ó‚Èó‘Ô‚Å¶¬‚·‚é
+	*/
+	Named()
+		:name(null), value(undefined){}
 };
 
 inline void visit_members(Visitor& m, const Named& p){

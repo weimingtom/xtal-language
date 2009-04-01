@@ -122,14 +122,14 @@ public:
 public:
 
 	/**
-	* @brief 範囲の開始
+	* \brief 範囲の開始
 	*
 	* beginは左閉右開区間 [begin, end) で得ることが出来る 
 	*/
 	int_t begin(){ return is_left_closed() ? left() : left()+1; }
 
 	/**
-	* @brief 範囲の終端
+	* \brief 範囲の終端
 	*
 	* endは左閉右開区間 [begin, end) で得ることが出来る 
 	*/

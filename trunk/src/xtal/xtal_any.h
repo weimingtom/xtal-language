@@ -19,123 +19,137 @@ union AnyRawValue{
 };
 
 /**
-* @brief any
+* \brief すべてのクラスの基底クラス
 *
+* 
 */
 class Any{
 public:
 
 	/**
-	* @brief 関数オブジェクトとみなし、関数呼び出しをする。
+	* \brief 関数オブジェクトとみなし、関数呼び出しをする。
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	void rawcall(const VMachinePtr& vm) const;
 	
 	/**
-	* @brief nameメソッド呼び出しをする
+	* \brief メソッド呼び出しをする
 	*
 	* 引数や戻り値はvmを通してやり取りする。
+	* \param vm 仮想マシン
+	* \param primary_key メンバ名
+	* \param secondary_key セカンダリキー
+	* \param self 可触性に影響するオブジェクト
+	* \param inherited_too 継承元クラスからもメソッド検索をするかどうか
 	*/
 	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+
+	/**
+	* \brief メソッド呼び出しをする
+	*
+	* 引数や戻り値はvmを通してやり取りする。
+	* \param primary_key メンバ名
+	*/
 	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const;
 
 	/**
-	* @brief nameメンバを取得する。
+	* \brief メンバを取得する。
 	* 可触性を考慮したメンバ取得
 	*
-	* @retval undefined そのメンバは存在しない
-	* @retval 非undefined nameに対応したメンバ  
+	* \retval undefined そのメンバは存在しない
+	* \retval 非undefined nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)null, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
 
 	/**
-	* @brief nameメンバを初期値valueで定義する。
-	*
+	* \brief メンバを定義する。
+	* \param primary_key メンバ名
+	* \param secondary_key セカンダリキー
 	*/
-	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0) const;
+	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)undefined, int_t accessibility = 0) const;
 
 	/**
-	* @brief このオブジェクトが所属するクラスを返す。
+	* \brief このオブジェクトが所属するクラスを返す。
 	*
 	*/
 	const ClassPtr& get_class() const;
 
 	/**
-	* @brief 整数に変換して返す。
+	* \brief 整数に変換して返す。
 	*
 	*/
 	int_t to_i() const;
 	
 	/**
-	* @brief 浮動小数点数に変換して返す。
+	* \brief 浮動小数点数に変換して返す。
 	*
 	*/
 	float_t to_f() const;
 	
 	/**
-	* @brief 文字列に変換して返す。
+	* \brief 文字列に変換して返す。
 	*
 	*/
 	StringPtr to_s() const;
 
 	/**
-	* @brief 配列に変換して返す。
+	* \brief 配列に変換して返す。
 	*
 	*/
 	ArrayPtr to_a() const;
 
 	/**
-	* @brief 連想配列に変換して返す。
+	* \brief 連想配列に変換して返す。
 	*
 	*/
 	MapPtr to_m() const;
 
 	/**
-	* @brief klassクラスのインスタンスか調べる。
+	* \brief klassクラスのインスタンスか調べる。
 	*
 	*/
 	bool is(const AnyPtr& klass) const;
 		
 	/**
-	* @brief klassクラスを継承しているか調べる
+	* \brief klassクラスを継承しているか調べる
 	*
 	*/
 	bool is_inherited(const AnyPtr& klass) const;
 	
 	/**
-	* @brief このオブジェクトがメンバとなっている親のクラスを返す。
+	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
 	*
 	*/
 	const ClassPtr& object_parent() const;
 	
 	/**
-	* @brief このオブジェクトに親を設定する。
+	* \brief このオブジェクトに親を設定する。
 	*
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
-	* @param parent 親
+	* \param parent 親
 	*/
 	void set_object_parent(const ClassPtr& parent) const;
 
 	/**
-	* @brief オブジェクトの名前を返す
+	* \brief オブジェクトの名前を返す
 	*/
 	StringPtr object_name() const;
 
 	/**
-	* @brief オブジェクトの名前のリストを返す
+	* \brief オブジェクトの名前のリストを返す
 	* 一番最上位の親からの名前のリストを返す
 	*/
 	ArrayPtr object_name_list() const;
 
 	/**
-	* @brief 自身を文字列化してprintlnする。
-	* @return 自身を返す。
+	* \brief 自身を文字列化してprintlnする。
+	* \return 自身を返す。
 	*/
 	AnyPtr p() const;
 
 	/**
-	* @brief 自身を返す。
+	* \brief 自身を返す。
 	*
 	*/
 	const AnyPtr& self() const{
@@ -160,99 +174,99 @@ public:
 
 public:
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	AnyPtr send(const IDPtr& primary_key) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	AnyPtr call() const;
 
 //{REPEAT{{
 /*
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	AnyPtr call(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const;
 */
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 >
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 ) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 >
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 ) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 >
 	AnyPtr call(const A0& a0 ) const;
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 , class A1>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 , class A1>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 , class A1>
 	AnyPtr call(const A0& a0 , const A1& a1) const;
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 , class A1, class A2>
 	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2) const;
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 , class A1, class A2, class A3>
 	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const;
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4>
 	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const;
 
-	/// @brief primary_keyメソッドを呼び出す
+	/// \brief primary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	AnyPtr send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
 
-	/// @brief primary_key#secondary_keyメソッドを呼び出す
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
 
-	/// @brief 関数を呼び出す
+	/// \brief 関数を呼び出す
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	AnyPtr call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const;
 

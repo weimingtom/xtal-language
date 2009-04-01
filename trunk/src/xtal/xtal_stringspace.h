@@ -48,7 +48,7 @@ enum{
 };};
 
 /*
-* @breif 文字列を管理するクラス
+* \brief 文字列を管理するクラス
 */
 class StringSpace{
 public:

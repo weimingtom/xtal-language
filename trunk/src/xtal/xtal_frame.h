@@ -5,6 +5,9 @@
 
 namespace xtal{
 
+/**
+* @brief フレーム
+*/
 class Frame : public HaveParent{
 public:
 	
@@ -21,7 +24,7 @@ public:
 public:
 	
 	/**
-	* @brief 外側のスコープを表すFrameオブジェクトを返す。
+	* \brief 外側のスコープを表すFrameオブジェクトを返す。
 	*
 	*/
 	const FramePtr& outer(){ 
@@ -37,7 +40,7 @@ public:
 	}
 
 	/**
-	* @brief リテラル時に定義された要素の数を返す。
+	* \brief リテラル時に定義された要素の数を返す。
 	*
 	*/
 	int_t block_size(){ 
@@ -45,7 +48,7 @@ public:
 	}
 
 	/**
-	* @brief i番目のメンバーをダイレクトに取得。
+	* \brief i番目のメンバーをダイレクトに取得。
 	*
 	*/
 	AnyPtr& member_direct(int_t i){
@@ -53,7 +56,7 @@ public:
 	}
 
 	/**
-	* @brief i番目のメンバーをダイレクトに設定。
+	* \brief i番目のメンバーをダイレクトに設定。
 	*
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
@@ -63,7 +66,7 @@ public:
 public:
 
 	/**
-	* @brief メンバが格納された、Iteratorを返す
+	* \brief メンバが格納された、Iteratorを返す
 	* ブロックパラメータは(primary_key, secondary_key, value)
 	*/
 	AnyPtr members();

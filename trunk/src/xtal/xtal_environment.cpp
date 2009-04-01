@@ -9,7 +9,7 @@
 
 int used_memory = 0;
 
-#define XTAL_DEBUG_ALLOC 0
+#define XTAL_DEBUG_ALLOC 1
 
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>
@@ -41,7 +41,7 @@ void* debug_malloc(size_t size){
 	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter)));
 	used_memory += size;
 
-	if(gcounter==25389){
+	if(gcounter==6){
 		gcounter = gcounter;
 	}
 
@@ -95,7 +95,7 @@ void display_debug_memory(){
 
 class DebugAllocatorLib : public xtal::AllocatorLib{
 public:
-	virtual void* malloc(std::size_t size){ return debug_malloc(size); }
+	virtual void* malloc(std::size_t size){ if(size>100000) return 0; return debug_malloc(size); }
 	virtual void free(void* p, std::size_t size){ debug_free(p, size); }
 };
 
@@ -138,6 +138,10 @@ public:
 	StreamPtr stdin_;
 	StreamPtr stdout_;
 	StreamPtr stderr_;
+
+	bool set_jmp_buf_;
+	bool ignore_memory_assert_;
+	JmpBuf jmp_buf_;
 };
 
 namespace{
@@ -191,6 +195,23 @@ void* xmalloc(size_t size){
 			if(!ret){
 				full_gc();
 				ret = environment_->setting_.allocator_lib->malloc(size);
+
+				if(!ret){
+					ret = environment_->setting_.allocator_lib->out_of_memory(size);
+
+					if(!ret){
+						// だめだ。メモリが確保できない。
+						// 環境を破棄して、XTAL_MEMORYまでジャンプしよう。
+
+						// XTAL_MEMORYで囲まれていない！
+						XTAL_ASSERT(environment_->set_jmp_buf_);
+					
+						environment_->ignore_memory_assert_= true;
+						JmpBuf buf = environment_->jmp_buf_;
+						uninitialize();
+						longjmp(buf.buf, 1);
+					}
+				}
 			}
 		}
 
@@ -216,6 +237,23 @@ void xfree(void* p, size_t size){
 	}
 }
 
+JmpBuf& protect(){
+	// XTAL_PROTECTが入れ子になっている場合assertに引っかかる
+	XTAL_ASSERT(!environment_->set_jmp_buf_);
+
+	environment_->set_jmp_buf_ = true;
+	return environment_->jmp_buf_;
+}
+
+void reset_protect(){
+	if(environment_){
+		environment_->set_jmp_buf_ = false;
+	}
+}
+
+bool ignore_memory_assert(){
+	return environment_->ignore_memory_assert_;
+}
 
 Setting::Setting(){
 	thread_lib = &empty_thread_lib;
@@ -242,6 +280,10 @@ void initialize(const Setting& setting){
 }
 
 void uninitialize(){
+	if(!environment_){
+		return;
+	}
+
 	AllocatorLib* allocacator_lib = environment_->setting_.allocator_lib;
 	environment_->uninitialize();
 	environment_->~Environment();
@@ -258,6 +300,9 @@ void Environment::initialize(const Setting& setting){
 	setting_ = setting;
 
 //////////
+
+	set_jmp_buf_ = false;
+	ignore_memory_assert_ = false;
 	
 	object_space_.initialize();
 	string_space_.initialize();
@@ -409,6 +454,7 @@ void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 }
 

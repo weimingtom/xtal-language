@@ -96,7 +96,7 @@ template<class T>
 inline const ClassPtr& cpp_class();
 
 /**
-* @brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
+* \brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
 */
 template<>
 class SmartPtr<Any> : public Any{
@@ -153,25 +153,25 @@ protected:
 public:
 
 	/**
-	* @brief booleanから構築するコンストラクタ。
+	* \brief booleanから構築するコンストラクタ。
 	*
 	*/
 	SmartPtr(bool v):Any(v){}
 
 	/**
-	* @brief 文字列から構築するコンストラクタ。
+	* \brief 文字列から構築するコンストラクタ。
 	*
 	*/
 	SmartPtr(const char_t* str);
 
 	/**
-	* @brief 文字列から構築するコンストラクタ。
+	* \brief 文字列から構築するコンストラクタ。
 	*
 	*/
 	SmartPtr(const char8_t* str);
 
 	/**
-	* @brief 文字列から構築するコンストラクタ。
+	* \brief 文字列から構築するコンストラクタ。
 	*
 	*/
 	SmartPtr(const StringLiteral& str);
@@ -194,19 +194,19 @@ public:
 public:
 
 	/**
-	* @brief ->演算子
+	* \brief ->演算子
 	* スマートポインタとして扱うためにオーバーロードする。
 	*/
 	Any* operator ->() const{ return get(); }
 	
 	/**
-	* @brief *演算子
+	* \brief *演算子
 	* スマートポインタとして扱うためにオーバーロードする。
 	*/
 	Any& operator *() const{ return *get(); }
 	
 	/**
-	* @brief T型へのポインタを取得する。
+	* \brief T型へのポインタを取得する。
 	*/
 	Any* get() const{ return (Any*)this; }
 
@@ -226,7 +226,7 @@ public:
 private:
 
 	/**
-	* @brief 暗黙の変換を抑えるためのコンストラクタ。
+	* \brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
 	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
 	*/

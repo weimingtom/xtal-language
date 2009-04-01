@@ -49,46 +49,49 @@ public:
 	static void operator delete(void*, void*){}
 };
 
+/**
+* @brief 基底クラス
+*/
 class Base : public RefCountingBase{
 public:
 
 	/**
-	* @brief 関数オブジェクトとみなし、関数呼び出しをする。
+	* \brief 関数オブジェクトとみなし、関数呼び出しをする。
 	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	virtual void rawcall(const VMachinePtr& vm);
 
 	/**
-	* @brief nameメンバを初期値valueで定義する。
+	* \brief nameメンバを初期値valueで定義する。
 	*
 	*/
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)null, int_t accessibility = 0);
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)undefined, int_t accessibility = 0);
 
 	/**
-	* @brief nameメンバを取得する。
+	* \brief nameメンバを取得する。
 	*
-	* @retval null そのメンバは存在しない
-	* @retval 非null nameに対応したメンバ  
+	* \retval null そのメンバは存在しない
+	* \retval 非null nameに対応したメンバ  
 	*/
 	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
-	* @brief このオブジェクトがメンバとなっている親のクラスを返す。
+	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
 	*
 	*/
 	virtual const ClassPtr& object_parent();
 	
 	/**
-	* @brief このオブジェクトに親を設定する。
+	* \brief このオブジェクトに親を設定する。
 	*
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
-	* @param parent 親
+	* \param parent 親
 	*/
 	virtual void set_object_parent(const ClassPtr& parent);
 
 	/**
-	* @brief ファイナライザ
+	* \brief ファイナライザ
 	*
 	* full_gc時に、死ぬ予定のオブジェクトとなった時に破棄をするための関数。
 	* ただし、set_finalizer_flag()を呼んでいなければ呼ばれることはない。
@@ -96,7 +99,7 @@ public:
 	virtual void finalize();
 
 	/**
-	* @brief このオブジェクトが所属するクラスを返す。
+	* \brief このオブジェクトが所属するクラスを返す。
 	*
 	*/
 	const ClassPtr& get_class();

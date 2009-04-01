@@ -292,6 +292,8 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 }
 
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
 	Xfor_cast(const MultiValuePtr& v, send(Xid(members_ancestors_too))){
@@ -311,22 +313,25 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 }
 
 void Class::def_double_dispatch_method(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::double_dispatch_method(primary_key), null, accessibility);
+	def(primary_key, xtal::double_dispatch_method(primary_key), undefined, accessibility);
 }
 
 void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), null, accessibility);
+	def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), undefined, accessibility);
 }
 
 const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFun>(pth, val, val_size), secondary_key, accessibility));
 }
 
 const NativeFunPtr& Class::def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, to_smartptr(this)), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	def(primary_key, value, secondary_key, accessibility);
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
@@ -337,6 +342,7 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 }
 
 void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -364,6 +370,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 }
 
 void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -379,6 +386,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 }
 
 const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	cpp_class<Any>()->bind();
 
 	Key key = {primary_key, secondary_key};
@@ -399,6 +407,7 @@ const AnyPtr& Class::bases_member(const IDPtr& name){
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 
@@ -423,6 +432,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 }
 
 const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	bind();
 
 	{
@@ -471,6 +481,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 }
 
 bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -484,7 +495,8 @@ bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 	return true;
 }
 
-void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ 
+void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert 
 	members_.set_at(i, value);
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
@@ -607,7 +619,7 @@ void Class::rawcall(const VMachinePtr& vm){
 
 		XTAL_CHECK_EXCEPT(e){ return; }
 		
-		if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
+		if(const AnyPtr& ret = member(Xid(initialize), undefined, vm->ff().self())){
 			vm->set_arg_this(instance);
 			if(vm->need_result()){
 				vm->prereturn_result(instance);
@@ -704,7 +716,7 @@ void Singleton::init_singleton(const VMachinePtr& vm){
 	SingletonPtr instance = to_smartptr(this);
 	init_instance(instance, vm);
 	
-	if(const AnyPtr& ret = member(Xid(initialize), null, vm->ff().self())){
+	if(const AnyPtr& ret = member(Xid(initialize), undefined, vm->ff().self())){
 		vm->setup_call(0);
 		vm->set_arg_this(instance);
 		ret->rawcall(vm);

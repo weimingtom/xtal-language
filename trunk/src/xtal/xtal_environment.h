@@ -5,13 +5,23 @@
 
 namespace xtal{
 
+/** \addtogroup environment 環境*/
+/*@{*/
+
+/**
+* \brief アロケータライブラリ
+*/
 class AllocatorLib{
 public:
 	virtual ~AllocatorLib(){}
 	virtual void* malloc(std::size_t size){ return std::malloc(size); }
 	virtual void free(void* p, std::size_t size){ std::free(p); }
+	virtual void* out_of_memory(std::size_t size){ return 0; }
 };
 
+/**
+* \brief 文字コードライブラリ
+*/
 class ChCodeLib{
 public:
 	virtual ~ChCodeLib(){}
@@ -22,6 +32,9 @@ public:
 	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
 };
 
+/**
+* \brief スレッドライブラリ
+*/
 class ThreadLib{
 public:
 	virtual ~ThreadLib(){}
@@ -40,6 +53,9 @@ public:
 	virtual void sleep(float_t sec){}
 };
 
+/**
+* \brief 標準入出力ライブラリ
+*/
 class StdStreamLib{
 public:
 	virtual ~StdStreamLib(){}
@@ -57,6 +73,9 @@ public:
 	virtual uint_t write_stderr_stream(void* stderr_stream_object, const void* src, uint_t size){ return 0; }
 };
 
+/**
+* \brief ファイルシステムライブラリ
+*/
 class FilesystemLib{
 public:
 	virtual ~FilesystemLib(){}
@@ -80,6 +99,9 @@ public:
 
 };
 
+/**
+* \brief 使用ライブラリの指定のための構造体
+*/
 struct Setting{
 	AllocatorLib* allocator_lib;
 	ChCodeLib* ch_code_lib;
@@ -87,45 +109,52 @@ struct Setting{
 	StdStreamLib* std_stream_lib;
 	FilesystemLib* filesystem_lib;
 
+	/**
+	* \brief ほとんど何もしない動作を設定する。
+	*/
 	Setting();
 };
 
 /**
-* @brief Xtal実行環境を初期化する。
+* \brief Xtal実行環境を初期化する。
 */
 void initialize(const Setting& setting);
 
 /**
-* @brief Xtal実行環境を破棄する。
+* \brief Xtal実行環境を破棄する。
 */
 void uninitialize();
 
 /**
-* @brief 現在のカレントのXtal実行環境を取得する。
+* \brief 現在のカレントのXtal実行環境を取得する。
 */
 Environment* environment();
 
 /**
-* @brief カレントのXtal実行環境を設定する。
+* \brief カレントのXtal実行環境を設定する。
 */
 void set_environment(Environment* e);
 
+/*@}*/
 /////////////////////////////////////////////////////
 
+/** \addtogroup memory メモリ*/
+/*@{*/
+
 /**
-* @brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
+* \brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 */
 void* xmalloc(size_t size);
 
 /**
-* @brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
+* \brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
 void xfree(void* p, size_t size);
 
 /**
-* @brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
+* \brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
 struct XMallocGuard{
 	XMallocGuard():p(0){}
@@ -143,10 +172,36 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(XMallocGuard);
 };
 
+struct JmpBuf{
+	jmp_buf buf;
+};
+
+JmpBuf& protect();
+
+void reset_protect();
+
+bool ignore_memory_assert();
+
+struct Protect{
+	bool pass;
+	Protect(bool pass):pass(pass){}
+	~Protect(){ reset_protect(); }
+	operator bool() const{ return !pass; }
+};
+
+#define XTAL_PROTECT if(const ::xtal::Protect& xtalprotect = setjmp(::xtal::protect().buf)!=0)
+
+#define XTAL_OUT_OF_MEMORY else 
+
+/*@}*/
+
 /////////////////////////////////////////////////////
 
+/** \addtogroup gc ガーベジコレクション*/
+/*@{*/
+
 /**
-* @brief ガーベジコレクションを実行する
+* \brief ガーベジコレクションを実行する
 *
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
 * 例えば循環参照はこれでは検知できない。
@@ -154,7 +209,7 @@ private:
 void gc();
 
 /**
-* @brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
+* \brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
 *
 * 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
 * 循環参照も検知できる。
@@ -162,7 +217,7 @@ void gc();
 void full_gc();
 
 /**
-* @brief ガーベジコレクションを無効化する
+* \brief ガーベジコレクションを無効化する
 *
 * gcやfull_gcの呼び出しを無効化する関数。
 * 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
@@ -170,7 +225,7 @@ void full_gc();
 void disable_gc();
 
 /**
-* @brief ガーベジコレクションを有効化する
+* \brief ガーベジコレクションを有効化する
 *
 * disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
 */
@@ -180,20 +235,25 @@ uint_t alive_object_count();
 
 RefCountingBase* alive_object(uint_t i);
 
+/*@}*/
+
 /////////////////////////////////////////////////////
 
+/** \addtogroup cppclass C++クラス*/
+/*@{*/
+
 /**
-* @brief keyに対応するC++のクラスのクラスオブジェクトを返す。
+* \brief keyに対応するC++のクラスのクラスオブジェクトを返す。
 */
 const ClassPtr& cpp_class(CppClassSymbolData* key);
 
 /**
-* @brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
+* \brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
 /**
-* @brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
+* \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
 inline const ClassPtr& cpp_class(){
@@ -201,7 +261,7 @@ inline const ClassPtr& cpp_class(){
 }
 
 /**
-* @brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
+* \brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 template<class T>
 inline void set_cpp_class(const ClassPtr& cls){
@@ -209,7 +269,7 @@ inline void set_cpp_class(const ClassPtr& cls){
 }
 
 /**
-* @brief T形をxtalで扱えるクラスを取得する。
+* \brief T形をxtalで扱えるクラスを取得する。
 */
 template<class T>
 inline const SmartPtr<T>& cpp_singleton(){
@@ -217,7 +277,7 @@ inline const SmartPtr<T>& cpp_singleton(){
 }
 
 /**
-* @brief T形をxtalで扱えるクラスを生成し、登録する。
+* \brief T形をxtalで扱えるクラスを生成し、登録する。
 */
 template<class T>
 inline const SmartPtr<T>& new_cpp_singleton(){
@@ -225,132 +285,140 @@ inline const SmartPtr<T>& new_cpp_singleton(){
 	return unchecked_ptr_cast<T>(cpp_class<T>());
 }
 
+/*@}*/
+
 /////////////////////////////////////////////////////
 
+/** \addtogroup cache キャッシュ*/
+/*@{*/
+
 /**
-* @brief クラスのメンバを取り出す。
+* \brief クラスのメンバを取り出す。
 */
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
 
 /**
-* @brief クラスの継承関係を調べる。
+* \brief クラスの継承関係を調べる。
 */
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass);
 
 /**
-* @brief クラスのコンストラクタがキャッシュされているから調べる。
+* \brief クラスのコンストラクタがキャッシュされているから調べる。
 */
 bool cache_ctor(const AnyPtr& target_class, int_t kind);
 
 /**
-* @brief メンバーのキャッシュテーブルに登録されているデータを無効にする。
+* \brief メンバーのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_member();
 
 /**
-* @brief 継承関係のキャッシュテーブルに登録されているデータを無効にする。
+* \brief 継承関係のキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_is();
 
 /**
-* @brief クラスのコンストラクタのキャッシュテーブルに登録されているデータを無効にする。
+* \brief クラスのコンストラクタのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_ctor();
+
+/*@}*/
 
 /////////////////////////////////////////////////////
 
 /**
-* @brief VMachineインスタンスをレンタルする。
+* \brief VMachineインスタンスをレンタルする。
 */
 VMachinePtr vmachine_take_over();
 
 /**
-* @brief VMachineインスタンスを返却する。
+* \brief VMachineインスタンスを返却する。
 */
 void vmachine_take_back(const VMachinePtr& vm);
 
 /////////////////////////////////////////////////////
 
 /**
-* @brief builtinシングルトンクラスを返す
+* \brief builtinオブジェクトを返す
 */
 const ClassPtr& builtin();
 
 /**
-* @brief libオブジェクトを返す
+* \brief libオブジェクトを返す
 */
 const LibPtr& lib();
 
 /**
-* @brief stdinストリームオブジェクトを返す
+* \brief stdinストリームオブジェクトを返す
 */
 const StreamPtr& stdin_stream();
 
 /**
-* @brief stdoutストリームオブジェクトを返す
+* \brief stdoutストリームオブジェクトを返す
 */
 const StreamPtr& stdout_stream();
 
 /**
-* @brief stderrストリームオブジェクトを返す
+* \brief stderrストリームオブジェクトを返す
 */
 const StreamPtr& stderr_stream();
 
 /**
-* @brief filesystemシングルトンオブジェクトを返す
+* \brief filesystemシングルトンオブジェクトを返す
 */
 const FilesystemPtr& filesystem();
 
+
 /**
-* @brief debugシングルトンオブジェクトを返す
+* \brief debugシングルトンオブジェクトを返す
 */
 const DebugPtr& debug();
 
 /**
-* @brief デバッグ機能を有効にする
+* \brief デバッグ機能を有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 void enable_debug();
 
 /**
-* @brief デバッグ機能を無効にする
+* \brief デバッグ機能を無効にする
 */
 void disable_debug();
 
 /**
-* @brief 文字列をインターン済み文字列に変換する
+* \brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str, uint_t data_size);
 
 /**
-* @brief 文字列をインターン済み文字列に変換する
+* \brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str);
 
 /**
-* @brief 文字列リテラルをインターン済み文字列に変換する
+* \brief 文字列リテラルをインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str, IdentifierData* iddata);
 
 /**
-* @brief 文字列リテラルをインターン済み文字列に変換する
+* \brief 文字列リテラルをインターン済み文字列に変換する
 */
 inline const IDPtr& intern(const StringLiteral& str){
 	return intern(str, str.size());
 }
 
 /**
-* @brief インターン済み文字列を列挙する
+* \brief インターン済み文字列を列挙する
 */
 AnyPtr interned_strings();
 
 /**
-* @brief 環境をロックする
+* \brief 環境をロックする
 */
 void xlock();
 
 /**
-* @brief 環境をアンロックする
+* \brief 環境をアンロックする
 */
 void xunlock();
 
@@ -367,11 +435,13 @@ void register_thread(Environment*);
 void unregister_thread(Environment*);
 
 ThreadLib* thread_lib();
+
 StdStreamLib* std_stream_lib();
+
 FilesystemLib* filesystem_lib();
 
 /**
-* @brief VMachinePtrオブジェクトを返す
+* \brief VMachinePtrオブジェクトを返す
 *
 * グローバルなVMachinePtrオブジェクトを返す。
 * スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
@@ -379,12 +449,12 @@ FilesystemLib* filesystem_lib();
 const VMachinePtr& vmachine();
 
 /**
-* @brief テキストマップを返す
+* \brief テキストマップを返す
 */
 const MapPtr& text_map();
 
 /**
-* @brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
+* \brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
 *
 * マイナスの値が返された場合、最低文字数を返す。
 * -2の場合、最低2文字以上の文字で、本当の長さは2文字目を読まないと判断できない、という意味となる。
@@ -392,7 +462,7 @@ const MapPtr& text_map();
 int_t ch_len(char_t lead);
 
 /**
-* @brief マルチバイト文字が何文字かを調べる。
+* \brief マルチバイト文字が何文字かを調べる。
 *
 * int_t ch_len(char_t lead)が呼ばれた後、マイナスの値を返した場合に続けて呼ぶ。
 * ch_lenで-2の値を返した後は、strの先には最低2バイト分のデータを格納すること。
@@ -401,14 +471,14 @@ int_t ch_len2(const char_t* str);
 
 
 /**
-* @brief 一つ先の文字を返す
+* \brief 一つ先の文字を返す
 *
 * 例えば a を渡した場合、b が返る
 */
 StringPtr ch_inc(const char_t* data, int_t data_size);
 
 /**
-* @brief 文字の大小判定
+* \brief 文字の大小判定
 *
 * 負の値 a の文字の方がbの文字より小さい
 * 0の値 等しい
@@ -426,36 +496,36 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 #ifndef XTAL_NO_PARSER
 
 /**
-* @brief file_nameファイルをコンパイルする。
+* \brief file_nameファイルをコンパイルする。
 *
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return 実行できる関数オブジェクト
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return 実行できる関数オブジェクト
 * この戻り値をserializeすると、バイトコード形式で保存される。
 */
 CodePtr compile_file(const StringPtr& file_name);
 
 /**
-* @brief source文字列をコンパイルする。
+* \brief source文字列をコンパイルする。
 *
-* @param source Xtalスクリプトが記述された文字列
-* @return 実行できる関数オブジェクト
+* \param source Xtalスクリプトが記述された文字列
+* \return 実行できる関数オブジェクト
 * この戻り値をserializeすると、バイトコード形式で保存される。
 */
 CodePtr compile(const StringPtr& source);
 
 /**
-* @brief file_nameファイルをコンパイルして実行する。
+* \brief file_nameファイルをコンパイルして実行する。
 *
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でreturnされた値
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return スクリプト内でreturnされた値
 */
 AnyPtr load(const StringPtr& file_name);
 
 /**
-* @brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
+* \brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
 *
-* @param file_name Xtalスクリプトが記述されたファイルの名前
-* @return スクリプト内でreturnされた値
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return スクリプト内でreturnされた値
 */
 AnyPtr load_and_save(const StringPtr& file_name);
 

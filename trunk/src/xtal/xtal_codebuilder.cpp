@@ -1153,14 +1153,15 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 					compile_expr(v1->cdefine_member_term());
 				}
 
-				compile_expr(v1->cdefine_member_ns());
 
 				if(v1->cdefine_member_ns()){
+					compile_expr(v1->cdefine_member_ns());
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
 					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 				else{
+					put_inst(InstPushUndefined());
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
 					entry(info).value = val;
 					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
@@ -2444,7 +2445,7 @@ AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
 
 	VMachinePtr vm = vmachine();
 	vm->setup_call();
-	a->rawsend(vm, name, null, null, false);
+	a->rawsend(vm, name, undefined, null, false);
 	if(!vm->processed()){ vm->return_result(undefined); }
 	ret = vm->result_and_cleanup_call();
 

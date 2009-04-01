@@ -5,13 +5,16 @@
 
 namespace xtal{
 
+/**
+* \brief コンパイルされたバイトコード
+*/
 class Code : public Base{
 public:
 	
 	Code();
 
 	/**
-	* @brief コードに対応したソース行数を返す。
+	* \brief コードに対応したソース行数を返す。
 	*/
 	int_t compliant_lineno(const inst_t* p);
 		
@@ -26,7 +29,7 @@ public:
 	}
 
 	/**
-	* @brief シンボルテーブルからi番目のシンボルを取り出す。
+	* \brief シンボルテーブルからi番目のシンボルを取り出す。
 	*/
 	const IDPtr& identifier(int_t i){
 		XTAL_ASSERT(i<(int_t)identifier_table_->size());
@@ -34,7 +37,7 @@ public:
 	}
 
 	/**
-	* @brief 値テーブルからi番目の値を取り出す。
+	* \brief 値テーブルからi番目の値を取り出す。
 	*/
 	const AnyPtr& value(int_t i){
 		XTAL_ASSERT(i<(int_t)value_table_->size());
@@ -42,7 +45,7 @@ public:
 	}
 
 	/**
-	* @brief onceテーブルからi番目の値を取り出す。
+	* \brief onceテーブルからi番目の値を取り出す。
 	*/
 	const AnyPtr& once_value(int_t i){
 		XTAL_ASSERT(i<(int_t)once_table_->size());
@@ -50,7 +53,7 @@ public:
 	}
 
 	/**
-	* @brief onceテーブルのi番目に値を設定する。
+	* \brief onceテーブルのi番目に値を設定する。
 	*/
 	void set_once_value(int_t i, const AnyPtr& v){
 		XTAL_ASSERT(i<(int_t)once_table_->size());

@@ -257,49 +257,49 @@ void Inst::checked_assign(T& ref, int v){
 	}
 
 /**
-* @brief 何もしない。
+* \brief 何もしない。
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(0, Nop);
 
 /**
-* @brief スタックにnull値をプッシュする。
+* \brief スタックにnull値をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(1, PushNull);
 
 /**
-* @brief スタックにundefined値をプッシュする。
+* \brief スタックにundefined値をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(2, PushUndefined);
 
 /**
-* @brief スタックにtrue値をプッシュする。
+* \brief スタックにtrue値をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(3, PushTrue);
 
 /**
-* @brief スタックにfalse値をプッシュする。
+* \brief スタックにfalse値をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(4, PushFalse);
 
 /**
-* @brief スタックにtrue値をプッシュする。
+* \brief スタックにtrue値をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(5, PushTrueAndSkip);
 
 /**
-* @brief スタックにint値をプッシュする。
+* \brief スタックにint値をプッシュする。
 *
 * stack [] -> [value]
 */
@@ -308,7 +308,7 @@ XTAL_DEF_INST_1(6, PushInt1Byte,
 );
 
 /**
-* @brief スタックにint値をプッシュする。
+* \brief スタックにint値をプッシュする。
 *
 * stack [] -> [value]
 */
@@ -317,7 +317,7 @@ XTAL_DEF_INST_1(7, PushInt2Byte,
 );
 
 /**
-* @brief スタックにfloat値をプッシュする。
+* \brief スタックにfloat値をプッシュする。
 *
 * stack [] -> [value]
 */
@@ -326,7 +326,7 @@ XTAL_DEF_INST_1(8, PushFloat1Byte,
 );
 
 /**
-* @brief スタックにfloat値をプッシュする。
+* \brief スタックにfloat値をプッシュする。
 *
 * stack [] -> [value]
 */
@@ -335,70 +335,70 @@ XTAL_DEF_INST_1(9, PushFloat2Byte,
 );
 
 /**
-* @brief スタックに現在実行中の関数をプッシュする。
+* \brief スタックに現在実行中の関数をプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(10, PushCallee);
 
 /**
-* @brief スタックにArgumentsオブジェクトをプッシュする。
+* \brief スタックにArgumentsオブジェクトをプッシュする。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(11, PushArgs);
 
 /**
-* @brief 現在のthisをスタックに積む。
+* \brief 現在のthisをスタックに積む。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(12, PushThis);
 
 /**
-* @brief 現在の文脈をスタックに積む。
+* \brief 現在の文脈をスタックに積む。
 *
 * stack [] -> [value]
 */
 XTAL_DEF_INST_0(13, PushCurrentContext);
 
 /**
-* @brief スタックトップをポップする
+* \brief スタックトップをポップする
 *
 * stack [value] -> []
 */
 XTAL_DEF_INST_0(14, Pop);
 
 /**
-* @brief スタックトップの値をプッシュする
+* \brief スタックトップの値をプッシュする
 *
 * stack [value] -> [value, value2]
 */
 XTAL_DEF_INST_0(15, Dup);
 
 /**
-* @brief スタックトップの値を一つ前に入れる。
+* \brief スタックトップの値を一つ前に入れる。
 *
 * stack [value1, value2] -> [value2, value1]
 */
 XTAL_DEF_INST_0(16, Insert1);
 
 /**
-* @brief スタックトップの値を二つ前に入れる。
+* \brief スタックトップの値を二つ前に入れる。
 *
 * stack [value1, value2, value3] -> [value3, value1, value2]
 */
 XTAL_DEF_INST_0(17, Insert2);
 
 /**
-* @brief スタックトップの値を三つ前に入れる。
+* \brief スタックトップの値を三つ前に入れる。
 *
 * stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
 */
 XTAL_DEF_INST_0(18, Insert3);
 
 /**
-* @brief 値の数を調整する
+* \brief 値の数を調整する
 *
 * stack [] -> []
 */
@@ -424,7 +424,7 @@ XTAL_DEF_INST_1(23, LocalVariableDec2Byte,
 );
 
 /**
-* @brief ローカル変数を取り出す。
+* \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -433,7 +433,7 @@ XTAL_DEF_INST_1(24, LocalVariable1Byte,
 );
 
 /**
-* @brief ローカル変数を取り出す。
+* \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -443,7 +443,7 @@ XTAL_DEF_INST_2(25, LocalVariable1ByteX2,
 );
 
 /**
-* @brief ローカル変数を取り出す。
+* \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -454,7 +454,7 @@ XTAL_DEF_INST_3(26, LocalVariable1ByteX3,
 );
 
 /**
-* @brief ローカル変数を取り出す。
+* \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -463,7 +463,7 @@ XTAL_DEF_INST_1(27, LocalVariable2Byte,
 );
 
 /**
-* @brief ローカル変数に値を設定する。
+* \brief ローカル変数に値を設定する。
 *
 * stack [value] -> []
 */
@@ -472,7 +472,7 @@ XTAL_DEF_INST_1(28, SetLocalVariable1Byte,
 );
 
 /**
-* @brief ローカル変数に値を設定する。
+* \brief ローカル変数に値を設定する。
 *
 * stack [value] -> []
 */
@@ -481,7 +481,7 @@ XTAL_DEF_INST_1(29, SetLocalVariable2Byte,
 );
 
 /**
-* @brief インスタンス変数を取り出す。
+* \brief インスタンス変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -491,7 +491,7 @@ XTAL_DEF_INST_2(30, InstanceVariable,
 );
 
 /**
-* @brief インスタンス変数に値を設定する。
+* \brief インスタンス変数に値を設定する。
 *
 * stack [value] -> []
 */
@@ -501,14 +501,14 @@ XTAL_DEF_INST_2(31, SetInstanceVariable,
 );
 
 /**
-* @brief 関数呼び出しの後始末をする
+* \brief 関数呼び出しの後始末をする
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(32, CleanupCall);
 
 /**
-* @brief 関数から抜ける
+* \brief 関数から抜ける
 *
 * stack [value1, value2, ...valueN] -> []
 */
@@ -517,7 +517,7 @@ XTAL_DEF_INST_1(33, Return,
 );
 
 /**
-* @brief fiberの実行を一時中断する
+* \brief fiberの実行を一時中断する
 *
 * stack [value1, value2, ...valueN] -> []
 */
@@ -526,14 +526,14 @@ XTAL_DEF_INST_1(34, Yield,
 );
 
 /**
-* @brief 仮想マシンのループから脱出する。
+* \brief 仮想マシンのループから脱出する。
 *
 * stack [] -> []
 */
 XTAL_DEF_INST_0(35, Exit);
 
 /**
-* @brief 値テーブルから値を取り出す
+* \brief 値テーブルから値を取り出す
 *
 * stack [] -> [value]
 */
@@ -582,7 +582,7 @@ XTAL_DEF_INST_5(41, Send,
 );
 
 /**
-* @brief オブジェクトのメンバを取り出す。
+* \brief オブジェクトのメンバを取り出す。
 *
 * stack [object] -> [result]
 */
@@ -592,7 +592,7 @@ XTAL_DEF_INST_2(42, Member,
 );
 
 /**
-* @brief オブジェクトのメンバを定義する。
+* \brief オブジェクトのメンバを定義する。
 *
 * stack [object, value] -> []
 */
@@ -620,7 +620,7 @@ XTAL_DEF_INST_1(48, PushGoto,
 XTAL_DEF_INST_0(49, PopGoto);
 
 /**
-* @brief 条件分岐
+* \brief 条件分岐
 *
 * stack [value] -> []
 */
@@ -629,7 +629,7 @@ XTAL_DEF_INST_1(50, If,
 );
 
 /**
-* @brief 条件分岐
+* \brief 条件分岐
 *
 * stack [value] -> []
 */
@@ -638,7 +638,7 @@ XTAL_DEF_INST_1(51, Unless,
 );
 
 /**
-* @brief 無条件分岐
+* \brief 無条件分岐
 *
 * stack [] -> []
 */
@@ -739,7 +739,7 @@ XTAL_DEF_INST_1(98, Range,
 );
 
 /**
-* @brief グローバル変数を取り出す。
+* \brief グローバル変数を取り出す。
 *
 * stack [] -> [value]
 */
@@ -747,7 +747,7 @@ XTAL_DEF_INST_1(99, GlobalVariable,
         inst_u16_t, identifier_number
 );
 /**
-* @brief グローバル変数に設定する。
+* \brief グローバル変数に設定する。
 *
 * stack [value] -> []
 */
@@ -756,7 +756,7 @@ XTAL_DEF_INST_1(100, SetGlobalVariable,
 );
 
 /**
-* @brief グローバル変数を定義する。
+* \brief グローバル変数を定義する。
 *
 * stack [value] -> []
 */

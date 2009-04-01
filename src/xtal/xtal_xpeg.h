@@ -26,8 +26,8 @@ typedef SmartPtr<NFA> NFAPtr;
 class Scanner;
 typedef SmartPtr<Scanner> ScannerPtr;
 
-/**
-* @brief 構文木のノード
+/*
+* \brief 構文木のノード
 */
 class TreeNode : public Array{
 public:
@@ -66,7 +66,7 @@ private:
 };
 
 /**
-* @brief PEGを実行する
+* \brief PEGを実行する
 */
 class Executor : public Base{
 public:
@@ -76,68 +76,68 @@ public:
 	}
 
 	/**
-	* @brief 設定をリセットする。
+	* \brief 設定をリセットする。
 	*/
 	void reset(const AnyPtr& stream_or_iterator);
 
 	/**
-	* @brief 渡されたパターンがマッチするか調べる。
+	* \brief 渡されたパターンがマッチするか調べる。
 	*/
 	bool match(const AnyPtr& pattern);
 
 	/**
-	* @brief 渡されたパターンでパースする。
+	* \brief 渡されたパターンでパースする。
 	*/
 	bool parse(const AnyPtr& pattern);
 
 public:
 
 	/**
-	* @brief キャプチャされた文字列を列挙するイテレータを取得する。
+	* \brief キャプチャされた文字列を列挙するイテレータを取得する。
 	*/
 	AnyPtr captures();
 
 	/**
-	* @brief キャプチャされた文字列を得る。
+	* \brief キャプチャされた文字列を得る。
 	*/
 	StringPtr at(const StringPtr& key);
 	
 	/**
-	* @brief マッチした部分から前の文字列を取得する。
+	* \brief マッチした部分から前の文字列を取得する。
 	*/
 	StringPtr prefix();
 
 	/**
-	* @brief マッチした部分から後の文字列を取得する。
+	* \brief マッチした部分から後の文字列を取得する。
 	*/
 	StringPtr suffix();
 	
 public:
 
 	/**
-	* @brief キャプチャされた値の配列のイテレータを取得する。
+	* \brief キャプチャされた値の配列のイテレータを取得する。
 	*/
 	AnyPtr captures_values();
 
 	/**
-	* @brief キャプチャされた値の配列を得る。
+	* \brief キャプチャされた値の配列を得る。
 	*/
 	AnyPtr call(const StringPtr& key);
 
 	/**
-	* @brief マッチした部分から前の値の配列のイテレータを取得する。
+	* \brief マッチした部分から前の値の配列のイテレータを取得する。
 	*/
 	AnyPtr prefix_values();
 
 	/**
-	* @brief マッチした部分から後の値の配列のイテレータを取得する。
+	* \brief マッチした部分から後の値の配列のイテレータを取得する。
 	*/
 	AnyPtr suffix_values();
 
 public:
 
 	/**
-	* @brief 発生したエラーのイテレータを取得する。
+	* \brief 発生したエラーのイテレータを取得する。
 	*/
 	AnyPtr errors(){
 		if(!errors_) return null;
@@ -147,14 +147,14 @@ public:
 	void error(const AnyPtr& message, int_t lineno = 0);
 
 	/**
-	* @brief 生成した構文木を取得する。
+	* \brief 生成した構文木を取得する。
 	*/
 	TreeNodePtr tree(){
 		return tree_;
 	}
 
 	/**
-	* @brief 構文木に要素を追加する
+	* \brief 構文木に要素を追加する
 	*/
 	void push_result(const AnyPtr& a){
 		tree_->push_back(a);
@@ -173,7 +173,7 @@ public:
 public:
 
 	/**
-	* @brief 一文字取得する。
+	* \brief 一文字取得する。
 	*/
 	const AnyPtr& read();
 
@@ -182,7 +182,7 @@ public:
 	int_t read_ascii();
 
 	/**
-	* @brief n文字先をのぞき見る。
+	* \brief n文字先をのぞき見る。
 	*/
 	const AnyPtr& peek(uint_t n = 0);
 
@@ -196,54 +196,54 @@ public:
 	};
 
 	/**
-	* @brief マークをつける
+	* \brief マークをつける
 	*/
 	State save();
 
 	/**
-	* @brief マークを付けた位置に戻る
+	* \brief マークを付けた位置に戻る
 	*/
 	void load(const State& state);
 
 	/**
-	* @brief 現在の位置を返す
+	* \brief 現在の位置を返す
 	*/
 	uint_t pos();
 
 	/**
-	* @brief 現在の行数を返す
+	* \brief 現在の行数を返す
 	*/
 	uint_t lineno();
 
 	/**
-	* @brief 一番最初の位置にあるか調べる
+	* \brief 一番最初の位置にあるか調べる
 	*/
 	bool bos();
 
 	/**
-	* @brief 終了しているか調べる
+	* \brief 終了しているか調べる
 	*/
 	bool eos();
 
 	/**
-	* @brief 行頭か調べる
+	* \brief 行頭か調べる
 	*/
 	bool bol();
 
 	/**
-	* @brief 行末か調べる
+	* \brief 行末か調べる
 	*/
 	bool eol();
 
 	/**
-	* @brief n要素読み飛ばす
+	* \brief n要素読み飛ばす
 	*/
 	void skip(uint_t n);
 
 	void skip();
 
 	/**
-	* @brief 行末を読み飛ばす
+	* \brief 行末を読み飛ばす
 	*/
 	void skip_eol();
 
@@ -288,8 +288,8 @@ private:
 	}
 };
 
-/**
-* @brief 一文字づつ読んで処理していくのに適したメソッドを提供するクラス
+/*
+* \brief 一文字づつ読んで処理していくのに適したメソッドを提供するクラス
 */
 class Scanner : public Base{
 
@@ -308,7 +308,7 @@ public:
 	typedef Executor::State State;
 
 	/**
-	* @brief マークをつける
+	* \brief マークをつける
 	*/
 	State save(){
 		State state;
@@ -318,7 +318,7 @@ public:
 	}
 
 	/**
-	* @brief マークを付けた位置に戻る
+	* \brief マークを付けた位置に戻る
 	*/
 	void load(const State& state){
 		pos_ = state.pos;
@@ -326,26 +326,26 @@ public:
 	}
 
 	/**
-	* @brief 現在の位置を返す
+	* \brief 現在の位置を返す
 	*/
 	uint_t pos(){
 		return pos_;
 	}
 
 	/**
-	* @brief 現在の行数を返す
+	* \brief 現在の行数を返す
 	*/
 	uint_t lineno(){
 		return lineno_;
 	}
 
 	/**
-	* @brief n個先の要素を覗き見る
+	* \brief n個先の要素を覗き見る
 	*/
 	const AnyPtr& peek(uint_t n = 0);
 	
 	/**
-	* @brief ひとつ読み取る
+	* \brief ひとつ読み取る
 	*/
 	const AnyPtr& read();
 

@@ -3,7 +3,7 @@
 
 namespace xtal{
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 AnyPtr Any::send(const IDPtr& primary_key) const{
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call();
@@ -11,15 +11,17 @@ AnyPtr Any::send(const IDPtr& primary_key) const{
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call();
 	rawsend(vm, primary_key, secondary_key);
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 AnyPtr Any::call() const{
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call();
@@ -28,6 +30,7 @@ AnyPtr Any::call() const{
 }
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	int_t accessibility = 0;
 	const AnyPtr& ret = inherited_too ?
 		cache_member(ap(*this), primary_key, secondary_key, accessibility) :
@@ -64,6 +67,8 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
@@ -73,6 +78,7 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 }
 
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	const ClassPtr& cls = get_class();
 	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, self, inherited_too);
 	if(rawne(ret, undefined)){
@@ -81,7 +87,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 	}
 	else{
 		XTAL_CHECK_EXCEPT(e){ return; }
-		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, self, inherited_too);
+		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, self, inherited_too);
 		if(rawne(ret, undefined)){
 			vm->set_arg_this(ap(*this));
 			ArgumentsPtr args = vm->make_arguments();
@@ -99,7 +105,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 	const ClassPtr& cls = get_class();
-	const AnyPtr& ret = ap(cls)->member(primary_key, null, null, true);
+	const AnyPtr& ret = ap(cls)->member(primary_key, undefined, null, true);
 
 	switch(type(ret)){
 		XTAL_DEFAULT{}
@@ -125,7 +131,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 
 	{
 		XTAL_CHECK_EXCEPT(e){ return; }
-		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), null, null, true);
+		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, null, true);
 		if(rawne(ret, undefined)){
 			vm->set_arg_this(ap(*this));
 			ArgumentsPtr args = vm->make_arguments();
@@ -136,7 +142,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 			ret->rawcall(vm);
 		}
 		else{
-			vm->set_unsuported_error_info(*this, primary_key, null);
+			vm->set_unsuported_error_info(*this, primary_key, undefined);
 		}
 	}	
 }
@@ -347,7 +353,7 @@ AnyPtr Any::s_save() const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_save), null, null, false)){
+		if(const AnyPtr& member = it->member(Xid(serial_save), undefined, null, false)){
 			const VMachinePtr& vm = vmachine();
 			vm->setup_call(1);
 			vm->set_arg_this(ap(*this));
@@ -370,7 +376,7 @@ void Any::s_load(const AnyPtr& v) const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_load), null, null, false)){
+		if(const AnyPtr& member = it->member(Xid(serial_load), undefined, null, false)){
 			const VMachinePtr& vm = vmachine();
 			vm->setup_call(1, ret->at(it));
 			vm->set_arg_this(ap(*this));

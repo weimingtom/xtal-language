@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <setjmp.h>
 
 #include "xtal_utility.h"
 #include "xtal_allocator.h"
@@ -29,8 +30,8 @@
 #include "xtal_frame.h"
 #include "xtal_cfun.h"
 #include "xtal_class.h"
-#include "xtal_ch.h"
 #include "xtal_environment.h"
+#include "xtal_ch.h"
 #include "xtal_stream.h"
 #include "xtal_filesystem.h"
 #include "xtal_thread.h"

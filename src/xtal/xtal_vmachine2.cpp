@@ -54,7 +54,7 @@ void VMachine::recycle_call(const AnyPtr& a1){
 
 void VMachine::push_ff(int_t need_result_count){
 	push(null);
-	push_call(&end_code_, need_result_count, 0, 0, null, null, null);
+	push_call(&end_code_, need_result_count, 0, 0, null, undefined, null);
 }
 
 void VMachine::push_arg(const AnyPtr& value){
@@ -374,7 +374,7 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	yield_result_count_ = 0;
 	push(null);
-	push_call(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), null, null, vm->arg_this());
+	push_call(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), null, undefined, vm->arg_this());
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	resume_pc_ = 0;
 	carry_over(fun);

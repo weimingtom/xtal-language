@@ -5,32 +5,35 @@
 
 namespace xtal{
 
+/**
+* \brief ƒXƒgƒŠ[ƒ€
+*/
 class Stream : public Base{
 public:
 
 	/**
-	* @brief æ–‡å­—åˆ—strã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æµã™
+	* \brief •¶š—ñstr‚ğƒXƒgƒŠ[ƒ€‚É—¬‚·
 	*/
 	void put_s(const StringPtr& str){
 		write(str->data(), str->data_size()*sizeof(char_t));
 	}
 
 	/**
-	* @brief æ–‡å­—åˆ—strã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æµã™
+	* \brief •¶š—ñstr‚ğƒXƒgƒŠ[ƒ€‚É—¬‚·
 	*/
 	void put_s(const char_t* str){
 		write(str, string_data_size(str));
 	}
 
 	/**
-	* @brief æ–‡å­—åˆ—strã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æµã™
+	* \brief •¶š—ñstr‚ğƒXƒgƒŠ[ƒ€‚É—¬‚·
 	*/
 	void put_s(const StringLiteral& str){
 		write(str, str.size());
 	}
 
 	/**
-	* @brief lengthæ–‡å­—åˆ†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰å–ã‚Šå‡ºã—ã€æ–‡å­—åˆ—ã¨ã—ã¦è¿”ã™ã€‚
+	* \brief length•¶š•ªƒXƒgƒŠ[ƒ€‚©‚çæ‚èo‚µA•¶š—ñ‚Æ‚µ‚Ä•Ô‚·B
 	*/
 	virtual StringPtr get_s(uint_t length);
 
@@ -69,26 +72,26 @@ public:
 	void block_break(const VMachinePtr& vm);
 
 	/**
-	* @brief ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç›´åˆ—åŒ–ã—ã¦ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief ƒIƒuƒWƒFƒNƒg‚ğ’¼—ñ‰»‚µ‚ÄƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*
-	* @param obj ç›´åˆ—åŒ–ã—ã¦ä¿å­˜ã—ãŸã„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+	* \param obj ’¼—ñ‰»‚µ‚Ä•Û‘¶‚µ‚½‚¢ƒIƒuƒWƒFƒNƒg
 	*/
 	void serialize(const AnyPtr& obj);
 
 	/**
-	* @brief ç›´åˆ—åŒ–ã•ã‚ŒãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰èª­ã¿å‡ºã™
+	* \brief ’¼—ñ‰»‚³‚ê‚½ƒIƒuƒWƒFƒNƒg‚ğƒXƒgƒŠ[ƒ€‚©‚ç“Ç‚İo‚·
 	*
-	* @return å¾©å…ƒã•ã‚ŒãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+	* \return •œŒ³‚³‚ê‚½ƒIƒuƒWƒFƒNƒg
 	*/	
 	AnyPtr deserialize();
 
 	/**
-	* @brief 
+	* \brief 
 	*/
 	void xtalize(const AnyPtr& obj);
 
 	/**
-	* @brief 
+	* \brief 
 	*/	
 	AnyPtr dextalize();
 
@@ -96,63 +99,63 @@ public:
 public:
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°8-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”8-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i8(i8 v){
 		put_u8(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°16-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”16-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i16be(i16 v){
 		put_u16be(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°16-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”16-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i16le(i16 v){
 		put_u16le(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°32-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”32-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i32be(i32 v){
 		put_u32be(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°32-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”32-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i32le(i32 v){
 		put_u32le(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°64-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”64-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i64be(i64 v){
 		put_u64be(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ä»˜æ•´æ•°64-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†•t®”64-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_i64le(i64 v){
 		put_u64le(v);
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°8-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”8-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u8(u8 v){
 		write(&v, 1);
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°16-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”16-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u16be(u16 v){
 		struct{ u8 data[2]; } data;
@@ -162,7 +165,7 @@ public:
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°16-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”16-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u16le(u16 v){
 		struct{ u8 data[2]; } data;
@@ -172,7 +175,7 @@ public:
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°32-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”32-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u32be(u32 v){
 		struct{ u8 data[4]; } data;
@@ -184,7 +187,7 @@ public:
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°32-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”32-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u32le(u32 v){
 		struct{ u8 data[4]; } data;
@@ -196,7 +199,7 @@ public:
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°64-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”64-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u64be(u64 v){
 		struct{ u8 data[8]; } data;
@@ -212,7 +215,7 @@ public:
 	}
 
 	/**
-	* @brief ç¬¦å·ç„¡æ•´æ•°64-bitã‚’ã‚¹ãƒˆãƒªãƒ¼ãƒ ã«æ›¸ãè¾¼ã‚€
+	* \brief •„†–³®”64-bit‚ğƒXƒgƒŠ[ƒ€‚É‘‚«‚Ş
 	*/
 	void put_u64le(u64 v){
 		struct{ u8 data[8]; } data;

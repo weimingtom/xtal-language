@@ -5,6 +5,9 @@
 
 namespace xtal{
 
+/**
+* @brief 例外
+*/
 class Exception : public Base{
 public:
 
@@ -53,9 +56,23 @@ AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
 AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type);
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key);
 
-typedef void (*except_handler_t)(const AnyPtr& except, const char* file, int line);
-except_handler_t except_handler();
-void set_except_handler(except_handler_t handler);
+/**
+* \brief 例外を設定する
+* \hideinitializer
+*/
+#define XTAL_SET_EXCEPT(e) ::xtal::vmachine()->set_except(e)
+
+/**
+* \brief 例外が送出されているなら取り出す
+* \hideinitializer
+*/
+#define XTAL_CATCH_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->catch_except()))
+
+/**
+* \brief 例外が送出されているか調べる
+* \hideinitializer
+*/
+#define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->except()))
 
 }
 

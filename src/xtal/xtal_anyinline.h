@@ -30,7 +30,7 @@ inline void dec_ref_count_force(const Any& v){
 
 //{REPEAT{{
 /*
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 #COMMA_REPEAT#class A`i+1`#>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
 	const VMachinePtr& vm = vmachine();
@@ -39,7 +39,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 #COMMA_REPEAT#con
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 #COMMA_REPEAT#class A`i+1`#>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
 	const VMachinePtr& vm = vmachine();
@@ -48,7 +48,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 #COMMA_REPEAT#class A`i+1`#>
 inline AnyPtr Any::call(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
 	const VMachinePtr& vm = vmachine();
@@ -58,7 +58,7 @@ inline AnyPtr Any::call(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
 }
 */
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 >
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 ) const{
 	const VMachinePtr& vm = vmachine();
@@ -67,7 +67,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 ) const{
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 >
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 ) const{
 	const VMachinePtr& vm = vmachine();
@@ -76,7 +76,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 >
 inline AnyPtr Any::call(const A0& a0 ) const{
 	const VMachinePtr& vm = vmachine();
@@ -85,7 +85,7 @@ inline AnyPtr Any::call(const A0& a0 ) const{
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 , class A1>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1) const{
 	const VMachinePtr& vm = vmachine();
@@ -94,7 +94,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1) c
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 , class A1>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1) const{
 	const VMachinePtr& vm = vmachine();
@@ -103,7 +103,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 , class A1>
 inline AnyPtr Any::call(const A0& a0 , const A1& a1) const{
 	const VMachinePtr& vm = vmachine();
@@ -112,7 +112,7 @@ inline AnyPtr Any::call(const A0& a0 , const A1& a1) const{
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2) const{
 	const VMachinePtr& vm = vmachine();
@@ -121,7 +121,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, c
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2) const{
 	const VMachinePtr& vm = vmachine();
@@ -130,7 +130,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 , class A1, class A2>
 inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2) const{
 	const VMachinePtr& vm = vmachine();
@@ -139,7 +139,7 @@ inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2) const{
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
 	const VMachinePtr& vm = vmachine();
@@ -148,7 +148,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, c
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
 	const VMachinePtr& vm = vmachine();
@@ -157,7 +157,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 , class A1, class A2, class A3>
 inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3) const{
 	const VMachinePtr& vm = vmachine();
@@ -166,7 +166,7 @@ inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3)
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3, class A4>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
 	const VMachinePtr& vm = vmachine();
@@ -175,7 +175,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, c
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3, class A4>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
 	const VMachinePtr& vm = vmachine();
@@ -184,7 +184,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 , class A1, class A2, class A3, class A4>
 inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
 	const VMachinePtr& vm = vmachine();
@@ -193,7 +193,7 @@ inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_keyメソッドを呼び出す
+/// \brief primary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3, class A4, class A5>
 inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
 	const VMachinePtr& vm = vmachine();
@@ -202,7 +202,7 @@ inline AnyPtr Any::send(const IDPtr& primary_key, const A0& a0 , const A1& a1, c
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief primary_key#secondary_keyメソッドを呼び出す
+/// \brief primary_key#secondary_keyメソッドを呼び出す
 template<class A0 , class A1, class A2, class A3, class A4, class A5>
 inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
 	const VMachinePtr& vm = vmachine();
@@ -211,7 +211,7 @@ inline AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, 
 	return vm->result_and_cleanup_call();
 }
 
-/// @brief 関数を呼び出す
+/// \brief 関数を呼び出す
 template<class A0 , class A1, class A2, class A3, class A4, class A5>
 inline AnyPtr Any::call(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
 	const VMachinePtr& vm = vmachine();

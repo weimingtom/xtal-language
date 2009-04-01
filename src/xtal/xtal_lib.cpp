@@ -12,7 +12,8 @@ Lib::Lib(bool most_top_level){
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){	
+const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert	
 	const AnyPtr& ret = Class::do_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	if(rawne(ret, undefined)){
 		return ret;

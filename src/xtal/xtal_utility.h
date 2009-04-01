@@ -10,7 +10,7 @@
 //#define XTAL_NO_XPEG
 
 /**
-* @brief C++ä¾‹å¤–on
+* \brief C++—áŠOon
 */
 //#define XTAL_USE_CPP_EXCEPTIONS
 
@@ -48,7 +48,6 @@ private:
 };
 #define XTAL_TLS_PTR(x) TLSPtr<x>
 #endif
-
 
 #ifdef XTAL_NO_PARSER
 #	define XTAL_USE_COMPILED_EMB
@@ -97,21 +96,6 @@ private:
 
 #define XTAL_GLOBAL_INTERPRETER_LOCK
 #define XTAL_GLOBAL_INTERPRETER_UNLOCK
-
-/**
-* @brief ä¾‹å¤–ã‚’è¨­å®šã™ã‚‹
-*/
-#define XTAL_SET_EXCEPT(e) ::xtal::vmachine()->set_except(e)
-
-/**
-* @brief ä¾‹å¤–ãŒé€å‡ºã•ã‚Œã¦ã„ã‚‹ãªã‚‰å–ã‚Šå‡ºã™
-*/
-#define XTAL_CATCH_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->catch_except()))
-
-/**
-* @brief ä¾‹å¤–ãŒé€å‡ºã•ã‚Œã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹
-*/
-#define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->except()))
 
 #define XTAL_UNUSED_VAR(x) (void)x
 
@@ -162,7 +146,7 @@ private:
 #		elif defined(__GNUC__) && !defined(__CYGWIN__)
 #			define XTAL_TLS_PTR(x) __thread x*
 #		else 
-#			error // XTAL_NO_THREADã‚’å®šç¾©ã—ãªã„å ´åˆã€TLSã‚’å®Ÿç¾ã™ã‚‹ãŸã‚ã®XTAL_TLS_PTR(x)ã®å®Ÿè£…ãŒå¿…è¦
+#			error // XTAL_NO_THREAD‚ğ’è‹`‚µ‚È‚¢ê‡ATLS‚ğÀŒ»‚·‚é‚½‚ß‚ÌXTAL_TLS_PTR(x)‚ÌÀ‘•‚ª•K—v
 #		endif
 #	endif
 #endif
@@ -212,7 +196,7 @@ struct static_ntz{
 	};
 };
 
-// æœ€ä½é™ã®ãƒ¡ã‚¿ãƒ—ãƒ­ã‚°ãƒ©ãƒŸãƒ³ã‚°ä¸‹åœ°
+// Å’áŒÀ‚Ìƒƒ^ƒvƒƒOƒ‰ƒ~ƒ“ƒO‰º’n
 
 template<bool>
 struct IfHelper{
@@ -518,25 +502,25 @@ private:
 
 
 /**
-* @brief ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãªå‹ã®ç¨®é¡
+* \brief ƒvƒŠƒ~ƒeƒBƒu‚ÈŒ^‚Ìí—Ş
 */
 enum PrimitiveType{
 	TYPE_NULL = 0,
 	TYPE_UNDEFINED = 1,
 
 	TYPE_FALSE = 2,
-	// ã“ã“ã‹ã‚‰ä¸Šã¯ã€ifãªã©ã§å½ã¨è©•ä¾¡ã•ã‚Œã‚‹
+	// ‚±‚±‚©‚çã‚ÍAif‚È‚Ç‚Å‹U‚Æ•]‰¿‚³‚ê‚é
 
-	// ã“ã“ã‹ã‚‰ä¸‹ã¯ã€å€¤ã«ã‚ˆã‚‰ãšçœŸã¨è©•ä¾¡ã•ã‚Œã‚‹
+	// ‚±‚±‚©‚ç‰º‚ÍA’l‚É‚æ‚ç‚¸^‚Æ•]‰¿‚³‚ê‚é
 	TYPE_TRUE = 3,
 	
 	TYPE_INT = 4,
 	TYPE_FLOAT = 5,
 	
 	TYPE_SMALL_STRING = 6,
-	// ã“ã“ã‹ã‚‰ä¸Šã¯immutableãªå€¤å‹ã§ã‚ã‚‹
+	// ‚±‚±‚©‚çã‚Íimmutable‚È’lŒ^‚Å‚ ‚é
 
-	// ã“ã“ã‹ã‚‰ä¸‹ã¯å‚ç…§å‹ã§ã‚ã‚‹
+	// ‚±‚±‚©‚ç‰º‚ÍQÆŒ^‚Å‚ ‚é
 	TYPE_BASE = 7,
 
 	TYPE_STRING = 8,
@@ -564,7 +548,7 @@ enum PrimitiveType{
 
 
 /**
-* @brief ãƒ–ãƒ­ãƒƒã‚¯ã®ç¨®é¡
+* \brief ƒuƒƒbƒN‚Ìí—Ş
 */
 enum BlockKind{
 	KIND_BLOCK,
@@ -578,7 +562,7 @@ enum BlockKind{
 };
 
 /**
-* @brief æ–‡å­—åˆ—ã®ç¨®é¡
+* \brief •¶š—ñ‚Ìí—Ş
 */
 enum StringKind{
 	KIND_STRING,
@@ -587,7 +571,7 @@ enum StringKind{
 };
 
 /**
-* @brief å¯è§¦æ€§ã®ç¨®é¡
+* \brief ‰ÂG«‚Ìí—Ş
 */
 enum AccessibilityKind{
 	KIND_PUBLIC = 0,
@@ -596,7 +580,7 @@ enum AccessibilityKind{
 };
 
 /**
-* @brief ãƒ–ãƒ¬ãƒ¼ã‚¯ãƒã‚¤ãƒ³ãƒˆã®ç¨®é¡
+* \brief ƒuƒŒ[ƒNƒ|ƒCƒ“ƒg‚Ìí—Ş
 */
 enum BreakPointKind{
 	BREAKPOINT,
@@ -607,7 +591,7 @@ enum BreakPointKind{
 };
 
 /**
-* @brief ç¯„å›²åŒºé–“ã®ç¨®é¡
+* \brief ”ÍˆÍ‹æŠÔ‚Ìí—Ş
 */
 enum RangeKind{
 	RANGE_CLOSED = (0<<1) | (0<<0),

@@ -801,7 +801,7 @@ XTAL_BIND(Class){
 	it->def_method(Xid(s_new), &Class::s_new);
 	it->def_method(Xid(inherited_classes), &Class::inherited_classes);
 	it->def_method(Xid(is_inherited), &Any::is_inherited);
-	it->def_method(Xid(find_near_member), &Class::find_near_member)->param(2, Xid(secondary_key), null);
+	it->def_method(Xid(find_near_member), &Class::find_near_member)->param(2, Xid(secondary_key), undefined);
 
 	Xemb((
 

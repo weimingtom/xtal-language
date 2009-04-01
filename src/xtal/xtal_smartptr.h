@@ -6,7 +6,7 @@
 namespace xtal{
 
 /**
-* @brief T型へのポインタを保持するためのスマートポインタ
+* \brief T型へのポインタを保持するためのスマートポインタ
 */
 template<class T>
 class SmartPtr : public SmartPtr<Any>{
@@ -64,7 +64,7 @@ public:
 private:
 
 	/**
-	* @brief 暗黙の変換を抑えるためのコンストラクタ。
+	* \brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
 	* AnyPtrからの暗黙の変換を拒否するために、privateで定義されている。
 	* AnyPtrからSmartPtr<T>に変換するにはptr_cast関数、ptr_cast関数を使用すること。
@@ -72,7 +72,7 @@ private:
 	//SmartPtr(const AnyPtr&);
 
 	/**
-	* @brief 暗黙の変換を抑えるためのコンストラクタ。
+	* \brief 暗黙の変換を抑えるためのコンストラクタ。
 	*
 	* 得体の知れないポインタ型からの暗黙の変換を拒否するために、privateで定義されている。
 	*
@@ -112,19 +112,19 @@ private:
 public:
 
 	/**
-	* @brief ->演算子
+	* \brief ->演算子
 	* スマートポインタとして扱うために。
 	*/
 	T* operator ->() const{ return get(); }
 	
 	/**
-	* @brief *演算子
+	* \brief *演算子
 	* スマートポインタとして扱うために。
 	*/
 	T& operator *() const{ return *get(); }
 	
 	/**
-	* @brief T型へのポインタを取得する。
+	* \brief T型へのポインタを取得する。
 	*/
 	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
 
@@ -275,7 +275,7 @@ SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 	:SmartPtr<Any>(SmartPtrCtor4<T>::call(v)){}
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T>
 inline SmartPtr<T> xnew(){
@@ -283,7 +283,7 @@ inline SmartPtr<T> xnew(){
 }
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T, class A0>
 inline SmartPtr<T> xnew(const A0& a0){
@@ -291,7 +291,7 @@ inline SmartPtr<T> xnew(const A0& a0){
 }
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T, class A0, class A1>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
@@ -299,7 +299,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1){
 }
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T, class A0, class A1, class A2>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
@@ -307,7 +307,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2){
 }
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T, class A0, class A1, class A2, class A3>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
@@ -315,7 +315,7 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3){
 }
 
 /**
-* @brief Tオブジェクトを生成する
+* \brief Tオブジェクトを生成する
 */
 template<class T, class A0, class A1, class A2, class A3, class A4>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
@@ -340,7 +340,7 @@ inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_ANY>, const T* 
 }
 
 /**
-* @brief T*をSmartPtr<T>に変換する関数
+* \brief T*をSmartPtr<T>に変換する関数
 */
 template<class T>
 inline const SmartPtr<T>& to_smartptr(const T* p){

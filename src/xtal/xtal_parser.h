@@ -117,30 +117,30 @@ public:
 	}
 
 	/**
-	* @brief èª­ã¿é€²ã‚ã‚‹ã€‚
+	* \brief “Ç‚İi‚ß‚éB
 	*/
 	int_t read();
 
 	/**
-	* @brief æ¬¡ã®è¦ç´ ã‚’èª­ã‚€ã€‚
+	* \brief Ÿ‚Ì—v‘f‚ğ“Ç‚ŞB
 	*/
 	int_t peek(int_t n=0);
 
 	/**
-	* @brief æ¬¡ã®è¦ç´ ãŒå¼•æ•°chã¨åŒã˜ã ã£ãŸã‚‰èª­ã¿é€²ã‚ã‚‹ã€‚
-	* @param ch ã“ã®å€¤ã¨æ¬¡ã®è¦ç´ ãŒç­‰ã—ã„å ´åˆã«èª­ã¿é€²ã‚ã‚‹ã€‚
-	* @retval true æ¬¡ã®è¦ç´ ã¯chã¨åŒã˜ã§ã€èª­ã¿é€²ã‚ãŸã€‚
-	* @retval false æ¬¡ã®è¦ç´ ã¯chã¨ç•°ãªã‚Šã€èª­ã¿é€²ã‚ã‚‰ã‚Œãªã‹ã£ãŸã€‚
+	* \brief Ÿ‚Ì—v‘f‚ªˆø”ch‚Æ“¯‚¶‚¾‚Á‚½‚ç“Ç‚İi‚ß‚éB
+	* \param ch ‚±‚Ì’l‚ÆŸ‚Ì—v‘f‚ª“™‚µ‚¢ê‡‚É“Ç‚İi‚ß‚éB
+	* \retval true Ÿ‚Ì—v‘f‚Ích‚Æ“¯‚¶‚ÅA“Ç‚İi‚ß‚½B
+	* \retval false Ÿ‚Ì—v‘f‚Ích‚ÆˆÙ‚È‚èA“Ç‚İi‚ß‚ç‚ê‚È‚©‚Á‚½B
 	*/
 	bool eat(int_t ch);
 
 	/**
-	* @brief æ–‡å­—åˆ—ã®è¨˜éŒ²ã‚’é–‹å§‹ã™ã‚‹
+	* \brief •¶š—ñ‚Ì‹L˜^‚ğŠJn‚·‚é
 	*/
 	void begin_record();
 
 	/**
-	* @brief æ–‡å­—åˆ—ã®è¨˜éŒ²ã‚’çµ‚äº†ã—ã¦ã€ãã‚Œã‚’è¿”ã™ã€‚
+	* \brief •¶š—ñ‚Ì‹L˜^‚ğI—¹‚µ‚ÄA‚»‚ê‚ğ•Ô‚·B
 	*/
 	StringPtr end_record();
 
@@ -170,7 +170,7 @@ public:
 };
 
 /*
-* XTALãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚½ãƒ¼ã‚¹ã‚’ãƒˆãƒ¼ã‚¯ãƒ³åˆ—ã«å¤‰æ›ã—ã¦å–ã‚Šå‡ºã™
+* XTALƒvƒƒOƒ‰ƒ€ƒ\[ƒX‚ğƒg[ƒNƒ“—ñ‚É•ÏŠ·‚µ‚Äæ‚èo‚·
 */
 class Lexer{
 public:
@@ -178,38 +178,38 @@ public:
 	Lexer();
 	
 	/**
-	* @brief åˆæœŸåŒ–
+	* \brief ‰Šú‰»
 	*/
 	void init(const StreamPtr& stream, CompileErrors* error);
 	
 	/**
-	* @brief èª­ã¿é€²ã‚ã‚‹
+	* \brief “Ç‚İi‚ß‚é
 	*/
 	const Token& read();
 
 	/**
-	* @brief æ¬¡ã®è¦ç´ ã‚’èª­ã‚€
+	* \brief Ÿ‚Ì—v‘f‚ğ“Ç‚Ş
 	*/
 	const Token& peek();
 
 	/**
-	* @brief èª­ã¿è¾¼ã‚“ã è¦ç´ ã‚’ä¸€ã¤æˆ»ã™
+	* \brief “Ç‚İ‚ñ‚¾—v‘f‚ğˆê‚Â–ß‚·
 	*/
 	void putback();
 	
 	/**
-	* @brief æŒ‡å®šã—ãŸãƒˆãƒ¼ã‚¯ãƒ³ã‚’ä¸€ã¤æˆ»ã™
-	* æ¬¡ã®readã‚„peekã§ã¯ã€ã“ã‚Œã§æˆ»ã—ãŸå€¤ãŒå¾—ã‚‰ã‚Œã‚‹
+	* \brief w’è‚µ‚½ƒg[ƒNƒ“‚ğˆê‚Â–ß‚·
+	* Ÿ‚Ìread‚âpeek‚Å‚ÍA‚±‚ê‚Å–ß‚µ‚½’l‚ª“¾‚ç‚ê‚é
 	*/
 	void putback(const Token& ch);
 	
 	/**
-	* @brief ç¾åœ¨ã®è¡Œæ•°ã‚’è¿”ã™
+	* \brief Œ»İ‚Ìs”‚ğ•Ô‚·
 	*/
 	int_t lineno(){ return lineno_; }
 	
 	/**
-	* @brief ç¾åœ¨ã®è¡Œæ•°ã‚’è¨­å®šã™ã‚‹
+	* \brief Œ»İ‚Ìs”‚ğİ’è‚·‚é
 	*/
 	void set_lineno(int_t v){ lineno_ = v; }
 
@@ -218,14 +218,14 @@ public:
 	StringPtr read_string(int_t open, int_t close);
 
 	/**
-	* @brief æ–‡å­—åˆ—ã®è¨˜éŒ²ã‚’é–‹å§‹ã™ã‚‹
+	* \brief •¶š—ñ‚Ì‹L˜^‚ğŠJn‚·‚é
 	*/
 	void begin_record(){
 		reader_.begin_record();
 	}
 
 	/**
-	* @brief æ–‡å­—åˆ—ã®è¨˜éŒ²ã‚’çµ‚äº†ã—ã¦ã€ãã‚Œã‚’è¿”ã™ã€‚
+	* \brief •¶š—ñ‚Ì‹L˜^‚ğI—¹‚µ‚ÄA‚»‚ê‚ğ•Ô‚·B
 	*/
 	StringPtr end_record(){
 		return reader_.end_record();

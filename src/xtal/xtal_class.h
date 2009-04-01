@@ -75,6 +75,9 @@ public:
 	static VariablesInfo vi;
 };
 
+/**
+* @brief クラス
+*/
 class Class : public Frame{
 public:
 
@@ -86,197 +89,244 @@ public:
 
 	void overwrite(const ClassPtr& p);
 
-	void overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
+	void overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC);
 
 public:
 
 	/**
-	* @brief 新しいメンバを定義する
+	* \brief 新しいメンバを定義する
 	*
-	* @param name 新しく定義するメンバの名前
+	* \param primary_key 新しく定義するメンバの名前
+	* \param value 設定する値
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	*/
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC);
 
 	/**
-	* @brief メンバを取り出す
+	* \brief メンバを取り出す
 	*
-	* @param name 取り出したいメンバの名前
+	* この関数を使うのではなく、Any::memberを使うこと。
 	*/
 	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
-	* @brief メンバを再設定する
+	* \brief メンバを再設定する
 	* Xtalレベルでは禁止されている操作だが、C++レベルでは可能にしておく
 	*
-	* @param name 再設定したいメンバの名前
+	* \param primary_key 新しく定義するメンバの名前
+	* \param value 設定する値
+	* \param secondary_key セカンダリキー
 	*/
 	bool set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
-	* @brief 継承
+	* \brief 継承
 	*
-	* @param cls 継承するクラスオブジェクト
+	* \param cls 継承するクラスオブジェクト
 	*/
 	void inherit(const ClassPtr& cls);
 
 	/**
-	* @brief 継承する
+	* \brief 継承する
 	*
-	* @param cls 継承するクラスオブジェクト
+	* Xtalレベルで、クラス定義時に継承する場合に呼ばれる
+	* \param cls 継承するクラスオブジェクト
 	*/
 	void inherit_first(const ClassPtr& cls);
 
 	/**
-	* @brief 継承する
+	* \brief 継承する
 	*
-	* @param cls 継承するクラスオブジェクト
+	* \param cls 継承するクラスオブジェクト
 	*/
 	void inherit_strict(const ClassPtr& cls);
 
 	/**
-	* @brief 継承されているか調べる
+	* \brief 継承されているか調べる
 	*
-	* @param md 継承されている調べたいクラスオブジェクト
+	* \param md 継承されている調べたいクラスオブジェクト
 	*/
 	bool is_inherited(const AnyPtr& md);
 
 	/**
-	* @brief C++のクラスがMix-inされているか調べる
+	* \brief C++のクラスがMix-inされているか調べる
 	*
 	*/
 	bool is_inherited_cpp_class();
 
 	/**
-	* @brief 継承されているクラスのIteratorを返す
+	* \brief 継承されているクラスのIteratorを返す
 	*
 	*/
 	AnyPtr inherited_classes();
 
 	/**
-	* @brief 近い名前のメンバを検索する
+	* \brief 近い名前のメンバを検索する
 	*/
-	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = null);
+	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined);
 	
 	AnyPtr ancestors();
 
 public:
+
 	/**
-	* @brief 関数を定義する
+	* \brief 関数を定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param f 設定する関数
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class TFun>
-	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef cfun_holder<TFun> fun_t;
 		fun_t fun(f);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
-	* @brief メソッドを定義する
+	* \brief メソッドを定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param f 設定する関数
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class TFun>
-	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef cmemfun_holder<TFun> fun_t;
 		fun_t fun(f);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	* \brief メンバ変数へのポインタからゲッターを生成し、定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param value 設定する値
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	*/
 	template<class T, class C>
-	const NativeFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	* \brief メンバ変数へのポインタからセッターを生成し、定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param v 設定するメンバ変数へのポインタ
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class C>
-	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	* \brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
 	*
-	* cls->def_getter(primary_key, var, policy);
+	* \param primary_key 新しく定義するメンバの名前
+	* \param v 設定するメンバ変数へのポインタ
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
+	* cls->def_getter(primary_key, v, policy);
 	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
 	* と等しい	
 	*/	
 	template<class T, class U>
-	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_getter(primary_key, v, secondary_key, accessibility);
 		def_setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
 	}
 
 	/**
-	* @brief 2重ディスパッチメソッドを定義する。
+	* \brief 2重ディスパッチメソッドを定義する。
+	* \param primary_key 新しく定義するメンバの名前
+	* \param accessibility 可蝕性
 	*/
 	void def_double_dispatch_method(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 	/**
-	* @brief 2重ディスパッチ関数を定義する。
+	* \brief 2重ディスパッチ関数を定義する。
+	* \param primary_key 新しく定義するメンバの名前
+	* \param accessibility 可蝕性
 	*/
 	void def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
 
 public:
 
 	/**
-	* @brief メソッドを定義する
+	* \brief シングルトンクラスにメソッドを定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param f 設定する関数
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	*/
 	template<class TFun>
-	const NativeFunPtr& def_singleton_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_singleton_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef cmemfun_holder<TFun> fun_t;
 		fun_t fun(f);
 		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 
 	/**
-	* @brief メンバ変数へのポインタからゲッターを生成し、定義する
+	* \brief シングルトンクラスに、メンバ変数へのポインタからゲッターを生成し定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param v 設定するメンバ変数へのポインタ
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	*/
 	template<class T, class C>
-	const NativeFunPtr& def_singleton_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_singleton_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef getter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからセッターを生成し、定義する
+	* \brief メンバ変数へのポインタからセッターを生成し、定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param v 設定するメンバ変数へのポインタ
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
 	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class C>
-	const NativeFunPtr& def_singleton_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	const NativeFunPtr& def_singleton_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		typedef setter_holder<C, T> fun_t;
 		fun_t fun(v);
 		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 	}
 	
 	/**
-	* @brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
+	* \brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
 	*
+	* \param primary_key 新しく定義するメンバの名前
+	* \param v 設定するメンバ変数へのポインタ
+	* \param secondary_key セカンダリキー
+	* \param accessibility 可蝕性
 	* cls->def_getter(primary_key, var, policy);
 	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
 	* と等しい	
 	*/	
 	template<class T, class U>
-	void def_singleton_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC){
+	void def_singleton_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_singleton_getter(primary_key, v, secondary_key, accessibility);
 		def_singleton_setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
 	}

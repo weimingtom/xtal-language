@@ -18,55 +18,55 @@ public:
 	// 関数呼び出し側が使うための関数群
 
 	/**
-	* @brief 引数を1個積む。
+	* \brief 引数を1個積む。
 	*
 	*/
 	void push_arg(const AnyPtr& value);
 	
 	/**
-	* @brief 名前付き引数を1個積む。
+	* \brief 名前付き引数を1個積む。
 	*
 	*/
 	void push_arg(const IDPtr& name, const AnyPtr& value);
 	
 	/**
-	* @brief 名前付き引数を1個積む。
+	* \brief 名前付き引数を1個積む。
 	*
 	*/
 	void push_arg(const Named& p){ push_arg(p.name, p.value); }
 
 	/**
-	* @brief 引数を配列の要素数積む。
+	* \brief 引数を配列の要素数積む。
 	*
 	*/
 	void push_ordered_args(const ArrayPtr& p);
 
 	/**
-	* @brief 名前つき引数を連想配列の要素数積む。
+	* \brief 名前つき引数を連想配列の要素数積む。
 	*
 	*/
 	void push_named_args(const MapPtr& p);
 
 	/**
-	* @brief pos番目の戻り値を得る。
+	* \brief pos番目の戻り値を得る。
 	*
 	*/
 	const AnyPtr& result(int_t pos = 0);
 
 	/**
-	* @brief 呼び出しの後始末をする。
+	* \brief 呼び出しの後始末をする。
 	*
 	*/
 	void cleanup_call();	
 
 	/**
-	* @brief pos番目の戻り値を返し、呼び出しの後始末をする。
+	* \brief pos番目の戻り値を返し、呼び出しの後始末をする。
 	*
 	*/
 	AnyPtr result_and_cleanup_call(int_t pos = 0);
 		
 	/**
-	* @brief thisを差し替える。
+	* \brief thisを差し替える。
 	*
 	*/	
 	void set_arg_this(const AnyPtr& self){ 
@@ -74,7 +74,7 @@ public:
 	}
 
 	/**
-	* @brief ヒントの設定
+	* \brief ヒントの設定
 	*
 	* 例外が起きたときのエラーメッセージのために、
 	* 現在呼び出している関数を登録する。
@@ -84,14 +84,14 @@ public:
 	}
 // 
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を`i`個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を`i`個積む
 	void setup_call(int_t need_result_count = 1){
 		push_ff(need_result_count);	
 	}
 
 //{REPEAT{{
 /*
-	/// @brief 関数を呼び出す用意をし、同時に引数を`n+1`個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を`n+1`個積む
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	void setup_call(int_t need_result_count, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
 		push_ff(need_result_count);
@@ -100,7 +100,7 @@ public:
 	}
 */
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を1個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を1個積む
 	template<class A0 >
 	void setup_call(int_t need_result_count, const A0& a0 ){
 		push_ff(need_result_count);
@@ -108,7 +108,7 @@ public:
 		 
 	}
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を2個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を2個積む
 	template<class A0 , class A1>
 	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1){
 		push_ff(need_result_count);
@@ -116,7 +116,7 @@ public:
 		push_arg(a1); 
 	}
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を3個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を3個積む
 	template<class A0 , class A1, class A2>
 	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2){
 		push_ff(need_result_count);
@@ -124,7 +124,7 @@ public:
 		push_arg(a1);push_arg(a2); 
 	}
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を4個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を4個積む
 	template<class A0 , class A1, class A2, class A3>
 	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
 		push_ff(need_result_count);
@@ -132,7 +132,7 @@ public:
 		push_arg(a1);push_arg(a2);push_arg(a3); 
 	}
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を5個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を5個積む
 	template<class A0 , class A1, class A2, class A3, class A4>
 	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 		push_ff(need_result_count);
@@ -140,7 +140,7 @@ public:
 		push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
 	}
 
-	/// @brief 関数を呼び出す用意をし、同時に引数を6個積む
+	/// \brief 関数を呼び出す用意をし、同時に引数を6個積む
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
 		push_ff(need_result_count);
@@ -155,19 +155,19 @@ public:
 	// 関数呼び出され側が使うための関数群
 
 	/**
-	* @brief pos番目の引数を得る。
+	* \brief pos番目の引数を得る。
 	*
 	*/
 	const AnyPtr& arg(int_t pos);
 
 	/**
-	* @brief nameに対応する引数を得る。
+	* \brief nameに対応する引数を得る。
 	*
 	*/
 	const AnyPtr& arg(const IDPtr& name);
 
 	/**
-	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
+	* \brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
 	*
 	*/
 	const AnyPtr& arg(int_t pos, const IDPtr& name);
@@ -175,44 +175,44 @@ public:
 	const AnyPtr& arg(int_t pos, Method* names);
 
 	/**
-	* @brief pos番目の引数を得る。
+	* \brief pos番目の引数を得る。
 	*
 	* もしpos番目の引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(int_t pos, const AnyPtr& def);
 
 	/**
-	* @brief nameに対応する引数を得る。
+	* \brief nameに対応する引数を得る。
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(const IDPtr& name, const AnyPtr& def);
 
 	/**
-	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
+	* \brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(int_t pos, const IDPtr& name, const AnyPtr& def);
 	
 	/**
-	* @brief nameに対応する引数を得る。
+	* \brief nameに対応する引数を得る。
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(const Named& name_and_def);
 
 	/**
-	* @brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
+	* \brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
 	*
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(int_t pos, const Named& name_and_def);
 
 	/**
-	* @brief pos番目の名前指定引数の名前を取得。
+	* \brief pos番目の名前指定引数の名前を取得。
 	*
-	* @param pos 0からnamed_arg_count()-1まで
+	* \param pos 0からnamed_arg_count()-1まで
 	*/
 	const IDPtr& arg_name(int_t pos){
 		return unchecked_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
@@ -221,7 +221,7 @@ public:
 	void adjust_args(const Named* params, int_t num);
 
 	/**
-	* @brief pos番目の引数を得る。
+	* \brief pos番目の引数を得る。
 	*
 	* adjust_argsを読んだ後だけ使える
 	*/
@@ -230,7 +230,7 @@ public:
 	}
 
 	/**
-	* @brief thisを取得。
+	* \brief thisを取得。
 	*
 	*/
 	const AnyPtr& arg_this(){ 
@@ -238,7 +238,7 @@ public:
 	}
 
 	/**
-	* @brief 位置指定引数の数を取得。
+	* \brief 位置指定引数の数を取得。
 	*
 	*/
 	int_t ordered_arg_count(){ 
@@ -246,7 +246,7 @@ public:
 	}
 	
 	/**
-	* @brief 名前指定引数の数を取得
+	* \brief 名前指定引数の数を取得
 	*
 	*/
 	int_t named_arg_count(){ 
@@ -254,13 +254,13 @@ public:
 	}
 
 	/**
-	* @brief 引数の多値を平らにする
+	* \brief 引数の多値を平らにする
 	*
 	*/
 	void flatten_args();
 	
 	/**
-	* @brief 呼び出し元が必要としている戻り値の数。
+	* \brief 呼び出し元が必要としている戻り値の数。
 	*
 	*/
 	int_t need_result_count(){ 
@@ -268,7 +268,7 @@ public:
 	}
 	
 	/**
-	* @brief 呼び出し元が戻り値を必要としているかどうか。
+	* \brief 呼び出し元が戻り値を必要としているかどうか。
 	*
 	*/
 	bool need_result(){ 
@@ -282,7 +282,7 @@ public:
 	ArgumentsPtr make_arguments();
 	
 	/**
-	* @brief 呼び出し元に引数の数だけの戻り値を返す。
+	* \brief 呼び出し元に引数の数だけの戻り値を返す。
 	*
 	* need_result_countの方が数が多い場合はその分nullが返される。
 	* need_result_countの方が数が少ない場合は返した値は捨てられる。
@@ -294,12 +294,12 @@ public:
 	void return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3, const AnyPtr& value4);
 
 	/**
-	* @brief 多値を返す。
+	* \brief 多値を返す。
 	*/
 	void return_result_mv(const MultiValuePtr& values);
 
 	/**
-	* @brief return_resultやcarry_overを既に呼び出したならtrueを、そうでないならfalseを返す。
+	* \brief return_resultやcarry_overを既に呼び出したならtrueを、そうでないならfalseを返す。
 	*
 	*/
 	bool processed(){ 

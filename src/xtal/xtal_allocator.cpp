@@ -158,19 +158,21 @@ void FixedAllocator::fit(size_t block_size){
 void FixedAllocator::release(size_t block_size){
 	fit(block_size);
 
-	XTAL_ASSERT(chunk_==0);
-	XTAL_ASSERT(free_data_==0);
+	if(!ignore_memory_assert()){
+		XTAL_ASSERT(chunk_==0);
+		XTAL_ASSERT(free_data_==0);
+	}
 
-	/*
+	uint_t blocks = calc_size(block_size);
+	uint_t buffer_size = sizeof(Chunk)+block_size*blocks*sizeof(data_t);
 	for(Chunk* p=chunk_; p; ){
 		Chunk* next = p->next;
-		xfree(p);
+		xfree(p, buffer_size);
 		p = next;
 	}
 	
 	chunk_ = 0;
 	free_data_ = 0;
-	*/
 }
 
 void* SmallObjectAllocator::malloc(size_t size){

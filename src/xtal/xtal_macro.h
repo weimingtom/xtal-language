@@ -7,98 +7,105 @@
 /*@{*/
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* \brief foreachを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * Xfor(value, array){
 *   // use value
 * }
-* @endcode
+* \endcode
 */
-#define Xfor(var, tar) \
+#define Xfor(var, target) \
 	if(bool not_end = true)\
-	for(::xtal::BlockValueHolder1 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(::xtal::BlockValueHolder1 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var = block_value_holder.values[0]; not_end; not_end=false)\
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* \brief foreachを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * Xfor2(key, value, map){
 *   // use key and value
 * }
-* @endcode
+* \endcode
 */
-#define Xfor2(var1, var2, tar) \
+#define Xfor2(var1, var2, target) \
 	if(bool not_end = true)\
-	for(::xtal::BlockValueHolder2 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(::xtal::BlockValueHolder2 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1]; not_end; not_end=false)\
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* \brief foreachを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * Xfor3(v1, v2, v3, hoge.send("each3")){
 *   // use v1, v2 and v3
 * }
-* @endcode
+* \endcode
 */
-#define Xfor3(var1, var2, var3, tar) \
+#define Xfor3(var1, var2, var3, target) \
 	if(bool not_end = true)\
-	for(::xtal::BlockValueHolder3 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(::xtal::BlockValueHolder3 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(const ::xtal::AnyPtr& var1 = block_value_holder.values[0], &var2 = block_value_holder.values[1], &var3 = block_value_holder.values[2]; not_end; not_end=false)\
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 
 /**
-* @brief foreachを簡単に記述するためのマクロ
+* \brief foreachを簡単に記述するためのマクロ
 *
 * 各要素を受け取る変数に型をつけることが出来る。
-* @code
+* \hideinitializer
+* \code
 * Xfor_cast(const StringPtr& value, array){
 *   // valueはStringPtrにキャストされている
 * }
 * else{
 *   // elseをつけると、キャストに失敗したら実行される
 * }
-* @endcode
+* \endcode
 */
-#define Xfor_cast(var, tar) \
+#define Xfor_cast(var, target) \
 	if(bool not_end = true)\
-	for(::xtal::BlockValueHolder1 block_value_holder(tar, not_end); not_end; not_end=false)\
+	for(::xtal::BlockValueHolder1 block_value_holder(target, not_end); not_end; not_end=false)\
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)\
 	if(var = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var##e))0))
 
 /**
-* @brief textを簡単に記述するためのマクロ
+* \brief textを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * AnyPtr text = Xt("Text %d %s")(10, "test");
-* @endcode
+* \endcode
 */
 #define Xt(txt) ::xtal::text(XTAL_STRING(txt)) 
 
 /**
-* @brief formatを簡単に記述するためのマクロ
+* \brief formatを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * AnyPtr fmt = Xf("Text %d %s")(10, "test");
-* @endcode
+* \endcode
 */
 #define Xf(txt) ::xtal::format(XTAL_STRING(txt)) 
 
 #ifndef XTAL_NO_PARSER
 
 /**
-* @brief Xtalのソースを簡単に記述するためのマクロ
+* \brief Xtalのソースを簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * AnyPtr src = Xsrc((
 *   return [0, 2, 3, 4];
 * ));
-* @endcode
+* \endcode
 */
 #define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3)
 
@@ -127,11 +134,12 @@
 #endif
 
 /*
-* @brief インターンされた文字列を簡単に記述するためのマクロ
+* \brief インターンされた文字列を簡単に記述するためのマクロ
 *
-* @code
+* \hideinitializer
+* \code
 * IDPtr id = Xid(test);
-* @endcode
+* \endcode
 */
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
 

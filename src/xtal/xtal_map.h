@@ -5,108 +5,126 @@
 
 namespace xtal{
 
+/**
+* \brief 連想配列
+*/
 class Map : public Base{
 public:
 
+	/**
+	* \brief 空の連想配列オブジェクトを生成
+	*/
 	Map()
 		:default_value_(undefined){}
 		
 	/**
-	* @brief iに対応する要素を返す
+	* \brief keyに対応する要素を返す
 	*
+	* \param key 検索のためのキー 
 	*/
 	const AnyPtr& at(const AnyPtr& key);
 	
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief keyに対応する要素を設定する
 	*
+	* \param key 検索のためのキー 
+	* \param value keyに対応する値
 	*/	
 	void set_at(const AnyPtr& key, const AnyPtr& value){
 		insert(key, value);
 	}
 
 	/**
-	* @brief iに対応する要素を設定する
+	* \brief keyに対応する要素を設定する
 	*
+	* \param key 検索のためのキー 
+	* \param value keyに対応する値
 	*/	
-	void insert(const AnyPtr& akey, const AnyPtr& value){
-		const AnyPtr& key = calc_key(akey);
-		table_.insert(key, value);
+	void insert(const AnyPtr& key, const AnyPtr& value){
+		const AnyPtr& akey = calc_key(key);
+		table_.insert(akey, value);
 	}
 
 	/**
-	* @brief keyに対応する値を削除する
+	* \brief keyに対応する値を削除する
 	*
+	* \param key 検索のためのキー 
 	*/
-	void erase(const AnyPtr& akey){
-		const AnyPtr& key = calc_key(akey);
-		table_.erase(key);
+	void erase(const AnyPtr& key){
+		const AnyPtr& akey = calc_key(key);
+		table_.erase(akey);
 	}
 
 	/**
-	* @brief 連想配列の容量を返す
+	* \brief 連想配列に登録された要素の数を返す
 	*
+	* \return 連想配列に登録された要素の数
 	*/
 	uint_t size(){
 		return table_.size();
 	}
 	
 	/**
-	* @brief 連想配列の容量を返す
+	* \brief 連想配列に登録された要素の数を返す
 	*
+	* \return 連想配列に登録された要素の数
 	*/
 	uint_t length(){
 		return table_.size();
 	}
 
 	/**
-	* @brief 空か調べる
+	* \brief 空か調べる
 	*
+	* \retval true 空
+	* \retval false 非空
 	*/
 	bool empty(){
 		return table_.empty();
 	}
 
 	/**
-	* @brief 空か調べる
+	* \brief 空か調べる
 	*
+	* \retval true 空
+	* \retval false 非空
 	*/
 	bool is_empty(){
 		return table_.empty();
 	}
 
 	/**
-	* @brief 連結した連想配列を返す
+	* \brief 連結した連想配列を返す
 	*
 	*/
 	MapPtr cat(const MapPtr& a);
 
 	/**
-	* @brief 自身と連結し、自身を返す
+	* \brief 自身と連結し、自身を返す
 	*
 	*/
 	MapPtr cat_assign(const MapPtr& a);
 		
 	/**
-	* @brief [key, value]を要素とする、Iteratorを返す
+	* \brief (key, value)を要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr pairs();
 	
 	/**
-	* @brief keyを要素とする、Iteratorを返す
+	* \brief keyを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr keys();
 	
 	/**
-	* @brief valueを要素とする、Iteratorを返す
+	* \brief valueを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr values();
 
 	/**
-	* @brief [key, value]を要素とする、Iteratorを返す
+	* \brief [key, value]を要素とする、Iteratorを返す
 	*
 	* pairsと同じ
 	*/
@@ -115,13 +133,13 @@ public:
 	}
 	
 	/**
-	* @brief 浅いコピーを返す
+	* \brief 浅いコピーを返す
 	*
 	*/
 	MapPtr clone();
 
 	/**
-	* @brief 要素を全て削除する
+	* \brief 要素を全て削除する
 	*
 	*/
 	void clear(){
@@ -133,7 +151,7 @@ public:
 	}
 
 	/**
-	* @brief 中身をiteratorで取得できる要素に置き換える
+	* \brief 中身をiteratorで取得できる要素に置き換える
 	*/
 	void assign(const AnyPtr& iterator);
 
@@ -141,10 +159,20 @@ public:
 
 	void push_all(const VMachinePtr& vm);
 
+	/**
+	* \brief デフォルト値として設定されているオブジェクトを取り出す
+	*
+	* \return デフォルト値
+	*/
 	const AnyPtr& default_value(){
 		return default_value_;
 	}
 
+	/**
+	* \brief デフォルト値を設定する
+	*
+	* \param default_value デフォルト値
+	*/
 	void set_default_value(const AnyPtr& default_value){
 		default_value_ = default_value;
 	}
@@ -208,7 +236,7 @@ class Set : public Map{
 public:
 
 	/**
-	* @brief valueが真なkeyを要素とするIteratorを返す
+	* \brief valueが真なkeyを要素とするIteratorを返す
 	*
 	*/
 	AnyPtr each();

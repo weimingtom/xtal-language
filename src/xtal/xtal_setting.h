@@ -8,22 +8,22 @@
 */
 
 /**
-* @brief パーサ使用off
+* \brief パーサ使用off
 */
 //#define XTAL_NO_PARSER
 
 /**
-* @brief wchar_t使用on
+* \brief wchar_t使用on
 */
 //#define XTAL_USE_WCHAR
 
 /**
-* @brief スレッド使用off
+* \brief スレッド使用off
 */
 //#define XTAL_NO_THREAD
 
 /**
-* @brief pthreadのスレッドローカルストレージを使う
+* \brief pthreadのスレッドローカルストレージを使う
 */
 //#define XTAL_USE_PTHREAD_TLS
 

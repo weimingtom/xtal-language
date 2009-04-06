@@ -9,7 +9,7 @@
 
 int used_memory = 0;
 
-#define XTAL_DEBUG_ALLOC 1
+#define XTAL_DEBUG_ALLOC 0
 
 #if XTAL_DEBUG_ALLOC!=0
 #include <map>

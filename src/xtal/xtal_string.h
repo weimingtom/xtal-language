@@ -6,6 +6,7 @@
 namespace xtal{
 
 /**
+* \ingroup Xtal Cpp
 * \brief 文字列
 */
 class String : public Any{
@@ -17,32 +18,37 @@ public:
 	String();
 
 	/**
+	* \version C++
 	* \brief NUL終端のC文字列から構築する
 	*
-	* \param str NULL終端文字列
+	* \param str NUL終端文字列
 	*/
 	String(const char_t* str);
 
 	/**
+	* \version C++
 	* \brief NUL終端のC文字列から構築する
 	*
-	* \param str NULL終端文字列
+	* \param str NUL終端文字列
 	*/
 	String(const char8_t* str);
 
 	/**
+	* \version C++
 	* \brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
 	String(const char_t* str, uint_t size);
 
 	/**
+	* \version C++
 	* \brief C文字列リテラルから構築する
 	*
 	*/
 	String(const StringLiteral& str);
 
 	/**
+	* \version C++
 	* \brief beginからlastまでの文字列で構築する
 	*
 	* [begin, last)
@@ -50,22 +56,26 @@ public:
 	String(const char_t* begin, const char_t* last);
 
 	/**
+	* \version C++
 	* \brief 二つのC文字列から構築する
 	*
 	*/
 	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
 
 	/**
+	* \version C++
 	* \brief 1つの文字から構築する
 	*/
 	String(char_t a);
 
 	/**
+	* \version C++
 	* \brief 2つの文字から構築する
 	*/
 	String(char_t a, char_t b);
 
 	/**
+	* \version C++
 	* \brief 3つの文字から構築する
 	*/
 	String(char_t a, char_t b, char_t c);
@@ -87,12 +97,14 @@ protected:
 public:
 
 	/**
+	* \version C++
 	* \brief 0終端の文字列先頭のポインタを返す。
 	*
 	*/
 	const char_t* c_str();
 
 	/**
+	* \version C++
 	* \brief 文字列先頭のポインタを返す。
 	*
 	* これは0終端文字列が返されるとは限らない。
@@ -100,6 +112,7 @@ public:
 	const char_t* data();
 
 	/**
+	* \version C++ Xtal
 	* \brief データサイズを返す。
 	*
 	* マルチバイト文字を考慮しない。
@@ -107,6 +120,7 @@ public:
 	uint_t data_size();
 
 	/**
+	* \version C++ Xtal
 	* \brief 文字列の長さを返す。
 	*
 	* マルチバイト文字を考慮する。
@@ -114,73 +128,158 @@ public:
 	uint_t length();
 
 	/*
+	* \version C++ Xtal
 	* \brief 浅いコピーを返す。
 	*
 	*/
 	StringPtr clone();
 
 	/**
+	* \version C++ Xtal
 	* \brief 一意化した文字列を返す。
 	*
 	*/
 	const IDPtr& intern();
 
 	/**
+	* \version C++ Xtal
 	* \brief 一意化されているか返す。
 	*/
 	bool is_interned();
 
 	/**
+	* \version C++ Xtal
 	* \brief 整数に変換した結果を返す。
 	*
 	*/ 
 	int_t to_i();
 	
 	/**
+	* \version C++ Xtal
 	* \brief 浮動小数点数に変換した結果を返す。
 	*
 	*/ 
 	float_t to_f();
 	
 	/**
+	* \version C++ Xtal
 	* \brief 自分自身を返す。
 	*
 	*/
 	StringPtr to_s();
 
 	/**
+	* \version C++ Xtal
 	* \brief 一文字づつの文字列を要素とするIteratorを返す。
 	*
+	* \return 一文字づつの文字列を要素とするIterator
 	*/
 	AnyPtr each();
 
 	/**
+	* \version C++ Xtal
 	* \brief 連結する
 	*
+	* \return 連結された新しいオブジェクト
 	*/
 	StringPtr cat(const StringPtr& v);
 
 public:
 
+	/**
+	* \version C++ Xtal
+	* \brief 一文字の文字列かどうか
+	*/
 	bool is_ch();
 
+	/**
+	* \version C++ Xtal
+	* \brief 一文字の文字列の場合、そのasciiコードを返す
+	*/
 	int_t ascii();
 
+	/**
+	* \version C++ Xtal
+	* \brief 文字の範囲オブジェクトの範囲内かどうか
+	*/
 	bool op_in(const ChRangePtr& range);
 
 public:
 
+	/**
+	* \brief 範囲オブジェクトを生成する
+	*/
 	ChRangePtr op_range(const StringPtr& right, int_t kind);
 	
+	/**
+	* \brief 連結する
+	*/
 	StringPtr op_cat(const StringPtr& v);
 	
+	/**
+	* \brief 値が等しいか比べる
+	*/
 	bool op_eq(const StringPtr& v);
 
+	/**
+	* \brief より小さいか比べる
+	*/
 	bool op_lt(const StringPtr& v);
+
+	/**
+	* \brief 文字列をスキャンする
+	*/
+	//AnyPtr scan(const AnyPtr& pattern){
+	//	return send(XTAL_ID(scan), pattern);
+	//}
 
 private:
 	void init_string(const char_t* str, uint_t size);
 };
+
+/*
+String::scan: method(pattern){
+	return StringStream(this).scan(pattern);
+}
+
+String::split: method(pattern){
+	return StringStream(this).split(pattern);
+}
+
+String::match: method(pattern){
+	return StringStream(this).match(pattern);
+}
+
+String::gsub: method(pattern, fn){
+	mm: MemoryStream();
+	exec: xpeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		mm.put_s(prefix);
+		ordered: [exec[""]];
+		ordered.concat(exec.captures);
+		named: exec.named_captures[:];
+		named["prefix"] = prefix;
+		mm.put_s(fn(...Arguments(ordered, named)));
+
+		while(exec.match(pattern)){
+			prefix: exec.prefix;
+			mm.put_s(prefix);
+			ordered: [exec[""]];
+			ordered.concat(exec.captures);
+			named: exec.named_captures[:];
+			named["prefix"] = prefix;
+			mm.put_s(fn(...Arguments(ordered, named)));
+		}
+		mm.put_s(exec.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+
+String::sub: method(pattern, fn){*/
 
 class StringData : public RefCountingBase{
 	enum{

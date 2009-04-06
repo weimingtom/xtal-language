@@ -76,15 +76,21 @@ int main(int argc, char** argv){
 	}
 
 	initialize(setting);
-	bind_error_message();
 
-	handle_argv(argv);
-	
-	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->println(e);
+	XTAL_PROTECT{
+		bind_error_message();
+
+		handle_argv(argv);
+		
+		XTAL_CATCH_EXCEPT(e){
+			stderr_stream()->println(e);
+		}
+
+		uninitialize();
 	}
-
-	uninitialize();
+	XTAL_OUT_OF_MEMORY{
+		puts("out of memory");
+	}
 
 	return 0;
 }

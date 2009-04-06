@@ -15,7 +15,12 @@ namespace xtal{
 * \param end メモリの最後の一つ次
 * \param current 使用中の要素の一つ次
 */
-void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize=1024);
+void expand_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current, int addsize);
+
+template<class T>
+inline void expand_simple_dynamic_pointer_array(T*** begin, T*** end, T*** current, int addsize=1024){
+	expand_simple_dynamic_pointer_array((void***)begin, (void***)end, (void***)current, addsize);
+}
 
 /**
 * \brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
@@ -25,7 +30,12 @@ void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& cur
 * \param end メモリの最後の一つ次
 * \param current 使用中の要素の一つ次
 */
-void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current);
+void fit_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current);
+
+template<class T>
+inline void fit_simple_dynamic_pointer_array(T*** begin, T*** end, T*** current){
+	fit_simple_dynamic_pointer_array((void***)begin, (void***)end, (void***)current);
+}
 
 /*
 * 固定サイズメモリアロケータ

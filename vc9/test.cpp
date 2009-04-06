@@ -24,19 +24,11 @@ int main2(int argc, char** argv){
 			
 	if(CodePtr code = Xsrc((
 		check_implicit_lookup();
-		
-		fib: fiber{
-			yield;
-			"b".p;
-		}
-		
-		fib();
-		fib();
-
-		println(Array(1000000)); 
+	
+		100/(dofun 0);
 
 	))){
-		code->call();
+
 	}
 
 	//load("../struct.xtal");
@@ -48,7 +40,7 @@ int main2(int argc, char** argv){
 
 	//compile_file("../bench/ao.xtal")->inspect()->p();
 	
-	if(0){
+	if(1){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		
@@ -143,10 +135,11 @@ int main(int argc, char** argv){
 	setting.ch_code_lib = &sjis_ch_code_lib;
 
 	initialize(setting);
-	bind_error_message();
 
 	int ret = 1;
 	XTAL_PROTECT{
+		bind_error_message();
+
 		ret = main2(argc, argv);
 
 		vmachine()->print_info();

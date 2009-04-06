@@ -257,6 +257,7 @@ void Inst::checked_assign(T& ref, int v){
 	}
 
 /**
+* \internal
 * \brief 何もしない。
 *
 * stack [] -> []
@@ -264,6 +265,7 @@ void Inst::checked_assign(T& ref, int v){
 XTAL_DEF_INST_0(0, Nop);
 
 /**
+* \internal
 * \brief スタックにnull値をプッシュする。
 *
 * stack [] -> [value]
@@ -271,6 +273,7 @@ XTAL_DEF_INST_0(0, Nop);
 XTAL_DEF_INST_0(1, PushNull);
 
 /**
+* \internal
 * \brief スタックにundefined値をプッシュする。
 *
 * stack [] -> [value]
@@ -278,6 +281,7 @@ XTAL_DEF_INST_0(1, PushNull);
 XTAL_DEF_INST_0(2, PushUndefined);
 
 /**
+* \internal
 * \brief スタックにtrue値をプッシュする。
 *
 * stack [] -> [value]
@@ -285,6 +289,7 @@ XTAL_DEF_INST_0(2, PushUndefined);
 XTAL_DEF_INST_0(3, PushTrue);
 
 /**
+* \internal
 * \brief スタックにfalse値をプッシュする。
 *
 * stack [] -> [value]
@@ -292,6 +297,7 @@ XTAL_DEF_INST_0(3, PushTrue);
 XTAL_DEF_INST_0(4, PushFalse);
 
 /**
+* \internal
 * \brief スタックにtrue値をプッシュする。
 *
 * stack [] -> [value]
@@ -299,6 +305,7 @@ XTAL_DEF_INST_0(4, PushFalse);
 XTAL_DEF_INST_0(5, PushTrueAndSkip);
 
 /**
+* \internal
 * \brief スタックにint値をプッシュする。
 *
 * stack [] -> [value]
@@ -308,6 +315,7 @@ XTAL_DEF_INST_1(6, PushInt1Byte,
 );
 
 /**
+* \internal
 * \brief スタックにint値をプッシュする。
 *
 * stack [] -> [value]
@@ -317,6 +325,7 @@ XTAL_DEF_INST_1(7, PushInt2Byte,
 );
 
 /**
+* \internal
 * \brief スタックにfloat値をプッシュする。
 *
 * stack [] -> [value]
@@ -326,6 +335,7 @@ XTAL_DEF_INST_1(8, PushFloat1Byte,
 );
 
 /**
+* \internal
 * \brief スタックにfloat値をプッシュする。
 *
 * stack [] -> [value]
@@ -335,6 +345,7 @@ XTAL_DEF_INST_1(9, PushFloat2Byte,
 );
 
 /**
+* \internal
 * \brief スタックに現在実行中の関数をプッシュする。
 *
 * stack [] -> [value]
@@ -342,6 +353,7 @@ XTAL_DEF_INST_1(9, PushFloat2Byte,
 XTAL_DEF_INST_0(10, PushCallee);
 
 /**
+* \internal
 * \brief スタックにArgumentsオブジェクトをプッシュする。
 *
 * stack [] -> [value]
@@ -349,6 +361,7 @@ XTAL_DEF_INST_0(10, PushCallee);
 XTAL_DEF_INST_0(11, PushArgs);
 
 /**
+* \internal
 * \brief 現在のthisをスタックに積む。
 *
 * stack [] -> [value]
@@ -356,6 +369,7 @@ XTAL_DEF_INST_0(11, PushArgs);
 XTAL_DEF_INST_0(12, PushThis);
 
 /**
+* \internal
 * \brief 現在の文脈をスタックに積む。
 *
 * stack [] -> [value]
@@ -363,6 +377,7 @@ XTAL_DEF_INST_0(12, PushThis);
 XTAL_DEF_INST_0(13, PushCurrentContext);
 
 /**
+* \internal
 * \brief スタックトップをポップする
 *
 * stack [value] -> []
@@ -370,6 +385,7 @@ XTAL_DEF_INST_0(13, PushCurrentContext);
 XTAL_DEF_INST_0(14, Pop);
 
 /**
+* \internal
 * \brief スタックトップの値をプッシュする
 *
 * stack [value] -> [value, value2]
@@ -377,6 +393,7 @@ XTAL_DEF_INST_0(14, Pop);
 XTAL_DEF_INST_0(15, Dup);
 
 /**
+* \internal
 * \brief スタックトップの値を一つ前に入れる。
 *
 * stack [value1, value2] -> [value2, value1]
@@ -384,6 +401,7 @@ XTAL_DEF_INST_0(15, Dup);
 XTAL_DEF_INST_0(16, Insert1);
 
 /**
+* \internal
 * \brief スタックトップの値を二つ前に入れる。
 *
 * stack [value1, value2, value3] -> [value3, value1, value2]
@@ -391,6 +409,7 @@ XTAL_DEF_INST_0(16, Insert1);
 XTAL_DEF_INST_0(17, Insert2);
 
 /**
+* \internal
 * \brief スタックトップの値を三つ前に入れる。
 *
 * stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
@@ -398,6 +417,7 @@ XTAL_DEF_INST_0(17, Insert2);
 XTAL_DEF_INST_0(18, Insert3);
 
 /**
+* \internal
 * \brief 値の数を調整する
 *
 * stack [] -> []
@@ -424,6 +444,7 @@ XTAL_DEF_INST_1(23, LocalVariableDec2Byte,
 );
 
 /**
+* \internal
 * \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
@@ -433,6 +454,7 @@ XTAL_DEF_INST_1(24, LocalVariable1Byte,
 );
 
 /**
+* \internal
 * \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
@@ -443,6 +465,7 @@ XTAL_DEF_INST_2(25, LocalVariable1ByteX2,
 );
 
 /**
+* \internal
 * \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
@@ -454,6 +477,7 @@ XTAL_DEF_INST_3(26, LocalVariable1ByteX3,
 );
 
 /**
+* \internal
 * \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
@@ -463,6 +487,7 @@ XTAL_DEF_INST_1(27, LocalVariable2Byte,
 );
 
 /**
+* \internal
 * \brief ローカル変数に値を設定する。
 *
 * stack [value] -> []
@@ -472,6 +497,7 @@ XTAL_DEF_INST_1(28, SetLocalVariable1Byte,
 );
 
 /**
+* \internal
 * \brief ローカル変数に値を設定する。
 *
 * stack [value] -> []
@@ -481,6 +507,7 @@ XTAL_DEF_INST_1(29, SetLocalVariable2Byte,
 );
 
 /**
+* \internal
 * \brief インスタンス変数を取り出す。
 *
 * stack [] -> [value]
@@ -491,6 +518,7 @@ XTAL_DEF_INST_2(30, InstanceVariable,
 );
 
 /**
+* \internal
 * \brief インスタンス変数に値を設定する。
 *
 * stack [value] -> []
@@ -501,6 +529,7 @@ XTAL_DEF_INST_2(31, SetInstanceVariable,
 );
 
 /**
+* \internal
 * \brief 関数呼び出しの後始末をする
 *
 * stack [] -> []
@@ -508,6 +537,7 @@ XTAL_DEF_INST_2(31, SetInstanceVariable,
 XTAL_DEF_INST_0(32, CleanupCall);
 
 /**
+* \internal
 * \brief 関数から抜ける
 *
 * stack [value1, value2, ...valueN] -> []
@@ -517,6 +547,7 @@ XTAL_DEF_INST_1(33, Return,
 );
 
 /**
+* \internal
 * \brief fiberの実行を一時中断する
 *
 * stack [value1, value2, ...valueN] -> []
@@ -526,6 +557,7 @@ XTAL_DEF_INST_1(34, Yield,
 );
 
 /**
+* \internal
 * \brief 仮想マシンのループから脱出する。
 *
 * stack [] -> []
@@ -533,6 +565,7 @@ XTAL_DEF_INST_1(34, Yield,
 XTAL_DEF_INST_0(35, Exit);
 
 /**
+* \internal
 * \brief 値テーブルから値を取り出す
 *
 * stack [] -> [value]
@@ -582,6 +615,7 @@ XTAL_DEF_INST_5(41, Send,
 );
 
 /**
+* \internal
 * \brief オブジェクトのメンバを取り出す。
 *
 * stack [object] -> [result]
@@ -592,6 +626,7 @@ XTAL_DEF_INST_2(42, Member,
 );
 
 /**
+* \internal
 * \brief オブジェクトのメンバを定義する。
 *
 * stack [object, value] -> []
@@ -620,6 +655,7 @@ XTAL_DEF_INST_1(48, PushGoto,
 XTAL_DEF_INST_0(49, PopGoto);
 
 /**
+* \internal
 * \brief 条件分岐
 *
 * stack [value] -> []
@@ -629,6 +665,7 @@ XTAL_DEF_INST_1(50, If,
 );
 
 /**
+* \internal
 * \brief 条件分岐
 *
 * stack [value] -> []
@@ -638,6 +675,7 @@ XTAL_DEF_INST_1(51, Unless,
 );
 
 /**
+* \internal
 * \brief 無条件分岐
 *
 * stack [] -> []
@@ -739,6 +777,7 @@ XTAL_DEF_INST_1(98, Range,
 );
 
 /**
+* \internal
 * \brief グローバル変数を取り出す。
 *
 * stack [] -> [value]
@@ -747,6 +786,7 @@ XTAL_DEF_INST_1(99, GlobalVariable,
         inst_u16_t, identifier_number
 );
 /**
+* \internal
 * \brief グローバル変数に設定する。
 *
 * stack [value] -> []
@@ -756,6 +796,7 @@ XTAL_DEF_INST_1(100, SetGlobalVariable,
 );
 
 /**
+* \internal
 * \brief グローバル変数を定義する。
 *
 * stack [value] -> []
@@ -810,16 +851,14 @@ XTAL_DEF_INST_0(114, Throw);
 
 XTAL_DEF_INST_0(115, ThrowUnsupportedError);
 
-XTAL_DEF_INST_0(116, ThrowUndefined);
-
-XTAL_DEF_INST_1(117, IfDebug,
+XTAL_DEF_INST_1(116, IfDebug,
 		inst_address_t, address);
 
-XTAL_DEF_INST_0(118, Assert);
+XTAL_DEF_INST_0(117, Assert);
 
-XTAL_DEF_INST_0(119, BreakPoint);
+XTAL_DEF_INST_0(118, BreakPoint);
 
-XTAL_DEF_INST_0(120, MAX);
+XTAL_DEF_INST_0(119, MAX);
 
 }
 

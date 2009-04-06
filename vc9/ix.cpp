@@ -9,7 +9,6 @@
 #include "../src/xtal/xtal_lib/xtal_errormessage.h"
 
 #include "../src/xtal/xtal_codebuilder.h"
-#include "../src/xtal/xtal_macro.h"
 
 void ix(){
 	using namespace xtal;
@@ -32,15 +31,21 @@ int main(int argc, char** argv){
 	setting.ch_code_lib = &sjis_ch_code_lib;
 
 	initialize(setting);
-	bind_error_message();
 
-	ix();
+	XTAL_PROTECT{
+		bind_error_message();
 
-	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->println(e);
+		ix();
+
+		XTAL_CATCH_EXCEPT(e){
+			stderr_stream()->println(e);
+		}
+
+		uninitialize();
 	}
-
-	uninitialize();
+	XTAL_OUT_OF_MEMORY{
+		puts("out of memory");
+	}
 
 	return 0;
 }

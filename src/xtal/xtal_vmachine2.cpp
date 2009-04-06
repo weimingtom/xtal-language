@@ -11,7 +11,6 @@ VMachine::VMachine(){
 	end_code_ = InstExit::NUMBER;
 	throw_code_ = InstThrow::NUMBER;
 	throw_unsupported_error_code_ = InstThrowUnsupportedError::NUMBER;
-	throw_undefined_code_ = InstThrowUndefined::NUMBER;
 	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
 	resume_pc_ = 0;
@@ -108,6 +107,7 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 
 const AnyPtr& VMachine::result(int_t pos){
 	const inst_t* temp;
+
 	{
 		FunFrame& f = ff();
 
@@ -134,7 +134,7 @@ const AnyPtr& VMachine::result(int_t pos){
 		f.poped_pc = temp;
 		f.called_pc = &cleanup_call_code_;
 		
-		if(type(except_[0])!=TYPE_NULL){
+		if(ap(except_[0])){
 			f.need_result_count = 0;
 			return undefined;
 		}
@@ -347,6 +347,7 @@ void VMachine::prereturn_result(const AnyPtr& v){
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	if(const AnyPtr& e = catch_except()){
 		vm->set_except(e);
+		vm->adjust_result(add_succ_or_fail_result ? 1 : 0);
 		return;
 	}
 
@@ -400,7 +401,10 @@ void VMachine::exit_fiber(){
 	yield_result_count_ = 0;
 	ff().called_pc = resume_pc_;
 	resume_pc_ = 0;
-	execute_inner(&throw_undefined_code_);
+
+	push(undefined);
+	execute_inner(&throw_code_);
+
 	reset();
 }
 

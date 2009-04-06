@@ -531,7 +531,7 @@ MultiValuePtr Class::child_object_name(const AnyPtr& a){
 StringPtr Class::object_name(){
 	if(const ClassPtr& parent = object_parent()){
 		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
-			if(raweq(myname->at(1), null)){
+			if(raweq(myname->at(1), undefined)){
 				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
 			}
 			else{

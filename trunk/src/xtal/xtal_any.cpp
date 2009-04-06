@@ -14,7 +14,6 @@ AnyPtr Any::send(const IDPtr& primary_key) const{
 /// \brief primary_key#secondary_keyメソッドを呼び出す
 AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call();
 	rawsend(vm, primary_key, secondary_key);
@@ -259,7 +258,7 @@ StringPtr Any::object_name() const{
 	// 親がいるなら、親が名前を知っている
 	if(const ClassPtr& parent = object_parent()){
 		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
-			if(raweq(myname->at(1), null)){
+			if(raweq(myname->at(1), undefined)){
 				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
 			}
 			else{

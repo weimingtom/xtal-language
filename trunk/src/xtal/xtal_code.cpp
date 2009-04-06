@@ -328,7 +328,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstMakeInstanceVariableAccessor::NUMBER){ temp = ((InstMakeInstanceVariableAccessor*)pc)->inspect(code); sz = InstMakeInstanceVariableAccessor::ISIZE; }
 		XTAL_CASE(InstThrow::NUMBER){ temp = ((InstThrow*)pc)->inspect(code); sz = InstThrow::ISIZE; }
 		XTAL_CASE(InstThrowUnsupportedError::NUMBER){ temp = ((InstThrowUnsupportedError*)pc)->inspect(code); sz = InstThrowUnsupportedError::ISIZE; }
-		XTAL_CASE(InstThrowUndefined::NUMBER){ temp = ((InstThrowUndefined*)pc)->inspect(code); sz = InstThrowUndefined::ISIZE; }
 		XTAL_CASE(InstIfDebug::NUMBER){ temp = ((InstIfDebug*)pc)->inspect(code); sz = InstIfDebug::ISIZE; }
 		XTAL_CASE(InstAssert::NUMBER){ temp = ((InstAssert*)pc)->inspect(code); sz = InstAssert::ISIZE; }
 		XTAL_CASE(InstBreakPoint::NUMBER){ temp = ((InstBreakPoint*)pc)->inspect(code); sz = InstBreakPoint::ISIZE; }

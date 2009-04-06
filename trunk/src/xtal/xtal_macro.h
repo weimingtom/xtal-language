@@ -3,7 +3,7 @@
 
 #pragma once
 
-/** @addtogroup xmacro */
+/** @addtogroup xmacro 記述を便利にするマクロ*/
 /*@{*/
 
 /**

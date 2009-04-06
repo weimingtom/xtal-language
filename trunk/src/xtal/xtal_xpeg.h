@@ -3,7 +3,12 @@
 
 #pragma once
 
-namespace xtal{ namespace xpeg{
+namespace xtal{ 
+
+/**
+* @brief xpeg namespace
+*/
+namespace xpeg{
 
 class MatchResult;
 typedef SmartPtr<MatchResult> MatchResultPtr;

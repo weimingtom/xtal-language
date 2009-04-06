@@ -9,6 +9,7 @@ namespace xtal{
 /*@{*/
 
 /**
+* \version C++
 * \brief アロケータライブラリ
 */
 class AllocatorLib{
@@ -20,6 +21,7 @@ public:
 };
 
 /**
+* \version C++
 * \brief 文字コードライブラリ
 */
 class ChCodeLib{
@@ -33,6 +35,7 @@ public:
 };
 
 /**
+* \version C++
 * \brief スレッドライブラリ
 */
 class ThreadLib{
@@ -54,6 +57,7 @@ public:
 };
 
 /**
+* \version C++
 * \brief 標準入出力ライブラリ
 */
 class StdStreamLib{
@@ -74,6 +78,7 @@ public:
 };
 
 /**
+* \version C++
 * \brief ファイルシステムライブラリ
 */
 class FilesystemLib{
@@ -100,6 +105,7 @@ public:
 };
 
 /**
+* \version C++
 * \brief 使用ライブラリの指定のための構造体
 */
 struct Setting{
@@ -116,21 +122,25 @@ struct Setting{
 };
 
 /**
+* \version C++
 * \brief Xtal実行環境を初期化する。
 */
 void initialize(const Setting& setting);
 
 /**
+* \version C++
 * \brief Xtal実行環境を破棄する。
 */
 void uninitialize();
 
 /**
+* \version C++
 * \brief 現在のカレントのXtal実行環境を取得する。
 */
 Environment* environment();
 
 /**
+* \version C++
 * \brief カレントのXtal実行環境を設定する。
 */
 void set_environment(Environment* e);
@@ -142,21 +152,27 @@ void set_environment(Environment* e);
 /*@{*/
 
 /**
+* \version C++
 * \brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
 *
 */
 void* xmalloc(size_t size);
 
 /**
+* \version C++
 * \brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
 *
 */
 void xfree(void* p, size_t size);
 
 /**
+* \version C++
 * \brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
 struct XMallocGuard{
+	/**
+	* \brief 
+	*/
 	XMallocGuard():p(0){}
 	explicit XMallocGuard(uint_t size):p(xmalloc(size)), sz(size){}
 	~XMallocGuard(){ xfree(p, sz); }
@@ -225,6 +241,7 @@ void full_gc();
 void disable_gc();
 
 /**
+* \version C++
 * \brief ガーベジコレクションを有効化する
 *
 * disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
@@ -243,16 +260,19 @@ RefCountingBase* alive_object(uint_t i);
 /*@{*/
 
 /**
+* \internal
 * \brief keyに対応するC++のクラスのクラスオブジェクトを返す。
 */
 const ClassPtr& cpp_class(CppClassSymbolData* key);
 
-/**
+/*
+* \internal
 * \brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
 /**
+* \internal
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
@@ -261,6 +281,7 @@ inline const ClassPtr& cpp_class(){
 }
 
 /**
+* \version C++
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 template<class T>
@@ -269,6 +290,7 @@ inline void set_cpp_class(const ClassPtr& cls){
 }
 
 /**
+* \version C++
 * \brief T形をxtalで扱えるクラスを取得する。
 */
 template<class T>
@@ -277,6 +299,7 @@ inline const SmartPtr<T>& cpp_singleton(){
 }
 
 /**
+* \version C++
 * \brief T形をxtalで扱えるクラスを生成し、登録する。
 */
 template<class T>
@@ -289,49 +312,52 @@ inline const SmartPtr<T>& new_cpp_singleton(){
 
 /////////////////////////////////////////////////////
 
-/** \addtogroup cache キャッシュ*/
-/*@{*/
-
 /**
+* \internal
 * \brief クラスのメンバを取り出す。
 */
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
 
 /**
+* \internal
 * \brief クラスの継承関係を調べる。
 */
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass);
 
 /**
+* \internal
 * \brief クラスのコンストラクタがキャッシュされているから調べる。
 */
 bool cache_ctor(const AnyPtr& target_class, int_t kind);
 
 /**
+* \internal
 * \brief メンバーのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_member();
 
 /**
+* \internal
 * \brief 継承関係のキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_is();
 
 /**
+* \internal
 * \brief クラスのコンストラクタのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_ctor();
 
-/*@}*/
-
 /////////////////////////////////////////////////////
 
 /**
+* \internal
 * \brief VMachineインスタンスをレンタルする。
 */
 VMachinePtr vmachine_take_over();
 
 /**
+* \internal
 * \brief VMachineインスタンスを返却する。
 */
 void vmachine_take_back(const VMachinePtr& vm);
@@ -339,68 +365,81 @@ void vmachine_take_back(const VMachinePtr& vm);
 /////////////////////////////////////////////////////
 
 /**
+* \version C++
 * \brief builtinオブジェクトを返す
 */
 const ClassPtr& builtin();
 
 /**
+* \version C++
 * \brief libオブジェクトを返す
 */
 const LibPtr& lib();
 
 /**
+* \version C++
 * \brief stdinストリームオブジェクトを返す
 */
 const StreamPtr& stdin_stream();
 
 /**
+* \version C++
 * \brief stdoutストリームオブジェクトを返す
 */
 const StreamPtr& stdout_stream();
 
 /**
+* \version C++
 * \brief stderrストリームオブジェクトを返す
 */
 const StreamPtr& stderr_stream();
 
 /**
+* \version C++
 * \brief filesystemシングルトンオブジェクトを返す
 */
 const FilesystemPtr& filesystem();
 
 
 /**
+* \version C++
 * \brief debugシングルトンオブジェクトを返す
 */
 const DebugPtr& debug();
 
 /**
+* \version C++
 * \brief デバッグ機能を有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 void enable_debug();
 
 /**
+* \version C++
 * \brief デバッグ機能を無効にする
 */
 void disable_debug();
 
 /**
+* \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str, uint_t data_size);
 
 /**
+* \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str);
 
 /**
+* \internal
 * \brief 文字列リテラルをインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str, IdentifierData* iddata);
 
 /**
+* \internal
 * \brief 文字列リテラルをインターン済み文字列に変換する
 */
 inline const IDPtr& intern(const StringLiteral& str){
@@ -413,11 +452,13 @@ inline const IDPtr& intern(const StringLiteral& str){
 AnyPtr interned_strings();
 
 /**
+* \internal
 * \brief 環境をロックする
 */
 void xlock();
 
 /**
+* \internal
 * \brief 環境をアンロックする
 */
 void xunlock();
@@ -441,6 +482,7 @@ StdStreamLib* std_stream_lib();
 FilesystemLib* filesystem_lib();
 
 /**
+* \internal
 * \brief VMachinePtrオブジェクトを返す
 *
 * グローバルなVMachinePtrオブジェクトを返す。
@@ -449,11 +491,13 @@ FilesystemLib* filesystem_lib();
 const VMachinePtr& vmachine();
 
 /**
+* \internal
 * \brief テキストマップを返す
 */
 const MapPtr& text_map();
 
 /**
+* \internal
 * \brief 先頭バイトを見て、そのマルチバイト文字が何文字かを調べる。
 *
 * マイナスの値が返された場合、最低文字数を返す。
@@ -462,6 +506,7 @@ const MapPtr& text_map();
 int_t ch_len(char_t lead);
 
 /**
+* \internal
 * \brief マルチバイト文字が何文字かを調べる。
 *
 * int_t ch_len(char_t lead)が呼ばれた後、マイナスの値を返した場合に続けて呼ぶ。
@@ -469,8 +514,8 @@ int_t ch_len(char_t lead);
 */
 int_t ch_len2(const char_t* str);
 
-
 /**
+* \internal
 * \brief 一つ先の文字を返す
 *
 * 例えば a を渡した場合、b が返る
@@ -478,6 +523,7 @@ int_t ch_len2(const char_t* str);
 StringPtr ch_inc(const char_t* data, int_t data_size);
 
 /**
+* \internal
 * \brief 文字の大小判定
 *
 * 負の値 a の文字の方がbの文字より小さい
@@ -487,7 +533,8 @@ StringPtr ch_inc(const char_t* data, int_t data_size);
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
 /**
-* @biref 演算子の名前をあらわす文字列の配列を返す
+* \internal
+* \brief 演算子の名前をあらわす文字列の配列を返す
 */
 const IDPtr* id_op_list();
 
@@ -496,6 +543,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 #ifndef XTAL_NO_PARSER
 
 /**
+* \version C++ Xtal
 * \brief file_nameファイルをコンパイルする。
 *
 * \param file_name Xtalスクリプトが記述されたファイルの名前
@@ -505,6 +553,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 CodePtr compile_file(const StringPtr& file_name);
 
 /**
+* \version C++ Xtal
 * \brief source文字列をコンパイルする。
 *
 * \param source Xtalスクリプトが記述された文字列
@@ -514,6 +563,7 @@ CodePtr compile_file(const StringPtr& file_name);
 CodePtr compile(const StringPtr& source);
 
 /**
+* \version C++ Xtal
 * \brief file_nameファイルをコンパイルして実行する。
 *
 * \param file_name Xtalスクリプトが記述されたファイルの名前

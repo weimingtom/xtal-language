@@ -3,6 +3,13 @@ inherit(xpeg);
 
 class TestXpeg{
 
+	bos_alpha0_eos#Test{
+		pattern: bos >> alpha*0 >> eos;
+		assert "ttestt".match(pattern);
+		assert "aewrrrrrrrrrrrrrrrrweraweaer".match(pattern);
+		assert !"aewrrrrrrrrrr_rrrrrrweraweaer".match(pattern);
+	}
+
 	mail#Test{		
 		bs: "\\";
 		dq: "\"";

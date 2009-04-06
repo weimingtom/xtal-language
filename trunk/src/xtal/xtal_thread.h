@@ -8,20 +8,42 @@ namespace xtal{
 class ThreadSpace;
 
 /**
+* \ingroup Xtal Cpp
 * \brief スレッド
 */
 class Thread : public Base{
 public:
 
+	/**
+	* \brief スレッドオブジェクトを生成する
+	*/
 	Thread();
 
 	~Thread();
 
 public:
-	
-	void start(const AnyPtr& a);
 
+	/**
+	* \brief スレッドを開始する
+	*/
+	void start(const AnyPtr& callback);
+
+	/**
+	* \brief スレッドが終わるまで待機する
+	*/
 	void join();
+
+public:
+
+	/**
+	* \brief スレッドを切り替える
+	*/
+	static void yield();
+	
+	/**
+	* \brief カレントスレッドをsec秒眠らせる
+	*/
+	static void sleep(float_t sec);
 
 protected:
 
@@ -39,17 +61,27 @@ protected:
 };
 
 /**
+* \ingroup Xtal Cpp
 * \brief ミューテックス
 */
 class Mutex : public Base{
 public:
 
+	/**
+	* \brief ミューテックスオブジェクトを生成する
+	*/
 	Mutex();
 
 	~Mutex();
 
+	/**
+	* \brief ロックする
+	*/
 	void lock();
 
+	/**
+	* \brief アンロックする
+	*/
 	void unlock();
 
 	void rawlock();
@@ -60,7 +92,6 @@ private:
 
 void yield_thread();
 void sleep_thread(float_t sec);
-
 
 }
 

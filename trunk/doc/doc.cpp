@@ -126,6 +126,12 @@ fun foo(a, b){
 foo(15, 5).p; //=> 10
 \endcode
 
+\section seclambda ラムダ
+\code
+lambda: |a, b| a + b;
+lambda(10, 20); //=> 30
+\endcode
+
 \section secclass クラス
 \code
 class Bar{
@@ -1313,6 +1319,27 @@ for(i: 0; i<3; ++i){
 */
     
 /** \page basic_operator 基本的な演算子
+
+\section pos 単項+演算子
+\code
++a
+\endcode
+これは、a.op_pos()の省略形です。\n
+
+\section pos 単項-演算子
+\code
+-a
+\endcode
+符号を反転します。\n
+これは、a.op_neg()の省略形です。\n
+
+\section pos 単項~演算子
+\code
+-a
+\endcode
+ビットを反転します。\n
+これは、a.op_com()の省略形です。\n
+
 \section add 加算演算子
 \code
 a + b
@@ -1400,6 +1427,12 @@ aをbビット論理的右シフトします。\n
 
     
 /** \page cmp_operator 比較演算子
+\section pos 単項!演算子
+\code
+-a
+\endcode
+真値をfalseに、偽値をtrueに変換します。\n
+
 \section eq ==演算子
 \code
 a == b
@@ -1600,6 +1633,21 @@ f.bar#B; //=> "bar#A"
 */
     
 /** \page etc_operator その他の演算子
+
+\section 要素取得演算子
+\code
+a[index]
+\endcode
+indexに対応する要素を返します。\n
+これは、a.op_at(index)の省略形です。\n
+
+\section 要素設定演算子
+\code
+a[index] = value
+\endcode
+indexに対応する要素を設定します。\n
+これは、a.op_set_at(index, value)の省略形です。\n
+
 \section 配列化演算子
 \code
 a[]

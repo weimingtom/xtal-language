@@ -2,31 +2,31 @@
 
 namespace xtal{
 
-void expand_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current, int addsize){
-	uint_t size = (uint_t)(end-begin);
+void expand_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current, int addsize){
+	uint_t size = (uint_t)(*end-*begin);
 	uint_t newsize = size+addsize+size;
 	void** newbegin=(void**)xmalloc(sizeof(void*)*newsize);
-	std::memcpy(newbegin, begin, sizeof(void*)*size);
-	end = newbegin+newsize;
-	current = newbegin+(current-begin);
-	xfree(begin, sizeof(void*)*size);
-	begin = newbegin;	
+	std::memcpy(newbegin, *begin, sizeof(void*)*size);
+	*end = newbegin+newsize;
+	*current = newbegin+(*current-*begin);
+	xfree(*begin, sizeof(void*)*size);
+	*begin = newbegin;	
 }
 
-void fit_simple_dynamic_pointer_array(void**& begin, void**& end, void**& current){
-	uint_t size = (uint_t)(end-begin);
-	uint_t newsize = (uint_t)(current-begin);
+void fit_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current){
+	uint_t size = (uint_t)(*end-*begin);
+	uint_t newsize = (uint_t)(*current-*begin);
 	if(newsize){
 		void** newbegin=(void**)xmalloc(sizeof(void*)*newsize);
-		std::memcpy(newbegin, begin, sizeof(void*)*newsize);
-		end = newbegin+newsize;
-		current = newbegin+newsize;
-		xfree(begin, sizeof(void*)*size);
-		begin = newbegin;	
+		std::memcpy(newbegin, *begin, sizeof(void*)*newsize);
+		*end = newbegin+newsize;
+		*current = newbegin+newsize;
+		xfree(*begin, sizeof(void*)*size);
+		*begin = newbegin;	
 	}
 	else{
-		xfree(begin, sizeof(void*)*size);
-		begin = end = current = 0;
+		xfree(*begin, sizeof(void*)*size);
+		*begin = *end = *current = 0;
 	}
 }
 

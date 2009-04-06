@@ -3,17 +3,30 @@
 
 #pragma once
 
-//#define XTAL_USE_COMPILED_EMB
+/**
+* @brief xtal namespace
+*/
+namespace xtal{
+enum{
+	VERSION1 = 0,
+	VERSION2 = 9,
+	VERSION3 = 9,
+	VERSION4 = 9
+};
+}
 
+/**
+* \defgroup Xtal Xtalから使えるクラスや関数
+*/
+
+/**
+* \defgroup Cpp C++から使えるクラスや関数
+*/
+
+//#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
-
-/**
-* \brief C++例外on
-*/
-//#define XTAL_USE_CPP_EXCEPTIONS
-
 
 #if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
 #include <pthread.h>
@@ -390,14 +403,6 @@ struct SelectType{
 	>::type float_t;
 };
 
-
-enum{
-	VERSION1 = 0,
-	VERSION2 = 9,
-	VERSION3 = 9,
-	VERSION4 = 1
-};
-
 /// 1-byte uint
 typedef SelectType<1>::uint_t u8;
 
@@ -583,10 +588,29 @@ enum AccessibilityKind{
 * \brief ブレークポイントの種類
 */
 enum BreakPointKind{
+	/**
+	* \brief ブレークポイント
+	*/
 	BREAKPOINT,
+
+	/**
+	* \brief 関数呼び出し時ブレークポイント
+	*/
 	BREAKPOINT_CALL,
+
+	/**
+	* \brief 関数リターン時ブレークポイント
+	*/
 	BREAKPOINT_RETURN,
+
+	/**
+	* \brief 例外創出時ブレークポイント
+	*/
 	BREAKPOINT_THROW,
+
+	/**
+	* \brief 表明ブレークポイント
+	*/
 	BREAKPOINT_ASSERT
 };
 
@@ -861,7 +885,10 @@ struct Identifier{
 template<class T>
 IdentifierData Identifier<T>::value;
 
-#define XTAL_ID(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
+#define XTAL_DECL_ID(x) class xtal_id_##x
+#define XTAL_ID2(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
+
+#define XTAL_ID(x) ::xtal::intern(XTAL_STRING(#x))
 
 }
 

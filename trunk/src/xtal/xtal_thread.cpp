@@ -48,6 +48,14 @@ void Thread::begin_thread(){
 	unregister_thread(env_);
 }
 
+void Thread::yield(){
+	yield_thread();
+}
+	
+void Thread::sleep(float_t sec){
+	sleep_thread(sec);
+}
+
 Mutex::Mutex(){
 	impl_ = thread_lib()->new_mutex();
 }

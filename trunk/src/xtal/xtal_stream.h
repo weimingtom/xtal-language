@@ -6,6 +6,7 @@
 namespace xtal{
 
 /**
+* \ingroup Xtal Cpp
 * \brief ストリーム
 */
 class Stream : public Base{
@@ -459,6 +460,10 @@ protected:
 	uint_t pos_;
 };
 
+/**
+* \ingroup Xtal Cpp
+* \biref メモリーストリーム
+*/
 class MemoryStream : public PointerStream{
 public:
 
@@ -487,6 +492,10 @@ protected:
 	uint_t capa_;
 };
 
+/**
+* \ingroup Xtal Cpp
+* \biref 文字列ストリーム
+*/
 class StringStream : public PointerStream{
 public:
 
@@ -506,6 +515,10 @@ private:
 	StringPtr str_;
 };
 
+/**
+* \ingroup Xtal Cpp
+* \biref ファイルストリーム
+*/
 class FileStream : public Stream{
 public:
 
@@ -583,6 +596,7 @@ public:
 private:
 	void* impl_;
 };
+
 
 class StdinStream : public Stream{
 public:

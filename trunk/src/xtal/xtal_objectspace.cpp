@@ -187,13 +187,13 @@ void ObjectSpace::uninitialize(){
 		RefCountingBase** begin = *it;
 		RefCountingBase** current = *it;
 		RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
-		fit_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current);
+		fit_simple_dynamic_pointer_array(&begin, &end, &current);
 	}
 
 	objects_list_current_ = objects_list_begin_;
 
-	fit_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_);
-	fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
+	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 
 }
 
@@ -207,12 +207,12 @@ void ObjectSpace::disable_gc(){
 	
 void ObjectSpace::expand_objects_list(){
 	if(objects_list_current_==objects_list_end_){
-		expand_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_, 1);
+		expand_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_, 1);
 		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
 			RefCountingBase** begin = 0;
 			RefCountingBase** current = 0;
 			RefCountingBase** end = 0;
-			expand_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current, OBJECTS_ALLOCATE_SIZE);
+			expand_simple_dynamic_pointer_array(&begin, &end, &current, OBJECTS_ALLOCATE_SIZE);
 			*it = begin;
 		}
 	}
@@ -475,9 +475,9 @@ void ObjectSpace::full_gc(){
 			RefCountingBase** begin = *it;
 			RefCountingBase** current = *it;
 			RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
-			fit_simple_dynamic_pointer_array((void**&)begin, (void**&)end, (void**&)current);
+			fit_simple_dynamic_pointer_array(&begin, &end, &current);
 		}
-		fit_simple_dynamic_pointer_array((void**&)objects_list_begin_, (void**&)objects_list_end_, (void**&)objects_list_current_);
+		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 	}
 }
 
@@ -498,7 +498,7 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 
 void ObjectSpace::register_gc_observer(GCObserver* p){
 	if(gcobservers_current_==gcobservers_end_){
-		expand_simple_dynamic_pointer_array((void**&)gcobservers_begin_, (void**&)gcobservers_end_, (void**&)gcobservers_current_, 64);
+		expand_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_, 64);
 	}
 	*gcobservers_current_++ = p;
 }

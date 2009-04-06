@@ -5,7 +5,8 @@
 
 namespace xtal{
 	
-/*
+/**
+* \internal
 * brief cast関数、as関数の戻り値の型を決定するためのヘルパーテンプレートクラス
 *
 * ほとんどの場合、CastResult<T>::typeはT自身を返す。
@@ -263,10 +264,33 @@ XTAL_CAST_HELPER(long double, Float);
 
 //////////////////////////////////////////////////////////////////////////////
 
-/** @addtogroup cast */
+/** @addtogroup cast 型キャスト*/
 /*@{*/
 
 /**
+* \version C++
+* \brief SmartPtr<T>型に変換する。
+*
+* Tに変換できない場合xtal::nullを返す。
+*/
+template<class T>
+inline const SmartPtr<T>&
+ptr_cast(const AnyPtr& a){
+	return CastHelperHelper<const SmartPtr<T>&>::cast(a);
+}
+
+/**
+* \version C++
+* \brief SmartPtr<T>型に、実際の型がどうであるかを無視して強制変換する。
+*/
+template<class T>
+inline const SmartPtr<T>&
+unchecked_ptr_cast(const AnyPtr& a){
+	return *(const SmartPtr<T>*)&a;
+}
+
+/**
+* \version C++
 * \brief T型に変換する。
 *
 * Tに変換できない場合、
@@ -281,6 +305,7 @@ cast(const AnyPtr& a){
 }
 
 /**
+* \version C++
 * \brief T型に変換できるか調べる。
 *
 */
@@ -290,6 +315,7 @@ inline bool can_cast(const AnyPtr& a){
 }
 
 /**
+* \version C++
 * \brief T型にチェック無しで変換する。
 *
 */
@@ -297,26 +323,6 @@ template<class T>
 inline typename CastResult<T>::type 
 unchecked_cast(const AnyPtr& a){
 	return CastHelperHelper<T>::unchecked_cast(a);
-}
-
-/**
-* \brief SmartPtr<T>型に変換する。
-*
-* Tに変換できない場合xtal::nullを返す。
-*/
-template<class T>
-inline const SmartPtr<T>&
-ptr_cast(const AnyPtr& a){
-	return CastHelperHelper<const SmartPtr<T>&>::cast(a);
-}
-
-/**
-* \brief SmartPtr<T>型に、実際の型がどうであるかを無視して強制変換する。
-*/
-template<class T>
-inline const SmartPtr<T>&
-unchecked_ptr_cast(const AnyPtr& a){
-	return *(const SmartPtr<T>*)&a;
 }
 
 /*@}*/

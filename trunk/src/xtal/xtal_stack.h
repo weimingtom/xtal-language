@@ -11,19 +11,20 @@ void* stack_allocate(size_t size);
 
 void stack_deallocate(void* p, size_t size);
 
-/*
-* VMachineクラスが使う色々なスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
+/**
+* \internal
+* VMachine�N���X���g���F�X�ȃX�^�b�N�p�ɁA����̑���̎��s���x���d�����Ď��������X�^�b�N�R���e�i�B
 *
-* 速度を稼ぐため、capacity分のオブジェクトは常に生成された状態となっている。
-* sizeが減ったり増えたりしたからといって、コンストラクタ、デストラクタを呼んだりはしない。
-* そのため、pop関数はポップされたオブジェクトの参照を返しているが、これは安全である。
+* ���x���҂����߁Acapacity���̃I�u�W�F�N�g�͏�ɐ������ꂽ��ԂƂȂ��Ă���B
+* size���������葝�����肵������Ƃ����āA�R���X�g���N�^�A�f�X�g���N�^���Ă񂾂�͂��Ȃ��B
+* ���̂��߁Apop�֐��̓|�b�v���ꂽ�I�u�W�F�N�g�̎Q�Ƃ�Ԃ��Ă��邪�A����͈��S�ł���B
 */
 template<class T>
 class FastStack{
 
-	T* begin_; // 確保したメモリの先頭の次を指す。
-	T* end_; // 確保したメモリの一番最後の次を指す
-	T* current_; // スタックトップの要素を指す
+	T* begin_; // �m�ۂ����������̐擪�̎����w���B
+	T* end_; // �m�ۂ����������̈�ԍŌ�̎����w��
+	T* current_; // �X�^�b�N�g�b�v�̗v�f���w��
 
 private:
 
@@ -340,14 +341,14 @@ void visit_members(Visitor& m, const FastStack<T>& value){
 }
 
 /*
-* POD専用に書き下ろしたスタックのベース部分
+* POD��p�ɏ������낵���X�^�b�N�̃x�[�X����
 */
 class PODStackBase{
 protected:
 
-	void* begin_; // 確保したメモリの先頭の次を指す。
-	void* end_; // 確保したメモリの一番最後の次を指す
-	void* current_; // スタックトップの要素を指す
+	void* begin_; // �m�ۂ����������̐擪�̎����w���B
+	void* end_; // �m�ۂ����������̈�ԍŌ�̎����w��
+	void* current_; // �X�^�b�N�g�b�v�̗v�f���w��
 	int one_size_;
 
 private:
@@ -499,8 +500,8 @@ public:
 };
 
 /*
-* POD専用に書き下ろしたスタック
-* TをPOD以外にすると未定義の動作となる
+* POD��p�ɏ������낵���X�^�b�N
+* T��POD�ȊO�ɂ���Ɩ���`�̓���ƂȂ�
 */
 template<class T>
 class PODStack{
@@ -555,7 +556,7 @@ public:
 };
 
 /*
-* 非PODもOKなスタックのベース
+* ��POD��OK�ȃX�^�b�N�̃x�[�X
 */
 class StackBase{
 	PODStackBase impl_;
@@ -624,8 +625,8 @@ public:
 };
 
 /*
-* 非PODもOKなスタック
-* コードの複製が抑えられる分、速度が遅い
+* ��POD��OK�ȃX�^�b�N
+* �R�[�h�̕������}�����镪�A���x���x��
 */
 template<class T>
 class Stack{
@@ -674,8 +675,8 @@ public:
 };
 
 /*
-* スタックを用いて配列を作る。
-* 実装を再利用してコードの膨張を押さえるための策
+* �X�^�b�N��p���Ĕz������B
+* �������ė��p���ăR�[�h�̖c�����������邽�߂̍�
 */
 template<class T, class TStack = Stack<T> >
 class ArrayList{

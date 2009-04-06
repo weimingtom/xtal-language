@@ -587,7 +587,8 @@ private:
 	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0);
 	const inst_t* inner_send_from_stack_q(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget, int_t na0, int_t na1);
 
-	const inst_t* push_except();
+	const inst_t* push_except(const inst_t* pc);
+	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
 
 	void set_local_variable_outer(uint_t pos, const Any& value);
 
@@ -733,7 +734,6 @@ public:
 	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunThrowUnsupportedError(const inst_t* pc);
-	const inst_t* FunThrowUndefined(const inst_t* pc);
 	const inst_t* FunIfDebug(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
 	const inst_t* FunBreakPoint(const inst_t* pc);
@@ -764,12 +764,13 @@ private:
 	inst_t end_code_;
 	inst_t throw_code_;
 	inst_t throw_unsupported_error_code_;
-	inst_t throw_undefined_code_;
 	inst_t check_unsupported_code_;
 	inst_t cleanup_call_code_;
 
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
+
+	const inst_t* throw_pc_;
 
 	const IDPtr* id_;
 

@@ -2689,6 +2689,10 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_MEMBER){
 			XTAL_CB_DO_EXPR(term, e->member_term());
 			XTAL_CB_DO_EXPR(ns, e->member_ns());
+
+			if(raweq(ns, null)){
+				ns = undefined;
+			}
 		
 			if(ptr_cast<Expr>(e->member_name())){
 				return undefined;

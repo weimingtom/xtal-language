@@ -6,6 +6,7 @@
 #include "xtal_threadspace.h"
 #include "xtal_cache.h"
 #include "xtal_codebuilder.h"
+#include "xtal_filesystem.h"
 
 int used_memory = 0;
 
@@ -124,9 +125,6 @@ public:
 	MemberCacheTable member_cache_table_;
 	IsCacheTable is_cache_table_;
 	CtorCacheTable ctor_cache_table_;
-
-	FilesystemPtr filesystem_;
-	DebugPtr debug_;
 
 	ClassPtr builtin_;
 	LibPtr lib_;
@@ -322,10 +320,7 @@ void Environment::initialize(const Setting& setting){
 
 	bind();
 
-	filesystem_ = new_cpp_singleton<Filesystem>();
-	filesystem_->initialize(setting_.filesystem_lib);
-
-	builtin()->def(Xid(filesystem), filesystem_);
+	builtin()->def(Xid(filesystem), cpp_class<filesystem::Filesystem>());
 
 	thread_space_.initialize(setting_.thread_lib);
 	
@@ -341,8 +336,7 @@ void Environment::initialize(const Setting& setting){
 	builtin()->def(Xid(stdout), stdout_);
 	builtin()->def(Xid(stderr), stderr_);
 
-	debug_ = new_cpp_singleton<Debug>();
-	builtin()->def(Xid(debug), debug_);
+	builtin()->def(Xid(debug), cpp_class<debug::Debug>());
 
 	initialize_math();
 	initialize_xpeg();
@@ -362,13 +356,11 @@ void Environment::uninitialize(){
 	lib_ = null;
 	vm_list_ = null;
 	nfa_map_ = null;
-	filesystem_ = null;
 
 	stdin_ = null;
 	stdout_ = null;
 	stderr_ = null;
 	text_map_ = null;
-	debug_ = null;
 
 	string_space_.uninitialize();
 
@@ -440,8 +432,8 @@ uint_t alive_object_count(){
 	return environment_->object_space_.alive_object_count();
 }
 
-RefCountingBase* alive_object(uint_t i){
-	return environment_->object_space_.alive_object(i);
+AnyPtr alive_object(uint_t i){
+	return to_smartptr(environment_->object_space_.alive_object(i));
 }
 
 
@@ -451,6 +443,14 @@ const ClassPtr& cpp_class(CppClassSymbolData* key){
 
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
 	return environment_->object_space_.set_cpp_class(cls, key);
+}
+
+void* cpp_var(CppVarSymbolData* key){
+	return environment_->object_space_.cpp_var(key);
+}
+
+void set_cpp_var(void* p, void (*deleter)(void*), CppVarSymbolData* key){
+	environment_->object_space_.set_cpp_var(p, deleter, key);
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
@@ -538,14 +538,6 @@ StdStreamLib* std_stream_lib(){
 
 FilesystemLib* filesystem_lib(){
 	return environment_->setting_.filesystem_lib;
-}
-
-const FilesystemPtr& filesystem(){
-	return environment_->filesystem_;
-}
-
-const DebugPtr& debug(){
-	return environment_->debug_;
 }
 
 const StreamPtr& stdin_stream(){

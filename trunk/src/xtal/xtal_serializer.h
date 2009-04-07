@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_serializer.h
+* \brief src/xtal/xtal_serializer.h
+*/
+
 #ifndef XTAL_SERIALIZER_H_INCLUDE_GUARD
 #define XTAL_SERIALIZER_H_INCLUDE_GUARD
 

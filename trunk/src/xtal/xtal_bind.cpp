@@ -1145,15 +1145,42 @@ XTAL_PREBIND(FileStream){
 XTAL_BIND(FileStream){
 }
 
-XTAL_BIND(Debug){
-	it->def_singleton_method(Xid(break_point_hook), &Debug::break_point_hook);
-	it->def_singleton_method(Xid(call_hook), &Debug::call_hook);
-	it->def_singleton_method(Xid(return_hook), &Debug::return_hook);
-	it->def_singleton_method(Xid(throw_hook), &Debug::throw_hook);
-	it->def_singleton_method(Xid(set_break_point_hook), &Debug::set_break_point_hook);
-	it->def_singleton_method(Xid(set_call_hook), &Debug::set_call_hook);
-	it->def_singleton_method(Xid(set_return_hook), &Debug::set_return_hook);
-	it->def_singleton_method(Xid(set_throw_hook), &Debug::set_throw_hook);
+XTAL_BIND(debug::Debug){
+	it->def_fun(Xid(enable), &debug::enable);
+	it->def_fun(Xid(disable), &debug::disable);
+	it->def_fun(Xid(is_enabled), &debug::is_enabled);
+
+	it->def_fun(Xid(break_point_hook), &debug::break_point_hook);
+	it->def_fun(Xid(call_hook), &debug::call_hook);
+	it->def_fun(Xid(return_hook), &debug::return_hook);
+	it->def_fun(Xid(throw_hook), &debug::throw_hook);
+	it->def_fun(Xid(set_break_point_hook), &debug::set_break_point_hook);
+	it->def_fun(Xid(set_call_hook), &debug::set_call_hook);
+	it->def_fun(Xid(set_return_hook), &debug::set_return_hook);
+	it->def_fun(Xid(set_throw_hook), &debug::set_throw_hook);
+
+	Xemb((
+debug::scope: singleton{
+	op_call{
+		return this;
+	}
+
+	block_first{
+		debug::enable();
+		return this;
+	}
+
+	block_next{
+		debug::disable();
+		return null;
+	}
+
+	block_break{
+		debug::disable();
+		return null;
+	}
+}
+	),"");
 }
 
 XTAL_PREBIND(Iterable){
@@ -1713,19 +1740,19 @@ XTAL_PREBIND(CompileError){
 	it->inherit(cpp_class<StandardError>());
 }
 
-XTAL_PREBIND(Entries){
+XTAL_PREBIND(filesystem::Entries){
 	it->inherit(cpp_class<Iterator>());
 }
 
-XTAL_BIND(Entries){
-	it->def_method(Xid(block_next), &Entries::block_next);
-	it->def_method(Xid(block_break), &Entries::block_break);
+XTAL_BIND(filesystem::Entries){
+	it->def_method(Xid(block_next), &filesystem::Entries::block_next);
+	it->def_method(Xid(block_break), &filesystem::Entries::block_break);
 }
 
-XTAL_BIND(Filesystem){
-	it->def_singleton_method(Xid(open), &Filesystem::open);
-	it->def_singleton_method(Xid(entries), &Filesystem::entries);
-	it->def_singleton_method(Xid(is_directory), &Filesystem::is_directory);
+XTAL_BIND(filesystem::Filesystem){
+	it->def_fun(Xid(open), &filesystem::open);
+	it->def_fun(Xid(entries), &filesystem::entries);
+	it->def_fun(Xid(is_directory), &filesystem::is_directory);
 }
 
 void bind(){
@@ -1793,9 +1820,6 @@ void bind(){
 	builtin()->def(Xid(Format), cpp_class<Format>());
 	builtin()->def(Xid(Text), cpp_class<Text>());
 
-	builtin()->def_fun(Xid(enable_debug), &enable_debug);
-	builtin()->def_fun(Xid(disable_debug), &disable_debug);
-
 	builtin()->def_fun(Xid(assign_text_map), &assign_text_map);
 	builtin()->def_fun(Xid(append_text_map), &append_text_map);
 	builtin()->def_fun(Xid(format), &format);
@@ -1844,27 +1868,6 @@ builtin::printf: fun(format_string, ...){
 builtin::load: fun(file_name, ...){
 	code: compile_file(file_name);
 	return code(...);
-}
-
-builtin::debug_scope: singleton{
-	op_call{
-		return this;
-	}
-
-	block_first{
-		enable_debug();
-		return this;
-	}
-
-	block_next{
-		disable_debug();
-		return null;
-	}
-
-	block_break{
-		disable_debug();
-		return null;
-	}
 }
 
 builtin::chain: fun(first, ...){

@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_allocator.h
+* \brief src/xtal/xtal_allocator.h
+*/
+
 #ifndef XTAL_ALLOCATOR_H_INCLUDE_GUARD
 #define XTAL_ALLOCATOR_H_INCLUDE_GUARD
 

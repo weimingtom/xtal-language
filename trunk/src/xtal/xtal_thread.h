@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_thread.h
+* \brief src/xtal/xtal_thread.h
+*/
+
 #ifndef XTAL_THREAD_H_INCLUDE_GUARD
 #define XTAL_THREAD_H_INCLUDE_GUARD
 

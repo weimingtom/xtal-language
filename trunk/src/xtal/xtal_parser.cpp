@@ -168,7 +168,6 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
 	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
 	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
-	keyword_map_->set_at(Xid(debug), (int_t)Token::KEYWORD_DEBUG);
 	keyword_map_->set_at(Xid(public), (int_t)Token::KEYWORD_PUBLIC);
 	keyword_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
 	keyword_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
@@ -1143,7 +1142,6 @@ bool Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_TRUE){ eb_.splice(EXPR_TRUE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_FALSE){ eb_.splice(EXPR_FALSE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_THIS){ eb_.splice(EXPR_THIS, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_DEBUG){ eb_.splice(EXPR_DEBUG, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ eb_.splice(EXPR_CURRENT_CONTEXT, 0); return true; }
 
 				XTAL_CASE(Token::KEYWORD_DOFUN){ 
@@ -1358,7 +1356,7 @@ void Parser::parse_each(){
 	eb_.splice(EXPR_LVAR, 1);
 	params->push_back(eb_.pop());
 
-	if(eat('|')){ // ãƒ–ãƒ­ãƒƒã‚¯ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+	if(eat('|')){ // ƒuƒƒbƒNƒpƒ‰ƒ[ƒ^
 		for(;;){
 			const Token& ch = lexer_peek();
 			if(ch.type()==ch.TYPE_IDENTIFIER){
@@ -1387,13 +1385,13 @@ void Parser::parse_each(){
 	ExprPtr scope = xnew<Expr>();
 	
 	{
-		eb_.push(params); // å¤šé‡ä»£å…¥ã®å·¦è¾º
+		eb_.push(params); // ‘½d‘ã“ü‚Ì¶•Ó
 
 		eb_.push(lhs);
 		eb_.push(Xid(block_first));
 		eb_.push(null);
 		eb_.splice(EXPR_PROPERTY, 3);
-		eb_.splice(0, 1); // å¤šé‡ä»£å…¥ã®å³è¾º
+		eb_.splice(0, 1); // ‘½d‘ã“ü‚Ì‰E•Ó
 
 		eb_.splice(EXPR_MDEFINE, 2);
 
@@ -1515,7 +1513,7 @@ void Parser::parse_while(){
 
 bool Parser::parse_loop(){
 	if(parse_var()){
-		const Token& ch = lexer_read(); // :ã®æ¬¡ã‚’èª­ã¿å–ã‚‹
+		const Token& ch = lexer_read(); // :‚ÌŸ‚ğ“Ç‚İæ‚é
 		if(ch.type()==Token::TYPE_KEYWORD){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
@@ -1868,13 +1866,13 @@ void Parser::parse_class(int_t kind){
 	expect('{');
 	for(;;){
 		
-		if(eat('#') || eat(Token::KEYWORD_PROTECTED)){// å¯è§¦æ€§ protected æŒ‡å®š
+		if(eat('#') || eat(Token::KEYWORD_PROTECTED)){// ‰ÂG« protected w’è
 			eb_.push(KIND_PROTECTED);
 		}
-		else if(eat('-') || eat(Token::KEYWORD_PRIVATE)){// å¯è§¦æ€§ private æŒ‡å®š
+		else if(eat('-') || eat(Token::KEYWORD_PRIVATE)){// ‰ÂG« private w’è
 			eb_.push(KIND_PRIVATE);
 		}
-		else if(eat('+') || eat(Token::KEYWORD_PUBLIC)){// å¯è§¦æ€§ public æŒ‡å®š
+		else if(eat('+') || eat(Token::KEYWORD_PUBLIC)){// ‰ÂG« public w’è
 			eb_.push(KIND_PUBLIC);
 		}
 		else{
@@ -1916,7 +1914,7 @@ void Parser::parse_class(int_t kind){
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
 			eat(';');
 		}
-		else if(parse_identifier()){ // ãƒ¡ãƒ³ãƒå®šç¾©
+		else if(parse_identifier()){ // ƒƒ“ƒo’è‹`
 			parse_secondary_key();
 
 			if(eat(':')){
@@ -1929,9 +1927,9 @@ void Parser::parse_class(int_t kind){
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
 			eat(';');
 		}
-		else if(eat('_')){// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹å¤‰æ•°å®šç¾©
+		else if(eat('_')){// ƒCƒ“ƒXƒ^ƒ“ƒX•Ï”’è‹`
 			if(parse_identifier()){
-				if(eat(':')){ // åˆæœŸå€¤è¾¼ã¿
+				if(eat(':')){ // ‰Šú’l‚İ
 					expect_parse_expr();
 				}
 				else{
@@ -2083,7 +2081,7 @@ void Parser::parse_fun(int_t kind){
 }
 
 void Parser::parse_call(){
-	// é †ç•ªå¼•æ•°ã®ãƒ«ãƒ¼ãƒ—
+	// ‡”Ôˆø”‚Ìƒ‹[ƒv
 	ExprBuilder::State state = eb_.begin();
 	for(;;){
 		if(eat(c3('.','.','.'))){ // extendable

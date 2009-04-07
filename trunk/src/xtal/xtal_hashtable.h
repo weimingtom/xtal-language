@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_hashtable.h
+* \brief src/xtal/xtal_hashtable.h
+*/
+
 #ifndef XTAL_HASHTABLE_H_INCLUDE_GUARD
 #define XTAL_HASHTABLE_H_INCLUDE_GUARD
 

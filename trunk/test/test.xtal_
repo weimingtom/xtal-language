@@ -18,7 +18,7 @@ lib::test: singleton{
 	}
 	
 	run_file: fun(file){
-		debug_scope{
+		debug::scope{
 			printf("file %s\n", file);
 			
 			code: compile_file(file);

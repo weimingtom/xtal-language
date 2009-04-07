@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_anyinline.h
+* \brief src/xtal/xtal_anyinline.h
+*/
+
 #ifndef XTAL_ANYINLINE_H_INCLUDE_GUARD
 #define XTAL_ANYINLINE_H_INCLUDE_GUARD
 

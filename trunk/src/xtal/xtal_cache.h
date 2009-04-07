@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_cache.h
+* \brief src/xtal/xtal_cache.h
+*/
+
 #ifndef XTAL_CACHE_H_INCLUDE_GUARD
 #define XTAL_CACHE_H_INCLUDE_GUARD
 #pragma once

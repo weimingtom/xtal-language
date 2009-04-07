@@ -130,7 +130,7 @@ void Class::overwrite(const ClassPtr& p){
 		}
 
 		for(uint_t i=0; i<alive_object_count(); ++i){
-			AnyPtr obj = to_smartptr(alive_object(i));
+			AnyPtr obj = alive_object(i);
 			if(type(obj)==TYPE_BASE){
 				if(obj->is(to_smartptr(this))){
 					AnyPtr data = obj->serial_save(to_smartptr(this));

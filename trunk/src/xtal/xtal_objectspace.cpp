@@ -127,6 +127,8 @@ void ObjectSpace::initialize(){
 		register_gc(p);
 	}
 
+	//////////////////////////////////////////////////
+
 	for(uint_t i=0; i<class_table_.size(); ++i){
 		if(!class_table_[i]){
 			class_table_[i] = xnew<Class>(Class::cpp_class_t()).get();
@@ -143,6 +145,16 @@ void ObjectSpace::initialize(){
 		}
 		prev = prev->prev;
 	}
+
+	//////////////////////////////////////////////////
+	{
+		static CppVarSymbolData key;
+		var_table_.resize(key.value);
+		for(uint_t i=0; i<key.value; ++i){
+			var_table_[i].var = 0;
+			var_table_[i].deleter = 0;
+		}
+	}
 }
 
 void ObjectSpace::uninitialize(){
@@ -153,7 +165,14 @@ void ObjectSpace::uninitialize(){
 		}
 	}
 
+	for(uint_t i=0; i<var_table_.size(); ++i){
+		if(var_table_[i].var){
+			var_table_[i].deleter(var_table_[i].var);
+		}
+	}
+
 	class_table_.release();
+	var_table_.release();
 	full_gc();
 
 	if(objects_count_ != 0){

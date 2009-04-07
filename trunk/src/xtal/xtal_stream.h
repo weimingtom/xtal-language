@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_stream.h
+* \brief src/xtal/xtal_stream.h
+*/
+
 #ifndef XTAL_STREAM_H_INCLUDE_GUARD
 #define XTAL_STREAM_H_INCLUDE_GUARD
 
@@ -426,6 +430,10 @@ private:
 	void put_t_le(f64 v, f64*){ put_f64le(v); }
 };
 
+/**
+* \ingroup Cpp
+* \brief ポインタ読み取りストリーム
+*/
 class PointerStream : public Stream{
 public:
 
@@ -462,7 +470,7 @@ protected:
 
 /**
 * \ingroup Xtal Cpp
-* \biref メモリーストリーム
+* \brief メモリーストリーム
 */
 class MemoryStream : public PointerStream{
 public:
@@ -494,7 +502,7 @@ protected:
 
 /**
 * \ingroup Xtal Cpp
-* \biref 文字列ストリーム
+* \brief 文字列ストリーム
 */
 class StringStream : public PointerStream{
 public:
@@ -517,7 +525,7 @@ private:
 
 /**
 * \ingroup Xtal Cpp
-* \biref ファイルストリーム
+* \brief ファイルストリーム
 */
 class FileStream : public Stream{
 public:

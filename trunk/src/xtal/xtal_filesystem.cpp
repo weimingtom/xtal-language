@@ -1,17 +1,17 @@
 #include "xtal.h"
 
-namespace xtal{
+namespace xtal{ namespace filesystem{
 
-StreamPtr Filesystem::open(const StringPtr& path, const StringPtr& flags){
+StreamPtr open(const StringPtr& path, const StringPtr& flags){
 	return xnew<FileStream>(path, flags);
 }
 
-AnyPtr Filesystem::entries(const StringPtr& path){
+AnyPtr entries(const StringPtr& path){
 	return xnew<Entries>(path);
 }
 
-bool Filesystem::is_directory(const StringPtr& path){
-	return filesystem_lib_->is_directory(path->c_str());
+bool is_directory(const StringPtr& path){
+	return filesystem_lib()->is_directory(path->c_str());
 }
 
-}
+}}

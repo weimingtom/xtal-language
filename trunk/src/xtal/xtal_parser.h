@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_parser.h
+* \brief src/xtal/xtal_parser.h
+*/
+
 #ifndef XTAL_PARSER_H_INCLUDE_GUARD
 #define XTAL_PARSER_H_INCLUDE_GUARD
 
@@ -61,7 +65,6 @@ public:
 		KEYWORD_CASE,
 		KEYWORD_DEFAULT,
 		KEYWORD_SINGLETON,
-		KEYWORD_DEBUG,
 		KEYWORD_PUBLIC,
 		KEYWORD_PROTECTED,
 		KEYWORD_PRIVATE,

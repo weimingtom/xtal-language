@@ -14,6 +14,7 @@ VMachine::VMachine(){
 	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
 	resume_pc_ = 0;
+	disable_debug_ = false;
 }
 
 VMachine::~VMachine(){
@@ -35,7 +36,6 @@ void VMachine::reset(){
 	except_[1] = null;
 	except_[2] = null;
 	debug_info_ = null;
-	debug_ = null;
 }
 
 void VMachine::recycle_call(){
@@ -533,17 +533,16 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		if(!debug_->is_enabled()){
+		if(!debug::is_enabled() || disable_debug_){
 			return;
 		}
 
 		{
 			struct guard{
-				const SmartPtr<Debug>* debug_;
-				int_t count_;
-				guard(const SmartPtr<Debug>& debug):debug_(&debug){ count_ = (*debug_)->disable_force(); }
-				~guard(){ (*debug_)->enable_force(count_); }
-			} g(debug_);
+				bool& disable_debug_;
+				guard(bool& disable_debug):disable_debug_(disable_debug){ disable_debug_ = true; }
+				~guard(){ disable_debug_ = false; }
+			} g(disable_debug_);
 
 			AnyPtr e = ap(except_[0]);
 			except_[0] = null;
@@ -552,31 +551,31 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 
 			switch(kind){
 				XTAL_CASE(BREAKPOINT){
-					if(const AnyPtr& hook = debug_->break_point_hook()){
+					if(const AnyPtr& hook = debug::break_point_hook()){
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_RETURN){
-					if(const AnyPtr& hook = debug_->return_hook()){
+					if(const AnyPtr& hook = debug::return_hook()){
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_CALL){
-					if(const AnyPtr& hook = debug_->call_hook()){
+					if(const AnyPtr& hook = debug::call_hook()){
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_THROW){
-					if(const AnyPtr& hook = debug_->throw_hook()){
+					if(const AnyPtr& hook = debug::throw_hook()){
 						hook->call(debug_info_);
 					}
 				}
 
 				XTAL_CASE(BREAKPOINT_ASSERT){
-					if(const AnyPtr& hook = debug_->assert_hook()){
+					if(const AnyPtr& hook = debug::assert_hook()){
 						hook->call(debug_info_);
 					}
 					else{
@@ -648,7 +647,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
-	m & debug_info_ & debug_ & except_[0] & except_[1] & except_[2];
+	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		m & stack_[i];
@@ -675,7 +674,6 @@ void VMachine::before_gc(){
 	}
 
 	inc_ref_count_force(debug_info_);
-	inc_ref_count_force(debug_);
 
 	inc_ref_count_force(except_[0]);
 	inc_ref_count_force(except_[1]);
@@ -728,7 +726,6 @@ void VMachine::after_gc(){
 	}
 
 	dec_ref_count_force(debug_info_);
-	dec_ref_count_force(debug_);
 
 	dec_ref_count_force(except_[0]);
 	dec_ref_count_force(except_[1]);

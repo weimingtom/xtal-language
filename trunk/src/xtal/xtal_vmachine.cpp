@@ -226,7 +226,7 @@ void VMachine::carry_over(Method* fun){
 	stack_.downsize(max_stack + f.args_stack_size());
 	f.ordered_arg_count = f.named_arg_count = 0;
 
-	hook_setting_bit_ = debug_ ? debug_->hook_setting_bit() : 0;
+	hook_setting_bit_ = debug::hook_setting_bit();
 	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
@@ -272,7 +272,7 @@ void VMachine::mv_carry_over(Method* fun){
 	stack_.downsize(max_stack + size);
 	f.ordered_arg_count = 0;
 
-	hook_setting_bit_ = debug_ ? debug_->hook_setting_bit() : 0;
+	hook_setting_bit_ = debug::hook_setting_bit();
 	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
 		debug_hook(f.called_pc, BREAKPOINT_CALL);
 	}
@@ -487,7 +487,7 @@ const FramePtr& VMachine::make_outer_outer(){
 			}
 			variables_.downsize(scope->variable_size);
 			ff().variable_size -= scope->variable_size;
-			if(debug()->is_enabled() || (scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN)){
+			if(debug::is_enabled() || (scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN)){
 				outer->set_outer(make_outer_outer());
 			}
 			ff().outer(outer);
@@ -498,7 +498,7 @@ const FramePtr& VMachine::make_outer_outer(){
 }
 
 const FramePtr& VMachine::make_outer(ScopeInfo* scope){
-	if(debug()->is_enabled() || (scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN)){
+	if(debug::is_enabled() || (scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN)){
 		ff().outer(make_outer_outer());
 	}
 	return ff().outer();
@@ -552,13 +552,7 @@ void VMachine::execute_inner(const inst_t* start){
 		return;
 	}
 
-	if(const AnyPtr& d = debug()){
-		debug_ = unchecked_ptr_cast<Debug>(d);
-		hook_setting_bit_ = debug_->hook_setting_bit();
-	}
-	else{
-		hook_setting_bit_ = 0;
-	}
+	hook_setting_bit_ = debug::hook_setting_bit();
 
 	thread_yield_count_ = 100;
 
@@ -1511,7 +1505,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfDebug){ // 2
-		XTAL_VM_CONTINUE(pc + (debug_->is_enabled() ? inst.ISIZE : inst.OFFSET_address + inst.address));
+		XTAL_VM_CONTINUE(pc + (debug::is_enabled() ? inst.ISIZE : inst.OFFSET_address + inst.address));
 	}
 
 	XTAL_VM_CASE(Assert){ // 4

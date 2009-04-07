@@ -595,10 +595,6 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2)
 			set_jump(InstUnless::OFFSET_address, label_if);
 			put_inst(InstUnless());
 		}
-		else if(e->itag()==EXPR_DEBUG){
-			set_jump(InstIfDebug::OFFSET_address, label_if);
-			put_inst(InstIfDebug());
-		}
 		else{
 			compile_expr(e);
 			set_jump(InstIf::OFFSET_address, label_if);
@@ -1527,19 +1523,6 @@ void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 		XTAL_CASE(EXPR_TRUE){ put_inst(InstPushTrue()); }
 		XTAL_CASE(EXPR_FALSE){ put_inst(InstPushFalse()); }
 		XTAL_CASE(EXPR_THIS){ put_inst(InstPushThis()); }
-
-		XTAL_CASE(EXPR_DEBUG){
-			int_t label_if = reserve_label();
-			int_t label_end = reserve_label();
-			set_jump(InstIfDebug::OFFSET_address, label_if);
-			put_inst(InstIfDebug());
-			put_inst(InstGlobalVariable(regster_identifier(Xid(debug))));
-			set_jump(InstGoto::OFFSET_address, label_end);
-			put_inst(InstGoto());
-			set_label(label_if);
-			put_inst(InstPushUndefined());
-			set_label(label_end);
-		}
 
 		XTAL_CASE(EXPR_CURRENT_CONTEXT){ put_inst(InstPushCurrentContext()); }
 		XTAL_CASE(EXPR_CALLEE){ put_inst(InstPushCallee()); }
@@ -2498,7 +2481,6 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		XTAL_CASE(EXPR_TRUE){ return true; }
 		XTAL_CASE(EXPR_FALSE){ return false; }
 		XTAL_CASE(EXPR_THIS){ return undefined; }
-		XTAL_CASE(EXPR_DEBUG){ return undefined; }
 		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return undefined; }
 		XTAL_CASE(EXPR_CALLEE){ return undefined; }
 		XTAL_CASE(EXPR_ARGS){ return undefined; }

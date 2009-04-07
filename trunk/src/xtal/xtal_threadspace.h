@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_threadspace.h
+* \brief src/xtal/xtal_threadspace.h
+*/
+
 #ifndef XTAL_THREADSPACE_H_INCLUDE_GUARD
 #define XTAL_THREADSPACE_H_INCLUDE_GUARD
 

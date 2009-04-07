@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_basictype.h
+* \brief src/xtal/xtal_basictype.h
+*/
+
 #ifndef XTAL_BASICTYPE_H_INCLUDE_GUARD
 #define XTAL_BASICTYPE_H_INCLUDE_GUARD
 

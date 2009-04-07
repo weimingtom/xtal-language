@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_fun.h
+* \brief src/xtal/xtal_fun.h
+*/
+
 #ifndef XTAL_FUN_H_INCLUDE_GUARD
 #define XTAL_FUN_H_INCLUDE_GUARD
 
@@ -5,7 +9,7 @@
 
 namespace xtal{
 
-// å¼•æ•°ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+// ˆø”ƒIƒuƒWƒFƒNƒg
 class Arguments : public Base{
 public:
 

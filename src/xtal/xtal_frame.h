@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_frame.h
+* \brief src/xtal/xtal_frame.h
+*/
+
 #ifndef XTAL_FRAME_H_INCLUDE_GUARD
 #define XTAL_FRAME_H_INCLUDE_GUARD
 

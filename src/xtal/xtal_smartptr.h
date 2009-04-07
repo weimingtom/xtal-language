@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_smartptr.h
+* \brief src/xtal/xtal_smartptr.h
+*/
+
 #ifndef XTAL_SMARTPTR_H_INCLUDE_GUARD
 #define XTAL_SMARTPTR_H_INCLUDE_GUARD
 

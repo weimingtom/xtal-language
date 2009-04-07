@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_macro.h
+* \brief src/xtal/xtal_macro.h
+*/
+
 #ifndef XTAL_MACRO_H_INCLUDE_GUARD
 #define XTAL_MACRO_H_INCLUDE_GUARD
 
@@ -7,9 +11,9 @@
 /*@{*/
 
 /**
+* \hideinitializer
 * \brief foreachを簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * Xfor(value, array){
 *   // use value
@@ -23,9 +27,9 @@
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
+* \hideinitializer
 * \brief foreachを簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * Xfor2(key, value, map){
 *   // use key and value
@@ -39,9 +43,9 @@
 	for(bool first_step=not_end=::xtal::block_next(block_value_holder, true); not_end; not_end=::xtal::block_next(block_value_holder, false), first_step=false)
 
 /**
+* \hideinitializer
 * \brief foreachを簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * Xfor3(v1, v2, v3, hoge.send("each3")){
 *   // use v1, v2 and v3
@@ -56,10 +60,10 @@
 
 
 /**
+* \hideinitializer
 * \brief foreachを簡単に記述するためのマクロ
 *
 * 各要素を受け取る変数に型をつけることが出来る。
-* \hideinitializer
 * \code
 * Xfor_cast(const StringPtr& value, array){
 *   // valueはStringPtrにキャストされている
@@ -76,9 +80,9 @@
 	if(var = ::xtal::tricky_cast(block_value_holder.values[0], (void (*)(var##e))0))
 
 /**
+* \hideinitializer
 * \brief textを簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * AnyPtr text = Xt("Text %d %s")(10, "test");
 * \endcode
@@ -98,9 +102,9 @@
 #ifndef XTAL_NO_PARSER
 
 /**
+* \hideinitializer
 * \brief Xtalのソースを簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * AnyPtr src = Xsrc((
 *   return [0, 2, 3, 4];
@@ -134,9 +138,9 @@
 #endif
 
 /*
+* \hideinitializer
 * \brief インターンされた文字列を簡単に記述するためのマクロ
 *
-* \hideinitializer
 * \code
 * IDPtr id = Xid(test);
 * \endcode

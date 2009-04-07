@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_inst.h
+* rief src/xtal/xtal_inst.h
+*/
+
 #ifndef XTAL_INST_H_INCLUDE_GUARD
 #define XTAL_INST_H_INCLUDE_GUARD
 

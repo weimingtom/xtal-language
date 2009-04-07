@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_class.h
+* \brief src/xtal/xtal_class.h
+*/
+
 #ifndef XTAL_CLASS_H_INCLUDE_GUARD
 #define XTAL_CLASS_H_INCLUDE_GUARD
 
@@ -150,13 +154,13 @@ public:
 	bool is_inherited(const AnyPtr& md);
 
 	/**
-	* \brief C++のクラスがMix-inされているか調べる
+	* \brief C++のクラスが継承されているか調べる
 	*
 	*/
 	bool is_inherited_cpp_class();
 
 	/**
-	* \brief 継承されているクラスのIteratorを返す
+	* \brief 継承されているクラスを列挙するIteratorを返す
 	*
 	*/
 	AnyPtr inherited_classes();
@@ -166,6 +170,9 @@ public:
 	*/
 	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined);
 	
+	/**
+	* \brief 祖先クラスを列挙するIteratorを返す
+	*/
 	AnyPtr ancestors();
 
 public:

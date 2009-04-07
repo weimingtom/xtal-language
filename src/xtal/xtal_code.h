@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_code.h
+* \brief src/xtal/xtal_code.h
+*/
+
 #ifndef XTAL_CODE_H_INCLUDE_GUARD
 #define XTAL_CODE_H_INCLUDE_GUARD
 
@@ -6,6 +10,7 @@
 namespace xtal{
 
 /**
+* \ingroup Cpp
 * \brief コンパイルされたバイトコード
 */
 class Code : public Base{

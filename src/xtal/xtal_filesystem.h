@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_filesystem.h
+* \brief src/xtal/xtal_filesystem.h
+*/
+
 #ifndef XTAL_FILESYSTEM_H_INCLUDE_GUARD
 #define XTAL_FILESYSTEM_H_INCLUDE_GUARD
 
@@ -7,22 +11,27 @@ namespace xtal{
 
 class FilesystemLib;
 
-class Filesystem : public CppSingleton{
-	FilesystemLib* filesystem_lib_;
-public:
+/**
+* \brief ファイルシステム
+*/
+namespace filesystem{
 
-	Filesystem(){}
+/**
+* \brief ファイルオープン
+*/
+StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
 
-	void initialize(FilesystemLib* p=0){
-		filesystem_lib_ = p;
-	}
+/**
+* \brief ディレクトリかどうか
+*/
+bool is_directory(const StringPtr& path);
 
-	StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
+/**
+* \brief path以下のエントリを列挙するIteratorを返す
+*/
+AnyPtr entries(const StringPtr& path);
 
-	bool is_directory(const StringPtr& path);
-
-	AnyPtr entries(const StringPtr& path);
-};
+class Filesystem;
 
 class Entries : public Base{
 public:
@@ -51,6 +60,8 @@ public:
 private:
 	void* impl_;
 };
+
+}
 
 }
 

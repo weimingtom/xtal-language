@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_cfun.h
+* \brief src/xtal/xtal_cfun.h
+*/
+
 #ifndef XTAL_CFUN_H_INCLUDE_GUARD
 #define XTAL_CFUN_H_INCLUDE_GUARD
 
@@ -1141,7 +1145,7 @@ struct setter_holder{
 	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
-	typedef ArgGetter<const T&, 0> ARG1;
+	typedef ArgGetter<typename CastResult<T>::type, 0> ARG1;
 	static CppClassSymbolData** types(){ return param_types_holder1<C, T>::values; }
 	T C::* var;
 	setter_holder(T C::* var):var(var){}
@@ -1202,6 +1206,7 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, in
 //////////////////////////////////////////////////////////////
 
 /**
+* \ingroup Cpp
 * \brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 */
@@ -1213,6 +1218,7 @@ inline NativeFunPtr fun(const Fun& f){
 }
 
 /**
+* \ingroup Cpp
 * \brief C++のメンバ関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
@@ -1225,6 +1231,7 @@ inline NativeFunPtr method(const Fun& f){
 }
 
 /*
+* \ingroup Cpp
 * \brief C++のコンストラクタをXtalから呼び出せるオブジェクトに変換するための擬似関数
 *
 */
@@ -1239,6 +1246,7 @@ struct ctor : public NativeFunPtr{
 
 	
 /**
+* \ingroup Cpp
 * \brief メンバ変数へのポインタからゲッター関数を生成する
 *
 */
@@ -1250,6 +1258,7 @@ inline NativeFunPtr getter(T C::* v){
 }
 	
 /**
+* \ingroup Cpp
 * \brief メンバ変数へのポインタからセッター関数を生成する
 *
 */
@@ -1262,6 +1271,7 @@ inline NativeFunPtr setter(T C::* v){
 
 
 /**
+* \ingroup Cpp
 * @brief 2重ディスパッチメソッド
 */
 class DoubleDispatchMethod : public HaveParent{
@@ -1281,12 +1291,14 @@ private:
 };
 
 /**
+* \ingroup Cpp
 * \brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */
 DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key);
 
 /**
+* \ingroup Cpp
 * @brief 2重ディスパッチ関数
 */
 class DoubleDispatchFun : public HaveParent{
@@ -1311,6 +1323,7 @@ private:
 };
 
 /**
+* \ingroup Cpp
 * \brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */

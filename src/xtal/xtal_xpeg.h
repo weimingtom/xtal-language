@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_xpeg.h
+* rief src/xtal/xtal_xpeg.h
+*/
+
 #ifndef XTAL_XPEG_H_INCLUDE_GUARD
 #define XTAL_XPEG_H_INCLUDE_GUARD
 

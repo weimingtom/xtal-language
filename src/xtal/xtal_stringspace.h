@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_stringspace.h
+* \brief src/xtal/xtal_stringspace.h
+*/
+
 #ifndef XTAL_STRINGSPACE_H_INCLUDE_GUARD
 #define XTAL_STRINGSPACE_H_INCLUDE_GUARD
 

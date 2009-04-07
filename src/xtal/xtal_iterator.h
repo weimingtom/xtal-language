@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_iterator.h
+* \brief src/xtal/xtal_iterator.h
+*/
+
 #ifndef XTAL_ITERATOR_H_INCLUDE_GUARD
 #define XTAL_ITERATOR_H_INCLUDE_GUARD
 

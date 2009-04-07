@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_expr.h
+* \brief src/xtal/xtal_expr.h
+*/
+
 #ifndef XTAL_EXPR_H_INCLUDE_GUARD
 #define XTAL_EXPR_H_INCLUDE_GUARD
 
@@ -18,7 +22,6 @@ namespace xtal{
 	EXPR_CALLEE,
 	EXPR_ARGS,
 	EXPR_THIS,
-	EXPR_DEBUG,
 	EXPR_CURRENT_CONTEXT,
 	EXPR_NUMBER,
 	EXPR_STRING,

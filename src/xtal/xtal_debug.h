@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_debug.h
+* \brief src/xtal/xtal_debug.h
+*/
+
 #ifndef XTAL_DEBUG_H_INCLUDE_GUARD
 #define XTAL_DEBUG_H_INCLUDE_GUARD
 
@@ -81,126 +85,99 @@ typedef SmartPtr<DebugInfo> DebugInfoPtr;
 /**
 * \brief デバッグ
 */
-class Debug : public CppSingleton{
-public:
+namespace debug{
 
-	Debug(){
-		enable_count_ = 0;
-		hook_setting_bit_ = 0;
-	}
+class Debug;
 
-	/**
-	* \brief デバッグ機能を有効にする
-	* デバッグ機能はデフォルトでは無効になっている。
-	*/
-	void enable();
+/**
+* \brief デバッグ機能を有効にする
+* デバッグ機能はデフォルトでは無効になっている。
+*/
+void enable();
 
-	/**
-	* \brief デバッグ機能を無効にする
-	*/
-	void disable();
+/**
+* \brief デバッグ機能を無効にする
+*/
+void disable();
 
-	/**
-	* \brief デバッグ機能を強制的に有効にする
-	* デバッグ機能はデフォルトでは無効になっている。
-	*/
-	void enable_force(int_t count){
-		enable_count_ = count;
-	}
+/**
+* \brief デバッグ機能を強制的に有効にする
+* デバッグ機能はデフォルトでは無効になっている。
+*/
+void enable_force(int_t count);
 
-	/**
-	* \brief デバッグ機能を強制的に無効にする
-	*/
-	int_t disable_force(){
-		int_t temp = enable_count_;
-		enable_count_ = 0;
-		return temp;
-	}
+/**
+* \brief デバッグ機能を強制的に無効にする
+*/
+int_t disable_force();
 
-	/**
-	* \brief デバッグ機能が有効かどうか
-	*/
-	bool is_enabled();
+/**
+* \brief デバッグ機能が有効かどうか
+*/
+bool is_enabled();
 
-	uint_t hook_setting_bit(){
-		return hook_setting_bit_;
-	}
+uint_t hook_setting_bit();
 
-	/**
-	* \brief ブレークポイントがある度に呼び出されるフック関数を登録する
-	*
-	* \param hook 登録するフック関数
-	*/
-	void set_break_point_hook(const AnyPtr& hook);
+/**
+* \brief ブレークポイントがある度に呼び出されるフック関数を登録する
+*
+* \param hook 登録するフック関数
+*/
+void set_break_point_hook(const AnyPtr& hook);
 
-	/**
-	* \brief 関数呼び出しされる度に呼び出されるフック関数を登録する
-	*
-	* \param hook 登録するフック関数
-	*/
-	void set_call_hook(const AnyPtr& hook);
+/**
+* \brief 関数呼び出しされる度に呼び出されるフック関数を登録する
+*
+* \param hook 登録するフック関数
+*/
+void set_call_hook(const AnyPtr& hook);
 
-	/**
-	* \brief 関数からreturnされる度に呼び出されるフック関数を登録する
-	*
-	* \param hook 登録するフック関数
-	*/
-	void set_return_hook(const AnyPtr& hook);
+/**
+* \brief 関数からreturnされる度に呼び出されるフック関数を登録する
+*
+* \param hook 登録するフック関数
+*/
+void set_return_hook(const AnyPtr& hook);
 
-	/**
-	* \brief 例外かthrowされる度に呼び出されるフック関数を登録する
-	*
-	* \param hook 登録するフック関数
-	*/
-	void set_throw_hook(const AnyPtr& hook);
+/**
+* \brief 例外かthrowされる度に呼び出されるフック関数を登録する
+*
+* \param hook 登録するフック関数
+*/
+void set_throw_hook(const AnyPtr& hook);
 
-	/**
-	* \brief アサートが失敗される度に呼び出されるフック関数を登録する
-	*
-	* \param hook 登録するフック関数
-	*/
-	void set_assert_hook(const AnyPtr& hook);
+/**
+* \brief アサートが失敗される度に呼び出されるフック関数を登録する
+*
+* \param hook 登録するフック関数
+*/
+void set_assert_hook(const AnyPtr& hook);
 
-	/**
-	* \brief set_break_point_hook関数で登録した関数を取得する
-	*/
-	const AnyPtr& break_point_hook();
+/**
+* \brief set_break_point_hook関数で登録した関数を取得する
+*/
+const AnyPtr& break_point_hook();
 
-	/**
-	* \brief set_call_hook関数で登録した関数を取得する
-	*/
-	const AnyPtr& call_hook();
+/**
+* \brief set_call_hook関数で登録した関数を取得する
+*/
+const AnyPtr& call_hook();
 
-	/**
-	* \brief set_return_hook関数で登録した関数を取得する
-	*/
-	const AnyPtr& return_hook();
+/**
+* \brief set_return_hook関数で登録した関数を取得する
+*/
+const AnyPtr& return_hook();
 
-	/**
-	* \brief set_throw_hook関数で登録した関数を取得する
-	*/
-	const AnyPtr& throw_hook();
+/**
+* \brief set_throw_hook関数で登録した関数を取得する
+*/
+const AnyPtr& throw_hook();
 
-	/**
-	* \brief set_assert_hook関数で登録した関数を取得する
-	*/
-	const AnyPtr& assert_hook();
+/**
+* \brief set_assert_hook関数で登録した関数を取得する
+*/
+const AnyPtr& assert_hook();
 
-private:
-
-	int_t enable_count_;
-	uint_t hook_setting_bit_;
-	AnyPtr break_point_hook_;
-	AnyPtr call_hook_;
-	AnyPtr return_hook_;
-	AnyPtr throw_hook_;
-	AnyPtr assert_hook_;
-
-public:
-	void visit_members(Visitor& m){
-		CppSingleton::visit_members(m);
-		m & break_point_hook_ & call_hook_ & return_hook_ & throw_hook_ & assert_hook_;
-	}
 };
 
 }

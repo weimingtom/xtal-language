@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_map.h
+* \brief src/xtal/xtal_map.h
+*/
+
 #ifndef XTAL_MAP_H_INCLUDE_GUARD
 #define XTAL_MAP_H_INCLUDE_GUARD
 
@@ -6,12 +10,14 @@
 namespace xtal{
 
 /**
+* \xbind
 * \brief 連想配列
 */
 class Map : public Base{
 public:
 
 	/**
+	* \xbind
 	* \brief 空の連想配列オブジェクトを生成
 	*/
 	Map()
@@ -35,6 +41,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief keyに対応する要素を設定する
 	*
 	* \param key 検索のためのキー 
@@ -46,6 +53,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief keyに対応する値を削除する
 	*
 	* \param key 検索のためのキー 
@@ -56,6 +64,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 連想配列に登録された要素の数を返す
 	*
 	* \return 連想配列に登録された要素の数
@@ -65,6 +74,7 @@ public:
 	}
 	
 	/**
+	* \xbind
 	* \brief 連想配列に登録された要素の数を返す
 	*
 	* \return 連想配列に登録された要素の数
@@ -74,6 +84,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 空か調べる
 	*
 	* \retval true 空
@@ -84,6 +95,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 空か調べる
 	*
 	* \retval true 空
@@ -106,25 +118,29 @@ public:
 	MapPtr cat_assign(const MapPtr& a);
 		
 	/**
+	* \xbind
 	* \brief (key, value)を要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr pairs();
 	
 	/**
+	* \xbind
 	* \brief keyを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr keys();
 	
 	/**
+	* \xbind
 	* \brief valueを要素とする、Iteratorを返す
 	*
 	*/
 	AnyPtr values();
 
 	/**
-	* \brief [key, value]を要素とする、Iteratorを返す
+	* \xbind
+	* \brief (key, value)を要素とする、Iteratorを返す
 	*
 	* pairsと同じ
 	*/
@@ -133,12 +149,14 @@ public:
 	}
 	
 	/**
+	* \xbind
 	* \brief 浅いコピーを返す
 	*
 	*/
 	MapPtr clone();
 
 	/**
+	* \xbind
 	* \brief 要素を全て削除する
 	*
 	*/
@@ -151,6 +169,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 中身をiteratorで取得できる要素に置き換える
 	*/
 	void assign(const AnyPtr& iterator);
@@ -160,6 +179,7 @@ public:
 	void push_all(const VMachinePtr& vm);
 
 	/**
+	* \xbind
 	* \brief デフォルト値として設定されているオブジェクトを取り出す
 	*
 	* \return デフォルト値
@@ -169,6 +189,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief デフォルト値を設定する
 	*
 	* \param default_value デフォルト値

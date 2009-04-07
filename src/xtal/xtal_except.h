@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_except.h
+* \brief src/xtal/xtal_except.h
+*/
+
 #ifndef XTAL_EXCEPT_H_INCLUDE_GUARD
 #define XTAL_EXCEPT_H_INCLUDE_GUARD
 

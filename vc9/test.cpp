@@ -14,6 +14,33 @@
 
 using namespace xtal;
 
+class Foo{
+public:
+    float x, y;
+    Foo(): x(0), y(0) {}
+};
+
+XTAL_PREBIND(Foo){
+    it->def_ctor( ctor<Foo>() );
+}
+
+XTAL_BIND(Foo){
+   it->def_getter(Xid(x), &Foo::x);
+   it->def_setter(Xid(set_x), &Foo::x);
+}
+
+void test(){
+    lib()->def(Xid(Foo), cpp_class<Foo>());
+
+	if(CodePtr code = Xsrc((
+		foo: lib::Foo();
+		foo.x = 0.5;
+		foo.x.p;
+	))){
+		code->call();
+	}
+} 
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -21,15 +48,16 @@ int main2(int argc, char** argv){
 
 	//enable_debug();
 	//debug()->set_throw_hook(fun(&debug_throw));
+
+	test();
 			
 	if(CodePtr code = Xsrc((
-		check_implicit_lookup();
+		//check_implicit_lookup();
 	
-		100/(dofun 0);
-
 	))){
-
+		code->call();
 	}
+
 
 	//load("../struct.xtal");
 
@@ -40,7 +68,7 @@ int main2(int argc, char** argv){
 
 	//compile_file("../bench/ao.xtal")->inspect()->p();
 	
-	if(1){
+	if(0){
 		int c = clock();
 		load("../bench/ao.xtal");
 		printf("ao %g\n\n", (clock()-c)/1000.0f);		

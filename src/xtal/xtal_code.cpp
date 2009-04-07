@@ -169,7 +169,7 @@ void Code::check_implicit_lookup(){
 				ary = xnew<Array>();
 			}
 
-			ary->push_back(Xf("%s(%d)")->call(unsupported_error(filelocal_, id, null), implicit_table_[i].lineno));
+			ary->push_back(Xf("%s(%d)")->call(unsupported_error(filelocal_, id, undefined), implicit_table_[i].lineno));
 		}
 	}
 

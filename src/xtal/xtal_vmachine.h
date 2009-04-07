@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_vmachine.h
+* \brief src/xtal/xtal_vmachine.h
+*/
+
 #ifndef XTAL_VMACHINE_H_INCLUDE_GUARD
 #define XTAL_VMACHINE_H_INCLUDE_GUARD
 
@@ -792,7 +796,7 @@ private:
 	Any except_[3];
 
 	SmartPtr<DebugInfo> debug_info_;
-	SmartPtr<Debug> debug_;
+	bool disable_debug_;
 	int_t hook_setting_bit_;
 
 	int_t thread_yield_count_;

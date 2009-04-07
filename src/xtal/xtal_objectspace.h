@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_objectspace.h
+* \brief src/xtal/xtal_objectspace.h
+*/
+
 #ifndef XTAL_OBJECTSPACE_H_INCLUDE_GUARD
 #define XTAL_OBJECTSPACE_H_INCLUDE_GUARD
 
@@ -53,6 +57,16 @@ public:
 		class_table_[index]->inc_ref_count();
 	}
 
+	void* cpp_var(CppVarSymbolData* key){
+		return var_table_[key->value].var;
+	}
+
+	void set_cpp_var(void* var, void (*deleter)(void*), CppVarSymbolData* key){
+		int_t index = key->value;
+		var_table_[index].var = var;
+		var_table_[index].deleter = deleter;
+	}
+
 	void print_alive_objects();
 
 	uint_t alive_object_count();
@@ -81,6 +95,13 @@ private:
 	uint_t cycle_count_;
 
 	PODArrayList<Class*> class_table_;
+
+	struct VarInfo{
+		void* var;
+		void (*deleter)(void*);
+	};
+
+	PODArrayList<VarInfo> var_table_;
 };
 
 }

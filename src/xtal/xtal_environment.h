@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_environment.h
+* \brief src/xtal/xtal_environment.h
+*/
+
 #ifndef XTAL_ENVIRONMENT_H_INCLUDE_GUARD
 #define XTAL_ENVIRONMENT_H_INCLUDE_GUARD
 
@@ -123,13 +127,13 @@ struct Setting{
 
 /**
 * \version C++
-* \brief Xtal実行環境を初期化する。
+* \brief Xtal実行環境を作成し、初期化し、カレントに設定する。
 */
 void initialize(const Setting& setting);
 
 /**
 * \version C++
-* \brief Xtal実行環境を破棄する。
+* \brief カレントのXtal実行環境を破棄する。
 */
 void uninitialize();
 
@@ -145,7 +149,14 @@ Environment* environment();
 */
 void set_environment(Environment* e);
 
+ThreadLib* thread_lib();
+
+StdStreamLib* std_stream_lib();
+
+FilesystemLib* filesystem_lib();
+
 /*@}*/
+
 /////////////////////////////////////////////////////
 
 /** \addtogroup memory メモリ*/
@@ -213,20 +224,20 @@ struct Protect{
 
 /////////////////////////////////////////////////////
 
-/** \addtogroup gc ガーベジコレクション*/
+/** \name ガーベジコレクション*/
 /*@{*/
 
 /**
+* \xbind
 * \brief ガーベジコレクションを実行する
-*
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
 * 例えば循環参照はこれでは検知できない。
 */
 void gc();
 
 /**
+* \xbind
 * \brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
-*
 * 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
 * 循環参照も検知できる。
 */
@@ -234,30 +245,24 @@ void full_gc();
 
 /**
 * \brief ガーベジコレクションを無効化する
-*
 * gcやfull_gcの呼び出しを無効化する関数。
 * 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
 */
 void disable_gc();
 
 /**
-* \version C++
 * \brief ガーベジコレクションを有効化する
-*
 * disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
 */
 void enable_gc();
 
 uint_t alive_object_count();
 
-RefCountingBase* alive_object(uint_t i);
+AnyPtr alive_object(uint_t i);
 
 /*@}*/
 
 /////////////////////////////////////////////////////
-
-/** \addtogroup cppclass C++クラス*/
-/*@{*/
 
 /**
 * \internal
@@ -271,8 +276,10 @@ const ClassPtr& cpp_class(CppClassSymbolData* key);
 */
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
+/** \name C++クラスへのアクセス */
+/*@{*/
+
 /**
-* \internal
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
@@ -281,7 +288,6 @@ inline const ClassPtr& cpp_class(){
 }
 
 /**
-* \version C++
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
 */
 template<class T>
@@ -290,7 +296,6 @@ inline void set_cpp_class(const ClassPtr& cls){
 }
 
 /**
-* \version C++
 * \brief T形をxtalで扱えるクラスを取得する。
 */
 template<class T>
@@ -299,13 +304,46 @@ inline const SmartPtr<T>& cpp_singleton(){
 }
 
 /**
-* \version C++
 * \brief T形をxtalで扱えるクラスを生成し、登録する。
 */
 template<class T>
 inline const SmartPtr<T>& new_cpp_singleton(){
 	set_cpp_class<T>(xnew<T>());
 	return unchecked_ptr_cast<T>(cpp_class<T>());
+}
+
+/**
+* \internal
+* \brief T型のオブジェクトを環境から取り出す
+*/
+void* cpp_var(CppVarSymbolData* key);
+
+/**
+* \internal
+* \brief T型のオブジェクトを環境に設定する
+*/
+void set_cpp_var(void* p, void (*deleter)(void*), CppVarSymbolData* key);
+
+template<class T>
+struct CppVarDeleter{
+	static void deleter(void* p){
+		((T*)p)->~T();
+		xfree(p, sizeof(T));
+	}
+};
+
+/**
+* \brief T型のオブジェクトを環境から取り出す
+*/
+template<class T>
+T& cpp_var(){
+	if(void* p=cpp_var(&CppVarSymbol<T>::value)){
+		return *(T*)p;
+	}
+	void* p=xmalloc(sizeof(T));
+	new(p) T;
+	set_cpp_var(p, &CppVarDeleter<T>::deleter, &CppVarSymbol<T>::value);
+	return *(T*)p;
 }
 
 /*@}*/
@@ -395,32 +433,6 @@ const StreamPtr& stdout_stream();
 const StreamPtr& stderr_stream();
 
 /**
-* \version C++
-* \brief filesystemシングルトンオブジェクトを返す
-*/
-const FilesystemPtr& filesystem();
-
-
-/**
-* \version C++
-* \brief debugシングルトンオブジェクトを返す
-*/
-const DebugPtr& debug();
-
-/**
-* \version C++
-* \brief デバッグ機能を有効にする
-* デバッグ機能はデフォルトでは無効になっている。
-*/
-void enable_debug();
-
-/**
-* \version C++
-* \brief デバッグ機能を無効にする
-*/
-void disable_debug();
-
-/**
 * \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
@@ -452,13 +464,11 @@ inline const IDPtr& intern(const StringLiteral& str){
 AnyPtr interned_strings();
 
 /**
-* \internal
 * \brief 環境をロックする
 */
 void xlock();
 
 /**
-* \internal
 * \brief 環境をアンロックする
 */
 void xunlock();
@@ -475,14 +485,7 @@ void register_thread(Environment*);
 
 void unregister_thread(Environment*);
 
-ThreadLib* thread_lib();
-
-StdStreamLib* std_stream_lib();
-
-FilesystemLib* filesystem_lib();
-
 /**
-* \internal
 * \brief VMachinePtrオブジェクトを返す
 *
 * グローバルなVMachinePtrオブジェクトを返す。
@@ -491,7 +494,6 @@ FilesystemLib* filesystem_lib();
 const VMachinePtr& vmachine();
 
 /**
-* \internal
 * \brief テキストマップを返す
 */
 const MapPtr& text_map();
@@ -534,7 +536,7 @@ int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
 /**
 * \internal
-* \brief 演算子の名前をあらわす文字列の配列を返す
+* \brief 演算子の名前をあらわすIDの配列を返す
 */
 const IDPtr* id_op_list();
 
@@ -545,27 +547,24 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 /**
 * \version C++ Xtal
 * \brief file_nameファイルをコンパイルする。
-*
+* この戻り値をserializeすると、バイトコード形式で保存される。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
 * \return 実行できる関数オブジェクト
-* この戻り値をserializeすると、バイトコード形式で保存される。
 */
 CodePtr compile_file(const StringPtr& file_name);
 
 /**
 * \version C++ Xtal
 * \brief source文字列をコンパイルする。
-*
+* この戻り値をserializeすると、バイトコード形式で保存される。
 * \param source Xtalスクリプトが記述された文字列
 * \return 実行できる関数オブジェクト
-* この戻り値をserializeすると、バイトコード形式で保存される。
 */
 CodePtr compile(const StringPtr& source);
 
 /**
 * \version C++ Xtal
 * \brief file_nameファイルをコンパイルして実行する。
-*
 * \param file_name Xtalスクリプトが記述されたファイルの名前
 * \return スクリプト内でreturnされた値
 */
@@ -573,7 +572,6 @@ AnyPtr load(const StringPtr& file_name);
 
 /**
 * \brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
-*
 * \param file_name Xtalスクリプトが記述されたファイルの名前
 * \return スクリプト内でreturnされた値
 */

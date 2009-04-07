@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_utility.h
+* \brief src/xtal/xtal_utility.h
+*/
+
 #ifndef XTAL_UTILITY_H_INCLUDE_GUARD
 #define XTAL_UTILITY_H_INCLUDE_GUARD
 
@@ -27,6 +31,10 @@ enum{
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
+
+#ifdef _UNICODE
+#	define XTAL_USE_WCHAR
+#endif 
 
 #if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
 #include <pthread.h>
@@ -669,10 +677,8 @@ class ChRange;
 class DoubleDispatchMethod;
 class DoubleDispatchFun;
 class MultiValue;
-class Debug;
 class DebugInfo;
 class Exception;
-class Filesystem;
 
 typedef SmartPtr<Null> NullPtr;
 typedef SmartPtr<Undefined> UndefinedPtr;
@@ -707,8 +713,6 @@ typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
 typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
 typedef SmartPtr<MultiValue> MultiValuePtr;
 typedef SmartPtr<Exception> ExceptionPtr;
-typedef SmartPtr<Filesystem> FilesystemPtr;
-typedef SmartPtr<Debug> DebugPtr;
 
 class Base;
 class RefCountingBase;
@@ -867,6 +871,26 @@ struct CppClassBindFun{
 	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::prebind_temp(\
 		CppClassSymbol<ClassName>::make().prebind, &CppClassBindFun<ClassName>::prebind, CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
 	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr& it)
+
+
+struct CppVarSymbolData{ 
+	CppVarSymbolData(){
+		static unsigned int counter = 1;
+		value = counter++;
+	}
+
+	unsigned int value;
+};
+
+template<class T>
+struct CppVarSymbol{
+	static CppVarSymbolData value;
+};
+
+template<class T>
+CppVarSymbolData CppVarSymbol<T>::value;
+
+
 
 struct IdentifierData{ 
 	IdentifierData(){

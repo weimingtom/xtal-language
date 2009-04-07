@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_array.h
+* \brief src/xtal/xtal_array.h
+*/
+
 #ifndef XTAL_ARRAY_H_INCLUDE_GUARD
 #define XTAL_ARRAY_H_INCLUDE_GUARD
 

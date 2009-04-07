@@ -1,3 +1,7 @@
+/** \file src/xtal/xtal_codebuilder.h
+* \brief src/xtal/xtal_codebuilder.h
+*/
+
 #ifndef XTAL_CODEBUILDER_H_INCLUDE_GUARD
 #define XTAL_CODEBUILDER_H_INCLUDE_GUARD
 

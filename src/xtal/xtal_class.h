@@ -80,7 +80,9 @@ public:
 };
 
 /**
-* @brief クラス
+* \xbind lib::builtin
+* \xinherit lib::builtin::Frame
+* \brief クラス
 */
 class Class : public Frame{
 public:
@@ -99,7 +101,6 @@ public:
 
 	/**
 	* \brief 新しいメンバを定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param value 設定する値
 	* \param secondary_key セカンダリキー
@@ -108,6 +109,7 @@ public:
 	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC);
 
 	/**
+	* \internal
 	* \brief メンバを取り出す
 	*
 	* この関数を使うのではなく、Any::memberを使うこと。
@@ -117,7 +119,6 @@ public:
 	/**
 	* \brief メンバを再設定する
 	* Xtalレベルでは禁止されている操作だが、C++レベルでは可能にしておく
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param value 設定する値
 	* \param secondary_key セカンダリキー
@@ -125,15 +126,14 @@ public:
 	bool set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 	/**
+	* \xbind
 	* \brief 継承
-	*
 	* \param cls 継承するクラスオブジェクト
 	*/
 	void inherit(const ClassPtr& cls);
 
 	/**
 	* \brief 継承する
-	*
 	* Xtalレベルで、クラス定義時に継承する場合に呼ばれる
 	* \param cls 継承するクラスオブジェクト
 	*/
@@ -141,27 +141,24 @@ public:
 
 	/**
 	* \brief 継承する
-	*
 	* \param cls 継承するクラスオブジェクト
 	*/
 	void inherit_strict(const ClassPtr& cls);
 
 	/**
 	* \brief 継承されているか調べる
-	*
-	* \param md 継承されている調べたいクラスオブジェクト
+	* \param cls 継承されている調べたいクラスオブジェクト
 	*/
-	bool is_inherited(const AnyPtr& md);
+	bool is_inherited(const AnyPtr& cls);
 
 	/**
 	* \brief C++のクラスが継承されているか調べる
-	*
 	*/
 	bool is_inherited_cpp_class();
 
 	/**
+	* \xbind
 	* \brief 継承されているクラスを列挙するIteratorを返す
-	*
 	*/
 	AnyPtr inherited_classes();
 
@@ -171,6 +168,7 @@ public:
 	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined);
 	
 	/**
+	* \xbind
 	* \brief 祖先クラスを列挙するIteratorを返す
 	*/
 	AnyPtr ancestors();
@@ -179,12 +177,11 @@ public:
 
 	/**
 	* \brief 関数を定義する
-	*
+	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	* \param primary_key 新しく定義するメンバの名前
 	* \param f 設定する関数
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
-	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
 	*/
 	template<class TFun>
 	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
@@ -195,12 +192,11 @@ public:
 
 	/**
 	* \brief メソッドを定義する
-	*
+	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	* \param primary_key 新しく定義するメンバの名前
 	* \param f 設定する関数
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
-	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
 	*/
 	template<class TFun>
 	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
@@ -211,7 +207,6 @@ public:
 
 	/**
 	* \brief メンバ変数へのポインタからゲッターを生成し、定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param value 設定する値
 	* \param secondary_key セカンダリキー
@@ -226,13 +221,12 @@ public:
 	
 	/**
 	* \brief メンバ変数へのポインタからセッターを生成し、定義する
-	*
+	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
+	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	* \param primary_key 新しく定義するメンバの名前
 	* \param v 設定するメンバ変数へのポインタ
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
-	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
-	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
 	*/
 	template<class T, class C>
 	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
@@ -243,14 +237,13 @@ public:
 	
 	/**
 	* \brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
-	*
+	* cls->def_getter(primary_key, v, policy);
+	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
+	* と等しい	
 	* \param primary_key 新しく定義するメンバの名前
 	* \param v 設定するメンバ変数へのポインタ
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
-	* cls->def_getter(primary_key, v, policy);
-	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
-	* と等しい	
 	*/	
 	template<class T, class U>
 	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
@@ -276,7 +269,6 @@ public:
 
 	/**
 	* \brief シングルトンクラスにメソッドを定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param f 設定する関数
 	* \param secondary_key セカンダリキー
@@ -291,7 +283,6 @@ public:
 
 	/**
 	* \brief シングルトンクラスに、メンバ変数へのポインタからゲッターを生成し定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param v 設定するメンバ変数へのポインタ
 	* \param secondary_key セカンダリキー
@@ -306,7 +297,6 @@ public:
 	
 	/**
 	* \brief メンバ変数へのポインタからセッターを生成し、定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param v 設定するメンバ変数へのポインタ
 	* \param secondary_key セカンダリキー
@@ -323,7 +313,6 @@ public:
 	
 	/**
 	* \brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
-	*
 	* \param primary_key 新しく定義するメンバの名前
 	* \param v 設定するメンバ変数へのポインタ
 	* \param secondary_key セカンダリキー

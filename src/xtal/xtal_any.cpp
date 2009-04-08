@@ -200,11 +200,11 @@ StringPtr Any::to_s() const{
 }
 
 ArrayPtr Any::to_a() const{
-	return ptr_cast<Array>((*this).send(Xid(op_to_a)));
+	return ptr_cast<Array>((*this).send(Xid(op_to_array)));
 }
 
 MapPtr Any::to_m() const{
-	return ptr_cast<Map>((*this).send(Xid(op_to_m)));
+	return ptr_cast<Map>((*this).send(Xid(op_to_map)));
 }
 
 const ClassPtr& Any::object_parent() const{

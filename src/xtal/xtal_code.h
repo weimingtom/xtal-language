@@ -10,7 +10,6 @@
 namespace xtal{
 
 /**
-* \ingroup Cpp
 * \brief コンパイルされたバイトコード
 */
 class Code : public Base{

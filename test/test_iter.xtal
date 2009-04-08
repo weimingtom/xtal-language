@@ -10,12 +10,12 @@ class IterTest{
 	}
 
 	range_each_collect_join#Test{
-		ret : range(5, 10)[].each.collect(|x| x*2).join(",");
+		ret : range(5, 10)[].collect(|x| x*2).join(",");
 		assert ret=="10,12,14,16,18";
 	}
 
 	each_select_join#Test{
-		ret : [5, 8, 7, 3, 2].each.select(|x| x%2 != 0).join(",");
+		ret : [5, 8, 7, 3, 2].select(|x| x%2 != 0).join(",");
 		assert ret=="5,7,3";
 	}
 

@@ -17,16 +17,19 @@ class FilesystemLib;
 namespace filesystem{
 
 /**
+* xbind lib::builtin::filesystem
 * \brief ファイルオープン
 */
 StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
 
 /**
+* xbind
 * \brief ディレクトリかどうか
 */
 bool is_directory(const StringPtr& path);
 
 /**
+* xbind
 * \brief path以下のエントリを列挙するIteratorを返す
 */
 AnyPtr entries(const StringPtr& path);

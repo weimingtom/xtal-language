@@ -8,7 +8,7 @@ void assign_text_map(const AnyPtr& map){
 }
 
 void append_text_map(const AnyPtr& map){
-	text_map()->concat(map);
+	text_map()->append(map);
 }
 
 AnyPtr text(const StringPtr& text){

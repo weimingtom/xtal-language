@@ -10,13 +10,14 @@
 namespace xtal{
 
 /**
-* \ingroup Xtal Cpp
+* \xbind lib::builtin
 * \brief ストリーム
 */
 class Stream : public Base{
 public:
 
 	/**
+	* \xbind
 	* \brief 文字列strをストリームに流す
 	*/
 	void put_s(const StringPtr& str){
@@ -38,6 +39,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief length文字分ストリームから取り出し、文字列として返す。
 	*/
 	virtual StringPtr get_s(uint_t length);
@@ -77,6 +79,7 @@ public:
 	void block_break(const VMachinePtr& vm);
 
 	/**
+	* \xbind
 	* \brief オブジェクトを直列化してストリームに書き込む
 	*
 	* \param obj 直列化して保存したいオブジェクト
@@ -84,6 +87,7 @@ public:
 	void serialize(const AnyPtr& obj);
 
 	/**
+	* \xbind
 	* \brief 直列化されたオブジェクトをストリームから読み出す
 	*
 	* \return 復元されたオブジェクト
@@ -104,6 +108,7 @@ public:
 public:
 
 	/**
+	* \xbind
 	* \brief 符号付整数8-bitをストリームに書き込む
 	*/
 	void put_i8(i8 v){
@@ -111,6 +116,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号付整数16-bitをストリームに書き込む
 	*/
 	void put_i16be(i16 v){
@@ -118,6 +124,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号付整数16-bitをストリームに書き込む
 	*/
 	void put_i16le(i16 v){
@@ -125,6 +132,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号付整数32-bitをストリームに書き込む
 	*/
 	void put_i32be(i32 v){
@@ -132,6 +140,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号付整数32-bitをストリームに書き込む
 	*/
 	void put_i32le(i32 v){
@@ -139,6 +148,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号付整数64-bitをストリームに書き込む
 	*/
 	void put_i64be(i64 v){
@@ -153,6 +163,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号無整数8-bitをストリームに書き込む
 	*/
 	void put_u8(u8 v){
@@ -160,6 +171,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号無整数16-bitをストリームに書き込む
 	*/
 	void put_u16be(u16 v){
@@ -170,6 +182,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号無整数16-bitをストリームに書き込む
 	*/
 	void put_u16le(u16 v){
@@ -180,6 +193,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号無整数32-bitをストリームに書き込む
 	*/
 	void put_u32be(u32 v){
@@ -192,6 +206,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 符号無整数32-bitをストリームに書き込む
 	*/
 	void put_u32le(u32 v){
@@ -431,8 +446,8 @@ private:
 };
 
 /**
-* \ingroup Cpp
 * \brief ポインタ読み取りストリーム
+* このストリームは読み取り専用である
 */
 class PointerStream : public Stream{
 public:
@@ -469,7 +484,7 @@ protected:
 };
 
 /**
-* \ingroup Xtal Cpp
+* \xbind lib::builtin
 * \brief メモリーストリーム
 */
 class MemoryStream : public PointerStream{
@@ -501,8 +516,9 @@ protected:
 };
 
 /**
-* \ingroup Xtal Cpp
+* \xbind lib::builtin
 * \brief 文字列ストリーム
+* 文字列を読み取るためのストリーム。書き込み不可。
 */
 class StringStream : public PointerStream{
 public:
@@ -524,7 +540,7 @@ private:
 };
 
 /**
-* \ingroup Xtal Cpp
+* \xbind lib::builtin
 * \brief ファイルストリーム
 */
 class FileStream : public Stream{

@@ -10,7 +10,8 @@
 namespace xtal{
 
 /**
-* \xbind
+* \xbind lib::builtin
+* \xinherit lib::builtin::Any lib::builtin::Iterable
 * \brief 連想配列
 */
 class Map : public Base{
@@ -22,17 +23,15 @@ public:
 	*/
 	Map()
 		:default_value_(undefined){}
-		
+	
 	/**
 	* \brief keyに対応する要素を返す
-	*
 	* \param key 検索のためのキー 
 	*/
 	const AnyPtr& at(const AnyPtr& key);
 	
 	/**
 	* \brief keyに対応する要素を設定する
-	*
 	* \param key 検索のためのキー 
 	* \param value keyに対応する値
 	*/	
@@ -42,8 +41,24 @@ public:
 
 	/**
 	* \xbind
+	* \brief keyに対応する要素を返す
+	* \param key 検索のためのキー 
+	*/
+	const AnyPtr& op_at(const AnyPtr& key);
+	
+	/**
+	* \xbind
 	* \brief keyに対応する要素を設定する
-	*
+	* \param key 検索のためのキー 
+	* \param value keyに対応する値
+	*/	
+	void op_set_at(const AnyPtr& key, const AnyPtr& value){
+		insert(key, value);
+	}
+
+	/**
+	* \xbind
+	* \brief keyに対応する要素を設定する
 	* \param key 検索のためのキー 
 	* \param value keyに対応する値
 	*/	
@@ -55,7 +70,6 @@ public:
 	/**
 	* \xbind
 	* \brief keyに対応する値を削除する
-	*
 	* \param key 検索のためのキー 
 	*/
 	void erase(const AnyPtr& key){
@@ -66,7 +80,6 @@ public:
 	/**
 	* \xbind
 	* \brief 連想配列に登録された要素の数を返す
-	*
 	* \return 連想配列に登録された要素の数
 	*/
 	uint_t size(){
@@ -76,7 +89,6 @@ public:
 	/**
 	* \xbind
 	* \brief 連想配列に登録された要素の数を返す
-	*
 	* \return 連想配列に登録された要素の数
 	*/
 	uint_t length(){
@@ -86,7 +98,6 @@ public:
 	/**
 	* \xbind
 	* \brief 空か調べる
-	*
 	* \retval true 空
 	* \retval false 非空
 	*/
@@ -97,7 +108,6 @@ public:
 	/**
 	* \xbind
 	* \brief 空か調べる
-	*
 	* \retval true 空
 	* \retval false 非空
 	*/
@@ -106,42 +116,38 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief 連結した連想配列を返す
-	*
 	*/
-	MapPtr cat(const MapPtr& a);
+	MapPtr op_cat(const MapPtr& a);
 
 	/**
+	* \xbind
 	* \brief 自身と連結し、自身を返す
-	*
 	*/
-	MapPtr cat_assign(const MapPtr& a);
+	MapPtr op_cat_assign(const MapPtr& a);
 		
 	/**
 	* \xbind
 	* \brief (key, value)を要素とする、Iteratorを返す
-	*
 	*/
 	AnyPtr pairs();
 	
 	/**
 	* \xbind
 	* \brief keyを要素とする、Iteratorを返す
-	*
 	*/
 	AnyPtr keys();
 	
 	/**
 	* \xbind
 	* \brief valueを要素とする、Iteratorを返す
-	*
 	*/
 	AnyPtr values();
 
 	/**
 	* \xbind
 	* \brief (key, value)を要素とする、Iteratorを返す
-	*
 	* pairsと同じ
 	*/
 	AnyPtr each(){
@@ -151,20 +157,22 @@ public:
 	/**
 	* \xbind
 	* \brief 浅いコピーを返す
-	*
 	*/
 	MapPtr clone();
 
 	/**
 	* \xbind
 	* \brief 要素を全て削除する
-	*
 	*/
 	void clear(){
 		table_.clear();
 	}
-	
-	MapPtr to_m(){
+
+	/**
+	* \xbind
+	* \brief 自身を返す
+	*/
+	MapPtr op_to_map(){
 		return to_smartptr(this);
 	}
 
@@ -174,14 +182,17 @@ public:
 	*/
 	void assign(const AnyPtr& iterator);
 
-	void concat(const AnyPtr& iterator);
+	/**
+	* \xbind
+	* \brief iteratorで取得できる要素を追加する
+	*/
+	void append(const AnyPtr& iterator);
 
 	void push_all(const VMachinePtr& vm);
 
 	/**
 	* \xbind
 	* \brief デフォルト値として設定されているオブジェクトを取り出す
-	*
 	* \return デフォルト値
 	*/
 	const AnyPtr& default_value(){
@@ -191,7 +202,6 @@ public:
 	/**
 	* \xbind
 	* \brief デフォルト値を設定する
-	*
 	* \param default_value デフォルト値
 	*/
 	void set_default_value(const AnyPtr& default_value){

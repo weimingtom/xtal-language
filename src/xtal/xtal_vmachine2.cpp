@@ -499,7 +499,7 @@ void VMachine::set_except_0(const Any& e){
 	
 void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	if(!debug_info_){ 
-		debug_info_ = xnew<DebugInfo>(); 
+		debug_info_ = xnew<debug::HookInfo>(); 
 	}
 
 	debug_info_->set_kind(kind);

@@ -256,7 +256,6 @@ XTAL_BIND(InternedStringIter){
 XTAL_BIND(Any){
 	it->def_method(Xid(class), &Any::get_class);
 	it->def_method(Xid(get_class), &Any::get_class);
-	it->def_method(Xid(self), &Any::self);
 	it->def_method(Xid(object_name), &Any::object_name);
 	it->def_method(Xid(object_name_list), &Any::object_name_list);
 	it->def_method(Xid(s_save), &Any::s_save);
@@ -318,8 +317,6 @@ Any::p: method{
 	return this;
 }
 
-Any::to_a: method this.op_to_a;
-Any::to_m: method this.op_to_m;
 ),
 "\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\xf7\x63\x00\x01\x70\x00\x01\x00\x69\x2c\x00\x02\x18\x02\x26\x00\x05\x02\x1c\x00\x1c\x01\x2e\x00\x01\x18\x01\x32\x00\x25\x18\x00\x0c\x35\x00\x0d\x32\x00\x0a\x03\x30\x00\x03\x2f\x2d\x21\x01\x18\x01\x26\x00\x06\x02"
 "\x1c\x00\x1c\x01\x18\x01\x32\x00\x05\x34\xff\xdf\x30\x00\x28\x2f\x2e\x00\x02\x2c\x00\x06\x1c\x00\x18\x00\x18\x02\x29\x01\x00\x01\x08\x00\x08\x33\x00\x05\x18\x00\x72\x2d\x2f\x18\x01\x29\x00\x00\x00\x08\x00\x09\x31\x2d\x04\x21\x01\x21\x00\x63\x00\x0b\x2b\x00"
@@ -379,11 +376,11 @@ XTAL_PREBIND(Null){
 }
 
 XTAL_BIND(Null){
-	it->def_method(Xid(each), &Any::self);
 
 	Xemb((
-Null::op_to_a: method [];
-Null::op_to_m: method [:];
+Null::each: method null;
+Null::op_to_array: method [];
+Null::op_to_map: method [:];
 Null::block_first: method null;
 ),
 "\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x36\x63\x00\x01\x70\x00\x01\x00\x07\x6b\x21\x01\x21\x00\x2b\x00\x02\x00\x63\x00\x01\x70\x00\x02\x00\x07\x6d\x21\x01\x21\x00\x2b\x00\x03\x00\x63\x00\x01\x70\x00\x03\x00\x07\x01\x21\x01\x21\x00\x2b\x00\x04\x00\x21"
@@ -519,7 +516,6 @@ XTAL_BIND(Array){
 
 	it->def_method(Xid(erase), &Array::erase)->param(2, Xid(n), 1);
 	it->def_method(Xid(insert), &Array::insert);
-	it->def_method(Xid(to_a), &Array::to_a);
 	it->def_method(Xid(each), &Array::each);
 	it->def_method(Xid(clone), &Array::clone);
 	it->def_method(Xid(front), &Array::front);
@@ -527,11 +523,11 @@ XTAL_BIND(Array){
 	it->def_method(Xid(clear), &Array::clear);
 	it->def_method(Xid(reverse), &Array::reverse);
 	it->def_method(Xid(assign), &Array::assign);
-	it->def_method(Xid(concat), &Array::concat);
+	it->def_method(Xid(append), &Array::append);
 
-	it->def_method(Xid(op_to_a), &Array::to_a);
-	it->def_method(Xid(op_cat), &Array::cat, cpp_class<Array>());
-	it->def_method(Xid(op_cat_assign), &Array::cat_assign, cpp_class<Array>());
+	it->def_method(Xid(op_to_array), &Array::op_to_array);
+	it->def_method(Xid(op_cat), &Array::op_cat, cpp_class<Array>());
+	it->def_method(Xid(op_cat_assign), &Array::op_cat_assign, cpp_class<Array>());
 	it->def_method(Xid(op_at), &Array::op_at, cpp_class<Int>());
 	it->def_method(Xid(op_set_at), &Array::op_set_at, cpp_class<Int>());
 	it->def_method(Xid(op_eq), &Array::op_eq, cpp_class<Array>());
@@ -562,6 +558,7 @@ Array::join: method(sep: ""){
 Array::to_s: method{
 	return %f([%s])(this.join(", "));
 }
+
 ),
 "\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x01\x63\x63\x00\x01\x70\x00\x01\x00\x0f\x0c\x26\x00\x02\x01\x26\x00\x03\x01\x21\x01\x21\x00\x2b\x00\x03\x00\x63\x00\x01\x70\x00\x02\x01\x1a\x41\x00\x00\x07\x24\x00\x01\x1c\x00\x2c\x00\x01\x18\x01\x26\x00\x06\x01\x1c"
 "\x01\x63\x00\x07\x28\x00\x00\x01\x00\x1c\x00\x18\x01\x24\x00\x01\x3b\x00\x6b\x32\x00\x68\x2c\x00\x03\x0c\x26\x00\x02\x01\x26\x00\x03\x02\x1c\x00\x1c\x01\x2e\x00\x01\x18\x01\x32\x00\x23\x18\x00\x26\x00\x06\x01\x18\x02\x29\x01\x00\x00\x00\x00\x0a\x18\x01\x26"
@@ -603,7 +600,6 @@ XTAL_PREBIND(Map){
 }
 
 XTAL_BIND(Map){
-	it->def_method(Xid(to_m), &Map::to_m);
 	it->def_method(Xid(size), &Map::size);
 	it->def_method(Xid(length), &Map::length);
 	it->def_method(Xid(insert), &Map::insert);
@@ -616,14 +612,14 @@ XTAL_BIND(Map){
 	it->def_method(Xid(empty), &Map::empty);
 	it->def_method(Xid(is_empty), &Map::is_empty);
 	it->def_method(Xid(assign), &Map::assign);
-	it->def_method(Xid(concat), &Map::concat);
+	it->def_method(Xid(append), &Map::append);
 
-	it->def_method(Xid(op_to_m), &Map::to_m);
-	it->def_method(Xid(op_at), &Map::at, cpp_class<Any>());
-	it->def_method(Xid(op_set_at), &Map::set_at, cpp_class<Any>());
-	it->def_method(Xid(op_cat), &Map::cat, cpp_class<Map>());
-	it->def_method(Xid(op_cat_assign), &Map::cat_assign, cpp_class<Map>());
-	it->def_method(Xid(op_call), &Map::at, cpp_class<Any>());
+	it->def_method(Xid(op_to_map), &Map::op_to_map);
+	it->def_method(Xid(op_at), &Map::op_at, cpp_class<Any>());
+	it->def_method(Xid(op_set_at), &Map::op_set_at, cpp_class<Any>());
+	it->def_method(Xid(op_cat), &Map::op_cat, cpp_class<Map>());
+	it->def_method(Xid(op_cat_assign), &Map::op_cat_assign, cpp_class<Map>());
+	it->def_method(Xid(op_call), &Map::op_at, cpp_class<Any>());
 
 	Xemb((
 Map::block_first: method this.each.block_first;
@@ -976,23 +972,23 @@ XTAL_BIND(Text){
 	it->def_method(Xid(serial_load), &Text::serial_load);
 }
 
-XTAL_BIND(DebugInfo){
-	it->def_method(Xid(clone), &DebugInfo::clone);
-	it->def_method(Xid(kind), &DebugInfo::kind);
-	it->def_method(Xid(line), &DebugInfo::line);
-	it->def_method(Xid(fun_name), &DebugInfo::fun_name);
-	it->def_method(Xid(file_name), &DebugInfo::file_name);
-	it->def_method(Xid(assertion_message), &DebugInfo::assertion_message);
-	it->def_method(Xid(exception), &DebugInfo::exception);
-	it->def_method(Xid(variables_frame), &DebugInfo::variables_frame);
+XTAL_BIND(debug::HookInfo){
+	it->def_method(Xid(clone), &debug::HookInfo::clone);
+	it->def_method(Xid(kind), &debug::HookInfo::kind);
+	it->def_method(Xid(line), &debug::HookInfo::line);
+	it->def_method(Xid(fun_name), &debug::HookInfo::fun_name);
+	it->def_method(Xid(file_name), &debug::HookInfo::file_name);
+	it->def_method(Xid(assertion_message), &debug::HookInfo::assertion_message);
+	it->def_method(Xid(exception), &debug::HookInfo::exception);
+	it->def_method(Xid(variables_frame), &debug::HookInfo::variables_frame);
 
-	it->def_method(Xid(set_kind), &DebugInfo::set_kind);
-	it->def_method(Xid(set_line), &DebugInfo::line);
-	it->def_method(Xid(set_fun_name), &DebugInfo::set_fun_name);
-	it->def_method(Xid(set_file_name), &DebugInfo::set_file_name);
-	it->def_method(Xid(set_assertion_message), &DebugInfo::set_assertion_message);
-	it->def_method(Xid(set_exception), &DebugInfo::set_exception);
-	it->def_method(Xid(set_variables_frame), &DebugInfo::set_variables_frame);
+	it->def_method(Xid(set_kind), &debug::HookInfo::set_kind);
+	it->def_method(Xid(set_line), &debug::HookInfo::line);
+	it->def_method(Xid(set_fun_name), &debug::HookInfo::set_fun_name);
+	it->def_method(Xid(set_file_name), &debug::HookInfo::set_file_name);
+	it->def_method(Xid(set_assertion_message), &debug::HookInfo::set_assertion_message);
+	it->def_method(Xid(set_exception), &debug::HookInfo::set_exception);
+	it->def_method(Xid(set_variables_frame), &debug::HookInfo::set_variables_frame);
 
 	it->def(Xid(BREAKPOINT), BREAKPOINT);
 	it->def(Xid(CALL), BREAKPOINT_CALL);
@@ -1188,12 +1184,16 @@ XTAL_PREBIND(Iterable){
 }
 
 XTAL_BIND(Iterable){
+	// Iterableがバインドされるなら、Iteratorもバインドしてしまう
 	cpp_class<Iterator>()->bind();
 }
 
-XTAL_BIND(Iterator){
-
+XTAL_PREBIND(Iterator){
 	it->inherit(cpp_class<Iterable>());
+	it->unset_native();
+}
+
+XTAL_BIND(Iterator){
 	it->def_fun(Xid(each), &Iterator_each);
 	it->def_fun(Xid(block_first), &Iterator_block_first);
 
@@ -1221,7 +1221,7 @@ Iterator::ip: method(n:3){
 	return chain(a.each, this);
 }
 
-Iterator::op_to_a: method{
+Iterator::op_to_array: method{
 	ret: [];
 	this{
 		ret.push_back(it); 
@@ -1229,16 +1229,12 @@ Iterator::op_to_a: method{
 	return ret;
 }
 
-Iterator::op_to_m: method{
+Iterator::op_to_map: method{
 	ret: [:];
 	this{ |key, value|
 		ret[key] = value; 
 	}
 	return ret;
-}
-
-Iterator::reverse: method{
-	return this[].reverse;
 }
 
 Iterator::join: method(sep: ""){
@@ -1273,7 +1269,6 @@ Iterator::collect: method(conv) fiber{
 		yield conv(it);
 	}
 }
-
 
 Iterator::map: Iterator::collect;
 
@@ -1317,57 +1312,8 @@ Iterator::zip: method(...){
 	return builtin::zip(this, ...);
 }
 
-Iterator::unique: method(pred: null){
-	if(pred){
-		return fiber{
-			prev: undefined;
-			this{
-				if(!pred(it, prev)){
-					yield it;
-					prev = it;
-				}
-			}
-		}
-	}
-
-	return fiber{
-		prev: undefined;
-		this{
-			if(prev!=it){
-				yield it;
-				prev = it;
-			}
-		}
-	}
-}
-
-ClassicIterator: class{
-	_current;
-	_source;
-
-	initialize: method(source){ _source, _current = source.block_first; }
-	current: method _current;
-	has_next: method !!_source;
-	is_done: method !_source;
-	next: method{ _source, _current = _source.block_next; }
-	source: method _source;
-}
-
-Iterator::classic: method ClassicIterator(this);
-
-chain: fun(...){
-	arg: ...;
-	return fiber{
-		arg.ordered_arguments{
-			it{
-				yield it;
-			}
-		}
-	}
-}
-
 Iterator::chain: method(...){
-	return chain(this, ...);
+	return builtin::chain(this, ...);
 }
 
 Iterator::cycle: method fiber{
@@ -1462,24 +1408,6 @@ Iterator::with_prev: method fiber{
 	}
 }
 
-
-
-builtin::range: fun(first, last, step:1){
-	if(step==1){
-		return fiber{
-			for(i:first; i<last; i++){
-				yield i;
-			}
-		}
-	}
-	else{
-		return fiber{
-			for(i:first; i<last; i+=step){
-				yield i;
-			}
-		}
-	}
-}
 	),
 "\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x0d\x09\x63\x00\x01\x70\x00\x01\x00\x43\x70\x00\x02\x00\x3a\x2c\x00\x01\x0c\x63\x00\x04\x2a\x00\x05\x00\x28\x01\x00\x01\x00\x1c\x00\x18\x01\x18\x00\x29\x01\x00\x01\x00\x00\x06\x32\x00\x17\x18\x00\x22\x01\x18\x01\x18"
 "\x00\x29\x01\x00\x01\x00\x00\x06\x32\x00\x05\x34\xff\xed\x2d\x21\x00\x21\x01\x21\x00\x2b\x00\x07\x00\x63\x00\x01\x70\x00\x03\x00\x9f\x41\x00\x00\x06\x06\x03\x1c\x00\x2c\x00\x04\x63\x00\x0b\x28\x00\x00\x01\x00\x1c\x01\x24\x00\x01\x18\x01\x29\x01\x00\x00\x00"
@@ -1661,6 +1589,11 @@ builtin::range: fun(first, last, step:1){
 "\x28\x00\x00\x00\x05\x72\x61\x6e\x67\x65\x28\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x2b\x00\x00\x00\x06\x20\x28\x00\x00\x00\x02\x3c\x5b\x28\x00\x00\x00\x01\x2c\x28\x00\x00\x00\x06\x20\x2e\x2e\x2e\x5d\x3e\x28\x00\x00\x00\x02\x5d\x3e\x03\x00\x00\x00\x06"
 );
 
+	Xfor3(primary_key, secondary_key, value, it->members()){
+		if(rawne(Xid(p), primary_key) && rawne(Xid(each), primary_key)){
+			cpp_class<Iterable>()->def(unchecked_ptr_cast<ID>(primary_key), xnew<DelegateToIterator>(unchecked_ptr_cast<ID>(primary_key)), secondary_key, 0);
+		}
+	}
 }
 
 XTAL_PREBIND(Exception){
@@ -1870,8 +1803,32 @@ builtin::load: fun(file_name, ...){
 	return code(...);
 }
 
-builtin::chain: fun(first, ...){
-	first.chain(...);
+builtin::chain: fun(...){
+	arg: ...;
+	return fiber{
+		arg.ordered_arguments{
+			it{
+				yield it;
+			}
+		}
+	}
+}
+
+builtin::range: fun(first, last, step:1){
+	if(step==1){
+		return fiber{
+			for(i:first; i<last; i++){
+				yield i;
+			}
+		}
+	}
+	else{
+		return fiber{
+			for(i:first; i<last; i+=step){
+				yield i;
+			}
+		}
+	}
 }
 
 	),

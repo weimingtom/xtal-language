@@ -23,23 +23,20 @@ union AnyRawValue{
 };
 
 /**
+* \xbind lib::builtin
 * \brief すべてのクラスの基底クラス
-*
-* 
 */
 class Any{
 public:
 
 	/**
 	* \brief 関数オブジェクトとみなし、関数呼び出しをする。
-	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	void rawcall(const VMachinePtr& vm) const;
 	
 	/**
 	* \brief メソッド呼び出しをする
-	*
 	* 引数や戻り値はvmを通してやり取りする。
 	* \param vm 仮想マシン
 	* \param primary_key メンバ名
@@ -51,7 +48,6 @@ public:
 
 	/**
 	* \brief メソッド呼び出しをする
-	*
 	* 引数や戻り値はvmを通してやり取りする。
 	* \param primary_key メンバ名
 	*/
@@ -60,7 +56,6 @@ public:
 	/**
 	* \brief メンバを取得する。
 	* 可触性を考慮したメンバ取得
-	*
 	* \retval undefined そのメンバは存在しない
 	* \retval 非undefined nameに対応したメンバ  
 	*/
@@ -74,91 +69,77 @@ public:
 	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)undefined, int_t accessibility = 0) const;
 
 	/**
+	* \xbind
 	* \brief このオブジェクトが所属するクラスを返す。
-	*
 	*/
 	const ClassPtr& get_class() const;
 
 	/**
 	* \brief 整数に変換して返す。
-	*
 	*/
 	int_t to_i() const;
 	
 	/**
 	* \brief 浮動小数点数に変換して返す。
-	*
 	*/
 	float_t to_f() const;
 	
 	/**
 	* \brief 文字列に変換して返す。
-	*
 	*/
 	StringPtr to_s() const;
 
 	/**
 	* \brief 配列に変換して返す。
-	*
 	*/
 	ArrayPtr to_a() const;
 
 	/**
 	* \brief 連想配列に変換して返す。
-	*
 	*/
 	MapPtr to_m() const;
 
 	/**
 	* \brief klassクラスのインスタンスか調べる。
-	*
 	*/
 	bool is(const AnyPtr& klass) const;
 		
 	/**
 	* \brief klassクラスを継承しているか調べる
-	*
 	*/
 	bool is_inherited(const AnyPtr& klass) const;
 	
 	/**
 	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
-	*
 	*/
 	const ClassPtr& object_parent() const;
 	
 	/**
 	* \brief このオブジェクトに親を設定する。
-	*
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
 	* \param parent 親
 	*/
 	void set_object_parent(const ClassPtr& parent) const;
 
 	/**
+	* \xbind
 	* \brief オブジェクトの名前を返す
 	*/
 	StringPtr object_name() const;
 
 	/**
+	* \xbind
 	* \brief オブジェクトの名前のリストを返す
 	* 一番最上位の親からの名前のリストを返す
 	*/
 	ArrayPtr object_name_list() const;
 
 	/**
+	* \xbind
 	* \brief 自身を文字列化してprintlnする。
 	* \return 自身を返す。
 	*/
 	AnyPtr p() const;
-
-	/**
-	* \brief 自身を返す。
-	*
-	*/
-	const AnyPtr& self() const{
-		return (const AnyPtr&)*this;
-	}
 
 public:
 

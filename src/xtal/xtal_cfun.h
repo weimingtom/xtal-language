@@ -1206,7 +1206,6 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, in
 //////////////////////////////////////////////////////////////
 
 /**
-* \ingroup Cpp
 * \brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 */
@@ -1218,7 +1217,6 @@ inline NativeFunPtr fun(const Fun& f){
 }
 
 /**
-* \ingroup Cpp
 * \brief C++のメンバ関数をXtalから呼び出せるオブジェクトに変換するための関数
 *
 * 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
@@ -1231,7 +1229,6 @@ inline NativeFunPtr method(const Fun& f){
 }
 
 /*
-* \ingroup Cpp
 * \brief C++のコンストラクタをXtalから呼び出せるオブジェクトに変換するための擬似関数
 *
 */
@@ -1243,10 +1240,8 @@ struct ctor : public NativeFunPtr{
 		NativeFunPtr::operator =(new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun)));
 	}
 };
-
 	
 /**
-* \ingroup Cpp
 * \brief メンバ変数へのポインタからゲッター関数を生成する
 *
 */
@@ -1258,7 +1253,6 @@ inline NativeFunPtr getter(T C::* v){
 }
 	
 /**
-* \ingroup Cpp
 * \brief メンバ変数へのポインタからセッター関数を生成する
 *
 */
@@ -1269,9 +1263,7 @@ inline NativeFunPtr setter(T C::* v){
 	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
-
 /**
-* \ingroup Cpp
 * @brief 2重ディスパッチメソッド
 */
 class DoubleDispatchMethod : public HaveParent{
@@ -1291,14 +1283,12 @@ private:
 };
 
 /**
-* \ingroup Cpp
 * \brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */
 DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key);
 
 /**
-* \ingroup Cpp
 * @brief 2重ディスパッチ関数
 */
 class DoubleDispatchFun : public HaveParent{
@@ -1323,7 +1313,6 @@ private:
 };
 
 /**
-* \ingroup Cpp
 * \brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */

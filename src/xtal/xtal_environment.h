@@ -9,11 +9,7 @@
 
 namespace xtal{
 
-/** \addtogroup environment 環境*/
-/*@{*/
-
 /**
-* \version C++
 * \brief アロケータライブラリ
 */
 class AllocatorLib{
@@ -25,7 +21,6 @@ public:
 };
 
 /**
-* \version C++
 * \brief 文字コードライブラリ
 */
 class ChCodeLib{
@@ -39,7 +34,6 @@ public:
 };
 
 /**
-* \version C++
 * \brief スレッドライブラリ
 */
 class ThreadLib{
@@ -61,7 +55,6 @@ public:
 };
 
 /**
-* \version C++
 * \brief 標準入出力ライブラリ
 */
 class StdStreamLib{
@@ -82,7 +75,6 @@ public:
 };
 
 /**
-* \version C++
 * \brief ファイルシステムライブラリ
 */
 class FilesystemLib{
@@ -109,7 +101,6 @@ public:
 };
 
 /**
-* \version C++
 * \brief 使用ライブラリの指定のための構造体
 */
 struct Setting{
@@ -126,25 +117,21 @@ struct Setting{
 };
 
 /**
-* \version C++
 * \brief Xtal実行環境を作成し、初期化し、カレントに設定する。
 */
 void initialize(const Setting& setting);
 
 /**
-* \version C++
 * \brief カレントのXtal実行環境を破棄する。
 */
 void uninitialize();
 
 /**
-* \version C++
 * \brief 現在のカレントのXtal実行環境を取得する。
 */
 Environment* environment();
 
 /**
-* \version C++
 * \brief カレントのXtal実行環境を設定する。
 */
 void set_environment(Environment* e);
@@ -155,29 +142,19 @@ StdStreamLib* std_stream_lib();
 
 FilesystemLib* filesystem_lib();
 
-/*@}*/
-
 /////////////////////////////////////////////////////
 
-/** \addtogroup memory メモリ*/
-/*@{*/
-
 /**
-* \version C++
 * \brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
-*
 */
 void* xmalloc(size_t size);
 
 /**
-* \version C++
 * \brief ユーザーが登録したメモリデアロケート関数を使ってメモリ解放する。
-*
 */
 void xfree(void* p, size_t size);
 
 /**
-* \version C++
 * \brief メモリ確保をスコープに閉じ込めるためのユーティリティクラス
 */
 struct XMallocGuard{
@@ -220,38 +197,39 @@ struct Protect{
 
 #define XTAL_OUT_OF_MEMORY else 
 
-/*@}*/
-
 /////////////////////////////////////////////////////
 
-/** \name ガーベジコレクション*/
-/*@{*/
-
 /**
-* \xbind
+* \xbind lib::builtin
 * \brief ガーベジコレクションを実行する
+*
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
 * 例えば循環参照はこれでは検知できない。
 */
 void gc();
 
 /**
-* \xbind
+* \xbind lib::builtin
 * \brief 循環オブジェクトも解放するフルガーベジコレクションを実行する
+*
 * 時間はかかるが、現在ゴミとなっているものはなるべく全て解放するガーベジコレクト関数
 * 循環参照も検知できる。
 */
 void full_gc();
 
 /**
+* \xbind lib::builtin
 * \brief ガーベジコレクションを無効化する
+*
 * gcやfull_gcの呼び出しを無効化する関数。
 * 内部でこれが何回呼び出されたか記憶されており、呼び出した回数enable_gcを呼びないとガーベジコレクションは有効にならない
 */
 void disable_gc();
 
 /**
+* \xbind lib::builtin
 * \brief ガーベジコレクションを有効化する
+
 * disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
 */
 void enable_gc();
@@ -259,8 +237,6 @@ void enable_gc();
 uint_t alive_object_count();
 
 AnyPtr alive_object(uint_t i);
-
-/*@}*/
 
 /////////////////////////////////////////////////////
 
@@ -276,9 +252,6 @@ const ClassPtr& cpp_class(CppClassSymbolData* key);
 */
 void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
 
-/** \name C++クラスへのアクセス */
-/*@{*/
-
 /**
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
@@ -293,23 +266,6 @@ inline const ClassPtr& cpp_class(){
 template<class T>
 inline void set_cpp_class(const ClassPtr& cls){
 	return set_cpp_class(cls, &CppClassSymbol<T>::value);
-}
-
-/**
-* \brief T形をxtalで扱えるクラスを取得する。
-*/
-template<class T>
-inline const SmartPtr<T>& cpp_singleton(){
-	return unchecked_ptr_cast<T>(cpp_class<T>());
-}
-
-/**
-* \brief T形をxtalで扱えるクラスを生成し、登録する。
-*/
-template<class T>
-inline const SmartPtr<T>& new_cpp_singleton(){
-	set_cpp_class<T>(xnew<T>());
-	return unchecked_ptr_cast<T>(cpp_class<T>());
 }
 
 /**
@@ -345,8 +301,6 @@ T& cpp_var(){
 	set_cpp_var(p, &CppVarDeleter<T>::deleter, &CppVarSymbol<T>::value);
 	return *(T*)p;
 }
-
-/*@}*/
 
 /////////////////////////////////////////////////////
 

@@ -19,14 +19,6 @@ enum{
 };
 }
 
-/**
-* \defgroup Xtal Xtalから使えるクラスや関数
-*/
-
-/**
-* \defgroup Cpp C++から使えるクラスや関数
-*/
-
 //#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
@@ -677,7 +669,6 @@ class ChRange;
 class DoubleDispatchMethod;
 class DoubleDispatchFun;
 class MultiValue;
-class DebugInfo;
 class Exception;
 
 typedef SmartPtr<Null> NullPtr;
@@ -911,6 +902,8 @@ IdentifierData Identifier<T>::value;
 
 #define XTAL_DECL_ID(x) class xtal_id_##x
 #define XTAL_ID2(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
+
+inline const IDPtr& intern(const StringLiteral& str);
 
 #define XTAL_ID(x) ::xtal::intern(XTAL_STRING(#x))
 

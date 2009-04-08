@@ -10,9 +10,15 @@
 namespace xtal{
 
 /**
+* \xbind lib::builtin
+* \brief デバッグ
+*/
+namespace debug{
+
+/**
 * \brief デバッグフック関数で渡されるオブジェクト
 */
-class DebugInfo : public Base{
+class HookInfo : public Base{
 public:
 	
 	/**
@@ -62,8 +68,8 @@ public:
 	* \brief クローンを作る
 	* DebugInfoオブジェクトは使いまわされるため、情報を保持したい場合、クローンを作る必要がある。
 	*/
-	SmartPtr<DebugInfo> clone(){
-		return xnew<DebugInfo>(*this);
+	SmartPtr<HookInfo> clone(){
+		return xnew<HookInfo>(*this);
 	}
 
 private:
@@ -80,38 +86,38 @@ private:
 	VMachinePtr vm_;
 };
 
-typedef SmartPtr<DebugInfo> DebugInfoPtr;
-
-/**
-* \brief デバッグ
-*/
-namespace debug{
+typedef SmartPtr<HookInfo> HookInfoPtr;
 
 class Debug;
 
 /**
+* \xbind
 * \brief デバッグ機能を有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 void enable();
 
 /**
+* \xbind
 * \brief デバッグ機能を無効にする
 */
 void disable();
 
 /**
+* \xbind
 * \brief デバッグ機能を強制的に有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 void enable_force(int_t count);
 
 /**
+* \xbind
 * \brief デバッグ機能を強制的に無効にする
 */
 int_t disable_force();
 
 /**
+* \xbind
 * \brief デバッグ機能が有効かどうか
 */
 bool is_enabled();
@@ -119,61 +125,66 @@ bool is_enabled();
 uint_t hook_setting_bit();
 
 /**
+* \xbind
 * \brief ブレークポイントがある度に呼び出されるフック関数を登録する
-*
 * \param hook 登録するフック関数
 */
 void set_break_point_hook(const AnyPtr& hook);
 
 /**
+* \xbind
 * \brief 関数呼び出しされる度に呼び出されるフック関数を登録する
-*
 * \param hook 登録するフック関数
 */
 void set_call_hook(const AnyPtr& hook);
 
 /**
+* \xbind
 * \brief 関数からreturnされる度に呼び出されるフック関数を登録する
-*
 * \param hook 登録するフック関数
 */
 void set_return_hook(const AnyPtr& hook);
 
 /**
+* \xbind
 * \brief 例外かthrowされる度に呼び出されるフック関数を登録する
-*
 * \param hook 登録するフック関数
 */
 void set_throw_hook(const AnyPtr& hook);
 
 /**
+* \xbind
 * \brief アサートが失敗される度に呼び出されるフック関数を登録する
-*
 * \param hook 登録するフック関数
 */
 void set_assert_hook(const AnyPtr& hook);
 
 /**
+* \xbind
 * \brief set_break_point_hook関数で登録した関数を取得する
 */
 const AnyPtr& break_point_hook();
 
 /**
+* \xbind
 * \brief set_call_hook関数で登録した関数を取得する
 */
 const AnyPtr& call_hook();
 
 /**
+* \xbind
 * \brief set_return_hook関数で登録した関数を取得する
 */
 const AnyPtr& return_hook();
 
 /**
+* \xbind
 * \brief set_throw_hook関数で登録した関数を取得する
 */
 const AnyPtr& throw_hook();
 
 /**
+* \xbind
 * \brief set_assert_hook関数で登録した関数を取得する
 */
 const AnyPtr& assert_hook();

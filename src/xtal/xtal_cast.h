@@ -268,11 +268,7 @@ XTAL_CAST_HELPER(long double, Float);
 
 //////////////////////////////////////////////////////////////////////////////
 
-/** \name 型キャスト*/
-// @{
-
 /**
-* \ingroup Cpp
 * \brief SmartPtr<T>型に変換する。
 *
 * Tに変換できない場合xtal::nullを返す。
@@ -284,7 +280,6 @@ ptr_cast(const AnyPtr& a){
 }
 
 /**
-* \ingroup Cpp
 * \brief SmartPtr<T>型に、実際の型がどうであるかを無視して強制変換する。
 */
 template<class T>
@@ -294,7 +289,6 @@ unchecked_ptr_cast(const AnyPtr& a){
 }
 
 /**
-* \ingroup Cpp
 * \brief T型に変換する。
 *
 * Tに変換できない場合、
@@ -309,7 +303,6 @@ cast(const AnyPtr& a){
 }
 
 /**
-* \ingroup Cpp
 * \brief T型に変換できるか調べる。
 *
 */
@@ -319,7 +312,6 @@ inline bool can_cast(const AnyPtr& a){
 }
 
 /**
-* \ingroup Cpp
 * \brief T型にチェック無しで変換する。
 *
 */
@@ -328,8 +320,6 @@ inline typename CastResult<T>::type
 unchecked_cast(const AnyPtr& a){
 	return CastHelperHelper<T>::unchecked_cast(a);
 }
-
-// @}
 	
 //////////////////////////////////////////
 

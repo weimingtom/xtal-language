@@ -795,7 +795,7 @@ private:
 	
 	Any except_[3];
 
-	SmartPtr<DebugInfo> debug_info_;
+	debug::HookInfoPtr debug_info_;
 	bool disable_debug_;
 	int_t hook_setting_bit_;
 

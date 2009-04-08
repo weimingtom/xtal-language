@@ -30,10 +30,10 @@ XTAL_BIND(Foo){
 }
 
 void test(){
-    lib()->def(Xid(Foo), cpp_class<Foo>());
+    lib()->def(Xid(eFoo), cpp_class<Foo>());
 
 	if(CodePtr code = Xsrc((
-		foo: lib::Foo();
+		foo: lib::eFoo();
 		foo.x = 0.5;
 		foo.x.p;
 	))){

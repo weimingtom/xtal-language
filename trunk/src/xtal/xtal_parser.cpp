@@ -1306,12 +1306,12 @@ bool Parser::parse_post(int_t pri, int_t space){
 					if(cmp_pri(pri, PRI_AT, space, l_space)){
 						if(eat(':')){
 							expect(']');
-							eb_.push(Xid(op_to_m));
+							eb_.push(Xid(op_to_map));
 							eb_.push(null);
 							eb_.splice(EXPR_PROPERTY, 3);
 						}
 						else if(eat(']')){
-							eb_.push(Xid(op_to_a));
+							eb_.push(Xid(op_to_array));
 							eb_.push(null);
 							eb_.splice(EXPR_PROPERTY, 3);
 						}

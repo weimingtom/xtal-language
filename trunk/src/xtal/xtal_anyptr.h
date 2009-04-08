@@ -220,11 +220,11 @@ public:
 	typedef void (dummy_bool_tag::*safe_bool)(dummy_bool_tag);
 
 	operator safe_bool() const{
-		return type((*this)->self())>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
+		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 
 	bool operator !() const{
-		return type((*this)->self())<=TYPE_FALSE;
+		return type(*this)<=TYPE_FALSE;
 	}
 
 private:

@@ -305,10 +305,6 @@ void Environment::initialize(const Setting& setting){
 	object_space_.initialize();
 	string_space_.initialize();
 
-	set_cpp_class<Iterator>(xnew<Iterator>());
-	cpp_class<Iterator>()->set_class(cpp_class<Class>());
-	cpp_class<Iterator>()->unset_native();
-
 	builtin_ = xnew<Singleton>();
 
 	lib_ = xnew<Lib>(true);

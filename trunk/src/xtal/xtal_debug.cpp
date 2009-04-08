@@ -1,9 +1,9 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
-namespace xtal{
+namespace xtal{ namespace debug{
 
-void DebugInfo::visit_members(Visitor& m){
+void HookInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & file_name_ & fun_name_ & variables_frame_;
 }
@@ -24,7 +24,6 @@ public:
 	AnyPtr assert_hook_;
 };
 
-namespace debug{
 
 void enable(){
 	DebugData& d = cpp_var<DebugData>();

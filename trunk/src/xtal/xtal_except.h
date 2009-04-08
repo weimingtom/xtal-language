@@ -10,7 +10,8 @@
 namespace xtal{
 
 /**
-* @brief 例外
+* \xbind lib::builtin
+* \brief 例外
 */
 class Exception : public Base{
 public:
@@ -21,12 +22,21 @@ public:
 
 	void append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name = empty_string);
 
+	/**
+	* \brief 文字列化する
+	*/
 	StringPtr to_s();
 
+	/**
+	* \brief メッセージを返す
+	*/
 	StringPtr message(){
 		return message_;
 	}
 
+	/**
+	* \brief バックトレースの情報を要素とするIteratorを返す
+	*/
 	AnyPtr backtrace(){
 		return backtrace_->each();
 	}

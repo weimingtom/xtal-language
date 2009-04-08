@@ -7,9 +7,6 @@
 
 #pragma once
 
-/** @addtogroup xmacro 記述を便利にするマクロ*/
-/*@{*/
-
 /**
 * \hideinitializer
 * \brief foreachを簡単に記述するためのマクロ
@@ -146,7 +143,5 @@
 * \endcode
 */
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
-
-/*@}*/
 
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

@@ -12,7 +12,6 @@ namespace xtal{
 class ThreadSpace;
 
 /**
-* \ingroup Xtal Cpp
 * \brief スレッド
 */
 class Thread : public Base{
@@ -65,7 +64,6 @@ protected:
 };
 
 /**
-* \ingroup Xtal Cpp
 * \brief ミューテックス
 */
 class Mutex : public Base{

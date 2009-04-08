@@ -293,7 +293,6 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
 	Xfor_cast(const MultiValuePtr& v, send(Xid(members_ancestors_too))){

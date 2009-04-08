@@ -18,6 +18,10 @@ const AnyPtr& Map::calc_key(const AnyPtr& key){
 }
 	
 const AnyPtr& Map::at(const AnyPtr& akey){
+	return op_at(akey);
+}
+	
+const AnyPtr& Map::op_at(const AnyPtr& akey){
 	const AnyPtr& key = calc_key(akey);
 	iterator it = table_.find(key);
 	if(it!=end()){
@@ -28,13 +32,13 @@ const AnyPtr& Map::at(const AnyPtr& akey){
 	}
 }
 
-MapPtr Map::cat(const MapPtr& a){
+MapPtr Map::op_cat(const MapPtr& a){
 	MapPtr ret(clone());
-	ret->cat_assign(a);
+	ret->op_cat_assign(a);
 	return ret;
 }
 
-MapPtr Map::cat_assign(const MapPtr& a){
+MapPtr Map::op_cat_assign(const MapPtr& a){
 	for(iterator p = a->begin(); p!=a->end(); ++p){
 		set_at(p->first, p->second);
 	}
@@ -69,7 +73,7 @@ void Map::assign(const AnyPtr& iterator){
 	}
 }
 	
-void Map::concat(const AnyPtr& iterator){
+void Map::append(const AnyPtr& iterator){
 	Xfor2(k, v, iterator){
 		set_at(k, v);
 	}

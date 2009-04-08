@@ -1,4 +1,34 @@
 
+/**
+* \biref xtalのライブラリ
+*/
+namespace lib{
+
+	/**
+	* \brief ビルトインのクラスや関数
+	*/
+	namespace builtin{
+	
+		/**
+		* \brief ファイルシステムのクラスや関数
+		*/
+		namespace filesystem{}
+		
+		/**
+		* \brief デバッグのクラスや関数
+		*/
+		namespace debug{}
+		
+		/**
+		* \brief xpegのクラスや関数
+		*/
+		namespace xpeg{}
+	}
+}
+
+
+
+
 /** \mainpage Programing Xtal
 Xtalは、主にゲーム製作用途のために、C++に組み込み、連携させて使うために開発された言語です。\n
 基本的にXtalを単体で使うことは無く、C++と組み合わせて使います。\n
@@ -1653,14 +1683,14 @@ indexに対応する要素を設定します。\n
 a[]
 \endcode
 aを配列に纏めた結果を返します。\n
-これは、a.op_to_aの省略形です。\n
+これは、a.op_to_arrayの省略形です。\n
 
 \section 連想配列化演算子
 \code 
 a[:]
 \endcode
 aを連想配列に纏めた結果を返します。\n
-これは、a.op_to_mの省略形です。\n
+これは、a.op_to_mapの省略形です。\n
 
 \section oror 論理和演算子
 \code

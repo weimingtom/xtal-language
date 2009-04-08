@@ -243,13 +243,13 @@ ArrayPtr Array::clone(){
 	return xnew<Array>(*this);
 }
 
-ArrayPtr Array::cat(const ArrayPtr& a){
+ArrayPtr Array::op_cat(const ArrayPtr& a){
 	ArrayPtr ret(clone());
-	ret->cat_assign(a);
+	ret->op_cat_assign(a);
 	return ret;
 }
 
-ArrayPtr Array::cat_assign(const ArrayPtr& a){
+ArrayPtr Array::op_cat_assign(const ArrayPtr& a){
 	for(uint_t i = 0, size = a->size(); i<size; ++i){
 		push_back(a->at(i));
 	}
@@ -301,7 +301,7 @@ void Array::assign(const AnyPtr& iterator){
 	}
 }
 
-void Array::concat(const AnyPtr& iterator){
+void Array::append(const AnyPtr& iterator){
 	Xfor(v, iterator){
 		push_back(v);
 	}

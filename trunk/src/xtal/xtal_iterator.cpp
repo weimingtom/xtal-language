@@ -71,14 +71,6 @@ void DelegateToIterator::rawcall(const VMachinePtr& vm){
 	vm->arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 
-void Iterator::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-	Class::def(primary_key, value, secondary_key, accessibility);
-	if(rawne(Xid(p), primary_key) && rawne(Xid(each), primary_key)){
-		cpp_class<Iterable>()->def(primary_key, xnew<DelegateToIterator>(primary_key), secondary_key, accessibility);
-	}
-}
-
 void block_break(AnyPtr& target){
 	if(target){
 		const VMachinePtr& vm = vmachine();

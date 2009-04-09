@@ -69,6 +69,7 @@ public:
 public:
 
 	/**
+	* \xbind
 	* \brief メンバが格納された、Iteratorを返す
 	* ブロックパラメータは(primary_key, secondary_key, value)
 	*/

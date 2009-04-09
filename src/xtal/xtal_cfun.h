@@ -1205,29 +1205,6 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, in
 
 //////////////////////////////////////////////////////////////
 
-/**
-* \brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
-*
-*/
-template<class Fun>
-inline NativeFunPtr fun(const Fun& f){
-	typedef cfun_holder<Fun> fun_t;
-	fun_t fun(f);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-}
-
-/**
-* \brief C++のメンバ関数をXtalから呼び出せるオブジェクトに変換するための関数
-*
-* 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
-*/
-template<class Fun>
-inline NativeFunPtr method(const Fun& f){
-	typedef cmemfun_holder<Fun> fun_t;
-	fun_t fun(f);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-}
-
 /*
 * \brief C++のコンストラクタをXtalから呼び出せるオブジェクトに変換するための擬似関数
 *
@@ -1241,28 +1218,6 @@ struct ctor : public NativeFunPtr{
 	}
 };
 	
-/**
-* \brief メンバ変数へのポインタからゲッター関数を生成する
-*
-*/
-template<class T, class C>
-inline NativeFunPtr getter(T C::* v){
-	typedef getter_holder<C, T> fun_t;
-	fun_t fun(v);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-}
-	
-/**
-* \brief メンバ変数へのポインタからセッター関数を生成する
-*
-*/
-template<class T, class C>
-inline NativeFunPtr setter(T C::* v){
-	typedef setter_holder<C, T> fun_t;
-	fun_t fun(v);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-}
-
 /**
 * @brief 2重ディスパッチメソッド
 */
@@ -1281,12 +1236,6 @@ public:
 private:
 	IDPtr primary_key_;
 };
-
-/**
-* \brief 2重ディスパッチメソッドオブジェクトを生成する
-*
-*/
-DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key);
 
 /**
 * @brief 2重ディスパッチ関数
@@ -1312,11 +1261,67 @@ private:
 	IDPtr primary_key_;
 };
 
+/// \name ネイティブ関数をXtalで呼び出せるオブジェクトに変換するための関数群
+//@{
+
+/**
+* \brief C++の関数をXtalから呼び出せるオブジェクトに変換するための関数
+*
+*/
+template<class Fun>
+inline NativeFunPtr fun(const Fun& f){
+	typedef cfun_holder<Fun> fun_t;
+	fun_t fun(f);
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+}
+
+/**
+* \brief C++のメンバ関数をXtalから呼び出せるオブジェクトに変換するための関数
+*
+* 普通の関数をメソッドとして変換したい場合、第一引数をその型にすること。
+*/
+template<class Fun>
+inline NativeFunPtr method(const Fun& f){
+	typedef cmemfun_holder<Fun> fun_t;
+	fun_t fun(f);
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+}
+
+/**
+* \brief メンバ変数へのポインタからゲッター関数を生成する
+*
+*/
+template<class T, class C>
+inline NativeFunPtr getter(T C::* v){
+	typedef getter_holder<C, T> fun_t;
+	fun_t fun(v);
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+}
+	
+/**
+* \brief メンバ変数へのポインタからセッター関数を生成する
+*
+*/
+template<class T, class C>
+inline NativeFunPtr setter(T C::* v){
+	typedef setter_holder<C, T> fun_t;
+	fun_t fun(v);
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+}
+
+/**
+* \brief 2重ディスパッチメソッドオブジェクトを生成する
+*
+*/
+DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key);
+
 /**
 * \brief 2重ディスパッチメソッドオブジェクトを生成する
 *
 */
 DoubleDispatchFunPtr double_dispatch_fun(const ClassPtr& klass, const IDPtr& primary_key);
+
+//@}
 
 }
 

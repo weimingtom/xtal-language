@@ -86,11 +86,12 @@ int main(int argc, char** argv){
 			stderr_stream()->println(e);
 		}
 
-		uninitialize();
 	}
 	XTAL_OUT_OF_MEMORY{
 		puts("out of memory");
 	}
+	
+	uninitialize();
 
 	return 0;
 }

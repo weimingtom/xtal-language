@@ -9,6 +9,9 @@
 
 namespace xtal{
 
+/// \name Xtal環境の初期化、破棄周り
+//@{
+
 /**
 * \brief アロケータライブラリ
 */
@@ -136,6 +139,8 @@ Environment* environment();
 */
 void set_environment(Environment* e);
 
+//@}
+
 ThreadLib* thread_lib();
 
 StdStreamLib* std_stream_lib();
@@ -143,6 +148,9 @@ StdStreamLib* std_stream_lib();
 FilesystemLib* filesystem_lib();
 
 /////////////////////////////////////////////////////
+
+/// \name メモリ周り
+//@{
 
 /**
 * \brief ユーザーが登録したメモリアロケート関数を使ってメモリ確保する。
@@ -159,16 +167,37 @@ void xfree(void* p, size_t size);
 */
 struct XMallocGuard{
 	/**
-	* \brief 
+	* \brief 確保せずに構築されるコンストラクタ
 	*/
 	XMallocGuard():p(0){}
+	
+	/**
+	* \brief size分のメモリ確保するコンストラクタ
+	*/
 	explicit XMallocGuard(uint_t size):p(xmalloc(size)), sz(size){}
+
+	/**
+	* \brief メモリを解放する
+	*/
 	~XMallocGuard(){ xfree(p, sz); }
 public:	
+
+	/**
+	* \brief メモリを確保する
+	* それまでに確保されていたメモリは解放される
+	*/
 	void malloc(size_t size){ xfree(p, sz); p = xmalloc(size); sz = size; }
+
+	/**
+	* \brief メモリの先頭アドレスを返す
+	*/
 	void* get(){ return p; }
-	void* release(){ void* ret = p; p = 0; return ret; }
+
+	/**
+	* \brief 確保されているメモリのサイズを返す
+	*/
 	uint_t size(){ return sz; }
+
 private:
 	void* p;
 	uint_t sz;
@@ -176,6 +205,16 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(XMallocGuard);
 };
 
+#define XTAL_PROTECT if(const ::xtal::Protect& xtalprotect = setjmp(::xtal::protect().buf)!=0)
+
+#define XTAL_OUT_OF_MEMORY else 
+
+//@}
+
+/**
+* \internal
+* \breif jmp_bufを閉じ込める構造体
+*/
 struct JmpBuf{
 	jmp_buf buf;
 };
@@ -192,10 +231,6 @@ struct Protect{
 	~Protect(){ reset_protect(); }
 	operator bool() const{ return !pass; }
 };
-
-#define XTAL_PROTECT if(const ::xtal::Protect& xtalprotect = setjmp(::xtal::protect().buf)!=0)
-
-#define XTAL_OUT_OF_MEMORY else 
 
 /////////////////////////////////////////////////////
 
@@ -356,35 +391,43 @@ void vmachine_take_back(const VMachinePtr& vm);
 
 /////////////////////////////////////////////////////
 
+/// \name ライブラリオブジェクト取得関数
+// @{
+
 /**
-* \version C++
 * \brief builtinオブジェクトを返す
 */
 const ClassPtr& builtin();
 
 /**
-* \version C++
 * \brief libオブジェクトを返す
 */
 const LibPtr& lib();
 
 /**
-* \version C++
 * \brief stdinストリームオブジェクトを返す
 */
 const StreamPtr& stdin_stream();
 
 /**
-* \version C++
 * \brief stdoutストリームオブジェクトを返す
 */
 const StreamPtr& stdout_stream();
 
 /**
-* \version C++
 * \brief stderrストリームオブジェクトを返す
 */
 const StreamPtr& stderr_stream();
+
+/**
+* \brief VMachinePtrオブジェクトを返す
+*
+* グローバルなVMachinePtrオブジェクトを返す。
+* スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
+*/
+const VMachinePtr& vmachine();
+
+// @}
 
 /**
 * \internal
@@ -440,14 +483,6 @@ void register_thread(Environment*);
 void unregister_thread(Environment*);
 
 /**
-* \brief VMachinePtrオブジェクトを返す
-*
-* グローバルなVMachinePtrオブジェクトを返す。
-* スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
-*/
-const VMachinePtr& vmachine();
-
-/**
 * \brief テキストマップを返す
 */
 const MapPtr& text_map();
@@ -498,8 +533,11 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 
 #ifndef XTAL_NO_PARSER
 
+/// \name コンパイル系関数
+//@{
+
 /**
-* \version C++ Xtal
+* \xbind lib::builtin
 * \brief file_nameファイルをコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
@@ -508,7 +546,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 CodePtr compile_file(const StringPtr& file_name);
 
 /**
-* \version C++ Xtal
+* \xbind lib::builtin
 * \brief source文字列をコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
 * \param source Xtalスクリプトが記述された文字列
@@ -517,7 +555,7 @@ CodePtr compile_file(const StringPtr& file_name);
 CodePtr compile(const StringPtr& source);
 
 /**
-* \version C++ Xtal
+* \xbind lib::builtin
 * \brief file_nameファイルをコンパイルして実行する。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
 * \return スクリプト内でreturnされた値
@@ -525,11 +563,14 @@ CodePtr compile(const StringPtr& source);
 AnyPtr load(const StringPtr& file_name);
 
 /**
+* \xbind lib::builtin
 * \brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
 * \return スクリプト内でreturnされた値
 */
 AnyPtr load_and_save(const StringPtr& file_name);
+
+//@}
 
 CodePtr source(const char_t* src, int_t size);
 

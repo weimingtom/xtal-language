@@ -10,7 +10,7 @@
 namespace xtal{ 
 
 /**
-* @brief xpeg namespace
+* @brief PEGライブラリ
 */
 namespace xpeg{
 
@@ -75,11 +75,17 @@ private:
 };
 
 /**
+* \xbind lib::builtin::xpeg
+* \xinherit lib::builtin::Any
 * \brief PEGを実行する
 */
 class Executor : public Base{
 public:
 
+	/**
+	* \xbind
+	* \brief ストリームかイテレータを受け取り構築する
+	*/
 	Executor(const AnyPtr& stream_or_iterator = null){
 		reset(stream_or_iterator);
 	}

@@ -3,8 +3,44 @@
 
 #include "xtal_objectspace.h"
 
+#if 0
 #include <map>
 #include <string>
+
+void xtal::ObjectSpace::print_alive_objects(){
+	full_gc();
+
+	ConnectedPointer current(objects_count_, objects_list_begin_);
+	ConnectedPointer begin(0, objects_list_begin_);
+
+	std::map<std::string, int> table;
+	for(ConnectedPointer it = begin; it!=current; ++it){
+		switch(type(**it)){
+		XTAL_DEFAULT;
+		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
+		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++; }
+		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
+		XTAL_CASE(TYPE_MULTI_VALUE){ table["MultiValue"]++; }
+		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
+		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
+		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ table["NativeFunBindedThis"]++; }
+		}
+	}
+
+	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
+	for(; it!=last; ++it){
+		printf("alive %s %d\n", it->first.c_str(), it->second);
+	}
+	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+	printf("m %d\n", m);
+
+	//printf("used_memory %d\n", used_memory);
+}
+#else
+void xtal::ObjectSpace::print_alive_objects(){
+
+}
+#endif
 
 namespace xtal{
 
@@ -179,7 +215,7 @@ void ObjectSpace::uninitialize(){
 		if(!ignore_memory_assert()){
 			//fprintf(stderr, "finished gc\n");
 			//fprintf(stderr, "exists cycled objects %d\n", objects_count_);
-			//print_alive_objects();
+			print_alive_objects();
 
 			// このassertでとまる場合、オブジェクトをすべて開放できていない。
 			// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
@@ -235,36 +271,6 @@ void ObjectSpace::expand_objects_list(){
 			*it = begin;
 		}
 	}
-}
-
-void ObjectSpace::print_alive_objects(){
-	full_gc();
-
-	ConnectedPointer current(objects_count_, objects_list_begin_);
-	ConnectedPointer begin(0, objects_list_begin_);
-
-	std::map<std::string, int> table;
-	for(ConnectedPointer it = begin; it!=current; ++it){
-		switch(type(**it)){
-		XTAL_DEFAULT;
-		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
-		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; }
-		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
-		XTAL_CASE(TYPE_MULTI_VALUE){ table["MultiValue"]++; }
-		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
-		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ table["NativeFunBindedThis"]++; }
-		}
-	}
-
-	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
-	for(; it!=last; ++it){
-		printf("alive %s %d\n", it->first.c_str(), it->second);
-	}
-	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
-	printf("m %d\n", m);
-
-	//printf("used_memory %d\n", used_memory);
 }
 
 uint_t ObjectSpace::alive_object_count(){

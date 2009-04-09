@@ -9,16 +9,28 @@
 
 namespace xtal{
 
+/**
+* \xbind lib::builtin
+* \brief ヌル値
+*/
 class Null : public Any{
 public:
 	Null():Any(TYPE_NULL){} 
 };
 
+/**
+* \xbind lib::builtin
+* \brief 未定義値
+*/
 class Undefined : public Any{ 
 public: 
 	Undefined():Any(TYPE_UNDEFINED){} 
 };
 
+/**
+* \xbind lib::builtin
+* \brief 整数値
+*/
 class Int : public Any{
 public:
 
@@ -48,6 +60,10 @@ public:
 	FloatRangePtr op_range(float_t right, int_t kind);
 };
 
+/**
+* \xbind lib::builtin
+* \brief 浮動小数点値
+*/
 class Float : public Any{
 public:
 
@@ -77,33 +93,54 @@ public:
 	FloatRangePtr op_range(float_t right, int_t kind);
 };
 
+/**
+* \xbind lib::builtin
+* \brief 真偽値
+*/
 class Bool : public Any{
 public: 
 	Bool(bool b):Any(b){} 
 };
 
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
 class Range : public Base{
 public:
 
-	Range(const AnyPtr& left, const AnyPtr& right, int_t kind = CLOSED)
+	Range(const AnyPtr& left, const AnyPtr& right, int_t kind = RANGE_CLOSED)
 		:left_(left), right_(right), kind_(kind){}
 
+	/**
+	* \xbind
+	* \breif 区間の左の要素を返す
+	*/
 	const AnyPtr& left(){ return left_; }
 
+	/**
+	* \xbind
+	* \breif 区間の右の要素を返す
+	*/
 	const AnyPtr& right(){ return right_; }
 
+	/**
+	* \xbind
+	* \breif 区間の種類を返す
+	*/
 	int_t kind(){ return kind_; }
 
+	/**
+	* \xbind
+	* \breif 左が閉じた区間か返す
+	*/
 	bool is_left_closed(){ return (kind_&(1<<1))==0; }
 
+	/**
+	* \xbind
+	* \breif 右が閉じた区間か返す
+	*/
 	bool is_right_closed(){ return (kind_&(1<<0))==0; }
-
-	enum{
-		CLOSED = (0<<1) | (0<<0),
-		LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
-		LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
-		OPEN = (1<<1) | (1<<0)
-	};
 
 protected:
 
@@ -117,30 +154,44 @@ protected:
 	int_t kind_;
 };
 
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
 class IntRange : public Range{
 public:
 
-	IntRange(int_t left, int_t right, int_t kind = CLOSED)
+	IntRange(int_t left, int_t right, int_t kind = RANGE_CLOSED)
 		:Range(left, right, kind){}
 
 public:
 
 	/**
-	* \brief 範囲の開始
+	* \xbind
+	* \brief 範囲の開始を返す
 	*
 	* beginは左閉右開区間 [begin, end) で得ることが出来る 
 	*/
 	int_t begin(){ return is_left_closed() ? left() : left()+1; }
 
 	/**
-	* \brief 範囲の終端
+	* \xbind
+	* \brief 範囲の終端を返す
 	*
 	* endは左閉右開区間 [begin, end) で得ることが出来る 
 	*/
 	int_t end(){ return is_right_closed() ? right()+1 : right(); }
 
+	/**
+	* \xbind
+	* \breif 区間の左の要素を返す
+	*/
 	int_t left(){ return ivalue(left_); }
 
+	/**
+	* \xbind
+	* \breif 区間の左の要素を返す
+	*/
 	int_t right(){ return ivalue(right_); }
 
 	AnyPtr each();
@@ -159,21 +210,36 @@ private:
 	int_t it_, end_;
 };
 
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
 class FloatRange : public Range{
 public:
 
-	FloatRange(float_t left, float_t right, int_t kind = CLOSED)
+	FloatRange(float_t left, float_t right, int_t kind = RANGE_CLOSED)
 		:Range(left, right, kind){}
 
 public:
 
+	/**
+	* \xbind
+	* \breif 区間の左の要素を返す
+	*/
 	float_t left(){ return fvalue(left_); }
 
+	/**
+	* \xbind
+	* \breif 区間の左の要素を返す
+	*/
 	float_t right(){ return fvalue(right_); }
 
 	AnyPtr each();
 };
 
+/**
+* \brief スコープ的な親を持つクラス
+*/
 class HaveParent : public Base{
 public:
 
@@ -197,6 +263,9 @@ protected:
 	virtual void visit_members(Visitor& m);
 };
 
+/**
+* \brief スコープ的な親を持つクラス
+*/
 class RefCountingHaveParent : public RefCountingBase{
 public:
 
@@ -220,7 +289,9 @@ protected:
 	void visit_members(Visitor& m);
 };
 
-
+/**
+* \brief GC時に通知を受け取るクラス
+*/
 class GCObserver : public Base{
 public:
 	GCObserver();

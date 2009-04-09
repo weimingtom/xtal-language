@@ -106,8 +106,14 @@ template<>
 class SmartPtr<Any> : public Any{
 public:
 	
+	/**
+	* \brief nullで構築するコンストラクタ
+	*/
 	SmartPtr(){}
 
+	/**
+	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
+	*/
 	template<class T, class Deleter>
 	SmartPtr(T* p, const Deleter& deleter){
 		UserTypeHolderSub<T, Deleter>* holder = new UserTypeHolderSub<T, Deleter>(p, deleter);
@@ -219,10 +225,16 @@ public:
 	struct dummy_bool_tag{ void safe_true(dummy_bool_tag){} };
 	typedef void (dummy_bool_tag::*safe_bool)(dummy_bool_tag);
 
+	/**
+	* \brief booleanへの自動変換
+	*/
 	operator safe_bool() const{
 		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 
+	/**
+	* \biref !演算子
+	*/
 	bool operator !() const{
 		return type(*this)<=TYPE_FALSE;
 	}
@@ -231,7 +243,6 @@ private:
 
 	/**
 	* \brief 暗黙の変換を抑えるためのコンストラクタ。
-	*
 	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
 	*/
 	SmartPtr(void*);

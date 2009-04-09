@@ -248,7 +248,7 @@ public:
 	template<class T, class U>
 	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_getter(primary_key, v, secondary_key, accessibility);
-		def_setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
+		def_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
 	}
 
 	/**
@@ -324,7 +324,7 @@ public:
 	template<class T, class U>
 	void def_singleton_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_singleton_getter(primary_key, v, secondary_key, accessibility);
-		def_singleton_setter(String("set_").cat(primary_key), v, secondary_key, accessibility);
+		def_singleton_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
 	}
 
 public:

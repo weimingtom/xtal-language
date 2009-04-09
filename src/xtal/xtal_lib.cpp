@@ -3,12 +3,13 @@
 
 namespace xtal{
 
-Lib::Lib(bool most_top_level){
-	if(most_top_level){
-		set_object_name(XTAL_STRING("lib"));
-		set_object_force(1000);
-	}
+Lib::Lib(most_top_level_t){
+	set_object_name(XTAL_STRING("lib"));
+	set_object_force(1000);
+	load_path_list_ = xnew<Array>();
+}
 
+Lib::Lib(){
 	load_path_list_ = xnew<Array>();
 }
 

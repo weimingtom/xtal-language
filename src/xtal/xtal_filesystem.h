@@ -12,24 +12,25 @@ namespace xtal{
 class FilesystemLib;
 
 /**
+* \xbind lib::builtin
 * \brief ファイルシステム
 */
 namespace filesystem{
 
 /**
-* xbind lib::builtin::filesystem
+* \xbind lib::builtin::filesystem
 * \brief ファイルオープン
 */
 StreamPtr open(const StringPtr& file_name, const StringPtr& flags);
 
 /**
-* xbind
+* \xbind lib::builtin::filesystem
 * \brief ディレクトリかどうか
 */
 bool is_directory(const StringPtr& path);
 
 /**
-* xbind
+* \xbind lib::builtin::filesystem
 * \brief path以下のエントリを列挙するIteratorを返す
 */
 AnyPtr entries(const StringPtr& path);

@@ -14,28 +14,33 @@
 
 using namespace xtal;
 
-class Foo{
+class TestGetterSetterBind{
 public:
     float x, y;
-    Foo(): x(0), y(0) {}
+    TestGetterSetterBind(): x(0), y(0) {}
 };
 
-XTAL_PREBIND(Foo){
-    it->def_ctor( ctor<Foo>() );
+XTAL_PREBIND(TestGetterSetterBind){
+    it->def_ctor(ctor<TestGetterSetterBind>());
 }
 
-XTAL_BIND(Foo){
-   it->def_getter(Xid(x), &Foo::x);
-   it->def_setter(Xid(set_x), &Foo::x);
+XTAL_BIND(TestGetterSetterBind){
+   it->def_getter(Xid(x), &TestGetterSetterBind::x);
+   it->def_setter(Xid(set_x), &TestGetterSetterBind::x);
+
+   it->def_var(Xid(y), &TestGetterSetterBind::y);
 }
 
 void test(){
-    lib()->def(Xid(eFoo), cpp_class<Foo>());
+    lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
 
 	if(CodePtr code = Xsrc((
-		foo: lib::eFoo();
+		foo: lib::TestGetterSetterBind();
 		foo.x = 0.5;
 		foo.x.p;
+
+		foo.y = 100.5;
+		foo.y.p;
 	))){
 		code->call();
 	}
@@ -171,11 +176,12 @@ int main(int argc, char** argv){
 		ret = main2(argc, argv);
 
 		vmachine()->print_info();
-		uninitialize();
 	}
 	XTAL_OUT_OF_MEMORY{
 		puts("out of memory");
 	}
+		
+	uninitialize();
 
 	return ret;
 }

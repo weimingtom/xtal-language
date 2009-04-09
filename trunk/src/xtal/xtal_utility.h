@@ -19,7 +19,7 @@ enum{
 };
 }
 
-//#define XTAL_USE_COMPILED_EMB
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -579,8 +579,19 @@ enum StringKind{
 * \brief 可触性の種類
 */
 enum AccessibilityKind{
+	/**
+	* \biref public
+	*/
 	KIND_PUBLIC = 0,
+
+	/**
+	* \brief protected
+	*/
 	KIND_PROTECTED = 1<<0,
+
+	/**
+	* \brief private
+	*/
 	KIND_PRIVATE = 1<<1
 };
 
@@ -615,12 +626,27 @@ enum BreakPointKind{
 };
 
 /**
-* \brief 範囲区間の種類
+* \brief 区間の種類
 */
 enum RangeKind{
+	/**
+	* \brief 閉区間[left, right]
+	*/
 	RANGE_CLOSED = (0<<1) | (0<<0),
+
+	/**
+	* \brief 左開右閉区間 [left, right)
+	*/
 	RANGE_LEFT_CLOSED_RIGHT_OPEN = (0<<1) | (1<<0),
+
+	/**
+	* \brief 左開右閉区間 (left, right]
+	*/
 	RANGE_LEFT_OPEN_RIGHT_CLOSED = (1<<1) | (0<<0),
+
+	/**
+	* \brief 開区間 (left, right)
+	*/
 	RANGE_OPEN = (1<<1) | (1<<0)
 };
 
@@ -717,6 +743,9 @@ class Bool;
 class Visitor;
 class InstanceVariables;
 
+/**
+* \brief スコープ情報
+*/
 struct ScopeInfo{
 	ScopeInfo()
 		:pc(0), kind(0), flags(0), variable_identifier_offset(0), variable_size(0){}
@@ -734,6 +763,9 @@ struct ScopeInfo{
 	};
 };
 
+/**
+* \brief クラススコープ情報
+*/
 struct ClassInfo : public ScopeInfo{
 	ClassInfo(u16 size = 0, u16 offset = 0)
 		:instance_variable_size(size), instance_variable_identifier_offset(offset), mixins(0){}
@@ -743,6 +775,9 @@ struct ClassInfo : public ScopeInfo{
 	u8 mixins;
 };
 
+/**
+* \brief 関数スコープ情報
+*/
 struct FunInfo : public ScopeInfo{
 	FunInfo()
 		:max_stack(256), min_param_count(0), max_param_count(0){}
@@ -758,6 +793,9 @@ struct FunInfo : public ScopeInfo{
 	};
 };
 
+/**
+* \brief 例外スコープ情報
+*/
 struct ExceptInfo{
 	ExceptInfo()
 		:catch_pc(0), finally_pc(0), end_pc(0){}
@@ -774,10 +812,25 @@ extern ClassInfo empty_class_info;
 extern FunInfo empty_xfun_info;
 extern ExceptInfo empty_except_info;
 extern EmptyInstanceVariables empty_instance_variables;
+
+/**
+* \brief 空文字列
+*/
 extern IDPtr empty_id;
+
+/**
+* \brief 空文字列
+*/
 extern StringPtr empty_string;
 
+/**
+* \brief nullオブジェクトのインスタンス
+*/
 extern NullPtr null;
+
+/**
+* \brief 未定義値
+*/
 extern UndefinedPtr undefined;
 
 struct ParamInfo;

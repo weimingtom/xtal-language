@@ -381,7 +381,7 @@ class ChRange : public Range{
 public:
 
 	ChRange(const StringPtr& left, const StringPtr& right)
-		:Range(left, right, CLOSED){}
+		:Range(left, right, RANGE_CLOSED){}
 
 public:
 

@@ -18,16 +18,26 @@ public:
 
 	Exception(const AnyPtr& message = empty_string);
 
+	/**
+	* \xbind
+	* \brief 初期化する
+	*/
 	void initialize(const AnyPtr& message = empty_string);
 
+	/**
+	* \xbind
+	* \brief バックトレースを追加する
+	*/
 	void append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name = empty_string);
 
 	/**
+	* \xbind
 	* \brief 文字列化する
 	*/
 	StringPtr to_s();
 
 	/**
+	* \xbind
 	* \brief メッセージを返す
 	*/
 	StringPtr message(){
@@ -35,6 +45,7 @@ public:
 	}
 
 	/**
+	* \xbind
 	* \brief バックトレースの情報を要素とするIteratorを返す
 	*/
 	AnyPtr backtrace(){
@@ -84,6 +95,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 
 /**
 * \brief 例外が送出されているか調べる
+* XTAL_CATCH_EXCEPTと違い、例外は設定されたまま。
 * \hideinitializer
 */
 #define XTAL_CHECK_EXCEPT(e) if(const ::xtal::AnyPtr& e = ::xtal::unchecked_ptr_cast<::xtal::Exception>(::xtal::vmachine()->except()))

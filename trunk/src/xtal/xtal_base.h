@@ -14,6 +14,9 @@ void register_gc(RefCountingBase* p);
 void register_gc_observer(GCObserver* p);
 void unregister_gc_observer(GCObserver* p);
 
+/**
+* \brief 参照カウンタの機能を有するクラス
+*/
 class RefCountingBase : public Any{
 public:
 	
@@ -61,20 +64,17 @@ public:
 
 	/**
 	* \brief 関数オブジェクトとみなし、関数呼び出しをする。
-	*
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
 	virtual void rawcall(const VMachinePtr& vm);
 
 	/**
 	* \brief nameメンバを初期値valueで定義する。
-	*
 	*/
 	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)undefined, int_t accessibility = 0);
 
 	/**
 	* \brief nameメンバを取得する。
-	*
 	* \retval null そのメンバは存在しない
 	* \retval 非null nameに対応したメンバ  
 	*/
@@ -82,13 +82,11 @@ public:
 
 	/**
 	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
-	*
 	*/
 	virtual const ClassPtr& object_parent();
 	
 	/**
 	* \brief このオブジェクトに親を設定する。
-	*
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
 	* \param parent 親
 	*/
@@ -96,15 +94,15 @@ public:
 
 	/**
 	* \brief ファイナライザ
-	*
 	* full_gc時に、死ぬ予定のオブジェクトとなった時に破棄をするための関数。
 	* ただし、set_finalizer_flag()を呼んでいなければ呼ばれることはない。
+	* 破棄時にXtalのメンバ変数を触ることがあるのであればこれを使う。
+	* そうでないのであれば、デストラクタに破棄処理を書くこと。
 	*/
 	virtual void finalize();
 
 	/**
 	* \brief このオブジェクトが所属するクラスを返す。
-	*
 	*/
 	const ClassPtr& get_class();
 

@@ -32,6 +32,8 @@ void fit_simple_dynamic_pointer_array(void*** begin, void*** end, void*** curren
 
 ///////////////////////////////////////
 
+#ifndef XTAL_NO_SMALL_ALLOCATOR
+
 FixedAllocator::FixedAllocator(){
 	chunk_ = 0;
 	free_data_ = 0;
@@ -72,7 +74,6 @@ void* FixedAllocator::malloc(size_t block_size){
 		return ret;
 	}
 
-	gc();
 	gc();
 	gc();
 
@@ -201,5 +202,7 @@ void SmallObjectAllocator::release(){
 		pool_[i].release(i+1);
 	}	
 }
+
+#endif
 
 }

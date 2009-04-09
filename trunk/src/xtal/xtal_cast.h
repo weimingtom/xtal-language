@@ -268,6 +268,9 @@ XTAL_CAST_HELPER(long double, Float);
 
 //////////////////////////////////////////////////////////////////////////////
 
+/// \name å^ïœä∑
+//@{
+
 /**
 * \brief SmartPtr<T>å^Ç…ïœä∑Ç∑ÇÈÅB
 *
@@ -320,7 +323,9 @@ inline typename CastResult<T>::type
 unchecked_cast(const AnyPtr& a){
 	return CastHelperHelper<T>::unchecked_cast(a);
 }
-	
+
+//@}
+
 //////////////////////////////////////////
 
 template<class T>

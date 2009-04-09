@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include <map>
-
 namespace xtal{
 
+void expand_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current, int addsize);
+
 /**
+* \internal
 * \brief 動的なポインタの配列を作成、拡張する関数。
 *
 * 一番最初の作成時は、引数全てがnullである必要がある。
@@ -19,14 +20,15 @@ namespace xtal{
 * \param end メモリの最後の一つ次
 * \param current 使用中の要素の一つ次
 */
-void expand_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current, int addsize);
-
 template<class T>
 inline void expand_simple_dynamic_pointer_array(T*** begin, T*** end, T*** current, int addsize=1024){
 	expand_simple_dynamic_pointer_array((void***)begin, (void***)end, (void***)current, addsize);
 }
 
+void fit_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current);
+
 /**
+* \internal
 * \brief expand_simple_dynamic_pointer_arrayで生成した配列を、使われている実際のサイズまで縮小する。
 *
 * 要素が一つも無いなら(current==beginなら)完全に解放される。
@@ -34,15 +36,16 @@ inline void expand_simple_dynamic_pointer_array(T*** begin, T*** end, T*** curre
 * \param end メモリの最後の一つ次
 * \param current 使用中の要素の一つ次
 */
-void fit_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current);
-
 template<class T>
 inline void fit_simple_dynamic_pointer_array(T*** begin, T*** end, T*** current){
 	fit_simple_dynamic_pointer_array((void***)begin, (void***)end, (void***)current);
 }
 
-/*
-* 固定サイズメモリアロケータ
+#ifndef XTAL_NO_SMALL_ALLOCATOR
+
+/**
+* \internal
+* \brief 固定サイズメモリアロケータ
 */
 class FixedAllocator{
 public:
@@ -92,8 +95,9 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(FixedAllocator);
 };
 
-/*
-* 小さいサイズのメモリアロケータ
+/**
+* \internal
+* \breif 小さいサイズのメモリアロケータ
 */
 class SmallObjectAllocator{	
 
@@ -124,6 +128,8 @@ private:
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(SmallObjectAllocator);
 };
+
+#endif
 
 }//namespace 
 

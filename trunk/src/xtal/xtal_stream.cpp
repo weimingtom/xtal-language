@@ -133,14 +133,6 @@ AnyPtr Stream::deserialize(){
 	return s.deserialize();
 }
 
-void Stream::xtalize(const AnyPtr& obj){
-
-}
-
-AnyPtr Stream::dextalize(){
-	return null;
-}
-
 /////////////////////////////////////////////////////////////////
 
 PointerStream::PointerStream(const void* data, uint_t size){

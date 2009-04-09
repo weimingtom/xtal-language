@@ -52,7 +52,8 @@ XtalはRuby, Python, D, Lua, NewtonScript, ECMAScript等、とても多くの言語を参考に
 \section indexsec 目次
 - \subpage tutorial
 - \subpage syntax
-
+- \ref lib::builtin Xtal APIs
+- \ref xtal C++ APIs
 */
 
 /** \page syntax Xtal言語構文

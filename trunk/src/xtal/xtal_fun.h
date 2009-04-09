@@ -9,20 +9,52 @@
 
 namespace xtal{
 
-// 引数オブジェクト
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Any
+* \breif 引数オブジェクト
+*/
 class Arguments : public Base{
 public:
 
+	/**
+	* \xbind
+	* \brief 順番指定引数、名前付き引数を渡して引数オブジェクトを構築する
+	*/
 	Arguments(const AnyPtr& ordered = undefined, const AnyPtr& named = undefined);
 
 	const AnyPtr& op_at_int(uint_t index);
 
 	const AnyPtr& op_at_string(const StringPtr& key);
 
+	/**
+	* \xbind
+	* \brief keyに対応する引数を返す
+	* keyが整数であれば、順番指定引数、文字列であれば名前付き引数を返す
+	*/
+	const AnyPtr& op_at(const AnyPtr& key){
+		if(type(key)==TYPE_INT){
+			return op_at_int(ivalue(key));
+		}
+		return op_at_string(key->to_s());
+	}
+
+	/**
+	* \xbind
+	* \brief 順番指定引数の数を返す
+	*/
 	uint_t length();
 	
+	/**
+	* \xbind
+	* \brief 順番指定引数を列挙するためのイテレータを返す
+	*/
 	AnyPtr ordered_arguments();
 	
+	/**
+	* \xbind
+	* \brief 名前付き引数を列挙するためのイテレータを返す
+	*/
 	AnyPtr named_arguments();
 
 public:
@@ -69,20 +101,34 @@ private:
 	ClassInfo* info_;
 };
 
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Any
+* \breif メソッドオブジェクト
+*/
 class Method : public HaveParent{
 public:
 
 	Method(const FramePtr& outer, const CodePtr& code, FunInfo* info);
 
 	const FramePtr& outer(){ return outer_; }
+
 	const CodePtr& code(){ return code_; }
+
 	int_t pc(){ return info_->pc; }
+
 	const inst_t* source(){ return code_->data()+info_->pc; }
+
 	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+info_->variable_identifier_offset); }
+
 	int_t param_size(){ return info_->variable_size; }	
+
 	bool extendable_param(){ return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; }
+
 	FunInfo* info(){ return info_; }
+
 	void set_info(FunInfo* fc){ info_ = fc; }
+
 	bool check_arg(const VMachinePtr& vm);
 
 public:
@@ -102,6 +148,11 @@ protected:
 
 };
 
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Method
+* \breif 関数オブジェクト
+*/
 class Fun : public Method{
 public:
 
@@ -123,6 +174,11 @@ protected:
 	AnyPtr this_;
 };
 
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Fun
+* \breif ラムダオブジェクト
+*/
 class Lambda : public Fun{
 public:
 
@@ -135,6 +191,11 @@ public:
 	virtual void rawcall(const VMachinePtr& vm);
 };
 
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Fun
+* \breif ファイバーオブジェクト
+*/
 class Fiber : public Fun{
 public:
 
@@ -148,19 +209,28 @@ public:
 		call_helper(vm, true);
 	}
 
+	/**
+	* \breif 実行を強制停止する
+	*/
 	void halt();
 
 	void rawcall(const VMachinePtr& vm){
 		call_helper(vm, false);
 	}
 
-	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
-
+	/**
+	* \brief ファイバーオブジェクトが実行中かどうか
+	*/
 	bool is_alive(){
 		return alive_;
 	}
 
+	/**
+	* \brief ファイバーを強制停止し、初期状態に戻す
+	*/
 	AnyPtr reset();
+
+	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
 
 private:
 

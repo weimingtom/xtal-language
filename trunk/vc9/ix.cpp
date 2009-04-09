@@ -40,12 +40,12 @@ int main(int argc, char** argv){
 		XTAL_CATCH_EXCEPT(e){
 			stderr_stream()->println(e);
 		}
-
-		uninitialize();
 	}
 	XTAL_OUT_OF_MEMORY{
 		puts("out of memory");
 	}
+		
+	uninitialize();
 
 	return 0;
 }

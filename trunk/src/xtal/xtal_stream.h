@@ -11,6 +11,7 @@ namespace xtal{
 
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Any
 * \brief ストリーム
 */
 class Stream : public Base{
@@ -44,32 +45,77 @@ public:
 	*/
 	virtual StringPtr get_s(uint_t length);
 
+	/**
+	* \xbind
+	* \brief ストリームからすべての文字を取り出し、文字列として返す
+	*/
 	virtual StringPtr get_s_all();
 
 	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max);
 
+	/**
+	* \xbind
+	* \brief valueを文字列化してプリントする
+	*/
 	uint_t print(const AnyPtr& value);
 
+	/**
+	* \xbind
+	* \brief valueを文字列化し、改行を加えてプリントする
+	*/
 	void println(const AnyPtr& value);
 
+	/**
+	* \xbind
+	* \brief ストリームの先頭からの位置を返す
+	*/
 	virtual uint_t tell();
 
 	virtual uint_t write(const void* p, uint_t size);
 
 	virtual uint_t read(void* p, uint_t size);
 
+	/**
+	* \xbind
+	* \brief ストリームの先頭からoffsetの位置に移動する
+	*/
 	virtual void seek(uint_t offset);
 
+	/**
+	* \xbind
+	* \brief ストリームをクローズする
+	*/
 	virtual void close(){}
 
+	/**
+	* \xbind
+	* \brief ストリームをフラッシュする
+	*/
 	virtual void flush(){}
 
+	/**
+	* \xbind
+	* \brief ストリームからストリームにsizeバイト流し込む 
+	*/
 	virtual uint_t pour(const StreamPtr& in_stream, uint_t size);
 
+	/**
+	* \xbind
+	* \brief ストリームからストリームにすべて流し込む 
+	*/
 	virtual uint_t pour_all(const StreamPtr& in_stream);
 
+	/**
+	* \xbind
+	* \brief ストリームの全サイズを返す
+	* ストリームの種類によっては、サイズを得ることは不可能である。
+	*/
 	virtual uint_t size();
 
+	/**
+	* \xbind
+	* \brief ストリームが終わっているか返す
+	*/
 	virtual bool eos(){ return false; }
 
 	void block_first(const VMachinePtr& vm);
@@ -93,17 +139,6 @@ public:
 	* \return 復元されたオブジェクト
 	*/	
 	AnyPtr deserialize();
-
-	/**
-	* \brief 
-	*/
-	void xtalize(const AnyPtr& obj);
-
-	/**
-	* \brief 
-	*/	
-	AnyPtr dextalize();
-
 
 public:
 
@@ -250,118 +285,198 @@ public:
 		write(data.data, 8);
 	}
 
+	/**
+	* \xbind
+	* \brief 符号付整数8-bitをストリームから取り出す
+	*/
 	i8 get_i8(){
 		return (i8)get_u8();
 	}
 
+	/**
+	* \xbind
+	* \brief 符号付整数16-bitをストリームから取り出す
+	*/
 	i16 get_i16be(){
 		return (i16)get_u16be();
 	}
 
+	/**
+	* \xbind
+	* \brief 符号付整数16-bitをストリームから取り出す
+	*/
 	i16 get_i16le(){
 		return (i16)get_u16le();
 	}
 
+	/**
+	* \xbind
+	* \brief 符号付整数32-bitをストリームから取り出す
+	*/
 	i32 get_i32be(){
 		return (i32)get_u32be();
 	}
 
+	/**
+	* \xbind
+	* \brief 符号付整数32-bitをストリームから取り出す
+	*/
 	i32 get_i32le(){
 		return (i32)get_u32le();
 	}
 
+	/**
+	* \brief 符号付整数64-bitをストリームから取り出す
+	*/
 	i64 get_i64be(){
 		return (i64)get_u64be();
 	}
 
+	/**
+	* \brief 符号付整数64-bitをストリームから取り出す
+	*/
 	i64 get_i64le(){
 		return (i64)get_u64le();
 	}
 
+	/**
+	* \xbind
+	* \brief 符号無整数8-bitをストリームから取り出す
+	*/
 	u8 get_u8(){
 		struct{ u8 data[1]; } data;
 		read(data.data, 1);
 		return (u8)data.data[0];
 	}
 
+	/**
+	* \xbind
+	* \brief 符号無整数16-bitをストリームから取り出す
+	*/
 	u16 get_u16be(){
 		struct{ u8 data[2]; } data;
 		read(data.data, 2);
 		return (u16)((data.data[0]<<8) | data.data[1]);
 	}
 
+	/**
+	* \xbind
+	* \brief 符号無整数16-bitをストリームから取り出す
+	*/
 	u16 get_u16le(){
 		struct{ u8 data[2]; } data;
 		read(data.data, 2);
 		return (u16)((data.data[1]<<8) | data.data[0]);
 	}
 
+	/**
+	* \xbind
+	* \brief 符号無整数32-bitをストリームから取り出す
+	*/
 	u32 get_u32be(){
 		struct{ u8 data[4]; } data;
 		read(data.data, 4);
 		return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 	}
 
+	/**
+	* \xbind
+	* \brief 符号無整数32-bitをストリームから取り出す
+	*/
 	u32 get_u32le(){
 		struct{ u8 data[4]; } data;
 		read(data.data, 4);
 		return (u32)((data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 	}
 
+	/**
+	* \brief 符号無整数64-bitをストリームから取り出す
+	*/
 	u64 get_u64be(){
 		struct{ u8 data[8]; } data;
 		read(data.data, 8);
 		return (u64)(((u64)data.data[0]<<56) | ((u64)data.data[1]<<48) | ((u64)data.data[2]<<40) | ((u64)data.data[3]<<32) | (data.data[4]<<24) | (data.data[5]<<16) | (data.data[6]<<8) | data.data[7]);
 	}
 
+	/**
+	* \brief 符号無整数64-bitをストリームから取り出す
+	*/
 	u64 get_u64le(){
 		struct{ u8 data[8]; } data;
 		read(data.data, 8);
 		return (u64)(((u64)data.data[7]<<56) | ((u64)data.data[6]<<48) | ((u64)data.data[5]<<40) | ((u64)data.data[4]<<32) | (data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 	}
 
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームに書き込む
+	*/
 	void put_f32be(f32 v){
 		union{ u32 u; f32 f; } u;
 		u.f = v;
 		put_u32be(u.u);
 	}
 
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームに書き込む
+	*/
 	void put_f32le(f32 v){
 		union{ u32 u; f32 f; } u;
 		u.f = v;
 		put_u32le(u.u);
 	}
 
+	/**
+	* \brief 浮動小数点数64-bitをストリームに書き込む
+	*/
 	void put_f64be(f64 v){
 		union{ u64 u; f64 f; } u;
 		u.f = v;
 		put_u64be(u.u);
 	}
 
+	/**
+	* \brief 浮動小数点数64-bitをストリームに書き込む
+	*/
 	void put_f64le(f64 v){
 		union{ u64 u; f64 f; } u;
 		u.f = v;
 		put_u64le(u.u);
 	}
 
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームから取り出す
+	*/
 	f32 get_f32be(){
 		union{ u32 u; f32 f; } u;
 		u.u = get_u32be();
 		return u.f;
 	}
 
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームから取り出す
+	*/
 	f32 get_f32le(){
 		union{ u32 u; f32 f; } u;
 		u.u = get_u32le();
 		return u.f;
 	}
 
+	/**
+	* \brief 浮動小数点数64-bitをストリームから取り出す
+	*/
 	f64 get_f64be(){
 		union{ u64 u; f64 f; } u;
 		u.u = get_u64be();
 		return u.f;
 	}
 
+	/**
+	* \brief 浮動小数点数64-bitをストリームから取り出す
+	*/
 	f64 get_f64le(){
 		union{ u64 u; f64 f; } u;
 		u.u = get_u64le();
@@ -485,6 +600,7 @@ protected:
 
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief メモリーストリーム
 */
 class MemoryStream : public PointerStream{
@@ -517,6 +633,7 @@ protected:
 
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief 文字列ストリーム
 * 文字列を読み取るためのストリーム。書き込み不可。
 */
@@ -541,6 +658,7 @@ private:
 
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief ファイルストリーム
 */
 class FileStream : public Stream{
@@ -550,6 +668,9 @@ public:
 		impl_ = 0;
 	}
 
+	/**
+	* \brief ファイル開きをファイルストリームを構築する
+	*/
 	FileStream(const StringPtr& path, const StringPtr& flags){
 		impl_ = 0;
 		open(path, flags);
@@ -620,7 +741,6 @@ public:
 private:
 	void* impl_;
 };
-
 
 class StdinStream : public Stream{
 public:

@@ -12,6 +12,8 @@ namespace xtal{
 class ThreadSpace;
 
 /**
+* \xbind
+* \xinherit lib::builtin::Any
 * \brief スレッド
 */
 class Thread : public Base{
@@ -64,6 +66,8 @@ protected:
 };
 
 /**
+* \xbind
+* \xinherit lib::builtin::Any
 * \brief ミューテックス
 */
 class Mutex : public Base{

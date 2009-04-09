@@ -27,7 +27,8 @@ public:
 		:SmartPtr<Any>(p){
 
 		// 継承関係をここでチェックしている。
-		// ここでコンパイルエラーになる場合、ptr_cast関数等を使用して変換する必要がある。
+		// ここでコンパイルエラーになる場合、
+		// ptr_cast関数等を使用して型を変換する必要がある。
 		T* n = (U*)0; 
 		XTAL_UNUSED_VAR(n);
 	}
@@ -278,6 +279,10 @@ template<class T>
 SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 	:SmartPtr<Any>(SmartPtrCtor4<T>::call(v)){}
 
+
+/// \name オブジェクト生成
+//@{
+
 /**
 * \brief Tオブジェクトを生成する
 */
@@ -325,6 +330,8 @@ template<class T, class A0, class A1, class A2, class A3, class A4>
 inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 	return SmartPtr<T>(SmartPtrSelector<InheritedN<T>::value>(), a0, a1, a2, a3, a4);
 }
+
+//@}
 
 //////////////////////////////////////////////////////////////
 

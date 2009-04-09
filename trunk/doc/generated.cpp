@@ -215,6 +215,148 @@ public:
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \brief ヌル値
+*/
+class Null{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 未定義値
+*/
+class Undefined{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 整数値
+*/
+class Int{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 浮動小数点値
+*/
+class Float{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 真偽値
+*/
+class Bool{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
+class Range{
+public:
+	/**
+	* \xbind
+	* \brief 区間の左の要素を返す
+	*/
+	 Any left();
+
+	/**
+	* \xbind
+	* \brief 区間の右の要素を返す
+	*/
+	 Any right();
+
+	/**
+	* \xbind
+	* \brief 区間の種類を返す
+	*/
+	int kind();
+
+	/**
+	* \xbind
+	* \brief 左が閉じた区間か返す
+	*/
+	bool is_left_closed();
+
+	/**
+	* \xbind
+	* \brief 右が閉じた区間か返す
+	*/
+	bool is_right_closed();
+
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
+class IntRange{
+public:
+	/**
+	* \xbind
+	* \brief 範囲の開始を返す
+	*
+	* beginは左閉右開区間 [begin, end) で得ることが出来る 
+	*/
+	int begin();
+
+	/**
+	* \xbind
+	* \brief 範囲の終端を返す
+	*
+	* endは左閉右開区間 [begin, end) で得ることが出来る 
+	*/
+	int end();
+
+	/**
+	* \xbind
+	* \brief 区間の左の要素を返す
+	*/
+	int left();
+
+	/**
+	* \xbind
+	* \brief 区間の左の要素を返す
+	*/
+	int right();
+
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief 区間
+*/
+class FloatRange{
+public:
+	/**
+	* \xbind
+	* \brief 区間の左の要素を返す
+	*/
+	float left();
+
+	/**
+	* \xbind
+	* \brief 区間の左の要素を返す
+	*/
+	float right();
+
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
 * \xinherit lib::builtin::Frame
 * \brief クラス
 */
@@ -241,133 +383,192 @@ public:
 
 };
 }}
-
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
+* \xinherit lib::builtin::Any
+* \brief デバッグフック関数で渡されるオブジェクト
+*/
+class HookInfo: public lib::builtin::Any{
+public:
+	/**
+	* \xbind
+	* \brief フックの種類を返す
+	*/
+	int kind();
+
+	/**
+	* \xbind
+	* \brief フックされた場所の行数を返す
+	*/
+	int line();
+
+	/**
+	* \xbind
+	* \brief フックされた場所のファイル名を返す
+	*/
+	 String file_name();
+
+	/**
+	* \xbind
+	* \brief フックされた場所のファイル名を返す
+	*/
+	 String fun_name();
+
+	/**
+	* \xbind
+	* \brief assertionのメッセージを返す
+	*/
+	 String assertion_message();
+
+	/**
+	* \xbind
+	* \brief 例外オブジェクトを返す
+	*/
+	 Any exception();
+
+	/**
+	* \xbind
+	* \brief フックされた場所の変数フレームオブジェクトを返す
+	*/
+	 Frame variables_frame();
+
+	/**
+	* \xbind
+	* \brief クローンを作る
+	* DebugInfoオブジェクトは使いまわされるため、情報を保持したい場合、クローンを作る必要がある。
+	*/
+	HookInfo clone();
+
+};
+}}}
+namespace lib{namespace builtin{namespace debug{
+/**
+* \xbind lib::builtin::debug
 * \brief デバッグ機能を有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 	void enable();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief デバッグ機能を無効にする
 */
 	void disable();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief デバッグ機能を強制的に有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
 	void enable_force(int count);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief デバッグ機能を強制的に無効にする
 */
 	int disable_force();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief デバッグ機能が有効かどうか
 */
 	bool is_enabled();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief ブレークポイントがある度に呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
 	void set_break_point_hook( Any hook);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief 関数呼び出しされる度に呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
 	void set_call_hook( Any hook);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief 関数からreturnされる度に呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
 	void set_return_hook( Any hook);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief 例外かthrowされる度に呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
 	void set_throw_hook( Any hook);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief アサートが失敗される度に呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
 	void set_assert_hook( Any hook);
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief set_break_point_hook関数で登録した関数を取得する
 */
 	 Any break_point_hook();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief set_call_hook関数で登録した関数を取得する
 */
 	 Any call_hook();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief set_return_hook関数で登録した関数を取得する
 */
 	 Any return_hook();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief set_throw_hook関数で登録した関数を取得する
 */
 	 Any throw_hook();
 
-
-
+}}}
+namespace lib{namespace builtin{namespace debug{
 /**
-* \xbind
+* \xbind lib::builtin::debug
 * \brief set_assert_hook関数で登録した関数を取得する
 */
 	 Any assert_hook();
 
-
+}}}
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
@@ -414,10 +615,82 @@ namespace lib{namespace builtin{
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \brief file_nameファイルをコンパイルする。
+* この戻り値をserializeすると、バイトコード形式で保存される。
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return 実行できる関数オブジェクト
+*/
+	Code compile_file( String file_name);
+
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief source文字列をコンパイルする。
+* この戻り値をserializeすると、バイトコード形式で保存される。
+* \param source Xtalスクリプトが記述された文字列
+* \return 実行できる関数オブジェクト
+*/
+	Code compile( String source);
+
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief file_nameファイルをコンパイルして実行する。
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return スクリプト内でreturnされた値
+*/
+	Any load( String file_name);
+
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
+* \param file_name Xtalスクリプトが記述されたファイルの名前
+* \return スクリプト内でreturnされた値
+*/
+	Any load_and_save( String file_name);
+
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
 * \brief 例外
 */
 class Exception{
 public:
+	/**
+	* \xbind
+	* \brief 初期化する
+	*/
+	void initialize( Any message = empty_string);
+
+	/**
+	* \xbind
+	* \brief バックトレースを追加する
+	*/
+	void append_backtrace( Any file, int line,  Any function_name = empty_string);
+
+	/**
+	* \xbind
+	* \brief 文字列化する
+	*/
+	String to_s();
+
+	/**
+	* \xbind
+	* \brief メッセージを返す
+	*/
+	String message();
+
+	/**
+	* \xbind
+	* \brief バックトレースの情報を要素とするIteratorを返す
+	*/
+	Any backtrace();
+
 };
 }}
 namespace lib{namespace builtin{namespace filesystem{
@@ -458,6 +731,94 @@ public:
 	*/
 	 Frame outer();
 
+	/**
+	* \xbind
+	* \brief メンバが格納された、Iteratorを返す
+	* ブロックパラメータは(primary_key, secondary_key, value)
+	*/
+	Any members();
+
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Any
+* \brief 引数オブジェクト
+*/
+class Arguments: public lib::builtin::Any{
+public:
+	/**
+	* \xbind
+	* \brief 順番指定引数、名前付き引数を渡して引数オブジェクトを構築する
+	*/
+	 Arguments( Any ordered = undefined,  Any named = undefined);
+
+	/**
+	* \xbind
+	* \brief keyに対応する引数を返す
+	* keyが整数であれば、順番指定引数、文字列であれば名前付き引数を返す
+	*/
+	 Any op_at( Any key);
+
+	/**
+	* \xbind
+	* \brief 順番指定引数の数を返す
+	*/
+	uint length();
+
+	/**
+	* \xbind
+	* \brief 順番指定引数を列挙するためのイテレータを返す
+	*/
+	Any ordered_arguments();
+
+	/**
+	* \xbind
+	* \brief 名前付き引数を列挙するためのイテレータを返す
+	*/
+	Any named_arguments();
+
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Any
+* \brief メソッドオブジェクト
+*/
+class Method: public lib::builtin::Any{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Method
+* \brief 関数オブジェクト
+*/
+class Fun: public lib::builtin::Method{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Fun
+* \brief ラムダオブジェクト
+*/
+class Lambda: public lib::builtin::Fun{
+public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \xinherit lib::builtin::Fun
+* \brief ファイバーオブジェクト
+*/
+class Fiber: public lib::builtin::Fun{
+public:
 };
 }}
 namespace lib{namespace builtin{
@@ -490,6 +851,10 @@ public:
 	/**
 	* \xbind
 	* \brief 要素を文字列化し、さらにそれらをsepで連結した文字列を返す
+	* \code
+	* [1, 2, 3].map(|x| x*2).join("::").p;
+	* //=> 1::2::3
+	* \endcode
 	*/
 	String join( String sep = "");
 
@@ -497,42 +862,79 @@ public:
 	* \xbind
 	* \brief (index, value)を返すイテレータを返す
 	* ループごとにindexはインクリメントされる。
+	* \code
+	* [45, 12, 33].map(|x| x*2).with_index{ |index, value|
+	*     %f(%d-%d)(index, value).p;
+	* }
+	* //=> 0-45
+	* //=> 1-12
+	* //=> 2-33
+	* \endcode
 	*/
 	Any with_index(int start = 0);
 
 	/**
 	* \xbind
 	* \brief 要素をconv関数で変換した要素を返すイテレータを返す
+	* mapメソッドと同じ意味である
 	*/
 	Any collect( Any conv);
 
 	/**
 	* \xbind
 	* \brief 要素をconv関数で変換した要素を返すイテレータを返す
+	* \code
+	* [10, 20, 30].map(|x| x*2){
+    *	it.p;
+	* }
+	* //=> 20
+	* //=> 30
+	* //=> 40
+	* \endcode
 	*/
 	Any map( Any conv);
 
 	/**
 	* \xbind
 	* \brief 選別された要素を返すイテレータを返す
+	* filterメソッドと同一の意味である
 	*/
 	Any select( Any pred);
 
 	/**
 	* \xbind
 	* \brief 選別された要素を返すイテレータを返す
+	* \code
+	* [1, 2, 3].filter(|x| x%2==1){
+	*	it.p;
+	* }
+	* //=> 1
+	* //=> 3
+	* \endcode
 	*/
 	Any filter( Any pred);
 
 	/**
 	* \xbind
 	* \brief pred関数がtrueを返すまでイテレートするイテレータを返す
+	* \code
+	* [7, 5, 3, 2, 1, 3].break_if(|x| x%2==1){
+	*     it.p;
+	* }
+	* //=> 7
+	* //=> 5
+	* //=> 3
+	* \endcode
 	*/
 	Any break_if( Any pred);
 
 	/**
 	* \xbind
 	* \brief times回イテレートするイテレータを返す
+	* \code
+	* [5, 3, 7].cycle.take(5).join(",").p;
+	* //=> 5,3,7,5,3
+	* \endcode
 	*/
 	Any take(int times);
 
@@ -551,24 +953,44 @@ public:
 	/**
 	* \xbind
 	* \brief イテレートする要素がなくなったら、最初から繰り返すイテレータを返す
+	* \code
+	* [4, 8, 11].map(|x| x*3).cycle{
+	*    it.p;
+	* }
+	* //=> 12
+	* //=> 24
+	* //=> 33
+	* //=> 12
+	* //=> 24
+	* //=> 33
+	* // 以下繰り返し
+	* \endcode
 	*/
 	Any cycle();
 
 	/**
 	* \xbind
 	* \brief イテレートする要素の最大の値を返す
+	* \param pred 同一要素か判定する述語関数オブジェクト
+	* 二つの引数を受け取り、一つ目より二つ目の方が大きいならtrueを返す関数を渡すこと。
+	* nullを指定すると < 演算子で判定される。
 	*/
 	Any max_element( Any pred = null);
 
 	/**
 	* \xbind
 	* \brief イテレートする要素の最小の値を返す
+	* \param pred 同一要素か判定する述語関数オブジェクト
+	* 二つの引数を受け取り、一つ目より二つ目の方が小さいならtrueを返す関数を渡すこと。
+	* nullを指定すると > 演算子で判定される。
 	*/
 	Any min_element( Any pred = null);
 
 	/**
 	* \xbind
 	* \brief イテレートする要素のpred関数がtrueを返す関数を返す
+	* \param pred 探している要素かを判定する述語関数オブジェクト
+	* 一つの引数を受け取り、探している要素ならtrueを返す関数を渡すこと。
 	*/
 	Any find( Any pred);
 
@@ -590,11 +1012,32 @@ public:
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
-* \brief イテレート可能なコンテナのための実装を提供するためのクラス
-* これをinheritしたクラスのオブジェクトは、eachメソッドを経由してlib::builtin::Iteratorが持つメソッドを呼び出せる
+* \brief イテレート可能なコンテナのための実装を提供するためのクラス。
+* これをinheritしたクラスのオブジェクトは、eachメソッドを経由してlib::builtin::Iteratorが持つメソッドを呼び出せる。
 */
 class Iterable{
 public:
+};
+}}
+namespace lib{namespace builtin{
+/**
+* \xbind lib::builtin
+* \brief ライブラリの登録などに使うクラスの一種
+*/
+class Lib{
+public:
+	/**
+	* \xbind
+	* \brief コンストラクタ
+	*/
+	 Lib();
+
+	/**
+	* \xbind
+	* \brief ロードパスを追加する
+	*/
+	void append_load_path( String path);
+
 };
 }}
 namespace lib{namespace builtin{
@@ -757,9 +1200,10 @@ public:
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Any
 * \brief ストリーム
 */
-class Stream{
+class Stream: public lib::builtin::Any{
 public:
 	/**
 	* \xbind
@@ -772,6 +1216,73 @@ public:
 	* \brief length文字分ストリームから取り出し、文字列として返す。
 	*/
 	 String get_s(uint length);
+
+	/**
+	* \xbind
+	* \brief ストリームからすべての文字を取り出し、文字列として返す
+	*/
+	 String get_s_all();
+
+	/**
+	* \xbind
+	* \brief valueを文字列化してプリントする
+	*/
+	uint print( Any value);
+
+	/**
+	* \xbind
+	* \brief valueを文字列化し、改行を加えてプリントする
+	*/
+	void println( Any value);
+
+	/**
+	* \xbind
+	* \brief ストリームの先頭からの位置を返す
+	*/
+	 uint tell();
+
+	/**
+	* \xbind
+	* \brief ストリームの先頭からoffsetの位置に移動する
+	*/
+	 void seek(uint offset);
+
+	/**
+	* \xbind
+	* \brief ストリームをクローズする
+	*/
+	 void close();
+
+	/**
+	* \xbind
+	* \brief ストリームをフラッシュする
+	*/
+	 void flush();
+
+	/**
+	* \xbind
+	* \brief ストリームからストリームにsizeバイト流し込む 
+	*/
+	 uint pour( Stream in_stream, uint size);
+
+	/**
+	* \xbind
+	* \brief ストリームからストリームにすべて流し込む 
+	*/
+	 uint pour_all( Stream in_stream);
+
+	/**
+	* \xbind
+	* \brief ストリームの全サイズを返す
+	* ストリームの種類によっては、サイズを得ることは不可能である。
+	*/
+	 uint size();
+
+	/**
+	* \xbind
+	* \brief ストリームが終わっているか返す
+	*/
+	 bool eos();
 
 	/**
 	* \xbind
@@ -855,33 +1366,120 @@ public:
 	*/
 	void put_u32le(u32 v);
 
+	/**
+	* \xbind
+	* \brief 符号付整数8-bitをストリームから取り出す
+	*/
+	i8 get_i8();
+
+	/**
+	* \xbind
+	* \brief 符号付整数16-bitをストリームから取り出す
+	*/
+	i16 get_i16be();
+
+	/**
+	* \xbind
+	* \brief 符号付整数16-bitをストリームから取り出す
+	*/
+	i16 get_i16le();
+
+	/**
+	* \xbind
+	* \brief 符号付整数32-bitをストリームから取り出す
+	*/
+	i32 get_i32be();
+
+	/**
+	* \xbind
+	* \brief 符号付整数32-bitをストリームから取り出す
+	*/
+	i32 get_i32le();
+
+	/**
+	* \xbind
+	* \brief 符号無整数8-bitをストリームから取り出す
+	*/
+	u8 get_u8();
+
+	/**
+	* \xbind
+	* \brief 符号無整数16-bitをストリームから取り出す
+	*/
+	u16 get_u16be();
+
+	/**
+	* \xbind
+	* \brief 符号無整数16-bitをストリームから取り出す
+	*/
+	u16 get_u16le();
+
+	/**
+	* \xbind
+	* \brief 符号無整数32-bitをストリームから取り出す
+	*/
+	u32 get_u32be();
+
+	/**
+	* \xbind
+	* \brief 符号無整数32-bitをストリームから取り出す
+	*/
+	u32 get_u32le();
+
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームに書き込む
+	*/
+	void put_f32be(f32 v);
+
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームに書き込む
+	*/
+	void put_f32le(f32 v);
+
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームから取り出す
+	*/
+	f32 get_f32be();
+
+	/**
+	* \xbind
+	* \brief 浮動小数点数32-bitをストリームから取り出す
+	*/
+	f32 get_f32le();
+
 };
 }}
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief メモリーストリーム
 */
-class MemoryStream{
+class MemoryStream: public lib::builtin::Stream{
 public:
 };
 }}
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief 文字列ストリーム
 * 文字列を読み取るためのストリーム。書き込み不可。
 */
-class StringStream{
+class StringStream: public lib::builtin::Stream{
 public:
 };
 }}
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
+* \xinherit lib::builtin::Stream
 * \brief ファイルストリーム
 */
-class FileStream{
+class FileStream: public lib::builtin::Stream{
 public:
 };
 }}
@@ -1031,3 +1629,39 @@ public:
 
 };
 }}
+
+/**
+* \xbind
+* \xinherit lib::builtin::Any
+* \brief スレッド
+*/
+class Thread: public lib::builtin::Any{
+public:
+};
+
+
+/**
+* \xbind
+* \xinherit lib::builtin::Any
+* \brief ミューテックス
+*/
+class Mutex: public lib::builtin::Any{
+public:
+};
+
+namespace lib{namespace builtin{namespace xpeg{
+/**
+* \xbind lib::builtin::xpeg
+* \xinherit lib::builtin::Any
+* \brief PEGを実行する
+*/
+class Executor: public lib::builtin::Any{
+public:
+	/**
+	* \xbind
+	* \brief ストリームかイテレータを受け取り構築する
+	*/
+	 Executor( Any stream_or_iterator = null);
+
+};
+}}}

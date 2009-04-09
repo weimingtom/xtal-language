@@ -19,7 +19,7 @@ public:
 	SmartPtr(){}
 
 	template<class Deleter>
-	SmartPtr(T* p, Deleter deleter)
+	SmartPtr(T* p, const Deleter& deleter)
 		:SmartPtr<Any>(p, deleter){}
 
 	template<class U>

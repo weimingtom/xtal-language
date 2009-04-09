@@ -31,9 +31,23 @@ XTAL_BIND(TestGetterSetterBind){
    it->def_var(Xid(y), &TestGetterSetterBind::y);
 }
 
+struct MyData{
+	int a;
+};
+
+struct MyDeleter{
+	void operator()(MyData* p){
+		delete p;
+	}
+};
+
+XTAL_BIND(MyData){
+	it->def_var(Xid(a), &MyData::a);
+}
+
 void test(){
     lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
-
+	lib()->def(Xid(MyData), SmartPtr<MyData>(new MyData, MyDeleter()));
 	if(CodePtr code = Xsrc((
 		foo: lib::TestGetterSetterBind();
 		foo.x = 0.5;
@@ -41,6 +55,10 @@ void test(){
 
 		foo.y = 100.5;
 		foo.y.p;
+
+		mydata: lib::MyData;
+		mydata.a = 10;
+		mydata.a.p;
 	))){
 		code->call();
 	}

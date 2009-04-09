@@ -115,9 +115,12 @@ public:
 	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
 	*/
 	template<class T, class Deleter>
-	SmartPtr(T* p, const Deleter& deleter){
-		UserTypeHolderSub<T, Deleter>* holder = new UserTypeHolderSub<T, Deleter>(p, deleter);
-		set_p_with_class(holder, cpp_class<T>());
+	SmartPtr(T* tp, const Deleter& deleter)
+		:Any(noinit_t()){
+		UserTypeHolderSub<T, Deleter>* p = new UserTypeHolderSub<T, Deleter>(tp, deleter);
+		set_pvalue(*this, p);
+		p->set_class(cpp_class<T>());
+		register_gc(p);
 	}
 
 	SmartPtr(const SmartPtr<Any>& p)

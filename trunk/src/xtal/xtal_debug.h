@@ -17,7 +17,7 @@ namespace debug{
 
 /**
 * \xbind lib::builtin::debug
-* \xinhrit lib::builtin::Any
+* \xinherit lib::builtin::Any
 * \brief デバッグフック関数で渡されるオブジェクト
 */
 class HookInfo : public Base{

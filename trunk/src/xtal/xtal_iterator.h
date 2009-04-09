@@ -189,7 +189,7 @@ public:
 	/**
 	* \xbind
 	* \brief イテレートする要素のpred関数がtrueを返す関数を返す
-	* \param 探している要素かを判定する述語関数オブジェクト
+	* \param pred 探している要素かを判定する述語関数オブジェクト
 	* 一つの引数を受け取り、探している要素ならtrueを返す関数を渡すこと。
 	*/
 	AnyPtr find(const AnyPtr& pred);
@@ -211,8 +211,8 @@ public:
 
 /**
 * \xbind lib::builtin
-* \brief イテレート可能なコンテナのための実装を提供するためのクラス
-* これをinheritしたクラスのオブジェクトは、eachメソッドを経由してlib::builtin::Iteratorが持つメソッドを呼び出せる
+* \brief イテレート可能なコンテナのための実装を提供するためのクラス。
+* これをinheritしたクラスのオブジェクトは、eachメソッドを経由してlib::builtin::Iteratorが持つメソッドを呼び出せる。
 */
 class Iterable{};
 

@@ -82,7 +82,7 @@ XTAL_PREBIND(ChRange){
 }
 
 XTAL_BIND(ChRange){
-	it->def_ctor(ctor<ChRange, const StringPtr&, const StringPtr&>());
+	it->def_ctor2<ChRange, const StringPtr&, const StringPtr&>();
 	it->def_method(Xid(each), &ChRange::each);
 }
 
@@ -112,7 +112,7 @@ MultiValue::to_s: method{
 }
 
 XTAL_PREBIND(Procedure){
-	it->def_ctor(ctor<Procedure>());
+	it->def_ctor0<Procedure>();
 }
 
 XTAL_BIND(Procedure){
@@ -458,7 +458,7 @@ XTAL_BIND(IntRangeIter){
 
 XTAL_PREBIND(Range){
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor(ctor<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(3, Xid(kind), 0));
+	it->def_ctor3<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(3, Xid(kind), 0);
 }
 
 XTAL_BIND(Range){
@@ -469,7 +469,7 @@ XTAL_BIND(Range){
 
 XTAL_PREBIND(IntRange){
 	it->inherit(cpp_class<Range>());
-	it->def_ctor(ctor<IntRange, int_t, int_t, int_t>()->param(3, Xid(kind), 0));
+	it->def_ctor3<IntRange, int_t, int_t, int_t>()->param(3, Xid(kind), 0);
 }
 
 XTAL_BIND(IntRange){
@@ -480,7 +480,7 @@ XTAL_BIND(IntRange){
 
 XTAL_PREBIND(FloatRange){
 	it->inherit(cpp_class<Range>());
-	it->def_ctor(ctor<FloatRange, float_t, float_t, int_t>()->param(3, Xid(kind), 0));
+	it->def_ctor3<FloatRange, float_t, float_t, int_t>()->param(3, Xid(kind), 0);
 }
 
 XTAL_BIND(FloatRange){
@@ -497,7 +497,7 @@ XTAL_BIND(ArrayIter){
 XTAL_PREBIND(Array){
 	it->set_final();
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor(ctor<Array, int_t>()->param(1, Xid(size), 0));
+	it->def_ctor1<Array, int_t>()->param(1, Xid(size), 0);
 }
 
 XTAL_BIND(Array){
@@ -595,7 +595,7 @@ XTAL_BIND(MapIter){
 
 XTAL_PREBIND(Map){
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor(ctor<Map>());
+	it->def_ctor0<Map>();
 }
 
 XTAL_BIND(Map){
@@ -666,7 +666,7 @@ Map::to_s: method{
 
 XTAL_PREBIND(Set){
 	it->inherit(cpp_class<Map>());
-	it->def_ctor(ctor<Set>());
+	it->def_ctor0<Set>();
 }
 
 XTAL_BIND(Set){
@@ -708,7 +708,7 @@ XTAL_PREBIND(Lambda){
 
 XTAL_PREBIND(Arguments){
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor(ctor<Arguments, const AnyPtr&, const AnyPtr&>()->param(1, Xid(ordered), null)->param(2, Xid(named), null));
+	it->def_ctor2<Arguments, const AnyPtr&, const AnyPtr&>()->param(1, Xid(ordered), null)->param(2, Xid(named), null);
 }
 
 XTAL_BIND(Arguments){
@@ -883,7 +883,7 @@ XTAL_PREBIND(CppSingleton){
 
 XTAL_PREBIND(Lib){
 	it->inherit(cpp_class<Class>());
-	it->def_ctor(ctor<Lib>());
+	it->def_ctor0<Lib>();
 }
 
 XTAL_BIND(Lib){
@@ -892,7 +892,7 @@ XTAL_BIND(Lib){
 
 XTAL_PREBIND(ZipIter){
 	it->inherit(cpp_class<Iterator>());
-	it->def_ctor(ctor<ZipIter, const VMachinePtr&>());
+	it->def_ctor1<ZipIter, const VMachinePtr&>();
 }
 
 XTAL_BIND(ZipIter){
@@ -902,7 +902,7 @@ XTAL_BIND(ZipIter){
 }
 
 XTAL_PREBIND(Thread){
-	it->def_ctor(ctor<Thread>());
+	it->def_ctor0<Thread>();
 }
 
 XTAL_BIND(Thread){
@@ -913,7 +913,7 @@ XTAL_BIND(Thread){
 }
 
 XTAL_PREBIND(Mutex){
-	it->def_ctor(ctor<Mutex>());
+	it->def_ctor0<Mutex>();
 }
 
 XTAL_BIND(Mutex){
@@ -1113,7 +1113,7 @@ XTAL_PREBIND(PointerStream){
 
 XTAL_PREBIND(MemoryStream){
 	it->inherit(cpp_class<PointerStream>());
-	it->def_ctor(ctor<MemoryStream>());
+	it->def_ctor0<MemoryStream>();
 }
 
 XTAL_BIND(MemoryStream){
@@ -1123,7 +1123,7 @@ XTAL_BIND(MemoryStream){
 
 XTAL_PREBIND(StringStream){
 	it->inherit(cpp_class<Stream>());
-	it->def_ctor(ctor<StringStream, const StringPtr&>());
+	it->def_ctor1<StringStream, const StringPtr&>();
 }
 
 XTAL_BIND(StringStream){
@@ -1132,7 +1132,7 @@ XTAL_BIND(StringStream){
 
 XTAL_PREBIND(FileStream){
 	it->inherit(cpp_class<Stream>());
-	it->def_ctor(ctor<FileStream, const StringPtr&, const StringPtr&>());
+	it->def_ctor2<FileStream, const StringPtr&, const StringPtr&>();
 }
 
 XTAL_BIND(FileStream){
@@ -1566,7 +1566,7 @@ Iterator::with_prev: method fiber{
 }
 
 XTAL_PREBIND(Exception){
-	it->def_ctor(ctor<Exception, const StringPtr&>()->param(1, Xid(message), empty_string));
+	it->def_ctor1<Exception, const StringPtr&>()->param(1, Xid(message), empty_string);
 }
 
 XTAL_BIND(Exception){

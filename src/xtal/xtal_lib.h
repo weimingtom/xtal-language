@@ -30,7 +30,7 @@ public:
 
 	/**
 	* \xbind
-	* \breif ロードパスを追加する
+	* \brief ロードパスを追加する
 	*/
 	void append_load_path(const StringPtr& path){
 		load_path_list_->push_back(path);

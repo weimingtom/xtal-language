@@ -114,31 +114,31 @@ public:
 
 	/**
 	* \xbind
-	* \breif 区間の左の要素を返す
+	* \brief 区間の左の要素を返す
 	*/
 	const AnyPtr& left(){ return left_; }
 
 	/**
 	* \xbind
-	* \breif 区間の右の要素を返す
+	* \brief 区間の右の要素を返す
 	*/
 	const AnyPtr& right(){ return right_; }
 
 	/**
 	* \xbind
-	* \breif 区間の種類を返す
+	* \brief 区間の種類を返す
 	*/
 	int_t kind(){ return kind_; }
 
 	/**
 	* \xbind
-	* \breif 左が閉じた区間か返す
+	* \brief 左が閉じた区間か返す
 	*/
 	bool is_left_closed(){ return (kind_&(1<<1))==0; }
 
 	/**
 	* \xbind
-	* \breif 右が閉じた区間か返す
+	* \brief 右が閉じた区間か返す
 	*/
 	bool is_right_closed(){ return (kind_&(1<<0))==0; }
 
@@ -184,13 +184,13 @@ public:
 
 	/**
 	* \xbind
-	* \breif 区間の左の要素を返す
+	* \brief 区間の左の要素を返す
 	*/
 	int_t left(){ return ivalue(left_); }
 
 	/**
 	* \xbind
-	* \breif 区間の左の要素を返す
+	* \brief 区間の左の要素を返す
 	*/
 	int_t right(){ return ivalue(right_); }
 
@@ -224,13 +224,13 @@ public:
 
 	/**
 	* \xbind
-	* \breif 区間の左の要素を返す
+	* \brief 区間の左の要素を返す
 	*/
 	float_t left(){ return fvalue(left_); }
 
 	/**
 	* \xbind
-	* \breif 区間の左の要素を返す
+	* \brief 区間の左の要素を返す
 	*/
 	float_t right(){ return fvalue(right_); }
 

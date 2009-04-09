@@ -12,7 +12,7 @@ namespace xtal{
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Any
-* \breif 引数オブジェクト
+* \brief 引数オブジェクト
 */
 class Arguments : public Base{
 public:
@@ -104,7 +104,7 @@ private:
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Any
-* \breif メソッドオブジェクト
+* \brief メソッドオブジェクト
 */
 class Method : public HaveParent{
 public:
@@ -151,7 +151,7 @@ protected:
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Method
-* \breif 関数オブジェクト
+* \brief 関数オブジェクト
 */
 class Fun : public Method{
 public:
@@ -177,7 +177,7 @@ protected:
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Fun
-* \breif ラムダオブジェクト
+* \brief ラムダオブジェクト
 */
 class Lambda : public Fun{
 public:
@@ -194,7 +194,7 @@ public:
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Fun
-* \breif ファイバーオブジェクト
+* \brief ファイバーオブジェクト
 */
 class Fiber : public Fun{
 public:
@@ -210,7 +210,7 @@ public:
 	}
 
 	/**
-	* \breif 実行を強制停止する
+	* \brief 実行を強制停止する
 	*/
 	void halt();
 

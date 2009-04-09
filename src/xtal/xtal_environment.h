@@ -213,7 +213,7 @@ private:
 
 /**
 * \internal
-* \breif jmp_buf‚ğ•Â‚¶‚ß‚é\‘¢‘Ì
+* \brief jmp_buf‚ğ•Â‚¶‚ß‚é\‘¢‘Ì
 */
 struct JmpBuf{
 	jmp_buf buf;

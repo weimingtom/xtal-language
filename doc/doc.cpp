@@ -49,12 +49,16 @@ XtalはRuby, Python, D, Lua, NewtonScript, ECMAScript等、とても多くの言語を参考に
 - native thread対応 
 - MultiVM 
 
-\section indexsec 目次
+\section xindexsec Xtal
 - \subpage tutorial
 - \subpage syntax
-- \ref lib::builtin Xtal APIs
-- \ref xtal C++ APIs
+- \link lib::builtin Xtal APIs \endlink
+\section cppindexsec C++
+- \link xtal C++ APIs \endlink
+- \subpage usepage
 */
+
+
 
 /** \page syntax Xtal言語構文
 - \subpage comment

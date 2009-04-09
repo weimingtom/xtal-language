@@ -97,7 +97,7 @@ private:
 
 /**
 * \internal
-* \breif 小さいサイズのメモリアロケータ
+* \brief 小さいサイズのメモリアロケータ
 */
 class SmallObjectAllocator{	
 

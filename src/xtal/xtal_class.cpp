@@ -220,13 +220,14 @@ AnyPtr Class::inherited_classes(){
 	return xnew<ClassInheritedClassesIter>(to_smartptr(this));
 }
 
-void Class::def_ctor(const AnyPtr& ctor_fun){
+const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_fun){
 	ctor_ = ctor_fun;
 	flags_ |= FLAG_NATIVE;
 	invalidate_cache_ctor();
+	return ctor_;
 }
 
-const AnyPtr& Class::ctor(){
+const NativeFunPtr& Class::ctor(){
 	prebind();
 
 	if(cache_ctor(to_smartptr(this), 0)){
@@ -238,21 +239,22 @@ const AnyPtr& Class::ctor(){
 	}
 
 	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const AnyPtr& ret = inherited_classes_[i-1]->ctor()){
+		if(const NativeFunPtr& ret = inherited_classes_[i-1]->ctor()){
 			return ctor_ = ret;
 		}
 	}
 
-	return undefined;
+	return unchecked_ptr_cast<NativeFun>(null);
 }
 
-void Class::def_serial_ctor(const AnyPtr& ctor_fun){
+const NativeFunPtr& Class::def_serial_ctor(const NativeFunPtr& ctor_fun){
 	serial_ctor_ = ctor_fun;
 	flags_ |= FLAG_NATIVE;
 	invalidate_cache_ctor();
+	return serial_ctor_;
 }
 
-const AnyPtr& Class::serial_ctor(){
+const NativeFunPtr& Class::serial_ctor(){
 	prebind();
 
 	if(cache_ctor(to_smartptr(this), 1)){
@@ -264,12 +266,12 @@ const AnyPtr& Class::serial_ctor(){
 	}
 
 	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const AnyPtr& ret = inherited_classes_[i-1]->serial_ctor()){
+		if(const NativeFunPtr& ret = inherited_classes_[i-1]->serial_ctor()){
 			return serial_ctor_ = ret;
 		}
 	}
 
-	return undefined;
+	return unchecked_ptr_cast<NativeFun>(null);
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
@@ -590,7 +592,7 @@ void Class::rawcall(const VMachinePtr& vm){
 	prebind();
 
 	if(is_native()){
-		if(const AnyPtr& ret = ctor()){
+		if(const NativeFunPtr& ret = ctor()){
 			ret->rawcall(vm);
 			if(vm->except()){
 				return;
@@ -603,7 +605,7 @@ void Class::rawcall(const VMachinePtr& vm){
 	}
 	else{
 		AnyPtr instance;
-		if(const AnyPtr& newfun = ctor()){
+		if(const NativeFunPtr& newfun = ctor()){
 			instance = newfun->call();
 		}
 		else{

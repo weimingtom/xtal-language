@@ -329,6 +329,75 @@ public:
 
 public:
 
+	/**
+	* \brief コンストラクタ関数を登録する
+	*/
+	const NativeFunPtr& def_ctor(const NativeFunPtr& ctor_fun);
+
+	/**
+	* \brief 登録されたコンストラクタ関数を返す
+	*/
+	const NativeFunPtr& ctor();
+
+	/**
+	* \brief シリアライズに使われるコンストラクタ関数を登録する
+	*/
+	const NativeFunPtr& def_serial_ctor(const NativeFunPtr& ctor_fun);
+
+	/**
+	* \brief 登録されたシリアライズに使われるコンストラクタ関数を返す
+	*/	
+	const NativeFunPtr& serial_ctor();
+
+//{REPEAT{{
+/*
+	/// `n`引数のコンストラクタ関数を登録する
+	template<class T #COMMA_REPEAT#class A`i`#>
+	const NativeFunPtr& def_ctor`n`(){
+		return def_ctor(xtal::ctor<T #COMMA_REPEAT#A`i`#>());
+	}
+*/
+
+	/// 0引数のコンストラクタ関数を登録する
+	template<class T >
+	const NativeFunPtr& def_ctor0(){
+		return def_ctor(xtal::ctor<T >());
+	}
+
+	/// 1引数のコンストラクタ関数を登録する
+	template<class T , class A0>
+	const NativeFunPtr& def_ctor1(){
+		return def_ctor(xtal::ctor<T , A0>());
+	}
+
+	/// 2引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1>
+	const NativeFunPtr& def_ctor2(){
+		return def_ctor(xtal::ctor<T , A0, A1>());
+	}
+
+	/// 3引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2>
+	const NativeFunPtr& def_ctor3(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2>());
+	}
+
+	/// 4引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3>
+	const NativeFunPtr& def_ctor4(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3>());
+	}
+
+	/// 5引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4>
+	const NativeFunPtr& def_ctor5(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4>());
+	}
+
+//}}REPEAT}
+
+public:
+
 	struct cpp_class_t{};
 
 	Class(cpp_class_t);
@@ -407,14 +476,6 @@ public:
 		return binder_;
 	}
 
-	void def_ctor(const AnyPtr& ctor_fun);
-
-	const AnyPtr& ctor();
-
-	void def_serial_ctor(const AnyPtr& ctor_fun);
-
-	const AnyPtr& serial_ctor();
-
 protected:
 
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
@@ -425,8 +486,8 @@ protected:
 
 	StringPtr name_;
 
-	AnyPtr ctor_;
-	AnyPtr serial_ctor_;
+	NativeFunPtr ctor_;
+	NativeFunPtr serial_ctor_;
 
 	PODArrayList<Class*> inherited_classes_;
 	void (*prebinder_)(const ClassPtr& cls);

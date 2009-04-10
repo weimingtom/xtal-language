@@ -348,7 +348,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_ANY){
-			if(scanner_->eos()){ return e->inv; }
+			if(scanner_->eos()){ return false; }
 			scanner_->read();
 			return !e->inv;
 		}
@@ -372,11 +372,13 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_EQL){
+			if(scanner_->eos()){ return false; }
 			if(raweq(scanner_->read(), e->param1)){ return !e->inv; }
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_INT_RANGE){
+			if(scanner_->eos()){ return false; }
 			const AnyPtr& a = scanner_->peek();
 			if(rawtype(a)==TYPE_INT){
 				return unchecked_ptr_cast<Int>(a)->op_in(unchecked_ptr_cast<IntRange>(e->param1))!=e->inv;
@@ -385,6 +387,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_FLOAT_RANGE){
+			if(scanner_->eos()){ return false; }
 			const AnyPtr& a = scanner_->peek();
 			if(rawtype(a)==TYPE_FLOAT){
 				return unchecked_ptr_cast<Float>(a)->op_in(unchecked_ptr_cast<FloatRange>(e->param1))!=e->inv;
@@ -393,6 +396,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_CH_RANGE){
+			if(scanner_->eos()){ return false; }
 			const AnyPtr& a = scanner_->read();
 			if(rawtype(a)==TYPE_SMALL_STRING){
 				return unchecked_ptr_cast<String>(a)->op_in(unchecked_ptr_cast<ChRange>(e->param1))!=e->inv;
@@ -407,6 +411,7 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_CH_SET){
+			if(scanner_->eos()){ return false; }
 			const MapPtr& data = unchecked_ptr_cast<Map>(e->param1);
 			if(data->at(scanner_->read())){ return !e->inv; }
 			return e->inv;
@@ -807,7 +812,8 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 		XTAL_CASE(Element::TYPE_DECL){
 			printn("DECL", depth);
-			gen_nfa(entry, t->param1, exit, depth+1);
+			add_transition(entry, t, exit);
+			//gen_nfa(entry, t->param1, exit, depth+1);
 		}
 	}
 }
@@ -996,7 +1002,12 @@ AnyPtr leafs(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(
 AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n); }
 
 AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
-void set_body(const ElementPtr& x, const AnyPtr& term){ if(x->type==Element::TYPE_DECL) x->param1 = elem(term); }
+void set_body(const ElementPtr& x, const AnyPtr& term){ 
+	if(x->type==Element::TYPE_DECL){
+		x->type = Element::TYPE_NODE;
+		x->param1 = elem(term);
+	}
+}
 
 AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return concat(concat(lookbehind(sep, 1), body), lookahead(sep)); }
 AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }

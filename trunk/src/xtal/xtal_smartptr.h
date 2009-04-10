@@ -98,11 +98,13 @@ private:
 
 	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		XTAL_ASSERT(type(*this)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
 		return (T*)pvalue(*this); 
 	}
 
 	T* get2(SmartPtrSelector<INHERITED_RCBASE>) const{ 
 		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		XTAL_ASSERT(type(*this)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
 		return (T*)rcpvalue(*this); 
 	}
 

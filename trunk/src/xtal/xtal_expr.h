@@ -11,7 +11,7 @@
 
 namespace xtal{
 
-	enum ExprType{
+enum ExprType{
 
 	EXPR_LIST,
 	
@@ -93,8 +93,6 @@ namespace xtal{
 	EXPR_FUN,
 	EXPR_MASSIGN,
 	EXPR_MDEFINE,
-	EXPR_BLOCK_FIRST,
-	EXPR_BLOCK_NEXT,
 	EXPR_IVAR,
 	EXPR_LVAR,
 	EXPR_MEMBER,

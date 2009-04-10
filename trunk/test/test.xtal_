@@ -18,6 +18,7 @@ lib::test: singleton{
 	}
 	
 	run_file: fun(file){
+		file.p;
 		debug::scope{
 			printf("file %s\n", file);
 			
@@ -57,7 +58,7 @@ lib::test: singleton{
 		}
 	}
 	
-	run_dir: method(dir){
+	run_dir: method(dir){					
 		run_files(filesystem::entries(dir)
 					.select(|x| x.match(once ".xtal" >> xpeg::eos))
 					.map(|x| dir ~ "/" ~ x)

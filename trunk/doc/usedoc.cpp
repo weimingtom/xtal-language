@@ -1,5 +1,5 @@
 
-/** \page usepage C++組み込み
+/** \page usepage C++組み込みサンプル
 - \subpage useinitialize
 - \subpage useexcept
 - \subpage usehelloworld
@@ -290,9 +290,10 @@ C++からクラスやモジュール、libオブジェクトのメンバを追加定義する方法です。「Int:
 これにはAny::defメンバ関数を使います。    
 第一引数に定義名、第二引数に定義する値を入れます。   
 
- 
+\code
 cls->def("foo", 100);
 lib()->def("bar", fun(&add));
+\endcode
 */
 
 
@@ -396,6 +397,7 @@ foo.p; //=> 100
 \code
 // test.cpp
 class Vector2D{
+public:
 	float x, y;
 	
 	Vector2D(float x = 0, float y = 0)
@@ -434,7 +436,7 @@ XTAL_BIND(Vector2D){
 
 void test(){
 	// libオブジェクトに登録
-	lib()->def(Xid(Vector), cpp_class<Vector2D>());
+	lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
 }
 \endcode
 

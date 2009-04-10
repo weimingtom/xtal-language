@@ -937,8 +937,6 @@ enum{//Expressions priority
 		PRI_COM = PRI_NEG,
 		PRI_NOT = PRI_NEG,
 
-	PRI_POW,
-
 	PRI_AT,
 		PRI_SEND = PRI_AT,
 		PRI_CALL = PRI_AT,

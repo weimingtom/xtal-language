@@ -465,6 +465,11 @@ XTAL_BIND(Range){
 	it->def_method(Xid(left), &Range::left);
 	it->def_method(Xid(right), &Range::right);
 	it->def_method(Xid(kind), &Range::kind);
+
+	it->def(Xid(CLOSED), (int_t)Range::CLOSED);
+	it->def(Xid(LEFT_OPEN_RIGHT_CLOSED), (int_t)Range::LEFT_OPEN_RIGHT_CLOSED);
+	it->def(Xid(LEFT_CLOSED_RIGHT_OPEN), (int_t)Range::LEFT_CLOSED_RIGHT_OPEN);
+	it->def(Xid(OPEN), (int_t)Range::OPEN);
 }
 
 XTAL_PREBIND(IntRange){

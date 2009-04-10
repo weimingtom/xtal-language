@@ -142,6 +142,31 @@ public:
 	*/
 	bool is_right_closed(){ return (kind_&(1<<0))==0; }
 
+	/**
+	* \brief 区間の種類
+	*/
+	enum RangeKind{
+		/**
+		* \brief 閉区間[left, right]
+		*/
+		CLOSED = RANGE_CLOSED,
+
+		/**
+		* \brief 左開右閉区間 [left, right)
+		*/
+		LEFT_CLOSED_RIGHT_OPEN = RANGE_LEFT_CLOSED_RIGHT_OPEN,
+
+		/**
+		* \brief 左開右閉区間 (left, right]
+		*/
+		LEFT_OPEN_RIGHT_CLOSED = RANGE_LEFT_OPEN_RIGHT_CLOSED,
+
+		/**
+		* \brief 開区間 (left, right)
+		*/
+		OPEN = RANGE_OPEN
+	};
+
 protected:
 
 	virtual void visit_members(Visitor& m){

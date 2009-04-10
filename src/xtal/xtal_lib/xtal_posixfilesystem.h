@@ -12,8 +12,8 @@ class Dirent{
 	DIR* dir_;
 public:
 
-	Dirent(const StringPtr& path){
-		dir_ = opendir(path->c_str());
+	Dirent(const char_t* path){
+		dir_ = opendir(path);
 	}
 	
 	~Dirent(){
@@ -29,7 +29,6 @@ public:
 		if(!dp){
 			return 0;
 		}
-		
 		return dp->d_name;
 	}
 	

@@ -52,13 +52,21 @@ XtalはRuby, Python, D, Lua, NewtonScript, ECMAScript等、とても多くの言語を参考に
 \section xindexsec Xtal
 - \subpage tutorial
 - \subpage syntax
-- \link lib::builtin Xtal APIs \endlink
+- \subpage xtalapis
 \section cppindexsec C++
-- \link xtal C++ APIs \endlink
+- \subpage cppapis
 - \subpage usepage
 */
 
+/** \page xtalapis Xtalの標準クラスや関数
+以下を参照してください。\n
+- \link lib::builtin Xtalの標準クラスや関数 \endlink
+*/
 
+/** \page cppapis C++のAPI
+以下を参照してください。\n
+- \link xtal C++のAPI \endlink
+*/
 
 /** \page syntax Xtal言語構文
 - \subpage comment
@@ -67,11 +75,12 @@ XtalはRuby, Python, D, Lua, NewtonScript, ECMAScript等、とても多くの言語を参考に
 - \subpage defvar
 - \subpage expr
 - \subpage sentence
+- \subpage overloadable_operator
 */
 
 /** \page expr 式
 - \subpage pseudovar
-- \subpage number
+- \subpage numberlit
 - \subpage string
 - \subpage array_map
 - \subpage fun
@@ -367,10 +376,6 @@ println(foo); // filelocal::println(filelocal::foo); と同義
 \endcode
 */
 
-
-
-
-
 /*
 \section defmember メンバ定義文 
 
@@ -392,10 +397,7 @@ Integer::x2: method(){
 既に同名のメンバが定義されている場合、例外が発生します。 \n
 */
 
-/* \page number 数値リテラル
-数値リテラルはどれも変更不能オブジェクトです。 \n
-そのため += 演算子などは a = a + b; と同じ意味となります。\n
-
+/* \page numberlit 数値リテラル
 \section integer 整数リテラル 
 整数を生成する式は次のように記述します。\n
 \code
@@ -447,6 +449,9 @@ eまたはEを使い、10を底とする指数表記も出来ます。 eは大文字小文字問われません。\n
 10.5f
 255f
 \endcode
+
+数値はどれも変更不能オブジェクトです。 \n
+そのため += 演算子などは a = a + b; と同じ意味となります。\n
 */
 
 /** \page string 文字列リテラル
@@ -508,6 +513,34 @@ format_object(y: 10, x: 20).p; // x=20, y=10
 \subsection text get text文字列 
 %の後に t を入れると、それはget text文字列となります。\n
 
+*/
+
+
+/** \page array_map
+
+\section secarray 配列生成式 
+配列を生成する式は次のように記述します。\n
+\code
+[]
+[0, 1, 2]
+["str", 5, 5.6, ]
+\endcode
+カンマに区切られた値を要素とした配列オブジェクトを生成します。 \n
+配列の要素はどんなデータが混在してもかまいません。 \n
+最後のカンマは付けても付けなくてもかまいません。\n
+
+\section secmap 連想配列生成式 
+連想配列を生成する式は次のように記述します。\n
+\code
+[:]
+["key":"value", 5:100]
+["one":1, "two":2, ]
+\endcode
+キーと値を:で区切ったものをカンマ(,)区切りにすると連想配列オブジェクトの生成となります。\n 
+最後のカンマは付けても付けなくてもかまいません。\n
+\n
+配列、連想配列はどれも変更可能オブジェクトです。 \n
+そのため += 演算子などはaを破壊的に変更します。\n
 */
 
 /** \page fun 関数生成式
@@ -1135,6 +1168,65 @@ aをbビット論理的右シフトした結果をaに代入します。\n
 
 */
 
+/** \page overloadable_operator 再定義可能な演算子の一覧
+
+\section secassign 演算子系
+<TABLE>
+<TR><TD>演算子</TD><TD>意味</TD></TR>
+<TR><TD>+a</TD><TD>a.op_pos()</TD></TR>
+<TR><TD>-a</TD><TD>a.op_neg()</TD></TR>
+<TR><TD>~a</TD><TD>a.op_com()</TD></TR>
+<TR><TD>a[]</TD><TD>a.op_to_array()</TD></TR>
+<TR><TD>a[:]</TD><TD>a.op_to_map()</TD></TR>
+<TR><TD>a + b</TD><TD>a.op_add(b)</TD></TR>
+<TR><TD>a - b</TD><TD>a.op_sub(b)</TD></TR>
+<TR><TD>a ~ b</TD><TD>a.op_cat(b)</TD></TR>
+<TR><TD>a * b</TD><TD>a.op_mul(b)</TD></TR>
+<TR><TD>a / b</TD><TD>a.op_div(b)</TD></TR>
+<TR><TD>a % b</TD><TD>a.op_mod(b)</TD></TR>
+<TR><TD>a & b</TD><TD>a.op_and(b)</TD></TR>
+<TR><TD>a | b</TD><TD>a.op_or(b)</TD></TR>
+<TR><TD>a ^ b</TD><TD>a.op_xor(b)</TD></TR>
+<TR><TD>a << b</TD><TD>a.op_shl(b)</TD></TR>
+<TR><TD>a >> b</TD><TD>a.op_shr(b)</TD></TR>
+<TR><TD>a >>> b</TD><TD>a.op_ushr(b)</TD></TR>
+<TR><TD>a[b]</TD><TD>a.op_at(b)</TD></TR>
+<TR><TD>a .. b</TD><TD>!a.op_range(b, Range::CLOSED)</TD></TR>
+<TR><TD>a ..< b</TD><TD>!a.op_range(b, Range::LEFT_CLOSED_RIGHT_OPEN)</TD></TR>
+<TR><TD>a <.. b</TD><TD>!a.op_range(b, Range::LEFT_OPEN_RIGHT_CLOSED)</TD></TR>
+<TR><TD>a <..< b</TD><TD>!a.op_range(b, Range::OPEN)</TD></TR>
+<TR><TD>a == b</TD><TD>a.op_eq(b)</TD></TR>
+<TR><TD>a != b</TD><TD>!a.op_eq(b)</TD></TR>
+<TR><TD>a < b</TD><TD>a.op_lt(b)</TD></TR>
+<TR><TD>a > b</TD><TD>b.op_lt(a)</TD></TR>
+<TR><TD>a <= b</TD><TD>!b.op_lt(a)</TD></TR>
+<TR><TD>a >= b</TD><TD>!a.op_lt(b)</TD></TR>
+<TR><TD>a in b</TD><TD>a.op_in(b)</TD></TR>
+<TR><TD>a !in b</TD><TD>!a.op_in(b)</TD></TR>
+</TABLE>
+
+\section secassign 代入演算文系
+<TABLE>
+<TR><TD>演算子</TD><TD>意味</TD></TR>
+<TR><TD>i++;</TD><TD>i = i.op_inc();</TD></TR>
+<TR><TD>i--;</TD><TD>i = i.op_dec();</TD></TR>
+<TR><TD>a[b] += c;</TD><TD>a = a.op_set_at(b, c);</TD></TR>
+<TR><TD>a += b;</TD><TD>a = a.op_add_assign(b);</TD></TR>
+<TR><TD>a -= b;</TD><TD>a = a.op_sub_assign(b);</TD></TR>
+<TR><TD>a ~= b;</TD><TD>a = a.op_cat_assign(b);</TD></TR>
+<TR><TD>a *= b;</TD><TD>a = a.op_mul_assign(b);</TD></TR>
+<TR><TD>a /= b;</TD><TD>a = a.op_div_assign(b);</TD></TR>
+<TR><TD>a %= b;</TD><TD>a = a.op_mod_assign(b);</TD></TR>
+<TR><TD>a &= b;</TD><TD>a = a.op_and_assign(b);</TD></TR>
+<TR><TD>a |= b;</TD><TD>a = a.op_or_assign(b);</TD></TR>
+<TR><TD>a ^= b;</TD><TD>a = a.op_xor_assign(b);</TD></TR>
+<TR><TD>a <<= b;</TD><TD>a = a.op_shl_assign(b);</TD></TR>
+<TR><TD>a >>= b;</TD><TD>a = a.op_shr_assign(b);</TD></TR>
+<TR><TD>a >>>= b;</TD><TD>a = a.op_ushr_assign(b);</TD></TR>
+</TABLE>
+
+*/
+
 /** \page branch 分岐制御文
 \section if if文
 \code
@@ -1743,6 +1835,9 @@ a <..< b  // 範囲(expr, expr)
 - 15  左  a.b  オブジェクトメンバアクセス 
 - 15  左  a[b]  配列要素アクセス 
 - 15  左  a()  関数呼び出し 
+- 15  左  a..b  範囲演算子 
+- 15  左  a[]  配列化演算子
+- 15  左  a[:]  連想配列化演算子
 - 14  右  +a   
 - 14  右  -a  符号反転 
 - 14  右  ~a  ビット単位の反転 
@@ -1769,10 +1864,8 @@ a <..< b  // 範囲(expr, expr)
 - 08  左  a^b  ビット単位の排他的論理和 
 - 07  左  a|b  ビット単位の論理和 
 - 06  左  a&&b  論理積 
-- 05  左  allb  論理和 
+- 05  左  a||b  論理和 
 - 00  右  once a  最初の一度しか評価しない 
-- 00  右  static a  コンパイル時に評価する 
-
 
 Xtalは優先順位と空白がマッチしていない場合、コンパイルエラーとします。\n
 \code

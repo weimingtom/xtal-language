@@ -359,6 +359,12 @@ bool cache_ctor(const AnyPtr& target_class, int_t kind);
 
 /**
 * \internal
+* \brief キャッシュを消す。
+*/
+void clear_cache();
+
+/**
+* \internal
 * \brief メンバーのキャッシュテーブルに登録されているデータを無効にする。
 */
 void invalidate_cache_member();

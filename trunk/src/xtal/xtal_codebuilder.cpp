@@ -134,6 +134,8 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().var_frame_count = var_frames_.size();
 	ff().stack_count = 0;
 	ff().max_stack_count = 0;
+	ff().variable_count = 0;
+	ff().max_variable_count = 0;
 	ff().extendable_param = true;
 
 	// 変数フレームを作成して、引数を登録する
@@ -703,6 +705,11 @@ void CodeBuilder::scope_begin(){
 	ScopeInfo info;
 	info.pc = code_size();
 
+	ff().variable_count += vf().entries.size();
+	if(ff().max_variable_count<ff().variable_count){
+		ff().max_variable_count = ff().variable_count;
+	}
+
 	int_t real_entry_num = vf().entries.size();
 
 	for(uint_t i=0; i<vf().entries.size(); ++i){
@@ -735,10 +742,15 @@ void CodeBuilder::scope_begin(){
 		put_inst(InstBlockBegin(scope_info_num));
 	}
 
+	ff().variable_count += vf().real_entry_num;
+
 	result_->scope_info_table_.push_back(info);
 }
 
 void CodeBuilder::scope_end(){
+	
+	ff().variable_count -= vf().real_entry_num;
+
 	if(vf().real_entry_num!=0){
 		put_inst(InstBlockEnd());
 	}
@@ -1259,6 +1271,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	ff().var_frame_count = var_frames_.size();
 	ff().stack_count = 0;
 	ff().max_stack_count = 0;
+	ff().variable_count = 0;
+	ff().max_variable_count = 0;
 	ff().extendable_param = e->fun_extendable_param();
 
 
@@ -1296,6 +1310,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
 	put_inst(InstMakeFun(fun_info_table_number, 0));
 
+	ff().variable_count += vf().entries.size();
+	if(ff().max_variable_count<ff().variable_count){
+		ff().max_variable_count = ff().variable_count;
+	}
 
 	// デフォルト値を持つ引数を処理する
 	{
@@ -1355,11 +1373,14 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 	}
 
+	// 変数フレームをポップする
+	var_end();
+
+	result_->xfun_info_table_[fun_info_table_number].max_variable = ff().max_variable_count;
+
 	// 関数フレームをポップする
 	fun_frames_.downsize(1);
 
-	// 変数フレームをポップする
-	var_end();
 }
 
 void CodeBuilder::compile_for(const ExprPtr& e){
@@ -1500,7 +1521,7 @@ bool CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr&
 	ret = undefined;
 	return false;
 }
-	
+
 void CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info){
 	AnyPtr val;
 	if(compile_expr(p, info, val)){
@@ -2182,8 +2203,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			}
 	
 			if(rawne(cond, e->if_cond())){
-				var_end();
 				scope_end();
+				var_end();
 			}
 		}
 
@@ -2387,8 +2408,8 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 			set_label(label_end);	
 
 			if(rawne(cond, e->switch_cond())){
-				var_end();
 				scope_end();
+				var_end();
 			}
 		}
 
@@ -2405,65 +2426,6 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	}
 }
 
-#define XTAL_CB_DO_EXPR(name, expr) AnyPtr name = do_expr(expr); if(raweq(name, undefined)) return undefined;
-
-AnyPtr CodeBuilder::do_bin(const ExprPtr& e, const IDPtr& name, bool swap){
-	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){ 
-		error_->error(lineno(), Xt("Xtal Compile Error 1025")); 
-	}
-
-	XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-	XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-
-	if(swap){
-		return do_send(rhs, name, lhs);
-	}
-	else{
-		return do_send(lhs, name, rhs);
-	}
-}
-	
-AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name){
-	AnyPtr ret = undefined;
-
-	VMachinePtr vm = vmachine();
-	vm->setup_call();
-	a->rawsend(vm, name, undefined, null, false);
-	if(!vm->processed()){ vm->return_result(undefined); }
-	ret = vm->result_and_cleanup_call();
-
-	XTAL_CATCH_EXCEPT(e){
-		XTAL_UNUSED_VAR(e);
-		ret = undefined;
-	}
-	return ret;
-}
-	
-AnyPtr CodeBuilder::do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b){
-	AnyPtr ret = undefined;
-	VMachinePtr vm = vmachine();
-	vm->setup_call(1, b);
-	a->rawsend(vm, name, b->get_class(), null, false);
-	if(!vm->processed()){ vm->return_result(undefined); }
-	ret = vm->result_and_cleanup_call();
-	if(ret->is(cpp_class<Int>()) || ret->is(cpp_class<Float>()) || ret->is(cpp_class<String>())
-		|| ret->is(cpp_class<Array>()) || ret->is(cpp_class<Map>()) || ret->is(cpp_class<Bool>())){
-		return ret;
-	}
-
-	XTAL_CATCH_EXCEPT(e){
-		XTAL_UNUSED_VAR(e);
-		ret = undefined;
-	}
-
-	return ret;
-}
-
-AnyPtr CodeBuilder::do_not(const AnyPtr& v){
-	if(raweq(v, undefined)) return undefined;
-	return !v;
-}
-
 AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 	if(!p){
@@ -2474,183 +2436,16 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 
 	switch(e->itag()){
 
-		XTAL_NODEFAULT;
+		XTAL_DEFAULT;
 
 		XTAL_CASE(EXPR_NULL){ return null; }
-		XTAL_CASE(EXPR_UNDEFINED){ return undefined; }
 		XTAL_CASE(EXPR_TRUE){ return true; }
 		XTAL_CASE(EXPR_FALSE){ return false; }
-		XTAL_CASE(EXPR_THIS){ return undefined; }
-		XTAL_CASE(EXPR_CURRENT_CONTEXT){ return undefined; }
-		XTAL_CASE(EXPR_CALLEE){ return undefined; }
-		XTAL_CASE(EXPR_ARGS){ return undefined; }
 		XTAL_CASE(EXPR_NUMBER){ return e->number_value(); }
 		XTAL_CASE(EXPR_STRING){
-			if(e->string_kind()==KIND_TEXT){
-				return undefined;
-			}
-			else if(e->string_kind()==KIND_FORMAT){
-				return undefined;
-			}
-			else{
+			if(e->string_kind()==KIND_STRING){
 				return e->string_value();
 			}
-		}
-
-		XTAL_CASE(EXPR_ARRAY){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_MAP){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_MULTI_VALUE){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_ADD){ return do_bin(e, Xid(op_add)); }
-		XTAL_CASE(EXPR_SUB){ return do_bin(e, Xid(op_sub)); }
-		XTAL_CASE(EXPR_CAT){ return do_bin(e, Xid(op_cat)); }
-		XTAL_CASE(EXPR_MUL){ return do_bin(e, Xid(op_mul)); }
-		XTAL_CASE(EXPR_DIV){ return do_bin(e, Xid(op_div)); }
-		XTAL_CASE(EXPR_MOD){ return do_bin(e, Xid(op_mod)); }
-		XTAL_CASE(EXPR_OR){ return do_bin(e, Xid(op_or)); }
-		XTAL_CASE(EXPR_AND){ return do_bin(e, Xid(op_and)); }
-		XTAL_CASE(EXPR_XOR){ return do_bin(e, Xid(op_xor)); }
-		XTAL_CASE(EXPR_SHR){ return do_bin(e, Xid(op_shr)); }
-		XTAL_CASE(EXPR_SHL){ return do_bin(e, Xid(op_shl)); }
-		XTAL_CASE(EXPR_USHR){ return do_bin(e, Xid(op_ushr)); }
-
-		XTAL_CASE(EXPR_EQ){ return do_bin(e, Xid(op_eq)); }
-		XTAL_CASE(EXPR_NE){ return do_not(do_bin(e, Xid(op_eq))); }
-		XTAL_CASE(EXPR_LT){ 
-			return do_bin(e, Xid(op_lt)); 
-		}
-		XTAL_CASE(EXPR_GT){ return do_bin(e, Xid(op_lt), true); }
-		XTAL_CASE(EXPR_LE){ return do_not(do_bin(e, Xid(op_lt), true)); }
-		XTAL_CASE(EXPR_GE){ return do_not(do_bin(e, Xid(op_lt))); }
-
-		XTAL_CASE(EXPR_RAWEQ){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			return raweq(lhs, rhs);
-		}
-
-		XTAL_CASE(EXPR_RAWNE){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			return rawne(lhs, rhs);
-		}
-
-		XTAL_CASE(EXPR_IN){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_NIN){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_IS){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			if(ClassPtr cp = ptr_cast<Class>(rhs)){
-				return lhs->is(cp);
-			}
-			else{
-				return undefined;
-			}
-		}
-
-		XTAL_CASE(EXPR_NIS){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			if(ClassPtr cp = ptr_cast<Class>(rhs)){
-				return !lhs->is(cp);
-			}
-			else{
-				return undefined;
-			}
-		}
-
-		XTAL_CASE(EXPR_CATCH){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_Q){
-			XTAL_CB_DO_EXPR(cond, e->q_cond());
-			if(cond){
-				XTAL_CB_DO_EXPR(qtrue, e->q_true());
-				return qtrue;
-			}
-			else{
-				XTAL_CB_DO_EXPR(qfalse, e->q_false());
-				return qfalse;
-			}
-		}
-		
-		XTAL_CASE(EXPR_AT){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			return do_send(lhs, Xid(op_at), rhs);
-		}
-
-		XTAL_CASE(EXPR_ANDAND){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			if(lhs){
-				XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-				return rhs;
-			}
-			return lhs;
-		}
-
-		XTAL_CASE(EXPR_OROR){
-			XTAL_CB_DO_EXPR(lhs, e->bin_lhs());
-			if(lhs){ return lhs; }
-			XTAL_CB_DO_EXPR(rhs, e->bin_rhs());
-			return rhs;
-		}
-
-		XTAL_CASE(EXPR_RANGE){ return undefined; }
-
-		XTAL_CASE(EXPR_POS){
-			XTAL_CB_DO_EXPR(term, e->una_term());
-			return do_send(term, Xid(op_pos));
-		}
-
-		XTAL_CASE(EXPR_NEG){
-			XTAL_CB_DO_EXPR(term, e->una_term());
-			return do_send(term, Xid(op_neg));
-		}
-
-		XTAL_CASE(EXPR_COM){
-			XTAL_CB_DO_EXPR(term, e->una_term());
-			return do_send(term, Xid(op_com));
-		}
-
-		XTAL_CASE(EXPR_NOT){
-			XTAL_CB_DO_EXPR(term, e->una_term());
-			return !term;
-		}
-
-		XTAL_CASE(EXPR_ONCE){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_PROPERTY){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_PROPERTY_Q){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_CALL){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_FUN){
-			return undefined;
 		}
 
 		XTAL_CASE(EXPR_LVAR){
@@ -2661,43 +2456,6 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 					return entry(info).value;
 				}
 			}
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_IVAR){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_MEMBER){
-			XTAL_CB_DO_EXPR(term, e->member_term());
-			XTAL_CB_DO_EXPR(ns, e->member_ns());
-
-			if(raweq(ns, null)){
-				ns = undefined;
-			}
-		
-			if(ptr_cast<Expr>(e->member_name())){
-				return undefined;
-			}
-			else{
-				AnyPtr ret = term->member(ptr_cast<ID>(e->member_name()), ns, null, false);
-				XTAL_CATCH_EXCEPT(e){
-					XTAL_UNUSED_VAR(e);
-					return undefined;
-				}
-			}
-		}		
-		
-		XTAL_CASE(EXPR_MEMBER_Q){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_CLASS){
-			return undefined;
-		}
-
-		XTAL_CASE(EXPR_BRACKET){
-			return undefined;
 		}
 	}
 
@@ -2714,14 +2472,9 @@ void CodeBuilder::check_lvar_assign(const ExprPtr& e){
 	}
 }
 
+// 代入演算子があるか調べる
 void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
-	if(!p){
-		return;
-	}
-
-	if(type(p)==TYPE_TREE_NODE){
-		ExprPtr e = ep(p);
-
+	if(ExprPtr e = ep(p)){
 		switch(e->itag()){
 		case EXPR_ASSIGN:
 		case EXPR_ADD_ASSIGN:

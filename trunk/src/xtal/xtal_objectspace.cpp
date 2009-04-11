@@ -209,6 +209,7 @@ void ObjectSpace::uninitialize(){
 
 	class_table_.release();
 	var_table_.release();
+	clear_cache();
 	full_gc();
 
 	if(objects_count_ != 0){

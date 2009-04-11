@@ -780,9 +780,10 @@ struct ClassInfo : public ScopeInfo{
 */
 struct FunInfo : public ScopeInfo{
 	FunInfo()
-		:max_stack(256), min_param_count(0), max_param_count(0){}
+		:max_stack(256), max_variable(0), min_param_count(0), max_param_count(0){}
 
 	u16 max_stack;
+	u16 max_variable;
 	u8 min_param_count;
 	u8 max_param_count;
 

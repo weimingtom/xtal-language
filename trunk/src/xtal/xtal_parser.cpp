@@ -1392,8 +1392,6 @@ void Parser::parse_each(){
 		eb_.splice(0, 1); // ‘½d‘ã“ü‚Ì‰E•Ó
 
 		eb_.splice(EXPR_MDEFINE, 2);
-
-		// eb_.splice(EXPR_BLOCK_FIRST, 2)
 	}
 
 	scope->push_back(eb_.pop());
@@ -1417,8 +1415,6 @@ void Parser::parse_each(){
 			eb_.splice(EXPR_PROPERTY, 3);
 			eb_.splice(0, 1);
 			eb_.splice(EXPR_MASSIGN, 2);
-
-			// eb_.splice(EXPR_BLOCK_NEXT, 2)
 		}
 
 		parse_scope();

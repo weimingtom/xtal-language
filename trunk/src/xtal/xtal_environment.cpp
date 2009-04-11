@@ -42,7 +42,7 @@ void* debug_malloc(size_t size){
 	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter)));
 	used_memory += size;
 
-	if(gcounter==6){
+	if(gcounter==13728){
 		gcounter = gcounter;
 	}
 
@@ -66,6 +66,11 @@ void* debug_malloc(size_t size){
 void debug_free(void* p, size_t size){
 	if(p){
 		int gcount = mem_map_[p].count;
+
+		if(gcount==13728){
+			gcount = gcounter;
+		}
+
 		XTAL_ASSERT(mem_map_[p].size==size);
 		XTAL_ASSERT(!mem_map_[p].free);
 		used_memory -= mem_map_[p].size;
@@ -189,6 +194,8 @@ void set_vmachine(const VMachinePtr& vm){
 ////////////////////////////////////
 
 void* xmalloc(size_t size){
+	//full_gc();
+
 	environment_->used_memory_ += size;
 
 #ifndef XTAL_NO_SMALL_ALLOCATOR
@@ -424,9 +431,6 @@ void gc(){
 }
 
 void full_gc(){
-	environment_->member_cache_table_.clear();
-	environment_->is_cache_table_.clear();
-	environment_->ctor_cache_table_.clear();
 	environment_->object_space_.full_gc();
 #ifndef XTAL_NO_SMALL_ALLOCATOR
 	environment_->so_alloc_.fit();
@@ -462,7 +466,6 @@ AnyPtr alive_object(uint_t i){
 	return to_smartptr(environment_->object_space_.alive_object(i));
 }
 
-
 const ClassPtr& cpp_class(CppClassSymbolData* key){
 	return environment_->object_space_.cpp_class(key);
 }
@@ -490,6 +493,12 @@ bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
 
 bool cache_ctor(const AnyPtr& target_class, int_t kind){
 	return environment_->ctor_cache_table_.cache(target_class, kind);
+}
+
+void clear_cache(){
+	environment_->member_cache_table_.clear();
+	environment_->is_cache_table_.clear();
+	environment_->ctor_cache_table_.clear();
 }
 
 void invalidate_cache_member(){

@@ -58,7 +58,7 @@ lib::test: singleton{
 		}
 	}
 	
-	run_dir: method(dir){					
+	run_dir: fun(dir){					
 		run_files(filesystem::entries(dir)
 					.select(|x| x.match(once ".xtal" >> xpeg::eos))
 					.map(|x| dir ~ "/" ~ x)
@@ -66,4 +66,4 @@ lib::test: singleton{
 	}
 }
 
-"load test.xtal_".p;
+lib::test.p;

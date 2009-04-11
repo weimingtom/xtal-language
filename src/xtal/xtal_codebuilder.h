@@ -77,11 +77,7 @@ public:
 	void compile_for(const ExprPtr& e);
 	int_t compile_exprs(const ExprPtr& e);
 
-	AnyPtr do_bin(const ExprPtr& e, const IDPtr& name, bool swap = false);
-	AnyPtr do_not(const AnyPtr& e);
 	AnyPtr do_expr(const AnyPtr& e);
-	AnyPtr do_send(const AnyPtr& a, const IDPtr& name);
-	AnyPtr do_send(const AnyPtr& a, const IDPtr& name, const AnyPtr& b);
 
 	void put_inst2(const Inst& t, uint_t sz);
 
@@ -95,6 +91,9 @@ public:
 	struct FunFrame{
 		int_t stack_count;
 		int_t max_stack_count;
+
+		int_t variable_count;
+		int_t max_variable_count;
 
 		int_t var_frame_count;
 		int_t fun_info_num;

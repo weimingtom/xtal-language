@@ -367,11 +367,12 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 	}
 }
 
+#define inst (*(InstType*)pc)
 #define XTAL_VM_NODEFAULT } XTAL_ASSERT(false); XTAL_NODEFAULT
-#define XTAL_VM_CASE_FIRST(key) case Inst##key::NUMBER: { Inst##key& inst = *(Inst##key*)pc;
-#define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key Inst; Inst& inst = *(Inst*)pc; XTAL_UNUSED_VAR(inst);
+#define XTAL_VM_CASE_FIRST(key) case Inst##key::NUMBER: { typedef Inst##key InstType;
+#define XTAL_VM_CASE(key) } XTAL_ASSERT(false); case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { typedef Inst##key InstType;
 #define XTAL_VM_SWITCH switch(*pc)
-#define XTAL_VM_DEF_INST(key) typedef Inst##key Inst; Inst& inst = *(Inst*)pc; XTAL_UNUSED_VAR(inst)
+#define XTAL_VM_DEF_INST(key) typedef Inst##key InstType;
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
 #define XTAL_VM_RETURN return
 
@@ -913,9 +914,9 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(TryBegin){ // 9
 		FunFrame& f = ff(); 
 		ExceptFrame& ef = except_frames_.push();
-		ef.info = &f.fun()->code()->except_info_table_[inst.info_number];
+		ef.info = f.fun()->code()->except_info(inst.info_number);
 		ef.fun_frame_size = fun_frames_.size();
-		ef.stack_size = this->stack_size();
+		ef.stack_size = stack_.size();
 		ef.scope_size = scopes_.size();
 		ef.outer = f.outer();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

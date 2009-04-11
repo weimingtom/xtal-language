@@ -5,7 +5,10 @@
 namespace xtal{
 
 const ExprPtr& ep(const AnyPtr& a){
-	return ptr_cast<Expr>(a);
+	if(type(a)==TYPE_TREE_NODE){
+		return unchecked_ptr_cast<Expr>(a);
+	}
+	return unchecked_ptr_cast<Expr>(null);
 }
 
 const AnyPtr& Expr::at(uint_t i){
@@ -30,6 +33,7 @@ void ExprBuilder::splice(int_t tag, int_t num){
 	root_->resize(root_->size()-num);
 	root_->push_back(ret);
 }
+
 
 }
 

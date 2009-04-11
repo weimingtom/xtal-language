@@ -126,6 +126,8 @@ typedef SmartPtr<Expr> ExprPtr;
 
 const ExprPtr& ep(const AnyPtr& a);
 
+
+
 class Expr : public xpeg::TreeNode{
 public:
 
@@ -247,8 +249,11 @@ public:
 	XTAL_DEF_MEMBER(2, const ExprPtr&, switch_default);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, scope_stmts);
+
 	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);
 };
+
+ExprPtr setup_expr(const ExprPtr& e);
 
 class ExprBuilder{
 public:
@@ -303,6 +308,7 @@ private:
 	ArrayPtr errors_;
 	int_t lineno_;
 };
+
 
 }
 

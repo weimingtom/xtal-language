@@ -52,7 +52,7 @@ public:
 	* \xbind
 	* \brief 要素を文字列化し、さらにそれらをsepで連結した文字列を返す
 	* \code
-	* [1, 2, 3].map(|x| x*2).join("::").p;
+	* [1, 2, 3].join("::").p;
 	* //=> 1::2::3
 	* \endcode
 	*/
@@ -63,7 +63,7 @@ public:
 	* \brief (index, value)を返すイテレータを返す
 	* ループごとにindexはインクリメントされる。
 	* \code
-	* [45, 12, 33].map(|x| x*2).with_index{ |index, value|
+	* [45, 12, 33].with_index{ |index, value|
 	*     %f(%d-%d)(index, value).p;
 	* }
 	* //=> 0-45
@@ -88,8 +88,8 @@ public:
     *	it.p;
 	* }
 	* //=> 20
-	* //=> 30
 	* //=> 40
+	* //=> 60
 	* \endcode
 	*/
 	AnyPtr map(const AnyPtr& conv);
@@ -118,7 +118,7 @@ public:
 	* \xbind
 	* \brief pred関数がtrueを返すまでイテレートするイテレータを返す
 	* \code
-	* [7, 5, 3, 2, 1, 3].break_if(|x| x%2==1){
+	* [7, 5, 3, 2, 1, 3].break_if(|x| x%2!=1){
 	*     it.p;
 	* }
 	* //=> 7

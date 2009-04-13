@@ -55,7 +55,7 @@ private:
 		TSTRING16,
 		TSTRING32,
 		TARRAY, 
-		TMULTI_VALUE,
+		TVALUES,
 		TMAP 
 	};
 

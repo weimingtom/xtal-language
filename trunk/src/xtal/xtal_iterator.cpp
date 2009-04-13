@@ -12,21 +12,21 @@ ZipIter::ZipIter(const VMachinePtr& vm){
 
 void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 	bool all = true;
-	MultiValuePtr value;
+	ValuesPtr value;
 	for(int_t i = next_->size()-1; i>=0; --i){
 		vm->setup_call(2);
 		next_->at(i)->rawsend(vm, id);
 		next_->set_at(i, vm->result(0));
-		if(type(value)==TYPE_MULTI_VALUE){
-			value = xnew<MultiValue>(vm->result(1), value);
+		if(type(value)==TYPE_VALUES){
+			value = xnew<Values>(vm->result(1), value);
 		}
 		else{
 			AnyPtr ret = vm->result(1);
-			if(type(ret)==TYPE_MULTI_VALUE){
-				value = unchecked_ptr_cast<MultiValue>(ret);
+			if(type(ret)==TYPE_VALUES){
+				value = unchecked_ptr_cast<Values>(ret);
 			}
 			else{
-				value = xnew<MultiValue>(ret);
+				value = xnew<Values>(ret);
 			}
 		}
 		vm->cleanup_call();

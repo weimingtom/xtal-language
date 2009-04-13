@@ -65,5 +65,3 @@ lib::test: singleton{
 			);
 	}
 }
-
-lib::test.p;

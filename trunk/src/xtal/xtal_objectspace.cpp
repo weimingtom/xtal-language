@@ -20,7 +20,7 @@ void xtal::ObjectSpace::print_alive_objects(){
 		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
 		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++; }
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
-		XTAL_CASE(TYPE_MULTI_VALUE){ table["MultiValue"]++; }
+		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
 		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
 		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ table["NativeFunBindedThis"]++; }

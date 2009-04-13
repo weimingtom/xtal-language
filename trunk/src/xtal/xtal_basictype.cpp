@@ -66,6 +66,79 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 	}
 }
 
+void Values::block_next(const VMachinePtr& vm){
+	if(tail_){
+		vm->return_result(tail_, head_);
+	}
+	else{
+		vm->return_result(0, head_);
+	}
+}
+
+int_t Values::size(){
+	const ValuesPtr* cur = &to_smartptr(this);
+	int_t size = 1;
+	while(true){
+		if(!(*cur)->tail_){
+			return size;
+		}
+		cur = &(*cur)->tail_;
+		++size;
+	}
+}
+
+const AnyPtr& Values::at(int_t i){
+	const ValuesPtr* cur = &to_smartptr(this);
+	const AnyPtr* ret = &head_;
+	for(int_t n=0; n<i; ++n){
+		if(!(*cur)->tail_){
+			ret = &undefined;
+			break;
+		}
+		cur = &(*cur)->tail_;
+		ret = &(*cur)->head_;
+	}
+	return *ret;
+}
+
+bool Values::op_eq(const ValuesPtr& other){
+	const VMachinePtr& vm = vmachine();
+
+	const ValuesPtr* cur1 = &to_smartptr(this);
+	const ValuesPtr* cur2 = &other;
+
+	int_t size = 1;
+	while(true){
+		if(!(*cur1)->tail_){
+			if(!(*cur2)->tail_){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+
+		if(!(*cur2)->tail_){
+			return false;
+		}
+
+		if(rawne((*cur1)->head_, (*cur2)->head_)){
+			vm->setup_call(1, (*cur2)->head_);
+			(*cur1)->head_->rawsend(vm, Xid(op_eq));
+			if(!vm->processed() || !vm->result()){
+				vm->cleanup_call();
+				return false;
+			}
+			vm->cleanup_call();
+		}
+
+		cur1 = &(*cur1)->tail_;
+		cur2 = &(*cur2)->tail_;
+	}
+
+	return true;
+}
+
 HaveParent::HaveParent(const HaveParent& a)
 :Base(a), parent_(0){
 }

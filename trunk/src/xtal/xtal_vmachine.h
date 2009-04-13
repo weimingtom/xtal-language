@@ -300,7 +300,7 @@ public:
 	/**
 	* \brief 多値を返す。
 	*/
-	void return_result_mv(const MultiValuePtr& values);
+	void return_result_mv(const ValuesPtr& values);
 
 	/**
 	* \brief return_resultやcarry_overを既に呼び出したならtrueを、そうでないならfalseを返す。
@@ -427,7 +427,7 @@ public:
 	// srcのスタックの内容をsize個取り除いて、プッシュする。
 	void move(VMachine* src, int_t size){ stack_.move(src->stack_, size); }
 
-	int_t push_mv(const MultiValuePtr& mv){
+	int_t push_mv(const ValuesPtr& mv){
 		int_t size = mv->size();
 		for(int_t i=0; i<size; ++i){
 			push(mv->at(i));
@@ -803,53 +803,9 @@ private:
 
 public:
 
-	void assign(const VMachinePtr& vm){
-		resume_pc_ = vm->resume_pc_;
-		yield_result_count_ = vm->yield_result_count_;
+	void make_procedure(const VMachinePtr& vm);
 
-		stack_ = vm->stack_;
-
-		fun_frames_.resize(vm->fun_frames_.size());
-		for(uint_t i=0; i<vm->fun_frames_.size(); ++i){
-			if(fun_frames_[i]){
-				*fun_frames_[i] = *vm->fun_frames_[i];
-			}
-			else{
-				void* p = xmalloc(sizeof(FunFrame));
-				fun_frames_[i] = new(p) FunFrame(*vm->fun_frames_[i]);
-			}
-		}
-
-		variables_ = vm->variables_;
-
-		except_frames_ = vm->except_frames_;
-		
-		except_[0] = vm->except_[0];
-		except_[1] = vm->except_[1];
-		except_[2] = vm->except_[2];
-
-		debug_info_ = vm->debug_info_;
-	}
-
-	friend void swap(VMachine& a, VMachine& b){
-		using namespace std;
-
-		std::swap(a.resume_pc_, b.resume_pc_);
-		std::swap(a.yield_result_count_, b.yield_result_count_);
-
-		swap(a.stack_, b.stack_);
-		swap(a.fun_frames_, b.fun_frames_);
-
-		swap(a.variables_, b.variables_);
-
-		swap(a.except_frames_, b.except_frames_);
-
-		swap(a.except_[0], b.except_[0]);
-		swap(a.except_[1], b.except_[1]);
-		swap(a.except_[2], b.except_[2]);
-
-		swap(a.debug_info_, b.debug_info_);
-	}
+	void swap_procedure(const VMachinePtr& vm);
 
 protected:
 
@@ -867,6 +823,7 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(VMachine);
 
 };
+
 
 }
 

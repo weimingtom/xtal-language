@@ -1,0 +1,45 @@
+inherit(lib::test)
+
+class TestProc{
+	local_assign#Test{
+		p: Procedure();
+		n: 0;
+		p{
+			n = 100;
+		}
+		
+		assert n==0;
+		
+		p();
+		
+		assert n==100;
+	}
+	
+	call#Test{
+		n: 0;
+		f: fun(p){
+			p();	
+		}
+		
+		p: Procedure();
+		p{
+			n = 100;
+		}
+		
+		f(p);
+		
+		assert n==100;
+	}
+	
+	bp#Test{
+		p: Procedure();
+		n: 0;
+		p{
+			n = it;
+		}
+		
+		p(10, 20);
+		
+		assert n[0]==10;
+	}
+}

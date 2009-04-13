@@ -17,6 +17,18 @@ class SerializeTest{
 		assert a[2][0]==10;
 		assert a[2][1]==20;
 	}
+	
+	values#Test{
+		ms: MemoryStream();
+
+		a: (1, 2, 3);
+
+		ms.serialize(a);
+		ms.seek(0);
+		b: ms.deserialize;
+		
+		assert b == (1, 2, 3);
+	}
 
 	instance#Test{
 		lib::Mew: class{

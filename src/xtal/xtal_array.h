@@ -208,6 +208,10 @@ public:
 		return to_smartptr(this);
 	}
 
+	/**
+	* \xbind
+	* \brief ’l‚ª“™‚µ‚¢‚©’²‚×‚é
+	*/
 	bool op_eq(const ArrayPtr& other);
 
 	/**
@@ -328,51 +332,6 @@ private:
 
 	virtual void visit_members(Visitor& m);
 };
-
-class MultiValue : public RefCountingBase{
-public:
-	enum{ TYPE = TYPE_MULTI_VALUE };
-
-	MultiValue(const AnyPtr& head, const MultiValuePtr& tail = null)
-		:head_(head), tail_(tail){
-		set_pvalue(*this, TYPE, this);
-	}
-
-	const AnyPtr& head(){
-		return head_;
-	}
-
-	const MultiValuePtr& tail(){
-		return tail_;
-	}
-
-	void block_next(const VMachinePtr& vm);
-
-	int_t size();
-
-	const AnyPtr& at(int_t i);
-
-	void visit_members(Visitor& m){
-		m & head_ & tail_;
-	}
-
-public:
-
-	void set(const AnyPtr& head, const MultiValuePtr& tail = null){
-		head_ = head;
-		tail_ = tail;
-	}
-
-private:
-	AnyPtr head_;
-	MultiValuePtr tail_;
-};
-
-void bind(MultiValue*);
-
-inline MultiValuePtr mv(const AnyPtr& v1, const AnyPtr& v2){
-	return xnew<MultiValue>(v1, xnew<MultiValue>(v2));
-}
 
 }
 

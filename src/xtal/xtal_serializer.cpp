@@ -129,9 +129,9 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			return;
 		}
 
-		XTAL_CASE(TYPE_MULTI_VALUE){
-			const MultiValuePtr& a = unchecked_ptr_cast<MultiValue>(v);
-			stream_->put_u8(TMULTI_VALUE);
+		XTAL_CASE(TYPE_VALUES){
+			const ValuesPtr& a = unchecked_ptr_cast<Values>(v);
+			stream_->put_u8(TVALUES);
 			inner_serialize(a->head());
 			inner_serialize(a->tail());
 			return;
@@ -198,7 +198,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		stream_->put_u8(NAME);
 		inner_serialize(name_list);
 
-		Xfor_cast(const MultiValuePtr& mv, name_list){
+		Xfor_cast(const ValuesPtr& mv, name_list){
 			if(first_step){
 				if(raweq(mv->at(0), Xid(lib))){
 					break;
@@ -332,12 +332,12 @@ AnyPtr Serializer::inner_deserialize(){
 			return ret;
 		}
 
-		XTAL_CASE(TMULTI_VALUE){
-			MultiValuePtr ret = xnew<MultiValue>(null);
+		XTAL_CASE(TVALUES){
+			ValuesPtr ret = xnew<Values>(null);
 			append_value(ret);
 			AnyPtr head = inner_deserialize();
 			AnyPtr tail = inner_deserialize();
-			ret->set(head, unchecked_ptr_cast<MultiValue>(tail));		
+			ret->set(head, unchecked_ptr_cast<Values>(tail));		
 			return ret;
 		}
 		
@@ -425,7 +425,7 @@ AnyPtr Serializer::inner_deserialize(){
 
 AnyPtr Serializer::demangle(const AnyPtr& n){
 	AnyPtr ret;
-	Xfor_cast(const MultiValuePtr& mv, n){
+	Xfor_cast(const ValuesPtr& mv, n){
 		if(first_step){
 			if(raweq(mv->at(0), Xid(lib))){
 				ret = lib();

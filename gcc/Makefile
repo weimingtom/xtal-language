@@ -1,6 +1,7 @@
 
-CC = gcc
+CC = g++
 OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
+LOPT = -lpthread -lstdc++
 
 .SUFFIXES: .cpp .o 
 
@@ -10,45 +11,63 @@ LIBDIR = ../lib
 
 SRC = $(shell ls $(SRCDIR)/xtal_*.cpp)
 OBJ = $(patsubst $(SRCDIR)/%.cpp,%.o,$(SRC))
+HED = $(shell ls $(SRCDIR)/xtal_*.h)
 
 %.o: $(SRCDIR)/%.cpp
 	$(CC) -o $@ -c $< $(OPT)
 
 all: libxtal ix xtal
+	
 
 depend:
 	g++ -MM -MG $(SRC) >makefile.depend -DXTAL_NO_THREAD
 
-libxtal: $(OBJ)
+$(SRCDIR)/xtal.h.gch: $(HED) 
+	$(CC) $(SRCDIR)/xtal.h $(OPT)
+
+$(LIBDIR)/libxtal.a: $(SRCDIR)/xtal.h.gch $(OBJ)
 	ar r $(LIBDIR)/libxtal.a $(OBJ)
 	ranlib $(LIBDIR)/libxtal.a
 
-xtal: libxtal xtal.cpp
-	$(CC) -o $(BINDIR)/xtal.exe ./xtal.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
+libxtal: $(LIBDIR)/libxtal.a
+	
+
+$(BINDIR)/xtal.exe: $(LIBDIR)/libxtal.a xtal.cpp
+	$(CC) -o $(BINDIR)/xtal.exe ./xtal.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT) 
 	strip --strip-all $(BINDIR)/xtal.exe
 
-ix: libxtal ix.cpp
-	$(CC) -o $(BINDIR)/ix.exe ./ix.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
+xtal: $(BINDIR)/xtal.exe
+	
+
+$(BINDIR)/ix.exe: $(LIBDIR)/libxtal.a ix.cpp
+	$(CC) -o $(BINDIR)/ix.exe ./ix.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT) 
 	strip --strip-all $(BINDIR)/ix.exe
 
-test: libxtal test.cpp
-	$(CC) -o $(BINDIR)/test.exe ./test.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
-	strip --strip-all $(BINDIR)/test.exe
-	$(BINDIR)/test.exe 
+ix: $(BINDIR)/ix.exe
 	
+
+$(BINDIR)/test.exe: $(LIBDIR)/libxtal.a test.cpp
+	$(CC) -o $(BINDIR)/test.exe ./test.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT) 
+
+test: $(BINDIR)/test.exe
+	$(BINDIR)/test.exe
+
 .PHONY: clean
+	
 
 clean:
-	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/all_src.exe
+	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/all_src.exe $(SRCDIR)/xtal.h.gch
+
+$(BINDIR)/prof.exe: $(LIBDIR)/libxtal.a $(SRCDIR)/main.cpp
+	$(CC) -o $(BINDIR)/prof.exe ./xtal.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT)  
+	$(BINDIR)/prof.exe ../bench/ao.xtal
 
 prof: override OPT += -pg
-prof: libxtal $(SRCDIR)/main.cpp
-	$(CC) -o $(BINDIR)/prof.exe ./xtal.cpp $(LIBDIR)/libxtal.a -lstdc++ $(OPT) -lpthread 
-	$(BINDIR)/prof.exe ../bench/ao.xtal
+prof: $(LIBDIR)/libxtal.a $(BINDIR)/prof.exe
 	gprof $(BINDIR)/prof.exe gmon.out -p > prof.txt
 
 all_src: 
-	$(CC) -o $(BINDIR)/all_src.exe ../all_src/all_src.cpp -lstdc++ $(OPT)
+	$(CC) -o $(BINDIR)/all_src.exe ../all_src/all_src.cpp $(OPT) $(LOPT) 
 
 run: xtal
 	$(BINDIR)/xtal.exe 

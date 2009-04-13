@@ -6,7 +6,8 @@ class MVTest{
 		foo: fun(){ return 0, 1, 2, 3, 4; }
 		a, b: foo();
 		assert a==0;
-		assert b[]==[1, 2, 3, 4];
+		assert b==(1, 2, 3, 4);
+		assert b!=(1, 2, 3, 4, 5);
 	}
 
 	mv4#Test{

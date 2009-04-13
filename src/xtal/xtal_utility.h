@@ -25,7 +25,9 @@ enum{
 //#define XTAL_NO_XPEG
 
 #ifdef _UNICODE
-#	define XTAL_USE_WCHAR
+#	ifndef XTAL_USE_WCHAR
+#		define XTAL_USE_WCHAR
+#	endif
 #endif 
 
 #if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
@@ -92,6 +94,8 @@ private:
 #	define XTAL_DEBUG_ONLY(x) 
 #endif
 
+#define XTAL_UNUSED_VAR(x) ((void)x)
+
 #define XTAL_DISALLOW_COPY_AND_ASSIGN(ClassName) ClassName(const ClassName&); void operator=(const ClassName&)
 
 #define XTAL_DEFAULT default:
@@ -104,13 +108,11 @@ private:
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
 #else
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = 0)
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
 #endif
 
 #define XTAL_GLOBAL_INTERPRETER_LOCK
 #define XTAL_GLOBAL_INTERPRETER_UNLOCK
-
-#define XTAL_UNUSED_VAR(x) (void)x
 
 #ifdef __GNUC__
 #	define XTAL_NOINLINE __attribute__((noinline)) 
@@ -531,7 +533,7 @@ enum PrimitiveType{
 	TYPE_STRING = 8,
 	
 	TYPE_ARRAY = 9,
-	TYPE_MULTI_VALUE = 10,
+	TYPE_VALUES = 10,
 	TYPE_TREE_NODE = 11,
 
 	TYPE_NATIVE_FUN = 12,
@@ -694,7 +696,7 @@ class FloatRange;
 class ChRange;
 class DoubleDispatchMethod;
 class DoubleDispatchFun;
-class MultiValue;
+class Values;
 class Exception;
 
 typedef SmartPtr<Null> NullPtr;
@@ -728,7 +730,7 @@ typedef SmartPtr<FloatRange> FloatRangePtr;
 typedef SmartPtr<ChRange> ChRangePtr;
 typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
 typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
-typedef SmartPtr<MultiValue> MultiValuePtr;
+typedef SmartPtr<Values> ValuesPtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 
 class Base;

@@ -257,7 +257,7 @@ StringPtr Any::object_name() const{
 
 	// 親がいるなら、親が名前を知っている
 	if(const ClassPtr& parent = object_parent()){
-		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
+		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
 			if(raweq(myname->at(1), undefined)){
 				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
 			}
@@ -314,7 +314,7 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_SMALL_STRING){ return cpp_class<String>(); }
 		XTAL_CASE(TYPE_STRING){ return cpp_class<String>(); }
 		XTAL_CASE(TYPE_ARRAY){ return cpp_class<Array>(); }
-		XTAL_CASE(TYPE_MULTI_VALUE){ return cpp_class<MultiValue>(); }
+		XTAL_CASE(TYPE_VALUES){ return cpp_class<Values>(); }
 		XTAL_CASE(TYPE_TREE_NODE){ return cpp_class<xpeg::TreeNode>(); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return cpp_class<NativeFun>(); }
 		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return cpp_class<NativeFunBindedThis>(); }
@@ -440,8 +440,8 @@ void Any::visit_members(Visitor& m) const{
 			((Array*)rcpvalue(*this))->visit_members(m); 
 		}
 
-		XTAL_CASE(TYPE_MULTI_VALUE){ 
-			((MultiValue*)rcpvalue(*this))->visit_members(m); 
+		XTAL_CASE(TYPE_VALUES){ 
+			((Values*)rcpvalue(*this))->visit_members(m); 
 		}
 
 		XTAL_CASE(TYPE_TREE_NODE){ 
@@ -478,9 +478,9 @@ void Any::destroy(){
 			value_.uvalue = sizeof(Array); 
 		}
 
-		XTAL_CASE(TYPE_MULTI_VALUE){ 
-			unchecked_ptr_cast<MultiValue>(ap(*this))->~MultiValue(); 
-			value_.uvalue = sizeof(MultiValue); 
+		XTAL_CASE(TYPE_VALUES){ 
+			unchecked_ptr_cast<Values>(ap(*this))->~Values(); 
+			value_.uvalue = sizeof(Values); 
 		}
 
 		XTAL_CASE(TYPE_TREE_NODE){ 

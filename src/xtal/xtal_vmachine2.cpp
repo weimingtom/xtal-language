@@ -31,6 +31,8 @@ void VMachine::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
+	variables_.resize(0);
+	scopes_.resize(0);
 
 	except_[0] = null;
 	except_[1] = null;
@@ -323,7 +325,7 @@ void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const A
 	f.called_pc = &cleanup_call_code_;
 }
 
-void VMachine::return_result_mv(const MultiValuePtr& values){
+void VMachine::return_result_mv(const ValuesPtr& values){
 	FunFrame& f = ff();
 	downsize(f.args_stack_size());
 	adjust_result(push_mv(values));
@@ -421,9 +423,9 @@ void VMachine::flatten_args(){
 		downsize(1);
 		f.ordered_arg_count = 0;
 	}
-	else if(type(a)==TYPE_MULTI_VALUE){
+	else if(type(a)==TYPE_VALUES){
 		downsize(1);
-		f.ordered_arg_count = push_mv(unchecked_ptr_cast<MultiValue>(a));
+		f.ordered_arg_count = push_mv(unchecked_ptr_cast<Values>(a));
 	}
 }
 
@@ -792,6 +794,62 @@ void VMachine::FunFrame::dec_ref(){
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
 	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
+
+void VMachine::make_procedure(const VMachinePtr& vm){
+	reset();
+
+	{
+		FunFrame* f = vm->fun_frames_.pop();
+		ScopeInfo* s = vm->scopes_.pop();
+		vm->make_outer_outer();
+		vm->fun_frames_.push(f);
+		vm->scopes_.push(s);
+	}
+
+	resume_pc_ = vm->resume_pc_;
+	yield_result_count_ = vm->yield_result_count_;
+
+	stack_ = vm->stack_;
+
+	fun_frames_.resize(vm->fun_frames_.size());
+	for(uint_t i=0; i<vm->fun_frames_.size(); ++i){
+		if(fun_frames_[i]){
+			*fun_frames_[i] = *vm->fun_frames_[i];
+		}
+		else{
+			void* p = xmalloc(sizeof(FunFrame));
+			fun_frames_[i] = new(p) FunFrame(*vm->fun_frames_[i]);
+		}
+	}
+
+	variables_ = vm->variables_;
+	scopes_ = vm->scopes_;
+	except_frames_ = vm->except_frames_;
+	
+	except_[0] = vm->except_[0];
+	except_[1] = vm->except_[1];
+	except_[2] = vm->except_[2];
+}
+
+void VMachine::swap_procedure(const VMachinePtr& vm){
+	using namespace std;
+
+	std::swap(resume_pc_, vm->resume_pc_);
+	std::swap(yield_result_count_, vm->yield_result_count_);
+
+	swap(stack_, vm->stack_);
+	swap(fun_frames_, vm->fun_frames_);
+	swap(variables_, vm->variables_);
+	swap(scopes_, vm->scopes_);
+	swap(except_frames_, vm->except_frames_);
+
+	swap(except_[0], vm->except_[0]);
+	swap(except_[1], vm->except_[1]);
+	swap(except_[2], vm->except_[2]);
+
+	swap(debug_info_, vm->debug_info_);
+}
+
 
 }//namespace
 

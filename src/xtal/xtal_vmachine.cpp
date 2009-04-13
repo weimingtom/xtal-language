@@ -308,16 +308,16 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 余った戻り値を多値に直す。
 		int_t size = n-need_result_count+1;
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			MultiValuePtr ret;
-			if(type(get(0))==TYPE_MULTI_VALUE){
-				ret = unchecked_ptr_cast<MultiValue>(get(0));
+			ValuesPtr ret;
+			if(type(get(0))==TYPE_VALUES){
+				ret = unchecked_ptr_cast<Values>(get(0));
 			}
 			else{
-				ret = xnew<MultiValue>(get(0));
+				ret = xnew<Values>(get(0));
 			}
 
 			for(int_t i=1; i<size; ++i){
-				ret = xnew<MultiValue>(get(i), ret);
+				ret = xnew<Values>(get(i), ret);
 			}
 			downsize(size);
 			push(ret);
@@ -327,12 +327,12 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 		// 要求している戻り値の数の方が、関数が返す戻り値より多い
 
 		XTAL_GLOBAL_INTERPRETER_LOCK{
-			if(type(get(0))==TYPE_MULTI_VALUE){
+			if(type(get(0))==TYPE_VALUES){
 				// 最後の要素の多値を展開し埋め込む
-				MultiValuePtr mv = unchecked_ptr_cast<MultiValue>(get(0));
+				ValuesPtr mv = unchecked_ptr_cast<Values>(get(0));
 				downsize(1);
 
-				const MultiValuePtr* cur = &mv;
+				const ValuesPtr* cur = &mv;
 				int_t size = 0;
 				while(true){
 					if((*cur)->tail()){
@@ -1888,177 +1888,168 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 	
 const inst_t* VMachine::OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, int_t op, Any& a, int_t constant){
 	uint_t atype = type(a)-TYPE_INT;
-	if(atype<2){
-		if(atype==0){
-			set_ivalue(a, ivalue(a)+constant);
-		}
-		else{
-			set_fvalue(a, fvalue(a)+constant);
-		}
+	if(atype==0){
+		set_ivalue(a, ivalue(a)+constant);
 		return pc1;
 	}
-	else{
-		push(a);
-		return inner_send_from_stack(pc2, 1, id_[op], 0);
+	
+	if(atype==1){
+		set_fvalue(a, fvalue(a)+constant);
+		return pc1;
 	}
+
+	push(a);
+	return inner_send_from_stack(pc2, 1, id_[op], 0);
 }
 
 const inst_t* VMachine::OpAddConstantInt(const inst_t* pc, int_t op, int_t constant){
 	Any& a = get(); uint_t atype = type(a)-TYPE_INT;
-	if(atype<2){
-		if(atype==0){
-			set_ivalue(a, ivalue(a)+constant);
-		}
-		else{
-			set_fvalue(a, fvalue(a)+constant);
-		}
+	if(atype==0){
+		set_ivalue(a, ivalue(a)+constant);
 		return pc;
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 0);
+
+	if(atype==1){
+		set_fvalue(a, fvalue(a)+constant);
+		return pc;
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 0);
 }
 
 const inst_t* VMachine::OpAdd(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
-	if(abtype<2){
-		Any ret;
-		if(abtype==0){
-			set_ivalue(ret, ivalue(a) + ivalue(b));
-		}
-		else{
-			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			set_fvalue(ret, afvalue + bfvalue);
-		}
-		set(1, ret);
+
+	if(abtype==0){
+		set_ivalue(get(1), ivalue(a) + ivalue(b));
 		downsize(1); 
 		return pc;	
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
+
+	if(abtype==1){
+		float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
+		float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
+		set_fvalue(get(1), afvalue + bfvalue);
+		downsize(1);
+		return pc;	
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 1, 0);
 }
 
 const inst_t* VMachine::OpSub(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
-	if(abtype<2){
-		Any ret;
-		if(abtype==0){
-			set_ivalue(ret, ivalue(a) - ivalue(b));
-		}
-		else{
-			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			set_fvalue(ret, afvalue - bfvalue);
-		}
-		set(1, ret);
+
+	if(abtype==0){
+		set_ivalue(get(1), ivalue(a) - ivalue(b));
 		downsize(1); 
-		return pc;
+		return pc;	
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
+
+	if(abtype==1){
+		float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
+		float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
+		set_fvalue(get(1), afvalue - bfvalue);
+		downsize(1);
+		return pc;	
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 1, 0);
 }
 
 const inst_t* VMachine::OpMul(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
-	if(abtype<2){
-		Any ret;
-		if(abtype==0){
-			set_ivalue(ret, ivalue(a) * ivalue(b));
-		}
-		else{
-			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
-			set_fvalue(ret, afvalue * bfvalue);
-		}
-		set(1, ret);
+
+	if(abtype==0){
+		set_ivalue(get(1), ivalue(a) * ivalue(b));
 		downsize(1); 
-		return pc;
+		return pc;	
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
+
+	if(abtype==1){
+		float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
+		float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
+		set_fvalue(get(1), afvalue * bfvalue);
+		downsize(1);
+		return pc;	
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 1, 0);
 }
 
 const inst_t* VMachine::OpDiv(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
-	if(abtype<2){
-		Any ret;
-		if(abtype==0){
-			int_t bivalue = ivalue(b);
 
-			if(bivalue==0){
-				push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
-				return &throw_code_;
-			}
-
-			set_ivalue(ret, ivalue(a) / bivalue);
+	if(abtype==0){
+		int_t bivalue = ivalue(b);
+		if(bivalue==0){
+			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
+			return &throw_code_;
 		}
-		else{
-			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
 
-			if(bfvalue==0){
-				push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
-				return &throw_code_;
-			}
-
-			set_fvalue(ret, afvalue / bfvalue);
-		}
-		set(1, ret);
+		set_ivalue(get(1), ivalue(a) / bivalue);
 		downsize(1); 
-		return pc;
+		return pc;	
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
+
+	if(abtype==1){
+		float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
+		float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
+
+		if(bfvalue==0){
+			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
+			return &throw_code_;
+		}
+
+		set_fvalue(get(1), afvalue / bfvalue);
+		downsize(1);
+		return pc;	
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 1, 0);
 }
 
 const inst_t* VMachine::OpMod(const inst_t* pc, int_t op){
 	const AnyPtr& b = get(); uint_t btype = type(b)-TYPE_INT;
 	const AnyPtr& a = get(1); uint_t atype = type(a)-TYPE_INT;
 	uint_t abtype = atype | btype;
-	if(abtype<2){
-		Any ret;
-		if(abtype==0){
-			int_t bivalue = ivalue(b);
 
-			if(bivalue==0){
-				push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
-				return &throw_code_;
-			}
-
-			set_ivalue(ret, ivalue(a) % bivalue);
+	if(abtype==0){
+		int_t bivalue = ivalue(b);
+		if(bivalue==0){
+			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
+			return &throw_code_;
 		}
-		else{
-			float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
-			float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
 
-			if(bfvalue==0){
-				push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
-				return &throw_code_;
-			}
-
-			using namespace std;
-			set_fvalue(ret, fmodf(afvalue, bfvalue));
-		}
-		set(1, ret);
+		set_ivalue(get(1), ivalue(a) % bivalue);
 		downsize(1); 
-		return pc;
+		return pc;	
 	}
-	else{
-		return inner_send_from_stack(pc, 1, id_[op], 1, 0);
+
+	if(abtype==1){
+		float_t afvalue = atype==0 ? (float_t)ivalue(a) : fvalue(a);
+		float_t bfvalue = btype==0 ? (float_t)ivalue(b) : fvalue(b);
+
+		if(bfvalue==0){
+			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
+			return &throw_code_;
+		}
+
+		using namespace std;
+		set_fvalue(get(1), fmodf(afvalue, bfvalue));
+		downsize(1);
+		return pc;	
 	}
+
+	return inner_send_from_stack(pc, 1, id_[op], 1, 0);
 }
 
 const inst_t* VMachine::OpAnd(const inst_t* pc, int_t op){

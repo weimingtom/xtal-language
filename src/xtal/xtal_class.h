@@ -416,7 +416,7 @@ public:
 
 	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
-	MultiValuePtr child_object_name(const AnyPtr& a);
+	ValuesPtr child_object_name(const AnyPtr& a);
 
 	void set_object_name(const StringPtr& name);
 

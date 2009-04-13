@@ -361,41 +361,4 @@ void ArrayIter::visit_members(Visitor& m){
 	m & array_;
 }
 
-//////////////////////////////////////////////////
-
-void MultiValue::block_next(const VMachinePtr& vm){
-	if(tail_){
-		vm->return_result(tail_, head_);
-	}
-	else{
-		vm->return_result(0, head_);
-	}
-}
-
-int_t MultiValue::size(){
-	const MultiValuePtr* cur = &to_smartptr(this);
-	int_t size = 1;
-	while(true){
-		if(!(*cur)->tail_){
-			return size;
-		}
-		cur = &(*cur)->tail_;
-		++size;
-	}
-}
-
-const AnyPtr& MultiValue::at(int_t i){
-	const MultiValuePtr* cur = &to_smartptr(this);
-	const AnyPtr* ret = &head_;
-	for(int_t n=0; n<i; ++n){
-		if(!(*cur)->tail_){
-			ret = &undefined;
-			break;
-		}
-		cur = &(*cur)->tail_;
-		ret = &(*cur)->head_;
-	}
-	return *ret;
-}
-
 }

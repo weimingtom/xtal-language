@@ -231,11 +231,11 @@ void Format::rawcall(const VMachinePtr& vm){
 	char_t* pcbuf;
 	
 	Xfor(v, strings_){
-		if(type(v)!=TYPE_MULTI_VALUE){
+		if(type(v)!=TYPE_VALUES){
 			ms->put_s(v->to_s());
 		}
 		else{
-			MultiValuePtr mv = unchecked_ptr_cast<MultiValue>(v);
+			ValuesPtr mv = unchecked_ptr_cast<Values>(v);
 			
 			AnyPtr a;
 			if(type(mv->at(0))==TYPE_INT){

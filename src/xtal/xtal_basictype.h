@@ -263,6 +263,62 @@ public:
 };
 
 /**
+* \brief 多値
+*/
+class Values : public RefCountingBase{
+public:
+	enum{ TYPE = TYPE_VALUES };
+
+	Values(const AnyPtr& head, const ValuesPtr& tail = null)
+		:head_(head), tail_(tail){
+		set_pvalue(*this, TYPE, this);
+	}
+
+	const AnyPtr& head(){
+		return head_;
+	}
+
+	const ValuesPtr& tail(){
+		return tail_;
+	}
+
+	void block_next(const VMachinePtr& vm);
+
+	int_t size();
+
+	const AnyPtr& at(int_t i);
+
+	const AnyPtr& op_at(int_t i){
+		return at(i);
+	}
+
+	/**
+	* \xbind
+	* \brief 値が等しいか調べる
+	*/
+	bool op_eq(const ValuesPtr& other);
+
+	void visit_members(Visitor& m){
+		m & head_ & tail_;
+	}
+
+public:
+
+	void set(const AnyPtr& head, const ValuesPtr& tail = null){
+		head_ = head;
+		tail_ = tail;
+	}
+
+private:
+	AnyPtr head_;
+	ValuesPtr tail_;
+};
+
+inline ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
+	return xnew<Values>(v1, xnew<Values>(v2));
+}
+
+/**
 * \brief スコープ的な親を持つクラス
 */
 class HaveParent : public Base{

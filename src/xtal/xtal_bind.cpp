@@ -27,7 +27,7 @@ public:
 
 	void block_first(const VMachinePtr& vm){
 		if(state_==0){
-			block_->assign(vm);
+			block_->make_procedure(vm);
 			vm->return_result(null);
 			state_ = 1;
 		}
@@ -35,7 +35,7 @@ public:
 
 	void block_next(const VMachinePtr& vm){
 		if(state_==2){
-			swap(*block_, *vm);
+			block_->swap_procedure(vm);
 			vm->return_result();
 			state_ = 1;
 		}
@@ -43,7 +43,7 @@ public:
 
 	void rawcall(const VMachinePtr& vm){
 		if(state_==1){
-			swap(*block_, *vm);
+			block_->swap_procedure(vm);
 			vm->prereturn_result(to_smartptr(this));
 			vm->return_result_args(block_);
 			state_ = 2;
@@ -86,18 +86,19 @@ XTAL_BIND(ChRange){
 	it->def_method(Xid(each), &ChRange::each);
 }
 
-XTAL_PREBIND(MultiValue){
+XTAL_PREBIND(Values){
 	it->set_final();
 	it->inherit(cpp_class<Iterator>());
 }
 
-XTAL_BIND(MultiValue){
-	it->def_method(Xid(block_next), &MultiValue::block_next);
-	it->def_method(Xid(at), &MultiValue::at);
-	it->def_method(Xid(size), &MultiValue::size);
+XTAL_BIND(Values){
+	it->def_method(Xid(block_next), &Values::block_next);
+	it->def_method(Xid(op_at), &Values::op_at);
+	it->def_method(Xid(size), &Values::size);
+	it->def_method(Xid(op_eq), &Values::op_eq);
 
 	Xemb((
-MultiValue::to_s: method{
+Values::to_s: method{
 	return %f((%s))(this.join(", "));
 }
 	),
@@ -1564,6 +1565,7 @@ Iterator::with_prev: method fiber{
 );
 
 	Xfor3(primary_key, secondary_key, value, it->members()){
+		XTAL_UNUSED_VAR(value);
 		if(rawne(Xid(p), primary_key) && rawne(Xid(each), primary_key)){
 			cpp_class<Iterable>()->def(unchecked_ptr_cast<ID>(primary_key), xnew<DelegateToIterator>(unchecked_ptr_cast<ID>(primary_key)), secondary_key, 0);
 		}
@@ -1694,7 +1696,7 @@ void bind(){
 	set_cpp_class<Expr>(cpp_class<xpeg::TreeNode>());
 
 	builtin()->def(Xid(Array), cpp_class<Array>());
-	builtin()->def(Xid(MultiValue), cpp_class<MultiValue>());
+	builtin()->def(Xid(Values), cpp_class<Values>());
 	builtin()->def(Xid(Map), cpp_class<Map>());
 	builtin()->def(Xid(Set), cpp_class<Set>());
 

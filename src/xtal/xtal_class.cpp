@@ -297,7 +297,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
-	Xfor_cast(const MultiValuePtr& v, send(Xid(members_ancestors_too))){
+	Xfor_cast(const ValuesPtr& v, send(Xid(members_ancestors_too))){
 		IDPtr id = ptr_cast<ID>(v->at(0));
 		if(raweq(primary_key, id)){
 			return id;
@@ -518,7 +518,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 	}
 }
 
-MultiValuePtr Class::child_object_name(const AnyPtr& a){
+ValuesPtr Class::child_object_name(const AnyPtr& a){
 	if(map_members_){
 		for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
 			if(raweq(members_.at(it->second.num), a)){
@@ -531,7 +531,7 @@ MultiValuePtr Class::child_object_name(const AnyPtr& a){
 
 StringPtr Class::object_name(){
 	if(const ClassPtr& parent = object_parent()){
-		if(MultiValuePtr myname = parent->child_object_name(ap(*this))){
+		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
 			if(raweq(myname->at(1), undefined)){
 				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
 			}

@@ -105,6 +105,14 @@ private:
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
 
+#if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
+#	define XTAL_LIKELY(cond) __builtin_expect(!!(int)(cond), 1)
+#	define XTAL_UNLIKELY(cond) __builtin_expect((int)(cond), 0)
+#else
+#	define XTAL_LIKELY(cond) (cond)
+#	define XTAL_UNLIKELY(cond) (cond)
+#endif
+
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
 #else

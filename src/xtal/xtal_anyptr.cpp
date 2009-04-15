@@ -16,9 +16,9 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 }
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
-	dec_ref_count();
+	dec_ref_count_force(*this);
 	*(Any*)this = p;
-	inc_ref_count();
+	inc_ref_count_force(*this);
 	return *this;
 }
 

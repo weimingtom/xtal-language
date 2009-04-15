@@ -34,7 +34,7 @@ public:
 	}
 
 	SmartPtr<T>& operator =(const Null&){
-		dec_ref_count();
+		dec_ref_count_force(*this);
 		set_null(*this);
 		return *this;
 	}
@@ -58,12 +58,12 @@ public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>, T* p){ 
 		set_p(*this, (Base*)p); 
-		p->inc_ref_count();
+		p->inc_ref_count_force(*this);
 	}
 
 	SmartPtr(SmartPtrSelector<INHERITED_ANY>, T* p){ 
 		*(Any*)this = *(Any*)p; 
-		inc_ref_count();
+		inc_ref_count_force(*this);
 	}
 
 private:

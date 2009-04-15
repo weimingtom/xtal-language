@@ -11,6 +11,58 @@
 
 #include <iostream>
 
+class TestGetterSetterBind{
+public:
+    float x, y;
+    TestGetterSetterBind(): x(0), y(0) {}
+};
+
+XTAL_PREBIND(TestGetterSetterBind){
+    it->def_ctor(ctor<TestGetterSetterBind>());
+}
+
+XTAL_BIND(TestGetterSetterBind){
+   it->def_getter(Xid(x), &TestGetterSetterBind::x);
+   it->def_setter(Xid(set_x), &TestGetterSetterBind::x);
+
+   it->def_var(Xid(y), &TestGetterSetterBind::y);
+}
+
+struct MyData{
+	int a;
+};
+
+struct MyDeleter{
+	void operator()(MyData* p){
+		delete p;
+	}
+};
+
+XTAL_BIND(MyData){
+	it->def_var(Xid(a), &MyData::a);
+}
+
+using namespace xtal;
+
+void test(){
+    lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
+	lib()->def(Xid(MyData), SmartPtr<MyData>(new MyData, MyDeleter()));
+	if(CodePtr code = Xsrc((
+		foo: lib::TestGetterSetterBind();
+		foo.x = 0.5;
+		foo.x.p;
+
+		foo.y = 100.5;
+		foo.y.p;
+
+		mydata: lib::MyData;
+		mydata.a = 10;
+		mydata.a.p;
+	))){
+		code->call();
+	}
+} 
+
 using namespace xtal;
 
 int main2(int argc, char** argv){

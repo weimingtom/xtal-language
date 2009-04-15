@@ -916,16 +916,16 @@ struct CppClassBindFun{
 };
 
 #define XTAL_BIND(ClassName) \
-	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr&);\
-	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::bind_temp(\
-		CppClassSymbol<ClassName>::make().bind, &CppClassBindFun<ClassName>::bind, CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
-	template<> void CppClassBindFun<ClassName>::bind(const ClassPtr& it)
+	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr&);\
+	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::bind_temp(\
+		::xtal::CppClassSymbol<ClassName>::make().bind, &::xtal::CppClassBindFun<ClassName>::bind, ::xtal::CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
+	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr& it)
 
 #define XTAL_PREBIND(ClassName) \
-	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr&);\
-	template<> volatile CppClassBindTemp CppClassBindFun<ClassName>::prebind_temp(\
-		CppClassSymbol<ClassName>::make().prebind, &CppClassBindFun<ClassName>::prebind, CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
-	template<> void CppClassBindFun<ClassName>::prebind(const ClassPtr& it)
+	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr&);\
+	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::prebind_temp(\
+		::xtal::CppClassSymbol<ClassName>::make().prebind, &::xtal::CppClassBindFun<ClassName>::prebind, ::xtal::CppClassSymbol<ClassName>::make().name, XTAL_STRING(#ClassName));\
+	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr& it)
 
 
 struct CppVarSymbolData{ 

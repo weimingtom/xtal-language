@@ -12,8 +12,6 @@
 
 #include <iostream>
 
-using namespace xtal;
-
 class TestGetterSetterBind{
 public:
     float x, y;
@@ -44,6 +42,8 @@ struct MyDeleter{
 XTAL_BIND(MyData){
 	it->def_var(Xid(a), &MyData::a);
 }
+
+using namespace xtal;
 
 void test(){
     lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());

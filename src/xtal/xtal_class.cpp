@@ -140,7 +140,7 @@ void Class::overwrite(const ClassPtr& p){
 					obj->serial_load(p, data);
 
 					{
-						Key key = {Xid(reloaded), null};
+						Key key = {Xid(reloaded), undefined};
 						map_t::iterator it = map_members_->find(key);
 						if(it!=map_members_->end()){
 							const VMachinePtr& vm = vmachine();

@@ -34,7 +34,7 @@ Xtal‚ÍAŽå‚ÉƒQ[ƒ€»ì—p“r‚Ì‚½‚ß‚ÉAC++‚É‘g‚Ýž‚ÝA˜AŒg‚³‚¹‚ÄŽg‚¤‚½‚ß‚ÉŠJ”­‚³‚ê‚
 Šî–{“I‚ÉXtal‚ð’P‘Ì‚ÅŽg‚¤‚±‚Æ‚Í–³‚­AC++‚Æ‘g‚Ý‡‚í‚¹‚ÄŽg‚¢‚Ü‚·B\n
 ‚±‚ÌƒhƒLƒ…ƒƒ“ƒg‚àAC++‚ðŽg—p‚Å‚«‚é‚±‚Æ‚ð‘O’ñ‚É‹Lq‚³‚ê‚Ä‚¢‚Ü‚·B\n
 \n
-Xtal‚ÍRuby, Python, D, Lua, NewtonScript, ECMAScript“™A‚Æ‚Ä‚à‘½‚­‚ÌŒ¾Œê‚ðŽQl‚É‚µ‚Äì‚ç‚ê‚Ü‚µ‚½B\n
+Xtal‚ÍRuby, Python, Lua, NewtonScript, ECMAScript“™A‚Æ‚Ä‚à‘½‚­‚ÌŒ¾Œê‚ðŽQl‚É‚µ‚Äì‚ç‚ê‚Ü‚µ‚½B\n
 \n
 
 \section feature “Á’¥

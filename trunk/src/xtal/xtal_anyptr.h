@@ -125,7 +125,7 @@ public:
 
 	SmartPtr(const SmartPtr<Any>& p)
 		:Any(p){
-		inc_ref_count();
+		inc_ref_count_force(*this);
 	}
 
 	/// nullを受け取るコンストラクタ
@@ -137,7 +137,7 @@ public:
 		:Any(type){}
 	
 	~SmartPtr(){
-		dec_ref_count();
+		dec_ref_count_force(*this);
 	}
 
 protected:
@@ -154,14 +154,6 @@ protected:
 	SmartPtr(Singleton* p, const ClassPtr& c, special_ctor_t);
 
 	SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t);
-
-	void inc_ref_count(){
-		inc_ref_count_force(*this);
-	}
-
-	void dec_ref_count(){
-		dec_ref_count_force(*this);
-	}
 
 public:
 

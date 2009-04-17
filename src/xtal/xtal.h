@@ -34,6 +34,7 @@
 #include "xtal_fun.h"
 #include "xtal_frame.h"
 #include "xtal_cfun.h"
+#include "xtal_bind.h"
 #include "xtal_class.h"
 #include "xtal_environment.h"
 #include "xtal_ch.h"

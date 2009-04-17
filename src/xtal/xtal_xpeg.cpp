@@ -1,4 +1,5 @@
 #include "xtal.h"
+#include "xtal_bind.h"
 #include "xtal_macro.h"
 
 namespace xtal{ namespace xpeg{
@@ -43,7 +44,7 @@ bool Executor::match(const AnyPtr& pattern){
 }
 
 bool Executor::parse(const AnyPtr& pattern){
-	return match_inner(fetch_nfa(elem(pattern))) && errors_->empty();
+	return match_inner(fetch_nfa(elem(pattern))) && (!errors_ || errors_->empty());
 }
 
 AnyPtr Executor::captures(){
@@ -248,6 +249,19 @@ void Executor::push(uint_t mins, uint_t cur_state, uint_t nodes, const State& po
 bool Executor::match_inner(const AnyPtr& anfa){
 	const NFAPtr& nfa = unchecked_ptr_cast<NFA>(anfa);
 
+	// メモ化したい
+	// (スキャナーの位置、NFAのポインタ値) がキー
+	Key key;
+	key.pos = scanner_->pos();
+	key.ptr = nfa.get();
+
+	memotable_t::iterator it=memotable_.find(key);
+	if(it!=memotable_.end()){
+		scanner_->load(it->second.state);
+		tree_->op_cat_assign(it->second.tree);
+		return true;
+	}
+
 	int_t nodenum = tree_->size();
 	uint_t mins = stack_.size();
 
@@ -283,6 +297,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				tree_->resize(se.nodes);
 			}
 
+			// パース成功
 			if(test((*tr)->ch)){
 				push(mins, (*tr)->to, tree_->size(), scanner_->save());
 				fail = false;
@@ -316,6 +331,10 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	stack_.downsize_n(mins);
 
 	if(match){
+		Value value;
+		value.state = match_pos;
+		value.tree = tree_->slice(nodenum, tree_->size()-nodenum);
+		memotable_[key] = value;
 		scanner_->load(match_pos);
 		return true;
 	}
@@ -1004,7 +1023,7 @@ AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n)
 AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
 void set_body(const ElementPtr& x, const AnyPtr& term){ 
 	if(x->type==Element::TYPE_DECL){
-		x->type = Element::TYPE_NODE;
+		x->type = Element::TYPE_GREED;
 		x->param1 = elem(term);
 	}
 }
@@ -1024,10 +1043,10 @@ XTAL_PREBIND(XpegOperator){
 XTAL_BIND(XpegOperator){
 	using namespace xpeg;
 
-	it->def_method(Xid(op_mod), &more_shortest_Int, cpp_class<Int>());
-	it->def_method(Xid(op_mod), &more_shortest_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid(op_div), &more_normal_Int, cpp_class<Int>());
-	it->def_method(Xid(op_div), &more_normal_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid(op_div), &more_shortest_Int, cpp_class<Int>());
+	it->def_method(Xid(op_div), &more_shortest_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid(op_mod), &more_normal_Int, cpp_class<Int>());
+	it->def_method(Xid(op_mod), &more_normal_IntRange, cpp_class<IntRange>());
 	it->def_method(Xid(op_mul), &more_greed_Int, cpp_class<Int>());
 	it->def_method(Xid(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
 	it->def_method(Xid(op_com), &inv);
@@ -1123,6 +1142,7 @@ void bind_xpeg(const ClassPtr& xpeg){
 	xpeg->def_fun(Xid(lookahead), &lookahead);
 	xpeg->def_fun(Xid(lookbehind), &lookbehind);
 	xpeg->def_fun(Xid(leaf), &leaf);
+	xpeg->def_fun(Xid(leafs), &leafs);
 	xpeg->def_fun(Xid(node), &node_vm);
 	xpeg->def_fun(Xid(splice_node), &splice_node_vm);
 	xpeg->def_fun(Xid(cap), &cap_vm);

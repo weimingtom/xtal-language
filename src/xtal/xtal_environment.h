@@ -279,20 +279,20 @@ AnyPtr alive_object(uint_t i);
 * \internal
 * \brief keyに対応するC++のクラスのクラスオブジェクトを返す。
 */
-const ClassPtr& cpp_class(CppClassSymbolData* key);
+const ClassPtr& cpp_class(uint_t key);
 
 /*
 * \internal
 * \brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
 */
-void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key);
+void set_cpp_class(const ClassPtr& cls, uint_t key);
 
 /**
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
 inline const ClassPtr& cpp_class(){
-	return cpp_class(&CppClassSymbol<T>::value);
+	return cpp_class(CppClassSymbol<T>::value->value);
 }
 
 /**
@@ -300,20 +300,20 @@ inline const ClassPtr& cpp_class(){
 */
 template<class T>
 inline void set_cpp_class(const ClassPtr& cls){
-	return set_cpp_class(cls, &CppClassSymbol<T>::value);
+	return set_cpp_class(cls, CppClassSymbol<T>::value->value);
 }
 
 /**
 * \internal
 * \brief T型のオブジェクトを環境から取り出す
 */
-void* cpp_var(CppVarSymbolData* key);
+void* cpp_var(uint_t key);
 
 /**
 * \internal
 * \brief T型のオブジェクトを環境に設定する
 */
-void set_cpp_var(void* p, void (*deleter)(void*), CppVarSymbolData* key);
+void set_cpp_var(void* p, void (*deleter)(void*), uint_t key);
 
 template<class T>
 struct CppVarDeleter{
@@ -328,12 +328,12 @@ struct CppVarDeleter{
 */
 template<class T>
 T& cpp_var(){
-	if(void* p=cpp_var(&CppVarSymbol<T>::value)){
+	if(void* p=cpp_var(CppVarSymbol<T>::value.value)){
 		return *(T*)p;
 	}
 	void* p=xmalloc(sizeof(T));
 	new(p) T;
-	set_cpp_var(p, &CppVarDeleter<T>::deleter, &CppVarSymbol<T>::value);
+	set_cpp_var(p, &CppVarDeleter<T>::deleter, CppVarSymbol<T>::value.value);
 	return *(T*)p;
 }
 

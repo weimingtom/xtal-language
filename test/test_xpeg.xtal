@@ -10,16 +10,32 @@ class TestXpeg{
 		assert !"awer(awer".match(bos >> ~set("()")*0 >> eos)
 	}
 
-	/*
 	balance#Test{
 		balance: decl();
-		balance.body = "(" >> (~set("()")*0|balance)*0 >> ")";
+		balance.body = "(" >> (~set("()")*0|balance*0) >> ")";
 		pattern: bos >> balance >> eos;
 		assert "(())".match(pattern);
 		assert !"(()".match(pattern);
+		assert "((ewerwer))".match(pattern);
+		assert "((((((((((((((((((((a)(a)))(aaaaa))))()))))))))))))))".match(pattern);
+		assert !"((((((((((((((((((((a)(a)))(aaaaa))))())))()))))))))))".match(pattern);
 	}
-	*/
-
+	
+	expr#Test{
+		add_expr: decl();
+		mul_expr: decl();
+		number: leaf(degit*1);
+		primary: number | ("(" >> add_expr >> ")");
+		add_expr.body = node( (mul_expr >> "+" >> add_expr) | (mul_expr >> "-" >> add_expr) ) | mul_expr;
+		mul_expr.body = node( (primary >> "*" >> mul_expr)  | (primary >> "/" >> mul_expr) ) | primary;
+		
+		expr: bos >> add_expr >> eos;
+		assert "10+20".match(expr);
+		assert !"10-*20".match(expr);
+		assert "(((((((((1)))))))))+(((((((((1)))))))))".match(expr);
+		assert "10+20*(50*80)".match(expr);
+	}
+	
 	bos_alpha0_eos#Test{
 		pattern: bos >> alpha*0 >> eos;
 		assert "ttestt".match(pattern);

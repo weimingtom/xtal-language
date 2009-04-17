@@ -1,6 +1,18 @@
 inherit(lib::test);
 
 class IterTest{
+
+	throwe#Test{
+		try{
+			[10,20,30].each{
+				throw "e";
+			}
+		}
+		catch(e){
+		
+		}
+	}
+	
 	times#Test{
 		n : 0;
 		10.times{ |v|

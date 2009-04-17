@@ -30,17 +30,16 @@ public:
 
 	void unregister_gc_observer(GCObserver* p);
 
-	bool exists_cpp_class(CppClassSymbolData* key){
-		return class_table_[key->value]!=0;
+	bool exists_cpp_class(uint_t key){
+		return class_table_[key]!=0;
 	}
 
-	const ClassPtr& cpp_class(CppClassSymbolData* key){
-		XTAL_ASSERT(exists_cpp_class(key));
-		return to_smartptr(class_table_[key->value]);
+	const ClassPtr& cpp_class(uint_t key){
+		return to_smartptr(class_table_[key]);
 	}
 
-	void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
-		int_t index = key->value;
+	void set_cpp_class(const ClassPtr& cls, uint_t key){
+		int_t index = key;
 		
 		if(class_table_[index]->prebinder()){
 			cls->set_prebinder(class_table_[index]->prebinder());
@@ -57,12 +56,12 @@ public:
 		class_table_[index]->inc_ref_count();
 	}
 
-	void* cpp_var(CppVarSymbolData* key){
-		return var_table_[key->value].var;
+	void* cpp_var(uint_t key){
+		return var_table_[key].var;
 	}
 
-	void set_cpp_var(void* var, void (*deleter)(void*), CppVarSymbolData* key){
-		int_t index = key->value;
+	void set_cpp_var(void* var, void (*deleter)(void*), uint_t key){
+		int_t index = key;
 		var_table_[index].var = var;
 		var_table_[index].deleter = deleter;
 	}

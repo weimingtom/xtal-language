@@ -76,7 +76,7 @@ int main2(int argc, char** argv){
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
-	
+
 	))){
 		code->call();
 	}
@@ -161,7 +161,8 @@ int main2(int argc, char** argv){
 	}
 
 	lib()->member("test")->send("run_dir", "../test");
-	
+	//lib()->member("test")->send("run_file", "../test/test_xpeg.xtal");
+	//lib()->member("test")->send("print_result");
 	//*/
 #endif
 

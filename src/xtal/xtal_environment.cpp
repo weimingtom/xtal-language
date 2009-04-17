@@ -466,19 +466,19 @@ AnyPtr alive_object(uint_t i){
 	return to_smartptr(environment_->object_space_.alive_object(i));
 }
 
-const ClassPtr& cpp_class(CppClassSymbolData* key){
+const ClassPtr& cpp_class(uint_t key){
 	return environment_->object_space_.cpp_class(key);
 }
 
-void set_cpp_class(const ClassPtr& cls, CppClassSymbolData* key){
+void set_cpp_class(const ClassPtr& cls, uint_t key){
 	return environment_->object_space_.set_cpp_class(cls, key);
 }
 
-void* cpp_var(CppVarSymbolData* key){
+void* cpp_var(uint_t key){
 	return environment_->object_space_.cpp_var(key);
 }
 
-void set_cpp_var(void* p, void (*deleter)(void*), CppVarSymbolData* key){
+void set_cpp_var(void* p, void (*deleter)(void*), uint_t key){
 	environment_->object_space_.set_cpp_var(p, deleter, key);
 }
 

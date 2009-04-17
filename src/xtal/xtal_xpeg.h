@@ -301,6 +301,33 @@ private:
 		Base::visit_members(m);
 		m & tree_ & errors_ & cap_;
 	}
+
+public:
+
+	struct Key{
+		uint_t pos;
+		void* ptr;
+	};
+
+	struct Fun{
+		static uint_t hash(const Key& key){
+			return key.pos ^ (uint_t)key.ptr;
+		}
+
+		static bool eq(const Key& a, const Key& b){
+			return a.pos==b.pos && a.ptr==b.ptr;
+		}
+	};
+
+	struct Value{
+		State state;
+		ArrayPtr tree;
+	};
+
+private:
+
+	typedef Hashtable<Key, Value, Fun> memotable_t;
+	memotable_t memotable_;
 };
 
 /*

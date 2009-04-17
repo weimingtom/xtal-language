@@ -213,6 +213,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_codebuilder2.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_debug.cpp"
 				>
 			</File>
@@ -343,6 +347,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\xtal\xtal_basictype.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\xtal\xtal_bind.h"
 				>
 			</File>
 			<File

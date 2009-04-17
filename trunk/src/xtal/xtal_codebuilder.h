@@ -32,18 +32,6 @@ public:
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
-	struct CompileInfo{
-		int_t need_result_count;
-		bool tail;
-
-		CompileInfo(int_t need_result_count = 1, bool tail = false)
-			:need_result_count(need_result_count), tail(tail){}
-	};
-
-	bool compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret);
-	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
-	void compile_stmt(const AnyPtr& p);	
-
 	int_t reserve_label();
 	void set_label(int_t lableno);
 	void set_jump(int_t offset, int_t labelno);
@@ -66,6 +54,19 @@ public:
 	void put_if_code(const ExprPtr& cond, int_t label_if, int_t label_if2);
 	void break_off(int_t to);
 	
+	struct CompileInfo{
+		int_t need_result_count;
+		bool tail;
+
+		CompileInfo(int_t need_result_count = 1, bool tail = false)
+			:need_result_count(need_result_count), tail(tail){}
+	};
+
+	bool compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret);
+	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
+	int_t compile_exprs(const ExprPtr& e);
+	void compile_stmt(const AnyPtr& p);	
+
 	void compile_bin(const ExprPtr& e);
 	void compile_comp_bin(const ExprPtr& e);
 	void compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label);
@@ -74,8 +75,8 @@ public:
 	void compile_loop_control_statement(const ExprPtr& e);
 	void compile_class(const ExprPtr& e);
 	void compile_fun(const ExprPtr& e);
-	void compile_for(const ExprPtr& e);
-	int_t compile_exprs(const ExprPtr& e);
+
+	int_t compile_e(const ExprPtr& e, const CompileInfo& info);
 
 	AnyPtr do_expr(const AnyPtr& e);
 
@@ -246,6 +247,102 @@ private:
 	ExprBuilder eb_;
 
 	int_t prev_inst_op_;
+
+public:
+
+//{STMT_DECLS{{
+	int_t compile_expr_LIST(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NULL(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_UNDEFINED(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_TRUE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_FALSE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CALLEE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ARGS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_THIS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CURRENT_CONTEXT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NUMBER(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_STRING(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ARRAY(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MAP(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MULTI_VALUE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ADD(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SUB(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CAT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MUL(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_DIV(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MOD(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_AND(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_OR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_XOR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SHL(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SHR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_USHR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_EQ(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_LT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_LE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_GT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_GE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_RAWEQ(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_RAWNE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_IN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NIN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_IS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NIS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ANDAND(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_OROR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CATCH(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_POS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NEG(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_COM(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_NOT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_RANGE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_FUN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CLASS(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ONCE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_IVAR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_LVAR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_AT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_Q(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MEMBER(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MEMBER_Q(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_PROPERTY(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_PROPERTY_Q(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CALL(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_INC(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_DEC(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ADD_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SUB_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CAT_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MUL_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_DIV_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MOD_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_AND_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_OR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_XOR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SHL_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SHR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_USHR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_RETURN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_YIELD(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ASSERT(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_THROW(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_TRY(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_IF(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_FOR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_MDEFINE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_ASSIGN(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_DEFINE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CDEFINE_MEMBER(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CDEFINE_IVAR(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_BREAK(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_CONTINUE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_BRACKET(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SCOPE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_SWITCH(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_TOPLEVEL(const ExprPtr& e, const CompileInfo& info);
+//}}STMT_DECLS}
 
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(CodeBuilder);

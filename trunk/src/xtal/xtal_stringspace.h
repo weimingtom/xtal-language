@@ -178,7 +178,7 @@ public:
 		return id_op_list_;
 	}
 
-private:
+public:
 
 	struct Key{
 		const char_t* str;
@@ -194,6 +194,8 @@ private:
 			return string_compare(a.str, a.size, b.str, b.size)==0;
 		}
 	};
+
+private:
 
 	typedef Hashtable<Key, IDPtr, Fun> table_t; 
 	table_t table_;

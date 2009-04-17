@@ -1483,6 +1483,8 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Throw){ // 5
 		XTAL_GLOBAL_INTERPRETER_LOCK{
+			//make_outer_outer();
+
 			AnyPtr except = pop();
 			if(!except){
 				except = ap(except_[0]);

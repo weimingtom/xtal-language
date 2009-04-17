@@ -125,11 +125,11 @@ void ObjectSpace::initialize(){
 	}
 
 	CppClassSymbolData* symbols[] = { 
-		&CppClassSymbol<void>::value,
-		&CppClassSymbol<Any>::value,
-		&CppClassSymbol<Class>::value,
-		&CppClassSymbol<Array>::value,
-		&CppClassSymbol<String>::value,
+		CppClassSymbol<void>::value,
+		CppClassSymbol<Any>::value,
+		CppClassSymbol<Class>::value,
+		CppClassSymbol<Array>::value,
+		CppClassSymbol<String>::value,
 	};
 
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);

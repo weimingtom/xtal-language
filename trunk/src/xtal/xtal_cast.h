@@ -9,6 +9,120 @@
 
 namespace xtal{
 	
+
+struct ParamInfo;
+struct VMAndData;
+
+template<class T>
+struct ConvertibleToAnyPtr{
+	enum{ value = 0 };
+};
+
+typedef void (*bind_class_fun_t)(const ClassPtr&);
+
+struct CppClassSymbolData{ 
+	CppClassSymbolData();
+
+	unsigned int value;
+	CppClassSymbolData* prev;
+	bind_class_fun_t prebind;
+	bind_class_fun_t bind;
+	const char_t* name;
+};
+
+template<class T>
+struct CppClassSymbol{
+	static CppClassSymbolData* value;
+	static CppClassSymbolData* make();
+};
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::make(){
+	static CppClassSymbolData data;
+	return &data;
+}
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
+
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+
+template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
+
+struct CppClassBindTemp{
+	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char_t*& name, const char_t* given);
+	char dummy;
+};
+
+template<class T>
+struct CppClassBindFun{
+	static void prebind(const ClassPtr&);
+	static void bind(const ClassPtr&);
+
+	static volatile CppClassBindTemp bind_temp;
+	static volatile CppClassBindTemp prebind_temp;
+};
+
+#define XTAL_BIND(ClassName) \
+	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr&);\
+	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::bind_temp(\
+		::xtal::CppClassSymbol<ClassName>::make()->bind, &::xtal::CppClassBindFun<ClassName>::bind, ::xtal::CppClassSymbol<ClassName>::make()->name, XTAL_STRING(#ClassName));\
+	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr& it)
+
+#define XTAL_PREBIND(ClassName) \
+	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr&);\
+	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::prebind_temp(\
+		::xtal::CppClassSymbol<ClassName>::make()->prebind, &::xtal::CppClassBindFun<ClassName>::prebind, ::xtal::CppClassSymbol<ClassName>::make()->name, XTAL_STRING(#ClassName));\
+	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr& it)
+
+
+struct CppVarSymbolData{ 
+	CppVarSymbolData(){
+		static unsigned int counter = 1;
+		value = counter++;
+	}
+
+	unsigned int value;
+};
+
+template<class T>
+struct CppVarSymbol{
+	static CppVarSymbolData value;
+};
+
+template<class T>
+CppVarSymbolData CppVarSymbol<T>::value;
+
+struct IdentifierData{ 
+	IdentifierData(){
+		static unsigned int counter = 0;
+		value = counter++;
+	}
+
+	unsigned int value;
+};
+
+template<class T>
+struct Identifier{
+	static IdentifierData value;
+};
+
+template<class T>
+IdentifierData Identifier<T>::value;
+
+#define XTAL_DECL_ID(x) class xtal_id_##x
+#define XTAL_ID2(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
+
+inline const IDPtr& intern(const StringLiteral& str);
+
+#define XTAL_ID(x) ::xtal::intern(XTAL_STRING(#x))
+
+
 /**
 * \internal
 * brief cast関数、as関数の戻り値の型を決定するためのヘルパーテンプレートクラス

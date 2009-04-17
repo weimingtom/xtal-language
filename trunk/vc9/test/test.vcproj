@@ -256,6 +256,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\test_proc.xtal"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\test_reload.xtal"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\test_serialize.xtal"
 				>
 			</File>

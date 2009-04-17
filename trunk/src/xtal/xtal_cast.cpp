@@ -3,6 +3,23 @@
 
 namespace xtal{
 
+CppClassSymbolData::CppClassSymbolData(){
+	static unsigned int counter = 1;
+	static CppClassSymbolData* prev_data = 0;
+	value = counter++;
+	prev = prev_data;
+	prebind = 0;
+	bind = 0;
+	name = 0;
+	prev_data = this;
+}
+
+CppClassBindTemp::CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char_t*& name, const char_t* given){
+	std::memcpy(&dest, &src, sizeof(src));
+	std::memcpy(&dummy, &src, sizeof(dummy));
+	name = given;
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 

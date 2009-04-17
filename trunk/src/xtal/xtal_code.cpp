@@ -1,4 +1,5 @@
 #include "xtal.h"
+#include "xtal_bind.h"
 #include "xtal_macro.h"
 
 namespace xtal{

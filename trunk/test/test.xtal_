@@ -4,8 +4,8 @@ lib::test: singleton{
 	Before: "Before";
 	After: "After";
 	
-	_ok;
-	_fail;
+	_ok: 0;
+	_fail: 0;
 	
 	run_files: fun(files){
 		_ok = 0;
@@ -18,7 +18,6 @@ lib::test: singleton{
 	}
 	
 	run_file: fun(file){
-		file.p;
 		debug::scope{
 			printf("file %s\n", file);
 			
@@ -63,5 +62,9 @@ lib::test: singleton{
 					.select(|x| x.match(once ".xtal" >> xpeg::eos))
 					.map(|x| dir ~ "/" ~ x)
 			);
+	}
+	
+	print_result{
+		printf("ok=%d, fail=%d\n", _ok, _fail);
 	}
 }

@@ -451,7 +451,7 @@ template<class Fun>
 inline NativeFunPtr fun(const Fun& f){
 	typedef cfun_holder<Fun> fun_t;
 	fun_t fun(f);
-	return new_native_fun(fun_param_holder<fun_t>::value(), &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
 }
 
 /**

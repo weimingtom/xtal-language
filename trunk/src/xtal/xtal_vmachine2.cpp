@@ -349,7 +349,8 @@ void VMachine::prereturn_result(const AnyPtr& v){
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	if(const AnyPtr& e = catch_except()){
 		vm->set_except(e);
-		vm->adjust_result(add_succ_or_fail_result ? 1 : 0);
+		vm->push(undefined);
+		vm->adjust_result(add_succ_or_fail_result?1:0);
 		return;
 	}
 
@@ -372,6 +373,7 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 			vm->adjust_result(yield_result_count_);
 		}
 	}
+	vm->ff().called_pc = &cleanup_call_code_;
 }
 
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
@@ -384,7 +386,6 @@ const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_f
 	ff().yieldable = true;
 	execute_inner(ff().called_pc);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
-	vm->ff().called_pc = &cleanup_call_code_;
 	return resume_pc_;
 }
 
@@ -395,7 +396,6 @@ const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm,
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	execute_inner(ff().called_pc);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
-	vm->ff().called_pc = &cleanup_call_code_;
 	return resume_pc_;
 }
 
@@ -506,8 +506,8 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 	debug_info_->set_kind(kind);
 	if(fun()){
-		debug_info_->set_line( fun()->code()->compliant_lineno(pc));
-		debug_info_->set_file_name( fun()->code()->source_file_name());
+		debug_info_->set_line(fun()->code()->compliant_lineno(pc));
+		debug_info_->set_file_name(fun()->code()->source_file_name());
 		debug_info_->set_fun_name(fun()->object_name());
 	}
 	else{
@@ -535,9 +535,6 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	XTAL_GLOBAL_INTERPRETER_LOCK{
-		if(!debug::is_enabled() || disable_debug_){
-			return;
-		}
 
 		{
 			struct guard{
@@ -600,7 +597,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 
 		// Xtal‚ÌŠÖ”‚ğ’Eo‚µ‚Ä‚¢‚­
 		while((size_t)ef.fun_frame_size<fun_frames_.size()){
-			debug_hook(pc, BREAKPOINT_RETURN);
+			check_debug_hook(pc, BREAKPOINT_RETURN);
 			pc = pop_ff();
 			e = append_backtrace(pc, e);
 

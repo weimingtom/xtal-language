@@ -20,7 +20,15 @@ class IterTest{
 		}
 		assert n==45;
 	}
-
+	
+	tims2#Test{
+		assert 3.times.with_index.map(|x, y| x+y).join=="024";
+	}
+	
+	tims22#Test{
+		assert 3.times.with_index("").join && false catch(e) true;
+	}
+	
 	range_each_collect_join#Test{
 		ret : range(5, 10)[].collect(|x| x*2).join(",");
 		assert ret=="10,12,14,16,18";

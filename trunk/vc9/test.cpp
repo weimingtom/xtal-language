@@ -16,7 +16,11 @@ class TestGetterSetterBind{
 public:
     float x, y;
     TestGetterSetterBind(): x(0), y(0) {}
+
+	void foomethod(){}
 };
+
+void foofun(){}
 
 XTAL_PREBIND(TestGetterSetterBind){
     it->def_ctor(ctor<TestGetterSetterBind>());
@@ -48,6 +52,10 @@ using namespace xtal;
 void test(){
     lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
 	lib()->def(Xid(MyData), SmartPtr<MyData>(new MyData, MyDeleter()));
+
+	AnyPtr m = method(&TestGetterSetterBind::foomethod);
+	AnyPtr f = fun(&foofun);
+
 	if(CodePtr code = Xsrc((
 		foo: lib::TestGetterSetterBind();
 		foo.x = 0.5;
@@ -67,6 +75,9 @@ void test(){
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
+	setlocale(LC_CTYPE, "");
+	fwide(stdout, 1);
+
 	using namespace std;
 
 	//enable_debug();
@@ -76,7 +87,6 @@ int main2(int argc, char** argv){
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
-
 	))){
 		code->call();
 	}

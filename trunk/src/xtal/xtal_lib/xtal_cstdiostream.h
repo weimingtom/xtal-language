@@ -7,7 +7,7 @@ namespace xtal{
 
 class CStdioStdStreamLib : public StdStreamLib{
 public:
-	virtual uint_t read_stdin_stream(void* stdin_stream_object, void* dest, uint_t size){ 
+	virtual uint_t read_stdin_stream(void* stdin_stream_object, void* dest, uint_t size){
 		return fread(dest, 1, size, stdin); 
 	}
 

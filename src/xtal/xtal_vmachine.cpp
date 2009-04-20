@@ -227,9 +227,7 @@ void VMachine::carry_over(Method* fun){
 	f.ordered_arg_count = f.named_arg_count = 0;
 
 	hook_setting_bit_ = debug::hook_setting_bit();
-	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
-		debug_hook(f.called_pc, BREAKPOINT_CALL);
-	}
+	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
 void VMachine::mv_carry_over(Method* fun){
@@ -273,9 +271,7 @@ void VMachine::mv_carry_over(Method* fun){
 	f.ordered_arg_count = 0;
 
 	hook_setting_bit_ = debug::hook_setting_bit();
-	if(hook_setting_bit_&(1<<BREAKPOINT_CALL)){
-		debug_hook(f.called_pc, BREAKPOINT_CALL);
-	}
+	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
 void VMachine::adjust_result(int_t n, int_t need_result_count){
@@ -376,7 +372,7 @@ void VMachine::adjust_result(int_t n, int_t need_result_count){
 #define XTAL_VM_CONTINUE(x) do{ pc = (x); goto begin; }while(0)
 #define XTAL_VM_RETURN return
 
-#define XTAL_VM_EXCEPT(e) do{ except_[0] = e; if(hook_setting_bit_&(1<<BREAKPOINT_THROW)){ debug_hook(pc==&throw_code_ ? throw_pc_ : pc, BREAKPOINT_THROW); } goto except_catch; }while(0)
+#define XTAL_VM_EXCEPT(e) do{ except_[0] = e; check_debug_hook(pc==&throw_code_ ? throw_pc_ : pc, BREAKPOINT_THROW); goto except_catch; }while(0)
 #define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except(pc) : (pc))
 #define XTAL_VM_THROW_EXCEPT(e) XTAL_VM_CONTINUE(push_except(pc, e))
 #define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ XTAL_VM_CONTINUE(push_except(pc)); }
@@ -561,12 +557,7 @@ void VMachine::execute_inner(const inst_t* start){
 
 XTAL_GLOBAL_INTERPRETER_UNLOCK{
 
-#ifdef XTAL_USE_CPP_EXCEPTION
-retry:
-try{
-#else 
 {
-#endif
 
 begin:
 
@@ -758,9 +749,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(Return){ // 5
-		if(hook_setting_bit_&(1<<BREAKPOINT_RETURN)){
-			debug_hook(pc, BREAKPOINT_RETURN);
-		}
+		check_debug_hook(pc, BREAKPOINT_RETURN);
 
 		FunFrame& f = ff();
 
@@ -1520,9 +1509,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(BreakPoint){ // 3
-		if(hook_setting_bit_&(1<<BREAKPOINT)){
-			debug_hook(pc, BREAKPOINT);
-		}
+		check_debug_hook(pc, BREAKPOINT);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 

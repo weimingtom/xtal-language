@@ -619,6 +619,13 @@ private:
 
 	void debug_hook(const inst_t* pc, int_t kind);
 
+	void check_debug_hook(const inst_t* pc, int_t kind){
+		if(!debug::is_enabled() || disable_debug_ || (hook_setting_bit_&(1<<kind))==0){
+			return;
+		}
+		debug_hook(pc, kind);
+	}
+
 public:
 
 //{DECLS{{

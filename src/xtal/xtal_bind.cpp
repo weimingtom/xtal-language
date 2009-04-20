@@ -1177,7 +1177,6 @@ debug::scope: singleton{
 
 	block_break{
 		debug::disable();
-		return null;
 	}
 }
 	),

@@ -29,14 +29,14 @@ public:
 	* \brief 文字列strをストリームに流す
 	*/
 	void put_s(const char_t* str){
-		write(str, string_data_size(str));
+		write(str, string_data_size(str)*sizeof(char_t));
 	}
 
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
 	void put_s(const StringLiteral& str){
-		write(str, str.size());
+		write(str, str.size()*sizeof(char_t));
 	}
 
 	/**

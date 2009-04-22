@@ -71,7 +71,7 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, const CompileInfo& info){
 		&CodeBuilder::compile_expr_STRING,
 		&CodeBuilder::compile_expr_ARRAY,
 		&CodeBuilder::compile_expr_MAP,
-		&CodeBuilder::compile_expr_MULTI_VALUE,
+		&CodeBuilder::compile_EXPR_VALUES,
 		&CodeBuilder::compile_expr_ADD,
 		&CodeBuilder::compile_expr_SUB,
 		&CodeBuilder::compile_expr_CAT,
@@ -262,7 +262,7 @@ int_t CodeBuilder::compile_expr_MAP(const ExprPtr& e, const CompileInfo& info){
 	return 1;
 }
 
-int_t CodeBuilder::compile_expr_MULTI_VALUE(const ExprPtr& e, const CompileInfo& info){
+int_t CodeBuilder::compile_EXPR_VALUES(const ExprPtr& e, const CompileInfo& info){
 	if(e->multi_value_exprs()){
 		Xfor(v, e->multi_value_exprs()){
 			compile_expr(v);		

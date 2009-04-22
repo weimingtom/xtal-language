@@ -1528,7 +1528,7 @@ ExprPtr CodeBuilder::setup_expr(const ExprPtr& e){
 	case EXPR_STRING:
 	case EXPR_ARRAY:
 	case EXPR_MAP:
-	case EXPR_MULTI_VALUE:
+	case EXPR_VALUES:
 
 	case EXPR_ADD:
 	case EXPR_SUB:

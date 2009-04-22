@@ -108,7 +108,7 @@
 * ));
 * \endcode
 */
-#define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3)
+#define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)
 
 #endif
 
@@ -124,7 +124,7 @@
 	}
 #else
 #define Xemb(text, compiled_text) \
-	if(::xtal::CodePtr code = ::xtal::source(XTAL_STRING(#text)+1, sizeof(#text)-3)){\
+	if(::xtal::CodePtr code = ::xtal::source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)){\
 		code->call();\
 	}\
 	else{\

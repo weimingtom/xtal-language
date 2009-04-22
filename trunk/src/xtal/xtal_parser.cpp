@@ -1042,7 +1042,7 @@ bool Parser::parse_term(){
 					if(parse_expr()){
 						if(eat(',')){
 							parse_exprs(true);
-							eb_.splice(EXPR_MULTI_VALUE, 1);
+							eb_.splice(EXPR_VALUES, 1);
 						}
 						else{
 							if(ep(eb_.back())->itag()==EXPR_PROPERTY){

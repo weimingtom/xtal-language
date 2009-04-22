@@ -70,23 +70,36 @@ void test(){
 	))){
 		code->call();
 	}
-} 
+}
+
+void benchmark(const char* file, const AnyPtr& arg){
+	int c = clock();
+	if(CodePtr code = compile_file(file)){
+		code->call(arg);
+		printf("%s %g\n\n", file, (clock()-c)/1000.0f);
+	}
+
+	XTAL_CATCH_EXCEPT(e){
+		stderr_stream()->println(e);
+	}
+}
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
-	setlocale(LC_CTYPE, "");
-	fwide(stdout, 1);
-
 	using namespace std;
 
 	//enable_debug();
 	//debug()->set_throw_hook(fun(&debug_throw));
 
-	test();
+	//test();
+
+	StringPtr sss = XTAL_STRING("‚±e‚ñe‚Ée‚¿e‚Í");
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
+
+		throw "—áŠO";
 	))){
 		code->call();
 	}
@@ -95,6 +108,8 @@ int main2(int argc, char** argv){
 	//load("../struct.xtal");
 
 	XTAL_CATCH_EXCEPT(e){
+		StringPtr str = e->to_s();
+		const char_t* cstr = str->c_str();
 		stderr_stream()->println(e);
 		return 1;
 	}
@@ -116,6 +131,12 @@ int main2(int argc, char** argv){
 #if 1
 
 	int c;
+
+	//benchmark("../fannkuch.xtal", 12);
+	//benchmark("../n-body.xtal", 12);
+	//benchmark("../special-norm.xtal", 12);
+	//benchmark("../binary-trees.xtal", 3);
+	benchmark("../mandelbrot.xtal", 10);
 
 	/*		
 	c = clock();
@@ -156,7 +177,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	//*
+	/*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

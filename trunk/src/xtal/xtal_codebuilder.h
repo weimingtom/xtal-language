@@ -264,7 +264,7 @@ public:
 	int_t compile_expr_STRING(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_ARRAY(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_MAP(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MULTI_VALUE(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_EXPR_VALUES(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_ADD(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_SUB(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_CAT(const ExprPtr& e, const CompileInfo& info);

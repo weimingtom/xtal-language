@@ -65,7 +65,9 @@ inline void bind_error_message(){
 	};
 	
 	for(int i=0; i<sizeof(messages)/sizeof(*messages)/2; ++i){
-		text_map()->set_at(messages[i*2+0], messages[i*2+1]);
+		StringPtr key(messages[i*2+0]);
+		StringPtr value(messages[i*2+1]);
+		text_map()->set_at(key, value);
 	}
 }
 	

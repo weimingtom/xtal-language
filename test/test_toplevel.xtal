@@ -24,7 +24,7 @@ filelocal::bar : fun(){
 	return "filelocal::bar";
 }
 
-class ToplevelTest{
+class filelocal::ToplevelTest{
 	func#Test{
 		assert foo===mod::foo;
 		assert foo()=="foo";

@@ -1,6 +1,6 @@
 inherit(lib::test)
 
-class TestProc{
+class filelocal::TestProc{
 	local_assign#Test{
 		p: Procedure();
 		n: 0;

@@ -212,7 +212,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
 
-/*
+///*
 	if(t.op==InstLocalVariable1Byte::NUMBER){
 		if(prev_inst_op_==InstLocalVariable1Byte::NUMBER){
 			InstLocalVariable1Byte prev_inst;
@@ -563,46 +563,155 @@ void CodeBuilder::put_val_code(const AnyPtr& val){
 	}
 }
 
-void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_if, int_t label_if2){
-	AnyPtr val = do_expr(e);
-
-	if(rawne(val, undefined)){
-		if(!val){
-			set_jump(InstGoto::OFFSET_address, label_if);
-			put_inst(InstGoto());
-		}
+void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_false){
+	AnyPtr value = do_expr(e);
+	if(value){
+		return;
 	}
-	else if(is_comp_bin(e)){
-		
-		compile_expr(e->bin_lhs());
-		compile_expr(e->bin_rhs());
 
-		set_jump(InstIfEq::OFFSET_address, label_if);
-		InstIfEq inst;
-		inst.op += e->itag()-EXPR_EQ;
-		put_inst(inst);
+	int_t label_true = reserve_label();
 
-		if(e->itag()==EXPR_NE || e->itag()==EXPR_LE || e->itag()==EXPR_GE || e->itag()==EXPR_NIN){
-			set_jump(InstUnless::OFFSET_address, label_if2);
-			put_inst(InstUnless());
+	if(is_comp_bin(e)){
+		if(EXPR_EQ==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfEq());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_NE==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfEq());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_LT==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfLt());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_GT==e->itag()){
+			compile_expr(e->bin_rhs());
+			compile_expr(e->bin_lhs());
+
+			put_inst(InstIfLt());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_GE==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfLt());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_LE==e->itag()){
+			compile_expr(e->bin_rhs());
+			compile_expr(e->bin_lhs());
+
+			put_inst(InstIfLt());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_RAWEQ==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfRawEq());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_RAWNE==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfRawEq());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_IN==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfIn());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_NIN==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfIn());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_IS==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfIs());
+
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
+			put_inst(InstIf());
+		}
+		else if(EXPR_NIS==e->itag()){
+			compile_expr(e->bin_lhs());
+			compile_expr(e->bin_rhs());
+
+			put_inst(InstIfIs());
+
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
 		}
 		else{
-			set_jump(InstIf::OFFSET_address, label_if2);
-			put_inst(InstIf());
+			XTAL_ASSERT(false);
 		}
 	}
 	else{
 		if(e->itag()==EXPR_NOT){
 			compile_expr(e->una_term());
-			set_jump(InstUnless::OFFSET_address, label_if);
-			put_inst(InstUnless());
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_false);
+			put_inst(InstIf());
 		}
 		else{
 			compile_expr(e);
-			set_jump(InstIf::OFFSET_address, label_if);
+			set_jump(InstIf::OFFSET_address_true, label_true);
+			set_jump(InstIf::OFFSET_address_false, label_false);
 			put_inst(InstIf());
 		}
 	}
+
+	set_label(label_true);
 }
 
 void CodeBuilder::scope_chain(int_t var_frame_size){
@@ -782,15 +891,12 @@ void CodeBuilder::compile_comp_bin(const ExprPtr& e){
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 
-	int_t label_if = reserve_label();
-	int_t label_if2 = reserve_label();
-
-	put_if_code(e, label_if, label_if2);
+	int_t label_false = reserve_label();
+	put_if_code(e, label_false);
 
 	put_inst(InstPushTrueAndSkip());
 
-	set_label(label_if);
-	set_label(label_if2);
+	set_label(label_false);
 
 	put_inst(InstPushFalse());
 }
@@ -801,21 +907,18 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	}
 	
 	{
-		int_t label_if = reserve_label();
-		int_t label_if2 = reserve_label();
-
-		put_if_code(e, label_if, label_if2);
-
+		int_t label_false = reserve_label();
+		put_if_code(e, label_false);
 		put_inst(InstPushTrueAndSkip());
-
-		set_label(label_if);
-		set_label(label_if2);
-
+		set_label(label_false);
 		put_inst(InstPushFalse());
 	}
 
-	set_jump(InstUnless::OFFSET_address, label);
-	put_inst(InstUnless());
+	int_t label_true = reserve_label();
+	set_jump(InstIf::OFFSET_address_false, label_true);
+	set_jump(InstIf::OFFSET_address_true, label);
+	put_inst(InstIf());
+	set_label(label_true);
 
 	if(str){ compile_expr(str); }
 	else{ put_inst(InstValue(register_value(empty_string))); }
@@ -1248,6 +1351,10 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 
 				IDPtr key;
 				ExprPtr arg = ep(e->fun_params()->at(0));
+				if(arg){
+					arg = ep(arg->at(0));
+				}
+
 				if(arg->itag()==EXPR_LVAR){
 					key = arg->lvar_name();
 				}

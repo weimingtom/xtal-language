@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class SerializeTest{
+class filelocal::SerializeTest{
 	array#Test{
 		ms: MemoryStream();
 

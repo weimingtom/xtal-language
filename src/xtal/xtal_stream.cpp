@@ -292,7 +292,7 @@ void MemoryStream::clear(){
 
 void MemoryStream::resize(uint_t size){
 	if(size>capa_){
-		uint_t newcapa = size + capa_;
+		uint_t newcapa = size + capa_*2;
 		void* newp = xmalloc(newcapa);
 		std::memcpy(newp, data_, size_);
 		if(capa_){

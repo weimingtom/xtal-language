@@ -26,7 +26,7 @@ struct cfun_holder<R (*)(#REPEAT_COMMA#A`i`#)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R #COMMA_REPEAT#class A`i`#>
 struct cfun_holder<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
 	enum{ PARAMS = `n`, PARAM_N = `n`, METHOD = 0, EXTENDABLE = 0 };
@@ -88,7 +88,7 @@ struct cmemfun_holder<R (*)(C #COMMA_REPEAT#A`i`#)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (__stdcall *)(C #COMMA_REPEAT#A`i`#)>{
 	enum{ PARAMS = `n+1`, PARAM_N = `n`, METHOD = 1, EXTENDABLE = 0 };
@@ -133,7 +133,7 @@ struct cfun_holder<R (*)()>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R >
 struct cfun_holder<R (__stdcall *)()>{
 	enum{ PARAMS = 0, PARAM_N = 0, METHOD = 0, EXTENDABLE = 0 };
@@ -195,7 +195,7 @@ struct cmemfun_holder<R (*)(C )>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R >
 struct cmemfun_holder<R (__stdcall *)(C )>{
 	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
@@ -239,7 +239,7 @@ struct cfun_holder<R (*)(A0)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R , class A0>
 struct cfun_holder<R (__stdcall *)(A0)>{
 	enum{ PARAMS = 1, PARAM_N = 1, METHOD = 0, EXTENDABLE = 0 };
@@ -301,7 +301,7 @@ struct cmemfun_holder<R (*)(C , A0)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R , class A0>
 struct cmemfun_holder<R (__stdcall *)(C , A0)>{
 	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
@@ -345,7 +345,7 @@ struct cfun_holder<R (*)(A0, A1)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R , class A0, class A1>
 struct cfun_holder<R (__stdcall *)(A0, A1)>{
 	enum{ PARAMS = 2, PARAM_N = 2, METHOD = 0, EXTENDABLE = 0 };
@@ -407,7 +407,7 @@ struct cmemfun_holder<R (*)(C , A0, A1)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1)>{
 	enum{ PARAMS = 3, PARAM_N = 2, METHOD = 1, EXTENDABLE = 0 };
@@ -451,7 +451,7 @@ struct cfun_holder<R (*)(A0, A1, A2)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R , class A0, class A1, class A2>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2)>{
 	enum{ PARAMS = 3, PARAM_N = 3, METHOD = 0, EXTENDABLE = 0 };
@@ -513,7 +513,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2)>{
 	enum{ PARAMS = 4, PARAM_N = 3, METHOD = 1, EXTENDABLE = 0 };
@@ -557,7 +557,7 @@ struct cfun_holder<R (*)(A0, A1, A2, A3)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R , class A0, class A1, class A2, class A3>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3)>{
 	enum{ PARAMS = 4, PARAM_N = 4, METHOD = 0, EXTENDABLE = 0 };
@@ -619,7 +619,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3)>{
 	enum{ PARAMS = 5, PARAM_N = 4, METHOD = 1, EXTENDABLE = 0 };
@@ -663,7 +663,7 @@ struct cfun_holder<R (*)(A0, A1, A2, A3, A4)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class R , class A0, class A1, class A2, class A3, class A4>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4)>{
 	enum{ PARAMS = 5, PARAM_N = 5, METHOD = 0, EXTENDABLE = 0 };
@@ -725,7 +725,7 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4)>{
 	}
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_M_IX86)
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4)>{
 	enum{ PARAMS = 6, PARAM_N = 5, METHOD = 1, EXTENDABLE = 0 };

@@ -67,7 +67,7 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 }
 
 void Values::block_next(const VMachinePtr& vm){
-	if(tail_){
+	if(!raweq(tail_, undefined)){
 		vm->return_result(tail_, head_);
 	}
 	else{
@@ -79,7 +79,7 @@ int_t Values::size(){
 	const ValuesPtr* cur = &to_smartptr(this);
 	int_t size = 1;
 	while(true){
-		if(!(*cur)->tail_){
+		if(raweq((*cur)->tail_, undefined)){
 			return size;
 		}
 		cur = &(*cur)->tail_;
@@ -91,7 +91,7 @@ const AnyPtr& Values::at(int_t i){
 	const ValuesPtr* cur = &to_smartptr(this);
 	const AnyPtr* ret = &head_;
 	for(int_t n=0; n<i; ++n){
-		if(!(*cur)->tail_){
+		if(raweq((*cur)->tail_, undefined)){
 			ret = &undefined;
 			break;
 		}
@@ -109,8 +109,18 @@ bool Values::op_eq(const ValuesPtr& other){
 
 	int_t size = 1;
 	while(true){
-		if(!(*cur1)->tail_){
-			if(!(*cur2)->tail_){
+		if(rawne((*cur1)->head_, (*cur2)->head_)){
+			vm->setup_call(1, (*cur2)->head_);
+			(*cur1)->head_->rawsend(vm, Xid(op_eq));
+			if(!vm->processed() || !vm->result()){
+				vm->cleanup_call();
+				return false;
+			}
+			vm->cleanup_call();
+		}
+
+		if(raweq((*cur1)->tail_, undefined)){
+			if(raweq((*cur2)->tail_, undefined)){
 				return true;
 			}
 			else{
@@ -120,16 +130,6 @@ bool Values::op_eq(const ValuesPtr& other){
 
 		if(!(*cur2)->tail_){
 			return false;
-		}
-
-		if(rawne((*cur1)->head_, (*cur2)->head_)){
-			vm->setup_call(1, (*cur2)->head_);
-			(*cur1)->head_->rawsend(vm, Xid(op_eq));
-			if(!vm->processed() || !vm->result()){
-				vm->cleanup_call();
-				return false;
-			}
-			vm->cleanup_call();
 		}
 
 		cur1 = &(*cur1)->tail_;

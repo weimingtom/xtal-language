@@ -269,7 +269,12 @@ class Values : public RefCountingBase{
 public:
 	enum{ TYPE = TYPE_VALUES };
 
-	Values(const AnyPtr& head, const ValuesPtr& tail = null)
+	Values(const AnyPtr& head)
+		:head_(head), tail_((ValuesPtr&)undefined){
+		set_pvalue(*this, TYPE, this);
+	}
+
+	Values(const AnyPtr& head, const ValuesPtr& tail)
 		:head_(head), tail_(tail){
 		set_pvalue(*this, TYPE, this);
 	}

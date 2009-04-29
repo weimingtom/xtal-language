@@ -98,10 +98,93 @@ int main2(int argc, char** argv){
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
+		fun fannkuch(n)
+		{
+			n = 4;
+			if(n < 1) return 0;
+			
+			flipsMax: 0;
+			r: n;
+			numPermutationsPrinted: 0;
+			
+			permutation: Array(n);
+			count: Array(n);
+			tmp: 0;
 
-		throw "—áŠO";
+			for(i:0; i<n; i++) permutation[i]=i;
+			
+			while(true)
+			{
+				if(numPermutationsPrinted < 30)
+				{
+					permutation.each{
+						print(it+1);
+					}
+					print("\n");
+					numPermutationsPrinted++;
+				}
+				
+				while(r!=1)
+				{
+					count[r-1]=r;
+					r--;
+				}
+				
+				if(!(permutation[0]==0 || permutation[n-1]==n-1))
+				{
+					permForFlipping: permutation.clone;
+					flips:0;
+					
+					k: permForFlipping[0];
+					while(true)
+					{
+						i: 1; j: k-1;
+						while(i<j)
+						{
+							permForFlipping[i], permForFlipping[j] = permForFlipping[j], permForFlipping[i];
+							i++;
+							j--;
+						}
+						tmp = permForFlipping[k];
+						permForFlipping[k] = k;
+						k = tmp;
+
+						
+						flips++;
+
+						if(k==0)
+							break;
+					}
+					
+					if(flipsMax < flips)
+						flipsMax = flips;
+				}
+				
+				while(true)
+				{
+					if(r==n) return flipsMax;
+					
+					perm0: permutation[0];
+					for(i:0; i<r; i++) permutation[i]=permutation[i+1];
+					permutation[r]=perm0;
+					
+					count[r]-=1;
+					if(count[r] >0 ) break;
+					
+					++r;
+				}
+				
+			} 
+		}
+
+		n: ...[0];
+
+		r: fannkuch(n);
+
+		printf("Pfannkuchen(%s) = %s\n", n, r);
 	))){
-		code->call();
+//		code->inspect()->p();
+//		code->call();
 	}
 
 
@@ -136,7 +219,7 @@ int main2(int argc, char** argv){
 	//benchmark("../n-body.xtal", 12);
 	//benchmark("../special-norm.xtal", 12);
 	//benchmark("../binary-trees.xtal", 3);
-	benchmark("../mandelbrot.xtal", 10);
+	//benchmark("../mandelbrot.xtal", 10);
 
 	/*		
 	c = clock();
@@ -177,7 +260,7 @@ int main2(int argc, char** argv){
 
 	//*/
 
-	/*
+	//*
 	CodePtr code = compile_file("../test/test.xtal_");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

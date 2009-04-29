@@ -91,6 +91,8 @@ private:
 	uint_t objects_count_;
 	uint_t prev_objects_count_;
 
+	bool disable_finalizer_;
+
 	uint_t cycle_count_;
 
 	PODArrayList<Class*> class_table_;

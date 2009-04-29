@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class OpAssignTest{
+class filelocal::OpAssignTest{
 	str_cat_assign#Test{
 		str : "aaa";
 		str ~= "bbb";

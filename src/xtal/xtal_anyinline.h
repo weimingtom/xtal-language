@@ -31,6 +31,12 @@ inline void dec_ref_count_force(const Any& v){
 	}
 }
 
+inline InstanceVariables* Any::instance_variables() const{
+	if(type(*this)==TYPE_BASE){
+		return pvalue(*this)->instance_variables();
+	}
+	return &empty_instance_variables;
+}
 
 //{REPEAT{{
 /*

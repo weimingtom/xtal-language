@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-TestInc: class{
+filelocal::TestInc: class{
 	
 	inc_local#Test{
 		i : 0;

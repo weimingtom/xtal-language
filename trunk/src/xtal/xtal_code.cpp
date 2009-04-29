@@ -263,21 +263,13 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstTryEnd::NUMBER){ temp = ((InstTryEnd*)pc)->inspect(code); sz = InstTryEnd::ISIZE; }
 		XTAL_CASE(InstPushGoto::NUMBER){ temp = ((InstPushGoto*)pc)->inspect(code); sz = InstPushGoto::ISIZE; }
 		XTAL_CASE(InstPopGoto::NUMBER){ temp = ((InstPopGoto*)pc)->inspect(code); sz = InstPopGoto::ISIZE; }
-		XTAL_CASE(InstIf::NUMBER){ temp = ((InstIf*)pc)->inspect(code); sz = InstIf::ISIZE; }
-		XTAL_CASE(InstUnless::NUMBER){ temp = ((InstUnless*)pc)->inspect(code); sz = InstUnless::ISIZE; }
 		XTAL_CASE(InstGoto::NUMBER){ temp = ((InstGoto*)pc)->inspect(code); sz = InstGoto::ISIZE; }
+		XTAL_CASE(InstIf::NUMBER){ temp = ((InstIf*)pc)->inspect(code); sz = InstIf::ISIZE; }
 		XTAL_CASE(InstIfEq::NUMBER){ temp = ((InstIfEq*)pc)->inspect(code); sz = InstIfEq::ISIZE; }
-		XTAL_CASE(InstIfNe::NUMBER){ temp = ((InstIfNe*)pc)->inspect(code); sz = InstIfNe::ISIZE; }
 		XTAL_CASE(InstIfLt::NUMBER){ temp = ((InstIfLt*)pc)->inspect(code); sz = InstIfLt::ISIZE; }
-		XTAL_CASE(InstIfLe::NUMBER){ temp = ((InstIfLe*)pc)->inspect(code); sz = InstIfLe::ISIZE; }
-		XTAL_CASE(InstIfGt::NUMBER){ temp = ((InstIfGt*)pc)->inspect(code); sz = InstIfGt::ISIZE; }
-		XTAL_CASE(InstIfGe::NUMBER){ temp = ((InstIfGe*)pc)->inspect(code); sz = InstIfGe::ISIZE; }
 		XTAL_CASE(InstIfRawEq::NUMBER){ temp = ((InstIfRawEq*)pc)->inspect(code); sz = InstIfRawEq::ISIZE; }
-		XTAL_CASE(InstIfRawNe::NUMBER){ temp = ((InstIfRawNe*)pc)->inspect(code); sz = InstIfRawNe::ISIZE; }
 		XTAL_CASE(InstIfIn::NUMBER){ temp = ((InstIfIn*)pc)->inspect(code); sz = InstIfIn::ISIZE; }
-		XTAL_CASE(InstIfNin::NUMBER){ temp = ((InstIfNin*)pc)->inspect(code); sz = InstIfNin::ISIZE; }
 		XTAL_CASE(InstIfIs::NUMBER){ temp = ((InstIfIs*)pc)->inspect(code); sz = InstIfIs::ISIZE; }
-		XTAL_CASE(InstIfNis::NUMBER){ temp = ((InstIfNis*)pc)->inspect(code); sz = InstIfNis::ISIZE; }
 		XTAL_CASE(InstIfArgIsUndefined::NUMBER){ temp = ((InstIfArgIsUndefined*)pc)->inspect(code); sz = InstIfArgIsUndefined::ISIZE; }
 		XTAL_CASE(InstPos::NUMBER){ temp = ((InstPos*)pc)->inspect(code); sz = InstPos::ISIZE; }
 		XTAL_CASE(InstNeg::NUMBER){ temp = ((InstNeg*)pc)->inspect(code); sz = InstNeg::ISIZE; }

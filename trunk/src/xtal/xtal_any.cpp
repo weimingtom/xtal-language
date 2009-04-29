@@ -67,7 +67,6 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	switch(type(*this)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){
@@ -136,7 +135,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
 			ArgumentsPtr args = vm->make_arguments();
 			vm->recycle_call();
 			vm->push_arg(primary_key);
-			vm->push_arg(null);
+			vm->push_arg(undefined);
 			vm->push_arg(args);
 			ret->rawcall(vm);
 		}

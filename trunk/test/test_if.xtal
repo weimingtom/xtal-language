@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class IfTest{
+class filelocal::IfTest{
 
 	test1#Test{
 		a : 10;

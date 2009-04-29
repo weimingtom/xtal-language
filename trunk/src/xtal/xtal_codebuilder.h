@@ -51,7 +51,7 @@ public:
 	void put_set_instance_variable_code(const IDPtr& var);
 	void put_instance_variable_code(const IDPtr& var);
 	void put_val_code(const AnyPtr& val);
-	void put_if_code(const ExprPtr& cond, int_t label_if, int_t label_if2);
+	void put_if_code(const ExprPtr& cond, int_t label_false);
 	void break_off(int_t to);
 	
 	struct CompileInfo{

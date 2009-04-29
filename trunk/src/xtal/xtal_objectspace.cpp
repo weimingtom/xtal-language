@@ -112,6 +112,8 @@ void ObjectSpace::initialize(){
 	prev_objects_count_ = 0;
 	cycle_count_ = 0;
 
+	disable_finalizer_ = false;
+
 	disable_gc();
 
 	expand_objects_list();
@@ -210,6 +212,9 @@ void ObjectSpace::uninitialize(){
 	class_table_.release();
 	var_table_.release();
 	clear_cache();
+
+	disable_finalizer_ = true;
+
 	full_gc();
 
 	if(objects_count_ != 0){
@@ -339,9 +344,6 @@ void ObjectSpace::full_gc(){
 		ScopeCounter cc(&cycle_count_);
 				
 		while(true){			
-			//member_cache_table_.clear();
-			//is_cache_table_.clear();
-
 			ConnectedPointer current(objects_count_, objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
 			if(current==begin){
@@ -351,10 +353,6 @@ void ObjectSpace::full_gc(){
 			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
 				(*it)->before_gc();
 			}
-
-			//if(string_space_){
-			//	string_space_->gc();
-			//}
 
 			{ // 参照カウンタを減らす
 				Visitor m(-1);	
@@ -399,7 +397,7 @@ void ObjectSpace::full_gc(){
 				(*it)->after_gc();
 			}
 
-			{
+			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
 				// 死者のfinalizerを走らせる
 				for(ConnectedPointer it = alive; it!=current; ++it){

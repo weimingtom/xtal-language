@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class MapTest{
+class filelocal::MapTest{
 	
 	setkey#Test{
 		a: [:];

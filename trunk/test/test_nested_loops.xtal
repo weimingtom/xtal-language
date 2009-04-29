@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class NLoopTest{
+class filelocal::NLoopTest{
 
 	nested_loops : fun(n){
 		x : 0;

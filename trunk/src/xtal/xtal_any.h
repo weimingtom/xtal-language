@@ -157,6 +157,8 @@ public:
 	
 	void object_free();
 
+	InstanceVariables* instance_variables() const;
+
 public:
 
 	/// \brief primary_keyメソッドを呼び出す

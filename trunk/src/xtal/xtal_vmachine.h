@@ -468,6 +468,9 @@ public:
 		// 呼び出された関数オブジェクト
 		Any fun_; 
 
+		// 関数が所属するコードオブジェクト
+		Any code_;
+
 		// スコープの外側のフレームオブジェクト
 		Any outer_;
 
@@ -491,6 +494,7 @@ public:
 
 		void set_null(){
 			xtal::set_null(fun_); 
+			xtal::set_null(code_); 
 			xtal::set_null(outer_);
 			xtal::set_null(arguments_);
 			xtal::set_null(self_);
@@ -501,6 +505,7 @@ public:
 		}
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
+		const CodePtr& code() const{ return unchecked_ptr_cast<Code>(ap(code_)); }
 		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& self() const{ return ap(self_); }
 		const ArgumentsPtr& arguments() const{ return unchecked_ptr_cast<Arguments>(ap(arguments_)); }
@@ -514,6 +519,7 @@ public:
 		}
 
 		void fun(const Any& v){ fun_ = v; }
+		void code(const Any& v){ code_ = v; }
 		void outer(const Any& v){ outer_ = v; }
 		void self(const Any& v){ self_ = v; }
 		void arguments(const Any& v){ arguments_ = v; }
@@ -679,21 +685,13 @@ public:
 	const inst_t* FunTryEnd(const inst_t* pc);
 	const inst_t* FunPushGoto(const inst_t* pc);
 	const inst_t* FunPopGoto(const inst_t* pc);
-	const inst_t* FunIf(const inst_t* pc);
-	const inst_t* FunUnless(const inst_t* pc);
 	const inst_t* FunGoto(const inst_t* pc);
+	const inst_t* FunIf(const inst_t* pc);
 	const inst_t* FunIfEq(const inst_t* pc);
-	const inst_t* FunIfNe(const inst_t* pc);
 	const inst_t* FunIfLt(const inst_t* pc);
-	const inst_t* FunIfLe(const inst_t* pc);
-	const inst_t* FunIfGt(const inst_t* pc);
-	const inst_t* FunIfGe(const inst_t* pc);
 	const inst_t* FunIfRawEq(const inst_t* pc);
-	const inst_t* FunIfRawNe(const inst_t* pc);
 	const inst_t* FunIfIn(const inst_t* pc);
-	const inst_t* FunIfNin(const inst_t* pc);
 	const inst_t* FunIfIs(const inst_t* pc);
-	const inst_t* FunIfNis(const inst_t* pc);
 	const inst_t* FunIfArgIsUndefined(const inst_t* pc);
 	const inst_t* FunPos(const inst_t* pc);
 	const inst_t* FunNeg(const inst_t* pc);
@@ -765,6 +763,27 @@ public:
 	const inst_t* OpShl(const inst_t* pc, int_t op);
 	const inst_t* OpShr(const inst_t* pc, int_t op);
 	const inst_t* OpUshr(const inst_t* pc, int_t op);
+
+	struct f2{
+		float_t a, b;
+	};
+
+	f2 to_f2(int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
+		f2 ret;
+		if(atype==0){
+			ret.a = (float_t)ivalue(a);
+			ret.b = fvalue(b);
+		}
+		else if(btype==0){
+			ret.a = fvalue(a);
+			ret.b = (float_t)ivalue(b);
+		}
+		else{
+			ret.a = fvalue(a);
+			ret.b = fvalue(b);
+		}
+		return ret;
+	}
 
 private:
 

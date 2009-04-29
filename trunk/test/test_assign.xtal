@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class AssignTest{
+class filelocal::AssignTest{
 
 	local#Test{
 		i, j : 5, 8;

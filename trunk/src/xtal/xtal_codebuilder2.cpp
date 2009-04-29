@@ -116,6 +116,7 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, const CompileInfo& info){
 		&CodeBuilder::compile_expr_PROPERTY,
 		&CodeBuilder::compile_expr_PROPERTY_Q,
 		&CodeBuilder::compile_expr_CALL,
+		&CodeBuilder::compile_expr_YIELD,
 		&CodeBuilder::compile_expr_INC,
 		&CodeBuilder::compile_expr_DEC,
 		&CodeBuilder::compile_expr_ADD_ASSIGN,
@@ -131,7 +132,6 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, const CompileInfo& info){
 		&CodeBuilder::compile_expr_SHR_ASSIGN,
 		&CodeBuilder::compile_expr_USHR_ASSIGN,
 		&CodeBuilder::compile_expr_RETURN,
-		&CodeBuilder::compile_expr_YIELD,
 		&CodeBuilder::compile_expr_ASSERT,
 		&CodeBuilder::compile_expr_THROW,
 		&CodeBuilder::compile_expr_TRY,
@@ -393,37 +393,45 @@ int_t CodeBuilder::compile_expr_NIS(const ExprPtr& e, const CompileInfo& info){
 }
 
 int_t CodeBuilder::compile_expr_ANDAND(const ExprPtr& e, const CompileInfo& info){
-	int_t label_if = reserve_label();
+	int_t label_true = reserve_label();
+	int_t label_false = reserve_label();
 
 	compile_expr(e->bin_lhs());
 
 	put_inst(InstDup());
 	
-	set_jump(InstIf::OFFSET_address, label_if);
+	set_jump(InstIf::OFFSET_address_true, label_true);
+	set_jump(InstIf::OFFSET_address_false, label_false);
 	put_inst(InstIf());
+	set_label(label_true);
 
 	put_inst(InstPop());
 	
 	compile_expr(e->bin_rhs());
 	
-	set_label(label_if);
+	set_label(label_false);
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_OROR(const ExprPtr& e, const CompileInfo& info){
-	int_t label_if = reserve_label();
+	int_t label_true = reserve_label();
+	int_t label_false = reserve_label();
+
 	compile_expr(e->bin_lhs());
 
 	put_inst(InstDup());
 	
-	set_jump(InstUnless::OFFSET_address, label_if);
-	put_inst(InstUnless());
+	set_jump(InstIf::OFFSET_address_true, label_true);
+	set_jump(InstIf::OFFSET_address_false, label_false);
+	put_inst(InstIf());
+
+	set_label(label_false);
 	
 	put_inst(InstPop());
 	
 	compile_expr(e->bin_rhs());
 	
-	set_label(label_if);
+	set_label(label_true);
 	return 1;
 }
 
@@ -536,20 +544,24 @@ int_t CodeBuilder::compile_expr_AT(const ExprPtr& e, const CompileInfo& info){
 }
 
 int_t CodeBuilder::compile_expr_Q(const ExprPtr& e, const CompileInfo& info){
-	int_t label_if = reserve_label();
+	int_t label_true = reserve_label();
+	int_t label_false = reserve_label();
 	int_t label_end = reserve_label();
 
 	compile_expr(e->q_cond());
 
-	set_jump(InstIf::OFFSET_address, label_if);
+	set_jump(InstIf::OFFSET_address_true, label_true);
+	set_jump(InstIf::OFFSET_address_false, label_false);
 	put_inst(InstIf());
+
+	set_label(label_true);	
 
 	compile_expr(e->q_true());
 
 	set_jump(InstGoto::OFFSET_address, label_end);
 	put_inst(InstGoto());
 
-	set_label(label_if);
+	set_label(label_false);
 	
 	compile_expr(e->q_false());
 	
@@ -665,6 +677,15 @@ int_t CodeBuilder::compile_expr_CALL(const ExprPtr& e, const CompileInfo& info){
 	return info.need_result_count;
 }
 
+int_t CodeBuilder::compile_expr_YIELD(const ExprPtr& e, const CompileInfo& info){
+	int_t exprs_size = compile_exprs(e->yield_exprs());
+	put_inst(InstYield(exprs_size));
+	if(exprs_size>=256){
+		error_->error(lineno(), Xt("Xtal Compile Error 1022"));
+	}
+	return info.need_result_count;
+}
+
 int_t CodeBuilder::compile_expr_INC(const ExprPtr& e, const CompileInfo& info){
 	compile_incdec(e);
 	return 0;
@@ -769,28 +790,23 @@ int_t CodeBuilder::compile_expr_RETURN(const ExprPtr& e, const CompileInfo& info
 	return 0;
 }
 
-int_t CodeBuilder::compile_expr_YIELD(const ExprPtr& e, const CompileInfo& info){
-	int_t exprs_size = compile_exprs(e->yield_exprs());
-	put_inst(InstYield(exprs_size));
-	if(exprs_size>=256){
-		error_->error(lineno(), Xt("Xtal Compile Error 1022"));
-	}
-	return 0;
-}
-
 int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, const CompileInfo& info){
-	int_t label_if = reserve_label();
-	int_t label_if2 = reserve_label();
+	int_t label_end = reserve_label();
 
-	set_jump(InstIfDebug::OFFSET_address, label_if);
+	set_jump(InstIfDebug::OFFSET_address, label_end);
 	put_inst(InstIfDebug());
 
 	if(ExprPtr e2 = e->assert_cond()){
 		switch(e2->itag()){
-		XTAL_DEFAULT{ 
-			compile_expr(e2); 
-			set_jump(InstUnless::OFFSET_address, label_if2);
-			put_inst(InstUnless());
+		XTAL_DEFAULT{
+			compile_expr(e2);
+
+			int_t label_true = reserve_label();
+			set_jump(InstIf::OFFSET_address_false, label_true);
+			set_jump(InstIf::OFFSET_address_true, label_end);
+			put_inst(InstIf());
+
+			set_label(label_true);
 
 			if(e->assert_string()){ compile_expr(e->assert_string()); }
 			else{ put_inst(InstValue(register_value(empty_string))); }
@@ -802,18 +818,18 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, const CompileInfo& info
 			put_inst(InstAssert());
 		}
 
-		XTAL_CASE(EXPR_EQ){ compile_comp_bin_assert(Xf("%s : ![%s == %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_NE){ compile_comp_bin_assert(Xf("%s : ![%s !=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_LT){ compile_comp_bin_assert(Xf("%s : ![%s <  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_GT){ compile_comp_bin_assert(Xf("%s : ![%s >  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_LE){ compile_comp_bin_assert(Xf("%s : ![%s <=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_GE){ compile_comp_bin_assert(Xf("%s : ![%s >=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin_assert(Xf("%s : ![%s ===  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin_assert(Xf("%s : ![%s !==  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_IN){ compile_comp_bin_assert(Xf("%s : ![%s in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_NIN){ compile_comp_bin_assert(Xf("%s : ![%s !in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_IS){ compile_comp_bin_assert(Xf("%s : ![%s is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
-		XTAL_CASE(EXPR_NIS){ compile_comp_bin_assert(Xf("%s : ![%s !is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_if2); }
+		XTAL_CASE(EXPR_EQ){ compile_comp_bin_assert(Xf("%s : ![%s == %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_NE){ compile_comp_bin_assert(Xf("%s : ![%s !=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_LT){ compile_comp_bin_assert(Xf("%s : ![%s <  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_GT){ compile_comp_bin_assert(Xf("%s : ![%s >  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_LE){ compile_comp_bin_assert(Xf("%s : ![%s <=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_GE){ compile_comp_bin_assert(Xf("%s : ![%s >=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin_assert(Xf("%s : ![%s ===  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin_assert(Xf("%s : ![%s !==  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_IN){ compile_comp_bin_assert(Xf("%s : ![%s in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_NIN){ compile_comp_bin_assert(Xf("%s : ![%s !in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_IS){ compile_comp_bin_assert(Xf("%s : ![%s is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
+		XTAL_CASE(EXPR_NIS){ compile_comp_bin_assert(Xf("%s : ![%s !is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end); }
 		}
 	}
 	else{
@@ -827,8 +843,7 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, const CompileInfo& info
 		put_inst(InstAssert());
 	}
 
-	set_label(label_if);
-	set_label(label_if2);
+	set_label(label_end);
 	return 0;
 }
 
@@ -935,11 +950,10 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, const CompileInfo& info){
 		}
 	}
 	else{
-		int_t label_if = reserve_label();
-		int_t label_if2 = reserve_label();
+		int_t label_false = reserve_label();
 		int_t label_end = reserve_label();
 
-		put_if_code(cond, label_if, label_if2);
+		put_if_code(cond, label_false);
 
 		compile_stmt(e->if_body());
 		
@@ -948,8 +962,7 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, const CompileInfo& info){
 			put_inst(InstGoto());
 		}
 		
-		set_label(label_if);
-		set_label(label_if2);
+		set_label(label_false);
 		compile_stmt(e->if_else());
 	
 		set_label(label_end);
@@ -976,10 +989,8 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, const CompileInfo& info){
 	}
 
 	int_t label_cond = reserve_label();
-	int_t label_if_q = reserve_label();
-	int_t label_if2_q = reserve_label();
-	int_t label_if = reserve_label();
-	int_t label_if2 = reserve_label();
+	int_t label_false_q = reserve_label();
+	int_t label_false = reserve_label();
 	int_t label_break = reserve_label();
 	int_t label_continue = reserve_label();
 	int_t label_body = reserve_label();
@@ -996,7 +1007,7 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, const CompileInfo& info){
 
 	// 条件式をコンパイル
 	if(e->for_cond()){
-		put_if_code(e->for_cond(), label_if, label_if2);
+		put_if_code(e->for_cond(), label_false);
 	}
 
 	set_label(label_body);
@@ -1022,7 +1033,7 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, const CompileInfo& info){
 
 	// 条件式をコンパイル 2回目
 	if(e->for_cond()){
-		put_if_code(e->for_cond(), label_if_q, label_if2_q);
+		put_if_code(e->for_cond(), label_false_q);
 	}
 
 	if(referenced_first_step){
@@ -1041,14 +1052,12 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, const CompileInfo& info){
 	
 	ff().loops.pop();
 	
-	set_label(label_if);
-	set_label(label_if2);
+	set_label(label_false);
 	if(e->for_else()){
 		compile_stmt(e->for_else());
 	}
 
-	set_label(label_if_q);
-	set_label(label_if2_q);
+	set_label(label_false_q);
 	if(e->for_nobreak()){
 		compile_stmt(e->for_nobreak());
 	}
@@ -1335,9 +1344,15 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, const CompileInfo& info
 }
 
 int_t CodeBuilder::compile_expr_TOPLEVEL(const ExprPtr& e, const CompileInfo& info){
-	Xfor(v, e->toplevel_stmts()){
-		compile_stmt(v);
-	}
+	var_begin(VarFrame::DEFAULT);
+	var_define_stmts(e->toplevel_stmts());
+	check_lvar_assign_stmt(e);
+	scope_begin();{
+		Xfor(v, e->toplevel_stmts()){
+			compile_stmt(v);
+		}
+	}scope_end();
+	var_end();
 
 	return 0;
 }

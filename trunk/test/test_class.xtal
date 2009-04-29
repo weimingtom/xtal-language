@@ -56,7 +56,7 @@ TestFoo: class{
 	}
 }
 
-TestBar: class{
+filelocal::TestBar: class{
 	_obj;
 	
 	setup#Before: method{
@@ -83,7 +83,7 @@ TestBar: class{
 	}
 }
 
-TestSingleton: class{
+filelocal::TestSingleton: class{
 	test#Test: method{
 		assert Singleton.class===Singleton;
 		assert Singleton::bar()=="aaa";
@@ -95,5 +95,19 @@ TestSingleton: class{
 	}
 }
 
+class filelocal::TestEq{
+	test#Test{
+		class Foo {
+				op_eq(a){
+						return true;
+				}
+		};
+
+		a: Foo();
+		b: Foo();
+		assert (a == b);
+		assert !(a != b); 
+	}
+}
 
 

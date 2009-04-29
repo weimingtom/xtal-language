@@ -1,7 +1,7 @@
 
 inherit(lib::test);
 
-class TestFiber{
+class filelocal::TestFiber{
 
 	except#Test{
 		fib: fiber{

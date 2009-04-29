@@ -392,19 +392,20 @@ void Lexer::parse_number(){
 			reader_.read();
 
 			float_t scale = 1;
-			while(reader_.eat('0')){
-				scale /= 10;
-			}
-
 			float_t fval = 0;
-			int_t after_the_decimal_point = parse_integer();
-			while(after_the_decimal_point!=0){
-				fval+=after_the_decimal_point%10;
-				fval/=10;
-				after_the_decimal_point/=10;
+			for(;;){
+				if(test_digit(reader_.peek())){
+					scale /= 10;
+					fval += (reader_.read()-'0')*scale;
+				}
+				else if(reader_.peek()=='_'){
+					reader_.read();
+				}
+				else{
+					break;
+				}
 			}
 
-			fval *= scale;
 			fval += ival;
 			int_t e = 1;
 			if(reader_.eat('e') || reader_.eat('E')){
@@ -1141,6 +1142,7 @@ bool Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_FALSE){ eb_.splice(EXPR_FALSE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_THIS){ eb_.splice(EXPR_THIS, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ eb_.splice(EXPR_CURRENT_CONTEXT, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_YIELD){ parse_exprs(); eb_.splice(EXPR_YIELD, 1); return true; }
 
 				XTAL_CASE(Token::KEYWORD_DOFUN){ 
 					parse_fun(KIND_FUN);
@@ -1695,7 +1697,6 @@ bool Parser::parse_stmt(){
 				XTAL_CASE(Token::KEYWORD_THROW){ expect_parse_expr(); eb_.splice(EXPR_THROW, 1); eat(';'); return true; }	
 				XTAL_CASE(Token::KEYWORD_ASSERT){ parse_assert(); eat(';'); return true; }
 				XTAL_CASE(Token::KEYWORD_RETURN){ parse_exprs(); eb_.splice(EXPR_RETURN, 1); eat(';'); return true; }
-				XTAL_CASE(Token::KEYWORD_YIELD){ parse_exprs(); eb_.splice(EXPR_YIELD, 1); eat(';'); return true; }
 				
 				XTAL_CASE(Token::KEYWORD_CONTINUE){ 
 					if(!parse_identifier())

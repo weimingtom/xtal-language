@@ -1,7 +1,7 @@
 inherit(lib::test);
 
 
-class ScopeTest{
+class filelocal::ScopeTest{
 
 	same_name#Test{
 		x: 10;

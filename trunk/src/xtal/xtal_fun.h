@@ -84,7 +84,7 @@ public:
 
 	virtual void rawcall(const VMachinePtr& vm);
 
-private:
+public:
 	int_t number_;
 	ClassInfo* info_;
 };
@@ -96,7 +96,7 @@ public:
 
 	virtual void rawcall(const VMachinePtr& vm);
 
-private:
+public:
 	int_t number_;
 	ClassInfo* info_;
 };

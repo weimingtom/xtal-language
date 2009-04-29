@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-TestArray: class{
+class filelocal::Test{
 	_obj;
 	
 	setup#Before: method{
@@ -92,38 +92,68 @@ TestArray: class{
 		_obj[3]=2;
 		assert _obj.join(",")=="1,6,4,2";
 	}
-}
-
-{
-	a: [];
-	a.push_back(1);
-	a.push_back(2);
-	assert a==[1, 2];
-}
-
-{
-	a: [];
-	ret: "";
 	
-	try{
-		a[5] = 10;
-	}catch(e){
-		ret = "catched";
+	push_back#Test{
+		a: [];
+		a.push_back(1);
+		a.push_back(2);
+		assert a==[1, 2];
 	}
-	assert ret=="catched";
+	
+	swap#Test{
+		a: [10, 20];
+		assert a[0]==10;
+		assert a[1]==20;
+		a[0], a[1] = a[1], a[0];
+		assert a[1]==10;
+		assert a[0]==20;
+	}
+	
+	swap2#Test{
+		class Temp{
+			i: 0;
+			j: 1;
+		}
+		
+		a: [10, 20];
+		assert a[0]==10;
+		assert a[1]==20;
+		a[Temp::i], a[Temp::j] = a[Temp::j], a[Temp::i];
+		assert a[1]==10;
+		assert a[0]==20;
+	}
+	
+	swap3#Test{
+		a: [10, 20];
+		b: 30;
+		a[0], b = b, a[0];
+		assert a[0]==30;
+		assert b==10;
+	}
+		
+	except#Test{
+		a: [];
+		ret: "";
+		
+		try{
+			a[5] = 10;
+		}catch(e){
+			ret = "catched";
+		}
+		assert ret=="catched";
+	}
+	
+	ct#Test{
+		assert Array().size==0;
+		assert Array(5).size==5;
+	}
+	
+	clone#Test{
+		a: [5, 6, 7, 8];
+		b: a.clone;
+		b[0] = 10;
+		assert b[0]==10;
+		assert a[0]==5;
+	}
 }
 
-
-{
-	assert Array().size==0;
-	assert Array(5).size==5;
-
-}
-
-{
-	a: [5, 6, 7, 8];
-	b: a.clone;
-	b[0] = 10;
-	assert b[0]==10;
-	assert a[0]==5;
-}

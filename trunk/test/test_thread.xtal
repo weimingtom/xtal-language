@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class ThreadTest{
+class filelocal::ThreadTest{
 	test#Test{
 		ret: [];
 		t1: Thread();

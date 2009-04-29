@@ -379,6 +379,7 @@ void Environment::initialize(const Setting& setting){
 void Environment::uninitialize(){
 	thread_space_.join_all_threads();
 
+	clear_cache();
 	full_gc();
 
 	builtin_ = null;
@@ -392,13 +393,7 @@ void Environment::uninitialize(){
 	text_map_ = null;
 
 	string_space_.uninitialize();
-
-	full_gc();
-
 	thread_space_.uninitialize();
-
-	full_gc();
-
 	object_space_.uninitialize();
 
 #ifndef XTAL_NO_SMALL_ALLOCATOR
@@ -483,7 +478,6 @@ void set_cpp_var(void* p, void (*deleter)(void*), uint_t key){
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 }
 

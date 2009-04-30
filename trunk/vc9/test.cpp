@@ -95,96 +95,65 @@ int main2(int argc, char** argv){
 	//test();
 
 	StringPtr sss = XTAL_STRING("‚±e‚ñe‚Ée‚¿e‚Í");
+
+	sss->send(Xid(aaa), 10);
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
-		fun fannkuch(n)
+		bit_num: 0;
+		byte_acc: 0;
+		i: 0; iter: 50;
+		x: 0; y: 0; limit2: 4;
+		Zr: 0; Zi: 0; Cr: 0; Ci: 0; Tr: 0; Ti: 0;
+
+		h: arg[0];
+		w: h;
+
+		//stdout: open("../mandelbrot.ppm", "w");
+
+		stdout.printf("P4\n%d %d\n", w, h);
+
+		for (y = 0 ; y < h ; y++)
 		{
-			n = 4;
-			if(n < 1) return 0;
-			
-			flipsMax: 0;
-			r: n;
-			numPermutationsPrinted: 0;
-			
-			permutation: Array(n);
-			count: Array(n);
-			tmp: 0;
-
-			for(i:0; i<n; i++) permutation[i]=i;
-			
-			while(true)
+			for (x = 0 ; x < w ; x++)
 			{
-				if(numPermutationsPrinted < 30)
-				{
-					permutation.each{
-						print(it+1);
-					}
-					print("\n");
-					numPermutationsPrinted++;
-				}
-				
-				while(r!=1)
-				{
-					count[r-1]=r;
-					r--;
-				}
-				
-				if(!(permutation[0]==0 || permutation[n-1]==n-1))
-				{
-					permForFlipping: permutation.clone;
-					flips:0;
-					
-					k: permForFlipping[0];
-					while(true)
-					{
-						i: 1; j: k-1;
-						while(i<j)
-						{
-							permForFlipping[i], permForFlipping[j] = permForFlipping[j], permForFlipping[i];
-							i++;
-							j--;
-						}
-						tmp = permForFlipping[k];
-						permForFlipping[k] = k;
-						k = tmp;
+				Zr = 0; Zi = 0; Tr = 0; Ti = 0.0;
 
-						
-						flips++;
+				Cr = (2.0 * x / w - 1.5); Ci = (2.0 * y / h - 1.0);
 
-						if(k==0)
-							break;
-					}
-					
-					if(flipsMax < flips)
-						flipsMax = flips;
-				}
-				
-				while(true)
+				for (i = 0 ; i < iter && (Tr + Ti <= limit2) ; i++)
 				{
-					if(r==n) return flipsMax;
-					
-					perm0: permutation[0];
-					for(i:0; i<r; i++) permutation[i]=permutation[i+1];
-					permutation[r]=perm0;
-					
-					count[r]-=1;
-					if(count[r] >0 ) break;
-					
-					++r;
+					Zi = 2.0 * Zr * Zi + Ci;
+					Zr = Tr - Ti + Cr;
+					Tr = Zr * Zr;
+					Ti = Zi * Zi;
 				}
-				
-			} 
+
+				byte_acc = byte_acc << 1;
+				if (Tr + Ti <= limit2) byte_acc = byte_acc | 1;
+
+				bit_num++;
+
+				if (bit_num == 8)
+				{
+					stdout.print(byte_acc);
+					byte_acc = 0;
+					bit_num = 0;
+				}
+				else if (x == w - 1)
+				{
+					byte_acc = byte_acc << (8 - w % 8);
+					stdout.print(byte_acc);
+					byte_acc = 0;
+					bit_num = 0;
+				}
+			}
 		}
 
-		n: ...[0];
-
-		r: fannkuch(n);
-
-		printf("Pfannkuchen(%s) = %s\n", n, r);
+		//stdout.close();	
 	))){
-//		code->inspect()->p();
-//		code->call();
+		code->inspect()->p();
+		code->call(4);
 	}
 
 

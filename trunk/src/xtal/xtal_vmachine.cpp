@@ -45,7 +45,6 @@ void VMachine::push_call(const inst_t* pc, int_t need_result_count,
 	f.self(self);
 	f.fun(null);
 	f.code(null);
-	f.arguments(null);
 	f.hint(null);
 	f.outer(null);
 
@@ -66,7 +65,6 @@ void VMachine::push_call(const inst_t* pc, const InstSend& inst){
 		fp->self(prev_ff().self());
 		fp->fun(null);
 		fp->code(null);
-		fp->arguments(null);
 		fp->hint(null);
 		fp->outer(null);
 
@@ -113,10 +111,11 @@ void VMachine::push_call(const inst_t* pc, const InstSend& inst){
 	f.target(pop());
 
 	if((inst.flags&CALL_FLAG_ARGS)!=0){
-		ArgumentsPtr args = ptr_cast<Arguments>(pop());
-		push_args(args, inst.named);
-		f.ordered_arg_count = args->ordered_size()+inst.ordered;
-		f.named_arg_count = args->named_size()+inst.named;
+		if(ArgumentsPtr args = ptr_cast<Arguments>(pop())){
+			push_args(args, inst.named);
+			f.ordered_arg_count = args->ordered_size()+inst.ordered;
+			f.named_arg_count = args->named_size()+inst.named;
+		}
 	}
 
 	scopes_.push(0);
@@ -136,7 +135,6 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 		fp->self(prev_ff().self());
 		fp->fun(null);
 		fp->code(null);
-		fp->arguments(null);
 		fp->hint(null);
 		fp->outer(null);
 	
@@ -162,10 +160,11 @@ void VMachine::push_call(const inst_t* pc, const InstCall& inst){
 	f.target(pop());
 
 	if((inst.flags&CALL_FLAG_ARGS)!=0){
-		ArgumentsPtr args = ptr_cast<Arguments>(pop());
-		push_args(args, inst.named);
-		f.ordered_arg_count = args->ordered_size()+inst.ordered;
-		f.named_arg_count = args->named_size()+inst.named;
+		if(ArgumentsPtr args = ptr_cast<Arguments>(pop())){
+			push_args(args, inst.named);
+			f.ordered_arg_count = args->ordered_size()+inst.ordered;
+			f.named_arg_count = args->named_size()+inst.named;
+		}
 	}
 
 	scopes_.push(0);
@@ -210,17 +209,22 @@ void VMachine::carry_over(Method* fun){
 		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
-	if(fun->extendable_param()){
-		f.arguments(inner_make_arguments(fun));
-	}
-	
 	FunInfo* info = fun->info();
 	if(int_t size = info->variable_size){
 		variables_.upsize(size);
 		f.variable_size += size;
 		Any* vars = &variables_[size-1];
-		for(int_t n = 0; n<size; ++n){
-			vars[n] = arg(n, fun);
+
+		if(fun->extendable_param()){
+			for(int_t n=0; n<size-1; ++n){
+				vars[n] = arg(n, fun);
+			}
+			vars[size-1] = inner_make_arguments(fun);
+		}
+		else{
+			for(int_t n=0; n<size; ++n){
+				vars[n] = arg(n, fun);
+			}
 		}
 	}
 	scopes_.top() = info;
@@ -247,10 +251,6 @@ void VMachine::mv_carry_over(Method* fun){
 		f.instance_variables = pvalue(f.self())->instance_variables();
 	}
 
-	if(fun->extendable_param()){
-		f.arguments(inner_make_arguments(fun));
-	}
-	
 	// –¼‘O•t‚«ˆø”‚Í×–‚
 	stack_.downsize(f.named_arg_count*2);
 
@@ -264,8 +264,17 @@ void VMachine::mv_carry_over(Method* fun){
 		variables_.upsize(size);
 		f.variable_size += size;
 		Any* vars = &variables_[size-1];
-		for(int_t n = 0; n<size; ++n){
-			vars[n] = get(size-1-n);
+
+		if(fun->extendable_param()){
+			for(int_t n=0; n<size-1; ++n){
+				vars[n] = arg(n, fun);
+			}
+			vars[size-1] = inner_make_arguments(fun);
+		}
+		else{
+			for(int_t n=0; n<size; ++n){
+				vars[n] = arg(n, fun);
+			}
 		}
 	}	
 	scopes_.top() = info;
@@ -624,11 +633,6 @@ XTAL_VM_SWITCH{
 	XTAL_VM_CASE(PushCallee){ // 3
 		push(fun()); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
-	}
-
-	XTAL_VM_CASE(PushArgs){ // 3
-		push(ff().arguments());
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(PushThis){ // 3

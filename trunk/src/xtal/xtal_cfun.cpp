@@ -33,7 +33,7 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 		param_n_ = pth.param_n;
 	}
 
-	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(Named);
+	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(NamedParam);
 	data_ = xmalloc(data_size);
 
 	// ä÷êîÇÉRÉsÅ[
@@ -51,9 +51,9 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 	}
 
 	if(param_n_){
-		Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+		NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 		for(int_t i=0; i<param_n_; ++i){
-			new(&params[i]) Named();
+			new(&params[i]) NamedParam();
 		}
 	}
 }
@@ -61,13 +61,13 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, int_t val
 
 NativeFun::~NativeFun(){
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	for(int_t i=0; i<param_n_; ++i){
-		params[i].~Named();
+		params[i].~NamedParam();
 	}
 
-	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(Named);
+	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(NamedParam);
 	xfree(data_, data_size);
 }
 
@@ -84,7 +84,7 @@ const NativeFunPtr& NativeFun::param(int_t i, const IDPtr& key, const Any& value
 	i--;
 
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	// ä˘Ç…ê›íËçœÇ›
 	XTAL_ASSERT(raweq(params[i].name, null) && raweq(params[i].value, undefined));
@@ -103,10 +103,10 @@ void NativeFun::visit_members(Visitor& m){
 	RefCountingHaveParent::visit_members(m);
 
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 	for(uint_t i=0; i<param_n_; ++i){
-		m & params[i];
+		m & params[i].name & params[i].value;
 	}
 }
 
@@ -140,7 +140,7 @@ void NativeFun::rawcall(const VMachinePtr& vm){
 	
 	{ // check arg type
 		Class** param_types = (Class**)((u8*)data_ +  val_size_);
-		Named* params = (Named*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+		NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
 
 		{
 			const AnyPtr& arg = vm->arg_this();

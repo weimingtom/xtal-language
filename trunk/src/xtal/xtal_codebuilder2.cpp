@@ -64,7 +64,6 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, const CompileInfo& info){
 		&CodeBuilder::compile_expr_TRUE,
 		&CodeBuilder::compile_expr_FALSE,
 		&CodeBuilder::compile_expr_CALLEE,
-		&CodeBuilder::compile_expr_ARGS,
 		&CodeBuilder::compile_expr_THIS,
 		&CodeBuilder::compile_expr_CURRENT_CONTEXT,
 		&CodeBuilder::compile_expr_NUMBER,
@@ -183,11 +182,6 @@ int_t CodeBuilder::compile_expr_FALSE(const ExprPtr& e, const CompileInfo& info)
 
 int_t CodeBuilder::compile_expr_CALLEE(const ExprPtr& e, const CompileInfo& info){
 	put_inst(InstPushCallee());
-	return 1;
-}
-
-int_t CodeBuilder::compile_expr_ARGS(const ExprPtr& e, const CompileInfo& info){
-	put_inst(InstPushArgs());
 	return 1;
 }
 

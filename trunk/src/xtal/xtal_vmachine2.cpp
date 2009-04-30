@@ -40,6 +40,17 @@ void VMachine::reset(){
 	debug_info_ = null;
 }
 
+void VMachine::FunFrame::set_null(){
+	xtal::set_null(fun_); 
+	xtal::set_null(code_); 
+	xtal::set_null(outer_);
+	xtal::set_null(self_);
+	xtal::set_null(hint_);
+	xtal::set_null(target_);
+	xtal::set_null(primary_key_);
+	xtal::set_null(secondary_key_);
+}
+
 void VMachine::recycle_call(){
 	FunFrame& f = ff();
 	downsize(f.ordered_arg_count+f.named_arg_count*2);
@@ -222,25 +233,7 @@ const AnyPtr& VMachine::arg_default(int_t pos, const IDPtr& name, const AnyPtr& 
 	return arg_default(name, def);
 }
 
-const AnyPtr& VMachine::arg_default(const Named& name_and_def){
-	FunFrame& f = ff();
-	for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
-		if(raweq(get(sz*2-1-(i*2+0)), name_and_def.name)){
-			return get(sz*2-1-(i*2+1));
-		}
-	}
-	return name_and_def.value;
-}
-
-const AnyPtr& VMachine::arg_default(int_t pos, const Named& name_and_def){
-	FunFrame& f = ff();
-	if(pos<f.ordered_arg_count){
-		return get(f.args_stack_size()-1-pos);
-	}
-	return arg_default(name_and_def);
-}
-
-void VMachine::adjust_args(const Named* params, int_t num){
+void VMachine::adjust_args(const NamedParam* params, int_t num){
 	FunFrame& f = ff();
 	int_t offset = f.named_arg_count*2;
 	int_t k = 0;
@@ -644,6 +637,21 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	//return 0;
 }
 
+const AnyPtr& VMachine::catch_except(){
+	except_[2] = except();
+	except_[0] = null;
+	return ap(except_[2]);
+}
+
+void VMachine::set_except(const AnyPtr& e){
+	if(!ap(except_[0])){
+		except_[0] = e;
+	}
+	else{
+		XTAL_ASSERT(false); // 例外をハンドルせずに次の例外を設定した
+	}
+}
+
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
 	m & debug_info_ & except_[0] & except_[1] & except_[2];
@@ -767,7 +775,6 @@ void VMachine::FunFrame::inc_ref(){
 	inc_ref_count_force(outer_);
 	
 	inc_ref_count_force(self_);
-	inc_ref_count_force(arguments_);
 	inc_ref_count_force(hint_);
 
 	inc_ref_count_force(target_);
@@ -780,7 +787,6 @@ void VMachine::FunFrame::dec_ref(){
 	dec_ref_count_force(outer_);
 	
 	dec_ref_count_force(self_);
-	dec_ref_count_force(arguments_);
 	dec_ref_count_force(hint_);
 
 	dec_ref_count_force(target_);
@@ -789,7 +795,7 @@ void VMachine::FunFrame::dec_ref(){
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
-	m & v.fun_ & v.outer_ & v.arguments_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
+	m & v.fun_ & v.outer_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
 
 void VMachine::make_procedure(const VMachinePtr& vm){

@@ -3,7 +3,8 @@
 namespace xtal{
 
 int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code){
-	return (int_t)(((inst_t*)inst - code->data()) + value + ((u8*)&value - (u8*)inst));
+	int_t pc = (inst_t*)inst - code->data();
+	return pc + (u8*)&value - (u8*)inst;
 }
 
 StringPtr make_inst_string(const char_t* InstName){

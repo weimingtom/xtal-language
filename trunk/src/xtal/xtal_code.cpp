@@ -224,7 +224,6 @@ StringPtr Code::inspect_range(int_t start, int_t end){
 		XTAL_CASE(InstPushFloat1Byte::NUMBER){ temp = ((InstPushFloat1Byte*)pc)->inspect(code); sz = InstPushFloat1Byte::ISIZE; }
 		XTAL_CASE(InstPushFloat2Byte::NUMBER){ temp = ((InstPushFloat2Byte*)pc)->inspect(code); sz = InstPushFloat2Byte::ISIZE; }
 		XTAL_CASE(InstPushCallee::NUMBER){ temp = ((InstPushCallee*)pc)->inspect(code); sz = InstPushCallee::ISIZE; }
-		XTAL_CASE(InstPushArgs::NUMBER){ temp = ((InstPushArgs*)pc)->inspect(code); sz = InstPushArgs::ISIZE; }
 		XTAL_CASE(InstPushThis::NUMBER){ temp = ((InstPushThis*)pc)->inspect(code); sz = InstPushThis::ISIZE; }
 		XTAL_CASE(InstPushCurrentContext::NUMBER){ temp = ((InstPushCurrentContext*)pc)->inspect(code); sz = InstPushCurrentContext::ISIZE; }
 		XTAL_CASE(InstPop::NUMBER){ temp = ((InstPop*)pc)->inspect(code); sz = InstPop::ISIZE; }

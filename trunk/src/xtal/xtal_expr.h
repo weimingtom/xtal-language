@@ -20,7 +20,6 @@ enum ExprType{
 	EXPR_TRUE,
 	EXPR_FALSE,
 	EXPR_CALLEE,
-	EXPR_ARGS,
 	EXPR_THIS,
 	EXPR_CURRENT_CONTEXT,
 	EXPR_NUMBER,
@@ -207,7 +206,7 @@ public:
 
 	XTAL_DEF_MEMBER(0, int_t, fun_kind);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, fun_params);
-	XTAL_DEF_MEMBER(2, const ExprPtr&, fun_extendable_param);
+	XTAL_DEF_MEMBER(2, const IDPtr&, fun_extendable_param);
 	XTAL_DEF_MEMBER(3, const ExprPtr&, fun_body);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, massign_lhs_exprs);

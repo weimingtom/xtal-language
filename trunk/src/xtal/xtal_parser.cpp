@@ -1113,8 +1113,6 @@ bool Parser::parse_term(){
 					return true; 
 				}
 				
-				XTAL_CASE(c3('.','.','.')){ eb_.splice(EXPR_ARGS, 0); return true; }
-
 ////////////////////////////////////////////////////////////////////////////////////////
 
 				XTAL_CASE('+'){ expect_parse_expr(PRI_POS, r_space); eb_.splice(EXPR_POS, 1); return true; }
@@ -2048,9 +2046,7 @@ void Parser::parse_fun(int_t kind){
 		eb_.end(0, state);
 
 		if(eat(c3('.','.','.'))){ // extendable
-			if(!parse_expr()){
-				eb_.splice(EXPR_ARGS, 0);
-			}
+			expect_parse_identifier();
 		}
 		else{
 			eb_.push(null);
@@ -2105,9 +2101,7 @@ void Parser::parse_call(){
 	eb_.end(0, state);
 
 	if(eat(c3('.','.','.'))){ // extendable
-		if(!parse_expr()){
-			eb_.splice(EXPR_ARGS, 0);
-		}
+		expect_parse_expr();
 	}
 	else{
 		eb_.push(null);

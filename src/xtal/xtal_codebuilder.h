@@ -257,7 +257,6 @@ public:
 	int_t compile_expr_TRUE(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_FALSE(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_CALLEE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ARGS(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_THIS(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_CURRENT_CONTEXT(const ExprPtr& e, const CompileInfo& info);
 	int_t compile_expr_NUMBER(const ExprPtr& e, const CompileInfo& info);

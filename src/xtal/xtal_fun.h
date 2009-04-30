@@ -121,7 +121,7 @@ public:
 
 	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+info_->variable_identifier_offset); }
 
-	int_t param_size(){ return info_->variable_size; }	
+	int_t param_size(){ return info_->variable_size-(int)extendable_param(); }	
 
 	bool extendable_param(){ return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; }
 

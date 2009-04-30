@@ -418,31 +418,6 @@ private:
 	StringPtr it_, end_;
 };
 
-/**
-* \brief 関数呼び出しで、名前付き引数として渡すためのクラス
-*
-*/
-struct Named{
-	IDPtr name;
-	AnyPtr value;
-
-	/**
-	* \brief 名前と値を指定して構築する。
-	*/
-	Named(const IDPtr& name, const AnyPtr& value)
-		:name(name), value(value){}
-
-	/**
-	* \brief 空な状態で生成する
-	*/
-	Named()
-		:name(null), value(undefined){}
-};
-
-inline void visit_members(Visitor& m, const Named& p){
-	m & p.name & p.value;
-}
-
 }
 
 #endif // XTAL_STRING_H_INCLUDE_GUARD

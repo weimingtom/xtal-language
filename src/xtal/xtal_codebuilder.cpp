@@ -134,12 +134,15 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().var_frame_count = var_frames_.size();
 	ff().stack_count = 0;
 	ff().max_stack_count = 0;
-	ff().variable_count = 0;
-	ff().max_variable_count = 0;
+	ff().variable_count = 1;
+	ff().max_variable_count = 1;
 	ff().extendable_param = true;
 
 	// 変数フレームを作成して、引数を登録する
 	var_begin(VarFrame::FRAME);
+
+	// コマンドライン引数
+	var_define(Xid(arg));
 
 	// 関数コアを作成
 	FunInfo info;
@@ -148,8 +151,14 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	info.min_param_count = 0;
 	info.max_param_count = 0;
 	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
-	info.variable_size = 0;
-	info.variable_identifier_offset = 0;
+
+	// 引数の名前を識別子テーブルに順番に乗せる
+	info.variable_size = vf().entries.size();
+	info.variable_identifier_offset = result_->identifier_table_->size();
+	for(uint_t i=0; i<vf().entries.size(); ++i){
+		vf().entries[i].initialized = true;
+		result_->identifier_table_->push_back(vf().entries[i].name);
+	}
 
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
@@ -218,7 +227,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			InstLocalVariable1Byte prev_inst;
 			uint_t prev_op_size = sizeof(InstLocalVariable1Byte);
 			uint_t prev_op_isize = sizeof(InstLocalVariable1Byte)/sizeof(inst_t);
-			memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
+			std::memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
 			result_->code_.downsize(prev_op_isize);
 
 			prev_inst_op_ = -1;
@@ -1382,17 +1391,22 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	ff().max_variable_count = 0;
 	ff().extendable_param = e->fun_extendable_param();
 
-
 	// 変数フレームを作成して、引数を登録する
 	var_begin(VarFrame::DEFAULT);
 	Xfor_cast(const ExprPtr& v1, e->fun_params()){
-		const ExprPtr& v = ep(v1->at(0));
-		if(v->itag()==EXPR_LVAR){
-			var_define(v->lvar_name());
+		if(const ExprPtr& v = ep(v1->at(0))){
+			if(v->itag()==EXPR_LVAR){
+				var_define(v->lvar_name());
+			}
+			else if(v->itag()==EXPR_IVAR){
+				var_define(v->ivar_name());
+			}
 		}
-		else if(v->itag()==EXPR_IVAR){
-			var_define(v->ivar_name());
-		}
+	}
+
+	// 可変長引数があるか？
+	if(e->fun_extendable_param()){
+		var_define(e->fun_extendable_param());
 	}
 
 	// 関数コアを作成
@@ -1407,6 +1421,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	info.variable_size = vf().entries.size();
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
+		vf().entries[i].initialized = true;
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 

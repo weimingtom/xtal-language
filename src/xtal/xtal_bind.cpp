@@ -1105,8 +1105,8 @@ Stream::split: method(pattern) fiber{
 	}
 }
 
-Stream::printf: method(format_string, ...){
-	this.print(format(format_string)(...));
+Stream::printf: method(format_string, ...args){
+	this.print(format(format_string)(...args));
 }
 
 ),
@@ -1344,12 +1344,12 @@ Iterator::take: method(times){
 	}
 }
 
-Iterator::zip: method(...){
-	return builtin::zip(this, ...);
+Iterator::zip: method(...args){
+	return builtin::zip(this, ...args);
 }
 
-Iterator::chain: method(...){
-	return builtin::chain(this, ...);
+Iterator::chain: method(...args){
+	return builtin::chain(this, ...args);
 }
 
 Iterator::cycle: method fiber{
@@ -1782,27 +1782,26 @@ builtin::CompileError::initialize: method(message, errors:[]){
 	Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));	
 }
 
-builtin::print: fun(...){
-	return stdout.print(...);
+builtin::print: fun(...args){
+	return stdout.print(...args);
 }
 
-builtin::println: fun(...){
-	return stdout.println(...);
+builtin::println: fun(...args){
+	return stdout.println(...args);
 }
 
-builtin::printf: fun(format_string, ...){
-	return stdout.printf(format_string, ...);
+builtin::printf: fun(format_string, ...args){
+	return stdout.printf(format_string, ...args);
 }
 
-builtin::load: fun(file_name, ...){
+builtin::load: fun(file_name, ...args){
 	code: compile_file(file_name);
-	return code(...);
+	return code(...args);
 }
 
-builtin::chain: fun(...){
-	arg: ...;
+builtin::chain: fun(...args){
 	return fiber{
-		arg.ordered_arguments{
+		args.ordered_arguments{
 			it{
 				yield it;
 			}

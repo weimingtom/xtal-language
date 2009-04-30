@@ -8,6 +8,95 @@
 #pragma once
 
 namespace xtal{
+	
+/**
+* \brief 関数呼び出しで、名前付き引数として渡すためのクラス
+*
+*/
+struct Named{
+	const IDPtr& name;
+	const Any& value;
+
+	/**
+	* \brief 名前と値を指定して構築する。
+	*/
+	Named(const IDPtr& name, const Any& value)
+		:name(name), value(value){}
+
+	/**
+	* \brief 空な状態で生成する
+	*/
+	Named()
+		:name((const IDPtr&)null), value(undefined){}
+};
+
+struct NamedParam{
+	NamedParam()
+		:name(null), value(undefined){}
+	IDPtr name;
+	AnyPtr value;
+};
+
+struct Param{
+	enum{
+		SHIFT = 16,
+
+		NAMED = (1<<SHIFT) + 1,
+		STR = (1<<SHIFT) + 2,
+		STR8 = (1<<SHIFT) + 3
+	};
+
+	Param(const Named& n){
+		type = NAMED;
+		name.name = &n.name;
+		name.value = &n.value;
+	}
+
+	Param(const char_t* s){
+		type = STR;
+		str = s;
+	}
+
+	Param(const char8_t* s){
+		type = STR8;
+		str8 = s;
+	}
+
+	Param(const Any& v){
+		type = xtal::type(v);
+		value = rawvalue(v);
+	}
+
+	Param(char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(signed char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(unsigned char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(short v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(unsigned short v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(int v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(unsigned int v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(long v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(unsigned long v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+
+	Param(float v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
+	Param(double v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
+	Param(long double v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
+
+	Param(bool b){ type = TYPE_FALSE + (int)b; value.ivalue = 0; }
+
+	int_t type;
+
+	struct NamedPair{
+		const IDPtr* name;
+		const Any* value;		
+	};
+
+	union{
+		const char_t* str;
+		const char8_t* str8;
+		NamedPair name;
+		AnyRawValue value;
+	};
+};
 
 // XTAL仮想マシン
 class VMachine : public GCObserver{
@@ -37,7 +126,7 @@ public:
 	* \brief 名前付き引数を1個積む。
 	*
 	*/
-	void push_arg(const Named& p){ push_arg(p.name, p.value); }
+	void push_arg(const Named& p){ push_arg(p.name, ap(p.value)); }
 
 	/**
 	* \brief 引数を配列の要素数積む。
@@ -198,20 +287,6 @@ public:
 	* もしnameに対応する引数が無ければdefの値を返す。
 	*/
 	const AnyPtr& arg_default(int_t pos, const IDPtr& name, const AnyPtr& def);
-	
-	/**
-	* \brief nameに対応する引数を得る。
-	*
-	* もしnameに対応する引数が無ければdefの値を返す。
-	*/
-	const AnyPtr& arg_default(const Named& name_and_def);
-
-	/**
-	* \brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
-	*
-	* もしnameに対応する引数が無ければdefの値を返す。
-	*/
-	const AnyPtr& arg_default(int_t pos, const Named& name_and_def);
 
 	/**
 	* \brief pos番目の名前指定引数の名前を取得。
@@ -222,7 +297,7 @@ public:
 		return unchecked_ptr_cast<ID>(get(named_arg_count()*2-1-(pos*2+0)));
 	}
 
-	void adjust_args(const Named* params, int_t num);
+	void adjust_args(const NamedParam* params, int_t num);
 
 	/**
 	* \brief pos番目の引数を得る。
@@ -320,24 +395,13 @@ public:
 
 public:
 
-	const AnyPtr& catch_except(){
-		except_[2] = except();
-		except_[0] = null;
-		return ap(except_[2]);
-	}
+	const AnyPtr& catch_except();
 
 	const AnyPtr& except(){
 		return ap(except_[0]);
 	}
 
-	void set_except(const AnyPtr& e){
-		if(!ap(except_[0])){
-			except_[0] = e;
-		}
-		else{
-			XTAL_ASSERT(false); // 例外をハンドルせずに次の例外を設定した
-		}
-	}
+	void set_except(const AnyPtr& e);
 
 	void set_except_0(const Any& e);
 
@@ -477,9 +541,6 @@ public:
 		// 関数が呼ばれたときのthisオブジェクト
 		Any self_;
 
-		// オブジェクト化した引数。
-		Any arguments_;
-		
 		// デバッグメッセージ出力用のヒント
 		Any hint_;
 
@@ -492,23 +553,12 @@ public:
 		// UnsuportedErrorのためにsecondary_keyをおくところ
 		Any secondary_key_;
 
-		void set_null(){
-			xtal::set_null(fun_); 
-			xtal::set_null(code_); 
-			xtal::set_null(outer_);
-			xtal::set_null(arguments_);
-			xtal::set_null(self_);
-			xtal::set_null(hint_);
-			xtal::set_null(target_);
-			xtal::set_null(primary_key_);
-			xtal::set_null(secondary_key_);
-		}
+		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
 		const CodePtr& code() const{ return unchecked_ptr_cast<Code>(ap(code_)); }
 		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& self() const{ return ap(self_); }
-		const ArgumentsPtr& arguments() const{ return unchecked_ptr_cast<Arguments>(ap(arguments_)); }
 		const AnyPtr& hint() const{ return ap(hint_); }
 		const AnyPtr& target() const{ return ap(target_); }
 		const IDPtr& primary_key() const{ return unchecked_ptr_cast<ID>(ap(primary_key_)); }
@@ -522,7 +572,6 @@ public:
 		void code(const Any& v){ code_ = v; }
 		void outer(const Any& v){ outer_ = v; }
 		void self(const Any& v){ self_ = v; }
-		void arguments(const Any& v){ arguments_ = v; }
 		void hint(const Any& v){ hint_ = v; }
 		void target(const Any& v){ target_ = v; }
 		void primary_key(const Any& v){ primary_key_ = v; }

@@ -43,9 +43,6 @@ AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, 
 }
 
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
-
 	if(!primary_key){
 		return null;
 	}

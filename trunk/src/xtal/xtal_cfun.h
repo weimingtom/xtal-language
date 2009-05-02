@@ -192,6 +192,11 @@ struct cmemfun_holder{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
 };
 
+template<class Fun, Fun fun>
+struct cmemfun_holder_static : cmemfun_holder<Fun>{
+	enum{ PARAMS = 0, PARAMS2 = 0 };
+};
+
 template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, class A5=void, class A6=void, class A7=void, class A8=void, class A9=void>
 struct ctor_fun{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
@@ -200,6 +205,7 @@ struct ctor_fun{
 struct param_types_holder_n{
 	void (*fun)(VMAndData& pvm); // 関数
 	CppClassSymbolData*** param_types; // thisと引数の型を表すクラスシンボルへのポインタ
+	u8 size;
 	u8 param_n; // 引数の数
 	u8 extendable; // 可変長かどうか
 };
@@ -213,6 +219,7 @@ template<class Fun>
 param_types_holder_n fun_param_holder<Fun>::value = {
 	&cfun<Fun::PARAMS, Fun>::f,
 	Fun::fun_param_holder::values,
+	sizeof(Fun),
 	Fun::PARAM_N,
 	Fun::EXTENDABLE,
 };

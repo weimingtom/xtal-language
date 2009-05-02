@@ -41,9 +41,9 @@ struct Param{
 	enum{
 		SHIFT = 16,
 
-		NAMED = (1<<SHIFT) + 1,
-		STR = (1<<SHIFT) + 2,
-		STR8 = (1<<SHIFT) + 3
+		NAMED = (1<<SHIFT),
+		STR = (2<<SHIFT),
+		STR8 = (3<<SHIFT)
 	};
 
 	Param(const Named& n){
@@ -62,7 +62,7 @@ struct Param{
 		str8 = s;
 	}
 
-	Param(const Any& v){
+	Param(const AnyPtr& v){
 		type = xtal::type(v);
 		value = rawvalue(v);
 	}
@@ -129,6 +129,12 @@ public:
 	void push_arg(const Named& p){ push_arg(p.name, ap(p.value)); }
 
 	/**
+	* \brief 引数を1個積む。
+	*
+	*/
+	void push_arg(const Param& p);
+
+	/**
 	* \brief 引数を配列の要素数積む。
 	*
 	*/
@@ -185,61 +191,26 @@ public:
 //{REPEAT{{
 /*
 	/// \brief 関数を呼び出す用意をし、同時に引数を`n+1`個積む
-	template<class A0 #COMMA_REPEAT#class A`i+1`#>
-	void setup_call(int_t need_result_count, const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
-		push_ff(need_result_count);
-		push_arg(a0);
-		#REPEAT#push_arg(a`i+1`);# 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#);
 */
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を1個積む
-	template<class A0 >
-	void setup_call(int_t need_result_count, const A0& a0 ){
-		push_ff(need_result_count);
-		push_arg(a0);
-		 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 );
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を2個積む
-	template<class A0 , class A1>
-	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1){
-		push_ff(need_result_count);
-		push_arg(a0);
-		push_arg(a1); 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1);
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を3個積む
-	template<class A0 , class A1, class A2>
-	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2){
-		push_ff(need_result_count);
-		push_arg(a0);
-		push_arg(a1);push_arg(a2); 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2);
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を4個積む
-	template<class A0 , class A1, class A2, class A3>
-	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
-		push_ff(need_result_count);
-		push_arg(a0);
-		push_arg(a1);push_arg(a2);push_arg(a3); 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3);
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を5個積む
-	template<class A0 , class A1, class A2, class A3, class A4>
-	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-		push_ff(need_result_count);
-		push_arg(a0);
-		push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4);
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を6個積む
-	template<class A0 , class A1, class A2, class A3, class A4, class A5>
-	void setup_call(int_t need_result_count, const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
-		push_ff(need_result_count);
-		push_arg(a0);
-		push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
-	}
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5);
 
 //}}REPEAT}
 

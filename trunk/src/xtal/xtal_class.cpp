@@ -133,11 +133,11 @@ void Class::overwrite(const ClassPtr& p){
 			AnyPtr obj = alive_object(i);
 			if(type(obj)==TYPE_BASE){
 				if(obj->is(to_smartptr(this))){
-					AnyPtr data = obj->serial_save(to_smartptr(this));
+					AnyPtr data = obj->save_instance_variables(to_smartptr(this));
 					if(pvalue(obj)->instance_variables()){
 						pvalue(obj)->instance_variables()->replace((ClassInfo*)scope_info_, (ClassInfo*)p->scope_info_);
 					}
-					obj->serial_load(p, data);
+					obj->load_instance_variables(p, data);
 
 					{
 						Key key = {Xid(reloaded), undefined};
@@ -294,7 +294,6 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 }
 
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	int_t minv = 0xffffff;
 	IDPtr minid = null;
 	Xfor_cast(const ValuesPtr& v, send(Xid(members_ancestors_too))){
@@ -322,17 +321,14 @@ void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibilit
 }
 
 const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFun>(pth, val, val_size), secondary_key, accessibility));
 }
 
 const NativeFunPtr& Class::def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, to_smartptr(this)), secondary_key, accessibility));
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	def(primary_key, value, secondary_key, accessibility);
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
@@ -343,7 +339,6 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 }
 
 void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -371,7 +366,6 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 }
 
 void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -387,7 +381,6 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 }
 
 const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	cpp_class<Any>()->bind();
 
 	Key key = {primary_key, secondary_key};
@@ -408,7 +401,6 @@ const AnyPtr& Class::bases_member(const IDPtr& name){
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 
@@ -433,7 +425,6 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 }
 
 const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	bind();
 
 	{
@@ -482,7 +473,6 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 }
 
 bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -497,7 +487,6 @@ bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert 
 	members_.set_at(i, value);
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};

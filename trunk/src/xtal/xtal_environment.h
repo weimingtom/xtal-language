@@ -580,9 +580,13 @@ AnyPtr load_and_save(const StringPtr& file_name);
 
 CodePtr source(const char_t* src, int_t size);
 
+void exec_source(const char_t* src, int_t size);
+
 #endif
 
 CodePtr compiled_source(const void* src, int_t size);
+
+void exec_compiled_source(const void* src, int_t size);
 
 }
 

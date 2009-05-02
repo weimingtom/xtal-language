@@ -44,4 +44,13 @@ SmartPtr<Any>::SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t)
 	register_gc(p);
 }
 
+SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
+	:Any(p){
+	inc_ref_count_force(*this);
+}
+
+SmartPtr<Any>::~SmartPtr(){
+	dec_ref_count_force(*this);
+}	
+		
 }

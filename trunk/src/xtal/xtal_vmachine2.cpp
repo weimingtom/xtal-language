@@ -51,6 +51,53 @@ void VMachine::FunFrame::set_null(){
 	xtal::set_null(secondary_key_);
 }
 
+//{REPEAT{{
+/*
+void VMachine::setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#){
+	push_ff(need_result_count);
+	push_arg(a0);
+	#REPEAT#push_arg(a`i+1`);# 
+}
+*/
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 ){
+	push_ff(need_result_count);
+	push_arg(a0);
+	 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1){
+	push_ff(need_result_count);
+	push_arg(a0);
+	push_arg(a1); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2){
+	push_ff(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3){
+	push_ff(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4){
+	push_ff(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5){
+	push_ff(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
+}
+
+//}}REPEAT}
+
 void VMachine::recycle_call(){
 	FunFrame& f = ff();
 	downsize(f.ordered_arg_count+f.named_arg_count*2);
@@ -80,6 +127,35 @@ void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
 	push(name);
 	push(value);
 }
+
+void VMachine::push_arg(const Param& p){
+	switch(p.type>>Param::SHIFT){
+		XTAL_NODEFAULT;
+
+		XTAL_CASE(0){
+			Any temp;
+			set_type_value(temp, p.type, p.value);
+			push(ap(temp));
+			ff().ordered_arg_count++;
+		}
+
+		XTAL_CASE(Param::NAMED>>Param::SHIFT){
+			push(*p.name.name);
+			push(*p.name.value);
+			ff().named_arg_count++;
+		}
+
+		XTAL_CASE(Param::STR>>Param::SHIFT){
+			push(xnew<String>(p.str));
+			ff().ordered_arg_count++;
+		}
+
+		XTAL_CASE(Param::STR8>>Param::SHIFT){
+			push(xnew<String>(p.str8));
+			ff().ordered_arg_count++;
+		}
+	}
+}
 	
 void VMachine::push_ordered_args(const ArrayPtr& p){ 
 	Xfor(v, p){
@@ -89,7 +165,7 @@ void VMachine::push_ordered_args(const ArrayPtr& p){
 
 void VMachine::push_named_args(const MapPtr& p){ 
 	Xfor2(k, v, p){
-		push_arg(cast<const IDPtr&>(k), v);
+		push_arg(ptr_cast<ID>(k), v);
 	}
 }
 	

@@ -113,25 +113,13 @@
 #endif
 
 #ifdef XTAL_USE_COMPILED_EMB
-#define Xemb(text, compiled_text) \
-	if(::xtal::CodePtr code = ::xtal::compiled_source(compiled_text, sizeof(compiled_text)-1)){\
-		code->call();\
-	}\
-	else{\
-		XTAL_CATCH_EXCEPT(e){\
-			::xtal::stderr_stream()->println(e);\
-		}\
-	}
+
+#define Xemb(text, compiled_text) ::xtal::exec_compiled_source(compiled_text, sizeof(compiled_text)-1)
+
 #else
-#define Xemb(text, compiled_text) \
-	if(::xtal::CodePtr code = ::xtal::source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)){\
-		code->call();\
-	}\
-	else{\
-		XTAL_CATCH_EXCEPT(e){\
-			::xtal::stderr_stream()->println(e);\
-		}\
-	}
+
+#define Xemb(text, compiled_text) ::xtal::exec_source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)
+
 #endif
 
 /*

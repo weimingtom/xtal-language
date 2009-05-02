@@ -96,21 +96,21 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 			if(sizeof(char_t)==1){
 				stream_->put_u8(TSTRING8);
-				stream_->put_i32be(sz);
+				stream_->put_u32be(sz);
 				for(size_t i=0; i<sz; ++i){
 					stream_->put_u8(str[i]);
 				}
 			}
 			else if(sizeof(char_t)==2){
 				stream_->put_u8(TSTRING16);
-				stream_->put_i32be(sz);
+				stream_->put_u32be(sz);
 				for(size_t i=0; i<sz; ++i){
 					stream_->put_u16be(str[i]);
 				}
 			}
 			else{
 				stream_->put_u8(TSTRING32);
-				stream_->put_i32be(sz);
+				stream_->put_u32be(sz);
 				for(size_t i=0; i<sz; ++i){
 					stream_->put_u32be(str[i]);
 				}
@@ -155,31 +155,70 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		stream_->put_u8(0); 
 		stream_->put_u8(0);
 		
-		int_t sz;
+		uint_t sz;
 		sz = p->code_.size();
 		stream_->put_u32be(sz);
-		if(sz!=0){ stream_->write(&p->code_[0], sizeof(p->code_[0])*sz); }
+		if(sz!=0){ stream_->write(&p->code_[0], sz); }	
 		
 		sz = p->scope_info_table_.size();
 		stream_->put_u16be(sz);
-		if(sz!=0){ stream_->write(&p->scope_info_table_[0], sizeof(p->scope_info_table_[0])*sz); }
-
+		for(uint_t i=0; i<sz; ++i){
+			ScopeInfo& info = p->scope_info_table_[i];
+			stream_->put_u32be(info.pc);
+			stream_->put_u8(info.kind);
+			stream_->put_u8(info.flags);
+			stream_->put_u16be(info.variable_identifier_offset);
+			stream_->put_u16be(info.variable_size);
+		}
+		
 		sz = p->class_info_table_.size();
 		stream_->put_u16be(sz);
-		if(sz!=0){ stream_->write(&p->class_info_table_[0], sizeof(p->class_info_table_[0])*sz); }
+		for(uint_t i=0; i<sz; ++i){
+			ClassInfo& info = p->class_info_table_[i];
+			stream_->put_u32be(info.pc);
+			stream_->put_u8(info.kind);
+			stream_->put_u8(info.flags);
+			stream_->put_u16be(info.variable_identifier_offset);
+			stream_->put_u16be(info.variable_size);
+
+			stream_->put_u16be(info.instance_variable_size);
+			stream_->put_u16be(info.instance_variable_identifier_offset);
+			stream_->put_u8(info.mixins);
+		}
 
 		sz = p->xfun_info_table_.size();
 		stream_->put_u16be(sz);
-		if(sz!=0){ stream_->write(&p->xfun_info_table_[0], sizeof(p->xfun_info_table_[0])*sz); }
+		for(uint_t i=0; i<sz; ++i){
+			FunInfo& info = p->xfun_info_table_[i];
+			stream_->put_u32be(info.pc);
+			stream_->put_u8(info.kind);
+			stream_->put_u8(info.flags);
+			stream_->put_u16be(info.variable_identifier_offset);
+			stream_->put_u16be(info.variable_size);
+			
+			stream_->put_u16be(info.max_stack);
+			stream_->put_u16be(info.max_variable);
+			stream_->put_u8(info.min_param_count);
+			stream_->put_u8(info.max_param_count);
+		}
 
 		sz = p->except_info_table_.size();
 		stream_->put_u16be(sz);
-		if(sz!=0){ stream_->write(&p->except_info_table_[0], sizeof(p->except_info_table_[0])*sz); }
-
+		for(uint_t i=0; i<sz; ++i){
+			ExceptInfo& info = p->except_info_table_[i];
+			stream_->put_u32be(info.catch_pc);
+			stream_->put_u32be(info.finally_pc);
+			stream_->put_u32be(info.end_pc);
+		}
+		
 		sz = p->lineno_table_.size();
 		stream_->put_u16be(sz);
-		if(sz!=0){ stream_->write(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
-
+		for(uint_t i=0; i<sz; ++i){
+			Code::LineNumberInfo& info = p->lineno_table_[i];
+			stream_->put_u32be(info.start_pc);
+			stream_->put_u32be(info.lineno);
+		}
+			
 		sz = p->once_table_->size();
 		stream_->put_u16be(sz);
 
@@ -217,8 +256,203 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		inner_serialize(v->get_class()); 
 
 		// s_saveでserializableなオブジェクトを取り出しserializeする
-		inner_serialize(v->send(Xid(s_save)));
+		inner_serialize(v->s_save());
 	}
+}
+
+AnyPtr Serializer::inner_deserialize_serial_new(){
+	int_t num = append_value(null);
+
+	// serial_newをするクラスを取り出す
+	ClassPtr c(ptr_cast<Class>(inner_deserialize()));
+
+	const VMachinePtr& vm = vmachine();
+
+	// serial_newを呼び出して、保存しておく
+	vm->setup_call(1);
+	c->s_new(vm);
+	AnyPtr ret = vm->result();
+	values_->set_at(num, ret);
+	vm->cleanup_call();
+
+	ret->s_load(inner_deserialize());
+
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_name(){
+	int_t num = append_value(null);
+	values_->set_at(num, demangle(inner_deserialize()));
+	return values_->at(num);
+}
+
+AnyPtr Serializer::inner_deserialize_string8(){
+	int_t sz = stream_->get_u32be();
+	XMallocGuard guard(sizeof(char_t)*sz);
+	char_t* p = (char_t*)guard.get();
+	for(int_t i = 0; i<sz; ++i){
+		p[i] = (char_t)stream_->get_u8();
+	}
+	IDPtr ret = xnew<ID>(p, sz);
+	append_value(ret);
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_string16(){
+	uint_t sz = stream_->get_u32be();
+	XMallocGuard guard(sizeof(char_t)*sz);
+	char_t* p = (char_t*)guard.get();
+	for(uint_t i = 0; i<sz; ++i){
+		p[i] = (char_t)stream_->get_u16be();
+	}
+	IDPtr ret = xnew<ID>(p, sz);
+	append_value(ret);
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_string32(){
+	uint_t sz = stream_->get_u32be();
+	XMallocGuard guard(sizeof(char_t)*sz);
+	char_t* p = (char_t*)guard.get();
+	for(uint_t i = 0; i<sz; ++i){
+		p[i] = (char_t)stream_->get_u32be();
+	}
+	IDPtr ret = xnew<ID>(p, sz);
+	append_value(ret);
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_array(){
+	uint_t sz = stream_->get_u32be();
+	ArrayPtr ret = xnew<Array>(sz);
+	append_value(ret);
+	for(uint_t i = 0; i<sz; ++i){
+		ret->set_at(i, inner_deserialize());
+	}				
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_values(){
+	ValuesPtr ret = xnew<Values>(null);
+	append_value(ret);
+	AnyPtr head = inner_deserialize();
+	AnyPtr tail = inner_deserialize();
+	ret->set(head, unchecked_ptr_cast<Values>(tail));		
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_map(){
+	int_t sz = stream_->get_u32be();
+	MapPtr ret(xnew<Map>());
+	append_value(ret);
+	AnyPtr key;
+	for(int_t i = 0; i<sz; ++i){
+		key = inner_deserialize();
+		ret->set_at(key, inner_deserialize());
+	}				
+	return ret;
+}
+
+AnyPtr Serializer::inner_deserialize_code(){
+	CodePtr p = xnew<Code>();
+
+	if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
+		return null;
+	}
+
+	xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
+	if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
+		return null;
+	}
+	
+	stream_->get_u8();
+	stream_->get_u8();
+
+	uint_t sz;
+	sz = stream_->get_u32be();
+	p->code_.resize(sz);
+	if(sz){ stream_->read(&p->code_[0], sz); }
+	
+	sz = stream_->get_u16be();
+	p->scope_info_table_.resize(sz);
+	for(uint_t i=0; i<sz; ++i){
+		ScopeInfo& info = p->scope_info_table_[i];
+		info.pc = stream_->get_u32be();
+		info.kind = stream_->get_u8();
+		info.flags = stream_->get_u8();
+		info.variable_identifier_offset = stream_->get_u16be();
+		info.variable_size = stream_->get_u16be();
+	}
+	
+	sz = stream_->get_u16be();
+	p->class_info_table_.resize(sz);
+	for(uint_t i=0; i<sz; ++i){
+		ClassInfo& info = p->class_info_table_[i];
+		info.pc = stream_->get_u32be();
+		info.kind = stream_->get_u8();
+		info.flags = stream_->get_u8();
+		info.variable_identifier_offset = stream_->get_u16be();
+		info.variable_size = stream_->get_u16be();
+
+		info.instance_variable_size = stream_->get_u16be();
+		info.instance_variable_identifier_offset = stream_->get_u16be();
+		info.mixins = stream_->get_u8();
+	}
+
+	sz = stream_->get_u16be();
+	p->xfun_info_table_.resize(sz);
+	for(uint_t i=0; i<sz; ++i){
+		FunInfo& info = p->xfun_info_table_[i];
+		info.pc = stream_->get_u32be();
+		info.kind = stream_->get_u8();
+		info.flags = stream_->get_u8();
+		info.variable_identifier_offset = stream_->get_u16be();
+		info.variable_size = stream_->get_u16be();
+
+		info.max_stack = stream_->get_u16be();
+		info.max_variable = stream_->get_u16be();
+		info.min_param_count = stream_->get_u8();
+		info.max_param_count = stream_->get_u8();
+	}
+
+	sz = stream_->get_u16be();
+	p->except_info_table_.resize(sz);
+	for(uint_t i=0; i<sz; ++i){
+		ExceptInfo& info = p->except_info_table_[i];
+		info.catch_pc = stream_->get_u32be();
+		info.finally_pc = stream_->get_u32be();
+		info.end_pc = stream_->get_u32be();
+	}
+	
+	sz = stream_->get_u16be();
+	p->lineno_table_.resize(sz);
+	for(uint_t i=0; i<sz; ++i){
+		Code::LineNumberInfo& info = p->lineno_table_[i];
+		info.start_pc = stream_->get_u32be();
+		info.lineno = stream_->get_u32be();
+	}
+
+	sz = stream_->get_u16be();
+	p->once_table_ = xnew<Array>(sz);
+	for(uint_t i=0; i<sz; ++i){
+		p->once_table_->set_at(i, undefined);
+	}
+
+	MethodPtr ret(xnew<Method>(null, p, &p->xfun_info_table_[0]));
+	append_value(ret);
+
+	AnyPtr mapd = inner_deserialize();
+	MapPtr map(ptr_cast<Map>(mapd));
+	
+	XTAL_ASSERT(map);
+	
+	p->source_file_name_ = ptr_cast<String>(map->at(Xid(source)));
+	p->identifier_table_ = ptr_cast<Array>(map->at(Xid(identifiers)));
+	p->value_table_ = ptr_cast<Array>(map->at(Xid(values)));
+	p->first_fun_ = ret;
+	return p;
 }
 
 AnyPtr Serializer::inner_deserialize(){
@@ -231,31 +465,11 @@ AnyPtr Serializer::inner_deserialize(){
 		XTAL_DEFAULT;
 
 		XTAL_CASE(SERIAL_NEW){
-			int_t num = append_value(null);
-
-			// serial_newをするクラスを取り出す
-			ClassPtr c(ptr_cast<Class>(inner_deserialize()));
-
-			const VMachinePtr& vm = vmachine();
-
-			// serial_newを呼び出して、保存しておく
-			vm->setup_call(1);
-			c->s_new(vm);
-			AnyPtr ret = vm->result();
-			values_->set_at(num, ret);
-			vm->cleanup_call();
-
-			vm->setup_call(0, inner_deserialize());
-			ret->rawsend(vm, Xid(s_load));
-			vm->cleanup_call();
-
-			return ret;
+			return inner_deserialize_serial_new();
 		}
 
 		XTAL_CASE(NAME){
-			int_t num = append_value(null);
-			values_->set_at(num, demangle(inner_deserialize()));
-			return values_->at(num);
+			return inner_deserialize_name();
 		}	
 
 		XTAL_CASE(REF){
@@ -287,70 +501,27 @@ AnyPtr Serializer::inner_deserialize(){
 		}
 
 		XTAL_CASE(TSTRING8){
-			int_t sz = stream_->get_u32be();
-			XMallocGuard guard(sizeof(char_t)*sz);
-			char_t* p = (char_t*)guard.get();
-			for(int_t i = 0; i<sz; ++i){
-				p[i] = (char_t)stream_->get_u8();
-			}
-			IDPtr ret = xnew<ID>(p, sz);
-			append_value(ret);
-			return ret;
+			return inner_deserialize_string8();
 		}
 
 		XTAL_CASE(TSTRING16){
-			int_t sz = stream_->get_u32be();
-			XMallocGuard guard(sizeof(char_t)*sz);
-			char_t* p = (char_t*)guard.get();
-			for(int_t i = 0; i<sz; ++i){
-				p[i] = (char_t)stream_->get_u16be();
-			}
-			IDPtr ret = xnew<ID>(p, sz);
-			append_value(ret);
-			return ret;
+			return inner_deserialize_string16();
 		}
 
 		XTAL_CASE(TSTRING32){
-			int_t sz = stream_->get_u32be();
-			XMallocGuard guard(sizeof(char_t)*sz);
-			char_t* p = (char_t*)guard.get();
-			for(int_t i = 0; i<sz; ++i){
-				p[i] = (char_t)stream_->get_u32be();
-			}
-			IDPtr ret = xnew<ID>(p, sz);
-			append_value(ret);
-			return ret;
+			return inner_deserialize_string32();
 		}
 
 		XTAL_CASE(TARRAY){
-			int_t sz = stream_->get_u32be();
-			ArrayPtr ret = xnew<Array>(sz);
-			append_value(ret);
-			for(int_t i = 0; i<sz; ++i){
-				ret->set_at(i, inner_deserialize());
-			}				
-			return ret;
+			return inner_deserialize_array();
 		}
 
 		XTAL_CASE(TVALUES){
-			ValuesPtr ret = xnew<Values>(null);
-			append_value(ret);
-			AnyPtr head = inner_deserialize();
-			AnyPtr tail = inner_deserialize();
-			ret->set(head, unchecked_ptr_cast<Values>(tail));		
-			return ret;
+			return inner_deserialize_values();
 		}
 		
 		XTAL_CASE(TMAP){
-			int_t sz = stream_->get_u32be();
-			MapPtr ret(xnew<Map>());
-			append_value(ret);
-			AnyPtr key;
-			for(int_t i = 0; i<sz; ++i){
-				key = inner_deserialize();
-				ret->set_at(key, inner_deserialize());
-			}				
-			return ret;
+			return inner_deserialize_map();
 		}
 		
 		XTAL_CASE(TTRUE){
@@ -362,62 +533,7 @@ AnyPtr Serializer::inner_deserialize(){
 		}
 
 		XTAL_CASE('x'){
-			CodePtr p = xnew<Code>();
-
-			if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
-				return null;
-			}
-
-			xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
-			if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
-				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
-				return null;
-			}
-			
-			stream_->get_u8();
-			stream_->get_u8();
-		
-			int_t sz;
-			sz = stream_->get_u32be();
-			p->code_.resize(sz);
-			if(sz!=0){ stream_->read(&p->code_[0], sizeof(p->code_[0])*sz); }
-
-			sz = stream_->get_u16be();
-			p->scope_info_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->scope_info_table_[0], sizeof(p->scope_info_table_[0])*sz); }
-	
-			sz = stream_->get_u16be();
-			p->class_info_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->class_info_table_[0], sizeof(p->class_info_table_[0])*sz); }
-
-			sz = stream_->get_u16be();
-			p->xfun_info_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->xfun_info_table_[0], sizeof(p->xfun_info_table_[0])*sz); }
-
-			sz = stream_->get_u16be();
-			p->except_info_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->except_info_table_[0], sizeof(p->except_info_table_[0])*sz); }
-
-			sz = stream_->get_u16be();
-			p->lineno_table_.resize(sz);
-			if(sz!=0){ stream_->read(&p->lineno_table_[0], sizeof(p->lineno_table_[0])*sz); }
-
-			sz = stream_->get_u16be();
-			p->once_table_ = xnew<Array>(sz);
-			for(int_t i=0; i<sz; ++i){
-				p->once_table_->set_at(i, undefined);
-			}
-
-			MethodPtr ret(xnew<Method>(null, p, &p->xfun_info_table_[0]));
-			append_value(ret);
-
-			MapPtr map(cast<MapPtr>(inner_deserialize()));
-			p->source_file_name_ = cast<StringPtr>(map->at(Xid(source)));
-			p->identifier_table_ = cast<ArrayPtr>(map->at(Xid(identifiers)));
-			p->value_table_ = cast<ArrayPtr>(map->at(Xid(values)));
-			p->first_fun_ = ret;
-			return p;
+			return inner_deserialize_code();
 		}
 	}
 	return null;

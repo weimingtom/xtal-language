@@ -35,6 +35,16 @@ private:
 		map_ = xnew<Map>();
 	}
 
+	AnyPtr inner_deserialize_serial_new();
+	AnyPtr inner_deserialize_name();
+	AnyPtr inner_deserialize_string8();
+	AnyPtr inner_deserialize_string16();
+	AnyPtr inner_deserialize_string32();
+	AnyPtr inner_deserialize_array();
+	AnyPtr inner_deserialize_values();
+	AnyPtr inner_deserialize_map();
+	AnyPtr inner_deserialize_code();
+
 private:
 
 	enum{ 
@@ -43,7 +53,7 @@ private:
 		FILELOCAL,
 		REF,
 		
-		TNULL = 32, 
+		TNULL = 16, 
 		TUNDEFINED, 
 		TFALSE, 
 		TTRUE,

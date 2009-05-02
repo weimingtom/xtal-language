@@ -123,10 +123,7 @@ public:
 		register_gc(p);
 	}
 
-	SmartPtr(const SmartPtr<Any>& p)
-		:Any(p){
-		inc_ref_count_force(*this);
-	}
+	SmartPtr(const SmartPtr<Any>& p);
 
 	/// nullを受け取るコンストラクタ
 	SmartPtr(const NullPtr&){}
@@ -136,9 +133,7 @@ public:
 	explicit SmartPtr(PrimitiveType type)
 		:Any(type){}
 	
-	~SmartPtr(){
-		dec_ref_count_force(*this);
-	}
+	~SmartPtr();
 
 protected:
 

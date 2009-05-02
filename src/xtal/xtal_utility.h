@@ -18,8 +18,8 @@ enum{
 	VERSION4 = 9
 };
 }
-
-//#define XTAL_USE_COMPILED_EMB
+//
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -670,6 +670,7 @@ template<> class SmartPtr<Any>;
 typedef SmartPtr<Any> AnyPtr;
 
 class Environment;
+struct Param;
 
 class Null;
 class Undefined;

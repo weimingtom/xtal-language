@@ -214,41 +214,31 @@ public:
 	* \xbind
 	* \brief 文字列をスキャンする
 	*/
-	AnyPtr scan(const AnyPtr& pattern){
-		return send(XTAL_ID(scan), pattern);
-	}
+	AnyPtr scan(const AnyPtr& pattern);
 
 	/**
 	* \xbind
 	* \brief 文字列を分割し、その部分文字列を要素とするIteratorを返す
 	*/
-	AnyPtr split(const AnyPtr& pattern){
-		return send(XTAL_ID(split), pattern);
-	}
+	AnyPtr split(const AnyPtr& pattern);
 
 	/**
 	* \xbind
 	* \brief 文字列を分割し、その部分文字列を要素とするIteratorを返す
 	*/	
-	bool match(const AnyPtr& pattern){
-		return send(XTAL_ID(match), pattern);
-	}
+	bool match(const AnyPtr& pattern);
 
 	/**
 	* \xbind
 	* \brief マッチする部分を置き換えた新しい文字列を返す
 	*/	
-	StringPtr gsub(const AnyPtr& pattern, const AnyPtr& fn){
-		return ptr_cast<String>(send(XTAL_ID(gsub), pattern, fn));
-	}
+	StringPtr gsub(const AnyPtr& pattern, const AnyPtr& fn);
 
 	/**
 	* \xbind
 	* \brief 最初にマッチする部分を置き換えた新しい文字列を返す
 	*/	
-	StringPtr sub(const AnyPtr& pattern, const AnyPtr& fn){
-		return ptr_cast<String>(send(XTAL_ID(sub), pattern, fn));
-	}
+	StringPtr sub(const AnyPtr& pattern, const AnyPtr& fn);
 
 private:
 	void init_string(const char_t* str, uint_t size);

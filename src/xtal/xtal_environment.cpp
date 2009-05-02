@@ -694,15 +694,37 @@ CodePtr source(const char_t* src, int_t size){
 	return ret;
 }
 
+void exec_source(const char_t* src, int_t size){
+	if(CodePtr code = source(src, size)){
+		code->call();
+	}
+	else{
+		XTAL_CATCH_EXCEPT(e){
+			stderr_stream()->println(e);
+		}
+	}
+}
+
 #endif
 
 CodePtr compiled_source(const void* src, int_t size){
-	StreamPtr ms(xnew<PointerStream>(src, size*sizeof(char_t)));
+	StreamPtr ms(xnew<PointerStream>(src, size));
 	if(CodePtr fun = ptr_cast<Code>(ms->deserialize())){
 		gc();
 		return fun;
 	}
 	return null;
+}
+
+void exec_compiled_source(const void* src, int_t size){
+	if(CodePtr code = compiled_source(src, size)){
+		code->call();
+	}
+	else{
+		XTAL_CATCH_EXCEPT(e){
+			stderr_stream()->println(e);
+		}
+	}
 }
 
 namespace xpeg{

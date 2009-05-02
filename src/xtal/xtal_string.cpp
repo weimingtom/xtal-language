@@ -452,6 +452,26 @@ StringPtr String::cat(const StringPtr& v){
 	return op_cat(v);
 }
 
+AnyPtr String::scan(const AnyPtr& pattern){
+	return send(XTAL_ID(scan), pattern);
+}
+
+AnyPtr String::split(const AnyPtr& pattern){
+	return send(XTAL_ID(split), pattern);
+}
+	
+bool String::match(const AnyPtr& pattern){
+	return send(XTAL_ID(match), pattern);
+}
+
+StringPtr String::gsub(const AnyPtr& pattern, const AnyPtr& fn){
+	return ptr_cast<String>(send(XTAL_ID(gsub), pattern, fn));
+}
+
+StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn){
+	return ptr_cast<String>(send(XTAL_ID(sub), pattern, fn));
+}
+
 ////////////////////////////////////////////////////////////////
 
 ID::ID(const char_t* str)

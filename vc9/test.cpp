@@ -96,7 +96,6 @@ int main2(int argc, char** argv){
 
 	StringPtr sss = XTAL_STRING("‚±e‚ñe‚Ée‚¿e‚Í");
 
-	sss->send(Xid(aaa), 10);
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();

@@ -57,7 +57,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	}
 
 	if(pick){
-		if(secondary_key){
+		if(rawne(secondary_key, undefined)){
 			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1021")->call(
 				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key)),
 				Named(Xid(pick), pick)
@@ -71,7 +71,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 		}
 	}
 	else{
-		if(secondary_key){
+		if(rawne(secondary_key, undefined)){
 			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1015")->call(
 				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key))
 			));
@@ -81,6 +81,26 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 				Named(Xid(object), Xf("%s::%s")->call(target->object_name(), primary_key))
 			));		
 		}
+	}
+}
+
+AnyPtr global_unsupported_error(const CodePtr& code, const IDPtr& primary_key){
+	if(!primary_key){
+		return null;
+	}
+
+	IDPtr pick = code->find_near_variable(primary_key);
+
+	if(pick){
+		return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1021")->call(
+			Named(Xid(object), primary_key),
+			Named(Xid(pick), pick)
+		));	
+	}
+	else{
+		return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1015")->call(
+			Named(Xid(object), primary_key)
+		));	
 	}
 }
 

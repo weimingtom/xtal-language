@@ -453,23 +453,23 @@ StringPtr String::cat(const StringPtr& v){
 }
 
 AnyPtr String::scan(const AnyPtr& pattern){
-	return send(XTAL_ID(scan), pattern);
+	return send(Xid(scan), pattern);
 }
 
 AnyPtr String::split(const AnyPtr& pattern){
-	return send(XTAL_ID(split), pattern);
+	return send(Xid(split), pattern);
 }
 	
 bool String::match(const AnyPtr& pattern){
-	return send(XTAL_ID(match), pattern);
+	return send(Xid(match), pattern);
 }
 
 StringPtr String::gsub(const AnyPtr& pattern, const AnyPtr& fn){
-	return ptr_cast<String>(send(XTAL_ID(gsub), pattern, fn));
+	return ptr_cast<String>(send(Xid(gsub), pattern, fn));
 }
 
 StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn){
-	return ptr_cast<String>(send(XTAL_ID(sub), pattern, fn));
+	return ptr_cast<String>(send(Xid(sub), pattern, fn));
 }
 
 ////////////////////////////////////////////////////////////////

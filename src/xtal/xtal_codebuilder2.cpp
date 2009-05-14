@@ -565,7 +565,7 @@ int_t CodeBuilder::compile_expr_Q(const ExprPtr& e, const CompileInfo& info){
 
 int_t CodeBuilder::compile_expr_MEMBER(const ExprPtr& e, const CompileInfo& info){
 	compile_expr(e->member_term());
-	int_t key = regster_identifier_or_compile_expr(e->member_name());
+	int_t key = register_identifier_or_compile_expr(e->member_name());
 
 	if(e->member_ns()){
 		compile_expr(e->member_ns());
@@ -579,7 +579,7 @@ int_t CodeBuilder::compile_expr_MEMBER(const ExprPtr& e, const CompileInfo& info
 
 int_t CodeBuilder::compile_expr_MEMBER_Q(const ExprPtr& e, const CompileInfo& info){
 	compile_expr(e->member_term());
-	int_t key = regster_identifier_or_compile_expr(e->member_name());
+	int_t key = register_identifier_or_compile_expr(e->member_name());
 	
 	if(e->member_ns()){
 		compile_expr(e->member_ns());
@@ -593,13 +593,13 @@ int_t CodeBuilder::compile_expr_MEMBER_Q(const ExprPtr& e, const CompileInfo& in
 
 int_t CodeBuilder::compile_expr_PROPERTY(const ExprPtr& e, const CompileInfo& info){
 	compile_expr(e->property_term());
-	put_send_code(e->property_name(), info.need_result_count, info.tail, false, e->property_ns());
+	put_send_code(e->property_name(), e->property_ns(), info.need_result_count, 0, 0, CALL_FLAG_NONE);
 	return info.need_result_count;
 }
 
 int_t CodeBuilder::compile_expr_PROPERTY_Q(const ExprPtr& e, const CompileInfo& info){
 	compile_expr(e->property_term());
-	put_send_code(e->property_name(), info.need_result_count, info.tail, true, e->property_ns());
+	put_send_code(e->property_name(), e->property_ns(), info.need_result_count, 0, 0, CALL_FLAG_Q);
 	return info.need_result_count;
 }
 
@@ -636,32 +636,16 @@ int_t CodeBuilder::compile_expr_CALL(const ExprPtr& e, const CompileInfo& info){
 	}
 
 	if(e->call_term()->itag()==EXPR_PROPERTY){ // a.b(); メッセージ送信式
-
 		ExprPtr e2 = e->call_term();
 		compile_expr(e2->property_term());
-		int_t key = regster_identifier_or_compile_expr(e2->property_name());
 
-		if(e2->property_ns()){
-			compile_expr(e2->property_ns());
-			put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS, key));
-		}
-		else{
-			put_inst(InstSend(ordered, named, info.need_result_count, flags, key));
-		}
+		put_send_code(e2->property_name(), e2->property_ns(), info.need_result_count, ordered, named, flags);
 	}
 	else if(e->call_term()->itag()==EXPR_PROPERTY_Q){ // a.?b(); メッセージ送信式
-
 		ExprPtr e2 = e->call_term();
 		compile_expr(e2->property_term());
-		int_t key = regster_identifier_or_compile_expr(e2->property_name());
 
-		if(e2->property_ns()){
-			compile_expr(e2->property_ns());
-			put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
-		}
-		else{
-			put_inst(InstSend(ordered, named, info.need_result_count, flags | CALL_FLAG_Q, key));
-		}
+		put_send_code(e2->property_name(), e2->property_ns(), info.need_result_count, ordered, named, flags | CALL_FLAG_Q);
 	}
 	else{
 		compile_expr(e->call_term());
@@ -1100,11 +1084,11 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, const CompileInfo& inf
 		}
 		else if(v->itag()==EXPR_PROPERTY){
 			compile_expr(v->property_term());
-			put_set_send_code(v->property_name(), false, v->property_ns());
+			put_set_send_code(v->property_name(), v->property_ns(), CALL_FLAG_NONE);
 		}
 		else if(v->itag()==EXPR_PROPERTY_Q){
 			compile_expr(v->property_term());
-			put_set_send_code(v->property_name(), true, v->property_ns());
+			put_set_send_code(v->property_name(), v->property_ns(), CALL_FLAG_Q);
 		}
 		else if(v->itag()==EXPR_IVAR){
 			put_set_instance_variable_code(v->ivar_name());					
@@ -1179,12 +1163,12 @@ int_t CodeBuilder::compile_expr_ASSIGN(const ExprPtr& e, const CompileInfo& info
 	else if(e->bin_lhs()->itag()==EXPR_PROPERTY){
 		compile_expr(e->bin_rhs());
 		compile_expr(e->bin_lhs()->property_term());
-		put_set_send_code(e->bin_lhs()->property_name(), false, e->bin_lhs()->property_ns());
+		put_set_send_code(e->bin_lhs()->property_name(), e->bin_lhs()->property_ns(), CALL_FLAG_NONE);
 	}
 	else if(e->bin_lhs()->itag()==EXPR_PROPERTY_Q){
 		compile_expr(e->bin_rhs());
 		compile_expr(e->bin_lhs()->property_term());
-		put_set_send_code(e->bin_lhs()->property_name(), true, e->bin_lhs()->property_ns());
+		put_set_send_code(e->bin_lhs()->property_name(), e->bin_lhs()->property_ns(), CALL_FLAG_Q);
 	}
 	else if(e->bin_lhs()->itag()==EXPR_AT){
 		compile_expr(e->bin_rhs());

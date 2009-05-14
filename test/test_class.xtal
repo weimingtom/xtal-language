@@ -29,7 +29,7 @@ Singleton: singleton{
 	}
 }
 
-TestFoo: class{
+filelocal::TestFoo: class{
 	_obj;
 	
 	setup#Before: method{
@@ -49,10 +49,12 @@ TestFoo: class{
 	
 	pro#Test: method{
 		assert _obj.pro && false catch(e) true; 
+		assert _obj.class::pro && false catch(e) true; 
 	}
 	
 	pri#Test: method{
 		assert _obj.pri && false catch(e) true; 
+		assert _obj.class::pri && false catch(e) true; 
 	}
 }
 

@@ -13,9 +13,9 @@ Lib::Lib(){
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert	
-	const AnyPtr& ret = Class::do_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
+	const AnyPtr& ret = Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	if(rawne(ret, undefined)){
 		return ret;
 	}
@@ -24,7 +24,7 @@ const AnyPtr& Lib::do_member(const IDPtr& primary_key, const AnyPtr& secondary_k
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
 			def(primary_key, load(file_name), secondary_key, accessibility);
-			return Class::do_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
+			return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 		}
 
 		return undefined;

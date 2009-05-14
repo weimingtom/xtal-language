@@ -45,7 +45,7 @@ public:
 
 	virtual void* new_thread(){ return 0; }
 	virtual void delete_thread(void* thread_object){}
-	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){}
+	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){ callback(data); }
 	virtual void join_thread(void* thread_object){}
 
 	virtual void* new_mutex(){ return 0; }
@@ -279,62 +279,30 @@ AnyPtr alive_object(uint_t i);
 * \internal
 * \brief keyに対応するC++のクラスのクラスオブジェクトを返す。
 */
-const ClassPtr& cpp_class(uint_t key);
-
-/*
-* \internal
-* \brief keyに対応するC++のクラスのクラスオブジェクトを設定する。
-*/
-void set_cpp_class(const ClassPtr& cls, uint_t key);
+const ClassPtr& cpp_class(CppClassSymbolData* key);
 
 /**
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
 inline const ClassPtr& cpp_class(){
-	return cpp_class(CppClassSymbol<T>::value->value);
+	return cpp_class(CppClassSymbol<T>::value);
 }
 
-/**
-* \brief クラスTに対応するC++のクラスのクラスオブジェクトを設定する。
-*/
-template<class T>
-inline void set_cpp_class(const ClassPtr& cls){
-	return set_cpp_class(cls, CppClassSymbol<T>::value->value);
-}
+/////////////////////////////////////////////////////
 
 /**
 * \internal
 * \brief T型のオブジェクトを環境から取り出す
 */
-void* cpp_var(uint_t key);
-
-/**
-* \internal
-* \brief T型のオブジェクトを環境に設定する
-*/
-void set_cpp_var(void* p, void (*deleter)(void*), uint_t key);
-
-template<class T>
-struct CppVarDeleter{
-	static void deleter(void* p){
-		((T*)p)->~T();
-		xfree(p, sizeof(T));
-	}
-};
+const AnyPtr& cpp_var(CppVarSymbolData* key);
 
 /**
 * \brief T型のオブジェクトを環境から取り出す
 */
 template<class T>
-T& cpp_var(){
-	if(void* p=cpp_var(CppVarSymbol<T>::value.value)){
-		return *(T*)p;
-	}
-	void* p=xmalloc(sizeof(T));
-	new(p) T;
-	set_cpp_var(p, &CppVarDeleter<T>::deleter, CppVarSymbol<T>::value.value);
-	return *(T*)p;
+const SmartPtr<T>& cpp_var(){
+	return unchecked_ptr_cast<T>(cpp_var(&CppVarSymbol<T>::value));
 }
 
 /////////////////////////////////////////////////////
@@ -344,6 +312,12 @@ T& cpp_var(){
 * \brief クラスのメンバを取り出す。
 */
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
+
+/**
+* \internal
+* \brief クラスのメンバを取り出す。
+*/
+const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, int_t& accessibility);
 
 /**
 * \internal
@@ -446,12 +420,6 @@ const IDPtr& intern(const char_t* str, uint_t data_size);
 * \brief 文字列をインターン済み文字列に変換する
 */
 const IDPtr& intern(const char_t* str);
-
-/**
-* \internal
-* \brief 文字列リテラルをインターン済み文字列に変換する
-*/
-const IDPtr& intern(const char_t* str, IdentifierData* iddata);
 
 /**
 * \internal

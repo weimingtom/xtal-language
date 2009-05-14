@@ -23,10 +23,8 @@ struct cfun_holder_base`n`{
 template<class R #COMMA_REPEAT#class A`i`#>
 struct cfun_holder<R (*)(#REPEAT_COMMA#A`i`#)> : public cfun_holder_base`n`<R #COMMA_REPEAT#A`i`#>{
 	typedef R (*fun_t)(#REPEAT_COMMA#A`i`#);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(#REPEAT_COMMA#A`i` a`i`#){ 
-		return (*fun)(#REPEAT_COMMA#a`i`#); 
+	static R call(const void* fun #COMMA_REPEAT#A`i` a`i`#){ 
+		return (*(fun_t*)fun)(#REPEAT_COMMA#a`i`#); 
 	}
 };
 
@@ -34,10 +32,8 @@ struct cfun_holder<R (*)(#REPEAT_COMMA#A`i`#)> : public cfun_holder_base`n`<R #C
 template<class R #COMMA_REPEAT#class A`i`#>
 struct cfun_holder<R (__stdcall *)(#REPEAT_COMMA#A`i`#)> : public cfun_holder_base`n`<R #COMMA_REPEAT#A`i`#>{
 	typedef R (__stdcall *fun_t)(#REPEAT_COMMA#A`i`#);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(#REPEAT_COMMA#A`i` a`i`#){ 
-		return (*fun)(#REPEAT_COMMA#a`i`#); 
+	static R call(const void* fun #COMMA_REPEAT#A`i` a`i`#){ 
+		return (*(fun_t*)fun)(#REPEAT_COMMA#a`i`#); 
 	}
 };
 
@@ -55,30 +51,24 @@ struct cmemfun_holder_base`n`{
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#)> : public cmemfun_holder_base`n`<C*, R #COMMA_REPEAT#A`i`#>{
 	typedef R (C::*fun_t)(#REPEAT_COMMA#A`i`#);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#){ 
-		return (self->*fun)(#REPEAT_COMMA#a`i`#); 
+	static R call(const void* fun, C* self #COMMA_REPEAT#A`i` a`i`#){ 
+		return (self->**(fun_t*)fun)(#REPEAT_COMMA#a`i`#); 
 	}
 };
 
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (C::*)(#REPEAT_COMMA#A`i`#) const> : public cmemfun_holder_base`n`<C*, R #COMMA_REPEAT#A`i`#>{
 	typedef R (C::*fun_t)(#REPEAT_COMMA#A`i`#) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#){ 
-		return (self->*fun)(#REPEAT_COMMA#a`i`#); 
+	static R call(const void* fun, C* self #COMMA_REPEAT#A`i` a`i`#){ 
+		return (self->**(fun_t*)fun)(#REPEAT_COMMA#a`i`#); 
 	}
 };
 
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (*)(C #COMMA_REPEAT#A`i`#)> : public cmemfun_holder_base`n`<C, R #COMMA_REPEAT#A`i`#>{
 	typedef R (*fun_t)(C #COMMA_REPEAT#A`i`#);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c #COMMA_REPEAT#A`i` a`i`#){ 
-		return (*fun)(c #COMMA_REPEAT#a`i`#); 
+	static R call(const void* fun, C c #COMMA_REPEAT#A`i` a`i`#){ 
+		return (*(fun_t*)fun)(c #COMMA_REPEAT#a`i`#); 
 	}
 };
 
@@ -86,10 +76,8 @@ struct cmemfun_holder<R (*)(C #COMMA_REPEAT#A`i`#)> : public cmemfun_holder_base
 template<class C, class R #COMMA_REPEAT#class A`i`#>
 struct cmemfun_holder<R (__stdcall *)(C #COMMA_REPEAT#A`i`#)> : public cmemfun_holder_base`n`<C, R #COMMA_REPEAT#A`i`#>{
 	typedef R (__stdcall *fun_t)(C #COMMA_REPEAT#A`i`#);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c #COMMA_REPEAT#A`i` a`i`#){ 
-		return (*fun)(c #COMMA_REPEAT#a`i`#); 
+	static R call(const void* fun, C c #COMMA_REPEAT#A`i` a`i`#){ 
+		return (*(fun_t*)fun)(c #COMMA_REPEAT#a`i`#); 
 	}
 };
 #endif
@@ -100,27 +88,9 @@ struct ctor_fun<T #COMMA_REPEAT#A`i`#>{
 	#REPEAT#typedef ArgGetter<A`i`, `i`> ARG`i`;#
 	typedef ReturnResult Result;
 	typedef param_types_holder`n`<void #COMMA_REPEAT#A`i`#> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(#REPEAT_COMMA#A`i` a`i`#){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun #COMMA_REPEAT#A`i` a`i`#){
 		return xnew<T>(#REPEAT_COMMA#a`i`#);
-	}
-};
-
-/////////////
-
-template<class C, class R #COMMA_REPEAT#class A`i`#, R (C::*fun)(#REPEAT_COMMA#A`i`#)>
-struct cmemfun_holder_static<R (C::*)(#REPEAT_COMMA#A`i`#), fun>
-	: public cmemfun_holder_base`n`<C*, R #COMMA_REPEAT#A`i`#>{
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#){ 
-		return (self->*fun)(#REPEAT_COMMA#a`i`#); 
-	}
-};
-
-template<class C, class R #COMMA_REPEAT#class A`i`#, R (C::*fun)(#REPEAT_COMMA#A`i`#) const>
-struct cmemfun_holder_static<R (C::*)(#REPEAT_COMMA#A`i`#) const, fun>
-	: public cmemfun_holder_base`n`<C*, R #COMMA_REPEAT#A`i`#>{
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#){ 
-		return (self->*fun)(#REPEAT_COMMA#a`i`#); 
 	}
 };
 
@@ -138,10 +108,8 @@ struct cfun_holder_base0{
 template<class R >
 struct cfun_holder<R (*)()> : public cfun_holder_base0<R >{
 	typedef R (*fun_t)();
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(){ 
-		return (*fun)(); 
+	static R call(const void* fun ){ 
+		return (*(fun_t*)fun)(); 
 	}
 };
 
@@ -149,10 +117,8 @@ struct cfun_holder<R (*)()> : public cfun_holder_base0<R >{
 template<class R >
 struct cfun_holder<R (__stdcall *)()> : public cfun_holder_base0<R >{
 	typedef R (__stdcall *fun_t)();
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(){ 
-		return (*fun)(); 
+	static R call(const void* fun ){ 
+		return (*(fun_t*)fun)(); 
 	}
 };
 
@@ -170,30 +136,24 @@ struct cmemfun_holder_base0{
 template<class C, class R >
 struct cmemfun_holder<R (C::*)()> : public cmemfun_holder_base0<C*, R >{
 	typedef R (C::*fun_t)();
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self ){ 
-		return (self->*fun)(); 
+	static R call(const void* fun, C* self ){ 
+		return (self->**(fun_t*)fun)(); 
 	}
 };
 
 template<class C, class R >
 struct cmemfun_holder<R (C::*)() const> : public cmemfun_holder_base0<C*, R >{
 	typedef R (C::*fun_t)() const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self ){ 
-		return (self->*fun)(); 
+	static R call(const void* fun, C* self ){ 
+		return (self->**(fun_t*)fun)(); 
 	}
 };
 
 template<class C, class R >
 struct cmemfun_holder<R (*)(C )> : public cmemfun_holder_base0<C, R >{
 	typedef R (*fun_t)(C );
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c ){ 
-		return (*fun)(c ); 
+	static R call(const void* fun, C c ){ 
+		return (*(fun_t*)fun)(c ); 
 	}
 };
 
@@ -201,10 +161,8 @@ struct cmemfun_holder<R (*)(C )> : public cmemfun_holder_base0<C, R >{
 template<class C, class R >
 struct cmemfun_holder<R (__stdcall *)(C )> : public cmemfun_holder_base0<C, R >{
 	typedef R (__stdcall *fun_t)(C );
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c ){ 
-		return (*fun)(c ); 
+	static R call(const void* fun, C c ){ 
+		return (*(fun_t*)fun)(c ); 
 	}
 };
 #endif
@@ -215,27 +173,9 @@ struct ctor_fun<T >{
 	
 	typedef ReturnResult Result;
 	typedef param_types_holder0<void > fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun ){
 		return xnew<T>();
-	}
-};
-
-/////////////
-
-template<class C, class R , R (C::*fun)()>
-struct cmemfun_holder_static<R (C::*)(), fun>
-	: public cmemfun_holder_base0<C*, R >{
-	R operator()(C* self ){ 
-		return (self->*fun)(); 
-	}
-};
-
-template<class C, class R , R (C::*fun)() const>
-struct cmemfun_holder_static<R (C::*)() const, fun>
-	: public cmemfun_holder_base0<C*, R >{
-	R operator()(C* self ){ 
-		return (self->*fun)(); 
 	}
 };
 
@@ -252,10 +192,8 @@ struct cfun_holder_base1{
 template<class R , class A0>
 struct cfun_holder<R (*)(A0)> : public cfun_holder_base1<R , A0>{
 	typedef R (*fun_t)(A0);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0){ 
-		return (*fun)(a0); 
+	static R call(const void* fun , A0 a0){ 
+		return (*(fun_t*)fun)(a0); 
 	}
 };
 
@@ -263,10 +201,8 @@ struct cfun_holder<R (*)(A0)> : public cfun_holder_base1<R , A0>{
 template<class R , class A0>
 struct cfun_holder<R (__stdcall *)(A0)> : public cfun_holder_base1<R , A0>{
 	typedef R (__stdcall *fun_t)(A0);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0){ 
-		return (*fun)(a0); 
+	static R call(const void* fun , A0 a0){ 
+		return (*(fun_t*)fun)(a0); 
 	}
 };
 
@@ -284,30 +220,24 @@ struct cmemfun_holder_base1{
 template<class C, class R , class A0>
 struct cmemfun_holder<R (C::*)(A0)> : public cmemfun_holder_base1<C*, R , A0>{
 	typedef R (C::*fun_t)(A0);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0){ 
-		return (self->*fun)(a0); 
+	static R call(const void* fun, C* self , A0 a0){ 
+		return (self->**(fun_t*)fun)(a0); 
 	}
 };
 
 template<class C, class R , class A0>
 struct cmemfun_holder<R (C::*)(A0) const> : public cmemfun_holder_base1<C*, R , A0>{
 	typedef R (C::*fun_t)(A0) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0){ 
-		return (self->*fun)(a0); 
+	static R call(const void* fun, C* self , A0 a0){ 
+		return (self->**(fun_t*)fun)(a0); 
 	}
 };
 
 template<class C, class R , class A0>
 struct cmemfun_holder<R (*)(C , A0)> : public cmemfun_holder_base1<C, R , A0>{
 	typedef R (*fun_t)(C , A0);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0){ 
-		return (*fun)(c , a0); 
+	static R call(const void* fun, C c , A0 a0){ 
+		return (*(fun_t*)fun)(c , a0); 
 	}
 };
 
@@ -315,10 +245,8 @@ struct cmemfun_holder<R (*)(C , A0)> : public cmemfun_holder_base1<C, R , A0>{
 template<class C, class R , class A0>
 struct cmemfun_holder<R (__stdcall *)(C , A0)> : public cmemfun_holder_base1<C, R , A0>{
 	typedef R (__stdcall *fun_t)(C , A0);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0){ 
-		return (*fun)(c , a0); 
+	static R call(const void* fun, C c , A0 a0){ 
+		return (*(fun_t*)fun)(c , a0); 
 	}
 };
 #endif
@@ -329,27 +257,9 @@ struct ctor_fun<T , A0>{
 	typedef ArgGetter<A0, 0> ARG0;
 	typedef ReturnResult Result;
 	typedef param_types_holder1<void , A0> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(A0 a0){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0){
 		return xnew<T>(a0);
-	}
-};
-
-/////////////
-
-template<class C, class R , class A0, R (C::*fun)(A0)>
-struct cmemfun_holder_static<R (C::*)(A0), fun>
-	: public cmemfun_holder_base1<C*, R , A0>{
-	R operator()(C* self , A0 a0){ 
-		return (self->*fun)(a0); 
-	}
-};
-
-template<class C, class R , class A0, R (C::*fun)(A0) const>
-struct cmemfun_holder_static<R (C::*)(A0) const, fun>
-	: public cmemfun_holder_base1<C*, R , A0>{
-	R operator()(C* self , A0 a0){ 
-		return (self->*fun)(a0); 
 	}
 };
 
@@ -366,10 +276,8 @@ struct cfun_holder_base2{
 template<class R , class A0, class A1>
 struct cfun_holder<R (*)(A0, A1)> : public cfun_holder_base2<R , A0, A1>{
 	typedef R (*fun_t)(A0, A1);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1){ 
-		return (*fun)(a0, a1); 
+	static R call(const void* fun , A0 a0, A1 a1){ 
+		return (*(fun_t*)fun)(a0, a1); 
 	}
 };
 
@@ -377,10 +285,8 @@ struct cfun_holder<R (*)(A0, A1)> : public cfun_holder_base2<R , A0, A1>{
 template<class R , class A0, class A1>
 struct cfun_holder<R (__stdcall *)(A0, A1)> : public cfun_holder_base2<R , A0, A1>{
 	typedef R (__stdcall *fun_t)(A0, A1);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1){ 
-		return (*fun)(a0, a1); 
+	static R call(const void* fun , A0 a0, A1 a1){ 
+		return (*(fun_t*)fun)(a0, a1); 
 	}
 };
 
@@ -398,30 +304,24 @@ struct cmemfun_holder_base2{
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (C::*)(A0, A1)> : public cmemfun_holder_base2<C*, R , A0, A1>{
 	typedef R (C::*fun_t)(A0, A1);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1){ 
-		return (self->*fun)(a0, a1); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1){ 
+		return (self->**(fun_t*)fun)(a0, a1); 
 	}
 };
 
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (C::*)(A0, A1) const> : public cmemfun_holder_base2<C*, R , A0, A1>{
 	typedef R (C::*fun_t)(A0, A1) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1){ 
-		return (self->*fun)(a0, a1); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1){ 
+		return (self->**(fun_t*)fun)(a0, a1); 
 	}
 };
 
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (*)(C , A0, A1)> : public cmemfun_holder_base2<C, R , A0, A1>{
 	typedef R (*fun_t)(C , A0, A1);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1){ 
-		return (*fun)(c , a0, a1); 
+	static R call(const void* fun, C c , A0 a0, A1 a1){ 
+		return (*(fun_t*)fun)(c , a0, a1); 
 	}
 };
 
@@ -429,10 +329,8 @@ struct cmemfun_holder<R (*)(C , A0, A1)> : public cmemfun_holder_base2<C, R , A0
 template<class C, class R , class A0, class A1>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1)> : public cmemfun_holder_base2<C, R , A0, A1>{
 	typedef R (__stdcall *fun_t)(C , A0, A1);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1){ 
-		return (*fun)(c , a0, a1); 
+	static R call(const void* fun, C c , A0 a0, A1 a1){ 
+		return (*(fun_t*)fun)(c , a0, a1); 
 	}
 };
 #endif
@@ -443,27 +341,9 @@ struct ctor_fun<T , A0, A1>{
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;
 	typedef ReturnResult Result;
 	typedef param_types_holder2<void , A0, A1> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(A0 a0, A1 a1){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1){
 		return xnew<T>(a0, a1);
-	}
-};
-
-/////////////
-
-template<class C, class R , class A0, class A1, R (C::*fun)(A0, A1)>
-struct cmemfun_holder_static<R (C::*)(A0, A1), fun>
-	: public cmemfun_holder_base2<C*, R , A0, A1>{
-	R operator()(C* self , A0 a0, A1 a1){ 
-		return (self->*fun)(a0, a1); 
-	}
-};
-
-template<class C, class R , class A0, class A1, R (C::*fun)(A0, A1) const>
-struct cmemfun_holder_static<R (C::*)(A0, A1) const, fun>
-	: public cmemfun_holder_base2<C*, R , A0, A1>{
-	R operator()(C* self , A0 a0, A1 a1){ 
-		return (self->*fun)(a0, a1); 
 	}
 };
 
@@ -480,10 +360,8 @@ struct cfun_holder_base3{
 template<class R , class A0, class A1, class A2>
 struct cfun_holder<R (*)(A0, A1, A2)> : public cfun_holder_base3<R , A0, A1, A2>{
 	typedef R (*fun_t)(A0, A1, A2);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2){ 
-		return (*fun)(a0, a1, a2); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2){ 
+		return (*(fun_t*)fun)(a0, a1, a2); 
 	}
 };
 
@@ -491,10 +369,8 @@ struct cfun_holder<R (*)(A0, A1, A2)> : public cfun_holder_base3<R , A0, A1, A2>
 template<class R , class A0, class A1, class A2>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2)> : public cfun_holder_base3<R , A0, A1, A2>{
 	typedef R (__stdcall *fun_t)(A0, A1, A2);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2){ 
-		return (*fun)(a0, a1, a2); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2){ 
+		return (*(fun_t*)fun)(a0, a1, a2); 
 	}
 };
 
@@ -512,30 +388,24 @@ struct cmemfun_holder_base3{
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (C::*)(A0, A1, A2)> : public cmemfun_holder_base3<C*, R , A0, A1, A2>{
 	typedef R (C::*fun_t)(A0, A1, A2);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2){ 
-		return (self->*fun)(a0, a1, a2); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (C::*)(A0, A1, A2) const> : public cmemfun_holder_base3<C*, R , A0, A1, A2>{
 	typedef R (C::*fun_t)(A0, A1, A2) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2){ 
-		return (self->*fun)(a0, a1, a2); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (*)(C , A0, A1, A2)> : public cmemfun_holder_base3<C, R , A0, A1, A2>{
 	typedef R (*fun_t)(C , A0, A1, A2);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2){ 
-		return (*fun)(c , a0, a1, a2); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2); 
 	}
 };
 
@@ -543,10 +413,8 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2)> : public cmemfun_holder_base3<C, R 
 template<class C, class R , class A0, class A1, class A2>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2)> : public cmemfun_holder_base3<C, R , A0, A1, A2>{
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2){ 
-		return (*fun)(c , a0, a1, a2); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2); 
 	}
 };
 #endif
@@ -557,27 +425,9 @@ struct ctor_fun<T , A0, A1, A2>{
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;
 	typedef ReturnResult Result;
 	typedef param_types_holder3<void , A0, A1, A2> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2){
 		return xnew<T>(a0, a1, a2);
-	}
-};
-
-/////////////
-
-template<class C, class R , class A0, class A1, class A2, R (C::*fun)(A0, A1, A2)>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2), fun>
-	: public cmemfun_holder_base3<C*, R , A0, A1, A2>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2){ 
-		return (self->*fun)(a0, a1, a2); 
-	}
-};
-
-template<class C, class R , class A0, class A1, class A2, R (C::*fun)(A0, A1, A2) const>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2) const, fun>
-	: public cmemfun_holder_base3<C*, R , A0, A1, A2>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2){ 
-		return (self->*fun)(a0, a1, a2); 
 	}
 };
 
@@ -594,10 +444,8 @@ struct cfun_holder_base4{
 template<class R , class A0, class A1, class A2, class A3>
 struct cfun_holder<R (*)(A0, A1, A2, A3)> : public cfun_holder_base4<R , A0, A1, A2, A3>{
 	typedef R (*fun_t)(A0, A1, A2, A3);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (*fun)(a0, a1, a2, a3); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3); 
 	}
 };
 
@@ -605,10 +453,8 @@ struct cfun_holder<R (*)(A0, A1, A2, A3)> : public cfun_holder_base4<R , A0, A1,
 template<class R , class A0, class A1, class A2, class A3>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3)> : public cfun_holder_base4<R , A0, A1, A2, A3>{
 	typedef R (__stdcall *fun_t)(A0, A1, A2, A3);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (*fun)(a0, a1, a2, a3); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3); 
 	}
 };
 
@@ -626,30 +472,24 @@ struct cmemfun_holder_base4{
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3)> : public cmemfun_holder_base4<C*, R , A0, A1, A2, A3>{
 	typedef R (C::*fun_t)(A0, A1, A2, A3);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (self->*fun)(a0, a1, a2, a3); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3) const> : public cmemfun_holder_base4<C*, R , A0, A1, A2, A3>{
 	typedef R (C::*fun_t)(A0, A1, A2, A3) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (self->*fun)(a0, a1, a2, a3); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (*)(C , A0, A1, A2, A3)> : public cmemfun_holder_base4<C, R , A0, A1, A2, A3>{
 	typedef R (*fun_t)(C , A0, A1, A2, A3);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (*fun)(c , a0, a1, a2, a3); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3); 
 	}
 };
 
@@ -657,10 +497,8 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3)> : public cmemfun_holder_base4<C
 template<class C, class R , class A0, class A1, class A2, class A3>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3)> : public cmemfun_holder_base4<C, R , A0, A1, A2, A3>{
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (*fun)(c , a0, a1, a2, a3); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3); 
 	}
 };
 #endif
@@ -671,27 +509,9 @@ struct ctor_fun<T , A0, A1, A2, A3>{
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;
 	typedef ReturnResult Result;
 	typedef param_types_holder4<void , A0, A1, A2, A3> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3){
 		return xnew<T>(a0, a1, a2, a3);
-	}
-};
-
-/////////////
-
-template<class C, class R , class A0, class A1, class A2, class A3, R (C::*fun)(A0, A1, A2, A3)>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2, A3), fun>
-	: public cmemfun_holder_base4<C*, R , A0, A1, A2, A3>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (self->*fun)(a0, a1, a2, a3); 
-	}
-};
-
-template<class C, class R , class A0, class A1, class A2, class A3, R (C::*fun)(A0, A1, A2, A3) const>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2, A3) const, fun>
-	: public cmemfun_holder_base4<C*, R , A0, A1, A2, A3>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3){ 
-		return (self->*fun)(a0, a1, a2, a3); 
 	}
 };
 
@@ -708,10 +528,8 @@ struct cfun_holder_base5{
 template<class R , class A0, class A1, class A2, class A3, class A4>
 struct cfun_holder<R (*)(A0, A1, A2, A3, A4)> : public cfun_holder_base5<R , A0, A1, A2, A3, A4>{
 	typedef R (*fun_t)(A0, A1, A2, A3, A4);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (*fun)(a0, a1, a2, a3, a4); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4); 
 	}
 };
 
@@ -719,10 +537,8 @@ struct cfun_holder<R (*)(A0, A1, A2, A3, A4)> : public cfun_holder_base5<R , A0,
 template<class R , class A0, class A1, class A2, class A3, class A4>
 struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4)> : public cfun_holder_base5<R , A0, A1, A2, A3, A4>{
 	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4);
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (*fun)(a0, a1, a2, a3, a4); 
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4); 
 	}
 };
 
@@ -740,30 +556,24 @@ struct cmemfun_holder_base5{
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4)> : public cmemfun_holder_base5<C*, R , A0, A1, A2, A3, A4>{
 	typedef R (C::*fun_t)(A0, A1, A2, A3, A4);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (self->*fun)(a0, a1, a2, a3, a4); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4) const> : public cmemfun_holder_base5<C*, R , A0, A1, A2, A3, A4>{
 	typedef R (C::*fun_t)(A0, A1, A2, A3, A4) const;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (self->*fun)(a0, a1, a2, a3, a4); 
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4); 
 	}
 };
 
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4)> : public cmemfun_holder_base5<C, R , A0, A1, A2, A3, A4>{
 	typedef R (*fun_t)(C , A0, A1, A2, A3, A4);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (*fun)(c , a0, a1, a2, a3, a4); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4); 
 	}
 };
 
@@ -771,10 +581,8 @@ struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4)> : public cmemfun_holder_bas
 template<class C, class R , class A0, class A1, class A2, class A3, class A4>
 struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4)> : public cmemfun_holder_base5<C, R , A0, A1, A2, A3, A4>{
 	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4);
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (*fun)(c , a0, a1, a2, a3, a4); 
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4); 
 	}
 };
 #endif
@@ -785,27 +593,9 @@ struct ctor_fun<T , A0, A1, A2, A3, A4>{
 	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;
 	typedef ReturnResult Result;
 	typedef param_types_holder5<void , A0, A1, A2, A3, A4> fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){
 		return xnew<T>(a0, a1, a2, a3, a4);
-	}
-};
-
-/////////////
-
-template<class C, class R , class A0, class A1, class A2, class A3, class A4, R (C::*fun)(A0, A1, A2, A3, A4)>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2, A3, A4), fun>
-	: public cmemfun_holder_base5<C*, R , A0, A1, A2, A3, A4>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (self->*fun)(a0, a1, a2, a3, a4); 
-	}
-};
-
-template<class C, class R , class A0, class A1, class A2, class A3, class A4, R (C::*fun)(A0, A1, A2, A3, A4) const>
-struct cmemfun_holder_static<R (C::*)(A0, A1, A2, A3, A4) const, fun>
-	: public cmemfun_holder_base5<C*, R , A0, A1, A2, A3, A4>{
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4){ 
-		return (self->*fun)(a0, a1, a2, a3, a4); 
 	}
 };
 
@@ -815,14 +605,12 @@ struct cmemfun_holder_static<R (C::*)(A0, A1, A2, A3, A4) const, fun>
 template<class R>
 struct cfun_holder<R (*)(const VMachinePtr&)>{
 	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 0, EXTENDABLE = 1 };
-	typedef R (*fun_t)(const VMachinePtr&);
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
 	typedef param_types_holder0<void > fun_param_holder;
-	fun_t fun;
-	cfun_holder(const fun_t& f):fun(f){}
-	R operator()(const VMachinePtr& a0){ 
-		return (*fun)(a0); 
+	typedef R (*fun_t)(const VMachinePtr&);
+	static R call(const void* fun, const VMachinePtr& a0){ 
+		return (*(fun_t*)fun)(a0); 
 	}
 };
 
@@ -832,8 +620,8 @@ struct ctor_fun<T , const VMachinePtr&>{
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
 	typedef param_types_holder0<void > fun_param_holder;
-	ctor_fun(){}
-	SmartPtr<T> operator()(const VMachinePtr& a0){ 
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun, const VMachinePtr& a0){ 
 		return xnew<T>(a0);
 	}
 };
@@ -841,59 +629,51 @@ struct ctor_fun<T , const VMachinePtr&>{
 template<class R>
 struct cmemfun_holder<R (*)(const VMachinePtr&)>{
 	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
-	typedef R (*fun_t)(const VMachinePtr&);
 	typedef ArgGetterVM ARG0; 
 	typedef ReturnNone Result;
 	typedef param_types_holder0<void > fun_param_holder;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(const VMachinePtr& a0){ 
-		return (*fun)(a0); 
+	typedef R (*fun_t)(const VMachinePtr&);
+	static R call(const void* fun, const VMachinePtr& a0){ 
+		return (*(fun_t*)fun)(a0); 
 	}
 };
 
 template<class R, class C>
 struct cmemfun_holder<R (*)(C, const VMachinePtr&)>{
 	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
-	typedef R (*fun_t)(C, const VMachinePtr&);
 	typedef ArgThisGetter<C> ARG0;
 	typedef ArgGetterVM ARG1;
 	typedef ReturnNone Result;
 	typedef param_types_holder1<C, void > fun_param_holder;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	R operator()(C self, const VMachinePtr& a0){ 
-		return (*fun)(self, a0); 
+	typedef R (*fun_t)(C, const VMachinePtr&);
+	static R call(const void* fun, C self, const VMachinePtr& a0){ 
+		return (*(fun_t*)fun)(self, a0); 
 	}
 };
 
 template<class C>
 struct cmemfun_holder<void (C::*)(const VMachinePtr&)>{
 	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
-	typedef void (C::*fun_t)(const VMachinePtr&);
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetterVM ARG1; 
 	typedef ReturnNone Result;
 	typedef param_types_holder1<C, void > fun_param_holder;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	void operator()(C* self , const VMachinePtr& a0){ 
-		return (self->*fun)(a0); 
+	typedef void (C::*fun_t)(const VMachinePtr&);
+	static void call(const void* fun, C* self , const VMachinePtr& a0){ 
+		return (self->**(fun_t*)fun)(a0); 
 	}
 };
 
 template<class C>
 struct cmemfun_holder<void (C::*)(const VMachinePtr&) const>{
 	enum{ PARAMS = 2, PARAM_N = 0, METHOD = 1, EXTENDABLE = 1 };
-	typedef void (C::*fun_t)(const VMachinePtr&) const;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetterVM ARG1; 
 	typedef ReturnNone Result;
 	typedef param_types_holder1<C, void > fun_param_holder;
-	fun_t fun;
-	cmemfun_holder(const fun_t& f):fun(f){}
-	void operator()(C* self , const VMachinePtr& a0){ 
-		return (self->*fun)(a0); 
+	typedef void (C::*fun_t)(const VMachinePtr&) const;
+	static void call(const void* fun, C* self , const VMachinePtr& a0){ 
+		return (self->**(fun_t*)fun)(a0); 
 	}
 };
 

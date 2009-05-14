@@ -18,8 +18,8 @@ enum{
 	VERSION4 = 9
 };
 }
-//
-#define XTAL_USE_COMPILED_EMB
+////
+//#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -544,8 +544,11 @@ enum PrimitiveType{
 	TYPE_VALUES = 10,
 	TYPE_TREE_NODE = 11,
 
-	TYPE_NATIVE_FUN = 12,
-	TYPE_NATIVE_FUN_BINDED_THIS = 13,
+	TYPE_NATIVE_METHOD = 12,
+	TYPE_NATIVE_FUN = 13,
+
+	TYPE_IVAR_GETTER = 14,
+	TYPE_IVAR_SETTER = 15,
 
 	/*
 	TYPE_FRAME,
@@ -692,14 +695,12 @@ class ID;
 class Code;
 class Arguments;
 class VMachine;
-class NativeFun;
+class NativeMethod;
 class Frame;
 class Class;
 class Lib;
-class CppSingleton;
 class Thread;
 class Mutex;
-class Singleton;
 class IntRange;
 class FloatRange;
 class ChRange;
@@ -727,13 +728,12 @@ typedef SmartPtr<ID> IDPtr;
 typedef SmartPtr<Code> CodePtr;
 typedef SmartPtr<Arguments> ArgumentsPtr;
 typedef SmartPtr<VMachine> VMachinePtr;
-typedef SmartPtr<NativeFun> NativeFunPtr;
+typedef SmartPtr<NativeMethod> NativeFunPtr;
 typedef SmartPtr<Frame> FramePtr;
 typedef SmartPtr<Class> ClassPtr;
 typedef SmartPtr<Lib> LibPtr;
 typedef SmartPtr<Thread> ThreadPtr;
 typedef SmartPtr<Mutex> MutexPtr;
-typedef SmartPtr<Singleton> SingletonPtr;
 typedef SmartPtr<IntRange> IntRangePtr;
 typedef SmartPtr<FloatRange> FloatRangePtr;
 typedef SmartPtr<ChRange> ChRangePtr;
@@ -779,10 +779,11 @@ struct ScopeInfo{
 */
 struct ClassInfo : public ScopeInfo{
 	ClassInfo(u16 size = 0, u16 offset = 0)
-		:instance_variable_size(size), instance_variable_identifier_offset(offset), mixins(0){}
+		:instance_variable_size(size), instance_variable_identifier_offset(offset), name_number(0), mixins(0){}
 
 	u16 instance_variable_size;
 	u16 instance_variable_identifier_offset;
+	u16 name_number;
 	u8 mixins;
 };
 
@@ -791,10 +792,11 @@ struct ClassInfo : public ScopeInfo{
 */
 struct FunInfo : public ScopeInfo{
 	FunInfo()
-		:max_stack(256), max_variable(0), min_param_count(0), max_param_count(0){}
+		:max_stack(256), max_variable(0), name_number(0), min_param_count(0), max_param_count(0){}
 
 	u16 max_stack;
 	u16 max_variable;
+	u16 name_number;
 	u8 min_param_count;
 	u8 max_param_count;
 

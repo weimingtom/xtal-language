@@ -44,22 +44,14 @@ public:
 	* \param self 可触性に影響するオブジェクト
 	* \param inherited_too 継承元クラスからもメソッド検索をするかどうか
 	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
-
-	/**
-	* \brief メソッド呼び出しをする
-	* 引数や戻り値はvmを通してやり取りする。
-	* \param primary_key メンバ名
-	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, bool inherited_too = true) const;
 
 	/**
 	* \brief メンバを取得する。
-	* 可触性を考慮したメンバ取得
 	* \retval undefined そのメンバは存在しない
 	* \retval 非undefined nameに対応したメンバ  
 	*/
-	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, const AnyPtr& self = (const AnyPtr&)null, bool inherited_too = true) const;
+	const AnyPtr& member(const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, bool inherited_too = true, int_t& accessibility = Temp()) const;
 
 	/**
 	* \brief メンバを定義する。

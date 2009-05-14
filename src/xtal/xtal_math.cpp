@@ -15,38 +15,36 @@ AnyPtr abs(const AnyPtr& a){
 }
 
 AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
-	switch(type(a)){XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){
-			switch(type(b)){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return ivalue(a)<ivalue(b) ? ivalue(b) : ivalue(a); }
-				XTAL_CASE(TYPE_FLOAT){ return ivalue(a)<fvalue(b) ? fvalue(b) : ivalue(a); }
-			}
-		}
-		XTAL_CASE(TYPE_FLOAT){
-			switch(type(b)){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return fvalue(a)<ivalue(b) ? ivalue(b) : fvalue(a); }
-				XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<fvalue(b) ? fvalue(b) : fvalue(a); }
-			}
-		}
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? b : a;	
 	}
+
+	if(abtype==1){
+		f2 ab = to_f2(atype, a, btype, b);
+		return ab.a < ab.b ? b : a;	
+	}
+
 	return null;
 }
 
 AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
-	switch(type(a)){XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){
-			switch(type(b)){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return ivalue(a)<ivalue(b) ? ivalue(a) : ivalue(b); }
-				XTAL_CASE(TYPE_FLOAT){ return ivalue(a)<fvalue(b) ? fvalue(a) : ivalue(b); }
-			}
-		}
-		XTAL_CASE(TYPE_FLOAT){
-			switch(type(b)){XTAL_DEFAULT;
-				XTAL_CASE(TYPE_INT){ return fvalue(a)<ivalue(b) ? ivalue(a) : fvalue(b); }
-				XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<fvalue(b) ? fvalue(a) : fvalue(b); }
-			}
-		}
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? a : b;	
 	}
+
+	if(abtype==1){
+		f2 ab = to_f2(atype, a, btype, b);
+		return ab.a < ab.b ? a : b;	
+	}
+
 	return null;
 }
 
@@ -96,7 +94,7 @@ float_t random_range(float_t in, float_t ax){
 }
 
 template<class T>
-struct Math{
+struct TMath{
 	static void bind(const ClassPtr& math, float*){
 		using namespace std;
 		
@@ -138,19 +136,19 @@ struct Math{
 	}
 };
 
-void bind_math(const ClassPtr& math){
-	Math<float_t>::bind(math, (float_t*)0);
-	math->def_fun(Xid(abs), &abs);
-	math->def_fun(Xid(max), &max_);
-	math->def_fun(Xid(min), &min_);
-	math->def_fun(Xid(random), &random);
-	math->def_fun(Xid(random_range), &random_range);
+class Math;
+
+XTAL_BIND(Math){
+	TMath<float_t>::bind(it, (float_t*)0);
+	it->def_fun(Xid(abs), &abs);
+	it->def_fun(Xid(max), &max_);
+	it->def_fun(Xid(min), &min_);
+	it->def_fun(Xid(random), &random);
+	it->def_fun(Xid(random_range), &random_range);
 }
 
 void initialize_math(){
-	ClassPtr math = xnew<Singleton>(Xid(math));
-	math->set_binder(&bind_math);
-	builtin()->def(Xid(math), math);
+	builtin()->def(Xid(math), cpp_class<Math>());
 }
 
 }

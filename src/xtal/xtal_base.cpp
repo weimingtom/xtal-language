@@ -89,7 +89,7 @@ void Base::rawcall(const VMachinePtr& vm){
 	ap(Any(this))->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& Base::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& Base::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert 
 	return undefined;
 }

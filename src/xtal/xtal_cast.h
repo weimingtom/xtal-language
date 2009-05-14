@@ -9,14 +9,8 @@
 
 namespace xtal{
 	
-
 struct ParamInfo;
 struct VMAndData;
-
-template<class T>
-struct ConvertibleToAnyPtr{
-	enum{ value = 0 };
-};
 
 typedef void (*bind_class_fun_t)(const ClassPtr&);
 
@@ -25,8 +19,10 @@ struct CppClassSymbolData{
 
 	unsigned int value;
 	CppClassSymbolData* prev;
+
 	bind_class_fun_t prebind;
 	bind_class_fun_t bind;
+	
 	const char_t* name;
 };
 
@@ -80,48 +76,28 @@ struct CppClassBindFun{
 		::xtal::CppClassSymbol<ClassName>::make()->prebind, &::xtal::CppClassBindFun<ClassName>::prebind, ::xtal::CppClassSymbol<ClassName>::make()->name, XTAL_STRING(#ClassName));\
 	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr& it)
 
+////////////////////
+
+typedef AnyPtr (*bind_var_fun_t)();
 
 struct CppVarSymbolData{ 
-	CppVarSymbolData(){
-		static unsigned int counter = 1;
-		value = counter++;
-	}
+	CppVarSymbolData(bind_var_fun_t fun);
 
+	CppVarSymbolData* prev;
+	bind_var_fun_t maker;
 	unsigned int value;
 };
 
 template<class T>
 struct CppVarSymbol{
 	static CppVarSymbolData value;
+	static AnyPtr maker(){ return xnew<T>(); }
 };
 
 template<class T>
-CppVarSymbolData CppVarSymbol<T>::value;
+CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
 
-struct IdentifierData{ 
-	IdentifierData(){
-		static unsigned int counter = 0;
-		value = counter++;
-	}
-
-	unsigned int value;
-};
-
-template<class T>
-struct Identifier{
-	static IdentifierData value;
-};
-
-template<class T>
-IdentifierData Identifier<T>::value;
-
-#define XTAL_DECL_ID(x) class xtal_id_##x
-#define XTAL_ID2(x) ::xtal::intern_literal(XTAL_STRING(#x), &::xtal::Identifier<typename x>::value)
-
-inline const IDPtr& intern(const StringLiteral& str);
-
-#define XTAL_ID(x) ::xtal::intern(XTAL_STRING(#x))
-
+////////////////////////////////////////
 
 /**
 * \internal

@@ -324,7 +324,7 @@ inline ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
 }
 
 /**
-* \brief スコープ的な親を持つクラス
+* \brief スコープ的な親を認識するクラス
 */
 class HaveParent : public Base{
 public:
@@ -350,7 +350,7 @@ protected:
 };
 
 /**
-* \brief スコープ的な親を持つクラス
+* \brief スコープ的な親を認識するクラス
 */
 class RefCountingHaveParent : public RefCountingBase{
 public:
@@ -368,11 +368,11 @@ public:
 
 	void set_object_parent(const ClassPtr& parent);
 
+	void visit_members(Visitor& m);
+
 protected:
 
 	Class* parent_;
-
-	void visit_members(Visitor& m);
 };
 
 /**

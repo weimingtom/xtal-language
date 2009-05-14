@@ -20,6 +20,15 @@ CppClassBindTemp::CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src,
 	name = given;
 }
 
+CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
+	static unsigned int counter = 1;
+	static CppVarSymbolData* prev_data = 0;
+	value = counter++;
+	prev = prev_data;
+	maker = fun;
+	prev_data = this;
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 

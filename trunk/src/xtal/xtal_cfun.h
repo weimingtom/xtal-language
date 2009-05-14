@@ -9,7 +9,7 @@
 
 namespace xtal{
 
-class NativeFun;	
+class NativeMethod;	
 
 struct ReturnResult{
 	static void return_result(const VMachinePtr& vm){
@@ -111,8 +111,8 @@ template<class Fun>
 struct cfun<`n`, Fun>{
 	static void f(VMAndData& pvm){
 		#REPEAT#typedef typename Fun::ARG`i` A`i`;#
-		(*(Fun*)pvm.data)(
-			#REPEAT_COMMA#A`i`::cast(pvm.vm)#
+		Fun::call(pvm.data
+			#COMMA_REPEAT#A`i`::cast(pvm.vm)#
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -122,7 +122,7 @@ template<class Fun>
 struct cfun<0, Fun>{
 	static void f(VMAndData& pvm){
 		
-		(*(Fun*)pvm.data)(
+		Fun::call(pvm.data
 			
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
@@ -132,8 +132,8 @@ template<class Fun>
 struct cfun<1, Fun>{
 	static void f(VMAndData& pvm){
 		typedef typename Fun::ARG0 A0;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm)
+		Fun::call(pvm.data
+			, A0::cast(pvm.vm)
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -142,8 +142,8 @@ template<class Fun>
 struct cfun<2, Fun>{
 	static void f(VMAndData& pvm){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm)
+		Fun::call(pvm.data
+			, A0::cast(pvm.vm), A1::cast(pvm.vm)
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -152,8 +152,8 @@ template<class Fun>
 struct cfun<3, Fun>{
 	static void f(VMAndData& pvm){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm)
+		Fun::call(pvm.data
+			, A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm)
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -162,8 +162,8 @@ template<class Fun>
 struct cfun<4, Fun>{
 	static void f(VMAndData& pvm){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm)
+		Fun::call(pvm.data
+			, A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm)
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -172,8 +172,8 @@ template<class Fun>
 struct cfun<5, Fun>{
 	static void f(VMAndData& pvm){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;
-		(*(Fun*)pvm.data)(
-			A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm), A4::cast(pvm.vm)
+		Fun::call(pvm.data
+			, A0::cast(pvm.vm), A1::cast(pvm.vm), A2::cast(pvm.vm), A3::cast(pvm.vm), A4::cast(pvm.vm)
 		), ReturnPolicyTest<typename Fun::Result>(pvm.vm), ReturnPolicyVoidTest();
 	}
 };
@@ -219,7 +219,7 @@ template<class Fun>
 param_types_holder_n fun_param_holder<Fun>::value = {
 	&cfun<Fun::PARAMS, Fun>::f,
 	Fun::fun_param_holder::values,
-	sizeof(Fun),
+	sizeof(typename Fun::fun_t),
 	Fun::PARAM_N,
 	Fun::EXTENDABLE,
 };
@@ -321,9 +321,8 @@ struct getter_holder{
 	typedef ReturnResult Result;
 	typedef ArgThisGetter<C*> ARG0;
 	typedef param_types_holder0<C> fun_param_holder;
-	T C::* var;
-	getter_holder(T C::* var):var(var){}
-	const T& operator()(C* self){ return self->*var; }
+	typedef T C::* fun_t;
+	static const T& call(const void* fun, C* self){ return self->**(fun_t*)fun; }
 };
 
 template<class C, class T>
@@ -333,26 +332,25 @@ struct setter_holder{
 	typedef ArgThisGetter<C*> ARG0;
 	typedef ArgGetter<typename CastResult<T>::type, 0> ARG1;
 	typedef param_types_holder1<C, T> fun_param_holder;
-	T C::* var;
-	setter_holder(T C::* var):var(var){}
-	const T& operator()(C* self, const T& v){ return self->*var = v; }
+	typedef T C::* fun_t;
+	static const T& call(const void* fun, C* self, const T& v){ return self->**(fun_t*)fun = v; }
 };
 
 //////////////////////////////////////////////////////////////
 
-class NativeFun : public RefCountingHaveParent{
+class NativeMethod : public RefCountingHaveParent{
 public:
-	enum{ TYPE = TYPE_NATIVE_FUN };
+	enum{ TYPE = TYPE_NATIVE_METHOD };
 
 	typedef void (*fun_t)(VMAndData& pvm);
 
-	NativeFun(const param_types_holder_n& pth, const void* val, int_t val_size);
+	NativeMethod(const param_types_holder_n& pth, const void* val = 0);
 	
-	~NativeFun();
+	~NativeMethod();
 
 public:
 
-	const NativeFunPtr& param(int_t i, const IDPtr& key, const Any& value);
+	const NativeFunPtr& param(int_t i, const IDPtr& key, const AnyPtr& value);
 
 public:
 
@@ -370,11 +368,11 @@ protected:
 	u8 val_size_;
 };
 
-class NativeFunBindedThis : public NativeFun{
+class NativeFun : public NativeMethod{
 public:
-	enum{ TYPE = TYPE_NATIVE_FUN_BINDED_THIS };
+	enum{ TYPE = TYPE_NATIVE_FUN };
 
-	NativeFunBindedThis(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_);
+	NativeFun(const param_types_holder_n& pth, const void* val, const AnyPtr& this_);
 
 public:
 
@@ -386,8 +384,8 @@ private:
 	AnyPtr this_;
 };
 
-NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size);
-NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, int_t val_size, const AnyPtr& this_);
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val);
+NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, const AnyPtr& this_);
 
 //////////////////////////////////////////////////////////////
 
@@ -399,8 +397,7 @@ template<class T, class A0=void, class A1=void, class A2=void, class A3=void, cl
 struct ctor : public NativeFunPtr{
 	typedef ctor_fun<T, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_t;
 	ctor(){
-		fun_t fun;
-		NativeFunPtr::operator =(new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun)));
+		NativeFunPtr::operator =(new_native_fun(fun_param_holder<fun_t>::value, 0));
 	}
 };
 	
@@ -415,7 +412,7 @@ public:
 
 	virtual void rawcall(const VMachinePtr& vm){
 		if(vm->ordered_arg_count()>0){
-			vm->arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class(), vm->arg_this());
+			vm->arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class());
 		}
 	}
 
@@ -433,7 +430,7 @@ public:
 		:klass_(klass), primary_key_(primary_key){}
 
 	virtual void rawcall(const VMachinePtr& vm){
-		klass_->member(primary_key_, vm->arg(0)->get_class(), vm->arg_this())->rawcall(vm);
+		klass_->member(primary_key_, vm->arg(0)->get_class())->rawcall(vm);
 	}
 
 private:
@@ -456,9 +453,7 @@ private:
 */
 template<class Fun>
 inline NativeFunPtr fun(const Fun& f){
-	typedef cfun_holder<Fun> fun_t;
-	fun_t fun(f);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<cfun_holder<Fun> >::value, &f);
 }
 
 /**
@@ -468,9 +463,7 @@ inline NativeFunPtr fun(const Fun& f){
 */
 template<class Fun>
 inline NativeFunPtr method(const Fun& f){
-	typedef cmemfun_holder<Fun> fun_t;
-	fun_t fun(f);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	return new_native_fun(fun_param_holder<cmemfun_holder<Fun> >::value, &f);
 }
 
 /**
@@ -478,10 +471,8 @@ inline NativeFunPtr method(const Fun& f){
 *
 */
 template<class T, class C>
-inline NativeFunPtr getter(T C::* v){
-	typedef getter_holder<C, T> fun_t;
-	fun_t fun(v);
-	return new_native_fun(fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+inline NativeFunPtr getter(T C::* f){
+	return new_native_fun(fun_param_holder<getter_holder<C, T> >::value, &f);
 }
 	
 /**
@@ -489,10 +480,8 @@ inline NativeFunPtr getter(T C::* v){
 *
 */
 template<class T, class C>
-inline NativeFunPtr setter(T C::* v){
-	typedef setter_holder<C, T> fun_t;
-	fun_t fun(v);
-	return new_native_fun(fun_param_holder<fun_t>::value(), &fun, sizeof(fun));
+inline NativeFunPtr setter(T C::* f){
+	return new_native_fun(fun_param_holder<setter_holder<C, T> >::value(), &f);
 }
 
 /**

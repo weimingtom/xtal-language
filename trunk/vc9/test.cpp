@@ -93,66 +93,14 @@ int main2(int argc, char** argv){
 	//debug()->set_throw_hook(fun(&debug_throw));
 
 	//test();
-
-	StringPtr sss = XTAL_STRING("‚±e‚ñe‚Ée‚¿e‚Í");
-
 			
 	if(CodePtr code = Xsrc((
 		//check_implicit_lookup();
-		bit_num: 0;
-		byte_acc: 0;
-		i: 0; iter: 50;
-		x: 0; y: 0; limit2: 4;
-		Zr: 0; Zi: 0; Cr: 0; Ci: 0; Tr: 0; Ti: 0;
+			
 
-		h: arg[0];
-		w: h;
-
-		//stdout: open("../mandelbrot.ppm", "w");
-
-		stdout.printf("P4\n%d %d\n", w, h);
-
-		for (y = 0 ; y < h ; y++)
-		{
-			for (x = 0 ; x < w ; x++)
-			{
-				Zr = 0; Zi = 0; Tr = 0; Ti = 0.0;
-
-				Cr = (2.0 * x / w - 1.5); Ci = (2.0 * y / h - 1.0);
-
-				for (i = 0 ; i < iter && (Tr + Ti <= limit2) ; i++)
-				{
-					Zi = 2.0 * Zr * Zi + Ci;
-					Zr = Tr - Ti + Cr;
-					Tr = Zr * Zr;
-					Ti = Zi * Zi;
-				}
-
-				byte_acc = byte_acc << 1;
-				if (Tr + Ti <= limit2) byte_acc = byte_acc | 1;
-
-				bit_num++;
-
-				if (bit_num == 8)
-				{
-					stdout.print(byte_acc);
-					byte_acc = 0;
-					bit_num = 0;
-				}
-				else if (x == w - 1)
-				{
-					byte_acc = byte_acc << (8 - w % 8);
-					stdout.print(byte_acc);
-					byte_acc = 0;
-					bit_num = 0;
-				}
-			}
-		}
-
-		//stdout.close();	
 	))){
 		code->inspect()->p();
-		code->call(4);
+		AnyPtr aa = code->call(4);
 	}
 
 
@@ -189,7 +137,7 @@ int main2(int argc, char** argv){
 	//benchmark("../binary-trees.xtal", 3);
 	//benchmark("../mandelbrot.xtal", 10);
 
-	/*		
+	//*		
 	c = clock();
 	load("../bench/vec.xtal");
 	printf("vec %g\n\n", (clock()-c)/1000.0f);		

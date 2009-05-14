@@ -172,20 +172,12 @@ public:
 		ff().self(self);
 	}
 
-	/**
-	* \brief ヒントの設定
-	*
-	* 例外が起きたときのエラーメッセージのために、
-	* 現在呼び出している関数を登録する。
-	*/
-	void set_hint(const AnyPtr& object){ 
-		ff().hint(object);
-	}
 // 
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を`i`個積む
 	void setup_call(int_t need_result_count = 1){
-		push_ff(need_result_count);	
+		push_ff();
+		set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);	
 	}
 
 //{REPEAT{{
@@ -489,6 +481,7 @@ public:
 		// 関数呼び出し側が必要とする戻り値の数
 		int_t need_result_count;
 
+		// 実際の戻り値の数
 		int_t result_count;
 
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
@@ -503,17 +496,11 @@ public:
 		// 呼び出された関数オブジェクト
 		Any fun_; 
 
-		// 関数が所属するコードオブジェクト
-		Any code_;
-
 		// スコープの外側のフレームオブジェクト
 		Any outer_;
 
 		// 関数が呼ばれたときのthisオブジェクト
 		Any self_;
-
-		// デバッグメッセージ出力用のヒント
-		Any hint_;
 
 		// UnsuportedErrorのためにtargetをおくところ
 		Any target_;
@@ -524,13 +511,15 @@ public:
 		// UnsuportedErrorのためにsecondary_keyをおくところ
 		Any secondary_key_;
 
+		Code* code;
+
+		const AnyPtr* identifiers;
+
 		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
-		const CodePtr& code() const{ return unchecked_ptr_cast<Code>(ap(code_)); }
 		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& self() const{ return ap(self_); }
-		const AnyPtr& hint() const{ return ap(hint_); }
 		const AnyPtr& target() const{ return ap(target_); }
 		const IDPtr& primary_key() const{ return unchecked_ptr_cast<ID>(ap(primary_key_)); }
 		const AnyPtr& secondary_key() const{ return ap(secondary_key_); }
@@ -540,10 +529,8 @@ public:
 		}
 
 		void fun(const Any& v){ fun_ = v; }
-		void code(const Any& v){ code_ = v; }
 		void outer(const Any& v){ outer_ = v; }
 		void self(const Any& v){ self_ = v; }
-		void hint(const Any& v){ hint_ = v; }
 		void target(const Any& v){ target_ = v; }
 		void primary_key(const Any& v){ primary_key_ = v; }
 		void secondary_key(const Any& v){ secondary_key_ = v; }
@@ -563,15 +550,21 @@ public:
 		Any outer;
 	};
 
-	void push_call(const inst_t* pc, 
-		int_t need_result_count, int_t ordered_arg_count, int_t named_arg_count, 
-		const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self);
+	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
 
-	void push_call(const inst_t* pc, const InstCall& inst);
+	const inst_t* send(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
+		int_t result, int_t ordered, int_t named);
 
-	void push_call(const inst_t* pc, const InstSend& inst);
+	const inst_t* call(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
+		int_t result, int_t ordered, int_t named);
 
-	void push_ff(int_t need_result_count);
+	FunFrame& push_ff(){
+		FunFrame* fp = fun_frames_.push();
+		if(!fp){ 
+			fun_frames_.top() = fp = new(xmalloc(sizeof(FunFrame))) FunFrame();
+		}
+		return *fp;
+	}
 
 	const inst_t* pop_ff(){
 		if(ScopeInfo* scope = scopes_.pop()){
@@ -580,35 +573,52 @@ public:
 		return fun_frames_.pop()->poped_pc; 
 	}
 
-	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
+	void set_ff(const inst_t* pc, const inst_t* cpc, int_t need_result_count, 
+			int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 
-	FunFrame& ff(){ return *fun_frames_.top(); }
+	FunFrame& ff(){ 
+		return *fun_frames_.top(); 
+	}
 
-	FunFrame& prev_ff(){ return *fun_frames_[1]; }
+	FunFrame& prev_ff(){ 
+		return *fun_frames_[1]; 
+	}
 
-	const FunPtr& fun(){ return ff().fun(); }
+	const FunPtr& fun(){ 
+		return ff().fun(); 
+	}
 
-	const FunPtr& prev_fun(){ return prev_ff().fun(); }
+	const FunPtr& prev_fun(){ 
+		return prev_ff().fun(); 
+	}
 
-	const FramePtr& outer(){ return ff().outer(); }
+	const FramePtr& outer(){ 
+		return ff().outer(); 
+	}
 
-	const FramePtr& prev_outer(){ return prev_ff().outer(); }
+	const FramePtr& prev_outer(){ 
+		return prev_ff().outer(); 
+	}
 
-	const CodePtr& code();
+	const CodePtr& code(){ 
+		return to_smartptr(ff().code); 
+	}
 
-	const CodePtr& prev_code();
+	const CodePtr& prev_code(){ 
+		return to_smartptr(prev_ff().code); 
+	}
 
-	const IDPtr& identifier(int_t n);
+	const IDPtr& identifier(int_t n){ 
+		return (const IDPtr&)ff().identifiers[n]; 
+	}
 
-	const IDPtr& prev_identifier(int_t n);
-
-	void return_result_instance_variable(int_t number, ClassInfo* info);
+	const IDPtr& prev_identifier(int_t n){ 
+		return (const IDPtr&)prev_ff().identifiers[n]; 
+	}
 
 	ArgumentsPtr inner_make_arguments(Method* fun);
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
-	
-	const VMachinePtr& myself(){ return to_smartptr(this); }
 
 private:
 	const inst_t* inner_send_from_stack(const inst_t* pc, int_t need_result_count, const IDPtr& primary_key, int_t ntarget);
@@ -619,6 +629,8 @@ private:
 
 	const inst_t* push_except(const inst_t* pc);
 	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
+
+	const inst_t* check_accessibility(const inst_t* pc, const AnyPtr& cls, const AnyPtr& self, int_t accessibility);
 
 	void set_local_variable_outer(uint_t pos, const Any& value);
 
@@ -638,6 +650,10 @@ private:
 		}
 		return local_variable_outer(pos - ff().variable_size);
 	}
+
+	const inst_t* vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
+
+	const inst_t* set_vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 
@@ -783,27 +799,6 @@ public:
 	const inst_t* OpShl(const inst_t* pc, int_t op);
 	const inst_t* OpShr(const inst_t* pc, int_t op);
 	const inst_t* OpUshr(const inst_t* pc, int_t op);
-
-	struct f2{
-		float_t a, b;
-	};
-
-	f2 to_f2(int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
-		f2 ret;
-		if(atype==0){
-			ret.a = (float_t)ivalue(a);
-			ret.b = fvalue(b);
-		}
-		else if(btype==0){
-			ret.a = fvalue(a);
-			ret.b = (float_t)ivalue(b);
-		}
-		else{
-			ret.a = fvalue(a);
-			ret.b = fvalue(b);
-		}
-		return ret;
-	}
 
 private:
 

@@ -15,7 +15,8 @@ void filelocal_check_implicit_lookup(const AnyPtr& a){
 }
 
 Code::Code()
-	:filelocal_(xnew<Singleton>()), source_file_name_(XTAL_STRING("<noname>")){
+	:filelocal_(xnew<Class>()), source_file_name_(XTAL_STRING("<noname>")){
+	filelocal_->set_singleton();
 	filelocal_->set_object_name(Xid(filelocal));
 	filelocal_->set_object_force(500);
 	filelocal_->inherit(builtin());
@@ -159,7 +160,41 @@ void Code::insert_erase_common(inst_t* p, int_t size){
 		}
 	}
 }
+
+void Code::find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv){
+	for(uint_t j=0; j<info.variable_size; ++j){
+		IDPtr id = identifier(info.variable_identifier_offset+j);
+		int_t dist = edit_distance(primary_key, id);
+		if(dist!=0 && dist<minv){
+			minv = dist;
+			pick = id;
+		}
+	}
+}
 	
+IDPtr Code::find_near_variable(const IDPtr& primary_key){
+	int_t minv = 0xffffff;
+	IDPtr pick;
+
+	if(const ClassPtr& klass = filelocal()){
+		pick = klass->find_near_member(primary_key, undefined, minv);
+	}
+
+	for(uint_t i=0; i<xfun_info_table_.size(); ++i){
+		find_near_variable_inner(primary_key, xfun_info_table_[i], pick, minv);
+	}
+
+	for(uint_t i=0; i<scope_info_table_.size(); ++i){
+		find_near_variable_inner(primary_key, scope_info_table_[i], pick, minv);
+	}
+
+	for(uint_t i=0; i<class_info_table_.size(); ++i){
+		find_near_variable_inner(primary_key, class_info_table_[i], pick, minv);
+	}
+
+	return pick;
+}
+
 void Code::check_implicit_lookup(){
 	ArrayPtr ary;
 	for(uint_t i=0; i<implicit_table_.size(); ++i){
@@ -170,7 +205,7 @@ void Code::check_implicit_lookup(){
 				ary = xnew<Array>();
 			}
 
-			ary->push_back(Xf("%s(%d)")->call(unsupported_error(filelocal_, id, undefined), implicit_table_[i].lineno));
+			ary->push_back(Xf("%s(%d)")->call(global_unsupported_error(to_smartptr(this), id), implicit_table_[i].lineno));
 		}
 	}
 

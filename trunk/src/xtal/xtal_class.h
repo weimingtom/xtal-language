@@ -106,7 +106,14 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC);
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+	
+	void def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+	void def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+
+	void def(const IDPtr& primary_key, const AnyPtr& value);
+	void def(const char_t* primary_key, const AnyPtr& value);
+	void def(const char8_t* primary_key, const AnyPtr& value);
 
 	/**
 	* \internal
@@ -114,7 +121,7 @@ public:
 	*
 	* この関数を使うのではなく、Any::memberを使うこと。
 	*/
-	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* \brief メンバを再設定する
@@ -165,7 +172,12 @@ public:
 	/**
 	* \brief 近い名前のメンバを検索する
 	*/
-	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined);
+	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined){
+		int_t dist = 0xffffff;
+		return find_near_member(primary_key, secondary_key, dist);
+	}
+
+	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& dist);
 	
 	/**
 	* \xbind
@@ -183,11 +195,14 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class TFun>
-	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef cfun_holder<TFun> fun_t;
-		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	template<class TFun, class Str>
+	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<cfun_holder<TFun> >::value, &f);
+	}
+
+	template<class TFun, class Str>
+	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f){
+		return def_and_return(primary_key, fun_param_holder<cfun_holder<TFun> >::value, &f);
 	}
 
 	/**
@@ -198,11 +213,14 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class TFun>
-	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef cmemfun_holder<TFun> fun_t;
-		fun_t fun(f);
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	template<class TFun, class Str>
+	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<cmemfun_holder<TFun> >::value, &f);
+	}
+
+	template<class TFun, class Str>
+	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f){
+		return def_and_return(primary_key, fun_param_holder<cmemfun_holder<TFun> >::value, &f);
 	}
 
 	/**
@@ -212,11 +230,9 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class T, class C>
-	const NativeFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef getter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	template<class T, class C, class Str>
+	const NativeFunPtr& def_getter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<getter_holder<C, T> >::value, &v);
 	}
 	
 	/**
@@ -228,11 +244,9 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class T, class C>
-	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef setter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
+	template<class T, class C, class Str>
+	const NativeFunPtr& def_setter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<setter_holder<C, T> >::value, &v);
 	}
 	
 	/**
@@ -245,8 +259,8 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/	
-	template<class T, class U>
-	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+	template<class T, class U, class Str>
+	void def_var(const Str& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_getter(primary_key, v, secondary_key, accessibility);
 		def_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
 	}
@@ -264,68 +278,6 @@ public:
 	* \param accessibility 可蝕性
 	*/
 	void def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility = KIND_PUBLIC);
-
-public:
-
-	/**
-	* \brief シングルトンクラスにメソッドを定義する
-	* \param primary_key 新しく定義するメンバの名前
-	* \param f 設定する関数
-	* \param secondary_key セカンダリキー
-	* \param accessibility 可蝕性
-	*/
-	template<class TFun>
-	const NativeFunPtr& def_singleton_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef cmemfun_holder<TFun> fun_t;
-		fun_t fun(f);
-		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-	}
-
-	/**
-	* \brief シングルトンクラスに、メンバ変数へのポインタからゲッターを生成し定義する
-	* \param primary_key 新しく定義するメンバの名前
-	* \param v 設定するメンバ変数へのポインタ
-	* \param secondary_key セカンダリキー
-	* \param accessibility 可蝕性
-	*/
-	template<class T, class C>
-	const NativeFunPtr& def_singleton_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef getter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-	}
-	
-	/**
-	* \brief メンバ変数へのポインタからセッターを生成し、定義する
-	* \param primary_key 新しく定義するメンバの名前
-	* \param v 設定するメンバ変数へのポインタ
-	* \param secondary_key セカンダリキー
-	* \param accessibility 可蝕性
-	* Xtalでは、obj.name = 10; とするにはset_nameとset_を前置したメソッドを定義する必要があるため、
-	* 単純なセッターを定義したい場合、set_xxxとすることを忘れないこと。
-	*/
-	template<class T, class C>
-	const NativeFunPtr& def_singleton_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		typedef setter_holder<C, T> fun_t;
-		fun_t fun(v);
-		return def_and_return_bind_this(primary_key, secondary_key, accessibility, fun_param_holder<fun_t>::value, &fun, sizeof(fun));
-	}
-	
-	/**
-	* \brief メンバ変数へのポインタからゲッター、セッターを両方生成し、定義する
-	* \param primary_key 新しく定義するメンバの名前
-	* \param v 設定するメンバ変数へのポインタ
-	* \param secondary_key セカンダリキー
-	* \param accessibility 可蝕性
-	* cls->def_getter(primary_key, var, policy);
-	* cls->def_setter(StringPtr("set_")->cat(primary_key), v, policy);
-	* と等しい	
-	*/	
-	template<class T, class U>
-	void def_singleton_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		def_singleton_getter(primary_key, v, secondary_key, accessibility);
-		def_singleton_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
-	}
 
 public:
 
@@ -458,29 +410,25 @@ public:
 
 	void prebind();
 
-	void set_prebinder(bind_class_fun_t binder){
-		prebinder_ = binder;
-	}
-
-	bind_class_fun_t prebinder(){
-		return prebinder_;
-	}
-
 	void bind();
 
-	void set_binder(bind_class_fun_t binder){
-		binder_ = binder;
+	void set_symbol_data(CppClassSymbolData* data){
+		symbol_data_ = data;
 	}
 
-	bind_class_fun_t binder(){
-		return binder_;
-	}
+	void set_singleton();
+
+	void init_singleton(const VMachinePtr& vm);
 
 protected:
 
-	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
+	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
+	const NativeFunPtr& def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
+	const NativeFunPtr& def_and_return(const char8_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
 
-	const NativeFunPtr& def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size);
+	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const param_types_holder_n& pth, const void* val);
+	const NativeFunPtr& def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val);
+	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
@@ -490,15 +438,16 @@ protected:
 	NativeFunPtr serial_ctor_;
 
 	PODArrayList<Class*> inherited_classes_;
-	void (*prebinder_)(const ClassPtr& cls);
-	void (*binder_)(const ClassPtr& cls);
+	CppClassSymbolData* symbol_data_;
 	u16 object_force_;
 	u16 flags_;
 
 	enum{
 		FLAG_NATIVE = 1<<0,
 		FLAG_FINAL = 1<<1,
-		FLAG_SINGLETON = 1<<2
+		FLAG_SINGLETON = 1<<2,
+		FLAG_PREBINDED = 1<<3,
+		FLAG_BINDED = 1<<4
 	};
 
 	virtual void visit_members(Visitor& m){
@@ -536,37 +485,6 @@ private:
 		Base::visit_members(m);
 		m & class_;
 	}
-};
-
-class Singleton : public Class{
-public:
-
-	Singleton(const StringPtr& name = empty_string);
-
-	Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
-	
-public:
-
-	void init_singleton(const VMachinePtr& vm);
-
-	// クラスの設定はスルーする
-	void set_class(const ClassPtr&){}
-
-	virtual void rawcall(const VMachinePtr& vm);
-	
-	virtual void s_new(const VMachinePtr& vm);
-};
-
-class CppSingleton : public Class{
-public:
-		
-	CppSingleton();
-
-public:
-
-	// クラスの設定はスルーする
-	void set_class(const ClassPtr&){}
-
 };
 
 }

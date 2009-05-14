@@ -77,24 +77,26 @@ private:
 	virtual void visit_members(Visitor& m);
 };
 
-class InstanceVariableGetter : public HaveParent{
+class InstanceVariableGetter : public RefCountingHaveParent{
 public:
+	enum{ TYPE = TYPE_IVAR_GETTER };
 
 	InstanceVariableGetter(int_t number, ClassInfo* info);
 
-	virtual void rawcall(const VMachinePtr& vm);
+	void rawcall(const VMachinePtr& vm);
 
 public:
 	int_t number_;
 	ClassInfo* info_;
 };
 
-class InstanceVariableSetter : public HaveParent{
+class InstanceVariableSetter : public RefCountingHaveParent{
 public:
+	enum{ TYPE = TYPE_IVAR_SETTER };
 
 	InstanceVariableSetter(int_t number, ClassInfo* info);
 
-	virtual void rawcall(const VMachinePtr& vm);
+	void rawcall(const VMachinePtr& vm);
 
 public:
 	int_t number_;

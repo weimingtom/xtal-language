@@ -85,9 +85,8 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	:Frame(outer, code, info){
 	set_object_name(empty_string);
 	object_force_ = 0;
-	prebinder_ = 0;
-	binder_ = 0;
 	flags_ = 0;
+	symbol_data_ = 0;
 	make_map_members();
 }
 
@@ -95,9 +94,8 @@ Class::Class(const StringPtr& name)
 	:Frame(null, null, 0){
 	set_object_name(name);
 	object_force_ = 0;
-	prebinder_ = 0;
-	binder_ = 0;
 	flags_ = 0;
+	symbol_data_ = 0;
 	make_map_members();
 }
 
@@ -105,9 +103,8 @@ Class::Class(cpp_class_t)
 	:Frame(null, null, 0){
 	set_object_name(empty_string);
 	object_force_ = 0;
-	prebinder_ = 0;
-	binder_ = 0;
 	flags_ = FLAG_NATIVE;
+	symbol_data_ = 0;
 	make_map_members();
 }
 
@@ -244,7 +241,7 @@ const NativeFunPtr& Class::ctor(){
 		}
 	}
 
-	return unchecked_ptr_cast<NativeFun>(null);
+	return unchecked_ptr_cast<NativeMethod>(null);
 }
 
 const NativeFunPtr& Class::def_serial_ctor(const NativeFunPtr& ctor_fun){
@@ -271,7 +268,7 @@ const NativeFunPtr& Class::serial_ctor(){
 		}
 	}
 
-	return unchecked_ptr_cast<NativeFun>(null);
+	return unchecked_ptr_cast<NativeMethod>(null);
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
@@ -293,17 +290,12 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
-IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
-	int_t minv = 0xffffff;
+IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& minv){
 	IDPtr minid = null;
 	Xfor_cast(const ValuesPtr& v, send(Xid(members_ancestors_too))){
 		IDPtr id = ptr_cast<ID>(v->at(0));
-		if(raweq(primary_key, id)){
-			return id;
-		}
-
 		int_t dist = edit_distance(primary_key, id);
-		if(dist<minv){
+		if(dist!=0 && dist<minv){
 			minv = dist;
 			minid = id;
 		}
@@ -320,12 +312,33 @@ void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibilit
 	def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), undefined, accessibility);
 }
 
-const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFun>(pth, val, val_size), secondary_key, accessibility));
+const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
+	if(is_singleton()){
+		return unchecked_ptr_cast<NativeMethod>(def2(primary_key, xnew<NativeFun>(pth, val, to_smartptr(this)), secondary_key, accessibility));
+	}
+	else{
+		return unchecked_ptr_cast<NativeMethod>(def2(primary_key, xnew<NativeMethod>(pth, val), secondary_key, accessibility));
+	}
 }
 
-const NativeFunPtr& Class::def_and_return_bind_this(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val, int_t val_size){
-	return unchecked_ptr_cast<NativeFun>(def2(primary_key, xnew<NativeFunBindedThis>(pth, val, val_size, to_smartptr(this)), secondary_key, accessibility));
+const NativeFunPtr& Class::def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
+	return def_and_return(xnew<ID>(primary_key), secondary_key, accessibility, pth, val);
+}
+
+const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
+	return def_and_return(xnew<ID>(primary_key), secondary_key, accessibility, pth, val);
+}
+
+const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const param_types_holder_n& pth, const void* val){
+	return def_and_return(primary_key, undefined, KIND_PUBLIC, pth, val);
+}
+
+const NativeFunPtr& Class::def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val){
+	return def_and_return(xnew<ID>(primary_key), undefined, KIND_PUBLIC, pth, val);
+}
+
+const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val){
+	return def_and_return(xnew<ID>(primary_key), undefined, KIND_PUBLIC, pth, val);
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
@@ -380,6 +393,26 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 	}
 }
 
+void Class::def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	return def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+}
+
+void Class::def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	return def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+}
+
+void Class::def(const IDPtr& primary_key, const AnyPtr& value){
+	return def(primary_key, value, undefined, KIND_PUBLIC);
+}
+
+void Class::def(const char_t* primary_key, const AnyPtr& value){
+	return def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+}
+
+void Class::def(const char8_t* primary_key, const AnyPtr& value){
+	return def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+}
+
 const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
 	cpp_class<Any>()->bind();
 
@@ -414,7 +447,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	// 継承しているクラスを順次検索
 	if(inherited_too){
 		for(int_t i=inherited_classes_.size(); i>0; --i){
-			const AnyPtr& ret = inherited_classes_[i-1]->do_member(primary_key, secondary_key, true, accessibility, nocache);
+			const AnyPtr& ret = inherited_classes_[i-1]->rawmember(primary_key, secondary_key, true, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -424,7 +457,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	return undefined;
 }
 
-const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& Class::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	bind();
 
 	{
@@ -450,7 +483,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = do_member(primary_key, to_smartptr(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
+			const AnyPtr& ret = rawmember(primary_key, to_smartptr(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -459,7 +492,7 @@ const AnyPtr& Class::do_member(const IDPtr& primary_key, const AnyPtr& secondary
 		//XTAL_CHECK_EXCEPT(e){ return undefined; }
 
 		if(rawne(cpp_class<Any>(), klass)){
-			const AnyPtr& ret = do_member(primary_key, cpp_class<Any>(), inherited_too, accessibility, nocache);
+			const AnyPtr& ret = rawmember(primary_key, cpp_class<Any>(), inherited_too, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
@@ -534,7 +567,12 @@ StringPtr Class::object_name(){
 		return name_;
 	}
 
-	return Xid(AnonymousClass);
+	if(symbol_data_ && symbol_data_->name){
+		name_ = symbol_data_->name;
+		return name_;
+	}
+
+	return empty_string;
 }
 
 void Class::set_object_name(const StringPtr& name){
@@ -580,6 +618,10 @@ bool Class::is_inherited_cpp_class(){
 void Class::rawcall(const VMachinePtr& vm){
 	prebind();
 
+	if(is_singleton()){
+		return ap(Any(this))->rawsend(vm, Xid(op_call));
+	}
+
 	if(is_native()){
 		if(const NativeFunPtr& ret = ctor()){
 			ret->rawcall(vm);
@@ -609,7 +651,7 @@ void Class::rawcall(const VMachinePtr& vm){
 
 		XTAL_CHECK_EXCEPT(e){ return; }
 		
-		if(const AnyPtr& ret = member(Xid(initialize), undefined, vm->ff().self())){
+		if(const AnyPtr& ret = member(Xid(initialize), undefined)){
 			vm->set_arg_this(instance);
 			if(vm->need_result()){
 				vm->prereturn_result(instance);
@@ -626,6 +668,11 @@ void Class::rawcall(const VMachinePtr& vm){
 }
 
 void Class::s_new(const VMachinePtr& vm){
+	if(is_singleton()){
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+		return;
+	}
+
 	if(is_native()){
 		if(const AnyPtr& ret = serial_ctor()){
 			ret->rawcall(vm);
@@ -672,62 +719,41 @@ AnyPtr Class::ancestors(){
 }
 
 void Class::prebind(){
-	if(prebinder_){
-		void (*temp)(const ClassPtr&) = prebinder_;
-		prebinder_ = 0;
-		temp(to_smartptr(this));
+	if((flags_ & FLAG_PREBINDED)==0){
+		flags_ |= FLAG_PREBINDED;
+		if(symbol_data_ && symbol_data_->prebind){
+			symbol_data_->prebind(to_smartptr(this));
+		}
 	}
 }
 
 void Class::bind(){
-	if(binder_){
+	if((flags_ & FLAG_BINDED)==0){
+		flags_ |= FLAG_BINDED;
 		prebind();
-		void (*temp)(const ClassPtr&) = binder_;
-		binder_ = 0;
-		temp(to_smartptr(this));
+		if(symbol_data_ && symbol_data_->bind){
+			symbol_data_->bind(to_smartptr(this));
+		}
 	}
 }
 
-Singleton::Singleton(const StringPtr& name)
-	:Class(name){
-	flags_ |= FLAG_SINGLETON;
-	Base::set_class(to_smartptr(this));
-	inherit(cpp_class<Class>());
+void Class::set_singleton(){
+	if((flags_ & FLAG_SINGLETON)==0){
+		flags_ |= FLAG_SINGLETON;
+		Base::set_class(to_smartptr(this));
+		inherit(cpp_class<Class>());
+	}
 }
 
-Singleton::Singleton(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
-	:Class(outer, code, info){
-	flags_ |= FLAG_SINGLETON;
-	Base::set_class(to_smartptr(this));
-	inherit(cpp_class<Class>());
-}
-
-void Singleton::init_singleton(const VMachinePtr& vm){
-	SingletonPtr instance = to_smartptr(this);
-	init_instance(instance, vm);
+void Class::init_singleton(const VMachinePtr& vm){
+	init_instance(to_smartptr(this), vm);
 	
-	if(const AnyPtr& ret = member(Xid(initialize), undefined, vm->ff().self())){
+	if(const AnyPtr& ret = member(Xid(initialize), undefined)){
 		vm->setup_call(0);
-		vm->set_arg_this(instance);
+		vm->set_arg_this(to_smartptr(this));
 		ret->rawcall(vm);
 		vm->cleanup_call();
 	}
 }
-
-void Singleton::rawcall(const VMachinePtr& vm){
-	ap(Any(this))->rawsend(vm, Xid(op_call));
-}
-
-void Singleton::s_new(const VMachinePtr& vm){
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
-}
-
-CppSingleton::CppSingleton()
-:Class(cpp_class_t()){
-	flags_ |= FLAG_SINGLETON;
-	Base::set_class(to_smartptr(this));
-	inherit(cpp_class<Class>());
-}
-
 
 }

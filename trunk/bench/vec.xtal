@@ -1,4 +1,4 @@
-Vec2D: class{
+class Vec2D{
   + _x;
   + _y;
 

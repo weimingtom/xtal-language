@@ -303,6 +303,9 @@ public:
 		return iterator(values_ + size_);
 	}
 
+	const AnyPtr* data(){
+		return values_;
+	}
 
 protected:
 

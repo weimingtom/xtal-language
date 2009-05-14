@@ -586,9 +586,8 @@ enum{
 	CALL_FLAG_Q = 1<<CALL_FLAG_Q_SHIFT
 };
 
-XTAL_DEF_INST_2(37, Property,
-        inst_u16_t, identifier_number,
-		inst_u8_t, need_result
+XTAL_DEF_INST_1(37, Property,
+        inst_u16_t, identifier_number
 );
 
 XTAL_DEF_INST_1(38, SetProperty,

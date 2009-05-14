@@ -106,16 +106,10 @@ public:
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = insert(ids[i]);
 		}
-
-		static IdentifierData iddata;
-		while(iddata.value>=table2_.size()){
-			table2_.push_back(0);
-		}
 	}
 
 	void uninitialize(){
 		table_.destroy();
-		table2_.release();
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = null;
@@ -126,16 +120,6 @@ public:
 		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
 			m & it->second;
 		}		
-	}
-
-	const IDPtr& insert_literal(const char_t* str, IdentifierData* iddata){
-		const IDPtr* ret = table2_[iddata->value];
-		if(!ret){
-			uint_t hashcode, size;
-			string_data_size_and_hashcode(str, size, hashcode);
-			ret = &insert(str, size, hashcode);
-		}
-		return *ret;
 	}
 
 	const IDPtr& insert(const char_t* str, uint_t size){
@@ -199,9 +183,6 @@ private:
 
 	typedef Hashtable<Key, IDPtr, Fun> table_t; 
 	table_t table_;
-
-	typedef PODArrayList<IDPtr*> table2_t; 
-	table2_t table2_;
 
 	IDPtr id_op_list_[IDOp::id_op_MAX];
 

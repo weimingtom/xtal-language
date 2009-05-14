@@ -127,6 +127,7 @@ public:
 	StringSpace string_space_;
 	ThreadSpace thread_space_;
 	MemberCacheTable member_cache_table_;
+	MemberCacheTable2 member_cache_table2_;
 	IsCacheTable is_cache_table_;
 	CtorCacheTable ctor_cache_table_;
 
@@ -338,7 +339,8 @@ void Environment::initialize(const Setting& setting){
 	object_space_.initialize();
 	string_space_.initialize();
 
-	builtin_ = xnew<Singleton>();
+	builtin_ = xnew<Class>();
+	builtin_->set_singleton();
 
 	lib_ = xnew<Lib>(Lib::most_top_level_t());
 	lib_->append_load_path(XTAL_STRING("."));
@@ -377,6 +379,13 @@ void Environment::initialize(const Setting& setting){
 }
 
 void Environment::uninitialize(){
+	{
+		printf("member hit=%d miss=%d rate=%g\n", member_cache_table_.hit_count(), member_cache_table_.miss_count(), member_cache_table_.hit_count()/(float)(member_cache_table_.hit_count()+member_cache_table_.miss_count()));
+		printf("member hit=%d miss=%d rate=%g\n", member_cache_table2_.hit_count(), member_cache_table2_.miss_count(), member_cache_table2_.hit_count()/(float)(member_cache_table2_.hit_count()+member_cache_table2_.miss_count()));
+		printf("is hit=%d miss=%d rate=%g\n", is_cache_table_.hit_count(), is_cache_table_.miss_count(), is_cache_table_.hit_count()/(float)(is_cache_table_.hit_count()+is_cache_table_.miss_count()));
+		printf("ctor hit=%d miss=%d rate=%g\n", ctor_cache_table_.hit_count(), ctor_cache_table_.miss_count(), ctor_cache_table_.hit_count()/(float)(ctor_cache_table_.hit_count()+ctor_cache_table_.miss_count()));
+	}
+
 	thread_space_.join_all_threads();
 
 	clear_cache();
@@ -461,24 +470,20 @@ AnyPtr alive_object(uint_t i){
 	return to_smartptr(environment_->object_space_.alive_object(i));
 }
 
-const ClassPtr& cpp_class(uint_t key){
-	return environment_->object_space_.cpp_class(key);
+const ClassPtr& cpp_class(CppClassSymbolData* key){
+	return environment_->object_space_.cpp_class(key->value);
 }
 
-void set_cpp_class(const ClassPtr& cls, uint_t key){
-	return environment_->object_space_.set_cpp_class(cls, key);
-}
-
-void* cpp_var(uint_t key){
-	return environment_->object_space_.cpp_var(key);
-}
-
-void set_cpp_var(void* p, void (*deleter)(void*), uint_t key){
-	environment_->object_space_.set_cpp_var(p, deleter, key);
+const AnyPtr& cpp_var(CppVarSymbolData* key){
+	return environment_->object_space_.cpp_var(key->value);
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
+	return environment_->member_cache_table2_.cache(target_class, primary_key, secondary_key, accessibility);
+}
+
+const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, int_t& accessibility){
+	return environment_->member_cache_table_.cache(target_class, primary_key, accessibility);
 }
 
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
@@ -515,10 +520,6 @@ const ClassPtr& builtin(){
 
 const LibPtr& lib(){
 	return environment_->lib_;
-}
-
-const IDPtr& intern_literal(const char_t* str, IdentifierData* iddata){
-	return environment_->string_space_.insert_literal(str, iddata);
 }
 
 const IDPtr& intern(const char_t* str){

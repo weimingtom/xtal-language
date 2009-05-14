@@ -42,10 +42,8 @@ void VMachine::reset(){
 
 void VMachine::FunFrame::set_null(){
 	xtal::set_null(fun_); 
-	xtal::set_null(code_); 
 	xtal::set_null(outer_);
 	xtal::set_null(self_);
-	xtal::set_null(hint_);
 	xtal::set_null(target_);
 	xtal::set_null(primary_key_);
 	xtal::set_null(secondary_key_);
@@ -54,44 +52,51 @@ void VMachine::FunFrame::set_null(){
 //{REPEAT{{
 /*
 void VMachine::setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	#REPEAT#push_arg(a`i+1`);# 
 }
 */
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 ){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	push_arg(a1); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5){
-	push_ff(need_result_count);
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
 }
@@ -109,11 +114,6 @@ void VMachine::recycle_call(){
 void VMachine::recycle_call(const AnyPtr& a1){
 	recycle_call();
 	push_arg(a1);
-}
-
-void VMachine::push_ff(int_t need_result_count){
-	push(null);
-	push_call(&end_code_, need_result_count, 0, 0, null, undefined, null);
 }
 
 void VMachine::push_arg(const AnyPtr& value){
@@ -447,8 +447,8 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	yield_result_count_ = 0;
-	push(null);
-	push_call(&end_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), null, undefined, vm->arg_this());
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->arg_this());
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 	resume_pc_ = 0;
 	carry_over(fun);
@@ -545,7 +545,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 		}
 
 		if(fun() &&  fun()->code()){
-			if((pc !=  fun()->code()->data()+ fun()->code()->size()-1)){
+			if((pc !=  fun()->code()->data() + fun()->code()->size()-1)){
 				unchecked_ptr_cast<Exception>(ep)->append_backtrace(
 					 fun()->code()->source_file_name(),
 					 fun()->code()->compliant_lineno(pc),
@@ -728,6 +728,20 @@ void VMachine::set_except(const AnyPtr& e){
 	}
 }
 
+const inst_t* VMachine::push_except(const inst_t* pc){
+	push(except_[0]);
+	except_[0] = null;
+	throw_pc_ = pc+1;
+	return &throw_code_;
+}
+	
+const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
+	push(e);
+	except_[0] = null;
+	throw_pc_ = pc+1;
+	return &throw_code_;
+}
+
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
 	m & debug_info_ & except_[0] & except_[1] & except_[2];
@@ -837,7 +851,7 @@ void VMachine::after_gc(){
 void VMachine::print_info(){
 	std::printf("stack size %d\n", stack_.size());
 	for(uint_t i=0; i<stack_.size(); ++i){
-		std::printf("\tstack value %d = %s\n", i, ap(stack_[i])->to_s()->c_str());
+//		std::printf("\tstack value %d = %s\n", i, ap(stack_[i])->to_s()->c_str());
 	}
 
 	std::printf("fun_frames size %d\n", fun_frames_.size());
@@ -851,7 +865,6 @@ void VMachine::FunFrame::inc_ref(){
 	inc_ref_count_force(outer_);
 	
 	inc_ref_count_force(self_);
-	inc_ref_count_force(hint_);
 
 	inc_ref_count_force(target_);
 	inc_ref_count_force(primary_key_);
@@ -863,7 +876,6 @@ void VMachine::FunFrame::dec_ref(){
 	dec_ref_count_force(outer_);
 	
 	dec_ref_count_force(self_);
-	dec_ref_count_force(hint_);
 
 	dec_ref_count_force(target_);
 	dec_ref_count_force(primary_key_);
@@ -871,7 +883,7 @@ void VMachine::FunFrame::dec_ref(){
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
-	m & v.fun_ & v.outer_ & v.hint_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
+	m & v.fun_ & v.outer_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
 
 void VMachine::make_procedure(const VMachinePtr& vm){

@@ -1107,8 +1107,11 @@ XTAL_BIND(xpeg::Executor){
 	it->def_method(Xid(eos), &Executor::eos);
 }
 
-void bind_xpeg(const ClassPtr& xpeg){
+class Xpeg;
+
+XTAL_BIND(Xpeg){
 	using namespace xpeg;
+	it->unset_native();
 
 	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
 	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
@@ -1124,50 +1127,46 @@ void bind_xpeg(const ClassPtr& xpeg){
 	AnyPtr word = select(select(alpha, degit), Xid(_));
 	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>((char_t)1), xnew<ID>((char_t)127)));
 
-	xpeg->def(Xid(any), any);
-	xpeg->def(Xid(bos), bos);
-	xpeg->def(Xid(eos), eos);
-	xpeg->def(Xid(bol), bol);
-	xpeg->def(Xid(eol), eol);
-	xpeg->def(Xid(empty), empty);
-	xpeg->def(Xid(degit), degit);
-	xpeg->def(Xid(lalpha), lalpha);
-	xpeg->def(Xid(ualpha), ualpha);
-	xpeg->def(Xid(alpha), alpha);
-	xpeg->def(Xid(word), word);
-	xpeg->def(Xid(ascii), ascii);
+	it->def(Xid(any), any);
+	it->def(Xid(bos), bos);
+	it->def(Xid(eos), eos);
+	it->def(Xid(bol), bol);
+	it->def(Xid(eol), eol);
+	it->def(Xid(empty), empty);
+	it->def(Xid(degit), degit);
+	it->def(Xid(lalpha), lalpha);
+	it->def(Xid(ualpha), ualpha);
+	it->def(Xid(alpha), alpha);
+	it->def(Xid(word), word);
+	it->def(Xid(ascii), ascii);
 	
-	xpeg->def_fun(Xid(set), &set);
-	xpeg->def_fun(Xid(back_ref), &back_ref);
-	xpeg->def_fun(Xid(lookahead), &lookahead);
-	xpeg->def_fun(Xid(lookbehind), &lookbehind);
-	xpeg->def_fun(Xid(leaf), &leaf);
-	xpeg->def_fun(Xid(leafs), &leafs);
-	xpeg->def_fun(Xid(node), &node_vm);
-	xpeg->def_fun(Xid(splice_node), &splice_node_vm);
-	xpeg->def_fun(Xid(cap), &cap_vm);
-	xpeg->def_fun(Xid(bound), &bound);
-	xpeg->def_fun(Xid(pred), &pred);
-	xpeg->def_fun(Xid(error), &error);
+	it->def_fun(Xid(set), &set);
+	it->def_fun(Xid(back_ref), &back_ref);
+	it->def_fun(Xid(lookahead), &lookahead);
+	it->def_fun(Xid(lookbehind), &lookbehind);
+	it->def_fun(Xid(leaf), &leaf);
+	it->def_fun(Xid(leafs), &leafs);
+	it->def_fun(Xid(node), &node_vm);
+	it->def_fun(Xid(splice_node), &splice_node_vm);
+	it->def_fun(Xid(cap), &cap_vm);
+	it->def_fun(Xid(bound), &bound);
+	it->def_fun(Xid(pred), &pred);
+	it->def_fun(Xid(error), &error);
 
-	xpeg->def_fun(Xid(decl), &decl);
+	it->def_fun(Xid(decl), &decl);
 
-	xpeg->def(Xid(Executor), cpp_class<Executor>());
+	it->def(Xid(Executor), cpp_class<Executor>());
 }
 
 void initialize_xpeg(){
 	using namespace xpeg;
-
-	ClassPtr xpeg = xnew<Singleton>(Xid(xpeg));
-	//bind_xpeg(xpeg);
-	xpeg->set_binder(&bind_xpeg);
 
 	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
 	for(int i=0; i<4; ++i){
 		classes[i]->inherit(cpp_class<XpegOperator>());
 	}
 
-	builtin()->def(Xid(xpeg), xpeg);
+	builtin()->def(Xid(xpeg), cpp_class<Xpeg>());
 }
 
 

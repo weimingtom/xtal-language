@@ -22,8 +22,8 @@ void xtal::ObjectSpace::print_alive_objects(){
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
 		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
 		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ table["NativeFunBindedThis"]++; }
 		}
 	}
 
@@ -135,33 +135,28 @@ void ObjectSpace::initialize(){
 	};
 
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
-	uint_t table[sizeof(symbols)/sizeof(symbols[0])];
 
 	for(uint_t i=0; i<nsize; ++i){
-		table[i] = symbols[i]->value;
+		class_table_[symbols[i]->value] = (Class*)Base::operator new(sizeof(Class));
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		class_table_[table[i]] = (Class*)Base::operator new(sizeof(Class));
-	}
-
-	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[table[i]];
+		Base* p = class_table_[symbols[i]->value];
 		new(p) Base();
 	}
 		
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[table[i]];
+		Base* p = class_table_[symbols[i]->value];
 		new(p) Class(Class::cpp_class_t());
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[table[i]];
+		Base* p = class_table_[symbols[i]->value];
 		p->set_class(xtal::cpp_class<Class>());
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[table[i]];
+		Base* p = class_table_[symbols[i]->value];
 		register_gc(p);
 	}
 
@@ -176,21 +171,19 @@ void ObjectSpace::initialize(){
 
 	CppClassSymbolData* prev = key.prev;
 	for(uint_t i=class_table_.size(); i>1; --i){
-		class_table_[i-1]->set_prebinder(prev->prebind);
-		class_table_[i-1]->set_binder(prev->bind);
-		if(prev->name){
-			class_table_[i-1]->set_object_name(prev->name);
-		}
+		class_table_[i-1]->set_symbol_data(prev);
 		prev = prev->prev;
 	}
 
 	//////////////////////////////////////////////////
+
 	{
-		static CppVarSymbolData key;
-		var_table_.resize(key.value);
-		for(uint_t i=0; i<key.value; ++i){
-			var_table_[i].var = 0;
-			var_table_[i].deleter = 0;
+		static CppVarSymbolData key(0);
+		var_table_ = xnew<Array>(key.value);
+		CppVarSymbolData* prev = key.prev;
+		for(uint_t i=var_table_->size(); i>1; --i){
+			var_table_->set_at(i-1, prev->maker ? prev->maker() : null);
+			prev = prev->prev;
 		}
 	}
 }
@@ -203,14 +196,12 @@ void ObjectSpace::uninitialize(){
 		}
 	}
 
-	for(uint_t i=0; i<var_table_.size(); ++i){
-		if(var_table_[i].var){
-			var_table_[i].deleter(var_table_[i].var);
-		}
+	for(uint_t i=0; i<var_table_->size(); ++i){
+		var_table_->set_at(i, undefined);
 	}
+	var_table_ = null;
 
 	class_table_.release();
-	var_table_.release();
 	clear_cache();
 
 	disable_finalizer_ = true;

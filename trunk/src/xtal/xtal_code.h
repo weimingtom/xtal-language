@@ -40,6 +40,10 @@ public:
 		return unchecked_ptr_cast<ID>(identifier_table_->at(i));
 	}
 
+	uint_t identifier_size(){
+		return identifier_table_->size();
+	}
+
 	/**
 	* \brief 値テーブルからi番目の値を取り出す。
 	*/
@@ -68,7 +72,7 @@ public:
 		return source_file_name_; 
 	}
 
-	const SingletonPtr& filelocal(){ 
+	const ClassPtr& filelocal(){ 
 		return filelocal_; 
 	}
 
@@ -108,7 +112,11 @@ public:
 
 	void check_implicit_lookup();
 
+	IDPtr find_near_variable(const IDPtr& primary_key);
+
 protected:
+
+	void find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv);
 
 	void insert_erase_common(inst_t* p, int_t size);
 
@@ -129,7 +137,7 @@ private:
 	ArrayPtr identifier_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
-	SingletonPtr filelocal_;
+	ClassPtr filelocal_;
 	StringPtr source_file_name_;
 	MethodPtr first_fun_;
 

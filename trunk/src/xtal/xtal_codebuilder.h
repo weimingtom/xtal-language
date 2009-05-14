@@ -41,8 +41,11 @@ public:
 	bool put_set_local_code(const IDPtr& var);
 	void put_define_local_code(const IDPtr& var, const ExprPtr& val = null);
 
-	void put_send_code(const AnyPtr& var, int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key);
-	void put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
+
+	void put_send_code(const AnyPtr& var, const ExprPtr& secondary_key, 
+		int_t need_result_count, int_t ordered, int_t named, int_t flags);
+
+	void put_set_send_code(const AnyPtr& var, const ExprPtr& secondary_key, int_t flags);
 
 	void put_member_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
 	void put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key);
@@ -73,8 +76,8 @@ public:
 	void compile_op_assign(const ExprPtr& e);
 	void compile_incdec(const ExprPtr& e);
 	void compile_loop_control_statement(const ExprPtr& e);
-	void compile_class(const ExprPtr& e);
-	void compile_fun(const ExprPtr& e);
+	void compile_class(const ExprPtr& e, const IDPtr& id = empty_id);
+	void compile_fun(const ExprPtr& e, const IDPtr& id = empty_id);
 
 	int_t compile_e(const ExprPtr& e, const CompileInfo& info);
 
@@ -212,8 +215,8 @@ public:
 		return class_frames_.empty() ? 0 : class_frames_.top().class_info_num;
 	}
 
-	int_t regster_identifier_or_compile_expr(const AnyPtr& var);
-	int_t regster_identifier(const IDPtr& v);
+	int_t register_identifier_or_compile_expr(const AnyPtr& var);
+	int_t register_identifier(const IDPtr& v);
 	int_t register_value(const AnyPtr& v);
 	int_t append_identifier(const IDPtr& identifier);
 	int_t append_value(const AnyPtr& v);

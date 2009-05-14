@@ -85,7 +85,7 @@ AnyPtr Frame::members(){
 	if(!map_members_ && code_ && scope_info_){
 		make_map_members();
 		for(int_t i=0; i<scope_info_->variable_size; ++i){
-			Key key = {code_->identifier(scope_info_->variable_identifier_offset+i), null};
+			Key key = {code_->identifier(scope_info_->variable_identifier_offset+i), undefined};
 			Value value = {i, 0};
 			map_members_->insert(key, value);
 		}

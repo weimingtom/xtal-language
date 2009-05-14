@@ -78,7 +78,7 @@ public:
 	* \retval null そのメンバは存在しない
 	* \retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& do_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
@@ -136,6 +136,7 @@ public:
 public:
 
 	InstanceVariables* instance_variables(){ return instance_variables_; }
+
 	void make_instance_variables();
 
 	void set_class(const ClassPtr& c);

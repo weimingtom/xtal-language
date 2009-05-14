@@ -130,7 +130,7 @@ typedef SmartPtr<Expr> ExprPtr;
 
 const ExprPtr& ep(const AnyPtr& a);
 
-
+template<> struct CppClassSymbol<Expr> : public CppClassSymbol<xpeg::TreeNode>{};
 
 class Expr : public xpeg::TreeNode{
 public:

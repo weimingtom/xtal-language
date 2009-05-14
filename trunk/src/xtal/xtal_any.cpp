@@ -1,5 +1,6 @@
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_stringspace.h"
 
 namespace xtal{
 
@@ -201,39 +202,11 @@ AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param
 
 //}}REPEAT}
 
-const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
-	int_t accessibility = 0;
+const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
+	accessibility = 0;
 	const AnyPtr& ret = inherited_too ?
 		cache_member(ap(*this), primary_key, secondary_key, accessibility) :
-		type(*this)==TYPE_BASE ? pvalue(*this)->do_member(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
-
-	if(accessibility==0){
-		return ret;
-	}
-
-	if(accessibility & KIND_PRIVATE){
-		if(rawne(self->get_class(), *this)){
-			XTAL_SET_EXCEPT(cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
-				Named(Xid(object), object_name()), 
-				Named(Xid(name), primary_key), 
-				Named(Xid(secondary_key), secondary_key), 
-				Named(Xid(accessibility), Xid(private))))
-			);
-			return undefined;
-		}
-	}
-	else if(accessibility & KIND_PROTECTED){
-		if(!self->is(ap(*this))){
-			XTAL_SET_EXCEPT(cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
-				Named(Xid(object), object_name()), 
-				Named(Xid(primary_key), primary_key), 
-				Named(Xid(secondary_key), secondary_key), 
-				Named(Xid(accessibility), Xid(protected))))
-			);
-			return undefined;
-		}
-	}
-
+		type(*this)==TYPE_BASE ? pvalue(*this)->rawmember(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
 	return ret;
 }
 
@@ -246,82 +219,71 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, bool inherited_too) const{
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too) const{
 	const ClassPtr& cls = get_class();
-	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, self, inherited_too);
-	if(rawne(ret, undefined)){
-		vm->set_arg_this(ap(*this));
-		ret->rawcall(vm);
-	}
-	else{
-		XTAL_CHECK_EXCEPT(e){ return; }
-		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, self, inherited_too);
-		if(rawne(ret, undefined)){
-			vm->set_arg_this(ap(*this));
-			ArgumentsPtr args = vm->make_arguments();
-			vm->recycle_call();
-			vm->push_arg(primary_key);
-			vm->push_arg(secondary_key);
-			vm->push_arg(args);
-			ret->rawcall(vm);
-		}
-		else{
-			vm->set_unsuported_error_info(*this, primary_key, secondary_key);
-		}
-	}
-}
-
-void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
-	const ClassPtr& cls = get_class();
-	const AnyPtr& ret = ap(cls)->member(primary_key, undefined, null, true);
+	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, inherited_too);
+	vm->set_arg_this(ap(*this));
 
 	switch(type(ret)){
-		XTAL_DEFAULT{}
+		XTAL_DEFAULT{
+			ret->rawsend(vm, id_op_list()[IDOp::id_op_call]);
+		}
+
+		XTAL_CASE(TYPE_UNDEFINED){
+			const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, inherited_too);
+			if(rawne(ret, undefined)){
+				vm->set_arg_this(ap(*this));
+				ArgumentsPtr args = vm->make_arguments();
+				vm->recycle_call();
+				vm->push_arg(primary_key);
+				vm->push_arg(secondary_key);
+				vm->push_arg(args);
+				ret->rawcall(vm);
+			}
+		}
 
 		XTAL_CASE(TYPE_BASE){ 
-			vm->set_arg_this(ap(*this));
 			pvalue(ret)->rawcall(vm); 
-			return;
+		}
+
+		XTAL_CASE(TYPE_NATIVE_METHOD){ 
+			unchecked_ptr_cast<NativeMethod>(ret)->rawcall(vm); 
 		}
 
 		XTAL_CASE(TYPE_NATIVE_FUN){ 
-			vm->set_arg_this(ap(*this));
 			unchecked_ptr_cast<NativeFun>(ret)->rawcall(vm); 
-			return;
 		}
 
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
-			vm->set_arg_this(ap(*this));
-			unchecked_ptr_cast<NativeFunBindedThis>(ret)->rawcall(vm); 
-			return;
+		XTAL_CASE(TYPE_IVAR_GETTER){ 
+			unchecked_ptr_cast<InstanceVariableGetter>(ret)->rawcall(vm); 
+		}
+
+		XTAL_CASE(TYPE_IVAR_SETTER){ 
+			unchecked_ptr_cast<InstanceVariableSetter>(ret)->rawcall(vm); 
 		}
 	}
 
-	{
-		XTAL_CHECK_EXCEPT(e){ return; }
-		const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, null, true);
-		if(rawne(ret, undefined)){
-			vm->set_arg_this(ap(*this));
-			ArgumentsPtr args = vm->make_arguments();
-			vm->recycle_call();
-			vm->push_arg(primary_key);
-			vm->push_arg(undefined);
-			vm->push_arg(args);
-			ret->rawcall(vm);
-		}
-		else{
-			vm->set_unsuported_error_info(*this, primary_key, undefined);
-		}
-	}	
+	if(!vm->processed()){
+		vm->set_unsuported_error_info(ap(*this), primary_key, secondary_key);
+	}
 }
 
 void Any::rawcall(const VMachinePtr& vm) const{
-	vm->set_hint(ap(*this));
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->rawcall(vm); }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ unchecked_ptr_cast<NativeMethod>(ap(*this))->rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ unchecked_ptr_cast<NativeFun>(ap(*this))->rawcall(vm); }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->rawcall(vm); }
+		XTAL_CASE(TYPE_IVAR_GETTER){ 
+			unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->rawcall(vm); 
+		}
+		XTAL_CASE(TYPE_IVAR_SETTER){ 
+			unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->rawcall(vm);
+		}
+	}
+
+	if(!vm->processed()){
+		vm->set_unsuported_error_info(ap(*this), id_op_list()[IDOp::id_op_call], undefined);
 	}
 }
 
@@ -388,8 +350,10 @@ const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return unchecked_ptr_cast<Class>(null); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->object_parent();  }
+		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->object_parent(); }
+		XTAL_CASE(TYPE_IVAR_SETTER){ return unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->object_parent(); }
 	}
 	//return unchecked_ptr_cast<Class>(null);	
 }
@@ -398,8 +362,10 @@ void Any::set_object_parent(const ClassPtr& parent) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_parent(parent);  }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->set_object_parent(parent);  }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->set_object_parent(parent);  }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->set_object_parent(parent);  }
+		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->set_object_parent(parent); }
+		XTAL_CASE(TYPE_IVAR_SETTER){ return unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->set_object_parent(parent); }
 	}
 }
 
@@ -453,6 +419,10 @@ StringPtr Any::object_name() const{
 		}
 		
 		if(cls->code()){
+			if(cls->info()->name_number!=0){
+				return cls->code()->identifier(cls->info()->name_number);
+			}
+
 			// 保持していないなら、その定義位置を表示しとこう
 			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
 				cls->code()->source_file_name(), 
@@ -466,6 +436,10 @@ StringPtr Any::object_name() const{
 	// メソッドの場合、その定義位置を表示しとこう
 	if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
 		if(mtd->code()){
+			if(mtd->info()->name_number!=0){
+				return mtd->code()->identifier(mtd->info()->name_number);
+			}
+
 			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
 				mtd->code()->source_file_name(), 
 				mtd->code()->compliant_lineno(mtd->code()->data()+mtd->info()->pc))->to_s();
@@ -493,8 +467,10 @@ const ClassPtr& Any::get_class() const{
 		XTAL_CASE(TYPE_ARRAY){ return cpp_class<Array>(); }
 		XTAL_CASE(TYPE_VALUES){ return cpp_class<Values>(); }
 		XTAL_CASE(TYPE_TREE_NODE){ return cpp_class<xpeg::TreeNode>(); }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ return cpp_class<NativeMethod>(); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return cpp_class<NativeFun>(); }
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ return cpp_class<NativeFunBindedThis>(); }
+		XTAL_CASE(TYPE_IVAR_GETTER){ return cpp_class<InstanceVariableGetter>(); }
+		XTAL_CASE(TYPE_IVAR_SETTER){ return cpp_class<InstanceVariableSetter>(); }
 	}
 	return cpp_class<Any>();
 }
@@ -529,7 +505,7 @@ AnyPtr Any::s_save() const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_save), undefined, null, false)){
+		if(const AnyPtr& member = it->member(Xid(serial_save), undefined, false)){
 			const VMachinePtr& vm = vmachine();
 			vm->setup_call(1);
 			vm->set_arg_this(ap(*this));
@@ -552,7 +528,7 @@ void Any::s_load(const AnyPtr& v) const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_load), undefined, null, false)){
+		if(const AnyPtr& member = it->member(Xid(serial_load), undefined, false)){
 			const VMachinePtr& vm = vmachine();
 			vm->setup_call(1, ret->at(it));
 			vm->set_arg_this(ap(*this));
@@ -625,12 +601,20 @@ void Any::visit_members(Visitor& m) const{
 			((TreeNode*)rcpvalue(*this))->visit_members(m); 
 		}
 
+		XTAL_CASE(TYPE_NATIVE_METHOD){ 
+			unchecked_ptr_cast<NativeMethod>(ap(*this))->visit_members(m); 
+		}
+
 		XTAL_CASE(TYPE_NATIVE_FUN){ 
 			unchecked_ptr_cast<NativeFun>(ap(*this))->visit_members(m); 
 		}
 
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
-			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->visit_members(m); 
+		XTAL_CASE(TYPE_IVAR_GETTER){ 
+			unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->visit_members(m); 
+		}
+
+		XTAL_CASE(TYPE_IVAR_SETTER){ 
+			unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->visit_members(m); 
 		}
 	}
 }
@@ -665,14 +649,24 @@ void Any::destroy(){
 			value_.uvalue = sizeof(TreeNode); 
 		}
 
+		XTAL_CASE(TYPE_NATIVE_METHOD){ 
+			unchecked_ptr_cast<NativeMethod>(ap(*this))->~NativeMethod(); 
+			value_.uvalue = sizeof(NativeMethod); 
+		}
+
 		XTAL_CASE(TYPE_NATIVE_FUN){ 
 			unchecked_ptr_cast<NativeFun>(ap(*this))->~NativeFun(); 
 			value_.uvalue = sizeof(NativeFun); 
 		}
 
-		XTAL_CASE(TYPE_NATIVE_FUN_BINDED_THIS){ 
-			unchecked_ptr_cast<NativeFunBindedThis>(ap(*this))->~NativeFunBindedThis(); 
-			value_.uvalue = sizeof(NativeFunBindedThis); 
+		XTAL_CASE(TYPE_IVAR_GETTER){ 
+			unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->~InstanceVariableGetter(); 
+			value_.uvalue = sizeof(InstanceVariableGetter); 
+		}
+
+		XTAL_CASE(TYPE_IVAR_SETTER){ 
+			unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->~InstanceVariableSetter(); 
+			value_.uvalue = sizeof(InstanceVariableSetter); 
 		}
 	}
 }

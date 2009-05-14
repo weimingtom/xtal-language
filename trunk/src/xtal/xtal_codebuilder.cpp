@@ -115,7 +115,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	result_->identifier_table_ = xnew<Array>();
 	identifier_map_ = xnew<Map>();
-	regster_identifier(empty_id);
+	register_identifier(empty_id);
 
 	result_->value_table_ = xnew<Array>();
 	value_map_ = xnew<Map>();
@@ -150,6 +150,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	info.kind = KIND_FUN;
 	info.min_param_count = 0;
 	info.max_param_count = 0;
+	info.name_number = register_identifier(Xid(toplevel));
 	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
@@ -263,9 +264,12 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		int_t id = regster_identifier(var);
+		error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), var)));
+		/*
+		int_t id = register_identifier(var);
 		put_inst(InstSetGlobalVariable(id));
 		global_ref_map_->set_at(id, lineno());
+		*/
 		return false;
 	}
 }
@@ -279,7 +283,16 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 
 			if(raweq(val, undefined) || entry(info).assigned){
 				if(raweq(val, undefined)){
-					compile_expr(rhs);
+
+					if(rhs->itag()==EXPR_CLASS){
+						compile_class(rhs, var);
+					}
+					else if(rhs->itag()==EXPR_FUN){
+						compile_fun(rhs, var);
+					}
+					else{
+						compile_expr(rhs);
+					}
 				}
 				else{
 					put_val_code(val);
@@ -310,7 +323,7 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 			compile_expr(rhs);
 		}
 
-		int_t id = regster_identifier(var);
+		int_t id = register_identifier(var);
 		put_inst(InstDefineGlobalVariable(id));
 		global_def_map_->set_at(id, lineno());
 	}
@@ -331,22 +344,22 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 		return true;
 	}
 	else{
-		int_t id = regster_identifier(var);
+		int_t id = register_identifier(var);
 		put_inst(InstGlobalVariable(id));
 		global_ref_map_->set_at(id, lineno());
 		return false;
 	}
 }
 
-int_t CodeBuilder::regster_identifier_or_compile_expr(const AnyPtr& var){
+int_t CodeBuilder::register_identifier_or_compile_expr(const AnyPtr& var){
 	if(const IDPtr& id = ptr_cast<ID>(var)){ 
-		return regster_identifier(id);
+		return register_identifier(id);
 	}
 	compile_expr(ep(var)); 
 	return 0;
 }
 
-int_t CodeBuilder::regster_identifier(const IDPtr& v){
+int_t CodeBuilder::register_identifier(const IDPtr& v){
 	if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
 	result_->identifier_table_->push_back(v);
 	identifier_map_->set_at(v, result_->identifier_table_->size()-1);
@@ -370,35 +383,27 @@ int_t CodeBuilder::append_value(const AnyPtr& v){
 	return result_->value_table_->size()-1;
 }
 
-void CodeBuilder::put_send_code(const AnyPtr& var,int_t need_result_count, bool tail, bool q, const ExprPtr& secondary_key){
-	int_t key = regster_identifier_or_compile_expr(var);
-	int_t flags = (tail ? CALL_FLAG_TAIL : 0);
+void CodeBuilder::put_send_code(const AnyPtr& var, const ExprPtr& secondary_key, 
+	int_t need_result_count, int_t ordered, int_t named, int_t flags){
+
+	int_t key = register_identifier_or_compile_expr(var);
 
 	if(secondary_key){
 		compile_expr(secondary_key);
-		if(q){
-			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS | CALL_FLAG_Q, key));
-		}
-		else{
-			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_NS, key));
-		}
+		flags |= CALL_FLAG_NS;
+		put_inst(InstSend(ordered, named, need_result_count, flags, key));
 	}
 	else{
-		if(q){
-			put_inst(InstSend(0, 0, need_result_count, flags | CALL_FLAG_Q, key));
+		if(flags==0 && key!=0 && need_result_count==1 && ordered==0 && named==0){
+			put_inst(InstProperty(key));
 		}
 		else{
-			if(flags==0 && key!=0){
-				put_inst(InstProperty(key, need_result_count));
-			}
-			else{
-				put_inst(InstSend(0, 0, need_result_count, flags, key));
-			}
+			put_inst(InstSend(ordered, named, need_result_count, flags, key));
 		}
 	}
 }
 
-void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key){
+void CodeBuilder::put_set_send_code(const AnyPtr& var, const ExprPtr& secondary_key, int_t flags){
 	int_t key = 0;
 	if(ptr_cast<Expr>(var)){ 
 		eb_.push(KIND_STRING);
@@ -409,36 +414,26 @@ void CodeBuilder::put_set_send_code(const AnyPtr& var, bool q, const ExprPtr& se
 		compile_expr(eb_.pop()); 
 	}
 	else{
-		key = regster_identifier(Xid(set_)->cat(ptr_cast<ID>(var)));
+		key = register_identifier(Xid(set_)->cat(ptr_cast<ID>(var)));
 	}
 	
 	if(secondary_key){
 		compile_expr(secondary_key);
-
-		if(q){
-			put_inst(InstSend(1, 0, 0, CALL_FLAG_NS | CALL_FLAG_Q, key));
-		}
-		else{
-			put_inst(InstSend(1, 0, 0, CALL_FLAG_NS, key));
-		}
+		flags |= CALL_FLAG_NS;
+		put_inst(InstSend(1, 0, 0, flags, key));
 	}
 	else{
-		if(q){
-			put_inst(InstSend(1, 0, 0, CALL_FLAG_Q, key));
+		if(flags==0 && key!=0){
+			put_inst(InstSetProperty(key));
 		}
 		else{
-			if(key!=0){
-				put_inst(InstSetProperty(key));
-			}
-			else{
-				put_inst(InstSend(1, 0, 0, CALL_FLAG_NONE, key));
-			}
+			put_inst(InstSend(1, 0, 0, flags, key));
 		}
 	}
 }
 
 void CodeBuilder::put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key){
-	int_t key = regster_identifier_or_compile_expr(var);
+	int_t key = register_identifier_or_compile_expr(var);
 
 	if(secondary_key){
 		compile_expr(secondary_key);
@@ -840,6 +835,8 @@ void CodeBuilder::scope_begin(){
 				entry.initialized = true;
 				entry.removed = true;
 				real_entry_num--;
+
+				result_->identifier_table_->push_back(entry.name);
 			}
 		}
 	}
@@ -965,20 +962,20 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e){
 	else if(lhs->itag()==EXPR_PROPERTY){
 		compile_expr(lhs->property_term());
 		put_inst(InstDup());
-		put_send_code(lhs->property_name(), 1, false, false, lhs->property_ns());
+		put_send_code(lhs->property_name(), lhs->property_ns(), 1, 0, 0, CALL_FLAG_NONE);
 		compile_expr(rhs);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(lhs->property_name(), false, lhs->property_ns());
+		put_set_send_code(lhs->property_name(), lhs->property_ns(), CALL_FLAG_NONE);
 	}
 	else if(lhs->itag()==EXPR_PROPERTY_Q){
 		compile_expr(lhs->property_term());
 		put_inst(InstDup());
-		put_send_code(lhs->property_name(), 1, false, true, lhs->property_ns());
+		put_send_code(lhs->property_name(), lhs->property_ns(), 1, 0, 0, CALL_FLAG_Q);
 		compile_expr(rhs);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(lhs->property_name(), true, lhs->property_ns());
+		put_set_send_code(lhs->property_name(), lhs->property_ns(), CALL_FLAG_Q);
 	}
 	else if(lhs->itag()==EXPR_AT){
 		compile_expr(lhs->bin_lhs());
@@ -1026,7 +1023,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 
 		}
 		else{
-			put_inst(InstGlobalVariable(regster_identifier(term->lvar_name())));
+			put_inst(InstGlobalVariable(register_identifier(term->lvar_name())));
 			put_inst(inst);
 			put_set_local_code(term->lvar_name());
 		}
@@ -1040,18 +1037,18 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	else if(term->itag()==EXPR_PROPERTY){
 		compile_expr(term->property_term());
 		put_inst(InstDup());
-		put_send_code(term->property_name(), 1, false, false, term->property_ns());
+		put_send_code(term->property_name(), term->property_ns(), 1, 0, 0, CALL_FLAG_NONE);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(term->property_name(), false, term->property_ns());
+		put_set_send_code(term->property_name(), term->property_ns(), CALL_FLAG_NONE);
 	}
 	else if(term->itag()==EXPR_PROPERTY_Q){
 		compile_expr(term->property_term());
 		put_inst(InstDup());
-		put_send_code(term->property_name(), 1, false, true, term->property_ns());
+		put_send_code(term->property_name(), term->property_ns(), 1, 0, 0, CALL_FLAG_Q);
 		put_inst(inst);
 		put_inst(InstInsert1());
-		put_set_send_code(term->property_name(), true, term->property_ns());
+		put_set_send_code(term->property_name(), term->property_ns(), CALL_FLAG_Q);
 	}
 	else if(term->itag()==EXPR_AT){
 		compile_expr(term->bin_lhs());
@@ -1118,7 +1115,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	}
 }
 
-void CodeBuilder::compile_class(const ExprPtr& e){
+void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 	// インスタンス変数を暗黙的初期化するメソッドを定義する
 
 	{
@@ -1253,6 +1250,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	info.variable_size = vf().entries.size();
 	info.instance_variable_size = ivar_num;
 	info.instance_variable_identifier_offset = instance_variable_identifier_offset;
+	info.name_number = register_identifier(id);
 	
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
@@ -1278,13 +1276,13 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 					compile_expr(v1->cdefine_member_ns());
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
 					entry(info).value = val;
-					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 				else{
 					put_inst(InstPushUndefined());
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
 					entry(info).value = val;
-					put_inst(InstDefineClassMember(info.pos, regster_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
 				}
 			}
 		}
@@ -1300,7 +1298,7 @@ void CodeBuilder::compile_class(const ExprPtr& e){
 	var_end();
 }
 
-void CodeBuilder::compile_fun(const ExprPtr& e){
+void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 
 	int_t ordered = 0;
 	int_t named = 0;
@@ -1415,6 +1413,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e){
 	info.kind = e->fun_kind();
 	info.min_param_count = minv;
 	info.max_param_count = maxv;
+	info.name_number = register_identifier(id);
 	info.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる

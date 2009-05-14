@@ -183,6 +183,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 			stream_->put_u16be(info.instance_variable_size);
 			stream_->put_u16be(info.instance_variable_identifier_offset);
+			stream_->put_u16be(info.name_number);
 			stream_->put_u8(info.mixins);
 		}
 
@@ -198,6 +199,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			
 			stream_->put_u16be(info.max_stack);
 			stream_->put_u16be(info.max_variable);
+			stream_->put_u16be(info.name_number);
 			stream_->put_u8(info.min_param_count);
 			stream_->put_u8(info.max_param_count);
 		}
@@ -398,6 +400,7 @@ AnyPtr Serializer::inner_deserialize_code(){
 
 		info.instance_variable_size = stream_->get_u16be();
 		info.instance_variable_identifier_offset = stream_->get_u16be();
+		info.name_number = stream_->get_u16be();
 		info.mixins = stream_->get_u8();
 	}
 
@@ -413,6 +416,7 @@ AnyPtr Serializer::inner_deserialize_code(){
 
 		info.max_stack = stream_->get_u16be();
 		info.max_variable = stream_->get_u16be();
+		info.name_number = stream_->get_u16be();
 		info.min_param_count = stream_->get_u8();
 		info.max_param_count = stream_->get_u8();
 	}

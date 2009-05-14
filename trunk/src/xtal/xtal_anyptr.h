@@ -146,10 +146,6 @@ protected:
 
 	SmartPtr(Base* p, const ClassPtr& c, special_ctor_t);
 
-	SmartPtr(Singleton* p, const ClassPtr& c, special_ctor_t);
-
-	SmartPtr(CppSingleton* p, const ClassPtr& c, special_ctor_t);
-
 public:
 
 	/**

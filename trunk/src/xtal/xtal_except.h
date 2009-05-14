@@ -80,6 +80,7 @@ class CompileError;
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
 AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type);
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key);
+AnyPtr global_unsupported_error(const CodePtr& code, const IDPtr& primary_key);
 
 /**
 * \brief ó·äOÇê›íËÇ∑ÇÈ

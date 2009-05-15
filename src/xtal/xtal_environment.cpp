@@ -496,17 +496,20 @@ bool cache_ctor(const AnyPtr& target_class, int_t kind){
 
 void clear_cache(){
 	environment_->member_cache_table_.clear();
+	environment_->member_cache_table2_.clear();
 	environment_->is_cache_table_.clear();
 	environment_->ctor_cache_table_.clear();
 }
 
 void invalidate_cache_member(){
 	environment_->member_cache_table_.invalidate();
+	environment_->member_cache_table2_.invalidate();
 }
 
 void invalidate_cache_is(){
 	environment_->is_cache_table_.invalidate();
 	environment_->member_cache_table_.invalidate();
+	environment_->member_cache_table2_.invalidate();
 	environment_->ctor_cache_table_.invalidate();
 }
 

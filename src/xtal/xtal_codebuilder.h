@@ -91,6 +91,10 @@ public:
 	}
 	
 	int_t code_size();
+
+	struct Scope{
+		
+	};
 			
 	struct FunFrame{
 		int_t stack_count;
@@ -227,8 +231,7 @@ private:
 	MapPtr value_map_;
 	MapPtr identifier_map_;
 
-	MapPtr global_ref_map_;
-	MapPtr global_def_map_;
+	MapPtr implicit_ref_map_;
 
 	CompileErrors errorimpl_;
 	CompileErrors* error_;

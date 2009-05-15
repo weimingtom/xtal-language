@@ -573,6 +573,11 @@ public:
 		return fun_frames_.pop()->poped_pc; 
 	}
 
+	const inst_t* pop_ff2(){
+		scopes_.pop();
+		return fun_frames_.pop()->poped_pc; 
+	}
+
 	void set_ff(const inst_t* pc, const inst_t* cpc, int_t need_result_count, 
 			int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 
@@ -651,6 +656,8 @@ private:
 		return local_variable_outer(pos - ff().variable_size);
 	}
 
+	const inst_t* send_inner(const ClassPtr& cls, const AnyPtr& ret);
+
 	const inst_t* vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
 
 	const inst_t* set_vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
@@ -678,28 +685,22 @@ public:
 	const inst_t* FunPushFalse(const inst_t* pc);
 	const inst_t* FunPushTrueAndSkip(const inst_t* pc);
 	const inst_t* FunPushInt1Byte(const inst_t* pc);
-	const inst_t* FunPushInt2Byte(const inst_t* pc);
 	const inst_t* FunPushFloat1Byte(const inst_t* pc);
-	const inst_t* FunPushFloat2Byte(const inst_t* pc);
 	const inst_t* FunPushCallee(const inst_t* pc);
-	const inst_t* FunPushArgs(const inst_t* pc);
 	const inst_t* FunPushThis(const inst_t* pc);
 	const inst_t* FunPushCurrentContext(const inst_t* pc);
 	const inst_t* FunPop(const inst_t* pc);
 	const inst_t* FunDup(const inst_t* pc);
 	const inst_t* FunInsert1(const inst_t* pc);
 	const inst_t* FunInsert2(const inst_t* pc);
-	const inst_t* FunInsert3(const inst_t* pc);
 	const inst_t* FunAdjustResult(const inst_t* pc);
-	const inst_t* FunLocalVariableInc(const inst_t* pc);
-	const inst_t* FunLocalVariableDec(const inst_t* pc);
-	const inst_t* FunLocalVariableInc2Byte(const inst_t* pc);
-	const inst_t* FunLocalVariableDec2Byte(const inst_t* pc);
+	const inst_t* FunLocalVariableInc1Byte(const inst_t* pc);
+	const inst_t* FunLocalVariableDec1Byte(const inst_t* pc);
 	const inst_t* FunLocalVariable1Byte(const inst_t* pc);
 	const inst_t* FunLocalVariable1ByteX2(const inst_t* pc);
-	const inst_t* FunLocalVariable1ByteX3(const inst_t* pc);
 	const inst_t* FunLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunSetLocalVariable1Byte(const inst_t* pc);
+	const inst_t* FunSetLocalVariable1ByteX2(const inst_t* pc);
 	const inst_t* FunSetLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunInstanceVariable(const inst_t* pc);
 	const inst_t* FunSetInstanceVariable(const inst_t* pc);
@@ -715,8 +716,8 @@ public:
 	const inst_t* FunSend(const inst_t* pc);
 	const inst_t* FunMember(const inst_t* pc);
 	const inst_t* FunDefineMember(const inst_t* pc);
-	const inst_t* FunBlockBegin(const inst_t* pc);
-	const inst_t* FunBlockEnd(const inst_t* pc);
+	const inst_t* FunScopeBegin(const inst_t* pc);
+	const inst_t* FunScopeEnd(const inst_t* pc);
 	const inst_t* FunTryBegin(const inst_t* pc);
 	const inst_t* FunTryEnd(const inst_t* pc);
 	const inst_t* FunPushGoto(const inst_t* pc);
@@ -762,9 +763,7 @@ public:
 	const inst_t* FunShrAssign(const inst_t* pc);
 	const inst_t* FunUshrAssign(const inst_t* pc);
 	const inst_t* FunRange(const inst_t* pc);
-	const inst_t* FunGlobalVariable(const inst_t* pc);
-	const inst_t* FunSetGlobalVariable(const inst_t* pc);
-	const inst_t* FunDefineGlobalVariable(const inst_t* pc);
+	const inst_t* FunFilelocalVariable(const inst_t* pc);
 	const inst_t* FunOnce(const inst_t* pc);
 	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);

@@ -95,12 +95,54 @@ int main2(int argc, char** argv){
 	//test();
 			
 	if(CodePtr code = Xsrc((
-		//check_implicit_lookup();
-			
+		fun A(i,j) {
+			return 1.0/((i+j)*(i+j+1)/2+i+1);
+		}
+
+		fun Au(u,v) {
+			for (i:0; i<u.length; ++i) {
+				t: 0;
+				for (j:0; j<u.length; ++j)
+					t += A(i,j) * u[j];
+				v[i] = t;
+			}
+		}
+
+		fun Atu(u,v) {
+			for (i:0; i<u.length; ++i) {
+				t: 0;
+				for (j:0; j<u.length; ++j)
+					t += A(j,i) * u[j];
+				v[i] = t;
+			}
+		}
+
+		fun AtAu(u,v,w) {
+			Au(u,w);
+			Atu(w,v);
+		}
+
+		fun spectralnorm(n) {
+			u:[]; v:[]; w:[]; vv:0; vBv:0;
+			for (i:0; i<n; ++i) {
+				u.push_back(1); v.push_back(0); w.push_back(0);
+			}
+			for (i:0; i<10; ++i) {
+				AtAu(u,v,w);
+				AtAu(v,u,w);
+			}
+			for (i:0; i<n; ++i) {
+				vBv += u[i]*v[i];
+				vv	+= v[i]*v[i];
+			}
+			return math::sqrt(vBv/vv);
+		}
+
+		println(spectralnorm(arg[0]));
 
 	))){
 		code->inspect()->p();
-		AnyPtr aa = code->call(4);
+		//AnyPtr aa = code->call(4);
 	}
 
 
@@ -137,7 +179,7 @@ int main2(int argc, char** argv){
 	//benchmark("../binary-trees.xtal", 3);
 	//benchmark("../mandelbrot.xtal", 10);
 
-	//*		
+	/*		
 	c = clock();
 	load("../bench/vec.xtal");
 	printf("vec %g\n\n", (clock()-c)/1000.0f);		

@@ -320,32 +320,12 @@ XTAL_DEF_INST_1(6, PushInt1Byte,
 
 /**
 * \internal
-* \brief スタックにint値をプッシュする。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_1(7, PushInt2Byte,
-        inst_i16_t, value
-);
-
-/**
-* \internal
 * \brief スタックにfloat値をプッシュする。
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(8, PushFloat1Byte,
+XTAL_DEF_INST_1(7, PushFloat1Byte,
         inst_i8_t, value
-);
-
-/**
-* \internal
-* \brief スタックにfloat値をプッシュする。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_1(9, PushFloat2Byte,
-        inst_i16_t, value
 );
 
 /**
@@ -354,7 +334,7 @@ XTAL_DEF_INST_1(9, PushFloat2Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(10, PushCallee);
+XTAL_DEF_INST_0(8, PushCallee);
 
 /**
 * \internal
@@ -362,7 +342,7 @@ XTAL_DEF_INST_0(10, PushCallee);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(11, PushThis);
+XTAL_DEF_INST_0(9, PushThis);
 
 /**
 * \internal
@@ -370,7 +350,7 @@ XTAL_DEF_INST_0(11, PushThis);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(12, PushCurrentContext);
+XTAL_DEF_INST_0(10, PushCurrentContext);
 
 /**
 * \internal
@@ -378,7 +358,7 @@ XTAL_DEF_INST_0(12, PushCurrentContext);
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_0(13, Pop);
+XTAL_DEF_INST_0(11, Pop);
 
 /**
 * \internal
@@ -386,7 +366,7 @@ XTAL_DEF_INST_0(13, Pop);
 *
 * stack [value] -> [value, value2]
 */
-XTAL_DEF_INST_0(14, Dup);
+XTAL_DEF_INST_0(12, Dup);
 
 /**
 * \internal
@@ -394,7 +374,7 @@ XTAL_DEF_INST_0(14, Dup);
 *
 * stack [value1, value2] -> [value2, value1]
 */
-XTAL_DEF_INST_0(15, Insert1);
+XTAL_DEF_INST_0(13, Insert1);
 
 /**
 * \internal
@@ -402,15 +382,7 @@ XTAL_DEF_INST_0(15, Insert1);
 *
 * stack [value1, value2, value3] -> [value3, value1, value2]
 */
-XTAL_DEF_INST_0(16, Insert2);
-
-/**
-* \internal
-* \brief スタックトップの値を三つ前に入れる。
-*
-* stack [value1, value2, value3, value4] -> [value4, value1, value2, value3]
-*/
-XTAL_DEF_INST_0(17, Insert3);
+XTAL_DEF_INST_0(14, Insert2);
 
 /**
 * \internal
@@ -418,25 +390,17 @@ XTAL_DEF_INST_0(17, Insert3);
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_2(18, AdjustResult,
+XTAL_DEF_INST_2(15, AdjustResult,
         inst_u8_t, result_count,
         inst_u8_t, need_result_count
 );
 
-XTAL_DEF_INST_1(19, LocalVariableInc,
+XTAL_DEF_INST_1(16, LocalVariableInc1Byte,
 		inst_u8_t, number
 );
 
-XTAL_DEF_INST_1(20, LocalVariableDec,
+XTAL_DEF_INST_1(17, LocalVariableDec1Byte,
 		inst_u8_t, number
-);
-
-XTAL_DEF_INST_1(21, LocalVariableInc2Byte,
-		inst_u16_t, number
-);
-
-XTAL_DEF_INST_1(22, LocalVariableDec2Byte,
-		inst_u16_t, number
 );
 
 /**
@@ -445,7 +409,7 @@ XTAL_DEF_INST_1(22, LocalVariableDec2Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(23, LocalVariable1Byte,
+XTAL_DEF_INST_1(18, LocalVariable1Byte,
         inst_u8_t, number
 );
 
@@ -455,7 +419,7 @@ XTAL_DEF_INST_1(23, LocalVariable1Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_2(24, LocalVariable1ByteX2,
+XTAL_DEF_INST_2(19, LocalVariable1ByteX2,
         inst_u8_t, number1,
         inst_u8_t, number2
 );
@@ -466,19 +430,7 @@ XTAL_DEF_INST_2(24, LocalVariable1ByteX2,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_3(25, LocalVariable1ByteX3,
-        inst_u8_t, number1,
-        inst_u8_t, number2,
-        inst_u8_t, number3
-);
-
-/**
-* \internal
-* \brief ローカル変数を取り出す。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_1(26, LocalVariable2Byte,
+XTAL_DEF_INST_1(20, LocalVariable2Byte,
         inst_u16_t, number
 );
 
@@ -488,7 +440,7 @@ XTAL_DEF_INST_1(26, LocalVariable2Byte,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_1(27, SetLocalVariable1Byte,
+XTAL_DEF_INST_1(21, SetLocalVariable1Byte,
         inst_u8_t, number
 );
 
@@ -498,7 +450,18 @@ XTAL_DEF_INST_1(27, SetLocalVariable1Byte,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_1(28, SetLocalVariable2Byte,
+XTAL_DEF_INST_2(22, SetLocalVariable1ByteX2,
+        inst_u8_t, number1,
+        inst_u8_t, number2
+);
+
+/**
+* \internal
+* \brief ローカル変数に値を設定する。
+*
+* stack [value] -> []
+*/
+XTAL_DEF_INST_1(23, SetLocalVariable2Byte,
         inst_u16_t, number
 );
 
@@ -508,7 +471,7 @@ XTAL_DEF_INST_1(28, SetLocalVariable2Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_2(29, InstanceVariable,
+XTAL_DEF_INST_2(24, InstanceVariable,
         inst_u8_t, number,
         inst_u16_t, info_number
 );
@@ -519,9 +482,19 @@ XTAL_DEF_INST_2(29, InstanceVariable,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_2(30, SetInstanceVariable,
+XTAL_DEF_INST_2(25, SetInstanceVariable,
         inst_u8_t, number,
         inst_u16_t, info_number
+);
+
+/**
+* \internal
+* \brief ファイルローカル変数を取り出す。
+*
+* stack [] -> [value]
+*/
+XTAL_DEF_INST_1(26, FilelocalVariable,
+        inst_u16_t, identifier_number
 );
 
 /**
@@ -530,7 +503,7 @@ XTAL_DEF_INST_2(30, SetInstanceVariable,
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_0(31, CleanupCall);
+XTAL_DEF_INST_0(27, CleanupCall);
 
 /**
 * \internal
@@ -538,7 +511,7 @@ XTAL_DEF_INST_0(31, CleanupCall);
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(32, Return,
+XTAL_DEF_INST_1(28, Return,
         inst_u8_t, results
 );
 
@@ -548,7 +521,7 @@ XTAL_DEF_INST_1(32, Return,
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(33, Yield,
+XTAL_DEF_INST_1(29, Yield,
         inst_u8_t, results
 );
 
@@ -558,7 +531,7 @@ XTAL_DEF_INST_1(33, Yield,
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_0(34, Exit);
+XTAL_DEF_INST_0(30, Exit);
 
 /**
 * \internal
@@ -566,11 +539,11 @@ XTAL_DEF_INST_0(34, Exit);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(35, Value,
+XTAL_DEF_INST_1(31, Value,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_0(36, CheckUnsupported);
+XTAL_DEF_INST_0(32, CheckUnsupported);
 
 enum{
 	CALL_FLAG_TAIL_SHIFT = 0,
@@ -586,22 +559,22 @@ enum{
 	CALL_FLAG_Q = 1<<CALL_FLAG_Q_SHIFT
 };
 
-XTAL_DEF_INST_1(37, Property,
+XTAL_DEF_INST_1(33, Property,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_1(38, SetProperty,
+XTAL_DEF_INST_1(34, SetProperty,
         inst_u16_t, identifier_number
 );
 
-XTAL_DEF_INST_4(39, Call,
+XTAL_DEF_INST_4(35, Call,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
 		inst_u8_t, flags
 );
 
-XTAL_DEF_INST_5(40, Send,
+XTAL_DEF_INST_5(36, Send,
         inst_u8_t, ordered,
         inst_u8_t, named,
         inst_u8_t, need_result,
@@ -615,7 +588,7 @@ XTAL_DEF_INST_5(40, Send,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_2(41, Member,
+XTAL_DEF_INST_2(37, Member,
         inst_u16_t, identifier_number,
 		inst_u8_t, flags
 );
@@ -626,28 +599,28 @@ XTAL_DEF_INST_2(41, Member,
 *
 * stack [object, value] -> []
 */
-XTAL_DEF_INST_2(42, DefineMember,
+XTAL_DEF_INST_2(38, DefineMember,
         inst_u16_t, identifier_number,
 		inst_u8_t, flags
 );
 
-XTAL_DEF_INST_1(43, BlockBegin,
+XTAL_DEF_INST_1(39, ScopeBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(44, BlockEnd);
+XTAL_DEF_INST_0(40, ScopeEnd);
 
-XTAL_DEF_INST_1(45, TryBegin,
+XTAL_DEF_INST_1(41, TryBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(46, TryEnd);
+XTAL_DEF_INST_0(42, TryEnd);
 
-XTAL_DEF_INST_1(47, PushGoto,
+XTAL_DEF_INST_1(43, PushGoto,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_0(48, PopGoto);
+XTAL_DEF_INST_0(44, PopGoto);
 
 /**
 * \internal
@@ -655,7 +628,7 @@ XTAL_DEF_INST_0(48, PopGoto);
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_1(49, Goto,
+XTAL_DEF_INST_1(45, Goto,
         inst_address_t, address
 );
 
@@ -665,149 +638,120 @@ XTAL_DEF_INST_1(49, Goto,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_2(50, If,
+XTAL_DEF_INST_2(46, If,
         inst_address_t, address_true,
 		inst_address_t, address_false
 );
 
-XTAL_DEF_INST_0(51, IfEq);
+XTAL_DEF_INST_0(47, IfEq);
 
-XTAL_DEF_INST_0(52, IfLt);
+XTAL_DEF_INST_0(48, IfLt);
 
-XTAL_DEF_INST_0(53, IfRawEq);
+XTAL_DEF_INST_0(49, IfRawEq);
 
-XTAL_DEF_INST_0(54, IfIn);
+XTAL_DEF_INST_0(50, IfIn);
 
-XTAL_DEF_INST_0(55, IfIs);
+XTAL_DEF_INST_0(51, IfIs);
 
-XTAL_DEF_INST_2(56, IfArgIsUndefined,
+XTAL_DEF_INST_2(52, IfArgIsUndefined,
 	inst_u8_t, arg,
 	inst_address_t, address
 );
 
-XTAL_DEF_INST_0(57, Pos);
-XTAL_DEF_INST_0(58, Neg);
-XTAL_DEF_INST_0(59, Com);
-XTAL_DEF_INST_0(60, Not);
+XTAL_DEF_INST_0(53, Pos);
+XTAL_DEF_INST_0(54, Neg);
+XTAL_DEF_INST_0(55, Com);
+XTAL_DEF_INST_0(56, Not);
 
-XTAL_DEF_INST_0(61, At);
-XTAL_DEF_INST_0(62, SetAt);
+XTAL_DEF_INST_0(57, At);
+XTAL_DEF_INST_0(58, SetAt);
 
-XTAL_DEF_INST_0(63, Add);
-XTAL_DEF_INST_0(64, Sub);
-XTAL_DEF_INST_0(65, Cat);
-XTAL_DEF_INST_0(66, Mul);
-XTAL_DEF_INST_0(67, Div);
-XTAL_DEF_INST_0(68, Mod);
-XTAL_DEF_INST_0(69, And);
-XTAL_DEF_INST_0(70, Or);
-XTAL_DEF_INST_0(71, Xor);
-XTAL_DEF_INST_0(72, Shl);
-XTAL_DEF_INST_0(73, Shr);
-XTAL_DEF_INST_0(74, Ushr);
+XTAL_DEF_INST_0(59, Add);
+XTAL_DEF_INST_0(60, Sub);
+XTAL_DEF_INST_0(61, Cat);
+XTAL_DEF_INST_0(62, Mul);
+XTAL_DEF_INST_0(63, Div);
+XTAL_DEF_INST_0(64, Mod);
+XTAL_DEF_INST_0(65, And);
+XTAL_DEF_INST_0(66, Or);
+XTAL_DEF_INST_0(67, Xor);
+XTAL_DEF_INST_0(68, Shl);
+XTAL_DEF_INST_0(69, Shr);
+XTAL_DEF_INST_0(70, Ushr);
 
-XTAL_DEF_INST_0(75, Inc);
-XTAL_DEF_INST_0(76, Dec);
-XTAL_DEF_INST_0(77, AddAssign);
-XTAL_DEF_INST_0(78, SubAssign);
-XTAL_DEF_INST_0(79, CatAssign);
-XTAL_DEF_INST_0(80, MulAssign);
-XTAL_DEF_INST_0(81, DivAssign);
-XTAL_DEF_INST_0(82, ModAssign);
-XTAL_DEF_INST_0(83, AndAssign);
-XTAL_DEF_INST_0(84, OrAssign);
-XTAL_DEF_INST_0(85, XorAssign);
-XTAL_DEF_INST_0(86, ShlAssign);
-XTAL_DEF_INST_0(87, ShrAssign);
-XTAL_DEF_INST_0(88, UshrAssign);
+XTAL_DEF_INST_0(71, Inc);
+XTAL_DEF_INST_0(72, Dec);
+XTAL_DEF_INST_0(73, AddAssign);
+XTAL_DEF_INST_0(74, SubAssign);
+XTAL_DEF_INST_0(75, CatAssign);
+XTAL_DEF_INST_0(76, MulAssign);
+XTAL_DEF_INST_0(77, DivAssign);
+XTAL_DEF_INST_0(78, ModAssign);
+XTAL_DEF_INST_0(79, AndAssign);
+XTAL_DEF_INST_0(80, OrAssign);
+XTAL_DEF_INST_0(81, XorAssign);
+XTAL_DEF_INST_0(82, ShlAssign);
+XTAL_DEF_INST_0(83, ShrAssign);
+XTAL_DEF_INST_0(84, UshrAssign);
 
-XTAL_DEF_INST_1(89, Range,
+XTAL_DEF_INST_1(85, Range,
 		inst_u8_t, kind
 );
 
-/**
-* \internal
-* \brief グローバル変数を取り出す。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_1(90, GlobalVariable,
-        inst_u16_t, identifier_number
-);
-/**
-* \internal
-* \brief グローバル変数に設定する。
-*
-* stack [value] -> []
-*/
-XTAL_DEF_INST_1(91, SetGlobalVariable,
-        inst_u16_t, identifier_number
-);
-
-/**
-* \internal
-* \brief グローバル変数を定義する。
-*
-* stack [value] -> []
-*/
-XTAL_DEF_INST_1(92, DefineGlobalVariable,
-        inst_u16_t, identifier_number
-);
-
-XTAL_DEF_INST_2(93, Once,
+XTAL_DEF_INST_2(86, Once,
         inst_address_t, address,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(94, SetOnce,
+XTAL_DEF_INST_1(87, SetOnce,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(95, ClassBegin,
+XTAL_DEF_INST_1(88, ClassBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(96, ClassEnd);
+XTAL_DEF_INST_0(89, ClassEnd);
 
-XTAL_DEF_INST_3(97, DefineClassMember,
+XTAL_DEF_INST_3(90, DefineClassMember,
         inst_u16_t, number,
 		inst_u16_t, identifier_number,
 		inst_u8_t, accessibility
 );
 
-XTAL_DEF_INST_0(98, MakeArray);
+XTAL_DEF_INST_0(91, MakeArray);
 
-XTAL_DEF_INST_0(99, ArrayAppend);
+XTAL_DEF_INST_0(92, ArrayAppend);
 
-XTAL_DEF_INST_0(100, MakeMap);
+XTAL_DEF_INST_0(93, MakeMap);
 
-XTAL_DEF_INST_0(101, MapInsert);
+XTAL_DEF_INST_0(94, MapInsert);
 
-XTAL_DEF_INST_0(102, MapSetDefault);
+XTAL_DEF_INST_0(95, MapSetDefault);
 
-XTAL_DEF_INST_2(103, MakeFun,
+XTAL_DEF_INST_2(96, MakeFun,
         inst_u16_t, info_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(104, MakeInstanceVariableAccessor,
+XTAL_DEF_INST_3(97, MakeInstanceVariableAccessor,
         inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(105, Throw);
+XTAL_DEF_INST_0(98, Throw);
 
-XTAL_DEF_INST_0(106, ThrowUnsupportedError);
+XTAL_DEF_INST_0(99, ThrowUnsupportedError);
 
-XTAL_DEF_INST_1(107, IfDebug,
+XTAL_DEF_INST_1(100, IfDebug,
 		inst_address_t, address);
 
-XTAL_DEF_INST_0(108, Assert);
+XTAL_DEF_INST_0(101, Assert);
 
-XTAL_DEF_INST_0(109, BreakPoint);
+XTAL_DEF_INST_0(102, BreakPoint);
 
-XTAL_DEF_INST_0(110, MAX);
+XTAL_DEF_INST_0(103, MAX);
 
 }
 

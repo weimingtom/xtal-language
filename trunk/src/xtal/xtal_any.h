@@ -272,6 +272,7 @@ public:
 	friend uint_t rawtype(const Any& v);
 	friend AnyRawValue rawvalue(const Any& v);
 	friend void set_type_value(Any& v, int_t type, AnyRawValue value);
+	friend void set_type(Any& v, int_t type);
 	friend void inc_ref_count_force(const Any& v);
 	friend void dec_ref_count_force(const Any& v);
 };
@@ -294,6 +295,10 @@ inline AnyRawValue rawvalue(const Any& v){
 inline void set_type_value(Any& v, int_t type, AnyRawValue value){
 	v.type_ = type;
 	v.value_ = value;
+}
+
+inline void set_type(Any& v, int_t type){
+	v.type_ = type;
 }
 
 inline int_t ivalue(const Any& v){ 
@@ -337,8 +342,7 @@ inline uint_t rawbitxor(const Any& a, const Any& b){
 }
 
 inline void set_nullt(Any& a){
-	AnyRawValue value; value.ivalue = 0;
-	set_type_value(a, TYPE_NULL, value);
+	set_type(a, TYPE_NULL);
 }
 
 inline void set_null(Any& a){

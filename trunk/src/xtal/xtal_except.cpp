@@ -84,7 +84,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	}
 }
 
-AnyPtr global_unsupported_error(const CodePtr& code, const IDPtr& primary_key){
+AnyPtr filelocal_unsupported_error(const CodePtr& code, const IDPtr& primary_key){
 	if(!primary_key){
 		return null;
 	}

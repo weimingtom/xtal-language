@@ -8,8 +8,7 @@
 namespace xtal{
 	
 CodeBuilder::CodeBuilder(){
-	global_ref_map_ = xnew<Map>();
-	global_def_map_ = xnew<Map>();
+	implicit_ref_map_ = xnew<Map>();
 }
 
 CodeBuilder::~CodeBuilder(){}
@@ -138,7 +137,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().max_variable_count = 1;
 	ff().extendable_param = true;
 
-	// 変数フレームを作成して、引数を登録する
+	// 変数フレームを作成して、コマンドライン引数を登録する
 	var_begin(VarFrame::FRAME);
 
 	// コマンドライン引数
@@ -190,13 +189,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	// 変数フレームをポップする
 	var_end();
 
-	Xfor2(k, v, global_def_map_){
-		if(v){
-			global_ref_map_->set_at(k, false);
-		}
-	}
-
-	Xfor2(k, v, global_ref_map_){
+	Xfor2(k, v, implicit_ref_map_){
 		if(v){
 			Code::ImplcitInfo info = {k->to_i(), v->to_i()};
 			result_->implicit_table_.push_back(info);
@@ -236,6 +229,20 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			return;
 		}
 	}
+
+	if(t.op==InstSetLocalVariable1Byte::NUMBER){
+		if(prev_inst_op_==InstSetLocalVariable1Byte::NUMBER){
+			InstLocalVariable1Byte prev_inst;
+			uint_t prev_op_size = sizeof(InstSetLocalVariable1Byte);
+			uint_t prev_op_isize = sizeof(InstSetLocalVariable1Byte)/sizeof(inst_t);
+			std::memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
+			result_->code_.downsize(prev_op_isize);
+
+			prev_inst_op_ = -1;
+			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
+			return;
+		}
+	}
 //*/
 
 	prev_inst_op_ = t.op;
@@ -265,11 +272,6 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 	}
 	else{
 		error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), var)));
-		/*
-		int_t id = register_identifier(var);
-		put_inst(InstSetGlobalVariable(id));
-		global_ref_map_->set_at(id, lineno());
-		*/
 		return false;
 	}
 }
@@ -319,13 +321,7 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 		}
 	}
 	else{
-		if(rhs){
-			compile_expr(rhs);
-		}
-
-		int_t id = register_identifier(var);
-		put_inst(InstDefineGlobalVariable(id));
-		global_def_map_->set_at(id, lineno());
+		XTAL_ASSERT(false);
 	}
 }
 
@@ -345,8 +341,8 @@ bool CodeBuilder::put_local_code(const IDPtr& var){
 	}
 	else{
 		int_t id = register_identifier(var);
-		put_inst(InstGlobalVariable(id));
-		global_ref_map_->set_at(id, lineno());
+		put_inst(InstFilelocalVariable(id));
+		implicit_ref_map_->set_at(id, lineno());
 		return false;
 	}
 }
@@ -517,7 +513,7 @@ void CodeBuilder::break_off(int_t n){
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
 		if(vf.real_entry_num!=0 && vf.kind==VarFrame::FRAME){
-			put_inst(InstBlockEnd());
+			put_inst(InstScopeEnd());
 		}
 	}
 }
@@ -544,9 +540,6 @@ void CodeBuilder::put_val_code(const AnyPtr& val){
 			if(value==(i8)value){ 
 				put_inst(InstPushInt1Byte(value));
 			}
-			else if(value==(i16)value){ 
-				put_inst(InstPushInt2Byte(value));
-			}
 			else{ 
 				put_inst(InstValue(register_value(value)));
 			}
@@ -556,9 +549,6 @@ void CodeBuilder::put_val_code(const AnyPtr& val){
 			float_t value = fvalue(val);
 			if(value==(i8)value){ 
 				put_inst(InstPushFloat1Byte((i8)value));
-			}
-			else if(value==(i16)value){ 
-				put_inst(InstPushFloat2Byte((i16)value));
 			}
 			else{ 
 				put_inst(InstValue(register_value(value)));
@@ -854,7 +844,7 @@ void CodeBuilder::scope_begin(){
 	}
 
 	if(vf().real_entry_num!=0){
-		put_inst(InstBlockBegin(scope_info_num));
+		put_inst(InstScopeBegin(scope_info_num));
 	}
 
 	ff().variable_count += vf().real_entry_num;
@@ -867,7 +857,7 @@ void CodeBuilder::scope_end(){
 	ff().variable_count -= vf().real_entry_num;
 
 	if(vf().real_entry_num!=0){
-		put_inst(InstBlockEnd());
+		put_inst(InstScopeEnd());
 	}
 		
 	if(vf().scope_chain){
@@ -1001,20 +991,16 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 		LVarInfo info = var_find(term->lvar_name());
 		if(info.pos>=0){
 			if(info.pos>=256){
-				if(e->itag() == EXPR_INC){
-					put_inst(InstLocalVariableInc2Byte(info.pos));
-				}
-				else{
-					put_inst(InstLocalVariableDec2Byte(info.pos));
-				}
-				put_inst(InstSetLocalVariable2Byte(info.pos));
+				put_local_code(term->lvar_name());
+				put_inst(inst);
+				put_set_local_code(term->lvar_name());
 			}
 			else{
 				if(e->itag() == EXPR_INC){
-					put_inst(InstLocalVariableInc(info.pos));
+					put_inst(InstLocalVariableInc1Byte(info.pos));
 				}
 				else{
-					put_inst(InstLocalVariableDec(info.pos));
+					put_inst(InstLocalVariableDec1Byte(info.pos));
 				}
 				put_inst(InstSetLocalVariable1Byte(info.pos));
 			}
@@ -1023,9 +1009,7 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 
 		}
 		else{
-			put_inst(InstGlobalVariable(register_identifier(term->lvar_name())));
-			put_inst(inst);
-			put_set_local_code(term->lvar_name());
+			error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), term->lvar_name())));
 		}
 
 	}

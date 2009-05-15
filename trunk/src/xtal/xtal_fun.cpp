@@ -85,14 +85,7 @@ InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
 
 void InstanceVariableGetter::rawcall(const VMachinePtr& vm){
 	const AnyPtr& self = vm->arg_this();
-	InstanceVariables* p;
-	if(type(self)==TYPE_BASE){
-		p = pvalue(self)->instance_variables();
-	}
-	else{
-		p = &empty_instance_variables;
-	}
-	vm->return_result(p->variable(number_, info_));
+	vm->return_result(self->instance_variables()->variable(number_, info_));
 }
 
 InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
@@ -102,14 +95,7 @@ InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
 
 void InstanceVariableSetter::rawcall(const VMachinePtr& vm){
 	const AnyPtr& self = vm->arg_this();
-	InstanceVariables* p;
-	if(type(self)==TYPE_BASE){
-		p = pvalue(self)->instance_variables();
-	}
-	else{
-		p = &empty_instance_variables;
-	}
-	p->set_variable(number_, info_, vm->arg(0));
+	self->instance_variables()->set_variable(number_, info_, vm->arg(0));
 	vm->return_result();
 }
 

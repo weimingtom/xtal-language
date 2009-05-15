@@ -202,9 +202,6 @@ int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, const CompileInfo& info
 		if(value==(i8)value){ 
 			put_inst(InstPushInt1Byte(value));
 		}
-		else if(value==(i16)value){ 
-			put_inst(InstPushInt2Byte(value));
-		}
 		else{ 
 			put_inst(InstValue(register_value(value)));
 		}
@@ -213,9 +210,6 @@ int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, const CompileInfo& info
 		float_t value = fvalue(nvalue);
 		if(value==(i8)value){ 
 			put_inst(InstPushFloat1Byte((i8)value));
-		}
-		else if(value==(i16)value){ 
-			put_inst(InstPushFloat2Byte((i16)value));
 		}
 		else{ 
 			put_inst(InstValue(register_value(value)));

@@ -544,7 +544,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 			ep = cpp_class<RuntimeError>()->call(ep);
 		}
 
-		if(fun() &&  fun()->code()){
+		if(fun() && fun()->code()){
 			if((pc !=  fun()->code()->data() + fun()->code()->size()-1)){
 				unchecked_ptr_cast<Exception>(ep)->append_backtrace(
 					 fun()->code()->source_file_name(),
@@ -603,114 +603,108 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
+	{
+		struct guard{
+			bool& disable_debug_;
+			guard(bool& disable_debug):disable_debug_(disable_debug){ disable_debug_ = true; }
+			~guard(){ disable_debug_ = false; }
+		} g(disable_debug_);
 
-		{
-			struct guard{
-				bool& disable_debug_;
-				guard(bool& disable_debug):disable_debug_(disable_debug){ disable_debug_ = true; }
-				~guard(){ disable_debug_ = false; }
-			} g(disable_debug_);
+		AnyPtr e = ap(except_[0]);
+		except_[0] = null;
 
-			AnyPtr e = ap(except_[0]);
-			except_[0] = null;
+		make_debug_info(pc, kind);
 
-			make_debug_info(pc, kind);
-
-			switch(kind){
-				XTAL_CASE(BREAKPOINT){
-					if(const AnyPtr& hook = debug::break_point_hook()){
-						hook->call(debug_info_);
-					}
-				}
-
-				XTAL_CASE(BREAKPOINT_RETURN){
-					if(const AnyPtr& hook = debug::return_hook()){
-						hook->call(debug_info_);
-					}
-				}
-
-				XTAL_CASE(BREAKPOINT_CALL){
-					if(const AnyPtr& hook = debug::call_hook()){
-						hook->call(debug_info_);
-					}
-				}
-
-				XTAL_CASE(BREAKPOINT_THROW){
-					if(const AnyPtr& hook = debug::throw_hook()){
-						hook->call(debug_info_);
-					}
-				}
-
-				XTAL_CASE(BREAKPOINT_ASSERT){
-					if(const AnyPtr& hook = debug::assert_hook()){
-						hook->call(debug_info_);
-					}
-					else{
-						set_except(cpp_class<AssertionFailed>()->call(debug_info_->assertion_message()));
-						e = ap(except_[0]);
-					}
+		switch(kind){
+			XTAL_CASE(BREAKPOINT){
+				if(const AnyPtr& hook = debug::break_point_hook()){
+					hook->call(debug_info_);
 				}
 			}
 
-			except_[0] = e;
+			XTAL_CASE(BREAKPOINT_RETURN){
+				if(const AnyPtr& hook = debug::return_hook()){
+					hook->call(debug_info_);
+				}
+			}
+
+			XTAL_CASE(BREAKPOINT_CALL){
+				if(const AnyPtr& hook = debug::call_hook()){
+					hook->call(debug_info_);
+				}
+			}
+
+			XTAL_CASE(BREAKPOINT_THROW){
+				if(const AnyPtr& hook = debug::throw_hook()){
+					hook->call(debug_info_);
+				}
+			}
+
+			XTAL_CASE(BREAKPOINT_ASSERT){
+				if(const AnyPtr& hook = debug::assert_hook()){
+					hook->call(debug_info_);
+				}
+				else{
+					set_except(cpp_class<AssertionFailed>()->call(debug_info_->assertion_message()));
+					e = ap(except_[0]);
+				}
+			}
 		}
+
+		except_[0] = e;
 	}
 }
 
 const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
-	XTAL_GLOBAL_INTERPRETER_LOCK{
-		AnyPtr e = catch_except();
+	AnyPtr e = catch_except();
 
-		ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
+	ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
 
-		// XtalÇÃä÷êîÇíEèoÇµÇƒÇ¢Ç≠
-		while((size_t)ef.fun_frame_size<fun_frames_.size()){
-			check_debug_hook(pc, BREAKPOINT_RETURN);
-			pc = pop_ff();
-			e = append_backtrace(pc, e);
+	// XtalÇÃä÷êîÇíEèoÇµÇƒÇ¢Ç≠
+	while((size_t)ef.fun_frame_size<fun_frames_.size()){
+		check_debug_hook(pc, BREAKPOINT_RETURN);
+		pc = pop_ff();
+		e = append_backtrace(pc, e);
 
-			// CÇÃä÷êîÇ…Ç‘Ç¬Ç©Ç¡ÇΩ
-			if(pc==&end_code_){
-				ef.info = 0;
-				break;
-			}
+		// CÇÃä÷êîÇ…Ç‘Ç¬Ç©Ç¡ÇΩ
+		if(pc==&end_code_){
+			ef.info = 0;
+			break;
 		}
+	}
 
-		while(scopes_.size()<ef.scope_size){
-			scopes_.push(0);
+	while(scopes_.size()<ef.scope_size){
+		scopes_.push(0);
+	}
+
+	while(scopes_.size()!=ef.scope_size){
+		if(ScopeInfo* scope = scopes_.pop()){
+			variables_.downsize(scope->variable_size);
 		}
+	}
+	ff().outer(ap(ef.outer));
 
-		while(scopes_.size()!=ef.scope_size){
-			if(ScopeInfo* scope = scopes_.pop()){
-				variables_.downsize(scope->variable_size);
-			}
-		}
-		ff().outer(ap(ef.outer));
+	stack_.resize(ef.stack_size);
 
-		stack_.resize(ef.stack_size);
-
-		if(ef.info){
-			if(ef.info->catch_pc && e){
-				pc = ef.info->catch_pc +  fun()->code()->data();
-				push(AnyPtr(ef.info->end_pc));
-				push(e);
-			}
-			else{
-				pc = ef.info->finally_pc +  fun()->code()->data();
-				push(e);
-				push(AnyPtr(fun()->code()->size()-1));
-			}
-
-			except_frames_.downsize(1);
-			return pc;
+	if(ef.info){
+		if(ef.info->catch_pc && e){
+			pc = ef.info->catch_pc +  fun()->code()->data();
+			push(AnyPtr(ef.info->end_pc));
+			push(e);
 		}
 		else{
-			set_except_0(e);
+			pc = ef.info->finally_pc +  fun()->code()->data();
+			push(e);
+			push(AnyPtr(fun()->code()->size()-1));
 		}
-		return 0;
+
+		except_frames_.downsize(1);
+		return pc;
 	}
-	//return 0;
+	else{
+		set_except_0(e);
+	}
+	return 0;
 }
 
 const AnyPtr& VMachine::catch_except(){

@@ -58,7 +58,6 @@ NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
 	}
 }
 
-
 NativeMethod::~NativeMethod(){
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
 	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));

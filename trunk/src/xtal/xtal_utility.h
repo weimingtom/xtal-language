@@ -119,9 +119,6 @@ private:
 #	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
 #endif
 
-#define XTAL_GLOBAL_INTERPRETER_LOCK
-#define XTAL_GLOBAL_INTERPRETER_UNLOCK
-
 #ifdef __GNUC__
 #	define XTAL_NOINLINE __attribute__((noinline)) 
 #else

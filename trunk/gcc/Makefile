@@ -58,7 +58,7 @@ test: $(BINDIR)/test.exe
 clean:
 	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/all_src.exe $(SRCDIR)/xtal.h.gch
 
-$(BINDIR)/prof.exe: $(LIBDIR)/libxtal.a $(SRCDIR)/main.cpp
+$(BINDIR)/prof.exe: $(LIBDIR)/libxtal.a xtal.cpp
 	$(CC) -o $(BINDIR)/prof.exe ./xtal.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT)  
 	$(BINDIR)/prof.exe ../bench/ao.xtal
 

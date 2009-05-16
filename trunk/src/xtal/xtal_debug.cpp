@@ -29,18 +29,24 @@ void enable(){
 
 	d->enable_count_++;
 
-	set_break_point_hook(d->break_point_hook_);
-	set_call_hook(d->call_hook_);
-	set_return_hook(d->return_hook_);
-	set_throw_hook(d->throw_hook_);
-	set_assert_hook(d->assert_hook_);
+	if(d->enable_count_>=1){
+		set_break_point_hook(d->break_point_hook_);
+		set_call_hook(d->call_hook_);
+		set_return_hook(d->return_hook_);
+		set_throw_hook(d->throw_hook_);
+		set_assert_hook(d->assert_hook_);
+		vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
+	}
 }
 
 void disable(){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->enable_count_--;
 
-	d->hook_setting_bit_ = 0;
+	if(d->enable_count_<=0){
+		d->hook_setting_bit_ = 0;
+		vmachine()->set_hook_setting_bit(0);
+	}
 }
 
 bool is_enabled(){
@@ -51,12 +57,27 @@ bool is_enabled(){
 void enable_force(int_t count){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->enable_count_ = count;
+
+	if(d->enable_count_>=1){
+		set_break_point_hook(d->break_point_hook_);
+		set_call_hook(d->call_hook_);
+		set_return_hook(d->return_hook_);
+		set_throw_hook(d->throw_hook_);
+		set_assert_hook(d->assert_hook_);
+		vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
+	}
 }
 
 int_t disable_force(){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	int_t temp = d->enable_count_;
 	d->enable_count_ = 0;
+
+	if(d->enable_count_<=0){
+		d->hook_setting_bit_ = 0;
+		vmachine()->set_hook_setting_bit(0);
+	}
+
 	return temp;
 }
 

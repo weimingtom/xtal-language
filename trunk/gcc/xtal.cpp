@@ -5,7 +5,7 @@
 #include "../src/xtal/xtal_lib/xtal_cstdiostream.h"
 #include "../src/xtal/xtal_lib/xtal_posixfilesystem.h"
 #include "../src/xtal/xtal_lib/xtal_chcode.h"
-#include "../src/xtal/xtal_lib/xtal_errormessage.h"
+//#include "../src/xtal/xtal_lib/xtal_errormessage.h"
 
 using namespace xtal;
 
@@ -77,7 +77,7 @@ int main(int argc, char** argv){
 	}
 
 	initialize(setting);
-	bind_error_message();
+	//bind_error_message();
 
 	handle_argv(argv);
 	

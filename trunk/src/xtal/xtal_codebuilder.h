@@ -32,6 +32,9 @@ public:
 
 	void adjust_result(int_t need_result_count, int_t result_count);
 
+	inst_address_t calc_address(const inst_t* pc, inst_address_t address);
+	void opt_jump();
+
 	int_t reserve_label();
 	void set_label(int_t lableno);
 	void set_jump(int_t offset, int_t labelno);

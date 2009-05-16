@@ -275,14 +275,6 @@ const AnyPtr& VMachine::arg(int_t pos, const IDPtr& name){
 	return arg(name);
 }
 
-const AnyPtr& VMachine::arg(int_t pos, Method* names){
-	FunFrame& f = ff();
-	if(pos<f.ordered_arg_count){
-		return get(f.args_stack_size()-1-pos);
-	}
-	return arg(names->param_name_at(pos));
-}
-
 const AnyPtr& VMachine::arg_default(int_t pos, const AnyPtr& def){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count){

@@ -85,17 +85,12 @@ void VMachine::carry_over(Method* fun){
 		f.variable_size += size;
 		Any* vars = &variables_[size-1];
 
-		if(fun->extendable_param()){
-			for(int_t n=0; n<size-1; ++n){
-				vars[n] = arg(n, fun);
-			}
-			vars[size-1] = inner_make_arguments(fun);
-		}
-		else{
-			for(int_t n=0; n<size; ++n){
-				vars[n] = arg(n, fun);
-			}
-		}
+		int_t m = size-1;
+		for(int_t n=0; n<m; ++n){
+			vars[n] = arg(n, fun);
+		}		
+			
+		vars[m] = fun->extendable_param() ? inner_make_arguments(fun) : arg(m, fun);
 	}
 	scopes_.top() = info;
 	
@@ -104,7 +99,6 @@ void VMachine::carry_over(Method* fun){
 	stack_.downsize(max_stack + f.args_stack_size());
 	f.ordered_arg_count = f.named_arg_count = 0;
 
-	hook_setting_bit_ = debug::hook_setting_bit();
 	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
@@ -134,17 +128,12 @@ void VMachine::mv_carry_over(Method* fun){
 		f.variable_size += size;
 		Any* vars = &variables_[size-1];
 
-		if(fun->extendable_param()){
-			for(int_t n=0; n<size-1; ++n){
-				vars[n] = arg(n, fun);
-			}
-			vars[size-1] = inner_make_arguments(fun);
-		}
-		else{
-			for(int_t n=0; n<size; ++n){
-				vars[n] = arg(n, fun);
-			}
-		}
+		int_t m = size-1;
+		for(int_t n=0; n<m; ++n){
+			vars[n] = arg(n, fun);
+		}		
+			
+		vars[m] = fun->extendable_param() ? inner_make_arguments(fun) : arg(m, fun);
 	}	
 	scopes_.top() = info;
 	
@@ -153,7 +142,6 @@ void VMachine::mv_carry_over(Method* fun){
 	stack_.downsize(max_stack + size);
 	f.ordered_arg_count = 0;
 
-	hook_setting_bit_ = debug::hook_setting_bit();
 	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
@@ -373,7 +361,7 @@ const inst_t* VMachine::send(const inst_t* pc, const inst_t* npc, const inst_t* 
 	const AnyPtr& ret = cache_member(cls, f.primary_key(), f.secondary_key(), accessibility);
 
 	if(accessibility){
-		if(const inst_t* epc = check_accessibility(pc, cls, f.self(), accessibility)){
+		if(const inst_t* epc = check_accessibility(pc, cls, prev_ff().self(), accessibility)){
 			return epc;
 		}
 	}
@@ -955,7 +943,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(PushGoto){ // 3
-		push(Any((int_t)((pc+inst.OFFSET_address+inst.address)-code()->data()))); 
+		push(Any((int_t)((pc+inst.address)-code()->data()))); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -965,13 +953,13 @@ XTAL_VM_SWITCH{
 
 	XTAL_VM_CASE(Goto){ // 3
 		XTAL_CHECK_YIELD;
-		XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
+		XTAL_VM_CONTINUE(pc + inst.address); 
 	}
 
 	XTAL_VM_CASE(If){ // 2
 		XTAL_VM_CONTINUE(pc + (pop() ? 
-			inst.OFFSET_address_true + inst.address_true : 
-			inst.OFFSET_address_false + inst.address_false));
+			inst.address_true : 
+			inst.address_false));
 	}
 
 	XTAL_VM_CASE(IfEq){ // 14
@@ -986,8 +974,8 @@ XTAL_VM_SWITCH{
 			downsize(2); 
 			XTAL_VM_CONTINUE((
 				ivalue(a) == ivalue(b) ? 
-				inst2.OFFSET_address_true+inst2.address_true : 
-				inst2.OFFSET_address_false+inst2.address_false) + pc + inst.ISIZE);
+				inst2.address_true : 
+				inst2.address_false) + pc + inst.ISIZE);
 		}
 
 		if(abtype==1){
@@ -995,8 +983,8 @@ XTAL_VM_SWITCH{
 			downsize(2); 
 			XTAL_VM_CONTINUE((
 				ab.a == ab.b ? 
-				inst2.OFFSET_address_true+inst2.address_true : 
-				inst2.OFFSET_address_false+inst2.address_false) + pc + inst.ISIZE);
+				inst2.address_true : 
+				inst2.address_false) + pc + inst.ISIZE);
 		}
 
 		XTAL_VM_CONTINUE(inner_send_from_stack_q(pc+inst.ISIZE, 1, id_[IDOp::id_op_eq], 1, 0));
@@ -1014,8 +1002,8 @@ XTAL_VM_SWITCH{
 			downsize(2); 
 			XTAL_VM_CONTINUE((
 				ivalue(a) < ivalue(b) ? 
-				inst2.OFFSET_address_true+inst2.address_true : 
-				inst2.OFFSET_address_false+inst2.address_false) + pc + inst.ISIZE);
+				inst2.address_true : 
+				inst2.address_false) + pc + inst.ISIZE);
 		}
 
 		if(abtype==1){
@@ -1023,8 +1011,8 @@ XTAL_VM_SWITCH{
 			downsize(2); 
 			XTAL_VM_CONTINUE(
 				(ab.a < ab.b ? 
-				inst2.OFFSET_address_true+inst2.address_true : 
-				inst2.OFFSET_address_false+inst2.address_false) + pc + inst.ISIZE);
+				inst2.address_true : 
+				inst2.address_false) + pc + inst.ISIZE);
 		}
 		
 		XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_lt], 1, 0));
@@ -1035,8 +1023,8 @@ XTAL_VM_SWITCH{
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 
 		pc = (raweq(get(1), get()) ? 
-			(int)(inst2.OFFSET_address_true+inst2.address_true) : 
-			(int)(inst2.OFFSET_address_false+inst2.address_false)) + pc + inst.ISIZE;
+			(int)(inst2.address_true) : 
+			(int)(inst2.address_false)) + pc + inst.ISIZE;
 
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
@@ -1051,8 +1039,8 @@ XTAL_VM_SWITCH{
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 
 		pc = (get(1)->is(get()) ? 
-			(int)(inst2.OFFSET_address_true+inst2.address_true) : 
-			(int)(inst2.OFFSET_address_false+inst2.address_false)) + pc + inst.ISIZE;
+			(int)(inst2.address_true) : 
+			(int)(inst2.address_false)) + pc + inst.ISIZE;
 		downsize(2);
 		XTAL_VM_CONTINUE(pc);
 	}
@@ -1062,7 +1050,7 @@ XTAL_VM_SWITCH{
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 		else{
-			XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address); 
+			XTAL_VM_CONTINUE(pc + inst.address); 
 		}
 	}
 
@@ -1118,13 +1106,13 @@ XTAL_VM_SWITCH{
 			set(ret);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 		}
-		//else if(type(get(1))==TYPE_MAP){
-		//	Any ret = unchecked_ptr_cast<Map>(get(1))->op_at(ivalue(get()));
-		//	XTAL_VM_CHECK_EXCEPT;
-		//	downsize(1);
-		//	set(ret);
-		//	XTAL_VM_CONTINUE(pc+inst.ISIZE); 
-		//}
+		else if(raweq(a->get_class(), cpp_class<Map>())){
+			Any ret = unchecked_ptr_cast<Map>(a)->op_at(b);
+			XTAL_VM_CHECK_EXCEPT;
+			downsize(1);
+			set(ret);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE); 
+		}
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 1, id_[IDOp::id_op_at], 1, 0));
 		}
@@ -1140,12 +1128,12 @@ XTAL_VM_SWITCH{
 			downsize(3);
 			XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 		}
-		//else if(type(get(2))==TYPE_MAP){
-		//	unchecked_ptr_cast<Map>(get(2))->op_set_at(get(1), get());
-		//	XTAL_VM_CHECK_EXCEPT;
-		//	downsize(3);
-		//	XTAL_VM_CONTINUE(pc+inst.ISIZE); 
-		//}
+		else if(raweq(a->get_class(), cpp_class<Map>())){
+			unchecked_ptr_cast<Map>(a)->op_set_at(b, get(2));
+			XTAL_VM_CHECK_EXCEPT;
+			downsize(3);
+			XTAL_VM_CONTINUE(pc+inst.ISIZE); 
+		}
 		else{
 			XTAL_VM_CONTINUE(inner_send_from_stack(pc+inst.ISIZE, 0, id_[IDOp::id_op_set_at], 1, 0, 2));
 		}
@@ -1274,7 +1262,7 @@ XTAL_VM_SWITCH{
 		const AnyPtr& ret = code()->once_value(inst.value_number);
 		if(rawne(ret, undefined)){
 			push(ret);
-			XTAL_VM_CONTINUE(pc + inst.OFFSET_address + inst.address);
+			XTAL_VM_CONTINUE(pc + inst.address);
 		}
 		else{
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1374,7 +1362,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(MakeFun){ // 10
-		int_t table_n = inst.info_number, end = inst.OFFSET_address + inst.address;
+		int_t table_n = inst.info_number, end = inst.address;
 		FunInfo* info = code()->fun_info(table_n);
 		const FramePtr& outer = make_outer(info);
 		switch(info->kind){
@@ -1424,7 +1412,7 @@ XTAL_VM_SWITCH{
 	}
 
 	XTAL_VM_CASE(IfDebug){ // 2
-		XTAL_VM_CONTINUE(pc + (debug::is_enabled() ? inst.ISIZE : inst.OFFSET_address + inst.address));
+		XTAL_VM_CONTINUE(pc + (debug::is_enabled() ? inst.ISIZE : inst.address));
 	}
 
 	XTAL_VM_CASE(Assert){ // 4

@@ -729,7 +729,6 @@ int_t CodeBuilder::compile_expr_USHR_ASSIGN(const ExprPtr& e, const CompileInfo&
 }
 
 int_t CodeBuilder::compile_expr_RETURN(const ExprPtr& e, const CompileInfo& info){
-	/*
 	bool have_finally = false;
 	for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)ff().var_frame_count+1; scope_count--){
 		for(uint_t k = 0; k<(uint_t)ff().finallies.size(); ++k){
@@ -740,21 +739,27 @@ int_t CodeBuilder::compile_expr_RETURN(const ExprPtr& e, const CompileInfo& info
 	}
 
 	int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
+
+	/*
 	if(!have_finally && exprs_size==1){
 		ExprPtr front = ep(e->return_exprs()->front());
 		if(front->itag()==EXPR_CALL || front->itag()==EXPR_PROPERTY || front->itag()==EXPR_PROPERTY_Q){
 			compile_expr(front, CompileInfo(1, true));
-			break;
+
+			break_off(ff().var_frame_count+1);
+			put_inst(InstReturn(exprs_size));
+			if(exprs_size>=256){
+				error_->error(lineno(), Xt("Xtal Compile Error 1022"));
+			}	
+
+			return 0;
 		}
 	}
 	*/
 
-	int_t exprs_size = e->return_exprs() ? e->return_exprs()->size() : 0;
-
 	compile_exprs(e->return_exprs());
 
 	break_off(ff().var_frame_count+1);
-
 	put_inst(InstReturn(exprs_size));
 	if(exprs_size>=256){
 		error_->error(lineno(), Xt("Xtal Compile Error 1022"));

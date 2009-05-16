@@ -69,6 +69,10 @@ StringPtr make_inst_string(const char_t* InstName,
 						const char_t* MemberName4, int_t MemberValue4,
 						const char_t* MemberName5, int_t MemberValue5);
 
+StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end);
+
+u8 inst_size(uint_t no);
+
 struct Inst{
 	inst_t op;
 

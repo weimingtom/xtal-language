@@ -228,8 +228,6 @@ public:
 	*/
 	const AnyPtr& arg(int_t pos, const IDPtr& name);
 	
-	const AnyPtr& arg(int_t pos, Method* names);
-
 	/**
 	* \brief pos番目の引数を得る。
 	*
@@ -404,6 +402,10 @@ public:
 
 	void adjust_result(int_t n, int_t need_result_count);
 
+	void set_hook_setting_bit(uint_t v){
+		hook_setting_bit_ = v;
+	}
+
 public:
 
 	// スタックのi番目の値を取得する。
@@ -550,6 +552,12 @@ public:
 		Any outer;
 	};
 
+	FunFrame& ff(){ 
+		return *fun_frames_.top(); 
+	}
+
+private:
+
 	void push_args(const ArgumentsPtr& args, int_t named_arg_count);
 
 	const inst_t* send(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
@@ -581,9 +589,7 @@ public:
 	void set_ff(const inst_t* pc, const inst_t* cpc, int_t need_result_count, 
 			int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
 
-	FunFrame& ff(){ 
-		return *fun_frames_.top(); 
-	}
+public:
 
 	FunFrame& prev_ff(){ 
 		return *fun_frames_[1]; 
@@ -635,6 +641,14 @@ private:
 	const inst_t* push_except(const inst_t* pc);
 	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
 
+	const AnyPtr& arg(int_t pos, Method* names){
+		FunFrame& f = ff();
+		if(pos<f.ordered_arg_count){
+			return get(f.args_stack_size()-1-pos);
+		}
+		return arg(names->param_name_at(pos));
+	}
+
 	const inst_t* check_accessibility(const inst_t* pc, const AnyPtr& cls, const AnyPtr& self, int_t accessibility);
 
 	void set_local_variable_outer(uint_t pos, const Any& value);
@@ -669,7 +683,7 @@ private:
 	void debug_hook(const inst_t* pc, int_t kind);
 
 	void check_debug_hook(const inst_t* pc, int_t kind){
-		if(!debug::is_enabled() || disable_debug_ || (hook_setting_bit_&(1<<kind))==0){
+		if(disable_debug_ || (hook_setting_bit_&(1<<kind))==0 || !debug::is_enabled()){
 			return;
 		}
 		debug_hook(pc, kind);
@@ -704,6 +718,7 @@ public:
 	const inst_t* FunSetLocalVariable2Byte(const inst_t* pc);
 	const inst_t* FunInstanceVariable(const inst_t* pc);
 	const inst_t* FunSetInstanceVariable(const inst_t* pc);
+	const inst_t* FunFilelocalVariable(const inst_t* pc);
 	const inst_t* FunCleanupCall(const inst_t* pc);
 	const inst_t* FunReturn(const inst_t* pc);
 	const inst_t* FunYield(const inst_t* pc);
@@ -763,7 +778,6 @@ public:
 	const inst_t* FunShrAssign(const inst_t* pc);
 	const inst_t* FunUshrAssign(const inst_t* pc);
 	const inst_t* FunRange(const inst_t* pc);
-	const inst_t* FunFilelocalVariable(const inst_t* pc);
 	const inst_t* FunOnce(const inst_t* pc);
 	const inst_t* FunSetOnce(const inst_t* pc);
 	const inst_t* FunClassBegin(const inst_t* pc);

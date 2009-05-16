@@ -273,8 +273,6 @@ public:
 	friend AnyRawValue rawvalue(const Any& v);
 	friend void set_type_value(Any& v, int_t type, AnyRawValue value);
 	friend void set_type(Any& v, int_t type);
-	friend void inc_ref_count_force(const Any& v);
-	friend void dec_ref_count_force(const Any& v);
 };
 
 /////////////////////////////////////////////////////////

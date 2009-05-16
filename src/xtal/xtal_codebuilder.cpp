@@ -197,12 +197,48 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	}
 
 	if(error_->errors->size()==0){
+		opt_jump();
 		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
 		return result_;
 	}
 	else{
 		result_ = null;
 		return null;
+	}
+}
+
+inst_address_t CodeBuilder::calc_address(const inst_t* pc, inst_address_t address){
+	const inst_t* pc2 = pc+address;
+	if(*pc2==InstGoto::NUMBER){
+		InstGoto& inst2 = *(InstGoto*)pc2;
+		return pc2+inst2.address - pc;
+	}
+
+	return address;
+}
+
+void CodeBuilder::opt_jump(){
+	const inst_t* begin = result_->data();
+	inst_t* pc = (inst_t*)begin;
+	const inst_t* end = result_->data() + result_->size(); 
+
+	while(pc<end){
+		switch(*pc){
+			XTAL_DEFAULT{}
+
+			XTAL_CASE(InstIf::NUMBER){
+				InstIf& inst = *(InstIf*)pc;
+				inst.address_true = calc_address(pc, inst.address_true);
+				inst.address_false = calc_address(pc, inst.address_false);
+			}
+
+			XTAL_CASE(InstGoto::NUMBER){
+				InstGoto& inst = *(InstGoto*)pc;
+				inst.address = calc_address(pc, inst.address);
+			}
+		}
+
+		pc += inst_size(*pc);
 	}
 }
 
@@ -490,7 +526,7 @@ void CodeBuilder::process_labels(){
 		for(size_t j = 0; j<l.froms.size(); ++j){
 			FunFrame::Label::From &f = l.froms[j];
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
-			buf = l.pos - f.set_pos; //l.pos - f.pos;
+			buf = l.pos - f.pos; //l.pos - f.set_pos;
 
 			Code::AddressJump address_jump = {f.set_pos};
 			result_->address_jump_table_.push_back(address_jump);

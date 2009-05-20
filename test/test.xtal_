@@ -7,6 +7,9 @@ lib::test: singleton{
 	_ok: 0;
 	_fail: 0;
 	
+	lrun_files: fun(files){
+	}
+	
 	run_files: fun(files){
 		_ok = 0;
 		_fail = 0;
@@ -40,6 +43,7 @@ lib::test: singleton{
 						obj: mem();
 						tests{
 							try{
+								printf("\tdo %s\n", it);
 								befores{ obj.(it)#Before; }
 								obj.(it)#Test;
 								afters{ obj.(it)#After; }
@@ -68,3 +72,4 @@ lib::test: singleton{
 		printf("ok=%d, fail=%d\n", _ok, _fail);
 	}
 }
+

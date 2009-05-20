@@ -65,15 +65,7 @@ void FixedAllocator::add_chunk(size_t block_size){
 	chunk_ = new_chunk;
 }
 
-void* FixedAllocator::malloc(size_t block_size){
-	++used_count_;
-
-	if(free_data_){
-		void* ret = free_data_;
-		free_data_ = static_cast<data_t*>(*free_data_);
-		return ret;
-	}
-
+void* FixedAllocator::malloc_inner(size_t block_size){
 	gc();
 	gc();
 
@@ -86,18 +78,11 @@ void* FixedAllocator::malloc(size_t block_size){
 	{
 		void* ret = free_data_;
 		free_data_ = static_cast<data_t*>(*free_data_);
-
 		cant_fit_ = false;
-
 		return ret;
 	}
 }
 
-void FixedAllocator::free(void* mem, size_t block_size){
-	*static_cast<data_t*>(mem) = free_data_;
-	free_data_ = static_cast<data_t*>(mem);
-	--used_count_;
-}
 
 void FixedAllocator::fit(size_t block_size){
 	if(used_count_>(all_count_>>1)){
@@ -174,21 +159,6 @@ void FixedAllocator::release(size_t block_size){
 	
 	chunk_ = 0;
 	free_data_ = 0;
-}
-
-void* SmallObjectAllocator::malloc(size_t size){
-	XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-
-	size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
-	if(wsize==0){ return 0; }
-	return pool_[wsize-1].malloc(wsize);
-}
-
-void SmallObjectAllocator::free(void* p, size_t size){
-	XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-	if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
-		pool_[wsize-1].free(p, wsize);
-	}
 }
 
 void SmallObjectAllocator::fit(){

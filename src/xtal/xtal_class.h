@@ -22,29 +22,25 @@ public:
 		
 	void init_variables(ClassInfo* class_info);
 
-	const AnyPtr& variable(int_t index, ClassInfo* class_info){
-		int_t i = find_class_info(class_info) + index;
-		if(i<0){ return undefined; }
-		return variables_.at(i);
-	}
-
-	void set_variable(int_t index, ClassInfo* class_info, const AnyPtr& value){
-		int_t i = find_class_info(class_info) + index;
-		if(i<0){ return; }
-		variables_.set_at(i, value);
-	}
-
-	int_t find_class_info(ClassInfo* class_info){
+	uint_t find_class_info(ClassInfo* class_info, uint_t index){
 		VariablesInfo& info = variables_info_.top();
 		if(info.class_info == class_info){
-			return info.pos;
+			return info.pos + index;
 		}
-		return find_class_info_inner(class_info);
+		return find_class_info_inner(class_info, index);
+	}
+
+	const AnyPtr& variable(uint_t index, ClassInfo* class_info){
+		return variables_.at(find_class_info(class_info, index));
+	}
+
+	void set_variable(uint_t index, ClassInfo* class_info, const AnyPtr& value){
+		variables_.set_at(find_class_info(class_info, index), value);
 	}
 
 	bool is_included(ClassInfo* class_info);
 
-	int_t find_class_info_inner(ClassInfo* class_info);
+	uint_t find_class_info_inner(ClassInfo* class_info, uint_t index);
 
 	void replace(ClassInfo* from, ClassInfo* to);
 

@@ -58,13 +58,13 @@ test: $(BINDIR)/test.exe
 clean:
 	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/all_src.exe $(SRCDIR)/xtal.h.gch
 
-$(BINDIR)/prof.exe: $(LIBDIR)/libxtal.a xtal.cpp
-	$(CC) -o $(BINDIR)/prof.exe ./xtal.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT)  
-	$(BINDIR)/prof.exe ../bench/ao.xtal
+$(BINDIR)/bench.exe: $(LIBDIR)/libxtal.a bench.cpp
+	$(CC) -o $(BINDIR)/bench.cpp ./bench.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT)  
 
-prof: override OPT += -pg
-prof: $(LIBDIR)/libxtal.a $(BINDIR)/prof.exe
-	gprof $(BINDIR)/prof.exe gmon.out -p > prof.txt
+bench: override OPT += -pg
+bench: $(LIBDIR)/libxtal.a $(BINDIR)/bench.exe
+	$(BINDIR)/bench.cpp
+	gprof $(BINDIR)/bench.cpp gmon.out -p > prof.txt
 
 all_src: 
 	$(CC) -o $(BINDIR)/all_src.exe ../all_src/all_src.cpp $(OPT) $(LOPT) 

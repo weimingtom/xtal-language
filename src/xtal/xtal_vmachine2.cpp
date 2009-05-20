@@ -31,7 +31,6 @@ void VMachine::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
-	variables_.resize(0);
 	scopes_.resize(0);
 
 	except_[0] = null;
@@ -184,7 +183,6 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 	}
 
 	fun_frames_.upsize(1);
-	scopes_.push(0);
 
 	{
 		FunFrame& f = ff();
@@ -215,7 +213,6 @@ const AnyPtr& VMachine::result(int_t pos){
 	}
 
 	fun_frames_.upsize(1);
-	scopes_.push(0);
 
 	{
 		FunFrame& f = ff();
@@ -240,14 +237,14 @@ const AnyPtr& VMachine::result(int_t pos){
 AnyPtr VMachine::result_and_cleanup_call(int_t pos){
 	const AnyPtr& ret = result(pos);
 	downsize(ff().need_result_count);
-	pop_ff();
+	pop_ff2();
 	return ret;
 }
 	
 void VMachine::cleanup_call(){
 	result(0);
 	downsize(ff().need_result_count);
-	pop_ff();
+	pop_ff2();
 }
 
 const AnyPtr& VMachine::arg(int_t pos){
@@ -317,6 +314,32 @@ void VMachine::adjust_args(const NamedParam* params, int_t num){
 
 		if(!hit){
 			stack_.push(params[j].value);
+		}
+
+		k++;
+	}
+
+	stack_.erase(k+offset-1, offset);
+	f.ordered_arg_count += k;
+	f.named_arg_count = 0;
+}
+
+void VMachine::adjust_args(Method* names, int_t num){
+	FunFrame& f = ff();
+	int_t offset = f.named_arg_count*2;
+	int_t k = 0;
+	for(int_t j=f.ordered_arg_count; j<num; ++j){
+		bool hit = false;
+		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
+			if(raweq(get(sz*2-1-(i*2+0)+k), names->param_name_at(j))){
+				stack_.push(get(sz*2-1-(i*2+1)+k));
+				hit = true;
+				break;
+			}
+		}
+
+		if(!hit){
+			stack_.push(undefined);
 		}
 
 		k++;
@@ -651,9 +674,14 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	AnyPtr e = catch_except();
 
 	ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
+	uint_t fs = fun_frames_.size();
 
 	// XtalÇÃä÷êîÇíEèoÇµÇƒÇ¢Ç≠
 	while((size_t)ef.fun_frame_size<fun_frames_.size()){
+		while(scopes_.size()>ff().scope_size+1){
+			pop_scope();
+		}
+
 		check_debug_hook(pc, BREAKPOINT_RETURN);
 		pc = pop_ff();
 		e = append_backtrace(pc, e);
@@ -665,16 +693,15 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 		}
 	}
 
+	//XTAL_ASSERT(scopes_.size()>=ef.scope_size);
+
 	while(scopes_.size()<ef.scope_size){
-		scopes_.push(0);
+		push_scope();
 	}
 
-	while(scopes_.size()!=ef.scope_size){
-		if(ScopeInfo* scope = scopes_.pop()){
-			variables_.downsize(scope->variable_size);
-		}
+	while(scopes_.size()>ef.scope_size){
+		pop_scope();
 	}
-	ff().outer(ap(ef.outer));
 
 	stack_.resize(ef.stack_size);
 
@@ -696,6 +723,11 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	else{
 		set_except_0(e);
 	}
+
+	while(scopes_.size()>ff().scope_size){
+		pop_scope();
+	}
+	pop_ff2();
 	return 0;
 }
 
@@ -742,12 +774,8 @@ void VMachine::visit_members(Visitor& m){
 		}
 	}
 
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		m & variables_[i];
-	}
-
-	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
-		m & except_frames_[i].outer;
+	for(int_t i=0, size=scopes_.size(); i<size; ++i){
+		m & scopes_[i];
 	}
 }
 
@@ -773,10 +801,6 @@ void VMachine::before_gc(){
 		}
 	}
 
-	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
-		inc_ref_count_force(except_frames_[i].outer);
-	}
-
 	//*
 	// égÇÌÇÍÇƒÇ¢Ç»Ç¢ïîï™ÇnullÇ≈ìhÇËÇ¬Ç‘Ç∑
 	for(int_t i=stack_.size(), size=stack_.capacity(); i<size; ++i){
@@ -789,17 +813,13 @@ void VMachine::before_gc(){
 		}
 	}
 
-	for(int_t j=variables_.size(), jsize=variables_.capacity(); j<jsize; ++j){
-		set_null(variables_.reverse_at_unchecked(j));
+	for(int_t i=scopes_.size(), size=scopes_.capacity(); i<size; ++i){
+		if(scopes_.reverse_at_unchecked(i)){
+			scopes_.reverse_at_unchecked(i)->members_.clear();
+			scopes_.reverse_at_unchecked(i)->set_outer(null);
+		}
 	}
 
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		inc_ref_count_force(variables_[i]);
-	}
-		
-	for(int_t i=except_frames_.size(), size=except_frames_.capacity(); i<size; ++i){
-		set_null(except_frames_.reverse_at_unchecked(i).outer);
-	}
 	//*/
 }
 
@@ -823,14 +843,6 @@ void VMachine::after_gc(){
 			fun_frames_[i]->dec_ref();
 		}
 	}
-
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		dec_ref_count_force(variables_[i]);
-	}
-
-	for(int_t i=0, size=except_frames_.size(); i<size; ++i){
-		dec_ref_count_force(except_frames_[i].outer);
-	}
 }
 
 
@@ -842,7 +854,6 @@ void VMachine::print_info(){
 
 	std::printf("fun_frames size %d\n", fun_frames_.size());
 	std::printf("except_frames size %d\n", except_frames_.size());
-	std::printf("variables size %d\n", variables_.size());
 	std::printf("scopes size %d\n", scopes_.size());
 }
 
@@ -873,6 +884,7 @@ void visit_members(Visitor& m, const VMachine::FunFrame& v){
 }
 
 void VMachine::make_procedure(const VMachinePtr& vm){
+	/*
 	reset();
 
 	{
@@ -906,9 +918,11 @@ void VMachine::make_procedure(const VMachinePtr& vm){
 	except_[0] = vm->except_[0];
 	except_[1] = vm->except_[1];
 	except_[2] = vm->except_[2];
+	*/
 }
 
 void VMachine::swap_procedure(const VMachinePtr& vm){
+	/*
 	using namespace std;
 
 	std::swap(resume_pc_, vm->resume_pc_);
@@ -925,6 +939,7 @@ void VMachine::swap_procedure(const VMachinePtr& vm){
 	swap(except_[2], vm->except_[2]);
 
 	swap(debug_info_, vm->debug_info_);
+	*/
 }
 
 

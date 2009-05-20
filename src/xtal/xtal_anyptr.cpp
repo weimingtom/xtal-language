@@ -3,6 +3,44 @@
 
 namespace xtal{
 
+void xmemmove(int_t* ss1, const int_t* ss2, size_t n){
+	if(n != 0){
+		if(ss1 < ss2){
+			const int_t *t = ss2 + n;
+			do{
+				*ss1++ = *ss2++;
+			}while(ss2 != t);
+		}
+		else if(ss1 > ss2){
+			const int_t *t = ss2;
+			ss1 += n;
+			ss2 += n;
+			do{
+				*--ss1 = *--ss2;
+			}while(ss2 != t);
+		}
+	}
+}
+
+void xmemcpy(int_t* ss1, const int_t* ss2, size_t n){
+	if(n != 0){
+		const int_t* t = ss2 + n;
+		do{
+			*ss1++ = *ss2++;
+		}while(ss2 != t);
+	}
+}
+
+void xmemset(int_t* s, int_t c, size_t n){
+	if(n != 0){
+		int_t* addr = s;
+		int_t* end = addr + n;
+		for(; addr < end; ++addr){
+			*addr = c;
+		}
+	}
+}
+
 SmartPtr<Any>::SmartPtr(const char_t* str){
 	*this = xnew<String>(str);
 }

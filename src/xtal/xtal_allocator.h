@@ -80,15 +80,29 @@ public:
 
 	FixedAllocator();
 
-	void* malloc(size_t block_size);
+	void* malloc(size_t block_size){
+		++used_count_;
+		if(free_data_){
+			void* ret = free_data_;
+			free_data_ = static_cast<data_t*>(*free_data_);
+			return ret;
+		}
+		return malloc_inner(block_size);
+	}
 
-	void free(void* p, size_t block_size);
+	void free(void* mem, size_t block_size){
+		*static_cast<data_t*>(mem) = free_data_;
+		free_data_ = static_cast<data_t*>(mem);
+		--used_count_;
+	}
 
 	void release(size_t block_size);
 
 	void fit(size_t block_size);
 
 private:
+
+	void* malloc_inner(size_t block_size);
 
 	void add_chunk(size_t block_size);
 
@@ -114,9 +128,20 @@ public:
 
 	SmallObjectAllocator(){}
 	
-	void* malloc(size_t size);
+	void* malloc(size_t size){
+		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
 
-	void free(void* p, size_t size);
+		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
+		if(wsize==0){ return 0; }
+		return pool_[wsize-1].malloc(wsize);
+	}
+
+	void free(void* p, size_t size){
+		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
+		if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
+			pool_[wsize-1].free(p, wsize);
+		}
+	}
 
 	void release();
 

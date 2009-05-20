@@ -45,6 +45,18 @@ public:
 		return code_; 
 	}
 
+	void set_code(const CodePtr& code){
+		code_ = code;
+	}
+
+	ScopeInfo* info(){
+		return scope_info_;
+	}
+
+	void set_info(ScopeInfo* info){
+		scope_info_ = info;
+	}
+
 	/**
 	* \brief リテラル時に定義された要素の数を返す。
 	*/
@@ -114,10 +126,7 @@ protected:
 	};
 
 	typedef Hashtable<Key, Value, Fun> map_t; 
-	//map_t table_;
-
 	map_t* map_members_;
-
 
 	virtual void visit_members(Visitor& m){
 		HaveParent::visit_members(m);
@@ -131,6 +140,8 @@ protected:
 			m & *map_members_;
 		}
 	}
+
+	friend class VMachine;
 };
 
 class MembersIter : public Base{

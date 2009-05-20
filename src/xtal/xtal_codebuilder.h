@@ -163,8 +163,7 @@ public:
 		enum{
 			CLASS,
 			FRAME,
-			
-			DEFAULT = FRAME
+			FUN,
 		};
 
 		int_t kind;
@@ -183,7 +182,9 @@ public:
 	struct LVarInfo{
 		int_t var_frame;
 		int_t entry;
+		int_t depth;
 		int_t pos;
+		bool out_of_fun;
 	};
 
 	VarFrame& var_frame(const LVarInfo& vi){

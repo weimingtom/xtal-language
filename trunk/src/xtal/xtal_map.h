@@ -208,7 +208,7 @@ public:
 		default_value_ = default_value;
 	}
 
-protected:
+public:
 
 	struct Fun{
 		static uint_t hash(const AnyPtr& key){

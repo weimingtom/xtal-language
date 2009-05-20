@@ -439,7 +439,7 @@ int_t CodeBuilder::compile_expr_CATCH(const ExprPtr& e, const CompileInfo& cinfo
 		result_->except_info_table_[info].catch_pc = code_size();
 
 		// 例外を受け取るために変数スコープを構築
-		var_begin(VarFrame::DEFAULT);
+		var_begin(VarFrame::FRAME);
 		var_define(e->catch_catch_var(), null, 0, true, false, true);
 		scope_begin();
 
@@ -866,7 +866,7 @@ int_t CodeBuilder::compile_expr_TRY(const ExprPtr& e, const CompileInfo& cinfo){
 		ff().finallies.push(exc);
 
 		// 例外を受け取るために変数スコープを構築
-		var_begin(VarFrame::DEFAULT);
+		var_begin(VarFrame::FRAME);
 		var_define(e->try_catch_var(), null, 0, true, false, true);
 		check_lvar_assign_stmt(e->try_catch());
 		scope_begin();
@@ -907,7 +907,7 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, const CompileInfo& info){
 	// 条件式の部分が変数定義式である場合
 	if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 		// スコープを形成する
-		var_begin(VarFrame::DEFAULT);
+		var_begin(VarFrame::FRAME);
 		var_define(cond->bin_lhs()->lvar_name());
 		check_lvar_assign_stmt(e);
 		scope_begin();
@@ -953,7 +953,7 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, const CompileInfo& info){
 }
 
 int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, const CompileInfo& info){
-	var_begin(VarFrame::DEFAULT);
+	var_begin(VarFrame::FRAME);
 	var_define_stmt(e->for_init());
 	var_define(Xid(first_step), xnew<Expr>(EXPR_TRUE));
 	check_lvar_assign_stmt(e);
@@ -1224,7 +1224,7 @@ int_t CodeBuilder::compile_expr_BRACKET(const ExprPtr& e, const CompileInfo& inf
 }
 
 int_t CodeBuilder::compile_expr_SCOPE(const ExprPtr& e, const CompileInfo& info){
-	var_begin(VarFrame::DEFAULT);
+	var_begin(VarFrame::FRAME);
 	var_define_stmts(e->scope_stmts());
 	check_lvar_assign_stmt(e);
 	scope_begin();{
@@ -1242,7 +1242,7 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, const CompileInfo& info
 	// 条件式の部分が変数定義式である場合
 	if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 		// スコープを形成する
-		var_begin(VarFrame::DEFAULT);
+		var_begin(VarFrame::FRAME);
 		var_define(cond->bin_lhs()->lvar_name());
 		check_lvar_assign_stmt(e);
 		scope_begin();
@@ -1321,7 +1321,7 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, const CompileInfo& info
 }
 
 int_t CodeBuilder::compile_expr_TOPLEVEL(const ExprPtr& e, const CompileInfo& info){
-	var_begin(VarFrame::DEFAULT);
+	var_begin(VarFrame::FRAME);
 	var_define_stmts(e->toplevel_stmts());
 	check_lvar_assign_stmt(e);
 	scope_begin();{

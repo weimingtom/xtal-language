@@ -307,6 +307,18 @@ public:
 		return values_;
 	}
 
+	void attach(AnyPtr* data, uint_t size){
+		values_ = data;
+		size_ = size;
+		capa_ = size;
+	}
+
+	void detach(){
+		values_ = 0;
+		size_ = 0;
+		capa_ = 0;
+	}
+
 protected:
 
 	int_t calc_offset(int_t i);

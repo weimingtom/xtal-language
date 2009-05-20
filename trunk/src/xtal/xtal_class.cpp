@@ -9,6 +9,7 @@ InstanceVariables::InstanceVariables()
 	vi.class_info = 0;
 	vi.pos = 0;
 	variables_info_.push(vi);
+	variables_.push_back(undefined);
 }
 		
 InstanceVariables::~InstanceVariables(){}
@@ -37,15 +38,15 @@ bool InstanceVariables::is_included(ClassInfo* class_info){
 	return false;
 }
 
-int_t InstanceVariables::find_class_info_inner(ClassInfo* class_info){
+uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t index){
 	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
-			return variables_info_[0].pos;
+			return variables_info_[0].pos + index;
 		}	
 	}
 	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
-	return -1;
+	return 0;
 }
 
 void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
@@ -71,10 +72,12 @@ EmptyInstanceVariables::EmptyInstanceVariables()
 	vi.class_info = 0;
 	vi.pos = 0;
 	variables_info_.attach(&vi);
+	variables_.attach(&undefined, 1);
 }
 
 EmptyInstanceVariables::~EmptyInstanceVariables(){
 	variables_info_.detach();
+	variables_.detach();
 }
 
 InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;

@@ -18,8 +18,8 @@ enum{
 	VERSION4 = 9
 };
 }
-////
-//#define XTAL_USE_COMPILED_EMB
+//////
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -557,6 +557,8 @@ enum PrimitiveType{
 	TYPE_FIBER,
 	*/
 
+	TYPE_MAX,
+
 	TYPE_SHIFT = 4,
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
 };
@@ -843,6 +845,9 @@ extern NullPtr null;
 * \brief –¢’è‹`’l
 */
 extern UndefinedPtr undefined;
+
+struct CppClassSymbolData;
+extern CppClassSymbolData** classdata[];
 
 }
 

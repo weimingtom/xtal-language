@@ -138,7 +138,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	ff().extendable_param = true;
 
 	// 変数フレームを作成して、コマンドライン引数を登録する
-	var_begin(VarFrame::FRAME);
+	var_begin(VarFrame::FUN);
 
 	// コマンドライン引数
 	var_define(Xid(arg));
@@ -163,7 +163,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
 
-	var_begin(VarFrame::DEFAULT);
+	var_begin(VarFrame::FRAME);
 	scope_begin();	
 
 	// 関数本体を処理する
@@ -251,7 +251,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
 
-///*
+//*
 	if(t.op==InstLocalVariable1Byte::NUMBER){
 		if(prev_inst_op_==InstLocalVariable1Byte::NUMBER){
 			InstLocalVariable1Byte prev_inst;
@@ -261,21 +261,21 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			result_->code_.downsize(prev_op_isize);
 
 			prev_inst_op_ = -1;
-			put_inst(InstLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
+			put_inst(InstLocalVariable1ByteX2(prev_inst.number, prev_inst.depth, ((InstLocalVariable1Byte&)t).number, ((InstLocalVariable1Byte&)t).depth));
 			return;
 		}
 	}
 
 	if(t.op==InstSetLocalVariable1Byte::NUMBER){
 		if(prev_inst_op_==InstSetLocalVariable1Byte::NUMBER){
-			InstLocalVariable1Byte prev_inst;
+			InstSetLocalVariable1Byte prev_inst;
 			uint_t prev_op_size = sizeof(InstSetLocalVariable1Byte);
 			uint_t prev_op_isize = sizeof(InstSetLocalVariable1Byte)/sizeof(inst_t);
 			std::memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
 			result_->code_.downsize(prev_op_isize);
 
 			prev_inst_op_ = -1;
-			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
+			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, prev_inst.depth, ((InstSetLocalVariable1Byte&)t).number, ((InstSetLocalVariable1Byte&)t).depth));
 			return;
 		}
 	}
@@ -295,11 +295,11 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
 		}
 
-		if(info.pos<=0xff){
-			put_inst(InstSetLocalVariable1Byte(info.pos));
+		if(info.pos<=0xff && !info.out_of_fun){
+			put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
 		}
 		else{
-			put_inst(InstSetLocalVariable2Byte(info.pos));
+			put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
 		}
 
 		entry(info).value = undefined;
@@ -337,10 +337,10 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 				}
 
 				if(info.pos<=0xff){
-					put_inst(InstSetLocalVariable1Byte(info.pos));
+					put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
 				}
 				else{
-					put_inst(InstSetLocalVariable2Byte(info.pos));
+					put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
 				}
 			}
 
@@ -348,11 +348,11 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 
 		}
 		else{
-			if(info.pos<=0xff){
-				put_inst(InstSetLocalVariable1Byte(info.pos));
+			if(info.pos<=0xff && !info.out_of_fun){
+				put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
 			}
 			else{
-				put_inst(InstSetLocalVariable2Byte(info.pos));
+				put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
 			}
 		}
 	}
@@ -364,11 +364,11 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 bool CodeBuilder::put_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
-		if(info.pos<=0xff){
-			put_inst(InstLocalVariable1Byte(info.pos));
+		if(info.pos<=0xff && !info.out_of_fun){
+			put_inst(InstLocalVariable1Byte(info.pos, info.depth));
 		}
 		else{
-			put_inst(InstLocalVariable2Byte(info.pos));
+			put_inst(InstLocalVariable2Byte(info.pos, info.depth));
 		}		
 
 		entry(info).referenced = true;
@@ -751,26 +751,48 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 }
 
 CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool traceless, int_t number){
-	LVarInfo ret = {0, 0, 0};
+	LVarInfo ret = {0, 0, 0, 0, false};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
+
 		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
 			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
+
 			if(raweq(entry.name, key) && (number<0 || entry.number<0 || number==entry.number)){
-				if((uint_t)vf.fun_frames_size!=fun_frames_.size() || entry.initialized || define){
+				bool out_of_fun = (uint_t)vf.fun_frames_size!=fun_frames_.size();
+
+				if(out_of_fun || entry.initialized || define){
+					ret.out_of_fun = out_of_fun;
+					//ret.depth += fun_frames_.size()-vf.fun_frames_size;
 					ret.var_frame = var_frames_.size()-1-i;
 					ret.entry = vf.entries.size()-1-j;
 					if(!traceless){
 						if(define){ entry.initialized = true; }
 						scope_chain(i);
 					}
+
+					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
+						VarFrame::Entry& entry = vf.entries[k];
+						if(!entry.removed){
+							ret.pos++;
+						}
+					}
 					return ret;
 				}
 			}
+		}
 
-			if(!entry.removed){
-				ret.pos++;
+		if(vf.kind==VarFrame::FRAME){
+			for(size_t k = 0, klast = vf.entries.size(); k<klast; ++k){
+				VarFrame::Entry& entry = vf.entries[k];
+				if(!entry.removed){
+					ret.depth++;
+					break;
+				}
 			}
+		}
+		else{
+			ret.depth++;
 		}
 	}
 	ret.pos = -1;
@@ -1026,19 +1048,19 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	if(term->itag()==EXPR_LVAR){
 		LVarInfo info = var_find(term->lvar_name());
 		if(info.pos>=0){
-			if(info.pos>=256){
+			if(info.pos>=256 || info.out_of_fun){
 				put_local_code(term->lvar_name());
 				put_inst(inst);
 				put_set_local_code(term->lvar_name());
 			}
 			else{
 				if(e->itag() == EXPR_INC){
-					put_inst(InstLocalVariableInc1Byte(info.pos));
+					put_inst(InstLocalVariableInc1Byte(info.pos, info.depth));
 				}
 				else{
-					put_inst(InstLocalVariableDec1Byte(info.pos));
+					put_inst(InstLocalVariableDec1Byte(info.pos, info.depth));
 				}
-				put_inst(InstSetLocalVariable1Byte(info.pos));
+				put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
 			}
 
 			entry(info).value = undefined;
@@ -1136,6 +1158,19 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
+	{
+		fun_frames_.push();	
+		ff().labels.clear();
+		ff().loops.clear();
+		ff().finallies.clear();
+		ff().var_frame_count = var_frames_.size();
+		ff().stack_count = 0;
+		ff().max_stack_count = 0;
+		ff().variable_count = 0;
+		ff().max_variable_count = 0;
+		ff().extendable_param = 0;
+	}
+
 	// インスタンス変数を暗黙的初期化するメソッドを定義する
 
 	{
@@ -1291,7 +1326,6 @@ void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 					compile_expr(v1->cdefine_member_term());
 				}
 
-
 				if(v1->cdefine_member_ns()){
 					compile_expr(v1->cdefine_member_ns());
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
@@ -1316,6 +1350,10 @@ void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 	class_frames_.pop();
 
 	var_end();
+
+	{
+		fun_frames_.pop();	
+	}
 }
 
 void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
@@ -1410,7 +1448,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 	ff().extendable_param = e->fun_extendable_param();
 
 	// 変数フレームを作成して、引数を登録する
-	var_begin(VarFrame::DEFAULT);
+	var_begin(VarFrame::FUN);
 	Xfor_cast(const ExprPtr& v1, e->fun_params()){
 		if(const ExprPtr& v = ep(v1->at(0))){
 			if(v->itag()==EXPR_LVAR){
@@ -1464,7 +1502,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 				int_t label = reserve_label();
 				
 				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
-				put_inst(InstIfArgIsUndefined(maxv-1-i, 0));
+				put_inst(InstIfArgIsUndefined(/*maxv-1-*/i, 0));
 
 				compile_expr(v);
 				

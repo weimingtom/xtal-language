@@ -1,3 +1,5 @@
+return;
+
 inherit(lib::test)
 
 class filelocal::TestProc{

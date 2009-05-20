@@ -260,6 +260,8 @@ public:
 
 	void adjust_args(const NamedParam* params, int_t num);
 
+	void adjust_args(Method* params, int_t num);
+
 	/**
 	* \brief pos番目の引数を得る。
 	*
@@ -493,7 +495,7 @@ public:
 		InstanceVariables* instance_variables;
 
 		// この関数で積まれたローカル変数の数
-		uint_t variable_size;
+		uint_t scope_size;
 
 		// 呼び出された関数オブジェクト
 		Any fun_; 
@@ -549,7 +551,6 @@ public:
 		uint_t stack_size;
 		uint_t fun_frame_size;
 		uint_t scope_size;
-		Any outer;
 	};
 
 	FunFrame& ff(){ 
@@ -566,6 +567,24 @@ private:
 	const inst_t* call(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
 		int_t result, int_t ordered, int_t named);
 
+	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info){
+		FramePtr& scope = scopes_.push();
+		if(!scope){
+			scope = xnew<Frame>();
+		}
+
+		scope->set_info(info);
+		scope->members_.resize(info->variable_size);
+		return scope;
+	}
+
+	void pop_scope(){
+		FramePtr& scope = scopes_.pop();
+		if(scope->code()){
+			scope = null;
+		}
+	}
+
 	FunFrame& push_ff(){
 		FunFrame* fp = fun_frames_.push();
 		if(!fp){ 
@@ -575,14 +594,11 @@ private:
 	}
 
 	const inst_t* pop_ff(){
-		if(ScopeInfo* scope = scopes_.pop()){
-			variables_.downsize(scope->variable_size);
-		}
+		pop_scope();
 		return fun_frames_.pop()->poped_pc; 
 	}
 
 	const inst_t* pop_ff2(){
-		scopes_.pop();
 		return fun_frames_.pop()->poped_pc; 
 	}
 
@@ -651,23 +667,16 @@ private:
 
 	const inst_t* check_accessibility(const inst_t* pc, const AnyPtr& cls, const AnyPtr& self, int_t accessibility);
 
-	void set_local_variable_outer(uint_t pos, const Any& value);
+	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value);
 
-	AnyPtr& local_variable_outer(uint_t pos);
+	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
-	void set_local_variable(uint_t pos, const Any& value){
-		if(pos<ff().variable_size){
-			variables_[pos] = value;
-			return;
-		}
-		set_local_variable_outer(pos - ff().variable_size, value);
+	void set_local_variable(uint_t pos, uint_t depth, const Any& value){
+		scopes_[depth]->set_member_direct(pos, ap(value));
 	}
 
-	AnyPtr& local_variable(uint_t pos){
-		if(pos<ff().variable_size){
-			return (AnyPtr&)variables_[pos];
-		}
-		return local_variable_outer(pos - ff().variable_size);
+	AnyPtr& local_variable(uint_t pos, uint_t depth){
+		return scopes_[depth]->member_direct(pos);
 	}
 
 	const inst_t* send_inner(const ClassPtr& cls, const AnyPtr& ret);
@@ -816,7 +825,7 @@ public:
 private:
 
 	const FramePtr& make_outer(ScopeInfo* scope);
-	const FramePtr& make_outer_outer();
+	const FramePtr& make_outer_outer(uint_t i=0);
 
 private:
 	inst_t end_code_;
@@ -839,13 +848,10 @@ private:
 	FastStack<FunFrame*> fun_frames_;
 
 	// スコープ情報
-	FastStack<ScopeInfo*> scopes_;
+	FastStack<FramePtr> scopes_;
 
 	// tryの度に積まれるフレーム
-	FastStack<ExceptFrame> except_frames_;
-
-	// スコープがオブジェクト化されてない時のローカル変数領域
-	FastStack<Any> variables_;
+	PODStack<ExceptFrame> except_frames_;
 	
 	Any except_[3];
 

@@ -4,6 +4,26 @@
 
 namespace xtal{
 
+CppClassSymbolData** classdata[] = {
+	&CppClassSymbol<Null>::value,
+	&CppClassSymbol<Undefined>::value,
+	&CppClassSymbol<Bool>::value,
+	&CppClassSymbol<Bool>::value,
+	&CppClassSymbol<Int>::value,
+	&CppClassSymbol<Float>::value,
+	&CppClassSymbol<String>::value,
+	&CppClassSymbol<Any>::value,
+	&CppClassSymbol<String>::value,
+	&CppClassSymbol<Array>::value,
+	&CppClassSymbol<Values>::value,
+	&CppClassSymbol<xpeg::TreeNode>::value,
+	&CppClassSymbol<NativeMethod>::value,
+	&CppClassSymbol<NativeFun>::value,
+	&CppClassSymbol<InstanceVariableGetter>::value,
+	&CppClassSymbol<InstanceVariableSetter>::value,
+};
+
+
 /// \brief primary_keyメソッドを呼び出す
 AnyPtr Any::send(const IDPtr& primary_key) const{
 	const VMachinePtr& vm = vmachine();
@@ -450,35 +470,6 @@ StringPtr Any::object_name() const{
 	}
 
 	return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
-}
-
-const ClassPtr& Any::get_class() const{
-	switch(type(*this)){
-		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_NULL){ return cpp_class<Null>(); }
-		XTAL_CASE(TYPE_UNDEFINED){ return cpp_class<Undefined>(); }
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->get_class(); }
-		XTAL_CASE(TYPE_INT){ return cpp_class<Int>(); }
-		XTAL_CASE(TYPE_FLOAT){ return cpp_class<Float>(); }
-		XTAL_CASE(TYPE_FALSE){ return cpp_class<Bool>(); }
-		XTAL_CASE(TYPE_TRUE){ return cpp_class<Bool>(); }
-		XTAL_CASE(TYPE_SMALL_STRING){ return cpp_class<String>(); }
-		XTAL_CASE(TYPE_STRING){ return cpp_class<String>(); }
-		XTAL_CASE(TYPE_ARRAY){ return cpp_class<Array>(); }
-		XTAL_CASE(TYPE_VALUES){ return cpp_class<Values>(); }
-		XTAL_CASE(TYPE_TREE_NODE){ return cpp_class<xpeg::TreeNode>(); }
-		XTAL_CASE(TYPE_NATIVE_METHOD){ return cpp_class<NativeMethod>(); }
-		XTAL_CASE(TYPE_NATIVE_FUN){ return cpp_class<NativeFun>(); }
-		XTAL_CASE(TYPE_IVAR_GETTER){ return cpp_class<InstanceVariableGetter>(); }
-		XTAL_CASE(TYPE_IVAR_SETTER){ return cpp_class<InstanceVariableSetter>(); }
-	}
-	return cpp_class<Any>();
-}
-
-bool Any::is(const AnyPtr& klass) const{
-	const ClassPtr& my_class = get_class();
-	if(raweq(my_class, klass)) return true;
-	return cache_is(my_class, klass);
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{

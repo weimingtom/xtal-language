@@ -500,9 +500,6 @@ public:
 		// 呼び出された関数オブジェクト
 		Any fun_; 
 
-		// スコープの外側のフレームオブジェクト
-		Any outer_;
-
 		// 関数が呼ばれたときのthisオブジェクト
 		Any self_;
 
@@ -522,7 +519,6 @@ public:
 		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
-		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		const AnyPtr& self() const{ return ap(self_); }
 		const AnyPtr& target() const{ return ap(target_); }
 		const IDPtr& primary_key() const{ return unchecked_ptr_cast<ID>(ap(primary_key_)); }
@@ -533,7 +529,6 @@ public:
 		}
 
 		void fun(const Any& v){ fun_ = v; }
-		void outer(const Any& v){ outer_ = v; }
 		void self(const Any& v){ self_ = v; }
 		void target(const Any& v){ target_ = v; }
 		void primary_key(const Any& v){ primary_key_ = v; }
@@ -620,11 +615,11 @@ public:
 	}
 
 	const FramePtr& outer(){ 
-		return ff().outer(); 
+		return fun()->outer(); 
 	}
 
 	const FramePtr& prev_outer(){ 
-		return prev_ff().outer(); 
+		return prev_fun()->outer(); 
 	}
 
 	const CodePtr& code(){ 

@@ -99,6 +99,8 @@ protected:
 	
 	Array members_;
 
+	bool orphan_;
+
 	struct Key{
 		IDPtr primary_key;
 		AnyPtr secondary_key;

@@ -42,7 +42,6 @@ void VMachine::set_ff(const inst_t* pc, const inst_t* cpc, int_t need_result_cou
 
 	f.self(self);
 	f.fun(null);
-	f.outer(null);
 }
 
 void VMachine::push_args(const ArgumentsPtr& args, int_t named_arg_count){
@@ -71,7 +70,6 @@ void VMachine::carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
-	f.outer(fun->outer());
 	f.code = fun->code().get();
 	f.identifiers = f.code->identifier_table_->data();
 
@@ -115,7 +113,6 @@ void VMachine::mv_carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
-	f.outer(fun->outer());
 	f.code = fun->code().get();
 	f.identifiers = f.code->identifier_table_->data();
 
@@ -516,7 +513,7 @@ const FramePtr& VMachine::make_outer_outer(uint_t i){
 		}
 		return scope;
 	}
-	return ff().outer();
+	return outer();
 }
 
 const FramePtr& VMachine::make_outer(ScopeInfo* scope){
@@ -535,13 +532,13 @@ void VMachine::set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any
 
 	depth -= size;
 
-	Frame* outer = ff().outer().get();
+	Frame* out = outer().get();
 	while(depth){
-		outer = outer->outer().get();
+		out = out->outer().get();
 		depth--;
 	}
 
-	outer->set_member_direct(pos, ap(value));
+	out->set_member_direct(pos, ap(value));
 }
 
 AnyPtr& VMachine::local_variable_out_of_fun(uint_t pos, uint_t depth){
@@ -552,13 +549,13 @@ AnyPtr& VMachine::local_variable_out_of_fun(uint_t pos, uint_t depth){
 
 	depth -= size;
 
-	Frame* outer = ff().outer().get();
+	Frame* out = outer().get();
 	while(depth){
-		outer = outer->outer().get();
+		out = out->outer().get();
 		depth--;
 	}
 
-	return outer->member_direct(pos);
+	return out->member_direct(pos);
 }
 
 void VMachine::execute_inner(const inst_t* start){
@@ -1741,7 +1738,6 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 		scopes_.push(cp);
 
 		ff().fun(prev_fun());
-		ff().outer(cp);
 		ff().code = ff().fun()->code().get();
 		ff().identifiers = ff().fun()->code()->identifier_table_->data();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1750,13 +1746,12 @@ const inst_t* VMachine::FunClassBegin(const inst_t* pc){
 const inst_t* VMachine::FunClassEnd(const inst_t* pc){
 		XTAL_VM_DEF_INST(ClassEnd);
 		XTAL_VM_FUN;
-		if(raweq(ff().outer()->get_class(), ff().outer())){
-			Class* singleton = (Class*)pvalue(ff().outer());
+		if(raweq(scopes_.top()->get_class(), scopes_.top())){
+			Class* singleton = (Class*)pvalue(scopes_.top());
 			singleton->init_singleton(to_smartptr(this));
 		}
 
-		push(ff().outer());
-		ff().outer(ff().outer()->outer());
+		push(scopes_.top());
 		pop_ff();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
@@ -1764,7 +1759,7 @@ const inst_t* VMachine::FunClassEnd(const inst_t* pc){
 const inst_t* VMachine::FunDefineClassMember(const inst_t* pc){
 		XTAL_VM_DEF_INST(DefineClassMember);
 		XTAL_VM_FUN;
-		const ClassPtr& p = cast<const ClassPtr&>(ff().outer());
+		const ClassPtr& p = ptr_cast<Class>(scopes_.top());
 		p->set_member_direct(inst.number, identifier(inst.identifier_number), get(1), get(), inst.accessibility);
 		downsize(2);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

@@ -23,43 +23,8 @@ public:
 	RefCountingBase()
 		:Any(noinit_t()){}
 
-	XTAL_DEBUG_ONLY(virtual void dummy(){})
+	virtual ~RefCountingBase(){}
 
-public:
-
-	enum{
-		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
-		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
-
-		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
-	};
-
-	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
-	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
-
-	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
-	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
-	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
-	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
-
-public:
-
-	static void* operator new(size_t size){ 
-		return xmalloc(size);
-	}
-
-	static void operator delete(void*){
-	}
-	
-	static void* operator new(size_t, void* p){ return p; }
-	static void operator delete(void*, void*){}
-};
-
-/**
-* @brief 基底クラス
-*/
-class Base : public RefCountingBase{
 public:
 
 	/**
@@ -101,6 +66,47 @@ public:
 	*/
 	virtual void finalize();
 
+	virtual void visit_members(Visitor& m){}
+
+public:
+
+	enum{
+		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
+		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
+
+		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
+		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
+	};
+
+	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
+	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
+
+	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
+	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
+	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
+	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
+
+public:
+
+	static void* operator new(size_t size){ 
+		return xmalloc(size);
+	}
+
+	static void operator delete(void* p, size_t size){
+		if(p){ ((RefCountingBase*)p)->value_.ivalue = (int_t)size; }
+	}
+	
+	static void* operator new(size_t, void* p){ return p; }
+	static void operator delete(void*, void*){}
+
+};
+
+/**
+* @brief 基底クラス
+*/
+class Base : public RefCountingBase{
+public:
+
 	/**
 	* \brief このオブジェクトが所属するクラスを返す。
 	*/
@@ -120,19 +126,6 @@ public:
 
 	virtual ~Base();
 			
-public:
-	
-	static void* operator new(size_t size){ 
-		return xmalloc(size);
-	}
-
-	static void operator delete(void* p, size_t size){
-		if(p){ ((Base*)p)->value_.ivalue = (int_t)size; }
-	}
-	
-	static void* operator new(size_t, void* p){ return p; }
-	static void operator delete(void*, void*){}
-
 public:
 
 	InstanceVariables* instance_variables(){ return instance_variables_; }

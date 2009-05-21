@@ -315,7 +315,7 @@ inline Base* pvalue(const Any& v){
 }
 
 inline RefCountingBase* rcpvalue(const Any& v){ 
-	XTAL_ASSERT(type(v)>TYPE_BASE || type(v)==TYPE_NULL); 
+	XTAL_ASSERT(type(v)>=TYPE_BASE || type(v)==TYPE_NULL); 
 	return rawvalue(v).rcpvalue; 
 }
 

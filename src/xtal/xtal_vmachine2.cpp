@@ -41,7 +41,6 @@ void VMachine::reset(){
 
 void VMachine::FunFrame::set_null(){
 	xtal::set_null(fun_); 
-	xtal::set_null(outer_);
 	xtal::set_null(self_);
 	xtal::set_null(target_);
 	xtal::set_null(primary_key_);
@@ -859,7 +858,6 @@ void VMachine::print_info(){
 
 void VMachine::FunFrame::inc_ref(){
 	inc_ref_count_force(fun_);
-	inc_ref_count_force(outer_);
 	
 	inc_ref_count_force(self_);
 
@@ -870,7 +868,6 @@ void VMachine::FunFrame::inc_ref(){
 
 void VMachine::FunFrame::dec_ref(){
 	dec_ref_count_force(fun_);
-	dec_ref_count_force(outer_);
 	
 	dec_ref_count_force(self_);
 
@@ -880,7 +877,7 @@ void VMachine::FunFrame::dec_ref(){
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){
-	m & v.fun_ & v.outer_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
+	m & v.fun_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
 
 void VMachine::make_procedure(const VMachinePtr& vm){

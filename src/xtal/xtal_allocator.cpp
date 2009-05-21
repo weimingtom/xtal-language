@@ -66,8 +66,13 @@ void FixedAllocator::add_chunk(size_t block_size){
 }
 
 void* FixedAllocator::malloc_inner(size_t block_size){
-	gc();
-	gc();
+	if(all_count_>128){
+		gc();
+
+		if(used_count_>(all_count_>>1)){
+			gc();
+		}
+	}
 
 	cant_fit_ = true;
 
@@ -142,12 +147,14 @@ void FixedAllocator::fit(size_t block_size){
 }
 	
 void FixedAllocator::release(size_t block_size){
+	/*
 	fit(block_size);
 
 	if(!ignore_memory_assert()){
 		XTAL_ASSERT(chunk_==0);
 		XTAL_ASSERT(free_data_==0);
 	}
+	*/
 
 	uint_t blocks = calc_size(block_size);
 	uint_t buffer_size = sizeof(Chunk)+block_size*blocks*sizeof(data_t);
@@ -162,6 +169,7 @@ void FixedAllocator::release(size_t block_size){
 }
 
 void SmallObjectAllocator::fit(){
+	return;
 	for(int i=0; i<POOL_SIZE; ++i){
 		pool_[i].fit(i+1);
 	}	

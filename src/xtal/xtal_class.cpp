@@ -43,7 +43,7 @@ uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t in
 		if(variables_info_[i].class_info==class_info){
 			std::swap(variables_info_[0], variables_info_[i]);
 			return variables_info_[0].pos + index;
-		}	
+		}
 	}
 	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
 	return 0;
@@ -81,6 +81,14 @@ EmptyInstanceVariables::~EmptyInstanceVariables(){
 }
 
 InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
+
+Instance::~Instance(){
+	instance_variables_ = &empty_instance_variables;
+
+	if(get_class()){
+		class_->dec_ref_count();
+	}
+}
 
 ///////////////////////////////////////
 

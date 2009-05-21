@@ -143,7 +143,7 @@ public:
 
 	virtual void visit_members(Visitor& m);
 
-private:
+protected:
 
 	// 参照カウンタ値
 	//uint_t ref_count_;

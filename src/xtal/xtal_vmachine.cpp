@@ -377,7 +377,7 @@ const inst_t* VMachine::send(const inst_t* pc, const inst_t* npc, const inst_t* 
 const inst_t* VMachine::vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key){
 	const ClassPtr& cls = get()->get_class();
 	int_t accessibility = 0;
-	const IDPtr& id = code()->identifier(primary_key);
+	const IDPtr& id = identifier(primary_key);
 	const AnyPtr& ret = cache_member(cls, id, accessibility);
 
 	if(accessibility){
@@ -406,7 +406,7 @@ const inst_t* VMachine::vproperty(const inst_t* pc, const inst_t* npc, const ins
 const inst_t* VMachine::set_vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key){
 	const ClassPtr& cls = get()->get_class();
 	int_t accessibility = 0;
-	const IDPtr& id = code()->identifier(primary_key);
+	const IDPtr& id = identifier(primary_key);
 	const AnyPtr& ret = cache_member(cls, id, accessibility);
 
 	if(accessibility){
@@ -510,7 +510,9 @@ const FramePtr& VMachine::make_outer_outer(uint_t i){
 		FramePtr& scope = scopes_[i];
 		if(!scope->code()){
 			scope->set_code(code());
-			scope->set_outer(make_outer_outer(i+1));
+			if(scope->info()->flags&ScopeInfo::FLAG_SCOPE_CHAIN){
+				scope->set_outer(make_outer_outer(i+1));
+			}
 		}
 		return scope;
 	}
@@ -518,7 +520,10 @@ const FramePtr& VMachine::make_outer_outer(uint_t i){
 }
 
 const FramePtr& VMachine::make_outer(ScopeInfo* scope){
-	return make_outer_outer();
+	if(scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN){
+		return make_outer_outer();
+	}
+	return unchecked_ptr_cast<Frame>(null);
 }
 
 void VMachine::set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value){
@@ -943,7 +948,8 @@ XTAL_VM_SWITCH{
 		}
 
 		if(abtype==1){
-			f2 ab = to_f2(atype, a, btype, b);
+			f2 ab;
+			to_f2(ab, atype, a, btype, b);
 			downsize(2); 
 			XTAL_VM_CONTINUE((
 				ab.a == ab.b ? 
@@ -971,7 +977,8 @@ XTAL_VM_SWITCH{
 		}
 
 		if(abtype==1){
-			f2 ab = to_f2(atype, a, btype, b);
+			f2 ab;
+			to_f2(ab, atype, a, btype, b);
 			downsize(2); 
 			XTAL_VM_CONTINUE(
 				(ab.a < ab.b ? 
@@ -1469,7 +1476,8 @@ const inst_t* VMachine::OpAdd(const inst_t* pc, int_t op){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 		set_fvalue(a, ab.a + ab.b);
 		downsize(1);
 		return pc;	
@@ -1490,7 +1498,8 @@ const inst_t* VMachine::OpSub(const inst_t* pc, int_t op){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 		set_fvalue(a, ab.a - ab.b);
 		downsize(1);
 		return pc;	
@@ -1511,7 +1520,8 @@ const inst_t* VMachine::OpMul(const inst_t* pc, int_t op){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 		set_fvalue(a, ab.a * ab.b);
 		downsize(1);
 		return pc;	
@@ -1538,7 +1548,8 @@ const inst_t* VMachine::OpDiv(const inst_t* pc, int_t op){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 
 		if(ab.b==0){
 			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
@@ -1571,7 +1582,8 @@ const inst_t* VMachine::OpMod(const inst_t* pc, int_t op){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 
 		if(ab.b==0){
 			push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));

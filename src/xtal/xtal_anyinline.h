@@ -9,30 +9,26 @@
 
 namespace xtal{
 
+/*
 void xmemmove(int_t* s1, const int_t* s2, size_t n);
 void xmemcpy(int_t* s1, const int_t* s2, size_t n);
 void xmemset(int_t* s, int_t c, size_t n);
 
 template<class T>
 void  xmemmove(T* s1, const T* s2, size_t n){
-	XTAL_ASSERT(n%sizeof(int_t)==0);
-	xmemmove((int_t*)s1, (const int_t*)s2, n/sizeof(int_t));
+	xmemmove((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
 }
 
 template<class T>
 void  xmemcpy(T* s1, const T* s2, size_t n){
-	XTAL_ASSERT(n%sizeof(int_t)==0);
-	typedef char staticassert[static_count_bits<sizeof(int_t)>::value==1 ? 1 : -1];
-	xmemcpy((int_t*)s1, (const int_t*)s2, n/sizeof(int_t));
+	xmemcpy((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
 }
 
 template<class T>
 void  xmemset(T* s, int_t c, size_t n){
-	XTAL_ASSERT(n%sizeof(int_t)==0);
-	typedef char staticassert[static_count_bits<sizeof(int_t)>::value==1 ? 1 : -1];
-	xmemset((int_t*)s1, c, n/sizeof(int_t));
+	xmemset((int_t*)s, c, n*(sizeof(T)/sizeof(int_t)));
 }
-
+*/
 
 inline const ClassPtr& Base::get_class(){ 
 	return to_smartptr(class_); 
@@ -89,21 +85,24 @@ struct f2{
 	float_t a, b;
 };
 
-inline f2 to_f2(int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
-	f2 ret;
-	if(atype==0){
-		ret.a = (float_t)ivalue(a);
-		ret.b = fvalue(b);
+inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
+	/*	if(atype==btype){
+		ret.a = fvalue(a); 
+		ret.b = fvalue(b); 
 	}
-	else if(btype==0){
-		ret.a = fvalue(a);
-		ret.b = (float_t)ivalue(b);
+	else if(atype==0){
+		ret.a = (float_t)ivalue(a); 
+		ret.b = fvalue(b); 
 	}
 	else{
-		ret.a = fvalue(a);
-		ret.b = fvalue(b);
+		ret.a = fvalue(a); 
+		ret.b = (float_t)ivalue(b); 
 	}
-	return ret;
+	*/
+	float_t aa[2] = {(float_t)ivalue(a), fvalue(a)};
+	float_t bb[2] = {(float_t)ivalue(b), fvalue(b)};
+	ret.a = aa[atype];
+	ret.b = bb[btype];
 }
 
 }

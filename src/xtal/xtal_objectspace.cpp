@@ -286,7 +286,7 @@ void ObjectSpace::gc(){
 		ScopeCounter cc(&cycle_count_);
 		
 		ConnectedPointer current(objects_count_, objects_list_begin_);
-		ConnectedPointer begin(prev_objects_count_>objects_count_ ? objects_count_ : (prev_objects_count_-prev_objects_count_/4), objects_list_begin_);
+		ConnectedPointer begin(prev_objects_count_<objects_count_ ? prev_objects_count_ : (objects_count_-objects_count_/4), objects_list_begin_);
 		if(current==begin){
 			return;
 		}

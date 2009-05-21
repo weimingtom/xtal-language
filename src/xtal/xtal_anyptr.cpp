@@ -3,6 +3,7 @@
 
 namespace xtal{
 
+/*
 void xmemmove(int_t* ss1, const int_t* ss2, size_t n){
 	if(n != 0){
 		if(ss1 < ss2){
@@ -40,6 +41,7 @@ void xmemset(int_t* s, int_t c, size_t n){
 		}
 	}
 }
+*/
 
 SmartPtr<Any>::SmartPtr(const char_t* str){
 	*this = xnew<String>(str);

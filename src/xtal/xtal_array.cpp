@@ -3,6 +3,21 @@
 
 namespace xtal{
 
+#define XTAL_ARRAY_CALC_OFFSET(i, ret) \
+	if(i<0){\
+		i = size_ + i;\
+		if(i<0){\
+			throw_index_error();\
+			ret;\
+		}\
+	}\
+	else{\
+		if((uint_t)i >= size_){\
+			throw_index_error();\
+			ret;\
+		}\
+	}
+
 void Array::visit_members(Visitor& m){
 	for(uint_t i=0; i<size_; ++i){
 		m & values_[i];
@@ -130,10 +145,7 @@ void Array::downsize(uint_t sz){
 }
 
 const AnyPtr& Array::op_at(int_t i){
-	i = calc_offset(i);
-	if(i<0){
-		return undefined;
-	}
+	XTAL_ARRAY_CALC_OFFSET(i, return undefined);
 
 	XTAL_ASSERT(0<=i && (uint_t)i<size_);
 	return values_[i];
@@ -141,10 +153,7 @@ const AnyPtr& Array::op_at(int_t i){
 }
 
 void Array::op_set_at(int_t i, const AnyPtr& v){
-	i = calc_offset(i);
-	if(i<0){
-		return;
-	}
+	XTAL_ARRAY_CALC_OFFSET(i, return);
 
 	XTAL_ASSERT(0<=i && (uint_t)i<size_);
 	values_[i] = v;
@@ -155,10 +164,8 @@ void Array::erase(int_t start, int_t n){
 		return;
 	}
 
-	int_t pos = calc_offset(start);
-	if(pos<0){
-		return;
-	}
+	int_t pos = start;
+	XTAL_ARRAY_CALC_OFFSET(pos, return);
 
 	if(n<0 || (uint_t)(n + pos)>size_){
 		throw_index_error();
@@ -186,11 +193,8 @@ void Array::insert(int_t i, const AnyPtr& v){
 		size_++;
 	}
 
-	int_t pos = calc_offset(i);
-	if(pos<0){
-		size_--;
-		return;
-	}
+	int_t pos = i;
+	XTAL_ARRAY_CALC_OFFSET(pos, size_--; return);
 
 	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
 	copy_any(values_[pos], v);
@@ -220,10 +224,8 @@ ArrayPtr Array::slice(int_t start, int_t n){
 		return xnew<Array>(0);
 	}
 
-	int_t pos = calc_offset(start);
-	if(pos<0){
-		return null;
-	}
+	int_t pos = start;
+	XTAL_ARRAY_CALC_OFFSET(pos, return null);
 
 	if(n<0 || (uint_t)(n + pos)>size_){
 		throw_index_error();
@@ -305,23 +307,6 @@ void Array::append(const AnyPtr& iterator){
 	Xfor(v, iterator){
 		push_back(v);
 	}
-}
-
-int_t Array::calc_offset(int_t i){
-	if(i<0){
-		i = size_ + i;
-		if(i<0){
-			throw_index_error();
-			return -1;
-		}
-	}
-	else{
-		if((uint_t)i >= size_){
-			throw_index_error();
-			return -1;
-		}
-	}
-	return i;
 }
 
 void Array::throw_index_error(){

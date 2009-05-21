@@ -27,13 +27,11 @@ struct MemberCacheTable{
 
 	int_t hit_;
 	int_t miss_;
-	int_t collided_;
 	uint_t mutate_count_;
 
 	MemberCacheTable(){
 		hit_ = 0;
 		miss_ = 0;
-		collided_ = 0;
 		mutate_count_ = 0;
 	}
 
@@ -43,10 +41,6 @@ struct MemberCacheTable{
 
 	int_t miss_count(){
 		return miss_;
-	}
-
-	int_t collided_count(){
-		return collided_;
 	}
 
 	void invalidate(){
@@ -125,13 +119,11 @@ struct MemberCacheTable2{
 
 	int_t hit_;
 	int_t miss_;
-	int_t collided_;
 	uint_t mutate_count_;
 
 	MemberCacheTable2(){
 		hit_ = 0;
 		miss_ = 0;
-		collided_ = 0;
 		mutate_count_ = 0;
 	}
 
@@ -143,18 +135,11 @@ struct MemberCacheTable2{
 		return miss_;
 	}
 
-	int_t collided_count(){
-		return collided_;
-	}
-
 	void invalidate(){
 		mutate_count_++;
 	}
 
 	const AnyPtr& cache(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-		//bool nocache = false;
-		//return pvalue(target_class)->rawmember(primary_key, secondary_key, true, accessibility, nocache);
-
 		uint_t itarget_class = rawvalue(target_class).uvalue>>2;
 		uint_t iprimary_key = rawvalue(primary_key).uvalue;
 		uint_t isecondary_key = rawvalue(secondary_key).uvalue;
@@ -162,10 +147,6 @@ struct MemberCacheTable2{
 		uint_t hash = (itarget_class ^ iprimary_key ^ isecondary_key) ^ (iprimary_key>>3)*3 ^ isecondary_key*7;
 		Unit& unit = table_[calc_index(hash)];
 
-		//if(mutate_count_==unit.mutate_count && 
-		//	raweq(primary_key, unit.primary_key) && 
-		//	raweq(target_class, unit.target_class) &&
-		//	raweq(secondary_key, unit.secondary_key)){
 		if(((mutate_count_^unit.mutate_count) | 
 			rawbitxor(primary_key, unit.primary_key) | 
 			rawbitxor(target_class, unit.target_class) | 
@@ -176,28 +157,11 @@ struct MemberCacheTable2{
 		}
 		else{
 
-			// 次の番地にあるか調べる
-			//Unit& unit2 = table_[calc_index(hash + 1)];
-			//if(mutate_count_==unit2.mutate_count && 
-			//	raweq(primary_key, unit2.primary_key) && 
-			//	raweq(target_class, unit2.target_class) &&
-			//	raweq(secondary_key, unit2.secondary_key)){
-			//	collided_++;
-			//	hit_++;
-			//	accessibility = unit2.accessibility;
-			//	return ap(unit2.member);
-			//}
-
 			miss_++;
 
 			if(type(target_class)!=TYPE_BASE){
 				return undefined;
 			}
-
-			// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-			//if(unit.mutate_count==mutate_count_){
-			//	unit2 = unit;
-			//}
 
 			bool nocache = false;
 			const AnyPtr& ret = pvalue(target_class)->rawmember(primary_key, ap(secondary_key), true, accessibility, nocache);
@@ -249,13 +213,11 @@ struct IsCacheTable{
 
 	int_t hit_;
 	int_t miss_;
-	int_t collided_;
 	uint_t mutate_count_;
 
 	IsCacheTable(){
 		hit_ = 0;
 		miss_ = 0;
-		collided_ = 0;
 		mutate_count_ = 0;
 	}
 
@@ -267,17 +229,11 @@ struct IsCacheTable{
 		return miss_;
 	}
 	
-	int_t collided_count(){
-		return collided_;
-	}
-
 	void invalidate(){
 		mutate_count_++;
 	}
 
 	bool cache(const AnyPtr& target_class, const AnyPtr& klass){
-		//return unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
-
 		uint_t itarget_class = rawvalue(target_class).uvalue;
 		uint_t iklass = rawvalue(klass).uvalue;
 
@@ -291,22 +247,7 @@ struct IsCacheTable{
 			return unit.result;
 		}
 		else{
-			// 次の番地にあるか調べる
-			//Unit& unit2 = table_[calc_index(hash + 1)];
-			//if(mutate_count_==unit2.mutate_count && 
-			//	raweq(target_class, unit2.target_class) && 
-			//	raweq(klass, unit2.klass)){
-			//	collided_++;
-			//	hit_++;
-			//	return unit2.result;
-			//}
-
 			miss_++;
-
-			// 今の番地にあるのが有効なキャッシュなら、それを退避させる
-			//if(unit.mutate_count==mutate_count_){
-			//	unit2 = unit;
-			//}
 
 			bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
 
@@ -348,13 +289,11 @@ struct CtorCacheTable{
 
 	int_t hit_;
 	int_t miss_;
-	int_t collided_;
 	uint_t mutate_count_;
 
 	CtorCacheTable(){
 		hit_ = 0;
 		miss_ = 0;
-		collided_ = 0;
 		mutate_count_ = 0;
 	}
 
@@ -366,10 +305,6 @@ struct CtorCacheTable{
 		return miss_;
 	}
 	
-	int_t collided_count(){
-		return collided_;
-	}
-
 	void invalidate(){
 		mutate_count_++;
 	}

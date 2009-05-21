@@ -24,7 +24,8 @@ AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 		return ab.a < ab.b ? b : a;	
 	}
 
@@ -41,7 +42,8 @@ AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
 	}
 
 	if(abtype==1){
-		f2 ab = to_f2(atype, a, btype, b);
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
 		return ab.a < ab.b ? a : b;	
 	}
 

@@ -48,6 +48,11 @@ public:
 		return variables_.empty();
 	}
 
+	void clear(){
+		variables_info_.clear();
+		variables_.clear();
+	}
+
 	void visit_members(Visitor& m){
 		for(uint_t i=0; i<variables_.size(); ++i){
 			m & variables_.at(i);
@@ -73,6 +78,19 @@ public:
 	~EmptyInstanceVariables();
 
 	static VariablesInfo vi;
+};
+
+class Instance : public Base{
+public:
+
+	Instance(){
+		instance_variables_ = &variables_;
+	}
+
+	~Instance();
+
+private:
+	InstanceVariables variables_;
 };
 
 /**

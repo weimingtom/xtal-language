@@ -64,7 +64,7 @@ public:
 	};
 
 	size_t calc_size(size_t block_size){
-		return 128/block_size + 4;
+		return 128/block_size + 64;
 	}
 
 private:
@@ -120,7 +120,7 @@ class SmallObjectAllocator{
 public:
 
 	enum{
-		POOL_SIZE = 16,
+		POOL_SIZE = 24,
 		HANDLE_MAX_SIZE = POOL_SIZE*sizeof(data_t)
 	};
 

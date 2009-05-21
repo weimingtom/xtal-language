@@ -195,7 +195,7 @@ void set_vmachine(const VMachinePtr& vm){
 ////////////////////////////////////
 
 void* xmalloc(size_t size){
-	//full_gc();
+	//gc();
 
 	environment_->used_memory_ += size;
 
@@ -216,9 +216,9 @@ void* xmalloc(size_t size){
 		if(environment_->used_memory_>environment_->memory_threshold_/2){
 			environment_->memory_threshold_ += 1024*20;
 		}
-		else{
-			environment_->memory_threshold_ = environment_->used_memory_*2;
-		}
+		//else{
+		//	environment_->memory_threshold_ = environment_->used_memory_*2;
+		//}
 	}
 
 	if(!ret){
@@ -250,6 +250,8 @@ void* xmalloc(size_t size){
 } 
 
 void xfree(void* p, size_t size){
+	//full_gc();
+
 	if(!p){
 		return;
 	}
@@ -632,7 +634,7 @@ CodePtr compile_file(const StringPtr& file_name){
 		}
 	}
 
-	full_gc();
+	gc();
 	return ret;
 }
 
@@ -651,7 +653,7 @@ CodePtr compile(const StringPtr& source){
 		}
 	}
 
-	full_gc();
+	gc();
 	return ret;
 }
 
@@ -694,7 +696,7 @@ CodePtr source(const char_t* src, int_t size){
 		}
 	}
 
-	full_gc();
+	gc();
 	return ret;
 }
 

@@ -321,7 +321,6 @@ public:
 
 protected:
 
-	int_t calc_offset(int_t i);
 	void throw_index_error();
 
 	AnyPtr* values_;

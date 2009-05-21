@@ -300,12 +300,12 @@ inline void set_type(Any& v, int_t type){
 }
 
 inline int_t ivalue(const Any& v){ 
-	XTAL_ASSERT(type(v)==TYPE_INT);
+	//XTAL_ASSERT(type(v)==TYPE_INT);
 	return rawvalue(v).ivalue; 
 }
 
 inline float_t fvalue(const Any& v){ 
-	XTAL_ASSERT(type(v)==TYPE_FLOAT); 
+	//XTAL_ASSERT(type(v)==TYPE_FLOAT); 
 	return rawvalue(v).fvalue; 
 }
 

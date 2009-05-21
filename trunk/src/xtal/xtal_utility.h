@@ -24,6 +24,8 @@ enum{
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
 
+//#define XTAL_NO_ASSERT
+
 #ifdef _UNICODE
 #	ifndef XTAL_USE_WCHAR
 #		define XTAL_USE_WCHAR
@@ -72,7 +74,7 @@ private:
 #	define XTAL_DEBUG
 #endif
 
-#ifdef XTAL_DEBUG
+#if defined(XTAL_DEBUG) && !defined(XTAL_NO_ASSERT)
 #	define XTAL_ASSERT(expr) assert(expr)
 #else
 #	define XTAL_ASSERT(expr)

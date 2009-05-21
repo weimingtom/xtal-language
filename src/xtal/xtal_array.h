@@ -319,6 +319,10 @@ public:
 		capa_ = 0;
 	}
 
+	void set_at_unref(int_t i, const Any& value){
+		(Any&)values_[i] = value;
+	}
+
 protected:
 
 	void throw_index_error();

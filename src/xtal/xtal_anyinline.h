@@ -34,6 +34,13 @@ inline const ClassPtr& Base::get_class(){
 	return to_smartptr(class_); 
 }
 
+inline void add_ref_count_force(const Any& v, int_t i){
+	uint_t t = type(v);
+	if(t>=TYPE_BASE){
+		rcpvalue(v)->add_ref_count(i);
+	}
+}
+
 inline void inc_ref_count_force(const Any& v){
 	uint_t t = type(v);
 	if(t>=TYPE_BASE){

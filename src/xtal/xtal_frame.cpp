@@ -95,4 +95,10 @@ AnyPtr Frame::members(){
 	return xnew<MembersIter>(to_smartptr(this));
 }
 
+void Frame::add_ref_count_members(int_t n){
+	for(uint_t i=0, size=members_.size(); i<size; ++i){
+		add_ref_count_force(members_.at(i), n);
+	}
+}
+
 }

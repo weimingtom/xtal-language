@@ -98,6 +98,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
+	orphan_ = true;
 	make_map_members();
 }
 
@@ -107,6 +108,7 @@ Class::Class(const StringPtr& name)
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
+	orphan_ = true;
 	make_map_members();
 }
 
@@ -116,6 +118,7 @@ Class::Class(cpp_class_t)
 	object_force_ = 0;
 	flags_ = FLAG_NATIVE;
 	symbol_data_ = 0;
+	orphan_ = true;
 	make_map_members();
 }
 
@@ -133,7 +136,7 @@ void Class::overwrite(const ClassPtr& p){
 		
 		if(p->map_members_){
 			for(map_t::iterator it=p->map_members_->begin(), last=p->map_members_->end(); it!=last; ++it){
-				overwrite_member(it->first.primary_key, p->members_.at(it->second.num), it->first.secondary_key, it->second.flags);
+				overwrite_member(it->first.primary_key, p->member_direct(it->second.num), it->first.secondary_key, it->second.flags);
 			}
 		}
 
@@ -143,7 +146,7 @@ void Class::overwrite(const ClassPtr& p){
 				if(obj->is(to_smartptr(this))){
 					AnyPtr data = obj->save_instance_variables(to_smartptr(this));
 					if(pvalue(obj)->instance_variables()){
-						pvalue(obj)->instance_variables()->replace((ClassInfo*)scope_info_, (ClassInfo*)p->scope_info_);
+						pvalue(obj)->instance_variables()->replace(info(), p->info());
 					}
 					obj->load_instance_variables(p, data);
 
@@ -154,7 +157,7 @@ void Class::overwrite(const ClassPtr& p){
 							const VMachinePtr& vm = vmachine();
 							vm->setup_call(0);
 							vm->set_arg_this(obj);
-							members_.at(it->second.num)->rawcall(vm);
+							member_direct(it->second.num)->rawcall(vm);
 							vm->cleanup_call();
 						}
 					}
@@ -162,9 +165,9 @@ void Class::overwrite(const ClassPtr& p){
 			}
 		}
 
-		outer_ = p->outer_;
-		code_ = p->code_;
-		scope_info_ = p->scope_info_;
+		set_outer(p->outer());
+		set_code(p->code());
+		set_info(p->info());
 	}
 }
 
@@ -292,10 +295,10 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 		pvalue(self)->instance_variables()->init_variables(info());
 
 		// 先頭のメソッドはインスタンス変数初期化関数
-		if(members_.at(0)){
+		if(member_direct(0)){
 			vm->setup_call(0);
 			vm->set_arg_this(self);
-			members_.at(0)->rawcall(vm);
+			member_direct(0)->rawcall(vm);
 			vm->cleanup_call();
 		}
 	}
@@ -357,7 +360,7 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
-		return members_.at(it->second.num);
+		return member_direct(it->second.num);
 	}
 	return null;
 }
@@ -366,14 +369,14 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value val = {members_.size(), accessibility};
+		Value val = {member_size(), accessibility};
 		map_members_->insert(key, val);
-		members_.push_back(value);
+		push_back_member(value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
 	else{
-		if(const ClassPtr& dest = ptr_cast<Class>(members_.at(it->second.num))){
+		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->second.num))){
 			if(const ClassPtr& src = ptr_cast<Class>(value)){
 				if(!dest->is_native() && !src->is_native()){
 					dest->overwrite(src);
@@ -383,7 +386,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 			}
 		}
 
-		members_.set_at(it->second.num, value);
+		Frame::set_member_direct(it->second.num, value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
@@ -393,9 +396,9 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value val = {members_.size(), accessibility};
+		Value val = {member_size(), accessibility};
 		map_members_->insert(key, val);
-		members_.push_back(value);
+		push_back_member(value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
@@ -430,7 +433,7 @@ const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondar
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
-		return members_.at(it->second.num);
+		return member_direct(it->second.num);
 	}
 	return undefined;
 }
@@ -452,7 +455,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 		// メンバが見つかった
 		
 		accessibility = it->second.flags & 0x3;
-		return members_.at(it->second.num);
+		return member_direct(it->second.num);
 	}
 	
 	// 継承しているクラスを順次検索
@@ -524,14 +527,14 @@ bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyP
 		return false;
 	}
 
-	members_.set_at(it->second.num, value);
+	Frame::set_member_direct(it->second.num, value);
 	value->set_object_parent(to_smartptr(this));
 	invalidate_cache_member();
 	return true;
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	members_.set_at(i, value);
+	Frame::set_member_direct(i, value);
 	Key key = {primary_key, secondary_key};
 	Value val = {i, accessibility};
 	map_members_->insert(key, val);
@@ -545,7 +548,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 		HaveParent::set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				members_.at(it->second.num)->set_object_parent(to_smartptr(this));
+				member_direct(it->second.num)->set_object_parent(to_smartptr(this));
 			}
 		}
 	}
@@ -554,7 +557,7 @@ void Class::set_object_parent(const ClassPtr& parent){
 ValuesPtr Class::child_object_name(const AnyPtr& a){
 	if(map_members_){
 		for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-			if(raweq(members_.at(it->second.num), a)){
+			if(raweq(member_direct(it->second.num), a)){
 				return mv(it->first.primary_key, it->first.secondary_key);
 			}
 		}

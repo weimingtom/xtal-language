@@ -379,13 +379,8 @@ const ClassPtr& Any::object_parent() const{
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{
-	switch(type(*this)){
-		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->set_object_parent(parent);  }
-		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->set_object_parent(parent);  }
-		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->set_object_parent(parent);  }
-		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->set_object_parent(parent); }
-		XTAL_CASE(TYPE_IVAR_SETTER){ return unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->set_object_parent(parent); }
+	if(type(*this)>=TYPE_BASE){
+		rcpvalue(*this)->set_object_parent(parent);
 	}
 }
 

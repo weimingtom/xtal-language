@@ -576,6 +576,8 @@ private:
 	void pop_scope(){
 		FramePtr& scope = scopes_.pop();
 		if(scope->code()){
+			//scope->add_ref_count_members(1);
+			scope->orphan_ = true;
 			scope = null;
 		}
 	}

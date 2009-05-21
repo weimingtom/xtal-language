@@ -399,7 +399,7 @@ public:
 	}
 
 	ClassInfo* info(){
-		return (ClassInfo*)scope_info_;
+		return (ClassInfo*)Frame::info();
 	}
 
 	void unset_native(){

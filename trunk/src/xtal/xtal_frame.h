@@ -65,6 +65,13 @@ public:
 	}
 
 	/**
+	* \xbind
+	* \brief メンバが格納された、Iteratorを返す
+	* ブロックパラメータは(primary_key, secondary_key, value)
+	*/
+	AnyPtr members();
+
+	/**
 	* \brief i番目のメンバーをダイレクトに取得。
 	*/
 	AnyPtr& member_direct(int_t i){
@@ -75,21 +82,40 @@ public:
 	* \brief i番目のメンバーをダイレクトに設定。
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
-		members_.set_at(i, value);
+		if(orphan_){
+			members_.set_at(i, value);
+		}
+		else{
+			members_.set_at(i, value);
+			//members_.set_at_unref(i, value);
+		}
 	}
 		
-public:
+private:
 
 	/**
-	* \xbind
-	* \brief メンバが格納された、Iteratorを返す
-	* ブロックパラメータは(primary_key, secondary_key, value)
+	* \brief i番目のメンバーを設定。
 	*/
-	AnyPtr members();
+	void set_member_direct_unref(int_t i, const Any& value){
+		members_.set_at(i, (AnyPtr&)value);
+		//members_.set_at_unref(i, value);
+	}
+
+	void add_ref_count_members(int_t i);
 
 protected:
 
 	void make_map_members();
+
+	void push_back_member(const AnyPtr& value){
+		members_.push_back(value);
+	}
+
+	uint_t member_size(){
+		return members_.size();
+	}
+
+private:
 
 	friend class MembersIter;
 
@@ -99,7 +125,11 @@ protected:
 	
 	Array members_;
 
+protected:
+
 	bool orphan_;
+
+public:
 
 	struct Key{
 		IDPtr primary_key;
@@ -127,8 +157,12 @@ protected:
 		}
 	};
 
+protected:
+
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
+
+protected:
 
 	virtual void visit_members(Visitor& m){
 		HaveParent::visit_members(m);

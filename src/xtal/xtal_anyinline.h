@@ -36,29 +36,15 @@ inline const ClassPtr& Base::get_class(){
 
 inline void inc_ref_count_force(const Any& v){
 	uint_t t = type(v);
-
-	if(t<TYPE_BASE){
-		
-	}
-	else if(t==TYPE_BASE){
-		pvalue(v)->inc_ref_count();
-	}
-	else{
-		rcpvalue(v)->inc_ref_count();		
+	if(t>=TYPE_BASE){
+		rcpvalue(v)->inc_ref_count();
 	}
 }
 
 inline void dec_ref_count_force(const Any& v){
 	uint_t t = type(v);
-
-	if(t<TYPE_BASE){
-		
-	}
-	else if(t==TYPE_BASE){
-		pvalue(v)->dec_ref_count();
-	}
-	else{
-		rcpvalue(v)->dec_ref_count();		
+	if(t>=TYPE_BASE){
+		rcpvalue(v)->dec_ref_count();
 	}
 }
 
@@ -79,6 +65,24 @@ inline bool Any::is(const AnyPtr& klass) const{
 	const ClassPtr& my_class = get_class();
 	if(raweq(my_class, klass)) return true;
 	return cache_is(my_class, klass);
+}
+
+inline void Any::visit_members(Visitor& m) const{
+	if(type(*this)>=TYPE_BASE){
+		rcpvalue(*this)->visit_members(m); 
+	}
+}
+
+inline void Any::destroy(){
+	if(type(*this)>=TYPE_BASE){
+		delete rcpvalue(*this);
+	}
+}
+
+inline void Any::object_free(){
+	if(type(*this)>=TYPE_BASE){
+		xfree(static_cast<RefCountingBase*>(this), value_.uvalue);
+	}
 }
 
 struct f2{

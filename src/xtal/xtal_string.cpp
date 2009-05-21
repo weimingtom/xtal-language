@@ -149,7 +149,7 @@ void String::init_string(const char_t* str, uint_t size){
 			*this = ID(str, size);
 		}
 		else{
-			StringData* sd = (StringData*)xmalloc(StringData::calc_size(size));
+			StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 			new(sd) StringData(size);
 			string_copy(sd->buf(), str, size);
 			set_pvalue(*this, TYPE_STRING, sd);
@@ -164,7 +164,7 @@ String::String(const char_t* str, uint_t size, make_t){
 		string_copy(value_.svalue, str, size);
 	}
 	else{
-		StringData* sd = (StringData*)xmalloc(StringData::calc_size(size));
+		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 		new(sd) StringData(size);
 		string_copy(sd->buf(), str, size);
 		set_pvalue(*this, TYPE_STRING, sd);
@@ -227,7 +227,7 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(&value_.svalue[size1], str2, size2);
 	}
 	else{
-		StringData* sd = (StringData*)xmalloc(StringData::calc_size(sz));
+		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 		sd = new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
@@ -470,6 +470,19 @@ StringPtr String::gsub(const AnyPtr& pattern, const AnyPtr& fn){
 
 StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn){
 	return ptr_cast<String>(send(Xid(sub), pattern, fn));
+}
+
+////////////////////////////////////////////////////////////////
+
+StringData::StringData(uint_t size){
+	set_pvalue(*this, TYPE_STRING, this);
+	data_size_ = size<<SIZE_SHIFT;
+	buf_ = (char_t*)xmalloc(size+1);
+	buf()[size] = 0;
+}
+
+StringData::~StringData(){
+	xfree(buf_, data_size()+1);
 }
 
 ////////////////////////////////////////////////////////////////

@@ -250,26 +250,20 @@ class StringData : public RefCountingBase{
 		SIZE_SHIFT = 1
 	};
 
-	XTAL_DEBUG_ONLY(char_t* buf_;)
-
+	char_t* buf_;
 	uint_t data_size_;
 public:
 
-	StringData(uint_t size){
-		set_pvalue(*this, TYPE_STRING, this);
-		data_size_ = size<<SIZE_SHIFT;
-		buf()[size] = 0;
-		XTAL_DEBUG_ONLY(buf_ = buf();)
-	}
+	StringData(uint_t size);
 
-	~StringData(){}
+	~StringData();
 
 	uint_t data_size(){
 		return data_size_>>SIZE_SHIFT;
 	}
 
 	char_t* buf(){ 
-		return (char_t*)(this+1); 
+		return buf_; 
 	}
 
 	bool is_interned(){
@@ -278,10 +272,6 @@ public:
 
 	void set_interned(){
 		data_size_ |= INTERNED;
-	}
-
-	static uint_t calc_size(uint_t sz){
-		return sizeof(StringData)+(sz+1)*sizeof(char_t);
 	}
 
 private:

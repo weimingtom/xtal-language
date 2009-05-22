@@ -446,6 +446,20 @@ protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
+	/*
+	struct InstanceVariablesInfo{
+		ClassInfo* class_info;
+		int_t pos;
+
+		InstanceVariablesInfo(ClassInfo* info = 0, int_t n = 0){
+			class_info = info;
+			pos = n;
+		}
+	};
+
+	PODStack<InstanceVariablesInfo> instance_variables_layout_;
+	*/
+
 	StringPtr name_;
 
 	NativeFunPtr ctor_;

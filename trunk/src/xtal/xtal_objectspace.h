@@ -9,6 +9,8 @@
 
 namespace xtal{
 
+struct ConnectedPointer;
+
 class ObjectSpace{
 public:
 
@@ -50,6 +52,13 @@ public:
 
 private:
 
+	void before_gc();
+	void after_gc();
+	void swap_alive_objects(ConnectedPointer& alive, ConnectedPointer current);
+	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
+	void free_objects(ConnectedPointer it, ConnectedPointer current);
+	void adjust_objects_list(ConnectedPointer it);
+
 	void expand_objects_list();
 
 	RefCountingBase** objects_begin_ ;
@@ -65,7 +74,7 @@ private:
 	GCObserver** gcobservers_end_;
 
 	uint_t objects_count_;
-	uint_t prev_objects_count_;
+	uint_t objects_count_limit_;
 
 	bool disable_finalizer_;
 

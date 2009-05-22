@@ -1274,6 +1274,7 @@ XTAL_VM_SWITCH{
 		push_ff();
 		set_ff(pc + inst.ISIZE, &throw_unsupported_error_code_, 0, 0, 0, cp);
 		scopes_.push(cp);
+		cp->orphan_ = false;
 
 		ff().fun(prev_fun());
 		ff().code = ff().fun()->code().get();

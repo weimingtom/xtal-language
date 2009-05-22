@@ -66,7 +66,7 @@ void FixedAllocator::add_chunk(size_t block_size){
 }
 
 void* FixedAllocator::malloc_inner(size_t block_size){
-	if(all_count_>128){
+	if(used_count_>128){
 		gc();
 
 		if(used_count_>(all_count_>>1)){

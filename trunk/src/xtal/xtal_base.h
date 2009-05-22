@@ -86,6 +86,8 @@ public:
 	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
 	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
 
+	uint_t ungc(){ return type_&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+
 public:
 
 	static void* operator new(size_t size){ 

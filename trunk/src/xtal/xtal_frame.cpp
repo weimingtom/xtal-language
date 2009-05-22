@@ -30,14 +30,16 @@ void MembersIter::block_next(const VMachinePtr& vm){
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), 
-	members_(scope_info_->variable_size), map_members_(0), orphan_(false){
+	members_(scope_info_->variable_size), map_members_(0), orphan_(true){
 }
 
 Frame::Frame()
-	:outer_(null), code_(null), scope_info_(&empty_class_info), members_(0), map_members_(0), orphan_(false){}
+	:outer_(null), code_(null), scope_info_(&empty_class_info), 
+	members_(0), map_members_(0), orphan_(true){}
 	
 Frame::Frame(const Frame& v)
-:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), members_(members_), map_members_(0), orphan_(false){
+	:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
+	members_(members_), map_members_(0), orphan_(true){
 
 	if(v.map_members_){
 		make_map_members();
@@ -98,6 +100,16 @@ AnyPtr Frame::members(){
 void Frame::add_ref_count_members(int_t n){
 	for(uint_t i=0, size=members_.size(); i<size; ++i){
 		add_ref_count_force(members_.at(i), n);
+	}
+}
+
+void Frame::push_back_member(const AnyPtr& value){
+	if(orphan_){
+		members_.push_back(value);
+	}
+	else{
+		members_.resize(members_.size()+1);
+		members_.set_at_unref(members_.size()-1, value);
 	}
 }
 

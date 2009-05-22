@@ -775,6 +775,39 @@ void VMachine::visit_members(Visitor& m){
 
 	for(int_t i=0, size=scopes_.size(); i<size; ++i){
 		m & scopes_[i];
+		//for(int_t j=0, jsize=scopes_[i]->members_.size(); j<jsize; ++j){
+		//	m & scopes_[i]->members_.at(j);
+		//}
+	}
+}
+
+void VMachine::add_ref_count_members(int_t n){
+	add_ref_count_force(debug_info_, n);
+
+	add_ref_count_force(except_[0], n);
+	add_ref_count_force(except_[1], n);
+	add_ref_count_force(except_[2], n);
+
+
+	for(int_t i=0, size=stack_.size(); i<size; ++i){
+		add_ref_count_force(stack_[i], n);
+	}
+
+	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
+		if(fun_frames_[i]){
+			FunFrame& f = *fun_frames_[i];
+			add_ref_count_force(f.fun_, n);
+			add_ref_count_force(f.self_, n);
+			add_ref_count_force(f.target_, n);
+			add_ref_count_force(f.primary_key_, n);
+			add_ref_count_force(f.secondary_key_, n);
+		}
+	}
+
+	for(int_t i=0, size=scopes_.size(); i<size; ++i){
+		if(scopes_[i]){
+			scopes_[i]->add_ref_count_members(n);
+		}
 	}
 }
 
@@ -783,22 +816,7 @@ void VMachine::before_gc(){
 		//return;
 	}
 
-	inc_ref_count_force(debug_info_);
-
-	inc_ref_count_force(except_[0]);
-	inc_ref_count_force(except_[1]);
-	inc_ref_count_force(except_[2]);
-
-
-	for(int_t i=0, size=stack_.size(); i<size; ++i){
-		inc_ref_count_force(stack_[i]);
-	}
-
-	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		if(fun_frames_[i]){
-			fun_frames_[i]->inc_ref();
-		}
-	}
+	add_ref_count_members(1);
 
 	//*
 	// Žg‚í‚ê‚Ä‚¢‚È‚¢•”•ª‚ðnull‚Å“h‚è‚Â‚Ô‚·
@@ -814,7 +832,7 @@ void VMachine::before_gc(){
 
 	for(int_t i=scopes_.size(), size=scopes_.capacity(); i<size; ++i){
 		if(scopes_.reverse_at_unchecked(i)){
-			scopes_.reverse_at_unchecked(i)->members_.clear();
+			scopes_.reverse_at_unchecked(i)->members_.clear_unref();
 			scopes_.reverse_at_unchecked(i)->set_outer(null);
 		}
 	}
@@ -827,21 +845,7 @@ void VMachine::after_gc(){
 		//return;
 	}
 
-	dec_ref_count_force(debug_info_);
-
-	dec_ref_count_force(except_[0]);
-	dec_ref_count_force(except_[1]);
-	dec_ref_count_force(except_[2]);
-
-	for(int_t i=0, size=stack_.size(); i<size; ++i){
-		dec_ref_count_force(stack_[i]);
-	}
-
-	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		if(fun_frames_[i]){
-			fun_frames_[i]->dec_ref();
-		}
-	}
+	add_ref_count_members(-1);
 }
 
 
@@ -854,26 +858,6 @@ void VMachine::print_info(){
 	std::printf("fun_frames size %d\n", fun_frames_.size());
 	std::printf("except_frames size %d\n", except_frames_.size());
 	std::printf("scopes size %d\n", scopes_.size());
-}
-
-void VMachine::FunFrame::inc_ref(){
-	inc_ref_count_force(fun_);
-	
-	inc_ref_count_force(self_);
-
-	inc_ref_count_force(target_);
-	inc_ref_count_force(primary_key_);
-	inc_ref_count_force(secondary_key_);
-}
-
-void VMachine::FunFrame::dec_ref(){
-	dec_ref_count_force(fun_);
-	
-	dec_ref_count_force(self_);
-
-	dec_ref_count_force(target_);
-	dec_ref_count_force(primary_key_);
-	dec_ref_count_force(secondary_key_);
 }
 	
 void visit_members(Visitor& m, const VMachine::FunFrame& v){

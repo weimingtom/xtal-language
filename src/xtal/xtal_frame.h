@@ -86,8 +86,8 @@ public:
 			members_.set_at(i, value);
 		}
 		else{
-			members_.set_at(i, value);
-			//members_.set_at_unref(i, value);
+			//members_.set_at(i, value);
+			members_.set_at_unref(i, value);
 		}
 	}
 		
@@ -97,8 +97,8 @@ private:
 	* \brief i”Ô–Ú‚Ìƒƒ“ƒo[‚ğİ’èB
 	*/
 	void set_member_direct_unref(int_t i, const Any& value){
-		members_.set_at(i, (AnyPtr&)value);
-		//members_.set_at_unref(i, value);
+		//members_.set_at(i, (AnyPtr&)value);
+		members_.set_at_unref(i, value);
 	}
 
 	void add_ref_count_members(int_t i);
@@ -107,9 +107,7 @@ protected:
 
 	void make_map_members();
 
-	void push_back_member(const AnyPtr& value){
-		members_.push_back(value);
-	}
+	void push_back_member(const AnyPtr& value);
 
 	uint_t member_size(){
 		return members_.size();
@@ -125,9 +123,6 @@ private:
 	
 	Array members_;
 
-protected:
-
-	bool orphan_;
 
 public:
 
@@ -161,6 +156,8 @@ protected:
 
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
+
+	bool orphan_;
 
 protected:
 

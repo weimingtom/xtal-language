@@ -98,8 +98,9 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
-	orphan_ = true;
 	make_map_members();
+
+//	instance_variables_layout_.push(InstanceVariablesInfo(info, 0));
 }
 
 Class::Class(const StringPtr& name)
@@ -108,7 +109,6 @@ Class::Class(const StringPtr& name)
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
-	orphan_ = true;
 	make_map_members();
 }
 
@@ -118,7 +118,6 @@ Class::Class(cpp_class_t)
 	object_force_ = 0;
 	flags_ = FLAG_NATIVE;
 	symbol_data_ = 0;
-	orphan_ = true;
 	make_map_members();
 }
 
@@ -182,6 +181,20 @@ void Class::inherit(const ClassPtr& cls){
 	inherited_classes_.push_back(cls.get());
 	cls.get()->inc_ref_count();
 	invalidate_cache_is();
+
+	/*
+	uint_t offset = 0;
+	for(uint_t i=0, size=instance_variables_layout_.size(); i<size; ++i){
+		offset += instance_variables_layout_[i].class_info->instance_variable_size;
+	}
+
+	for(uint_t i=0, size=cls->instance_variables_layout_.size(); i<size; ++i){
+		instance_variables_layout_.push(
+			InstanceVariablesInfo(
+				cls->instance_variables_layout_[i].class_info,
+				cls->instance_variables_layout_[i].pos + offset));
+	}
+	*/
 }
 
 void Class::inherit_first(const ClassPtr& cls){
@@ -654,7 +667,7 @@ void Class::rawcall(const VMachinePtr& vm){
 			instance = newfun->call();
 		}
 		else{
-			instance = xnew<Base>();
+			instance = xnew<Instance>();
 		}
 
 		if(type(instance)==TYPE_BASE){

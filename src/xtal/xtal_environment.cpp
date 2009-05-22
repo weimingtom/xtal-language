@@ -195,7 +195,7 @@ void set_vmachine(const VMachinePtr& vm){
 ////////////////////////////////////
 
 void* xmalloc(size_t size){
-	//gc();
+	//full_gc();
 
 	environment_->used_memory_ += size;
 
@@ -213,7 +213,7 @@ void* xmalloc(size_t size){
 		gc();
 
 		// ƒƒ‚ƒŠŽg—p—Ê‚Íè‡’l‚Ì”¼•ªˆÈã
-		if(environment_->used_memory_>environment_->memory_threshold_/2){
+		if(environment_->used_memory_>environment_->memory_threshold_>>1){
 			environment_->memory_threshold_ += 1024*20;
 		}
 		//else{

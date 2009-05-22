@@ -3,43 +3,10 @@
 
 #include "xtal_objectspace.h"
 
-#if 0
+//#define XTAL_DEBUG_MEMORY
+#ifdef XTAL_DEBUG_MEMORY
 #include <map>
 #include <string>
-
-void xtal::ObjectSpace::print_alive_objects(){
-	full_gc();
-
-	ConnectedPointer current(objects_count_, objects_list_begin_);
-	ConnectedPointer begin(0, objects_list_begin_);
-
-	std::map<std::string, int> table;
-	for(ConnectedPointer it = begin; it!=current; ++it){
-		switch(type(**it)){
-		XTAL_DEFAULT;
-		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
-		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++; }
-		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
-		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
-		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
-		XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
-		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
-		}
-	}
-
-	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
-	for(; it!=last; ++it){
-		printf("alive %s %d\n", it->first.c_str(), it->second);
-	}
-	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
-	printf("m %d\n", m);
-
-	//printf("used_memory %d\n", used_memory);
-}
-#else
-void xtal::ObjectSpace::print_alive_objects(){
-
-}
 #endif
 
 namespace xtal{
@@ -100,6 +67,43 @@ struct ConnectedPointer{
 	}
 };
 
+#ifdef XTAL_DEBUG_MEMORY
+
+void xtal::ObjectSpace::print_alive_objects(){
+	full_gc();
+
+	ConnectedPointer current(objects_count_, objects_list_begin_);
+	ConnectedPointer begin(0, objects_list_begin_);
+
+	std::map<std::string, int> table;
+	for(ConnectedPointer it = begin; it!=current; ++it){
+		switch(type(**it)){
+		XTAL_DEFAULT;
+		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
+		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++; }
+		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
+		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
+		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
+		XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
+		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
+		}
+	}
+
+	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
+	for(; it!=last; ++it){
+		printf("alive %s %d\n", it->first.c_str(), it->second);
+	}
+	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+	printf("m %d\n", m);
+
+	//printf("used_memory %d\n", used_memory);
+}
+#else
+void xtal::ObjectSpace::print_alive_objects(){
+
+}
+#endif
+
 
 void ObjectSpace::initialize(){
 	objects_list_begin_ = 0;
@@ -109,7 +113,7 @@ void ObjectSpace::initialize(){
 	gcobservers_current_ = 0;
 	gcobservers_end_ = 0;
 	objects_count_ = 0;
-	prev_objects_count_ = 0;
+	objects_count_limit_ = 0;
 	cycle_count_ = 0;
 
 	disable_finalizer_ = false;
@@ -224,13 +228,8 @@ void ObjectSpace::uninitialize(){
 			ConnectedPointer current(objects_count_, objects_list_begin_);
 			ConnectedPointer begin(0, objects_list_begin_);
 
-			for(ConnectedPointer it = begin; it!=current; ++it){
-				(*it)->destroy();
-			}
-
-			for(ConnectedPointer it = begin; it!=current; ++it){
-				(*it)->object_free();
-			}
+			destroy_objects(begin, current);
+			free_objects(begin, current);
 		}
 
 	}
@@ -279,53 +278,88 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 	return *current;
 }
 
+void ObjectSpace::before_gc(){
+	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+		(*it)->before_gc();
+	}
+}
+
+void ObjectSpace::after_gc(){
+	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+		(*it)->after_gc();
+	}
+}
+
+void ObjectSpace::swap_alive_objects(ConnectedPointer& alive, ConnectedPointer current){
+	for(ConnectedPointer it=alive; it!=current;){
+		if((*it)->ungc()==0){
+			--current;
+			RefCountingBase* temp = *it;
+			*it = *current;
+			*current = temp;
+		}
+		else{
+			++it;
+		}
+	}
+	alive = current;
+
+/*
+	for(ConnectedPointer it=alive; it!=current; ++it){
+		if((*it)->ref_count()!=0 || (*it)->have_finalizer()){
+			std::swap(*it, *alive++);
+		}
+	}
+	*/
+}
+
+void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer current){
+	for(; it!=current; ++it){
+		(*it)->destroy();
+	}
+}
+
+void ObjectSpace::free_objects(ConnectedPointer it, ConnectedPointer current){
+	for(; it!=current; ++it){
+		//XTAL_ASSERT((*it)->ref_count()==0);
+		(*it)->object_free();
+		//*it = 0;
+	}
+}
+
+void ObjectSpace::adjust_objects_list(ConnectedPointer it){
+	objects_count_ = it.pos;
+	objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
+	expand_objects_list();
+	objects_begin_ = *objects_list_current_++;
+	objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
+	objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
+	XTAL_ASSERT(objects_list_current_<=objects_list_end_);
+
+	objects_count_limit_ = objects_count_limit_*5/6 + objects_count_/6;
+}
+
+
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 
 	{
 		ScopeCounter cc(&cycle_count_);
-		
-		ConnectedPointer current(objects_count_, objects_list_begin_);
-		ConnectedPointer begin(prev_objects_count_<objects_count_ ? prev_objects_count_ : (objects_count_-objects_count_/4), objects_list_begin_);
-		if(current==begin){
+
+		if(objects_count_limit_>=objects_count_){
+			objects_count_limit_ = objects_count_;
 			return;
 		}
+		
+		ConnectedPointer current(objects_count_, objects_list_begin_);
+		ConnectedPointer alive(objects_count_limit_, objects_list_begin_);
 
-		for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-			(*it)->before_gc();
-		}
-
-		ConnectedPointer alive = begin;
-
-		for(ConnectedPointer it = alive; it!=current; ++it){
-			if((*it)->ref_count()!=0 || (*it)->have_finalizer()){
-				std::swap(*it, *alive++);
-			}
-		}
-
-		for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-			(*it)->after_gc();
-		}
-
-		for(ConnectedPointer it = alive; it!=current; ++it){
-			(*it)->destroy();
-		}
-
-		for(ConnectedPointer it = alive; it!=current; ++it){
-			XTAL_ASSERT((*it)->ref_count()==0);
-			(*it)->object_free();
-			*it = 0;
-		}
-
-		{
-			prev_objects_count_ = objects_count_ = alive.pos;
-			objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
-			expand_objects_list();
-			objects_begin_ = *objects_list_current_++;
-			objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
-			objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
-			XTAL_ASSERT(objects_list_current_<=objects_list_end_);
-		}
+		before_gc();
+		swap_alive_objects(alive, current);
+		after_gc();
+		destroy_objects(alive, current);
+		free_objects(alive, current);
+		adjust_objects_list(alive);
 	}
 }
 
@@ -341,9 +375,7 @@ void ObjectSpace::full_gc(){
 				break;
 			}
 
-			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-				(*it)->before_gc();
-			}
+			before_gc();
 
 			{ // 参照カウンタを減らす
 				Visitor m(-1);	
@@ -384,9 +416,7 @@ void ObjectSpace::full_gc(){
 				}
 			}
 
-			for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-				(*it)->after_gc();
-			}
+			after_gc();
 
 			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
@@ -405,9 +435,7 @@ void ObjectSpace::full_gc(){
 
 					// 死者が生き返ったかも知れないのでチェックする
 
-					for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-						(*it)->before_gc();
-					}
+					before_gc();
 
 					{ // 参照カウンタを減らす
 						Visitor m(-1);	
@@ -442,32 +470,14 @@ void ObjectSpace::full_gc(){
 						}
 					}
 
-					for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-						(*it)->after_gc();
-					}
+					after_gc();
 				}
 			}
 
-			for(ConnectedPointer it = alive; it!=current; ++it){
-				//printf("delete %s\n", typeid(**it).name());
-				(*it)->destroy();
-			}
-
-			for(ConnectedPointer it = alive; it!=current; ++it){
-				XTAL_ASSERT((*it)->ref_count()==0);
-				(*it)->object_free();
-				*it = 0;
-			}
+			destroy_objects(alive, current);
+			free_objects(alive, current);
 			
-			{
-				prev_objects_count_ = objects_count_ = alive.pos;
-				objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
-				expand_objects_list();
-				objects_begin_ = *objects_list_current_++;
-				objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
-				objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
-				XTAL_ASSERT(objects_list_current_<=objects_list_end_);
-			}
+			adjust_objects_list(alive);
 
 			if(current==alive){
 				break;

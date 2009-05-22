@@ -533,9 +533,6 @@ public:
 		void target(const Any& v){ target_ = v; }
 		void primary_key(const Any& v){ primary_key_ = v; }
 		void secondary_key(const Any& v){ secondary_key_ = v; }
-
-		void inc_ref();
-		void dec_ref();
 	};
 
 	friend void visit_members(Visitor& m, const FunFrame& v);
@@ -566,17 +563,18 @@ private:
 		FramePtr& scope = scopes_.push();
 		if(!scope){
 			scope = xnew<Frame>();
+			scope->orphan_ = false;
 		}
 
 		scope->set_info(info);
-		scope->members_.resize(info->variable_size);
+		scope->members_.resize_unref(info->variable_size);
 		return scope;
 	}
 
 	void pop_scope(){
 		FramePtr& scope = scopes_.pop();
 		if(scope->code()){
-			//scope->add_ref_count_members(1);
+			scope->add_ref_count_members(1);
 			scope->orphan_ = true;
 			scope = null;
 		}
@@ -669,7 +667,7 @@ private:
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
 	void set_local_variable(uint_t pos, uint_t depth, const Any& value){
-		scopes_[depth]->set_member_direct(pos, ap(value));
+		scopes_[depth]->set_member_direct_unref(pos, ap(value));
 	}
 
 	AnyPtr& local_variable(uint_t pos, uint_t depth){
@@ -870,6 +868,8 @@ protected:
 
 	virtual void before_gc();
 	virtual void after_gc();
+
+	void add_ref_count_members(int_t i);
 
 public:
 

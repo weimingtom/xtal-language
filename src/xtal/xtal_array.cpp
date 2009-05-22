@@ -313,6 +313,43 @@ void Array::throw_index_error(){
 	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1020")));
 }
 
+void Array::clear_unref(){
+	size_ = 0;
+}
+
+void Array::resize_unref(uint_t size){
+	if(size<=size_){
+		size_ -= size_ - size;
+		return;
+	}
+
+	uint_t sz = size-size_;
+
+	if(size_+sz>capa_){ // todo overflow check
+		if(capa_!=0){
+			uint_t newcapa = size_+sz+capa_+3;
+			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
+			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
+			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
+			xfree(values_, sizeof(AnyPtr)*capa_);
+			values_ = newp;
+			size_ += sz;
+			capa_ = newcapa;
+		}
+		else{
+			uint_t newcapa = 3+sz; // todo overflow check
+			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
+			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
+			size_ = sz;
+			capa_ = newcapa;
+		}
+	}
+	else{
+		std::memset(&values_[size_], 0, sizeof(AnyPtr)*sz);
+		size_ += sz;
+	}
+}
+
 //////////////////////////////////////////////////
 
 ArrayIter::ArrayIter(const ArrayPtr& a, bool reverse)

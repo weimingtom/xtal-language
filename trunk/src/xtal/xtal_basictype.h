@@ -272,11 +272,20 @@ public:
 	Values(const AnyPtr& head)
 		:head_(head), tail_((ValuesPtr&)undefined){
 		set_pvalue(*this, TYPE, this);
+
+		static int n = 0;
+		if(n++>1500){
+			n = n;
+		}
 	}
 
 	Values(const AnyPtr& head, const ValuesPtr& tail)
 		:head_(head), tail_(tail){
 		set_pvalue(*this, TYPE, this);
+	}
+
+	~Values(){
+
 	}
 
 	const AnyPtr& head(){

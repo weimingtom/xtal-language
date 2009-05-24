@@ -23,8 +23,14 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
-			def(primary_key, load(file_name), secondary_key, accessibility);
-			return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+			AnyPtr value = load(file_name);
+			
+			XTAL_CHECK_EXCEPT(e){ return undefined; }
+
+			if(!raweq(value, undefined)){
+				def(primary_key, value, secondary_key, accessibility);
+				return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+			}
 		}
 
 		return undefined;

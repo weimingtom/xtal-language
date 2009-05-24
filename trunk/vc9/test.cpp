@@ -93,7 +93,15 @@ int main2(int argc, char** argv){
 	//debug()->set_throw_hook(fun(&debug_throw));
 
 	//test();
-			
+
+    lib()->member( Xid(Foo) );
+    AnyPtr foo = xnew<Class>();
+    lib()->def(Xid(Foo), foo);
+
+    XTAL_CATCH_EXCEPT(e){
+            cout << e->to_s()->c_str() << endl;
+    } 
+
 	if(CodePtr code = Xsrc((
 		/*
 		f: fun(i) fiber{
@@ -139,6 +147,8 @@ int main2(int argc, char** argv){
 		//code->call(4);
 	}
 
+	bind_all();
+	full_gc();
 
 	//load("../struct.xtal");
 
@@ -231,6 +241,8 @@ int main2(int argc, char** argv){
 	//lib()->member("test")->send("print_result");
 	//*/
 #endif
+
+	full_gc();
 
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);

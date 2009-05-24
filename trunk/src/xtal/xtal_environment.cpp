@@ -197,14 +197,14 @@ void set_vmachine(const VMachinePtr& vm){
 void* xmalloc(size_t size){
 	//full_gc();
 
-	environment_->used_memory_ += size;
-
 #ifndef XTAL_NO_SMALL_ALLOCATOR
-	if(size<SmallObjectAllocator::HANDLE_MAX_SIZE){	
+	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
 		//return environment_->setting_.allocator_lib->malloc(size);
 		return environment_->so_alloc_.malloc(size);
 	}
 #endif
+
+	environment_->used_memory_ += size;
 
 	void* ret = environment_->setting_.allocator_lib->malloc(size);
 
@@ -216,9 +216,9 @@ void* xmalloc(size_t size){
 		if(environment_->used_memory_>environment_->memory_threshold_>>1){
 			environment_->memory_threshold_ += 1024*20;
 		}
-		//else{
-		//	environment_->memory_threshold_ = environment_->used_memory_*2;
-		//}
+		else{
+			environment_->memory_threshold_ = environment_->used_memory_*2;
+		}
 	}
 
 	if(!ret){
@@ -250,21 +250,19 @@ void* xmalloc(size_t size){
 } 
 
 void xfree(void* p, size_t size){
-	//full_gc();
-
 	if(!p){
 		return;
 	}
 
-	environment_->used_memory_ -= size;
-
 #ifndef XTAL_NO_SMALL_ALLOCATOR
-	if(size<SmallObjectAllocator::HANDLE_MAX_SIZE){	
+	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
 		//environment_->setting_.allocator_lib->free(p, size);
 		environment_->so_alloc_.free(p, size);
 		return;
 	}
 #endif
+
+	environment_->used_memory_ -= size;
 
 	environment_->setting_.allocator_lib->free(p, size);
 }
@@ -381,12 +379,15 @@ void Environment::initialize(const Setting& setting){
 }
 
 void Environment::uninitialize(){
+
+#ifdef XTAL_DEBUG_PRINT
 	{
 		printf("member hit=%d miss=%d rate=%g\n", member_cache_table_.hit_count(), member_cache_table_.miss_count(), member_cache_table_.hit_count()/(float)(member_cache_table_.hit_count()+member_cache_table_.miss_count()));
 		printf("member hit=%d miss=%d rate=%g\n", member_cache_table2_.hit_count(), member_cache_table2_.miss_count(), member_cache_table2_.hit_count()/(float)(member_cache_table2_.hit_count()+member_cache_table2_.miss_count()));
 		printf("is hit=%d miss=%d rate=%g\n", is_cache_table_.hit_count(), is_cache_table_.miss_count(), is_cache_table_.hit_count()/(float)(is_cache_table_.hit_count()+is_cache_table_.miss_count()));
 		printf("ctor hit=%d miss=%d rate=%g\n", ctor_cache_table_.hit_count(), ctor_cache_table_.miss_count(), ctor_cache_table_.hit_count()/(float)(ctor_cache_table_.hit_count()+ctor_cache_table_.miss_count()));
 	}
+#endif
 
 	thread_space_.join_all_threads();
 
@@ -441,7 +442,13 @@ void full_gc(){
 #ifndef XTAL_NO_SMALL_ALLOCATOR
 	environment_->so_alloc_.fit();
 #endif
-	//printf("used_memory %d\n", used_memory/1024);
+
+#ifdef XTAL_DEBUG_PRINT
+	printf("used_memory %gKB\n", environment_->used_memory_/1024.0f);
+	environment_->object_space_.print_alive_objects();
+	environment_->so_alloc_.print();
+#endif
+
 }
 
 void disable_gc(){
@@ -478,6 +485,10 @@ const ClassPtr& cpp_class(CppClassSymbolData* key){
 
 const AnyPtr& cpp_var(CppVarSymbolData* key){
 	return environment_->object_space_.cpp_var(key->value);
+}
+
+void bind_all(){
+	environment_->object_space_.bind_all();
 }
 
 const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
@@ -608,7 +619,12 @@ int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
 }
 
 StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
-	return xnew<FileStream>(file_name, mode);
+	SmartPtr<FileStream> ret = xnew<FileStream>(file_name, mode);
+	if(ret->is_open()){
+		return ret;
+	}
+//	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")));
+	return null;
 }
 
 #ifndef XTAL_NO_PARSER
@@ -634,7 +650,7 @@ CodePtr compile_file(const StringPtr& file_name){
 		}
 	}
 
-	gc();
+	full_gc();
 	return ret;
 }
 
@@ -653,16 +669,16 @@ CodePtr compile(const StringPtr& source){
 		}
 	}
 
-	gc();
+	full_gc();
 	return ret;
 }
 
 AnyPtr load(const StringPtr& file_name){
-	AnyPtr ret;
+	AnyPtr ret = undefined;
 	if(CodePtr code = compile_file(file_name)){
 		ret = code->call();
 	}
-	gc();
+	full_gc();
 	return ret;
 }
 
@@ -673,12 +689,13 @@ AnyPtr load_and_save(const StringPtr& file_name){
 		fs->close();
 		XTAL_CHECK_EXCEPT(e){
 			XTAL_UNUSED_VAR(e);
-			return null;
+			return undefined;
 		}
-		gc();
+		full_gc();
 		return code->call();
 	}
-	return null;
+	full_gc();
+	return undefined;
 }
 
 CodePtr source(const char_t* src, int_t size){
@@ -696,7 +713,7 @@ CodePtr source(const char_t* src, int_t size){
 		}
 	}
 
-	gc();
+	full_gc();
 	return ret;
 }
 

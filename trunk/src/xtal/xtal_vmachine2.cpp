@@ -794,13 +794,12 @@ void VMachine::add_ref_count_members(int_t n){
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		if(fun_frames_[i]){
-			FunFrame& f = *fun_frames_[i];
-			add_ref_count_force(f.fun_, n);
-			add_ref_count_force(f.self_, n);
-			add_ref_count_force(f.target_, n);
-			add_ref_count_force(f.primary_key_, n);
-			add_ref_count_force(f.secondary_key_, n);
+		if(FunFrame* f = fun_frames_[i]){
+			add_ref_count_force(f->fun_, n);
+			add_ref_count_force(f->self_, n);
+			add_ref_count_force(f->target_, n);
+			add_ref_count_force(f->primary_key_, n);
+			add_ref_count_force(f->secondary_key_, n);
 		}
 	}
 
@@ -812,8 +811,8 @@ void VMachine::add_ref_count_members(int_t n){
 }
 
 void VMachine::before_gc(){
-	if(fun_frames_.empty()){
-		//return;
+	if(stack_.empty() && except_frames_.empty() && fun_frames_.empty() && scopes_.empty()){
+	//	return;
 	}
 
 	add_ref_count_members(1);
@@ -841,9 +840,10 @@ void VMachine::before_gc(){
 }
 
 void VMachine::after_gc(){
-	if(fun_frames_.empty()){
-		//return;
+	if(stack_.empty() && except_frames_.empty() && fun_frames_.empty() && scopes_.empty()){
+	//	return;
 	}
+
 
 	add_ref_count_members(-1);
 }

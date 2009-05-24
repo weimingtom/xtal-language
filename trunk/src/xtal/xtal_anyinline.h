@@ -80,18 +80,6 @@ inline void Any::visit_members(Visitor& m) const{
 	}
 }
 
-inline void Any::destroy(){
-	if(type(*this)>=TYPE_BASE){
-		delete rcpvalue(*this);
-	}
-}
-
-inline void Any::object_free(){
-	if(type(*this)>=TYPE_BASE){
-		xfree(static_cast<RefCountingBase*>(this), value_.uvalue);
-	}
-}
-
 struct f2{
 	float_t a, b;
 };

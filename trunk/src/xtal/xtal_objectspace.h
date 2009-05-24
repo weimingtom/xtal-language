@@ -50,14 +50,19 @@ public:
 
 	RefCountingBase* alive_object(uint_t i);
 
+	void bind_all();
+
 private:
 
 	void before_gc();
 	void after_gc();
-	void swap_alive_objects(ConnectedPointer& alive, ConnectedPointer current);
+	uint_t swap_dead_objects(ConnectedPointer& alive, ConnectedPointer current);
 	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
 	void free_objects(ConnectedPointer it, ConnectedPointer current);
 	void adjust_objects_list(ConnectedPointer it);
+
+	void sort_objects();
+	void add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v);
 
 	void expand_objects_list();
 

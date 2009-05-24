@@ -70,9 +70,6 @@ void VMachine::carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
-	f.code = fun->code().get();
-	f.identifiers = f.code->identifier_table_->data();
-
 	f.called_pc = fun->source();
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	f.instance_variables = f.self()->instance_variables();
@@ -113,9 +110,6 @@ void VMachine::mv_carry_over(Method* fun){
 	FunFrame& f = ff();
 	
 	f.fun(fun);
-	f.code = fun->code().get();
-	f.identifiers = f.code->identifier_table_->data();
-
 	f.called_pc = fun->source();
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	f.instance_variables = f.self()->instance_variables();
@@ -538,7 +532,7 @@ void VMachine::set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any
 		depth--;
 	}
 
-	out->set_member_direct_unref(pos, ap(value));
+	out->set_member_direct(pos, ap(value));
 }
 
 AnyPtr& VMachine::local_variable_out_of_fun(uint_t pos, uint_t depth){
@@ -1277,20 +1271,24 @@ XTAL_VM_SWITCH{
 		cp->orphan_ = false;
 
 		ff().fun(prev_fun());
-		ff().code = ff().fun()->code().get();
-		ff().identifiers = ff().fun()->code()->identifier_table_->data();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
 	XTAL_VM_CASE(ClassEnd){ // 8
 		XTAL_VM_FUN;
-		if(raweq(scopes_.top()->get_class(), scopes_.top())){
-			Class* singleton = (Class*)pvalue(scopes_.top());
+		FramePtr& scope = scopes_.top();
+		if(raweq(scope->get_class(), scope)){
+			Class* singleton = (Class*)pvalue(scope);
 			singleton->init_singleton(to_smartptr(this));
 		}
 
-		push(scopes_.top());
-		pop_ff();
+		push(scope);
+		scope->add_ref_count_members(1);
+		scope->orphan_ = true;
+		scope = null;
+		scopes_.downsize(1);
+
+		pop_ff2();
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 

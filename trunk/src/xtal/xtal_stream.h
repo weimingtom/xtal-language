@@ -35,6 +35,13 @@ public:
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
+	void put_s(const char_t* str, const char_t* end){
+		write(str, (end-str)*sizeof(char_t));
+	}
+
+	/**
+	* \brief 文字列strをストリームに流す
+	*/
 	void put_s(const StringLiteral& str){
 		write(str, str.size()*sizeof(char_t));
 	}
@@ -683,6 +690,10 @@ public:
 	}
 
 	void open(const StringPtr& path, const StringPtr& flags);
+
+	bool is_open(){
+		return impl_!=0;
+	}
 
 	virtual void close(){
 		if(impl_){

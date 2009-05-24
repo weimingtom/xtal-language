@@ -44,7 +44,7 @@ class Format : public Base{
 public:
 
 	Format(const StringPtr& str = empty_string);
-	void set(const char_t* str);
+	void set(const StringPtr& str);
 	virtual void rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
@@ -52,15 +52,12 @@ public:
 
 private:
 
-	ArrayList<FormatSpecifier> format_specifiers_;
-	ArrayPtr strings_;
-
 	StringPtr original_;
 	bool have_named_;
 	
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & strings_ & original_;
+		m & original_;
 	}
 };
 

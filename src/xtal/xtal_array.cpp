@@ -317,37 +317,19 @@ void Array::clear_unref(){
 	size_ = 0;
 }
 
-void Array::resize_unref(uint_t size){
-	if(size<=size_){
-		size_ -= size_ - size;
-		return;
-	}
-
-	uint_t sz = size-size_;
-
-	if(size_+sz>capa_){ // todo overflow check
+void Array::upsize_unref(uint_t size){
+	if(size>capa_){
 		if(capa_!=0){
-			uint_t newcapa = size_+sz+capa_+3;
-			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
-			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
 			xfree(values_, sizeof(AnyPtr)*capa_);
-			values_ = newp;
-			size_ += sz;
-			capa_ = newcapa;
 		}
-		else{
-			uint_t newcapa = 3+sz; // todo overflow check
-			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
-			size_ = sz;
-			capa_ = newcapa;
-		}
+
+		uint_t newcapa = size;
+		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
+		capa_ = newcapa;
 	}
-	else{
-		std::memset(&values_[size_], 0, sizeof(AnyPtr)*sz);
-		size_ += sz;
-	}
+
+	size_ = size;
+	std::memset(&values_[0], 0, sizeof(AnyPtr)*size_);
 }
 
 //////////////////////////////////////////////////

@@ -289,6 +289,8 @@ inline const ClassPtr& cpp_class(){
 	return cpp_class(CppClassSymbol<T>::value);
 }
 
+void bind_all();
+
 /////////////////////////////////////////////////////
 
 /**

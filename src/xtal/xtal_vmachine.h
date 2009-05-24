@@ -494,7 +494,7 @@ public:
 		// thisが持つインスタンス変数へのポインタ
 		InstanceVariables* instance_variables;
 
-		// この関数で積まれたローカル変数の数
+		// この関数で積まれたスコープの数
 		uint_t scope_size;
 
 		// 呼び出された関数オブジェクト
@@ -511,10 +511,6 @@ public:
 
 		// UnsuportedErrorのためにsecondary_keyをおくところ
 		Any secondary_key_;
-
-		Code* code;
-
-		const AnyPtr* identifiers;
 
 		void set_null();
 
@@ -567,7 +563,7 @@ private:
 		}
 
 		scope->set_info(info);
-		scope->members_.resize_unref(info->variable_size);
+		scope->members_.upsize_unref(info->variable_size);
 		return scope;
 	}
 
@@ -577,6 +573,9 @@ private:
 			scope->add_ref_count_members(1);
 			scope->orphan_ = true;
 			scope = null;
+		}
+		else{
+			scope->members_.clear_unref();
 		}
 	}
 
@@ -615,27 +614,27 @@ public:
 	}
 
 	const FramePtr& outer(){ 
-		return fun()->outer(); 
+		return ff().fun()->outer(); 
 	}
 
 	const FramePtr& prev_outer(){ 
-		return prev_fun()->outer(); 
+		return prev_ff().fun()->outer(); 
 	}
 
 	const CodePtr& code(){ 
-		return to_smartptr(ff().code); 
+		return ff().fun()->code(); 
 	}
 
 	const CodePtr& prev_code(){ 
-		return to_smartptr(prev_ff().code); 
+		return prev_ff().fun()->code(); 
 	}
 
 	const IDPtr& identifier(int_t n){ 
-		return (const IDPtr&)ff().identifiers[n]; 
+		return ff().fun()->code()->identifier(n); 
 	}
 
 	const IDPtr& prev_identifier(int_t n){ 
-		return (const IDPtr&)prev_ff().identifiers[n]; 
+		return prev_ff().fun()->code()->identifier(n);  
 	}
 
 	ArgumentsPtr inner_make_arguments(Method* fun);

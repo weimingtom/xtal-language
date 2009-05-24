@@ -3,8 +3,7 @@
 
 #include "xtal_objectspace.h"
 
-//#define XTAL_DEBUG_MEMORY
-#ifdef XTAL_DEBUG_MEMORY
+#ifdef XTAL_DEBUG_PRINT
 #include <map>
 #include <string>
 #endif
@@ -26,6 +25,18 @@ struct ScopeCounter{
 struct ConnectedPointer{
 	int_t pos;
 	RefCountingBase**** bp;
+
+	typedef std::random_access_iterator_tag iterator_category;
+
+	typedef std::random_access_iterator_tag iterator_category;
+	typedef RefCountingBase* value_type;
+	typedef int_t difference_type;
+	typedef int_t distance_type;	// retained
+	typedef RefCountingBase** pointer;
+	typedef RefCountingBase*& reference;
+
+	ConnectedPointer()
+		:pos(0), bp(0){}
 
 	ConnectedPointer(int_t p, RefCountingBase***& pp)
 		:pos(p), bp(&pp){}
@@ -65,12 +76,52 @@ struct ConnectedPointer{
 		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos!=b.pos;
 	}
+
+	friend bool operator<(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
+		return a.pos<b.pos;
+	}
+
+	friend bool operator>(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
+		return a.pos>b.pos;
+	}
+
+	friend bool operator<=(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
+		return a.pos<=b.pos;
+	}
+
+	friend bool operator>=(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
+		return a.pos>=b.pos;
+	}
+
+	friend int_t operator-(const ConnectedPointer& a, const ConnectedPointer& b){
+		XTAL_ASSERT(a.bp==b.bp);
+		return a.pos - b.pos;
+	}
+
+	friend ConnectedPointer operator-(const ConnectedPointer& a, int_t b){
+		return ConnectedPointer(a.pos - b, *a.bp);
+	}
+
+	friend ConnectedPointer operator-(int_t a, const ConnectedPointer& b){
+		return ConnectedPointer(a - b.pos, *b.bp);
+	}
+
+	friend ConnectedPointer operator+(const ConnectedPointer& a, int_t b){
+		return ConnectedPointer(a.pos + b, *a.bp);
+	}
+
+	friend ConnectedPointer operator+(int_t a, const ConnectedPointer& b){
+		return ConnectedPointer(a + b.pos, *b.bp);
+	}
 };
 
-#ifdef XTAL_DEBUG_MEMORY
 
 void xtal::ObjectSpace::print_alive_objects(){
-	full_gc();
+#ifdef XTAL_DEBUG_PRINT
 
 	ConnectedPointer current(objects_count_, objects_list_begin_);
 	ConnectedPointer begin(0, objects_list_begin_);
@@ -79,8 +130,8 @@ void xtal::ObjectSpace::print_alive_objects(){
 	for(ConnectedPointer it = begin; it!=current; ++it){
 		switch(type(**it)){
 		XTAL_DEFAULT;
-		//XTAL_CASE(TYPE_BASE){ table[typeid(*pvalue(**it)).name()]++; }
-		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++; }
+		XTAL_CASE(TYPE_BASE){ table["Base"]++; }
+		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; /*table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++;*/ }
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
 		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
@@ -97,13 +148,8 @@ void xtal::ObjectSpace::print_alive_objects(){
 	printf("m %d\n", m);
 
 	//printf("used_memory %d\n", used_memory);
-}
-#else
-void xtal::ObjectSpace::print_alive_objects(){
-
-}
 #endif
-
+}
 
 void ObjectSpace::initialize(){
 	objects_list_begin_ = 0;
@@ -290,10 +336,12 @@ void ObjectSpace::after_gc(){
 	}
 }
 
-void ObjectSpace::swap_alive_objects(ConnectedPointer& alive, ConnectedPointer current){
+uint_t ObjectSpace::swap_dead_objects(ConnectedPointer& alive, ConnectedPointer current){
+	uint_t num = 0;
 	for(ConnectedPointer it=alive; it!=current;){
 		if((*it)->ungc()==0){
 			--current;
+			++num;
 			RefCountingBase* temp = *it;
 			*it = *current;
 			*current = temp;
@@ -303,14 +351,7 @@ void ObjectSpace::swap_alive_objects(ConnectedPointer& alive, ConnectedPointer c
 		}
 	}
 	alive = current;
-
-/*
-	for(ConnectedPointer it=alive; it!=current; ++it){
-		if((*it)->ref_count()!=0 || (*it)->have_finalizer()){
-			std::swap(*it, *alive++);
-		}
-	}
-	*/
+	return num;
 }
 
 void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer current){
@@ -321,9 +362,7 @@ void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer current)
 
 void ObjectSpace::free_objects(ConnectedPointer it, ConnectedPointer current){
 	for(; it!=current; ++it){
-		//XTAL_ASSERT((*it)->ref_count()==0);
 		(*it)->object_free();
-		//*it = 0;
 	}
 }
 
@@ -336,31 +375,80 @@ void ObjectSpace::adjust_objects_list(ConnectedPointer it){
 	objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 	XTAL_ASSERT(objects_list_current_<=objects_list_end_);
 
-	objects_count_limit_ = objects_count_limit_*5/6 + objects_count_/6;
+	objects_count_limit_ = objects_count_limit_*30/50 + objects_count_*15/50;
+}
+
+namespace{
+	struct RefCountComp{
+		bool operator()(RefCountingBase* a, RefCountingBase* b){
+			if(a->ref_count()>b->ref_count()){
+				return true;
+			}
+			if(a->ref_count()<b->ref_count()){
+				return false;
+			}
+			return a->gene_count() > b->gene_count();
+		}
+	};
+}
+
+void ObjectSpace::sort_objects(){
+	ConnectedPointer begin(0, objects_list_begin_);
+	ConnectedPointer end(objects_count_, objects_list_begin_);
+
+	std::sort(begin, end, RefCountComp());
+
+	for(ConnectedPointer it=begin; it!=end; ++it){
+		(*it)->inc_gene_count();
+	}
+}
+
+void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v){
+	Visitor m(v);
+	for(; it!=current; ++it){
+		(*it)->visit_members(m);
+	}
 }
 
 
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 
-	{
-		ScopeCounter cc(&cycle_count_);
+	ScopeCounter cc(&cycle_count_);
 
-		if(objects_count_limit_>=objects_count_){
-			objects_count_limit_ = objects_count_;
-			return;
-		}
-		
-		ConnectedPointer current(objects_count_, objects_list_begin_);
-		ConnectedPointer alive(objects_count_limit_, objects_list_begin_);
-
-		before_gc();
-		swap_alive_objects(alive, current);
-		after_gc();
-		destroy_objects(alive, current);
-		free_objects(alive, current);
-		adjust_objects_list(alive);
+	if(objects_count_limit_>=objects_count_){
+		objects_count_limit_ = objects_count_;
+		return;
 	}
+	
+	ConnectedPointer current(objects_count_, objects_list_begin_);
+	ConnectedPointer begin(objects_count_limit_, objects_list_begin_);
+	ConnectedPointer alive = begin;
+
+	before_gc();
+
+	ConnectedPointer dead = current;
+	for(int_t i=0; i<3; ++i){
+		if(swap_dead_objects(alive, dead)==0){
+			break;
+		}
+
+		if(i>=1){
+			i = i;
+		}
+
+		add_ref_count_objects(alive, dead, -1);
+
+		dead = alive;
+		alive = begin;
+	}
+	
+	add_ref_count_objects(dead, current, 1);
+
+	after_gc();
+	destroy_objects(dead, current);
+	free_objects(dead, current);
+	adjust_objects_list(dead);
 }
 
 void ObjectSpace::full_gc(){
@@ -377,14 +465,9 @@ void ObjectSpace::full_gc(){
 
 			before_gc();
 
-			{ // 参照カウンタを減らす
-				Visitor m(-1);	
-				for(ConnectedPointer it = begin; it!=current; ++it){
-					(*it)->visit_members(m);
-				}
-
-				// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
-			}
+			// 参照カウンタを減らす
+			// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
+			add_ref_count_objects(begin, current, -1);
 		
 			ConnectedPointer alive = begin;
 
@@ -409,12 +492,8 @@ void ObjectSpace::full_gc(){
 			// alive ～ currentまでのオブジェクトは死亡予定
 
 
-			{// 死者も、参照カウンタを元に戻す
-				Visitor m(1);
-				for(ConnectedPointer it = alive; it!=current; ++it){
-					(*it)->visit_members(m);
-				}
-			}
+			// 死者も、参照カウンタを元に戻す
+			add_ref_count_objects(alive, current, 1);
 
 			after_gc();
 
@@ -437,12 +516,8 @@ void ObjectSpace::full_gc(){
 
 					before_gc();
 
-					{ // 参照カウンタを減らす
-						Visitor m(-1);	
-						for(ConnectedPointer it = alive; it!=current; ++it){
-							(*it)->visit_members(m);
-						}
-					}
+					// 参照カウンタを減らす
+					add_ref_count_objects(alive, current, -1);
 					
 					{ // 死者の中から復活した者を見つける
 						Visitor m(1);
@@ -462,13 +537,8 @@ void ObjectSpace::full_gc(){
 					// begin ～ aliveまでのオブジェクトは生存確定
 					// alive ～ currentまでのオブジェクトは死亡確定
 
-
-					{// 死者も、参照カウンタを元に戻す
-						Visitor m(1);
-						for(ConnectedPointer it = alive; it!=current; ++it){
-							(*it)->visit_members(m);
-						}
-					}
+					// 死者も、参照カウンタを元に戻す
+					add_ref_count_objects(alive, current, 1);
 
 					after_gc();
 				}
@@ -503,6 +573,8 @@ void ObjectSpace::full_gc(){
 			fit_simple_dynamic_pointer_array(&begin, &end, &current);
 		}
 		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
+
+		sort_objects();
 	}
 }
 
@@ -537,5 +609,12 @@ void ObjectSpace::unregister_gc_observer(GCObserver* p){
 	}
 }
 
+void ObjectSpace::bind_all(){
+	for(uint_t i=0; i<class_table_.size(); ++i){
+		if(class_table_[i]){
+			class_table_[i]->bind();
+		}
+	}
+}
 
 }

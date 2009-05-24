@@ -323,7 +323,7 @@ public:
 		(Any&)values_[i] = value;
 	}
 
-	void resize_unref(uint_t size);
+	void upsize_unref(uint_t size);
 
 	void clear_unref();
 

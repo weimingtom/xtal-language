@@ -63,8 +63,12 @@ public:
 		}
 	};
 
+	enum{
+		ONE_SIZE = sizeof(data_t)*2
+	};
+
 	size_t calc_size(size_t block_size){
-		return 128/block_size + 64;
+		return 128/block_size + 4;
 	}
 
 private:
@@ -81,16 +85,31 @@ public:
 	FixedAllocator();
 
 	void* malloc(size_t block_size){
-		++used_count_;
 		if(free_data_){
 			void* ret = free_data_;
 			free_data_ = static_cast<data_t*>(*free_data_);
+			++used_count_;
 			return ret;
 		}
 		return malloc_inner(block_size);
 	}
 
 	void free(void* mem, size_t block_size){
+		/*
+		data_t* m = static_cast<data_t*>(mem);
+		data_t** p = &free_data_;
+		while(true){
+			if(*p==0 || *p>m){
+				break;
+			}
+			p = &(data_t*&)(**p);
+		}
+		
+		*m = *p;
+		*p = m;
+		--used_count_;
+		*/
+
 		*static_cast<data_t*>(mem) = free_data_;
 		free_data_ = static_cast<data_t*>(mem);
 		--used_count_;
@@ -99,6 +118,8 @@ public:
 	void release(size_t block_size);
 
 	void fit(size_t block_size);
+
+	void print(size_t block_size);
 
 private:
 
@@ -120,8 +141,9 @@ class SmallObjectAllocator{
 public:
 
 	enum{
-		POOL_SIZE = 24,
-		HANDLE_MAX_SIZE = POOL_SIZE*sizeof(data_t)
+		POOL_SIZE = 8,
+		ONE_SIZE = FixedAllocator::ONE_SIZE,
+		HANDLE_MAX_SIZE = POOL_SIZE*ONE_SIZE
 	};
 
 public:
@@ -131,14 +153,14 @@ public:
 	void* malloc(size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
 
-		size_t wsize = align(size, sizeof(data_t))/sizeof(data_t);
+		size_t wsize = align(size, ONE_SIZE)/ONE_SIZE;
 		if(wsize==0){ return 0; }
 		return pool_[wsize-1].malloc(wsize);
 	}
 
 	void free(void* p, size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-		if(size_t wsize = align(size, sizeof(data_t))/sizeof(data_t)){
+		if(size_t wsize = align(size, ONE_SIZE)/ONE_SIZE){
 			pool_[wsize-1].free(p, wsize);
 		}
 	}
@@ -146,6 +168,8 @@ public:
 	void release();
 
 	void fit();
+
+	void print();
 
 private:
 

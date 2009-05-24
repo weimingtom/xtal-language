@@ -145,10 +145,6 @@ public:
 
 	void visit_members(Visitor& m) const;
 
-	void destroy();
-	
-	void object_free();
-
 	InstanceVariables* instance_variables() const;
 
 public:

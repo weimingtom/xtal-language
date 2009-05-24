@@ -155,10 +155,21 @@ Format::Format(const StringPtr& str){
 	set(str->c_str());
 }
 
-void Format::set(const char_t* str){
-	original_ = xnew<String>(str);
+void Format::set(const StringPtr& original){
+	original_ = original;
+
+	const char_t* str = original_->c_str();
+	for(uint_t i=0, size=original_->data_size()-2; i<size; ++i){
+		if(str[i]=='%' && str[i+1]=='(' && !('0'<=str[i+2] && str[i+2]<='9')){
+			have_named_ = true;
+			break;
+		}
+	}
+
+	/*
 	strings_ = xnew<Array>();
 
+	const char_t* str = original_->c_str();
 	const char_t* begin = str;
 	int_t n = 0;
 	while(true){
@@ -217,84 +228,120 @@ void Format::set(const char_t* str){
 			str++;
 		}
 	}
+	*/
 }
 
 void Format::rawcall(const VMachinePtr& vm){
-
 	if(!have_named_){
 		vm->flatten_args();
 	}
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
+	uint_t malloc_size = 0;
 	char_t cbuf[256];
 	char_t spec[FormatSpecifier::FORMAT_SPECIFIER_MAX];
 	char_t* pcbuf;
+
+	const char_t* str = original_->c_str();
+	const char_t* begin = str;
+	int_t n = 0;		
 	
-	Xfor(v, strings_){
-		if(type(v)!=TYPE_VALUES){
-			ms->put_s(v->to_s());
+	AnyPtr value;
+	FormatSpecifier fs;
+
+	while(true){
+		if(str[0]=='%'){
+			ms->put_s(begin, str);
+			str++;
+			
+			if(str[0]=='%'){
+				begin = str++;
+			}
+			else{
+				if(str[0]=='('){
+					str++;
+					begin = str;
+					
+					bool number = false;
+					if('0'<=str[0] && str[0]<='9'){
+						number = true;
+					}
+
+					while(str[0]!=0 && str[0]!=')'){
+						str++;					
+					}
+
+					if(number){
+						value = vm->arg(ivalue(xnew<String>(begin, str)->to_i()));
+					}
+					else{
+						value = vm->arg(xnew<ID>(begin, str));
+					}
+
+					if(str[0]==')'){
+						str++;
+					}
+				}
+				else{
+					value = vm->arg(n);
+					++n;
+				}
+
+				str = fs.parse_format(str);
+				begin = str;
+
+				switch(type(value)){
+					XTAL_DEFAULT{
+						StringPtr str = value->to_s();
+						
+						if(str->data_size()>=256){
+							if(str->data_size()>malloc_size){
+								if(malloc_size!=0){
+									xfree(pcbuf, malloc_size);
+								}
+								
+								malloc_size = str->data_size() + fs.max_buffer_size() + 1;
+								pcbuf = (char_t*)xmalloc(malloc_size);
+							}
+						}
+						else{
+							pcbuf = cbuf;
+						}
+
+						fs.make_format_specifier(spec, 's');
+						XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, str->c_str());
+						ms->put_s(pcbuf);
+					}
+
+					XTAL_CASE(TYPE_NULL){
+						ms->put_s(XTAL_STRING("null"));
+					}
+
+					XTAL_CASE(TYPE_INT){
+						fs.make_format_specifier(spec, fs.change_int_type(), true);
+						XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, ivalue(value));
+						ms->put_s(cbuf);
+					}
+					
+					XTAL_CASE(TYPE_FLOAT){
+						fs.make_format_specifier(spec, fs.change_float_type());
+						XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(value));
+						ms->put_s(cbuf);
+					}
+				}
+			}
+		}
+		else if(str[0]=='\0'){
+			ms->put_s(begin, str);
+			break;
 		}
 		else{
-			ValuesPtr mv = unchecked_ptr_cast<Values>(v);
-			
-			AnyPtr a;
-			if(type(mv->at(0))==TYPE_INT){
-				a = vm->arg(ivalue(mv->at(0)));
-			}
-			else{
-				a = vm->arg(unchecked_ptr_cast<ID>(mv->at(0)));
-			}
-			
-			FormatSpecifier& fs = format_specifiers_[ivalue(mv->at(1))];
-			size_t malloc_size = 0;
-			if(fs.max_buffer_size()>=256){
-				malloc_size = fs.max_buffer_size() + 1;
-				pcbuf = (char_t*)xmalloc(malloc_size);
-			}
-			else{
-				pcbuf = cbuf;
-			}
-			
-			switch(type(a)){
-				XTAL_DEFAULT{
-					StringPtr str = a->to_s();
-					
-					if(str->data_size()>=256){
-						if(str->data_size()>malloc_size){
-							if(malloc_size!=0){
-								xfree(pcbuf, malloc_size);
-							}
-							
-							malloc_size = str->data_size() + fs.max_buffer_size() + 1;
-							pcbuf = (char_t*)xmalloc(malloc_size);
-						}
-					}
-					fs.make_format_specifier(spec, 's');
-					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, str->c_str());
-					ms->put_s(pcbuf);
-				}
-
-				XTAL_CASE(TYPE_NULL){
-					ms->put_s(XTAL_STRING("null"));
-				}
-
-				XTAL_CASE(TYPE_INT){
-					fs.make_format_specifier(spec, fs.change_int_type(), true);
-					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, ivalue(a));
-					ms->put_s(pcbuf);
-				}
-				
-				XTAL_CASE(TYPE_FLOAT){
-					fs.make_format_specifier(spec, fs.change_float_type());
-					XTAL_SPRINTF(pcbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(a));
-					ms->put_s(pcbuf);
-				}
-			}
-			
-			if(malloc_size!=0){
-				xfree(pcbuf, malloc_size);
-			}
+			str++;
 		}
+	}
+
+	if(malloc_size!=0){
+		xfree(pcbuf, malloc_size);
 	}
 
 	vm->return_result(ms->to_s());

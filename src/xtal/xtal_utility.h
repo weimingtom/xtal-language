@@ -26,6 +26,8 @@ enum{
 
 //#define XTAL_NO_ASSERT
 
+//#define XTAL_DEBUG_PRINT
+
 #ifdef _UNICODE
 #	ifndef XTAL_USE_WCHAR
 #		define XTAL_USE_WCHAR

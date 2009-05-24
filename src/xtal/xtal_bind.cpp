@@ -931,6 +931,8 @@ XTAL_BIND(ZipIter){
 	it->def_method("block_break", &ZipIter::block_break);
 }
 
+#ifndef XTAL_NO_THREAD
+
 XTAL_PREBIND(Thread){
 	it->def_ctor0<Thread>();
 }
@@ -980,6 +982,7 @@ Mutex::block_break: method{
 );
 
 }
+#endif
 
 XTAL_PREBIND(Format){
 	it->def_serial_ctor(ctor<Format>());

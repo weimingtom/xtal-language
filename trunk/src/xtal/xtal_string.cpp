@@ -477,12 +477,12 @@ StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn){
 StringData::StringData(uint_t size){
 	set_pvalue(*this, TYPE_STRING, this);
 	data_size_ = size<<SIZE_SHIFT;
-	buf_ = (char_t*)xmalloc(size+1);
+	buf_ = (char_t*)xmalloc(sizeof(char_t)*(size+1));
 	buf()[size] = 0;
 }
 
 StringData::~StringData(){
-	xfree(buf_, data_size()+1);
+	xfree(buf_, sizeof(char_t)*(data_size()+1));
 }
 
 ////////////////////////////////////////////////////////////////

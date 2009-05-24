@@ -94,6 +94,10 @@ int main2(int argc, char** argv){
 
 	//test();
 
+    lib()->member( Xid(Foo) );
+    //AnyPtr foo = xnew<Class>();
+    //lib()->def(Xid(Foo), foo);
+
     XTAL_CATCH_EXCEPT(e){
             cout << e->to_s()->c_str() << endl;
     } 

@@ -485,6 +485,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 }
 
 const AnyPtr& Class::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	XTAL_CHECK_EXCEPT(e){ return undefined; }
+
 	bind();
 
 	{

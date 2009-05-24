@@ -34,7 +34,6 @@ AnyPtr Any::send(const IDPtr& primary_key) const{
 
 /// \brief primary_key#secondary_keyメソッドを呼び出す
 AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key) const{
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call();
 	rawsend(vm, primary_key, secondary_key);

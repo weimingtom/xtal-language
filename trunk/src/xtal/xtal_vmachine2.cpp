@@ -194,8 +194,16 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 const AnyPtr& VMachine::result(int_t pos){
 	const inst_t* temp;
 
+
 	{
 		FunFrame& f = ff();
+
+		// 例外がクリアされていないなら実行できない
+		if(ap(except_[0])){
+			downsize(f.args_stack_size());
+			upsize(f.need_result_count);
+			return undefined;
+		}
 
 		if(*f.called_pc==InstCleanupCall::NUMBER){
 			if(pos<f.need_result_count){

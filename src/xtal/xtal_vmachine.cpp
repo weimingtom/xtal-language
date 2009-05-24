@@ -563,13 +563,6 @@ void VMachine::execute_inner(const inst_t* start){
 	cur.fun_frame_size = fun_frames_.size();
 	cur.scope_size = scopes_.size();
 
-	// 例外がクリアされていないなら実行できない
-	if(ap(except_[0])){
-		stack_.downsize_n(cur.stack_size);
-		pop_ff2();
-		return;
-	}
-
 	hook_setting_bit_ = debug::hook_setting_bit();
 
 	thread_yield_count_ = 1000;

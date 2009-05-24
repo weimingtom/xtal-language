@@ -623,7 +623,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 	if(ret->is_open()){
 		return ret;
 	}
-//	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")));
 	return null;
 }
 

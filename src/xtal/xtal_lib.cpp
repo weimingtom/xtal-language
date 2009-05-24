@@ -14,7 +14,6 @@ Lib::Lib(){
 }
 
 const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	XTAL_ASSERT(!raweq(secondary_key, null)); // セカンダリキーが無いときはnullでなくundefinedを指定するようになったので、検出用assert	
 	const AnyPtr& ret = Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	if(rawne(ret, undefined)){
 		return ret;
@@ -25,7 +24,7 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
 			AnyPtr value = load(file_name);
 			
-			XTAL_CHECK_EXCEPT(e){ return undefined; }
+			XTAL_CATCH_EXCEPT(e){ return undefined; }
 
 			if(!raweq(value, undefined)){
 				def(primary_key, value, secondary_key, accessibility);

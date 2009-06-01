@@ -1,4 +1,3 @@
-return;
 inherit(lib::test);
 
 class filelocal::FibTest{

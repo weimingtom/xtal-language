@@ -159,7 +159,7 @@ void Format::set(const StringPtr& original){
 	original_ = original;
 
 	const char_t* str = original_->c_str();
-	for(uint_t i=0, size=original_->data_size()-2; i<size; ++i){
+	for(int_t i=0, size=original_->data_size()-2; i<size; ++i){
 		if(str[i]=='%' && str[i+1]=='(' && !('0'<=str[i+2] && str[i+2]<='9')){
 			have_named_ = true;
 			break;

@@ -20,8 +20,6 @@ public:
 	void foomethod(){}
 };
 
-void foofun(){}
-
 XTAL_PREBIND(TestGetterSetterBind){
     it->def_ctor(ctor<TestGetterSetterBind>());
 }
@@ -48,6 +46,8 @@ XTAL_BIND(MyData){
 }
 
 using namespace xtal;
+
+void foofun(){}
 
 void test(){
     lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
@@ -84,6 +84,32 @@ void benchmark(const char* file, const AnyPtr& arg){
 	}
 }
 
+void debughook(const debug::HookInfoPtr& info){
+	//FramePtr frame = info->variables_frame();
+	//Xfor3(key1st, key2nd, value, frame->members()){
+	//	key1st->p();
+	//}
+
+	for(uint_t i=0;; ++i){
+		// ŒÄ‚Ño‚µŒ³î•ñ‚ðŽæ“¾‚·‚é
+		if(debug::CallerInfoPtr caller = info->caller(i)){
+			FramePtr frame = caller->variables_frame();
+			while(frame){
+				Xfor3(key1st, key2nd, value, frame->members()){
+					key1st->p();
+				}
+				frame = frame->outer();
+			}
+
+			break;
+		}
+		else{
+			break;
+		}
+	}
+
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -94,60 +120,29 @@ int main2(int argc, char** argv){
 
 	//test();
 
-    lib()->member( Xid(Foo) );
+   // lib()->member( Xid(Foo) );
     //AnyPtr foo = xnew<Class>();
     //lib()->def(Xid(Foo), foo);
 
     XTAL_CATCH_EXCEPT(e){
-            cout << e->to_s()->c_str() << endl;
+		cout << e->to_s()->c_str() << endl;
     } 
 
+	debug::enable();
+	//debug::set_return_hook(fun(&debughook));
+
 	if(CodePtr code = Xsrc((
-		/*
-		f: fun(i) fiber{
-			10.times{
-				i++;
-				yield;
-			}
-		}
-			
-		ff: f("");
-		ff();
-		//ff();
-*/
-		//(3.times.with_index("").join && false catch(e) true).p;
+	class Foo{
+foo: 10;
+	}
 
-		/*
-		class C{
-			+_a: 10.p;
-
-			moo(e:0){ "e".p; return a.p; }
-		}
-
-		C().moo;
-
-		aaa: [];
-
-		fun A(a, b:5){
-			{
-				c: a + b;
-				return a - b + c;	
-			}
-		}
-
-		A(10).p;
-
-		a, b: 2, 1;
-		a.p;
-		b.p;
-		*/
+	Foo::("f" ~ "oo").p;
 
 	))){
 		//code->inspect()->p();
-		//code->call(4);
+		code->call(4);
 	}
 
-	bind_all();
 	full_gc();
 
 	//load("../struct.xtal");

@@ -3,9 +3,18 @@
 
 namespace xtal{ namespace debug{
 
-void HookInfo::visit_members(Visitor& m){
+void CallerInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & file_name_ & fun_name_ & variables_frame_;
+}
+
+void HookInfo::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & /*vm_ & */file_name_ & fun_name_ & assertion_message_ & exception_ & variables_frame_;
+}
+
+CallerInfoPtr HookInfo::caller(uint_t n){
+	return vm_->caller(funframe_-n);
 }
 
 class DebugData{
@@ -25,11 +34,13 @@ public:
 };
 
 void enable(){
+
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 
 	d->enable_count_++;
 
 	if(d->enable_count_>=1){
+		bind_all();
 		set_break_point_hook(d->break_point_hook_);
 		set_call_hook(d->call_hook_);
 		set_return_hook(d->return_hook_);
@@ -59,6 +70,7 @@ void enable_force(int_t count){
 	d->enable_count_ = count;
 
 	if(d->enable_count_>=1){
+		bind_all();
 		set_break_point_hook(d->break_point_hook_);
 		set_call_hook(d->call_hook_);
 		set_return_hook(d->return_hook_);

@@ -46,8 +46,8 @@ FixedAllocator::FixedAllocator(){
 
 void FixedAllocator::add_chunk(size_t block_size){
 	uint_t blocks = calc_size(block_size);
-	all_count_ += blocks;
 	Chunk* new_chunk = (Chunk*)xmalloc(sizeof(Chunk)+block_size*ONE_SIZE*blocks);
+	all_count_ += blocks;
 	
 	{
 		new_chunk->next = 0;
@@ -68,11 +68,14 @@ void FixedAllocator::add_chunk(size_t block_size){
 void* FixedAllocator::malloc_inner(size_t block_size){
 	uint_t blocks = calc_size(block_size);
 
-	gc();
-	
+	if(all_count_>blocks*10){
+		gc();
+	}
+
 	cant_fit_ = true;
 
 	if(all_count_-used_count_<blocks){
+//	if(all_count_<=used_count_*2){
 		add_chunk(block_size);
 	}
 

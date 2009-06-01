@@ -261,7 +261,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			result_->code_.downsize(prev_op_isize);
 
 			prev_inst_op_ = -1;
-			put_inst(InstLocalVariable1ByteX2(prev_inst.number, prev_inst.depth, ((InstLocalVariable1Byte&)t).number, ((InstLocalVariable1Byte&)t).depth));
+			put_inst(InstLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
 			return;
 		}
 	}
@@ -275,7 +275,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 			result_->code_.downsize(prev_op_isize);
 
 			prev_inst_op_ = -1;
-			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, prev_inst.depth, ((InstSetLocalVariable1Byte&)t).number, ((InstSetLocalVariable1Byte&)t).depth));
+			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, ((InstSetLocalVariable1Byte&)t).number));
 			return;
 		}
 	}
@@ -295,8 +295,8 @@ bool CodeBuilder::put_set_local_code(const IDPtr& var){
 			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
 		}
 
-		if(info.pos<=0xff && !info.out_of_fun){
-			put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
+		if(info.pos<=0xff && info.vpos>=0){
+			put_inst(InstSetLocalVariable1Byte(info.vpos));
 		}
 		else{
 			put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
@@ -336,8 +336,8 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 					put_val_code(val);
 				}
 
-				if(info.pos<=0xff){
-					put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
+				if(info.pos<=0xff && info.vpos>=0){
+					put_inst(InstSetLocalVariable1Byte(info.vpos));
 				}
 				else{
 					put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
@@ -348,8 +348,8 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 
 		}
 		else{
-			if(info.pos<=0xff && !info.out_of_fun){
-				put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
+			if(info.pos<=0xff && info.vpos>=0){
+				put_inst(InstSetLocalVariable1Byte(info.vpos));
 			}
 			else{
 				put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
@@ -364,8 +364,8 @@ void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
 bool CodeBuilder::put_local_code(const IDPtr& var){
 	LVarInfo info = var_find(var);
 	if(info.pos>=0){
-		if(info.pos<=0xff && !info.out_of_fun){
-			put_inst(InstLocalVariable1Byte(info.pos, info.depth));
+		if(info.pos<=0xff && info.vpos>=0){
+			put_inst(InstLocalVariable1Byte(info.vpos));
 		}
 		else{
 			put_inst(InstLocalVariable2Byte(info.pos, info.depth));
@@ -388,6 +388,8 @@ int_t CodeBuilder::register_identifier_or_compile_expr(const AnyPtr& var){
 		return register_identifier(id);
 	}
 	compile_expr(ep(var)); 
+	put_inst(InstProperty(register_identifier(Xid(to_s))));
+	put_inst(InstProperty(register_identifier(Xid(intern))));
 	return 0;
 }
 
@@ -751,7 +753,7 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 }
 
 CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool traceless, int_t number){
-	LVarInfo ret = {0, 0, 0, 0, false};
+	LVarInfo ret = {0, 0, 0, 0, 0};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
 
@@ -762,8 +764,6 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 				bool out_of_fun = (uint_t)vf.fun_frames_size!=fun_frames_.size();
 
 				if(out_of_fun || entry.initialized || define){
-					ret.out_of_fun = out_of_fun;
-					//ret.depth += fun_frames_.size()-vf.fun_frames_size;
 					ret.var_frame = var_frames_.size()-1-i;
 					ret.entry = vf.entries.size()-1-j;
 					if(!traceless){
@@ -777,8 +777,16 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 							ret.pos++;
 						}
 					}
+
+					if(out_of_fun){
+						ret.vpos = -1;
+					}
 					return ret;
 				}
+			}
+
+			if(!entry.removed){
+				ret.vpos++;
 			}
 		}
 
@@ -1048,19 +1056,19 @@ void CodeBuilder::compile_incdec(const ExprPtr& e){
 	if(term->itag()==EXPR_LVAR){
 		LVarInfo info = var_find(term->lvar_name());
 		if(info.pos>=0){
-			if(info.pos>=256 || info.out_of_fun){
+			if(info.pos>=256 || info.vpos<0){
 				put_local_code(term->lvar_name());
 				put_inst(inst);
 				put_set_local_code(term->lvar_name());
 			}
 			else{
 				if(e->itag() == EXPR_INC){
-					put_inst(InstLocalVariableInc1Byte(info.pos, info.depth));
+					put_inst(InstLocalVariableInc1Byte(info.vpos));
 				}
 				else{
-					put_inst(InstLocalVariableDec1Byte(info.pos, info.depth));
+					put_inst(InstLocalVariableDec1Byte(info.vpos));
 				}
-				put_inst(InstSetLocalVariable1Byte(info.pos, info.depth));
+				put_inst(InstSetLocalVariable1Byte(info.vpos));
 			}
 
 			entry(info).value = undefined;
@@ -1502,7 +1510,7 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 				int_t label = reserve_label();
 				
 				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
-				put_inst(InstIfArgIsUndefined(/*maxv-1-*/i, 0));
+				put_inst(InstIfArgIsUndefined(maxv-1-i, 0));
 
 				compile_expr(v);
 				

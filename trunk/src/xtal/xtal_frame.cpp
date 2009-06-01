@@ -27,19 +27,35 @@ void MembersIter::block_next(const VMachinePtr& vm){
 	}
 }
 
+void MembersIter2::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & frame_;
+}
+
+void MembersIter2::block_next(const VMachinePtr& vm){
+	if(it_ < frame_->scope_info_->variable_size){
+		vm->return_result(to_smartptr(this), frame_->code_->identifier(frame_->scope_info_->variable_identifier_offset+it_), undefined, frame_->members_.at(it_));
+		++it_;
+		return;
+	}
+	else{
+		vm->return_result(null, null, null, null);
+		return;
+	}
+}
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), 
-	members_(scope_info_->variable_size), map_members_(0), orphan_(true){
+	members_(scope_info_->variable_size), map_members_(0), recycle_(false), orphan_(true){
 }
 
 Frame::Frame()
 	:outer_(null), code_(null), scope_info_(&empty_class_info), 
-	members_(0), map_members_(0), orphan_(true){}
+	members_(0), map_members_(0), recycle_(false), orphan_(true){}
 	
 Frame::Frame(const Frame& v)
 	:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
-	members_(members_), map_members_(0), orphan_(true){
+	members_(members_), map_members_(0), recycle_(false), orphan_(true){
 
 	if(v.map_members_){
 		make_map_members();
@@ -85,6 +101,10 @@ void Frame::make_map_members(){
 }
 
 AnyPtr Frame::members(){
+	if(recycle_){
+		return xnew<MembersIter2>(to_smartptr(this));
+	}
+
 	if(!map_members_ && code_ && scope_info_){
 		make_map_members();
 		for(int_t i=0; i<scope_info_->variable_size; ++i){

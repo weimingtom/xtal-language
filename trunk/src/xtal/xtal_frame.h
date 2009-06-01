@@ -115,13 +115,11 @@ protected:
 
 private:
 
-	friend class MembersIter;
-
 	FramePtr outer_;
 	CodePtr code_;
 	ScopeInfo* scope_info_;
 	
-	Array members_;
+	xarray members_;
 
 
 public:
@@ -130,7 +128,7 @@ public:
 		IDPtr primary_key;
 		AnyPtr secondary_key;
 
-		friend void visit_members(Visitor& m, const Key& a){
+		friend void visit_members(Visitor& m, Key& a){
 			m & a.primary_key & a.secondary_key;
 		}
 	};
@@ -157,6 +155,7 @@ protected:
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
 
+	bool recycle_;
 	bool orphan_;
 
 protected:
@@ -174,6 +173,8 @@ protected:
 		}
 	}
 
+	friend class MembersIter;
+	friend class MembersIter2;
 	friend class VMachine;
 };
 
@@ -187,6 +188,21 @@ public:
 
 	MembersIter(const FramePtr& a)
 		:frame_(a), it_(frame_->map_members_->begin()){
+	}
+
+	void block_next(const VMachinePtr& vm);
+};
+
+class MembersIter2 : public Base{
+	FramePtr frame_;
+	int_t it_;
+
+	virtual void visit_members(Visitor& m);
+
+public:
+
+	MembersIter2(const FramePtr& a)
+		:frame_(a), it_(0){
 	}
 
 	void block_next(const VMachinePtr& vm);

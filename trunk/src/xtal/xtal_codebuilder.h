@@ -184,7 +184,7 @@ public:
 		int_t entry;
 		int_t depth;
 		int_t pos;
-		bool out_of_fun;
+		int_t vpos;
 	};
 
 	VarFrame& var_frame(const LVarInfo& vi){

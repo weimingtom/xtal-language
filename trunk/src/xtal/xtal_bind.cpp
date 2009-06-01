@@ -816,6 +816,15 @@ XTAL_BIND(MembersIter){
 	it->def_method("block_next", &MembersIter::block_next);
 }
 
+XTAL_PREBIND(MembersIter2){
+	it->inherit(cpp_class<Iterator>());
+}
+
+XTAL_BIND(MembersIter2){
+	it->def_method("block_next", &MembersIter2::block_next);
+}
+
+
 XTAL_BIND(Frame){
 	it->def_method("members", &Frame::members);
 	it->def_method("outer", &Frame::outer);

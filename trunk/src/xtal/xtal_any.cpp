@@ -566,11 +566,4 @@ void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{
 	}
 }
 
-void visit_members(Visitor& m, const AnyPtr& p){
-	if(type(p)>=TYPE_BASE){
-		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
-		rcpvalue(p)->add_ref_count(m.value());
-	}
-}
-
 }

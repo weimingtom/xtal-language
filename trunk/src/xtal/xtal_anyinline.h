@@ -80,30 +80,6 @@ inline void Any::visit_members(Visitor& m) const{
 	}
 }
 
-struct f2{
-	float_t a, b;
-};
-
-inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
-	/*	if(atype==btype){
-		ret.a = fvalue(a); 
-		ret.b = fvalue(b); 
-	}
-	else if(atype==0){
-		ret.a = (float_t)ivalue(a); 
-		ret.b = fvalue(b); 
-	}
-	else{
-		ret.a = fvalue(a); 
-		ret.b = (float_t)ivalue(b); 
-	}
-	*/
-	float_t aa[2] = {(float_t)ivalue(a), fvalue(a)};
-	float_t bb[2] = {(float_t)ivalue(b), fvalue(b)};
-	ret.a = aa[atype];
-	ret.b = bb[btype];
-}
-
 }
 
 #endif // XTAL_ANYINLINE_H_INCLUDE_GUARD

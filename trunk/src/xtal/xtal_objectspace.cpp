@@ -159,7 +159,7 @@ void ObjectSpace::initialize(){
 	gcobservers_current_ = 0;
 	gcobservers_end_ = 0;
 	objects_count_ = 0;
-	objects_count_limit_ = 0;
+	processed_line_ = 0;
 	cycle_count_ = 0;
 
 	disable_finalizer_ = false;
@@ -336,22 +336,82 @@ void ObjectSpace::after_gc(){
 	}
 }
 
-uint_t ObjectSpace::swap_dead_objects(ConnectedPointer& alive, ConnectedPointer current){
+ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
+	
+	/*
 	uint_t num = 0;
-	for(ConnectedPointer it=alive; it!=current;){
+	ConnectedPointer end = alive - 1;
+	ConnectedPointer it = current - 1;
+	while(it!=end){
 		if((*it)->ungc()==0){
 			--current;
 			++num;
-			RefCountingBase* temp = *it;
+
+			(*it)->destroy();
+			(*it)->object_free();
+
 			*it = *current;
-			*current = temp;
+		}
+			
+		--it;
+	}
+	//alive = current;
+	//return num;
+	*/
+
+	/*
+	//uint_t num = 0;
+	while(alive!=current){
+		if((*alive)->ungc()==0){
+			--current;
+
+			(*alive)->destroy();
+			(*alive)->object_free();
+
+			*alive = *current;
 		}
 		else{
-			++it;
+			++alive;
 		}
 	}
-	alive = current;
 	return num;
+	//*/
+
+	/*
+	while(first!=last){
+		if((*first)->ungc()==0){
+			if(end==last){
+				--last;
+			}
+			--end;
+
+			(*first)->destroy();
+			(*first)->object_free();
+
+			*first = *end;
+		}
+		else{
+			++first;
+		}
+	}
+	*/
+
+	ConnectedPointer rend = first - 1;
+	ConnectedPointer it = last - 1;
+	while(it!=rend){
+		if((*it)->ungc()==0){
+			--end;
+
+			(*it)->destroy();
+			(*it)->object_free();
+
+			*it = *end;
+		}
+			
+		--it;
+	}
+
+	return end;
 }
 
 void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer current){
@@ -374,33 +434,6 @@ void ObjectSpace::adjust_objects_list(ConnectedPointer it){
 	objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
 	objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 	XTAL_ASSERT(objects_list_current_<=objects_list_end_);
-
-	objects_count_limit_ = objects_count_limit_*30/50 + objects_count_*15/50;
-}
-
-namespace{
-	struct RefCountComp{
-		bool operator()(RefCountingBase* a, RefCountingBase* b){
-			if(a->ref_count()>b->ref_count()){
-				return true;
-			}
-			if(a->ref_count()<b->ref_count()){
-				return false;
-			}
-			return a->gene_count() > b->gene_count();
-		}
-	};
-}
-
-void ObjectSpace::sort_objects(){
-	ConnectedPointer begin(0, objects_list_begin_);
-	ConnectedPointer end(objects_count_, objects_list_begin_);
-
-	std::sort(begin, end, RefCountComp());
-
-	for(ConnectedPointer it=begin; it!=end; ++it){
-		(*it)->inc_gene_count();
-	}
 }
 
 void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v){
@@ -410,45 +443,48 @@ void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer cu
 	}
 }
 
-
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 
 	ScopeCounter cc(&cycle_count_);
 
-	if(objects_count_limit_>=objects_count_){
-		objects_count_limit_ = objects_count_;
-		return;
+	if(processed_line_>objects_count_){
+		processed_line_ = 0;
 	}
 	
-	ConnectedPointer current(objects_count_, objects_list_begin_);
-	ConnectedPointer begin(objects_count_limit_, objects_list_begin_);
-	ConnectedPointer alive = begin;
+	ConnectedPointer first(processed_line_, objects_list_begin_);
+	ConnectedPointer last(processed_line_+objects_count_/20, objects_list_begin_);
+	ConnectedPointer end(objects_count_, objects_list_begin_);
+
+	if(last>end){ last = end; }
 
 	before_gc();
+	end = swap_dead_objects(first, last, end);
 
-	ConnectedPointer dead = current;
-	for(int_t i=0; i<3; ++i){
-		if(swap_dead_objects(alive, dead)==0){
-			break;
-		}
-
-		if(i>=1){
-			i = i;
-		}
-
-		add_ref_count_objects(alive, dead, -1);
-
-		dead = alive;
-		alive = begin;
-	}
-	
-	add_ref_count_objects(dead, current, 1);
-
+	first = ConnectedPointer(end.pos*19/20, objects_list_begin_);
+	last = ConnectedPointer(end.pos, objects_list_begin_);
+	end = swap_dead_objects(first, last, end);
 	after_gc();
-	destroy_objects(dead, current);
-	free_objects(dead, current);
-	adjust_objects_list(dead);
+
+	adjust_objects_list(end);
+
+	processed_line_ += objects_count_/20;
+}
+
+void ObjectSpace::gc2(){
+	if(cycle_count_!=0){ return; }
+
+	ScopeCounter cc(&cycle_count_);
+
+	ConnectedPointer first(0, objects_list_begin_);
+	ConnectedPointer last(objects_count_, objects_list_begin_);
+	ConnectedPointer end(objects_count_, objects_list_begin_);
+
+	before_gc();
+	end = swap_dead_objects(first, last, end);
+	after_gc();
+
+	adjust_objects_list(end);
 }
 
 void ObjectSpace::full_gc(){
@@ -573,8 +609,6 @@ void ObjectSpace::full_gc(){
 			fit_simple_dynamic_pointer_array(&begin, &end, &current);
 		}
 		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
-
-		sort_objects();
 	}
 }
 

@@ -10,6 +10,246 @@
 namespace xtal{
 
 /**
+* \brief 配列
+*/
+class xarray{
+public:
+
+	/**
+	* \brief sizeの長さの配列を生成する 
+	*/
+	xarray(uint_t size = 0);
+
+	xarray(const AnyPtr* first, const AnyPtr* end);
+
+	/**
+	* \brief コピーコンストラクタを備える
+	*/
+	xarray(const xarray& v);
+
+	/**
+	* \brief 代入演算子を備える
+	*/
+	xarray& operator =(const xarray& v);
+
+	/**
+	* \brief デストラクタ
+	*/
+	~xarray();
+
+	/**
+	* \brief 配列の長さを返す
+	*/
+	uint_t length(){
+		return size_;
+	}
+
+	/**
+	* \brief 配列の長さを返す
+	*/
+	uint_t size(){
+		return size_;
+	}
+
+	/**
+	* \brief 配列の長さを変更する
+	*/
+	void resize(uint_t sz);
+
+	/**
+	* \xbind
+	* \brief 配列をsz分長くする
+	*/
+	void upsize(uint_t sz);
+
+	/**
+	* \brief 配列をsz分短くする
+	*/
+	void downsize(uint_t sz);
+
+	/**
+	* \brief i番目の要素を返す
+	*/
+	const AnyPtr& at(int_t i){
+		XTAL_ASSERT(0<=i && (uint_t)i<size_);
+		return values_[i];
+	}
+
+	/**
+	* \brief i番目の要素を設定する
+	*/
+	void set_at(int_t i, const AnyPtr& v){
+		XTAL_ASSERT(0<=i && (uint_t)i<size_);
+		values_[i] = v;
+	}
+
+	/**
+	* \xbind
+	* \brief 先頭に要素を追加する
+	*/
+	void push_front(const AnyPtr& v){
+		insert(0, v);
+	}
+
+	/**
+	* \xbind
+	* \brief 先頭の要素を削除する
+	*/
+	void pop_front(){
+		erase(0);
+	}
+
+	/**
+	* \xbind
+	* \brief 末尾に要素を追加する
+	*/
+	void push_back(const AnyPtr& v);
+
+	/**
+	* \xbind
+	* \brief 末尾の要素を削除する
+	*/
+	void pop_back();
+
+	/**
+	* \xbind
+	* \brief 先頭の要素を返す
+	*/
+	const AnyPtr& front(){
+		return at(0);
+	}
+
+	/**
+	* \xbind
+	* \brief 末尾の要素を返す
+	*/
+	const AnyPtr& back(){
+		return at(size()-1);
+	}
+
+	/**
+	* \xbind
+	* \brief i番目のn個の要素を削除する
+	*/
+	void erase(int_t i, int_t n = 1);
+
+	/**
+	* \xbind
+	* \brief i番目に要素を追加する
+	*/
+	void insert(int_t i, const AnyPtr& v);
+
+	/**
+	* \xbind
+	* \brief 空か調べる
+	*/
+	bool empty(){
+		return size_ == 0;
+	}
+
+	/**
+	* \xbind
+	* \brief 空か調べる
+	*/
+	bool is_empty(){
+		return size_ == 0;
+	}
+
+	/**
+	* \xbind
+	* \brief 要素を全て削除する
+	*/
+	void clear();
+
+public:
+
+	void visit_members(Visitor& m);
+
+	class iterator{
+	public:
+		
+		iterator(AnyPtr* p = 0)
+			:p_(p){}
+		
+		AnyPtr& operator *() const{
+			return *p_;
+		}
+
+		AnyPtr* operator ->() const{
+			return p_;
+		}
+
+		iterator& operator ++(){
+			++p_;
+			return *this;
+		}
+
+		iterator operator ++(int){
+			iterator temp(*this);
+			++p_;
+			return *this;
+		}
+
+		friend bool operator ==(iterator a, iterator b){
+			return a.p_ == b.p_;
+		}
+
+		friend bool operator !=(iterator a, iterator b){
+			return a.p_ != b.p_;
+		}
+
+	private:
+		AnyPtr* p_;
+	};
+
+	iterator begin(){
+		return iterator(values_);
+	}
+
+	iterator end(){
+		return iterator(values_ + size_);
+	}
+
+	const AnyPtr* data(){
+		return values_;
+	}
+
+	void attach(AnyPtr* data, uint_t size){
+		values_ = data;
+		size_ = size;
+		capa_ = size;
+	}
+
+	void detach(){
+		values_ = 0;
+		size_ = 0;
+		capa_ = 0;
+	}
+
+	void reflesh(){
+		AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
+		std::memcpy(&newp[0], &values_[0], sizeof(AnyPtr)*size_);
+		capa_ = size_;	
+		values_ = newp;
+	}
+
+	void set_at_unref(int_t i, const Any& value){
+		(Any&)values_[i] = value;
+	}
+
+	void upsize_unref(uint_t size);
+
+	void clear_unref();
+
+protected:
+
+	AnyPtr* values_;
+	uint_t size_;
+	uint_t capa_;
+};
+
+
+/**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Any lib::builtin::Iterable
 * \brief 配列
@@ -37,16 +277,11 @@ public:
 	Array& operator =(const Array& v);
 
 	/**
-	* \brief デストラクタ
-	*/
-	~Array();
-
-	/**
 	* \xbind
 	* \brief 配列の長さを返す
 	*/
 	uint_t length(){
-		return size_;
+		return values_.length();
 	}
 
 	/**
@@ -54,41 +289,45 @@ public:
 	* \brief 配列の長さを返す
 	*/
 	uint_t size(){
-		return size_;
+		return values_.size();
 	}
 
 	/**
 	* \xbind
 	* \brief 配列の長さを変更する
 	*/
-	void resize(uint_t sz);
+	void resize(uint_t sz){
+		values_.resize(sz);
+	}
 
 	/**
 	* \xbind
 	* \brief 配列をsz分長くする
 	*/
-	void upsize(uint_t sz);
+	void upsize(uint_t sz){
+		values_.upsize(sz);
+	}
 
 	/**
 	* \xbind
 	* \brief 配列をsz分短くする
 	*/
-	void downsize(uint_t sz);
+	void downsize(uint_t sz){
+		values_.downsize(sz);
+	}
 
 	/**
 	* \brief i番目の要素を返す
 	*/
 	const AnyPtr& at(int_t i){
-		XTAL_ASSERT(0<=i && (uint_t)i<size_);
-		return values_[i];
+		return values_.at(i);
 	}
 
 	/**
 	* \brief i番目の要素を設定する
 	*/
 	void set_at(int_t i, const AnyPtr& v){
-		XTAL_ASSERT(0<=i && (uint_t)i<size_);
-		values_[i] = v;
+		values_.set_at(i, v);
 	}
 
 	/**
@@ -219,7 +458,7 @@ public:
 	* \brief 空か調べる
 	*/
 	bool empty(){
-		return size_ == 0;
+		return values_.empty();
 	}
 
 	/**
@@ -227,14 +466,16 @@ public:
 	* \brief 空か調べる
 	*/
 	bool is_empty(){
-		return size_ == 0;
+		return values_.is_empty();
 	}
 
 	/**
 	* \xbind
 	* \brief 要素を全て削除する
 	*/
-	void clear();
+	void clear(){
+		values_.clear();
+	}
 
 	/**
 	* \xbind
@@ -258,82 +499,49 @@ public:
 
 	void visit_members(Visitor& m);
 
-	class iterator{
-	public:
-		
-		iterator(AnyPtr* p = 0)
-			:p_(p){}
-		
-		AnyPtr& operator *() const{
-			return *p_;
-		}
-
-		AnyPtr* operator ->() const{
-			return p_;
-		}
-
-		iterator& operator ++(){
-			++p_;
-			return *this;
-		}
-
-		iterator operator ++(int){
-			iterator temp(*this);
-			++p_;
-			return *this;
-		}
-
-		friend bool operator ==(iterator a, iterator b){
-			return a.p_ == b.p_;
-		}
-
-		friend bool operator !=(iterator a, iterator b){
-			return a.p_ != b.p_;
-		}
-
-	private:
-		AnyPtr* p_;
-	};
+	typedef xarray::iterator iterator;
 
 	iterator begin(){
-		return iterator(values_);
+		return values_.begin();
 	}
 
 	iterator end(){
-		return iterator(values_ + size_);
+		return values_.end();
 	}
 
 	const AnyPtr* data(){
-		return values_;
+		return values_.data();
 	}
 
 	void attach(AnyPtr* data, uint_t size){
-		values_ = data;
-		size_ = size;
-		capa_ = size;
+		values_.attach(data, size);
 	}
 
 	void detach(){
-		values_ = 0;
-		size_ = 0;
-		capa_ = 0;
+		values_.detach();
 	}
 
 	void set_at_unref(int_t i, const Any& value){
-		(Any&)values_[i] = value;
+		values_.set_at_unref(i, value);
 	}
 
-	void upsize_unref(uint_t size);
+	void upsize_unref(uint_t size){
+		values_.upsize_unref(size);
+	}
 
-	void clear_unref();
+	void clear_unref(){
+		values_.clear_unref();
+	}
+
+	void reflesh(){
+		values_.reflesh();
+	}
 
 protected:
 
 	void throw_index_error();
 
-	AnyPtr* values_;
-	uint_t size_;
-	uint_t capa_;
+	xarray values_;
 };
 
 class ArrayIter : public Base{

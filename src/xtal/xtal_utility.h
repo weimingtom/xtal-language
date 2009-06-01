@@ -34,6 +34,10 @@ enum{
 #	endif
 #endif 
 
+#if !defined(XTAL_USE_COMPUTED_GOTO) && defined(__GNUC__)
+#define XTAL_USE_COMPUTED_GOTO
+#endif
+
 #if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
 #include <pthread.h>
 template<class T>

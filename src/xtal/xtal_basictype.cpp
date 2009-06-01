@@ -112,6 +112,7 @@ bool Values::op_eq(const ValuesPtr& other){
 		if(rawne((*cur1)->head_, (*cur2)->head_)){
 			vm->setup_call(1, (*cur2)->head_);
 			(*cur1)->head_->rawsend(vm, Xid(op_eq));
+
 			if(!vm->processed() || !vm->result()){
 				vm->cleanup_call();
 				return false;
@@ -181,7 +182,11 @@ void HaveParent::set_object_parent(const ClassPtr& parent){
 
 void HaveParent::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & object_parent();
+	if(parent_){
+		ClassPtr temp = to_smartptr(parent_);
+		m & temp;
+		parent_ = temp.get();
+	}
 }	
 
 RefCountingHaveParent::RefCountingHaveParent(const RefCountingHaveParent& a)
@@ -225,7 +230,11 @@ void RefCountingHaveParent::set_object_parent(const ClassPtr& parent){
 }
 
 void RefCountingHaveParent::visit_members(Visitor& m){
-	m & object_parent();
+	if(parent_){
+		ClassPtr temp = to_smartptr(parent_);
+		m & temp;
+		parent_ = temp.get();
+	}
 }	
 
 GCObserver::GCObserver(){

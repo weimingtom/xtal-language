@@ -82,5 +82,12 @@ SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
 SmartPtr<Any>::~SmartPtr(){
 	dec_ref_count_force(*this);
 }	
-		
+
+void visit_members(Visitor& m, const Any& p){
+	if(type(p)>=TYPE_BASE){
+		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
+		rcpvalue(p)->add_ref_count(m.value());
+	}
+}
+
 }

@@ -55,7 +55,7 @@ public:
 
 	void visit_members(Visitor& m){
 		for(uint_t i=0; i<variables_.size(); ++i){
-			m & variables_.at(i);
+			m & (AnyPtr&)variables_.at(i);
 		}
 	}
 
@@ -67,7 +67,7 @@ protected:
 	};
 
 	PODStack<VariablesInfo> variables_info_;
-	Array variables_;
+	xarray variables_;
 };
 
 class EmptyInstanceVariables : public InstanceVariables{
@@ -481,7 +481,9 @@ protected:
 	virtual void visit_members(Visitor& m){
 		Frame::visit_members(m);
 		for(uint_t i=0; i<inherited_classes_.size(); ++i){
-			m & inherited_classes_[i];
+			ClassPtr temp = to_smartptr(inherited_classes_[i]);
+			m & temp;
+			inherited_classes_[i] = temp.get();
 		}
 	}
 

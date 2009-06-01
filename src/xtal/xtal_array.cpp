@@ -3,30 +3,7 @@
 
 namespace xtal{
 
-#define XTAL_ARRAY_CALC_OFFSET(i, ret) \
-	if(i<0){\
-		i = size_ + i;\
-		if(i<0){\
-			throw_index_error();\
-			ret;\
-		}\
-	}\
-	else{\
-		if((uint_t)i >= size_){\
-			throw_index_error();\
-			ret;\
-		}\
-	}
-
-void Array::visit_members(Visitor& m){
-	for(uint_t i=0; i<size_; ++i){
-		m & values_[i];
-	}
-}
-
-Array::Array(uint_t size){
-	set_pvalue(*this, TYPE, this);
-
+xarray::xarray(uint_t size){
 	capa_ = size;
 	size_ = size;
 
@@ -39,9 +16,7 @@ Array::Array(uint_t size){
 	}
 }
 
-Array::Array(const AnyPtr* first, const AnyPtr* end){
-	set_pvalue(*this, TYPE, this);
-
+xarray::xarray(const AnyPtr* first, const AnyPtr* end){
 	int_t size = end-first;
 
 	capa_ = size;
@@ -54,11 +29,8 @@ Array::Array(const AnyPtr* first, const AnyPtr* end){
 	}
 }
 
-Array::Array(const Array& v)
-:RefCountingBase(v){
-	set_pvalue(*this, TYPE, this);
-
-	size_ = capa_ = ((Array&)v).size();
+xarray::xarray(const xarray& v){
+	size_ = capa_ = ((xarray&)v).size();
 	if(capa_!=0){
 		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
 		
@@ -72,29 +44,29 @@ Array::Array(const Array& v)
 	}
 }
 
-Array& Array::operator =(const Array& v){
-	Array temp(v);
+xarray& xarray::operator =(const xarray& v){
+	xarray temp(v);
 	std::swap(values_, temp.values_);
 	std::swap(size_, temp.size_);
 	std::swap(capa_, temp.capa_);
 	return *this;
 }
 
-Array::~Array(){
+xarray::~xarray(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
 	xfree(values_, sizeof(AnyPtr)*capa_);
 }
 
-void Array::clear(){
+void xarray::clear(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
 	size_ = 0;
 }
 
-void Array::resize(uint_t sz){
+void xarray::resize(uint_t sz){
 	if(sz<size_){
 		downsize(size_-sz);
 	}
@@ -103,7 +75,7 @@ void Array::resize(uint_t sz){
 	}
 }
 
-void Array::upsize(uint_t sz){
+void xarray::upsize(uint_t sz){
 	if(sz==0){
 		return;
 	}
@@ -120,7 +92,7 @@ void Array::upsize(uint_t sz){
 			capa_ = newcapa;
 		}
 		else{
-			uint_t newcapa = 3+sz; // todo overflow check
+			uint_t newcapa = sz; // todo overflow check
 			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
 			size_ = sz;
@@ -133,7 +105,7 @@ void Array::upsize(uint_t sz){
 	}
 }
 
-void Array::downsize(uint_t sz){
+void xarray::downsize(uint_t sz){
 	if(sz>size_){
 		sz = size_;
 	}
@@ -144,33 +116,12 @@ void Array::downsize(uint_t sz){
 	size_ -= sz;
 }
 
-const AnyPtr& Array::op_at(int_t i){
-	XTAL_ARRAY_CALC_OFFSET(i, return undefined);
-
-	XTAL_ASSERT(0<=i && (uint_t)i<size_);
-	return values_[i];
-
-}
-
-void Array::op_set_at(int_t i, const AnyPtr& v){
-	XTAL_ARRAY_CALC_OFFSET(i, return);
-
-	XTAL_ASSERT(0<=i && (uint_t)i<size_);
-	values_[i] = v;
-}
-
-void Array::erase(int_t start, int_t n){
+void xarray::erase(int_t start, int_t n){
 	if(n==0){
 		return;
 	}
 
 	int_t pos = start;
-	XTAL_ARRAY_CALC_OFFSET(pos, return);
-
-	if(n<0 || (uint_t)(n + pos)>size_){
-		throw_index_error();
-		return;
-	}
 
 	for(int_t i=0; i<n; ++i){
 		dec_ref_count_force(values_[pos+i]);
@@ -185,7 +136,7 @@ void Array::erase(int_t start, int_t n){
 	size_ -= n;
 }
 
-void Array::insert(int_t i, const AnyPtr& v){
+void xarray::insert(int_t i, const AnyPtr& v){
 	if(capa_==size_){
 		upsize(1);
 	}
@@ -194,29 +145,127 @@ void Array::insert(int_t i, const AnyPtr& v){
 	}
 
 	int_t pos = i;
-	XTAL_ARRAY_CALC_OFFSET(pos, size_--; return);
 
 	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
 	copy_any(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }
 
-void Array::push_back(const AnyPtr& v){
+void xarray::push_back(const AnyPtr& v){
 	if(capa_==size_){
 		upsize(1);
 	}
 	else{
 		size_++;
 	}
+
 	copy_any(values_[size_-1], v);
 	inc_ref_count_force(values_[size_-1]);
 }
 
-void Array::pop_back(){
+void xarray::pop_back(){
 	if(!empty()){
 		dec_ref_count_force(values_[size_-1]);
 		size_--;
 	}
+}
+
+void xarray::clear_unref(){
+	size_ = 0;
+}
+
+void xarray::upsize_unref(uint_t size){
+	if(size>capa_){
+		if(capa_!=0){
+			xfree(values_, sizeof(AnyPtr)*capa_);
+		}
+
+		uint_t newcapa = size;
+		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
+		capa_ = newcapa;
+	}
+
+	size_ = size;
+	std::memset(&values_[0], 0, sizeof(AnyPtr)*size_);
+}
+
+//////////////////////////////////////////////////
+
+#define XTAL_ARRAY_CALC_OFFSET(i, size, ret) \
+	if(i<0){\
+		i = size + i;\
+		if(i<0){\
+			throw_index_error();\
+			ret;\
+		}\
+	}\
+	else{\
+		if((uint_t)i >= size){\
+			throw_index_error();\
+			ret;\
+		}\
+	}
+
+void Array::visit_members(Visitor& m){
+	for(uint_t i=0; i<size(); ++i){
+		m & values_.at(i);
+	}
+}
+
+Array::Array(uint_t size)
+:values_(size){
+	set_pvalue(*this, TYPE, this);
+}
+
+Array::Array(const AnyPtr* first, const AnyPtr* end)
+:values_(first, end){
+	set_pvalue(*this, TYPE, this);
+}
+
+Array::Array(const Array& v)
+:RefCountingBase(v), values_(v.values_){
+	set_pvalue(*this, TYPE, this);
+}
+
+Array& Array::operator =(const Array& v){
+	values_ = v.values_;
+	return *this;
+}
+
+const AnyPtr& Array::op_at(int_t i){
+	XTAL_ARRAY_CALC_OFFSET(i, size(), return undefined);
+	return values_.at(i);
+}
+
+void Array::op_set_at(int_t i, const AnyPtr& v){
+	XTAL_ARRAY_CALC_OFFSET(i, size(), return);
+	values_.set_at(i, v);
+}
+
+void Array::erase(int_t start, int_t n){
+	int_t pos = start;
+	XTAL_ARRAY_CALC_OFFSET(pos, size(), return);
+
+	if(n<0 || (uint_t)(n + pos)>size()){
+		throw_index_error();
+		return;
+	}
+
+	values_.erase(pos, n);
+}
+
+void Array::insert(int_t i, const AnyPtr& v){
+	int_t pos = i;
+	XTAL_ARRAY_CALC_OFFSET(pos, size()+1, return);
+	values_.insert(pos, v);
+}
+
+void Array::push_back(const AnyPtr& v){
+	insert(size(), v);
+}
+
+void Array::pop_back(){
+	erase(size()-1, 1);
 }
 
 ArrayPtr Array::slice(int_t start, int_t n){
@@ -225,14 +274,14 @@ ArrayPtr Array::slice(int_t start, int_t n){
 	}
 
 	int_t pos = start;
-	XTAL_ARRAY_CALC_OFFSET(pos, return null);
+	XTAL_ARRAY_CALC_OFFSET(pos, size(), return null);
 
-	if(n<0 || (uint_t)(n + pos)>size_){
+	if(n<0 || (uint_t)(n + pos)>size()){
 		throw_index_error();
 		return null;
 	}
 
-	return xnew<Array>(&values_[pos], &values_[pos+n]);
+	return xnew<Array>(values_.data()+pos, values_.data()+pos+n);
 }
 
 ArrayPtr Array::splice(int_t start, int_t n){
@@ -294,7 +343,7 @@ void Array::assign(const AnyPtr& iterator){
 
 	uint_t i = 0;
 	Xfor(v, iterator){
-		if(i>=size_){
+		if(i>=size()){
 			upsize(1);
 		}
 
@@ -311,25 +360,6 @@ void Array::append(const AnyPtr& iterator){
 
 void Array::throw_index_error(){
 	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1020")));
-}
-
-void Array::clear_unref(){
-	size_ = 0;
-}
-
-void Array::upsize_unref(uint_t size){
-	if(size>capa_){
-		if(capa_!=0){
-			xfree(values_, sizeof(AnyPtr)*capa_);
-		}
-
-		uint_t newcapa = size;
-		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-		capa_ = newcapa;
-	}
-
-	size_ = size;
-	std::memset(&values_[0], 0, sizeof(AnyPtr)*size_);
 }
 
 //////////////////////////////////////////////////

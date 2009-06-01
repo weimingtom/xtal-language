@@ -2,7 +2,31 @@
 inherit(lib::test);
 
 class filelocal::TestFiber{
+	
+	yield_expr#Test{
+		fib: fiber(a){
+			b: yield a;
+			c: yield b+5;
+			yield c*7;
+		}	
+		
+		assert fib(10)==10;
+		assert fib(20)==25;
+		assert fib(30)==210;
+	}
 
+	yield_expr_values#Test{
+		fib: fiber(a){
+			b: yield a, a;
+			c: yield b, a;
+			yield c, a;
+		}	
+		
+		assert fib(10)==(10, 10);
+		assert fib(20, 40)==((20, 40), 10);
+		assert fib(30, 50)==((30, 50), 10);
+	}
+	
 	except#Test{
 		fib: fiber{
 			yield;

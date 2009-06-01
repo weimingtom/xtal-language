@@ -10,9 +10,9 @@
 
 int used_memory = 0;
 
-#define XTAL_DEBUG_ALLOC 0
+//#define XTAL_DEBUG_ALLOC
 
-#if XTAL_DEBUG_ALLOC!=0
+#ifdef XTAL_DEBUG_ALLOC
 #include <map>
 #include <typeinfo>
 #include <string>
@@ -197,20 +197,16 @@ void set_vmachine(const VMachinePtr& vm){
 void* xmalloc(size_t size){
 	//full_gc();
 
-#ifndef XTAL_NO_SMALL_ALLOCATOR
+#if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
 	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
-		//return environment_->setting_.allocator_lib->malloc(size);
 		return environment_->so_alloc_.malloc(size);
 	}
 #endif
 
 	environment_->used_memory_ += size;
 
-	void* ret = environment_->setting_.allocator_lib->malloc(size);
-
 	if(environment_->used_memory_>environment_->memory_threshold_){
-		gc();
-		gc();
+		environment_->object_space_.gc2();
 
 		// ƒƒ‚ƒŠŽg—p—Ê‚Íè‡’l‚Ì”¼•ªˆÈã
 		if(environment_->used_memory_>environment_->memory_threshold_>>1){
@@ -221,12 +217,14 @@ void* xmalloc(size_t size){
 		}
 	}
 
+	void* ret = environment_->setting_.allocator_lib->malloc(size);
+
 	if(!ret){
-		gc();
+		environment_->object_space_.gc2();
 		ret = environment_->setting_.allocator_lib->malloc(size);
 
 		if(!ret){
-			full_gc();
+			environment_->object_space_.full_gc();
 			ret = environment_->setting_.allocator_lib->malloc(size);
 
 			if(!ret){
@@ -254,9 +252,8 @@ void xfree(void* p, size_t size){
 		return;
 	}
 
-#ifndef XTAL_NO_SMALL_ALLOCATOR
+#if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
 	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
-		//environment_->setting_.allocator_lib->free(p, size);
 		environment_->so_alloc_.free(p, size);
 		return;
 	}
@@ -295,7 +292,7 @@ Setting::Setting(){
 
 
 void initialize(const Setting& setting){
-#if XTAL_DEBUG_ALLOC!=0
+#ifdef XTAL_DEBUG_ALLOC
 	static DebugAllocatorLib alib;
 	Setting setting2 = setting;
 	setting2.allocator_lib = &alib;
@@ -320,7 +317,7 @@ void uninitialize(){
 	allocacator_lib->free(environment_, sizeof(Environment));
 	environment_ = 0;
 
-#if XTAL_DEBUG_ALLOC!=0
+#ifdef XTAL_DEBUG_ALLOC
 	display_debug_memory();
 #endif
 

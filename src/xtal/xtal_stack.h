@@ -45,6 +45,10 @@ public:
 	~FastStack();
 
 public:
+
+	T* data(){
+		return begin_;
+	}
 	
 	T& push_unchecked(const T &val){
 		upsize_unchecked(1);
@@ -303,7 +307,7 @@ void FastStack<T>::upsize_detail(size_t us){
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
-	size_t newcapa = 4 + us + oldcapa + oldcapa/2;
+	size_t newcapa = oldcapa==0 ? us : 4 + us + oldcapa + oldcapa/2;
 	T* newp = (T*)stack_allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i){

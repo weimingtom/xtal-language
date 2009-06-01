@@ -15,9 +15,13 @@ VMachine::VMachine(){
 	cleanup_call_code_ = InstCleanupCall::NUMBER;
 	resume_pc_ = 0;
 	disable_debug_ = false;
+
+	variables_.resize(10000);
+	variables_top_ = 0;
 }
 
 VMachine::~VMachine(){
+	variables_.clear_unref();
 	fun_frames_.resize(fun_frames_.capacity());
 	for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
 		if(fun_frames_[i]){
@@ -25,18 +29,30 @@ VMachine::~VMachine(){
 			xfree(fun_frames_[i], sizeof(FunFrame));
 		}
 	}
+
+	while(scopes_.size()){
+		pop_scope();
+	}
 }
 
 void VMachine::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
-	scopes_.resize(0);
+	
+	while(scopes_.size()){
+		pop_scope();
+	}
+
+	variables_top_ = 0;
 
 	except_[0] = null;
 	except_[1] = null;
 	except_[2] = null;
 	debug_info_ = null;
+}
+
+VMachine::FunFrame::FunFrame(){
 }
 
 void VMachine::FunFrame::set_null(){
@@ -193,7 +209,6 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 
 const AnyPtr& VMachine::result(int_t pos){
 	const inst_t* temp;
-
 
 	{
 		FunFrame& f = ff();
@@ -621,7 +636,33 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 		debug_info_->set_exception(null);
 	}
 
-	debug_info_->set_variables_frame(make_outer_outer());
+	make_outer_outer();
+	debug_info_->set_variables_frame(scopes_.top());
+	scopes_.top()->recycle_ = false;
+
+	debug_info_->set_vm(to_smartptr(this));
+	debug_info_->funframe_ = fun_frames_.size()-2;
+}
+
+debug::CallerInfoPtr VMachine::caller(uint_t n){
+	if(n>=fun_frames_.size()){
+		return null;
+	}
+
+	FunFrame& f = *fun_frames_.reverse_at(n);
+	FunFrame& pf = *fun_frames_.reverse_at(n+1);
+
+	if(!f.fun()){
+		return null;
+	}
+
+	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
+	ret->set_line(f.fun()->code()->compliant_lineno(f.poped_pc));
+	ret->set_fun_name(f.fun()->object_name());
+	ret->set_file_name(f.fun()->code()->source_file_name());
+	make_outer_outer();
+	ret->set_variables_frame(scopes_.reverse_at(pf.scope_size-1));
+	return ret;
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
@@ -735,6 +776,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 		pop_scope();
 	}
 	pop_ff2();
+
 	return 0;
 }
 
@@ -787,6 +829,10 @@ void VMachine::visit_members(Visitor& m){
 		//	m & scopes_[i]->members_.at(j);
 		//}
 	}
+
+	for(int_t i=0, size=variables_.size(); i<size; ++i){
+		//m & variables_.at(i);
+	}
 }
 
 void VMachine::add_ref_count_members(int_t n){
@@ -816,6 +862,10 @@ void VMachine::add_ref_count_members(int_t n){
 			scopes_[i]->add_ref_count_members(n);
 		}
 	}
+
+	for(int_t i=0, size=variables_.size(); i<size; ++i){
+		//add_ref_count_force(variables_.at(i), n);
+	}
 }
 
 void VMachine::before_gc(){
@@ -837,13 +887,6 @@ void VMachine::before_gc(){
 		}
 	}
 
-	for(int_t i=scopes_.size(), size=scopes_.capacity(); i<size; ++i){
-		if(scopes_.reverse_at_unchecked(i)){
-			scopes_.reverse_at_unchecked(i)->members_.clear_unref();
-			scopes_.reverse_at_unchecked(i)->set_outer(null);
-		}
-	}
-
 	//*/
 }
 
@@ -852,12 +895,12 @@ void VMachine::after_gc(){
 	//	return;
 	}
 
-
 	add_ref_count_members(-1);
 }
 
 
 void VMachine::print_info(){
+#ifdef XTAL_DEBUG_PRINT
 	std::printf("stack size %d\n", stack_.size());
 	for(uint_t i=0; i<stack_.size(); ++i){
 //		std::printf("\tstack value %d = %s\n", i, ap(stack_[i])->to_s()->c_str());
@@ -866,9 +909,10 @@ void VMachine::print_info(){
 	std::printf("fun_frames size %d\n", fun_frames_.size());
 	std::printf("except_frames size %d\n", except_frames_.size());
 	std::printf("scopes size %d\n", scopes_.size());
+#endif
 }
 	
-void visit_members(Visitor& m, const VMachine::FunFrame& v){
+void visit_members(Visitor& m, VMachine::FunFrame& v){
 	m & v.fun_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
 

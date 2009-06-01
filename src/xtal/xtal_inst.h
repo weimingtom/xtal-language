@@ -399,25 +399,12 @@ XTAL_DEF_INST_2(15, AdjustResult,
         inst_u8_t, need_result_count
 );
 
-XTAL_DEF_INST_2(16, LocalVariableInc1Byte,
-		inst_u8_t, number,
-		inst_u8_t, depth
+XTAL_DEF_INST_1(16, LocalVariableInc1Byte,
+		inst_u8_t, number
 );
 
-XTAL_DEF_INST_2(17, LocalVariableDec1Byte,
-		inst_u8_t, number,
-		inst_u8_t, depth
-);
-
-/**
-* \internal
-* \brief ローカル変数を取り出す。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_2(18, LocalVariable1Byte,
-        inst_u8_t, number,
-		inst_u8_t, depth
+XTAL_DEF_INST_1(17, LocalVariableDec1Byte,
+		inst_u8_t, number
 );
 
 /**
@@ -426,11 +413,19 @@ XTAL_DEF_INST_2(18, LocalVariable1Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_4(19, LocalVariable1ByteX2,
+XTAL_DEF_INST_1(18, LocalVariable1Byte,
+        inst_u8_t, number
+);
+
+/**
+* \internal
+* \brief ローカル変数を取り出す。
+*
+* stack [] -> [value]
+*/
+XTAL_DEF_INST_2(19, LocalVariable1ByteX2,
         inst_u8_t, number1,
-		inst_u8_t, depth1,
-        inst_u8_t, number2,
-		inst_u8_t, depth2
+        inst_u8_t, number2
 );
 
 /**
@@ -450,9 +445,8 @@ XTAL_DEF_INST_2(20, LocalVariable2Byte,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_2(21, SetLocalVariable1Byte,
-        inst_u8_t, number,
-		inst_u8_t, depth
+XTAL_DEF_INST_1(21, SetLocalVariable1Byte,
+        inst_u8_t, number
 );
 
 /**
@@ -461,11 +455,9 @@ XTAL_DEF_INST_2(21, SetLocalVariable1Byte,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_4(22, SetLocalVariable1ByteX2,
+XTAL_DEF_INST_2(22, SetLocalVariable1ByteX2,
         inst_u8_t, number1,
-		inst_u8_t, depth1,
-        inst_u8_t, number2,
-		inst_u8_t, depth2
+        inst_u8_t, number2
 );
 
 /**
@@ -679,6 +671,23 @@ XTAL_DEF_INST_0(56, Not);
 
 XTAL_DEF_INST_0(57, At);
 XTAL_DEF_INST_0(58, SetAt);
+
+/*
+enum{
+	ARITH_ADD,
+	ARITH_SUB,
+	ARITH_CAT,
+	ARITH_MUL,
+	ARITH_DIV,
+	ARITH_MOD,
+	ARITH_AND,
+	ARITH_OR,
+	ARITH_XOR,
+	ARITH_SHL,
+	ARITH_SHR,
+	ARITH_USHR
+};
+*/
 
 XTAL_DEF_INST_0(59, Add);
 XTAL_DEF_INST_0(60, Sub);

@@ -15,6 +15,49 @@ namespace xtal{
 */
 namespace debug{
 
+class CallerInfo : public Base{
+public:
+
+	/**
+	* \xbind
+	* \brief 呼び出し場所の行数を返す
+	*/
+	int_t line(){ return line_; }
+
+	/**
+	* \xbind
+	* \brief 呼び出し場所のファイル名を返す
+	*/
+	const StringPtr& file_name(){ return file_name_; }
+
+	/**
+	* \xbind
+	* \brief 呼び出し場所のファイル名を返す
+	*/
+	const StringPtr& fun_name(){ return fun_name_; }
+
+	/**
+	* \xbind
+	* \brief 呼び出し場所の変数フレームオブジェクトを返す
+	*/
+	const FramePtr& variables_frame(){ return variables_frame_; }
+
+	void set_line(int_t v){ line_ = v; }
+	void set_file_name(const StringPtr& v){ file_name_ = v; }
+	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
+	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
+
+	virtual void visit_members(Visitor& m);
+
+private:
+	int_t line_;
+	StringPtr file_name_;
+	StringPtr fun_name_;
+	FramePtr variables_frame_;
+};
+
+typedef SmartPtr<CallerInfo> CallerInfoPtr;
+
 /**
 * \xbind lib::builtin::debug
 * \xinherit lib::builtin::Any
@@ -65,6 +108,11 @@ public:
 	*/
 	const FramePtr& variables_frame(){ return variables_frame_; }
 
+	/**
+	* \brief 呼び出し元の情報を返す
+	*/
+	CallerInfoPtr caller(uint_t n);
+
 	void set_kind(int_t v){ kind_ = v; }
 	void set_line(int_t v){ line_ = v; }
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
@@ -82,6 +130,10 @@ public:
 		return xnew<HookInfo>(*this);
 	}
 
+	void set_vm(const VMachinePtr& v){ vm_ = v.get(); }
+
+	const VMachinePtr& vm(){ return to_smartptr(vm_); }
+
 private:
 
 	virtual void visit_members(Visitor& m);
@@ -93,7 +145,10 @@ private:
 	StringPtr assertion_message_;
 	AnyPtr exception_;
 	FramePtr variables_frame_;
-	VMachinePtr vm_;
+	VMachine* vm_;
+	uint_t funframe_;
+
+	friend class VMachine;
 };
 
 typedef SmartPtr<HookInfo> HookInfoPtr;

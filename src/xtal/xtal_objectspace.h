@@ -24,6 +24,8 @@ public:
 
 	void gc();
 
+	void gc2();
+
 	void full_gc();
 
 	void register_gc(RefCountingBase* p);
@@ -56,12 +58,11 @@ private:
 
 	void before_gc();
 	void after_gc();
-	uint_t swap_dead_objects(ConnectedPointer& alive, ConnectedPointer current);
+	ConnectedPointer swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end);
 	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
 	void free_objects(ConnectedPointer it, ConnectedPointer current);
 	void adjust_objects_list(ConnectedPointer it);
 
-	void sort_objects();
 	void add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v);
 
 	void expand_objects_list();
@@ -79,7 +80,7 @@ private:
 	GCObserver** gcobservers_end_;
 
 	uint_t objects_count_;
-	uint_t objects_count_limit_;
+	uint_t processed_line_;
 
 	bool disable_finalizer_;
 

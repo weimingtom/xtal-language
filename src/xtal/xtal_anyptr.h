@@ -235,7 +235,7 @@ private:
 
 };
 
-void visit_members(Visitor& m, const AnyPtr& p);
+void visit_members(Visitor& m, const Any& p);
 
 class Visitor{
 	int_t value_;
@@ -249,12 +249,12 @@ public:
 		return value_;
 	}
 
-	template<class T> Visitor operator &(const T& value){
+	template<class T> Visitor& operator &(T& value){
 		visit_members(*this, value);
 		return *this;
 	}
 
-	template<class T> Visitor operator ()(const T& value){
+	template<class T> Visitor& operator ()(T& value){
 		visit_members(*this, value);
 		return *this;
 	}
@@ -267,16 +267,6 @@ inline const AnyPtr& ap(const Any& v){
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){
 	m & value.first & value.second;
-}
-
-inline void visit_members(Visitor& m, Base* p){
-	if(p){		
-		m & ap(Any(p));
-	}
-}
-
-inline void visit_members(Visitor& m, const Any& p){
-	m & ap(p);
 }
 
 }//namespace 

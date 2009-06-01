@@ -122,7 +122,9 @@ void Base::make_instance_variables(){
 
 void Base::visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
-		m & get_class();
+		ClassPtr temp = to_smartptr(class_);
+		m & temp;
+		class_ = temp.get();
 		instance_variables_->visit_members(m);
 	}
 }

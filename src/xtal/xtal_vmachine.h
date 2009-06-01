@@ -98,6 +98,17 @@ struct Param{
 	};
 };
 
+struct f2{
+	float_t a, b;
+};
+
+inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
+	float_t aa[2] = {(float_t)ivalue(a), fvalue(a)};
+	float_t bb[2] = {(float_t)ivalue(b), fvalue(b)};
+	ret.a = aa[atype];
+	ret.b = bb[btype];
+}
+
 // XTAL仮想マシン
 class VMachine : public GCObserver{
 public:
@@ -468,6 +479,10 @@ public:
 
 public:
 
+	debug::CallerInfoPtr caller(uint_t n);
+
+public:
+
 	struct FunFrame{
 
 		// pop_ffしたときはこのpcから実行する
@@ -512,6 +527,8 @@ public:
 		// UnsuportedErrorのためにsecondary_keyをおくところ
 		Any secondary_key_;
 
+		FunFrame();
+
 		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
@@ -531,7 +548,7 @@ public:
 		void secondary_key(const Any& v){ secondary_key_ = v; }
 	};
 
-	friend void visit_members(Visitor& m, const FunFrame& v);
+	friend void visit_members(Visitor& m, FunFrame& v);
 
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
@@ -555,29 +572,9 @@ private:
 	const inst_t* call(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
 		int_t result, int_t ordered, int_t named);
 
-	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info){
-		FramePtr& scope = scopes_.push();
-		if(!scope){
-			scope = xnew<Frame>();
-			scope->orphan_ = false;
-		}
+	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info);
 
-		scope->set_info(info);
-		scope->members_.upsize_unref(info->variable_size);
-		return scope;
-	}
-
-	void pop_scope(){
-		FramePtr& scope = scopes_.pop();
-		if(scope->code()){
-			scope->add_ref_count_members(1);
-			scope->orphan_ = true;
-			scope = null;
-		}
-		else{
-			scope->members_.clear_unref();
-		}
-	}
+	void pop_scope();
 
 	FunFrame& push_ff(){
 		FunFrame* fp = fun_frames_.push();
@@ -596,8 +593,21 @@ private:
 		return fun_frames_.pop()->poped_pc; 
 	}
 
+
 	void set_ff(const inst_t* pc, const inst_t* cpc, int_t need_result_count, 
-			int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self);
+			int_t ordered_arg_count, int_t named_arg_count, const AnyPtr& self){
+		FunFrame& f = *fun_frames_.top();
+		f.need_result_count = need_result_count;
+		f.ordered_arg_count = ordered_arg_count;
+		f.named_arg_count = named_arg_count;
+		f.result_count = 0;
+		f.called_pc = cpc;
+		f.poped_pc = pc;
+		f.instance_variables = (InstanceVariables*)&empty_instance_variables;
+		f.scope_size = scopes_.size();
+		f.self(self);
+		f.fun(null);
+	}
 
 public:
 
@@ -665,19 +675,15 @@ private:
 
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
-	void set_local_variable(uint_t pos, uint_t depth, const Any& value){
-		scopes_[depth]->set_member_direct_unref(pos, ap(value));
+	AnyPtr& local_variable(uint_t pos){
+		return (AnyPtr&)variables_.at(variables_top_-pos-1);
 	}
 
-	AnyPtr& local_variable(uint_t pos, uint_t depth){
-		return scopes_[depth]->member_direct(pos);
+	void set_local_variable(uint_t pos, const Any& value){
+		(Any&)variables_.at(variables_top_-pos-1) = value;
 	}
 
 	const inst_t* send_inner(const ClassPtr& cls, const AnyPtr& ret);
-
-	const inst_t* vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
-
-	const inst_t* set_vproperty(const inst_t* pc, const inst_t* npc, const inst_t* cpc, int_t primary_key);
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 
@@ -843,6 +849,9 @@ private:
 
 	// スコープ情報
 	FastStack<FramePtr> scopes_;
+
+	xarray variables_;
+	uint_t variables_top_;
 
 	// tryの度に積まれるフレーム
 	PODStack<ExceptFrame> except_frames_;

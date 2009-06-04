@@ -24,7 +24,7 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
 			AnyPtr value = load(file_name);
 			
-			XTAL_CATCH_EXCEPT(e){ return undefined; }
+			XTAL_CHECK_EXCEPT(e){ return undefined; }
 
 			if(!raweq(value, undefined)){
 				def(primary_key, value, secondary_key, accessibility);

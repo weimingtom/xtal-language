@@ -15,12 +15,12 @@
 /**
 * \brief wchar_t使用on
 */
-#define XTAL_USE_WCHAR
+//#define XTAL_USE_WCHAR
 
 /**
 * \brief スレッド使用off
 */
-#define XTAL_NO_THREAD
+//#define XTAL_NO_THREAD
 
 /**
 * \brief pthreadのスレッドローカルストレージを使う

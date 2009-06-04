@@ -1,5 +1,6 @@
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_codebuilder.h"
 
 namespace xtal{
 
@@ -22,9 +23,26 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 
 		Xfor(var, load_path_list_){
 			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
-			AnyPtr value = load(file_name);
-			
-			XTAL_CHECK_EXCEPT(e){ return undefined; }
+
+			AnyPtr value;// = load(file_name);
+
+			if(StreamPtr fs = open(file_name, Xid(r))){
+				CodeBuilder cb;
+				if(CodePtr fun = cb.compile(fs, file_name)){
+					fs->close();
+					value = fun->call();
+				}
+				else{
+					fs->close();
+					XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
+					return null;
+				}
+			}
+			else{
+				XTAL_CATCH_EXCEPT(e){ 
+					continue; 
+				}
+			}
 
 			if(!raweq(value, undefined)){
 				def(primary_key, value, secondary_key, accessibility);
@@ -32,6 +50,7 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 			}
 		}
 
+		nocache = true;
 		return undefined;
 
 		/* 指定した名前をフォルダーとみなす

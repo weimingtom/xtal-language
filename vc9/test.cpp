@@ -139,6 +139,7 @@ int main2(int argc, char** argv){
 	test();
 
 	if(CodePtr code = Xsrc((
+		//lib.append_load_path("..");
 		foo: lib::testload;
 		foo();
 	))){

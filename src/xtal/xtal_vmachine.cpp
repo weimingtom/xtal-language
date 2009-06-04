@@ -1377,6 +1377,7 @@ XTAL_VM_LOOP
 				push(ret);
 			}
 			else{
+				XTAL_VM_CHECK_EXCEPT;
 				XTAL_VM_THROW_EXCEPT(unsupported_error(f.target(), f.primary_key(), f.secondary_key()));
 			}
 		}
@@ -2093,6 +2094,7 @@ const inst_t* VMachine::FunMember(const inst_t* pc){
 				push(ret);
 			}
 			else{
+				XTAL_VM_CHECK_EXCEPT;
 				XTAL_VM_THROW_EXCEPT(unsupported_error(f.target(), f.primary_key(), f.secondary_key()));
 			}
 		}

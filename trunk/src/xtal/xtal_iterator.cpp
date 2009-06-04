@@ -133,8 +133,9 @@ bool block_next(BlockValueHolder3& holder, bool first){
 BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const ArrayPtr& array = ptr_cast<Array>(tar);
-	if(array){ it = unchecked_ptr_cast<ArrayIter>(array->each()); }
+	if(const ArrayPtr& array = ptr_cast<Array>(tar)){ 
+		it = unchecked_ptr_cast<ArrayIter>(array->each()); 
+	}
 	else{ 
 		it = ptr_cast<ArrayIter>(tar); 
 	}
@@ -143,8 +144,9 @@ BlockValueHolder1::BlockValueHolder1(const AnyPtr& tar, bool& not_end)
 BlockValueHolder1::BlockValueHolder1(const ArrayPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const ArrayPtr& array = tar;
-	if(array){ it = unchecked_ptr_cast<ArrayIter>(array->each()); }
+	if(const ArrayPtr& array = tar){ 
+		it = unchecked_ptr_cast<ArrayIter>(array->each()); 
+	}
 }
 
 BlockValueHolder1::~BlockValueHolder1(){ 
@@ -154,8 +156,9 @@ BlockValueHolder1::~BlockValueHolder1(){
 BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const MapPtr& map = ptr_cast<Map>(tar);
-	if(map){ it = unchecked_ptr_cast<MapIter>(map->each()); }
+	if(const MapPtr& map = ptr_cast<Map>(tar)){ 
+		it = unchecked_ptr_cast<MapIter>(map->each()); 
+	}
 	else{ 
 		it = ptr_cast<MapIter>(tar); 
 	}
@@ -164,8 +167,9 @@ BlockValueHolder2::BlockValueHolder2(const AnyPtr& tar, bool& not_end)
 BlockValueHolder2::BlockValueHolder2(const MapPtr& tar, bool& not_end)
 	:target(tar){
 	not_end = tar;
-	const MapPtr& map = tar;
-	if(map){ it = unchecked_ptr_cast<MapIter>(map->each()); }
+	if(const MapPtr& map = tar){ 
+		it = unchecked_ptr_cast<MapIter>(map->each()); 
+	}
 }
 
 BlockValueHolder2::~BlockValueHolder2(){ 

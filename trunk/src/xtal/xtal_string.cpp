@@ -498,7 +498,8 @@ ID::ID(const char8_t* str)
 	for(uint_t i=0; i<n; ++i){
 		buf[i] = str[i];
 	}
-	*this = ID(buf, n);
+	//*this = ID(buf, n);
+	*this = *xtal::intern(buf, n);
 }
 
 ID::ID(const StringLiteral& str)

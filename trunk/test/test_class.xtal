@@ -83,6 +83,16 @@ filelocal::TestBar: class{
 		assert Foo::hoge==555;
 		assert Bar::foo()==555;
 	}
+	
+	boo#Test{
+		class Poo{
+			test: 10;
+			test2: test + 10;
+		}
+		
+		assert Poo::test==10;
+		assert Poo::test2==20;
+	}
 }
 
 filelocal::TestSingleton: class{

@@ -15,7 +15,7 @@
 /**
 * \brief wchar_t使用on
 */
-//#define XTAL_USE_WCHAR
+#define XTAL_USE_WCHAR
 
 /**
 * \brief スレッド使用off

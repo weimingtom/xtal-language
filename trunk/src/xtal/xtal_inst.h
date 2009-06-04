@@ -56,6 +56,7 @@ StringPtr make_inst_string(const char_t* InstName,
 						const char_t* MemberName1, int_t MemberValue1,
 						const char_t* MemberName2, int_t MemberValue2,
 						const char_t* MemberName3, int_t MemberValue3);
+						
 StringPtr make_inst_string(const char_t* InstName, 
 						const char_t* MemberName1, int_t MemberValue1,
 						const char_t* MemberName2, int_t MemberValue2,
@@ -518,7 +519,7 @@ XTAL_DEF_INST_0(27, CleanupCall);
 * stack [value1, value2, ...valueN] -> []
 */
 XTAL_DEF_INST_1(28, Return,
-        inst_u8_t, results
+        inst_u8_t, result_count
 );
 
 /**
@@ -527,8 +528,9 @@ XTAL_DEF_INST_1(28, Return,
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(29, Yield,
-        inst_u8_t, results
+XTAL_DEF_INST_2(29, Yield,
+        inst_u8_t, result_count,
+		inst_u8_t, need_result_count
 );
 
 /**

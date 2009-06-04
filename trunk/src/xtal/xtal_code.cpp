@@ -198,8 +198,8 @@ IDPtr Code::find_near_variable(const IDPtr& primary_key){
 void Code::check_implicit_lookup(){
 	ArrayPtr ary;
 	for(uint_t i=0; i<implicit_table_.size(); ++i){
-		IDPtr id = unchecked_ptr_cast<ID>(identifier_table_->at(implicit_table_[i].id));
-		AnyPtr ret = filelocal_->member(id);
+		const IDPtr& id = unchecked_ptr_cast<ID>(identifier_table_->at(implicit_table_[i].id));
+		const AnyPtr& ret = filelocal_->member(id);
 		if(raweq(undefined, ret)){
 			if(!ary){
 				ary = xnew<Array>();
@@ -214,25 +214,32 @@ void Code::check_implicit_lookup(){
 	}
 }
 
-
 StringPtr Code::inspect(){
+
+#ifdef XTAL_DEBUG
+
 	MemoryStreamPtr ms(xnew<MemoryStream>());
 
-	ms->put_s("identifier_table\n");
+	ms->put_s(XTAL_STRING("identifier_table\n"));
 	for(uint_t i=0; i<identifier_table_->size(); ++i){
+		Xf("\t%04d:%s\n")->call(i, identifier_table_->at(i));
 		ms->put_s(Xf("\t%04d:%s\n")->call(i, identifier_table_->at(i))->to_s());
 	}
 
-	ms->put_s("value_table\n");
+	ms->put_s(XTAL_STRING("value_table\n"));
 	for(uint_t i=0; i<value_table_->size(); ++i){
 		ms->put_s(Xf("\t%04d:%s\n")->call(i, value_table_->at(i))->to_s());
 	}
-
-	ms->put_s("\n");
+	
+	ms->put_s(XTAL_STRING("\n"));
 	ms->put_s(inspect_range(0, size()));
 
 	ms->seek(0);
 	return ms->get_s(ms->size());
+	
+#endif
+
+	return empty_string;
 }
 
 StringPtr Code::inspect_range(int_t start, int_t end){

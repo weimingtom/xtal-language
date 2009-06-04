@@ -14,7 +14,7 @@ void HookInfo::visit_members(Visitor& m){
 }
 
 CallerInfoPtr HookInfo::caller(uint_t n){
-	return vm_->caller(funframe_-n);
+	return ptr_cast<VMachine>(ap(vm_))->caller(funframe_-n);
 }
 
 class DebugData{
@@ -33,21 +33,33 @@ public:
 	AnyPtr assert_hook_;
 };
 
-void enable(){
+namespace{
 
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
+void debugenable(const SmartPtr<DebugData>& d){
+	bind_all();
+	set_break_point_hook(d->break_point_hook_);
+	set_call_hook(d->call_hook_);
+	set_return_hook(d->return_hook_);
+	set_throw_hook(d->throw_hook_);
+	set_assert_hook(d->assert_hook_);
+	vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
+}
 
-	d->enable_count_++;
-
-	if(d->enable_count_>=1){
-		bind_all();
-		set_break_point_hook(d->break_point_hook_);
-		set_call_hook(d->call_hook_);
-		set_return_hook(d->return_hook_);
-		set_throw_hook(d->throw_hook_);
-		set_assert_hook(d->assert_hook_);
-		vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
+void bitchange(const SmartPtr<DebugData>& d, bool b, int_t type){
+	if(b){
+		d->hook_setting_bit_ |= 1<<type;
 	}
+	else{
+		d->hook_setting_bit_ &= ~(1<<type);
+	}
+}
+
+}
+
+void enable(){
+	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
+	d->enable_count_++;
+	debugenable(d);
 }
 
 void disable(){
@@ -68,16 +80,7 @@ bool is_enabled(){
 void enable_force(int_t count){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->enable_count_ = count;
-
-	if(d->enable_count_>=1){
-		bind_all();
-		set_break_point_hook(d->break_point_hook_);
-		set_call_hook(d->call_hook_);
-		set_return_hook(d->return_hook_);
-		set_throw_hook(d->throw_hook_);
-		set_assert_hook(d->assert_hook_);
-		vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
-	}
+	debugenable(d);
 }
 
 int_t disable_force(){
@@ -101,56 +104,31 @@ uint_t hook_setting_bit(){
 void set_break_point_hook(const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->break_point_hook_ = hook;
-	if(hook){
-		d->hook_setting_bit_ |= 1<<BREAKPOINT;
-	}
-	else{
-		d->hook_setting_bit_ &= ~(1<<BREAKPOINT);
-	}
+	bitchange(d, hook, BREAKPOINT);
 }
 
 void set_call_hook(const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->call_hook_ = hook;
-	if(hook){
-		d->hook_setting_bit_ |= 1<<BREAKPOINT_CALL;
-	}
-	else{
-		d->hook_setting_bit_ &= ~(1<<BREAKPOINT_CALL);
-	}
+	bitchange(d, hook, BREAKPOINT_CALL);
 }
 
 void set_return_hook(const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->return_hook_ = hook;
-	if(hook){
-		d->hook_setting_bit_ |= 1<<BREAKPOINT_RETURN;
-	}
-	else{
-		d->hook_setting_bit_ &= ~(1<<BREAKPOINT_RETURN);
-	}
+	bitchange(d, hook, BREAKPOINT_RETURN);
 }
 
 void set_throw_hook(const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->throw_hook_ = hook;
-	if(hook){
-		d->hook_setting_bit_ |= 1<<BREAKPOINT_THROW;
-	}
-	else{
-		d->hook_setting_bit_ &= ~(1<<BREAKPOINT_THROW);
-	}
+	bitchange(d, hook, BREAKPOINT_THROW);
 }
 
 void set_assert_hook(const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	d->assert_hook_ = hook;
-	if(hook){
-		d->hook_setting_bit_ |= 1<<BREAKPOINT_ASSERT;
-	}
-	else{
-		d->hook_setting_bit_ &= ~(1<<BREAKPOINT_ASSERT);
-	}
+	bitchange(d, hook, BREAKPOINT_ASSERT);
 }
 
 const AnyPtr& break_point_hook(){

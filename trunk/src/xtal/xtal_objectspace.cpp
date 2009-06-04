@@ -131,7 +131,19 @@ void xtal::ObjectSpace::print_alive_objects(){
 		switch(type(**it)){
 		XTAL_DEFAULT;
 		XTAL_CASE(TYPE_BASE){ table["Base"]++; }
-		XTAL_CASE(TYPE_STRING){ unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; /*table[unchecked_ptr_cast<String>(ap(**it))->c_str()]++;*/ }
+		XTAL_CASE(TYPE_STRING){ 
+			unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
+			const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
+			str = str;
+			uint_t n = string_data_size(str);
+			XMallocGuard umg((n+1)*sizeof(char));
+			char* buf = (char*)umg.get();
+			for(uint_t i=0; i<n; ++i){
+				buf[i] = str[i];
+			}
+			buf[n] = 0;
+			table[buf]++;
+		}
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
 		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }

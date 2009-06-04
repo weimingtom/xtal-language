@@ -651,7 +651,7 @@ int_t CodeBuilder::compile_expr_CALL(const ExprPtr& e, const CompileInfo& info){
 
 int_t CodeBuilder::compile_expr_YIELD(const ExprPtr& e, const CompileInfo& info){
 	int_t exprs_size = compile_exprs(e->yield_exprs());
-	put_inst(InstYield(exprs_size));
+	put_inst(InstYield(exprs_size, info.need_result_count));
 	if(exprs_size>=256){
 		error_->error(lineno(), Xt("Xtal Compile Error 1022"));
 	}

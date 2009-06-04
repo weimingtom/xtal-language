@@ -15,7 +15,15 @@ AnyPtr text(const StringPtr& text){
 	return xnew<Text>(text);
 }
 
+AnyPtr text(const StringLiteral& text){
+	return xnew<Text>(text);
+}
+
 AnyPtr format(const StringPtr& text){
+	return xnew<Format>(text);
+}
+
+AnyPtr format(const StringLiteral& text){
 	return xnew<Format>(text);
 }
 
@@ -165,70 +173,6 @@ void Format::set(const StringPtr& original){
 			break;
 		}
 	}
-
-	/*
-	strings_ = xnew<Array>();
-
-	const char_t* str = original_->c_str();
-	const char_t* begin = str;
-	int_t n = 0;
-	while(true){
-		if(str[0]=='%'){
-			strings_->push_back(xnew<String>(begin, str));
-			str++;
-			
-			if(str[0]=='%'){
-				//strings_->push_back(xnew<String>('%'));
-				begin = str++;
-			}
-			else{
-				AnyPtr key;
-				if(str[0]=='('){
-					str++;
-					begin = str;
-					
-					bool number = false;
-					if('0'<=str[0] && str[0]<='9'){
-						number = true;
-					}
-
-					while(str[0]!=0 && str[0]!=')'){
-						str++;					
-					}
-
-					if(number){
-						key = xnew<String>(begin, str);
-						key = key->to_i();
-					}
-					else{
-						key = xnew<ID>(begin, str);
-						have_named_ = true;
-					}
-
-					if(str[0]==')'){
-						str++;
-					}
-				}
-				else{
-					key = n++;
-				}
-
-				FormatSpecifier fs;
-				str = fs.parse_format(str);
-				strings_->push_back(mv(key, format_specifiers_.size()));
-				format_specifiers_.push_back(fs);
-				begin = str;
-			}
-		}
-		else if(str[0]=='\0'){
-			strings_->push_back(xnew<String>(begin, str));
-			break;
-		}
-		else{
-			str++;
-		}
-	}
-	*/
 }
 
 void Format::rawcall(const VMachinePtr& vm){

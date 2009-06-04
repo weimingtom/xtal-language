@@ -241,6 +241,12 @@ public:
 
 	void clear_unref();
 
+	friend void swap(xarray& a, xarray& b){
+		std::swap(a.values_, b.values_);
+		std::swap(a.size_, b.size_);
+		std::swap(a.capa_, b.capa_);
+	}
+
 protected:
 
 	AnyPtr* values_;

@@ -180,16 +180,13 @@ public:
 	*
 	*/	
 	void set_arg_this(const AnyPtr& self){ 
-		ff().self(self);
+		ff().set_self(self);
 	}
 
 // 
 
-	/// \brief 関数を呼び出す用意をし、同時に引数を`i`個積む
-	void setup_call(int_t need_result_count = 1){
-		push_ff();
-		set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);	
-	}
+	/// \brief 関数を呼び出す用意をし、同時に引数を0個積む
+	void setup_call(int_t need_result_count = 1);
 
 //{REPEAT{{
 /*
@@ -231,7 +228,9 @@ public:
 	* \brief nameに対応する引数を得る。
 	*
 	*/
-	const AnyPtr& arg(const IDPtr& name);
+	const AnyPtr& arg(const IDPtr& name){
+		return arg_default(name, undefined);
+	}
 
 	/**
 	* \brief pos番目の引数を得る。もしpos番目の引数がなければnameに対応する引数を得る。
@@ -515,6 +514,9 @@ public:
 		// 呼び出された関数オブジェクト
 		Any fun_; 
 
+		// 関数の外側のフレームオブジェクト
+		//Any outer_;
+
 		// 関数が呼ばれたときのthisオブジェクト
 		Any self_;
 
@@ -532,6 +534,8 @@ public:
 		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
+		//const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
+		const FramePtr& outer() const{ return fun()->outer(); }
 		const AnyPtr& self() const{ return ap(self_); }
 		const AnyPtr& target() const{ return ap(target_); }
 		const IDPtr& primary_key() const{ return unchecked_ptr_cast<ID>(ap(primary_key_)); }
@@ -541,11 +545,15 @@ public:
 			return ordered_arg_count+(named_arg_count<<1);
 		}
 
-		void fun(const Any& v){ fun_ = v; }
-		void self(const Any& v){ self_ = v; }
-		void target(const Any& v){ target_ = v; }
-		void primary_key(const Any& v){ primary_key_ = v; }
-		void secondary_key(const Any& v){ secondary_key_ = v; }
+		void set_fun(const MethodPtr& v){ fun_ = v; }
+		void set_fun(){ fun_ = null; }
+		//void set_fun(const MethodPtr& v){ fun_ = v; outer_ = v->outer(); }
+		//void set_fun(){ fun_ = null; outer_ = null; }
+		//void set_outer(const Any& v){ outer_ = v; }
+		void set_self(const Any& v){ self_ = v; }
+		void set_target(const Any& v){ target_ = v; }
+		void set_primary_key(const Any& v){ primary_key_ = v; }
+		void set_secondary_key(const Any& v){ secondary_key_ = v; }
 	};
 
 	friend void visit_members(Visitor& m, FunFrame& v);
@@ -605,8 +613,8 @@ private:
 		f.poped_pc = pc;
 		f.instance_variables = (InstanceVariables*)&empty_instance_variables;
 		f.scope_size = scopes_.size();
-		f.self(self);
-		f.fun(null);
+		f.set_self(self);
+		f.set_fun();
 	}
 
 public:
@@ -624,11 +632,11 @@ public:
 	}
 
 	const FramePtr& outer(){ 
-		return ff().fun()->outer(); 
+		return ff().outer(); 
 	}
 
 	const FramePtr& prev_outer(){ 
-		return prev_ff().fun()->outer(); 
+		return prev_ff().outer(); 
 	}
 
 	const CodePtr& code(){ 
@@ -809,6 +817,8 @@ public:
 	
 	const inst_t* OpAddConstantInt(const inst_t* pc1, const inst_t* pc2, int_t op, Any& a, int_t constant);
 	const inst_t* OpAddConstantInt(const inst_t* pc, int_t op, int_t constant);
+	
+	const inst_t* OpArith(const inst_t* pc, int_t optype);
 
 	const inst_t* OpAdd(const inst_t* pc, int_t op);
 	const inst_t* OpSub(const inst_t* pc, int_t op);
@@ -836,6 +846,7 @@ private:
 
 	const inst_t* resume_pc_;
 	int_t yield_result_count_;
+	int_t yield_need_result_count_;
 
 	const inst_t* throw_pc_;
 
@@ -863,12 +874,6 @@ private:
 	int_t hook_setting_bit_;
 
 	int_t thread_yield_count_;
-
-public:
-
-	void make_procedure(const VMachinePtr& vm);
-
-	void swap_procedure(const VMachinePtr& vm);
 
 protected:
 

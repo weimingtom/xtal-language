@@ -62,18 +62,6 @@ inline InstanceVariables* Any::instance_variables() const{
 	return &empty_instance_variables;
 }
 
-inline const ClassPtr& Any::get_class() const{
-	int_t t = type(*this);
-	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
-	return cpp_class(*classdata[t]);
-}
-
-inline bool Any::is(const AnyPtr& klass) const{
-	const ClassPtr& my_class = get_class();
-	if(raweq(my_class, klass)) return true;
-	return cache_is(my_class, klass);
-}
-
 inline void Any::visit_members(Visitor& m) const{
 	if(type(*this)>=TYPE_BASE){
 		rcpvalue(*this)->visit_members(m); 

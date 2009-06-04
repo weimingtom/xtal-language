@@ -85,19 +85,37 @@ void benchmark(const char* file, const AnyPtr& arg){
 }
 
 void debughook(const debug::HookInfoPtr& info){
-	//FramePtr frame = info->variables_frame();
-	//Xfor3(key1st, key2nd, value, frame->members()){
-	//	key1st->p();
-	//}
+
+	// ブレーク位置のローカル変数フレームを取得する
+	FramePtr frame = info->variables_frame();
+
+	// ローカル変数をイテレートする
+	Xfor3(key1st, key2nd, value, frame->members()){
+		// key1stにプライマリキー
+		// key2ndにセカンダリキー(基本的にundefinedなので無視してかまわない)
+		// valueに値が入る
+
+		key1st->p(); // key1stをプリントする
+	}
 
 	for(uint_t i=0;; ++i){
 		// 呼び出し元情報を取得する
 		if(debug::CallerInfoPtr caller = info->caller(i)){
+
+			// 呼び出し元のローカル変数フレームを取得する
 			FramePtr frame = caller->variables_frame();
 			while(frame){
+
+				// ローカル変数をイテレートする
 				Xfor3(key1st, key2nd, value, frame->members()){
-					key1st->p();
+					// key1stにプライマリキー
+					// key2ndにセカンダリキー(基本的にundefinedなので無視してかまわない)
+					// valueに値が入る
+
+					key1st->p(); // key1stをプリントする
 				}
+
+				// 外側のスコープのローカル変数フレームを取得する
 				frame = frame->outer();
 			}
 
@@ -115,21 +133,10 @@ int main2(int argc, char** argv){
 	
 	using namespace std;
 
-	//enable_debug();
-	//debug()->set_throw_hook(fun(&debug_throw));
-
-	//test();
-
-   // lib()->member( Xid(Foo) );
-    //AnyPtr foo = xnew<Class>();
-    //lib()->def(Xid(Foo), foo);
-
-    XTAL_CATCH_EXCEPT(e){
-		cout << e->to_s()->c_str() << endl;
-    } 
-
-	debug::enable();
+	//debug::enable();
 	//debug::set_return_hook(fun(&debughook));
+
+	test();
 
 	if(CodePtr code = Xsrc((
 	class Foo{
@@ -218,7 +225,12 @@ foo: 10;
 	//*/
 
 	//*
+#ifdef XTAL_USE_WCHAR
+	CodePtr code = compile_file("../utf16le-test/test.xtal_");
+#else
 	CodePtr code = compile_file("../test/test.xtal_");
+#endif
+
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 		return 1;
@@ -231,7 +243,12 @@ foo: 10;
 		return 1;
 	}
 
+#ifdef XTAL_USE_WCHAR
+	lib()->member("test")->send("run_dir", "../utf16le-test");
+#else
 	lib()->member("test")->send("run_dir", "../test");
+#endif
+
 	//lib()->member("test")->send("run_file", "../test/test_xpeg.xtal");
 	//lib()->member("test")->send("print_result");
 	//*/

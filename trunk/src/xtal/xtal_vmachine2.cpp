@@ -16,7 +16,7 @@ VMachine::VMachine(){
 	resume_pc_ = 0;
 	disable_debug_ = false;
 
-	variables_.resize(10000);
+	variables_.resize(16);
 	variables_top_ = 0;
 }
 
@@ -63,54 +63,52 @@ void VMachine::FunFrame::set_null(){
 	xtal::set_null(secondary_key_);
 }
 
+void VMachine::setup_call(int_t need_result_count){
+	push_ff();
+	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);	
+}
+	
 //{REPEAT{{
 /*
 void VMachine::setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	#REPEAT#push_arg(a`i+1`);# 
 }
 */
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 ){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
 }
 
 void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);
+	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
 }
@@ -273,16 +271,6 @@ const AnyPtr& VMachine::arg(int_t pos){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count)
 		return get(f.args_stack_size()-1-pos);
-	return undefined;
-}
-
-const AnyPtr& VMachine::arg(const IDPtr& name){
-	FunFrame& f = ff();
-	for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
-		if(raweq(get(sz*2-1-(i*2+0)), name)){
-			return get(sz*2-1-(i*2+1));
-		}
-	}
 	return undefined;
 }
 
@@ -500,6 +488,7 @@ const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm,
 	ff().called_pc = pc;
 	resume_pc_ = 0;
 	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+	adjust_result(vm->ordered_arg_count()+vm->named_arg_count()*2, yield_need_result_count_);
 	execute_inner(ff().called_pc);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 	return resume_pc_;
@@ -915,66 +904,6 @@ void VMachine::print_info(){
 void visit_members(Visitor& m, VMachine::FunFrame& v){
 	m & v.fun_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
-
-void VMachine::make_procedure(const VMachinePtr& vm){
-	/*
-	reset();
-
-	{
-		FunFrame* f = vm->fun_frames_.pop();
-		ScopeInfo* s = vm->scopes_.pop();
-		vm->make_outer_outer();
-		vm->fun_frames_.push(f);
-		vm->scopes_.push(s);
-	}
-
-	resume_pc_ = vm->resume_pc_;
-	yield_result_count_ = vm->yield_result_count_;
-
-	stack_ = vm->stack_;
-
-	fun_frames_.resize(vm->fun_frames_.size());
-	for(uint_t i=0; i<vm->fun_frames_.size(); ++i){
-		if(fun_frames_[i]){
-			*fun_frames_[i] = *vm->fun_frames_[i];
-		}
-		else{
-			void* p = xmalloc(sizeof(FunFrame));
-			fun_frames_[i] = new(p) FunFrame(*vm->fun_frames_[i]);
-		}
-	}
-
-	variables_ = vm->variables_;
-	scopes_ = vm->scopes_;
-	except_frames_ = vm->except_frames_;
-	
-	except_[0] = vm->except_[0];
-	except_[1] = vm->except_[1];
-	except_[2] = vm->except_[2];
-	*/
-}
-
-void VMachine::swap_procedure(const VMachinePtr& vm){
-	/*
-	using namespace std;
-
-	std::swap(resume_pc_, vm->resume_pc_);
-	std::swap(yield_result_count_, vm->yield_result_count_);
-
-	swap(stack_, vm->stack_);
-	swap(fun_frames_, vm->fun_frames_);
-	swap(variables_, vm->variables_);
-	swap(scopes_, vm->scopes_);
-	swap(except_frames_, vm->except_frames_);
-
-	swap(except_[0], vm->except_[0]);
-	swap(except_[1], vm->except_[1]);
-	swap(except_[2], vm->except_[2]);
-
-	swap(debug_info_, vm->debug_info_);
-	*/
-}
-
 
 }//namespace
 

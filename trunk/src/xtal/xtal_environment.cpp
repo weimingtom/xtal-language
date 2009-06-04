@@ -623,7 +623,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 	if(ret->is_open()){
 		return ret;
 	}
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")->call(Named(Xid(name), file_name))));
 	return null;
 }
 
@@ -632,22 +632,20 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 CodePtr compile_file(const StringPtr& file_name){
 	CodePtr ret;
 
-	{
-		if(StreamPtr fs = open(file_name, Xid(r))){
-			CodeBuilder cb;
-			if(CodePtr fun = cb.compile(fs, file_name)){
-				fs->close();
-				ret = fun;
-			}
-			else{
-				fs->close();
-				XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
-				return null;
-			}
+	if(StreamPtr fs = open(file_name, Xid(r))){
+		CodeBuilder cb;
+		if(CodePtr fun = cb.compile(fs, file_name)){
+			fs->close();
+			ret = fun;
 		}
 		else{
+			fs->close();
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
 			return null;
 		}
+	}
+	else{
+		return null;
 	}
 
 	full_gc();

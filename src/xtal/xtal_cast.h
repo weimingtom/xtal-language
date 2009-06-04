@@ -10,7 +10,6 @@
 namespace xtal{
 	
 struct ParamInfo;
-struct VMAndData;
 
 typedef void (*bind_class_fun_t)(const ClassPtr&);
 
@@ -109,81 +108,86 @@ CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
 template<class T>
 struct CastResult{ typedef T type; };
 
-template<class T>
-inline typename CastResult<T>::type cast(const AnyPtr& a);
-	
-template<class T>
-inline bool can_cast(const AnyPtr& a);
+/////////////////////////////////////////////////////////////////////////////
+
+template<int N, class T>
+struct UncheckedCastHelper{};
 
 template<class T>
-inline typename CastResult<T>::type unchecked_cast(const AnyPtr& a);
+struct UncheckedCastHelper<INHERITED_BASE, T>{
+	static const void* cast(const AnyPtr& a){
+		return pvalue(a);
+	}
+};
 
 template<class T>
-const ClassPtr& cpp_class();
+struct UncheckedCastHelper<INHERITED_RCBASE, T>{
+	static const void* cast(const AnyPtr& a){
+		return rcpvalue(a);
+	}
+};
+
+template<class T>
+struct UncheckedCastHelper<INHERITED_ANY, T>{
+	static const void* cast(const AnyPtr& a){
+		return &a;
+	}
+};
+
+template<class T>
+struct UncheckedCastHelper<INHERITED_ANYPTR, T>{
+	static const void* cast(const AnyPtr& a){
+		return &a;
+	}
+};
+
+template<class T>
+struct UncheckedCastHelper<INHERITED_OTHER, T>{
+	static const void* cast(const AnyPtr& a){
+		return ((SmartPtr<T>&)a).get();
+	}
+};
+
 
 /////////////////////////////////////////////////////////////////////////////
 
-// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
-template<class U, class V>
-inline const void* unchecked_cast_helper(const AnyPtr& a, const SmartPtr<U>*, const V&){
-	return &a;
-}
+template<int N, class T>
+struct GetNullHelper{};
 
-// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* unchecked_cast_helper(const AnyPtr& a, const Base*, const U*){
-	return pvalue(a);
-}
+template<class T>
+struct GetNullHelper<INHERITED_BASE, T>{
+	static const void* get(){
+		return 0;
+	}
+};
 
-// •ÏŠ·Œã‚ÌŒ^‚ªRefCountingBaseBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* unchecked_cast_helper(const AnyPtr& a, const RefCountingBase*, const U*){
-	return rcpvalue(a);
-}
+template<class T>
+struct GetNullHelper<INHERITED_RCBASE, T>{
+	static const void* get(){
+		return 0;
+	}
+};
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* unchecked_cast_helper(const AnyPtr& a, const Any*, const U*){
-	return &a;
-}
+template<class T>
+struct GetNullHelper<INHERITED_ANY, T>{
+	static const void* get(){
+		return &null;
+	}
+};
 
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
-template<class U>
-inline const void* unchecked_cast_helper(const AnyPtr& a, const void*, const U*){
-	return ((SmartPtr<U>&)a).get();
-}
+template<class T>
+struct GetNullHelper<INHERITED_ANYPTR, T>{
+	static const void* get(){
+		return &null;
+	}
+};
 
-/////////////////////////////////////////////////////////////////////////////
-
-// •ÏŠ·Œã‚ÌŒ^‚ªSmartPtr‚Ìê‡
-template<class U, class V>
-inline const void* get_null_helper(const SmartPtr<U>*, const V&){
-	return &null;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* get_null_helper(const Base*, const U*){
-	return 0;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªRefCountingBase‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* get_null_helper(const RefCountingBase*, const U*){
-	return 0;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚ğŒp³‚µ‚½Œ^‚Ìê‡
-template<class U>
-inline const void* get_null_helper(const Any*, const U*){
-	return &null;
-}
-
-// •ÏŠ·Œã‚ÌŒ^‚ªAny‚âBase‚ğŒp³‚µ‚Ä‚¢‚È‚¢Œ^‚Ìê‡
-template<class U>
-inline const void* get_null_helper(const void*, const U*){
-	return U();
-}
+template<class T>
+struct GetNullHelper<INHERITED_OTHER, T>{
+	static const void* get(){
+		return 0;
+	}
+};
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -205,6 +209,23 @@ struct CastHelper{
 };
 
 template<class T>
+struct CastHelper<T*>{
+	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
+
+	static bool can_cast(const AnyPtr& a){ 
+		return a->is(cpp_class<T>());
+	}
+
+	static T* unchecked_cast(const AnyPtr& a){ 
+		return (T*)UncheckedCastHelper<InheritedN<T>::value, T>::cast(a); 
+	}	
+
+	static T* get_null(){ 
+		return (T*)GetNullHelper<InheritedN<T>::value, T>::get(); 
+	}
+};
+
+template<class T>
 struct CastHelper<T&>{
 	// •ÏŠ·Œã‚ÌŒ^‚ªQÆ‚Ìê‡Aƒ|ƒCƒ“ƒ^Œ^‚Æ‚µ‚ÄƒLƒƒƒXƒg‚µ‚½‚ ‚ÆQÆ‚É‚·‚é
 	
@@ -218,23 +239,6 @@ struct CastHelper<T&>{
 
 	static T& get_null(){ 
 		return *CastHelper<const T*>::get_null();
-	}
-};
-
-template<class T>
-struct CastHelper<T*>{
-	// •ÏŠ·Œã‚ÌŒ^‚ªƒ|ƒCƒ“ƒ^‚Ìê‡
-
-	static bool can_cast(const AnyPtr& a){ 
-		return a->is(cpp_class<T>());
-	}
-
-	static T* unchecked_cast(const AnyPtr& a){ 
-		return (T*)unchecked_cast_helper(a, (T*)0, (T*)0); 
-	}	
-
-	static T* get_null(){ 
-		return (T*)get_null_helper((T*)0, (T*)0);
 	}
 };
 

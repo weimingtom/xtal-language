@@ -92,7 +92,7 @@ void xarray::upsize(uint_t sz){
 			capa_ = newcapa;
 		}
 		else{
-			uint_t newcapa = sz; // todo overflow check
+			uint_t newcapa = sz;
 			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
 			size_ = sz;

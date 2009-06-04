@@ -1,0 +1,34 @@
+inherit(lib::test);
+
+class lib::ReloadTestClass{
+	public _test;
+}
+
+class filelocal::ReloadTest{
+	test#Test{
+		rc: lib::ReloadTestClass();
+		rc.test = 10;
+		
+		assert rc.test ==10;
+		
+		lib::ReloadTestClass.overwrite(
+			class{
+				public _add;
+				public _test;
+				_add2;
+				
+				foo{
+					return _test + _add + _add2;
+				}
+				
+				reloaded{
+					_add2 = 20;
+				}
+			}
+		);
+		
+		rc.add = 20;
+		
+		assert rc.foo==50;
+	}
+}

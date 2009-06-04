@@ -8,8 +8,8 @@ namespace{
 
 AnyPtr abs(const AnyPtr& a){
 	switch(type(a)){XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? -ivalue(a) : a; }
-		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? -fvalue(a) : a; }
+		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? AnyPtr(-ivalue(a)) : a; }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? AnyPtr(-fvalue(a)) : a; }
 	}
 	return 0;
 }

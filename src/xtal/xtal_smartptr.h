@@ -9,6 +9,41 @@
 
 namespace xtal{
 
+template<int N, class T>
+struct ExtractSmartPtr{};
+
+template<class T>
+struct ExtractSmartPtr<INHERITED_BASE, T>{
+	static T* extract(const Any& a){
+		XTAL_ASSERT(type(a)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		XTAL_ASSERT(type(a)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
+		return (T*)pvalue(a);
+	}
+};
+
+template<class T>
+struct ExtractSmartPtr<INHERITED_RCBASE, T>{
+	static T* extract(const Any& a){
+		XTAL_ASSERT(type(a)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
+		XTAL_ASSERT(type(a)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
+		return (T*)rcpvalue(a);
+	}
+};
+
+template<class T>
+struct ExtractSmartPtr<INHERITED_ANY, T>{
+	static T* extract(const Any& a){
+		return (T*)&a;
+	}
+};
+
+template<class T>
+struct ExtractSmartPtr<INHERITED_OTHER, T>{
+	static T* extract(const Any& a){
+		return (T*)((UserTypeHolder<T>*)pvalue(a))->ptr; 
+	}
+};
+
 /**
 * \brief T型へのポインタを保持するためのスマートポインタ
 */
@@ -32,10 +67,21 @@ public:
 		T* n = (U*)0; 
 		XTAL_UNUSED_VAR(n);
 	}
-
-	SmartPtr<T>& operator =(const Null&){
-		dec_ref_count_force(*this);
-		set_null(*this);
+	
+	template<class U>
+	SmartPtr<T>& operator =(const SmartPtr<U>& p){
+		// 継承関係をここでチェックしている。
+		// ここでコンパイルエラーになる場合、
+		// ptr_cast関数等を使用して型を変換する必要がある。
+		T* n = (U*)0; 
+		XTAL_UNUSED_VAR(n);
+		
+		SmartPtr<Any>::operator =(p);
+		return *this;
+	}
+	
+	SmartPtr<T>& operator =(const NullPtr& null){
+		SmartPtr<Any>::operator =(null);
 		return *this;
 	}
 
@@ -53,18 +99,6 @@ public:
 
 	/// 特別なコンストラクタ4
 	SmartPtr(typename SmartPtrCtor4<T>::type v);
-
-public:
-
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, T* p){ 
-		set_p(*this, (Base*)p); 
-		p->inc_ref_count_force(*this);
-	}
-
-	SmartPtr(SmartPtrSelector<INHERITED_ANY>, T* p){ 
-		*(Any*)this = *(Any*)p; 
-		inc_ref_count_force(*this);
-	}
 
 private:
 
@@ -92,31 +126,13 @@ private:
 	* または独自のdeleterを定義して渡す方法をとること。
 	*/
 	SmartPtr(void*);
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, T* p);
-
-private:
-
-	T* get2(SmartPtrSelector<INHERITED_BASE>) const{ 
-		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
-		XTAL_ASSERT(type(*this)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
-		return (T*)pvalue(*this); 
-	}
-
-	T* get2(SmartPtrSelector<INHERITED_RCBASE>) const{ 
-		XTAL_ASSERT(type(*this)!=TYPE_NULL); // このアサーションで止まる場合、nullポインタが格納されている
-		XTAL_ASSERT(type(*this)!=TYPE_UNDEFINED); // このアサーションで止まる場合、undefinedが格納されている
-		return (T*)rcpvalue(*this); 
-	}
-
-	T* get2(SmartPtrSelector<INHERITED_ANY>) const{ 
-		return (T*)this; 
-	}
-
-	T* get2(SmartPtrSelector<INHERITED_OTHER>) const{ 
-		return (T*)((UserTypeHolder<T>*)pvalue(*this))->ptr; 
-	}
 
 public:
+
+	/**
+	* \brief T型へのポインタを取得する。
+	*/
+	T* get() const{ return ExtractSmartPtr<InheritedN<T>::value, T>::extract(*this); }
 
 	/**
 	* \brief ->演算子
@@ -130,11 +146,6 @@ public:
 	*/
 	T& operator *() const{ return *get(); }
 	
-	/**
-	* \brief T型へのポインタを取得する。
-	*/
-	T* get() const{ return get2(SmartPtrSelector<InheritedN<T>::value>()); }
-
 public:
 
 	SmartPtr(SmartPtrSelector<INHERITED_BASE>)
@@ -285,6 +296,11 @@ SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 /// \name オブジェクト生成
 //@{
 
+//{REPEAT{{
+/*
+*/
+//}}REPEAT}
+
 /**
 * \brief Tオブジェクトを生成する
 */
@@ -337,27 +353,36 @@ inline SmartPtr<T> xnew(const A0& a0, const A1& a1, const A2& a2, const A3& a3, 
 
 //////////////////////////////////////////////////////////////
 
-template<class T>
-inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_BASE>, const T* p){
-	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
-}
+template<int N, class T>
+struct ToSmartPtr{};
 
 template<class T>
-inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_RCBASE>, const T* p){
-	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
-}
+struct ToSmartPtr<INHERITED_BASE, T>{
+	static const SmartPtr<T>& to(const T* p){
+		return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
+	}
+};
 
 template<class T>
-inline const SmartPtr<T>& to_smartptr(SmartPtrSelector<INHERITED_ANY>, const T* p){
-	return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
-}
+struct ToSmartPtr<INHERITED_RCBASE, T>{
+	static const SmartPtr<T>& to(const T* p){
+		return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
+	}
+};
+
+template<class T>
+struct ToSmartPtr<INHERITED_ANY, T>{
+	static const SmartPtr<T>& to(const T* p){
+		return *static_cast<SmartPtr<T>*>(static_cast<Any*>(const_cast<T*>(p)));
+	}
+};
 
 /**
 * \brief T*をSmartPtr<T>に変換する関数
 */
 template<class T>
 inline const SmartPtr<T>& to_smartptr(const T* p){
-	return to_smartptr(SmartPtrSelector<InheritedN<T>::value>(), p);
+	return ToSmartPtr<InheritedN<T>::value, T>::to(p);
 }
 
 //////////////////////////////////////////////////////////////

@@ -555,7 +555,7 @@ public:
 	void release(){ impl_.release(); }
 
 	friend void swap(PODStack<T>& a, PODStack<T>& b){
-		swap(a.impl, b.impl);
+		swap(a.impl_, b.impl_);
 	}
 
 public:

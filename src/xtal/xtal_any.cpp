@@ -399,6 +399,21 @@ ArrayPtr Any::object_name_list() const{
 	return xnew<Array>();
 }
 
+StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_number) const{
+	if(code){
+		if(name_number!=0){
+			return code->identifier(name_number);
+		}
+
+		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
+			code->source_file_name(), 
+			code->compliant_lineno(code->data()+pc))->to_s();
+	}
+	else{
+		return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+	}
+}
+
 StringPtr Any::object_name() const{
 	switch(type(*this)){
 		XTAL_DEFAULT;
@@ -431,36 +446,13 @@ StringPtr Any::object_name() const{
 				return name;
 			}
 		}
-		
-		if(cls->code()){
-			if(cls->info()->name_number!=0){
-				return cls->code()->identifier(cls->info()->name_number);
-			}
 
-			// 保持していないなら、その定義位置を表示しとこう
-			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
-				cls->code()->source_file_name(), 
-				cls->code()->compliant_lineno(cls->code()->data()+cls->info()->pc))->to_s();
-		}
-		else{
-			return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
-		}
+		return defined_place_name(cls->code(), cls->info()->pc, cls->info()->name_number);
 	}
 
 	// メソッドの場合、その定義位置を表示しとこう
 	if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
-		if(mtd->code()){
-			if(mtd->info()->name_number!=0){
-				return mtd->code()->identifier(mtd->info()->name_number);
-			}
-
-			return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
-				mtd->code()->source_file_name(), 
-				mtd->code()->compliant_lineno(mtd->code()->data()+mtd->info()->pc))->to_s();
-		}
-		else{
-			return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
-		}
+		return defined_place_name(mtd->code(), mtd->info()->pc, mtd->info()->name_number);
 	}
 
 	return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
@@ -564,6 +556,18 @@ void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{
 			}
 		}
 	}
+}
+
+const ClassPtr& Any::get_class() const{
+	int_t t = type(*this);
+	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
+	return cpp_class(*classdata[t]);
+}
+
+bool Any::is(const AnyPtr& klass) const{
+	const ClassPtr& my_class = get_class();
+	if(raweq(my_class, klass)) return true;
+	return cache_is(my_class, klass);
 }
 
 }

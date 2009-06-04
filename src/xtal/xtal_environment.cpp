@@ -195,50 +195,52 @@ void set_vmachine(const VMachinePtr& vm){
 ////////////////////////////////////
 
 void* xmalloc(size_t size){
+	Environment* env = environment_;
+	
 	//full_gc();
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
 	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
-		return environment_->so_alloc_.malloc(size);
+		return env->so_alloc_.malloc(size);
 	}
 #endif
 
-	environment_->used_memory_ += size;
+	env->used_memory_ += size;
 
-	if(environment_->used_memory_>environment_->memory_threshold_){
-		environment_->object_space_.gc2();
+	if(env->used_memory_>env->memory_threshold_){
+		env->object_space_.gc2();
 
 		// メモリ使用量は閾値の半分以上
-		if(environment_->used_memory_>environment_->memory_threshold_>>1){
-			environment_->memory_threshold_ += 1024*20;
+		if(env->used_memory_>env->memory_threshold_/2){
+			env->memory_threshold_ += 1024*20;
 		}
 		else{
-			environment_->memory_threshold_ = environment_->used_memory_*2;
+			env->memory_threshold_ = env->used_memory_*2;
 		}
 	}
 
-	void* ret = environment_->setting_.allocator_lib->malloc(size);
+	void* ret = env->setting_.allocator_lib->malloc(size);
 
 	if(!ret){
-		environment_->object_space_.gc2();
-		ret = environment_->setting_.allocator_lib->malloc(size);
+		env->object_space_.gc2();
+		ret = env->setting_.allocator_lib->malloc(size);
 
 		if(!ret){
-			environment_->object_space_.full_gc();
-			ret = environment_->setting_.allocator_lib->malloc(size);
+			env->object_space_.full_gc();
+			ret = env->setting_.allocator_lib->malloc(size);
 
 			if(!ret){
-				ret = environment_->setting_.allocator_lib->out_of_memory(size);
+				ret = env->setting_.allocator_lib->out_of_memory(size);
 
 				if(!ret){
 					// だめだ。メモリが確保できない。
 					// XTAL_MEMORYまでジャンプしよう。
 
 					// XTAL_MEMORYで囲まれていない！もうどうしようもない！
-					XTAL_ASSERT(environment_->set_jmp_buf_);
+					XTAL_ASSERT(env->set_jmp_buf_);
 					
-					environment_->ignore_memory_assert_= true;
-					longjmp(environment_->jmp_buf_.buf, 1);
+					env->ignore_memory_assert_= true;
+					longjmp(env->jmp_buf_.buf, 1);
 				}
 			}
 		}
@@ -248,20 +250,21 @@ void* xmalloc(size_t size){
 } 
 
 void xfree(void* p, size_t size){
+	Environment* env = environment_;
+
 	if(!p){
 		return;
 	}
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
 	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
-		environment_->so_alloc_.free(p, size);
+		env->so_alloc_.free(p, size);
 		return;
 	}
 #endif
 
-	environment_->used_memory_ -= size;
-
-	environment_->setting_.allocator_lib->free(p, size);
+	env->used_memory_ -= size;
+	env->setting_.allocator_lib->free(p, size);
 }
 
 JmpBuf& protect(){

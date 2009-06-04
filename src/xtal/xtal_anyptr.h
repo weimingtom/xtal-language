@@ -55,6 +55,7 @@ enum InheritedEnum{
 	INHERITED_BASE,
 	INHERITED_RCBASE,
 	INHERITED_ANY,
+	INHERITED_ANYPTR,
 	INHERITED_OTHER
 };
 
@@ -64,6 +65,7 @@ struct InheritedN{
 		value = 
 			IsInherited<T, Base>::value ? INHERITED_BASE : 
 			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
+			IsInherited<T, AnyPtr>::value ? INHERITED_ANYPTR :
 			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
@@ -190,6 +192,11 @@ public:
 public:
 
 	/**
+	* \brief Any型へのポインタを取得する。
+	*/
+	Any* get() const{ return (Any*)this; }
+
+	/**
 	* \brief ->演算子
 	* スマートポインタとして扱うためにオーバーロードする。
 	*/
@@ -201,22 +208,27 @@ public:
 	*/
 	Any& operator *() const{ return *get(); }
 	
-	/**
-	* \brief T型へのポインタを取得する。
-	*/
-	Any* get() const{ return (Any*)this; }
-
 public:
 
-	struct dummy_bool_tag{ void safe_true(dummy_bool_tag){} };
-	typedef void (dummy_bool_tag::*safe_bool)(dummy_bool_tag);
+#ifdef XTAL_DEBUG
+
+	struct dummy_bool_tag{ void safe_true(){} };
+	typedef void (dummy_bool_tag::*safe_bool)();
+
+	operator safe_bool() const{
+		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
+	}
+
+#else
 
 	/**
 	* \brief booleanへの自動変換
 	*/
-	operator safe_bool() const{
-		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
+	operator bool() const{
+		return type(*this)>TYPE_FALSE;
 	}
+
+#endif
 
 	/**
 	* \biref !演算子

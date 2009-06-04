@@ -258,6 +258,10 @@ public:
 	struct noinit_t{};
 	Any(noinit_t){}
 
+private:
+
+	StringPtr defined_place_name(const CodePtr& code, int_t pc, int_t name_number) const;
+
 protected:
 
 	int_t type_;
@@ -266,8 +270,8 @@ protected:
 public:
 
 	friend uint_t rawtype(const Any& v);
-	friend AnyRawValue rawvalue(const Any& v);
-	friend void set_type_value(Any& v, int_t type, AnyRawValue value);
+	friend const AnyRawValue& rawvalue(const Any& v);
+	friend void set_type_value(Any& v, int_t type, const AnyRawValue& value);
 	friend void set_type(Any& v, int_t type);
 };
 
@@ -282,11 +286,11 @@ inline int_t type(const Any& v){
 	return rawtype(v) & TYPE_MASK; 
 }
 
-inline AnyRawValue rawvalue(const Any& v){
+inline const AnyRawValue& rawvalue(const Any& v){
 	return v.value_;
 }
 
-inline void set_type_value(Any& v, int_t type, AnyRawValue value){
+inline void set_type_value(Any& v, int_t type, const AnyRawValue& value){
 	v.type_ = type;
 	v.value_ = value;
 }
@@ -328,7 +332,7 @@ inline bool rawlt(const Any& a, const Any& b){
 		return true;
 	if(type(b)<type(a))
 		return false;
-	return rawvalue(a).ivalue<(int_t)rawvalue(b).ivalue;
+	return rawvalue(a).ivalue<rawvalue(b).ivalue;
 }
 
 inline uint_t rawbitxor(const Any& a, const Any& b){

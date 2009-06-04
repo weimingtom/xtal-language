@@ -75,8 +75,10 @@ private:
 };
 
 AnyPtr text(const StringPtr& text);
+AnyPtr text(const StringLiteral& text);
 
 AnyPtr format(const StringPtr& text);
+AnyPtr format(const StringLiteral& text);
 
 void assign_text_map(const AnyPtr& map_iter);
 

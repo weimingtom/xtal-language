@@ -167,8 +167,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 		}
 	}
 
-	VMAndData pvm(vm, data_);
-	fun_(pvm);
+	fun_(vm, data_);
 }
 
 

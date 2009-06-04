@@ -140,6 +140,12 @@ private:
 #endif
 
 #ifdef XTAL_USE_WCHAR
+#	define XTAL_L(x) L##x
+#else 
+#	define XTAL_L(x) x
+#endif
+
+#ifdef XTAL_USE_WCHAR
 #	define XTAL_STRING(x) ::xtal::StringLiteral(L##x, sizeof(L##x)/sizeof(wchar_t)-1)
 #else 
 #	define XTAL_STRING(x) ::xtal::StringLiteral(x, sizeof(x)-1)

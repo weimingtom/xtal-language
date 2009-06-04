@@ -32,7 +32,7 @@ public:
 
 	/**
 	* \xbind
-	* \brief 呼び出し場所のファイル名を返す
+	* \brief 呼び出し場所の関数名を返す
 	*/
 	const StringPtr& fun_name(){ return fun_name_; }
 
@@ -86,7 +86,7 @@ public:
 
 	/**
 	* \xbind
-	* \brief フックされた場所のファイル名を返す
+	* \brief フックされた場所の関数名を返す
 	*/
 	const StringPtr& fun_name(){ return fun_name_; }
 
@@ -130,9 +130,9 @@ public:
 		return xnew<HookInfo>(*this);
 	}
 
-	void set_vm(const VMachinePtr& v){ vm_ = v.get(); }
+	void set_vm(const VMachinePtr& v){ vm_ = v; }
 
-	const VMachinePtr& vm(){ return to_smartptr(vm_); }
+	const VMachinePtr& vm(){ return ptr_cast<VMachine>(ap(vm_)); }
 
 private:
 
@@ -145,7 +145,7 @@ private:
 	StringPtr assertion_message_;
 	AnyPtr exception_;
 	FramePtr variables_frame_;
-	VMachine* vm_;
+	Any vm_;
 	uint_t funframe_;
 
 	friend class VMachine;

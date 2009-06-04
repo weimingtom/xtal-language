@@ -139,12 +139,8 @@ int main2(int argc, char** argv){
 	test();
 
 	if(CodePtr code = Xsrc((
-	class Foo{
-foo: 10;
-	}
-
-	Foo::("f" ~ "oo").p;
-
+		foo: lib::testload;
+		foo();
 	))){
 		//code->inspect()->p();
 		code->call(4);

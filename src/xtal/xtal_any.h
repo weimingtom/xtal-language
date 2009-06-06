@@ -145,6 +145,8 @@ public:
 
 	void visit_members(Visitor& m) const;
 
+	StringPtr ask_object_name_to_parent() const;
+
 	InstanceVariables* instance_variables() const;
 
 public:

@@ -327,7 +327,7 @@ struct setter_holder{
 
 //////////////////////////////////////////////////////////////
 
-class NativeMethod : public RefCountingHaveParent{
+class NativeMethod : public HaveParentRefCountingBase{
 public:
 	enum{ TYPE = TYPE_NATIVE_METHOD };
 
@@ -393,7 +393,7 @@ struct ctor : public NativeFunPtr{
 /**
 * @brief 2重ディスパッチメソッド
 */
-class DoubleDispatchMethod : public HaveParent{
+class DoubleDispatchMethod : public HaveParentBase{
 public:
 
 	DoubleDispatchMethod(const IDPtr& primary_key)
@@ -412,7 +412,7 @@ private:
 /**
 * @brief 2重ディスパッチ関数
 */
-class DoubleDispatchFun : public HaveParent{
+class DoubleDispatchFun : public HaveParentBase{
 public:
 
 	DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
@@ -425,7 +425,7 @@ public:
 private:
 
 	virtual void visit_members(Visitor& m){
-		HaveParent::visit_members(m);
+		HaveParentBase::visit_members(m);
 		m & klass_;
 	}
 

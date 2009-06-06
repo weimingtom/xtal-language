@@ -54,7 +54,7 @@ Frame::Frame()
 	members_(0), map_members_(0), recycle_(false), orphan_(true){}
 	
 Frame::Frame(const Frame& v)
-	:HaveParent(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
+	:HaveParentBase(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
 	members_(members_), map_members_(0), recycle_(false), orphan_(true){
 
 	if(v.map_members_){
@@ -66,7 +66,7 @@ Frame::Frame(const Frame& v)
 Frame& Frame::operator=(const Frame& v){
 	if(this==&v){ return *this; }
 
-	HaveParent::operator=(v);
+	HaveParentBase::operator=(v);
 
 	outer_ = v.outer_;
 	code_ = v.code_;

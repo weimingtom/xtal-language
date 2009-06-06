@@ -99,7 +99,7 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 }
 
 void NativeMethod::visit_members(Visitor& m){
-	RefCountingHaveParent::visit_members(m);
+	HaveParentRefCountingBase::visit_members(m);
 
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
 	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));

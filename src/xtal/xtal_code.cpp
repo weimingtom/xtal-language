@@ -17,7 +17,7 @@ void filelocal_check_implicit_lookup(const AnyPtr& a){
 Code::Code()
 	:filelocal_(xnew<Class>()), source_file_name_(XTAL_STRING("<noname>")){
 	filelocal_->set_singleton();
-	filelocal_->set_object_name(Xid(filelocal));
+	filelocal_->set_object_temporary_name(Xid(filelocal));
 	filelocal_->set_object_force(500);
 	filelocal_->inherit(builtin());
 	filelocal_->def(Xid(filelocal), filelocal_);

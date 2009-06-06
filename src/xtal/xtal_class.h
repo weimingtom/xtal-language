@@ -384,9 +384,9 @@ public:
 
 	ValuesPtr child_object_name(const AnyPtr& a);
 
-	void set_object_name(const StringPtr& name);
+	void set_object_temporary_name(const StringPtr& name);
 
-	StringPtr object_name();
+	const StringPtr& object_temporary_name();
 
 	void set_object_parent(const ClassPtr& parent);
 
@@ -434,6 +434,12 @@ public:
 
 	void init_singleton(const VMachinePtr& vm);
 
+private:
+
+	const NativeFunPtr& ctor(int_t type);
+
+	const NativeFunPtr& def_ctor(int_t type, const NativeFunPtr& ctor_fun);
+
 protected:
 
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
@@ -462,8 +468,7 @@ protected:
 
 	StringPtr name_;
 
-	NativeFunPtr ctor_;
-	NativeFunPtr serial_ctor_;
+	NativeFunPtr ctor_[2];
 
 	PODArrayList<Class*> inherited_classes_;
 	CppClassSymbolData* symbol_data_;

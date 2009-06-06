@@ -26,22 +26,17 @@ public:
 
 	int_t enable_count_;
 	uint_t hook_setting_bit_;
-	AnyPtr break_point_hook_;
-	AnyPtr call_hook_;
-	AnyPtr return_hook_;
-	AnyPtr throw_hook_;
-	AnyPtr assert_hook_;
+
+	AnyPtr hooks_[BREAKPOINT_MAX];
 };
 
 namespace{
 
 void debugenable(const SmartPtr<DebugData>& d){
 	bind_all();
-	set_break_point_hook(d->break_point_hook_);
-	set_call_hook(d->call_hook_);
-	set_return_hook(d->return_hook_);
-	set_throw_hook(d->throw_hook_);
-	set_assert_hook(d->assert_hook_);
+	for(int_t i=0, size=BREAKPOINT_MAX; i<size; ++i){
+		set_hook(i, d->hooks_[i]);
+	}
 	vmachine()->set_hook_setting_bit(d->hook_setting_bit_);
 }
 
@@ -101,59 +96,55 @@ uint_t hook_setting_bit(){
 	return d->hook_setting_bit_;
 }
 
-void set_break_point_hook(const AnyPtr& hook){
+void set_hook(int_t hooktype, const AnyPtr& hook){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	d->break_point_hook_ = hook;
-	bitchange(d, hook, BREAKPOINT);
+	d->hooks_[hooktype] = hook;
+	bitchange(d, hook, hooktype);
+}
+
+const AnyPtr& hook(int_t hooktype){
+	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
+	return d->hooks_[hooktype];
+}
+
+void set_break_point_hook(const AnyPtr& hook){
+	set_hook(BREAKPOINT, hook);
 }
 
 void set_call_hook(const AnyPtr& hook){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	d->call_hook_ = hook;
-	bitchange(d, hook, BREAKPOINT_CALL);
+	set_hook(BREAKPOINT_CALL, hook);
 }
 
 void set_return_hook(const AnyPtr& hook){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	d->return_hook_ = hook;
-	bitchange(d, hook, BREAKPOINT_RETURN);
+	set_hook(BREAKPOINT_RETURN, hook);
 }
 
 void set_throw_hook(const AnyPtr& hook){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	d->throw_hook_ = hook;
-	bitchange(d, hook, BREAKPOINT_THROW);
+	set_hook(BREAKPOINT_THROW, hook);
 }
 
 void set_assert_hook(const AnyPtr& hook){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	d->assert_hook_ = hook;
-	bitchange(d, hook, BREAKPOINT_ASSERT);
+	set_hook(BREAKPOINT_ASSERT, hook);
 }
 
 const AnyPtr& break_point_hook(){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	return d->break_point_hook_;
+	return hook(BREAKPOINT);
 }
 
 const AnyPtr& call_hook(){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	return d->call_hook_;
+	return hook(BREAKPOINT_CALL);
 }
 
 const AnyPtr& return_hook(){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	return d->return_hook_;
+	return hook(BREAKPOINT_RETURN);
 }
 
 const AnyPtr& throw_hook(){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	return d->throw_hook_;
+	return hook(BREAKPOINT_THROW);
 }
 
 const AnyPtr& assert_hook(){
-	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
-	return d->assert_hook_;
+	return hook(BREAKPOINT_ASSERT);
 }
 
 }

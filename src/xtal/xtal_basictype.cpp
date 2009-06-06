@@ -140,12 +140,24 @@ bool Values::op_eq(const ValuesPtr& other){
 	return true;
 }
 
+///////////////////////////////////
+
 HaveParent::HaveParent(const HaveParent& a)
-:Base(a), parent_(0){
+:parent_(a.parent_){
+	if(parent_){
+		parent_->inc_ref_count();
+	}
 }
 
 HaveParent& HaveParent::operator=(const HaveParent& a){
-	Base::operator=(a);
+	if(parent_){
+		parent_->dec_ref_count();
+	}
+	parent_ = a.parent_;
+	if(parent_){
+		parent_->inc_ref_count();
+	}
+
 	return *this;
 }
 
@@ -181,55 +193,6 @@ void HaveParent::set_object_parent(const ClassPtr& parent){
 }
 
 void HaveParent::visit_members(Visitor& m){
-	Base::visit_members(m);
-	if(parent_){
-		ClassPtr temp = to_smartptr(parent_);
-		m & temp;
-		parent_ = temp.get();
-	}
-}	
-
-RefCountingHaveParent::RefCountingHaveParent(const RefCountingHaveParent& a)
-:RefCountingBase(a), parent_(0){
-}
-
-RefCountingHaveParent& RefCountingHaveParent::operator=(const RefCountingHaveParent& a){
-	RefCountingBase::operator=(a);
-	return *this;
-}
-
-RefCountingHaveParent::~RefCountingHaveParent(){
-	if(parent_){
-		parent_->dec_ref_count();
-	}
-}
-
-const ClassPtr& RefCountingHaveParent::object_parent(){
-	if(parent_){
-		return to_smartptr(parent_);
-	}
-	else{
-		return unchecked_ptr_cast<Class>(null);
-	}
-}
-
-void RefCountingHaveParent::set_object_parent(const ClassPtr& parent){
-	if(!parent_ || parent_->object_force()<parent->object_force()){
-		if(parent_){
-			parent_->dec_ref_count();
-		}
-
-		if(parent){
-			parent_ = parent.get();
-			parent_->inc_ref_count();
-		}
-		else{
-			parent_ = 0;
-		}
-	}
-}
-
-void RefCountingHaveParent::visit_members(Visitor& m){
 	if(parent_){
 		ClassPtr temp = to_smartptr(parent_);
 		m & temp;

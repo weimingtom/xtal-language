@@ -332,10 +332,7 @@ inline ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
 	return xnew<Values>(v1, xnew<Values>(v2));
 }
 
-/**
-* \brief スコープ的な親を認識するクラス
-*/
-class HaveParent : public Base{
+class HaveParent{
 public:
 
 	HaveParent()
@@ -347,41 +344,62 @@ public:
 
 	~HaveParent();
 
-	virtual const ClassPtr& object_parent();
-
-	virtual void set_object_parent(const ClassPtr& parent);
-
-protected:
-
-	Class* parent_;
-
-	virtual void visit_members(Visitor& m);
-};
-
-/**
-* \brief スコープ的な親を認識するクラス
-*/
-class RefCountingHaveParent : public RefCountingBase{
-public:
-
-	RefCountingHaveParent()
-		:parent_(0){}
-
-	RefCountingHaveParent(const RefCountingHaveParent& a);
-
-	RefCountingHaveParent& operator=(const RefCountingHaveParent& a);
-
-	~RefCountingHaveParent();
-
 	const ClassPtr& object_parent();
 
 	void set_object_parent(const ClassPtr& parent);
 
 	void visit_members(Visitor& m);
 
-protected:
+private:
 
 	Class* parent_;
+};
+
+/**
+* \brief スコープ的な親を認識するクラス
+*/
+class HaveParentBase : public Base{
+public:
+
+	virtual const ClassPtr& object_parent(){
+		return have_parent_.object_parent();
+	}
+
+	virtual void set_object_parent(const ClassPtr& parent){
+		have_parent_.set_object_parent(parent);
+	}
+
+protected:
+
+	HaveParent have_parent_;
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		have_parent_.visit_members(m);
+	}
+};
+
+/**
+* \brief スコープ的な親を認識するクラス
+*/
+class HaveParentRefCountingBase : public RefCountingBase{
+public:
+
+	virtual const ClassPtr& object_parent(){
+		return have_parent_.object_parent();
+	}
+
+	virtual void set_object_parent(const ClassPtr& parent){
+		have_parent_.set_object_parent(parent);
+	}
+
+	virtual void visit_members(Visitor& m){
+		have_parent_.visit_members(m);
+	}
+
+protected:
+
+	HaveParent have_parent_;
 };
 
 /**

@@ -52,6 +52,8 @@ public:
 	*/
 	virtual StringPtr get_s(uint_t length);
 
+	StringPtr get_ch();
+
 	/**
 	* \xbind
 	* \brief ストリームからすべての文字を取り出し、文字列として返す

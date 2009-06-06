@@ -391,12 +391,14 @@ ArrayPtr Any::object_name_list() const{
 		}
 		return ret;
 	}
-	else if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
-		ArrayPtr ret = xnew<Array>();
+	
+	ArrayPtr ret = xnew<Array>();
+	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 		ret->push_back(mv(cls->object_name(), null));
 		return ret;
 	}
-	return xnew<Array>();
+
+	return ret;
 }
 
 StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_number) const{
@@ -414,20 +416,7 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 	}
 }
 
-StringPtr Any::object_name() const{
-	switch(type(*this)){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_NULL){ return Xid(null); }
-		XTAL_CASE(TYPE_UNDEFINED){ return Xid(undefined); }
-		XTAL_CASE(TYPE_INT){ return Xf("%d")->call(ap(*this))->to_s(); }
-		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
-		XTAL_CASE(TYPE_FALSE){ return Xid(true); }
-		XTAL_CASE(TYPE_TRUE){ return Xid(false); }
-		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
-		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
-	}
-
-	// 親がいるなら、親が名前を知っている
+StringPtr Any::ask_object_name_to_parent() const{
 	if(const ClassPtr& parent = object_parent()){
 		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
 			if(raweq(myname->at(1), undefined)){
@@ -439,23 +428,48 @@ StringPtr Any::object_name() const{
 		}
 	}
 
-	// クラスの場合、自身が名前を保持してるかも
-	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
-		if(StringPtr name = cls->object_name()){
-			if(rawne(name, empty_string)){
-				return name;
-			}
+	return empty_string;
+}
+
+StringPtr Any::object_name() const{
+	StringPtr ret;
+
+	int iii = type(*this);
+
+	switch(type(*this)){
+		XTAL_DEFAULT;
+		XTAL_CASE(TYPE_NULL){ ret.assign_direct(Xid(null)); }
+		XTAL_CASE(TYPE_UNDEFINED){ ret.assign_direct(Xid(undefined)); }
+		XTAL_CASE(TYPE_INT){ ret.assign_direct(Xf("%d")->call(ap(*this))->to_s()); }
+		XTAL_CASE(TYPE_FLOAT){ ret.assign_direct(Xf("%g")->call(ap(*this))->to_s()); }
+		XTAL_CASE(TYPE_FALSE){ ret.assign_direct(Xid(true)); }
+		XTAL_CASE(TYPE_TRUE){ ret.assign_direct(Xid(false)); }
+		XTAL_CASE(TYPE_SMALL_STRING){ ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); }
+		XTAL_CASE(TYPE_STRING){ ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); }
+	}
+
+	do{
+		if(ret){ break; }
+
+		ret.assign_direct(ask_object_name_to_parent());
+		if(ret->data_size()!=0){ break; }
+
+		if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
+			ret = cls->object_temporary_name();
+			if(ret->data_size()!=0){ break; }
+			ret = defined_place_name(cls->code(), cls->info()->pc, cls->info()->name_number);
+			break;
 		}
 
-		return defined_place_name(cls->code(), cls->info()->pc, cls->info()->name_number);
-	}
+		if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
+			ret = defined_place_name(mtd->code(), mtd->info()->pc, mtd->info()->name_number);
+			break;
+		}
 
-	// メソッドの場合、その定義位置を表示しとこう
-	if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
-		return defined_place_name(mtd->code(), mtd->info()->pc, mtd->info()->name_number);
-	}
+		ret = Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+	}while(0);
 
-	return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+	return ret;
 }
 
 bool Any::is_inherited(const AnyPtr& klass) const{

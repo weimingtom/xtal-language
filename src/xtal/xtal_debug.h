@@ -189,6 +189,10 @@ bool is_enabled();
 
 uint_t hook_setting_bit();
 
+void set_hook(int_t hooktype, const AnyPtr& hook);
+
+const AnyPtr& hook(int_t hooktype);
+
 /**
 * \xbind lib::builtin::debug
 * \brief ブレークポイントがある度に呼び出されるフック関数を登録する

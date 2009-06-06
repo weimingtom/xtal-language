@@ -83,6 +83,11 @@ SmartPtr<Any>::~SmartPtr(){
 	dec_ref_count_force(*this);
 }	
 
+void SmartPtr<Any>::assign_direct(const SmartPtr<Any>& a){
+	copy_any(*this, a);
+	inc_ref_count_force(*this);
+}
+
 void visit_members(Visitor& m, const Any& p){
 	if(type(p)>=TYPE_BASE){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());

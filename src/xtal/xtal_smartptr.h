@@ -100,6 +100,19 @@ public:
 	/// 特別なコンストラクタ4
 	SmartPtr(typename SmartPtrCtor4<T>::type v);
 
+public:
+
+	template<class U>
+	void assign_direct(const SmartPtr<U>& a){
+		AnyPtr::assign_direct(a);
+
+		// 継承関係をここでチェックしている。
+		// ここでコンパイルエラーになる場合、
+		// ptr_cast関数等を使用して型を変換する必要がある。
+		T* n = (U*)0; 
+		XTAL_UNUSED_VAR(n);
+	}
+
 private:
 
 	/**

@@ -71,7 +71,7 @@ int_t Int_unchecked_cast(const AnyPtr& a){
 bool Float_can_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return false; }
-		XTAL_CASE(TYPE_INT){ return true; }
+		XTAL_CASE(TYPE_INT){ return false; }
 		XTAL_CASE(TYPE_FLOAT){ return true; }
 	}
 }
@@ -79,7 +79,7 @@ bool Float_can_cast(const AnyPtr& a){
 float_t Float_unchecked_cast(const AnyPtr& a){
 	switch(type(a)){
 		XTAL_DEFAULT{ return 0; }
-		XTAL_CASE(TYPE_INT){ return static_cast<float_t>(ivalue(a)); }
+		XTAL_CASE(TYPE_INT){ return 0; }
 		XTAL_CASE(TYPE_FLOAT){ return fvalue(a); }
 	}
 }

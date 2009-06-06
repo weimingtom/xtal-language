@@ -94,7 +94,7 @@ Instance::~Instance(){
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	:Frame(outer, code, info){
-	set_object_name(empty_string);
+	set_object_temporary_name(empty_string);
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
@@ -105,7 +105,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 
 Class::Class(const StringPtr& name)
 	:Frame(null, null, 0){
-	set_object_name(name);
+	set_object_temporary_name(name);
 	object_force_ = 0;
 	flags_ = 0;
 	symbol_data_ = 0;
@@ -114,7 +114,7 @@ Class::Class(const StringPtr& name)
 
 Class::Class(cpp_class_t)
 	:Frame(null, null, 0){
-	set_object_name(empty_string);
+	set_object_temporary_name(empty_string);
 	object_force_ = 0;
 	flags_ = FLAG_NATIVE;
 	symbol_data_ = 0;
@@ -218,17 +218,7 @@ void Class::inherit_first(const ClassPtr& cls){
 		return;
 	}
 
-	if(is_inherited(cls)){
-		return;
-	}
-
-	XTAL_ASSERT(cls);
-
-	cls->prebind();
-
-	inherited_classes_.push_back(cls.get());
-	cls.get()->inc_ref_count();
-	invalidate_cache_is();
+	inherit(cls);
 }
 
 void Class::inherit_strict(const ClassPtr& cls){
@@ -244,58 +234,47 @@ AnyPtr Class::inherited_classes(){
 	return xnew<ClassInheritedClassesIter>(to_smartptr(this));
 }
 
-const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_fun){
-	ctor_ = ctor_fun;
+const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_fun){
+	ctor_[type] = ctor_fun;
 	flags_ |= FLAG_NATIVE;
 	invalidate_cache_ctor();
-	return ctor_;
+	return ctor_[type];
+}
+
+const NativeFunPtr& Class::ctor(int_t type){
+	prebind();
+
+	if(cache_ctor(to_smartptr(this), type)){
+		return ctor_[type];
+	}
+
+	if(ctor_[type]){
+		return ctor_[type];
+	}
+
+	for(int_t i = inherited_classes_.size(); i>0; --i){
+		if(const NativeFunPtr& ret = inherited_classes_[i-1]->ctor(type)){
+			return ctor_[type] = ret;
+		}
+	}
+
+	return unchecked_ptr_cast<NativeMethod>(null);
+}
+
+const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_fun){
+	return def_ctor(0, ctor_fun);
 }
 
 const NativeFunPtr& Class::ctor(){
-	prebind();
-
-	if(cache_ctor(to_smartptr(this), 0)){
-		return ctor_;
-	}
-
-	if(ctor_){
-		return ctor_;
-	}
-
-	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const NativeFunPtr& ret = inherited_classes_[i-1]->ctor()){
-			return ctor_ = ret;
-		}
-	}
-
-	return unchecked_ptr_cast<NativeMethod>(null);
+	return ctor(0);
 }
 
 const NativeFunPtr& Class::def_serial_ctor(const NativeFunPtr& ctor_fun){
-	serial_ctor_ = ctor_fun;
-	flags_ |= FLAG_NATIVE;
-	invalidate_cache_ctor();
-	return serial_ctor_;
+	return def_ctor(1, ctor_fun);
 }
 
 const NativeFunPtr& Class::serial_ctor(){
-	prebind();
-
-	if(cache_ctor(to_smartptr(this), 1)){
-		return serial_ctor_;
-	}
-
-	if(serial_ctor_){
-		return serial_ctor_;
-	}
-
-	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const NativeFunPtr& ret = inherited_classes_[i-1]->serial_ctor()){
-			return serial_ctor_ = ret;
-		}
-	}
-
-	return unchecked_ptr_cast<NativeMethod>(null);
+	return ctor(1);
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
@@ -382,11 +361,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Value val = {member_size(), accessibility};
-		map_members_->insert(key, val);
-		push_back_member(value);
-		value->set_object_parent(to_smartptr(this));
-		invalidate_cache_member();
+		def(primary_key, value, secondary_key, accessibility);
 	}
 	else{
 		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->second.num))){
@@ -560,7 +535,7 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 void Class::set_object_parent(const ClassPtr& parent){
 	if(object_force_<parent->object_force()){
 		object_force_ = parent->object_force()-1;
-		HaveParent::set_object_parent(parent);
+		HaveParentBase::set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
 				member_direct(it->second.num)->set_object_parent(to_smartptr(this));
@@ -580,18 +555,7 @@ ValuesPtr Class::child_object_name(const AnyPtr& a){
 	return null;
 }
 
-StringPtr Class::object_name(){
-	if(const ClassPtr& parent = object_parent()){
-		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
-			if(raweq(myname->at(1), undefined)){
-				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
-			}
-			else{
-				return Xf("%s::%s#%s")->call(parent->object_name(), myname->at(0), myname->at(1))->to_s();
-			}
-		}
-	}
-
+const StringPtr& Class::object_temporary_name(){
 	if(name_ && name_->data_size()!=0){
 		return name_;
 	}
@@ -601,10 +565,10 @@ StringPtr Class::object_name(){
 		return name_;
 	}
 
-	return empty_string;
+	return name_;
 }
 
-void Class::set_object_name(const StringPtr& name){
+void Class::set_object_temporary_name(const StringPtr& name){
 	name_ = name;
 }
 

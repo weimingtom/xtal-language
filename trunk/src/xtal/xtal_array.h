@@ -247,6 +247,8 @@ public:
 		std::swap(a.capa_, b.capa_);
 	}
 
+	void init(const AnyPtr* values, uint_t size);
+
 protected:
 
 	AnyPtr* values_;

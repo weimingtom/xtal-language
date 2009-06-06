@@ -292,18 +292,22 @@ void ObjectSpace::uninitialize(){
 
 	}
 
-	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){
-		RefCountingBase** begin = *it;
-		RefCountingBase** current = *it;
-		RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
-		fit_simple_dynamic_pointer_array(&begin, &end, &current);
-	}
+	fit_objects_list(objects_list_begin_);
 
 	objects_list_current_ = objects_list_begin_;
 
 	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 
+}
+
+void ObjectSpace::fit_objects_list(RefCountingBase*** it){
+	for(; it!=objects_list_end_; ++it){
+		RefCountingBase** begin = *it;
+		RefCountingBase** current = *it;
+		RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
+		fit_simple_dynamic_pointer_array(&begin, &end, &current);
+	}
 }
 
 void ObjectSpace::enable_gc(){
@@ -499,6 +503,24 @@ void ObjectSpace::gc2(){
 	adjust_objects_list(end);
 }
 
+ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, ConnectedPointer current){ 
+	// 死者の中から復活した者を見つける
+	Visitor m(1);
+	bool end = false;
+	while(!end){
+		end = true;
+		for(ConnectedPointer it = alive; it!=current; ++it){
+			if((*it)->ref_count()!=0){
+				end = false;
+				(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
+				std::swap(*it, *alive++);
+			}
+		}
+	}
+
+	return alive;
+}
+
 void ObjectSpace::full_gc(){
 	if(cycle_count_!=0){ return; }
 	{
@@ -519,22 +541,7 @@ void ObjectSpace::full_gc(){
 		
 			ConnectedPointer alive = begin;
 
-			{ // 生存者を見つける
-				// 生存者と手をつないでる人も生存者というふうに関係を洗い出す
-
-				Visitor m(1);
-				bool end = false;
-				while(!end){
-					end = true;
-					for(ConnectedPointer it = alive; it!=current; ++it){
-						if((*it)->ref_count()!=0){
-							end = false;
-							(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
-							std::swap(*it, *alive++);
-						}
-					}
-				}
-			}
+			alive = find_alive_objects(alive, current);
 
 			// begin ～ aliveまでのオブジェクトは生存確定
 			// alive ～ currentまでのオブジェクトは死亡予定
@@ -567,20 +574,7 @@ void ObjectSpace::full_gc(){
 					// 参照カウンタを減らす
 					add_ref_count_objects(alive, current, -1);
 					
-					{ // 死者の中から復活した者を見つける
-						Visitor m(1);
-						bool end = false;
-						while(!end){
-							end = true;
-							for(ConnectedPointer it = alive; it!=current; ++it){
-								if((*it)->ref_count()!=0){
-									end = false;
-									(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
-									std::swap(*it, *alive++);
-								}
-							}
-						}
-					}
+					alive = find_alive_objects(alive, current);
 
 					// begin ～ aliveまでのオブジェクトは生存確定
 					// alive ～ currentまでのオブジェクトは死亡確定
@@ -614,12 +608,7 @@ void ObjectSpace::full_gc(){
 			}
 		}*/
 
-		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
-			RefCountingBase** begin = *it;
-			RefCountingBase** current = *it;
-			RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
-			fit_simple_dynamic_pointer_array(&begin, &end, &current);
-		}
+		fit_objects_list(objects_list_current_);
 		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 	}
 }

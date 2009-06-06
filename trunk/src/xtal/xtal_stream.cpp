@@ -29,13 +29,7 @@ StringPtr Stream::get_s(uint_t length){
 		return empty_string;
 
 	if(length==1){
-		char_t ch;
-		ChMaker chm;
-		while(!chm.is_completed()){
-			read(&ch, sizeof(char_t));
-			chm.add(ch);
-		}
-		return chm.to_s();
+		return get_ch();
 	}
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
@@ -43,6 +37,16 @@ StringPtr Stream::get_s(uint_t length){
 		ms->put_s(get_s(1));
 	}
 	return ms->to_s();
+}
+
+StringPtr Stream::get_ch(){
+	char_t ch;
+	ChMaker chm;
+	while(!chm.is_completed()){
+		read(&ch, sizeof(char_t));
+		chm.add(ch);
+	}
+	return chm.to_s();
 }
 
 StringPtr Stream::get_s_all(){
@@ -178,13 +182,7 @@ StringPtr PointerStream::get_s(uint_t length){
 		return empty_string;
 
 	if(length==1){
-		char_t ch;
-		ChMaker chm;
-		while(!chm.is_completed()){
-			read(&ch, sizeof(char_t));
-			chm.add(ch);
-		}
-		return chm.to_s();
+		return get_ch();
 	}
 
 	uint_t saved = pos_;

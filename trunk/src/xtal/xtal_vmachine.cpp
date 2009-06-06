@@ -610,13 +610,46 @@ const inst_t* VMachine::OpArith(const inst_t* pc, int_t optype){
 	AnyPtr& a = get(1);
 	uint_t btype = type(b)-TYPE_INT;
 	uint_t atype = type(a)-TYPE_INT;
-	uint_t abtype = atype | btype;
+
+	downsize(2);
+	AnyPtr& ret = push();
 
 #define XTAL_ARITH_CASE(at, bt, ot) XTAL_CASE(((at-TYPE_INT) | ((bt-TYPE_INT)<<1) | ((ot)<<2)))
 	
-	if(abtype<2){
+	if((atype | btype)<2){
 		switch(atype | btype<<1 | (optype&0xf)<<2){
 			XTAL_NODEFAULT;
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_ADD){ set_ivalue(ret, ivalue(a) + ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_ADD){ set_fvalue(ret, ivalue(a) + fvalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_ADD){ set_fvalue(ret, fvalue(a) + ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_ADD){ set_fvalue(ret, fvalue(a) + fvalue(b)); }
+
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_SUB){ set_ivalue(ret, ivalue(a) - ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_SUB){ set_fvalue(ret, ivalue(a) - fvalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_SUB){ set_fvalue(ret, fvalue(a) - ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_SUB){ set_fvalue(ret, fvalue(a) - fvalue(b)); }
+
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_CAT){ goto send; }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_CAT){ goto send; }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_CAT){ goto send; }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_CAT){ goto send; }
+
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_MUL){ set_ivalue(ret, ivalue(a) * ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_MUL){ set_fvalue(ret, ivalue(a) * fvalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_MUL){ set_fvalue(ret, fvalue(a) * ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_MUL){ set_fvalue(ret, fvalue(a) * fvalue(b)); }
+
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_DIV){ if(ivalue(b)==0) goto zerodiv; set_ivalue(ret, ivalue(a) / ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_DIV){ if(fvalue(b)==0) goto zerodiv; set_fvalue(ret, ivalue(a) / fvalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_DIV){ if(ivalue(b)==0) goto zerodiv; set_fvalue(ret, fvalue(a) / ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_DIV){ if(fvalue(b)==0) goto zerodiv; set_fvalue(ret, fvalue(a) / fvalue(b)); }
+
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_MOD){ if(ivalue(b)==0) goto zerodiv; set_ivalue(ret, ivalue(a) % ivalue(b)); }
+			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_MOD){ if(fvalue(b)==0) goto zerodiv; set_fvalue(ret, std::fmodf((float_t)ivalue(a), fvalue(b))); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_MOD){ if(ivalue(b)==0) goto zerodiv; set_fvalue(ret, std::fmodf(fvalue(a), (float_t)ivalue(b))); }
+			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_MOD){ if(fvalue(b)==0) goto zerodiv; set_fvalue(ret, std::fmodf(fvalue(a), fvalue(b))); }
+
+/*
 			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_ADD){ set_ivalue(a, ivalue(a) + ivalue(b)); }
 			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_ADD){ set_fvalue(a, ivalue(a) + fvalue(b)); }
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_ADD){ set_fvalue(a, fvalue(a) + ivalue(b)); }
@@ -647,6 +680,8 @@ const inst_t* VMachine::OpArith(const inst_t* pc, int_t optype){
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_MOD){ if(ivalue(b)==0) goto zerodiv; set_fvalue(a, std::fmodf(fvalue(a), (float_t)ivalue(b))); }
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_MOD){ if(fvalue(b)==0) goto zerodiv; set_fvalue(a, std::fmodf(fvalue(a), fvalue(b))); }
 
+*/
+/*
 			XTAL_ARITH_CASE(TYPE_INT,TYPE_INT,ARITH_AND){ set_ivalue(a, ivalue(a) & ivalue(b)); }
 			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_AND){ goto send; }
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_AND){ goto send; }
@@ -676,12 +711,14 @@ const inst_t* VMachine::OpArith(const inst_t* pc, int_t optype){
 			XTAL_ARITH_CASE(TYPE_INT,TYPE_FLOAT,ARITH_USHR){ goto send; }
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_INT,ARITH_USHR){ goto send; }
 			XTAL_ARITH_CASE(TYPE_FLOAT,TYPE_FLOAT,ARITH_USHR){ goto send; }
+			*/
+/*
 		}
-		downsize(1);
 		return pc;
 	}
 
 send:
+	upsize(2);
 	return inner_send_from_stack(pc, 1, id_[optype>=ARITH_ADD_ASSIGN ? IDOp::id_op_add_assign+optype : IDOp::id_op_add+optype], 1, 0);
 
 zerodiv:
@@ -1620,10 +1657,12 @@ XTAL_VM_LOOP
 	}
 
 	XTAL_VM_CASE(Add){ // 2
+		//XTAL_VM_CONTINUE(OpArith(pc+inst.ISIZE, ARITH_ADD));
 		XTAL_VM_CONTINUE(OpAdd(pc+inst.ISIZE, IDOp::id_op_add));
 	}
 
 	XTAL_VM_CASE(Sub){ // 2
+		//XTAL_VM_CONTINUE(OpArith(pc+inst.ISIZE, ARITH_SUB));
 		XTAL_VM_CONTINUE(OpSub(pc+inst.ISIZE, IDOp::id_op_sub));
 	}
 
@@ -1632,14 +1671,17 @@ XTAL_VM_LOOP
 	}
 
 	XTAL_VM_CASE(Mul){ // 2
+		//XTAL_VM_CONTINUE(OpArith(pc+inst.ISIZE, ARITH_MUL));
 		XTAL_VM_CONTINUE(OpMul(pc+inst.ISIZE, IDOp::id_op_mul));
 	}
 
 	XTAL_VM_CASE(Div){ // 2
+		//XTAL_VM_CONTINUE(OpArith(pc+inst.ISIZE, ARITH_DIV));
 		XTAL_VM_CONTINUE(OpDiv(pc+inst.ISIZE, IDOp::id_op_div));
 	}
 
 	XTAL_VM_CASE(Mod){ // 2
+		//XTAL_VM_CONTINUE(OpArith(pc+inst.ISIZE, ARITH_MOD));
 		XTAL_VM_CONTINUE(OpMod(pc+inst.ISIZE, IDOp::id_op_mod));
 	}
 

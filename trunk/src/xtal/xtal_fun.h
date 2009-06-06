@@ -77,7 +77,7 @@ private:
 	virtual void visit_members(Visitor& m);
 };
 
-class InstanceVariableGetter : public RefCountingHaveParent{
+class InstanceVariableGetter : public HaveParentRefCountingBase{
 public:
 	enum{ TYPE = TYPE_IVAR_GETTER };
 
@@ -90,7 +90,7 @@ public:
 	ClassInfo* info_;
 };
 
-class InstanceVariableSetter : public RefCountingHaveParent{
+class InstanceVariableSetter : public HaveParentRefCountingBase{
 public:
 	enum{ TYPE = TYPE_IVAR_SETTER };
 
@@ -108,7 +108,7 @@ public:
 * \xinherit lib::builtin::Any
 * \brief メソッドオブジェクト
 */
-class Method : public HaveParent{
+class Method : public HaveParentBase{
 public:
 
 	Method(const FramePtr& outer, const CodePtr& code, FunInfo* info);
@@ -144,7 +144,7 @@ protected:
 	FunInfo* info_;
 	
 	virtual void visit_members(Visitor& m){
-		HaveParent::visit_members(m);
+		HaveParentBase::visit_members(m);
 		m & outer_ & code_;
 	}
 

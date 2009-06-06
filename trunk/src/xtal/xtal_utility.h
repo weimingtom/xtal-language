@@ -87,7 +87,7 @@ private:
 #endif
 
 #ifdef XTAL_DEBUG
-#	define XTAL_NODEFAULT default: XTAL_ASSERT(false); break
+#	define XTAL_NODEFAULT break; default: XTAL_ASSERT(false); break
 #else
 #	ifdef _MSC_VER
 #		define XTAL_NODEFAULT default: __assume(0)
@@ -106,7 +106,7 @@ private:
 
 #define XTAL_DISALLOW_COPY_AND_ASSIGN(ClassName) ClassName(const ClassName&); void operator=(const ClassName&)
 
-#define XTAL_DEFAULT default:
+#define XTAL_DEFAULT break; default:
 #define XTAL_CASE(key) break; case key:
 #define XTAL_CASE1(key) break; case key:
 #define XTAL_CASE2(key, key2) break; case key:case key2:
@@ -648,7 +648,9 @@ enum BreakPointKind{
 	/**
 	* \brief 表明ブレークポイント
 	*/
-	BREAKPOINT_ASSERT
+	BREAKPOINT_ASSERT,
+
+	BREAKPOINT_MAX
 };
 
 /**

@@ -38,6 +38,8 @@ private:
 	
 	const char_t* parse_format_inner(const char_t* str);
 
+	const char_t* parse_format_digit(const char_t* str, int_t& digit);
+
 };
 
 class Format : public Base{

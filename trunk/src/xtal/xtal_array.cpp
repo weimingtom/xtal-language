@@ -16,32 +16,28 @@ xarray::xarray(uint_t size){
 	}
 }
 
-xarray::xarray(const AnyPtr* first, const AnyPtr* end){
-	int_t size = end-first;
-
+void xarray::init(const AnyPtr* values, uint_t size){
 	capa_ = size;
 	size_ = size;
-	values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
-
-	for(int_t i=0; i<size; ++i){
-		copy_any(values_[i], first[i]);
-		inc_ref_count_force(values_[i]);
-	}
-}
-
-xarray::xarray(const xarray& v){
-	size_ = capa_ = ((xarray&)v).size();
 	if(capa_!=0){
 		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
-		
-		for(uint_t i=0; i<size_; ++i){
-			copy_any(values_[i], v.values_[i]);
+
+		for(uint_t i=0; i<size; ++i){
+			copy_any(values_[i], values[i]);
 			inc_ref_count_force(values_[i]);
 		}
 	}
 	else{
 		values_ = 0;
 	}
+}
+
+xarray::xarray(const AnyPtr* first, const AnyPtr* end){
+	init(first, end-first);
+}
+
+xarray::xarray(const xarray& v){
+	init(((xarray&)v).data(), ((xarray&)v).size());
 }
 
 xarray& xarray::operator =(const xarray& v){

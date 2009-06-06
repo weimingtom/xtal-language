@@ -444,6 +444,8 @@ public:
 	// スタックに値vをプッシュする。
 	void push(const Any& v){ stack_.push_unchecked(v); }
 
+	AnyPtr& push(){ return (AnyPtr&)stack_.push_unchecked(); }
+
 	// スタックに値vをプッシュする。
 	void push(const Named& v){ push(v.name); push(v.value); }
 

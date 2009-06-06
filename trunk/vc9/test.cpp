@@ -140,8 +140,8 @@ int main2(int argc, char** argv){
 
 	if(CodePtr code = Xsrc((
 		//lib.append_load_path("..");
-		foo: lib::testload;
-		foo();
+		//foo: lib::testload;
+		//foo();
 	))){
 		//code->inspect()->p();
 		code->call(4);

@@ -92,6 +92,19 @@ bool string_is_ch(const char_t* str, uint_t size){
 }
 
 
+struct Conv{
+	XMallocGuard memory;
+	Conv(const char8_t* str);
+};
+
+Conv::Conv(const char8_t* str)
+	:memory(std::strlen((char*)str)){
+	char_t* buf = (char_t*)memory.get();
+	for(uint_t i=0; i<memory.size(); ++i){
+		buf[i] = str[i];
+	}
+}
+
 void StringEachIter::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & ss_;
@@ -185,13 +198,8 @@ String::String(const char_t* str)
 
 String::String(const char8_t* str)
 :Any(noinit_t()){
-	uint_t n = std::strlen((char*)str);
-	XMallocGuard umg(n*sizeof(char_t));
-	char_t* buf = (char_t*)umg.get();
-	for(uint_t i=0; i<n; ++i){
-		buf[i] = str[i];
-	}
-	init_string(buf, n);
+	Conv conv(str);
+	init_string((char_t*)conv.memory.get(), conv.memory.size());
 }
 
 String::String(const char_t* str, uint_t size)
@@ -301,12 +309,7 @@ const char_t* String::c_str(){
 }
 
 const char_t* String::data(){
-	if(type(*this)==TYPE_STRING){
-		return ((StringData*)rcpvalue(*this))->buf();
-	}
-	else{
-		return value_.svalue;
-	}
+	return c_str();
 }
 
 uint_t String::data_size(){
@@ -492,14 +495,8 @@ ID::ID(const char_t* str)
 
 ID::ID(const char8_t* str)	
 	:String(noinit_t()){	
-	uint_t n = std::strlen((char*)str);
-	XMallocGuard umg(n*sizeof(char_t));
-	char_t* buf = (char_t*)umg.get();
-	for(uint_t i=0; i<n; ++i){
-		buf[i] = str[i];
-	}
-	//*this = ID(buf, n);
-	*this = *xtal::intern(buf, n);
+	Conv conv(str);
+	*this = *xtal::intern((char_t*)conv.memory.get(), conv.memory.size());
 }
 
 ID::ID(const StringLiteral& str)

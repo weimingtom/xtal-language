@@ -89,6 +89,25 @@ const char_t* FormatSpecifier::parse_format(const char_t* str){
 	return str;
 }
 
+const char_t* FormatSpecifier::parse_format_digit(const char_t* str, int_t& digit){
+	digit = 0;
+	while(str[0]){
+		if(str[0]>='0' && str[0]<= '9'){
+			digit *= 10;
+			digit += str[0]-'0';
+			buf_[pos_++] = *str++; 
+			if(pos_ == BUF_MAX){
+				break;
+			}
+		}
+		else{
+			break;
+		}
+	}
+
+	return str;
+}
+
 const char_t* FormatSpecifier::parse_format_inner(const char_t* str){
 
 	while(str[0]){
@@ -103,41 +122,15 @@ const char_t* FormatSpecifier::parse_format_inner(const char_t* str){
 		break;
 	}
 	
-	width_ = 0;
-	while(str[0]){
-		if(str[0]>='0' && str[0]<= '9'){
-			width_ *= 10;
-			width_ += str[0]-'0';
-			buf_[pos_++] = *str++; 
-			if(pos_ == BUF_MAX){
-				return str;
-			}
-		}
-		else{
-			break;
-		}
-	}
+	str = parse_format_digit(str, width_);
+	if(pos_ == BUF_MAX){ return str; }
 
 	if(str[0]=='.'){	
 		buf_[pos_++] = *str++; 
-		if(pos_ == BUF_MAX){
-			return str;
-		}
+		if(pos_ == BUF_MAX){ return str; }
 		
-		precision_ = 0;
-		while(str[0]){
-			if(str[0]>='0' && str[0]<= '9'){
-				precision_ *= 10;
-				precision_ += str[0]-'0';
-				buf_[pos_++] = *str++; 
-				if(pos_ == BUF_MAX){
-					return str;
-				}
-			}
-			else{
-				break;
-			}
-		}
+		str = parse_format_digit(str, precision_);
+		if(pos_ == BUF_MAX){ return str; }
 	}
 
 	char_t type = *str;

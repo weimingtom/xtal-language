@@ -14,7 +14,7 @@ namespace xtal{
 * \xinherit lib::builtin::Any
 * \brief ƒtƒŒ[ƒ€
 */
-class Frame : public HaveParent{
+class Frame : public HaveParentBase{
 public:
 	
 	Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info);
@@ -161,7 +161,7 @@ protected:
 protected:
 
 	virtual void visit_members(Visitor& m){
-		HaveParent::visit_members(m);
+		HaveParentBase::visit_members(m);
 		m & outer_ & code_;
 
 		for(uint_t i=0; i<members_.size(); ++i){

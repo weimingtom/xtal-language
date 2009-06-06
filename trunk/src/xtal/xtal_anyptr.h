@@ -137,6 +137,10 @@ public:
 	
 	~SmartPtr();
 
+public:
+
+	void assign_direct(const SmartPtr<Any>& a);
+
 protected:
 
 	struct special_ctor_t{};

@@ -30,7 +30,7 @@ public:
 
 	CodePtr compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
-	void adjust_result(int_t need_result_count, int_t result_count);
+	void adjust_values(int_t need_result_count, int_t result_count);
 
 	inst_address_t calc_address(const inst_t* pc, inst_address_t address);
 	void opt_jump();
@@ -40,49 +40,53 @@ public:
 	void set_jump(int_t offset, int_t labelno);
 	void process_labels();
 
-	bool put_local_code(const IDPtr& var);
-	bool put_set_local_code(const IDPtr& var);
-	void put_define_local_code(const IDPtr& var, const ExprPtr& val = null);
-
-
-	void put_send_code(const AnyPtr& var, const ExprPtr& secondary_key, 
-		int_t need_result_count, int_t ordered, int_t named, int_t flags);
-
-	void put_set_send_code(const AnyPtr& var, const ExprPtr& secondary_key, int_t flags);
-
 	void put_member_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
 	void put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key);
 
 	int_t lookup_instance_variable(const IDPtr& key);
-	void put_set_instance_variable_code(const IDPtr& var);
-	void put_instance_variable_code(const IDPtr& var);
+	void put_set_instance_variable_code(int_t value, const IDPtr& var);
+	void put_instance_variable_code(int_t result, const IDPtr& var);
 	void put_val_code(const AnyPtr& val);
-	void put_if_code(const ExprPtr& cond, int_t label_false);
+	void put_if_code(const ExprPtr& cond, int_t label_false, int_t stack_top);
 	void break_off(int_t to);
-	
-	struct CompileInfo{
-		int_t need_result_count;
-		bool tail;
 
-		CompileInfo(int_t need_result_count = 1, bool tail = false)
-			:need_result_count(need_result_count), tail(tail){}
-	};
+	int_t make_result_number(int_t stack_top, int_t result, int_t result_count);
+	int_t compile_bin2(const ExprPtr& e, int_t stack_top, int_t result);
 
-	bool compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret);
-	void compile_expr(const AnyPtr& p, const CompileInfo& info = CompileInfo());
-	int_t compile_exprs(const ExprPtr& e);
+	int_t compile_member(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, int_t flags, int_t stack_top, int_t result);
+
+	bool compile_expr(const AnyPtr& p, int_t stack_top, int_t result, int_t result_count, AnyPtr& ret);
+
+	int_t compile_expr(const AnyPtr& p, int_t stack_top, int_t result, int_t result_count = 1);
+	int_t compile_expr(const AnyPtr& p, int_t& stack_top);
+
 	void compile_stmt(const AnyPtr& p);	
 
 	void compile_bin(const ExprPtr& e);
 	void compile_comp_bin(const ExprPtr& e);
-	void compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label);
-	void compile_op_assign(const ExprPtr& e);
-	void compile_incdec(const ExprPtr& e);
-	void compile_loop_control_statement(const ExprPtr& e);
-	void compile_class(const ExprPtr& e, const IDPtr& id = empty_id);
-	void compile_fun(const ExprPtr& e, const IDPtr& id = empty_id);
+	int_t compile_comp_bin2(const ExprPtr& e, int_t stack_top, int_t result);
 
-	int_t compile_e(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_send(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, const ExprPtr& args, const ExprPtr& eargs, int_t flags, int_t stack_top, int_t result, int_t result_count);
+
+	int_t compile_property(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, int_t flags, int_t stack_top, int_t result, int_t result_count = 1);
+	int_t compile_set_property(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, const AnyPtr& set, int_t flags, int_t stack_top, int_t result, int_t result_count = 1);
+
+	int_t compile_call(int_t target, int_t self, const ExprPtr& args, const ExprPtr& eargs, int_t flags, int_t stack_top, int_t result, int_t result_count);
+	void compile_lassign(int_t target, const IDPtr& var);
+	void put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, inst_t label_true, int_t label_false, int_t stack_top);
+	void put_bin(int_t result, const ExprPtr& e, int_t a, int_t b, int_t stack_top);
+
+	void compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label, int_t stack_top);
+	void compile_op_assign(const ExprPtr& e, int_t stack_top);
+	void put_incdec(const ExprPtr& e, int_t ret, int_t target, int_t stack_top);
+	void compile_incdec(const ExprPtr& e, int_t stack_top);
+	void compile_loop_control_statement(const ExprPtr& e);
+	void compile_class(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id = empty_id);
+	int_t compile_fun(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id = empty_id);
+
+	int_t compile_e(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+
+	bool is_comp_bin(const ExprPtr& e);
 
 	AnyPtr do_expr(const AnyPtr& e);
 
@@ -94,10 +98,6 @@ public:
 	}
 	
 	int_t code_size();
-
-	struct Scope{
-		
-	};
 			
 	struct FunFrame{
 		int_t stack_count;
@@ -149,7 +149,6 @@ public:
 			bool initialized;
 			bool referenced;
 			bool assigned;
-			bool removed;
 			int_t accessibility;
 			int_t number;
 		};
@@ -185,6 +184,7 @@ public:
 		int_t depth;
 		int_t pos;
 		int_t vpos;
+		bool out_of_fun;
 	};
 
 	VarFrame& var_frame(const LVarInfo& vi){
@@ -261,96 +261,96 @@ private:
 public:
 
 //{STMT_DECLS{{
-	int_t compile_expr_LIST(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NULL(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_UNDEFINED(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_TRUE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_FALSE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CALLEE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_THIS(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CURRENT_CONTEXT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NUMBER(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_STRING(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ARRAY(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MAP(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_EXPR_VALUES(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ADD(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SUB(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CAT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MUL(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_DIV(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MOD(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_AND(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_OR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_XOR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SHL(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SHR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_USHR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_EQ(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_LT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_LE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_GT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_GE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_RAWEQ(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_RAWNE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_IN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NIN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_IS(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NIS(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ANDAND(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_OROR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CATCH(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_POS(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NEG(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_COM(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_NOT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_RANGE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_FUN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CLASS(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ONCE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_IVAR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_LVAR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_AT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_Q(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MEMBER(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MEMBER_Q(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_PROPERTY(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_PROPERTY_Q(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CALL(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_INC(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_DEC(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ADD_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SUB_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CAT_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MUL_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_DIV_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MOD_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_AND_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_OR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_XOR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SHL_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SHR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_USHR_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_RETURN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_YIELD(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ASSERT(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_THROW(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_TRY(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_IF(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_FOR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_MDEFINE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_ASSIGN(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_DEFINE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CDEFINE_MEMBER(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CDEFINE_IVAR(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_BREAK(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_CONTINUE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_BRACKET(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SCOPE(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_SWITCH(const ExprPtr& e, const CompileInfo& info);
-	int_t compile_expr_TOPLEVEL(const ExprPtr& e, const CompileInfo& info);
+	int_t compile_expr_LIST(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NULL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_UNDEFINED(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_TRUE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_FALSE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CALLEE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_THIS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CURRENT_CONTEXT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_STRING(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ARRAY(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MAP(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_VALUES(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ADD(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SUB(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CAT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MUL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_DIV(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MOD(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_AND(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_OR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_XOR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SHL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SHR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_USHR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_EQ(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_LT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_LE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_GT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_GE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_RAWEQ(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_RAWNE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_IN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NIN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_IS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NIS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ANDAND(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_OROR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CATCH(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_POS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NEG(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_COM(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_NOT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_RANGE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_FUN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CLASS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ONCE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_IVAR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_LVAR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_AT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_Q(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MEMBER(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MEMBER_Q(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_PROPERTY(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_PROPERTY_Q(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CALL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_INC(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_DEC(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ADD_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SUB_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CAT_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MUL_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_DIV_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MOD_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_AND_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_OR_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_XOR_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SHL_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SHR_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_USHR_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_RETURN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_YIELD(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ASSERT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_THROW(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_TRY(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_IF(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_FOR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_ASSIGN(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_DEFINE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CDEFINE_MEMBER(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CDEFINE_IVAR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_BREAK(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_CONTINUE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_BRACKET(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SCOPE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
+	int_t compile_expr_TOPLEVEL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 //}}STMT_DECLS}
 
 private:

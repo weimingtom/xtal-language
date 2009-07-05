@@ -1,10 +1,7 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
-#include "xtal_objectspace.h"
-#include "xtal_stringspace.h"
-#include "xtal_threadspace.h"
-#include "xtal_cache.h"
+#include "xtal_details.h"
 #include "xtal_codebuilder.h"
 #include "xtal_filesystem.h"
 
@@ -109,55 +106,16 @@ public:
 
 namespace xtal{
 
-
 void initialize_math();
 void initialize_xpeg();
 
 void bind();
 void exec_script();
 
-class Environment{
-public:
-
-	void initialize(const Setting& setting);
-	void uninitialize();
-	
-	Setting setting_;
-	ObjectSpace object_space_;	
-	StringSpace string_space_;
-	ThreadSpace thread_space_;
-	MemberCacheTable member_cache_table_;
-	MemberCacheTable2 member_cache_table2_;
-	IsCacheTable is_cache_table_;
-	CtorCacheTable ctor_cache_table_;
-
-	ClassPtr builtin_;
-	LibPtr lib_;
-
-	ArrayPtr vm_list_;
-	MapPtr text_map_;
-	MapPtr nfa_map_;
-
-	StreamPtr stdin_;
-	StreamPtr stdout_;
-	StreamPtr stderr_;
-
-	bool set_jmp_buf_;
-	bool ignore_memory_assert_;
-	JmpBuf jmp_buf_;
-
-	uint_t used_memory_;
-	uint_t memory_threshold_;
-
-#ifndef XTAL_NO_SMALL_ALLOCATOR
-	SmallObjectAllocator so_alloc_;
-#endif
-};
+XTAL_TLS_PTR(Environment) environment_;
+XTAL_TLS_PTR(VMachine) vmachine_;
 
 namespace{
-	XTAL_TLS_PTR(Environment) environment_;
-	XTAL_TLS_PTR(VMachine) vmachine_;
-
 	ThreadLib empty_thread_lib;
 	StdStreamLib empty_std_stream_lib;
 	FilesystemLib empty_filesystem_lib;
@@ -175,6 +133,10 @@ void set_environment(Environment* environment){
 
 const VMachinePtr& vmachine(){
 	return to_smartptr((VMachine*)vmachine_);
+}
+
+const VMachinePtr& vmachine_checked(){
+	return vmachine_ ? to_smartptr((VMachine*)vmachine_) : unchecked_ptr_cast<VMachine>(null);
 }
 
 void set_vmachine(const VMachinePtr& vm){
@@ -429,6 +391,12 @@ void vmachine_take_back(const VMachinePtr& vm){
 	environment->vm_list_->push_back(vm);
 }
 
+void vmachine_swap_temp(){
+	Environment* environment = xtal::environment_;
+	environment->thread_space_.swap_temp();
+}
+
+
 const IDPtr* id_op_list(){
 	return environment_->string_space_.id_op_list();
 }
@@ -444,9 +412,9 @@ void full_gc(){
 #endif
 
 #ifdef XTAL_DEBUG_PRINT
-	printf("used_memory %gKB\n", environment_->used_memory_/1024.0f);
-	environment_->object_space_.print_alive_objects();
-	environment_->so_alloc_.print();
+	//printf("used_memory %gKB\n", environment_->used_memory_/1024.0f);
+	//environment_->object_space_.print_alive_objects();
+	//environment_->so_alloc_.print();
 #endif
 
 }
@@ -491,14 +459,6 @@ void bind_all(){
 	environment_->object_space_.bind_all();
 }
 
-const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	return environment_->member_cache_table2_.cache(target_class, primary_key, secondary_key, accessibility);
-}
-
-const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, int_t& accessibility){
-	return environment_->member_cache_table_.cache(target_class, primary_key, accessibility);
-}
-
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
 	return environment_->is_cache_table_.cache(target_class, klass);
 }
@@ -509,20 +469,17 @@ bool cache_ctor(const AnyPtr& target_class, int_t kind){
 
 void clear_cache(){
 	environment_->member_cache_table_.clear();
-	environment_->member_cache_table2_.clear();
 	environment_->is_cache_table_.clear();
 	environment_->ctor_cache_table_.clear();
 }
 
 void invalidate_cache_member(){
 	environment_->member_cache_table_.invalidate();
-	environment_->member_cache_table2_.invalidate();
 }
 
 void invalidate_cache_is(){
 	environment_->is_cache_table_.invalidate();
 	environment_->member_cache_table_.invalidate();
-	environment_->member_cache_table2_.invalidate();
 	environment_->ctor_cache_table_.invalidate();
 }
 

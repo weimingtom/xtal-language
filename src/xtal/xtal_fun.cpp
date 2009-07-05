@@ -198,6 +198,7 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 		else{ 
 			resume_pc_ = vm_->resume_fiber(this, resume_pc_, vm.get(), add_succ_or_fail_result);
 		}
+
 		if(resume_pc_==0){
 			vmachine_take_back(vm_);
 			vm_ = null;

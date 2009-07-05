@@ -1,6 +1,7 @@
 
 CC = g++
 OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
+#OPT = -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
 LOPT = -lpthread -lstdc++
 
 .SUFFIXES: .cpp .o 

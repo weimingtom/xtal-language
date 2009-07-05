@@ -16,6 +16,10 @@ void Iterator_block_first(const VMachinePtr& vm){
 	vm->arg_this()->rawsend(vm, Xid(block_next));
 }
 
+void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
+	cls->inherit(cls2);
+}
+
 }
 
 XTAL_PREBIND(StringEachIter){
@@ -1719,6 +1723,8 @@ void bind(){
 	it->def_fun("format", (AnyPtr (*)(const StringPtr&))&format);
 	it->def_fun("text", (AnyPtr (*)(const StringPtr&))&text);
 
+	it->def_method("inherit", &Class_inherit);
+
 	it->def("builtin", builtin());
 
 	it->def("Iterator", cpp_class<Iterator>());
@@ -1747,12 +1753,12 @@ builtin::CompileError::initialize: method(message, errors:[]){
 	Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));	
 }
 
-builtin::print: fun(...args){
-	return stdout.print(...args);
+builtin::print: fun(v){
+	return stdout.print(v);
 }
 
-builtin::println: fun(...args){
-	return stdout.println(...args);
+builtin::println: fun(v){
+	return stdout.println(v);
 }
 
 builtin::printf: fun(format_string, ...args){

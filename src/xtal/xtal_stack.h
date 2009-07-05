@@ -142,6 +142,16 @@ public:
 
 	void reserve(size_t capa);
 
+	T& get(size_t i = 0){
+		XTAL_ASSERT(i<size());
+		return *(current_-i);
+	}
+
+	T& get(size_t i, const T& v){
+		XTAL_ASSERT(i<size());
+		*(current_-i) = v;
+	}
+
 	T& operator [](size_t i){
 		XTAL_ASSERT(i<size());
 		return *(current_-i);

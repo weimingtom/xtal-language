@@ -44,7 +44,7 @@ public:
 	* \param self 可触性に影響するオブジェクト
 	* \param inherited_too 継承元クラスからもメソッド検索をするかどうか
 	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, bool inherited_too = true) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, bool inherited_too = true, bool q = false) const;
 
 	/**
 	* \brief メンバを取得する。
@@ -319,6 +319,14 @@ inline Base* pvalue(const Any& v){
 inline RefCountingBase* rcpvalue(const Any& v){ 
 	XTAL_ASSERT(type(v)>=TYPE_BASE || type(v)==TYPE_NULL); 
 	return rawvalue(v).rcpvalue; 
+}
+
+inline bool is_undefined(const Any& a){
+	return rawtype(a)==TYPE_UNDEFINED;
+}
+
+inline bool is_null(const Any& a){
+	return rawtype(a)==TYPE_NULL;
 }
 
 inline bool raweq(const Any& a, const Any& b){

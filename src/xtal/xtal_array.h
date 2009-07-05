@@ -229,7 +229,7 @@ public:
 	void reflesh(){
 		AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
 		std::memcpy(&newp[0], &values_[0], sizeof(AnyPtr)*size_);
-		capa_ = size_;	
+		capa_ = size_;
 		values_ = newp;
 	}
 
@@ -240,6 +240,8 @@ public:
 	void upsize_unref(uint_t size);
 
 	void clear_unref();
+
+	void move_unref(int_t dest, int_t src, int_t n );
 
 	friend void swap(xarray& a, xarray& b){
 		std::swap(a.values_, b.values_);

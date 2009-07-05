@@ -53,7 +53,7 @@ void ZipIter::block_break(const VMachinePtr& vm){
 	IDPtr id = Xid(block_break);
 	for(int_t i = 0, len = next_->size(); i<len; ++i){
 		vm->setup_call(0);
-		next_->at(i)->rawsend(vm, id);
+		next_->at(i)->rawsend(vm, id, undefined, true, true);
 		if(!vm->processed()){
 			vm->return_result();	
 		}
@@ -75,7 +75,7 @@ void block_break(AnyPtr& target){
 	if(target){
 		const VMachinePtr& vm = vmachine();
 		vm->setup_call(0);
-		target->rawsend(vm, Xid(block_break));
+		target->rawsend(vm, Xid(block_break), undefined, true, true);
 		if(!vm->processed()){
 			vm->return_result();
 		}

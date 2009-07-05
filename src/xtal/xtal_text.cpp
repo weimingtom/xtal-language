@@ -169,9 +169,9 @@ void Format::set(const StringPtr& original){
 }
 
 void Format::rawcall(const VMachinePtr& vm){
-	if(!have_named_){
-		vm->flatten_args();
-	}
+	//if(!have_named_){
+	//	vm->flatten_args();
+	//}
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	uint_t malloc_size = 0;
@@ -302,7 +302,7 @@ Text::Text(const StringPtr& key)
 void Text::rawcall(const VMachinePtr& vm){
 	MapPtr m = text_map();
 	if(m){
-		if(const AnyPtr& value=m->at(key_)){
+		if(AnyPtr value = m->at(key_)){
 			xnew<Format>(value->to_s())->rawcall(vm);
 			return;
 		}

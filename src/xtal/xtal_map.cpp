@@ -81,8 +81,7 @@ void Map::append(const AnyPtr& iterator){
 
 void Map::push_all(const VMachinePtr& vm){
 	for(iterator p = begin(); p!=end(); ++p){
-		vm->push(p->first);
-		vm->push(p->second);
+		vm->push_arg(ptr_cast<ID>(p->first), p->second);
 	}	
 }
 

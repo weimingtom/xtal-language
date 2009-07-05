@@ -132,6 +132,15 @@ void xarray::erase(int_t start, int_t n){
 	size_ -= n;
 }
 
+void xarray::move_unref(int_t dest, int_t src, int_t n){
+	if(n==0 || dest==src){
+		return;
+	}
+
+	std::memmove(&values_[dest], &values_[src], sizeof(AnyPtr)*n);
+}
+
+
 void xarray::insert(int_t i, const AnyPtr& v){
 	if(capa_==size_){
 		upsize(1);

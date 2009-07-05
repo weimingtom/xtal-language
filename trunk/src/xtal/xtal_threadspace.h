@@ -26,6 +26,8 @@ public:
 
 		thread_enabled_ = true;
 
+		temp_ = xnew<VMachine>();
+
 		register_vmachine();
 		xlock();
 	}
@@ -37,6 +39,7 @@ public:
 		thread_enabled_ = false;
 		thread_lib_ = 0;
 		mutex_ = null;
+		temp_ = null;
 	}
 
 	void join_all_threads(){
@@ -67,6 +70,12 @@ public:
 		}
 
 		mutex_->unlock();
+	}
+
+	void swap_temp(){
+		VMachinePtr temp = vmachine_checked();
+		set_vmachine(temp_);
+		temp_ = temp;
 	}
 
 	void register_thread(){
@@ -107,6 +116,9 @@ public:
 	}
 
 private:
+
+	VMachinePtr temp_;
+
 	int thread_count_;
 
 	MutexPtr mutex_;

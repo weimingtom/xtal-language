@@ -47,8 +47,8 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 		return null;
 	}
 
+#ifdef XTAL_DEBUG
 	IDPtr pick;
-
 	if(const ClassPtr& klass = ptr_cast<Class>(target)){
 		pick = klass->find_near_member(primary_key, secondary_key);
 		if(raweq(pick, primary_key)){
@@ -70,7 +70,9 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 			));	
 		}
 	}
-	else{
+#endif
+
+	{
 		if(rawne(secondary_key, undefined)){
 			return cpp_class<UnsupportedError>()->call(Xt("Xtal Runtime Error 1015")->call(
 				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key))

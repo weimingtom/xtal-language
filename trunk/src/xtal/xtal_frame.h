@@ -121,7 +121,6 @@ private:
 	
 	xarray members_;
 
-
 public:
 
 	struct Key{
@@ -155,7 +154,6 @@ protected:
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
 
-	bool recycle_;
 	bool orphan_;
 
 protected:
@@ -164,8 +162,10 @@ protected:
 		HaveParentBase::visit_members(m);
 		m & outer_ & code_;
 
-		for(uint_t i=0; i<members_.size(); ++i){
-			m & members_.at(i);
+		if(orphan_){
+			for(uint_t i=0; i<members_.size(); ++i){
+				m & members_.at(i);
+			}
 		}
 
 		if(map_members_){

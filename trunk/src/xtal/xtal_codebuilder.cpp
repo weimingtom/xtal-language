@@ -238,6 +238,11 @@ void CodeBuilder::opt_jump(){
 			}
 		}
 
+		int_t size = inst_size(*pc);
+		if(size==0){
+			break;
+		}
+
 		pc += inst_size(*pc);
 	}
 }
@@ -251,146 +256,11 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
 	}
 
-//*
-	if(t.op==InstLocalVariable1Byte::NUMBER){
-		if(prev_inst_op_==InstLocalVariable1Byte::NUMBER){
-			InstLocalVariable1Byte prev_inst;
-			uint_t prev_op_size = sizeof(InstLocalVariable1Byte);
-			uint_t prev_op_isize = sizeof(InstLocalVariable1Byte)/sizeof(inst_t);
-			std::memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
-			result_->code_.downsize(prev_op_isize);
-
-			prev_inst_op_ = -1;
-			put_inst(InstLocalVariable1ByteX2(prev_inst.number, ((InstLocalVariable1Byte&)t).number));
-			return;
-		}
-	}
-
-	if(t.op==InstSetLocalVariable1Byte::NUMBER){
-		if(prev_inst_op_==InstSetLocalVariable1Byte::NUMBER){
-			InstSetLocalVariable1Byte prev_inst;
-			uint_t prev_op_size = sizeof(InstSetLocalVariable1Byte);
-			uint_t prev_op_isize = sizeof(InstSetLocalVariable1Byte)/sizeof(inst_t);
-			std::memcpy(&prev_inst, &result_->code_[result_->code_.size()-prev_op_isize], prev_op_size);
-			result_->code_.downsize(prev_op_isize);
-
-			prev_inst_op_ = -1;
-			put_inst(InstSetLocalVariable1ByteX2(prev_inst.number, ((InstSetLocalVariable1Byte&)t).number));
-			return;
-		}
-	}
-//*/
-
 	prev_inst_op_ = t.op;
 
 	size_t cur = result_->code_.size();
 	result_->code_.resize(cur+sz/sizeof(inst_t));
 	std::memcpy(&result_->code_[cur], &t, sz);
-}
-
-bool CodeBuilder::put_set_local_code(const IDPtr& var){
-	LVarInfo info = var_find(var);
-	if(info.pos>=0){
-		if(entry(info).constant){
-			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
-		}
-
-		if(info.pos<=0xff && info.vpos>=0){
-			put_inst(InstSetLocalVariable1Byte(info.vpos));
-		}
-		else{
-			put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
-		}
-
-		entry(info).value = undefined;
-
-		return true;
-	}
-	else{
-		error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), var)));
-		return false;
-	}
-}
-
-void CodeBuilder::put_define_local_code(const IDPtr& var, const ExprPtr& rhs){
-	LVarInfo info = var_find(var, true);
-
-	if(info.pos>=0){
-		if(rhs){
-			AnyPtr val = entry(info).initialized ? entry(info).value : do_expr(rhs);
-
-			if(raweq(val, undefined) || entry(info).assigned){
-				if(raweq(val, undefined)){
-
-					if(rhs->itag()==EXPR_CLASS){
-						compile_class(rhs, var);
-					}
-					else if(rhs->itag()==EXPR_FUN){
-						compile_fun(rhs, var);
-					}
-					else{
-						compile_expr(rhs);
-					}
-				}
-				else{
-					put_val_code(val);
-				}
-
-				if(info.pos<=0xff && info.vpos>=0){
-					put_inst(InstSetLocalVariable1Byte(info.vpos));
-				}
-				else{
-					put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
-				}
-			}
-
-			entry(info).value = val;
-
-		}
-		else{
-			if(info.pos<=0xff && info.vpos>=0){
-				put_inst(InstSetLocalVariable1Byte(info.vpos));
-			}
-			else{
-				put_inst(InstSetLocalVariable2Byte(info.pos, info.depth));
-			}
-		}
-	}
-	else{
-		XTAL_ASSERT(false);
-	}
-}
-
-bool CodeBuilder::put_local_code(const IDPtr& var){
-	LVarInfo info = var_find(var);
-	if(info.pos>=0){
-		if(info.pos<=0xff && info.vpos>=0){
-			put_inst(InstLocalVariable1Byte(info.vpos));
-		}
-		else{
-			put_inst(InstLocalVariable2Byte(info.pos, info.depth));
-		}		
-
-		entry(info).referenced = true;
-
-		return true;
-	}
-	else{
-		int_t id = register_identifier(var);
-		put_inst(InstFilelocalVariable(id));
-		implicit_ref_map_->set_at(id, lineno());
-		return false;
-	}
-}
-
-int_t CodeBuilder::register_identifier_or_compile_expr(const AnyPtr& var){
-	if(const IDPtr& id = ptr_cast<ID>(var)){ 
-		return register_identifier(id);
-	}
-	compile_expr(ep(var)); 
-	put_inst(InstProperty(register_identifier(Xid(to_s))));
-	put_inst(InstProperty(register_identifier(Xid(intern))));
-	return 0;
 }
 
 int_t CodeBuilder::register_identifier(const IDPtr& v){
@@ -417,67 +287,6 @@ int_t CodeBuilder::append_value(const AnyPtr& v){
 	return result_->value_table_->size()-1;
 }
 
-void CodeBuilder::put_send_code(const AnyPtr& var, const ExprPtr& secondary_key, 
-	int_t need_result_count, int_t ordered, int_t named, int_t flags){
-
-	int_t key = register_identifier_or_compile_expr(var);
-
-	if(secondary_key){
-		compile_expr(secondary_key);
-		flags |= CALL_FLAG_NS;
-		put_inst(InstSend(ordered, named, need_result_count, flags, key));
-	}
-	else{
-		if(flags==0 && key!=0 && need_result_count==1 && ordered==0 && named==0){
-			put_inst(InstProperty(key));
-		}
-		else{
-			put_inst(InstSend(ordered, named, need_result_count, flags, key));
-		}
-	}
-}
-
-void CodeBuilder::put_set_send_code(const AnyPtr& var, const ExprPtr& secondary_key, int_t flags){
-	int_t key = 0;
-	if(ptr_cast<Expr>(var)){ 
-		eb_.push(KIND_STRING);
-		eb_.push(Xid(set_));
-		eb_.splice(EXPR_STRING, 2);
-		eb_.push(ep(var));
-		eb_.splice(EXPR_CAT, 2);
-		compile_expr(eb_.pop()); 
-	}
-	else{
-		key = register_identifier(Xid(set_)->cat(ptr_cast<ID>(var)));
-	}
-	
-	if(secondary_key){
-		compile_expr(secondary_key);
-		flags |= CALL_FLAG_NS;
-		put_inst(InstSend(1, 0, 0, flags, key));
-	}
-	else{
-		if(flags==0 && key!=0){
-			put_inst(InstSetProperty(key));
-		}
-		else{
-			put_inst(InstSend(1, 0, 0, flags, key));
-		}
-	}
-}
-
-void CodeBuilder::put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key){
-	int_t key = register_identifier_or_compile_expr(var);
-
-	if(secondary_key){
-		compile_expr(secondary_key);
-		put_inst(InstDefineMember(key, CALL_FLAG_NS));
-	}
-	else{
-		put_inst(InstDefineMember(key, CALL_FLAG_NONE));
-	}
-}
-
 int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 	if(!class_frames_.empty()){
 		int ret = 0;
@@ -494,12 +303,12 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 	return 0;
 }
 
-void CodeBuilder::put_set_instance_variable_code(const IDPtr& var){
-	put_inst(InstSetInstanceVariable(lookup_instance_variable(var), class_info_num()));
+void CodeBuilder::put_set_instance_variable_code(int_t value, const IDPtr& var){
+	put_inst(InstSetInstanceVariable(value, lookup_instance_variable(var), class_info_num()));
 }
 
-void CodeBuilder::put_instance_variable_code(const IDPtr& var){
-	put_inst(InstInstanceVariable(lookup_instance_variable(var), class_info_num()));
+void CodeBuilder::put_instance_variable_code(int_t result, const IDPtr& var){
+	put_inst(InstInstanceVariable(result, lookup_instance_variable(var), class_info_num()));
 }
 
 int_t CodeBuilder::reserve_label(){
@@ -556,194 +365,11 @@ void CodeBuilder::break_off(int_t n){
 	}
 }
 
-static bool is_comp_bin(const ExprPtr& e){
+bool CodeBuilder::is_comp_bin(const ExprPtr& e){
 	if(e && EXPR_EQ<=e->itag() && e->itag()<=EXPR_NIS){
 		return true;
 	}	
 	return false;
-}
-
-void CodeBuilder::put_val_code(const AnyPtr& val){
-	switch(type(val)){
-		XTAL_DEFAULT{
-			put_inst(InstValue(register_value(val)));
-		}
-
-		XTAL_CASE(TYPE_NULL){ put_inst(InstPushNull()); }
-		XTAL_CASE(TYPE_TRUE){ put_inst(InstPushTrue()); }
-		XTAL_CASE(TYPE_FALSE){ put_inst(InstPushFalse()); }
-
-		XTAL_CASE(TYPE_INT){
-			int_t value = ivalue(val);
-			if(value==(i8)value){ 
-				put_inst(InstPushInt1Byte(value));
-			}
-			else{ 
-				put_inst(InstValue(register_value(value)));
-			}
-		}
-
-		XTAL_CASE(TYPE_FLOAT){
-			float_t value = fvalue(val);
-			if(value==(i8)value){ 
-				put_inst(InstPushFloat1Byte((i8)value));
-			}
-			else{ 
-				put_inst(InstValue(register_value(value)));
-			}
-		}
-	}
-}
-
-void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_false){
-	AnyPtr value = do_expr(e);
-	if(value){
-		return;
-	}
-
-	int_t label_true = reserve_label();
-
-	if(is_comp_bin(e)){
-		if(EXPR_EQ==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfEq());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_NE==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfEq());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_LT==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfLt());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_GT==e->itag()){
-			compile_expr(e->bin_rhs());
-			compile_expr(e->bin_lhs());
-
-			put_inst(InstIfLt());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_GE==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfLt());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_LE==e->itag()){
-			compile_expr(e->bin_rhs());
-			compile_expr(e->bin_lhs());
-
-			put_inst(InstIfLt());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_RAWEQ==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfRawEq());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_RAWNE==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfRawEq());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_IN==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfIn());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_NIN==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfIn());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_IS==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfIs());
-
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-		else if(EXPR_NIS==e->itag()){
-			compile_expr(e->bin_lhs());
-			compile_expr(e->bin_rhs());
-
-			put_inst(InstIfIs());
-
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else{
-			XTAL_ASSERT(false);
-		}
-	}
-	else{
-		if(e->itag()==EXPR_NOT){
-			compile_expr(e->una_term());
-			set_jump(InstIf::OFFSET_address_false, label_true);
-			set_jump(InstIf::OFFSET_address_true, label_false);
-			put_inst(InstIf());
-		}
-		else{
-			compile_expr(e);
-			set_jump(InstIf::OFFSET_address_true, label_true);
-			set_jump(InstIf::OFFSET_address_false, label_false);
-			put_inst(InstIf());
-		}
-	}
-
-	set_label(label_true);
 }
 
 void CodeBuilder::scope_chain(int_t var_frame_size){
@@ -753,7 +379,7 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 }
 
 CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool traceless, int_t number){
-	LVarInfo ret = {0, 0, 0, 0, 0};
+	LVarInfo ret = {0, 0, 0, 0, 0, false};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
 
@@ -764,6 +390,7 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 				bool out_of_fun = (uint_t)vf.fun_frames_size!=fun_frames_.size();
 
 				if(out_of_fun || entry.initialized || define){
+					ret.out_of_fun = out_of_fun;
 					ret.var_frame = var_frames_.size()-1-i;
 					ret.entry = vf.entries.size()-1-j;
 					if(!traceless){
@@ -773,30 +400,23 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 
 					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
 						VarFrame::Entry& entry = vf.entries[k];
-						if(!entry.removed){
-							ret.pos++;
-						}
+						ret.pos++;
 					}
 
-					if(out_of_fun){
-						ret.vpos = -1;
-					}
+					ret.vpos--;
+
 					return ret;
 				}
 			}
 
-			if(!entry.removed){
-				ret.vpos++;
-			}
+			ret.vpos--;
 		}
 
 		if(vf.kind==VarFrame::FRAME){
 			for(size_t k = 0, klast = vf.entries.size(); k<klast; ++k){
 				VarFrame::Entry& entry = vf.entries[k];
-				if(!entry.removed){
-					ret.depth++;
-					break;
-				}
+				ret.depth++;
+				break;
 			}
 		}
 		else{
@@ -859,7 +479,6 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	entry.accessibility = accessibility;
 	entry.assigned = assign;
 	entry.referenced = false;
-	entry.removed = false;
 	entry.number = number;
 	vf().entries.push_back(entry);
 }
@@ -881,22 +500,6 @@ void CodeBuilder::scope_begin(){
 
 	int_t real_entry_num = vf().entries.size();
 
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		VarFrame::Entry& entry = vf().entries[i];
-
-		// 変数を消せるか調べる
-		if(entry.expr && !entry.assigned){
-			entry.value = do_expr(entry.expr);
-			if(rawne(entry.value, undefined)){
-				entry.initialized = true;
-				entry.removed = true;
-				real_entry_num--;
-
-				result_->identifier_table_->push_back(entry.name);
-			}
-		}
-	}
-
 	vf().real_entry_num = real_entry_num;
 	vf().scope_info_num = scope_info_num;
 
@@ -904,9 +507,7 @@ void CodeBuilder::scope_begin(){
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		VarFrame::Entry& entry = vf().entries[i];
-		if(!entry.removed){	
-			result_->identifier_table_->push_back(entry.name);
-		}
+		result_->identifier_table_->push_back(entry.name);
 	}
 
 	if(vf().real_entry_num!=0){
@@ -935,181 +536,207 @@ int_t CodeBuilder::code_size(){
 	return result_->code_.size();
 }
 
-void CodeBuilder::compile_bin(const ExprPtr& e){
-	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1013"));
-	}
-	
-	compile_expr(e->bin_lhs());
-	compile_expr(e->bin_rhs());
-
-	InstAdd inst;
-	inst.op += e->itag() - EXPR_ADD;
-	put_inst(inst);
-}
-
-void CodeBuilder::compile_comp_bin(const ExprPtr& e){
+void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label, int_t stack_top){
 	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
 		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
 	}
 
-	int_t label_false = reserve_label();
-	put_if_code(e, label_false);
-
-	put_inst(InstPushTrueAndSkip());
-
-	set_label(label_false);
-
-	put_inst(InstPushFalse());
-}
-
-void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label){
-	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
-	}
+	int_t target = stack_top++;
+	int_t lhs = compile_expr(e->bin_lhs(), stack_top);
+	int_t rhs = compile_expr(e->bin_rhs(), stack_top);
 	
 	{
 		int_t label_false = reserve_label();
-		put_if_code(e, label_false);
-		put_inst(InstPushTrueAndSkip());
+		put_if_code(e->itag(), target, lhs, rhs, label, label_false, stack_top);
+		put_inst(InstLoadTrueAndSkip(target));
 		set_label(label_false);
-		put_inst(InstPushFalse());
+		put_inst(InstLoadFalse(target));
 	}
 
 	int_t label_true = reserve_label();
 	set_jump(InstIf::OFFSET_address_false, label_true);
 	set_jump(InstIf::OFFSET_address_true, label);
-	put_inst(InstIf());
+	put_inst(InstIf(target, 0, 0));
 	set_label(label_true);
 
-	if(str){ compile_expr(str); }
-	else{ put_inst(InstValue(register_value(empty_string))); }
+	int_t vart = stack_top++;
+	put_inst(InstValue(vart, register_value(f)));
 
-	compile_expr(e->bin_lhs());
-	compile_expr(e->bin_rhs());
+	int_t strt = stack_top++;
+	if(str){ compile_expr(str, stack_top, strt); }
+	else{ put_inst(InstValue(strt, register_value(empty_string))); }
+	
+	int_t lhst = stack_top++;
+	put_inst(InstCopy(lhst, lhs));
 
-	if(mes){ compile_expr(mes); }
-	else{ put_inst(InstValue(register_value(empty_string))); }
+	int_t rhst = stack_top++;
+	put_inst(InstCopy(rhst, rhs));
 
-	put_inst(InstValue(register_value(f)));
-	put_inst(InstCall(4, 0, 1, 0));
-	put_inst(InstAssert());
+	int_t mest = stack_top++;
+	if(mes){ compile_expr(mes, stack_top, mest); }
+	else{ put_inst(InstValue(mest, register_value(empty_string))); }
+
+	put_inst(InstCall(target, 1, vart, 0, vart+1, 4, 0, 0));
+	put_inst(InstAssert(target));
+}	
+
+void CodeBuilder::put_bin(int_t result, const ExprPtr& e, int_t a, int_t b, int_t stack_top){
+	int_t tag = e->itag();
+	if(tag>=EXPR_ADD && tag<=EXPR_MOD){	
+		put_inst(InstArith(result, ARITH_ADD + tag - EXPR_ADD, a, b, stack_top));
+		return;
+	}
+
+	if(tag>=EXPR_ADD_ASSIGN && tag<=EXPR_MOD_ASSIGN){	
+		put_inst(InstArith(result, ARITH_ADD_ASSIGN + tag - EXPR_ADD_ASSIGN, a, b, stack_top));
+		return;
+	}
+
+	if(tag>=EXPR_AND && tag<=EXPR_USHR){	
+		put_inst(InstBitwise(result, BITWISE_AND + tag - EXPR_AND, a, b, stack_top));
+		return;
+	}
+
+	if(tag>=EXPR_AND_ASSIGN && tag<=EXPR_USHR_ASSIGN){	
+		put_inst(InstBitwise(result, BITWISE_AND_ASSIGN + tag - EXPR_AND_ASSIGN, a, b, stack_top));
+		return;
+	}
 }
 
-void CodeBuilder::compile_op_assign(const ExprPtr& e){
+void CodeBuilder::compile_op_assign(const ExprPtr& e, int_t stack_top){
 	ExprPtr lhs = e->bin_lhs();
 	ExprPtr rhs = e->bin_rhs();
 
-	InstAddAssign inst;
-	inst.op += e->itag() - EXPR_ADD_ASSIGN;
-
 	if(lhs->itag()==EXPR_LVAR){
-		put_local_code(lhs->lvar_name());
-		compile_expr(rhs);
-		put_inst(inst);
-		put_set_local_code(lhs->lvar_name());
+		int_t a = compile_expr(lhs, stack_top);
+		int_t b = compile_expr(rhs, stack_top);
+		if(a<0){
+			put_bin(a, e, a, b, stack_top);
+		}
+		else{
+			put_bin(a, e, a, b, stack_top);
+			compile_lassign(a, lhs->lvar_name());
+		}
 	}
 	else if(lhs->itag()==EXPR_IVAR){
-		put_instance_variable_code(lhs->ivar_name());
-		compile_expr(rhs);
-		put_inst(inst);
-		put_set_instance_variable_code(lhs->ivar_name());
+		int_t a = compile_expr(lhs, stack_top);
+		int_t b = compile_expr(rhs, stack_top);
+		int_t target = stack_top++;
+		put_bin(target, e, a, b, stack_top);
+		put_set_instance_variable_code(target, lhs->ivar_name());
 	}
 	else if(lhs->itag()==EXPR_PROPERTY){
-		compile_expr(lhs->property_term());
-		put_inst(InstDup());
-		put_send_code(lhs->property_name(), lhs->property_ns(), 1, 0, 0, CALL_FLAG_NONE);
-		compile_expr(rhs);
-		put_inst(inst);
-		put_inst(InstInsert1());
-		put_set_send_code(lhs->property_name(), lhs->property_ns(), CALL_FLAG_NONE);
+		AnyPtr sec;
+
+		int_t term = compile_expr(lhs->property_term(), stack_top);
+
+		if(lhs->property_ns()){
+			sec = compile_expr(lhs->property_ns(), stack_top);
+		}
+
+		int_t value = compile_expr(rhs, stack_top);
+		int_t target = stack_top++;
+
+		compile_property(term, lhs->property_name(), sec, 0, stack_top, target);
+		put_bin(target, e, target, value, stack_top);
+		compile_set_property(term, lhs->property_name(), sec, target, 0, stack_top, target, 0);
 	}
 	else if(lhs->itag()==EXPR_PROPERTY_Q){
-		compile_expr(lhs->property_term());
-		put_inst(InstDup());
-		put_send_code(lhs->property_name(), lhs->property_ns(), 1, 0, 0, CALL_FLAG_Q);
-		compile_expr(rhs);
-		put_inst(inst);
-		put_inst(InstInsert1());
-		put_set_send_code(lhs->property_name(), lhs->property_ns(), CALL_FLAG_Q);
+		AnyPtr sec;
+
+		int_t term = compile_expr(lhs->property_term(), stack_top);
+
+		if(lhs->property_ns()){
+			sec = compile_expr(lhs->property_ns(), stack_top);
+		}
+
+		int_t value = compile_expr(rhs, stack_top);
+		int_t target = stack_top++;
+
+		compile_property(term, lhs->property_name(), sec, MEMBER_FLAG_Q_BIT, stack_top, target);
+		put_bin(target, e, target, value, stack_top);
+		compile_set_property(term, lhs->property_name(), sec, target, MEMBER_FLAG_Q_BIT, stack_top, target, 0);
 	}
 	else if(lhs->itag()==EXPR_AT){
-		compile_expr(lhs->bin_lhs());
-		put_inst(InstDup());
-		compile_expr(lhs->bin_rhs());
-		put_inst(InstDup());
-		put_inst(InstInsert2());
-		put_inst(InstAt());
-		compile_expr(rhs);
-		put_inst(inst);
-		put_inst(InstInsert2());
-		put_inst(InstSetAt());	
+		int_t var = compile_expr(lhs->bin_lhs(), stack_top);
+		int_t key = compile_expr(lhs->bin_rhs(), stack_top);
+		int_t value = compile_expr(rhs, stack_top);
+		int_t target = stack_top++;
+
+		put_inst(InstAt(target, var, key, stack_top));
+		put_bin(value, e, target, value, stack_top);
+		//put_inst(InstArith(value, ARITH_ADD_ASSIGN + e->itag() - EXPR_ADD_ASSIGN, target, value, stack_top));
+		put_inst(InstSetAt(var, key, value, stack_top));
 	}
+
 }
 
-void CodeBuilder::compile_incdec(const ExprPtr& e){
+void CodeBuilder::put_incdec(const ExprPtr& e, int_t ret, int_t target, int_t stack_top){
+	if(e->itag()==EXPR_INC)
+		put_inst(InstInc(ret, target, stack_top));
+	else
+		put_inst(InstDec(ret, target, stack_top));
+}
+
+void CodeBuilder::compile_incdec(const ExprPtr& e, int_t stack_top){
 	ExprPtr term = e->una_term();
 
 	InstInc inst;
-	inst.op += e->itag() - EXPR_INC;
+	inst.op += e->itag()-(e->itag()-EXPR_INC);
 
 	if(term->itag()==EXPR_LVAR){
-		LVarInfo info = var_find(term->lvar_name());
-		if(info.pos>=0){
-			if(info.pos>=256 || info.vpos<0){
-				put_local_code(term->lvar_name());
-				put_inst(inst);
-				put_set_local_code(term->lvar_name());
-			}
-			else{
-				if(e->itag() == EXPR_INC){
-					put_inst(InstLocalVariableInc1Byte(info.vpos));
-				}
-				else{
-					put_inst(InstLocalVariableDec1Byte(info.vpos));
-				}
-				put_inst(InstSetLocalVariable1Byte(info.vpos));
-			}
-
-			entry(info).value = undefined;
-
+		int_t a = compile_expr(term, stack_top);
+		if(a<0){
+			put_incdec(e, a, a, stack_top);
 		}
 		else{
-			error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), term->lvar_name())));
+			put_incdec(e, a, a, stack_top);
+			compile_lassign(a, term->lvar_name());
 		}
-
 	}
 	else if(term->itag()==EXPR_IVAR){
-		put_instance_variable_code(term->ivar_name());
-		put_inst(inst);
-		put_set_instance_variable_code(term->ivar_name());
+		int_t a = compile_expr(term, stack_top);
+		put_incdec(e, a, a, stack_top);
+		put_set_instance_variable_code(a, term->ivar_name());
 	}
 	else if(term->itag()==EXPR_PROPERTY){
-		compile_expr(term->property_term());
-		put_inst(InstDup());
-		put_send_code(term->property_name(), term->property_ns(), 1, 0, 0, CALL_FLAG_NONE);
-		put_inst(inst);
-		put_inst(InstInsert1());
-		put_set_send_code(term->property_name(), term->property_ns(), CALL_FLAG_NONE);
+		AnyPtr sec;
+
+		int_t nterm = compile_expr(term->property_term(), stack_top);
+
+		if(term->property_ns()){
+			sec = compile_expr(term->property_ns(), stack_top);
+		}
+
+		int_t target = stack_top++;
+
+		compile_property(nterm, term->property_name(), sec, 0, stack_top, target);
+		put_incdec(e, target, target, stack_top);
+		compile_set_property(nterm, term->property_name(), sec, target, 0, stack_top, target, 0);
 	}
 	else if(term->itag()==EXPR_PROPERTY_Q){
-		compile_expr(term->property_term());
-		put_inst(InstDup());
-		put_send_code(term->property_name(), term->property_ns(), 1, 0, 0, CALL_FLAG_Q);
-		put_inst(inst);
-		put_inst(InstInsert1());
-		put_set_send_code(term->property_name(), term->property_ns(), CALL_FLAG_Q);
+		AnyPtr sec;
+
+		int_t nterm = compile_expr(term->property_term(), stack_top);
+
+		if(term->property_ns()){
+			sec = compile_expr(term->property_ns(), stack_top);
+		}
+
+		int_t target = stack_top++;
+
+		compile_property(nterm, term->property_name(), sec, MEMBER_FLAG_Q_BIT, stack_top, target);
+		put_incdec(e, target, target, stack_top);
+		compile_set_property(nterm, term->property_name(), sec, target, MEMBER_FLAG_Q_BIT, stack_top, target, 0);
 	}
 	else if(term->itag()==EXPR_AT){
-		compile_expr(term->bin_lhs());
-		put_inst(InstDup());
-		compile_expr(term->bin_rhs());
-		put_inst(InstDup());
-		put_inst(InstInsert2());
-		put_inst(InstAt());
-		put_inst(inst);
-		put_inst(InstInsert2());
-		put_inst(InstSetAt());		
+		int_t var = compile_expr(term->bin_lhs(), stack_top);
+		int_t key = compile_expr(term->bin_rhs(), stack_top);
+		int_t target = stack_top++;
+
+		put_inst(InstAt(target, var, key, stack_top));
+		put_incdec(e, target, target, stack_top);
+		put_inst(InstSetAt(var, key, target, stack_top));
 	}
 }
 
@@ -1165,7 +792,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	}
 }
 
-void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
+void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id){
 	{
 		fun_frames_.push();	
 		ff().labels.clear();
@@ -1265,7 +892,12 @@ void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 	}
 
 	// 継承
-	int_t mixins = compile_exprs(e->class_mixins());
+	int_t mixins = 0;
+	int_t mixin_base = stack_top;
+	Xfor(v, e->class_mixins()){
+		compile_expr(v, stack_top+mixins+1, stack_top+mixins);
+		mixins++;
+	}
 
 	// 変数フレームを作成
 	var_begin(VarFrame::CLASS);
@@ -1321,31 +953,31 @@ void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 	}
 
 
-	put_inst(InstClassBegin(class_info_num));
+	put_inst(InstClassBegin(class_info_num, mixin_base));
 	result_->class_info_table_.push_back(info);
 
 	{
 		int_t number = 0;
 		Xfor(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
-			if(v1->itag()==EXPR_CDEFINE_MEMBER){					
-				AnyPtr val;
-				if(!compile_expr(v1->cdefine_member_term(), CompileInfo(), val)){
-					compile_expr(v1->cdefine_member_term());
-				}
+			if(v1->itag()==EXPR_CDEFINE_MEMBER){				
+				compile_expr(v1->cdefine_member_term(), stack_top+1, stack_top);
 
+				int_t inumber = 0;
 				if(v1->cdefine_member_ns()){
-					compile_expr(v1->cdefine_member_ns());
+					compile_expr(v1->cdefine_member_ns(), stack_top+2, stack_top+1);
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
-					entry(info).value = val;
-					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					inumber = info.pos;
 				}
 				else{
-					put_inst(InstPushUndefined());
+					put_inst(InstLoadUndefined(stack_top+1));
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
-					entry(info).value = val;
-					put_inst(InstDefineClassMember(info.pos, register_identifier(v1->cdefine_member_name()), v1->cdefine_member_accessibility()->to_i()));
+					inumber = info.pos;
 				}
+
+				put_inst(InstDefineClassMember(inumber, 
+					register_identifier(v1->cdefine_member_name()), stack_top+1,
+					v1->cdefine_member_accessibility()->to_i(), stack_top));
 			}
 		}
 	}
@@ -1354,25 +986,22 @@ void CodeBuilder::compile_class(const ExprPtr& e, const IDPtr& id){
 		result_->class_info_table_[class_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 	}
 
-	put_inst(InstClassEnd());
+	put_inst(InstClassEnd(result));
 	class_frames_.pop();
 
 	var_end();
 
-	{
-		fun_frames_.pop();	
-	}
+	fun_frames_.pop();
 }
 
-void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
-
+int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id){
 	int_t ordered = 0;
 	int_t named = 0;
 
 	Xfor_cast(const ExprPtr& v, e->fun_params()){
 		if(!v->at(0) || (ep(v->at(0))->itag()!=EXPR_LVAR && ep(v->at(0))->itag()!=EXPR_IVAR)){
 			error_->error(lineno(), Xt("Xtal Compile Error 1004"));
-			return;
+			return int_t();
 		}
 
 		if(v->at(1)){
@@ -1404,8 +1033,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 				if(body->return_exprs() && body->return_exprs()->size()==1){
 					body = ep(body->return_exprs()->front());
 					if(body->itag()==EXPR_IVAR){
-						put_inst(InstMakeInstanceVariableAccessor(0, lookup_instance_variable(body->ivar_name()), class_info_num()));
-						return;
+						put_inst(InstMakeInstanceVariableAccessor(result, 0, lookup_instance_variable(body->ivar_name()), class_info_num()));
+						return 1;
 					}
 				}
 			}
@@ -1436,8 +1065,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 				}
 
 				if(key && lhs->itag()==EXPR_IVAR && rhs->itag()==EXPR_LVAR && raweq(rhs->lvar_name(), key)){
-					put_inst(InstMakeInstanceVariableAccessor(1, lookup_instance_variable(lhs->ivar_name()), class_info_num()));
-					return;
+					put_inst(InstMakeInstanceVariableAccessor(result, 1, lookup_instance_variable(lhs->ivar_name()), class_info_num()));
+					return 1;
 				}
 			}
 		}
@@ -1474,28 +1103,28 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 	}
 
 	// 関数コアを作成
-	FunInfo info;
-	info.pc = code_size() + InstMakeFun::ISIZE;
-	info.kind = e->fun_kind();
-	info.min_param_count = minv;
-	info.max_param_count = maxv;
-	info.name_number = register_identifier(id);
-	info.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
+	FunInfo fun;
+	fun.pc = code_size() + InstMakeFun::ISIZE;
+	fun.kind = e->fun_kind();
+	fun.min_param_count = minv;
+	fun.max_param_count = maxv;
+	fun.name_number = register_identifier(id);
+	fun.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
-	info.variable_size = vf().entries.size();
-	info.variable_identifier_offset = result_->identifier_table_->size();
+	fun.variable_size = vf().entries.size();
+	fun.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		vf().entries[i].initialized = true;
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
 
 	int_t fun_info_table_number = result_->xfun_info_table_.size();
-	result_->xfun_info_table_.push_back(info);
+	result_->xfun_info_table_.push_back(fun);
 
 	int_t fun_end_label = reserve_label();
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
-	put_inst(InstMakeFun(fun_info_table_number, 0));
+	put_inst(InstMakeFun(result, fun_info_table_number, 0));
 
 	ff().variable_count += vf().entries.size();
 	if(ff().max_variable_count<ff().variable_count){
@@ -1507,17 +1136,17 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 		int_t i = 0;
 		Xfor_cast(const ExprPtr& v1, e->fun_params()){
 			if(const ExprPtr& v = ptr_cast<Expr>(v1->at(1))){
-				int_t label = reserve_label();
+				int_t label_true = reserve_label();
+				int_t label_false = reserve_label();
 				
-				set_jump(InstIfArgIsUndefined::OFFSET_address, label);
-				put_inst(InstIfArgIsUndefined(maxv-1-i, 0));
+				set_jump(InstIfUndefined::OFFSET_address_true, label_true);
+				set_jump(InstIfUndefined::OFFSET_address_false, label_false);
+				put_inst(InstIfUndefined(-(maxv-1-i)-1, 0, 0));
+				set_label(label_true);
 
-				compile_expr(v);
-				
-				var_find(vf().entries[i].name, true);
-				put_set_local_code(vf().entries[i].name);
-				
-				set_label(label);
+				compile_expr(v, stack_top+1, -(maxv-1-i)-1);
+								
+				set_label(label_false);
 			}
 			else{
 				var_find(vf().entries[i].name, true);
@@ -1568,51 +1197,8 @@ void CodeBuilder::compile_fun(const ExprPtr& e, const IDPtr& id){
 	// 関数フレームをポップする
 	fun_frames_.downsize(1);
 
+	return 1;
 }
-
-int_t CodeBuilder::compile_exprs(const ExprPtr& e){
-	int_t count = 0;
-	Xfor(v, e){
-		compile_expr(v);
-		count++;
-	}
-	return count;
-}
-
-bool CodeBuilder::compile_expr(const AnyPtr& p, const CompileInfo& info, AnyPtr& ret){
-	if(!p){
-		if(info.need_result_count==1){
-			put_inst(InstPushNull());
-			ret = null;
-			return true;
-		}
-		else if(info.need_result_count!=0){
-			put_inst(InstAdjustResult(0, info.need_result_count));
-		}
-		ret = undefined;
-		return true;
-	}
-
-	ExprPtr e = ep(p);
-
-	AnyPtr val = do_expr(e);
-	if(rawne(val, undefined)){
-		if(info.need_result_count!=0){
-			put_val_code(val);
-
-			if(info.need_result_count!=1){
-				put_inst(InstAdjustResult(1, info.need_result_count));
-			}
-		}
-		ret = val;
-		return true;
-	}
-
-	ret = undefined;
-	return false;
-}
-
-
 
 AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 

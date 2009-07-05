@@ -1,6 +1,7 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 #include "xtal_stringspace.h"
+#include "xtal_details.h"
 
 namespace xtal{
 
@@ -238,53 +239,19 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 	}
 }
 
-void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too) const{
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, bool q) const{
 	const ClassPtr& cls = get_class();
-	const AnyPtr& ret = ap(cls)->member(primary_key, secondary_key, inherited_too);
+	Any mem = ap(cls)->member(primary_key, secondary_key, inherited_too);
 	vm->set_arg_this(ap(*this));
 
-	switch(type(ret)){
-		XTAL_DEFAULT{
-			ret->rawsend(vm, id_op_list()[IDOp::id_op_call]);
+	if(is_undefined(mem)){
+		if(!q){
+			vm->set_except(unsupported_error(cls, primary_key, secondary_key));
 		}
-
-		XTAL_CASE(TYPE_UNDEFINED){
-			const AnyPtr& ret = ap(cls)->member(Xid(send_missing), undefined, inherited_too);
-			if(rawne(ret, undefined)){
-				vm->set_arg_this(ap(*this));
-				ArgumentsPtr args = vm->make_arguments();
-				vm->recycle_call();
-				vm->push_arg(primary_key);
-				vm->push_arg(secondary_key);
-				vm->push_arg(args);
-				ret->rawcall(vm);
-			}
-		}
-
-		XTAL_CASE(TYPE_BASE){ 
-			pvalue(ret)->rawcall(vm); 
-		}
-
-		XTAL_CASE(TYPE_NATIVE_METHOD){ 
-			unchecked_ptr_cast<NativeMethod>(ret)->rawcall(vm); 
-		}
-
-		XTAL_CASE(TYPE_NATIVE_FUN){ 
-			unchecked_ptr_cast<NativeFun>(ret)->rawcall(vm); 
-		}
-
-		XTAL_CASE(TYPE_IVAR_GETTER){ 
-			unchecked_ptr_cast<InstanceVariableGetter>(ret)->rawcall(vm); 
-		}
-
-		XTAL_CASE(TYPE_IVAR_SETTER){ 
-			unchecked_ptr_cast<InstanceVariableSetter>(ret)->rawcall(vm); 
-		}
+		return;
 	}
 
-	if(!vm->processed()){
-		vm->set_unsuported_error_info(ap(*this), primary_key, secondary_key);
-	}
+	ap(mem)->rawcall(vm);
 }
 
 void Any::rawcall(const VMachinePtr& vm) const{
@@ -293,16 +260,17 @@ void Any::rawcall(const VMachinePtr& vm) const{
 		XTAL_CASE(TYPE_BASE){ pvalue(*this)->rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_METHOD){ unchecked_ptr_cast<NativeMethod>(ap(*this))->rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ unchecked_ptr_cast<NativeFun>(ap(*this))->rawcall(vm); }
-		XTAL_CASE(TYPE_IVAR_GETTER){ 
-			unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->rawcall(vm); 
-		}
-		XTAL_CASE(TYPE_IVAR_SETTER){ 
-			unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->rawcall(vm);
-		}
+		XTAL_CASE(TYPE_IVAR_GETTER){ unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->rawcall(vm); }
+		XTAL_CASE(TYPE_IVAR_SETTER){ unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->rawcall(vm); }
 	}
 
-	if(!vm->processed()){
-		vm->set_unsuported_error_info(ap(*this), id_op_list()[IDOp::id_op_call], undefined);
+	if(vm->processed()==0){
+		if(vm->except()){ 
+			return;
+		}
+
+		vm->set_except(unsupported_error(ap(*this)->get_class(), id_op_list()[IDOp::id_op_call], undefined));
+		return;
 	}
 }
 
@@ -570,18 +538,6 @@ void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{
 			}
 		}
 	}
-}
-
-const ClassPtr& Any::get_class() const{
-	int_t t = type(*this);
-	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
-	return cpp_class(*classdata[t]);
-}
-
-bool Any::is(const AnyPtr& klass) const{
-	const ClassPtr& my_class = get_class();
-	if(raweq(my_class, klass)) return true;
-	return cache_is(my_class, klass);
 }
 
 }

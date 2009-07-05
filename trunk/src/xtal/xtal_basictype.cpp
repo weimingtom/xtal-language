@@ -111,7 +111,7 @@ bool Values::op_eq(const ValuesPtr& other){
 	while(true){
 		if(rawne((*cur1)->head_, (*cur2)->head_)){
 			vm->setup_call(1, (*cur2)->head_);
-			(*cur1)->head_->rawsend(vm, Xid(op_eq));
+			(*cur1)->head_->rawsend(vm, Xid(op_eq), undefined, true, true);
 
 			if(!vm->processed() || !vm->result()){
 				vm->cleanup_call();

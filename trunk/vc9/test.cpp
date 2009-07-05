@@ -128,6 +128,14 @@ void debughook(const debug::HookInfoPtr& info){
 
 }
 
+int print(const AnyPtr& a){
+	return 111;	
+}
+
+void breakpoint(){
+	
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -136,20 +144,23 @@ int main2(int argc, char** argv){
 	//debug::enable();
 	//debug::set_return_hook(fun(&debughook));
 
-	test();
+	//test();
 
+//*
 	if(CodePtr code = Xsrc((
-		//lib.append_load_path("..");
-		//foo: lib::testload;
-		//foo();
+
 	))){
+		code->filelocal()->def("ppp", fun(&print));
 		//code->inspect()->p();
-		code->call(4);
+		AnyPtr ret = code->call(500, 108);
+		//ret = ret;
 	}
 
 	full_gc();
 
 	//load("../struct.xtal");
+
+	//xnew<Array>()->call("test");
 
 	XTAL_CATCH_EXCEPT(e){
 		StringPtr str = e->to_s();
@@ -170,7 +181,7 @@ int main2(int argc, char** argv){
 		stderr_stream()->println(e);
 		return 1;
 	}
-
+//*/
 
 #if 1
 
@@ -222,6 +233,8 @@ int main2(int argc, char** argv){
 	//*/
 
 	//*
+	builtin()->def("breakpoint", fun(&breakpoint));
+
 #ifdef XTAL_USE_WCHAR
 	CodePtr code = compile_file("../utf16le-test/test.xtal_");
 #else

@@ -157,12 +157,7 @@ uint_t PointerStream::tell(){
 
 uint_t PointerStream::read(void* p, uint_t size){
 	if(pos_+size>size_){ 
-		uint_t diff = size_-pos_;
-		if(diff>0){
-			std::memcpy(p, &data_[pos_], diff);
-		}
-		pos_ += diff;
-		return diff; 
+		size = size_-pos_;
 	}
 	
 	if(size>0){

@@ -2,7 +2,7 @@ inherit(lib::test);
 
 class filelocal::Calc{
 
-	calc#Test: method{
+	calc#Test{
 		assert 10+20 == 30;
 		assert 50-100 == -50;
 		assert 10*5 == 50;
@@ -14,6 +14,9 @@ class filelocal::Calc{
 		assert 10>>1 == 5;
 		assert 20>>2 == 5;
 		assert 1<<3 == 8;
+	}
+	
+	calc2#Test{
 		assert 10>5;
 		assert !(5>5);
 		assert 10<20;
@@ -27,6 +30,9 @@ class filelocal::Calc{
 		assert 5==5;
 		assert 5!=4;
 		assert 1===1;
+	}
+
+	calc3#Test{
 		assert 1 is Int;
 		assert 2!==1;
 		assert "Test" is String;
@@ -34,7 +40,11 @@ class filelocal::Calc{
 		assert 0xff==255;
 		assert 0x10==16;
 		assert 0b11==3;
+		assert 1!=null;
+		assert !(2==null);
+	}
 
+	calc4#Test{
 		isa: false;
 		assert !isa;
 
@@ -62,10 +72,12 @@ class filelocal::Calc{
 		i+=5;
 		assert i==7;
 
-		i*=5.0;
+		i *= 5.0;
 		assert i is Float;
 		assert i in ((35.0-0.01)..(35.0+0.01));
+	}
 		
+	calc5#Test{
 		assert (1||false)==1;
 		assert 1+1 == 2;
 		assert 8*5 == 40;

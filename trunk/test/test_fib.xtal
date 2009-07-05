@@ -21,17 +21,19 @@ class filelocal::FibTest{
 	
 	fib6#Test{
 		fib3: fib2();
-		10.times{
-			assert fib(it)==fib3(it)
+		for(it: 0; it<10; ++it){
+			a: fib(it);
+			b: fib3(); 
+			assert a==b;
 		}
 	}
-
+	
 	fib_zip#Test{
 		zip(fib2(), 10.times){ |v, i|
 			assert fib(i) == v;
 		}
 	}
-	
+
 	foo#Test{
 		f: fiber{
 			i: 0;

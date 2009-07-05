@@ -20,16 +20,6 @@ class filelocal::ScopeTest{
 			assert x()===x;
 		}
 	}
-	
-	same_name_class#Test{
-		x: 1000;
-		
-		c: class{
-			x: x;
-		}
-		
-		assert c::x==x;
-	}
 }
 
 

@@ -13,7 +13,9 @@ lib::test: singleton{
 	run_files: fun(files){
 		_ok = 0;
 		_fail = 0;
-		files{
+		
+		files.each{
+			println(it);
 			run_file(it);
 		}
 		
@@ -43,9 +45,11 @@ lib::test: singleton{
 						obj: mem();
 						tests{
 							try{
-								printf("\tdo %s\n", it);
 								befores{ obj.(it)#Before; }
+								
+								printf("\tdo %s\n", it);
 								obj.(it)#Test;
+								
 								afters{ obj.(it)#After; }
 								printf("\tok %s\n", it);
 								_ok++;
@@ -61,7 +65,7 @@ lib::test: singleton{
 		}
 	}
 	
-	run_dir: fun(dir){					
+	run_dir: fun(dir){			
 		run_files(filesystem::entries(dir)
 					.select(|x| x.match(once ".xtal" >> xpeg::eos))
 					.map(|x| dir ~ "/" ~ x)

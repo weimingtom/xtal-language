@@ -46,16 +46,16 @@ void MembersIter2::block_next(const VMachinePtr& vm){
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), 
-	members_(scope_info_->variable_size), map_members_(0), recycle_(false), orphan_(true){
+	members_(scope_info_->variable_size), map_members_(0), orphan_(true){
 }
 
 Frame::Frame()
 	:outer_(null), code_(null), scope_info_(&empty_class_info), 
-	members_(0), map_members_(0), recycle_(false), orphan_(true){}
+	members_(0), map_members_(0), orphan_(true){}
 	
 Frame::Frame(const Frame& v)
 	:HaveParentBase(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
-	members_(members_), map_members_(0), recycle_(false), orphan_(true){
+	members_(members_), map_members_(0), orphan_(true){
 
 	if(v.map_members_){
 		make_map_members();
@@ -101,7 +101,7 @@ void Frame::make_map_members(){
 }
 
 AnyPtr Frame::members(){
-	if(recycle_){
+	if(!orphan_){
 		return xnew<MembersIter2>(to_smartptr(this));
 	}
 
@@ -128,7 +128,7 @@ void Frame::push_back_member(const AnyPtr& value){
 		members_.push_back(value);
 	}
 	else{
-		members_.resize(members_.size()+1);
+		members_.upsize(1);
 		members_.set_at_unref(members_.size()-1, value);
 	}
 }

@@ -117,7 +117,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 			if(min_param_count_==0 && max_param_count_==0){
 				vm->set_except(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1007")->call(
-						Named(Xid(object), vm->ff().target()->object_name()),
+						Named(Xid(object), object_name()),
 						Named(Xid(value), n)
 					)
 				));
@@ -126,7 +126,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 			else{
 				vm->set_except(cpp_class<ArgumentError>()->call(
 					Xt("Xtal Runtime Error 1006")->call(
-						Named(Xid(object), vm->ff().target()->object_name()),
+						Named(Xid(object), object_name()),
 						Named(Xid(min), min_param_count_),
 						Named(Xid(max), max_param_count_),
 						Named(Xid(value), n)
@@ -145,7 +145,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 			const AnyPtr& arg = vm->arg_this();
 			if(param_types[0]){
 				if(!arg->is(to_smartptr(param_types[0]))){
-					vm->set_except(argument_error(vm->ff().target()->object_name(), 0, to_smartptr(param_types[0]), arg->get_class()));
+					vm->set_except(argument_error(object_name(), 0, to_smartptr(param_types[0]), arg->get_class()));
 					return;
 				}
 			}
@@ -160,7 +160,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 
 			if(param_types[i+1]){
 				if(!arg->is(to_smartptr(param_types[i+1]))){ 
-					vm->set_except(argument_error(vm->ff().target()->object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
+					vm->set_except(argument_error(object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
 					return;
 				}
 			}

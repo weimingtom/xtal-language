@@ -371,6 +371,8 @@ VMachinePtr vmachine_take_over();
 */
 void vmachine_take_back(const VMachinePtr& vm);
 
+void vmachine_swap_temp();
+
 /////////////////////////////////////////////////////
 
 /// \name ライブラリオブジェクト取得関数
@@ -408,6 +410,8 @@ const StreamPtr& stderr_stream();
 * スレッド毎にこのグローバルVMachinePtrオブジェクトは存在する。
 */
 const VMachinePtr& vmachine();
+
+const VMachinePtr& vmachine_checked();
 
 // @}
 

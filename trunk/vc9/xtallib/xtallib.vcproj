@@ -386,6 +386,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\xtal\xtal_details.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\xtal\xtal_environment.h"
 				>
 			</File>

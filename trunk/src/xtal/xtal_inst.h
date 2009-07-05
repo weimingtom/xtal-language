@@ -72,7 +72,7 @@ StringPtr make_inst_string(const char_t* InstName,
 
 StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end);
 
-u8 inst_size(uint_t no);
+int_t inst_size(uint_t no);
 
 struct Inst{
 	inst_t op;
@@ -265,6 +265,192 @@ void Inst::checked_assign(T& ref, int v){
 		}\
 	}
 
+#define XTAL_DEF_INST_6(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5, MemberType6, MemberName6) \
+	struct Inst##InstName : public Inst{\
+		enum{ \
+			NUMBER = N,\
+			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2) + sizeof(MemberType3) + sizeof(MemberType4) + sizeof(MemberType5) + sizeof(MemberType6),\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
+			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
+			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4),\
+			OFFSET_##MemberName6 = OFFSET_##MemberName5 + sizeof(MemberType5)\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		MemberType4 MemberName4;\
+		MemberType5 MemberName5;\
+		MemberType6 MemberName6;\
+		Inst##InstName(){\
+			op = N;\
+		}\
+		Inst##InstName(int m1, int m2, int m3, int m4, int m5, int m6){\
+			op = N;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
+			checked_assign(MemberName4, m4);\
+			checked_assign(MemberName5, m5);\
+			checked_assign(MemberName6, m6);\
+		}\
+		StringPtr inspect(const CodePtr& code){\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
+		}\
+	}
+
+#define XTAL_DEF_INST_7(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5, MemberType6, MemberName6, MemberType7, MemberName7) \
+	struct Inst##InstName : public Inst{\
+		enum{ \
+			NUMBER = N,\
+			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2) + sizeof(MemberType3) + sizeof(MemberType4) + sizeof(MemberType5) + sizeof(MemberType6) + sizeof(MemberType7),\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
+			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
+			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4),\
+			OFFSET_##MemberName6 = OFFSET_##MemberName5 + sizeof(MemberType5),\
+			OFFSET_##MemberName7 = OFFSET_##MemberName6 + sizeof(MemberType6)\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		MemberType4 MemberName4;\
+		MemberType5 MemberName5;\
+		MemberType6 MemberName6;\
+		MemberType7 MemberName7;\
+		Inst##InstName(){\
+			op = N;\
+		}\
+		Inst##InstName(int m1, int m2, int m3, int m4, int m5, int m6, int m7){\
+			op = N;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
+			checked_assign(MemberName4, m4);\
+			checked_assign(MemberName5, m5);\
+			checked_assign(MemberName6, m6);\
+			checked_assign(MemberName7, m7);\
+		}\
+		StringPtr inspect(const CodePtr& code){\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
+		}\
+	}
+
+#define XTAL_DEF_INST_8(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5, MemberType6, MemberName6, MemberType7, MemberName7, MemberType8, MemberName8) \
+	struct Inst##InstName : public Inst{\
+		enum{ \
+			NUMBER = N,\
+			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2) + sizeof(MemberType3) + sizeof(MemberType4) + sizeof(MemberType5) + sizeof(MemberType6) + sizeof(MemberType7) + sizeof(MemberType8),\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
+			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
+			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4),\
+			OFFSET_##MemberName6 = OFFSET_##MemberName5 + sizeof(MemberType5),\
+			OFFSET_##MemberName7 = OFFSET_##MemberName6 + sizeof(MemberType6),\
+			OFFSET_##MemberName8 = OFFSET_##MemberName7 + sizeof(MemberType7)\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		MemberType4 MemberName4;\
+		MemberType5 MemberName5;\
+		MemberType6 MemberName6;\
+		MemberType7 MemberName7;\
+		MemberType8 MemberName8;\
+		Inst##InstName(){\
+			op = N;\
+		}\
+		Inst##InstName(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8){\
+			op = N;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
+			checked_assign(MemberName4, m4);\
+			checked_assign(MemberName5, m5);\
+			checked_assign(MemberName6, m6);\
+			checked_assign(MemberName7, m7);\
+			checked_assign(MemberName8, m8);\
+		}\
+		StringPtr inspect(const CodePtr& code){\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
+		}\
+	}
+
+#define XTAL_DEF_INST_9(N, InstName, MemberType1, MemberName1, MemberType2, MemberName2, MemberType3, MemberName3, MemberType4, MemberName4, MemberType5, MemberName5, MemberType6, MemberName6, MemberType7, MemberName7, MemberType8, MemberName8, MemberType9, MemberName9) \
+	struct Inst##InstName : public Inst{\
+		enum{ \
+			NUMBER = N,\
+			SIZE = sizeof(Inst) + sizeof(MemberType1) + sizeof(MemberType2) + sizeof(MemberType3) + sizeof(MemberType4) + sizeof(MemberType5) + sizeof(MemberType6) + sizeof(MemberType7) + sizeof(MemberType8) + sizeof(MemberType9),\
+			ISIZE = SIZE/sizeof(inst_t),\
+			OFFSET_##MemberName1 = sizeof(inst_t),\
+			OFFSET_##MemberName2 = OFFSET_##MemberName1 + sizeof(MemberType1),\
+			OFFSET_##MemberName3 = OFFSET_##MemberName2 + sizeof(MemberType2),\
+			OFFSET_##MemberName4 = OFFSET_##MemberName3 + sizeof(MemberType3),\
+			OFFSET_##MemberName5 = OFFSET_##MemberName4 + sizeof(MemberType4),\
+			OFFSET_##MemberName6 = OFFSET_##MemberName5 + sizeof(MemberType5),\
+			OFFSET_##MemberName7 = OFFSET_##MemberName6 + sizeof(MemberType6),\
+			OFFSET_##MemberName8 = OFFSET_##MemberName7 + sizeof(MemberType7),\
+			OFFSET_##MemberName9 = OFFSET_##MemberName8 + sizeof(MemberType8)\
+		};\
+		MemberType1 MemberName1;\
+		MemberType2 MemberName2;\
+		MemberType3 MemberName3;\
+		MemberType4 MemberName4;\
+		MemberType5 MemberName5;\
+		MemberType6 MemberName6;\
+		MemberType7 MemberName7;\
+		MemberType8 MemberName8;\
+		MemberType8 MemberName9;\
+		Inst##InstName(){\
+			op = N;\
+		}\
+		Inst##InstName(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8, int m9){\
+			op = N;\
+			checked_assign(MemberName1, m1);\
+			checked_assign(MemberName2, m2);\
+			checked_assign(MemberName3, m3);\
+			checked_assign(MemberName4, m4);\
+			checked_assign(MemberName5, m5);\
+			checked_assign(MemberName6, m6);\
+			checked_assign(MemberName7, m7);\
+			checked_assign(MemberName8, m8);\
+			checked_assign(MemberName9, m9);\
+		}\
+		StringPtr inspect(const CodePtr& code){\
+			return make_inst_string(\
+					XTAL_STRING(#InstName),\
+					XTAL_STRING(#MemberName1), inst_inspect(MemberName1, this, code),\
+					XTAL_STRING(#MemberName2), inst_inspect(MemberName2, this, code),\
+					XTAL_STRING(#MemberName3), inst_inspect(MemberName3, this, code),\
+					XTAL_STRING(#MemberName4), inst_inspect(MemberName4, this, code),\
+					XTAL_STRING(#MemberName5), inst_inspect(MemberName5, this, code));\
+		}\
+	}
+
 /**
 * \internal
 * \brief 何もしない。
@@ -279,7 +465,8 @@ XTAL_DEF_INST_0(0, Nop);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(1, PushNull);
+XTAL_DEF_INST_1(1, LoadNull,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -287,7 +474,8 @@ XTAL_DEF_INST_0(1, PushNull);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(2, PushUndefined);
+XTAL_DEF_INST_1(2, LoadUndefined,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -295,7 +483,8 @@ XTAL_DEF_INST_0(2, PushUndefined);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(3, PushTrue);
+XTAL_DEF_INST_1(3, LoadTrue,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -303,7 +492,8 @@ XTAL_DEF_INST_0(3, PushTrue);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(4, PushFalse);
+XTAL_DEF_INST_1(4, LoadFalse,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -311,7 +501,8 @@ XTAL_DEF_INST_0(4, PushFalse);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(5, PushTrueAndSkip);
+XTAL_DEF_INST_1(5, LoadTrueAndSkip,
+		inst_i8_t, result);
 
 /**
 * \internal
@@ -319,7 +510,8 @@ XTAL_DEF_INST_0(5, PushTrueAndSkip);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(6, PushInt1Byte,
+XTAL_DEF_INST_2(6, LoadInt1Byte,
+		inst_i8_t, result,
         inst_i8_t, value
 );
 
@@ -329,7 +521,8 @@ XTAL_DEF_INST_1(6, PushInt1Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(7, PushFloat1Byte,
+XTAL_DEF_INST_2(7, LoadFloat1Byte,
+		inst_i8_t, result,
         inst_i8_t, value
 );
 
@@ -339,7 +532,8 @@ XTAL_DEF_INST_1(7, PushFloat1Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(8, PushCallee);
+XTAL_DEF_INST_1(8, LoadCallee,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -347,7 +541,8 @@ XTAL_DEF_INST_0(8, PushCallee);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(9, PushThis);
+XTAL_DEF_INST_1(9, LoadThis,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -355,39 +550,23 @@ XTAL_DEF_INST_0(9, PushThis);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_0(10, PushCurrentContext);
+XTAL_DEF_INST_1(10, LoadCurrentContext,
+	inst_i8_t, result);
 
 /**
 * \internal
-* \brief スタックトップをポップする
+* \brief スタックトップをコピーする
 *
-* stack [value] -> []
 */
-XTAL_DEF_INST_0(11, Pop);
+XTAL_DEF_INST_2(11, Copy,
+	inst_i8_t, result,
+	inst_i8_t, target);
 
-/**
-* \internal
-* \brief スタックトップの値をプッシュする
-*
-* stack [value] -> [value, value2]
-*/
-XTAL_DEF_INST_0(12, Dup);
+XTAL_DEF_INST_1(12, Push,
+	inst_i8_t, target);
 
-/**
-* \internal
-* \brief スタックトップの値を一つ前に入れる。
-*
-* stack [value1, value2] -> [value2, value1]
-*/
-XTAL_DEF_INST_0(13, Insert1);
-
-/**
-* \internal
-* \brief スタックトップの値を二つ前に入れる。
-*
-* stack [value1, value2, value3] -> [value3, value1, value2]
-*/
-XTAL_DEF_INST_0(14, Insert2);
+XTAL_DEF_INST_1(13, Pop,
+	inst_i8_t, result);
 
 /**
 * \internal
@@ -395,47 +574,20 @@ XTAL_DEF_INST_0(14, Insert2);
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_2(15, AdjustResult,
+XTAL_DEF_INST_3(14, AdjustValues,
+		inst_u8_t, stack_base,
         inst_u8_t, result_count,
         inst_u8_t, need_result_count
 );
 
-XTAL_DEF_INST_1(16, LocalVariableInc1Byte,
-		inst_u8_t, number
-);
-
-XTAL_DEF_INST_1(17, LocalVariableDec1Byte,
-		inst_u8_t, number
-);
-
 /**
 * \internal
 * \brief ローカル変数を取り出す。
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(18, LocalVariable1Byte,
-        inst_u8_t, number
-);
-
-/**
-* \internal
-* \brief ローカル変数を取り出す。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_2(19, LocalVariable1ByteX2,
-        inst_u8_t, number1,
-        inst_u8_t, number2
-);
-
-/**
-* \internal
-* \brief ローカル変数を取り出す。
-*
-* stack [] -> [value]
-*/
-XTAL_DEF_INST_2(20, LocalVariable2Byte,
+XTAL_DEF_INST_3(15, LocalVariable2Byte,
+		inst_i8_t, result,
         inst_u16_t, number,
 		inst_u8_t, depth
 );
@@ -446,29 +598,9 @@ XTAL_DEF_INST_2(20, LocalVariable2Byte,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_1(21, SetLocalVariable1Byte,
-        inst_u8_t, number
-);
-
-/**
-* \internal
-* \brief ローカル変数に値を設定する。
-*
-* stack [value] -> []
-*/
-XTAL_DEF_INST_2(22, SetLocalVariable1ByteX2,
-        inst_u8_t, number1,
-        inst_u8_t, number2
-);
-
-/**
-* \internal
-* \brief ローカル変数に値を設定する。
-*
-* stack [value] -> []
-*/
-XTAL_DEF_INST_2(23, SetLocalVariable2Byte,
-        inst_u16_t, number,
+XTAL_DEF_INST_3(16, SetLocalVariable2Byte,
+		inst_i8_t, target,
+		inst_u16_t, number,
 		inst_u8_t, depth
 );
 
@@ -478,7 +610,8 @@ XTAL_DEF_INST_2(23, SetLocalVariable2Byte,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_2(24, InstanceVariable,
+XTAL_DEF_INST_3(17, InstanceVariable,
+		inst_i8_t, result,
         inst_u8_t, number,
         inst_u16_t, info_number
 );
@@ -489,7 +622,8 @@ XTAL_DEF_INST_2(24, InstanceVariable,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_2(25, SetInstanceVariable,
+XTAL_DEF_INST_3(18, SetInstanceVariable,
+		inst_i8_t, value,
         inst_u8_t, number,
         inst_u16_t, info_number
 );
@@ -500,17 +634,10 @@ XTAL_DEF_INST_2(25, SetInstanceVariable,
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(26, FilelocalVariable,
+XTAL_DEF_INST_2(19, FilelocalVariable,
+		inst_i8_t, result,
         inst_u16_t, identifier_number
 );
-
-/**
-* \internal
-* \brief 関数呼び出しの後始末をする
-*
-* stack [] -> []
-*/
-XTAL_DEF_INST_0(27, CleanupCall);
 
 /**
 * \internal
@@ -518,7 +645,7 @@ XTAL_DEF_INST_0(27, CleanupCall);
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_1(28, Return,
+XTAL_DEF_INST_1(20, Return,
         inst_u8_t, result_count
 );
 
@@ -528,9 +655,10 @@ XTAL_DEF_INST_1(28, Return,
 *
 * stack [value1, value2, ...valueN] -> []
 */
-XTAL_DEF_INST_2(29, Yield,
-        inst_u8_t, result_count,
-		inst_u8_t, need_result_count
+XTAL_DEF_INST_3(21, Yield,
+		inst_i8_t, result,
+		inst_u8_t, need_result_count,
+        inst_u8_t, target_count
 );
 
 /**
@@ -539,7 +667,7 @@ XTAL_DEF_INST_2(29, Yield,
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_0(30, Exit);
+XTAL_DEF_INST_0(22, Exit);
 
 /**
 * \internal
@@ -547,47 +675,63 @@ XTAL_DEF_INST_0(30, Exit);
 *
 * stack [] -> [value]
 */
-XTAL_DEF_INST_1(31, Value,
+XTAL_DEF_INST_2(23, Value,
+		inst_i8_t, result,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_0(32, CheckUnsupported);
-
 enum{
-	CALL_FLAG_TAIL_SHIFT = 0,
-	CALL_FLAG_ARGS_SHIFT = 1,
-	CALL_FLAG_NS_SHIFT = 2,
-	CALL_FLAG_Q_SHIFT = 3,
+	CALL_FLAG_ARGS = 0,
+	CALL_FLAG_THIS = 1,
 
-	CALL_FLAG_NONE = 0,
-
-	CALL_FLAG_TAIL = 1<<CALL_FLAG_TAIL_SHIFT,
-	CALL_FLAG_ARGS = 1<<CALL_FLAG_ARGS_SHIFT,
-	CALL_FLAG_NS = 1<<CALL_FLAG_NS_SHIFT,
-	CALL_FLAG_Q = 1<<CALL_FLAG_Q_SHIFT
+	CALL_FLAG_ARGS_BIT = 1<<CALL_FLAG_ARGS,
+	CALL_FLAG_THIS_BIT = 1<<CALL_FLAG_THIS,
 };
 
-XTAL_DEF_INST_1(33, Property,
-        inst_u16_t, identifier_number
-);
+enum{
+	MEMBER_FLAG_P = 2,
+	MEMBER_FLAG_S = 3,
+	MEMBER_FLAG_Q = 4,
 
-XTAL_DEF_INST_1(34, SetProperty,
-        inst_u16_t, identifier_number
-);
+	MEMBER_FLAG_P_BIT = 1<<MEMBER_FLAG_P,
+	MEMBER_FLAG_S_BIT = 1<<MEMBER_FLAG_S,
+	MEMBER_FLAG_Q_BIT = 1<<MEMBER_FLAG_Q,
+};
 
-XTAL_DEF_INST_4(35, Call,
+XTAL_DEF_INST_8(24, Call,
+		inst_i8_t, result,
+        inst_u8_t, need_result,
+		inst_i8_t, target,
+		inst_i8_t, self,
+		inst_i8_t, stack_base,
         inst_u8_t, ordered,
         inst_u8_t, named,
-        inst_u8_t, need_result,
-		inst_u8_t, flags
+        inst_u8_t, flags
 );
 
-XTAL_DEF_INST_5(36, Send,
+XTAL_DEF_INST_9(25, Send,
+		inst_i8_t, result,
+        inst_u8_t, need_result,
+		inst_i8_t, target,
+		inst_i16_t, primary,
+		inst_i8_t, secondary,
+		inst_i8_t, stack_base,
         inst_u8_t, ordered,
         inst_u8_t, named,
-        inst_u8_t, need_result,
-		inst_u8_t, flags,
-        inst_u16_t, identifier_number
+        inst_u8_t, flags
+);
+
+XTAL_DEF_INST_4(26, Property,
+		inst_i8_t, result,
+		inst_i8_t, target,
+        inst_i16_t, primary,
+		inst_i8_t, stack_base
+);
+
+XTAL_DEF_INST_3(27, SetProperty,
+		inst_i8_t, target,
+        inst_i16_t, primary,
+		inst_i8_t, stack_base
 );
 
 /**
@@ -596,39 +740,112 @@ XTAL_DEF_INST_5(36, Send,
 *
 * stack [object] -> [result]
 */
-XTAL_DEF_INST_2(37, Member,
-        inst_u16_t, identifier_number,
+XTAL_DEF_INST_5(28, Member,
+		inst_i8_t, result,
+		inst_i8_t, target,
+		inst_i16_t, primary,
+		inst_i8_t, secondary,
 		inst_u8_t, flags
 );
 
-/**
-* \internal
-* \brief オブジェクトのメンバを定義する。
-*
-* stack [object, value] -> []
-*/
-XTAL_DEF_INST_2(38, DefineMember,
-        inst_u16_t, identifier_number,
-		inst_u8_t, flags
-);
-
-XTAL_DEF_INST_1(39, ScopeBegin,
+XTAL_DEF_INST_1(29, ScopeBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(40, ScopeEnd);
+XTAL_DEF_INST_0(30, ScopeEnd);
 
-XTAL_DEF_INST_1(41, TryBegin,
-        inst_u16_t, info_number
+XTAL_DEF_INST_3(31, Pos,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(32, Neg,
+	inst_i8_t, result,
+	inst_i8_t, target,
+		inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(33, Com,
+	inst_i8_t, result,
+	inst_i8_t, target,
+		inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(34, Not,
+	inst_i8_t, result,
+	inst_i8_t, target,
+		inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(35, Inc,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(36, Dec,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+enum{
+	ARITH_ADD,
+	ARITH_SUB,
+	ARITH_CAT,
+	ARITH_MUL,
+	ARITH_DIV,
+	ARITH_MOD,
+
+	ARITH_ADD_ASSIGN = 8,
+	ARITH_SUB_ASSIGN,
+	ARITH_CAT_ASSIGN,
+	ARITH_MUL_ASSIGN,
+	ARITH_DIV_ASSIGN,
+	ARITH_MOD_ASSIGN,
+};
+
+XTAL_DEF_INST_5(37, Arith,
+	inst_i8_t, result,
+	inst_u8_t, kind,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base
+	);
+
+enum{
+	BITWISE_AND,
+	BITWISE_OR,
+	BITWISE_XOR,
+	BITWISE_SHL,
+	BITWISE_SHR,
+	BITWISE_USHR,
+
+	BITWISE_AND_ASSIGN = 8,
+	BITWISE_OR_ASSIGN,
+	BITWISE_XOR_ASSIGN,
+	BITWISE_SHL_ASSIGN,
+	BITWISE_SHR_ASSIGN,
+	BITWISE_USHR_ASSIGN,
+};
+
+XTAL_DEF_INST_5(38, Bitwise,
+	inst_i8_t, result,
+	inst_u8_t, kind,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base
+	);
+
+
+XTAL_DEF_INST_4(39, At,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, index,
+	inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_0(42, TryEnd);
-
-XTAL_DEF_INST_1(43, PushGoto,
-        inst_address_t, address
+XTAL_DEF_INST_4(40, SetAt,
+	inst_i8_t, target,
+	inst_i8_t, index,
+	inst_i8_t, value,
+	inst_i8_t, stack_base
 );
-
-XTAL_DEF_INST_0(44, PopGoto);
 
 /**
 * \internal
@@ -636,7 +853,7 @@ XTAL_DEF_INST_0(44, PopGoto);
 *
 * stack [] -> []
 */
-XTAL_DEF_INST_1(45, Goto,
+XTAL_DEF_INST_1(41, Goto,
         inst_address_t, address
 );
 
@@ -646,137 +863,152 @@ XTAL_DEF_INST_1(45, Goto,
 *
 * stack [value] -> []
 */
-XTAL_DEF_INST_2(46, If,
+XTAL_DEF_INST_3(42, If,
+		inst_i8_t, target,
         inst_address_t, address_true,
 		inst_address_t, address_false
 );
 
-XTAL_DEF_INST_0(47, IfEq);
+XTAL_DEF_INST_3(43, IfEq,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base
+	);
 
-XTAL_DEF_INST_0(48, IfLt);
+XTAL_DEF_INST_3(44, IfLt,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_0(49, IfRawEq);
+XTAL_DEF_INST_3(45, IfRawEq,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_0(50, IfIn);
+XTAL_DEF_INST_3(46, IfIn,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_0(51, IfIs);
+XTAL_DEF_INST_3(47, IfIs,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_2(52, IfArgIsUndefined,
-	inst_u8_t, arg,
-	inst_address_t, address
+XTAL_DEF_INST_3(48, IfUndefined,
+	inst_i8_t, target,
+    inst_address_t, address_true,
+	inst_address_t, address_false
 );
 
-XTAL_DEF_INST_0(53, Pos);
-XTAL_DEF_INST_0(54, Neg);
-XTAL_DEF_INST_0(55, Com);
-XTAL_DEF_INST_0(56, Not);
+XTAL_DEF_INST_1(49, IfDebug,
+		inst_address_t, address);
 
-XTAL_DEF_INST_0(57, At);
-XTAL_DEF_INST_0(58, SetAt);
 
-/*
-enum{
-	ARITH_ADD,
-	ARITH_SUB,
-	ARITH_CAT,
-	ARITH_MUL,
-	ARITH_DIV,
-	ARITH_MOD,
-	ARITH_AND,
-	ARITH_OR,
-	ARITH_XOR,
-	ARITH_SHL,
-	ARITH_SHR,
-	ARITH_USHR
-};
-*/
-
-XTAL_DEF_INST_0(59, Add);
-XTAL_DEF_INST_0(60, Sub);
-XTAL_DEF_INST_0(61, Cat);
-XTAL_DEF_INST_0(62, Mul);
-XTAL_DEF_INST_0(63, Div);
-XTAL_DEF_INST_0(64, Mod);
-XTAL_DEF_INST_0(65, And);
-XTAL_DEF_INST_0(66, Or);
-XTAL_DEF_INST_0(67, Xor);
-XTAL_DEF_INST_0(68, Shl);
-XTAL_DEF_INST_0(69, Shr);
-XTAL_DEF_INST_0(70, Ushr);
-
-XTAL_DEF_INST_0(71, Inc);
-XTAL_DEF_INST_0(72, Dec);
-XTAL_DEF_INST_0(73, AddAssign);
-XTAL_DEF_INST_0(74, SubAssign);
-XTAL_DEF_INST_0(75, CatAssign);
-XTAL_DEF_INST_0(76, MulAssign);
-XTAL_DEF_INST_0(77, DivAssign);
-XTAL_DEF_INST_0(78, ModAssign);
-XTAL_DEF_INST_0(79, AndAssign);
-XTAL_DEF_INST_0(80, OrAssign);
-XTAL_DEF_INST_0(81, XorAssign);
-XTAL_DEF_INST_0(82, ShlAssign);
-XTAL_DEF_INST_0(83, ShrAssign);
-XTAL_DEF_INST_0(84, UshrAssign);
-
-XTAL_DEF_INST_1(85, Range,
-		inst_u8_t, kind
+XTAL_DEF_INST_5(50, Range,
+	inst_i8_t, result,
+	inst_u8_t, kind,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_2(86, Once,
+XTAL_DEF_INST_3(51, Once,
+		inst_i8_t, result,
         inst_address_t, address,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(87, SetOnce,
+XTAL_DEF_INST_2(52, SetOnce,
+		inst_i8_t, target,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(88, ClassBegin,
-        inst_u16_t, info_number
+XTAL_DEF_INST_1(53, MakeArray,
+		inst_i8_t, result
 );
 
-XTAL_DEF_INST_0(89, ClassEnd);
+XTAL_DEF_INST_2(54, ArrayAppend,
+		inst_i8_t, target,
+		inst_i8_t, value
+);
 
-XTAL_DEF_INST_3(90, DefineClassMember,
+XTAL_DEF_INST_1(55, MakeMap,
+		inst_i8_t, result);
+
+XTAL_DEF_INST_3(56, MapInsert,
+		inst_i8_t, target,
+		inst_i8_t, key,
+		inst_i8_t, value
+);
+
+XTAL_DEF_INST_2(57, MapSetDefault,
+		inst_i8_t, target,
+		inst_i8_t, value);
+
+XTAL_DEF_INST_2(58, ClassBegin,
+        inst_u16_t, info_number,
+		inst_i8_t, mixin_base
+);
+
+XTAL_DEF_INST_1(59, ClassEnd,
+		inst_i8_t, result);
+
+XTAL_DEF_INST_5(60, DefineClassMember,
         inst_u16_t, number,
-		inst_u16_t, identifier_number,
-		inst_u8_t, accessibility
+		inst_u16_t, primary,
+		inst_i8_t, secondary,
+		inst_u8_t, accessibility,
+		inst_i8_t, value
 );
 
-XTAL_DEF_INST_0(91, MakeArray);
+/**
+* \internal
+* \brief オブジェクトのメンバを定義する。
+*
+* stack [object, value] -> []
+*/
+XTAL_DEF_INST_5(61, DefineMember,
+		inst_i8_t, target,
+		inst_i16_t, primary,
+		inst_i8_t, secondary,
+		inst_u8_t, flags,
+		inst_i8_t, value
+);
 
-XTAL_DEF_INST_0(92, ArrayAppend);
-
-XTAL_DEF_INST_0(93, MakeMap);
-
-XTAL_DEF_INST_0(94, MapInsert);
-
-XTAL_DEF_INST_0(95, MapSetDefault);
-
-XTAL_DEF_INST_2(96, MakeFun,
+XTAL_DEF_INST_3(62, MakeFun,
+		inst_i8_t, result,
         inst_u16_t, info_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_3(97, MakeInstanceVariableAccessor,
-        inst_u8_t, type,
+XTAL_DEF_INST_4(63, MakeInstanceVariableAccessor,
+		inst_i8_t, result,        
+		inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(98, Throw);
+XTAL_DEF_INST_1(64, TryBegin,
+        inst_u16_t, info_number
+);
 
-XTAL_DEF_INST_0(99, ThrowUnsupportedError);
+XTAL_DEF_INST_0(65, TryEnd);
 
-XTAL_DEF_INST_1(100, IfDebug,
-		inst_address_t, address);
+XTAL_DEF_INST_1(66, PushGoto,
+        inst_address_t, address
+);
 
-XTAL_DEF_INST_0(101, Assert);
+XTAL_DEF_INST_0(67, PopGoto);
 
-XTAL_DEF_INST_0(102, BreakPoint);
+XTAL_DEF_INST_0(68, Throw);
 
-XTAL_DEF_INST_0(103, MAX);
+XTAL_DEF_INST_1(69, Assert,
+		inst_i8_t, message);
+
+XTAL_DEF_INST_0(70, BreakPoint);
+
+XTAL_DEF_INST_0(71, MAX);
 
 }
 

@@ -6,24 +6,24 @@ namespace xtal{
 VMachine::VMachine(){
 	id_ = id_op_list();
 
-	stack_.reserve(32);
-
 	end_code_ = InstExit::NUMBER;
 	throw_code_ = InstThrow::NUMBER;
-	throw_unsupported_error_code_ = InstThrowUnsupportedError::NUMBER;
-	check_unsupported_code_ = InstCheckUnsupported::NUMBER;
-	cleanup_call_code_ = InstCleanupCall::NUMBER;
 	resume_pc_ = 0;
 	disable_debug_ = false;
 
-	variables_.resize(16);
 	variables_top_ = 0;
+	variables_.resize(128);
+	set_variables_top(0);
+	stack_.reserve(32);
+
+	setup_call();
+	fun_frames_.top()->processed = 0;
 }
 
 VMachine::~VMachine(){
 	variables_.clear_unref();
 	fun_frames_.resize(fun_frames_.capacity());
-	for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
+	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
 		if(fun_frames_[i]){
 			fun_frames_[i]->~FunFrame();
 			xfree(fun_frames_[i], sizeof(FunFrame));
@@ -39,12 +39,15 @@ void VMachine::reset(){
 	stack_.resize(0);
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
+
+	setup_call();
+	fun_frames_.top()->processed = 0;
 	
 	while(scopes_.size()){
 		pop_scope();
 	}
 
-	variables_top_ = 0;
+	set_variables_top(0);
 
 	except_[0] = null;
 	except_[1] = null;
@@ -58,14 +61,11 @@ VMachine::FunFrame::FunFrame(){
 void VMachine::FunFrame::set_null(){
 	xtal::set_null(fun_); 
 	xtal::set_null(self_);
-	xtal::set_null(target_);
-	xtal::set_null(primary_key_);
-	xtal::set_null(secondary_key_);
 }
 
 void VMachine::setup_call(int_t need_result_count){
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, need_result_count, 0, 0, undefined);	
+	int_t base = variables_top()!=0 ? 128 : 1;
+	push_ff(undefined, &end_code_, base, need_result_count, base, 0, 0);	
 }
 	
 //{REPEAT{{
@@ -115,12 +115,12 @@ void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param
 
 //}}REPEAT}
 
+
 void VMachine::recycle_call(){
 	FunFrame& f = ff();
-	downsize(f.ordered_arg_count+f.named_arg_count*2);
 	f.ordered_arg_count = 0;
 	f.named_arg_count = 0;
-	f.called_pc = &throw_unsupported_error_code_;
+	f.called_pc = 0;
 }
 
 void VMachine::recycle_call(const AnyPtr& a1){
@@ -130,40 +130,42 @@ void VMachine::recycle_call(const AnyPtr& a1){
 
 void VMachine::push_arg(const AnyPtr& value){
 	XTAL_ASSERT(named_arg_count() == 0);
+	set_local_variable(ff().ordered_arg_count, value);
 	ff().ordered_arg_count++;
-	push(value);
 }
 	
 void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
+	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
+	set_local_variable(offset+0, name);
+	set_local_variable(offset+1, value);
 	ff().named_arg_count++;
-	push(name);
-	push(value);
 }
 
 void VMachine::push_arg(const Param& p){
+	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
 	switch(p.type>>Param::SHIFT){
 		XTAL_NODEFAULT;
 
 		XTAL_CASE(0){
 			Any temp;
 			set_type_value(temp, p.type, p.value);
-			push(ap(temp));
+			set_local_variable(offset, ap(temp));
 			ff().ordered_arg_count++;
 		}
 
 		XTAL_CASE(Param::NAMED>>Param::SHIFT){
-			push(*p.name.name);
-			push(*p.name.value);
+			set_local_variable(offset+0, *p.name.name);
+			set_local_variable(offset+1, *p.name.value);
 			ff().named_arg_count++;
 		}
 
 		XTAL_CASE(Param::STR>>Param::SHIFT){
-			push(xnew<String>(p.str));
+			set_local_variable(offset, xnew<String>(p.str));
 			ff().ordered_arg_count++;
 		}
 
 		XTAL_CASE(Param::STR8>>Param::SHIFT){
-			push(xnew<String>(p.str8));
+			set_local_variable(offset, xnew<String>(p.str8));
 			ff().ordered_arg_count++;
 		}
 	}
@@ -194,90 +196,63 @@ void VMachine::execute(Method* fun, const inst_t* start_pc){
 
 		execute_inner(start_pc ? start_pc : f.called_pc);
 	}
-
-	fun_frames_.upsize(1);
-
-	{
-		FunFrame& f = ff();
-		f.poped_pc = temp;
-		f.called_pc = &cleanup_call_code_;
-	}
-
 }
 
+void VMachine::execute(){
+	FunFrame& f = ff();
+
+	// 既に実行されている
+	if(f.processed==2){
+		return;
+	}
+
+	// 関数も戻り値も設定されていない
+	if(f.processed==0){
+		//XTAL_SET_EXCEPT(unsupported_error(target_class, f.primary_key(), f.secondary_key()));	
+		for(int_t i=0; i<i; ++i){
+
+		}
+		return;
+	}
+
+	// 例外がクリアされていないなら実行できない
+	if(ap(except_[0])){
+		return;
+	}
+
+	const inst_t* pc = f.called_pc;
+	f.called_pc = 0;
+
+	execute_inner(pc);
+}
+	
 const AnyPtr& VMachine::result(int_t pos){
-	const inst_t* temp;
-
-	{
-		FunFrame& f = ff();
-
-		// 例外がクリアされていないなら実行できない
-		if(ap(except_[0])){
-			downsize(f.args_stack_size());
-			upsize(f.need_result_count);
-			return undefined;
-		}
-
-		if(*f.called_pc==InstCleanupCall::NUMBER){
-			if(pos<f.need_result_count){
-				return get(f.need_result_count-pos-1);
-			}
-			else{
-				return undefined;
-			}
-		}
-
-		temp = f.poped_pc;
-		f.poped_pc = &end_code_;
-		execute_inner(f.called_pc);
-	}
-
-	fun_frames_.upsize(1);
-
-	{
-		FunFrame& f = ff();
-
-		f.poped_pc = temp;
-		f.called_pc = &cleanup_call_code_;
-		
-		if(ap(except_[0])){
-			f.need_result_count = 0;
-			return undefined;
-		}
-
-		if(pos<f.need_result_count){
-			return get(f.need_result_count-pos-1);
-		}
-		else{
-			return undefined;
-		}
-	}
+	execute();
+	return local_variable(result_base_+pos);
 }
 	
 AnyPtr VMachine::result_and_cleanup_call(int_t pos){
-	const AnyPtr& ret = result(pos);
-	downsize(ff().need_result_count);
-	pop_ff2();
-	return ret;
+	execute();
+	ff().processed = 0;
+	return local_variable(result_base_+pos);
 }
 	
 void VMachine::cleanup_call(){
-	result(0);
-	downsize(ff().need_result_count);
-	pop_ff2();
+	execute();
+	ff().processed = 0;
 }
 
 const AnyPtr& VMachine::arg(int_t pos){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count)
-		return get(f.args_stack_size()-1-pos);
+		return local_variable(pos);
 	return undefined;
 }
 
 const AnyPtr& VMachine::arg(int_t pos, const IDPtr& name){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count){
-		return get(f.args_stack_size()-1-pos);
+		return local_variable(pos);
 	}
 	return arg(name);
 }
@@ -285,7 +260,7 @@ const AnyPtr& VMachine::arg(int_t pos, const IDPtr& name){
 const AnyPtr& VMachine::arg_default(int_t pos, const AnyPtr& def){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count){
-		return get(f.args_stack_size()-1-pos);
+		return local_variable(pos);
 	}
 	return def;
 }
@@ -293,8 +268,8 @@ const AnyPtr& VMachine::arg_default(int_t pos, const AnyPtr& def){
 const AnyPtr& VMachine::arg_default(const IDPtr& name, const AnyPtr& def){
 	FunFrame& f = ff();
 	for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
-		if(raweq(get(sz*2-1-(i*2+0)), name)){
-			return get(sz*2-1-(i*2+1));
+		if(raweq(local_variable(f.ordered_arg_count + i*2 + 0), name)){
+			return local_variable(f.ordered_arg_count + i*2 + 1);
 		}
 	}
 	return def;
@@ -303,225 +278,223 @@ const AnyPtr& VMachine::arg_default(const IDPtr& name, const AnyPtr& def){
 const AnyPtr& VMachine::arg_default(int_t pos, const IDPtr& name, const AnyPtr& def){
 	FunFrame& f = ff();
 	if(pos<f.ordered_arg_count){
-		return get(f.args_stack_size()-1-pos);
+		return local_variable(pos);
 	}
 	return arg_default(name, def);
 }
 
 void VMachine::adjust_args(const NamedParam* params, int_t num){
 	FunFrame& f = ff();
-	int_t offset = f.named_arg_count*2;
-	int_t k = 0;
+	int_t base = f.ordered_arg_count + f.named_arg_count*2;
+	int_t offset = base;
 	for(int_t j=f.ordered_arg_count; j<num; ++j){
 		bool hit = false;
 		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
-			if(raweq(get(sz*2-1-(i*2+0)+k), params[j].name)){
-				stack_.push(get(sz*2-1-(i*2+1)+k));
+			if(raweq(local_variable(f.ordered_arg_count + i*2 + 0), params[j].name)){
+				set_local_variable(offset++, local_variable(f.ordered_arg_count + i*2 + 1));
 				hit = true;
 				break;
 			}
 		}
 
 		if(!hit){
-			stack_.push(params[j].value);
+			set_local_variable(offset++, params[j].value);
 		}
-
-		k++;
 	}
 
-	stack_.erase(k+offset-1, offset);
-	f.ordered_arg_count += k;
-	f.named_arg_count = 0;
+	variables_.move_unref(variables_top() + f.ordered_arg_count, base + variables_top(), offset-base);
 }
 
 void VMachine::adjust_args(Method* names, int_t num){
 	FunFrame& f = ff();
-	int_t offset = f.named_arg_count*2;
-	int_t k = 0;
+	int_t base = f.ordered_arg_count + f.named_arg_count*2;
+	int_t offset = base;
 	for(int_t j=f.ordered_arg_count; j<num; ++j){
 		bool hit = false;
 		for(int_t i = 0, sz = f.named_arg_count; i<sz; ++i){
-			if(raweq(get(sz*2-1-(i*2+0)+k), names->param_name_at(j))){
-				stack_.push(get(sz*2-1-(i*2+1)+k));
+			if(raweq(local_variable(f.ordered_arg_count + i*2 + 0), names->param_name_at(j))){
+				set_local_variable(offset++, local_variable(f.ordered_arg_count + i*2 + 1));
 				hit = true;
 				break;
 			}
 		}
 
 		if(!hit){
-			stack_.push(undefined);
+			set_local_variable(offset++, undefined);
 		}
-
-		k++;
 	}
 
-	stack_.erase(k+offset-1, offset);
-	f.ordered_arg_count += k;
-	f.named_arg_count = 0;
+	variables_.move_unref(variables_top() + f.ordered_arg_count, base + variables_top(), offset-base);
 }
 
 void VMachine::return_result(){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	downsize(f.args_stack_size());
-	if(f.need_result_count!=f.result_count+0){
-		adjust_result(f.result_count+0);
-	}
-
-	f.called_pc = &cleanup_call_code_;
+	f.result_count += 0;
+	pop_ff();
 }
 
 void VMachine::return_result(const AnyPtr& value1){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	downsize(f.args_stack_size());
-	push(value1);
-	if(f.need_result_count!=f.result_count+1){
-		adjust_result(f.result_count+1);
-	}
-
-	f.called_pc = &cleanup_call_code_;
+	stack_.push(value1);
+	f.result_count += 1;
+	pop_ff();
 }
 	
 void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	downsize(f.args_stack_size());
-	push(value1);
-	push(value2);
-	adjust_result(f.result_count+2);
-
-	f.called_pc = &cleanup_call_code_;
+	stack_.push(value1);
+	stack_.push(value2);
+	f.result_count += 2;
+	pop_ff();
 }
 
 void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	downsize(f.args_stack_size());
-	push(value1);
-	push(value2);
-	push(value3);
-	adjust_result(f.result_count+3);
-
-	f.called_pc = &cleanup_call_code_;
+	stack_.push(value1);
+	stack_.push(value2);
+	stack_.push(value3);
+	f.result_count += 3;
+	pop_ff();
 }
 	
 void VMachine::return_result(const AnyPtr& value1, const AnyPtr& value2, const AnyPtr& value3, const AnyPtr& value4){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	downsize(f.args_stack_size());
-	push(value1);
-	push(value2);
-	push(value3);
-	push(value4);
-	adjust_result(f.result_count+4);
-
-	f.called_pc = &cleanup_call_code_;
+	stack_.push(value1);
+	stack_.push(value2);
+	stack_.push(value3);
+	stack_.push(value4);
+	f.result_count += 4;
+	pop_ff();
 }
 
 void VMachine::return_result_mv(const ValuesPtr& values){
+	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
-	downsize(f.args_stack_size());
-	adjust_result(push_mv(values));
-	f.called_pc = &cleanup_call_code_;
-}
 
-void VMachine::return_result_args(const VMachinePtr& vm){
-	FunFrame& f = ff();
-	vm->downsize(vm->named_arg_count()*2);
-	push(vm.get(), vm->ordered_arg_count());
-	vm->upsize(vm->named_arg_count()*2);
-	adjust_result(f.result_count+vm->ordered_arg_count());
-	f.called_pc = &cleanup_call_code_;
+	int_t size = values->size();
+	for(int_t i=0; i<size; ++i){
+		stack_.push(values->at(i));
+	}
+
+	f.result_count += size;
+	pop_ff();
 }
 
 void VMachine::prereturn_result(const AnyPtr& v){
 	ff().result_count++;
-	stack_.insert(ff().args_stack_size(), v);
+	stack_.push(v);
 }
 
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	if(const AnyPtr& e = catch_except()){
 		vm->set_except(e);
-		vm->push(undefined);
-		vm->adjust_result(add_succ_or_fail_result?1:0);
+		vm->stack_.push(e);
+		vm->fun_frames_.top()->called_pc = &throw_code_;
+		resume_pc_ = 0;
 		return;
 	}
 
 	// 結果をvmに渡す
-	if(vm->need_result()){
-		if(add_succ_or_fail_result){
-			if(resume_pc_!=0){
-				vm->push(to_smartptr(fun));
-			}
-			else{
-				vm->push(null);
-			}
-			vm->push(this, yield_result_count_);
-			downsize(yield_result_count_);
-			vm->adjust_result(yield_result_count_+1);
+	if(add_succ_or_fail_result){
+		if(resume_pc_!=0){
+			vm->stack_.push(to_smartptr(fun));
 		}
 		else{
-			vm->push(this, yield_result_count_);
-			downsize(yield_result_count_);
-			vm->adjust_result(yield_result_count_);
+			vm->stack_.push(null);
 		}
+		vm->ff().result_count += 1;
 	}
-	vm->ff().called_pc = &cleanup_call_code_;
+
+	for(int_t i=0; i<yield_target_count_; ++i){
+		vm->stack_.push(stack_[yield_target_count_-1-i]);
+	}
+	stack_.downsize(yield_target_count_);
+	
+	vm->ff().result_count += yield_target_count_;
+
+	vm->pop_ff();
 }
 
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
-	yield_result_count_ = 0;
-	push_ff();
-	set_ff(&end_code_, &throw_unsupported_error_code_, vm->need_result_count(), vm->ordered_arg_count(), vm->named_arg_count(), vm->arg_this());
-	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+	yield_target_count_ = 0;
+
+	push_ff(vm->arg_this(), &end_code_, variables_top(), vm->need_result_count(), 0, vm->ordered_arg_count(), vm->named_arg_count());	
+	
+	move_variables(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
+
 	resume_pc_ = 0;
+
 	carry_over(fun);
 	ff().yieldable = true;
+
 	execute_inner(ff().called_pc);
+	//XTAL_ASSERT(resume_pc_);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 	return resume_pc_;
 }
 
 const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm, bool add_succ_or_fail_result){
-	yield_result_count_ = 0;
+	yield_target_count_ = 0;
 	ff().called_pc = pc;
 	resume_pc_ = 0;
-	move(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
-	adjust_result(vm->ordered_arg_count()+vm->named_arg_count()*2, yield_need_result_count_);
+
+	if(yield_need_result_count_!=0){
+		vm->adjust_values2(0, vm->ordered_arg_count()+vm->named_arg_count()*2, yield_need_result_count_);
+
+		for(int_t i=0; i<yield_need_result_count_; ++i){
+			set_local_variable(yield_result_+i, vm->local_variable(i));
+		}
+	}
+
 	execute_inner(ff().called_pc);
+	//XTAL_ASSERT(resume_pc_);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 	return resume_pc_;
 }
 
 void VMachine::exit_fiber(){
-	yield_result_count_ = 0;
-	ff().called_pc = resume_pc_;
+	yield_target_count_ = 0;
+	ff().called_pc = &throw_code_;
 	resume_pc_ = 0;
 
-	push(undefined);
+	stack_.push(undefined);
 	execute_inner(&throw_code_);
 
 	reset();
 }
 
 void VMachine::flatten_args(){
+	XTAL_ASSERT(false);
+	/*todo
 	FunFrame& f = ff();
 
 	stack_.downsize(f.named_arg_count*2);
-	adjust_result(f.ordered_arg_count, 1);
+	adjust_values(variables_top_, f.ordered_arg_count, 1);
 	f.named_arg_count = 0;
 	f.ordered_arg_count = 1;
 
 	AnyPtr a = arg(0);
 	if(type(a)==TYPE_UNDEFINED){
-		downsize(1);
 		f.ordered_arg_count = 0;
 	}
 	else if(type(a)==TYPE_VALUES){
-		downsize(1);
+		int_t size = values->size();
+		for(int_t i=0; i<size; ++i){
+			stack_.push(values->at(i));
+		}
 		f.ordered_arg_count = push_mv(unchecked_ptr_cast<Values>(a));
 	}
+	*/
 }
 
 ArgumentsPtr VMachine::make_arguments(){
@@ -532,7 +505,7 @@ ArgumentsPtr VMachine::make_arguments(){
 	}
 
 	for(int_t i = 0, size = named_arg_count(); i<size; ++i){
-		p->add_named(get(size*2-1-(i*2+0)), get(size*2-1-(i*2+1)));
+		p->add_named(local_variable(ff().ordered_arg_count+i*2+0), local_variable(ff().ordered_arg_count+i*2+1));
 	}
 	return p;
 }
@@ -540,15 +513,13 @@ ArgumentsPtr VMachine::make_arguments(){
 ArgumentsPtr VMachine::inner_make_arguments(Method* fun){
 	ArgumentsPtr p = xnew<Arguments>();
 
-	ArrayPtr ordered;
 	for(int_t i = fun->param_size(), size = ff().ordered_arg_count; i<size; ++i){
-		p->add_ordered(get(ff().ordered_arg_count+ff().named_arg_count*2-1-i));
+		p->add_ordered(local_variable(i));
 	}
 
-	MapPtr named;
 	IDPtr name;
 	for(int_t i = 0, size = ff().named_arg_count; i<size; ++i){
-		name = (IDPtr&)get(size*2-1-(i*2+0));
+		name = (IDPtr&)local_variable(ff().ordered_arg_count+i*2+0);
 		for(int_t j = 0; j<fun->param_size(); ++j){
 			if(fun->param_name_at(j)==name){
 				name = null;
@@ -556,7 +527,7 @@ ArgumentsPtr VMachine::inner_make_arguments(Method* fun){
 			}
 		}
 		if(name){
-			p->add_named(name, get(size*2-1-(i*2+1)));
+			p->add_named(name, local_variable(ff().ordered_arg_count+i*2+1));
 		}
 	}
 
@@ -612,7 +583,8 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	}
 
 	if(kind==BREAKPOINT_ASSERT){
-		debug_info_->set_assertion_message(pop()->to_s());
+		debug_info_->set_assertion_message(assertion_message_);
+		assertion_message_ = empty_string;
 	}
 	else{
 		debug_info_->set_assertion_message(empty_string);
@@ -626,8 +598,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	}
 
 	make_outer_outer();
-	debug_info_->set_variables_frame(scopes_.top());
-	scopes_.top()->recycle_ = false;
+	debug_info_->set_variables_frame(scopes_.top().frame);
 
 	debug_info_->set_vm(to_smartptr(this));
 	debug_info_->funframe_ = fun_frames_.size()-2;
@@ -650,7 +621,7 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 	ret->set_fun_name(f.fun()->object_name());
 	ret->set_file_name(f.fun()->code()->source_file_name());
 	make_outer_outer();
-	ret->set_variables_frame(scopes_.reverse_at(pf.scope_size-1));
+	ret->set_variables_frame(scopes_.reverse_at(pf.scope_size-1).frame);
 	return ret;
 }
 
@@ -715,12 +686,13 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 
 	// Xtalの関数を脱出していく
 	while((size_t)ef.fun_frame_size<fun_frames_.size()){
-		while(scopes_.size()>ff().scope_size+1){
+		while(scopes_.size()>ff().scope_size){
 			pop_scope();
 		}
 
 		check_debug_hook(pc, BREAKPOINT_RETURN);
-		pc = pop_ff();
+		pop_ff2();
+		pc = ff().called_pc;
 		e = append_backtrace(pc, e);
 
 		// Cの関数にぶつかった
@@ -741,17 +713,18 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	}
 
 	stack_.resize(ef.stack_size);
+	set_variables_top(ef.variables_top);
 
 	if(ef.info){
 		if(ef.info->catch_pc && e){
 			pc = ef.info->catch_pc +  fun()->code()->data();
-			push(AnyPtr(ef.info->end_pc));
-			push(e);
+			stack_.push(AnyPtr(ef.info->end_pc));
+			stack_.push(e);
 		}
 		else{
 			pc = ef.info->finally_pc +  fun()->code()->data();
-			push(e);
-			push(AnyPtr(fun()->code()->size()-1));
+			stack_.push(e);
+			stack_.push(AnyPtr(fun()->code()->size()-1));
 		}
 
 		except_frames_.downsize(1);
@@ -785,14 +758,14 @@ void VMachine::set_except(const AnyPtr& e){
 }
 
 const inst_t* VMachine::push_except(const inst_t* pc){
-	push(except_[0]);
+	stack_.push(except_[0]);
 	except_[0] = null;
 	throw_pc_ = pc+1;
 	return &throw_code_;
 }
 	
 const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
-	push(e);
+	stack_.push(e);
 	except_[0] = null;
 	throw_pc_ = pc+1;
 	return &throw_code_;
@@ -800,37 +773,32 @@ const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
 
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
-	m & debug_info_ & except_[0] & except_[1] & except_[2];
+	m & debug_info_ & except_[0] & except_[1] & except_[2] & assertion_message_;
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		m & stack_[i];
 	}
 
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
-		if(fun_frames_[i]){
-			m & *fun_frames_[i];
+		if(FunFrame* f = fun_frames_[i]){
+			m & f->fun_;
+			m & f->self_;
 		}
 	}
 
 	for(int_t i=0, size=scopes_.size(); i<size; ++i){
-		m & scopes_[i];
-		//for(int_t j=0, jsize=scopes_[i]->members_.size(); j<jsize; ++j){
-		//	m & scopes_[i]->members_.at(j);
-		//}
+		m & scopes_[i].frame;
 	}
 
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		//m & variables_.at(i);
+	for(int_t i=0, size=std::min((int)variables_top()+256, (int)variables_.size()); i<size; ++i){
+		m & variables_.at(i);
 	}
 }
 
 void VMachine::add_ref_count_members(int_t n){
-	add_ref_count_force(debug_info_, n);
-
 	add_ref_count_force(except_[0], n);
 	add_ref_count_force(except_[1], n);
 	add_ref_count_force(except_[2], n);
-
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		add_ref_count_force(stack_[i], n);
@@ -840,50 +808,37 @@ void VMachine::add_ref_count_members(int_t n){
 		if(FunFrame* f = fun_frames_[i]){
 			add_ref_count_force(f->fun_, n);
 			add_ref_count_force(f->self_, n);
-			add_ref_count_force(f->target_, n);
-			add_ref_count_force(f->primary_key_, n);
-			add_ref_count_force(f->secondary_key_, n);
 		}
 	}
 
 	for(int_t i=0, size=scopes_.size(); i<size; ++i){
-		if(scopes_[i]){
-			scopes_[i]->add_ref_count_members(n);
+		Scope& scope = scopes_[i];
+		if(scope.flags==Scope::CLASS && scope.frame){
+			scope.frame->add_ref_count_members(n);
 		}
 	}
 
-	for(int_t i=0, size=variables_.size(); i<size; ++i){
-		//add_ref_count_force(variables_.at(i), n);
+	for(int_t i=0, size=std::min((int)variables_top()+256, (int)variables_.size()); i<size; ++i){
+		add_ref_count_force(variables_.at(i), n);
 	}
 }
 
 void VMachine::before_gc(){
-	if(stack_.empty() && except_frames_.empty() && fun_frames_.empty() && scopes_.empty()){
-	//	return;
-	}
-
-	add_ref_count_members(1);
-
-	//*
-	// 使われていない部分をnullで塗りつぶす
-	for(int_t i=stack_.size(), size=stack_.capacity(); i<size; ++i){
-		set_null(stack_.reverse_at_unchecked(i));
-	}
-
 	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
-		if(fun_frames_.reverse_at_unchecked(i)){
-			fun_frames_.reverse_at_unchecked(i)->set_null();
+		if(FunFrame* f = fun_frames_.reverse_at_unchecked(i)){
+			set_null(f->fun_);
+			set_null(f->self_);
 		}
 	}
 
-	//*/
+	for(int_t i=variables_top()+128, size=variables_.size(); i<size; ++i){
+		set_null((Any&)variables_.at(i));
+	}
+
+	add_ref_count_members(1);
 }
 
 void VMachine::after_gc(){
-	if(stack_.empty() && except_frames_.empty() && fun_frames_.empty() && scopes_.empty()){
-	//	return;
-	}
-
 	add_ref_count_members(-1);
 }
 
@@ -899,10 +854,6 @@ void VMachine::print_info(){
 	std::printf("except_frames size %d\n", except_frames_.size());
 	std::printf("scopes size %d\n", scopes_.size());
 #endif
-}
-	
-void visit_members(Visitor& m, VMachine::FunFrame& v){
-	m & v.fun_ & v.self_ & v.target_ & v.primary_key_ & v.secondary_key_;
 }
 
 }//namespace

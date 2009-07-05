@@ -122,7 +122,6 @@ struct ConnectedPointer{
 
 void xtal::ObjectSpace::print_alive_objects(){
 #ifdef XTAL_DEBUG_PRINT
-
 	ConnectedPointer current(objects_count_, objects_list_begin_);
 	ConnectedPointer begin(0, objects_list_begin_);
 
@@ -142,7 +141,7 @@ void xtal::ObjectSpace::print_alive_objects(){
 				buf[i] = str[i];
 			}
 			buf[n] = 0;
-			table[buf]++;
+			//table[buf]++;
 		}
 		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
@@ -298,7 +297,6 @@ void ObjectSpace::uninitialize(){
 
 	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
-
 }
 
 void ObjectSpace::fit_objects_list(RefCountingBase*** it){
@@ -353,65 +351,6 @@ void ObjectSpace::after_gc(){
 }
 
 ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
-	
-	/*
-	uint_t num = 0;
-	ConnectedPointer end = alive - 1;
-	ConnectedPointer it = current - 1;
-	while(it!=end){
-		if((*it)->ungc()==0){
-			--current;
-			++num;
-
-			(*it)->destroy();
-			(*it)->object_free();
-
-			*it = *current;
-		}
-			
-		--it;
-	}
-	//alive = current;
-	//return num;
-	*/
-
-	/*
-	//uint_t num = 0;
-	while(alive!=current){
-		if((*alive)->ungc()==0){
-			--current;
-
-			(*alive)->destroy();
-			(*alive)->object_free();
-
-			*alive = *current;
-		}
-		else{
-			++alive;
-		}
-	}
-	return num;
-	//*/
-
-	/*
-	while(first!=last){
-		if((*first)->ungc()==0){
-			if(end==last){
-				--last;
-			}
-			--end;
-
-			(*first)->destroy();
-			(*first)->object_free();
-
-			*first = *end;
-		}
-		else{
-			++first;
-		}
-	}
-	*/
-
 	ConnectedPointer rend = first - 1;
 	ConnectedPointer it = last - 1;
 	while(it!=rend){
@@ -524,6 +463,8 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 void ObjectSpace::full_gc(){
 	if(cycle_count_!=0){ return; }
 	{
+		vmachine_swap_temp();
+
 		ScopeCounter cc(&cycle_count_);
 				
 		while(true){			
@@ -554,13 +495,19 @@ void ObjectSpace::full_gc(){
 
 			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
+				
+
 				// 死者のfinalizerを走らせる
 				for(ConnectedPointer it = alive; it!=current; ++it){
 					if((*it)->have_finalizer()){
 						exists_have_finalizer = true;
+						//vmachine()->setup_call();
 						((Base*)(*it))->finalize();
+						//vmachine()->return_result();
+						//vmachine()->cleanup_call();
 					}
 				}
+
 
 				if(exists_have_finalizer){
 					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
@@ -610,6 +557,8 @@ void ObjectSpace::full_gc(){
 
 		fit_objects_list(objects_list_current_);
 		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
+
+		vmachine_swap_temp();
 	}
 }
 

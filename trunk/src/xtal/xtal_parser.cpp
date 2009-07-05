@@ -84,6 +84,8 @@ int_t Reader::read(){
 }
 
 int_t Reader::peek(int_t n){
+	XTAL_ASSERT(n<BUF_SIZE);
+
 	uint_t rpos = read_&BUF_MASK;
 	uint_t ppos = pos_&BUF_MASK;
 

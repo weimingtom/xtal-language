@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_details.h"
+
 namespace xtal{
 
 InstanceVariables::InstanceVariables()		
@@ -298,7 +300,20 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 
 IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& minv){
 	IDPtr minid = null;
-	Xfor_cast(const ValuesPtr& v, send(Xid(members_ancestors_too))){
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1);
+	AnyPtr mem = ap(get_class())->member(Xid(members_ancestors_too));
+
+	if(is_undefined(mem)){
+		return minid;
+	}
+
+	vm->set_arg_this(ap(*this));
+	mem->rawcall(vm);
+
+	AnyPtr value = vm->result_and_cleanup_call();
+
+	Xfor_cast(const ValuesPtr& v, value){
 		IDPtr id = ptr_cast<ID>(v->at(0));
 		int_t dist = edit_distance(primary_key, id);
 		if(dist!=0 && dist<minv){

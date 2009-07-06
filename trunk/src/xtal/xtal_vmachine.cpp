@@ -1244,12 +1244,18 @@ zerodiv:
 
 	XTAL_VM_CASE(IfEq){ // 14
 		XTAL_VM_FUN;
-		const AnyPtr& b = local_variable(inst.rhs); uint_t btype = type(b)-TYPE_INT;
-		const AnyPtr& a = local_variable(inst.lhs); uint_t atype = type(a)-TYPE_INT;
-		uint_t abtype = atype | btype;
-		
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
+	
+		const AnyPtr& b = local_variable(inst.rhs); 
+		const AnyPtr& a = local_variable(inst.lhs); 
+		if(raweq(a, b)){
+			XTAL_VM_CONTINUE(inst2.address_true + pc + inst.ISIZE);
+		}		
+		
+		uint_t btype = type(b)-TYPE_INT;
+		uint_t atype = type(a)-TYPE_INT;
+		uint_t abtype = atype | btype;
 
 		if(abtype==0){
 			XTAL_VM_CONTINUE((

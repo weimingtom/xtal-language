@@ -149,6 +149,9 @@ int main2(int argc, char** argv){
 //*
 	if(CodePtr code = Xsrc((
 
+		a: null;
+		(a==null).p;
+
 	))){
 		code->filelocal()->def("ppp", fun(&print));
 		//code->inspect()->p();

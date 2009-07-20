@@ -160,7 +160,6 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
 	keyword_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
 	keyword_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
-	keyword_map_->set_at(Xid(current_context), (int_t)Token::KEYWORD_CURRENT_CONTEXT);
 	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
 	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
 	keyword_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
@@ -1141,7 +1140,6 @@ bool Parser::parse_term(){
 				XTAL_CASE(Token::KEYWORD_TRUE){ eb_.splice(EXPR_TRUE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_FALSE){ eb_.splice(EXPR_FALSE, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_THIS){ eb_.splice(EXPR_THIS, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_CURRENT_CONTEXT){ eb_.splice(EXPR_CURRENT_CONTEXT, 0); return true; }
 				XTAL_CASE(Token::KEYWORD_YIELD){ parse_exprs(); eb_.splice(EXPR_YIELD, 1); return true; }
 
 				XTAL_CASE(Token::KEYWORD_DOFUN){ 
@@ -2169,6 +2167,7 @@ void Parser::parse_switch(){
 	expect('(');
 
 	if(parse_var()){
+		eb_.splice(EXPR_LVAR, 1);
 		expect_parse_expr();
 		eb_.splice(EXPR_DEFINE, 2);
 	}

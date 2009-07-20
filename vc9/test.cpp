@@ -149,8 +149,11 @@ int main2(int argc, char** argv){
 //*
 	if(CodePtr code = Xsrc((
 
-		a: null;
-		(a==null).p;
+		[[1], [2], [3]].each{
+			it.each{
+				it.p;
+			}
+		}
 
 	))){
 		code->filelocal()->def("ppp", fun(&print));

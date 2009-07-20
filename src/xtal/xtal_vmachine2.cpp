@@ -65,7 +65,16 @@ void VMachine::FunFrame::set_null(){
 
 void VMachine::setup_call(int_t need_result_count){
 	int_t base = variables_top()!=0 ? 128 : 1;
-	push_ff(undefined, &end_code_, base, need_result_count, base, 0, 0);	
+
+	CallState call_state;
+	call_state.self = undefined;
+	call_state.npc = &end_code_;
+	call_state.result = base;
+	call_state.need_result_count = need_result_count;
+	call_state.stack_base = base;
+	call_state.ordered = 0;
+	call_state.named = 0;
+	push_ff(call_state);	
 }
 	
 //{REPEAT{{
@@ -428,7 +437,15 @@ void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_re
 const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	yield_target_count_ = 0;
 
-	push_ff(vm->arg_this(), &end_code_, variables_top(), vm->need_result_count(), 0, vm->ordered_arg_count(), vm->named_arg_count());	
+	CallState call_state;
+	call_state.self = vm->arg_this();
+	call_state.npc = &end_code_;
+	call_state.result = variables_top();
+	call_state.need_result_count = vm->need_result_count();
+	call_state.stack_base = 0;
+	call_state.ordered = vm->ordered_arg_count();
+	call_state.named = vm->named_arg_count();
+	push_ff(call_state);
 	
 	move_variables(vm, vm->ordered_arg_count()+vm->named_arg_count()*2);
 

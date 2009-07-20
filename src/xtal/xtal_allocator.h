@@ -67,7 +67,7 @@ public:
 		ONE_SIZE = sizeof(data_t)*2
 	};
 
-	size_t calc_size(size_t block_size){
+	std::size_t calc_size(std::size_t block_size){
 		return 128/block_size + 4;
 	}
 
@@ -78,13 +78,15 @@ private:
 	uint_t all_count_;
 	uint_t used_count_;
 
+	uint_t gc_count_;
+
 	bool cant_fit_;
 
 public:
 
 	FixedAllocator();
 
-	void* malloc(size_t block_size){
+	void* malloc(std::size_t block_size){
 		if(free_data_){
 			void* ret = free_data_;
 			free_data_ = static_cast<data_t*>(*free_data_);
@@ -94,7 +96,7 @@ public:
 		return malloc_inner(block_size);
 	}
 
-	void free(void* mem, size_t block_size){
+	void free(void* mem, std::size_t block_size){
 		/*
 		data_t* m = static_cast<data_t*>(mem);
 		data_t** p = &free_data_;
@@ -115,17 +117,17 @@ public:
 		--used_count_;
 	}
 
-	void release(size_t block_size);
+	void release(std::size_t block_size);
 
-	void fit(size_t block_size);
+	void fit(std::size_t block_size);
 
-	void print(size_t block_size);
+	void print(std::size_t block_size);
 
 private:
 
-	void* malloc_inner(size_t block_size);
+	void* malloc_inner(std::size_t block_size);
 
-	void add_chunk(size_t block_size);
+	void add_chunk(std::size_t block_size);
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(FixedAllocator);
 };
@@ -150,17 +152,17 @@ public:
 
 	SmallObjectAllocator(){}
 	
-	void* malloc(size_t size){
+	void* malloc(std::size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
 
-		size_t wsize = align(size, ONE_SIZE)/ONE_SIZE;
+		std::size_t wsize = align(size, ONE_SIZE)/ONE_SIZE;
 		if(wsize==0){ return 0; }
 		return pool_[wsize-1].malloc(wsize);
 	}
 
-	void free(void* p, size_t size){
+	void free(void* p, std::size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-		if(size_t wsize = align(size, ONE_SIZE)/ONE_SIZE){
+		if(std::size_t wsize = align(size, ONE_SIZE)/ONE_SIZE){
 			pool_[wsize-1].free(p, wsize);
 		}
 	}

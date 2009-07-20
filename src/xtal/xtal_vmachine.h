@@ -366,6 +366,12 @@ public:
 
 public:
 
+	FramePtr current_context(){
+		return make_outer_outer();
+	}
+
+public:
+
 	const AnyPtr& catch_except();
 
 	const AnyPtr& except(){
@@ -400,16 +406,9 @@ public:
 
 public:
 
-	void adjust_values(){		
-		adjust_values(0, ff().result_count, ff().need_result_count);
-	}
-
-	void adjust_values(int_t n){		
-		adjust_values(0, n, ff().need_result_count);
-	}
-
-	void adjust_values(int_t stack_base, int_t n, int_t need_result_count);
+	void adjust_values(int_t n, int_t need_result_count);
 	void adjust_values2(int_t stack_base, int_t n, int_t need_result_count);
+	void adjust_values3(Any* values, int_t n, int_t need_result_count);
 
 	void set_hook_setting_bit(uint_t v){
 		hook_setting_bit_ = v;
@@ -530,9 +529,15 @@ private:
 	void push_args(const ArgumentsPtr& args, int_t stack_base, int_t ordered_arg_count, int_t named_arg_count);
 
 	struct CallState{
+		Any cls;
+		Any target;
+		Any primary;
+		Any secondary;
+		Any self;
+		Any member;
+
 		const inst_t* pc;
 		const inst_t* npc;
-		const inst_t* cpc;
 		int_t result;
 		int_t need_result_count;
 		int_t stack_base;
@@ -540,11 +545,13 @@ private:
 		int_t named;
 		int_t flags;
 
-		void set(const inst_t* pc, const inst_t* npc, const inst_t* cpc,
-			int_t result, int_t need_result_count, int_t stack_base, int_t ordered, int_t named, int_t flags){
+		void set(const inst_t* pc, const inst_t* npc,
+			int_t result, int_t need_result_count, 
+			int_t stack_base, int_t ordered, int_t named, 
+			int_t flags){
+
 			this->pc = pc;
 			this->npc = npc; 
-			this->cpc = cpc; 
 			this->result = result; 
 			this->need_result_count = need_result_count;
 			this->stack_base = stack_base;
@@ -554,36 +561,19 @@ private:
 		}
 	};
 
-	const inst_t* send(Any target, Any primary_key, Any secondary_key, const AnyPtr& self,
-		const inst_t* pc, const inst_t* npc,
-		int_t result, int_t need_result_count, 
-		int_t stack_base, int_t ordered, int_t named, int_t flags);
-
-	const inst_t* call(Any mem, const AnyPtr& self, 
-		const inst_t* pc, const inst_t* npc,
-		int_t result, int_t need_result_count, 
-		int_t stack_base, int_t ordered, int_t named, int_t flags);
+	const inst_t* check_accessibility(CallState& call_state, int_t accessibility);
 
 	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info);
 
 	void pop_scope();
 
-	void push_ff(const AnyPtr& self, 
-		const inst_t* npc, 
-		int_t result, int_t need_result_count, 
-		int_t stack_base, int_t ordered_arg_count, int_t named_arg_count);
+	void push_ff(CallState& call_state);
 
 	void pop_ff();
 
 	void pop_ff2();
 
 	void execute();
-
-	const inst_t* inner_send(const inst_t* npc, const IDPtr& primary_key, int_t stack_base, int_t result, int_t target);
-
-	const inst_t* inner_send(const inst_t* npc, const IDPtr& primary_key, int_t stack_base, int_t result, int_t target, int_t value);
-
-	const inst_t* inner_send_q(const inst_t* npc, const IDPtr& primary_key, int_t stack_base, int_t result, int_t target, int_t value);
 
 	void upsize_variables(uint_t upsize);
 
@@ -634,20 +624,16 @@ private:
 	const inst_t* push_except(const inst_t* pc);
 	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
 
-	const inst_t* check_accessibility(const inst_t* pc, const AnyPtr& cls, const IDPtr& primary_key, const AnyPtr& secondary_key, const AnyPtr& self, int_t accessibility);
-
 	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value);
 
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
 	AnyPtr& local_variable(int_t pos){
 		return (AnyPtr&)variables_top_[pos];
-		//return (AnyPtr&)variables_.at(variables_top_+pos);
 	}
 
 	void set_local_variable(int_t pos, const Any& value){
 		(Any&)variables_top_[pos] = value;
-		//(Any&)variables_.at(variables_top_+pos) = value;
 	}
 
 	int_t variables_top(){
@@ -675,55 +661,44 @@ public:
 
 //{DECLS{{
 	const inst_t* FunNop(const inst_t* pc);
-	const inst_t* FunLoadNull(const inst_t* pc);
-	const inst_t* FunLoadUndefined(const inst_t* pc);
-	const inst_t* FunLoadTrue(const inst_t* pc);
-	const inst_t* FunLoadFalse(const inst_t* pc);
-	const inst_t* FunLoadTrueAndSkip(const inst_t* pc);
+	const inst_t* FunLoadValue(const inst_t* pc);
+	const inst_t* FunLoadConstant(const inst_t* pc);
 	const inst_t* FunLoadInt1Byte(const inst_t* pc);
 	const inst_t* FunLoadFloat1Byte(const inst_t* pc);
 	const inst_t* FunLoadCallee(const inst_t* pc);
 	const inst_t* FunLoadThis(const inst_t* pc);
-	const inst_t* FunLoadCurrentContext(const inst_t* pc);
 	const inst_t* FunCopy(const inst_t* pc);
-	const inst_t* FunPush(const inst_t* pc);
-	const inst_t* FunPop(const inst_t* pc);
-	const inst_t* FunAdjustValues(const inst_t* pc);
-	const inst_t* FunLocalVariable2Byte(const inst_t* pc);
-	const inst_t* FunSetLocalVariable2Byte(const inst_t* pc);
-	const inst_t* FunInstanceVariable(const inst_t* pc);
-	const inst_t* FunSetInstanceVariable(const inst_t* pc);
-	const inst_t* FunFilelocalVariable(const inst_t* pc);
-	const inst_t* FunReturn(const inst_t* pc);
-	const inst_t* FunYield(const inst_t* pc);
-	const inst_t* FunExit(const inst_t* pc);
-	const inst_t* FunValue(const inst_t* pc);
-	const inst_t* FunCall(const inst_t* pc);
-	const inst_t* FunSend(const inst_t* pc);
-	const inst_t* FunProperty(const inst_t* pc);
-	const inst_t* FunSetProperty(const inst_t* pc);
 	const inst_t* FunMember(const inst_t* pc);
-	const inst_t* FunScopeBegin(const inst_t* pc);
-	const inst_t* FunScopeEnd(const inst_t* pc);
-	const inst_t* FunPos(const inst_t* pc);
-	const inst_t* FunNeg(const inst_t* pc);
-	const inst_t* FunCom(const inst_t* pc);
-	const inst_t* FunNot(const inst_t* pc);
-	const inst_t* FunInc(const inst_t* pc);
-	const inst_t* FunDec(const inst_t* pc);
+	const inst_t* FunUna(const inst_t* pc);
 	const inst_t* FunArith(const inst_t* pc);
 	const inst_t* FunBitwise(const inst_t* pc);
 	const inst_t* FunAt(const inst_t* pc);
 	const inst_t* FunSetAt(const inst_t* pc);
 	const inst_t* FunGoto(const inst_t* pc);
+	const inst_t* FunNot(const inst_t* pc);
 	const inst_t* FunIf(const inst_t* pc);
-	const inst_t* FunIfEq(const inst_t* pc);
-	const inst_t* FunIfLt(const inst_t* pc);
+	const inst_t* FunIfComp(const inst_t* pc);
 	const inst_t* FunIfRawEq(const inst_t* pc);
-	const inst_t* FunIfIn(const inst_t* pc);
 	const inst_t* FunIfIs(const inst_t* pc);
 	const inst_t* FunIfUndefined(const inst_t* pc);
 	const inst_t* FunIfDebug(const inst_t* pc);
+	const inst_t* FunPush(const inst_t* pc);
+	const inst_t* FunPop(const inst_t* pc);
+	const inst_t* FunAdjustValues(const inst_t* pc);
+	const inst_t* FunLocalVariable(const inst_t* pc);
+	const inst_t* FunSetLocalVariable(const inst_t* pc);
+	const inst_t* FunInstanceVariable(const inst_t* pc);
+	const inst_t* FunSetInstanceVariable(const inst_t* pc);
+	const inst_t* FunFilelocalVariable(const inst_t* pc);
+	const inst_t* FunCall(const inst_t* pc);
+	const inst_t* FunSend(const inst_t* pc);
+	const inst_t* FunProperty(const inst_t* pc);
+	const inst_t* FunSetProperty(const inst_t* pc);
+	const inst_t* FunScopeBegin(const inst_t* pc);
+	const inst_t* FunScopeEnd(const inst_t* pc);
+	const inst_t* FunReturn(const inst_t* pc);
+	const inst_t* FunYield(const inst_t* pc);
+	const inst_t* FunExit(const inst_t* pc);
 	const inst_t* FunRange(const inst_t* pc);
 	const inst_t* FunOnce(const inst_t* pc);
 	const inst_t* FunSetOnce(const inst_t* pc);

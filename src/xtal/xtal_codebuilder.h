@@ -268,7 +268,6 @@ public:
 	int_t compile_expr_FALSE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	int_t compile_expr_CALLEE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	int_t compile_expr_THIS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
-	int_t compile_expr_CURRENT_CONTEXT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	int_t compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	int_t compile_expr_STRING(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	int_t compile_expr_ARRAY(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);

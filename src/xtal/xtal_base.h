@@ -75,10 +75,7 @@ public:
 		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
 		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
 
-		GENE_COUNT_BIT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		GENE_COUNT_BIT_MASK = (1<<GENE_COUNT_BIT_SHIFT) | (1<<(GENE_COUNT_BIT_SHIFT+1)),
-
-		REF_COUNT_SHIFT = GENE_COUNT_BIT_SHIFT+2,
+		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+2,
 		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
 	};
 
@@ -91,9 +88,6 @@ public:
 	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
 
 	uint_t ungc(){ return type_&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
-
-	uint_t gene_count(){ return type_&GENE_COUNT_BIT_MASK; }
-	void inc_gene_count(){ if(gene_count()!=GENE_COUNT_BIT_MASK)type_+=1<<GENE_COUNT_BIT_SHIFT; }
 
 	void destroy(){ delete this; }
 

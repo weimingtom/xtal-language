@@ -69,55 +69,44 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 
 //{INST_INSPECT{{
 		XTAL_INST_CASE(Nop);
-		XTAL_INST_CASE(LoadNull);
-		XTAL_INST_CASE(LoadUndefined);
-		XTAL_INST_CASE(LoadTrue);
-		XTAL_INST_CASE(LoadFalse);
-		XTAL_INST_CASE(LoadTrueAndSkip);
+		XTAL_INST_CASE(LoadValue);
+		XTAL_INST_CASE(LoadConstant);
 		XTAL_INST_CASE(LoadInt1Byte);
 		XTAL_INST_CASE(LoadFloat1Byte);
 		XTAL_INST_CASE(LoadCallee);
 		XTAL_INST_CASE(LoadThis);
-		XTAL_INST_CASE(LoadCurrentContext);
 		XTAL_INST_CASE(Copy);
-		XTAL_INST_CASE(Push);
-		XTAL_INST_CASE(Pop);
-		XTAL_INST_CASE(AdjustValues);
-		XTAL_INST_CASE(LocalVariable2Byte);
-		XTAL_INST_CASE(SetLocalVariable2Byte);
-		XTAL_INST_CASE(InstanceVariable);
-		XTAL_INST_CASE(SetInstanceVariable);
-		XTAL_INST_CASE(FilelocalVariable);
-		XTAL_INST_CASE(Return);
-		XTAL_INST_CASE(Yield);
-		XTAL_INST_CASE(Exit);
-		XTAL_INST_CASE(Value);
-		XTAL_INST_CASE(Call);
-		XTAL_INST_CASE(Send);
-		XTAL_INST_CASE(Property);
-		XTAL_INST_CASE(SetProperty);
 		XTAL_INST_CASE(Member);
-		XTAL_INST_CASE(ScopeBegin);
-		XTAL_INST_CASE(ScopeEnd);
-		XTAL_INST_CASE(Pos);
-		XTAL_INST_CASE(Neg);
-		XTAL_INST_CASE(Com);
-		XTAL_INST_CASE(Not);
-		XTAL_INST_CASE(Inc);
-		XTAL_INST_CASE(Dec);
+		XTAL_INST_CASE(Una);
 		XTAL_INST_CASE(Arith);
 		XTAL_INST_CASE(Bitwise);
 		XTAL_INST_CASE(At);
 		XTAL_INST_CASE(SetAt);
 		XTAL_INST_CASE(Goto);
+		XTAL_INST_CASE(Not);
 		XTAL_INST_CASE(If);
-		XTAL_INST_CASE(IfEq);
-		XTAL_INST_CASE(IfLt);
+		XTAL_INST_CASE(IfComp);
 		XTAL_INST_CASE(IfRawEq);
-		XTAL_INST_CASE(IfIn);
 		XTAL_INST_CASE(IfIs);
 		XTAL_INST_CASE(IfUndefined);
 		XTAL_INST_CASE(IfDebug);
+		XTAL_INST_CASE(Push);
+		XTAL_INST_CASE(Pop);
+		XTAL_INST_CASE(AdjustValues);
+		XTAL_INST_CASE(LocalVariable);
+		XTAL_INST_CASE(SetLocalVariable);
+		XTAL_INST_CASE(InstanceVariable);
+		XTAL_INST_CASE(SetInstanceVariable);
+		XTAL_INST_CASE(FilelocalVariable);
+		XTAL_INST_CASE(Call);
+		XTAL_INST_CASE(Send);
+		XTAL_INST_CASE(Property);
+		XTAL_INST_CASE(SetProperty);
+		XTAL_INST_CASE(ScopeBegin);
+		XTAL_INST_CASE(ScopeEnd);
+		XTAL_INST_CASE(Return);
+		XTAL_INST_CASE(Yield);
+		XTAL_INST_CASE(Exit);
 		XTAL_INST_CASE(Range);
 		XTAL_INST_CASE(Once);
 		XTAL_INST_CASE(SetOnce);
@@ -157,55 +146,44 @@ int_t inst_size(uint_t no){
 	static u8 sizelist[] = {
 //{INST_SIZE{{
 	InstNop::ISIZE,
-	InstLoadNull::ISIZE,
-	InstLoadUndefined::ISIZE,
-	InstLoadTrue::ISIZE,
-	InstLoadFalse::ISIZE,
-	InstLoadTrueAndSkip::ISIZE,
+	InstLoadValue::ISIZE,
+	InstLoadConstant::ISIZE,
 	InstLoadInt1Byte::ISIZE,
 	InstLoadFloat1Byte::ISIZE,
 	InstLoadCallee::ISIZE,
 	InstLoadThis::ISIZE,
-	InstLoadCurrentContext::ISIZE,
 	InstCopy::ISIZE,
-	InstPush::ISIZE,
-	InstPop::ISIZE,
-	InstAdjustValues::ISIZE,
-	InstLocalVariable2Byte::ISIZE,
-	InstSetLocalVariable2Byte::ISIZE,
-	InstInstanceVariable::ISIZE,
-	InstSetInstanceVariable::ISIZE,
-	InstFilelocalVariable::ISIZE,
-	InstReturn::ISIZE,
-	InstYield::ISIZE,
-	InstExit::ISIZE,
-	InstValue::ISIZE,
-	InstCall::ISIZE,
-	InstSend::ISIZE,
-	InstProperty::ISIZE,
-	InstSetProperty::ISIZE,
 	InstMember::ISIZE,
-	InstScopeBegin::ISIZE,
-	InstScopeEnd::ISIZE,
-	InstPos::ISIZE,
-	InstNeg::ISIZE,
-	InstCom::ISIZE,
-	InstNot::ISIZE,
-	InstInc::ISIZE,
-	InstDec::ISIZE,
+	InstUna::ISIZE,
 	InstArith::ISIZE,
 	InstBitwise::ISIZE,
 	InstAt::ISIZE,
 	InstSetAt::ISIZE,
 	InstGoto::ISIZE,
+	InstNot::ISIZE,
 	InstIf::ISIZE,
-	InstIfEq::ISIZE,
-	InstIfLt::ISIZE,
+	InstIfComp::ISIZE,
 	InstIfRawEq::ISIZE,
-	InstIfIn::ISIZE,
 	InstIfIs::ISIZE,
 	InstIfUndefined::ISIZE,
 	InstIfDebug::ISIZE,
+	InstPush::ISIZE,
+	InstPop::ISIZE,
+	InstAdjustValues::ISIZE,
+	InstLocalVariable::ISIZE,
+	InstSetLocalVariable::ISIZE,
+	InstInstanceVariable::ISIZE,
+	InstSetInstanceVariable::ISIZE,
+	InstFilelocalVariable::ISIZE,
+	InstCall::ISIZE,
+	InstSend::ISIZE,
+	InstProperty::ISIZE,
+	InstSetProperty::ISIZE,
+	InstScopeBegin::ISIZE,
+	InstScopeEnd::ISIZE,
+	InstReturn::ISIZE,
+	InstYield::ISIZE,
+	InstExit::ISIZE,
 	InstRange::ISIZE,
 	InstOnce::ISIZE,
 	InstSetOnce::ISIZE,

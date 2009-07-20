@@ -5,26 +5,6 @@
 
 namespace xtal{
 
-CppClassSymbolData** classdata[] = {
-	&CppClassSymbol<Null>::value,
-	&CppClassSymbol<Undefined>::value,
-	&CppClassSymbol<Bool>::value,
-	&CppClassSymbol<Bool>::value,
-	&CppClassSymbol<Int>::value,
-	&CppClassSymbol<Float>::value,
-	&CppClassSymbol<String>::value,
-	&CppClassSymbol<Any>::value,
-	&CppClassSymbol<String>::value,
-	&CppClassSymbol<Array>::value,
-	&CppClassSymbol<Values>::value,
-	&CppClassSymbol<xpeg::TreeNode>::value,
-	&CppClassSymbol<NativeMethod>::value,
-	&CppClassSymbol<NativeFun>::value,
-	&CppClassSymbol<InstanceVariableGetter>::value,
-	&CppClassSymbol<InstanceVariableSetter>::value,
-};
-
-
 /// \brief primary_keyメソッドを呼び出す
 AnyPtr Any::send(const IDPtr& primary_key) const{
 	const VMachinePtr& vm = vmachine();
@@ -224,10 +204,13 @@ AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
 	accessibility = 0;
-	const AnyPtr& ret = inherited_too ?
-		cache_member(ap(*this), primary_key, secondary_key, accessibility) :
-		type(*this)==TYPE_BASE ? pvalue(*this)->rawmember(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
-	return ret;
+	if(type(*this)==TYPE_BASE){
+		const AnyPtr& ret = inherited_too ?
+			cache_member(pvalue(*this), primary_key, secondary_key, accessibility) :
+			type(*this)==TYPE_BASE ? pvalue(*this)->rawmember(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
+		return ret;
+	}
+	return undefined;
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{

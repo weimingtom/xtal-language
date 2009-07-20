@@ -41,15 +41,9 @@ public:
 	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
 		if(c==0) return 1;
-		if((c&0x80) && (c&0x40)){
+		if(c&0x40){
 			if(c&0x20){
 				if(c&0x10){
-					if(c&0x8){
-						if(c&0x4){
-							return 6;
-						}
-						return 5;		
-					}
 					return 4;
 				}
 				return 3;

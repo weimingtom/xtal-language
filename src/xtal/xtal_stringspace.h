@@ -12,12 +12,17 @@ namespace xtal{
 struct IDOp{
 enum{
 	id_op_call,
+
+	id_op_inc,
+	id_op_dec,
 	id_op_pos,
 	id_op_neg,
 	id_op_com,
+
 	id_op_at,
 	id_op_set_at,
 	id_op_range,
+
 	id_op_add,
 	id_op_sub,
 	id_op_cat,
@@ -30,11 +35,7 @@ enum{
 	id_op_shl,
 	id_op_shr,
 	id_op_ushr,
-	id_op_eq,
-	id_op_lt,
-	id_op_in,
-	id_op_inc,
-	id_op_dec,
+
 	id_op_add_assign,
 	id_op_sub_assign,
 	id_op_cat_assign,
@@ -47,6 +48,10 @@ enum{
 	id_op_shl_assign,
 	id_op_shr_assign,
 	id_op_ushr_assign,
+
+	id_op_eq,
+	id_op_lt,
+	id_op_in,
 
 	id_op_MAX
 };};
@@ -66,12 +71,17 @@ public:
 
 		const char_t* ids[] = {
 			XTAL_L("op_call"),
+
+			XTAL_L("op_inc"),
+			XTAL_L("op_dec"),
 			XTAL_L("op_pos"),
 			XTAL_L("op_neg"),
 			XTAL_L("op_com"),
+
 			XTAL_L("op_at"),
 			XTAL_L("op_set_at"),
 			XTAL_L("op_range"),
+
 			XTAL_L("op_add"),
 			XTAL_L("op_sub"),
 			XTAL_L("op_cat"),
@@ -84,11 +94,7 @@ public:
 			XTAL_L("op_shl"),
 			XTAL_L("op_shr"),
 			XTAL_L("op_ushr"),
-			XTAL_L("op_eq"),
-			XTAL_L("op_lt"),
-			XTAL_L("op_in"),
-			XTAL_L("op_inc"),
-			XTAL_L("op_dec"),
+
 			XTAL_L("op_add_assign"),
 			XTAL_L("op_sub_assign"),
 			XTAL_L("op_cat_assign"),
@@ -101,6 +107,10 @@ public:
 			XTAL_L("op_shl_assign"),
 			XTAL_L("op_shr_assign"),
 			XTAL_L("op_ushr_assign"),
+
+			XTAL_L("op_eq"),
+			XTAL_L("op_lt"),
+			XTAL_L("op_in"),
 		};
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){

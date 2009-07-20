@@ -41,10 +41,12 @@ FixedAllocator::FixedAllocator(){
 	all_count_ = 0;
 	used_count_ = 0;
 
+	gc_count_ = 0;
+
 	cant_fit_ = false;
 }
 
-void FixedAllocator::add_chunk(size_t block_size){
+void FixedAllocator::add_chunk(std::size_t block_size){
 	uint_t blocks = calc_size(block_size);
 	Chunk* new_chunk = (Chunk*)xmalloc(sizeof(Chunk)+block_size*ONE_SIZE*blocks);
 	all_count_ += blocks;
@@ -65,17 +67,17 @@ void FixedAllocator::add_chunk(size_t block_size){
 	chunk_ = new_chunk;
 }
 
-void* FixedAllocator::malloc_inner(size_t block_size){
+void* FixedAllocator::malloc_inner(std::size_t block_size){
 	uint_t blocks = calc_size(block_size);
 
-	if(all_count_>blocks*10){
+	gc_count_ = (gc_count_ + 1) & 0x8;
+	if(gc_count_==0){
 		gc();
 	}
 
 	cant_fit_ = true;
 
 	if(all_count_-used_count_<blocks){
-//	if(all_count_<=used_count_*2){
 		add_chunk(block_size);
 	}
 
@@ -89,7 +91,7 @@ void* FixedAllocator::malloc_inner(size_t block_size){
 }
 
 
-void FixedAllocator::fit(size_t block_size){
+void FixedAllocator::fit(std::size_t block_size){
 	if(cant_fit_){
 		return;
 	}
@@ -142,7 +144,7 @@ void FixedAllocator::fit(size_t block_size){
 	}
 }
 	
-void FixedAllocator::release(size_t block_size){
+void FixedAllocator::release(std::size_t block_size){
 	/*
 	fit(block_size);
 
@@ -164,7 +166,7 @@ void FixedAllocator::release(size_t block_size){
 	free_data_ = 0;
 }
 
-void FixedAllocator::print(size_t block_size){
+void FixedAllocator::print(std::size_t block_size){
 #ifdef XTAL_DEBUG_PRINT
 	printf("sm %d, used=%d=%gKB, free=%d=%gKB\n", block_size*ONE_SIZE,
 		used_count_, (used_count_*block_size*ONE_SIZE)/1024.0f, 

@@ -27,30 +27,39 @@ AnyPtr format(const StringLiteral& text){
 	return xnew<Format>(text);
 }
 
-
-char_t FormatSpecifier::change_int_type(){
+bool FormatSpecifier::is_int_type(){
 	switch(type_){
 	case 'i': case 'd': case 'x': case 'X':
-		return type_;
-		break;
+		return true;
 	
 	default:
-		return 'd';
-		break;
+		return false;
 	}
 }
 
-char_t FormatSpecifier::change_float_type(){
+bool FormatSpecifier::is_float_type(){
 	switch(type_){
 	case 'e': case 'E': case 'g':
 	case 'G': case 'f':
-		return type_;
-		break;
+		return true;
 	
 	default:
-		return 'g';
-		break;
+		return false;
 	}
+}
+
+char_t FormatSpecifier::change_int_type(){
+	if(is_int_type()){
+		return type_;
+	}
+	return 'd';
+}
+
+char_t FormatSpecifier::change_float_type(){
+	if(is_float_type()){
+		return type_;
+	}
+	return 'g';
 }
 	
 int_t FormatSpecifier::type(){
@@ -255,14 +264,26 @@ void Format::rawcall(const VMachinePtr& vm){
 					}
 
 					XTAL_CASE(TYPE_INT){
-						fs.make_format_specifier(spec, fs.change_int_type(), true);
-						XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, ivalue(value));
+						if(fs.is_float_type()){
+							fs.make_format_specifier(spec, fs.change_float_type(), true);
+							XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, (double)ivalue(value));
+						}
+						else{
+							fs.make_format_specifier(spec, fs.change_int_type(), true);
+							XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, ivalue(value));
+						}
 						ms->put_s(cbuf);
 					}
 					
 					XTAL_CASE(TYPE_FLOAT){
-						fs.make_format_specifier(spec, fs.change_float_type());
-						XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(value));
+						if(fs.is_int_type()){
+							fs.make_format_specifier(spec, fs.change_int_type(), true);
+							XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, (int_t)ivalue(value));
+						}
+						else{			
+							fs.make_format_specifier(spec, fs.change_float_type());
+							XTAL_SPRINTF(cbuf, malloc_size ? malloc_size : 255, spec, (double)fvalue(value));
+						}
 						ms->put_s(cbuf);
 					}
 				}

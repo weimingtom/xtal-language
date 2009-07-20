@@ -29,7 +29,9 @@ public:
 
 	char_t change_int_type();
 	char_t change_float_type();
-	
+	bool is_int_type();
+	bool is_float_type();
+
 	void make_format_specifier(char_t* dest, char_t type, bool int_type = false);
 
 	const char_t* parse_format(const char_t* str);

@@ -54,7 +54,7 @@ public:
 extern XTAL_TLS_PTR(Environment) environment_;
 extern XTAL_TLS_PTR(VMachine) vmachine_;
 
-inline const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+inline const AnyPtr& cache_member(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
 	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 }
 

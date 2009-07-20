@@ -158,4 +158,64 @@ class filelocal::IfTest{
 		assert(temp==7);
 			
 	}
+	
+	test_switch#Test{
+		a: 0;
+		
+		fun foo(b){
+			switch(b){
+				case(10){
+					a = 9;
+				}
+				
+				case(9){
+					a = 8;
+				}
+				
+				default{
+					a = 7;
+				}			
+			}
+			
+			return a;
+		}
+		
+		assert foo(10)==9;
+		assert foo(9)==8;
+		assert foo(8)==7;
+	}
+	
+	test_if_var#Test{
+		fun foo(b){
+			if(a: b){
+				return a+b;
+			}
+		}
+		
+		assert foo(1)==2;
+		assert foo(null)===undefined;
+	}
+	
+	test_switch_var#Test{
+		fun foo(b){
+			switch(a: b){
+				case(10){
+					return a;
+				}
+				
+				case(9){
+					return a+1;
+				}
+				
+				default{
+					return a+2;
+				}			
+			}
+		}
+		
+		assert foo(10)==10;
+		assert foo(9)==10;
+		assert foo(8)==10;
+		assert foo(0)==2;
+	}
 }

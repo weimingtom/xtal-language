@@ -313,13 +313,7 @@ const SmartPtr<T>& cpp_var(){
 * \internal
 * \brief クラスのメンバを取り出す。
 */
-const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
-
-/**
-* \internal
-* \brief クラスのメンバを取り出す。
-*/
-const AnyPtr& cache_member(const AnyPtr& target_class, const IDPtr& primary_key, int_t& accessibility);
+const AnyPtr& cache_member(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
 
 /**
 * \internal

@@ -162,7 +162,7 @@ void* xmalloc(size_t size){
 	//full_gc();
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
-	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
+	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){
 		return env->so_alloc_.malloc(size);
 	}
 #endif
@@ -170,11 +170,11 @@ void* xmalloc(size_t size){
 	env->used_memory_ += size;
 
 	if(env->used_memory_>env->memory_threshold_){
-		env->object_space_.gc2();
+		env->object_space_.gc();
 
 		// ƒƒ‚ƒŠŽg—p—Ê‚Íè‡’l‚Ì”¼•ªˆÈã
 		if(env->used_memory_>env->memory_threshold_/2){
-			env->memory_threshold_ += 1024*20;
+			env->memory_threshold_ += 1024*10;
 		}
 		else{
 			env->memory_threshold_ = env->used_memory_*2;
@@ -342,14 +342,13 @@ void Environment::initialize(const Setting& setting){
 
 void Environment::uninitialize(){
 
-#ifdef XTAL_DEBUG_PRINT
+//#ifdef XTAL_DEBUG_PRINT
 	{
-		printf("member hit=%d miss=%d rate=%g\n", member_cache_table_.hit_count(), member_cache_table_.miss_count(), member_cache_table_.hit_count()/(float)(member_cache_table_.hit_count()+member_cache_table_.miss_count()));
-		printf("member hit=%d miss=%d rate=%g\n", member_cache_table2_.hit_count(), member_cache_table2_.miss_count(), member_cache_table2_.hit_count()/(float)(member_cache_table2_.hit_count()+member_cache_table2_.miss_count()));
-		printf("is hit=%d miss=%d rate=%g\n", is_cache_table_.hit_count(), is_cache_table_.miss_count(), is_cache_table_.hit_count()/(float)(is_cache_table_.hit_count()+is_cache_table_.miss_count()));
-		printf("ctor hit=%d miss=%d rate=%g\n", ctor_cache_table_.hit_count(), ctor_cache_table_.miss_count(), ctor_cache_table_.hit_count()/(float)(ctor_cache_table_.hit_count()+ctor_cache_table_.miss_count()));
+		//printf("member hit=%d miss=%d rate=%g\n", member_cache_table_.hit_count(), member_cache_table_.miss_count(), member_cache_table_.hit_count()/(float)(member_cache_table_.hit_count()+member_cache_table_.miss_count()));
+		//printf("is hit=%d miss=%d rate=%g\n", is_cache_table_.hit_count(), is_cache_table_.miss_count(), is_cache_table_.hit_count()/(float)(is_cache_table_.hit_count()+is_cache_table_.miss_count()));
+		//printf("ctor hit=%d miss=%d rate=%g\n", ctor_cache_table_.hit_count(), ctor_cache_table_.miss_count(), ctor_cache_table_.hit_count()/(float)(ctor_cache_table_.hit_count()+ctor_cache_table_.miss_count()));
 	}
-#endif
+//#endif
 
 	thread_space_.join_all_threads();
 

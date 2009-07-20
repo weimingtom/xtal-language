@@ -862,9 +862,6 @@ extern NullPtr null;
 */
 extern UndefinedPtr undefined;
 
-struct CppClassSymbolData;
-extern CppClassSymbolData** classdata[];
-
 }
 
 #endif // XTAL_UTILITY_H_INCLUDE_GUARD

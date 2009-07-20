@@ -548,9 +548,16 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	{
 		int_t label_false = reserve_label();
 		put_if_code(e->itag(), target, lhs, rhs, label, label_false, stack_top);
-		put_inst(InstLoadTrueAndSkip(target));
+
+		int_t label_true = reserve_label();
+		put_inst(InstLoadConstant(target, LOAD_TRUE));
+
+		set_jump(InstGoto::OFFSET_address, label_true);
+		put_inst(InstGoto());
+
 		set_label(label_false);
-		put_inst(InstLoadFalse(target));
+		put_inst(InstLoadValue(target, LOAD_FALSE));
+		set_label(label_true);
 	}
 
 	int_t label_true = reserve_label();
@@ -560,11 +567,11 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	set_label(label_true);
 
 	int_t vart = stack_top++;
-	put_inst(InstValue(vart, register_value(f)));
+	put_inst(InstLoadConstant(vart, register_value(f)));
 
 	int_t strt = stack_top++;
 	if(str){ compile_expr(str, stack_top, strt); }
-	else{ put_inst(InstValue(strt, register_value(empty_string))); }
+	else{ put_inst(InstLoadConstant(strt, register_value(empty_string))); }
 	
 	int_t lhst = stack_top++;
 	put_inst(InstCopy(lhst, lhs));
@@ -574,7 +581,7 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 
 	int_t mest = stack_top++;
 	if(mes){ compile_expr(mes, stack_top, mest); }
-	else{ put_inst(InstValue(mest, register_value(empty_string))); }
+	else{ put_inst(InstLoadConstant(mest, register_value(empty_string))); }
 
 	put_inst(InstCall(target, 1, vart, 0, vart+1, 4, 0, 0));
 	put_inst(InstAssert(target));
@@ -673,16 +680,13 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e, int_t stack_top){
 
 void CodeBuilder::put_incdec(const ExprPtr& e, int_t ret, int_t target, int_t stack_top){
 	if(e->itag()==EXPR_INC)
-		put_inst(InstInc(ret, target, stack_top));
+		put_inst(InstUna(ret, UNA_INC, target, stack_top));
 	else
-		put_inst(InstDec(ret, target, stack_top));
+		put_inst(InstUna(ret, UNA_DEC, target, stack_top));
 }
 
 void CodeBuilder::compile_incdec(const ExprPtr& e, int_t stack_top){
 	ExprPtr term = e->una_term();
-
-	InstInc inst;
-	inst.op += e->itag()-(e->itag()-EXPR_INC);
 
 	if(term->itag()==EXPR_LVAR){
 		int_t a = compile_expr(term, stack_top);
@@ -970,7 +974,7 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result,
 					inumber = info.pos;
 				}
 				else{
-					put_inst(InstLoadUndefined(stack_top+1));
+					put_inst(InstLoadValue(stack_top+1, LOAD_UNDEFINED));
 					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
 					inumber = info.pos;
 				}
@@ -1295,7 +1299,6 @@ ExprPtr CodeBuilder::setup_expr(const ExprPtr& e){
 	case EXPR_ARGS:
 	case EXPR_THIS:
 	case EXPR_DEBUG:
-	case EXPR_CURRENT_CONTEXT:
 	case EXPR_INT:
 	case EXPR_FLOAT:
 	case EXPR_STRING:

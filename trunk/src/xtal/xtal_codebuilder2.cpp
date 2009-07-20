@@ -97,7 +97,6 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, int_t stack_top, int_t result, in
 		&CodeBuilder::compile_expr_FALSE,
 		&CodeBuilder::compile_expr_CALLEE,
 		&CodeBuilder::compile_expr_THIS,
-		&CodeBuilder::compile_expr_CURRENT_CONTEXT,
 		&CodeBuilder::compile_expr_NUMBER,
 		&CodeBuilder::compile_expr_STRING,
 		&CodeBuilder::compile_expr_ARRAY,
@@ -194,22 +193,22 @@ int_t CodeBuilder::compile_expr_LIST(const ExprPtr& e, int_t stack_top, int_t re
 }
 
 int_t CodeBuilder::compile_expr_NULL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstLoadNull(result));
+	put_inst(InstLoadValue(result, LOAD_NULL));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_UNDEFINED(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstLoadUndefined(result));
+	put_inst(InstLoadValue(result, LOAD_UNDEFINED));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_TRUE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstLoadTrue(result));
+	put_inst(InstLoadValue(result, LOAD_TRUE));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_FALSE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstLoadFalse(result));
+	put_inst(InstLoadValue(result, LOAD_FALSE));
 	return 1;
 }
 
@@ -223,11 +222,6 @@ int_t CodeBuilder::compile_expr_THIS(const ExprPtr& e, int_t stack_top, int_t re
 	return 1;
 }
 
-int_t CodeBuilder::compile_expr_CURRENT_CONTEXT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstLoadCurrentContext(result));
-	return 1;
-}
-
 int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	AnyPtr nvalue = e->number_value();
 	if(type(nvalue)==TYPE_INT){
@@ -236,7 +230,7 @@ int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t 
 			put_inst(InstLoadInt1Byte(result, value));
 		}
 		else{ 
-			put_inst(InstValue(result, register_value(value)));
+			put_inst(InstLoadConstant(result, register_value(value)));
 		}
 	}
 	else{
@@ -245,7 +239,7 @@ int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t 
 			put_inst(InstLoadFloat1Byte(result, (i8)value));
 		}
 		else{ 
-			put_inst(InstValue(result, register_value(value)));
+			put_inst(InstLoadConstant(result, register_value(value)));
 		}
 	}
 
@@ -254,13 +248,13 @@ int_t CodeBuilder::compile_expr_NUMBER(const ExprPtr& e, int_t stack_top, int_t 
 
 int_t CodeBuilder::compile_expr_STRING(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	if(e->string_kind()==KIND_TEXT){
-		put_inst(InstValue(result, register_value(text(e->string_value()->to_s()))));
+		put_inst(InstLoadConstant(result, register_value(text(e->string_value()->to_s()))));
 	}
 	else if(e->string_kind()==KIND_FORMAT){
-		put_inst(InstValue(result, register_value(format(e->string_value()->to_s()))));
+		put_inst(InstLoadConstant(result, register_value(format(e->string_value()->to_s()))));
 	}
 	else{
-		put_inst(InstValue(result, register_value(e->string_value())));
+		put_inst(InstLoadConstant(result, register_value(e->string_value())));
 	}
 
 	return 1;
@@ -302,7 +296,7 @@ int_t CodeBuilder::compile_expr_VALUES(const ExprPtr& e, int_t stack_top, int_t 
 		put_inst(InstCopy(result, stack_base));
 		return 1;
 	}
-	put_inst(InstLoadUndefined(result));
+	put_inst(InstLoadValue(result, LOAD_UNDEFINED));
 	return 1;
 }
 
@@ -362,53 +356,59 @@ int_t CodeBuilder::compile_comp_bin2(const ExprPtr& e, int_t stack_top, int_t re
 	int_t label_false = reserve_label();
 	put_if_code(e, label_false, stack_top);
 
-	put_inst(InstLoadTrueAndSkip(result));
+	int_t label_true = reserve_label();
+	put_inst(InstLoadValue(result, LOAD_TRUE));
+
+	set_jump(InstGoto::OFFSET_address, label_true);
+	put_inst(InstGoto());
 
 	set_label(label_false);
 
-	put_inst(InstLoadFalse(result));
+	put_inst(InstLoadValue(result, LOAD_FALSE));
+
+	set_label(label_true);
 
 	return 1;
 }
 
 void CodeBuilder::put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, inst_t label_true, int_t label_false, int_t stack_top){
 	if(EXPR_EQ==tag){
-		put_inst(InstIfEq(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_EQ, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_true, label_true);
 		set_jump(InstIf::OFFSET_address_false, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_NE==tag){
-		put_inst(InstIfEq(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_EQ, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_false, label_true);
 		set_jump(InstIf::OFFSET_address_true, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_LT==tag){
-		put_inst(InstIfLt(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_LT, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_true, label_true);
 		set_jump(InstIf::OFFSET_address_false, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_GT==tag){
-		put_inst(InstIfLt(rhs, lhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_LT, rhs, lhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_true, label_true);
 		set_jump(InstIf::OFFSET_address_false, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_GE==tag){
-		put_inst(InstIfLt(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_LT, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_false, label_true);
 		set_jump(InstIf::OFFSET_address_true, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_LE==tag){
-		put_inst(InstIfLt(rhs, lhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_LT, rhs, lhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_false, label_true);
 		set_jump(InstIf::OFFSET_address_true, label_false);
@@ -429,14 +429,14 @@ void CodeBuilder::put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, ins
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_IN==tag){
-		put_inst(InstIfIn(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_IN, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_true, label_true);
 		set_jump(InstIf::OFFSET_address_false, label_false);
 		put_inst(InstIf(target, 0, 0));
 	}
 	else if(EXPR_NIN==tag){
-		put_inst(InstIfIn(lhs, rhs, stack_top));
+		put_inst(InstIfComp(IF_COMP_IN, lhs, rhs, stack_top));
 
 		set_jump(InstIf::OFFSET_address_false, label_true);
 		set_jump(InstIf::OFFSET_address_true, label_false);
@@ -628,25 +628,25 @@ int_t CodeBuilder::compile_expr_CATCH(const ExprPtr& e, int_t stack_top, int_t r
 
 int_t CodeBuilder::compile_expr_POS(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	compile_expr(e->una_term(), stack_top, result);
-	put_inst(InstPos(result, result, stack_top));
+	put_inst(InstUna(result, UNA_POS, result, stack_top));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_NEG(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	compile_expr(e->una_term(), stack_top, result);
-	put_inst(InstNeg(result, result, stack_top));
+	put_inst(InstUna(result, UNA_NEG, result, stack_top));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_COM(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	compile_expr(e->una_term(), stack_top, result);
-	put_inst(InstCom(result, result, stack_top));
+	put_inst(InstUna(result, UNA_COM, result, stack_top));
 	return 1;
 }
 
 int_t CodeBuilder::compile_expr_NOT(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	compile_expr(e->una_term(), stack_top, result);
-	put_inst(InstNot(result, result, stack_top));
+	put_inst(InstNot(result, result));
 	return 1;
 }
 
@@ -696,7 +696,7 @@ int_t CodeBuilder::compile_expr_LVAR(const ExprPtr& e, int_t stack_top, int_t re
 			put_inst(InstCopy(result, var.vpos));
 		}
 		else{
-			put_inst(InstLocalVariable2Byte(result, var.pos, var.depth));
+			put_inst(InstLocalVariable(result, var.pos, var.depth));
 		}
 	}
 	else{
@@ -837,7 +837,7 @@ int_t CodeBuilder::compile_send(const AnyPtr& eterm, const AnyPtr& eprimary, con
 			if(v->at(0)){
 				const ExprPtr& k = ptr_cast<Expr>(v->at(0));
 
-				put_inst(InstValue(stack_top++, register_value(k->lvar_name())));
+				put_inst(InstLoadConstant(stack_top++, register_value(k->lvar_name())));
 				compile_expr(v->at(1), stack_top+1, stack_top);
 				stack_top++;
 			}
@@ -891,7 +891,7 @@ int_t CodeBuilder::compile_call(int_t target, int_t self, const ExprPtr& args, c
 			if(v->at(0)){
 				const ExprPtr& k = ptr_cast<Expr>(v->at(0));
 
-				put_inst(InstValue(stack_top++, register_value(k->lvar_name())));
+				put_inst(InstLoadConstant(stack_top++, register_value(k->lvar_name())));
 				compile_expr(ep(v->at(1)), stack_top+1, stack_top);
 				stack_top++;
 			}
@@ -1059,15 +1059,15 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, int_t stack_top, int_t 
 			set_label(label_true);
 
 			int_t vart = stack_top++;
-			put_inst(InstValue(vart, register_value(Xf("%s : %s"))));
+			put_inst(InstLoadConstant(vart, register_value(Xf("%s : %s"))));
 
 			int_t strt = stack_top++;
 			if(e->assert_string()){ compile_expr(e->assert_string(), stack_top, strt); }
-			else{ put_inst(InstValue(strt, register_value(empty_string))); }
+			else{ put_inst(InstLoadConstant(strt, register_value(empty_string))); }
 			
 			int_t mest = stack_top++;
 			if(e->assert_message()){ compile_expr(e->assert_message(), stack_top, mest); }
-			else{ put_inst(InstValue(mest, register_value(empty_string))); }
+			else{ put_inst(InstLoadConstant(mest, register_value(empty_string))); }
 
 			put_inst(InstCall(target, 1, vart, 0, vart+1, 2, 0, 0));
 			put_inst(InstAssert(target));
@@ -1091,15 +1091,15 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, int_t stack_top, int_t 
 		int_t target = stack_top++;
 
 		int_t vart = stack_top++;
-		put_inst(InstValue(vart, register_value(Xf("%s : %s"))));
+		put_inst(InstLoadConstant(vart, register_value(Xf("%s : %s"))));
 
 		int_t strt = stack_top++;
 		if(e->assert_string()){ compile_expr(e->assert_string(), stack_top, strt); }
-		else{ put_inst(InstValue(strt, register_value(empty_string))); }
+		else{ put_inst(InstLoadConstant(strt, register_value(empty_string))); }
 		
 		int_t mest = stack_top++;
 		if(e->assert_message()){ compile_expr(e->assert_message(), stack_top, mest); }
-		else{ put_inst(InstValue(mest, register_value(empty_string))); }
+		else{ put_inst(InstLoadConstant(mest, register_value(empty_string))); }
 
 		put_inst(InstCall(target, 1, vart, 0, vart+1, 2, 0, 0));
 		put_inst(InstAssert(target));
@@ -1193,19 +1193,27 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, int_t stack_top, int_t resu
 	ExprPtr cond = e->if_cond();
 
 	// 条件式の部分が変数定義式である場合
-	/* todo
 	if(cond->itag()==EXPR_DEFINE && cond->bin_lhs()->itag()==EXPR_LVAR){
 		// スコープを形成する
 		var_begin(VarFrame::FRAME);
 		var_define(cond->bin_lhs()->lvar_name());
 		check_lvar_assign_stmt(e);
 		scope_begin();
-		put_define_local_code(cond->bin_lhs()->lvar_name(), cond->bin_rhs());
+
+		LVarInfo var = var_find(cond->bin_lhs()->lvar_name(), true);
+		entry(var).initialized = false;
+		if(var.pos>=0){
+			compile_expr(cond->bin_rhs(), stack_top, var.vpos);
+			entry(var).initialized = true;
+		}
+		else{
+			XTAL_ASSERT(false);
+		}
 
 		// 変数参照を条件式とする
 		cond = cond->bin_lhs();
 	}
-	*/
+
 
 	AnyPtr val = do_expr(cond);
 	if(rawne(val, undefined)){
@@ -1271,7 +1279,7 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, int_t stack_top, int_t res
 
 	// 条件式をコンパイル
 	if(e->for_cond()){
-		put_inst(InstLoadTrue(first_step_info.vpos));
+		put_inst(InstLoadValue(first_step_info.vpos, LOAD_TRUE));
 		put_if_code(e->for_cond(), label_false, stack_top);
 	}
 
@@ -1291,7 +1299,7 @@ int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, int_t stack_top, int_t res
 
 	// 条件式をコンパイル 2回目
 	if(e->for_cond()){
-		put_inst(InstLoadFalse(first_step_info.vpos));
+		put_inst(InstLoadValue(first_step_info.vpos, LOAD_FALSE));
 		put_if_code(e->for_cond(), label_false_q, stack_top);
 	}
 
@@ -1351,7 +1359,7 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t
 				int_t sec = stack_top++; compile_expr(term->property_ns(), stack_top, sec);
 			}
 			else{
-				int_t sec = stack_top++; put_inst(InstLoadUndefined(sec));
+				int_t sec = stack_top++; put_inst(InstLoadValue(sec, LOAD_UNDEFINED));
 			}
 		}
 		else if(term->itag()==EXPR_PROPERTY_Q){
@@ -1361,7 +1369,7 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t
 				int_t sec = stack_top++; compile_expr(term->property_ns(), stack_top, sec);
 			}
 			else{
-				int_t sec = stack_top++; put_inst(InstLoadUndefined(sec));
+				int_t sec = stack_top++; put_inst(InstLoadValue(sec, LOAD_UNDEFINED));
 			}
 		}
 		else if(term->itag()==EXPR_AT){
@@ -1491,7 +1499,7 @@ void CodeBuilder::compile_lassign(int_t target, const IDPtr& var){
 			put_inst(InstCopy(varinfo.vpos, target));
 		}
 		else{
-			put_inst(InstSetLocalVariable2Byte(target, varinfo.pos, varinfo.depth));
+			put_inst(InstSetLocalVariable(target, varinfo.pos, varinfo.depth));
 		}
 
 		entry(varinfo).value = undefined;
@@ -1617,7 +1625,6 @@ int_t CodeBuilder::compile_expr_SCOPE(const ExprPtr& e, int_t stack_top, int_t r
 }
 
 int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	/*
 	ExprPtr cond = e->switch_cond();
 
 	// 条件式の部分が変数定義式である場合
@@ -1627,7 +1634,15 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 		var_define(cond->bin_lhs()->lvar_name());
 		check_lvar_assign_stmt(e);
 		scope_begin();
-		put_define_local_code(cond->bin_lhs()->lvar_name(), cond->bin_rhs());
+		LVarInfo var = var_find(cond->bin_lhs()->lvar_name(), true);
+		entry(var).initialized = false;
+		if(var.pos>=0){
+			compile_expr(cond->bin_rhs(), stack_top, var.vpos);
+			entry(var).initialized = true;
+		}
+		else{
+			XTAL_ASSERT(false);
+		}
 
 		// 変数参照を条件式とする
 		cond = cond->bin_lhs();
@@ -1637,10 +1652,12 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 	int_t label_end = reserve_label();
 	int_t label_default = reserve_label();
 
+	int_t base = stack_top++;
+
 	set_jump(InstOnce::OFFSET_address, label_jump);
 	int_t num = result_->once_table_->size();
 	result_->once_table_->push_back(undefined);
-	put_inst(InstOnce(0, num));
+	put_inst(InstOnce(base, 0, num));
 
 	MapPtr case_map = xnew<Map>();
 	ExprPtr default_case = e->switch_default();
@@ -1657,26 +1674,28 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 		jump_map->set_at(k, jump_to);
 	}
 
-	put_inst(InstMakeMap());
+	put_inst(InstMakeMap(result));
 	Xfor2(k, v, case_map){
 		XTAL_UNUSED_VAR(v);
-		compile_expr(k);
+		compile_expr(k, stack_top+1, stack_top);
 		set_jump(InstPushGoto::OFFSET_address, jump_map->at(k)->to_i());
 		put_inst(InstPushGoto());
-		put_inst(InstMapInsert());
+		put_inst(InstPop(stack_top+1));
+		put_inst(InstMapInsert(base, stack_top, stack_top+1));
 	}
 
 	set_jump(InstPushGoto::OFFSET_address, label_default);
 	put_inst(InstPushGoto());
-	put_inst(InstMapSetDefault());
+	put_inst(InstPop(stack_top+1));
+	put_inst(InstMapSetDefault(base, stack_top+1));
 				
-	put_inst(InstDup());
-	put_inst(InstSetOnce(num));
+	put_inst(InstSetOnce(base, num));
 	
 	set_label(label_jump);
 
-	compile_expr(cond);
-	put_inst(InstAt());
+	compile_expr(cond, stack_top+1, stack_top);
+	put_inst(InstAt(base, base, stack_top, stack_top+1));
+	put_inst(InstPush(base));
 	put_inst(InstPopGoto());
 
 	Xfor2(k, v, case_map){
@@ -1698,8 +1717,8 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 		scope_end();
 		var_end();
 	}
-	info.result_count = 0;
-	*/	return 0;
+
+	return 0;
 }
 
 int_t CodeBuilder::compile_expr_TOPLEVEL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){

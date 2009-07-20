@@ -98,9 +98,9 @@ struct Conv{
 };
 
 Conv::Conv(const char8_t* str)
-	:memory(std::strlen((char*)str)){
+	:memory((std::strlen((char*)str)+1)*sizeof(char_t)){
 	char_t* buf = (char_t*)memory.get();
-	for(uint_t i=0; i<memory.size(); ++i){
+	for(uint_t i=0; i<memory.size()/sizeof(char_t); ++i){
 		buf[i] = str[i];
 	}
 }
@@ -199,7 +199,7 @@ String::String(const char_t* str)
 String::String(const char8_t* str)
 :Any(noinit_t()){
 	Conv conv(str);
-	init_string((char_t*)conv.memory.get(), conv.memory.size());
+	init_string((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
 }
 
 String::String(const char_t* str, uint_t size)
@@ -496,7 +496,7 @@ ID::ID(const char_t* str)
 ID::ID(const char8_t* str)	
 	:String(noinit_t()){	
 	Conv conv(str);
-	*this = *xtal::intern((char_t*)conv.memory.get(), conv.memory.size());
+	*this = *xtal::intern((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
 }
 
 ID::ID(const StringLiteral& str)

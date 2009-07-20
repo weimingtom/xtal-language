@@ -179,19 +179,28 @@ struct XMallocGuard{
 	/**
 	* \brief メモリを解放する
 	*/
-	~XMallocGuard(){ xfree(p, sz); }
+	~XMallocGuard(){ if(p)xfree(p, sz); }
 public:	
 
 	/**
 	* \brief メモリを確保する
 	* それまでに確保されていたメモリは解放される
 	*/
-	void malloc(size_t size){ xfree(p, sz); p = xmalloc(size); sz = size; }
+	void malloc(size_t size){ if(p)xfree(p, sz); p = xmalloc(size); sz = size; }
 
 	/**
 	* \brief メモリの先頭アドレスを返す
 	*/
 	void* get(){ return p; }
+
+	/**
+	* \brief メモリの先頭アドレスを返す
+	*/
+	void* release(){
+		void* temp = p;
+		p = 0;
+		return temp; 
+	}
 
 	/**
 	* \brief 確保されているメモリのサイズを返す

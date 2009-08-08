@@ -11,7 +11,7 @@
 namespace xtal{
 
 enum{
-	OBJECTS_ALLOCATE_SHIFT = 8,
+	OBJECTS_ALLOCATE_SHIFT = 10,
 	OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
 	OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 };
@@ -23,26 +23,29 @@ struct ScopeCounter{
 };
 
 struct ConnectedPointer{
-	int_t pos;
-	RefCountingBase**** bp;
-
-	typedef std::random_access_iterator_tag iterator_category;
+	uint_t pos;
+	RefCountingBase*** bp;
 
 	typedef std::random_access_iterator_tag iterator_category;
 	typedef RefCountingBase* value_type;
 	typedef int_t difference_type;
 	typedef int_t distance_type;	// retained
-	typedef RefCountingBase** pointer;
-	typedef RefCountingBase*& reference;
+	typedef value_type* pointer;
+	typedef value_type& reference;
 
 	ConnectedPointer()
 		:pos(0), bp(0){}
 
-	ConnectedPointer(int_t p, RefCountingBase***& pp)
-		:pos(p), bp(&pp){}
+	ConnectedPointer(int_t p, RefCountingBase*** pp)
+		:pos(p), bp(pp){}
 
-	RefCountingBase*& operator *(){
-		return (*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
+	reference operator *(){
+		return bp[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
+	}
+
+	reference operator [](int_t index){
+		int_t pos2 = pos+index;
+		return bp[pos2>>OBJECTS_ALLOCATE_SHIFT][pos2&OBJECTS_ALLOCATE_MASK];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -51,7 +54,7 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator ++(int){
-		ConnectedPointer temp(pos, *bp);
+		ConnectedPointer temp(pos, bp);
 		++pos;
 		return temp; 
 	}
@@ -62,60 +65,53 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator --(int){
-		ConnectedPointer temp(pos, *bp);
+		ConnectedPointer temp(pos, bp);
 		--pos;
 		return temp; 
 	}
 
 	friend bool operator==(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos==b.pos;
 	}
 
 	friend bool operator!=(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos!=b.pos;
 	}
 
 	friend bool operator<(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos<b.pos;
 	}
 
 	friend bool operator>(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos>b.pos;
 	}
 
 	friend bool operator<=(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos<=b.pos;
 	}
 
 	friend bool operator>=(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos>=b.pos;
 	}
 
 	friend int_t operator-(const ConnectedPointer& a, const ConnectedPointer& b){
-		XTAL_ASSERT(a.bp==b.bp);
 		return a.pos - b.pos;
 	}
 
 	friend ConnectedPointer operator-(const ConnectedPointer& a, int_t b){
-		return ConnectedPointer(a.pos - b, *a.bp);
+		return ConnectedPointer(a.pos - b, a.bp);
 	}
 
 	friend ConnectedPointer operator-(int_t a, const ConnectedPointer& b){
-		return ConnectedPointer(a - b.pos, *b.bp);
+		return ConnectedPointer(a - b.pos, b.bp);
 	}
 
 	friend ConnectedPointer operator+(const ConnectedPointer& a, int_t b){
-		return ConnectedPointer(a.pos + b, *a.bp);
+		return ConnectedPointer(a.pos + b, a.bp);
 	}
 
 	friend ConnectedPointer operator+(int_t a, const ConnectedPointer& b){
-		return ConnectedPointer(a + b.pos, *b.bp);
+		return ConnectedPointer(a + b.pos, b.bp);
 	}
 };
 
@@ -170,6 +166,7 @@ void ObjectSpace::initialize(){
 	gcobservers_current_ = 0;
 	gcobservers_end_ = 0;
 	objects_count_ = 0;
+	objects_max_ = 0;
 	processed_line_ = 0;
 	cycle_count_ = 0;
 
@@ -178,8 +175,6 @@ void ObjectSpace::initialize(){
 	disable_gc();
 
 	expand_objects_list();
-	objects_begin_ = objects_current_ = *objects_list_current_++;
-	objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 
 	static CppClassSymbolData key;
 	class_table_.resize(key.value);
@@ -291,21 +286,17 @@ void ObjectSpace::uninitialize(){
 
 	}
 
-	fit_objects_list(objects_list_begin_);
-
-	objects_list_current_ = objects_list_begin_;
-
-	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
-	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
-}
-
-void ObjectSpace::fit_objects_list(RefCountingBase*** it){
-	for(; it!=objects_list_end_; ++it){
+	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){
 		RefCountingBase** begin = *it;
 		RefCountingBase** current = *it;
 		RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
 		fit_simple_dynamic_pointer_array(&begin, &end, &current);
 	}
+
+	objects_list_current_ = objects_list_begin_;
+
+	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
+	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 }
 
 void ObjectSpace::enable_gc(){
@@ -317,20 +308,20 @@ void ObjectSpace::disable_gc(){
 }
 	
 void ObjectSpace::expand_objects_list(){
-	if(objects_list_current_==objects_list_end_){
+	if(objects_count_==objects_max_){
 		expand_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_, 1);
-		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
-			RefCountingBase** begin = 0;
-			RefCountingBase** current = 0;
-			RefCountingBase** end = 0;
-			expand_simple_dynamic_pointer_array(&begin, &end, &current, OBJECTS_ALLOCATE_SIZE);
-			*it = begin;
-		}
+
+		RefCountingBase** begin = 0;
+		RefCountingBase** current = 0;
+		RefCountingBase** end = 0;
+		expand_simple_dynamic_pointer_array(&begin, &end, &current, OBJECTS_ALLOCATE_SIZE);
+		objects_list_begin_[objects_max_>>OBJECTS_ALLOCATE_SHIFT] = begin;
+		objects_max_ += OBJECTS_ALLOCATE_SIZE;
 	}
 }
 
 uint_t ObjectSpace::alive_object_count(){
-	return (objects_list_current_ - objects_list_begin_ - 1)*OBJECTS_ALLOCATE_SIZE + (objects_current_ - objects_begin_);
+	return objects_count_;
 }
 
 RefCountingBase* ObjectSpace::alive_object(uint_t i){
@@ -353,16 +344,18 @@ void ObjectSpace::after_gc(){
 ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
 	ConnectedPointer rend = first - 1;
 	ConnectedPointer it = last - 1;
-	while(it!=rend){
-		if((*it)->ungc()==0){
+	for(; it!=rend; ){
+		RefCountingBase* p = *it;
+
+		if(p->ungc()==0){
 			--end;
 
-			(*it)->destroy();
-			(*it)->object_free();
+			p->destroy();
+			p->object_free();
 
 			*it = *end;
 		}
-			
+
 		--it;
 	}
 
@@ -385,9 +378,6 @@ void ObjectSpace::adjust_objects_list(ConnectedPointer it){
 	objects_count_ = it.pos;
 	objects_list_current_ = objects_list_begin_ + (objects_count_>>OBJECTS_ALLOCATE_SHIFT);
 	expand_objects_list();
-	objects_begin_ = *objects_list_current_++;
-	objects_current_ = objects_begin_ + (objects_count_&OBJECTS_ALLOCATE_MASK);
-	objects_end_ = objects_begin_ + OBJECTS_ALLOCATE_SIZE;
 	XTAL_ASSERT(objects_list_current_<=objects_list_end_);
 }
 
@@ -403,27 +393,33 @@ void ObjectSpace::gc(){
 
 	ScopeCounter cc(&cycle_count_);
 
-	if(processed_line_>objects_count_){
-		processed_line_ = 0;
-	}
+	ConnectedPointer first, last, end;
 	
-	ConnectedPointer first(processed_line_, objects_list_begin_);
-	ConnectedPointer last(processed_line_+objects_count_/20, objects_list_begin_);
-	ConnectedPointer end(objects_count_, objects_list_begin_);
-
-	if(last>end){ last = end; }
-
 	before_gc();
+
+	int_t N = 256;
+
+	first = ConnectedPointer(objects_count_<=N ? 0 : objects_count_-N, objects_list_begin_);
+	last = ConnectedPointer(objects_count_, objects_list_begin_);
+	end = ConnectedPointer(objects_count_, objects_list_begin_);
+
 	end = swap_dead_objects(first, last, end);
 
-	first = ConnectedPointer(end.pos*19/20, objects_list_begin_);
-	last = ConnectedPointer(end.pos, objects_list_begin_);
+	first = ConnectedPointer(processed_line_, objects_list_begin_);
+	last = ConnectedPointer(processed_line_+N, objects_list_begin_);
+
+	if(first>end){ first = end; }
+	if(last>end){ last = end; }
 	end = swap_dead_objects(first, last, end);
+
 	after_gc();
 
 	adjust_objects_list(end);
 
-	processed_line_ += objects_count_/20;
+	processed_line_ += N;
+	if(processed_line_>objects_count_){
+		processed_line_ = 0;
+	}
 }
 
 void ObjectSpace::gc2(){
@@ -456,7 +452,7 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 			}
 		}
 	}
- 
+
 	return alive;
 }
 
@@ -466,6 +462,8 @@ void ObjectSpace::full_gc(){
 		vmachine_swap_temp();
 
 		ScopeCounter cc(&cycle_count_);
+
+		//std::sort(ConnectedPointer(0, objects_list_begin_), ConnectedPointer(objects_count_, objects_list_begin_));
 				
 		while(true){			
 			ConnectedPointer current(objects_count_, objects_list_begin_);
@@ -499,10 +497,11 @@ void ObjectSpace::full_gc(){
 
 				// Ž€ŽÒ‚Ìfinalizer‚ð‘–‚ç‚¹‚é
 				for(ConnectedPointer it = alive; it!=current; ++it){
-					if((*it)->have_finalizer()){
+					RefCountingBase* p = *it;
+					if(p->have_finalizer()){
 						exists_have_finalizer = true;
 						//vmachine()->setup_call();
-						((Base*)(*it))->finalize();
+						((Base*)p)->finalize();
 						//vmachine()->return_result();
 						//vmachine()->cleanup_call();
 					}
@@ -555,9 +554,6 @@ void ObjectSpace::full_gc(){
 			}
 		}*/
 
-		fit_objects_list(objects_list_current_);
-		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
-
 		vmachine_swap_temp();
 	}
 }
@@ -565,15 +561,12 @@ void ObjectSpace::full_gc(){
 void ObjectSpace::register_gc(RefCountingBase* p){
 	p->inc_ref_count();
 
-	if(objects_current_==objects_end_){
+	if(objects_count_==objects_max_){
 		ScopeCounter cc(&cycle_count_);
-
 		expand_objects_list();
-		objects_begin_ = objects_current_ = *objects_list_current_++;
-		objects_end_ = objects_begin_+OBJECTS_ALLOCATE_SIZE;
 	}
 
-	*objects_current_++ = p;
+	*ConnectedPointer(objects_count_, objects_list_begin_) = p;
 	objects_count_++;
 }
 

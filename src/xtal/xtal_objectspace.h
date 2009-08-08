@@ -62,16 +62,11 @@ private:
 	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
 	void free_objects(ConnectedPointer it, ConnectedPointer current);
 	void adjust_objects_list(ConnectedPointer it);
-	void fit_objects_list(RefCountingBase*** it);
 	ConnectedPointer find_alive_objects(ConnectedPointer alive, ConnectedPointer current);
 
 	void add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v);
 
 	void expand_objects_list();
-
-	RefCountingBase** objects_begin_ ;
-	RefCountingBase** objects_current_;
-	RefCountingBase** objects_end_;
 
 	RefCountingBase*** objects_list_begin_;
 	RefCountingBase*** objects_list_current_;
@@ -82,6 +77,7 @@ private:
 	GCObserver** gcobservers_end_;
 
 	uint_t objects_count_;
+	uint_t objects_max_;
 	uint_t processed_line_;
 
 	bool disable_finalizer_;

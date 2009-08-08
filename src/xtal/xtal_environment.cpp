@@ -171,14 +171,8 @@ void* xmalloc(size_t size){
 
 	if(env->used_memory_>env->memory_threshold_){
 		env->object_space_.gc();
-
-		// ƒƒ‚ƒŠŽg—p—Ê‚Íè‡’l‚Ì”¼•ªˆÈã
-		if(env->used_memory_>env->memory_threshold_/2){
-			env->memory_threshold_ += 1024*10;
-		}
-		else{
-			env->memory_threshold_ = env->used_memory_*2;
-		}
+		env->memory_threshold_ = env->used_memory_ + 1024*20;
+		//printf("mem %dKB\n", env->memory_threshold_/1024);
 	}
 
 	void* ret = env->setting_.allocator_lib->malloc(size);

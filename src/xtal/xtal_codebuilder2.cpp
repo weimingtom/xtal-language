@@ -46,21 +46,11 @@ int_t CodeBuilder::compile_expr(const AnyPtr& p, int_t stack_top, int_t result, 
 
 	ExprPtr e = ep(p);
 	
-	if(e->lineno()!=0){
-		linenos_.push(e->lineno());
-		result_->set_lineno_info(e->lineno());
-	}
-
 	int_t temp = stack_top;
 	int_t ret = compile_e(e, temp, result, result_count);
 
 	if(result_count!=0 && ret!=result_count){
 		put_inst(InstAdjustValues(result, ret, result_count));
-	}
-
-	if(e->lineno()!=0){
-		result_->set_lineno_info(e->lineno());
-		linenos_.pop();
 	}
 
 	return ret;
@@ -75,7 +65,9 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 	if(e->lineno()!=0){
 		linenos_.push(e->lineno());
-		result_->set_lineno_info(e->lineno());
+		if(result_->set_lineno_info(e->lineno())){
+			put_inst(InstLine());
+		}
 	}
 
 	compile_e(e, 0, 0, 0);

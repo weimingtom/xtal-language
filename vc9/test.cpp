@@ -128,12 +128,18 @@ void debughook(const debug::HookInfoPtr& info){
 
 }
 
+void linehook(const debug::HookInfoPtr& info){
+	int line = info->line();
+	//printf("line %d\n", line);
+}
+
+
 int print(const AnyPtr& a){
 	return 111;	
 }
 
 void breakpoint(){
-	
+
 }
 
 int main2(int argc, char** argv){
@@ -142,17 +148,15 @@ int main2(int argc, char** argv){
 	using namespace std;
 
 	//debug::enable();
-	//debug::set_return_hook(fun(&debughook));
+	//debug::set_line_hook(fun(&linehook));
 
 	//test();
 
 //*
 	if(CodePtr code = Xsrc((
-
-format: %f!%10.3f!;
-format( 0   ).p;
-format( 0.0 ).p; 
-
+		a : []; 
+		b : null; 
+		if( a==b ){ a.p; } else { b.p; } 
 	))){
 		code->filelocal()->def("ppp", fun(&print));
 		//code->inspect()->p();
@@ -278,17 +282,425 @@ format( 0.0 ).p;
 	return 0;
 }
 
+
+namespace xxx{
+class SimpleMemoryManager{
+public:
+	enum{
+		USED = 1<<0,
+		RED = 1<<1,
+
+		OFFSET_SHIFT = 2,
+		OFFSET_MASK = 0xffff<<OFFSET_SHIFT
+	};
+
+	static int offset(void* p){ return ((*(int*)p)&OFFSET_MASK)>>OFFSET_SHIFT; }
+	static void set_offset(void* p, int a){ (*(int*)p) &= ~OFFSET_MASK; (*(int*)p) |= a<<OFFSET_SHIFT; }
+
+	struct Chunk{
+		Chunk* next;
+		Chunk* prev;
+		int_t flags;
+
+		Chunk* left;
+		Chunk* right;
+
+		void init(){ next = prev = left = right = 0; flags = 0; }
+
+		int size(){ return (unsigned char*)next - (unsigned char*)(&flags+1); }
+		int buf_size(){ return (unsigned char*)next - (unsigned char*)buf(); }
+		void* buf(){ return (unsigned char*)this+offset(); }
+		
+		bool used(){ return (flags&USED)!=0; }
+		void set_used(){ flags |= USED; }
+		void unset_used(){ flags &= ~USED; }
+
+		int offset(){ return SimpleMemoryManager::offset(&flags); }
+		void set_offset(int a){ SimpleMemoryManager::set_offset(&flags, a); }
+
+		bool red(){ return (flags&RED)!=0; }
+		void set_red(){ flags |= RED; }
+		void set_black(){ flags &= ~RED; }
+		void flip_color(){ flags ^= RED; }
+		void set_same_color(Chunk* a){ set_black(); flags |= a->flags&RED; }
+	};
+
+	SimpleMemoryManager(){ 
+		head_ = begin_ = end_ = 0; 
+	}
+	
+	SimpleMemoryManager(void* buffer, size_t size){
+		init(buffer, size);
+	}
+
+	void init(void* buffer, size_t size);
+
+	void* malloc(size_t size, int alignment = sizeof(int_t));
+	void free(void* p);
+
+	Chunk* begin(){ return begin_; }
+	Chunk* end(){ return end_; }
+
+	Chunk* to_chunk(void* p){ return (Chunk*)((unsigned char*)p-offset((int_t*)p-1)); }
+	
+private:
+
+	int compare(Chunk* a, Chunk* b){
+		int ret = a->size() - b->size();
+		if(ret==0){
+			return a<b ? -1 : a>b ? 1 : 0;
+		}
+		return ret;
+	}
+
+	Chunk* find_in(Chunk* l, int key){
+		while(l!=end()){
+			int cmp = key - l->size();
+
+			if(cmp==0){
+				return l;
+			}
+
+			if(cmp<0){
+				Chunk* ret = find_in(l->left, key);
+				if(ret!=end()){
+					return ret;
+				}
+				return l;
+			}
+
+			l = l->right;
+		}
+
+		return end();
+	}
+
+	Chunk* find(int key){
+		return find_in(root_, key);
+	}
+
+	bool is_red(Chunk* n){
+		return n->red();
+	}
+
+	void flip_colors(Chunk* n){
+		n->flip_color();
+		n->left->flip_color();
+		n->right->flip_color();
+	}
+
+	Chunk* rotate_left(Chunk* n){
+		Chunk* x = n->right;
+		n->right = x->left;
+		x->left = n;
+		x->set_same_color(n);
+		n->set_red();
+		return x;
+	}
+
+	Chunk* rotate_right(Chunk* n){
+		Chunk* x = n->left;
+		n->left = x->right;
+		x->right = n;
+		x->set_same_color(n);
+		n->set_red();
+		return x;
+	}
+
+	Chunk* fixup(Chunk* n){
+		if(is_red(n->right)){
+			n = rotate_left(n);
+		}
+		
+		if(is_red(n->left) && is_red(n->left->left)){
+			n = rotate_right(n);
+		}
+		
+		if(is_red(n->left) && is_red(n->right)){
+			flip_colors(n);
+		}
+
+		return n;
+	}
+
+	Chunk* insert_in(Chunk* n, Chunk* key){
+		if(n==end()){
+			return key;
+		}
+
+		int cmp = compare(key, n);
+		
+		if(cmp<0){
+			n->left = insert_in(n->left, key);
+		}
+		else{
+			n->right = insert_in(n->right, key);
+		}
+		
+		if(is_red(n->right) && !is_red(n->left)){
+			n = rotate_left(n);
+		}
+		
+		if(is_red(n->left) && is_red(n->left->left)){
+			n = rotate_right(n);
+		}
+		
+		if(is_red(n->left) && is_red(n->right)){
+			flip_colors(n);
+		}
+		
+		return n;
+	}
+
+	void insert(Chunk* key){
+		key->right = key->left = end();
+		key->set_red();
+
+		root_ = insert_in(root_, key);
+		root_->set_black();
+	}
+
+	Chunk* minv(Chunk* n){
+		while(n->left!=end()){
+			n = n->left;
+		}
+		return n;
+	}
+
+	Chunk* move_red_left(Chunk* n){
+		flip_colors(n);
+		if(is_red(n->right->left)){
+			n->right = rotate_right(n->right);
+			n = rotate_left(n);
+			flip_colors(n);
+		}
+		return n;
+	}
+
+	Chunk* move_red_right(Chunk* n){
+		flip_colors(n);
+		
+		if(is_red(n->left->left)){
+			n = rotate_right(n);
+			flip_colors(n);
+		}
+		return n;
+	}
+
+	Chunk* remove_min(Chunk* n){
+		if(n->left==end()){
+			return end();
+		}
+		
+		if(!is_red(n->left) && !is_red(n->left->left)){
+			n = move_red_left(n);
+		}
+
+		n->left = remove_min(n->left);
+		return fixup(n);
+	}
+
+	Chunk* remove_in(Chunk* n, Chunk* key){
+		if(compare(key, n) < 0){
+			if(!is_red(n->left) && !is_red(n->left->left)){
+				n = move_red_left(n);
+			}
+			
+			n->left = remove_in(n->left, key);
+		}
+		else{
+			if(is_red(n->left)){
+				n = rotate_right(n);
+			}
+			
+			if(n==key && n->right==end()){
+				return end();
+			}
+			
+			if(!is_red(n->right) && !is_red(n->right->left)){
+				n = move_red_right(n);
+			}
+			
+			if(n==key){
+				Chunk* x = minv(n->right);
+				x->right = remove_min(n->right);
+				x->left = n->left;
+				x->set_same_color(n);
+				n = x;
+			}
+			else{
+				n->right = remove_in(n->right, key);
+			}
+		}
+
+		return fixup(n);
+	}
+
+	void remove(Chunk* key){
+		root_ = remove_in(root_, key);
+		root_->set_black();
+	}
+
+public:
+
+	enum{
+		COLOR_FREE,
+		COLOR_USED
+	};
+
+	void dump_bitmap(unsigned char* dest, size_t size, unsigned char* marks){
+		Chunk* p = head_;
+		int_t* it = (int_t*)head_;
+
+		size -= 1;
+
+		size_t n = 0;
+		while(p!=end()){
+			double sz = p->size()*size/(double)buffer_size_;
+			size_t szm = (size_t)sz+1;
+			if(szm!=0){
+				memset(dest+(size_t)n, marks[!p->used()], szm);
+			}
+
+			n += sz;
+			p = p->next;
+		}
+
+		size_t m = (size_t)n;
+		memset(dest+m, 0, (size+1)-m);
+	}
+
+	void dump_bitmap(unsigned char* dest, size_t size){
+		unsigned char marks[] = {'O', 'X'};
+		dump_bitmap(dest, size, marks);
+	}
+
+private:
+	Chunk* head_;
+	Chunk* begin_;
+	Chunk* end_;
+	Chunk* root_;
+
+	size_t buffer_size_;
+};
+
+void SimpleMemoryManager::init(void* buffer, size_t size){
+	buffer_size_ = size;
+
+	head_ = (Chunk*)align_p(buffer, sizeof(int_t));
+	begin_ = head_+1;
+	end_ = (Chunk*)align_p((Chunk*)((char*)buffer+size)-2, sizeof(int_t));
+	
+	head_->init();
+	head_->next = begin_;
+	head_->prev = 0;
+	head_->set_black();
+	head_->set_used();
+	
+	begin_->init();
+	begin_->next = end_;
+	begin_->prev = head_;
+	begin_->set_red();
+	begin_->unset_used();
+	
+	end_->init();
+	end_->next = 0;
+	end_->prev = begin_;
+	end_->set_black();
+	end_->set_used();
+	end_->left = end();
+	end_->right = end();
+	
+	root_ = begin_;
+	root_->left = end();
+	root_->right = end();
+	root_->set_red();
+}
+
+void* SimpleMemoryManager::malloc(size_t size, int alignment){
+	if(alignment<=sizeof(int_t)){
+		size = align(size, sizeof(int_t));
+	}
+	else{
+		size = align(size+alignment-sizeof(int_t), sizeof(int_t));
+	}
+
+	Chunk* it = find(size);
+	if(it!=end()){
+		remove(it);
+		it->set_used();
+
+		void* p = (unsigned char*)(&it->flags+1);
+		p = align_p(p, alignment);
+		int ofst = (unsigned char*)p - (unsigned char*)it;
+		it->set_offset(ofst);
+		set_offset((int_t*)p-1, ofst);
+
+		if(it->buf_size()>=size+sizeof(Chunk)){
+			Chunk* newchunk = (Chunk*)((unsigned char*)it->buf()+size);
+			newchunk->init();
+			newchunk->unset_used();
+			it->next->prev = newchunk;
+			newchunk->next = it->next;
+			it->next = newchunk;
+			newchunk->prev = it;
+
+			insert(newchunk);
+		}
+
+		return p;
+	}
+		
+	return 0;
+}
+
+void SimpleMemoryManager::free(void* p){
+	if(p){
+		Chunk* it = to_chunk(p);
+
+		if(!it->prev->used()){
+			remove(it->prev);
+			it->prev->next = it->next;
+			it->next->prev = it->prev;
+			it = it->prev;
+		}
+	
+		if(!it->next->used()){
+			remove(it->next);
+			it->next->next->prev = it;
+			it->next = it->next->next;
+		}
+
+		insert(it);
+	}
+}
+
+}
+
+char memory[1024*1024*1];
+xxx::SimpleMemoryManager smm(memory, 1024*1024*1);
+
+class AAllocatorLib : public AllocatorLib{
+public:
+	virtual ~AAllocatorLib(){}
+	virtual void* malloc(std::size_t size){ return smm.malloc(size); }
+	virtual void free(void* p, std::size_t size){ smm.free(p); }
+	virtual void* out_of_memory(std::size_t size){ return 0; }
+};
+
 int main(int argc, char** argv){
 	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;
 	WinFilesystemLib win_filesystem_lib;
 	SJISChCodeLib sjis_ch_code_lib;
+	AAllocatorLib alloc_lib;
 
 	Setting setting;
 	setting.thread_lib = &win_thread_lib;
 	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.ch_code_lib = &sjis_ch_code_lib;
+	setting.allocator_lib = &alloc_lib;
 
 	initialize(setting);
 
@@ -297,6 +709,11 @@ int main(int argc, char** argv){
 		bind_error_message();
 
 		ret = main2(argc, argv);
+
+		static unsigned char dest[10000];
+		smm.dump_bitmap(dest, 9999);
+		dest[9999] = 0;
+		puts((char*)dest);
 
 		vmachine()->print_info();
 	}

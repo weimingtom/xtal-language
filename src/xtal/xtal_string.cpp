@@ -4,33 +4,17 @@
 namespace xtal{
 
 uint_t string_hashcode(const char_t* str, uint_t size){
-	uint_t hash = 2166136261U;
-	for(uint_t i=0; i<size; ++i){
-		hash = hash*137 ^ str[i];
+	uint_t step = (size>>5)+1;
+	uint_t hash = size;
+	for(uint_t i=0; i<size; i+=step){
+		hash = hash ^ ((hash<<5)+(hash>>2)+str[i]);
 	}
 	return hash;
 }
 
 void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash){
-	hash = 2166136261U;
-	size = 0;
-
-	ChMaker chm;
-
-	uint_t i=0;
-	while(str[i]){
-		chm.clear();
-		while(!chm.is_completed()){
-			if(str[i]){ 
-				hash = hash*137 ^ str[i];
-				size++;
-				chm.add(str[i++]); 
-			} 
-			else{ 
-				break; 
-			}
-		}
-	}
+	size = string_data_size(str);
+	hash = string_hashcode(str, size);
 }
 
 uint_t string_length(const char_t* str){
@@ -70,6 +54,7 @@ int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsiz
 			return diff;
 		}
 	}
+
 	return 0;
 }
 

@@ -107,8 +107,8 @@ const AnyPtr& hook(int_t hooktype){
 	return d->hooks_[hooktype];
 }
 
-void set_break_point_hook(const AnyPtr& hook){
-	set_hook(BREAKPOINT, hook);
+void set_line_hook(const AnyPtr& hook){
+	set_hook(BREAKPOINT_LINE, hook);
 }
 
 void set_call_hook(const AnyPtr& hook){
@@ -127,8 +127,8 @@ void set_assert_hook(const AnyPtr& hook){
 	set_hook(BREAKPOINT_ASSERT, hook);
 }
 
-const AnyPtr& break_point_hook(){
-	return hook(BREAKPOINT);
+const AnyPtr& line_hook(){
+	return hook(BREAKPOINT_LINE);
 }
 
 const AnyPtr& call_hook(){

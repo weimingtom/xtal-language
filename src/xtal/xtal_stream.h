@@ -768,6 +768,11 @@ public:
 	virtual uint_t read(void* p, uint_t size){
 		return std_stream_lib()->read_stdin_stream(impl_, p, size);
 	}
+
+	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max){
+		return Stream::read_charactors(buffer, 1);
+	}
+
 private:
 	void* impl_;
 };

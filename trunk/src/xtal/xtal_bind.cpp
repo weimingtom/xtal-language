@@ -121,21 +121,14 @@ String::gsub: method(pattern, fn){
 	if(exec.match(pattern)){
 		prefix: exec.prefix;
 		mm.put_s(prefix);
-		ordered: [exec[""]];
-		ordered.concat(exec.captures);
-		named: exec.named_captures[:];
-		named["prefix"] = prefix;
-		mm.put_s(fn(...Arguments(ordered, named)));
+		mm.put_s(fn(exec));
 
 		while(exec.match(pattern)){
 			prefix: exec.prefix;
 			mm.put_s(prefix);
-			ordered: [exec[""]];
-			ordered.concat(exec.captures);
-			named: exec.named_captures[:];
-			named["prefix"] = prefix;
-			mm.put_s(fn(...Arguments(ordered, named)));
+			mm.put_s(fn(exec));
 		}
+
 		mm.put_s(exec.suffix);
 		return mm.to_s;
 	}
@@ -151,12 +144,7 @@ String::sub: method(pattern, fn){
 		prefix: exec.prefix;
 		suffix: exec.suffix;
 		mm.put_s(prefix);
-		ordered: [exec[""]];
-		ordered.concat(exec.captures);
-		named: exec.named_captures[:];
-		named["prefix"] = prefix;
-		named["suffix"] = suffix;
-		mm.put_s(fn(...Arguments(ordered, named)));
+		mm.put_s(fn(exec));
 		mm.put_s(exec.suffix);
 		return mm.to_s;
 	}
@@ -250,6 +238,8 @@ XTAL_BIND(Any){
 	it->def_double_dispatch_method("op_call");
 	it->def_double_dispatch_method("op_range");
 	it->def_double_dispatch_method("op_in");
+
+	it->def_method("op_eq", &Any::op_eq, cpp_class<Any>()); 
 
 	Xemb((
 Any::op_in#Array: method(values){
@@ -1000,10 +990,10 @@ XTAL_BIND(debug::HookInfo){
 	it->def_method("set_exception", &debug::HookInfo::set_exception);
 	it->def_method("set_variables_frame", &debug::HookInfo::set_variables_frame);
 
-	it->def("BREAKPOINT", BREAKPOINT);
+	it->def("LINE", BREAKPOINT_LINE);
 	it->def("CALL", BREAKPOINT_CALL);
 	it->def("RETURN", BREAKPOINT_RETURN);
-	it->def("RETURN_THROW", BREAKPOINT_THROW);
+	it->def("THROW", BREAKPOINT_THROW);
 }
 
 XTAL_BIND(Stream){
@@ -1158,11 +1148,11 @@ XTAL_BIND(debug::Debug){
 	it->def_fun("disable", &debug::disable);
 	it->def_fun("is_enabled", &debug::is_enabled);
 
-	it->def_fun("break_point_hook", &debug::break_point_hook);
+	it->def_fun("line_hook", &debug::line_hook);
 	it->def_fun("call_hook", &debug::call_hook);
 	it->def_fun("return_hook", &debug::return_hook);
 	it->def_fun("throw_hook", &debug::throw_hook);
-	it->def_fun("set_break_point_hook", &debug::set_break_point_hook);
+	it->def_fun("set_line_hook", &debug::set_line_hook);
 	it->def_fun("set_call_hook", &debug::set_call_hook);
 	it->def_fun("set_return_hook", &debug::set_return_hook);
 	it->def_fun("set_throw_hook", &debug::set_throw_hook);

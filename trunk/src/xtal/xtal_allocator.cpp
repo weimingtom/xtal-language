@@ -4,7 +4,7 @@ namespace xtal{
 
 void expand_simple_dynamic_pointer_array(void*** begin, void*** end, void*** current, int addsize){
 	uint_t size = (uint_t)(*end-*begin);
-	uint_t newsize = size+addsize+size;
+	uint_t newsize = size+addsize;
 	void** newbegin=(void**)xmalloc(sizeof(void*)*newsize);
 	std::memcpy(newbegin, *begin, sizeof(void*)*size);
 	*end = newbegin+newsize;
@@ -70,10 +70,10 @@ void FixedAllocator::add_chunk(std::size_t block_size){
 void* FixedAllocator::malloc_inner(std::size_t block_size){
 	uint_t blocks = calc_size(block_size);
 
-	gc_count_ = (gc_count_ + 1) & 0x8;
-	if(gc_count_==0){
-		gc();
-	}
+	//gc_count_ = (gc_count_ + 1) & 0x8;
+	//if(gc_count_==0){
+		//gc();
+	//}
 
 	cant_fit_ = true;
 

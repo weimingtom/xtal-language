@@ -195,10 +195,10 @@ const AnyPtr& hook(int_t hooktype);
 
 /**
 * \xbind lib::builtin::debug
-* \brief ブレークポイントがある度に呼び出されるフック関数を登録する
+* \brief 行が変わるたびに呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
-void set_break_point_hook(const AnyPtr& hook);
+void set_line_hook(const AnyPtr& hook);
 
 /**
 * \xbind lib::builtin::debug
@@ -230,9 +230,9 @@ void set_assert_hook(const AnyPtr& hook);
 
 /**
 * \xbind lib::builtin::debug
-* \brief set_break_point_hook関数で登録した関数を取得する
+* \brief set_line_hook関数で登録した関数を取得する
 */
-const AnyPtr& break_point_hook();
+const AnyPtr& line_hook();
 
 /**
 * \xbind lib::builtin::debug

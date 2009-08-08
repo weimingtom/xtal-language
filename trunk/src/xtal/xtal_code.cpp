@@ -30,11 +30,12 @@ Code::Code()
 	first_fun_ = xnew<Method>(null, to_smartptr(this), (FunInfo*)0);
 }
 
-void Code::set_lineno_info(uint_t line){
+bool Code::set_lineno_info(uint_t line){
 	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
-		return;
+		return false;
 	LineNumberInfo lnt={(u16)code_.size(), (u16)line};
 	lineno_table_.push_back(lnt);
+	return true;
 }
 
 int_t Code::compliant_lineno(const inst_t* p){
@@ -57,6 +58,7 @@ int_t Code::compliant_lineno(const inst_t* p){
 			return it->lineno;
 		}
 	}
+
 	return 0;
 }
 
@@ -65,6 +67,7 @@ void Code::rawcall(const VMachinePtr& vm){
 	first_fun_->rawcall(vm);
 }
 
+/*
 void Code::insert_code(inst_t* p, inst_t* code, int_t size){
 	insert_erase_common(p, size);
 	code_.insert(p-&code_[0], code, size);
@@ -160,6 +163,7 @@ void Code::insert_erase_common(inst_t* p, int_t size){
 		}
 	}
 }
+*/
 
 void Code::find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv){
 	for(uint_t j=0; j<info.variable_size; ++j){

@@ -794,7 +794,8 @@ zerodiv:
 XTAL_VM_LOOP
 
 //{OPS{{
-	XTAL_VM_CASE_FIRST(Nop){ // 2
+	XTAL_VM_CASE_FIRST(Line){ // 2
+		check_debug_hook(pc, BREAKPOINT_LINE);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1539,11 +1540,6 @@ comp_send:
 		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
-
-	XTAL_VM_CASE(BreakPoint){ // 3
-		check_debug_hook(pc, BREAKPOINT);
-		XTAL_VM_CONTINUE(pc + inst.ISIZE);
-	}
 
 	XTAL_VM_CASE(MAX){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

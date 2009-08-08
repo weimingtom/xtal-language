@@ -25,8 +25,9 @@ void Stream::seek(uint_t offset){
 }
 
 StringPtr Stream::get_s(uint_t length){
-	if(eos())
+	if(eos()){
 		return empty_string;
+	}
 
 	if(length==1){
 		return get_ch();
@@ -36,6 +37,7 @@ StringPtr Stream::get_s(uint_t length){
 	for(uint_t i=0; i<length; ++i){
 		ms->put_s(get_s(1));
 	}
+
 	return ms->to_s();
 }
 
@@ -50,13 +52,15 @@ StringPtr Stream::get_ch(){
 }
 
 StringPtr Stream::get_s_all(){
-	if(eos())
+	if(eos()){
 		return empty_string;
+	}
 
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	while(!eos()){
 		ms->put_s(get_s(1));
 	}
+
 	return ms->to_s();
 }
 

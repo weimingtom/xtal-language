@@ -38,6 +38,18 @@ enum{
 #define XTAL_USE_COMPUTED_GOTO
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
+#define XTAL_PREFETCH(x) __builtin_prefetch(x)
+#define XTAL_PREFETCHW(x) __builtin_prefetch(x, 2)
+#define XTAL_LIKELY(x) __builtin_expect(!!(x), 1)
+#define XTAL_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define XTAL_PREFETCH(x) 
+#define XTAL_PREFETCHW(x) 
+#define XTAL_LIKELY(x) x
+#define XTAL_UNLIKELY(x) x
+#endif
+
 #if !defined(XTAL_NO_THREAD) && !defined(XTAL_TLS_PTR) && defined(XTAL_USE_PTHREAD_TLS)
 #include <pthread.h>
 template<class T>
@@ -112,14 +124,6 @@ private:
 #define XTAL_CASE2(key, key2) break; case key:case key2:
 #define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
 #define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
-
-#if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
-#	define XTAL_LIKELY(cond) __builtin_expect(!!(int)(cond), 1)
-#	define XTAL_UNLIKELY(cond) __builtin_expect((int)(cond), 0)
-#else
-#	define XTAL_LIKELY(cond) (cond)
-#	define XTAL_UNLIKELY(cond) (cond)
-#endif
 
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
@@ -628,7 +632,7 @@ enum BreakPointKind{
 	/**
 	* \brief ブレークポイント
 	*/
-	BREAKPOINT,
+	BREAKPOINT_LINE,
 
 	/**
 	* \brief 関数呼び出し時ブレークポイント

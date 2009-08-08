@@ -149,6 +149,8 @@ public:
 
 	InstanceVariables* instance_variables() const;
 
+	bool op_eq( const AnyPtr& v ) const;
+
 public:
 
 	/// \brief primary_keyメソッドを呼び出す

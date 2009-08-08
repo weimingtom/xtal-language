@@ -26,7 +26,7 @@ public:
 	*/
 	int_t compliant_lineno(const inst_t* p);
 		
-	void set_lineno_info(uint_t line);
+	bool set_lineno_info(uint_t line);
 
 	const inst_t* data(){
 		return &code_[0];
@@ -106,6 +106,7 @@ public:
 
 	virtual void rawcall(const VMachinePtr& vm);
 
+	/*
 	void insert_code(inst_t* p, inst_t* code, int_t size);
 
 	void erase_code(inst_t* p, int_t size);
@@ -113,6 +114,7 @@ public:
 	bool add_break_point(uint_t lineno);
 
 	void remove_break_point(uint_t lineno);
+	*/
 
 	void check_implicit_lookup();
 

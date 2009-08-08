@@ -15,4 +15,10 @@ class filelocal::StringTest{
 		assert "‚Ä‚¢‚·‚Ä‚¢".length==5;
 		assert "ewrwer‚¨".length==7;
 	}
+	
+	sub#Test{
+		assert "Hello".sub("l", fun(x) "L")=="HeLlo";
+		assert "Hello".gsub("l", fun(x) "L")=="HeLLo";
+		assert "Hello".sub("l"*2, fun(x) "O")=="HeOo";
+	}
 }

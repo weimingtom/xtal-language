@@ -358,12 +358,10 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 			return code->identifier(name_number);
 		}
 
-		return Xf("(instance of %s) %s(%d)")->call(get_class()->object_name(), 
-			code->source_file_name(), 
-			code->compliant_lineno(code->data()+pc))->to_s();
+		return Xf("%s(%d)")->call(code->source_file_name(), code->compliant_lineno(code->data()+pc))->to_s();
 	}
 	else{
-		return Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+		return "?";
 	}
 }
 
@@ -384,8 +382,6 @@ StringPtr Any::ask_object_name_to_parent() const{
 
 StringPtr Any::object_name() const{
 	StringPtr ret;
-
-	int iii = type(*this);
 
 	switch(type(*this)){
 		XTAL_DEFAULT;
@@ -418,6 +414,7 @@ StringPtr Any::object_name() const{
 		}
 
 		ret = Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+
 	}while(0);
 
 	return ret;
@@ -433,6 +430,10 @@ bool Any::is_inherited(const AnyPtr& klass) const{
 		return false;
 	}
 }
+
+bool Any::op_eq( const AnyPtr& v ) const{
+  return raweq(*this, *v ); 
+} 
 
 AnyPtr Any::p() const{
 	ap(*this)->send(Xid(p));

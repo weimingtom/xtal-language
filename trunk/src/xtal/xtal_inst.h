@@ -453,10 +453,10 @@ void Inst::checked_assign(T& ref, int v){
 
 /**
 * \internal
-* \brief âΩÇ‡ÇµÇ»Ç¢ÅB
+* \brief çsÇ™ïœÇÌÇÈÇ≤Ç∆Ç…ã≤Ç‹ÇÍÇÈñΩóﬂ
 *
 */
-XTAL_DEF_INST_0(0, Nop);
+XTAL_DEF_INST_0(0, Line);
 
 enum{
 	LOAD_NULL,
@@ -929,9 +929,7 @@ XTAL_DEF_INST_0(57, Throw);
 XTAL_DEF_INST_1(58, Assert,
 		inst_i8_t, message);
 
-XTAL_DEF_INST_0(59, BreakPoint);
-
-XTAL_DEF_INST_0(60, MAX);
+XTAL_DEF_INST_0(59, MAX);
 
 }
 

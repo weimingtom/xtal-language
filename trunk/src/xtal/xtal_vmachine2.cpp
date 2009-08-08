@@ -656,8 +656,8 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 		make_debug_info(pc, kind);
 
 		switch(kind){
-			XTAL_CASE(BREAKPOINT){
-				if(const AnyPtr& hook = debug::break_point_hook()){
+			XTAL_CASE(BREAKPOINT_LINE){
+				if(const AnyPtr& hook = debug::line_hook()){
 					hook->call(debug_info_);
 				}
 			}

@@ -68,7 +68,7 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 #define XTAL_INST_CASE(x) XTAL_CASE(Inst##x::NUMBER){ temp = ((Inst##x*)pc)->inspect(code); sz = Inst##x::ISIZE; }
 
 //{INST_INSPECT{{
-		XTAL_INST_CASE(Nop);
+		XTAL_INST_CASE(Line);
 		XTAL_INST_CASE(LoadValue);
 		XTAL_INST_CASE(LoadConstant);
 		XTAL_INST_CASE(LoadInt1Byte);
@@ -127,7 +127,6 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(PopGoto);
 		XTAL_INST_CASE(Throw);
 		XTAL_INST_CASE(Assert);
-		XTAL_INST_CASE(BreakPoint);
 		XTAL_INST_CASE(MAX);
 //}}INST_INSPECT}
 	} ms->put_s(Xf("%04d:%s\n")->call((int_t)(pc-start), temp)->to_s()); pc += sz; }
@@ -145,7 +144,7 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 int_t inst_size(uint_t no){
 	static u8 sizelist[] = {
 //{INST_SIZE{{
-	InstNop::ISIZE,
+	InstLine::ISIZE,
 	InstLoadValue::ISIZE,
 	InstLoadConstant::ISIZE,
 	InstLoadInt1Byte::ISIZE,
@@ -204,7 +203,6 @@ int_t inst_size(uint_t no){
 	InstPopGoto::ISIZE,
 	InstThrow::ISIZE,
 	InstAssert::ISIZE,
-	InstBreakPoint::ISIZE,
 	InstMAX::ISIZE,
 //}}INST_SIZE}
 	};

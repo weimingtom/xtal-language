@@ -324,6 +324,7 @@ struct CastHelper<bool>{
 	static bool unchecked_cast(const AnyPtr& a){ return a; }
 	static bool get_null(){ return false; }
 };
+template<> struct CppClassSymbol<bool> : public CppClassSymbol<Bool>{};
 
 bool Int_can_cast(const AnyPtr& a);
 int_t Int_unchecked_cast(const AnyPtr& a);

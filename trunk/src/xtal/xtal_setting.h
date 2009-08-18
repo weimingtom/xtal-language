@@ -20,7 +20,7 @@
 /**
 * \brief スレッド使用off
 */
-//#define XTAL_NO_THREAD
+#define XTAL_NO_THREAD
 
 /**
 * \brief pthreadのスレッドローカルストレージを使う

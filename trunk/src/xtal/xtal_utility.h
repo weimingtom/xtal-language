@@ -12,10 +12,10 @@
 */
 namespace xtal{
 enum{
-	VERSION1 = 0,
-	VERSION2 = 9,
-	VERSION3 = 9,
-	VERSION4 = 9
+	VERSION1 = 1,
+	VERSION2 = 0,
+	VERSION3 = 0,
+	VERSION4 = 0
 };
 }
 

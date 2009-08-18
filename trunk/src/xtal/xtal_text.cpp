@@ -243,11 +243,11 @@ void Format::rawcall(const VMachinePtr& vm){
 						if(str->data_size()>=256){
 							if(str->data_size()>malloc_size){
 								if(malloc_size!=0){
-									xfree(pcbuf, malloc_size);
+									xfree(pcbuf, malloc_size*sizeof(char_t));
 								}
 								
 								malloc_size = str->data_size() + fs.max_buffer_size() + 1;
-								pcbuf = (char_t*)xmalloc(malloc_size);
+								pcbuf = (char_t*)xmalloc(malloc_size*sizeof(char_t));
 							}
 						}
 						else{
@@ -299,7 +299,7 @@ void Format::rawcall(const VMachinePtr& vm){
 	}
 
 	if(malloc_size!=0){
-		xfree(pcbuf, malloc_size);
+		xfree(pcbuf, malloc_size*sizeof(char_t));
 	}
 
 	vm->return_result(ms->to_s());

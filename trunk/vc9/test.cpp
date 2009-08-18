@@ -187,17 +187,16 @@ int main2(int argc, char** argv){
 	//AnyPtr a = cast<bool>(false);
 
 //*
-	/*if(CodePtr code = Xsrc((
-		a : []; 
-		b : null; 
-		if( a==b ){ a.p; } else { b.p; } 
+	if(CodePtr code = Xsrc((
+		stdin.split("\n"){ |x|
+			x.p;
+		}
 	))){
 		code->filelocal()->def("ppp", fun(&print));
 		//code->inspect()->p();
 		AnyPtr ret = code->call(500, 108);
 		//ret = ret;
 	}
-	*/
 
 	full_gc();
 

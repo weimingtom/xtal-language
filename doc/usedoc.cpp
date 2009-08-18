@@ -31,35 +31,35 @@
 #include <xtal_lib/xtal_errormessage.h> // bind_error_message()のため
 
 int main(int argc, char** argv){
-	using namespace xtal;
+    using namespace xtal;
 
-	CStdioStdStreamLib cstd_std_stream_lib; // stdin, stdout, stderrはCの標準ライブラリを使う
-	WinThreadLib win_thread_lib; // Windowsのスレッドを使う
-	WinFilesystemLib win_filesystem_lib; // Windowsのファイルシステムを使う 
-	SJISChCodeLib sjis_ch_code_lib; // SJISを使う
+    CStdioStdStreamLib cstd_std_stream_lib; // stdin, stdout, stderrはCの標準ライブラリを使う
+    WinThreadLib win_thread_lib; // Windowsのスレッドを使う
+    WinFilesystemLib win_filesystem_lib; // Windowsのファイルシステムを使う 
+    SJISChCodeLib sjis_ch_code_lib; // SJISを使う
 
-	// 環境依存である機能についてどれを使うかを設定
-	Setting setting; 
-	setting.thread_lib = &win_thread_lib;
-	setting.std_stream_lib = &cstd_std_stream_lib;
-	setting.filesystem_lib = &win_filesystem_lib;
-	setting.ch_code_lib = &sjis_ch_code_lib;
-	
-	// ここで指定したthread_libなどのポインタが示す先のオブジェクトは、
-	// uninitializeを呼び出すまで存在している必要があります。
+    // 環境依存である機能についてどれを使うかを設定
+    Setting setting; 
+    setting.thread_lib = &win_thread_lib;
+    setting.std_stream_lib = &cstd_std_stream_lib;
+    setting.filesystem_lib = &win_filesystem_lib;
+    setting.ch_code_lib = &sjis_ch_code_lib;
+    
+    // ここで指定したthread_libなどのポインタが示す先のオブジェクトは、
+    // uninitializeを呼び出すまで存在している必要があります。
 
-	// Xtalを初期化
-	initialize(setting);
+    // Xtalを初期化
+    initialize(setting);
 
-	// エラーメッセージをバインド
-	bind_error_message();
+    // エラーメッセージをバインド
+    bind_error_message();
 
-	// ここでスクリプトの実行を行う
+    // ここでスクリプトの実行を行う
 
-	// Xtalを破棄
-	uninitialize();
+    // Xtalを破棄
+    uninitialize();
 
-	return 0;
+    return 0;
 }
 \endcode
 
@@ -79,7 +79,7 @@ load("HelloWirld.xtal");
 
 // コンパイルエラーや実行時エラーがあったら捕捉する。
 XTAL_CATCH_EXCEPT(e){
-	stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
+    stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
 }
 
 \endcode
@@ -92,11 +92,11 @@ XTAL_CATCH_EXCEPT(e)を使います。\n
 any->call();
 
 XTAL_CATCH_EXCEPT(e){
-	// call内で例外がセットされたらここを通る
-	// eに例外オブジェクトがセットされる。
+    // call内で例外がセットされたらここを通る
+    // eに例外オブジェクトがセットされる。
 }
 else{
-	// 例外が発生していないならここを通る
+    // 例外が発生していないならここを通る
 }
 \endcode
 
@@ -109,11 +109,11 @@ const char* source = " println(\"Hello, World\"); ";
 
 // コンパイルエラーがあれば、codeはnullが返る
 if(CodePtr code = compile(source)){
-	code->call();
+    code->call();
 }
 
 XTAL_CATCH_EXCEPT(e){
-	stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
+    stderr_stream()->println(e); // stderrに例外オブジェクトを出力する
 }
 \endcode
 */
@@ -197,8 +197,8 @@ void bar(){
 }
 
 void test(){
-	NativeFunPtr f = fun(&foo);
-	NativeFunPtr b = fun(&bar);
+    NativeFunPtr f = fun(&foo);
+    NativeFunPtr b = fun(&bar);
 }
 \endcode
 
@@ -209,9 +209,9 @@ void foo(int key1, int key2){
 }
 
 void test(){
-	// 一つ目の引数をkey1と名づけ、デフォルト値を50に
-	// 二つ目の引数をkey2と名づけ、デフォルト値を100にする
-	NativeFunPtr f = fun(&foo)->param(1, Xid(key1), 50)->param(2, Xid(key2), 100);
+    // 一つ目の引数をkey1と名づけ、デフォルト値を50に
+    // 二つ目の引数をkey2と名づけ、デフォルト値を100にする
+    NativeFunPtr f = fun(&foo)->param(1, Xid(key1), 50)->param(2, Xid(key2), 100);
 }
 \endcode
 */
@@ -223,8 +223,8 @@ void add(int a, int b){
     printf("%d\n", a+b);
 }
 void test(){
-	AnyPtr add = fun(&add);
-	AnyPtr ret = add->call(100, 200);
+    AnyPtr add = fun(&add);
+    AnyPtr ret = add->call(100, 200);
 }
 \endcode
 とAnyPtr型の変数に()を付けて引数を渡すというとても直感的な関数の呼び出しができます。\n
@@ -234,8 +234,8 @@ void add(int key1, int key2){
      printf("%d\n", key1+key2);
 }
 void test(){
-	AnyPtr add = fun(&add)->param(1, Xid(key1), 10)->param(2, Xid(key2), 20);
-	AnyPtr ret = add->call(Named(Xid(key2), 50)); // => 60
+    AnyPtr add = fun(&add)->param(1, Xid(key1), 10)->param(2, Xid(key2), 20);
+    AnyPtr ret = add->call(Named(Xid(key2), 50)); // => 60
 }
 \endcode
 */
@@ -325,11 +325,11 @@ AnyPtr ret = load("test.xtal");
 
 // 例外が発生していないかチェック
 XTAL_CATCH_EXCEPT(e){
-	stderr_stream()->println(e);
+    stderr_stream()->println(e);
 }
 else{
-	int value = ret->to_i();
-	printf("%d\n", value);
+    int value = ret->to_i();
+    printf("%d\n", value);
 }
 \endcode
 */
@@ -343,9 +343,9 @@ void cpp_fun(){
 }
 
 void test(){
-	// libオブジェクトに登録
-	lib()->def(Xid(cpp_value), fun(&cpp_fun));
-	load("test.xtal");
+    // libオブジェクトに登録
+    lib()->def(Xid(cpp_value), fun(&cpp_fun));
+    load("test.xtal");
 }
 \endcode
 
@@ -360,10 +360,10 @@ lib::cpp_value(); // => cpp_fun
 \code
 // C++
 void test(){
-	// コンパイルして、それをcallで実行する。
-	if(CodePtr code = compile("test.xtal")){
-		code->call(100, 200);
-	}
+    // コンパイルして、それをcallで実行する。
+    if(CodePtr code = compile("test.xtal")){
+        code->call(100, 200);
+    }
 }
 \endcode
 
@@ -378,11 +378,11 @@ Code::filelocalでそのコードのfilelocalを取り出して、変数を定義することもできます
 \code
 // C++
 void test(){
-	// コンパイルして、それをcallで実行する。
-	if(CodePtr code = compile("test.xtal")){
-		code->def(Xid(foo), 100);
-		code->call();
-	}
+    // コンパイルして、それをcallで実行する。
+    if(CodePtr code = compile("test.xtal")){
+        code->def(Xid(foo), 100);
+        code->call();
+    }
 }
 \endcode
 
@@ -398,45 +398,45 @@ foo.p; //=> 100
 // test.cpp
 class Vector2D{
 public:
-	float x, y;
-	
-	Vector2D(float x = 0, float y = 0)
-		:x(x), y(y){}
-	
-	float length() const{
-		return sqrt(x*x + y*y);
-	}
-	
-	void normalize(){
-		float len = length();
-		x /= len;
-		y /= len;
-	}
+    float x, y;
+    
+    Vector2D(float x = 0, float y = 0)
+        :x(x), y(y){}
+    
+    float length() const{
+        return sqrt(x*x + y*y);
+    }
+    
+    void normalize(){
+        float len = length();
+        x /= len;
+        y /= len;
+    }
 };
 
 // XTAL_PREBINDの中で継承関係の登録、コンストラクタの登録を行う
 XTAL_PREBIND(Vector2D){
-	// itはClassPtrである。
-	// it->でClassクラスのメンバ関数が呼べる
-	
-	// コンストラクタの登録
-	it->def_ctor2<Vector2D, float, float>()->param(1, Xid(x), 0)->param(2, Xid(y), 0);
+    // itはClassPtrである。
+    // it->でClassクラスのメンバ関数が呼べる
+    
+    // コンストラクタの登録
+    it->def_ctor2<Vector2D, float, float>()->param(1, Xid(x), 0)->param(2, Xid(y), 0);
 }
 
 // XTAL_BINDの中でメンバ関数の登録を行う
 XTAL_BIND(Vector2D){
-	// itはClassPtrである。
-	// it->でClassクラスのメンバ関数が呼べる
+    // itはClassPtrである。
+    // it->でClassクラスのメンバ関数が呼べる
 
-	it->def_var(Xid(x), &Vector2D::x); // メンバ変数xのセッタ、ゲッタを登録
-	it->def_var(Xid(y), &Vector2D::y); // メンバ変数yのセッタ、ゲッタを登録
-	it->def_method(Xid(length), &Vector2D::length); // メンバ関数lengthを登録
-	it->def_method(Xid(normalize), &Vector2D::normalize); // メンバ関数lengthを登録
+    it->def_var(Xid(x), &Vector2D::x); // メンバ変数xのセッタ、ゲッタを登録
+    it->def_var(Xid(y), &Vector2D::y); // メンバ変数yのセッタ、ゲッタを登録
+    it->def_method(Xid(length), &Vector2D::length); // メンバ関数lengthを登録
+    it->def_method(Xid(normalize), &Vector2D::normalize); // メンバ関数lengthを登録
 }
 
 void test(){
-	// libオブジェクトに登録
-	lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
+    // libオブジェクトに登録
+    lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
 }
 \endcode
 
@@ -465,18 +465,18 @@ public:
 };
 
 XTAL_PREBIND(Foo){
-	it->def_ctor1<Foo>()->param(1, Xid(value), 0);
+    it->def_ctor1<Foo>()->param(1, Xid(value), 0);
 }
 
 XTAL_BIND(Foo){
-	it->def_method(Xid(add), &Foo::add);
+    it->def_method(Xid(add), &Foo::add);
 }
 
 XTAL_PREBIND(SubFoo){
-	// inheritで継承関係を結ぶ
-	// cpp_class<Foo>()でFooクラスのクラスオブジェクトを取得できる
-	it->inherit(cpp_class<Foo>());
-	it->def_ctor0<SubFoo>();
+    // inheritで継承関係を結ぶ
+    // cpp_class<Foo>()でFooクラスのクラスオブジェクトを取得できる
+    it->inherit(cpp_class<Foo>());
+    it->def_ctor0<SubFoo>();
 }
 
 void test(){
@@ -485,7 +485,7 @@ void test(){
     lib()->def(Xid(SubFoo), cpp_class<SubFoo>());
 
     // 実行して結果を受け取る
-	AnyPtr ret = load("test.xtal");
+    AnyPtr ret = load("test.xtal");
     
     // ここでretにはSubFooクラスのインスタンスが入っている
     
@@ -509,9 +509,9 @@ return subfoo; // subfooをreturnする
 \code
 // ファイルをコンパイルする
 if(CodePtr code = compile_file("test.xtal")){
-	// test.xtalcにバイトコードを保存する
-	FileStreamPtr fs = xnew<FileStream>("test.xtalc", "w");
-	fs->serialize(code);
+    // test.xtalcにバイトコードを保存する
+    FileStreamPtr fs = xnew<FileStream>("test.xtalc", "w");
+    fs->serialize(code);
 }
 \endcode
 
@@ -519,8 +519,8 @@ if(CodePtr code = compile_file("test.xtal")){
 // バイトコードを読み出す
 FileStreamPtr fs = xnew<FileStream>("test.xtalc", "r");
 if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
-	// 実行する
-	code->call();
+    // 実行する
+    code->call();
 }
 \endcode
 */

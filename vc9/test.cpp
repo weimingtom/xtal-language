@@ -17,7 +17,7 @@ public:
     float x, y;
     TestGetterSetterBind(): x(0), y(0) {}
 
-	void foomethod(){}
+	void foomethod(bool){}
 };
 
 XTAL_PREBIND(TestGetterSetterBind){
@@ -142,6 +142,36 @@ void breakpoint(){
 
 }
 
+  class Test{ 
+  public: 
+      Test(): b_(false){} 
+      void set_bool(bool b){ b_ = b; } 
+      bool get_bool(){ return b_; } 
+  private: 
+      bool b_; 
+  };
+
+ XTAL_PREBIND(Test){
+    it->def_ctor(ctor<Test>());
+}
+
+XTAL_BIND(Test){
+   it->def_method(Xid(set_bool), &Test::set_bool);
+   it->def_method(Xid(get_bool), &Test::get_bool);
+}
+
+  void test2(){ 
+      lib()->def(Xid(Test), cpp_class<Test>()); 
+
+     if(CodePtr code = Xsrc(( 
+          foo: lib::Test(); 
+          foo.set_bool(false); 
+          foo.get_bool().p; 
+      ))){ 
+          code->call(); 
+      } 
+  } 
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
@@ -152,8 +182,12 @@ int main2(int argc, char** argv){
 
 	//test();
 
+	test2();
+
+	//AnyPtr a = cast<bool>(false);
+
 //*
-	if(CodePtr code = Xsrc((
+	/*if(CodePtr code = Xsrc((
 		a : []; 
 		b : null; 
 		if( a==b ){ a.p; } else { b.p; } 
@@ -163,6 +197,7 @@ int main2(int argc, char** argv){
 		AnyPtr ret = code->call(500, 108);
 		//ret = ret;
 	}
+	*/
 
 	full_gc();
 

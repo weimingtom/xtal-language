@@ -115,7 +115,7 @@ public:
 
 	/**
 	* \xbind
-	* \brief オブジェクトの名前を返す
+	* \brief オブジェクトの名前を返す。
 	*/
 	StringPtr object_name() const;
 
@@ -129,6 +129,7 @@ public:
 	/**
 	* \xbind
 	* \brief 自身を文字列化してprintlnする。
+	* 文字列化にはto_sメソッドが呼ばれる。
 	* \return 自身を返す。
 	*/
 	AnyPtr p() const;

@@ -4,26 +4,26 @@
 */
 namespace lib{
 
-	/**
-	* \brief ビルトインのクラスや関数
-	*/
-	namespace builtin{
-	
-		/**
-		* \brief ファイルシステムのクラスや関数
-		*/
-		namespace filesystem{}
-		
-		/**
-		* \brief デバッグのクラスや関数
-		*/
-		namespace debug{}
-		
-		/**
-		* \brief xpegのクラスや関数
-		*/
-		namespace xpeg{}
-	}
+    /**
+    * \brief ビルトインのクラスや関数
+    */
+    namespace builtin{
+    
+        /**
+        * \brief ファイルシステムのクラスや関数
+        */
+        namespace filesystem{}
+        
+        /**
+        * \brief デバッグのクラスや関数
+        */
+        namespace debug{}
+        
+        /**
+        * \brief xpegのクラスや関数
+        */
+        namespace xpeg{}
+    }
 }
 
 
@@ -477,7 +477,7 @@ eまたはEを使い、10を底とする指数表記も出来ます。 eは大文字小文字問われません。\n
 
 \section parcent %記法 
 
-中にダブルコーテーションを含む文字列をシンプルに記述できるように、Rubyのような%記法も存在します。\n
+Rubyのような%記法も存在します。\n
 \code
 %!This is a "pen"! // "This is a \"pen\"" と等しい
 \endcode
@@ -490,12 +490,12 @@ eまたはEを使い、10を底とする指数表記も出来ます。 eは大文字小文字問われません。\n
 %[ai[u]eo] // "ai[u]eo" と等しい
 \endcode
 
-また、%記法では、%と始まりの記号文字の間の文字によって特別な意味が付与されます。\n
+また、%%記法では、%%と始まりの記号文字の間の文字によって特別な意味が付与されます。\n
 - f フォーマット文字列 
 - t get text文字列 
 
 \subsection フォーマット文字列 
-%の後に f を入れると、それはフォーマット文字列となります。\n
+%%の後に f を入れると、それはフォーマット文字列となります。\n
 
 \code
 format_object: %f!This %s a %s.!;
@@ -511,12 +511,12 @@ format_object(y: 10, x: 20).p; // x=20, y=10
 \endcode
 
 \subsection text get text文字列 
-%の後に t を入れると、それはget text文字列となります。\n
+%%の後に t を入れると、それはget text文字列となります。\n
 
 */
 
 
-/** \page array_map
+/** \page array_map 配列、連想配列
 
 \section secarray 配列生成式 
 配列を生成する式は次のように記述します。\n
@@ -772,9 +772,9 @@ yieldに値を渡すこともできます。
 \code
 fib: fiber(){
     a: yield; 
-	a.p;
-	b: yield;
-	b.p;
+    a.p;
+    b: yield;
+    b.p;
 }
 
 fib(); // 最初のyieldまで実行される
@@ -1001,16 +1001,30 @@ Foo::("set_" ~ name): method(v){
 classの継承は次のように書きます。\n
 \code
 class A{
+    // 初期化関数
+    initialize(x){
+        
+    }
+    
     foo{
 
     }
 }
 
 class B(A){
-    bar{
-
+    // 初期化関数
+    initialize(x){
+        // Aの初期化関数を呼び出す
+        A::initialize(x);
+    }
+    
+    // fooをオーバーライドする
+    foo{
+        // A::fooを呼び出す
+        A::foo();
     }
 }
+\endcode
 
 \section minherit 多重継承 
 Xtalではclassの多重継承をサポートします。カンマで区切って指定します。\n
@@ -1019,6 +1033,28 @@ class C(Foo, Bar){
 
 }
 \endcode
+
+\section poly ポリモーフィズムを期待したメソッド呼び出し
+クラスのメンバ関数の中で、ポリモーフィズムを期待したメソッド呼び出しをしたい場合。\n
+this.と前置した呼び出しをしなければなりません。\n
+\code
+class Foo { 
+    value{
+        return 1;
+    }
+    
+    show{ 
+        this.value().p; 
+    } 
+} 
+
+class Bar(Foo) { 
+    value{ 
+        return 1; 
+    } 
+} 
+\endcode
+これを単純にvalue().pとした場合、valueは静的に解決されるため、Foo::valueが呼ばれます。
 */
 
 /** \page singleton シングルトンクラス生成式
@@ -1071,7 +1107,7 @@ a, b = b, a;
 */
 
 /** \page op_assign 演算代入文
-\section inc インクリメント文 デクリメント文 
+\section inc インクリメント文
 \code
 i++;
 ++i;
@@ -1221,7 +1257,7 @@ aをbビット論理的右シフトした結果をaに代入します。\n
 <TR><TD>演算子</TD><TD>意味</TD></TR>
 <TR><TD>i++;</TD><TD>i = i.op_inc();</TD></TR>
 <TR><TD>i--;</TD><TD>i = i.op_dec();</TD></TR>
-<TR><TD>a[b] += c;</TD><TD>a = a.op_set_at(b, c);</TD></TR>
+<TR><TD>a[b] = c;</TD><TD>a = a.op_set_at(b, c);</TD></TR>
 <TR><TD>a += b;</TD><TD>a = a.op_add_assign(b);</TD></TR>
 <TR><TD>a -= b;</TD><TD>a = a.op_sub_assign(b);</TD></TR>
 <TR><TD>a ~= b;</TD><TD>a = a.op_cat_assign(b);</TD></TR>
@@ -1464,14 +1500,14 @@ for(i: 0; i<3; ++i){
 \endcode
 これは、a.op_pos()の省略形です。\n
 
-\section pos 単項-演算子
+\section neg 単項-演算子
 \code
 -a
 \endcode
 符号を反転します。\n
 これは、a.op_neg()の省略形です。\n
 
-\section pos 単項~演算子
+\section com 単項~演算子
 \code
 -a
 \endcode
@@ -1565,7 +1601,7 @@ aをbビット論理的右シフトします。\n
 
     
 /** \page cmp_operator 比較演算子
-\section pos 単項!演算子
+\section not 単項!演算子
 \code
 -a
 \endcode
@@ -1730,11 +1766,11 @@ class Foo{
 Foo::("ro" ~ "o").p; //=>100
 Foo::?("key").p; //=> undefined
 \endcode
-識別子の部分を動的に決定します。\n
+識別子の部分を文字列で指定し、取り出すメンバを動的に決定します。\n
 */
 
 /** \page secondary_key セカンダリキー
-メンバの定義、取得などに、任意のオブジェクトをセカンダリキーとして使うことができます。\n
+メンバの定義や取得などに、任意のオブジェクトをセカンダリキーとして使うことができます。\n
 \code
 class Foo{
     // 識別子hogeをプライマリキー
@@ -1842,42 +1878,44 @@ a <..< b  // 範囲(expr, expr)
 */
 
 /** \page operator_priority 演算子の優先順位
-- 優  結  演算子  意味 
-- 15  左  a.b  オブジェクトメンバアクセス 
-- 15  左  a[b]  配列要素アクセス 
-- 15  左  a()  関数呼び出し 
-- 15  左  a..b  範囲演算子 
-- 15  左  a[]  配列化演算子
-- 15  左  a[:]  連想配列化演算子
-- 14  右  +a   
-- 14  右  -a  符号反転 
-- 14  右  ~a  ビット単位の反転 
-- 14  右  !a  論理否定 
-- 13  左  a*b  乗算 
-- 13  左  a/b  除算 
-- 13  左  a%b  余り 
-- 12  左  a+b  加算 
-- 12  左  a-b  減算 
-- 11  左  a<<b  左シフト 
-- 11  左  a>>b  符号付右シフト 
-- 11  左  a>>>b  符号無右シフト 
-- 10  左  a==b  等しい 
-- 10  左  a!=b  等しくない 
-- 10  左  a===b  同一 
-- 10  左  a!==b  同一ではない 
-- 10  左  a is b  aはbクラスのインスタンスか 
-- 10  左  a !is b  aはbクラスのインスタンスではないか 
-- 10  左  a<b  より小さい 
-- 10  左  a>b  より大きい 
-- 10  左  a<=b  より小さいか等しい 
-- 10  左  a>=b  より大きいか等しい 
-- 09  左  a&b  ビット単位の論理積 
-- 08  左  a^b  ビット単位の排他的論理和 
-- 07  左  a|b  ビット単位の論理和 
-- 06  左  a&&b  論理積 
-- 05  左  a||b  論理和 
-- 00  右  once a  最初の一度しか評価しない 
-
+<TABLE>
+<TR><TD>優</TD><TD>結</TD><TD>演算子</TD><TD>意味</TD></TR> 
+<TR><TD>15</TD><TD>左</TD><TD>a.b</TD><TD>オブジェクトメンバアクセス</TD></TR>  
+<TR><TD>15</TD><TD>左</TD><TD>a[b]</TD><TD>配列要素アクセス</TD></TR>  
+<TR><TD>15</TD><TD>左</TD><TD>a()</TD><TD>関数呼び出し</TD></TR>  
+<TR><TD>15</TD><TD>左</TD><TD>a..b</TD><TD>範囲演算子</TD></TR>  
+<TR><TD>15</TD><TD>左</TD><TD>a[]</TD><TD>配列化演算子</TD></TR> 
+<TR><TD>15</TD><TD>左</TD><TD>a[:]</TD><TD>連想配列化演算子</TD></TR> 
+<TR><TD>14</TD><TD>右</TD><TD>+a</TD><TD></TD></TR>  
+<TR><TD>14</TD><TD>右</TD><TD>-a</TD><TD>符号反転</TD></TR>  
+<TR><TD>14</TD><TD>右</TD><TD>~a</TD><TD>ビット単位の反転</TD></TR>  
+<TR><TD>14</TD><TD>右</TD><TD>!a</TD><TD>論理否定</TD></TR>  
+<TR><TD>13</TD><TD>左</TD><TD>a*b</TD><TD>乗算</TD></TR>  
+<TR><TD>13</TD><TD>左</TD><TD>a/b</TD><TD>除算</TD></TR>  
+<TR><TD>13</TD><TD>左</TD><TD>a%b</TD><TD>余り</TD></TR>  
+<TR><TD>12</TD><TD>左</TD><TD>a+b</TD><TD>加算</TD></TR>  
+<TR><TD>12</TD><TD>左</TD><TD>a-b</TD><TD>減算</TD></TR>  
+<TR><TD>11</TD><TD>左</TD><TD>a<<b</TD><TD>左シフト</TD></TR>  
+<TR><TD>11</TD><TD>左</TD><TD>a>>b</TD><TD>符号付右シフト</TD></TR>  
+<TR><TD>11</TD><TD>左</TD><TD>a>>>b</TD><TD>符号無右シフト</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a==b</TD><TD>等しい</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a!=b</TD><TD>等しくない</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a===b</TD><TD>同一</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a!==b</TD><TD>同一ではない</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a is b</TD><TD>aはbクラスのインスタンスか</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a !is b</TD><TD>aはbクラスのインスタンスではないか</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a<b</TD><TD>より小さい</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a>b</TD><TD>より大きい</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a<=b</TD><TD>より小さいか等しい</TD></TR>  
+<TR><TD>10</TD><TD>左</TD><TD>a>=b</TD><TD>より大きいか等しい</TD></TR>  
+<TR><TD>09</TD><TD>左</TD><TD>a&b</TD><TD>ビット単位の論理積</TD></TR>  
+<TR><TD>08</TD><TD>左</TD><TD>a^b</TD><TD>ビット単位の排他的論理和</TD></TR>  
+<TR><TD>07</TD><TD>左</TD><TD>a|b</TD><TD>ビット単位の論理和</TD></TR>  
+<TR><TD>06</TD><TD>左</TD><TD>a&&b</TD><TD>論理積</TD></TR>  
+<TR><TD>05</TD><TD>左</TD><TD>a||b</TD><TD>論理和</TD></TR>  
+<TR><TD>00</TD><TD>右</TD><TD>once a</TD><TD>最初の一度しか評価しない</TD></TR>  
+</TABLE>
+    
 Xtalは優先順位と空白がマッチしていない場合、コンパイルエラーとします。\n
 \code
 10 + 5*6 // ok

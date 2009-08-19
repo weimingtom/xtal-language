@@ -75,7 +75,7 @@ println("Hello, World");
 これをC++から呼び出すにはload関数を使います。\n
 \code
 // C++
-load("HelloWirld.xtal");
+load("HelloWorld.xtal");
 
 // コンパイルエラーや実行時エラーがあったら捕捉する。
 XTAL_CATCH_EXCEPT(e){

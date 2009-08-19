@@ -1509,7 +1509,7 @@ for(i: 0; i<3; ++i){
 
 \section com 単項~演算子
 \code
--a
+~a
 \endcode
 ビットを反転します。\n
 これは、a.op_com()の省略形です。\n
@@ -1603,7 +1603,7 @@ aをbビット論理的右シフトします。\n
 /** \page cmp_operator 比較演算子
 \section not 単項!演算子
 \code
--a
+!a
 \endcode
 真値をfalseに、偽値をtrueに変換します。\n
 

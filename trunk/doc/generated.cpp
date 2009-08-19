@@ -13,7 +13,7 @@ public:
 
 	/**
 	* \xbind
-	* \brief オブジェクトの名前を返す
+	* \brief オブジェクトの名前を返す。
 	*/
 	String object_name();
 
@@ -27,12 +27,109 @@ public:
 	/**
 	* \xbind
 	* \brief 自身を文字列化してprintlnする。
+	* 文字列化にはto_sメソッドが呼ばれる。
 	* \return 自身を返す。
 	*/
 	Any p();
 
 };
 }}
+
+/**
+	* \xbind
+	* \brief 配列をsz分長くする
+	*/
+	void upsize(uint sz);
+
+
+
+/**
+	* \xbind
+	* \brief 先頭に要素を追加する
+	*/
+	void push_front( Any v);
+
+
+
+/**
+	* \xbind
+	* \brief 先頭の要素を削除する
+	*/
+	void pop_front();
+
+
+
+/**
+	* \xbind
+	* \brief 末尾に要素を追加する
+	*/
+	void push_back( Any v);
+
+
+
+/**
+	* \xbind
+	* \brief 末尾の要素を削除する
+	*/
+	void pop_back();
+
+
+
+/**
+	* \xbind
+	* \brief 先頭の要素を返す
+	*/
+	 Any front();
+
+
+
+/**
+	* \xbind
+	* \brief 末尾の要素を返す
+	*/
+	 Any back();
+
+
+
+/**
+	* \xbind
+	* \brief i番目のn個の要素を削除する
+	*/
+	void erase(int i, int n = 1);
+
+
+
+/**
+	* \xbind
+	* \brief i番目に要素を追加する
+	*/
+	void insert(int i,  Any v);
+
+
+
+/**
+	* \xbind
+	* \brief 空か調べる
+	*/
+	bool empty();
+
+
+
+/**
+	* \xbind
+	* \brief 空か調べる
+	*/
+	bool is_empty();
+
+
+
+/**
+	* \xbind
+	* \brief 要素を全て削除する
+	*/
+	void clear();
+
+
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
@@ -173,6 +270,12 @@ public:
 	* \brief 自身を返す
 	*/
 	Array op_to_array();
+
+	/**
+	* \xbind
+	* \brief 値が等しいか調べる
+	*/
+	bool op_eq( Array other);
 
 	/**
 	* \xbind
@@ -354,6 +457,14 @@ public:
 
 };
 }}
+
+/**
+	* \xbind
+	* \brief 値が等しいか調べる
+	*/
+	bool op_eq( Values other);
+
+
 namespace lib{namespace builtin{
 /**
 * \xbind lib::builtin
@@ -383,6 +494,38 @@ public:
 
 };
 }}
+
+/**
+	* \xbind
+	* \brief 呼び出し場所の行数を返す
+	*/
+	int line();
+
+
+
+/**
+	* \xbind
+	* \brief 呼び出し場所のファイル名を返す
+	*/
+	 String file_name();
+
+
+
+/**
+	* \xbind
+	* \brief 呼び出し場所の関数名を返す
+	*/
+	 String fun_name();
+
+
+
+/**
+	* \xbind
+	* \brief 呼び出し場所の変数フレームオブジェクトを返す
+	*/
+	 Frame variables_frame();
+
+
 namespace lib{namespace builtin{namespace debug{
 /**
 * \xbind lib::builtin::debug
@@ -411,7 +554,7 @@ public:
 
 	/**
 	* \xbind
-	* \brief フックされた場所のファイル名を返す
+	* \brief フックされた場所の関数名を返す
 	*/
 	 String fun_name();
 
@@ -487,10 +630,10 @@ namespace lib{namespace builtin{namespace debug{
 namespace lib{namespace builtin{namespace debug{
 /**
 * \xbind lib::builtin::debug
-* \brief ブレークポイントがある度に呼び出されるフック関数を登録する
+* \brief 行が変わるたびに呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
-	void set_break_point_hook( Any hook);
+	void set_line_hook( Any hook);
 
 }}}
 namespace lib{namespace builtin{namespace debug{
@@ -532,9 +675,9 @@ namespace lib{namespace builtin{namespace debug{
 namespace lib{namespace builtin{namespace debug{
 /**
 * \xbind lib::builtin::debug
-* \brief set_break_point_hook関数で登録した関数を取得する
+* \brief set_line_hook関数で登録した関数を取得する
 */
-	 Any break_point_hook();
+	 Any line_hook();
 
 }}}
 namespace lib{namespace builtin{namespace debug{
@@ -852,7 +995,7 @@ public:
 	* \xbind
 	* \brief 要素を文字列化し、さらにそれらをsepで連結した文字列を返す
 	* \code
-	* [1, 2, 3].map(|x| x*2).join("::").p;
+	* [1, 2, 3].join("::").p;
 	* //=> 1::2::3
 	* \endcode
 	*/
@@ -863,7 +1006,7 @@ public:
 	* \brief (index, value)を返すイテレータを返す
 	* ループごとにindexはインクリメントされる。
 	* \code
-	* [45, 12, 33].map(|x| x*2).with_index{ |index, value|
+	* [45, 12, 33].with_index{ |index, value|
 	*     %f(%d-%d)(index, value).p;
 	* }
 	* //=> 0-45
@@ -888,8 +1031,8 @@ public:
     *	it.p;
 	* }
 	* //=> 20
-	* //=> 30
 	* //=> 40
+	* //=> 60
 	* \endcode
 	*/
 	Any map( Any conv);
@@ -918,7 +1061,7 @@ public:
 	* \xbind
 	* \brief pred関数がtrueを返すまでイテレートするイテレータを返す
 	* \code
-	* [7, 5, 3, 2, 1, 3].break_if(|x| x%2==1){
+	* [7, 5, 3, 2, 1, 3].break_if(|x| x%2!=1){
 	*     it.p;
 	* }
 	* //=> 7

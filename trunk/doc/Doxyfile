@@ -20,18 +20,18 @@
 # iconv built into libc) for the transcoding. See 
 # http://www.gnu.org/software/libiconv for the list of possible encodings.
 
-DOXYFILE_ENCODING      = UTF-8
+DOXYFILE_ENCODING      = CP932
 
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = "Programing Xtal"
+PROJECT_NAME           = Xtal
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = 0.9.9.9
+PROJECT_NUMBER         = 1.0.0.0
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -900,7 +900,7 @@ GENERATE_CHI           = NO
 # is used to encode HtmlHelp index (hhk), content (hhc) and project file 
 # content.
 
-CHM_INDEX_ENCODING     = UTF-8
+CHM_INDEX_ENCODING     = CP932
 
 # If the GENERATE_HTMLHELP tag is set to YES, the BINARY_TOC flag 
 # controls whether a binary table of contents is generated (YES) or a 

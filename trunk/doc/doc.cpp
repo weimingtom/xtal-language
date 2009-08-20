@@ -1635,14 +1635,14 @@ a > b
 aよりbが大きい値か調べます。\n
 これは、b.op_lt(a)の省略形です。\n
 
-\section gt <=演算子
+\section ge <=演算子
 \code
 a <= b
 \endcode
 aがb以下か調べます。\n
 これは、!b.op_lt(a)の省略形です。\n
     
-\section gt >=演算子
+\section le >=演算子
 \code
 a >= b
 \endcode

@@ -45,6 +45,46 @@ XTAL_BIND(MyData){
 	it->def_var(Xid(a), &MyData::a);
 }
 
+
+class Vector2D{
+public:
+    float x, y;
+    
+    Vector2D(float x = 0, float y = 0)
+        :x(x), y(y){}
+    
+    float length() const{
+        return sqrt(x*x + y*y);
+    }
+    
+    void normalize(){
+        float len = length();
+        x /= len;
+        y /= len;
+    }
+};
+
+// XTAL_PREBIND‚Ì’†‚ÅŒp³ŠÖŒW‚Ì“o˜^AƒRƒ“ƒXƒgƒ‰ƒNƒ^‚Ì“o˜^‚ðs‚¤
+XTAL_PREBIND(Vector2D){
+    // it‚ÍClassPtr‚Å‚ ‚éB
+    // it->‚ÅClassƒNƒ‰ƒX‚Ìƒƒ“ƒoŠÖ”‚ªŒÄ‚×‚é
+    
+    // ƒRƒ“ƒXƒgƒ‰ƒNƒ^‚Ì“o˜^
+    it->def_ctor2<Vector2D, float, float>()->param(1, Xid(x), 0)->param(2, Xid(y), 0);
+}
+
+// XTAL_BIND‚Ì’†‚Åƒƒ“ƒoŠÖ”‚Ì“o˜^‚ðs‚¤
+XTAL_BIND(Vector2D){
+    // it‚ÍClassPtr‚Å‚ ‚éB
+    // it->‚ÅClassƒNƒ‰ƒX‚Ìƒƒ“ƒoŠÖ”‚ªŒÄ‚×‚é
+
+    it->def_var(Xid(x), &Vector2D::x); // ƒƒ“ƒo•Ï”x‚ÌƒZƒbƒ^AƒQƒbƒ^‚ð“o˜^
+    it->def_var(Xid(y), &Vector2D::y); // ƒƒ“ƒo•Ï”y‚ÌƒZƒbƒ^AƒQƒbƒ^‚ð“o˜^
+    it->def_method(Xid(length), &Vector2D::length); // ƒƒ“ƒoŠÖ”length‚ð“o˜^
+    it->def_method(Xid(normalize), &Vector2D::normalize); // ƒƒ“ƒoŠÖ”length‚ð“o˜^
+}
+
+
 using namespace xtal;
 
 void foofun(){}
@@ -182,15 +222,17 @@ int main2(int argc, char** argv){
 
 	//test();
 
-	test2();
+	//test2();
+    lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
 
 	//AnyPtr a = cast<bool>(false);
 
 //*
 	if(CodePtr code = Xsrc((
-		stdin.split("\n"){ |x|
-			x.p;
-		}
+		vec: lib::Vector2D(10, 20);
+		vec.length.p;
+		vec.normalize;
+		vec.length.p;
 	))){
 		code->filelocal()->def("ppp", fun(&print));
 		//code->inspect()->p();

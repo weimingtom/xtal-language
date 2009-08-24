@@ -17,7 +17,9 @@ public:
     float x, y;
     TestGetterSetterBind(): x(0), y(0) {}
 
-	void foomethod(bool){}
+	void foomethod(const char* str){
+	
+	}
 };
 
 XTAL_PREBIND(TestGetterSetterBind){
@@ -29,6 +31,7 @@ XTAL_BIND(TestGetterSetterBind){
    it->def_setter(Xid(set_x), &TestGetterSetterBind::x);
 
    it->def_var(Xid(y), &TestGetterSetterBind::y);
+   it->def_method(Xid(foomethod), &TestGetterSetterBind::foomethod);
 }
 
 struct MyData{
@@ -93,9 +96,6 @@ void test(){
     lib()->def(Xid(TestGetterSetterBind), cpp_class<TestGetterSetterBind>());
 	lib()->def(Xid(MyData), SmartPtr<MyData>(new MyData, MyDeleter()));
 
-	AnyPtr m = method(&TestGetterSetterBind::foomethod);
-	AnyPtr f = fun(&foofun);
-
 	if(CodePtr code = Xsrc((
 		foo: lib::TestGetterSetterBind();
 		foo.x = 0.5;
@@ -103,6 +103,8 @@ void test(){
 
 		foo.y = 100.5;
 		foo.y.p;
+
+		foo.foomethod("test");
 
 		mydata: lib::MyData;
 		mydata.a = 10;
@@ -220,7 +222,7 @@ int main2(int argc, char** argv){
 	//debug::enable();
 	//debug::set_line_hook(fun(&linehook));
 
-	//test();
+	test();
 
 	//test2();
     lib()->def(Xid(Vector2D), cpp_class<Vector2D>());

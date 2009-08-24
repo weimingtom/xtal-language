@@ -191,16 +191,25 @@ private:
 
 namespace xtal{
 
+/**
+* \brief 整数値のアライメント調整
+*/
 template<class T>
 inline T align(T v, int N){
 	return (v+(N-1)) & ~(N-1);
 }
 
+/**
+* \brief ポインタ値のアライメント調整
+*/
 template<class T>
 inline T* align_p(T* v, int N){
 	return (T*)align((unsigned long)v, N);
 }
 
+/**
+* \brief 整数値の2の累乗のアライメント調整
+*/
 template<class T>
 inline T align_2(T v){
 	v-=1;
@@ -213,6 +222,9 @@ inline T align_2(T v){
 	return v+1;
 }
 
+/**
+* \brief 静的にビットの数を数えるメタ関数
+*/
 template<int N>
 class static_count_bits{
 	enum{
@@ -227,6 +239,9 @@ public:
 	};
 };
 
+/**
+* \brief 静的にntzを計算するメタ関数
+*/
 template<int N>
 struct static_ntz{
 	enum{

@@ -288,6 +288,7 @@ struct CastHelper<const char_t*>{
 	static const char_t* unchecked_cast(const AnyPtr& a);
 	static const Any* get_null(){ return 0; }
 };
+template<> struct CppClassSymbol<const char_t*> : public CppClassSymbol<String>{};
 
 template<>
 struct CastHelper<const IDPtr*>{

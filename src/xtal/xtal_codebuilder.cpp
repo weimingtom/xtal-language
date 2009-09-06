@@ -58,6 +58,30 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 			if(e->itag()==EXPR_RETURN){
 				break;
 			}
+			else if(e->itag()==EXPR_DEFINE){
+				if(e->bin_lhs()->itag()==EXPR_LVAR){
+					eb_.push(Xid(filelocal));
+					eb_.splice(EXPR_LVAR, 1);
+					eb_.push(e->bin_lhs()->lvar_name());
+					eb_.push(null);
+					eb_.splice(EXPR_MEMBER, 3);
+					e->set_bin_lhs(ep(eb_.pop()));
+				}
+			}
+			else if(e->itag()==EXPR_MDEFINE){
+				ExprPtr lhs = e->mdefine_lhs_exprs();
+				for(int i=0; i<lhs->size(); ++i){
+					ExprPtr e2 = ep(lhs->at(i));
+					if(e2->itag()==EXPR_LVAR){
+						eb_.push(Xid(filelocal));
+						eb_.splice(EXPR_LVAR, 1);
+						eb_.push(e2->lvar_name());
+						eb_.push(null);
+						eb_.splice(EXPR_MEMBER, 3);
+						lhs->set_at(i, ep(eb_.pop()));
+					}
+				}
+			}
 
 			fun_frames_.push();	
 			ff().labels.clear();
@@ -85,7 +109,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 				if(code_size()==0)
 					continue;
 
-				result_->inspect_range(last_code_size, code_size())->p();
+				//result_->inspect_range(last_code_size, code_size())->p();
 
 				put_inst(InstReturn(0));
 				put_inst(InstThrow());
@@ -401,6 +425,10 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
 						VarFrame::Entry& entry = vf.entries[k];
 						ret.pos++;
+					}
+
+					if(!define && ret.depth==0 && vf.kind==VarFrame::CLASS){
+						ret.out_of_fun = true;
 					}
 
 					ret.vpos--;
@@ -955,7 +983,6 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result,
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		result_->identifier_table_->push_back(vf().entries[i].name);
 	}
-
 
 	put_inst(InstClassBegin(class_info_num, mixin_base));
 	result_->class_info_table_.push_back(info);

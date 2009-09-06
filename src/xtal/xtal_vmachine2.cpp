@@ -59,8 +59,8 @@ VMachine::FunFrame::FunFrame(){
 }
 
 void VMachine::FunFrame::set_null(){
-	xtal::set_null(fun_); 
-	xtal::set_null(self_);
+	set_fun();
+	set_self();
 }
 
 void VMachine::setup_call(int_t need_result_count){

@@ -24,7 +24,7 @@ struct ScopeCounter{
 
 struct ConnectedPointer{
 	uint_t pos;
-	RefCountingBase*** bp;
+	RefCountingBase**** bp;
 
 	typedef std::random_access_iterator_tag iterator_category;
 	typedef RefCountingBase* value_type;
@@ -36,16 +36,16 @@ struct ConnectedPointer{
 	ConnectedPointer()
 		:pos(0), bp(0){}
 
-	ConnectedPointer(int_t p, RefCountingBase*** pp)
-		:pos(p), bp(pp){}
+	ConnectedPointer(int_t p, RefCountingBase***& pp)
+		:pos(p), bp(&pp){}
 
 	reference operator *(){
-		return bp[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
+		return (*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
 	}
 
 	reference operator [](int_t index){
 		int_t pos2 = pos+index;
-		return bp[pos2>>OBJECTS_ALLOCATE_SHIFT][pos2&OBJECTS_ALLOCATE_MASK];
+		return (*bp)[pos2>>OBJECTS_ALLOCATE_SHIFT][pos2&OBJECTS_ALLOCATE_MASK];
 	}
 
 	ConnectedPointer& operator ++(){
@@ -54,7 +54,7 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator ++(int){
-		ConnectedPointer temp(pos, bp);
+		ConnectedPointer temp(pos, *bp);
 		++pos;
 		return temp; 
 	}
@@ -65,7 +65,7 @@ struct ConnectedPointer{
 	}
 
 	ConnectedPointer operator --(int){
-		ConnectedPointer temp(pos, bp);
+		ConnectedPointer temp(pos, *bp);
 		--pos;
 		return temp; 
 	}
@@ -99,19 +99,19 @@ struct ConnectedPointer{
 	}
 
 	friend ConnectedPointer operator-(const ConnectedPointer& a, int_t b){
-		return ConnectedPointer(a.pos - b, a.bp);
+		return ConnectedPointer(a.pos - b, *a.bp);
 	}
 
 	friend ConnectedPointer operator-(int_t a, const ConnectedPointer& b){
-		return ConnectedPointer(a - b.pos, b.bp);
+		return ConnectedPointer(a - b.pos, *b.bp);
 	}
 
 	friend ConnectedPointer operator+(const ConnectedPointer& a, int_t b){
-		return ConnectedPointer(a.pos + b, a.bp);
+		return ConnectedPointer(a.pos + b, *a.bp);
 	}
 
 	friend ConnectedPointer operator+(int_t a, const ConnectedPointer& b){
-		return ConnectedPointer(a + b.pos, b.bp);
+		return ConnectedPointer(a + b.pos, *b.bp);
 	}
 };
 

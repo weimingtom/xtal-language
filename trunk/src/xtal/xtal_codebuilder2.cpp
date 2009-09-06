@@ -79,6 +79,11 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 }
 
 int_t CodeBuilder::compile_e(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
+	if(!e){
+		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+		return 0;
+	}
+
 	typedef int_t (CodeBuilder::*expr_compile_fun_t)(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 	static expr_compile_fun_t expr_compile_fun_[EXPR_MAX] ={
 //{STMT_TABLE{{
@@ -1370,8 +1375,113 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t
 		}
 	}
 
+	// スタックトップを保存
 	int_t rhs_stack_base = stack_top;
-	
+
+	// 右辺をすべて評価する
+	for(uint_t i=0; i<lhs->size(); ++i){
+		// 右辺最後の要素
+		if(i==rhs->size()-1){
+			int_t rrc = lhs->size() - i;
+			compile_expr(rhs->at(i), stack_top+1, stack_top, rrc);
+			stack_top += rrc;
+			break;
+		}
+		// 左辺最後の要素
+		else if(i==lhs->size()-1){
+			int_t stack_base2 = stack_top;
+			for(; i<rhs->size(); ++i){
+				compile_expr(rhs->at(i), stack_top+1, stack_top);
+				stack_top++;
+			}
+
+			if(rhs->size()!=lhs->size()){
+				put_inst(InstAdjustValues(stack_base2, rhs->size()-(lhs->size()-1), 1));
+			}
+			break;
+		}
+		else{
+			compile_expr(rhs->at(i), stack_top+1, stack_top);
+			stack_top++;
+		}
+	}
+
+
+	// 左辺に代入する
+	for(uint_t i=0; i<lhs->size(); ++i){
+		ExprPtr term = ep(lhs->at(i));
+
+		if(term->itag()==EXPR_LVAR){
+			int_t target = rhs_stack_base++;
+			compile_lassign(target, term->ivar_name());
+		}
+		else if(term->itag()==EXPR_IVAR){
+			int_t target = rhs_stack_base++;
+			put_set_instance_variable_code(target, term->ivar_name());
+		}
+		else if(term->itag()==EXPR_PROPERTY){
+			int_t nterm = lhs_stack_base++;
+			int_t sec = lhs_stack_base++;
+			int_t target = rhs_stack_base++;
+			compile_set_property(nterm, term->property_name(), sec, target, 0, stack_top, target);
+		}
+		else if(term->itag()==EXPR_PROPERTY_Q){
+			int_t nterm = lhs_stack_base++;
+			int_t sec = lhs_stack_base++;
+			int_t target = rhs_stack_base++;
+			compile_set_property(nterm, term->property_name(), sec, target, MEMBER_FLAG_Q_BIT, stack_top, target);
+		}
+		else if(term->itag()==EXPR_AT){
+			int_t var = lhs_stack_base++;
+			int_t key = lhs_stack_base++;
+			int_t target = rhs_stack_base++;
+			put_inst(InstSetAt(var, key, target, stack_top));
+		}
+		else{
+			error_->error(lineno(), Xt("Xtal Compile Error 1012"));
+		}
+	}
+
+	return 0;
+}
+
+int_t CodeBuilder::compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
+	ExprPtr lhs = e->massign_lhs_exprs();
+	ExprPtr rhs = e->massign_rhs_exprs();
+
+	int_t lhs_stack_base = stack_top;
+
+	// 左辺をすべて評価する
+	for(uint_t i=0; i<lhs->size(); ++i){
+		ExprPtr term = ep(lhs->at(i));
+
+		if(term->itag()==EXPR_LVAR){
+
+		}
+		else if(term->itag()==EXPR_MEMBER){
+			int_t nterm = stack_top++; compile_expr(term->member_term(), stack_top, nterm);
+
+			if(const IDPtr& id = ptr_cast<ID>(term->member_name())){
+			
+			}
+			else{
+				int_t primary = stack_top++; compile_expr(term->member_name(), stack_top, primary);
+				compile_property(primary, Xid(to_s), null, 0, stack_top, primary, 1);
+				compile_property(primary, Xid(intern), null, 0, stack_top, primary, 1);
+			}
+
+			if(term->member_ns()){
+				int_t sec = stack_top++; compile_expr(term->member_ns(), stack_top, sec);
+			}
+			else{
+				int_t sec = stack_top++; put_inst(InstLoadValue(sec, LOAD_UNDEFINED));
+			}
+		}
+	}
+
+	// スタックトップを保存
+	int_t rhs_stack_base = stack_top;
+
 	// 右辺をすべて評価する
 	for(uint_t i=0; i<lhs->size(); ++i){
 		// 右辺最後の要素
@@ -1406,74 +1516,38 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t
 
 		if(term->itag()==EXPR_LVAR){
 			int_t target = rhs_stack_base++;
-			compile_lassign(target, term->ivar_name());
-		}
-		else if(term->itag()==EXPR_IVAR){
-			int_t target = rhs_stack_base++;
-			put_set_instance_variable_code(target, term->ivar_name());
-		}
-		else if(term->itag()==EXPR_PROPERTY){
-			int_t nterm = lhs_stack_base++;
-			int_t sec = lhs_stack_base++;
-			int_t target = rhs_stack_base++;
-			compile_set_property(nterm, term->property_name(), sec, target, 0, stack_top, target);
-		}
-		else if(term->itag()==EXPR_PROPERTY_Q){
-			int_t nterm = lhs_stack_base++;
-			int_t sec = lhs_stack_base++;
-			int_t target = rhs_stack_base++;
-			compile_set_property(nterm, term->property_name(), sec, target, MEMBER_FLAG_Q_BIT, stack_top, target);
-		}
-		else if(term->itag()==EXPR_AT){
-			int_t var = lhs_stack_base++;
-			int_t key = lhs_stack_base++;
-			int_t target = rhs_stack_base++;
-			put_inst(InstSetAt(var, key, target, stack_top));
-		}
-	}
+			LVarInfo var = var_find(term->lvar_name(), true);
 
-	return 0;
-}
-
-int_t CodeBuilder::compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	ExprPtr lhs = e->massign_lhs_exprs();
-	ExprPtr rhs = e->massign_rhs_exprs();
-	int_t stack_base = stack_top;
-
-	for(uint_t i=0; i<lhs->size(); ++i){
-		// 右辺最後の要素
-		if(i==rhs->size()-1){
-			int_t rrc = lhs->size() - i;
-			compile_expr(rhs->at(i), stack_top+1, stack_top, rrc);
-			stack_top += rrc;
-			break;
-		}
-		// 左辺最後の要素
-		else if(i==lhs->size()-1){
-			int_t stack_base2 = stack_top;
-			for(; i<rhs->size(); ++i){
-				compile_expr(rhs->at(i), stack_top+1, stack_top);
-				stack_top++;
+			if(var.pos>=0){
+				put_inst(InstCopy(var.vpos, target));
 			}
-			if(rhs->size()!=lhs->size()){
-				put_inst(InstAdjustValues(stack_base2, rhs->size()-(lhs->size()-1), 1));
+			else{
+				XTAL_ASSERT(false);
 			}
-			break;
+		}
+		else if(term->itag()==EXPR_MEMBER){
+			int_t flags = 0;
+			int_t nterm = lhs_stack_base++;
+
+			int_t primary;
+			if(const IDPtr& id = ptr_cast<ID>(term->member_name())){
+				primary = register_identifier(id);
+			}
+			else{
+				primary = lhs_stack_base++;
+				flags |= MEMBER_FLAG_P_BIT;		
+			}
+
+			int_t sec = lhs_stack_base++;
+			if(term->member_ns()){
+				flags |= MEMBER_FLAG_S_BIT;		
+			}
+			
+			int_t target = rhs_stack_base++;
+			put_inst(InstDefineMember(nterm, primary, sec, flags, target));
 		}
 		else{
-			compile_expr(rhs->at(i), stack_top+1, stack_top);
-			stack_top++;
-		}
-	}
-
-	for(uint_t i=0; i<lhs->size(); ++i){
-		LVarInfo var = var_find(ep(lhs->at(i))->lvar_name(), true);
-
-		if(var.pos>=0){
-			compile_expr(stack_base+i, stack_top+1, var.vpos);
-		}
-		else{
-			XTAL_ASSERT(false);
+			error_->error(lineno(), Xt("Xtal Compile Error 1012"));
 		}
 	}
 

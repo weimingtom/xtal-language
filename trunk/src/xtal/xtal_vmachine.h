@@ -480,7 +480,7 @@ public:
 		const IDPtr* identifier_;
 
 		// 関数の外側のフレームオブジェクト
-		//Any outer_;
+		Any outer_;
 
 		// 関数が呼ばれたときのthisオブジェクト
 		Any self_;
@@ -490,8 +490,8 @@ public:
 		void set_null();
 
 		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
-		//const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
-		const FramePtr& outer() const{ return fun()->outer(); }
+		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
+		//const FramePtr& outer() const{ return fun()->outer(); }
 		//const IDPtr& identifier(int_t n){ return fun()->code()->identifier(n); }
 		const IDPtr& identifier(int_t n){ return identifier_[n]; }
 		const AnyPtr& self() const{ return ap(self_); }
@@ -501,12 +501,13 @@ public:
 		}
 
 		//void set_fun(const MethodPtr& v){ fun_ = v; }
-		void set_fun(){ fun_ = null; }
-		void set_fun(const MethodPtr& v){ fun_ = v; identifier_ = &fun()->code()->identifier(0); }
-		//void set_fun(const MethodPtr& v){ fun_ = v; outer_ = v->outer(); }
+		void set_fun(){ fun_ = null; outer_ = null; }
+		//void set_fun(const MethodPtr& v){ fun_ = v; identifier_ = &fun()->code()->identifier(0); }
+		void set_fun(const MethodPtr& v){ fun_ = v; outer_ = v->outer();  identifier_ = &fun()->code()->identifier(0); }
 		//void set_fun(){ fun_ = null; outer_ = null; }
-		//void set_outer(const Any& v){ outer_ = v; }
+		void set_outer(const Any& v){ outer_ = v; }
 		void set_self(const Any& v){ self_ = v; }
+		void set_self(){ self_ = null; }
 	};
 
 	friend void visit_members(Visitor& m, FunFrame& v);
@@ -660,7 +661,7 @@ private:
 public:
 
 //{DECLS{{
-	const inst_t* FunNop(const inst_t* pc);
+	const inst_t* FunLine(const inst_t* pc);
 	const inst_t* FunLoadValue(const inst_t* pc);
 	const inst_t* FunLoadConstant(const inst_t* pc);
 	const inst_t* FunLoadInt1Byte(const inst_t* pc);
@@ -719,7 +720,6 @@ public:
 	const inst_t* FunPopGoto(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
-	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 

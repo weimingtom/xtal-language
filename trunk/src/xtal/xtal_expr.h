@@ -274,6 +274,8 @@ public:
 
 	void splice(int_t tag, int_t num);
 
+	void splice(int_t tag, int_t num, int_t lineno);
+
 	struct State{
 		int_t lineno;
 		int_t pos;
@@ -285,30 +287,33 @@ public:
 	}
 
 	void end(int_t tag, const State& state){
-		splice(tag, root_->size()-state.pos);
+		splice(tag, root_->size()-state.pos, state.lineno);
 	}
 
 	const AnyPtr& back(){
 		return root_->back();
 	}
 
-	void push(const AnyPtr& v){
-		root_->push_back(v);
-	}
+	void push(const AnyPtr& v);
 
 	void insert(int_t n, const AnyPtr& v){
+		linenos_.insert(root_->size()-n, lineno_);
 		root_->insert(root_->size()-n, v);
 	}
 
 	AnyPtr pop(){
 		AnyPtr ret = root_->back();
 		root_->pop_back();
+		linenos_.pop_back();
 		return ret;
 	}
 
 private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(ExprBuilder);
+private:
 	ExprPtr root_;
 	ArrayPtr errors_;
+	PODArrayList<int> linenos_;
 	int_t lineno_;
 };
 

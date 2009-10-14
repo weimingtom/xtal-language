@@ -989,14 +989,31 @@ ExprPtr Parser::parse_stmt(const StreamPtr& stream, CompileErrors* error){
 	return ep(eb_.pop());
 }
 
+ExprPtr Parser::parse_expr(const StreamPtr& stream, CompileErrors* error){
+	error_ = error;
+	lexer_.init(stream, error_);
+
+	if(!parse_expr()){
+		return null;
+	}
+
+	if(error_->errors->size()!=0){
+		return null;
+	}
+
+	return ep(eb_.pop());
+}
+
 const Token& Parser::lexer_read(){
+	const Token& ret = lexer_.read();
 	eb_.set_lineno(lexer_.lineno());
-	return lexer_.read();
+	return ret;
 }
 
 const Token& Parser::lexer_peek(){
+	const Token& ret = lexer_.peek();
 	eb_.set_lineno(lexer_.lineno());
-	return lexer_.peek();
+	return ret;
 }
 
 void Parser::expect(int_t ch){
@@ -1694,7 +1711,9 @@ bool Parser::parse_stmt(){
 				XTAL_CASE(Token::KEYWORD_TRY){ parse_try(); return true; }
 				XTAL_CASE(Token::KEYWORD_THROW){ expect_parse_expr(); eb_.splice(EXPR_THROW, 1); eat(';'); return true; }	
 				XTAL_CASE(Token::KEYWORD_ASSERT){ parse_assert(); eat(';'); return true; }
-				XTAL_CASE(Token::KEYWORD_RETURN){ parse_exprs(); eb_.splice(EXPR_RETURN, 1); eat(';'); return true; }
+				XTAL_CASE(Token::KEYWORD_RETURN){ 
+					parse_exprs(); eb_.splice(EXPR_RETURN, 1); eat(';'); return true; 
+				}
 				
 				XTAL_CASE(Token::KEYWORD_CONTINUE){ 
 					if(!parse_identifier())
@@ -1822,14 +1841,16 @@ bool Parser::parse_var(){
 }
 	
 void Parser::parse_toplevel(){
+	ExprBuilder::State state = eb_.begin();
 	parse_stmts();
-	eb_.splice(EXPR_TOPLEVEL, 1);
+	eb_.end(EXPR_TOPLEVEL, state);
 	expect(-1);
 }
 
 void Parser::parse_scope(){
+	ExprBuilder::State state = eb_.begin();
 	parse_stmts();
-	eb_.splice(EXPR_SCOPE, 1);
+	eb_.end(EXPR_SCOPE, state);
 	expect('}');
 	expr_end_flag_ = true;
 }

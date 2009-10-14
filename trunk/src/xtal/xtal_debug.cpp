@@ -5,7 +5,7 @@ namespace xtal{ namespace debug{
 
 void CallerInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
-	m & file_name_ & fun_name_ & variables_frame_;
+	m & fun_ & variables_frame_;
 }
 
 void HookInfo::visit_members(Visitor& m){
@@ -14,20 +14,38 @@ void HookInfo::visit_members(Visitor& m){
 }
 
 CallerInfoPtr HookInfo::caller(uint_t n){
-	return ptr_cast<VMachine>(ap(vm_))->caller(funframe_-n);
+	return ptr_cast<VMachine>(ap(vm_))->caller(n);
 }
+
+int_t HookInfo::call_stack_size(){
+	return ptr_cast<VMachine>(ap(vm_))->call_stack_size();
+}
+
+
+enum{
+	BSTATE_NONE,
+	BSTATE_GO,
+	BSTATE_STEP,
+	BSTATE_STEP_IN,
+	BSTATE_STEP_OUT
+};
 
 class DebugData{
 public:
 	DebugData(){
 		enable_count_ = 0;
 		hook_setting_bit_ = 0;
+		breakpoint_state_ = BSTATE_GO;
 	}
 
 	int_t enable_count_;
 	uint_t hook_setting_bit_;
 
 	AnyPtr hooks_[BREAKPOINT_MAX];
+
+	AnyPtr breakpoint_hook_;
+	int_t breakpoint_state_;
+	int_t breakpoint_call_stack_size_;
 };
 
 namespace{
@@ -145,6 +163,74 @@ const AnyPtr& throw_hook(){
 
 const AnyPtr& assert_hook(){
 	return hook(BREAKPOINT_ASSERT);
+}
+
+void breakpoint_hook_helper(const HookInfoPtr& ainfo){
+	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
+	HookInfoPtr info = ainfo;
+
+	while(true){
+		switch(d->breakpoint_state_){
+			XTAL_NODEFAULT;
+
+			XTAL_CASE(BSTATE_NONE){
+				int_t ret = d->breakpoint_hook_->call(info)->to_i();
+				switch(ret){
+					XTAL_CASE(GO){
+						d->breakpoint_state_ = BSTATE_NONE;
+					}
+
+					XTAL_CASE(STEP){
+						d->breakpoint_state_ = BSTATE_STEP;
+					}
+
+					XTAL_CASE(STEP_IN){
+						d->breakpoint_state_ = BSTATE_STEP_IN;
+					}
+
+					XTAL_CASE(STEP_OUT){
+						d->breakpoint_state_ = BSTATE_STEP_OUT;
+					}
+				}
+
+				d->breakpoint_call_stack_size_ = info->call_stack_size();
+			}
+
+			XTAL_CASE(BSTATE_GO){
+				if(true){
+					d->breakpoint_state_ = BSTATE_NONE;
+					continue;
+				}
+			}
+
+			XTAL_CASE(BSTATE_STEP){
+				if(info->call_stack_size() <= d->breakpoint_call_stack_size_){
+					d->breakpoint_state_ = BSTATE_NONE;
+					continue;
+				}
+			}
+
+			XTAL_CASE(BSTATE_STEP_IN){
+				d->breakpoint_state_ = BSTATE_NONE;
+				continue;
+			}
+
+			XTAL_CASE(BSTATE_STEP_OUT){
+				if(info->call_stack_size() < d->breakpoint_call_stack_size_){
+					d->breakpoint_state_ = BSTATE_NONE;
+					continue;
+				}
+			}
+		}
+
+		break;
+	}
+}
+
+void set_breakpoint_hook(const AnyPtr& f){
+	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
+	d->breakpoint_hook_ = f;
+	set_line_hook(fun(&breakpoint_hook_helper));
 }
 
 }

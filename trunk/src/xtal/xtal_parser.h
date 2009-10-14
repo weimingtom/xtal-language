@@ -283,6 +283,8 @@ public:
 
 	ExprPtr parse_stmt(const StreamPtr& stream, CompileErrors* error);
 
+	ExprPtr parse_expr(const StreamPtr& stream, CompileErrors* error);
+
 private:
 
 	int_t lineno(){ return lexer_.lineno(); }

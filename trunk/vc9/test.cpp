@@ -170,12 +170,6 @@ void debughook(const debug::HookInfoPtr& info){
 
 }
 
-void linehook(const debug::HookInfoPtr& info){
-	int line = info->line();
-	//printf("line %d\n", line);
-}
-
-
 int print(const AnyPtr& a){
 	return 111;	
 }
@@ -202,35 +196,106 @@ XTAL_BIND(Test){
    it->def_method(Xid(get_bool), &Test::get_bool);
 }
 
-  void test2(){ 
-      lib()->def(Xid(Test), cpp_class<Test>()); 
+void test2(){ 
+  lib()->def(Xid(Test), cpp_class<Test>()); 
 
-     if(CodePtr code = Xsrc(( 
-          foo: lib::Test(); 
-          foo.set_bool(false); 
-          foo.get_bool().p; 
-      ))){ 
-          code->call(); 
-      } 
+ if(CodePtr code = Xsrc(( 
+      foo: lib::Test(); 
+      foo.set_bool(false); 
+      foo.get_bool().p; 
+  ))){ 
+      code->call(); 
   } 
+} 
+
+void diside(const VMachinePtr& vm){
+	AnyPtr ret = vm->eval("n+m", 0);
+	vm->catch_except();
+	ret->p();
+
+	/*
+	for(uint_t i=0;; ++i){
+		// 呼び出し元情報を取得する
+		if(debug::CallerInfoPtr caller = vm->caller(i)){
+
+			caller->fun_name()->p();
+
+			// 呼び出し元のローカル変数フレームを取得する
+			FramePtr frame = caller->variables_frame();
+			while(frame){
+
+				// ローカル変数をイテレートする
+				Xfor3(key1st, key2nd, value, frame->members()){
+					// key1stにプライマリキー
+					// key2ndにセカンダリキー(基本的にundefinedなので無視してかまわない)
+					// valueに値が入る
+
+					//key1st->p(); // key1stをプリントする
+				}
+
+				// 外側のスコープのローカル変数フレームを取得する
+				frame = frame->outer();
+			}
+		}
+		else{
+			break;
+		}
+	}
+*/
+	vm->return_result();
+}
+
+int linehook(const debug::HookInfoPtr& info){
+	AnyPtr ret = info->vm()->eval("i", 1);
+	info->vm()->catch_except();
+	ret->p();
+
+/*
+	struct CallInfo{
+		StringPtr fun_name;
+		StringPtr file_name;
+		int lineno;
+	};
+
+	if(info->vm()){
+		{
+			CallInfo ci;
+			ci.fun_name = info->fun_name()->to_s()->c_str();
+			ci.file_name = info->file_name()->to_s()->c_str();
+			ci.lineno = info->line();
+		}
+
+		for(int i=2; i<info->call_stack_size(); ++i){
+			CallInfo ci;
+			if(info->caller(i)){
+				ci.fun_name = info->caller(i)->fun_name()->to_s()->c_str();
+				ci.file_name = info->caller(i)->file_name()->to_s()->c_str();
+				ci.lineno = info->caller(i)->line();
+			}
+		}
+	}
+*/
+
+	return debug::STEP;
+}
 
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
 
-	//debug::enable();
-	//debug::set_line_hook(fun(&linehook));
+	debug::enable();
+	debug::set_breakpoint_hook(fun(&linehook));
 
-	test();
+	//test();
 
 	//test2();
-    lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
+   // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
 
 	//AnyPtr a = cast<bool>(false);
 
 //*
-	if(CodePtr code = Xsrc((
+	/*if(CodePtr code = Xsrc((
 		vec: lib::Vector2D(10, 20);
 		vec.length.p;
 		vec.normalize;
@@ -240,11 +305,79 @@ int main2(int argc, char** argv){
 		//code->inspect()->p();
 		AnyPtr ret = code->call(500, 108);
 		//ret = ret;
+	}*/
+/*
+	if(CodePtr code = Xsrc((
+		{
+			n: 2+5;
+			   {
+					m: 6;
+
+				   10.times{
+						diside();
+				   }
+
+					   {
+a: 10;
+						 diside();
+					   }
+
+				   fun filelocal::foo(){
+					   diside();
+					   4.p;
+				   }
+
+				   fun filelocal::bar(){
+						foo();
+				   }
+
+				   bar();
+			   }
+		}
+		//diside(n);
+	))){
+		code->filelocal()->def("ppp", fun(&print));
+		code->filelocal()->def("diside", fun(&diside));
+
+		//code->inspect()->p();
+		AnyPtr ret = code->call(500, 108);
+		//ret = ret;
+	}
+*/
+	if(CodePtr code = compile(
+		/*
+"		{\n"
+"			n: 2+5;\n"
+"			   {\n"
+"					m: 6;\n"
+"				   fun filelocal::foo(){\n"
+"					   diside();\n"
+"					   4.p;\n"
+"				   }\n"
+"\n"
+"				   fun filelocal::bar(){\n"
+"						foo();\n"
+"				   }\n"
+"\n"
+"				   bar();\n"
+"			   }\n"
+"		}\n"
+*/
+"for(i: 0; i<10; ++i){\n"
+"  i = i;\n"
+"}\n"
+	)){
+		code->filelocal()->def("ppp", fun(&print));
+		code->filelocal()->def("diside", fun(&diside));
+
+		//code->inspect()->p();
+		AnyPtr ret = code->call(500, 108);
+		//ret = ret;
 	}
 
 	full_gc();
 
-	load("../struct.xtal");
+	//load("../struct.xtal");
 
 	//xnew<Array>()->call("test");
 
@@ -537,7 +670,9 @@ public:
 	void free(void* p){
 #ifdef XTAL_DEBUG
 		Chunk* cp = to_chunk(p);
+		unsigned char* ucp = (unsigned char*)p+cp->h.debug.size;
 		for(int i=0; i<GUARD_MAX; ++i){
+			int cc = *((unsigned char*)p+cp->h.debug.size+i);
 			XTAL_ASSERT(*((unsigned char*)p+cp->h.debug.size+i)==0xcc);
 		}
 
@@ -887,8 +1022,8 @@ private:
 };
 }
 
-char memory[1024*1024*1];
-xxx::SimpleMemoryManager smm(memory, 1024*1024*1);
+char memory[1024*1024*200];
+xxx::SimpleMemoryManager smm(memory, 1024*1024*200);
 
 class AAllocatorLib : public AllocatorLib{
 public:

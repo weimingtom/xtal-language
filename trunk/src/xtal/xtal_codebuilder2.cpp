@@ -45,7 +45,7 @@ int_t CodeBuilder::compile_expr(const AnyPtr& p, int_t stack_top, int_t result, 
 	}
 
 	ExprPtr e = ep(p);
-	
+
 	int_t temp = stack_top;
 	int_t ret = compile_e(e, temp, result, result_count);
 
@@ -64,6 +64,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	ExprPtr e = ep(p);
 
 	if(e->lineno()!=0){
+		int_t lineno = e->lineno();
 		linenos_.push(e->lineno());
 		if(result_->set_lineno_info(e->lineno())){
 			put_inst(InstLine());

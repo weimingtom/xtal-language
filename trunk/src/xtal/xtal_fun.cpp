@@ -216,4 +216,9 @@ AnyPtr Fiber::reset(){
 	return to_smartptr(this);
 }
 
+void BindedThis::rawcall(const VMachinePtr& vm){
+	vm->set_arg_this(this_);
+	fun_->rawcall(vm);
+}
+
 }

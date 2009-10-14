@@ -246,6 +246,32 @@ private:
 	}
 };
 
+class BindedThis : public Base{
+public:
+
+	BindedThis(const AnyPtr& fun, const AnyPtr& athis)
+		:fun_(fun), this_(athis){
+	}
+
+public:
+	
+	virtual void rawcall(const VMachinePtr& vm);
+
+protected:
+
+	virtual void visit_members(Visitor& m){
+		Base::visit_members(m);
+		m & fun_ & this_;
+	}
+
+	AnyPtr fun_;
+	AnyPtr this_;
+};
+
+inline AnyPtr bind_this(const AnyPtr& fun, const AnyPtr& athis){
+	return xnew<BindedThis>(fun, athis);
+}
+
 }
 
 

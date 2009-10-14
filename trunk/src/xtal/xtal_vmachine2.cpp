@@ -9,7 +9,6 @@ VMachine::VMachine(){
 	end_code_ = InstExit::NUMBER;
 	throw_code_ = InstThrow::NUMBER;
 	resume_pc_ = 0;
-	disable_debug_ = false;
 
 	variables_top_ = 0;
 	variables_.resize(128);
@@ -18,6 +17,9 @@ VMachine::VMachine(){
 
 	setup_call();
 	fun_frames_.top()->processed = 0;
+	
+	eval_n_ = 0;
+	parent_vm_ = 0;
 }
 
 VMachine::~VMachine(){
@@ -53,6 +55,8 @@ void VMachine::reset(){
 	except_[1] = null;
 	except_[2] = null;
 	debug_info_ = null;
+
+	parent_vm_ = 0;
 }
 
 VMachine::FunFrame::FunFrame(){
@@ -454,7 +458,9 @@ const inst_t* VMachine::start_fiber(Fiber* fun, VMachine* vm, bool add_succ_or_f
 	carry_over(fun);
 	ff().yieldable = true;
 
+	parent_vm_ = vm;
 	execute_inner(ff().called_pc);
+	parent_vm_ = 0;
 	//XTAL_ASSERT(resume_pc_);
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 	return resume_pc_;
@@ -473,8 +479,9 @@ const inst_t* VMachine::resume_fiber(Fiber* fun, const inst_t* pc, VMachine* vm,
 		}
 	}
 
+	parent_vm_ = vm;
 	execute_inner(ff().called_pc);
-	//XTAL_ASSERT(resume_pc_);
+	parent_vm_ = 0;
 	present_for_vm(fun, vm, add_succ_or_fail_result);
 	return resume_pc_;
 }
@@ -591,7 +598,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	if(fun()){
 		debug_info_->set_line(fun()->code()->compliant_lineno(pc));
 		debug_info_->set_file_name(fun()->code()->source_file_name());
-		debug_info_->set_fun_name(fun()->object_name());
+		//debug_info_->set_fun_name(fun()->object_name());
 	}
 	else{
 		debug_info_->set_line(0);
@@ -618,37 +625,84 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	debug_info_->set_variables_frame(scopes_.top().frame);
 
 	debug_info_->set_vm(to_smartptr(this));
-	debug_info_->funframe_ = fun_frames_.size()-2;
 }
 
 debug::CallerInfoPtr VMachine::caller(uint_t n){
-	if(n>=fun_frames_.size()){
+	if(n>=call_stack_size()){
 		return null;
 	}
 
-	FunFrame& f = *fun_frames_.reverse_at(n);
-	FunFrame& pf = *fun_frames_.reverse_at(n+1);
-
-	if(!f.fun()){
+	if(n>=fun_frames_.size()-1){
+		if(parent_vm_){
+			return parent_vm_->caller(n-(fun_frames_.size()-1));
+		}
 		return null;
 	}
+
+	FunFrame& f = *fun_frames_[n];
+	int_t scope_lower = n==0 ? 0 : fun_frames_[n-1]->scope_lower;
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
+
+	if(!f.fun()){
+		ret->set_line(0);
+		ret->set_fun(null);
+		return ret;
+	}
+
 	ret->set_line(f.fun()->code()->compliant_lineno(f.poped_pc));
-	ret->set_fun_name(f.fun()->object_name());
-	ret->set_file_name(f.fun()->code()->source_file_name());
+	ret->set_fun(f.fun());
 	make_outer_outer();
-	ret->set_variables_frame(scopes_.reverse_at(pf.scope_size-1).frame);
+	ret->set_variables_frame(scopes_.reverse_at(scope_lower-1).frame);
 	return ret;
+}
+
+int_t VMachine::call_stack_size(){
+	int_t n = parent_vm_ ? parent_vm_->call_stack_size()-1 : 0; 
+	return n + fun_frames_.size()-1;
+}
+
+AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
+	if(call_n<fun_frames_.size()-1){
+		int_t scope_upper = fun_frames_[call_n-1]->scope_lower;
+		int_t scope_lower = fun_frames_[call_n]->scope_lower;
+
+		FramePtr frame;
+		for(uint_t i=0; i<scope_upper - scope_lower; ++i){
+			frame = scopes_.reverse_at(scope_upper-i-1).frame;
+
+			const AnyPtr& ret = frame->member(var);
+			if(rawne(ret, undefined)){
+				return ret;
+			}
+		}
+
+		frame = fun_frames_[call_n]->outer();
+		while(frame){
+			const AnyPtr& ret = frame->member(var);
+			if(rawne(ret, undefined)){
+				return ret;
+			}
+
+			frame = frame->outer();
+		}
+	}
+	else{
+		if(parent_vm_){
+			return parent_vm_->eval_local_variable(var, call_n-(fun_frames_.size()-1));
+		}
+	}
+		
+	return undefined;
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	{
 		struct guard{
-			bool& disable_debug_;
-			guard(bool& disable_debug):disable_debug_(disable_debug){ disable_debug_ = true; }
-			~guard(){ disable_debug_ = false; }
-		} g(disable_debug_);
+			int count;
+			guard(){ count = debug::disable_force(); }
+			~guard(){ debug::enable_force(count); }
+		} g;
 
 		AnyPtr e = ap(except_[0]);
 		except_[0] = null;
@@ -703,7 +757,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 
 	// XtalÇÃä÷êîÇíEèoÇµÇƒÇ¢Ç≠
 	while((size_t)ef.fun_frame_size<fun_frames_.size()){
-		while(scopes_.size()>ff().scope_size){
+		while(scopes_.size()>ff().scope_lower){
 			pop_scope();
 		}
 
@@ -751,7 +805,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 		set_except_0(e);
 	}
 
-	while(scopes_.size()>ff().scope_size){
+	while(scopes_.size()>ff().scope_lower){
 		pop_scope();
 	}
 	pop_ff2();

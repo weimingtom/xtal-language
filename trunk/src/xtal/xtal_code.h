@@ -28,6 +28,8 @@ public:
 		
 	bool set_lineno_info(uint_t line);
 
+	int_t last_lineno();
+
 	const inst_t* data(){
 		return &code_[0];
 	}

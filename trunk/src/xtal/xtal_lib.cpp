@@ -4,6 +4,10 @@
 
 namespace xtal{
 
+//AnyPtr load_lib_member(){
+
+//}
+
 Lib::Lib(most_top_level_t){
 	set_object_temporary_name(XTAL_STRING("lib"));
 	set_object_force(1000);

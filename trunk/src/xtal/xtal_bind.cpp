@@ -21,7 +21,7 @@ void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
 }
 
 void VMachine_current_context(const VMachinePtr& vm){
-	vm->return_result(vm->current_context());
+	vm->return_result(vm->current_context2());
 }
 
 }

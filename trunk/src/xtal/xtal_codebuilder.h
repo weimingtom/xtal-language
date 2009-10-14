@@ -24,6 +24,8 @@ public:
 
 	void interactive_compile(const StreamPtr& stream);
 
+	CodePtr eval_compile(const StringPtr& code);
+
 	AnyPtr errors();
 
 public:

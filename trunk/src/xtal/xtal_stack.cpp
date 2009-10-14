@@ -106,27 +106,17 @@ void PODStackBase::upsize_detail(size_t us){
 	end_ = plusp(begin_, newcapa);
 }
 
-void PODStackBase::erase(size_t i, size_t n){
-	if((i+1-n)!=0){
-		std::memmove((*this)[i], (*this)[i-n], one_size_*(i+1-n));
-	}
-	downsize(n);
-}	
-
-void PODStackBase::insert(size_t i, const void* v, size_t n){
-	upsize(n);
-	std::memmove((*this)[i], (*this)[i+n], one_size_*(i+1-n));
-	std::memcpy((*this)[i], v, one_size_*n);
-}
-
 void PODStackBase::reverse_erase(size_t i, size_t n){
-	std::memmove(reverse_at(i), reverse_at(i+n), one_size_*(size()+1-n));
+	size_t sz = size();
+	if(sz-(i+n)!=0){
+		std::memmove(reverse_at(i), reverse_at(i+n), one_size_*(sz-(i+n)));
+	}
 	downsize(n);
 }	
 
 void PODStackBase::reverse_insert(size_t i, const void* v, size_t n){
 	upsize(n);
-	std::memmove(reverse_at(i+n), reverse_at(i), one_size_*(size()+1-n));
+	std::memmove(reverse_at(i+n), reverse_at(i), one_size_*(size()-(i+n)));
 	std::memcpy(reverse_at(i), v, one_size_*n);
 }
 

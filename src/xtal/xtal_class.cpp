@@ -10,7 +10,7 @@ InstanceVariables::InstanceVariables()
 	VariablesInfo vi;
 	vi.class_info = 0;
 	vi.pos = 0;
-	variables_info_.push(vi);
+	variables_info_.push_back(vi);
 	variables_.push_back(undefined);
 }
 		
@@ -22,18 +22,18 @@ void InstanceVariables::init_variables(ClassInfo* class_info){
 		vi.class_info = class_info;
 		vi.pos = (int_t)variables_.size();
 		variables_.upsize(class_info->instance_variable_size);
-		variables_info_.push(vi);
+		variables_info_.push_back(vi);
 	}
 }
 
 bool InstanceVariables::is_included(ClassInfo* class_info){
-	VariablesInfo& info = variables_info_.top();
+	VariablesInfo& info = variables_info_.back();
 	if(info.class_info == class_info){
 		return true;
 	}
-	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
+	for(uint_t i = 0, size = variables_info_.size()-1; i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
-			std::swap(variables_info_[0], variables_info_[i]);
+			std::swap(variables_info_[size], variables_info_[i]);
 			return true;
 		}	
 	}
@@ -41,10 +41,10 @@ bool InstanceVariables::is_included(ClassInfo* class_info){
 }
 
 uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t index){
-	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
+	for(uint_t i = 0, size = variables_info_.size()-1; i<size; ++i){
 		if(variables_info_[i].class_info==class_info){
-			std::swap(variables_info_[0], variables_info_[i]);
-			return variables_info_[0].pos + index;
+			std::swap(variables_info_[size], variables_info_[i]);
+			return variables_info_[size].pos + index;
 		}
 	}
 	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
@@ -56,11 +56,13 @@ void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
 		if(variables_info_[i].class_info==from){
 			int_t pos = variables_info_[i].pos;
 			variables_info_.erase(i, 1);
+
 			for(uint_t j = 0, jsize = variables_info_.size(); j<jsize; ++j){
-				if(variables_info_[i].pos>pos){
-					variables_info_[i].pos -= from->instance_variable_size;
+				if(variables_info_[j].pos>pos){
+					variables_info_[j].pos -= from->instance_variable_size;
 				}
 			}
+
 			variables_.erase(pos, from->instance_variable_size);
 			init_variables(to);
 			return;

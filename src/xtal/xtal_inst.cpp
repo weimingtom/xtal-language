@@ -129,7 +129,7 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(Assert);
 		XTAL_INST_CASE(MAX);
 //}}INST_INSPECT}
-	} ms->put_s(Xf("%04d:%s\n")->call((int_t)(pc-start), temp)->to_s()); pc += sz; }
+	} ms->put_s(Xf("%04d(%04d):%s\n")->call((int_t)(pc-start), code->compliant_lineno(pc), temp)->to_s()); pc += sz; }
 
 	ms->seek(0);
 	return ms->get_s(ms->size());
@@ -207,7 +207,7 @@ int_t inst_size(uint_t no){
 //}}INST_SIZE}
 	};
 
-	if(no>=InstMAX::ISIZE){
+	if(no>=InstMAX::NUMBER){
 		return 0;
 	}
 

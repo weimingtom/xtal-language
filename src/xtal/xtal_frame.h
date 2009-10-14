@@ -157,6 +157,8 @@ protected:
 	bool orphan_;
 
 protected:
+	
+	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	virtual void visit_members(Visitor& m){
 		HaveParentBase::visit_members(m);

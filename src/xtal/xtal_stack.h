@@ -434,10 +434,6 @@ public:
 		XTAL_ASSERT(!empty());
 		return current_;
 	}
-		
-	void erase(size_t i, size_t n=1);
-
-	void insert(size_t i, const void* v, size_t n=1);
 
 	void reverse_erase(size_t i, size_t n=1);
 
@@ -547,12 +543,9 @@ public:
 	void downsize(size_t ds){ impl_.downsize(ds); }
 	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
 	void upsize(size_t us){ impl_.upsize(us); }
-	void insert(size_t i, const T& val){ impl_.insert(i, &val); }
-	void insert(size_t i, const T* val, size_t n){ impl_.insert(i, val, n); }
 	void reverse_erase(size_t i, size_t n){ impl_.reverse_erase(i, n); }
 	void reverse_insert(size_t i, const T& val){ impl_.reverse_insert(i, &val); }
 	void reverse_insert(size_t i, const T* val, size_t n){ impl_.reverse_insert(i, val, n); }
-	void erase(size_t i, size_t n){ impl_.erase(i, n); }
 	size_t size() const{ return impl_.size(); }
 	size_t capacity() const{ return impl_.capacity(); }
 	void reserve(size_t capa){ impl_.reserve(capa); }
@@ -725,7 +718,9 @@ public:
 	bool empty() const{ return impl_.empty(); }
 	void clear(){ impl_.clear(); }
 	void release(){ impl_.release(); }
-
+public:
+	void attach(T* p){ impl_.attach(p); }
+	void detach(){ impl_.detach(); }
 };
 	
 template<class T>

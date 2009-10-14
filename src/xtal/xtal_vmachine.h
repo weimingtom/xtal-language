@@ -370,6 +370,10 @@ public:
 		return make_outer_outer();
 	}
 
+	FramePtr current_context2(){
+		return make_outer_outer(0, 1);
+	}
+
 public:
 
 	const AnyPtr& catch_except();
@@ -435,6 +439,12 @@ public:
 
 	debug::CallerInfoPtr caller(uint_t n);
 
+	int_t call_stack_size();
+
+	AnyPtr eval(const StringPtr& code, uint_t n = 0);
+
+	AnyPtr eval_local_variable(const IDPtr& var, uint_t call_n);
+
 public:
 
 	struct FunFrame{
@@ -463,8 +473,8 @@ public:
 		// thisが持つインスタンス変数へのポインタ
 		InstanceVariables* instance_variables;
 
-		// この関数までに積まれたスコープの数
-		uint_t scope_size;
+		// この関数が使っているスコープの下限
+		uint_t scope_lower;
 
 		int_t processed;
 
@@ -652,7 +662,7 @@ private:
 	void debug_hook(const inst_t* pc, int_t kind);
 
 	void check_debug_hook(const inst_t* pc, int_t kind){
-		if(disable_debug_ || (hook_setting_bit_&(1<<kind))==0 || !debug::is_enabled()){
+		if((hook_setting_bit_&(1<<kind))==0 || !debug::is_enabled()){
 			return;
 		}
 		debug_hook(pc, kind);
@@ -726,7 +736,7 @@ public:
 private:
 
 	const FramePtr& make_outer(ScopeInfo* scope);
-	const FramePtr& make_outer_outer(uint_t i=0);
+	const FramePtr& make_outer_outer(uint_t i = 0, uint_t call_n = 0);
 
 private:
 	inst_t end_code_;
@@ -776,10 +786,12 @@ private:
 	StringPtr assertion_message_;
 
 	debug::HookInfoPtr debug_info_;
-	bool disable_debug_;
 	int_t hook_setting_bit_;
 
 	int_t thread_yield_count_;
+
+	int_t eval_n_;
+	VMachine* parent_vm_;
 
 protected:
 

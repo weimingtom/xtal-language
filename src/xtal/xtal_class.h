@@ -23,7 +23,7 @@ public:
 	void init_variables(ClassInfo* class_info);
 
 	uint_t find_class_info(ClassInfo* class_info, uint_t index){
-		VariablesInfo& info = variables_info_.top();
+		VariablesInfo& info = variables_info_.back();
 		if(info.class_info == class_info){
 			return info.pos + index;
 		}
@@ -66,7 +66,7 @@ protected:
 		int_t pos;
 	};
 
-	PODStack<VariablesInfo> variables_info_;
+	PODArrayList<VariablesInfo> variables_info_;
 	xarray variables_;
 };
 

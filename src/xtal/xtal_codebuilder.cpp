@@ -131,6 +131,23 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 	}
 }
 
+CodePtr CodeBuilder::eval_compile(const StringPtr& sorce){
+	error_= &errorimpl_;
+	error_->init("<eval>");
+	ExprPtr e = parser_.parse_expr(xnew<StringStream>(sorce), error_);
+	if(!e){
+		return null;
+	}
+
+	eb_.push(e);
+	eb_.splice(EXPR_LIST, 1);
+	eb_.splice(EXPR_RETURN, 1);
+	e = ep(eb_.pop());
+
+	prev_inst_op_ = -1;
+	return compile_toplevel(e, "<eval>");
+}
+
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
 	result_ = xnew<Code>();
 	result_->source_file_name_ = source_file_name;
@@ -199,6 +216,9 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	break_off(ff().var_frame_count+1);
 
 	put_inst(InstReturn(0));
+	
+	result_->set_lineno_info(result_->last_lineno()+1);
+
 	put_inst(InstThrow());
 
 	process_labels();
@@ -232,7 +252,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 }
 
 inst_address_t CodeBuilder::calc_address(const inst_t* pc, inst_address_t address){
-	const inst_t* pc2 = pc+address;
+	const inst_t* pc2 = pc + address;
 	if(*pc2==InstGoto::NUMBER){
 		InstGoto& inst2 = *(InstGoto*)pc2;
 		return pc2+inst2.address - pc;
@@ -1424,6 +1444,26 @@ ExprPtr CodeBuilder::setup_expr(const ExprPtr& e){
 	case EXPR_TOPLEVEL:
 */
 	return null;
+}
+
+AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
+	debug::CallerInfoPtr cp = caller(n+1);
+	if(!cp || !cp->fun()){
+		return undefined;
+	}
+
+	CodeBuilder cb;
+	if(CodePtr code = cb.eval_compile(source)){
+		eval_n_ = n + 2;
+		setup_call(1);
+		code->rawcall(to_smartptr(this));
+		AnyPtr ret = result_and_cleanup_call();
+		eval_n_ = 0;
+
+		return ret;
+	}
+
+	return undefined;
 }
 
 }

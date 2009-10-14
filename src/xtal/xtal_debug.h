@@ -24,17 +24,20 @@ public:
 	*/
 	int_t line(){ return line_; }
 
+
+	const FunPtr& fun(){ return fun_; }
+
 	/**
 	* \xbind
 	* \brief 呼び出し場所のファイル名を返す
 	*/
-	const StringPtr& file_name(){ return file_name_; }
+	StringPtr file_name(){ return fun_ ? fun_->code()->source_file_name() : "C++ Function"; }
 
 	/**
 	* \xbind
 	* \brief 呼び出し場所の関数名を返す
 	*/
-	const StringPtr& fun_name(){ return fun_name_; }
+	StringPtr fun_name(){ return fun_ ? fun_->object_name() : ""; }
 
 	/**
 	* \xbind
@@ -43,16 +46,14 @@ public:
 	const FramePtr& variables_frame(){ return variables_frame_; }
 
 	void set_line(int_t v){ line_ = v; }
-	void set_file_name(const StringPtr& v){ file_name_ = v; }
-	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
+	void set_fun(const FunPtr& v){ fun_ = v; }
 	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
 
 	virtual void visit_members(Visitor& m);
 
 private:
 	int_t line_;
-	StringPtr file_name_;
-	StringPtr fun_name_;
+	FunPtr fun_;
 	FramePtr variables_frame_;
 };
 
@@ -113,6 +114,8 @@ public:
 	*/
 	CallerInfoPtr caller(uint_t n);
 
+	int_t call_stack_size();
+
 	void set_kind(int_t v){ kind_ = v; }
 	void set_line(int_t v){ line_ = v; }
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
@@ -132,7 +135,7 @@ public:
 
 	void set_vm(const VMachinePtr& v){ vm_ = v; }
 
-	const VMachinePtr& vm(){ return ptr_cast<VMachine>(ap(vm_)); }
+	const VMachinePtr& vm(){ return (VMachinePtr&)ap(vm_); }
 
 private:
 
@@ -146,7 +149,6 @@ private:
 	AnyPtr exception_;
 	FramePtr variables_frame_;
 	Any vm_;
-	uint_t funframe_;
 
 	friend class VMachine;
 };
@@ -258,7 +260,23 @@ const AnyPtr& throw_hook();
 */
 const AnyPtr& assert_hook();
 
+
+//////////////////////////////
+
+void add_breakpoint(const AnyPtr& sorce, int_t line);
+void remove_breakpoint(const AnyPtr& sorce, int_t line);
+void clear_breakpoint();
+
+enum{
+	GO,
+	STEP,
+	STEP_IN,
+	STEP_OUT
 };
+
+void set_breakpoint_hook(const AnyPtr& fun);
+
+}
 
 }
 

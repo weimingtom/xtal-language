@@ -37,13 +37,19 @@ bool Code::set_lineno_info(uint_t line){
 	lineno_table_.push_back(lnt);
 	return true;
 }
+	
+int_t Code::last_lineno(){
+	if(lineno_table_.empty())
+		return 0;
+	return lineno_table_.back().lineno;
+}
 
 int_t Code::compliant_lineno(const inst_t* p){
 	if(!lineno_table_.empty()){
 		LineNumberInfo* begin = &lineno_table_[0];
 		LineNumberInfo* end = begin+lineno_table_.size();
 		LineNumberInfo* it=
-			std::lower_bound(
+			std::upper_bound(
 				begin,
 				end,
 				static_cast<int_t>(p-data()),

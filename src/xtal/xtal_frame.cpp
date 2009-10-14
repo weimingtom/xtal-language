@@ -117,6 +117,21 @@ AnyPtr Frame::members(){
 	return xnew<MembersIter>(to_smartptr(this));
 }
 
+const AnyPtr& Frame::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	nocache = true;
+
+	if(raweq(secondary_key, undefined) && !map_members_ && code_ && scope_info_){
+		for(int_t i=0; i<scope_info_->variable_size; ++i){
+			IDPtr id = code_->identifier(scope_info_->variable_identifier_offset+i);
+			if(raweq(id, primary_key)){
+				return members_.at(i);
+			}
+		}
+	}
+
+	return undefined;
+}
+
 void Frame::add_ref_count_members(int_t n){
 	for(uint_t i=0, size=members_.size(); i<size; ++i){
 		add_ref_count_force(members_.at(i), n);

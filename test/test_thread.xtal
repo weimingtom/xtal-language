@@ -1,5 +1,7 @@
 inherit(lib::test);
 
+return;
+
 class filelocal::ThreadTest{
 	test#Test{
 		ret: [];

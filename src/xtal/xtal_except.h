@@ -66,6 +66,7 @@ private:
 class StandardError;
 class RuntimeError;
 class IOError;
+class EOSError;
 class LogicError;
 class CastError;
 class ArgumentError;

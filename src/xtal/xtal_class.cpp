@@ -582,7 +582,11 @@ const StringPtr& Class::object_temporary_name(){
 		return name_;
 	}
 
-	return name_;
+	if(code() && info()){
+		return (StringPtr&)code()->identifier(info()->name_number);
+	}
+
+	return empty_string;
 }
 
 void Class::set_object_temporary_name(const StringPtr& name){

@@ -968,7 +968,6 @@ XTAL_BIND(debug::HookInfo){
 	it->def_method("line", &debug::HookInfo::line);
 	it->def_method("fun_name", &debug::HookInfo::fun_name);
 	it->def_method("file_name", &debug::HookInfo::file_name);
-	it->def_method("assertion_message", &debug::HookInfo::assertion_message);
 	it->def_method("exception", &debug::HookInfo::exception);
 	it->def_method("variables_frame", &debug::HookInfo::variables_frame);
 
@@ -976,7 +975,6 @@ XTAL_BIND(debug::HookInfo){
 	it->def_method("set_line", &debug::HookInfo::line);
 	it->def_method("set_fun_name", &debug::HookInfo::set_fun_name);
 	it->def_method("set_file_name", &debug::HookInfo::set_file_name);
-	it->def_method("set_assertion_message", &debug::HookInfo::set_assertion_message);
 	it->def_method("set_exception", &debug::HookInfo::set_exception);
 	it->def_method("set_variables_frame", &debug::HookInfo::set_variables_frame);
 
@@ -1136,11 +1134,11 @@ XTAL_BIND(debug::Debug){
 	it->def_fun("disable", &debug::disable);
 	it->def_fun("is_enabled", &debug::is_enabled);
 
-	it->def_fun("line_hook", &debug::line_hook);
+	it->def_fun("breakpoint_hook", &debug::breakpoint_hook);
 	it->def_fun("call_hook", &debug::call_hook);
 	it->def_fun("return_hook", &debug::return_hook);
 	it->def_fun("throw_hook", &debug::throw_hook);
-	it->def_fun("set_line_hook", &debug::set_line_hook);
+	it->def_fun("set_breakpoint_hook", &debug::set_breakpoint_hook);
 	it->def_fun("set_call_hook", &debug::set_call_hook);
 	it->def_fun("set_return_hook", &debug::set_return_hook);
 	it->def_fun("set_throw_hook", &debug::set_throw_hook);
@@ -1596,6 +1594,11 @@ XTAL_PREBIND(IOError){
 	it->inherit(cpp_class<StandardError>());
 }
 
+XTAL_PREBIND(EOSError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
 XTAL_PREBIND(LogicError){
 	it->unset_native();
 	it->inherit(cpp_class<StandardError>());
@@ -1679,6 +1682,7 @@ void bind(){
 	it->def("StandardError", cpp_class<StandardError>());
 	it->def("RuntimeError", cpp_class<RuntimeError>());
 	it->def("IOError", cpp_class<IOError>());
+	it->def("EOSError", cpp_class<EOSError>());
 	it->def("LogicError", cpp_class<LogicError>());
 	it->def("CastError", cpp_class<CastError>());
 	it->def("ArgumentError", cpp_class<ArgumentError>());

@@ -63,6 +63,7 @@ inline void bind_error_message(){
 		XTAL_STRING("Xtal Runtime Error 1030"), XTAL_STRING("暗黙の変数参照があります。%(name)s"),
 		XTAL_STRING("Xtal Runtime Error 1031"), XTAL_STRING("シングルトンクラスはシングルトンクラスでないと継承できません。"),
 		XTAL_STRING("Xtal Runtime Error 1032"), XTAL_STRING("ファイル'%(name)s'が開けません。"),
+		XTAL_STRING("Xtal Runtime Error 1033"), XTAL_STRING("ストリームの終端以降を読み取ろうとしました。"),
 	};
 	
 	for(int i=0; i<sizeof(messages)/sizeof(*messages)/2; ++i){

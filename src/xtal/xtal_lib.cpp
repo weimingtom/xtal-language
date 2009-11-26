@@ -25,27 +25,22 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 	}
 	else{
 
+		AnyPtr value;
 		Xfor(var, load_path_list_){
-			StringPtr file_name = Xf("%s/%s.xtal")->call(var, primary_key)->to_s();
-
-			AnyPtr value;// = load(file_name);
-
-			if(StreamPtr fs = open(file_name, Xid(r))){
-				CodeBuilder cb;
-				if(CodePtr fun = cb.compile(fs, file_name)){
-					fs->close();
-					value = fun->call();
-				}
-				else{
-					fs->close();
-					XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
-					return null;
-				}
+			if(CodePtr code = require_source(Xf("%s/%s")->call(var, primary_key)->to_s())){
+				value = code->call();
 			}
 			else{
-				XTAL_CATCH_EXCEPT(e){ 
-					continue; 
+				XTAL_CATCH_EXCEPT(e){
+					if(e->is(cpp_class<CompileError>())){
+						XTAL_SET_EXCEPT(e);
+						return null;
+					}
 				}
+			}
+
+			XTAL_CATCH_EXCEPT(e){ 
+				return null;
 			}
 
 			if(!raweq(value, undefined)){

@@ -280,6 +280,11 @@ public:
 	friend void set_type(Any& v, int_t type);
 };
 
+class UninitializedAny : public Any{
+public:
+	UninitializedAny():Any(noinit_t()){}
+};
+
 /////////////////////////////////////////////////////////
 
 

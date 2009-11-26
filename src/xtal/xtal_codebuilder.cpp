@@ -70,7 +70,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 			}
 			else if(e->itag()==EXPR_MDEFINE){
 				ExprPtr lhs = e->mdefine_lhs_exprs();
-				for(int i=0; i<lhs->size(); ++i){
+				for(uint_t i=0; i<lhs->size(); ++i){
 					ExprPtr e2 = ep(lhs->at(i));
 					if(e2->itag()==EXPR_LVAR){
 						eb_.push(Xid(filelocal));
@@ -217,7 +217,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	put_inst(InstReturn(0));
 	
-	result_->set_lineno_info(result_->last_lineno()+1);
+	result_->set_lineno_info(result_->final_lineno()+1);
 
 	put_inst(InstThrow());
 
@@ -308,6 +308,7 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 }
 
 int_t CodeBuilder::register_identifier(const IDPtr& v){
+	if(!v){ return 0; }
 	if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
 	result_->identifier_table_->push_back(v);
 	identifier_map_->set_at(v, result_->identifier_table_->size()-1);
@@ -382,9 +383,6 @@ void CodeBuilder::process_labels(){
 			FunFrame::Label::From &f = l.froms[j];
 			inst_address_t& buf = *(inst_address_t*)&result_->code_[f.set_pos];
 			buf = l.pos - f.pos; //l.pos - f.set_pos;
-
-			Code::AddressJump address_jump = {f.set_pos};
-			result_->address_jump_table_.push_back(address_jump);
 		}
 	}
 	ff().labels.clear();
@@ -443,7 +441,7 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 					}
 
 					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
-						VarFrame::Entry& entry = vf.entries[k];
+						//VarFrame::Entry& entry = vf.entries[k];
 						ret.pos++;
 					}
 
@@ -495,6 +493,13 @@ void CodeBuilder::var_define_stmt(const AnyPtr& stmt){
 		if(v->itag()==EXPR_DEFINE){
 			if(v->bin_lhs()->itag()==EXPR_LVAR){
 				var_define(v->bin_lhs()->lvar_name(), v->bin_rhs());
+
+				if(v->bin_rhs()->itag()==EXPR_CLASS){
+					v->bin_rhs()->set_class_name(v->bin_lhs()->lvar_name());
+				}
+				else if(v->bin_rhs()->itag()==EXPR_FUN){
+					v->bin_rhs()->set_fun_name(v->bin_lhs()->lvar_name());
+				}
 			}
 		}
 		else if(v->itag()==EXPR_MDEFINE){
@@ -844,7 +849,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	}
 }
 
-void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id){
+void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result){
 	{
 		fun_frames_.push();	
 		ff().labels.clear();
@@ -997,7 +1002,7 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result,
 	info.variable_size = vf().entries.size();
 	info.instance_variable_size = ivar_num;
 	info.instance_variable_identifier_offset = instance_variable_identifier_offset;
-	info.name_number = register_identifier(id);
+	info.name_number = register_identifier(e->class_name());
 	
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
@@ -1045,7 +1050,7 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result,
 	fun_frames_.pop();
 }
 
-int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id){
+int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 	int_t ordered = 0;
 	int_t named = 0;
 
@@ -1159,7 +1164,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result, 
 	fun.kind = e->fun_kind();
 	fun.min_param_count = minv;
 	fun.max_param_count = maxv;
-	fun.name_number = register_identifier(id);
+	fun.name_number = register_identifier(e->fun_name());
 	fun.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
 	// 引数の名前を識別子テーブルに順番に乗せる
@@ -1335,117 +1340,6 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-ExprPtr CodeBuilder::setup_expr(const ExprPtr& e){
-/*
-	switch(e->itag()){
-	case EXPR_NULL:
-	case EXPR_UNDEFINED:
-	case EXPR_TRUE:
-	case EXPR_FALSE:
-	case EXPR_CALLEE:
-	case EXPR_ARGS:
-	case EXPR_THIS:
-	case EXPR_DEBUG:
-	case EXPR_INT:
-	case EXPR_FLOAT:
-	case EXPR_STRING:
-	case EXPR_ARRAY:
-	case EXPR_MAP:
-	case EXPR_VALUES:
-
-	case EXPR_ADD:
-	case EXPR_SUB:
-	case EXPR_CAT:
-	case EXPR_MUL:
-	case EXPR_DIV:
-	case EXPR_MOD:
-	case EXPR_AND:
-	case EXPR_OR:
-	case EXPR_XOR:
-	case EXPR_SHL:
-	case EXPR_SHR:
-	case EXPR_USHR:
-
-	case EXPR_ADD_ASSIGN:
-	case EXPR_SUB_ASSIGN:
-	case EXPR_CAT_ASSIGN:
-	case EXPR_MUL_ASSIGN:
-	case EXPR_DIV_ASSIGN:
-	case EXPR_MOD_ASSIGN:
-	case EXPR_AND_ASSIGN:
-	case EXPR_OR_ASSIGN:
-	case EXPR_XOR_ASSIGN:
-	case EXPR_SHL_ASSIGN:
-	case EXPR_SHR_ASSIGN:
-	case EXPR_USHR_ASSIGN:
-
-	case EXPR_EQ:
-	case EXPR_NE:
-	case EXPR_LT:
-	case EXPR_LE:
-	case EXPR_GT:
-	case EXPR_GE:
-	case EXPR_RAWEQ:
-	case EXPR_RAWNE:
-	case EXPR_IN:
-	case EXPR_NIN:
-	case EXPR_IS:
-	case EXPR_NIS:
-
-	case EXPR_ANDAND:
-	case EXPR_OROR:
-		setup_expr(e->bin_lhs, e->bin_rhs());
-		break;
-
-	case EXPR_CATCH:
-		setup_expr(e->at(0), e->at(1));
-		break;
-
-	case EXPR_INC:
-	case EXPR_DEC:
-	case EXPR_POS:
-	case EXPR_NEG:
-	case EXPR_COM:
-	case EXPR_NOT:
-
-	case EXPR_RANGE:
-	case EXPR_RETURN:
-	case EXPR_YIELD:
-	case EXPR_ASSERT:
-	case EXPR_ONCE:
-	case EXPR_THROW:
-	case EXPR_Q:
-	case EXPR_TRY:
-	case EXPR_IF:
-	case EXPR_FOR:
-	case EXPR_FUN:
-	case EXPR_MASSIGN:
-	case EXPR_MDEFINE:
-	case EXPR_IVAR:
-	case EXPR_LVAR:
-	case EXPR_MEMBER:
-	case EXPR_MEMBER_Q:
-	case EXPR_PROPERTY:
-	case EXPR_PROPERTY_Q:
-	case EXPR_CALL:
-	case EXPR_ASSIGN:
-	case EXPR_DEFINE:
-	case EXPR_CDEFINE_MEMBER:
-	case EXPR_CDEFINE_IVAR:
-	case EXPR_AT:
-	case EXPR_BREAK:
-	case EXPR_CONTINUE:
-	case EXPR_BRACKET:
-	case EXPR_SCOPE:
-	case EXPR_CLASS:
-	case EXPR_SWITCH:
-	case EXPR_SWITCH_CASE:
-	case EXPR_SWITCH_DEFAULT:
-	case EXPR_TOPLEVEL:
-*/
-	return null;
-}
-
 AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
 	debug::CallerInfoPtr cp = caller(n+1);
 	if(!cp || !cp->fun()){
@@ -1454,13 +1348,16 @@ AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
 
 	CodeBuilder cb;
 	if(CodePtr code = cb.eval_compile(source)){
-		eval_n_ = n + 2;
 		setup_call(1);
 		code->rawcall(to_smartptr(this));
-		AnyPtr ret = result_and_cleanup_call();
-		eval_n_ = 0;
 
-		return ret;
+		const inst_t* pc = ff().called_pc;
+		ff().called_pc = 0;
+
+		execute_inner(pc, n + 2);
+
+		ff().processed = 0;
+		return local_variable(result_base_+0);
 	}
 
 	return undefined;

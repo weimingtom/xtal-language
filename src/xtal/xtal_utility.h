@@ -15,11 +15,11 @@ enum{
 	VERSION1 = 1,
 	VERSION2 = 0,
 	VERSION3 = 0,
-	VERSION4 = 1
+	VERSION4 = 2
 };
 }
 
-#define XTAL_USE_COMPILED_EMB
+//#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -646,6 +646,11 @@ enum AccessibilityKind{
 enum BreakPointKind{
 	/**
 	* \brief ブレークポイント
+	*/
+	BREAKPOINT,
+
+	/**
+	* \brief ラインごとのブレークポイント
 	*/
 	BREAKPOINT_LINE,
 

@@ -100,7 +100,26 @@ public:
 	virtual void delete_entries(void* entries_object){}
 	virtual const char_t* next_entries(void* entries_object){ return 0; }
 	virtual void break_entries(void* entries_object){}
+};
 
+/**
+* \brief TCPストリームライブラリ
+*/
+class TCPStreamLib{
+public:
+	virtual ~TCPStreamLib(){}
+
+	virtual void* new_server();
+	virtual void delete_server();
+
+
+	virtual void* accept();
+
+	virtual void* new_stream(){ return 0; }
+	virtual void delete_stream(void* stream_object){}
+
+	virtual uint_t write_stream(void* stream_object, const void* dest, uint_t size){ return 0; }
+	virtual uint_t read_stream(void* stream_object, void* dest, uint_t size){ return 0; }
 };
 
 /**
@@ -521,6 +540,15 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 
 /**
 * \xbind lib::builtin
+* \brief stream文字列をコンパイルする。
+* この戻り値をserializeすると、バイトコード形式で保存される。
+* \param stream Xtalスクリプトが記述された文字列を読み取れるストリーム
+* \return 実行できる関数オブジェクト
+*/
+CodePtr compile_stream(const StreamPtr& stream);
+
+/**
+* \xbind lib::builtin
 * \brief file_nameファイルをコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
@@ -545,13 +573,11 @@ CodePtr compile(const StringPtr& source);
 */
 AnyPtr load(const StringPtr& file_name);
 
-/**
-* \xbind lib::builtin
-* \brief file_nameファイルをコンパイルしてコンパイル済みソースを保存し、実行する。
-* \param file_name Xtalスクリプトが記述されたファイルの名前
-* \return スクリプト内でreturnされた値
-*/
-AnyPtr load_and_save(const StringPtr& file_name);
+void set_require_source_hook(const AnyPtr& hook);
+
+CodePtr require_source(const StringPtr& name);
+
+AnyPtr require(const StringPtr& name);
 
 //@}
 

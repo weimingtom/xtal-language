@@ -312,6 +312,13 @@ SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 //{REPEAT{{
 /*
 */
+
+
+
+
+
+
+
 //}}REPEAT}
 
 /**

@@ -107,7 +107,6 @@ bool Values::op_eq(const ValuesPtr& other){
 	const ValuesPtr* cur1 = &to_smartptr(this);
 	const ValuesPtr* cur2 = &other;
 
-	int_t size = 1;
 	while(true){
 		if(rawne((*cur1)->head_, (*cur2)->head_)){
 			vm->setup_call(1, (*cur2)->head_);

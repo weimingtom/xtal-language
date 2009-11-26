@@ -17,9 +17,11 @@ VMachine::VMachine(){
 
 	setup_call();
 	fun_frames_.top()->processed = 0;
-	
-	eval_n_ = 0;
+
 	parent_vm_ = 0;
+
+	static uint_t dummy = 0;
+	hook_setting_bit_ = &dummy;
 }
 
 VMachine::~VMachine(){
@@ -598,7 +600,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	if(fun()){
 		debug_info_->set_line(fun()->code()->compliant_lineno(pc));
 		debug_info_->set_file_name(fun()->code()->source_file_name());
-		//debug_info_->set_fun_name(fun()->object_name());
+		debug_info_->set_fun_name(fun()->object_name());
 	}
 	else{
 		debug_info_->set_line(0);
@@ -606,20 +608,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 		debug_info_->set_fun_name("?");
 	}
 
-	if(kind==BREAKPOINT_ASSERT){
-		debug_info_->set_assertion_message(assertion_message_);
-		assertion_message_ = empty_string;
-	}
-	else{
-		debug_info_->set_assertion_message(empty_string);
-	}
-
-	if(kind==BREAKPOINT_THROW){
-		debug_info_->set_exception(ap(except_[0]));
-	}
-	else{
-		debug_info_->set_exception(null);
-	}
+	debug_info_->set_exception(ap(except_[0]));
 
 	make_outer_outer();
 	debug_info_->set_variables_frame(scopes_.top().frame);
@@ -628,7 +617,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 }
 
 debug::CallerInfoPtr VMachine::caller(uint_t n){
-	if(n>=call_stack_size()){
+	if((int_t)n>=call_stack_size()){
 		return null;
 	}
 
@@ -640,25 +629,26 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 	}
 
 	FunFrame& f = *fun_frames_[n];
+	FunFrame& pf = *fun_frames_[n+1];
 	int_t scope_lower = n==0 ? 0 : fun_frames_[n-1]->scope_lower;
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
 
-	if(!f.fun()){
+	if(!pf.fun() || !f.fun()){
 		ret->set_line(0);
 		ret->set_fun(null);
 		return ret;
 	}
 
-	ret->set_line(f.fun()->code()->compliant_lineno(f.poped_pc));
-	ret->set_fun(f.fun());
+	ret->set_line(pf.fun()->code()->compliant_lineno(f.poped_pc));
+	ret->set_fun(pf.fun());
 	make_outer_outer();
 	ret->set_variables_frame(scopes_.reverse_at(scope_lower-1).frame);
 	return ret;
 }
 
 int_t VMachine::call_stack_size(){
-	int_t n = parent_vm_ ? parent_vm_->call_stack_size()-1 : 0; 
+	int_t n = parent_vm_ ? parent_vm_->call_stack_size()-1 : -1; 
 	return n + fun_frames_.size()-1;
 }
 
@@ -668,7 +658,7 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 		int_t scope_lower = fun_frames_[call_n]->scope_lower;
 
 		FramePtr frame;
-		for(uint_t i=0; i<scope_upper - scope_lower; ++i){
+		for(int_t i=0; i<scope_upper - scope_lower; ++i){
 			frame = scopes_.reverse_at(scope_upper-i-1).frame;
 
 			const AnyPtr& ret = frame->member(var);
@@ -699,53 +689,20 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
 	{
 		struct guard{
-			int count;
+			int_t count;
 			guard(){ count = debug::disable_force(); }
 			~guard(){ debug::enable_force(count); }
 		} g;
 
+		make_debug_info(pc, kind);
+
+		// Œ»Ý”­¶‚µ‚Ä‚¢‚é—áŠO‚ð‘Þ”ð‚³‚¹‚é
 		AnyPtr e = ap(except_[0]);
 		except_[0] = null;
 
-		make_debug_info(pc, kind);
+		debug::call_debug_hook(kind, debug_info_);
 
-		switch(kind){
-			XTAL_CASE(BREAKPOINT_LINE){
-				if(const AnyPtr& hook = debug::line_hook()){
-					hook->call(debug_info_);
-				}
-			}
-
-			XTAL_CASE(BREAKPOINT_RETURN){
-				if(const AnyPtr& hook = debug::return_hook()){
-					hook->call(debug_info_);
-				}
-			}
-
-			XTAL_CASE(BREAKPOINT_CALL){
-				if(const AnyPtr& hook = debug::call_hook()){
-					hook->call(debug_info_);
-				}
-			}
-
-			XTAL_CASE(BREAKPOINT_THROW){
-				if(const AnyPtr& hook = debug::throw_hook()){
-					hook->call(debug_info_);
-				}
-			}
-
-			XTAL_CASE(BREAKPOINT_ASSERT){
-				if(const AnyPtr& hook = debug::assert_hook()){
-					hook->call(debug_info_);
-				}
-				else{
-					set_except(cpp_class<AssertionFailed>()->call(debug_info_->assertion_message()));
-					e = ap(except_[0]);
-				}
-			}
-		}
-
-		except_[0] = e;
+		except_[0] = debug_info_->exception();
 	}
 }
 
@@ -844,7 +801,7 @@ const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
 
 void VMachine::visit_members(Visitor& m){
 	GCObserver::visit_members(m);
-	m & debug_info_ & except_[0] & except_[1] & except_[2] & assertion_message_;
+	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		m & stack_[i];

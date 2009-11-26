@@ -397,7 +397,7 @@ void ObjectSpace::gc(){
 	
 	before_gc();
 
-	int_t N = 256;
+	uint_t N = 256;
 
 	first = ConnectedPointer(objects_count_<=N ? 0 : objects_count_-N, objects_list_begin_);
 	last = ConnectedPointer(objects_count_, objects_list_begin_);

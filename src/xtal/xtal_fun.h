@@ -133,6 +133,8 @@ public:
 
 	bool check_arg(const VMachinePtr& vm);
 
+	const StringPtr& object_temporary_name();
+
 public:
 		
 	virtual void rawcall(const VMachinePtr& vm);

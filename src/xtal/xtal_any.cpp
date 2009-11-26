@@ -409,6 +409,8 @@ StringPtr Any::object_name() const{
 		}
 
 		if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
+			ret = mtd->object_temporary_name();
+			if(ret->data_size()!=0){ break; }
 			ret = defined_place_name(mtd->code(), mtd->info()->pc, mtd->info()->name_number);
 			break;
 		}

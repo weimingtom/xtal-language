@@ -579,10 +579,28 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 
 #ifndef XTAL_NO_PARSER
 
+CodePtr compile_stream(const StreamPtr& stream){
+	CodePtr ret;
+
+	{
+		CodeBuilder cb;
+		if(CodePtr fun =  cb.compile(stream, "<eval>")){
+			ret = fun;
+		}
+		else{
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
+			return null;
+		}
+	}
+
+	full_gc();
+	return ret;
+}
+
 CodePtr compile_file(const StringPtr& file_name){
 	CodePtr ret;
 
-	if(StreamPtr fs = open(file_name, Xid(r))){
+	if(StreamPtr fs = open(file_name, "r")){
 		CodeBuilder cb;
 		if(CodePtr fun = cb.compile(fs, file_name)){
 			fs->close();
@@ -603,22 +621,7 @@ CodePtr compile_file(const StringPtr& file_name){
 }
 
 CodePtr compile(const StringPtr& source){
-	CodePtr ret;
-
-	{
-		CodeBuilder cb;
-		StringStreamPtr ms(xnew<StringStream>(source));
-		if(CodePtr fun =  cb.compile(ms, "<eval>")){
-			ret = fun;
-		}
-		else{
-			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
-			return null;
-		}
-	}
-
-	full_gc();
-	return ret;
+	return compile_stream(xnew<StringStream>(source));
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -630,19 +633,49 @@ AnyPtr load(const StringPtr& file_name){
 	return ret;
 }
 
-AnyPtr load_and_save(const StringPtr& file_name){
-	if(CodePtr code = compile_file(file_name)){
-		StreamPtr fs = open(file_name->cat(Xid(c)), Xid(w));
-		fs->serialize(code);
-		fs->close();
-		XTAL_CHECK_EXCEPT(e){
-			XTAL_UNUSED_VAR(e);
-			return undefined;
-		}
-		full_gc();
-		return code->call();
+struct RequireData{
+	AnyPtr require_source_hook;
+};
+
+void set_require_source_hook(const AnyPtr& hook){
+	const SmartPtr<RequireData>& r = cpp_var<RequireData>();
+	r->require_source_hook = hook;
+}
+
+CodePtr require_source(const StringPtr& name){
+	const SmartPtr<RequireData>& r = cpp_var<RequireData>();
+	if(r->require_source_hook){
+		return ptr_cast<Code>(r->require_source_hook->call(name));
 	}
-	full_gc();
+	else{
+		StringPtr temp = ptr_cast<String>(Xf("%s.xtalc")->call(name));
+		if(StreamPtr fs = open(name, "r")){
+			if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
+				return code;
+			}
+		}
+		else{
+			XTAL_CATCH_EXCEPT(e){
+				if(e->is(cpp_class<CompileError>())){
+					XTAL_SET_EXCEPT(e);
+					return null;
+				}
+			}
+
+			temp = ptr_cast<String>(Xf("%s.xtal")->call(name));
+			if(CodePtr ret = compile_file(temp)){
+				return ret;
+			}
+		}
+	}
+
+	return null;
+}
+
+AnyPtr require(const StringPtr& name){
+	if(CodePtr ret = require_source(name)){
+		return ret->call();
+	}
 	return undefined;
 }
 

@@ -84,6 +84,8 @@ public:
 
 	virtual uint_t read(void* p, uint_t size);
 
+	void read_strict(void* p, uint_t size);
+
 	/**
 	* \xbind
 	* \brief ストリームの先頭からoffsetの位置に移動する
@@ -353,8 +355,8 @@ public:
 	* \brief 符号無整数8-bitをストリームから取り出す
 	*/
 	u8 get_u8(){
-		struct{ u8 data[1]; } data;
-		read(data.data, 1);
+		struct{ u8 data[1]; } data = {0};
+		read_strict(data.data, 1);
 		return (u8)data.data[0];
 	}
 
@@ -363,8 +365,8 @@ public:
 	* \brief 符号無整数16-bitをストリームから取り出す
 	*/
 	u16 get_u16be(){
-		struct{ u8 data[2]; } data;
-		read(data.data, 2);
+		struct{ u8 data[2]; } data = {0};
+		read_strict(data.data, 2);
 		return (u16)((data.data[0]<<8) | data.data[1]);
 	}
 
@@ -373,8 +375,8 @@ public:
 	* \brief 符号無整数16-bitをストリームから取り出す
 	*/
 	u16 get_u16le(){
-		struct{ u8 data[2]; } data;
-		read(data.data, 2);
+		struct{ u8 data[2]; } data = {0};
+		read_strict(data.data, 2);
 		return (u16)((data.data[1]<<8) | data.data[0]);
 	}
 
@@ -383,8 +385,8 @@ public:
 	* \brief 符号無整数32-bitをストリームから取り出す
 	*/
 	u32 get_u32be(){
-		struct{ u8 data[4]; } data;
-		read(data.data, 4);
+		struct{ u8 data[4]; } data = {0};
+		read_strict(data.data, 4);
 		return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 	}
 
@@ -393,8 +395,8 @@ public:
 	* \brief 符号無整数32-bitをストリームから取り出す
 	*/
 	u32 get_u32le(){
-		struct{ u8 data[4]; } data;
-		read(data.data, 4);
+		struct{ u8 data[4]; } data = {0};
+		read_strict(data.data, 4);
 		return (u32)((data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 	}
 
@@ -402,8 +404,8 @@ public:
 	* \brief 符号無整数64-bitをストリームから取り出す
 	*/
 	u64 get_u64be(){
-		struct{ u8 data[8]; } data;
-		read(data.data, 8);
+		struct{ u8 data[8]; } data = {0};
+		read_strict(data.data, 8);
 		return (u64)(((u64)data.data[0]<<56) | ((u64)data.data[1]<<48) | ((u64)data.data[2]<<40) | ((u64)data.data[3]<<32) | (data.data[4]<<24) | (data.data[5]<<16) | (data.data[6]<<8) | data.data[7]);
 	}
 
@@ -411,8 +413,8 @@ public:
 	* \brief 符号無整数64-bitをストリームから取り出す
 	*/
 	u64 get_u64le(){
-		struct{ u8 data[8]; } data;
-		read(data.data, 8);
+		struct{ u8 data[8]; } data = {0};
+		read_strict(data.data, 8);
 		return (u64)(((u64)data.data[7]<<56) | ((u64)data.data[6]<<48) | ((u64)data.data[5]<<40) | ((u64)data.data[4]<<32) | (data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 	}
 
@@ -685,7 +687,7 @@ public:
 		open(path, flags);
 	}
 
-	~FileStream(){
+	virtual ~FileStream(){
 		if(impl_){
 			filesystem_lib()->delete_file_stream(impl_);
 		}

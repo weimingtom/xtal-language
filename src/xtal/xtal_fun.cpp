@@ -143,6 +143,13 @@ bool Method::check_arg(const VMachinePtr& vm){
 	return true;
 }
 
+const StringPtr& Method::object_temporary_name(){
+	if(code_ && info_){
+		return (StringPtr&)code_->identifier(info_->name_number);
+	}
+	return empty_string;
+}
+
 void Method::rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=info_->max_param_count){
 		if(!check_arg(vm)){

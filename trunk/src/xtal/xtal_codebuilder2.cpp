@@ -64,7 +64,6 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 	ExprPtr e = ep(p);
 
 	if(e->lineno()!=0){
-		int_t lineno = e->lineno();
 		linenos_.push(e->lineno());
 		if(result_->set_lineno_info(e->lineno())){
 			put_inst(InstLine());

@@ -93,12 +93,6 @@ public:
 
 	/**
 	* \xbind
-	* \brief assertionのメッセージを返す
-	*/
-	const StringPtr& assertion_message(){ return assertion_message_; }
-
-	/**
-	* \xbind
 	* \brief 例外オブジェクトを返す
 	*/
 	const AnyPtr& exception(){ return exception_; }
@@ -120,7 +114,6 @@ public:
 	void set_line(int_t v){ line_ = v; }
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
 	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
-	void set_assertion_message(const StringPtr& v){ assertion_message_ = v; }
 	void set_exception(const AnyPtr& e){ exception_ = e; }
 	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
 
@@ -145,7 +138,6 @@ private:
 	int_t line_;
 	StringPtr file_name_;
 	StringPtr fun_name_;
-	StringPtr assertion_message_;
 	AnyPtr exception_;
 	FramePtr variables_frame_;
 	Any vm_;
@@ -175,13 +167,13 @@ void disable();
 * \brief デバッグ機能を強制的に有効にする
 * デバッグ機能はデフォルトでは無効になっている。
 */
-void enable_force(int_t count);
+void enable_force(uint_t count);
 
 /**
 * \xbind lib::builtin::debug
 * \brief デバッグ機能を強制的に無効にする
 */
-int_t disable_force();
+uint_t disable_force();
 
 /**
 * \xbind lib::builtin::debug
@@ -191,16 +183,18 @@ bool is_enabled();
 
 uint_t hook_setting_bit();
 
+uint_t* hook_setting_bit_ptr();
+
 void set_hook(int_t hooktype, const AnyPtr& hook);
 
 const AnyPtr& hook(int_t hooktype);
 
 /**
 * \xbind lib::builtin::debug
-* \brief 行が変わるたびに呼び出されるフック関数を登録する
+* \brief ブレークポイントに達するたびに呼び出されるフック関数を登録する
 * \param hook 登録するフック関数
 */
-void set_line_hook(const AnyPtr& hook);
+void set_breakpoint_hook(const AnyPtr& hook);
 
 /**
 * \xbind lib::builtin::debug
@@ -232,9 +226,9 @@ void set_assert_hook(const AnyPtr& hook);
 
 /**
 * \xbind lib::builtin::debug
-* \brief set_line_hook関数で登録した関数を取得する
+* \brief set_breakpoint_hook関数で登録した関数を取得する
 */
-const AnyPtr& line_hook();
+const AnyPtr& breakpoint_hook();
 
 /**
 * \xbind lib::builtin::debug
@@ -268,13 +262,15 @@ void remove_breakpoint(const AnyPtr& sorce, int_t line);
 void clear_breakpoint();
 
 enum{
-	GO,
-	STEP,
-	STEP_IN,
+	RUN,
+	STEP_OVER,
+	STEP_INTO,
 	STEP_OUT
 };
 
-void set_breakpoint_hook(const AnyPtr& fun);
+MapPtr make_debug_object(const AnyPtr& v, int depth = 5);
+
+void call_debug_hook(int_t kind, const HookInfoPtr& info);
 
 }
 

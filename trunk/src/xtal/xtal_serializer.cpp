@@ -21,7 +21,9 @@ void Serializer::serialize(const AnyPtr& v){
 
 AnyPtr Serializer::deserialize(){
 	clear();
-	return inner_deserialize();
+	AnyPtr ret = inner_deserialize();
+	XTAL_CHECK_EXCEPT(e){ return undefined; }
+	return ret;
 }
 
 void Serializer::inner_serialize(const AnyPtr& v){
@@ -266,20 +268,22 @@ AnyPtr Serializer::inner_deserialize_serial_new(){
 	int_t num = append_value(null);
 
 	// serial_newをするクラスを取り出す
-	ClassPtr c(ptr_cast<Class>(inner_deserialize()));
+	if(ClassPtr c = (ptr_cast<Class>(inner_deserialize()))){
+		const VMachinePtr& vm = vmachine();
 
-	const VMachinePtr& vm = vmachine();
+		// serial_newを呼び出して、保存しておく
+		vm->setup_call(1);
+		c->s_new(vm);
+		AnyPtr ret = vm->result();
+		values_->set_at(num, ret);
+		vm->cleanup_call();
 
-	// serial_newを呼び出して、保存しておく
-	vm->setup_call(1);
-	c->s_new(vm);
-	AnyPtr ret = vm->result();
-	values_->set_at(num, ret);
-	vm->cleanup_call();
+		ret->s_load(inner_deserialize());
 
-	ret->s_load(inner_deserialize());
+		return ret;
+	}
 
-	return ret;
+	return undefined;
 }
 
 AnyPtr Serializer::inner_deserialize_name(){
@@ -436,6 +440,8 @@ AnyPtr Serializer::inner_deserialize_code(){
 		Code::LineNumberInfo& info = p->lineno_table_[i];
 		info.start_pc = stream_->get_u32be();
 		info.lineno = stream_->get_u32be();
+		info.op = 0;
+		info.breakpoint = 0;
 	}
 
 	sz = stream_->get_u16be();
@@ -461,6 +467,10 @@ AnyPtr Serializer::inner_deserialize_code(){
 
 AnyPtr Serializer::inner_deserialize(){
 	if(stream_->eos()){
+		return undefined;
+	}
+
+	XTAL_CHECK_EXCEPT(e){
 		return undefined;
 	}
 

@@ -10,7 +10,7 @@ namespace xtal{
 
 //#define XTAL_VM_DEF_INST(key) typedef const Inst##key InstType
 //#define inst (*(InstType*)pc)
-#define XTAL_VM_DEF_INST(key) const Inst##key& inst = *(const Inst##key*)pc
+#define XTAL_VM_DEF_INST(key) const Inst##key& inst = *(const Inst##key*)pc; XTAL_UNUSED_VAR(inst)
 
 #define XTAL_VM_RETURN return
 #define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except(pc) : (pc))
@@ -28,7 +28,7 @@ namespace xtal{
 #else
 #	define XTAL_VM_CASE_FIRST(key) case Inst##key::NUMBER: { XTAL_VM_DEF_INST(key);
 #	define XTAL_VM_CASE(key) } case Inst##key::NUMBER: /*printf("%s\n", #key);*/ { XTAL_VM_DEF_INST(key);
-#	define XTAL_VM_LOOP vmloopbegin: switch(*pc){
+#	define XTAL_VM_LOOP switch(xop){
 #	define XTAL_VM_LOOP_END } XTAL_NODEFAULT; }
 #	define XTAL_VM_CONTINUE(x) { pc = (x); goto vmloopbegin; }
 #	define XTAL_VM_CONTINUE0 goto vmloopbegin
@@ -546,7 +546,7 @@ AnyPtr& VMachine::local_variable_out_of_fun(uint_t pos, uint_t depth){
 }
 
 #if 1
-void VMachine::execute_inner(const inst_t* start){
+void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 
 	const inst_t* pc = start;
 
@@ -559,7 +559,7 @@ void VMachine::execute_inner(const inst_t* start){
 	cur.scope_size = scopes_.size();
 	cur.variables_top = variables_top();
 
-	hook_setting_bit_ = debug::hook_setting_bit();
+	hook_setting_bit_ = debug::hook_setting_bit_ptr();
 	thread_yield_count_ = 1000;
 
 	Any values[4];
@@ -567,6 +567,8 @@ void VMachine::execute_inner(const inst_t* start){
 	values[LOAD_UNDEFINED] = undefined;
 	values[LOAD_FALSE] = false;
 	values[LOAD_TRUE] = true;
+
+	inst_t xop = 0;
 
 
 	XTAL_ASSERT(cur.stack_size>=0);
@@ -633,6 +635,7 @@ void VMachine::execute_inner(const inst_t* start){
 		XTAL_COPY_LABEL_ADDRESS(PopGoto),
 		XTAL_COPY_LABEL_ADDRESS(Throw),
 		XTAL_COPY_LABEL_ADDRESS(Assert),
+		XTAL_COPY_LABEL_ADDRESS(BreakPoint),
 		XTAL_COPY_LABEL_ADDRESS(MAX),
 //}}LABELS}
 		};
@@ -792,6 +795,9 @@ zerodiv:
 		XTAL_VM_CONTINUE(&throw_code_);
 	}
 
+vmloopbegin:
+	xop = *pc;
+vmloopbegin2:
 XTAL_VM_LOOP
 
 //{OPS{{
@@ -1219,8 +1225,8 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(FilelocalVariable){ // 8
-		if(eval_n_){
-			const AnyPtr& ret = eval_local_variable(identifier(inst.identifier_number), eval_n_);
+		if(eval_n){
+			const AnyPtr& ret = eval_local_variable(identifier(inst.identifier_number), eval_n);
 			if(rawne(ret, undefined)){
 				set_local_variable(inst.result, ret);
 				XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1543,13 +1549,25 @@ comp_send:
 
 	XTAL_VM_CASE(Assert){ XTAL_VM_CONTINUE(FunAssert(pc)); /*
 		XTAL_VM_FUN;
-		assertion_message_ = ptr_cast<String>(local_variable(inst.message));
+		set_except(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
+
 		if(ap(except_[0])){
 			XTAL_VM_THROW_EXCEPT(ap(except_[0]));
 		}
+
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}*/ }
+
+	XTAL_VM_CASE(BreakPoint){ // 5
+		check_debug_hook(pc, BREAKPOINT);
+		if(inst_t opp = code()->original_op(pc)){
+			xop = opp;
+			goto vmloopbegin2;
+		}
+
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
 
 	XTAL_VM_CASE(MAX){ // 2
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1711,11 +1729,13 @@ const inst_t* VMachine::FunTryBegin(const inst_t* pc){
 const inst_t* VMachine::FunAssert(const inst_t* pc){
 		XTAL_VM_DEF_INST(Assert);
 		XTAL_VM_FUN;
-		assertion_message_ = ptr_cast<String>(local_variable(inst.message));
+		set_except(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
+
 		if(ap(except_[0])){
 			XTAL_VM_THROW_EXCEPT(ap(except_[0]));
 		}
+
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 }
 

@@ -90,7 +90,7 @@ public:
 			members_.set_at_unref(i, value);
 		}
 	}
-		
+
 private:
 
 	/**

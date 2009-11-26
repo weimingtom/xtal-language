@@ -207,6 +207,7 @@ public:
 	XTAL_DEF_MEMBER(1, const ExprPtr&, fun_params);
 	XTAL_DEF_MEMBER(2, const IDPtr&, fun_extendable_param);
 	XTAL_DEF_MEMBER(3, const ExprPtr&, fun_body);
+	XTAL_DEF_MEMBER(4, const IDPtr&, fun_name);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, massign_lhs_exprs);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, massign_rhs_exprs);
@@ -246,6 +247,7 @@ public:
 	XTAL_DEF_MEMBER(0, int_t, class_kind);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, class_mixins);
 	XTAL_DEF_MEMBER(2, const ExprPtr&, class_stmts);
+	XTAL_DEF_MEMBER(3, const IDPtr&, class_name);
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, switch_cond);
 	XTAL_DEF_MEMBER(1, const ExprPtr&, switch_cases);

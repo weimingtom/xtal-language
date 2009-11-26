@@ -109,7 +109,6 @@ void NativeMethod::visit_members(Visitor& m){
 	}
 }
 
-
 void NativeMethod::rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=min_param_count_){
 		int_t n = vm->ordered_arg_count();
@@ -136,6 +135,8 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 			}
 		}
 	}
+
+	UninitializedAny args[16];
 	
 	{ // check arg type
 		Class** param_types = (Class**)((u8*)data_ +  val_size_);
@@ -157,6 +158,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 
 		for(int_t i=0; i<param_n_; ++i){
 			const AnyPtr& arg = vm->arg_unchecked(i);
+			args[i] = (UninitializedAny&)arg;
 
 			if(param_types[i+1]){
 				if(!arg->is(to_smartptr(param_types[i+1]))){ 
@@ -167,7 +169,7 @@ void NativeMethod::rawcall(const VMachinePtr& vm){
 		}
 	}
 
-	fun_(vm, data_);
+	fun_(vm, data_, args);
 }
 
 

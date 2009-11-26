@@ -30,21 +30,46 @@ Code::Code()
 	first_fun_ = xnew<Method>(null, to_smartptr(this), (FunInfo*)0);
 }
 
+Code::~Code(){
+
+}
+
 bool Code::set_lineno_info(uint_t line){
 	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
 		return false;
-	LineNumberInfo lnt={(u16)code_.size(), (u16)line};
+	LineNumberInfo lnt={(u16)code_.size(), (u16)line, 0, 0};
 	lineno_table_.push_back(lnt);
 	return true;
 }
 	
-int_t Code::last_lineno(){
+int_t Code::final_lineno(){
 	if(lineno_table_.empty())
 		return 0;
 	return lineno_table_.back().lineno;
 }
 
 int_t Code::compliant_lineno(const inst_t* p){
+	if(LineNumberInfo* lni = compliant_lineno_info(p)){
+		return lni->lineno;
+	}
+	return 0;
+}
+
+const inst_t* Code::compliant_pc(int_t lineno){
+	int_t nearv = 0xffffff;
+	int_t neari = -1;
+	for(uint_t i=0; i<lineno_table_.size(); ++i){
+		int_t diff = lineno_table_[i].lineno - lineno;
+		if(diff>=0 && diff<nearv){
+			nearv = diff;
+			neari = i;
+		}
+	}
+
+	return neari<0 ? 0 : data() + lineno_table_[neari].start_pc;
+}
+
+Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 	if(!lineno_table_.empty()){
 		LineNumberInfo* begin = &lineno_table_[0];
 		LineNumberInfo* end = begin+lineno_table_.size();
@@ -58,10 +83,10 @@ int_t Code::compliant_lineno(const inst_t* p){
 
 		if(it!=end){
 			if(it==begin){
-				return 1;
+				return &*it;
 			}
 			--it;
-			return it->lineno;
+			return &*it;
 		}
 	}
 
@@ -72,104 +97,6 @@ void Code::rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(filelocal_);
 	first_fun_->rawcall(vm);
 }
-
-/*
-void Code::insert_code(inst_t* p, inst_t* code, int_t size){
-	insert_erase_common(p, size);
-	code_.insert(p-&code_[0], code, size);
-}
-
-void Code::erase_code(inst_t* p, int_t size){
-	insert_erase_common(p, -size);
-	code_.erase(p-&code_[0], size);
-}
-
-bool Code::add_break_point(uint_t lineno){
-	for(uint_t i=0; i<lineno_table_.size(); ++i){
-		if(lineno_table_[i].lineno==lineno){
-			if(code_[lineno_table_[i].start_pc]!=InstBreakPoint::NUMBER){
-				InstBreakPoint break_point;
-				insert_code(&code_[lineno_table_[i].start_pc], (inst_t*)&break_point, sizeof(InstBreakPoint));
-			}
-			return true;
-		}
-	}
-	return false;
-}
-
-void Code::remove_break_point(uint_t lineno){
-	for(uint_t i=0; i<lineno_table_.size(); ++i){
-		if(lineno_table_[i].lineno==lineno){
-			if(code_[lineno_table_[i].start_pc]==InstBreakPoint::NUMBER){
-				erase_code(&code_[lineno_table_[i].start_pc], sizeof(InstBreakPoint));
-			}
-			return;
-		}
-	}
-}
-
-void Code::insert_erase_common(inst_t* p, int_t size){
-	uint_t pos = p - &code_[0];
-	for(uint_t i=0; i<address_jump_table_.size(); ++i){
-		uint_t start = address_jump_table_[i].pos;
-		inst_address_t& address = *(inst_address_t*)&code_[start];
-		uint_t end = start + address;
-
-		if(start<end){
-			if(start<pos && pos<=end){
-				address = address + size;
-			}
-		}
-		else{
-			if(end<=pos && pos<start){
-				address = address - size;
-			}
-		}
-
-		if(start>=pos){
-			address_jump_table_[i].pos += size;
-		}
-	}
-
-	for(uint_t i=0; i<lineno_table_.size(); ++i){
-		if(lineno_table_[i].start_pc>pos){
-			lineno_table_[i].start_pc += size;
-		}
-	}
-
-	for(uint_t i=0; i<xfun_info_table_.size(); ++i){
-		if(xfun_info_table_[i].pc>pos){
-			xfun_info_table_[i].pc += size;
-		}
-	}
-
-	for(uint_t i=0; i<scope_info_table_.size(); ++i){
-		if(scope_info_table_[i].pc>pos){
-			scope_info_table_[i].pc += size;
-		}
-	}
-
-	for(uint_t i=0; i<class_info_table_.size(); ++i){
-		if(class_info_table_[i].pc>pos){
-			class_info_table_[i].pc += size;
-		}
-	}
-
-	for(uint_t i=0; i<except_info_table_.size(); ++i){
-		if(except_info_table_[i].catch_pc>pos){
-			except_info_table_[i].catch_pc += size;
-		}
-
-		if(except_info_table_[i].finally_pc>pos){
-			except_info_table_[i].finally_pc += size;
-		}
-
-		if(except_info_table_[i].end_pc>pos){
-			except_info_table_[i].end_pc += size;
-		}
-	}
-}
-*/
 
 void Code::find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv){
 	for(uint_t j=0; j<info.variable_size; ++j){

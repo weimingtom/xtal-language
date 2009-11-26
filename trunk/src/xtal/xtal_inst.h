@@ -929,7 +929,9 @@ XTAL_DEF_INST_0(57, Throw);
 XTAL_DEF_INST_1(58, Assert,
 		inst_i8_t, message);
 
-XTAL_DEF_INST_0(59, MAX);
+XTAL_DEF_INST_0(59, BreakPoint);
+
+XTAL_DEF_INST_0(60, MAX);
 
 }
 

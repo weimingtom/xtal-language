@@ -83,8 +83,8 @@ public:
 	void put_incdec(const ExprPtr& e, int_t ret, int_t target, int_t stack_top);
 	void compile_incdec(const ExprPtr& e, int_t stack_top);
 	void compile_loop_control_statement(const ExprPtr& e);
-	void compile_class(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id = empty_id);
-	int_t compile_fun(const ExprPtr& e, int_t stack_top, int_t result, const IDPtr& id = empty_id);
+	void compile_class(const ExprPtr& e, int_t stack_top, int_t result);
+	int_t compile_fun(const ExprPtr& e, int_t stack_top, int_t result);
 
 	int_t compile_e(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count);
 
@@ -230,8 +230,6 @@ public:
 	int_t register_value(const AnyPtr& v);
 	int_t append_identifier(const IDPtr& identifier);
 	int_t append_value(const AnyPtr& v);
-
-	ExprPtr setup_expr(const ExprPtr& e);
 
 private:
 	MapPtr value_map_;

@@ -44,22 +44,22 @@ struct ReturnNone{
 template<class T, int N>
 struct ArgGetter{
 	static typename CastResult<T>::type 
-	cast(const VMachinePtr& vm){
-		return unchecked_cast<T>(vm->arg_unchecked(N));
+	cast(const VMachinePtr& vm, UninitializedAny* args){
+		return unchecked_cast<T>((AnyPtr&)args[N]);
 	}
 };
 
 template<class T>
 struct ArgThisGetter{
 	static typename CastResult<T>::type 
-	cast(const VMachinePtr& vm){
+	cast(const VMachinePtr& vm, UninitializedAny* args){
 		return unchecked_cast<T>(vm->arg_this());
 	}
 };
 
 struct ArgGetterVM{
 	static const VMachinePtr& 
-	cast(const VMachinePtr& vm){
+	cast(const VMachinePtr& vm, UninitializedAny* args){
 		return vm;
 	}
 };
@@ -98,10 +98,10 @@ struct cfun{};
 /*
 template<class Fun>
 struct cfun<`n`, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		#REPEAT#typedef typename Fun::ARG`i` A`i`;#
 		Fun::call(data
-			#COMMA_REPEAT#A`i`::cast(vm)#
+			#COMMA_REPEAT#A`i`::cast(vm, args)#
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
@@ -109,7 +109,7 @@ struct cfun<`n`, Fun>{
 
 template<class Fun>
 struct cfun<0, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		
 		Fun::call(data
 			
@@ -119,50 +119,50 @@ struct cfun<0, Fun>{
 
 template<class Fun>
 struct cfun<1, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		typedef typename Fun::ARG0 A0;
 		Fun::call(data
-			, A0::cast(vm)
+			, A0::cast(vm, args)
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class Fun>
 struct cfun<2, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;
 		Fun::call(data
-			, A0::cast(vm), A1::cast(vm)
+			, A0::cast(vm, args), A1::cast(vm, args)
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class Fun>
 struct cfun<3, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;
 		Fun::call(data
-			, A0::cast(vm), A1::cast(vm), A2::cast(vm)
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args)
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class Fun>
 struct cfun<4, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;
 		Fun::call(data
-			, A0::cast(vm), A1::cast(vm), A2::cast(vm), A3::cast(vm)
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args)
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
 
 template<class Fun>
 struct cfun<5, Fun>{
-	static void f(const VMachinePtr& vm, const void* data){
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
 		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;
 		Fun::call(data
-			, A0::cast(vm), A1::cast(vm), A2::cast(vm), A3::cast(vm), A4::cast(vm)
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args)
 		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
 	}
 };
@@ -192,7 +192,7 @@ struct ctor_fun{
 };
 
 struct param_types_holder_n{
-	void (*fun)(const VMachinePtr& vm, const void* data); // 関数
+	void (*fun)(const VMachinePtr& vm, const void* data, UninitializedAny* args); // 関数
 	CppClassSymbolData*** param_types; // thisと引数の型を表すクラスシンボルへのポインタ
 	u8 size;
 	u8 param_n; // 引数の数
@@ -331,7 +331,7 @@ class NativeMethod : public HaveParentRefCountingBase{
 public:
 	enum{ TYPE = TYPE_NATIVE_METHOD };
 
-	typedef void (*fun_t)(const VMachinePtr& vm, const void* data);
+	typedef void (*fun_t)(const VMachinePtr& vm, const void* data, UninitializedAny* args);
 
 	NativeMethod(const param_types_holder_n& pth, const void* val = 0);
 	

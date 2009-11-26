@@ -82,6 +82,24 @@ uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
 	return max;
 }
 
+void Stream::read_strict(void* p, uint_t size){
+	uint_t read = 0;
+	while(true){
+		int temp = this->read((char*)p+read, size-read);
+
+		if(temp<=0){
+			XTAL_SET_EXCEPT(cpp_class<EOSError>()->call(Xt("Xtal Runtime Error 1033")));
+			return;
+		}
+
+		read += temp;
+
+		if(read==size){
+			break;
+		}
+	}
+}
+
 uint_t Stream::print(const AnyPtr& value){
 	StringPtr str = value->to_s(); 
 	return write(str->data(), str->data_size()*sizeof(char_t));

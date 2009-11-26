@@ -275,7 +275,7 @@ public:
 	/**
 	* \brief pos”Ô–Ú‚Ìˆø”‚ğ“¾‚éB
 	*
-	* adjust_args‚ğ“Ç‚ñ‚¾Œã‚¾‚¯g‚¦‚é
+	* adjust_args‚ğŒÄ‚ñ‚¾Œã‚¾‚¯g‚¦‚é
 	*/
 	const AnyPtr& arg_unchecked(int_t pos){
 		return local_variable(pos);
@@ -386,7 +386,7 @@ public:
 
 	void set_except_0(const Any& e);
 
-	void execute_inner(const inst_t* start);
+	void execute_inner(const inst_t* start, int_t eval_n = 0);
 
 	void execute(Method* fun, const inst_t* start_pc);
 
@@ -413,10 +413,6 @@ public:
 	void adjust_values(int_t n, int_t need_result_count);
 	void adjust_values2(int_t stack_base, int_t n, int_t need_result_count);
 	void adjust_values3(Any* values, int_t n, int_t need_result_count);
-
-	void set_hook_setting_bit(uint_t v){
-		hook_setting_bit_ = v;
-	}
 
 public:
 
@@ -662,7 +658,7 @@ private:
 	void debug_hook(const inst_t* pc, int_t kind);
 
 	void check_debug_hook(const inst_t* pc, int_t kind){
-		if((hook_setting_bit_&(1<<kind))==0 || !debug::is_enabled()){
+		if((*hook_setting_bit_&(1<<kind))==0){
 			return;
 		}
 		debug_hook(pc, kind);
@@ -730,6 +726,7 @@ public:
 	const inst_t* FunPopGoto(const inst_t* pc);
 	const inst_t* FunThrow(const inst_t* pc);
 	const inst_t* FunAssert(const inst_t* pc);
+	const inst_t* FunBreakPoint(const inst_t* pc);
 	const inst_t* FunMAX(const inst_t* pc);
 //}}DECLS}
 
@@ -783,14 +780,12 @@ private:
 	PODStack<ExceptFrame> except_frames_;
 	
 	Any except_[3];
-	StringPtr assertion_message_;
 
 	debug::HookInfoPtr debug_info_;
-	int_t hook_setting_bit_;
+	uint_t* hook_setting_bit_;
 
 	int_t thread_yield_count_;
 
-	int_t eval_n_;
 	VMachine* parent_vm_;
 
 protected:

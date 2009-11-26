@@ -93,7 +93,7 @@ Frame::~Frame(){
 		xfree(map_members_, sizeof(map_t));
 	}
 }
-	
+
 void Frame::make_map_members(){
 	if(!map_members_){
 		map_members_ = new(xmalloc(sizeof(map_t))) map_t();

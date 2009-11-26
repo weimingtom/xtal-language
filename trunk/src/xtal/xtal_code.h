@@ -17,18 +17,21 @@ public:
 	
 	Code();
 
-	~Code(){
-
-	}
+	~Code();
 
 	/**
 	* \brief コードに対応したソース行数を返す。
 	*/
 	int_t compliant_lineno(const inst_t* p);
+
+	/**
+	* \brief ソース行数に対応したコード位置を返す。
+	*/
+	const inst_t* compliant_pc(int_t p);
 		
 	bool set_lineno_info(uint_t line);
 
-	int_t last_lineno();
+	int_t final_lineno();
 
 	const inst_t* data(){
 		return &code_[0];
@@ -78,6 +81,10 @@ public:
 		return source_file_name_; 
 	}
 
+	void set_source_file_name(const StringPtr& file_name){
+		source_file_name_ = file_name;
+	}
+
 	const ClassPtr& filelocal(){ 
 		return filelocal_; 
 	}
@@ -108,25 +115,64 @@ public:
 
 	virtual void rawcall(const VMachinePtr& vm);
 
-	/*
-	void insert_code(inst_t* p, inst_t* code, int_t size);
-
-	void erase_code(inst_t* p, int_t size);
-
-	bool add_break_point(uint_t lineno);
-
-	void remove_break_point(uint_t lineno);
-	*/
-
 	void check_implicit_lookup();
 
 	IDPtr find_near_variable(const IDPtr& primary_key);
 
+	/*
+	void set_steppabled(bool steppabled){
+		if(steppabled_!=steppabled){
+			if(steppabled){
+				for(uint_t i=0; i<lineno_table_.size(); ++i){
+					LineNumberInfo& info = lineno_table_[i];
+					info.op = code_[info.start_pc];
+					code_[info.start_pc] = InstBreakPoint::NUMBER;
+				}
+			}
+			else{
+				for(uint_t i=0; i<lineno_table_.size(); ++i){
+					LineNumberInfo& info = lineno_table_[i];
+					if(!info.breakpoint){
+						code_[info.start_pc] = info.op;
+					}
+				}
+			}
+
+			steppabled_ = steppabled;
+		}
+	}
+	*/
+
+	void set_breakpoint(int_t lineno, bool set = true){
+		for(uint_t i=0; i<lineno_table_.size(); ++i){
+			LineNumberInfo& info = lineno_table_[i];
+			if(info.lineno==lineno){
+				if(set){
+					if(!info.breakpoint){
+						info.op = code_[info.start_pc];
+						code_[info.start_pc] = InstBreakPoint::NUMBER;
+					}
+				}
+				else{
+					if(!steppabled_ && info.breakpoint){
+						code_[info.start_pc] = info.op;
+					}
+				}
+				info.breakpoint = (int)set;
+			}
+		}
+	}
+
+	inst_t original_op(const inst_t* pc){
+		if(LineNumberInfo* lni = compliant_lineno_info(pc)){
+			return lni->op;
+		}
+		return 0;
+	}
+
 protected:
 
 	void find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv);
-
-	void insert_erase_common(inst_t* p, int_t size);
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
@@ -158,7 +204,9 @@ private:
 
 	struct LineNumberInfo{
 		u32 start_pc;
-		u32 lineno;
+		u16 lineno;
+		inst_t op;
+		u8 breakpoint;
 	};
 
 	struct LineNumberCmp{
@@ -174,12 +222,13 @@ private:
 	};
 
 	PODArrayList<LineNumberInfo> lineno_table_;
+	bool steppabled_;
+
+	LineNumberInfo* compliant_lineno_info(const inst_t* p);
 
 	struct AddressJump{
 		u32 pos;
 	};
-
-	PODArrayList<AddressJump> address_jump_table_;
 	
 	struct ImplcitInfo{
 		u16 id;

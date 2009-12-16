@@ -11,7 +11,10 @@ namespace xtal{
 	
 struct ParamInfo;
 
-typedef void (*bind_class_fun_t)(const ClassPtr&);
+struct BindBase{
+	void XTAL_set(BindBase*& dest, const char_t*& name, const char_t* given);
+	virtual void XTAL_bind(const ClassPtr& it) = 0;
+};
 
 struct CppClassSymbolData{ 
 	CppClassSymbolData();
@@ -19,8 +22,13 @@ struct CppClassSymbolData{
 	unsigned int value;
 	CppClassSymbolData* prev;
 
-	bind_class_fun_t prebind;
-	bind_class_fun_t bind;
+	BindBase* prebind;
+
+	enum{
+		BIND = 3
+	};
+
+	BindBase* bind[BIND];
 	
 	const char_t* name;
 };
@@ -49,31 +57,32 @@ template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>
 template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
-struct CppClassBindTemp{
-	CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char_t*& name, const char_t* given);
-	char dummy;
-};
+#define XTAL_CAT_(x, y) x ## y
+#define XTAL_CAT(x, y) XTAL_CAT_(x, y)
+#define XTAL_UNIQUE(x) XTAL_CAT(x, __LINE__)
 
-template<class T>
-struct CppClassBindFun{
-	static void prebind(const ClassPtr&);
-	static void bind(const ClassPtr&);
+#define XTAL_BIND_(ClassName, xtbind, xtname) \
+	struct XTAL_UNIQUE(XTAL_bind) : public ::xtal::BindBase{\
+		XTAL_UNIQUE(XTAL_bind)(){\
+			XTAL_set(\
+				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
+				::xtal::CppClassSymbol<ClassName>::make()->name,\
+				xtname);\
+		}\
+		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
+	};\
+	static volatile XTAL_UNIQUE(XTAL_bind) XTAL_UNIQUE(XTAL_bind_var);\
+	inline void XTAL_UNIQUE(XTAL_bind)::XTAL_bind(const ::xtal::ClassPtr& it)
 
-	static volatile CppClassBindTemp bind_temp;
-	static volatile CppClassBindTemp prebind_temp;
-};
 
-#define XTAL_BIND(ClassName) \
-	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr&);\
-	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::bind_temp(\
-		::xtal::CppClassSymbol<ClassName>::make()->bind, &::xtal::CppClassBindFun<ClassName>::bind, ::xtal::CppClassSymbol<ClassName>::make()->name, XTAL_STRING(#ClassName));\
-	template<> void ::xtal::CppClassBindFun<ClassName>::bind(const ::xtal::ClassPtr& it)
+#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName))
+#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName))
+#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName))
+#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName))
 
-#define XTAL_PREBIND(ClassName) \
-	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr&);\
-	template<> volatile ::xtal::CppClassBindTemp xtal::CppClassBindFun<ClassName>::prebind_temp(\
-		::xtal::CppClassSymbol<ClassName>::make()->prebind, &::xtal::CppClassBindFun<ClassName>::prebind, ::xtal::CppClassSymbol<ClassName>::make()->name, XTAL_STRING(#ClassName));\
-	template<> void ::xtal::CppClassBindFun<ClassName>::prebind(const ::xtal::ClassPtr& it)
+#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name))
+#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name))
+
 
 ////////////////////
 
@@ -95,6 +104,36 @@ struct CppVarSymbol{
 
 template<class T>
 CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
+
+
+////////////////////////////////////////
+
+struct IDSymbolData{ 
+	IDSymbolData();
+	unsigned int value;
+};
+
+const IDPtr& intern(const StringLiteral& str);
+const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym);
+
+template<class T>
+struct IDSymbol{
+        static IDSymbolData value;
+};
+
+template<class T>
+IDSymbolData IDSymbol<T>::value;
+
+template<class T>
+inline const IDPtr& make_id(const StringLiteral& str, void (*)(T*), typename T::id* = 0){
+	return intern(str, IDSymbol<T>::value);
+}
+
+inline const IDPtr& make_id(const StringLiteral& str, ...){
+	return intern(str);
+}
+
+#define XTAL_DECL_ID(x) struct XTAL_ID_##x{struct id{}; }; template struct ::xtal::IDSymbol<XTAL_ID_##x>
 
 ////////////////////////////////////////
 

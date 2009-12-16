@@ -208,7 +208,11 @@ public:
 		default_value_ = default_value;
 	}
 
+	StringPtr to_s();
+
 public:
+
+	void block_first(const VMachinePtr& vm);
 
 	struct Fun{
 		static uint_t hash(const AnyPtr& key){
@@ -271,6 +275,8 @@ public:
 	*
 	*/
 	AnyPtr each();
+
+	StringPtr to_s();
 };
 
 }//namespace

@@ -9,6 +9,8 @@
 
 namespace xtal{
 
+struct param_types_holder_n;
+
 class InstanceVariables{
 public:
 
@@ -298,7 +300,7 @@ public:
 	/**
 	* \brief コンストラクタ関数を登録する
 	*/
-	const NativeFunPtr& def_ctor(const NativeFunPtr& ctor_fun);
+	const NativeFunPtr& def_ctor(const NativeFunPtr& ctor_func);
 
 	/**
 	* \brief 登録されたコンストラクタ関数を返す
@@ -308,7 +310,7 @@ public:
 	/**
 	* \brief シリアライズに使われるコンストラクタ関数を登録する
 	*/
-	const NativeFunPtr& def_serial_ctor(const NativeFunPtr& ctor_fun);
+	const NativeFunPtr& def_serial_ctor(const NativeFunPtr& ctor_func);
 
 	/**
 	* \brief 登録されたシリアライズに使われるコンストラクタ関数を返す
@@ -360,6 +362,54 @@ public:
 		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4>());
 	}
 
+	/// 6引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5>
+	const NativeFunPtr& def_ctor6(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5>());
+	}
+
+	/// 7引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+	const NativeFunPtr& def_ctor7(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6>());
+	}
+
+	/// 8引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+	const NativeFunPtr& def_ctor8(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7>());
+	}
+
+	/// 9引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+	const NativeFunPtr& def_ctor9(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>());
+	}
+
+	/// 10引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+	const NativeFunPtr& def_ctor10(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>());
+	}
+
+	/// 11引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+	const NativeFunPtr& def_ctor11(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>());
+	}
+
+	/// 12引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+	const NativeFunPtr& def_ctor12(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>());
+	}
+
+	/// 13引数のコンストラクタ関数を登録する
+	template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+	const NativeFunPtr& def_ctor13(){
+		return def_ctor(xtal::ctor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>());
+	}
+
 //}}REPEAT}
 
 public:
@@ -376,11 +426,11 @@ public:
 	
 	void set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
 
-	const AnyPtr& any_member(const IDPtr& primary_key, const AnyPtr& secondary_key);
-	
-	const AnyPtr& bases_member(const IDPtr& primary_key);
+	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache);
 
 	const AnyPtr& find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+
+	const AnyPtr& find_member_from_inherited_classes(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache);
 
 	ValuesPtr child_object_name(const AnyPtr& a);
 
@@ -424,10 +474,14 @@ public:
 
 	void prebind();
 
-	void bind();
+	bool bind(int_t n = -1);
 
 	void set_symbol_data(CppClassSymbolData* data){
 		symbol_data_ = data;
+	}
+
+	CppClassSymbolData* symbol_data(){
+		return symbol_data_;
 	}
 
 	void set_singleton();
@@ -438,7 +492,7 @@ private:
 
 	const NativeFunPtr& ctor(int_t type);
 
-	const NativeFunPtr& def_ctor(int_t type, const NativeFunPtr& ctor_fun);
+	const NativeFunPtr& def_ctor(int_t type, const NativeFunPtr& ctor_func);
 
 protected:
 
@@ -451,20 +505,6 @@ protected:
 	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
-
-	/*
-	struct InstanceVariablesInfo{
-		ClassInfo* class_info;
-		int_t pos;
-
-		InstanceVariablesInfo(ClassInfo* info = 0, int_t n = 0){
-			class_info = info;
-			pos = n;
-		}
-	};
-
-	PODStack<InstanceVariablesInfo> instance_variables_layout_;
-	*/
 
 	StringPtr name_;
 
@@ -480,7 +520,9 @@ protected:
 		FLAG_FINAL = 1<<1,
 		FLAG_SINGLETON = 1<<2,
 		FLAG_PREBINDED = 1<<3,
-		FLAG_BINDED = 1<<4
+		FLAG_BINDED = 1<<4,
+		FLAG_BINDED2 = 1<<5,
+		FLAG_BINDED3 = 1<<6,
 	};
 
 	virtual void visit_members(Visitor& m){
@@ -502,15 +544,7 @@ public:
 	ClassInheritedClassesIter(const ClassPtr& cls)
 		:class_(cls), index_(0){}
 	
-	void block_next(const VMachinePtr& vm){
-		++index_;
-		if(index_<=class_->inherited_classes_.size()){
-			vm->return_result(to_smartptr(this), to_smartptr(class_->inherited_classes_[index_-1]));
-		}
-		else{
-			vm->return_result(null, null);
-		}
-	}
+	void block_next(const VMachinePtr& vm);
 
 private:
 	ClassPtr class_;

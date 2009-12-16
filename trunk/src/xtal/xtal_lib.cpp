@@ -27,6 +27,8 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 
 		AnyPtr value;
 		Xfor(var, load_path_list_){
+			value = undefined;
+
 			if(CodePtr code = require_source(Xf("%s/%s")->call(var, primary_key)->to_s())){
 				value = code->call();
 			}
@@ -34,13 +36,13 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 				XTAL_CATCH_EXCEPT(e){
 					if(e->is(cpp_class<CompileError>())){
 						XTAL_SET_EXCEPT(e);
-						return null;
+						return undefined;
 					}
 				}
 			}
 
 			XTAL_CATCH_EXCEPT(e){ 
-				return null;
+				return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
 
 			if(!raweq(value, undefined)){
@@ -50,7 +52,7 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 		}
 
 		nocache = true;
-		return undefined;
+		return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 
 		/* 指定した名前をフォルダーとみなす
 		ArrayPtr next = path_.clone();
@@ -58,6 +60,17 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 		AnyPtr lib = xnew<Lib>(next);
 		return rawdef(name, lib, secondary_key);
 		*/
+	}
+}
+
+void Global::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+	Key key = {primary_key, secondary_key};
+	map_t::iterator it = map_members_->find(key);
+	if(it==map_members_->end()){
+		Class::def(primary_key, value, secondary_key, accessibility);
+	}
+	else{
+		overwrite_member(primary_key, value, secondary_key, accessibility);
 	}
 }
 

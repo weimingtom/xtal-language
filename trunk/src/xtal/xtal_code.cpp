@@ -12,17 +12,22 @@ void filelocal_check_implicit_lookup(const AnyPtr& a){
 	}
 }
 
+void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
+	cls->inherit(cls2);
+}
+
 }
 
 Code::Code()
-	:filelocal_(xnew<Class>()), source_file_name_(XTAL_STRING("<noname>")){
-	filelocal_->set_singleton();
-	filelocal_->set_object_temporary_name(Xid(filelocal));
-	filelocal_->set_object_force(500);
-	filelocal_->inherit(builtin());
-	filelocal_->def(Xid(filelocal), filelocal_);
-	filelocal_->def(Xid(code), to_smartptr(this));
-	filelocal_->def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
+	:source_file_name_(XTAL_STRING("<noname>")){
+	set_singleton();
+	set_object_temporary_name(Xid(filelocal));
+	set_object_force(500);
+	inherit(builtin());
+
+	def_method(Xid(inherit), &Class_inherit);
+	def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
+	def(Xid(filelocal), to_smartptr(this));
 
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
@@ -94,7 +99,7 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 }
 
 void Code::rawcall(const VMachinePtr& vm){
-	vm->set_arg_this(filelocal_);
+	vm->set_arg_this(to_smartptr(this));
 	first_fun_->rawcall(vm);
 }
 
@@ -136,7 +141,7 @@ void Code::check_implicit_lookup(){
 	ArrayPtr ary;
 	for(uint_t i=0; i<implicit_table_.size(); ++i){
 		const IDPtr& id = unchecked_ptr_cast<ID>(identifier_table_->at(implicit_table_[i].id));
-		const AnyPtr& ret = filelocal_->member(id);
+		const AnyPtr& ret = member(id);
 		if(raweq(undefined, ret)){
 			if(!ary){
 				ary = xnew<Array>();
@@ -147,7 +152,7 @@ void Code::check_implicit_lookup(){
 	}
 
 	if(ary){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1030")->call(Named(Xid(name), ary))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1030")->call(Named(Xid(name), ary))));
 	}
 }
 

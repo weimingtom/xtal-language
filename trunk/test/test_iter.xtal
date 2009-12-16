@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::IterTest{
+class IterTest{
 
 	throwe#Test{
 		try{

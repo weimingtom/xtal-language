@@ -74,7 +74,7 @@ public:
 		return (*this)()*max; 
 	}
 
-	const float_t operator ()(float_t min, float_t max){
+	float_t operator ()(float_t min, float_t max){
 		return (*this)()*(max-min)+min; 
 	}	
 

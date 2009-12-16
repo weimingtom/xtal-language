@@ -130,6 +130,7 @@
 * IDPtr id = Xid(test);
 * \endcode
 */
+//#define Xid(x) ::xtal::make_id(XTAL_STRING(#x), (struct XTAL_ID_##x*)0)
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
 
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

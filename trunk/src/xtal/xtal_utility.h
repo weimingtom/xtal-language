@@ -128,7 +128,7 @@ private:
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
 #else
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), ::xtal::XUnlock(0)))
 #endif
 
 #ifdef __GNUC__
@@ -311,17 +311,6 @@ struct T2T{
 struct Other{
 	template<class T>
 	Other(const T&){}
-};
-
-template<class T>
-struct IsConst{
-	typedef char (&yes)[2];
-	typedef char (&no)[1];
-	template<class U>
-	static yes test(const U (*)());
-	static no test(...);
-
-	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
 };
 
 template<class T>
@@ -748,6 +737,8 @@ class DoubleDispatchMethod;
 class DoubleDispatchFun;
 class Values;
 class Exception;
+class Format;
+class Text;
 
 typedef SmartPtr<Null> NullPtr;
 typedef SmartPtr<Undefined> UndefinedPtr;
@@ -782,6 +773,8 @@ typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
 typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
 typedef SmartPtr<Values> ValuesPtr;
 typedef SmartPtr<Exception> ExceptionPtr;
+typedef SmartPtr<Text> TextPtr;
+typedef SmartPtr<Format> FormatPtr;
 
 class Base;
 class RefCountingBase;

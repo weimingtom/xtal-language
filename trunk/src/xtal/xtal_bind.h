@@ -600,6 +600,678 @@ struct ctor_fun<T , A0, A1, A2, A3, A4>{
 };
 
 
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cfun_holder_base6{
+	enum{ PARAMS = 6, PARAM_N = 6, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;
+	typedef ReturnResult Result;
+	typedef param_types_holder6<void , A0, A1, A2, A3, A4, A5> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5)> : public cfun_holder_base6<R , A0, A1, A2, A3, A4, A5>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5)> : public cfun_holder_base6<R , A0, A1, A2, A3, A4, A5>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cmemfun_holder_base6{
+	enum{ PARAMS = 7, PARAM_N = 6, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;
+	typedef ReturnResult Result;
+	typedef param_types_holder6<C , A0, A1, A2, A3, A4, A5> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5)> : public cmemfun_holder_base6<C*, R , A0, A1, A2, A3, A4, A5>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5) const> : public cmemfun_holder_base6<C*, R , A0, A1, A2, A3, A4, A5>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5)> : public cmemfun_holder_base6<C, R , A0, A1, A2, A3, A4, A5>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5)> : public cmemfun_holder_base6<C, R , A0, A1, A2, A3, A4, A5>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5>{
+	enum{ PARAMS = 6, PARAM_N = 6, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;
+	typedef ReturnResult Result;
+	typedef param_types_holder6<void , A0, A1, A2, A3, A4, A5> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5){
+		return xnew<T>(a0, a1, a2, a3, a4, a5);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cfun_holder_base7{
+	enum{ PARAMS = 7, PARAM_N = 7, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;
+	typedef ReturnResult Result;
+	typedef param_types_holder7<void , A0, A1, A2, A3, A4, A5, A6> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6)> : public cfun_holder_base7<R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)> : public cfun_holder_base7<R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cmemfun_holder_base7{
+	enum{ PARAMS = 8, PARAM_N = 7, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;
+	typedef ReturnResult Result;
+	typedef param_types_holder7<C , A0, A1, A2, A3, A4, A5, A6> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6)> : public cmemfun_holder_base7<C*, R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const> : public cmemfun_holder_base7<C*, R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6)> : public cmemfun_holder_base7<C, R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6)> : public cmemfun_holder_base7<C, R , A0, A1, A2, A3, A4, A5, A6>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6>{
+	enum{ PARAMS = 7, PARAM_N = 7, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;
+	typedef ReturnResult Result;
+	typedef param_types_holder7<void , A0, A1, A2, A3, A4, A5, A6> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cfun_holder_base8{
+	enum{ PARAMS = 8, PARAM_N = 8, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;
+	typedef ReturnResult Result;
+	typedef param_types_holder8<void , A0, A1, A2, A3, A4, A5, A6, A7> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)> : public cfun_holder_base8<R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)> : public cfun_holder_base8<R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cmemfun_holder_base8{
+	enum{ PARAMS = 9, PARAM_N = 8, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;
+	typedef ReturnResult Result;
+	typedef param_types_holder8<C , A0, A1, A2, A3, A4, A5, A6, A7> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)> : public cmemfun_holder_base8<C*, R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const> : public cmemfun_holder_base8<C*, R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7)> : public cmemfun_holder_base8<C, R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7)> : public cmemfun_holder_base8<C, R , A0, A1, A2, A3, A4, A5, A6, A7>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7>{
+	enum{ PARAMS = 8, PARAM_N = 8, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;
+	typedef ReturnResult Result;
+	typedef param_types_holder8<void , A0, A1, A2, A3, A4, A5, A6, A7> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cfun_holder_base9{
+	enum{ PARAMS = 9, PARAM_N = 9, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;
+	typedef ReturnResult Result;
+	typedef param_types_holder9<void , A0, A1, A2, A3, A4, A5, A6, A7, A8> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)> : public cfun_holder_base9<R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)> : public cfun_holder_base9<R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cmemfun_holder_base9{
+	enum{ PARAMS = 10, PARAM_N = 9, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;typedef ArgGetter<A8, 8> ARG9;
+	typedef ReturnResult Result;
+	typedef param_types_holder9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)> : public cmemfun_holder_base9<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const> : public cmemfun_holder_base9<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8)> : public cmemfun_holder_base9<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8)> : public cmemfun_holder_base9<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
+	enum{ PARAMS = 9, PARAM_N = 9, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;
+	typedef ReturnResult Result;
+	typedef param_types_holder9<void , A0, A1, A2, A3, A4, A5, A6, A7, A8> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cfun_holder_base10{
+	enum{ PARAMS = 10, PARAM_N = 10, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;
+	typedef ReturnResult Result;
+	typedef param_types_holder10<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public cfun_holder_base10<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public cfun_holder_base10<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cmemfun_holder_base10{
+	enum{ PARAMS = 11, PARAM_N = 10, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;typedef ArgGetter<A8, 8> ARG9;typedef ArgGetter<A9, 9> ARG10;
+	typedef ReturnResult Result;
+	typedef param_types_holder10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public cmemfun_holder_base10<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const> : public cmemfun_holder_base10<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public cmemfun_holder_base10<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public cmemfun_holder_base10<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
+	enum{ PARAMS = 10, PARAM_N = 10, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;
+	typedef ReturnResult Result;
+	typedef param_types_holder10<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cfun_holder_base11{
+	enum{ PARAMS = 11, PARAM_N = 11, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;
+	typedef ReturnResult Result;
+	typedef param_types_holder11<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public cfun_holder_base11<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public cfun_holder_base11<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cmemfun_holder_base11{
+	enum{ PARAMS = 12, PARAM_N = 11, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;typedef ArgGetter<A8, 8> ARG9;typedef ArgGetter<A9, 9> ARG10;typedef ArgGetter<A10, 10> ARG11;
+	typedef ReturnResult Result;
+	typedef param_types_holder11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public cmemfun_holder_base11<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const> : public cmemfun_holder_base11<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public cmemfun_holder_base11<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public cmemfun_holder_base11<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
+	enum{ PARAMS = 11, PARAM_N = 11, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;
+	typedef ReturnResult Result;
+	typedef param_types_holder11<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cfun_holder_base12{
+	enum{ PARAMS = 12, PARAM_N = 12, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;typedef ArgGetter<A11, 11> ARG11;
+	typedef ReturnResult Result;
+	typedef param_types_holder12<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> : public cfun_holder_base12<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> : public cfun_holder_base12<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cmemfun_holder_base12{
+	enum{ PARAMS = 13, PARAM_N = 12, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;typedef ArgGetter<A8, 8> ARG9;typedef ArgGetter<A9, 9> ARG10;typedef ArgGetter<A10, 10> ARG11;typedef ArgGetter<A11, 11> ARG12;
+	typedef ReturnResult Result;
+	typedef param_types_holder12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> : public cmemfun_holder_base12<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const> : public cmemfun_holder_base12<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> : public cmemfun_holder_base12<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> : public cmemfun_holder_base12<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
+	enum{ PARAMS = 12, PARAM_N = 12, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;typedef ArgGetter<A11, 11> ARG11;
+	typedef ReturnResult Result;
+	typedef param_types_holder12<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	}
+};
+
+
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cfun_holder_base13{
+	enum{ PARAMS = 13, PARAM_N = 13, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;typedef ArgGetter<A11, 11> ARG11;typedef ArgGetter<A12, 12> ARG12;
+	typedef ReturnResult Result;
+	typedef param_types_holder13<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12> fun_param_holder;
+};
+
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cfun_holder<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> : public cfun_holder_base13<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cfun_holder<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> : public cfun_holder_base13<R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (__stdcall *fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	static R call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (*(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+
+#endif
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cmemfun_holder_base13{
+	enum{ PARAMS = 14, PARAM_N = 13, METHOD = 1, EXTENDABLE = 0 };
+	typedef ArgThisGetter<C> ARG0;
+	typedef ArgGetter<A0, 0> ARG1;typedef ArgGetter<A1, 1> ARG2;typedef ArgGetter<A2, 2> ARG3;typedef ArgGetter<A3, 3> ARG4;typedef ArgGetter<A4, 4> ARG5;typedef ArgGetter<A5, 5> ARG6;typedef ArgGetter<A6, 6> ARG7;typedef ArgGetter<A7, 7> ARG8;typedef ArgGetter<A8, 8> ARG9;typedef ArgGetter<A9, 9> ARG10;typedef ArgGetter<A10, 10> ARG11;typedef ArgGetter<A11, 11> ARG12;typedef ArgGetter<A12, 12> ARG13;
+	typedef ReturnResult Result;
+	typedef param_types_holder13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12> fun_param_holder;
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> : public cmemfun_holder_base13<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cmemfun_holder<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const> : public cmemfun_holder_base13<C*, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (C::*fun_t)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const;
+	static R call(const void* fun, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (self->**(fun_t*)fun)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cmemfun_holder<R (*)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> : public cmemfun_holder_base13<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (*fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+
+#if defined(_WIN32) && defined(_M_IX86)
+template<class C, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct cmemfun_holder<R (__stdcall *)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> : public cmemfun_holder_base13<C, R , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	typedef R (__stdcall *fun_t)(C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	static R call(const void* fun, C c , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){ 
+		return (*(fun_t*)fun)(c , a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); 
+	}
+};
+#endif
+
+template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct ctor_fun<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
+	enum{ PARAMS = 13, PARAM_N = 13, METHOD = 0, EXTENDABLE = 0 };
+	typedef ArgGetter<A0, 0> ARG0;typedef ArgGetter<A1, 1> ARG1;typedef ArgGetter<A2, 2> ARG2;typedef ArgGetter<A3, 3> ARG3;typedef ArgGetter<A4, 4> ARG4;typedef ArgGetter<A5, 5> ARG5;typedef ArgGetter<A6, 6> ARG6;typedef ArgGetter<A7, 7> ARG7;typedef ArgGetter<A8, 8> ARG8;typedef ArgGetter<A9, 9> ARG9;typedef ArgGetter<A10, 10> ARG10;typedef ArgGetter<A11, 11> ARG11;typedef ArgGetter<A12, 12> ARG12;
+	typedef ReturnResult Result;
+	typedef param_types_holder13<void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12> fun_param_holder;
+	typedef char fun_t;
+	static SmartPtr<T> call(const void* fun , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12){
+		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	}
+};
+
+
 //}}REPEAT}
 
 template<class R>

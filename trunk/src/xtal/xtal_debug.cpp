@@ -3,6 +3,14 @@
 
 namespace xtal{ namespace debug{
 
+StringPtr CallerInfo::file_name(){ 
+	return fun_ ? fun_->code()->source_file_name() : "C++ Function"; 
+}
+
+StringPtr CallerInfo::fun_name(){ 
+	return fun_ ? fun_->object_name() : ""; 
+}
+
 void CallerInfo::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & fun_ & variables_frame_;

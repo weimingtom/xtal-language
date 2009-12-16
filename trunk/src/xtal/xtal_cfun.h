@@ -45,7 +45,7 @@ template<class T, int N>
 struct ArgGetter{
 	static typename CastResult<T>::type 
 	cast(const VMachinePtr& vm, UninitializedAny* args){
-		return unchecked_cast<T>((AnyPtr&)args[N]);
+		return unchecked_cast<T>((AnyPtr&)args[N+1]);
 	}
 };
 
@@ -53,7 +53,7 @@ template<class T>
 struct ArgThisGetter{
 	static typename CastResult<T>::type 
 	cast(const VMachinePtr& vm, UninitializedAny* args){
-		return unchecked_cast<T>(vm->arg_this());
+		return unchecked_cast<T>((AnyPtr&)args[0]);
 	}
 };
 
@@ -167,6 +167,86 @@ struct cfun<5, Fun>{
 	}
 };
 
+template<class Fun>
+struct cfun<6, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<7, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<8, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<9, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<10, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<11, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<12, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;typedef typename Fun::ARG11 A11;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args), A11::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
+template<class Fun>
+struct cfun<13, Fun>{
+	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
+		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;typedef typename Fun::ARG11 A11;typedef typename Fun::ARG12 A12;
+		Fun::call(data
+			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args), A11::cast(vm, args), A12::cast(vm, args)
+		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
+	}
+};
+
 //}}REPEAT}
 
 ///////////////////////////////////////////////////////
@@ -186,7 +266,10 @@ struct cmemfun_holder_static : cmemfun_holder<Fun>{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
 };
 
-template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, class A5=void, class A6=void, class A7=void, class A8=void, class A9=void>
+template<class T, 
+class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, 
+class A5=void, class A6=void, class A7=void, class A8=void, class A9=void,
+class A10=void, class A11=void, class A12=void, class A13=void, class A14=void>
 struct ctor_fun{
 	enum{ PARAMS = 0, PARAMS2 = 0 };
 };
@@ -199,18 +282,28 @@ struct param_types_holder_n{
 	u8 extendable; // 可変長かどうか
 };
 
-template<class Fun>
+template<class Func>
 struct fun_param_holder{
+	enum{
+		PARAMS = Func::PARAMS,
+		PARAM_N = Func::PARAM_N,
+		EXTENDABLE = Func::EXTENDABLE,
+	};
+
+	typedef typename Func::fun_param_holder fph;
+	typedef typename Func::fun_t fun_t;
+	typedef cfun<PARAMS, Func> cfun_t;
+
 	static param_types_holder_n value;
 };
 
 template<class Fun>
 param_types_holder_n fun_param_holder<Fun>::value = {
-	&cfun<Fun::PARAMS, Fun>::f,
-	Fun::fun_param_holder::values,
-	sizeof(typename Fun::fun_t),
-	Fun::PARAM_N,
-	Fun::EXTENDABLE,
+	&cfun_t::f,
+	fph::values,
+	sizeof(fun_t),
+	PARAM_N,
+	EXTENDABLE,
 };
 
 //{REPEAT{{
@@ -300,6 +393,102 @@ CppClassSymbolData** param_types_holder5<C , A0, A1, A2, A3, A4>::values[5+1] = 
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,
 };
 
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
+struct param_types_holder6{
+	static CppClassSymbolData** values[6+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
+CppClassSymbolData** param_types_holder6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct param_types_holder7{
+	static CppClassSymbolData** values[7+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+CppClassSymbolData** param_types_holder7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct param_types_holder8{
+	static CppClassSymbolData** values[8+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+CppClassSymbolData** param_types_holder8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct param_types_holder9{
+	static CppClassSymbolData** values[9+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+CppClassSymbolData** param_types_holder9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct param_types_holder10{
+	static CppClassSymbolData** values[10+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+CppClassSymbolData** param_types_holder10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct param_types_holder11{
+	static CppClassSymbolData** values[11+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+CppClassSymbolData** param_types_holder11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct param_types_holder12{
+	static CppClassSymbolData** values[12+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+CppClassSymbolData** param_types_holder12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,
+};
+
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct param_types_holder13{
+	static CppClassSymbolData** values[13+1];
+};
+
+template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+CppClassSymbolData** param_types_holder13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
+	&CppClassSymbol<C>::value,
+	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,&CppClassSymbol<A12>::value,
+};
+
 //}}REPEAT}
 
 ///////////////////////////////////////////////////////
@@ -311,7 +500,8 @@ struct getter_holder{
 	typedef ArgThisGetter<C*> ARG0;
 	typedef param_types_holder0<C> fun_param_holder;
 	typedef T C::* fun_t;
-	static const T& call(const void* fun, C* self){ return self->**(fun_t*)fun; }
+	//static const T* call(const void* fun, C* self){ return &(self->**(fun_t*)fun); }
+	static const T& call(const void* fun, C* self){ return (self->**(fun_t*)fun); }
 };
 
 template<class C, class T>
@@ -322,7 +512,8 @@ struct setter_holder{
 	typedef ArgGetter<typename CastResult<T>::type, 0> ARG1;
 	typedef param_types_holder1<C, T> fun_param_holder;
 	typedef T C::* fun_t;
-	static const T& call(const void* fun, C* self, const T& v){ return self->**(fun_t*)fun = v; }
+	//static const T* call(const void* fun, C* self, const T& v){ self->**(fun_t*)fun = v; return &(self->**(fun_t*)fun); }
+	static const T& call(const void* fun, C* self, const T& v){ self->**(fun_t*)fun = v; return (self->**(fun_t*)fun); }
 };
 
 //////////////////////////////////////////////////////////////
@@ -382,9 +573,12 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, co
 * \brief C++のコンストラクタをXtalから呼び出せるオブジェクトに変換するための擬似関数
 *
 */
-template<class T, class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, class A5=void, class A6=void, class A7=void, class A8=void, class A9=void>
+template<class T, 
+class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, 
+class A5=void, class A6=void, class A7=void, class A8=void, class A9=void,
+class A10=void, class A11=void, class A12=void, class A13=void, class A14=void>
 struct ctor : public NativeFunPtr{
-	typedef ctor_fun<T, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9> fun_t;
+	typedef ctor_fun<T, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14> fun_t;
 	ctor(){
 		NativeFunPtr::operator =(new_native_fun(fun_param_holder<fun_t>::value, 0));
 	}

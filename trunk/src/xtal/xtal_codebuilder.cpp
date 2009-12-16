@@ -145,7 +145,110 @@ CodePtr CodeBuilder::eval_compile(const StringPtr& sorce){
 	e = ep(eb_.pop());
 
 	prev_inst_op_ = -1;
-	return compile_toplevel(e, "<eval>");
+	return compile_eval_toplevel(e, "<eval>");
+}
+
+CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
+	result_ = xnew<Code>();
+	result_->source_file_name_ = source_file_name;
+	result_->except_info_table_.push_back(ExceptInfo());
+
+	result_->identifier_table_ = xnew<Array>();
+	identifier_map_ = xnew<Map>();
+	register_identifier(empty_id);
+
+	result_->value_table_ = xnew<Array>();
+	value_map_ = xnew<Map>();
+	register_value(null);
+	
+	result_->once_table_ = xnew<Array>();
+	result_->once_table_->push_back(undefined);
+
+	linenos_.push(1);
+
+	// 関数フレームを作成する
+	fun_frames_.push();	
+	ff().labels.clear();
+	ff().loops.clear();
+	ff().finallies.clear();
+	ff().var_frame_count = var_frames_.size();
+	ff().stack_count = 0;
+	ff().max_stack_count = 0;
+	ff().variable_count = 1;
+	ff().max_variable_count = 1;
+	ff().extendable_param = true;
+
+	// 変数フレームを作成して、コマンドライン引数を登録する
+	var_begin(VarFrame::FUN);
+
+	// コマンドライン引数
+	var_define(Xid(arg));
+
+	// 関数コアを作成
+	FunInfo info;
+	info.pc = 0;
+	info.kind = KIND_METHOD;
+	info.min_param_count = 0;
+	info.max_param_count = 0;
+	info.name_number = register_identifier(Xid(toplevel));
+	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
+
+	// 引数の名前を識別子テーブルに順番に乗せる
+	info.variable_size = vf().entries.size();
+	info.variable_identifier_offset = result_->identifier_table_->size();
+	for(uint_t i=0; i<vf().entries.size(); ++i){
+		vf().entries[i].initialized = true;
+		result_->identifier_table_->push_back(vf().entries[i].name);
+	}
+
+	int_t fun_info_table_number = 0;
+	result_->xfun_info_table_.push_back(info);
+
+	var_begin(VarFrame::FRAME);
+	scope_begin();	
+
+	// 関数本体を処理する
+	compile_stmt(e);
+
+	scope_end();
+	var_end();
+	
+	break_off(ff().var_frame_count+1);
+
+	put_inst(InstReturn(0));
+	
+	result_->set_lineno_info(result_->final_lineno()+1);
+
+	put_inst(InstThrow());
+
+	process_labels();
+	
+	if(vf().scope_chain){
+		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
+	}
+
+	// 関数フレームをポップする
+	fun_frames_.downsize(1);
+
+	// 変数フレームをポップする
+	var_end();
+
+	Xfor2(k, v, implicit_ref_map_){
+		if(v){
+			Code::ImplcitInfo info = {k->to_i(), v->to_i()};
+			result_->implicit_table_.push_back(info);
+		}
+	}
+
+	if(error_->errors->size()==0){
+		opt_jump();
+		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
+		return result_;
+	}
+	else{
+		result_ = null;
+		return null;
+	}
 }
 
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
@@ -215,7 +318,11 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	
 	break_off(ff().var_frame_count+1);
 
-	put_inst(InstReturn(0));
+	eb_.push(Xid(filelocal));
+	eb_.splice(EXPR_LVAR, 1);
+	eb_.splice(0, 1);
+	eb_.splice(EXPR_RETURN, 1);
+	compile_stmt(eb_.pop());
 	
 	result_->set_lineno_info(result_->final_lineno()+1);
 
@@ -297,7 +404,7 @@ AnyPtr CodeBuilder::errors(){
 
 void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	if(t.op==255){
-		error_->error(lineno(), Xt("Xtal Compile Error 1027"));
+		error_->error(lineno(), Xt("XCE1027"));
 	}
 
 	prev_inst_op_ = t.op;
@@ -344,7 +451,7 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 		}
 	}
 
-	error_->error(lineno(), Xt("Xtal Compile Error 1023")->call(Named(Xid(name), Xid(_)->cat(key))));
+	error_->error(lineno(), Xt("XCE1023")->call(Named(Xid(name), Xid(_)->cat(key))));
 	return 0;
 }
 
@@ -517,7 +624,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	if(number<0){
 		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
-				error_->error(lineno(), Xt("Xtal Compile Error 1026")->call(Named(Xid(name), name)));
+				error_->error(lineno(), Xt("XCE1026")->call(Named(Xid(name), name)));
 				return;
 			}
 		}
@@ -591,7 +698,7 @@ int_t CodeBuilder::code_size(){
 
 void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label, int_t stack_top){
 	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
+		error_->error(lineno(), Xt("XCE1025"));
 	}
 
 	int_t target = stack_top++;
@@ -811,7 +918,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	}
 
 	if(ff().loops.empty()){
-		error_->error(lineno(), Xt("Xtal Compile Error 1006"));
+		error_->error(lineno(), Xt("XCE1006"));
 	}
 	else{
 		if(label){
@@ -827,7 +934,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
+				error_->error(lineno(), Xt("XCE1006"));
 			}
 		}
 		else{
@@ -843,7 +950,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("Xtal Compile Error 1006"));
+				error_->error(lineno(), Xt("XCE1006"));
 			}
 		}
 	}
@@ -1056,7 +1163,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 
 	Xfor_cast(const ExprPtr& v, e->fun_params()){
 		if(!v->at(0) || (ep(v->at(0))->itag()!=EXPR_LVAR && ep(v->at(0))->itag()!=EXPR_IVAR)){
-			error_->error(lineno(), Xt("Xtal Compile Error 1004"));
+			error_->error(lineno(), Xt("XCE1004"));
 			return int_t();
 		}
 
@@ -1065,7 +1172,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 		}
 		else{
 			if(named!=0){
-				error_->error(lineno(), Xt("Xtal Compile Error 1005"));
+				error_->error(lineno(), Xt("XCE1005"));
 			}
 
 			ordered++;
@@ -1348,8 +1455,10 @@ AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
 
 	CodeBuilder cb;
 	if(CodePtr code = cb.eval_compile(source)){
+		AnyPtr self = fun_frames_[1]->self();
 		setup_call(1);
-		code->rawcall(to_smartptr(this));
+		set_arg_this(self);
+		code->first_fun()->rawcall(to_smartptr(this));
 
 		const inst_t* pc = ff().called_pc;
 		ff().called_pc = 0;

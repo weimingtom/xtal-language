@@ -29,6 +29,8 @@ public:
 	CtorCacheTable ctor_cache_table_;
 
 	ClassPtr builtin_;
+	ClassPtr cpp_;
+	ClassPtr global_;
 	LibPtr lib_;
 
 	ArrayPtr vm_list_;

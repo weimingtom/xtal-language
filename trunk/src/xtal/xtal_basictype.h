@@ -307,6 +307,8 @@ public:
 	*/
 	bool op_eq(const ValuesPtr& other);
 
+	StringPtr to_s();
+
 	void visit_members(Visitor& m){
 		m & head_ & tail_;
 	}

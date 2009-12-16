@@ -313,7 +313,29 @@ ArrayPtr Array::op_cat_assign(const ArrayPtr& a){
 }
 	
 StringPtr Array::join(const StringPtr& sep){
-	return ptr_cast<String>(send(Xid(join), sep));
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	if(raweq(sep, empty_string)){
+		for(uint_t i=0, sz=size(); i<sz; ++i){
+			ms->put_s(at(i)->to_s());
+		}
+	}
+	else{
+		for(uint_t i=0, sz=size(); i<sz; ++i){
+			if(i!=0){
+				ms->put_s(sep);
+			}
+			ms->put_s(at(i)->to_s());
+		}
+	}
+	return ms->to_s();
+}
+
+StringPtr Array::to_s(){
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	ms->put_s(XTAL_STRING("["));
+	ms->put_s(join(XTAL_STRING(", ")));
+	ms->put_s(XTAL_STRING("]"));
+	return ms->to_s();
 }
 
 bool Array::op_eq(const ArrayPtr& other){
@@ -342,6 +364,11 @@ AnyPtr Array::each(){
 AnyPtr Array::reverse(){
 	return xnew<ArrayIter>(to_smartptr(this), true);
 }
+	
+void Array::block_first(const VMachinePtr& vm){
+	SmartPtr<ArrayIter> it = xnew<ArrayIter>(to_smartptr(this));
+	it->block_next(vm);
+}
 
 void Array::assign(const AnyPtr& iterator){
 	clear();
@@ -364,7 +391,7 @@ void Array::append(const AnyPtr& iterator){
 }
 
 void Array::throw_index_error(){
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1020")));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1020")));
 }
 
 //////////////////////////////////////////////////
@@ -382,7 +409,7 @@ void ArrayIter::block_next(const VMachinePtr& vm){
 		vm->return_result(null, null);
 	}
 }
-	
+
 bool ArrayIter::block_next_direct(AnyPtr& ret){
 	++index_;
 	if(index_<=array_->size()){

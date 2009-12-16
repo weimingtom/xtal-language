@@ -83,6 +83,13 @@ struct Param{
 
 	Param(bool b){ type = TYPE_FALSE + (int)b; value.ivalue = 0; }
 
+	template<class T>
+	Param(const T* p){
+		AnyPtr v(p);
+		type = xtal::type(v);
+		value = rawvalue(v);
+	}
+
 	int_t type;
 
 	struct NamedPair{
@@ -211,6 +218,30 @@ public:
 
 	/// \brief 関数を呼び出す用意をし、同時に引数を6個積む
 	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を7個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を8個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を9個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を10個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を11個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を12個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を13個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12);
+
+	/// \brief 関数を呼び出す用意をし、同時に引数を14個積む
+	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13);
 
 //}}REPEAT}
 
@@ -384,6 +415,8 @@ public:
 
 	void set_except(const AnyPtr& e);
 
+	void set_except_x(const AnyPtr& e);
+
 	void set_except_0(const Any& e);
 
 	void execute_inner(const inst_t* start, int_t eval_n = 0);
@@ -509,7 +542,7 @@ public:
 		//void set_fun(const MethodPtr& v){ fun_ = v; }
 		void set_fun(){ fun_ = null; outer_ = null; }
 		//void set_fun(const MethodPtr& v){ fun_ = v; identifier_ = &fun()->code()->identifier(0); }
-		void set_fun(const MethodPtr& v){ fun_ = v; outer_ = v->outer();  identifier_ = &fun()->code()->identifier(0); }
+		void set_fun(const MethodPtr& v);
 		//void set_fun(){ fun_ = null; outer_ = null; }
 		void set_outer(const Any& v){ outer_ = v; }
 		void set_self(const Any& v){ self_ = v; }

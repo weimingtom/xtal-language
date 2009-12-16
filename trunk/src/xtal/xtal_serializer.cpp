@@ -220,7 +220,9 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		for(uint_t i=0; i<sz; ++i){
 			Code::LineNumberInfo& info = p->lineno_table_[i];
 			stream_->put_u32be(info.start_pc);
-			stream_->put_u32be(info.lineno);
+			stream_->put_u16be(info.lineno);
+			stream_->put_u8(info.op);
+			stream_->put_u8(info.breakpoint);
 		}
 			
 		sz = p->once_table_->size();
@@ -363,13 +365,13 @@ AnyPtr Serializer::inner_deserialize_code(){
 	CodePtr p = xnew<Code>();
 
 	if(stream_->get_u8()!='t' || stream_->get_u8()!='a' || stream_->get_u8()!='l'){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1009")));
 		return null;
 	}
 
 	xtal::u8 version1 = stream_->get_u8(), version2 = stream_->get_u8();
 	if(version1!=SERIALIZE_VERSION1 || version2!=SERIALIZE_VERSION2){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1009")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1009")));
 		return null;
 	}
 	
@@ -439,9 +441,9 @@ AnyPtr Serializer::inner_deserialize_code(){
 	for(uint_t i=0; i<sz; ++i){
 		Code::LineNumberInfo& info = p->lineno_table_[i];
 		info.start_pc = stream_->get_u32be();
-		info.lineno = stream_->get_u32be();
-		info.op = 0;
-		info.breakpoint = 0;
+		info.lineno = stream_->get_u16be();
+		info.op = stream_->get_u8();
+		info.breakpoint = stream_->get_u8();
 	}
 
 	sz = stream_->get_u16be();
@@ -570,7 +572,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	}
 
 	if(!ret){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1008")->call(Named(Xid(object), n))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1008")->call(Named(Xid(object), n))));
 		return null;
 	}
 

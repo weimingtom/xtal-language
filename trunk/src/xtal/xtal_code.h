@@ -12,7 +12,7 @@ namespace xtal{
 /**
 * \brief コンパイルされたバイトコード
 */
-class Code : public Base{
+class Code : public Class{
 public:
 	
 	Code();
@@ -86,7 +86,7 @@ public:
 	}
 
 	const ClassPtr& filelocal(){ 
-		return filelocal_; 
+		return to_smartptr((Class*)this); 
 	}
 
 	ScopeInfo* scope_info(int_t i){
@@ -119,32 +119,8 @@ public:
 
 	IDPtr find_near_variable(const IDPtr& primary_key);
 
-	/*
-	void set_steppabled(bool steppabled){
-		if(steppabled_!=steppabled){
-			if(steppabled){
-				for(uint_t i=0; i<lineno_table_.size(); ++i){
-					LineNumberInfo& info = lineno_table_[i];
-					info.op = code_[info.start_pc];
-					code_[info.start_pc] = InstBreakPoint::NUMBER;
-				}
-			}
-			else{
-				for(uint_t i=0; i<lineno_table_.size(); ++i){
-					LineNumberInfo& info = lineno_table_[i];
-					if(!info.breakpoint){
-						code_[info.start_pc] = info.op;
-					}
-				}
-			}
-
-			steppabled_ = steppabled;
-		}
-	}
-	*/
-
 	void set_breakpoint(int_t lineno, bool set = true){
-		for(uint_t i=0; i<lineno_table_.size(); ++i){
+		for(uint_t i=0, sz=lineno_table_.size(); i<sz; ++i){
 			LineNumberInfo& info = lineno_table_[i];
 			if(info.lineno==lineno){
 				if(set){
@@ -154,7 +130,7 @@ public:
 					}
 				}
 				else{
-					if(!steppabled_ && info.breakpoint){
+					if(info.breakpoint){
 						code_[info.start_pc] = info.op;
 					}
 				}
@@ -175,8 +151,8 @@ protected:
 	void find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv);
 
 	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & identifier_table_ & value_table_ & filelocal_ & source_file_name_ & first_fun_ & once_table_;
+		Class::visit_members(m);
+		m & identifier_table_ & value_table_ & source_file_name_ & first_fun_ & once_table_;
 	}
 
 private:
@@ -191,7 +167,6 @@ private:
 	ArrayPtr identifier_table_;
 	ArrayPtr value_table_;
 	ArrayPtr once_table_;
-	ClassPtr filelocal_;
 	StringPtr source_file_name_;
 	MethodPtr first_fun_;
 
@@ -222,14 +197,9 @@ private:
 	};
 
 	PODArrayList<LineNumberInfo> lineno_table_;
-	bool steppabled_;
 
 	LineNumberInfo* compliant_lineno_info(const inst_t* p);
 
-	struct AddressJump{
-		u32 pos;
-	};
-	
 	struct ImplcitInfo{
 		u16 id;
 		u16 lineno;

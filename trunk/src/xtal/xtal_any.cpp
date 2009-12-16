@@ -200,6 +200,198 @@ AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param
 	return vm->result_and_cleanup_call();
 }
 
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_keyメソッドを呼び出す
+AnyPtr Any::send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	rawsend(vm, primary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief primary_key#secondary_keyメソッドを呼び出す
+AnyPtr Any::send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	rawsend(vm, primary_key, secondary_key);
+	return vm->result_and_cleanup_call();
+}
+
+/// \brief 関数を呼び出す
+AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const{
+	const VMachinePtr& vm = vmachine();
+	vm->setup_call(1, a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	rawcall(vm);
+	return vm->result_and_cleanup_call();
+}
+
 //}}REPEAT}
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
@@ -292,8 +484,8 @@ StringPtr Any::to_s() const{
 
 		XTAL_CASE(TYPE_INT){ return Xf("%d")->call(ap(*this))->to_s(); }
 		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
-		XTAL_CASE(TYPE_FALSE){ return Xid(true); }
-		XTAL_CASE(TYPE_TRUE){ return Xid(false); }
+		XTAL_CASE(TYPE_FALSE){ return Xid(false); }
+		XTAL_CASE(TYPE_TRUE){ return Xid(true); }
 		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
 	}

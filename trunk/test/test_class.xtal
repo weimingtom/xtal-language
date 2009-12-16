@@ -29,7 +29,7 @@ Singleton: singleton{
 	}
 }
 
-filelocal::TestFoo: class{
+TestFoo: class{
 	_obj;
 	
 	setup#Before: method{
@@ -58,7 +58,7 @@ filelocal::TestFoo: class{
 	}
 }
 
-filelocal::TestBar: class{
+TestBar: class{
 	_obj;
 	
 	setup#Before: method{
@@ -95,7 +95,7 @@ filelocal::TestBar: class{
 	}
 }
 
-filelocal::TestSingleton: class{
+TestSingleton: class{
 	tests#Test: method{
 		assert Singleton.class===Singleton;
 		assert Singleton::bar()=="aaa";
@@ -107,7 +107,7 @@ filelocal::TestSingleton: class{
 	}
 }
 
-class filelocal::TestEq{
+class TestEq{
 	testeq#Test{
 		class Foo {
 				op_eq(a){

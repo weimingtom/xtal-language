@@ -88,6 +88,10 @@ Frame& Frame::operator=(const Frame& v){
 }
 
 Frame::~Frame(){
+	if(!orphan_){
+		members_.detach();
+	}
+
 	if(map_members_){
 		map_members_->~Hashtable();
 		xfree(map_members_, sizeof(map_t));

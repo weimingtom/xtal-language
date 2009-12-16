@@ -11,19 +11,19 @@ void append_text_map(const AnyPtr& map){
 	text_map()->append(map);
 }
 
-AnyPtr text(const StringPtr& text){
+TextPtr text(const StringPtr& text){
 	return xnew<Text>(text);
 }
 
-AnyPtr text(const StringLiteral& text){
+TextPtr text(const StringLiteral& text){
 	return xnew<Text>(text);
 }
 
-AnyPtr format(const StringPtr& text){
+FormatPtr format(const StringPtr& text){
 	return xnew<Format>(text);
 }
 
-AnyPtr format(const StringLiteral& text){
+FormatPtr format(const StringLiteral& text){
 	return xnew<Format>(text);
 }
 

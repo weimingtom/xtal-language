@@ -1,7 +1,7 @@
 inherit(lib::test);
 inherit(xpeg);
 
-class filelocal::TestXpeg{
+class TestXpeg{
 
 	com#Test{
 		assert "a".match(~"b")
@@ -21,6 +21,46 @@ class filelocal::TestXpeg{
 		assert !"((((((((((((((((((((a)(a)))(aaaaa))))())))()))))))))))".match(pattern);
 	}
 	
+	tee#Test{
+		pattern: ">" >> cap(test: any/0) >> (eol | eos);
+		
+		assert ">test\n>aaa".scan(pattern).map(|it| it["test"])[].size==2;
+	}
+	
+	nov#Test{
+		pattern: ">" >> leaf(alpha*0) >> (eol | eos);
+		ret: ">test\n>aaa".parse(pattern);
+
+		assert ret;
+	}
+	
+	bind{
+		source: "/**
+		 * \brief test
+		 * \xbind
+		 */
+		 void foo();";
+		 
+		balance: decl();
+		balance.body = "(" >> (~set("()")*0|balance*0) >> ")";
+		
+		ws: set(" \t");
+		mlcomment: "/*" >> cap(comment: any/0) >> "*/" >> ws*0 >> eol;
+		slcomment: "//" >> cap(comment: any/0) >> eol;
+		
+		funpattern: any/0 >> cap(name: word*1) >> "(";
+		
+		exe: xpeg::Executor(source);
+		while(exe.match(mlcomment | slcomment)){
+			exe2: xpeg::Executor(exe["comment"]);
+			if(exe2.match("xbind")){
+				if(exe.match(funpattern)){
+					exe["name"].p;
+				}
+			}
+		}
+	}
+				
 	expr#Test{
 		add_expr: decl();
 		mul_expr: decl();
@@ -30,6 +70,7 @@ class filelocal::TestXpeg{
 		mul_expr.body = node( (primary >> "*" >> mul_expr)  | (primary >> "/" >> mul_expr) ) | primary;
 		
 		expr: bos >> add_expr >> eos;
+		
 		assert "10+20".match(expr);
 		assert !"10-*20".match(expr);
 		assert "(((((((((1)))))))))+(((((((((1)))))))))".match(expr);

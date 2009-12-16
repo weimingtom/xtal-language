@@ -116,6 +116,9 @@ public:
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = insert(ids[i]);
 		}
+
+		static IDSymbolData key;
+		id_list_.resize(key.value);
 	}
 
 	void uninitialize(){
@@ -124,7 +127,19 @@ public:
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = null;
 		}
+
+		for(int i=0, sz=id_list_.size(); i<sz; ++i){
+			id_list_.set_at(i, null);
+		}
 	}
+
+	const IDPtr& make_id(const StringLiteral& str, const IDSymbolData& sym){
+		int n = sym.value;
+		if(!id_list_.at(n)){
+			id_list_.set_at(n, insert(str, str.size()));
+		}
+		return (const IDPtr&)id_list_.at(n);
+	}	
 
 	void visit_members(Visitor& m){
 		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
@@ -195,6 +210,8 @@ private:
 	table_t table_;
 
 	IDPtr id_op_list_[IDOp::id_op_MAX];
+
+	xarray id_list_;
 
 protected:
 

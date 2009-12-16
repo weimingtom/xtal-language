@@ -47,7 +47,7 @@ uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t in
 			return variables_info_[size].pos + index;
 		}
 	}
-	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("Xtal Runtime Error 1003")));
+	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("XRE1003")));
 	return 0;
 }
 
@@ -204,21 +204,21 @@ void Class::inherit(const ClassPtr& cls){
 void Class::inherit_first(const ClassPtr& cls){
 	if(cls->is_singleton()){
 		if(!is_singleton()){
-			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1031")));
+			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1031")));
 			return;
 		}
 	}
 	else{
 		if(cls->is_native()){
 			if(is_inherited_cpp_class()){
-				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1019")));
+				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1019")));
 				return;
 			}
 		}
 	}
 
 	if(cls->is_final()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1028")->call(Named(Xid(name), cls->object_name()))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1028")->call(Named(Xid(name), cls->object_name()))));
 		return;
 	}
 
@@ -227,7 +227,7 @@ void Class::inherit_first(const ClassPtr& cls){
 
 void Class::inherit_strict(const ClassPtr& cls){
 	if(cls->is_native()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1029")->call(Named(Xid(name), cls->object_name()))));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1029")->call(Named(Xid(name), cls->object_name()))));
 		return;
 	}
 
@@ -238,8 +238,8 @@ AnyPtr Class::inherited_classes(){
 	return xnew<ClassInheritedClassesIter>(to_smartptr(this));
 }
 
-const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_fun){
-	ctor_[type] = ctor_fun;
+const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_func){
+	ctor_[type] = ctor_func;
 	flags_ |= FLAG_NATIVE;
 	invalidate_cache_ctor();
 	return ctor_[type];
@@ -265,16 +265,16 @@ const NativeFunPtr& Class::ctor(int_t type){
 	return unchecked_ptr_cast<NativeMethod>(null);
 }
 
-const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_fun){
-	return def_ctor(0, ctor_fun);
+const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_func){
+	return def_ctor(0, ctor_func);
 }
 
 const NativeFunPtr& Class::ctor(){
 	return ctor(0);
 }
 
-const NativeFunPtr& Class::def_serial_ctor(const NativeFunPtr& ctor_fun){
-	return def_ctor(1, ctor_fun);
+const NativeFunPtr& Class::def_serial_ctor(const NativeFunPtr& ctor_func){
+	return def_ctor(1, ctor_func);
 }
 
 const NativeFunPtr& Class::serial_ctor(){
@@ -408,7 +408,7 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 		invalidate_cache_member();
 	}
 	else{
-		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt("Xtal Runtime Error 1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
+		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt("XRE1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
 	}
 }
 
@@ -432,44 +432,63 @@ void Class::def(const char8_t* primary_key, const AnyPtr& value){
 	return def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
 }
 
-const AnyPtr& Class::any_member(const IDPtr& primary_key, const AnyPtr& secondary_key){
-	cpp_class<Any>()->bind();
-
+const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
-	if(it!=map_members_->end()){
+	if(it!=map_members_->end()){		
+		accessibility = it->second.flags & 0x3;
 		return member_direct(it->second.num);
 	}
+
+	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
+		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
+			const AnyPtr& ret = find_member(primary_key, to_smartptr(klass->inherited_classes_[i]), accessibility, nocache);
+			if(rawne(ret, undefined)){
+				return ret;
+			}
+		}
+
+		if(rawne(cpp_class<Any>(), klass)){
+			const AnyPtr& ret = find_member(primary_key, cpp_class<Any>(), accessibility, nocache);
+			if(rawne(ret, undefined)){
+				return ret;
+			}
+		}	
+	}
+
 	return undefined;
 }
-
-const AnyPtr& Class::bases_member(const IDPtr& name){
-	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const AnyPtr& ret = inherited_classes_[i-1]->member(name)){
+	
+const AnyPtr& Class::find_member_from_inherited_classes(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
+	for(int_t i=inherited_classes_.size(); i>0; --i){
+		const AnyPtr& ret = inherited_classes_[i-1]->find_member(primary_key, secondary_key, true, accessibility, nocache);
+		if(rawne(ret, undefined)){
 			return ret;
 		}
 	}
+
 	return undefined;
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
-
-	if(it!=map_members_->end()){
-		// メンバが見つかった
-		
-		accessibility = it->second.flags & 0x3;
-		return member_direct(it->second.num);
+	const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
+	if(rawne(ret, undefined)){
+		return ret;
 	}
-	
-	// 継承しているクラスを順次検索
-	if(inherited_too){
-		for(int_t i=inherited_classes_.size(); i>0; --i){
-			const AnyPtr& ret = inherited_classes_[i-1]->rawmember(primary_key, secondary_key, true, accessibility, nocache);
+
+	for(int_t i=0; i<CppClassSymbolData::BIND; ++i){
+		if(bind(i)){
+			const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
 			if(rawne(ret, undefined)){
 				return ret;
 			}
+		}
+	}
+
+	if(inherited_too){
+		const AnyPtr& ret = find_member_from_inherited_classes(primary_key, secondary_key, accessibility, nocache);
+		if(rawne(ret, undefined)){
+			return ret;
 		}
 	}
 
@@ -477,52 +496,15 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 }
 
 const AnyPtr& Class::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	XTAL_CHECK_EXCEPT(e){ return undefined; }
-
-	bind();
-
-	{
-		const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
-		if(rawne(ret, undefined)){
-			return ret;
-		}
-
-		//XTAL_CHECK_EXCEPT(e){ return undefined; }
-	}
-		
-	{
-		const AnyPtr& ret = cpp_class<Any>()->any_member(primary_key, secondary_key);
-		if(rawne(ret, undefined)){
-			return ret;
-		}
-
-		//XTAL_CHECK_EXCEPT(e){ return undefined; }
+	const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
+	if(rawne(ret, undefined)){
+		return ret;
 	}
 
-	// 見つからなかった。
-
-	// もしsecond keyがクラスの場合、スーパークラスをsecond keyに変え、順次試していく
-	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
-		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = rawmember(primary_key, to_smartptr(klass->inherited_classes_[i]), inherited_too, accessibility, nocache);
-			if(rawne(ret, undefined)){
-				return ret;
-			}
-		}
-
-		//XTAL_CHECK_EXCEPT(e){ return undefined; }
-
-		if(rawne(cpp_class<Any>(), klass)){
-			const AnyPtr& ret = rawmember(primary_key, cpp_class<Any>(), inherited_too, accessibility, nocache);
-			if(rawne(ret, undefined)){
-				return ret;
-			}
-
-			//XTAL_CHECK_EXCEPT(e){ return undefined; }
-		}	
+	if(inherited_too){
+		return cpp_class<Any>()->find_member(primary_key, secondary_key, false, accessibility, nocache);
 	}
 
-	// やっぱり見つからなかった。
 	return undefined;
 }
 
@@ -645,7 +627,7 @@ void Class::rawcall(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+			vm->set_except(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
 		}
 	}
 	else{
@@ -683,7 +665,7 @@ void Class::rawcall(const VMachinePtr& vm){
 
 void Class::s_new(const VMachinePtr& vm){
 	if(is_singleton()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
 		return;
 	}
 
@@ -693,7 +675,7 @@ void Class::s_new(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1013")->call(object_name())));
+			vm->set_except(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
 		}
 	}
 	else{
@@ -736,19 +718,32 @@ void Class::prebind(){
 	if((flags_ & FLAG_PREBINDED)==0){
 		flags_ |= FLAG_PREBINDED;
 		if(symbol_data_ && symbol_data_->prebind){
-			symbol_data_->prebind(to_smartptr(this));
+			symbol_data_->prebind->XTAL_bind(to_smartptr(this));
 		}
 	}
 }
 
-void Class::bind(){
-	if((flags_ & FLAG_BINDED)==0){
-		flags_ |= FLAG_BINDED;
+bool Class::bind(int_t n){
+	if(n<0){
+		bool ret = false;
+		for(int_t i=0; i<CppClassSymbolData::BIND; ++i){
+			if(bind(i)){
+				ret = true;
+			}
+		}
+		return ret;
+	}
+
+	if((flags_ & (FLAG_BINDED<<n))==0){
+		flags_ |= (FLAG_BINDED<<n);
 		prebind();
-		if(symbol_data_ && symbol_data_->bind){
-			symbol_data_->bind(to_smartptr(this));
+		if(symbol_data_ && symbol_data_->bind[n]){
+			symbol_data_->bind[n]->XTAL_bind(to_smartptr(this));
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void Class::set_singleton(){
@@ -767,6 +762,16 @@ void Class::init_singleton(const VMachinePtr& vm){
 		vm->set_arg_this(to_smartptr(this));
 		ret->rawcall(vm);
 		vm->cleanup_call();
+	}
+}
+
+void ClassInheritedClassesIter::block_next(const VMachinePtr& vm){
+	++index_;
+	if(index_<=class_->inherited_classes_.size()){
+		vm->return_result(to_smartptr(this), to_smartptr(class_->inherited_classes_[index_-1]));
+	}
+	else{
+		vm->return_result(null, null);
 	}
 }
 

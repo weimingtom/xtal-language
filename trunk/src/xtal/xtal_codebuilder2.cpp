@@ -80,7 +80,7 @@ void CodeBuilder::compile_stmt(const AnyPtr& p){
 
 int_t CodeBuilder::compile_e(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	if(!e){
-		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("XCE1001"));
 		return 0;
 	}
 
@@ -347,7 +347,7 @@ int_t CodeBuilder::compile_expr_USHR(const ExprPtr& e, int_t stack_top, int_t re
 
 int_t CodeBuilder::compile_comp_bin2(const ExprPtr& e, int_t stack_top, int_t result){
 	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1025"));
+		error_->error(lineno(), Xt("XCE1025"));
 	}
 
 	int_t label_false = reserve_label();
@@ -820,7 +820,7 @@ int_t CodeBuilder::compile_send(const AnyPtr& eterm, const AnyPtr& eprimary, con
 			}
 			else{
 				if(named!=0){
-					error_->error(lineno(), Xt("Xtal Compile Error 1005"));
+					error_->error(lineno(), Xt("XCE1005"));
 				}
 
 				ordered++;
@@ -874,7 +874,7 @@ int_t CodeBuilder::compile_call(int_t target, int_t self, const ExprPtr& args, c
 			}
 			else{
 				if(named!=0){
-					error_->error(lineno(), Xt("Xtal Compile Error 1005"));
+					error_->error(lineno(), Xt("XCE1005"));
 				}
 
 				ordered++;
@@ -961,7 +961,7 @@ int_t CodeBuilder::compile_expr_RETURN(const ExprPtr& e, int_t stack_top, int_t 
 	break_off(ff().var_frame_count+1);
 	put_inst(InstReturn(count));
 	if(count>=256){
-		error_->error(lineno(), Xt("Xtal Compile Error 1022"));
+		error_->error(lineno(), Xt("XCE1022"));
 	}	
 	
 	return 0;
@@ -1438,7 +1438,7 @@ int_t CodeBuilder::compile_expr_MASSIGN(const ExprPtr& e, int_t stack_top, int_t
 			put_inst(InstSetAt(var, key, target, stack_top));
 		}
 		else{
-			error_->error(lineno(), Xt("Xtal Compile Error 1012"));
+			error_->error(lineno(), Xt("XCE1012"));
 		}
 	}
 
@@ -1547,7 +1547,7 @@ int_t CodeBuilder::compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t
 			put_inst(InstDefineMember(nterm, primary, sec, flags, target));
 		}
 		else{
-			error_->error(lineno(), Xt("Xtal Compile Error 1012"));
+			error_->error(lineno(), Xt("XCE1012"));
 		}
 	}
 
@@ -1558,7 +1558,7 @@ void CodeBuilder::compile_lassign(int_t target, const IDPtr& var){
 	LVarInfo varinfo = var_find(var);
 	if(varinfo.pos>=0){
 		if(entry(varinfo).constant){
-			error_->error(lineno(), Xt("Xtal Compile Error 1019")->call(Named(Xid(name), var)));
+			error_->error(lineno(), Xt("XCE1019")->call(Named(Xid(name), var)));
 		}
 
 		if(varinfo.pos<=0xff && !varinfo.out_of_fun){
@@ -1571,7 +1571,7 @@ void CodeBuilder::compile_lassign(int_t target, const IDPtr& var){
 		entry(varinfo).value = undefined;
 	}
 	else{
-		error_->error(lineno(), Xt("Xtal Compile Error 1009")->call(Named(Xid(name), var)));
+		error_->error(lineno(), Xt("XCE1009")->call(Named(Xid(name), var)));
 	}	
 }
 
@@ -1605,7 +1605,7 @@ int_t CodeBuilder::compile_expr_ASSIGN(const ExprPtr& e, int_t stack_top, int_t 
 		put_inst(InstSetAt(target, key, value, stack_top));
 	}
 	else{
-		error_->error(lineno(), Xt("Xtal Compile Error 1012"));
+		error_->error(lineno(), Xt("XCE1012"));
 	}
 
 	return 0;
@@ -1649,7 +1649,7 @@ int_t CodeBuilder::compile_expr_DEFINE(const ExprPtr& e, int_t stack_top, int_t 
 		put_inst(InstDefineMember(lhs, primary, secondary, flags, rhs));
 	}
 	else{
-		error_->error(lineno(), Xt("Xtal Compile Error 1012"));
+		error_->error(lineno(), Xt("XCE1012"));
 	}
 
 	return 0;
@@ -1793,6 +1793,32 @@ int_t CodeBuilder::compile_expr_TOPLEVEL(const ExprPtr& e, int_t stack_top, int_
 	check_lvar_assign_stmt(e);
 	scope_begin();{
 		Xfor(v, e->toplevel_stmts()){
+			if(ExprPtr e = ep(v)){
+				if(e->itag()==EXPR_DEFINE){
+					if(e->bin_lhs()->itag()==EXPR_LVAR && (e->bin_rhs()->itag()==EXPR_CLASS || e->bin_rhs()->itag()==EXPR_FUN)){
+						ExprPtr lhs = e->bin_lhs();
+						eb_.push(Xid(filelocal));
+						eb_.splice(EXPR_LVAR, 1);
+						eb_.push(lhs->lvar_name());
+						eb_.push(null);
+						eb_.splice(EXPR_MEMBER, 3);
+						e->set_bin_lhs(ep(eb_.pop()));
+						compile_stmt(e);
+
+						e->set_bin_lhs(lhs);
+						eb_.push(Xid(filelocal));
+						eb_.splice(EXPR_LVAR, 1);
+						eb_.push(lhs->lvar_name());
+						eb_.push(null);
+						eb_.splice(EXPR_MEMBER, 3);
+						e->set_bin_rhs(ep(eb_.pop()));
+						compile_stmt(e);
+
+						continue;
+					}
+				}
+			}
+
 			compile_stmt(v);
 		}
 	}scope_end();

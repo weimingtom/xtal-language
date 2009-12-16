@@ -1,7 +1,7 @@
 
 inherit(lib::test);
 
-class filelocal::TestFiber{
+class TestFiber{
 	
 	yield_expr#Test{
 		fib: fiber(a){

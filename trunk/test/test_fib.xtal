@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::FibTest{
+class FibTest{
 	fib: fun(i){
 		if(i<2){
 			return 1;

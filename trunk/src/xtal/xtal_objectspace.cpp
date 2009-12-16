@@ -171,12 +171,15 @@ void ObjectSpace::initialize(){
 	cycle_count_ = 0;
 
 	disable_finalizer_ = false;
+	def_all_cpp_classes_ = false;
 
 	disable_gc();
 
 	expand_objects_list();
 
 	static CppClassSymbolData key;
+	symbol_data_ = &key;
+
 	class_table_.resize(key.value);
 	for(uint_t i=0; i<key.value; ++i){
 		class_table_[i] = 0;
@@ -494,7 +497,6 @@ void ObjectSpace::full_gc(){
 			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
 				
-
 				// Ž€ŽÒ‚Ìfinalizer‚ð‘–‚ç‚¹‚é
 				for(ConnectedPointer it = alive; it!=current; ++it){
 					RefCountingBase* p = *it;
@@ -591,6 +593,21 @@ void ObjectSpace::bind_all(){
 		if(class_table_[i]){
 			class_table_[i]->bind();
 		}
+	}
+}
+
+void ObjectSpace::def_all_cpp_classes(){
+	if(!def_all_cpp_classes_){
+		ClassPtr it = cpp();
+		for(uint_t i=0; i<class_table_.size(); ++i){
+			if(class_table_[i] && class_table_[i]->symbol_data() && class_table_[i]->symbol_data()->name){
+				IDPtr id = class_table_[i]->symbol_data()->name;
+				if(!it->member(id)){
+					it->def(id, to_smartptr(class_table_[i]));
+				}
+			}
+		}
+		def_all_cpp_classes_ = true;
 	}
 }
 

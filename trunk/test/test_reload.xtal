@@ -4,7 +4,7 @@ class lib::ReloadTestClass{
 	public _test;
 }
 
-class filelocal::ReloadTest{
+class ReloadTest{
 	test#Test{
 		rc: lib::ReloadTestClass();
 		rc.test = 10;

@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::MVTest{
+class MVTest{
 
 	mv5#Test{
 		foo: fun(){ return 0, 1, 2, 3, 4; }

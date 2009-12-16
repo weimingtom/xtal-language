@@ -73,9 +73,65 @@ AnyPtr Arguments::named_arguments(){
 	return null;
 }
 
+AnyPtr Arguments::each(){
+	return xnew<ArgumentsIter>(to_smartptr(this));
+}
+
+
+StringPtr Arguments::to_s(){
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	ms->put_s(XTAL_STRING("("));
+	Xfor2(key, val, each()){
+		if(!first_step){
+			ms->put_s(XTAL_STRING(", "));
+		}
+		ms->put_s(key->to_s());
+		ms->put_s(XTAL_STRING(":"));
+		ms->put_s(val->to_s());
+	}
+	ms->put_s(XTAL_STRING(")"));
+	return ms->to_s();
+}
+
 void Arguments::visit_members(Visitor& m){
 	Base::visit_members(m);
 	m & ordered_ & named_;
+}
+
+ArgumentsIter::ArgumentsIter(const ArgumentsPtr& a){
+	ait_ = ptr_cast<ArrayIter>(a->ordered_arguments());
+	mit_ = ptr_cast<MapIter>(a->named_arguments());
+	index_ = 0;
+}
+		
+void ArgumentsIter::block_next(const VMachinePtr& vm){
+	if(ait_){
+		AnyPtr ret;
+		if(ait_->block_next_direct(ret)){
+			vm->return_result(to_smartptr(this), index_, ret);
+			index_++;
+			return;
+		}
+
+		ait_ = null;
+	}
+
+	if(mit_){
+		AnyPtr key, val;
+		if(mit_->block_next_direct(key, val)){
+			vm->return_result(to_smartptr(this), key, val);
+			return;
+		}
+
+		mit_ = null;
+	}
+
+	vm->return_result(null, null);
+}
+
+void ArgumentsIter::visit_members(Visitor& m){
+	Base::visit_members(m);
+	m & ait_ & mit_;
 }
 
 InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
@@ -104,12 +160,28 @@ Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* info)
 	:outer_(outer), code_(code), info_(info){
 }
 
+const inst_t* Method::source(){ 
+	return code_->data()+info_->pc; 
+}
+
+const IDPtr& Method::param_name_at(size_t i){ 
+	return code_->identifier(i+info_->variable_identifier_offset); 
+}
+
+int_t Method::param_size(){ 
+	return info_->variable_size-(int)extendable_param(); 
+}	
+
+bool Method::extendable_param(){ 
+	return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; 
+}
+
 bool Method::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<info_->min_param_count || (!(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM) && n>info_->max_param_count)){
 		if(info_->min_param_count==0 && info_->max_param_count==0){
 			XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-				Xt("Xtal Runtime Error 1007")->call(
+				Xt("XRE1007")->call(
 					Named(Xid(object), object_name()),
 					Named(Xid(value), n)
 				)
@@ -119,7 +191,7 @@ bool Method::check_arg(const VMachinePtr& vm){
 		else{
 			if(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM){
 				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-					Xt("Xtal Runtime Error 1005")->call(
+					Xt("XRE1005")->call(
 						Named(Xid(object), object_name()),
 						Named(Xid(min), info_->min_param_count),
 						Named(Xid(value), n)
@@ -129,7 +201,7 @@ bool Method::check_arg(const VMachinePtr& vm){
 			}
 			else{
 				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-					Xt("Xtal Runtime Error 1006")->call(
+					Xt("XRE1006")->call(
 						Named(Xid(object), object_name()),
 						Named(Xid(min), info_->min_param_count),
 						Named(Xid(max), info_->max_param_count),

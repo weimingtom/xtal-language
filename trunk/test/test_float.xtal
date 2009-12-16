@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::FloatTest{
+class FloatTest{
 
 	near: fun(a, b){
 		return math::abs(a-b)<0.000001;

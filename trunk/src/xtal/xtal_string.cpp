@@ -280,11 +280,11 @@ String& String::operator= (const String& s){
 	return *this;
 }
 
-uint_t String::length(){
+uint_t String::length() const{
 	return string_length(c_str());
 }
 
-const char_t* String::c_str(){
+const char_t* String::c_str() const{
 	if(type(*this)==TYPE_STRING){
 		return ((StringData*)rcpvalue(*this))->buf();
 	}
@@ -293,11 +293,11 @@ const char_t* String::c_str(){
 	}
 }
 
-const char_t* String::data(){
+const char_t* String::data() const{
 	return c_str();
 }
 
-uint_t String::data_size(){
+uint_t String::data_size() const{
 	if(type(*this)==TYPE_STRING){
 		return ((StringData*)rcpvalue(*this))->data_size();
 	}
@@ -312,11 +312,11 @@ uint_t String::data_size(){
 	}
 }
 
-StringPtr String::clone(){
+StringPtr String::clone() const{
 	return to_smartptr(this);
 }
 
-const IDPtr& String::intern(){
+const IDPtr& String::intern() const{
 	if(type(*this)==TYPE_STRING){
 		StringData* p = ((StringData*)rcpvalue(*this));
 		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
@@ -327,7 +327,7 @@ const IDPtr& String::intern(){
 	}
 }
 
-bool String::is_interned(){
+bool String::is_interned() const{
 	if(type(*this)==TYPE_STRING){
 		return ((StringData*)rcpvalue(*this))->is_interned();
 	}
@@ -336,11 +336,11 @@ bool String::is_interned(){
 	}
 }
 
-StringPtr String::to_s(){
+StringPtr String::to_s() const{
 	return to_smartptr(this);
 }
 
-int_t String::to_i(){
+int_t String::to_i() const{
 	const char_t* str = data();
 	int_t ret = 0;
 	int_t start = 0, sign = 1;
@@ -360,7 +360,7 @@ int_t String::to_i(){
 	return ret*sign; 
 }
 
-float_t String::to_f(){
+float_t String::to_f() const{
 	const char_t* str = data();
 	float_t ret = 0;
 	float_t scale = 10;
@@ -386,15 +386,15 @@ float_t String::to_f(){
 	return ret*sign; 
 }
 
-AnyPtr String::each(){
+AnyPtr String::each() const{
 	return xnew<StringEachIter>(to_smartptr(this));
 }
 
-bool String::is_ch(){
+bool String::is_ch() const{
 	return string_is_ch(data(), data_size());
 }
 
-int_t String::ascii(){
+int_t String::ascii() const{
 	if(data_size()==0){
 		return -1;
 	}
@@ -403,15 +403,15 @@ int_t String::ascii(){
 	return ch<128 ? ch : 255;
 }
 	
-bool String::op_in(const ChRangePtr& range){
+bool String::op_in(const ChRangePtr& range) const{
 	const char_t* str = c_str();
 	return ch_cmp(str, data_size(), range->left()->c_str(), range->left()->data_size())>=0 &&
 		ch_cmp(str, data_size(), range->right()->c_str(), range->right()->data_size())<=0;
 }
 
-ChRangePtr String::op_range(const StringPtr& right, int_t kind){
+ChRangePtr String::op_range(const StringPtr& right, int_t kind) const{
 	if(kind!=RANGE_CLOSED){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1025")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1025")));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 
@@ -419,44 +419,44 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind){
 		return xnew<ChRange>(to_smartptr(this), right);
 	}
 	else{
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1023")));
+		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1023")));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 }
 
-StringPtr String::op_cat(const StringPtr& v){
+StringPtr String::op_cat(const StringPtr& v) const{
 	return xnew<String>(c_str(), data_size(), v->c_str(), v->data_size());
 }
 
-bool String::op_eq(const StringPtr& v){ 
+bool String::op_eq(const StringPtr& v) const{ 
 	return string_compare(data(), data_size(), v->data(), v->data_size())==0; 
 }
 
-bool String::op_lt(const StringPtr& v){
+bool String::op_lt(const StringPtr& v) const{
 	return string_compare(data(), data_size(), v->data(), v->data_size()) < 0;
 }
 
-StringPtr String::cat(const StringPtr& v){
+StringPtr String::cat(const StringPtr& v) const{
 	return op_cat(v);
 }
 
-AnyPtr String::scan(const AnyPtr& pattern){
+AnyPtr String::scan(const AnyPtr& pattern) const{
 	return send(Xid(scan), pattern);
 }
 
-AnyPtr String::split(const AnyPtr& pattern){
+AnyPtr String::split(const AnyPtr& pattern) const{
 	return send(Xid(split), pattern);
 }
 	
-bool String::match(const AnyPtr& pattern){
+bool String::match(const AnyPtr& pattern) const{
 	return send(Xid(match), pattern);
 }
 
-StringPtr String::gsub(const AnyPtr& pattern, const AnyPtr& fn){
+StringPtr String::gsub(const AnyPtr& pattern, const AnyPtr& fn) const{
 	return ptr_cast<String>(send(Xid(gsub), pattern, fn));
 }
 
-StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn){
+StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn) const{
 	return ptr_cast<String>(send(Xid(sub), pattern, fn));
 }
 

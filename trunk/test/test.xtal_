@@ -18,7 +18,7 @@ lib::test: singleton{
 			println(it);
 			run_file(it);
 		}
-		
+			
 		printf("ok=%d, fail=%d\n", _ok, _fail);
 	}
 	
@@ -29,7 +29,7 @@ lib::test: singleton{
 			code: compile_file(file);
 			code();
 			
-			code.filelocal.members{ |name, name2, mem|
+			code.members{ |name, name2, mem|
 				if(mem is Class){
 					tests: [];
 					befores: [];

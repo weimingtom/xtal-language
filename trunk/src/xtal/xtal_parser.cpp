@@ -292,7 +292,7 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_.peek())){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 16)));
+		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 16)));
 	}
 
 	return ret;		
@@ -314,7 +314,7 @@ int_t Lexer::parse_oct(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('8'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 8)));
+		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 8)));
 	}
 
 	return ret;		
@@ -336,7 +336,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_.peek()) || ('2'<=reader_.peek() && reader_.peek()<='9')){
-		error_->error(lineno(), Xt("Xtal Compile Error 1015")->call(Named(Xid(n), 2)));
+		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 2)));
 	}
 
 	return ret;
@@ -349,7 +349,7 @@ void Lexer::parse_number_suffix(int_t val){
 	else{
 
 		if(test_ident_rest(reader_.peek())){
-			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
+			error_->error(lineno(), Xt("XCE1010"));
 		}
 
 		push_int_token(val);
@@ -363,7 +363,7 @@ void Lexer::parse_number_suffix(float_t val){
 	else{
 	
 		if(test_ident_rest(reader_.peek())){
-			error_->error(lineno(), Xt("Xtal Compile Error 1010"));
+			error_->error(lineno(), Xt("XCE1010"));
 		}
 
 		push_float_token(val);
@@ -418,7 +418,7 @@ void Lexer::parse_number(){
 				}
 
 				if(!test_digit(reader_.peek())){
-					error_->error(lineno(), Xt("Xtal Compile Error 1014"));
+					error_->error(lineno(), Xt("XCE1014"));
 				}
 
 				e *= parse_integer();
@@ -537,7 +537,7 @@ void Lexer::do_read(){
 							}
 						}
 						else if(ch==-1){
-							error_->error(lineno(), Xt("Xtal Compile Error 1021"));
+							error_->error(lineno(), Xt("XCE1021"));
 							break;
 						}
 					}
@@ -639,7 +639,7 @@ void Lexer::do_read(){
 				}
 				else if(reader_.eat('.')){
 					if(!reader_.eat('.')){
-						error_->error(lineno(), Xt("Xtal Compile Error 1001"));					
+						error_->error(lineno(), Xt("XCE1001"));					
 					}
 
 					if(reader_.eat('<')){
@@ -710,6 +710,11 @@ void Lexer::do_read(){
 			}
 			
 			XTAL_CASE('.'){ 
+				if(test_digit(reader_.peek(1))){
+					parse_number();
+					return;
+				}
+				
 				reader_.read();
 				if(reader_.eat('.')){
 					if(reader_.eat('.')){ push_token(c3('.', '.', '.')); }
@@ -820,7 +825,7 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 			++depth;
 		}
 		if(ch==-1){
-			error_->error(lineno(), Xt("Xtal Compile Error 1011"));
+			error_->error(lineno(), Xt("XCE1011"));
 			break;
 		}
 		if(ch=='\\'){
@@ -1020,7 +1025,7 @@ void Parser::expect(int_t ch){
 	if(eat(ch)){
 		return;
 	}		
-	error_->error(lineno(), Xt("Xtal Compile Error 1002")->call(Named(Xid(char), lexer_peek().to_s())));
+	error_->error(lineno(), Xt("XCE1002")->call(Named(Xid(char), lexer_peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){
@@ -1121,7 +1126,7 @@ bool Parser::parse_term(){
 
 						default:
 							close = open;
-							error_->error(lineno(), Xt("Xtal Compile Error 1017"));
+							error_->error(lineno(), Xt("XCE1017"));
 							break;
 					}
 
@@ -1182,7 +1187,7 @@ bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 	bool one = pri < op;
 	bool two = pri-l_space < op - r_space;
 	if(one!=two){
-		error_->error(lineno(), Xt("Xtal Compile Error 1028"));
+		error_->error(lineno(), Xt("XCE1028"));
 	}
 	return one;
 }
@@ -1646,7 +1651,7 @@ bool Parser::parse_assign_stmt(){
 							return true;
 						}
 						else{
-							error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+							error_->error(lineno(), Xt("XCE1001"));
 						}
 						
 						return true;
@@ -1754,7 +1759,7 @@ bool Parser::parse_stmt(){
 
 void Parser::expect_parse_stmt(){
 	if(!parse_stmt()){
-		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("XCE1001"));
 		eb_.push(null);
 	}
 }
@@ -1802,7 +1807,7 @@ void Parser::parse_stmts(){
 
 void Parser::expect_parse_identifier(){
 	if(!parse_identifier()){
-		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("XCE1001"));
 		eb_.push(null);
 	}
 }
@@ -1954,7 +1959,7 @@ void Parser::parse_class(int_t kind){
 			}
 			else{
 				eb_.pop();
-				error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+				error_->error(lineno(), Xt("XCE1001"));
 			}
 		}
 		else{
@@ -2150,7 +2155,7 @@ bool Parser::parse_expr(){
 
 void Parser::expect_parse_expr(int_t pri, int_t space){
 	if(!parse_expr(pri, space)){
-		error_->error(lineno(), Xt("Xtal Compile Error 1001"));
+		error_->error(lineno(), Xt("XCE1001"));
 		eb_.push(null);
 	}
 }

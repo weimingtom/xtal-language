@@ -154,10 +154,10 @@ void PODStackBase::detach(){
 //////////////////////////
 
 StackBase::StackBase(size_t onesize,
-	void (*ctor)(void* p),
+	void (*ctorc)(void* p),
 	void (*copy_ctor)(void* p, const void* q),
 	void (*dtor)(void* p))
-	:impl_(onesize), ctor_(ctor), copy_ctor_(copy_ctor), dtor_(dtor){} 
+	:impl_(onesize), ctor_(ctorc), copy_ctor_(copy_ctor), dtor_(dtor){} 
 
 StackBase::StackBase(const StackBase& v)
 	:impl_(v.impl_){

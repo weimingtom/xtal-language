@@ -103,26 +103,6 @@ public:
 };
 
 /**
-* \brief TCPストリームライブラリ
-*/
-class TCPStreamLib{
-public:
-	virtual ~TCPStreamLib(){}
-
-	virtual void* new_server();
-	virtual void delete_server();
-
-
-	virtual void* accept();
-
-	virtual void* new_stream(){ return 0; }
-	virtual void delete_stream(void* stream_object){}
-
-	virtual uint_t write_stream(void* stream_object, const void* dest, uint_t size){ return 0; }
-	virtual uint_t read_stream(void* stream_object, void* dest, uint_t size){ return 0; }
-};
-
-/**
 * \brief 使用ライブラリの指定のための構造体
 */
 struct Setting{
@@ -319,6 +299,8 @@ inline const ClassPtr& cpp_class(){
 
 void bind_all();
 
+void def_all_cpp_classes();
+
 /////////////////////////////////////////////////////
 
 /**
@@ -406,9 +388,19 @@ void vmachine_swap_temp();
 const ClassPtr& builtin();
 
 /**
+* \brief cppオブジェクトを返す
+*/
+const ClassPtr& cpp();
+
+/**
 * \brief libオブジェクトを返す
 */
 const LibPtr& lib();
+
+/**
+* \brief globalオブジェクトを返す
+*/
+const ClassPtr& global();
 
 /**
 * \brief stdinストリームオブジェクトを返す
@@ -458,6 +450,12 @@ inline const IDPtr& intern(const StringLiteral& str){
 }
 
 /**
+* \internal
+* \brief 文字列リテラルをインターン済み文字列に変換する
+*/
+const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym);
+
+/**
 * \brief インターン済み文字列を列挙する
 */
 AnyPtr interned_strings();
@@ -473,11 +471,11 @@ void xlock();
 void xunlock();
 
 struct XUnlock{
-	XUnlock(int){ xunlock(); }
+	explicit XUnlock(int){ xunlock(); }
 	~XUnlock(){ xlock(); }
+	XUnlock(const XUnlock&){ xunlock(); }
+	void operator =(const XUnlock&){ xunlock(); }
 	operator bool() const{ return true; }
-private:
-	XTAL_DISALLOW_COPY_AND_ASSIGN(XUnlock);
 };
 
 void register_thread(Environment*);

@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::TestExcept{
+class TestExcept{
 	
 	try_break#Test{
 		temp : 0;

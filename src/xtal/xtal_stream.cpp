@@ -88,7 +88,7 @@ void Stream::read_strict(void* p, uint_t size){
 		int temp = this->read((char*)p+read, size-read);
 
 		if(temp<=0){
-			XTAL_SET_EXCEPT(cpp_class<EOSError>()->call(Xt("Xtal Runtime Error 1033")));
+			XTAL_SET_EXCEPT(cpp_class<EOSError>()->call(Xt("XRE1033")));
 			return;
 		}
 

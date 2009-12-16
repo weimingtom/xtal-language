@@ -85,6 +85,30 @@ void Map::push_all(const VMachinePtr& vm){
 	}	
 }
 
+StringPtr Map::to_s(){
+	if(is_empty()){
+		return XTAL_STRING("[:]");
+	}
+
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	ms->put_s(XTAL_STRING("["));
+	for(iterator p = begin(); p!=end(); ++p){
+		if(p!=begin()){
+			ms->put_s(XTAL_STRING(", "));
+		}
+		ms->put_s(p->first->to_s());
+		ms->put_s(XTAL_STRING(":"));
+		ms->put_s(p->second->to_s());
+	}	
+	ms->put_s(XTAL_STRING("]"));
+	return ms->to_s();
+}
+
+void Map::block_first(const VMachinePtr& vm){
+	SmartPtr<MapIter> it = xnew<MapIter>(to_smartptr(this), 0);
+	it->block_next(vm);
+}
+
 //////////////////////////////////////////////////////////
 
 MapIter::MapIter(const MapPtr& m, int_t type)
@@ -184,6 +208,22 @@ void MapIter::visit_members(Visitor& m){
 
 AnyPtr Set::each(){
 	return xnew<MapIter>(to_smartptr(this), 3);
+}
+
+StringPtr Set::to_s(){
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	ms->put_s(XTAL_STRING("["));
+	for(iterator p = begin(); p!=end(); ++p){
+		if(p!=begin()){
+			ms->put_s(XTAL_STRING(", "));
+		}
+
+		if(p->second){
+			ms->put_s(p->first->to_s());
+		}
+	}	
+	ms->put_s(XTAL_STRING("]"));
+	return ms->to_s();
 }
 
 }

@@ -2,7 +2,7 @@ inherit(lib::test);
 
 return;
 
-class filelocal::ThreadTest{
+class ThreadTest{
 	test#Test{
 		ret: [];
 		t1: Thread();

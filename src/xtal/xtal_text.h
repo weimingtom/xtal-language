@@ -41,7 +41,6 @@ private:
 	const char_t* parse_format_inner(const char_t* str);
 
 	const char_t* parse_format_digit(const char_t* str, int_t& digit);
-
 };
 
 class Format : public Base{
@@ -78,14 +77,13 @@ private:
 	StringPtr key_;
 };
 
-AnyPtr text(const StringPtr& text);
-AnyPtr text(const StringLiteral& text);
+TextPtr text(const StringPtr& text);
+TextPtr text(const StringLiteral& text);
 
-AnyPtr format(const StringPtr& text);
-AnyPtr format(const StringLiteral& text);
+FormatPtr format(const StringPtr& text);
+FormatPtr format(const StringLiteral& text);
 
 void assign_text_map(const AnyPtr& map_iter);
-
 void append_text_map(const AnyPtr& map_iter);
 
 }

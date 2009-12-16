@@ -40,14 +40,14 @@ public:
 	/**
 	* \brief ”z—ñ‚Ì’·‚³‚ð•Ô‚·
 	*/
-	uint_t length(){
+	uint_t length() const{
 		return size_;
 	}
 
 	/**
 	* \brief ”z—ñ‚Ì’·‚³‚ð•Ô‚·
 	*/
-	uint_t size(){
+	uint_t size() const{
 		return size_;
 	}
 
@@ -70,7 +70,7 @@ public:
 	/**
 	* \brief i”Ô–Ú‚Ì—v‘f‚ð•Ô‚·
 	*/
-	const AnyPtr& at(int_t i){
+	const AnyPtr& at(int_t i) const{
 		XTAL_ASSERT(0<=i && (uint_t)i<size_);
 		return values_[i];
 	}
@@ -115,7 +115,7 @@ public:
 	* \xbind
 	* \brief æ“ª‚Ì—v‘f‚ð•Ô‚·
 	*/
-	const AnyPtr& front(){
+	const AnyPtr& front() const{
 		return at(0);
 	}
 
@@ -123,7 +123,7 @@ public:
 	* \xbind
 	* \brief ––”ö‚Ì—v‘f‚ð•Ô‚·
 	*/
-	const AnyPtr& back(){
+	const AnyPtr& back() const{
 		return at(size()-1);
 	}
 
@@ -143,7 +143,7 @@ public:
 	* \xbind
 	* \brief ‹ó‚©’²‚×‚é
 	*/
-	bool empty(){
+	bool empty() const{
 		return size_ == 0;
 	}
 
@@ -151,7 +151,7 @@ public:
 	* \xbind
 	* \brief ‹ó‚©’²‚×‚é
 	*/
-	bool is_empty(){
+	bool is_empty() const{
 		return size_ == 0;
 	}
 
@@ -505,7 +505,11 @@ public:
 	*/
 	void append(const AnyPtr& iterator);
 
+	StringPtr to_s();
+
 public:
+
+	void block_first(const VMachinePtr& vm);
 
 	void visit_members(Visitor& m);
 

@@ -229,6 +229,78 @@ public:
 	/// \brief 関数を呼び出す
 	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5) const;
 
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+
+	/// \brief primary_keyメソッドを呼び出す
+	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+
+	/// \brief primary_key#secondary_keyメソッドを呼び出す
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+
+	/// \brief 関数を呼び出す
+	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+
 //}}REPEAT}
 
 private:

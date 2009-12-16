@@ -25,6 +25,7 @@ public:
 	void interactive_compile(const StreamPtr& stream);
 
 	CodePtr eval_compile(const StringPtr& code);
+	CodePtr compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
 	AnyPtr errors();
 

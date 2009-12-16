@@ -460,7 +460,7 @@ void VMachine::pop_scope(){
 const inst_t* VMachine::check_accessibility(CallState& call_state, int_t accessibility){
 	if(accessibility & KIND_PRIVATE){
 		if(rawne(ap(call_state.self)->get_class(), ap(call_state.cls))){
-			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
+			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt("XRE1017")->call(
 				Named(Xid(object), ap(call_state.cls)->object_name()), 
 				Named(Xid(name), ap(call_state.primary)), 
 				Named(Xid(secondary_key), ap(call_state.secondary)), 
@@ -470,7 +470,7 @@ const inst_t* VMachine::check_accessibility(CallState& call_state, int_t accessi
 	}
 	else if(accessibility & KIND_PROTECTED){
 		if(!ap(call_state.self)->is(ap(call_state.cls))){
-			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt("Xtal Runtime Error 1017")->call(
+			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt("XRE1017")->call(
 				Named(Xid(object), ap(call_state.cls)->object_name()), 
 				Named(Xid(primary_key), ap(call_state.primary)), 
 				Named(Xid(secondary_key), ap(call_state.secondary)), 
@@ -791,7 +791,7 @@ call_common:
 
 	{
 zerodiv:
-		stack_.push(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1024")));
+		stack_.push(cpp_class<RuntimeError>()->call(Xt("XRE1024")));
 		XTAL_VM_CONTINUE(&throw_code_);
 	}
 
@@ -1309,7 +1309,7 @@ comp_send:
 			XTAL_VM_RETURN;
 		}
 		else{
-			XTAL_VM_THROW_EXCEPT(cpp_class<YieldError>()->call(Xt("Xtal Runtime Error 1012")));
+			XTAL_VM_THROW_EXCEPT(cpp_class<YieldError>()->call(Xt("XRE1012")));
 		}
 	}
 
@@ -1533,7 +1533,7 @@ comp_send:
 
 		// 例外にバックトレースを追加する
 		AnyPtr e = catch_except();
-		set_except(append_backtrace(throw_pc_, ap(e)));
+		set_except_x(append_backtrace(throw_pc_, ap(e)));
 
 		// Xtalソース内でキャッチ等あるか調べる
 		pc = catch_body(throw_pc_, cur);
@@ -1549,7 +1549,7 @@ comp_send:
 
 	XTAL_VM_CASE(Assert){ XTAL_VM_CONTINUE(FunAssert(pc)); /*
 		XTAL_VM_FUN;
-		set_except(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
+		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
 
 		if(ap(except_[0])){
@@ -1729,7 +1729,7 @@ const inst_t* VMachine::FunTryBegin(const inst_t* pc){
 const inst_t* VMachine::FunAssert(const inst_t* pc){
 		XTAL_VM_DEF_INST(Assert);
 		XTAL_VM_FUN;
-		set_except(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
+		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
 
 		if(ap(except_[0])){

@@ -154,7 +154,7 @@ protected:
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
 
-	bool orphan_;
+	uint_t orphan_;
 
 protected:
 	

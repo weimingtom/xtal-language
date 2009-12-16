@@ -45,6 +45,8 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				ExceptionHandling="0"
 				RuntimeLibrary="1"
+				DisableLanguageExtensions="false"
+				DefaultCharIsUnsigned="false"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="xtal.h"

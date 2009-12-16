@@ -117,13 +117,30 @@ public:
 	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
 	*/
 	template<class T, class Deleter>
-	SmartPtr(T* tp, const Deleter& deleter)
+	SmartPtr(const T* tp, const Deleter& deleter)
 		:Any(noinit_t()){
-		UserTypeHolderSub<T, Deleter>* p = new UserTypeHolderSub<T, Deleter>(tp, deleter);
+		UserTypeHolderSub<T, Deleter>* p = new UserTypeHolderSub<T, Deleter>((T*)tp, deleter);
 		set_pvalue(*this, p);
 		p->set_class(cpp_class<T>());
 		register_gc(p);
 	}
+
+	// 任意のポインタ型を受け取ってxtalで参照できるようにするコンストラクタ
+	template<class T>
+	SmartPtr(const T* p){
+		set_unknown_pointer(p, p);
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, const Base*){
+		*this = to_smartptr(p);
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, const void*){
+		*this = SmartPtr(p, undeleter);
+	}
+
 
 	SmartPtr(const SmartPtr<Any>& p);
 
@@ -193,6 +210,19 @@ public:
 	SmartPtr(double v):Any(v){}
 	SmartPtr(long double v):Any(v){}
 
+	// 基本型の整数、浮動小数点数から構築するコンストラクタ
+	SmartPtr(const bool* v):Any(*v){}
+	SmartPtr(const unsigned char* v):Any(*v){}
+	SmartPtr(const short* v):Any(*v){}
+	SmartPtr(const unsigned short* v):Any(*v){}
+	SmartPtr(const int* v):Any(*v){}
+	SmartPtr(const unsigned int* v):Any(*v){}
+	SmartPtr(const long* v):Any(*v){}
+	SmartPtr(const unsigned long* v):Any(*v){}
+
+	SmartPtr(const float* v):Any(*v){}
+	SmartPtr(const double* v):Any(*v){}
+	SmartPtr(const long double* v):Any(*v){}
 public:
 
 	/**

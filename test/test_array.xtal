@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::Test{
+class ArrayTest{
 	_obj;
 	
 	setup#Before: method{

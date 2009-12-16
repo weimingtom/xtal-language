@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::Calc{
+class Calc{
 
 	calc#Test{
 		assert 10+20 == 30;

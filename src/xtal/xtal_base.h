@@ -145,9 +145,6 @@ public:
 
 protected:
 
-	// 参照カウンタ値
-	//uint_t ref_count_;
-
 	// インスタンス変数テーブル
 	InstanceVariables* instance_variables_;
 

@@ -57,6 +57,10 @@ public:
 	*/
 	AnyPtr named_arguments();
 
+	AnyPtr each();
+
+	StringPtr to_s();
+
 public:
 
 	void add_ordered(const AnyPtr& v);
@@ -76,6 +80,22 @@ private:
 
 	virtual void visit_members(Visitor& m);
 };
+
+class ArgumentsIter : public Base{
+public:
+
+	ArgumentsIter(const ArgumentsPtr& a);
+			
+	void block_next(const VMachinePtr& vm);
+
+private:
+	SmartPtr<ArrayIter> ait_;
+	SmartPtr<MapIter> mit_;
+	int_t index_;
+
+	virtual void visit_members(Visitor& m);
+};
+
 
 class InstanceVariableGetter : public HaveParentRefCountingBase{
 public:
@@ -119,13 +139,13 @@ public:
 
 	int_t pc(){ return info_->pc; }
 
-	const inst_t* source(){ return code_->data()+info_->pc; }
+	const inst_t* source();
 
-	const IDPtr& param_name_at(size_t i){ return code_->identifier(i+info_->variable_identifier_offset); }
+	const IDPtr& param_name_at(size_t i);
 
-	int_t param_size(){ return info_->variable_size-(int)extendable_param(); }	
+	int_t param_size();
 
-	bool extendable_param(){ return (info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM)!=0; }
+	bool extendable_param();
 
 	FunInfo* info(){ return info_; }
 

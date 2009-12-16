@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::ForTest{
+class ForTest{
 
 	for_cat#Test{
 		ret : "";

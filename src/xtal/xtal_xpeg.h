@@ -399,40 +399,13 @@ public:
 		return raweq(peek(), undefined);
 	}
 
-	bool bol(){
-		if(pos_==0){
-			return true;
-		}
+	bool bol();
 
-		const AnyPtr& ch = access(pos_-1);
-		return raweq(ch, n_ch_) || raweq(ch, r_ch_);
-	}
+	bool eol();
 
-	bool eol(){
-		const AnyPtr& ch = peek();
-		return raweq(ch, r_ch_) || raweq(ch, n_ch_);
-	}
+	void skip(uint_t n);
 
-	void skip(uint_t n){
-		for(uint_t i=0; i<n; ++i){
-			read();
-		}
-	}
-
-	void skip_eol(){
-		const AnyPtr& ch = peek();
-		if(raweq(ch, r_ch_)){
-			if(raweq(peek(1), n_ch_)){
-				skip(2);
-			}
-			else{
-				skip(1);
-			}
-		}
-		else if(raweq(ch, n_ch_)){
-			skip(1);
-		}
-	}
+	void skip_eol();
 
 public:
 

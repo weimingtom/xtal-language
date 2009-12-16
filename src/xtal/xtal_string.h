@@ -91,76 +91,76 @@ public:
 	/**
 	* \brief 0終端の文字列先頭のポインタを返す。
 	*/
-	const char_t* c_str();
+	const char_t* c_str() const;
 
 	/**
 	* \brief 文字列先頭のポインタを返す。
 	* これは0終端文字列が返されるとは限らない。
 	*/
-	const char_t* data();
+	const char_t* data() const;
 
 	/**
 	* \xbind
 	* \brief データサイズを返す。
 	* マルチバイト文字を考慮しない。
 	*/
-	uint_t data_size();
+	uint_t data_size() const;
 
 	/**
 	* \xbind
 	* \brief 文字列の長さを返す。
 	* マルチバイト文字を考慮する。
 	*/
-	uint_t length();
+	uint_t length() const;
 
 	/*
 	* \brief 浅いコピーを返す。
 	*/
-	StringPtr clone();
+	StringPtr clone() const;
 
 	/**
 	* \xbind
 	* \brief 一意化した文字列を返す。
 	*/
-	const IDPtr& intern();
+	const IDPtr& intern() const;
 
 	/**
 	* \xbind
 	* \brief 一意化されているか返す。
 	*/
-	bool is_interned();
+	bool is_interned() const;
 
 	/**
 	* \xbind
 	* \brief 整数に変換した結果を返す。
 	*/ 
-	int_t to_i();
+	int_t to_i() const;
 	
 	/**
 	* \xbind
 	* \brief 浮動小数点数に変換した結果を返す。
 	*/ 
-	float_t to_f();
+	float_t to_f() const;
 	
 	/**
 	* \xbind
 	* \brief 自分自身を返す。
 	*/
-	StringPtr to_s();
+	StringPtr to_s() const;
 
 	/**
 	* \xbind
 	* \brief 一文字づつの文字列を要素とするIteratorを返す。
 	* \return 一文字づつの文字列を要素とするIterator
 	*/
-	AnyPtr each();
+	AnyPtr each() const;
 
 	/**
 	* \xbind
 	* \brief 連結する
 	* \return 連結された新しいオブジェクト
 	*/
-	StringPtr cat(const StringPtr& v);
+	StringPtr cat(const StringPtr& v) const;
 
 public:
 
@@ -168,19 +168,19 @@ public:
 	* \xbind
 	* \brief 一文字の文字列かどうか
 	*/
-	bool is_ch();
+	bool is_ch() const;
 
 	/**
 	* \xbind
 	* \brief 一文字の文字列の場合、そのasciiコードを返す
 	*/
-	int_t ascii();
+	int_t ascii() const;
 
 	/**
 	* \xbind
 	* \brief 文字の範囲オブジェクトの範囲内かどうか
 	*/
-	bool op_in(const ChRangePtr& range);
+	bool op_in(const ChRangePtr& range) const;
 
 public:
 
@@ -188,25 +188,25 @@ public:
 	* \xbind
 	* \brief 範囲オブジェクトを生成する
 	*/
-	ChRangePtr op_range(const StringPtr& right, int_t kind);
+	ChRangePtr op_range(const StringPtr& right, int_t kind) const;
 	
 	/**
 	* \xbind
 	* \brief 連結する
 	*/
-	StringPtr op_cat(const StringPtr& v);
+	StringPtr op_cat(const StringPtr& v) const;
 	
 	/**
 	* \xbind
 	* \brief 値が等しいか比べる
 	*/
-	bool op_eq(const StringPtr& v);
+	bool op_eq(const StringPtr& v) const;
 
 	/**
 	* \xbind
 	* \brief より小さいか比べる
 	*/
-	bool op_lt(const StringPtr& v);
+	bool op_lt(const StringPtr& v) const;
 
 public:
 
@@ -214,31 +214,31 @@ public:
 	* \xbind
 	* \brief 文字列をスキャンする
 	*/
-	AnyPtr scan(const AnyPtr& pattern);
+	AnyPtr scan(const AnyPtr& pattern) const;
 
 	/**
 	* \xbind
 	* \brief 文字列を分割し、その部分文字列を要素とするIteratorを返す
 	*/
-	AnyPtr split(const AnyPtr& pattern);
+	AnyPtr split(const AnyPtr& pattern) const;
 
 	/**
 	* \xbind
 	* \brief 文字列を分割し、その部分文字列を要素とするIteratorを返す
 	*/	
-	bool match(const AnyPtr& pattern);
+	bool match(const AnyPtr& pattern) const;
 
 	/**
 	* \xbind
 	* \brief マッチする部分を置き換えた新しい文字列を返す
 	*/	
-	StringPtr gsub(const AnyPtr& pattern, const AnyPtr& fn);
+	StringPtr gsub(const AnyPtr& pattern, const AnyPtr& fn) const;
 
 	/**
 	* \xbind
 	* \brief 最初にマッチする部分を置き換えた新しい文字列を返す
 	*/	
-	StringPtr sub(const AnyPtr& pattern, const AnyPtr& fn);
+	StringPtr sub(const AnyPtr& pattern, const AnyPtr& fn) const;
 
 private:
 	void init_string(const char_t* str, uint_t size);

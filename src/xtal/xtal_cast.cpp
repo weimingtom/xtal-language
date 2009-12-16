@@ -7,16 +7,18 @@ CppClassSymbolData::CppClassSymbolData(){
 	static unsigned int counter = 1;
 	static CppClassSymbolData* prev_data = 0;
 	value = counter++;
+	
 	prev = prev_data;
 	prebind = 0;
-	bind = 0;
+	for(int_t i=0; i<BIND; ++i){
+		bind[i] = 0;
+	}
 	name = 0;
 	prev_data = this;
 }
 
-CppClassBindTemp::CppClassBindTemp(bind_class_fun_t& dest, bind_class_fun_t src, const char_t*& name, const char_t* given){
-	std::memcpy(&dest, &src, sizeof(src));
-	std::memcpy(&dummy, &src, sizeof(dummy));
+void BindBase::XTAL_set(BindBase*& dest, const char_t*& name, const char_t* given){
+	dest = this;
 	name = given;
 }
 
@@ -27,6 +29,11 @@ CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
 	prev = prev_data;
 	maker = fun;
 	prev_data = this;
+}
+
+IDSymbolData::IDSymbolData(){
+	static unsigned int counter = 1;
+	value = counter++;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -47,6 +54,7 @@ bool CastHelper<const IDPtr*>::can_cast(const AnyPtr& a){
 const IDPtr* CastHelper<const IDPtr*>::unchecked_cast(const AnyPtr& a){ 
 	return (const IDPtr*)&a;
 }
+
 
 ////////////////////////////////////////////////////////////
 

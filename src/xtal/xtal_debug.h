@@ -31,13 +31,13 @@ public:
 	* \xbind
 	* \brief 呼び出し場所のファイル名を返す
 	*/
-	StringPtr file_name(){ return fun_ ? fun_->code()->source_file_name() : "C++ Function"; }
+	StringPtr file_name();
 
 	/**
 	* \xbind
 	* \brief 呼び出し場所の関数名を返す
 	*/
-	StringPtr fun_name(){ return fun_ ? fun_->object_name() : ""; }
+	StringPtr fun_name();
 
 	/**
 	* \xbind
@@ -256,10 +256,6 @@ const AnyPtr& assert_hook();
 
 
 //////////////////////////////
-
-void add_breakpoint(const AnyPtr& sorce, int_t line);
-void remove_breakpoint(const AnyPtr& sorce, int_t line);
-void clear_breakpoint();
 
 enum{
 	RUN,

@@ -64,6 +64,10 @@ void VMachine::reset(){
 VMachine::FunFrame::FunFrame(){
 }
 
+void VMachine::FunFrame::set_fun(const MethodPtr& v){ 
+	fun_ = v; outer_ = v->outer();  identifier_ = &fun()->code()->identifier(0); 
+}
+
 void VMachine::FunFrame::set_null(){
 	set_fun();
 	set_self();
@@ -126,6 +130,54 @@ void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param
 	setup_call(need_result_count);
 	push_arg(a0);
 	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11);push_arg(a12); 
+}
+
+void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13){
+	setup_call(need_result_count);
+	push_arg(a0);
+	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11);push_arg(a12);push_arg(a13); 
 }
 
 //}}REPEAT}
@@ -223,10 +275,6 @@ void VMachine::execute(){
 
 	// 関数も戻り値も設定されていない
 	if(f.processed==0){
-		//XTAL_SET_EXCEPT(unsupported_error(target_class, f.primary_key(), f.secondary_key()));	
-		for(int_t i=0; i<i; ++i){
-
-		}
 		return;
 	}
 
@@ -412,7 +460,7 @@ void VMachine::prereturn_result(const AnyPtr& v){
 
 void VMachine::present_for_vm(Fiber* fun, VMachine* vm, bool add_succ_or_fail_result){
 	if(const AnyPtr& e = catch_except()){
-		vm->set_except(e);
+		vm->set_except_x(e);
 		vm->stack_.push(e);
 		vm->fun_frames_.top()->called_pc = &throw_code_;
 		resume_pc_ = 0;
@@ -617,7 +665,9 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 }
 
 debug::CallerInfoPtr VMachine::caller(uint_t n){
-	if((int_t)n>=call_stack_size()){
+	int m = call_stack_size();
+
+	if((int_t)n>call_stack_size()){
 		return null;
 	}
 
@@ -634,7 +684,7 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
 
-	if(!pf.fun() || !f.fun()){
+	if(!pf.fun()){
 		ret->set_line(0);
 		ret->set_fun(null);
 		return ret;
@@ -781,7 +831,13 @@ void VMachine::set_except(const AnyPtr& e){
 		except_[0] = e;
 	}
 	else{
-		XTAL_ASSERT(false); // 例外をハンドルせずに次の例外を設定した
+		//XTAL_ASSERT(false); // 例外をハンドルせずに次の例外を設定した
+	}
+}
+
+void VMachine::set_except_x(const AnyPtr& e){
+	if(!ap(except_[0])){
+		except_[0] = e;
 	}
 }
 
@@ -859,7 +915,7 @@ void VMachine::before_gc(){
 		}
 	}
 
-	for(int_t i=variables_top()+128, size=variables_.size(); i<size; ++i){
+	for(int_t i=(int)variables_top()+256, size=(int)variables_.size(); i<size; ++i){
 		set_null((Any&)variables_.at(i));
 	}
 

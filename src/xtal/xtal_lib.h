@@ -47,6 +47,12 @@ private:
 	}
 };
 
+
+class Global : public Class{
+public:
+	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+};
+
 }
 
 

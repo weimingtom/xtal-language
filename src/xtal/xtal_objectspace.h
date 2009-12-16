@@ -54,6 +54,8 @@ public:
 
 	void bind_all();
 
+	void def_all_cpp_classes();
+
 private:
 
 	void before_gc();
@@ -81,8 +83,11 @@ private:
 	uint_t processed_line_;
 
 	bool disable_finalizer_;
+	bool def_all_cpp_classes_;
 
 	uint_t cycle_count_;
+
+	CppClassSymbolData* symbol_data_;
 
 	PODArrayList<Class*> class_table_;
 	ArrayPtr var_table_;

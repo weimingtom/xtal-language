@@ -5,8 +5,6 @@
 #include "xtal_codebuilder.h"
 #include "xtal_filesystem.h"
 
-int used_memory = 0;
-
 //#define XTAL_DEBUG_ALLOC
 
 #ifdef XTAL_DEBUG_ALLOC
@@ -14,92 +12,106 @@ int used_memory = 0;
 #include <typeinfo>
 #include <string>
 
-struct SizeAndCount{
-	SizeAndCount(int a = 0, int b = 0){
-		size = a;
-		count = b;
-		free = false;
-	}
-	int size;
-	int count;
-	bool free;
-};
-
-namespace{
-std::map<void*, SizeAndCount> mem_map_;
-int gcounter = 1;
-int max_used_memory = 0;
-const char debugstring[]= "awerwoeekrlwsekrlewskrkerswer";
-}
-
-void* debug_malloc(size_t size){
-	//xtal::full_gc();
-	//xtal::gc();
-	void* ret = malloc(size + sizeof(debugstring));
-	mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter)));
-	used_memory += size;
-
-	if(gcounter==13728){
-		gcounter = gcounter;
-	}
-
-	gcounter++;
-
-	if(size>30000){
-		size = size;
-	}
-	
-	if(max_used_memory<used_memory){
-		max_used_memory = used_memory+1024; 
-		printf("max used memory %dKB\n", max_used_memory/1024);
-	}
-		
-	memset(ret, 0xda, size);
-	memcpy((char*)ret+size, debugstring, sizeof(debugstring));
-
-	return ret;
-}
-
-void debug_free(void* p, size_t size){
-	if(p){
-		int gcount = mem_map_[p].count;
-
-		if(gcount==13728){
-			gcount = gcounter;
-		}
-
-		XTAL_ASSERT(mem_map_[p].size==size);
-		XTAL_ASSERT(!mem_map_[p].free);
-		used_memory -= mem_map_[p].size;
-		mem_map_[p].free = true;
-
-		XTAL_ASSERT(memcmp((char*)p+mem_map_[p].size, debugstring, sizeof(debugstring))==0);
-		memset(p, 0xcd, mem_map_[p].size);
-
-		//free(p);
-		//mem_map_.erase(p);
-	}
-}
-
-void display_debug_memory(){
-	bool allfree = true;
-	for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
-		int size = it->second.size;
-		int count = it->second.count;
-		size = size;
-		if(!it->second.free){
-			allfree = false;
-		}
-	}
-
-	XTAL_ASSERT(allfree); // 全部開放できてない
-	XTAL_ASSERT(used_memory==0);
-}
-
 class DebugAllocatorLib : public xtal::AllocatorLib{
 public:
-	virtual void* malloc(std::size_t size){ if(size>100000) return 0; return debug_malloc(size); }
-	virtual void free(void* p, std::size_t size){ debug_free(p, size); }
+	virtual void* malloc(std::size_t size){ 
+		return debug_malloc(size); 
+	}
+
+	virtual void free(void* p, std::size_t size){ 
+		debug_free(p, size); 
+	}
+
+	struct SizeAndCount{
+		SizeAndCount(int a = 0, int b = 0){
+			size = a;
+			count = b;
+			free = false;
+		}
+		int size;
+		int count;
+		bool free;
+	};
+
+	std::map<void*, SizeAndCount> mem_map_;
+	int gcounter_;
+	int used_memory_;
+	int max_used_memory_;
+	char debugstring_[32];
+
+	DebugAllocatorLib(){
+		gcounter_ = 1;
+		used_memory_ = 0;
+		max_used_memory_ = 0;
+		memcpy(debugstring_, "12345678901234567890123456789012", 32);
+	}
+
+	void* debug_malloc(size_t size){
+		//xtal::full_gc();
+		//xtal::gc();
+		void* ret = std::malloc(size + sizeof(debugstring_));
+		mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter_)));
+		used_memory_ += size;
+
+		if(gcounter_==13728){
+			gcounter_ = gcounter_;
+		}
+
+		gcounter_++;
+
+		if(size>30000){
+			size = size;
+		}
+		
+		if(max_used_memory_<used_memory_){
+			max_used_memory_ = used_memory_+1024; 
+			printf("max used memory %dKB\n", max_used_memory_/1024);
+		}
+			
+		memset(ret, 0xda, size);
+		memcpy((char*)ret+size, debugstring_, sizeof(debugstring_));
+
+		return ret;
+	}
+
+	void debug_free(void* p, size_t size){
+		if(p){
+			int gcount = mem_map_[p].count;
+
+			if(gcount==13728){
+				gcount = gcount;
+			}
+
+			XTAL_ASSERT(mem_map_[p].size==size);
+			XTAL_ASSERT(!mem_map_[p].free);
+			used_memory_ -= mem_map_[p].size;
+			mem_map_[p].free = true;
+
+			XTAL_ASSERT(memcmp((char*)p+mem_map_[p].size, debugstring_, sizeof(debugstring_))==0);
+			memset(p, 0xcd, mem_map_[p].size);
+
+			//*
+			std::free(p);
+			mem_map_.erase(p);
+			//*/
+		}
+	}
+
+	void display_debug_memory(){
+		bool allfree = true;
+		for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
+			int size = it->second.size;
+			int count = it->second.count;
+			size = size;
+			if(!it->second.free){
+				allfree = false;
+			}
+		}
+
+		XTAL_ASSERT(allfree); // 全部開放できてない
+		XTAL_ASSERT(used_memory_==0);
+	}
+
 };
 
 #endif
@@ -252,9 +264,8 @@ Setting::Setting(){
 
 void initialize(const Setting& setting){
 #ifdef XTAL_DEBUG_ALLOC
-	static DebugAllocatorLib alib;
 	Setting setting2 = setting;
-	setting2.allocator_lib = &alib;
+	setting2.allocator_lib = new DebugAllocatorLib;
 	environment_ = (Environment*)setting2.allocator_lib->malloc(sizeof(Environment));
 	new(environment_) Environment();
 	environment_->initialize(setting2);
@@ -277,9 +288,16 @@ void uninitialize(){
 	environment_ = 0;
 
 #ifdef XTAL_DEBUG_ALLOC
-	display_debug_memory();
+	((DebugAllocatorLib*)allocacator_lib)->display_debug_memory();
+	delete ((DebugAllocatorLib*)allocacator_lib);
 #endif
 
+}
+
+class cpp_classes;
+
+XTAL_BIND(cpp_classes){
+	def_all_cpp_classes();
 }
 
 void Environment::initialize(const Setting& setting){
@@ -301,13 +319,26 @@ void Environment::initialize(const Setting& setting){
 	lib_ = xnew<Lib>(Lib::most_top_level_t());
 	lib_->append_load_path(XTAL_STRING("."));
 
+	global_ = xnew<Global>();
+	global_->set_singleton();
+	builtin_->inherit(global_);
+	builtin_->def("global", global_);
+
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
 	nfa_map_ = xnew<Map>();
 
+	lib_->def("builtin", builtin_);
+
+	cpp_ = cpp_class<cpp_classes>();
+	cpp_->set_singleton();
+	builtin_->def("cpp", cpp_);
+
+	cpp_->set_object_force(100);
+
 	bind();
 
-	builtin()->def(Xid(filesystem), cpp_class<filesystem::Filesystem>());
+	builtin_->def(Xid(filesystem), cpp_class<filesystem::Filesystem>());
 
 	thread_space_.initialize(setting_.thread_lib);
 	
@@ -319,11 +350,11 @@ void Environment::initialize(const Setting& setting){
 	stdout_ = xnew<StdoutStream>();
 	stderr_ = xnew<StderrStream>();
 
-	builtin()->def(Xid(stdin), stdin_);
-	builtin()->def(Xid(stdout), stdout_);
+	builtin_->def(Xid(stdin), stdin_);
+	builtin_->def(Xid(stdout), stdout_);
 	builtin()->def(Xid(stderr), stderr_);
 
-	builtin()->def(Xid(debug), cpp_class<debug::Debug>());
+	builtin_->def(Xid(debug), cpp_class<debug::Debug>());
 
 	initialize_math();
 	initialize_xpeg();
@@ -350,7 +381,9 @@ void Environment::uninitialize(){
 	full_gc();
 
 	builtin_ = null;
+	cpp_ = null;
 	lib_ = null;
+	global_ = null;
 	vm_list_ = null;
 	nfa_map_ = null;
 
@@ -452,6 +485,10 @@ void bind_all(){
 	environment_->object_space_.bind_all();
 }
 
+void def_all_cpp_classes(){
+	environment_->object_space_.def_all_cpp_classes();
+}
+
 bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
 	return environment_->is_cache_table_.cache(target_class, klass);
 }
@@ -484,8 +521,16 @@ const ClassPtr& builtin(){
 	return environment_->builtin_;
 }
 
+const ClassPtr& cpp(){
+	return environment_->cpp_;
+}
+
 const LibPtr& lib(){
 	return environment_->lib_;
+}
+
+const ClassPtr& global(){
+	return environment_->global_;
 }
 
 const IDPtr& intern(const char_t* str){
@@ -494,6 +539,10 @@ const IDPtr& intern(const char_t* str){
 
 const IDPtr& intern(const char_t* str, uint_t data_size){
 	return environment_->string_space_.insert(str, data_size);
+}
+
+const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym){
+	return environment_->string_space_.make_id(str, sym);
 }
 
 AnyPtr interned_strings(){
@@ -573,7 +622,7 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 	if(ret->is_open()){
 		return ret;
 	}
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("Xtal Runtime Error 1032")->call(Named(Xid(name), file_name))));
+	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1032")->call(Named(Xid(name), file_name))));
 	return null;
 }
 
@@ -588,7 +637,7 @@ CodePtr compile_stream(const StreamPtr& stream){
 			ret = fun;
 		}
 		else{
-			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1002"), cb.errors()->to_a()));
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1002"), cb.errors()->to_a()));
 			return null;
 		}
 	}
@@ -608,7 +657,7 @@ CodePtr compile_file(const StringPtr& file_name){
 		}
 		else{
 			fs->close();
-			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
 			return null;
 		}
 	}
@@ -689,7 +738,7 @@ CodePtr source(const char_t* src, int_t size){
 			ret = fun;
 		}
 		else{
-			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("Xtal Runtime Error 1010")->call(), cb.errors()->to_a()));
+			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1010")->call(), cb.errors()->to_a()));
 			return null;
 		}
 	}

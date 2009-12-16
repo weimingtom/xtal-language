@@ -1,6 +1,6 @@
 inherit(lib::test);
 
-class filelocal::FunTest{
+class FunTest{
 
 	named#Test{
 		aa, bb, cc, dd, : null, null, null, null;

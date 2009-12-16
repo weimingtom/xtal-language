@@ -139,6 +139,29 @@ bool Values::op_eq(const ValuesPtr& other){
 	return true;
 }
 
+StringPtr Values::to_s(){
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+	ms->put_s(XTAL_STRING("("));
+
+	const ValuesPtr* cur = &to_smartptr(this);
+	for(int_t n=0; ; ++n){
+		if(n!=0){
+			ms->put_s(XTAL_STRING(", "));
+		}
+
+		ms->put_s((*cur)->head_->to_s());
+
+		if(raweq((*cur)->tail_, undefined)){
+			break;
+		}
+		cur = &(*cur)->tail_;
+	}
+
+	ms->put_s(XTAL_STRING(")"));
+	return ms->to_s();
+
+}
+
 ///////////////////////////////////
 
 HaveParent::HaveParent(const HaveParent& a)

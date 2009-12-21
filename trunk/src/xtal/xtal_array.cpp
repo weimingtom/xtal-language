@@ -49,10 +49,18 @@ xarray& xarray::operator =(const xarray& v){
 }
 
 xarray::~xarray(){
+	destroy();
+}
+
+void xarray::destroy(){
 	for(uint_t i=0; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
 	xfree(values_, sizeof(AnyPtr)*capa_);
+	size_ = 0;
+	capa_ = 0;
+	values_ = 0;
+
 }
 
 void xarray::clear(){

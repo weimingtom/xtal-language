@@ -123,13 +123,10 @@ public:
 
 	void uninitialize(){
 		table_.destroy();
+		id_list_.destroy();
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
 			id_op_list_[i] = null;
-		}
-
-		for(int i=0, sz=id_list_.size(); i<sz; ++i){
-			id_list_.set_at(i, null);
 		}
 	}
 

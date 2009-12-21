@@ -143,6 +143,7 @@ void Class::overwrite(const ClassPtr& p){
 			}
 		}
 
+		Key key = {Xid(reloaded), undefined};
 		for(uint_t i=0; i<alive_object_count(); ++i){
 			AnyPtr obj = alive_object(i);
 			if(type(obj)==TYPE_BASE){
@@ -154,7 +155,6 @@ void Class::overwrite(const ClassPtr& p){
 					obj->load_instance_variables(p, data);
 
 					{
-						Key key = {Xid(reloaded), undefined};
 						map_t::iterator it = map_members_->find(key);
 						if(it!=map_members_->end()){
 							const VMachinePtr& vm = vmachine();

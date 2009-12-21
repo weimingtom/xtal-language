@@ -120,7 +120,7 @@ public:
 	SmartPtr(const T* tp, const Deleter& deleter)
 		:Any(noinit_t()){
 		UserTypeHolderSub<T, Deleter>* p = new UserTypeHolderSub<T, Deleter>((T*)tp, deleter);
-		set_pvalue(*this, p);
+		value_.init(TYPE_BASE, p);
 		p->set_class(cpp_class<T>());
 		register_gc(p);
 	}
@@ -205,6 +205,8 @@ public:
 	SmartPtr(unsigned int v):Any(v){}
 	SmartPtr(long v):Any(v){}
 	SmartPtr(unsigned long v):Any(v){}
+	SmartPtr(long long v):Any(v){}
+	SmartPtr(unsigned long long v):Any(v){}
 
 	SmartPtr(float v):Any(v){}
 	SmartPtr(double v):Any(v){}

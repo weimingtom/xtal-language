@@ -27,14 +27,14 @@ void RefCountingBase::finalize(){
 }
 
 Base::Base(){
-	set_pvalue(*this, this);
+	value_.init(TYPE_BASE, this);
 	//ref_count_ = 0;
 	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
 Base::Base(const Base& b){
-	set_pvalue(*this, this);
+	value_.init(TYPE_BASE, this);
 	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));

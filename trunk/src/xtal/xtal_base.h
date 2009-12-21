@@ -71,27 +71,19 @@ public:
 
 public:
 
-	enum{
-		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
-		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
+	bool have_finalizer(){ return value_.have_finalizer(); }
+	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
 
-		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+2,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
-	};
+	uint_t ref_count(){ return value_.ref_count(); }
+	void add_ref_count(int_t rc){ value_.add_ref_count(rc); }
+	void inc_ref_count(){ value_.inc_ref_count(); }
+	void dec_ref_count(){ value_.dec_ref_count(); }
 
-	bool have_finalizer(){ return (type_ & HAVE_FINALIZER_FLAG_BIT)!=0; }
-	void set_finalizer_flag(){ type_ |= HAVE_FINALIZER_FLAG_BIT; }
-
-	uint_t ref_count(){ return (type_ & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
-	void add_ref_count(int_t rc){ type_ += rc<<REF_COUNT_SHIFT; }
-	void inc_ref_count(){ type_ += 1<<REF_COUNT_SHIFT; }
-	void dec_ref_count(){ type_ -= 1<<REF_COUNT_SHIFT; }
-
-	uint_t ungc(){ return type_&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+	uint_t ungc(){ return value_.ungc(); }
 
 	void destroy(){ delete this; }
 
-	void object_free(){ xfree(this, value_.uvalue); }
+	void object_free(){ xfree(this, value_.object_size()); }
 
 public:
 
@@ -100,7 +92,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		if(p){ ((RefCountingBase*)p)->value_.ivalue = (int_t)size; }
+		if(p){ ((RefCountingBase*)p)->value_.set_object_size(size); }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }

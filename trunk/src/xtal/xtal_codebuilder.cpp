@@ -1113,7 +1113,7 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 	
 	info.variable_identifier_offset = result_->identifier_table_->size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
-		result_->identifier_table_->push_back(vf().entries[i].name);
+		result_->identifier_table_->push_back(Xid(_)->op_cat(vf().entries[i].name));
 	}
 
 	put_inst(InstClassBegin(class_info_num, mixin_base));

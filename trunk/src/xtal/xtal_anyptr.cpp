@@ -64,7 +64,7 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 
 SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)
 	:Any(noinit_t()){
-	set_pvalue(*this, type, p);
+	value_.init(type, p);
 	register_gc(p);
 }
 

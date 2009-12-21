@@ -638,7 +638,7 @@ AnyPtr Any::s_save() const{
 	MapPtr ret = xnew<Map>();
 	ClassPtr klass = get_class();
 
-	ArrayPtr ary = klass->send(Xid(ancestors))->to_a();
+	ArrayPtr ary = klass->ancestors()->to_a();
 	ary->push_back(klass);
 
 	Xfor(it, ary){

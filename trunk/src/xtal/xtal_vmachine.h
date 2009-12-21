@@ -39,11 +39,10 @@ struct NamedParam{
 
 struct Param{
 	enum{
-		SHIFT = 16,
-
-		NAMED = (1<<SHIFT),
-		STR = (2<<SHIFT),
-		STR8 = (3<<SHIFT)
+		ANY = 0,
+		NAMED = 1,
+		STR = 2,
+		STR8 = 3
 	};
 
 	Param(const Named& n){
@@ -63,34 +62,29 @@ struct Param{
 	}
 
 	Param(const AnyPtr& v){
-		type = xtal::type(v);
+		type = ANY;
 		value = rawvalue(v);
 	}
 
-	Param(char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(signed char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(unsigned char v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(short v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(unsigned short v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(int v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(unsigned int v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(long v){ type = TYPE_INT; value.ivalue = (int_t)v; }
-	Param(unsigned long v){ type = TYPE_INT; value.ivalue = (int_t)v; }
+	Param(char v){ type = ANY; value.init(v); }
+	Param(signed char v){ type = ANY; value.init(v); }
+	Param(unsigned char v){ type = ANY; value.init(v); }
+	Param(short v){ type = ANY; value.init(v); }
+	Param(unsigned short v){ type = ANY; value.init(v); }
+	Param(int v){ type = ANY; value.init(v); }
+	Param(unsigned int v){ type = ANY; value.init(v); }
+	Param(long v){ type = ANY; value.init(v); }
+	Param(unsigned long v){ type = ANY; value.init(v); }
+	Param(long long v){ type = ANY; value.init(v); }
+	Param(unsigned long long v){ type = ANY; value.init(v); }
 
-	Param(float v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
-	Param(double v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
-	Param(long double v){ type = TYPE_FLOAT; value.fvalue = (float_t)v; }
+	Param(float v){ type = ANY; value.init(v); }
+	Param(double v){ type = ANY; value.init(v); }
+	Param(long double v){ type = ANY; value.init(v); }
 
-	Param(bool b){ type = TYPE_FALSE + (int)b; value.ivalue = 0; }
+	Param(bool v){ type = ANY; value.init(v); }
 
-	template<class T>
-	Param(const T* p){
-		AnyPtr v(p);
-		type = xtal::type(v);
-		value = rawvalue(v);
-	}
-
-	int_t type;
+	u8 type;
 
 	struct NamedPair{
 		const IDPtr* name;

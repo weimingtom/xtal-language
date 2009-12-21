@@ -210,28 +210,26 @@ void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
 
 void VMachine::push_arg(const Param& p){
 	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
-	switch(p.type>>Param::SHIFT){
+	switch(p.type){
 		XTAL_NODEFAULT;
 
-		XTAL_CASE(0){
-			Any temp;
-			set_type_value(temp, p.type, p.value);
-			set_local_variable(offset, ap(temp));
+		XTAL_CASE(Param::ANY){
+			set_local_variable(offset, ap(Any(p.value)));
 			ff().ordered_arg_count++;
 		}
 
-		XTAL_CASE(Param::NAMED>>Param::SHIFT){
+		XTAL_CASE(Param::NAMED){
 			set_local_variable(offset+0, *p.name.name);
 			set_local_variable(offset+1, *p.name.value);
 			ff().named_arg_count++;
 		}
 
-		XTAL_CASE(Param::STR>>Param::SHIFT){
+		XTAL_CASE(Param::STR){
 			set_local_variable(offset, xnew<String>(p.str));
 			ff().ordered_arg_count++;
 		}
 
-		XTAL_CASE(Param::STR8>>Param::SHIFT){
+		XTAL_CASE(Param::STR8){
 			set_local_variable(offset, xnew<String>(p.str8));
 			ff().ordered_arg_count++;
 		}
@@ -910,13 +908,13 @@ void VMachine::add_ref_count_members(int_t n){
 void VMachine::before_gc(){
 	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
 		if(FunFrame* f = fun_frames_.reverse_at_unchecked(i)){
-			set_null(f->fun_);
-			set_null(f->self_);
+			f->fun_ = null;
+			f->self_ = null;
 		}
 	}
 
 	for(int_t i=(int)variables_top()+256, size=(int)variables_.size(); i<size; ++i){
-		set_null((Any&)variables_.at(i));
+		(Any&)variables_.at(i) = null;
 	}
 
 	add_ref_count_members(1);

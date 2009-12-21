@@ -216,7 +216,7 @@ public:
 
 	struct Fun{
 		static uint_t hash(const AnyPtr& key){
-			return (rawvalue(key).uvalue ^ type(key) ^ (rawvalue(key).uvalue>>3));
+			return (rawvalue(key).u() ^ type(key) ^ (rawvalue(key).u()>>3));
 		}
 
 		static bool eq(const AnyPtr& a, const AnyPtr& b){

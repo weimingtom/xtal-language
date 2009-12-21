@@ -219,17 +219,17 @@ void Array::visit_members(Visitor& m){
 
 Array::Array(uint_t size)
 :values_(size){
-	set_pvalue(*this, TYPE, this);
+	value_.init(TYPE, this);
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end)
 :values_(first, end){
-	set_pvalue(*this, TYPE, this);
+	value_.init(TYPE, this);
 }
 
 Array::Array(const Array& v)
 :RefCountingBase(v), values_(v.values_){
-	set_pvalue(*this, TYPE, this);
+	value_.init(TYPE, this);
 }
 
 Array& Array::operator =(const Array& v){

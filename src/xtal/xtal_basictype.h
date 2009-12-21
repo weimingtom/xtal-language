@@ -271,12 +271,12 @@ public:
 
 	Values(const AnyPtr& head)
 		:head_(head), tail_((ValuesPtr&)undefined){
-		set_pvalue(*this, TYPE, this);
+		value_.init(TYPE, this);
 	}
 
 	Values(const AnyPtr& head, const ValuesPtr& tail)
 		:head_(head), tail_(tail){
-		set_pvalue(*this, TYPE, this);
+		value_.init(TYPE, this);
 	}
 
 	~Values(){

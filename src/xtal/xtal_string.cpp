@@ -139,8 +139,8 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 
 void String::init_string(const char_t* str, uint_t size){
 	if(size<SMALL_STRING_MAX){
-		set_svalue(*this);
-		string_copy(value_.svalue, str, size);
+		value_.init(TYPE_SMALL_STRING);
+		string_copy(value_.s(), str, size);
 	}
 	else{
 		if(string_is_ch(str, size)){
@@ -150,7 +150,7 @@ void String::init_string(const char_t* str, uint_t size){
 			StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 			new(sd) StringData(size);
 			string_copy(sd->buf(), str, size);
-			set_pvalue(*this, TYPE_STRING, sd);
+			value_.init(TYPE_STRING, sd);
 			register_gc(sd);
 		}
 	}
@@ -158,14 +158,14 @@ void String::init_string(const char_t* str, uint_t size){
 
 String::String(const char_t* str, uint_t size, make_t){
 	if(size<SMALL_STRING_MAX){
-		set_svalue(*this);
-		string_copy(value_.svalue, str, size);
+		value_.init(TYPE_SMALL_STRING);
+		string_copy(value_.s(), str, size);
 	}
 	else{
 		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 		new(sd) StringData(size);
 		string_copy(sd->buf(), str, size);
-		set_pvalue(*this, TYPE_STRING, sd);
+		value_.init(TYPE_STRING, sd);
 		sd->set_interned();
 		register_gc(sd);
 	}
@@ -173,7 +173,7 @@ String::String(const char_t* str, uint_t size, make_t){
 
 String::String()
 :Any(noinit_t()){
-	set_svalue(*this);
+	value_.init(TYPE_SMALL_STRING);
 }
 
 String::String(const char_t* str)
@@ -215,16 +215,16 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
-		set_svalue(*this);
-		string_copy(value_.svalue, str1, size1);
-		string_copy(&value_.svalue[size1], str2, size2);
+		value_.init(TYPE_SMALL_STRING);
+		string_copy(value_.s(), str1, size1);
+		string_copy(&value_.s()[size1], str2, size2);
 	}
 	else{
 		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
 		sd = new(sd) StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
-		set_pvalue(*this, TYPE_STRING, sd);
+		value_.init(TYPE_STRING, sd);
 		register_gc(sd);
 	}
 }
@@ -232,8 +232,8 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 String::String(char_t a)
 	:Any(noinit_t()){
 	if(1<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a;
 	}
 	else{
 		init_string(&a, 1);
@@ -243,8 +243,8 @@ String::String(char_t a)
 String::String(char_t a, char_t b)
 	:Any(noinit_t()){
 	if(2<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a; value_.svalue[1] = b;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a; value_.s()[1] = b;
 	}
 	else{
 		char_t buf[2] = {a, b};
@@ -255,8 +255,8 @@ String::String(char_t a, char_t b)
 String::String(char_t a, char_t b, char_t c)
 	:Any(noinit_t()){
 	if(3<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a; value_.svalue[1] = b; value_.svalue[2] = c;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a; value_.s()[1] = b; value_.s()[2] = c;
 	}
 	else{
 		char_t buf[3] = {a, b, c};
@@ -289,7 +289,7 @@ const char_t* String::c_str() const{
 		return ((StringData*)rcpvalue(*this))->buf();
 	}
 	else{
-		return value_.svalue;
+		return value_.s();
 	}
 }
 
@@ -303,7 +303,7 @@ uint_t String::data_size() const{
 	}
 	else{
 		for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
-			if(value_.svalue[i]=='\0'){
+			if(value_.s()[i]=='\0'){
 				return i;
 			}
 		}
@@ -463,7 +463,7 @@ StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn) const{
 ////////////////////////////////////////////////////////////////
 
 StringData::StringData(uint_t size){
-	set_pvalue(*this, TYPE_STRING, this);
+	value_.init(TYPE_STRING, this);
 	data_size_ = size<<SIZE_SHIFT;
 	buf_ = (char_t*)xmalloc(sizeof(char_t)*(size+1));
 	buf()[size] = 0;
@@ -496,8 +496,8 @@ ID::ID(const char_t* begin, const char_t* last)
 ID::ID(char_t a)
 	:String(noinit_t()){
 	if(1<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a;
 	}
 	else{
 		*this = ID(&a, 1);
@@ -507,8 +507,8 @@ ID::ID(char_t a)
 ID::ID(char_t a, char_t b)
 	:String(noinit_t()){
 	if(2<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a; value_.svalue[1] = b;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a; value_.s()[1] = b;
 	}
 	else{
 		char_t buf[2] = {a, b};
@@ -519,8 +519,8 @@ ID::ID(char_t a, char_t b)
 ID::ID(char_t a, char_t b, char_t c)
 	:String(noinit_t()){
 	if(3<SMALL_STRING_MAX){
-		set_svalue(*this);
-		value_.svalue[0] = a; value_.svalue[1] = b; value_.svalue[2] = c;
+		value_.init(TYPE_SMALL_STRING);
+		value_.s()[0] = a; value_.s()[1] = b; value_.s()[2] = c;
 	}
 	else{
 		char_t buf[3] = {a, b, c};

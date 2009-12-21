@@ -141,7 +141,7 @@ public:
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return (rawvalue(key.primary_key).uvalue>>3) ^ rawvalue(key.secondary_key).uvalue;
+			return (rawvalue(key.primary_key).u()>>3) ^ rawvalue(key.secondary_key).u();
 		}
 
 		static bool eq(const Key& a, const Key& b){

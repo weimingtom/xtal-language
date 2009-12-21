@@ -14,8 +14,8 @@ namespace xtal{
 enum{
 	VERSION1 = 1,
 	VERSION2 = 0,
-	VERSION3 = 0,
-	VERSION4 = 2
+	VERSION3 = 1,
+	VERSION4 = 0
 };
 }
 
@@ -218,7 +218,7 @@ inline T align_2(T v){
 	v|=v>>4;
 	v|=v>>8;
 	v|=v>>16;
-	v|=v>>32;
+//	v|=v>>32;
 	return v+1;
 }
 
@@ -478,12 +478,13 @@ typedef SelectType<8>::uint_t uint_t;
 
 /// int
 typedef SelectType<sizeof(void*)>::int_t int_t;
-	
+
+/// uint
+typedef SelectType<sizeof(void*)>::uint_t uint_t;
+
 /// float
 typedef SelectType<sizeof(void*)>::float_t float_t;
 	
-/// uint
-typedef SelectType<sizeof(void*)>::uint_t uint_t;
 
 #endif
 

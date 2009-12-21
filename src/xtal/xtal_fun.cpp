@@ -136,7 +136,7 @@ void ArgumentsIter::visit_members(Visitor& m){
 
 InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	set_pvalue(*this, TYPE, this);
+	value_.init(TYPE, this);
 }
 
 void InstanceVariableGetter::rawcall(const VMachinePtr& vm){
@@ -146,7 +146,7 @@ void InstanceVariableGetter::rawcall(const VMachinePtr& vm){
 
 InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	set_pvalue(*this, TYPE, this);
+	value_.init(TYPE, this);
 }
 
 void InstanceVariableSetter::rawcall(const VMachinePtr& vm){

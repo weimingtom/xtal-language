@@ -75,9 +75,9 @@ bool Any::is(const AnyPtr& klass) const{
 }
 
 const AnyPtr& MemberCacheTable::cache(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	uint_t itarget_class = rawvalue(target_class).uvalue;
-	uint_t iprimary_key = rawvalue(primary_key).uvalue;
-	uint_t isecondary_key = rawvalue(secondary_key).uvalue;
+	uint_t itarget_class = rawvalue(target_class).u();
+	uint_t iprimary_key = rawvalue(primary_key).u();
+	uint_t isecondary_key = rawvalue(secondary_key).u();
 
 	uint_t hash = (itarget_class + iprimary_key + isecondary_key) ^ 
 				 ((itarget_class>>8) + (iprimary_key>>8) + (isecondary_key>>8)) ^
@@ -87,7 +87,7 @@ const AnyPtr& MemberCacheTable::cache(Base* target_class, const IDPtr& primary_k
 
 	if(((mutate_count_ ^ unit.mutate_count) | 
 		rawbitxor(primary_key, unit.primary_key) | 
-		((uint_t)target_class ^ rawvalue(unit.target_class).uvalue) | 
+		((uint_t)target_class ^ rawvalue(unit.target_class).u()) | 
 		rawbitxor(secondary_key, unit.secondary_key))==0){
 
 		hit_++;
@@ -113,8 +113,8 @@ const AnyPtr& MemberCacheTable::cache(Base* target_class, const IDPtr& primary_k
 }
 
 bool IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
-	uint_t itarget_class = rawvalue(target_class).uvalue;
-	uint_t iklass = rawvalue(klass).uvalue;
+	uint_t itarget_class = rawvalue(target_class).u();
+	uint_t iklass = rawvalue(klass).u();
 
 	uint_t hash = (itarget_class>>3) ^ (iklass>>2);
 	Unit& unit = table_[hash & CACHE_MASK];
@@ -140,7 +140,7 @@ bool IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
 }
 
 bool CtorCacheTable::cache(const AnyPtr& target_class, int_t kind){
-	uint_t itarget_class = rawvalue(target_class).uvalue;
+	uint_t itarget_class = rawvalue(target_class).u();
 
 	uint_t hash = (itarget_class>>3) ^ kind*37;
 	Unit& unit = table_[hash & CACHE_MASK];
@@ -644,6 +644,8 @@ void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 	uint_t common_flag = 0;
 	int_t accessibility = 0;
 
+	XTAL_CHECK_YIELD;
+
 XTAL_VM_CONTINUE0;
 
 	enum{
@@ -867,7 +869,7 @@ XTAL_VM_LOOP
 				XTAL_CASE(UNA_NEG){ iret = -ia; }
 				XTAL_CASE(UNA_COM){ iret = ~ia; }
 			}
-			set_ivalue(local_variable(inst.result), iret);
+			(Any&)(local_variable(inst.result)) = Any(iret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -881,7 +883,7 @@ XTAL_VM_LOOP
 				XTAL_CASE(UNA_NEG){ fret = -fa; }
 				XTAL_CASE(UNA_COM){ goto una_send; }
 			}
-			set_fvalue(local_variable(inst.result), fret);
+			(Any&)(local_variable(inst.result)) = Any(fret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -940,7 +942,7 @@ icalc:
 			XTAL_CASE(ARITH_DIV){ if(ib==0) goto zerodiv; iret = ia / ib; }
 			XTAL_CASE(ARITH_MOD){ if(ib==0) goto zerodiv; iret = ia % ib; }
 		}
-		set_ivalue(local_variable(inst.result), iret);
+		(Any&)(local_variable(inst.result)) = Any(iret);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 
 fcalc:
@@ -954,7 +956,7 @@ fcalc:
 			XTAL_CASE(ARITH_DIV){ if(fb==0) goto zerodiv; fret = fa / fb; }
 			XTAL_CASE(ARITH_MOD){ if(fb==0) goto zerodiv; fret = fmodf(fa, fb); }
 		}
-		set_fvalue(local_variable(inst.result), fret);
+		(Any&)(local_variable(inst.result)) = Any(fret);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 
 send:
@@ -985,7 +987,7 @@ send:
 				XTAL_CASE(BITWISE_USHR){ iret = (uint_t)ia >> ib; }
 			}
 
-			set_ivalue(local_variable(inst.result), iret);
+			(Any&)(local_variable(inst.result)) = Any(iret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -1079,17 +1081,19 @@ send:
 	}
 
 	XTAL_VM_CASE(If){ // 2
+		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + (local_variable(inst.target) ? inst.address_true : inst.address_false));
 	}
 
 	XTAL_VM_CASE(IfComp){ // 40
+		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 	
 		AnyPtr& a = local_variable(inst.lhs); uint_t atype = rawtype(a);
 		AnyPtr& b = local_variable(inst.rhs); uint_t btype = rawtype(b);
 
-		int_t next;
+		int next;
 		int_t ia, ib;
 		float_t fa, fb;
 
@@ -1154,6 +1158,7 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(IfRawEq){ // 7
+		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 
@@ -1168,6 +1173,7 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(IfIs){ // 7
+		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 
@@ -1182,6 +1188,7 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(IfUndefined){ // 2
+		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + (raweq(local_variable(inst.target), undefined) ? inst.address_true : inst.address_false));
 	}
 

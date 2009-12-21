@@ -32,4 +32,9 @@
 */
 //#define XTAL_NO_SMALL_ALLOCATOR
 
+/**
+* \brief ‰Â”\‚ÈŒÀ‚è®”‚Ì”ÍˆÍ‚ð‘å‚«‚­‚·‚é
+*/
+//#define XTAL_USE_LARGE_INT
+
 #endif // XTAL_SETTING_H_INCLUDE_GUARD

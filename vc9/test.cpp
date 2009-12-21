@@ -921,7 +921,7 @@ int main(int argc, char** argv){
 	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.ch_code_lib = &sjis_ch_code_lib;
-	setting.allocator_lib = &alloc_lib;
+	//setting.allocator_lib = &alloc_lib;
 
 	initialize(setting);
 

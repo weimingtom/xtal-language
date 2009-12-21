@@ -251,6 +251,8 @@ public:
 
 	void init(const AnyPtr* values, uint_t size);
 
+	void destroy();
+
 protected:
 
 	AnyPtr* values_;

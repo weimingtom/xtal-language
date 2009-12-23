@@ -53,7 +53,7 @@ public:
 		mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter_)));
 		used_memory_ += size;
 
-		if(gcounter_==13728){
+		if(gcounter_==2011){
 			gcounter_ = gcounter_;
 		}
 
@@ -98,17 +98,17 @@ public:
 	}
 
 	void display_debug_memory(){
-		bool allfree = true;
+		int notfree = 0;
 		for(std::map<void*, SizeAndCount>::iterator it=mem_map_.begin(); it!=mem_map_.end(); ++it){
 			int size = it->second.size;
 			int count = it->second.count;
 			size = size;
 			if(!it->second.free){
-				allfree = false;
+				notfree++;
 			}
 		}
 
-		XTAL_ASSERT(allfree); // 全部開放できてない
+		XTAL_ASSERT(notfree==0); // 全部開放できてない
 		XTAL_ASSERT(used_memory_==0);
 	}
 

@@ -471,11 +471,12 @@ void xlock();
 void xunlock();
 
 struct XUnlock{
-	explicit XUnlock(int){ xunlock(); }
+	XUnlock(int){ xunlock(); }
 	~XUnlock(){ xlock(); }
-	XUnlock(const XUnlock&){ xunlock(); }
-	void operator =(const XUnlock&){ xunlock(); }
 	operator bool() const{ return true; }
+private:
+	XUnlock(const XUnlock&);
+	void operator =(const XUnlock&);
 };
 
 void register_thread(Environment*);

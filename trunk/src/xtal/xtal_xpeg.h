@@ -299,7 +299,7 @@ private:
 
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
-		m & tree_ & errors_ & cap_;
+		m & tree_ & errors_ & cap_ & scanner_;
 	}
 
 public:
@@ -350,7 +350,7 @@ public:
 	typedef Executor::State State;
 
 	/**
-	* \brief マークをつける
+	* \brief 現在の位置状態を取得する
 	*/
 	State save(){
 		State state;
@@ -360,7 +360,7 @@ public:
 	}
 
 	/**
-	* \brief マークを付けた位置に戻る
+	* \brief 指定した位置状態に戻る
 	*/
 	void load(const State& state){
 		pos_ = state.pos;
@@ -407,6 +407,8 @@ public:
 
 	void skip_eol();
 
+	void bin();
+
 public:
 
 	ArrayPtr capture_values(int_t begin, int_t end);
@@ -418,6 +420,36 @@ public:
 	StringPtr capture(int_t begin);
 
 	bool eat_capture(int_t begin, int_t end);
+
+public:
+
+	int_t peek_ascii(uint_t n = 0){
+		const AnyPtr& ch = peek(n);
+		return chvalue(ch);
+	}
+	
+	int_t read_ascii(){
+		const AnyPtr& ch = read();
+		return chvalue(ch);
+	}
+
+	/**
+	* \brief 文字列の記録を開始する
+	*/
+	void begin_record();
+
+	/**
+	* \brief 文字列の記録を終了して、それを返す。
+	*/
+	StringPtr end_record();
+
+	bool eat_ascii(int_t ch){
+		if(peek_ascii()==ch){
+			read_ascii();
+			return true;
+		}
+		return false;
+	}
 
 protected:
 
@@ -431,7 +463,10 @@ protected:
 	void expand();
 
 	AnyPtr& access(uint_t pos){
-		return begin_[pos>>ONE_BLOCK_SHIFT][pos&ONE_BLOCK_MASK];
+		if(pos<base_*ONE_BLOCK_SIZE){ 
+			return undefined; 
+		}
+		return begin_[(pos>>ONE_BLOCK_SHIFT)-base_][pos&ONE_BLOCK_MASK];
 	}
 
 private:
@@ -442,9 +477,12 @@ private:
 	MemoryStreamPtr mm_;
 	AnyPtr** begin_;
 	uint_t num_;
+	uint_t max_;
 	uint_t pos_;
 	uint_t read_;
+	uint_t base_;
 	uint_t lineno_;
+	uint_t record_pos_;
 };
 
 class StreamScanner : public Scanner{

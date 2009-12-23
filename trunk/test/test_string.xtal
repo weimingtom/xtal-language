@@ -7,15 +7,6 @@ class StringTest{
 		assert ("te"~"st")=="test";
 	}
 	
-	japanese#Test{
-		assert "‚ ".length==1;
-		assert "‚É‚É".length==2;
-		assert "i‚¨".length==2;
-		assert "‚¨i‚¢".length==3;
-		assert "‚Ä‚¢‚·‚Ä‚¢".length==5;
-		assert "ewrwer‚¨".length==7;
-	}
-	
 	sub#Test{
 		assert "Hello".sub("l", fun(x) "L")=="HeLlo";
 		assert "Hello".gsub("l", fun(x) "L")=="HeLLo";

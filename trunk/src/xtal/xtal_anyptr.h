@@ -17,7 +17,7 @@ struct UserTypeBuffer{
 	};
 
 	template<class T>
-	void operator()(T* p){
+	void destroy(T* p){
 		p->~T();
 	}
 };
@@ -33,18 +33,28 @@ template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
 struct UserTypeHolderSub : public UserTypeHolder<T>, public Deleter{
 	UserTypeHolderSub(){}
 	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder<T>(p), Deleter(f){}
-	virtual ~UserTypeHolderSub(){ Deleter::operator()(this->ptr); }
+	virtual ~UserTypeHolderSub(){ Deleter::destroy(this->ptr); }
 };
 
 struct undeleter_t{
 	template<class T>
-	void operator()(T* p){}
+	void destroy(T* p){}
+
+	template<class T>
+	SmartPtr<T> operator()(const T* p){
+		return SmartPtr<T>(p, *this);
+	}
 };
 
 struct deleter_t{
 	template<class T>
-	void operator()(T* p){
+	void destroy(T* p){
 		delete p;
+	}
+
+	template<class T>
+	SmartPtr<T> operator()(const T* p){
+		return SmartPtr<T>(p, *this);
 	}
 };
 

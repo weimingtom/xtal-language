@@ -15,11 +15,11 @@ enum{
 	VERSION1 = 1,
 	VERSION2 = 0,
 	VERSION3 = 1,
-	VERSION4 = 0
+	VERSION4 = 1
 };
 }
 
-//#define XTAL_USE_COMPILED_EMB
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -128,7 +128,7 @@ private:
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
 #else
-#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), ::xtal::XUnlock(0)))
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
 #endif
 
 #ifdef __GNUC__

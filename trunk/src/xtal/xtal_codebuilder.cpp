@@ -16,10 +16,29 @@ CodeBuilder::~CodeBuilder(){}
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
 	error_= &errorimpl_;
 	error_->init(source_file_name);
-	ExprPtr e = parser_.parse(stream, error_);
+	ExprPtr e = parser_.parse(xnew<xpeg::StreamScanner>(stream), error_);
+
+	if(!stream->eos()){
+		error_->error(parser_.lineno(), Xt("XCE1001"));
+	}
+
 	if(!e){
 		return null;
 	}
+
+	prev_inst_op_ = -1;
+	return compile_toplevel(e, source_file_name);
+}
+
+CodePtr CodeBuilder::compile(const xpeg::ScannerPtr& scanner, const StringPtr& source_file_name){
+	error_= &errorimpl_;
+	error_->init(source_file_name);
+	ExprPtr e = parser_.parse(scanner, error_);
+
+	if(!e){
+		return null;
+	}
+
 	prev_inst_op_ = -1;
 	return compile_toplevel(e, source_file_name);
 }
@@ -30,7 +49,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 
 	{
 		StreamPtr ss = xnew<StringStream>(";");
-		ExprPtr e = parser_.parse_stmt(ss, error_);
+		ExprPtr e = parser_.parse_stmt(xnew<xpeg::StreamScanner>(ss), error_);
 		compile_toplevel(e, "<ix>");
 		result_->code_.clear();
 	}
@@ -45,7 +64,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 	int_t pc_pos = 0;
 	while(!stream->eos()){
 
-		ExprPtr e = parser_.parse_stmt(stream, error_);
+		ExprPtr e = parser_.parse_stmt(xnew<xpeg::StreamScanner>(stream), error_);
 		stream->flush();
 
 		if(!e){
@@ -134,7 +153,7 @@ void CodeBuilder::interactive_compile(const StreamPtr& stream){
 CodePtr CodeBuilder::eval_compile(const StringPtr& sorce){
 	error_= &errorimpl_;
 	error_->init("<eval>");
-	ExprPtr e = parser_.parse_expr(xnew<StringStream>(sorce), error_);
+	ExprPtr e = parser_.parse_expr(xnew<xpeg::StreamScanner>(xnew<StringStream>(sorce)), error_);
 	if(!e){
 		return null;
 	}

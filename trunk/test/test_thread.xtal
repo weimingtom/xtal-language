@@ -1,7 +1,5 @@
 inherit(lib::test);
 
-return;
-
 class ThreadTest{
 	test#Test{
 		ret: [];

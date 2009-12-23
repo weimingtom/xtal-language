@@ -560,7 +560,6 @@ void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 	cur.variables_top = variables_top();
 
 	hook_setting_bit_ = debug::hook_setting_bit_ptr();
-	thread_yield_count_ = 1000;
 
 	Any values[4];
 	values[LOAD_NULL] = null;

@@ -20,6 +20,8 @@ VMachine::VMachine(){
 
 	parent_vm_ = 0;
 
+	thread_yield_count_ = 1000;
+
 	static uint_t dummy = 0;
 	hook_setting_bit_ = &dummy;
 }

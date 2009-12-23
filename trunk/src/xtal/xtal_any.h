@@ -536,6 +536,13 @@ public:
 
 /////////////////////////////////////////////////////////
 
+inline const AnyRawValue& rawvalue(const Any& v){
+	return v.value_;
+}
+
+inline AnyRawValue& rawvalue(Any& v){
+	return v.value_;
+}
 
 inline uint_t rawtype(const Any& v){
 	return (uint_t)(rawvalue(v).t());
@@ -543,14 +550,6 @@ inline uint_t rawtype(const Any& v){
 
 inline int_t type(const Any& v){ 
 	return rawtype(v) & TYPE_MASK; 
-}
-
-inline const AnyRawValue& rawvalue(const Any& v){
-	return v.value_;
-}
-
-inline AnyRawValue& rawvalue(Any& v){
-	return v.value_;
 }
 
 inline int_t ivalue(const Any& v){ 
@@ -561,6 +560,11 @@ inline int_t ivalue(const Any& v){
 inline float_t fvalue(const Any& v){ 
 	//XTAL_ASSERT(type(v)==TYPE_FLOAT); 
 	return rawvalue(v).f(); 
+}
+
+inline int_t chvalue(const Any& v){ 
+	//XTAL_ASSERT(type(v)==TYPE_FLOAT); 
+	return rawvalue(v).s()[0];
 }
 
 inline Base* pvalue(const Any& v){ 

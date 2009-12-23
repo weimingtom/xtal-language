@@ -458,6 +458,11 @@ protected:
 	virtual void visit_members(Visitor& m){
 		Base::visit_members(m);
 		m & mm_;
+		for(uint_t i=base_, sz=num_; i<sz; ++i){
+			for(int j=0; j<ONE_BLOCK_SIZE; ++j){
+				m & begin_[i-base_][j];
+			}
+		}
 	}
 
 	void expand();

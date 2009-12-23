@@ -109,58 +109,6 @@ private:
 	
 };
 
-class Reader{
-public:
-
-	Reader();
-
-	void set_stream(const StreamPtr& stream){
-		stream_ = stream;
-	}
-
-	/**
-	* \brief 読み進める。
-	*/
-	int_t read();
-
-	/**
-	* \brief 次の要素を読む。
-	*/
-	int_t peek(int_t n=0);
-
-	/**
-	* \brief 次の要素が引数chと同じだったら読み進める。
-	* \param ch この値と次の要素が等しい場合に読み進める。
-	* \retval true 次の要素はchと同じで、読み進めた。
-	* \retval false 次の要素はchと異なり、読み進められなかった。
-	*/
-	bool eat(int_t ch);
-
-	/**
-	* \brief 文字列の記録を開始する
-	*/
-	void begin_record();
-
-	/**
-	* \brief 文字列の記録を終了して、それを返す。
-	*/
-	StringPtr end_record();
-
-private:
-
-	enum{ BUF_SIZE = 1024, BUF_MASK = BUF_SIZE-1 };
-
-	StreamPtr stream_;
-
-	char_t buf_[BUF_SIZE];
-
-	uint_t pos_;
-	uint_t read_;
-
-	MemoryStreamPtr recorded_ms_;
-	bool recording_;
-};
-	
 class CompileErrors{
 public:	
 
@@ -182,7 +130,7 @@ public:
 	/**
 	* \brief 初期化
 	*/
-	void init(const StreamPtr& stream, CompileErrors* error);
+	void init(const xpeg::ScannerPtr& scanner, CompileErrors* error);
 	
 	/**
 	* \brief 読み進める
@@ -223,14 +171,18 @@ public:
 	* \brief 文字列の記録を開始する
 	*/
 	void begin_record(){
-		reader_.begin_record();
+		reader_->begin_record();
 	}
 
 	/**
 	* \brief 文字列の記録を終了して、それを返す。
 	*/
 	StringPtr end_record(){
-		return reader_.end_record();
+		return reader_->end_record();
+	}
+
+	void bin(){
+		reader_->bin();
 	}
 
 private:
@@ -259,7 +211,7 @@ private:
 
 private:
 
-	Reader reader_;
+	xpeg::ScannerPtr reader_;
 	MapPtr keyword_map_;
 	MemoryStreamPtr ms_;
 
@@ -279,15 +231,17 @@ public:
 
 	Parser();
 
-	ExprPtr parse(const StreamPtr& stream, CompileErrors* error);
+	ExprPtr parse(const xpeg::ScannerPtr& scanner, CompileErrors* error);
 
-	ExprPtr parse_stmt(const StreamPtr& stream, CompileErrors* error);
+	ExprPtr parse_stmt(const xpeg::ScannerPtr& scanner, CompileErrors* error);
 
-	ExprPtr parse_expr(const StreamPtr& stream, CompileErrors* error);
+	ExprPtr parse_expr(const xpeg::ScannerPtr& scanner, CompileErrors* error);
 
-private:
+public:
 
 	int_t lineno(){ return lexer_.lineno(); }
+
+private:
 
 	bool eos(){
 		return eat(-1);

@@ -531,10 +531,13 @@ bool Executor::test(const AnyPtr& ae){
 Scanner::Scanner(){
 	num_ = 0;
 	begin_ = 0;
+	max_ = 0;
 
 	mm_ = xnew<MemoryStream>();
 	pos_ = 0;
 	read_ = 0;
+	base_ = 0;
+	record_pos_ = -1;
 
 	n_ch_ = XTAL_STRING("\n");
 	r_ch_ = XTAL_STRING("\r");
@@ -545,10 +548,10 @@ Scanner::Scanner(){
 }
 
 Scanner::~Scanner(){
-	for(uint_t i=0; i<num_; ++i){
-		xfree(begin_[i], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	for(uint_t i=base_; i<num_; ++i){
+		xfree(begin_[i-base_], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	}
-	xfree(begin_, sizeof(AnyPtr*)*num_);
+	xfree(begin_, sizeof(AnyPtr*)*max_);
 }
 
 const AnyPtr& Scanner::peek(uint_t n){
@@ -669,20 +672,53 @@ bool Scanner::eat_capture(int_t begin, int_t end){
 	return true;
 }
 
-void Scanner::expand(){
-	uint_t newnum = num_ + 1;
-	AnyPtr** newp = (AnyPtr**)xmalloc(sizeof(AnyPtr*)*newnum);
+void Scanner::begin_record(){
+	record_pos_ = pos_;
+}
 
-	if(begin_){
-		std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
+StringPtr Scanner::end_record(){
+	if(record_pos_<0){
+		return empty_string;
 	}
 
-	newp[num_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
-	std::memset(newp[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	int_t begin = record_pos_;
+	record_pos_ = -1;
+	return capture(begin, pos_);
+}
 
-	xfree(begin_, sizeof(AnyPtr*)*num_);
-	begin_ = newp;
-	num_ = newnum;
+void Scanner::expand(){
+	if(max_==num_){
+		uint_t newmax = max_ + max_/2 + 4;
+		AnyPtr** newp = (AnyPtr**)xmalloc(sizeof(AnyPtr*)*newmax);
+
+		if(begin_){
+			std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
+		}
+		xfree(begin_, sizeof(AnyPtr*)*max_);
+		begin_ = newp;
+		max_ = newmax;
+	}
+
+	begin_[num_-base_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	std::memset(begin_[num_-base_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	num_++;
+}
+	
+void Scanner::bin(){
+	if(record_pos_<0){
+		return;
+	}
+
+	int n = (pos_>>ONE_BLOCK_SHIFT)-base_;
+	for(int i=0; i<n; ++i){
+		if((int)num_<=n+i){
+			break;
+		}
+
+		std::swap(begin_[i], begin_[n+i]);
+	}
+
+	base_ += n;
 }
 
 IteratorScanner::IteratorScanner(const AnyPtr& iter)

@@ -118,7 +118,7 @@ const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym);
 
 template<class T>
 struct IDSymbol{
-        static IDSymbolData value;
+	static IDSymbolData value;
 };
 
 template<class T>

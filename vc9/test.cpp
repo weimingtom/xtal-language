@@ -44,7 +44,7 @@ struct MyData{
 };
 
 struct MyDeleter{
-	void operator()(MyData* p){
+	void destroy(MyData* p){
 		delete p;
 	}
 };

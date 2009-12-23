@@ -483,94 +483,47 @@ public:
 	}
 
 //}}REPEAT}
+};
 
-	/*
-	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new T(a0, a1), cpp_class<T>(), special_ctor_t()){}
+template<>
+class SmartPtr<void> : public SmartPtr<Any>{
+public:
+	
+	SmartPtr(){}
 
-	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new T(a0, a1), T::TYPE, special_ctor_t()){}
+	template<class Deleter>
+	SmartPtr(const void* p, const Deleter& deleter)
+		:SmartPtr<Any>((void*)p, deleter){}
 
-	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(T(a0, a1), special_ctor_t()){}
-
-	template<class A0, class A1>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), cpp_class<T>(), special_ctor_t()){
-		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)p->buf;
-		new(p->ptr) T(a0, a1);
+	SmartPtr(const SmartPtr<void>& p)
+		:SmartPtr<Any>(p){
+	}
+	
+	SmartPtr<void>& operator =(const SmartPtr<void>& p){
+		SmartPtr<Any>::operator =(p);
+		return *this;
+	}
+	
+	SmartPtr<void>& operator =(const NullPtr& null){
+		SmartPtr<Any>::operator =(null);
+		return *this;
 	}
 
-/////////////////////
+	/// nullを受け取るコンストラクタ
+	SmartPtr(const NullPtr&){}
 
-	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new T(a0, a1, a2), cpp_class<T>(), special_ctor_t()){}
+public:
 
-	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new T(a0, a1, a2), T::TYPE, special_ctor_t()){}
+	/**
+	* \brief void*を取得する。
+	*/
+	void* get() const{ return ExtractSmartPtr<InheritedN<void>::value, void>::extract(*this); }
 
-	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(T(a0, a1, a2), special_ctor_t()){}
-
-	template<class A0, class A1, class A2>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), cpp_class<T>(), special_ctor_t()){
-		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)p->buf;
-		new(p->ptr) T(a0, a1, a2);
-	}
-
-/////////////////////
-
-	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3), cpp_class<T>(), special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3), T::TYPE, special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(T(a0, a1, a2, a3), special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), cpp_class<T>(), special_ctor_t()){
-		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)p->buf;
-		new(p->ptr) T(a0, a1, a2, a3);
-	}
-
-/////////////////////
-
-	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_BASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), cpp_class<T>(), special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_RCBASE>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new T(a0, a1, a2, a3, a4), T::TYPE, special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_ANY>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(T(a0, a1, a2, a3, a4), special_ctor_t()){}
-
-	template<class A0, class A1, class A2, class A3, class A4>
-	SmartPtr(SmartPtrSelector<INHERITED_OTHER>, const A0& a0, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		:SmartPtr<Any>(new UserTypeHolderSub<T>(), cpp_class<T>(), special_ctor_t()){
-		UserTypeHolderSub<T>* p = ((UserTypeHolderSub<T>*)pvalue(*this));
-		p->ptr = (T*)p->buf;
-		new(p->ptr) T(a0, a1, a2, a3, a4);
-	}
-*/
+	/**
+	* \brief void*への暗黙的な変換オペレータ
+	* スマートポインタとして振舞うために。
+	*/
+	operator void*() const{ return get(); }
 };
 
 template<class T>

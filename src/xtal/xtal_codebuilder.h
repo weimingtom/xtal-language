@@ -22,6 +22,8 @@ public:
 	
 	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
+	CodePtr compile(const xpeg::ScannerPtr& scanner, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
+
 	void interactive_compile(const StreamPtr& stream);
 
 	CodePtr eval_compile(const StringPtr& code);

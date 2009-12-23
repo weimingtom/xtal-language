@@ -549,6 +549,10 @@ Scanner::Scanner(){
 
 Scanner::~Scanner(){
 	for(uint_t i=base_; i<num_; ++i){
+		for(int j=0, sz=ONE_BLOCK_SIZE; j<sz; ++j){
+			begin_[i-base_][j] = null;
+		}
+
 		xfree(begin_[i-base_], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	}
 	xfree(begin_, sizeof(AnyPtr*)*max_);

@@ -414,7 +414,9 @@ VMachinePtr vmachine_take_over(){
 void vmachine_take_back(const VMachinePtr& vm){
 	Environment* environment = xtal::environment_;
 	vm->reset();
-	environment->vm_list_->push_back(vm);
+	if(environment->vm_list_->length()<16){
+		environment->vm_list_->push_back(vm);
+	}
 }
 
 void vmachine_swap_temp(){

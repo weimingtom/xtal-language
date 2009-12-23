@@ -548,12 +548,12 @@ Scanner::Scanner(){
 }
 
 Scanner::~Scanner(){
-	for(uint_t i=base_; i<num_; ++i){
+	for(uint_t i=0; i<num_; ++i){
 		for(int j=0, sz=ONE_BLOCK_SIZE; j<sz; ++j){
-			begin_[i-base_][j] = null;
+			begin_[i][j] = null;
 		}
 
-		xfree(begin_[i-base_], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+		xfree(begin_[i], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	}
 	xfree(begin_, sizeof(AnyPtr*)*max_);
 }
@@ -562,7 +562,7 @@ const AnyPtr& Scanner::peek(uint_t n){
 	while(pos_+n >= read_){
 		uint_t now_read = 0;
 
-		if((read_>>ONE_BLOCK_SHIFT)==num_){
+		if((read_>>ONE_BLOCK_SHIFT)-base_==num_){
 			expand();
 		}
 
@@ -699,7 +699,7 @@ void Scanner::expand(){
 			std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
 		}
 
-		for(int i=num_; i<newmax; ++i){
+		for(uint_t i=num_; i<newmax; ++i){
 			newp[i] = 0;
 		}
 
@@ -710,21 +710,21 @@ void Scanner::expand(){
 
 	//XTAL_ASSERT(begin_[num_-base_]==0);
 
-	begin_[num_-base_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
-	std::memset(begin_[num_-base_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	begin_[num_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	std::memset(begin_[num_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	num_++;
 }
 	
 void Scanner::bin(){
-		return;
 	if(record_pos_<0){
+		return;
 	}
 
 	int n = (int)((pos_>>ONE_BLOCK_SHIFT)-base_);
 
 	if(n>0){
 		for(int i=0; i<num_; ++i){
-			if((int)num_<=n+i){
+			if(n+i>=(int)num_){
 				break;
 			}
 

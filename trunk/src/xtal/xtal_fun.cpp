@@ -250,7 +250,6 @@ void Lambda::rawcall(const VMachinePtr& vm){
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
 	:Fun(outer, th, code, info), vm_(null), resume_pc_(0), alive_(true){
-	set_finalizer_flag();
 }
 
 void Fiber::finalize(){
@@ -264,6 +263,7 @@ void Fiber::halt(){
 		vmachine_take_back(vm_);
 		vm_ = null;
 		alive_ = false;
+		unset_finalizer_flag();
 	}
 }
 
@@ -271,7 +271,10 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 	if(alive_){
 		vm->set_arg_this(this_);
 		if(resume_pc_==0){
-			if(!vm_){ vm_ = vmachine_take_over(); }
+			if(!vm_){ 
+				set_finalizer_flag();
+				vm_ = vmachine_take_over(); 
+			}
 			resume_pc_ = vm_->start_fiber(this, vm.get(), add_succ_or_fail_result);
 		}
 		else{ 
@@ -282,6 +285,7 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 			vmachine_take_back(vm_);
 			vm_ = null;
 			alive_ = false;
+			unset_finalizer_flag();
 		}
 	}
 	else{

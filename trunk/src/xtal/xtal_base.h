@@ -73,6 +73,7 @@ public:
 
 	bool have_finalizer(){ return value_.have_finalizer(); }
 	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
+	void unset_finalizer_flag(){ value_.unset_finalizer_flag(); }
 
 	uint_t ref_count(){ return value_.ref_count(); }
 	void add_ref_count(int_t rc){ value_.add_ref_count(rc); }

@@ -150,6 +150,7 @@ struct AnyRawValue{
 
 	bool have_finalizer(){ return (type & HAVE_FINALIZER_FLAG_BIT)!=0; }
 	void set_finalizer_flag(){ type |= HAVE_FINALIZER_FLAG_BIT; }
+	void unset_finalizer_flag(){ type &= ~HAVE_FINALIZER_FLAG_BIT; }
 
 	uint_t ref_count(){ return (type & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
 	void add_ref_count(int_t rc){ type += rc<<REF_COUNT_SHIFT; }

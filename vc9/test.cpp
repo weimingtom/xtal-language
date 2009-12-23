@@ -194,19 +194,14 @@ int main2(int argc, char** argv){
 	//AnyPtr a = cast<bool>(false);
 
 	if(CodePtr code = Xsrc((
-		fun global::aaa(){
-			callee.p;
-		}
+		
+fun createFibers(max){ 
+  for (i : 0; i < max; ++i){ 
+    foo : fiber(){yield 1;}; 
+  } 
+	}
 
-		aaa();
-
-		fun global::aaa(){
-			"e".p;
-		}
-
-		aaa();
-
-		(45, 65, 78).p;
+	createFibers(100*100);
 
 	))){
 		code->call();

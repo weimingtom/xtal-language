@@ -698,10 +698,17 @@ void Scanner::expand(){
 		if(begin_){
 			std::memcpy(newp, begin_, sizeof(AnyPtr*)*num_);
 		}
+
+		for(int i=num_; i<newmax; ++i){
+			newp[i] = 0;
+		}
+
 		xfree(begin_, sizeof(AnyPtr*)*max_);
 		begin_ = newp;
 		max_ = newmax;
 	}
+
+	//XTAL_ASSERT(begin_[num_-base_]==0);
 
 	begin_[num_-base_] = (AnyPtr*)xmalloc(sizeof(AnyPtr)*ONE_BLOCK_SIZE);
 	std::memset(begin_[num_-base_], 0, sizeof(AnyPtr)*ONE_BLOCK_SIZE);
@@ -709,20 +716,23 @@ void Scanner::expand(){
 }
 	
 void Scanner::bin(){
-	if(record_pos_<0){
 		return;
+	if(record_pos_<0){
 	}
 
-	int n = (pos_>>ONE_BLOCK_SHIFT)-base_;
-	for(int i=0; i<n; ++i){
-		if((int)num_<=n+i){
-			break;
+	int n = (int)((pos_>>ONE_BLOCK_SHIFT)-base_);
+
+	if(n>0){
+		for(int i=0; i<num_; ++i){
+			if((int)num_<=n+i){
+				break;
+			}
+
+			std::swap(begin_[i], begin_[n+i]);
 		}
 
-		std::swap(begin_[i], begin_[n+i]);
+		base_ += n;
 	}
-
-	base_ += n;
 }
 
 IteratorScanner::IteratorScanner(const AnyPtr& iter)

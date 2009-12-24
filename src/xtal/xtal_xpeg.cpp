@@ -720,11 +720,11 @@ void Scanner::bin(){
 		return;
 	}
 
-	int n = (int)((pos_>>ONE_BLOCK_SHIFT)-base_);
+	uint_t n = (pos_>>ONE_BLOCK_SHIFT)-base_;
 
 	if(n>0){
-		for(int i=0; i<num_; ++i){
-			if(n+i>=(int)num_){
+		for(uint_t i=0; i<num_; ++i){
+			if(n+i>=num_){
 				break;
 			}
 

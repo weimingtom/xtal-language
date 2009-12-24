@@ -150,9 +150,9 @@ private:
 #endif
 
 #ifdef XTAL_USE_WCHAR
-#	define XTAL_STRING(x) ::xtal::StringLiteral(L##x, sizeof(L##x)/sizeof(wchar_t)-1)
+#	define XTAL_STRING(x) ::xtal::StringLiteral(L##x)
 #else 
-#	define XTAL_STRING(x) ::xtal::StringLiteral(x, sizeof(x)-1)
+#	define XTAL_STRING(x) ::xtal::StringLiteral(x)
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
@@ -518,8 +518,9 @@ struct IsFloat<float_t>{ enum{ value = 1 }; };
 class StringLiteral{
 public:
 
-	StringLiteral(const char_t* str, uint_t size)
-		:str_(str), size_(size){
+	template<int N>
+	explicit StringLiteral(const char_t (&str)[N])
+		:str_(str), size_(N-1){
 	}
 
 	operator const char_t*() const{

@@ -33,6 +33,8 @@ public:
 	}
 
 	void uninitialize(){
+		join_all_threads();
+
 		unregister_vmachine();
 		xunlock();
 		
@@ -44,7 +46,9 @@ public:
 
 	void join_all_threads(){
 		while(thread_count_!=1){
-			yield_thread();
+			XTAL_UNLOCK{
+				thread_lib_->yield();
+			}
 		}
 	}
 
@@ -79,12 +83,12 @@ public:
 	}
 
 	void register_thread(){
+		thread_lib_->lock_mutex(mutex_->impl());
+
 		XTAL_ASSERT(environment()==0);
 		set_environment(environment_);
 
 		registered_thread_ = true;
-		xlock();
-		registered_thread_ = false;
 		thread_count_++;
 		register_vmachine();
 	}

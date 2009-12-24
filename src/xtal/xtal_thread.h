@@ -92,6 +92,12 @@ public:
 
 	void rawlock();
 
+public:
+
+	void* impl(){
+		return impl_;
+	}
+
 private:
 	void* impl_;
 };

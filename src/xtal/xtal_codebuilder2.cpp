@@ -258,24 +258,39 @@ int_t CodeBuilder::compile_expr_STRING(const ExprPtr& e, int_t stack_top, int_t 
 }
 
 int_t CodeBuilder::compile_expr_ARRAY(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstMakeArray(result));
-	Xfor(v, e->array_values()){
-		compile_expr(v, stack_top+1, stack_top);
-		put_inst(InstArrayAppend(result, stack_top));
+	if(result_count!=0){
+		put_inst(InstMakeArray(result));
+		Xfor(v, e->array_values()){
+			compile_expr(v, stack_top+1, stack_top);
+			put_inst(InstArrayAppend(result, stack_top));
+		}
+		return 1;
 	}
-
-	return 1;
+	else{
+		Xfor(v, e->array_values()){
+			compile_expr(v, stack_top+1, stack_top);
+		}
+		return 0;
+	}
 }
 
 int_t CodeBuilder::compile_expr_MAP(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	put_inst(InstMakeMap(result));
-	Xfor_cast(const ArrayPtr& v, e->map_values()){
-		compile_expr(v->at(0), stack_top+1, stack_top);
-		compile_expr(v->at(1), stack_top+2, stack_top+1);
-		put_inst(InstMapInsert(result, stack_top, stack_top+1));
+	if(result_count!=0){
+		put_inst(InstMakeMap(result));
+		Xfor_cast(const ArrayPtr& v, e->map_values()){
+			compile_expr(v->at(0), stack_top+1, stack_top);
+			compile_expr(v->at(1), stack_top+2, stack_top+1);
+			put_inst(InstMapInsert(result, stack_top, stack_top+1));
+		}
+		return 1;
 	}
-
-	return 1;
+	else{
+		Xfor_cast(const ArrayPtr& v, e->map_values()){
+			compile_expr(v->at(0), stack_top+1, stack_top);
+			compile_expr(v->at(1), stack_top+2, stack_top+1);
+		}
+		return 0;
+	}
 }
 
 int_t CodeBuilder::compile_expr_VALUES(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){

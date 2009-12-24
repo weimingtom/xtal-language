@@ -80,6 +80,12 @@ SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
 }
 
 SmartPtr<Any>::~SmartPtr(){
+#if 0
+	if(!environment()){
+		XTAL_ASSERT(type(*this)<TYPE_BASE);
+	}
+#endif
+
 	dec_ref_count_force(*this);
 }	
 

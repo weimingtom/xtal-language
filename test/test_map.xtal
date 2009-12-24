@@ -14,7 +14,11 @@ class MapTest{
 	size_zero#Test{
 		assert Map().size == 0;
 	}
-
+	
+	literal#Test{
+		["a": 10, "b": 20, "c": 30];
+	}
+	
 	clone#Test{
 		a: [5:10, 6:20, 7:30, 8:40];
 		b: a.clone;

@@ -199,6 +199,7 @@ private:
 
 	IDPtr parse_identifier();
 	int_t parse_integer();
+	float_t parse_finteger();
 	int_t parse_hex();
 	int_t parse_oct();
 	int_t parse_bin();

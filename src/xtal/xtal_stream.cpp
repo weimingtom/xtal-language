@@ -358,10 +358,10 @@ void FileStream::open(const StringPtr& path, const StringPtr& aflags){
 
 uint_t InteractiveStream::read(void* p, uint_t size){
 	if(continue_stmt_){
-		stdout_stream()->put_s(format("ix:%03d>    ")->call(line_)->to_s());
+		stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>    "))->call(line_)->to_s());
 	}
 	else{
-		stdout_stream()->put_s(format("ix:%03d>")->call(line_)->to_s());
+		stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>"))->call(line_)->to_s());
 	}
 
 	continue_stmt_ = true;

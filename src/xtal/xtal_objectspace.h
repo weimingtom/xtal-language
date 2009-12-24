@@ -22,9 +22,9 @@ public:
 
 	void disable_gc();
 
-	void gc();
+	void lw_gc();
 
-	void gc2();
+	void gc();
 
 	void full_gc();
 
@@ -46,8 +46,6 @@ public:
 		return var_table_->at(key);
 	}
 
-	void print_alive_objects();
-
 	uint_t alive_object_count();
 
 	RefCountingBase* alive_object(uint_t i);
@@ -55,6 +53,10 @@ public:
 	void bind_all();
 
 	void def_all_cpp_classes();
+
+	void finish_initialize(){
+		objects_builtin_line_ = objects_count_;
+	}
 
 private:
 
@@ -78,12 +80,14 @@ private:
 	GCObserver** gcobservers_current_;
 	GCObserver** gcobservers_end_;
 
+	uint_t objects_builtin_line_;
 	uint_t objects_count_;
 	uint_t objects_max_;
 	uint_t processed_line_;
 
 	bool disable_finalizer_;
 	bool def_all_cpp_classes_;
+	bool binded_all_;
 
 	uint_t cycle_count_;
 

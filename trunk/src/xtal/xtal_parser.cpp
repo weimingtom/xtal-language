@@ -197,6 +197,23 @@ int_t Lexer::parse_integer(){
 	return ret;
 }
 
+float_t Lexer::parse_finteger(){
+	float_t ret = 0;
+	for(;;){
+		if(test_digit(reader_->peek_ascii())){
+			ret *= 10;
+			ret += reader_->read_ascii()-'0';
+		}
+		else if(reader_->peek_ascii()=='_'){
+			reader_->read_ascii();
+		}
+		else{
+			break;
+		}
+	}
+	return ret;
+}
+
 int_t Lexer::parse_hex(){
 	int_t ret = 0;
 	for(;;){
@@ -315,57 +332,59 @@ void Lexer::parse_number(){
 		}
 	}
 	
-	int_t ival = parse_integer();
+	{
+		int i = 0;
+		while(test_digit(reader_->peek_ascii(i)) || reader_->peek_ascii(i)=='_'){
+			i++;
+		}
+
+		if(reader_->peek_ascii(i)!='.' || !test_digit(reader_->peek_ascii(i+1))){
+			parse_number_suffix(parse_integer());
+			return;
+		}
+	}
+
+	float_t ival = parse_finteger();
 	
-	if(reader_->peek_ascii()=='.'){
-		if(test_digit(reader_->peek_ascii(1))){
+	reader_->read_ascii(); // skip '.'
+
+	float_t scale = 1;
+	float_t fval = 0;
+	for(;;){
+		if(test_digit(reader_->peek_ascii())){
+			scale /= 10;
+			fval += (reader_->read_ascii()-'0')*scale;
+		}
+		else if(reader_->peek_ascii()=='_'){
 			reader_->read_ascii();
-
-			float_t scale = 1;
-			float_t fval = 0;
-			for(;;){
-				if(test_digit(reader_->peek_ascii())){
-					scale /= 10;
-					fval += (reader_->read_ascii()-'0')*scale;
-				}
-				else if(reader_->peek_ascii()=='_'){
-					reader_->read_ascii();
-				}
-				else{
-					break;
-				}
-			}
-
-			fval += ival;
-			int_t e = 1;
-			if(reader_->eat_ascii('e') || reader_->eat_ascii('E')){
-				if(reader_->eat_ascii('-')){
-					e=-1;
-				}
-				else{
-					reader_->eat_ascii('+');
-				}
-
-				if(!test_digit(reader_->peek_ascii())){
-					error_->error(lineno(), Xt("XCE1014"));
-				}
-
-				e *= parse_integer();
-
-				{
-					using namespace std;
-					fval *= (float_t)pow((float_t)10, (float_t)e);
-				}
-			}
-			parse_number_suffix(fval);
 		}
 		else{
-			push_int_token(ival);
+			break;
 		}
 	}
-	else{
-		parse_number_suffix(ival);
+
+	fval += ival;
+	int_t e = 1;
+	if(reader_->eat_ascii('e') || reader_->eat_ascii('E')){
+		if(reader_->eat_ascii('-')){
+			e=-1;
+		}
+		else{
+			reader_->eat_ascii('+');
+		}
+
+		if(!test_digit(reader_->peek_ascii())){
+			error_->error(lineno(), Xt("XCE1014"));
+		}
+
+		e *= parse_integer();
+
+		{
+			using namespace std;
+			fval *= (float_t)pow((float_t)10, (float_t)e);
+		}
 	}
+	parse_number_suffix(fval);
 }
 	
 void Lexer::do_read(){

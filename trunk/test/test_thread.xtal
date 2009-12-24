@@ -29,7 +29,7 @@ class ThreadTest{
 		thread2 : Thread(); 
 		ret : []; 
 		fun foo(str){ 
-		  10.times{ 
+		  100.times{ 
 			ret.push_back(%f[%s](str)); 
 		  } 
 		} 
@@ -38,7 +38,7 @@ class ThreadTest{
 		thread2.start(fun(){foo("sub2");}); 
 		thread1.join(); 
 		thread2.join(); 
-		assert ret.length==20; 
+		assert ret.length==200; 
 	}
 }
 

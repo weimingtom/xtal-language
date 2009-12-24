@@ -61,6 +61,10 @@ void VMachine::reset(){
 	debug_info_ = null;
 
 	parent_vm_ = 0;
+
+	for(int_t i=0, size=(int)variables_.size(); i<size; ++i){
+		(Any&)variables_.at(i) = null;
+	}
 }
 
 VMachine::FunFrame::FunFrame(){
@@ -76,7 +80,19 @@ void VMachine::FunFrame::set_null(){
 }
 
 void VMachine::setup_call(int_t need_result_count){
-	int_t base = variables_top()!=0 ? 128 : 1;
+	int_t base;
+	if(!fun_frames_.empty()){
+		FunFrame& f= ff();
+		if(f.fun()){
+			base = 128;
+		}
+		else{
+			base = f.ordered_arg_count+f.named_arg_count*2+1;
+		}
+	}
+	else{
+		base = 0;
+	}
 
 	CallState call_state;
 	call_state.self = undefined;
@@ -902,7 +918,7 @@ void VMachine::add_ref_count_members(int_t n){
 		}
 	}
 
-	for(int_t i=0, size=std::min((int)variables_top()+256, (int)variables_.size()); i<size; ++i){
+	for(int_t i=0, size=std::min((int)variables_top()+128, (int)variables_.size()); i<size; ++i){
 		add_ref_count_force(variables_.at(i), n);
 	}
 }
@@ -915,7 +931,7 @@ void VMachine::before_gc(){
 		}
 	}
 
-	for(int_t i=(int)variables_top()+256, size=(int)variables_.size(); i<size; ++i){
+	for(int_t i=(int)variables_top()+128, size=(int)variables_.size(); i<size; ++i){
 		(Any&)variables_.at(i) = null;
 	}
 

@@ -3,6 +3,8 @@
 
 #include "xtal_objectspace.h"
 
+//#define XTAL_DEBUG_PRINT
+
 #ifdef XTAL_DEBUG_PRINT
 #include <map>
 #include <string>
@@ -115,49 +117,6 @@ struct ConnectedPointer{
 	}
 };
 
-
-void xtal::ObjectSpace::print_alive_objects(){
-#ifdef XTAL_DEBUG_PRINT
-	ConnectedPointer current(objects_count_, objects_list_begin_);
-	ConnectedPointer begin(0, objects_list_begin_);
-
-	std::map<std::string, int> table;
-	for(ConnectedPointer it = begin; it!=current; ++it){
-		switch(type(**it)){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){ table["Base"]++; }
-		XTAL_CASE(TYPE_STRING){ 
-			unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
-			const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
-			str = str;
-			uint_t n = string_data_size(str);
-			XMallocGuard umg((n+1)*sizeof(char));
-			char* buf = (char*)umg.get();
-			for(uint_t i=0; i<n; ++i){
-				buf[i] = str[i];
-			}
-			buf[n] = 0;
-			//table[buf]++;
-		}
-		XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
-		XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
-		XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
-		XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
-		XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
-		}
-	}
-
-	std::map<std::string, int>::iterator it=table.begin(), last=table.end();
-	for(; it!=last; ++it){
-		printf("alive %s %d\n", it->first.c_str(), it->second);
-	}
-	int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
-	printf("m %d\n", m);
-
-	//printf("used_memory %d\n", used_memory);
-#endif
-}
-
 void ObjectSpace::initialize(){
 	objects_list_begin_ = 0;
 	objects_list_current_ = 0;
@@ -169,9 +128,11 @@ void ObjectSpace::initialize(){
 	objects_max_ = 0;
 	processed_line_ = 0;
 	cycle_count_ = 0;
+	objects_builtin_line_ = 0;
 
 	disable_finalizer_ = false;
 	def_all_cpp_classes_ = false;
+	binded_all_ = false;
 
 	disable_gc();
 
@@ -271,7 +232,57 @@ void ObjectSpace::uninitialize(){
 		if(!ignore_memory_assert()){
 			//fprintf(stderr, "finished gc\n");
 			//fprintf(stderr, "exists cycled objects %d\n", objects_count_);
-			print_alive_objects();
+			//print_alive_objects();
+
+#ifdef XTAL_DEBUG_PRINT
+			ConnectedPointer current(objects_count_, objects_list_begin_);
+			ConnectedPointer begin(objects_builtin_line_, objects_list_begin_);
+
+			std::map<std::string, int> table;
+			for(ConnectedPointer it = begin; it!=current; ++it){
+				switch(type(**it)){
+				XTAL_DEFAULT;
+
+				XTAL_CASE(TYPE_BASE){ 
+					//table["Base"]++; 
+					if(Class* p=dynamic_cast<Class*>((Base*)*it)){
+						table[p->object_temporary_name()->c_str()]++;
+					}
+					else{
+						table[typeid(*pvalue(**it)).name()]++;
+					}
+				}
+
+				XTAL_CASE(TYPE_STRING){ 
+					unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
+					const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
+					str = str;
+					uint_t n = string_data_size(str);
+					XMallocGuard umg((n+1)*sizeof(char));
+					char* buf = (char*)umg.get();
+					for(uint_t i=0; i<n; ++i){
+						buf[i] = str[i];
+					}
+					buf[n] = 0;
+					//table[buf]++;
+				}
+				XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
+				XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
+				XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
+				XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
+				XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
+				}
+			}
+
+			std::map<std::string, int>::iterator it=table.begin(), last=table.end();
+			for(; it!=last; ++it){
+				printf("alive %s %d\n", it->first.c_str(), it->second);
+			}
+			int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+			printf("m %d\n", m);
+
+			//printf("used_memory %d\n", used_memory);	
+#endif
 
 			// このassertでとまる場合、オブジェクトをすべて開放できていない。
 			// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
@@ -391,7 +402,7 @@ void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer cu
 	}
 }
 
-void ObjectSpace::gc(){
+void ObjectSpace::lw_gc(){
 	if(cycle_count_!=0){ return; }
 
 	ScopeCounter cc(&cycle_count_);
@@ -421,16 +432,16 @@ void ObjectSpace::gc(){
 
 	processed_line_ += N;
 	if(processed_line_>objects_count_){
-		processed_line_ = 0;
+		processed_line_ = objects_builtin_line_;
 	}
 }
 
-void ObjectSpace::gc2(){
+void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 
 	ScopeCounter cc(&cycle_count_);
 
-	ConnectedPointer first(0, objects_list_begin_);
+	ConnectedPointer first(objects_builtin_line_, objects_list_begin_);
 	ConnectedPointer last(objects_count_, objects_list_begin_);
 	ConnectedPointer end(objects_count_, objects_list_begin_);
 
@@ -502,13 +513,9 @@ void ObjectSpace::full_gc(){
 					RefCountingBase* p = *it;
 					if(p->have_finalizer()){
 						exists_have_finalizer = true;
-						//vmachine()->setup_call();
 						((Base*)p)->finalize();
-						//vmachine()->return_result();
-						//vmachine()->cleanup_call();
 					}
 				}
-
 
 				if(exists_have_finalizer){
 					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
@@ -589,9 +596,12 @@ void ObjectSpace::unregister_gc_observer(GCObserver* p){
 }
 
 void ObjectSpace::bind_all(){
-	for(uint_t i=0; i<class_table_.size(); ++i){
-		if(class_table_[i]){
-			class_table_[i]->bind();
+	if(!binded_all_){
+		binded_all_ = true;
+		for(uint_t i=0; i<class_table_.size(); ++i){
+			if(class_table_[i]){
+				class_table_[i]->bind();
+			}
 		}
 	}
 }

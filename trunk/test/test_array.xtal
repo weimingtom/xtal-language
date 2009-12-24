@@ -11,6 +11,10 @@ class ArrayTest{
 		assert _obj.is_empty;
 	}
 	
+	literal#Test{
+		[10, 20, 30];
+	}
+		
 	indexerror#Test{
 		a: [];
 		ret: "";

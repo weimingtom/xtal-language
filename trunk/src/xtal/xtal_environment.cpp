@@ -182,7 +182,7 @@ void* xmalloc(size_t size){
 	env->used_memory_ += size;
 
 	if(env->used_memory_>env->memory_threshold_){
-		env->object_space_.gc();
+		env->object_space_.lw_gc();
 		env->memory_threshold_ = env->used_memory_ + 1024*20;
 		//printf("mem %dKB\n", env->memory_threshold_/1024);
 	}
@@ -190,7 +190,7 @@ void* xmalloc(size_t size){
 	void* ret = env->setting_.allocator_lib->malloc(size);
 
 	if(!ret){
-		env->object_space_.gc2();
+		env->object_space_.gc();
 		ret = env->setting_.allocator_lib->malloc(size);
 
 		if(!ret){
@@ -362,7 +362,10 @@ void Environment::initialize(const Setting& setting){
 	enable_gc();
 	exec_script();
 
+	//bind_all();
+
 	full_gc();
+	object_space_.finish_initialize();
 }
 
 void Environment::uninitialize(){
@@ -427,6 +430,10 @@ void vmachine_swap_temp(){
 
 const IDPtr* id_op_list(){
 	return environment_->string_space_.id_op_list();
+}
+
+void lw_gc(){
+	return environment_->object_space_.lw_gc();
 }
 
 void gc(){

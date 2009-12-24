@@ -195,13 +195,7 @@ int main2(int argc, char** argv){
 
 	if(CodePtr code = Xsrc((
 		
-fun createFibers(max){ 
-  for (i : 0; i < max; ++i){ 
-    foo : fiber(){yield 1;}; 
-  } 
-	}
-
-	createFibers(100*100);
+		4294967296475785785785.0.p;
 
 	))){
 		code->call();

@@ -266,6 +266,7 @@ void ObjectSpace::uninitialize(){
 					buf[n] = 0;
 					//table[buf]++;
 				}
+
 				XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
 				XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
 				XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }

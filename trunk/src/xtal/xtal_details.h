@@ -48,6 +48,8 @@ public:
 	uint_t used_memory_;
 	uint_t memory_threshold_;
 
+	bool gc_stress_;
+
 #ifndef XTAL_NO_SMALL_ALLOCATOR
 	SmallObjectAllocator so_alloc_;
 #endif

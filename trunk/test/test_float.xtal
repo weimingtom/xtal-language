@@ -21,4 +21,8 @@ class FloatTest{
 		a: 1.20e-5;
 		assert near(a, 0.000012);
 	}
+	
+	big#Test{
+		assert 65535.0 < 4294967296475785785785.0;
+	}
 }

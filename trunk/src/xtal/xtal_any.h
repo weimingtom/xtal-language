@@ -138,26 +138,36 @@ struct AnyRawValue{
 	void init(const Base* v){  type = TYPE_BASE; pvalue = (Base*)v; }
 	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = (RefCountingBase*)v; }
 
-	enum{
-		IMMUTABLE_SHIFT = TYPE_SHIFT+1,
+	void init_string_literal(const char_t* v, uint_t sz){ 
+		type = TYPE_STRING_LITERAL | (sz<<STRING_LITERAL_SIZE_SHIFT); 
+		spvalue = v; 
+	}
+public:
 
-		HAVE_FINALIZER_FLAG_SHIFT = IMMUTABLE_SHIFT+1,
+	enum{
+		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
 		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
 
 		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1)
+		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1),
+
+		STRING_LITERAL_SIZE_SHIFT = TYPE_SHIFT+1,
+		STRING_LITERAL_SIZE_MASK = ~((1<<STRING_LITERAL_SIZE_SHIFT)-1)
 	};
 
-	bool have_finalizer(){ return (type & HAVE_FINALIZER_FLAG_BIT)!=0; }
+	bool have_finalizer() const{ return (type & HAVE_FINALIZER_FLAG_BIT)!=0; }
 	void set_finalizer_flag(){ type |= HAVE_FINALIZER_FLAG_BIT; }
 	void unset_finalizer_flag(){ type &= ~HAVE_FINALIZER_FLAG_BIT; }
 
-	uint_t ref_count(){ return (type & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
+	uint_t ref_count() const{ return (type & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
 	void add_ref_count(int_t rc){ type += rc<<REF_COUNT_SHIFT; }
 	void inc_ref_count(){ type += 1<<REF_COUNT_SHIFT; }
 	void dec_ref_count(){ type -= 1<<REF_COUNT_SHIFT; }
 
-	uint_t ungc(){ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+	uint_t ungc() const{ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+
+	uint_t string_literal_size() const{ return (type & STRING_LITERAL_SIZE_MASK)>>STRING_LITERAL_SIZE_SHIFT; }
+public:
 
 	int_t t() const{ return type; }
 	int_t i() const{ return ivalue; }
@@ -167,6 +177,7 @@ struct AnyRawValue{
 	RefCountingBase* r() const{ return rcpvalue; }
 	char_t* s(){ return svalue; }
 	const char_t* s() const{ return svalue; }
+	const char_t* sp() const{ return spvalue; }
 
 	void set_object_size(int_t sz){ ivalue = sz; }
 	int_t object_size(){ return ivalue; }
@@ -195,6 +206,7 @@ private:
 		float_t fvalue;
 		Base* pvalue;
 		RefCountingBase* rcpvalue;
+		const char_t* spvalue;
 		char_t svalue[SMALL_STRING_MAX];
 	};
 };

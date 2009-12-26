@@ -19,7 +19,7 @@ enum{
 };
 }
 
-#define XTAL_USE_COMPILED_EMB
+//#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -37,6 +37,12 @@ enum{
 #if !defined(XTAL_USE_COMPUTED_GOTO) && defined(__GNUC__)
 #define XTAL_USE_COMPUTED_GOTO
 #endif
+
+#define XTAL_CAT_(x, y) x ## y
+#define XTAL_CAT(x, y) XTAL_CAT_(x, y)
+#define XTAL_UNIQUE(x) XTAL_CAT(x, __LINE__)
+
+#define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0};
 
 #if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
 #define XTAL_PREFETCH(x) __builtin_prefetch(x)
@@ -554,22 +560,23 @@ enum PrimitiveType{
 	TYPE_FLOAT = 5,
 	
 	TYPE_SMALL_STRING = 6,
+	TYPE_STRING_LITERAL = 7,
 	// Ç±Ç±Ç©ÇÁè„ÇÕimmutableÇ»ílå^Ç≈Ç†ÇÈ
 
 	// Ç±Ç±Ç©ÇÁâ∫ÇÕéQè∆å^Ç≈Ç†ÇÈ
-	TYPE_BASE = 7,
+	TYPE_BASE = 8,
 
-	TYPE_STRING = 8,
+	TYPE_STRING = 9,
 	
-	TYPE_ARRAY = 9,
-	TYPE_VALUES = 10,
-	TYPE_TREE_NODE = 11,
+	TYPE_ARRAY = 10,
+	TYPE_VALUES = 11,
+	TYPE_TREE_NODE = 12,
 
-	TYPE_NATIVE_METHOD = 12,
-	TYPE_NATIVE_FUN = 13,
+	TYPE_NATIVE_METHOD = 13,
+	TYPE_NATIVE_FUN = 14,
 
-	TYPE_IVAR_GETTER = 14,
-	TYPE_IVAR_SETTER = 15,
+	TYPE_IVAR_GETTER = 15,
+	TYPE_IVAR_SETTER = 16,
 
 	/*
 	TYPE_FRAME,
@@ -583,7 +590,7 @@ enum PrimitiveType{
 
 	TYPE_MAX,
 
-	TYPE_SHIFT = 4,
+	TYPE_SHIFT = 5,
 	TYPE_MASK = (1<<TYPE_SHIFT)-1
 };
 

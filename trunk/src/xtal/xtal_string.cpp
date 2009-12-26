@@ -253,7 +253,7 @@ void String::init_string(const char_t* str, uint_t size){
 	}
 }
 
-String::String(const char_t* str, uint_t size, make_t){
+String::String(const char_t* str, uint_t size, intern_t){
 	if(size<SMALL_STRING_MAX){
 		value_.init(TYPE_SMALL_STRING);
 		string_copy(value_.s(), str, size);
@@ -265,6 +265,16 @@ String::String(const char_t* str, uint_t size, make_t){
 		value_.init(TYPE_STRING, sd);
 		sd->set_interned();
 		register_gc(sd);
+	}
+}
+
+String::String(const StringLiteral& str, intern_t){
+	if(str.size()<SMALL_STRING_MAX){
+		value_.init(TYPE_SMALL_STRING);
+		string_copy(value_.s(), str, str.size());
+	}
+	else{
+		value_.init_string_literal(TYPE_ID_LITERAL, str);
 	}
 }
 
@@ -297,7 +307,7 @@ String::String(const StringLiteral& str)
 		string_copy(value_.s(), str, str.size());
 	}
 	else{
-		value_.init_string_literal(str, str.size());
+		value_.init_string_literal(TYPE_STRING_LITERAL, str);
 	}
 }
 
@@ -396,7 +406,7 @@ const char_t* String::data() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return value_.s(); }
-		XTAL_CASE(TYPE_STRING_LITERAL){ return value_.sp(); }
+		XTAL_CASE2(TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ return value_.sp(); }
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
 	}
 	return "";
@@ -414,7 +424,7 @@ uint_t String::data_size() const{
 			XTAL_ASSERT(false);
 		}
 
-		XTAL_CASE(TYPE_STRING_LITERAL){ 
+		XTAL_CASE2(TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ 
 			return value_.string_literal_size();
 		}
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->data_size(); }
@@ -431,6 +441,7 @@ const IDPtr& String::intern() const{
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
 		XTAL_CASE(TYPE_STRING_LITERAL){ return xtal::intern(value_.sp(), value_.string_literal_size()); }
+		XTAL_CASE(TYPE_ID_LITERAL){ return unchecked_ptr_cast<ID>(ap(*this)); }
 		XTAL_CASE(TYPE_STRING){
 			StringData* p = ((StringData*)rcpvalue(*this));
 			if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
@@ -445,6 +456,7 @@ bool String::is_interned() const{
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return true; }
 		XTAL_CASE(TYPE_STRING_LITERAL){ return false; }
+		XTAL_CASE(TYPE_ID_LITERAL){ return true; }
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->is_interned(); }
 	}
 	return false;
@@ -603,7 +615,7 @@ ID::ID(const char8_t* str)
 }
 
 ID::ID(const StringLiteral& str)
-	:String(*xtal::intern(str, str.size())){}
+	:String(*xtal::intern(str)){}
 
 ID::ID(const char_t* str, uint_t size)
 	:String(*xtal::intern(str, size)){}

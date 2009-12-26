@@ -193,6 +193,9 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
+	AnyPtr a = Xs("This is a pen.");
+	StringPtr b = Xs("This is a pen.");
+
 	if(CodePtr code = Xsrc((
 		
 		it: [1, 2, 3].each.to_fiber;

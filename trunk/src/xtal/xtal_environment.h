@@ -456,9 +456,7 @@ const IDPtr& intern(const char_t* str);
 * \internal
 * \brief 文字列リテラルをインターン済み文字列に変換する
 */
-inline const IDPtr& intern(const StringLiteral& str){
-	return intern(str, str.size());
-}
+const IDPtr& intern(const StringLiteral& str);
 
 /**
 * \internal

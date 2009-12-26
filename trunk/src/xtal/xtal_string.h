@@ -74,8 +74,9 @@ public:
 
 public:
 
-	struct make_t{};
-	String(const char_t* str, uint_t size, make_t);
+	struct intern_t{};
+	String(const char_t* str, uint_t size, intern_t);
+	String(const StringLiteral& str, intern_t);
 	
 	String& operator= (const String& s);
 

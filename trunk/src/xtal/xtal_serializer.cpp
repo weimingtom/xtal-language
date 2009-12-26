@@ -91,7 +91,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	switch(type(v)){
 		XTAL_DEFAULT;
 
-		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_STRING){
+		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_ID_LITERAL, TYPE_STRING){
 			const StringPtr& a = unchecked_ptr_cast<String>(v);
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();

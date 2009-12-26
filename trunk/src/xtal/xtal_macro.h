@@ -133,4 +133,14 @@
 //#define Xid(x) ::xtal::make_id(XTAL_STRING(#x), (struct XTAL_ID_##x*)0)
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
 
+/*
+* \hideinitializer
+* \brief •¶Žš—ñƒŠƒeƒ‰ƒ‹
+*
+* \code
+* StringPtr str = Xs("This is a pen.");
+* \endcode
+*/
+#define Xs(x) XTAL_STRING(x)
+
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

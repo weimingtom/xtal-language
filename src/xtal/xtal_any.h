@@ -138,10 +138,11 @@ struct AnyRawValue{
 	void init(const Base* v){  type = TYPE_BASE; pvalue = (Base*)v; }
 	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = (RefCountingBase*)v; }
 
-	void init_string_literal(const char_t* v, uint_t sz){ 
-		type = TYPE_STRING_LITERAL | (sz<<STRING_LITERAL_SIZE_SHIFT); 
+	void init_string_literal(int t, const StringLiteral& v){ 
+		type = t | (v.size()<<STRING_LITERAL_SIZE_SHIFT); 
 		spvalue = v; 
 	}
+
 public:
 
 	enum{

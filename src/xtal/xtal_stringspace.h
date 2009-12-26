@@ -161,7 +161,21 @@ public:
 			return it->second;
 		}
 
-		StringPtr sp = xnew<String>(str, size, String::make_t());
+		StringPtr sp = xnew<String>(str, size, String::intern_t());
+		it = table_.insert(key, unchecked_ptr_cast<ID>(sp), hashcode).first;
+		it->first.str = it->second->data();
+		return it->second;
+	}
+
+	const IDPtr& insert(const StringLiteral& str){
+		uint_t hashcode = string_hashcode(str, str.size());
+		Key key = {str, str.size()};
+		table_t::iterator it = table_.find(key, hashcode);
+		if(it!=table_.end()){
+			return it->second;
+		}
+
+		StringPtr sp = xnew<String>(str, String::intern_t());
 		it = table_.insert(key, unchecked_ptr_cast<ID>(sp), hashcode).first;
 		it->first.str = it->second->data();
 		return it->second;

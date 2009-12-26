@@ -558,6 +558,10 @@ const IDPtr& intern(const char_t* str, uint_t data_size){
 	return environment_->string_space_.insert(str, data_size);
 }
 
+const IDPtr& intern(const StringLiteral& str){
+	return environment_->string_space_.insert(str);
+}
+
 const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym){
 	return environment_->string_space_.make_id(str, sym);
 }

@@ -47,7 +47,7 @@ const ClassPtr& Any::get_class() const{
 	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
 
 	// å^ÇëùÇ‚ÇµÇΩÇÁïœçXÇ∑ÇÈÇ±Ç∆
-	XTAL_STATIC_ASSERT(TYPE_MAX==17);
+	XTAL_STATIC_ASSERT(TYPE_MAX==18);
 
 	static CppClassSymbolData** classdata[] = {
 		&CppClassSymbol<Null>::value,
@@ -56,6 +56,7 @@ const ClassPtr& Any::get_class() const{
 		&CppClassSymbol<Bool>::value,
 		&CppClassSymbol<Int>::value,
 		&CppClassSymbol<Float>::value,
+		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<Any>::value,

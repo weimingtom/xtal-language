@@ -306,6 +306,7 @@ MapPtr make_debug_object(const AnyPtr& v, int_t depth){
 		case TYPE_FALSE:
 		case TYPE_TRUE:
 		case TYPE_SMALL_STRING:
+		case TYPE_STRING_LITERAL:
 		case TYPE_STRING:
 			return ret;
 	}

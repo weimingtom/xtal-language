@@ -195,7 +195,9 @@ int main2(int argc, char** argv){
 
 	if(CodePtr code = Xsrc((
 		
-		4294967296475785785785.0.p;
+		it: [1, 2, 3].each.to_fiber;
+		it().p;
+		it().p;
 
 	))){
 		code->call();
@@ -203,7 +205,7 @@ int main2(int argc, char** argv){
 
 	XTAL_CATCH_EXCEPT(e){
 		StringPtr str = e->to_s();
-		const char_t* cstr = str->c_str();
+		const char_t* cstr = str->data();
 		stderr_stream()->println(e);
 		return 1;
 	}
@@ -228,13 +230,23 @@ int main2(int argc, char** argv){
 
 	int c;
 
-	//benchmark("../fannkuch.xtal", 12);
-	//benchmark("../n-body.xtal", 12);
-	//benchmark("../special-norm.xtal", 12);
-	//benchmark("../binary-trees.xtal", 3);
-	//benchmark("../mandelbrot.xtal", 10);
+	/*
+	benchmark("../fannkuch.xtal", 12);
+	benchmark("../n-body.xtal", 12);
+	benchmark("../special-norm.xtal", 12);
+	benchmark("../binary-trees.xtal", 3);
+	benchmark("../mandelbrot.xtal", 10);
+	//*/
 
 	/*		
+	c = clock();
+	load("../bench/sum_fiber.xtal");
+	printf("sum_fiber %g\n\n", (clock()-c)/1000.0f);	
+
+	c = clock();
+	load("../bench/sum_array.xtal");
+	printf("sum_array %g\n\n", (clock()-c)/1000.0f);		
+
 	c = clock();
 	load("../bench/vec.xtal");
 	printf("vec %g\n\n", (clock()-c)/1000.0f);		

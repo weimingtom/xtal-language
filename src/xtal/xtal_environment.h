@@ -242,6 +242,13 @@ struct Protect{
 
 /////////////////////////////////////////////////////
 
+/**
+* \xbind lib::builtin
+* \brief すぐに終わるガーベジコレクションを実行する
+*
+* gc関数より処理がかからないガーベジコレクト関数
+* ゲームで毎フレームこまめに呼ぶときなどに使う。
+*/
 void lw_gc();
 
 /**
@@ -278,6 +285,8 @@ void disable_gc();
 * disable_gcが呼ばれた回数と同じだけ呼び出すとガーベジコレクションが有効になる
 */
 void enable_gc();
+
+void set_gc_stress(bool b);
 
 uint_t alive_object_count();
 

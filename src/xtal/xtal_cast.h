@@ -57,10 +57,6 @@ template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>
 template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
-#define XTAL_CAT_(x, y) x ## y
-#define XTAL_CAT(x, y) XTAL_CAT_(x, y)
-#define XTAL_UNIQUE(x) XTAL_CAT(x, __LINE__)
-
 #define XTAL_BIND_(ClassName, xtbind, xtname) \
 	struct XTAL_UNIQUE(XTAL_bind) : public ::xtal::BindBase{\
 		XTAL_UNIQUE(XTAL_bind)(){\

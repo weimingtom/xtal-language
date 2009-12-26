@@ -52,6 +52,10 @@ bool Any_op_in_Set(const AnyPtr& v, const MapPtr& values){
 	return !!values->at(v);
 }
 
+AnyPtr Any_this(const AnyPtr& v){
+	return v;
+}
+
 }
 
 XTAL_PREBIND(StringEachIter){
@@ -598,6 +602,7 @@ XTAL_BIND(Fiber){
 	it->def_method("block_next", &Fiber::block_next);
 	it->def_method("halt", &Fiber::halt);
 	it->def_method("is_alive", &Fiber::is_alive);
+	it->def_method("to_fiber", &Any_this);
 }
 
 XTAL_PREBIND(Lambda){
@@ -1121,6 +1126,14 @@ XTAL_BIND(Iterator){
 
 XTAL_BIND2(Iterator){
 	Xemb((
+
+Iterator::to_fiber: method(){
+	return fiber{
+		this{
+			yield it;
+		}
+	}
+}
 
 Iterator::scan: method(pattern) fiber{
 	exec: xpeg::Executor(this);
@@ -1659,10 +1672,12 @@ void bind(){
 	it->def_fun("compile", &compile);
 #endif
 
+	it->def_fun("lw_gc", &::xtal::lw_gc);
 	it->def_fun("gc", &::xtal::gc);
 	it->def_fun("full_gc", &::xtal::full_gc);
 	it->def_fun("disable_gc", &::xtal::disable_gc);
 	it->def_fun("enable_gc", &::xtal::enable_gc);
+	it->def_fun("set_gc_stress", &::xtal::enable_gc);
 	//it->def_fun("clock", &clock_);
 	it->def_fun("open", &xtal::open)->param(2, "mode", "r");
 	it->def_fun("interned_strings", &interned_strings);

@@ -141,7 +141,7 @@ public:
 	void visit_members(Visitor& m){
 		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
 			m & it->second;
-		}		
+		}
 	}
 
 	const IDPtr& insert(const char_t* str, uint_t size){

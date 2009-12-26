@@ -171,7 +171,9 @@ void set_vmachine(const VMachinePtr& vm){
 void* xmalloc(size_t size){
 	Environment* env = environment_;
 	
-	//full_gc();
+	if(env->gc_stress_){
+		full_gc();
+	}
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
 	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){
@@ -304,6 +306,8 @@ void Environment::initialize(const Setting& setting){
 	setting_ = setting;
 
 //////////
+
+	gc_stress_ = false;
 
 	set_jmp_buf_ = false;
 	ignore_memory_assert_ = false;
@@ -460,6 +464,10 @@ void disable_gc(){
 
 void enable_gc(){
 	return environment_->object_space_.enable_gc();
+}
+
+void set_gc_stress(bool b){
+	environment_->gc_stress_ = b;
 }
 
 void register_gc(RefCountingBase* p){

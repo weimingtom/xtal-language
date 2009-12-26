@@ -10,10 +10,6 @@ enum{
 };
 
 /*
-inline uint_t hashv2(uint_t k) {
-	return (k ^ (k>>hash_r));
-}
-
 template <int N>
 inline uint_t hashv(const char (&data)[N], uint_t h){
 	uint_t k = data[0];
@@ -107,6 +103,25 @@ uint_t string_length(const char_t* str){
 		chm.clear();
 		while(!chm.is_completed()){
 			if(str[i]){ 
+				chm.add(str[i++]); 
+			} 
+			else{ 
+				break; 
+			}
+		}
+		length += 1;
+	}
+	return length;
+}
+
+uint_t string_length_with_limit(const char_t* str, uint_t limit){
+	ChMaker chm;
+	uint_t length = 0;
+	uint_t i=0;
+	while(str[i] && i<limit){
+		chm.clear();
+		while(!chm.is_completed()){
+			if(str[i] && i<limit){ 
 				chm.add(str[i++]); 
 			} 
 			else{ 
@@ -276,7 +291,14 @@ String::String(const char_t* str, uint_t size)
 
 String::String(const StringLiteral& str)
 :Any(noinit_t()){
-	init_string(str, str.size());
+
+	if(str.size()<SMALL_STRING_MAX){
+		value_.init(TYPE_SMALL_STRING);
+		string_copy(value_.s(), str, str.size());
+	}
+	else{
+		value_.init_string_literal(str, str.size());
+	}
 }
 
 String::String(const char_t* begin, const char_t* last)
@@ -367,31 +389,37 @@ uint_t String::length() const{
 }
 
 const char_t* String::c_str() const{
-	if(type(*this)==TYPE_STRING){
-		return ((StringData*)rcpvalue(*this))->buf();
-	}
-	else{
-		return value_.s();
-	}
+	return data();
 }
 
 const char_t* String::data() const{
-	return c_str();
+	switch(type(*this)){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_SMALL_STRING){ return value_.s(); }
+		XTAL_CASE(TYPE_STRING_LITERAL){ return value_.sp(); }
+		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
+	}
+	return "";
 }
 
 uint_t String::data_size() const{
-	if(type(*this)==TYPE_STRING){
-		return ((StringData*)rcpvalue(*this))->data_size();
-	}
-	else{
-		for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
-			if(value_.s()[i]=='\0'){
-				return i;
+	switch(type(*this)){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_SMALL_STRING){ 
+			for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
+				if(value_.s()[i]=='\0'){
+					return i;
+				}
 			}
+			XTAL_ASSERT(false);
 		}
-		XTAL_ASSERT(false);
-		return 0;
+
+		XTAL_CASE(TYPE_STRING_LITERAL){ 
+			return value_.string_literal_size();
+		}
+		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->data_size(); }
 	}
+	return 0;
 }
 
 StringPtr String::clone() const{
@@ -399,23 +427,27 @@ StringPtr String::clone() const{
 }
 
 const IDPtr& String::intern() const{
-	if(type(*this)==TYPE_STRING){
-		StringData* p = ((StringData*)rcpvalue(*this));
-		if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
-		return xtal::intern(p->buf(), p->data_size());
+	switch(type(*this)){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
+		XTAL_CASE(TYPE_STRING_LITERAL){ return xtal::intern(value_.sp(), value_.string_literal_size()); }
+		XTAL_CASE(TYPE_STRING){
+			StringData* p = ((StringData*)rcpvalue(*this));
+			if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
+			return xtal::intern(p->buf(), p->data_size());
+		}
 	}
-	else{
-		return unchecked_ptr_cast<ID>(ap(*this));
-	}
+	return empty_id;
 }
 
 bool String::is_interned() const{
-	if(type(*this)==TYPE_STRING){
-		return ((StringData*)rcpvalue(*this))->is_interned();
+	switch(type(*this)){
+		XTAL_NODEFAULT;
+		XTAL_CASE(TYPE_SMALL_STRING){ return true; }
+		XTAL_CASE(TYPE_STRING_LITERAL){ return false; }
+		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->is_interned(); }
 	}
-	else{
-		return true;
-	}
+	return false;
 }
 
 StringPtr String::to_s() const{
@@ -456,7 +488,7 @@ float_t String::to_f() const{
 		start = 1;
 	}
 
-	for(uint_t i=0, sz=data_size(); i<sz; ++i){
+	for(uint_t i=start, sz=data_size(); i<sz; ++i){
 		if(str[i]=='.'){
 			scale = 0.1f;
 			continue;
@@ -474,6 +506,10 @@ AnyPtr String::each() const{
 
 bool String::is_ch() const{
 	return string_is_ch(data(), data_size());
+}
+
+bool String::is_empty() const{
+	return raweq(*this, empty_string);
 }
 
 int_t String::ascii() const{
@@ -507,7 +543,7 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind) const{
 }
 
 StringPtr String::op_cat(const StringPtr& v) const{
-	return xnew<String>(c_str(), data_size(), v->c_str(), v->data_size());
+	return xnew<String>(data(), data_size(), v->data(), v->data_size());
 }
 
 bool String::op_eq(const StringPtr& v) const{ 

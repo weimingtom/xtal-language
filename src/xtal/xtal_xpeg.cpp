@@ -941,11 +941,11 @@ ElementPtr elem(const AnyPtr& a){
 	}
 
 	if(const StringPtr& p = ptr_cast<String>(a)){
-		if(p->length()==0){
+		if(p->is_empty()){
 			return xnew<Element>(Element::TYPE_EMPTY);
 		}
 		
-		if(p->length()==1){
+		if(p->is_ch()){
 			return xnew<Element>(Element::TYPE_EQL, p);
 		}
 

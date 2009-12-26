@@ -333,11 +333,12 @@ StringStream::StringStream(const StringPtr& str)
 void FileStream::open(const StringPtr& path, const StringPtr& aflags){
 	close();
 
-	const char_t* flags = aflags->c_str();
+	const char_t* flags = aflags->data();
 	char_t flags_temp[256];
 	bool text = false;
 	uint_t i = 0;
-	for(; flags[i]!=0 && i<10; ++i){
+	uint_t sz = aflags->data_size();
+	for(; flags[i]!=0 && i<sz; ++i){
 		if(flags[i]=='t'){
 			text = true;
 		}

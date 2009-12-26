@@ -90,6 +90,8 @@ public:
 
 	/**
 	* \brief 0終端の文字列先頭のポインタを返す。
+	* 使う際は、本当に0終端の文字列が必要なのか考えて使用してください。
+	* data()とdata_size()で代用可能ならそちらを使ってください。
 	*/
 	const char_t* c_str() const;
 
@@ -169,6 +171,13 @@ public:
 	* \brief 一文字の文字列かどうか
 	*/
 	bool is_ch() const;
+
+	/**
+	* \xbind
+	* \brief 空の文字列かどうか
+	*/
+	bool is_empty() const;
+	bool empty() const{ return is_empty(); }
 
 	/**
 	* \xbind

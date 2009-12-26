@@ -34,13 +34,13 @@ public:
 
 	void make_format_specifier(char_t* dest, char_t type, bool int_type = false);
 
-	const char_t* parse_format(const char_t* str);
+	uint_t parse_format(const char_t* str, uint_t i, uint_t sz);
 
 private:
 	
-	const char_t* parse_format_inner(const char_t* str);
+	uint_t parse_format_inner(const char_t* str, uint_t i, uint_t sz);
 
-	const char_t* parse_format_digit(const char_t* str, int_t& digit);
+	uint_t parse_format_digit(const char_t* str, uint_t i, uint_t sz, int_t& digit);
 };
 
 class Format : public Base{

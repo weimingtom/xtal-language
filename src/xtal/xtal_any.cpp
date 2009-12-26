@@ -486,8 +486,10 @@ StringPtr Any::to_s() const{
 		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
 		XTAL_CASE(TYPE_FALSE){ return Xid(false); }
 		XTAL_CASE(TYPE_TRUE){ return Xid(true); }
-		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
-		XTAL_CASE(TYPE_STRING){ return unchecked_ptr_cast<String>(ap(*this)); }
+
+		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_STRING){
+			return unchecked_ptr_cast<String>(ap(*this));
+		}
 	}
 //	return empty_string;
 }
@@ -583,8 +585,10 @@ StringPtr Any::object_name() const{
 		XTAL_CASE(TYPE_FLOAT){ ret.assign_direct(Xf("%g")->call(ap(*this))->to_s()); }
 		XTAL_CASE(TYPE_FALSE){ ret.assign_direct(Xid(true)); }
 		XTAL_CASE(TYPE_TRUE){ ret.assign_direct(Xid(false)); }
-		XTAL_CASE(TYPE_SMALL_STRING){ ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); }
-		XTAL_CASE(TYPE_STRING){ ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); }
+
+		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_STRING){ 
+			ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); 
+		}
 	}
 
 	do{

@@ -198,9 +198,8 @@ int main2(int argc, char** argv){
 
 	if(CodePtr code = Xsrc((
 		
-		it: [1, 2, 3].each.to_fiber;
-		it().p;
-		it().p;
+		cpp::Class1.p;
+		cpp::Class2.p;
 
 	))){
 		code->call();

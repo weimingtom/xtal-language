@@ -57,9 +57,10 @@ template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>
 template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
-#define XTAL_BIND_(ClassName, xtbind, xtname) \
-	struct XTAL_UNIQUE(XTAL_bind) : public ::xtal::BindBase{\
-		XTAL_UNIQUE(XTAL_bind)(){\
+#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
+	template<class T> struct XTAL_bind_template##N;\
+	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
+	XTAL_bind_template##N(){\
 			XTAL_set(\
 				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
 				::xtal::CppClassSymbol<ClassName>::make()->name,\
@@ -67,17 +68,17 @@ template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 		}\
 		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
 	};\
-	static volatile XTAL_UNIQUE(XTAL_bind) XTAL_UNIQUE(XTAL_bind_var);\
-	inline void XTAL_UNIQUE(XTAL_bind)::XTAL_bind(const ::xtal::ClassPtr& it)
+	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable);\
+	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
 
 
-#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName))
-#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName))
-#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName))
-#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName))
+#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
+#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
+#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
+#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
 
-#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name))
-#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name))
+#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
+#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
 
 
 ////////////////////

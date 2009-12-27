@@ -444,13 +444,13 @@ const VMachinePtr& vmachine_checked();
 * \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
-const IDPtr& intern(const char_t* str, uint_t data_size);
+const IDPtr& intern(const char_t* str);
 
 /**
 * \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
-const IDPtr& intern(const char_t* str);
+const IDPtr& intern(const char_t* str, uint_t data_size);
 
 /**
 * \internal
@@ -462,7 +462,7 @@ const IDPtr& intern(const StringLiteral& str);
 * \internal
 * \brief 文字列リテラルをインターン済み文字列に変換する
 */
-const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym);
+const IDPtr& intern(const StringLiteral2& str);
 
 /**
 * \brief インターン済み文字列を列挙する

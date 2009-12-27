@@ -19,7 +19,7 @@ enum{
 };
 }
 
-//#define XTAL_USE_COMPILED_EMB
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
@@ -42,7 +42,7 @@ enum{
 #define XTAL_CAT(x, y) XTAL_CAT_(x, y)
 #define XTAL_UNIQUE(x) XTAL_CAT(x, __LINE__)
 
-#define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0};
+#define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0}
 
 #if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
 #define XTAL_PREFETCH(x) __builtin_prefetch(x)
@@ -157,8 +157,10 @@ private:
 
 #ifdef XTAL_USE_WCHAR
 #	define XTAL_STRING(x) ::xtal::StringLiteral(L##x)
+#	define XTAL_STRING2(x) ::xtal::StringLiteral2(L##x)
 #else 
 #	define XTAL_STRING(x) ::xtal::StringLiteral(x)
+#	define XTAL_STRING2(x) ::xtal::StringLiteral2(x)
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
@@ -521,8 +523,73 @@ struct IsFloat{ enum{ value = 0 }; };
 template<>
 struct IsFloat<float_t>{ enum{ value = 1 }; };
 
+
+//////////////////////////////////////////////////
+//
+
+enum{
+	hash_m = 0x5bd1e995,
+	hash_seed = 0xdeadbeef,
+	hash_r = 24
+};
+
+template <int N>
+inline uint_t hashv(const char_t (&data)[N], uint_t h){
+	uint_t k = data[0];
+	k |= data[1] << 8;
+	k |= data[2] << 16;
+	k |= data[3] << 24;
+
+	k *= hash_m; 
+	k ^= k >> hash_r; 
+	k *= hash_m;
+
+	h *= hash_m;
+	h ^= k;
+	return hashv(reinterpret_cast<const char_t (&)[N-4]>(data[4]), h);
+}
+
+template<>
+inline uint_t hashv<4>(const char_t (&data)[4], uint_t h){
+	return (h ^ (data[2]<<16) ^ (data[1]<<8) ^ data[0])*hash_m;
+}
+
+template<>
+inline uint_t hashv<3>(const char_t (&data)[3], uint_t h){
+	return (h ^ (data[1]<<8) ^ data[0])*hash_m;
+}
+
+template<>
+inline uint_t hashv<2>(const char_t (&data)[2], uint_t h){
+	return (h ^ data[0])*hash_m;
+}
+
+template<>
+inline uint_t hashv<1>(const char_t (&data)[1], uint_t h){
+	return h;
+}
+
+template <int N>
+inline uint_t hash(const char_t (&data)[N]){
+	uint_t h = hashv(data, hash_seed ^ (N-1));
+	h ^= h >> 13;
+	h *= hash_m;
+	h ^= h >> 15;
+	return h;
+}
+
 class StringLiteral{
 public:
+
+	StringLiteral(){
+		str_ = 0;
+		size_ = 0;
+	}
+
+	StringLiteral(const char_t* str, uint_t size){
+		str_ = str;
+		size_ = size;
+	}
 
 	template<int N>
 	explicit StringLiteral(const char_t (&str)[N])
@@ -542,6 +609,23 @@ private:
 	uint_t size_;
 };
 
+class StringLiteral2 : public StringLiteral{
+public:
+	template<int N>
+	explicit StringLiteral2(const char_t (&str)[N])
+		:StringLiteral(str), hash_(hash(str)){
+	}
+
+	uint_t hashcode() const{
+		return hash_;
+	}
+
+private:
+	uint_t hash_;
+};
+
+//
+////////////////////////////////////////////
 
 /**
 * \brief プリミティブな型の種類

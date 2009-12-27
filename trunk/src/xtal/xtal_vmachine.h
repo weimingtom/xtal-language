@@ -42,7 +42,8 @@ struct Param{
 		ANY = 0,
 		NAMED = 1,
 		STR = 2,
-		STR8 = 3
+		STR8 = 3,
+		LITERAL = 4
 	};
 
 	Param(const Named& n){
@@ -59,6 +60,12 @@ struct Param{
 	Param(const char8_t* s){
 		type = STR8;
 		str8 = s;
+	}
+
+	Param(const StringLiteral& s){
+		type = LITERAL;
+		literal.str = s;
+		literal.size = s.size();
 	}
 
 	Param(const AnyPtr& v){
@@ -91,11 +98,17 @@ struct Param{
 		const Any* value;		
 	};
 
+	struct Literal{
+		const char_t* str;
+		uint_t size;	
+	};
+
 	union{
 		const char_t* str;
 		const char8_t* str8;
 		NamedPair name;
 		AnyRawValue value;
+		Literal literal;
 	};
 };
 

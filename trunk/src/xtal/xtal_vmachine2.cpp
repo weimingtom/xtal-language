@@ -251,6 +251,11 @@ void VMachine::push_arg(const Param& p){
 			set_local_variable(offset, xnew<String>(p.str8));
 			ff().ordered_arg_count++;
 		}
+
+		XTAL_CASE(Param::LITERAL){
+			set_local_variable(offset, xnew<String>(StringLiteral(p.literal.str, p.literal.size)));
+			ff().ordered_arg_count++;
+		}
 	}
 }
 	

@@ -3,7 +3,7 @@
 
 #include "xtal_objectspace.h"
 
-//#define XTAL_DEBUG_PRINT
+#define XTAL_DEBUG_PRINT
 
 #ifdef XTAL_DEBUG_PRINT
 #include <map>
@@ -312,6 +312,10 @@ void ObjectSpace::uninitialize(){
 
 	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
+}
+
+void ObjectSpace::finish_initialize(){
+	objects_builtin_line_ = objects_count_;
 }
 
 void ObjectSpace::enable_gc(){

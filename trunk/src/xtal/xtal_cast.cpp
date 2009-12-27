@@ -13,11 +13,10 @@ CppClassSymbolData::CppClassSymbolData(){
 	for(int_t i=0; i<BIND; ++i){
 		bind[i] = 0;
 	}
-	name = 0;
 	prev_data = this;
 }
 
-void BindBase::XTAL_set(BindBase*& dest, const char_t*& name, const char_t* given){
+void BindBase::XTAL_set(BindBase*& dest, StringLiteral& name, const StringLiteral& given){
 	dest = this;
 	name = given;
 }
@@ -29,11 +28,6 @@ CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
 	prev = prev_data;
 	maker = fun;
 	prev_data = this;
-}
-
-IDSymbolData::IDSymbolData(){
-	static unsigned int counter = 1;
-	value = counter++;
 }
 
 ////////////////////////////////////////////////////////////////////////

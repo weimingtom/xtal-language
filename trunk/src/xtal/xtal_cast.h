@@ -12,7 +12,7 @@ namespace xtal{
 struct ParamInfo;
 
 struct BindBase{
-	void XTAL_set(BindBase*& dest, const char_t*& name, const char_t* given);
+	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
 	virtual void XTAL_bind(const ClassPtr& it) = 0;
 };
 
@@ -30,7 +30,7 @@ struct CppClassSymbolData{
 
 	BindBase* bind[BIND];
 	
-	const char_t* name;
+	StringLiteral name;
 };
 
 template<class T>
@@ -101,35 +101,6 @@ struct CppVarSymbol{
 template<class T>
 CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
 
-
-////////////////////////////////////////
-
-struct IDSymbolData{ 
-	IDSymbolData();
-	unsigned int value;
-};
-
-const IDPtr& intern(const StringLiteral& str);
-const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym);
-
-template<class T>
-struct IDSymbol{
-	static IDSymbolData value;
-};
-
-template<class T>
-IDSymbolData IDSymbol<T>::value;
-
-template<class T>
-inline const IDPtr& make_id(const StringLiteral& str, void (*)(T*), typename T::id* = 0){
-	return intern(str, IDSymbol<T>::value);
-}
-
-inline const IDPtr& make_id(const StringLiteral& str, ...){
-	return intern(str);
-}
-
-#define XTAL_DECL_ID(x) struct XTAL_ID_##x{struct id{}; }; template struct ::xtal::IDSymbol<XTAL_ID_##x>
 
 ////////////////////////////////////////
 

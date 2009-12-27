@@ -54,9 +54,7 @@ public:
 
 	void def_all_cpp_classes();
 
-	void finish_initialize(){
-		objects_builtin_line_ = objects_count_;
-	}
+	void finish_initialize();
 
 private:
 

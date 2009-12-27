@@ -51,7 +51,7 @@ static void handle_argv(char** argv){
 		for(i=1; argv[i]!=0; i++){
 			arg_list->push_back(argv[i]);
 		}
-		builtin()->def("argv", arg_list);
+		builtin()->def(Xid(argv), arg_list);
 		load(filename);
 	}
 }

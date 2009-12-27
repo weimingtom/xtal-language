@@ -326,17 +326,17 @@ void Environment::initialize(const Setting& setting){
 	global_ = xnew<Global>();
 	global_->set_singleton();
 	builtin_->inherit(global_);
-	builtin_->def("global", global_);
+	builtin_->def(Xid(global), global_);
 
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
 	nfa_map_ = xnew<Map>();
 
-	lib_->def("builtin", builtin_);
+	lib_->def(Xid(builtin), builtin_);
 
 	cpp_ = cpp_class<cpp_classes>();
 	cpp_->set_singleton();
-	builtin_->def("cpp", cpp_);
+	builtin_->def(Xid(cpp), cpp_);
 
 	cpp_->set_object_force(100);
 
@@ -550,20 +550,30 @@ const ClassPtr& global(){
 	return environment_->global_;
 }
 
+namespace{
+	
+const IDPtr& intern(const char_t* str, uint_t size, uint_t hashcode, bool literal){
+	return environment_->string_space_.insert(str, size, hashcode, literal);
+}
+
+}
+
 const IDPtr& intern(const char_t* str){
-	return environment_->string_space_.insert(str);
+	uint_t hashcode, size;
+	string_data_size_and_hashcode(str, size, hashcode);
+	return intern(str, size, hashcode, false);
 }
 
 const IDPtr& intern(const char_t* str, uint_t data_size){
-	return environment_->string_space_.insert(str, data_size);
+	return intern(str, data_size, string_hashcode(str, data_size), false);
 }
 
 const IDPtr& intern(const StringLiteral& str){
-	return environment_->string_space_.insert(str);
+	return intern(str, str.size(), string_hashcode(str, str.size()), true);
 }
 
-const IDPtr& intern(const StringLiteral& str, const IDSymbolData& sym){
-	return environment_->string_space_.make_id(str, sym);
+const IDPtr& intern(const StringLiteral2& str){
+	return intern(str, str.size(), str.hashcode(), true);
 }
 
 AnyPtr interned_strings(){
@@ -670,7 +680,7 @@ CodePtr compile_stream(const StreamPtr& stream){
 CodePtr compile_file(const StringPtr& file_name){
 	CodePtr ret;
 
-	if(StreamPtr fs = open(file_name, "r")){
+	if(StreamPtr fs = open(file_name, Xid(r))){
 		CodeBuilder cb;
 		if(CodePtr fun = cb.compile(fs, file_name)){
 			fs->close();
@@ -719,7 +729,7 @@ CodePtr require_source(const StringPtr& name){
 	}
 	else{
 		StringPtr temp = ptr_cast<String>(Xf("%s.xtalc")->call(name));
-		if(StreamPtr fs = open(name, "r")){
+		if(StreamPtr fs = open(name, Xid(r))){
 			if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
 				return code;
 			}

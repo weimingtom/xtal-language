@@ -3,59 +3,6 @@
 
 namespace xtal{
 
-enum{
-	hash_m = 0x5bd1e995,
-	hash_seed = 0xdeadbeef,
-	hash_r = 24
-};
-
-/*
-template <int N>
-inline uint_t hashv(const char (&data)[N], uint_t h){
-	uint_t k = data[0];
-	k |= data[1] << 8;
-	k |= data[2] << 16;
-	k |= data[3] << 24;
-
-	k *= hash_m; 
-	k ^= k >> hash_r; 
-	k *= hash_m;
-
-	h *= hash_m;
-	h ^= k;
-	return hashv(reinterpret_cast<const char (&)[N-4]>(data[4]), h);
-}
-
-template<>
-inline uint_t hashv<4>(const char (&data)[4], uint_t h){
-	return (h ^ (data[2]<<16) ^ (data[1]<<8) ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<3>(const char (&data)[3], uint_t h){
-	return (h ^ (data[1]<<8) ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<2>(const char (&data)[2], uint_t h){
-	return (h ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<1>(const char (&data)[1], uint_t h){
-	return h;
-}
-
-template <int N>
-inline uint_t hash(const char (&data)[N]){
-	uint_t h = hashv(data, hash_seed ^ (N-1));
-	h ^= h >> 13;
-	h *= hash_m;
-	h ^= h >> 15;
-	return h;
-}
-*/
-
 uint_t string_hashcode(const char_t* data, uint_t len){
 	uint_t h = hash_seed ^ len;
 

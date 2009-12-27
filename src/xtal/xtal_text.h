@@ -67,14 +67,14 @@ private:
 class Text : public Base{
 public:
 
-	Text(const StringPtr& key = empty_string);
+	Text(const IDPtr& key = empty_id);
 	virtual void rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
-	void serial_load(const StringPtr& v);
+	void serial_load(const IDPtr& v);
 
 private:	
-	StringPtr key_;
+	IDPtr key_;
 };
 
 TextPtr text(const StringPtr& text);

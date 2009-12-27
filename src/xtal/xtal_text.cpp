@@ -307,7 +307,7 @@ void Format::serial_load(const StringPtr& v){
 	set(v);
 }
 
-Text::Text(const StringPtr& key)
+Text::Text(const IDPtr& key)
 	:key_(key){}
 
 void Text::rawcall(const VMachinePtr& vm){
@@ -330,7 +330,7 @@ AnyPtr Text::serial_save(){
 	return key_;
 }
 
-void Text::serial_load(const StringPtr& v){
+void Text::serial_load(const IDPtr& v){
 	key_ = v;
 }
 

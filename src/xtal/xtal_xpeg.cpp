@@ -1172,24 +1172,24 @@ XTAL_PREBIND(xpeg::Executor){
 
 XTAL_BIND(xpeg::Executor){
 	using namespace xpeg;
-	it->def_method("reset", &Executor::reset);
-	it->def_method("parse", &Executor::parse);
-	it->def_method("match", &Executor::match);
+	it->def_method(Xid(reset), &Executor::reset);
+	it->def_method(Xid(parse), &Executor::parse);
+	it->def_method(Xid(match), &Executor::match);
 
-	it->def_method("captures", &Executor::captures);
-	it->def_method("captures_values", &Executor::captures_values);		
-	it->def_method("op_at", &Executor::at, cpp_class<String>());
-	it->def_method("op_call", &Executor::call, cpp_class<String>());
-	it->def_method("prefix", &Executor::prefix);
-	it->def_method("suffix", &Executor::suffix);
-	it->def_method("prefix_values", &Executor::prefix_values);
-	it->def_method("suffix_values", &Executor::suffix_values);
-	it->def_method("errors", &Executor::errors);
-	it->def_method("read", &Executor::read);
-	it->def_method("peek", &Executor::peek)->param(1, "n", 0);
-	it->def_method("tree", &Executor::tree);
-	it->def_method("bos", &Executor::bos);
-	it->def_method("eos", &Executor::eos);
+	it->def_method(Xid(captures), &Executor::captures);
+	it->def_method(Xid(captures_values), &Executor::captures_values);		
+	it->def_method(Xid(op_at), &Executor::at, cpp_class<String>());
+	it->def_method(Xid(op_call), &Executor::call, cpp_class<String>());
+	it->def_method(Xid(prefix), &Executor::prefix);
+	it->def_method(Xid(suffix), &Executor::suffix);
+	it->def_method(Xid(prefix_values), &Executor::prefix_values);
+	it->def_method(Xid(suffix_values), &Executor::suffix_values);
+	it->def_method(Xid(errors), &Executor::errors);
+	it->def_method(Xid(read), &Executor::read);
+	it->def_method(Xid(peek), &Executor::peek)->param(1, Xid(n), 0);
+	it->def_method(Xid(tree), &Executor::tree);
+	it->def_method(Xid(bos), &Executor::bos);
+	it->def_method(Xid(eos), &Executor::eos);
 }
 
 class Xpeg;
@@ -1205,42 +1205,42 @@ XTAL_BIND(Xpeg){
 	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
 	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
 	
-	AnyPtr degit = elem(xnew<ChRange>("0", "9"));
-	AnyPtr lalpha = elem(xnew<ChRange>("a", "z"));
-	AnyPtr ualpha = elem(xnew<ChRange>("A", "Z"));
+	AnyPtr degit = elem(xnew<ChRange>(Xs("0"), Xs("9")));
+	AnyPtr lalpha = elem(xnew<ChRange>(Xs("a"), Xs("z")));
+	AnyPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
 	AnyPtr alpha = select(lalpha, ualpha);
-	AnyPtr word = select(select(alpha, degit), "_");
+	AnyPtr word = select(select(alpha, degit), Xs("_"));
 	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>((char_t)1), xnew<ID>((char_t)127)));
 
-	it->def("any", any);
-	it->def("bos", bos);
-	it->def("eos", eos);
-	it->def("bol", bol);
-	it->def("eol", eol);
-	it->def("empty", empty);
-	it->def("degit", degit);
-	it->def("lalpha", lalpha);
-	it->def("ualpha", ualpha);
-	it->def("alpha", alpha);
-	it->def("word", word);
-	it->def("ascii", ascii);
+	it->def(Xid(any), any);
+	it->def(Xid(bos), bos);
+	it->def(Xid(eos), eos);
+	it->def(Xid(bol), bol);
+	it->def(Xid(eol), eol);
+	it->def(Xid(empty), empty);
+	it->def(Xid(degit), degit);
+	it->def(Xid(lalpha), lalpha);
+	it->def(Xid(ualpha), ualpha);
+	it->def(Xid(alpha), alpha);
+	it->def(Xid(word), word);
+	it->def(Xid(ascii), ascii);
 	
-	it->def_fun("set", &set);
-	it->def_fun("back_ref", &back_ref);
-	it->def_fun("lookahead", &lookahead);
-	it->def_fun("lookbehind", &lookbehind);
-	it->def_fun("leaf", &leaf);
-	it->def_fun("leafs", &leafs);
-	it->def_fun("node", &node_vm);
-	it->def_fun("splice_node", &splice_node_vm);
-	it->def_fun("cap", &cap_vm);
-	it->def_fun("bound", &bound);
-	it->def_fun("pred", &pred);
-	it->def_fun("error", &error);
+	it->def_fun(Xid(set), &set);
+	it->def_fun(Xid(back_ref), &back_ref);
+	it->def_fun(Xid(lookahead), &lookahead);
+	it->def_fun(Xid(lookbehind), &lookbehind);
+	it->def_fun(Xid(leaf), &leaf);
+	it->def_fun(Xid(leafs), &leafs);
+	it->def_fun(Xid(node), &node_vm);
+	it->def_fun(Xid(splice_node), &splice_node_vm);
+	it->def_fun(Xid(cap), &cap_vm);
+	it->def_fun(Xid(bound), &bound);
+	it->def_fun(Xid(pred), &pred);
+	it->def_fun(Xid(error), &error);
 
-	it->def_fun("decl", &decl);
+	it->def_fun(Xid(decl), &decl);
 
-	it->def("Executor", cpp_class<Executor>());
+	it->def(Xid(Executor), cpp_class<Executor>());
 }
 
 void initialize_xpeg(){
@@ -1251,7 +1251,7 @@ void initialize_xpeg(){
 		classes[i]->inherit(cpp_class<XpegOperator>());
 	}
 
-	builtin()->def("xpeg", cpp_class<Xpeg>());
+	builtin()->def(Xid(xpeg), cpp_class<Xpeg>());
 }
 
 

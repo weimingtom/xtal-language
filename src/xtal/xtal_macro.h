@@ -122,6 +122,8 @@
 
 #endif
 
+#if defined(XTAL_DEBUG)
+
 /*
 * \hideinitializer
 * \brief インターンされた文字列を簡単に記述するためのマクロ
@@ -130,8 +132,13 @@
 * IDPtr id = Xid(test);
 * \endcode
 */
-//#define Xid(x) ::xtal::make_id(XTAL_STRING(#x), (struct XTAL_ID_##x*)0)
 #define Xid(x) ::xtal::intern(XTAL_STRING(#x))
+
+#else
+
+#define Xid(x) ::xtal::intern(XTAL_STRING2(#x))
+
+#endif
 
 /*
 * \hideinitializer

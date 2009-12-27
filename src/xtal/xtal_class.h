@@ -205,7 +205,7 @@ public:
 
 	/**
 	* \brief 関数を定義する
-	* cls->def_fun("name", &foo); は cls->def("name", xtal::fun(&foo)); と同一
+	* cls->def_fun(Xid(name), &foo); は cls->def(Xid(name), xtal::fun(&foo)); と同一
 	* \param primary_key 新しく定義するメンバの名前
 	* \param f 設定する関数
 	* \param secondary_key セカンダリキー
@@ -223,7 +223,7 @@ public:
 
 	/**
 	* \brief メソッドを定義する
-	* cls->def_method("name", &Klass::foo); は cls->def("name", xtal::method(&Klass::foo)); と同一
+	* cls->def_method(Xid(name), &Klass::foo); は cls->def(Xid(name), xtal::method(&Klass::foo)); と同一
 	* \param primary_key 新しく定義するメンバの名前
 	* \param f 設定する関数
 	* \param secondary_key セカンダリキー

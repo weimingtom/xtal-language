@@ -193,8 +193,8 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
-	AnyPtr a = Xs("This is a pen.");
-	StringPtr b = Xs("This is a pen.");
+	AnyPtr b = intern("aaaaaaaaaaaaaaaaaaa");
+	AnyPtr a = Xid(aaaaaaaaaaaaaaaaaaa);
 
 	if(CodePtr code = Xsrc((
 		

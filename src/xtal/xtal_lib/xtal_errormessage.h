@@ -4,7 +4,7 @@
 namespace xtal{
 
 inline void bind_error_message(){
-	const char_t* messages[] = {
+	const StringLiteral messages[] = {
 		XTAL_STRING("XCE1001"), XTAL_STRING("構文エラーです。"),
 		XTAL_STRING("XCE1002"), XTAL_STRING("予期せぬ文字 '%(char)s' が検出されました。"),
 		XTAL_STRING("XCE1003"), XTAL_STRING("';' がありません。"),
@@ -67,7 +67,7 @@ inline void bind_error_message(){
 	};
 	
 	for(int i=0; i<sizeof(messages)/sizeof(*messages)/2; ++i){
-		StringPtr key(messages[i*2+0]);
+		IDPtr key(messages[i*2+0]);
 		StringPtr value(messages[i*2+1]);
 		text_map()->set_at(key, value);
 	}

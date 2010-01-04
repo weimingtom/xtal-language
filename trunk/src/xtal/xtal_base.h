@@ -80,7 +80,7 @@ public:
 	void inc_ref_count(){ value_.inc_ref_count(); }
 	void dec_ref_count(){ value_.dec_ref_count(); }
 
-	uint_t ungc(){ return value_.ungc(); }
+	uint_t can_not_gc(){ return value_.can_not_gc(); }
 
 	void destroy(){ delete this; }
 
@@ -93,7 +93,7 @@ public:
 	}
 
 	static void operator delete(void* p, size_t size){
-		if(p){ ((RefCountingBase*)p)->value_.set_object_size(size); }
+		if(p){ static_cast<RefCountingBase*>(p)->value_.set_object_size(size); }
 	}
 	
 	static void* operator new(size_t, void* p){ return p; }

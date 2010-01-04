@@ -220,81 +220,35 @@ public:
 	* \xbind
 	* \brief 符号無整数16-bitをストリームに書き込む
 	*/
-	void put_u16be(u16 v){
-		struct{ u8 data[2]; } data;
-		data.data[0] = (u8)(v>>8);
-		data.data[1] = (u8)(v>>0);
-		write(data.data, 2);
-	}
+	void put_u16be(u16 v);
 
 	/**
 	* \xbind
 	* \brief 符号無整数16-bitをストリームに書き込む
 	*/
-	void put_u16le(u16 v){
-		struct{ u8 data[2]; } data;
-		data.data[1] = (u8)(v>>8);
-		data.data[0] = (u8)(v>>0);
-		write(data.data, 2);
-	}
+	void put_u16le(u16 v);
 
 	/**
 	* \xbind
 	* \brief 符号無整数32-bitをストリームに書き込む
 	*/
-	void put_u32be(u32 v){
-		struct{ u8 data[4]; } data;
-		data.data[0] = (u8)(v>>24);
-		data.data[1] = (u8)(v>>16);
-		data.data[2] = (u8)(v>>8);
-		data.data[3] = (u8)(v>>0);
-		write(data.data, 4);
-	}
+	void put_u32be(u32 v);
 
 	/**
 	* \xbind
 	* \brief 符号無整数32-bitをストリームに書き込む
 	*/
-	void put_u32le(u32 v){
-		struct{ u8 data[4]; } data;
-		data.data[3] = (u8)(v>>24);
-		data.data[2] = (u8)(v>>16);
-		data.data[1] = (u8)(v>>8);
-		data.data[0] = (u8)(v>>0);
-		write(data.data, 4);
-	}
+	void put_u32le(u32 v);
 
 	/**
 	* \brief 符号無整数64-bitをストリームに書き込む
 	*/
-	void put_u64be(u64 v){
-		struct{ u8 data[8]; } data;
-		data.data[0] = (u8)(v>>56);
-		data.data[1] = (u8)(v>>48);
-		data.data[2] = (u8)(v>>40);
-		data.data[3] = (u8)(v>>32);
-		data.data[4] = (u8)(v>>24);
-		data.data[5] = (u8)(v>>16);
-		data.data[6] = (u8)(v>>8);
-		data.data[7] = (u8)(v>>0);
-		write(data.data, 8);
-	}
+	void put_u64be(u64 v);
 
 	/**
 	* \brief 符号無整数64-bitをストリームに書き込む
 	*/
-	void put_u64le(u64 v){
-		struct{ u8 data[8]; } data;
-		data.data[7] = (u8)(v>>56);
-		data.data[6] = (u8)(v>>48);
-		data.data[5] = (u8)(v>>40);
-		data.data[4] = (u8)(v>>32);
-		data.data[3] = (u8)(v>>24);
-		data.data[2] = (u8)(v>>16);
-		data.data[1] = (u8)(v>>8);
-		data.data[0] = (u8)(v>>0);
-		write(data.data, 8);
-	}
+	void put_u64le(u64 v);
 
 	/**
 	* \xbind
@@ -364,59 +318,35 @@ public:
 	* \xbind
 	* \brief 符号無整数16-bitをストリームから取り出す
 	*/
-	u16 get_u16be(){
-		struct{ u8 data[2]; } data = {0};
-		read_strict(data.data, 2);
-		return (u16)((data.data[0]<<8) | data.data[1]);
-	}
+	u16 get_u16be();
 
 	/**
 	* \xbind
 	* \brief 符号無整数16-bitをストリームから取り出す
 	*/
-	u16 get_u16le(){
-		struct{ u8 data[2]; } data = {0};
-		read_strict(data.data, 2);
-		return (u16)((data.data[1]<<8) | data.data[0]);
-	}
+	u16 get_u16le();
 
 	/**
 	* \xbind
 	* \brief 符号無整数32-bitをストリームから取り出す
 	*/
-	u32 get_u32be(){
-		struct{ u8 data[4]; } data = {0};
-		read_strict(data.data, 4);
-		return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
-	}
+	u32 get_u32be();
 
 	/**
 	* \xbind
 	* \brief 符号無整数32-bitをストリームから取り出す
 	*/
-	u32 get_u32le(){
-		struct{ u8 data[4]; } data = {0};
-		read_strict(data.data, 4);
-		return (u32)((data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
-	}
+	u32 get_u32le();
 
 	/**
 	* \brief 符号無整数64-bitをストリームから取り出す
 	*/
-	u64 get_u64be(){
-		struct{ u8 data[8]; } data = {0};
-		read_strict(data.data, 8);
-		return (u64)(((u64)data.data[0]<<56) | ((u64)data.data[1]<<48) | ((u64)data.data[2]<<40) | ((u64)data.data[3]<<32) | (data.data[4]<<24) | (data.data[5]<<16) | (data.data[6]<<8) | data.data[7]);
-	}
+	u64 get_u64be();
 
 	/**
 	* \brief 符号無整数64-bitをストリームから取り出す
 	*/
-	u64 get_u64le(){
-		struct{ u8 data[8]; } data = {0};
-		read_strict(data.data, 8);
-		return (u64)(((u64)data.data[7]<<56) | ((u64)data.data[6]<<48) | ((u64)data.data[5]<<40) | ((u64)data.data[4]<<32) | (data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
-	}
+	u64 get_u64le();
 
 	/**
 	* \xbind

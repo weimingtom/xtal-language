@@ -81,7 +81,7 @@ struct Inst{
 		:op(v){}
 
 	operator const inst_t*() const{
-		return &op;
+		return &this->op;
 	}
 
 	template<class T>

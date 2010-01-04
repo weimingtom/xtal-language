@@ -57,19 +57,18 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	dec_ref_count_force(*this);
-	*(Any*)this = p;
+	copy_any(*this, p);
 	inc_ref_count_force(*this);
 	return *this;
 }
 
-SmartPtr<Any>::SmartPtr(RefCountingBase* p, int_t type, special_ctor_t)
-	:Any(noinit_t()){
+void SmartPtr<Any>::init_smartptr(RefCountingBase* p, int_t type){
 	value_.init(type, p);
 	register_gc(p);
 }
 
-SmartPtr<Any>::SmartPtr(Base* p, const ClassPtr& c, special_ctor_t)
-	:Any(p){
+void SmartPtr<Any>::init_smartptr(Base* p, const ClassPtr& c){
+	value_.init(p);
 	p->set_class(c);
 	register_gc(p);
 }

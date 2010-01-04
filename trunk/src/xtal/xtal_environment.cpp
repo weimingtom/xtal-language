@@ -494,6 +494,10 @@ const ClassPtr& cpp_class(CppClassSymbolData* key){
 	return environment_->object_space_.cpp_class(key->value);
 }
 
+const ClassPtr& cpp_class(int_t index){
+	return environment_->object_space_.cpp_class(index);
+}
+
 const AnyPtr& cpp_var(CppVarSymbolData* key){
 	return environment_->object_space_.cpp_var(key->value);
 }

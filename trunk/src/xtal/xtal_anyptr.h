@@ -129,55 +129,61 @@ public:
 	template<class T, class Deleter>
 	SmartPtr(const T* tp, const Deleter& deleter)
 		:Any(noinit_t()){
-		UserTypeHolderSub<T, Deleter>* p = new UserTypeHolderSub<T, Deleter>((T*)tp, deleter);
-		value_.init(TYPE_BASE, p);
-		p->set_class(cpp_class<T>());
-		register_gc(p);
+		init_smartptr(new UserTypeHolderSub<T, Deleter>((T*)tp, deleter), cpp_class<T>());
+	}
+
+	template<class T>
+	SmartPtr(const T* p, const undeleter_t&)
+		:Any(noinit_t()){
+		value_.init_pointer(p, CppClassSymbol<T>::value->value);
 	}
 
 	// 任意のポインタ型を受け取ってxtalで参照できるようにするコンストラクタ
 	template<class T>
-	SmartPtr(const T* p){
+	SmartPtr(const T* p)
+		:Any(noinit_t()){
 		set_unknown_pointer(p, p);
 	}
-
-	template<class T>
-	void set_unknown_pointer(const T* p, const Base*){
-		*this = to_smartptr(p);
-	}
-
-	template<class T>
-	void set_unknown_pointer(const T* p, const void*){
-		*this = SmartPtr(p, undeleter);
-	}
-
 
 	SmartPtr(const SmartPtr<Any>& p);
 
 	/// nullを受け取るコンストラクタ
 	SmartPtr(const NullPtr&){}
 
+public:
+
 	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
+
+	void assign_direct(const SmartPtr<Any>& a);
 
 	explicit SmartPtr(PrimitiveType type)
 		:Any(type){}
 	
 	~SmartPtr();
 
-public:
-
-	void assign_direct(const SmartPtr<Any>& a);
-
 protected:
+	
+	SmartPtr(noinit_t)
+		:Any(noinit_t()){}
 
-	struct special_ctor_t{};
+	template<class T>
+	void set_unknown_pointer(const T* p, const Base*){
+		value_.init(p);
+		inc_ref_count();
+	}
 
-	SmartPtr(const Any& a, special_ctor_t)
-		:Any(a){}
+	template<class T>
+	void set_unknown_pointer(const T* p, const void*){
+		value_.init_pointer(p, CppClassSymbol<T>::value->value);
+	}
 
-	SmartPtr(RefCountingBase* p, int_t type, special_ctor_t);
+	void init_smartptr(const Any& a){
+		*static_cast<Any*>(this) = a;
+	}
 
-	SmartPtr(Base* p, const ClassPtr& c, special_ctor_t);
+	void init_smartptr(RefCountingBase* p, int_t type);
+
+	void init_smartptr(Base* p, const ClassPtr& c);
 
 public:
 
@@ -290,6 +296,14 @@ private:
 	* 得体の知れないポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
 	*/
 	SmartPtr(void*);
+
+	/**
+	* \brief 暗黙の変換を抑えるためのコンストラクタ。
+	* 得体の知れない関数ポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
+	*/
+	template<class R> AnyPtr(R (*)());
+	template<class R, class A1> AnyPtr(R (*)(A1));
+	template<class R, class A1, class A2> AnyPtr(R (*)(A1, A2));
 
 };
 

@@ -40,15 +40,16 @@ class UTF8ChCodeLib : public ChCodeLib{
 public:
 	virtual int_t ch_len(char_t ch){
 		u8 c = (u8)ch;
-		if(c==0) return 1;
-		if(c&0x40){
-			if(c&0x20){
-				if(c&0x10){
-					return 4;
+		if(c&0x80) {
+			if(c&0x40){
+				if(c&0x20){
+					if(c&0x10){
+						return 4;
+					}
+					return 3;
 				}
-				return 3;
+				return 2;       
 			}
-			return 2;	
 		}
 		return 1;
 	}

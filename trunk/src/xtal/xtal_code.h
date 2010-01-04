@@ -86,7 +86,7 @@ public:
 	}
 
 	const ClassPtr& filelocal(){ 
-		return to_smartptr((Class*)this); 
+		return to_smartptr(static_cast<Class*>(this)); 
 	}
 
 	ScopeInfo* scope_info(int_t i){

@@ -13,6 +13,8 @@ void set_vmachine(const VMachinePtr& vm);
 
 class ThreadSpace{
 public:
+	
+	ThreadSpace(){}
 
 	void initialize(ThreadLib* lib){
 		thread_lib_ = lib;

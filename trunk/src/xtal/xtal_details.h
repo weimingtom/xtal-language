@@ -16,6 +16,8 @@ namespace xtal{
 
 class Environment{
 public:
+	
+	Environment(){}
 
 	void initialize(const Setting& setting);
 	void uninitialize();

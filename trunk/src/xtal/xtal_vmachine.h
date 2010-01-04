@@ -680,15 +680,15 @@ private:
 	}
 
 	void set_local_variable(int_t pos, const Any& value){
-		(Any&)variables_top_[pos] = value;
+		static_cast<Any&>(variables_top_[pos]) = value;
 	}
 
 	int_t variables_top(){
-		return variables_top_-(Any*)variables_.data();
+		return variables_top_-static_cast<const Any*>(variables_.data());
 	}
 	
 	void set_variables_top(int_t top){
-		variables_top_ = (Any*)variables_.data() + top;
+		variables_top_ = const_cast<Any*>(static_cast<const Any*>(variables_.data())) + top;
 	}
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);

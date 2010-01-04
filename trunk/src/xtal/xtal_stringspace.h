@@ -152,7 +152,7 @@ public:
 
 	void gc(){
 		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last;){
-			if(type(*it->second)==TYPE_STRING && ((StringData*)rcpvalue(*it->second))->ref_count()==1){
+			if(type(*it->second)==TYPE_STRING && (static_cast<StringData*>(rcpvalue(*it->second)))->ref_count()==1){
 				it = table_.erase(it);
 			}
 			else{

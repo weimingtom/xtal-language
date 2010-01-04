@@ -38,15 +38,17 @@ const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){
 
 bool CastHelper<const IDPtr*>::can_cast(const AnyPtr& a){
 	if(String* p = xtal::cast<String*>(a)){
-		if(p->is_interned()){
-			return true;
-		}
+		return true;
 	}
 	return false;
 }
 
-const IDPtr* CastHelper<const IDPtr*>::unchecked_cast(const AnyPtr& a){ 
-	return (const IDPtr*)&a;
+const IDPtr* CastHelper<const IDPtr*>::unchecked_cast(const AnyPtr& a){
+	if(a){
+		const StringPtr& s = unchecked_ptr_cast<String>(a);
+		return s->is_interned() ? (IDPtr*)&a : (IDPtr*)&s->intern();
+	}
+	return (IDPtr*)&a;
 }
 
 

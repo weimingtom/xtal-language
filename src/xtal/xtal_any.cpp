@@ -669,16 +669,18 @@ void Any::s_load(const AnyPtr& v) const{
 	ary->push_back(klass);
 
 	Xfor(it, ary){
-		if(const AnyPtr& member = it->member(Xid(serial_load), undefined, false)){
-			const VMachinePtr& vm = vmachine();
-			vm->setup_call(1, ret->at(it));
-			vm->set_arg_this(ap(*this));
-			member->rawcall(vm);
-			vm->cleanup_call();
-		}
-		else{
+		if(rawne(it, cpp_class<Any>())){
+			if(const AnyPtr& member = it->member(Xid(serial_load), undefined, false)){
+				const VMachinePtr& vm = vmachine();
+				vm->setup_call(1, ret->at(it));
+				vm->set_arg_this(ap(*this));
+				member->rawcall(vm);
+				vm->cleanup_call();
+
+				continue;
+			}
 			load_instance_variables(unchecked_ptr_cast<Class>(it), ret->at(it));
-		}
+		}		
 	}
 }
 

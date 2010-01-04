@@ -96,28 +96,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();
 
-			if(sizeof(char_t)==1){
-				stream_->put_u8(TSTRING8);
-				stream_->put_u32be(sz);
-				for(size_t i=0; i<sz; ++i){
-					stream_->put_u8(str[i]);
-				}
+			stream_->put_u8(a->is_interned() ? TID : TSTRING);
+			stream_->put_u32be(sz);
+			for(size_t i=0; i<sz; ++i){
+				stream_->put_ch_code_be(str[i]);
 			}
-			else if(sizeof(char_t)==2){
-				stream_->put_u8(TSTRING16);
-				stream_->put_u32be(sz);
-				for(size_t i=0; i<sz; ++i){
-					stream_->put_u16be(str[i]);
-				}
-			}
-			else{
-				stream_->put_u8(TSTRING32);
-				stream_->put_u32be(sz);
-				for(size_t i=0; i<sz; ++i){
-					stream_->put_u32be(str[i]);
-				}
-			}
-
 			return;
 		}
 
@@ -277,7 +260,7 @@ AnyPtr Serializer::inner_deserialize_serial_new(){
 		vm->setup_call(1);
 		c->s_new(vm);
 		AnyPtr ret = vm->result();
-		values_->set_at(num, ret);
+		values_.set_at(num, ret);
 		vm->cleanup_call();
 
 		ret->s_load(inner_deserialize());
@@ -290,42 +273,25 @@ AnyPtr Serializer::inner_deserialize_serial_new(){
 
 AnyPtr Serializer::inner_deserialize_name(){
 	int_t num = append_value(null);
-	values_->set_at(num, demangle(inner_deserialize()));
-	return values_->at(num);
+	values_.set_at(num, demangle(inner_deserialize()));
+	return values_.at(num);
 }
 
-AnyPtr Serializer::inner_deserialize_string8(){
-	int_t sz = stream_->get_u32be();
-	XMallocGuard guard(sizeof(char_t)*sz);
-	char_t* p = (char_t*)guard.get();
-	for(int_t i = 0; i<sz; ++i){
-		p[i] = (char_t)stream_->get_u8();
-	}
-	IDPtr ret = xnew<ID>(p, sz);
-	append_value(ret);
-	return ret;
-}
-
-AnyPtr Serializer::inner_deserialize_string16(){
+AnyPtr Serializer::inner_deserialize_string(bool intern){
 	uint_t sz = stream_->get_u32be();
 	XMallocGuard guard(sizeof(char_t)*sz);
 	char_t* p = (char_t*)guard.get();
 	for(uint_t i = 0; i<sz; ++i){
-		p[i] = (char_t)stream_->get_u16be();
+		p[i] = stream_->get_ch_code_be();
 	}
-	IDPtr ret = xnew<ID>(p, sz);
-	append_value(ret);
-	return ret;
-}
 
-AnyPtr Serializer::inner_deserialize_string32(){
-	uint_t sz = stream_->get_u32be();
-	XMallocGuard guard(sizeof(char_t)*sz);
-	char_t* p = (char_t*)guard.get();
-	for(uint_t i = 0; i<sz; ++i){
-		p[i] = (char_t)stream_->get_u32be();
+	AnyPtr ret;
+	if(intern){
+		ret = xnew<ID>(p, sz);
 	}
-	IDPtr ret = xnew<ID>(p, sz);
+	else{
+		ret = xnew<String>(p, sz);
+	}
 	append_value(ret);
 	return ret;
 }
@@ -489,7 +455,7 @@ AnyPtr Serializer::inner_deserialize(){
 		}	
 
 		XTAL_CASE(REF){
-			return values_->at(stream_->get_u32be());
+			return values_.at(stream_->get_u32be());
 		}
 
 		XTAL_CASE(TNULL){
@@ -516,16 +482,12 @@ AnyPtr Serializer::inner_deserialize(){
 			return (float_t)stream_->get_f64be();
 		}
 
-		XTAL_CASE(TSTRING8){
-			return inner_deserialize_string8();
+		XTAL_CASE(TSTRING){
+			return inner_deserialize_string(false);
 		}
 
-		XTAL_CASE(TSTRING16){
-			return inner_deserialize_string16();
-		}
-
-		XTAL_CASE(TSTRING32){
-			return inner_deserialize_string32();
+		XTAL_CASE(TID){
+			return inner_deserialize_string(true);
 		}
 
 		XTAL_CASE(TARRAY){
@@ -580,20 +542,18 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 }
 
 int_t Serializer::register_value(const AnyPtr& v){
-	AnyPtr ret = map_->at(v);
-	if(rawne(ret, undefined)){
-		return ret->to_i();
+	table_t::iterator it=map_.find(v);
+	if(it!=map_.end()){
+		return it->second;
 	}
-	else{
-		ret = append_value(v);
-		return -1;
-	}
+	append_value(v);
+	return -1;
 }
 
 int_t Serializer::append_value(const AnyPtr& v){
-	uint_t ret = values_->size();
-	map_->set_at(v, ret);
-	values_->push_back(v);
+	uint_t ret = values_.size();
+	map_.insert(v, ret);
+	values_.push_back(v);
 	return ret;
 }
 

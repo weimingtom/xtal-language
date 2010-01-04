@@ -17,9 +17,9 @@ uint_t edit_distance(const void* data1, uint_t size1, const void* data2, uint_t 
 class ChMaker{
 public:
 
-	ChMaker(){
-		pos_ = 0;
-		len_ = -1;
+	ChMaker()
+		:pos_(0), len_(-1){
+		buf_[0] = 0;
 	}
 
 	bool is_completed(){

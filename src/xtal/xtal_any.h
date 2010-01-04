@@ -135,12 +135,17 @@ struct AnyRawValue{
 	void init(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
 
 	void init(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
-	void init(const Base* v){  type = TYPE_BASE; pvalue = (Base*)v; }
-	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = (RefCountingBase*)v; }
+	void init(const Base* v){  type = TYPE_BASE; pvalue = const_cast<Base*>(v); }
+	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = const_cast<RefCountingBase*>(v); }
 
-	void init_string_literal(int t, const StringLiteral& v){ 
+	void init_string_literal(int_t t, const StringLiteral& v){ 
 		type = t | (v.size()<<STRING_LITERAL_SIZE_SHIFT); 
 		spvalue = v; 
+	}
+
+	void init_pointer(const void* v, uint_t i){ 
+		type = TYPE_POINTER | (i<<CPP_CLASS_INDEX_SHIFT); 
+		vpvalue = const_cast<void*>(v);
 	}
 
 public:
@@ -153,7 +158,10 @@ public:
 		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1),
 
 		STRING_LITERAL_SIZE_SHIFT = TYPE_SHIFT+1,
-		STRING_LITERAL_SIZE_MASK = ~((1<<STRING_LITERAL_SIZE_SHIFT)-1)
+		STRING_LITERAL_SIZE_MASK = ~((1<<STRING_LITERAL_SIZE_SHIFT)-1),
+
+		CPP_CLASS_INDEX_SHIFT = TYPE_SHIFT+1,
+		CPP_CLASS_INDEX_MASK = ~((1<<CPP_CLASS_INDEX_SHIFT)-1)
 	};
 
 	bool have_finalizer() const{ return (type & HAVE_FINALIZER_FLAG_BIT)!=0; }
@@ -164,10 +172,10 @@ public:
 	void add_ref_count(int_t rc){ type += rc<<REF_COUNT_SHIFT; }
 	void inc_ref_count(){ type += 1<<REF_COUNT_SHIFT; }
 	void dec_ref_count(){ type -= 1<<REF_COUNT_SHIFT; }
-
-	uint_t ungc() const{ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+	uint_t can_not_gc() const{ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
 
 	uint_t string_literal_size() const{ return (type & STRING_LITERAL_SIZE_MASK)>>STRING_LITERAL_SIZE_SHIFT; }
+	uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
 public:
 
 	int_t t() const{ return type; }
@@ -179,6 +187,7 @@ public:
 	char_t* s(){ return svalue; }
 	const char_t* s() const{ return svalue; }
 	const char_t* sp() const{ return spvalue; }
+	void* vp() const{ return vpvalue; }
 
 	void set_object_size(int_t sz){ ivalue = sz; }
 	int_t object_size(){ return ivalue; }
@@ -209,6 +218,7 @@ private:
 		RefCountingBase* rcpvalue;
 		const char_t* spvalue;
 		char_t svalue[SMALL_STRING_MAX];
+		void* vpvalue;
 	};
 };
 
@@ -567,17 +577,14 @@ inline int_t type(const Any& v){
 }
 
 inline int_t ivalue(const Any& v){ 
-	//XTAL_ASSERT(type(v)==TYPE_INT);
 	return rawvalue(v).i(); 
 }
 
 inline float_t fvalue(const Any& v){ 
-	//XTAL_ASSERT(type(v)==TYPE_FLOAT); 
 	return rawvalue(v).f(); 
 }
 
 inline int_t chvalue(const Any& v){ 
-	//XTAL_ASSERT(type(v)==TYPE_FLOAT); 
 	return rawvalue(v).s()[0];
 }
 

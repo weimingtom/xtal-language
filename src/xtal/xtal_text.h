@@ -12,7 +12,10 @@ namespace xtal{
 class FormatSpecifier{
 public:
 
-	FormatSpecifier(){}
+	FormatSpecifier()
+		:type_(0), pos_(0), width_(0), precision_(0){
+		buf_[0] = 0;
+	}
 
 	enum{ BUF_MAX = 20, REAL_BUF_MAX = BUF_MAX + 2 };
 	
@@ -66,7 +69,6 @@ private:
 
 class Text : public Base{
 public:
-
 	Text(const IDPtr& key = empty_id);
 	virtual void rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);

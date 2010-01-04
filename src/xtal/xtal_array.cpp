@@ -3,13 +3,24 @@
 
 namespace xtal{
 
+namespace{
+
+void fill_undefined(Any* begin, uint_t size){
+	Any v = undefined;
+	for(uint_t i=0; i<size; ++i){
+		begin[i] = v;
+	}
+}
+
+}
+
 xarray::xarray(uint_t size){
 	capa_ = size;
 	size_ = size;
 
 	if(capa_!=0){
 		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
-		std::memset(values_, 0, sizeof(AnyPtr)*size_);
+		fill_undefined(values_, size_);
 	}
 	else{
 		values_ = 0;
@@ -89,7 +100,7 @@ void xarray::upsize(uint_t sz){
 			uint_t newcapa = size_+sz+capa_+3;
 			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
-			std::memset(&newp[size_], 0, sizeof(AnyPtr)*sz);
+			fill_undefined(&newp[size_], sz);
 			xfree(values_, sizeof(AnyPtr)*capa_);
 			values_ = newp;
 			size_ += sz;
@@ -98,13 +109,13 @@ void xarray::upsize(uint_t sz){
 		else{
 			uint_t newcapa = sz;
 			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-			std::memset(&values_[0], 0, sizeof(AnyPtr)*sz);
+			fill_undefined(&values_[0], sz);
 			size_ = sz;
 			capa_ = newcapa;
 		}
 	}
 	else{
-		std::memset(&values_[size_], 0, sizeof(AnyPtr)*sz);
+		fill_undefined(&values_[size_], sz);
 		size_ += sz;
 	}
 }
@@ -199,7 +210,7 @@ void xarray::upsize_unref(uint_t size){
 	}
 
 	size_ = size;
-	std::memset(&values_[0], 0, sizeof(AnyPtr)*size_);
+	fill_undefined(&values_[0], size_);
 }
 
 //////////////////////////////////////////////////

@@ -31,15 +31,13 @@ private:
 	void put_tab(int_t tab);
 
 	void clear(){
-		values_ = xnew<Array>();
-		map_ = xnew<Map>();
+		values_.clear();
+		map_.clear();
 	}
 
 	AnyPtr inner_deserialize_serial_new();
 	AnyPtr inner_deserialize_name();
-	AnyPtr inner_deserialize_string8();
-	AnyPtr inner_deserialize_string16();
-	AnyPtr inner_deserialize_string32();
+	AnyPtr inner_deserialize_string(bool intern);
 	AnyPtr inner_deserialize_array();
 	AnyPtr inner_deserialize_values();
 	AnyPtr inner_deserialize_map();
@@ -61,9 +59,8 @@ private:
 		TFLOAT32,
 		TINT64, 
 		TFLOAT64,
-		TSTRING8,
-		TSTRING16,
-		TSTRING32,
+		TSTRING,
+		TID,
 		TARRAY, 
 		TVALUES,
 		TMAP 
@@ -71,8 +68,21 @@ private:
 
 private:
 
-	MapPtr map_;
-	ArrayPtr values_;
+	struct Fun{
+		static uint_t hash(const AnyPtr& key){
+			return (rawvalue(key).u() ^ type(key) ^ (rawvalue(key).u()>>3));
+		}
+
+		static bool eq(const AnyPtr& a, const AnyPtr& b){
+			return raweq(a, b);
+		}
+	};
+
+	typedef OrderedHashtable<AnyPtr, int_t, Fun> table_t;
+
+	table_t map_;
+	xarray values_;
+
 	StreamPtr stream_;
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(Serializer);

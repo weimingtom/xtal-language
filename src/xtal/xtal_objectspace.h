@@ -14,6 +14,8 @@ struct ConnectedPointer;
 class ObjectSpace{
 public:
 
+	ObjectSpace(){}
+
 	void initialize();
 
 	void uninitialize();

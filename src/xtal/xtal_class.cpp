@@ -702,7 +702,9 @@ AnyPtr Class::ancestors(){
 	}			
 	
 	ArrayPtr ret = xnew<Array>();
-	Xfor_cast(const ClassPtr& it, inherited_classes()){
+
+	for(int_t i=0, sz=inherited_classes_.size(); i<sz; i++){
+		ClassPtr it = to_smartptr(class_->inherited_classes_[i]);
 		ret->push_back(it);
 
 		Xfor(it2, it->ancestors()){

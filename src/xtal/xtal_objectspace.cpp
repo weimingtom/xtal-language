@@ -3,7 +3,7 @@
 
 #include "xtal_objectspace.h"
 
-#define XTAL_DEBUG_PRINT
+//#define XTAL_DEBUG_PRINT
 
 #ifdef XTAL_DEBUG_PRINT
 #include <map>
@@ -366,7 +366,7 @@ ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, Connecte
 	for(; it!=rend; ){
 		RefCountingBase* p = *it;
 
-		if(p->ungc()==0){
+		if(p->can_not_gc()==0){
 			--end;
 
 			p->destroy();

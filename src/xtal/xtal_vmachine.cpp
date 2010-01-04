@@ -45,9 +45,7 @@ namespace xtal{
 const ClassPtr& Any::get_class() const{
 	int_t t = type(*this);
 	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
-
-	// å^ÇëùÇ‚ÇµÇΩÇÁïœçXÇ∑ÇÈÇ±Ç∆
-	XTAL_STATIC_ASSERT(TYPE_MAX==18);
+	if(t==TYPE_POINTER){ return cpp_class(value_.cpp_class_index()); }
 
 	static CppClassSymbolData** classdata[] = {
 		&CppClassSymbol<Null>::value,
@@ -60,6 +58,7 @@ const ClassPtr& Any::get_class() const{
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<Any>::value,
+		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<Array>::value,
 		&CppClassSymbol<Values>::value,
@@ -69,6 +68,9 @@ const ClassPtr& Any::get_class() const{
 		&CppClassSymbol<InstanceVariableGetter>::value,
 		&CppClassSymbol<InstanceVariableSetter>::value,
 	};
+
+	// å^ÇëùÇ‚ÇµÇΩÇÁïœçXÇ∑ÇÈÇ±Ç∆
+	XTAL_STATIC_ASSERT(sizeof(classdata)/sizeof(*classdata) == TYPE_MAX);
 
 	return cpp_class(*classdata[t]);
 }
@@ -1440,7 +1442,7 @@ comp_send:
 		XTAL_VM_FUN;
 		Scope& scope = scopes_.top();
 		if(raweq(scope.frame->get_class(), scope.frame)){
-			Class* singleton = (Class*)pvalue(scope.frame);
+			Class* singleton = staic_cast<Class*>(pvalue(scope.frame));
 			singleton->init_singleton(to_smartptr(this));
 		}
 
@@ -1660,7 +1662,7 @@ const inst_t* VMachine::FunClassEnd(const inst_t* pc){
 		XTAL_VM_FUN;
 		Scope& scope = scopes_.top();
 		if(raweq(scope.frame->get_class(), scope.frame)){
-			Class* singleton = (Class*)pvalue(scope.frame);
+			Class* singleton = static_cast<Class*>(pvalue(scope.frame));
 			singleton->init_singleton(to_smartptr(this));
 		}
 

@@ -159,11 +159,472 @@ void test(){
 	n = 0;
 }
 
+class BinaryType;
+class BinaryRecordType;
+class BinaryRecordData;
+class BinaryArrayType;
+class BinaryArrayData;
+class BinaryOptionalType;
+
+typedef SmartPtr<BinaryType> BinaryTypePtr;
+typedef SmartPtr<BinaryRecordType> BinaryRecordTypePtr;
+typedef SmartPtr<BinaryRecordData> BinaryRecordDataPtr;
+typedef SmartPtr<BinaryArrayType> BinaryArrayTypePtr;
+typedef SmartPtr<BinaryArrayData> BinaryArrayDataPtr;
+typedef SmartPtr<BinaryOptionalType> BinaryOptionalTypePtr;
+
+class BinaryType : public Base{
+public:
+	BinaryArrayTypePtr at(const AnyPtr& length);
+
+	BinaryOptionalTypePtr optional(const AnyPtr& checker);
+
+	virtual void on_write_to_stream(const StreamPtr& stream, const AnyPtr& data, const BinaryRecordDataPtr& parent_data) = 0;
+	
+	virtual AnyPtr on_read_from_stream(const StreamPtr& stream, const BinaryRecordDataPtr& parent_data) = 0;
+
+	virtual AnyPtr make() = 0;
+
+	virtual AnyPtr on_translate(const AnyPtr& data, const BinaryRecordDataPtr& parent_data) = 0;
+
+	void write_to_stream(const StreamPtr& stream, const AnyPtr& data){
+		return on_write_to_stream(stream, data, null);
+	}
+	
+	AnyPtr read_from_stream(const StreamPtr& stream){
+		return on_read_from_stream(stream, null);
+	}
+
+	AnyPtr translate(const AnyPtr& data){
+		return on_translate(data, null);
+	}
+};
+
+XTAL_PREBIND(BinaryType){
+	
+}
+
+XTAL_BIND(BinaryType){
+	it->def_method(Xid(op_at), &BinaryType::at, cpp_class<Any>());
+	it->def_method(Xid(write_to_stream), &BinaryType::write_to_stream);
+	it->def_method(Xid(read_from_stream), &BinaryType::read_from_stream);
+	it->def_method(Xid(op_call), &BinaryType::make);
+	it->def_method(Xid(translate), &BinaryType::translate);
+	it->def_method(Xid(optional), &BinaryType::optional);
+}
+
+class BinaryArrayData : public Base{
+	BinaryTypePtr element_type_;
+	ArrayPtr data_;
+public:
+	
+	BinaryArrayData(const BinaryTypePtr& element_type, int_t len = 0)
+		:element_type_(element_type), data_(xnew<Array>(len)){}
+
+	void fillup(int_t i){
+		if(data_->length()<=i){
+			data_->resize(i+1);
+		}
+	}
+	
+	AnyPtr at(int_t i){
+		fillup(i);
+		if(raweq(data_->at(i), undefined)){
+			data_->set_at(i, element_type_->make());
+		}
+		return data_->at(i);
+	}
+	
+	void set_at(int_t i, const AnyPtr& v){
+		fillup(i);
+		data_->set_at(i, v);
+	}
+};
+
+XTAL_BIND(BinaryArrayData){
+	it->def_method(Xid(op_at), &BinaryArrayData::at, cpp_class<Int>());
+	it->def_method(Xid(op_set_at), &BinaryArrayData::set_at, cpp_class<Int>());
+}
+
+class BinaryArrayType : public BinaryType{
+	BinaryTypePtr element_type_;
+	AnyPtr length_;
+public:
+	
+	BinaryArrayType(const BinaryTypePtr& element_type, const AnyPtr& length)
+		:element_type_(element_type), length_(length){}
+	
+	int_t length(const BinaryRecordDataPtr& parent_data);
+
+	void on_write_to_stream(const StreamPtr& stream, const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(BinaryArrayDataPtr d = ptr_cast<BinaryArrayData>(data)){
+			int_t len = length(parent_data);
+			for(int_t i=0; i<len; ++i){
+				element_type_->on_write_to_stream(stream, d->at(i), parent_data);
+			}
+		}
+	}
+	
+	AnyPtr on_read_from_stream(const StreamPtr& stream, const BinaryRecordDataPtr& parent_data){
+		int_t len = length(parent_data);
+		BinaryArrayDataPtr data = xnew<BinaryArrayData>(element_type_, len);
+		for(int_t i=0; i<len; ++i){
+			data->set_at(i, element_type_->on_read_from_stream(stream, parent_data));
+		}
+		return data;
+	}
+	
+	AnyPtr make(){
+		return xnew<BinaryArrayData>(element_type_);
+	}
+
+	AnyPtr on_translate(const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(BinaryArrayDataPtr d = ptr_cast<BinaryArrayData>(data)){
+			int_t len = length(parent_data);
+			ArrayPtr ret = xnew<Array>(len);
+			for(int_t i=0; i<len; ++i){
+				ret->set_at(i, element_type_->on_translate(d->at(i), parent_data));
+			}
+			return ret;
+		}
+		return undefined;
+	}
+
+};
+
+XTAL_PREBIND(BinaryArrayType){
+	it->inherit(cpp_class<BinaryType>());
+}
+
+class BinaryOptionalType : public BinaryType{
+	BinaryTypePtr original_type_;
+	AnyPtr checker_;
+public:
+	
+	BinaryOptionalType(const BinaryTypePtr& original_type, const AnyPtr& checker)
+		:original_type_(original_type), checker_(checker){}
+	
+	bool check(const BinaryRecordDataPtr& parent_data);
+
+	void on_write_to_stream(const StreamPtr& stream, const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(check(parent_data)){
+			original_type_->on_write_to_stream(stream, data, parent_data);
+		}
+	}
+	
+	AnyPtr on_read_from_stream(const StreamPtr& stream, const BinaryRecordDataPtr& parent_data){
+		if(check(parent_data)){
+			return original_type_->on_read_from_stream(stream, parent_data);
+		}
+		return undefined;
+	}
+	
+	AnyPtr make(){
+		return original_type_->make();
+	}
+
+	AnyPtr on_translate(const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(check(parent_data)){
+			return original_type_->on_translate(data, parent_data);
+		}
+		return undefined;
+	}
+
+};
+
+XTAL_PREBIND(BinaryOptionalType){
+	it->inherit(cpp_class<BinaryType>());
+}
+
+class BinaryPrimitiveType : public BinaryType{
+	int_t type_;
+	AnyPtr value_;
+public:
+	enum{
+		I8,
+		I16,
+		I32,
+
+		U8,
+		U16,
+		U32,
+
+		F32,
+		F64,
+
+		BE = 0,
+		LE = 1
+	};
+
+	BinaryPrimitiveType(int_t type, int_t endian, const AnyPtr& value){
+		type_ = endian | (type<<1);
+		value_ = value;
+	}
+
+	void on_write_to_stream(const StreamPtr& stream, const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		switch(type_){
+			XTAL_NODEFAULT;
+			XTAL_CASE(BE | (I8<<1)){ stream->put_i8(data->to_i()); }
+			XTAL_CASE(BE | (I16<<1)){ stream->put_i16be(data->to_i()); }
+			XTAL_CASE(BE | (I32<<1)){ stream->put_i32be(data->to_i()); }
+
+			XTAL_CASE(BE | (U8<<1)){ stream->put_u8(data->to_i()); }
+			XTAL_CASE(BE | (U16<<1)){ stream->put_u16be(data->to_i()); }
+			XTAL_CASE(BE | (U32<<1)){ stream->put_u32be(data->to_i()); }
+
+			XTAL_CASE(BE | (F32<<1)){ stream->put_f32be(data->to_f()); }
+			XTAL_CASE(BE | (F64<<1)){ stream->put_f64be(data->to_f()); }
+
+			XTAL_CASE(LE | (I8<<1)){ stream->put_i8(data->to_i()); }
+			XTAL_CASE(LE | (I16<<1)){ stream->put_i16le(data->to_i()); }
+			XTAL_CASE(LE | (I32<<1)){ stream->put_i32le(data->to_i()); }
+
+			XTAL_CASE(LE | (U8<<1)){ stream->put_u8(data->to_i()); }
+			XTAL_CASE(LE | (U16<<1)){ stream->put_u16le(data->to_i()); }
+			XTAL_CASE(LE | (U32<<1)){ stream->put_u32le(data->to_i()); }
+
+			XTAL_CASE(LE | (F32<<1)){ stream->put_f32le(data->to_f()); }
+			XTAL_CASE(LE | (F64<<1)){ stream->put_f64le(data->to_f()); }
+		}
+	}
+	
+	AnyPtr on_read_from_stream(const StreamPtr& stream, const BinaryRecordDataPtr& parent_data){
+		switch(type_){
+			XTAL_NODEFAULT;
+			XTAL_CASE(BE | (I8<<1)){ return stream->get_i8(); }
+			XTAL_CASE(BE | (I16<<1)){ return stream->get_i16be(); }
+			XTAL_CASE(BE | (I32<<1)){ return stream->get_i32be(); }
+
+			XTAL_CASE(BE | (U8<<1)){ return stream->get_u8(); }
+			XTAL_CASE(BE | (U16<<1)){ return stream->get_u16be(); }
+			XTAL_CASE(BE | (U32<<1)){ return stream->get_u32be(); }
+
+			XTAL_CASE(BE | (F32<<1)){ return stream->get_f32be(); }
+			XTAL_CASE(BE | (F64<<1)){ return stream->get_f64be(); }
+
+			XTAL_CASE(LE | (I8<<1)){ return stream->get_i8(); }
+			XTAL_CASE(LE | (I16<<1)){ return stream->get_i16le(); }
+			XTAL_CASE(LE | (I32<<1)){ return stream->get_i32le(); }
+
+			XTAL_CASE(LE | (U8<<1)){ return stream->get_u8(); }
+			XTAL_CASE(LE | (U16<<1)){ return stream->get_u16le(); }
+			XTAL_CASE(LE | (U32<<1)){ return stream->get_u32le(); }
+
+			XTAL_CASE(LE | (F32<<1)){ return stream->get_f32le(); }
+			XTAL_CASE(LE | (F64<<1)){ return stream->get_f64le(); }
+		}
+		return undefined;
+	}
+	
+	AnyPtr make(){
+		return value_;
+	}
+
+	AnyPtr on_translate(const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		return data;
+	}
+};
+
+XTAL_PREBIND(BinaryPrimitiveType){
+	it->inherit(cpp_class<BinaryType>());
+	//it->def_ctor3<BinaryPrimitiveType>();
+}
+
+class BinaryRecordData : public Base{
+	BinaryRecordTypePtr type_;
+	ArrayPtr data_;
+public:
+	
+	BinaryRecordData(const BinaryRecordTypePtr& type, int_t len = 0)
+		:type_(type), data_(xnew<Array>(len)){}
+
+	const BinaryRecordTypePtr& type(){
+		return type_;
+	}
+
+	void fillup(int_t i){
+		if(data_->length()<=i){
+			data_->resize(i+1);
+		}
+	}
+	
+	AnyPtr at(int_t i, const BinaryTypePtr& type){
+		fillup(i);
+		if(raweq(data_->at(i), undefined)){
+			data_->set_at(i, type->make());
+		}
+		return data_->at(i);
+	}
+	
+	void set_at(int_t i, const AnyPtr& v){
+		fillup(i);
+		data_->set_at(i, v);
+	}
+};
+
+XTAL_BIND(BinaryRecordData){
+
+}
+
+class StructMemberGetterAndSetter : public Base{
+public:
+	int_t index_;
+	BinaryTypePtr type_;
+
+	StructMemberGetterAndSetter(int_t index, const BinaryTypePtr& type)
+		:index_(index), type_(type){}
+
+	virtual void rawcall(const VMachinePtr& vm){
+		if(vm->ordered_arg_count()==0){
+			vm->return_result(ptr_cast<BinaryRecordData>(vm->arg_this())->at(index_, type_));
+			return;
+		}
+		else if(vm->ordered_arg_count()==1){
+			ptr_cast<BinaryRecordData>(vm->arg_this())->set_at(index_, vm->arg(0));
+			vm->return_result();
+			return;
+		}
+		vm->return_result();
+	}
+};
+
+class BinaryRecordType : public BinaryType{
+public:
+	MapPtr members_;
+	MapPtr index_map_;
+	ClassPtr cls_;
+	
+	BinaryRecordType(){
+		cls_ = xnew<Class>();
+		cls_->inherit(cpp_class<BinaryRecordData>());
+
+		members_ = xnew<Map>();
+		index_map_ = xnew<Map>();
+	}
+
+	AnyPtr members(){
+		return members_;
+	}
+	
+	void def(const IDPtr& key, const BinaryTypePtr& type){
+		cls_->def(key, xnew<StructMemberGetterAndSetter>(members_->size(), type));
+		cls_->def(Xid(set_)->op_cat(key), xnew<StructMemberGetterAndSetter>(members_->size(), type));
+		index_map_->set_at(key, members_->size());
+		members_->set_at(key, type);
+	}
+
+	AnyPtr access(const BinaryRecordDataPtr& data, const IDPtr& key){
+		return data->at(index_map_->at(key)->to_i(), ptr_cast<BinaryType>(members_->at(key)));
+	}
+
+	void on_write_to_stream(const StreamPtr& stream, const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(BinaryRecordDataPtr d = ptr_cast<BinaryRecordData>(data)){
+			int_t i = 0;
+			Xfor2(key, type, members_){
+				if(BinaryTypePtr p = ptr_cast<BinaryType>(type)){
+					p->on_write_to_stream(stream, d->at(i, p), d);
+				}
+				++i;
+			}
+		}
+	}
+	
+	AnyPtr on_read_from_stream(const StreamPtr& stream, const BinaryRecordDataPtr& parent_data){
+		BinaryRecordDataPtr data = xnew<BinaryRecordData>(to_smartptr(this));
+		data->set_class(cls_);
+		int_t i = 0;
+		Xfor2(key, type, members_){
+			if(BinaryTypePtr p = ptr_cast<BinaryType>(type)){
+				data->set_at(i, p->on_read_from_stream(stream, data));
+			}
+			++i;
+		}
+		return data;
+	}
+			
+	AnyPtr make(){
+		BinaryRecordDataPtr data = xnew<BinaryRecordData>(to_smartptr(this), members_->size());
+		data->set_class(cls_);
+		int_t i = 0;
+		Xfor2(key, type, members_){
+			if(BinaryTypePtr p = ptr_cast<BinaryType>(type)){
+				data->set_at(i, p->make());
+			}
+			++i;
+		}
+		return data;
+	}
+
+	AnyPtr on_translate(const AnyPtr& data, const BinaryRecordDataPtr& parent_data){
+		if(BinaryRecordDataPtr d = ptr_cast<BinaryRecordData>(data)){
+			MapPtr ret = xnew<Map>();
+			int_t i=0;
+			Xfor2(key, type, members()){
+				if(BinaryTypePtr p = ptr_cast<BinaryType>(type)){
+					ret->set_at(key, p->on_translate(d->at(i, p), d));
+				}
+				++i;
+			}
+			return ret;
+		}
+		return undefined;
+	}
+};
+
+BinaryArrayTypePtr BinaryType::at(const AnyPtr& length){
+	return xnew<BinaryArrayType>(to_smartptr(this), length);
+}
+
+BinaryOptionalTypePtr BinaryType::optional(const AnyPtr& checker){
+	return xnew<BinaryOptionalType>(to_smartptr(this), checker);
+}
+
+int_t BinaryArrayType::length(const BinaryRecordDataPtr& parent_data){
+	if(type(length_)==TYPE_INT){
+		return ivalue(length_);
+	}
+	else if(const StringPtr& key = ptr_cast<String>(length_)){
+		return parent_data->type()->access(parent_data, key)->to_i();
+	}
+	else{
+		return length_->call(parent_data)->to_i();
+	}
+	return 0;
+}
+	
+bool BinaryOptionalType::check(const BinaryRecordDataPtr& parent_data){
+	return checker_->call(parent_data);
+}
+
+XTAL_PREBIND(BinaryRecordType){
+	it->inherit(cpp_class<BinaryType>());
+	it->def_ctor0<BinaryRecordType>();
+}
+
+XTAL_BIND(BinaryRecordType){
+	it->def_method(Xid(def), &BinaryRecordType::def);
+	it->def_method(Xid(members), &BinaryRecordType::members);
+	it->def_method(Xid(access), &BinaryRecordType::access);
+
+	/*
+		fun binary(...args){
+			members: args.named_arguments[:];
+			ret: cpp::BinaryRecordType();
+
+			members{ |key, val|
+				ret.def(key, val);
+			}
+
+			return ret;
+		}
+
+	*/
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 	
 	using namespace std;
-
 
 	//debug::enable();
 	//debug::set_breakpoint_hook(fun(&linehook));
@@ -193,13 +654,7 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
-	AnyPtr b = intern("aaaaaaaaaaaaaaaaaaa");
-	AnyPtr a = Xid(aaaaaaaaaaaaaaaaaaa);
-
 	if(CodePtr code = Xsrc((
-		
-		cpp::Class1.p;
-		cpp::Class2.p;
 
 	))){
 		code->call();
@@ -331,7 +786,7 @@ int main2(int argc, char** argv){
 
 namespace xxx{
 
-class SimpleMemoryManager{
+class MemoryManager{
 	enum{
 		USED = 1<<0,
 		RED = 1<<1,
@@ -409,11 +864,11 @@ class SimpleMemoryManager{
 			h.prev.u &= ~USED;
 		}
 
-		bool is_used(){			
+		int is_used(){			
 			return h.prev.u & USED;
 		}
 
-		bool is_red(){ 
+		int is_red(){ 
 			return h.prev.u & RED;
 		}
 
@@ -438,11 +893,11 @@ class SimpleMemoryManager{
 public:
 
 
-	SimpleMemoryManager(){ 
+	MemoryManager(){ 
 		head_ = begin_ = end_ = 0; 
 	}
 	
-	SimpleMemoryManager(void* buffer, size_t size){
+	MemoryManager(void* buffer, size_t size){
 		init(buffer, size);
 	}
 
@@ -537,7 +992,7 @@ private:
 	size_t buffer_size_;
 };
 
-void SimpleMemoryManager::init(void* buffer, size_t size){
+void MemoryManager::init(void* buffer, size_t size){
 	buffer_size_ = size;
 
 	head_ = (Chunk*)align_p(buffer, MIN_ALIGNMENT);
@@ -571,7 +1026,7 @@ void SimpleMemoryManager::init(void* buffer, size_t size){
 	root_->set_red();
 }
 
-void* SimpleMemoryManager::malloc(size_t size, int alignment, const char* file, int line){
+void* MemoryManager::malloc(size_t size, int alignment, const char* file, int line){
 #ifdef XTAL_DEBUG
 	if(void* p = malloc_inner(size+GUARD_MAX, alignment, file, line)){
 		Chunk* cp = to_chunk(p);
@@ -588,7 +1043,7 @@ void* SimpleMemoryManager::malloc(size_t size, int alignment, const char* file, 
 #endif
 }
 
-void SimpleMemoryManager::free(void* p){
+void MemoryManager::free(void* p){
 #ifdef XTAL_DEBUG
 	Chunk* cp = to_chunk(p);
 	unsigned char* ucp = (unsigned char*)p+cp->h.debug.size;
@@ -603,7 +1058,7 @@ void SimpleMemoryManager::free(void* p){
 #endif
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::chunk_align(Chunk* it, int alignment){
+MemoryManager::Chunk* MemoryManager::chunk_align(Chunk* it, int alignment){
 	// ユーザーへ返すメモリの先頭アドレスを計算
 	void* p = align_p(it->buf(), alignment);
 
@@ -622,7 +1077,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::chunk_align(Chunk* it, int alig
 /**
 * \brief メモリ確保
 */
-void* SimpleMemoryManager::malloc_inner(size_t size, int alignment, const char* file, int line){
+void* MemoryManager::malloc_inner(size_t size, int alignment, const char* file, int line){
 	if(alignment>MIN_ALIGNMENT){
 		alignment = align_2(alignment);
 	}
@@ -668,7 +1123,7 @@ void* SimpleMemoryManager::malloc_inner(size_t size, int alignment, const char* 
 	return 0;
 }
 
-void SimpleMemoryManager::free_inner(void* p){
+void MemoryManager::free_inner(void* p){
 	if(p){
 		Chunk* it = to_chunk(p);
 		it->unref();
@@ -690,7 +1145,7 @@ void SimpleMemoryManager::free_inner(void* p){
 	}
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::find(Chunk* l, int key){
+MemoryManager::Chunk* MemoryManager::find(Chunk* l, int key){
 	Chunk* ret = end();
 	while(l!=end()){
 		int cmp = key - l->size();
@@ -718,13 +1173,13 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::find(Chunk* l, int key){
 	return ret;
 }
 
-void SimpleMemoryManager::flip_colors(Chunk* n){
+void MemoryManager::flip_colors(Chunk* n){
 	n->flip_color();
 	n->b.left->flip_color();
 	n->b.right->flip_color();
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::rotate_left(Chunk* n){
+MemoryManager::Chunk* MemoryManager::rotate_left(Chunk* n){
 	Chunk* x = n->b.right;
 	n->b.right = x->b.left;
 	x->b.left = n;
@@ -733,7 +1188,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::rotate_left(Chunk* n){
 	return x;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::rotate_right(Chunk* n){
+MemoryManager::Chunk* MemoryManager::rotate_right(Chunk* n){
 	Chunk* x = n->b.left;
 	n->b.left = x->b.right;
 	x->b.right = n;
@@ -742,7 +1197,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::rotate_right(Chunk* n){
 	return x;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::fixup(Chunk* n){
+MemoryManager::Chunk* MemoryManager::fixup(Chunk* n){
 	if(n->b.right->is_red()){
 		n = rotate_left(n);
 	}
@@ -758,7 +1213,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::fixup(Chunk* n){
 	return n;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::insert(Chunk* n, Chunk* key){
+MemoryManager::Chunk* MemoryManager::insert(Chunk* n, Chunk* key){
 	if(n==end()){
 		return key;
 	}
@@ -787,7 +1242,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::insert(Chunk* n, Chunk* key){
 	return n;
 }
 
-void SimpleMemoryManager::insert(Chunk* key){
+void MemoryManager::insert(Chunk* key){
 	key->b.right = key->b.left = end();
 	key->set_red();
 
@@ -795,14 +1250,14 @@ void SimpleMemoryManager::insert(Chunk* key){
 	root_->set_black();
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::minv(Chunk* n){
+MemoryManager::Chunk* MemoryManager::minv(Chunk* n){
 	while(n->b.left!=end()){
 		n = n->b.left;
 	}
 	return n;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::move_red_left(Chunk* n){
+MemoryManager::Chunk* MemoryManager::move_red_left(Chunk* n){
 	flip_colors(n);
 	if(n->b.right->b.left->is_red()){
 		n->b.right = rotate_right(n->b.right);
@@ -812,7 +1267,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::move_red_left(Chunk* n){
 	return n;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::move_red_right(Chunk* n){
+MemoryManager::Chunk* MemoryManager::move_red_right(Chunk* n){
 	flip_colors(n);
 	
 	if(n->b.left->b.left->is_red()){
@@ -822,7 +1277,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::move_red_right(Chunk* n){
 	return n;
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::remove_min(Chunk* n){
+MemoryManager::Chunk* MemoryManager::remove_min(Chunk* n){
 	if(n->b.left==end()){
 		return end();
 	}
@@ -835,7 +1290,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::remove_min(Chunk* n){
 	return fixup(n);
 }
 
-SimpleMemoryManager::Chunk* SimpleMemoryManager::remove(Chunk* n, Chunk* key){
+MemoryManager::Chunk* MemoryManager::remove(Chunk* n, Chunk* key){
 	if(compare(key, n) < 0){
 		if(!n->b.left->is_red() && !n->b.left->b.left->is_red()){
 			n = move_red_left(n);
@@ -871,7 +1326,7 @@ SimpleMemoryManager::Chunk* SimpleMemoryManager::remove(Chunk* n, Chunk* key){
 	return fixup(n);
 }
 
-void SimpleMemoryManager::dump(unsigned char* dest, size_t size, unsigned char* marks){
+void MemoryManager::dump(unsigned char* dest, size_t size, unsigned char* marks){
 	Chunk* p = head_;
 	int_t* it = (int_t*)head_;
 
@@ -893,7 +1348,7 @@ void SimpleMemoryManager::dump(unsigned char* dest, size_t size, unsigned char* 
 	memset(dest+m, 0, (size+1)-m);
 }
 
-void SimpleMemoryManager::dump(unsigned char* dest, size_t size){
+void MemoryManager::dump(unsigned char* dest, size_t size){
 	unsigned char marks[] = {'O', 'X'};
 	dump(dest, size, marks);
 }
@@ -901,7 +1356,7 @@ void SimpleMemoryManager::dump(unsigned char* dest, size_t size){
 }
 
 char memory[1024*1024*200];
-xxx::SimpleMemoryManager smm(memory, 1024*1024*200);
+xxx::MemoryManager smm(memory, 1024*1024*200);
 
 class AAllocatorLib : public AllocatorLib{
 public:

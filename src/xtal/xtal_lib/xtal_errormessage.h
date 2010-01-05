@@ -27,7 +27,7 @@ inline void bind_error_message(){
 		XTAL_STRING("XCE1022"), XTAL_STRING("関数から返せる多値の最大は255個です。"),
 		XTAL_STRING("XCE1023"), XTAL_STRING("定義されていないインスタンス変数名 '%(name)s' を参照しています。"),
 		XTAL_STRING("XCE1024"), XTAL_STRING("同名のインスタンス変数名 '%(name)s' が既に定義されています。"),
-		XTAL_STRING("XCE1025"), XTAL_STRING("比較演算式の結果を最比較しようとしています。"),
+		XTAL_STRING("XCE1025"), XTAL_STRING("比較演算式の結果を再比較しようとしています。"),
 		XTAL_STRING("XCE1026"), XTAL_STRING("同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。"),
 		XTAL_STRING("XCE1027"), XTAL_STRING("コードが大きすぎて、バイトコードの生成に失敗しました。"),
 		XTAL_STRING("XCE1028"), XTAL_STRING("演算子の前後の空白と演算子の優先順位が一致していません。想定している優先順位と異なっている可能性があります。"),

@@ -187,7 +187,7 @@ public:
 		iterator operator ++(int){
 			iterator temp(*this);
 			++p_;
-			return *this;
+			return temp;
 		}
 
 		friend bool operator ==(iterator a, iterator b){

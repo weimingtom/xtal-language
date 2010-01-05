@@ -199,6 +199,30 @@ struct CastHelperHelper{
 	}
 };
 
+template<class T>
+struct CastHelperHelper<T*>{
+	static T* cast(const AnyPtr& a){ 
+		if(can_cast(a)){
+			return unchecked_cast(a);
+		}
+		else{
+			return get_null();
+		}
+	}
+		
+	static bool can_cast(const AnyPtr& a){ 
+		return CastHelper<T*>::can_cast(a); 
+	}
+
+	static T* unchecked_cast(const AnyPtr& a){ 
+		return CastHelper<T*>::unchecked_cast(a); 
+	}
+	
+	static T* get_null(){ 
+		return 0;
+	}
+};
+
 /////////////////////////////////////////////////////////////////////////////
 
 template<>

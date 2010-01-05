@@ -147,7 +147,7 @@ public:
 		return *(current_-i);
 	}
 
-	T& get(size_t i, const T& v){
+	void set(size_t i, const T& v){
 		XTAL_ASSERT(i<size());
 		*(current_-i) = v;
 	}

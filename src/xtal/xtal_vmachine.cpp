@@ -1504,7 +1504,7 @@ comp_send:
 
 	XTAL_VM_CASE(TryBegin){ XTAL_VM_CONTINUE(FunTryBegin(pc)); /*
 		XTAL_VM_FUN;
-		FunFrame& f = ff(); 
+		//FunFrame& f = ff();
 		ExceptFrame& ef = except_frames_.push();
 		ef.info = code()->except_info(inst.info_number);
 		ef.fun_frame_size = fun_frames_.size();
@@ -1729,7 +1729,7 @@ const inst_t* VMachine::FunMakeInstanceVariableAccessor(const inst_t* pc){
 const inst_t* VMachine::FunTryBegin(const inst_t* pc){
 		XTAL_VM_DEF_INST(TryBegin);
 		XTAL_VM_FUN;
-		FunFrame& f = ff(); 
+		//FunFrame& f = ff();
 		ExceptFrame& ef = except_frames_.push();
 		ef.info = code()->except_info(inst.info_number);
 		ef.fun_frame_size = fun_frames_.size();

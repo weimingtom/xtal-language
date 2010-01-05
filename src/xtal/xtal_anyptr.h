@@ -166,11 +166,7 @@ protected:
 	SmartPtr(noinit_t)
 		:Any(noinit_t()){}
 
-	template<class T>
-	void set_unknown_pointer(const T* p, const Base*){
-		value_.init(p);
-		inc_ref_count();
-	}
+	void set_unknown_pointer(const Base* p, const Base*);
 
 	template<class T>
 	void set_unknown_pointer(const T* p, const void*){
@@ -301,9 +297,9 @@ private:
 	* \brief 暗黙の変換を抑えるためのコンストラクタ。
 	* 得体の知れない関数ポインタからの構築を拒否するため、このコンストラクタはprivateで実装も存在しない。
 	*/
-	template<class R> AnyPtr(R (*)());
-	template<class R, class A1> AnyPtr(R (*)(A1));
-	template<class R, class A1, class A2> AnyPtr(R (*)(A1, A2));
+	template<class R> SmartPtr(R (*a)());
+	template<class R, class A1> SmartPtr(R (*a)(A1));
+	template<class R, class A1, class A2> SmartPtr(R (*a)(A1, A2));
 
 };
 

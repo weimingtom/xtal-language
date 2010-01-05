@@ -37,7 +37,7 @@ const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){
 }
 
 bool CastHelper<const IDPtr*>::can_cast(const AnyPtr& a){
-	if(String* p = xtal::cast<String*>(a)){
+	if(xtal::can_cast<String*>(a)){
 		return true;
 	}
 	return false;

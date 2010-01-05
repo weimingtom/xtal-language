@@ -11,78 +11,6 @@ namespace xtal{
 	
 struct ParamInfo;
 
-struct BindBase{
-	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
-	virtual void XTAL_bind(const ClassPtr& it) = 0;
-};
-
-struct CppClassSymbolData{ 
-	CppClassSymbolData();
-
-	unsigned int value;
-	CppClassSymbolData* prev;
-
-	BindBase* prebind;
-
-	enum{
-		BIND = 3
-	};
-
-	BindBase* bind[BIND];
-	
-	StringLiteral name;
-};
-
-template<class T>
-struct CppClassSymbol{
-	static CppClassSymbolData* value;
-	static CppClassSymbolData* make();
-};
-
-template<class T>
-CppClassSymbolData* CppClassSymbol<T>::make(){
-	static CppClassSymbolData data;
-	return &data;
-}
-
-template<class T>
-CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
-
-template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
-
-template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
-template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
-
-#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
-	template<class T> struct XTAL_bind_template##N;\
-	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
-	XTAL_bind_template##N(){\
-			XTAL_set(\
-				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
-				::xtal::CppClassSymbol<ClassName>::make()->name,\
-				xtname);\
-		}\
-		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
-	};\
-	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable);\
-	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
-
-
-#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
-#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
-#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
-#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
-
-#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
-#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
-
-
-////////////////////
-
 typedef AnyPtr (*bind_var_fun_t)();
 
 struct CppVarSymbolData{ 
@@ -102,8 +30,6 @@ struct CppVarSymbol{
 template<class T>
 CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
 
-
-////////////////////////////////////////
 
 /**
 * \internal

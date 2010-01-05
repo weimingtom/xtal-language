@@ -351,6 +351,7 @@ MapPtr make_debug_object(const AnyPtr& v, int_t depth){
 	if(const ClassPtr& a = ptr_cast<Class>(v)){
 		MapPtr children = xnew<Map>();
 		Xfor3(key, skey, val, a->members()){
+			XTAL_UNUSED_VAR(skey);
 			children->set_at(key->to_s(), make_debug_object(val, depth-1));
 		}
 		ret->set_at(Xid(children), children);
@@ -361,6 +362,7 @@ MapPtr make_debug_object(const AnyPtr& v, int_t depth){
 	if(const MapPtr& a = ptr_cast<Map>(data)){
 		MapPtr children = xnew<Map>();
 		Xfor2(key, val, a){
+			XTAL_UNUSED_VAR(key);
 			Xfor2(key2, val2, val){
 				children->set_at(key2->to_s(), make_debug_object(val2, depth-1));
 			}

@@ -218,37 +218,37 @@ void Stream::put_u64le(u64 v){
 }
 
 u16 Stream::get_u16be(){
-	struct{ u8 data[2]; } data = {0};
+	struct{ u8 data[2]; } data = {{0}};
 	read_strict(data.data, 2);
 	return (u16)((data.data[0]<<8) | data.data[1]);
 }
 
 u16 Stream::get_u16le(){
-	struct{ u8 data[2]; } data = {0};
+	struct{ u8 data[2]; } data = {{0}};
 	read_strict(data.data, 2);
 	return (u16)((data.data[1]<<8) | data.data[0]);
 }
 
 u32 Stream::get_u32be(){
-	struct{ u8 data[4]; } data = {0};
+	struct{ u8 data[4]; } data = {{0}};
 	read_strict(data.data, 4);
 	return (u32)((data.data[0]<<24) | (data.data[1]<<16) | (data.data[2]<<8) | data.data[3]);
 }
 
 u32 Stream::get_u32le(){
-	struct{ u8 data[4]; } data = {0};
+	struct{ u8 data[4]; } data = {{0}};
 	read_strict(data.data, 4);
 	return (u32)((data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 }
 
 u64 Stream::get_u64be(){
-	struct{ u8 data[8]; } data = {0};
+	struct{ u8 data[8]; } data = {{0}};
 	read_strict(data.data, 8);
 	return (u64)(((u64)data.data[0]<<56) | ((u64)data.data[1]<<48) | ((u64)data.data[2]<<40) | ((u64)data.data[3]<<32) | (data.data[4]<<24) | (data.data[5]<<16) | (data.data[6]<<8) | data.data[7]);
 }
 
 u64 Stream::get_u64le(){
-	struct{ u8 data[8]; } data = {0};
+	struct{ u8 data[8]; } data = {{0}};
 	read_strict(data.data, 8);
 	return (u64)(((u64)data.data[7]<<56) | ((u64)data.data[6]<<48) | ((u64)data.data[5]<<40) | ((u64)data.data[4]<<32) | (data.data[3]<<24) | (data.data[2]<<16) | (data.data[1]<<8) | data.data[0]);
 }

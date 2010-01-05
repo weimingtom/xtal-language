@@ -654,6 +654,8 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
+	String* p = cast<String*>(89);
+
 	if(CodePtr code = Xsrc((
 
 	))){

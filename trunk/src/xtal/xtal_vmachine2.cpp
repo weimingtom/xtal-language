@@ -686,8 +686,6 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 }
 
 debug::CallerInfoPtr VMachine::caller(uint_t n){
-	int m = call_stack_size();
-
 	if((int_t)n>call_stack_size()){
 		return null;
 	}
@@ -781,7 +779,6 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	AnyPtr e = catch_except();
 
 	ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
-	uint_t fs = fun_frames_.size();
 
 	// Xtal‚ÌŠÖ”‚ğ’Eo‚µ‚Ä‚¢‚­
 	while((size_t)ef.fun_frame_size<fun_frames_.size()){

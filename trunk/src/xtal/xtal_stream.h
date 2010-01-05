@@ -309,7 +309,7 @@ public:
 	* \brief 符号無整数8-bitをストリームから取り出す
 	*/
 	u8 get_u8(){
-		struct{ u8 data[1]; } data = {0};
+		struct{ u8 data[1]; } data = {{0}};
 		read_strict(data.data, 1);
 		return (u8)data.data[0];
 	}

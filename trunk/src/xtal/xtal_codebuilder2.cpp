@@ -301,7 +301,7 @@ int_t CodeBuilder::compile_expr_VALUES(const ExprPtr& e, int_t stack_top, int_t 
 			compile_expr(v, stack_top);	
 		}
 
-		if(e->multi_value_exprs()->size()!=result_count){
+		if(e->multi_value_exprs()->size()!=(uint_t)result_count){
 			put_inst(InstAdjustValues(stack_base, e->multi_value_exprs()->size(), 1));
 		}
 
@@ -1476,7 +1476,7 @@ int_t CodeBuilder::compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t
 		else if(term->itag()==EXPR_MEMBER){
 			int_t nterm = stack_top++; compile_expr(term->member_term(), stack_top, nterm);
 
-			if(const IDPtr& id = ptr_cast<ID>(term->member_name())){
+			if(ptr_cast<ID>(term->member_name())){
 			
 			}
 			else{

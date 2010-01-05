@@ -586,7 +586,7 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 
 		if(vf.kind==VarFrame::FRAME){
 			for(size_t k = 0, klast = vf.entries.size(); k<klast; ++k){
-				VarFrame::Entry& entry = vf.entries[k];
+				//VarFrame::Entry& entry = vf.entries[k];
 				ret.depth++;
 				break;
 			}

@@ -42,8 +42,6 @@ enum{
 #define XTAL_CAT(x, y) XTAL_CAT_(x, y)
 #define XTAL_UNIQUE(x) XTAL_CAT(x, __LINE__)
 
-#define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0}
-
 #if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96))
 #define XTAL_PREFETCH(x) __builtin_prefetch(x)
 #define XTAL_PREFETCHW(x) __builtin_prefetch(x, 2)
@@ -123,6 +121,8 @@ private:
 #define XTAL_UNUSED_VAR(x) ((void)x)
 
 #define XTAL_DISALLOW_COPY_AND_ASSIGN(ClassName) ClassName(const ClassName&); void operator=(const ClassName&)
+
+#define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0}; XTAL_UNUSED_VAR(XTAL_UNIQUE(static_assert_failure))
 
 #define XTAL_DEFAULT break; default:
 #define XTAL_CASE(key) break; case key:
@@ -527,13 +527,11 @@ struct IsFloat<float_t>{ enum{ value = 1 }; };
 //////////////////////////////////////////////////
 //
 
-enum{
-	hash_m = 0x5bd1e995,
-	hash_seed = 0xdeadbeef,
-	hash_r = 24
-};
+const uint_t hash_m = 0x5bd1e995;
+const uint_t hash_seed = 0xdeadbeef;
+const uint_t hash_r = 24;
 
-template <int N>
+template <uint_t N>
 inline uint_t hashv(const char_t (&data)[N], uint_t h){
 	uint_t k = data[0];
 	k |= data[1] << 8;
@@ -569,7 +567,7 @@ inline uint_t hashv<1>(const char_t (&data)[1], uint_t h){
 	return h;
 }
 
-template <int N>
+template <uint_t N>
 inline uint_t hash(const char_t (&data)[N]){
 	uint_t h = hashv(data, hash_seed ^ (N-1));
 	h ^= h >> 13;
@@ -976,6 +974,76 @@ extern NullPtr null;
 * \brief –¢’è‹`’l
 */
 extern UndefinedPtr undefined;
+
+
+struct BindBase{
+	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
+	virtual void XTAL_bind(const ClassPtr& it) = 0;
+};
+
+struct CppClassSymbolData{ 
+	CppClassSymbolData();
+
+	unsigned int value;
+	CppClassSymbolData* prev;
+
+	BindBase* prebind;
+
+	enum{
+		BIND = 3
+	};
+
+	BindBase* bind[BIND];
+	
+	StringLiteral name;
+};
+
+template<class T>
+struct CppClassSymbol{
+	static CppClassSymbolData* value;
+	static CppClassSymbolData* make();
+};
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::make(){
+	static CppClassSymbolData data;
+	return &data;
+}
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
+
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+
+template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
+
+#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
+	template<class T> struct XTAL_bind_template##N;\
+	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
+	XTAL_bind_template##N(){\
+			XTAL_set(\
+				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
+				::xtal::CppClassSymbol<ClassName>::make()->name,\
+				xtname);\
+		}\
+		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
+	};\
+	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
+	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
+
+
+#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
+#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
+#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
+#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
+
+#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
+#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
 
 }
 

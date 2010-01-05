@@ -55,6 +55,11 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 	*this = xnew<String>(str);
 }
 
+void SmartPtr<Any>::set_unknown_pointer(const Base* p, const Base*){
+	value_.init(p);
+	inc_ref_count_force(*this);
+}
+
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	dec_ref_count_force(*this);
 	copy_any(*this, p);

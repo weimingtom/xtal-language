@@ -352,6 +352,50 @@ public:
 	*
 	*/
 	ID(const StringPtr& name);		
+
+public:
+
+	class iterator{
+	public:
+		
+		iterator(const char_t* p)
+			:p_(p){}
+		
+		char_t operator *() const{
+			return *p_;
+		}
+
+		iterator& operator ++(){
+			++p_;
+			return *this;
+		}
+
+		iterator operator ++(int){
+			iterator temp(*this);
+			++p_;
+			return temp;
+		}
+
+		friend bool operator ==(iterator a, iterator b){
+			return a.p_ == b.p_;
+		}
+
+		friend bool operator !=(iterator a, iterator b){
+			return a.p_ != b.p_;
+		}
+
+	private:
+		const char_t* p_;
+	};
+
+	iterator begin(){
+		return iterator(data());
+	}
+
+	iterator end(){
+		return iterator(data() + data_size());
+	}
+
 };
 
 inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }

@@ -108,7 +108,7 @@
 * ));
 * \endcode
 */
-#define Xsrc(text) ::xtal::source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)
+#define Xsrc(text) ::xtal::source(XTAL_STRING(#text).str()+1, XTAL_STRING(#text).size()-3)
 
 #endif
 
@@ -118,7 +118,7 @@
 
 #else
 
-#define Xemb(text, compiled_text) ::xtal::exec_source(XTAL_STRING(#text)+1, XTAL_STRING(#text).size()-3)
+#define Xemb(text, compiled_text) ::xtal::exec_source(XTAL_STRING(#text).str()+1, XTAL_STRING(#text).size()-3)
 
 #endif
 
@@ -140,6 +140,8 @@
 
 #endif
 
+#define Xid2(x) XTAL_L(#x)
+
 /*
 * \hideinitializer
 * \brief •¶Žš—ñƒŠƒeƒ‰ƒ‹
@@ -149,5 +151,6 @@
 * \endcode
 */
 #define Xs(x) XTAL_STRING(x)
+
 
 #endif // XTAL_MACRO_H_INCLUDE_GUARD

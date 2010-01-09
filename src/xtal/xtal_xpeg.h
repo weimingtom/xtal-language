@@ -42,12 +42,7 @@ class TreeNode : public Array{
 public:
 	enum{ TYPE = TYPE_TREE_NODE };
 
-	TreeNode(const AnyPtr& tag=null, int_t lineno=0){
-		value_.init(TYPE_TREE_NODE, this);
-
-		tag_ = tag;
-		lineno_ = lineno;
-	}
+	TreeNode(const AnyPtr& tag=null, int_t lineno=0);
 
 	const AnyPtr& tag(){
 		return tag_;
@@ -68,6 +63,10 @@ public:
 	void set_lineno(int_t lineno){
 		lineno_ = lineno;
 	}
+
+	const AnyPtr& at(int_t i);
+
+	void set_at(int_t i, const AnyPtr& v);
 
 private:
 	AnyPtr tag_;

@@ -687,14 +687,14 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 debug::CallerInfoPtr VMachine::caller(uint_t n){
 	if((int_t)n>call_stack_size()){
-		return null;
+		return nul<debug::CallerInfo>();
 	}
 
 	if(n>=fun_frames_.size()-1){
 		if(parent_vm_){
 			return parent_vm_->caller(n-(fun_frames_.size()-1));
 		}
-		return null;
+		return nul<debug::CallerInfo>();
 	}
 
 	FunFrame& f = *fun_frames_[n];
@@ -705,7 +705,7 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 
 	if(!pf.fun()){
 		ret->set_line(0);
-		ret->set_fun(null);
+		ret->set_fun(nul<Fun>());
 		return ret;
 	}
 

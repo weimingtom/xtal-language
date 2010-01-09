@@ -512,14 +512,14 @@ MapPtr Any::to_m() const{
 
 const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
-		XTAL_DEFAULT{ return unchecked_ptr_cast<Class>(null); }
+		XTAL_DEFAULT{ return nul<Class>(); }
 		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
 		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->object_parent(); }
 		XTAL_CASE(TYPE_IVAR_SETTER){ return unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->object_parent(); }
 	}
-	//return unchecked_ptr_cast<Class>(null);	
+	return nul<Class>();	
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{
@@ -555,7 +555,7 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 		return Xf("%s(%d)")->call(code->source_file_name(), code->compliant_lineno(code->data()+pc))->to_s();
 	}
 	else{
-		return "?";
+		return XTAL_STRING("?");
 	}
 }
 

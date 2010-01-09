@@ -53,13 +53,6 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 
 		nocache = true;
 		return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
-
-		/* 指定した名前をフォルダーとみなす
-		ArrayPtr next = path_.clone();
-		next.push_back(name);
-		AnyPtr lib = xnew<Lib>(next);
-		return rawdef(name, lib, secondary_key);
-		*/
 	}
 }
 

@@ -140,7 +140,7 @@ struct AnyRawValue{
 
 	void init_string_literal(int_t t, const StringLiteral& v){ 
 		type = t | (v.size()<<STRING_LITERAL_SIZE_SHIFT); 
-		spvalue = v; 
+		spvalue = v.str(); 
 	}
 
 	void init_pointer(const void* v, uint_t i){ 
@@ -295,6 +295,8 @@ public:
 	* \brief klassクラスのインスタンスか調べる。
 	*/
 	bool is(const AnyPtr& klass) const;
+
+	bool is(CppClassSymbolData* key) const;
 		
 	/**
 	* \brief klassクラスを継承しているか調べる

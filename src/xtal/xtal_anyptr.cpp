@@ -55,6 +55,50 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 	*this = xnew<String>(str);
 }
 
+SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_BASE>& m)
+	:Any(noinit_t()){
+	init_smartptr(m.value, cpp_class(m.klass));
+}
+
+SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_RCBASE>& m)
+	:Any(noinit_t()){
+	init_smartptr(m.value, m.klass);
+}
+
+SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_ANY>& m)
+	:Any(noinit_t()){
+	init_smartptr((Any&)m.value);
+}
+
+SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_OTHER>& m)
+	:Any(noinit_t()){
+	init_smartptr(m.value, cpp_class(m.klass));
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_BASE>& m){
+	dec_ref_count_force(*this);
+	init_smartptr(m.value, cpp_class(m.klass));
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_RCBASE>& m){
+	dec_ref_count_force(*this);
+	init_smartptr(m.value, m.klass);
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_ANY>& m){
+	dec_ref_count_force(*this);
+	init_smartptr((Any&)m.value);
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_OTHER>& m){
+	dec_ref_count_force(*this);
+	init_smartptr(m.value, cpp_class(m.klass));
+	return *this;
+}
+
 void SmartPtr<Any>::set_unknown_pointer(const Base* p, const Base*){
 	value_.init(p);
 	inc_ref_count_force(*this);

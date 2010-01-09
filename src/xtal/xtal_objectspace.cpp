@@ -162,12 +162,12 @@ void ObjectSpace::initialize(){
 
 	for(uint_t i=0; i<nsize; ++i){
 		Base* p = class_table_[symbols[i]->value];
-		new(p) Base();
+		::new(p) Base();
 	}
 		
 	for(uint_t i=0; i<nsize; ++i){
 		Base* p = class_table_[symbols[i]->value];
-		new(p) Class(Class::cpp_class_t());
+		::new(p) Class(Class::cpp_class_t());
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
@@ -615,7 +615,7 @@ void ObjectSpace::def_all_cpp_classes(){
 	if(!def_all_cpp_classes_){
 		ClassPtr it = cpp();
 		for(uint_t i=0; i<class_table_.size(); ++i){
-			if(class_table_[i] && class_table_[i]->symbol_data() && class_table_[i]->symbol_data()->name){
+			if(class_table_[i] && class_table_[i]->symbol_data() && class_table_[i]->symbol_data()->name.str()){
 				IDPtr id = class_table_[i]->symbol_data()->name;
 				if(!it->member(id)){
 					it->def(id, to_smartptr(class_table_[i]));

@@ -11,6 +11,8 @@ namespace xtal{
 
 class NativeMethod;	
 
+///////////////////////////////////////////////////////
+
 struct ReturnResult{
 	static void return_result(const VMachinePtr& vm){
 		vm->return_result();
@@ -41,238 +43,40 @@ struct ReturnNone{
 	}
 };
 
-template<class T, int N>
-struct ArgGetter{
-	static typename CastResult<T>::type 
-	cast(const VMachinePtr& vm, UninitializedAny* args){
-		return unchecked_cast<T>((AnyPtr&)args[N+1]);
-	}
-};
-
-template<class T>
-struct ArgThisGetter{
-	static typename CastResult<T>::type 
-	cast(const VMachinePtr& vm, UninitializedAny* args){
-		return unchecked_cast<T>((AnyPtr&)args[0]);
-	}
-};
-
-struct ArgGetterVM{
-	static const VMachinePtr& 
-	cast(const VMachinePtr& vm, UninitializedAny* args){
-		return vm;
-	}
-};
-
 template<class Policy>
 struct ReturnPolicyTest{
-	const VMachinePtr& vm;
+	const VMachinePtr* vm;
 
 	ReturnPolicyTest(const VMachinePtr& vm)
-		:vm(vm){}
-
-private:
-	void operator =(const ReturnPolicyTest&);
+		:vm(&vm){}
 };
 
 struct ReturnPolicyVoidTest{};
 
 template<class T, class Policy>
 inline int operator ,(const T& val, ReturnPolicyTest<Policy> rp){
-	Policy::return_result(rp.vm, val);
+	Policy::return_result(*rp.vm, val);
 	return 0;
 }
 
 template<class Policy>
 inline int operator ,(ReturnPolicyTest<Policy> rp, ReturnPolicyVoidTest){
-	Policy::return_result(rp.vm);
+	Policy::return_result(*rp.vm);
 	return 0;
 }
 
-///////////////////////////////////////////////////////
-
-template<int N, class Fun>
-struct cfun{};
-
-//{REPEAT{{
-/*
-template<class Fun>
-struct cfun<`n`, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		#REPEAT#typedef typename Fun::ARG`i` A`i`;#
-		Fun::call(data
-			#COMMA_REPEAT#A`i`::cast(vm, args)#
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-*/
 
 template<class Fun>
-struct cfun<0, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		
-		Fun::call(data
-			
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
+struct cfun_holder{};
 
 template<class Fun>
-struct cfun<1, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;
-		Fun::call(data
-			, A0::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<2, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<3, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<4, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<5, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<6, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<7, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<8, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<9, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<10, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<11, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<12, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;typedef typename Fun::ARG11 A11;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args), A11::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class Fun>
-struct cfun<13, Fun>{
-	static void f(const VMachinePtr& vm, const void* data, UninitializedAny* args){
-		typedef typename Fun::ARG0 A0;typedef typename Fun::ARG1 A1;typedef typename Fun::ARG2 A2;typedef typename Fun::ARG3 A3;typedef typename Fun::ARG4 A4;typedef typename Fun::ARG5 A5;typedef typename Fun::ARG6 A6;typedef typename Fun::ARG7 A7;typedef typename Fun::ARG8 A8;typedef typename Fun::ARG9 A9;typedef typename Fun::ARG10 A10;typedef typename Fun::ARG11 A11;typedef typename Fun::ARG12 A12;
-		Fun::call(data
-			, A0::cast(vm, args), A1::cast(vm, args), A2::cast(vm, args), A3::cast(vm, args), A4::cast(vm, args), A5::cast(vm, args), A6::cast(vm, args), A7::cast(vm, args), A8::cast(vm, args), A9::cast(vm, args), A10::cast(vm, args), A11::cast(vm, args), A12::cast(vm, args)
-		), ReturnPolicyTest<typename Fun::Result>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-//}}REPEAT}
-
-///////////////////////////////////////////////////////
-
-template<class Fun>
-struct cfun_holder{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
-};
-
-template<class Fun>
-struct cmemfun_holder{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
-};
-
-template<class Fun, Fun fun>
-struct cmemfun_holder_static : cmemfun_holder<Fun>{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
-};
+struct cmemfun_holder{};
 
 template<class T, 
 class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, 
 class A5=void, class A6=void, class A7=void, class A8=void, class A9=void,
 class A10=void, class A11=void, class A12=void, class A13=void, class A14=void>
-struct ctor_fun{
-	enum{ PARAMS = 0, PARAMS2 = 0 };
-};
+struct ctor_fun{};
 
 struct param_types_holder_n{
 	void (*fun)(const VMachinePtr& vm, const void* data, UninitializedAny* args); // ä÷êî
@@ -285,21 +89,20 @@ struct param_types_holder_n{
 template<class Func>
 struct fun_param_holder{
 	enum{
-		PARAMS = Func::PARAMS,
 		PARAM_N = Func::PARAM_N,
-		EXTENDABLE = Func::EXTENDABLE,
+		EXTENDABLE = Func::EXTENDABLE
 	};
 
 	typedef typename Func::fun_param_holder fph;
 	typedef typename Func::fun_t fun_t;
-	typedef cfun<PARAMS, Func> cfun_t;
+	typedef Func cfun_t;
 
 	static param_types_holder_n value;
 };
 
 template<class Fun>
 param_types_holder_n fun_param_holder<Fun>::value = {
-	&cfun_t::f,
+	&cfun_t::call,
 	fph::values,
 	sizeof(fun_t),
 	PARAM_N,
@@ -496,24 +299,24 @@ CppClassSymbolData** param_types_holder13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8
 template<class C, class T>
 struct getter_holder{
 	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
-	typedef ReturnResult Result;
-	typedef ArgThisGetter<C*> ARG0;
 	typedef param_types_holder0<C> fun_param_holder;
 	typedef T C::* fun_t;
-	//static const T* call(const void* fun, C* self){ return &(self->**(fun_t*)fun); }
-	static const T& call(const void* fun, C* self){ return (self->**(fun_t*)fun); }
+	static void call(const VMachinePtr& vm, const void* data, UninitializedAny* args){ 
+		(unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data)
+		), ReturnPolicyTest<ReturnResult>(vm), ReturnPolicyVoidTest();
+	}
 };
 
 template<class C, class T>
 struct setter_holder{
 	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
-	typedef ReturnResult Result;
-	typedef ArgThisGetter<C*> ARG0;
-	typedef ArgGetter<typename CastResult<T>::type, 0> ARG1;
 	typedef param_types_holder1<C, T> fun_param_holder;
 	typedef T C::* fun_t;
-	//static const T* call(const void* fun, C* self, const T& v){ self->**(fun_t*)fun = v; return &(self->**(fun_t*)fun); }
-	static const T& call(const void* fun, C* self, const T& v){ self->**(fun_t*)fun = v; return (self->**(fun_t*)fun); }
+	static void call(const VMachinePtr& vm, const void* data, UninitializedAny* args){ 
+		unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data) = unchecked_cast<T>((AnyPtr&)args[1]);
+		(unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data)
+		), ReturnPolicyTest<ReturnResult>(vm), ReturnPolicyVoidTest();
+	}
 };
 
 //////////////////////////////////////////////////////////////

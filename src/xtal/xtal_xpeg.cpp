@@ -88,7 +88,7 @@ StringPtr Executor::at(const StringPtr& key){
 				return empty_string;
 			}
 			else{
-				return null;
+				return nul<String>();
 			}
 		}
 	}
@@ -783,19 +783,6 @@ void NFA::add_transition(int from, const AnyPtr& ch, int to){
 	x->to = to;
 	x->ch = ptr_cast<Element>(ch);
 
-	/*
-	if(states_[from].trans){
-		TransPtr cur = states_[from].trans;
-		while(cur->next){
-			cur = cur->next;
-		}
-		cur->next = x;
-	}
-	else{
-		states_[from].trans = x;
-	}
-	*/
-
 	x->next = states_[from].trans;
 	states_[from].trans = x;
 }
@@ -923,6 +910,35 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////////////
 
+TreeNode::TreeNode(const AnyPtr& tag, int_t lineno){
+	value_.init(TYPE_TREE_NODE, this);
+
+	tag_ = tag;
+	lineno_ = lineno;
+}
+
+const AnyPtr& TreeNode::at(int_t i){
+	if(i>=0){
+		if(size()<=(uint_t)i){
+			resize(i+1);
+		}
+		return Array::at(i);
+	}
+	return Array::op_at(i);
+}
+
+void TreeNode::set_at(int_t i, const AnyPtr& v){
+	if(i>=0){
+		if(size()<=(uint_t)i){
+			resize(i+1);
+		}
+		Array::set_at(i, v); 
+	}
+	Array::set_at(i, v);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 ElementPtr elem(const AnyPtr& a){
 	if(const ElementPtr& p = ptr_cast<Element>(a)){
 		return p;
@@ -967,7 +983,7 @@ ElementPtr elem(const AnyPtr& a){
 	}
 
 	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1026")));
-	return null;
+	return nul<Element>();
 }
 
 AnyPtr set(const StringPtr& str){
@@ -1118,141 +1134,5 @@ AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
 AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 	
 }
-
-class XpegOperator;
-
-XTAL_PREBIND(XpegOperator){
-	it->unset_native();
-}
-
-XTAL_BIND(XpegOperator){
-	using namespace xpeg;
-
-	it->def_method(Xid(op_div), &more_shortest_Int, cpp_class<Int>());
-	it->def_method(Xid(op_div), &more_shortest_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid(op_mod), &more_normal_Int, cpp_class<Int>());
-	it->def_method(Xid(op_mod), &more_normal_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid(op_mul), &more_greed_Int, cpp_class<Int>());
-	it->def_method(Xid(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid(op_com), &inv);
-	
-	it->def_method(Xid(op_or), &select, cpp_class<Element>());
-	it->def_method(Xid(op_or), &select, cpp_class<String>());
-	it->def_method(Xid(op_or), &select, cpp_class<ChRange>());
-	it->def_method(Xid(op_or), &select, cpp_class<Fun>());
-	it->def_method(Xid(op_shr), &concat, cpp_class<Element>());
-	it->def_method(Xid(op_shr), &concat, cpp_class<String>());
-	it->def_method(Xid(op_shr), &concat, cpp_class<ChRange>());
-	it->def_method(Xid(op_shr), &concat, cpp_class<Fun>());
-}
-
-XTAL_BIND(xpeg::Element){
-	using namespace xpeg;
-	it->def_method(Xid(set_body), &set_body);
-}
-
-XTAL_PREBIND(xpeg::TreeNode){
-	using namespace xpeg;
-	it->set_final();
-	it->inherit(cpp_class<Array>());
-}
-
-XTAL_BIND(xpeg::TreeNode){
-	using namespace xpeg;
-	it->def_method(Xid(tag), &TreeNode::tag);
-	it->def_method(Xid(lineno), &TreeNode::lineno);
-	it->def_method(Xid(set_tag), &TreeNode::set_tag);
-	it->def_method(Xid(set_lineno), &TreeNode::set_lineno);
-}
-
-XTAL_PREBIND(xpeg::Executor){
-	using namespace xpeg;
-	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid(stream_or_iterator), empty_string));
-}
-
-XTAL_BIND(xpeg::Executor){
-	using namespace xpeg;
-	it->def_method(Xid(reset), &Executor::reset);
-	it->def_method(Xid(parse), &Executor::parse);
-	it->def_method(Xid(match), &Executor::match);
-
-	it->def_method(Xid(captures), &Executor::captures);
-	it->def_method(Xid(captures_values), &Executor::captures_values);		
-	it->def_method(Xid(op_at), &Executor::at, cpp_class<String>());
-	it->def_method(Xid(op_call), &Executor::call, cpp_class<String>());
-	it->def_method(Xid(prefix), &Executor::prefix);
-	it->def_method(Xid(suffix), &Executor::suffix);
-	it->def_method(Xid(prefix_values), &Executor::prefix_values);
-	it->def_method(Xid(suffix_values), &Executor::suffix_values);
-	it->def_method(Xid(errors), &Executor::errors);
-	it->def_method(Xid(read), &Executor::read);
-	it->def_method(Xid(peek), &Executor::peek)->param(1, Xid(n), 0);
-	it->def_method(Xid(tree), &Executor::tree);
-	it->def_method(Xid(bos), &Executor::bos);
-	it->def_method(Xid(eos), &Executor::eos);
-}
-
-class Xpeg;
-
-XTAL_BIND(Xpeg){
-	using namespace xpeg;
-	it->unset_native();
-
-	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
-	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
-	AnyPtr eos = xnew<Element>(Element::TYPE_EOS);
-	AnyPtr bol = xnew<Element>(Element::TYPE_BOL);
-	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
-	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
-	
-	AnyPtr degit = elem(xnew<ChRange>(Xs("0"), Xs("9")));
-	AnyPtr lalpha = elem(xnew<ChRange>(Xs("a"), Xs("z")));
-	AnyPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
-	AnyPtr alpha = select(lalpha, ualpha);
-	AnyPtr word = select(select(alpha, degit), Xs("_"));
-	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>((char_t)1), xnew<ID>((char_t)127)));
-
-	it->def(Xid(any), any);
-	it->def(Xid(bos), bos);
-	it->def(Xid(eos), eos);
-	it->def(Xid(bol), bol);
-	it->def(Xid(eol), eol);
-	it->def(Xid(empty), empty);
-	it->def(Xid(degit), degit);
-	it->def(Xid(lalpha), lalpha);
-	it->def(Xid(ualpha), ualpha);
-	it->def(Xid(alpha), alpha);
-	it->def(Xid(word), word);
-	it->def(Xid(ascii), ascii);
-	
-	it->def_fun(Xid(set), &set);
-	it->def_fun(Xid(back_ref), &back_ref);
-	it->def_fun(Xid(lookahead), &lookahead);
-	it->def_fun(Xid(lookbehind), &lookbehind);
-	it->def_fun(Xid(leaf), &leaf);
-	it->def_fun(Xid(leafs), &leafs);
-	it->def_fun(Xid(node), &node_vm);
-	it->def_fun(Xid(splice_node), &splice_node_vm);
-	it->def_fun(Xid(cap), &cap_vm);
-	it->def_fun(Xid(bound), &bound);
-	it->def_fun(Xid(pred), &pred);
-	it->def_fun(Xid(error), &error);
-
-	it->def_fun(Xid(decl), &decl);
-
-	it->def(Xid(Executor), cpp_class<Executor>());
-}
-
-void initialize_xpeg(){
-	using namespace xpeg;
-
-	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
-	for(int i=0; i<4; ++i){
-		classes[i]->inherit(cpp_class<XpegOperator>());
-	}
-
-	builtin()->def(Xid(xpeg), cpp_class<Xpeg>());
-}
-
 
 }

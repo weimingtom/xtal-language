@@ -99,11 +99,11 @@ void Arguments::visit_members(Visitor& m){
 }
 
 ArgumentsIter::ArgumentsIter(const ArgumentsPtr& a){
-	ait_ = ptr_cast<ArrayIter>(a->ordered_arguments());
-	mit_ = ptr_cast<MapIter>(a->named_arguments());
+	ait_ = unchecked_ptr_cast<ArrayIter>(a->ordered_arguments());
+	mit_ = unchecked_ptr_cast<MapIter>(a->named_arguments());
 	index_ = 0;
 }
-		
+
 void ArgumentsIter::block_next(const VMachinePtr& vm){
 	if(ait_){
 		AnyPtr ret;
@@ -249,7 +249,7 @@ void Lambda::rawcall(const VMachinePtr& vm){
 }
 
 Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
-	:Fun(outer, th, code, info), vm_(null), resume_pc_(0), alive_(true){
+	:Fun(outer, th, code, info), resume_pc_(0), alive_(true){
 }
 
 void Fiber::finalize(){

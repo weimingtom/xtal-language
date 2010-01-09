@@ -13,10 +13,12 @@ ZipIter::ZipIter(const VMachinePtr& vm){
 void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 	bool all = true;
 	ValuesPtr value;
+	
 	for(int_t i = next_->size()-1; i>=0; --i){
 		vm->setup_call(2);
 		next_->at(i)->rawsend(vm, id);
 		next_->set_at(i, vm->result(0));
+		
 		if(type(value)==TYPE_VALUES){
 			value = xnew<Values>(vm->result(1), value);
 		}
@@ -33,6 +35,7 @@ void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 		if(!next_->at(i))
 			all = false;
 	}
+	
 	if(all){
 		vm->return_result(to_smartptr(this), value);
 	}

@@ -11,20 +11,6 @@ const ExprPtr& ep(const AnyPtr& a){
 	return unchecked_ptr_cast<Expr>(null);
 }
 
-const AnyPtr& Expr::at(uint_t i){
-	if(size()<=i){
-		resize(i+1);
-	}
-	return Array::at(i);
-}
-
-void Expr::set_at(uint_t i, const AnyPtr& v){
-	if(size()<=i){
-		resize(i+1);
-	}
-	Array::set_at(i, v); 
-}
-
 void ExprBuilder::splice(int_t tag, int_t num){
 	int_t nn = root_->size()-num;
 	if(nn<0 || nn>=(int_t)linenos_.size()){

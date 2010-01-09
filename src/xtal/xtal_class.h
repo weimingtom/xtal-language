@@ -494,7 +494,7 @@ private:
 
 	const NativeFunPtr& def_ctor(int_t type, const NativeFunPtr& ctor_func);
 
-protected:
+public:
 
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
 	const NativeFunPtr& def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
@@ -503,6 +503,8 @@ protected:
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const param_types_holder_n& pth, const void* val);
 	const NativeFunPtr& def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val);
 	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
+
+protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 

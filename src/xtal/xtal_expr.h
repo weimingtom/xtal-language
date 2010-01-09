@@ -33,6 +33,9 @@ enum ExprType{
 	EXPR_MUL,
 	EXPR_DIV,
 	EXPR_MOD,
+
+	//EXPR_ARITH,
+
 	EXPR_AND,
 	EXPR_OR,
 	EXPR_XOR,
@@ -131,21 +134,15 @@ const ExprPtr& ep(const AnyPtr& a);
 
 template<> struct CppClassSymbol<Expr> : public CppClassSymbol<xpeg::TreeNode>{};
 
+
+
+
 class Expr : public xpeg::TreeNode{
 public:
 
-	Expr(const AnyPtr& tag=0, int_t lineno=0){
+	Expr(const AnyPtr& tag = null, int_t lineno = 0){
 		set_tag(tag);
 		set_lineno(lineno);
-	}
-
-	const AnyPtr& at(uint_t i);
-
-	void set_at(uint_t i, const AnyPtr& v);
-
-	const ExprPtr& push(const AnyPtr& v){
-		push_back(v);
-		return to_smartptr(this);
 	}
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, una_term);
@@ -257,8 +254,6 @@ public:
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);
 };
-
-ExprPtr setup_expr(const ExprPtr& e);
 
 class ExprBuilder{
 public:

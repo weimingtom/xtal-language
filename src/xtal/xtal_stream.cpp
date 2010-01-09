@@ -107,8 +107,8 @@ uint_t Stream::print(const AnyPtr& value){
 
 void Stream::println(const AnyPtr& value){
 	StringPtr str = value->to_s(); 
-	write(str->data(), str->data_size()*sizeof(char_t));
-	write(XTAL_STRING("\n"), sizeof(char_t)*1);
+	put_s(str);
+	put_s(XTAL_STRING("\n"));
 }
 
 uint_t Stream::pour(const StreamPtr& in_stream, uint_t size){

@@ -151,14 +151,10 @@ private:
 
 #ifdef XTAL_USE_WCHAR
 #	define XTAL_L(x) L##x
-#else 
-#	define XTAL_L(x) x
-#endif
-
-#ifdef XTAL_USE_WCHAR
 #	define XTAL_STRING(x) ::xtal::StringLiteral(L##x)
 #	define XTAL_STRING2(x) ::xtal::StringLiteral2(L##x)
 #else 
+#	define XTAL_L(x) x
 #	define XTAL_STRING(x) ::xtal::StringLiteral(x)
 #	define XTAL_STRING2(x) ::xtal::StringLiteral2(x)
 #endif
@@ -527,6 +523,105 @@ struct IsFloat<float_t>{ enum{ value = 1 }; };
 //////////////////////////////////////////////////
 //
 
+
+class Any;
+
+template<class T>
+class SmartPtr;
+
+template<> class SmartPtr<Any>;
+typedef SmartPtr<Any> AnyPtr;
+
+class Environment;
+struct Param;
+
+class Null;
+class Undefined;
+class Array;
+class Map;
+class Set;
+class Stream;
+class MemoryStream;
+class PointerStream;
+class StringStream;
+class InteractiveStream;
+class Fun;
+class Method;
+class Fiber;
+class InstanceVariableGetter;
+class InstanceVariableSetter;
+class Lambda;
+class String;
+class ID;
+class Code;
+class Arguments;
+class VMachine;
+class NativeMethod;
+class Frame;
+class Class;
+class Lib;
+class Thread;
+class Mutex;
+class IntRange;
+class FloatRange;
+class ChRange;
+class DoubleDispatchMethod;
+class DoubleDispatchFun;
+class Values;
+class Exception;
+class Format;
+class Text;
+
+typedef SmartPtr<Null> NullPtr;
+typedef SmartPtr<Undefined> UndefinedPtr;
+typedef SmartPtr<Array> ArrayPtr;
+typedef SmartPtr<Map> MapPtr;
+typedef SmartPtr<Set> SetPtr;
+typedef SmartPtr<Stream> StreamPtr;
+typedef SmartPtr<MemoryStream> MemoryStreamPtr;
+typedef SmartPtr<PointerStream> PointerStreamPtr;
+typedef SmartPtr<StringStream> StringStreamPtr;
+typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
+typedef SmartPtr<Fun> FunPtr;
+typedef SmartPtr<Method> MethodPtr;
+typedef SmartPtr<Fiber> FiberPtr;
+typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
+typedef SmartPtr<InstanceVariableSetter> InstanceVariableSetterPtr;
+typedef SmartPtr<String> StringPtr;
+typedef SmartPtr<ID> IDPtr;
+typedef SmartPtr<Code> CodePtr;
+typedef SmartPtr<Arguments> ArgumentsPtr;
+typedef SmartPtr<VMachine> VMachinePtr;
+typedef SmartPtr<NativeMethod> NativeFunPtr;
+typedef SmartPtr<Frame> FramePtr;
+typedef SmartPtr<Class> ClassPtr;
+typedef SmartPtr<Lib> LibPtr;
+typedef SmartPtr<Thread> ThreadPtr;
+typedef SmartPtr<Mutex> MutexPtr;
+typedef SmartPtr<IntRange> IntRangePtr;
+typedef SmartPtr<FloatRange> FloatRangePtr;
+typedef SmartPtr<ChRange> ChRangePtr;
+typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
+typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
+typedef SmartPtr<Values> ValuesPtr;
+typedef SmartPtr<Exception> ExceptionPtr;
+typedef SmartPtr<Text> TextPtr;
+typedef SmartPtr<Format> FormatPtr;
+
+class Base;
+class RefCountingBase;
+class GCObserver;
+
+class Int;
+class Float;
+class Undefined;
+class Bool;
+
+class Visitor;
+class InstanceVariables;
+
+////////////////////////////////////////////////
+
 const uint_t hash_m = 0x5bd1e995;
 const uint_t hash_seed = 0xdeadbeef;
 const uint_t hash_r = 24;
@@ -579,22 +674,18 @@ inline uint_t hash(const char_t (&data)[N]){
 class StringLiteral{
 public:
 
-	StringLiteral(){
-		str_ = 0;
-		size_ = 0;
-	}
+	StringLiteral()		
+		:str_(0), size_(0){}
 
-	StringLiteral(const char_t* str, uint_t size){
-		str_ = str;
-		size_ = size;
-	}
+	StringLiteral(const char_t* str, uint_t size)
+		:str_(str), size_(size){}
 
 	template<int N>
 	explicit StringLiteral(const char_t (&str)[N])
 		:str_(str), size_(N-1){
 	}
 
-	operator const char_t*() const{
+	const char_t* str() const{
 		return str_;
 	}
 
@@ -785,103 +876,6 @@ enum RangeKind{
 	RANGE_OPEN = (1<<1) | (1<<0)
 };
 
-
-
-template<class T>
-class SmartPtr;
-
-class Any;
-template<> class SmartPtr<Any>;
-typedef SmartPtr<Any> AnyPtr;
-
-class Environment;
-struct Param;
-
-class Null;
-class Undefined;
-class Array;
-class Map;
-class Set;
-class Stream;
-class MemoryStream;
-class PointerStream;
-class StringStream;
-class InteractiveStream;
-class Fun;
-class Method;
-class Fiber;
-class InstanceVariableGetter;
-class InstanceVariableSetter;
-class Lambda;
-class String;
-class ID;
-class Code;
-class Arguments;
-class VMachine;
-class NativeMethod;
-class Frame;
-class Class;
-class Lib;
-class Thread;
-class Mutex;
-class IntRange;
-class FloatRange;
-class ChRange;
-class DoubleDispatchMethod;
-class DoubleDispatchFun;
-class Values;
-class Exception;
-class Format;
-class Text;
-
-typedef SmartPtr<Null> NullPtr;
-typedef SmartPtr<Undefined> UndefinedPtr;
-typedef SmartPtr<Array> ArrayPtr;
-typedef SmartPtr<Map> MapPtr;
-typedef SmartPtr<Set> SetPtr;
-typedef SmartPtr<Stream> StreamPtr;
-typedef SmartPtr<MemoryStream> MemoryStreamPtr;
-typedef SmartPtr<PointerStream> PointerStreamPtr;
-typedef SmartPtr<StringStream> StringStreamPtr;
-typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
-typedef SmartPtr<Fun> FunPtr;
-typedef SmartPtr<Method> MethodPtr;
-typedef SmartPtr<Fiber> FiberPtr;
-typedef SmartPtr<InstanceVariableGetter> InstanceVariableGetterPtr;
-typedef SmartPtr<InstanceVariableSetter> InstanceVariableSetterPtr;
-typedef SmartPtr<String> StringPtr;
-typedef SmartPtr<ID> IDPtr;
-typedef SmartPtr<Code> CodePtr;
-typedef SmartPtr<Arguments> ArgumentsPtr;
-typedef SmartPtr<VMachine> VMachinePtr;
-typedef SmartPtr<NativeMethod> NativeFunPtr;
-typedef SmartPtr<Frame> FramePtr;
-typedef SmartPtr<Class> ClassPtr;
-typedef SmartPtr<Lib> LibPtr;
-typedef SmartPtr<Thread> ThreadPtr;
-typedef SmartPtr<Mutex> MutexPtr;
-typedef SmartPtr<IntRange> IntRangePtr;
-typedef SmartPtr<FloatRange> FloatRangePtr;
-typedef SmartPtr<ChRange> ChRangePtr;
-typedef SmartPtr<DoubleDispatchMethod> DoubleDispatchMethodPtr;
-typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
-typedef SmartPtr<Values> ValuesPtr;
-typedef SmartPtr<Exception> ExceptionPtr;
-typedef SmartPtr<Text> TextPtr;
-typedef SmartPtr<Format> FormatPtr;
-
-class Base;
-class RefCountingBase;
-class GCObserver;
-
-class Int;
-class Float;
-class Undefined;
-class Bool;
-
-class Visitor;
-class InstanceVariables;
-
 /**
 * \brief スコープ情報
 */
@@ -966,7 +960,7 @@ extern IDPtr empty_id;
 extern StringPtr empty_string;
 
 /**
-* \brief nullオブジェクトのインスタンス
+* \brief null
 */
 extern NullPtr null;
 
@@ -1013,6 +1007,7 @@ CppClassSymbolData* CppClassSymbol<T>::make(){
 template<class T>
 CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
 
+// CppClassSymbolの修飾子をはずすための定義
 template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
@@ -1025,7 +1020,8 @@ template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 #define XTAL_BIND_(ClassName, xtbind, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\
 	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
-	XTAL_bind_template##N(){\
+		typedef ClassName Self;\
+		XTAL_bind_template##N(){\
 			XTAL_set(\
 				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
 				::xtal::CppClassSymbol<ClassName>::make()->name,\

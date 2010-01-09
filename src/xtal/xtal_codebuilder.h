@@ -204,7 +204,7 @@ public:
 	void var_begin(int_t kind);
 	void var_define_stmts(const ExprPtr& stmts);
 	void var_define_stmt(const AnyPtr& stmt);
-	void var_define(const IDPtr& name, const ExprPtr& expr = null, int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
+	void var_define(const IDPtr& name, const ExprPtr& expr = nul<Expr>(), int_t accessibility = 0, bool define = false, bool constant = false, bool assign = false, int_t number = -1);
 	void var_end();
 
 	void check_lvar_assign(const ExprPtr& e);

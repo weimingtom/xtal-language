@@ -80,7 +80,7 @@ void FormatSpecifier::make_format_specifier(char_t* dest, char_t type, bool int_
 	}
 
 	if(int_type){ // int_t ‚ª64-bit‚Ì‚É“Á•Ê‚È‘®w’èq‚ğ–„‚ß‚Ş
-		const char_t* src = XTAL_INT_FMT;
+		const char_t* src = XTAL_INT_FMT.str();
 		while((*dest++ = *src++)!=0){}
 		--dest;
 	}

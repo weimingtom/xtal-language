@@ -305,14 +305,6 @@
 				RelativePath="..\test.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\test1.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\test2.cpp"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

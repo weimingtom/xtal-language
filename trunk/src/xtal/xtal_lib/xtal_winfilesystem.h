@@ -17,7 +17,7 @@ public:
 
 	WinFindNextFile(const char_t* path){
 		char_t path2[MAX_PATH];
-		XTAL_SPRINTF(path2, MAX_PATH, XTAL_STRING("%s/*"), path);
+		XTAL_SPRINTF(path2, MAX_PATH, XTAL_STRING("%s/*").str(), path);
 		h_ = FindFirstFile(path2, &fd_);
 		first_ = true;
 	}

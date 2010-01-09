@@ -264,10 +264,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\xtal\xtal_math.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\xtal\xtal_objectspace.cpp"
 				>
 			</File>

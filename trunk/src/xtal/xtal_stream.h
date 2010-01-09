@@ -43,7 +43,7 @@ public:
 	* \brief •¶š—ñstr‚ğƒXƒgƒŠ[ƒ€‚É—¬‚·
 	*/
 	void put_s(const StringLiteral& str){
-		write(str, str.size()*sizeof(char_t));
+		write(str.str(), str.size()*sizeof(char_t));
 	}
 
 	/**

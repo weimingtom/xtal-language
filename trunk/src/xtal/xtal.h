@@ -12,6 +12,7 @@
 #include <cmath>
 #include <algorithm>
 #include <setjmp.h>
+#include <new>
 
 #include "xtal_utility.h"
 #include "xtal_allocator.h"

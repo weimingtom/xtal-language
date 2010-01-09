@@ -27,12 +27,12 @@ struct Named{
 	* \brief ãÛÇ»èÛë‘Ç≈ê∂ê¨Ç∑ÇÈ
 	*/
 	Named()
-		:name((const IDPtr&)null), value(undefined){}
+		:name(nul<ID>()), value(undefined){}
 };
 
 struct NamedParam{
 	NamedParam()
-		:name(null), value(undefined){}
+		:value(undefined){}
 	IDPtr name;
 	AnyPtr value;
 };
@@ -64,7 +64,7 @@ struct Param{
 
 	Param(const StringLiteral& s){
 		type = LITERAL;
-		literal.str = s;
+		literal.str = s.str();
 		literal.size = s.size();
 	}
 
@@ -91,7 +91,7 @@ struct Param{
 
 	Param(bool v){ type = ANY; value.init(v); }
 
-	u8 type;
+	int_t type;
 
 	struct NamedPair{
 		const IDPtr* name;
@@ -707,67 +707,67 @@ private:
 public:
 
 //{DECLS{{
-	const inst_t* FunLine(const inst_t* pc);
-	const inst_t* FunLoadValue(const inst_t* pc);
-	const inst_t* FunLoadConstant(const inst_t* pc);
-	const inst_t* FunLoadInt1Byte(const inst_t* pc);
-	const inst_t* FunLoadFloat1Byte(const inst_t* pc);
-	const inst_t* FunLoadCallee(const inst_t* pc);
-	const inst_t* FunLoadThis(const inst_t* pc);
-	const inst_t* FunCopy(const inst_t* pc);
-	const inst_t* FunMember(const inst_t* pc);
-	const inst_t* FunUna(const inst_t* pc);
-	const inst_t* FunArith(const inst_t* pc);
-	const inst_t* FunBitwise(const inst_t* pc);
-	const inst_t* FunAt(const inst_t* pc);
-	const inst_t* FunSetAt(const inst_t* pc);
-	const inst_t* FunGoto(const inst_t* pc);
-	const inst_t* FunNot(const inst_t* pc);
-	const inst_t* FunIf(const inst_t* pc);
-	const inst_t* FunIfComp(const inst_t* pc);
-	const inst_t* FunIfRawEq(const inst_t* pc);
-	const inst_t* FunIfIs(const inst_t* pc);
-	const inst_t* FunIfUndefined(const inst_t* pc);
-	const inst_t* FunIfDebug(const inst_t* pc);
-	const inst_t* FunPush(const inst_t* pc);
-	const inst_t* FunPop(const inst_t* pc);
-	const inst_t* FunAdjustValues(const inst_t* pc);
-	const inst_t* FunLocalVariable(const inst_t* pc);
-	const inst_t* FunSetLocalVariable(const inst_t* pc);
-	const inst_t* FunInstanceVariable(const inst_t* pc);
-	const inst_t* FunSetInstanceVariable(const inst_t* pc);
-	const inst_t* FunFilelocalVariable(const inst_t* pc);
-	const inst_t* FunCall(const inst_t* pc);
-	const inst_t* FunSend(const inst_t* pc);
-	const inst_t* FunProperty(const inst_t* pc);
-	const inst_t* FunSetProperty(const inst_t* pc);
-	const inst_t* FunScopeBegin(const inst_t* pc);
-	const inst_t* FunScopeEnd(const inst_t* pc);
-	const inst_t* FunReturn(const inst_t* pc);
-	const inst_t* FunYield(const inst_t* pc);
-	const inst_t* FunExit(const inst_t* pc);
-	const inst_t* FunRange(const inst_t* pc);
-	const inst_t* FunOnce(const inst_t* pc);
-	const inst_t* FunSetOnce(const inst_t* pc);
-	const inst_t* FunMakeArray(const inst_t* pc);
-	const inst_t* FunArrayAppend(const inst_t* pc);
-	const inst_t* FunMakeMap(const inst_t* pc);
-	const inst_t* FunMapInsert(const inst_t* pc);
-	const inst_t* FunMapSetDefault(const inst_t* pc);
-	const inst_t* FunClassBegin(const inst_t* pc);
-	const inst_t* FunClassEnd(const inst_t* pc);
-	const inst_t* FunDefineClassMember(const inst_t* pc);
-	const inst_t* FunDefineMember(const inst_t* pc);
-	const inst_t* FunMakeFun(const inst_t* pc);
-	const inst_t* FunMakeInstanceVariableAccessor(const inst_t* pc);
-	const inst_t* FunTryBegin(const inst_t* pc);
-	const inst_t* FunTryEnd(const inst_t* pc);
-	const inst_t* FunPushGoto(const inst_t* pc);
-	const inst_t* FunPopGoto(const inst_t* pc);
-	const inst_t* FunThrow(const inst_t* pc);
-	const inst_t* FunAssert(const inst_t* pc);
-	const inst_t* FunBreakPoint(const inst_t* pc);
-	const inst_t* FunMAX(const inst_t* pc);
+	const inst_t* FunInstLine(const inst_t* pc);
+	const inst_t* FunInstLoadValue(const inst_t* pc);
+	const inst_t* FunInstLoadConstant(const inst_t* pc);
+	const inst_t* FunInstLoadInt1Byte(const inst_t* pc);
+	const inst_t* FunInstLoadFloat1Byte(const inst_t* pc);
+	const inst_t* FunInstLoadCallee(const inst_t* pc);
+	const inst_t* FunInstLoadThis(const inst_t* pc);
+	const inst_t* FunInstCopy(const inst_t* pc);
+	const inst_t* FunInstMember(const inst_t* pc);
+	const inst_t* FunInstUna(const inst_t* pc);
+	const inst_t* FunInstArith(const inst_t* pc);
+	const inst_t* FunInstBitwise(const inst_t* pc);
+	const inst_t* FunInstAt(const inst_t* pc);
+	const inst_t* FunInstSetAt(const inst_t* pc);
+	const inst_t* FunInstGoto(const inst_t* pc);
+	const inst_t* FunInstNot(const inst_t* pc);
+	const inst_t* FunInstIf(const inst_t* pc);
+	const inst_t* FunInstIfComp(const inst_t* pc);
+	const inst_t* FunInstIfRawEq(const inst_t* pc);
+	const inst_t* FunInstIfIs(const inst_t* pc);
+	const inst_t* FunInstIfUndefined(const inst_t* pc);
+	const inst_t* FunInstIfDebug(const inst_t* pc);
+	const inst_t* FunInstPush(const inst_t* pc);
+	const inst_t* FunInstPop(const inst_t* pc);
+	const inst_t* FunInstAdjustValues(const inst_t* pc);
+	const inst_t* FunInstLocalVariable(const inst_t* pc);
+	const inst_t* FunInstSetLocalVariable(const inst_t* pc);
+	const inst_t* FunInstInstanceVariable(const inst_t* pc);
+	const inst_t* FunInstSetInstanceVariable(const inst_t* pc);
+	const inst_t* FunInstFilelocalVariable(const inst_t* pc);
+	const inst_t* FunInstCall(const inst_t* pc);
+	const inst_t* FunInstSend(const inst_t* pc);
+	const inst_t* FunInstProperty(const inst_t* pc);
+	const inst_t* FunInstSetProperty(const inst_t* pc);
+	const inst_t* FunInstScopeBegin(const inst_t* pc);
+	const inst_t* FunInstScopeEnd(const inst_t* pc);
+	const inst_t* FunInstReturn(const inst_t* pc);
+	const inst_t* FunInstYield(const inst_t* pc);
+	const inst_t* FunInstExit(const inst_t* pc);
+	const inst_t* FunInstRange(const inst_t* pc);
+	const inst_t* FunInstOnce(const inst_t* pc);
+	const inst_t* FunInstSetOnce(const inst_t* pc);
+	const inst_t* FunInstMakeArray(const inst_t* pc);
+	const inst_t* FunInstArrayAppend(const inst_t* pc);
+	const inst_t* FunInstMakeMap(const inst_t* pc);
+	const inst_t* FunInstMapInsert(const inst_t* pc);
+	const inst_t* FunInstMapSetDefault(const inst_t* pc);
+	const inst_t* FunInstClassBegin(const inst_t* pc);
+	const inst_t* FunInstClassEnd(const inst_t* pc);
+	const inst_t* FunInstDefineClassMember(const inst_t* pc);
+	const inst_t* FunInstDefineMember(const inst_t* pc);
+	const inst_t* FunInstMakeFun(const inst_t* pc);
+	const inst_t* FunInstMakeInstanceVariableAccessor(const inst_t* pc);
+	const inst_t* FunInstTryBegin(const inst_t* pc);
+	const inst_t* FunInstTryEnd(const inst_t* pc);
+	const inst_t* FunInstPushGoto(const inst_t* pc);
+	const inst_t* FunInstPopGoto(const inst_t* pc);
+	const inst_t* FunInstThrow(const inst_t* pc);
+	const inst_t* FunInstAssert(const inst_t* pc);
+	const inst_t* FunInstBreakPoint(const inst_t* pc);
+	const inst_t* FunInstMAX(const inst_t* pc);
 //}}DECLS}
 
 private:

@@ -107,6 +107,7 @@ void xarray::upsize(uint_t sz){
 			capa_ = newcapa;
 		}
 		else{
+			// 一番最初のリサイズは、きっかりに取る
 			uint_t newcapa = sz;
 			values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			fill_undefined(&values_[0], sz);
@@ -298,11 +299,11 @@ ArrayPtr Array::slice(int_t start, int_t n){
 	}
 
 	int_t pos = start;
-	XTAL_ARRAY_CALC_OFFSET(pos, size(), return null);
+	XTAL_ARRAY_CALC_OFFSET(pos, size(), return nul<Array>());
 
 	if(n<0 || (uint_t)(n + pos)>size()){
 		throw_index_error();
-		return null;
+		return nul<Array>();
 	}
 
 	return xnew<Array>(values_.data()+pos, values_.data()+pos+n);
@@ -330,7 +331,7 @@ ArrayPtr Array::op_cat_assign(const ArrayPtr& a){
 	}
 	return to_smartptr(this);
 }
-	
+
 StringPtr Array::join(const StringPtr& sep){
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	if(raweq(sep, empty_string)){
@@ -360,7 +361,7 @@ StringPtr Array::to_s(){
 bool Array::op_eq(const ArrayPtr& other){
 	if(size()!=other->size())
 		return false;
-
+	
 	const VMachinePtr& vm = vmachine();
 	for(uint_t i=0, size=other->size(); i<size; ++i){
 		if(rawne(at(i), other->at(i))){

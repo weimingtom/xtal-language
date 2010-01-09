@@ -22,18 +22,17 @@ struct UserTypeBuffer{
 	}
 };
 
-template<class T>
 struct UserTypeHolder : public Base{
 	UserTypeHolder(){}
-	UserTypeHolder(T* p):ptr(p){}
-	T* ptr;
+	UserTypeHolder(void* p):ptr(p){}
+	void* ptr;
 };
 
 template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
-struct UserTypeHolderSub : public UserTypeHolder<T>, public Deleter{
+struct UserTypeHolderSub : public UserTypeHolder, public Deleter{
 	UserTypeHolderSub(){}
-	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder<T>(p), Deleter(f){}
-	virtual ~UserTypeHolderSub(){ Deleter::destroy(this->ptr); }
+	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder(p), Deleter(f){}
+	virtual ~UserTypeHolderSub(){ Deleter::destroy((T*)this->ptr); }
 };
 
 struct undeleter_t{
@@ -80,6 +79,74 @@ struct InheritedN{
 	};
 };
 
+template<int N>
+struct XNewBase{};
+
+template<>
+struct XNewBase<INHERITED_BASE>{
+
+	template<class T>
+	void init(){
+		value = static_cast<Base*>(xmalloc(sizeof(T)));
+		klass = CppClassSymbol<T>::value;
+	}
+	
+	void* ptr(){ return value; }
+
+	Base* value;
+	CppClassSymbolData* klass;
+};
+
+template<>
+struct XNewBase<INHERITED_RCBASE>{
+
+	template<class T>
+	void init(){
+		value = static_cast<RefCountingBase*>(xmalloc(sizeof(T)));
+		klass = T::TYPE;
+	}
+
+	void* ptr(){ return value; }
+
+	RefCountingBase* value;
+	int_t klass;
+};
+
+template<>
+struct XNewBase<INHERITED_ANY>{
+
+	template<class T>
+	void init(){}
+
+	void* ptr(){ return &value; }
+
+	UninitializedAny value;
+};
+
+template<>
+struct XNewBase<INHERITED_OTHER>{
+
+	template<class T>
+	void init(){
+		UserTypeHolderSub<T>* p = new UserTypeHolderSub<T>();
+		p->ptr = static_cast<T*>(static_cast<void*>(p->buf));
+		value = p;
+		klass = CppClassSymbol<T>::value;
+	}
+
+	void* ptr(){ return value->ptr; }
+
+	UserTypeHolder* value;
+	CppClassSymbolData* klass;
+};
+
+template<class T>
+struct XNew : public XNewBase<InheritedN<T>::value>{
+	XNew(){
+		XNewBase<InheritedN<T>::value>::template init<T>();
+	}
+};
+
 template<class T>
 struct SmartPtrCtor1{
 	struct type{};
@@ -103,10 +170,6 @@ struct SmartPtrCtor4{
 	struct type{};
 	static int_t call(type){ return 0; };
 };
-
-
-template <int N>
-struct SmartPtrSelector{};
 
 template<class T>
 inline const ClassPtr& cpp_class();
@@ -161,8 +224,20 @@ public:
 	
 	~SmartPtr();
 
-protected:
+public:
+
+	SmartPtr(const XNewBase<INHERITED_BASE>& m);
+	SmartPtr(const XNewBase<INHERITED_RCBASE>& m);
+	SmartPtr(const XNewBase<INHERITED_ANY>& m);
+	SmartPtr(const XNewBase<INHERITED_OTHER>& m);
 	
+	SmartPtr<Any>& operator =(const XNewBase<INHERITED_BASE>& m);
+	SmartPtr<Any>& operator =(const XNewBase<INHERITED_RCBASE>& m);
+	SmartPtr<Any>& operator =(const XNewBase<INHERITED_ANY>& m);
+	SmartPtr<Any>& operator =(const XNewBase<INHERITED_OTHER>& m);
+
+protected:
+
 	SmartPtr(noinit_t)
 		:Any(noinit_t()){}
 
@@ -256,6 +331,12 @@ public:
 	*/
 	Any& operator *() const{ return *get(); }
 	
+private:
+
+	bool is_true() const{
+		return rawtype(*this)>TYPE_FALSE;
+	}
+
 public:
 
 #ifdef XTAL_DEBUG
@@ -264,7 +345,7 @@ public:
 	typedef void (dummy_bool_tag::*safe_bool)();
 
 	operator safe_bool() const{
-		return type(*this)>TYPE_FALSE ? &dummy_bool_tag::safe_true : (safe_bool)0;
+		return is_true() ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 
 #else
@@ -273,7 +354,7 @@ public:
 	* \brief boolean‚Ö‚ÌŽ©“®•ÏŠ·
 	*/
 	operator bool() const{
-		return type(*this)>TYPE_FALSE;
+		return is_true();
 	}
 
 #endif
@@ -282,7 +363,7 @@ public:
 	* \biref !‰‰ŽZŽq
 	*/
 	bool operator !() const{
-		return type(*this)<=TYPE_FALSE;
+		return !is_true();
 	}
 
 private:

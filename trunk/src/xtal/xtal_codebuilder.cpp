@@ -23,7 +23,7 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	}
 
 	if(!e){
-		return null;
+		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
@@ -36,7 +36,7 @@ CodePtr CodeBuilder::compile(const xpeg::ScannerPtr& scanner, const StringPtr& s
 	ExprPtr e = parser_.parse(scanner, error_);
 
 	if(!e){
-		return null;
+		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
@@ -155,7 +155,7 @@ CodePtr CodeBuilder::eval_compile(const StringPtr& sorce){
 	error_->init("<eval>");
 	ExprPtr e = parser_.parse_expr(xnew<xpeg::StreamScanner>(xnew<StringStream>(sorce)), error_);
 	if(!e){
-		return null;
+		return nul<Code>();
 	}
 
 	eb_.push(e);
@@ -266,7 +266,7 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 	}
 	else{
 		result_ = null;
-		return null;
+		return nul<Code>();
 	}
 }
 
@@ -1092,10 +1092,10 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 			ExprPtr v1 = ep(v);
 			if(v1->itag()==EXPR_CDEFINE_MEMBER){
 				if(v1->cdefine_member_ns()){
-					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false, number++);
+					var_define(v1->cdefine_member_name(), nul<Expr>(), v1->cdefine_member_accessibility()->to_i(), false, true, false, number++);
 				}
 				else{
-					var_define(v1->cdefine_member_name(), null, v1->cdefine_member_accessibility()->to_i(), false, true, false);
+					var_define(v1->cdefine_member_name(), nul<Expr>(), v1->cdefine_member_accessibility()->to_i(), false, true, false);
 				}
 			}
 		}

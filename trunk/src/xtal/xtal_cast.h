@@ -182,7 +182,7 @@ struct CastHelperHelper{
 			return unchecked_cast(a);
 		}
 		else{
-			return get_null();
+			return CastHelper<T>::get_null();
 		}
 	}
 		
@@ -193,10 +193,6 @@ struct CastHelperHelper{
 	static T unchecked_cast(const AnyPtr& a){ 
 		return CastHelper<T>::unchecked_cast(a); 
 	}
-	
-	static T get_null(){ 
-		return CastHelper<T>::get_null();
-	}
 };
 
 template<class T>
@@ -206,7 +202,7 @@ struct CastHelperHelper<T*>{
 			return unchecked_cast(a);
 		}
 		else{
-			return get_null();
+			return 0;
 		}
 	}
 		
@@ -217,10 +213,6 @@ struct CastHelperHelper<T*>{
 	static T* unchecked_cast(const AnyPtr& a){ 
 		return CastHelper<T*>::unchecked_cast(a); 
 	}
-	
-	static T* get_null(){ 
-		return 0;
-	}
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -229,7 +221,7 @@ template<>
 struct CastHelper<const AnyPtr*>{
 	static bool can_cast(const AnyPtr&){ return true; }
 	static const AnyPtr* unchecked_cast(const AnyPtr& a){ return (AnyPtr*)&a; }
-	static const AnyPtr* get_null(){ return (AnyPtr*)&null; }
+	static const AnyPtr* get_null(){ return (AnyPtr*)&nul<Any>(); }
 };
 
 template<>
@@ -321,6 +313,8 @@ XTAL_CAST_HELPER(long double, Float);
 
 //////////////////////////////////////////////////////////////////////////////
 
+const AnyPtr& ptr_cast(const AnyPtr& a, CppClassSymbolData* key);
+
 /// \name Œ^•ÏŠ·
 //@{
 
@@ -332,7 +326,7 @@ XTAL_CAST_HELPER(long double, Float);
 template<class T>
 inline const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
-	return CastHelperHelper<const SmartPtr<T>&>::cast(a);
+	return *(const SmartPtr<T>*)&ptr_cast(a, CppClassSymbol<T>::value);
 }
 
 /**

@@ -626,7 +626,7 @@ foo(5, 10, 20, named:"test");
 \code
 fun foo(...a){
     // 順番指定引数を全てプリントする
-    each_ordered{
+    a.each_ordered{
         it.p;
     }
 }
@@ -1321,7 +1321,7 @@ switch(value){
 このようにC言語ではcase部分が「case 10:」という風になりますが、Xtalでは「case(10){}」となります。\n
 またswitch内のbreakもswitchを抜け出す意味とはなりません。\n
 \n
-case文に指定したオブジェクトは同一演算子で比較されます。\n
+case文に指定したオブジェクトは同一演算子(===)で比較されます。\n
 
 \code
 while(true){
@@ -1379,15 +1379,15 @@ ary.each{
 ブロック文は次のように書くのと同義です。\n
 \code
 ary: [5, 4, 3];
-_has_next, value: ary.each.iter_first();
+_has_next, value: ary.each.block_first();
 try{
     while(_has_next){
         println(value);
-        _has_next, value = _has_next.iter_next();
+        _has_next, value = _has_next.block_next();
     }
 }
 finally{
-    _has_next.?iter_break();
+    _has_next.?block_break();
 }
 \endcode
 
@@ -1419,7 +1419,7 @@ else{
 }
 \endcode
 
-\section nibreak nobreak節
+\section nobreak nobreak節
 各ループ文にはnobreak節をつけることが出来ます。\n
 nobreak節は、breakで中止しなかった場合に通ります。\n
 条件式が一度も真とならない場合も同様に通ります。\n
@@ -1735,7 +1735,7 @@ name: "aaaa";
 obj.(name)(100);
 ojb.?("key");
 \endcode
-識別子の部分を動的な文字列にて指定することができます。\n
+.の直後に()で囲むことで、識別子の部分を動的な文字列にて指定することができます。\n
 */
 
 /** \page refmember メンバ取得演算子
@@ -1766,7 +1766,7 @@ class Foo{
 Foo::("ro" ~ "o").p; //=>100
 Foo::?("key").p; //=> undefined
 \endcode
-識別子の部分を文字列で指定し、取り出すメンバを動的に決定します。\n
+::の直後に()で囲むことで、識別子の部分を文字列で指定し、取り出すメンバを動的に決定します。\n
 */
 
 /** \page secondary_key セカンダリキー

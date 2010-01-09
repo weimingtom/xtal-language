@@ -616,7 +616,7 @@ int_t CodeBuilder::compile_expr_CATCH(const ExprPtr& e, int_t stack_top, int_t r
 
 		// 例外を受け取るために変数スコープを構築
 		var_begin(VarFrame::FRAME);
-		var_define(e->catch_catch_var(), null, 0, true, false, true);
+		var_define(e->catch_catch_var(), nul<Expr>(), 0, true, false, true);
 		scope_begin();
 
 		put_inst(InstPop(stack_top));
@@ -781,7 +781,7 @@ int_t CodeBuilder::compile_member(const AnyPtr& eterm, const AnyPtr& eprimary, c
 }
 
 int_t CodeBuilder::compile_property(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, int_t flags, int_t stack_top, int_t result, int_t result_count){
-	return compile_send(eterm, eprimary, esecondary, null, null, flags, stack_top, result, result_count);
+	return compile_send(eterm, eprimary, esecondary, nul<Expr>(), nul<Expr>(), flags, stack_top, result, result_count);
 }	
 
 int_t CodeBuilder::compile_set_property(const AnyPtr& eterm, const AnyPtr& eprimary, const AnyPtr& esecondary, const AnyPtr& set, int_t flags, int_t stack_top, int_t result, int_t result_count){
@@ -797,10 +797,10 @@ int_t CodeBuilder::compile_set_property(const AnyPtr& eterm, const AnyPtr& eprim
 		eb_.splice(EXPR_STRING, 2);
 		eb_.push(ep(eprimary));
 		eb_.splice(EXPR_CAT, 2);
-		return compile_send(eterm, eb_.pop(), esecondary, args, null, flags, stack_top, result, result_count);
+		return compile_send(eterm, eb_.pop(), esecondary, args, nul<Expr>(), flags, stack_top, result, result_count);
 	}
 	else{
-		return compile_send(eterm, Xid(set_)->cat(ptr_cast<ID>(eprimary))->intern(), esecondary, args, null, flags, stack_top, result, result_count);
+		return compile_send(eterm, Xid(set_)->cat(ptr_cast<ID>(eprimary))->intern(), esecondary, args, nul<Expr>(), flags, stack_top, result, result_count);
 	}
 }
 
@@ -1166,7 +1166,7 @@ int_t CodeBuilder::compile_expr_TRY(const ExprPtr& e, int_t stack_top, int_t res
 
 		// 例外を受け取るために変数スコープを構築
 		var_begin(VarFrame::FRAME);
-		var_define(e->try_catch_var(), null, 0, true, false, true);
+		var_define(e->try_catch_var(), nul<Expr>(), 0, true, false, true);
 		check_lvar_assign_stmt(e->try_catch());
 		scope_begin();
 		scope_chain(1);
@@ -1266,7 +1266,7 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, int_t stack_top, int_t resu
 int_t CodeBuilder::compile_expr_FOR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	var_begin(VarFrame::FRAME);
 	var_define_stmt(e->for_init());
-	var_define(Xid(first_step), null, 0, true, true);
+	var_define(Xid(first_step), nul<Expr>(), 0, true, true);
 	check_lvar_assign_stmt(e);
 	scope_begin();
 	

@@ -13,7 +13,7 @@ void Iterator_each(const VMachinePtr& vm){
 }
 
 void Iterator_block_first(const VMachinePtr& vm){
-	vm->arg_this()->rawsend(vm, Xid(block_next));
+	vm->arg_this()->rawsend(vm, Xid2(block_next));
 }
 
 void VMachine_current_context(const VMachinePtr& vm){
@@ -37,7 +37,7 @@ bool Any_op_in_Array(const AnyPtr& v, const ArrayPtr& values){
 		}
 
 		vm->setup_call(1, v);
-		n->rawsend(vm, Xid(op_eq));
+		n->rawsend(vm, Xid2(op_eq));
 		if(vm->processed() && vm->result()){
 			vm->cleanup_call();
 			return true;
@@ -56,6 +56,26 @@ AnyPtr Any_this(const AnyPtr& v){
 	return v;
 }
 
+void Bool_block_next(const AnyPtr& v, const VMachinePtr& vm){
+	vm->return_result(null, v);
+}
+
+void Bool_to_s(const AnyPtr& v, const VMachinePtr& vm){
+	vm->return_result(v ? Xid(true) : Xid(false));
+}
+
+void Null_each(const AnyPtr& v, const VMachinePtr& vm){
+	vm->return_result(null);
+}
+
+void Null_to_array(const AnyPtr& v, const VMachinePtr& vm){
+	vm->return_result(xnew<Array>());
+}
+
+void Null_to_map(const AnyPtr& v, const VMachinePtr& vm){
+	vm->return_result(xnew<Map>());
+}
+
 }
 
 XTAL_PREBIND(StringEachIter){
@@ -63,7 +83,7 @@ XTAL_PREBIND(StringEachIter){
 }
 
 XTAL_BIND(StringEachIter){
-	it->def_method(Xid(block_next), &StringEachIter::block_next);
+	it->def_method(Xid2(block_next), &StringEachIter::block_next);
 }
 
 XTAL_PREBIND(ChRangeIter){
@@ -71,7 +91,7 @@ XTAL_PREBIND(ChRangeIter){
 }
 
 XTAL_BIND(ChRangeIter){
-	it->def_method(Xid(block_next), &ChRangeIter::block_next);
+	it->def_method(Xid2(block_next), &ChRangeIter::block_next);
 }
 
 XTAL_PREBIND(ChRange){
@@ -80,7 +100,7 @@ XTAL_PREBIND(ChRange){
 
 XTAL_BIND(ChRange){
 	it->def_ctor2<ChRange, const StringPtr&, const StringPtr&>();
-	it->def_method(Xid(each), &ChRange::each);
+	it->def_method(Xid2(each), &ChRange::each);
 }
 
 XTAL_PREBIND(Values){
@@ -89,11 +109,11 @@ XTAL_PREBIND(Values){
 }
 
 XTAL_BIND(Values){
-	it->def_method(Xid(block_next), &Values::block_next);
-	it->def_method(Xid(op_at), &Values::op_at);
-	it->def_method(Xid(size), &Values::size);
-	it->def_method(Xid(op_eq), &Values::op_eq);
-	it->def_method(Xid(to_s), &Values::to_s);
+	it->def_method(Xid2(block_next), &Values::block_next);
+	it->def_method(Xid2(op_at), &Values::op_at);
+	it->def_method(Xid2(size), &Values::size);
+	it->def_method(Xid2(op_eq), &Values::op_eq);
+	it->def_method(Xid2(to_s), &Values::to_s);
 }
 
 XTAL_PREBIND(String){
@@ -101,28 +121,46 @@ XTAL_PREBIND(String){
 	it->inherit(cpp_class<Iterable>());
 }
 
+template<class TFun, TFun pfun>
+struct Pointer2Function{ static TFun fun; };
+
+template<class TFun, TFun pfun>
+TFun Pointer2Function<TFun, pfun>::fun = pfun;
+
+struct MethodInfo{
+	const char_t* primary_key;
+	const param_types_holder_n* pth;
+	const void* val;
+	xtal::CppClassSymbolData** secondary_key;
+	int_t accessibility; 
+};
+
+#define XTAL_METHOD_INFO(PrimaryKey, FuncSig, Func, SecondaryKey, Accesibility) \
+	{ Xid2(PrimaryKey), &fun_param_holder<cmemfun_holder<FuncSig> >::value, &Pointer2Function<FuncSig, Func>::fun, &CppClassSymbol<SecondaryKey>::value, Accesibility}
+
 XTAL_BIND(String){
-	
-	it->def_method(Xid(to_i), &String::to_i);
-	it->def_method(Xid(to_f), &String::to_f);
-	it->def_method(Xid(to_s), &String::to_s);
-	it->def_method(Xid(clone), &String::clone);
-	it->def_method(Xid(length), &String::length);
-	it->def_method(Xid(intern), &String::intern);
-	it->def_method(Xid(each), &String::each);
-	it->def_method(Xid(op_range), &String::op_range, cpp_class<String>());
-	it->def_method(Xid(op_cat), &String::op_cat, cpp_class<String>());
-	it->def_method(Xid(op_cat_assign), &String::op_cat, cpp_class<String>());
-	it->def_method(Xid(op_eq), &String::op_eq, cpp_class<String>());
-	it->def_method(Xid(op_lt), &String::op_lt, cpp_class<String>());
-	it->def_method(Xid(is_ch), &String::is_ch);
-	it->def_method(Xid(ascii), &String::ascii);
-	it->def_method(Xid(op_in), &String::op_in);
-	it->def_method(Xid(p), &Any_p);
+	it->def_method(Xid2(to_i), &String::to_i);
+	it->def_method(Xid2(to_f), &String::to_f);
+	it->def_method(Xid2(to_s), &String::to_s);
+	it->def_method(Xid2(clone), &String::clone);
+	it->def_method(Xid2(length), &String::length);
+	it->def_method(Xid2(intern), &String::intern);
+	it->def_method(Xid2(each), &String::each);
+	it->def_method(Xid2(is_ch), &String::is_ch);
+	it->def_method(Xid2(ascii), &String::ascii);
+
+	it->def_method(Xid2(op_range), &String::op_range, cpp_class<String>());
+	it->def_method(Xid2(op_cat), &String::op_cat, cpp_class<String>());
+	it->def_method(Xid2(op_cat_assign), &String::op_cat, cpp_class<String>());
+	it->def_method(Xid2(op_eq), &String::op_eq, cpp_class<String>());
+	it->def_method(Xid2(op_lt), &String::op_lt, cpp_class<String>());
+	it->def_method(Xid2(op_in), &String::op_in, cpp_class<ChRange>());
+
+	it->def_method(Xid2(p), &Any_p);
 }
 
 XTAL_BIND2(String){
-	it->def_method(Xid(op_in2), &String::op_in);
+
 	Xemb((
 
 String::scan: method(pattern){
@@ -217,94 +255,56 @@ XTAL_PREBIND(InternedStringIter){
 }
 
 XTAL_BIND(InternedStringIter){
-	it->def_method(Xid(block_next), &InternedStringIter::block_next);
+	it->def_method(Xid2(block_next), &InternedStringIter::block_next);
 }
 
 XTAL_BIND(Any){
-	it->def_method(Xid(class), &Any::get_class);
-	it->def_method(Xid(get_class), &Any::get_class);
-	it->def_method(Xid(object_name), &Any::object_name);
-	it->def_method(Xid(object_name_list), &Any::object_name_list);
-	it->def_method(Xid(p), &Any_p);
-	it->def_method(Xid(to_s), &Any_to_s);
-	it->def_method(Xid(op_in), &Any_op_in_Array, cpp_class<Array>());
-	it->def_method(Xid(op_in), &Any_op_in_Set, cpp_class<Set>());
-	it->def_method(Xid(op_eq), &Any::op_eq, cpp_class<Any>()); 
+	it->def_method(Xid2(class), &Any::get_class);
+	it->def_method(Xid2(get_class), &Any::get_class);
+	it->def_method(Xid2(object_name), &Any::object_name);
+	it->def_method(Xid2(object_name_list), &Any::object_name_list);
+	it->def_method(Xid2(p), &Any_p);
+	it->def_method(Xid2(to_s), &Any_to_s);
+	it->def_method(Xid2(op_in), &Any_op_in_Array, cpp_class<Array>());
+	it->def_method(Xid2(op_in), &Any_op_in_Set, cpp_class<Set>());
+	it->def_method(Xid2(op_eq), &Any::op_eq, cpp_class<Any>()); 
 }
 
 XTAL_BIND2(Any){
-	it->def_double_dispatch_method(Xid(op_add));
-	it->def_double_dispatch_method(Xid(op_sub));
-	it->def_double_dispatch_method(Xid(op_cat));
-	it->def_double_dispatch_method(Xid(op_mul));
-	it->def_double_dispatch_method(Xid(op_div));
-	it->def_double_dispatch_method(Xid(op_mod));
-	it->def_double_dispatch_method(Xid(op_and));
-	it->def_double_dispatch_method(Xid(op_or));
-	it->def_double_dispatch_method(Xid(op_xor));
-	it->def_double_dispatch_method(Xid(op_shr));
-	it->def_double_dispatch_method(Xid(op_shl));
-	it->def_double_dispatch_method(Xid(op_ushr));
+	it->def_double_dispatch_method(Xid2(op_add));
+	it->def_double_dispatch_method(Xid2(op_sub));
+	it->def_double_dispatch_method(Xid2(op_cat));
+	it->def_double_dispatch_method(Xid2(op_mul));
+	it->def_double_dispatch_method(Xid2(op_div));
+	it->def_double_dispatch_method(Xid2(op_mod));
+	it->def_double_dispatch_method(Xid2(op_and));
+	it->def_double_dispatch_method(Xid2(op_or));
+	it->def_double_dispatch_method(Xid2(op_xor));
+	it->def_double_dispatch_method(Xid2(op_shr));
+	it->def_double_dispatch_method(Xid2(op_shl));
+	it->def_double_dispatch_method(Xid2(op_ushr));
 
-	it->def_double_dispatch_method(Xid(op_add_assign));
-	it->def_double_dispatch_method(Xid(op_sub_assign));
-	it->def_double_dispatch_method(Xid(op_cat_assign));
-	it->def_double_dispatch_method(Xid(op_mul_assign));
-	it->def_double_dispatch_method(Xid(op_div_assign));
-	it->def_double_dispatch_method(Xid(op_mod_assign));
-	it->def_double_dispatch_method(Xid(op_and_assign));
-	it->def_double_dispatch_method(Xid(op_or_assign));
-	it->def_double_dispatch_method(Xid(op_xor_assign));
-	it->def_double_dispatch_method(Xid(op_shr_assign));
-	it->def_double_dispatch_method(Xid(op_shl_assign));
-	it->def_double_dispatch_method(Xid(op_ushr_assign));
-	it->def_double_dispatch_method(Xid(op_eq));
-	it->def_double_dispatch_method(Xid(op_lt));
-	it->def_double_dispatch_method(Xid(op_at));
-	it->def_double_dispatch_method(Xid(op_set_at));
-	it->def_double_dispatch_method(Xid(op_call));
-	it->def_double_dispatch_method(Xid(op_range));
-	it->def_double_dispatch_method(Xid(op_in));
-
-}
-
-/*
-XTAL_BIND2(Any){
-	Xemb((
-Any::op_in#Array: method(values){
-	values{
-		if(it==this){
-			return true;
-		}
-	}
-	return false;
-}
-
-Any::op_in#Set: method(values){
-	return values[v];
-}
-
-//
-
-),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\xe7\x00\x1d\x00\x00\x03\x33\x01\x00\x01\x00\xa8\x00\x22\x00\x03\x00\x1f\x00\x02\xfd\x00\x07\x00\x01\x00\x00\x00\x07\xfe\x00\x07\xff\x01\x00\x35\x00\x01\x00\x22\x00\x04\x01\xff\x03\x10\xfd\x00\x06\x00\x3e\x06\x01"
-"\x11\x00\xfe\x01\x02\x10\x00\x00\x06\x00\x14\x00\x01\x00\x03\x16\x00\x23\x37\x00\x04\x36\x23\x24\x01\x1f\x00\x02\xfd\x00\x09\x00\x01\x00\x00\x00\x07\xfd\x00\x07\xfe\x01\x01\xff\x02\x10\xfd\xff\xd1\x00\x09\x0e\xff\xcb\x23\x37\x00\x38\x36\x35\x00\x02\x22\x00"
-"\x07\x17\x00\x07\xff\x00\x00\x07\x01\xff\x1f\x00\x01\xfd\x00\x0b\x00\x01\x01\x00\x10\x10\x00\x00\x0c\x00\x06\x07\x00\xff\x16\x00\x39\x23\x36\x1f\x00\x00\xfe\x00\x0c\x00\x00\x00\x00\x10\x38\x23\x01\x00\x02\x16\x00\x24\x01\x24\x00\x1d\x02\x00\x0e\x32\x00\x00"
-"\x0d\x02\x08\x01\x00\x1d\x00\x00\x03\x33\x01\x00\x02\x00\x16\x00\x1d\x01\x00\x10\x0c\x00\xff\x01\x02\x16\x00\x24\x01\x24\x00\x1d\x02\x00\x11\x32\x00\x00\x0d\x02\x08\x01\x1d\x00\x00\x12\x16\x00\x24\x01\x39\x00\x09\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00"
-"\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x0b\x00\x01\x00\x05\x00\x00\x00\x00\x00\x0c\x00\x01\x00\x05\x00\x02\x00\x00\x00\x26\x00\x01\x00\x08\x00\x01\x00\x00\x00\x32\x00\x01\x00\x09\x00\x00\x00\x00\x00\x3f\x00\x00\x00\x09\x00\x00\x00\x00\x00\x72\x00"
-"\x01\x00\x0a\x00\x01\x00\x00\x00\xc3\x00\x01\x00\x10\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x01\x01\x00\x00\x07\x00\x00\x01\x01\x00\x00\x00\xc3\x05\x00\x00\x0f\x00"
-"\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6f\x00\x00\x00\x97\x00\x00\x00\xa3\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x00\x97\x00\x0d\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x0b\x00\x08\x00"
-"\x00\x00\x00\x00\x0f\x00\x04\x00\x00\x00\x00\x00\x21\x00\x08\x00\x00\x00\x00\x00\x25\x00\x04\x00\x00\x00\x00\x00\x3f\x00\x05\x00\x00\x00\x00\x00\x4d\x00\x04\x00\x00\x00\x00\x00\x7a\x00\x08\x00\x00\x00\x00\x00\xab\x00\x02\x00\x00\x00\x00\x00\xb8\x00\x0b\x00"
-"\x00\x00\x00\x00\xc3\x00\x0c\x00\x00\x00\x00\x00\xd1\x00\x0b\x00\x00\x00\x00\x00\xe6\x00\x0c\x00\x00\x00\x01\x1c\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61"
-"\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1a\x00\x00\x00\x13\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x03\x41\x6e\x79\x19\x00\x00\x00\x06\x76\x61\x6c"
-"\x75\x65\x73\x19\x00\x00\x00\x08\x69\x74\x65\x72\x61\x74\x6f\x72\x19\x00\x00\x00\x02\x69\x74\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x19\x00\x00\x00\x0a\x66\x69\x72\x73\x74\x5f\x73\x74\x65\x70\x19\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b"
-"\x5f\x6e\x65\x78\x74\x19\x00\x00\x00\x01\x65\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x63\x61\x74\x63\x68\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x62\x72\x65\x61\x6b\x19\x00\x00\x00\x05\x6f\x70\x5f\x69\x6e\x19\x00\x00\x00\x05\x41\x72\x72\x61\x79\x03"
-"\x00\x00\x00\x0a\x19\x00\x00\x00\x01\x76\x19\x00\x00\x00\x03\x53\x65\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x03\x00\x00\x00\x0a\x1a\x00\x00\x00\x01\x10"
-);
+	it->def_double_dispatch_method(Xid2(op_add_assign));
+	it->def_double_dispatch_method(Xid2(op_sub_assign));
+	it->def_double_dispatch_method(Xid2(op_cat_assign));
+	it->def_double_dispatch_method(Xid2(op_mul_assign));
+	it->def_double_dispatch_method(Xid2(op_div_assign));
+	it->def_double_dispatch_method(Xid2(op_mod_assign));
+	it->def_double_dispatch_method(Xid2(op_and_assign));
+	it->def_double_dispatch_method(Xid2(op_or_assign));
+	it->def_double_dispatch_method(Xid2(op_xor_assign));
+	it->def_double_dispatch_method(Xid2(op_shr_assign));
+	it->def_double_dispatch_method(Xid2(op_shl_assign));
+	it->def_double_dispatch_method(Xid2(op_ushr_assign));
+	it->def_double_dispatch_method(Xid2(op_eq));
+	it->def_double_dispatch_method(Xid2(op_lt));
+	it->def_double_dispatch_method(Xid2(op_at));
+	it->def_double_dispatch_method(Xid2(op_set_at));
+	it->def_double_dispatch_method(Xid2(op_call));
+	it->def_double_dispatch_method(Xid2(op_range));
+	it->def_double_dispatch_method(Xid2(op_in));
 
 }
-*/
-
 
 XTAL_PREBIND(Undefined){
 	it->set_final();
@@ -315,24 +315,9 @@ XTAL_BIND(Undefined){
 }
 
 XTAL_BIND(Bool){
-	Xemb((
-Bool::block_next: method{
-	return null, this;
-}
-
-Bool::block_first: Bool::block_next;
-
-Bool::to_s: method this ? "true" : "false";
-),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x6b\x00\x1d\x00\x00\x03\x33\x01\x00\x01\x00\x14\x00\x01\x00\x00\x16\x00\x06\x00\x16\x00\x24\x02\x24\x00\x32\x00\x00\x04\x00\x00\x01\x00\x1d\x00\x00\x03\x1d\x02\x00\x03\x08\x01\x02\x00\x04\x00\x00\x32\x00\x00\x05"
-"\x00\x00\x01\x00\x1d\x00\x00\x03\x33\x01\x00\x02\x00\x1f\x06\x00\x10\x00\x00\x06\x00\x0d\x02\x00\x00\x01\x0e\x00\x07\x02\x00\x00\x02\x16\x00\x24\x01\x24\x00\x32\x00\x00\x06\x00\x00\x01\x1d\x00\x00\x07\x16\x00\x24\x01\x39\x00\x03\x00\x00\x00\x00\x00\x00\x00"
-"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x0b\x00\x00\x00\x04\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00"
-"\x00\x00\x42\x05\x00\x00\x06\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x0b\x00\x03\x00\x00\x00\x00\x00\x17\x00\x02\x00\x00\x00\x00\x00\x20\x00\x06\x00"
-"\x00\x00\x00\x00\x37\x00\x08\x00\x00\x00\x00\x00\x6a\x00\x09\x00\x00\x00\x01\x1c\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64"
-"\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1a\x00\x00\x00\x08\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x04\x42\x6f\x6f\x6c\x19\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74"
-"\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x19\x00\x00\x00\x04\x74\x6f\x5f\x73\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x1a\x00\x00\x00\x03\x10\x19\x00\x00\x00\x04\x74\x72\x75"
-"\x65\x19\x00\x00\x00\x05\x66\x61\x6c\x73\x65"
-);
+	it->def_method(Xid2(block_next), &Bool_block_next);
+	it->def_method(Xid2(block_first), &Bool_block_next);
+	it->def_method(Xid2(to_s), &Bool_to_s);
 }
 
 XTAL_PREBIND(Null){
@@ -341,23 +326,10 @@ XTAL_PREBIND(Null){
 }
 
 XTAL_BIND(Null){
-
-	Xemb((
-Null::each: method null;
-Null::op_to_array: method [];
-Null::op_to_map: method [:];
-Null::block_first: method null;
-),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x73\x00\x1d\x00\x00\x03\x33\x01\x00\x01\x00\x0f\x01\x00\x00\x16\x00\x24\x01\x24\x00\x32\x00\x00\x04\x00\x00\x01\x00\x1d\x00\x00\x03\x33\x01\x00\x02\x00\x0e\x2a\x00\x16\x00\x24\x01\x24\x00\x32\x00\x00\x05\x00\x00"
-"\x01\x00\x1d\x00\x00\x03\x33\x01\x00\x03\x00\x0e\x2c\x00\x16\x00\x24\x01\x24\x00\x32\x00\x00\x06\x00\x00\x01\x00\x1d\x00\x00\x03\x33\x01\x00\x04\x00\x0f\x01\x00\x00\x16\x00\x24\x01\x24\x00\x32\x00\x00\x07\x00\x00\x01\x1d\x00\x00\x08\x16\x00\x24\x01\x39\x00"
-"\x02\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-"\x26\x05\x00\x00\x05\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x05\x00\x00\x06\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5a\x05\x00\x00\x07\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-"\x00\x00\x05\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x1b\x00\x03\x00\x00\x00\x00\x00\x35\x00\x04\x00\x00\x00\x00\x00\x4f\x00\x05\x00\x00\x00\x00\x00\x72\x00\x06\x00\x00\x00\x01\x1c\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00"
-"\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1a\x00\x00\x00\x09\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61"
-"\x72\x67\x19\x00\x00\x00\x04\x4e\x75\x6c\x6c\x19\x00\x00\x00\x04\x65\x61\x63\x68\x19\x00\x00\x00\x0b\x6f\x70\x5f\x74\x6f\x5f\x61\x72\x72\x61\x79\x19\x00\x00\x00\x09\x6f\x70\x5f\x74\x6f\x5f\x6d\x61\x70\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72"
-"\x73\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x1a\x00\x00\x00\x01\x10"
-);
-
+	it->def_method(Xid2(each), &Null_each);
+	it->def_method(Xid2(op_to_array), &Null_to_array);
+	it->def_method(Xid2(op_to_map), &Null_to_map);
+	it->def_method(Xid2(block_first), &Null_each);
 }
 
 XTAL_PREBIND(Int){
@@ -366,15 +338,15 @@ XTAL_PREBIND(Int){
 }
 
 XTAL_BIND(Int){
-	it->def_method(Xid(to_i), &Int::to_i);
-	it->def_method(Xid(to_f), &Int::to_f);
-	it->def_method(Xid(f), &Int::to_f);
-	it->def_method(Xid(F), &Int::to_f);
-	it->def_method(Xid(to_s), &Int::to_s);
-	it->def_method(Xid(op_range), (IntRangePtr (Int::*)(int_t, int_t))&Int::op_range, cpp_class<Int>());
-	it->def_method(Xid(op_range), (FloatRangePtr (Int::*)(float_t, int_t))&Int::op_range, cpp_class<Float>());
-	it->def_method(Xid(op_in), (bool (Int::*)(const IntRangePtr&))&Int::op_in, cpp_class<IntRange>());
-	it->def_method(Xid(op_in), (bool (Int::*)(const FloatRangePtr&))&Int::op_in, cpp_class<FloatRange>());
+	it->def_method(Xid2(to_i), &Int::to_i);
+	it->def_method(Xid2(to_f), &Int::to_f);
+	it->def_method(Xid2(f), &Int::to_f);
+	it->def_method(Xid2(F), &Int::to_f);
+	it->def_method(Xid2(to_s), &Int::to_s);
+	it->def_method(Xid2(op_range), (IntRangePtr (Int::*)(int_t, int_t))&Int::op_range, cpp_class<Int>());
+	it->def_method(Xid2(op_range), (FloatRangePtr (Int::*)(float_t, int_t))&Int::op_range, cpp_class<Float>());
+	it->def_method(Xid2(op_in), (bool (Int::*)(const IntRangePtr&))&Int::op_in, cpp_class<IntRange>());
+	it->def_method(Xid2(op_in), (bool (Int::*)(const FloatRangePtr&))&Int::op_in, cpp_class<FloatRange>());
 }
 
 XTAL_BIND2(Int){
@@ -418,15 +390,15 @@ XTAL_PREBIND(Float){
 }
 
 XTAL_BIND(Float){
-	it->def_method(Xid(to_i), &Float::to_i);
-	it->def_method(Xid(to_f), &Float::to_f);
-	it->def_method(Xid(f), &Float::to_f);
-	it->def_method(Xid(F), &Float::to_f);
-	it->def_method(Xid(to_s), &Float::to_s);
-	it->def_method(Xid(op_range), (FloatRangePtr (Float::*)(int_t, int_t))&Float::op_range, cpp_class<Int>());
-	it->def_method(Xid(op_range), (FloatRangePtr (Float::*)(float_t, int_t))&Float::op_range, cpp_class<Float>());
-	it->def_method(Xid(op_in), (bool (Float::*)(const IntRangePtr&))&Float::op_in, cpp_class<IntRange>());
-	it->def_method(Xid(op_in), (bool (Float::*)(const FloatRangePtr&))&Float::op_in, cpp_class<FloatRange>());
+	it->def_method(Xid2(to_i), &Float::to_i);
+	it->def_method(Xid2(to_f), &Float::to_f);
+	it->def_method(Xid2(f), &Float::to_f);
+	it->def_method(Xid2(F), &Float::to_f);
+	it->def_method(Xid2(to_s), &Float::to_s);
+	it->def_method(Xid2(op_range), (FloatRangePtr (Float::*)(int_t, int_t))&Float::op_range, cpp_class<Int>());
+	it->def_method(Xid2(op_range), (FloatRangePtr (Float::*)(float_t, int_t))&Float::op_range, cpp_class<Float>());
+	it->def_method(Xid2(op_in), (bool (Float::*)(const IntRangePtr&))&Float::op_in, cpp_class<IntRange>());
+	it->def_method(Xid2(op_in), (bool (Float::*)(const FloatRangePtr&))&Float::op_in, cpp_class<FloatRange>());
 }
 
 XTAL_BIND2(Float){
@@ -451,39 +423,39 @@ XTAL_PREBIND(IntRangeIter){
 }
 
 XTAL_BIND(IntRangeIter){
-	it->def_method(Xid(block_next), &IntRangeIter::block_next);
+	it->def_method(Xid2(block_next), &IntRangeIter::block_next);
 }
 
 XTAL_PREBIND(Range){
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor3<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(3, Xid(kind), 0);
+	it->def_ctor3<Range, const AnyPtr&, const AnyPtr&, int_t>()->param(3, Xid2(kind), 0);
 }
 
 XTAL_BIND(Range){
-	it->def_method(Xid(left), &Range::left);
-	it->def_method(Xid(right), &Range::right);
-	it->def_method(Xid(kind), &Range::kind);
+	it->def_method(Xid2(left), &Range::left);
+	it->def_method(Xid2(right), &Range::right);
+	it->def_method(Xid2(kind), &Range::kind);
 
-	it->def(Xid(CLOSED), (int_t)Range::CLOSED);
-	it->def(Xid(LEFT_OPEN_RIGHT_CLOSED), (int_t)Range::LEFT_OPEN_RIGHT_CLOSED);
-	it->def(Xid(LEFT_CLOSED_RIGHT_OPEN), (int_t)Range::LEFT_CLOSED_RIGHT_OPEN);
-	it->def(Xid(OPEN), (int_t)Range::OPEN);
+	it->def(Xid2(CLOSED), (int_t)Range::CLOSED);
+	it->def(Xid2(LEFT_OPEN_RIGHT_CLOSED), (int_t)Range::LEFT_OPEN_RIGHT_CLOSED);
+	it->def(Xid2(LEFT_CLOSED_RIGHT_OPEN), (int_t)Range::LEFT_CLOSED_RIGHT_OPEN);
+	it->def(Xid2(OPEN), (int_t)Range::OPEN);
 }
 
 XTAL_PREBIND(IntRange){
 	it->inherit(cpp_class<Range>());
-	it->def_ctor3<IntRange, int_t, int_t, int_t>()->param(3, Xid(kind), 0);
+	it->def_ctor3<IntRange, int_t, int_t, int_t>()->param(3, Xid2(kind), 0);
 }
 
 XTAL_BIND(IntRange){
-	it->def_method(Xid(begin), &IntRange::begin);
-	it->def_method(Xid(end), &IntRange::end);
-	it->def_method(Xid(each), &IntRange::each);
+	it->def_method(Xid2(begin), &IntRange::begin);
+	it->def_method(Xid2(end), &IntRange::end);
+	it->def_method(Xid2(each), &IntRange::each);
 }
 
 XTAL_PREBIND(FloatRange){
 	it->inherit(cpp_class<Range>());
-	it->def_ctor3<FloatRange, float_t, float_t, int_t>()->param(3, Xid(kind), 0);
+	it->def_ctor3<FloatRange, float_t, float_t, int_t>()->param(3, Xid2(kind), 0);
 }
 
 XTAL_BIND(FloatRange){
@@ -494,50 +466,50 @@ XTAL_PREBIND(ArrayIter){
 }
 
 XTAL_BIND(ArrayIter){
-	it->def_method(Xid(block_next), &ArrayIter::block_next);
+	it->def_method(Xid2(block_next), &ArrayIter::block_next);
 }
 
 XTAL_PREBIND(Array){
 	it->set_final();
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor1<Array, int_t>()->param(1, Xid(size), 0);
+	it->def_ctor1<Array, int_t>()->param(1, Xid2(size), 0);
 }
 
 XTAL_BIND(Array){
-	it->def_method(Xid(size), &Array::size);
-	it->def_method(Xid(length), &Array::size);
-	it->def_method(Xid(resize), &Array::resize);
-	it->def_method(Xid(empty), &Array::empty);
-	it->def_method(Xid(is_empty), &Array::is_empty);
-	it->def_method(Xid(slice), &Array::slice)->param(2, Xid(n), 1);
-	it->def_method(Xid(splice), &Array::splice)->param(2, Xid(n), 1);
-	it->def_method(Xid(pop_back), &Array::pop_back);
-	it->def_method(Xid(pop_front), &Array::pop_front);
-	it->def_method(Xid(push_back), &Array::push_back);
-	it->def_method(Xid(push_front), &Array::push_front);
+	it->def_method(Xid2(size), &Array::size);
+	it->def_method(Xid2(length), &Array::size);
+	it->def_method(Xid2(resize), &Array::resize);
+	it->def_method(Xid2(empty), &Array::empty);
+	it->def_method(Xid2(is_empty), &Array::is_empty);
+	it->def_method(Xid2(slice), &Array::slice)->param(2, Xid2(n), 1);
+	it->def_method(Xid2(splice), &Array::splice)->param(2, Xid2(n), 1);
+	it->def_method(Xid2(pop_back), &Array::pop_back);
+	it->def_method(Xid2(pop_front), &Array::pop_front);
+	it->def_method(Xid2(push_back), &Array::push_back);
+	it->def_method(Xid2(push_front), &Array::push_front);
 
-	it->def_method(Xid(erase), &Array::erase)->param(2, Xid(n), 1);
-	it->def_method(Xid(insert), &Array::insert);
-	it->def_method(Xid(each), &Array::each);
-	it->def_method(Xid(clone), &Array::clone);
-	it->def_method(Xid(front), &Array::front);
-	it->def_method(Xid(back), &Array::back);
-	it->def_method(Xid(clear), &Array::clear);
-	it->def_method(Xid(reverse), &Array::reverse);
-	it->def_method(Xid(assign), &Array::assign);
-	it->def_method(Xid(append), &Array::append);
+	it->def_method(Xid2(erase), &Array::erase)->param(2, Xid2(n), 1);
+	it->def_method(Xid2(insert), &Array::insert);
+	it->def_method(Xid2(each), &Array::each);
+	it->def_method(Xid2(clone), &Array::clone);
+	it->def_method(Xid2(front), &Array::front);
+	it->def_method(Xid2(back), &Array::back);
+	it->def_method(Xid2(clear), &Array::clear);
+	it->def_method(Xid2(reverse), &Array::reverse);
+	it->def_method(Xid2(assign), &Array::assign);
+	it->def_method(Xid2(append), &Array::append);
 
-	it->def_method(Xid(op_to_array), &Array::op_to_array);
-	it->def_method(Xid(op_cat), &Array::op_cat, cpp_class<Array>());
-	it->def_method(Xid(op_cat_assign), &Array::op_cat_assign, cpp_class<Array>());
-	it->def_method(Xid(op_at), &Array::op_at, cpp_class<Int>());
-	it->def_method(Xid(op_set_at), &Array::op_set_at, cpp_class<Int>());
-	it->def_method(Xid(op_eq), &Array::op_eq, cpp_class<Array>());
-	it->def_method(Xid(op_call), &Array::op_at, cpp_class<Int>());
+	it->def_method(Xid2(op_to_array), &Array::op_to_array);
+	it->def_method(Xid2(op_cat), &Array::op_cat, cpp_class<Array>());
+	it->def_method(Xid2(op_cat_assign), &Array::op_cat_assign, cpp_class<Array>());
+	it->def_method(Xid2(op_at), &Array::op_at, cpp_class<Int>());
+	it->def_method(Xid2(op_set_at), &Array::op_set_at, cpp_class<Int>());
+	it->def_method(Xid2(op_eq), &Array::op_eq, cpp_class<Array>());
+	it->def_method(Xid2(op_call), &Array::op_at, cpp_class<Int>());
 
-	it->def_method(Xid(join), &Array::join)->param(1, Xid(sep), empty_string);
-	it->def_method(Xid(to_s), &Array::to_s);
-	it->def_method(Xid(block_first), &Array::block_first);
+	it->def_method(Xid2(join), &Array::join)->param(1, Xid2(sep), empty_string);
+	it->def_method(Xid2(to_s), &Array::to_s);
+	it->def_method(Xid2(block_first), &Array::block_first);
 }
 
 XTAL_PREBIND(MapIter){
@@ -545,7 +517,7 @@ XTAL_PREBIND(MapIter){
 }
 
 XTAL_BIND(MapIter){
-	it->def_method(Xid(block_next), &MapIter::block_next);
+	it->def_method(Xid2(block_next), &MapIter::block_next);
 }
 
 XTAL_PREBIND(Map){
@@ -554,29 +526,29 @@ XTAL_PREBIND(Map){
 }
 
 XTAL_BIND(Map){
-	it->def_method(Xid(size), &Map::size);
-	it->def_method(Xid(length), &Map::length);
-	it->def_method(Xid(insert), &Map::insert);
-	it->def_method(Xid(each), &Map::pairs);
-	it->def_method(Xid(pairs), &Map::pairs);
-	it->def_method(Xid(keys), &Map::keys);
-	it->def_method(Xid(values), &Map::values);
-	it->def_method(Xid(clone), &Map::clone);
-	it->def_method(Xid(erase), &Map::erase);
-	it->def_method(Xid(empty), &Map::empty);
-	it->def_method(Xid(is_empty), &Map::is_empty);
-	it->def_method(Xid(assign), &Map::assign);
-	it->def_method(Xid(append), &Map::append);
+	it->def_method(Xid2(size), &Map::size);
+	it->def_method(Xid2(length), &Map::length);
+	it->def_method(Xid2(insert), &Map::insert);
+	it->def_method(Xid2(each), &Map::pairs);
+	it->def_method(Xid2(pairs), &Map::pairs);
+	it->def_method(Xid2(keys), &Map::keys);
+	it->def_method(Xid2(values), &Map::values);
+	it->def_method(Xid2(clone), &Map::clone);
+	it->def_method(Xid2(erase), &Map::erase);
+	it->def_method(Xid2(empty), &Map::empty);
+	it->def_method(Xid2(is_empty), &Map::is_empty);
+	it->def_method(Xid2(assign), &Map::assign);
+	it->def_method(Xid2(append), &Map::append);
 
-	it->def_method(Xid(op_to_map), &Map::op_to_map);
-	it->def_method(Xid(op_at), &Map::op_at, cpp_class<Any>());
-	it->def_method(Xid(op_set_at), &Map::op_set_at, cpp_class<Any>());
-	it->def_method(Xid(op_cat), &Map::op_cat, cpp_class<Map>());
-	it->def_method(Xid(op_cat_assign), &Map::op_cat_assign, cpp_class<Map>());
-	it->def_method(Xid(op_call), &Map::op_at, cpp_class<Any>());
+	it->def_method(Xid2(op_to_map), &Map::op_to_map);
+	it->def_method(Xid2(op_at), &Map::op_at, cpp_class<Any>());
+	it->def_method(Xid2(op_set_at), &Map::op_set_at, cpp_class<Any>());
+	it->def_method(Xid2(op_cat), &Map::op_cat, cpp_class<Map>());
+	it->def_method(Xid2(op_cat_assign), &Map::op_cat_assign, cpp_class<Map>());
+	it->def_method(Xid2(op_call), &Map::op_at, cpp_class<Any>());
 
-	it->def_method(Xid(block_first), &Map::block_first);
-	it->def_method(Xid(to_s), &Map::to_s);
+	it->def_method(Xid2(block_first), &Map::block_first);
+	it->def_method(Xid2(to_s), &Map::to_s);
 }
 
 XTAL_PREBIND(Set){
@@ -585,8 +557,8 @@ XTAL_PREBIND(Set){
 }
 
 XTAL_BIND(Set){
-	it->def_method(Xid(each), &Set::each);
-	it->def_method(Xid(to_s), &Set::to_s);
+	it->def_method(Xid2(each), &Set::each);
+	it->def_method(Xid2(to_s), &Set::to_s);
 }
 
 XTAL_PREBIND(Fun){
@@ -599,12 +571,12 @@ XTAL_PREBIND(Fiber){
 }
 
 XTAL_BIND(Fiber){
-	it->def_method(Xid(reset), &Fiber::reset);
-	it->def_method(Xid(block_first), &Fiber::block_next);
-	it->def_method(Xid(block_next), &Fiber::block_next);
-	it->def_method(Xid(halt), &Fiber::halt);
-	it->def_method(Xid(is_alive), &Fiber::is_alive);
-	it->def_method(Xid(to_fiber), &Any_this);
+	it->def_method(Xid2(reset), &Fiber::reset);
+	it->def_method(Xid2(block_first), &Fiber::block_next);
+	it->def_method(Xid2(block_next), &Fiber::block_next);
+	it->def_method(Xid2(halt), &Fiber::halt);
+	it->def_method(Xid2(is_alive), &Fiber::is_alive);
+	it->def_method(Xid2(to_fiber), &Any_this);
 }
 
 XTAL_PREBIND(Lambda){
@@ -613,21 +585,21 @@ XTAL_PREBIND(Lambda){
 
 XTAL_PREBIND(Arguments){
 	it->inherit(cpp_class<Iterable>());
-	it->def_ctor2<Arguments, const AnyPtr&, const AnyPtr&>()->param(1, Xid(ordered), null)->param(2, Xid(named), null);
+	it->def_ctor2<Arguments, const AnyPtr&, const AnyPtr&>()->param(1, Xid2(ordered), null)->param(2, Xid2(named), null);
 }
 
 XTAL_BIND(Arguments){
-	it->def_method(Xid(size), &Arguments::length);
-	it->def_method(Xid(length), &Arguments::length);
-	it->def_method(Xid(ordered_arguments), &Arguments::ordered_arguments);
-	it->def_method(Xid(named_arguments), &Arguments::named_arguments);
+	it->def_method(Xid2(size), &Arguments::length);
+	it->def_method(Xid2(length), &Arguments::length);
+	it->def_method(Xid2(ordered_arguments), &Arguments::ordered_arguments);
+	it->def_method(Xid2(named_arguments), &Arguments::named_arguments);
 	
-	it->def(Xid(op_at), method(&Arguments::op_at_int), cpp_class<Int>());
-	it->def(Xid(op_at), method(&Arguments::op_at_string), cpp_class<String>());
+	it->def(Xid2(op_at), method(&Arguments::op_at_int), cpp_class<Int>());
+	it->def(Xid2(op_at), method(&Arguments::op_at_string), cpp_class<String>());
 
-	it->def_method(Xid(each), &Arguments::each);
-	it->def_method(Xid(pairs), &Arguments::each);
-	it->def_method(Xid(to_s), &Arguments::to_s);
+	it->def_method(Xid2(each), &Arguments::each);
+	it->def_method(Xid2(pairs), &Arguments::each);
+	it->def_method(Xid2(to_s), &Arguments::to_s);
 }
 
 
@@ -636,7 +608,7 @@ XTAL_PREBIND(ArgumentsIter){
 }
 
 XTAL_BIND(ArgumentsIter){
-	it->def_method(Xid(block_next), &ArgumentsIter::block_next);
+	it->def_method(Xid2(block_next), &ArgumentsIter::block_next);
 }
 
 XTAL_PREBIND(Code){
@@ -644,8 +616,8 @@ XTAL_PREBIND(Code){
 }
 
 XTAL_BIND(Code){
-	it->def_method(Xid(filelocal), &Code::filelocal);
-	it->def_method(Xid(inspect), &Code::inspect);
+	it->def_method(Xid2(filelocal), &Code::filelocal);
+	it->def_method(Xid2(inspect), &Code::inspect);
 }
 
 XTAL_PREBIND(MembersIter){
@@ -653,7 +625,7 @@ XTAL_PREBIND(MembersIter){
 }
 
 XTAL_BIND(MembersIter){
-	it->def_method(Xid(block_next), &MembersIter::block_next);
+	it->def_method(Xid2(block_next), &MembersIter::block_next);
 }
 
 XTAL_PREBIND(MembersIter2){
@@ -661,13 +633,13 @@ XTAL_PREBIND(MembersIter2){
 }
 
 XTAL_BIND(MembersIter2){
-	it->def_method(Xid(block_next), &MembersIter2::block_next);
+	it->def_method(Xid2(block_next), &MembersIter2::block_next);
 }
 
 
 XTAL_BIND(Frame){
-	it->def_method(Xid(members), &Frame::members);
-	it->def_method(Xid(outer), &Frame::outer);
+	it->def_method(Xid2(members), &Frame::members);
+	it->def_method(Xid2(outer), &Frame::outer);
 }
 
 XTAL_PREBIND(Class){
@@ -675,12 +647,12 @@ XTAL_PREBIND(Class){
 }
 
 XTAL_BIND(Class){
-	it->def_method(Xid(inherit), &Class::inherit_strict);
-	it->def_method(Xid(overwrite), &Class::overwrite);
-	it->def_method(Xid(s_new), &Class::s_new);
-	it->def_method(Xid(inherited_classes), &Class::inherited_classes);
-	it->def_method(Xid(is_inherited), &Any::is_inherited);
-	it->def_method(Xid(find_near_member), (IDPtr (Class::*)(const IDPtr&, const AnyPtr&))&Class::find_near_member)->param(2, Xid(secondary_key), undefined);
+	it->def_method(Xid2(inherit), &Class::inherit_strict);
+	it->def_method(Xid2(overwrite), &Class::overwrite);
+	it->def_method(Xid2(s_new), &Class::s_new);
+	it->def_method(Xid2(inherited_classes), &Class::inherited_classes);
+	it->def_method(Xid2(is_inherited), &Any::is_inherited);
+	it->def_method(Xid2(find_near_member), (IDPtr (Class::*)(const IDPtr&, const AnyPtr&))&Class::find_near_member)->param(2, Xid2(secondary_key), undefined);
 }
 
 XTAL_BIND2(Class){
@@ -758,7 +730,7 @@ XTAL_PREBIND(ClassInheritedClassesIter){
 }
 
 XTAL_BIND(ClassInheritedClassesIter){
-	it->def_method(Xid(block_next), &ClassInheritedClassesIter::block_next);
+	it->def_method(Xid2(block_next), &ClassInheritedClassesIter::block_next);
 }
 
 
@@ -768,7 +740,7 @@ XTAL_PREBIND(Lib){
 }
 
 XTAL_BIND(Lib){
-	it->def_method(Xid(append_load_path), &Lib::append_load_path);
+	it->def_method(Xid2(append_load_path), &Lib::append_load_path);
 }
 
 
@@ -782,9 +754,9 @@ XTAL_PREBIND(ZipIter){
 }
 
 XTAL_BIND(ZipIter){
-	it->def_method(Xid(block_first), &ZipIter::block_first);
-	it->def_method(Xid(block_next), &ZipIter::block_next);
-	it->def_method(Xid(block_break), &ZipIter::block_break);
+	it->def_method(Xid2(block_first), &ZipIter::block_first);
+	it->def_method(Xid2(block_next), &ZipIter::block_next);
+	it->def_method(Xid2(block_break), &ZipIter::block_break);
 }
 
 #ifndef XTAL_NO_THREAD
@@ -794,10 +766,10 @@ XTAL_PREBIND(Thread){
 }
 
 XTAL_BIND(Thread){
-	it->def_method(Xid(start), &Thread::start);
-	it->def_method(Xid(join), &Thread::join);
-	it->def_fun(Xid(yield), &yield_thread);
-	it->def_fun(Xid(sleep), &sleep_thread);
+	it->def_method(Xid2(start), &Thread::start);
+	it->def_method(Xid2(join), &Thread::join);
+	it->def_fun(Xid2(yield), &yield_thread);
+	it->def_fun(Xid2(sleep), &sleep_thread);
 }
 
 XTAL_PREBIND(Mutex){
@@ -805,8 +777,8 @@ XTAL_PREBIND(Mutex){
 }
 
 XTAL_BIND(Mutex){
-	it->def_method(Xid(lock), &Mutex::lock);
-	it->def_method(Xid(unlock), &Mutex::unlock);
+	it->def_method(Xid2(lock), &Mutex::lock);
+	it->def_method(Xid2(unlock), &Mutex::unlock);
 }
 
 XTAL_BIND2(Mutex){
@@ -848,9 +820,9 @@ XTAL_PREBIND(Format){
 }
 
 XTAL_BIND(Format){
-	it->def_method(Xid(to_s), &Format::to_s);
-	it->def_method(Xid(serial_save), &Format::serial_save);
-	it->def_method(Xid(serial_load), &Format::serial_load);
+	it->def_method(Xid2(to_s), &Format::to_s);
+	it->def_method(Xid2(serial_save), &Format::serial_save);
+	it->def_method(Xid2(serial_load), &Format::serial_load);
 }
 
 XTAL_PREBIND(Text){
@@ -858,9 +830,9 @@ XTAL_PREBIND(Text){
 }
 
 XTAL_BIND(Text){
-	it->def_method(Xid(to_s), &Text::to_s);
-	it->def_method(Xid(serial_save), &Text::serial_save);
-	it->def_method(Xid(serial_load), &Text::serial_load);
+	it->def_method(Xid2(to_s), &Text::to_s);
+	it->def_method(Xid2(serial_save), &Text::serial_save);
+	it->def_method(Xid2(serial_load), &Text::serial_load);
 }
 
 XTAL_PREBIND(NativeMethod){
@@ -872,79 +844,79 @@ XTAL_PREBIND(NativeFun){
 }
 
 XTAL_BIND(debug::HookInfo){
-	it->def_method(Xid(clone), &debug::HookInfo::clone);
-	it->def_method(Xid(kind), &debug::HookInfo::kind);
-	it->def_method(Xid(line), &debug::HookInfo::line);
-	it->def_method(Xid(fun_name), &debug::HookInfo::fun_name);
-	it->def_method(Xid(file_name), &debug::HookInfo::file_name);
-	it->def_method(Xid(exception), &debug::HookInfo::exception);
-	it->def_method(Xid(variables_frame), &debug::HookInfo::variables_frame);
+	it->def_method(Xid2(clone), &debug::HookInfo::clone);
+	it->def_method(Xid2(kind), &debug::HookInfo::kind);
+	it->def_method(Xid2(line), &debug::HookInfo::line);
+	it->def_method(Xid2(fun_name), &debug::HookInfo::fun_name);
+	it->def_method(Xid2(file_name), &debug::HookInfo::file_name);
+	it->def_method(Xid2(exception), &debug::HookInfo::exception);
+	it->def_method(Xid2(variables_frame), &debug::HookInfo::variables_frame);
 
-	it->def_method(Xid(set_kind), &debug::HookInfo::set_kind);
-	it->def_method(Xid(set_line), &debug::HookInfo::line);
-	it->def_method(Xid(set_fun_name), &debug::HookInfo::set_fun_name);
-	it->def_method(Xid(set_file_name), &debug::HookInfo::set_file_name);
-	it->def_method(Xid(set_exception), &debug::HookInfo::set_exception);
-	it->def_method(Xid(set_variables_frame), &debug::HookInfo::set_variables_frame);
+	it->def_method(Xid2(set_kind), &debug::HookInfo::set_kind);
+	it->def_method(Xid2(set_line), &debug::HookInfo::line);
+	it->def_method(Xid2(set_fun_name), &debug::HookInfo::set_fun_name);
+	it->def_method(Xid2(set_file_name), &debug::HookInfo::set_file_name);
+	it->def_method(Xid2(set_exception), &debug::HookInfo::set_exception);
+	it->def_method(Xid2(set_variables_frame), &debug::HookInfo::set_variables_frame);
 
-	it->def(Xid(LINE), BREAKPOINT_LINE);
-	it->def(Xid(CALL), BREAKPOINT_CALL);
-	it->def(Xid(RETURN), BREAKPOINT_RETURN);
-	it->def(Xid(THROW), BREAKPOINT_THROW);
+	it->def(Xid2(LINE), BREAKPOINT_LINE);
+	it->def(Xid2(CALL), BREAKPOINT_CALL);
+	it->def(Xid2(RETURN), BREAKPOINT_RETURN);
+	it->def(Xid2(THROW), BREAKPOINT_THROW);
 }
 
 XTAL_BIND(Stream){
-	it->def_method(Xid(get_s), &Stream::get_s);
-	it->def_method(Xid(get_s_all), &Stream::get_s_all);
-	it->def_method(Xid(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
+	it->def_method(Xid2(get_s), &Stream::get_s);
+	it->def_method(Xid2(get_s_all), &Stream::get_s_all);
+	it->def_method(Xid2(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
 
-	it->def_method(Xid(print), &Stream::print);
-	it->def_method(Xid(println), &Stream::println);
+	it->def_method(Xid2(print), &Stream::print);
+	it->def_method(Xid2(println), &Stream::println);
 
-	it->def_method(Xid(seek), &Stream::seek);
-	it->def_method(Xid(tell), &Stream::tell);
-	it->def_method(Xid(pour), &Stream::pour);
-	it->def_method(Xid(pour_all), &Stream::pour_all);
-	it->def_method(Xid(size), &Stream::size);
-	it->def_method(Xid(close), &Stream::close);
+	it->def_method(Xid2(seek), &Stream::seek);
+	it->def_method(Xid2(tell), &Stream::tell);
+	it->def_method(Xid2(pour), &Stream::pour);
+	it->def_method(Xid2(pour_all), &Stream::pour_all);
+	it->def_method(Xid2(size), &Stream::size);
+	it->def_method(Xid2(close), &Stream::close);
 
-	it->def_method(Xid(eos), &Stream::eos);
+	it->def_method(Xid2(eos), &Stream::eos);
 
-	it->def_method(Xid(serialize), &Stream::serialize);
-	it->def_method(Xid(deserialize), &Stream::deserialize);
+	it->def_method(Xid2(serialize), &Stream::serialize);
+	it->def_method(Xid2(deserialize), &Stream::deserialize);
 
-	it->def_method(Xid(block_first), &Stream::block_first);
-	it->def_method(Xid(block_next), &Stream::block_next);
-	it->def_method(Xid(block_break), &Stream::block_break);
+	it->def_method(Xid2(block_first), &Stream::block_first);
+	it->def_method(Xid2(block_next), &Stream::block_next);
+	it->def_method(Xid2(block_break), &Stream::block_break);
 
-	it->def_method(Xid(put_i8), &Stream::put_i8);
-	it->def_method(Xid(put_u8), &Stream::put_u8);
+	it->def_method(Xid2(put_i8), &Stream::put_i8);
+	it->def_method(Xid2(put_u8), &Stream::put_u8);
 
-	it->def_method(Xid(put_i16be), &Stream::put_i16be);
-	it->def_method(Xid(put_i32be), &Stream::put_i32be);
-	it->def_method(Xid(put_u16be), &Stream::put_u16be);
-	it->def_method(Xid(put_u32be), &Stream::put_u32be);
-	it->def_method(Xid(put_f32be), &Stream::put_f32be);
+	it->def_method(Xid2(put_i16be), &Stream::put_i16be);
+	it->def_method(Xid2(put_i32be), &Stream::put_i32be);
+	it->def_method(Xid2(put_u16be), &Stream::put_u16be);
+	it->def_method(Xid2(put_u32be), &Stream::put_u32be);
+	it->def_method(Xid2(put_f32be), &Stream::put_f32be);
 
-	it->def_method(Xid(put_i16le), &Stream::put_i16le);
-	it->def_method(Xid(put_i32le), &Stream::put_i32le);
-	it->def_method(Xid(put_u16le), &Stream::put_u16le);
-	it->def_method(Xid(put_u32le), &Stream::put_u32le);
-	it->def_method(Xid(put_f32le), &Stream::put_f32le);
+	it->def_method(Xid2(put_i16le), &Stream::put_i16le);
+	it->def_method(Xid2(put_i32le), &Stream::put_i32le);
+	it->def_method(Xid2(put_u16le), &Stream::put_u16le);
+	it->def_method(Xid2(put_u32le), &Stream::put_u32le);
+	it->def_method(Xid2(put_f32le), &Stream::put_f32le);
 
-	it->def_method(Xid(get_i8), &Stream::get_i8);
+	it->def_method(Xid2(get_i8), &Stream::get_i8);
 
-	it->def_method(Xid(get_i16be), &Stream::get_i16be);
-	it->def_method(Xid(get_i32be), &Stream::get_i32be);
-	it->def_method(Xid(get_u16be), &Stream::get_u16be);
-	it->def_method(Xid(get_u32be), &Stream::get_u32be);
-	it->def_method(Xid(get_f32be), &Stream::get_f32be);
+	it->def_method(Xid2(get_i16be), &Stream::get_i16be);
+	it->def_method(Xid2(get_i32be), &Stream::get_i32be);
+	it->def_method(Xid2(get_u16be), &Stream::get_u16be);
+	it->def_method(Xid2(get_u32be), &Stream::get_u32be);
+	it->def_method(Xid2(get_f32be), &Stream::get_f32be);
 
-	it->def_method(Xid(get_i16le), &Stream::get_i16le);
-	it->def_method(Xid(get_i32le), &Stream::get_i32le);
-	it->def_method(Xid(get_u16le), &Stream::get_u16le);
-	it->def_method(Xid(get_u32le), &Stream::get_u32le);
-	it->def_method(Xid(get_f32le), &Stream::get_f32le);
+	it->def_method(Xid2(get_i16le), &Stream::get_i16le);
+	it->def_method(Xid2(get_i32le), &Stream::get_i32le);
+	it->def_method(Xid2(get_u16le), &Stream::get_u16le);
+	it->def_method(Xid2(get_u32le), &Stream::get_u32le);
+	it->def_method(Xid2(get_f32le), &Stream::get_f32le);
 }
 
 XTAL_BIND2(Stream){
@@ -1030,8 +1002,8 @@ XTAL_PREBIND(MemoryStream){
 }
 
 XTAL_BIND(MemoryStream){
-	it->def_method(Xid(to_s), &MemoryStream::to_s);
-	it->def_method(Xid(resize), &MemoryStream::resize);
+	it->def_method(Xid2(to_s), &MemoryStream::to_s);
+	it->def_method(Xid2(resize), &MemoryStream::resize);
 }
 
 XTAL_PREBIND(StringStream){
@@ -1040,7 +1012,7 @@ XTAL_PREBIND(StringStream){
 }
 
 XTAL_BIND(StringStream){
-	it->def_method(Xid(to_s), &StringStream::to_s);
+	it->def_method(Xid2(to_s), &StringStream::to_s);
 }
 
 XTAL_PREBIND(FileStream){
@@ -1052,18 +1024,18 @@ XTAL_BIND(FileStream){
 }
 
 XTAL_BIND(debug::Debug){
-	it->def_fun(Xid(enable), &debug::enable);
-	it->def_fun(Xid(disable), &debug::disable);
-	it->def_fun(Xid(is_enabled), &debug::is_enabled);
+	it->def_fun(Xid2(enable), &debug::enable);
+	it->def_fun(Xid2(disable), &debug::disable);
+	it->def_fun(Xid2(is_enabled), &debug::is_enabled);
 
-	it->def_fun(Xid(breakpoint_hook), &debug::breakpoint_hook);
-	it->def_fun(Xid(call_hook), &debug::call_hook);
-	it->def_fun(Xid(return_hook), &debug::return_hook);
-	it->def_fun(Xid(throw_hook), &debug::throw_hook);
-	it->def_fun(Xid(set_breakpoint_hook), &debug::set_breakpoint_hook);
-	it->def_fun(Xid(set_call_hook), &debug::set_call_hook);
-	it->def_fun(Xid(set_return_hook), &debug::set_return_hook);
-	it->def_fun(Xid(set_throw_hook), &debug::set_throw_hook);
+	it->def_fun(Xid2(breakpoint_hook), &debug::breakpoint_hook);
+	it->def_fun(Xid2(call_hook), &debug::call_hook);
+	it->def_fun(Xid2(return_hook), &debug::return_hook);
+	it->def_fun(Xid2(throw_hook), &debug::throw_hook);
+	it->def_fun(Xid2(set_breakpoint_hook), &debug::set_breakpoint_hook);
+	it->def_fun(Xid2(set_call_hook), &debug::set_call_hook);
+	it->def_fun(Xid2(set_return_hook), &debug::set_return_hook);
+	it->def_fun(Xid2(set_throw_hook), &debug::set_throw_hook);
 
 }
 
@@ -1122,8 +1094,8 @@ XTAL_PREBIND(Iterator){
 }
 
 XTAL_BIND(Iterator){
-	it->def_fun(Xid(each), &Iterator_each);
-	it->def_fun(Xid(block_first), &Iterator_block_first);
+	it->def_fun(Xid2(each), &Iterator_each);
+	it->def_fun(Xid2(block_first), &Iterator_block_first);
 }
 
 XTAL_BIND2(Iterator){
@@ -1505,15 +1477,15 @@ Iterator::with_prev: method fiber{
 }
 
 XTAL_PREBIND(Exception){
-	it->def_ctor1<Exception, const StringPtr&>()->param(1, Xid(message), empty_string);
+	it->def_ctor1<Exception, const StringPtr&>()->param(1, Xid2(message), empty_string);
 }
 
 XTAL_BIND(Exception){
-	it->def_method(Xid(initialize), &Exception::initialize)->param(1, Xid(message), empty_string);
-	it->def_method(Xid(to_s), &Exception::to_s);
-	it->def_method(Xid(message), &Exception::message);
-	it->def_method(Xid(backtrace), &Exception::backtrace);
-	it->def_method(Xid(append_backtrace), &Exception::append_backtrace);
+	it->def_method(Xid2(initialize), &Exception::initialize)->param(1, Xid2(message), empty_string);
+	it->def_method(Xid2(to_s), &Exception::to_s);
+	it->def_method(Xid2(message), &Exception::message);
+	it->def_method(Xid2(backtrace), &Exception::backtrace);
+	it->def_method(Xid2(append_backtrace), &Exception::append_backtrace);
 }
 
 XTAL_PREBIND(StandardError){
@@ -1591,104 +1563,383 @@ XTAL_PREBIND(filesystem::Entries){
 }
 
 XTAL_BIND(filesystem::Entries){
-	it->def_method(Xid(block_next), &filesystem::Entries::block_next);
-	it->def_method(Xid(block_break), &filesystem::Entries::block_break);
+	it->def_method(Xid2(block_next), &filesystem::Entries::block_next);
+	it->def_method(Xid2(block_break), &filesystem::Entries::block_break);
 }
 
 XTAL_BIND(filesystem::Filesystem){
-	it->def_fun(Xid(open), &filesystem::open);
-	it->def_fun(Xid(entries), &filesystem::entries);
-	it->def_fun(Xid(is_directory), &filesystem::is_directory);
+	it->def_fun(Xid2(open), &filesystem::open);
+	it->def_fun(Xid2(entries), &filesystem::entries);
+	it->def_fun(Xid2(is_directory), &filesystem::is_directory);
+}
+
+namespace{
+
+AnyPtr abs(const AnyPtr& a){
+	switch(type(a)){XTAL_DEFAULT;
+		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? AnyPtr(-ivalue(a)) : a; }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? AnyPtr(-fvalue(a)) : a; }
+	}
+	return 0;
+}
+
+AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? b : a;	
+	}
+
+	if(abtype==1){
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
+		return ab.a < ab.b ? b : a;	
+	}
+
+	return null;
+}
+
+AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? a : b;	
+	}
+
+	if(abtype==1){
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
+		return ab.a < ab.b ? a : b;	
+	}
+
+	return null;
+}
+
+class Random{
+public:
+
+	Random(int_t seed=1){ 
+		set_seed(seed); 
+	}
+	
+	void set_seed(int_t seed){
+		idum_=seed==0 ? 1 : seed; 
+	} 
+
+	float_t operator ()(){
+		int_t idum = idum_;
+		int_t k = idum/IQ;
+		idum = IA*(idum-k*IQ)-IR*k;
+		idum &= IM;
+		idum_ = idum;
+		return ((float_t)1.0/IM)*idum;
+	}
+	
+	float_t operator ()(float_t max){
+		return (*this)()*max; 
+	}
+
+	float_t operator ()(float_t min, float_t max){
+		return (*this)()*(max-min)+min; 
+	}	
+
+private:
+	enum{ IA=16807,IM=2147483647,IQ=127773,IR=2836 };
+	int_t idum_;
+};
+	
+Random random_instance;
+
+float_t random(){
+	return random_instance();
+}
+
+float_t random_range(float_t in, float_t ax){
+	return random_instance(in, ax);
+}
+
+}
+
+template<class T>
+struct TMath{
+	static void bind(const ClassPtr& math, float*){
+		using namespace std;
+		
+		math->def_fun(Xid2(acos), (float (*)(float))&acosf);
+		math->def_fun(Xid2(asin), (float (*)(float))&asinf);
+		math->def_fun(Xid2(atan), (float (*)(float))&atanf);
+		math->def_fun(Xid2(atan2), (float (*)(float, float))&atan2f);
+		math->def_fun(Xid2(ceil), (float (*)(float))&ceilf);
+		math->def_fun(Xid2(cos), (float (*)(float))&cosf);
+		math->def_fun(Xid2(exp), (float (*)(float))&expf);
+		math->def_fun(Xid2(floor), (float (*)(float))&floorf);
+		math->def_fun(Xid2(log), (float (*)(float))&logf);
+		math->def_fun(Xid2(pow), (float (*)(float, float))&powf);
+		math->def_fun(Xid2(sin), (float (*)(float))&sinf);
+		math->def_fun(Xid2(sqrt), (float (*)(float))&sqrtf);
+		math->def_fun(Xid2(tan), (float (*)(float))&tanf);
+		math->def(Xid2(PI), (float_t)3.14159265358979);
+		math->def(Xid2(E), (float_t)2.71828182845905);
+	}
+
+	static void bind(const ClassPtr& math, double*){
+		using namespace std;
+
+		math->def_fun(Xid2(acos), (double (*)(double))&acos);
+		math->def_fun(Xid2(asin), (double (*)(double))&asin);
+		math->def_fun(Xid2(atan), (double (*)(double))&atan);
+		math->def_fun(Xid2(atan2), (double (*)(double, double))&atan2);
+		math->def_fun(Xid2(ceil), (double (*)(double))&ceil);
+		math->def_fun(Xid2(cos), (double (*)(double))&cos);
+		math->def_fun(Xid2(exp), (double (*)(double))&exp);
+		math->def_fun(Xid2(floor), (double (*)(double))&floor);
+		math->def_fun(Xid2(log), (double (*)(double))&log);
+		math->def_fun(Xid2(pow), (double (*)(double, double))&pow);
+		math->def_fun(Xid2(sin), (double (*)(double))&sin);
+		math->def_fun(Xid2(sqrt), (double (*)(double))&sqrt);
+		math->def_fun(Xid2(tan), (double (*)(double))&tan);
+		math->def(Xid2(PI), (float_t)3.14159265358979);
+		math->def(Xid2(E), (float_t)2.71828182845905);
+	}
+};
+
+class Math;
+
+XTAL_BIND(Math){
+	TMath<float_t>::bind(it, (float_t*)0);
+	it->def_fun(Xid2(abs), &abs);
+	it->def_fun(Xid2(max), &max_);
+	it->def_fun(Xid2(min), &min_);
+	it->def_fun(Xid2(random), &random);
+	it->def_fun(Xid2(random_range), &random_range);
+}
+
+namespace xpeg{
+
+class XpegOperator;
+
+XTAL_PREBIND(XpegOperator){
+	it->unset_native();
+}
+
+XTAL_BIND(XpegOperator){
+	it->def_method(Xid2(op_div), &more_shortest_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_div), &more_shortest_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_mod), &more_normal_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_mod), &more_normal_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_mul), &more_greed_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_com), &inv);
+	
+	it->def_method(Xid2(op_or), &select, cpp_class<Element>());
+	it->def_method(Xid2(op_or), &select, cpp_class<String>());
+	it->def_method(Xid2(op_or), &select, cpp_class<ChRange>());
+	it->def_method(Xid2(op_or), &select, cpp_class<Fun>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<Element>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<String>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<ChRange>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<Fun>());
+}
+
+XTAL_BIND(xpeg::Element){
+	it->def_method(Xid2(set_body), &set_body);
+}
+
+XTAL_PREBIND(xpeg::TreeNode){
+	it->set_final();
+	it->inherit(cpp_class<Array>());
+}
+
+XTAL_BIND(xpeg::TreeNode){
+	it->def_method(Xid2(tag), &TreeNode::tag);
+	it->def_method(Xid2(lineno), &TreeNode::lineno);
+	it->def_method(Xid2(set_tag), &TreeNode::set_tag);
+	it->def_method(Xid2(set_lineno), &TreeNode::set_lineno);
+	it->def_method(Xid2(op_at), &TreeNode::at);
+	it->def_method(Xid2(op_set_at), &TreeNode::set_at);
+}
+
+XTAL_PREBIND(xpeg::Executor){
+	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid2(stream_or_iterator), empty_string));
+}
+
+XTAL_BIND(xpeg::Executor){
+	it->def_method(Xid2(reset), &Executor::reset);
+	it->def_method(Xid2(parse), &Executor::parse);
+	it->def_method(Xid2(match), &Executor::match);
+
+	it->def_method(Xid2(captures), &Executor::captures);
+	it->def_method(Xid2(captures_values), &Executor::captures_values);		
+	it->def_method(Xid2(op_at), &Executor::at, cpp_class<String>());
+	it->def_method(Xid2(op_call), &Executor::call, cpp_class<String>());
+	it->def_method(Xid2(prefix), &Executor::prefix);
+	it->def_method(Xid2(suffix), &Executor::suffix);
+	it->def_method(Xid2(prefix_values), &Executor::prefix_values);
+	it->def_method(Xid2(suffix_values), &Executor::suffix_values);
+	it->def_method(Xid2(errors), &Executor::errors);
+	it->def_method(Xid2(read), &Executor::read);
+	it->def_method(Xid2(peek), &Executor::peek)->param(1, Xid2(n), 0);
+	it->def_method(Xid2(tree), &Executor::tree);
+	it->def_method(Xid2(bos), &Executor::bos);
+	it->def_method(Xid2(eos), &Executor::eos);
+}
+
+class Xpeg;
+
+XTAL_BIND(Xpeg){
+	it->unset_native();
+
+	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
+	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
+	AnyPtr eos = xnew<Element>(Element::TYPE_EOS);
+	AnyPtr bol = xnew<Element>(Element::TYPE_BOL);
+	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
+	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
+	
+	AnyPtr degit = elem(xnew<ChRange>(Xs("0"), Xs("9")));
+	AnyPtr lalpha = elem(xnew<ChRange>(Xs("a"), Xs("z")));
+	AnyPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
+	AnyPtr alpha = select(lalpha, ualpha);
+	AnyPtr word = select(select(alpha, degit), Xs("_"));
+	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>((char_t)1), xnew<ID>((char_t)127)));
+
+	it->def(Xid2(any), any);
+	it->def(Xid2(bos), bos);
+	it->def(Xid2(eos), eos);
+	it->def(Xid2(bol), bol);
+	it->def(Xid2(eol), eol);
+	it->def(Xid2(empty), empty);
+	it->def(Xid2(degit), degit);
+	it->def(Xid2(lalpha), lalpha);
+	it->def(Xid2(ualpha), ualpha);
+	it->def(Xid2(alpha), alpha);
+	it->def(Xid2(word), word);
+	it->def(Xid2(ascii), ascii);
+	
+	it->def_fun(Xid2(set), &set);
+	it->def_fun(Xid2(back_ref), &back_ref);
+	it->def_fun(Xid2(lookahead), &lookahead);
+	it->def_fun(Xid2(lookbehind), &lookbehind);
+	it->def_fun(Xid2(leaf), &leaf);
+	it->def_fun(Xid2(leafs), &leafs);
+	it->def_fun(Xid2(node), &node_vm);
+	it->def_fun(Xid2(splice_node), &splice_node_vm);
+	it->def_fun(Xid2(cap), &cap_vm);
+	it->def_fun(Xid2(bound), &bound);
+	it->def_fun(Xid2(pred), &pred);
+	it->def_fun(Xid2(error), &error);
+
+	it->def_fun(Xid2(decl), &decl);
+
+	it->def(Xid2(Executor), cpp_class<Executor>());
+}
+
 }
 
 void bind(){
 	const ClassPtr& it = builtin();
 
-	it->def(Xid(Any), cpp_class<Any>());
-	it->def(Xid(String), cpp_class<String>());
-	it->def(Xid(Int), cpp_class<Int>());
-	it->def(Xid(Float), cpp_class<Float>());
-	it->def(Xid(Null), cpp_class<Null>());
-	it->def(Xid(Undefined), cpp_class<Undefined>());
-	it->def(Xid(Bool), cpp_class<Bool>());
-	it->def(Xid(IntRange), cpp_class<IntRange>());
-	it->def(Xid(FloatRange), cpp_class<FloatRange>());
-	it->def(Xid(ChRange), cpp_class<ChRange>());
+	it->def(Xid2(Any), cpp_class<Any>());
+	it->def(Xid2(String), cpp_class<String>());
+	it->def(Xid2(Int), cpp_class<Int>());
+	it->def(Xid2(Float), cpp_class<Float>());
+	it->def(Xid2(Null), cpp_class<Null>());
+	it->def(Xid2(Undefined), cpp_class<Undefined>());
+	it->def(Xid2(Bool), cpp_class<Bool>());
+	it->def(Xid2(IntRange), cpp_class<IntRange>());
+	it->def(Xid2(FloatRange), cpp_class<FloatRange>());
+	it->def(Xid2(ChRange), cpp_class<ChRange>());
 
-	it->def(Xid(Exception), cpp_class<Exception>());
-	it->def(Xid(StandardError), cpp_class<StandardError>());
-	it->def(Xid(RuntimeError), cpp_class<RuntimeError>());
-	it->def(Xid(IOError), cpp_class<IOError>());
-	it->def(Xid(EOSError), cpp_class<EOSError>());
-	it->def(Xid(LogicError), cpp_class<LogicError>());
-	it->def(Xid(CastError), cpp_class<CastError>());
-	it->def(Xid(ArgumentError), cpp_class<ArgumentError>());
-	it->def(Xid(YieldError), cpp_class<YieldError>());
-	it->def(Xid(InstanceVariableError), cpp_class<InstanceVariableError>());
-	it->def(Xid(UnsupportedError), cpp_class<UnsupportedError>());
-	it->def(Xid(RedefinedError), cpp_class<RedefinedError>());
-	it->def(Xid(AccessibilityError), cpp_class<AccessibilityError>());
-	it->def(Xid(AssertionFailed), cpp_class<AssertionFailed>());
-	it->def(Xid(CompileError), cpp_class<CompileError>());
+	it->def(Xid2(Exception), cpp_class<Exception>());
+	it->def(Xid2(StandardError), cpp_class<StandardError>());
+	it->def(Xid2(RuntimeError), cpp_class<RuntimeError>());
+	it->def(Xid2(IOError), cpp_class<IOError>());
+	it->def(Xid2(EOSError), cpp_class<EOSError>());
+	it->def(Xid2(LogicError), cpp_class<LogicError>());
+	it->def(Xid2(CastError), cpp_class<CastError>());
+	it->def(Xid2(ArgumentError), cpp_class<ArgumentError>());
+	it->def(Xid2(YieldError), cpp_class<YieldError>());
+	it->def(Xid2(InstanceVariableError), cpp_class<InstanceVariableError>());
+	it->def(Xid2(UnsupportedError), cpp_class<UnsupportedError>());
+	it->def(Xid2(RedefinedError), cpp_class<RedefinedError>());
+	it->def(Xid2(AccessibilityError), cpp_class<AccessibilityError>());
+	it->def(Xid2(AssertionFailed), cpp_class<AssertionFailed>());
+	it->def(Xid2(CompileError), cpp_class<CompileError>());
 
-	it->def(Xid(Array), cpp_class<Array>());
-	it->def(Xid(Values), cpp_class<Values>());
-	it->def(Xid(Map), cpp_class<Map>());
-	it->def(Xid(Set), cpp_class<Set>());
+	it->def(Xid2(Array), cpp_class<Array>());
+	it->def(Xid2(Values), cpp_class<Values>());
+	it->def(Xid2(Map), cpp_class<Map>());
+	it->def(Xid2(Set), cpp_class<Set>());
 
-	it->def(Xid(zip), cpp_class<ZipIter>());
+	it->def(Xid2(zip), cpp_class<ZipIter>());
 
-	it->def(Xid(Arguments), cpp_class<Arguments>());
-	it->def(Xid(Fun), cpp_class<Fun>());
-	it->def(Xid(Fiber), cpp_class<Fiber>());
-	it->def(Xid(Code), cpp_class<Code>());
-	it->def(Xid(Frame), cpp_class<Frame>());
-	it->def(Xid(Class), cpp_class<Class>());
-	it->def(Xid(lib), lib());
+	it->def(Xid2(Arguments), cpp_class<Arguments>());
+	it->def(Xid2(Fun), cpp_class<Fun>());
+	it->def(Xid2(Fiber), cpp_class<Fiber>());
+	it->def(Xid2(Code), cpp_class<Code>());
+	it->def(Xid2(Frame), cpp_class<Frame>());
+	it->def(Xid2(Class), cpp_class<Class>());
+	it->def(Xid2(lib), lib());
 
-	it->def(Xid(NativeMethod), cpp_class<NativeMethod>());
+	it->def(Xid2(NativeMethod), cpp_class<NativeMethod>());
 
-	it->def(Xid(Lib), cpp_class<Lib>());
+	it->def(Xid2(Lib), cpp_class<Lib>());
 
 #ifndef XTAL_NO_THREAD
-	it->def(Xid(Thread), cpp_class<Thread>());
-	it->def(Xid(Mutex), cpp_class<Mutex>());
+	it->def(Xid2(Thread), cpp_class<Thread>());
+	it->def(Xid2(Mutex), cpp_class<Mutex>());
 #endif
 
-	it->def(Xid(Stream), cpp_class<Stream>());
-	it->def(Xid(MemoryStream), cpp_class<MemoryStream>());
-	it->def(Xid(StringStream), cpp_class<StringStream>());
-	it->def(Xid(FileStream), cpp_class<FileStream>());
+	it->def(Xid2(Stream), cpp_class<Stream>());
+	it->def(Xid2(MemoryStream), cpp_class<MemoryStream>());
+	it->def(Xid2(StringStream), cpp_class<StringStream>());
+	it->def(Xid2(FileStream), cpp_class<FileStream>());
 
-	it->def(Xid(Format), cpp_class<Format>());
-	it->def(Xid(Text), cpp_class<Text>());
+	it->def(Xid2(Format), cpp_class<Format>());
+	it->def(Xid2(Text), cpp_class<Text>());
 
-	it->def_fun(Xid(assign_text_map), &assign_text_map);
-	it->def_fun(Xid(append_text_map), &append_text_map);
-	it->def_fun(Xid(format), (FormatPtr (*)(const StringPtr&))&format);
-	it->def_fun(Xid(text), (TextPtr (*)(const StringPtr&))&text);
+	it->def_fun(Xid2(assign_text_map), &assign_text_map);
+	it->def_fun(Xid2(append_text_map), &append_text_map);
+	it->def_fun(Xid2(format), (FormatPtr (*)(const StringPtr&))&format);
+	it->def_fun(Xid2(text), (TextPtr (*)(const StringPtr&))&text);
 
-	it->def(Xid(builtin), builtin());
+	it->def(Xid2(builtin), builtin());
 
-	it->def(Xid(Iterator), cpp_class<Iterator>());
-	it->def(Xid(Iterable), cpp_class<Iterable>());
+	it->def(Xid2(Iterator), cpp_class<Iterator>());
+	it->def(Xid2(Iterable), cpp_class<Iterable>());
 
-	it->def_fun(Xid(current_context), &VMachine_current_context);
+	it->def_fun(Xid2(current_context), &VMachine_current_context);
 	
 #ifndef XTAL_NO_PARSER
-	it->def_fun(Xid(compile_file), &compile_file);
-	it->def_fun(Xid(compile), &compile);
+	it->def_fun(Xid2(compile_file), &compile_file);
+	it->def_fun(Xid2(compile), &compile);
 #endif
 
-	it->def_fun(Xid(lw_gc), &::xtal::lw_gc);
-	it->def_fun(Xid(gc), &::xtal::gc);
-	it->def_fun(Xid(full_gc), &::xtal::full_gc);
-	it->def_fun(Xid(disable_gc), &::xtal::disable_gc);
-	it->def_fun(Xid(enable_gc), &::xtal::enable_gc);
-	it->def_fun(Xid(set_gc_stress), &::xtal::enable_gc);
-	//it->def_fun(Xid(clock), &clock_);
-	it->def_fun(Xid(open), &xtal::open)->param(2, Xid(mode), Xid(r));
-	it->def_fun(Xid(interned_strings), &interned_strings);
+	it->def_fun(Xid2(lw_gc), &::xtal::lw_gc);
+	it->def_fun(Xid2(gc), &::xtal::gc);
+	it->def_fun(Xid2(full_gc), &::xtal::full_gc);
+	it->def_fun(Xid2(disable_gc), &::xtal::disable_gc);
+	it->def_fun(Xid2(enable_gc), &::xtal::enable_gc);
+	it->def_fun(Xid2(set_gc_stress), &::xtal::enable_gc);
+	//it->def_fun(Xid2(clock), &clock_);
+	it->def_fun(Xid2(open), &xtal::open)->param(2, Xid2(mode), Xid2(r));
+	it->def_fun(Xid2(interned_strings), &interned_strings);
+
+	builtin()->def(Xid2(math), cpp_class<Math>());
+
+	{
+		using namespace xpeg;
+		ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
+		for(int i=0; i<4; ++i){
+			classes[i]->inherit(cpp_class<XpegOperator>());
+		}
+
+		builtin()->def(Xid2(xpeg), cpp_class<Xpeg>());
+	}
 }
 
 void exec_script(){

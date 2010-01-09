@@ -95,10 +95,6 @@ public:
 	static void operator delete(void* p, size_t size){
 		if(p){ static_cast<RefCountingBase*>(p)->value_.set_object_size(size); }
 	}
-	
-	static void* operator new(size_t, void* p){ return p; }
-	static void operator delete(void*, void*){}
-
 };
 
 /**

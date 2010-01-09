@@ -20,10 +20,10 @@ void Exception::append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& f
 StringPtr Exception::to_s(){
 	MemoryStreamPtr mm = xnew<MemoryStream>();
 	mm->put_s(get_class()->object_name());
-	mm->put_s(": ");
+	mm->put_s(Xs(": "));
 	mm->put_s(message_->to_s());
-	mm->put_s("\n");
-	mm->put_s(backtrace_->join("\n"));
+	mm->put_s(Xs("\n"));
+	mm->put_s(backtrace_->join(Xs("\n")));
 	return mm->to_s();
 }
 

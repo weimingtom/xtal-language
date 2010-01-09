@@ -32,6 +32,13 @@ CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
 
 ////////////////////////////////////////////////////////////////////////
 
+const AnyPtr& ptr_cast(const AnyPtr& a, CppClassSymbolData* key){
+	if(a->is(key)){
+		return a;
+	}
+	return null;
+}
+
 const char_t* CastHelper<const char_t*>::unchecked_cast(const AnyPtr& a){ 
 	return ptr_cast<String>(a)->c_str(); 
 }

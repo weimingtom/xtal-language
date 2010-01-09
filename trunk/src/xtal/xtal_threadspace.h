@@ -59,7 +59,7 @@ public:
 	}
 
 	void unregister_vmachine(){
-		set_vmachine(null);
+		set_vmachine(nul<VMachine>());
 	}
 
 	void xlock(){

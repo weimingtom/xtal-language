@@ -118,9 +118,6 @@ public:
 
 namespace xtal{
 
-void initialize_math();
-void initialize_xpeg();
-
 void bind();
 void exec_script();
 
@@ -360,9 +357,6 @@ void Environment::initialize(const Setting& setting){
 
 	builtin_->def(Xid(debug), cpp_class<debug::Debug>());
 
-	initialize_math();
-	initialize_xpeg();
-
 	enable_gc();
 	exec_script();
 
@@ -573,11 +567,11 @@ const IDPtr& intern(const char_t* str, uint_t data_size){
 }
 
 const IDPtr& intern(const StringLiteral& str){
-	return intern(str, str.size(), string_hashcode(str, str.size()), true);
+	return intern(str.str(), str.size(), string_hashcode(str.str(), str.size()), true);
 }
 
 const IDPtr& intern(const StringLiteral2& str){
-	return intern(str, str.size(), str.hashcode(), true);
+	return intern(str.str(), str.size(), str.hashcode(), true);
 }
 
 AnyPtr interned_strings(){
@@ -673,7 +667,7 @@ CodePtr compile_stream(const StreamPtr& stream){
 		}
 		else{
 			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1002"), cb.errors()->to_a()));
-			return null;
+			return nul<Code>();
 		}
 	}
 
@@ -693,11 +687,11 @@ CodePtr compile_file(const StringPtr& file_name){
 		else{
 			fs->close();
 			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1016")->call(Named(Xid(name), file_name)), cb.errors()->to_a()));
-			return null;
+			return nul<Code>();
 		}
 	}
 	else{
-		return null;
+		return nul<Code>();
 	}
 
 	full_gc();
@@ -742,7 +736,7 @@ CodePtr require_source(const StringPtr& name){
 			XTAL_CATCH_EXCEPT(e){
 				if(e->is(cpp_class<CompileError>())){
 					XTAL_SET_EXCEPT(e);
-					return null;
+					return nul<Code>();
 				}
 			}
 
@@ -753,7 +747,7 @@ CodePtr require_source(const StringPtr& name){
 		}
 	}
 
-	return null;
+	return nul<Code>();
 }
 
 AnyPtr require(const StringPtr& name){
@@ -774,7 +768,7 @@ CodePtr source(const char_t* src, int_t size){
 		}
 		else{
 			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1010")->call(), cb.errors()->to_a()));
-			return null;
+			return nul<Code>();
 		}
 	}
 
@@ -801,7 +795,7 @@ CodePtr compiled_source(const void* src, int_t size){
 		gc();
 		return fun;
 	}
-	return null;
+	return nul<Code>();
 }
 
 void exec_compiled_source(const void* src, int_t size){

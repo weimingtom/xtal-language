@@ -191,8 +191,7 @@ void String::init_string(const char_t* str, uint_t size){
 			*this = ID(str, size);
 		}
 		else{
-			StringData* sd = (StringData*)xmalloc(sizeof(StringData));
-			new(sd) StringData(size);
+			StringData* sd = new StringData(size);
 			string_copy(sd->buf(), str, size);
 			value_.init(TYPE_STRING, sd);
 			register_gc(sd);
@@ -206,8 +205,7 @@ String::String(const char_t* str, uint_t size, intern_t){
 		string_copy(value_.s(), str, size);
 	}
 	else{
-		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
-		new(sd) StringData(size);
+		StringData* sd = new StringData(size);
 		string_copy(sd->buf(), str, size);
 		value_.init(TYPE_STRING, sd);
 		sd->set_interned();
@@ -218,7 +216,7 @@ String::String(const char_t* str, uint_t size, intern_t){
 String::String(const StringLiteral& str, intern_t){
 	if(str.size()<SMALL_STRING_MAX){
 		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str, str.size());
+		string_copy(value_.s(), str.str(), str.size());
 	}
 	else{
 		value_.init_string_literal(TYPE_ID_LITERAL, str);
@@ -251,7 +249,7 @@ String::String(const StringLiteral& str)
 
 	if(str.size()<SMALL_STRING_MAX){
 		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str, str.size());
+		string_copy(value_.s(), str.str(), str.size());
 	}
 	else{
 		value_.init_string_literal(TYPE_STRING_LITERAL, str);
@@ -281,8 +279,7 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(&value_.s()[size1], str2, size2);
 	}
 	else{
-		StringData* sd = (StringData*)xmalloc(sizeof(StringData));
-		sd = new(sd) StringData(sz);
+		StringData* sd = new StringData(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
 		value_.init(TYPE_STRING, sd);

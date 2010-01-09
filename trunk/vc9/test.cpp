@@ -654,12 +654,12 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
-	String* p = cast<String*>(89);
+	const AnyPtr& aaa = null;
 
 	if(CodePtr code = Xsrc((
 
 	))){
-		code->call();
+		AnyPtr ret = code->call();
 	}
 
 	XTAL_CATCH_EXCEPT(e){
@@ -1368,7 +1368,69 @@ public:
 	virtual void* out_of_memory(std::size_t size){ return 0; }
 };
 
+#include <dbghelp.h>
+#include <tlhelp32.h>
+#pragma comment(lib, "Dbghelp.lib") 
+
+// 例外発生時に関数の呼び出し履歴を表示する、例外フィルタ関数
+LONG CALLBACK print_stacktrace(EXCEPTION_POINTERS *ExInfo){
+	STACKFRAME sf;
+	BOOL bResult;
+	PIMAGEHLP_SYMBOL pSym;
+	DWORD Disp;
+	std::string buffer;
+
+	//シンボル情報格納用バッファの初期化
+	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 10000);
+	pSym->SizeOfStruct = 10000;
+	pSym->MaxNameLength = 10000 - sizeof(IMAGEHLP_SYMBOL);
+
+	//スタックフレームの初期化
+	ZeroMemory(&sf, sizeof(sf));
+	sf.AddrPC.Offset = ExInfo->ContextRecord->Eip;
+	sf.AddrStack.Offset = ExInfo->ContextRecord->Esp;
+	sf.AddrFrame.Offset = ExInfo->ContextRecord->Ebp;
+	sf.AddrPC.Mode = AddrModeFlat;
+	sf.AddrStack.Mode = AddrModeFlat;
+	sf.AddrFrame.Mode = AddrModeFlat;
+
+	//シンボルハンドラの初期化
+	SymInitialize(GetCurrentProcess(), NULL, TRUE);
+
+	//スタックフレームを順に表示していく
+	for(;;) {
+		//次のスタックフレームの取得
+		bResult = StackWalk(
+			IMAGE_FILE_MACHINE_I386,
+			GetCurrentProcess(),
+			GetCurrentThread(),
+			&sf,
+			NULL, 
+			NULL,
+			SymFunctionTableAccess,
+			SymGetModuleBase,
+			NULL);
+
+		//失敗ならば、ループを抜ける
+		if(!bResult || sf.AddrFrame.Offset == 0) break;
+
+		//プログラムカウンタから関数名を取得
+		bResult = SymGetSymFromAddr(GetCurrentProcess(), sf.AddrPC.Offset, &Disp, pSym);
+		
+		if(bResult) printf("0x%08x %s() + 0x%x\n", sf.AddrPC.Offset, pSym->Name, Disp);
+		else printf("%08x, ---", sf.AddrPC.Offset);
+	}
+
+	//後処理 
+	SymCleanup(GetCurrentProcess());
+	GlobalFree(pSym);
+
+	return(EXCEPTION_EXECUTE_HANDLER);
+}
+
+
 int main(int argc, char** argv){
+	SetUnhandledExceptionFilter(&print_stacktrace);
 
 	CStdioStdStreamLib cstd_std_stream_lib;
 	WinThreadLib win_thread_lib;

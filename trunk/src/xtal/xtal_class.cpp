@@ -108,7 +108,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 }
 
 Class::Class(const StringPtr& name)
-	:Frame(null, null, 0){
+	:Frame(nul<Frame>(), nul<Code>(), 0){
 	set_object_temporary_name(name);
 	object_force_ = 0;
 	flags_ = 0;
@@ -117,7 +117,7 @@ Class::Class(const StringPtr& name)
 }
 
 Class::Class(cpp_class_t)
-	:Frame(null, null, 0){
+	:Frame(nul<Frame>(), nul<Code>(), 0){
 	set_object_temporary_name(empty_string);
 	object_force_ = 0;
 	flags_ = FLAG_NATIVE;
@@ -551,7 +551,7 @@ ValuesPtr Class::child_object_name(const AnyPtr& a){
 			}
 		}
 	}
-	return null;
+	return nul<Values>();
 }
 
 const StringPtr& Class::object_temporary_name(){
@@ -559,7 +559,7 @@ const StringPtr& Class::object_temporary_name(){
 		return name_;
 	}
 
-	if(symbol_data_ && symbol_data_->name){
+	if(symbol_data_ && symbol_data_->name.str()){
 		name_ = symbol_data_->name;
 		return name_;
 	}

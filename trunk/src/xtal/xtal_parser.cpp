@@ -922,7 +922,7 @@ ExprPtr Parser::parse(const xpeg::ScannerPtr& scanner, CompileErrors* error){
 	parse_toplevel();
 
 	if(error_->errors->size()!=0){
-		return null;
+		return nul<Expr>();
 	}
 
 	return ep(eb_.pop());
@@ -937,7 +937,7 @@ ExprPtr Parser::parse_stmt(const xpeg::ScannerPtr& scanner, CompileErrors* error
 	}
 
 	if(error_->errors->size()!=0){
-		return null;
+		return nul<Expr>();
 	}
 
 	return ep(eb_.pop());
@@ -948,11 +948,11 @@ ExprPtr Parser::parse_expr(const xpeg::ScannerPtr& scanner, CompileErrors* error
 	lexer_.init(scanner, error_);
 
 	if(!parse_expr()){
-		return null;
+		return nul<Expr>();
 	}
 
 	if(error_->errors->size()!=0){
-		return null;
+		return nul<Expr>();
 	}
 
 	return ep(eb_.pop());

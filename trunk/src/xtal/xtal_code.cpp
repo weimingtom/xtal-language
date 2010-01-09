@@ -32,7 +32,7 @@ Code::Code()
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
 
-	first_fun_ = xnew<Method>(null, to_smartptr(this), (FunInfo*)0);
+	first_fun_ = xnew<Method>(nul<Frame>(), to_smartptr(this), (FunInfo*)0);
 }
 
 Code::~Code(){

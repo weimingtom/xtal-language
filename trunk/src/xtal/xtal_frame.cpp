@@ -50,7 +50,7 @@ Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 }
 
 Frame::Frame()
-	:outer_(null), code_(null), scope_info_(&empty_class_info), 
+	:scope_info_(&empty_class_info), 
 	members_(0), map_members_(0), orphan_(true){}
 	
 Frame::Frame(const Frame& v)

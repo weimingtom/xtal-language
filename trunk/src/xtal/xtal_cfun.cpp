@@ -98,8 +98,8 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 	return to_smartptr(this);
 }
 
-void NativeMethod::visit_members(Visitor& m){
-	HaveParentRefCountingBase::visit_members(m);
+void NativeMethod::on_visit_members(Visitor& m){
+	HaveParentRefCountingBase::on_visit_members(m);
 
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
 	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
@@ -109,7 +109,7 @@ void NativeMethod::visit_members(Visitor& m){
 	}
 }
 
-void NativeMethod::rawcall(const VMachinePtr& vm){
+void NativeMethod::on_rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=min_param_count_){
 		int_t n = vm->ordered_arg_count();
 		if(n<min_param_count_ || n>max_param_count_){
@@ -180,14 +180,14 @@ NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, const Any
 	value_.init(TYPE, this);
 }
 
-void NativeFun::visit_members(Visitor& m){
-	NativeMethod::visit_members(m);
+void NativeFun::on_visit_members(Visitor& m){
+	NativeMethod::on_visit_members(m);
 	m & this_;
 }
 
-void NativeFun::rawcall(const VMachinePtr& vm){
+void NativeFun::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
-	NativeMethod::rawcall(vm);
+	NativeMethod::on_rawcall(vm);
 }
 
 

@@ -4,7 +4,18 @@
 #include "xtal_details.h"
 
 namespace xtal{
-
+/*
+	void RefCountingBase::operator delete(void* p, size_t size){
+	if(p){ 
+		RefCountingBase* rp = static_cast<RefCountingBase*>(p);
+		//if(type(*rp)==TYPE_BASE){
+		//	CppClassSymbolData* data = rp->get_class()->symbol_data();
+		//	XTAL_ASSERT(data->sizeofclass==size);
+		//}
+		rp->value_.set_object_size(size);
+	}
+}
+*/
 /// \brief primary_keyメソッドを呼び出す
 AnyPtr Any::send(const IDPtr& primary_key) const{
 	const VMachinePtr& vm = vmachine();
@@ -396,21 +407,20 @@ AnyPtr Any::call(const Param& a0 , const Param& a1, const Param& a2, const Param
 
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
 	accessibility = 0;
+
 	if(type(*this)==TYPE_BASE){
+		Base* p = pvalue(*this);
 		const AnyPtr& ret = inherited_too ?
-			cache_member(pvalue(*this), primary_key, secondary_key, accessibility) :
-			type(*this)==TYPE_BASE ? pvalue(*this)->rawmember(primary_key, secondary_key, false, accessibility, Temp()) : undefined;
+			cache_member(p, primary_key, secondary_key, accessibility) :
+			p->rawmember(primary_key, secondary_key, false, accessibility, Temp());
 		return ret;
 	}
 	return undefined;
 }
 
 void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility) const{
-	switch(type(*this)){
-		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_BASE){
-			pvalue(*this)->def(primary_key, value, secondary_key, accessibility);
-		}
+	if(type(*this)>=TYPE_BASE){
+		rcpvalue(*this)->def(primary_key, value, secondary_key, accessibility); 
 	}
 }
 
@@ -432,7 +442,11 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 void Any::rawcall(const VMachinePtr& vm) const{
 	switch(type(*this)){
 		XTAL_DEFAULT{}
-		XTAL_CASE(TYPE_BASE){ pvalue(*this)->rawcall(vm); }
+
+		XTAL_CASE(TYPE_BASE){ 
+			pvalue(*this)->rawcall(vm);
+		}
+
 		XTAL_CASE(TYPE_NATIVE_METHOD){ unchecked_ptr_cast<NativeMethod>(ap(*this))->rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ unchecked_ptr_cast<NativeFun>(ap(*this))->rawcall(vm); }
 		XTAL_CASE(TYPE_IVAR_GETTER){ unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->rawcall(vm); }
@@ -513,7 +527,11 @@ MapPtr Any::to_m() const{
 const ClassPtr& Any::object_parent() const{
 	switch(type(*this)){
 		XTAL_DEFAULT{ return nul<Class>(); }
-		XTAL_CASE(TYPE_BASE){ return pvalue(*this)->object_parent(); }
+
+		XTAL_CASE(TYPE_BASE){ 
+			return pvalue(*this)->object_parent(); 
+		}
+
 		XTAL_CASE(TYPE_NATIVE_METHOD){ return unchecked_ptr_cast<NativeMethod>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_NATIVE_FUN){ return unchecked_ptr_cast<NativeFun>(ap(*this))->object_parent();  }
 		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->object_parent(); }

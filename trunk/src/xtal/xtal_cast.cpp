@@ -3,35 +3,6 @@
 
 namespace xtal{
 
-CppClassSymbolData::CppClassSymbolData(){
-	static unsigned int counter = 1;
-	static CppClassSymbolData* prev_data = 0;
-	value = counter++;
-	
-	prev = prev_data;
-	prebind = 0;
-	for(int_t i=0; i<BIND; ++i){
-		bind[i] = 0;
-	}
-	prev_data = this;
-}
-
-void BindBase::XTAL_set(BindBase*& dest, StringLiteral& name, const StringLiteral& given){
-	dest = this;
-	name = given;
-}
-
-CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
-	static unsigned int counter = 1;
-	static CppVarSymbolData* prev_data = 0;
-	value = counter++;
-	prev = prev_data;
-	maker = fun;
-	prev_data = this;
-}
-
-////////////////////////////////////////////////////////////////////////
-
 const AnyPtr& ptr_cast(const AnyPtr& a, CppClassSymbolData* key){
 	if(a->is(key)){
 		return a;

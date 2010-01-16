@@ -11,9 +11,74 @@ namespace xtal{
 
 void* xmalloc(size_t);
 void xfree(void*p, size_t);
+void* xmalloc_align(size_t, size_t);
+void xfree_align(void*p, size_t, size_t);
 void register_gc(RefCountingBase* p);
 void register_gc_observer(GCObserver* p);
 void unregister_gc_observer(GCObserver* p);
+
+template<class T>
+inline T* object_xmalloc(){
+	if(AlignOf<T>::value<=8){
+		return static_cast<T*>(xmalloc(sizeof(T)));
+	}
+	else{
+		return static_cast<T*>(xmalloc_align(sizeof(T), AlignOf<T>::value));
+	}
+}
+
+template<class T>
+inline void object_xfree(T* p){
+	if(AlignOf<T>::value<=8){
+		return xfree(p, sizeof(T));
+	}
+	else{
+		return xfree_align(p, sizeof(T), AlignOf<T>::value);
+	}
+}
+
+struct VirtualMembers{	
+	void (*destroy)(void*);
+	void (*object_free)(void*);
+	void (*rawcall)(void* p, const VMachinePtr& vm);
+	void (*def)(void* p, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
+	const AnyPtr& (*rawmember)(void* p, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const ClassPtr& (*object_parent)(void* p);
+	void (*set_object_parent)(void* p, const ClassPtr& parent);
+	void (*finalize)(void* p);
+	void (*visit_members)(void* p, Visitor& m);
+
+};
+	
+template<class T>
+struct VirtualMembersT{
+	static const VirtualMembers members;
+	
+	static T* cast(void* p){ return static_cast<T*>(static_cast<RefCountingBase*>(p)); }
+	
+	static void destroy(void* p){ cast(p)->~T(); }
+	static void object_free(void* p){ object_xfree<T>(cast(p)); }
+	static void rawcall(void* p, const VMachinePtr& vm){ cast(p)->on_rawcall(vm); }
+	static void def(void* p, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){ cast(p)->on_def(primary_key, value, secondary_key, accessibility); }
+	static const AnyPtr& rawmember(void* p, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){ return cast(p)->on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache); }
+	static const ClassPtr& object_parent(void* p){ return cast(p)->on_object_parent(); }
+	static void set_object_parent(void* p, const ClassPtr& parent){ cast(p)->on_set_object_parent(parent); }
+	static void finalize(void* p){ cast(p)->on_finalize(); }
+	static void visit_members(void* p, Visitor& m){ cast(p)->on_visit_members(m); }
+};
+
+template<class T>
+const VirtualMembers VirtualMembersT<T>::members = {
+	&VirtualMembersT<T>::destroy,
+	&VirtualMembersT<T>::object_free,
+	&VirtualMembersT<T>::rawcall,
+	&VirtualMembersT<T>::def,
+	&VirtualMembersT<T>::rawmember,
+	&VirtualMembersT<T>::object_parent,
+	&VirtualMembersT<T>::set_object_parent,
+	&VirtualMembersT<T>::finalize,
+	&VirtualMembersT<T>::visit_members,
+};
 
 /**
 * \brief 参照カウンタの機能を有するクラス
@@ -24,7 +89,12 @@ public:
 	RefCountingBase()
 		:Any(noinit_t()){}
 
-	virtual ~RefCountingBase(){}
+	RefCountingBase(const RefCountingBase& v)
+		:Any(v){}
+
+protected:
+
+	~RefCountingBase(){}
 
 public:
 
@@ -32,31 +102,41 @@ public:
 	* \brief 関数オブジェクトとみなし、関数呼び出しをする。
 	* 引数や戻り値はvmを通してやり取りする。
 	*/
-	virtual void rawcall(const VMachinePtr& vm);
+	void rawcall(const VMachinePtr& vm){
+		virtual_members()->rawcall(this, vm);
+	}
 
 	/**
 	* \brief nameメンバを初期値valueで定義する。
 	*/
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = (const AnyPtr&)undefined, int_t accessibility = 0);
+	void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+		virtual_members()->def(this, primary_key, value, secondary_key, accessibility);
+	}
 
 	/**
 	* \brief nameメンバを取得する。
 	* \retval null そのメンバは存在しない
 	* \retval 非null nameに対応したメンバ  
 	*/
-	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+		return virtual_members()->rawmember(this, primary_key, secondary_key, inherited_too, accessibility, nocache);
+	}
 
 	/**
 	* \brief このオブジェクトがメンバとなっている親のクラスを返す。
 	*/
-	virtual const ClassPtr& object_parent();
+	const ClassPtr& object_parent(){
+		return virtual_members()->object_parent(this);
+	}
 	
 	/**
 	* \brief このオブジェクトに親を設定する。
 	* 親を持てないオブジェクトや、前に付けられた親の方が強い場合無視される。
 	* \param parent 親
 	*/
-	virtual void set_object_parent(const ClassPtr& parent);
+	void set_object_parent(const ClassPtr& parent){
+		virtual_members()->set_object_parent(this, parent);
+	}
 
 	/**
 	* \brief ファイナライザ
@@ -65,9 +145,23 @@ public:
 	* 破棄時にXtalのメンバ変数を触ることがあるのであればこれを使う。
 	* そうでないのであれば、デストラクタに破棄処理を書くこと。
 	*/
-	virtual void finalize();
+	void finalize(){
+		virtual_members()->finalize(this);
+	}
 
-	virtual void visit_members(Visitor& m){}
+	void visit_members(Visitor& m){
+		virtual_members()->visit_members(this, m);
+	}
+
+public:
+
+	void on_rawcall(const VMachinePtr& vm);
+	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
+	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const ClassPtr& on_object_parent();
+	void on_set_object_parent(const ClassPtr& parent);
+	void on_finalize();
+	void on_visit_members(Visitor& m){}
 
 public:
 
@@ -82,19 +176,29 @@ public:
 
 	uint_t can_not_gc(){ return value_.can_not_gc(); }
 
-	void destroy(){ delete this; }
-
-	void object_free(){ xfree(this, value_.object_size()); }
+	void destroy(){ virtual_members()->destroy(this); }
+	void object_free(){ virtual_members()->object_free(this); }
 
 public:
 
-	static void* operator new(size_t size){ 
-		return xmalloc(size);
+	template<class T>
+	void set_virtual_members(){
+		vmembers_ = &VirtualMembersT<T>::members;
 	}
 
-	static void operator delete(void* p, size_t size){
-		if(p){ static_cast<RefCountingBase*>(p)->value_.set_object_size(size); }
+	const VirtualMembers* virtual_members() const{
+		return vmembers_;
 	}
+
+private:
+	const VirtualMembers* vmembers_;
+
+private:
+	static void* operator new(size_t);
+public:
+	static void operator delete(void*){}
+	static void* operator new(size_t, void* p){ return p; }
+	static void operator delete(void*, void*){}
 };
 
 /**
@@ -120,7 +224,7 @@ protected:
 
 public:
 
-	virtual ~Base();
+	~Base();
 			
 public:
 
@@ -130,7 +234,7 @@ public:
 
 	void set_class(const ClassPtr& c);
 
-	virtual void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 protected:
 

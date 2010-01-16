@@ -35,7 +35,7 @@ bool is_directory(const StringPtr& path);
 */
 AnyPtr entries(const StringPtr& path);
 
-class Filesystem;
+class Filesystem{};
 
 class Entries : public Base{
 public:

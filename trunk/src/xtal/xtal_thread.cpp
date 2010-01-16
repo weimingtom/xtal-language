@@ -13,8 +13,8 @@ Thread::~Thread(){
 	thread_lib()->delete_thread(impl_);
 }
 
-void Thread::visit_members(Visitor& m){
-	Base::visit_members(m);
+void Thread::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & callback_;
 }
 

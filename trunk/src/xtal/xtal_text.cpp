@@ -177,7 +177,7 @@ void Format::set(const StringPtr& original){
 	}
 }
 
-void Format::rawcall(const VMachinePtr& vm){
+void Format::on_rawcall(const VMachinePtr& vm){
 	//if(!have_named_){
 	//	vm->flatten_args();
 	//}
@@ -310,7 +310,7 @@ void Format::serial_load(const StringPtr& v){
 Text::Text(const IDPtr& key)
 	:key_(key){}
 
-void Text::rawcall(const VMachinePtr& vm){
+void Text::on_rawcall(const VMachinePtr& vm){
 	MapPtr m = text_map();
 	if(m){
 		if(AnyPtr value = m->at(key_)){

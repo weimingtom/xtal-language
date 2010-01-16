@@ -474,7 +474,7 @@ public:
 	StructMemberGetterAndSetter(int_t index, const BinaryTypePtr& type)
 		:index_(index), type_(type){}
 
-	virtual void rawcall(const VMachinePtr& vm){
+	void on_rawcall(const VMachinePtr& vm){
 		if(vm->ordered_arg_count()==0){
 			vm->return_result(ptr_cast<BinaryRecordData>(vm->arg_this())->at(index_, type_));
 			return;
@@ -506,7 +506,7 @@ public:
 		return members_;
 	}
 	
-	void def(const IDPtr& key, const BinaryTypePtr& type){
+	void define(const IDPtr& key, const BinaryTypePtr& type){
 		cls_->def(key, xnew<StructMemberGetterAndSetter>(members_->size(), type));
 		cls_->def(Xid(set_)->op_cat(key), xnew<StructMemberGetterAndSetter>(members_->size(), type));
 		index_map_->set_at(key, members_->size());
@@ -621,10 +621,31 @@ XTAL_BIND(BinaryRecordType){
 	*/
 }
 
+#include <xmmintrin.h>
+
+struct Vec128{
+	__m128 a;
+};
+
+struct Spr{
+	Vec128 v;
+};
+
+XTAL_BIND(Spr){
+	it->def_var("v", &Spr::v);
+}
+
+struct SLp : public Base{
+	virtual void foo(){}
+};
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
-	
+
 	using namespace std;
+
+	SmartPtr<Spr> s = xnew<Spr>();
+	_mm_add_ps(s->v.a, s->v.a);
 
 	//debug::enable();
 	//debug::set_breakpoint_hook(fun(&linehook));
@@ -647,19 +668,19 @@ int main2(int argc, char** argv){
 		}
 	}*/
 
-	//test();
+	test();
 
 	//test2();
    // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
 
 	//AnyPtr a = cast<bool>(false);
 
-	const AnyPtr& aaa = null;
-
 	if(CodePtr code = Xsrc((
-
+		"Smiles".p;
+		arg[0].v.p;
 	))){
-		AnyPtr ret = code->call();
+		AnyPtr ret = code->call(xnew<Spr>());
+//		code->call();
 	}
 
 	XTAL_CATCH_EXCEPT(e){
@@ -1428,8 +1449,20 @@ LONG CALLBACK print_stacktrace(EXCEPTION_POINTERS *ExInfo){
 	return(EXCEPTION_EXECUTE_HANDLER);
 }
 
+struct TestA{
+	int n;
+};
+
+struct TestB : TestA{
+	int nn;
+	virtual void a(){}
+};
 
 int main(int argc, char** argv){
+	TestB aa;
+	TestA* pb = &aa;
+
+
 	SetUnhandledExceptionFilter(&print_stacktrace);
 
 	CStdioStdStreamLib cstd_std_stream_lib;

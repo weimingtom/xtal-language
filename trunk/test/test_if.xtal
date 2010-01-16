@@ -189,6 +189,8 @@ class IfTest{
 		a: 0;
 		
 		fun foo(b){
+			a = 9999;
+			
 			switch(b){
 				case(0){ a = -1; } 
 				case(1){ a = 0; } 

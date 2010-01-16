@@ -26,7 +26,7 @@ public:
 	*/
 	Lib();
 	
-	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* \xbind
@@ -36,21 +36,21 @@ public:
 		load_path_list_->push_back(path);
 	}
 
+	void on_visit_members(Visitor& m){
+		Class::on_visit_members(m);
+		m & load_path_list_ & path_map_;
+	}
+
 private:
 
 	ArrayPtr load_path_list_;
 	MapPtr path_map_;
-
-	virtual void visit_members(Visitor& m){
-		Class::visit_members(m);
-		m & load_path_list_ & path_map_;
-	}
 };
 
 
 class Global : public Class{
 public:
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
 };
 
 }

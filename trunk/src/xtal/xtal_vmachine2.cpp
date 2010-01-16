@@ -873,8 +873,8 @@ const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
 	return &throw_code_;
 }
 
-void VMachine::visit_members(Visitor& m){
-	GCObserver::visit_members(m);
+void VMachine::on_visit_members(Visitor& m){
+	GCObserver::on_visit_members(m);
 	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){

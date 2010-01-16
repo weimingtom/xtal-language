@@ -58,7 +58,7 @@ protected:
 
 protected:
 
-	virtual void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 	AnyPtr callback_;
 	void* impl_;

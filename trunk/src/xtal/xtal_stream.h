@@ -66,7 +66,7 @@ public:
 	* \xbind
 	* \brief value‚ð•¶Žš—ñ‰»‚µ‚ÄƒvƒŠƒ“ƒg‚·‚é
 	*/
-	uint_t print(const AnyPtr& value);
+	void print(const AnyPtr& value);
 
 	/**
 	* \xbind
@@ -551,7 +551,7 @@ public:
 	
 	MemoryStream(const void* data, uint_t data_size);
 
-	virtual ~MemoryStream();
+	~MemoryStream();
 	
 	virtual uint_t write(const void* p, uint_t size);
 
@@ -587,13 +587,12 @@ public:
 		return str_;
 	}
 
-private:
-
-	virtual void visit_members(Visitor& m){
-		PointerStream::visit_members(m);
+	void on_visit_members(Visitor& m){
+		PointerStream::on_visit_members(m);
 		m & str_;
 	}
 
+private:
 	StringPtr str_;
 };
 

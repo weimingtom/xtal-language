@@ -231,7 +231,7 @@ void xarray::upsize_unref(uint_t size){
 		}\
 	}
 
-void Array::visit_members(Visitor& m){
+void Array::on_visit_members(Visitor& m){
 	for(uint_t i=0; i<size(); ++i){
 		m & values_.at(i);
 	}
@@ -442,8 +442,8 @@ bool ArrayIter::block_next_direct(AnyPtr& ret){
 	}
 }
 
-void ArrayIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void ArrayIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & array_;
 }
 

@@ -141,8 +141,9 @@ void ObjectSpace::initialize(){
 	static CppClassSymbolData key;
 	symbol_data_ = &key;
 
-	class_table_.resize(key.value);
-	for(uint_t i=0; i<key.value; ++i){
+	uint_t maxv = key.value;
+	class_table_.resize(maxv);
+	for(uint_t i=0; i<maxv; ++i){
 		class_table_[i] = 0;
 	}
 
@@ -157,26 +158,28 @@ void ObjectSpace::initialize(){
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
 
 	for(uint_t i=0; i<nsize; ++i){
-		class_table_[symbols[i]->value] = (Class*)Base::operator new(sizeof(Class));
+		class_table_[symbols[i]->value] = (Class*)object_xmalloc<Class>();
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[symbols[i]->value];
-		::new(p) Base();
+		Class* p = class_table_[symbols[i]->value];
+		Base* bp = p;
+		new(bp) Base();
 	}
 		
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[symbols[i]->value];
-		::new(p) Class(Class::cpp_class_t());
+		Class* p = class_table_[symbols[i]->value];
+		new(p) Class(Class::cpp_class_t());
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[symbols[i]->value];
+		Class* p = class_table_[symbols[i]->value];
 		p->set_class(xtal::cpp_class<Class>());
+		p->set_virtual_members<Class>();
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Base* p = class_table_[symbols[i]->value];
+		Class* p = class_table_[symbols[i]->value];
 		register_gc(p);
 	}
 
@@ -189,10 +192,12 @@ void ObjectSpace::initialize(){
 		}
 	}
 
-	CppClassSymbolData* prev = key.prev;
-	for(uint_t i=class_table_.size(); i>1; --i){
-		class_table_[i-1]->set_symbol_data(prev);
-		prev = prev->prev;
+	{
+		CppClassSymbolData* prev = key.prev;
+		while(prev){
+			class_table_[prev->value]->set_symbol_data(prev);
+			prev = prev->prev;
+		}
 	}
 
 	//////////////////////////////////////////////////

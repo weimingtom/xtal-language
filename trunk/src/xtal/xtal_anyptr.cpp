@@ -57,12 +57,12 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 
 SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_BASE>& m)
 	:Any(noinit_t()){
-	init_smartptr(m.value, cpp_class(m.klass));
+	init_smartptr(m.pvalue, cpp_class(m.klass));
 }
 
 SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_RCBASE>& m)
 	:Any(noinit_t()){
-	init_smartptr(m.value, m.klass);
+	init_smartptr(m.pvalue, m.klass);
 }
 
 SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_ANY>& m)
@@ -77,13 +77,13 @@ SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_OTHER>& m)
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_BASE>& m){
 	dec_ref_count_force(*this);
-	init_smartptr(m.value, cpp_class(m.klass));
+	init_smartptr(m.pvalue, cpp_class(m.klass));
 	return *this;
 }
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_RCBASE>& m){
 	dec_ref_count_force(*this);
-	init_smartptr(m.value, m.klass);
+	init_smartptr(m.pvalue, m.klass);
 	return *this;
 }
 
@@ -147,6 +147,37 @@ void visit_members(Visitor& m, const Any& p){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
 		rcpvalue(p)->add_ref_count(m.value());
 	}
+}
+
+//////////////////////////////
+
+CppClassSymbolData::CppClassSymbolData(int size, int align){
+	static unsigned int counter = 0;
+	static CppClassSymbolData* prev_data = 0;
+	value = counter++;
+
+	sizeofclass = size;
+	
+	prev = prev_data;
+	prebind = 0;
+	for(int_t i=0; i<BIND; ++i){
+		bind[i] = 0;
+	}
+	prev_data = this;
+}
+
+void BindBase::XTAL_set(BindBase*& dest, StringLiteral& name, const StringLiteral& given){
+	dest = this;
+	name = given;
+}
+
+CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
+	static unsigned int counter = 1;
+	static CppVarSymbolData* prev_data = 0;
+	value = counter++;
+	prev = prev_data;
+	maker = fun;
+	prev_data = this;
 }
 
 }

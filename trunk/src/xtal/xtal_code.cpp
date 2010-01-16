@@ -98,7 +98,7 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 	return 0;
 }
 
-void Code::rawcall(const VMachinePtr& vm){
+void Code::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(to_smartptr(this));
 	first_fun_->rawcall(vm);
 }

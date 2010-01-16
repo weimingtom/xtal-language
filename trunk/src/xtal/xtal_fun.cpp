@@ -93,8 +93,8 @@ StringPtr Arguments::to_s(){
 	return ms->to_s();
 }
 
-void Arguments::visit_members(Visitor& m){
-	Base::visit_members(m);
+void Arguments::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & ordered_ & named_;
 }
 
@@ -129,8 +129,8 @@ void ArgumentsIter::block_next(const VMachinePtr& vm){
 	vm->return_result(null, null);
 }
 
-void ArgumentsIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void ArgumentsIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & ait_ & mit_;
 }
 
@@ -139,7 +139,7 @@ InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
 	value_.init(TYPE, this);
 }
 
-void InstanceVariableGetter::rawcall(const VMachinePtr& vm){
+void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
 	const AnyPtr& self = vm->arg_this();
 	vm->return_result(self->instance_variables()->variable(number_, info_));
 }
@@ -149,7 +149,7 @@ InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
 	value_.init(TYPE, this);
 }
 
-void InstanceVariableSetter::rawcall(const VMachinePtr& vm){
+void InstanceVariableSetter::on_rawcall(const VMachinePtr& vm){
 	const AnyPtr& self = vm->arg_this();
 	self->instance_variables()->set_variable(number_, info_, vm->arg(0));
 	vm->return_result();
@@ -222,7 +222,7 @@ const StringPtr& Method::object_temporary_name(){
 	return empty_string;
 }
 
-void Method::rawcall(const VMachinePtr& vm){
+void Method::on_rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=info_->max_param_count){
 		if(!check_arg(vm)){
 			return;
@@ -232,7 +232,7 @@ void Method::rawcall(const VMachinePtr& vm){
 	vm->carry_over(this);
 }
 
-void Fun::rawcall(const VMachinePtr& vm){
+void Fun::on_rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=info_->max_param_count){
 		if(!check_arg(vm)){
 			return;
@@ -243,7 +243,7 @@ void Fun::rawcall(const VMachinePtr& vm){
 	vm->carry_over(this);
 }
 
-void Lambda::rawcall(const VMachinePtr& vm){
+void Lambda::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
 	vm->mv_carry_over(this);
 }
@@ -252,7 +252,7 @@ Fiber::Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunIn
 	:Fun(outer, th, code, info), resume_pc_(0), alive_(true){
 }
 
-void Fiber::finalize(){
+void Fiber::on_finalize(){
 	halt();
 }
 
@@ -299,7 +299,7 @@ AnyPtr Fiber::reset(){
 	return to_smartptr(this);
 }
 
-void BindedThis::rawcall(const VMachinePtr& vm){
+void BindedThis::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
 	fun_->rawcall(vm);
 }

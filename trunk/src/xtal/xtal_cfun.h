@@ -34,43 +34,79 @@ struct ReturnResult{
 	}
 };
 
-struct ReturnNone{
-	static void return_result(const VMachinePtr& vm){}
-
-	template<class T>
-	static void return_result(const VMachinePtr& vm, const T& v){
-		ReturnResult::return_result(vm, v);
-	}
-};
-
-template<class Policy>
-struct ReturnPolicyTest{
+struct ReturnValueToVMTest{
 	const VMachinePtr* vm;
 
-	ReturnPolicyTest(const VMachinePtr& vm)
+	ReturnValueToVMTest(const VMachinePtr& vm)
 		:vm(&vm){}
 };
 
-struct ReturnPolicyVoidTest{};
+struct ReturnVoidToVMTest{};
 
-template<class T, class Policy>
-inline int operator ,(const T& val, ReturnPolicyTest<Policy> rp){
-	Policy::return_result(*rp.vm, val);
+template<class T>
+inline int operator ,(const T& val, ReturnValueToVMTest rp){
+	(*rp.vm)->return_result(val);
 	return 0;
 }
 
-template<class Policy>
-inline int operator ,(ReturnPolicyTest<Policy> rp, ReturnPolicyVoidTest){
-	Policy::return_result(*rp.vm);
+inline int operator ,(ReturnValueToVMTest rp, ReturnVoidToVMTest){
+	(*rp.vm)->return_result();
 	return 0;
 }
 
+#define XTAL_RETURN_TO_VM(expr) expr, ReturnValueToVMTest(vm), ReturnVoidToVMTest()
+
+////////////////////////////////////////////
+
+template<class Fun>
+struct cfun_holder_base{};
+
+template<class Fun>
+struct cmemfun_holder_base{};
+
+template<class T>
+struct CommonThisType{ typedef T type; };
+
+template<class T>
+struct CommonType{ typedef T type; };
+
+
+/*
+template<class T>
+struct CommonThisType{ 
+	typedef typename If<IsInherited<T, Base>::value, Base, 
+		typename If<IsInherited<T, RefCountingBase>::value, RefCountingBase, T>::type
+	>::type type;
+};
+
+template<class T>
+struct CommonType{ typedef T type; };
+
+template<>
+struct CommonType<const AnyPtr&>{ typedef const AnyPtr& type; };
+
+template<class T>
+struct CommonType<const SmartPtr<T>&> : CommonType<const AnyPtr&>{};
+
+template<class T>
+struct CommonType<T*>{ 
+	typedef typename If<IsInherited<T, Base>::value, Base*, 
+		typename If<IsInherited<T, RefCountingBase>::value, RefCountingBase*, T*>::type
+	>::type type;
+};
+*/
 
 template<class Fun>
 struct cfun_holder{};
 
 template<class Fun>
 struct cmemfun_holder{};
+
+template<class C, class T>
+struct getter_holder;
+
+template<class C, class T>
+struct setter_holder;
 
 template<class T, 
 class A0=void, class A1=void, class A2=void, class A3=void, class A4=void, 
@@ -109,216 +145,6 @@ param_types_holder_n fun_param_holder<Fun>::value = {
 	EXTENDABLE,
 };
 
-//{REPEAT{{
-/*
-
-template<class C #COMMA_REPEAT#class A`i`#>
-struct param_types_holder`n`{
-	static CppClassSymbolData** values[`n`+1];
-};
-
-template<class C #COMMA_REPEAT#class A`i`#>
-CppClassSymbolData** param_types_holder`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
-	&CppClassSymbol<C>::value,
-	#REPEAT#&CppClassSymbol<A`i`>::value,#
-};
-*/
-
-
-template<class C >
-struct param_types_holder0{
-	static CppClassSymbolData** values[0+1];
-};
-
-template<class C >
-CppClassSymbolData** param_types_holder0<C >::values[0+1] = {
-	&CppClassSymbol<C>::value,
-	
-};
-
-
-template<class C , class A0>
-struct param_types_holder1{
-	static CppClassSymbolData** values[1+1];
-};
-
-template<class C , class A0>
-CppClassSymbolData** param_types_holder1<C , A0>::values[1+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,
-};
-
-
-template<class C , class A0, class A1>
-struct param_types_holder2{
-	static CppClassSymbolData** values[2+1];
-};
-
-template<class C , class A0, class A1>
-CppClassSymbolData** param_types_holder2<C , A0, A1>::values[2+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,
-};
-
-
-template<class C , class A0, class A1, class A2>
-struct param_types_holder3{
-	static CppClassSymbolData** values[3+1];
-};
-
-template<class C , class A0, class A1, class A2>
-CppClassSymbolData** param_types_holder3<C , A0, A1, A2>::values[3+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3>
-struct param_types_holder4{
-	static CppClassSymbolData** values[4+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3>
-CppClassSymbolData** param_types_holder4<C , A0, A1, A2, A3>::values[4+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4>
-struct param_types_holder5{
-	static CppClassSymbolData** values[5+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4>
-CppClassSymbolData** param_types_holder5<C , A0, A1, A2, A3, A4>::values[5+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-struct param_types_holder6{
-	static CppClassSymbolData** values[6+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-CppClassSymbolData** param_types_holder6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-struct param_types_holder7{
-	static CppClassSymbolData** values[7+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-CppClassSymbolData** param_types_holder7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-struct param_types_holder8{
-	static CppClassSymbolData** values[8+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-CppClassSymbolData** param_types_holder8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-struct param_types_holder9{
-	static CppClassSymbolData** values[9+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-CppClassSymbolData** param_types_holder9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-struct param_types_holder10{
-	static CppClassSymbolData** values[10+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-CppClassSymbolData** param_types_holder10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-struct param_types_holder11{
-	static CppClassSymbolData** values[11+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-CppClassSymbolData** param_types_holder11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-struct param_types_holder12{
-	static CppClassSymbolData** values[12+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-CppClassSymbolData** param_types_holder12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,
-};
-
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-struct param_types_holder13{
-	static CppClassSymbolData** values[13+1];
-};
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-CppClassSymbolData** param_types_holder13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
-	&CppClassSymbol<C>::value,
-	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,&CppClassSymbol<A12>::value,
-};
-
-//}}REPEAT}
-
-///////////////////////////////////////////////////////
-
-template<class C, class T>
-struct getter_holder{
-	enum{ PARAMS = 1, PARAM_N = 0, METHOD = 1, EXTENDABLE = 0 };
-	typedef param_types_holder0<C> fun_param_holder;
-	typedef T C::* fun_t;
-	static void call(const VMachinePtr& vm, const void* data, UninitializedAny* args){ 
-		(unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data)
-		), ReturnPolicyTest<ReturnResult>(vm), ReturnPolicyVoidTest();
-	}
-};
-
-template<class C, class T>
-struct setter_holder{
-	enum{ PARAMS = 2, PARAM_N = 1, METHOD = 1, EXTENDABLE = 0 };
-	typedef param_types_holder1<C, T> fun_param_holder;
-	typedef T C::* fun_t;
-	static void call(const VMachinePtr& vm, const void* data, UninitializedAny* args){ 
-		unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data) = unchecked_cast<T>((AnyPtr&)args[1]);
-		(unchecked_cast<C*>((AnyPtr&)args[0])->*(*(fun_t*)data)
-		), ReturnPolicyTest<ReturnResult>(vm), ReturnPolicyVoidTest();
-	}
-};
-
 //////////////////////////////////////////////////////////////
 
 class NativeMethod : public HaveParentRefCountingBase{
@@ -337,9 +163,9 @@ public:
 
 public:
 
-	void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
-	void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
 protected:
 	fun_t fun_;
@@ -359,9 +185,9 @@ public:
 
 public:
 
-	void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
-	void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
 private:
 	AnyPtr this_;
@@ -396,7 +222,7 @@ public:
 	DoubleDispatchMethod(const IDPtr& primary_key)
 		:primary_key_(primary_key){}
 
-	virtual void rawcall(const VMachinePtr& vm){
+	void on_rawcall(const VMachinePtr& vm){
 		if(vm->ordered_arg_count()>0){
 			vm->arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class());
 		}
@@ -415,17 +241,16 @@ public:
 	DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
 		:klass_(klass), primary_key_(primary_key){}
 
-	virtual void rawcall(const VMachinePtr& vm){
+	void on_rawcall(const VMachinePtr& vm){
 		klass_->member(primary_key_, vm->arg(0)->get_class())->rawcall(vm);
 	}
 
-private:
-
-	virtual void visit_members(Visitor& m){
-		HaveParentBase::visit_members(m);
+	void on_visit_members(Visitor& m){
+		HaveParentBase::on_visit_members(m);
 		m & klass_;
 	}
 
+private:
 	AnyPtr klass_;
 	IDPtr primary_key_;
 };

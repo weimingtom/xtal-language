@@ -65,12 +65,12 @@ void ZipIter::block_break(const VMachinePtr& vm){
 	vm->return_result();
 }
 
-void ZipIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void ZipIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & next_;
 }
 
-void DelegateToIterator::rawcall(const VMachinePtr& vm){
+void DelegateToIterator::on_rawcall(const VMachinePtr& vm){
 	vm->arg_this()->send(Xid(each))->rawsend(vm, member_);
 }
 

@@ -134,8 +134,8 @@ Conv::Conv(const char8_t* str)
 	}
 }
 
-void StringEachIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void StringEachIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & ss_;
 }
 
@@ -164,11 +164,6 @@ void ChRangeIter::block_next(const VMachinePtr& vm){
 	vm->return_result(to_smartptr(this), temp);
 }
 
-void ChRangeIter::visit_members(Visitor& m){
-	Base::visit_members(m);
-	m & it_ & end_;
-}
-
 AnyPtr ChRange::each(){
 	return xnew<ChRangeIter>(to_smartptr(this));
 }
@@ -181,6 +176,14 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 
 ////////////////////////////////////////////////////////////////
 
+StringData* String::new_string_data(uint_t size){
+	StringData* sd = new(object_xmalloc<StringData>()) StringData(size);
+	sd->set_virtual_members<StringData>();
+	value_.init(TYPE_STRING, sd);
+	register_gc(sd);
+	return sd;
+}
+
 void String::init_string(const char_t* str, uint_t size){
 	if(size<SMALL_STRING_MAX){
 		value_.init(TYPE_SMALL_STRING);
@@ -191,10 +194,8 @@ void String::init_string(const char_t* str, uint_t size){
 			*this = ID(str, size);
 		}
 		else{
-			StringData* sd = new StringData(size);
+			StringData* sd = new_string_data(size);
 			string_copy(sd->buf(), str, size);
-			value_.init(TYPE_STRING, sd);
-			register_gc(sd);
 		}
 	}
 }
@@ -205,11 +206,9 @@ String::String(const char_t* str, uint_t size, intern_t){
 		string_copy(value_.s(), str, size);
 	}
 	else{
-		StringData* sd = new StringData(size);
+		StringData* sd = new_string_data(size);
 		string_copy(sd->buf(), str, size);
-		value_.init(TYPE_STRING, sd);
 		sd->set_interned();
-		register_gc(sd);
 	}
 }
 
@@ -279,11 +278,9 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 		string_copy(&value_.s()[size1], str2, size2);
 	}
 	else{
-		StringData* sd = new StringData(sz);
+		StringData* sd = new_string_data(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
-		value_.init(TYPE_STRING, sd);
-		register_gc(sd);
 	}
 }
 
@@ -534,6 +531,14 @@ StringPtr String::sub(const AnyPtr& pattern, const AnyPtr& fn) const{
 	return ptr_cast<String>(send(Xid(sub), pattern, fn));
 }
 
+String::iterator String::begin() const{
+	return iterator(data());
+}
+
+String::iterator String::end() const{
+	return iterator(data() + data_size());
+}
+
 ////////////////////////////////////////////////////////////////
 
 StringData::StringData(uint_t size){
@@ -606,32 +611,32 @@ ID::ID(const StringPtr& name)
 	:String(*(name ? name->intern() : (const IDPtr&)name)){}
 
 
-AnyPtr SmartPtrCtor1<String>::call(type v){
+StringPtr SmartPtrCtor1<String>::call(type v){
 	return xnew<String>(v);
 }
 
-AnyPtr SmartPtrCtor2<String>::call(type v){
+StringPtr SmartPtrCtor2<String>::call(type v){
 	return xnew<String>(v);
 }
 
-AnyPtr SmartPtrCtor3<String>::call(type v){
+StringPtr SmartPtrCtor3<String>::call(type v){
 	return xnew<String>(v);
 }
 
-AnyPtr SmartPtrCtor1<ID>::call(type v){
+IDPtr  SmartPtrCtor1<ID>::call(type v){
 	return intern(v);
 }
 
-AnyPtr SmartPtrCtor2<ID>::call(type v){
+IDPtr SmartPtrCtor2<ID>::call(type v){
 	if(v) return v->intern();
 	return v;
 }
 
-AnyPtr SmartPtrCtor3<ID>::call(type v){
+IDPtr SmartPtrCtor3<ID>::call(type v){
 	return xnew<ID>(v);
 }
 
-AnyPtr SmartPtrCtor4<ID>::call(type v){
+IDPtr SmartPtrCtor4<ID>::call(type v){
 	return xnew<ID>(v);
 }
 

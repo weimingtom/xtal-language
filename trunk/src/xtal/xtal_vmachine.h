@@ -8,6 +8,11 @@
 #pragma once
 
 namespace xtal{
+
+template<class T>
+inline AnyPtr convert_to_anyptr(const T& val){
+	return xnew<T>();
+}
 	
 /**
 * \brief 関数呼び出しで、名前付き引数として渡すためのクラス
@@ -401,6 +406,32 @@ public:
 	void recycle_call();
 
 	void recycle_call(const AnyPtr& a1);
+
+public:
+
+	template<class T>
+	void return_result(const T& ret){
+		return_result2(ret, TypeIntType<Convertible<T, AnyPtr>::value>());
+	}
+
+	template<class T>
+	void return_result4(const T& ret){
+	//	return_result2(ConvertToAnyPtr<T>::convert(ret));
+	}
+
+protected:
+
+
+	template<class T>
+	void return_result2(const T& ret, TypeIntType<1>){
+		return_result((const AnyPtr&)ret);
+	}
+		
+	template<class T>
+	void return_result2(const T& ret, TypeIntType<0>){
+		return_result(convert_to_anyptr(ret));
+	}
+
 
 public:
 
@@ -828,9 +859,11 @@ private:
 
 	VMachine* parent_vm_;
 
-protected:
+public:
 
-	virtual void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
+
+protected:
 
 	virtual void before_gc();
 	virtual void after_gc();

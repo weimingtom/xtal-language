@@ -217,6 +217,10 @@ void Class::inherit_first(const ClassPtr& cls){
 		}
 	}
 
+	if(!symbol_data_){
+		symbol_data_ = cls->symbol_data();
+	}
+
 	if(cls->is_final()){
 		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1028")->call(Named(Xid(name), cls->object_name()))));
 		return;
@@ -328,11 +332,11 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 }
 
 void Class::def_double_dispatch_method(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::double_dispatch_method(primary_key), undefined, accessibility);
+	on_def(primary_key, xtal::double_dispatch_method(primary_key), undefined, accessibility);
 }
 
 void Class::def_double_dispatch_fun(const IDPtr& primary_key, int_t accessibility){
-	def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), undefined, accessibility);
+	on_def(primary_key, xtal::double_dispatch_fun(to_smartptr(this), primary_key), undefined, accessibility);
 }
 
 const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
@@ -365,7 +369,7 @@ const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const para
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	def(primary_key, value, secondary_key, accessibility);
+	on_def(primary_key, value, secondary_key, accessibility);
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){
@@ -378,7 +382,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		def(primary_key, value, secondary_key, accessibility);
+		on_def(primary_key, value, secondary_key, accessibility);
 	}
 	else{
 		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->second.num))){
@@ -397,7 +401,7 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 	}
 }
 
-void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
@@ -413,23 +417,23 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& sec
 }
 
 void Class::def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	return def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+	on_def(xnew<ID>(primary_key), value, secondary_key, accessibility);
 }
 
 void Class::def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	return def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+	on_def(xnew<ID>(primary_key), value, secondary_key, accessibility);
 }
 
 void Class::def(const IDPtr& primary_key, const AnyPtr& value){
-	return def(primary_key, value, undefined, KIND_PUBLIC);
+	on_def(primary_key, value, undefined, KIND_PUBLIC);
 }
 
 void Class::def(const char_t* primary_key, const AnyPtr& value){
-	return def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+	on_def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 void Class::def(const char8_t* primary_key, const AnyPtr& value){
-	return def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+	on_def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
@@ -495,7 +499,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	return undefined;
 }
 
-const AnyPtr& Class::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& Class::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	if(rawne(ret, undefined)){
 		return ret;
@@ -531,10 +535,10 @@ void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& v
 	invalidate_cache_member();
 }
 
-void Class::set_object_parent(const ClassPtr& parent){
+void Class::on_set_object_parent(const ClassPtr& parent){
 	if(object_force_<parent->object_force()){
 		object_force_ = parent->object_force()-1;
-		HaveParentBase::set_object_parent(parent);
+		HaveParentBase::on_set_object_parent(parent);
 		if(map_members_){
 			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
 				member_direct(it->second.num)->set_object_parent(to_smartptr(this));
@@ -611,7 +615,7 @@ bool Class::is_inherited_cpp_class(){
 	return false;
 }
 
-void Class::rawcall(const VMachinePtr& vm){
+void Class::on_rawcall(const VMachinePtr& vm){
 	prebind();
 
 	if(is_singleton()){

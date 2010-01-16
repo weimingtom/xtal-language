@@ -910,35 +910,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TreeNode::TreeNode(const AnyPtr& tag, int_t lineno){
-	value_.init(TYPE_TREE_NODE, this);
-
-	tag_ = tag;
-	lineno_ = lineno;
-}
-
-const AnyPtr& TreeNode::at(int_t i){
-	if(i>=0){
-		if(size()<=(uint_t)i){
-			resize(i+1);
-		}
-		return Array::at(i);
-	}
-	return Array::op_at(i);
-}
-
-void TreeNode::set_at(int_t i, const AnyPtr& v){
-	if(i>=0){
-		if(size()<=(uint_t)i){
-			resize(i+1);
-		}
-		Array::set_at(i, v); 
-	}
-	Array::set_at(i, v);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 ElementPtr elem(const AnyPtr& a){
 	if(const ElementPtr& p = ptr_cast<Element>(a)){
 		return p;

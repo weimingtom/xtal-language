@@ -67,7 +67,6 @@ public:
 
 	void compile_stmt(const AnyPtr& p);	
 
-	void compile_bin(const ExprPtr& e);
 	void compile_comp_bin(const ExprPtr& e);
 	int_t compile_comp_bin2(const ExprPtr& e, int_t stack_top, int_t result);
 

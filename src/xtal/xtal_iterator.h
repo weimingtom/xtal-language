@@ -16,7 +16,7 @@ public:
 	DelegateToIterator(const IDPtr& name)
 		:member_(name){}
 
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 };
 
 /**
@@ -229,7 +229,7 @@ public:
 
 	void block_break(const VMachinePtr& vm);
 
-	virtual void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 	ArrayPtr next_;
 };

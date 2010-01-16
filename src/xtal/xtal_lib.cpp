@@ -18,8 +18,8 @@ Lib::Lib(){
 	load_path_list_ = xnew<Array>();
 }
 
-const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
-	const AnyPtr& ret = Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+	const AnyPtr& ret = Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	if(rawne(ret, undefined)){
 		return ret;
 	}
@@ -42,25 +42,25 @@ const AnyPtr& Lib::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_k
 			}
 
 			XTAL_CATCH_EXCEPT(e){ 
-				return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
 
 			if(!raweq(value, undefined)){
-				def(primary_key, value, secondary_key, accessibility);
-				return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+				on_def(primary_key, value, secondary_key, accessibility);
+				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
 		}
 
 		nocache = true;
-		return Class::rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
+		return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	}
 }
 
-void Global::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void Global::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it==map_members_->end()){
-		Class::def(primary_key, value, secondary_key, accessibility);
+		Class::on_def(primary_key, value, secondary_key, accessibility);
 	}
 	else{
 		overwrite_member(primary_key, value, secondary_key, accessibility);

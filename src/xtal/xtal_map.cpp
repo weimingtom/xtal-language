@@ -3,8 +3,8 @@
 
 namespace xtal{
 
-void Map::visit_members(Visitor& m){
-	Base::visit_members(m);
+void Map::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & table_ & default_value_;
 }	
 
@@ -199,8 +199,8 @@ bool MapIter::block_next_direct(AnyPtr& rkey, AnyPtr& rval){
 	return true;
 }
 
-void MapIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void MapIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & map_;
 }
 

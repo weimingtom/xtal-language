@@ -167,12 +167,12 @@ public:
 		OPEN = RANGE_OPEN
 	};
 
-protected:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & left_ & right_;
 	}
+
+protected:
 
 	AnyPtr left_;
 	AnyPtr right_;
@@ -303,7 +303,7 @@ public:
 
 	StringPtr to_s();
 
-	void visit_members(Visitor& m){
+	void on_visit_members(Visitor& m){
 		m & head_ & tail_;
 	}
 
@@ -352,22 +352,22 @@ private:
 class HaveParentBase : public Base{
 public:
 
-	virtual const ClassPtr& object_parent(){
+	const ClassPtr& on_object_parent(){
 		return have_parent_.object_parent();
 	}
 
-	virtual void set_object_parent(const ClassPtr& parent){
+	void on_set_object_parent(const ClassPtr& parent){
 		have_parent_.set_object_parent(parent);
+	}
+
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
+		have_parent_.visit_members(m);
 	}
 
 protected:
 
 	HaveParent have_parent_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		have_parent_.visit_members(m);
-	}
 };
 
 /**
@@ -376,15 +376,15 @@ protected:
 class HaveParentRefCountingBase : public RefCountingBase{
 public:
 
-	virtual const ClassPtr& object_parent(){
+	const ClassPtr& on_object_parent(){
 		return have_parent_.object_parent();
 	}
 
-	virtual void set_object_parent(const ClassPtr& parent){
+	void on_set_object_parent(const ClassPtr& parent){
 		have_parent_.set_object_parent(parent);
 	}
 
-	virtual void visit_members(Visitor& m){
+	void on_visit_members(Visitor& m){
 		have_parent_.visit_members(m);
 	}
 

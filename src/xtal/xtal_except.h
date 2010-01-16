@@ -52,31 +52,30 @@ public:
 		return backtrace_->each();
 	}
 
-private:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & message_ & backtrace_;
 	}
 
+private:
 	StringPtr message_;
 	ArrayPtr backtrace_;
 };
 
-class StandardError;
-class RuntimeError;
-class IOError;
-class EOSError;
-class LogicError;
-class CastError;
-class ArgumentError;
-class YieldError;
-class InstanceVariableError;
-class UnsupportedError;
-class RedefinedError;
-class AccessibilityError;
-class AssertionFailed;
-class CompileError;
+class StandardError{};
+class RuntimeError{};
+class IOError{};
+class EOSError{};
+class LogicError{};
+class CastError{};
+class ArgumentError{};
+class YieldError{};
+class InstanceVariableError{};
+class UnsupportedError{};
+class RedefinedError{};
+class AccessibilityError{};
+class AssertionFailed{};
+class CompileError{};
 
 AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
 AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type);

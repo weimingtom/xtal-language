@@ -49,7 +49,7 @@ public:
 	void set_fun(const FunPtr& v){ fun_ = v; }
 	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
 
-	virtual void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 private:
 	int_t line_;
@@ -130,9 +130,9 @@ public:
 
 	const VMachinePtr& vm(){ return (VMachinePtr&)ap(vm_); }
 
-private:
+	void on_visit_members(Visitor& m);
 
-	virtual void visit_members(Visitor& m);
+private:
 
 	int_t kind_;
 	int_t line_;
@@ -147,7 +147,7 @@ private:
 
 typedef SmartPtr<HookInfo> HookInfoPtr;
 
-class Debug;
+class Debug{};
 
 /**
 * \xbind lib::builtin::debug

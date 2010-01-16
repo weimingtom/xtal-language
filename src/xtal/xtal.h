@@ -45,7 +45,7 @@
 #include "xtal_lib.h"
 #include "xtal_iterator.h"
 #include "xtal_except.h"
-#include "xtal_xpeg.h"
 #include "xtal_expr.h"
+#include "xtal_xpeg.h"
 #include "xtal_anyinline.h"
 

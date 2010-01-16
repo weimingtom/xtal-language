@@ -131,7 +131,7 @@ struct MethodInfo{
 	const char_t* primary_key;
 	const param_types_holder_n* pth;
 	const void* val;
-	xtal::CppClassSymbolData** secondary_key;
+	CppClassSymbolData** secondary_key;
 	int_t accessibility; 
 };
 
@@ -1707,7 +1707,7 @@ struct TMath{
 	}
 };
 
-class Math;
+class Math{};
 
 XTAL_BIND(Math){
 	TMath<float_t>::bind(it, (float_t*)0);
@@ -1718,9 +1718,23 @@ XTAL_BIND(Math){
 	it->def_fun(Xid2(random_range), &random_range);
 }
 
+XTAL_PREBIND(TreeNode){
+	it->set_final();
+	it->inherit(cpp_class<Array>());
+}
+
+XTAL_BIND(TreeNode){
+	it->def_method(Xid2(tag), &TreeNode::tag);
+	it->def_method(Xid2(lineno), &TreeNode::lineno);
+	it->def_method(Xid2(set_tag), &TreeNode::set_tag);
+	it->def_method(Xid2(set_lineno), &TreeNode::set_lineno);
+	it->def_method(Xid2(op_at), &TreeNode::at);
+	it->def_method(Xid2(op_set_at), &TreeNode::set_at);
+}
+
 namespace xpeg{
 
-class XpegOperator;
+class XpegOperator{};
 
 XTAL_PREBIND(XpegOperator){
 	it->unset_native();
@@ -1745,29 +1759,15 @@ XTAL_BIND(XpegOperator){
 	it->def_method(Xid2(op_shr), &concat, cpp_class<Fun>());
 }
 
-XTAL_BIND(xpeg::Element){
+XTAL_BIND(Element){
 	it->def_method(Xid2(set_body), &set_body);
 }
 
-XTAL_PREBIND(xpeg::TreeNode){
-	it->set_final();
-	it->inherit(cpp_class<Array>());
-}
-
-XTAL_BIND(xpeg::TreeNode){
-	it->def_method(Xid2(tag), &TreeNode::tag);
-	it->def_method(Xid2(lineno), &TreeNode::lineno);
-	it->def_method(Xid2(set_tag), &TreeNode::set_tag);
-	it->def_method(Xid2(set_lineno), &TreeNode::set_lineno);
-	it->def_method(Xid2(op_at), &TreeNode::at);
-	it->def_method(Xid2(op_set_at), &TreeNode::set_at);
-}
-
-XTAL_PREBIND(xpeg::Executor){
+XTAL_PREBIND(Executor){
 	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid2(stream_or_iterator), empty_string));
 }
 
-XTAL_BIND(xpeg::Executor){
+XTAL_BIND(Executor){
 	it->def_method(Xid2(reset), &Executor::reset);
 	it->def_method(Xid2(parse), &Executor::parse);
 	it->def_method(Xid2(match), &Executor::match);
@@ -1788,7 +1788,7 @@ XTAL_BIND(xpeg::Executor){
 	it->def_method(Xid2(eos), &Executor::eos);
 }
 
-class Xpeg;
+class Xpeg{};
 
 XTAL_BIND(Xpeg){
 	it->unset_native();

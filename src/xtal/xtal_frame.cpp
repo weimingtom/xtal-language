@@ -3,8 +3,8 @@
 
 namespace xtal{
 
-void MembersIter::visit_members(Visitor& m){
-	Base::visit_members(m);
+void MembersIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & frame_;
 }
 
@@ -27,8 +27,8 @@ void MembersIter::block_next(const VMachinePtr& vm){
 	}
 }
 
-void MembersIter2::visit_members(Visitor& m){
-	Base::visit_members(m);
+void MembersIter2::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & frame_;
 }
 
@@ -121,7 +121,7 @@ AnyPtr Frame::members(){
 	return xnew<MembersIter>(to_smartptr(this));
 }
 
-const AnyPtr& Frame::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& Frame::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	nocache = true;
 
 	if(raweq(secondary_key, undefined) && !map_members_ && code_ && scope_info_){

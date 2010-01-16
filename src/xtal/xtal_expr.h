@@ -127,23 +127,56 @@ enum ExprType{
 	CastResult<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
 	const ExprPtr& set_##Name(Type v){ set_at(N, v); return to_smartptr(this); }
 
-class Expr;
-typedef SmartPtr<Expr> ExprPtr;
 
+typedef TreeNode Expr;
+typedef TreeNodePtr ExprPtr;
 const ExprPtr& ep(const AnyPtr& a);
 
-template<> struct CppClassSymbol<Expr> : public CppClassSymbol<xpeg::TreeNode>{};
 
 
-
-
-class Expr : public xpeg::TreeNode{
+/*
+* \brief ç\ï∂ñÿÇÃÉmÅ[Éh
+*/
+class TreeNode : public Array{
 public:
+	enum{ TYPE = TYPE_TREE_NODE };
 
-	Expr(const AnyPtr& tag = null, int_t lineno = 0){
-		set_tag(tag);
-		set_lineno(lineno);
+	TreeNode(const AnyPtr& tag=null, int_t lineno=0);
+
+	const AnyPtr& tag(){
+		return tag_;
 	}
+
+	int_t itag(){
+		return ivalue(tag_);
+	}
+
+	void set_tag(const AnyPtr& tag){
+		tag_ = tag;
+	}
+	
+	int_t lineno(){
+		return lineno_;
+	}
+
+	void set_lineno(int_t lineno){
+		lineno_ = lineno;
+	}
+
+	const AnyPtr& at(int_t i);
+
+	void set_at(int_t i, const AnyPtr& v);
+
+	template<class T>
+	typename CastResult<const T&>::type at_cast(int_t i){
+		return cast<const T&>(at(i));
+	}
+
+private:
+	AnyPtr tag_;
+	int_t lineno_;
+
+public:
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, una_term);
 
@@ -254,6 +287,8 @@ public:
 
 	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);
 };
+
+//#define XTAL_DEF_INST_1(N, InstName, MemberType1, MemberName1)
 
 class ExprBuilder{
 public:

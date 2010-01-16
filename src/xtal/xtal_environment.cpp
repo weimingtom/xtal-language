@@ -53,7 +53,7 @@ public:
 		mem_map_.insert(std::make_pair(ret, SizeAndCount(size, gcounter_)));
 		used_memory_ += size;
 
-		if(gcounter_==2011){
+		if(gcounter_==1744){
 			gcounter_ = gcounter_;
 		}
 
@@ -76,21 +76,25 @@ public:
 
 	void debug_free(void* p, size_t size){
 		if(p){
-			int gcount = mem_map_[p].count;
+			XTAL_ASSERT(mem_map_.find(p)!=mem_map_.end());
+
+			SizeAndCount& sac = mem_map_[p];
+
+			int gcount = sac.count;
 
 			if(gcount==13728){
 				gcount = gcount;
 			}
 
-			XTAL_ASSERT(mem_map_[p].size==size);
-			XTAL_ASSERT(!mem_map_[p].free);
-			used_memory_ -= mem_map_[p].size;
-			mem_map_[p].free = true;
+			XTAL_ASSERT(sac.size==size);
+			XTAL_ASSERT(!sac.free);
+			used_memory_ -= sac.size;
+			sac.free = true;
 
-			XTAL_ASSERT(memcmp((char*)p+mem_map_[p].size, debugstring_, sizeof(debugstring_))==0);
-			memset(p, 0xcd, mem_map_[p].size);
+			XTAL_ASSERT(memcmp((char*)p+sac.size, debugstring_, sizeof(debugstring_))==0);
+			memset(p, 0xcd, sac.size);
 
-			//*
+			/*
 			std::free(p);
 			mem_map_.erase(p);
 			//*/
@@ -131,6 +135,41 @@ namespace{
 	AllocatorLib cstd_allocator_lib;
 	ChCodeLib ascii_ch_code_lib;
 }
+
+void* AllocatorLib::malloc_align(std::size_t size, std::size_t alignment){
+	//return (char*)malloc(size+1)+1;
+
+	if(alignment <= sizeof(void*)){
+        alignment = sizeof(void*);
+	}
+
+    void* p = malloc(size + alignment);
+	if(!p){
+        return 0;
+	}
+
+	char* aligned = (char*)align_p(p, alignment);
+	if(aligned==p){
+		aligned += alignment;
+	}
+
+	*((void**)(aligned-sizeof(void*))) = p;
+    return aligned; 
+}
+
+void AllocatorLib::free_align(void *mem, std::size_t size, std::size_t alignment){
+	//return free((char*)mem-1, size+1);
+
+	if(!mem){
+		return;
+	}
+
+	char* aligned = (char*)mem;
+    void* p = *((void**)(aligned-sizeof(void*)));
+
+    free(p, size+alignment);
+}
+
 
 Environment* environment(){
 	return environment_;
@@ -197,7 +236,8 @@ void* xmalloc(size_t size){
 			ret = env->setting_.allocator_lib->malloc(size);
 
 			if(!ret){
-				ret = env->setting_.allocator_lib->out_of_memory(size);
+				 env->setting_.allocator_lib->out_of_memory();
+				 ret = env->setting_.allocator_lib->malloc(size);
 
 				if(!ret){
 					// だめだ。メモリが確保できない。
@@ -233,6 +273,64 @@ void xfree(void* p, size_t size){
 	env->used_memory_ -= size;
 	env->setting_.allocator_lib->free(p, size);
 }
+
+void* xmalloc_align(size_t size, size_t al){
+	Environment* env = environment_;
+	
+	if(env->gc_stress_){
+		full_gc();
+	}
+
+	env->used_memory_ += size;
+
+	if(env->used_memory_>env->memory_threshold_){
+		env->object_space_.lw_gc();
+		env->memory_threshold_ = env->used_memory_ + 1024*20;
+	}
+
+	void* ret = env->setting_.allocator_lib->malloc_align(size, al);
+
+	if(!ret){
+		env->object_space_.gc();
+		ret = env->setting_.allocator_lib->malloc_align(size, al);
+
+		if(!ret){
+			env->object_space_.full_gc();
+			ret = env->setting_.allocator_lib->malloc_align(size, al);
+
+			if(!ret){
+				env->setting_.allocator_lib->out_of_memory();
+				ret = env->setting_.allocator_lib->malloc_align(size, al);
+
+				if(!ret){
+					// だめだ。メモリが確保できない。
+					// XTAL_MEMORYまでジャンプしよう。
+
+					// XTAL_MEMORYで囲まれていない！もうどうしようもない！
+					XTAL_ASSERT(env->set_jmp_buf_);
+					
+					env->ignore_memory_assert_= true;
+					longjmp(env->jmp_buf_.buf, 1);
+				}
+			}
+		}
+	}
+
+	return ret;
+
+}
+
+void xfree_align(void* p, size_t size, size_t alignment){
+	Environment* env = environment_;
+	
+	if(!p){
+		return;
+	}
+
+	env->used_memory_ -= size;
+	env->setting_.allocator_lib->free_align(p, size, alignment);
+}
+
 
 JmpBuf& protect(){
 	// XTAL_PROTECTが入れ子になっている場合assertに引っかかる
@@ -293,7 +391,7 @@ void uninitialize(){
 
 }
 
-class cpp_classes;
+class cpp_classes{};
 
 XTAL_BIND(cpp_classes){
 	def_all_cpp_classes();
@@ -711,7 +809,7 @@ AnyPtr load(const StringPtr& file_name){
 	return ret;
 }
 
-struct RequireData{
+struct RequireData : public Base{
 	AnyPtr require_source_hook;
 };
 

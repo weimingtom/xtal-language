@@ -9,16 +9,15 @@
 
 namespace xtal{
 
-template<uint_t Size>
+template<class T>
 struct UserTypeBuffer{
-	union{
-		u8 buf[Size];
-		int_t dummy;
-	};
+	AlignBuffer<T> buf;
 
-	template<class T>
-	void destroy(T* p){
-		p->~T();
+	void* buffer(){ return buf.buffer; }
+
+	template<class U>
+	void destroy(U* p){
+		p->~U();
 	}
 };
 
@@ -28,11 +27,11 @@ struct UserTypeHolder : public Base{
 	void* ptr;
 };
 
-template<class T, class Deleter = UserTypeBuffer<sizeof(T)> >
+template<class T, class Deleter = UserTypeBuffer<T> >
 struct UserTypeHolderSub : public UserTypeHolder, public Deleter{
 	UserTypeHolderSub(){}
 	UserTypeHolderSub(T* p, const Deleter& f):UserTypeHolder(p), Deleter(f){}
-	virtual ~UserTypeHolderSub(){ Deleter::destroy((T*)this->ptr); }
+	~UserTypeHolderSub(){ Deleter::destroy((T*)this->ptr); }
 };
 
 struct undeleter_t{
@@ -64,7 +63,6 @@ enum InheritedEnum{
 	INHERITED_BASE,
 	INHERITED_RCBASE,
 	INHERITED_ANY,
-	INHERITED_ANYPTR,
 	INHERITED_OTHER
 };
 
@@ -74,46 +72,53 @@ struct InheritedN{
 		value = 
 			IsInherited<T, Base>::value ? INHERITED_BASE : 
 			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
-			IsInherited<T, AnyPtr>::value ? INHERITED_ANYPTR :
 			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
 
-template<int N>
-struct XNewBase{};
+///////////////////////////////////////////
 
-template<>
-struct XNewBase<INHERITED_BASE>{
+struct XNewBase_INHERITED_BASE{
 
 	template<class T>
-	void init(){
-		value = static_cast<Base*>(xmalloc(sizeof(T)));
-		klass = CppClassSymbol<T>::value;
-	}
+	void init();
 	
 	void* ptr(){ return value; }
 
-	Base* value;
+	void* value;
+	Base* pvalue;
 	CppClassSymbolData* klass;
 };
 
-template<>
-struct XNewBase<INHERITED_RCBASE>{
+template<class T>
+void XNewBase_INHERITED_BASE::init(){
+	value = object_xmalloc<T>();
+	klass = CppClassSymbol<T>::value;
+	static_cast<T*>(value)->template set_virtual_members<T>();
+	pvalue = static_cast<T*>(value);
+}
+
+struct XNewBase_INHERITED_RCBASE{
 
 	template<class T>
-	void init(){
-		value = static_cast<RefCountingBase*>(xmalloc(sizeof(T)));
-		klass = T::TYPE;
-	}
+	void init();
 
 	void* ptr(){ return value; }
 
-	RefCountingBase* value;
+	void* value;
+	RefCountingBase* pvalue;
 	int_t klass;
 };
 
-template<>
-struct XNewBase<INHERITED_ANY>{
+template<class T>
+void XNewBase_INHERITED_RCBASE::init(){
+	value = object_xmalloc<T>();
+	klass = T::TYPE;
+	static_cast<T*>(value)->template set_virtual_members<T>();
+	pvalue = static_cast<T*>(value);
+}
+
+struct XNewBase_INHERITED_ANY{
 
 	template<class T>
 	void init(){}
@@ -123,16 +128,10 @@ struct XNewBase<INHERITED_ANY>{
 	UninitializedAny value;
 };
 
-template<>
-struct XNewBase<INHERITED_OTHER>{
+struct XNewBase_INHERITED_OTHER{
 
 	template<class T>
-	void init(){
-		UserTypeHolderSub<T>* p = new UserTypeHolderSub<T>();
-		p->ptr = static_cast<T*>(static_cast<void*>(p->buf));
-		value = p;
-		klass = CppClassSymbol<T>::value;
-	}
+	void init();
 
 	void* ptr(){ return value->ptr; }
 
@@ -141,11 +140,47 @@ struct XNewBase<INHERITED_OTHER>{
 };
 
 template<class T>
+void XNewBase_INHERITED_OTHER::init(){
+	typedef UserTypeHolderSub<T> holder;
+	holder* p = new(object_xmalloc<holder>()) holder();
+	p->ptr = static_cast<T*>(static_cast<void*>(p->buffer()));
+	value = p;
+	klass = CppClassSymbol<T>::value;
+	p->template set_virtual_members<holder>();
+}
+
+template<int N>
+struct XNewBase{};
+
+template<>
+struct XNewBase<INHERITED_BASE> : XNewBase_INHERITED_BASE{};
+
+template<>
+struct XNewBase<INHERITED_RCBASE> : XNewBase_INHERITED_RCBASE{};
+
+template<>
+struct XNewBase<INHERITED_ANY> : XNewBase_INHERITED_ANY{};
+
+template<>
+struct XNewBase<INHERITED_OTHER> : XNewBase_INHERITED_OTHER{};
+
+template<class T>
 struct XNew : public XNewBase<InheritedN<T>::value>{
 	XNew(){
 		XNewBase<InheritedN<T>::value>::template init<T>();
 	}
 };
+
+template<class T, class Deleter>
+UserTypeHolderSub<T, Deleter>* xnew_with_deleter(const T* tp, const Deleter& deleter){
+	typedef UserTypeHolderSub<T, Deleter> holder;
+	holder* p = new(object_xmalloc<holder>()) holder();
+	p->ptr = const_cast<T*>(tp);
+	p->template set_virtual_members<holder>();
+	return p;
+}
+
+////////////////////////////////////
 
 template<class T>
 struct SmartPtrCtor1{
@@ -174,6 +209,8 @@ struct SmartPtrCtor4{
 template<class T>
 inline const ClassPtr& cpp_class();
 
+/////////////////////////////////////////
+
 /**
 * \brief 何の型のオブジェクトでも保持する特殊化されたスマートポインタ
 */
@@ -192,7 +229,7 @@ public:
 	template<class T, class Deleter>
 	SmartPtr(const T* tp, const Deleter& deleter)
 		:Any(noinit_t()){
-		init_smartptr(new UserTypeHolderSub<T, Deleter>((T*)tp, deleter), cpp_class<T>());
+		init_smartptr(xnew_with_deleter<T, Deleter>(tp, deleter), cpp_class<T>());
 	}
 
 	template<class T>
@@ -312,6 +349,7 @@ public:
 	SmartPtr(const float* v):Any(*v){}
 	SmartPtr(const double* v):Any(*v){}
 	SmartPtr(const long double* v):Any(*v){}
+
 public:
 
 	/**
@@ -384,6 +422,71 @@ private:
 
 };
 
+///////////////////////////////////////////
+
+template<int N, class T>
+struct Extract{};
+
+template<class T>
+struct Extract<INHERITED_BASE, T>{
+	static T* extract(const AnyPtr& a){
+		return static_cast<T*>(pvalue(a));
+	}
+};
+
+template<class T>
+struct Extract<INHERITED_RCBASE, T>{
+	static T* extract(const AnyPtr& a){
+		return static_cast<T*>(rcpvalue(a));
+	}
+};
+
+template<class T>
+struct Extract<INHERITED_ANY, T>{
+	static T* extract(const AnyPtr& a){
+		return reinterpret_cast<T*>(const_cast<AnyPtr*>(&a));
+	}
+};
+
+template<class T>
+struct Extract<INHERITED_OTHER, T>{
+	static T* extract(const AnyPtr& a){
+		if(type(a)==TYPE_BASE){
+			return static_cast<T*>((static_cast<UserTypeHolder*>(pvalue(a)))->ptr); 
+		}
+		else{
+			return static_cast<T*>(rawvalue(a).vp());
+		}
+	}
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+template<int N, class T>
+struct GetNull{};
+
+template<class T>
+struct GetNull<INHERITED_BASE, T>{
+	static T* get(){ return 0; }
+};
+
+template<class T>
+struct GetNull<INHERITED_RCBASE, T>{
+	static T* get(){ return 0; }
+};
+
+template<class T>
+struct GetNull<INHERITED_ANY, T>{
+	static T* get(){ return (T*)&null; }
+};
+
+template<class T>
+struct GetNull<INHERITED_OTHER, T>{
+	static T* get(){ return 0; }
+};
+
+/////////////////////////////////////////////////
+
 void visit_members(Visitor& m, const Any& p);
 
 class Visitor{
@@ -417,6 +520,109 @@ template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){
 	m & value.first & value.second;
 }
+
+/////////////////////////////////////////////////
+
+struct BindBase{
+	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
+	virtual void XTAL_bind(const ClassPtr& it) = 0;
+};
+
+struct CppClassSymbolData{ 
+	CppClassSymbolData(int size = 0, int align = 0);
+
+	enum{
+		BIND = 3
+	};
+
+	unsigned int value;
+
+	BindBase* prebind;
+	BindBase* bind[BIND];
+
+	unsigned int sizeofclass;
+	unsigned int alignofclass;
+	
+	StringLiteral name;
+
+	CppClassSymbolData* prev;
+};
+
+template<class T>
+struct CppClassSymbol{
+	static CppClassSymbolData* value;
+	static CppClassSymbolData* make();
+
+	typedef T type;
+};
+
+
+template<class T> struct AlignOf2{ enum{ value = AlignOf<T>::value }; };
+template<> struct AlignOf2<void>{ enum{ value = 0 }; };
+template<class T> struct SizeOf2{ enum{ value = sizeof(T) }; };
+template<> struct SizeOf2<void>{ enum{ value = 0 }; };
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::make(){
+	static CppClassSymbolData data(SizeOf2<T>::value, 0);
+	return &data;
+}
+
+template<class T>
+CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
+
+// CppClassSymbolの修飾子をはずすための定義
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+
+template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
+
+#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
+	template<class T> struct XTAL_bind_template##N;\
+	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
+		typedef ClassName Self;\
+		XTAL_bind_template##N(){\
+			::xtal::CppClassSymbolData* key = ::xtal::CppClassSymbol<ClassName>::make();\
+			XTAL_set(key->xtbind, key->name, xtname);\
+		}\
+		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
+	};\
+	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
+	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
+
+
+#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
+#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
+#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
+#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
+
+#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
+#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
+
+////////////////////////////////////
+
+typedef AnyPtr (*bind_var_fun_t)();
+
+struct CppVarSymbolData{ 
+	CppVarSymbolData(bind_var_fun_t fun);
+
+	CppVarSymbolData* prev;
+	bind_var_fun_t maker;
+	unsigned int value;
+};
+
+template<class T>
+struct CppVarSymbol{
+	static CppVarSymbolData value;
+	static AnyPtr maker(){ return xnew<T>(); }
+};
+
+template<class T>
+CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
 
 }//namespace 
 

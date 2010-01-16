@@ -17,9 +17,6 @@ namespace xpeg{
 class MatchResult;
 typedef SmartPtr<MatchResult> MatchResultPtr;
 
-class TreeNode;
-typedef SmartPtr<TreeNode> TreeNodePtr;
-
 class Executor;
 typedef SmartPtr<Executor> ExecutorPtr;
 
@@ -34,44 +31,6 @@ typedef SmartPtr<NFA> NFAPtr;
 
 class Scanner;
 typedef SmartPtr<Scanner> ScannerPtr;
-
-/*
-* \brief ç\ï∂ñÿÇÃÉmÅ[Éh
-*/
-class TreeNode : public Array{
-public:
-	enum{ TYPE = TYPE_TREE_NODE };
-
-	TreeNode(const AnyPtr& tag=null, int_t lineno=0);
-
-	const AnyPtr& tag(){
-		return tag_;
-	}
-
-	int_t itag(){
-		return ivalue(tag_);
-	}
-
-	void set_tag(const AnyPtr& tag){
-		tag_ = tag;
-	}
-	
-	int_t lineno(){
-		return lineno_;
-	}
-
-	void set_lineno(int_t lineno){
-		lineno_ = lineno;
-	}
-
-	const AnyPtr& at(int_t i);
-
-	void set_at(int_t i, const AnyPtr& v);
-
-private:
-	AnyPtr tag_;
-	int_t lineno_;
-};
 
 /**
 * \xbind lib::builtin::xpeg
@@ -281,7 +240,7 @@ private:
 
 	typedef PODStack<StackInfo> stack_t;
 
-	struct Cap{
+	struct Cap : public Base{
 		int_t begin, end;
 	};
 
@@ -295,11 +254,6 @@ private:
 	int_t begin_;
 	int_t match_begin_;
 	int_t match_end_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & tree_ & errors_ & cap_ & scanner_;
-	}
 
 public:
 
@@ -322,6 +276,11 @@ public:
 		State state;
 		ArrayPtr tree;
 	};
+
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
+		m & tree_ & errors_ & cap_ & scanner_;
+	}
 
 private:
 
@@ -454,8 +413,8 @@ protected:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & mm_;
 		for(uint_t i=base_, sz=num_; i<sz; ++i){
 			for(int j=0; j<ONE_BLOCK_SIZE; ++j){
@@ -499,13 +458,13 @@ public:
 		return stream_->read_charactors(buffer, max);
 	}
 
-private:
-	StreamPtr stream_;
-
-	virtual void visit_members(Visitor& m){
-		Scanner::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Scanner::on_visit_members(m);
 		m & stream_;
 	}
+
+private:
+	StreamPtr stream_;
 };
 
 class IteratorScanner : public Scanner{
@@ -515,13 +474,12 @@ public:
 
 	virtual int_t do_read(AnyPtr* buffer, int_t max);
 
-private:
-	AnyPtr iter_;
-
-	virtual void visit_members(Visitor& m){
-		Scanner::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Scanner::on_visit_members(m);
 		m & iter_;
 	}
+private:
+	AnyPtr iter_;
 };
 
 struct Element : public Base{
@@ -575,8 +533,8 @@ struct Element : public Base{
 	Element(Type type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)
 		:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & param1 & param2;
 	}
 };
@@ -588,8 +546,8 @@ struct Trans : public Base{
 	int to;
 	SmartPtr<Trans> next;
 
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & ch & next;
 	}
 };	

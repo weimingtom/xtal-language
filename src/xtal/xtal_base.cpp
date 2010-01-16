@@ -3,39 +3,38 @@
 
 namespace xtal{
 
-void RefCountingBase::rawcall(const VMachinePtr& vm){
+void RefCountingBase::on_rawcall(const VMachinePtr& vm){
 	to_smartptr(this)->rawsend(vm, Xid(op_call));
 }
 
-const AnyPtr& RefCountingBase::rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& RefCountingBase::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	return undefined;
 }
 
-void RefCountingBase::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+void RefCountingBase::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
+
 }
 
-const ClassPtr& RefCountingBase::object_parent(){
+const ClassPtr& RefCountingBase::on_object_parent(){
 	return unchecked_ptr_cast<Class>(null);
 }
 
-void RefCountingBase::set_object_parent(const ClassPtr& parent){
+void RefCountingBase::on_set_object_parent(const ClassPtr& parent){
 
 }
 
-void RefCountingBase::finalize(){
+void RefCountingBase::on_finalize(){
 
 }
 
 Base::Base(){
 	value_.init(TYPE_BASE, this);
-	//ref_count_ = 0;
 	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
 Base::Base(const Base& b){
 	value_.init(TYPE_BASE, this);
-	//ref_count_ = 0;
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		
@@ -120,7 +119,7 @@ void Base::make_instance_variables(){
 	}
 }
 
-void Base::visit_members(Visitor& m){
+void Base::on_visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
 		ClassPtr temp = to_smartptr(class_);
 		m & temp;

@@ -11,13 +11,13 @@ StringPtr CallerInfo::fun_name(){
 	return fun_ ? fun_->object_name() : ""; 
 }
 
-void CallerInfo::visit_members(Visitor& m){
-	Base::visit_members(m);
+void CallerInfo::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & fun_ & variables_frame_;
 }
 
-void HookInfo::visit_members(Visitor& m){
-	Base::visit_members(m);
+void HookInfo::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
 	m & /*vm_ & */file_name_ & fun_name_ & exception_ & variables_frame_;
 }
 
@@ -38,7 +38,7 @@ enum{
 	BSTATE_STEP_OUT
 };
 
-class DebugData{
+class DebugData : public Base{
 public:
 	DebugData(){
 		enable_count_ = 0;
@@ -194,7 +194,7 @@ void call_debug_hook(int_t kind, const HookInfoPtr& ainfo){
 			XTAL_NODEFAULT;
 
 			XTAL_CASE(BSTATE_NONE){
-				AnyPtr hookret = hook->call(info);
+				AnyPtr hookret = hook ? hook->call(info) : AnyPtr(0);
 				int_t ret = type(hookret)==TYPE_INT ? hookret->to_i() : 0;
 
 				switch(ret){
@@ -251,45 +251,6 @@ void call_debug_hook(int_t kind, const HookInfoPtr& ainfo){
 
 		break;
 	}
-
-		/*	switch(kind){
-		XTAL_CASE(BREAKPOINT_LINE){
-			if(d->hooks_[BREAKPOINT_LINE]){
-				breakpoint_hook_helper(info, d->hooks_[BREAKPOINT_LINE]);
-			}
-		}
-
-		XTAL_CASE(BREAKPOINT_RETURN){
-			if(return_hook()){
-				breakpoint_hook_helper(info, return_hook());
-			}
-		}
-
-		XTAL_CASE(BREAKPOINT_CALL){
-			if(call_hook()){
-				breakpoint_hook_helper(info, call_hook());
-			}
-		}
-
-		XTAL_CASE(BREAKPOINT_THROW){
-			if(throw_hook()){
-				breakpoint_hook_helper(info, throw_hook());
-			}
-		}
-
-
-		XTAL_CASE(BREAKPOINT_ASSERT){
-			if(const AnyPtr& hook = debug::assert_hook()){
-				hook->call(info);
-			}
-			else{
-				set_except(cpp_class<AssertionFailed>()->call(info->assertion_message()));
-				e = ap(except_[0]);
-			}
-		}
-
-	}
-		*/
 }
 
 MapPtr make_debug_object(const AnyPtr& v, int_t depth){

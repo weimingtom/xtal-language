@@ -156,12 +156,12 @@ protected:
 
 	uint_t orphan_;
 
-protected:
+public:
 	
-	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
-	virtual void visit_members(Visitor& m){
-		HaveParentBase::visit_members(m);
+	void on_visit_members(Visitor& m){
+		HaveParentBase::on_visit_members(m);
 		m & outer_ & code_;
 
 		if(orphan_){
@@ -175,17 +175,14 @@ protected:
 		}
 	}
 
+protected:
+
 	friend class MembersIter;
 	friend class MembersIter2;
 	friend class VMachine;
 };
 
 class MembersIter : public Base{
-	FramePtr frame_;
-	Frame::map_t::iterator it_;
-
-	virtual void visit_members(Visitor& m);
-
 public:
 
 	MembersIter(const FramePtr& a)
@@ -193,14 +190,15 @@ public:
 	}
 
 	void block_next(const VMachinePtr& vm);
+
+	void on_visit_members(Visitor& m);
+
+private:
+	FramePtr frame_;
+	Frame::map_t::iterator it_;
 };
 
 class MembersIter2 : public Base{
-	FramePtr frame_;
-	int_t it_;
-
-	virtual void visit_members(Visitor& m);
-
 public:
 
 	MembersIter2(const FramePtr& a)
@@ -208,6 +206,12 @@ public:
 	}
 
 	void block_next(const VMachinePtr& vm);
+
+	void on_visit_members(Visitor& m);
+
+private:
+	FramePtr frame_;
+	int_t it_;
 };
 
 }

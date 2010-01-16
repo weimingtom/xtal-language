@@ -163,7 +163,7 @@ public:
 
 public:
 
-	void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 	class iterator{
 	public:
@@ -513,7 +513,7 @@ public:
 
 	void block_first(const VMachinePtr& vm);
 
-	void visit_members(Visitor& m);
+	void on_visit_members(Visitor& m);
 
 	typedef xarray::iterator iterator;
 
@@ -571,12 +571,12 @@ public:
 
 	bool block_next_direct(AnyPtr& ret);
 
+	void on_visit_members(Visitor& m);
+
 private:
 	ArrayPtr array_;
 	uint_t index_;
 	bool reverse_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 }

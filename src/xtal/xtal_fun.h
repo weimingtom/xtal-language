@@ -73,12 +73,12 @@ public:
 
 	uint_t named_size();
 
+	void on_visit_members(Visitor& m);
+
 private:
 
 	ArrayPtr ordered_;
 	MapPtr named_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 class ArgumentsIter : public Base{
@@ -88,12 +88,12 @@ public:
 			
 	void block_next(const VMachinePtr& vm);
 
+	void on_visit_members(Visitor& m);
+
 private:
 	SmartPtr<ArrayIter> ait_;
 	SmartPtr<MapIter> mit_;
 	int_t index_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 
@@ -103,7 +103,7 @@ public:
 
 	InstanceVariableGetter(int_t number, ClassInfo* info);
 
-	void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
 public:
 	int_t number_;
@@ -116,7 +116,7 @@ public:
 
 	InstanceVariableSetter(int_t number, ClassInfo* info);
 
-	void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
 public:
 	int_t number_;
@@ -157,19 +157,18 @@ public:
 
 public:
 		
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 	
+	void on_visit_members(Visitor& m){
+		HaveParentBase::on_visit_members(m);
+		m & outer_ & code_;
+	}
+
 protected:
 
 	FramePtr outer_;
 	CodePtr code_;
 	FunInfo* info_;
-	
-	virtual void visit_members(Visitor& m){
-		HaveParentBase::visit_members(m);
-		m & outer_ & code_;
-	}
-
 };
 
 /**
@@ -186,14 +185,14 @@ public:
 
 public:
 	
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
-protected:
-
-	virtual void visit_members(Visitor& m){
-		Method::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Method::on_visit_members(m);
 		m & this_;
 	}
+
+protected:
 
 	AnyPtr this_;
 };
@@ -212,7 +211,7 @@ public:
 
 public:
 	
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 };
 
 /**
@@ -225,7 +224,7 @@ public:
 
 	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info);
 
-	virtual void finalize();
+	void on_finalize();
 			
 public:
 
@@ -238,7 +237,7 @@ public:
 	*/
 	void halt();
 
-	void rawcall(const VMachinePtr& vm){
+	void on_rawcall(const VMachinePtr& vm){
 		call_helper(vm, false);
 	}
 
@@ -256,16 +255,16 @@ public:
 
 	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
 
+	void on_visit_members(Visitor& m){
+		Fun::on_visit_members(m);
+		m & vm_;
+	}
+
 private:
 
 	VMachinePtr vm_;
 	const inst_t* resume_pc_;
 	bool alive_;
-
-	void visit_members(Visitor& m){
-		Fun::visit_members(m);
-		m & vm_;
-	}
 };
 
 class BindedThis : public Base{
@@ -277,14 +276,14 @@ public:
 
 public:
 	
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
-protected:
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
 		m & fun_ & this_;
 	}
+
+protected:
 
 	AnyPtr fun_;
 	AnyPtr this_;

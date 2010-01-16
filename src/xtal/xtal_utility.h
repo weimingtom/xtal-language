@@ -520,6 +520,76 @@ template<>
 struct IsFloat<float_t>{ enum{ value = 1 }; };
 
 
+template<class T>
+struct AlignCalc{
+	char c;
+	T t;
+};
+
+template<class T>
+struct AlignOf{
+	enum{
+		TSIZE = sizeof(T),
+		ASIZE = sizeof(AlignCalc<T>) - TSIZE,
+		value = ASIZE < TSIZE ? ASIZE : TSIZE
+	};
+};
+
+#if defined(_MSC_VER)
+
+struct align16_t{
+	__declspec(align(16)) int v;
+};
+
+#elif defined(__GNUC__)
+
+struct align16_t{
+	int __attribute__((aligned(16))) v;
+};
+
+#else
+
+typedef void align16_t
+
+#endif
+
+template<int N>
+struct SelectAlignType{
+	typedef typename If<sizeof(unsigned char)==N,
+		unsigned char,
+		typename If<sizeof(unsigned short)==N, 
+			unsigned short int,
+			typename If<sizeof(unsigned int)==N,
+				unsigned int,
+				typename If<sizeof(unsigned long)==N,
+					unsigned long int,
+					typename If<sizeof(unsigned long long)==N,
+						unsigned long long int,
+						typename If<sizeof(double)==N,
+							double,
+							typename If<sizeof(long double)==N,
+								long double,
+								typename If<16==N,
+									align16_t,
+									void
+								>::type
+							>::type
+						>::type
+					>::type
+				>::type
+			>::type
+		>::type
+	>::type type;	
+};
+
+template<class T>
+struct AlignBuffer{
+	union{
+		typename SelectAlignType<AlignOf<T>::value>::type a;
+		char buffer[sizeof(T)];
+	};
+};
+
 //////////////////////////////////////////////////
 //
 
@@ -571,6 +641,7 @@ class Values;
 class Exception;
 class Format;
 class Text;
+class TreeNode;
 
 typedef SmartPtr<Null> NullPtr;
 typedef SmartPtr<Undefined> UndefinedPtr;
@@ -607,6 +678,7 @@ typedef SmartPtr<Values> ValuesPtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 typedef SmartPtr<Text> TextPtr;
 typedef SmartPtr<Format> FormatPtr;
+typedef SmartPtr<TreeNode> TreeNodePtr;
 
 class Base;
 class RefCountingBase;
@@ -619,6 +691,14 @@ class Bool;
 
 class Visitor;
 class InstanceVariables;
+
+struct CppClassSymbolData;
+
+template<class T>
+struct CppClassSymbol;
+
+template<class T >
+inline SmartPtr<T> xnew();
 
 ////////////////////////////////////////////////
 
@@ -969,77 +1049,7 @@ extern NullPtr null;
 */
 extern UndefinedPtr undefined;
 
-
-struct BindBase{
-	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
-	virtual void XTAL_bind(const ClassPtr& it) = 0;
-};
-
-struct CppClassSymbolData{ 
-	CppClassSymbolData();
-
-	unsigned int value;
-	CppClassSymbolData* prev;
-
-	BindBase* prebind;
-
-	enum{
-		BIND = 3
-	};
-
-	BindBase* bind[BIND];
-	
-	StringLiteral name;
-};
-
-template<class T>
-struct CppClassSymbol{
-	static CppClassSymbolData* value;
-	static CppClassSymbolData* make();
-};
-
-template<class T>
-CppClassSymbolData* CppClassSymbol<T>::make(){
-	static CppClassSymbolData data;
-	return &data;
-}
-
-template<class T>
-CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
-
-// CppClassSymbolÇÃèCè¸éqÇÇÕÇ∏Ç∑ÇΩÇﬂÇÃíËã`
-template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
-
-template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
-template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
-
-#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
-	template<class T> struct XTAL_bind_template##N;\
-	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
-		typedef ClassName Self;\
-		XTAL_bind_template##N(){\
-			XTAL_set(\
-				::xtal::CppClassSymbol<ClassName>::make()->xtbind,\
-				::xtal::CppClassSymbol<ClassName>::make()->name,\
-				xtname);\
-		}\
-		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
-	};\
-	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
-	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
-
-
-#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
-#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
-#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
-#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
-
-#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
-#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
+//////////////////////////////////////////////
 
 }
 

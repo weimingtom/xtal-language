@@ -10,6 +10,27 @@ uint_t Stream::tell(){
 	return 0;
 }
 
+/*
+uint_t Stream::write(String::iterator first, String::iterator end){
+	char_t buf[256];
+	uint_t size = 0;
+	while(first!=end){
+		int_t i = 0;
+		while(first!=end){
+			buf[i] = *first;
+			++first;
+			++i;
+			if(i==256){
+				break;
+			}
+		}
+		size += write(&buf[0], i*sizeof(char_t));
+	}
+
+	return size;
+}
+*/
+
 uint_t Stream::write(const void* p, uint_t size){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(write), null));
 	return 0;
@@ -100,9 +121,8 @@ void Stream::read_strict(void* p, uint_t size){
 	}
 }
 
-uint_t Stream::print(const AnyPtr& value){
-	StringPtr str = value->to_s(); 
-	return write(str->data(), str->data_size()*sizeof(char_t));
+void Stream::print(const AnyPtr& value){
+	return put_s(value->to_s());
 }
 
 void Stream::println(const AnyPtr& value){

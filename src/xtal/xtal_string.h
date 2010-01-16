@@ -9,6 +9,8 @@
 
 namespace xtal{
 
+class StringData;
+
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Any lib::builtin::Iterable
@@ -91,7 +93,6 @@ public:
 
 	/**
 	* \brief 0終端の文字列先頭のポインタを返す。
-	* 使う際は、本当に0終端の文字列が必要なのか考えて使用してください。
 	* data()とdata_size()で代用可能ならそちらを使ってください。
 	*/
 	const char_t* c_str() const;
@@ -252,6 +253,46 @@ public:
 
 private:
 	void init_string(const char_t* str, uint_t size);
+	StringData* new_string_data(uint_t size);
+
+public:
+
+	class iterator{
+	public:
+		
+		iterator(const char_t* p)
+			:p_(p){}
+		
+		char_t operator *() const{
+			return *p_;
+		}
+
+		iterator& operator ++(){
+			++p_;
+			return *this;
+		}
+
+		iterator operator ++(int){
+			iterator temp(*this);
+			++p_;
+			return temp;
+		}
+
+		friend bool operator ==(iterator a, iterator b){
+			return a.p_ == b.p_;
+		}
+
+		friend bool operator !=(iterator a, iterator b){
+			return a.p_ != b.p_;
+		}
+
+	private:
+		const char_t* p_;
+	};
+
+	iterator begin() const;
+
+	iterator end() const;
 };
 
 class StringData : public RefCountingBase{
@@ -352,50 +393,6 @@ public:
 	*
 	*/
 	ID(const StringPtr& name);		
-
-public:
-
-	class iterator{
-	public:
-		
-		iterator(const char_t* p)
-			:p_(p){}
-		
-		char_t operator *() const{
-			return *p_;
-		}
-
-		iterator& operator ++(){
-			++p_;
-			return *this;
-		}
-
-		iterator operator ++(int){
-			iterator temp(*this);
-			++p_;
-			return temp;
-		}
-
-		friend bool operator ==(iterator a, iterator b){
-			return a.p_ == b.p_;
-		}
-
-		friend bool operator !=(iterator a, iterator b){
-			return a.p_ != b.p_;
-		}
-
-	private:
-		const char_t* p_;
-	};
-
-	iterator begin(){
-		return iterator(data());
-	}
-
-	iterator end(){
-		return iterator(data() + data_size());
-	}
-
 };
 
 inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
@@ -427,15 +424,17 @@ public:
 };
 
 class StringEachIter : public Base{
-	StringStreamPtr ss_;
-
-	virtual void visit_members(Visitor& m);
-
 public:
 
 	StringEachIter(const StringPtr& str);
 
 	void block_next(const VMachinePtr& vm);
+
+	void on_visit_members(Visitor& m);
+
+
+private:
+	StringStreamPtr ss_;
 };
 
 class ChRangeIter : public Base{
@@ -445,10 +444,8 @@ public:
 		:it_(range->left()), end_(range->right()){}
 
 	void block_next(const VMachinePtr& vm);
+
 private:
-
-	virtual void visit_members(Visitor& m);
-
 	StringPtr it_, end_;
 };
 

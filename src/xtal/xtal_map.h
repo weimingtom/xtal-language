@@ -239,13 +239,13 @@ public:
 	iterator end(){
 		return table_.end();
 	}
+
+	void on_visit_members(Visitor& m);
 	
 protected:
 
 	table_t table_;
 	AnyPtr default_value_;
-
-	virtual void visit_members(Visitor& m);
 };
 
 class MapIter : public Base{
@@ -259,12 +259,13 @@ public:
 
 	bool block_next_direct(AnyPtr& rkey, AnyPtr& rval);
 
+	void on_visit_members(Visitor& m);
+
 private:
 	MapPtr map_;
 	Map::iterator node_;
 	int_t type_;
 
-	virtual void visit_members(Visitor& m);
 };
 
 class Set : public Map{

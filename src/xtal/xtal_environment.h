@@ -20,7 +20,11 @@ public:
 	virtual ~AllocatorLib(){}
 	virtual void* malloc(std::size_t size){ return std::malloc(size); }
 	virtual void free(void* p, std::size_t size){ std::free(p); }
-	virtual void* out_of_memory(std::size_t size){ return 0; }
+
+	virtual void* malloc_align(std::size_t size, std::size_t alignment);
+	virtual void free_align(void* p, std::size_t size, std::size_t alignment);
+
+	virtual void out_of_memory(){}
 };
 
 /**

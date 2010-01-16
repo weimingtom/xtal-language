@@ -107,7 +107,7 @@ public:
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
 
-	virtual ~Class();
+	~Class();
 
 	void overwrite(const ClassPtr& p);
 
@@ -122,7 +122,9 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	virtual void def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
+
+	using RefCountingBase::def;
 	
 	void def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
 	void def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
@@ -137,7 +139,7 @@ public:
 	*
 	* この関数を使うのではなく、Any::memberを使うこと。
 	*/
-	virtual const AnyPtr& rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
+	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 
 	/**
 	* \brief メンバを再設定する
@@ -418,9 +420,9 @@ public:
 
 	Class(cpp_class_t);
 
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 	
-	virtual void s_new(const VMachinePtr& vm);
+	void s_new(const VMachinePtr& vm);
 
 	void init_instance(const AnyPtr& self, const VMachinePtr& vm);
 	
@@ -438,7 +440,7 @@ public:
 
 	const StringPtr& object_temporary_name();
 
-	void set_object_parent(const ClassPtr& parent);
+	void on_set_object_parent(const ClassPtr& parent);
 
 	uint_t object_force(){
 		return object_force_;
@@ -477,6 +479,7 @@ public:
 	bool bind(int_t n = -1);
 
 	void set_symbol_data(CppClassSymbolData* data){
+		XTAL_ASSERT(!symbol_data_);
 		symbol_data_ = data;
 	}
 
@@ -504,6 +507,17 @@ public:
 	const NativeFunPtr& def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val);
 	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
 
+public:
+
+	void on_visit_members(Visitor& m){
+		Frame::on_visit_members(m);
+		for(uint_t i=0; i<inherited_classes_.size(); ++i){
+			ClassPtr temp = to_smartptr(inherited_classes_[i]);
+			m & temp;
+			inherited_classes_[i] = temp.get();
+		}
+	}
+
 protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
@@ -527,15 +541,6 @@ protected:
 		FLAG_BINDED3 = 1<<6,
 	};
 
-	virtual void visit_members(Visitor& m){
-		Frame::visit_members(m);
-		for(uint_t i=0; i<inherited_classes_.size(); ++i){
-			ClassPtr temp = to_smartptr(inherited_classes_[i]);
-			m & temp;
-			inherited_classes_[i] = temp.get();
-		}
-	}
-
 	friend class ClassInheritedClassesIter;
 };
 
@@ -548,14 +553,14 @@ public:
 	
 	void block_next(const VMachinePtr& vm);
 
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
+		m & class_;
+	}
+
 private:
 	ClassPtr class_;
 	uint_t index_;
-
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & class_;
-	}
 };
 
 }

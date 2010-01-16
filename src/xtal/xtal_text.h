@@ -51,26 +51,20 @@ public:
 
 	Format(const StringPtr& str = empty_string);
 	void set(const StringPtr& str);
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
 	void serial_load(const StringPtr& v);
-
 private:
 
 	StringPtr original_;
 	bool have_named_;
-	
-	virtual void visit_members(Visitor& m){
-		Base::visit_members(m);
-		m & original_;
-	}
 };
 
 class Text : public Base{
 public:
 	Text(const IDPtr& key = empty_id);
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
 	void serial_load(const IDPtr& v);

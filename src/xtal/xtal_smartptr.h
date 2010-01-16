@@ -9,42 +9,6 @@
 
 namespace xtal{
 
-template<int N, class T>
-struct ExtractSmartPtr{};
-
-template<class T>
-struct ExtractSmartPtr<INHERITED_BASE, T>{
-	static T* extract(const Any& a){
-		return (T*)pvalue(a);
-	}
-};
-
-template<class T>
-struct ExtractSmartPtr<INHERITED_RCBASE, T>{
-	static T* extract(const Any& a){
-		return (T*)rcpvalue(a);
-	}
-};
-
-template<class T>
-struct ExtractSmartPtr<INHERITED_ANY, T>{
-	static T* extract(const Any& a){
-		return (T*)&a;
-	}
-};
-
-template<class T>
-struct ExtractSmartPtr<INHERITED_OTHER, T>{
-	static T* extract(const Any& a){
-		if(type(a)==TYPE_BASE){
-			return (T*)((UserTypeHolder*)pvalue(a))->ptr; 
-		}
-		else{
-			return (T*)rawvalue(a).vp();
-		}
-	}
-};
-
 /**
 * \brief T型へのポインタを保持するためのスマートポインタ
 */
@@ -178,7 +142,7 @@ public:
 	/**
 	* \brief T型へのポインタを取得する。
 	*/
-	T* get() const{ return ExtractSmartPtr<InheritedN<T>::value, T>::extract(*this); }
+	T* get() const{ return Extract<InheritedN<T>::value, T>::extract(*this); }
 
 	/**
 	* \brief ->演算子
@@ -217,7 +181,7 @@ SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 template<class T >
 XNew<T> xxnew(){
 	XNew<T> n;
-	::new(n.ptr()) T;
+	new(n.ptr()) T;
 	return n;
 }
 
@@ -231,7 +195,7 @@ inline SmartPtr<T> xnew(){
 template<class T, class A0 #COMMA_REPEAT#class A`i+1`#>
 XNew<T> xxnew(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 #COMMA_REPEAT#a`i+1`#);
+	new(n.ptr()) T(a0 #COMMA_REPEAT#a`i+1`#);
 	return n;
 }
 
@@ -245,7 +209,7 @@ inline SmartPtr<T> xnew(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
 template<class T, class A0 >
 XNew<T> xxnew(const A0& a0 ){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 );
+	new(n.ptr()) T(a0 );
 	return n;
 }
 
@@ -258,7 +222,7 @@ inline SmartPtr<T> xnew(const A0& a0 ){
 template<class T, class A0 , class A1>
 XNew<T> xxnew(const A0& a0 , const A1& a1){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1);
+	new(n.ptr()) T(a0 , a1);
 	return n;
 }
 
@@ -271,7 +235,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1){
 template<class T, class A0 , class A1, class A2>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2);
+	new(n.ptr()) T(a0 , a1, a2);
 	return n;
 }
 
@@ -284,7 +248,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2){
 template<class T, class A0 , class A1, class A2, class A3>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3);
+	new(n.ptr()) T(a0 , a1, a2, a3);
 	return n;
 }
 
@@ -297,7 +261,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3)
 template<class T, class A0 , class A1, class A2, class A3, class A4>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4);
 	return n;
 }
 
@@ -310,7 +274,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5);
 	return n;
 }
 
@@ -323,7 +287,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6);
 	return n;
 }
 
@@ -336,7 +300,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7);
 	return n;
 }
 
@@ -349,7 +313,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
 	return n;
 }
 
@@ -362,7 +326,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	return n;
 }
 
@@ -375,7 +339,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	return n;
 }
 
@@ -388,7 +352,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	return n;
 }
 
@@ -401,7 +365,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	return n;
 }
 
@@ -414,7 +378,7 @@ inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3,
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
 XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
 	XNew<T> n;
-	::new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
 	return n;
 }
 
@@ -481,43 +445,43 @@ class SmartPtr< SmartPtr<T> >;
 template<>
 struct SmartPtrCtor1<String>{
 	typedef const char_t* type;
-	static AnyPtr call(type v);
+	static StringPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor2<String>{
 	typedef const char8_t* type;
-	static AnyPtr call(type v);
+	static StringPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor3<String>{
 	typedef const StringLiteral& type;
-	static AnyPtr call(type v);
+	static StringPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor1<ID>{
 	typedef const char_t* type;
-	static AnyPtr call(type v);
+	static IDPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor2<ID>{
 	typedef const StringPtr& type;
-	static AnyPtr call(type v);
+	static IDPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor3<ID>{
 	typedef const char8_t* type;
-	static AnyPtr call(type v);
+	static IDPtr call(type v);
 };
 
 template<>
 struct SmartPtrCtor4<ID>{
 	typedef const StringLiteral& type;
-	static AnyPtr call(type v);
+	static IDPtr call(type v);
 };
 
 }

@@ -113,7 +113,7 @@ public:
 
 	StringPtr inspect_range(int_t start, int_t end);
 
-	virtual void rawcall(const VMachinePtr& vm);
+	void on_rawcall(const VMachinePtr& vm);
 
 	void check_implicit_lookup();
 
@@ -146,14 +146,14 @@ public:
 		return 0;
 	}
 
+	void on_visit_members(Visitor& m){
+		Class::on_visit_members(m);
+		m & identifier_table_ & value_table_ & source_file_name_ & first_fun_ & once_table_;
+	}
+
 protected:
 
 	void find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv);
-
-	virtual void visit_members(Visitor& m){
-		Class::visit_members(m);
-		m & identifier_table_ & value_table_ & source_file_name_ & first_fun_ & once_table_;
-	}
 
 private:
 

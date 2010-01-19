@@ -199,6 +199,13 @@ public:
 	static void operator delete(void*){}
 	static void* operator new(size_t, void* p){ return p; }
 	static void operator delete(void*, void*){}
+	
+private:
+
+#ifdef XTAL_DEBUG
+	virtual void virtual_function(){}
+#endif
+
 };
 
 /**

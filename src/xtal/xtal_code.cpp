@@ -19,15 +19,12 @@ void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
 }
 
 Code::Code()
-	:source_file_name_(XTAL_STRING("<noname>")){
+	:source_file_name_(empty_string){
+
 	set_singleton();
 	set_object_temporary_name(Xid(filelocal));
 	set_object_force(500);
-	inherit(builtin());
 
-	def_method(Xid(inherit), &Class_inherit);
-	def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
-	def(Xid(filelocal), to_smartptr(this));
 
 	identifier_table_ = xnew<Array>();
 	value_table_ = xnew<Array>();
@@ -39,9 +36,27 @@ Code::~Code(){
 
 }
 
+void Code::generated(){
+	set_code(to_smartptr(this));
+	if(!scope_info_table_.empty()){
+		set_info(&scope_info_table_[0]);
+		resize_member_direct(scope_info_table_[0].variable_size);
+		make_members_force(Frame::FLAG_NOCACHE);
+	}
+
+	inherit(builtin());
+	def_method(Xid(inherit), &Class_inherit);
+	def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
+	def(Xid(filelocal), to_smartptr(this));
+
+	first_fun_->set_info(&xfun_info_table_[0]);
+}
+
 bool Code::set_lineno_info(uint_t line){
-	if(!lineno_table_.empty() && lineno_table_.back().lineno==line)
+	if(!lineno_table_.empty() && lineno_table_.back().lineno==line){
 		return false;
+	}
+
 	LineNumberInfo lnt={(u16)code_.size(), (u16)line, 0, 0};
 	lineno_table_.push_back(lnt);
 	return true;

@@ -64,6 +64,8 @@ inline const AnyPtr& cache_member(Base* target_class, const IDPtr& primary_key, 
 	return environment_->member_cache_table_.cache(target_class, primary_key, secondary_key, accessibility);
 }
 
+class Builtin{};
+
 }
 
 #endif //XTAL_DETAILS_H_INCLUDE_GUARD

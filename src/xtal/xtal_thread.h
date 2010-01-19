@@ -50,6 +50,10 @@ public:
 	*/
 	static void sleep(float_t sec);
 
+public:
+
+	void on_visit_members(Visitor& m);
+
 protected:
 
 	static void trampoline(void* data);
@@ -57,8 +61,6 @@ protected:
 	void begin_thread();
 
 protected:
-
-	void on_visit_members(Visitor& m);
 
 	AnyPtr callback_;
 	void* impl_;

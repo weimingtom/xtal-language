@@ -21,10 +21,6 @@ public:
 	
 	Frame();
 
-	Frame(const Frame& frame);
-
-	Frame& operator=(const Frame& frame);
-		
 	~Frame();
 
 public:
@@ -71,6 +67,8 @@ public:
 	*/
 	AnyPtr members();
 
+public:
+
 	/**
 	* \brief i番目のメンバーをダイレクトに取得。
 	*/
@@ -91,6 +89,12 @@ public:
 		}
 	}
 
+	void resize_member_direct(int_t size){
+		members_.resize(size);
+	}
+
+	bool replace_member(const IDPtr& primary_key, const AnyPtr& value);
+
 private:
 
 	/**
@@ -106,6 +110,8 @@ private:
 protected:
 
 	void make_map_members();
+	void make_members();
+	void make_members_force(int_t flags);
 
 	void push_back_member(const AnyPtr& value);
 
@@ -132,9 +138,22 @@ public:
 		}
 	};
 
+	enum{
+		FLAG_ACCESSIBILITY_MASK = 0x3,
+		FLAG_NOCACHE = 1<<3
+	};
+
 	struct Value{
 		u16 num;
-		u16 flags;
+		u16 flag;
+
+		int_t accessibility() const{
+			return flag & FLAG_ACCESSIBILITY_MASK;
+		}
+
+		bool nocache() const{
+			return (flag&FLAG_NOCACHE)==0;
+		}
 
 		friend void visit_members(Visitor& m, const Value&){}
 	};
@@ -154,7 +173,8 @@ protected:
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
 
-	uint_t orphan_;
+	bool orphan_;
+	bool initialized_members_;
 
 public:
 	
@@ -175,7 +195,8 @@ public:
 		}
 	}
 
-protected:
+private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(Frame);
 
 	friend class MembersIter;
 	friend class MembersIter2;

@@ -645,7 +645,7 @@ int main2(int argc, char** argv){
 	using namespace std;
 
 	SmartPtr<Spr> s = xnew<Spr>();
-	_mm_add_ps(s->v.a, s->v.a);
+//	_mm_add_ps(s->v.a, s->v.a);
 
 	//debug::enable();
 	//debug::set_breakpoint_hook(fun(&linehook));
@@ -668,7 +668,7 @@ int main2(int argc, char** argv){
 		}
 	}*/
 
-	test();
+	//test();
 
 	//test2();
    // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
@@ -676,11 +676,12 @@ int main2(int argc, char** argv){
 	//AnyPtr a = cast<bool>(false);
 
 	if(CodePtr code = Xsrc((
-		"Smiles".p;
-		arg[0].v.p;
+		aa: 10;
+		//eval("unknown") && false catch(e) true;
 	))){
-		AnyPtr ret = code->call(xnew<Spr>());
-//		code->call();
+		code->inspect()->p();
+		//AnyPtr ret = code->call(xnew<Spr>());
+		code->call();
 	}
 
 	XTAL_CATCH_EXCEPT(e){

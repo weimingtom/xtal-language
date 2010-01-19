@@ -33,7 +33,7 @@ inline void bind_error_message(){
 		XTAL_STRING("XCE1028"), XTAL_STRING("演算子の前後の空白と演算子の優先順位が一致していません。想定している優先順位と異なっている可能性があります。"),
 		
 		XTAL_STRING("XRE1001"), XTAL_STRING("'%(object)s' 関数呼び出しの '%(no)s'番目の引数の型が不正です。'%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。"),
-		XTAL_STRING("XRE1002"), XTAL_STRING("evalに渡されたソースのコンパイル中、コンパイルエラーが発生しました。"),
+		XTAL_STRING("XRE1002"), XTAL_STRING("ソースのコンパイル中、コンパイルエラーが発生しました。"),
 		XTAL_STRING("XRE1003"), XTAL_STRING("不正なインスタンス変数の参照です。"),
 		XTAL_STRING("XRE1004"), XTAL_STRING("型エラーです。 '%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。"),
 		XTAL_STRING("XRE1005"), XTAL_STRING("'%(object)s' 関数呼び出しの引数の数が不正です。'%(min)s'以上の引数を受け取る関数に、%(value)s個の引数を渡しました。"),

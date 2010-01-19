@@ -86,6 +86,7 @@ StringPtr Stream::get_s_all(){
 }
 
 uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
+	int nn = 0;
 	for(uint_t i=0; i<max; ++i){
 		if(eos()){
 			return i;
@@ -97,8 +98,11 @@ uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
 			read(&ch, sizeof(char_t));
 			chm.add(ch);
 		}
+
+		XTAL_ASSERT(i<max);
 	
 		buffer[i] = chm.to_s();
+		nn++;
 	}
 	return max;
 }
@@ -467,44 +471,6 @@ void FileStream::open(const StringPtr& path, const StringPtr& aflags){
 	flags_temp[i++] = 0;
 
 	impl_ = filesystem_lib()->new_file_stream(path->c_str(), flags_temp);
-}
-
-////////////////////////////////////////////////////////////////////////////
-
-uint_t InteractiveStream::read(void* p, uint_t size){
-	if(continue_stmt_){
-		stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>    "))->call(line_)->to_s());
-	}
-	else{
-		stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>"))->call(line_)->to_s());
-	}
-
-	continue_stmt_ = true;
-	if(uint_t sz = read_line(p, size)){
-		if(sz!=size-1){
-			line_++;
-		}
-		return sz;
-	}
-	return 0;
-}
-
-uint_t InteractiveStream::read_line(void* p, uint_t size){
-	ChMaker chm;
-	char_t ch;
-	uint_t sz = 0;
-	do{
-		chm.clear();
-		while(!chm.is_completed()){
-			if(stdin_stream()->read((char_t*)p+sz, sizeof(ch))!=sizeof(ch)){
-				return sz*sizeof(ch);
-			}
-			chm.add(*((char_t*)p+sz));
-			sz++;
-		}
-	}while(chm.data()[0]!='\n');
-
-	return sz*sizeof(ch);
 }
 
 }

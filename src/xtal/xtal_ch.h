@@ -61,7 +61,7 @@ private:
 
 	int_t pos_;
 	int_t len_;
-	char_t buf_[8];
+	char_t buf_[16];
 	IDPtr temp_;
 };
 

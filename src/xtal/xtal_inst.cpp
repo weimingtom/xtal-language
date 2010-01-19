@@ -97,7 +97,12 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(InstSetLocalVariable);
 		XTAL_INST_CASE(InstInstanceVariable);
 		XTAL_INST_CASE(InstSetInstanceVariable);
+		XTAL_INST_CASE(InstInstanceVariableByName);
+		XTAL_INST_CASE(InstSetInstanceVariableByName);
 		XTAL_INST_CASE(InstFilelocalVariable);
+		XTAL_INST_CASE(InstSetFilelocalVariable);
+		XTAL_INST_CASE(InstFilelocalVariableByName);
+		XTAL_INST_CASE(InstSetFilelocalVariableByName);
 		XTAL_INST_CASE(InstCall);
 		XTAL_INST_CASE(InstSend);
 		XTAL_INST_CASE(InstProperty);
@@ -127,6 +132,7 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(InstPopGoto);
 		XTAL_INST_CASE(InstThrow);
 		XTAL_INST_CASE(InstAssert);
+		XTAL_INST_CASE(InstBreakPoint);
 		XTAL_INST_CASE(InstMAX);
 //}}INST_INSPECT}
 	} ms->put_s(Xf("%04d(%04d):%s\n")->call((int_t)(pc-start), code->compliant_lineno(pc), temp)->to_s()); pc += sz; }
@@ -173,7 +179,12 @@ int_t inst_size(uint_t no){
 	InstSetLocalVariable::ISIZE,
 	InstInstanceVariable::ISIZE,
 	InstSetInstanceVariable::ISIZE,
+	InstInstanceVariableByName::ISIZE,
+	InstSetInstanceVariableByName::ISIZE,
 	InstFilelocalVariable::ISIZE,
+	InstSetFilelocalVariable::ISIZE,
+	InstFilelocalVariableByName::ISIZE,
+	InstSetFilelocalVariableByName::ISIZE,
 	InstCall::ISIZE,
 	InstSend::ISIZE,
 	InstProperty::ISIZE,
@@ -203,6 +214,7 @@ int_t inst_size(uint_t no){
 	InstPopGoto::ISIZE,
 	InstThrow::ISIZE,
 	InstAssert::ISIZE,
+	InstBreakPoint::ISIZE,
 	InstMAX::ISIZE,
 //}}INST_SIZE}
 	};

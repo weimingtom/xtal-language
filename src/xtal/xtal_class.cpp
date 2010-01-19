@@ -103,7 +103,7 @@ Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	flags_ = 0;
 	symbol_data_ = 0;
 	make_map_members();
-
+	initialized_members_ = true;
 //	instance_variables_layout_.push(InstanceVariablesInfo(info, 0));
 }
 
@@ -114,6 +114,7 @@ Class::Class(const StringPtr& name)
 	flags_ = 0;
 	symbol_data_ = 0;
 	make_map_members();
+	initialized_members_ = true;
 }
 
 Class::Class(cpp_class_t)
@@ -123,6 +124,7 @@ Class::Class(cpp_class_t)
 	flags_ = FLAG_NATIVE;
 	symbol_data_ = 0;
 	make_map_members();
+	initialized_members_ = true;
 }
 
 Class::~Class(){
@@ -139,7 +141,7 @@ void Class::overwrite(const ClassPtr& p){
 		
 		if(p->map_members_){
 			for(map_t::iterator it=p->map_members_->begin(), last=p->map_members_->end(); it!=last; ++it){
-				overwrite_member(it->first.primary_key, p->member_direct(it->second.num), it->first.secondary_key, it->second.flags);
+				overwrite_member(it->first.primary_key, p->member_direct(it->second.num), it->first.secondary_key, it->second.flag);
 			}
 		}
 
@@ -440,7 +442,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	Key key = {primary_key, secondary_key};
 	map_t::iterator it = map_members_->find(key);
 	if(it!=map_members_->end()){		
-		accessibility = it->second.flags & 0x3;
+		accessibility = it->second.accessibility();
+		nocache = it->second.nocache();
 		return member_direct(it->second.num);
 	}
 

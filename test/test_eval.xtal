@@ -1,0 +1,81 @@
+inherit(lib::test);
+
+class EvalTest{
+
+	local_var#Test{
+		a: 10;
+		assert eval("a")==a;
+		assert eval("dofun a")==a;
+	}
+	
+	instance_var#Test{
+		class A{
+			_e: 11;
+			
+			foo{
+				assert eval("_e")==_e;
+			}
+		}
+		
+		A().foo;
+	}
+	
+	local_instance_var#Test{
+		a: 10;
+		
+		class A{
+			_e: 11;
+			
+			foo{
+				assert eval("_e + a") == _e + a;
+				
+				eval("_e = 19;");
+				eval("a = 22;");
+				
+				assert eval("_e + a") == 19 + 22;				
+			}
+		}
+		
+		A().foo;
+	}
+	
+	set_local_var#Test{
+		a: 10;
+		eval("a = 1;");
+		assert a==1;
+	}
+	
+	
+	instance_var#Test{
+		class A{
+			_e: 11;
+			
+			foo{
+				eval("_e = 22;");
+				assert _e==22;
+			}
+		}
+		
+		A().foo;
+	}
+	
+	catch_except#Test{
+		aa: 10;
+		assert eval("unknown") && false catch(e) true;
+		assert eval("aa") && true catch(e) false;
+	}
+	
+	fiber_var#Test{
+		f: fiber{
+			for(i: 0; i<10; ++i){
+				yield i;
+				assert eval("i")==i;
+			}
+		}
+		
+		f{
+			assert eval("it")==it;
+		}
+	}
+}
+

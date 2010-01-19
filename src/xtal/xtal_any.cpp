@@ -704,7 +704,7 @@ void Any::s_load(const AnyPtr& v) const{
 
 AnyPtr Any::save_instance_variables(const ClassPtr& p) const{
 	if(type(*this)!=TYPE_BASE){
-		return null;
+		return undefined;
 	}
 
 	if(InstanceVariables* iv = pvalue(*this)->instance_variables()){
@@ -719,7 +719,7 @@ AnyPtr Any::save_instance_variables(const ClassPtr& p) const{
 			}
 		}
 	}
-	return null;
+	return undefined;
 }
 
 void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{

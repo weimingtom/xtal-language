@@ -19,6 +19,8 @@ public:
 
 	~Code();
 
+public:
+
 	/**
 	* \brief コードに対応したソース行数を返す。
 	*/
@@ -150,6 +152,8 @@ public:
 		Class::on_visit_members(m);
 		m & identifier_table_ & value_table_ & source_file_name_ & first_fun_ & once_table_;
 	}
+
+	void generated();
 
 protected:
 

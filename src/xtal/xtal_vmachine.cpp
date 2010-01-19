@@ -495,7 +495,7 @@ const inst_t* VMachine::check_accessibility(CallState& call_state, int_t accessi
 	return 0;
 }
 	
-const FramePtr& VMachine::make_outer_outer(uint_t i, uint_t call_n){
+const FramePtr& VMachine::make_outer_outer(uint_t i, uint_t call_n, bool force){
 	int_t scope_upper = call_n==0 ? scopes_.size() : fun_frames_[call_n-1]->scope_lower;
 
 	FunFrame& ff = *fun_frames_[call_n];
@@ -503,8 +503,8 @@ const FramePtr& VMachine::make_outer_outer(uint_t i, uint_t call_n){
 		Scope& scope = scopes_.reverse_at(scope_upper - i - 1);
 		if(scope.flags==0){
 			scope.flags = Scope::FRAME;
-			if(debug::is_enabled() || scope.frame->info()->flags&ScopeInfo::FLAG_SCOPE_CHAIN){
-				scope.frame->set_outer(make_outer_outer(i+1, call_n));
+			if(force || scope.frame->info()->flags&ScopeInfo::FLAG_SCOPE_CHAIN){
+				scope.frame->set_outer(make_outer_outer(i+1, call_n, force));
 			}
 		}
 		return scope.frame;
@@ -514,14 +514,14 @@ const FramePtr& VMachine::make_outer_outer(uint_t i, uint_t call_n){
 		return ff.outer();
 	}
 
-	return unchecked_ptr_cast<Frame>(null);
+	return nul<Frame>();
 }
 
 const FramePtr& VMachine::make_outer(ScopeInfo* scope){
 	if(debug::is_enabled() || scope->flags&ScopeInfo::FLAG_SCOPE_CHAIN){
-		return make_outer_outer();
+		return make_outer_outer(0, 0, debug::is_enabled());
 	}
-	return unchecked_ptr_cast<Frame>(null);
+	return nul<Frame>();
 }
 
 void VMachine::set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value){
@@ -559,7 +559,6 @@ AnyPtr& VMachine::local_variable_out_of_fun(uint_t pos, uint_t depth){
 	return out->member_direct(pos);
 }
 
-#if 1
 void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 
 	const inst_t* pc = start;
@@ -580,6 +579,8 @@ void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 	values[LOAD_UNDEFINED] = undefined;
 	values[LOAD_FALSE] = false;
 	values[LOAD_TRUE] = true;
+
+	int_t eval_base_n = fun_frames_.size();
 
 	inst_t xop = 0;
 
@@ -618,7 +619,12 @@ void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 		XTAL_COPY_LABEL_ADDRESS(InstSetLocalVariable),
 		XTAL_COPY_LABEL_ADDRESS(InstInstanceVariable),
 		XTAL_COPY_LABEL_ADDRESS(InstSetInstanceVariable),
+		XTAL_COPY_LABEL_ADDRESS(InstInstanceVariableByName),
+		XTAL_COPY_LABEL_ADDRESS(InstSetInstanceVariableByName),
 		XTAL_COPY_LABEL_ADDRESS(InstFilelocalVariable),
+		XTAL_COPY_LABEL_ADDRESS(InstSetFilelocalVariable),
+		XTAL_COPY_LABEL_ADDRESS(InstFilelocalVariableByName),
+		XTAL_COPY_LABEL_ADDRESS(InstSetFilelocalVariableByName),
 		XTAL_COPY_LABEL_ADDRESS(InstCall),
 		XTAL_COPY_LABEL_ADDRESS(InstSend),
 		XTAL_COPY_LABEL_ADDRESS(InstProperty),
@@ -1093,12 +1099,12 @@ send:
 		XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(InstIf){ // 2
+	XTAL_VM_CASE(InstIf){ // 3
 		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + (local_variable(inst.target) ? inst.address_true : inst.address_false));
 	}
 
-	XTAL_VM_CASE(InstIfComp){ // 40
+	XTAL_VM_CASE(InstIfComp){ // 41
 		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
@@ -1170,7 +1176,7 @@ comp_send:
 		goto send_common;
 	}
 
-	XTAL_VM_CASE(InstIfRawEq){ // 7
+	XTAL_VM_CASE(InstIfRawEq){ // 8
 		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
@@ -1185,7 +1191,7 @@ comp_send:
 		XTAL_VM_CONTINUE(pc);
 	}
 
-	XTAL_VM_CASE(InstIfIs){ // 7
+	XTAL_VM_CASE(InstIfIs){ // 8
 		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
 		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
@@ -1200,7 +1206,7 @@ comp_send:
 		XTAL_VM_CONTINUE(pc);
 	}
 
-	XTAL_VM_CASE(InstIfUndefined){ // 2
+	XTAL_VM_CASE(InstIfUndefined){ // 3
 		XTAL_CHECK_YIELD;
 		XTAL_VM_CONTINUE(pc + (raweq(local_variable(inst.target), undefined) ? inst.address_true : inst.address_false));
 	}
@@ -1244,16 +1250,43 @@ comp_send:
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(InstFilelocalVariable){ // 8
+	XTAL_VM_CASE(InstInstanceVariableByName){ // 3
 		if(eval_n){
-			const AnyPtr& ret = eval_local_variable(identifier(inst.identifier_number), eval_n);
+			const AnyPtr& ret = eval_instance_variable(ff().self(), identifier(inst.identifier_number));
+			set_local_variable(inst.result, ret);
+		}
+
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
+
+	XTAL_VM_CASE(InstSetInstanceVariableByName){ // 3
+		if(eval_n){
+			eval_set_instance_variable(ff().self(), identifier(inst.identifier_number), local_variable(inst.value));
+		}
+
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(InstFilelocalVariable){ // 3
+		set_local_variable(inst.result, code()->member_direct(inst.value_number));
+		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
+	}
+
+	XTAL_VM_CASE(InstSetFilelocalVariable){ // 3
+		code()->Frame::set_member_direct(inst.value_number, local_variable(inst.value));
+		XTAL_VM_CONTINUE(pc + inst.ISIZE);
+	}
+
+	XTAL_VM_CASE(InstFilelocalVariableByName){ // 8
+		if(eval_n){
+			const AnyPtr& ret = eval_local_variable(identifier(inst.identifier_number), eval_n + (fun_frames_.size()-eval_base_n));
 			if(rawne(ret, undefined)){
 				set_local_variable(inst.result, ret);
 				XTAL_VM_CONTINUE(pc + inst.ISIZE);
 			}
 		}
 
-		const AnyPtr& ret = code()->filelocal()->member(identifier(inst.identifier_number));
+		const AnyPtr& ret = code()->member(identifier(inst.identifier_number));
 		if(rawne(ret, undefined)){
 			set_local_variable(inst.result, ret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1261,6 +1294,16 @@ comp_send:
 		else{
 			XTAL_VM_THROW_EXCEPT(filelocal_unsupported_error(code(), identifier(inst.identifier_number)));
 		}
+	}
+
+	XTAL_VM_CASE(InstSetFilelocalVariableByName){ // 3
+		if(eval_n){
+			if(eval_set_local_variable(identifier(inst.identifier_number), local_variable(inst.value), eval_n + (fun_frames_.size()-eval_base_n))){
+				XTAL_VM_CONTINUE(pc + inst.ISIZE);
+			}
+		}
+
+		XTAL_VM_THROW_EXCEPT(filelocal_unsupported_error(code(), identifier(inst.identifier_number)));
 	}
 
 	XTAL_VM_CASE(InstCall){ // 6
@@ -1369,7 +1412,7 @@ comp_send:
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
-	XTAL_VM_CASE(InstMakeArray){ // 3
+	XTAL_VM_CASE(InstMakeArray){ // 4
 		SmartPtr<Array> value = xnew<Array>();
 		set_local_variable(inst.result, value);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1380,7 +1423,7 @@ comp_send:
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 	}
 
-	XTAL_VM_CASE(InstMakeMap){ // 3
+	XTAL_VM_CASE(InstMakeMap){ // 4
 		SmartPtr<Map> value = xnew<Map>();
 		set_local_variable(inst.result, value);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1451,7 +1494,7 @@ comp_send:
 		XTAL_VM_FUN;
 		Scope& scope = scopes_.top();
 		if(raweq(scope.frame->get_class(), scope.frame)){
-			Class* singleton = staic_cast<Class*>(pvalue(scope.frame));
+			Class* singleton = static_cast<Class*>(pvalue(scope.frame));
 			singleton->init_singleton(to_smartptr(this));
 		}
 
@@ -1600,8 +1643,6 @@ comp_send:
 XTAL_VM_LOOP_END
 
 }
-
-#endif
 
 #undef XTAL_VM_CONTINUE
 #undef XTAL_VM_CONTINUE0

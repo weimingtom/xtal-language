@@ -14,19 +14,19 @@ namespace xtal{
 enum{
 	VERSION1 = 1,
 	VERSION2 = 0,
-	VERSION3 = 1,
-	VERSION4 = 1
+	VERSION3 = 2,
+	VERSION4 = 0
 };
 }
 
 #define XTAL_USE_COMPILED_EMB
+//#define XTAL_DEBUG_PRINT
+
 //#define XTAL_ENFORCE_64_BIT
 //#define XTAL_USE_THREAD_MODEL_2
 //#define XTAL_NO_XPEG
-
 //#define XTAL_NO_ASSERT
 
-//#define XTAL_DEBUG_PRINT
 
 #ifdef _UNICODE
 #	ifndef XTAL_USE_WCHAR
@@ -692,6 +692,28 @@ class Bool;
 class Visitor;
 class InstanceVariables;
 
+namespace xpeg{
+
+class MatchResult;
+typedef SmartPtr<MatchResult> MatchResultPtr;
+
+class Executor;
+typedef SmartPtr<Executor> ExecutorPtr;
+
+struct Element;
+typedef SmartPtr<Element> ElementPtr;
+
+struct Trans;
+typedef SmartPtr<Trans> TransPtr;
+
+struct NFA;
+typedef SmartPtr<NFA> NFAPtr;
+
+class Scanner;
+typedef SmartPtr<Scanner> ScannerPtr;
+
+}
+
 struct CppClassSymbolData;
 
 template<class T>
@@ -971,7 +993,6 @@ struct ScopeInfo{
 
 	enum{
 		FLAG_SCOPE_CHAIN = 1<<0,
-
 		FLAG_USED_BIT = 1
 	};
 };

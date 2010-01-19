@@ -679,7 +679,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 	debug_info_->set_exception(ap(except_[0]));
 
-	make_outer_outer();
+	make_outer_outer(0, 0, true);
 	debug_info_->set_variables_frame(scopes_.top().frame);
 
 	debug_info_->set_vm(to_smartptr(this));
@@ -703,15 +703,16 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
 
-	if(!pf.fun()){
+	if(!f.fun()){
 		ret->set_line(0);
 		ret->set_fun(nul<Fun>());
 		return ret;
 	}
 
-	ret->set_line(pf.fun()->code()->compliant_lineno(f.poped_pc));
-	ret->set_fun(pf.fun());
-	make_outer_outer();
+	ret->set_line(f.fun()->code()->compliant_lineno(f.poped_pc));
+	ret->set_fun(f.fun());
+
+	make_outer_outer(0, 0, true);
 	ret->set_variables_frame(scopes_.reverse_at(scope_lower-1).frame);
 	return ret;
 }
@@ -729,7 +730,6 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 		FramePtr frame;
 		for(int_t i=0; i<scope_upper - scope_lower; ++i){
 			frame = scopes_.reverse_at(scope_upper-i-1).frame;
-
 			const AnyPtr& ret = frame->member(var);
 			if(rawne(ret, undefined)){
 				return ret;
@@ -745,6 +745,13 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 
 			frame = frame->outer();
 		}
+
+		if(fun_frames_[call_n]->fun()){
+			const AnyPtr& ret = fun_frames_[call_n]->code()->member(var);
+			if(rawne(ret, undefined)){
+				return ret;
+			}
+		}
 	}
 	else{
 		if(parent_vm_){
@@ -753,6 +760,94 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 	}
 		
 	return undefined;
+}
+
+bool VMachine::eval_set_local_variable(const IDPtr& var, const AnyPtr& value, uint_t call_n){
+	if(call_n<fun_frames_.size()-1){
+
+		int_t scope_upper = fun_frames_[call_n-1]->scope_lower;
+		int_t scope_lower = fun_frames_[call_n]->scope_lower;
+
+		FramePtr frame;
+		for(int_t i=0; i<scope_upper - scope_lower; ++i){
+			frame = scopes_.reverse_at(scope_upper-i-1).frame;
+
+			if(frame->replace_member(var, value)){
+				return true;
+			}
+		}
+
+		frame = fun_frames_[call_n]->outer();
+		while(frame){
+			if(frame->replace_member(var, value)){
+				return true;
+			}
+
+			frame = frame->outer();
+		}
+
+		if(fun_frames_[call_n]->fun()){
+			if(fun_frames_[call_n]->code()->replace_member(var, value)){
+				return true;
+			}
+		}
+	}
+	else{
+		if(parent_vm_){
+			return parent_vm_->eval_set_local_variable(var, value, call_n-(fun_frames_.size()-1));
+		}
+	}
+		
+	return false;
+}
+
+AnyPtr VMachine::eval_instance_variable(const AnyPtr& self, const IDPtr& key){
+	if(type(self)!=TYPE_BASE){
+		return undefined;
+	}
+
+	ClassPtr klass = self->get_class();
+	ArrayPtr ary = klass->ancestors()->to_a();
+	ary->push_back(klass);
+
+	Xfor_cast(const ClassPtr& p, ary){
+		if(InstanceVariables* iv = pvalue(self)->instance_variables()){
+			if(const CodePtr& code = p->code()){
+				ClassInfo* info = p->info();
+				for(uint_t i=0; i<info->instance_variable_size; ++i){
+					if(raweq(key, code->identifier(info->instance_variable_identifier_offset+i))){
+						return iv->variable(i, info);
+					}
+				}
+			}
+		}
+	}
+	return undefined;
+}
+
+bool VMachine::eval_set_instance_variable(const AnyPtr& self, const IDPtr& key, const AnyPtr& value){
+	if(type(self)!=TYPE_BASE){
+		return false;
+	}
+
+	ClassPtr klass = self->get_class();
+	ArrayPtr ary = klass->ancestors()->to_a();
+	ary->push_back(klass);
+
+	Xfor_cast(const ClassPtr& p, ary){
+		if(InstanceVariables* iv = pvalue(self)->instance_variables()){
+			if(const CodePtr& code = p->code()){
+				ClassInfo* info = p->info();
+				for(uint_t i=0; i<info->instance_variable_size; ++i){
+					if(raweq(key, code->identifier(info->instance_variable_identifier_offset+i))){
+						iv->set_variable(i, info, value);
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
@@ -778,7 +873,13 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	AnyPtr e = catch_except();
 
-	ExceptFrame ef = except_frames_.empty() ? nef : except_frames_.top();
+	ExceptFrame ef;
+	if(except_frames_.empty() || except_frames_.top().fun_frame_size<nef.fun_frame_size){
+		ef = nef;
+	}
+	else{
+		ef = except_frames_.top();
+	}
 
 	// Xtal‚ÌŠÖ”‚ð’Eo‚µ‚Ä‚¢‚­
 	while((size_t)ef.fun_frame_size<fun_frames_.size()){
@@ -833,6 +934,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	while(scopes_.size()>ff().scope_lower){
 		pop_scope();
 	}
+
 	pop_ff2();
 
 	return 0;

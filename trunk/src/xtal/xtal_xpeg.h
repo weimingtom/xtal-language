@@ -14,24 +14,6 @@ namespace xtal{
 */
 namespace xpeg{
 
-class MatchResult;
-typedef SmartPtr<MatchResult> MatchResultPtr;
-
-class Executor;
-typedef SmartPtr<Executor> ExecutorPtr;
-
-struct Element;
-typedef SmartPtr<Element> ElementPtr;
-
-struct Trans;
-typedef SmartPtr<Trans> TransPtr;
-
-struct NFA;
-typedef SmartPtr<NFA> NFAPtr;
-
-class Scanner;
-typedef SmartPtr<Scanner> ScannerPtr;
-
 /**
 * \xbind lib::builtin::xpeg
 * \xinherit lib::builtin::Any
@@ -409,10 +391,6 @@ public:
 		return false;
 	}
 
-protected:
-
-	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
-
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
 		m & mm_;
@@ -423,6 +401,10 @@ protected:
 		}
 	}
 
+protected:
+
+	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
+
 	void expand();
 
 	AnyPtr& access(uint_t pos){
@@ -432,7 +414,7 @@ protected:
 		return begin_[(pos>>ONE_BLOCK_SHIFT)-base_][pos&ONE_BLOCK_MASK];
 	}
 
-private:
+protected:
 
 	IDPtr n_ch_;
 	IDPtr r_ch_;

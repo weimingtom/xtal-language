@@ -151,12 +151,10 @@ void visit_members(Visitor& m, const Any& p){
 
 //////////////////////////////
 
-CppClassSymbolData::CppClassSymbolData(int size, int align){
+CppClassSymbolData::CppClassSymbolData(){
 	static unsigned int counter = 0;
 	static CppClassSymbolData* prev_data = 0;
 	value = counter++;
-
-	sizeofclass = size;
 	
 	prev = prev_data;
 	prebind = 0;

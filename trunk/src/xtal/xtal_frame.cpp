@@ -11,7 +11,7 @@ void MembersIter::on_visit_members(Visitor& m){
 void MembersIter::block_next(const VMachinePtr& vm){
 	while(true){
 		if(frame_->map_members_ && it_!=frame_->map_members_->end()){
-			if(it_->second.flags==0){
+			if(it_->second.accessibility()==KIND_PUBLIC){
 				vm->return_result(to_smartptr(this), it_->first.primary_key, it_->first.secondary_key, frame_->members_.at(it_->second.num));
 				++it_;
 				return;
@@ -46,46 +46,12 @@ void MembersIter2::block_next(const VMachinePtr& vm){
 
 Frame::Frame(const FramePtr& outer, const CodePtr& code, ScopeInfo* info)
 	:outer_(outer), code_(code), scope_info_(info ? info : &empty_class_info), 
-	members_(scope_info_->variable_size), map_members_(0), orphan_(true){
+	members_(scope_info_->variable_size), map_members_(0), orphan_(true), initialized_members_(false){
 }
 
 Frame::Frame()
 	:scope_info_(&empty_class_info), 
-	members_(0), map_members_(0), orphan_(true){}
-	
-Frame::Frame(const Frame& v)
-	:HaveParentBase(v), outer_(v.outer_), code_(v.code_), scope_info_(v.scope_info_), 
-	members_(members_), map_members_(0), orphan_(true){
-
-	if(v.map_members_){
-		make_map_members();
-		*map_members_ = *v.map_members_;
-	}
-}
-
-Frame& Frame::operator=(const Frame& v){
-	if(this==&v){ return *this; }
-
-	HaveParentBase::operator=(v);
-
-	outer_ = v.outer_;
-	code_ = v.code_;
-	scope_info_ = v.scope_info_;
-
-	members_ = v.members_;
-
-	if(v.map_members_){
-		make_map_members();
-		*map_members_ = *v.map_members_;
-	}
-	else{
-		map_members_->~Hashtable();
-		xfree(map_members_, sizeof(map_t));
-		map_members_ = 0;
-	}
-
-	return *this;
-}
+	members_(0), map_members_(0), orphan_(true), initialized_members_(false){}
 
 Frame::~Frame(){
 	if(!orphan_){
@@ -104,36 +70,64 @@ void Frame::make_map_members(){
 	}
 }
 
+void Frame::make_members(){
+	if(!initialized_members_){
+		make_members_force(0);
+	}
+}
+
+void Frame::make_members_force(int_t flags){
+	if(code_ && scope_info_){
+		make_map_members();
+
+		for(int_t i=0; i<scope_info_->variable_size; ++i){
+			Key key = {code_->identifier(scope_info_->variable_identifier_offset+i), undefined};
+			Value value = {i, flags};
+			map_members_->insert(key, value);
+		}
+
+		initialized_members_ = true;
+	}
+}
+
+
 AnyPtr Frame::members(){
 	if(!orphan_){
 		return xnew<MembersIter2>(to_smartptr(this));
 	}
 
-	if(!map_members_ && code_ && scope_info_){
-		make_map_members();
-		for(int_t i=0; i<scope_info_->variable_size; ++i){
-			Key key = {code_->identifier(scope_info_->variable_identifier_offset+i), undefined};
-			Value value = {i, 0};
-			map_members_->insert(key, value);
-		}
-	}
-
+	make_members();
 	return xnew<MembersIter>(to_smartptr(this));
 }
 
 const AnyPtr& Frame::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	nocache = true;
 
-	if(raweq(secondary_key, undefined) && !map_members_ && code_ && scope_info_){
-		for(int_t i=0; i<scope_info_->variable_size; ++i){
-			IDPtr id = code_->identifier(scope_info_->variable_identifier_offset+i);
-			if(raweq(id, primary_key)){
-				return members_.at(i);
-			}
-		}
+	make_members_force(0);
+
+	Key key = {primary_key, secondary_key};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){		
+		return member_direct(it->second.num);
 	}
 
 	return undefined;
+}
+
+bool Frame::replace_member(const IDPtr& primary_key, const AnyPtr& value){
+	make_members();
+
+	Key key = {primary_key, undefined};
+	map_t::iterator it = map_members_->find(key);
+	if(it!=map_members_->end()){
+		if(!it->second.nocache()){
+			invalidate_cache_member();
+		}
+		set_member_direct(it->second.num, value);
+		return true;
+	}
+
+	return false;
 }
 
 void Frame::add_ref_count_members(int_t n){

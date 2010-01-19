@@ -383,7 +383,7 @@ int_t CodeBuilder::compile_comp_bin2(const ExprPtr& e, int_t stack_top, int_t re
 	return 1;
 }
 
-void CodeBuilder::put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, inst_t label_true, int_t label_false, int_t stack_top){
+void CodeBuilder::put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, int_t label_true, int_t label_false, int_t stack_top){
 	if(EXPR_EQ==tag){
 		put_inst(InstIfComp(IF_COMP_EQ, lhs, rhs, stack_top));
 
@@ -712,9 +712,15 @@ int_t CodeBuilder::compile_expr_LVAR(const ExprPtr& e, int_t stack_top, int_t re
 		}
 	}
 	else{
-		int_t id = register_identifier(e->lvar_name());
-		put_inst(InstFilelocalVariable(result, id));
-		implicit_ref_map_->set_at(id, lineno());
+		if(var.toplevel){
+			entry(var).referenced = true;
+			put_inst(InstFilelocalVariable(result, var.vpos));
+		}
+		else{
+			int_t id = register_identifier(e->lvar_name());
+			put_inst(InstFilelocalVariableByName(result, id));
+			implicit_ref_map_->set_at(id, lineno());
+		}
 	}
 
 	return 1;
@@ -1537,7 +1543,12 @@ int_t CodeBuilder::compile_expr_MDEFINE(const ExprPtr& e, int_t stack_top, int_t
 				put_inst(InstCopy(var.vpos, target));
 			}
 			else{
-				XTAL_ASSERT(false);
+				if(var.toplevel){
+					put_inst(InstSetFilelocalVariable(target, var.vpos));
+				}
+				else{
+					XTAL_ASSERT(false);
+				}
 			}
 		}
 		else if(term->itag()==EXPR_MEMBER){
@@ -1586,7 +1597,18 @@ void CodeBuilder::compile_lassign(int_t target, const IDPtr& var){
 		entry(varinfo).value = undefined;
 	}
 	else{
-		error_->error(lineno(), Xt("XCE1009")->call(Named(Xid(name), var)));
+		if(varinfo.toplevel){
+			put_inst(InstSetFilelocalVariable(target, varinfo.vpos));
+			entry(varinfo).value = undefined;
+		}
+		else{
+			if(eval_){
+				put_inst(InstSetFilelocalVariableByName(target, register_identifier(var)));
+			}
+			else{
+				error_->error(lineno(), Xt("XCE1009")->call(Named(Xid(name), var)));
+			}
+		}
 	}	
 }
 
@@ -1635,7 +1657,14 @@ int_t CodeBuilder::compile_expr_DEFINE(const ExprPtr& e, int_t stack_top, int_t 
 			entry(var).initialized = true;
 		}
 		else{
-			XTAL_ASSERT(false);
+			if(var.toplevel){
+				compile_expr(e->bin_rhs(), stack_top+1, stack_top);
+				put_inst(InstSetFilelocalVariable(stack_top, var.vpos));
+				entry(var).initialized = true;
+			}
+			else{
+				//XTAL_ASSERT(false);
+			}
 		}
 	}
 	else if(e->bin_lhs()->itag()==EXPR_MEMBER){
@@ -1803,37 +1832,11 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 }
 
 int_t CodeBuilder::compile_expr_TOPLEVEL(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
-	var_begin(VarFrame::FRAME);
+	var_begin(VarFrame::TOPLEVEL);
 	var_define_stmts(e->toplevel_stmts());
 	check_lvar_assign_stmt(e);
 	scope_begin();{
 		Xfor(v, e->toplevel_stmts()){
-			if(ExprPtr e = ep(v)){
-				if(e->itag()==EXPR_DEFINE){
-					if(e->bin_lhs()->itag()==EXPR_LVAR && (e->bin_rhs()->itag()==EXPR_CLASS || e->bin_rhs()->itag()==EXPR_FUN)){
-						ExprPtr lhs = e->bin_lhs();
-						eb_.push(Xid(filelocal));
-						eb_.splice(EXPR_LVAR, 1);
-						eb_.push(lhs->lvar_name());
-						eb_.push(null);
-						eb_.splice(EXPR_MEMBER, 3);
-						e->set_bin_lhs(ep(eb_.pop()));
-						compile_stmt(e);
-
-						e->set_bin_lhs(lhs);
-						eb_.push(Xid(filelocal));
-						eb_.splice(EXPR_LVAR, 1);
-						eb_.push(lhs->lvar_name());
-						eb_.push(null);
-						eb_.splice(EXPR_MEMBER, 3);
-						e->set_bin_rhs(ep(eb_.pop()));
-						compile_stmt(e);
-
-						continue;
-					}
-				}
-			}
-
 			compile_stmt(v);
 		}
 	}scope_end();

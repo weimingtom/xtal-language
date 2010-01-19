@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\test\test_eval.xtal"
+				>
+			</File>
+			<File
 				RelativePath="..\..\test\test_except.xtal"
 				>
 			</File>

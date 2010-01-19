@@ -430,6 +430,9 @@ AnyPtr Serializer::inner_deserialize_code(){
 	p->identifier_table_ = ptr_cast<Array>(map->at(Xid(identifiers)));
 	p->value_table_ = ptr_cast<Array>(map->at(Xid(values)));
 	p->first_fun_ = ret;
+
+	p->generated();
+
 	return p;
 }
 

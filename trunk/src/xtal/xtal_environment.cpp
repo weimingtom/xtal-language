@@ -122,9 +122,6 @@ public:
 
 namespace xtal{
 
-void bind();
-void exec_script();
-
 XTAL_TLS_PTR(Environment) environment_;
 XTAL_TLS_PTR(VMachine) vmachine_;
 
@@ -397,6 +394,8 @@ XTAL_BIND(cpp_classes){
 	def_all_cpp_classes();
 }
 
+void bind();
+
 void Environment::initialize(const Setting& setting){
 	setting_ = setting;
 
@@ -412,7 +411,8 @@ void Environment::initialize(const Setting& setting){
 	object_space_.initialize();
 	string_space_.initialize();
 
-	builtin_ = xnew<Class>();
+	builtin_ = cpp_class<Builtin>();
+	builtin_->unset_native();
 	builtin_->set_singleton();
 
 	lib_ = xnew<Lib>(Lib::most_top_level_t());
@@ -451,12 +451,12 @@ void Environment::initialize(const Setting& setting){
 
 	builtin_->def(Xid(stdin), stdin_);
 	builtin_->def(Xid(stdout), stdout_);
-	builtin()->def(Xid(stderr), stderr_);
+	builtin_->def(Xid(stderr), stderr_);
 
 	builtin_->def(Xid(debug), cpp_class<debug::Debug>());
 
 	enable_gc();
-	exec_script();
+	//exec_script();
 
 	//bind_all();
 
@@ -760,7 +760,7 @@ CodePtr compile_stream(const StreamPtr& stream){
 
 	{
 		CodeBuilder cb;
-		if(CodePtr fun =  cb.compile(stream, "<eval>")){
+		if(CodePtr fun =  cb.compile(stream, empty_string)){
 			ret = fun;
 		}
 		else{

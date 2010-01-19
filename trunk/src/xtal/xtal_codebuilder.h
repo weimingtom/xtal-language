@@ -24,9 +24,7 @@ public:
 
 	CodePtr compile(const xpeg::ScannerPtr& scanner, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
-	void interactive_compile(const StreamPtr& stream);
-
-	CodePtr eval_compile(const StringPtr& code);
+	CodePtr eval_compile(const xpeg::ScannerPtr& scanner);
 	CodePtr compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
 	AnyPtr errors();
@@ -48,7 +46,7 @@ public:
 	void put_member_code(const AnyPtr& var, bool q, const ExprPtr& secondary_key);
 	void put_define_member_code(const AnyPtr& var, const ExprPtr& secondary_key);
 
-	int_t lookup_instance_variable(const IDPtr& key);
+	int_t lookup_instance_variable(const IDPtr& key, bool must = true);
 	void put_set_instance_variable_code(int_t value, const IDPtr& var);
 	void put_instance_variable_code(int_t result, const IDPtr& var);
 	void put_val_code(const AnyPtr& val);
@@ -77,7 +75,7 @@ public:
 
 	int_t compile_call(int_t target, int_t self, const ExprPtr& args, const ExprPtr& eargs, int_t flags, int_t stack_top, int_t result, int_t result_count);
 	void compile_lassign(int_t target, const IDPtr& var);
-	void put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, inst_t label_true, int_t label_false, int_t stack_top);
+	void put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, int_t label_true, int_t label_false, int_t stack_top);
 	void put_bin(int_t result, const ExprPtr& e, int_t a, int_t b, int_t stack_top);
 
 	void compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label, int_t stack_top);
@@ -167,6 +165,7 @@ public:
 			CLASS,
 			FRAME,
 			FUN,
+			TOPLEVEL
 		};
 
 		int_t kind;
@@ -189,6 +188,7 @@ public:
 		int_t pos;
 		int_t vpos;
 		bool out_of_fun;
+		bool toplevel;
 	};
 
 	VarFrame& var_frame(const LVarInfo& vi){
@@ -259,6 +259,8 @@ private:
 	ExprBuilder eb_;
 
 	int_t prev_inst_op_;
+
+	bool eval_;
 
 public:
 

@@ -508,9 +508,13 @@ public:
 
 	int_t call_stack_size();
 
-	AnyPtr eval(const StringPtr& code, uint_t n = 0);
+	AnyPtr eval(const xpeg::ScannerPtr& scanner, uint_t n = 0);
 
 	AnyPtr eval_local_variable(const IDPtr& var, uint_t call_n);
+	bool eval_set_local_variable(const IDPtr& var, const AnyPtr& value, uint_t call_n);
+
+	AnyPtr eval_instance_variable(const AnyPtr& self, const IDPtr& key);
+	bool eval_set_instance_variable(const AnyPtr& self, const IDPtr& key, const AnyPtr& value);
 
 public:
 
@@ -572,6 +576,7 @@ public:
 		//const IDPtr& identifier(int_t n){ return fun()->code()->identifier(n); }
 		const IDPtr& identifier(int_t n){ return identifier_[n]; }
 		const AnyPtr& self() const{ return ap(self_); }
+		const CodePtr& code(){ return fun()->code(); }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
@@ -767,7 +772,12 @@ public:
 	const inst_t* FunInstSetLocalVariable(const inst_t* pc);
 	const inst_t* FunInstInstanceVariable(const inst_t* pc);
 	const inst_t* FunInstSetInstanceVariable(const inst_t* pc);
+	const inst_t* FunInstInstanceVariableByName(const inst_t* pc);
+	const inst_t* FunInstSetInstanceVariableByname(const inst_t* pc);
 	const inst_t* FunInstFilelocalVariable(const inst_t* pc);
+	const inst_t* FunInstSetFilelocalVariable(const inst_t* pc);
+	const inst_t* FunInstFilelocalVariableByName(const inst_t* pc);
+	const inst_t* FunInstSetFilelocalVariableByName(const inst_t* pc);
 	const inst_t* FunInstCall(const inst_t* pc);
 	const inst_t* FunInstSend(const inst_t* pc);
 	const inst_t* FunInstProperty(const inst_t* pc);
@@ -804,7 +814,7 @@ public:
 private:
 
 	const FramePtr& make_outer(ScopeInfo* scope);
-	const FramePtr& make_outer_outer(uint_t i = 0, uint_t call_n = 0);
+	const FramePtr& make_outer_outer(uint_t i = 0, uint_t call_n = 0, bool force = false);
 
 private:
 	inst_t end_code_;

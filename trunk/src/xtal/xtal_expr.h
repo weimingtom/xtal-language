@@ -33,9 +33,6 @@ enum ExprType{
 	EXPR_MUL,
 	EXPR_DIV,
 	EXPR_MOD,
-
-	//EXPR_ARITH,
-
 	EXPR_AND,
 	EXPR_OR,
 	EXPR_XOR,

@@ -529,7 +529,7 @@ struct BindBase{
 };
 
 struct CppClassSymbolData{ 
-	CppClassSymbolData(int size = 0, int align = 0);
+	CppClassSymbolData();
 
 	enum{
 		BIND = 3
@@ -539,9 +539,6 @@ struct CppClassSymbolData{
 
 	BindBase* prebind;
 	BindBase* bind[BIND];
-
-	unsigned int sizeofclass;
-	unsigned int alignofclass;
 	
 	StringLiteral name;
 
@@ -556,15 +553,9 @@ struct CppClassSymbol{
 	typedef T type;
 };
 
-
-template<class T> struct AlignOf2{ enum{ value = AlignOf<T>::value }; };
-template<> struct AlignOf2<void>{ enum{ value = 0 }; };
-template<class T> struct SizeOf2{ enum{ value = sizeof(T) }; };
-template<> struct SizeOf2<void>{ enum{ value = 0 }; };
-
 template<class T>
 CppClassSymbolData* CppClassSymbol<T>::make(){
-	static CppClassSymbolData data(SizeOf2<T>::value, 0);
+	static CppClassSymbolData data;
 	return &data;
 }
 

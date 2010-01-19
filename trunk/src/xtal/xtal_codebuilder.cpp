@@ -27,6 +27,8 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	}
 
 	prev_inst_op_ = -1;
+	eval_ = false;
+
 	return compile_toplevel(e, source_file_name);
 }
 
@@ -40,130 +42,51 @@ CodePtr CodeBuilder::compile(const xpeg::ScannerPtr& scanner, const StringPtr& s
 	}
 
 	prev_inst_op_ = -1;
+	eval_ = false;
 	return compile_toplevel(e, source_file_name);
 }
 
-void CodeBuilder::interactive_compile(const StreamPtr& stream){
-	error_= &errorimpl_;
-	error_->init("<ix>");
-
-	{
-		StreamPtr ss = xnew<StringStream>(";");
-		ExprPtr e = parser_.parse_stmt(xnew<xpeg::StreamScanner>(ss), error_);
-		compile_toplevel(e, "<ix>");
-		result_->code_.clear();
-	}
-
-	result_->xfun_info_table_.reserve(10000);
-	result_->class_info_table_.reserve(10000);
-	result_->scope_info_table_.reserve(10000);
-	result_->except_info_table_.reserve(10000);
-
-	result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
-
-	int_t pc_pos = 0;
-	while(!stream->eos()){
-
-		ExprPtr e = parser_.parse_stmt(xnew<xpeg::StreamScanner>(stream), error_);
-		stream->flush();
-
-		if(!e){
-			stderr_stream()->put_s(error_->errors->join("\n"));
-			stderr_stream()->put_s("\n");
-			error_->errors->clear();
-		}
-		else{
-
-			if(e->itag()==EXPR_RETURN){
-				break;
-			}
-			else if(e->itag()==EXPR_DEFINE){
-				if(e->bin_lhs()->itag()==EXPR_LVAR){
-					eb_.push(Xid(filelocal));
-					eb_.splice(EXPR_LVAR, 1);
-					eb_.push(e->bin_lhs()->lvar_name());
-					eb_.push(null);
-					eb_.splice(EXPR_MEMBER, 3);
-					e->set_bin_lhs(ep(eb_.pop()));
-				}
-			}
-			else if(e->itag()==EXPR_MDEFINE){
-				ExprPtr lhs = e->mdefine_lhs_exprs();
-				for(uint_t i=0; i<lhs->size(); ++i){
-					ExprPtr e2 = ep(lhs->at(i));
-					if(e2->itag()==EXPR_LVAR){
-						eb_.push(Xid(filelocal));
-						eb_.splice(EXPR_LVAR, 1);
-						eb_.push(e2->lvar_name());
-						eb_.push(null);
-						eb_.splice(EXPR_MEMBER, 3);
-						lhs->set_at(i, ep(eb_.pop()));
-					}
-				}
-			}
-
-			fun_frames_.push();	
-			ff().labels.clear();
-			ff().loops.clear();
-			ff().finallies.clear();
-			ff().var_frame_count = var_frames_.size();
-			ff().extendable_param = true;
-
-			int_t last_code_size = code_size();
-			compile_stmt(e);
-
-			if(error_->errors->size()!=0){
-				stderr_stream()->put_s(error_->errors->join("\n"));
-				stderr_stream()->put_s("\n");
-				error_->errors->clear();				
-				result_->code_.resize(last_code_size);
-				fun_frames_.downsize(1);
-			}
-			else{
-
-				process_labels();
-
-				fun_frames_.downsize(1);
-				
-				if(code_size()==0)
-					continue;
-
-				//result_->inspect_range(last_code_size, code_size())->p();
-
-				put_inst(InstReturn(0));
-				put_inst(InstThrow());
-
-				vmachine()->execute(result_->first_fun().get(), &result_->code_[pc_pos]);
-				
-				XTAL_CATCH_EXCEPT(e){
-					stderr_stream()->put_s(e->to_s());
-					stderr_stream()->put_s("\n");
-				}
-
-				for(uint_t i=0; i<(sizeof(InstThrow)+sizeof(InstReturn))/sizeof(inst_t); ++i){
-					result_->code_.pop_back();
-				}
-
-				pc_pos = result_->code_.size();
-			}
-		}
-	}
-}
-
-CodePtr CodeBuilder::eval_compile(const StringPtr& sorce){
+CodePtr CodeBuilder::eval_compile(const xpeg::ScannerPtr& scanner){
 	error_= &errorimpl_;
 	error_->init("<eval>");
-	ExprPtr e = parser_.parse_expr(xnew<xpeg::StreamScanner>(xnew<StringStream>(sorce)), error_);
+	ExprPtr e = parser_.parse_stmt(scanner, error_);
 	if(!e){
 		return nul<Code>();
 	}
 
-	eb_.push(e);
-	eb_.splice(EXPR_LIST, 1);
-	eb_.splice(EXPR_RETURN, 1);
-	e = ep(eb_.pop());
+	if(e->itag()==EXPR_DEFINE){
+		if(e->bin_lhs()->itag()==EXPR_LVAR){
+			eb_.push(Xid(filelocal));
+			eb_.splice(EXPR_LVAR, 1);
+			eb_.push(e->bin_lhs()->lvar_name());
+			eb_.push(null);
+			eb_.splice(EXPR_MEMBER, 3);
+			e->set_bin_lhs(ep(eb_.pop()));
+		}
+	}
+	else if(e->itag()==EXPR_MDEFINE){
+		ExprPtr lhs = e->mdefine_lhs_exprs();
+		for(uint_t i=0; i<lhs->size(); ++i){
+			ExprPtr e2 = ep(lhs->at(i));
+			if(e2->itag()==EXPR_LVAR){
+				eb_.push(Xid(filelocal));
+				eb_.splice(EXPR_LVAR, 1);
+				eb_.push(e2->lvar_name());
+				eb_.push(null);
+				eb_.splice(EXPR_MEMBER, 3);
+				lhs->set_at(i, ep(eb_.pop()));
+			}
+		}
+	}
+	else{
+		eb_.push(e);
+		eb_.splice(EXPR_LIST, 1);
+		eb_.splice(EXPR_RETURN, 1);
+		e = ep(eb_.pop());
+	}
 
 	prev_inst_op_ = -1;
+	eval_ = true;
 	return compile_eval_toplevel(e, "<eval>");
 }
 
@@ -223,14 +146,14 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
 
-	var_begin(VarFrame::FRAME);
-	scope_begin();	
+	//var_begin(VarFrame::FRAME);
+	//scope_begin();	
 
 	// ŠÖ”–{‘Ì‚ðˆ—‚·‚é
 	compile_stmt(e);
 
-	scope_end();
-	var_end();
+	//scope_end();
+	//var_end();
 	
 	break_off(ff().var_frame_count+1);
 
@@ -261,7 +184,7 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 
 	if(error_->errors->size()==0){
 		opt_jump();
-		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
+		result_->generated();
 		return result_;
 	}
 	else{
@@ -326,14 +249,14 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
 
-	var_begin(VarFrame::FRAME);
-	scope_begin();	
+	//var_begin(VarFrame::FRAME);
+	//scope_begin();	
 
 	// ŠÖ”–{‘Ì‚ðˆ—‚·‚é
 	compile_stmt(e);
 
-	scope_end();
-	var_end();
+	//scope_end();
+	//var_end();
 	
 	break_off(ff().var_frame_count+1);
 
@@ -368,7 +291,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	if(error_->errors->size()==0){
 		opt_jump();
-		result_->first_fun()->set_info(&result_->xfun_info_table_[0]);
+		result_->generated();
 		return result_;
 	}
 	else{
@@ -458,7 +381,7 @@ int_t CodeBuilder::append_value(const AnyPtr& v){
 	return result_->value_table_->size()-1;
 }
 
-int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
+int_t CodeBuilder::lookup_instance_variable(const IDPtr& key, bool must){
 	if(!class_frames_.empty()){
 		int ret = 0;
 		ClassFrame& cf = class_frames_.top();
@@ -470,16 +393,32 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key){
 		}
 	}
 
-	error_->error(lineno(), Xt("XCE1023")->call(Named(Xid(name), Xid(_)->cat(key))));
-	return 0;
+	if(must || !eval_){
+		error_->error(lineno(), Xt("XCE1023")->call(Named(Xid(name), Xid(_)->cat(key))));
+		return 0;
+	}
+
+	return -1;
 }
 
 void CodeBuilder::put_set_instance_variable_code(int_t value, const IDPtr& var){
-	put_inst(InstSetInstanceVariable(value, lookup_instance_variable(var), class_info_num()));
+	int_t n = lookup_instance_variable(var, false);
+	if(n<0){
+		put_inst(InstSetInstanceVariableByName(value, register_identifier(var)));
+	}
+	else{
+		put_inst(InstSetInstanceVariable(value, lookup_instance_variable(var), class_info_num()));
+	}
 }
 
 void CodeBuilder::put_instance_variable_code(int_t result, const IDPtr& var){
-	put_inst(InstInstanceVariable(result, lookup_instance_variable(var), class_info_num()));
+	int_t n = lookup_instance_variable(var, false);
+	if(n<0){
+		put_inst(InstInstanceVariableByName(result, register_identifier(var)));
+	}
+	else{
+		put_inst(InstInstanceVariable(result, lookup_instance_variable(var), class_info_num()));
+	}
 }
 
 int_t CodeBuilder::reserve_label(){
@@ -527,7 +466,7 @@ void CodeBuilder::break_off(int_t n){
 		}
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.real_entry_num!=0 && vf.kind==VarFrame::FRAME){
+		if(vf.real_entry_num!=0 && (vf.kind==VarFrame::FRAME || vf.kind==VarFrame::TOPLEVEL)){
 			put_inst(InstScopeEnd());
 		}
 	}
@@ -547,7 +486,7 @@ void CodeBuilder::scope_chain(int_t var_frame_size){
 }
 
 CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool traceless, int_t number){
-	LVarInfo ret = {0, 0, 0, 0, 0, false};
+	LVarInfo ret = {0, 0, 0, 0, 0, false, false};
 	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
 		VarFrame& vf = var_frames_[i];
 
@@ -561,9 +500,12 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 					ret.out_of_fun = out_of_fun;
 					ret.var_frame = var_frames_.size()-1-i;
 					ret.entry = vf.entries.size()-1-j;
+
 					if(!traceless){
 						if(define){ entry.initialized = true; }
-						scope_chain(i);
+						if(vf.kind!=VarFrame::TOPLEVEL){
+							scope_chain(i);
+						}
 					}
 
 					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
@@ -577,11 +519,19 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 
 					ret.vpos--;
 
+					if(vf.kind==VarFrame::TOPLEVEL){
+						ret.toplevel = true;
+						ret.vpos = ret.entry;
+						ret.pos = -1;
+					}
+
 					return ret;
 				}
 			}
 
-			ret.vpos--;
+			if(vf.kind!=VarFrame::TOPLEVEL){
+				ret.vpos--;
+			}
 		}
 
 		if(vf.kind==VarFrame::FRAME){
@@ -591,10 +541,14 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 				break;
 			}
 		}
+		else if(vf.kind==VarFrame::TOPLEVEL){
+
+		}
 		else{
 			ret.depth++;
 		}
 	}
+
 	ret.pos = -1;
 	return ret;
 }
@@ -689,7 +643,7 @@ void CodeBuilder::scope_begin(){
 		result_->identifier_table_->push_back(entry.name);
 	}
 
-	if(vf().real_entry_num!=0){
+	if(vf().real_entry_num!=0 && vf().kind!=VarFrame::TOPLEVEL){
 		put_inst(InstScopeBegin(scope_info_num));
 	}
 
@@ -702,7 +656,7 @@ void CodeBuilder::scope_end(){
 	
 	ff().variable_count -= vf().real_entry_num;
 
-	if(vf().real_entry_num!=0){
+	if(vf().real_entry_num!=0 && vf().kind!=VarFrame::TOPLEVEL){
 		put_inst(InstScopeEnd());
 	}
 		
@@ -1466,15 +1420,17 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
+AnyPtr VMachine::eval(const xpeg::ScannerPtr& scanner, uint_t n){
 	debug::CallerInfoPtr cp = caller(n+1);
 	if(!cp || !cp->fun()){
 		return undefined;
 	}
 
 	CodeBuilder cb;
-	if(CodePtr code = cb.eval_compile(source)){
-		AnyPtr self = fun_frames_[1]->self();
+	if(CodePtr code = cb.eval_compile(scanner)){
+		print_info();
+
+		AnyPtr self = fun_frames_[n+1]->self();
 		setup_call(1);
 		set_arg_this(self);
 		code->first_fun()->rawcall(to_smartptr(this));
@@ -1485,6 +1441,7 @@ AnyPtr VMachine::eval(const StringPtr& source, uint_t n){
 		execute_inner(pc, n + 2);
 
 		ff().processed = 0;
+		print_info();
 		return local_variable(result_base_+0);
 	}
 

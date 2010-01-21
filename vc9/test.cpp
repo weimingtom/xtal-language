@@ -506,7 +506,7 @@ public:
 		return members_;
 	}
 	
-	void define(const IDPtr& key, const BinaryTypePtr& type){
+	void def(const IDPtr& key, const BinaryTypePtr& type){
 		cls_->def(key, xnew<StructMemberGetterAndSetter>(members_->size(), type));
 		cls_->def(Xid(set_)->op_cat(key), xnew<StructMemberGetterAndSetter>(members_->size(), type));
 		index_map_->set_at(key, members_->size());

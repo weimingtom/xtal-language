@@ -21,8 +21,9 @@ public:
 	* \xbind
 	* \brief 空の連想配列オブジェクトを生成
 	*/
-	Map()
-		:default_value_(undefined){}
+	Map();
+
+	~Map();
 	
 	/**
 	* \brief keyに対応する要素を返す
@@ -164,9 +165,7 @@ public:
 	* \xbind
 	* \brief 要素を全て削除する
 	*/
-	void clear(){
-		table_.clear();
-	}
+	void clear();
 
 	/**
 	* \xbind
@@ -238,6 +237,14 @@ public:
 
 	iterator end(){
 		return table_.end();
+	}
+
+	iterator find_direct(const AnyPtr& key){
+		return table_.find(key);
+	}
+
+	void insert_direct(const AnyPtr& key, const AnyPtr& value){
+		table_.insert(key, value);
 	}
 
 	void on_visit_members(Visitor& m);

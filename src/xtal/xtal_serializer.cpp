@@ -11,8 +11,10 @@ enum{
 };
 
 Serializer::Serializer(const StreamPtr& s)
-	:stream_(s){
+	:stream_(s), map_(xnew<Map>()){
 }
+
+Serializer::~Serializer(){}
 
 void Serializer::serialize(const AnyPtr& v){
 	clear();
@@ -545,9 +547,9 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 }
 
 int_t Serializer::register_value(const AnyPtr& v){
-	table_t::iterator it=map_.find(v);
-	if(it!=map_.end()){
-		return it->second;
+	Map::iterator it=map_->find_direct(v);
+	if(it!=map_->end()){
+		return ivalue(it->second);
 	}
 	append_value(v);
 	return -1;
@@ -555,16 +557,20 @@ int_t Serializer::register_value(const AnyPtr& v){
 
 int_t Serializer::append_value(const AnyPtr& v){
 	uint_t ret = values_.size();
-	map_.insert(v, ret);
+	map_->insert_direct(v, ret);
 	values_.push_back(v);
 	return ret;
 }
 
 void Serializer::put_tab(int_t tab){
 	while(tab--){
-		stream_->put_s("\t");
+		stream_->put_s(XTAL_STRING("\t"));
 	}
 }
 
+void Serializer::clear(){
+	values_.clear();
+	map_->clear();
+}
 
 }

@@ -473,37 +473,9 @@ public:
 			return &node_->pair;
 		}
 
-		iterator& operator ++(){
-			if(node_){
-				if(node_->next){
-					node_ = node_->next;
-					return *this;
-				}
+		iterator& operator ++();
 
-				node_ = 0;
-				++first_;
-			}
-
-			for(;;){
-				if(first_==last_){
-					node_ = 0;
-					return *this;
-				}
-
-				if(*first_){
-					node_ = *first_;
-					return *this;
-				}
-
-				++first_;
-			}
-		}
-
-		iterator operator ++(int){
-			iterator temp(*this);
-			++(*this);
-			return temp;
-		}
+		iterator operator ++(int);
 
 		friend bool operator ==(iterator a, iterator b){
 			return a.node_ == b.node_;
@@ -644,6 +616,40 @@ protected:
 	uint_t size_;
 	uint_t used_size_;
 };
+
+template<class Key, class Val, class Fun>
+typename Hashtable<Key, Val, Fun>::iterator& Hashtable<Key, Val, Fun>::iterator::operator ++(){
+	if(node_){
+		if(node_->next){
+			node_ = node_->next;
+			return *this;
+		}
+
+		node_ = 0;
+		++first_;
+	}
+
+	for(;;){
+		if(first_==last_){
+			node_ = 0;
+			return *this;
+		}
+
+		if(*first_){
+			node_ = *first_;
+			return *this;
+		}
+
+		++first_;
+	}
+}
+
+template<class Key, class Val, class Fun>
+typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::iterator::operator ++(int){
+	iterator temp(*this);
+	++(*this);
+	return temp;
+}
 
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::Hashtable(no_use_memory_t){

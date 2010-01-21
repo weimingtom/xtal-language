@@ -116,7 +116,7 @@ struct ctor_fun{};
 
 struct param_types_holder_n{
 	void (*fun)(const VMachinePtr& vm, const void* data, UninitializedAny* args); // 関数
-	CppClassSymbolData*** param_types; // thisと引数の型を表すクラスシンボルへのポインタ
+	CppClassSymbolData** const * param_types; // thisと引数の型を表すクラスシンボルへのポインタ
 	u8 size;
 	u8 param_n; // 引数の数
 	u8 extendable; // 可変長かどうか
@@ -133,11 +133,11 @@ struct fun_param_holder{
 	typedef typename Func::fun_t fun_t;
 	typedef Func cfun_t;
 
-	static param_types_holder_n value;
+	static const param_types_holder_n value;
 };
 
 template<class Fun>
-param_types_holder_n fun_param_holder<Fun>::value = {
+const param_types_holder_n fun_param_holder<Fun>::value = {
 	&cfun_t::call,
 	fph::values,
 	sizeof(fun_t),

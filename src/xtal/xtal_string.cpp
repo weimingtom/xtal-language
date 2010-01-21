@@ -61,25 +61,6 @@ uint_t string_length(const char_t* str){
 	return length;
 }
 
-uint_t string_length_with_limit(const char_t* str, uint_t limit){
-	ChMaker chm;
-	uint_t length = 0;
-	uint_t i=0;
-	while(str[i] && i<limit){
-		chm.clear();
-		while(!chm.is_completed()){
-			if(str[i] && i<limit){ 
-				chm.add(str[i++]); 
-			} 
-			else{ 
-				break; 
-			}
-		}
-		length += 1;
-	}
-	return length;
-}
-
 uint_t string_data_size(const char_t* str){
 	uint_t ret = 0;
 	while(*str++){
@@ -186,8 +167,7 @@ StringData* String::new_string_data(uint_t size){
 
 void String::init_string(const char_t* str, uint_t size){
 	if(size<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str, size);
+		value_.init_small_string(str, size);
 	}
 	else{
 		if(string_is_ch(str, size)){
@@ -202,8 +182,7 @@ void String::init_string(const char_t* str, uint_t size){
 
 String::String(const char_t* str, uint_t size, intern_t){
 	if(size<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str, size);
+		value_.init_small_string(str, size);
 	}
 	else{
 		StringData* sd = new_string_data(size);
@@ -214,8 +193,7 @@ String::String(const char_t* str, uint_t size, intern_t){
 
 String::String(const StringLiteral& str, intern_t){
 	if(str.size()<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str.str(), str.size());
+		value_.init_small_string(str.str(), str.size());
 	}
 	else{
 		value_.init_string_literal(TYPE_ID_LITERAL, str);
@@ -224,7 +202,7 @@ String::String(const StringLiteral& str, intern_t){
 
 String::String()
 :Any(noinit_t()){
-	value_.init(TYPE_SMALL_STRING);
+	value_.init_small_string(0);
 }
 
 String::String(const char_t* str)
@@ -245,10 +223,8 @@ String::String(const char_t* str, uint_t size)
 
 String::String(const StringLiteral& str)
 :Any(noinit_t()){
-
 	if(str.size()<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		string_copy(value_.s(), str.str(), str.size());
+		value_.init_small_string(str.str(), str.size());
 	}
 	else{
 		value_.init_string_literal(TYPE_STRING_LITERAL, str);
@@ -273,49 +249,14 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 
 	uint_t sz = size1 + size2;
 	if(sz<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
+		value_.init_small_string(sz);
 		string_copy(value_.s(), str1, size1);
-		string_copy(&value_.s()[size1], str2, size2);
+		string_copy(value_.s()+size1, str2, size2);
 	}
 	else{
 		StringData* sd = new_string_data(sz);
 		string_copy(sd->buf(), str1, size1);
 		string_copy(sd->buf()+size1, str2, size2);
-	}
-}
-
-String::String(char_t a)
-	:Any(noinit_t()){
-	if(1<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a;
-	}
-	else{
-		init_string(&a, 1);
-	}
-}
-
-String::String(char_t a, char_t b)
-	:Any(noinit_t()){
-	if(2<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a; value_.s()[1] = b;
-	}
-	else{
-		char_t buf[2] = {a, b};
-		init_string(buf, 2);
-	}
-}
-
-String::String(char_t a, char_t b, char_t c)
-	:Any(noinit_t()){
-	if(3<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a; value_.s()[1] = b; value_.s()[2] = c;
-	}
-	else{
-		char_t buf[3] = {a, b, c};
-		init_string(buf, 3);
 	}
 }
 
@@ -356,18 +297,11 @@ const char_t* String::data() const{
 uint_t String::data_size() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_SMALL_STRING){ 
-			for(uint_t i=0; i<SMALL_STRING_MAX; ++i){
-				if(value_.s()[i]=='\0'){
-					return i;
-				}
-			}
-			XTAL_ASSERT(false);
+
+		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ 
+			return value_.string_size(); 
 		}
 
-		XTAL_CASE2(TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ 
-			return value_.string_literal_size();
-		}
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->data_size(); }
 	}
 	return 0;
@@ -381,7 +315,7 @@ const IDPtr& String::intern() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
-		XTAL_CASE(TYPE_STRING_LITERAL){ return xtal::intern(value_.sp(), value_.string_literal_size()); }
+		XTAL_CASE(TYPE_STRING_LITERAL){ return xtal::intern(value_.sp(), value_.string_size()); }
 		XTAL_CASE(TYPE_ID_LITERAL){ return unchecked_ptr_cast<ID>(ap(*this)); }
 		XTAL_CASE(TYPE_STRING){
 			StringData* p = ((StringData*)rcpvalue(*this));
@@ -571,41 +505,6 @@ ID::ID(const char_t* str, uint_t size)
 
 ID::ID(const char_t* begin, const char_t* last)
 	:String(*xtal::intern(begin, last-begin)){}
-
-ID::ID(char_t a)
-	:String(noinit_t()){
-	if(1<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a;
-	}
-	else{
-		*this = ID(&a, 1);
-	}
-}
-
-ID::ID(char_t a, char_t b)
-	:String(noinit_t()){
-	if(2<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a; value_.s()[1] = b;
-	}
-	else{
-		char_t buf[2] = {a, b};
-		*this = ID(buf, 2);
-	}
-}
-
-ID::ID(char_t a, char_t b, char_t c)
-	:String(noinit_t()){
-	if(3<SMALL_STRING_MAX){
-		value_.init(TYPE_SMALL_STRING);
-		value_.s()[0] = a; value_.s()[1] = b; value_.s()[2] = c;
-	}
-	else{
-		char_t buf[3] = {a, b, c};
-		*this = ID(buf, 3);
-	}
-}
 
 ID::ID(const StringPtr& name)
 	:String(*(name ? name->intern() : (const IDPtr&)name)){}

@@ -36,7 +36,8 @@ bool Any_op_in_Array(const AnyPtr& v, const ArrayPtr& values){
 			return true;
 		}
 
-		vm->setup_call(1, v);
+		vm->setup_call(1);
+		vm->push_arg(v);
 		n->rawsend(vm, Xid2(op_eq));
 		if(vm->processed() && vm->result()){
 			vm->cleanup_call();
@@ -1846,7 +1847,7 @@ XTAL_BIND(Xpeg){
 	AnyPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
 	AnyPtr alpha = select(lalpha, ualpha);
 	AnyPtr word = select(select(alpha, degit), Xs("_"));
-	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>((char_t)1), xnew<ID>((char_t)127)));
+	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>(Xs("\x01")), xnew<ID>(Xs("\xfe"))));
 
 	it->def(Xid2(any), any);
 	it->def(Xid2(bos), bos);
@@ -1881,8 +1882,7 @@ XTAL_BIND(Xpeg){
 
 }
 
-void bind(){
-	const ClassPtr& it = builtin();
+XTAL_BIND(Builtin){
 
 	it->def(Xid2(Any), cpp_class<Any>());
 	it->def(Xid2(String), cpp_class<String>());
@@ -1924,7 +1924,6 @@ void bind(){
 	it->def(Xid2(Code), cpp_class<Code>());
 	it->def(Xid2(Frame), cpp_class<Frame>());
 	it->def(Xid2(Class), cpp_class<Class>());
-	it->def(Xid2(lib), lib());
 
 	it->def(Xid2(NativeMethod), cpp_class<NativeMethod>());
 
@@ -1943,6 +1942,13 @@ void bind(){
 	it->def(Xid2(Format), cpp_class<Format>());
 	it->def(Xid2(Text), cpp_class<Text>());
 
+	it->def(Xid2(math), cpp_class<Math>());
+	it->def(Xid2(Iterator), cpp_class<Iterator>());
+	it->def(Xid2(Iterable), cpp_class<Iterable>());
+
+
+	it->def(Xid2(lib), lib());
+
 	it->def_fun(Xid2(assign_text_map), &assign_text_map);
 	it->def_fun(Xid2(append_text_map), &append_text_map);
 	it->def_fun(Xid2(format), (FormatPtr (*)(const StringPtr&))&format);
@@ -1950,8 +1956,6 @@ void bind(){
 
 	it->def(Xid2(builtin), builtin());
 
-	it->def(Xid2(Iterator), cpp_class<Iterator>());
-	it->def(Xid2(Iterable), cpp_class<Iterable>());
 
 	it->def_fun(Xid2(current_context), &VMachine_current_context);
 	
@@ -1971,18 +1975,15 @@ void bind(){
 	it->def_fun(Xid2(interned_strings), &interned_strings);
 
 	it->def_fun(Xid2(eval), &eval);
+	it->def(Xid2(xpeg), cpp_class<xpeg::Xpeg>());
+}
 
-	builtin()->def(Xid2(math), cpp_class<Math>());
-
-	{
-		using namespace xpeg;
-		ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
-		for(int i=0; i<4; ++i){
-			classes[i]->inherit(cpp_class<XpegOperator>());
-		}
-
-		builtin()->def(Xid2(xpeg), cpp_class<Xpeg>());
-	}
+void bind(){
+	using namespace xpeg;
+	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
+	for(int i=0; i<4; ++i){
+		classes[i]->inherit(cpp_class<XpegOperator>());
+	}		
 }
 
 XTAL_BIND2(Builtin){

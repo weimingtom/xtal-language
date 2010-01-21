@@ -31,6 +31,7 @@ inline void bind_error_message(){
 		XTAL_STRING("XCE1026"), XTAL_STRING("同じスコープ内で、同じ変数名 '%(name)s' が既に定義されています。"),
 		XTAL_STRING("XCE1027"), XTAL_STRING("コードが大きすぎて、バイトコードの生成に失敗しました。"),
 		XTAL_STRING("XCE1028"), XTAL_STRING("演算子の前後の空白と演算子の優先順位が一致していません。想定している優先順位と異なっている可能性があります。"),
+		XTAL_STRING("XCE1029"), XTAL_STRING("a&1というように、bitwise andを条件式とすることは安全のため禁止されています。(a&1)==0という形で比較してください。"),
 		
 		XTAL_STRING("XRE1001"), XTAL_STRING("'%(object)s' 関数呼び出しの '%(no)s'番目の引数の型が不正です。'%(required)s'型を要求していますが、'%(type)s'型の値が渡されました。"),
 		XTAL_STRING("XRE1002"), XTAL_STRING("ソースのコンパイル中、コンパイルエラーが発生しました。"),

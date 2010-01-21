@@ -3,6 +3,10 @@
 
 namespace xtal{
 
+MembersIter::MembersIter(const FramePtr& a)
+	:frame_(a), it_(frame_->map_members_->begin()){
+}
+
 void MembersIter::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
 	m & frame_;
@@ -25,6 +29,11 @@ void MembersIter::block_next(const VMachinePtr& vm){
 			return;
 		}
 	}
+}
+
+
+MembersIter2::MembersIter2(const FramePtr& a)
+	:frame_(a), it_(0){
 }
 
 void MembersIter2::on_visit_members(Visitor& m){

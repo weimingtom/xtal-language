@@ -104,7 +104,7 @@ public:
 	/**
 	* \brief ê∂ê¨ÇµÇΩç\ï∂ñÿÇéÊìæÇ∑ÇÈÅB
 	*/
-	TreeNodePtr tree(){
+	const TreeNodePtr& tree(){
 		return tree_;
 	}
 
@@ -364,13 +364,11 @@ public:
 public:
 
 	int_t peek_ascii(uint_t n = 0){
-		const AnyPtr& ch = peek(n);
-		return chvalue(ch);
+		return chvalue(peek(n));
 	}
 	
 	int_t read_ascii(){
-		const AnyPtr& ch = read();
-		return chvalue(ch);
+		return chvalue(read());
 	}
 
 	/**
@@ -383,13 +381,7 @@ public:
 	*/
 	StringPtr end_record();
 
-	bool eat_ascii(int_t ch){
-		if(peek_ascii()==ch){
-			read_ascii();
-			return true;
-		}
-		return false;
-	}
+	bool eat_ascii(int_t ch);
 
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
@@ -512,8 +504,12 @@ struct Element : public Base{
 	int_t param3;
 	bool inv;
 
-	Element(Type type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0)
-		:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
+	Element(Type type);
+	Element(Type type, const AnyPtr& param1);
+	Element(Type type, const AnyPtr& param1, const AnyPtr& param2);
+	Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
+
+	~Element();
 
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
@@ -543,13 +539,6 @@ struct NFA : public Base{
 	void add_transition(int from, const AnyPtr& ch, int to);
 
 	void gen_nfa(int entry, const AnyPtr& t, int exit, int depth);
-
-	void printn(const char* str, int depth){
-		//for(int i=0; i<depth; ++i){
-		//	printf("%s", " ");
-		//}
-		//printf("%s\n", str);
-	}
 	
 	struct State{
 		TransPtr trans;
@@ -575,39 +564,41 @@ struct NFA : public Base{
 const NFAPtr& fetch_nfa(const ElementPtr& node);
 
 ElementPtr elem(const AnyPtr& a);
-AnyPtr set(const StringPtr& str);
-AnyPtr call(const AnyPtr& fun);
-AnyPtr select(const AnyPtr& left, const AnyPtr& right);
-AnyPtr concat(const AnyPtr& left, const AnyPtr& right);
-AnyPtr more_Int(const AnyPtr& left, int_t n, int_t kind = 0);
-AnyPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind = 0);
-AnyPtr more_normal_Int(const AnyPtr& left, int_t n);
-AnyPtr more_shortest_Int(const AnyPtr& left, int_t n);
-AnyPtr more_greed_Int(const AnyPtr& left, int_t n);
-AnyPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range);
-AnyPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range);
-AnyPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range);
-AnyPtr inv(const AnyPtr& left);
-AnyPtr lookahead(const AnyPtr& left);
-AnyPtr lookbehind(const AnyPtr& left, int_t back);
-AnyPtr cap(const IDPtr& name, const AnyPtr& left);
+ElementPtr set(const StringPtr& str);
+ElementPtr call(const AnyPtr& fun);
+ElementPtr select(const AnyPtr& left, const AnyPtr& right);
+ElementPtr concat(const AnyPtr& left, const AnyPtr& right);
+ElementPtr more_Int(const AnyPtr& left, int_t n, int_t kind = 0);
+ElementPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind = 0);
+ElementPtr more_normal_Int(const AnyPtr& left, int_t n);
+ElementPtr more_shortest_Int(const AnyPtr& left, int_t n);
+ElementPtr more_greed_Int(const AnyPtr& left, int_t n);
+ElementPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range);
+ElementPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range);
+ElementPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range);
+ElementPtr inv(const AnyPtr& left);
+ElementPtr lookahead(const AnyPtr& left);
+ElementPtr lookbehind(const AnyPtr& left, int_t back);
+ElementPtr cap(const IDPtr& name, const AnyPtr& left);
 void cap_vm(const VMachinePtr& vm);
-AnyPtr node(const AnyPtr& left);
-AnyPtr node(const IDPtr& name, const AnyPtr& left);
+ElementPtr node(const AnyPtr& left);
+ElementPtr node(const IDPtr& name, const AnyPtr& left);
 void node_vm(const VMachinePtr& vm);
-AnyPtr splice_node(int_t num, const AnyPtr& left);
-AnyPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
+ElementPtr splice_node(int_t num, const AnyPtr& left);
+ElementPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
 void splice_node_vm(const VMachinePtr& vm);
-AnyPtr leaf(const AnyPtr& left);
-AnyPtr leafs(const AnyPtr& left);
-AnyPtr back_ref(const AnyPtr& n);
-AnyPtr decl();
+ElementPtr leaf(const AnyPtr& left);
+ElementPtr leafs(const AnyPtr& left);
+ElementPtr back_ref(const AnyPtr& n);
+ElementPtr decl();
 void set_body(const ElementPtr& x, const AnyPtr& term);
-AnyPtr bound(const AnyPtr& body, const AnyPtr& sep);
-AnyPtr error(const AnyPtr& fn);
-AnyPtr pred(const AnyPtr& e);
+ElementPtr bound(const AnyPtr& body, const AnyPtr& sep);
+ElementPtr error(const AnyPtr& fn);
+ElementPtr pred(const AnyPtr& e);
 
-}}
+}
+
+}
 
 
 #endif // XTAL_XPEG_H_INCLUDE_GUARD

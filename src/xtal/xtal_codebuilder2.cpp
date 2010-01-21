@@ -474,12 +474,21 @@ void CodeBuilder::put_if_code(int_t tag, int_t target, int_t lhs, int_t rhs, int
 }
 
 void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_false, int_t stack_top){
+	int_t label_true = reserve_label();
+	put_if_code(e, label_true, label_false, stack_top);
+	set_label(label_true);
+}
+
+void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_true, int_t label_false, int_t stack_top){
+	if(e->itag()==EXPR_AND){
+		error_->error(lineno(), Xt("XCE1029"));
+	}
+
 	AnyPtr value = do_expr(e);
 	if(value){
 		return;
 	}
 
-	int_t label_true = reserve_label();
 
 	if(is_comp_bin(e)){
 		int_t target = stack_top++;
@@ -501,8 +510,6 @@ void CodeBuilder::put_if_code(const ExprPtr& e, int_t label_false, int_t stack_t
 			put_inst(InstIf(lhs, 0, 0));
 		}
 	}
-
-	set_label(label_true);
 }
 
 int_t CodeBuilder::compile_expr_EQ(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
@@ -569,6 +576,10 @@ int_t CodeBuilder::compile_expr_ANDAND(const ExprPtr& e, int_t stack_top, int_t 
 	int_t label_true = reserve_label();
 	int_t label_false = reserve_label();
 
+	if(e->bin_lhs()->itag()==EXPR_AND){
+		error_->error(lineno(), Xt("XCE1029"));
+	}
+
 	compile_expr(e->bin_lhs(), stack_top, result);
 	
 	set_jump(InstIf::OFFSET_address_true, label_true);
@@ -585,6 +596,10 @@ int_t CodeBuilder::compile_expr_ANDAND(const ExprPtr& e, int_t stack_top, int_t 
 int_t CodeBuilder::compile_expr_OROR(const ExprPtr& e, int_t stack_top, int_t result, int_t result_count){
 	int_t label_true = reserve_label();
 	int_t label_false = reserve_label();
+
+	if(e->bin_lhs()->itag()==EXPR_AND){
+		error_->error(lineno(), Xt("XCE1029"));
+	}
 
 	compile_expr(e->bin_lhs(), stack_top, result);
 	

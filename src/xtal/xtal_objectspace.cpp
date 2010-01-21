@@ -353,15 +353,9 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 	return *current;
 }
 
-void ObjectSpace::before_gc(){
+void ObjectSpace::gc_signal(int_t flag){
 	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-		(*it)->before_gc();
-	}
-}
-
-void ObjectSpace::after_gc(){
-	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
-		(*it)->after_gc();
+		(*it)->gc_signal(flag);
 	}
 }
 
@@ -419,7 +413,7 @@ void ObjectSpace::lw_gc(){
 
 	ConnectedPointer first, last, end;
 	
-	before_gc();
+	gc_signal(0);
 
 	uint_t N = 256;
 
@@ -436,7 +430,7 @@ void ObjectSpace::lw_gc(){
 	if(last>end){ last = end; }
 	end = swap_dead_objects(first, last, end);
 
-	after_gc();
+	gc_signal(1);
 
 	adjust_objects_list(end);
 
@@ -455,9 +449,9 @@ void ObjectSpace::gc(){
 	ConnectedPointer last(objects_count_, objects_list_begin_);
 	ConnectedPointer end(objects_count_, objects_list_begin_);
 
-	before_gc();
+	gc_signal(0);
 	end = swap_dead_objects(first, last, end);
-	after_gc();
+	gc_signal(1);
 
 	adjust_objects_list(end);
 }
@@ -496,7 +490,7 @@ void ObjectSpace::full_gc(){
 				break;
 			}
 
-			before_gc();
+			gc_signal(0);
 
 			// 参照カウンタを減らす
 			// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
@@ -513,7 +507,7 @@ void ObjectSpace::full_gc(){
 			// 死者も、参照カウンタを元に戻す
 			add_ref_count_objects(alive, current, 1);
 
-			after_gc();
+			gc_signal(1);
 
 			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
@@ -534,7 +528,7 @@ void ObjectSpace::full_gc(){
 
 					// 死者が生き返ったかも知れないのでチェックする
 
-					before_gc();
+					gc_signal(0);
 
 					// 参照カウンタを減らす
 					add_ref_count_objects(alive, current, -1);
@@ -547,7 +541,7 @@ void ObjectSpace::full_gc(){
 					// 死者も、参照カウンタを元に戻す
 					add_ref_count_objects(alive, current, 1);
 
-					after_gc();
+					gc_signal(1);
 				}
 			}
 

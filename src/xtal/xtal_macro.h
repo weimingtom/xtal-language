@@ -136,7 +136,7 @@
 
 #else
 
-#define Xid(x) ::xtal::intern(XTAL_STRING2(#x))
+#define Xid(x) ::xtal::intern(XTAL_STRING(#x))
 
 #endif
 

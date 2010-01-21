@@ -48,7 +48,6 @@ private:
 
 class Format : public Base{
 public:
-
 	Format(const StringPtr& str = empty_string);
 	void set(const StringPtr& str);
 	void on_rawcall(const VMachinePtr& vm);
@@ -56,7 +55,6 @@ public:
 	AnyPtr serial_save();
 	void serial_load(const StringPtr& v);
 private:
-
 	StringPtr original_;
 	bool have_named_;
 };
@@ -68,7 +66,6 @@ public:
 	void to_s(const VMachinePtr& vm);
 	AnyPtr serial_save();
 	void serial_load(const IDPtr& v);
-
 private:	
 	IDPtr key_;
 };

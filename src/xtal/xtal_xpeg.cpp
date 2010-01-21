@@ -417,7 +417,7 @@ bool Executor::test(const AnyPtr& ae){
 		XTAL_CASE(Element::TYPE_CH_RANGE){
 			if(scanner_->eos()){ return false; }
 			const AnyPtr& a = scanner_->read();
-			if(rawtype(a)==TYPE_SMALL_STRING){
+			if(type(a)==TYPE_SMALL_STRING){
 				return unchecked_ptr_cast<String>(a)->op_in(unchecked_ptr_cast<ChRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
@@ -690,6 +690,14 @@ StringPtr Scanner::end_record(){
 	return capture(begin, pos_);
 }
 
+bool Scanner::eat_ascii(int_t ch){
+	if(peek_ascii()==ch){
+		read_ascii();
+		return true;
+	}
+	return false;
+}
+
 void Scanner::expand(){
 	if(max_==num_){
 		uint_t newmax = max_ + max_/2 + 4;
@@ -792,14 +800,12 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 	switch(t->type){
 		XTAL_DEFAULT{
-			printn("DEFAULT", depth);
 			//         ch
 			//  entry -----> exit
 			add_transition(entry, t, exit);
 		}
 
 		XTAL_CASE(Element::TYPE_CONCAT){
-			printn("CONCAT", depth);
 			//         left         right
 			//  entry ------> step -------> exit
 			int step = gen_state();
@@ -808,7 +814,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 		}
 
 		XTAL_CASE(Element::TYPE_OR){
-			printn("OR", depth);
 			//               left
 			//        ----------------->
 			//  entry -----> step -----> exit
@@ -820,7 +825,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 		}
 
 		XTAL_CASE2(Element::TYPE_MORE0, Element::TYPE_MORE1){
-			printn("MORE", depth);
 			//                       e
 			//         e          <------        e
 			//  entry ---> before ------> after ---> exit
@@ -859,7 +863,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 		}
 
 		XTAL_CASE(Element::TYPE_01){
-			printn("01", depth);
 			//           e
 			//        ------>
 			//  entry ------> exit
@@ -877,14 +880,12 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 		}
 
 		XTAL_CASE(Element::TYPE_EMPTY){
-			printn("EMPTY", depth);
 			//         e
 			//  entry ---> exit
 			add_transition(entry, e_, exit);
 		}
 
 		XTAL_CASE(Element::TYPE_CAP){
-			printn("CAP", depth);
 			int before = gen_state();
 			int after = gen_state();
 
@@ -901,7 +902,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 		}
 
 		XTAL_CASE(Element::TYPE_DECL){
-			printn("DECL", depth);
 			add_transition(entry, t, exit);
 			//gen_nfa(entry, t->param1, exit, depth+1);
 		}
@@ -909,6 +909,20 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+Element::Element(Type type)
+	:type(type), param1(null), param2(null), param3(0), inv(false){}
+
+Element::Element(Type type, const AnyPtr& param1)
+	:type(type), param1(param1), param2(null), param3(0), inv(false){}
+
+Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2)
+	:type(type), param1(param1), param2(param2), param3(0), inv(false){}
+
+Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
+	:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
+	
+Element::~Element(){}
 
 ElementPtr elem(const AnyPtr& a){
 	if(const ElementPtr& p = ptr_cast<Element>(a)){
@@ -957,7 +971,7 @@ ElementPtr elem(const AnyPtr& a){
 	return nul<Element>();
 }
 
-AnyPtr set(const StringPtr& str){
+ElementPtr set(const StringPtr& str){
 	SetPtr chset = xnew<Set>();
 	Xfor(v, str){
 		chset->set_at(v, true);
@@ -965,11 +979,11 @@ AnyPtr set(const StringPtr& str){
 	return xnew<Element>(Element::TYPE_CH_SET, chset);
 }
 
-AnyPtr call(const AnyPtr& fun){
+ElementPtr call(const AnyPtr& fun){
 	return xnew<Element>(Element::TYPE_CALL, fun);
 }
 
-AnyPtr select(const AnyPtr& left, const AnyPtr& right){
+ElementPtr select(const AnyPtr& left, const AnyPtr& right){
 	ElementPtr eleft = elem(left);
 	ElementPtr eright = elem(right);
 
@@ -1003,7 +1017,7 @@ AnyPtr select(const AnyPtr& left, const AnyPtr& right){
 	return xnew<Element>(Element::TYPE_OR, eleft, eright); 
 }
 
-AnyPtr concat(const AnyPtr& left, const AnyPtr& right){ 
+ElementPtr concat(const AnyPtr& left, const AnyPtr& right){ 
 	ElementPtr eleft = elem(left);
 	ElementPtr eright = elem(right);
 
@@ -1014,7 +1028,7 @@ AnyPtr concat(const AnyPtr& left, const AnyPtr& right){
 	return xnew<Element>(Element::TYPE_CONCAT, eleft, eright); 
 }
 
-AnyPtr more_Int(const AnyPtr& left, int_t n, int_t kind){
+ElementPtr more_Int(const AnyPtr& left, int_t n, int_t kind){
 	if(n==0){ return xnew<Element>(Element::TYPE_MORE0, elem(left), null, kind); }
 	else if(n==1){ return xnew<Element>(Element::TYPE_MORE1, elem(left), null, kind); }
 	else if(n==-1){ return xnew<Element>(Element::TYPE_01, elem(left), null, kind); }
@@ -1023,7 +1037,7 @@ AnyPtr more_Int(const AnyPtr& left, int_t n, int_t kind){
 	else{ return concat(more_Int(left, -1, kind), more_Int(left, n+1, kind)); }
 }
 
-AnyPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind){
+ElementPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind){
 	if(range->begin()<=0){
 		int n = -(range->end()-1);
 		return n < 0 ? more_Int(left, n, kind) : xnew<Element>(Element::TYPE_EMPTY);
@@ -1032,24 +1046,24 @@ AnyPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind){
 	return concat(left, more_IntRange(left, xnew<IntRange>(range->begin()-1, range->end()-1, RANGE_LEFT_CLOSED_RIGHT_OPEN), kind));
 }
 
-AnyPtr more_normal_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 0); }
-AnyPtr more_shortest_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 1); }
-AnyPtr more_greed_Int(const AnyPtr& left, int_t n){ return xnew<Element>(Element::TYPE_GREED, more_normal_Int(left, n)); }
-AnyPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 0); }
-AnyPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 1); }
-AnyPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return xnew<Element>(Element::TYPE_GREED, more_normal_IntRange(left, range)); }
+ElementPtr more_normal_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 0); }
+ElementPtr more_shortest_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 1); }
+ElementPtr more_greed_Int(const AnyPtr& left, int_t n){ return xnew<Element>(Element::TYPE_GREED, more_normal_Int(left, n)); }
+ElementPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 0); }
+ElementPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 1); }
+ElementPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return xnew<Element>(Element::TYPE_GREED, more_normal_IntRange(left, range)); }
 
-AnyPtr inv(const AnyPtr& left){
+ElementPtr inv(const AnyPtr& left){
 	ElementPtr e = elem(left);
 	ElementPtr ret = xnew<Element>(e->type, e->param1, e->param2, e->param3);
 	ret->inv = !e->inv;
 	return ret;
 }
 
-AnyPtr lookahead(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LOOKAHEAD, elem(left)); }
-AnyPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), null, back); }
+ElementPtr lookahead(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LOOKAHEAD, elem(left)); }
+ElementPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), null, back); }
 
-AnyPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
+ElementPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
 
 void cap_vm(const VMachinePtr& vm){
 	if(vm->named_arg_count()==1 && vm->ordered_arg_count()==0){ 
@@ -1065,8 +1079,8 @@ void cap_vm(const VMachinePtr& vm){
 	XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(Xt("XRE1027")));
 }
 
-AnyPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
-AnyPtr node(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name); }
+ElementPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
+ElementPtr node(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name); }
 
 void node_vm(const VMachinePtr& vm){
 	if(vm->named_arg_count()!=0){ vm->return_result(node(vm->arg_name(0), vm->arg(vm->arg_name(0)))); }
@@ -1076,8 +1090,8 @@ void node_vm(const VMachinePtr& vm){
 	}
 }
 
-AnyPtr splice_node(int_t num, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), null, num); }
-AnyPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name, num); }
+ElementPtr splice_node(int_t num, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), null, num); }
+ElementPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name, num); }
 
 void splice_node_vm(const VMachinePtr& vm){
 	if(vm->named_arg_count()!=0){ vm->return_result(splice_node(vm->arg(0)->to_i(), vm->arg_name(0), vm->arg(vm->arg_name(0)))); }
@@ -1087,11 +1101,11 @@ void splice_node_vm(const VMachinePtr& vm){
 	}
 }
 
-AnyPtr leaf(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left)); }
-AnyPtr leafs(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left), null, 1); }
-AnyPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n); }
+ElementPtr leaf(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left)); }
+ElementPtr leafs(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left), null, 1); }
+ElementPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n); }
 
-AnyPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
+ElementPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
 
 void set_body(const ElementPtr& x, const AnyPtr& term){ 
 	if(x->type==Element::TYPE_DECL){
@@ -1100,10 +1114,10 @@ void set_body(const ElementPtr& x, const AnyPtr& term){
 	}
 }
 
-AnyPtr bound(const AnyPtr& body, const AnyPtr& sep){ return concat(concat(lookbehind(sep, 1), body), lookahead(sep)); }
-AnyPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
-AnyPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
-	
+ElementPtr bound(const AnyPtr& body, const AnyPtr& sep){ return concat(concat(lookbehind(sep, 1), body), lookahead(sep)); }
+ElementPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
+ElementPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
+
 }
 
 }

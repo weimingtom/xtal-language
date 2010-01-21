@@ -51,6 +51,7 @@ public:
 	void put_instance_variable_code(int_t result, const IDPtr& var);
 	void put_val_code(const AnyPtr& val);
 	void put_if_code(const ExprPtr& cond, int_t label_false, int_t stack_top);
+	void put_if_code(const ExprPtr& e, int_t label_true, int_t label_false, int_t stack_top);
 	void break_off(int_t to);
 
 	int_t make_result_number(int_t stack_top, int_t result, int_t result_count);

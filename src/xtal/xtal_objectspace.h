@@ -60,8 +60,8 @@ public:
 
 private:
 
-	void before_gc();
-	void after_gc();
+	void gc_signal(int_t flag);
+	
 	ConnectedPointer swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end);
 	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
 	void free_objects(ConnectedPointer it, ConnectedPointer current);

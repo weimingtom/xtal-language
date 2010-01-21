@@ -365,7 +365,8 @@ bool Array::op_eq(const ArrayPtr& other){
 	const VMachinePtr& vm = vmachine();
 	for(uint_t i=0, size=other->size(); i<size; ++i){
 		if(rawne(at(i), other->at(i))){
-			vm->setup_call(1, other->at(i));
+			vm->setup_call(1);
+			vm->push_arg(other->at(i));
 			at(i)->rawsend(vm, Xid(op_eq));
 			if(!vm->processed() || !vm->result()){
 				vm->cleanup_call();

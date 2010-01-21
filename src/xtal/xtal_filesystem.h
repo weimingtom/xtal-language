@@ -39,6 +39,7 @@ class Filesystem{};
 
 class Entries : public Base{
 public:
+
 	Entries(const StringPtr& path){
 		impl_ = filesystem_lib()->new_entries(path->c_str());
 	}

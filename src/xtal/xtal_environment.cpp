@@ -180,6 +180,18 @@ const VMachinePtr& vmachine(){
 	return to_smartptr((VMachine*)vmachine_);
 }
 
+const VMachinePtr& setup_call(){
+	const VMachinePtr& vm = to_smartptr((VMachine*)vmachine_);
+	vm->setup_call();
+	return vm;
+}
+
+const VMachinePtr& setup_call(int_t need_result_count){
+	const VMachinePtr& vm = to_smartptr((VMachine*)vmachine_);
+	vm->setup_call(need_result_count);
+	return vm;
+}
+
 const VMachinePtr& vmachine_checked(){
 	return vmachine_ ? to_smartptr((VMachine*)vmachine_) : unchecked_ptr_cast<VMachine>(null);
 }

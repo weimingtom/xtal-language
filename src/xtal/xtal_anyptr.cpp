@@ -55,47 +55,47 @@ SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_BASE>& m)
+SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_BASE>& m)
 	:Any(noinit_t()){
-	init_smartptr(m.pvalue, cpp_class(m.klass));
+	init_smartptr(m.pvalue);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_RCBASE>& m)
+SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_RCBASE>& m)
 	:Any(noinit_t()){
-	init_smartptr(m.pvalue, m.klass);
+	init_smartptr(m.pvalue);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_ANY>& m)
+SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_ANY>& m)
 	:Any(noinit_t()){
 	init_smartptr((Any&)m.value);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewBase<INHERITED_OTHER>& m)
+SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_OTHER>& m)
 	:Any(noinit_t()){
-	init_smartptr(m.value, cpp_class(m.klass));
+	init_smartptr(m.value);
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_BASE>& m){
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewXBase<INHERITED_BASE>& m){
 	dec_ref_count_force(*this);
-	init_smartptr(m.pvalue, cpp_class(m.klass));
+	init_smartptr(m.pvalue);
 	return *this;
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_RCBASE>& m){
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewXBase<INHERITED_RCBASE>& m){
 	dec_ref_count_force(*this);
-	init_smartptr(m.pvalue, m.klass);
+	init_smartptr(m.pvalue);
 	return *this;
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_ANY>& m){
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewXBase<INHERITED_ANY>& m){
 	dec_ref_count_force(*this);
 	init_smartptr((Any&)m.value);
 	return *this;
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewBase<INHERITED_OTHER>& m){
+SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewXBase<INHERITED_OTHER>& m){
 	dec_ref_count_force(*this);
-	init_smartptr(m.value, cpp_class(m.klass));
+	init_smartptr(m.value);
 	return *this;
 }
 
@@ -111,14 +111,14 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	return *this;
 }
 
-void SmartPtr<Any>::init_smartptr(RefCountingBase* p, int_t type){
-	value_.init(type, p);
+void SmartPtr<Any>::init_smartptr(RefCountingBase* p){
+	value_.init(p->virtual_members()->rcbase_class_type, p);
 	register_gc(p);
 }
 
-void SmartPtr<Any>::init_smartptr(Base* p, const ClassPtr& c){
+void SmartPtr<Any>::init_smartptr(Base* p){
 	value_.init(p);
-	p->set_class(c);
+	p->set_class(cpp_class(*p->virtual_members()->cpp_class_symbol_data));
 	register_gc(p);
 }
 

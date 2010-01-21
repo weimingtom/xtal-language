@@ -9,11 +9,6 @@
 
 namespace xtal{
 
-template<class T>
-inline AnyPtr convert_to_anyptr(const T& val){
-	return xnew<T>();
-}
-	
 /**
 * \brief 関数呼び出しで、名前付き引数として渡すためのクラス
 *
@@ -38,83 +33,9 @@ struct Named{
 struct NamedParam{
 	NamedParam()
 		:value(undefined){}
+
 	IDPtr name;
 	AnyPtr value;
-};
-
-struct Param{
-	enum{
-		ANY = 0,
-		NAMED = 1,
-		STR = 2,
-		STR8 = 3,
-		LITERAL = 4
-	};
-
-	Param(const Named& n){
-		type = NAMED;
-		name.name = &n.name;
-		name.value = &n.value;
-	}
-
-	Param(const char_t* s){
-		type = STR;
-		str = s;
-	}
-
-	Param(const char8_t* s){
-		type = STR8;
-		str8 = s;
-	}
-
-	Param(const StringLiteral& s){
-		type = LITERAL;
-		literal.str = s.str();
-		literal.size = s.size();
-	}
-
-	Param(const AnyPtr& v){
-		type = ANY;
-		value = rawvalue(v);
-	}
-
-	Param(char v){ type = ANY; value.init(v); }
-	Param(signed char v){ type = ANY; value.init(v); }
-	Param(unsigned char v){ type = ANY; value.init(v); }
-	Param(short v){ type = ANY; value.init(v); }
-	Param(unsigned short v){ type = ANY; value.init(v); }
-	Param(int v){ type = ANY; value.init(v); }
-	Param(unsigned int v){ type = ANY; value.init(v); }
-	Param(long v){ type = ANY; value.init(v); }
-	Param(unsigned long v){ type = ANY; value.init(v); }
-	Param(long long v){ type = ANY; value.init(v); }
-	Param(unsigned long long v){ type = ANY; value.init(v); }
-
-	Param(float v){ type = ANY; value.init(v); }
-	Param(double v){ type = ANY; value.init(v); }
-	Param(long double v){ type = ANY; value.init(v); }
-
-	Param(bool v){ type = ANY; value.init(v); }
-
-	int_t type;
-
-	struct NamedPair{
-		const IDPtr* name;
-		const Any* value;		
-	};
-
-	struct Literal{
-		const char_t* str;
-		uint_t size;	
-	};
-
-	union{
-		const char_t* str;
-		const char8_t* str8;
-		NamedPair name;
-		AnyRawValue value;
-		Literal literal;
-	};
 };
 
 struct f2{
@@ -159,12 +80,6 @@ public:
 	void push_arg(const Named& p){ push_arg(p.name, ap(p.value)); }
 
 	/**
-	* \brief 引数を1個積む。
-	*
-	*/
-	void push_arg(const Param& p);
-
-	/**
 	* \brief 引数を配列の要素数積む。
 	*
 	*/
@@ -203,59 +118,29 @@ public:
 	}
 
 // 
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を0個積む
+	/// \brief 関数を呼び出す用意をする
 	void setup_call(int_t need_result_count = 1);
 
-//{REPEAT{{
-/*
-	/// \brief 関数を呼び出す用意をし、同時に引数を`n+1`個積む
-	void setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#);
-*/
+public:
 
-	/// \brief 関数を呼び出す用意をし、同時に引数を1個積む
-	void setup_call(int_t need_result_count, const Param& a0 );
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を2個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を3個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を4個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を5個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を6個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を7個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を8個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を9個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を10個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を11個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を12個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を13個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12);
-
-	/// \brief 関数を呼び出す用意をし、同時に引数を14個積む
-	void setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13);
-
-//}}REPEAT}
+	void push_arg(const char_t* s);
+	void push_arg(const char8_t* s);
+	void push_arg(const StringLiteral& s);
+	void push_arg(char v);
+	void push_arg(signed char v);
+	void push_arg(unsigned char v);
+	void push_arg(short v);
+	void push_arg(unsigned short v);
+	void push_arg(int v);
+	void push_arg(unsigned int v);
+	void push_arg(long v);
+	void push_arg(unsigned long v);
+	void push_arg(long long v);
+	void push_arg(unsigned long long v);
+	void push_arg(float v);
+	void push_arg(double v);
+	void push_arg(long double v);
+	void push_arg(bool v);
 
 public:
 
@@ -429,7 +314,7 @@ protected:
 		
 	template<class T>
 	void return_result2(const T& ret, TypeIntType<0>){
-		return_result(convert_to_anyptr(ret));
+		return_result(xnew<T>(ret));
 	}
 
 
@@ -872,11 +757,9 @@ private:
 public:
 
 	void on_visit_members(Visitor& m);
+	void on_gc_signal(int_t flag);
 
 protected:
-
-	virtual void before_gc();
-	virtual void after_gc();
 
 	void add_ref_count_members(int_t i);
 

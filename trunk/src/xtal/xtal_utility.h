@@ -466,7 +466,6 @@ typedef SelectType<4>::float_t f32;
 /// 8-byte float
 typedef SelectType<8>::float_t f64;
 
-
 #ifdef XTAL_ENFORCE_64_BIT
 
 /// int
@@ -549,7 +548,7 @@ struct align16_t{
 
 #else
 
-typedef void align16_t
+typedef void align16_t;
 
 #endif
 
@@ -603,7 +602,6 @@ template<> class SmartPtr<Any>;
 typedef SmartPtr<Any> AnyPtr;
 
 class Environment;
-struct Param;
 
 class Null;
 class Undefined;
@@ -719,8 +717,25 @@ struct CppClassSymbolData;
 template<class T>
 struct CppClassSymbol;
 
-template<class T >
+template<class T>
 inline SmartPtr<T> xnew();
+
+enum InheritedEnum{
+	INHERITED_BASE,
+	INHERITED_RCBASE,
+	INHERITED_ANY,
+	INHERITED_OTHER
+};
+
+template<class T>
+struct InheritedN{
+	enum{
+		value = 
+			IsInherited<T, Base>::value ? INHERITED_BASE : 
+			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
+			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
+	};
+};
 
 ////////////////////////////////////////////////
 

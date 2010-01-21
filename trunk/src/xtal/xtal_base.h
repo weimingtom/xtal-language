@@ -37,7 +37,21 @@ inline void object_xfree(T* p){
 	}
 }
 
-struct VirtualMembers{	
+template<int N, class T>
+struct RCBaseClassType{
+	enum{ value = -1 };
+};
+
+template<class T>
+struct RCBaseClassType<INHERITED_RCBASE, T>{
+	enum{ value = T::TYPE };
+};
+
+struct VirtualMembers{
+	//VirtualMembers* super;
+	CppClassSymbolData** cpp_class_symbol_data;
+	int rcbase_class_type;
+
 	void (*destroy)(void*);
 	void (*object_free)(void*);
 	void (*rawcall)(void* p, const VMachinePtr& vm);
@@ -47,7 +61,7 @@ struct VirtualMembers{
 	void (*set_object_parent)(void* p, const ClassPtr& parent);
 	void (*finalize)(void* p);
 	void (*visit_members)(void* p, Visitor& m);
-
+	void (*gc_signal)(void* p, int_t flag);
 };
 	
 template<class T>
@@ -65,10 +79,14 @@ struct VirtualMembersT{
 	static void set_object_parent(void* p, const ClassPtr& parent){ cast(p)->on_set_object_parent(parent); }
 	static void finalize(void* p){ cast(p)->on_finalize(); }
 	static void visit_members(void* p, Visitor& m){ cast(p)->on_visit_members(m); }
+	static void gc_signal(void* p, int_t flag){ cast(p)->on_gc_signal(flag); }
 };
 
 template<class T>
 const VirtualMembers VirtualMembersT<T>::members = {
+	&CppClassSymbol<T>::value,
+	RCBaseClassType<InheritedN<T>::value, T>::value,
+
 	&VirtualMembersT<T>::destroy,
 	&VirtualMembersT<T>::object_free,
 	&VirtualMembersT<T>::rawcall,
@@ -78,6 +96,7 @@ const VirtualMembers VirtualMembersT<T>::members = {
 	&VirtualMembersT<T>::set_object_parent,
 	&VirtualMembersT<T>::finalize,
 	&VirtualMembersT<T>::visit_members,
+	&VirtualMembersT<T>::gc_signal,
 };
 
 /**
@@ -153,6 +172,10 @@ public:
 		virtual_members()->visit_members(this, m);
 	}
 
+	void gc_signal(int_t flag){
+		virtual_members()->gc_signal(this, flag);
+	}
+
 public:
 
 	void on_rawcall(const VMachinePtr& vm);
@@ -162,6 +185,7 @@ public:
 	void on_set_object_parent(const ClassPtr& parent);
 	void on_finalize();
 	void on_visit_members(Visitor& m){}
+	void on_gc_signal(int_t flag){}
 
 public:
 

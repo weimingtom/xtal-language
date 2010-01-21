@@ -3,6 +3,11 @@
 
 namespace xtal{
 
+Map::Map()
+	:default_value_(undefined){}
+
+Map::~Map(){}
+
 void Map::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
 	m & table_ & default_value_;
@@ -64,7 +69,11 @@ MapPtr Map::clone(){
 	}	
 	return ret;
 }
-	
+
+void Map::clear(){
+	table_.clear();
+}	
+
 void Map::assign(const AnyPtr& iterator){
 	clear();
 

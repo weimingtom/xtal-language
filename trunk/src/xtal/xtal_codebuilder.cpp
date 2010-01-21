@@ -1444,6 +1444,9 @@ AnyPtr VMachine::eval(const xpeg::ScannerPtr& scanner, uint_t n){
 		print_info();
 		return local_variable(result_base_+0);
 	}
+	else{
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1010")->call(), cb.errors()->to_a()));
+	}
 
 	return undefined;
 }

@@ -139,8 +139,21 @@ struct AnyRawValue{
 	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = const_cast<RefCountingBase*>(v); }
 
 	void init_string_literal(int_t t, const StringLiteral& v){ 
-		type = t | (v.size()<<STRING_LITERAL_SIZE_SHIFT); 
+		type = t | (v.size()<<STRING_SIZE_SHIFT); 
 		spvalue = v.str(); 
+	}
+
+	void init_small_string(uint_t size){ 
+		type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
+		ivalue = 0;	
+	}
+
+	void init_small_string(const char_t* str, uint_t size){ 
+		type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
+		ivalue = 0;
+		for(uint_t i=0; i<size; ++i){
+			svalue[i] = str[i];
+		}
 	}
 
 	void init_pointer(const void* v, uint_t i){ 
@@ -157,8 +170,8 @@ public:
 		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
 		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1),
 
-		STRING_LITERAL_SIZE_SHIFT = TYPE_SHIFT+1,
-		STRING_LITERAL_SIZE_MASK = ~((1<<STRING_LITERAL_SIZE_SHIFT)-1),
+		STRING_SIZE_SHIFT = TYPE_SHIFT+1,
+		STRING_SIZE_MASK = ~((1<<STRING_SIZE_SHIFT)-1),
 
 		CPP_CLASS_INDEX_SHIFT = TYPE_SHIFT+1,
 		CPP_CLASS_INDEX_MASK = ~((1<<CPP_CLASS_INDEX_SHIFT)-1)
@@ -174,7 +187,8 @@ public:
 	void dec_ref_count(){ type -= 1<<REF_COUNT_SHIFT; }
 	uint_t can_not_gc() const{ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
 
-	uint_t string_literal_size() const{ return (type & STRING_LITERAL_SIZE_MASK)>>STRING_LITERAL_SIZE_SHIFT; }
+	uint_t string_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
+	uint_t string_literal_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
 	uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
 public:
 
@@ -188,9 +202,6 @@ public:
 	const char_t* s() const{ return svalue; }
 	const char_t* sp() const{ return spvalue; }
 	void* vp() const{ return vpvalue; }
-
-	void set_object_size(int_t sz){ ivalue = sz; }
-	int_t object_size(){ return ivalue; }
 	
 	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
 		return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
@@ -368,142 +379,373 @@ public:
 //{REPEAT{{
 /*
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#) const;
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); #REPEAT#vm->push_arg(a`i+1`); #
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#) const;
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); #REPEAT#vm->push_arg(a`i+1`); #
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#) const;
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	AnyPtr call(const A0& a0  #COMMA_REPEAT#const A`i+1`& a`i+1`#) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); #REPEAT#vm->push_arg(a`i+1`); #
+		return private_call(vm);	
+	}
 */
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 ) const;
+	template<class A0 >
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  ) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 ) const;
+	template<class A0 >
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  ) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 ) const;
+	template<class A0 >
+	AnyPtr call(const A0& a0  ) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1) const;
+	template<class A0 , class A1>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1) const;
+	template<class A0 , class A1>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1) const;
+	template<class A0 , class A1>
+	AnyPtr call(const A0& a0  , const A1& a1) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2) const;
+	template<class A0 , class A1, class A2>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2) const;
+	template<class A0 , class A1, class A2>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2) const;
+	template<class A0 , class A1, class A2>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3) const;
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3) const;
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3) const;
+	template<class A0 , class A1, class A2, class A3>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4) const;
+	template<class A0 , class A1, class A2, class A3, class A4>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); 
+		return private_call(vm);	
+	}
 
 	/// \brief primary_keyメソッドを呼び出す
-	AnyPtr send(const IDPtr& primary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
+	AnyPtr send(const IDPtr& primary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); vm->push_arg(a13); 
+		return private_send(vm, primary_key);	
+	}
 
 	/// \brief primary_key#secondary_keyメソッドを呼び出す
-	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
+	AnyPtr send2(const IDPtr& primary_key, const AnyPtr& secondary_key, const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); vm->push_arg(a13); 
+		return private_send(vm, primary_key, secondary_key);	
+	}
 
 	/// \brief 関数を呼び出す
-	AnyPtr call(const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13) const;
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
+	AnyPtr call(const A0& a0  , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13) const{
+		const VMachinePtr& vm = setup_call();
+		vm->push_arg(a0); vm->push_arg(a1); vm->push_arg(a2); vm->push_arg(a3); vm->push_arg(a4); vm->push_arg(a5); vm->push_arg(a6); vm->push_arg(a7); vm->push_arg(a8); vm->push_arg(a9); vm->push_arg(a10); vm->push_arg(a11); vm->push_arg(a12); vm->push_arg(a13); 
+		return private_call(vm);	
+	}
 
 //}}REPEAT}
+
+private:
+
+	AnyPtr private_send(const VMachinePtr& vm, const IDPtr& primary_key) const;
+	AnyPtr private_send2(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key) const;
+	AnyPtr private_call(const VMachinePtr& vm) const;
 
 private:
 

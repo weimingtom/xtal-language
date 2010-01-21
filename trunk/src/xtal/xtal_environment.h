@@ -443,6 +443,9 @@ const VMachinePtr& vmachine();
 
 const VMachinePtr& vmachine_checked();
 
+const VMachinePtr& setup_call();
+const VMachinePtr& setup_call(int_t need_result_count);
+
 // @}
 
 /**

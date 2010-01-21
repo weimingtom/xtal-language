@@ -232,6 +232,10 @@ void Method::on_rawcall(const VMachinePtr& vm){
 	vm->carry_over(this);
 }
 
+Fun::Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* info)
+	:Method(outer, code, info), this_(athis){
+}
+
 void Fun::on_rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=info_->max_param_count){
 		if(!check_arg(vm)){
@@ -241,6 +245,10 @@ void Fun::on_rawcall(const VMachinePtr& vm){
 
 	vm->set_arg_this(this_);
 	vm->carry_over(this);
+}
+
+Lambda::Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
+	:Fun(outer, th, code, info){
 }
 
 void Lambda::on_rawcall(const VMachinePtr& vm){

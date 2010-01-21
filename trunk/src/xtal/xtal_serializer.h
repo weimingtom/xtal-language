@@ -14,6 +14,8 @@ public:
 
 	Serializer(const StreamPtr& s);
 
+	~Serializer();
+
 	void serialize(const AnyPtr& v);
 
 	AnyPtr deserialize();
@@ -30,10 +32,7 @@ private:
 
 	void put_tab(int_t tab);
 
-	void clear(){
-		values_.clear();
-		map_.clear();
-	}
+	void clear();
 
 	AnyPtr inner_deserialize_serial_new();
 	AnyPtr inner_deserialize_name();
@@ -68,19 +67,7 @@ private:
 
 private:
 
-	struct Fun{
-		static uint_t hash(const AnyPtr& key){
-			return (rawvalue(key).u() ^ type(key) ^ (rawvalue(key).u()>>3));
-		}
-
-		static bool eq(const AnyPtr& a, const AnyPtr& b){
-			return raweq(a, b);
-		}
-	};
-
-	typedef OrderedHashtable<AnyPtr, int_t, Fun> table_t;
-
-	table_t map_;
+	MapPtr map_;
 	xarray values_;
 
 	StreamPtr stream_;

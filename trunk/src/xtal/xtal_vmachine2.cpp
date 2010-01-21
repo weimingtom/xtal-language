@@ -79,6 +79,53 @@ void VMachine::FunFrame::set_null(){
 	set_self();
 }
 
+void VMachine::push_arg(const AnyPtr& value){
+	XTAL_ASSERT(ff().named_arg_count==0); //順番指定引数は 名前指定引数の前だけ
+
+	set_local_variable(ff().ordered_arg_count, value);
+	ff().ordered_arg_count++;
+}
+	
+void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
+	XTAL_ASSERT(ff().ordered_arg_count==0); // 名前指定引数は順番指定引数の後だけ
+
+	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
+	set_local_variable(offset+0, name);
+	set_local_variable(offset+1, value);
+	ff().named_arg_count++;
+}
+
+void VMachine::push_ordered_args(const ArrayPtr& p){ 
+	Xfor(v, p){
+		push_arg(v);
+	}
+}
+
+void VMachine::push_named_args(const MapPtr& p){ 
+	Xfor2(k, v, p){
+		push_arg(ptr_cast<ID>(k), v);
+	}
+}
+
+void VMachine::push_arg(const char_t* s){ push_arg(AnyPtr(s)); }
+void VMachine::push_arg(const char8_t* s){ push_arg(AnyPtr(s)); }
+void VMachine::push_arg(const StringLiteral& s){ push_arg(AnyPtr(s)); }
+void VMachine::push_arg(char v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(signed char v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(unsigned char v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(short v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(unsigned short v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(int v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(unsigned int v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(long v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(unsigned long v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(long long v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(unsigned long long v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(float v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(double v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(long double v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(bool v){ push_arg(ap(Any(v))); }
+
 void VMachine::setup_call(int_t need_result_count){
 	int_t base;
 	if(!fun_frames_.empty()){
@@ -104,102 +151,6 @@ void VMachine::setup_call(int_t need_result_count){
 	call_state.named = 0;
 	push_ff(call_state);	
 }
-	
-//{REPEAT{{
-/*
-void VMachine::setup_call(int_t need_result_count, const Param& a0 #COMMA_REPEAT#const Param& a`i+1`#){
-	setup_call(need_result_count);
-	push_arg(a0);
-	#REPEAT#push_arg(a`i+1`);# 
-}
-*/
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 ){
-	setup_call(need_result_count);
-	push_arg(a0);
-	 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11);push_arg(a12); 
-}
-
-void VMachine::setup_call(int_t need_result_count, const Param& a0 , const Param& a1, const Param& a2, const Param& a3, const Param& a4, const Param& a5, const Param& a6, const Param& a7, const Param& a8, const Param& a9, const Param& a10, const Param& a11, const Param& a12, const Param& a13){
-	setup_call(need_result_count);
-	push_arg(a0);
-	push_arg(a1);push_arg(a2);push_arg(a3);push_arg(a4);push_arg(a5);push_arg(a6);push_arg(a7);push_arg(a8);push_arg(a9);push_arg(a10);push_arg(a11);push_arg(a12);push_arg(a13); 
-}
-
-//}}REPEAT}
-
 
 void VMachine::recycle_call(){
 	FunFrame& f = ff();
@@ -211,64 +162,6 @@ void VMachine::recycle_call(){
 void VMachine::recycle_call(const AnyPtr& a1){
 	recycle_call();
 	push_arg(a1);
-}
-
-void VMachine::push_arg(const AnyPtr& value){
-	XTAL_ASSERT(named_arg_count() == 0);
-	set_local_variable(ff().ordered_arg_count, value);
-	ff().ordered_arg_count++;
-}
-	
-void VMachine::push_arg(const IDPtr& name, const AnyPtr& value){
-	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
-	set_local_variable(offset+0, name);
-	set_local_variable(offset+1, value);
-	ff().named_arg_count++;
-}
-
-void VMachine::push_arg(const Param& p){
-	int_t offset = ff().ordered_arg_count + ff().named_arg_count*2;
-	switch(p.type){
-		XTAL_NODEFAULT;
-
-		XTAL_CASE(Param::ANY){
-			set_local_variable(offset, ap(Any(p.value)));
-			ff().ordered_arg_count++;
-		}
-
-		XTAL_CASE(Param::NAMED){
-			set_local_variable(offset+0, *p.name.name);
-			set_local_variable(offset+1, *p.name.value);
-			ff().named_arg_count++;
-		}
-
-		XTAL_CASE(Param::STR){
-			set_local_variable(offset, xnew<String>(p.str));
-			ff().ordered_arg_count++;
-		}
-
-		XTAL_CASE(Param::STR8){
-			set_local_variable(offset, xnew<String>(p.str8));
-			ff().ordered_arg_count++;
-		}
-
-		XTAL_CASE(Param::LITERAL){
-			set_local_variable(offset, xnew<String>(StringLiteral(p.literal.str, p.literal.size)));
-			ff().ordered_arg_count++;
-		}
-	}
-}
-	
-void VMachine::push_ordered_args(const ArrayPtr& p){ 
-	Xfor(v, p){
-		push_arg(v);
-	}
-}
-
-void VMachine::push_named_args(const MapPtr& p){ 
-	Xfor2(k, v, p){
-		push_arg(ptr_cast<ID>(k), v);
-	}
 }
 	
 void VMachine::execute(Method* fun, const inst_t* start_pc){
@@ -1027,25 +920,25 @@ void VMachine::add_ref_count_members(int_t n){
 	}
 }
 
-void VMachine::before_gc(){
-	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
-		if(FunFrame* f = fun_frames_.reverse_at_unchecked(i)){
-			f->fun_ = null;
-			f->self_ = null;
+void VMachine::on_gc_signal(int_t flag){
+	if(flag==0){
+		for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
+			if(FunFrame* f = fun_frames_.reverse_at_unchecked(i)){
+				f->fun_ = null;
+				f->self_ = null;
+			}
 		}
+
+		for(int_t i=(int)variables_top()+128, size=(int)variables_.size(); i<size; ++i){
+			(Any&)variables_.at(i) = null;
+		}
+
+		add_ref_count_members(1);
 	}
-
-	for(int_t i=(int)variables_top()+128, size=(int)variables_.size(); i<size; ++i){
-		(Any&)variables_.at(i) = null;
+	else if(flag==1){
+		add_ref_count_members(-1);
 	}
-
-	add_ref_count_members(1);
 }
-
-void VMachine::after_gc(){
-	add_ref_count_members(-1);
-}
-
 
 void VMachine::print_info(){
 #ifdef XTAL_DEBUG_PRINT

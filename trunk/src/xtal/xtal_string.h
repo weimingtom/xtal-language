@@ -58,22 +58,6 @@ public:
 	*/
 	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
 
-	/**
-	* \brief 1‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	String(char_t a);
-
-	/**
-	* \version C++
-	* \brief 2‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	String(char_t a, char_t b);
-
-	/**
-	* \brief 3‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	String(char_t a, char_t b, char_t c);
-
 public:
 
 	struct intern_t{};
@@ -305,6 +289,10 @@ class StringData : public RefCountingBase{
 	uint_t data_size_;
 public:
 
+	enum{
+		TYPE = TYPE_STRING
+	};
+
 	StringData(uint_t size);
 
 	~StringData();
@@ -372,21 +360,6 @@ public:
 	* [begin, last)
 	*/
 	ID(const char_t* begin, const char_t* last);
-
-	/**
-	* \brief 1‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	ID(char_t a);
-
-	/**
-	* \brief 2‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	ID(char_t a, char_t b);
-
-	/**
-	* \brief 3‚Â‚Ì•¶š‚©‚ç\’z‚·‚é
-	*/
-	ID(char_t a, char_t b, char_t c);
 
 	/**
 	* \brief String‚©‚ç\’z‚·‚é

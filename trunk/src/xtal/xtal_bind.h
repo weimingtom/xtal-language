@@ -14,11 +14,11 @@ namespace xtal{
 /*
 template<class C #COMMA_REPEAT#class A`i`#>
 struct param_types_holder_base`n`{
-	static CppClassSymbolData** values[`n`+1];
+	static CppClassSymbolData** const values[`n`+1];
 };
 
 template<class C #COMMA_REPEAT#class A`i`#>
-CppClassSymbolData** param_types_holder_base`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
+CppClassSymbolData** const param_types_holder_base`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
 	&CppClassSymbol<C>::value,
 	#REPEAT#&CppClassSymbol<A`i`>::value,#
 };
@@ -30,11 +30,11 @@ public param_types_holder_base`n`<typename CppClassSymbol<C>::type #COMMA_REPEAT
 
 template<class C >
 struct param_types_holder_base0{
-	static CppClassSymbolData** values[0+1];
+	static CppClassSymbolData** const values[0+1];
 };
 
 template<class C >
-CppClassSymbolData** param_types_holder_base0<C >::values[0+1] = {
+CppClassSymbolData** const param_types_holder_base0<C >::values[0+1] = {
 	&CppClassSymbol<C>::value,
 	
 };
@@ -45,11 +45,11 @@ public param_types_holder_base0<typename CppClassSymbol<C>::type >{};
 
 template<class C , class A0>
 struct param_types_holder_base1{
-	static CppClassSymbolData** values[1+1];
+	static CppClassSymbolData** const values[1+1];
 };
 
 template<class C , class A0>
-CppClassSymbolData** param_types_holder_base1<C , A0>::values[1+1] = {
+CppClassSymbolData** const param_types_holder_base1<C , A0>::values[1+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,
 };
@@ -60,11 +60,11 @@ public param_types_holder_base1<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1>
 struct param_types_holder_base2{
-	static CppClassSymbolData** values[2+1];
+	static CppClassSymbolData** const values[2+1];
 };
 
 template<class C , class A0, class A1>
-CppClassSymbolData** param_types_holder_base2<C , A0, A1>::values[2+1] = {
+CppClassSymbolData** const param_types_holder_base2<C , A0, A1>::values[2+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,
 };
@@ -75,11 +75,11 @@ public param_types_holder_base2<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2>
 struct param_types_holder_base3{
-	static CppClassSymbolData** values[3+1];
+	static CppClassSymbolData** const values[3+1];
 };
 
 template<class C , class A0, class A1, class A2>
-CppClassSymbolData** param_types_holder_base3<C , A0, A1, A2>::values[3+1] = {
+CppClassSymbolData** const param_types_holder_base3<C , A0, A1, A2>::values[3+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,
 };
@@ -90,11 +90,11 @@ public param_types_holder_base3<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3>
 struct param_types_holder_base4{
-	static CppClassSymbolData** values[4+1];
+	static CppClassSymbolData** const values[4+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3>
-CppClassSymbolData** param_types_holder_base4<C , A0, A1, A2, A3>::values[4+1] = {
+CppClassSymbolData** const param_types_holder_base4<C , A0, A1, A2, A3>::values[4+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,
 };
@@ -105,11 +105,11 @@ public param_types_holder_base4<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4>
 struct param_types_holder_base5{
-	static CppClassSymbolData** values[5+1];
+	static CppClassSymbolData** const values[5+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4>
-CppClassSymbolData** param_types_holder_base5<C , A0, A1, A2, A3, A4>::values[5+1] = {
+CppClassSymbolData** const param_types_holder_base5<C , A0, A1, A2, A3, A4>::values[5+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,
 };
@@ -120,11 +120,11 @@ public param_types_holder_base5<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
 struct param_types_holder_base6{
-	static CppClassSymbolData** values[6+1];
+	static CppClassSymbolData** const values[6+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-CppClassSymbolData** param_types_holder_base6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
+CppClassSymbolData** const param_types_holder_base6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,
 };
@@ -135,11 +135,11 @@ public param_types_holder_base6<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct param_types_holder_base7{
-	static CppClassSymbolData** values[7+1];
+	static CppClassSymbolData** const values[7+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-CppClassSymbolData** param_types_holder_base7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
+CppClassSymbolData** const param_types_holder_base7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,
 };
@@ -150,11 +150,11 @@ public param_types_holder_base7<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct param_types_holder_base8{
-	static CppClassSymbolData** values[8+1];
+	static CppClassSymbolData** const values[8+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-CppClassSymbolData** param_types_holder_base8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
+CppClassSymbolData** const param_types_holder_base8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,
 };
@@ -165,11 +165,11 @@ public param_types_holder_base8<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct param_types_holder_base9{
-	static CppClassSymbolData** values[9+1];
+	static CppClassSymbolData** const values[9+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-CppClassSymbolData** param_types_holder_base9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
+CppClassSymbolData** const param_types_holder_base9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,
 };
@@ -180,11 +180,11 @@ public param_types_holder_base9<typename CppClassSymbol<C>::type , typename CppC
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct param_types_holder_base10{
-	static CppClassSymbolData** values[10+1];
+	static CppClassSymbolData** const values[10+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-CppClassSymbolData** param_types_holder_base10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
+CppClassSymbolData** const param_types_holder_base10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,
 };
@@ -195,11 +195,11 @@ public param_types_holder_base10<typename CppClassSymbol<C>::type , typename Cpp
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct param_types_holder_base11{
-	static CppClassSymbolData** values[11+1];
+	static CppClassSymbolData** const values[11+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-CppClassSymbolData** param_types_holder_base11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
+CppClassSymbolData** const param_types_holder_base11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,
 };
@@ -210,11 +210,11 @@ public param_types_holder_base11<typename CppClassSymbol<C>::type , typename Cpp
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct param_types_holder_base12{
-	static CppClassSymbolData** values[12+1];
+	static CppClassSymbolData** const values[12+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-CppClassSymbolData** param_types_holder_base12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
+CppClassSymbolData** const param_types_holder_base12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,
 };
@@ -225,11 +225,11 @@ public param_types_holder_base12<typename CppClassSymbol<C>::type , typename Cpp
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct param_types_holder_base13{
-	static CppClassSymbolData** values[13+1];
+	static CppClassSymbolData** const values[13+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-CppClassSymbolData** param_types_holder_base13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
+CppClassSymbolData** const param_types_holder_base13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,&CppClassSymbol<A12>::value,
 };

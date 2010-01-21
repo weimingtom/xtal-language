@@ -206,9 +206,7 @@ private:
 class MembersIter : public Base{
 public:
 
-	MembersIter(const FramePtr& a)
-		:frame_(a), it_(frame_->map_members_->begin()){
-	}
+	MembersIter(const FramePtr& a);
 
 	void block_next(const VMachinePtr& vm);
 
@@ -222,9 +220,7 @@ private:
 class MembersIter2 : public Base{
 public:
 
-	MembersIter2(const FramePtr& a)
-		:frame_(a), it_(0){
-	}
+	MembersIter2(const FramePtr& a);
 
 	void block_next(const VMachinePtr& vm);
 

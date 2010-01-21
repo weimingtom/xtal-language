@@ -179,9 +179,7 @@ protected:
 class Fun : public Method{
 public:
 
-	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* info)
-		:Method(outer, code, info), this_(athis){
-	}
+	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* info);
 
 public:
 	
@@ -205,9 +203,7 @@ protected:
 class Lambda : public Fun{
 public:
 
-	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info)
-		:Fun(outer, th, code, info){
-	}
+	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info);
 
 public:
 	

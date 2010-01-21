@@ -18,6 +18,7 @@ class Environment{
 public:
 	
 	Environment(){}
+	~Environment(){}
 
 	void initialize(const Setting& setting);
 	void uninitialize();

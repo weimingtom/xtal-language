@@ -399,10 +399,15 @@ protected:
 class GCObserver : public Base{
 public:
 	GCObserver();
-	GCObserver(const GCObserver& v);
-	virtual ~GCObserver();
-	virtual void before_gc(){}
-	virtual void after_gc(){}
+	~GCObserver();
+
+	enum{
+		GC_BEFORE,
+		GC_AFTER
+	};
+
+private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(GCObserver);
 };
 
 

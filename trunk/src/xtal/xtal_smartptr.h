@@ -75,7 +75,7 @@ public:
 public:
 
 	template<class U>
-	SmartPtr(const XNew<U>& m)
+	SmartPtr(const XNewX<U>& m)
 		:SmartPtr<Any>(m){
 		// 継承関係をここでチェックしている。
 		// ここでコンパイルエラーになる場合、
@@ -85,7 +85,7 @@ public:
 	}
 
 	template<class U>
-	SmartPtr<T>& operator =(const XNew<U>& p){
+	SmartPtr<T>& operator =(const XNewX<U>& p){
 		// 継承関係をここでチェックしている。
 		// ここでコンパイルエラーになる場合、
 		// ptr_cast関数等を使用して型を変換する必要がある。
@@ -95,7 +95,6 @@ public:
 		SmartPtr<Any>::operator =(p);
 		return *this;
 	}
-
 
 public:
 
@@ -173,220 +172,179 @@ template<class T>
 SmartPtr<T>::SmartPtr(typename SmartPtrCtor4<T>::type v)
 	:SmartPtr<Any>(SmartPtrCtor4<T>::call(v)){}
 
-
-
 /// \name オブジェクト生成
 //@{
 
-template<class T >
-XNew<T> xxnew(){
-	XNew<T> n;
-	new(n.ptr()) T;
-	return n;
-}
+template<class T>
+struct XNew : XNewX<T>{
+
+	XNew(){
+		new(this->ptr()) T;
+	}
+
+//{REPEAT{{
+/*
+	template<class A0 #COMMA_REPEAT#class A`i+1`#>
+	XNew(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
+		new(this->ptr()) T(a0 #COMMA_REPEAT#a`i+1`#);
+	}
+*/
+
+	template<class A0 >
+	XNew(const A0& a0 ){
+		new(this->ptr()) T(a0 );
+	}
+
+	template<class A0 , class A1>
+	XNew(const A0& a0 , const A1& a1){
+		new(this->ptr()) T(a0 , a1);
+	}
+
+	template<class A0 , class A1, class A2>
+	XNew(const A0& a0 , const A1& a1, const A2& a2){
+		new(this->ptr()) T(a0 , a1, a2);
+	}
+
+	template<class A0 , class A1, class A2, class A3>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
+		new(this->ptr()) T(a0 , a1, a2, a3);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	}
+
+	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
+	XNew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
+		new(this->ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	}
+
+//}}REPEAT}
+};
 
 template<class T >
 inline SmartPtr<T> xnew(){
-	return xxnew<T>();
+	return XNew<T>();
 }
 
 //{REPEAT{{
 /*
 template<class T, class A0 #COMMA_REPEAT#class A`i+1`#>
-XNew<T> xxnew(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
-	XNew<T> n;
-	new(n.ptr()) T(a0 #COMMA_REPEAT#a`i+1`#);
-	return n;
-}
-
-template<class T, class A0 #COMMA_REPEAT#class A`i+1`#>
 inline SmartPtr<T> xnew(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
-	return xxnew<T>(a0 #COMMA_REPEAT#a`i+1`#);
+	return XNew<T>(a0 #COMMA_REPEAT#a`i+1`#);
 }
-
 */
 
 template<class T, class A0 >
-XNew<T> xxnew(const A0& a0 ){
-	XNew<T> n;
-	new(n.ptr()) T(a0 );
-	return n;
-}
-
-template<class T, class A0 >
 inline SmartPtr<T> xnew(const A0& a0 ){
-	return xxnew<T>(a0 );
-}
-
-
-template<class T, class A0 , class A1>
-XNew<T> xxnew(const A0& a0 , const A1& a1){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1);
-	return n;
+	return XNew<T>(a0 );
 }
 
 template<class T, class A0 , class A1>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1){
-	return xxnew<T>(a0 , a1);
-}
-
-
-template<class T, class A0 , class A1, class A2>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2);
-	return n;
+	return XNew<T>(a0 , a1);
 }
 
 template<class T, class A0 , class A1, class A2>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2){
-	return xxnew<T>(a0 , a1, a2);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3);
-	return n;
+	return XNew<T>(a0 , a1, a2);
 }
 
 template<class T, class A0 , class A1, class A2, class A3>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
-	return xxnew<T>(a0 , a1, a2, a3);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-	return xxnew<T>(a0 , a1, a2, a3, a4);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
-}
-
-
-template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
-XNew<T> xxnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
-	XNew<T> n;
-	new(n.ptr()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
-	return n;
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 }
 
 template<class T, class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
 inline SmartPtr<T> xnew(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
-	return xxnew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
+	return XNew<T>(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
 }
-
 
 //}}REPEAT}
 

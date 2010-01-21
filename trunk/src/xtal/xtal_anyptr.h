@@ -59,26 +59,9 @@ struct deleter_t{
 extern undeleter_t undeleter;
 extern deleter_t deleter;
 
-enum InheritedEnum{
-	INHERITED_BASE,
-	INHERITED_RCBASE,
-	INHERITED_ANY,
-	INHERITED_OTHER
-};
-
-template<class T>
-struct InheritedN{
-	enum{
-		value = 
-			IsInherited<T, Base>::value ? INHERITED_BASE : 
-			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
-			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
-	};
-};
-
 ///////////////////////////////////////////
 
-struct XNewBase_INHERITED_BASE{
+struct XNewXBase_INHERITED_BASE{
 
 	template<class T>
 	void init();
@@ -87,18 +70,16 @@ struct XNewBase_INHERITED_BASE{
 
 	void* value;
 	Base* pvalue;
-	CppClassSymbolData* klass;
 };
 
 template<class T>
-void XNewBase_INHERITED_BASE::init(){
+void XNewXBase_INHERITED_BASE::init(){
 	value = object_xmalloc<T>();
-	klass = CppClassSymbol<T>::value;
 	static_cast<T*>(value)->template set_virtual_members<T>();
 	pvalue = static_cast<T*>(value);
 }
 
-struct XNewBase_INHERITED_RCBASE{
+struct XNewXBase_INHERITED_RCBASE{
 
 	template<class T>
 	void init();
@@ -107,18 +88,16 @@ struct XNewBase_INHERITED_RCBASE{
 
 	void* value;
 	RefCountingBase* pvalue;
-	int_t klass;
 };
 
 template<class T>
-void XNewBase_INHERITED_RCBASE::init(){
+void XNewXBase_INHERITED_RCBASE::init(){
 	value = object_xmalloc<T>();
-	klass = T::TYPE;
 	static_cast<T*>(value)->template set_virtual_members<T>();
 	pvalue = static_cast<T*>(value);
 }
 
-struct XNewBase_INHERITED_ANY{
+struct XNewXBase_INHERITED_ANY{
 
 	template<class T>
 	void init(){}
@@ -128,7 +107,7 @@ struct XNewBase_INHERITED_ANY{
 	UninitializedAny value;
 };
 
-struct XNewBase_INHERITED_OTHER{
+struct XNewXBase_INHERITED_OTHER{
 
 	template<class T>
 	void init();
@@ -136,39 +115,31 @@ struct XNewBase_INHERITED_OTHER{
 	void* ptr(){ return value->ptr; }
 
 	UserTypeHolder* value;
-	CppClassSymbolData* klass;
 };
 
 template<class T>
-void XNewBase_INHERITED_OTHER::init(){
+void XNewXBase_INHERITED_OTHER::init(){
 	typedef UserTypeHolderSub<T> holder;
 	holder* p = new(object_xmalloc<holder>()) holder();
 	p->ptr = static_cast<T*>(static_cast<void*>(p->buffer()));
 	value = p;
-	klass = CppClassSymbol<T>::value;
 	p->template set_virtual_members<holder>();
 }
 
-template<int N>
-struct XNewBase{};
-
-template<>
-struct XNewBase<INHERITED_BASE> : XNewBase_INHERITED_BASE{};
-
-template<>
-struct XNewBase<INHERITED_RCBASE> : XNewBase_INHERITED_RCBASE{};
-
-template<>
-struct XNewBase<INHERITED_ANY> : XNewBase_INHERITED_ANY{};
-
-template<>
-struct XNewBase<INHERITED_OTHER> : XNewBase_INHERITED_OTHER{};
+template<int N> struct XNewXBase{};
+template<> struct XNewXBase<INHERITED_BASE> : XNewXBase_INHERITED_BASE{};
+template<> struct XNewXBase<INHERITED_RCBASE> : XNewXBase_INHERITED_RCBASE{};
+template<> struct XNewXBase<INHERITED_ANY> : XNewXBase_INHERITED_ANY{};
+template<> struct XNewXBase<INHERITED_OTHER> : XNewXBase_INHERITED_OTHER{};
 
 template<class T>
-struct XNew : public XNewBase<InheritedN<T>::value>{
-	XNew(){
-		XNewBase<InheritedN<T>::value>::template init<T>();
+struct XNewX : public XNewXBase<InheritedN<T>::value>{
+	XNewX(){
+		XNewXBase<InheritedN<T>::value>::template init<T>();
 	}
+
+	static void* operator new(std::size_t, XNewX<T>* self){ return self->ptr(); }
+	static void operator delete(void*){}
 };
 
 template<class T, class Deleter>
@@ -229,7 +200,7 @@ public:
 	template<class T, class Deleter>
 	SmartPtr(const T* tp, const Deleter& deleter)
 		:Any(noinit_t()){
-		init_smartptr(xnew_with_deleter<T, Deleter>(tp, deleter), cpp_class<T>());
+		init_smartptr(xnew_with_deleter<T, Deleter>(tp, deleter));
 	}
 
 	template<class T>
@@ -263,15 +234,15 @@ public:
 
 public:
 
-	SmartPtr(const XNewBase<INHERITED_BASE>& m);
-	SmartPtr(const XNewBase<INHERITED_RCBASE>& m);
-	SmartPtr(const XNewBase<INHERITED_ANY>& m);
-	SmartPtr(const XNewBase<INHERITED_OTHER>& m);
+	SmartPtr(const XNewXBase<INHERITED_BASE>& m);
+	SmartPtr(const XNewXBase<INHERITED_RCBASE>& m);
+	SmartPtr(const XNewXBase<INHERITED_ANY>& m);
+	SmartPtr(const XNewXBase<INHERITED_OTHER>& m);
 	
-	SmartPtr<Any>& operator =(const XNewBase<INHERITED_BASE>& m);
-	SmartPtr<Any>& operator =(const XNewBase<INHERITED_RCBASE>& m);
-	SmartPtr<Any>& operator =(const XNewBase<INHERITED_ANY>& m);
-	SmartPtr<Any>& operator =(const XNewBase<INHERITED_OTHER>& m);
+	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_BASE>& m);
+	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_RCBASE>& m);
+	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_ANY>& m);
+	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_OTHER>& m);
 
 protected:
 
@@ -289,9 +260,9 @@ protected:
 		*static_cast<Any*>(this) = a;
 	}
 
-	void init_smartptr(RefCountingBase* p, int_t type);
+	void init_smartptr(RefCountingBase* p);
 
-	void init_smartptr(Base* p, const ClassPtr& c);
+	void init_smartptr(Base* p);
 
 public:
 
@@ -568,6 +539,7 @@ template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : public CppClassSymbol<T>{};
 
 template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};

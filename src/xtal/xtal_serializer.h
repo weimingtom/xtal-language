@@ -36,7 +36,7 @@ private:
 
 	AnyPtr inner_deserialize_serial_new();
 	AnyPtr inner_deserialize_name();
-	AnyPtr inner_deserialize_string(bool intern);
+	AnyPtr inner_deserialize_string(int_t charsize, bool intern);
 	AnyPtr inner_deserialize_array();
 	AnyPtr inner_deserialize_values();
 	AnyPtr inner_deserialize_map();
@@ -58,8 +58,12 @@ private:
 		TFLOAT32,
 		TINT64, 
 		TFLOAT64,
-		TSTRING,
-		TID,
+		TSTRING8,
+		TID8,
+		TSTRING16,
+		TID16,
+		TSTRING32,
+		TID32,
 		TARRAY, 
 		TVALUES,
 		TMAP 

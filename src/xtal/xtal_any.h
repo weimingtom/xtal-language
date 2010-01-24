@@ -13,111 +13,10 @@ enum{
 	SMALL_STRING_MAX = sizeof(void*) / sizeof(char_t)
 };
 
-/*
 struct AnyRawValue{
-	enum{
-		EMB_SHIFT = TYPE_SHIFT+1,
-		EMB = 1<<EMB_SHIFT,
-
-		HAVE_FINALIZER_FLAG_SHIFT = EMB_SHIFT+1,
-		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
-
-		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1) & 0xffffffff,
-
-		INT_SHIFT = 8,
-		STR_SHIFT = 16,
-		VALUE_SHIFT = 32
-	};
-
-	void set_ivalue(int_t v){ value = TYPE_INT | (v << INT_SHIFT); }
-
-	template<class T> 
-	void set_value(int type, T v){
-		union{
-			SelectType<sizeof(T)>::uint_t iv;
-			T tv;
-		} u;
-		u.tv = v;
-		value = type | ((long_t)iv << VALUE_SHIFT); 
-	}
-
-	template<class T> 
-	T get_value() const{
-		union{
-			SelectType<sizeof(T)>::uint_t iv;
-			T tv;
-		} u;
-		u.iv = (SelectType<sizeof(T)>::uint_t)(value>>VALUE_SHIFT);
-		return u.tv;
-	}
-
-	void init(PrimitiveType t){ value = t; }
-	void init(char v){ set_ivalue(v); }
-	void init(signed char v){ set_ivalue(v); }
-	void init(unsigned char v){ set_ivalue(v); }
-	void init(short v){ set_ivalue(v); }
-	void init(unsigned short v){ set_ivalue(v); }
-	void init(int v){ set_ivalue(v); }
-	void init(unsigned int v){ set_ivalue(v); }
-	void init(long v){ set_ivalue(v); }
-	void init(unsigned long v){ set_ivalue(v); }
-	void init(long long v){ set_ivalue(v); }
-	void init(unsigned long long v){ set_ivalue(v); }
-
-	void init(float v){ set_value(TYPE_FLOAT, (float_t)v); }
-	void init(double v){ set_value(TYPE_FLOAT, (float_t)v); }
-	void init(long double v){ set_value(TYPE_FLOAT, (float_t)v); }
-
-	void init(bool b){ value = TYPE_FALSE + (int)b; }
-	void init(const Base* v){ set_value(TYPE_BASE | EMB, v); }
-	void init(int t, const RefCountingBase* v){ set_value(t | EMB, v); }
-
-	bool have_finalizer(){ return (value & HAVE_FINALIZER_FLAG_BIT)!=0; }
-	void set_finalizer_flag(){ value |= HAVE_FINALIZER_FLAG_BIT; }
-
-	uint_t ref_count(){ return (value & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
-	void add_ref_count(int_t rc){ value += rc<<REF_COUNT_SHIFT; }
-	void inc_ref_count(){ value += 1<<REF_COUNT_SHIFT; }
-	void dec_ref_count(){ value -= 1<<REF_COUNT_SHIFT; }
-
-	uint_t ungc(){ return value&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
-
-	int t() const{ return (int)value; }
-	int_t i() const{ return (int_t)(value>>INT_SHIFT); }
-	uint_t u() const{ return (uint_t)(value>>INT_SHIFT); }
-	float_t f() const{ return get_value<float_t>(); }
-	Base* p() const{ return get_value<Base*>(); }
-	RefCountingBase* r() const{ return get_value<RefCountingBase*>(); }
-	
-	char_t* s(){ union{ u8 u8v[2]; u16 u16v; } u; u.u16v = 1; ((u8*)&value)[u.u8v[0]]; }
-	const char_t* s() const{ union{ u8 u8v[2]; u16 u16v; } u; u.u16v = 1; ((u8*)&value)[u.u8v[0]]; }
-
-	void set_object_size(int sz){ set_value<int>(t(), sz); }
-	int object_size(){ return get_value<int>(); }
-	
-	u64 v() const{ return value & ~(u64)(((value&EMB) - (1<<EMB)) & 0xffffffff); }
-
-	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
-		return a.v()==b.v();
-	}
-
-	friend bool rawlt(const AnyRawValue& a, const AnyRawValue& b){
-		return a.v()<b.v();
-	}
-
-	friend uint_t rawbitxor(const AnyRawValue& a, const AnyRawValue& b){
-		u64 t = a.v() ^ b.v();
-		return (u32)t | (u32)(t>>32);
-	}
-
 private:
-	u64 value;
-};
-*/
-
-struct AnyRawValue{
 	void init(PrimitiveType t){ type = t; ivalue = 0; }
+
 	void init(char v){ type = TYPE_INT; ivalue = (int_t)v; }
 	void init(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
 	void init(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
@@ -135,8 +34,41 @@ struct AnyRawValue{
 	void init(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
 
 	void init(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
-	void init(const Base* v){  type = TYPE_BASE; pvalue = const_cast<Base*>(v); }
-	void init(int t, const RefCountingBase* v){ type = t; rcpvalue = const_cast<RefCountingBase*>(v); }
+
+	void init(const Base* v);
+	void init(int t, const RefCountingBase* v);
+
+public:
+
+	void init_primitive(PrimitiveType t){ type = t; ivalue = 0; }
+
+	void init_int(char v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(short v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(unsigned short v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(int v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(unsigned int v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(long v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(unsigned long v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(long long v){ type = TYPE_INT; ivalue = (int_t)v; }
+	void init_int(unsigned long long v){ type = TYPE_INT; ivalue = (int_t)v; }
+
+	void init_float(float v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+	void init_float(double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+	void init_float(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+
+	void init_bool(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
+
+	void init_base(const Base* v){  
+		type = TYPE_BASE; 
+		pvalue = const_cast<Base*>(v); 
+	}
+
+	void init_rcbase(int t, const RefCountingBase* v){ 
+		type = t; 
+		rcpvalue = const_cast<RefCountingBase*>(v); 
+	}
 
 	void init_string_literal(int_t t, const StringLiteral& v){ 
 		type = t | (v.size()<<STRING_SIZE_SHIFT); 
@@ -159,6 +91,11 @@ struct AnyRawValue{
 	void init_pointer(const void* v, uint_t i){ 
 		type = TYPE_POINTER | (i<<CPP_CLASS_INDEX_SHIFT); 
 		vpvalue = const_cast<void*>(v);
+	}
+
+	void init_stateless_native_method(const param_types_holder_n* v){  
+		type = TYPE_STATELESS_NATIVE_METHOD; 
+		pthvalue = v; 
 	}
 
 public:
@@ -202,6 +139,7 @@ public:
 	const char_t* s() const{ return svalue; }
 	const char_t* sp() const{ return spvalue; }
 	void* vp() const{ return vpvalue; }
+	const param_types_holder_n* pth() const{ return pthvalue; }
 	
 	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
 		return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
@@ -219,8 +157,7 @@ public:
 		return ((a.type^b.type)&TYPE_MASK) | (a.ivalue^b.ivalue);
 	}
 
-private:
-	int_t type;
+public:
 	union{
 		int_t ivalue;
 		uint_t uvalue;
@@ -230,7 +167,10 @@ private:
 		const char_t* spvalue;
 		char_t svalue[SMALL_STRING_MAX];
 		void* vpvalue;
+		const param_types_holder_n* pthvalue;
 	};
+
+	int_t type;
 };
 
 /**
@@ -754,40 +694,35 @@ private:
 	void call(cmpitle_error) const;
 
 public:
-
-	Any(){ value_.init(TYPE_NULL); }
-
-	Any(char v){ value_.init(v); }
-	Any(signed char v){ value_.init(v); }
-	Any(unsigned char v){ value_.init(v); }
-	Any(short v){ value_.init(v); }
-	Any(unsigned short v){ value_.init(v); }
-	Any(int v){ value_.init(v); }
-	Any(unsigned int v){ value_.init(v); }
-	Any(long v){ value_.init(v); }
-	Any(unsigned long v){ value_.init(v); }
-	Any(long long v){ value_.init(v); }
-	Any(unsigned long long v){ value_.init(v); }
-
-	Any(float v){ value_.init(v); }
-	Any(double v){ value_.init(v); }
-	Any(long double v){ value_.init(v); }
-
-	Any(bool v){ value_.init(v); }
-	Any(const Base* v){ value_.init(v); }
-
-	Any(PrimitiveType v){ value_.init(v); }
-
-	Any(const AnyRawValue& v){ value_ = v; }
-
 	struct noinit_t{};
 	Any(noinit_t){}
+
+	Any(){ value_.init_primitive(TYPE_NULL); }
+	Any(PrimitiveType v){ value_.init_primitive(v); }
+	Any(const AnyRawValue& v){ value_ = v; }
+
+	Any(char v){ value_.init_int(v); }
+	Any(signed char v){ value_.init_int(v); }
+	Any(unsigned char v){ value_.init_int(v); }
+	Any(short v){ value_.init_int(v); }
+	Any(unsigned short v){ value_.init_int(v); }
+	Any(int v){ value_.init_int(v); }
+	Any(unsigned int v){ value_.init_int(v); }
+	Any(long v){ value_.init_int(v); }
+	Any(unsigned long v){ value_.init_int(v); }
+	Any(long long v){ value_.init_int(v); }
+	Any(unsigned long long v){ value_.init_int(v); }
+	Any(float v){ value_.init_float(v); }
+	Any(double v){ value_.init_float(v); }
+	Any(long double v){ value_.init_float(v); }
+	Any(bool v){ value_.init_bool(v); }
+	Any(const Base* v){ value_.init_base(v); }
 
 private:
 
 	StringPtr defined_place_name(const CodePtr& code, int_t pc, int_t name_number) const;
 
-protected:
+public: // 
 
 	AnyRawValue value_;
 
@@ -799,7 +734,8 @@ public:
 
 class UninitializedAny : public Any{
 public:
-	UninitializedAny():Any(noinit_t()){}
+	UninitializedAny()
+		:Any(noinit_t()){}
 };
 
 /////////////////////////////////////////////////////////
@@ -871,7 +807,9 @@ inline void copy_any(Any& v, const Any& u){
 }
 
 inline void swap(Any& a, Any& b){
-	std::swap(a, b);
+	Any temp = a;
+	a = b;
+	b = temp;
 }
 
 }

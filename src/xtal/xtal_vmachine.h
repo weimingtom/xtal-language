@@ -9,6 +9,20 @@
 
 namespace xtal{
 
+template<class R>
+struct ReturnResult{
+	static void call(VMachine* vm, const R& r){ 
+		vm->return_result(r); 
+	}
+};
+
+template<class R> 
+struct ReturnResult<R&>{
+	static void call(VMachine* vm, const R& r){ 
+		vm->return_result(&r); 
+	}	
+};
+
 /**
 * \brief 関数呼び出しで、名前付き引数として渡すためのクラス
 *
@@ -196,19 +210,6 @@ public:
 		return unchecked_ptr_cast<ID>(local_variable(ordered_arg_count()+pos*2));
 	}
 
-	void adjust_args(const NamedParam* params, int_t num);
-
-	void adjust_args(Method* params, int_t num);
-
-	/**
-	* \brief pos番目の引数を得る。
-	*
-	* adjust_argsを呼んだ後だけ使える
-	*/
-	const AnyPtr& arg_unchecked(int_t pos){
-		return local_variable(pos);
-	}
-
 	/**
 	* \brief thisを取得。
 	*
@@ -259,7 +260,7 @@ public:
 	* Argumentsオブジェクトを生成する。
 	* return_result()を呼んだ後は正常な値は得られない。
 	*/
-	ArgumentsPtr make_arguments();
+	ArgumentsPtr make_arguments(int_t lower = 0);
 	
 	/**
 	* \brief 呼び出し元に引数の数だけの戻り値を返す。
@@ -290,34 +291,36 @@ public:
 
 	void recycle_call();
 
-	void recycle_call(const AnyPtr& a1);
-
 public:
 
-	template<class T>
-	void return_result(const T& ret){
-		return_result2(ret, TypeIntType<Convertible<T, AnyPtr>::value>());
+	void adjust_args(const NamedParam* params, int_t num);
+
+	void adjust_args(Method* params);
+
+	const AnyPtr& arg_unchecked(int_t pos){
+		return local_variable(pos);
 	}
 
-	template<class T>
-	void return_result4(const T& ret){
-	//	return_result2(ConvertToAnyPtr<T>::convert(ret));
-	}
-
-protected:
-
-
-	template<class T>
-	void return_result2(const T& ret, TypeIntType<1>){
-		return_result((const AnyPtr&)ret);
-	}
-		
-	template<class T>
-	void return_result2(const T& ret, TypeIntType<0>){
-		return_result(xnew<T>(ret));
-	}
-
-
+/*
+	void return_result(const char_t* s);
+	void return_result(const char8_t* s);
+	void return_result(const StringLiteral& s);
+	void return_result(char v);
+	void return_result(signed char v);
+	void return_result(unsigned char v);
+	void return_result(short v);
+	void return_result(unsigned short v);
+	void return_result(int v);
+	void return_result(unsigned int v);
+	void return_result(long v);
+	void return_result(unsigned long v);
+	void return_result(long long v);
+	void return_result(unsigned long long v);
+	void return_result(float v);
+	void return_result(double v);
+	void return_result(long double v);
+	void return_result(bool v);
+*/
 public:
 
 	FramePtr current_context(){
@@ -584,13 +587,11 @@ public:
 	}
 
 	ArgumentsPtr inner_make_arguments(Method* fun);
+	ArgumentsPtr inner_make_arguments(const NamedParam* params, int_t num);
 
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
 
-private:
-
-	const inst_t* push_except(const inst_t* pc);
-	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
+public:
 
 	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value);
 
@@ -611,6 +612,11 @@ private:
 	void set_variables_top(int_t top){
 		variables_top_ = const_cast<Any*>(static_cast<const Any*>(variables_.data())) + top;
 	}
+
+private:
+
+	const inst_t* push_except(const inst_t* pc);
+	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 

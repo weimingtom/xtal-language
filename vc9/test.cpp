@@ -639,10 +639,18 @@ struct SLp : public Base{
 	virtual void foo(){}
 };
 
+
+
+void aaa(int v, const ArgumentsPtr& a){
+	a->p();
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	using namespace std;
+
+	VMachine* vm = &*vmachine();
 
 	SmartPtr<Spr> s = xnew<Spr>();
 //	_mm_add_ps(s->v.a, s->v.a);
@@ -675,13 +683,26 @@ int main2(int argc, char** argv){
 
 	//AnyPtr a = cast<bool>(false);
 
+	//static_cmemfun_holder<StringPtr (String::*)() const, &String::clone>::call(vmachine(), 0, 0);
+
+	{
+		//XTAL_RETURN_TO_VM(StringPtr, vm, str());
+		//foo(str(), str());
+		//aaa(&n);
+		//vm->return_result(str());
+		//vm->return_result((
+		//	unchecked_cast<String*>(empty_string)->*(&String::to_s))());
+		//XTAL_RETURN_TO_VM(vmachine(), (unchecked_cast<String*>(empty_string)->*(&String::clone))(	
+		//));
+	}
+
 	if(CodePtr code = Xsrc((
-		aa: 10;
-		//eval("unknown") && false catch(e) true;
+		arg[0](9);
+
 	))){
 		code->inspect()->p();
 		//AnyPtr ret = code->call(xnew<Spr>());
-		code->call();
+		code->call(fun(&aaa));
 	}
 
 	XTAL_CATCH_EXCEPT(e){
@@ -768,6 +789,8 @@ int main2(int argc, char** argv){
 
 	//*
 
+	//set_gc_stress(true);
+
 #ifdef XTAL_USE_WCHAR
 	CodePtr code = compile_file("../utf16le-test/test.xtal_");
 #else
@@ -778,6 +801,7 @@ int main2(int argc, char** argv){
 		stderr_stream()->println(e);
 		return 1;
 	}
+
 
 	code->call();
 

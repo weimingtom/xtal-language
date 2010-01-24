@@ -239,17 +239,17 @@ void Array::on_visit_members(Visitor& m){
 
 Array::Array(uint_t size)
 :values_(size){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 Array::Array(const AnyPtr* first, const AnyPtr* end)
 :values_(first, end){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 Array::Array(const Array& v)
 :RefCountingBase(v), values_(v.values_){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 Array& Array::operator =(const Array& v){

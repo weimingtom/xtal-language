@@ -455,7 +455,7 @@ public:
 	* \xbind
 	* \brief ©g‚ğ•Ô‚·
 	*/
-	ArrayPtr op_to_array(){
+	const ArrayPtr& op_to_array(){
 		return to_smartptr(this);
 	}
 

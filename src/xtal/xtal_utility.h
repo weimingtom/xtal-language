@@ -27,6 +27,10 @@ enum{
 //#define XTAL_NO_XPEG
 //#define XTAL_NO_ASSERT
 
+/**
+* \brief â¬î\Ç»å¿ÇËêÆêîÇÃîÕàÕÇëÂÇ´Ç≠Ç∑ÇÈ
+*/
+//#define XTAL_USE_LARGE_INT
 
 #ifdef _UNICODE
 #	ifndef XTAL_USE_WCHAR
@@ -317,47 +321,14 @@ struct Other{
 	Other(const T&){}
 };
 
-template<class T>
-struct IsReference{
-	typedef char (&yes)[2];
-	typedef char (&no)[1];
-	template<class U>
-	static yes test(U& (*)());
-	static no test(...);
+template<class T, class U> struct IsSame{ enum{ value = 0 }; };
+template<class T> struct IsSame<T, T>{ enum{ value = 1 }; };
 
-	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
-};
+template<class T> struct IsVoid{ enum{ value = 0 }; };
+template<> struct IsVoid<void>{ enum{ value = 1 }; };
 
-template<class T>
-struct IsPointer{
-	typedef char (&yes)[2];
-	typedef char (&no)[1];
-	template<class U>
-	static yes test(U* (*)());
-	static no test(...);
-
-	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
-};
-
-template<class T, class U>
-struct IsSame{
-	typedef char (&yes)[2];
-	typedef char (&no)[1];
-	static yes test(U (*)());
-	static no test(...);
-
-	enum{ value = sizeof(test((T (*)())0))==sizeof(yes) };
-};
-
-template<class T>
-struct IsVoid{ enum{ value = 0 }; };
-template<>
-struct IsVoid<void>{ enum{ value = 1 }; };
-
-template<class T>
-struct IsNotVoid{ enum{ value = 1 }; };
-template<>
-struct IsNotVoid<void>{ enum{ value = 0 }; };
+template<class T> struct IsNotVoid{ enum{ value = 1 }; };
+template<> struct IsNotVoid<void>{ enum{ value = 0 }; };
 
 template<class T>
 struct TempHolder{
@@ -680,6 +651,7 @@ typedef SmartPtr<TreeNode> TreeNodePtr;
 
 class Base;
 class RefCountingBase;
+class Any;
 class GCObserver;
 
 class Int;
@@ -720,10 +692,14 @@ struct CppClassSymbol;
 template<class T>
 inline SmartPtr<T> xnew();
 
+struct param_types_holder_n;
+struct VirtualMembers;
+
 enum InheritedEnum{
 	INHERITED_BASE,
 	INHERITED_RCBASE,
 	INHERITED_ANY,
+	INHERITED_ANYPTR,
 	INHERITED_OTHER
 };
 
@@ -733,6 +709,7 @@ struct InheritedN{
 		value = 
 			IsInherited<T, Base>::value ? INHERITED_BASE : 
 			IsInherited<T, RefCountingBase>::value ? INHERITED_RCBASE : 
+			IsInherited<T, AnyPtr>::value ? INHERITED_ANYPTR :
 			IsInherited<T, Any>::value ? INHERITED_ANY : INHERITED_OTHER
 	};
 };
@@ -854,6 +831,8 @@ enum PrimitiveType{
 	TYPE_ID_LITERAL,
 
 	TYPE_POINTER,
+
+	TYPE_STATELESS_NATIVE_METHOD,
 	// Ç±Ç±Ç©ÇÁè„ÇÕimmutableÇ»ílå^Ç≈Ç†ÇÈ
 
 	// Ç±Ç±Ç©ÇÁâ∫ÇÕéQè∆å^Ç≈Ç†ÇÈ

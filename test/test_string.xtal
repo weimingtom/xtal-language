@@ -5,6 +5,7 @@ class StringTest{
 		assert "test".length==4;
 		assert ("te"~"st").length==4;
 		assert ("te"~"st")=="test";
+		assert "4".to_i==4;
 	}
 	
 	sub#Test{

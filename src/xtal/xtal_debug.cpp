@@ -4,11 +4,11 @@
 namespace xtal{ namespace debug{
 
 StringPtr CallerInfo::file_name(){ 
-	return fun_ ? fun_->code()->source_file_name() : "C++ Function"; 
+	return fun_ ? fun_->code()->source_file_name() : StringPtr(XTAL_STRING("C++ Function")); 
 }
 
 StringPtr CallerInfo::fun_name(){ 
-	return fun_ ? fun_->object_name() : ""; 
+	return fun_ ? fun_->object_name() : empty_string; 
 }
 
 void CallerInfo::on_visit_members(Visitor& m){
@@ -187,6 +187,7 @@ const AnyPtr& assert_hook(){
 void call_debug_hook(int_t kind, const HookInfoPtr& ainfo){
 	const SmartPtr<DebugData>& d = cpp_var<DebugData>();
 	HookInfoPtr info = ainfo;
+	
 	AnyPtr hook = d->hooks_[kind];
 
 	while(true){
@@ -274,7 +275,7 @@ MapPtr make_debug_object(const AnyPtr& v, int_t depth){
 	}
 
 	if(depth<=0){
-		ret->set_at(Xid(children), "...");
+		ret->set_at(Xid(children), XTAL_STRING("..."));
 		return ret;
 	}
 

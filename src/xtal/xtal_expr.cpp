@@ -12,7 +12,7 @@ const ExprPtr& ep(const AnyPtr& a){
 }
 
 TreeNode::TreeNode(const AnyPtr& tag, int_t lineno){
-	value_.init(TYPE_TREE_NODE, this);
+	value_.init_rcbase(TYPE_TREE_NODE, this);
 
 	tag_ = tag;
 	lineno_ = lineno;

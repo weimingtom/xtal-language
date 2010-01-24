@@ -153,7 +153,7 @@ public:
 
 	bool check_arg(const VMachinePtr& vm);
 
-	const StringPtr& object_temporary_name();
+	const IDPtr& object_temporary_name();
 
 public:
 		

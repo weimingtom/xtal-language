@@ -11,19 +11,103 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, co
 	return xnew<NativeFun>(pth, val, this_);
 }
 
+namespace{
+	void set_arg_error_except(const VMachinePtr& vm, const StringPtr& name, int_t n, int_t minv, int_t maxv){
+		if(minv==0 && maxv==0){
+			vm->set_except(cpp_class<ArgumentError>()->call(
+				Xt("XRE1007")->call(
+					Named(Xid(object), name),
+					Named(Xid(value), n)
+				)
+			));
+		}
+		else{
+			vm->set_except(cpp_class<ArgumentError>()->call(
+				Xt("XRE1006")->call(
+					Named(Xid(object), name),
+					Named(Xid(min), minv),
+					Named(Xid(max), maxv),
+					Named(Xid(value), n)
+				)
+			));
+		}
+	}
+}
+
+StatelessNativeMethod::StatelessNativeMethod(const param_types_holder_n& pth)
+	:Any(noinit_t()){
+	value_.init_stateless_native_method(&pth);
+}
+
+void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
+	const param_types_holder_n& pth = *value_.pth();
+	int_t param_n = pth.param_n;
+
+	if(vm->ordered_arg_count()!=param_n){
+		set_arg_error_except(vm, empty_id, vm->ordered_arg_count(), param_n, pth.param_n);
+		return;
+	}
+
+	UninitializedAny args[16];
+	
+	{ // check arg type
+
+		const CppClassSymbolData* anycls = CppClassSymbol<Any>::value;
+
+		{
+			const AnyPtr& arg = vm->arg_this();
+			args[0] = (UninitializedAny&)arg;
+
+			if(anycls!=*pth.param_types[0]){
+				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
+				if(!arg->is(cls)){
+					vm->set_except(argument_error(object_name(), 0, cls, arg->get_class()));
+					return;
+				}
+			}
+		}
+
+		if(pth.extendable){
+			vm->set_local_variable(param_n-1, vm->make_arguments(param_n-1));
+		}
+
+		for(int_t i=0; i<param_n; ++i){
+			const AnyPtr& arg = vm->arg_unchecked(i);
+			args[i+1] = (UninitializedAny&)arg;
+
+			if(anycls!=*pth.param_types[0]){
+				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
+				if(!arg->is(cls)){ 
+					vm->set_except(argument_error(object_name(), i+1, cls, arg->get_class()));
+					return;
+				}
+			}
+		}
+	}
+
+	pth.fun(&*vm, args, 0);
+}
+
 NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 
 	fun_ = pth.fun;
-	if(pth.size<(int_t)sizeof(int_t)){
+	if(pth.size==1){
 		val_size_ = 0;
 	}
 	else{
 		val_size_ = pth.size;
 	}
 
-	if(pth.extendable!=0){
+	extendable_ = pth.extendable;
+
+	if(pth.vm){
 		min_param_count_ = 0;
+		max_param_count_ = 255;
+		param_n_ = pth.param_n;
+	}
+	else if(pth.extendable){
+		min_param_count_ = pth.param_n-1;
 		max_param_count_ = 255;
 		param_n_ = pth.param_n;
 	}
@@ -42,7 +126,7 @@ NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
 	Class** param_types = (Class**)((u8*)data_ +  val_size_);
 	for(int_t i=0; i<param_n_+1; ++i){
 		const ClassPtr& cls = cpp_class(*pth.param_types[i]);
-		if(raweq(cls, cpp_class<Any>()) || raweq(cls, cpp_class<void>())){
+		if(raweq(cls, cpp_class<Any>())){
 			param_types[i] = 0;
 		}
 		else{
@@ -74,7 +158,7 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 	// iは1始まり
 	XTAL_ASSERT(i!=0);
 
-	// 今のところ、VMachinePtrを引数にする場合、paramは設定でない制限あり
+	// 今のところ、VMachineを引数にする場合、paramは設定でない制限あり
 	XTAL_ASSERT(!(min_param_count_==0 && max_param_count_==255));
 
 	// iが引数の数より大きすぎる
@@ -113,26 +197,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 	if(vm->ordered_arg_count()!=min_param_count_){
 		int_t n = vm->ordered_arg_count();
 		if(n<min_param_count_ || n>max_param_count_){
-			if(min_param_count_==0 && max_param_count_==0){
-				vm->set_except(cpp_class<ArgumentError>()->call(
-					Xt("XRE1007")->call(
-						Named(Xid(object), object_name()),
-						Named(Xid(value), n)
-					)
-				));
-				return;
-			}
-			else{
-				vm->set_except(cpp_class<ArgumentError>()->call(
-					Xt("XRE1006")->call(
-						Named(Xid(object), object_name()),
-						Named(Xid(min), min_param_count_),
-						Named(Xid(max), max_param_count_),
-						Named(Xid(value), n)
-					)
-				));
-				return;
-			}
+			set_arg_error_except(vm, object_name(), n, min_param_count_, max_param_count_);
 		}
 	}
 
@@ -154,8 +219,13 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 			}
 		}
 
-		if(vm->ordered_arg_count()!=param_n_){
-			vm->adjust_args(params, param_n_);
+		if(extendable_){
+			vm->set_local_variable(param_n_-1, vm->inner_make_arguments(params, param_n_-1));
+		}
+		else{
+			if(vm->ordered_arg_count()!=param_n_){
+				vm->adjust_args(params, param_n_);
+			}
 		}
 
 		for(int_t i=0; i<param_n_; ++i){
@@ -171,13 +241,13 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 		}
 	}
 
-	fun_(vm, data_, args);
+	fun_(&*vm, args, data_);
 }
 
 
 NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, const AnyPtr& this_)
 :NativeMethod(pth, val), this_(this_){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 void NativeFun::on_visit_members(Visitor& m){

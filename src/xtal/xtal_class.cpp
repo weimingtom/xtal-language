@@ -370,6 +370,14 @@ const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const para
 	return def_and_return(xnew<ID>(primary_key), undefined, KIND_PUBLIC, pth, val);
 }
 
+void Class::def_and_return(const char_t* primary_key, const param_types_holder_n& pth){
+	def2(xnew<ID>(primary_key), xnew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
+}
+
+void Class::def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
+	def2(xnew<ID>(primary_key), xnew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
+}
+
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	on_def(primary_key, value, secondary_key, accessibility);
 	Key key = {primary_key, secondary_key};
@@ -561,7 +569,7 @@ ValuesPtr Class::child_object_name(const AnyPtr& a){
 	return nul<Values>();
 }
 
-const StringPtr& Class::object_temporary_name(){
+const IDPtr& Class::object_temporary_name(){
 	if(name_ && name_->data_size()!=0){
 		return name_;
 	}
@@ -572,13 +580,13 @@ const StringPtr& Class::object_temporary_name(){
 	}
 
 	if(code() && info()){
-		return (StringPtr&)code()->identifier(info()->name_number);
+		return code()->identifier(info()->name_number);
 	}
 
-	return empty_string;
+	return empty_id;
 }
 
-void Class::set_object_temporary_name(const StringPtr& name){
+void Class::set_object_temporary_name(const IDPtr& name){
 	name_ = name;
 }
 
@@ -727,7 +735,7 @@ void Class::prebind(){
 	if((flags_ & FLAG_PREBINDED)==0){
 		flags_ |= FLAG_PREBINDED;
 		if(symbol_data_ && symbol_data_->prebind){
-			symbol_data_->prebind->XTAL_bind(to_smartptr(this));
+			symbol_data_->prebind->XTAL_bind(this);
 		}
 	}
 }
@@ -747,7 +755,7 @@ bool Class::bind(int_t n){
 		flags_ |= (FLAG_BINDED<<n);
 		prebind();
 		if(symbol_data_ && symbol_data_->bind[n]){
-			symbol_data_->bind[n]->XTAL_bind(to_smartptr(this));
+			symbol_data_->bind[n]->XTAL_bind(this);
 			return true;
 		}
 	}

@@ -498,16 +498,16 @@ struct Element : public Base{
 		TYPE_DECL // êÈåæ
 	};
 
-	Type type;
+	u8 type;
+	u8 param3;
+	bool inv;
 	AnyPtr param1;
 	AnyPtr param2;
-	int_t param3;
-	bool inv;
 
-	Element(Type type);
-	Element(Type type, const AnyPtr& param1);
-	Element(Type type, const AnyPtr& param1, const AnyPtr& param2);
-	Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
+	Element(u8 type);
+	Element(u8 type, const AnyPtr& param1);
+	Element(u8 type, const AnyPtr& param1, const AnyPtr& param2);
+	Element(u8 type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
 
 	~Element();
 

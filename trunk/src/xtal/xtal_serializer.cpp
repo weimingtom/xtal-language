@@ -98,7 +98,23 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();
 
-			stream_->put_u8(a->is_interned() ? TID : TSTRING);
+			int_t type = 0;
+			if(a->is_interned()){
+				switch(sizeof(char_t)){
+					XTAL_DEFAULT{ type = TID8; }
+					XTAL_CASE(2){ type = TID16; }
+					XTAL_CASE(4){ type = TID32; }
+				}
+			}
+			else{
+				switch(sizeof(char_t)){
+					XTAL_DEFAULT{ type = TSTRING8; }
+					XTAL_CASE(2){ type = TSTRING16; }
+					XTAL_CASE(4){ type = TSTRING32; }
+				}
+			}
+
+			stream_->put_u8(type);
 			stream_->put_u32be(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_ch_code_be(str[i]);
@@ -279,12 +295,16 @@ AnyPtr Serializer::inner_deserialize_name(){
 	return values_.at(num);
 }
 
-AnyPtr Serializer::inner_deserialize_string(bool intern){
+AnyPtr Serializer::inner_deserialize_string(int_t charsize, bool intern){
 	uint_t sz = stream_->get_u32be();
+	
 	XMallocGuard guard(sizeof(char_t)*sz);
 	char_t* p = (char_t*)guard.get();
-	for(uint_t i = 0; i<sz; ++i){
-		p[i] = stream_->get_ch_code_be();
+
+	switch(charsize){
+		XTAL_DEFAULT{ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u8(); } }
+		XTAL_CASE(2){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u16be(); } }
+		XTAL_CASE(4){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u32be(); } }
 	}
 
 	AnyPtr ret;
@@ -487,12 +507,28 @@ AnyPtr Serializer::inner_deserialize(){
 			return (float_t)stream_->get_f64be();
 		}
 
-		XTAL_CASE(TSTRING){
-			return inner_deserialize_string(false);
+		XTAL_CASE(TSTRING8){
+			return inner_deserialize_string(1, false);
 		}
 
-		XTAL_CASE(TID){
-			return inner_deserialize_string(true);
+		XTAL_CASE(TID8){
+			return inner_deserialize_string(1, true);
+		}
+
+		XTAL_CASE(TSTRING16){
+			return inner_deserialize_string(2, false);
+		}
+
+		XTAL_CASE(TID16){
+			return inner_deserialize_string(2, true);
+		}
+
+		XTAL_CASE(TSTRING32){
+			return inner_deserialize_string(4, false);
+		}
+
+		XTAL_CASE(TID32){
+			return inner_deserialize_string(4, true);
 		}
 
 		XTAL_CASE(TARRAY){

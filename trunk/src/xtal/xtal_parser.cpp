@@ -36,7 +36,7 @@ inline bool test_space(int ch){
 }
 
 inline bool test_ident_first(int ch){
-	return test_alpha(ch) || ch_len(ch)>1;
+	return test_alpha(ch) || ch_len(ch)>1 || ch>255;
 }
 
 inline bool test_ident_rest(int ch){

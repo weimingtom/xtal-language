@@ -1,40 +1,29 @@
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_stringspace.h"
 
 namespace xtal{
 
 void RefCountingBase::on_rawcall(const VMachinePtr& vm){
-	to_smartptr(this)->rawsend(vm, Xid(op_call));
+	to_smartptr(this)->rawsend(vm, id_op_list()[IDOp::id_op_call]);
 }
 
 const AnyPtr& RefCountingBase::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	return undefined;
 }
 
-void RefCountingBase::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-
-}
-
 const ClassPtr& RefCountingBase::on_object_parent(){
-	return unchecked_ptr_cast<Class>(null);
-}
-
-void RefCountingBase::on_set_object_parent(const ClassPtr& parent){
-
-}
-
-void RefCountingBase::on_finalize(){
-
+	return nul<Class>();
 }
 
 Base::Base(){
-	value_.init(TYPE_BASE, this);
+	value_.init_rcbase(TYPE_BASE, this);
 	class_ = (Class*)&null;
 	instance_variables_ = &empty_instance_variables; 
 }
 
 Base::Base(const Base& b){
-	value_.init(TYPE_BASE, this);
+	value_.init_rcbase(TYPE_BASE, this);
 	if(b.instance_variables_!=&empty_instance_variables){
 		instance_variables_ = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));
 		new(instance_variables_) InstanceVariables(*b.instance_variables_);		

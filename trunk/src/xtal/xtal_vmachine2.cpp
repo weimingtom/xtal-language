@@ -71,7 +71,9 @@ VMachine::FunFrame::FunFrame(){
 }
 
 void VMachine::FunFrame::set_fun(const MethodPtr& v){ 
-	fun_ = v; outer_ = v->outer();  identifier_ = &fun()->code()->identifier(0); 
+	fun_ = v; 
+	outer_ = v->outer();
+	identifier_ = fun()->code()->identifier_data(); 
 }
 
 void VMachine::FunFrame::set_null(){
@@ -157,11 +159,6 @@ void VMachine::recycle_call(){
 	f.ordered_arg_count = 0;
 	f.named_arg_count = 0;
 	f.called_pc = 0;
-}
-
-void VMachine::recycle_call(const AnyPtr& a1){
-	recycle_call();
-	push_arg(a1);
 }
 	
 void VMachine::execute(Method* fun, const inst_t* start_pc){
@@ -282,8 +279,9 @@ void VMachine::adjust_args(const NamedParam* params, int_t num){
 	variables_.move_unref(variables_top() + f.ordered_arg_count, base + variables_top(), offset-base);
 }
 
-void VMachine::adjust_args(Method* names, int_t num){
+void VMachine::adjust_args(Method* names){
 	FunFrame& f = ff();
+	int_t num = names->param_size();
 	int_t base = f.ordered_arg_count + f.named_arg_count*2;
 	int_t offset = base;
 	for(int_t j=f.ordered_arg_count; j<num; ++j){
@@ -307,8 +305,6 @@ void VMachine::adjust_args(Method* names, int_t num){
 void VMachine::return_result(){
 	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
-
-	f.result_count += 0;
 	pop_ff();
 }
 
@@ -366,7 +362,26 @@ void VMachine::return_result_mv(const ValuesPtr& values){
 	f.result_count += size;
 	pop_ff();
 }
-
+/*
+void VMachine::return_result(const char_t* s){ return_result(AnyPtr(s)); }
+void VMachine::return_result(const char8_t* s){ return_result(AnyPtr(s)); }
+void VMachine::return_result(const StringLiteral& s){ return_result(AnyPtr(s)); }
+void VMachine::return_result(char v){ return_result(ap(Any(v))); }
+void VMachine::return_result(signed char v){ return_result(ap(Any(v))); }
+void VMachine::return_result(unsigned char v){ return_result(ap(Any(v))); }
+void VMachine::return_result(short v){ return_result(ap(Any(v))); }
+void VMachine::return_result(unsigned short v){ return_result(ap(Any(v))); }
+void VMachine::return_result(int v){ return_result(ap(Any(v))); }
+void VMachine::return_result(unsigned int v){ return_result(ap(Any(v))); }
+void VMachine::return_result(long v){ return_result(ap(Any(v))); }
+void VMachine::return_result(unsigned long v){ return_result(ap(Any(v))); }
+void VMachine::return_result(long long v){ return_result(ap(Any(v))); }
+void VMachine::return_result(unsigned long long v){ return_result(ap(Any(v))); }
+void VMachine::return_result(float v){ return_result(ap(Any(v))); }
+void VMachine::return_result(double v){ return_result(ap(Any(v))); }
+void VMachine::return_result(long double v){ return_result(ap(Any(v))); }
+void VMachine::return_result(bool v){ return_result(ap(Any(v))); }
+*/
 void VMachine::prereturn_result(const AnyPtr& v){
 	ff().result_count++;
 	stack_.push(v);
@@ -485,10 +500,10 @@ void VMachine::flatten_args(){
 	*/
 }
 
-ArgumentsPtr VMachine::make_arguments(){
+ArgumentsPtr VMachine::make_arguments(int_t lower){
 	ArgumentsPtr p = xnew<Arguments>();
 
-	for(int_t i = 0, size = ordered_arg_count(); i<size; ++i){
+	for(int_t i = lower, size = ordered_arg_count(); i<size; ++i){
 		p->add_ordered(arg(i));
 	}
 
@@ -498,23 +513,53 @@ ArgumentsPtr VMachine::make_arguments(){
 	return p;
 }
 
-ArgumentsPtr VMachine::inner_make_arguments(Method* fun){
+ArgumentsPtr VMachine::inner_make_arguments(const NamedParam* params, int_t num){
 	ArgumentsPtr p = xnew<Arguments>();
 
-	for(int_t i = fun->param_size(), size = ff().ordered_arg_count; i<size; ++i){
+	int_t param_size =num;
+
+	for(int_t i = param_size, size = ff().ordered_arg_count; i<size; ++i){
 		p->add_ordered(local_variable(i));
 	}
 
-	IDPtr name;
 	for(int_t i = 0, size = ff().named_arg_count; i<size; ++i){
-		name = (IDPtr&)local_variable(ff().ordered_arg_count+i*2+0);
-		for(int_t j = 0; j<fun->param_size(); ++j){
-			if(fun->param_name_at(j)==name){
-				name = null;
+		IDPtr& name = (IDPtr&)local_variable(ff().ordered_arg_count+i*2+0);
+		bool found = false;
+		for(int_t j = 0; j<param_size; ++j){
+			if(raweq(params[j].name, name)){
+				found = true;
 				break;
 			}
 		}
-		if(name){
+
+		if(!found){
+			p->add_named(name, local_variable(ff().ordered_arg_count+i*2+1));
+		}
+	}
+
+	return p;
+}
+
+ArgumentsPtr VMachine::inner_make_arguments(Method* fun){
+	ArgumentsPtr p = xnew<Arguments>();
+
+	int_t param_size = fun->param_size();
+
+	for(int_t i = param_size, size = ff().ordered_arg_count; i<size; ++i){
+		p->add_ordered(local_variable(i));
+	}
+
+	for(int_t i = 0, size = ff().named_arg_count; i<size; ++i){
+		IDPtr& name = (IDPtr&)local_variable(ff().ordered_arg_count+i*2+0);
+		bool found = false;
+		for(int_t j = 0; j<param_size; ++j){
+			if(raweq(fun->param_name_at(j), name)){
+				found = true;
+				break;
+			}
+		}
+
+		if(!found){
 			p->add_named(name, local_variable(ff().ordered_arg_count+i*2+1));
 		}
 	}

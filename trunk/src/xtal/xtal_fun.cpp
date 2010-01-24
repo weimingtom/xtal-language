@@ -9,6 +9,7 @@ Arguments::Arguments(const AnyPtr& ordered, const AnyPtr& named){
 	if(named){ named_ = ptr_cast<Map>(named); }
 	else{ named_ = null; }
 }
+
 void Arguments::add_ordered(const AnyPtr& v){
 	if(!ordered_){ ordered_ = xnew<Array>(); }
 	ordered_->push_back(v);
@@ -136,7 +137,7 @@ void ArgumentsIter::on_visit_members(Visitor& m){
 
 InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
@@ -146,7 +147,7 @@ void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
 
 InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	value_.init(TYPE, this);
+	value_.init_rcbase(TYPE, this);
 }
 
 void InstanceVariableSetter::on_rawcall(const VMachinePtr& vm){
@@ -215,11 +216,11 @@ bool Method::check_arg(const VMachinePtr& vm){
 	return true;
 }
 
-const StringPtr& Method::object_temporary_name(){
+const IDPtr& Method::object_temporary_name(){
 	if(code_ && info_){
-		return (StringPtr&)code_->identifier(info_->name_number);
+		return code_->identifier(info_->name_number);
 	}
-	return empty_string;
+	return empty_id;
 }
 
 void Method::on_rawcall(const VMachinePtr& vm){

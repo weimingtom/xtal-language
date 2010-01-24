@@ -9,7 +9,7 @@ namespace xtal{
 //}
 
 Lib::Lib(most_top_level_t){
-	set_object_temporary_name(XTAL_STRING("lib"));
+	set_object_temporary_name(Xid(lib));
 	set_object_force(1000);
 	load_path_list_ = xnew<Array>();
 }

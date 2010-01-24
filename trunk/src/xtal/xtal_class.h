@@ -215,12 +215,12 @@ public:
 	*/
 	template<class TFun, class Str>
 	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<cfun_holder<TFun> >::value, &f);
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dfun<TFun> >::value, &f);
 	}
 
 	template<class TFun, class Str>
 	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f){
-		return def_and_return(primary_key, fun_param_holder<cfun_holder<TFun> >::value, &f);
+		return def_and_return(primary_key, fun_param_holder<dfun<TFun> >::value, &f);
 	}
 
 	/**
@@ -233,12 +233,17 @@ public:
 	*/
 	template<class TFun, class Str>
 	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<cmemfun_holder<TFun> >::value, &f);
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<TFun> >::value, &f);
 	}
 
 	template<class TFun, class Str>
 	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f){
-		return def_and_return(primary_key, fun_param_holder<cmemfun_holder<TFun> >::value, &f);
+		return def_and_return(primary_key, fun_param_holder<dmemfun<TFun> >::value, &f);
+	}
+
+	template<class Str>
+	const NativeFunPtr& def_method_static(const Str& primary_key, const param_types_holder_n& pth){
+		return def_and_return(primary_key, pth, 0);
 	}
 
 	/**
@@ -250,7 +255,7 @@ public:
 	*/
 	template<class T, class C, class Str>
 	const NativeFunPtr& def_getter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<getter_holder<C, T> >::value, &v);
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<getter_functor<C, T> > >::value, &v);
 	}
 	
 	/**
@@ -264,7 +269,7 @@ public:
 	*/
 	template<class T, class C, class Str>
 	const NativeFunPtr& def_setter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
-		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<setter_holder<C, T> >::value, &v);
+		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<setter_functor<C, T> > >::value, &v);
 	}
 	
 	/**
@@ -436,9 +441,9 @@ public:
 
 	ValuesPtr child_object_name(const AnyPtr& a);
 
-	void set_object_temporary_name(const StringPtr& name);
+	void set_object_temporary_name(const IDPtr& name);
 
-	const StringPtr& object_temporary_name();
+	const IDPtr& object_temporary_name();
 
 	void on_set_object_parent(const ClassPtr& parent);
 
@@ -507,6 +512,9 @@ public:
 	const NativeFunPtr& def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val);
 	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
 
+	void def_and_return(const char_t* primary_key, const param_types_holder_n& pth);
+	void def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth);
+
 public:
 
 	void on_visit_members(Visitor& m){
@@ -522,7 +530,7 @@ protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
-	StringPtr name_;
+	IDPtr name_;
 
 	NativeFunPtr ctor_[2];
 

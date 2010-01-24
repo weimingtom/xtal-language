@@ -15,7 +15,8 @@ namespace xtal{
 */
 class Null : public Any{
 public:
-	Null():Any(TYPE_NULL){} 
+	Null()
+		:Any(TYPE_NULL){} 
 };
 
 /**
@@ -24,7 +25,8 @@ public:
 */
 class Undefined : public Any{ 
 public: 
-	Undefined():Any(TYPE_UNDEFINED){} 
+	Undefined()
+		:Any(TYPE_UNDEFINED){} 
 };
 
 /**
@@ -99,7 +101,8 @@ public:
 */
 class Bool : public Any{
 public: 
-	Bool(bool b):Any(b){} 
+	Bool(bool b)
+		:Any(b){} 
 };
 
 /**

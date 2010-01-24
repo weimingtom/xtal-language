@@ -99,11 +99,6 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const XNewXBase<INHERITED_OTHER>& m){
 	return *this;
 }
 
-void SmartPtr<Any>::set_unknown_pointer(const Base* p, const Base*){
-	value_.init(p);
-	inc_ref_count_force(*this);
-}
-
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 	dec_ref_count_force(*this);
 	copy_any(*this, p);
@@ -112,12 +107,12 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
 }
 
 void SmartPtr<Any>::init_smartptr(RefCountingBase* p){
-	value_.init(p->virtual_members()->rcbase_class_type, p);
+	value_ = p->value_;
 	register_gc(p);
 }
 
 void SmartPtr<Any>::init_smartptr(Base* p){
-	value_.init(p);
+	value_ = p->value_;
 	p->set_class(cpp_class(*p->virtual_members()->cpp_class_symbol_data));
 	register_gc(p);
 }

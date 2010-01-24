@@ -78,20 +78,18 @@ StringPtr Executor::at(const StringPtr& key){
 		return unchecked_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
 	}
 	else{
-		const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key));
-
-		if(temp->end>=0 && temp->end-temp->begin>0){
-			return scanner_->capture(temp->begin, temp->end);
-		}
-		else{
-			if(temp->end==temp->begin){
-				return empty_string;
+		if(const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key))){
+			if(temp->end>=0 && temp->end-temp->begin>0){
+				return scanner_->capture(temp->begin, temp->end);
 			}
 			else{
-				return nul<String>();
+				if(temp->end==temp->begin){
+					return empty_string;
+				}
 			}
 		}
 	}
+	return nul<String>();
 }
 
 AnyPtr Executor::call(const StringPtr& key){
@@ -459,7 +457,7 @@ bool Executor::test(const AnyPtr& ae){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			Scanner::State state = scanner_->save();
 			Scanner::State fict_state = state;
-			fict_state.pos = fict_state.pos > (uint_t)e->param3 ? fict_state.pos-e->param3 : 0;
+			fict_state.pos = fict_state.pos > (uint_t)ivalue(e->param2) ? fict_state.pos-e->param3 : 0;
 			scanner_->load(fict_state);
 			bool ret = match_inner(nfa);
 			scanner_->load(state);
@@ -910,16 +908,16 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Element::Element(Type type)
+Element::Element(u8 type)
 	:type(type), param1(null), param2(null), param3(0), inv(false){}
 
-Element::Element(Type type, const AnyPtr& param1)
+Element::Element(u8 type, const AnyPtr& param1)
 	:type(type), param1(param1), param2(null), param3(0), inv(false){}
 
-Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2)
+Element::Element(u8 type, const AnyPtr& param1, const AnyPtr& param2)
 	:type(type), param1(param1), param2(param2), param3(0), inv(false){}
 
-Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
+Element::Element(u8 type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
 	:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
 	
 Element::~Element(){}
@@ -1061,9 +1059,9 @@ ElementPtr inv(const AnyPtr& left){
 }
 
 ElementPtr lookahead(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LOOKAHEAD, elem(left)); }
-ElementPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), null, back); }
+ElementPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), back); }
 
-ElementPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name, 1); }
+ElementPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name); }
 
 void cap_vm(const VMachinePtr& vm){
 	if(vm->named_arg_count()==1 && vm->ordered_arg_count()==0){ 

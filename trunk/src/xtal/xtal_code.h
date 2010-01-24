@@ -51,6 +51,10 @@ public:
 		return unchecked_ptr_cast<ID>(identifier_table_->at(i));
 	}
 
+	const IDPtr* identifier_data(){
+		return (IDPtr*)identifier_table_->data();
+	}
+
 	uint_t identifier_size(){
 		return identifier_table_->size();
 	}

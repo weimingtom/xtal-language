@@ -48,7 +48,6 @@ struct RCBaseClassType<INHERITED_RCBASE, T>{
 };
 
 struct VirtualMembers{
-	//VirtualMembers* super;
 	CppClassSymbolData** cpp_class_symbol_data;
 	int rcbase_class_type;
 
@@ -66,7 +65,7 @@ struct VirtualMembers{
 	
 template<class T>
 struct VirtualMembersT{
-	static const VirtualMembers members;
+	static const VirtualMembers value;
 	
 	static T* cast(void* p){ return static_cast<T*>(static_cast<RefCountingBase*>(p)); }
 	
@@ -83,7 +82,7 @@ struct VirtualMembersT{
 };
 
 template<class T>
-const VirtualMembers VirtualMembersT<T>::members = {
+const VirtualMembers VirtualMembersT<T>::value = {
 	&CppClassSymbol<T>::value,
 	RCBaseClassType<InheritedN<T>::value, T>::value,
 
@@ -177,18 +176,16 @@ public:
 	}
 
 public:
-
 	void on_rawcall(const VMachinePtr& vm);
-	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility);
+	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){}
 	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache);
 	const ClassPtr& on_object_parent();
-	void on_set_object_parent(const ClassPtr& parent);
-	void on_finalize();
+	void on_set_object_parent(const ClassPtr& parent){}
+	void on_finalize(){}
 	void on_visit_members(Visitor& m){}
 	void on_gc_signal(int_t flag){}
 
 public:
-
 	bool have_finalizer(){ return value_.have_finalizer(); }
 	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
 	void unset_finalizer_flag(){ value_.unset_finalizer_flag(); }
@@ -207,7 +204,7 @@ public:
 
 	template<class T>
 	void set_virtual_members(){
-		vmembers_ = &VirtualMembersT<T>::members;
+		vmembers_ = &VirtualMembersT<T>::value;
 	}
 
 	const VirtualMembers* virtual_members() const{

@@ -20,7 +20,7 @@
 /**
 * \brief スレッド使用off
 */
-//#define XTAL_NO_THREAD
+#define XTAL_NO_THREAD
 
 /**
 * \brief pthreadのスレッドローカルストレージを使う
@@ -31,10 +31,5 @@
 * \brief 小さいサイズのメモリ確保にXtal独自のアロケータを使わない
 */
 //#define XTAL_NO_SMALL_ALLOCATOR
-
-/**
-* \brief 可能な限り整数の範囲を大きくする
-*/
-//#define XTAL_USE_LARGE_INT
 
 #endif // XTAL_SETTING_H_INCLUDE_GUARD

@@ -198,9 +198,9 @@ public:
 	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
 	*/
 	template<class T, class Deleter>
-	SmartPtr(const T* tp, const Deleter& deleter)
+	SmartPtr(const T* p, const Deleter& deleter)
 		:Any(noinit_t()){
-		init_smartptr(xnew_with_deleter<T, Deleter>(tp, deleter));
+		init_smartptr(xnew_with_deleter<T, Deleter>(p, deleter));
 	}
 
 	template<class T>
@@ -213,7 +213,7 @@ public:
 	template<class T>
 	SmartPtr(const T* p)
 		:Any(noinit_t()){
-		set_unknown_pointer(p, p);
+		set_unknown_pointer(p, TypeIntType<InheritedN<T>::value>());
 	}
 
 	SmartPtr(const SmartPtr<Any>& p);
@@ -249,13 +249,6 @@ protected:
 	SmartPtr(noinit_t)
 		:Any(noinit_t()){}
 
-	void set_unknown_pointer(const Base* p, const Base*);
-
-	template<class T>
-	void set_unknown_pointer(const T* p, const void*){
-		value_.init_pointer(p, CppClassSymbol<T>::value->value);
-	}
-
 	void init_smartptr(const Any& a){
 		*static_cast<Any*>(this) = a;
 	}
@@ -263,6 +256,34 @@ protected:
 	void init_smartptr(RefCountingBase* p);
 
 	void init_smartptr(Base* p);
+
+	template<class T>
+	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_BASE>){
+		value_.init_base(p);
+		inc_ref_count_force(*this);
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_RCBASE>){
+		value_.init_base(p);
+		inc_ref_count_force(*this);
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_ANY>){
+		*static_cast<Any*>(this) = *p;
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_ANYPTR>){
+		*static_cast<Any*>(this) = *p;
+		inc_ref_count_force(*this);
+	}
+
+	template<class T>
+	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_OTHER>){
+		value_.init_pointer(p, CppClassSymbol<T>::value->value);
+	}
 
 public:
 
@@ -420,6 +441,13 @@ struct Extract<INHERITED_ANY, T>{
 };
 
 template<class T>
+struct Extract<INHERITED_ANYPTR, T>{
+	static T* extract(const AnyPtr& a){
+		return reinterpret_cast<T*>(const_cast<AnyPtr*>(&a));
+	}
+};
+
+template<class T>
 struct Extract<INHERITED_OTHER, T>{
 	static T* extract(const AnyPtr& a){
 		if(type(a)==TYPE_BASE){
@@ -448,6 +476,11 @@ struct GetNull<INHERITED_RCBASE, T>{
 
 template<class T>
 struct GetNull<INHERITED_ANY, T>{
+	static T* get(){ return (T*)&null; }
+};
+
+template<class T>
+struct GetNull<INHERITED_ANYPTR, T>{
 	static T* get(){ return (T*)&null; }
 };
 
@@ -496,7 +529,7 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 
 struct BindBase{
 	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
-	virtual void XTAL_bind(const ClassPtr& it) = 0;
+	virtual void XTAL_bind(Class* it) = 0;
 };
 
 struct CppClassSymbolData{ 
@@ -552,10 +585,10 @@ template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 			::xtal::CppClassSymbolData* key = ::xtal::CppClassSymbol<ClassName>::make();\
 			XTAL_set(key->xtbind, key->name, xtname);\
 		}\
-		virtual void XTAL_bind(const ::xtal::ClassPtr& it);\
+		virtual void XTAL_bind(::xtal::Class* it);\
 	};\
 	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
-	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(const ::xtal::ClassPtr& it)
+	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(::xtal::Class* it)
 
 
 #define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)

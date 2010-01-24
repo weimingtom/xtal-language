@@ -160,7 +160,7 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 StringData* String::new_string_data(uint_t size){
 	StringData* sd = new(object_xmalloc<StringData>()) StringData(size);
 	sd->set_virtual_members<StringData>();
-	value_.init(TYPE_STRING, sd);
+	value_.init_rcbase(TYPE_STRING, sd);
 	register_gc(sd);
 	return sd;
 }
@@ -201,28 +201,28 @@ String::String(const StringLiteral& str, intern_t){
 }
 
 String::String()
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	value_.init_small_string(0);
 }
 
 String::String(const char_t* str)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	init_string(str, string_data_size(str));
 }
 
 String::String(const char8_t* str)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	Conv conv(str);
 	init_string((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
 }
 
 String::String(const char_t* str, uint_t size)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	init_string(str, size);
 }
 
 String::String(const StringLiteral& str)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	if(str.size()<SMALL_STRING_MAX){
 		value_.init_small_string(str.str(), str.size());
 	}
@@ -232,12 +232,12 @@ String::String(const StringLiteral& str)
 }
 
 String::String(const char_t* begin, const char_t* last)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	init_string(begin, last-begin);
 }
 
 String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2)
-:Any(noinit_t()){
+	:Any(noinit_t()){
 	if(size1==0){
 		init_string(str2, size2);
 		return;
@@ -291,7 +291,7 @@ const char_t* String::data() const{
 		XTAL_CASE2(TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ return value_.sp(); }
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
 	}
-	return "";
+	return XTAL_L("");
 }
 
 uint_t String::data_size() const{
@@ -476,7 +476,7 @@ String::iterator String::end() const{
 ////////////////////////////////////////////////////////////////
 
 StringData::StringData(uint_t size){
-	value_.init(TYPE_STRING, this);
+	value_.init_rcbase(TYPE_STRING, this);
 	data_size_ = size<<SIZE_SHIFT;
 	buf_ = (char_t*)xmalloc(sizeof(char_t)*(size+1));
 	buf()[size] = 0;

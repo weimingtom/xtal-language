@@ -47,7 +47,7 @@ const ClassPtr& Any::get_class() const{
 	if(t==TYPE_BASE){ return pvalue(*this)->get_class(); }
 	if(t==TYPE_POINTER){ return cpp_class(value_.cpp_class_index()); }
 
-	static CppClassSymbolData** classdata[] = {
+	static CppClassSymbolData** const data[] = {
 		&CppClassSymbol<Null>::value,
 		&CppClassSymbol<Undefined>::value,
 		&CppClassSymbol<Bool>::value,
@@ -57,6 +57,7 @@ const ClassPtr& Any::get_class() const{
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
+		&CppClassSymbol<StatelessNativeMethod>::value,
 		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<String>::value,
@@ -70,9 +71,9 @@ const ClassPtr& Any::get_class() const{
 	};
 
 	// Œ^‚ð‘‚â‚µ‚½‚ç•ÏX‚·‚é‚±‚Æ
-	XTAL_STATIC_ASSERT(sizeof(classdata)/sizeof(*classdata) == TYPE_MAX);
+	XTAL_STATIC_ASSERT(sizeof(data)/sizeof(*data) == TYPE_MAX);
 
-	return cpp_class(*classdata[t]);
+	return cpp_class(*data[t]);
 }
 
 bool Any::is(const AnyPtr& klass) const{
@@ -219,7 +220,7 @@ void VMachine::carry_over(Method* fun){
 	}
 	else{
 		if(f.ordered_arg_count!=fun->param_size()){
-			adjust_args(fun, fun->param_size());
+			adjust_args(fun);
 		}
 	}
 
@@ -781,21 +782,25 @@ call_common:
 			XTAL_CASE(TYPE_BASE){ 
 				pvalue(ap(call_state.member))->rawcall(to_smartptr(this)); 
 			}
+			
+			XTAL_CASE(TYPE_STATELESS_NATIVE_METHOD){ 
+				unchecked_ptr_cast<StatelessNativeMethod>(ap(call_state.member))->on_rawcall(to_smartptr(this)); 
+			}
 
 			XTAL_CASE(TYPE_NATIVE_METHOD){ 
-				unchecked_ptr_cast<NativeMethod>(ap(call_state.member))->rawcall(to_smartptr(this)); 
+				unchecked_ptr_cast<NativeMethod>(ap(call_state.member))->on_rawcall(to_smartptr(this)); 
 			}
 
 			XTAL_CASE(TYPE_NATIVE_FUN){ 
-				unchecked_ptr_cast<NativeFun>(ap(call_state.member))->rawcall(to_smartptr(this)); 
+				unchecked_ptr_cast<NativeFun>(ap(call_state.member))->on_rawcall(to_smartptr(this)); 
 			}
 
 			XTAL_CASE(TYPE_IVAR_GETTER){ 
-				unchecked_ptr_cast<InstanceVariableGetter>(ap(call_state.member))->rawcall(to_smartptr(this)); 
+				unchecked_ptr_cast<InstanceVariableGetter>(ap(call_state.member))->on_rawcall(to_smartptr(this)); 
 			}
 
 			XTAL_CASE(TYPE_IVAR_SETTER){ 
-				unchecked_ptr_cast<InstanceVariableSetter>(ap(call_state.member))->rawcall(to_smartptr(this)); 
+				unchecked_ptr_cast<InstanceVariableSetter>(ap(call_state.member))->on_rawcall(to_smartptr(this)); 
 			}
 		}
 

@@ -459,36 +459,6 @@ struct Extract<INHERITED_OTHER, T>{
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
-
-template<int N, class T>
-struct GetNull{};
-
-template<class T>
-struct GetNull<INHERITED_BASE, T>{
-	static T* get(){ return 0; }
-};
-
-template<class T>
-struct GetNull<INHERITED_RCBASE, T>{
-	static T* get(){ return 0; }
-};
-
-template<class T>
-struct GetNull<INHERITED_ANY, T>{
-	static T* get(){ return (T*)&null; }
-};
-
-template<class T>
-struct GetNull<INHERITED_ANYPTR, T>{
-	static T* get(){ return (T*)&null; }
-};
-
-template<class T>
-struct GetNull<INHERITED_OTHER, T>{
-	static T* get(){ return 0; }
-};
-
 /////////////////////////////////////////////////
 
 void visit_members(Visitor& m, const Any& p);
@@ -567,15 +537,33 @@ template<class T>
 CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
 
 // CppClassSymbolÇÃèCè¸éqÇÇÕÇ∏Ç∑ÇΩÇﬂÇÃíËã`
-template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
-template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T&> : CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : CppClassSymbol<T>{};
+template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : CppClassSymbol<T>{};
 
-template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<Base> : CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
+
+template<> struct CppClassSymbol<bool> : CppClassSymbol<Bool>{};
+template<> struct CppClassSymbol<char> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<signed char> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned char> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<short> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned short> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<int> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned int> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<long> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned long> : CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<float> : CppClassSymbol<Float>{};
+template<> struct CppClassSymbol<double> : CppClassSymbol<Float>{};
+template<> struct CppClassSymbol<long double> : CppClassSymbol<Float>{};
+
+template<> struct CppClassSymbol<const char*> : public CppClassSymbol<String>{};
+template<> struct CppClassSymbol<const wchar_t*> : public CppClassSymbol<String>{};
+
 
 #define XTAL_BIND_(ClassName, xtbind, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\

@@ -230,8 +230,8 @@ private:
 	MapPtr cap_;
 
 	TreeNodePtr tree_;
-	ArrayPtr errors_;
 	ScannerPtr scanner_;
+	ArrayPtr errors_;
 
 	int_t begin_;
 	int_t match_begin_;

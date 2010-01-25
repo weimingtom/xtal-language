@@ -714,6 +714,11 @@ struct InheritedN{
 	};
 };
 
+template<class T> struct InheritedN<T&> : InheritedN<T>{};
+template<class T> struct InheritedN<T*> : InheritedN<T>{};
+template<class T> struct InheritedN<const T> : InheritedN<T>{};
+template<class T> struct InheritedN<volatile T> : InheritedN<T>{};
+
 ////////////////////////////////////////////////
 
 const uint_t hash_m = 0x5bd1e995;

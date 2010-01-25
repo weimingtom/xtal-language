@@ -1005,6 +1005,42 @@ struct ctor_functor<T #COMMA_REPEAT#A`i`#>{
 		return xnew<T>(#REPEAT_COMMA#a`i`#);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R #COMMA_REPEAT#class A`i`#>
+struct nfun<R (__stdcall *)(#REPEAT_COMMA#A`i`#), Method>
+	: nfun_base<`n`, functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R #COMMA_REPEAT#class A`i`#>
+struct functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
+	typedef R result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
+	typedef R (__stdcall *fun_type)(#REPEAT_COMMA#A`i`#);
+	enum{ arity = `n`};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
+		return fun_(#REPEAT_COMMA#a`i`#);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R #COMMA_REPEAT#class A`i`#, R (__stdcall *fun_)(#REPEAT_COMMA#A`i`#)>
+struct static_functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#), fun_>{
+	typedef R result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
+	enum{ arity = `n`};
+
+	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
+		return fun_(#REPEAT_COMMA#a`i`#);
+	}
+};
+
+#endif
+
 */
 
 template<int Method, class R >
@@ -1110,6 +1146,42 @@ struct ctor_functor<T >{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R >
+struct nfun<R (__stdcall *)(), Method>
+	: nfun_base<0, functor<R (__stdcall *)()>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R >
+struct functor<R (__stdcall *)()>{
+	typedef R result_type; 
+	typedef R (__stdcall *fun_type)();
+	enum{ arity = 0};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()() const{
+		return fun_();
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , R (__stdcall *fun_)()>
+struct static_functor<R (__stdcall *)(), fun_>{
+	typedef R result_type; 
+	enum{ arity = 0};
+
+	R operator()() const{
+		return fun_();
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0>
 struct nfun<R (*)(A0), Method>
 	: nfun_base<1, functor<R (*)(A0)>, Method, R>{};
@@ -1212,6 +1284,42 @@ struct ctor_functor<T , A0>{
 		return xnew<T>(a0);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0>
+struct nfun<R (__stdcall *)(A0), Method>
+	: nfun_base<1, functor<R (__stdcall *)(A0)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0>
+struct functor<R (__stdcall *)(A0)>{
+	typedef R result_type; typedef A0 arg1_type; 
+	typedef R (__stdcall *fun_type)(A0);
+	enum{ arity = 1};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0) const{
+		return fun_(a0);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, R (__stdcall *fun_)(A0)>
+struct static_functor<R (__stdcall *)(A0), fun_>{
+	typedef R result_type; typedef A0 arg1_type; 
+	enum{ arity = 1};
+
+	R operator()(A0 a0) const{
+		return fun_(a0);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1>
 struct nfun<R (*)(A0, A1), Method>
@@ -1316,6 +1424,42 @@ struct ctor_functor<T , A0, A1>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1>
+struct nfun<R (__stdcall *)(A0, A1), Method>
+	: nfun_base<2, functor<R (__stdcall *)(A0, A1)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1>
+struct functor<R (__stdcall *)(A0, A1)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
+	typedef R (__stdcall *fun_type)(A0, A1);
+	enum{ arity = 2};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1) const{
+		return fun_(a0, a1);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, R (__stdcall *fun_)(A0, A1)>
+struct static_functor<R (__stdcall *)(A0, A1), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
+	enum{ arity = 2};
+
+	R operator()(A0 a0, A1 a1) const{
+		return fun_(a0, a1);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2>
 struct nfun<R (*)(A0, A1, A2), Method>
 	: nfun_base<3, functor<R (*)(A0, A1, A2)>, Method, R>{};
@@ -1418,6 +1562,42 @@ struct ctor_functor<T , A0, A1, A2>{
 		return xnew<T>(a0, a1, a2);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2>
+struct nfun<R (__stdcall *)(A0, A1, A2), Method>
+	: nfun_base<3, functor<R (__stdcall *)(A0, A1, A2)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2>
+struct functor<R (__stdcall *)(A0, A1, A2)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2);
+	enum{ arity = 3};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2) const{
+		return fun_(a0, a1, a2);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, R (__stdcall *fun_)(A0, A1, A2)>
+struct static_functor<R (__stdcall *)(A0, A1, A2), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
+	enum{ arity = 3};
+
+	R operator()(A0 a0, A1 a1, A2 a2) const{
+		return fun_(a0, a1, a2);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1, class A2, class A3>
 struct nfun<R (*)(A0, A1, A2, A3), Method>
@@ -1522,6 +1702,42 @@ struct ctor_functor<T , A0, A1, A2, A3>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3), Method>
+	: nfun_base<4, functor<R (__stdcall *)(A0, A1, A2, A3)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3>
+struct functor<R (__stdcall *)(A0, A1, A2, A3)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3);
+	enum{ arity = 4};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
+		return fun_(a0, a1, a2, a3);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, R (__stdcall *fun_)(A0, A1, A2, A3)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
+	enum{ arity = 4};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
+		return fun_(a0, a1, a2, a3);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4>
 struct nfun<R (*)(A0, A1, A2, A3, A4), Method>
 	: nfun_base<5, functor<R (*)(A0, A1, A2, A3, A4)>, Method, R>{};
@@ -1624,6 +1840,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4>{
 		return xnew<T>(a0, a1, a2, a3, a4);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4), Method>
+	: nfun_base<5, functor<R (__stdcall *)(A0, A1, A2, A3, A4)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4);
+	enum{ arity = 5};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		return fun_(a0, a1, a2, a3, a4);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, R (__stdcall *fun_)(A0, A1, A2, A3, A4)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
+	enum{ arity = 5};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		return fun_(a0, a1, a2, a3, a4);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5), Method>
@@ -1728,6 +1980,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5), Method>
+	: nfun_base<6, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5);
+	enum{ arity = 6};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		return fun_(a0, a1, a2, a3, a4, a5);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
+	enum{ arity = 6};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		return fun_(a0, a1, a2, a3, a4, a5);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6), Method>
 	: nfun_base<7, functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
@@ -1830,6 +2118,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6>{
 		return xnew<T>(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), Method>
+	: nfun_base<7, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6);
+	enum{ arity = 7};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
+	enum{ arity = 7};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7), Method>
@@ -1934,6 +2258,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), Method>
+	: nfun_base<8, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7);
+	enum{ arity = 8};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
+	enum{ arity = 8};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), Method>
 	: nfun_base<9, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
@@ -2036,6 +2396,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
 		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), Method>
+	: nfun_base<9, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7, A8);
+	enum{ arity = 9};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
+	enum{ arity = 9};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), Method>
@@ -2140,6 +2536,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), Method>
+	: nfun_base<10, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+	enum{ arity = 10};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
+	enum{ arity = 10};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Method>
 	: nfun_base<11, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
@@ -2242,6 +2674,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
 		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Method>
+	: nfun_base<11, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+	enum{ arity = 11};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
+	enum{ arity = 11};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	}
+};
+
+#endif
+
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Method>
@@ -2346,6 +2814,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
 	}
 };
 
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Method>
+	: nfun_base<12, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+	enum{ arity = 12};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
+	enum{ arity = 12};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	}
+};
+
+#endif
+
+
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Method>
 	: nfun_base<13, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
@@ -2448,6 +2952,42 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
 		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
+
+// stdcall版
+#if defined(_WIN32) && defined(_M_IX86)
+
+template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Method>
+	: nfun_base<13, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
+struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
+	typedef R (__stdcall *fun_type)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+	enum{ arity = 13};
+
+	fun_type fun_;
+	functor(fun_type fun):fun_(fun){}
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	}
+};
+
+// 関数を関数オブジェクト化する
+template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, R (__stdcall *fun_)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>
+struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), fun_>{
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
+	enum{ arity = 13};
+
+	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	}
+};
+
+#endif
+
 
 //}}REPEAT}
 

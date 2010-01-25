@@ -121,7 +121,7 @@ enum ExprType{
 
 
 #define XTAL_DEF_MEMBER(N, Type, Name) \
-	CastResult<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
+	Caster<Type>::type Name(){ return unchecked_cast<Type>(at(N)); }\
 	const ExprPtr& set_##Name(Type v){ set_at(N, v); return to_smartptr(this); }
 
 
@@ -165,7 +165,7 @@ public:
 	void set_at(int_t i, const AnyPtr& v);
 
 	template<class T>
-	typename CastResult<const T&>::type at_cast(int_t i){
+	typename Caster<const T&>::type at_cast(int_t i){
 		return cast<const T&>(at(i));
 	}
 

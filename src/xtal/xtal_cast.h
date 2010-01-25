@@ -55,7 +55,7 @@ struct Caster<const SmartPtr<T>&>{
 
 template<>
 struct Caster<const char_t*>{
-	typedef const char* type;
+	typedef const char_t* type;
 	static type cast(const AnyPtr& a){ return cast_const_char_t_ptr(a); }
 };
 

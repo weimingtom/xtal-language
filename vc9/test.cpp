@@ -27,6 +27,10 @@ public:
 	}
 };
 
+int WINAPI getset(TestGetterSetterBind* b){
+	return b->x * 10;	
+}
+
 XTAL_PREBIND(TestGetterSetterBind){
 	it->def_ctor(xtal::ctor<TestGetterSetterBind>());
 }
@@ -37,6 +41,9 @@ XTAL_BIND(TestGetterSetterBind){
 
    it->def_var(Xid(y), &TestGetterSetterBind::y);
    it->def_method(Xid(foomethod), &TestGetterSetterBind::foomethod);
+ 
+   it->def_method("getseta", &getset);
+   Xdef_method_alias(getset, &getset);
 }
 
 struct MyData{
@@ -132,21 +139,22 @@ void test(){
 	if(CodePtr code = Xsrc((
 		foo: lib::TestGetterSetterBind();
 		foo.x = 0.5;
-		foo.x.p;
+		assert math::abs(foo.x-0.5)<0.001;
+		assert math::abs(foo.getset-5)<0.001;
 
 		foo.y = 100.5;
-		foo.y.p;
+		assert math::abs(foo.y-100.5)<0.001;
 
 		foo.foomethod("test");
 
 		mydata: lib::MyData;
 		mydata.a = 10;
-		mydata.a.p;
+		assert mydata.a==10;
 
 		a: cpp::AAA();
 		a.test.y = 10;
 		a.test.x = a.test.y;
-		a.test.x.p;
+		assert a.test.x==10;
 	))){
 		code->call();
 	}
@@ -154,7 +162,6 @@ void test(){
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 	}
-
 	int n;
 	n = 0;
 }
@@ -641,7 +648,7 @@ struct SLp : public Base{
 
 
 
-void aaa(int v, const ArgumentsPtr& a){
+void aaa(float v, const ArgumentsPtr& a){
 	a->p();
 }
 
@@ -675,8 +682,6 @@ int main2(int argc, char** argv){
 			Sleep(15);
 		}
 	}*/
-
-	//test();
 
 	//test2();
    // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
@@ -820,6 +825,9 @@ int main2(int argc, char** argv){
 	//lib()->member("test")->send("print_result");
 	//*/
 #endif
+
+	debug::enable();
+	test();
 
 	full_gc();
 

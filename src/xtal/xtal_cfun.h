@@ -41,6 +41,22 @@ const param_types_holder_n fun_param_holder<TFun>::value = {
 
 //////////////////////////////////////////////
 
+template<class R>
+struct ReturnResult{
+	static void call(VMachine* vm, const R& r){ 
+		vm->return_result(r); 
+	}
+};
+
+template<class R> 
+struct ReturnResult<R&>{
+	static void call(VMachine* vm, const R& r){ 
+		vm->return_result(&r); 
+	}	
+};
+
+//////////////////////////////////////////////
+
 template<class C, class T>
 struct getter_functor;
 
@@ -70,6 +86,12 @@ template<class TFun>
 struct dmemfun
 	: nfun<TFun, 1>{};
 
+template<class C, class T>
+struct getter_functor;
+
+template<class C, class T>
+struct setter_functor;
+
 template<class TFun> struct static_cfun_meker{ 
 	template<TFun fun> const param_types_holder_n& inner(){ 
 		return fun_param_holder<dfun<static_functor<TFun, fun> > >::value; 
@@ -89,7 +111,6 @@ template<class TFun> struct static_cmemfun_meker{
 template<class TFun> inline static_cmemfun_meker<TFun> generate_static_cmemfun(TFun){ 
 	return static_cmemfun_meker<TFun>(); 
 }
-
 
 #if defined(_MSC_VER) && _MSC_VER<=1300
 
@@ -143,6 +164,7 @@ protected:
 	u8 min_param_count_;
 	u8 max_param_count_;
 	u8 val_size_;
+	u8 vm_;
 	u8 extendable_;
 };
 
@@ -252,7 +274,7 @@ inline NativeFunPtr method(const Fun& f){
 */
 template<class T, class C>
 inline NativeFunPtr getter(T C::* f){
-	return new_native_fun(fun_param_holder<getter_holder<C, T> >::value, &f);
+	return new_native_fun(fun_param_holder<getter_functor<C, T> >::value, &f);
 }
 	
 /**
@@ -261,7 +283,7 @@ inline NativeFunPtr getter(T C::* f){
 */
 template<class T, class C>
 inline NativeFunPtr setter(T C::* f){
-	return new_native_fun(fun_param_holder<setter_holder<C, T> >::value(), &f);
+	return new_native_fun(fun_param_holder<getter_functor<C, T> >::value(), &f);
 }
 
 /**

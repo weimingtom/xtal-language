@@ -884,7 +884,7 @@ XTAL_VM_LOOP
 		const AnyPtr& a = local_variable(inst.target); uint_t atype = rawtype(a);
 
 		if(atype==TYPE_INT){
-			int_t iret, ia = ivalue(a);
+			int_t iret = 0, ia = ivalue(a);
 			switch(inst.kind){
 				XTAL_NODEFAULT;
 				XTAL_CASE(UNA_INC){ iret = ia + 1; }
@@ -898,7 +898,7 @@ XTAL_VM_LOOP
 		}
 
 		if(atype==TYPE_FLOAT){
-			float_t fret, fa = fvalue(a);
+			float_t fret = 0, fa = fvalue(a);
 			switch(inst.kind){
 				XTAL_NODEFAULT;
 				XTAL_CASE(UNA_INC){ fret = fa + 1; }

@@ -78,11 +78,7 @@ void Null_to_map(const AnyPtr& v, const VMachinePtr& vm){
 }
 
 void eval(const VMachinePtr& vm){
-	if(const StringPtr& source = ptr_cast<String>(vm->arg(0))){
-		vm->return_result(vm->eval(xnew<xpeg::StreamScanner>(xnew<StringStream>(source)), 0));
-		return;
-	}
-	return vm->return_result();
+	vm->return_result(vm->eval(xnew<xpeg::Executor>(vm->arg(0), XTAL_STRING("<eval>")), 0));
 }
 
 }
@@ -118,11 +114,19 @@ XTAL_PREBIND(Values){
 }
 
 XTAL_BIND(Values){
+	Xdef_method(block_next);
+	Xdef_method(op_at);
+	Xdef_method(size);
+	Xdef_method(op_eq);
+	Xdef_method(to_s);
+
+	/*
 	it->def_method(Xid2(block_next), &Values::block_next);
 	it->def_method(Xid2(op_at), &Values::op_at);
 	it->def_method(Xid2(size), &Values::size);
 	it->def_method(Xid2(op_eq), &Values::op_eq);
 	it->def_method(Xid2(to_s), &Values::to_s);
+	*/
 }
 
 XTAL_PREBIND(String){
@@ -145,7 +149,7 @@ XTAL_BIND(String){
 
 	Xdef_method2(op_range, cpp_class<String>());
 	Xdef_method2(op_cat, cpp_class<String>());
-	Xdef_method_alias2(op_cat_assign, &Self::op_cat, cpp_class<String>());
+	Xdef_method_alias2(op_cat_assign, cpp_class<String>(), &Self::op_cat);
 	Xdef_method2(op_eq, cpp_class<String>());
 	Xdef_method2(op_lt, cpp_class<String>());
 	Xdef_method2(op_in, cpp_class<ChRange>());
@@ -271,6 +275,17 @@ XTAL_BIND(InternedStringIter){
 }
 
 XTAL_BIND(Any){
+	Xdef_method_alias(class, &Any::get_class);
+	Xdef_method(get_class);
+	Xdef_method(object_name);
+	Xdef_method(object_name_list);
+	Xdef_method_alias(p, &Any_p);
+	Xdef_method_alias(to_s, &Any_to_s);
+	Xdef_method_alias2(op_in, cpp_class<Array>(), &Any_op_in_Array);
+	Xdef_method_alias2(op_in, cpp_class<Set>(), &Any_op_in_Set);
+	Xdef_method2(op_eq, cpp_class<Any>());
+
+	/*
 	it->def_method(Xid2(class), &Any::get_class);
 	it->def_method(Xid2(get_class), &Any::get_class);
 	it->def_method(Xid2(object_name), &Any::object_name);
@@ -280,6 +295,7 @@ XTAL_BIND(Any){
 	it->def_method(Xid2(op_in), &Any_op_in_Array, cpp_class<Array>());
 	it->def_method(Xid2(op_in), &Any_op_in_Set, cpp_class<Set>());
 	it->def_method(Xid2(op_eq), &Any::op_eq, cpp_class<Any>()); 
+	*/
 }
 
 XTAL_BIND2(Any){
@@ -1043,10 +1059,6 @@ XTAL_PREBIND(StdoutStream){
 }
 
 XTAL_PREBIND(StderrStream){
-	it->inherit(cpp_class<Stream>());
-}
-
-XTAL_PREBIND(InteractiveStream){
 	it->inherit(cpp_class<Stream>());
 }
 

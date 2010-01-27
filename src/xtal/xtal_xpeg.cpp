@@ -6,45 +6,83 @@ namespace xtal{ namespace xpeg{
 
 enum{ NFA_STATE_START = 0, NFA_STATE_FINAL = 1 };
 
-void Executor::reset(const AnyPtr& stream_or_iterator){
-	if(stream_or_iterator->is(cpp_class<Stream>())){
-		scanner_ = xnew<StreamScanner>(ptr_cast<Stream>(stream_or_iterator));
+void Executor::reset(const AnyPtr& source, const StringPtr& source_name){
+	if(const StreamPtr& stream = ptr_cast<Stream>(source)){
+		stream_ = stream;
 	}
-	else if(stream_or_iterator->is(cpp_class<String>())){
-		scanner_ = xnew<StreamScanner>(xnew<StringStream>(ptr_cast<String>(stream_or_iterator)));
+	else if(const StringPtr& string = ptr_cast<String>(source)){
+		stream_ = xnew<StringStream>(string);
 	}
 	else{
-		scanner_ = xnew<IteratorScanner>(stream_or_iterator);
+		stream_ = null;	
 	}
+
+	source_name_ = source_name;
 
 	cap_ = xnew<Map>();
 	tree_ = xnew<TreeNode>();
 	errors_ = null;
-	begin_ = 0;
+	pos_begin_ = 0;
 	match_begin_ = 0;
 	match_end_ = 0;
+
+
+	num_ = 0;
+	begin_ = 0;
+	max_ = 0;
+
+	mm_ = xnew<MemoryStream>();
+	pos_ = 0;
+	read_ = 0;
+	base_ = 0;
+	record_pos_ = (uint_t)-1;
+
+	n_ch_ = XTAL_STRING("\n");
+	r_ch_ = XTAL_STRING("\r");
+
+	lineno_ = 1;
+
+	expand();
+}
+
+Executor::~Executor(){
+	for(uint_t i=0; i<num_; ++i){
+		for(int j=0, sz=ONE_BLOCK_SIZE; j<sz; ++j){
+			begin_[i][j] = null;
+		}
+
+		xfree(begin_[i], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
+	}
+	xfree(begin_, sizeof(AnyPtr*)*max_);
 }
 
 bool Executor::match(const AnyPtr& pattern){
 	const NFAPtr& nfa = fetch_nfa(elem(pattern));
-	begin_ = scanner_->pos();
+	pos_begin_ = pos();
 	for(;;){
-		match_begin_ = scanner_->pos();
+		match_begin_ = pos();
 		if(match_inner(nfa)){
-			match_end_ = scanner_->pos();
+			match_end_ = pos();
 			return !errors_;
 		}
 
-		if(scanner_->eos()){
+		if(eos()){
 			return false;
 		}
 
-		scanner_->read();
+		read();
 	}
 }
 
 bool Executor::parse(const AnyPtr& pattern){
 	return match_inner(fetch_nfa(elem(pattern))) && (!errors_ || errors_->empty());
+}
+
+int_t Executor::do_read(AnyPtr* buffer, int_t max){
+	if(stream_){
+		return stream_->read_charactors(buffer, max); 
+	}
+	return 0;
 }
 
 AnyPtr Executor::captures(){
@@ -75,12 +113,12 @@ AnyPtr Executor::captures_values(){
 
 StringPtr Executor::at(const StringPtr& key){
 	if(raweq(key, empty_id)){
-		return unchecked_ptr_cast<Scanner>(scanner_)->capture(match_begin_, match_end_);
+		return capture(match_begin_, match_end_);
 	}
 	else{
 		if(const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key))){
 			if(temp->end>=0 && temp->end-temp->begin>0){
-				return scanner_->capture(temp->begin, temp->end);
+				return capture(temp->begin, temp->end);
 			}
 			else{
 				if(temp->end==temp->begin){
@@ -94,13 +132,13 @@ StringPtr Executor::at(const StringPtr& key){
 
 AnyPtr Executor::call(const StringPtr& key){
 	if(raweq(key, empty_id)){
-		return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(match_begin_, match_end_);
+		return capture_values(match_begin_, match_end_);
 	}
 	else{		
 		const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(key));
 
 		if(temp->end>=0 && temp->end-temp->begin>0){
-			return scanner_->capture_values(temp->begin, temp->end);
+			return capture_values(temp->begin, temp->end);
 		}
 		else{
 			if(temp->end==temp->begin){
@@ -114,27 +152,27 @@ AnyPtr Executor::call(const StringPtr& key){
 }
 
 StringPtr Executor::prefix(){
-	return unchecked_ptr_cast<Scanner>(scanner_)->capture(begin_, match_begin_);
+	return capture(pos_begin_, match_begin_);
 }
 
 StringPtr Executor::suffix(){
-	return unchecked_ptr_cast<Scanner>(scanner_)->capture(match_end_);
+	return capture(match_end_);
 }
 
 AnyPtr Executor::prefix_values(){
-	return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(begin_, match_begin_)->each();
+	return capture_values(pos_begin_, match_begin_)->each();
 }
 
 AnyPtr Executor::suffix_values(){
-	return unchecked_ptr_cast<Scanner>(scanner_)->capture_values(match_end_)->each();
+	return capture_values(match_end_)->each();
 }
 
-const AnyPtr& Executor::read(){
-	return scanner_->read();
+int_t Executor::peek_ascii(uint_t n){
+	return chvalue(peek(n));
 }
 
-const AnyPtr& Executor::peek(uint_t n){
-	return scanner_->peek(n);
+int_t Executor::read_ascii(){
+	return chvalue(read());
 }
 
 const StringPtr& Executor::peek_s(uint_t n){
@@ -145,48 +183,12 @@ const StringPtr& Executor::peek_s(uint_t n){
 	return unchecked_ptr_cast<String>(ret);
 }
 
-int_t Executor::peek_ascii(uint_t n){
-	const AnyPtr& ret = peek(n);
-	if(raweq(ret, undefined)){
-		return -1;
-	}
-	return unchecked_ptr_cast<String>(ret)->ascii();
-}
-
 const StringPtr& Executor::read_s(){
 	const AnyPtr& ret = read();
 	if(raweq(ret, undefined)){
 		return empty_string;
 	}
 	return unchecked_ptr_cast<String>(ret);
-}
-
-int_t Executor::read_ascii(){
-	const AnyPtr& ret = read();
-	if(raweq(ret, undefined)){
-		return -1;
-	}
-	return unchecked_ptr_cast<String>(ret)->ascii();		
-}
-
-uint_t Executor::lineno(){
-	return scanner_->lineno();
-}
-
-bool Executor::bos(){
-	return scanner_->bos();
-}
-
-bool Executor::eos(){
-	return scanner_->eos();
-}
-
-bool Executor::bol(){
-	return scanner_->bol();
-}
-
-bool Executor::eol(){
-	return scanner_->eol();
 }
 
 bool Executor::eat(const AnyPtr& v){
@@ -197,36 +199,13 @@ bool Executor::eat(const AnyPtr& v){
 	return false;
 }
 
-bool Executor::eat_ascii(int_t ch){
-	if(peek_s()->ascii()==ch){
-		skip();
-		return true;
-	}
-	return false;
-}
-
-void Executor::skip_eol(){
-	return scanner_->skip_eol();
-}
-
-void Executor::skip(uint_t n){
-	scanner_->skip(n);
-}
-
-void Executor::skip(){
-	scanner_->read();
-}
-
 void Executor::error(const AnyPtr& message, int_t line){
 	if(!errors_){
 		errors_ = xnew<Array>();
 	}
 
 	if(errors_->size()<10){
-		errors_->push_back(Xf("%(lineno)d:%(message)s")->call(
-			Named(Xid(lineno), line==0 ? lineno() : line),
-			Named(Xid(message), message)
-		));
+		errors_->push_back(Xf("%s:%d:%s")->call(source_name_, line==0 ? lineno() : line, message));
 	}
 }
 
@@ -250,12 +229,12 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	// メモ化したい
 	// (スキャナーの位置、NFAのポインタ値) がキー
 	Key key;
-	key.pos = scanner_->pos();
+	key.pos = pos();
 	key.ptr = nfa.get();
 
 	memotable_t::iterator it=memotable_.find(key);
 	if(it!=memotable_.end()){
-		scanner_->load(it->second.state);
+		load(it->second.state);
 		tree_->op_cat_assign(it->second.tree);
 		return true;
 	}
@@ -269,7 +248,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 
 	bool match = false;
 	State match_pos = {0, 0};
-	State first_pos = scanner_->save();
+	State first_pos = save();
 
 	push(mins, NFA_STATE_START, nodenum, first_pos);
 
@@ -289,7 +268,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 
 		bool fail = true;
 		for(const TransPtr* tr=&state.trans; *tr; tr=&(*tr)->next){
-			scanner_->load(pos);
+			load(pos);
 
 			if(se.nodes<tree_->size()){
 				tree_->resize(se.nodes);
@@ -297,7 +276,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 
 			// パース成功
 			if(test((*tr)->ch)){
-				push(mins, (*tr)->to, tree_->size(), scanner_->save());
+				push(mins, (*tr)->to, tree_->size(), save());
 				fail = false;
 			}
 		}
@@ -333,13 +312,13 @@ bool Executor::match_inner(const AnyPtr& anfa){
 		value.state = match_pos;
 		value.tree = tree_->slice(nodenum, tree_->size()-nodenum);
 		memotable_[key] = value;
-		scanner_->load(match_pos);
+		load(match_pos);
 		return true;
 	}
 
 	tree_->resize(nodenum);
 
-	scanner_->load(first_pos);
+	load(first_pos);
 	return false;
 }
 
@@ -365,38 +344,38 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_ANY){
-			if(scanner_->eos()){ return false; }
-			scanner_->read();
+			if(eos()){ return false; }
+			read();
 			return !e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_BOS){
-			return scanner_->bos()!=e->inv;
+			return bos()!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_EOS){
-			return scanner_->eos()!=e->inv;
+			return eos()!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_BOL){
-			return scanner_->bol()!=e->inv;
+			return bol()!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_EOL){
-			if(!scanner_->eol()){ return e->inv; }
-			scanner_->skip_eol();
+			if(!eol()){ return e->inv; }
+			skip_eol();
 			return !e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_EQL){
-			if(scanner_->eos()){ return false; }
-			if(raweq(scanner_->read(), e->param1)){ return !e->inv; }
+			if(eos()){ return false; }
+			if(raweq(read(), e->param1)){ return !e->inv; }
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_INT_RANGE){
-			if(scanner_->eos()){ return false; }
-			const AnyPtr& a = scanner_->peek();
+			if(eos()){ return false; }
+			const AnyPtr& a = peek();
 			if(rawtype(a)==TYPE_INT){
 				return unchecked_ptr_cast<Int>(a)->op_in(unchecked_ptr_cast<IntRange>(e->param1))!=e->inv;
 			}
@@ -404,8 +383,8 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_FLOAT_RANGE){
-			if(scanner_->eos()){ return false; }
-			const AnyPtr& a = scanner_->peek();
+			if(eos()){ return false; }
+			const AnyPtr& a = peek();
 			if(rawtype(a)==TYPE_FLOAT){
 				return unchecked_ptr_cast<Float>(a)->op_in(unchecked_ptr_cast<FloatRange>(e->param1))!=e->inv;
 			}
@@ -413,8 +392,8 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_CH_RANGE){
-			if(scanner_->eos()){ return false; }
-			const AnyPtr& a = scanner_->read();
+			if(eos()){ return false; }
+			const AnyPtr& a = read();
 			if(type(a)==TYPE_SMALL_STRING){
 				return unchecked_ptr_cast<String>(a)->op_in(unchecked_ptr_cast<ChRange>(e->param1))!=e->inv;
 			}
@@ -422,20 +401,20 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_PRED){
-			if(scanner_->eos()){ return false; }
-			if(e->param1->call(scanner_->read())){ return !e->inv; }
+			if(eos()){ return false; }
+			if(e->param1->call(read())){ return !e->inv; }
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_CH_SET){
-			if(scanner_->eos()){ return false; }
+			if(eos()){ return false; }
 			const MapPtr& data = unchecked_ptr_cast<Map>(e->param1);
-			if(data->at(scanner_->read())){ return !e->inv; }
+			if(data->at(read())){ return !e->inv; }
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_CALL){
-			if(scanner_->eos()){ return false; }
+			if(eos()){ return false; }
 			AnyPtr ret = e->param1->call(to_smartptr(this));
 			return (ret || raweq(ret, undefined))!=e->inv;
 		}
@@ -447,33 +426,33 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_LOOKAHEAD){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			Scanner::State state = scanner_->save();
+			State state = save();
 			bool ret = match_inner(nfa);
-			scanner_->load(state);
+			load(state);
 			return ret!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_LOOKBEHIND){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			Scanner::State state = scanner_->save();
-			Scanner::State fict_state = state;
+			State state = save();
+			State fict_state = state;
 			fict_state.pos = fict_state.pos > (uint_t)ivalue(e->param2) ? fict_state.pos-e->param3 : 0;
-			scanner_->load(fict_state);
+			load(fict_state);
 			bool ret = match_inner(nfa);
-			scanner_->load(state);
+			load(state);
 			return ret!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_LEAF){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			int_t pos = scanner_->pos();
+			int_t ipos = pos();
 			if(match_inner(nfa)){
 				if(tree_){
 					if(e->param3!=0){
-						tree_->push_back(scanner_->capture_values(pos, scanner_->pos()));
+						tree_->push_back(capture_values(ipos, pos()));
 					}
 					else{
-						tree_->push_back(scanner_->capture(pos, scanner_->pos()));
+						tree_->push_back(capture(ipos, pos()));
 					}
 				}
 				return !e->inv;
@@ -483,7 +462,7 @@ bool Executor::test(const AnyPtr& ae){
 
 		XTAL_CASE(Element::TYPE_NODE){
 			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			//int_t pos = scanner_->pos();
+			//int_t pos = pos();
 			if(tree_){
 				int_t nodenum = tree_->size() - e->param3;
 				if(nodenum<0){ nodenum = 0; }
@@ -491,7 +470,7 @@ bool Executor::test(const AnyPtr& ae){
 				if(match_inner(nfa)){
 					TreeNodePtr node = xnew<TreeNode>();
 					node->set_tag(e->param2->to_s()->intern());
-					node->set_lineno(scanner_->lineno());
+					node->set_lineno(lineno());
 					node->assign(tree_->splice(nodenum, tree_->size()-nodenum));
 					tree_->push_back(node);
 					return !e->inv;
@@ -508,14 +487,14 @@ bool Executor::test(const AnyPtr& ae){
 		XTAL_CASE(Element::TYPE_BACKREF){
 			const SmartPtr<Cap>& temp = unchecked_ptr_cast<Cap>(cap_->at(e->param1));
 			if(temp && temp->end>=0 && temp->end-temp->begin>0){
-				return (scanner_->eat_capture(temp->begin, temp->end))!=e->inv;
+				return (eat_capture(temp->begin, temp->end))!=e->inv;
 			}
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_ERROR){
 			if(errors_){
-				errors_->push_back(e->param1->call(Named(Xid(line), scanner_->lineno())));
+				errors_->push_back(e->param1->call(Named(Xid(line), lineno())));
 			}
 			return !e->inv;
 		}
@@ -524,39 +503,10 @@ bool Executor::test(const AnyPtr& ae){
 	return false;
 }
 
-////////////////////////////////////////////////////////////////////////
 
-Scanner::Scanner(){
-	num_ = 0;
-	begin_ = 0;
-	max_ = 0;
+/////
 
-	mm_ = xnew<MemoryStream>();
-	pos_ = 0;
-	read_ = 0;
-	base_ = 0;
-	record_pos_ = -1;
-
-	n_ch_ = XTAL_STRING("\n");
-	r_ch_ = XTAL_STRING("\r");
-
-	lineno_ = 1;
-
-	expand();
-}
-
-Scanner::~Scanner(){
-	for(uint_t i=0; i<num_; ++i){
-		for(int j=0, sz=ONE_BLOCK_SIZE; j<sz; ++j){
-			begin_[i][j] = null;
-		}
-
-		xfree(begin_[i], sizeof(AnyPtr)*ONE_BLOCK_SIZE);
-	}
-	xfree(begin_, sizeof(AnyPtr*)*max_);
-}
-
-const AnyPtr& Scanner::peek(uint_t n){
+const AnyPtr& Executor::peek(uint_t n){
 	while(pos_+n >= read_){
 		uint_t now_read = 0;
 
@@ -576,14 +526,9 @@ const AnyPtr& Scanner::peek(uint_t n){
 	return access(pos_+n);
 }
 
-const AnyPtr& Scanner::read(){
+const AnyPtr& Executor::read(){
 	const AnyPtr& ret = peek();
-	if(raweq(ret, r_ch_)){
-		if(rawne(peek(1), n_ch_)){
-			lineno_++;
-		}
-	}
-	else if(raweq(ret, n_ch_)){
+	if(raweq(ret, n_ch_)){
 		lineno_++;
 	}
 
@@ -591,7 +536,7 @@ const AnyPtr& Scanner::read(){
 	return  ret;
 }
 
-bool Scanner::bol(){
+bool Executor::bol(){
 	if(pos_==0){
 		return true;
 	}
@@ -600,18 +545,22 @@ bool Scanner::bol(){
 	return raweq(ch, n_ch_) || raweq(ch, r_ch_);
 }
 
-bool Scanner::eol(){
+bool Executor::eol(){
 	const AnyPtr& ch = peek();
 	return raweq(ch, r_ch_) || raweq(ch, n_ch_);
 }
 
-void Scanner::skip(uint_t n){
+void Executor::skip(uint_t n){
 	for(uint_t i=0; i<n; ++i){
 		read();
 	}
 }
 
-void Scanner::skip_eol(){
+void Executor::skip(){
+	read();
+}
+
+void Executor::skip_eol(){
 	const AnyPtr& ch = peek();
 	if(raweq(ch, r_ch_)){
 		if(raweq(peek(1), n_ch_)){
@@ -626,7 +575,7 @@ void Scanner::skip_eol(){
 	}
 }
 
-ArrayPtr Scanner::capture_values(int_t begin, int_t end){
+ArrayPtr Executor::capture_values(int_t begin, int_t end){
 	ArrayPtr ret = xnew<Array>();
 	for(int_t i=begin; i<end; ++i){
 		ret->push_back(access(i));
@@ -634,7 +583,7 @@ ArrayPtr Scanner::capture_values(int_t begin, int_t end){
 	return ret;
 }
 
-ArrayPtr Scanner::capture_values(int_t begin){
+ArrayPtr Executor::capture_values(int_t begin){
 	ArrayPtr ret = xnew<Array>();
 	int_t saved = pos_;
 	pos_ = begin;
@@ -645,7 +594,7 @@ ArrayPtr Scanner::capture_values(int_t begin){
 	return ret;
 }
 	
-StringPtr Scanner::capture(int_t begin, int_t end){
+StringPtr Executor::capture(int_t begin, int_t end){
 	mm_->clear();
 	for(int_t i=begin; i<end; ++i){
 		mm_->put_s(access(i)->to_s());
@@ -653,7 +602,7 @@ StringPtr Scanner::capture(int_t begin, int_t end){
 	return mm_->to_s();
 }
 
-StringPtr Scanner::capture(int_t begin){
+StringPtr Executor::capture(int_t begin){
 	mm_->clear();
 	int_t saved = pos_;
 	pos_ = begin;
@@ -664,7 +613,7 @@ StringPtr Scanner::capture(int_t begin){
 	return mm_->to_s();
 }
 
-bool Scanner::eat_capture(int_t begin, int_t end){
+bool Executor::eat_capture(int_t begin, int_t end){
 	for(int_t i=begin; i<end; ++i){
 		if(rawne(peek(i-begin), access(i))){
 			return false;
@@ -674,21 +623,21 @@ bool Scanner::eat_capture(int_t begin, int_t end){
 	return true;
 }
 
-void Scanner::begin_record(){
+void Executor::begin_record(){
 	record_pos_ = pos_;
 }
 
-StringPtr Scanner::end_record(){
+StringPtr Executor::end_record(){
 	if(record_pos_<0){
 		return empty_string;
 	}
 
 	int_t begin = record_pos_;
-	record_pos_ = -1;
+	record_pos_ = (uint_t)-1;
 	return capture(begin, pos_);
 }
 
-bool Scanner::eat_ascii(int_t ch){
+bool Executor::eat_ascii(int_t ch){
 	if(peek_ascii()==ch){
 		read_ascii();
 		return true;
@@ -696,7 +645,7 @@ bool Scanner::eat_ascii(int_t ch){
 	return false;
 }
 
-void Scanner::expand(){
+void Executor::expand(){
 	if(max_==num_){
 		uint_t newmax = max_ + max_/2 + 4;
 		AnyPtr** newp = (AnyPtr**)xmalloc(sizeof(AnyPtr*)*newmax);
@@ -721,7 +670,7 @@ void Scanner::expand(){
 	num_++;
 }
 	
-void Scanner::bin(){
+void Executor::bin(){
 	if(record_pos_<0){
 		return;
 	}
@@ -741,28 +690,7 @@ void Scanner::bin(){
 	}
 }
 
-IteratorScanner::IteratorScanner(const AnyPtr& iter)
-	:iter_(iter->send(Xid(each))){}
-
-int_t IteratorScanner::do_read(AnyPtr* buffer, int_t max){
-	if(!iter_){
-		return 0;
-	}
-
-	const VMachinePtr& vm = vmachine();
-	for(int_t i=0; i<max; ++i){
-		vm->setup_call(2);
-		iter_->rawsend(vm, Xid(block_next));
-		iter_ = vm->result(0);
-		if(!iter_){
-			vm->cleanup_call();
-			return i;
-		}
-		buffer[i] = vm->result(1);
-		vm->cleanup_call();
-	}
-	return max;
-}
+/////////////////////////////////////////////////
 	
 NFA::NFA(const ElementPtr& node){
 	e_ = xnew<Element>(Element::TYPE_INVALID);
@@ -908,17 +836,17 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Element::Element(u8 type)
-	:type(type), param1(null), param2(null), param3(0), inv(false){}
+Element::Element(Type type)
+	:type((u8)type), inv(false), param1(null), param2(null), param3(0){}
 
-Element::Element(u8 type, const AnyPtr& param1)
-	:type(type), param1(param1), param2(null), param3(0), inv(false){}
+Element::Element(Type type, const AnyPtr& param1)
+	:type((u8)type), inv(false), param1(param1), param2(null), param3(0){}
 
-Element::Element(u8 type, const AnyPtr& param1, const AnyPtr& param2)
-	:type(type), param1(param1), param2(param2), param3(0), inv(false){}
+Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2)
+	:type((u8)type), inv(false), param1(param1), param2(param2), param3(0){}
 
-Element::Element(u8 type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
-	:type(type), param1(param1), param2(param2), param3(param3), inv(false){}
+Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
+	:type((u8)type), inv(false), param1(param1), param2(param2), param3(param3){}
 	
 Element::~Element(){}
 
@@ -1053,7 +981,7 @@ ElementPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ re
 
 ElementPtr inv(const AnyPtr& left){
 	ElementPtr e = elem(left);
-	ElementPtr ret = xnew<Element>(e->type, e->param1, e->param2, e->param3);
+	ElementPtr ret = xnew<Element>((Element::Type)e->type, e->param1, e->param2, e->param3);
 	ret->inv = !e->inv;
 	return ret;
 }

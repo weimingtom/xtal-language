@@ -494,6 +494,8 @@ template<class T>
 struct AlignCalc{
 	char c;
 	T t;
+
+	AlignCalc();
 };
 
 template<class T>
@@ -583,7 +585,6 @@ class Stream;
 class MemoryStream;
 class PointerStream;
 class StringStream;
-class InteractiveStream;
 class Fun;
 class Method;
 class Fiber;
@@ -621,7 +622,6 @@ typedef SmartPtr<Stream> StreamPtr;
 typedef SmartPtr<MemoryStream> MemoryStreamPtr;
 typedef SmartPtr<PointerStream> PointerStreamPtr;
 typedef SmartPtr<StringStream> StringStreamPtr;
-typedef SmartPtr<InteractiveStream> InteractiveStreamPtr;
 typedef SmartPtr<Fun> FunPtr;
 typedef SmartPtr<Method> MethodPtr;
 typedef SmartPtr<Fiber> FiberPtr;
@@ -678,9 +678,6 @@ typedef SmartPtr<Trans> TransPtr;
 
 struct NFA;
 typedef SmartPtr<NFA> NFAPtr;
-
-class Scanner;
-typedef SmartPtr<Scanner> ScannerPtr;
 
 }
 

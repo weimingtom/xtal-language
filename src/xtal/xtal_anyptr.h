@@ -112,9 +112,9 @@ struct XNewXBase_INHERITED_OTHER{
 	template<class T>
 	void init();
 
-	void* ptr(){ return value->ptr; }
+	void* ptr(){ return pvalue->ptr; }
 
-	UserTypeHolder* value;
+	UserTypeHolder* pvalue;
 };
 
 template<class T>
@@ -122,7 +122,7 @@ void XNewXBase_INHERITED_OTHER::init(){
 	typedef UserTypeHolderSub<T> holder;
 	holder* p = new(object_xmalloc<holder>()) holder();
 	p->ptr = static_cast<T*>(static_cast<void*>(p->buffer()));
-	value = p;
+	pvalue = p;
 	p->template set_virtual_members<holder>();
 }
 
@@ -239,46 +239,17 @@ public:
 	SmartPtr(const XNewXBase<INHERITED_ANY>& m);
 	SmartPtr(const XNewXBase<INHERITED_OTHER>& m);
 	
-	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_BASE>& m);
-	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_RCBASE>& m);
-	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_ANY>& m);
-	SmartPtr<Any>& operator =(const XNewXBase<INHERITED_OTHER>& m);
-
 protected:
 
 	SmartPtr(noinit_t)
 		:Any(noinit_t()){}
 
-	void init_smartptr(const Any& a){
-		*static_cast<Any*>(this) = a;
-	}
-
-	void init_smartptr(RefCountingBase* p);
-
 	void init_smartptr(Base* p);
 
-	template<class T>
-	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_BASE>){
-		value_.init_base(p);
-		inc_ref_count_force(*this);
-	}
-
-	template<class T>
-	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_RCBASE>){
-		value_.init_base(p);
-		inc_ref_count_force(*this);
-	}
-
-	template<class T>
-	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_ANY>){
-		*static_cast<Any*>(this) = *p;
-	}
-
-	template<class T>
-	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_ANYPTR>){
-		*static_cast<Any*>(this) = *p;
-		inc_ref_count_force(*this);
-	}
+	void set_unknown_pointer(const Base* p, TypeIntType<INHERITED_BASE>);
+	void set_unknown_pointer(const RefCountingBase* p, TypeIntType<INHERITED_RCBASE>);
+	void set_unknown_pointer(const Any* p, TypeIntType<INHERITED_ANY>);
+	void set_unknown_pointer(const AnyPtr* p, TypeIntType<INHERITED_ANYPTR>);
 
 	template<class T>
 	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_OTHER>){

@@ -109,16 +109,6 @@ private:
 	
 };
 
-class CompileErrors{
-public:	
-
-	void init(const StringPtr& source_file_name);
-	void error(int_t line, const AnyPtr& message);
-
-	ArrayPtr errors;
-	StringPtr source_file_name;
-};
-
 /*
 * XTALプログラムソースをトークン列に変換して取り出す
 */
@@ -130,7 +120,7 @@ public:
 	/**
 	* \brief 初期化
 	*/
-	void init(const xpeg::ScannerPtr& scanner, CompileErrors* error);
+	void init(const xpeg::ExecutorPtr& scanner);
 	
 	/**
 	* \brief 読み進める
@@ -156,13 +146,8 @@ public:
 	/**
 	* \brief 現在の行数を返す
 	*/
-	int_t lineno(){ return lineno_; }
+	int_t lineno(){ return reader_->lineno(); }
 	
-	/**
-	* \brief 現在の行数を設定する
-	*/
-	void set_lineno(int_t v){ lineno_ = v; }
-
 	int_t read_direct();
 
 	StringPtr read_string(int_t open, int_t close);
@@ -186,7 +171,7 @@ public:
 	}
 
 private:
-	
+
 	void do_read();
 
 	void push_token(int_t v);
@@ -212,7 +197,7 @@ private:
 
 private:
 
-	xpeg::ScannerPtr reader_;
+	xpeg::ExecutorPtr reader_;
 	MapPtr keyword_map_;
 	MemoryStreamPtr ms_;
 
@@ -222,9 +207,7 @@ private:
 	uint_t pos_;
 	uint_t read_;
 	uint_t left_space_;
-	uint_t lineno_;
 
-	CompileErrors* error_;
 };
 
 class Parser{
@@ -232,21 +215,17 @@ public:
 
 	Parser();
 
-	ExprPtr parse(const xpeg::ScannerPtr& scanner, CompileErrors* error);
+	ExprPtr parse(const xpeg::ExecutorPtr& scanner);
 
-	ExprPtr parse_stmt(const xpeg::ScannerPtr& scanner, CompileErrors* error);
+	ExprPtr parse_stmt(const xpeg::ExecutorPtr& scanner);
 
-	ExprPtr parse_expr(const xpeg::ScannerPtr& scanner, CompileErrors* error);
+	ExprPtr parse_expr(const xpeg::ExecutorPtr& scanner);
 
 public:
 
 	int_t lineno(){ return lexer_.lineno(); }
 
 private:
-
-	bool eos(){
-		return eat(-1);
-	}
 	
 	const Token& lexer_read();
 	const Token& lexer_peek();
@@ -295,7 +274,8 @@ public:
 	ExprBuilder eb_;
 	Lexer lexer_;
 	bool expr_end_flag_;
-	CompileErrors* error_;
+
+	xpeg::ExecutorPtr reader_;
 };
 
 

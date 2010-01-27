@@ -43,28 +43,7 @@ inline bool test_ident_rest(int ch){
 	return test_ident_first(ch) || test_digit(ch) || ch=='_';
 }
 
-inline bool test_delim(int ch){
-	return ch==';' || ch==':' || ch=='}' || ch==']' || ch==')' || ch==',';
-}
-
-
-void CompileErrors::init(const StringPtr& file_name){
-	errors = xnew<Array>();
-	source_file_name = file_name;
-}
-
-void CompileErrors::error(int_t lineno, const AnyPtr& message){
-	if(errors->size()<10){
-		errors->push_back(Xf("%(file)s:%(lineno)d:%(message)s")->call(
-			Named(Xid(file), source_file_name),
-			Named(Xid(lineno), lineno),
-			Named(Xid(message), message)
-		));
-	}
-}
-
 Lexer::Lexer(){
-	set_lineno(1);
 	read_ = 0;
 	pos_ = 0;
 
@@ -110,9 +89,8 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
 }	
 
-void Lexer::init(const xpeg::ScannerPtr& scanner, CompileErrors* error){
+void Lexer::init(const xpeg::ExecutorPtr& scanner){
 	reader_ = scanner;
-	error_ = error;
 }
 
 const Token& Lexer::read(){
@@ -125,7 +103,7 @@ const Token& Lexer::peek(){
 	if(pos_==read_){
 		do_read();
 		if(pos_==read_){
-			static Token end(Token::TYPE_TOKEN, (int_t)-1, (int_t)0);
+			static Token end(Token::TYPE_TOKEN, (int_t)0, (int_t)0);
 			return end;
 		}
 	}
@@ -188,7 +166,7 @@ int_t Lexer::parse_integer(){
 			ret += reader_->read_ascii()-'0';
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -205,7 +183,7 @@ float_t Lexer::parse_finteger(){
 			ret += reader_->read_ascii()-'0';
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -230,7 +208,7 @@ int_t Lexer::parse_hex(){
 			ret += reader_->read_ascii()-'A' + 10;
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -238,7 +216,7 @@ int_t Lexer::parse_hex(){
 	}
 
 	if(test_ident_rest(reader_->peek_ascii())){
-		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 16)));
+		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 16)));
 	}
 
 	return ret;		
@@ -252,7 +230,7 @@ int_t Lexer::parse_oct(){
 			ret += reader_->read_ascii()-'0';
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -260,7 +238,7 @@ int_t Lexer::parse_oct(){
 	}
 
 	if(test_ident_rest(reader_->peek_ascii()) || ('8'<=reader_->peek_ascii() && reader_->peek_ascii()<='9')){
-		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 8)));
+		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 8)));
 	}
 
 	return ret;		
@@ -274,7 +252,7 @@ int_t Lexer::parse_bin(){
 			ret += reader_->read_ascii()-'0';
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -282,7 +260,7 @@ int_t Lexer::parse_bin(){
 	}
 
 	if(test_ident_rest(reader_->peek_ascii()) || ('2'<=reader_->peek_ascii() && reader_->peek_ascii()<='9')){
-		error_->error(lineno(), Xt("XCE1015")->call(Named(Xid(n), 2)));
+		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 2)));
 	}
 
 	return ret;
@@ -295,7 +273,7 @@ void Lexer::parse_number_suffix(int_t val){
 	else{
 
 		if(test_ident_rest(reader_->peek_ascii())){
-			error_->error(lineno(), Xt("XCE1010"));
+			reader_->error(Xt("XCE1010"));
 		}
 
 		push_int_token(val);
@@ -309,7 +287,7 @@ void Lexer::parse_number_suffix(float_t val){
 	else{
 	
 		if(test_ident_rest(reader_->peek_ascii())){
-			error_->error(lineno(), Xt("XCE1010"));
+			reader_->error(Xt("XCE1010"));
 		}
 
 		push_float_token(val);
@@ -346,7 +324,7 @@ void Lexer::parse_number(){
 
 	float_t ival = parse_finteger();
 	
-	reader_->read_ascii(); // skip '.'
+	reader_->skip(); // skip '.'
 
 	float_t scale = 1;
 	float_t fval = 0;
@@ -356,7 +334,7 @@ void Lexer::parse_number(){
 			fval += (reader_->read_ascii()-'0')*scale;
 		}
 		else if(reader_->peek_ascii()=='_'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			break;
@@ -367,14 +345,14 @@ void Lexer::parse_number(){
 	int_t e = 1;
 	if(reader_->eat_ascii('e') || reader_->eat_ascii('E')){
 		if(reader_->eat_ascii('-')){
-			e=-1;
+			e = -1;
 		}
 		else{
 			reader_->eat_ascii('+');
 		}
 
 		if(!test_digit(reader_->peek_ascii())){
-			error_->error(lineno(), Xt("XCE1014"));
+			reader_->error(Xt("XCE1014"));
 		}
 
 		e *= parse_integer();
@@ -398,7 +376,7 @@ void Lexer::do_read(){
 
 			XTAL_DEFAULT{
 
-				if(ch!=-1 && test_ident_first(ch)){
+				if(ch!=0 && test_ident_first(ch)){
 					IDPtr identifier = parse_identifier();
 					if(const AnyPtr& key = keyword_map_->at(identifier)){
 						push_keyword_token(identifier, ivalue(key));
@@ -412,39 +390,39 @@ void Lexer::do_read(){
 					return;
 				}
 				else{
-					reader_->read_ascii();
+					reader_->skip();
 					push_token(ch);
 				}
 			}
 			
 			XTAL_CASE('+'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('+')){ push_token(c2('+', '+')); }
 				else if(reader_->eat_ascii('=')){ push_token(c2('+', '=')); }
 				else{ push_token('+'); }
 			}
 			
 			XTAL_CASE('-'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('-')){ push_token(c2('-', '-')); }
 				else if(reader_->eat_ascii('=')){ push_token(c2('-', '=')); }
 				else{ push_token('-'); }
 			}
 			
 			XTAL_CASE('~'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('~', '=')); }
 				else{ push_token('~'); }
 			}
 			
 			XTAL_CASE('*'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('*', '=')); }
 				else{ push_token('*'); }
 			}
 			
 			XTAL_CASE('/'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){
 					push_token(c2('/', '='));
 				}
@@ -453,16 +431,14 @@ void Lexer::do_read(){
 						int_t ch = reader_->read_ascii();
 						if(ch=='\r'){
 							reader_->eat_ascii('\n');
-							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
 						else if(ch=='\n'){
-							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
-						else if(ch==-1){
+						else if(ch==0){
 							break;
 						}
 					}
@@ -473,10 +449,9 @@ void Lexer::do_read(){
 						int_t ch = reader_->read_ascii();
 						if(ch=='\r'){
 							reader_->eat_ascii('\n');
-							set_lineno(lineno()+1);
 						}
 						else if(ch=='\n'){
-							set_lineno(lineno()+1);
+
 						}
 						else if(ch=='*'){
 							if(reader_->eat_ascii('/')){
@@ -484,8 +459,8 @@ void Lexer::do_read(){
 								break;
 							}
 						}
-						else if(ch==-1){
-							error_->error(lineno(), Xt("XCE1021"));
+						else if(ch==0){
+							reader_->error(Xt("XCE1021"));
 							break;
 						}
 					}
@@ -497,22 +472,20 @@ void Lexer::do_read(){
 			}			
 			
 			XTAL_CASE('#'){
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('!')){
 					for(;;){
 						int_t ch = reader_->read_ascii();
 						if(ch=='\r'){
 							reader_->eat_ascii('\n');
-							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
 						else if(ch=='\n'){
-							set_lineno(lineno()+1);
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
-						else if(ch==-1){
+						else if(ch==0){
 							break;
 						}
 					}
@@ -524,33 +497,33 @@ void Lexer::do_read(){
 			}			
 				
 			XTAL_CASE('^'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('^', '=')); }
 				else{ push_token('^'); }
 			}
 
 			XTAL_CASE('%'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('%', '=')); }
 				else{ push_token('%'); }
 			}
 			
 			XTAL_CASE('&'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('&', '=')); }
 				else if(reader_->eat_ascii('&')){ push_token(c2('&', '&')); }
 				else{ push_token('&'); }
 			}
 			
 			XTAL_CASE('|'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){ push_token(c2('|', '=')); }
 				else if(reader_->eat_ascii('|')){ push_token(c2('|', '|')); }
 				else{ push_token('|'); }
 			}
 						
 			XTAL_CASE('>'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('>')){
 					if(reader_->eat_ascii('>')){
 						if(reader_->eat_ascii('=')){
@@ -573,7 +546,7 @@ void Lexer::do_read(){
 			}
 			
 			XTAL_CASE('<'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('<')){
 					if(reader_->eat_ascii('=')){
 						push_token(c3('<','<','='));
@@ -587,7 +560,7 @@ void Lexer::do_read(){
 				}
 				else if(reader_->eat_ascii('.')){
 					if(!reader_->eat_ascii('.')){
-						error_->error(lineno(), Xt("XCE1001"));					
+						reader_->error(Xt("XCE1001"));					
 					}
 
 					if(reader_->eat_ascii('<')){
@@ -603,7 +576,7 @@ void Lexer::do_read(){
 			}
 			
 			XTAL_CASE('='){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){
 					if(reader_->eat_ascii('=')){
 						push_token(c3('=', '=', '='));
@@ -618,7 +591,7 @@ void Lexer::do_read(){
 			}
 			
 			XTAL_CASE('!'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('=')){
 					if(reader_->eat_ascii('=')){
 						push_token(c3('!', '=', '='));
@@ -630,8 +603,8 @@ void Lexer::do_read(){
 				else if(reader_->peek_ascii()=='i'){
 					if(reader_->peek_ascii(1)=='s'){
 						if(!test_ident_rest(reader_->peek_ascii(2))){
-							reader_->read_ascii();
-							reader_->read_ascii();
+							reader_->skip();
+							reader_->skip();
 							push_token(c3('!', 'i', 's'));
 						}
 						else{
@@ -640,8 +613,8 @@ void Lexer::do_read(){
 					}
 					else if(reader_->peek_ascii(1)=='n'){
 						if(!test_ident_rest(reader_->peek_ascii(2))){
-							reader_->read_ascii();
-							reader_->read_ascii();
+							reader_->skip();
+							reader_->skip();
 							push_token(c3('!', 'i', 'n'));
 						}
 						else{
@@ -663,7 +636,7 @@ void Lexer::do_read(){
 					return;
 				}
 				
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii('.')){
 					if(reader_->eat_ascii('.')){ push_token(c3('.', '.', '.')); }
 					else if(reader_->eat_ascii('<')){ push_token(c3('.', '.', '<')); }
@@ -674,7 +647,7 @@ void Lexer::do_read(){
 			}
 			
 			XTAL_CASE(':'){ 
-				reader_->read_ascii();
+				reader_->skip();
 				if(reader_->eat_ascii(':')){
 					if(reader_->eat_ascii('?')){ push_token(c3(':', ':', '?')); }
 					else{ push_token(c2(':', ':')); }
@@ -683,7 +656,7 @@ void Lexer::do_read(){
 			}
 
 			XTAL_CASE('\''){ 
-				reader_->read_ascii();
+				reader_->skip();
 				push_identifier_token(read_string('\'', '\''));
 			}
 
@@ -704,19 +677,19 @@ void Lexer::do_read(){
 			}
 			*/
 #else
-			XTAL_CASE((char_t)239){
+			XTAL_CASE((uchar_t)239){
 				if((uchar_t)reader_->peek_ascii(1)==(uchar_t)187 && (uchar_t)reader_->peek_ascii(2)==(uchar_t)191){
-					reader_->read_ascii();
-					reader_->read_ascii();
-					reader_->read_ascii();
+					reader_->skip();
+					reader_->skip();
+					reader_->skip();
 					continue;
 				}
 				push_token(ch);
 			}
 #endif
 
-			XTAL_CASE(-1){
-				push_token(-1);
+			XTAL_CASE(0){
+				push_token(0);
 			}
 		}
 			
@@ -729,16 +702,14 @@ void Lexer::deplete_space(){
 	for(;;){
 		int_t ch = reader_->peek_ascii();
 		if(ch=='\r'){
-			reader_->read_ascii();
+			reader_->skip();
 			reader_->eat_ascii('\n');
-			set_lineno(lineno()+1);
 		}
 		else if(ch=='\n'){
-			reader_->read_ascii();
-			set_lineno(lineno()+1);
+			reader_->skip();
 		}
 		else if(ch==' ' || ch=='\t'){
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			return;
@@ -776,8 +747,8 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 			++depth;
 		}
 
-		if(ch==-1){
-			error_->error(lineno(), Xt("XCE1011"));
+		if(ch==0){
+			reader_->error(Xt("XCE1011"));
 			break;
 		}
 
@@ -800,40 +771,36 @@ StringPtr Lexer::read_string(int_t open, int_t close){
 				
 				XTAL_CASE('\r'){ 
 					if(reader_->peek_ascii()=='\n'){
-						reader_->read_ascii();
+						reader_->skip();
 					}
 
 					chs[n++] = '\r';
 					chs[n++] = '\n';
-					set_lineno(lineno()+1);
 				}
 				
 				XTAL_CASE('\n'){ 
 					chs[n++] = '\n';
-					set_lineno(lineno()+1);
 				}
 			}
 			ms_->write(chs, n*sizeof(char_t));
-			reader_->read_ascii();
+			reader_->skip();
 		}
 		else{
 			if(ch=='\r'){
 				if(reader_->peek_ascii()=='\n'){
-					reader_->read_ascii();
+					reader_->skip();
 				}
 				char_t chs[2];
 				int_t n = 0;
 				chs[n++] = '\r';
 				chs[n++] = '\n';
 				ms_->write(chs, n*sizeof(char_t));
-				set_lineno(lineno()+1);
 			}
 			else if(ch=='\n'){
 				char_t chs[2];
 				int_t n = 0;
 				chs[n++] = '\n';
 				ms_->write(chs, n*sizeof(char_t));
-				set_lineno(lineno()+1);
 			}
 			else{
 				const StringPtr& str = (StringPtr&)ach;
@@ -915,43 +882,51 @@ Parser::Parser(){
 	expr_end_flag_ = false;
 }
 
-ExprPtr Parser::parse(const xpeg::ScannerPtr& scanner, CompileErrors* error){
-	error_ = error;
-	lexer_.init(scanner, error_);
+ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
+	lexer_.init(scanner);
+	reader_ = scanner;
 
 	parse_toplevel();
 
-	if(error_->errors->size()!=0){
+	if(scanner->errors()){
 		return nul<Expr>();
 	}
 
 	return ep(eb_.pop());
 }
 
-ExprPtr Parser::parse_stmt(const xpeg::ScannerPtr& scanner, CompileErrors* error){
-	error_ = error;
-	lexer_.init(scanner, error_);
+ExprPtr Parser::parse_stmt(const xpeg::ExecutorPtr& scanner){
+	lexer_.init(scanner);
+	reader_ = scanner;
 
 	if(!parse_stmt()){
 		lexer_read();
 	}
 
-	if(error_->errors->size()!=0){
+	if(scanner->errors()){
+		return nul<Expr>();
+	}
+
+	if(eb_.empty()){
 		return nul<Expr>();
 	}
 
 	return ep(eb_.pop());
 }
 
-ExprPtr Parser::parse_expr(const xpeg::ScannerPtr& scanner, CompileErrors* error){
-	error_ = error;
-	lexer_.init(scanner, error_);
+ExprPtr Parser::parse_expr(const xpeg::ExecutorPtr& scanner){
+	lexer_.init(scanner);
+	reader_ = scanner;
 
 	if(!parse_expr()){
 		return nul<Expr>();
 	}
 
-	if(error_->errors->size()!=0){
+	if(scanner->errors()){
+		return nul<Expr>();
+	}
+
+	if(eb_.empty()){
 		return nul<Expr>();
 	}
 
@@ -975,7 +950,7 @@ void Parser::expect(int_t ch){
 		lexer_.bin();
 		return;
 	}
-	error_->error(lineno(), Xt("XCE1002")->call(Named(Xid(char), lexer_peek().to_s())));
+	reader_->error(Xt("XCE1002")->call(Named(Xid(char), lexer_peek().to_s())));
 }
 
 bool Parser::eat(int_t ch){
@@ -1076,7 +1051,7 @@ bool Parser::parse_term(){
 
 						default:
 							close = open;
-							error_->error(lineno(), Xt("XCE1017"));
+							reader_->error(Xt("XCE1017"));
 							break;
 					}
 
@@ -1137,7 +1112,7 @@ bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 	bool one = pri < op;
 	bool two = pri-l_space < op - r_space;
 	if(one!=two){
-		error_->error(lineno(), Xt("XCE1028"));
+		reader_->error(Xt("XCE1028"));
 	}
 	return one;
 }
@@ -1601,7 +1576,7 @@ bool Parser::parse_assign_stmt(){
 							return true;
 						}
 						else{
-							error_->error(lineno(), Xt("XCE1001"));
+							reader_->error(Xt("XCE1001"));
 						}
 						
 						return true;
@@ -1709,7 +1684,7 @@ bool Parser::parse_stmt(){
 
 void Parser::expect_parse_stmt(){
 	if(!parse_stmt()){
-		error_->error(lineno(), Xt("XCE1001"));
+		reader_->error(Xt("XCE1001"));
 		eb_.push(null);
 	}
 }
@@ -1717,7 +1692,7 @@ void Parser::expect_parse_stmt(){
 void Parser::parse_assert(){
 	lexer_.begin_record();
 	if(parse_expr()){
-		IDPtr ref_str = lexer_.end_record();
+		StringPtr ref_str = lexer_.end_record();
 		eb_.push(KIND_STRING);
 		eb_.push(ref_str);
 		eb_.splice(EXPR_STRING, 2);
@@ -1757,7 +1732,7 @@ void Parser::parse_stmts(){
 
 void Parser::expect_parse_identifier(){
 	if(!parse_identifier()){
-		error_->error(lineno(), Xt("XCE1001"));
+		reader_->error(Xt("XCE1001"));
 		eb_.push(null);
 	}
 }
@@ -1908,7 +1883,7 @@ void Parser::parse_class(int_t kind){
 			}
 			else{
 				eb_.pop();
-				error_->error(lineno(), Xt("XCE1001"));
+				reader_->error(Xt("XCE1001"));
 			}
 		}
 		else{
@@ -2104,7 +2079,7 @@ bool Parser::parse_expr(){
 
 void Parser::expect_parse_expr(int_t pri, int_t space){
 	if(!parse_expr(pri, space)){
-		error_->error(lineno(), Xt("XCE1001"));
+		reader_->error(Xt("XCE1001"));
 		eb_.push(null);
 	}
 }

@@ -176,9 +176,9 @@ void FixedAllocator::print(std::size_t block_size){
 
 void SmallObjectAllocator::fit(){
 	return;
-	for(int i=0; i<POOL_SIZE; ++i){
-		pool_[i].fit(i+1);
-	}	
+//	for(int i=0; i<POOL_SIZE; ++i){
+//		pool_[i].fit(i+1);
+//	}	
 }
 
 void SmallObjectAllocator::release(){

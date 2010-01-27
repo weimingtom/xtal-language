@@ -11,7 +11,7 @@ enum{
 };
 
 Serializer::Serializer(const StreamPtr& s)
-	:stream_(s), map_(xnew<Map>()){
+	:map_(xnew<Map>()), stream_(s){
 }
 
 Serializer::~Serializer(){}

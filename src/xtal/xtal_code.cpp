@@ -194,9 +194,11 @@ StringPtr Code::inspect(){
 	ms->seek(0);
 	return ms->get_s(ms->size());
 	
-#endif
+#else
 
 	return empty_string;
+
+#endif
 }
 
 StringPtr Code::inspect_range(int_t start, int_t end){

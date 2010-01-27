@@ -12,16 +12,16 @@
 	
 using namespace xtal;
 
-class InteractiveScanner : public xpeg::Scanner{
+class InteractiveStream : public Stream{
 public:
 
-	InteractiveScanner(){
+	InteractiveStream(){
 		line_ = 1;
 		continue_stmt_ = false;
 		continue_line_ = false;
 	}
 	
-	virtual int_t do_read(AnyPtr* buffer, int_t max){
+	virtual uint_t read_charactors(AnyPtr* buffer, uint_t max){
 		if(continue_line_){
 			return read_line(buffer, max);
 		}
@@ -37,8 +37,6 @@ public:
 		
 			return read_line(buffer, max);
 		}
-
-		return 0;
 	}
 
 	int_t read_line(AnyPtr* buffer, int_t max){
@@ -50,7 +48,7 @@ public:
 				return i;
 			}
 
-			if(raweq(buffer[i], n_ch_)){
+			if(raweq(buffer[i], intern(XTAL_STRING("\n")))){
 				line_++;
 				continue_line_ = false;
 				return i+1;
@@ -70,15 +68,20 @@ private:
 	bool continue_line_;
 };
 
+XTAL_PREBIND(InteractiveStream){
+	it->inherit(cpp_class<Stream>());
+}
+
 void interactive_compile_loop(const VMachinePtr& vm){
-	SmartPtr<InteractiveScanner> p = unchecked_ptr_cast<InteractiveScanner>(vm->arg(0));
-	vm->eval(p, 0);
+	SmartPtr<InteractiveStream> stream = unchecked_ptr_cast<InteractiveStream>(vm->arg(0));
+	SmartPtr<xpeg::Executor> exec = unchecked_ptr_cast<xpeg::Executor>(vm->arg(1));
+	vm->eval(exec, 0);
 	
 	XTAL_CATCH_EXCEPT(e){
 		stdout_stream()->println(e);
 	}
 
-	p->end_stmt();
+	stream->end_stmt();
 	vm->return_result();
 }
 
@@ -92,7 +95,9 @@ void interactive_compile(){
 		}
 	))){
 		code->def_fun(XTAL_STRING("interactive_compile_loop"), &interactive_compile_loop);
-		code->call(xnew<InteractiveScanner>());
+		StreamPtr stream = xnew<InteractiveStream>();
+		xpeg::ExecutorPtr exec = xnew<xpeg::Executor>(stream, XTAL_STRING("ix"));
+		code->call(stream, exec);
 	}
 }
 

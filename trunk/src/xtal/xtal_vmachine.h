@@ -9,20 +9,6 @@
 
 namespace xtal{
 
-template<class R>
-struct ReturnResult{
-	static void call(VMachine* vm, const R& r){ 
-		vm->return_result(r); 
-	}
-};
-
-template<class R> 
-struct ReturnResult<R&>{
-	static void call(VMachine* vm, const R& r){ 
-		vm->return_result(&r); 
-	}	
-};
-
 /**
 * \brief 関数呼び出しで、名前付き引数として渡すためのクラス
 *
@@ -42,6 +28,8 @@ struct Named{
 	*/
 	Named()
 		:name(nul<ID>()), value(undefined){}
+private:
+	void operator=(const Named&);
 };
 
 struct NamedParam{
@@ -396,7 +384,7 @@ public:
 
 	int_t call_stack_size();
 
-	AnyPtr eval(const xpeg::ScannerPtr& scanner, uint_t n = 0);
+	AnyPtr eval(const xpeg::ExecutorPtr& scanner, uint_t n = 0);
 
 	AnyPtr eval_local_variable(const IDPtr& var, uint_t call_n);
 	bool eval_set_local_variable(const IDPtr& var, const AnyPtr& value, uint_t call_n);

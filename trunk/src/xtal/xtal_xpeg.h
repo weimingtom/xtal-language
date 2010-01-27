@@ -26,14 +26,16 @@ public:
 	* \xbind
 	* \brief ストリームかイテレータを受け取り構築する
 	*/
-	Executor(const AnyPtr& stream_or_iterator = null){
-		reset(stream_or_iterator);
+	Executor(const AnyPtr& source = null, const StringPtr& source_name = empty_string){
+		reset(source, source_name);
 	}
+
+	~Executor();
 
 	/**
 	* \brief 設定をリセットする。
 	*/
-	void reset(const AnyPtr& stream_or_iterator);
+	void reset(const AnyPtr& source, const StringPtr& source_name = empty_string);
 
 	/**
 	* \brief 渡されたパターンがマッチするか調べる。
@@ -144,41 +146,57 @@ public:
 	const StringPtr& peek_s(uint_t n = 0);
 
 	int_t peek_ascii(uint_t n = 0);
-
+	
 	struct State{
 		uint_t lineno;
 		uint_t pos;
 	};
 
 	/**
-	* \brief マークをつける
+	* \brief 現在の位置状態を取得する
 	*/
-	State save();
+	State save(){
+		State state;
+		state.lineno = lineno_;
+		state.pos = pos_;
+		return state;
+	}
 
 	/**
-	* \brief マークを付けた位置に戻る
+	* \brief 指定した位置状態に戻る
 	*/
-	void load(const State& state);
+	void load(const State& state){
+		pos_ = state.pos;
+		lineno_ = state.lineno;
+	}
 
 	/**
 	* \brief 現在の位置を返す
 	*/
-	uint_t pos();
+	uint_t pos(){
+		return pos_;
+	}
 
 	/**
 	* \brief 現在の行数を返す
 	*/
-	uint_t lineno();
+	uint_t lineno(){
+		return lineno_;
+	}
 
 	/**
 	* \brief 一番最初の位置にあるか調べる
 	*/
-	bool bos();
+	bool bos(){
+		return pos()==0;
+	}
 
 	/**
 	* \brief 終了しているか調べる
 	*/
-	bool eos();
+	bool eos(){
+		return raweq(peek(), undefined);
+	}
 
 	/**
 	* \brief 行頭か調べる
@@ -230,10 +248,9 @@ private:
 	MapPtr cap_;
 
 	TreeNodePtr tree_;
-	ScannerPtr scanner_;
 	ArrayPtr errors_;
 
-	int_t begin_;
+	int_t pos_begin_;
 	int_t match_begin_;
 	int_t match_end_;
 
@@ -261,20 +278,21 @@ public:
 
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
-		m & tree_ & errors_ & cap_ & scanner_;
+		m & tree_ & errors_ & cap_;
+		m & mm_;
+		for(uint_t i=base_, sz=num_; i<sz; ++i){
+			for(int j=0; j<ONE_BLOCK_SIZE; ++j){
+				m & begin_[i-base_][j];
+			}
+		}
 	}
 
 private:
 
 	typedef Hashtable<Key, Value, Fun> memotable_t;
 	memotable_t memotable_;
-};
 
-/*
-* \brief 一文字づつ読んで処理していくのに適したメソッドを提供するクラス
-*/
-class Scanner : public Base{
-
+private:
 	enum{
 		ONE_BLOCK_SHIFT = 8,
 		ONE_BLOCK_SIZE = 1<<ONE_BLOCK_SHIFT,
@@ -282,70 +300,6 @@ class Scanner : public Base{
 	};
 
 public:
-
-	Scanner();
-
-	~Scanner();
-
-	typedef Executor::State State;
-
-	/**
-	* \brief 現在の位置状態を取得する
-	*/
-	State save(){
-		State state;
-		state.lineno = lineno_;
-		state.pos = pos_;
-		return state;
-	}
-
-	/**
-	* \brief 指定した位置状態に戻る
-	*/
-	void load(const State& state){
-		pos_ = state.pos;
-		lineno_ = state.lineno;
-	}
-
-	/**
-	* \brief 現在の位置を返す
-	*/
-	uint_t pos(){
-		return pos_;
-	}
-
-	/**
-	* \brief 現在の行数を返す
-	*/
-	uint_t lineno(){
-		return lineno_;
-	}
-
-	/**
-	* \brief n個先の要素を覗き見る
-	*/
-	const AnyPtr& peek(uint_t n = 0);
-	
-	/**
-	* \brief ひとつ読み取る
-	*/
-	const AnyPtr& read();
-
-	bool bos(){
-		return pos()==0;
-	}
-
-	bool eos(){
-		return raweq(peek(), undefined);
-	}
-
-	bool bol();
-
-	bool eol();
-
-	void skip(uint_t n);
-
-	void skip_eol();
 
 	void bin();
 
@@ -363,14 +317,6 @@ public:
 
 public:
 
-	int_t peek_ascii(uint_t n = 0){
-		return chvalue(peek(n));
-	}
-	
-	int_t read_ascii(){
-		return chvalue(read());
-	}
-
 	/**
 	* \brief 文字列の記録を開始する
 	*/
@@ -381,21 +327,9 @@ public:
 	*/
 	StringPtr end_record();
 
-	bool eat_ascii(int_t ch);
-
-	void on_visit_members(Visitor& m){
-		Base::on_visit_members(m);
-		m & mm_;
-		for(uint_t i=base_, sz=num_; i<sz; ++i){
-			for(int j=0; j<ONE_BLOCK_SIZE; ++j){
-				m & begin_[i-base_][j];
-			}
-		}
-	}
-
 protected:
 
-	virtual int_t do_read(AnyPtr* buffer, int_t max) = 0;
+	int_t do_read(AnyPtr* buffer, int_t max);
 
 	void expand();
 
@@ -408,11 +342,15 @@ protected:
 
 protected:
 
+	StreamPtr stream_;
+	StringPtr source_name_;
+
 	IDPtr n_ch_;
 	IDPtr r_ch_;
 	
 	MemoryStreamPtr mm_;
 	AnyPtr** begin_;
+
 	uint_t num_;
 	uint_t max_;
 	uint_t pos_;
@@ -420,40 +358,6 @@ protected:
 	uint_t base_;
 	uint_t lineno_;
 	uint_t record_pos_;
-};
-
-class StreamScanner : public Scanner{
-public:
-
-	StreamScanner(const StreamPtr& stream)
-		:stream_(stream){}
-
-	virtual int_t do_read(AnyPtr* buffer, int_t max){
-		return stream_->read_charactors(buffer, max);
-	}
-
-	void on_visit_members(Visitor& m){
-		Scanner::on_visit_members(m);
-		m & stream_;
-	}
-
-private:
-	StreamPtr stream_;
-};
-
-class IteratorScanner : public Scanner{
-public:
-
-	IteratorScanner(const AnyPtr& iter);
-
-	virtual int_t do_read(AnyPtr* buffer, int_t max);
-
-	void on_visit_members(Visitor& m){
-		Scanner::on_visit_members(m);
-		m & iter_;
-	}
-private:
-	AnyPtr iter_;
 };
 
 struct Element : public Base{
@@ -499,15 +403,15 @@ struct Element : public Base{
 	};
 
 	u8 type;
-	u8 param3;
 	bool inv;
 	AnyPtr param1;
 	AnyPtr param2;
+	int_t param3;
 
-	Element(u8 type);
-	Element(u8 type, const AnyPtr& param1);
-	Element(u8 type, const AnyPtr& param1, const AnyPtr& param2);
-	Element(u8 type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
+	Element(Type type);
+	Element(Type type, const AnyPtr& param1);
+	Element(Type type, const AnyPtr& param1, const AnyPtr& param2);
+	Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
 
 	~Element();
 

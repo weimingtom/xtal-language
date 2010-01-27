@@ -43,11 +43,6 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 	const param_types_holder_n& pth = *value_.pth();
 	int_t param_n = pth.param_n;
 
-	if(vm->ordered_arg_count()!=param_n){
-		set_arg_error_except(vm, empty_id, vm->ordered_arg_count(), param_n, pth.param_n);
-		return;
-	}
-
 	UninitializedAny args[16];
 	
 	{ // check arg type
@@ -61,25 +56,27 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 			if(anycls!=*pth.param_types[0]){
 				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
 				if(!arg->is(cls)){
-					vm->set_except(argument_error(object_name(), 0, cls, arg->get_class()));
+					vm->set_except(argument_error(Xid(NativeFunction), 0, cls, arg->get_class()));
 					return;
 				}
 			}
 		}
 
-		if(pth.extendable){
-			vm->set_local_variable(param_n-1, vm->make_arguments(param_n-1));
-		}
+		if(!pth.vm){
+			if(pth.extendable){
+				vm->set_local_variable(param_n-1, vm->make_arguments(param_n-1));
+			}
 
-		for(int_t i=0; i<param_n; ++i){
-			const AnyPtr& arg = vm->arg_unchecked(i);
-			args[i+1] = (UninitializedAny&)arg;
+			for(int_t i=0; i<param_n; ++i){
+				const AnyPtr& arg = vm->arg_unchecked(i);
+				args[i+1] = (UninitializedAny&)arg;
 
-			if(anycls!=*pth.param_types[0]){
-				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
-				if(!arg->is(cls)){ 
-					vm->set_except(argument_error(object_name(), i+1, cls, arg->get_class()));
-					return;
+				if(anycls!=*pth.param_types[0]){
+					const ClassPtr& cls = cpp_class(*pth.param_types[0]);
+					if(!arg->is(cls)){ 
+						vm->set_except(argument_error(object_name(), i+1, cls, arg->get_class()));
+						return;
+					}
 				}
 			}
 		}
@@ -91,6 +88,7 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
 	value_.init_rcbase(TYPE, this);
 
+	vm_ = pth.vm;
 	fun_ = pth.fun;
 	if(pth.size==1){
 		val_size_ = 0;
@@ -219,23 +217,25 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 			}
 		}
 
-		if(extendable_){
-			vm->set_local_variable(param_n_-1, vm->inner_make_arguments(params, param_n_-1));
-		}
-		else{
-			if(vm->ordered_arg_count()!=param_n_){
-				vm->adjust_args(params, param_n_);
+		if(!vm_){
+			if(extendable_){
+				vm->set_local_variable(param_n_-1, vm->inner_make_arguments(params, param_n_-1));
 			}
-		}
+			else{
+				if(vm->ordered_arg_count()!=param_n_){
+					vm->adjust_args(params, param_n_);
+				}
+			}
 
-		for(int_t i=0; i<param_n_; ++i){
-			const AnyPtr& arg = vm->arg_unchecked(i);
-			args[i+1] = (UninitializedAny&)arg;
+			for(int_t i=0; i<param_n_; ++i){
+				const AnyPtr& arg = vm->arg_unchecked(i);
+				args[i+1] = (UninitializedAny&)arg;
 
-			if(param_types[i+1]){
-				if(!arg->is(to_smartptr(param_types[i+1]))){ 
-					vm->set_except(argument_error(object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
-					return;
+				if(param_types[i+1]){
+					if(!arg->is(to_smartptr(param_types[i+1]))){ 
+						vm->set_except(argument_error(object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
+						return;
+					}
 				}
 			}
 		}

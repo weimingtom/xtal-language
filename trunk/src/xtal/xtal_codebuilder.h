@@ -22,9 +22,9 @@ public:
 	
 	CodePtr compile(const StreamPtr& stream, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
-	CodePtr compile(const xpeg::ScannerPtr& scanner, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
+	CodePtr compile(const xpeg::ExecutorPtr& scanner, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
-	CodePtr eval_compile(const xpeg::ScannerPtr& scanner);
+	CodePtr eval_compile(const xpeg::ExecutorPtr& scanner);
 	CodePtr compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
 	AnyPtr errors();
@@ -234,14 +234,12 @@ public:
 	int_t append_identifier(const IDPtr& identifier);
 	int_t append_value(const AnyPtr& v);
 
+	void error(const AnyPtr& message);
 private:
 	MapPtr value_map_;
 	MapPtr identifier_map_;
 
 	MapPtr implicit_ref_map_;
-
-	CompileErrors errorimpl_;
-	CompileErrors* error_;
 	
 	Parser parser_;
 	CodePtr result_;

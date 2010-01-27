@@ -13,13 +13,15 @@ CodeBuilder::CodeBuilder(){
 
 CodeBuilder::~CodeBuilder(){}
 
+void CodeBuilder::error(const AnyPtr& message){
+	parser_.reader_->error(message, lineno());
+}
+
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
-	error_= &errorimpl_;
-	error_->init(source_file_name);
-	ExprPtr e = parser_.parse(xnew<xpeg::StreamScanner>(stream), error_);
+	ExprPtr e = parser_.parse(xnew<xpeg::Executor>(stream, source_file_name));
 
 	if(!stream->eos()){
-		error_->error(parser_.lineno(), Xt("XCE1001"));
+		error(Xt("XCE1001"));
 	}
 
 	if(!e){
@@ -32,10 +34,8 @@ CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_fi
 	return compile_toplevel(e, source_file_name);
 }
 
-CodePtr CodeBuilder::compile(const xpeg::ScannerPtr& scanner, const StringPtr& source_file_name){
-	error_= &errorimpl_;
-	error_->init(source_file_name);
-	ExprPtr e = parser_.parse(scanner, error_);
+CodePtr CodeBuilder::compile(const xpeg::ExecutorPtr& scanner, const StringPtr& source_file_name){
+	ExprPtr e = parser_.parse(scanner);
 
 	if(!e){
 		return nul<Code>();
@@ -46,10 +46,8 @@ CodePtr CodeBuilder::compile(const xpeg::ScannerPtr& scanner, const StringPtr& s
 	return compile_toplevel(e, source_file_name);
 }
 
-CodePtr CodeBuilder::eval_compile(const xpeg::ScannerPtr& scanner){
-	error_= &errorimpl_;
-	error_->init("<eval>");
-	ExprPtr e = parser_.parse_stmt(scanner, error_);
+CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& scanner){
+	ExprPtr e = parser_.parse_stmt(scanner);
 	if(!e){
 		return nul<Code>();
 	}
@@ -182,7 +180,7 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 		}
 	}
 
-	if(error_->errors->size()==0){
+	if(!parser_.reader_->errors()){
 		opt_jump();
 		result_->generated();
 		return result_;
@@ -289,7 +287,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 		}
 	}
 
-	if(error_->errors->size()==0){
+	if(!parser_.reader_->errors()){
 		opt_jump();
 		result_->generated();
 		return result_;
@@ -341,12 +339,12 @@ void CodeBuilder::opt_jump(){
 }
 
 AnyPtr CodeBuilder::errors(){
-	return error_->errors->each();
+	return parser_.reader_->errors();
 }
 
 void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 	if(t.op==255){
-		error_->error(lineno(), Xt("XCE1027"));
+		error(Xt("XCE1027"));
 	}
 
 	prev_inst_op_ = t.op;
@@ -394,7 +392,7 @@ int_t CodeBuilder::lookup_instance_variable(const IDPtr& key, bool must){
 	}
 
 	if(must || !eval_){
-		error_->error(lineno(), Xt("XCE1023")->call(Named(Xid(name), Xid(_)->cat(key))));
+		error(Xt("XCE1023")->call(Named(Xid(name), Xid(_)->cat(key))));
 		return 0;
 	}
 
@@ -597,7 +595,7 @@ void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t acces
 	if(number<0){
 		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
 			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
-				error_->error(lineno(), Xt("XCE1026")->call(Named(Xid(name), name)));
+				error(Xt("XCE1026")->call(Named(Xid(name), name)));
 				return;
 			}
 		}
@@ -671,7 +669,7 @@ int_t CodeBuilder::code_size(){
 
 void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, const ExprPtr& str, const ExprPtr& mes, int_t label, int_t stack_top){
 	if(is_comp_bin(e->bin_lhs()) || is_comp_bin(e->bin_rhs())){
-		error_->error(lineno(), Xt("XCE1025"));
+		error(Xt("XCE1025"));
 	}
 
 	int_t target = stack_top++;
@@ -891,7 +889,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 	}
 
 	if(ff().loops.empty()){
-		error_->error(lineno(), Xt("XCE1006"));
+		error(Xt("XCE1006"));
 	}
 	else{
 		if(label){
@@ -907,7 +905,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("XCE1006"));
+				error(Xt("XCE1006"));
 			}
 		}
 		else{
@@ -923,7 +921,7 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 			}
 
 			if(!found){
-				error_->error(lineno(), Xt("XCE1006"));
+				error(Xt("XCE1006"));
 			}
 		}
 	}
@@ -1136,7 +1134,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 
 	Xfor_cast(const ExprPtr& v, e->fun_params()){
 		if(!v->at(0) || (ep(v->at(0))->itag()!=EXPR_LVAR && ep(v->at(0))->itag()!=EXPR_IVAR)){
-			error_->error(lineno(), Xt("XCE1004"));
+			error(Xt("XCE1004"));
 			return int_t();
 		}
 
@@ -1145,7 +1143,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 		}
 		else{
 			if(named!=0){
-				error_->error(lineno(), Xt("XCE1005"));
+				error(Xt("XCE1005"));
 			}
 
 			ordered++;
@@ -1420,7 +1418,7 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-AnyPtr VMachine::eval(const xpeg::ScannerPtr& scanner, uint_t n){
+AnyPtr VMachine::eval(const xpeg::ExecutorPtr& scanner, uint_t n){
 	debug::CallerInfoPtr cp = caller(n+1);
 	if(!cp || !cp->fun()){
 		return undefined;

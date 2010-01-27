@@ -17,6 +17,8 @@ namespace xtal{
 class Stream : public Base{
 public:
 
+	virtual ~Stream(){}
+
 	/**
 	* \xbind
 	* \brief •¶š—ñstr‚ğƒXƒgƒŠ[ƒ€‚É—¬‚·

@@ -337,6 +337,10 @@ public:
 		return ret;
 	}
 
+	bool empty(){
+		return root_->empty();
+	}
+
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(ExprBuilder);
 private:

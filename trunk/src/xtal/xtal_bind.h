@@ -852,7 +852,7 @@ struct nfun_base<13, TFun, Method, R>
 template<class TFun>
 struct nfun_base1<TFun, 0, void , const VMachinePtr&>{
 	typedef TFun fun_type;
-	typedef typename param_types_holder1<Any, Any> fun_param_holder;
+	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
 	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
 		(*(TFun*)data)(
@@ -864,7 +864,7 @@ struct nfun_base1<TFun, 0, void , const VMachinePtr&>{
 template<class TFun, class C>
 struct nfun_base2<TFun, 1, void , C, const VMachinePtr&>{
 	typedef TFun fun_type;
-	typedef typename param_types_holder1<C, Any> fun_param_holder;
+	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
 	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
 		(*(TFun*)data)(
@@ -877,7 +877,7 @@ struct nfun_base2<TFun, 1, void , C, const VMachinePtr&>{
 template<class TFun, class R>
 struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
 	typedef TFun fun_type;
-	typedef typename param_types_holder1<Any, Any> fun_param_holder;
+	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
 	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
 		ReturnResult<R>::call(vm, (*(TFun*)data)(
@@ -889,7 +889,7 @@ struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
 template<class TFun, class R, class C>
 struct nfun_base2<TFun, 1, R , C, const VMachinePtr&>{
 	typedef TFun fun_type;
-	typedef typename param_types_holder1<C, Any> fun_param_holder;
+	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
 	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
 		ReturnResult<R>::call(vm, (*(TFun*)data)(
@@ -3030,7 +3030,7 @@ struct setter_functor{
 #define Xdef_method(fun) it->def_and_return(XTAL_L(#fun), XTAL_METHOD(&Self::fun))
 #define Xdef_method2(fun, secondary_key) it->def_and_return(XTAL_L(#fun), secondary_key, XTAL_METHOD(&Self::fun))
 #define Xdef_method_alias(fun, impl) it->def_and_return(XTAL_L(#fun), XTAL_METHOD(impl))
-#define Xdef_method_alias2(fun, impl, secondary_key) it->def_and_return(XTAL_L(#fun), secondary_key, XTAL_METHOD(impl))
+#define Xdef_method_alias2(fun, secondary_key, impl) it->def_and_return(XTAL_L(#fun), secondary_key, XTAL_METHOD(impl))
 
 }
 

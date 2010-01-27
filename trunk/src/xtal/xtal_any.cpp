@@ -174,7 +174,7 @@ const ClassPtr& Any::object_parent() const{
 		XTAL_CASE(TYPE_IVAR_GETTER){ return unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->object_parent(); }
 		XTAL_CASE(TYPE_IVAR_SETTER){ return unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->object_parent(); }
 	}
-	return nul<Class>();	
+//	return nul<Class>();	
 }
 
 void Any::set_object_parent(const ClassPtr& parent) const{

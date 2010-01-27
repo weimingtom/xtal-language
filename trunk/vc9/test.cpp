@@ -22,7 +22,7 @@ public:
     float x, y;
     TestGetterSetterBind(): x(0), y(0) {}
 
-	void foomethod(const char* str){
+	void foomethod(const char* str, const int&, TestGetterSetterBind&){
 	
 	}
 };
@@ -145,7 +145,7 @@ void test(){
 		foo.y = 100.5;
 		assert math::abs(foo.y-100.5)<0.001;
 
-		foo.foomethod("test");
+		//foo.foomethod("test");
 
 		mydata: lib::MyData;
 		mydata.a = 10;
@@ -632,6 +632,10 @@ XTAL_BIND(BinaryRecordType){
 
 struct Vec128{
 	__m128 a;
+
+	Vec128(){
+		a = _mm_set_ps(1.0f, 2.0f, 3.0f, 4.0f);
+	}
 };
 
 struct Spr{
@@ -648,7 +652,7 @@ struct SLp : public Base{
 
 
 
-void aaa(float v, const ArgumentsPtr& a){
+void aaa(int v, const ArgumentsPtr& a){
 	a->p();
 }
 
@@ -660,6 +664,8 @@ int main2(int argc, char** argv){
 	VMachine* vm = &*vmachine();
 
 	SmartPtr<Spr> s = xnew<Spr>();
+	Spr& p = unchecked_cast<Spr&>(s);
+
 //	_mm_add_ps(s->v.a, s->v.a);
 
 	//debug::enable();

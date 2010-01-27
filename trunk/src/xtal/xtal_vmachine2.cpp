@@ -304,7 +304,6 @@ void VMachine::adjust_args(Method* names){
 
 void VMachine::return_result(){
 	XTAL_ASSERT(!processed());
-	FunFrame& f = ff();
 	pop_ff();
 }
 
@@ -636,7 +635,6 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 	}
 
 	FunFrame& f = *fun_frames_[n];
-	FunFrame& pf = *fun_frames_[n+1];
 	int_t scope_lower = n==0 ? 0 : fun_frames_[n-1]->scope_lower;
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();

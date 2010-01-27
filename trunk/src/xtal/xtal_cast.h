@@ -30,6 +30,12 @@ struct Caster{
 };
 
 template<class T>
+struct Caster<T&>{
+	typedef T& type;
+	static type cast(const AnyPtr& a){ return (type)Caster<const T&>::cast(a); }
+};
+
+template<class T>
 struct Caster<const T*>{
 	typedef const T* type;
 	static type cast(const AnyPtr& a){ return &Caster<const T&>::cast(a); }
@@ -78,7 +84,14 @@ template<>\
 struct Caster<const Type&>{\
 	typedef Type type;\
 	static type cast(const AnyPtr& a){ return (type)cast_##XType(a); }\
+};\
+template<>struct Caster<Type&>{\
+	typedef Type& type;\
+private:\
+	static type cast(const AnyPtr& a);\
 }
+
+// 以下の型は参照型にキャストできない。const参照型にはキャストできる。
 
 XTAL_CAST_HELPER(char, Int);
 XTAL_CAST_HELPER(signed char, Int);

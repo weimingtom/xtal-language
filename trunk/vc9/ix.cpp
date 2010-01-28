@@ -78,6 +78,8 @@ void interactive_compile_loop(const VMachinePtr& vm){
 	vm->eval(exec, 0);
 	
 	XTAL_CATCH_EXCEPT(e){
+		exec->skip();
+		exec->clear_errors();
 		stdout_stream()->println(e);
 	}
 

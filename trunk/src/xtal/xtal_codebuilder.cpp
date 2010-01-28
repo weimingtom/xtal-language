@@ -47,7 +47,7 @@ CodePtr CodeBuilder::compile(const xpeg::ExecutorPtr& scanner, const StringPtr& 
 }
 
 CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& scanner){
-	ExprPtr e = parser_.parse_stmt(scanner);
+	ExprPtr e = parser_.parse_eval(scanner);
 	if(!e){
 		return nul<Code>();
 	}
@@ -464,7 +464,7 @@ void CodeBuilder::break_off(int_t n){
 		}
 
 		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.real_entry_num!=0 && (vf.kind==VarFrame::FRAME || vf.kind==VarFrame::TOPLEVEL)){
+		if(vf.real_entry_num!=0 && vf.kind!=VarFrame::TOPLEVEL && vf.kind==VarFrame::FRAME){
 			put_inst(InstScopeEnd());
 		}
 	}

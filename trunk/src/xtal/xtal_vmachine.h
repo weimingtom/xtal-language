@@ -753,6 +753,10 @@ public:
 	void on_visit_members(Visitor& m);
 	void on_gc_signal(int_t flag);
 
+	int_t fun_frame_size(){
+		return fun_frames_.size();
+	}
+
 protected:
 
 	void add_ref_count_members(int_t i);

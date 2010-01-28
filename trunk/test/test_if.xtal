@@ -153,7 +153,7 @@ class IfTest{
 			temp = 5;
 		}
 		else{
-			temp = 7
+			temp = 7;
 		}
 		assert(temp==7);
 			

@@ -708,7 +708,10 @@ int main2(int argc, char** argv){
 	}
 
 	if(CodePtr code = Xsrc((
-		arg[0](9);
+		a: 10;
+		a.p;
+
+		return "aaa";
 
 	))){
 		code->inspect()->p();
@@ -805,7 +808,7 @@ int main2(int argc, char** argv){
 #ifdef XTAL_USE_WCHAR
 	CodePtr code = compile_file("../utf16le-test/test.xtal_");
 #else
-	CodePtr code = compile_file("../test/test.xtal_");
+	CodePtr code = compile_file("../test/exec.xtal");
 #endif
 
 	XTAL_CATCH_EXCEPT(e){
@@ -827,8 +830,6 @@ int main2(int argc, char** argv){
 	lib()->member("test")->send("run_dir", "../test");
 #endif
 
-	//lib()->member("test")->send("run_file", "../test/test_xpeg.xtal");
-	//lib()->member("test")->send("print_result");
 	//*/
 #endif
 

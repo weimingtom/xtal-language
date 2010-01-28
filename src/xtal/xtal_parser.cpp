@@ -87,6 +87,70 @@ Lexer::Lexer(){
 	keyword_map_->set_at(Xid(public), (int_t)Token::KEYWORD_PUBLIC);
 	keyword_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
 	keyword_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
+
+	/*
+	">>>=",
+	"<..<",
+	">>>",
+	"<<=",
+	"<..",
+	"===",
+	"!==",
+	"!is",
+	"!in",
+	"...",
+	"..<",
+	"::?",
+	"++",
+	"+=",
+	"--",
+	"-=",
+	"~=",
+	"*=",
+	"/=",
+	"^=",
+	"%=",
+	"&=",
+	"&&",
+	"|=",
+	"||",
+	">>",
+	">=",
+	"<<",
+	"<=",
+	"==",
+	"!=",
+	"..",
+	".?",
+	"::",
+	"+",
+	"-",
+	"~",
+	"*",
+	"/",
+	"#",
+	"^",
+	"%",
+	"&",
+	"|",
+	">",
+	"<",
+	"=",
+	"!",
+	".",
+	":",
+	"[",
+	"]",
+	"(",
+	")",
+	"#",
+	"\"",
+	"'",
+	";",
+	"{",
+	"}",
+	"?"
+	*/
 }	
 
 void Lexer::init(const xpeg::ExecutorPtr& scanner){
@@ -99,15 +163,16 @@ const Token& Lexer::read(){
 	return ret;
 }
 
-const Token& Lexer::peek(){
-	if(pos_==read_){
+const Token& Lexer::peek(int_t n){
+	while(pos_+n >= read_){
+		int_t prev = read_;
 		do_read();
-		if(pos_==read_){
+		if(read_==prev){
 			static Token end(Token::TYPE_TOKEN, (int_t)0, (int_t)0);
 			return end;
 		}
 	}
-	return buf_[pos_ & BUF_MASK];
+	return buf_[(pos_+n) & BUF_MASK];
 }
 
 void Lexer::push_token(int_t v){
@@ -365,6 +430,8 @@ void Lexer::parse_number(){
 	parse_number_suffix(fval);
 }
 	
+//////////////////////////////////////////
+
 void Lexer::do_read(){
 	left_space_ = 0;
 	
@@ -667,15 +734,15 @@ void Lexer::do_read(){
 			}
 
 #ifdef XTAL_USE_WCHAR
-			/*
-			XTAL_CASE((char_t)0xFEFF){
+
+			XTAL_CASE((uchar_t)0xFEFF){
 				continue;
 			}
 
-			XTAL_CASE((char_t)0xFFFE){
+			XTAL_CASE((uchar_t)0xFFFE){
 				continue;
 			}
-			*/
+
 #else
 			XTAL_CASE((uchar_t)239){
 				if((uchar_t)reader_->peek_ascii(1)==(uchar_t)187 && (uchar_t)reader_->peek_ascii(2)==(uchar_t)191){
@@ -879,7 +946,7 @@ enum{//Expressions priority
 
 
 Parser::Parser(){
-	expr_end_flag_ = false;
+
 }
 
 ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
@@ -892,21 +959,6 @@ ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
 		return nul<Expr>();
 	}
 
-	return ep(eb_.pop());
-}
-
-ExprPtr Parser::parse_stmt(const xpeg::ExecutorPtr& scanner){
-	lexer_.init(scanner);
-	reader_ = scanner;
-
-	if(!parse_stmt()){
-		lexer_read();
-	}
-
-	if(scanner->errors()){
-		return nul<Expr>();
-	}
-
 	if(eb_.empty()){
 		return nul<Expr>();
 	}
@@ -914,13 +966,11 @@ ExprPtr Parser::parse_stmt(const xpeg::ExecutorPtr& scanner){
 	return ep(eb_.pop());
 }
 
-ExprPtr Parser::parse_expr(const xpeg::ExecutorPtr& scanner){
+ExprPtr Parser::parse_eval(const xpeg::ExecutorPtr& scanner){
 	lexer_.init(scanner);
 	reader_ = scanner;
 
-	if(!parse_expr()){
-		return nul<Expr>();
-	}
+	parse_stmt();
 
 	if(scanner->errors()){
 		return nul<Expr>();
@@ -1003,11 +1053,10 @@ bool Parser::parse_term(){
 						eb_.splice(EXPR_UNDEFINED, 0);
 					}
 					expect(')'); 
-					expr_end_flag_ = false; 
 					return true; 
 				}
 
-				XTAL_CASE('['){ parse_array();  expr_end_flag_ = false; return true; }
+				XTAL_CASE('['){ parse_array();  return true; }
 				XTAL_CASE('|'){ parse_lambda(); return true; }
 				XTAL_CASE(c2('|', '|')){ parse_lambda(true); return true; }
 
@@ -1117,12 +1166,17 @@ bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 	return one;
 }
 
+bool Parser::expr_end(){
+	const Token& prevch = lexer_.peek(-1);
+	return prevch.type()==Token::TYPE_TOKEN && prevch.ivalue()=='}';
+}
+
 bool Parser::parse_post(int_t pri, int_t space){
-	if(expr_end_flag_){
+	if(expr_end()){
 		const Token& ch = lexer_peek();
 
 		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
-			expr_end_flag_ = false;
+		
 		}
 		else{
 			return false;
@@ -1453,6 +1507,7 @@ void Parser::parse_while(){
 }
 
 bool Parser::parse_loop(){
+	// label: while(true){ // というパターンかをチェック
 	if(parse_var()){
 		const Token& ch = lexer_read(); // :の次を読み取る
 		if(ch.type()==Token::TYPE_KEYWORD){
@@ -1465,11 +1520,12 @@ bool Parser::parse_loop(){
 
 		lexer_.putback(ch);
 		if(parse_expr()){
-			if(!expr_end_flag_ && eat('{')){
+			if(!expr_end() && eat('{')){
 				parse_each();
 				return true;
 			}
 			else{
+				// 変数定義文だった
 				AnyPtr temp = eb_.pop();
 				eb_.splice(EXPR_LVAR, 1);
 				eb_.push(temp);
@@ -1545,7 +1601,7 @@ bool Parser::parse_assign_stmt(){
 	}
 
 	if(parse_expr()){
-		if(expr_end_flag_){
+		if(expr_end()){
 			return true;
 		}
 		
@@ -1617,11 +1673,17 @@ bool Parser::parse_assign_stmt(){
 	return false;
 }
 
-bool Parser::parse_stmt(){
-	expr_end_flag_ = false; 
+void Parser::expect_stmt_end(){
+	if(!expr_end()){
+		if(!reader_->eos()){
+			expect(';');
+		}
+	}
+}
 
+bool Parser::parse_stmt(){
 	if(parse_loop()){
-		eat(';'); 
+		expect_stmt_end();
 		return true;
 	}
 
@@ -1639,17 +1701,32 @@ bool Parser::parse_stmt(){
 				XTAL_CASE(Token::KEYWORD_SWITCH){ parse_switch(); return true; }
 				XTAL_CASE(Token::KEYWORD_IF){ parse_if(); return true; }
 				XTAL_CASE(Token::KEYWORD_TRY){ parse_try(); return true; }
-				XTAL_CASE(Token::KEYWORD_THROW){ expect_parse_expr(); eb_.splice(EXPR_THROW, 1); eat(';'); return true; }	
-				XTAL_CASE(Token::KEYWORD_ASSERT){ parse_assert(); eat(';'); return true; }
+
+				XTAL_CASE(Token::KEYWORD_THROW){ 
+					expect_parse_expr(); 
+					eb_.splice(EXPR_THROW, 1);
+					expect_stmt_end(); 
+					return true; 
+				}	
+
+				XTAL_CASE(Token::KEYWORD_ASSERT){ 
+					parse_assert(); 
+					expect_stmt_end(); 
+					return true; 
+				}
+
 				XTAL_CASE(Token::KEYWORD_RETURN){ 
-					parse_exprs(); eb_.splice(EXPR_RETURN, 1); eat(';'); return true; 
+					parse_exprs(); 
+					eb_.splice(EXPR_RETURN, 1); 
+					expect_stmt_end(); 
+					return true; 
 				}
 				
 				XTAL_CASE(Token::KEYWORD_CONTINUE){ 
 					if(!parse_identifier())
 						eb_.push(null); 
 					eb_.splice(EXPR_CONTINUE, 1); 
-					eat(';'); 
+					expect_stmt_end();
 					return true; 
 				}
 
@@ -1657,7 +1734,7 @@ bool Parser::parse_stmt(){
 					if(!parse_identifier())
 						eb_.push(null); 
 					eb_.splice(EXPR_BREAK, 1); 
-					eat(';'); 
+					expect_stmt_end();
 					return true; 
 				}
 
@@ -1675,7 +1752,7 @@ bool Parser::parse_stmt(){
 	
 	lexer_.putback();
 	if(parse_assign_stmt()){
-		eat(';');
+		expect_stmt_end();
 		return true;
 	}
 
@@ -1769,6 +1846,10 @@ bool Parser::parse_var(){
 	}
 	return false;
 }
+
+void Parser::parse_expr_statement(){
+
+}
 	
 void Parser::parse_toplevel(){
 	ExprBuilder::State state = eb_.begin();
@@ -1781,7 +1862,6 @@ void Parser::parse_scope(){
 	parse_stmts();
 	eb_.end(EXPR_SCOPE, state);
 	expect('}');
-	expr_end_flag_ = true;
 }
 
 void Parser::parse_secondary_key(){
@@ -1827,35 +1907,35 @@ void Parser::parse_class(int_t kind){
 			parse_secondary_key();
 			parse_fun(KIND_METHOD);
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(eat(Token::KEYWORD_FUN)){
 			expect_parse_identifier();
 			parse_secondary_key();
 			parse_fun(KIND_FUN);
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(eat(Token::KEYWORD_FIBER)){
 			expect_parse_identifier();
 			parse_secondary_key();
 			parse_fun(KIND_FIBER);
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(eat(Token::KEYWORD_CLASS)){
 			expect_parse_identifier();
 			parse_secondary_key();
 			parse_class(KIND_CLASS);
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(eat(Token::KEYWORD_SINGLETON)){
 			expect_parse_identifier();
 			parse_secondary_key();
 			parse_class(KIND_SINGLETON);
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(parse_identifier()){ // メンバ定義
 			parse_secondary_key();
@@ -1868,7 +1948,7 @@ void Parser::parse_class(int_t kind){
 			}
 
 			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			eat(';');
+			expect_stmt_end();
 		}
 		else if(eat('_')){// インスタンス変数定義
 			if(parse_identifier()){
@@ -1879,7 +1959,7 @@ void Parser::parse_class(int_t kind){
 					eb_.push(null);
 				}
 				eb_.splice(EXPR_CDEFINE_IVAR, 3);
-				eat(';');
+				expect_stmt_end();
 			}
 			else{
 				eb_.pop();
@@ -1896,7 +1976,6 @@ void Parser::parse_class(int_t kind){
 	eb_.splice(EXPR_CLASS, 3);
 
 	expect('}');
-	expr_end_flag_ = true;
 }
 
 void Parser::parse_try(){	
@@ -2073,7 +2152,6 @@ bool Parser::parse_expr(int_t pri, int_t space){
 }
 
 bool Parser::parse_expr(){
-	expr_end_flag_ = false;
 	return parse_expr(0, 0);
 }
 
@@ -2085,7 +2163,6 @@ void Parser::expect_parse_expr(int_t pri, int_t space){
 }
 
 void Parser::expect_parse_expr(){
-	expr_end_flag_ = false;
 	expect_parse_expr(0, 0);
 
 }
@@ -2145,7 +2222,6 @@ void Parser::parse_switch(){
 		}
 		else{
 			expect('}');
-			expr_end_flag_ = true;
 			break;
 		}
 	}

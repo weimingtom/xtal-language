@@ -130,7 +130,7 @@ public:
 	/**
 	* \brief Ÿ‚Ì—v‘f‚ğ“Ç‚Ş
 	*/
-	const Token& peek();
+	const Token& peek(int_t n = 0);
 
 	/**
 	* \brief “Ç‚İ‚ñ‚¾—v‘f‚ğˆê‚Â–ß‚·
@@ -204,8 +204,8 @@ private:
 	enum{ BUF_SIZE = 64, BUF_MASK = BUF_SIZE-1 };
 	Token buf_[BUF_SIZE];
 
-	uint_t pos_;
-	uint_t read_;
+	int_t pos_;
+	int_t read_;
 	uint_t left_space_;
 
 };
@@ -217,9 +217,7 @@ public:
 
 	ExprPtr parse(const xpeg::ExecutorPtr& scanner);
 
-	ExprPtr parse_stmt(const xpeg::ExecutorPtr& scanner);
-
-	ExprPtr parse_expr(const xpeg::ExecutorPtr& scanner);
+	ExprPtr parse_eval(const xpeg::ExecutorPtr& scanner);
 
 public:
 
@@ -269,11 +267,14 @@ private:
 	void parse_call();		
 	void parse_toplevel();
 
+	void parse_expr_statement();
+	bool expr_end();
+	void expect_stmt_end();
+
 public:
 
 	ExprBuilder eb_;
 	Lexer lexer_;
-	bool expr_end_flag_;
 
 	xpeg::ExecutorPtr reader_;
 };

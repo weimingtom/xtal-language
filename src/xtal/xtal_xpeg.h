@@ -97,11 +97,15 @@ public:
 	* \brief 発生したエラーのイテレータを取得する。
 	*/
 	AnyPtr errors(){
-		if(!errors_) return null;
+		if(!errors_ || errors_->empty()) return null;
 		return errors_->each();
 	}
 
 	void error(const AnyPtr& message, int_t lineno = 0);
+
+	void clear_errors(){
+		if(errors_) return errors_->clear();
+	}
 
 	/**
 	* \brief 生成した構文木を取得する。
@@ -141,11 +145,11 @@ public:
 	/**
 	* \brief n文字先をのぞき見る。
 	*/
-	const AnyPtr& peek(uint_t n = 0);
+	const AnyPtr& peek(int_t n = 0);
 
-	const StringPtr& peek_s(uint_t n = 0);
+	const StringPtr& peek_s(int_t n = 0);
 
-	int_t peek_ascii(uint_t n = 0);
+	int_t peek_ascii(int_t n = 0);
 	
 	struct State{
 		uint_t lineno;
@@ -333,7 +337,7 @@ protected:
 
 	void expand();
 
-	AnyPtr& access(uint_t pos){
+	AnyPtr& access(int_t pos){
 		if(pos<base_*ONE_BLOCK_SIZE){ 
 			return undefined; 
 		}
@@ -353,9 +357,11 @@ protected:
 
 	uint_t num_;
 	uint_t max_;
-	uint_t pos_;
-	uint_t read_;
-	uint_t base_;
+
+	int_t pos_;
+	int_t read_;
+	int_t base_;
+
 	uint_t lineno_;
 	uint_t record_pos_;
 };

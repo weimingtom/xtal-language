@@ -4,10 +4,10 @@ inherit(xpeg);
 class TestXpeg{
 
 	com#Test{
-		assert "a".match(~"b")
-		assert !"b".match(~"b")
-		assert "awerawer".match(bos >> ~set("()")*0 >> eos)
-		assert !"awer(awer".match(bos >> ~set("()")*0 >> eos)
+		assert "a".match(~"b");
+		assert !"b".match(~"b");
+		assert "awerawer".match(bos >> ~set("()")*0 >> eos);
+		assert !"awer(awer".match(bos >> ~set("()")*0 >> eos);
 	}
 
 	balance#Test{

@@ -25,6 +25,7 @@ public:
 	CodePtr compile(const xpeg::ExecutorPtr& scanner, const StringPtr& source_file_name = XTAL_STRING("anonymous"));
 
 	CodePtr eval_compile(const xpeg::ExecutorPtr& scanner);
+
 	CodePtr compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name);
 
 	AnyPtr errors();
@@ -222,7 +223,7 @@ public:
 		}
 	}
 
-	int_t lineno(){ return linenos_.top(); }
+	int_t lineno(){ return linenos_.empty() ? 0 : linenos_.top(); }
 
 	int_t class_info_num(){
 		return class_frames_.empty() ? 0 : class_frames_.top().class_info_num;

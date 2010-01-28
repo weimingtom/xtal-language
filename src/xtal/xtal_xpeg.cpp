@@ -167,7 +167,7 @@ AnyPtr Executor::suffix_values(){
 	return capture_values(match_end_)->each();
 }
 
-int_t Executor::peek_ascii(uint_t n){
+int_t Executor::peek_ascii(int_t n){
 	return chvalue(peek(n));
 }
 
@@ -175,7 +175,7 @@ int_t Executor::read_ascii(){
 	return chvalue(read());
 }
 
-const StringPtr& Executor::peek_s(uint_t n){
+const StringPtr& Executor::peek_s(int_t n){
 	const AnyPtr& ret = peek(n);
 	if(raweq(ret, undefined)){
 		return empty_string;
@@ -506,9 +506,9 @@ bool Executor::test(const AnyPtr& ae){
 
 /////
 
-const AnyPtr& Executor::peek(uint_t n){
+const AnyPtr& Executor::peek(int_t n){
 	while(pos_+n >= read_){
-		uint_t now_read = 0;
+		int_t now_read = 0;
 
 		if((read_>>ONE_BLOCK_SHIFT)-base_==num_){
 			expand();

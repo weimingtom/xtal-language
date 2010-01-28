@@ -179,7 +179,15 @@
 			Name="リソース ファイル"
 			>
 			<File
-				RelativePath="..\..\test\test.xtal_"
+				RelativePath="..\..\test\exec.xtal"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\first.xtal"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\second.xtal"
 				>
 			</File>
 			<File
@@ -244,6 +252,10 @@
 			</File>
 			<File
 				RelativePath="..\..\test\test_jp.xtal"
+				>
+			</File>
+			<File
+				RelativePath="..\..\test\test_lib.xtal"
 				>
 			</File>
 			<File

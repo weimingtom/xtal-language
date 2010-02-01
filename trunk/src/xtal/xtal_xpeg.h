@@ -107,6 +107,8 @@ public:
 		if(errors_) return errors_->clear();
 	}
 
+public:
+
 	/**
 	* \brief 生成した構文木を取得する。
 	*/
@@ -115,21 +117,45 @@ public:
 	}
 
 	/**
-	* \brief 構文木に要素を追加する
+	* \brief 構文木に要素を一つ追加する
 	*/
-	void push_result(const AnyPtr& a){
+	void tree_add(const AnyPtr& a){
 		tree_->push_back(a);
 	}
 
-	AnyPtr pop_result(){
+	/**
+	* \brief 構文木から要素を一つ取り除く
+	*/
+	AnyPtr tree_remove(){
 		AnyPtr ret = tree_->back();
 		tree_->pop_back();
 		return ret;
 	}
 
-	const AnyPtr& back_result(){
+	/**
+	* \brief 構文木の最後の要素を取得する
+	*/
+	const AnyPtr& tree_back(){
 		return tree_->back();
 	}
+
+	struct TreeNodeState{
+		int_t lineno;
+		int_t pos;
+	};
+
+	TreeNodeState tree_node_begin(){
+		TreeNodeState state = {lineno_, tree_->size()};
+		return state;
+	}
+
+	void tree_node_end(const AnyPtr& tag, const TreeNodeState& state){
+		tree_splice(tag, tree_->size()-state.pos, state.lineno);
+	}
+
+	void tree_splice(const AnyPtr& tag, int_t num);
+
+	void tree_splice(const AnyPtr& tag, int_t num, int_t lineno);
 
 public:
 
@@ -230,11 +256,9 @@ public:
 
 private:
 	
-	bool match_inner(const AnyPtr& nfa);
+	bool match_inner(const ElementPtr& nfa);
 
-	bool test(const AnyPtr& elem);
-
-	void push(uint_t mins, uint_t st, uint_t nodes, const State& pos);
+	bool test(const ElementPtr& elem);
 
 	struct StackInfo{ 
 		uint_t state;
@@ -243,12 +267,17 @@ private:
 	};
 
 	typedef PODStack<StackInfo> stack_t;
+	stack_t stack_;
+
+	void push(uint_t mins, uint_t cur_state, uint_t nodes, const State& pos){
+		StackInfo temp = {cur_state, nodes, pos};
+		stack_.push(temp);
+	}
 
 	struct Cap : public Base{
 		int_t begin, end;
 	};
 
-	stack_t stack_;
 	MapPtr cap_;
 
 	TreeNodePtr tree_;
@@ -345,7 +374,6 @@ protected:
 	}
 
 protected:
-
 	StreamPtr stream_;
 	StringPtr source_name_;
 
@@ -414,6 +442,8 @@ struct Element : public Base{
 	AnyPtr param2;
 	int_t param3;
 
+	NFAPtr nfa;
+
 	Element(Type type);
 	Element(Type type, const AnyPtr& param1);
 	Element(Type type, const AnyPtr& param1, const AnyPtr& param2);
@@ -421,9 +451,11 @@ struct Element : public Base{
 
 	~Element();
 
+	bool is_e_transition() const;
+
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
-		m & param1 & param2;
+		m & param1 & param2 & nfa;
 	}
 };
 
@@ -458,11 +490,19 @@ struct NFA : public Base{
 
 	int gen_state();
 
+	bool check_infinity_loop();
+
 	ElementPtr e_;
-	ElementPtr root_node_;
 	ArrayList<State> states_;
 	uint_t cap_max_;
 	ArrayPtr cap_list_;
+
+	void on_visit_members(Visitor& m){
+		Base::on_visit_members(m);
+		for(uint_t i=0; i<states_.size(); ++i){
+			m & states_[i].trans;
+		}
+	}
 
 	enum{
 		CAPTURE_NONE = 0,
@@ -470,8 +510,6 @@ struct NFA : public Base{
 		CAPTURE_END = 2
 	};
 };
-
-const NFAPtr& fetch_nfa(const ElementPtr& node);
 
 ElementPtr elem(const AnyPtr& a);
 ElementPtr set(const StringPtr& str);

@@ -35,7 +35,7 @@ namespace{
 }
 
 StatelessNativeMethod::StatelessNativeMethod(const param_types_holder_n& pth)
-	:Any(noinit_t()){
+	{
 	value_.init_stateless_native_method(&pth);
 }
 
@@ -43,7 +43,7 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 	const param_types_holder_n& pth = *value_.pth();
 	int_t param_n = pth.param_n;
 
-	UninitializedAny args[16];
+	Any args[16];
 	
 	{ // check arg type
 
@@ -51,7 +51,7 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 
 		{
 			const AnyPtr& arg = vm->arg_this();
-			args[0] = (UninitializedAny&)arg;
+			args[0] = (Any&)arg;
 
 			if(anycls!=*pth.param_types[0]){
 				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
@@ -69,7 +69,7 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 
 			for(int_t i=0; i<param_n; ++i){
 				const AnyPtr& arg = vm->arg_unchecked(i);
-				args[i+1] = (UninitializedAny&)arg;
+				args[i+1] = (Any&)arg;
 
 				if(anycls!=*pth.param_types[0]){
 					const ClassPtr& cls = cpp_class(*pth.param_types[0]);
@@ -199,7 +199,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 		}
 	}
 
-	UninitializedAny args[16];
+	Any args[16];
 	
 	{ // check arg type
 		Class** param_types = (Class**)((u8*)data_ +  val_size_);
@@ -207,7 +207,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 
 		{
 			const AnyPtr& arg = vm->arg_this();
-			args[0] = (UninitializedAny&)arg;
+			args[0] = (Any&)arg;
 
 			if(param_types[0]){
 				if(!arg->is(to_smartptr(param_types[0]))){
@@ -229,7 +229,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 
 			for(int_t i=0; i<param_n_; ++i){
 				const AnyPtr& arg = vm->arg_unchecked(i);
-				args[i+1] = (UninitializedAny&)arg;
+				args[i+1] = (Any&)arg;
 
 				if(param_types[i+1]){
 					if(!arg->is(to_smartptr(param_types[i+1]))){ 

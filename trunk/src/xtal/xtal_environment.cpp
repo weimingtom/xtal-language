@@ -437,7 +437,6 @@ void Environment::initialize(const Setting& setting){
 
 	vm_list_ = xnew<Array>();
 	text_map_ = xnew<Map>();
-	nfa_map_ = xnew<Map>();
 
 	lib_->def(Xid(builtin), builtin_);
 
@@ -496,7 +495,6 @@ void Environment::uninitialize(){
 	lib_ = null;
 	global_ = null;
 	vm_list_ = null;
-	nfa_map_ = null;
 
 	stdin_ = null;
 	stdout_ = null;
@@ -917,21 +915,6 @@ void exec_compiled_source(const void* src, int_t size){
 			stderr_stream()->println(e);
 		}
 	}
-}
-
-namespace xpeg{
-
-const NFAPtr& fetch_nfa(const ElementPtr& node){
-	const AnyPtr& temp = environment_->nfa_map_->at(node);
-	if(temp){
-		return unchecked_ptr_cast<NFA>(temp);
-	}
-	else{
-		environment_->nfa_map_->set_at(node, xnew<NFA>(node));
-		return unchecked_ptr_cast<NFA>(environment_->nfa_map_->at(node));
-	}
-}
-
 }
 
 }

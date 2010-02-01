@@ -13,9 +13,9 @@ namespace xtal{
 #define XTAL_VM_DEF_INST(key) const key& inst = *(const key*)pc; XTAL_UNUSED_VAR(inst)
 
 #define XTAL_VM_RETURN return
-#define XTAL_VM_CHECK_EXCEPT_PC(pc) (ap(except_[0]) ? push_except(pc) : (pc))
+#define XTAL_VM_CHECK_EXCEPT_PC(pc) (except_[0] ? push_except(pc) : (pc))
 #define XTAL_VM_THROW_EXCEPT(e) XTAL_VM_CONTINUE(push_except(pc, e))
-#define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ XTAL_VM_CONTINUE(push_except(pc)); }
+#define XTAL_VM_CHECK_EXCEPT if(except_[0]){ XTAL_VM_CONTINUE(push_except(pc)); }
 
 #ifdef XTAL_USE_COMPUTED_GOTO
 #	define XTAL_COPY_LABEL_ADDRESS(key) &&Label##key
@@ -54,6 +54,7 @@ const ClassPtr& Any::get_class() const{
 		&CppClassSymbol<Bool>::value,
 		&CppClassSymbol<Int>::value,
 		&CppClassSymbol<Float>::value,
+		&CppClassSymbol<Any>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
 		&CppClassSymbol<String>::value,
@@ -90,7 +91,7 @@ bool Any::is(CppClassSymbolData* key) const{
 }
 
 const AnyPtr& MemberCacheTable::cache(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
-	uint_t itarget_class = rawvalue(target_class).u();
+	uint_t itarget_class = (uint_t)target_class;
 	uint_t iprimary_key = rawvalue(primary_key).u();
 	uint_t isecondary_key = rawvalue(secondary_key).u();
 
@@ -107,14 +108,14 @@ const AnyPtr& MemberCacheTable::cache(Base* target_class, const IDPtr& primary_k
 
 		hit_++;
 		accessibility = unit.accessibility;
-		return ap(unit.member);
+		return unit.member;
 	}
 	else{
 
 		miss_++;
 
 		bool nocache = false;
-		const AnyPtr& ret = target_class->rawmember(primary_key, ap(secondary_key), true, accessibility, nocache);
+		const AnyPtr& ret = target_class->rawmember(primary_key, secondary_key, true, accessibility, nocache);
 		if(!nocache){
 			unit.member = ret;
 			unit.target_class = to_smartptr(target_class);
@@ -144,7 +145,7 @@ bool IsCacheTable::cache(const AnyPtr& target_class, const AnyPtr& klass){
 	else{
 		miss_++;
 
-		bool ret = unchecked_ptr_cast<Class>(ap(target_class))->is_inherited(ap(klass));
+		bool ret = unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
 
 		unit.target_class = target_class;
 		unit.klass = klass;
@@ -575,11 +576,7 @@ void VMachine::execute_inner(const inst_t* start, int_t eval_n){
 
 	hook_setting_bit_ = debug::hook_setting_bit_ptr();
 
-	Any values[4];
-	values[LOAD_NULL] = null;
-	values[LOAD_UNDEFINED] = undefined;
-	values[LOAD_FALSE] = false;
-	values[LOAD_TRUE] = true;
+	Any values[4] = { null, undefined, Bool(false), Bool(true) };
 
 	int_t eval_base_n = fun_frames_.size();
 
@@ -805,8 +802,8 @@ call_common:
 		}
 
 		if(ff().processed==0){
-			if(ap(except_[0])){ 
-				XTAL_VM_CONTINUE(push_except(call_state.pc, ap(except_[0])));
+			if(except_[0]){ 
+				XTAL_VM_CONTINUE(push_except(call_state.pc, except_[0]));
 			}
 
 			XTAL_VM_CONTINUE(push_except(call_state.pc, unsupported_error(ap(call_state.member)->get_class(), id_[IDOp::id_op_call], undefined)));
@@ -843,12 +840,12 @@ XTAL_VM_LOOP
 	}
 
 	XTAL_VM_CASE(InstLoadInt1Byte){ // 3
-		set_local_variable(inst.result, Any((int_t)inst.value));
+		set_local_variable(inst.result, Int((int_t)inst.value));
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
 	XTAL_VM_CASE(InstLoadFloat1Byte){ // 3
-		set_local_variable(inst.result, Any((float_t)inst.value));
+		set_local_variable(inst.result, Float((float_t)inst.value));
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -893,7 +890,7 @@ XTAL_VM_LOOP
 				XTAL_CASE(UNA_NEG){ iret = -ia; }
 				XTAL_CASE(UNA_COM){ iret = ~ia; }
 			}
-			(Any&)(local_variable(inst.result)) = Any(iret);
+			(Any&)(local_variable(inst.result)) = Int(iret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -907,7 +904,7 @@ XTAL_VM_LOOP
 				XTAL_CASE(UNA_NEG){ fret = -fa; }
 				XTAL_CASE(UNA_COM){ goto una_send; }
 			}
-			(Any&)(local_variable(inst.result)) = Any(fret);
+			(Any&)(local_variable(inst.result)) = Float(fret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -966,7 +963,7 @@ icalc:
 			XTAL_CASE(ARITH_DIV){ if(ib==0) goto zerodiv; iret = ia / ib; }
 			XTAL_CASE(ARITH_MOD){ if(ib==0) goto zerodiv; iret = ia % ib; }
 		}
-		(Any&)(local_variable(inst.result)) = Any(iret);
+		(Any&)(local_variable(inst.result)) = Int(iret);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 
 fcalc:
@@ -980,7 +977,7 @@ fcalc:
 			XTAL_CASE(ARITH_DIV){ if(fb==0) goto zerodiv; fret = fa / fb; }
 			XTAL_CASE(ARITH_MOD){ if(fb==0) goto zerodiv; fret = fmodf(fa, fb); }
 		}
-		(Any&)(local_variable(inst.result)) = Any(fret);
+		(Any&)(local_variable(inst.result)) = Float(fret);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
 
 send:
@@ -1011,7 +1008,7 @@ send:
 				XTAL_CASE(BITWISE_USHR){ iret = (uint_t)ia >> ib; }
 			}
 
-			(Any&)(local_variable(inst.result)) = Any(iret);
+			(Any&)(local_variable(inst.result)) = Int(iret);
 			XTAL_VM_CONTINUE(pc + inst.ISIZE);
 		}
 
@@ -1100,7 +1097,7 @@ send:
 	}
 
 	XTAL_VM_CASE(InstNot){ // 3
-		set_local_variable(inst.result, Any(!local_variable(inst.target))); 
+		set_local_variable(inst.result, Bool(!local_variable(inst.target))); 
 		XTAL_VM_CONTINUE(pc+inst.ISIZE); 
 	}
 
@@ -1391,7 +1388,7 @@ comp_send:
 		AnyPtr& b = local_variable(inst.rhs);
 
 		set_local_variable(inst.stack_base+0, b);
-		set_local_variable(inst.stack_base+1, inst.kind);
+		set_local_variable(inst.stack_base+1, Int(inst.kind));
 
 		call_state.set(pc, pc + inst.ISIZE, inst.result, 1, inst.stack_base, 2, 0, 0);
 		call_state.target = a;
@@ -1576,7 +1573,7 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(InstPushGoto){ // 3
-		stack_.push(Any((int_t)((pc+inst.address)-code()->data()))); 
+		stack_.push(Int((int_t)((pc+inst.address)-code()->data()))); 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1587,7 +1584,7 @@ comp_send:
 	XTAL_VM_CASE(InstThrow){ // 12
 		AnyPtr except = ap(stack_.pop());
 		if(!except){
-			except = ap(except_[0]);
+			except = except_[0];
 		}
 
 		if(pc!=&throw_code_){
@@ -1603,7 +1600,7 @@ comp_send:
 
 		// 例外にバックトレースを追加する
 		AnyPtr e = catch_except();
-		set_except_x(append_backtrace(throw_pc_, ap(e)));
+		set_except_x(append_backtrace(throw_pc_, e));
 
 		// Xtalソース内でキャッチ等あるか調べる
 		pc = catch_body(throw_pc_, cur);
@@ -1622,8 +1619,8 @@ comp_send:
 		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
 
-		if(ap(except_[0])){
-			XTAL_VM_THROW_EXCEPT(ap(except_[0]));
+		if(except_[0]){
+			XTAL_VM_THROW_EXCEPT(except_[0]);
 		}
 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);
@@ -1657,7 +1654,7 @@ XTAL_VM_LOOP_END
 #define XTAL_VM_CONTINUE(x) return (x)
 #define XTAL_VM_CONTINUE0 return pc
 #define XTAL_VM_THROW_EXCEPT(e) XTAL_VM_CONTINUE(push_except(pc, e))
-#define XTAL_VM_CHECK_EXCEPT if(ap(except_[0])){ XTAL_VM_CONTINUE(push_except(pc)); }
+#define XTAL_VM_CHECK_EXCEPT if(except_[0]){ XTAL_VM_CONTINUE(push_except(pc)); }
 
 //{FUNS{{
 const inst_t* VMachine::FunInstClassBegin(const inst_t* pc){
@@ -1747,7 +1744,7 @@ const inst_t* VMachine::FunInstDefineMember(const inst_t* pc){
 		AnyPtr secondary = (inst.flags&MEMBER_FLAG_S_BIT) ? local_variable(inst.secondary) : undefined;
 		AnyPtr cls = local_variable(inst.target);
 		AnyPtr value = local_variable(inst.value);
-		cls->def(primary, ap(value), secondary, KIND_PUBLIC);
+		cls->def(primary, value, secondary, KIND_PUBLIC);
 		XTAL_VM_CHECK_EXCEPT;
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 }
@@ -1800,8 +1797,8 @@ const inst_t* VMachine::FunInstAssert(const inst_t* pc){
 		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
 		debug_hook(pc, BREAKPOINT_ASSERT);
 
-		if(ap(except_[0])){
-			XTAL_VM_THROW_EXCEPT(ap(except_[0]));
+		if(except_[0]){
+			XTAL_VM_THROW_EXCEPT(except_[0]);
 		}
 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE);

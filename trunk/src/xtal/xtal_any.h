@@ -14,30 +14,6 @@ enum{
 };
 
 struct AnyRawValue{
-private:
-	void init(PrimitiveType t){ type = t; ivalue = 0; }
-
-	void init(char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(short v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(unsigned short v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(int v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(unsigned int v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(unsigned long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(long long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init(unsigned long long v){ type = TYPE_INT; ivalue = (int_t)v; }
-
-	void init(float v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-	void init(double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-	void init(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-
-	void init(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
-
-	void init(const Base* v);
-	void init(int t, const RefCountingBase* v);
-
 public:
 
 	void init_primitive(PrimitiveType t){ type = t; ivalue = 0; }
@@ -98,6 +74,16 @@ public:
 		pthvalue = v; 
 	}
 
+	void init_immediate_value(int_t value1, int_t value2){
+		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+		ivalue = value2;
+	}
+
+	void init_immediate_value(int_t value1, float_t value2){
+		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+		fvalue = value2;
+	}
+
 public:
 
 	enum{
@@ -127,6 +113,11 @@ public:
 	uint_t string_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
 	uint_t string_literal_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
 	uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
+
+	int_t immediate_first_value() const{ return (int_t)(type>>8); }
+	int_t immediate_second_value() const{ return ivalue; }
+	float_t immediate_secondf_value() const{ return fvalue; }
+
 public:
 
 	int_t t() const{ return type; }
@@ -513,34 +504,13 @@ private:
 	struct cmpitle_error{ cmpitle_error(const VMachinePtr& vm); };
 	void call(cmpitle_error) const;
 
-public:
-	struct noinit_t{};
-	Any(noinit_t){}
-
-	Any(){ value_.init_primitive(TYPE_NULL); }
-	Any(PrimitiveType v){ value_.init_primitive(v); }
-	Any(const AnyRawValue& v){ value_ = v; }
-
-	Any(char v){ value_.init_int(v); }
-	Any(signed char v){ value_.init_int(v); }
-	Any(unsigned char v){ value_.init_int(v); }
-	Any(short v){ value_.init_int(v); }
-	Any(unsigned short v){ value_.init_int(v); }
-	Any(int v){ value_.init_int(v); }
-	Any(unsigned int v){ value_.init_int(v); }
-	Any(long v){ value_.init_int(v); }
-	Any(unsigned long v){ value_.init_int(v); }
-	Any(long long v){ value_.init_int(v); }
-	Any(unsigned long long v){ value_.init_int(v); }
-	Any(float v){ value_.init_float(v); }
-	Any(double v){ value_.init_float(v); }
-	Any(long double v){ value_.init_float(v); }
-	Any(bool v){ value_.init_bool(v); }
-	Any(const Base* v){ value_.init_base(v); }
-
 private:
 
 	StringPtr defined_place_name(const CodePtr& code, int_t pc, int_t name_number) const;
+
+protected:
+
+	struct noinit_t{};
 
 public: // 
 
@@ -550,12 +520,6 @@ public:
 
 	friend const AnyRawValue& rawvalue(const Any& v);
 	friend AnyRawValue& rawvalue(Any& v);
-};
-
-class UninitializedAny : public Any{
-public:
-	UninitializedAny()
-		:Any(noinit_t()){}
 };
 
 /////////////////////////////////////////////////////////

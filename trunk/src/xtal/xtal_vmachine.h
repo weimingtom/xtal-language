@@ -15,12 +15,12 @@ namespace xtal{
 */
 struct Named{
 	const IDPtr& name;
-	const Any& value;
+	const AnyPtr& value;
 
 	/**
 	* \brief 名前と値を指定して構築する。
 	*/
-	Named(const IDPtr& name, const Any& value)
+	Named(const IDPtr& name, const AnyPtr& value)
 		:name(name), value(value){}
 
 	/**
@@ -51,6 +51,12 @@ inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyP
 	ret.b = bb[btype];
 }
 
+
+template<>
+struct FastStackDefaultValue<Any>{
+	static Any get(){ return null; }
+};
+
 // XTAL仮想マシン
 class VMachine : public GCObserver{
 public:
@@ -79,7 +85,7 @@ public:
 	* \brief 名前付き引数を1個積む。
 	*
 	*/
-	void push_arg(const Named& p){ push_arg(p.name, ap(p.value)); }
+	void push_arg(const Named& p){ push_arg(p.name, p.value); }
 
 	/**
 	* \brief 引数を配列の要素数積む。
@@ -124,10 +130,15 @@ public:
 	void setup_call(int_t need_result_count = 1);
 
 public:
+	template<class T>
+	void push_arg(const T* p){
+		push_arg(AnyPtr(p));
+	}
 
 	void push_arg(const char_t* s);
 	void push_arg(const char8_t* s);
 	void push_arg(const StringLiteral& s);
+
 	void push_arg(char v);
 	void push_arg(signed char v);
 	void push_arg(unsigned char v);
@@ -143,7 +154,6 @@ public:
 	void push_arg(double v);
 	void push_arg(long double v);
 	void push_arg(bool v);
-
 public:
 
 	// 関数呼び出され側が使うための関数群
@@ -289,7 +299,11 @@ public:
 		return local_variable(pos);
 	}
 
-/*
+	template<class T>
+	void return_result(const T* p){
+		return_result(AnyPtr(p));
+	}
+
 	void return_result(const char_t* s);
 	void return_result(const char8_t* s);
 	void return_result(const StringLiteral& s);
@@ -308,7 +322,7 @@ public:
 	void return_result(double v);
 	void return_result(long double v);
 	void return_result(bool v);
-*/
+
 public:
 
 	FramePtr current_context(){
@@ -324,7 +338,7 @@ public:
 	const AnyPtr& catch_except();
 
 	const AnyPtr& except(){
-		return ap(except_[0]);
+		return except_[0];
 	}
 
 	void set_except(const AnyPtr& e);
@@ -494,6 +508,9 @@ private:
 		Any secondary;
 		Any self;
 		Any member;
+
+		CallState()
+			:cls(null), target(null), primary(null), secondary(null), self(null), member(null){} 
 
 		const inst_t* pc;
 		const inst_t* npc;
@@ -739,7 +756,7 @@ private:
 	// tryの度に積まれるフレーム
 	PODStack<ExceptFrame> except_frames_;
 	
-	Any except_[3];
+	AnyPtr except_[3];
 
 	debug::HookInfoPtr debug_info_;
 	uint_t* hook_setting_bit_;

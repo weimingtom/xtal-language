@@ -20,7 +20,7 @@ lib::test: singleton{
 			run_file(it);
 		}
 			
-		printf("ok=%d, fail=%d\n", _ok, _fail);
+		print_result();
 	}
 	
 	run_file: fun(file){

@@ -120,15 +120,15 @@ public:
 	/**
 	* \xbind
 	* \brief クローンを作る
-	* DebugInfoオブジェクトは使いまわされるため、情報を保持したい場合、クローンを作る必要がある。
+	* HookInfoオブジェクトは使いまわされるため、情報を保持したい場合、クローンを作る必要がある。
 	*/
 	SmartPtr<HookInfo> clone(){
 		return xnew<HookInfo>(*this);
 	}
 
-	void set_vm(const VMachinePtr& v){ vm_ = v; }
+	void set_vm(const VMachinePtr& v);
 
-	const VMachinePtr& vm(){ return (VMachinePtr&)ap(vm_); }
+	const VMachinePtr& vm();
 
 	void on_visit_members(Visitor& m);
 
@@ -140,7 +140,7 @@ private:
 	StringPtr fun_name_;
 	AnyPtr exception_;
 	FramePtr variables_frame_;
-	Any vm_;
+	VMachine* vm_;
 
 	friend class VMachine;
 };

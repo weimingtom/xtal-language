@@ -38,7 +38,6 @@ public:
 
 	ArrayPtr vm_list_;
 	MapPtr text_map_;
-	MapPtr nfa_map_;
 
 	StreamPtr stdin_;
 	StreamPtr stdout_;

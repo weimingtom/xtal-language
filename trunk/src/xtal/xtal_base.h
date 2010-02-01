@@ -105,7 +105,7 @@ class RefCountingBase : public Any{
 public:
 	
 	RefCountingBase()
-		:Any(noinit_t()){}
+		{}
 
 	RefCountingBase(const RefCountingBase& v)
 		:Any(v){}

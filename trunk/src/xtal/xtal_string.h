@@ -70,8 +70,7 @@ public:
 
 protected:
 
-	String(noinit_t n)
-		:Any(n){}
+	String(noinit_t){}
 
 public:
 

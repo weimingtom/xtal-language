@@ -310,7 +310,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	IDPtr minid = null;
 	const VMachinePtr& vm = vmachine();
 	vm->setup_call(1);
-	AnyPtr mem = ap(get_class())->member(Xid(members_ancestors_too));
+	AnyPtr mem = get_class()->member(Xid(members_ancestors_too));
 
 	if(is_undefined(mem)){
 		return minid;
@@ -630,7 +630,7 @@ void Class::on_rawcall(const VMachinePtr& vm){
 	prebind();
 
 	if(is_singleton()){
-		return ap(Any(this))->rawsend(vm, Xid(op_call));
+		return Any::rawsend(vm, Xid(op_call));
 	}
 
 	if(is_native()){

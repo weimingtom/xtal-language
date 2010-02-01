@@ -12,13 +12,29 @@ class TestXpeg{
 
 	balance#Test{
 		balance: decl();
-		balance.body = "(" >> (~set("()")*0|balance*0) >> ")";
+		balance.body = "(" >> (empty | ~set("()")*1 | balance*1) >> ")";
 		pattern: bos >> balance >> eos;
 		assert "(())".match(pattern);
 		assert !"(()".match(pattern);
 		assert "((ewerwer))".match(pattern);
 		assert "((((((((((((((((((((a)(a)))(aaaaa))))()))))))))))))))".match(pattern);
 		assert !"((((((((((((((((((((a)(a)))(aaaaa))))())))()))))))))))".match(pattern);
+	}
+	
+	tinyxml#Test{
+		tag_name: word*0;
+		tag_start: "<" >> tag_name >> ">";
+		tag_end: "</" >> tag_name >> ">";
+		text: (word | " " | "\t" | "\n")*1;
+		tag: decl();
+		tag.body = tag_start >> (tag | text)*0 >> tag_end;
+		
+		peg: bos >> tag >> eos;
+		
+		assert "<test>test</test>".match(peg);
+		assert !"<test>test<test>".match(peg);
+		assert "<test><a>te<b>s</b>t</a></test>".match(peg);
+		assert !"<test><a>te<b>s<b>t</a></test>".match(peg);
 	}
 	
 	tee#Test{

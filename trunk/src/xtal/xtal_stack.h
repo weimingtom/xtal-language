@@ -15,6 +15,11 @@ void* stack_allocate(size_t size);
 
 void stack_deallocate(void* p, size_t size);
 
+template<class T>
+struct FastStackDefaultValue{
+	static T get(){ return T(); }
+};
+
 /**
 * \internal
 * VMachineクラスが使う色々なスタック用に、特定の操作の実行速度を重視して実装したスタックコンテナ。
@@ -325,7 +330,7 @@ void FastStack<T>::upsize_detail(size_t us){
 	}
 
 	for(size_t i = oldsize; i<newcapa; ++i){
-		new(&newp[i]) T();
+		new(&newp[i]) T(FastStackDefaultValue<T>::get());
 	}
 
 	for(size_t i = 0; i<oldcapa; ++i){

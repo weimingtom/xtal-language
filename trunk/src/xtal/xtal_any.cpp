@@ -62,7 +62,7 @@ void Any::def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secon
 
 void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, bool q) const{
 	const ClassPtr& cls = get_class();
-	Any mem = ap(cls)->member(primary_key, secondary_key, inherited_too);
+	Any mem = cls->member(primary_key, secondary_key, inherited_too);
 	vm->set_arg_this(ap(*this));
 
 	if(is_undefined(mem)){

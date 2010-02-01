@@ -43,50 +43,56 @@ inline bool test_ident_rest(int ch){
 	return test_ident_first(ch) || test_digit(ch) || ch=='_';
 }
 
-Lexer::Lexer(){
-	read_ = 0;
-	pos_ = 0;
+Parser::Parser(){
+	token_read_ = 0;
+	token_pos_ = 0;
 
 	ms_ = xnew<MemoryStream>();
 
-	keyword_map_ = xnew<Map>();
-	keyword_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
-	keyword_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
-	keyword_map_->set_at(Xid(else), (int_t)Token::KEYWORD_ELSE);
-	keyword_map_->set_at(Xid(fun), (int_t)Token::KEYWORD_FUN);
-	keyword_map_->set_at(Xid(method), (int_t)Token::KEYWORD_METHOD);
-	keyword_map_->set_at(Xid(do), (int_t)Token::KEYWORD_DO);
-	keyword_map_->set_at(Xid(while), (int_t)Token::KEYWORD_WHILE);
-	keyword_map_->set_at(Xid(continue), (int_t)Token::KEYWORD_CONTINUE);
-	keyword_map_->set_at(Xid(break), (int_t)Token::KEYWORD_BREAK);
-	keyword_map_->set_at(Xid(fiber), (int_t)Token::KEYWORD_FIBER);
-	keyword_map_->set_at(Xid(yield), (int_t)Token::KEYWORD_YIELD);
-	keyword_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
-	keyword_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
-	keyword_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
-	keyword_map_->set_at(Xid(undefined), (int_t)Token::KEYWORD_UNDEFINED);
-	keyword_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
-	keyword_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
-	keyword_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
-	keyword_map_->set_at(Xid(try), (int_t)Token::KEYWORD_TRY);
-	keyword_map_->set_at(Xid(catch), (int_t)Token::KEYWORD_CATCH);
-	keyword_map_->set_at(Xid(finally), (int_t)Token::KEYWORD_FINALLY);
-	keyword_map_->set_at(Xid(throw), (int_t)Token::KEYWORD_THROW);
-	keyword_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
-	keyword_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
-	keyword_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
-	keyword_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
-	keyword_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
-	keyword_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
-	keyword_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
-	keyword_map_->set_at(Xid(nobreak), (int_t)Token::KEYWORD_NOBREAK);
-	keyword_map_->set_at(Xid(switch), (int_t)Token::KEYWORD_SWITCH);
-	keyword_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
-	keyword_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
-	keyword_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
-	keyword_map_->set_at(Xid(public), (int_t)Token::KEYWORD_PUBLIC);
-	keyword_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
-	keyword_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
+	identifier_map_ = xnew<Map>();
+	identifier_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
+	identifier_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
+	identifier_map_->set_at(Xid(else), (int_t)Token::KEYWORD_ELSE);
+	identifier_map_->set_at(Xid(fun), (int_t)Token::KEYWORD_FUN);
+	identifier_map_->set_at(Xid(method), (int_t)Token::KEYWORD_METHOD);
+	identifier_map_->set_at(Xid(do), (int_t)Token::KEYWORD_DO);
+	identifier_map_->set_at(Xid(while), (int_t)Token::KEYWORD_WHILE);
+	identifier_map_->set_at(Xid(continue), (int_t)Token::KEYWORD_CONTINUE);
+	identifier_map_->set_at(Xid(break), (int_t)Token::KEYWORD_BREAK);
+	identifier_map_->set_at(Xid(fiber), (int_t)Token::KEYWORD_FIBER);
+	identifier_map_->set_at(Xid(yield), (int_t)Token::KEYWORD_YIELD);
+	identifier_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
+	identifier_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
+	identifier_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
+	identifier_map_->set_at(Xid(undefined), (int_t)Token::KEYWORD_UNDEFINED);
+	identifier_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
+	identifier_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
+	identifier_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
+	identifier_map_->set_at(Xid(try), (int_t)Token::KEYWORD_TRY);
+	identifier_map_->set_at(Xid(catch), (int_t)Token::KEYWORD_CATCH);
+	identifier_map_->set_at(Xid(finally), (int_t)Token::KEYWORD_FINALLY);
+	identifier_map_->set_at(Xid(throw), (int_t)Token::KEYWORD_THROW);
+	identifier_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
+	identifier_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
+	identifier_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
+	identifier_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
+	identifier_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
+	identifier_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
+	identifier_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
+	identifier_map_->set_at(Xid(nobreak), (int_t)Token::KEYWORD_NOBREAK);
+	identifier_map_->set_at(Xid(switch), (int_t)Token::KEYWORD_SWITCH);
+	identifier_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
+	identifier_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
+	identifier_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
+	identifier_map_->set_at(Xid(public), (int_t)Token::KEYWORD_PUBLIC);
+	identifier_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
+	identifier_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
+
+	identifiers_ = xnew<Array>(Token::KEYWORD_MAX);
+
+	Xfor2(key, value, identifier_map_){
+		identifiers_->set_at(ivalue(value), key);
+	}
 
 	/*
 	">>>=",
@@ -153,94 +159,60 @@ Lexer::Lexer(){
 	*/
 }	
 
-void Lexer::init(const xpeg::ExecutorPtr& scanner){
-	reader_ = scanner;
-}
-
-const Token& Lexer::read(){
-	const Token& ret = peek();
-	++pos_;
+const Token& Parser::read_token(){
+	const Token& ret = peek_token();
+	++token_pos_;
 	return ret;
 }
 
-const Token& Lexer::peek(int_t n){
-	while(pos_+n >= read_){
-		int_t prev = read_;
-		do_read();
-		if(read_==prev){
+const Token& Parser::peek_token(int_t n){
+	while(token_pos_+n >= token_read_){
+		int_t prev = token_read_;
+		tokenize();
+		if(token_read_==prev){
 			static Token end(Token::TYPE_TOKEN, (int_t)0, (int_t)0);
 			return end;
 		}
 	}
-	return buf_[(pos_+n) & BUF_MASK];
+	eb_.set_lineno(reader_->lineno());
+	return token_buf_[(token_pos_+n) & TOKEN_BUF_MASK];
 }
 
-void Lexer::push_token(int_t v){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_TOKEN, v, left_space_ | test_right_space(reader_->peek_ascii()));
-	read_++;
+void Parser::push_token(int_t v){
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_TOKEN, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_read_++;
 }
 	
-void Lexer::push_int_token(int_t v){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_INT, v, left_space_ | test_right_space(reader_->peek_ascii()));
-	read_++;
+void Parser::push_int_token(int_t v){
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_INT, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_read_++;
 }
 
-void Lexer::push_float_token(float_t v){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_FLOAT, v, left_space_ | test_right_space(reader_->peek_ascii()));
-	read_++;
-}
-	
-void Lexer::push_keyword_token(const IDPtr& v, int_t num){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_KEYWORD, v, left_space_ | test_right_space(reader_->peek_ascii()), num);
-	read_++;
+void Parser::push_float_token(float_t v){
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_FLOAT, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_read_++;
 }
 	
-void Lexer::push_identifier_token(const IDPtr& v){
-	buf_[read_ & BUF_MASK] = Token(Token::TYPE_IDENTIFIER, v, left_space_ | test_right_space(reader_->peek_ascii()));
-	read_++;
+void Parser::push_keyword_token(int_t num){
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_KEYWORD, left_space_ | test_right_space(reader_->peek_ascii()), num);
+	token_read_++;
 }
-
-void Lexer::putback(){
-	pos_--;
-}
-
-void Lexer::putback(const Token& ch){
-	pos_--;
-	buf_[pos_ & BUF_MASK] = ch;
-}
-
-IDPtr Lexer::parse_identifier(){
-	ms_->clear();
-
-	StringPtr& ch = (StringPtr&)reader_->read();
-	ms_->write(ch->data(), ch->data_size()*sizeof(char_t));
-
-	while(test_ident_rest(reader_->peek_ascii())){
-		StringPtr& ch = (StringPtr&)reader_->read();
-		ms_->write(ch->data(), ch->data_size()*sizeof(char_t));
-	}
 	
-	return ms_->to_s();
+void Parser::push_identifier_token(int_t num){
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_IDENTIFIER, left_space_ | test_right_space(reader_->peek_ascii()), num);
+	token_read_++;
 }
 
-int_t Lexer::parse_integer(){
-	int_t ret = 0;
-	for(;;){
-		if(test_digit(reader_->peek_ascii())){
-			ret *= 10;
-			ret += reader_->read_ascii()-'0';
-		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
-		}
-		else{
-			break;
-		}
-	}
-	return ret;
+void Parser::putback_token(){
+	token_pos_--;
 }
 
-float_t Lexer::parse_finteger(){
+void Parser::putback_token(const Token& ch){
+	token_pos_--;
+	token_buf_[token_pos_ & TOKEN_BUF_MASK] = ch;
+}
+
+float_t Parser::read_finteger(){
 	float_t ret = 0;
 	for(;;){
 		if(test_digit(reader_->peek_ascii())){
@@ -257,137 +229,81 @@ float_t Lexer::parse_finteger(){
 	return ret;
 }
 
-int_t Lexer::parse_hex(){
+int_t Parser::read_integer(int_t base){
 	int_t ret = 0;
 	for(;;){
+		int_t num = 0;
 		if(test_digit(reader_->peek_ascii())){
-			ret *= 16;
-			ret += reader_->read_ascii()-'0';
+			num = reader_->read_ascii()-'0';
 		}
-		else if(test_range(reader_->peek_ascii(), 'a', 'f')){
-			ret *= 16;
-			ret += reader_->read_ascii()-'a' + 10;
+		else if(test_range(reader_->peek_ascii(), 'a', 'z')){
+			num = reader_->read_ascii()-'a' + 10;
 		}
-		else if(test_range(reader_->peek_ascii(), 'A', 'F')){
-			ret *= 16;
-			ret += reader_->read_ascii()-'A' + 10;
+		else if(test_range(reader_->peek_ascii(), 'A', 'Z')){
+			num = reader_->read_ascii()-'A' + 10;
 		}
 		else if(reader_->peek_ascii()=='_'){
 			reader_->skip();
+			continue;
 		}
 		else{
 			break;
 		}
+
+		if(num>=base){
+			break;
+		}
+
+		ret *= base;
+		ret += num;
 	}
 
 	if(test_ident_rest(reader_->peek_ascii())){
-		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 16)));
+		reader_->error(Xt("XCE1015")->call(Named(Xid(n), base)));
 	}
 
 	return ret;		
 }
 
-int_t Lexer::parse_oct(){
-	int_t ret = 0;
-	for(;;){
-		if(test_range(reader_->peek_ascii(), '0', '7')){
-			ret *= 8;
-			ret += reader_->read_ascii()-'0';
-		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
-		}
-		else{
-			break;
-		}
+bool Parser::is_integer_literal(){
+	int_t i = 0;
+	while(test_digit(reader_->peek_ascii(i)) || reader_->peek_ascii(i)=='_'){
+		i++;
 	}
 
-	if(test_ident_rest(reader_->peek_ascii()) || ('8'<=reader_->peek_ascii() && reader_->peek_ascii()<='9')){
-		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 8)));
+	if(reader_->peek_ascii(i)=='f' || reader_->peek_ascii(i)=='F'){
+		return false;
 	}
 
-	return ret;		
+	if(reader_->peek_ascii(i)=='.' && test_digit(reader_->peek_ascii(i+1))){
+		return false;
+	}
+
+	return true;
 }
 
-int_t Lexer::parse_bin(){
-	int ret = 0;
-	for(;;){
-		if(test_range(reader_->peek_ascii(), '0', '1')){
-			ret *= 2;
-			ret += reader_->read_ascii()-'0';
-		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
-		}
-		else{
-			break;
-		}
-	}
-
-	if(test_ident_rest(reader_->peek_ascii()) || ('2'<=reader_->peek_ascii() && reader_->peek_ascii()<='9')){
-		reader_->error(Xt("XCE1015")->call(Named(Xid(n), 2)));
-	}
-
-	return ret;
-}
-
-void Lexer::parse_number_suffix(int_t val){
-	if(reader_->eat_ascii('f') || reader_->eat_ascii('F')){
-		push_float_token((float_t)val);	
-	}
-	else{
-
-		if(test_ident_rest(reader_->peek_ascii())){
-			reader_->error(Xt("XCE1010"));
-		}
-
-		push_int_token(val);
-	}
-}
-
-void Lexer::parse_number_suffix(float_t val){
-	if(reader_->eat_ascii('f') || reader_->eat_ascii('F')){
-		push_float_token(val);	
-	}
-	else{
-	
-		if(test_ident_rest(reader_->peek_ascii())){
-			reader_->error(Xt("XCE1010"));
-		}
-
-		push_float_token(val);
-	}
-}
-
-void Lexer::parse_number(){
+void Parser::tokenize_number(){
 	if(reader_->eat_ascii('0')){
 		if(reader_->eat_ascii('x') || reader_->eat_ascii('X')){
-			push_int_token(parse_hex());
+			push_int_token(read_integer(16));
 			return;
 		}
 		else if(reader_->eat_ascii('o')){
-			push_int_token(parse_oct());
+			push_int_token(read_integer(8));
 			return;
 		}
 		else if(reader_->eat_ascii('b') || reader_->eat_ascii('B')){
-			push_int_token(parse_bin());
+			push_int_token(read_integer(2));
 			return;
 		}
 	}
 	
-	{
-		int i = 0;
-		while(test_digit(reader_->peek_ascii(i)) || reader_->peek_ascii(i)=='_'){
-			i++;
-		}
-
-		if(reader_->peek_ascii(i)!='.' || !test_digit(reader_->peek_ascii(i+1))){
-			parse_number_suffix(parse_integer());
-			return;
-		}
+	if(is_integer_literal()){
+		push_int_token(read_integer(10));
+		return;		
 	}
 
-	float_t ival = parse_finteger();
+	float_t ival = read_finteger();
 	
 	reader_->skip(); // skip '.'
 
@@ -407,8 +323,8 @@ void Lexer::parse_number(){
 	}
 
 	fval += ival;
-	int_t e = 1;
 	if(reader_->eat_ascii('e') || reader_->eat_ascii('E')){
+		int_t e = 1;
 		if(reader_->eat_ascii('-')){
 			e = -1;
 		}
@@ -420,19 +336,28 @@ void Lexer::parse_number(){
 			reader_->error(Xt("XCE1014"));
 		}
 
-		e *= parse_integer();
+		e *= read_integer(10);
 
 		{
 			using namespace std;
 			fval *= (float_t)pow((float_t)10, (float_t)e);
 		}
 	}
-	parse_number_suffix(fval);
+
+	if(!reader_->eat_ascii('f')){
+		reader_->eat_ascii('F');
+	}
+	
+	if(test_ident_rest(reader_->peek_ascii())){
+		reader_->error(Xt("XCE1010"));
+	}
+
+	push_float_token(fval);
 }
 	
 //////////////////////////////////////////
 
-void Lexer::do_read(){
+void Parser::tokenize(){
 	left_space_ = 0;
 	
 	do{
@@ -444,16 +369,30 @@ void Lexer::do_read(){
 			XTAL_DEFAULT{
 
 				if(ch!=0 && test_ident_first(ch)){
-					IDPtr identifier = parse_identifier();
-					if(const AnyPtr& key = keyword_map_->at(identifier)){
-						push_keyword_token(identifier, ivalue(key));
+					ms_->clear();
+					ms_->put_s(reader_->read()->to_s());
+					while(test_ident_rest(reader_->peek_ascii())){
+						ms_->put_s(reader_->read()->to_s());
+					}
+					IDPtr identifier = ms_->to_s();
+					if(const AnyPtr& key = identifier_map_->at(identifier)){
+						int_t n = ivalue(key);
+						if(n<Token::KEYWORD_MAX){
+							push_keyword_token(n);
+						}
+						else{
+							push_identifier_token(n);
+						}
 					}
 					else{
-						push_identifier_token(identifier);
+						int_t n = identifiers_->size();
+						identifier_map_->set_at(identifier, n);
+						identifiers_->push_back(identifier);
+						push_identifier_token(n);
 					}
 				}
 				else if(test_digit(ch)){
-					parse_number();
+					tokenize_number();
 					return;
 				}
 				else{
@@ -514,13 +453,7 @@ void Lexer::do_read(){
 				else if(reader_->eat_ascii('*')){
 					for(;;){
 						int_t ch = reader_->read_ascii();
-						if(ch=='\r'){
-							reader_->eat_ascii('\n');
-						}
-						else if(ch=='\n'){
-
-						}
-						else if(ch=='*'){
+						if(ch=='*'){
 							if(reader_->eat_ascii('/')){
 								left_space_ = Token::FLAG_LEFT_SPACE;
 								break;
@@ -699,7 +632,7 @@ void Lexer::do_read(){
 			
 			XTAL_CASE('.'){ 
 				if(test_digit(reader_->peek_ascii(1))){
-					parse_number();
+					tokenize_number();
 					return;
 				}
 				
@@ -724,7 +657,18 @@ void Lexer::do_read(){
 
 			XTAL_CASE('\''){ 
 				reader_->skip();
-				push_identifier_token(read_string('\'', '\''));
+				IDPtr identifier = read_string('\'', '\'');
+
+				if(const AnyPtr& key = identifier_map_->at(identifier)){
+					int_t n = ivalue(key);
+					push_identifier_token(n);
+				}
+				else{
+					int_t n = identifiers_->size();
+					identifier_map_->set_at(identifier, n);
+					identifiers_->push_back(identifier);
+					push_identifier_token(n);
+				}
 			}
 
 			XTAL_CASE4(' ', '\t', '\r', '\n'){
@@ -736,10 +680,12 @@ void Lexer::do_read(){
 #ifdef XTAL_USE_WCHAR
 
 			XTAL_CASE((uchar_t)0xFEFF){
+				reader_->skip();
 				continue;
 			}
 
 			XTAL_CASE((uchar_t)0xFFFE){
+				reader_->skip();
 				continue;
 			}
 
@@ -765,7 +711,7 @@ void Lexer::do_read(){
 
 }
 
-void Lexer::deplete_space(){
+void Parser::deplete_space(){
 	for(;;){
 		int_t ch = reader_->peek_ascii();
 		if(ch=='\r'){
@@ -784,18 +730,14 @@ void Lexer::deplete_space(){
 	}
 }
 
-int_t Lexer::test_right_space(int_t ch){
+int_t Parser::test_right_space(int_t ch){
 	if(test_space(ch)){
 		return Token::FLAG_RIGHT_SPACE;
 	}
 	return 0;
 }
 
-int_t Lexer::read_direct(){
-	return reader_->read_ascii();
-}
-
-StringPtr Lexer::read_string(int_t open, int_t close){
+StringPtr Parser::read_string(int_t open, int_t close){
 	ms_->clear();
 
 	int_t depth = 1;
@@ -944,13 +886,7 @@ enum{//Expressions priority
 
 
 
-
-Parser::Parser(){
-
-}
-
 ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
-	lexer_.init(scanner);
 	reader_ = scanner;
 
 	parse_toplevel();
@@ -967,7 +903,6 @@ ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
 }
 
 ExprPtr Parser::parse_eval(const xpeg::ExecutorPtr& scanner){
-	lexer_.init(scanner);
 	reader_ = scanner;
 
 	parse_stmt();
@@ -983,31 +918,41 @@ ExprPtr Parser::parse_eval(const xpeg::ExecutorPtr& scanner){
 	return ep(eb_.pop());
 }
 
-const Token& Parser::lexer_read(){
-	const Token& ret = lexer_.read();
-	eb_.set_lineno(lexer_.lineno());
-	return ret;
+StringPtr Parser::token_to_string(const Token& ch){
+	if(ch.type()==Token::TYPE_IDENTIFIER || ch.type()==Token::TYPE_KEYWORD){
+		return identifier(ch.identifier_number());
+	}
+	else if(ch.type()==Token::TYPE_INT || ch.type()==Token::TYPE_FLOAT){
+		return XTAL_STRING("<number>");
+	}
+	else{
+		int_t n = ch.ivalue();
+		char_t buf[] = {((n>>0)&0xff), ((n>>8)&0xff), ((n>>16)&0xff), ((n>>24)&0xff), 0};
+
+		if(buf[0]==0){
+			return XTAL_STRING("<end of stream>");			
+		}
+
+		return xnew<String>(buf);
+	}
 }
 
-const Token& Parser::lexer_peek(){
-	const Token& ret = lexer_.peek();
-	eb_.set_lineno(lexer_.lineno());
-	return ret;
-}
-
-void Parser::expect(int_t ch){
-	if(eat(ch)){
-		lexer_.bin();
+void Parser::expect(int_t ach){
+	if(eat(ach)){
+		reader_->bin();
 		return;
 	}
-	reader_->error(Xt("XCE1002")->call(Named(Xid(char), lexer_peek().to_s())));
+
+	const Token& ch = peek_token();
+	Token rch(Token::TYPE_TOKEN, 0, ach);
+	reader_->error(Xt("XCE1002")->call(Named(Xid(required), token_to_string(rch)), Named(Xid(char), token_to_string(ch))));
 }
 
 bool Parser::eat(int_t ch){
-	const Token& n = lexer_peek();
+	const Token& n = peek_token();
 	if(n.type() == Token::TYPE_TOKEN){
 		if(n.ivalue()==ch){
-			lexer_read();
+			read_token();
 			return true;
 		}
 	}
@@ -1015,10 +960,10 @@ bool Parser::eat(int_t ch){
 }
 
 bool Parser::eat(Token::Keyword kw){
-	const Token& n = lexer_peek();
+	const Token& n = peek_token();
 	if(n.type() == Token::TYPE_KEYWORD){
 		if(n.keyword_number()==kw){
-			lexer_read();
+			read_token();
 			return true;
 		}
 	}
@@ -1026,7 +971,7 @@ bool Parser::eat(Token::Keyword kw){
 }
 
 bool Parser::parse_term(){
-	const Token& ch = lexer_read();
+	const Token& ch = read_token();
 	int_t r_space = ch.right_space() ? PRI_MAX : 0;
 
 	switch(ch.type()){
@@ -1064,22 +1009,22 @@ bool Parser::parse_term(){
 
 				XTAL_CASE('"'){ 
 					eb_.push(KIND_STRING);
-					eb_.push(lexer_.read_string('"', '"'));
+					eb_.push(read_string('"', '"'));
 					eb_.splice(EXPR_STRING, 2);
 					return true; 
 				}
 				
 				XTAL_CASE('%'){
-					int_t ch = lexer_.read_direct();
+					int_t ch = reader_->read_ascii();
 					int_t kind = KIND_STRING;
 
 					if(ch=='t'){
 						kind = KIND_TEXT;
-						ch = lexer_.read_direct();
+						ch = reader_->read_ascii();
 					}
 					else if(ch=='f'){
 						kind = KIND_FORMAT;
-						ch = lexer_.read_direct();
+						ch = reader_->read_ascii();
 					}
 
 					int_t open = ch;
@@ -1105,7 +1050,7 @@ bool Parser::parse_term(){
 					}
 
 					eb_.push(kind);
-					eb_.push(lexer_.read_string(open, close));
+					eb_.push(read_string(open, close));
 					eb_.splice(EXPR_STRING, 2);
 					return true; 
 				}
@@ -1150,16 +1095,16 @@ bool Parser::parse_term(){
 		
 		XTAL_CASE(Token::TYPE_INT){ eb_.push(ch.ivalue()); eb_.splice(EXPR_NUMBER, 1); return true; }
 		XTAL_CASE(Token::TYPE_FLOAT){ eb_.push(ch.fvalue()); eb_.splice(EXPR_NUMBER, 1); return true; }
-		XTAL_CASE(Token::TYPE_IDENTIFIER){ eb_.push(ch.identifier()); eb_.splice(EXPR_LVAR, 1); return true; }
+		XTAL_CASE(Token::TYPE_IDENTIFIER){ eb_.push(identifier(ch.identifier_number())); eb_.splice(EXPR_LVAR, 1); return true; }
 	}
 
-	lexer_.putback(ch);
+	putback_token(ch);
 	return false;
 }
 
 bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 	bool one = pri < op;
-	bool two = pri-l_space < op - r_space;
+	bool two = pri-l_space < op-r_space;
 	if(one!=two){
 		reader_->error(Xt("XCE1028"));
 	}
@@ -1167,13 +1112,13 @@ bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 }
 
 bool Parser::expr_end(){
-	const Token& prevch = lexer_.peek(-1);
+	const Token& prevch = peek_token(-1);
 	return prevch.type()==Token::TYPE_TOKEN && prevch.ivalue()=='}';
 }
 
 bool Parser::parse_post(int_t pri, int_t space){
 	if(expr_end()){
-		const Token& ch = lexer_peek();
+		const Token& ch = peek_token();
 
 		if(ch.type()==Token::TYPE_TOKEN && (ch.ivalue()=='.' || ch.ivalue()==c2('.','?'))){
 		
@@ -1183,7 +1128,7 @@ bool Parser::parse_post(int_t pri, int_t space){
 		}
 	}
 
-	Token ch = lexer_read();
+	Token ch = read_token();
 	int_t r_space = (ch.right_space()) ? PRI_MAX : 0;
 	int_t l_space = (ch.left_space()) ? PRI_MAX : 0;
 
@@ -1250,7 +1195,7 @@ bool Parser::parse_post(int_t pri, int_t space){
 							parse_identifier_or_keyword();
 						}
 
-						int_t r_space = (lexer_peek().right_space() || lexer_peek().left_space()) ? PRI_MAX : 0;
+						int_t r_space = (peek_token().right_space() || peek_token().left_space()) ? PRI_MAX : 0;
 						if(eat('#')){
 							expect_parse_expr(PRI_NS, r_space);
 						}
@@ -1326,7 +1271,7 @@ bool Parser::parse_post(int_t pri, int_t space){
 		}
 	}
 
-	lexer_.putback(ch);
+	putback_token(ch);
 	return false;
 }
 
@@ -1357,10 +1302,10 @@ void Parser::parse_each(){
 
 	if(eat('|')){ // ブロックパラメータ
 		for(;;){
-			const Token& ch = lexer_peek();
+			const Token& ch = peek_token();
 			if(ch.type()==ch.TYPE_IDENTIFIER){
-				lexer_read();
-				eb_.push(ch.identifier());
+				read_token();
+				eb_.push(identifier(ch.identifier_number()));
 				eb_.splice(EXPR_LVAR, 1);
 				params->push_back(eb_.pop());
 				if(!eat(',')){
@@ -1509,7 +1454,7 @@ void Parser::parse_while(){
 bool Parser::parse_loop(){
 	// label: while(true){ // というパターンかをチェック
 	if(parse_var()){
-		const Token& ch = lexer_read(); // :の次を読み取る
+		const Token& ch = read_token(); // :の次を読み取る
 		if(ch.type()==Token::TYPE_KEYWORD){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
@@ -1518,7 +1463,7 @@ bool Parser::parse_loop(){
 			}
 		}
 
-		lexer_.putback(ch);
+		putback_token(ch);
 		if(parse_expr()){
 			if(!expr_end() && eat('{')){
 				parse_each();
@@ -1534,8 +1479,8 @@ bool Parser::parse_loop(){
 			}
 		}
 
-		lexer_.putback();
-		lexer_.putback();
+		putback_token();
+		putback_token();
 	}
 
 	return false;
@@ -1543,7 +1488,7 @@ bool Parser::parse_loop(){
 
 bool Parser::parse_assign_stmt(){
 	{
-		const Token& ch = lexer_read();
+		const Token& ch = read_token();
 
 		switch(ch.type()){
 			XTAL_DEFAULT;
@@ -1597,7 +1542,7 @@ bool Parser::parse_assign_stmt(){
 			}
 		}
 
-		lexer_.putback();
+		putback_token();
 	}
 
 	if(parse_expr()){
@@ -1605,7 +1550,7 @@ bool Parser::parse_assign_stmt(){
 			return true;
 		}
 		
-		const Token& ch = lexer_read();
+		const Token& ch = read_token();
 
 		switch(ch.type()){
 			XTAL_DEFAULT{}
@@ -1614,7 +1559,7 @@ bool Parser::parse_assign_stmt(){
 				switch(ch.ivalue()){
 
 					XTAL_DEFAULT{
-						lexer_.putback();
+						putback_token();
 						return true; 
 					}
 
@@ -1666,7 +1611,7 @@ bool Parser::parse_assign_stmt(){
 			}
 		}
 
-		lexer_.putback();
+		putback_token();
 		return true;
 	}
 
@@ -1687,7 +1632,7 @@ bool Parser::parse_stmt(){
 		return true;
 	}
 
-	const Token& ch = lexer_read();
+	const Token& ch = read_token();
 
 	switch(ch.type()){
 		XTAL_DEFAULT{}
@@ -1723,16 +1668,18 @@ bool Parser::parse_stmt(){
 				}
 				
 				XTAL_CASE(Token::KEYWORD_CONTINUE){ 
-					if(!parse_identifier())
+					if(!parse_identifier()){
 						eb_.push(null); 
+					}
 					eb_.splice(EXPR_CONTINUE, 1); 
 					expect_stmt_end();
 					return true; 
 				}
 
 				XTAL_CASE(Token::KEYWORD_BREAK){ 
-					if(!parse_identifier())
+					if(!parse_identifier()){
 						eb_.push(null); 
+					}
 					eb_.splice(EXPR_BREAK, 1); 
 					expect_stmt_end();
 					return true; 
@@ -1750,7 +1697,7 @@ bool Parser::parse_stmt(){
 		}
 	}
 	
-	lexer_.putback();
+	putback_token();
 	if(parse_assign_stmt()){
 		expect_stmt_end();
 		return true;
@@ -1767,9 +1714,9 @@ void Parser::expect_parse_stmt(){
 }
 
 void Parser::parse_assert(){
-	lexer_.begin_record();
+	reader_->begin_record();
 	if(parse_expr()){
-		StringPtr ref_str = lexer_.end_record();
+		StringPtr ref_str = reader_->end_record();
 		eb_.push(KIND_STRING);
 		eb_.push(ref_str);
 		eb_.splice(EXPR_STRING, 2);
@@ -1781,7 +1728,7 @@ void Parser::parse_assert(){
 		eb_.push(null);
 		eb_.push(null);
 		eb_.push(null);
-		lexer_.end_record();
+		reader_->end_record();
 	}
 
 	eb_.splice(EXPR_ASSERT, 3);
@@ -1815,19 +1762,19 @@ void Parser::expect_parse_identifier(){
 }
 
 bool Parser::parse_identifier(){
-	if(lexer_peek().type()==Token::TYPE_IDENTIFIER){
-		eb_.push(lexer_read().identifier());
+	if(peek_token().type()==Token::TYPE_IDENTIFIER){
+		eb_.push(identifier(read_token().identifier_number()));
 		return true;
 	}
 	return false;
 }
 
 void Parser::parse_identifier_or_keyword(){
-	if(lexer_peek().type()==Token::TYPE_IDENTIFIER){
-		eb_.push(lexer_read().identifier());
+	if(peek_token().type()==Token::TYPE_IDENTIFIER){
+		eb_.push(identifier(read_token().identifier_number()));
 	}
-	else if(lexer_peek().type()==Token::TYPE_KEYWORD){
-		eb_.push(lexer_read().identifier());
+	else if(peek_token().type()==Token::TYPE_KEYWORD){
+		eb_.push(identifier(read_token().identifier_number()));
 	}
 	else{
 		expect('i');
@@ -1841,7 +1788,7 @@ bool Parser::parse_var(){
 		}
 		else{
 			eb_.pop();
-			lexer_.putback();
+			putback_token();
 		}
 	}
 	return false;
@@ -1871,6 +1818,22 @@ void Parser::parse_secondary_key(){
 	else{ 
 		eb_.push(null); 
 	}
+}
+
+void Parser::parse_fun2(int_t kind){
+	expect_parse_identifier();
+	parse_secondary_key();
+	parse_fun(kind);
+	eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+	expect_stmt_end();
+}
+
+void Parser::parse_class2(int_t kind){
+	expect_parse_identifier();
+	parse_secondary_key();
+	parse_class(kind);
+	eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+	expect_stmt_end();
 }
 
 void Parser::parse_class(int_t kind){
@@ -1903,39 +1866,19 @@ void Parser::parse_class(int_t kind){
 		}
 
 		if(eat(Token::KEYWORD_METHOD)){
-			expect_parse_identifier();
-			parse_secondary_key();
-			parse_fun(KIND_METHOD);
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			expect_stmt_end();
+			parse_fun2(KIND_METHOD);
 		}
 		else if(eat(Token::KEYWORD_FUN)){
-			expect_parse_identifier();
-			parse_secondary_key();
-			parse_fun(KIND_FUN);
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			expect_stmt_end();
+			parse_fun2(KIND_FUN);
 		}
 		else if(eat(Token::KEYWORD_FIBER)){
-			expect_parse_identifier();
-			parse_secondary_key();
-			parse_fun(KIND_FIBER);
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			expect_stmt_end();
+			parse_fun2(KIND_FIBER);
 		}
 		else if(eat(Token::KEYWORD_CLASS)){
-			expect_parse_identifier();
-			parse_secondary_key();
-			parse_class(KIND_CLASS);
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			expect_stmt_end();
+			parse_class2(KIND_CLASS);
 		}
 		else if(eat(Token::KEYWORD_SINGLETON)){
-			expect_parse_identifier();
-			parse_secondary_key();
-			parse_class(KIND_SINGLETON);
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-			expect_stmt_end();
+			parse_class2(KIND_SINGLETON);
 		}
 		else if(parse_identifier()){ // メンバ定義
 			parse_secondary_key();
@@ -2050,7 +1993,7 @@ void Parser::parse_fun(int_t kind){
 		ExprBuilder::State state = eb_.begin();
 		for(;;){
 			if(eat(c3('.','.','.'))){ // extendable
-				lexer_.putback();
+				putback_token();
 				break;
 			}
 			else{
@@ -2105,7 +2048,7 @@ void Parser::parse_call(){
 	ExprBuilder::State state = eb_.begin();
 	for(;;){
 		if(eat(c3('.','.','.'))){ // extendable
-			lexer_.putback();
+			putback_token();
 			break;
 		}
 		else{

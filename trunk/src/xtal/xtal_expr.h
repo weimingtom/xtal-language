@@ -169,6 +169,11 @@ public:
 		return cast<const T&>(at(i));
 	}
 
+	void on_visit_members(Visitor& m){
+		Array::on_visit_members(m);
+		m & tag_;
+	}
+
 private:
 	AnyPtr tag_;
 	int_t lineno_;

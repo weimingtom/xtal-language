@@ -104,7 +104,7 @@ struct XNewXBase_INHERITED_ANY{
 
 	void* ptr(){ return &value; }
 
-	UninitializedAny value;
+	Any value;
 };
 
 struct XNewXBase_INHERITED_OTHER{
@@ -192,34 +192,35 @@ public:
 	/**
 	* \brief nullで構築するコンストラクタ
 	*/
-	SmartPtr(){}
+	SmartPtr(){
+		value_.init_primitive(TYPE_NULL);
+	}
 
 	/**
 	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
 	*/
 	template<class T, class Deleter>
-	SmartPtr(const T* p, const Deleter& deleter)
-		:Any(noinit_t()){
+	SmartPtr(const T* p, const Deleter& deleter){
 		init_smartptr(xnew_with_deleter<T, Deleter>(p, deleter));
 	}
 
 	template<class T>
-	SmartPtr(const T* p, const undeleter_t&)
-		:Any(noinit_t()){
+	SmartPtr(const T* p, const undeleter_t&){
 		value_.init_pointer(p, CppClassSymbol<T>::value->value);
 	}
 
 	// 任意のポインタ型を受け取ってxtalで参照できるようにするコンストラクタ
 	template<class T>
-	SmartPtr(const T* p)
-		:Any(noinit_t()){
+	SmartPtr(const T* p){
 		set_unknown_pointer(p, TypeIntType<InheritedN<T>::value>());
 	}
 
 	SmartPtr(const SmartPtr<Any>& p);
 
 	/// nullを受け取るコンストラクタ
-	SmartPtr(const NullPtr&){}
+	SmartPtr(const NullPtr&){
+		value_.init_primitive(TYPE_NULL);
+	}
 
 public:
 
@@ -228,7 +229,9 @@ public:
 	void assign_direct(const SmartPtr<Any>& a);
 
 	explicit SmartPtr(PrimitiveType type)
-		:Any(type){}
+		{
+		value_.init_primitive(type);
+	}
 	
 	~SmartPtr();
 
@@ -241,8 +244,7 @@ public:
 	
 protected:
 
-	SmartPtr(noinit_t)
-		:Any(noinit_t()){}
+	SmartPtr(noinit_t){}
 
 	void init_smartptr(Base* p);
 
@@ -262,7 +264,9 @@ public:
 	* \brief booleanから構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(bool v):Any(v){}
+	SmartPtr(bool v){
+		value_.init_bool(v);
+	}
 
 	/**
 	* \brief 文字列から構築するコンストラクタ。
@@ -283,35 +287,35 @@ public:
 	SmartPtr(const StringLiteral& str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(char v):Any(v){}
-	SmartPtr(signed char v):Any(v){}
-	SmartPtr(unsigned char v):Any(v){}
-	SmartPtr(short v):Any(v){}
-	SmartPtr(unsigned short v):Any(v){}
-	SmartPtr(int v):Any(v){}
-	SmartPtr(unsigned int v):Any(v){}
-	SmartPtr(long v):Any(v){}
-	SmartPtr(unsigned long v):Any(v){}
-	SmartPtr(long long v):Any(v){}
-	SmartPtr(unsigned long long v):Any(v){}
+	SmartPtr(char v){ value_.init_int(v); }
+	SmartPtr(signed char v){ value_.init_int(v); }
+	SmartPtr(unsigned char v){ value_.init_int(v); }
+	SmartPtr(short v){ value_.init_int(v); }
+	SmartPtr(unsigned short v){ value_.init_int(v); }
+	SmartPtr(int v){ value_.init_int(v); }
+	SmartPtr(unsigned int v){ value_.init_int(v); }
+	SmartPtr(long v){ value_.init_int(v); }
+	SmartPtr(unsigned long v){ value_.init_int(v); }
+	SmartPtr(long long v){ value_.init_int(v); }
+	SmartPtr(unsigned long long v){ value_.init_int(v); }
 
-	SmartPtr(float v):Any(v){}
-	SmartPtr(double v):Any(v){}
-	SmartPtr(long double v):Any(v){}
+	SmartPtr(float v){ value_.init_float(v); }
+	SmartPtr(double v){ value_.init_float(v); }
+	SmartPtr(long double v){ value_.init_float(v); }
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(const bool* v):Any(*v){}
-	SmartPtr(const unsigned char* v):Any(*v){}
-	SmartPtr(const short* v):Any(*v){}
-	SmartPtr(const unsigned short* v):Any(*v){}
-	SmartPtr(const int* v):Any(*v){}
-	SmartPtr(const unsigned int* v):Any(*v){}
-	SmartPtr(const long* v):Any(*v){}
-	SmartPtr(const unsigned long* v):Any(*v){}
+	SmartPtr(const bool* v){ value_.init_bool(*v); }
+	SmartPtr(const unsigned char* v){ value_.init_int(*v); }
+	SmartPtr(const short* v){ value_.init_int(*v); }
+	SmartPtr(const unsigned short* v){ value_.init_int(*v); }
+	SmartPtr(const int* v){ value_.init_int(*v); }
+	SmartPtr(const unsigned int* v){ value_.init_int(*v); }
+	SmartPtr(const long* v){ value_.init_int(*v); }
+	SmartPtr(const unsigned long* v){ value_.init_int(*v); }
 
-	SmartPtr(const float* v):Any(*v){}
-	SmartPtr(const double* v):Any(*v){}
-	SmartPtr(const long double* v):Any(*v){}
+	SmartPtr(const float* v){ value_.init_float(*v); }
+	SmartPtr(const double* v){ value_.init_float(*v); }
+	SmartPtr(const long double* v){ value_.init_float(*v); }
 
 public:
 
@@ -460,6 +464,8 @@ public:
 inline const AnyPtr& ap(const Any& v){
 	return (const AnyPtr&)v;
 }
+
+inline void ap(const AnyPtr& v);
 
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){

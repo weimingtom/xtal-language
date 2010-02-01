@@ -14,7 +14,7 @@ class NativeMethod;
 ////////////////////////////////////////////
 
 struct param_types_holder_n{
-	void (*fun)(VMachine* vm, UninitializedAny* args, const void* data); // 関数
+	void (*fun)(VMachine* vm, Any* args, const void* data); // 関数
 	CppClassSymbolData** const * param_types; // thisと引数の型を表すクラスシンボルへのポインタ
 	u8 size;
 	u8 param_n; // 引数の数
@@ -51,7 +51,7 @@ struct ReturnResult{
 template<class R> 
 struct ReturnResult<R&>{
 	static void call(VMachine* vm, const R& r){ 
-		vm->return_result(&r); 
+		vm->return_result(&r);
 	}	
 };
 
@@ -138,7 +138,7 @@ class NativeMethod : public HaveParentRefCountingBase{
 public:
 	enum{ TYPE = TYPE_NATIVE_METHOD };
 
-	typedef void (*fun_t)(VMachine* vm, UninitializedAny* args, const void* data);
+	typedef void (*fun_t)(VMachine* vm, Any* args, const void* data);
 
 	NativeMethod(const param_types_holder_n& pth, const void* val = 0);
 	

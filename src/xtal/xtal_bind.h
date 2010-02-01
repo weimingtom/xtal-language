@@ -255,7 +255,7 @@ struct nfun_base`n`{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && `n`==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A`n-1`>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				#REPEAT_COMMA#unchecked_cast<A`i`>((AnyPtr&)args[ArgBase+`i`])#
@@ -273,7 +273,7 @@ struct nfun_base`n`<TFun, Method, void #COMMA_REPEAT#A`i`#>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && `n`==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A`n-1`>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			#REPEAT_COMMA#unchecked_cast<A`i`>((AnyPtr&)args[ArgBase+`i`])#
 		);
@@ -296,7 +296,7 @@ struct nfun_base0{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 0==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<AM1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				
@@ -314,7 +314,7 @@ struct nfun_base0<TFun, Method, void >{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 0==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<AM1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			
 		);
@@ -336,7 +336,7 @@ struct nfun_base1{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 1==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A0>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0])
@@ -354,7 +354,7 @@ struct nfun_base1<TFun, Method, void , A0>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 1==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A0>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0])
 		);
@@ -376,7 +376,7 @@ struct nfun_base2{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 2==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1])
@@ -394,7 +394,7 @@ struct nfun_base2<TFun, Method, void , A0, A1>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 2==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1])
 		);
@@ -416,7 +416,7 @@ struct nfun_base3{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 3==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A2>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2])
@@ -434,7 +434,7 @@ struct nfun_base3<TFun, Method, void , A0, A1, A2>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 3==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A2>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2])
 		);
@@ -456,7 +456,7 @@ struct nfun_base4{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 4==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A3>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3])
@@ -474,7 +474,7 @@ struct nfun_base4<TFun, Method, void , A0, A1, A2, A3>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 4==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A3>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3])
 		);
@@ -496,7 +496,7 @@ struct nfun_base5{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 5==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A4>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4])
@@ -514,7 +514,7 @@ struct nfun_base5<TFun, Method, void , A0, A1, A2, A3, A4>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 5==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A4>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4])
 		);
@@ -536,7 +536,7 @@ struct nfun_base6{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 6==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A5>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5])
@@ -554,7 +554,7 @@ struct nfun_base6<TFun, Method, void , A0, A1, A2, A3, A4, A5>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 6==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A5>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5])
 		);
@@ -576,7 +576,7 @@ struct nfun_base7{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 7==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A6>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6])
@@ -594,7 +594,7 @@ struct nfun_base7<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 7==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A6>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6])
 		);
@@ -616,7 +616,7 @@ struct nfun_base8{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 8==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A7>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7])
@@ -634,7 +634,7 @@ struct nfun_base8<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 8==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A7>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7])
 		);
@@ -656,7 +656,7 @@ struct nfun_base9{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 9==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A8>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8])
@@ -674,7 +674,7 @@ struct nfun_base9<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 9==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A8>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8])
 		);
@@ -696,7 +696,7 @@ struct nfun_base10{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 10==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A9>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9])
@@ -714,7 +714,7 @@ struct nfun_base10<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 10==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A9>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9])
 		);
@@ -736,7 +736,7 @@ struct nfun_base11{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 11==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A10>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10])
@@ -754,7 +754,7 @@ struct nfun_base11<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, 
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 11==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A10>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10])
 		);
@@ -776,7 +776,7 @@ struct nfun_base12{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 12==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A11>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11])
@@ -794,7 +794,7 @@ struct nfun_base12<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, 
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 12==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A11>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11])
 		);
@@ -816,7 +816,7 @@ struct nfun_base13{
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 13==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A12>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm,
 			(*(fun_type*)data)(
 				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)args[ArgBase+12])
@@ -834,7 +834,7 @@ struct nfun_base13<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, 
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 13==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A12>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method, vm = 0 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(fun_type*)data)(
 			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)args[ArgBase+12])
 		);
@@ -854,7 +854,7 @@ struct nfun_base1<TFun, 0, void , const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(TFun*)data)(
 			to_smartptr(vm)
 		);
@@ -866,7 +866,7 @@ struct nfun_base2<TFun, 1, void , C, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		(*(TFun*)data)(
 			unchecked_cast<C>((AnyPtr&)args[0]),
 			to_smartptr(vm)
@@ -879,7 +879,7 @@ struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm, (*(TFun*)data)(
 			to_smartptr(vm)
 		));
@@ -891,7 +891,7 @@ struct nfun_base2<TFun, 1, R , C, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, UninitializedAny* args, const void* data){ 
+	static void call(VMachine* vm, Any* args, const void* data){ 
 		ReturnResult<R>::call(vm, (*(TFun*)data)(
 			unchecked_cast<C>((AnyPtr&)args[0]),
 			to_smartptr(vm)

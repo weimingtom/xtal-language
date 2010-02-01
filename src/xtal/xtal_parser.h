@@ -11,7 +11,7 @@
 
 namespace xtal{
 
-class Token{
+class Token : public ImmediateValue{
 public:
 
 	enum Flag{
@@ -71,143 +71,28 @@ public:
 		KEYWORD_MAX
 	};
 
-	Token(){}
+	Token()
+		:ImmediateValue(0, 0){}
 	
-	Token(int_t type, const AnyPtr& value, int_t flags, int_t keyword_number = 0)
-		:type_((u8)type), flags_((u8)flags), keyword_number_(keyword_number), value_(value){}
+	Token(int_t type, int_t flags, int_t value)
+		:ImmediateValue(type | (flags<<4), value){}
 
-	int_t type() const{ return type_; }
+	Token(int_t type, int_t flags, float_t value)
+		:ImmediateValue(type | (flags<<4), value){}
 
-	bool left_space() const{ return (flags_ & FLAG_LEFT_SPACE) != 0; }
+	int_t type() const{ return first()&0xf; }
+
+	bool left_space() const{ return (((first()>>4)&0xf) & FLAG_LEFT_SPACE) != 0; }
 	
-	bool right_space() const{ return (flags_ & FLAG_RIGHT_SPACE) != 0; }
+	bool right_space() const{ return (((first()>>4)&0xf) & FLAG_RIGHT_SPACE) != 0; }
 	
-	int_t ivalue() const{ return ::xtal::ivalue((Any&)value_); }
+	int_t ivalue() const{ return second(); }
 	
-	float_t fvalue() const{ return ::xtal::fvalue(value_); }
+	float_t fvalue() const{ return secondf(); }
 	
-	const IDPtr& identifier() const{ return *(IDPtr*)&value_; }
+	int_t identifier_number() const{ return second(); }
 	
-	u16 keyword_number() const{ return keyword_number_; }
-
-	StringPtr to_s() const{ 
-		if(type_==TYPE_TOKEN){
-			char_t buf[4] = {((ivalue()>>0)&0xff), ((ivalue()>>8)&0xff), ((ivalue()>>16)&0xff), 0};
-			return buf;
-		}
-		else{
-			return value_->to_s();
-		}
-	}
-
-private:
-
-	u8 type_;
-	u8 flags_;
-	u16 keyword_number_;
-	AnyPtr value_;
-	
-};
-
-/*
-* XTALプログラムソースをトークン列に変換して取り出す
-*/
-class Lexer{
-public:
-
-	Lexer();
-	
-	/**
-	* \brief 初期化
-	*/
-	void init(const xpeg::ExecutorPtr& scanner);
-	
-	/**
-	* \brief 読み進める
-	*/
-	const Token& read();
-
-	/**
-	* \brief 次の要素を読む
-	*/
-	const Token& peek(int_t n = 0);
-
-	/**
-	* \brief 読み込んだ要素を一つ戻す
-	*/
-	void putback();
-	
-	/**
-	* \brief 指定したトークンを一つ戻す
-	* 次のreadやpeekでは、これで戻した値が得られる
-	*/
-	void putback(const Token& ch);
-	
-	/**
-	* \brief 現在の行数を返す
-	*/
-	int_t lineno(){ return reader_->lineno(); }
-	
-	int_t read_direct();
-
-	StringPtr read_string(int_t open, int_t close);
-
-	/**
-	* \brief 文字列の記録を開始する
-	*/
-	void begin_record(){
-		reader_->begin_record();
-	}
-
-	/**
-	* \brief 文字列の記録を終了して、それを返す。
-	*/
-	StringPtr end_record(){
-		return reader_->end_record();
-	}
-
-	void bin(){
-		reader_->bin();
-	}
-
-private:
-
-	void do_read();
-
-	void push_token(int_t v);
-	void push_int_token(int_t v);
-	void push_float_token(float_t v);
-	void push_keyword_token(const IDPtr& v, int_t num);
-	void push_identifier_token(const IDPtr& v);
-
-	void deplete_space();
-
-	IDPtr parse_identifier();
-	int_t parse_integer();
-	float_t parse_finteger();
-	int_t parse_hex();
-	int_t parse_oct();
-	int_t parse_bin();
-
-	void parse_number_suffix(int_t val);
-	void parse_number_suffix(float_t val);
-	void parse_number();
-	
-	int_t test_right_space(int_t ch);
-
-private:
-
-	xpeg::ExecutorPtr reader_;
-	MapPtr keyword_map_;
-	MemoryStreamPtr ms_;
-
-	enum{ BUF_SIZE = 64, BUF_MASK = BUF_SIZE-1 };
-	Token buf_[BUF_SIZE];
-
-	int_t pos_;
-	int_t read_;
-	uint_t left_space_;
-
+	int_t keyword_number() const{ return second(); }
 };
 
 class Parser{
@@ -219,15 +104,8 @@ public:
 
 	ExprPtr parse_eval(const xpeg::ExecutorPtr& scanner);
 
-public:
-
-	int_t lineno(){ return lexer_.lineno(); }
-
 private:
 	
-	const Token& lexer_read();
-	const Token& lexer_peek();
-
 	void expect(int_t ch);
 	bool eat(int_t ch);
 	bool eat(Token::Keyword kw);
@@ -261,9 +139,11 @@ private:
 	bool parse_loop();
 	void parse_switch();
 	void parse_class(int_t kind);
+	void parse_class2(int_t kind);
 	void parse_scope();
 	void parse_lambda(bool noparam = false);
 	void parse_fun(int_t kind);
+	void parse_fun2(int_t kind);
 	void parse_call();		
 	void parse_toplevel();
 
@@ -271,14 +151,56 @@ private:
 	bool expr_end();
 	void expect_stmt_end();
 
+private:
+
+	const Token& read_token();
+	const Token& peek_token(int_t n = 0);
+	void putback_token();
+	void putback_token(const Token& ch);
+	StringPtr token_to_string(const Token& ch);
+		
+	StringPtr read_string(int_t open, int_t close);
+
+	const IDPtr& identifier(int_t n){
+		return unchecked_ptr_cast<ID>(identifiers_->at(n));
+	}
+
+private:
+
+	void tokenize();
+	void push_token(int_t v);
+	void push_int_token(int_t v);
+	void push_float_token(float_t v);
+	void push_keyword_token(int_t num);
+	void push_identifier_token(int_t num);
+
+	void deplete_space();
+
+	float_t read_finteger();
+	int_t read_integer(int_t base);
+	bool is_integer_literal();
+	void tokenize_number();
+	
+	int_t test_right_space(int_t ch);
+
+private:
+
+	MapPtr identifier_map_;
+	ArrayPtr identifiers_;
+	MemoryStreamPtr ms_;
+
+	enum{ TOKEN_BUF_SIZE = 8, TOKEN_BUF_MASK = TOKEN_BUF_SIZE-1 };
+	Token token_buf_[TOKEN_BUF_SIZE];
+	int_t token_pos_;
+	int_t token_read_;
+
+	uint_t left_space_;
+
 public:
 
-	ExprBuilder eb_;
-	Lexer lexer_;
-
 	xpeg::ExecutorPtr reader_;
+	ExprBuilder eb_;
 };
-
 
 }
 

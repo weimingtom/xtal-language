@@ -57,7 +57,8 @@ Executor::~Executor(){
 }
 
 bool Executor::match(const AnyPtr& pattern){
-	const NFAPtr& nfa = fetch_nfa(elem(pattern));
+	ElementPtr nfa = elem(pattern);
+
 	pos_begin_ = pos();
 	for(;;){
 		match_begin_ = pos();
@@ -75,7 +76,7 @@ bool Executor::match(const AnyPtr& pattern){
 }
 
 bool Executor::parse(const AnyPtr& pattern){
-	return match_inner(fetch_nfa(elem(pattern))) && (!errors_ || errors_->empty());
+	return match_inner(elem(pattern)) && (!errors_ || errors_->empty());
 }
 
 int_t Executor::do_read(AnyPtr* buffer, int_t max){
@@ -209,22 +210,16 @@ void Executor::error(const AnyPtr& message, int_t line){
 	}
 }
 
-void Executor::push(uint_t mins, uint_t cur_state, uint_t nodes, const State& pos){
-	for(uint_t i=mins, sz=stack_.size(); i<sz; ++i){
-		if(stack_.reverse_at(i).pos.pos != pos.pos){
-			break;
-		}
-		else if(stack_.reverse_at(i).state == cur_state){
-			return;
+bool Executor::match_inner(const ElementPtr& e){
+	if(!e->nfa){
+		e->nfa = xnew<NFA>(e);
+		if(e->nfa->check_infinity_loop()){
+			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1034")));
+			return false;
 		}
 	}
 
-	StackInfo temp = {cur_state, nodes, pos};
-	stack_.push(temp);
-}
-
-bool Executor::match_inner(const AnyPtr& anfa){
-	const NFAPtr& nfa = unchecked_ptr_cast<NFA>(anfa);
+	const NFAPtr& nfa = e->nfa;
 
 	// メモ化したい
 	// (スキャナーの位置、NFAのポインタ値) がキー
@@ -232,6 +227,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	key.pos = pos();
 	key.ptr = nfa.get();
 
+	// メモ化した中にひょっとしてあるのかな？
 	memotable_t::iterator it=memotable_.find(key);
 	if(it!=memotable_.end()){
 		load(it->second.state);
@@ -274,7 +270,6 @@ bool Executor::match_inner(const AnyPtr& anfa){
 				tree_->resize(se.nodes);
 			}
 
-			// パース成功
 			if(test((*tr)->ch)){
 				push(mins, (*tr)->to, tree_->size(), save());
 				fail = false;
@@ -322,9 +317,7 @@ bool Executor::match_inner(const AnyPtr& anfa){
 	return false;
 }
 
-bool Executor::test(const AnyPtr& ae){
-	const ElementPtr& e = unchecked_ptr_cast<Element>(ae);
-
+bool Executor::test(const ElementPtr& e){
 	switch(e->type){
 		XTAL_NODEFAULT;
 
@@ -420,33 +413,29 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_GREED){
-			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			return match_inner(nfa)!=e->inv;
+			return match_inner(unchecked_ptr_cast<Element>(e->param1))!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_LOOKAHEAD){
-			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			State state = save();
-			bool ret = match_inner(nfa);
+			bool ret = match_inner(unchecked_ptr_cast<Element>(e->param1));
 			load(state);
 			return ret!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_LOOKBEHIND){
-			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			State state = save();
 			State fict_state = state;
 			fict_state.pos = fict_state.pos > (uint_t)ivalue(e->param2) ? fict_state.pos-e->param3 : 0;
 			load(fict_state);
-			bool ret = match_inner(nfa);
+			bool ret = match_inner(unchecked_ptr_cast<Element>(e->param1));
 			load(state);
 			return ret!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_LEAF){
-			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
 			int_t ipos = pos();
-			if(match_inner(nfa)){
+			if(match_inner(unchecked_ptr_cast<Element>(e->param1))){
 				if(tree_){
 					if(e->param3!=0){
 						tree_->push_back(capture_values(ipos, pos()));
@@ -461,13 +450,11 @@ bool Executor::test(const AnyPtr& ae){
 		}
 
 		XTAL_CASE(Element::TYPE_NODE){
-			const NFAPtr& nfa = fetch_nfa(unchecked_ptr_cast<Element>(e->param1));
-			//int_t pos = pos();
 			if(tree_){
 				int_t nodenum = tree_->size() - e->param3;
 				if(nodenum<0){ nodenum = 0; }
 
-				if(match_inner(nfa)){
+				if(match_inner(unchecked_ptr_cast<Element>(e->param1))){
 					TreeNodePtr node = xnew<TreeNode>();
 					node->set_tag(e->param2->to_s()->intern());
 					node->set_lineno(lineno());
@@ -477,7 +464,7 @@ bool Executor::test(const AnyPtr& ae){
 				}
 			}
 			else{
-				if(match_inner(nfa)){
+				if(match_inner(unchecked_ptr_cast<Element>(e->param1))){
 					return !e->inv;
 				}
 			}
@@ -690,12 +677,69 @@ void Executor::bin(){
 	}
 }
 
-/////////////////////////////////////////////////
+void Executor::tree_splice(const AnyPtr& tag, int_t num){
+	tree_splice(tag, num, lineno_);
+}
+
+void Executor::tree_splice(const AnyPtr& tag, int_t num, int_t lineno){
+	TreeNodePtr ret = xnew<TreeNode>(tag, lineno);
 	
+	if((int_t)tree_->size()<num){
+		tree_->resize(num);
+	}
+
+	for(uint_t i=tree_->size()-num; i<tree_->size(); ++i){
+		tree_->push_back(tree_->at(i));
+	}
+
+	tree_->resize(tree_->size()-num);
+	tree_->push_back(ret);
+}
+
+
+/////////////////////////////////////////////////
+
+bool NFA::check_infinity_loop(){
+	PODArrayList<int_t> checked_list;
+	PODStack<int_t> stack;
+
+	checked_list.resize(states_.size());
+	for(uint_t i=0; i<states_.size(); ++i){
+		checked_list[i] = 0;
+	}
+
+	for(uint_t i=0; i<states_.size(); ++i){
+		if(checked_list[i]==0){
+
+			stack.push(i);
+			while(!stack.empty()){
+				State& state = states_[stack.top()];
+				checked_list[stack.top()] = 1;
+				stack.pop();
+
+				for(const TransPtr* tr=&state.trans; *tr; tr=&(*tr)->next){
+					if((*tr)->ch->is_e_transition()){
+						if(checked_list[(*tr)->to]==1){
+							return true;
+						}
+						stack.push((*tr)->to);
+					}
+				}
+			}
+
+			for(uint_t i=0; i<states_.size(); ++i){
+				if(checked_list[i] == 1){
+					checked_list[i] = 2;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 NFA::NFA(const ElementPtr& node){
 	e_ = xnew<Element>(Element::TYPE_INVALID);
 
-	root_node_ = node;
 	cap_max_ = 0;
 	cap_list_ = xnew<Array>();
 
@@ -826,11 +870,6 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 			gen_nfa(before, t->param1, after, depth+1);
 			add_transition(after, e_, exit);
 		}
-
-		XTAL_CASE(Element::TYPE_DECL){
-			add_transition(entry, t, exit);
-			//gen_nfa(entry, t->param1, exit, depth+1);
-		}
 	}
 }
 
@@ -849,6 +888,120 @@ Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t pa
 	:type((u8)type), inv(false), param1(param1), param2(param2), param3(param3){}
 	
 Element::~Element(){}
+
+bool Element::is_e_transition() const{
+	switch(type){
+		XTAL_NODEFAULT;
+
+		case Element::TYPE_CONCAT: 
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition() && unchecked_ptr_cast<Element>(param2)->is_e_transition();
+
+		case Element::TYPE_OR:
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition() || unchecked_ptr_cast<Element>(param2)->is_e_transition();
+
+		case Element::TYPE_MORE0:
+			return true;
+
+		case Element::TYPE_MORE1:
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
+
+		case Element::TYPE_01:
+			return true;
+
+		case Element::TYPE_EMPTY:
+			return true;
+
+		case Element::TYPE_CAP:
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
+
+		case Element::TYPE_DECL:
+			return false;
+
+		XTAL_CASE(Element::TYPE_INVALID){
+			return true;
+		}
+
+		XTAL_CASE(Element::TYPE_ANY){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_BOS){
+			return true;
+		}
+
+		XTAL_CASE(Element::TYPE_EOS){
+			return true;
+		}
+
+		XTAL_CASE(Element::TYPE_BOL){
+			return true;
+		}
+
+		XTAL_CASE(Element::TYPE_EOL){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_EQL){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_INT_RANGE){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_FLOAT_RANGE){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_CH_RANGE){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_PRED){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_CH_SET){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_CALL){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_GREED){
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
+		}
+
+		XTAL_CASE(Element::TYPE_LOOKAHEAD){
+			return true;	
+		}
+
+		XTAL_CASE(Element::TYPE_LOOKBEHIND){
+			return true;	
+		}
+
+		XTAL_CASE(Element::TYPE_LEAF){
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
+		}
+
+		XTAL_CASE(Element::TYPE_NODE){
+			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
+		}
+
+		XTAL_CASE(Element::TYPE_BACKREF){
+			return false;
+		}
+
+		XTAL_CASE(Element::TYPE_ERROR){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 ElementPtr elem(const AnyPtr& a){
 	if(const ElementPtr& p = ptr_cast<Element>(a)){

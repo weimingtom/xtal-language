@@ -20,13 +20,21 @@ void HookInfo::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
 	m & /*vm_ & */file_name_ & fun_name_ & exception_ & variables_frame_;
 }
+	
+void HookInfo::set_vm(const VMachinePtr& v){ 
+	vm_ = &*v; 
+}
+	
+const VMachinePtr& HookInfo::vm(){ 
+	return to_smartptr(vm_); 
+}
 
 CallerInfoPtr HookInfo::caller(uint_t n){
-	return ptr_cast<VMachine>(ap(vm_))->caller(n);
+	return vm_->caller(n);
 }
 
 int_t HookInfo::call_stack_size(){
-	return ptr_cast<VMachine>(ap(vm_))->call_stack_size();
+	return vm_->call_stack_size();
 }
 
 

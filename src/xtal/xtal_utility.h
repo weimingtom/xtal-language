@@ -303,7 +303,12 @@ struct IsInherited{
 	static no test(...);
 	static T* makeT();
 
-	enum{ value = sizeof(test(makeT()))==sizeof(yes) };
+	enum{ 
+		// 完全型チェック
+		CHECK = sizeof(T) + sizeof(U),
+		
+		value = sizeof(test(makeT()))==sizeof(yes) 
+	};
 };
 
 template<int N>
@@ -827,6 +832,8 @@ enum PrimitiveType{
 	
 	TYPE_INT,
 	TYPE_FLOAT,
+
+	TYPE_IMMEDIATE_VALUE,
 	
 	TYPE_SMALL_STRING,
 	TYPE_STRING_LITERAL,

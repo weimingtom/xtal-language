@@ -6,8 +6,8 @@ namespace xtal{
 NullPtr null(unchecked_ptr_cast<Null>(ap(Null())));
 UndefinedPtr undefined(unchecked_ptr_cast<Undefined>(ap(Undefined())));
 
-IDPtr empty_id(unchecked_ptr_cast<ID>(ap(Any(TYPE_SMALL_STRING))));
-StringPtr empty_string(unchecked_ptr_cast<String>(ap(Any(TYPE_SMALL_STRING))));
+IDPtr empty_id(unchecked_ptr_cast<ID>(ap(String())));
+StringPtr empty_string(empty_id);
 
 FunInfo empty_xfun_info;
 ScopeInfo empty_scope_info;

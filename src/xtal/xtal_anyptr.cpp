@@ -43,15 +43,21 @@ void xmemset(int_t* s, int_t c, size_t n){
 }
 */
 
-SmartPtr<Any>::SmartPtr(const char_t* str){
+SmartPtr<Any>::SmartPtr(const char_t* str)
+	{
+	value_.init_primitive(TYPE_NULL);
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const char8_t* str){
+SmartPtr<Any>::SmartPtr(const char8_t* str)	
+	{
+	value_.init_primitive(TYPE_NULL);
 	*this = xnew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const StringLiteral& str){
+SmartPtr<Any>::SmartPtr(const StringLiteral& str)	
+	{
+	value_.init_primitive(TYPE_NULL);
 	*this = xnew<String>(str);
 }
 
@@ -81,23 +87,23 @@ void SmartPtr<Any>::set_unknown_pointer(const AnyPtr* p, TypeIntType<INHERITED_A
 }
 
 SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_BASE>& m)
-	:Any(noinit_t()){
+	{
 	init_smartptr(m.pvalue);
 }
 
 SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_RCBASE>& m)
-	:Any(noinit_t()){
+	{
 	value_ = m.pvalue->value_;
 	register_gc(m.pvalue);
 }
 
 SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_ANY>& m)
-	:Any(noinit_t()){
+	{
 	*(Any*)this = (Any&)m.value;
 }
 
 SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_OTHER>& m)
-	:Any(noinit_t()){
+	{
 	init_smartptr(m.pvalue);
 }
 
@@ -114,7 +120,7 @@ SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
 }
 
 SmartPtr<Any>::~SmartPtr(){
-#if 0
+#ifdef XTAL_CHECK_REF_COUNT
 	if(!environment()){
 		XTAL_ASSERT(type(*this)<TYPE_BASE);
 	}

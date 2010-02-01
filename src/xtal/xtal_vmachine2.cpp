@@ -67,8 +67,8 @@ void VMachine::reset(){
 	}
 }
 
-VMachine::FunFrame::FunFrame(){
-}
+VMachine::FunFrame::FunFrame()
+	:fun_(null), outer_(null), self_(null){}
 
 void VMachine::FunFrame::set_fun(const MethodPtr& v){ 
 	fun_ = v; 
@@ -112,21 +112,21 @@ void VMachine::push_named_args(const MapPtr& p){
 void VMachine::push_arg(const char_t* s){ push_arg(AnyPtr(s)); }
 void VMachine::push_arg(const char8_t* s){ push_arg(AnyPtr(s)); }
 void VMachine::push_arg(const StringLiteral& s){ push_arg(AnyPtr(s)); }
-void VMachine::push_arg(char v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(signed char v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(unsigned char v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(short v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(unsigned short v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(int v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(unsigned int v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(long v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(unsigned long v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(long long v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(unsigned long long v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(float v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(double v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(long double v){ push_arg(ap(Any(v))); }
-void VMachine::push_arg(bool v){ push_arg(ap(Any(v))); }
+void VMachine::push_arg(char v){ push_arg(Int(v)); }
+void VMachine::push_arg(signed char v){ push_arg(Int(v)); }
+void VMachine::push_arg(unsigned char v){ push_arg(Int(v)); }
+void VMachine::push_arg(short v){ push_arg(Int(v)); }
+void VMachine::push_arg(unsigned short v){ push_arg(Int(v)); }
+void VMachine::push_arg(int v){ push_arg(Int(v)); }
+void VMachine::push_arg(unsigned int v){ push_arg(Int(v)); }
+void VMachine::push_arg(long v){ push_arg(Int((int_t)v)); }
+void VMachine::push_arg(unsigned long v){ push_arg(Int((int_t)v)); }
+void VMachine::push_arg(long long v){ push_arg(Int((int_t)v)); }
+void VMachine::push_arg(unsigned long long v){ push_arg(Int((int_t)v)); }
+void VMachine::push_arg(float v){ push_arg(Float(v)); }
+void VMachine::push_arg(double v){ push_arg(Float((float_t)v)); }
+void VMachine::push_arg(long double v){ push_arg(Float((float_t)v)); }
+void VMachine::push_arg(bool v){ push_arg(Bool(v)); }
 
 void VMachine::setup_call(int_t need_result_count){
 	int_t base;
@@ -190,7 +190,7 @@ void VMachine::execute(){
 	}
 
 	// 例外がクリアされていないなら実行できない
-	if(ap(except_[0])){
+	if(except_[0]){
 		return;
 	}
 
@@ -361,26 +361,28 @@ void VMachine::return_result_mv(const ValuesPtr& values){
 	f.result_count += size;
 	pop_ff();
 }
-/*
-void VMachine::return_result(const char_t* s){ return_result(AnyPtr(s)); }
-void VMachine::return_result(const char8_t* s){ return_result(AnyPtr(s)); }
-void VMachine::return_result(const StringLiteral& s){ return_result(AnyPtr(s)); }
-void VMachine::return_result(char v){ return_result(ap(Any(v))); }
-void VMachine::return_result(signed char v){ return_result(ap(Any(v))); }
-void VMachine::return_result(unsigned char v){ return_result(ap(Any(v))); }
-void VMachine::return_result(short v){ return_result(ap(Any(v))); }
-void VMachine::return_result(unsigned short v){ return_result(ap(Any(v))); }
-void VMachine::return_result(int v){ return_result(ap(Any(v))); }
-void VMachine::return_result(unsigned int v){ return_result(ap(Any(v))); }
-void VMachine::return_result(long v){ return_result(ap(Any(v))); }
-void VMachine::return_result(unsigned long v){ return_result(ap(Any(v))); }
-void VMachine::return_result(long long v){ return_result(ap(Any(v))); }
-void VMachine::return_result(unsigned long long v){ return_result(ap(Any(v))); }
-void VMachine::return_result(float v){ return_result(ap(Any(v))); }
-void VMachine::return_result(double v){ return_result(ap(Any(v))); }
-void VMachine::return_result(long double v){ return_result(ap(Any(v))); }
-void VMachine::return_result(bool v){ return_result(ap(Any(v))); }
-*/
+
+void VMachine::return_result(const char_t* s){ return_result(xnew<String>(s)); }
+void VMachine::return_result(const char8_t* s){ return_result(xnew<String>(s)); }
+void VMachine::return_result(const StringLiteral& s){ return_result(xnew<String>(s)); }
+
+void VMachine::return_result(char v){ return_result(Int(v)); }
+void VMachine::return_result(signed char v){ return_result(Int(v)); }
+void VMachine::return_result(unsigned char v){ return_result(Int(v)); }
+void VMachine::return_result(short v){ return_result(Int(v)); }
+void VMachine::return_result(unsigned short v){ return_result(Int(v)); }
+void VMachine::return_result(int v){ return_result(Int(v)); }
+void VMachine::return_result(unsigned int v){ return_result(Int(v)); }
+void VMachine::return_result(long v){ return_result(Int(v)); }
+void VMachine::return_result(unsigned long v){ return_result(Int(v)); }
+void VMachine::return_result(long long v){ return_result(Int((int_t)v)); }
+void VMachine::return_result(unsigned long long v){ return_result(Int((int_t)v)); }
+
+void VMachine::return_result(float v){ return_result(Float(v)); }
+void VMachine::return_result(double v){ return_result(Float((float_t)v)); }
+void VMachine::return_result(long double v){ return_result(Float((float_t)v)); }
+void VMachine::return_result(bool v){ return_result(Bool(v)); }
+
 void VMachine::prereturn_result(const AnyPtr& v){
 	ff().result_count++;
 	stack_.push(v);
@@ -594,7 +596,7 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 }
 
 void VMachine::set_except_0(const Any& e){
-	except_[0] = e;
+	except_[0] = ap(e);
 }
 	
 void VMachine::make_debug_info(const inst_t* pc, int_t kind){
@@ -614,7 +616,7 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 		debug_info_->set_fun_name("?");
 	}
 
-	debug_info_->set_exception(ap(except_[0]));
+	debug_info_->set_exception(except_[0]);
 
 	make_outer_outer(0, 0, true);
 	debug_info_->set_variables_frame(scopes_.top().frame);
@@ -797,7 +799,7 @@ void VMachine::debug_hook(const inst_t* pc, int_t kind){
 		make_debug_info(pc, kind);
 
 		// 現在発生している例外を退避させる
-		AnyPtr e = ap(except_[0]);
+		AnyPtr e = except_[0];
 		except_[0] = null;
 
 		debug::call_debug_hook(kind, debug_info_);
@@ -879,11 +881,11 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 const AnyPtr& VMachine::catch_except(){
 	except_[2] = except();
 	except_[0] = null;
-	return ap(except_[2]);
+	return except_[2];
 }
 
 void VMachine::set_except(const AnyPtr& e){
-	if(!ap(except_[0])){
+	if(!except_[0]){
 		except_[0] = e;
 	}
 	else{
@@ -892,7 +894,7 @@ void VMachine::set_except(const AnyPtr& e){
 }
 
 void VMachine::set_except_x(const AnyPtr& e){
-	if(!ap(except_[0])){
+	if(!except_[0]){
 		except_[0] = e;
 	}
 }
@@ -936,10 +938,6 @@ void VMachine::on_visit_members(Visitor& m){
 }
 
 void VMachine::add_ref_count_members(int_t n){
-	add_ref_count_force(except_[0], n);
-	add_ref_count_force(except_[1], n);
-	add_ref_count_force(except_[2], n);
-
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
 		add_ref_count_force(stack_[i], n);
 	}

@@ -708,11 +708,7 @@ int main2(int argc, char** argv){
 	}
 
 	if(CodePtr code = Xsrc((
-		a: 10;
-		a.p;
-
-		return "aaa";
-
+		"a,a,a".split(",")[].p;
 	))){
 		code->inspect()->p();
 		//AnyPtr ret = code->call(xnew<Spr>());
@@ -1536,3 +1532,346 @@ int main(int argc, char** argv){
 
 	return ret;
 }
+
+
+/*
+#ifdef WIN32
+
+struct WinSock{
+	WinSock(){
+		WSAStartup(MAKEWORD(2, 2), &wsaData);
+	}
+
+	~WinSock(){
+		WSACleanup();
+	}
+	
+	WSADATA wsaData;
+};
+	
+static WinSock win_sock;
+
+class TCPStream : public Stream{
+public:
+
+	TCPStream(){
+		socket_ = INVALID_SOCKET;
+	}
+
+	TCPStream(int s){
+		socket_ = s;
+	}
+
+	TCPStream(const StringPtr& path, const StringPtr& port){
+		socket_ = INVALID_SOCKET;
+		open(path, port);
+	}
+
+	virtual ~TCPStream(){
+		close();
+	}
+
+	void open(const StringPtr& host, const StringPtr& port){
+		close();
+		socket_ = socket(AF_INET, SOCK_STREAM, 0);
+
+		if(is_open()){
+			struct addrinfo hints = {0};
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+			hints.ai_flags = 0;
+
+			struct addrinfo* res = 0;
+			int err = getaddrinfo(host->c_str(), port->c_str(), &hints, &res);
+			if(err!=0){
+				return;
+			}
+
+			for(struct addrinfo* ai= res; ai; ai=ai->ai_next){
+				socket_ = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+				if(socket_==INVALID_SOCKET){
+					break;
+				}
+
+				if(connect(socket_, ai->ai_addr, ai->ai_addrlen)<0){
+					close();
+					continue;
+				}
+				else{
+					break;
+				}
+			}
+
+			freeaddrinfo(res);
+		}
+	}
+
+	bool is_open(){
+		return socket_!=INVALID_SOCKET;
+	}
+
+	virtual void close(){
+		if(socket_!=INVALID_SOCKET){
+			closesocket(socket_);
+			socket_ = INVALID_SOCKET;
+		}
+	}
+  
+	bool is_readable(){
+	   fd_set fdset; 
+	   FD_ZERO(&fdset); 
+	   FD_SET(socket_ , &fdset);
+
+	   struct timeval timeout;
+	   timeout.tv_sec = 0; 
+	   timeout.tv_usec = 0;
+
+	   return select(socket_+1, &fdset, 0, 0, &timeout)>0; // && FD_ISSET(socket_, &fdset);
+	}
+
+	virtual uint_t read(void* dest, uint_t size){
+		int read = recv(socket_, (char*)dest, size, 0);
+		if(read<0){
+			close();
+			return 0;
+		}
+		return read;
+	}
+
+	virtual uint_t write(const void* src, uint_t size){
+		int temp = ::send(socket_, (char*)src, size, 0);
+		if(temp<0){
+			close();
+			return 0;
+		}
+		return temp;
+	}
+
+private:
+	int socket_;
+};
+
+ArrayPtr make_debug_object(const AnyPtr& v, int depth = 5){
+	ArrayPtr ret = xnew<Array>(3);
+	ret->set_at(0, v->get_class()->to_s());
+	ret->set_at(1, v->to_s());
+
+	// 基本型かチェック
+	switch(type(v)){
+		case TYPE_NULL:
+		case TYPE_UNDEFINED:
+		case TYPE_INT:
+		case TYPE_FLOAT:
+		case TYPE_FALSE:
+		case TYPE_TRUE:
+		case TYPE_SMALL_STRING:
+		case TYPE_STRING:
+			return ret;
+	}
+
+	if(depth<=0){
+		ret->set_at(2, "...");
+		return ret;
+	}
+
+	switch(type(v)){
+		XTAL_DEFAULT{}
+
+		XTAL_CASE(TYPE_ARRAY){
+			ArrayPtr children = xnew<Array>();
+			Xfor(it, v){
+				children->push_back(make_debug_object(it, depth-1));
+			}
+			ret->set_at(2, children);
+			return ret;
+		}
+
+		XTAL_CASE(TYPE_VALUES){
+			ArrayPtr children = xnew<Array>();
+			Xfor(it, v){
+				children->push_back(make_debug_object(it, depth-1));
+			}
+			ret->set_at(2, children);
+			return ret;
+		}
+	}
+
+	if(const MapPtr& a = ptr_cast<Map>(v)){
+		MapPtr children = xnew<Map>();
+		Xfor2(key, val, v){
+			children->set_at(key->to_s(), make_debug_object(val, depth-1));
+		}
+		ret->set_at(2, children);
+		return ret;
+	}
+
+	if(const ClassPtr& a = ptr_cast<Class>(v)){
+		MapPtr children = xnew<Map>();
+		Xfor3(key, skey, val, a->members()){
+			children->set_at(key->to_s(), make_debug_object(val, depth-1));
+		}
+		ret->set_at(2, children);
+		return ret;
+	}
+
+	AnyPtr data = v->s_save();
+	if(const MapPtr& a = ptr_cast<Map>(data)){
+		MapPtr children = xnew<Map>();
+		Xfor2(key, val, a){
+			Xfor2(key2, val2, val){
+				children->set_at(key2->to_s(), make_debug_object(val2, depth-1));
+			}
+		}
+		ret->set_at(2, children);
+		return ret;
+	}
+
+	return ret;
+}
+
+class DebugConnector{
+public:
+
+	void connect(const StringPtr& port){
+		stream_ = xnew<TCPStream>("127.0.0.1", port);
+		if(stream_->is_open()){
+			debug::set_breakpoint_hook(bind_this(method(&DebugConnector::linehook), SmartPtr<DebugConnector>(this, undeleter)));
+			set_require_source_hook(bind_this(method(&DebugConnector::require_source_hook), SmartPtr<DebugConnector>(this, undeleter)));
+		}
+	}
+
+	CodePtr require_source_hook(const StringPtr& name){
+		ArrayPtr a = xnew<Array>();
+		a->push_back(Xid(require));
+		a->push_back(name);
+		stream_->serialize(a);
+
+		ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize());
+		if(raweq(cmd->at(0), Xid(required_source))){
+			return ptr_cast<Code>(cmd->at(1));
+		}
+		return null;
+	}
+
+	void update(){
+		if(stream_->is_readable()){
+			exec_command(ptr_cast<Array>(stream_->deserialize()));
+		}
+	}
+
+	CodePtr find_code(const StringPtr& path){
+		for(int i=0; i<alive_object_count(); ++i){
+			if(CodePtr ret=ptr_cast<Code>(alive_object(i))){
+				if(ret->source_file_name()->op_eq(path)){
+					return ret;
+				}
+			}
+		}
+		return null;
+	}
+
+	void exec_command(const ArrayPtr& cmd){
+		if(cmd && raweq(cmd->at(0), Xid(breakpoint))){
+			if(CodePtr code=find_code(ptr_cast<String>(cmd->at(1)))){
+				code->set_breakpoint(cmd->at(2)->to_i(), cmd->at(3));
+			}
+		}
+	}
+
+	ArrayPtr make_call_stack_info(const debug::HookInfoPtr& info){
+		ArrayPtr ret = xnew<Array>();
+
+		{
+			ArrayPtr record = xnew<Array>(3);
+			record->set_at(0, info->fun_name());
+			record->set_at(1, info->file_name());
+			record->set_at(2, info->line());
+			ret->push_back(record);
+		}
+
+		for(int i=1; i<info->call_stack_size(); ++i){
+			ArrayPtr record = xnew<Array>(3);
+			if(info->caller(i)){
+				record->set_at(0, info->caller(i)->fun_name());
+				record->set_at(1, info->caller(i)->file_name());
+				record->set_at(2, info->caller(i)->line());
+			}
+			ret->push_back(record);
+		}
+
+		return ret;
+	}
+
+	ArrayPtr make_eval_expr_info(const debug::HookInfoPtr& info){
+		ArrayPtr ret = xnew<Array>();
+
+		int i = 0;
+		Xfor_cast(const StringPtr& key, eval_exprs_){
+			AnyPtr ev = info->vm()->eval(key, 0);
+
+			if(info->vm()->catch_except()){
+				ret->push_back(null);
+			}
+			else{
+				ret->push_back(make_debug_object(ev));
+			}
+		}
+		else{
+			ret->push_back(null);
+		}
+
+		return ret;
+	}
+
+	int linehook(debug::HookInfoPtr info){
+		while(true){
+			ArrayPtr data = xnew<Array>();
+			data->push_back(Xid(break));
+			data->push_back(make_eval_expr_info(info));
+			data->push_back(make_call_stack_info(info));
+			stream_->serialize(data);
+
+			if(ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize())){
+
+				if(cmd->at(1)){
+					eval_exprs_ = ptr_cast<Array>(cmd->at(1));
+				}
+
+				AnyPtr type = cmd->at(0);
+
+				if(raweq(type, Xid(return))){
+					continue;
+				}	
+
+				if(raweq(type, Xid(run))){
+					return debug::RUN;
+				}
+
+				if(raweq(type, Xid(step_into))){
+					return debug::STEP_INTO;
+				}
+
+				if(raweq(type, Xid(step_over))){
+					return debug::STEP_OVER;
+				}
+
+				if(raweq(type, Xid(step_out))){
+					return debug::STEP_OUT;
+				}
+
+				exec_command(cmd);
+			}
+		}
+	}
+
+private:
+	SmartPtr<TCPStream> stream_;
+	ArrayPtr eval_exprs_;
+	ArrayPtr break_points_;
+};
+
+DebugConnector* dcon;
+void update_debug(){
+	dcon->update();
+}
+*/

@@ -180,7 +180,8 @@ void String::init_string(const char_t* str, uint_t size){
 	}
 }
 
-String::String(const char_t* str, uint_t size, intern_t){
+String::String(const char_t* str, uint_t size, intern_t)	
+	{
 	if(size<SMALL_STRING_MAX){
 		value_.init_small_string(str, size);
 	}
@@ -191,7 +192,8 @@ String::String(const char_t* str, uint_t size, intern_t){
 	}
 }
 
-String::String(const StringLiteral& str, intern_t){
+String::String(const StringLiteral& str, intern_t)	
+	{
 	if(str.size()<SMALL_STRING_MAX){
 		value_.init_small_string(str.str(), str.size());
 	}
@@ -201,28 +203,28 @@ String::String(const StringLiteral& str, intern_t){
 }
 
 String::String()
-	:Any(noinit_t()){
+	{
 	value_.init_small_string(0);
 }
 
 String::String(const char_t* str)
-	:Any(noinit_t()){
+	{
 	init_string(str, string_data_size(str));
 }
 
 String::String(const char8_t* str)
-	:Any(noinit_t()){
+	{
 	Conv conv(str);
 	init_string((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
 }
 
 String::String(const char_t* str, uint_t size)
-	:Any(noinit_t()){
+	{
 	init_string(str, size);
 }
 
 String::String(const StringLiteral& str)
-	:Any(noinit_t()){
+	{
 	if(str.size()<SMALL_STRING_MAX){
 		value_.init_small_string(str.str(), str.size());
 	}
@@ -232,12 +234,12 @@ String::String(const StringLiteral& str)
 }
 
 String::String(const char_t* begin, const char_t* last)
-	:Any(noinit_t()){
+	{
 	init_string(begin, last-begin);
 }
 
 String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2)
-	:Any(noinit_t()){
+	{
 	if(size1==0){
 		init_string(str2, size2);
 		return;

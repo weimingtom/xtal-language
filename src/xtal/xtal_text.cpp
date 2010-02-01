@@ -233,7 +233,7 @@ void Format::on_rawcall(const VMachinePtr& vm){
 					}
 
 					if(number){
-						value = vm->arg(ivalue(xnew<String>(begin, str+i)->to_i()));
+						value = vm->arg(xnew<String>(begin, str+i)->to_i());
 					}
 					else{
 						value = vm->arg(xnew<ID>(begin, str+i));

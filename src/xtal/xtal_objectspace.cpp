@@ -290,9 +290,13 @@ void ObjectSpace::uninitialize(){
 			//printf("used_memory %d\n", used_memory);	
 #endif
 
+#ifndef XTAL_CHECK_REF_COUNT
+
 			// このassertでとまる場合、オブジェクトをすべて開放できていない。
 			// グローバル変数などでオブジェクトを握っていないか、循環参照はないか調べること。
 			XTAL_ASSERT(false);
+
+#endif
 		}
 
 		// 強制的に開放してしまおう

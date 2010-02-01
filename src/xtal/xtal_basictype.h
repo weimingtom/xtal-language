@@ -15,8 +15,9 @@ namespace xtal{
 */
 class Null : public Any{
 public:
-	Null()
-		:Any(TYPE_NULL){} 
+	Null(){ 
+		value_.init_primitive(TYPE_NULL); 
+	} 
 };
 
 /**
@@ -25,8 +26,9 @@ public:
 */
 class Undefined : public Any{ 
 public: 
-	Undefined()
-		:Any(TYPE_UNDEFINED){} 
+	Undefined(){ 
+		value_.init_primitive(TYPE_UNDEFINED); 
+	} 
 };
 
 /**
@@ -36,8 +38,9 @@ public:
 class Int : public Any{
 public:
 
-	Int(int_t val = 0)
-		:Any(val){}
+	Int(int_t val = 0){ 
+		value_.init_int(val); 
+	}
 
 public:
 	
@@ -60,6 +63,12 @@ public:
 	IntRangePtr op_range(int_t right, int_t kind);
 
 	FloatRangePtr op_range(float_t right, int_t kind);
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
 };
 
 /**
@@ -69,8 +78,9 @@ public:
 class Float : public Any{
 public:
 
-	Float(float_t val = 0)
-		:Any(val){}
+	Float(float_t val = 0){ 
+		value_.init_float(val); 
+	}
 
 public:
 
@@ -93,6 +103,49 @@ public:
 	FloatRangePtr op_range(int_t right, int_t kind);
 
 	FloatRangePtr op_range(float_t right, int_t kind);
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
+
+};
+
+/**
+* \xbind lib::builtin
+* \brief ‘¦’l
+*/
+class ImmediateValue : public Any{
+public:
+
+	ImmediateValue(int_t value1, int_t value2){
+		value_.init_immediate_value(value1, value2);
+	}
+
+	ImmediateValue(int_t value1, float_t value2){
+		value_.init_immediate_value(value1, value2);
+	}
+
+public:
+
+	int_t first() const{
+		return value_.immediate_first_value();
+	}
+
+	int_t second() const{
+		return value_.immediate_second_value();
+	}
+
+	float_t secondf() const{
+		return value_.immediate_secondf_value();
+	}
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
 };
 
 /**
@@ -102,7 +155,13 @@ public:
 class Bool : public Any{
 public: 
 	Bool(bool b)
-		:Any(b){} 
+		{ value_.init_bool(b); } 
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
 };
 
 /**
@@ -402,6 +461,7 @@ protected:
 class GCObserver : public Base{
 public:
 	GCObserver();
+
 	~GCObserver();
 
 	enum{

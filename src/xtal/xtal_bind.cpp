@@ -78,7 +78,7 @@ void Null_to_map(const AnyPtr& v, const VMachinePtr& vm){
 }
 
 void eval(const VMachinePtr& vm){
-	vm->return_result(vm->eval(xnew<xpeg::Executor>(vm->arg(0), XTAL_STRING("<eval>")), 0));
+	vm->return_result(vm->eval(xnew<xpeg::Executor>(vm->arg(0), XTAL_STRING("<eval>")), vm->arg_default(1, 0)->to_i()));
 }
 
 }

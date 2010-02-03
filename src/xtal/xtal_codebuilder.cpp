@@ -14,43 +14,47 @@ CodeBuilder::CodeBuilder(){
 CodeBuilder::~CodeBuilder(){}
 
 void CodeBuilder::error(const AnyPtr& message){
-	parser_.reader_->error(message, lineno());
+	parser_.executor_->error(message, lineno());
 }
 
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
-	ExprPtr e = parser_.parse(xnew<xpeg::Executor>(stream, source_file_name));
+	xpeg::ExecutorPtr exec = xnew<xpeg::Executor>(stream, source_file_name);
+	parser_.parse(exec);
 
 	if(!stream->eos()){
 		error(Xt("XCE1001"));
 	}
 
-	if(!e){
+	if(exec->has_error()){
 		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
 	eval_ = false;
 
-	return compile_toplevel(e, source_file_name);
+	return compile_toplevel(ep(exec->tree_back()), source_file_name);
 }
 
-CodePtr CodeBuilder::compile(const xpeg::ExecutorPtr& scanner, const StringPtr& source_file_name){
-	ExprPtr e = parser_.parse(scanner);
+CodePtr CodeBuilder::compile(const xpeg::ExecutorPtr& executor, const StringPtr& source_file_name){
+	parser_.parse(executor);
 
-	if(!e){
+	if(executor->has_error()){
 		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
 	eval_ = false;
-	return compile_toplevel(e, source_file_name);
+	return compile_toplevel(ep(executor->tree_back()), source_file_name);
 }
 
-CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& scanner){
-	ExprPtr e = parser_.parse_eval(scanner);
-	if(!e){
+CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& executor){
+	parser_.parse_eval(executor);
+	
+	if(executor->has_error()){
 		return nul<Code>();
 	}
+
+	ExprPtr e = ep(executor->tree_back());
 
 	if(e->itag()==EXPR_DEFINE){
 		if(e->bin_lhs()->itag()==EXPR_LVAR){
@@ -180,7 +184,7 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 		}
 	}
 
-	if(!parser_.reader_->errors()){
+	if(!parser_.executor_->errors()){
 		opt_jump();
 		result_->generated();
 		return result_;
@@ -287,7 +291,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 		}
 	}
 
-	if(!parser_.reader_->errors()){
+	if(!parser_.executor_->errors()){
 		opt_jump();
 		result_->generated();
 		return result_;
@@ -339,7 +343,7 @@ void CodeBuilder::opt_jump(){
 }
 
 AnyPtr CodeBuilder::errors(){
-	return parser_.reader_->errors();
+	return parser_.executor_->errors();
 }
 
 void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
@@ -1418,14 +1422,14 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-AnyPtr VMachine::eval(const xpeg::ExecutorPtr& scanner, uint_t n){
+AnyPtr VMachine::eval(const xpeg::ExecutorPtr& executor, uint_t n){
 	debug::CallerInfoPtr cp = caller(n+1);
 	if(!cp || !cp->fun()){
 		return undefined;
 	}
 
 	CodeBuilder cb;
-	if(CodePtr code = cb.eval_compile(scanner)){
+	if(CodePtr code = cb.eval_compile(executor)){
 		print_info();
 
 		AnyPtr self = fun_frames_[n+1]->self();

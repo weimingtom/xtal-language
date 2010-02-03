@@ -178,7 +178,7 @@ struct SmartPtrCtor4{
 };
 
 template<class T>
-inline const ClassPtr& cpp_class();
+const ClassPtr& cpp_class();
 
 /////////////////////////////////////////
 
@@ -227,11 +227,6 @@ public:
 	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
 
 	void assign_direct(const SmartPtr<Any>& a);
-
-	explicit SmartPtr(PrimitiveType type)
-		{
-		value_.init_primitive(type);
-	}
 	
 	~SmartPtr();
 
@@ -476,7 +471,7 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 
 struct BindBase{
 	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
-	virtual void XTAL_bind(Class* it) = 0;
+	void (*XTAL_bind)(Class* it);
 };
 
 struct CppClassSymbolData{ 
@@ -544,13 +539,14 @@ template<> struct CppClassSymbol<const wchar_t*> : public CppClassSymbol<String>
 
 #define XTAL_BIND_(ClassName, xtbind, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\
-	template<> struct XTAL_bind_template##N<ClassName> : public ::xtal::BindBase{\
+	template<> struct XTAL_bind_template##N<ClassName> : ::xtal::BindBase{\
 		typedef ClassName Self;\
 		XTAL_bind_template##N(){\
+			BindBase::XTAL_bind = &XTAL_bind_template##N::XTAL_bind;\
 			::xtal::CppClassSymbolData* key = ::xtal::CppClassSymbol<ClassName>::make();\
 			XTAL_set(key->xtbind, key->name, xtname);\
 		}\
-		virtual void XTAL_bind(::xtal::Class* it);\
+		static void XTAL_bind(::xtal::Class* it);\
 	};\
 	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
 	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(::xtal::Class* it)

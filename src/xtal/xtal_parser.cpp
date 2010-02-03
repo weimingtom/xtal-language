@@ -174,32 +174,31 @@ const Token& Parser::peek_token(int_t n){
 			return end;
 		}
 	}
-	eb_.set_lineno(reader_->lineno());
 	return token_buf_[(token_pos_+n) & TOKEN_BUF_MASK];
 }
 
 void Parser::push_token(int_t v){
-	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_TOKEN, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_TOKEN, left_space_ | test_right_space(executor_->peek_ascii()), v);
 	token_read_++;
 }
 	
 void Parser::push_int_token(int_t v){
-	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_INT, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_INT, left_space_ | test_right_space(executor_->peek_ascii()), v);
 	token_read_++;
 }
 
 void Parser::push_float_token(float_t v){
-	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_FLOAT, left_space_ | test_right_space(reader_->peek_ascii()), v);
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_FLOAT, left_space_ | test_right_space(executor_->peek_ascii()), v);
 	token_read_++;
 }
 	
 void Parser::push_keyword_token(int_t num){
-	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_KEYWORD, left_space_ | test_right_space(reader_->peek_ascii()), num);
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_KEYWORD, left_space_ | test_right_space(executor_->peek_ascii()), num);
 	token_read_++;
 }
 	
 void Parser::push_identifier_token(int_t num){
-	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_IDENTIFIER, left_space_ | test_right_space(reader_->peek_ascii()), num);
+	token_buf_[token_read_ & TOKEN_BUF_MASK] = Token(Token::TYPE_IDENTIFIER, left_space_ | test_right_space(executor_->peek_ascii()), num);
 	token_read_++;
 }
 
@@ -215,12 +214,12 @@ void Parser::putback_token(const Token& ch){
 float_t Parser::read_finteger(){
 	float_t ret = 0;
 	for(;;){
-		if(test_digit(reader_->peek_ascii())){
+		if(test_digit(executor_->peek_ascii())){
 			ret *= 10;
-			ret += reader_->read_ascii()-'0';
+			ret += executor_->read_ascii()-'0';
 		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
+		else if(executor_->peek_ascii()=='_'){
+			executor_->skip();
 		}
 		else{
 			break;
@@ -233,17 +232,17 @@ int_t Parser::read_integer(int_t base){
 	int_t ret = 0;
 	for(;;){
 		int_t num = 0;
-		if(test_digit(reader_->peek_ascii())){
-			num = reader_->read_ascii()-'0';
+		if(test_digit(executor_->peek_ascii())){
+			num = executor_->read_ascii()-'0';
 		}
-		else if(test_range(reader_->peek_ascii(), 'a', 'z')){
-			num = reader_->read_ascii()-'a' + 10;
+		else if(test_range(executor_->peek_ascii(), 'a', 'z')){
+			num = executor_->read_ascii()-'a' + 10;
 		}
-		else if(test_range(reader_->peek_ascii(), 'A', 'Z')){
-			num = reader_->read_ascii()-'A' + 10;
+		else if(test_range(executor_->peek_ascii(), 'A', 'Z')){
+			num = executor_->read_ascii()-'A' + 10;
 		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
+		else if(executor_->peek_ascii()=='_'){
+			executor_->skip();
 			continue;
 		}
 		else{
@@ -258,8 +257,8 @@ int_t Parser::read_integer(int_t base){
 		ret += num;
 	}
 
-	if(test_ident_rest(reader_->peek_ascii())){
-		reader_->error(Xt("XCE1015")->call(Named(Xid(n), base)));
+	if(test_ident_rest(executor_->peek_ascii())){
+		executor_->error(Xt("XCE1015")->call(Named(Xid(n), base)));
 	}
 
 	return ret;		
@@ -267,15 +266,15 @@ int_t Parser::read_integer(int_t base){
 
 bool Parser::is_integer_literal(){
 	int_t i = 0;
-	while(test_digit(reader_->peek_ascii(i)) || reader_->peek_ascii(i)=='_'){
+	while(test_digit(executor_->peek_ascii(i)) || executor_->peek_ascii(i)=='_'){
 		i++;
 	}
 
-	if(reader_->peek_ascii(i)=='f' || reader_->peek_ascii(i)=='F'){
+	if(executor_->peek_ascii(i)=='f' || executor_->peek_ascii(i)=='F'){
 		return false;
 	}
 
-	if(reader_->peek_ascii(i)=='.' && test_digit(reader_->peek_ascii(i+1))){
+	if(executor_->peek_ascii(i)=='.' && test_digit(executor_->peek_ascii(i+1))){
 		return false;
 	}
 
@@ -283,16 +282,16 @@ bool Parser::is_integer_literal(){
 }
 
 void Parser::tokenize_number(){
-	if(reader_->eat_ascii('0')){
-		if(reader_->eat_ascii('x') || reader_->eat_ascii('X')){
+	if(executor_->eat_ascii('0')){
+		if(executor_->eat_ascii('x') || executor_->eat_ascii('X')){
 			push_int_token(read_integer(16));
 			return;
 		}
-		else if(reader_->eat_ascii('o')){
+		else if(executor_->eat_ascii('o')){
 			push_int_token(read_integer(8));
 			return;
 		}
-		else if(reader_->eat_ascii('b') || reader_->eat_ascii('B')){
+		else if(executor_->eat_ascii('b') || executor_->eat_ascii('B')){
 			push_int_token(read_integer(2));
 			return;
 		}
@@ -305,17 +304,17 @@ void Parser::tokenize_number(){
 
 	float_t ival = read_finteger();
 	
-	reader_->skip(); // skip '.'
+	executor_->skip(); // skip '.'
 
 	float_t scale = 1;
 	float_t fval = 0;
 	for(;;){
-		if(test_digit(reader_->peek_ascii())){
+		if(test_digit(executor_->peek_ascii())){
 			scale /= 10;
-			fval += (reader_->read_ascii()-'0')*scale;
+			fval += (executor_->read_ascii()-'0')*scale;
 		}
-		else if(reader_->peek_ascii()=='_'){
-			reader_->skip();
+		else if(executor_->peek_ascii()=='_'){
+			executor_->skip();
 		}
 		else{
 			break;
@@ -323,17 +322,17 @@ void Parser::tokenize_number(){
 	}
 
 	fval += ival;
-	if(reader_->eat_ascii('e') || reader_->eat_ascii('E')){
+	if(executor_->eat_ascii('e') || executor_->eat_ascii('E')){
 		int_t e = 1;
-		if(reader_->eat_ascii('-')){
+		if(executor_->eat_ascii('-')){
 			e = -1;
 		}
 		else{
-			reader_->eat_ascii('+');
+			executor_->eat_ascii('+');
 		}
 
-		if(!test_digit(reader_->peek_ascii())){
-			reader_->error(Xt("XCE1014"));
+		if(!test_digit(executor_->peek_ascii())){
+			executor_->error(Xt("XCE1014"));
 		}
 
 		e *= read_integer(10);
@@ -344,12 +343,12 @@ void Parser::tokenize_number(){
 		}
 	}
 
-	if(!reader_->eat_ascii('f')){
-		reader_->eat_ascii('F');
+	if(!executor_->eat_ascii('f')){
+		executor_->eat_ascii('F');
 	}
 	
-	if(test_ident_rest(reader_->peek_ascii())){
-		reader_->error(Xt("XCE1010"));
+	if(test_ident_rest(executor_->peek_ascii())){
+		executor_->error(Xt("XCE1010"));
 	}
 
 	push_float_token(fval);
@@ -362,7 +361,7 @@ void Parser::tokenize(){
 	
 	do{
 
-		int_t ch = reader_->peek_ascii();
+		int_t ch = executor_->peek_ascii();
 		
 		switch(ch){
 
@@ -370,9 +369,9 @@ void Parser::tokenize(){
 
 				if(ch!=0 && test_ident_first(ch)){
 					ms_->clear();
-					ms_->put_s(reader_->read()->to_s());
-					while(test_ident_rest(reader_->peek_ascii())){
-						ms_->put_s(reader_->read()->to_s());
+					ms_->put_s(executor_->read()->to_s());
+					while(test_ident_rest(executor_->peek_ascii())){
+						ms_->put_s(executor_->read()->to_s());
 					}
 					IDPtr identifier = ms_->to_s();
 					if(const AnyPtr& key = identifier_map_->at(identifier)){
@@ -396,47 +395,47 @@ void Parser::tokenize(){
 					return;
 				}
 				else{
-					reader_->skip();
+					executor_->skip();
 					push_token(ch);
 				}
 			}
 			
 			XTAL_CASE('+'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('+')){ push_token(c2('+', '+')); }
-				else if(reader_->eat_ascii('=')){ push_token(c2('+', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('+')){ push_token(c2('+', '+')); }
+				else if(executor_->eat_ascii('=')){ push_token(c2('+', '=')); }
 				else{ push_token('+'); }
 			}
 			
 			XTAL_CASE('-'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('-')){ push_token(c2('-', '-')); }
-				else if(reader_->eat_ascii('=')){ push_token(c2('-', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('-')){ push_token(c2('-', '-')); }
+				else if(executor_->eat_ascii('=')){ push_token(c2('-', '=')); }
 				else{ push_token('-'); }
 			}
 			
 			XTAL_CASE('~'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('~', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('~', '=')); }
 				else{ push_token('~'); }
 			}
 			
 			XTAL_CASE('*'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('*', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('*', '=')); }
 				else{ push_token('*'); }
 			}
 			
 			XTAL_CASE('/'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){
+				executor_->skip();
+				if(executor_->eat_ascii('=')){
 					push_token(c2('/', '='));
 				}
-				else if(reader_->eat_ascii('/')){
+				else if(executor_->eat_ascii('/')){
 					for(;;){
-						int_t ch = reader_->read_ascii();
+						int_t ch = executor_->read_ascii();
 						if(ch=='\r'){
-							reader_->eat_ascii('\n');
+							executor_->eat_ascii('\n');
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
@@ -450,17 +449,17 @@ void Parser::tokenize(){
 					}
 					continue;
 				}
-				else if(reader_->eat_ascii('*')){
+				else if(executor_->eat_ascii('*')){
 					for(;;){
-						int_t ch = reader_->read_ascii();
+						int_t ch = executor_->read_ascii();
 						if(ch=='*'){
-							if(reader_->eat_ascii('/')){
+							if(executor_->eat_ascii('/')){
 								left_space_ = Token::FLAG_LEFT_SPACE;
 								break;
 							}
 						}
 						else if(ch==0){
-							reader_->error(Xt("XCE1021"));
+							executor_->error(Xt("XCE1021"));
 							break;
 						}
 					}
@@ -472,12 +471,12 @@ void Parser::tokenize(){
 			}			
 			
 			XTAL_CASE('#'){
-				reader_->skip();
-				if(reader_->eat_ascii('!')){
+				executor_->skip();
+				if(executor_->eat_ascii('!')){
 					for(;;){
-						int_t ch = reader_->read_ascii();
+						int_t ch = executor_->read_ascii();
 						if(ch=='\r'){
-							reader_->eat_ascii('\n');
+							executor_->eat_ascii('\n');
 							left_space_ = Token::FLAG_LEFT_SPACE;
 							break;
 						}
@@ -497,36 +496,36 @@ void Parser::tokenize(){
 			}			
 				
 			XTAL_CASE('^'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('^', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('^', '=')); }
 				else{ push_token('^'); }
 			}
 
 			XTAL_CASE('%'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('%', '=')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('%', '=')); }
 				else{ push_token('%'); }
 			}
 			
 			XTAL_CASE('&'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('&', '=')); }
-				else if(reader_->eat_ascii('&')){ push_token(c2('&', '&')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('&', '=')); }
+				else if(executor_->eat_ascii('&')){ push_token(c2('&', '&')); }
 				else{ push_token('&'); }
 			}
 			
 			XTAL_CASE('|'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){ push_token(c2('|', '=')); }
-				else if(reader_->eat_ascii('|')){ push_token(c2('|', '|')); }
+				executor_->skip();
+				if(executor_->eat_ascii('=')){ push_token(c2('|', '=')); }
+				else if(executor_->eat_ascii('|')){ push_token(c2('|', '|')); }
 				else{ push_token('|'); }
 			}
 						
 			XTAL_CASE('>'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('>')){
-					if(reader_->eat_ascii('>')){
-						if(reader_->eat_ascii('=')){
+				executor_->skip();
+				if(executor_->eat_ascii('>')){
+					if(executor_->eat_ascii('>')){
+						if(executor_->eat_ascii('=')){
 							push_token(c4('>','>','>','='));
 						}
 						else{
@@ -537,7 +536,7 @@ void Parser::tokenize(){
 						push_token(c2('>','>'));
 					}
 				}
-				else if(reader_->eat_ascii('=')){
+				else if(executor_->eat_ascii('=')){
 					push_token(c2('>', '='));
 				}
 				else{
@@ -546,24 +545,24 @@ void Parser::tokenize(){
 			}
 			
 			XTAL_CASE('<'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('<')){
-					if(reader_->eat_ascii('=')){
+				executor_->skip();
+				if(executor_->eat_ascii('<')){
+					if(executor_->eat_ascii('=')){
 						push_token(c3('<','<','='));
 					}
 					else{
 						push_token(c2('<','<'));
 					}
 				}
-				else if(reader_->eat_ascii('=')){
+				else if(executor_->eat_ascii('=')){
 					push_token(c2('<', '='));
 				}
-				else if(reader_->eat_ascii('.')){
-					if(!reader_->eat_ascii('.')){
-						reader_->error(Xt("XCE1001"));					
+				else if(executor_->eat_ascii('.')){
+					if(!executor_->eat_ascii('.')){
+						executor_->error(Xt("XCE1001"));					
 					}
 
-					if(reader_->eat_ascii('<')){
+					if(executor_->eat_ascii('<')){
 						push_token(c4('<', '.', '.', '<'));
 					}
 					else{
@@ -576,9 +575,9 @@ void Parser::tokenize(){
 			}
 			
 			XTAL_CASE('='){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){
-					if(reader_->eat_ascii('=')){
+				executor_->skip();
+				if(executor_->eat_ascii('=')){
+					if(executor_->eat_ascii('=')){
 						push_token(c3('=', '=', '='));
 					}
 					else{
@@ -591,30 +590,30 @@ void Parser::tokenize(){
 			}
 			
 			XTAL_CASE('!'){ 
-				reader_->skip();
-				if(reader_->eat_ascii('=')){
-					if(reader_->eat_ascii('=')){
+				executor_->skip();
+				if(executor_->eat_ascii('=')){
+					if(executor_->eat_ascii('=')){
 						push_token(c3('!', '=', '='));
 					}
 					else{
 						push_token(c2('!', '='));
 					}
 				}
-				else if(reader_->peek_ascii()=='i'){
-					if(reader_->peek_ascii(1)=='s'){
-						if(!test_ident_rest(reader_->peek_ascii(2))){
-							reader_->skip();
-							reader_->skip();
+				else if(executor_->peek_ascii()=='i'){
+					if(executor_->peek_ascii(1)=='s'){
+						if(!test_ident_rest(executor_->peek_ascii(2))){
+							executor_->skip();
+							executor_->skip();
 							push_token(c3('!', 'i', 's'));
 						}
 						else{
 							push_token('!');
 						}
 					}
-					else if(reader_->peek_ascii(1)=='n'){
-						if(!test_ident_rest(reader_->peek_ascii(2))){
-							reader_->skip();
-							reader_->skip();
+					else if(executor_->peek_ascii(1)=='n'){
+						if(!test_ident_rest(executor_->peek_ascii(2))){
+							executor_->skip();
+							executor_->skip();
 							push_token(c3('!', 'i', 'n'));
 						}
 						else{
@@ -631,32 +630,32 @@ void Parser::tokenize(){
 			}
 			
 			XTAL_CASE('.'){ 
-				if(test_digit(reader_->peek_ascii(1))){
+				if(test_digit(executor_->peek_ascii(1))){
 					tokenize_number();
 					return;
 				}
 				
-				reader_->skip();
-				if(reader_->eat_ascii('.')){
-					if(reader_->eat_ascii('.')){ push_token(c3('.', '.', '.')); }
-					else if(reader_->eat_ascii('<')){ push_token(c3('.', '.', '<')); }
+				executor_->skip();
+				if(executor_->eat_ascii('.')){
+					if(executor_->eat_ascii('.')){ push_token(c3('.', '.', '.')); }
+					else if(executor_->eat_ascii('<')){ push_token(c3('.', '.', '<')); }
 					else{ push_token(c2('.', '.')); }
 				}
-				else if(reader_->eat_ascii('?')){ push_token(c2('.', '?')); }
+				else if(executor_->eat_ascii('?')){ push_token(c2('.', '?')); }
 				else{ push_token('.'); }
 			}
 			
 			XTAL_CASE(':'){ 
-				reader_->skip();
-				if(reader_->eat_ascii(':')){
-					if(reader_->eat_ascii('?')){ push_token(c3(':', ':', '?')); }
+				executor_->skip();
+				if(executor_->eat_ascii(':')){
+					if(executor_->eat_ascii('?')){ push_token(c3(':', ':', '?')); }
 					else{ push_token(c2(':', ':')); }
 				}
 				else{ push_token(':'); }
 			}
 
 			XTAL_CASE('\''){ 
-				reader_->skip();
+				executor_->skip();
 				IDPtr identifier = read_string('\'', '\'');
 
 				if(const AnyPtr& key = identifier_map_->at(identifier)){
@@ -680,21 +679,21 @@ void Parser::tokenize(){
 #ifdef XTAL_USE_WCHAR
 
 			XTAL_CASE((uchar_t)0xFEFF){
-				reader_->skip();
+				executor_->skip();
 				continue;
 			}
 
 			XTAL_CASE((uchar_t)0xFFFE){
-				reader_->skip();
+				executor_->skip();
 				continue;
 			}
 
 #else
 			XTAL_CASE((uchar_t)239){
-				if((uchar_t)reader_->peek_ascii(1)==(uchar_t)187 && (uchar_t)reader_->peek_ascii(2)==(uchar_t)191){
-					reader_->skip();
-					reader_->skip();
-					reader_->skip();
+				if((uchar_t)executor_->peek_ascii(1)==(uchar_t)187 && (uchar_t)executor_->peek_ascii(2)==(uchar_t)191){
+					executor_->skip();
+					executor_->skip();
+					executor_->skip();
 					continue;
 				}
 				push_token(ch);
@@ -713,16 +712,16 @@ void Parser::tokenize(){
 
 void Parser::deplete_space(){
 	for(;;){
-		int_t ch = reader_->peek_ascii();
+		int_t ch = executor_->peek_ascii();
 		if(ch=='\r'){
-			reader_->skip();
-			reader_->eat_ascii('\n');
+			executor_->skip();
+			executor_->eat_ascii('\n');
 		}
 		else if(ch=='\n'){
-			reader_->skip();
+			executor_->skip();
 		}
 		else if(ch==' ' || ch=='\t'){
-			reader_->skip();
+			executor_->skip();
 		}
 		else{
 			return;
@@ -743,7 +742,7 @@ StringPtr Parser::read_string(int_t open, int_t close){
 	int_t depth = 1;
 	for(;;){
 
-		AnyPtr ach = reader_->read();
+		AnyPtr ach = executor_->read();
 		int_t ch = chvalue(ach);
 		if(ch==close){
 			--depth;
@@ -757,17 +756,17 @@ StringPtr Parser::read_string(int_t open, int_t close){
 		}
 
 		if(ch==0){
-			reader_->error(Xt("XCE1011"));
+			executor_->error(Xt("XCE1011"));
 			break;
 		}
 
 		if(ch=='\\'){
 			char_t chs[2];
 			int_t n = 0;
-			switch(reader_->peek_ascii()){
+			switch(executor_->peek_ascii()){
 				XTAL_DEFAULT{ 
 					chs[n++] = '\\';
-					chs[n++] = (char_t)reader_->peek_ascii();
+					chs[n++] = (char_t)executor_->peek_ascii();
 				}
 				
 				XTAL_CASE('n'){ chs[n++] = '\n'; }
@@ -779,8 +778,8 @@ StringPtr Parser::read_string(int_t open, int_t close){
 				XTAL_CASE('"'){ chs[n++] = '"'; } 
 				
 				XTAL_CASE('\r'){ 
-					if(reader_->peek_ascii()=='\n'){
-						reader_->skip();
+					if(executor_->peek_ascii()=='\n'){
+						executor_->skip();
 					}
 
 					chs[n++] = '\r';
@@ -792,12 +791,12 @@ StringPtr Parser::read_string(int_t open, int_t close){
 				}
 			}
 			ms_->write(chs, n*sizeof(char_t));
-			reader_->skip();
+			executor_->skip();
 		}
 		else{
 			if(ch=='\r'){
-				if(reader_->peek_ascii()=='\n'){
-					reader_->skip();
+				if(executor_->peek_ascii()=='\n'){
+					executor_->skip();
 				}
 				char_t chs[2];
 				int_t n = 0;
@@ -886,36 +885,14 @@ enum{//Expressions priority
 
 
 
-ExprPtr Parser::parse(const xpeg::ExecutorPtr& scanner){
-	reader_ = scanner;
-
+void Parser::parse(const xpeg::ExecutorPtr& executor){
+	executor_ = executor;
 	parse_toplevel();
-
-	if(scanner->errors()){
-		return nul<Expr>();
-	}
-
-	if(eb_.empty()){
-		return nul<Expr>();
-	}
-
-	return ep(eb_.pop());
 }
 
-ExprPtr Parser::parse_eval(const xpeg::ExecutorPtr& scanner){
-	reader_ = scanner;
-
+void Parser::parse_eval(const xpeg::ExecutorPtr& executor){
+	executor_ = executor;
 	parse_stmt();
-
-	if(scanner->errors()){
-		return nul<Expr>();
-	}
-
-	if(eb_.empty()){
-		return nul<Expr>();
-	}
-
-	return ep(eb_.pop());
 }
 
 StringPtr Parser::token_to_string(const Token& ch){
@@ -939,13 +916,13 @@ StringPtr Parser::token_to_string(const Token& ch){
 
 void Parser::expect(int_t ach){
 	if(eat(ach)){
-		reader_->bin();
+		executor_->bin();
 		return;
 	}
 
 	const Token& ch = peek_token();
 	Token rch(Token::TYPE_TOKEN, 0, ach);
-	reader_->error(Xt("XCE1002")->call(Named(Xid(required), token_to_string(rch)), Named(Xid(char), token_to_string(ch))));
+	executor_->error(Xt("XCE1002")->call(Named(Xid(required), token_to_string(rch)), Named(Xid(char), token_to_string(ch))));
 }
 
 bool Parser::eat(int_t ch){
@@ -986,16 +963,16 @@ bool Parser::parse_term(){
 					if(parse_expr()){
 						if(eat(',')){
 							parse_exprs(true);
-							eb_.splice(EXPR_VALUES, 1);
+							executor_->tree_splice(EXPR_VALUES, 1);
 						}
 						else{
-							if(ep(eb_.back())->itag()==EXPR_PROPERTY){
-								eb_.splice(EXPR_BRACKET, 1);
+							if(ep(executor_->tree_back())->itag()==EXPR_PROPERTY){
+								executor_->tree_splice(EXPR_BRACKET, 1);
 							}	
 						}
 					}
 					else{
-						eb_.splice(EXPR_UNDEFINED, 0);
+						executor_->tree_splice(EXPR_UNDEFINED, 0);
 					}
 					expect(')'); 
 					return true; 
@@ -1005,26 +982,26 @@ bool Parser::parse_term(){
 				XTAL_CASE('|'){ parse_lambda(); return true; }
 				XTAL_CASE(c2('|', '|')){ parse_lambda(true); return true; }
 
-				XTAL_CASE('_'){ expect_parse_identifier(); eb_.splice(EXPR_IVAR, 1); return true; }
+				XTAL_CASE('_'){ expect_parse_identifier(); executor_->tree_splice(EXPR_IVAR, 1); return true; }
 
 				XTAL_CASE('"'){ 
-					eb_.push(KIND_STRING);
-					eb_.push(read_string('"', '"'));
-					eb_.splice(EXPR_STRING, 2);
+					executor_->tree_push_back(KIND_STRING);
+					executor_->tree_push_back(read_string('"', '"'));
+					executor_->tree_splice(EXPR_STRING, 2);
 					return true; 
 				}
 				
 				XTAL_CASE('%'){
-					int_t ch = reader_->read_ascii();
+					int_t ch = executor_->read_ascii();
 					int_t kind = KIND_STRING;
 
 					if(ch=='t'){
 						kind = KIND_TEXT;
-						ch = reader_->read_ascii();
+						ch = executor_->read_ascii();
 					}
 					else if(ch=='f'){
 						kind = KIND_FORMAT;
-						ch = reader_->read_ascii();
+						ch = executor_->read_ascii();
 					}
 
 					int_t open = ch;
@@ -1045,22 +1022,22 @@ bool Parser::parse_term(){
 
 						default:
 							close = open;
-							reader_->error(Xt("XCE1017"));
+							executor_->error(Xt("XCE1017"));
 							break;
 					}
 
-					eb_.push(kind);
-					eb_.push(read_string(open, close));
-					eb_.splice(EXPR_STRING, 2);
+					executor_->tree_push_back(kind);
+					executor_->tree_push_back(read_string(open, close));
+					executor_->tree_splice(EXPR_STRING, 2);
 					return true; 
 				}
 				
 ////////////////////////////////////////////////////////////////////////////////////////
 
-				XTAL_CASE('+'){ expect_parse_expr(PRI_POS, r_space); eb_.splice(EXPR_POS, 1); return true; }
-				XTAL_CASE('-'){ expect_parse_expr(PRI_NEG, r_space); eb_.splice(EXPR_NEG, 1); return true; }
-				XTAL_CASE('~'){ expect_parse_expr(PRI_COM, r_space); eb_.splice(EXPR_COM, 1); return true; }
-				XTAL_CASE('!'){ expect_parse_expr(PRI_NOT, r_space); eb_.splice(EXPR_NOT, 1); return true; }
+				XTAL_CASE('+'){ expect_parse_expr(PRI_POS, r_space); executor_->tree_splice(EXPR_POS, 1); return true; }
+				XTAL_CASE('-'){ expect_parse_expr(PRI_NEG, r_space); executor_->tree_splice(EXPR_NEG, 1); return true; }
+				XTAL_CASE('~'){ expect_parse_expr(PRI_COM, r_space); executor_->tree_splice(EXPR_COM, 1); return true; }
+				XTAL_CASE('!'){ expect_parse_expr(PRI_NOT, r_space); executor_->tree_splice(EXPR_NOT, 1); return true; }
 			}
 		}
 
@@ -1069,33 +1046,33 @@ bool Parser::parse_term(){
 
 				XTAL_DEFAULT{}
 				
-				XTAL_CASE(Token::KEYWORD_ONCE){ expect_parse_expr(PRI_ONCE - r_space*2, 0); eb_.splice(EXPR_ONCE, 1); return true; }
+				XTAL_CASE(Token::KEYWORD_ONCE){ expect_parse_expr(PRI_ONCE - r_space*2, 0); executor_->tree_splice(EXPR_ONCE, 1); return true; }
 				XTAL_CASE(Token::KEYWORD_CLASS){ parse_class(KIND_CLASS); return true; }
 				XTAL_CASE(Token::KEYWORD_SINGLETON){ parse_class(KIND_SINGLETON); return true; }
 				XTAL_CASE(Token::KEYWORD_FUN){ parse_fun(KIND_FUN); return true; }
 				XTAL_CASE(Token::KEYWORD_METHOD){ parse_fun(KIND_METHOD); return true; }
 				XTAL_CASE(Token::KEYWORD_FIBER){ parse_fun(KIND_FIBER); return true; }
-				XTAL_CASE(Token::KEYWORD_CALLEE){ eb_.splice(EXPR_CALLEE, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_NULL){ eb_.splice(EXPR_NULL, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_UNDEFINED){ eb_.splice(EXPR_UNDEFINED, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_TRUE){ eb_.splice(EXPR_TRUE, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_FALSE){ eb_.splice(EXPR_FALSE, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_THIS){ eb_.splice(EXPR_THIS, 0); return true; }
-				XTAL_CASE(Token::KEYWORD_YIELD){ parse_exprs(); eb_.splice(EXPR_YIELD, 1); return true; }
+				XTAL_CASE(Token::KEYWORD_CALLEE){ executor_->tree_splice(EXPR_CALLEE, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_NULL){ executor_->tree_splice(EXPR_NULL, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_UNDEFINED){ executor_->tree_splice(EXPR_UNDEFINED, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_TRUE){ executor_->tree_splice(EXPR_TRUE, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_FALSE){ executor_->tree_splice(EXPR_FALSE, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_THIS){ executor_->tree_splice(EXPR_THIS, 0); return true; }
+				XTAL_CASE(Token::KEYWORD_YIELD){ parse_exprs(); executor_->tree_splice(EXPR_YIELD, 1); return true; }
 
 				XTAL_CASE(Token::KEYWORD_DOFUN){ 
 					parse_fun(KIND_FUN);
-					eb_.push(null);
-					eb_.push(null);
-					eb_.splice(EXPR_CALL, 3);
+					executor_->tree_push_back(null);
+					executor_->tree_push_back(null);
+					executor_->tree_splice(EXPR_CALL, 3);
 					return true; 
 				}
 			}
 		}
 		
-		XTAL_CASE(Token::TYPE_INT){ eb_.push(ch.ivalue()); eb_.splice(EXPR_NUMBER, 1); return true; }
-		XTAL_CASE(Token::TYPE_FLOAT){ eb_.push(ch.fvalue()); eb_.splice(EXPR_NUMBER, 1); return true; }
-		XTAL_CASE(Token::TYPE_IDENTIFIER){ eb_.push(identifier(ch.identifier_number())); eb_.splice(EXPR_LVAR, 1); return true; }
+		XTAL_CASE(Token::TYPE_INT){ executor_->tree_push_back(ch.ivalue()); executor_->tree_splice(EXPR_NUMBER, 1); return true; }
+		XTAL_CASE(Token::TYPE_FLOAT){ executor_->tree_push_back(ch.fvalue()); executor_->tree_splice(EXPR_NUMBER, 1); return true; }
+		XTAL_CASE(Token::TYPE_IDENTIFIER){ executor_->tree_push_back(identifier(ch.identifier_number())); executor_->tree_splice(EXPR_LVAR, 1); return true; }
 	}
 
 	putback_token(ch);
@@ -1106,7 +1083,7 @@ bool Parser::cmp_pri(int_t pri, int_t op, int_t l_space, int_t r_space){
 	bool one = pri < op;
 	bool two = pri-l_space < op-r_space;
 	if(one!=two){
-		reader_->error(Xt("XCE1028"));
+		executor_->error(Xt("XCE1028"));
 	}
 	return one;
 }
@@ -1140,15 +1117,15 @@ bool Parser::parse_post(int_t pri, int_t space){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
 				
-				XTAL_CASE(Token::KEYWORD_IS){ if(cmp_pri(pri, PRI_IS, space, l_space)){ expect_parse_expr(PRI_IS, r_space); eb_.splice(EXPR_IS, 2); return true; } }
-				XTAL_CASE(Token::KEYWORD_IN){ if(cmp_pri(pri, PRI_IN, space, l_space)){ expect_parse_expr(PRI_IN, r_space); eb_.splice(EXPR_IN, 2); return true; } }
+				XTAL_CASE(Token::KEYWORD_IS){ if(cmp_pri(pri, PRI_IS, space, l_space)){ expect_parse_expr(PRI_IS, r_space); executor_->tree_splice(EXPR_IS, 2); return true; } }
+				XTAL_CASE(Token::KEYWORD_IN){ if(cmp_pri(pri, PRI_IN, space, l_space)){ expect_parse_expr(PRI_IN, r_space); executor_->tree_splice(EXPR_IN, 2); return true; } }
 				XTAL_CASE(Token::KEYWORD_CATCH){ 
 					if(cmp_pri(pri, PRI_CATCH, space, l_space)){
 						expect('(');
 						expect_parse_identifier();
 						expect(')');
 						expect_parse_expr(PRI_CATCH, r_space); 
-						eb_.splice(EXPR_CATCH, 3);
+						executor_->tree_splice(EXPR_CATCH, 3);
 						return true; 
 					} 
 				}
@@ -1160,30 +1137,30 @@ bool Parser::parse_post(int_t pri, int_t space){
 
 				XTAL_DEFAULT{}
 			
-				XTAL_CASE('+'){ if(cmp_pri(pri, PRI_ADD, space, l_space)){ expect_parse_expr(PRI_ADD, r_space); eb_.splice(EXPR_ADD, 2); return true; } }
-				XTAL_CASE('-'){ if(cmp_pri(pri, PRI_SUB, space, l_space)){ expect_parse_expr(PRI_SUB, r_space); eb_.splice(EXPR_SUB, 2); return true; } }
-				XTAL_CASE('~'){ if(cmp_pri(pri, PRI_CAT, space, l_space)){ expect_parse_expr(PRI_CAT, r_space); eb_.splice(EXPR_CAT, 2); return true; } } 
-				XTAL_CASE('*'){ if(cmp_pri(pri, PRI_MUL, space, l_space)){ expect_parse_expr(PRI_MUL, r_space); eb_.splice(EXPR_MUL, 2); return true; } } 
-				XTAL_CASE('/'){ if(cmp_pri(pri, PRI_DIV, space, l_space)){ expect_parse_expr(PRI_DIV, r_space); eb_.splice(EXPR_DIV, 2); return true; } } 
-				XTAL_CASE('%'){ if(cmp_pri(pri, PRI_MOD, space, l_space)){ expect_parse_expr(PRI_MOD, r_space); eb_.splice(EXPR_MOD, 2); return true; } } 
-				XTAL_CASE('^'){ if(cmp_pri(pri, PRI_XOR, space, l_space)){ expect_parse_expr(PRI_XOR, r_space); eb_.splice(EXPR_XOR, 2); return true; } } 
-				XTAL_CASE(c2('&','&')){ if(cmp_pri(pri, PRI_ANDAND, space, l_space)){ expect_parse_expr(PRI_ANDAND, r_space); eb_.splice(EXPR_ANDAND, 2); return true; } } 
-				XTAL_CASE('&'){ if(cmp_pri(pri, PRI_AND, space, l_space)){ expect_parse_expr(PRI_AND, r_space); eb_.splice(EXPR_AND, 2); return true; } } 
-				XTAL_CASE(c2('|','|')){ if(cmp_pri(pri, PRI_OROR, space, l_space)){ expect_parse_expr(PRI_OROR, r_space); eb_.splice(EXPR_OROR, 2); return true; } } 
-				XTAL_CASE('|'){ if(cmp_pri(pri, PRI_OR, space, l_space)){ expect_parse_expr(PRI_OR, r_space); eb_.splice(EXPR_OR, 2); return true; } } 
-				XTAL_CASE(c2('<','<')){ if(cmp_pri(pri, PRI_SHL, space, l_space)){ expect_parse_expr(PRI_SHL, r_space); eb_.splice(EXPR_SHL, 2); return true; } } 
-				XTAL_CASE(c2('>','>')){ if(cmp_pri(pri, PRI_SHR, space, l_space)){ expect_parse_expr(PRI_SHR, r_space); eb_.splice(EXPR_SHR, 2); return true; } } 
-				XTAL_CASE(c3('>','>','>')){ if(cmp_pri(pri, PRI_USHR, space, l_space)){ expect_parse_expr(PRI_USHR, r_space); eb_.splice(EXPR_USHR, 2); return true; } } 
-				XTAL_CASE(c2('<','=')){ if(cmp_pri(pri, PRI_LE, space, l_space)){ expect_parse_expr(PRI_LE, r_space); eb_.splice(EXPR_LE, 2); return true; } } 
-				XTAL_CASE('<'){ if(cmp_pri(pri, PRI_LT, space, l_space)){ expect_parse_expr(PRI_LT, r_space); eb_.splice(EXPR_LT, 2); return true; } } 
-				XTAL_CASE(c2('>','=')){ if(cmp_pri(pri, PRI_GE, space, l_space)){ expect_parse_expr(PRI_GE, r_space); eb_.splice(EXPR_GE, 2); return true; } } 
-				XTAL_CASE('>'){ if(cmp_pri(pri, PRI_GT, space, l_space)){ expect_parse_expr(PRI_GT, r_space); eb_.splice(EXPR_GT, 2); return true; } } 
-				XTAL_CASE(c2('=','=')){ if(cmp_pri(pri, PRI_EQ, space, l_space)){ expect_parse_expr(PRI_EQ, r_space); eb_.splice(EXPR_EQ, 2); return true; } } 
-				XTAL_CASE(c2('!','=')){ if(cmp_pri(pri, PRI_NE, space, l_space)){ expect_parse_expr(PRI_NE, r_space); eb_.splice(EXPR_NE, 2); return true; } } 
-				XTAL_CASE(c3('=','=','=')){ if(cmp_pri(pri, PRI_RAWEQ, space, l_space)){ expect_parse_expr(PRI_RAWEQ, r_space); eb_.splice(EXPR_RAWEQ, 2); return true; } } 
-				XTAL_CASE(c3('!','=','=')){ if(cmp_pri(pri, PRI_RAWNE, space, l_space)){ expect_parse_expr(PRI_RAWNE, r_space); eb_.splice(EXPR_RAWNE, 2); return true; } } 
-				XTAL_CASE(c3('!','i','s')){ if(cmp_pri(pri, PRI_NIS, space, l_space)){ expect_parse_expr(PRI_NIS, r_space); eb_.splice(EXPR_NIS, 2); return true; } }
-				XTAL_CASE(c3('!','i','n')){ if(cmp_pri(pri, PRI_NIN, space, l_space)){ expect_parse_expr(PRI_NIN, r_space); eb_.splice(EXPR_NIN, 2); return true; } }
+				XTAL_CASE('+'){ if(cmp_pri(pri, PRI_ADD, space, l_space)){ expect_parse_expr(PRI_ADD, r_space); executor_->tree_splice(EXPR_ADD, 2); return true; } }
+				XTAL_CASE('-'){ if(cmp_pri(pri, PRI_SUB, space, l_space)){ expect_parse_expr(PRI_SUB, r_space); executor_->tree_splice(EXPR_SUB, 2); return true; } }
+				XTAL_CASE('~'){ if(cmp_pri(pri, PRI_CAT, space, l_space)){ expect_parse_expr(PRI_CAT, r_space); executor_->tree_splice(EXPR_CAT, 2); return true; } } 
+				XTAL_CASE('*'){ if(cmp_pri(pri, PRI_MUL, space, l_space)){ expect_parse_expr(PRI_MUL, r_space); executor_->tree_splice(EXPR_MUL, 2); return true; } } 
+				XTAL_CASE('/'){ if(cmp_pri(pri, PRI_DIV, space, l_space)){ expect_parse_expr(PRI_DIV, r_space); executor_->tree_splice(EXPR_DIV, 2); return true; } } 
+				XTAL_CASE('%'){ if(cmp_pri(pri, PRI_MOD, space, l_space)){ expect_parse_expr(PRI_MOD, r_space); executor_->tree_splice(EXPR_MOD, 2); return true; } } 
+				XTAL_CASE('^'){ if(cmp_pri(pri, PRI_XOR, space, l_space)){ expect_parse_expr(PRI_XOR, r_space); executor_->tree_splice(EXPR_XOR, 2); return true; } } 
+				XTAL_CASE(c2('&','&')){ if(cmp_pri(pri, PRI_ANDAND, space, l_space)){ expect_parse_expr(PRI_ANDAND, r_space); executor_->tree_splice(EXPR_ANDAND, 2); return true; } } 
+				XTAL_CASE('&'){ if(cmp_pri(pri, PRI_AND, space, l_space)){ expect_parse_expr(PRI_AND, r_space); executor_->tree_splice(EXPR_AND, 2); return true; } } 
+				XTAL_CASE(c2('|','|')){ if(cmp_pri(pri, PRI_OROR, space, l_space)){ expect_parse_expr(PRI_OROR, r_space); executor_->tree_splice(EXPR_OROR, 2); return true; } } 
+				XTAL_CASE('|'){ if(cmp_pri(pri, PRI_OR, space, l_space)){ expect_parse_expr(PRI_OR, r_space); executor_->tree_splice(EXPR_OR, 2); return true; } } 
+				XTAL_CASE(c2('<','<')){ if(cmp_pri(pri, PRI_SHL, space, l_space)){ expect_parse_expr(PRI_SHL, r_space); executor_->tree_splice(EXPR_SHL, 2); return true; } } 
+				XTAL_CASE(c2('>','>')){ if(cmp_pri(pri, PRI_SHR, space, l_space)){ expect_parse_expr(PRI_SHR, r_space); executor_->tree_splice(EXPR_SHR, 2); return true; } } 
+				XTAL_CASE(c3('>','>','>')){ if(cmp_pri(pri, PRI_USHR, space, l_space)){ expect_parse_expr(PRI_USHR, r_space); executor_->tree_splice(EXPR_USHR, 2); return true; } } 
+				XTAL_CASE(c2('<','=')){ if(cmp_pri(pri, PRI_LE, space, l_space)){ expect_parse_expr(PRI_LE, r_space); executor_->tree_splice(EXPR_LE, 2); return true; } } 
+				XTAL_CASE('<'){ if(cmp_pri(pri, PRI_LT, space, l_space)){ expect_parse_expr(PRI_LT, r_space); executor_->tree_splice(EXPR_LT, 2); return true; } } 
+				XTAL_CASE(c2('>','=')){ if(cmp_pri(pri, PRI_GE, space, l_space)){ expect_parse_expr(PRI_GE, r_space); executor_->tree_splice(EXPR_GE, 2); return true; } } 
+				XTAL_CASE('>'){ if(cmp_pri(pri, PRI_GT, space, l_space)){ expect_parse_expr(PRI_GT, r_space); executor_->tree_splice(EXPR_GT, 2); return true; } } 
+				XTAL_CASE(c2('=','=')){ if(cmp_pri(pri, PRI_EQ, space, l_space)){ expect_parse_expr(PRI_EQ, r_space); executor_->tree_splice(EXPR_EQ, 2); return true; } } 
+				XTAL_CASE(c2('!','=')){ if(cmp_pri(pri, PRI_NE, space, l_space)){ expect_parse_expr(PRI_NE, r_space); executor_->tree_splice(EXPR_NE, 2); return true; } } 
+				XTAL_CASE(c3('=','=','=')){ if(cmp_pri(pri, PRI_RAWEQ, space, l_space)){ expect_parse_expr(PRI_RAWEQ, r_space); executor_->tree_splice(EXPR_RAWEQ, 2); return true; } } 
+				XTAL_CASE(c3('!','=','=')){ if(cmp_pri(pri, PRI_RAWNE, space, l_space)){ expect_parse_expr(PRI_RAWNE, r_space); executor_->tree_splice(EXPR_RAWNE, 2); return true; } } 
+				XTAL_CASE(c3('!','i','s')){ if(cmp_pri(pri, PRI_NIS, space, l_space)){ expect_parse_expr(PRI_NIS, r_space); executor_->tree_splice(EXPR_NIS, 2); return true; } }
+				XTAL_CASE(c3('!','i','n')){ if(cmp_pri(pri, PRI_NIN, space, l_space)){ expect_parse_expr(PRI_NIN, r_space); executor_->tree_splice(EXPR_NIN, 2); return true; } }
 
 				XTAL_CASE4(c2(':',':'), '.', c3(':',':','?'), c2('.', '?')){
 					if(cmp_pri(pri, PRI_MEMBER, space, l_space)){
@@ -1200,15 +1177,15 @@ bool Parser::parse_post(int_t pri, int_t space){
 							expect_parse_expr(PRI_NS, r_space);
 						}
 						else{
-							eb_.push(null);
+							executor_->tree_push_back(null);
 						}
 
 						switch(ch.ivalue()){
 							XTAL_NODEFAULT;
-							XTAL_CASE(c2(':',':')){ eb_.splice(EXPR_MEMBER, 3); }
-							XTAL_CASE('.'){ eb_.splice(EXPR_PROPERTY, 3); }
-							XTAL_CASE(c3(':',':','?')){ eb_.splice(EXPR_MEMBER_Q, 3); }
-							XTAL_CASE(c2('.', '?')){ eb_.splice(EXPR_PROPERTY_Q, 3); }
+							XTAL_CASE(c2(':',':')){ executor_->tree_splice(EXPR_MEMBER, 3); }
+							XTAL_CASE('.'){ executor_->tree_splice(EXPR_PROPERTY, 3); }
+							XTAL_CASE(c3(':',':','?')){ executor_->tree_splice(EXPR_MEMBER_Q, 3); }
+							XTAL_CASE(c2('.', '?')){ executor_->tree_splice(EXPR_PROPERTY_Q, 3); }
 						}
 						return true;
 					}
@@ -1219,7 +1196,7 @@ bool Parser::parse_post(int_t pri, int_t space){
 						expect_parse_expr();
 						expect(':');
 						expect_parse_expr();
-						eb_.splice(EXPR_Q, 3);
+						executor_->tree_splice(EXPR_Q, 3);
 						return true;
 					}
 				}
@@ -1229,12 +1206,12 @@ bool Parser::parse_post(int_t pri, int_t space){
 						expect_parse_expr(PRI_RANGE, r_space);
 						switch(ch.ivalue()){
 							XTAL_NODEFAULT;
-							XTAL_CASE(c2('.', '.')){ eb_.insert(2, RANGE_CLOSED); }
-							XTAL_CASE(c3('.', '.', '<')){ eb_.insert(2, RANGE_LEFT_CLOSED_RIGHT_OPEN); }
-							XTAL_CASE(c3('<', '.', '.')){ eb_.insert(2, RANGE_LEFT_OPEN_RIGHT_CLOSED); }
-							XTAL_CASE(c4('<', '.', '.', '<')){ eb_.insert(2, RANGE_OPEN); }
+							XTAL_CASE(c2('.', '.')){ executor_->tree_insert(2, RANGE_CLOSED); }
+							XTAL_CASE(c3('.', '.', '<')){ executor_->tree_insert(2, RANGE_LEFT_CLOSED_RIGHT_OPEN); }
+							XTAL_CASE(c3('<', '.', '.')){ executor_->tree_insert(2, RANGE_LEFT_OPEN_RIGHT_CLOSED); }
+							XTAL_CASE(c4('<', '.', '.', '<')){ executor_->tree_insert(2, RANGE_OPEN); }
 						}
-						eb_.splice(EXPR_RANGE, 3);
+						executor_->tree_splice(EXPR_RANGE, 3);
 						return true;
 					}
 				}
@@ -1250,18 +1227,18 @@ bool Parser::parse_post(int_t pri, int_t space){
 					if(cmp_pri(pri, PRI_AT, space, l_space)){
 						if(eat(':')){
 							expect(']');
-							eb_.push(Xid(op_to_map));
-							eb_.push(null);
-							eb_.splice(EXPR_PROPERTY, 3);
+							executor_->tree_push_back(Xid(op_to_map));
+							executor_->tree_push_back(null);
+							executor_->tree_splice(EXPR_PROPERTY, 3);
 						}
 						else if(eat(']')){
-							eb_.push(Xid(op_to_array));
-							eb_.push(null);
-							eb_.splice(EXPR_PROPERTY, 3);
+							executor_->tree_push_back(Xid(op_to_array));
+							executor_->tree_push_back(null);
+							executor_->tree_splice(EXPR_PROPERTY, 3);
 						}
 						else{
 							expect_parse_expr();
-							eb_.splice(EXPR_AT, 2);
+							executor_->tree_splice(EXPR_AT, 2);
 							expect(']');
 						}
 						return true;
@@ -1278,36 +1255,36 @@ bool Parser::parse_post(int_t pri, int_t space){
 void Parser::parse_else_or_nobreak(){
 	if(eat(Token::KEYWORD_ELSE)){
 		expect_parse_stmt();
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
 	else if(eat(Token::KEYWORD_NOBREAK)){
-		eb_.push(null);
+		executor_->tree_push_back(null);
 		expect_parse_stmt();
 	}
 	else{
-		eb_.push(null);
-		eb_.push(null);
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(null);
 	}
 }
 
 void Parser::parse_each(){
-	ExprPtr lhs = ep(eb_.pop());
-	IDPtr label = ptr_cast<ID>(eb_.pop());
+	ExprPtr lhs = ep(executor_->tree_pop_back());
+	IDPtr label = ptr_cast<ID>(executor_->tree_pop_back());
 
 	ExprPtr params = xnew<Expr>();
 
-	eb_.push(Xid(iterator));
-	eb_.splice(EXPR_LVAR, 1);
-	params->push_back(eb_.pop());
+	executor_->tree_push_back(Xid(iterator));
+	executor_->tree_splice(EXPR_LVAR, 1);
+	params->push_back(executor_->tree_pop_back());
 
 	if(eat('|')){ // ブロックパラメータ
 		for(;;){
 			const Token& ch = peek_token();
 			if(ch.type()==ch.TYPE_IDENTIFIER){
 				read_token();
-				eb_.push(identifier(ch.identifier_number()));
-				eb_.splice(EXPR_LVAR, 1);
-				params->push_back(eb_.pop());
+				executor_->tree_push_back(identifier(ch.identifier_number()));
+				executor_->tree_splice(EXPR_LVAR, 1);
+				params->push_back(executor_->tree_pop_back());
 				if(!eat(',')){
 					expect('|');
 					break;
@@ -1321,134 +1298,134 @@ void Parser::parse_each(){
 	}
 	
 	if(params->size()==1){
-		eb_.push(Xid(it));
-		eb_.splice(EXPR_LVAR, 1);
-		params->push_back(eb_.pop());
+		executor_->tree_push_back(Xid(it));
+		executor_->tree_splice(EXPR_LVAR, 1);
+		params->push_back(executor_->tree_pop_back());
 	}
 
 	ExprPtr scope = xnew<Expr>();
 	
 	{
-		eb_.push(params); // 多重代入の左辺
+		executor_->tree_push_back(params); // 多重代入の左辺
 
-		eb_.push(lhs);
-		eb_.push(Xid(block_first));
-		eb_.push(null);
-		eb_.splice(EXPR_PROPERTY, 3);
-		eb_.splice(0, 1); // 多重代入の右辺
+		executor_->tree_push_back(lhs);
+		executor_->tree_push_back(Xid(block_first));
+		executor_->tree_push_back(null);
+		executor_->tree_splice(EXPR_PROPERTY, 3);
+		executor_->tree_splice(0, 1); // 多重代入の右辺
 
-		eb_.splice(EXPR_MDEFINE, 2);
+		executor_->tree_splice(EXPR_MDEFINE, 2);
 	}
 
-	scope->push_back(eb_.pop());
+	scope->push_back(executor_->tree_pop_back());
 
 	{
-		eb_.push(label);
+		executor_->tree_push_back(label);
 
-		eb_.push(null);
+		executor_->tree_push_back(null);
 
 		{
-			eb_.push(Xid(iterator));
-			eb_.splice(EXPR_LVAR, 1);
+			executor_->tree_push_back(Xid(iterator));
+			executor_->tree_splice(EXPR_LVAR, 1);
 		}
 
 		{
-			eb_.push(params);
-			eb_.push(Xid(iterator));
-			eb_.splice(EXPR_LVAR, 1);
-			eb_.push(Xid(block_next));
-			eb_.push(null);
-			eb_.splice(EXPR_PROPERTY, 3);
-			eb_.splice(0, 1);
-			eb_.splice(EXPR_MASSIGN, 2);
+			executor_->tree_push_back(params);
+			executor_->tree_push_back(Xid(iterator));
+			executor_->tree_splice(EXPR_LVAR, 1);
+			executor_->tree_push_back(Xid(block_next));
+			executor_->tree_push_back(null);
+			executor_->tree_splice(EXPR_PROPERTY, 3);
+			executor_->tree_splice(0, 1);
+			executor_->tree_splice(EXPR_MASSIGN, 2);
 		}
 
 		parse_scope();
 
 		parse_else_or_nobreak();
 
-		eb_.splice(EXPR_FOR, 7);
+		executor_->tree_splice(EXPR_FOR, 7);
 	}
 
-	ExprPtr loop = ep(eb_.pop());
+	ExprPtr loop = ep(executor_->tree_pop_back());
 
 	{
-		eb_.push(Xid(iterator));
-		eb_.splice(EXPR_LVAR, 1);
-		eb_.push(Xid(block_catch));
-		eb_.push(null);
-		eb_.splice(EXPR_PROPERTY_Q, 3);
+		executor_->tree_push_back(Xid(iterator));
+		executor_->tree_splice(EXPR_LVAR, 1);
+		executor_->tree_push_back(Xid(block_catch));
+		executor_->tree_push_back(null);
+		executor_->tree_splice(EXPR_PROPERTY_Q, 3);
 
-		eb_.push(null);
-		eb_.push(Xid(e));
-		eb_.splice(EXPR_LVAR, 1);
-		eb_.splice(0, 2);
-		eb_.splice(0, 1);
-		eb_.push(null);
-		eb_.splice(EXPR_CALL, 3);
-		eb_.splice(EXPR_NOT, 1);
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(Xid(e));
+		executor_->tree_splice(EXPR_LVAR, 1);
+		executor_->tree_splice(0, 2);
+		executor_->tree_splice(0, 1);
+		executor_->tree_push_back(null);
+		executor_->tree_splice(EXPR_CALL, 3);
+		executor_->tree_splice(EXPR_NOT, 1);
 
-		eb_.push(Xid(e));
-		eb_.splice(EXPR_LVAR, 1);
-		eb_.splice(EXPR_THROW, 1);
+		executor_->tree_push_back(Xid(e));
+		executor_->tree_splice(EXPR_LVAR, 1);
+		executor_->tree_splice(EXPR_THROW, 1);
 
-		eb_.push(null);
+		executor_->tree_push_back(null);
 
-		eb_.splice(EXPR_IF, 3);
+		executor_->tree_splice(EXPR_IF, 3);
 	}
 
-	ExprPtr block_catch = ep(eb_.pop());
+	ExprPtr block_catch = ep(executor_->tree_pop_back());
 
-	eb_.push(loop);
+	executor_->tree_push_back(loop);
 
-	eb_.push(Xid(e));
-	eb_.push(block_catch);
+	executor_->tree_push_back(Xid(e));
+	executor_->tree_push_back(block_catch);
 
-	eb_.push(Xid(iterator));
-	eb_.splice(EXPR_LVAR, 1);
-	eb_.push(Xid(block_break));
-	eb_.push(null);
-	eb_.splice(EXPR_PROPERTY_Q, 3);
+	executor_->tree_push_back(Xid(iterator));
+	executor_->tree_splice(EXPR_LVAR, 1);
+	executor_->tree_push_back(Xid(block_break));
+	executor_->tree_push_back(null);
+	executor_->tree_splice(EXPR_PROPERTY_Q, 3);
 
-	eb_.splice(EXPR_TRY, 4);
+	executor_->tree_splice(EXPR_TRY, 4);
 	
-	scope->push_back(eb_.pop());
-	eb_.push(scope);
-	eb_.splice(EXPR_SCOPE, 1);
+	scope->push_back(executor_->tree_pop_back());
+	executor_->tree_push_back(scope);
+	executor_->tree_splice(EXPR_SCOPE, 1);
 }
 
 void Parser::parse_for(){
 	expect('(');
-	if(!parse_assign_stmt()) eb_.push(null);
+	if(!parse_assign_stmt()) executor_->tree_push_back(null);
 	expect(';');
 
-	if(!parse_expr()) eb_.push(null);
+	if(!parse_expr()) executor_->tree_push_back(null);
 	expect(';');
 
-	if(!parse_assign_stmt()) eb_.push(null);
+	if(!parse_assign_stmt()) executor_->tree_push_back(null);
 	expect(')');
 
 	expect_parse_stmt();
 
 	parse_else_or_nobreak();
 
-	eb_.splice(EXPR_FOR, 7);
+	executor_->tree_splice(EXPR_FOR, 7);
 }
 
 void Parser::parse_while(){
-	eb_.push(null);
+	executor_->tree_push_back(null);
 	expect('(');
 
 	expect_parse_expr();
 	expect(')');
 
-	eb_.push(null);
+	executor_->tree_push_back(null);
 	
 	expect_parse_stmt();
 	
 	parse_else_or_nobreak();
 
-	eb_.splice(EXPR_FOR, 7);
+	executor_->tree_splice(EXPR_FOR, 7);
 }
 
 bool Parser::parse_loop(){
@@ -1471,10 +1448,10 @@ bool Parser::parse_loop(){
 			}
 			else{
 				// 変数定義文だった
-				AnyPtr temp = eb_.pop();
-				eb_.splice(EXPR_LVAR, 1);
-				eb_.push(temp);
-				eb_.splice(EXPR_DEFINE, 2);
+				AnyPtr temp = executor_->tree_pop_back();
+				executor_->tree_splice(EXPR_LVAR, 1);
+				executor_->tree_push_back(temp);
+				executor_->tree_splice(EXPR_DEFINE, 2);
 				return true;
 			}
 		}
@@ -1496,8 +1473,8 @@ bool Parser::parse_assign_stmt(){
 			XTAL_CASE(Token::TYPE_TOKEN){
 				switch(ch.ivalue()){
 					XTAL_DEFAULT{}
-					XTAL_CASE(c2('+','+')){ expect_parse_expr(); eb_.splice(EXPR_INC, 1); return true; }
-					XTAL_CASE(c2('-','-')){ expect_parse_expr(); eb_.splice(EXPR_DEC, 1); return true; }
+					XTAL_CASE(c2('+','+')){ expect_parse_expr(); executor_->tree_splice(EXPR_INC, 1); return true; }
+					XTAL_CASE(c2('-','-')){ expect_parse_expr(); executor_->tree_splice(EXPR_DEC, 1); return true; }
 				}
 			}
 
@@ -1507,35 +1484,35 @@ bool Parser::parse_assign_stmt(){
 					XTAL_CASE(Token::KEYWORD_METHOD){
 						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_METHOD);
-						eb_.splice(EXPR_DEFINE, 2);
+						executor_->tree_splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_FUN){
 						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_FUN);
-						eb_.splice(EXPR_DEFINE, 2);
+						executor_->tree_splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_FIBER){
 						expect_parse_expr(PRI_CALL, 0);
 						parse_fun(KIND_FIBER);
-						eb_.splice(EXPR_DEFINE, 2);
+						executor_->tree_splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_CLASS){
 						expect_parse_expr(PRI_CALL, 0);
 						parse_class(KIND_CLASS);
-						eb_.splice(EXPR_DEFINE, 2);
+						executor_->tree_splice(EXPR_DEFINE, 2);
 						return true;
 					}
 
 					XTAL_CASE(Token::KEYWORD_SINGLETON){
 						expect_parse_expr(PRI_CALL, 0);
 						parse_class(KIND_SINGLETON);
-						eb_.splice(EXPR_DEFINE, 2);
+						executor_->tree_splice(EXPR_DEFINE, 2);
 						return true;
 					}
 				}
@@ -1568,42 +1545,42 @@ bool Parser::parse_assign_stmt(){
 						
 						if(eat('=')){
 							parse_exprs();
-							eb_.splice(EXPR_MASSIGN, 2);
+							executor_->tree_splice(EXPR_MASSIGN, 2);
 							return true;
 						}
 						else if(eat(':')){
 							parse_exprs();
-							eb_.splice(EXPR_MDEFINE, 2);
+							executor_->tree_splice(EXPR_MDEFINE, 2);
 							return true;
 						}
 						else{
-							reader_->error(Xt("XCE1001"));
+							executor_->error(Xt("XCE1001"));
 						}
 						
 						return true;
 					}
 
-					XTAL_CASE('='){ expect_parse_expr(); eb_.splice(EXPR_ASSIGN, 2); return true; }
-					XTAL_CASE(':'){ expect_parse_expr(); eb_.splice(EXPR_DEFINE, 2); return true; }
+					XTAL_CASE('='){ expect_parse_expr(); executor_->tree_splice(EXPR_ASSIGN, 2); return true; }
+					XTAL_CASE(':'){ expect_parse_expr(); executor_->tree_splice(EXPR_DEFINE, 2); return true; }
 
-					XTAL_CASE(c2('+','+')){ eb_.splice(EXPR_INC, 1); return true; }
-					XTAL_CASE(c2('-','-')){ eb_.splice(EXPR_DEC, 1); return true; }
+					XTAL_CASE(c2('+','+')){ executor_->tree_splice(EXPR_INC, 1); return true; }
+					XTAL_CASE(c2('-','-')){ executor_->tree_splice(EXPR_DEC, 1); return true; }
 					
-					XTAL_CASE(c2('+','=')){ expect_parse_expr(); eb_.splice(EXPR_ADD_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('-','=')){ expect_parse_expr(); eb_.splice(EXPR_SUB_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('~','=')){ expect_parse_expr(); eb_.splice(EXPR_CAT_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('*','=')){ expect_parse_expr(); eb_.splice(EXPR_MUL_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('/','=')){ expect_parse_expr(); eb_.splice(EXPR_DIV_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('%','=')){ expect_parse_expr(); eb_.splice(EXPR_MOD_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('^','=')){ expect_parse_expr(); eb_.splice(EXPR_XOR_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('|','=')){ expect_parse_expr(); eb_.splice(EXPR_OR_ASSIGN, 2); return true; }
-					XTAL_CASE(c2('&','=')){ expect_parse_expr(); eb_.splice(EXPR_AND_ASSIGN, 2); return true; }
-					XTAL_CASE(c3('<','<','=')){ expect_parse_expr(); eb_.splice(EXPR_SHL_ASSIGN, 2); return true; }
-					XTAL_CASE(c3('>','>','=')){ expect_parse_expr(); eb_.splice(EXPR_SHR_ASSIGN, 2); return true; }
-					XTAL_CASE(c4('>','>','>','=')){ expect_parse_expr(); eb_.splice(EXPR_USHR_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('+','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_ADD_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('-','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_SUB_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('~','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_CAT_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('*','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_MUL_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('/','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_DIV_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('%','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_MOD_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('^','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_XOR_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('|','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_OR_ASSIGN, 2); return true; }
+					XTAL_CASE(c2('&','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_AND_ASSIGN, 2); return true; }
+					XTAL_CASE(c3('<','<','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_SHL_ASSIGN, 2); return true; }
+					XTAL_CASE(c3('>','>','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_SHR_ASSIGN, 2); return true; }
+					XTAL_CASE(c4('>','>','>','=')){ expect_parse_expr(); executor_->tree_splice(EXPR_USHR_ASSIGN, 2); return true; }
 
 					XTAL_CASE('{'){
-						eb_.insert(1, null);
+						executor_->tree_insert(1, null);
 						parse_each();
 						return true;
 					}
@@ -1620,7 +1597,7 @@ bool Parser::parse_assign_stmt(){
 
 void Parser::expect_stmt_end(){
 	if(!expr_end()){
-		if(!reader_->eos()){
+		if(!executor_->eos()){
 			expect(';');
 		}
 	}
@@ -1641,15 +1618,15 @@ bool Parser::parse_stmt(){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
 		
-				XTAL_CASE(Token::KEYWORD_WHILE){ eb_.push(null); parse_while(); return true; }
-				XTAL_CASE(Token::KEYWORD_FOR){ eb_.push(null); parse_for(); return true; }
+				XTAL_CASE(Token::KEYWORD_WHILE){ executor_->tree_push_back(null); parse_while(); return true; }
+				XTAL_CASE(Token::KEYWORD_FOR){ executor_->tree_push_back(null); parse_for(); return true; }
 				XTAL_CASE(Token::KEYWORD_SWITCH){ parse_switch(); return true; }
 				XTAL_CASE(Token::KEYWORD_IF){ parse_if(); return true; }
 				XTAL_CASE(Token::KEYWORD_TRY){ parse_try(); return true; }
 
 				XTAL_CASE(Token::KEYWORD_THROW){ 
 					expect_parse_expr(); 
-					eb_.splice(EXPR_THROW, 1);
+					executor_->tree_splice(EXPR_THROW, 1);
 					expect_stmt_end(); 
 					return true; 
 				}	
@@ -1662,25 +1639,25 @@ bool Parser::parse_stmt(){
 
 				XTAL_CASE(Token::KEYWORD_RETURN){ 
 					parse_exprs(); 
-					eb_.splice(EXPR_RETURN, 1); 
+					executor_->tree_splice(EXPR_RETURN, 1); 
 					expect_stmt_end(); 
 					return true; 
 				}
 				
 				XTAL_CASE(Token::KEYWORD_CONTINUE){ 
 					if(!parse_identifier()){
-						eb_.push(null); 
+						executor_->tree_push_back(null); 
 					}
-					eb_.splice(EXPR_CONTINUE, 1); 
+					executor_->tree_splice(EXPR_CONTINUE, 1); 
 					expect_stmt_end();
 					return true; 
 				}
 
 				XTAL_CASE(Token::KEYWORD_BREAK){ 
 					if(!parse_identifier()){
-						eb_.push(null); 
+						executor_->tree_push_back(null); 
 					}
-					eb_.splice(EXPR_BREAK, 1); 
+					executor_->tree_splice(EXPR_BREAK, 1); 
 					expect_stmt_end();
 					return true; 
 				}
@@ -1692,7 +1669,7 @@ bool Parser::parse_stmt(){
 			switch(ch.ivalue()){
 				XTAL_DEFAULT{}
 				XTAL_CASE('{'){ parse_scope(); return true; }
-				XTAL_CASE(';'){ eb_.splice(EXPR_NULL, 0); return true; }
+				XTAL_CASE(';'){ executor_->tree_splice(EXPR_NULL, 0); return true; }
 			}
 		}
 	}
@@ -1708,34 +1685,34 @@ bool Parser::parse_stmt(){
 
 void Parser::expect_parse_stmt(){
 	if(!parse_stmt()){
-		reader_->error(Xt("XCE1001"));
-		eb_.push(null);
+		executor_->error(Xt("XCE1001"));
+		executor_->tree_push_back(null);
 	}
 }
 
 void Parser::parse_assert(){
-	reader_->begin_record();
+	executor_->begin_record();
 	if(parse_expr()){
-		StringPtr ref_str = reader_->end_record();
-		eb_.push(KIND_STRING);
-		eb_.push(ref_str);
-		eb_.splice(EXPR_STRING, 2);
+		StringPtr ref_str = executor_->end_record();
+		executor_->tree_push_back(KIND_STRING);
+		executor_->tree_push_back(ref_str);
+		executor_->tree_splice(EXPR_STRING, 2);
 		if(!eat(',') || !parse_expr()){
-			eb_.push(null);
+			executor_->tree_push_back(null);
 		}
 	}
 	else{
-		eb_.push(null);
-		eb_.push(null);
-		eb_.push(null);
-		reader_->end_record();
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(null);
+		executor_->end_record();
 	}
 
-	eb_.splice(EXPR_ASSERT, 3);
+	executor_->tree_splice(EXPR_ASSERT, 3);
 }
 	
 void Parser::parse_exprs(bool one){
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	if(one){
 		state.pos--;
 	}
@@ -1745,25 +1722,25 @@ void Parser::parse_exprs(bool one){
 			break;
 		}
 	}
-	eb_.end(0, state);
+	executor_->tree_node_end(0, state);
 }
 
 void Parser::parse_stmts(){
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	while(parse_stmt()){}
-	eb_.end(0, state);
+	executor_->tree_node_end(0, state);
 }
 
 void Parser::expect_parse_identifier(){
 	if(!parse_identifier()){
-		reader_->error(Xt("XCE1001"));
-		eb_.push(null);
+		executor_->error(Xt("XCE1001"));
+		executor_->tree_push_back(null);
 	}
 }
 
 bool Parser::parse_identifier(){
 	if(peek_token().type()==Token::TYPE_IDENTIFIER){
-		eb_.push(identifier(read_token().identifier_number()));
+		executor_->tree_push_back(identifier(read_token().identifier_number()));
 		return true;
 	}
 	return false;
@@ -1771,10 +1748,10 @@ bool Parser::parse_identifier(){
 
 void Parser::parse_identifier_or_keyword(){
 	if(peek_token().type()==Token::TYPE_IDENTIFIER){
-		eb_.push(identifier(read_token().identifier_number()));
+		executor_->tree_push_back(identifier(read_token().identifier_number()));
 	}
 	else if(peek_token().type()==Token::TYPE_KEYWORD){
-		eb_.push(identifier(read_token().identifier_number()));
+		executor_->tree_push_back(identifier(read_token().identifier_number()));
 	}
 	else{
 		expect('i');
@@ -1787,7 +1764,7 @@ bool Parser::parse_var(){
 			return true; 
 		}
 		else{
-			eb_.pop();
+			executor_->tree_pop_back();
 			putback_token();
 		}
 	}
@@ -1799,15 +1776,15 @@ void Parser::parse_expr_statement(){
 }
 	
 void Parser::parse_toplevel(){
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	parse_stmts();
-	eb_.end(EXPR_TOPLEVEL, state);
+	executor_->tree_node_end(EXPR_TOPLEVEL, state);
 }
 
 void Parser::parse_scope(){
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	parse_stmts();
-	eb_.end(EXPR_SCOPE, state);
+	executor_->tree_node_end(EXPR_SCOPE, state);
 	expect('}');
 }
 
@@ -1816,7 +1793,7 @@ void Parser::parse_secondary_key(){
 		expect_parse_expr(PRI_NS, 0); 
 	}
 	else{ 
-		eb_.push(null); 
+		executor_->tree_push_back(null); 
 	}
 }
 
@@ -1824,7 +1801,7 @@ void Parser::parse_fun2(int_t kind){
 	expect_parse_identifier();
 	parse_secondary_key();
 	parse_fun(kind);
-	eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+	executor_->tree_splice(EXPR_CDEFINE_MEMBER, 4);
 	expect_stmt_end();
 }
 
@@ -1832,37 +1809,37 @@ void Parser::parse_class2(int_t kind){
 	expect_parse_identifier();
 	parse_secondary_key();
 	parse_class(kind);
-	eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+	executor_->tree_splice(EXPR_CDEFINE_MEMBER, 4);
 	expect_stmt_end();
 }
 
 void Parser::parse_class(int_t kind){
-	eb_.push(kind);
+	executor_->tree_push_back(kind);
 
 	if(eat('(')){
 		parse_exprs();
 		expect(')');
 	}
 	else{
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
 
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 
 	expect('{');
 	for(;;){
 		
 		if(eat('#') || eat(Token::KEYWORD_PROTECTED)){// 可触性 protected 指定
-			eb_.push(KIND_PROTECTED);
+			executor_->tree_push_back(KIND_PROTECTED);
 		}
 		else if(eat('-') || eat(Token::KEYWORD_PRIVATE)){// 可触性 private 指定
-			eb_.push(KIND_PRIVATE);
+			executor_->tree_push_back(KIND_PRIVATE);
 		}
 		else if(eat('+') || eat(Token::KEYWORD_PUBLIC)){// 可触性 public 指定
-			eb_.push(KIND_PUBLIC);
+			executor_->tree_push_back(KIND_PUBLIC);
 		}
 		else{
-			eb_.push(null);
+			executor_->tree_push_back(null);
 		}
 
 		if(eat(Token::KEYWORD_METHOD)){
@@ -1890,7 +1867,7 @@ void Parser::parse_class(int_t kind){
 				parse_fun(KIND_METHOD);
 			}
 
-			eb_.splice(EXPR_CDEFINE_MEMBER, 4);
+			executor_->tree_splice(EXPR_CDEFINE_MEMBER, 4);
 			expect_stmt_end();
 		}
 		else if(eat('_')){// インスタンス変数定義
@@ -1899,24 +1876,24 @@ void Parser::parse_class(int_t kind){
 					expect_parse_expr();
 				}
 				else{
-					eb_.push(null);
+					executor_->tree_push_back(null);
 				}
-				eb_.splice(EXPR_CDEFINE_IVAR, 3);
+				executor_->tree_splice(EXPR_CDEFINE_IVAR, 3);
 				expect_stmt_end();
 			}
 			else{
-				eb_.pop();
-				reader_->error(Xt("XCE1001"));
+				executor_->tree_pop_back();
+				executor_->error(Xt("XCE1001"));
 			}
 		}
 		else{
-			eb_.pop();
+			executor_->tree_pop_back();
 			break;
 		}
 	}
 
-	eb_.end(0, state);
-	eb_.splice(EXPR_CLASS, 3);
+	executor_->tree_node_end(0, state);
+	executor_->tree_splice(EXPR_CLASS, 3);
 
 	expect('}');
 }
@@ -1931,33 +1908,33 @@ void Parser::parse_try(){
 		expect_parse_stmt();
 	}
 	else{
-		eb_.push(null);
-		eb_.push(null);
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(null);
 	}
 
 	if(eat(Token::KEYWORD_FINALLY)){
 		expect_parse_stmt();
 	}
 	else{
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
 
-	eb_.splice(EXPR_TRY, 4);
+	executor_->tree_splice(EXPR_TRY, 4);
 }
 
 void Parser::parse_lambda(bool noparam){
-	eb_.push(KIND_LAMBDA);
+	executor_->tree_push_back(KIND_LAMBDA);
 
 	if(noparam){
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
 	else{
-		ExprBuilder::State state = eb_.begin();
+		xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 		for(;;){
 			if(parse_identifier()){
-				eb_.splice(EXPR_LVAR, 1);
-				eb_.push(null);
-				eb_.splice(0, 2);
+				executor_->tree_splice(EXPR_LVAR, 1);
+				executor_->tree_push_back(null);
+				executor_->tree_splice(0, 2);
 			}
 			else{
 				break;
@@ -1969,28 +1946,28 @@ void Parser::parse_lambda(bool noparam){
 		}
 		eat(',');
 		expect('|');
-		eb_.end(0, state);
+		executor_->tree_node_end(0, state);
 	}
 
-	eb_.push(null);
+	executor_->tree_push_back(null);
 
 	if(eat('{')){
 		parse_scope();
 	}
 	else{
 		parse_exprs();
-		eb_.splice(EXPR_RETURN, 1);
+		executor_->tree_splice(EXPR_RETURN, 1);
 	}
 
-	eb_.splice(EXPR_FUN, 4);
+	executor_->tree_splice(EXPR_FUN, 4);
 }
 
 void Parser::parse_fun(int_t kind){
-	eb_.push(kind);
+	executor_->tree_push_back(kind);
 	
 	if(eat('(')){
 
-		ExprBuilder::State state = eb_.begin();
+		xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 		for(;;){
 			if(eat(c3('.','.','.'))){ // extendable
 				putback_token();
@@ -2002,9 +1979,9 @@ void Parser::parse_fun(int_t kind){
 						expect_parse_expr();
 					}
 					else{
-						eb_.push(null);
+						executor_->tree_push_back(null);
 					}
-					eb_.splice(0, 2);
+					executor_->tree_splice(0, 2);
 				}
 				else{
 					break;
@@ -2015,21 +1992,21 @@ void Parser::parse_fun(int_t kind){
 				break;
 			}
 		}
-		eb_.end(0, state);
+		executor_->tree_node_end(0, state);
 
 		if(eat(c3('.','.','.'))){ // extendable
 			expect_parse_identifier();
 		}
 		else{
-			eb_.push(null);
+			executor_->tree_push_back(null);
 		}
 
 		eat(',');
 		expect(')');
 	}
 	else{
-		eb_.push(null);
-		eb_.push(null);
+		executor_->tree_push_back(null);
+		executor_->tree_push_back(null);
 	}
 
 	if(eat('{')){
@@ -2037,15 +2014,15 @@ void Parser::parse_fun(int_t kind){
 	}
 	else{
 		parse_exprs();
-		eb_.splice(EXPR_RETURN, 1);
+		executor_->tree_splice(EXPR_RETURN, 1);
 	}
 
-	eb_.splice(EXPR_FUN, 4);
+	executor_->tree_splice(EXPR_FUN, 4);
 }
 
 void Parser::parse_call(){
 	// 順番引数のループ
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	for(;;){
 		if(eat(c3('.','.','.'))){ // extendable
 			putback_token();
@@ -2057,9 +2034,9 @@ void Parser::parse_call(){
 					expect_parse_expr();
 				}
 				else{
-					eb_.insert(1, null);
+					executor_->tree_insert(1, null);
 				}
-				eb_.splice(0, 2);
+				executor_->tree_splice(0, 2);
 			}
 			else{
 				break;
@@ -2070,19 +2047,19 @@ void Parser::parse_call(){
 			break;
 		}
 	}
-	eb_.end(0, state);
+	executor_->tree_node_end(0, state);
 
 	if(eat(c3('.','.','.'))){ // extendable
 		expect_parse_expr();
 	}
 	else{
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
 
 	eat(',');
 	expect(')');
 
-	eb_.splice(EXPR_CALL, 3);
+	executor_->tree_splice(EXPR_CALL, 3);
 }
 
 bool Parser::parse_expr(int_t pri, int_t space){
@@ -2100,8 +2077,8 @@ bool Parser::parse_expr(){
 
 void Parser::expect_parse_expr(int_t pri, int_t space){
 	if(!parse_expr(pri, space)){
-		reader_->error(Xt("XCE1001"));
-		eb_.push(null);
+		executor_->error(Xt("XCE1001"));
+		executor_->tree_push_back(null);
 	}
 }
 
@@ -2114,9 +2091,9 @@ void Parser::parse_if(){
 	expect('(');
 
 	if(parse_var()){
-		eb_.splice(EXPR_LVAR, 1);
+		executor_->tree_splice(EXPR_LVAR, 1);
 		expect_parse_expr();
-		eb_.splice(EXPR_DEFINE, 2);
+		executor_->tree_splice(EXPR_DEFINE, 2);
 	}
 	else{
 		expect_parse_expr();
@@ -2128,18 +2105,18 @@ void Parser::parse_if(){
 		expect_parse_stmt();
 	}
 	else{
-		eb_.push(null);
+		executor_->tree_push_back(null);
 	}
-	eb_.splice(EXPR_IF, 3);
+	executor_->tree_splice(EXPR_IF, 3);
 }
 
 void Parser::parse_switch(){
 	expect('(');
 
 	if(parse_var()){
-		eb_.splice(EXPR_LVAR, 1);
+		executor_->tree_splice(EXPR_LVAR, 1);
 		expect_parse_expr();
-		eb_.splice(EXPR_DEFINE, 2);
+		executor_->tree_splice(EXPR_DEFINE, 2);
 	}
 	else{
 		expect_parse_expr();
@@ -2156,12 +2133,12 @@ void Parser::parse_switch(){
 			parse_exprs();
 			expect(')');
 			expect_parse_stmt();
-			eb_.splice(EXPR_LIST, 2);
-			cases->push_back(eb_.pop());
+			executor_->tree_splice(EXPR_LIST, 2);
+			cases->push_back(executor_->tree_pop_back());
 		}
 		else if(eat(Token::KEYWORD_DEFAULT)){
 			expect_parse_stmt();
-			default_case = ep(eb_.pop());
+			default_case = ep(executor_->tree_pop_back());
 		}
 		else{
 			expect('}');
@@ -2169,35 +2146,35 @@ void Parser::parse_switch(){
 		}
 	}
 
-	eb_.push(cases);
-	eb_.push(default_case);
-	eb_.splice(EXPR_SWITCH, 3);
+	executor_->tree_push_back(cases);
+	executor_->tree_push_back(default_case);
+	executor_->tree_splice(EXPR_SWITCH, 3);
 }
 
 void Parser::parse_array(){	
 	if(eat(']')){//empty array
-		eb_.splice(EXPR_ARRAY, 0);
+		executor_->tree_splice(EXPR_ARRAY, 0);
 		return;
 	}
 	
 	if(eat(':')){//empty map
 		expect(']');
-		eb_.splice(EXPR_MAP, 0);
+		executor_->tree_splice(EXPR_MAP, 0);
 		return;
 	}
 	
-	ExprBuilder::State state = eb_.begin();
+	xpeg::Executor::TreeNodeState state = executor_->tree_node_begin();
 	expect_parse_expr();
 	if(eat(':')){//map
 		expect_parse_expr();
-		eb_.splice(0, 2);
+		executor_->tree_splice(0, 2);
 
 		if(eat(',')){
 			for(;;){
 				if(parse_expr()){
 					expect(':');
 					expect_parse_expr();
-					eb_.splice(0, 2);
+					executor_->tree_splice(0, 2);
 					
 					if(!eat(',')){
 						break;
@@ -2210,8 +2187,8 @@ void Parser::parse_array(){
 		}
 
 		expect(']');
-		eb_.end(0, state);
-		eb_.splice(EXPR_MAP, 1);
+		executor_->tree_node_end(0, state);
+		executor_->tree_splice(EXPR_MAP, 1);
 	}
 	else{//array
 		if(eat(',')){
@@ -2228,8 +2205,8 @@ void Parser::parse_array(){
 		}
 
 		expect(']');
-		eb_.end(0, state);
-		eb_.splice(EXPR_ARRAY, 1);
+		executor_->tree_node_end(0, state);
+		executor_->tree_splice(EXPR_ARRAY, 1);
 	}
 }
 

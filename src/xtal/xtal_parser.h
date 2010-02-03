@@ -100,9 +100,9 @@ public:
 
 	Parser();
 
-	ExprPtr parse(const xpeg::ExecutorPtr& scanner);
+	void parse(const xpeg::ExecutorPtr& scanner);
 
-	ExprPtr parse_eval(const xpeg::ExecutorPtr& scanner);
+	void parse_eval(const xpeg::ExecutorPtr& scanner);
 
 private:
 	
@@ -198,8 +198,7 @@ private:
 
 public:
 
-	xpeg::ExecutorPtr reader_;
-	ExprBuilder eb_;
+	xpeg::ExecutorPtr executor_;
 };
 
 }

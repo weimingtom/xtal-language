@@ -309,7 +309,7 @@ const ClassPtr& cpp_class(int_t index);
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
-inline const ClassPtr& cpp_class(){
+const ClassPtr& cpp_class(){
 	return cpp_class(CppClassSymbol<T>::value);
 }
 

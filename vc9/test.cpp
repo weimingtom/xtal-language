@@ -656,12 +656,21 @@ void aaa(int v, const ArgumentsPtr& a){
 	a->p();
 }
 
+
+void fooe(const AnyPtr& a){
+	//a = a;
+}
+
+StringPtr return_string(){
+	return empty_string;
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	using namespace std;
 
-	VMachine* vm = &*vmachine();
+	const VMachinePtr vm = vmachine();
 
 	SmartPtr<Spr> s = xnew<Spr>();
 	Spr& p = unchecked_cast<Spr&>(s);
@@ -688,6 +697,15 @@ int main2(int argc, char** argv){
 			Sleep(15);
 		}
 	}*/
+
+	/*
+	const StringPtr& a1 = "e";
+	VMachine* vvm = unchecked_cast<VMachine*>(vm);
+	{
+		ReturnResult<AnyPtr>::call(vvm, return_string());
+		ReturnResult<StringPtr>::call(vvm, a1);
+	}
+	*/
 
 	//test2();
    // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());

@@ -107,6 +107,10 @@ public:
 		if(errors_) return errors_->clear();
 	}
 
+	bool has_error(){
+		return errors_ && !errors_->empty();
+	}
+
 public:
 
 	/**
@@ -119,14 +123,14 @@ public:
 	/**
 	* \brief \•¶–Ø‚É—v‘f‚ðˆê‚Â’Ç‰Á‚·‚é
 	*/
-	void tree_add(const AnyPtr& a){
+	void tree_push_back(const AnyPtr& a){
 		tree_->push_back(a);
 	}
 
 	/**
 	* \brief \•¶–Ø‚©‚ç—v‘f‚ðˆê‚ÂŽæ‚èœ‚­
 	*/
-	AnyPtr tree_remove(){
+	AnyPtr tree_pop_back(){
 		AnyPtr ret = tree_->back();
 		tree_->pop_back();
 		return ret;
@@ -136,7 +140,12 @@ public:
 	* \brief \•¶–Ø‚ÌÅŒã‚Ì—v‘f‚ðŽæ“¾‚·‚é
 	*/
 	const AnyPtr& tree_back(){
+		if(tree_->empty()){ return undefined; }
 		return tree_->back();
+	}
+
+	void tree_insert(int_t n, const AnyPtr& v){
+		tree_->insert(tree_->size()-n, v);
 	}
 
 	struct TreeNodeState{
@@ -362,8 +371,6 @@ public:
 
 protected:
 
-	int_t do_read(AnyPtr* buffer, int_t max);
-
 	void expand();
 
 	AnyPtr& access(int_t pos){
@@ -391,7 +398,7 @@ protected:
 	int_t base_;
 
 	uint_t lineno_;
-	uint_t record_pos_;
+	int_t record_pos_;
 };
 
 struct Element : public Base{

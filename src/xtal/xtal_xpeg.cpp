@@ -35,7 +35,7 @@ void Executor::reset(const AnyPtr& source, const StringPtr& source_name){
 	pos_ = 0;
 	read_ = 0;
 	base_ = 0;
-	record_pos_ = (uint_t)-1;
+	record_pos_ = -1;
 
 	n_ch_ = XTAL_STRING("\n");
 	r_ch_ = XTAL_STRING("\r");
@@ -77,13 +77,6 @@ bool Executor::match(const AnyPtr& pattern){
 
 bool Executor::parse(const AnyPtr& pattern){
 	return match_inner(elem(pattern)) && (!errors_ || errors_->empty());
-}
-
-int_t Executor::do_read(AnyPtr* buffer, int_t max){
-	if(stream_){
-		return stream_->read_charactors(buffer, max); 
-	}
-	return 0;
 }
 
 AnyPtr Executor::captures(){
@@ -227,7 +220,7 @@ bool Executor::match_inner(const ElementPtr& e){
 	key.pos = pos();
 	key.ptr = nfa.get();
 
-	// メモ化した中にひょっとしてあるのかな？
+	// すでにメモ化してないかチェック
 	memotable_t::iterator it=memotable_.find(key);
 	if(it!=memotable_.end()){
 		load(it->second.state);
@@ -328,7 +321,6 @@ bool Executor::test(const ElementPtr& e){
 		case Element::TYPE_01:
 		case Element::TYPE_EMPTY:
 		case Element::TYPE_CAP:
-		case Element::TYPE_DECL:
 			XTAL_ASSERT(false);
 			break;
 
@@ -485,6 +477,10 @@ bool Executor::test(const ElementPtr& e){
 			}
 			return !e->inv;
 		}
+
+		XTAL_CASE(Element::TYPE_DECL){
+			return match_inner(unchecked_ptr_cast<Element>(e->param1))!=e->inv;
+		}
 	}
 
 	return false;
@@ -494,6 +490,10 @@ bool Executor::test(const ElementPtr& e){
 /////
 
 const AnyPtr& Executor::peek(int_t n){
+	if(!stream_){
+		return undefined;
+	}
+
 	while(pos_+n >= read_){
 		int_t now_read = 0;
 
@@ -501,7 +501,7 @@ const AnyPtr& Executor::peek(int_t n){
 			expand();
 		}
 
-		now_read = do_read(&access(read_), ONE_BLOCK_SIZE-(read_&ONE_BLOCK_MASK));
+		now_read = stream_->read_charactors(&access(read_), ONE_BLOCK_SIZE-(read_&ONE_BLOCK_MASK));
 
 		if(now_read==0){
 			return undefined;
@@ -620,7 +620,7 @@ StringPtr Executor::end_record(){
 	}
 
 	int_t begin = record_pos_;
-	record_pos_ = (uint_t)-1;
+	record_pos_ = -1;
 	return capture(begin, pos_);
 }
 
@@ -658,7 +658,7 @@ void Executor::expand(){
 }
 	
 void Executor::bin(){
-	if(record_pos_<0){
+	if(record_pos_>=0){
 		return;
 	}
 
@@ -689,7 +689,7 @@ void Executor::tree_splice(const AnyPtr& tag, int_t num, int_t lineno){
 	}
 
 	for(uint_t i=tree_->size()-num; i<tree_->size(); ++i){
-		tree_->push_back(tree_->at(i));
+		ret->push_back(tree_->at(i));
 	}
 
 	tree_->resize(tree_->size()-num);
@@ -1188,7 +1188,6 @@ ElementPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
 
 void set_body(const ElementPtr& x, const AnyPtr& term){ 
 	if(x->type==Element::TYPE_DECL){
-		x->type = Element::TYPE_GREED;
 		x->param1 = elem(term);
 	}
 }

@@ -71,8 +71,8 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 				const AnyPtr& arg = vm->arg_unchecked(i);
 				args[i+1] = (Any&)arg;
 
-				if(anycls!=*pth.param_types[0]){
-					const ClassPtr& cls = cpp_class(*pth.param_types[0]);
+				if(anycls!=*pth.param_types[i+1]){
+					const ClassPtr& cls = cpp_class(*pth.param_types[i+1]);
 					if(!arg->is(cls)){ 
 						vm->set_except(argument_error(object_name(), i+1, cls, arg->get_class()));
 						return;

@@ -20,7 +20,7 @@ class TestXpeg{
 		assert "((((((((((((((((((((a)(a)))(aaaaa))))()))))))))))))))".match(pattern);
 		assert !"((((((((((((((((((((a)(a)))(aaaaa))))())))()))))))))))".match(pattern);
 	}
-	
+		
 	tinyxml#Test{
 		tag_name: word*0;
 		tag_start: "<" >> tag_name >> ">";

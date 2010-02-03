@@ -175,97 +175,6 @@ XTAL_BIND(String){
 	it->def_method(Xid2(p), &Any_p);
 }
 
-XTAL_BIND2(String){
-
-	Xemb((
-
-String::scan: method(pattern){
-	return StringStream(this).scan(pattern);
-}
-
-String::split: method(pattern){
-	return StringStream(this).split(pattern);
-}
-
-String::match: method(pattern){
-	return StringStream(this).match(pattern);
-}
-
-String::parse: method(pattern){
-	return StringStream(this).parse(pattern);
-}
-
-String::gsub: method(pattern, fn){
-	mm: MemoryStream();
-	exec: xpeg::Executor(StringStream(this));
-	if(exec.match(pattern)){
-		prefix: exec.prefix;
-		mm.put_s(prefix);
-		mm.put_s(fn(exec));
-
-		while(exec.match(pattern)){
-			prefix: exec.prefix;
-			mm.put_s(prefix);
-			mm.put_s(fn(exec));
-		}
-
-		mm.put_s(exec.suffix);
-		return mm.to_s;
-	}
-	else{
-		return this;
-	}
-}
-
-String::sub: method(pattern, fn){
-	mm: MemoryStream();
-	exec: xpeg::Executor(StringStream(this));
-	if(exec.match(pattern)){
-		prefix: exec.prefix;
-		suffix: exec.suffix;
-		mm.put_s(prefix);
-		mm.put_s(fn(exec));
-		mm.put_s(exec.suffix);
-		return mm.to_s;
-	}
-	else{
-		return this;
-	}
-}
-
-),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x02\x98\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x06\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x06\x00"
-"\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x02\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x08\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x08\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00"
-"\x03\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x0a\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x0a\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x04\x00\x2a\x00\x21\x02\x00\x05\x06\x03"
-"\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x0c\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x0c\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x05\x00\xfa\x27\x00\x05\x00\x21\x00\x00\x11\x23\xfe\x01\x00\x00\x01\x00\x00\x00"
-"\x00\x21\x01\x00\x12\x08\x00\x01\x00\x13\x00\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x23\xff\x01\x00\x00\x01\x01\x00\x00\x00\x07\x01\xfc\x24\x00\x01\xff\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\xa4\x27\x00\x06\x00\x25\xff\xfe"
-"\x00\x15\x00\x00\x07\x00\xff\x26\xfd\x00\x16\x00\x00\x07\x01\xfe\x23\x00\x01\xfc\x00\x01\x01\x00\x00\x26\xfd\x00\x16\x00\x00\x27\x00\x07\x01\xff\x03\x07\x01\xfa\x24\x00\x01\xfd\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\x46\x27\x00\x08\x00\x25\xff\xfc"
-"\x00\x15\x00\x00\x07\x00\xff\x26\xfb\x00\x16\x00\x00\x07\x01\xfc\x23\x00\x01\xfa\x00\x01\x01\x00\x00\x26\xfb\x00\x16\x00\x28\x01\xff\x02\x07\x01\xfa\x24\x00\x01\xfd\x00\x0a\x00\x01\x01\x00\x00\x10\x00\xff\xc9\x00\x09\x0e\xff\xc3\x28\x00\x25\x00\xfe\x00\x19"
-"\x01\x26\xfd\x00\x16\x00\x00\x25\x00\xfd\x00\x1a\x01\x16\x00\x28\x28\x29\x01\x28\x0e\x00\x0c\x00\x00\x06\x00\x16\x00\x28\x29\x01\x28\x29\x00\x37\x00\x00\x1b\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x06\x00\xa5\x27\x00\x0a\x00\x21\x00\x00\x11\x23\xfe\x01"
-"\x00\x00\x01\x00\x00\x00\x00\x21\x01\x00\x12\x08\x00\x01\x00\x13\x00\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x23\xff\x01\x00\x00\x01\x01\x00\x00\x00\x07\x01\xfc\x24\x00\x01\xff\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\x4f\x27"
-"\x00\x0b\x00\x25\xfe\xfd\x00\x15\x00\x00\x25\xff\xfd\x00\x19\x00\x00\x07\x00\xfe\x26\xfc\x00\x16\x00\x00\x07\x01\xfd\x23\x00\x01\xfb\x00\x01\x01\x00\x00\x26\xfc\x00\x16\x00\x00\x25\x00\xfd\x00\x19\x01\x26\xfc\x00\x16\x00\x00\x25\x00\xfc\x00\x1a\x01\x16\x00"
-"\x28\x28\x29\x01\x28\x0e\x00\x0c\x00\x00\x06\x00\x16\x00\x28\x29\x01\x28\x29\x00\x37\x00\x00\x22\x00\x00\x01\x21\x00\x00\x23\x16\x00\x29\x01\x3e\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x0b\x00\x01\x00\x05\x00\x00\x00\x00\x00\x41\x00\x01"
-"\x00\x08\x00\x00\x00\x00\x00\x77\x00\x01\x00\x0a\x00\x00\x00\x00\x00\xad\x00\x01\x00\x0c\x00\x00\x00\x00\x00\xe3\x00\x01\x00\x0f\x00\x02\x00\x00\x01\x2d\x00\x01\x00\x14\x00\x01\x00\x00\x01\x53\x00\x01\x00\x17\x00\x01\x00\x00\x01\x6d\x00\x01\x00\x18\x00\x01"
-"\x00\x00\x01\xcc\x00\x00\x00\x1b\x00\x00\x00\x00\x01\xe9\x00\x01\x00\x1e\x00\x02\x00\x00\x02\x33\x00\x01\x00\x20\x00\x02\x00\x00\x02\x7d\x00\x00\x00\x22\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00"
-"\x00\x0b\x05\x00\x00\x04\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x41\x05\x00\x00\x07\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x77\x05\x00\x00\x09\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\xad\x05\x00\x00\x0b\x00\x01\x01\x00"
-"\x00\x01\x00\x00\x01\x01\x00\x00\x00\xe3\x05\x00\x00\x0d\x00\x02\x01\x00\x00\x0b\x00\x00\x02\x02\x00\x00\x01\xe9\x05\x00\x00\x1c\x00\x02\x01\x00\x00\x08\x00\x00\x02\x02\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00\x00\x00\x00\x00\x03"
-"\x00\x00\x00\x00\x00\x0b\x00\x04\x00\x00\x00\x00\x00\x2d\x00\x03\x00\x00\x00\x00\x00\x36\x00\x07\x00\x00\x00\x00\x00\x41\x00\x08\x00\x00\x00\x00\x00\x63\x00\x07\x00\x00\x00\x00\x00\x6c\x00\x0b\x00\x00\x00\x00\x00\x77\x00\x0c\x00\x00\x00\x00\x00\x99\x00\x0b"
-"\x00\x00\x00\x00\x00\xa2\x00\x0f\x00\x00\x00\x00\x00\xad\x00\x10\x00\x00\x00\x00\x00\xcf\x00\x0f\x00\x00\x00\x00\x00\xd8\x00\x13\x00\x00\x00\x00\x00\xe6\x00\x14\x00\x00\x00\x00\x00\xf4\x00\x15\x00\x00\x00\x00\x01\x18\x00\x16\x00\x00\x00\x00\x01\x30\x00\x17"
-"\x00\x00\x00\x00\x01\x37\x00\x18\x00\x00\x00\x00\x01\x40\x00\x19\x00\x00\x00\x00\x01\x52\x00\x1b\x00\x00\x00\x00\x01\x70\x00\x1c\x00\x00\x00\x00\x01\x77\x00\x1d\x00\x00\x00\x00\x01\x80\x00\x1e\x00\x00\x00\x00\x01\x93\x00\x1b\x00\x00\x00\x00\x01\xae\x00\x21"
-"\x00\x00\x00\x00\x01\xba\x00\x22\x00\x00\x00\x00\x01\xc8\x00\x16\x00\x00\x00\x00\x01\xcb\x00\x24\x00\x00\x00\x00\x01\xcc\x00\x25\x00\x00\x00\x00\x01\xd4\x00\x24\x00\x00\x00\x00\x01\xd4\x00\x16\x00\x00\x00\x00\x01\xd5\x00\x13\x00\x00\x00\x00\x01\xde\x00\x29"
-"\x00\x00\x00\x00\x01\xec\x00\x2a\x00\x00\x00\x00\x01\xfa\x00\x2b\x00\x00\x00\x00\x02\x1e\x00\x2c\x00\x00\x00\x00\x02\x36\x00\x2d\x00\x00\x00\x00\x02\x3d\x00\x2e\x00\x00\x00\x00\x02\x44\x00\x2f\x00\x00\x00\x00\x02\x4d\x00\x30\x00\x00\x00\x00\x02\x5f\x00\x31"
-"\x00\x00\x00\x00\x02\x6b\x00\x32\x00\x00\x00\x00\x02\x79\x00\x2c\x00\x00\x00\x00\x02\x7c\x00\x34\x00\x00\x00\x00\x02\x7d\x00\x35\x00\x00\x00\x00\x02\x85\x00\x34\x00\x00\x00\x00\x02\x85\x00\x2c\x00\x00\x00\x00\x02\x86\x00\x29\x00\x00\x00\x00\x02\x97\x00\x2a"
-"\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1e\x00\x00\x00\x24\x19"
-"\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x06\x53\x74\x72\x69\x6e\x67\x19\x00\x00\x00\x07\x70\x61\x74\x74\x65\x72\x6e\x19\x00\x00\x00\x0c\x53\x74\x72\x69\x6e\x67\x53\x74\x72\x65\x61"
-"\x6d\x19\x00\x00\x00\x04\x73\x63\x61\x6e\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x73\x70\x6c\x69\x74\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x6d\x61\x74\x63\x68\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x70\x61\x72\x73\x65\x03\x00\x00\x00\x0a\x19\x00\x00\x00"
-"\x02\x66\x6e\x19\x00\x00\x00\x02\x6d\x6d\x19\x00\x00\x00\x04\x65\x78\x65\x63\x19\x00\x00\x00\x0c\x4d\x65\x6d\x6f\x72\x79\x53\x74\x72\x65\x61\x6d\x19\x00\x00\x00\x04\x78\x70\x65\x67\x19\x00\x00\x00\x08\x45\x78\x65\x63\x75\x74\x6f\x72\x19\x00\x00\x00\x06\x70"
-"\x72\x65\x66\x69\x78\x03\x00\x00\x00\x16\x19\x00\x00\x00\x05\x70\x75\x74\x5f\x73\x19\x00\x00\x00\x0a\x66\x69\x72\x73\x74\x5f\x73\x74\x65\x70\x03\x00\x00\x00\x16\x19\x00\x00\x00\x06\x73\x75\x66\x66\x69\x78\x19\x00\x00\x00\x04\x74\x6f\x5f\x73\x19\x00\x00\x00"
-"\x04\x67\x73\x75\x62\x03\x00\x00\x00\x0a\x03\x00\x00\x00\x10\x03\x00\x00\x00\x11\x03\x00\x00\x00\x12\x03\x00\x00\x00\x16\x03\x00\x00\x00\x19\x19\x00\x00\x00\x03\x73\x75\x62\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61"
-"\x6c\x75\x65\x73\x1e\x00\x00\x00\x01\x10"
-);
-
-}
-
 XTAL_PREBIND(InternedStringIter){
 	it->inherit(cpp_class<Iterator>());
 }
@@ -377,42 +286,6 @@ XTAL_BIND(Int){
 	it->def_method(Xid2(op_in), (bool (Int::*)(const FloatRangePtr&))&Int::op_in, cpp_class<FloatRange>());
 }
 
-XTAL_BIND2(Int){
-	Xemb((
-
-Int::times: method fiber{
-	for(i: 0; i<this; ++i){
-		yield i;
-	}
-}
-
-Int::block_next: method{
-	return (this==0 ? null : this-1), this;
-}
-
-Int::block_first: Int::block_next;
-
-Int::op_eq#Int: method(v) this==v;
-Int::op_lt#Int: method(v) this<v;
-
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x01\x2b\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x4e\x38\x00\x00\x02\x00\x42\x00\x27\x00\x02\x03\xfe\x00\x01\xff\x03\x06\x01\x11\x01\xfe\x01\x02\x10\x00\x00\x06\x00\x28\x00\x07\x00\xfe\x16\x00\x2a\x00\x00\x01\x09\xfe"
-"\x00\xfe\x00\x01\xff\x02\x06\x01\x11\x01\xfe\x01\x02\x10\x00\xff\xe7\x00\x09\x0e\xff\xe1\x28\x29\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x06\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x03\x00\x41\x00\x06\x02\x03\x03\x00\x11\x00\x02\x03\x04\x10\x01\x00\x06"
-"\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x10\x00\x00\x06\x00\x0c\x01\x00\x00\x0e\x00\x0e\x06\x01\x03\x02\x01\x0a\x00\x01\x01\x02\x03\x16\x00\x06\x00\x16\x00\x29\x02\x29\x00\x37\x00\x00\x07\x00\x00\x01\x00\x21\x00\x00\x03\x21\x02\x00\x03\x08\x01\x02\x00"
-"\x07\x00\x00\x37\x00\x00\x08\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x04\x00\x22\x06\x02\x11\x00\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x0a\x02\x08\x01\x00\x21\x00\x00"
-"\x03\x38\x01\x00\x05\x00\x22\x06\x02\x11\x01\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x0c\x02\x08\x01\x21\x00\x00\x0d\x16\x00\x29\x01\x3e\x00\x05\x00\x00\x00\x00\x00\x00\x00"
-"\x03\x00\x00\x00\x00\x00\x11\x00\x00\x00\x04\x00\x00\x00\x00\x00\x12\x00\x00\x00\x04\x00\x02\x00\x00\x00\x28\x00\x01\x00\x06\x00\x00\x00\x00\x00\x65\x00\x00\x00\x07\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00"
-"\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x11\x06\x00\x00\x04\x00\x00\x01\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x65\x05\x00\x00\x07\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc9\x05\x00\x00\x09\x00"
-"\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\xfb\x05\x00\x00\x0b\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x11\x00\x04\x00\x00\x00\x00\x00\x28\x00"
-"\x05\x00\x00\x00\x00\x00\x32\x00\x04\x00\x00\x00\x00\x00\x4b\x00\x03\x00\x00\x00\x00\x00\x5a\x00\x09\x00\x00\x00\x00\x00\x65\x00\x0a\x00\x00\x00\x00\x00\x9e\x00\x09\x00\x00\x00\x00\x00\xa7\x00\x0d\x00\x00\x00\x00\x00\xbe\x00\x0f\x00\x00\x00\x00\x00\xf0\x00"
-"\x10\x00\x00\x00\x00\x01\x2a\x00\x11\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69"
-"\x65\x72\x73\x1e\x00\x00\x00\x0e\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x03\x49\x6e\x74\x19\x00\x00\x00\x01\x69\x19\x00\x00\x00\x0a\x66\x69\x72\x73\x74\x5f\x73\x74\x65\x70\x19"
-"\x00\x00\x00\x05\x74\x69\x6d\x65\x73\x19\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x19\x00\x00\x00\x01\x76\x19\x00\x00\x00\x05\x6f\x70\x5f\x65\x71\x03\x00\x00\x00\x0f\x19\x00\x00"
-"\x00\x05\x6f\x70\x5f\x6c\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x1e\x00\x00\x00\x01\x10"
-);
-
-}
-
 XTAL_PREBIND(Float){
 	it->set_final();
 }
@@ -429,23 +302,6 @@ XTAL_BIND(Float){
 	it->def_method(Xid2(op_in), (bool (Float::*)(const FloatRangePtr&))&Float::op_in, cpp_class<FloatRange>());
 }
 
-XTAL_BIND2(Float){
-	Xemb((
-
-Float::op_eq#Float: method(v) this==v;
-Float::op_lt#Float: method(v) this<v;
-
-	),
-"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x6d\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x22\x06\x02\x11\x00\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x05\x02\x08\x01\x00\x21"
-"\x00\x00\x03\x38\x01\x00\x02\x00\x22\x06\x02\x11\x01\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x07\x02\x08\x01\x21\x00\x00\x08\x16\x00\x29\x01\x3e\x00\x01\x00\x00\x00\x00\x00"
-"\x00\x00\x03\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x3d\x05\x00\x00\x06\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00"
-"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x32\x00\x04\x00\x00\x00\x00\x00\x6c\x00\x05\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f"
-"\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1e\x00\x00\x00\x09\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00"
-"\x00\x00\x05\x46\x6c\x6f\x61\x74\x19\x00\x00\x00\x01\x76\x19\x00\x00\x00\x05\x6f\x70\x5f\x65\x71\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x6f\x70\x5f\x6c\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73"
-"\x1e\x00\x00\x00\x01\x10"
-);
-}
-
 XTAL_PREBIND(IntRangeIter){
 	it->inherit(cpp_class<Iterator>());
 }
@@ -460,7 +316,8 @@ XTAL_PREBIND(Range){
 }
 
 XTAL_BIND(Range){
-	it->def_method(Xid2(left), &Range::left);
+	Xdef_method(left);
+//	it->def_method(Xid2(left), &Range::left);
 	it->def_method(Xid2(right), &Range::right);
 	it->def_method(Xid2(kind), &Range::kind);
 
@@ -504,9 +361,13 @@ XTAL_PREBIND(Array){
 }
 
 XTAL_BIND(Array){
-	it->def_method(Xid2(size), &Array::size);
-	it->def_method(Xid2(length), &Array::size);
-	it->def_method(Xid2(resize), &Array::resize);
+	Xdef_method(size);
+	Xdef_method(length);
+	Xdef_method(resize);
+
+	//it->def_method(Xid2(size), &Array::size);
+	//it->def_method(Xid2(length), &Array::size);
+	//it->def_method(Xid2(resize), &Array::resize);
 	it->def_method(Xid2(empty), &Array::empty);
 	it->def_method(Xid2(is_empty), &Array::is_empty);
 	it->def_method(Xid2(slice), &Array::slice)->param(2, Xid2(n), 1);
@@ -675,12 +536,879 @@ XTAL_PREBIND(Class){
 }
 
 XTAL_BIND(Class){
+	Xdef_method_alias(inherit, &Class::inherit_strict);
+	Xdef_method(overwrite);
+	Xdef_method(s_new);
+	Xdef_method(inherited_classes);
+	Xdef_method(is_inherited);
+	it->def_method(Xid2(find_near_member), (IDPtr (Class::*)(const IDPtr&, const AnyPtr&))&Class::find_near_member)->param(2, Xid2(secondary_key), undefined);
+
+/*
 	it->def_method(Xid2(inherit), &Class::inherit_strict);
 	it->def_method(Xid2(overwrite), &Class::overwrite);
 	it->def_method(Xid2(s_new), &Class::s_new);
 	it->def_method(Xid2(inherited_classes), &Class::inherited_classes);
 	it->def_method(Xid2(is_inherited), &Any::is_inherited);
 	it->def_method(Xid2(find_near_member), (IDPtr (Class::*)(const IDPtr&, const AnyPtr&))&Class::find_near_member)->param(2, Xid2(secondary_key), undefined);
+*/
+}
+
+XTAL_PREBIND(ClassInheritedClassesIter){
+	it->inherit(cpp_class<Iterator>());
+}
+
+XTAL_BIND(ClassInheritedClassesIter){
+	it->def_method(Xid2(block_next), &ClassInheritedClassesIter::block_next);
+}
+
+
+XTAL_PREBIND(Lib){
+	it->inherit(cpp_class<Class>());
+	it->def_ctor0<Lib>();
+}
+
+XTAL_BIND(Lib){
+	it->def_method(Xid2(append_load_path), &Lib::append_load_path);
+}
+
+
+XTAL_PREBIND(Global){
+	it->inherit(cpp_class<Class>());
+}
+
+XTAL_PREBIND(ZipIter){
+	it->inherit(cpp_class<Iterator>());
+	it->def_ctor1<ZipIter, const VMachinePtr&>();
+}
+
+XTAL_BIND(ZipIter){
+	it->def_method(Xid2(block_first), &ZipIter::block_first);
+	it->def_method(Xid2(block_next), &ZipIter::block_next);
+	it->def_method(Xid2(block_break), &ZipIter::block_break);
+}
+
+#ifndef XTAL_NO_THREAD
+
+XTAL_PREBIND(Thread){
+	it->def_ctor0<Thread>();
+}
+
+XTAL_BIND(Thread){
+	it->def_method(Xid2(start), &Thread::start);
+	it->def_method(Xid2(join), &Thread::join);
+	it->def_fun(Xid2(yield), &yield_thread);
+	it->def_fun(Xid2(sleep), &sleep_thread);
+}
+
+XTAL_PREBIND(Mutex){
+	it->def_ctor0<Mutex>();
+}
+
+XTAL_BIND(Mutex){
+	it->def_method(Xid2(lock), &Mutex::lock);
+	it->def_method(Xid2(unlock), &Mutex::unlock);
+}
+
+#endif
+
+XTAL_PREBIND(Format){
+	it->def_serial_ctor(ctor<Format>());
+}
+
+XTAL_BIND(Format){
+	it->def_method(Xid2(to_s), &Format::to_s);
+	it->def_method(Xid2(serial_save), &Format::serial_save);
+	it->def_method(Xid2(serial_load), &Format::serial_load);
+}
+
+XTAL_PREBIND(Text){
+	it->def_serial_ctor(ctor<Text>());
+}
+
+XTAL_BIND(Text){
+	it->def_method(Xid2(to_s), &Text::to_s);
+	it->def_method(Xid2(serial_save), &Text::serial_save);
+	it->def_method(Xid2(serial_load), &Text::serial_load);
+}
+
+XTAL_PREBIND(NativeMethod){
+
+}
+
+XTAL_PREBIND(NativeFun){
+	it->inherit(cpp_class<NativeMethod>());
+}
+
+XTAL_BIND(Stream){
+	it->def_method(Xid2(get_s), &Stream::get_s);
+	it->def_method(Xid2(get_s_all), &Stream::get_s_all);
+	it->def_method(Xid2(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
+
+	it->def_method(Xid2(print), &Stream::print);
+	it->def_method(Xid2(println), &Stream::println);
+
+	it->def_method(Xid2(seek), &Stream::seek);
+	it->def_method(Xid2(tell), &Stream::tell);
+	it->def_method(Xid2(pour), &Stream::pour);
+	it->def_method(Xid2(pour_all), &Stream::pour_all);
+	it->def_method(Xid2(size), &Stream::size);
+	it->def_method(Xid2(close), &Stream::close);
+
+	it->def_method(Xid2(eos), &Stream::eos);
+
+	it->def_method(Xid2(serialize), &Stream::serialize);
+	it->def_method(Xid2(deserialize), &Stream::deserialize);
+
+	it->def_method(Xid2(block_first), &Stream::block_first);
+	it->def_method(Xid2(block_next), &Stream::block_next);
+	it->def_method(Xid2(block_break), &Stream::block_break);
+
+	it->def_method(Xid2(put_i8), &Stream::put_i8);
+	it->def_method(Xid2(put_u8), &Stream::put_u8);
+
+	it->def_method(Xid2(put_i16be), &Stream::put_i16be);
+	it->def_method(Xid2(put_i32be), &Stream::put_i32be);
+	it->def_method(Xid2(put_u16be), &Stream::put_u16be);
+	it->def_method(Xid2(put_u32be), &Stream::put_u32be);
+	it->def_method(Xid2(put_f32be), &Stream::put_f32be);
+
+	it->def_method(Xid2(put_i16le), &Stream::put_i16le);
+	it->def_method(Xid2(put_i32le), &Stream::put_i32le);
+	it->def_method(Xid2(put_u16le), &Stream::put_u16le);
+	it->def_method(Xid2(put_u32le), &Stream::put_u32le);
+	it->def_method(Xid2(put_f32le), &Stream::put_f32le);
+
+	it->def_method(Xid2(get_i8), &Stream::get_i8);
+
+	it->def_method(Xid2(get_i16be), &Stream::get_i16be);
+	it->def_method(Xid2(get_i32be), &Stream::get_i32be);
+	it->def_method(Xid2(get_u16be), &Stream::get_u16be);
+	it->def_method(Xid2(get_u32be), &Stream::get_u32be);
+	it->def_method(Xid2(get_f32be), &Stream::get_f32be);
+
+	it->def_method(Xid2(get_i16le), &Stream::get_i16le);
+	it->def_method(Xid2(get_i32le), &Stream::get_i32le);
+	it->def_method(Xid2(get_u16le), &Stream::get_u16le);
+	it->def_method(Xid2(get_u32le), &Stream::get_u32le);
+	it->def_method(Xid2(get_f32le), &Stream::get_f32le);
+}
+
+XTAL_PREBIND(PointerStream){
+	it->inherit(cpp_class<Stream>());
+}
+
+XTAL_PREBIND(MemoryStream){
+	it->inherit(cpp_class<PointerStream>());
+	it->def_ctor0<MemoryStream>();
+}
+
+XTAL_BIND(MemoryStream){
+	it->def_method(Xid2(to_s), &MemoryStream::to_s);
+	it->def_method(Xid2(resize), &MemoryStream::resize);
+}
+
+XTAL_PREBIND(StringStream){
+	it->inherit(cpp_class<Stream>());
+	it->def_ctor1<StringStream, const StringPtr&>();
+}
+
+XTAL_BIND(StringStream){
+	it->def_method(Xid2(to_s), &StringStream::to_s);
+}
+
+XTAL_PREBIND(FileStream){
+	it->inherit(cpp_class<Stream>());
+	it->def_ctor2<FileStream, const StringPtr&, const StringPtr&>();
+}
+
+XTAL_BIND(FileStream){
+}
+
+XTAL_PREBIND(StdinStream){
+	it->inherit(cpp_class<Stream>());
+}
+
+XTAL_PREBIND(StdoutStream){
+	it->inherit(cpp_class<Stream>());
+}
+
+XTAL_PREBIND(StderrStream){
+	it->inherit(cpp_class<Stream>());
+}
+
+namespace debug{
+
+XTAL_BIND(HookInfo){
+	it->def_method(Xid2(clone), &HookInfo::clone);
+	it->def_method(Xid2(kind), &HookInfo::kind);
+	it->def_method(Xid2(line), &HookInfo::line);
+	it->def_method(Xid2(fun_name), &HookInfo::fun_name);
+	it->def_method(Xid2(file_name), &HookInfo::file_name);
+	it->def_method(Xid2(exception), &HookInfo::exception);
+	it->def_method(Xid2(variables_frame), &HookInfo::variables_frame);
+
+	it->def_method(Xid2(set_kind), &HookInfo::set_kind);
+	it->def_method(Xid2(set_line), &HookInfo::line);
+	it->def_method(Xid2(set_fun_name), &HookInfo::set_fun_name);
+	it->def_method(Xid2(set_file_name), &HookInfo::set_file_name);
+	it->def_method(Xid2(set_exception), &HookInfo::set_exception);
+	it->def_method(Xid2(set_variables_frame), &HookInfo::set_variables_frame);
+
+	it->def(Xid2(LINE), BREAKPOINT_LINE);
+	it->def(Xid2(CALL), BREAKPOINT_CALL);
+	it->def(Xid2(RETURN), BREAKPOINT_RETURN);
+	it->def(Xid2(THROW), BREAKPOINT_THROW);
+}
+
+XTAL_BIND(Debug){
+	it->def_fun(Xid2(enable), &enable);
+	it->def_fun(Xid2(disable), &disable);
+	it->def_fun(Xid2(is_enabled), &is_enabled);
+
+	it->def_fun(Xid2(breakpoint_hook), &breakpoint_hook);
+	it->def_fun(Xid2(call_hook), &call_hook);
+	it->def_fun(Xid2(return_hook), &return_hook);
+	it->def_fun(Xid2(throw_hook), &throw_hook);
+	it->def_fun(Xid2(set_breakpoint_hook), &set_breakpoint_hook);
+	it->def_fun(Xid2(set_call_hook), &set_call_hook);
+	it->def_fun(Xid2(set_return_hook), &set_return_hook);
+	it->def_fun(Xid2(set_throw_hook), &set_throw_hook);
+}
+
+}
+
+XTAL_PREBIND(Iterable){
+	it->unset_native();
+}
+
+XTAL_BIND(Iterable){
+	// Iterableがバインドされるなら、Iteratorもバインドしてしまう
+	cpp_class<Iterator>()->bind();
+}
+
+XTAL_PREBIND(Iterator){
+	it->inherit(cpp_class<Iterable>());
+	it->unset_native();
+}
+
+XTAL_BIND(Iterator){
+	it->def_fun(Xid2(each), &Iterator_each);
+	it->def_fun(Xid2(block_first), &Iterator_block_first);
+}
+
+XTAL_PREBIND(Exception){
+	it->def_ctor1<Exception, const StringPtr&>()->param(1, Xid2(message), empty_string);
+}
+
+XTAL_BIND(Exception){
+	it->def_method(Xid2(initialize), &Exception::initialize)->param(1, Xid2(message), empty_string);
+	it->def_method(Xid2(to_s), &Exception::to_s);
+	it->def_method(Xid2(message), &Exception::message);
+	it->def_method(Xid2(backtrace), &Exception::backtrace);
+	it->def_method(Xid2(append_backtrace), &Exception::append_backtrace);
+}
+
+XTAL_PREBIND(StandardError){
+	it->unset_native();
+	it->inherit(cpp_class<Exception>());
+}
+
+XTAL_PREBIND(RuntimeError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(IOError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(EOSError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(LogicError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(CastError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(ArgumentError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(YieldError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(InstanceVariableError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(UnsupportedError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(RedefinedError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(AccessibilityError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(AssertionFailed){
+	it->unset_native();
+	it->inherit(cpp_class<Exception>());
+}
+
+XTAL_PREBIND(CompileError){
+	it->unset_native();
+	it->inherit(cpp_class<StandardError>());
+}
+
+XTAL_PREBIND(filesystem::Entries){
+	it->inherit(cpp_class<Iterator>());
+}
+
+XTAL_BIND(filesystem::Entries){
+	it->def_method(Xid2(block_next), &filesystem::Entries::block_next);
+	it->def_method(Xid2(block_break), &filesystem::Entries::block_break);
+}
+
+XTAL_BIND(filesystem::Filesystem){
+	it->def_fun(Xid2(open), &filesystem::open);
+	it->def_fun(Xid2(entries), &filesystem::entries);
+	it->def_fun(Xid2(is_directory), &filesystem::is_directory);
+}
+
+namespace{
+
+AnyPtr abs(const AnyPtr& a){
+	switch(type(a)){XTAL_DEFAULT;
+		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? AnyPtr(-ivalue(a)) : a; }
+		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? AnyPtr(-fvalue(a)) : a; }
+	}
+	return 0;
+}
+
+AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? b : a;	
+	}
+
+	if(abtype==1){
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
+		return ab.a < ab.b ? b : a;	
+	}
+
+	return null;
+}
+
+AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
+	uint_t btype = type(b)-TYPE_INT;
+	uint_t atype = type(a)-TYPE_INT;
+	uint_t abtype = atype | btype;
+
+	if(abtype==0){
+		return ivalue(a) < ivalue(b) ? a : b;	
+	}
+
+	if(abtype==1){
+		f2 ab;
+		to_f2(ab, atype, a, btype, b);
+		return ab.a < ab.b ? a : b;	
+	}
+
+	return null;
+}
+
+class Random{
+public:
+
+	Random(int_t seed=1){ 
+		set_seed(seed); 
+	}
+	
+	void set_seed(int_t seed){
+		idum_=seed==0 ? 1 : seed; 
+	} 
+
+	float_t operator ()(){
+		int_t idum = idum_;
+		int_t k = idum/IQ;
+		idum = IA*(idum-k*IQ)-IR*k;
+		idum &= IM;
+		idum_ = idum;
+		return ((float_t)1.0/IM)*idum;
+	}
+	
+	float_t operator ()(float_t max){
+		return (*this)()*max; 
+	}
+
+	float_t operator ()(float_t min, float_t max){
+		return (*this)()*(max-min)+min; 
+	}	
+
+private:
+	enum{ IA=16807,IM=2147483647,IQ=127773,IR=2836 };
+	int_t idum_;
+};
+	
+Random random_instance;
+
+float_t random(){
+	return random_instance();
+}
+
+float_t random_range(float_t in, float_t ax){
+	return random_instance(in, ax);
+}
+
+}
+
+template<class T>
+struct TMath{
+	static void bind(const ClassPtr& it, float*){
+		using namespace std;
+		it->def_fun(Xid2(acos), (float (*)(float))&acosf);
+		it->def_fun(Xid2(asin), (float (*)(float))&asinf);
+		it->def_fun(Xid2(atan), (float (*)(float))&atanf);
+		it->def_fun(Xid2(atan2), (float (*)(float, float))&atan2f);
+		it->def_fun(Xid2(ceil), (float (*)(float))&ceilf);
+		it->def_fun(Xid2(cos), (float (*)(float))&cosf);
+		it->def_fun(Xid2(exp), (float (*)(float))&expf);
+		it->def_fun(Xid2(floor), (float (*)(float))&floorf);
+		it->def_fun(Xid2(log), (float (*)(float))&logf);
+		it->def_fun(Xid2(pow), (float (*)(float, float))&powf);
+		it->def_fun(Xid2(sin), (float (*)(float))&sinf);
+		it->def_fun(Xid2(sqrt), (float (*)(float))&sqrtf);
+		it->def_fun(Xid2(tan), (float (*)(float))&tanf);
+		it->def(Xid2(PI), 3.14159265358979f);
+		it->def(Xid2(E), 2.71828182845905f);
+	}
+
+	static void bind(const ClassPtr& it, double*){
+		using namespace std;
+
+		it->def_fun(Xid2(acos), (double (*)(double))&acos);
+		it->def_fun(Xid2(asin), (double (*)(double))&asin);
+		it->def_fun(Xid2(atan), (double (*)(double))&atan);
+		it->def_fun(Xid2(atan2), (double (*)(double, double))&atan2);
+		it->def_fun(Xid2(ceil), (double (*)(double))&ceil);
+		it->def_fun(Xid2(cos), (double (*)(double))&cos);
+		it->def_fun(Xid2(exp), (double (*)(double))&exp);
+		it->def_fun(Xid2(floor), (double (*)(double))&floor);
+		it->def_fun(Xid2(log), (double (*)(double))&log);
+		it->def_fun(Xid2(pow), (double (*)(double, double))&pow);
+		it->def_fun(Xid2(sin), (double (*)(double))&sin);
+		it->def_fun(Xid2(sqrt), (double (*)(double))&sqrt);
+		it->def_fun(Xid2(tan), (double (*)(double))&tan);
+		it->def(Xid2(PI), 3.14159265358979);
+		it->def(Xid2(E), 2.71828182845905);
+	}
+};
+
+class Math{};
+
+XTAL_BIND(Math){
+	TMath<float_t>::bind(it, (float_t*)0);
+	it->def_fun(Xid2(abs), &abs);
+	it->def_fun(Xid2(max), &max_);
+	it->def_fun(Xid2(min), &min_);
+	it->def_fun(Xid2(random), &random);
+	it->def_fun(Xid2(random_range), &random_range);
+}
+
+XTAL_PREBIND(TreeNode){
+	it->set_final();
+	it->inherit(cpp_class<Array>());
+}
+
+XTAL_BIND(TreeNode){
+	it->def_method(Xid2(tag), &TreeNode::tag);
+	it->def_method(Xid2(lineno), &TreeNode::lineno);
+	it->def_method(Xid2(set_tag), &TreeNode::set_tag);
+	it->def_method(Xid2(set_lineno), &TreeNode::set_lineno);
+	it->def_method(Xid2(op_at), &TreeNode::at);
+	it->def_method(Xid2(op_set_at), &TreeNode::set_at);
+}
+
+namespace xpeg{
+
+class XpegOperator{};
+
+XTAL_PREBIND(XpegOperator){
+	it->unset_native();
+}
+
+XTAL_BIND(XpegOperator){
+	it->def_method(Xid2(op_div), &more_shortest_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_div), &more_shortest_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_mod), &more_normal_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_mod), &more_normal_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_mul), &more_greed_Int, cpp_class<Int>());
+	it->def_method(Xid2(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
+	it->def_method(Xid2(op_com), &inv);
+	
+	it->def_method(Xid2(op_or), &select, cpp_class<Element>());
+	it->def_method(Xid2(op_or), &select, cpp_class<String>());
+	it->def_method(Xid2(op_or), &select, cpp_class<ChRange>());
+	it->def_method(Xid2(op_or), &select, cpp_class<Fun>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<Element>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<String>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<ChRange>());
+	it->def_method(Xid2(op_shr), &concat, cpp_class<Fun>());
+}
+
+XTAL_BIND(Element){
+	it->def_method(Xid2(set_body), &set_body);
+}
+
+XTAL_PREBIND(Executor){
+	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid2(stream_or_iterator), empty_string));
+}
+
+XTAL_BIND(Executor){
+	it->def_method(Xid2(reset), &Executor::reset);
+	it->def_method(Xid2(parse), &Executor::parse);
+	it->def_method(Xid2(match), &Executor::match);
+
+	it->def_method(Xid2(captures), &Executor::captures);
+	it->def_method(Xid2(captures_values), &Executor::captures_values);		
+	it->def_method(Xid2(op_at), &Executor::at, cpp_class<String>());
+	it->def_method(Xid2(op_call), &Executor::call, cpp_class<String>());
+	it->def_method(Xid2(prefix), &Executor::prefix);
+	it->def_method(Xid2(suffix), &Executor::suffix);
+	it->def_method(Xid2(prefix_values), &Executor::prefix_values);
+	it->def_method(Xid2(suffix_values), &Executor::suffix_values);
+	it->def_method(Xid2(errors), &Executor::errors);
+	it->def_method(Xid2(read), &Executor::read);
+	it->def_method(Xid2(peek), &Executor::peek)->param(1, Xid2(n), 0);
+	it->def_method(Xid2(tree), &Executor::tree);
+	it->def_method(Xid2(bos), &Executor::bos);
+	it->def_method(Xid2(eos), &Executor::eos);
+}
+
+class Xpeg{};
+
+XTAL_BIND(Xpeg){
+	it->unset_native();
+
+	ElementPtr any = xnew<Element>(Element::TYPE_ANY);
+	ElementPtr bos = xnew<Element>(Element::TYPE_BOS);
+	ElementPtr eos = xnew<Element>(Element::TYPE_EOS);
+	ElementPtr bol = xnew<Element>(Element::TYPE_BOL);
+	ElementPtr eol = xnew<Element>(Element::TYPE_EOL);
+	ElementPtr empty = xnew<Element>(Element::TYPE_EMPTY);
+	
+	ElementPtr degit = elem(xnew<ChRange>(Xs("0"), Xs("9")));
+	ElementPtr lalpha = elem(xnew<ChRange>(Xs("a"), Xs("z")));
+	ElementPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
+	ElementPtr alpha = select(lalpha, ualpha);
+	ElementPtr word = select(select(alpha, degit), Xs("_"));
+	ElementPtr ascii = elem(xnew<ChRange>(xnew<ID>(Xs("\x01")), xnew<ID>(Xs("\xfe"))));
+
+	it->def(Xid2(any), any);
+	it->def(Xid2(bos), bos);
+	it->def(Xid2(eos), eos);
+	it->def(Xid2(bol), bol);
+	it->def(Xid2(eol), eol);
+	it->def(Xid2(empty), empty);
+	it->def(Xid2(degit), degit);
+	it->def(Xid2(lalpha), lalpha);
+	it->def(Xid2(ualpha), ualpha);
+	it->def(Xid2(alpha), alpha);
+	it->def(Xid2(word), word);
+	it->def(Xid2(ascii), ascii);
+	
+	it->def_fun(Xid2(set), &set);
+	it->def_fun(Xid2(back_ref), &back_ref);
+	it->def_fun(Xid2(lookahead), &lookahead);
+	it->def_fun(Xid2(lookbehind), &lookbehind);
+	it->def_fun(Xid2(leaf), &leaf);
+	it->def_fun(Xid2(leafs), &leafs);
+	it->def_fun(Xid2(node), &node_vm);
+	it->def_fun(Xid2(splice_node), &splice_node_vm);
+	it->def_fun(Xid2(cap), &cap_vm);
+	it->def_fun(Xid2(bound), &bound);
+	it->def_fun(Xid2(pred), &pred);
+	it->def_fun(Xid2(error), &error);
+
+	it->def_fun(Xid2(decl), &decl);
+
+	it->def(Xid2(Executor), cpp_class<Executor>());
+}
+
+}
+
+//*
+XTAL_BIND(Builtin){
+	it->def(Xid2(Any), cpp_class<Any>());
+	it->def(Xid2(String), cpp_class<String>());
+	it->def(Xid2(Int), cpp_class<Int>());
+	it->def(Xid2(Float), cpp_class<Float>());
+	it->def(Xid2(Null), cpp_class<Null>());
+	it->def(Xid2(Undefined), cpp_class<Undefined>());
+	it->def(Xid2(Bool), cpp_class<Bool>());
+	it->def(Xid2(IntRange), cpp_class<IntRange>());
+	it->def(Xid2(FloatRange), cpp_class<FloatRange>());
+	it->def(Xid2(ChRange), cpp_class<ChRange>());
+
+	it->def(Xid2(Exception), cpp_class<Exception>());
+	it->def(Xid2(StandardError), cpp_class<StandardError>());
+	it->def(Xid2(RuntimeError), cpp_class<RuntimeError>());
+	it->def(Xid2(IOError), cpp_class<IOError>());
+	it->def(Xid2(EOSError), cpp_class<EOSError>());
+	it->def(Xid2(LogicError), cpp_class<LogicError>());
+	it->def(Xid2(CastError), cpp_class<CastError>());
+	it->def(Xid2(ArgumentError), cpp_class<ArgumentError>());
+	it->def(Xid2(YieldError), cpp_class<YieldError>());
+	it->def(Xid2(InstanceVariableError), cpp_class<InstanceVariableError>());
+	it->def(Xid2(UnsupportedError), cpp_class<UnsupportedError>());
+	it->def(Xid2(RedefinedError), cpp_class<RedefinedError>());
+	it->def(Xid2(AccessibilityError), cpp_class<AccessibilityError>());
+	it->def(Xid2(AssertionFailed), cpp_class<AssertionFailed>());
+	it->def(Xid2(CompileError), cpp_class<CompileError>());
+
+	it->def(Xid2(Array), cpp_class<Array>());
+	it->def(Xid2(Values), cpp_class<Values>());
+	it->def(Xid2(Map), cpp_class<Map>());
+	it->def(Xid2(Set), cpp_class<Set>());
+
+	it->def(Xid2(Arguments), cpp_class<Arguments>());
+	it->def(Xid2(Fun), cpp_class<Fun>());
+	it->def(Xid2(Fiber), cpp_class<Fiber>());
+	it->def(Xid2(Code), cpp_class<Code>());
+	it->def(Xid2(Frame), cpp_class<Frame>());
+	it->def(Xid2(Class), cpp_class<Class>());
+
+	it->def(Xid2(NativeMethod), cpp_class<NativeMethod>());
+
+	it->def(Xid2(Lib), cpp_class<Lib>());
+
+#ifndef XTAL_NO_THREAD
+	it->def(Xid2(Thread), cpp_class<Thread>());
+	it->def(Xid2(Mutex), cpp_class<Mutex>());
+#endif
+
+	it->def(Xid2(Stream), cpp_class<Stream>());
+	it->def(Xid2(MemoryStream), cpp_class<MemoryStream>());
+	it->def(Xid2(StringStream), cpp_class<StringStream>());
+	it->def(Xid2(FileStream), cpp_class<FileStream>());
+
+	it->def(Xid2(Format), cpp_class<Format>());
+	it->def(Xid2(Text), cpp_class<Text>());
+
+	it->def(Xid2(math), cpp_class<Math>());
+	it->def(Xid2(Iterator), cpp_class<Iterator>());
+	it->def(Xid2(Iterable), cpp_class<Iterable>());
+
+
+	it->def(Xid2(lib), lib());
+
+	it->def_fun(Xid2(assign_text_map), &assign_text_map);
+	it->def_fun(Xid2(append_text_map), &append_text_map);
+	it->def_fun(Xid2(format), (FormatPtr (*)(const StringPtr&))&format);
+	it->def_fun(Xid2(text), (TextPtr (*)(const StringPtr&))&text);
+
+	it->def(Xid2(builtin), builtin());
+
+	it->def(Xid2(zip), cpp_class<ZipIter>());
+	
+	it->def_fun(Xid2(current_context), &VMachine_current_context);
+	
+#ifndef XTAL_NO_PARSER
+	it->def_fun(Xid2(compile_file), &compile_file);
+	it->def_fun(Xid2(compile), &compile);
+#endif
+
+	it->def_fun(Xid2(lw_gc), &::xtal::lw_gc);
+	it->def_fun(Xid2(gc), &::xtal::gc);
+	it->def_fun(Xid2(full_gc), &::xtal::full_gc);
+	it->def_fun(Xid2(disable_gc), &::xtal::disable_gc);
+	it->def_fun(Xid2(enable_gc), &::xtal::enable_gc);
+	it->def_fun(Xid2(set_gc_stress), &::xtal::set_gc_stress);
+	//it->def_fun(Xid2(clock), &clock_);
+	it->def_fun(Xid2(open), &xtal::open)->param(2, Xid2(mode), Xid2(r));
+	it->def_fun(Xid2(interned_strings), &interned_strings);
+
+	it->def_fun(Xid2(eval), &eval);
+	it->def(Xid2(xpeg), cpp_class<xpeg::Xpeg>());
+}
+//*/
+
+void bind(){
+	using namespace xpeg;
+	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
+	for(int i=0; i<4; ++i){
+		classes[i]->inherit(cpp_class<XpegOperator>());
+	}		
+}
+
+
+
+////////////////////////////////////////////////////////////////////////
+
+XTAL_BIND2(String){
+
+	Xemb((
+
+String::scan: method(pattern){
+	return StringStream(this).scan(pattern);
+}
+
+String::split: method(pattern){
+	return StringStream(this).split(pattern);
+}
+
+String::match: method(pattern){
+	return StringStream(this).match(pattern);
+}
+
+String::parse: method(pattern){
+	return StringStream(this).parse(pattern);
+}
+
+String::gsub: method(pattern, fn){
+	mm: MemoryStream();
+	exec: xpeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		mm.put_s(prefix);
+		mm.put_s(fn(exec));
+
+		while(exec.match(pattern)){
+			prefix: exec.prefix;
+			mm.put_s(prefix);
+			mm.put_s(fn(exec));
+		}
+
+		mm.put_s(exec.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+
+String::sub: method(pattern, fn){
+	mm: MemoryStream();
+	exec: xpeg::Executor(StringStream(this));
+	if(exec.match(pattern)){
+		prefix: exec.prefix;
+		suffix: exec.suffix;
+		mm.put_s(prefix);
+		mm.put_s(fn(exec));
+		mm.put_s(exec.suffix);
+		return mm.to_s;
+	}
+	else{
+		return this;
+	}
+}
+
+),
+"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x02\x98\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x06\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x06\x00"
+"\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x02\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x08\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x08\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00"
+"\x03\x00\x2a\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x0a\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x0a\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x04\x00\x2a\x00\x21\x02\x00\x05\x06\x03"
+"\x23\x01\x01\x02\x00\x03\x01\x00\x00\x07\x02\xff\x24\x00\x01\x01\x00\x0c\x00\x02\x01\x00\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x0c\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x05\x00\xfa\x27\x00\x05\x00\x21\x00\x00\x11\x23\xfe\x01\x00\x00\x01\x00\x00\x00"
+"\x00\x21\x01\x00\x12\x08\x00\x01\x00\x13\x00\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x23\xff\x01\x00\x00\x01\x01\x00\x00\x00\x07\x01\xfc\x24\x00\x01\xff\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\xa4\x27\x00\x06\x00\x25\xff\xfe"
+"\x00\x15\x00\x00\x07\x00\xff\x26\xfd\x00\x16\x00\x00\x07\x01\xfe\x23\x00\x01\xfc\x00\x01\x01\x00\x00\x26\xfd\x00\x16\x00\x00\x27\x00\x07\x01\xff\x03\x07\x01\xfa\x24\x00\x01\xfd\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\x46\x27\x00\x08\x00\x25\xff\xfc"
+"\x00\x15\x00\x00\x07\x00\xff\x26\xfb\x00\x16\x00\x00\x07\x01\xfc\x23\x00\x01\xfa\x00\x01\x01\x00\x00\x26\xfb\x00\x16\x00\x28\x01\xff\x02\x07\x01\xfa\x24\x00\x01\xfd\x00\x0a\x00\x01\x01\x00\x00\x10\x00\xff\xc9\x00\x09\x0e\xff\xc3\x28\x00\x25\x00\xfe\x00\x19"
+"\x01\x26\xfd\x00\x16\x00\x00\x25\x00\xfd\x00\x1a\x01\x16\x00\x28\x28\x29\x01\x28\x0e\x00\x0c\x00\x00\x06\x00\x16\x00\x28\x29\x01\x28\x29\x00\x37\x00\x00\x1b\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x06\x00\xa5\x27\x00\x0a\x00\x21\x00\x00\x11\x23\xfe\x01"
+"\x00\x00\x01\x00\x00\x00\x00\x21\x01\x00\x12\x08\x00\x01\x00\x13\x00\x00\x21\x02\x00\x05\x06\x03\x23\x01\x01\x02\x00\x03\x01\x00\x00\x23\xff\x01\x00\x00\x01\x01\x00\x00\x00\x07\x01\xfc\x24\x00\x01\xff\x00\x0a\x00\x01\x01\x00\x00\x10\x00\x00\x06\x00\x4f\x27"
+"\x00\x0b\x00\x25\xfe\xfd\x00\x15\x00\x00\x25\xff\xfd\x00\x19\x00\x00\x07\x00\xfe\x26\xfc\x00\x16\x00\x00\x07\x01\xfd\x23\x00\x01\xfb\x00\x01\x01\x00\x00\x26\xfc\x00\x16\x00\x00\x25\x00\xfd\x00\x19\x01\x26\xfc\x00\x16\x00\x00\x25\x00\xfc\x00\x1a\x01\x16\x00"
+"\x28\x28\x29\x01\x28\x0e\x00\x0c\x00\x00\x06\x00\x16\x00\x28\x29\x01\x28\x29\x00\x37\x00\x00\x22\x00\x00\x01\x21\x00\x00\x23\x16\x00\x29\x01\x3e\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x0b\x00\x01\x00\x05\x00\x00\x00\x00\x00\x41\x00\x01"
+"\x00\x08\x00\x00\x00\x00\x00\x77\x00\x01\x00\x0a\x00\x00\x00\x00\x00\xad\x00\x01\x00\x0c\x00\x00\x00\x00\x00\xe3\x00\x01\x00\x0f\x00\x02\x00\x00\x01\x2d\x00\x01\x00\x14\x00\x01\x00\x00\x01\x53\x00\x01\x00\x17\x00\x01\x00\x00\x01\x6d\x00\x01\x00\x18\x00\x01"
+"\x00\x00\x01\xcc\x00\x00\x00\x1b\x00\x00\x00\x00\x01\xe9\x00\x01\x00\x1e\x00\x02\x00\x00\x02\x33\x00\x01\x00\x20\x00\x02\x00\x00\x02\x7d\x00\x00\x00\x22\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00"
+"\x00\x0b\x05\x00\x00\x04\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x41\x05\x00\x00\x07\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x77\x05\x00\x00\x09\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\xad\x05\x00\x00\x0b\x00\x01\x01\x00"
+"\x00\x01\x00\x00\x01\x01\x00\x00\x00\xe3\x05\x00\x00\x0d\x00\x02\x01\x00\x00\x0b\x00\x00\x02\x02\x00\x00\x01\xe9\x05\x00\x00\x1c\x00\x02\x01\x00\x00\x08\x00\x00\x02\x02\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00\x00\x00\x00\x00\x03"
+"\x00\x00\x00\x00\x00\x0b\x00\x04\x00\x00\x00\x00\x00\x2d\x00\x03\x00\x00\x00\x00\x00\x36\x00\x07\x00\x00\x00\x00\x00\x41\x00\x08\x00\x00\x00\x00\x00\x63\x00\x07\x00\x00\x00\x00\x00\x6c\x00\x0b\x00\x00\x00\x00\x00\x77\x00\x0c\x00\x00\x00\x00\x00\x99\x00\x0b"
+"\x00\x00\x00\x00\x00\xa2\x00\x0f\x00\x00\x00\x00\x00\xad\x00\x10\x00\x00\x00\x00\x00\xcf\x00\x0f\x00\x00\x00\x00\x00\xd8\x00\x13\x00\x00\x00\x00\x00\xe6\x00\x14\x00\x00\x00\x00\x00\xf4\x00\x15\x00\x00\x00\x00\x01\x18\x00\x16\x00\x00\x00\x00\x01\x30\x00\x17"
+"\x00\x00\x00\x00\x01\x37\x00\x18\x00\x00\x00\x00\x01\x40\x00\x19\x00\x00\x00\x00\x01\x52\x00\x1b\x00\x00\x00\x00\x01\x70\x00\x1c\x00\x00\x00\x00\x01\x77\x00\x1d\x00\x00\x00\x00\x01\x80\x00\x1e\x00\x00\x00\x00\x01\x93\x00\x1b\x00\x00\x00\x00\x01\xae\x00\x21"
+"\x00\x00\x00\x00\x01\xba\x00\x22\x00\x00\x00\x00\x01\xc8\x00\x16\x00\x00\x00\x00\x01\xcb\x00\x24\x00\x00\x00\x00\x01\xcc\x00\x25\x00\x00\x00\x00\x01\xd4\x00\x24\x00\x00\x00\x00\x01\xd4\x00\x16\x00\x00\x00\x00\x01\xd5\x00\x13\x00\x00\x00\x00\x01\xde\x00\x29"
+"\x00\x00\x00\x00\x01\xec\x00\x2a\x00\x00\x00\x00\x01\xfa\x00\x2b\x00\x00\x00\x00\x02\x1e\x00\x2c\x00\x00\x00\x00\x02\x36\x00\x2d\x00\x00\x00\x00\x02\x3d\x00\x2e\x00\x00\x00\x00\x02\x44\x00\x2f\x00\x00\x00\x00\x02\x4d\x00\x30\x00\x00\x00\x00\x02\x5f\x00\x31"
+"\x00\x00\x00\x00\x02\x6b\x00\x32\x00\x00\x00\x00\x02\x79\x00\x2c\x00\x00\x00\x00\x02\x7c\x00\x34\x00\x00\x00\x00\x02\x7d\x00\x35\x00\x00\x00\x00\x02\x85\x00\x34\x00\x00\x00\x00\x02\x85\x00\x2c\x00\x00\x00\x00\x02\x86\x00\x29\x00\x00\x00\x00\x02\x97\x00\x2a"
+"\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1e\x00\x00\x00\x24\x19"
+"\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x06\x53\x74\x72\x69\x6e\x67\x19\x00\x00\x00\x07\x70\x61\x74\x74\x65\x72\x6e\x19\x00\x00\x00\x0c\x53\x74\x72\x69\x6e\x67\x53\x74\x72\x65\x61"
+"\x6d\x19\x00\x00\x00\x04\x73\x63\x61\x6e\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x73\x70\x6c\x69\x74\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x6d\x61\x74\x63\x68\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x70\x61\x72\x73\x65\x03\x00\x00\x00\x0a\x19\x00\x00\x00"
+"\x02\x66\x6e\x19\x00\x00\x00\x02\x6d\x6d\x19\x00\x00\x00\x04\x65\x78\x65\x63\x19\x00\x00\x00\x0c\x4d\x65\x6d\x6f\x72\x79\x53\x74\x72\x65\x61\x6d\x19\x00\x00\x00\x04\x78\x70\x65\x67\x19\x00\x00\x00\x08\x45\x78\x65\x63\x75\x74\x6f\x72\x19\x00\x00\x00\x06\x70"
+"\x72\x65\x66\x69\x78\x03\x00\x00\x00\x16\x19\x00\x00\x00\x05\x70\x75\x74\x5f\x73\x19\x00\x00\x00\x0a\x66\x69\x72\x73\x74\x5f\x73\x74\x65\x70\x03\x00\x00\x00\x16\x19\x00\x00\x00\x06\x73\x75\x66\x66\x69\x78\x19\x00\x00\x00\x04\x74\x6f\x5f\x73\x19\x00\x00\x00"
+"\x04\x67\x73\x75\x62\x03\x00\x00\x00\x0a\x03\x00\x00\x00\x10\x03\x00\x00\x00\x11\x03\x00\x00\x00\x12\x03\x00\x00\x00\x16\x03\x00\x00\x00\x19\x19\x00\x00\x00\x03\x73\x75\x62\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61"
+"\x6c\x75\x65\x73\x1e\x00\x00\x00\x01\x10"
+);
+
+}
+
+XTAL_BIND2(Int){
+	Xemb((
+
+Int::times: method fiber{
+	for(i: 0; i<this; ++i){
+		yield i;
+	}
+}
+
+Int::block_next: method{
+	return (this==0 ? null : this-1), this;
+}
+
+Int::block_first: Int::block_next;
+
+Int::op_eq#Int: method(v) this==v;
+Int::op_lt#Int: method(v) this<v;
+
+	),
+"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x01\x2b\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x4e\x38\x00\x00\x02\x00\x42\x00\x27\x00\x02\x03\xfe\x00\x01\xff\x03\x06\x01\x11\x01\xfe\x01\x02\x10\x00\x00\x06\x00\x28\x00\x07\x00\xfe\x16\x00\x2a\x00\x00\x01\x09\xfe"
+"\x00\xfe\x00\x01\xff\x02\x06\x01\x11\x01\xfe\x01\x02\x10\x00\xff\xe7\x00\x09\x0e\xff\xe1\x28\x29\x00\x16\x00\x29\x01\x29\x00\x37\x00\x00\x06\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x03\x00\x41\x00\x06\x02\x03\x03\x00\x11\x00\x02\x03\x04\x10\x01\x00\x06"
+"\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x10\x00\x00\x06\x00\x0c\x01\x00\x00\x0e\x00\x0e\x06\x01\x03\x02\x01\x0a\x00\x01\x01\x02\x03\x16\x00\x06\x00\x16\x00\x29\x02\x29\x00\x37\x00\x00\x07\x00\x00\x01\x00\x21\x00\x00\x03\x21\x02\x00\x03\x08\x01\x02\x00"
+"\x07\x00\x00\x37\x00\x00\x08\x00\x00\x01\x00\x21\x00\x00\x03\x38\x01\x00\x04\x00\x22\x06\x02\x11\x00\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x0a\x02\x08\x01\x00\x21\x00\x00"
+"\x03\x38\x01\x00\x05\x00\x22\x06\x02\x11\x01\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x0c\x02\x08\x01\x21\x00\x00\x0d\x16\x00\x29\x01\x3e\x00\x05\x00\x00\x00\x00\x00\x00\x00"
+"\x03\x00\x00\x00\x00\x00\x11\x00\x00\x00\x04\x00\x00\x00\x00\x00\x12\x00\x00\x00\x04\x00\x02\x00\x00\x00\x28\x00\x01\x00\x06\x00\x00\x00\x00\x00\x65\x00\x00\x00\x07\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00"
+"\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x11\x06\x00\x00\x04\x00\x00\x01\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x65\x05\x00\x00\x07\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc9\x05\x00\x00\x09\x00"
+"\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\xfb\x05\x00\x00\x0b\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x11\x00\x04\x00\x00\x00\x00\x00\x28\x00"
+"\x05\x00\x00\x00\x00\x00\x32\x00\x04\x00\x00\x00\x00\x00\x4b\x00\x03\x00\x00\x00\x00\x00\x5a\x00\x09\x00\x00\x00\x00\x00\x65\x00\x0a\x00\x00\x00\x00\x00\x9e\x00\x09\x00\x00\x00\x00\x00\xa7\x00\x0d\x00\x00\x00\x00\x00\xbe\x00\x0f\x00\x00\x00\x00\x00\xf0\x00"
+"\x10\x00\x00\x00\x00\x01\x2a\x00\x11\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69"
+"\x65\x72\x73\x1e\x00\x00\x00\x0e\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00\x00\x00\x03\x49\x6e\x74\x19\x00\x00\x00\x01\x69\x19\x00\x00\x00\x0a\x66\x69\x72\x73\x74\x5f\x73\x74\x65\x70\x19"
+"\x00\x00\x00\x05\x74\x69\x6d\x65\x73\x19\x00\x00\x00\x0a\x62\x6c\x6f\x63\x6b\x5f\x6e\x65\x78\x74\x19\x00\x00\x00\x0b\x62\x6c\x6f\x63\x6b\x5f\x66\x69\x72\x73\x74\x19\x00\x00\x00\x01\x76\x19\x00\x00\x00\x05\x6f\x70\x5f\x65\x71\x03\x00\x00\x00\x0f\x19\x00\x00"
+"\x00\x05\x6f\x70\x5f\x6c\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73\x1e\x00\x00\x00\x01\x10"
+);
+
+}
+
+XTAL_BIND2(Float){
+	Xemb((
+
+Float::op_eq#Float: method(v) this==v;
+Float::op_lt#Float: method(v) this<v;
+
+	),
+"\x78\x74\x61\x6c\x01\x00\x00\x00\x00\x00\x00\x6d\x00\x21\x00\x00\x03\x38\x01\x00\x01\x00\x22\x06\x02\x11\x00\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x05\x02\x08\x01\x00\x21"
+"\x00\x00\x03\x38\x01\x00\x02\x00\x22\x06\x02\x11\x01\x02\xff\x03\x10\x01\x00\x06\x00\x0c\x01\x00\x03\x0e\x00\x06\x01\x00\x02\x16\x00\x29\x01\x29\x00\x21\x02\x00\x03\x37\x00\x00\x07\x02\x08\x01\x21\x00\x00\x08\x16\x00\x29\x01\x3e\x00\x01\x00\x00\x00\x00\x00"
+"\x00\x00\x03\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x03\x02\x00\x02\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x0b\x05\x00\x00\x04\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x3d\x05\x00\x00\x06\x00\x01\x01\x00\x00\x01\x00\x00\x01\x01\x00"
+"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x32\x00\x04\x00\x00\x00\x00\x00\x6c\x00\x05\x00\x00\x00\x01\x20\x00\x00\x00\x03\x19\x00\x00\x00\x06\x73\x6f\x75\x72\x63\x65\x19\x00\x00\x00\x11\x74\x6f"
+"\x6f\x6c\x2f\x74\x65\x6d\x70\x2f\x69\x6e\x2e\x78\x74\x61\x6c\x19\x00\x00\x00\x0b\x69\x64\x65\x6e\x74\x69\x66\x69\x65\x72\x73\x1e\x00\x00\x00\x09\x19\x00\x00\x00\x00\x19\x00\x00\x00\x08\x74\x6f\x70\x6c\x65\x76\x65\x6c\x19\x00\x00\x00\x03\x61\x72\x67\x19\x00"
+"\x00\x00\x05\x46\x6c\x6f\x61\x74\x19\x00\x00\x00\x01\x76\x19\x00\x00\x00\x05\x6f\x70\x5f\x65\x71\x03\x00\x00\x00\x0a\x19\x00\x00\x00\x05\x6f\x70\x5f\x6c\x74\x19\x00\x00\x00\x09\x66\x69\x6c\x65\x6c\x6f\x63\x61\x6c\x19\x00\x00\x00\x06\x76\x61\x6c\x75\x65\x73"
+"\x1e\x00\x00\x00\x01\x10"
+);
 }
 
 XTAL_BIND2(Class){
@@ -753,61 +1481,7 @@ Class::members_ancestors_too: method{
 
 }
 
-XTAL_PREBIND(ClassInheritedClassesIter){
-	it->inherit(cpp_class<Iterator>());
-}
-
-XTAL_BIND(ClassInheritedClassesIter){
-	it->def_method(Xid2(block_next), &ClassInheritedClassesIter::block_next);
-}
-
-
-XTAL_PREBIND(Lib){
-	it->inherit(cpp_class<Class>());
-	it->def_ctor0<Lib>();
-}
-
-XTAL_BIND(Lib){
-	it->def_method(Xid2(append_load_path), &Lib::append_load_path);
-}
-
-
-XTAL_PREBIND(Global){
-	it->inherit(cpp_class<Class>());
-}
-
-XTAL_PREBIND(ZipIter){
-	it->inherit(cpp_class<Iterator>());
-	it->def_ctor1<ZipIter, const VMachinePtr&>();
-}
-
-XTAL_BIND(ZipIter){
-	it->def_method(Xid2(block_first), &ZipIter::block_first);
-	it->def_method(Xid2(block_next), &ZipIter::block_next);
-	it->def_method(Xid2(block_break), &ZipIter::block_break);
-}
-
 #ifndef XTAL_NO_THREAD
-
-XTAL_PREBIND(Thread){
-	it->def_ctor0<Thread>();
-}
-
-XTAL_BIND(Thread){
-	it->def_method(Xid2(start), &Thread::start);
-	it->def_method(Xid2(join), &Thread::join);
-	it->def_fun(Xid2(yield), &yield_thread);
-	it->def_fun(Xid2(sleep), &sleep_thread);
-}
-
-XTAL_PREBIND(Mutex){
-	it->def_ctor0<Mutex>();
-}
-
-XTAL_BIND(Mutex){
-	it->def_method(Xid2(lock), &Mutex::lock);
-	it->def_method(Xid2(unlock), &Mutex::unlock);
-}
 
 XTAL_BIND2(Mutex){
 	Xemb((
@@ -841,111 +1515,10 @@ Mutex::block_break: method{
 );
 
 }
+
 #endif
 
-XTAL_PREBIND(Format){
-	it->def_serial_ctor(ctor<Format>());
-}
 
-XTAL_BIND(Format){
-	it->def_method(Xid2(to_s), &Format::to_s);
-	it->def_method(Xid2(serial_save), &Format::serial_save);
-	it->def_method(Xid2(serial_load), &Format::serial_load);
-}
-
-XTAL_PREBIND(Text){
-	it->def_serial_ctor(ctor<Text>());
-}
-
-XTAL_BIND(Text){
-	it->def_method(Xid2(to_s), &Text::to_s);
-	it->def_method(Xid2(serial_save), &Text::serial_save);
-	it->def_method(Xid2(serial_load), &Text::serial_load);
-}
-
-XTAL_PREBIND(NativeMethod){
-
-}
-
-XTAL_PREBIND(NativeFun){
-	it->inherit(cpp_class<NativeMethod>());
-}
-
-XTAL_BIND(debug::HookInfo){
-	it->def_method(Xid2(clone), &debug::HookInfo::clone);
-	it->def_method(Xid2(kind), &debug::HookInfo::kind);
-	it->def_method(Xid2(line), &debug::HookInfo::line);
-	it->def_method(Xid2(fun_name), &debug::HookInfo::fun_name);
-	it->def_method(Xid2(file_name), &debug::HookInfo::file_name);
-	it->def_method(Xid2(exception), &debug::HookInfo::exception);
-	it->def_method(Xid2(variables_frame), &debug::HookInfo::variables_frame);
-
-	it->def_method(Xid2(set_kind), &debug::HookInfo::set_kind);
-	it->def_method(Xid2(set_line), &debug::HookInfo::line);
-	it->def_method(Xid2(set_fun_name), &debug::HookInfo::set_fun_name);
-	it->def_method(Xid2(set_file_name), &debug::HookInfo::set_file_name);
-	it->def_method(Xid2(set_exception), &debug::HookInfo::set_exception);
-	it->def_method(Xid2(set_variables_frame), &debug::HookInfo::set_variables_frame);
-
-	it->def(Xid2(LINE), BREAKPOINT_LINE);
-	it->def(Xid2(CALL), BREAKPOINT_CALL);
-	it->def(Xid2(RETURN), BREAKPOINT_RETURN);
-	it->def(Xid2(THROW), BREAKPOINT_THROW);
-}
-
-XTAL_BIND(Stream){
-	it->def_method(Xid2(get_s), &Stream::get_s);
-	it->def_method(Xid2(get_s_all), &Stream::get_s_all);
-	it->def_method(Xid2(put_s), (void (Stream::*)(const StringPtr&))&Stream::put_s);
-
-	it->def_method(Xid2(print), &Stream::print);
-	it->def_method(Xid2(println), &Stream::println);
-
-	it->def_method(Xid2(seek), &Stream::seek);
-	it->def_method(Xid2(tell), &Stream::tell);
-	it->def_method(Xid2(pour), &Stream::pour);
-	it->def_method(Xid2(pour_all), &Stream::pour_all);
-	it->def_method(Xid2(size), &Stream::size);
-	it->def_method(Xid2(close), &Stream::close);
-
-	it->def_method(Xid2(eos), &Stream::eos);
-
-	it->def_method(Xid2(serialize), &Stream::serialize);
-	it->def_method(Xid2(deserialize), &Stream::deserialize);
-
-	it->def_method(Xid2(block_first), &Stream::block_first);
-	it->def_method(Xid2(block_next), &Stream::block_next);
-	it->def_method(Xid2(block_break), &Stream::block_break);
-
-	it->def_method(Xid2(put_i8), &Stream::put_i8);
-	it->def_method(Xid2(put_u8), &Stream::put_u8);
-
-	it->def_method(Xid2(put_i16be), &Stream::put_i16be);
-	it->def_method(Xid2(put_i32be), &Stream::put_i32be);
-	it->def_method(Xid2(put_u16be), &Stream::put_u16be);
-	it->def_method(Xid2(put_u32be), &Stream::put_u32be);
-	it->def_method(Xid2(put_f32be), &Stream::put_f32be);
-
-	it->def_method(Xid2(put_i16le), &Stream::put_i16le);
-	it->def_method(Xid2(put_i32le), &Stream::put_i32le);
-	it->def_method(Xid2(put_u16le), &Stream::put_u16le);
-	it->def_method(Xid2(put_u32le), &Stream::put_u32le);
-	it->def_method(Xid2(put_f32le), &Stream::put_f32le);
-
-	it->def_method(Xid2(get_i8), &Stream::get_i8);
-
-	it->def_method(Xid2(get_i16be), &Stream::get_i16be);
-	it->def_method(Xid2(get_i32be), &Stream::get_i32be);
-	it->def_method(Xid2(get_u16be), &Stream::get_u16be);
-	it->def_method(Xid2(get_u32be), &Stream::get_u32be);
-	it->def_method(Xid2(get_f32be), &Stream::get_f32be);
-
-	it->def_method(Xid2(get_i16le), &Stream::get_i16le);
-	it->def_method(Xid2(get_i32le), &Stream::get_i32le);
-	it->def_method(Xid2(get_u16le), &Stream::get_u16le);
-	it->def_method(Xid2(get_u32le), &Stream::get_u32le);
-	it->def_method(Xid2(get_f32le), &Stream::get_f32le);
-}
 
 XTAL_BIND2(Stream){
 	Xemb((
@@ -1019,66 +1592,9 @@ Stream::printf: method(format_string, ...args){
 
 }
 
-XTAL_PREBIND(PointerStream){
-	it->inherit(cpp_class<Stream>());
-}
-
-XTAL_PREBIND(MemoryStream){
-	it->inherit(cpp_class<PointerStream>());
-	it->def_ctor0<MemoryStream>();
-}
-
-XTAL_BIND(MemoryStream){
-	it->def_method(Xid2(to_s), &MemoryStream::to_s);
-	it->def_method(Xid2(resize), &MemoryStream::resize);
-}
-
-XTAL_PREBIND(StringStream){
-	it->inherit(cpp_class<Stream>());
-	it->def_ctor1<StringStream, const StringPtr&>();
-}
-
-XTAL_BIND(StringStream){
-	it->def_method(Xid2(to_s), &StringStream::to_s);
-}
-
-XTAL_PREBIND(FileStream){
-	it->inherit(cpp_class<Stream>());
-	it->def_ctor2<FileStream, const StringPtr&, const StringPtr&>();
-}
-
-XTAL_BIND(FileStream){
-}
-
-XTAL_PREBIND(StdinStream){
-	it->inherit(cpp_class<Stream>());
-}
-
-XTAL_PREBIND(StdoutStream){
-	it->inherit(cpp_class<Stream>());
-}
-
-XTAL_PREBIND(StderrStream){
-	it->inherit(cpp_class<Stream>());
-}
-
-XTAL_BIND(debug::Debug){
-	it->def_fun(Xid2(enable), &debug::enable);
-	it->def_fun(Xid2(disable), &debug::disable);
-	it->def_fun(Xid2(is_enabled), &debug::is_enabled);
-
-	it->def_fun(Xid2(breakpoint_hook), &debug::breakpoint_hook);
-	it->def_fun(Xid2(call_hook), &debug::call_hook);
-	it->def_fun(Xid2(return_hook), &debug::return_hook);
-	it->def_fun(Xid2(throw_hook), &debug::throw_hook);
-	it->def_fun(Xid2(set_breakpoint_hook), &debug::set_breakpoint_hook);
-	it->def_fun(Xid2(set_call_hook), &debug::set_call_hook);
-	it->def_fun(Xid2(set_return_hook), &debug::set_return_hook);
-	it->def_fun(Xid2(set_throw_hook), &debug::set_throw_hook);
-
-}
-
-XTAL_BIND2(debug::Debug){
+namespace debug{
+	
+XTAL_BIND2(Debug){
 	Xemb((
 
 debug::scope: singleton{
@@ -1118,32 +1634,20 @@ debug::scope: singleton{
 );
 }
 
-XTAL_PREBIND(Iterable){
-	it->unset_native();
-}
-
-XTAL_BIND(Iterable){
-	// Iterableがバインドされるなら、Iteratorもバインドしてしまう
-	cpp_class<Iterator>()->bind();
-}
-
-XTAL_PREBIND(Iterator){
-	it->inherit(cpp_class<Iterable>());
-	it->unset_native();
-}
-
-XTAL_BIND(Iterator){
-	it->def_fun(Xid2(each), &Iterator_each);
-	it->def_fun(Xid2(block_first), &Iterator_block_first);
 }
 
 XTAL_BIND2(Iterator){
 	Xemb((
 
 Iterator::to_fiber: method(){
-	return fiber{
-		this{
-			yield it;
+	if(this is Fiber){
+		return this;	
+	}
+	else{
+		return fiber{
+			this{
+				yield it;
+			}
 		}
 	}
 }
@@ -1515,89 +2019,8 @@ Iterator::with_prev: method fiber{
 	}
 }
 
-XTAL_PREBIND(Exception){
-	it->def_ctor1<Exception, const StringPtr&>()->param(1, Xid2(message), empty_string);
-}
+XTAL_BIND2(CompileError){
 
-XTAL_BIND(Exception){
-	it->def_method(Xid2(initialize), &Exception::initialize)->param(1, Xid2(message), empty_string);
-	it->def_method(Xid2(to_s), &Exception::to_s);
-	it->def_method(Xid2(message), &Exception::message);
-	it->def_method(Xid2(backtrace), &Exception::backtrace);
-	it->def_method(Xid2(append_backtrace), &Exception::append_backtrace);
-}
-
-XTAL_PREBIND(StandardError){
-	it->unset_native();
-	it->inherit(cpp_class<Exception>());
-}
-
-XTAL_PREBIND(RuntimeError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(IOError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(EOSError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(LogicError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(CastError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(ArgumentError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(YieldError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(InstanceVariableError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(UnsupportedError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(RedefinedError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(AccessibilityError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_PREBIND(AssertionFailed){
-	it->unset_native();
-	it->inherit(cpp_class<Exception>());
-}
-
-XTAL_PREBIND(CompileError){
-	it->unset_native();
-	it->inherit(cpp_class<StandardError>());
-}
-
-XTAL_BIND(CompileError){
 	Xemb((
 builtin::CompileError::initialize: method(message, errors:[]){
 	Exception::initialize(%f"%s\n%s"(message, errors.join("\t\n")));	
@@ -1613,392 +2036,6 @@ builtin::CompileError::initialize: method(message, errors:[]){
 "\x00\x00\x09\x1f\x11\x11\x1f\x19\x00\x00\x00\x06\x46\x6f\x72\x6d\x61\x74\x1f\x11\x11\x20\x00\x00\x00\x02\x01\x1e\x00\x00\x00\x03\x1f\x03\x00\x00\x00\x17\x1f\x10\x11\x1f\x03\x00\x00\x00\x09\x1f\x11\x11\x1f\x19\x00\x00\x00\x03\x41\x6e\x79\x1f\x11\x11\x11\x03"
 "\x00\x00\x00\x14\x19\x00\x00\x00\x05\x25\x73\x0a\x25\x73\x19\x00\x00\x00\x02\x09\x0a"
 );
-}
-
-XTAL_PREBIND(filesystem::Entries){
-	it->inherit(cpp_class<Iterator>());
-}
-
-XTAL_BIND(filesystem::Entries){
-	it->def_method(Xid2(block_next), &filesystem::Entries::block_next);
-	it->def_method(Xid2(block_break), &filesystem::Entries::block_break);
-}
-
-XTAL_BIND(filesystem::Filesystem){
-	it->def_fun(Xid2(open), &filesystem::open);
-	it->def_fun(Xid2(entries), &filesystem::entries);
-	it->def_fun(Xid2(is_directory), &filesystem::is_directory);
-}
-
-namespace{
-
-AnyPtr abs(const AnyPtr& a){
-	switch(type(a)){XTAL_DEFAULT;
-		XTAL_CASE(TYPE_INT){ return ivalue(a)<0 ? AnyPtr(-ivalue(a)) : a; }
-		XTAL_CASE(TYPE_FLOAT){ return fvalue(a)<0 ? AnyPtr(-fvalue(a)) : a; }
-	}
-	return 0;
-}
-
-AnyPtr max_(const AnyPtr& a, const AnyPtr& b){
-	uint_t btype = type(b)-TYPE_INT;
-	uint_t atype = type(a)-TYPE_INT;
-	uint_t abtype = atype | btype;
-
-	if(abtype==0){
-		return ivalue(a) < ivalue(b) ? b : a;	
-	}
-
-	if(abtype==1){
-		f2 ab;
-		to_f2(ab, atype, a, btype, b);
-		return ab.a < ab.b ? b : a;	
-	}
-
-	return null;
-}
-
-AnyPtr min_(const AnyPtr& a, const AnyPtr& b){
-	uint_t btype = type(b)-TYPE_INT;
-	uint_t atype = type(a)-TYPE_INT;
-	uint_t abtype = atype | btype;
-
-	if(abtype==0){
-		return ivalue(a) < ivalue(b) ? a : b;	
-	}
-
-	if(abtype==1){
-		f2 ab;
-		to_f2(ab, atype, a, btype, b);
-		return ab.a < ab.b ? a : b;	
-	}
-
-	return null;
-}
-
-class Random{
-public:
-
-	Random(int_t seed=1){ 
-		set_seed(seed); 
-	}
-	
-	void set_seed(int_t seed){
-		idum_=seed==0 ? 1 : seed; 
-	} 
-
-	float_t operator ()(){
-		int_t idum = idum_;
-		int_t k = idum/IQ;
-		idum = IA*(idum-k*IQ)-IR*k;
-		idum &= IM;
-		idum_ = idum;
-		return ((float_t)1.0/IM)*idum;
-	}
-	
-	float_t operator ()(float_t max){
-		return (*this)()*max; 
-	}
-
-	float_t operator ()(float_t min, float_t max){
-		return (*this)()*(max-min)+min; 
-	}	
-
-private:
-	enum{ IA=16807,IM=2147483647,IQ=127773,IR=2836 };
-	int_t idum_;
-};
-	
-Random random_instance;
-
-float_t random(){
-	return random_instance();
-}
-
-float_t random_range(float_t in, float_t ax){
-	return random_instance(in, ax);
-}
-
-}
-
-template<class T>
-struct TMath{
-	static void bind(const ClassPtr& math, float*){
-		using namespace std;
-		
-		math->def_fun(Xid2(acos), (float (*)(float))&acosf);
-		math->def_fun(Xid2(asin), (float (*)(float))&asinf);
-		math->def_fun(Xid2(atan), (float (*)(float))&atanf);
-		math->def_fun(Xid2(atan2), (float (*)(float, float))&atan2f);
-		math->def_fun(Xid2(ceil), (float (*)(float))&ceilf);
-		math->def_fun(Xid2(cos), (float (*)(float))&cosf);
-		math->def_fun(Xid2(exp), (float (*)(float))&expf);
-		math->def_fun(Xid2(floor), (float (*)(float))&floorf);
-		math->def_fun(Xid2(log), (float (*)(float))&logf);
-		math->def_fun(Xid2(pow), (float (*)(float, float))&powf);
-		math->def_fun(Xid2(sin), (float (*)(float))&sinf);
-		math->def_fun(Xid2(sqrt), (float (*)(float))&sqrtf);
-		math->def_fun(Xid2(tan), (float (*)(float))&tanf);
-		math->def(Xid2(PI), (float_t)3.14159265358979);
-		math->def(Xid2(E), (float_t)2.71828182845905);
-	}
-
-	static void bind(const ClassPtr& math, double*){
-		using namespace std;
-
-		math->def_fun(Xid2(acos), (double (*)(double))&acos);
-		math->def_fun(Xid2(asin), (double (*)(double))&asin);
-		math->def_fun(Xid2(atan), (double (*)(double))&atan);
-		math->def_fun(Xid2(atan2), (double (*)(double, double))&atan2);
-		math->def_fun(Xid2(ceil), (double (*)(double))&ceil);
-		math->def_fun(Xid2(cos), (double (*)(double))&cos);
-		math->def_fun(Xid2(exp), (double (*)(double))&exp);
-		math->def_fun(Xid2(floor), (double (*)(double))&floor);
-		math->def_fun(Xid2(log), (double (*)(double))&log);
-		math->def_fun(Xid2(pow), (double (*)(double, double))&pow);
-		math->def_fun(Xid2(sin), (double (*)(double))&sin);
-		math->def_fun(Xid2(sqrt), (double (*)(double))&sqrt);
-		math->def_fun(Xid2(tan), (double (*)(double))&tan);
-		math->def(Xid2(PI), (float_t)3.14159265358979);
-		math->def(Xid2(E), (float_t)2.71828182845905);
-	}
-};
-
-class Math{};
-
-XTAL_BIND(Math){
-	TMath<float_t>::bind(it, (float_t*)0);
-	it->def_fun(Xid2(abs), &abs);
-	it->def_fun(Xid2(max), &max_);
-	it->def_fun(Xid2(min), &min_);
-	it->def_fun(Xid2(random), &random);
-	it->def_fun(Xid2(random_range), &random_range);
-}
-
-XTAL_PREBIND(TreeNode){
-	it->set_final();
-	it->inherit(cpp_class<Array>());
-}
-
-XTAL_BIND(TreeNode){
-	it->def_method(Xid2(tag), &TreeNode::tag);
-	it->def_method(Xid2(lineno), &TreeNode::lineno);
-	it->def_method(Xid2(set_tag), &TreeNode::set_tag);
-	it->def_method(Xid2(set_lineno), &TreeNode::set_lineno);
-	it->def_method(Xid2(op_at), &TreeNode::at);
-	it->def_method(Xid2(op_set_at), &TreeNode::set_at);
-}
-
-namespace xpeg{
-
-class XpegOperator{};
-
-XTAL_PREBIND(XpegOperator){
-	it->unset_native();
-}
-
-XTAL_BIND(XpegOperator){
-	it->def_method(Xid2(op_div), &more_shortest_Int, cpp_class<Int>());
-	it->def_method(Xid2(op_div), &more_shortest_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid2(op_mod), &more_normal_Int, cpp_class<Int>());
-	it->def_method(Xid2(op_mod), &more_normal_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid2(op_mul), &more_greed_Int, cpp_class<Int>());
-	it->def_method(Xid2(op_mul), &more_greed_IntRange, cpp_class<IntRange>());
-	it->def_method(Xid2(op_com), &inv);
-	
-	it->def_method(Xid2(op_or), &select, cpp_class<Element>());
-	it->def_method(Xid2(op_or), &select, cpp_class<String>());
-	it->def_method(Xid2(op_or), &select, cpp_class<ChRange>());
-	it->def_method(Xid2(op_or), &select, cpp_class<Fun>());
-	it->def_method(Xid2(op_shr), &concat, cpp_class<Element>());
-	it->def_method(Xid2(op_shr), &concat, cpp_class<String>());
-	it->def_method(Xid2(op_shr), &concat, cpp_class<ChRange>());
-	it->def_method(Xid2(op_shr), &concat, cpp_class<Fun>());
-}
-
-XTAL_BIND(Element){
-	it->def_method(Xid2(set_body), &set_body);
-}
-
-XTAL_PREBIND(Executor){
-	it->def_ctor(ctor<Executor, const AnyPtr&>()->param(1, Xid2(stream_or_iterator), empty_string));
-}
-
-XTAL_BIND(Executor){
-	it->def_method(Xid2(reset), &Executor::reset);
-	it->def_method(Xid2(parse), &Executor::parse);
-	it->def_method(Xid2(match), &Executor::match);
-
-	it->def_method(Xid2(captures), &Executor::captures);
-	it->def_method(Xid2(captures_values), &Executor::captures_values);		
-	it->def_method(Xid2(op_at), &Executor::at, cpp_class<String>());
-	it->def_method(Xid2(op_call), &Executor::call, cpp_class<String>());
-	it->def_method(Xid2(prefix), &Executor::prefix);
-	it->def_method(Xid2(suffix), &Executor::suffix);
-	it->def_method(Xid2(prefix_values), &Executor::prefix_values);
-	it->def_method(Xid2(suffix_values), &Executor::suffix_values);
-	it->def_method(Xid2(errors), &Executor::errors);
-	it->def_method(Xid2(read), &Executor::read);
-	it->def_method(Xid2(peek), &Executor::peek)->param(1, Xid2(n), 0);
-	it->def_method(Xid2(tree), &Executor::tree);
-	it->def_method(Xid2(bos), &Executor::bos);
-	it->def_method(Xid2(eos), &Executor::eos);
-}
-
-class Xpeg{};
-
-XTAL_BIND(Xpeg){
-	it->unset_native();
-
-	AnyPtr any = xnew<Element>(Element::TYPE_ANY);
-	AnyPtr bos = xnew<Element>(Element::TYPE_BOS);
-	AnyPtr eos = xnew<Element>(Element::TYPE_EOS);
-	AnyPtr bol = xnew<Element>(Element::TYPE_BOL);
-	AnyPtr eol = xnew<Element>(Element::TYPE_EOL);
-	AnyPtr empty = xnew<Element>(Element::TYPE_EMPTY);
-	
-	AnyPtr degit = elem(xnew<ChRange>(Xs("0"), Xs("9")));
-	AnyPtr lalpha = elem(xnew<ChRange>(Xs("a"), Xs("z")));
-	AnyPtr ualpha = elem(xnew<ChRange>(Xs("A"), Xs("Z")));
-	AnyPtr alpha = select(lalpha, ualpha);
-	AnyPtr word = select(select(alpha, degit), Xs("_"));
-	AnyPtr ascii = elem(xnew<ChRange>(xnew<ID>(Xs("\x01")), xnew<ID>(Xs("\xfe"))));
-
-	it->def(Xid2(any), any);
-	it->def(Xid2(bos), bos);
-	it->def(Xid2(eos), eos);
-	it->def(Xid2(bol), bol);
-	it->def(Xid2(eol), eol);
-	it->def(Xid2(empty), empty);
-	it->def(Xid2(degit), degit);
-	it->def(Xid2(lalpha), lalpha);
-	it->def(Xid2(ualpha), ualpha);
-	it->def(Xid2(alpha), alpha);
-	it->def(Xid2(word), word);
-	it->def(Xid2(ascii), ascii);
-	
-	it->def_fun(Xid2(set), &set);
-	it->def_fun(Xid2(back_ref), &back_ref);
-	it->def_fun(Xid2(lookahead), &lookahead);
-	it->def_fun(Xid2(lookbehind), &lookbehind);
-	it->def_fun(Xid2(leaf), &leaf);
-	it->def_fun(Xid2(leafs), &leafs);
-	it->def_fun(Xid2(node), &node_vm);
-	it->def_fun(Xid2(splice_node), &splice_node_vm);
-	it->def_fun(Xid2(cap), &cap_vm);
-	it->def_fun(Xid2(bound), &bound);
-	it->def_fun(Xid2(pred), &pred);
-	it->def_fun(Xid2(error), &error);
-
-	it->def_fun(Xid2(decl), &decl);
-
-	it->def(Xid2(Executor), cpp_class<Executor>());
-}
-
-}
-
-XTAL_BIND(Builtin){
-
-	it->def(Xid2(Any), cpp_class<Any>());
-	it->def(Xid2(String), cpp_class<String>());
-	it->def(Xid2(Int), cpp_class<Int>());
-	it->def(Xid2(Float), cpp_class<Float>());
-	it->def(Xid2(Null), cpp_class<Null>());
-	it->def(Xid2(Undefined), cpp_class<Undefined>());
-	it->def(Xid2(Bool), cpp_class<Bool>());
-	it->def(Xid2(IntRange), cpp_class<IntRange>());
-	it->def(Xid2(FloatRange), cpp_class<FloatRange>());
-	it->def(Xid2(ChRange), cpp_class<ChRange>());
-
-	it->def(Xid2(Exception), cpp_class<Exception>());
-	it->def(Xid2(StandardError), cpp_class<StandardError>());
-	it->def(Xid2(RuntimeError), cpp_class<RuntimeError>());
-	it->def(Xid2(IOError), cpp_class<IOError>());
-	it->def(Xid2(EOSError), cpp_class<EOSError>());
-	it->def(Xid2(LogicError), cpp_class<LogicError>());
-	it->def(Xid2(CastError), cpp_class<CastError>());
-	it->def(Xid2(ArgumentError), cpp_class<ArgumentError>());
-	it->def(Xid2(YieldError), cpp_class<YieldError>());
-	it->def(Xid2(InstanceVariableError), cpp_class<InstanceVariableError>());
-	it->def(Xid2(UnsupportedError), cpp_class<UnsupportedError>());
-	it->def(Xid2(RedefinedError), cpp_class<RedefinedError>());
-	it->def(Xid2(AccessibilityError), cpp_class<AccessibilityError>());
-	it->def(Xid2(AssertionFailed), cpp_class<AssertionFailed>());
-	it->def(Xid2(CompileError), cpp_class<CompileError>());
-
-	it->def(Xid2(Array), cpp_class<Array>());
-	it->def(Xid2(Values), cpp_class<Values>());
-	it->def(Xid2(Map), cpp_class<Map>());
-	it->def(Xid2(Set), cpp_class<Set>());
-
-	it->def(Xid2(zip), cpp_class<ZipIter>());
-
-	it->def(Xid2(Arguments), cpp_class<Arguments>());
-	it->def(Xid2(Fun), cpp_class<Fun>());
-	it->def(Xid2(Fiber), cpp_class<Fiber>());
-	it->def(Xid2(Code), cpp_class<Code>());
-	it->def(Xid2(Frame), cpp_class<Frame>());
-	it->def(Xid2(Class), cpp_class<Class>());
-
-	it->def(Xid2(NativeMethod), cpp_class<NativeMethod>());
-
-	it->def(Xid2(Lib), cpp_class<Lib>());
-
-#ifndef XTAL_NO_THREAD
-	it->def(Xid2(Thread), cpp_class<Thread>());
-	it->def(Xid2(Mutex), cpp_class<Mutex>());
-#endif
-
-	it->def(Xid2(Stream), cpp_class<Stream>());
-	it->def(Xid2(MemoryStream), cpp_class<MemoryStream>());
-	it->def(Xid2(StringStream), cpp_class<StringStream>());
-	it->def(Xid2(FileStream), cpp_class<FileStream>());
-
-	it->def(Xid2(Format), cpp_class<Format>());
-	it->def(Xid2(Text), cpp_class<Text>());
-
-	it->def(Xid2(math), cpp_class<Math>());
-	it->def(Xid2(Iterator), cpp_class<Iterator>());
-	it->def(Xid2(Iterable), cpp_class<Iterable>());
-
-
-	it->def(Xid2(lib), lib());
-
-	it->def_fun(Xid2(assign_text_map), &assign_text_map);
-	it->def_fun(Xid2(append_text_map), &append_text_map);
-	it->def_fun(Xid2(format), (FormatPtr (*)(const StringPtr&))&format);
-	it->def_fun(Xid2(text), (TextPtr (*)(const StringPtr&))&text);
-
-	it->def(Xid2(builtin), builtin());
-
-
-	it->def_fun(Xid2(current_context), &VMachine_current_context);
-	
-#ifndef XTAL_NO_PARSER
-	it->def_fun(Xid2(compile_file), &compile_file);
-	it->def_fun(Xid2(compile), &compile);
-#endif
-
-	it->def_fun(Xid2(lw_gc), &::xtal::lw_gc);
-	it->def_fun(Xid2(gc), &::xtal::gc);
-	it->def_fun(Xid2(full_gc), &::xtal::full_gc);
-	it->def_fun(Xid2(disable_gc), &::xtal::disable_gc);
-	it->def_fun(Xid2(enable_gc), &::xtal::enable_gc);
-	it->def_fun(Xid2(set_gc_stress), &::xtal::set_gc_stress);
-	//it->def_fun(Xid2(clock), &clock_);
-	it->def_fun(Xid2(open), &xtal::open)->param(2, Xid2(mode), Xid2(r));
-	it->def_fun(Xid2(interned_strings), &interned_strings);
-
-	it->def_fun(Xid2(eval), &eval);
-	it->def(Xid2(xpeg), cpp_class<xpeg::Xpeg>());
-}
-
-void bind(){
-	using namespace xpeg;
-	ClassPtr classes[4] = {cpp_class<Element>(), cpp_class<ChRange>(), cpp_class<String>(), cpp_class<Fun>()};
-	for(int i=0; i<4; ++i){
-		classes[i]->inherit(cpp_class<XpegOperator>());
-	}		
 }
 
 XTAL_BIND2(Builtin){

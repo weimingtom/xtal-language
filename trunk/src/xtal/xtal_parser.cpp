@@ -47,9 +47,9 @@ Parser::Parser(){
 	token_read_ = 0;
 	token_pos_ = 0;
 
-	ms_ = xnew<MemoryStream>();
+	ms_ = XNew<MemoryStream>();
 
-	identifier_map_ = xnew<Map>();
+	identifier_map_ = XNew<Map>();
 	identifier_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
 	identifier_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
 	identifier_map_->set_at(Xid(else), (int_t)Token::KEYWORD_ELSE);
@@ -88,7 +88,7 @@ Parser::Parser(){
 	identifier_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
 	identifier_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
 
-	identifiers_ = xnew<Array>(Token::KEYWORD_MAX);
+	identifiers_ = XNew<Array>(Token::KEYWORD_MAX);
 
 	Xfor2(key, value, identifier_map_){
 		identifiers_->set_at(ivalue(value), key);
@@ -369,11 +369,11 @@ void Parser::tokenize(){
 
 				if(ch!=0 && test_ident_first(ch)){
 					ms_->clear();
-					ms_->put_s(executor_->read()->to_s());
+					ms_->put_s(executor_->read());
 					while(test_ident_rest(executor_->peek_ascii())){
-						ms_->put_s(executor_->read()->to_s());
+						ms_->put_s(executor_->read());
 					}
-					IDPtr identifier = ms_->to_s();
+					IDPtr identifier = ms_->to_s()->intern();
 					if(const AnyPtr& key = identifier_map_->at(identifier)){
 						int_t n = ivalue(key);
 						if(n<Token::KEYWORD_MAX){
@@ -656,7 +656,7 @@ void Parser::tokenize(){
 
 			XTAL_CASE('\''){ 
 				executor_->skip();
-				IDPtr identifier = read_string('\'', '\'');
+				IDPtr identifier = read_string('\'', '\'')->intern();
 
 				if(const AnyPtr& key = identifier_map_->at(identifier)){
 					int_t n = ivalue(key);

@@ -37,8 +37,7 @@ void Thread::trampoline(void* data){
 void Thread::begin_thread(){
 	register_thread(env_);
 
-	VMachinePtr vm = vmachine();
-	vm->setup_call(0);
+	VMachinePtr vm = setup_call(0);
 	callback_->rawcall(vm);
 	vm->cleanup_call();
 	callback_ = null;

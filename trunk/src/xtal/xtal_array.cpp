@@ -81,6 +81,15 @@ void xarray::clear(){
 	size_ = 0;
 }
 
+void xarray::shrink_to_fit(){
+	if(size_!=capa_){
+		xarray temp(*this);
+		std::swap(values_, temp.values_);
+		std::swap(size_, temp.size_);
+		std::swap(capa_, temp.capa_);
+	}
+}
+
 void xarray::resize(uint_t sz){
 	if(sz<size_){
 		downsize(size_-sz);
@@ -97,7 +106,7 @@ void xarray::upsize(uint_t sz){
 
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
-			uint_t newcapa = size_+sz+capa_+3;
+			uint_t newcapa = size_+sz+capa_+1;
 			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
 			fill_undefined(&newp[size_], sz);
@@ -214,48 +223,41 @@ void xarray::upsize_unref(uint_t size){
 	fill_undefined(&values_[0], size_);
 }
 
+void visit_members(Visitor& m, const xarray& values){
+	for(uint_t i=0; i<values.size(); ++i){
+		m & values.at(i);
+	}
+}
+
 //////////////////////////////////////////////////
 
 #define XTAL_ARRAY_CALC_OFFSET(i, size, ret) \
-	if(i<0){\
-		i = size + i;\
+	do{\
 		if(i<0){\
-			throw_index_error();\
-			ret;\
+			i = size + i;\
+			if(i>=0){\
+				break;\
+			}\
 		}\
-	}\
-	else{\
-		if((uint_t)i >= size){\
-			throw_index_error();\
-			ret;\
+		else{\
+			if((uint_t)i < size){\
+				break;\
+			}\
 		}\
-	}
+		throw_index_error();\
+		ret;\
+	}while(0)
+
 
 void Array::on_visit_members(Visitor& m){
-	for(uint_t i=0; i<size(); ++i){
-		m & values_.at(i);
-	}
+	m & values_;
 }
 
 Array::Array(uint_t size)
-:values_(size){
-	value_.init_rcbase(TYPE, this);
-}
+:values_(size){}
 
 Array::Array(const AnyPtr* first, const AnyPtr* end)
-:values_(first, end){
-	value_.init_rcbase(TYPE, this);
-}
-
-Array::Array(const Array& v)
-:RefCountingBase(v), values_(v.values_){
-	value_.init_rcbase(TYPE, this);
-}
-
-Array& Array::operator =(const Array& v){
-	values_ = v.values_;
-	return *this;
-}
+:values_(first, end){}
 
 const AnyPtr& Array::op_at(int_t i){
 	XTAL_ARRAY_CALC_OFFSET(i, size(), return undefined);
@@ -295,7 +297,7 @@ void Array::pop_back(){
 
 ArrayPtr Array::slice(int_t start, int_t n){
 	if(n==0){
-		return xnew<Array>(0);
+		return XNew<Array>(0);
 	}
 
 	int_t pos = start;
@@ -306,7 +308,7 @@ ArrayPtr Array::slice(int_t start, int_t n){
 		return nul<Array>();
 	}
 
-	return xnew<Array>(values_.data()+pos, values_.data()+pos+n);
+	return XNew<Array>(values_.data()+pos, values_.data()+pos+n);
 }
 
 ArrayPtr Array::splice(int_t start, int_t n){
@@ -316,7 +318,7 @@ ArrayPtr Array::splice(int_t start, int_t n){
 }
 
 ArrayPtr Array::clone(){
-	return xnew<Array>(*this);
+	return XNew<Array>(data(), data()+size());
 }
 
 ArrayPtr Array::op_cat(const ArrayPtr& a){
@@ -325,7 +327,7 @@ ArrayPtr Array::op_cat(const ArrayPtr& a){
 	return ret;
 }
 
-ArrayPtr Array::op_cat_assign(const ArrayPtr& a){
+const ArrayPtr& Array::op_cat_assign(const ArrayPtr& a){
 	for(uint_t i = 0, size = a->size(); i<size; ++i){
 		push_back(a->at(i));
 	}
@@ -336,7 +338,7 @@ StringPtr Array::join(const StringPtr& sep){
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	if(raweq(sep, empty_string)){
 		for(uint_t i=0, sz=size(); i<sz; ++i){
-			ms->put_s(at(i)->to_s());
+			ms->put_s(at(i));
 		}
 	}
 	else{
@@ -344,7 +346,7 @@ StringPtr Array::join(const StringPtr& sep){
 			if(i!=0){
 				ms->put_s(sep);
 			}
-			ms->put_s(at(i)->to_s());
+			ms->put_s(at(i));
 		}
 	}
 	return ms->to_s();
@@ -379,15 +381,15 @@ bool Array::op_eq(const ArrayPtr& other){
 }
 
 AnyPtr Array::each(){
-	return xnew<ArrayIter>(to_smartptr(this));
+	return xnew<ArrayIter>(to_smartptr(this), &values_, false);
 }
 
 AnyPtr Array::reverse(){
-	return xnew<ArrayIter>(to_smartptr(this), true);
+	return xnew<ArrayIter>(to_smartptr(this), &values_, true);
 }
 	
 void Array::block_first(const VMachinePtr& vm){
-	SmartPtr<ArrayIter> it = xnew<ArrayIter>(to_smartptr(this));
+	SmartPtr<ArrayIter> it = XNew<ArrayIter>(to_smartptr(this), &values_);
 	it->block_next(vm);
 }
 
@@ -412,19 +414,19 @@ void Array::append(const AnyPtr& iterator){
 }
 
 void Array::throw_index_error(){
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1020")));
+	set_runtime_error(Xt("XRE1020"));
 }
 
 //////////////////////////////////////////////////
 
-ArrayIter::ArrayIter(const ArrayPtr& a, bool reverse)
-	:array_(a), index_(0), reverse_(reverse){
+ArrayIter::ArrayIter(const AnyPtr& a, xarray* v, bool reverse)
+	:ref_(a), values_(v), index_(0), reverse_(reverse){
 }
-		
+
 void ArrayIter::block_next(const VMachinePtr& vm){
 	++index_;
-	if(index_<=array_->size()){
-		vm->return_result(to_smartptr(this), array_->at(reverse_ ? array_->size()-index_ : index_-1));
+	if(index_<=values_->size()){
+		vm->return_result(to_smartptr(this), values_->at(reverse_ ? values_->size()-index_ : index_-1));
 	}
 	else{
 		vm->return_result(null, null);
@@ -433,8 +435,8 @@ void ArrayIter::block_next(const VMachinePtr& vm){
 
 bool ArrayIter::block_next_direct(AnyPtr& ret){
 	++index_;
-	if(index_<=array_->size()){
-		ret = array_->at(reverse_ ? array_->size()-index_ : index_-1);
+	if(index_<=values_->size()){
+		ret = values_->at(reverse_ ? values_->size()-index_ : index_-1);
 		return true;
 	}
 	else{
@@ -445,7 +447,10 @@ bool ArrayIter::block_next_direct(AnyPtr& ret){
 
 void ArrayIter::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
-	m & array_;
+	m & ref_;
 }
+
+XNew<Array>::XNew(uint_t size){ init(size);	}
+XNew<Array>::XNew(const AnyPtr* first, const AnyPtr* end){ init(first, end); }
 
 }

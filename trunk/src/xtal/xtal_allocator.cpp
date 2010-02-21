@@ -41,8 +41,6 @@ FixedAllocator::FixedAllocator(){
 	all_count_ = 0;
 	used_count_ = 0;
 
-	gc_count_ = 0;
-
 	cant_fit_ = false;
 }
 
@@ -69,11 +67,6 @@ void FixedAllocator::add_chunk(std::size_t block_size){
 
 void* FixedAllocator::malloc_inner(std::size_t block_size){
 	uint_t blocks = calc_size(block_size);
-
-	//gc_count_ = (gc_count_ + 1) & 0x8;
-	//if(gc_count_==0){
-		//gc();
-	//}
 
 	cant_fit_ = true;
 
@@ -175,10 +168,9 @@ void FixedAllocator::print(std::size_t block_size){
 }
 
 void SmallObjectAllocator::fit(){
-	return;
-//	for(int i=0; i<POOL_SIZE; ++i){
-//		pool_[i].fit(i+1);
-//	}	
+	for(int i=0; i<POOL_SIZE; ++i){
+		pool_[i].fit(i+1);
+	}	
 }
 
 void SmallObjectAllocator::release(){

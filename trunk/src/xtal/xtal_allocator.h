@@ -78,8 +78,6 @@ private:
 	uint_t all_count_;
 	uint_t used_count_;
 
-	uint_t gc_count_;
-
 	bool cant_fit_;
 
 public:

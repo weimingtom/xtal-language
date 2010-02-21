@@ -46,8 +46,8 @@ public:
 		rcpvalue = const_cast<RefCountingBase*>(v); 
 	}
 
-	void init_string_literal(int_t t, const StringLiteral& v){ 
-		type = t | (v.size()<<STRING_SIZE_SHIFT); 
+	void init_literal_string(const StringLiteral& v){ 
+		type = TYPE_LITERAL_STRING | (v.size()<<STRING_SIZE_SHIFT); 
 		spvalue = v.str(); 
 	}
 
@@ -62,6 +62,11 @@ public:
 		for(uint_t i=0; i<size; ++i){
 			svalue[i] = str[i];
 		}
+	}
+
+	void init_interned_string(const char_t* str, uint_t size){ 
+		type = TYPE_INTERNED_STRING | (size<<STRING_SIZE_SHIFT);
+		spvalue = str; 
 	}
 
 	void init_pointer(const void* v, uint_t i){ 
@@ -134,6 +139,7 @@ public:
 	
 	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
 		return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
+		//return rawbitxor(a, b)==0;
 	}
 
 	friend bool rawlt(const AnyRawValue& a, const AnyRawValue& b){
@@ -186,7 +192,10 @@ public:
 	* \param self 可触性に影響するオブジェクト
 	* \param inherited_too 継承元クラスからもメソッド検索をするかどうか
 	*/
-	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key = (const AnyPtr&)undefined, bool inherited_too = true, bool q = false) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, bool q) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key) const;
+	void rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too) const;
 
 	/**
 	* \brief メンバを取得する。
@@ -276,13 +285,13 @@ public:
 	* 文字列化にはto_sメソッドが呼ばれる。
 	* \return 自身を返す。
 	*/
-	AnyPtr p() const;
+	const AnyPtr& p() const;
 
 public:
 
-	AnyPtr s_save() const;
+	MapPtr s_save() const;
 
-	void s_load(const AnyPtr& v) const;
+	void s_load(const MapPtr& v) const;
 
 	AnyPtr save_instance_variables(const ClassPtr& cls) const;
 
@@ -494,12 +503,6 @@ public:
 
 private:
 
-	AnyPtr private_send(const VMachinePtr& vm, const IDPtr& primary_key) const;
-	AnyPtr private_send2(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key) const;
-	AnyPtr private_call(const VMachinePtr& vm) const;
-
-private:
-
 	// call(VMachinePtr)がコンパイルエラーとなるように
 	struct cmpitle_error{ cmpitle_error(const VMachinePtr& vm); };
 	void call(cmpitle_error) const;
@@ -511,6 +514,8 @@ private:
 protected:
 
 	struct noinit_t{};
+
+	void init(RefCountingBase* p);
 
 public: // 
 

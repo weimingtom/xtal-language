@@ -7,7 +7,7 @@ namespace xtal{
 namespace{
 
 void filelocal_check_implicit_lookup(const AnyPtr& a){
-	if(CodePtr code = ptr_cast<Code>(a->member(Xid(code)))){
+	if(const CodePtr& code = ptr_cast<Code>(a->member(Xid(code)))){
 		code->check_implicit_lookup();
 	}
 }
@@ -25,11 +25,7 @@ Code::Code()
 	set_object_temporary_name(Xid(filelocal));
 	set_object_force(500);
 
-
-	identifier_table_ = xnew<Array>();
-	value_table_ = xnew<Array>();
-
-	first_fun_ = xnew<Method>(nul<Frame>(), to_smartptr(this), (FunInfo*)0);
+	first_fun_ = XNew<Method>(nul<Frame>(), to_smartptr(this), (FunInfo*)0);
 }
 
 Code::~Code(){
@@ -45,13 +41,45 @@ void Code::generated(){
 	}
 
 	inherit(builtin());
-	def_method(Xid(inherit), &Class_inherit);
-	def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
+	
+	Class* it = this;
+	Xdef_method_alias(inherit, &Class_inherit);
+	Xdef_method_alias(check_implicit_lookup, &filelocal_check_implicit_lookup);
+	//def_method(Xid(inherit), &Class_inherit);
+	//def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
+	
 	def(Xid(filelocal), to_smartptr(this));
 
 	first_fun_->set_info(&xfun_info_table_[0]);
 }
 
+void Code::set_breakpoint(int_t lineno, bool set){
+	for(uint_t i=0, sz=lineno_table_.size(); i<sz; ++i){
+		LineNumberInfo& info = lineno_table_[i];
+		if(info.lineno==lineno){
+			if(set){
+				if(!info.breakpoint){
+					info.op = code_[info.start_pc];
+					code_[info.start_pc] = InstBreakPoint::NUMBER;
+				}
+			}
+			else{
+				if(info.breakpoint){
+					code_[info.start_pc] = info.op;
+				}
+			}
+			info.breakpoint = (int)set;
+		}
+	}
+}
+
+inst_t Code::original_op(const inst_t* pc){
+	if(LineNumberInfo* lni = compliant_lineno_info(pc)){
+		return lni->op;
+	}
+	return 0;	
+}
+	
 bool Code::set_lineno_info(uint_t line){
 	if(!lineno_table_.empty() && lineno_table_.back().lineno==line){
 		return false;
@@ -134,7 +162,7 @@ IDPtr Code::find_near_variable(const IDPtr& primary_key){
 	IDPtr pick;
 
 	if(const ClassPtr& klass = filelocal()){
-		pick = klass->find_near_member(primary_key, undefined, minv);
+		pick = klass->find_near_member2(primary_key, undefined, minv);
 	}
 
 	for(uint_t i=0; i<xfun_info_table_.size(); ++i){
@@ -155,19 +183,19 @@ IDPtr Code::find_near_variable(const IDPtr& primary_key){
 void Code::check_implicit_lookup(){
 	ArrayPtr ary;
 	for(uint_t i=0; i<implicit_table_.size(); ++i){
-		const IDPtr& id = unchecked_ptr_cast<ID>(identifier_table_->at(implicit_table_[i].id));
+		const IDPtr& id = unchecked_ptr_cast<ID>(identifier_table_.at(implicit_table_[i].id));
 		const AnyPtr& ret = member(id);
 		if(raweq(undefined, ret)){
 			if(!ary){
-				ary = xnew<Array>();
+				ary = XNew<Array>();
 			}
 
-			ary->push_back(Xf("%s(%d)")->call(filelocal_unsupported_error(to_smartptr(this), id), implicit_table_[i].lineno));
+			ary->push_back(Xf2("%s(%d)", 0, filelocal_unsupported_error(to_smartptr(this), id), 1, implicit_table_[i].lineno));
 		}
 	}
 
 	if(ary){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1030")->call(Named(Xid(name), ary))));
+		set_runtime_error(Xt1("XRE1030", name, ary));
 	}
 }
 
@@ -175,17 +203,17 @@ StringPtr Code::inspect(){
 
 #ifdef XTAL_DEBUG
 
-	MemoryStreamPtr ms(xnew<MemoryStream>());
+	MemoryStreamPtr ms = xnew<MemoryStream>();
 
 	ms->put_s(XTAL_STRING("identifier_table\n"));
-	for(uint_t i=0; i<identifier_table_->size(); ++i){
-		Xf("\t%04d:%s\n")->call(i, identifier_table_->at(i));
-		ms->put_s(Xf("\t%04d:%s\n")->call(i, identifier_table_->at(i))->to_s());
+	for(uint_t i=0; i<identifier_table_.size(); ++i){
+		Xf("\t%04d:%s\n")->call(i, identifier_table_.at(i));
+		ms->put_s(Xf("\t%04d:%s\n")->call(i, identifier_table_.at(i))->to_s());
 	}
 
 	ms->put_s(XTAL_STRING("value_table\n"));
-	for(uint_t i=0; i<value_table_->size(); ++i){
-		ms->put_s(Xf("\t%04d:%s\n")->call(i, value_table_->at(i))->to_s());
+	for(uint_t i=0; i<value_table_.size(); ++i){
+		ms->put_s(Xf("\t%04d:%s\n")->call(i, value_table_.at(i))->to_s());
 	}
 	
 	ms->put_s(XTAL_STRING("\n"));

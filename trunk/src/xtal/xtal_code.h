@@ -47,40 +47,36 @@ public:
 	* \brief シンボルテーブルからi番目のシンボルを取り出す。
 	*/
 	const IDPtr& identifier(int_t i){
-		XTAL_ASSERT(i<(int_t)identifier_table_->size());
-		return unchecked_ptr_cast<ID>(identifier_table_->at(i));
+		return unchecked_ptr_cast<ID>(identifier_table_.at(i));
 	}
 
 	const IDPtr* identifier_data(){
-		return (IDPtr*)identifier_table_->data();
+		return (IDPtr*)identifier_table_.data();
 	}
 
 	uint_t identifier_size(){
-		return identifier_table_->size();
+		return identifier_table_.size();
 	}
 
 	/**
 	* \brief 値テーブルからi番目の値を取り出す。
 	*/
 	const AnyPtr& value(int_t i){
-		XTAL_ASSERT(i<(int_t)value_table_->size());
-		return value_table_->at(i);
+		return value_table_.at(i);
 	}
 
 	/**
 	* \brief onceテーブルからi番目の値を取り出す。
 	*/
 	const AnyPtr& once_value(int_t i){
-		XTAL_ASSERT(i<(int_t)once_table_->size());
-		return once_table_->at(i);
+		return once_table_.at(i);
 	}
 
 	/**
 	* \brief onceテーブルのi番目に値を設定する。
 	*/
 	void set_once_value(int_t i, const AnyPtr& v){
-		XTAL_ASSERT(i<(int_t)once_table_->size());
-		once_table_->set_at(i, v);
+		once_table_.set_at(i, v);
 	}
 
 	const StringPtr& source_file_name(){ 
@@ -125,32 +121,9 @@ public:
 
 	IDPtr find_near_variable(const IDPtr& primary_key);
 
-	void set_breakpoint(int_t lineno, bool set = true){
-		for(uint_t i=0, sz=lineno_table_.size(); i<sz; ++i){
-			LineNumberInfo& info = lineno_table_[i];
-			if(info.lineno==lineno){
-				if(set){
-					if(!info.breakpoint){
-						info.op = code_[info.start_pc];
-						code_[info.start_pc] = InstBreakPoint::NUMBER;
-					}
-				}
-				else{
-					if(info.breakpoint){
-						code_[info.start_pc] = info.op;
-					}
-				}
-				info.breakpoint = (int)set;
-			}
-		}
-	}
+	void set_breakpoint(int_t lineno, bool set = true);
 
-	inst_t original_op(const inst_t* pc){
-		if(LineNumberInfo* lni = compliant_lineno_info(pc)){
-			return lni->op;
-		}
-		return 0;
-	}
+	inst_t original_op(const inst_t* pc);
 
 	void on_visit_members(Visitor& m){
 		Class::on_visit_members(m);
@@ -172,9 +145,10 @@ private:
 	typedef PODArrayList<inst_t> code_t;
 	code_t code_;
 
-	ArrayPtr identifier_table_;
-	ArrayPtr value_table_;
-	ArrayPtr once_table_;
+	xarray identifier_table_;
+	xarray value_table_;
+	xarray once_table_;
+	
 	StringPtr source_file_name_;
 	MethodPtr first_fun_;
 

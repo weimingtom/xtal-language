@@ -36,7 +36,7 @@ public:
 
 	virtual int_t ch_len(char_t lead){ return 1; }
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
-	virtual StringPtr ch_inc(const char_t* data, int_t data_size);
+	virtual int_t ch_inc(const char_t* data, int_t data_size, char_t* dest, int_t dest_size);
 	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
 };
 
@@ -294,7 +294,7 @@ void set_gc_stress(bool b);
 
 uint_t alive_object_count();
 
-AnyPtr alive_object(uint_t i);
+const AnyPtr& alive_object(uint_t i);
 
 /////////////////////////////////////////////////////
 
@@ -309,13 +309,9 @@ const ClassPtr& cpp_class(int_t index);
 * \brief クラスTに対応するC++のクラスのクラスオブジェクトを返す。
 */
 template<class T>
-const ClassPtr& cpp_class(){
-	return cpp_class(CppClassSymbol<T>::value);
+inline const ClassPtr& cpp_class(){
+	return cpp_class(&CppClassSymbol<T>::value);
 }
-
-void bind_all();
-
-void def_all_cpp_classes();
 
 /////////////////////////////////////////////////////
 
@@ -323,14 +319,14 @@ void def_all_cpp_classes();
 * \internal
 * \brief T型のオブジェクトを環境から取り出す
 */
-const AnyPtr& cpp_var(CppVarSymbolData* key);
+const AnyPtr& cpp_value(CppValueSymbolData* key);
 
 /**
 * \brief T型のオブジェクトを環境から取り出す
 */
 template<class T>
-const SmartPtr<T>& cpp_var(){
-	return unchecked_ptr_cast<T>(cpp_var(&CppVarSymbol<T>::value));
+const SmartPtr<T>& cpp_value(){
+	return unchecked_ptr_cast<T>(cpp_value(&CppValueSymbol<T>::value));
 }
 
 /////////////////////////////////////////////////////
@@ -404,11 +400,6 @@ void vmachine_swap_temp();
 const ClassPtr& builtin();
 
 /**
-* \brief cppオブジェクトを返す
-*/
-const ClassPtr& cpp();
-
-/**
 * \brief libオブジェクトを返す
 */
 const LibPtr& lib();
@@ -449,33 +440,48 @@ const VMachinePtr& setup_call(int_t need_result_count);
 // @}
 
 /**
-* \internal
 * \brief 文字列をインターン済み文字列に変換する
 */
-const IDPtr& intern(const char_t* str);
+IDPtr intern(const char_t* str);
 
 /**
-* \internal
-* \brief 文字列をインターン済み文字列に変換する
+* \brief NUL終端のC文字列をインターン済み文字列に変換する
+*
+* \param str NULL終端文字列
 */
-const IDPtr& intern(const char_t* str, uint_t data_size);
+IDPtr intern(const char8_t* str);
 
 /**
-* \internal
-* \brief 文字列リテラルをインターン済み文字列に変換する
+* \brief C文字列からsize分の長さを取り出しインターン済み文字列に変換する
+*
 */
-const IDPtr& intern(const StringLiteral& str);
+IDPtr intern(const char_t* str, uint_t size);
 
 /**
-* \internal
-* \brief 文字列リテラルをインターン済み文字列に変換する
+* \brief C文字列リテラルからインターン済み文字列に変換する
+*
 */
-const IDPtr& intern(const StringLiteral2& str);
+IDPtr intern(const StringLiteral& str);
 
 /**
-* \brief インターン済み文字列を列挙する
+* \brief beginからlastまでの文字列でインターン済み文字列に変換する
+*
+* [begin, last)
 */
-AnyPtr interned_strings();
+IDPtr intern(const char_t* begin, const char_t* last);
+
+/**
+* \brief Stringからインターン済み文字列に変換する
+*
+*/
+IDPtr intern(const StringPtr& name);		
+
+
+struct StringConv{
+	XMallocGuard memory;
+	StringConv(const char8_t* str);
+};
+
 
 /**
 * \brief 環境をロックする
@@ -529,7 +535,7 @@ int_t ch_len2(const char_t* str);
 *
 * 例えば a を渡した場合、b が返る
 */
-StringPtr ch_inc(const char_t* data, int_t data_size);
+int_t ch_inc(const char_t* data, int_t data_size, char_t* dest, int_t dest_size);
 
 /**
 * \internal

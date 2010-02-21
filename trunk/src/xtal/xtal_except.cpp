@@ -9,12 +9,11 @@ Exception::Exception(const AnyPtr& message){
 
 void Exception::initialize(const AnyPtr& message){
 	message_ = message->to_s();
-	backtrace_ = xnew<Array>();
+	backtrace_ = XNew<Array>();
 }
 
 void Exception::append_backtrace(const AnyPtr& file, int_t line, const AnyPtr& function_name){
-	backtrace_->push_back(Xf("\t%(file)s:%(line)d: in %(function_name)s")->call(
-		Named(Xid(file), file), Named(Xid(line), line), Named(Xid(function_name), function_name)));
+	backtrace_->push_back(Xf3("\t%s:%d: in %s", 0, file, 1, line, 2, function_name));
 }
 
 StringPtr Exception::to_s(){
@@ -27,25 +26,7 @@ StringPtr Exception::to_s(){
 	return mm->to_s();
 }
 
-AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to){
-	return cpp_class<CastError>()->call(Xt("XRE1004")->call(
-		Named(Xid(type), from->get_class()->object_name()), Named(Xid(required), to)
-	));
-}
-
-AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type){
-	return cpp_class<ArgumentError>()->call(Xt("XRE1001")->call(
-		Named(Xid(object), object), 
-		Named(Xid(no), no),
-		Named(Xid(required), required->object_name()),
-		Named(Xid(type), type->object_name())
-	));
-}
-
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key){
-	if(!primary_key){
-		return null;
-	}
 
 #ifdef XTAL_DEBUG
 	IDPtr pick;
@@ -58,51 +39,82 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 
 	if(pick){
 		if(rawne(secondary_key, undefined)){
-			return cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
-				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key)),
+			return (cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
+				Named(Xid(object), Xf3("%s::%s#%s", 0, target->object_name(), 1, primary_key, 2, secondary_key)),
 				Named(Xid(pick), pick)
-			));	
+			)));
 		}
 		else{
-			return cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
-				Named(Xid(object), Xf("%s::%s")->call(target->object_name(), primary_key)),
+			return (cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
+				Named(Xid(object), Xf2("%s::%s", 0, target->object_name(), 1, primary_key)),
 				Named(Xid(pick), pick)
-			));	
+			)));
 		}
 	}
 #endif
 
-	{
-		if(rawne(secondary_key, undefined)){
-			return cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
-				Named(Xid(object), Xf("%s::%s#%s")->call(target->object_name(), primary_key, secondary_key))
-			));
-		}
-		else{
-			return cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
-				Named(Xid(object), Xf("%s::%s")->call(target->object_name(), primary_key))
-			));		
-		}
+	if(!is_undefined(secondary_key)){
+		return (cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
+			Named(Xid(object), Xf3("%s::%s#%s", 0, target->object_name(), 1, primary_key, 2, secondary_key))
+		)));
+	}
+	else{
+		return (cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
+			Named(Xid(object), Xf2("%s::%s", 0, target->object_name(), 1, primary_key))
+		)));
 	}
 }
 
 AnyPtr filelocal_unsupported_error(const CodePtr& code, const IDPtr& primary_key){
-	if(!primary_key){
-		return null;
-	}
-
 	IDPtr pick = code->find_near_variable(primary_key);
 
 	if(pick){
-		return cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
-			Named(Xid(object), primary_key),
-			Named(Xid(pick), pick)
-		));	
+		return (cpp_class<UnsupportedError>()->call(Xt2("XRE1021", object, primary_key, pick, pick)));	
 	}
 	else{
-		return cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
-			Named(Xid(object), primary_key)
-		));	
+		return (cpp_class<UnsupportedError>()->call(Xt1("XRE1015", object, primary_key)));	
+	}	
+}
+
+void set_unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key, const VMachinePtr& vm){
+	vm->set_except(unsupported_error(target, primary_key, secondary_key));
+}
+
+void set_runtime_error(const AnyPtr& arg, const VMachinePtr& vm){
+	vm->set_except(cpp_class<RuntimeError>()->call(arg));
+}
+
+void set_argument_type_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type, const VMachinePtr& vm){
+	vm->set_except(cpp_class<ArgumentError>()->call(
+		Xt4("XRE1001", 
+			object, object, 
+			no, no, required, 
+			required->object_name(), 
+			type, type->object_name())));
+}
+
+void set_argument_num_error(const AnyPtr& funtion_name, int_t n, int_t min_count, int_t max_count, const VMachinePtr& vm){
+	if(min_count==0 && max_count==0){
+		vm->set_except(cpp_class<ArgumentError>()->call(Xt2("XRE1007", object, funtion_name, value, n)));
+	}
+	else if(max_count<0){
+		vm->set_except(cpp_class<ArgumentError>()->call(
+			Xt3("XRE1005",
+				object, funtion_name,
+				min, min_count,
+				value, n
+			)
+		));
+	}
+	else{
+		vm->set_except(cpp_class<ArgumentError>()->call(
+			Xt4("XRE1006", 
+				object, funtion_name,
+				min, min_count,
+				max, max_count,
+				value, n
+			)
+		));
 	}
 }
 

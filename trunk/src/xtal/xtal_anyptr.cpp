@@ -43,68 +43,58 @@ void xmemset(int_t* s, int_t c, size_t n){
 }
 */
 
-SmartPtr<Any>::SmartPtr(const char_t* str)
-	{
+SmartPtr<Any>::SmartPtr(const char_t* str){
 	value_.init_primitive(TYPE_NULL);
-	*this = xnew<String>(str);
+	*this = XNew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const char8_t* str)	
-	{
+SmartPtr<Any>::SmartPtr(const char8_t* str){
 	value_.init_primitive(TYPE_NULL);
-	*this = xnew<String>(str);
+	*this = XNew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const StringLiteral& str)	
-	{
+SmartPtr<Any>::SmartPtr(const StringLiteral& str){
 	value_.init_primitive(TYPE_NULL);
-	*this = xnew<String>(str);
+	*this = XNew<String>(str);
 }
 
-void SmartPtr<Any>::init_smartptr(Base* p){
-	value_ = p->value_;
-	p->set_class(cpp_class(*p->virtual_members()->cpp_class_symbol_data));
-	register_gc(p);
-}
-
-void SmartPtr<Any>::set_unknown_pointer(const Base* p, TypeIntType<INHERITED_BASE>){
-	value_ = p->value_;
+void SmartPtr<Any>::set_unknown_pointer(const Base* p){
+	copy_any(*this, *p);
 	inc_ref_count_force(*this);
 }
 
-void SmartPtr<Any>::set_unknown_pointer(const RefCountingBase* p, TypeIntType<INHERITED_RCBASE>){
-	value_ = p->value_;
+void SmartPtr<Any>::set_unknown_pointer(const RefCountingBase* p){
+	copy_any(*this, *p);
 	inc_ref_count_force(*this);
 }
 
-void SmartPtr<Any>::set_unknown_pointer(const Any* p, TypeIntType<INHERITED_ANY>){
-	*static_cast<Any*>(this) = *p;
-}
-
-void SmartPtr<Any>::set_unknown_pointer(const AnyPtr* p, TypeIntType<INHERITED_ANYPTR>){
-	*static_cast<Any*>(this) = *p;
+void SmartPtr<Any>::set_unknown_pointer(const Any* p){
+	copy_any(*this, *p);
 	inc_ref_count_force(*this);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_BASE>& m)
-	{
-	init_smartptr(m.pvalue);
+void SmartPtr<Any>::set_unknown_pointer(const AnyPtr* p){
+	copy_any(*this, *p);
+	inc_ref_count_force(*this);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_RCBASE>& m)
-	{
-	value_ = m.pvalue->value_;
-	register_gc(m.pvalue);
+void SmartPtr<Any>::init(const Any& a){
+	copy_any(*this, a);
+	inc_ref_count_force(*this);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_ANY>& m)
-	{
-	*(Any*)this = (Any&)m.value;
+void SmartPtr<Any>::unref_init(const Any& a){
+	dec_ref_count_force(*this);
+	copy_any(*this, a);
+	inc_ref_count_force(*this);
 }
 
-SmartPtr<Any>::SmartPtr(const XNewXBase<INHERITED_OTHER>& m)
-	{
-	init_smartptr(m.pvalue);
+void SmartPtr<Any>::ref(){
+	inc_ref_count_force(*this);
+}
+
+void SmartPtr<Any>::unref(){
+	dec_ref_count_force(*this);
 }
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
@@ -129,11 +119,6 @@ SmartPtr<Any>::~SmartPtr(){
 	dec_ref_count_force(*this);
 }	
 
-void SmartPtr<Any>::assign_direct(const SmartPtr<Any>& a){
-	copy_any(*this, a);
-	inc_ref_count_force(*this);
-}
-
 void visit_members(Visitor& m, const Any& p){
 	if(type(p)>=TYPE_BASE){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
@@ -143,31 +128,21 @@ void visit_members(Visitor& m, const Any& p){
 
 //////////////////////////////
 
-CppClassSymbolData::CppClassSymbolData(){
-	static unsigned int counter = 0;
-	static CppClassSymbolData* prev_data = 0;
-	value = counter++;
-	
-	prev = prev_data;
-	prebind = 0;
-	for(int_t i=0; i<BIND; ++i){
-		bind[i] = 0;
-	}
-	prev_data = this;
+void CppClassSymbolData::init_bind0(XTAL_bind_t b, const char_t* xtname){
+	flags |= FLAG_NAME | FLAG_BIND0;
+	prebind = b;
+	name = xtname;
 }
 
-void BindBase::XTAL_set(BindBase*& dest, StringLiteral& name, const StringLiteral& given){
-	dest = this;
-	name = given;
+void CppClassSymbolData::init_bind1(XTAL_bind_t b, const char_t* xtname){
+	flags |= FLAG_NAME | FLAG_BIND1;
+	bind[0] = b;
+	name = xtname;
 }
 
-CppVarSymbolData::CppVarSymbolData(bind_var_fun_t fun){
-	static unsigned int counter = 1;
-	static CppVarSymbolData* prev_data = 0;
-	value = counter++;
-	prev = prev_data;
-	maker = fun;
-	prev_data = this;
+void CppClassSymbolData::init_bind2(XTAL_bind_t b, const char_t* xtname){
+	flags |= FLAG_BIND2;
+	bind[1] = b;
 }
 
 }

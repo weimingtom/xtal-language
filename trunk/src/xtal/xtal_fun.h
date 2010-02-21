@@ -247,7 +247,7 @@ public:
 	/**
 	* \brief ファイバーを強制停止し、初期状態に戻す
 	*/
-	AnyPtr reset();
+	const FiberPtr& reset();
 
 	void call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result);
 
@@ -284,10 +284,6 @@ protected:
 	AnyPtr fun_;
 	AnyPtr this_;
 };
-
-inline AnyPtr bind_this(const AnyPtr& fun, const AnyPtr& athis){
-	return xnew<BindedThis>(fun, athis);
-}
 
 }
 

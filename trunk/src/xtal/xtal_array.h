@@ -161,6 +161,8 @@ public:
 	*/
 	void clear();
 
+	void shrink_to_fit();
+
 public:
 
 	void on_visit_members(Visitor& m);
@@ -260,6 +262,8 @@ protected:
 	uint_t capa_;
 };
 
+void visit_members(Visitor& m, const xarray& values);
+
 
 /**
 * \xbind lib::builtin
@@ -278,15 +282,7 @@ public:
 
 	Array(const AnyPtr* first, const AnyPtr* end);
 
-	/**
-	* \brief コピーコンストラクタを備える
-	*/
-	Array(const Array& v);
-
-	/**
-	* \brief 代入演算子を備える
-	*/
-	Array& operator =(const Array& v);
+public:
 
 	/**
 	* \xbind
@@ -442,7 +438,7 @@ public:
 	/**
 	* \brief 自身を連結し、自身を返す
 	*/
-	ArrayPtr op_cat_assign(const ArrayPtr& a);
+	const ArrayPtr& op_cat_assign(const ArrayPtr& a);
 	
 	/**
 	* \xbind
@@ -558,12 +554,15 @@ protected:
 	void throw_index_error();
 
 	xarray values_;
+
+private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(Array);
 };
 
 class ArrayIter : public Base{
 public:
 
-	ArrayIter(const ArrayPtr& a, bool reverse = false);
+	ArrayIter(const AnyPtr& a, xarray* v, bool reverse = false);
 			
 	void block_next(const VMachinePtr& vm);
 
@@ -574,9 +573,16 @@ public:
 	void on_visit_members(Visitor& m);
 
 private:
-	ArrayPtr array_;
+	AnyPtr ref_;
+	xarray* values_;
 	uint_t index_;
 	bool reverse_;
+};
+
+template<>
+struct XNew<Array> : XXNew<Array>{
+	XNew(uint_t size = 0);
+	XNew(const AnyPtr* first, const AnyPtr* end);
 };
 
 }

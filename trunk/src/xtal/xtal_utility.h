@@ -155,18 +155,16 @@ private:
 
 #ifdef XTAL_USE_WCHAR
 #	define XTAL_L(x) L##x
-#	define XTAL_STRING(x) ::xtal::StringLiteral(L##x)
-#	define XTAL_STRING2(x) ::xtal::StringLiteral2(L##x)
+#	define XTAL_STRING(x) (*(::xtal::StringLiteral*)(L##x))
 #else 
 #	define XTAL_L(x) x
-#	define XTAL_STRING(x) ::xtal::StringLiteral(x)
-#	define XTAL_STRING2(x) ::xtal::StringLiteral2(x)
+#	define XTAL_STRING(x) (*(::xtal::StringLiteral*)(x))
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
-#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("I64") : XTAL_STRING(""))
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_L("I64") : XTAL_L(""))
 #else
-#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_STRING("ll") : XTAL_STRING(""))
+#	define XTAL_INT_FMT (sizeof(int_t)==8 ? XTAL_L("ll") : XTAL_L(""))
 #endif
 
 #ifdef XTAL_USE_WCHAR
@@ -614,7 +612,6 @@ class DoubleDispatchMethod;
 class DoubleDispatchFun;
 class Values;
 class Exception;
-class Format;
 class Text;
 class TreeNode;
 
@@ -651,13 +648,11 @@ typedef SmartPtr<DoubleDispatchFun> DoubleDispatchFunPtr;
 typedef SmartPtr<Values> ValuesPtr;
 typedef SmartPtr<Exception> ExceptionPtr;
 typedef SmartPtr<Text> TextPtr;
-typedef SmartPtr<Format> FormatPtr;
 typedef SmartPtr<TreeNode> TreeNodePtr;
 
 class Base;
 class RefCountingBase;
 class Any;
-class GCObserver;
 
 class Int;
 class Float;
@@ -691,9 +686,6 @@ struct CppClassSymbolData;
 template<class T>
 struct CppClassSymbol;
 
-template<class T>
-inline SmartPtr<T> xnew();
-
 struct param_types_holder_n;
 struct VirtualMembers;
 
@@ -721,97 +713,60 @@ template<class T> struct InheritedN<T*> : InheritedN<T>{};
 template<class T> struct InheritedN<const T> : InheritedN<T>{};
 template<class T> struct InheritedN<volatile T> : InheritedN<T>{};
 
+
+template<class T, int N = -1>
+struct InheritedCast;
+
+template<class T>
+struct InheritedCast<T, -1> : InheritedCast<T, InheritedN<T>::value>{};
+
+template<class T>
+struct InheritedCast<T, INHERITED_RCBASE>{
+	static const RefCountingBase* cast(const T* p){ return p; }
+};
+
+template<class T>
+struct InheritedCast<T, INHERITED_BASE>{
+	static const Base* cast(const T* p){ return p; }
+};
+
+template<class T>
+struct InheritedCast<T, INHERITED_ANY>{
+	static const Any* cast(const T* p){ return p; }
+};
+
+template<class T>
+struct InheritedCast<T, INHERITED_ANYPTR>{
+	static const AnyPtr* cast(const T* p){ return p; }
+};
+
+template<class T>
+struct InheritedCast<T, INHERITED_OTHER>{
+	static const T* cast(const T* p){ return p; }
+};
+
 ////////////////////////////////////////////////
 
 const uint_t hash_m = 0x5bd1e995;
 const uint_t hash_seed = 0xdeadbeef;
 const uint_t hash_r = 24;
 
-template <uint_t N>
-inline uint_t hashv(const char_t (&data)[N], uint_t h){
-	uint_t k = data[0];
-	k |= data[1] << 8;
-	k |= data[2] << 16;
-	k |= data[3] << 24;
+uint_t string_hashcode(const char_t* str, uint_t size);
+void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash);
+uint_t string_length(const char_t* str);
+uint_t string_data_size(const char_t* str);
+int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
+void string_copy(char_t* a, const char_t* b, uint_t size);
+bool string_is_ch(const char_t* str, uint_t size);
 
-	k *= hash_m; 
-	k ^= k >> hash_r; 
-	k *= hash_m;
-
-	h *= hash_m;
-	h ^= k;
-	return hashv(reinterpret_cast<const char_t (&)[N-4]>(data[4]), h);
-}
-
-template<>
-inline uint_t hashv<4>(const char_t (&data)[4], uint_t h){
-	return (h ^ (data[2]<<16) ^ (data[1]<<8) ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<3>(const char_t (&data)[3], uint_t h){
-	return (h ^ (data[1]<<8) ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<2>(const char_t (&data)[2], uint_t h){
-	return (h ^ data[0])*hash_m;
-}
-
-template<>
-inline uint_t hashv<1>(const char_t (&data)[1], uint_t h){
-	return h;
-}
-
-template <uint_t N>
-inline uint_t hash(const char_t (&data)[N]){
-	uint_t h = hashv(data, hash_seed ^ (N-1));
-	h ^= h >> 13;
-	h *= hash_m;
-	h ^= h >> 15;
-	return h;
-}
-
-class StringLiteral{
-public:
-
-	StringLiteral()		
-		:str_(0), size_(0){}
-
-	StringLiteral(const char_t* str, uint_t size)
-		:str_(str), size_(size){}
-
-	template<int N>
-	explicit StringLiteral(const char_t (&str)[N])
-		:str_(str), size_(N-1){
-	}
-
+struct StringLiteral{
 	const char_t* str() const{
-		return str_;
+		return (char_t*)this;
 	}
 
 	uint_t size() const{
-		return size_;
+		return string_data_size((char_t*)this);
 	}
-
-private:
-	const char_t* str_;
-	uint_t size_;
-};
-
-class StringLiteral2 : public StringLiteral{
-public:
-	template<int N>
-	explicit StringLiteral2(const char_t (&str)[N])
-		:StringLiteral(str), hash_(hash(str)){
-	}
-
-	uint_t hashcode() const{
-		return hash_;
-	}
-
-private:
-	uint_t hash_;
 };
 
 //
@@ -836,8 +791,8 @@ enum PrimitiveType{
 	TYPE_IMMEDIATE_VALUE,
 	
 	TYPE_SMALL_STRING,
-	TYPE_STRING_LITERAL,
-	TYPE_ID_LITERAL,
+	TYPE_LITERAL_STRING,
+	TYPE_INTERNED_STRING,
 
 	TYPE_POINTER,
 

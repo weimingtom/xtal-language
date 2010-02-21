@@ -650,7 +650,7 @@ class Stack{
 	StackBase impl_;
 	
 	static void ctor(void* p){
-		new(p) T();
+		new(p) T;
 	}
 	
 	static void copy_ctor(void* p, const void* q){

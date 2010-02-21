@@ -24,11 +24,11 @@ public:
 		registered_thread_ = false;
 		thread_count_ = 1;
 
-		mutex_ = xnew<Mutex>(); 
+		mutex_ = XNew<Mutex>(); 
 
 		thread_enabled_ = true;
 
-		temp_ = xnew<VMachine>();
+		temp_ = XNew<VMachine>();
 
 		register_vmachine();
 		xlock();

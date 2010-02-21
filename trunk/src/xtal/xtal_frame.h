@@ -125,6 +125,8 @@ private:
 	CodePtr code_;
 	ScopeInfo* scope_info_;
 	
+protected:
+
 	xarray members_;
 
 public:
@@ -136,6 +138,14 @@ public:
 		friend void visit_members(Visitor& m, Key& a){
 			m & a.primary_key & a.secondary_key;
 		}
+	};
+
+	struct RKey{
+		const IDPtr& primary_key;
+		const AnyPtr& secondary_key;
+
+		RKey(const IDPtr& primary_key, const AnyPtr& secondary_key)
+			:primary_key(primary_key), secondary_key(secondary_key){}
 	};
 
 	enum{
@@ -159,11 +169,13 @@ public:
 	};
 
 	struct Fun{
-		static uint_t hash(const Key& key){
+		template<class NKey>
+		static uint_t hash(const NKey& key){
 			return (rawvalue(key.primary_key).u()>>3) ^ rawvalue(key.secondary_key).u();
 		}
 
-		static bool eq(const Key& a, const Key& b){
+		template<class LKey, class RKey>
+		static bool eq(const LKey& a, const RKey& b){
 			return raweq(a.primary_key, b.primary_key) && raweq(a.secondary_key, b.secondary_key);
 		}
 	};
@@ -172,6 +184,8 @@ protected:
 
 	typedef Hashtable<Key, Value, Fun> map_t; 
 	map_t* map_members_;
+
+	map_t::iterator find(const IDPtr& primary_key, const AnyPtr& secondary_key);
 
 	bool orphan_;
 	bool initialized_members_;
@@ -185,9 +199,7 @@ public:
 		m & outer_ & code_;
 
 		if(orphan_){
-			for(uint_t i=0; i<members_.size(); ++i){
-				m & members_.at(i);
-			}
+			m & members_;
 		}
 
 		if(map_members_){

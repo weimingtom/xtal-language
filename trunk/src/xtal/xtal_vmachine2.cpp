@@ -3,6 +3,9 @@
 
 namespace xtal{
 
+void register_gc_vm(VMachine* p);
+void unregister_gc_vm(VMachine* p);
+
 VMachine::VMachine(){
 	id_ = id_op_list();
 
@@ -24,9 +27,13 @@ VMachine::VMachine(){
 
 	static uint_t dummy = 0;
 	hook_setting_bit_ = &dummy;
+
+	register_gc_vm(this);
 }
 
 VMachine::~VMachine(){
+	unregister_gc_vm(this);
+
 	variables_.clear_unref();
 	fun_frames_.resize(fun_frames_.capacity());
 	for(int_t i=0, size=fun_frames_.size(); i<size; ++i){
@@ -205,7 +212,7 @@ const AnyPtr& VMachine::result(int_t pos){
 	return local_variable(result_base_+pos);
 }
 	
-AnyPtr VMachine::result_and_cleanup_call(int_t pos){
+const AnyPtr& VMachine::result_and_cleanup_call(int_t pos){
 	execute();
 	ff().processed = 0;
 	return local_variable(result_base_+pos);
@@ -311,8 +318,11 @@ void VMachine::return_result(const AnyPtr& value1){
 	XTAL_ASSERT(!processed());
 	FunFrame& f = ff();
 
-	stack_.push(value1);
-	f.result_count += 1;
+	if(!is_undefined(value1)){
+		stack_.push(value1);
+		f.result_count += 1;
+	}
+
 	pop_ff();
 }
 	
@@ -365,6 +375,7 @@ void VMachine::return_result_mv(const ValuesPtr& values){
 void VMachine::return_result(const char_t* s){ return_result(xnew<String>(s)); }
 void VMachine::return_result(const char8_t* s){ return_result(xnew<String>(s)); }
 void VMachine::return_result(const StringLiteral& s){ return_result(xnew<String>(s)); }
+void VMachine::return_result(const IDPtr& s){ return_result((AnyPtr&)s); }
 
 void VMachine::return_result(char v){ return_result(Int(v)); }
 void VMachine::return_result(signed char v){ return_result(Int(v)); }
@@ -475,6 +486,56 @@ void VMachine::exit_fiber(){
 	execute_inner(&throw_code_);
 
 	reset();
+}
+
+const inst_t* VMachine::check_accessibility(CallState& call_state, int_t accessibility){
+	if(accessibility & KIND_PRIVATE){
+		if(rawne(ap(call_state.self)->get_class(), ap(call_state.cls))){
+			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt4("XRE1017",
+				object, ap(call_state.cls)->object_name(), 
+				name, ap(call_state.primary), 
+				secondary_key, ap(call_state.secondary), 
+				accessibility, Xid(private)))
+			);
+		}
+	}
+	else if(accessibility & KIND_PROTECTED){
+		if(!ap(call_state.self)->is(ap(call_state.cls))){
+			return push_except(call_state.pc, cpp_class<AccessibilityError>()->call(Xt4("XRE1017",
+				object, ap(call_state.cls)->object_name(), 
+				primary_key, ap(call_state.primary), 
+				secondary_key, ap(call_state.secondary), 
+				accessibility, Xid(protected)))
+			);
+		}
+	}
+	return 0;
+}
+
+void VMachine::push_args(const ArgumentsPtr& args, int_t stack_base, int_t ordered_arg_count, int_t named_arg_count){
+	if(!named_arg_count){
+		for(uint_t i = 0; i<args->ordered_size(); ++i){
+			set_local_variable(stack_base+ordered_arg_count+i, args->op_at_int(i));
+		}
+	}
+	else{
+		int_t usize = args->ordered_size();
+		int_t offset = named_arg_count*2;
+		for(int_t i = 0; i<offset; ++i){
+			set_local_variable(stack_base+ordered_arg_count+i+usize, local_variable(ordered_arg_count+i));
+		}
+
+		for(int_t i = 0; i<usize; ++i){
+			set_local_variable(stack_base+ordered_arg_count+i, args->op_at_int(i));
+		}
+	}
+
+	int_t i=0;
+	Xfor2(key, value, args->named_arguments()){
+		set_local_variable(stack_base+ordered_arg_count+named_arg_count*2+i*2+0, key);
+		set_local_variable(stack_base+ordered_arg_count+named_arg_count*2+i*2+1, value);
+		++i;
+	}
 }
 
 void VMachine::flatten_args(){
@@ -601,7 +662,7 @@ void VMachine::set_except_0(const Any& e){
 	
 void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	if(!debug_info_){ 
-		debug_info_ = xnew<debug::HookInfo>(); 
+		debug_info_ = XNew<debug::HookInfo>(); 
 	}
 
 	debug_info_->set_kind(kind);
@@ -669,7 +730,7 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 		for(int_t i=0; i<scope_upper - scope_lower; ++i){
 			frame = scopes_.reverse_at(scope_upper-i-1).frame;
 			const AnyPtr& ret = frame->member(var);
-			if(rawne(ret, undefined)){
+			if(!is_undefined(ret)){
 				return ret;
 			}
 		}
@@ -677,7 +738,7 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 		frame = fun_frames_[call_n]->outer();
 		while(frame){
 			const AnyPtr& ret = frame->member(var);
-			if(rawne(ret, undefined)){
+			if(!is_undefined(ret)){
 				return ret;
 			}
 
@@ -686,7 +747,7 @@ AnyPtr VMachine::eval_local_variable(const IDPtr& var, uint_t call_n){
 
 		if(fun_frames_[call_n]->fun()){
 			const AnyPtr& ret = fun_frames_[call_n]->code()->member(var);
-			if(rawne(ret, undefined)){
+			if(!is_undefined(ret)){
 				return ret;
 			}
 		}
@@ -914,7 +975,7 @@ const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
 }
 
 void VMachine::on_visit_members(Visitor& m){
-	GCObserver::on_visit_members(m);
+	Base::on_visit_members(m);
 	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
 	for(int_t i=0, size=stack_.size(); i<size; ++i){
@@ -961,7 +1022,7 @@ void VMachine::add_ref_count_members(int_t n){
 	}
 }
 
-void VMachine::on_gc_signal(int_t flag){
+void VMachine::gc_signal(int_t flag){
 	if(flag==0){
 		for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
 			if(FunFrame* f = fun_frames_.reverse_at_unchecked(i)){
@@ -970,8 +1031,15 @@ void VMachine::on_gc_signal(int_t flag){
 			}
 		}
 
-		for(int_t i=(int)variables_top()+128, size=(int)variables_.size(); i<size; ++i){
-			(Any&)variables_.at(i) = null;
+		if(fun_frames_.size()==1){
+			for(int_t i=0, size=(int_t)variables_.size(); i<size; ++i){
+				(Any&)variables_.at(i) = null;
+			}
+		}
+		else{
+			for(int_t i=(int_t)variables_top()+128, size=(int_t)variables_.size(); i<size; ++i){
+				(Any&)variables_.at(i) = null;
+			}
 		}
 
 		add_ref_count_members(1);

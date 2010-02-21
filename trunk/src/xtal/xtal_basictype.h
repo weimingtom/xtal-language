@@ -37,6 +37,7 @@ public:
 */
 class Int : public Any{
 public:
+	typedef int_t value_type;
 
 	Int(int_t val = 0){ 
 		value_.init_int(val); 
@@ -56,13 +57,13 @@ public:
 		return Any::to_s();
 	}
 
-	bool op_in(const IntRangePtr& range);
+	bool op_in_IntRange(const IntRangePtr& range);
 
-	bool op_in(const FloatRangePtr& range);
+	bool op_in_FloatRange(const FloatRangePtr& range);
 
-	IntRangePtr op_range(int_t right, int_t kind);
+	IntRangePtr op_range_Int(int_t right, int_t kind);
 
-	FloatRangePtr op_range(float_t right, int_t kind);
+	FloatRangePtr op_range_Float(float_t right, int_t kind);
 
 public:
 
@@ -77,6 +78,7 @@ public:
 */
 class Float : public Any{
 public:
+	typedef float_t value_type;
 
 	Float(float_t val = 0){ 
 		value_.init_float(val); 
@@ -96,13 +98,13 @@ public:
 		return Any::to_s();
 	}
 
-	bool op_in(const IntRangePtr& range);
+	bool op_in_IntRange(const IntRangePtr& range);
 
-	bool op_in(const FloatRangePtr& range);
+	bool op_in_FloatRange(const FloatRangePtr& range);
 
-	FloatRangePtr op_range(int_t right, int_t kind);
+	FloatRangePtr op_range_Int(int_t right, int_t kind);
 
-	FloatRangePtr op_range(float_t right, int_t kind);
+	FloatRangePtr op_range_Float(float_t right, int_t kind);
 
 public:
 
@@ -154,6 +156,8 @@ public:
 */
 class Bool : public Any{
 public: 
+	typedef bool value_type;
+
 	Bool(bool b)
 		{ value_.init_bool(b); } 
 
@@ -335,9 +339,7 @@ public:
 
 	Values(const AnyPtr& head, const ValuesPtr& tail);
 
-	~Values(){
-
-	}
+	~Values();
 
 	const AnyPtr& head(){
 		return head_;
@@ -371,29 +373,20 @@ public:
 
 public:
 
-	void set(const AnyPtr& head, const ValuesPtr& tail = null){
-		head_ = head;
-		tail_ = tail;
-	}
-
+	void set(const AnyPtr& head, const ValuesPtr& tail = null);
+	
 private:
 	AnyPtr head_;
 	ValuesPtr tail_;
 };
 
-inline ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
-	return xnew<Values>(v1, xnew<Values>(v2));
-}
+ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2);
 
 class HaveParent{
 public:
 
 	HaveParent()
 		:parent_(0){}
-
-	HaveParent(const HaveParent& a);
-
-	HaveParent& operator=(const HaveParent& a);
 
 	~HaveParent();
 
@@ -402,10 +395,10 @@ public:
 	void set_object_parent(const ClassPtr& parent);
 
 	void visit_members(Visitor& m);
-
 private:
-
 	Class* parent_;
+private:
+	XTAL_DISALLOW_COPY_AND_ASSIGN(HaveParent);
 };
 
 /**
@@ -454,25 +447,6 @@ protected:
 
 	HaveParent have_parent_;
 };
-
-/**
-* \brief GCŽž‚É’Ê’m‚ðŽó‚¯Žæ‚éƒNƒ‰ƒX
-*/
-class GCObserver : public Base{
-public:
-	GCObserver();
-
-	~GCObserver();
-
-	enum{
-		GC_BEFORE,
-		GC_AFTER
-	};
-
-private:
-	XTAL_DISALLOW_COPY_AND_ASSIGN(GCObserver);
-};
-
 
 }
 

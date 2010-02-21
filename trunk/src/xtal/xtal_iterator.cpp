@@ -4,7 +4,7 @@
 namespace xtal{
 
 ZipIter::ZipIter(const VMachinePtr& vm){
-	next_ = xnew<Array>(vm->ordered_arg_count());
+	next_ = XNew<Array>(vm->ordered_arg_count());
 	for(int_t i = 0, len = next_->size(); i<len; ++i){
 		next_->set_at(i, vm->arg(i));
 	}
@@ -20,7 +20,7 @@ void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 		next_->set_at(i, vm->result(0));
 		
 		if(type(value)==TYPE_VALUES){
-			value = xnew<Values>(vm->result(1), value);
+			value = XNew<Values>(vm->result(1), value);
 		}
 		else{
 			AnyPtr ret = vm->result(1);
@@ -28,12 +28,13 @@ void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 				value = unchecked_ptr_cast<Values>(ret);
 			}
 			else{
-				value = xnew<Values>(ret);
+				value = XNew<Values>(ret);
 			}
 		}
 		vm->cleanup_call();
-		if(!next_->at(i))
+		if(!next_->at(i)){
 			all = false;
+		}
 	}
 	
 	if(all){
@@ -76,8 +77,7 @@ void DelegateToIterator::on_rawcall(const VMachinePtr& vm){
 
 void block_break(AnyPtr& target){
 	if(target){
-		const VMachinePtr& vm = vmachine();
-		vm->setup_call(0);
+		const VMachinePtr& vm = setup_call(0);
 		target->rawsend(vm, Xid(block_break), undefined, true, true);
 		if(!vm->processed()){
 			vm->return_result();
@@ -93,8 +93,7 @@ bool block_next(BlockValueHolder1& holder, bool first){
 		}
 	}
 	else{
-		const VMachinePtr& vm = vmachine();
-		vm->setup_call(2);
+		const VMachinePtr& vm = setup_call(2);
 		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
 		holder.target = vm->result(0);
 		holder.values[0] = vm->result(1);
@@ -110,8 +109,7 @@ bool block_next(BlockValueHolder2& holder, bool first){
 		}
 	}
 	else{
-		const VMachinePtr& vm = vmachine();
-		vm->setup_call(3);
+		const VMachinePtr& vm = setup_call(3);
 		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
 		holder.target = vm->result(0);
 		holder.values[0] = vm->result(1);
@@ -122,8 +120,7 @@ bool block_next(BlockValueHolder2& holder, bool first){
 }
 
 bool block_next(BlockValueHolder3& holder, bool first){
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(4);
+	const VMachinePtr& vm = setup_call(4);
 	holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
 	holder.target = vm->result(0);
 	holder.values[0] = vm->result(1);

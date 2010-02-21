@@ -8,7 +8,7 @@
 namespace xtal{
 	
 CodeBuilder::CodeBuilder(){
-	implicit_ref_map_ = xnew<Map>();
+	implicit_ref_map_ = XNew<Map>();
 }
 
 CodeBuilder::~CodeBuilder(){}
@@ -93,20 +93,17 @@ CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& executor){
 }
 
 CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
-	result_ = xnew<Code>();
+	result_ = XNew<Code>();
 	result_->source_file_name_ = source_file_name;
 	result_->except_info_table_.push_back(ExceptInfo());
 
-	result_->identifier_table_ = xnew<Array>();
-	identifier_map_ = xnew<Map>();
+	identifier_map_ = XNew<Map>();
 	register_identifier(empty_id);
 
-	result_->value_table_ = xnew<Array>();
-	value_map_ = xnew<Map>();
+	value_map_ = XNew<Map>();
 	register_value(null);
 	
-	result_->once_table_ = xnew<Array>();
-	result_->once_table_->push_back(undefined);
+	result_->once_table_.push_back(undefined);
 
 	linenos_.push(1);
 
@@ -139,10 +136,10 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 
 	// 引数の名前を識別子テーブルに順番に乗せる
 	info.variable_size = vf().entries.size();
-	info.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_identifier_offset = result_->identifier_table_.size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		vf().entries[i].initialized = true;
-		result_->identifier_table_->push_back(vf().entries[i].name);
+		result_->identifier_table_.push_back(vf().entries[i].name);
 	}
 
 	int_t fun_info_table_number = 0;
@@ -196,20 +193,17 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 }
 
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
-	result_ = xnew<Code>();
+	result_ = XNew<Code>();
 	result_->source_file_name_ = source_file_name;
 	result_->except_info_table_.push_back(ExceptInfo());
 
-	result_->identifier_table_ = xnew<Array>();
-	identifier_map_ = xnew<Map>();
+	identifier_map_ = XNew<Map>();
 	register_identifier(empty_id);
 
-	result_->value_table_ = xnew<Array>();
-	value_map_ = xnew<Map>();
+	value_map_ = XNew<Map>();
 	register_value(null);
 	
-	result_->once_table_ = xnew<Array>();
-	result_->once_table_->push_back(undefined);
+	result_->once_table_.push_back(undefined);
 
 	linenos_.push(1);
 
@@ -242,10 +236,10 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	// 引数の名前を識別子テーブルに順番に乗せる
 	info.variable_size = vf().entries.size();
-	info.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_identifier_offset = result_->identifier_table_.size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		vf().entries[i].initialized = true;
-		result_->identifier_table_->push_back(vf().entries[i].name);
+		result_->identifier_table_.push_back(vf().entries[i].name);
 	}
 
 	int_t fun_info_table_number = 0;
@@ -361,26 +355,26 @@ void CodeBuilder::put_inst2(const Inst& t, uint_t sz){
 int_t CodeBuilder::register_identifier(const IDPtr& v){
 	if(!v){ return 0; }
 	if(const AnyPtr& pos = identifier_map_->at(v)){ return pos->to_i(); }
-	result_->identifier_table_->push_back(v);
-	identifier_map_->set_at(v, result_->identifier_table_->size()-1);
-	return result_->identifier_table_->size()-1;
+	result_->identifier_table_.push_back(v);
+	identifier_map_->set_at(v, result_->identifier_table_.size()-1);
+	return result_->identifier_table_.size()-1;
 }
 
 int_t CodeBuilder::register_value(const AnyPtr& v){
 	if(const AnyPtr& pos = value_map_->at(v)){ return pos->to_i(); }
-	result_->value_table_->push_back(v);
-	value_map_->set_at(v, result_->value_table_->size()-1);
-	return result_->value_table_->size()-1;
+	result_->value_table_.push_back(v);
+	value_map_->set_at(v, result_->value_table_.size()-1);
+	return result_->value_table_.size()-1;
 }
 
 int_t CodeBuilder::append_identifier(const IDPtr& identifier){
-	result_->identifier_table_->push_back(identifier);
-	return result_->identifier_table_->size()-1;
+	result_->identifier_table_.push_back(identifier);
+	return result_->identifier_table_.size()-1;
 }
 
 int_t CodeBuilder::append_value(const AnyPtr& v){
-	result_->value_table_->push_back(v);
-	return result_->value_table_->size()-1;
+	result_->value_table_.push_back(v);
+	return result_->value_table_.size()-1;
 }
 
 int_t CodeBuilder::lookup_instance_variable(const IDPtr& key, bool must){
@@ -639,10 +633,10 @@ void CodeBuilder::scope_begin(){
 	vf().scope_info_num = scope_info_num;
 
 	info.variable_size = real_entry_num;
-	info.variable_identifier_offset = result_->identifier_table_->size();
+	info.variable_identifier_offset = result_->identifier_table_.size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		VarFrame::Entry& entry = vf().entries[i];
-		result_->identifier_table_->push_back(entry.name);
+		result_->identifier_table_.push_back(entry.name);
 	}
 
 	if(vf().real_entry_num!=0 && vf().kind!=VarFrame::TOPLEVEL){
@@ -1062,14 +1056,14 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 	cf().class_info_num = result_->class_info_table_.size();
 
 	int_t ivar_num = 0;
-	int_t instance_variable_identifier_offset = result_->identifier_table_->size();
+	int_t instance_variable_identifier_offset = result_->identifier_table_.size();
 	Xfor_cast(const ExprPtr& v, e->class_stmts()){
 		if(v->itag()==EXPR_CDEFINE_IVAR){
 			ClassFrame::Entry entry;
 			entry.name = v->cdefine_ivar_name();
 			cf().entries.push_back(entry);
 
-			result_->identifier_table_->push_back(entry.name);
+			result_->identifier_table_.push_back(entry.name);
 
 			ivar_num++;
 		}
@@ -1086,10 +1080,11 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 	info.instance_variable_identifier_offset = instance_variable_identifier_offset;
 	info.name_number = register_identifier(e->class_name());
 	
-	info.variable_identifier_offset = result_->identifier_table_->size();
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		result_->identifier_table_->push_back(Xid(_)->op_cat(vf().entries[i].name));
-	}
+	info.variable_identifier_offset = result_->identifier_table_.size();
+
+	//for(uint_t i=0; i<vf().entries.size(); ++i){
+	//	result_->identifier_table_.push_back(intern(Xid(_)->op_cat(vf().entries[i].name)));
+	//}
 
 	put_inst(InstClassBegin(class_info_num, mixin_base));
 	result_->class_info_table_.push_back(info);
@@ -1251,10 +1246,10 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 
 	// 引数の名前を識別子テーブルに順番に乗せる
 	fun.variable_size = vf().entries.size();
-	fun.variable_identifier_offset = result_->identifier_table_->size();
+	fun.variable_identifier_offset = result_->identifier_table_.size();
 	for(uint_t i=0; i<vf().entries.size(); ++i){
 		vf().entries[i].initialized = true;
-		result_->identifier_table_->push_back(vf().entries[i].name);
+		result_->identifier_table_.push_back(vf().entries[i].name);
 	}
 
 	int_t fun_info_table_number = result_->xfun_info_table_.size();

@@ -59,13 +59,7 @@ public:
 	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
 
 public:
-
-	struct intern_t{};
-	String(const char_t* str, uint_t size, intern_t);
-	String(const StringLiteral& str, intern_t);
 	
-	String& operator= (const String& s);
-
 	String(const String& s);
 
 protected:
@@ -103,13 +97,13 @@ public:
 	/*
 	* \brief 浅いコピーを返す。
 	*/
-	StringPtr clone() const;
+	const StringPtr& clone() const;
 
 	/**
 	* \xbind
 	* \brief 一意化した文字列を返す。
 	*/
-	const IDPtr& intern() const;
+	IDPtr intern() const;
 
 	/**
 	* \xbind
@@ -133,7 +127,7 @@ public:
 	* \xbind
 	* \brief 自分自身を返す。
 	*/
-	StringPtr to_s() const;
+	const StringPtr& to_s() const;
 
 	/**
 	* \xbind
@@ -234,8 +228,13 @@ public:
 	*/	
 	StringPtr sub(const AnyPtr& pattern, const AnyPtr& fn) const;
 
+public:
+
+	void on_rawcall(const VMachinePtr& vm);
+
 private:
 	void init_string(const char_t* str, uint_t size);
+	void init_small_string(const char_t* str, uint_t size);
 	StringData* new_string_data(uint_t size);
 
 public:
@@ -279,11 +278,6 @@ public:
 };
 
 class StringData : public RefCountingBase{
-	enum{
-		INTERNED = 1<<0,
-		SIZE_SHIFT = 1
-	};
-
 	char_t* buf_;
 	uint_t data_size_;
 public:
@@ -296,27 +290,13 @@ public:
 
 	~StringData();
 
-	uint_t data_size(){
-		return data_size_>>SIZE_SHIFT;
-	}
+	uint_t data_size(){ return data_size_; }
 
-	char_t* buf(){ 
-		return buf_; 
-	}
-
-	bool is_interned(){
-		return (data_size_&INTERNED)!=0;
-	}
-
-	void set_interned(){
-		data_size_ |= INTERNED;
-	}
+	char_t* buf(){ return buf_; }
 
 private:
-	
 	XTAL_DISALLOW_COPY_AND_ASSIGN(StringData);
 };
-
 
 /**
 * \brief Intern済みのString
@@ -364,21 +344,29 @@ public:
 	* \brief Stringから構築する
 	*
 	*/
-	ID(const StringPtr& name);		
+	ID(const StringPtr& name);	
+
+public:
+
+	struct intern_t{};
+
+	ID(const char_t* str, uint_t size, intern_t)
+		:String(noinit_t()){
+		value_.init_interned_string(str, size);
+	}
+
+	struct small_intern_t{};
+
+	ID(const char_t* str, uint_t size, small_intern_t)
+		:String(noinit_t()){
+		value_.init_small_string(str, size);
+	}
 };
 
 inline bool operator ==(const IDPtr& a, const IDPtr& b){ return raweq(a, b); }
 inline bool operator !=(const IDPtr& a, const IDPtr& b){ return rawne(a, b); }
 
-AnyPtr interned_strings();
 int_t edit_distance(const StringPtr& str1, const StringPtr& str2);
-uint_t string_hashcode(const char_t* str, uint_t size);
-void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash);
-uint_t string_length(const char_t* str);
-uint_t string_data_size(const char_t* str);
-int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
-void string_copy(char_t* a, const char_t* b, uint_t size);
-bool string_is_ch(const char_t* str, uint_t size);
 
 class ChRange : public Range{
 public:

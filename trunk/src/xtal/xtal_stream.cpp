@@ -31,6 +31,26 @@ uint_t Stream::write(String::iterator first, String::iterator end){
 }
 */
 
+void Stream::put_s(const StringPtr& str){
+	write(str->data(), str->data_size()*sizeof(char_t));
+}
+
+void Stream::put_s(const char_t* str){
+	write(str, string_data_size(str)*sizeof(char_t));
+}
+
+void Stream::put_s(const char_t* str, const char_t* end){
+	write(str, (end-str)*sizeof(char_t));
+}
+
+void Stream::put_s(const StringLiteral& str){
+	write(str.str(), str.size()*sizeof(char_t));
+}
+
+void Stream::put_s(const AnyPtr& str){
+	put_s(str->to_s());
+}
+
 uint_t Stream::write(const void* p, uint_t size){
 	XTAL_SET_EXCEPT(unsupported_error(get_class(), Xid(write), null));
 	return 0;
@@ -108,6 +128,10 @@ uint_t Stream::read_charactors(AnyPtr* buffer, uint_t max){
 }
 
 void Stream::read_strict(void* p, uint_t size){
+	if(size==0){
+		return;
+	}
+
 	uint_t read = 0;
 	while(true){
 		int temp = this->read((char*)p+read, size-read);
@@ -118,7 +142,6 @@ void Stream::read_strict(void* p, uint_t size){
 		}
 
 		read += temp;
-
 		if(read==size){
 			break;
 		}
@@ -126,12 +149,11 @@ void Stream::read_strict(void* p, uint_t size){
 }
 
 void Stream::print(const AnyPtr& value){
-	return put_s(value->to_s());
+	return put_s(value);
 }
 
 void Stream::println(const AnyPtr& value){
-	StringPtr str = value->to_s(); 
-	put_s(str);
+	put_s(value);
 	put_s(XTAL_STRING("\n"));
 }
 
@@ -239,6 +261,12 @@ void Stream::put_u64le(u64 v){
 	data.data[1] = (u8)(v>>8);
 	data.data[0] = (u8)(v>>0);
 	write(data.data, 8);
+}
+
+u8 Stream::get_u8(){
+	struct{ u8 data[1]; } data = {{0}};
+	read_strict(data.data, 1);
+	return (u8)data.data[0];
 }
 
 u16 Stream::get_u16be(){
@@ -414,8 +442,9 @@ uint_t MemoryStream::pour_all(const StreamPtr& in_stream){
 	return sum;
 }
 
-StringPtr MemoryStream::to_s(){
-	return xnew<String>((char_t*)data_, size_/sizeof(char_t));
+const StringPtr& MemoryStream::to_s(){
+	str_ = XNew<String>((char_t*)data_, size_/sizeof(char_t));
+	return str_;
 }
 
 void MemoryStream::clear(){
@@ -472,5 +501,465 @@ void FileStream::open(const StringPtr& path, const StringPtr& aflags){
 
 	impl_ = filesystem_lib()->new_file_stream(path->c_str(), flags_temp);
 }
+
+///////////////////////////////////////////////////////////////////////////
+
+class LZEncoder{
+public:
+
+	LZEncoder(const StreamPtr& out){
+		out_ = out;
+		state_ = 0;
+	}
+
+	void finish(){
+		while(state_>=0){
+			encode(0, 0);
+		}
+	}
+
+	void encode(u8* first, u8* last);
+
+	enum{
+		RING_BUF_SIZE = 4096,
+		RING_BUF_MASK = RING_BUF_SIZE-1,
+		NO_COMPRESS_SIZE = 3,
+		MAX_MATCH_LEN = 15+NO_COMPRESS_SIZE,
+		NIL = RING_BUF_SIZE
+	};	
+
+private:
+	enum{
+		TEXT_SIZE = RING_BUF_SIZE+MAX_MATCH_LEN-1,
+		DAD_SIZE = RING_BUF_SIZE+1,
+		LSON_SIZE = RING_BUF_SIZE+1,
+		RSON_SIZE = RING_BUF_SIZE+256+1
+	};
+
+	int state_;
+
+	u8 code_[17];
+	int code_count_;
+	unsigned int mask_;
+
+	int s_;
+	int r_;
+	int len_;
+	int i_;
+	int lastmatchlen_;
+
+	StreamPtr out_;
+
+	u8 text_[RING_BUF_SIZE+MAX_MATCH_LEN-1];
+	int parent_node_[RING_BUF_SIZE+1];
+	int left_node_[RING_BUF_SIZE+1];
+	int right_node_[RING_BUF_SIZE+256+1];
+	int matchpos_;
+	int matchlen_;
+	
+	void insert(int r);
+	void erase(int p);
+};
+
+void LZEncoder::encode(u8* first, u8* last){
+	if(first==0){
+		switch(state_){
+		case 0: goto finish0;
+		case 1: goto finish1;
+		case 2: goto finish2;
+		}
+	}
+	else{
+		if(first==last){ return; }
+		switch(state_){
+		case 0: goto yield0;
+		case 1: goto yield1;
+		case 2: goto yield2;
+		}
+	}
+
+finish0:
+yield0:
+
+	matchpos_ = 0;
+	matchlen_ = 0;
+	
+	for(int i=RING_BUF_SIZE; i<=RING_BUF_SIZE+256; ++i){
+		right_node_[i] = NIL;
+	}
+
+	for(int i=0; i<RING_BUF_SIZE; ++i){
+		parent_node_[i] = NIL;
+	}
+
+	std::fill(text_, text_+TEXT_SIZE, 0);
+	
+	code_[0] = 0;
+
+	mask_ = 1;
+	code_count_ = 1;
+
+	s_ = 0;
+	r_ = RING_BUF_SIZE-MAX_MATCH_LEN;
+
+	for(len_ = 0; len_<MAX_MATCH_LEN; len_++){
+		if(first==last){
+			state_ = 1;
+			return;
+			finish1:
+			break;
+			yield1:;
+		}
+
+		text_[r_+len_] = *first++;
+	}
+
+	for(int i=1; i<=MAX_MATCH_LEN; i++){
+		insert(r_-i);
+	}
+
+	insert(r_);
+
+	do{
+		if(matchlen_>len_){
+			matchlen_ = len_;
+		}
+
+		if(matchlen_<NO_COMPRESS_SIZE){
+			matchlen_ = 1;
+			code_[0] |= mask_;
+			code_[code_count_++] = text_[r_];
+		}
+		else{
+			code_[code_count_++] = matchpos_;
+			code_[code_count_++] = ((matchpos_>>4) & 0xf0) | (matchlen_-NO_COMPRESS_SIZE);
+		}
+
+		mask_ = (mask_<<1) & 0xff;
+		if(mask_==0){
+			out_->write(code_, code_count_);
+			mask_ = code_count_ = 1;
+			code_[0] = 0;
+		}
+		
+		lastmatchlen_ = matchlen_;
+		for(i_ = 0; i_<lastmatchlen_; i_++){
+			if(first==last){
+				state_ = 2;
+				return;
+				finish2:
+				break;
+				yield2:;
+			}
+			u8 c = *first++;
+
+			erase(s_);	
+			text_[s_] = c;
+
+			if(s_<MAX_MATCH_LEN-1){
+				text_[s_+RING_BUF_SIZE] = c;
+			}
+
+			s_ = (s_+1) & RING_BUF_MASK;	
+			r_ = (r_+1) & RING_BUF_MASK;
+			insert(r_);
+		}
+
+		while(i_++<lastmatchlen_){
+			erase(s_);
+			s_ = (s_+1) & RING_BUF_MASK;	
+			r_ = (r_+1) & RING_BUF_MASK;
+			if(--len_){
+				insert(r_);
+			}
+		}
+
+	}while(len_>0);
+
+	if(code_count_>1){
+		out_->write(code_, code_count_);
+	}
+
+	state_ = -1;
+}
+
+void LZEncoder::insert(int r){		
+	int cmp = 1;
+	u8* key = &text_[r];
+	int p = RING_BUF_SIZE + 1 + key[0];
+	right_node_[r] = left_node_[r] = NIL;
+	matchlen_ = 0;
+	while(true){
+		if(cmp>=0){
+			if(right_node_[p]!=NIL){
+				p = right_node_[p];
+			}
+			else{	
+				right_node_[p] = r;	
+				parent_node_[r] = p;
+				return;	
+			}
+		}
+		else{
+			if(left_node_[p]!=NIL){
+				p = left_node_[p];
+			}
+			else{	
+				left_node_[p] = r;	
+				parent_node_[r] = p;
+				return;	
+			}
+		}
+
+		int i = 1;
+		for(; i<MAX_MATCH_LEN; i++){
+			cmp = key[i]-text_[p+i];
+			if(cmp!=0){
+				break;
+			}
+		}
+
+		if(i>matchlen_){
+			matchpos_ = p;
+			matchlen_ = i;
+			if(matchlen_>=MAX_MATCH_LEN){	
+				break;
+			}
+		}
+	}
+
+	parent_node_[r] = parent_node_[p];
+	left_node_[r] = left_node_[p];
+	right_node_[r] = right_node_[p];
+	parent_node_[left_node_[p]] = r;
+	parent_node_[right_node_[p]] = r;
+	
+	if(right_node_[parent_node_[p]] == p){
+		right_node_[parent_node_[p]] = r;
+	}
+	else{				
+		left_node_[parent_node_[p]] = r;
+	}
+
+	parent_node_[p] = NIL;
+	
+}
+
+void LZEncoder::erase(int p){
+	int q;
+	
+	if(parent_node_[p]==NIL){
+		return;
+	}
+
+	if(right_node_[p]==NIL){
+		q = left_node_[p];
+	}
+	else if(left_node_[p]==NIL){
+		q = right_node_[p];
+	}
+	else{
+		q = left_node_[p];
+		if(right_node_[q]!=NIL){
+			q = right_node_[q];
+			while(right_node_[q]!=NIL){
+				q = right_node_[q];
+			}
+
+			right_node_[parent_node_[q]] = left_node_[q];
+			parent_node_[left_node_[q]] = parent_node_[q];
+			left_node_[q] = left_node_[p];
+			parent_node_[left_node_[p]] = q;
+		}
+		right_node_[q] = right_node_[p];
+		parent_node_[right_node_[p]] = q;
+	}
+	
+	parent_node_[q] = parent_node_[p];
+	
+	if(right_node_[parent_node_[p]]==p){	
+		right_node_[parent_node_[p]] = q;
+	}
+	else{						
+		left_node_[parent_node_[p]] = q;
+	}
+
+	parent_node_[p] = NIL;
+}
+
+CompressEncoder::CompressEncoder(const StreamPtr& stream){
+	LZEncoder* p = new(object_xmalloc<LZEncoder>()) LZEncoder(stream);
+	impl_ = p;
+}
+
+CompressEncoder::~CompressEncoder(){
+	destroy();
+}
+
+uint_t CompressEncoder::write(const void* data, uint_t size){
+	if(impl_){
+		LZEncoder* p = (LZEncoder*)impl_;
+		p->encode((u8*)data, (u8*)data + size);
+		return size;
+	}
+	return 0;
+}
+
+void CompressEncoder::close(){
+	if(impl_){
+		LZEncoder* p = (LZEncoder*)impl_;
+		p->finish();
+
+		destroy();
+	}
+}
+
+void CompressEncoder::destroy(){
+	if(impl_){
+		LZEncoder* p = (LZEncoder*)impl_;
+		p->~LZEncoder();
+		object_xfree<LZEncoder>(p);
+		impl_ = 0;
+	}
+}
+
+class LZDecoder{
+public:
+
+	enum{
+		RING_BUF_SIZE = 4096,
+		RING_BUF_MASK = RING_BUF_SIZE-1,
+		NO_COMPRESS_SIZE = 3,
+		MAX_MATCH_LEN = 15+NO_COMPRESS_SIZE,
+	};	
+
+	LZDecoder(const StreamPtr& in){
+		in_ = in;
+		state_ = 0;
+	}
+
+	u8* decode(u8* first, u8* last);
+
+private:
+
+	StreamPtr in_;
+
+	int state_;
+	u8 text_[RING_BUF_SIZE];
+	u8 c_;
+	int r_;
+	unsigned int flags_;
+	int pos_;
+	int len_;
+	int i_;
+};
+
+u8* LZDecoder::decode(u8* first, u8* last){
+	unsigned int c1 = 0;
+	unsigned int c2 = 0;
+
+	if(first==last){ return first; }
+	switch(state_){
+	case -1: return first;
+	case 0: goto yield0;
+	case 1: goto yield1;
+	case 2: goto yield2;
+	}
+
+yield0:
+	std::fill(text_, text_+RING_BUF_SIZE, 0);
+	r_ = RING_BUF_SIZE - MAX_MATCH_LEN;
+	flags_ = 0;
+
+	while(true){
+		flags_ >>= 1;
+		if((flags_&(1<<8))==0){
+			u8 c;
+			if(in_->read(&c, 1)!=1){
+				state_ = -1;
+				return first;
+			}
+
+			flags_ = (int)c | 0xff00;
+		}
+
+		if(flags_ & 1){
+			if(in_->read(&c_, 1)!=1){
+				state_ = -1;
+				return first;
+			}
+
+			if(first==last){
+				state_ = 1;
+				return first;
+				yield1:;
+			}
+			*first++ = text_[r_] = c_;
+			r_ = (r_+1) & RING_BUF_MASK;
+		}
+		else{
+			u8 cc[2];
+			if(in_->read(cc, 2)!=2){
+				state_ = -1;
+				return first;
+			}
+
+			c1 = cc[0];
+			c2 = cc[1];
+
+			pos_ = c1 | ((c2 & 0xf0)<<4);
+			len_ = (c2 & 0x0f) + NO_COMPRESS_SIZE;
+
+			for(i_=0; i_<len_; i_++){
+				if(first==last){
+					state_ = 2;
+					return first;
+					yield2:;
+				}
+
+				*first++ = text_[r_] = text_[(pos_+i_) & RING_BUF_MASK];
+				r_ = (r_+1) & RING_BUF_MASK;
+			}
+		}
+	}
+
+	return first;
+}
+
+CompressDecoder::CompressDecoder(const StreamPtr& stream){
+	LZDecoder* p = new(object_xmalloc<LZDecoder>()) LZDecoder(stream);
+	impl_ = p;
+}
+
+CompressDecoder::~CompressDecoder(){
+	destroy();
+}
+
+uint_t CompressDecoder::read(void* data, uint_t size){
+	if(impl_){
+		LZDecoder* p = (LZDecoder*)impl_;
+		u8* out = p->decode((u8*)data, (u8*)data + size);
+		return out - (u8*)data;
+	}
+	return 0;
+}
+
+void CompressDecoder::destroy(){
+	if(impl_){
+		LZDecoder* p = (LZDecoder*)impl_;
+		p->~LZDecoder();
+		object_xfree<LZDecoder>(p);
+		impl_ = 0;
+	}
+}
+
+void CompressDecoder::close(){
+	destroy();
+}
+
+///////////////////////////////////////////////////////////////////////////
+
+XNew<MemoryStream>::XNew(){ init(); }
+XNew<MemoryStream>::XNew(const void* data, uint_t data_size){ init(data, data_size); }
 
 }

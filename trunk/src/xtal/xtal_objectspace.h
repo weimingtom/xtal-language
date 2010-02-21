@@ -14,11 +14,15 @@ struct ConnectedPointer;
 class ObjectSpace{
 public:
 
-	ObjectSpace(){}
+	ObjectSpace()
+		:class_map_(map_t::no_use_memory_t())
+		,value_map_(map_t::no_use_memory_t()){}
 
 	void initialize();
 
 	void uninitialize();
+
+	void print_all_objects();
 
 	void enable_gc();
 
@@ -32,31 +36,52 @@ public:
 
 	void register_gc(RefCountingBase* p);
 
-	void register_gc_observer(GCObserver* p);
+	void register_gc_vm(VMachine* p);
 
-	void unregister_gc_observer(GCObserver* p);
+	void unregister_gc_vm(VMachine* p);
 
-	bool exists_cpp_class(uint_t key){
-		return class_table_[key]!=0;
+	void make_cpp_class(CppClassSymbolData* key){
+		RefCountingBase*& ret = class_map_[key->key()];
+		ret = xnew<Class>(Class::cpp_class_t()).get();
+		ret->inc_ref_count();
+		((Class*)ret)->set_symbol_data(key);
+	}
+
+	const ClassPtr& cpp_class(CppClassSymbolData* key){
+		map_t::iterator it = class_map_.find(key->key());
+		if(it==class_map_.end()){
+			make_cpp_class(key);
+			it = class_map_.find(key->key());
+		}
+		return to_smartptr((Class*)it->second);
 	}
 
 	const ClassPtr& cpp_class(uint_t key){
-		return to_smartptr(class_table_[key]);
+		return to_smartptr((Class*)class_map_[key]);
 	}
 
-	const AnyPtr& cpp_var(uint_t key){
-		return var_table_->at(key);
+	void make_cpp_value(CppValueSymbolData* key){
+		RefCountingBase*& ret = value_map_[key->key()];
+		ret = rcpvalue(key->maker());
+		ret->inc_ref_count();
+	}
+
+	const AnyPtr& cpp_value(CppValueSymbolData* key){
+		map_t::iterator it = value_map_.find(key->key());
+		if(it==value_map_.end()){
+			make_cpp_value(key);
+			it = value_map_.find(key->key());
+		}
+		return to_smartptr(it->second);
 	}
 
 	uint_t alive_object_count();
 
 	RefCountingBase* alive_object(uint_t i);
 
-	void bind_all();
-
-	void def_all_cpp_classes();
-
 	void finish_initialize();
+
+	void shrink_to_fit();
 
 private:
 
@@ -76,9 +101,9 @@ private:
 	RefCountingBase*** objects_list_current_;
 	RefCountingBase*** objects_list_end_;
 
-	GCObserver** gcobservers_begin_;
-	GCObserver** gcobservers_current_;
-	GCObserver** gcobservers_end_;
+	VMachine** gcvms_begin_;
+	VMachine** gcvms_current_;
+	VMachine** gcvms_end_;
 
 	uint_t objects_builtin_line_;
 	uint_t objects_count_;
@@ -86,15 +111,22 @@ private:
 	uint_t processed_line_;
 
 	bool disable_finalizer_;
-	bool def_all_cpp_classes_;
-	bool binded_all_;
 
 	uint_t cycle_count_;
 
-	CppClassSymbolData* symbol_data_;
+	struct Fun{
+		static uint_t hash(uint_t key){
+			return key;
+		}
 
-	PODArrayList<Class*> class_table_;
-	ArrayPtr var_table_;
+		static bool eq(uint_t a, uint_t b){
+			return a==b;
+		}
+	};
+
+	typedef Hashtable<uint_t, RefCountingBase*, Fun> map_t; 
+	map_t class_map_;
+	map_t value_map_;
 };
 
 }

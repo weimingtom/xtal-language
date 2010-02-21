@@ -8,19 +8,18 @@ namespace xtal{
 
 //}
 
-Lib::Lib(most_top_level_t){
+Lib::Lib(most_top_level_t)
+	:load_path_list_(xnew<Array>()){
 	set_object_temporary_name(Xid(lib));
 	set_object_force(1000);
-	load_path_list_ = xnew<Array>();
 }
 
-Lib::Lib(){
-	load_path_list_ = xnew<Array>();
-}
+Lib::Lib()
+	:load_path_list_(xnew<Array>()){}
 
 const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
-	if(rawne(ret, undefined)){
+	if(!is_undefined(ret)){
 		return ret;
 	}
 	else{
@@ -29,7 +28,7 @@ const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondar
 		Xfor(var, load_path_list_){
 			value = undefined;
 
-			if(CodePtr code = require_source(Xf("%s/%s")->call(var, primary_key)->to_s())){
+			if(CodePtr code = require_source(Xf2("%s/%s", 0, var, 1, primary_key))){
 				value = code->call();
 			}
 			else{
@@ -45,7 +44,7 @@ const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondar
 				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
 
-			if(!raweq(value, undefined)){
+			if(!is_undefined(value)){
 				on_def(primary_key, value, secondary_key, accessibility);
 				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}

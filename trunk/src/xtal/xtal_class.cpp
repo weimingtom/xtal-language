@@ -47,7 +47,8 @@ uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t in
 			return variables_info_[size].pos + index;
 		}
 	}
-	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt("XRE1003")));
+	
+	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt0("XRE1003")));
 	return 0;
 }
 
@@ -76,7 +77,7 @@ EmptyInstanceVariables::EmptyInstanceVariables()
 	vi.class_info = 0;
 	vi.pos = 0;
 	variables_info_.attach(&vi);
-	variables_.attach(&undefined, 1);
+	variables_.attach(&(AnyPtr&)undefined, 1);
 }
 
 EmptyInstanceVariables::~EmptyInstanceVariables(){
@@ -86,58 +87,49 @@ EmptyInstanceVariables::~EmptyInstanceVariables(){
 
 InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 
-Instance::~Instance(){
-	instance_variables_ = &empty_instance_variables;
-
-	if(get_class()){
-		class_->dec_ref_count();
-	}
-}
-
 ///////////////////////////////////////
+
+Class::Class()
+	:Frame(nul<Frame>(), nul<Code>(), 0){
+	init();
+}
 
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	:Frame(outer, code, info){
-	set_object_temporary_name(empty_string);
-	object_force_ = 0;
-	flags_ = 0;
-	symbol_data_ = 0;
-	make_map_members();
-	initialized_members_ = true;
+	init();
 //	instance_variables_layout_.push(InstanceVariablesInfo(info, 0));
 }
 
-Class::Class(const StringPtr& name)
+Class::Class(const IDPtr& name)
 	:Frame(nul<Frame>(), nul<Code>(), 0){
+	init();
 	set_object_temporary_name(name);
-	object_force_ = 0;
-	flags_ = 0;
-	symbol_data_ = 0;
-	make_map_members();
-	initialized_members_ = true;
 }
 
 Class::Class(cpp_class_t)
 	:Frame(nul<Frame>(), nul<Code>(), 0){
-	set_object_temporary_name(empty_string);
-	object_force_ = 0;
+	init();
 	flags_ = FLAG_NATIVE;
+}
+
+void Class::init(){
+	set_object_temporary_name(empty_id);
+	object_force_ = 0;
+	flags_ = 0;
 	symbol_data_ = 0;
 	make_map_members();
 	initialized_members_ = true;
 }
 
 Class::~Class(){
-	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-		inherited_classes_[i]->dec_ref_count();
-	}
+
 }
 
 void Class::overwrite(const ClassPtr& p){
 	if(!is_native() && !p->is_native()){
 		for(int_t i=0, sz=p->inherited_classes_.size(); i<sz; ++i){
-			inherit(to_smartptr(p->inherited_classes_[i]));
-		}		
+			inherit(unchecked_ptr_cast<Class>(p->inherited_classes_.at(i)));
+		}
 		
 		if(p->map_members_){
 			for(map_t::iterator it=p->map_members_->begin(), last=p->map_members_->end(); it!=last; ++it){
@@ -145,7 +137,6 @@ void Class::overwrite(const ClassPtr& p){
 			}
 		}
 
-		Key key = {Xid(reloaded), undefined};
 		for(uint_t i=0; i<alive_object_count(); ++i){
 			AnyPtr obj = alive_object(i);
 			if(type(obj)==TYPE_BASE){
@@ -157,10 +148,9 @@ void Class::overwrite(const ClassPtr& p){
 					obj->load_instance_variables(p, data);
 
 					{
-						map_t::iterator it = map_members_->find(key);
+						map_t::iterator it = find(Xid(reloaded), undefined);
 						if(it!=map_members_->end()){
-							const VMachinePtr& vm = vmachine();
-							vm->setup_call(0);
+							const VMachinePtr& vm = setup_call(0);
 							vm->set_arg_this(obj);
 							member_direct(it->second.num)->rawcall(vm);
 							vm->cleanup_call();
@@ -176,6 +166,10 @@ void Class::overwrite(const ClassPtr& p){
 	}
 }
 
+void Class::fillup_inherited_classes(){
+
+}
+
 void Class::inherit(const ClassPtr& cls){
 	if(is_inherited(cls))
 		return;
@@ -184,8 +178,8 @@ void Class::inherit(const ClassPtr& cls){
 
 	cls->prebind();
 
-	inherited_classes_.push_back(cls.get());
-	cls.get()->inc_ref_count();
+	fillup_inherited_classes();
+	inherited_classes_.push_back(cls);
 	invalidate_cache_is();
 
 	/*
@@ -206,14 +200,14 @@ void Class::inherit(const ClassPtr& cls){
 void Class::inherit_first(const ClassPtr& cls){
 	if(cls->is_singleton()){
 		if(!is_singleton()){
-			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1031")));
+			set_runtime_error(Xt0("XRE1031"));
 			return;
 		}
 	}
 	else{
 		if(cls->is_native()){
 			if(is_inherited_cpp_class()){
-				XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1019")));
+				set_runtime_error(Xt0("XRE1019"));
 				return;
 			}
 		}
@@ -224,7 +218,7 @@ void Class::inherit_first(const ClassPtr& cls){
 	}
 
 	if(cls->is_final()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1028")->call(Named(Xid(name), cls->object_name()))));
+		set_runtime_error(Xt1("XRE1028", name, cls->object_name()));
 		return;
 	}
 
@@ -233,7 +227,7 @@ void Class::inherit_first(const ClassPtr& cls){
 
 void Class::inherit_strict(const ClassPtr& cls){
 	if(cls->is_native()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1029")->call(Named(Xid(name), cls->object_name()))));
+		set_runtime_error(Xt1("XRE1029", name, cls->object_name()));
 		return;
 	}
 
@@ -241,11 +235,12 @@ void Class::inherit_strict(const ClassPtr& cls){
 }
 
 AnyPtr Class::inherited_classes(){
-	return xnew<ClassInheritedClassesIter>(to_smartptr(this));
+	return xnew<ArrayIter>(to_smartptr(this), &inherited_classes_);
 }
 
 const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_func){
 	ctor_[type] = ctor_func;
+	flags_ |= (FLAG_LAST_DEFINED_CTOR<<type);
 	flags_ |= FLAG_NATIVE;
 	invalidate_cache_ctor();
 	return ctor_[type];
@@ -263,12 +258,12 @@ const NativeFunPtr& Class::ctor(int_t type){
 	}
 
 	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const NativeFunPtr& ret = inherited_classes_[i-1]->ctor(type)){
+		if(const NativeFunPtr& ret = unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->ctor(type)){
 			return ctor_[type] = ret;
 		}
 	}
 
-	return unchecked_ptr_cast<NativeMethod>(null);
+	return nul<NativeMethod>();
 }
 
 const NativeFunPtr& Class::def_ctor(const NativeFunPtr& ctor_func){
@@ -289,7 +284,7 @@ const NativeFunPtr& Class::serial_ctor(){
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	for(int_t i = inherited_classes_.size(); i>0; --i){
-		inherited_classes_[i-1]->init_instance(self, vm);
+		unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->init_instance(self, vm);
 	}
 	
 	if(info()->instance_variable_size){
@@ -306,16 +301,15 @@ void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
 	}
 }
 
-IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& minv){
+IDPtr Class::find_near_member2(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& minv){
 	IDPtr minid = null;
-	const VMachinePtr& vm = vmachine();
-	vm->setup_call(1);
 	AnyPtr mem = get_class()->member(Xid(members_ancestors_too));
 
 	if(is_undefined(mem)){
 		return minid;
 	}
 
+	const VMachinePtr& vm = setup_call(1);
 	vm->set_arg_this(ap(*this));
 	mem->rawcall(vm);
 
@@ -324,7 +318,7 @@ IDPtr Class::find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_
 	Xfor_cast(const ValuesPtr& v, value){
 		IDPtr id = ptr_cast<ID>(v->at(0));
 		int_t dist = edit_distance(primary_key, id);
-		if(dist!=0 && dist<minv){
+		if(dist<minv){
 			minv = dist;
 			minid = id;
 		}
@@ -350,38 +344,60 @@ const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr
 	}
 }
 
-const NativeFunPtr& Class::def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
-	return def_and_return(xnew<ID>(primary_key), secondary_key, accessibility, pth, val);
+void Class::define(const char_t* primary_key, const param_types_holder_n& pth){
+	def(intern(primary_key), XNew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
 }
 
-const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val){
-	return def_and_return(xnew<ID>(primary_key), secondary_key, accessibility, pth, val);
+void Class::define(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
+	def(intern(primary_key), XNew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
 }
 
-const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const param_types_holder_n& pth, const void* val){
-	return def_and_return(primary_key, undefined, KIND_PUBLIC, pth, val);
+void Class::define_param(const char_t* name, const AnyPtr& default_value){
+	AnyPtr member;
+
+	if(flags_&FLAG_LAST_DEFINED_CTOR){
+		member = ctor_[0];
+	}
+	else if(flags_&FLAG_LAST_DEFINED_CTOR2){
+		member = ctor_[1];
+	}
+	else{
+		member = members_.back();
+	}
+
+	if(type(member)==TYPE_STATELESS_NATIVE_METHOD){
+		NativeFunPtr method = xnew<NativeMethod>(*rawvalue(member).pth());
+		method->add_param(name, default_value);
+
+		if(flags_&FLAG_LAST_DEFINED_CTOR){
+			member = method;
+		}
+		else if(flags_&FLAG_LAST_DEFINED_CTOR2){
+			member = method;
+		}
+		else{
+			members_.set_at(members_.size()-1, method);
+		}
+	}
+	else if(const NativeFunPtr& method = ptr_cast<NativeMethod>(member)){
+		method->add_param(name, default_value);
+	}
+	else{
+		XTAL_ASSERT(false);
+	}
 }
 
-const NativeFunPtr& Class::def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val){
-	return def_and_return(xnew<ID>(primary_key), undefined, KIND_PUBLIC, pth, val);
+void Class::define(const char_t* primary_key, const AnyPtr& value){
+	def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
-const NativeFunPtr& Class::def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val){
-	return def_and_return(xnew<ID>(primary_key), undefined, KIND_PUBLIC, pth, val);
-}
-
-void Class::def_and_return(const char_t* primary_key, const param_types_holder_n& pth){
-	def2(xnew<ID>(primary_key), xnew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
-}
-
-void Class::def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
-	def2(xnew<ID>(primary_key), xnew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
+void Class::define(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+	def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	on_def(primary_key, value, secondary_key, accessibility);
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it!=map_members_->end()){
 		return member_direct(it->second.num);
 	}
@@ -389,8 +405,7 @@ const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const A
 }
 
 void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it==map_members_->end()){
 		on_def(primary_key, value, secondary_key, accessibility);
 	}
@@ -412,9 +427,11 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 }
 
 void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	flags_ &= ~(FLAG_LAST_DEFINED_CTOR | FLAG_LAST_DEFINED_CTOR2);
+
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it==map_members_->end()){
+		Key key = {primary_key, secondary_key};
 		Value val = {member_size(), accessibility};
 		map_members_->insert(key, val);
 		push_back_member(value);
@@ -422,16 +439,16 @@ void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& 
 		invalidate_cache_member();
 	}
 	else{
-		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt("XRE1011")->call(Named(Xid(object), this->object_name()), Named(Xid(name), primary_key))));
+		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
 	}
 }
 
 void Class::def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	on_def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+	on_def(intern(primary_key), value, secondary_key, accessibility);
 }
 
 void Class::def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	on_def(xnew<ID>(primary_key), value, secondary_key, accessibility);
+	on_def(intern(primary_key), value, secondary_key, accessibility);
 }
 
 void Class::def(const IDPtr& primary_key, const AnyPtr& value){
@@ -439,16 +456,15 @@ void Class::def(const IDPtr& primary_key, const AnyPtr& value){
 }
 
 void Class::def(const char_t* primary_key, const AnyPtr& value){
-	on_def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+	on_def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 void Class::def(const char8_t* primary_key, const AnyPtr& value){
-	on_def(xnew<ID>(primary_key), value, undefined, KIND_PUBLIC);
+	on_def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it!=map_members_->end()){		
 		accessibility = it->second.accessibility();
 		nocache = it->second.nocache();
@@ -457,15 +473,15 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
 		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = find_member(primary_key, to_smartptr(klass->inherited_classes_[i]), accessibility, nocache);
-			if(rawne(ret, undefined)){
+			const AnyPtr& ret = find_member(primary_key, unchecked_ptr_cast<Class>(klass->inherited_classes_.at(i)), accessibility, nocache);
+			if(!is_undefined(ret)){
 				return ret;
 			}
 		}
 
 		if(rawne(cpp_class<Any>(), klass)){
 			const AnyPtr& ret = find_member(primary_key, cpp_class<Any>(), accessibility, nocache);
-			if(rawne(ret, undefined)){
+			if(!is_undefined(ret)){
 				return ret;
 			}
 		}	
@@ -476,25 +492,24 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 	
 const AnyPtr& Class::find_member_from_inherited_classes(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
 	for(int_t i=inherited_classes_.size(); i>0; --i){
-		const AnyPtr& ret = inherited_classes_[i-1]->find_member(primary_key, secondary_key, true, accessibility, nocache);
-		if(rawne(ret, undefined)){
+		const AnyPtr& ret = unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->find_member(primary_key, secondary_key, true, accessibility, nocache);
+		if(!is_undefined(ret)){
 			return ret;
 		}
 	}
-
 	return undefined;
 }
 
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
-	if(rawne(ret, undefined)){
+	if(!is_undefined(ret)){
 		return ret;
 	}
 
 	for(int_t i=0; i<CppClassSymbolData::BIND; ++i){
 		if(bind(i)){
 			const AnyPtr& ret = find_member(primary_key, secondary_key, accessibility, nocache);
-			if(rawne(ret, undefined)){
+			if(!is_undefined(ret)){
 				return ret;
 			}
 		}
@@ -502,7 +517,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 	if(inherited_too){
 		const AnyPtr& ret = find_member_from_inherited_classes(primary_key, secondary_key, accessibility, nocache);
-		if(rawne(ret, undefined)){
+		if(!is_undefined(ret)){
 			return ret;
 		}
 	}
@@ -512,7 +527,7 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 
 const AnyPtr& Class::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = find_member(primary_key, secondary_key, inherited_too, accessibility, nocache);
-	if(rawne(ret, undefined)){
+	if(!is_undefined(ret)){
 		return ret;
 	}
 
@@ -524,10 +539,9 @@ const AnyPtr& Class::on_rawmember(const IDPtr& primary_key, const AnyPtr& second
 }
 
 bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it==map_members_->end()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xid(undefined)));
+		set_runtime_error(Xid(undefined));
 		return false;
 	}
 
@@ -574,8 +588,8 @@ const IDPtr& Class::object_temporary_name(){
 		return name_;
 	}
 
-	if(symbol_data_ && symbol_data_->name.str()){
-		name_ = symbol_data_->name;
+	if(symbol_data_ && (symbol_data_->flags&CppClassSymbolData::FLAG_NAME)){
+		name_ = *(StringLiteral*)(symbol_data_->name);
 		return name_;
 	}
 
@@ -602,7 +616,7 @@ bool Class::is_inherited(const AnyPtr& v){
 	prebind();
 
 	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-		if(inherited_classes_[i]->is_inherited(v)){
+		if(unchecked_ptr_cast<Class>(inherited_classes_.at(i))->is_inherited(v)){
 			return true;
 		}
 	}
@@ -618,7 +632,7 @@ bool Class::is_inherited_cpp_class(){
 	prebind();
 
 	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-		if(inherited_classes_[i]->is_inherited_cpp_class()){
+		if(unchecked_ptr_cast<Class>(inherited_classes_.at(i))->is_inherited_cpp_class()){
 			return true;
 		}
 	}
@@ -642,7 +656,7 @@ void Class::on_rawcall(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
+			set_runtime_error(Xt1("XRE1013", object, object_name()), vm);
 		}
 	}
 	else{
@@ -651,7 +665,7 @@ void Class::on_rawcall(const VMachinePtr& vm){
 			instance = newfun->call();
 		}
 		else{
-			instance = xnew<Instance>();
+			instance = XNew<Base>();
 		}
 
 		if(type(instance)==TYPE_BASE){
@@ -666,11 +680,8 @@ void Class::on_rawcall(const VMachinePtr& vm){
 			vm->set_arg_this(instance);
 			if(vm->need_result()){
 				vm->prereturn_result(instance);
-				ret->rawcall(vm);
 			}
-			else{
-				ret->rawcall(vm);
-			}
+			ret->rawcall(vm);
 		}
 		else{
 			vm->return_result(instance);
@@ -680,7 +691,7 @@ void Class::on_rawcall(const VMachinePtr& vm){
 
 void Class::s_new(const VMachinePtr& vm){
 	if(is_singleton()){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
+		set_runtime_error(Xt1("XRE1013", object, object_name()), vm);
 		return;
 	}
 
@@ -690,7 +701,7 @@ void Class::s_new(const VMachinePtr& vm){
 			init_instance(vm->result(), vm);
 		}
 		else{
-			vm->set_except(cpp_class<RuntimeError>()->call(Xt("XRE1013")->call(object_name())));
+			set_runtime_error(Xt1("XRE1013", object, object_name()), vm);
 		}
 	}
 	else{
@@ -699,7 +710,7 @@ void Class::s_new(const VMachinePtr& vm){
 			instance = newfun->call();
 		}
 		else{
-			instance = xnew<Base>();
+			instance = XNew<Base>();
 		}
 
 		if(type(instance)==TYPE_BASE){
@@ -719,7 +730,7 @@ AnyPtr Class::ancestors(){
 	ArrayPtr ret = xnew<Array>();
 
 	for(int_t i=0, sz=inherited_classes_.size(); i<sz; i++){
-		ClassPtr it = to_smartptr(class_->inherited_classes_[i]);
+		const ClassPtr& it = unchecked_ptr_cast<Class>(get_class()->inherited_classes_.at(i));
 		ret->push_back(it);
 
 		Xfor(it2, it->ancestors()){
@@ -734,8 +745,8 @@ AnyPtr Class::ancestors(){
 void Class::prebind(){
 	if((flags_ & FLAG_PREBINDED)==0){
 		flags_ |= FLAG_PREBINDED;
-		if(symbol_data_ && symbol_data_->prebind){
-			symbol_data_->prebind->XTAL_bind(this);
+		if(symbol_data_ && (symbol_data_->flags&CppClassSymbolData::FLAG_BIND0)){
+			symbol_data_->prebind(this);
 		}
 	}
 }
@@ -754,8 +765,8 @@ bool Class::bind(int_t n){
 	if((flags_ & (FLAG_BINDED<<n))==0){
 		flags_ |= (FLAG_BINDED<<n);
 		prebind();
-		if(symbol_data_ && symbol_data_->bind[n]){
-			symbol_data_->bind[n]->XTAL_bind(this);
+		if(symbol_data_ && (symbol_data_->flags&(CppClassSymbolData::FLAG_BIND1<<n))){
+			symbol_data_->bind[n](this);
 			return true;
 		}
 	}
@@ -766,8 +777,8 @@ bool Class::bind(int_t n){
 void Class::set_singleton(){
 	if((flags_ & FLAG_SINGLETON)==0){
 		flags_ |= FLAG_SINGLETON;
+		inherit(get_class());
 		Base::set_class(to_smartptr(this));
-		inherit(cpp_class<Class>());
 	}
 }
 
@@ -779,16 +790,6 @@ void Class::init_singleton(const VMachinePtr& vm){
 		vm->set_arg_this(to_smartptr(this));
 		ret->rawcall(vm);
 		vm->cleanup_call();
-	}
-}
-
-void ClassInheritedClassesIter::block_next(const VMachinePtr& vm){
-	++index_;
-	if(index_<=class_->inherited_classes_.size()){
-		vm->return_result(to_smartptr(this), to_smartptr(class_->inherited_classes_[index_-1]));
-	}
-	else{
-		vm->return_result(null, null);
 	}
 }
 

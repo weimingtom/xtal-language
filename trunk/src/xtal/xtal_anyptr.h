@@ -59,95 +59,15 @@ struct deleter_t{
 extern undeleter_t undeleter;
 extern deleter_t deleter;
 
-///////////////////////////////////////////
-
-struct XNewXBase_INHERITED_BASE{
-
-	template<class T>
-	void init();
-	
-	void* ptr(){ return value; }
-
-	void* value;
-	Base* pvalue;
-};
-
 template<class T>
-void XNewXBase_INHERITED_BASE::init(){
-	value = object_xmalloc<T>();
-	static_cast<T*>(value)->template set_virtual_members<T>();
-	pvalue = static_cast<T*>(value);
-}
-
-struct XNewXBase_INHERITED_RCBASE{
-
-	template<class T>
-	void init();
-
-	void* ptr(){ return value; }
-
-	void* value;
-	RefCountingBase* pvalue;
-};
-
-template<class T>
-void XNewXBase_INHERITED_RCBASE::init(){
-	value = object_xmalloc<T>();
-	static_cast<T*>(value)->template set_virtual_members<T>();
-	pvalue = static_cast<T*>(value);
-}
-
-struct XNewXBase_INHERITED_ANY{
-
-	template<class T>
-	void init(){}
-
-	void* ptr(){ return &value; }
-
-	Any value;
-};
-
-struct XNewXBase_INHERITED_OTHER{
-
-	template<class T>
-	void init();
-
-	void* ptr(){ return pvalue->ptr; }
-
-	UserTypeHolder* pvalue;
-};
-
-template<class T>
-void XNewXBase_INHERITED_OTHER::init(){
-	typedef UserTypeHolderSub<T> holder;
-	holder* p = new(object_xmalloc<holder>()) holder();
-	p->ptr = static_cast<T*>(static_cast<void*>(p->buffer()));
-	pvalue = p;
-	p->template set_virtual_members<holder>();
-}
-
-template<int N> struct XNewXBase{};
-template<> struct XNewXBase<INHERITED_BASE> : XNewXBase_INHERITED_BASE{};
-template<> struct XNewXBase<INHERITED_RCBASE> : XNewXBase_INHERITED_RCBASE{};
-template<> struct XNewXBase<INHERITED_ANY> : XNewXBase_INHERITED_ANY{};
-template<> struct XNewXBase<INHERITED_OTHER> : XNewXBase_INHERITED_OTHER{};
-
-template<class T>
-struct XNewX : public XNewXBase<InheritedN<T>::value>{
-	XNewX(){
-		XNewXBase<InheritedN<T>::value>::template init<T>();
-	}
-
-	static void* operator new(std::size_t, XNewX<T>* self){ return self->ptr(); }
-	static void operator delete(void*){}
-};
+T* make_object();
 
 template<class T, class Deleter>
 UserTypeHolderSub<T, Deleter>* xnew_with_deleter(const T* tp, const Deleter& deleter){
 	typedef UserTypeHolderSub<T, Deleter> holder;
-	holder* p = new(object_xmalloc<holder>()) holder();
+	holder* p = new(make_object<holder>()) holder;
 	p->ptr = const_cast<T*>(tp);
-	p->template set_virtual_members<holder>();
+	register_gc(p);
 	return p;
 }
 
@@ -178,7 +98,7 @@ struct SmartPtrCtor4{
 };
 
 template<class T>
-const ClassPtr& cpp_class();
+struct XNew;
 
 /////////////////////////////////////////
 
@@ -196,61 +116,113 @@ public:
 		value_.init_primitive(TYPE_NULL);
 	}
 
+	// デストラクタ
+	~SmartPtr();
+
+public:
+
+	// コピーコンストラクタ
+	SmartPtr(const SmartPtr<Any>& p);
+
+	// 代入演算子
+	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
+
+public:
+
+	// 任意のポインタ型を受け取ってxtalで参照できるようにするコンストラクタ
+	template<class T>
+	SmartPtr(const T* p){
+		set_unknown_pointer(InheritedCast<T>::cast(p));
+	}
+
+	template<class T>
+	SmartPtr<Any>& operator =(const T* p){
+		unref();
+		set_unknown_pointer(InheritedCast<T>::cast(p));	
+		return *this;
+	}
+
+public:
+
 	/**
 	* \brief Tのポインタと、それを破棄するための関数オブジェクトを受け取って構築するコンストラクタ
 	*/
 	template<class T, class Deleter>
 	SmartPtr(const T* p, const Deleter& deleter){
-		init_smartptr(xnew_with_deleter<T, Deleter>(p, deleter));
+		set_unknown_pointer((const Base*)xnew_with_deleter<T, Deleter>(p, deleter));
 	}
 
 	template<class T>
-	SmartPtr(const T* p, const undeleter_t&){
-		value_.init_pointer(p, CppClassSymbol<T>::value->value);
-	}
-
-	// 任意のポインタ型を受け取ってxtalで参照できるようにするコンストラクタ
-	template<class T>
-	SmartPtr(const T* p){
-		set_unknown_pointer(p, TypeIntType<InheritedN<T>::value>());
-	}
-
-	SmartPtr(const SmartPtr<Any>& p);
-
-	/// nullを受け取るコンストラクタ
-	SmartPtr(const NullPtr&){
-		value_.init_primitive(TYPE_NULL);
+	SmartPtr(const T* p, undeleter_t){
+		value_.init_pointer(p, CppClassSymbol<T>::value.value);
 	}
 
 public:
 
-	SmartPtr<Any>& operator =(const SmartPtr<Any>& p);
-
-	void assign_direct(const SmartPtr<Any>& a);
+	template<class U>
+	SmartPtr(const SmartPtr<U>& p)
+		:Any(p){
+		ref();
+	}
 	
-	~SmartPtr();
+	template<class U>
+	AnyPtr& operator =(const SmartPtr<U>& p){
+		return SmartPtr<Any>::operator =((AnyPtr&)p);
+	}
 
 public:
 
-	SmartPtr(const XNewXBase<INHERITED_BASE>& m);
-	SmartPtr(const XNewXBase<INHERITED_RCBASE>& m);
-	SmartPtr(const XNewXBase<INHERITED_ANY>& m);
-	SmartPtr(const XNewXBase<INHERITED_OTHER>& m);
+	template<class T>
+	SmartPtr(const XNew<T>& x){
+		init(x);
+	}
+
+	template<class T>
+	SmartPtr<Any>& operator =(const XNew<T>& x){
+		unref_init(x);
+		return *this;
+	}
 	
 protected:
 
 	SmartPtr(noinit_t){}
 
-	void init_smartptr(Base* p);
+	void init(const Any& a);
+	void unref_init(const Any& a);
 
-	void set_unknown_pointer(const Base* p, TypeIntType<INHERITED_BASE>);
-	void set_unknown_pointer(const RefCountingBase* p, TypeIntType<INHERITED_RCBASE>);
-	void set_unknown_pointer(const Any* p, TypeIntType<INHERITED_ANY>);
-	void set_unknown_pointer(const AnyPtr* p, TypeIntType<INHERITED_ANYPTR>);
+	void set_unknown_pointer(const Base* p);
+	void set_unknown_pointer(const RefCountingBase* p);
+	void set_unknown_pointer(const Any* p);
+	void set_unknown_pointer(const AnyPtr* p);
 
 	template<class T>
-	void set_unknown_pointer(const T* p, TypeIntType<INHERITED_OTHER>){
-		value_.init_pointer(p, CppClassSymbol<T>::value->value);
+	void set_unknown_pointer(const T* p){
+		value_.init_pointer(p, CppClassSymbol<T>::value.key());
+	}
+
+	void ref();
+	void unref();
+
+public:
+
+	SmartPtr(const NullPtr&){
+		value_.init_primitive(TYPE_NULL);
+	}
+
+	SmartPtr<Any>& operator =(const NullPtr& p){
+		unref();
+		value_.init_primitive(TYPE_NULL);
+		return *this;
+	}
+
+	SmartPtr(const UndefinedPtr&){
+		value_.init_primitive(TYPE_UNDEFINED);
+	}
+
+	SmartPtr<Any>& operator =(const UndefinedPtr& p){
+		unref();
+		value_.init_primitive(TYPE_UNDEFINED);
+		return *this;
 	}
 
 public:
@@ -297,20 +269,6 @@ public:
 	SmartPtr(float v){ value_.init_float(v); }
 	SmartPtr(double v){ value_.init_float(v); }
 	SmartPtr(long double v){ value_.init_float(v); }
-
-	// 基本型の整数、浮動小数点数から構築するコンストラクタ
-	SmartPtr(const bool* v){ value_.init_bool(*v); }
-	SmartPtr(const unsigned char* v){ value_.init_int(*v); }
-	SmartPtr(const short* v){ value_.init_int(*v); }
-	SmartPtr(const unsigned short* v){ value_.init_int(*v); }
-	SmartPtr(const int* v){ value_.init_int(*v); }
-	SmartPtr(const unsigned int* v){ value_.init_int(*v); }
-	SmartPtr(const long* v){ value_.init_int(*v); }
-	SmartPtr(const unsigned long* v){ value_.init_int(*v); }
-
-	SmartPtr(const float* v){ value_.init_float(*v); }
-	SmartPtr(const double* v){ value_.init_float(*v); }
-	SmartPtr(const long double* v){ value_.init_float(*v); }
 
 public:
 
@@ -460,7 +418,7 @@ inline const AnyPtr& ap(const Any& v){
 	return (const AnyPtr&)v;
 }
 
-inline void ap(const AnyPtr& v);
+void ap(const AnyPtr& v);
 
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){
@@ -469,44 +427,46 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 
 /////////////////////////////////////////////////
 
-struct BindBase{
-	void XTAL_set(BindBase*& dest, StringLiteral& name,  const StringLiteral& given);
-	void (*XTAL_bind)(Class* it);
-};
+typedef void (*XTAL_bind_t)(Class* it);
 
 struct CppClassSymbolData{ 
-	CppClassSymbolData();
+	//CppClassSymbolData();
+
+	void init_bind0(XTAL_bind_t b, const char_t* xtname);
+	void init_bind1(XTAL_bind_t b, const char_t* xtname);
+	void init_bind2(XTAL_bind_t b, const char_t* xtname);
 
 	enum{
-		BIND = 3
+		BIND = 2,
+
+		FLAG_BIND0 = 1<<0,
+		FLAG_BIND1 = 1<<1,
+		FLAG_BIND2 = 1<<2,
+		FLAG_NAME = 1<<3
 	};
 
-	unsigned int value;
+	uint_t key() const{
+		return ((uint_t)this >> 2) & 0xffffff;
+	}
 
-	BindBase* prebind;
-	BindBase* bind[BIND];
-	
-	StringLiteral name;
-
-	CppClassSymbolData* prev;
+	int_t flags;	
+	XTAL_bind_t prebind;
+	XTAL_bind_t bind[BIND];	
+	const char_t* name;
 };
 
 template<class T>
-struct CppClassSymbol{
-	static CppClassSymbolData* value;
-	static CppClassSymbolData* make();
-
+struct CppClassSymbolBase{
+	static CppClassSymbolData value;
 	typedef T type;
 };
 
 template<class T>
-CppClassSymbolData* CppClassSymbol<T>::make(){
-	static CppClassSymbolData data;
-	return &data;
-}
+CppClassSymbolData CppClassSymbolBase<T>::value;
+
 
 template<class T>
-CppClassSymbolData* CppClassSymbol<T>::value = CppClassSymbol<T>::make();
+struct CppClassSymbol : CppClassSymbolBase<T>{};
 
 // CppClassSymbolの修飾子をはずすための定義
 template<class T> struct CppClassSymbol<T&> : CppClassSymbol<T>{};
@@ -515,6 +475,8 @@ template<class T> struct CppClassSymbol<const T> : CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<volatile T> : CppClassSymbol<T>{};
 template<class T> struct CppClassSymbol<SmartPtr<T> > : CppClassSymbol<T>{};
 template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : CppClassSymbol<T>{};
+
+template<> struct CppClassSymbol<void> : CppClassSymbol<Any>{};
 
 template<> struct CppClassSymbol<Base> : CppClassSymbol<Any>{};
 template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
@@ -533,53 +495,50 @@ template<> struct CppClassSymbol<float> : CppClassSymbol<Float>{};
 template<> struct CppClassSymbol<double> : CppClassSymbol<Float>{};
 template<> struct CppClassSymbol<long double> : CppClassSymbol<Float>{};
 
-template<> struct CppClassSymbol<const char*> : public CppClassSymbol<String>{};
-template<> struct CppClassSymbol<const wchar_t*> : public CppClassSymbol<String>{};
+template<> struct CppClassSymbol<const char*> : CppClassSymbol<String>{};
+template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
 
 
-#define XTAL_BIND_(ClassName, xtbind, xtname, N) \
+#define XTAL_BIND_(ClassName, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\
-	template<> struct XTAL_bind_template##N<ClassName> : ::xtal::BindBase{\
+	template<> struct XTAL_bind_template##N<ClassName>{\
 		typedef ClassName Self;\
 		XTAL_bind_template##N(){\
-			BindBase::XTAL_bind = &XTAL_bind_template##N::XTAL_bind;\
-			::xtal::CppClassSymbolData* key = ::xtal::CppClassSymbol<ClassName>::make();\
-			XTAL_set(key->xtbind, key->name, xtname);\
+			::xtal::CppClassSymbol<ClassName>::value.init_bind##N(&XTAL_bind_template##N::on_bind, xtname);\
 		}\
-		static void XTAL_bind(::xtal::Class* it);\
+		static void on_bind(::xtal::Class* it);\
 	};\
 	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
-	inline void XTAL_bind_template##N<ClassName>::XTAL_bind(::xtal::Class* it)
+	void XTAL_bind_template##N<ClassName>::on_bind(::xtal::Class* it)
 
 
-#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#ClassName), 0)
-#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, bind[0], XTAL_STRING(#ClassName), 1)
-#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, bind[1], XTAL_STRING(#ClassName), 2)
-#define XTAL_BIND3(ClassName) XTAL_BIND_(ClassName, bind[2], XTAL_STRING(#ClassName), 3)
+#define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 0)
+#define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 1)
+#define XTAL_BIND2(ClassName) XTAL_BIND_(ClassName, XTAL_L(""), 2)
 
-#define XTAL_NAMED_PREBIND(ClassName, Name) XTAL_BIND_(ClassName, prebind, XTAL_STRING(#Name), 0)
-#define XTAL_NAMED_BIND(ClassName, Name) XTAL_BIND_(ClassName, bind, XTAL_STRING(#Name), 1)
+#define XTAL_PREBIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 0)
+#define XTAL_BIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 1)
 
 ////////////////////////////////////
 
 typedef AnyPtr (*bind_var_fun_t)();
 
-struct CppVarSymbolData{ 
-	CppVarSymbolData(bind_var_fun_t fun);
-
-	CppVarSymbolData* prev;
+struct CppValueSymbolData{ 
 	bind_var_fun_t maker;
-	unsigned int value;
+
+	uint_t key() const{
+		return ((uint_t)this >> 2) & 0xffffff;
+	}
 };
 
 template<class T>
-struct CppVarSymbol{
-	static CppVarSymbolData value;
-	static AnyPtr maker(){ return xnew<T>(); }
+struct CppValueSymbol{
+	static CppValueSymbolData value;
+	static AnyPtr maker(){ return XNew<T>(); }
 };
 
 template<class T>
-CppVarSymbolData CppVarSymbol<T>::value(&CppVarSymbol<T>::maker);
+CppValueSymbolData CppValueSymbol<T>::value = {&CppValueSymbol<T>::maker};
 
 }//namespace 
 

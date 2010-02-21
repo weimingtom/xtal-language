@@ -3,6 +3,8 @@
 
 namespace xtal{
 
+PairDummy PairDummy::second;
+
 Map::Map()
 	:default_value_(undefined){}
 
@@ -13,8 +15,8 @@ void Map::on_visit_members(Visitor& m){
 	m & table_ & default_value_;
 }	
 
-const AnyPtr& Map::calc_key(const AnyPtr& key){
-	if(type(key)==TYPE_STRING || type(key)==TYPE_STRING_LITERAL){
+AnyPtr Map::calc_key(const AnyPtr& key){
+	if(type(key)==TYPE_STRING || type(key)==TYPE_LITERAL_STRING){
 		if(const StringPtr& str = unchecked_ptr_cast<String>(key)){
 			return str->intern();
 		}
@@ -43,7 +45,7 @@ MapPtr Map::op_cat(const MapPtr& a){
 	return ret;
 }
 
-MapPtr Map::op_cat_assign(const MapPtr& a){
+const MapPtr& Map::op_cat_assign(const MapPtr& a){
 	for(iterator p = a->begin(); p!=a->end(); ++p){
 		set_at(p->first, p->second);
 	}
@@ -63,7 +65,7 @@ AnyPtr Map::values(){
 }
 
 MapPtr Map::clone(){
-	MapPtr ret(xnew<Map>());
+	MapPtr ret = xnew<Map>();
 	for(iterator p = begin(); p!=end(); ++p){
 		ret->set_at(p->first, p->second);
 	}	
@@ -105,9 +107,9 @@ StringPtr Map::to_s(){
 		if(p!=begin()){
 			ms->put_s(XTAL_STRING(", "));
 		}
-		ms->put_s(p->first->to_s());
+		ms->put_s(p->first);
 		ms->put_s(XTAL_STRING(":"));
-		ms->put_s(p->second->to_s());
+		ms->put_s(p->second);
 	}	
 	ms->put_s(XTAL_STRING("]"));
 	return ms->to_s();
@@ -228,11 +230,13 @@ StringPtr Set::to_s(){
 		}
 
 		if(p->second){
-			ms->put_s(p->first->to_s());
+			ms->put_s(p->first);
 		}
 	}	
 	ms->put_s(XTAL_STRING("]"));
 	return ms->to_s();
 }
+
+XNew<Map>::XNew(){ init(); }
 
 }

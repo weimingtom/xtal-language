@@ -114,11 +114,17 @@ public:
 		};
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
-			id_op_list_[i] = intern(ids[i]);
+			id_op_list_[i] = intern(*(StringLiteral*)(ids[i]));
 		}
 	}
 
 	void uninitialize(){
+		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last; ++it){
+			if((it->first.size&(1<<31))==0){
+				xfree((void*)it->first.str, it->first.size);
+			}
+		}
+
 		table_.destroy();
 
 		for(int i=0; i<IDOp::id_op_MAX; ++i){
@@ -126,39 +132,25 @@ public:
 		}
 	}
 
-	void visit_members(Visitor& m){
-		for(table_t::iterator it = table_.begin(); it!=table_.end(); ++it){
-			m & it->second;
-		}
-	}
-
-	const IDPtr& insert(const char_t* str, uint_t size, uint_t hashcode, bool literal){
-		Key key = {str, size};
+	const char_t* register_string(const char_t* str, uint_t size, uint_t hashcode, bool undelete){
+		Key key = {str, size, hashcode};
 		table_t::iterator it = table_.find(key, hashcode);
 		if(it!=table_.end()){
-			return it->second;
+			return it->first.str;
 		}
 
-		StringPtr sp = literal ? 
-			xnew<String>(StringLiteral(str, size), String::intern_t()) :
-			xnew<String>(str, size, String::intern_t());
-
-		it = table_.insert(key, unchecked_ptr_cast<ID>(sp), hashcode).first;
-		it->first.str = it->second->data();
-		return it->second;
-	}
-
-	AnyPtr interned_strings();
-
-	void gc(){
-		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last;){
-			if(type(*it->second)==TYPE_STRING && (static_cast<StringData*>(rcpvalue(*it->second)))->ref_count()==1){
-				it = table_.erase(it);
-			}
-			else{
-				++it;
-			}
+		it = table_.insert(key, PairDummy(), hashcode).first;
+		if(!undelete){
+			char_t* newstr = (char_t*)xmalloc((size+1)*sizeof(char_t));
+			string_copy(newstr, str, size);
+			newstr[size] = 0;
+			it->first.str = newstr;
 		}
+		else{
+			it->first.size |= 1<<31;
+		}
+
+		return it->first.str;
 	}
 
 	const IDPtr* id_op_list(){
@@ -170,21 +162,22 @@ public:
 	struct Key{
 		const char_t* str;
 		uint_t size;
+		uint_t hash;
 	};
 
 	struct Fun{
 		static uint_t hash(const Key& key){
-			return string_hashcode(key.str, key.size);
+			return key.hash;
 		}
 
 		static bool eq(const Key& a, const Key& b){
-			return string_compare(a.str, a.size, b.str, b.size)==0;
+			if(a.hash!=b.hash){ return false; }
+			return string_compare(a.str, a.size&0x7fffffff, b.str, b.size&0x7fffffff)==0;
 		}
 	};
 
 private:
-
-	typedef Hashtable<Key, IDPtr, Fun> table_t; 
+	typedef Hashtable<Key, PairDummy, Fun> table_t; 
 	table_t table_;
 
 	IDPtr id_op_list_[IDOp::id_op_MAX];
@@ -193,30 +186,6 @@ protected:
 
 	friend class InternedStringIter;
 };
-
-class InternedStringIter : public Base{
-	StringSpace::table_t::iterator iter_, last_;
-public:
-
-	InternedStringIter(StringSpace::table_t::iterator begin, StringSpace::table_t::iterator end)
-		:iter_(begin), last_(end){
-	}
-			
-	void block_next(const VMachinePtr& vm){
-		if(iter_!=last_){
-			vm->return_result(to_smartptr(this), iter_->second);
-			++iter_;
-		}
-		else{
-			vm->return_result(null, null);
-		}
-	}
-
-};
-
-inline AnyPtr StringSpace::interned_strings(){
-	return xnew<InternedStringIter>(table_.begin(), table_.end());
-}
 
 }
 

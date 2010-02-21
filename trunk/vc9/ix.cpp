@@ -27,10 +27,10 @@ public:
 		}
 		else{
 			if(continue_stmt_){
-				stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>    "))->call(line_)->to_s());
+				stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>    "))->call(line_));
 			}
 			else{
-				stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>"))->call(line_)->to_s());
+				stdout_stream()->put_s(format(XTAL_STRING("ix:%03d>"))->call(line_));
 			}
 
 			continue_stmt_ = true;

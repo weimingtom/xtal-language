@@ -28,6 +28,7 @@ struct Named{
 	*/
 	Named()
 		:name(nul<ID>()), value(undefined){}
+
 private:
 	void operator=(const Named&);
 };
@@ -54,11 +55,11 @@ inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyP
 
 template<>
 struct FastStackDefaultValue<Any>{
-	static Any get(){ return null; }
+	static const Any& get(){ return null; }
 };
 
 // XTAL仮想マシン
-class VMachine : public GCObserver{
+class VMachine : public Base{
 public:
 
 	VMachine();
@@ -115,7 +116,7 @@ public:
 	* \brief pos番目の戻り値を返し、呼び出しの後始末をする。
 	*
 	*/
-	AnyPtr result_and_cleanup_call(int_t pos = 0);
+	const AnyPtr& result_and_cleanup_call(int_t pos = 0);
 		
 	/**
 	* \brief thisを差し替える。
@@ -307,6 +308,7 @@ public:
 	void return_result(const char_t* s);
 	void return_result(const char8_t* s);
 	void return_result(const StringLiteral& s);
+	void return_result(const IDPtr& s);
 	void return_result(char v);
 	void return_result(signed char v);
 	void return_result(unsigned char v);
@@ -728,7 +730,7 @@ private:
 
 	const IDPtr* id_;
 
-	// 計算用スタック
+	// 値保持用スタック
 	FastStack<Any> stack_;
 
 	// 関数呼び出しの度に積まれるフレーム
@@ -767,8 +769,15 @@ private:
 
 public:
 
+	void on_shrink_to_fit(){
+		int_t top = variables_top();
+		variables_.shrink_to_fit();
+		variables_top_ = (Any*)variables_.data()+top; 
+	}
+
 	void on_visit_members(Visitor& m);
-	void on_gc_signal(int_t flag);
+
+	void gc_signal(int_t flag);
 
 	int_t fun_frame_size(){
 		return fun_frames_.size();

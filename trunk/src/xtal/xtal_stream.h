@@ -23,31 +23,27 @@ public:
 	* \xbind
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const StringPtr& str){
-		write(str->data(), str->data_size()*sizeof(char_t));
-	}
+	void put_s(const StringPtr& str);
+	/**
+	* \brief 文字列strをストリームに流す
+	*/
+	void put_s(const char_t* str);
+	
+	/**
+	* \brief 文字列strをストリームに流す
+	*/
+	void put_s(const char_t* str, const char_t* end);
 
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const char_t* str){
-		write(str, string_data_size(str)*sizeof(char_t));
-	}
-
+	void put_s(const StringLiteral& str);
+	
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const char_t* str, const char_t* end){
-		write(str, (end-str)*sizeof(char_t));
-	}
-
-	/**
-	* \brief 文字列strをストリームに流す
-	*/
-	void put_s(const StringLiteral& str){
-		write(str.str(), str.size()*sizeof(char_t));
-	}
-
+	void put_s(const AnyPtr& str);
+	
 	/**
 	* \xbind
 	* \brief length文字分ストリームから取り出し、文字列として返す。
@@ -310,11 +306,7 @@ public:
 	* \xbind
 	* \brief 符号無整数8-bitをストリームから取り出す
 	*/
-	u8 get_u8(){
-		struct{ u8 data[1]; } data = {{0}};
-		read_strict(data.data, 1);
-		return (u8)data.data[0];
-	}
+	u8 get_u8();
 
 	/**
 	* \xbind
@@ -565,12 +557,11 @@ public:
 
 	void resize(uint_t size);
 
-	StringPtr to_s();
+	const StringPtr& to_s();
 
 protected:
-
+	StringPtr str_;
 	void resize_data(uint_t size);
-
 	uint_t capa_;
 };
 
@@ -585,7 +576,7 @@ public:
 
 	StringStream(const StringPtr& str);
 		
-	StringPtr to_s(){
+	const StringPtr& to_s(){
 		return str_;
 	}
 
@@ -596,6 +587,44 @@ public:
 
 private:
 	StringPtr str_;
+};
+
+class CompressEncoder : public Stream{
+public:
+
+	CompressEncoder(const StreamPtr& stream);
+
+	~CompressEncoder();
+
+	virtual uint_t write(const void* p, uint_t size);
+
+	virtual void close();
+
+private:
+
+	void destroy();
+
+private:
+	void* impl_;
+};
+
+class CompressDecoder : public Stream{
+public:
+
+	CompressDecoder(const StreamPtr& stream);
+
+	~CompressDecoder();
+
+	virtual uint_t read(void* p, uint_t size);
+
+	virtual void close();
+
+private:
+
+	void destroy();
+
+private:
+	void* impl_;
 };
 
 /**
@@ -742,6 +771,13 @@ public:
 	}
 private:
 	void* impl_;
+};
+
+
+template<>
+struct XNew<MemoryStream> : XXNew<MemoryStream>{
+	XNew();
+	XNew(const void* data, uint_t data_size);
 };
 
 }

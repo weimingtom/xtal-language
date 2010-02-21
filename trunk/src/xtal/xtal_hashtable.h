@@ -187,8 +187,10 @@ protected:
 	}
 
 	uint_t calc_index(uint_t hash, uint_t size){
-		return hash & (size-1);
+		return hash % size;
 	}
+
+	void set_zero();
 
 protected:
 
@@ -200,32 +202,29 @@ protected:
 };
 
 template<class Key, class Val, class Fun>
-OrderedHashtable<Key, Val, Fun>::OrderedHashtable(no_use_memory_t){
+void OrderedHashtable<Key, Val, Fun>::set_zero(){
 	size_ = 0;
 	begin_ = 0;
 	used_size_ = 0;
 	ordered_head_ = 0;
 	ordered_tail_ = 0;
+}
+
+template<class Key, class Val, class Fun>
+OrderedHashtable<Key, Val, Fun>::OrderedHashtable(no_use_memory_t){
+	set_zero();
 }
 
 template<class Key, class Val, class Fun>
 OrderedHashtable<Key, Val, Fun>::OrderedHashtable(){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	ordered_head_ = 0;
-	ordered_tail_ = 0;
-	expand(4);
+	set_zero();
+	expand(5);
 }
 
 template<class Key, class Val, class Fun>
 OrderedHashtable<Key, Val, Fun>::OrderedHashtable(const OrderedHashtable<Key, Val, Fun>& v){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	ordered_head_ = 0;
-	ordered_tail_ = 0;
-	expand(4);
+	set_zero();
+	expand(5);
 
 	for(const_iterator it=v.begin(); it!=v.end(); ++it){
 		insert(it->first, it->second);
@@ -252,11 +251,7 @@ template<class Key, class Val, class Fun>
 void OrderedHashtable<Key, Val, Fun>::destroy(){
 	clear();
 	xfree(begin_, sizeof(Node*)*size_);
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	ordered_head_ = 0;
-	ordered_tail_ = 0;
+	set_zero();
 }
 
 template<class Key, class Val, class Fun>
@@ -298,7 +293,7 @@ Val& OrderedHashtable<Key, Val, Fun>::operator [](const Key& key){
 
 	used_size_++;
 	if(rate()>0.8f){
-		expand(0);
+		expand(1);
 	}
 
 	return ret->pair.second;
@@ -331,7 +326,7 @@ std::pair<typename OrderedHashtable<Key, Val, Fun>::iterator, bool> OrderedHasht
 
 	used_size_++;
 	if(rate()>0.8f){
-		expand(0);
+		expand(1);
 	}
 
 	return std::pair<iterator, bool>(ret, true);
@@ -426,13 +421,36 @@ void visit_members(Visitor& m, const OrderedHashtable<Key, Val, Fun>& values){
 	}
 }
 
+struct PairDummy{
+	static PairDummy second;
+};
 
+template<class T, class U>
+struct Pair{
+	T first;
+	U second;
+
+	Pair(){}
+
+	Pair(const T& t, const U& u)
+		:first(t), second(u){}
+};
+
+template<class T>
+struct Pair<T, PairDummy> : PairDummy{
+	T first;
+
+	Pair(){}
+
+	Pair(const T& t, PairDummy)
+		:first(t){}
+};
 
 template<class Key, class Val, class Fun>
 class Hashtable{
 public:
 
-	typedef std::pair<Key, Val> pair_t;
+	typedef Pair<Key, Val> pair_t;
 
 	struct Node{
 		pair_t pair;
@@ -547,6 +565,24 @@ public:
 	*/
 	iterator find(const Key& key, uint_t hash);
 
+	template<class NKey>
+	iterator find(const NKey& key, uint_t hash){
+		Node** pp = &begin_[calc_index(hash)];
+		Node* p = *pp;
+		while(p){
+			if(Fun::eq(p->pair.first, key)){
+				return iterator(pp, begin_+size_, p);
+			}
+			p = p->next;
+		}
+		return end();
+	}
+
+	template<class NKey>
+	iterator find(const NKey& key){
+		return find(key, Fun::hash(key));
+	}
+
 	/**
 	* \brief iÇ…ëŒâûÇ∑ÇÈóvëfÇê›íËÇ∑ÇÈ
 	*
@@ -607,8 +643,10 @@ protected:
 	}
 
 	uint_t calc_index(uint_t hash, uint_t size){
-		return hash & (size-1);
+		return hash % size;
 	}
+
+	void set_zero();
 
 protected:
 
@@ -616,6 +654,13 @@ protected:
 	uint_t size_;
 	uint_t used_size_;
 };
+
+template<class Key, class Val, class Fun>
+void Hashtable<Key, Val, Fun>::set_zero(){
+	size_ = 0;
+	begin_ = 0;
+	used_size_ = 0;
+}
 
 template<class Key, class Val, class Fun>
 typename Hashtable<Key, Val, Fun>::iterator& Hashtable<Key, Val, Fun>::iterator::operator ++(){
@@ -653,25 +698,19 @@ typename Hashtable<Key, Val, Fun>::iterator Hashtable<Key, Val, Fun>::iterator::
 
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::Hashtable(no_use_memory_t){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
+	set_zero();
 }
 
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::Hashtable(){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	expand(4);
+	set_zero();
+	expand(5);
 }
 
 template<class Key, class Val, class Fun>
 Hashtable<Key, Val, Fun>::Hashtable(const Hashtable<Key, Val, Fun>& v){
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
-	expand(4);
+	set_zero();
+	expand(5);
 
 	for(const_iterator it=v.begin(); it!=v.end(); ++it){
 		insert(it->first, it->second);
@@ -698,9 +737,7 @@ template<class Key, class Val, class Fun>
 void Hashtable<Key, Val, Fun>::destroy(){
 	clear();
 	xfree(begin_, sizeof(Node*)*size_);
-	size_ = 0;
-	begin_ = 0;
-	used_size_ = 0;
+	set_zero();
 }
 
 template<class Key, class Val, class Fun>
@@ -733,7 +770,7 @@ Val& Hashtable<Key, Val, Fun>::operator [](const Key& key){
 
 	used_size_++;
 	if(rate()>0.8f){
-		expand(0);
+		expand(1);
 	}
 
 	return ret->pair.second;
@@ -756,7 +793,7 @@ std::pair<typename Hashtable<Key, Val, Fun>::iterator, bool> Hashtable<Key, Val,
 
 	used_size_++;
 	if(rate()>0.8f){
-		expand(0);
+		expand(1);
 	}
 
 	return std::pair<iterator, bool>(iterator(begin_ + calc_index(hash), begin_+size_, ret), true);

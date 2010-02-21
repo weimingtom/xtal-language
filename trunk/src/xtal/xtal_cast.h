@@ -11,8 +11,6 @@ namespace xtal{
 
 const char_t* cast_const_char_t_ptr(const AnyPtr& a);
 const IDPtr& cast_IDPtr(const AnyPtr& a);
-int_t cast_Int(const AnyPtr& a);
-float_t cast_Float(const AnyPtr& a);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -77,13 +75,11 @@ struct Caster<const bool&>{
 	static type cast(const AnyPtr& a){ return a; }
 };
 
-#undef XTAL_CAST_HELPER
-
-#define XTAL_CAST_HELPER(Type, XType) \
+#define XTAL_CAST_HELPER(Type, XType, Conv) \
 template<>\
 struct Caster<const Type&>{\
 	typedef Type type;\
-	static type cast(const AnyPtr& a){ return (type)cast_##XType(a); }\
+	static type cast(const AnyPtr& a){ return (type)Conv(a); }\
 };\
 template<>struct Caster<Type&>{\
 	typedef Type& type;\
@@ -93,18 +89,18 @@ private:\
 
 // 以下の型は参照型にキャストできない。const参照型にはキャストできる。
 
-XTAL_CAST_HELPER(char, Int);
-XTAL_CAST_HELPER(signed char, Int);
-XTAL_CAST_HELPER(unsigned char, Int);
-XTAL_CAST_HELPER(short, Int);
-XTAL_CAST_HELPER(unsigned short, Int);
-XTAL_CAST_HELPER(int, Int);
-XTAL_CAST_HELPER(unsigned int, Int);
-XTAL_CAST_HELPER(long, Int);
-XTAL_CAST_HELPER(unsigned long, Int);
-XTAL_CAST_HELPER(float, Float);
-XTAL_CAST_HELPER(double, Float);
-XTAL_CAST_HELPER(long double, Float);
+XTAL_CAST_HELPER(char, Int, ivalue);
+XTAL_CAST_HELPER(signed char, Int, ivalue);
+XTAL_CAST_HELPER(unsigned char, Int, ivalue);
+XTAL_CAST_HELPER(short, Int, ivalue);
+XTAL_CAST_HELPER(unsigned short, Int, ivalue);
+XTAL_CAST_HELPER(int, Int, ivalue);
+XTAL_CAST_HELPER(unsigned int, Int, ivalue);
+XTAL_CAST_HELPER(long, Int, ivalue);
+XTAL_CAST_HELPER(unsigned long, Int, ivalue);
+XTAL_CAST_HELPER(float, Float, fvalue);
+XTAL_CAST_HELPER(double, Float, fvalue);
+XTAL_CAST_HELPER(long double, Float, fvalue);
 
 #undef XTAL_CAST_HELPER
 
@@ -120,7 +116,7 @@ XTAL_CAST_HELPER(long double, Float);
 */
 template<class T>
 inline bool can_cast(const AnyPtr& a){
-	return a->is(cpp_class<typename CppClassSymbol<T>::type>());
+	return a->is(&CppClassSymbol<T>::value);
 }
 
 /**
@@ -142,7 +138,7 @@ unchecked_cast(const AnyPtr& a){
 * それ以外の型の場合はコンパイルエラーとなる。
 */
 template<class T>
-inline typename Caster<T>::type 
+typename Caster<T>::type 
 cast(const AnyPtr& a){
 	if(can_cast<T>(a)){
 		return unchecked_cast<T>(a);
@@ -167,7 +163,7 @@ unchecked_ptr_cast(const AnyPtr& a){
 * Tに変換できない場合xtal::nullを返す。
 */
 template<class T>
-inline const SmartPtr<T>&
+const SmartPtr<T>&
 ptr_cast(const AnyPtr& a){
 	if(can_cast<T>(a)){
 		return unchecked_ptr_cast<T>(a);

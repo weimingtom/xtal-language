@@ -22,7 +22,12 @@ public:
 		buf_[0] = 0;
 	}
 
+	~ChMaker(){
+
+	}
+
 	bool is_completed(){
+		if(pos_>8){ return true; }
 		return pos_==len_;
 	}
 
@@ -37,7 +42,7 @@ public:
 	}
 
 	const IDPtr& to_s(){
-		return temp_ = xnew<ID>(&buf_[0], pos_);
+		return temp_ = intern(&buf_[0], pos_);
 	}
 
 	int_t pos(){

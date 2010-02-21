@@ -112,6 +112,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
+				FavorSizeOrSpeed="0"
 				OmitFramePointers="false"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_SECURE_SCL=0"
 				StringPooling="true"

@@ -11,31 +11,7 @@ NativeFunPtr new_native_fun(const param_types_holder_n& pth, const void* val, co
 	return xnew<NativeFun>(pth, val, this_);
 }
 
-namespace{
-	void set_arg_error_except(const VMachinePtr& vm, const StringPtr& name, int_t n, int_t minv, int_t maxv){
-		if(minv==0 && maxv==0){
-			vm->set_except(cpp_class<ArgumentError>()->call(
-				Xt("XRE1007")->call(
-					Named(Xid(object), name),
-					Named(Xid(value), n)
-				)
-			));
-		}
-		else{
-			vm->set_except(cpp_class<ArgumentError>()->call(
-				Xt("XRE1006")->call(
-					Named(Xid(object), name),
-					Named(Xid(min), minv),
-					Named(Xid(max), maxv),
-					Named(Xid(value), n)
-				)
-			));
-		}
-	}
-}
-
-StatelessNativeMethod::StatelessNativeMethod(const param_types_holder_n& pth)
-	{
+StatelessNativeMethod::StatelessNativeMethod(const param_types_holder_n& pth){
 	value_.init_stateless_native_method(&pth);
 }
 
@@ -43,24 +19,28 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 	const param_types_holder_n& pth = *value_.pth();
 	int_t param_n = pth.param_n;
 
-	Any args[16];
-	
-	{ // check arg type
-
-		const CppClassSymbolData* anycls = CppClassSymbol<Any>::value;
-
-		{
-			const AnyPtr& arg = vm->arg_this();
-			args[0] = (Any&)arg;
-
-			if(anycls!=*pth.param_types[0]){
-				const ClassPtr& cls = cpp_class(*pth.param_types[0]);
-				if(!arg->is(cls)){
-					vm->set_except(argument_error(Xid(NativeFunction), 0, cls, arg->get_class()));
-					return;
-				}
+	if(vm->ordered_arg_count()!=param_n){
+		if(!pth.vm){
+			if(!pth.extendable || vm->ordered_arg_count()<param_n){
+				set_argument_num_error(Xid(NativeFunction), vm->ordered_arg_count(), param_n, param_n, vm);
+				return;
 			}
 		}
+	}
+
+	FunctorParam fp;
+	fp.vm = &*vm;
+	fp.fun = 0;
+	fp.result = undefined;
+
+	{ // check arg type
+
+		const CppClassSymbolData* anycls = &CppClassSymbol<Any>::value;
+		const CppClassSymbolData* intcls = &CppClassSymbol<Int>::value;
+		const CppClassSymbolData* floatcls = &CppClassSymbol<Float>::value;
+
+		int_t num = 1;
+		fp.args[0] = (Any&)vm->arg_this();
 
 		if(!pth.vm){
 			if(pth.extendable){
@@ -68,104 +48,89 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 			}
 
 			for(int_t i=0; i<param_n; ++i){
-				const AnyPtr& arg = vm->arg_unchecked(i);
-				args[i+1] = (Any&)arg;
+				fp.args[i+1] = (Any&)vm->arg_unchecked(i);
+			}
 
-				if(anycls!=*pth.param_types[i+1]){
-					const ClassPtr& cls = cpp_class(*pth.param_types[i+1]);
-					if(!arg->is(cls)){ 
-						vm->set_except(argument_error(object_name(), i+1, cls, arg->get_class()));
-						return;
-					}
+			num = param_n+1;
+		}
+			
+		for(int_t i=0; i<num; ++i){
+			if(pth.param_types[i]==anycls){
+				continue;
+			}
+			else{
+				const AnyPtr& arg = ap(fp.args[i]);
+				const ClassPtr& cls = cpp_class(pth.param_types[i]);
+				if(!arg->is(cls)){ 
+					set_argument_type_error(Xid(NativeFunction), i, cls, arg->get_class(), vm);
+					return;
+				}
+
+				if(pth.param_types[i]==intcls){
+					fp.args[i].value_.init_int(arg->to_i());
+				}
+				else if(pth.param_types[i]==floatcls){
+					fp.args[i].value_.init_float(arg->to_f());
 				}
 			}
 		}
 	}
 
-	pth.fun(&*vm, args, 0);
+	pth.fun(fp);
+
+	if(!vm->processed()){
+		vm->return_result(ap(fp.result));
+	}
 }
 
 NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
-	value_.init_rcbase(TYPE, this);
+	pth_ = &pth;
 
-	vm_ = pth.vm;
-	fun_ = pth.fun;
-	if(pth.size==1){
-		val_size_ = 0;
-	}
-	else{
-		val_size_ = pth.size;
-	}
+	val_size_ = pth.size==1 ? 0 : pth.size;
+	min_param_count_ = pth.vm ? 0 : pth.param_n;
+	max_param_count_ = (pth.vm || pth.extendable) ? 255 : pth.param_n;
 
-	extendable_ = pth.extendable;
-
-	if(pth.vm){
-		min_param_count_ = 0;
-		max_param_count_ = 255;
-		param_n_ = pth.param_n;
-	}
-	else if(pth.extendable){
-		min_param_count_ = pth.param_n-1;
-		max_param_count_ = 255;
-		param_n_ = pth.param_n;
-	}
-	else{
-		min_param_count_ = pth.param_n;
-		max_param_count_ = pth.param_n;
-		param_n_ = pth.param_n;
-	}
-
-	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(NamedParam);
+	uint_t data_size = val_size_ + pth.param_n*sizeof(NamedParam);
 	data_ = xmalloc(data_size);
 
 	// 関数をコピー
 	std::memcpy(data_, val, val_size_);
 
-	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	for(int_t i=0; i<param_n_+1; ++i){
-		const ClassPtr& cls = cpp_class(*pth.param_types[i]);
-		if(raweq(cls, cpp_class<Any>())){
-			param_types[i] = 0;
-		}
-		else{
-			param_types[i] = cls.get();
-		}
-	}
-
-	if(param_n_){
-		NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
-		for(int_t i=0; i<param_n_; ++i){
+	if(pth.param_n){
+		NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
+		for(int_t i=0; i<pth.param_n; ++i){
 			new(&params[i]) NamedParam();
 		}
 	}
 }
 
 NativeMethod::~NativeMethod(){
-	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	const param_types_holder_n& pth = *pth_;
+	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
-	for(int_t i=0; i<param_n_; ++i){
+	for(int_t i=0; i<pth.param_n; ++i){
 		params[i].~NamedParam();
 	}
 
-	uint_t data_size = val_size_ + (param_n_+1)*sizeof(Class*) + param_n_*sizeof(NamedParam);
+	uint_t data_size = val_size_ + pth.param_n*sizeof(NamedParam);
 	xfree(data_, data_size);
 }
 
 const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr& value){
+	const param_types_holder_n& pth = *pth_;
+
 	// iは1始まり
 	XTAL_ASSERT(i!=0);
 
-	// 今のところ、VMachineを引数にする場合、paramは設定でない制限あり
-	XTAL_ASSERT(!(min_param_count_==0 && max_param_count_==255));
+	// 今のところ、可変長引数をとる関数は、paramは設定でない制限あり
+	XTAL_ASSERT(pth_->vm==0 && pth_->extendable==0);
 
 	// iが引数の数より大きすぎる
-	XTAL_ASSERT(i<=param_n_);
+	XTAL_ASSERT(i<=pth.param_n);
 
 	i--;
 
-	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
 	// 既に設定済み
 	XTAL_ASSERT(raweq(params[i].name, null) && raweq(params[i].value, undefined));
@@ -180,74 +145,114 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 	return to_smartptr(this);
 }
 
+const NativeFunPtr& NativeMethod::add_param(const IDPtr& key, const AnyPtr& value){
+	const param_types_holder_n& pth = *pth_;
+	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
+
+	// 今のところ、可変長引数をとる関数は、paramは設定でない制限あり
+	XTAL_ASSERT(pth_->vm==0 && pth_->extendable==0);
+
+	// 引数の数よりparamを多く設定している
+	XTAL_ASSERT(min_param_count_>0);
+
+	min_param_count_--;
+	for(int_t i=min_param_count_; i<max_param_count_-1; ++i){
+		params[i] = params[i+1];
+	}
+
+	params[max_param_count_-1].name = key;
+	params[max_param_count_-1].value = value;
+	
+	return to_smartptr(this);
+}
+
+
 void NativeMethod::on_visit_members(Visitor& m){
-	HaveParentRefCountingBase::on_visit_members(m);
+	const param_types_holder_n& pth = *pth_;
 
-	Class** param_types = (Class**)((u8*)data_ +  val_size_);
-	NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+	RefCountingBase::on_visit_members(m);
+	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
-	for(uint_t i=0; i<param_n_; ++i){
+	for(uint_t i=0; i<pth.param_n; ++i){
 		m & params[i].name & params[i].value;
 	}
 }
 
 void NativeMethod::on_rawcall(const VMachinePtr& vm){
+	const param_types_holder_n& pth = *pth_;
+	int_t param_n = pth.param_n;
+
 	if(vm->ordered_arg_count()!=min_param_count_){
 		int_t n = vm->ordered_arg_count();
 		if(n<min_param_count_ || n>max_param_count_){
-			set_arg_error_except(vm, object_name(), n, min_param_count_, max_param_count_);
+			set_argument_num_error(Xid(NativeFunction), n, min_param_count_, max_param_count_, vm);
+			return;
 		}
 	}
 
-	Any args[16];
+	FunctorParam fp;
+	fp.vm = &*vm;
+	fp.fun = data_;
+	fp.result = undefined;
 	
 	{ // check arg type
-		Class** param_types = (Class**)((u8*)data_ +  val_size_);
-		NamedParam* params = (NamedParam*)((u8*)param_types + (param_n_+1)*sizeof(Class*));
+		NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
-		{
-			const AnyPtr& arg = vm->arg_this();
-			args[0] = (Any&)arg;
+		const CppClassSymbolData* anycls = &CppClassSymbol<Any>::value;
+		const CppClassSymbolData* intcls = &CppClassSymbol<Int>::value;
+		const CppClassSymbolData* floatcls = &CppClassSymbol<Float>::value;
 
-			if(param_types[0]){
-				if(!arg->is(to_smartptr(param_types[0]))){
-					vm->set_except(argument_error(object_name(), 0, to_smartptr(param_types[0]), arg->get_class()));
-					return;
-				}
-			}
-		}
+		int_t num = 1;
+		fp.args[0] = (Any&)vm->arg_this();
 
-		if(!vm_){
-			if(extendable_){
-				vm->set_local_variable(param_n_-1, vm->inner_make_arguments(params, param_n_-1));
+		if(!pth.vm){
+			if(pth.extendable){
+				vm->set_local_variable(pth.param_n-1, vm->inner_make_arguments(params, pth.param_n-1));
 			}
 			else{
-				if(vm->ordered_arg_count()!=param_n_){
-					vm->adjust_args(params, param_n_);
+				if(vm->ordered_arg_count()!=pth.param_n){
+					vm->adjust_args(params, pth.param_n);
 				}
 			}
 
-			for(int_t i=0; i<param_n_; ++i){
-				const AnyPtr& arg = vm->arg_unchecked(i);
-				args[i+1] = (Any&)arg;
+			for(int_t i=0; i<pth.param_n; ++i){
+				fp.args[i+1] = (Any&)vm->arg_unchecked(i);
+			}
+			num = pth.param_n+1;
+		}
+			
+		for(int_t i=0; i<num; ++i){
+			if(pth.param_types[i]==anycls){
+				continue;
+			}
+			else{
+				const AnyPtr& arg = ap(fp.args[i]);
+				const ClassPtr& cls = cpp_class(pth.param_types[i]);
+				if(!arg->is(cls)){ 
+					set_argument_type_error(object_name(), i, cls, arg->get_class(), vm);
+					return;
+				}
 
-				if(param_types[i+1]){
-					if(!arg->is(to_smartptr(param_types[i+1]))){ 
-						vm->set_except(argument_error(object_name(), i+1, to_smartptr(param_types[i+1]), arg->get_class()));
-						return;
-					}
+				if(pth.param_types[i]==intcls){
+					fp.args[i].value_.init_int(arg->to_i());
+				}
+				else if(pth.param_types[i]==floatcls){
+					fp.args[i].value_.init_float(arg->to_f());
 				}
 			}
 		}
 	}
 
-	fun_(&*vm, args, data_);
+	pth.fun(fp);
+
+	if(!vm->processed()){
+		vm->return_result(ap(fp.result));
+	}
 }
 
 
 NativeFun::NativeFun(const param_types_holder_n& pth, const void* val, const AnyPtr& this_)
 :NativeMethod(pth, val), this_(this_){
-	value_.init_rcbase(TYPE, this);
 }
 
 void NativeFun::on_visit_members(Visitor& m){
@@ -259,7 +264,6 @@ void NativeFun::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
 	NativeMethod::on_rawcall(vm);
 }
-
 
 DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key){
 	return xnew<DoubleDispatchMethod>(primary_key);

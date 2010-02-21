@@ -34,39 +34,46 @@ private:
 
 	void clear();
 
+	void inner_serialize_scope_info(ScopeInfo& info);
+	void inner_deserialize_scope_info(ScopeInfo& info);
+
 	AnyPtr inner_deserialize_serial_new();
 	AnyPtr inner_deserialize_name();
-	AnyPtr inner_deserialize_string(int_t charsize, bool intern);
-	AnyPtr inner_deserialize_array();
-	AnyPtr inner_deserialize_values();
-	AnyPtr inner_deserialize_map();
-	AnyPtr inner_deserialize_code();
+	StringPtr inner_deserialize_string(int_t charsize, bool intern);
+	ArrayPtr inner_deserialize_array();
+	ValuesPtr inner_deserialize_values();
+	MapPtr inner_deserialize_map();
+	CodePtr inner_deserialize_code();
 
 private:
 
 	enum{ 
 		SERIAL_NEW,
 		NAME,
-		FILELOCAL,
-		REF,
+		REFERENCE,
 		
-		TNULL = 16, 
+		TNULL, 
 		TUNDEFINED, 
 		TFALSE, 
 		TTRUE,
+
 		TINT32, 
-		TFLOAT32,
 		TINT64, 
+
+		TFLOAT32,
 		TFLOAT64,
+
 		TSTRING8,
-		TID8,
 		TSTRING16,
-		TID16,
 		TSTRING32,
+
+		TID8,
+		TID16,
 		TID32,
+
 		TARRAY, 
+		TMAP,
 		TVALUES,
-		TMAP 
 	};
 
 private:
@@ -74,7 +81,8 @@ private:
 	MapPtr map_;
 	xarray values_;
 
-	StreamPtr stream_;
+	Stream* stream_;
+	StreamPtr pstream_;
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(Serializer);
 };

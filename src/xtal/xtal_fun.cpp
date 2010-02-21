@@ -16,12 +16,12 @@ void Arguments::add_ordered(const AnyPtr& v){
 }
 
 void Arguments::add_named(const AnyPtr& k, const AnyPtr& v){
-	if(!named_){ named_ = xnew<Map>(); }
+	if(!named_){ named_ = XNew<Map>(); }
 	named_->set_at(k, v);
 }
 	
 void Arguments::add_named(const VMachinePtr& vm){
-	if(!named_){ named_ = xnew<Map>(); }
+	if(!named_){ named_ = XNew<Map>(); }
 	named_->push_all(vm);
 }
 
@@ -78,7 +78,6 @@ AnyPtr Arguments::each(){
 	return xnew<ArgumentsIter>(to_smartptr(this));
 }
 
-
 StringPtr Arguments::to_s(){
 	MemoryStreamPtr ms = xnew<MemoryStream>();
 	ms->put_s(XTAL_STRING("("));
@@ -86,9 +85,9 @@ StringPtr Arguments::to_s(){
 		if(!first_step){
 			ms->put_s(XTAL_STRING(", "));
 		}
-		ms->put_s(key->to_s());
+		ms->put_s(key);
 		ms->put_s(XTAL_STRING(":"));
-		ms->put_s(val->to_s());
+		ms->put_s(val);
 	}
 	ms->put_s(XTAL_STRING(")"));
 	return ms->to_s();
@@ -137,7 +136,6 @@ void ArgumentsIter::on_visit_members(Visitor& m){
 
 InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	value_.init_rcbase(TYPE, this);
 }
 
 void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
@@ -147,7 +145,6 @@ void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
 
 InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
 	:number_(number), info_(info){
-	value_.init_rcbase(TYPE, this);
 }
 
 void InstanceVariableSetter::on_rawcall(const VMachinePtr& vm){
@@ -180,38 +177,8 @@ bool Method::extendable_param(){
 bool Method::check_arg(const VMachinePtr& vm){
 	int_t n = vm->ordered_arg_count();
 	if(n<info_->min_param_count || (!(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM) && n>info_->max_param_count)){
-		if(info_->min_param_count==0 && info_->max_param_count==0){
-			XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-				Xt("XRE1007")->call(
-					Named(Xid(object), object_name()),
-					Named(Xid(value), n)
-				)
-			));
-			return false;
-		}
-		else{
-			if(info_->flags&FunInfo::FLAG_EXTENDABLE_PARAM){
-				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-					Xt("XRE1005")->call(
-						Named(Xid(object), object_name()),
-						Named(Xid(min), info_->min_param_count),
-						Named(Xid(value), n)
-					)
-				));
-				return false;
-			}
-			else{
-				XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(
-					Xt("XRE1006")->call(
-						Named(Xid(object), object_name()),
-						Named(Xid(min), info_->min_param_count),
-						Named(Xid(max), info_->max_param_count),
-						Named(Xid(value), n)
-					)
-				));
-				return false;
-			}
-		}
+		set_argument_num_error(object_name(), n, info_->min_param_count, info_->max_param_count, vm);
+		return false;
 	}
 	return true;
 }
@@ -302,7 +269,7 @@ void Fiber::call_helper(const VMachinePtr& vm, bool add_succ_or_fail_result){
 	}
 }
 
-AnyPtr Fiber::reset(){
+const FiberPtr& Fiber::reset(){
 	halt();
 	alive_ = true;
 	return to_smartptr(this);

@@ -24,6 +24,7 @@ class ArrayTest{
 		}catch(e){
 			ret = "catched";
 		}
+				
 		assert ret == "catched";
 	}
 		
@@ -54,8 +55,8 @@ class ArrayTest{
 	
 	join#Test: method{
 		_obj.assign(3.times);
-		s: _obj.join();
-		assert s=="012";
+		assert _obj.join()=="012";
+		assert _obj.join(",")=="0,1,2";	
 	}	
 	
 	front#Test: method{

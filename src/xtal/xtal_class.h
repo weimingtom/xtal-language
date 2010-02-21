@@ -82,19 +82,6 @@ public:
 	static VariablesInfo vi;
 };
 
-class Instance : public Base{
-public:
-
-	Instance(){
-		instance_variables_ = &variables_;
-	}
-
-	~Instance();
-
-private:
-	InstanceVariables variables_;
-};
-
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Frame
@@ -103,7 +90,9 @@ private:
 class Class : public Frame{
 public:
 
-	Class(const StringPtr& name = empty_string);
+	Class();
+
+	Class(const IDPtr& name);
 
 	Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info);
 
@@ -192,10 +181,10 @@ public:
 	*/
 	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key = undefined){
 		int_t dist = 0xffffff;
-		return find_near_member(primary_key, secondary_key, dist);
+		return find_near_member2(primary_key, secondary_key, dist);
 	}
 
-	IDPtr find_near_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& dist);
+	IDPtr find_near_member2(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& dist);
 	
 	/**
 	* \xbind
@@ -213,14 +202,9 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class TFun, class Str>
-	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
+	template<class TFun>
+	const NativeFunPtr& def_fun(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dfun<TFun> >::value, &f);
-	}
-
-	template<class TFun, class Str>
-	const NativeFunPtr& def_fun(const Str& primary_key, const TFun& f){
-		return def_and_return(primary_key, fun_param_holder<dfun<TFun> >::value, &f);
 	}
 
 	/**
@@ -231,19 +215,9 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class TFun, class Str>
-	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC){
+	template<class TFun>
+	const NativeFunPtr& def_method(const IDPtr& primary_key, const TFun& f, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<TFun> >::value, &f);
-	}
-
-	template<class TFun, class Str>
-	const NativeFunPtr& def_method(const Str& primary_key, const TFun& f){
-		return def_and_return(primary_key, fun_param_holder<dmemfun<TFun> >::value, &f);
-	}
-
-	template<class Str>
-	const NativeFunPtr& def_method_static(const Str& primary_key, const param_types_holder_n& pth){
-		return def_and_return(primary_key, pth, 0);
 	}
 
 	/**
@@ -253,8 +227,8 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class T, class C, class Str>
-	const NativeFunPtr& def_getter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+	template<class T, class C>
+	const NativeFunPtr& def_getter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<getter_functor<C, T> > >::value, &v);
 	}
 	
@@ -267,8 +241,8 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/
-	template<class T, class C, class Str>
-	const NativeFunPtr& def_setter(const Str& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+	template<class T, class C>
+	const NativeFunPtr& def_setter(const IDPtr& primary_key, T C::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		return def_and_return(primary_key, secondary_key, accessibility, fun_param_holder<dmemfun<setter_functor<C, T> > >::value, &v);
 	}
 	
@@ -282,8 +256,8 @@ public:
 	* \param secondary_key セカンダリキー
 	* \param accessibility 可蝕性
 	*/	
-	template<class T, class U, class Str>
-	void def_var(const Str& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
+	template<class T, class U>
+	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_getter(primary_key, v, secondary_key, accessibility);
 		def_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
 	}
@@ -498,6 +472,8 @@ public:
 
 private:
 
+	void init();
+
 	const NativeFunPtr& ctor(int_t type);
 
 	const NativeFunPtr& def_ctor(int_t type, const NativeFunPtr& ctor_func);
@@ -505,28 +481,25 @@ private:
 public:
 
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
-	const NativeFunPtr& def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
-	const NativeFunPtr& def_and_return(const char8_t* primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
 
-	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const param_types_holder_n& pth, const void* val);
-	const NativeFunPtr& def_and_return(const char_t* primary_key, const param_types_holder_n& pth, const void* val);
-	const NativeFunPtr& def_and_return(const char8_t* primary_key, const param_types_holder_n& pth, const void* val);
-
-	void def_and_return(const char_t* primary_key, const param_types_holder_n& pth);
-	void def_and_return(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth);
+	void define(const char_t* primary_key, const param_types_holder_n& pth);
+	void define(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth);
+	void define_param(const char_t* name, const AnyPtr& default_value);
+	void define(const char_t* primary_key, const AnyPtr& valueh);
+	void define(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
 
 public:
 
 	void on_visit_members(Visitor& m){
 		Frame::on_visit_members(m);
 		for(uint_t i=0; i<inherited_classes_.size(); ++i){
-			ClassPtr temp = to_smartptr(inherited_classes_[i]);
-			m & temp;
-			inherited_classes_[i] = temp.get();
+			m & inherited_classes_.at(i);
 		}
 	}
 
 protected:
+
+	void fillup_inherited_classes();
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
@@ -534,8 +507,9 @@ protected:
 
 	NativeFunPtr ctor_[2];
 
-	PODArrayList<Class*> inherited_classes_;
+	xarray inherited_classes_;
 	CppClassSymbolData* symbol_data_;
+
 	u16 object_force_;
 	u16 flags_;
 
@@ -546,29 +520,11 @@ protected:
 		FLAG_PREBINDED = 1<<3,
 		FLAG_BINDED = 1<<4,
 		FLAG_BINDED2 = 1<<5,
-		FLAG_BINDED3 = 1<<6,
+
+		FLAG_LAST_DEFINED_CTOR = 1<<7,
+		FLAG_LAST_DEFINED_CTOR2 = 1<<8,
+
 	};
-
-	friend class ClassInheritedClassesIter;
-};
-
-
-class ClassInheritedClassesIter : public Base{
-public:
-
-	ClassInheritedClassesIter(const ClassPtr& cls)
-		:class_(cls), index_(0){}
-	
-	void block_next(const VMachinePtr& vm);
-
-	void on_visit_members(Visitor& m){
-		Base::on_visit_members(m);
-		m & class_;
-	}
-
-private:
-	ClassPtr class_;
-	uint_t index_;
 };
 
 }

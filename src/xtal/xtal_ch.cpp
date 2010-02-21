@@ -4,28 +4,42 @@ namespace xtal{
 
 ////////////////////////////////////////////////
 
-StringPtr ChCodeLib::ch_inc(const char_t* data, int_t data_size){
+int_t ChCodeLib::ch_inc(const char_t* data, int_t data_size, char_t* dest, int_t dest_size){
+	const char_t* p;
+	int_t sz;
+
 	if(data_size>6){
-		return xnew<String>(data, data_size);
-	}
-
-	uchar_t buf[8] = {0};
-	std::memcpy(buf+1, data, data_size*sizeof(uchar_t));
-
-	for(int_t i=data_size; i>=0; --i){
-		buf[i]++;
-		if(buf[i]==0){
-			continue;
-		}
-		break;
-	}
-
-	if(buf[0]==0){
-		return xnew<String>((char_t*)buf+1, data_size);
+		p = data;
+		sz = data_size;
 	}
 	else{
-		return xnew<String>((char_t*)buf, data_size+1);
+		uchar_t buf[8] = {0};
+		std::memcpy(buf+1, data, data_size*sizeof(uchar_t));
+
+		for(int_t i=data_size; i>=0; --i){
+			buf[i]++;
+			if(buf[i]==0){
+				continue;
+			}
+			break;
+		}
+
+		if(buf[0]==0){
+			p = (char_t*)buf+1;
+			sz = data_size;
+		}
+		else{
+			p = (char_t*)buf;
+			sz = data_size+1;
+		}
 	}
+	
+	if(dest_size<sz){
+		sz = dest_size;	
+	}
+	
+	std::memcpy(dest, p, sz*sizeof(uchar_t));
+	return sz;
 }
 
 int_t ChCodeLib::ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize){

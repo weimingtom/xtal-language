@@ -24,7 +24,6 @@ public:
 	*/
 	int_t line(){ return line_; }
 
-
 	const FunPtr& fun(){ return fun_; }
 
 	/**
@@ -122,9 +121,7 @@ public:
 	* \brief クローンを作る
 	* HookInfoオブジェクトは使いまわされるため、情報を保持したい場合、クローンを作る必要がある。
 	*/
-	SmartPtr<HookInfo> clone(){
-		return xnew<HookInfo>(*this);
-	}
+	SmartPtr<HookInfo> clone();
 
 	void set_vm(const VMachinePtr& v);
 

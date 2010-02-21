@@ -40,7 +40,7 @@ public:
 	* \xbind
 	* \brief メッセージを返す
 	*/
-	StringPtr message(){
+	const StringPtr& message(){
 		return message_;
 	}
 
@@ -77,10 +77,13 @@ class AccessibilityError{};
 class AssertionFailed{};
 class CompileError{};
 
-AnyPtr cast_error(const AnyPtr& from, const AnyPtr& to);
-AnyPtr argument_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type);
 AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key);
 AnyPtr filelocal_unsupported_error(const CodePtr& code, const IDPtr& primary_key);
+
+void set_unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const AnyPtr& secondary_key, const VMachinePtr& vm = vmachine());
+void set_runtime_error(const AnyPtr& arg, const VMachinePtr& vm = vmachine());
+void set_argument_type_error(const AnyPtr& object, int_t no, const ClassPtr& required, const ClassPtr& type, const VMachinePtr& vm = vmachine());
+void set_argument_num_error(const AnyPtr& funtion_name, int_t n, int_t min_count, int_t max_count, const VMachinePtr& vm = vmachine());
 
 /**
 * \brief 例外を設定する

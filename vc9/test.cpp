@@ -14,7 +14,6 @@
 #include "time.h"
 
 
-
 #include <iostream>
 
 class TestGetterSetterBind{
@@ -36,11 +35,11 @@ XTAL_PREBIND(TestGetterSetterBind){
 }
 
 XTAL_BIND(TestGetterSetterBind){
-   it->def_getter(Xid(x), &TestGetterSetterBind::x);
-   it->def_setter(Xid(set_x), &TestGetterSetterBind::x);
+   Xdef_getter(x);
+   Xdef_setter(x);
 
-   it->def_var(Xid(y), &TestGetterSetterBind::y);
-   it->def_method(Xid(foomethod), &TestGetterSetterBind::foomethod);
+   Xdef_var(y);
+   Xdef_method(foomethod);
  
    it->def_method("getseta", &getset);
    Xdef_method_alias(getset, &getset);
@@ -151,11 +150,14 @@ void test(){
 		mydata.a = 10;
 		assert mydata.a==10;
 
-		a: cpp::AAA();
+		a: AAA();
 		a.test.y = 10;
 		a.test.x = a.test.y;
 		assert a.test.x==10;
+
+		assert true==false;
 	))){
+		code->def("AAA", cpp_class<AAA>());
 		code->call();
 	}
 
@@ -650,19 +652,28 @@ struct SLp : public Base{
 	virtual void foo(){}
 };
 
-
-
 void aaa(int v, const ArgumentsPtr& a){
 	a->p();
 }
 
-
-void fooe(const AnyPtr& a){
-	//a = a;
+void fooo3(Any& a, Any& b, Any& c){
+	
 }
 
-StringPtr return_string(){
-	return empty_string;
+void fooo(Any* p){
+	fooo3(p[0], p[1], p[2]);
+}
+
+void fooo(Any* a, Any* b, Any* c){
+	fooo3(*a, *b, *c);
+}
+
+struct Mared{
+	void move_initialize(const Mared&);
+};
+
+void Mared::move_initialize(const Mared&){
+
 }
 
 int main2(int argc, char** argv){
@@ -670,10 +681,19 @@ int main2(int argc, char** argv){
 
 	using namespace std;
 
-	const VMachinePtr vm = vmachine();
+	MemoryStreamPtr ms = xnew<MemoryStream>();
+
+
+	VMachinePtr vm = vmachine();
 
 	SmartPtr<Spr> s = xnew<Spr>();
 	Spr& p = unchecked_cast<Spr&>(s);
+
+	if(vm){
+		vm = vm;
+	}
+
+//	ArrayPtr aa = pnew<Array>(10);
 
 //	_mm_add_ps(s->v.a, s->v.a);
 
@@ -725,13 +745,27 @@ int main2(int argc, char** argv){
 		//));
 	}
 
-	if(CodePtr code = Xsrc((
-		"a,a,a".split(",")[].p;
-	))){
-		code->inspect()->p();
-		//AnyPtr ret = code->call(xnew<Spr>());
-		code->call(fun(&aaa));
+	XTAL_CATCH_EXCEPT(e){
+		StringPtr str = e->to_s();
+		const char_t* cstr = str->data();
+		stderr_stream()->println(e);
+		return 1;
 	}
+
+	{
+		if(CodePtr code = Xsrc((
+			1.p;
+		))){
+			//code->inspect()->p();
+			//AnyPtr ret = code->call(xnew<Spr>());
+			code->call();
+			full_gc();
+		}
+	}
+
+	Environment* eeee = environment();
+	full_gc();
+	full_gc();
 
 	XTAL_CATCH_EXCEPT(e){
 		StringPtr str = e->to_s();
@@ -754,6 +788,7 @@ int main2(int argc, char** argv){
 		stderr_stream()->println(e);
 		return 1;
 	}
+
 //*/
 
 #if 1
@@ -1432,15 +1467,18 @@ void MemoryManager::dump(unsigned char* dest, size_t size){
 
 }
 
-char memory[1024*1024*200];
-xxx::MemoryManager smm(memory, 1024*1024*200);
+char memory[1024*512*4];
+xxx::MemoryManager smm(memory, sizeof(memory));
 
 class AAllocatorLib : public AllocatorLib{
 public:
-	virtual ~AAllocatorLib(){}
 	virtual void* malloc(std::size_t size){ return smm.malloc(size); }
 	virtual void free(void* p, std::size_t size){ smm.free(p); }
-	virtual void* out_of_memory(std::size_t size){ return 0; }
+
+	virtual void* malloc_align(std::size_t size, std::size_t alignment){ return smm.malloc(size, alignment); }
+	virtual void free_align(void* p, std::size_t size, std::size_t alignment){ smm.free(p); }
+
+	virtual void out_of_memory(){}
 };
 
 #include <dbghelp.h>
@@ -1530,7 +1568,7 @@ int main(int argc, char** argv){
 	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.ch_code_lib = &sjis_ch_code_lib;
-	//setting.allocator_lib = &alloc_lib;
+	setting.allocator_lib = &alloc_lib;
 
 	initialize(setting);
 
@@ -1892,4 +1930,225 @@ DebugConnector* dcon;
 void update_debug(){
 	dcon->update();
 }
+*/
+
+
+
+
+/*
+class Freq{
+public:
+
+	Freq(){
+		sum_ = 0;
+
+		for(u32 i=0; i<TABLE_SIZE; ++i){
+			count_[i] = 0;
+			count_sum_[i] = 0;
+		}
+
+		for(u32 i=0; i<TABLE_SIZE; ++i){
+			put_value(i, 1);
+		}
+	}
+
+	void put_value(i32 c, i32 n){
+		i32 node = c + TABLE_SIZE - 1;
+		count_[c] += n;
+		sum_ += n;
+		while(node>0){
+			int_t parent = (node - 1) / 2;
+			if(node & 1){
+				count_sum_[parent] += n;
+			}
+			node = parent;
+		}
+	}
+
+	u32 cumul(i32 c){
+		i32 n = 0;
+		i32 node = c + TABLE_SIZE - 1;
+		while(node > 0){
+			i32 parent = (node - 1) / 2;
+			if(node & 1){
+				count_sum_[parent]++;
+			}
+			else{
+				n += count_sum_[parent];
+			}
+			node = parent;
+		}
+		return n;
+	}
+
+	void update(i32 c){
+		count_[c]++;
+		sum_++;
+		if(sum_ >= MIN_RANGE){
+			for(i32 i=0; i<TABLE_SIZE; ++i){
+				i32 n = count_[i] >> 1;
+				if(n>0){
+					put_value(i, -n);
+				}
+			}
+		}
+	}
+
+	u32 sum(){
+		return sum_;
+	}
+
+	i32 count_sum(i32 c){
+		return count_sum_[c];
+	}
+
+	i32 count(i32 c){
+		return count_[c];
+	}
+
+	void search_code(u32 value, u32& retnode, u32& retn){
+		u32 n = 0;
+		u32 node = 0;
+		u32 node_size = TABLE_SIZE - 1;
+		while(node < node_size){
+			if(value < n + count_sum_[node]){
+				count_sum_[node]++;
+				node = node * 2 + 1;
+			}
+			else{
+				n += count_sum_[node];
+				node = node * 2 + 2;
+			}
+		}
+
+		retnode = node - node_size;
+		retn = n;
+	}
+	
+	static const int MAX_RANGE = 0xffffffff;
+	static const int MIN_RANGE = 0x100000;
+	static const int TABLE_SIZE = 256;
+
+private:
+
+	i32 count_[TABLE_SIZE];
+	i32 count_sum_[TABLE_SIZE];
+	u32 sum_;
+};
+
+class RangeEncoder{
+public:
+	RangeEncoder(const StreamPtr& out){
+		out_ = out;
+		range_ = Freq::MAX_RANGE;
+		buff_ = 0;
+		count_ = 0;
+		low_ = 0;
+	}
+
+	void encode(i32 c){
+		u32 temp = range_ / freq_.sum();
+		normalize(freq_.cumul(c), freq_.count(c), temp);
+		freq_.update(c);
+	}
+
+	void finish(){
+		out_->put_u8(buff_);
+		for(i32 i=0; i<count_; ++i){
+			out_->put_u8(0xff);
+		}	
+		out_->put_u32be(low_);
+	}
+
+	void normalize(u32 cumul, u32 count, u32 div){
+		u32 newlow = low_ + cumul * div;
+		range_ = count * div;
+
+		// overflow
+		if(newlow < low_){
+			buff_++;
+			if(count_>0){
+				out_->put_u8(buff_);
+				for(i32 i=0; i<count_-1; ++i){
+					out_->put_u8(0);
+				}
+				buff_ = 0;
+				count_ = 0;
+			}
+		}
+
+		low_ = newlow;
+		while(range_ < Freq::MIN_RANGE){
+			if(low_ < (0xff<<24)){
+				out_->put_u8(buff_);
+				for(i32 i=0; i<count_; ++i){
+					out_->put_u8(0xff);
+				}				
+				buff_ = (low_ >> 24) & 0xff;
+				count_ = 0;
+			}
+			else{
+				count_++;
+			}
+
+			low_  <<= 8;
+			range_ <<= 8;
+		}
+	}
+
+private:
+	StreamPtr out_;
+
+	Freq freq_;
+
+	u32 low_;
+	u32 range_;
+	u32 buff_;
+	u32 count_;
+};
+
+class RangeDecoder{
+public:
+
+	RangeDecoder(const StreamPtr& in){
+		in_ = in;
+		range_ = Freq::MAX_RANGE;
+		buff_ = 0;
+		count_ = 0;
+
+		in_->get_u8();
+		low_ = in_->get_u32be();
+	}
+
+	void normalize(){
+		while(range_ < Freq::MIN_RANGE){
+			range_ <<= 8;
+			low_ <<= 8;
+			low_ += in_->get_u8();
+		}
+	}
+
+	u32 decode(){
+		u32 c;
+		u32 num;
+		u32 temp = range_ / freq_.sum();
+		freq_.search_code(low_ / temp, c, num);
+		low_ -= temp * num;
+		range_ = temp * freq_.count(c);
+		normalize();
+		freq_.update(c);
+		return c;
+	}
+
+private:
+	StreamPtr in_;
+
+	Freq freq_;
+
+	u32 low_;
+	u32 range_;
+	u32 buff_;
+	u32 count_;
+};
+
 */

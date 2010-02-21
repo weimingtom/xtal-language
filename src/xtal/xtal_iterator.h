@@ -9,7 +9,7 @@
 
 namespace xtal{
 
-class DelegateToIterator : public HaveParentBase{
+class DelegateToIterator : public Base{
 	IDPtr member_;
 public:
 	

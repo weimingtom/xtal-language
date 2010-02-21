@@ -126,7 +126,7 @@ public:
 	* \xbind
 	* \brief 自身と連結し、自身を返す
 	*/
-	MapPtr op_cat_assign(const MapPtr& a);
+	const MapPtr& op_cat_assign(const MapPtr& a);
 		
 	/**
 	* \xbind
@@ -171,7 +171,7 @@ public:
 	* \xbind
 	* \brief 自身を返す
 	*/
-	MapPtr op_to_map(){
+	const MapPtr& op_to_map(){
 		return to_smartptr(this);
 	}
 
@@ -225,7 +225,7 @@ public:
 
 	typedef OrderedHashtable<AnyPtr, AnyPtr, Fun> table_t;
 
-	const AnyPtr& calc_key(const AnyPtr& key);
+	 AnyPtr calc_key(const AnyPtr& key);
 
 public:
 
@@ -286,6 +286,13 @@ public:
 
 	StringPtr to_s();
 };
+
+
+template<>
+struct XNew<Map> : XXNew<Map>{
+	XNew();
+};
+
 
 }//namespace
 

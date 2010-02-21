@@ -13,7 +13,7 @@
 namespace xtal{
 
 enum{
-	OBJECTS_ALLOCATE_SHIFT = 10,
+	OBJECTS_ALLOCATE_SHIFT = 9,
 	OBJECTS_ALLOCATE_SIZE = 1 << OBJECTS_ALLOCATE_SHIFT,
 	OBJECTS_ALLOCATE_MASK = OBJECTS_ALLOCATE_SIZE-1
 };
@@ -40,6 +40,46 @@ struct ConnectedPointer{
 
 	ConnectedPointer(int_t p, RefCountingBase***& pp)
 		:pos(p), bp(&pp){}
+
+public:
+
+	pointer segment_begin(){
+		return &(*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][0];
+	}
+
+	pointer segment_end(){
+		return &(*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][OBJECTS_ALLOCATE_SIZE];
+	}
+
+	pointer segment_rbegin(){
+		return segment_end()-1;
+	}
+
+	pointer segment_rend(){
+		return segment_begin()-1;
+	}
+
+	pointer segment_get(){
+		return &(*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
+	}
+
+	uint_t segment_pos(){
+		return pos&OBJECTS_ALLOCATE_MASK;
+	}
+
+	uint_t segment_number(){
+		return pos>>OBJECTS_ALLOCATE_SHIFT;
+	}
+
+	void move_next_segment(){
+		pos = (pos+OBJECTS_ALLOCATE_SIZE) & ~OBJECTS_ALLOCATE_MASK;
+	}
+
+	void move_back_segment(){
+		pos = (pos & ~OBJECTS_ALLOCATE_MASK) - 1;
+	}
+
+public:
 
 	reference operator *(){
 		return (*bp)[pos>>OBJECTS_ALLOCATE_SHIFT][pos&OBJECTS_ALLOCATE_MASK];
@@ -117,13 +157,84 @@ struct ConnectedPointer{
 	}
 };
 
+struct ConnectedPointerEnumerator{
+	ConnectedPointer begin_;
+	ConnectedPointer end_;
+
+	ConnectedPointerEnumerator(const ConnectedPointer& b, const ConnectedPointer& e){
+		begin_ = b;
+		end_ = e;
+	}
+
+	RefCountingBase** begin(){
+		return begin_.segment_get();
+	}
+
+	RefCountingBase** end(){
+		if(begin_.segment_number()==end_.segment_number()){
+			return end_.segment_get();
+		}
+		else{
+			return begin_.segment_end();
+		}
+	}
+
+	bool move(){
+		if(begin_.segment_number()==end_.segment_number()){
+			return false;
+		}
+
+		begin_.move_next_segment();
+		return true;
+	}
+
+//	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+//	}while(e.move());
+};
+
+struct ConnectedPointerReverseEnumerator{
+	ConnectedPointer begin_;
+	ConnectedPointer end_;
+
+	ConnectedPointerReverseEnumerator(const ConnectedPointer& b, const ConnectedPointer& e){
+		begin_ = e - 1;
+		end_ = b - 1;
+	}
+
+	RefCountingBase** begin(){
+		return begin_.segment_get();
+	}
+
+	RefCountingBase** end(){
+		if(begin_.segment_number()==end_.segment_number()){
+			return end_.segment_get();
+		}
+		else{
+			return begin_.segment_rend();
+		}
+	}
+
+	bool move(){
+		if(begin_.segment_number()==end_.segment_number()){
+			return false;
+		}
+
+		begin_.move_back_segment();
+		return true;
+	}
+
+
+//	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; --pp){
+//	}while(e.move());
+};
+
 void ObjectSpace::initialize(){
 	objects_list_begin_ = 0;
 	objects_list_current_ = 0;
 	objects_list_end_ = 0;
-	gcobservers_begin_ = 0;
-	gcobservers_current_ = 0;
-	gcobservers_end_ = 0;
+	gcvms_begin_ = 0;
+	gcvms_current_ = 0;
+	gcvms_end_ = 0;
 	objects_count_ = 0;
 	objects_max_ = 0;
 	processed_line_ = 0;
@@ -131,102 +242,59 @@ void ObjectSpace::initialize(){
 	objects_builtin_line_ = 0;
 
 	disable_finalizer_ = false;
-	def_all_cpp_classes_ = false;
-	binded_all_ = false;
 
 	disable_gc();
 
+	class_map_.expand(4);
+	value_map_.expand(4);
+
 	expand_objects_list();
 
-	static CppClassSymbolData key;
-	symbol_data_ = &key;
-
-	uint_t maxv = key.value;
-	class_table_.resize(maxv);
-	for(uint_t i=0; i<maxv; ++i){
-		class_table_[i] = 0;
-	}
-
-	CppClassSymbolData* symbols[] = { 
-		CppClassSymbol<void>::value,
-		CppClassSymbol<Any>::value,
-		CppClassSymbol<Class>::value,
-		CppClassSymbol<Array>::value,
-		CppClassSymbol<String>::value,
+	static CppClassSymbolData* symbols[] = { 
+		&CppClassSymbol<Class>::value,
+		&CppClassSymbol<Any>::value,
+		&CppClassSymbol<Array>::value,
+		&CppClassSymbol<String>::value,
 	};
 
 	uint_t nsize = sizeof(symbols)/sizeof(symbols[0]);
 
 	for(uint_t i=0; i<nsize; ++i){
-		class_table_[symbols[i]->value] = (Class*)object_xmalloc<Class>();
+		Class* p = object_xmalloc<Class>();
+		class_map_[symbols[i]->key()] = p;
+		p->special_initialize();
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = class_table_[symbols[i]->value];
-		Base* bp = p;
-		new(bp) Base();
-	}
-		
-	for(uint_t i=0; i<nsize; ++i){
-		Class* p = class_table_[symbols[i]->value];
+		Class* p = (Class*)class_map_[symbols[i]->key()];
 		new(p) Class(Class::cpp_class_t());
-	}
-
-	for(uint_t i=0; i<nsize; ++i){
-		Class* p = class_table_[symbols[i]->value];
-		p->set_class(xtal::cpp_class<Class>());
-		p->set_virtual_members<Class>();
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = class_table_[symbols[i]->value];
+		Class* p = (Class*)class_map_[symbols[i]->key()];
+		p->special_initialize(&VirtualMembersT<Class>::value);
+	}
+
+	for(uint_t i=0; i<nsize; ++i){
+		Class* p = (Class*)class_map_[symbols[i]->key()];
 		register_gc(p);
-	}
-
-	//////////////////////////////////////////////////
-
-	for(uint_t i=0; i<class_table_.size(); ++i){
-		if(!class_table_[i]){
-			class_table_[i] = xnew<Class>(Class::cpp_class_t()).get();
-			class_table_[i]->inc_ref_count();
-		}
-	}
-
-	{
-		CppClassSymbolData* prev = key.prev;
-		while(prev){
-			class_table_[prev->value]->set_symbol_data(prev);
-			prev = prev->prev;
-		}
-	}
-
-	//////////////////////////////////////////////////
-
-	{
-		static CppVarSymbolData key(0);
-		var_table_ = xnew<Array>(key.value);
-		CppVarSymbolData* prev = key.prev;
-		for(uint_t i=var_table_->size(); i>1; --i){
-			var_table_->set_at(i-1, prev->maker ? prev->maker() : null);
-			prev = prev->prev;
-		}
+		p->inc_ref_count();
+		p->set_symbol_data(symbols[i]);
 	}
 }
 
 void ObjectSpace::uninitialize(){
-	for(uint_t i=0; i<class_table_.size(); ++i){
-		if(class_table_[i]){
-			class_table_[i]->dec_ref_count();
-			class_table_[i] = 0;
-		}
+	for(map_t::iterator it=class_map_.begin(), last=class_map_.end(); it!=last; ++it){
+		it->second->dec_ref_count();
 	}
 
-	for(uint_t i=0; i<var_table_->size(); ++i){
-		var_table_->set_at(i, undefined);
+	for(map_t::iterator it=value_map_.begin(), last=value_map_.end(); it!=last; ++it){
+		it->second->dec_ref_count();
 	}
-	var_table_ = null;
 
-	class_table_.release();
+	class_map_.destroy();
+	value_map_.destroy();
+
 	clear_cache();
 
 	disable_finalizer_ = true;
@@ -239,56 +307,7 @@ void ObjectSpace::uninitialize(){
 			//fprintf(stderr, "exists cycled objects %d\n", objects_count_);
 			//print_alive_objects();
 
-#ifdef XTAL_DEBUG_PRINT
-			ConnectedPointer current(objects_count_, objects_list_begin_);
-			ConnectedPointer begin(objects_builtin_line_, objects_list_begin_);
-
-			std::map<std::string, int> table;
-			for(ConnectedPointer it = begin; it!=current; ++it){
-				switch(type(**it)){
-				XTAL_DEFAULT;
-
-				XTAL_CASE(TYPE_BASE){ 
-					//table["Base"]++; 
-					if(Class* p=dynamic_cast<Class*>((Base*)*it)){
-						table[p->object_temporary_name()->c_str()]++;
-					}
-					else{
-						table[typeid(*pvalue(**it)).name()]++;
-					}
-				}
-
-				XTAL_CASE(TYPE_STRING){ 
-					unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
-					const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
-					str = str;
-					uint_t n = string_data_size(str);
-					XMallocGuard umg((n+1)*sizeof(char));
-					char* buf = (char*)umg.get();
-					for(uint_t i=0; i<n; ++i){
-						buf[i] = str[i];
-					}
-					buf[n] = 0;
-					//table[buf]++;
-				}
-
-				XTAL_CASE(TYPE_ARRAY){ table["Array"]++; }
-				XTAL_CASE(TYPE_VALUES){ table["Values"]++; }
-				XTAL_CASE(TYPE_TREE_NODE){ table["xpeg::TreeNode"]++; }
-				XTAL_CASE(TYPE_NATIVE_METHOD){ table["NativeMethod"]++; }
-				XTAL_CASE(TYPE_NATIVE_FUN){ table["NativeFun"]++; }
-				}
-			}
-
-			std::map<std::string, int>::iterator it=table.begin(), last=table.end();
-			for(; it!=last; ++it){
-				printf("alive %s %d\n", it->first.c_str(), it->second);
-			}
-			int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
-			printf("m %d\n", m);
-
-			//printf("used_memory %d\n", used_memory);	
-#endif
+		print_all_objects();
 
 #ifndef XTAL_CHECK_REF_COUNT
 
@@ -307,24 +326,114 @@ void ObjectSpace::uninitialize(){
 			destroy_objects(begin, current);
 			free_objects(begin, current);
 		}
-
 	}
 
-	for(RefCountingBase*** it=objects_list_begin_; it!=objects_list_end_; ++it){
+	for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
 		RefCountingBase** begin = *it;
 		RefCountingBase** current = *it;
 		RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
 		fit_simple_dynamic_pointer_array(&begin, &end, &current);
 	}
 
-	objects_list_current_ = objects_list_begin_;
+	gcvms_current_ = gcvms_begin_;
+	fit_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_);
 
-	fit_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_);
+	objects_list_current_ = objects_list_begin_;
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 }
 
 void ObjectSpace::finish_initialize(){
 	objects_builtin_line_ = objects_count_;
+}
+	
+void ObjectSpace::shrink_to_fit(){
+	if(cycle_count_>0){
+		return;
+	}
+
+	ScopeCounter cc(&cycle_count_);
+
+	if(objects_list_current_!=objects_list_end_){
+		++objects_list_current_;
+
+		for(RefCountingBase*** it=objects_list_current_; it!=objects_list_end_; ++it){
+			RefCountingBase** begin = *it;
+			RefCountingBase** current = *it;
+			RefCountingBase** end = *it+OBJECTS_ALLOCATE_SIZE;
+			fit_simple_dynamic_pointer_array(&begin, &end, &current);
+		}
+
+		fit_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_);
+		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
+
+		objects_max_ = (objects_list_current_-objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+		
+		--objects_list_current_;
+	}
+
+	ConnectedPointer current(objects_count_, objects_list_begin_);
+	ConnectedPointer begin(0, objects_list_begin_);
+
+	ConnectedPointerEnumerator e(begin, current);
+	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+		(*pp)->shrink_to_fit();
+	}while(e.move());
+}
+
+void ObjectSpace::print_all_objects(){
+#ifdef XTAL_DEBUG_PRINT
+			ConnectedPointer current(objects_count_, objects_list_begin_);
+			ConnectedPointer begin(0, objects_list_begin_);
+
+			std::map<std::string, int> table;
+			std::string classpre = "CLASS: ";
+			std::string stringpre = "STRING: ";
+			for(ConnectedPointer it = begin; it!=current; ++it){
+				switch(type(**it)){
+					XTAL_DEFAULT{
+						RefCountingBase* p = *it;
+						int_t rc = p->ref_count();
+
+						//table["Base"]++; 
+						if(Class* cp=dynamic_cast<Class*>(p)){
+							table["Class"]++;
+							table[classpre + cp->object_temporary_name()->c_str()]++;
+						}
+						else{
+							table[typeid(*p).name()]++;
+							if(table[typeid(*p).name()]==20){
+								table[typeid(*p).name()] = table[typeid(*p).name()];
+							}
+						}
+					}
+
+					XTAL_CASE(TYPE_STRING){ 
+						unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
+						const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
+						str = str;
+						uint_t n = string_data_size(str);
+						XMallocGuard umg((n+1)*sizeof(char));
+						char* buf = (char*)umg.get();
+						for(uint_t i=0; i<n; ++i){
+							buf[i] = str[i];
+						}
+						buf[n] = 0;
+						table[stringpre+buf]++;
+					}
+
+				}
+			}
+
+			std::map<std::string, int>::iterator it=table.begin(), last=table.end();
+			for(; it!=last; ++it){
+				if(it->second>10){
+					printf("alive %s %d\n", it->first.c_str(), it->second);
+				}
+			}
+			int m = (objects_list_end_ - objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
+			printf("object_list_size=%d, objects_count=%d\n", m, objects_count_);
+			//printf("used_memory %d\n", used_memory);	
+#endif
 }
 
 void ObjectSpace::enable_gc(){
@@ -358,14 +467,48 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 }
 
 void ObjectSpace::gc_signal(int_t flag){
-	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+	for(VMachine** it = gcvms_begin_; it!=gcvms_current_; ++it){
 		(*it)->gc_signal(flag);
 	}
 }
 
 ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
-	ConnectedPointer rend = first - 1;
+	if(first==last){
+		return end;
+	}
+
+	ConnectedPointerReverseEnumerator cpre1(first+1, last);
+	ConnectedPointerReverseEnumerator cpre2(first+1, end);
+
+	RefCountingBase** endpp = cpre2.begin();
+	RefCountingBase** endppend = cpre2.end();
+
+	do for(RefCountingBase** pp=cpre1.begin(), **ppend=cpre1.end(); pp!=ppend; --pp){
+		RefCountingBase* p = *pp;
+		if(p->can_not_gc()==0){
+			p->destroy();
+			p->object_free();
+
+			if(endpp==endppend){
+				cpre2.move();
+				endpp = cpre2.begin();
+				endppend = cpre2.end();
+			}
+
+			--end;
+
+			*pp = *endpp;
+			--endpp;
+		}
+
+	}while(cpre1.move());
+
+	return end;
+
+	/*	
 	ConnectedPointer it = last - 1;
+	ConnectedPointer rend = first - 1;
+
 	for(; it!=rend; ){
 		RefCountingBase* p = *it;
 
@@ -382,18 +525,21 @@ ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, Connecte
 	}
 
 	return end;
+*/
 }
 
-void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer current){
-	for(; it!=current; ++it){
-		(*it)->destroy();
-	}
+void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer end){
+	ConnectedPointerEnumerator e(it, end);
+	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+		(*pp)->destroy();
+	}while(e.move());
 }
 
-void ObjectSpace::free_objects(ConnectedPointer it, ConnectedPointer current){
-	for(; it!=current; ++it){
-		(*it)->object_free();
-	}
+void ObjectSpace::free_objects(ConnectedPointer it, ConnectedPointer end){
+	ConnectedPointerEnumerator e(it, end);
+	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+		(*pp)->object_free();
+	}while(e.move());
 }
 
 void ObjectSpace::adjust_objects_list(ConnectedPointer it){
@@ -403,11 +549,12 @@ void ObjectSpace::adjust_objects_list(ConnectedPointer it){
 	XTAL_ASSERT(objects_list_current_<=objects_list_end_);
 }
 
-void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer current, int_t v){
+void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer end, int_t v){
 	Visitor m(v);
-	for(; it!=current; ++it){
-		(*it)->visit_members(m);
-	}
+	ConnectedPointerEnumerator e(it, end);
+	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+		(*pp)->visit_members(m);
+	}while(e.move());
 }
 
 void ObjectSpace::lw_gc(){
@@ -466,13 +613,15 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 	bool end = false;
 	while(!end){
 		end = true;
-		for(ConnectedPointer it = alive; it!=current; ++it){
-			if((*it)->ref_count()!=0){
+
+		ConnectedPointerEnumerator e(alive, current);
+		do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+			if((*pp)->ref_count()!=0){
 				end = false;
-				(*it)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
-				std::swap(*it, *alive++);
+				(*pp)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
+				std::swap(*pp, *alive++);
 			}
-		}
+		}while(e.move());
 	}
 
 	return alive;
@@ -517,13 +666,14 @@ void ObjectSpace::full_gc(){
 				bool exists_have_finalizer = false;
 				
 				// 死者のfinalizerを走らせる
-				for(ConnectedPointer it = alive; it!=current; ++it){
-					RefCountingBase* p = *it;
+				ConnectedPointerEnumerator e(alive, current);
+				do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+					RefCountingBase* p = *pp;
 					if(p->have_finalizer()){
 						exists_have_finalizer = true;
 						((Base*)p)->finalize();
 					}
-				}
+				}while(e.move());
 
 				if(exists_have_finalizer){
 					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
@@ -561,23 +711,11 @@ void ObjectSpace::full_gc(){
 			current = alive;
 		}
 
-		/*{
-			ConnectedPointer current(objects_count_, objects_list_begin_);
-			ConnectedPointer begin(0, objects_list_begin_);
-
-			for(ConnectedPointer it = begin; it!=current; ++it){
-				if(typeid(**it)==typeid(Code))
-				printf("alive %s\n", typeid(**it).name());
-			}
-		}*/
-
 		vmachine_swap_temp();
 	}
 }
 
 void ObjectSpace::register_gc(RefCountingBase* p){
-	p->inc_ref_count();
-
 	if(objects_count_==objects_max_){
 		ScopeCounter cc(&cycle_count_);
 		expand_objects_list();
@@ -587,45 +725,19 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 	objects_count_++;
 }
 
-void ObjectSpace::register_gc_observer(GCObserver* p){
-	if(gcobservers_current_==gcobservers_end_){
-		expand_simple_dynamic_pointer_array(&gcobservers_begin_, &gcobservers_end_, &gcobservers_current_, 64);
+void ObjectSpace::register_gc_vm(VMachine* p){
+	if(gcvms_current_==gcvms_end_){
+		expand_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_, 64);
 	}
-	*gcobservers_current_++ = p;
+	*gcvms_current_++ = p;
 }
 
-void ObjectSpace::unregister_gc_observer(GCObserver* p){
-	for(GCObserver** it = gcobservers_begin_; it!=gcobservers_current_; ++it){
+void ObjectSpace::unregister_gc_vm(VMachine* p){
+	for(VMachine** it = gcvms_begin_; it!=gcvms_current_; ++it){
 		if(*it==p){
-			std::swap(*it, *--gcobservers_current_);
+			std::swap(*it, *--gcvms_current_);
 			break;
 		}
-	}
-}
-
-void ObjectSpace::bind_all(){
-	if(!binded_all_){
-		binded_all_ = true;
-		for(uint_t i=0; i<class_table_.size(); ++i){
-			if(class_table_[i]){
-				class_table_[i]->bind();
-			}
-		}
-	}
-}
-
-void ObjectSpace::def_all_cpp_classes(){
-	if(!def_all_cpp_classes_){
-		ClassPtr it = cpp();
-		for(uint_t i=0; i<class_table_.size(); ++i){
-			if(class_table_[i] && class_table_[i]->symbol_data() && class_table_[i]->symbol_data()->name.str()){
-				IDPtr id = class_table_[i]->symbol_data()->name;
-				if(!it->member(id)){
-					it->def(id, to_smartptr(class_table_[i]));
-				}
-			}
-		}
-		def_all_cpp_classes_ = true;
 	}
 }
 

@@ -12,42 +12,42 @@ StringPtr empty_string(empty_id);
 FunInfo empty_xfun_info;
 ScopeInfo empty_scope_info;
 ClassInfo empty_class_info;
+
 ExceptInfo empty_except_info;
 EmptyInstanceVariables empty_instance_variables;
 
 undeleter_t undeleter;
 deleter_t deleter;
 
-
-bool Int::op_in(const IntRangePtr& range){
+bool Int::op_in_IntRange(const IntRangePtr& range){
 	return range->begin() <= ivalue(*this) && ivalue(*this) < range->end();
 }
 
-bool Int::op_in(const FloatRangePtr& range){
+bool Int::op_in_FloatRange(const FloatRangePtr& range){
 	return (range->is_left_closed() ? (range->left() <= ivalue(*this)) : (range->left() < ivalue(*this))) && (range->is_right_closed() ? (ivalue(*this) <= range->right()) : (ivalue(*this) < range->right()));
 }
 
-IntRangePtr Int::op_range(int_t right, int_t kind){
+IntRangePtr Int::op_range_Int(int_t right, int_t kind){
 	return xnew<IntRange>(ivalue(*this), right, kind);	
 }
 
-FloatRangePtr Int::op_range(float_t right, int_t kind){
+FloatRangePtr Int::op_range_Float(float_t right, int_t kind){
 	return xnew<FloatRange>(fvalue(*this), right, kind);	
 }
 
-FloatRangePtr Float::op_range(int_t right, int_t kind){
+FloatRangePtr Float::op_range_Int(int_t right, int_t kind){
 	return xnew<FloatRange>(fvalue(*this), (float_t)right, kind);	
 }
 
-FloatRangePtr Float::op_range(float_t right, int_t kind){
+FloatRangePtr Float::op_range_Float(float_t right, int_t kind){
 	return xnew<FloatRange>(fvalue(*this), right, kind);	
 }
 
-bool Float::op_in(const IntRangePtr& range){
+bool Float::op_in_IntRange(const IntRangePtr& range){
 	return range->begin() <= fvalue(*this) && fvalue(*this) < range->end();
 }
 
-bool Float::op_in(const FloatRangePtr& range){
+bool Float::op_in_FloatRange(const FloatRangePtr& range){
 	return (range->is_left_closed() ? (range->left() <= fvalue(*this)) : (range->left() < fvalue(*this))) && (range->is_right_closed() ? (fvalue(*this) <= range->right()) : (fvalue(*this) < range->right()));
 }
 
@@ -68,16 +68,17 @@ void IntRangeIter::block_next(const VMachinePtr& vm){
 
 Values::Values(const AnyPtr& head)
 	:head_(head), tail_((ValuesPtr&)undefined){
-	value_.init_rcbase(TYPE, this);
 }
 
 Values::Values(const AnyPtr& head, const ValuesPtr& tail)
 	:head_(head), tail_(tail){
-	value_.init_rcbase(TYPE, this);
+}
+
+Values::~Values(){
 }
 	
 void Values::block_next(const VMachinePtr& vm){
-	if(!raweq(tail_, undefined)){
+	if(!is_undefined(tail_)){
 		vm->return_result(tail_, head_);
 	}
 	else{
@@ -89,7 +90,7 @@ int_t Values::size(){
 	const ValuesPtr* cur = &to_smartptr(this);
 	int_t size = 1;
 	while(true){
-		if(raweq((*cur)->tail_, undefined)){
+		if(is_undefined((*cur)->tail_)){
 			return size;
 		}
 		cur = &(*cur)->tail_;
@@ -101,8 +102,8 @@ const AnyPtr& Values::at(int_t i){
 	const ValuesPtr* cur = &to_smartptr(this);
 	const AnyPtr* ret = &head_;
 	for(int_t n=0; n<i; ++n){
-		if(raweq((*cur)->tail_, undefined)){
-			ret = &undefined;
+		if(is_undefined((*cur)->tail_)){
+			ret = &(AnyPtr&)undefined;
 			break;
 		}
 		cur = &(*cur)->tail_;
@@ -130,8 +131,8 @@ bool Values::op_eq(const ValuesPtr& other){
 			vm->cleanup_call();
 		}
 
-		if(raweq((*cur1)->tail_, undefined)){
-			if(raweq((*cur2)->tail_, undefined)){
+		if(is_undefined((*cur1)->tail_)){
+			if(is_undefined((*cur2)->tail_)){
 				return true;
 			}
 			else{
@@ -160,9 +161,9 @@ StringPtr Values::to_s(){
 			ms->put_s(XTAL_STRING(", "));
 		}
 
-		ms->put_s((*cur)->head_->to_s());
+		ms->put_s((*cur)->head_);
 
-		if(raweq((*cur)->tail_, undefined)){
+		if(is_undefined((*cur)->tail_)){
 			break;
 		}
 		cur = &(*cur)->tail_;
@@ -173,26 +174,16 @@ StringPtr Values::to_s(){
 
 }
 
+void Values::set(const AnyPtr& head, const ValuesPtr& tail){
+	head_ = head;
+	tail_ = tail;
+}
+
+ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
+	return xnew<Values>(v1, xnew<Values>(v2));
+}
+
 ///////////////////////////////////
-
-HaveParent::HaveParent(const HaveParent& a)
-:parent_(a.parent_){
-	if(parent_){
-		parent_->inc_ref_count();
-	}
-}
-
-HaveParent& HaveParent::operator=(const HaveParent& a){
-	if(parent_){
-		parent_->dec_ref_count();
-	}
-	parent_ = a.parent_;
-	if(parent_){
-		parent_->inc_ref_count();
-	}
-
-	return *this;
-}
 
 HaveParent::~HaveParent(){
 	if(parent_){
@@ -205,7 +196,7 @@ const ClassPtr& HaveParent::object_parent(){
 		return to_smartptr(parent_);
 	}
 	else{
-		return unchecked_ptr_cast<Class>(null);
+		return nul<Class>();
 	}
 }
 
@@ -232,18 +223,5 @@ void HaveParent::visit_members(Visitor& m){
 		parent_ = temp.get();
 	}
 }	
-
-GCObserver::GCObserver(){
-	register_gc_observer(this);
-}
-
-GCObserver::GCObserver(const GCObserver& v)
-:Base(v){
-	register_gc_observer(this);
-}
-	
-GCObserver::~GCObserver(){
-	unregister_gc_observer(this);
-}
 
 }

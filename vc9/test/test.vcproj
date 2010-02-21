@@ -142,6 +142,8 @@
 				AdditionalDependencies="../../lib/xtallib.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapFileName="$(OutDir)\$(ProjectName).map"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

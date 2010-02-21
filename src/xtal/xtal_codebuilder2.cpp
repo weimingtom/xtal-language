@@ -697,8 +697,8 @@ int_t CodeBuilder::compile_expr_ONCE(const ExprPtr& e, int_t stack_top, int_t re
 	int_t label_end = reserve_label();
 	
 	set_jump(InstOnce::OFFSET_address, label_end);
-	int_t num = result_->once_table_->size();
-	result_->once_table_->push_back(undefined);
+	int_t num = result_->once_table_.size();
+	result_->once_table_.push_back(undefined);
 	put_inst(InstOnce(result, 0, num));
 				
 	compile_expr(e->una_term(), stack_top, result);
@@ -1092,7 +1092,7 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, int_t stack_top, int_t 
 			set_label(label_true);
 
 			int_t vart = stack_top++;
-			put_inst(InstLoadConstant(vart, register_value(Xf("%s : %s"))));
+			put_inst(InstLoadConstant(vart, register_value(Xs("%s : %s"))));
 
 			int_t strt = stack_top++;
 			if(e->assert_string()){ compile_expr(e->assert_string(), stack_top, strt); }
@@ -1106,25 +1106,25 @@ int_t CodeBuilder::compile_expr_ASSERT(const ExprPtr& e, int_t stack_top, int_t 
 			put_inst(InstAssert(target));
 		}
 
-		XTAL_CASE(EXPR_EQ){ compile_comp_bin_assert(Xf("%s : ![%s == %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_NE){ compile_comp_bin_assert(Xf("%s : ![%s !=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_LT){ compile_comp_bin_assert(Xf("%s : ![%s <  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_GT){ compile_comp_bin_assert(Xf("%s : ![%s >  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_LE){ compile_comp_bin_assert(Xf("%s : ![%s <=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_GE){ compile_comp_bin_assert(Xf("%s : ![%s >=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin_assert(Xf("%s : ![%s ===  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin_assert(Xf("%s : ![%s !==  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_IN){ compile_comp_bin_assert(Xf("%s : ![%s in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_NIN){ compile_comp_bin_assert(Xf("%s : ![%s !in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_IS){ compile_comp_bin_assert(Xf("%s : ![%s is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
-		XTAL_CASE(EXPR_NIS){ compile_comp_bin_assert(Xf("%s : ![%s !is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_EQ){ compile_comp_bin_assert(Xs("%s : ![%s == %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_NE){ compile_comp_bin_assert(Xs("%s : ![%s !=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_LT){ compile_comp_bin_assert(Xs("%s : ![%s <  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_GT){ compile_comp_bin_assert(Xs("%s : ![%s >  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_LE){ compile_comp_bin_assert(Xs("%s : ![%s <=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_GE){ compile_comp_bin_assert(Xs("%s : ![%s >=  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_RAWEQ){ compile_comp_bin_assert(Xs("%s : ![%s ===  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_RAWNE){ compile_comp_bin_assert(Xs("%s : ![%s !==  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_IN){ compile_comp_bin_assert(Xs("%s : ![%s in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_NIN){ compile_comp_bin_assert(Xs("%s : ![%s !in  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_IS){ compile_comp_bin_assert(Xs("%s : ![%s is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
+		XTAL_CASE(EXPR_NIS){ compile_comp_bin_assert(Xs("%s : ![%s !is  %s] : %s"), e2, e->assert_string(), e->assert_message(), label_end, stack_top); }
 		}
 	}
 	else{		
 		int_t target = stack_top++;
 
 		int_t vart = stack_top++;
-		put_inst(InstLoadConstant(vart, register_value(Xf("%s : %s"))));
+		put_inst(InstLoadConstant(vart, register_value(Xs("%s : %s"))));
 
 		int_t strt = stack_top++;
 		if(e->assert_string()){ compile_expr(e->assert_string(), stack_top, strt); }
@@ -1249,7 +1249,7 @@ int_t CodeBuilder::compile_expr_IF(const ExprPtr& e, int_t stack_top, int_t resu
 
 
 	AnyPtr val = do_expr(cond);
-	if(rawne(val, undefined)){
+	if(!is_undefined(val)){
 		if(val){
 			compile_stmt(e->if_body());
 		}
@@ -1780,8 +1780,8 @@ int_t CodeBuilder::compile_expr_SWITCH(const ExprPtr& e, int_t stack_top, int_t 
 	int_t base = stack_top++;
 
 	set_jump(InstOnce::OFFSET_address, label_jump);
-	int_t num = result_->once_table_->size();
-	result_->once_table_->push_back(undefined);
+	int_t num = result_->once_table_.size();
+	result_->once_table_.push_back(undefined);
 	put_inst(InstOnce(base, 0, num));
 
 	MapPtr case_map = xnew<Map>();

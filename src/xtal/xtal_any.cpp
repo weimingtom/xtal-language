@@ -26,21 +26,6 @@ AnyPtr Any::call() const{
 	return vm->result_and_cleanup_call();
 }
 
-AnyPtr Any::private_send(const VMachinePtr& vm, const IDPtr& primary_key) const{
-	rawsend(vm, primary_key);
-	return vm->result_and_cleanup_call();	
-}
-
-AnyPtr Any::private_send2(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key) const{
-	rawsend(vm, primary_key, secondary_key);
-	return vm->result_and_cleanup_call();	
-}
-
-AnyPtr Any::private_call(const VMachinePtr& vm) const{
-	rawcall(vm);
-	return vm->result_and_cleanup_call();	
-}
-
 const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility) const{
 	accessibility = 0;
 
@@ -67,7 +52,7 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 
 	if(is_undefined(mem)){
 		if(!q){
-			vm->set_except(unsupported_error(cls, primary_key, secondary_key));
+			set_unsupported_error(cls, primary_key, secondary_key, vm);
 		}
 		return;
 	}
@@ -75,9 +60,23 @@ void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr&
 	ap(mem)->rawcall(vm);
 }
 
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key) const{
+	rawsend(vm, primary_key, undefined, true, false);
+}
+
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key) const{
+	rawsend(vm, primary_key, secondary_key, true, false);
+}
+
+void Any::rawsend(const VMachinePtr& vm, const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too) const{
+	rawsend(vm, primary_key, secondary_key, inherited_too, false);
+}
+
 void Any::rawcall(const VMachinePtr& vm) const{
 	switch(type(*this)){
-		XTAL_DEFAULT{}
+		XTAL_DEFAULT{
+			rawsend(vm, id_op_list()[IDOp::id_op_call]);
+		}
 
 		XTAL_CASE(TYPE_BASE){ 
 			pvalue(*this)->rawcall(vm);
@@ -95,9 +94,15 @@ void Any::rawcall(const VMachinePtr& vm) const{
 			return;
 		}
 
-		vm->set_except(unsupported_error(ap(*this)->get_class(), id_op_list()[IDOp::id_op_call], undefined));
+		set_unsupported_error(ap(*this)->get_class(), id_op_list()[IDOp::id_op_call], undefined, vm);
 		return;
 	}
+}
+
+
+void Any::init(RefCountingBase* p){ 
+	value_ = p->value_;
+	register_gc(p);
 }
 
 int_t Any::to_i() const{
@@ -133,12 +138,12 @@ StringPtr Any::to_s() const{
 			return ptr_cast<String>((*this).send(Xid(to_s)));
 		}
 
-		XTAL_CASE(TYPE_INT){ return Xf("%d")->call(ap(*this))->to_s(); }
-		XTAL_CASE(TYPE_FLOAT){ return Xf("%g")->call(ap(*this))->to_s(); }
+		XTAL_CASE(TYPE_INT){ return Xf1("%d", 0, ap(*this)); }
+		XTAL_CASE(TYPE_FLOAT){ return Xf1("%g", 0, ap(*this)); }
 		XTAL_CASE(TYPE_FALSE){ return Xid(false); }
 		XTAL_CASE(TYPE_TRUE){ return Xid(true); }
 
-		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_ID_LITERAL, TYPE_STRING){
+		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LITERAL_STRING, TYPE_INTERNED_STRING, TYPE_STRING){
 			return unchecked_ptr_cast<String>(ap(*this));
 		}
 	}
@@ -184,20 +189,21 @@ void Any::set_object_parent(const ClassPtr& parent) const{
 }
 
 ArrayPtr Any::object_name_list() const{
+	ArrayPtr ret;
+
 	if(const ClassPtr& parent = object_parent()){
-		ArrayPtr ret = parent->object_name_list();
+		ret = parent->object_name_list();
 		if(AnyPtr name = parent->child_object_name(ap(*this))){
-			ret->push_back(parent->child_object_name(ap(*this)));
+			ret->push_back(name);
 		}
-		return ret;
+	}
+	else{
+		ret = XNew<Array>();
+		if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
+			ret->push_back(mv(cls->object_name(), null));
+		}
 	}
 	
-	ArrayPtr ret = xnew<Array>();
-	if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
-		ret->push_back(mv(cls->object_name(), null));
-		return ret;
-	}
-
 	return ret;
 }
 
@@ -207,7 +213,7 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 			return code->identifier(name_number);
 		}
 
-		return Xf("%s(%d)")->call(code->source_file_name(), code->compliant_lineno(code->data()+pc))->to_s();
+		return Xf2("%s(%d)", 0, code->source_file_name(), 1, code->compliant_lineno(code->data()+pc));
 	}
 	else{
 		return XTAL_STRING("?");
@@ -217,11 +223,11 @@ StringPtr Any::defined_place_name(const CodePtr& code, int_t pc, int_t name_numb
 StringPtr Any::ask_object_name_to_parent() const{
 	if(const ClassPtr& parent = object_parent()){
 		if(ValuesPtr myname = parent->child_object_name(ap(*this))){
-			if(raweq(myname->at(1), undefined)){
-				return Xf("%s::%s")->call(parent->object_name(), myname->at(0))->to_s();
+			if(is_undefined(myname->at(1))){
+				return Xf2("%s::%s", 0, parent->object_name(), 1, myname->at(0));
 			}
 			else{
-				return Xf("%s::%s#%s")->call(parent->object_name(), myname->at(0), myname->at(1))->to_s();
+				return Xf3("%s::%s#%s", 0, parent->object_name(), 1, myname->at(0), 2, myname->at(1));
 			}
 		}
 	}
@@ -234,39 +240,39 @@ StringPtr Any::object_name() const{
 
 	switch(type(*this)){
 		XTAL_DEFAULT;
-		XTAL_CASE(TYPE_NULL){ ret.assign_direct(Xid(null)); }
-		XTAL_CASE(TYPE_UNDEFINED){ ret.assign_direct(Xid(undefined)); }
-		XTAL_CASE(TYPE_INT){ ret.assign_direct(Xf("%d")->call(ap(*this))->to_s()); }
-		XTAL_CASE(TYPE_FLOAT){ ret.assign_direct(Xf("%g")->call(ap(*this))->to_s()); }
-		XTAL_CASE(TYPE_FALSE){ ret.assign_direct(Xid(true)); }
-		XTAL_CASE(TYPE_TRUE){ ret.assign_direct(Xid(false)); }
+		XTAL_CASE(TYPE_NULL){ ret = Xid(null); }
+		XTAL_CASE(TYPE_UNDEFINED){ ret = Xid(undefined); }
+		XTAL_CASE(TYPE_INT){ ret = Xf1("%d", 0, ap(*this)); }
+		XTAL_CASE(TYPE_FLOAT){ ret = Xf1("%g", 0, ap(*this)); }
+		XTAL_CASE(TYPE_FALSE){ ret = Xid(true); }
+		XTAL_CASE(TYPE_TRUE){ ret = Xid(false); }
 
-		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_STRING_LITERAL, TYPE_ID_LITERAL, TYPE_STRING){ 
-			ret.assign_direct(unchecked_ptr_cast<String>(ap(*this))); 
+		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LITERAL_STRING, TYPE_INTERNED_STRING, TYPE_STRING){ 
+			ret = unchecked_ptr_cast<String>(ap(*this)); 
 		}
 	}
 
 	do{
 		if(ret){ break; }
 
-		ret.assign_direct(ask_object_name_to_parent());
+		ret = ask_object_name_to_parent();
 		if(ret->data_size()!=0){ break; }
 
 		if(const ClassPtr& cls = ptr_cast<Class>(ap(*this))){
 			ret = cls->object_temporary_name();
-			if(ret->data_size()!=0){ break; }
+			if(ret && ret->data_size()!=0){ break; }
 			ret = defined_place_name(cls->code(), cls->info()->pc, cls->info()->name_number);
 			break;
 		}
 
 		if(const MethodPtr& mtd = ptr_cast<Method>(ap(*this))){
 			ret = mtd->object_temporary_name();
-			if(ret->data_size()!=0){ break; }
+			if(ret && ret->data_size()!=0){ break; }
 			ret = defined_place_name(mtd->code(), mtd->info()->pc, mtd->info()->name_number);
 			break;
 		}
 
-		ret = Xf("(instance of %s)")->call(get_class()->object_name())->to_s();
+		ret = Xf1("(instance of %s)", 0, get_class()->object_name());
 
 	}while(0);
 
@@ -284,26 +290,25 @@ bool Any::is_inherited(const AnyPtr& klass) const{
 	}
 }
 
-bool Any::op_eq( const AnyPtr& v ) const{
-  return raweq(*this, *v ); 
+bool Any::op_eq( const AnyPtr& v) const{
+  return raweq(*this, *v); 
 } 
 
-AnyPtr Any::p() const{
+const AnyPtr& Any::p() const{
 	ap(*this)->send(Xid(p));
 	return ap(*this);
 }
 
-AnyPtr Any::s_save() const{
+MapPtr Any::s_save() const{
 	MapPtr ret = xnew<Map>();
-	ClassPtr klass = get_class();
+	const ClassPtr& klass = get_class();
 
 	ArrayPtr ary = klass->ancestors()->to_a();
 	ary->push_back(klass);
 
 	Xfor(it, ary){
 		if(const AnyPtr& member = it->member(Xid(serial_save), undefined, false)){
-			const VMachinePtr& vm = vmachine();
-			vm->setup_call(1);
+			const VMachinePtr& vm = setup_call(1);
 			vm->set_arg_this(ap(*this));
 			member->rawcall(vm);
 			ret->set_at(it, vm->result_and_cleanup_call());
@@ -316,9 +321,8 @@ AnyPtr Any::s_save() const{
 	return ret;
 }
 
-void Any::s_load(const AnyPtr& v) const{
-	MapPtr ret = ptr_cast<Map>(v);
-	ClassPtr klass = get_class();
+void Any::s_load(const MapPtr& ret) const{
+	const ClassPtr& klass = get_class();
 
 	ArrayPtr ary = klass->ancestors()->to_a();
 	ary->push_back(klass);
@@ -326,8 +330,7 @@ void Any::s_load(const AnyPtr& v) const{
 	Xfor(it, ary){
 		if(rawne(it, cpp_class<Any>())){
 			if(const AnyPtr& member = it->member(Xid(serial_load), undefined, false)){
-				const VMachinePtr& vm = vmachine();
-				vm->setup_call(1);
+				const VMachinePtr& vm = setup_call(1);
 				vm->push_arg(ret->at(it));
 				vm->set_arg_this(ap(*this));
 				member->rawcall(vm);
@@ -371,7 +374,6 @@ void Any::load_instance_variables(const ClassPtr& p, const AnyPtr& v) const{
 				ClassInfo* info = p->info();
 				if(info->instance_variable_size!=0){	
 					for(uint_t i=0; i<info->instance_variable_size; ++i){
-						StringPtr str = code->identifier(info->instance_variable_identifier_offset+i);
 						iv->set_variable(i, info, insts->at(code->identifier(info->instance_variable_identifier_offset+i)));
 					}
 				}

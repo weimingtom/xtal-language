@@ -81,7 +81,7 @@
 * \brief textを簡単に記述するためのマクロ
 *
 * \code
-* AnyPtr text = Xt("Text %d %s")(10, "test");
+* TextPtr text = Xt("Text");
 * \endcode
 */
 #define Xt(txt) ::xtal::text(XTAL_STRING(txt)) 
@@ -91,7 +91,7 @@
 *
 * \hideinitializer
 * \code
-* AnyPtr fmt = Xf("Text %d %s")(10, "test");
+* FormatPtr fmt = Xf("Text %d %s");
 * \endcode
 */
 #define Xf(txt) ::xtal::format(XTAL_STRING(txt)) 
@@ -108,7 +108,7 @@
 * ));
 * \endcode
 */
-#define Xsrc(text) ::xtal::source(XTAL_STRING(#text).str()+1, XTAL_STRING(#text).size()-3)
+#define Xsrc(text) ::xtal::source(#text+1, sizeof(#text)/sizeof(::xtal::char_t)-3)
 
 #endif
 
@@ -118,7 +118,7 @@
 
 #else
 
-#define Xemb(text, compiled_text) ::xtal::exec_source(XTAL_STRING(#text).str()+1, XTAL_STRING(#text).size()-3)
+#define Xemb(text, compiled_text) ::xtal::exec_source(#text+1, sizeof(#text)/sizeof(::xtal::char_t)-3)
 
 #endif
 

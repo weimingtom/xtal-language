@@ -96,20 +96,13 @@ public:
 	/**
 	* \brief 発生したエラーのイテレータを取得する。
 	*/
-	AnyPtr errors(){
-		if(!errors_ || errors_->empty()) return null;
-		return errors_->each();
-	}
+	AnyPtr errors();
 
 	void error(const AnyPtr& message, int_t lineno = 0);
 
-	void clear_errors(){
-		if(errors_) return errors_->clear();
-	}
+	void clear_errors();
 
-	bool has_error(){
-		return errors_ && !errors_->empty();
-	}
+	bool has_error();
 
 public:
 
@@ -234,7 +227,7 @@ public:
 	* \brief 終了しているか調べる
 	*/
 	bool eos(){
-		return raweq(peek(), undefined);
+		return is_undefined(peek());
 	}
 
 	/**
@@ -336,7 +329,7 @@ private:
 
 private:
 	enum{
-		ONE_BLOCK_SHIFT = 8,
+		ONE_BLOCK_SHIFT = 5,
 		ONE_BLOCK_SIZE = 1<<ONE_BLOCK_SHIFT,
 		ONE_BLOCK_MASK = ONE_BLOCK_SIZE-1
 	};
@@ -451,14 +444,13 @@ struct Element : public Base{
 
 	NFAPtr nfa;
 
-	Element(Type type);
-	Element(Type type, const AnyPtr& param1);
-	Element(Type type, const AnyPtr& param1, const AnyPtr& param2);
-	Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3);
+	Element(int_t type, const AnyPtr& param1 = null, const AnyPtr& param2 = null, int_t param3 = 0);
 
 	~Element();
 
 	bool is_e_transition() const;
+
+	ElementPtr op_com() const;
 
 	void on_visit_members(Visitor& m){
 		Base::on_visit_members(m);
@@ -519,41 +511,9 @@ struct NFA : public Base{
 };
 
 ElementPtr elem(const AnyPtr& a);
-ElementPtr set(const StringPtr& str);
-ElementPtr call(const AnyPtr& fun);
-ElementPtr select(const AnyPtr& left, const AnyPtr& right);
-ElementPtr concat(const AnyPtr& left, const AnyPtr& right);
-ElementPtr more_Int(const AnyPtr& left, int_t n, int_t kind = 0);
-ElementPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind = 0);
-ElementPtr more_normal_Int(const AnyPtr& left, int_t n);
-ElementPtr more_shortest_Int(const AnyPtr& left, int_t n);
-ElementPtr more_greed_Int(const AnyPtr& left, int_t n);
-ElementPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range);
-ElementPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range);
-ElementPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range);
-ElementPtr inv(const AnyPtr& left);
-ElementPtr lookahead(const AnyPtr& left);
-ElementPtr lookbehind(const AnyPtr& left, int_t back);
-ElementPtr cap(const IDPtr& name, const AnyPtr& left);
-void cap_vm(const VMachinePtr& vm);
-ElementPtr node(const AnyPtr& left);
-ElementPtr node(const IDPtr& name, const AnyPtr& left);
-void node_vm(const VMachinePtr& vm);
-ElementPtr splice_node(int_t num, const AnyPtr& left);
-ElementPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left);
-void splice_node_vm(const VMachinePtr& vm);
-ElementPtr leaf(const AnyPtr& left);
-ElementPtr leafs(const AnyPtr& left);
-ElementPtr back_ref(const AnyPtr& n);
-ElementPtr decl();
-void set_body(const ElementPtr& x, const AnyPtr& term);
-ElementPtr bound(const AnyPtr& body, const AnyPtr& sep);
-ElementPtr error(const AnyPtr& fn);
-ElementPtr pred(const AnyPtr& e);
 
 }
 
 }
-
 
 #endif // XTAL_XPEG_H_INCLUDE_GUARD

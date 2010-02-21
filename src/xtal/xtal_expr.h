@@ -137,6 +137,7 @@ const ExprPtr& ep(const AnyPtr& a);
 class TreeNode : public Array{
 public:
 	enum{ TYPE = TYPE_TREE_NODE };
+	enum{ BUILD = 0 };
 
 	TreeNode(const AnyPtr& tag=null, int_t lineno=0);
 
@@ -295,8 +296,7 @@ public:
 class ExprBuilder{
 public:
 
-	ExprBuilder(int_t lineno = 0)
-		:root_(xnew<Expr>()), lineno_(lineno){}
+	ExprBuilder(int_t lineno = 0);
 
 	int_t lineno(){
 		return lineno_;
@@ -330,17 +330,9 @@ public:
 
 	void push(const AnyPtr& v);
 
-	void insert(int_t n, const AnyPtr& v){
-		linenos_.insert(root_->size()-n, lineno_);
-		root_->insert(root_->size()-n, v);
-	}
+	void insert(int_t n, const AnyPtr& v);
 
-	AnyPtr pop(){
-		AnyPtr ret = root_->back();
-		root_->pop_back();
-		linenos_.pop_back();
-		return ret;
-	}
+	AnyPtr pop();
 
 	bool empty(){
 		return root_->empty();
@@ -354,7 +346,6 @@ private:
 	PODArrayList<int> linenos_;
 	int_t lineno_;
 };
-
 
 }
 

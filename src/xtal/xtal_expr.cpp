@@ -12,8 +12,6 @@ const ExprPtr& ep(const AnyPtr& a){
 }
 
 TreeNode::TreeNode(const AnyPtr& tag, int_t lineno){
-	value_.init_rcbase(TYPE_TREE_NODE, this);
-
 	tag_ = tag;
 	lineno_ = lineno;
 }
@@ -37,6 +35,9 @@ void TreeNode::set_at(int_t i, const AnyPtr& v){
 	}
 	Array::set_at(i, v);
 }
+
+ExprBuilder::ExprBuilder(int_t lineno)
+	:root_(xnew<Expr>()), lineno_(lineno){}
 
 void ExprBuilder::splice(int_t tag, int_t num){
 	int_t nn = root_->size()-num;
@@ -68,6 +69,18 @@ void ExprBuilder::splice(int_t tag, int_t num, int_t lineno){
 void ExprBuilder::push(const AnyPtr& v){
 	linenos_.push_back(lineno_);
 	root_->push_back(v);
+}
+
+void ExprBuilder::insert(int_t n, const AnyPtr& v){
+	linenos_.insert(root_->size()-n, lineno_);
+	root_->insert(root_->size()-n, v);
+}
+
+AnyPtr ExprBuilder::pop(){
+	AnyPtr ret = root_->back();
+	root_->pop_back();
+	linenos_.pop_back();
+	return ret;
 }
 
 }

@@ -17,6 +17,7 @@ lib::test: singleton{
 		
 		files.each{
 			println(it);
+			
 			run_file(it);
 		}
 			

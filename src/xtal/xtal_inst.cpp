@@ -3,6 +3,8 @@
 
 namespace xtal{
 
+#ifdef XTAL_DEBUG
+
 int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code){
 	int_t pc = (inst_t*)inst - code->data();
 	return pc + value;
@@ -53,6 +55,8 @@ StringPtr make_inst_string(const StringLiteral& InstName,
 	return format(temp)->call(MemberValue1, MemberValue2, MemberValue3, MemberValue4, MemberValue5)->to_s();
 }
 
+#endif
+
 StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end){
 
 #ifdef XTAL_DEBUG
@@ -60,7 +64,7 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 	int sz = 0;
 	const inst_t* pc = start;
 	StringPtr temp;
-	MemoryStreamPtr ms(xnew<MemoryStream>());
+	MemoryStreamPtr ms = xnew<MemoryStream>();
 
 	for(; pc < end;){switch(*pc){
 		XTAL_NODEFAULT;
@@ -142,9 +146,10 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 
 #else
 
-	return "no debug info";
+	return XTAL_STRING("");
 
 #endif
+
 }
 
 int_t inst_size(uint_t no){

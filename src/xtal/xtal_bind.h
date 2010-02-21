@@ -9,236 +9,176 @@
 
 namespace xtal{
 
-template<class C = void >
+template<class C = Any >
 struct param_types_holderM1;
 
 //{REPEAT{{
 /*
 template<class C #COMMA_REPEAT#class A`i`#>
-struct param_types_holder_base`n`{
-	static CppClassSymbolData** const values[`n`+1];
+struct param_types_holder`n`{
+	static CppClassSymbolData* const values[`n`+1];
 };
 
 template<class C #COMMA_REPEAT#class A`i`#>
-CppClassSymbolData** const param_types_holder_base`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
+CppClassSymbolData* const param_types_holder`n`<C #COMMA_REPEAT#A`i`#>::values[`n`+1] = {
 	&CppClassSymbol<C>::value,
 	#REPEAT#&CppClassSymbol<A`i`>::value,#
 };
-
-template<class C #COMMA_REPEAT#class A`i`#>
-struct param_types_holder`n` : 
-public param_types_holder_base`n`<typename CppClassSymbol<C>::type #COMMA_REPEAT#typename CppClassSymbol<A`i`>::type#>{};
 */
 
 template<class C >
-struct param_types_holder_base0{
-	static CppClassSymbolData** const values[0+1];
+struct param_types_holder0{
+	static CppClassSymbolData* const values[0+1];
 };
 
 template<class C >
-CppClassSymbolData** const param_types_holder_base0<C >::values[0+1] = {
+CppClassSymbolData* const param_types_holder0<C >::values[0+1] = {
 	&CppClassSymbol<C>::value,
 	
 };
 
-template<class C >
-struct param_types_holder0 : 
-public param_types_holder_base0<typename CppClassSymbol<C>::type >{};
-
 template<class C , class A0>
-struct param_types_holder_base1{
-	static CppClassSymbolData** const values[1+1];
+struct param_types_holder1{
+	static CppClassSymbolData* const values[1+1];
 };
 
 template<class C , class A0>
-CppClassSymbolData** const param_types_holder_base1<C , A0>::values[1+1] = {
+CppClassSymbolData* const param_types_holder1<C , A0>::values[1+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,
 };
 
-template<class C , class A0>
-struct param_types_holder1 : 
-public param_types_holder_base1<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type>{};
-
 template<class C , class A0, class A1>
-struct param_types_holder_base2{
-	static CppClassSymbolData** const values[2+1];
+struct param_types_holder2{
+	static CppClassSymbolData* const values[2+1];
 };
 
 template<class C , class A0, class A1>
-CppClassSymbolData** const param_types_holder_base2<C , A0, A1>::values[2+1] = {
+CppClassSymbolData* const param_types_holder2<C , A0, A1>::values[2+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,
 };
 
-template<class C , class A0, class A1>
-struct param_types_holder2 : 
-public param_types_holder_base2<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type>{};
-
 template<class C , class A0, class A1, class A2>
-struct param_types_holder_base3{
-	static CppClassSymbolData** const values[3+1];
+struct param_types_holder3{
+	static CppClassSymbolData* const values[3+1];
 };
 
 template<class C , class A0, class A1, class A2>
-CppClassSymbolData** const param_types_holder_base3<C , A0, A1, A2>::values[3+1] = {
+CppClassSymbolData* const param_types_holder3<C , A0, A1, A2>::values[3+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,
 };
 
-template<class C , class A0, class A1, class A2>
-struct param_types_holder3 : 
-public param_types_holder_base3<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3>
-struct param_types_holder_base4{
-	static CppClassSymbolData** const values[4+1];
+struct param_types_holder4{
+	static CppClassSymbolData* const values[4+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3>
-CppClassSymbolData** const param_types_holder_base4<C , A0, A1, A2, A3>::values[4+1] = {
+CppClassSymbolData* const param_types_holder4<C , A0, A1, A2, A3>::values[4+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3>
-struct param_types_holder4 : 
-public param_types_holder_base4<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4>
-struct param_types_holder_base5{
-	static CppClassSymbolData** const values[5+1];
+struct param_types_holder5{
+	static CppClassSymbolData* const values[5+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4>
-CppClassSymbolData** const param_types_holder_base5<C , A0, A1, A2, A3, A4>::values[5+1] = {
+CppClassSymbolData* const param_types_holder5<C , A0, A1, A2, A3, A4>::values[5+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4>
-struct param_types_holder5 : 
-public param_types_holder_base5<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-struct param_types_holder_base6{
-	static CppClassSymbolData** const values[6+1];
+struct param_types_holder6{
+	static CppClassSymbolData* const values[6+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-CppClassSymbolData** const param_types_holder_base6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
+CppClassSymbolData* const param_types_holder6<C , A0, A1, A2, A3, A4, A5>::values[6+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5>
-struct param_types_holder6 : 
-public param_types_holder_base6<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-struct param_types_holder_base7{
-	static CppClassSymbolData** const values[7+1];
+struct param_types_holder7{
+	static CppClassSymbolData* const values[7+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-CppClassSymbolData** const param_types_holder_base7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
+CppClassSymbolData* const param_types_holder7<C , A0, A1, A2, A3, A4, A5, A6>::values[7+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-struct param_types_holder7 : 
-public param_types_holder_base7<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-struct param_types_holder_base8{
-	static CppClassSymbolData** const values[8+1];
+struct param_types_holder8{
+	static CppClassSymbolData* const values[8+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-CppClassSymbolData** const param_types_holder_base8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
+CppClassSymbolData* const param_types_holder8<C , A0, A1, A2, A3, A4, A5, A6, A7>::values[8+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-struct param_types_holder8 : 
-public param_types_holder_base8<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-struct param_types_holder_base9{
-	static CppClassSymbolData** const values[9+1];
+struct param_types_holder9{
+	static CppClassSymbolData* const values[9+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-CppClassSymbolData** const param_types_holder_base9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
+CppClassSymbolData* const param_types_holder9<C , A0, A1, A2, A3, A4, A5, A6, A7, A8>::values[9+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-struct param_types_holder9 : 
-public param_types_holder_base9<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type, typename CppClassSymbol<A8>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-struct param_types_holder_base10{
-	static CppClassSymbolData** const values[10+1];
+struct param_types_holder10{
+	static CppClassSymbolData* const values[10+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-CppClassSymbolData** const param_types_holder_base10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
+CppClassSymbolData* const param_types_holder10<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>::values[10+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-struct param_types_holder10 : 
-public param_types_holder_base10<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type, typename CppClassSymbol<A8>::type, typename CppClassSymbol<A9>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-struct param_types_holder_base11{
-	static CppClassSymbolData** const values[11+1];
+struct param_types_holder11{
+	static CppClassSymbolData* const values[11+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-CppClassSymbolData** const param_types_holder_base11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
+CppClassSymbolData* const param_types_holder11<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>::values[11+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-struct param_types_holder11 : 
-public param_types_holder_base11<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type, typename CppClassSymbol<A8>::type, typename CppClassSymbol<A9>::type, typename CppClassSymbol<A10>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-struct param_types_holder_base12{
-	static CppClassSymbolData** const values[12+1];
+struct param_types_holder12{
+	static CppClassSymbolData* const values[12+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-CppClassSymbolData** const param_types_holder_base12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
+CppClassSymbolData* const param_types_holder12<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>::values[12+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,
 };
 
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-struct param_types_holder12 : 
-public param_types_holder_base12<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type, typename CppClassSymbol<A8>::type, typename CppClassSymbol<A9>::type, typename CppClassSymbol<A10>::type, typename CppClassSymbol<A11>::type>{};
-
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-struct param_types_holder_base13{
-	static CppClassSymbolData** const values[13+1];
+struct param_types_holder13{
+	static CppClassSymbolData* const values[13+1];
 };
 
 template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-CppClassSymbolData** const param_types_holder_base13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
+CppClassSymbolData* const param_types_holder13<C , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>::values[13+1] = {
 	&CppClassSymbol<C>::value,
 	&CppClassSymbol<A0>::value,&CppClassSymbol<A1>::value,&CppClassSymbol<A2>::value,&CppClassSymbol<A3>::value,&CppClassSymbol<A4>::value,&CppClassSymbol<A5>::value,&CppClassSymbol<A6>::value,&CppClassSymbol<A7>::value,&CppClassSymbol<A8>::value,&CppClassSymbol<A9>::value,&CppClassSymbol<A10>::value,&CppClassSymbol<A11>::value,&CppClassSymbol<A12>::value,
 };
-
-template<class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-struct param_types_holder13 : 
-public param_types_holder_base13<typename CppClassSymbol<C>::type , typename CppClassSymbol<A0>::type, typename CppClassSymbol<A1>::type, typename CppClassSymbol<A2>::type, typename CppClassSymbol<A3>::type, typename CppClassSymbol<A4>::type, typename CppClassSymbol<A5>::type, typename CppClassSymbol<A6>::type, typename CppClassSymbol<A7>::type, typename CppClassSymbol<A8>::type, typename CppClassSymbol<A9>::type, typename CppClassSymbol<A10>::type, typename CppClassSymbol<A11>::type, typename CppClassSymbol<A12>::type>{};
 
 //}}REPEAT}
 
@@ -249,35 +189,17 @@ struct AM1{};
 template<class TFun, int Method, class R #COMMA_REPEAT#class A`i`#>
 struct nfun_base`n`{
 	typedef TFun fun_type;
+	#REPEAT#typedef typename CppClassSymbol<A`i`>::type AA`i`; #
 	typedef typename If<Method,
-		param_types_holder`n-1`<#REPEAT_COMMA#A`i`#>,
-		param_types_holder`n`<Any #COMMA_REPEAT#A`i`#>
+		param_types_holder`n-1`<#REPEAT_COMMA#AA`i`#>,
+		param_types_holder`n`<Any #COMMA_REPEAT#AA`i`#>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && `n`==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A`n-1`>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				#REPEAT_COMMA#unchecked_cast<A`i`>((AnyPtr&)args[ArgBase+`i`])#
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			#COMMA_REPEAT#unchecked_cast<A`i`>((AnyPtr&)fp.args[ArgBase+`i`])#
 		);
-	}
-};
-
-template<class TFun, int Method #COMMA_REPEAT#class A`i`#>
-struct nfun_base`n`<TFun, Method, void #COMMA_REPEAT#A`i`#>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder`n-1`<#REPEAT_COMMA#A`i`#>,
-		param_types_holder`n`<Any #COMMA_REPEAT#A`i`#>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && `n`==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A`n-1`>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			#REPEAT_COMMA#unchecked_cast<A`i`>((AnyPtr&)args[ArgBase+`i`])#
-		);
-		vm->return_result();
 	}
 };
 
@@ -290,35 +212,17 @@ struct nfun_base<`n`, TFun, Method, R>
 template<class TFun, int Method, class R >
 struct nfun_base0{
 	typedef TFun fun_type;
+	
 	typedef typename If<Method,
 		param_types_holderM1<>,
 		param_types_holder0<Any >
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 0==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<AM1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				
-			)
-		);
-	}
-};
-
-template<class TFun, int Method >
-struct nfun_base0<TFun, Method, void >{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holderM1<>,
-		param_types_holder0<Any >
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 0==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<AM1>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
 			
 		);
-		vm->return_result();
 	}
 };
 
@@ -330,35 +234,17 @@ struct nfun_base<0, TFun, Method, R>
 template<class TFun, int Method, class R , class A0>
 struct nfun_base1{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; 
 	typedef typename If<Method,
-		param_types_holder0<A0>,
-		param_types_holder1<Any , A0>
+		param_types_holder0<AA0>,
+		param_types_holder1<Any , AA0>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 1==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A0>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0>
-struct nfun_base1<TFun, Method, void , A0>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder0<A0>,
-		param_types_holder1<Any , A0>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 1==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A0>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0])
-		);
-		vm->return_result();
 	}
 };
 
@@ -370,35 +256,17 @@ struct nfun_base<1, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1>
 struct nfun_base2{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; 
 	typedef typename If<Method,
-		param_types_holder1<A0, A1>,
-		param_types_holder2<Any , A0, A1>
+		param_types_holder1<AA0, AA1>,
+		param_types_holder2<Any , AA0, AA1>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 2==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A1>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1>
-struct nfun_base2<TFun, Method, void , A0, A1>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder1<A0, A1>,
-		param_types_holder2<Any , A0, A1>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 2==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A1>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1])
-		);
-		vm->return_result();
 	}
 };
 
@@ -410,35 +278,17 @@ struct nfun_base<2, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2>
 struct nfun_base3{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; 
 	typedef typename If<Method,
-		param_types_holder2<A0, A1, A2>,
-		param_types_holder3<Any , A0, A1, A2>
+		param_types_holder2<AA0, AA1, AA2>,
+		param_types_holder3<Any , AA0, AA1, AA2>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 3==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A2>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2>
-struct nfun_base3<TFun, Method, void , A0, A1, A2>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder2<A0, A1, A2>,
-		param_types_holder3<Any , A0, A1, A2>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 3==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A2>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2])
-		);
-		vm->return_result();
 	}
 };
 
@@ -450,35 +300,17 @@ struct nfun_base<3, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3>
 struct nfun_base4{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; 
 	typedef typename If<Method,
-		param_types_holder3<A0, A1, A2, A3>,
-		param_types_holder4<Any , A0, A1, A2, A3>
+		param_types_holder3<AA0, AA1, AA2, AA3>,
+		param_types_holder4<Any , AA0, AA1, AA2, AA3>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 4==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A3>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3>
-struct nfun_base4<TFun, Method, void , A0, A1, A2, A3>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder3<A0, A1, A2, A3>,
-		param_types_holder4<Any , A0, A1, A2, A3>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 4==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A3>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3])
-		);
-		vm->return_result();
 	}
 };
 
@@ -490,35 +322,17 @@ struct nfun_base<4, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4>
 struct nfun_base5{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; 
 	typedef typename If<Method,
-		param_types_holder4<A0, A1, A2, A3, A4>,
-		param_types_holder5<Any , A0, A1, A2, A3, A4>
+		param_types_holder4<AA0, AA1, AA2, AA3, AA4>,
+		param_types_holder5<Any , AA0, AA1, AA2, AA3, AA4>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 5==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A4>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4>
-struct nfun_base5<TFun, Method, void , A0, A1, A2, A3, A4>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder4<A0, A1, A2, A3, A4>,
-		param_types_holder5<Any , A0, A1, A2, A3, A4>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 5==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A4>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4])
-		);
-		vm->return_result();
 	}
 };
 
@@ -530,35 +344,17 @@ struct nfun_base<5, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun_base6{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; 
 	typedef typename If<Method,
-		param_types_holder5<A0, A1, A2, A3, A4, A5>,
-		param_types_holder6<Any , A0, A1, A2, A3, A4, A5>
+		param_types_holder5<AA0, AA1, AA2, AA3, AA4, AA5>,
+		param_types_holder6<Any , AA0, AA1, AA2, AA3, AA4, AA5>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 6==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A5>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5>
-struct nfun_base6<TFun, Method, void , A0, A1, A2, A3, A4, A5>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder5<A0, A1, A2, A3, A4, A5>,
-		param_types_holder6<Any , A0, A1, A2, A3, A4, A5>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 6==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A5>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5])
-		);
-		vm->return_result();
 	}
 };
 
@@ -570,35 +366,17 @@ struct nfun_base<6, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun_base7{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; 
 	typedef typename If<Method,
-		param_types_holder6<A0, A1, A2, A3, A4, A5, A6>,
-		param_types_holder7<Any , A0, A1, A2, A3, A4, A5, A6>
+		param_types_holder6<AA0, AA1, AA2, AA3, AA4, AA5, AA6>,
+		param_types_holder7<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 7==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A6>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
-struct nfun_base7<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder6<A0, A1, A2, A3, A4, A5, A6>,
-		param_types_holder7<Any , A0, A1, A2, A3, A4, A5, A6>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 7==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A6>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6])
-		);
-		vm->return_result();
 	}
 };
 
@@ -610,35 +388,17 @@ struct nfun_base<7, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun_base8{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; 
 	typedef typename If<Method,
-		param_types_holder7<A0, A1, A2, A3, A4, A5, A6, A7>,
-		param_types_holder8<Any , A0, A1, A2, A3, A4, A5, A6, A7>
+		param_types_holder7<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7>,
+		param_types_holder8<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 8==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A7>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
-struct nfun_base8<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder7<A0, A1, A2, A3, A4, A5, A6, A7>,
-		param_types_holder8<Any , A0, A1, A2, A3, A4, A5, A6, A7>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 8==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A7>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7])
-		);
-		vm->return_result();
 	}
 };
 
@@ -650,35 +410,17 @@ struct nfun_base<8, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun_base9{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; typedef typename CppClassSymbol<A8>::type AA8; 
 	typedef typename If<Method,
-		param_types_holder8<A0, A1, A2, A3, A4, A5, A6, A7, A8>,
-		param_types_holder9<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8>
+		param_types_holder8<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8>,
+		param_types_holder9<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 9==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A8>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
-struct nfun_base9<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder8<A0, A1, A2, A3, A4, A5, A6, A7, A8>,
-		param_types_holder9<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 9==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A8>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8])
-		);
-		vm->return_result();
 	}
 };
 
@@ -690,35 +432,17 @@ struct nfun_base<9, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun_base10{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; typedef typename CppClassSymbol<A8>::type AA8; typedef typename CppClassSymbol<A9>::type AA9; 
 	typedef typename If<Method,
-		param_types_holder9<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>,
-		param_types_holder10<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>
+		param_types_holder9<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9>,
+		param_types_holder10<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 10==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A9>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
-struct nfun_base10<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder9<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>,
-		param_types_holder10<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 10==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A9>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9])
-		);
-		vm->return_result();
 	}
 };
 
@@ -730,35 +454,17 @@ struct nfun_base<10, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun_base11{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; typedef typename CppClassSymbol<A8>::type AA8; typedef typename CppClassSymbol<A9>::type AA9; typedef typename CppClassSymbol<A10>::type AA10; 
 	typedef typename If<Method,
-		param_types_holder10<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>,
-		param_types_holder11<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>
+		param_types_holder10<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10>,
+		param_types_holder11<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 11==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A10>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
-struct nfun_base11<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder10<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>,
-		param_types_holder11<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 11==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A10>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10])
-		);
-		vm->return_result();
 	}
 };
 
@@ -770,35 +476,17 @@ struct nfun_base<11, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun_base12{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; typedef typename CppClassSymbol<A8>::type AA8; typedef typename CppClassSymbol<A9>::type AA9; typedef typename CppClassSymbol<A10>::type AA10; typedef typename CppClassSymbol<A11>::type AA11; 
 	typedef typename If<Method,
-		param_types_holder11<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>,
-		param_types_holder12<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>
+		param_types_holder11<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11>,
+		param_types_holder12<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 12==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A11>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)fp.args[ArgBase+11])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
-struct nfun_base12<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder11<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>,
-		param_types_holder12<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 12==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A11>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11])
-		);
-		vm->return_result();
 	}
 };
 
@@ -810,35 +498,17 @@ struct nfun_base<12, TFun, Method, R>
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun_base13{
 	typedef TFun fun_type;
+	typedef typename CppClassSymbol<A0>::type AA0; typedef typename CppClassSymbol<A1>::type AA1; typedef typename CppClassSymbol<A2>::type AA2; typedef typename CppClassSymbol<A3>::type AA3; typedef typename CppClassSymbol<A4>::type AA4; typedef typename CppClassSymbol<A5>::type AA5; typedef typename CppClassSymbol<A6>::type AA6; typedef typename CppClassSymbol<A7>::type AA7; typedef typename CppClassSymbol<A8>::type AA8; typedef typename CppClassSymbol<A9>::type AA9; typedef typename CppClassSymbol<A10>::type AA10; typedef typename CppClassSymbol<A11>::type AA11; typedef typename CppClassSymbol<A12>::type AA12; 
 	typedef typename If<Method,
-		param_types_holder12<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>,
-		param_types_holder13<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>
+		param_types_holder12<AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11, AA12>,
+		param_types_holder13<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11, AA12>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 13==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A12>::type>::value };
 	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm,
-			(*(fun_type*)data)(
-				unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)args[ArgBase+12])
-			)
+	static void call(FunctorParam& fp){ 
+		(*(fun_type*)fp.fun)(fp
+			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)fp.args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)fp.args[ArgBase+12])
 		);
-	}
-};
-
-template<class TFun, int Method , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
-struct nfun_base13<TFun, Method, void , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
-	typedef TFun fun_type;
-	typedef typename If<Method,
-		param_types_holder12<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>,
-		param_types_holder13<Any , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>
-		>::type fun_param_holder;
-	enum{ extendable = (Method==1 && 13==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A12>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method, vm = 0 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(fun_type*)data)(
-			unchecked_cast<A0>((AnyPtr&)args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)args[ArgBase+12])
-		);
-		vm->return_result();
 	}
 };
 
@@ -851,25 +521,27 @@ struct nfun_base<13, TFun, Method, R>
 
 template<class TFun>
 struct nfun_base1<TFun, 0, void , const VMachinePtr&>{
+	typedef void R;
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(TFun*)data)(
-			to_smartptr(vm)
+	static void call(FunctorParam& fp){ 
+		(*(TFun*)fp.fun)(fp,
+			to_smartptr(fp.vm)
 		);
 	}
 };
 
 template<class TFun, class C>
 struct nfun_base2<TFun, 1, void , C, const VMachinePtr&>{
+	typedef void R;
 	typedef TFun fun_type;
 	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		(*(TFun*)data)(
-			unchecked_cast<C>((AnyPtr&)args[0]),
-			to_smartptr(vm)
+	static void call(FunctorParam& fp){ 
+		(*(TFun*)fp.fun)(fp,
+			unchecked_cast<C>((AnyPtr&)fp.args[0]),
+			to_smartptr(fp.vm)
 		);
 	}
 };
@@ -879,10 +551,10 @@ struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm, (*(TFun*)data)(
-			to_smartptr(vm)
-		));
+	static void call(FunctorParam& fp){ 
+		(*(TFun*)fp.fun)(fp,
+			to_smartptr(fp.vm)
+		);
 	}
 };
 
@@ -891,15 +563,13 @@ struct nfun_base2<TFun, 1, R , C, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<C, Any> fun_param_holder;
 	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
-	static void call(VMachine* vm, Any* args, const void* data){ 
-		ReturnResult<R>::call(vm, (*(TFun*)data)(
-			unchecked_cast<C>((AnyPtr&)args[0]),
-			to_smartptr(vm)
-		));
+	static void call(FunctorParam& fp){ 
+		(*(TFun*)fp.fun)(fp,
+			unchecked_cast<C>((AnyPtr&)fp.args[0]),
+			to_smartptr(fp.vm)
+		);
 	}
 };
-
-
 
 //{REPEAT{{
 /*
@@ -917,8 +587,8 @@ struct functor<R (*)(#REPEAT_COMMA#A`i`#)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
-		return fun_(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
+		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -936,8 +606,8 @@ struct functor<R (C::*)(#REPEAT_COMMA#A`i`#)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		return (self->*fun_)(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
+		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -955,8 +625,8 @@ struct functor<R (C::*)(#REPEAT_COMMA#A`i`#) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		return (self->*fun_)(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
+		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -968,8 +638,8 @@ struct static_functor<R (*)(#REPEAT_COMMA#A`i`#), fun_>{
 	typedef R result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
 	enum{ arity = `n`};
 
-	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
-		return fun_(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
+		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -979,8 +649,8 @@ struct static_functor<R (C::*)(#REPEAT_COMMA#A`i`#), fun_>{
 	typedef R result_type; typedef C* arg1_type; #REPEAT#typedef A`i` arg`i+2`_type; #
 	enum{ arity = `n+1`};
 
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		return (self->*fun_)(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
+		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -990,19 +660,20 @@ struct static_functor<R (C::*)(#REPEAT_COMMA#A`i`#) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; #REPEAT#typedef A`i` arg`i+2`_type; #
 	enum{ arity = `n+1`};
 
-	R operator()(C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		return (self->*fun_)(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
+		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T #COMMA_REPEAT#class A`i`#>
 struct ctor_functor<T #COMMA_REPEAT#A`i`#>{
-	typedef SmartPtr<T> result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
+	typedef SmartPtr<T> R;
+	typedef R result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
 	enum{ arity = `n`};
 
-	SmartPtr<T> operator()(#REPEAT_COMMA#A`i` a`i`#) const{
-		return xnew<T>(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
+		xnew<T>(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -1023,8 +694,8 @@ struct functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
-		return fun_(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
+		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -1034,8 +705,8 @@ struct static_functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#), fun_>{
 	typedef R result_type; #REPEAT#typedef A`i` arg`i+1`_type; #
 	enum{ arity = `n`};
 
-	R operator()(#REPEAT_COMMA#A`i` a`i`#) const{
-		return fun_(#REPEAT_COMMA#a`i`#);
+	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
+		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
 	}
 };
 
@@ -1057,8 +728,8 @@ struct functor<R (*)()>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()() const{
-		return fun_();
+	void operator()(FunctorParam& ret ) const{
+		fun_(), rcast<R>(ret);
 	}
 };
 
@@ -1076,8 +747,8 @@ struct functor<R (C::*)()>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self ) const{
-		return (self->*fun_)();
+	void operator()(FunctorParam& ret, C* self ) const{
+		(self->*fun_)(), rcast<R>(ret);
 	}
 };
 
@@ -1095,8 +766,8 @@ struct functor<R (C::*)() const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self ) const{
-		return (self->*fun_)();
+	void operator()(FunctorParam& ret, C* self ) const{
+		(self->*fun_)(), rcast<R>(ret);
 	}
 };
 
@@ -1108,8 +779,8 @@ struct static_functor<R (*)(), fun_>{
 	typedef R result_type; 
 	enum{ arity = 0};
 
-	R operator()() const{
-		return fun_();
+	void operator()(FunctorParam& ret ) const{
+		fun_(), rcast<R>(ret);
 	}
 };
 
@@ -1119,8 +790,8 @@ struct static_functor<R (C::*)(), fun_>{
 	typedef R result_type; typedef C* arg1_type; 
 	enum{ arity = 1};
 
-	R operator()(C* self ) const{
-		return (self->*fun_)();
+	void operator()(FunctorParam& ret, C* self ) const{
+		(self->*fun_)(), rcast<R>(ret);
 	}
 };
 
@@ -1130,19 +801,20 @@ struct static_functor<R (C::*)() const, fun_>{
 	typedef R result_type; typedef C* arg1_type; 
 	enum{ arity = 1};
 
-	R operator()(C* self ) const{
-		return (self->*fun_)();
+	void operator()(FunctorParam& ret, C* self ) const{
+		(self->*fun_)(), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T >
 struct ctor_functor<T >{
-	typedef SmartPtr<T> result_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; 
 	enum{ arity = 0};
 
-	SmartPtr<T> operator()() const{
-		return xnew<T>();
+	void operator()(FunctorParam& ret ) const{
+		xnew<T>(), rcast<R>(ret);
 	}
 };
 
@@ -1163,8 +835,8 @@ struct functor<R (__stdcall *)()>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()() const{
-		return fun_();
+	void operator()(FunctorParam& ret ) const{
+		fun_(), rcast<R>(ret);
 	}
 };
 
@@ -1174,8 +846,8 @@ struct static_functor<R (__stdcall *)(), fun_>{
 	typedef R result_type; 
 	enum{ arity = 0};
 
-	R operator()() const{
-		return fun_();
+	void operator()(FunctorParam& ret ) const{
+		fun_(), rcast<R>(ret);
 	}
 };
 
@@ -1196,8 +868,8 @@ struct functor<R (*)(A0)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0) const{
-		return fun_(a0);
+	void operator()(FunctorParam& ret , A0 a0) const{
+		fun_(a0), rcast<R>(ret);
 	}
 };
 
@@ -1215,8 +887,8 @@ struct functor<R (C::*)(A0)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0) const{
-		return (self->*fun_)(a0);
+	void operator()(FunctorParam& ret, C* self , A0 a0) const{
+		(self->*fun_)(a0), rcast<R>(ret);
 	}
 };
 
@@ -1234,8 +906,8 @@ struct functor<R (C::*)(A0) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0) const{
-		return (self->*fun_)(a0);
+	void operator()(FunctorParam& ret, C* self , A0 a0) const{
+		(self->*fun_)(a0), rcast<R>(ret);
 	}
 };
 
@@ -1247,8 +919,8 @@ struct static_functor<R (*)(A0), fun_>{
 	typedef R result_type; typedef A0 arg1_type; 
 	enum{ arity = 1};
 
-	R operator()(A0 a0) const{
-		return fun_(a0);
+	void operator()(FunctorParam& ret , A0 a0) const{
+		fun_(a0), rcast<R>(ret);
 	}
 };
 
@@ -1258,8 +930,8 @@ struct static_functor<R (C::*)(A0), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; 
 	enum{ arity = 2};
 
-	R operator()(C* self , A0 a0) const{
-		return (self->*fun_)(a0);
+	void operator()(FunctorParam& ret, C* self , A0 a0) const{
+		(self->*fun_)(a0), rcast<R>(ret);
 	}
 };
 
@@ -1269,19 +941,20 @@ struct static_functor<R (C::*)(A0) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; 
 	enum{ arity = 2};
 
-	R operator()(C* self , A0 a0) const{
-		return (self->*fun_)(a0);
+	void operator()(FunctorParam& ret, C* self , A0 a0) const{
+		(self->*fun_)(a0), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0>
 struct ctor_functor<T , A0>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; 
 	enum{ arity = 1};
 
-	SmartPtr<T> operator()(A0 a0) const{
-		return xnew<T>(a0);
+	void operator()(FunctorParam& ret , A0 a0) const{
+		xnew<T>(a0), rcast<R>(ret);
 	}
 };
 
@@ -1302,8 +975,8 @@ struct functor<R (__stdcall *)(A0)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0) const{
-		return fun_(a0);
+	void operator()(FunctorParam& ret , A0 a0) const{
+		fun_(a0), rcast<R>(ret);
 	}
 };
 
@@ -1313,8 +986,8 @@ struct static_functor<R (__stdcall *)(A0), fun_>{
 	typedef R result_type; typedef A0 arg1_type; 
 	enum{ arity = 1};
 
-	R operator()(A0 a0) const{
-		return fun_(a0);
+	void operator()(FunctorParam& ret , A0 a0) const{
+		fun_(a0), rcast<R>(ret);
 	}
 };
 
@@ -1335,8 +1008,8 @@ struct functor<R (*)(A0, A1)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1) const{
-		return fun_(a0, a1);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
+		fun_(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1354,8 +1027,8 @@ struct functor<R (C::*)(A0, A1)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1) const{
-		return (self->*fun_)(a0, a1);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
+		(self->*fun_)(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1373,8 +1046,8 @@ struct functor<R (C::*)(A0, A1) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1) const{
-		return (self->*fun_)(a0, a1);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
+		(self->*fun_)(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1386,8 +1059,8 @@ struct static_functor<R (*)(A0, A1), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
 	enum{ arity = 2};
 
-	R operator()(A0 a0, A1 a1) const{
-		return fun_(a0, a1);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
+		fun_(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1397,8 +1070,8 @@ struct static_functor<R (C::*)(A0, A1), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; 
 	enum{ arity = 3};
 
-	R operator()(C* self , A0 a0, A1 a1) const{
-		return (self->*fun_)(a0, a1);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
+		(self->*fun_)(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1408,19 +1081,20 @@ struct static_functor<R (C::*)(A0, A1) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; 
 	enum{ arity = 3};
 
-	R operator()(C* self , A0 a0, A1 a1) const{
-		return (self->*fun_)(a0, a1);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
+		(self->*fun_)(a0, a1), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1>
 struct ctor_functor<T , A0, A1>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
 	enum{ arity = 2};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1) const{
-		return xnew<T>(a0, a1);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
+		xnew<T>(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1441,8 +1115,8 @@ struct functor<R (__stdcall *)(A0, A1)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1) const{
-		return fun_(a0, a1);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
+		fun_(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1452,8 +1126,8 @@ struct static_functor<R (__stdcall *)(A0, A1), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; 
 	enum{ arity = 2};
 
-	R operator()(A0 a0, A1 a1) const{
-		return fun_(a0, a1);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
+		fun_(a0, a1), rcast<R>(ret);
 	}
 };
 
@@ -1474,8 +1148,8 @@ struct functor<R (*)(A0, A1, A2)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2) const{
-		return fun_(a0, a1, a2);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
+		fun_(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1493,8 +1167,8 @@ struct functor<R (C::*)(A0, A1, A2)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2) const{
-		return (self->*fun_)(a0, a1, a2);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
+		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1512,8 +1186,8 @@ struct functor<R (C::*)(A0, A1, A2) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2) const{
-		return (self->*fun_)(a0, a1, a2);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
+		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1525,8 +1199,8 @@ struct static_functor<R (*)(A0, A1, A2), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
 	enum{ arity = 3};
 
-	R operator()(A0 a0, A1 a1, A2 a2) const{
-		return fun_(a0, a1, a2);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
+		fun_(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1536,8 +1210,8 @@ struct static_functor<R (C::*)(A0, A1, A2), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; 
 	enum{ arity = 4};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2) const{
-		return (self->*fun_)(a0, a1, a2);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
+		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1547,19 +1221,20 @@ struct static_functor<R (C::*)(A0, A1, A2) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; 
 	enum{ arity = 4};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2) const{
-		return (self->*fun_)(a0, a1, a2);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
+		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2>
 struct ctor_functor<T , A0, A1, A2>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
 	enum{ arity = 3};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2) const{
-		return xnew<T>(a0, a1, a2);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
+		xnew<T>(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1580,8 +1255,8 @@ struct functor<R (__stdcall *)(A0, A1, A2)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2) const{
-		return fun_(a0, a1, a2);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
+		fun_(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1591,8 +1266,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; 
 	enum{ arity = 3};
 
-	R operator()(A0 a0, A1 a1, A2 a2) const{
-		return fun_(a0, a1, a2);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
+		fun_(a0, a1, a2), rcast<R>(ret);
 	}
 };
 
@@ -1613,8 +1288,8 @@ struct functor<R (*)(A0, A1, A2, A3)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return fun_(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		fun_(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1632,8 +1307,8 @@ struct functor<R (C::*)(A0, A1, A2, A3)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return (self->*fun_)(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1651,8 +1326,8 @@ struct functor<R (C::*)(A0, A1, A2, A3) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return (self->*fun_)(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1664,8 +1339,8 @@ struct static_functor<R (*)(A0, A1, A2, A3), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
 	enum{ arity = 4};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return fun_(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		fun_(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1675,8 +1350,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; 
 	enum{ arity = 5};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return (self->*fun_)(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1686,19 +1361,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; 
 	enum{ arity = 5};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return (self->*fun_)(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3>
 struct ctor_functor<T , A0, A1, A2, A3>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
 	enum{ arity = 4};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return xnew<T>(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		xnew<T>(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1719,8 +1395,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return fun_(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		fun_(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1730,8 +1406,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; 
 	enum{ arity = 4};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3) const{
-		return fun_(a0, a1, a2, a3);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
+		fun_(a0, a1, a2, a3), rcast<R>(ret);
 	}
 };
 
@@ -1752,8 +1428,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return fun_(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1771,8 +1447,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1790,8 +1466,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1803,8 +1479,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
 	enum{ arity = 5};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return fun_(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1814,8 +1490,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; 
 	enum{ arity = 6};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1825,19 +1501,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; 
 	enum{ arity = 6};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4>
 struct ctor_functor<T , A0, A1, A2, A3, A4>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
 	enum{ arity = 5};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return xnew<T>(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		xnew<T>(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1858,8 +1535,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return fun_(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1869,8 +1546,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; 
 	enum{ arity = 5};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		return fun_(a0, a1, a2, a3, a4);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
+		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
 	}
 };
 
@@ -1891,8 +1568,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return fun_(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1910,8 +1587,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1929,8 +1606,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1942,8 +1619,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
 	enum{ arity = 6};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return fun_(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1953,8 +1630,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; 
 	enum{ arity = 7};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1964,19 +1641,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; 
 	enum{ arity = 7};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
 	enum{ arity = 6};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -1997,8 +1675,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return fun_(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -2008,8 +1686,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; 
 	enum{ arity = 6};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		return fun_(a0, a1, a2, a3, a4, a5);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
+		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
 	}
 };
 
@@ -2030,8 +1708,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2049,8 +1727,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2068,8 +1746,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2081,8 +1759,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
 	enum{ arity = 7};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2092,8 +1770,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; 
 	enum{ arity = 8};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2103,19 +1781,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; 
 	enum{ arity = 8};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
 	enum{ arity = 7};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2136,8 +1815,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2147,8 +1826,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; 
 	enum{ arity = 7};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
 	}
 };
 
@@ -2169,8 +1848,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2188,8 +1867,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2207,8 +1886,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2220,8 +1899,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
 	enum{ arity = 8};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2231,8 +1910,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; 
 	enum{ arity = 9};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2242,19 +1921,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; 
 	enum{ arity = 9};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
 	enum{ arity = 8};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2275,8 +1955,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2286,8 +1966,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; 
 	enum{ arity = 8};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
 	}
 };
 
@@ -2308,8 +1988,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2327,8 +2007,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2346,8 +2026,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2359,8 +2039,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
 	enum{ arity = 9};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2370,8 +2050,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; 
 	enum{ arity = 10};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2381,19 +2061,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const, fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; 
 	enum{ arity = 10};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
 	enum{ arity = 9};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2414,8 +2095,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2425,8 +2106,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; 
 	enum{ arity = 9};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
 	}
 };
 
@@ -2447,8 +2128,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2466,8 +2147,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2485,8 +2166,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2498,8 +2179,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
 	enum{ arity = 10};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2509,8 +2190,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), fun_>{
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; 
 	enum{ arity = 11};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2520,19 +2201,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const, fu
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; 
 	enum{ arity = 11};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
 	enum{ arity = 10};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2553,8 +2235,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2564,8 +2246,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), f
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; 
 	enum{ arity = 10};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
 	}
 };
 
@@ -2586,8 +2268,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2605,8 +2287,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2624,8 +2306,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2637,8 +2319,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), fun_>{
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
 	enum{ arity = 11};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2648,8 +2330,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), fun
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; 
 	enum{ arity = 12};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2659,19 +2341,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) cons
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; 
 	enum{ arity = 12};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
 	enum{ arity = 11};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2692,8 +2375,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2703,8 +2386,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; 
 	enum{ arity = 11};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
 	}
 };
 
@@ -2725,8 +2408,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2744,8 +2427,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2763,8 +2446,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const>
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2776,8 +2459,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), f
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
 	enum{ arity = 12};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2787,8 +2470,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; typedef A11 arg13_type; 
 	enum{ arity = 13};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2798,19 +2481,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; typedef A11 arg13_type; 
 	enum{ arity = 13};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
 	enum{ arity = 12};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2831,8 +2515,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2842,8 +2526,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; 
 	enum{ arity = 12};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
 	}
 };
 
@@ -2864,8 +2548,8 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2883,8 +2567,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2902,8 +2586,8 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) c
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2915,8 +2599,8 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A1
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
 	enum{ arity = 13};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2926,8 +2610,8 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; typedef A11 arg13_type; typedef A12 arg14_type; 
 	enum{ arity = 14};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2937,19 +2621,20 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	typedef R result_type; typedef C* arg1_type; typedef A0 arg2_type; typedef A1 arg3_type; typedef A2 arg4_type; typedef A3 arg5_type; typedef A4 arg6_type; typedef A5 arg7_type; typedef A6 arg8_type; typedef A7 arg9_type; typedef A8 arg10_type; typedef A9 arg11_type; typedef A10 arg12_type; typedef A11 arg13_type; typedef A12 arg14_type; 
 	enum{ arity = 14};
 
-	R operator()(C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
 // コンストラクタを関数オブジェクト化する
 template<class T , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
-	typedef SmartPtr<T> result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
+	typedef SmartPtr<T> R;
+	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
 	enum{ arity = 13};
 
-	SmartPtr<T> operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2970,8 +2655,8 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	fun_type fun_;
 	functor(fun_type fun):fun_(fun){}
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2981,8 +2666,8 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	typedef R result_type; typedef A0 arg1_type; typedef A1 arg2_type; typedef A2 arg3_type; typedef A3 arg4_type; typedef A4 arg5_type; typedef A5 arg6_type; typedef A6 arg7_type; typedef A7 arg8_type; typedef A8 arg9_type; typedef A9 arg10_type; typedef A10 arg11_type; typedef A11 arg12_type; typedef A12 arg13_type; 
 	enum{ arity = 13};
 
-	R operator()(A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		return fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
+	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
+		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
 	}
 };
 
@@ -2996,41 +2681,192 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 
 template<class C, class T>
 struct getter_functor{
-	typedef T& result_type; typedef C* arg1_type;
+	typedef T& R;
+	typedef R result_type; typedef C* arg1_type;
 	enum{ arity = 1 };
 	typedef T C::* fun_t;
 
 	fun_t fun_;
 	getter_functor(fun_t fun): fun_(fun){}
 
-	T& operator()(C* a0){
-		T& ret = a0->*fun_;
-		return ret;
+	void operator()(FunctorParam& ret, C* a0){
+		T& t = a0->*fun_;
+		t, rcast<R>(ret);
 	}
 };
 
 template<class C, class T>
 struct setter_functor{
-	typedef T& result_type; typedef C* arg1_type; typedef const T& arg2_type;
+	typedef T& R;
+	typedef R result_type; typedef C* arg1_type; typedef const T& arg2_type;
 	enum{ arity = 2 };
 	typedef T C::* fun_t;
 
 	fun_t fun_;
 	setter_functor(fun_t fun): fun_(fun){}
 
-	T& operator()(C* a0, const T& a1){
-		T& ret = a0->*fun_;
-		ret = a1;
-		return ret;
+	void operator()(FunctorParam& ret, C* a0, const T& a1){
+		T& t = a0->*fun_;
+		t = a1;
+		t, rcast<R>(ret);
+	}
+};
+
+template<class TFun, TFun fun_>
+struct static_getter_functor;
+
+template<class TFun, TFun fun_>
+struct static_setter_functor;
+
+template<class C, class T, T C::* fun_>
+struct static_getter_functor<T C::*, fun_>{
+	typedef T& R;
+	typedef R result_type; typedef C* arg1_type;
+	enum{ arity = 1 };
+
+	void operator()(FunctorParam& ret, C* a0){
+		T& t = a0->*fun_;
+		t, rcast<R>(ret);
+	}
+};
+
+template<class C, class T, T C::* fun_>
+struct static_setter_functor<T C::*, fun_>{
+	typedef T& R;
+	typedef R result_type; typedef C* arg1_type; typedef const T& arg2_type;
+	enum{ arity = 2 };
+
+	void operator()(FunctorParam& ret, C* a0, const T& a1){
+		T& t = a0->*fun_;
+		t = a1;
+		t, rcast<R>(ret);
 	}
 };
 
 //////////////////////////////////////////
 
-#define Xdef_method(fun) it->def_and_return(XTAL_L(#fun), XTAL_METHOD(&Self::fun))
-#define Xdef_method2(fun, secondary_key) it->def_and_return(XTAL_L(#fun), secondary_key, XTAL_METHOD(&Self::fun))
-#define Xdef_method_alias(fun, impl) it->def_and_return(XTAL_L(#fun), XTAL_METHOD(impl))
-#define Xdef_method_alias2(fun, secondary_key, impl) it->def_and_return(XTAL_L(#fun), secondary_key, XTAL_METHOD(impl))
+#if defined(_MSC_VER) && _MSC_VER<=1300
+
+#define Xdef_method(fun) it->def_method(XTAL_L(#fun), fun)
+#define Xdef_method2(fun, secondary_key) it->def_method(XTAL_L(#fun), secondary_key, &Self::fun)
+#define Xdef_method_alias(fun, impl) it->def_method(XTAL_L(#fun), impl)
+#define Xdef_method_alias2(fun, impl, secondary_key) it->def_method(XTAL_L(#fun), secondary_key, impl)
+
+#define Xdef_fun(fun) it->def_fun(XTAL_L(#fun), &Self::fun)
+#define Xdef_fun2(fun, secondary_key) it->def_fun(XTAL_L(#fun), secondary_key, &Self::fun)
+#define Xdef_fun_alias(fun, impl) it->def_fun(XTAL_L(#fun), impl)
+#define Xdef_fun_alias2(fun, impl, secondary_key) it->def_fun(XTAL_L(#fun), secondary_key, impl)
+
+#define Xdef_getter(fun) it->def_getter(XTAL_L(#fun), &Self::fun)
+#define Xdef_setter(fun) it->def_setter(XTAL_L("set_" #fun), &Self::fun)
+
+#else
+
+template<class TFun> struct static_cfun_meker{ 
+	template<TFun fun> static const param_types_holder_n& inner(){ 
+		return fun_param_holder<dfun<static_functor<TFun, fun> > >::value; 
+	} 
+};
+
+template<class TFun> inline static_cfun_meker<TFun> generate_static_cfun(TFun){ 
+	return static_cfun_meker<TFun>(); 
+}
+
+template<class TFun> struct static_cmemfun_meker{ 
+	template<TFun fun> static const param_types_holder_n& inner(){ 
+		return fun_param_holder<dmemfun<static_functor<TFun, fun> > >::value;
+	} 
+};
+
+template<class TFun> inline static_cmemfun_meker<TFun> generate_static_cmemfun(TFun){ 
+	return static_cmemfun_meker<TFun>(); 
+}
+
+
+template<class TFun> struct static_getter_meker{ 
+	template<TFun fun> static const param_types_holder_n& inner(){ 
+		return fun_param_holder<dmemfun<static_getter_functor<TFun, fun> > >::value;
+	} 
+};
+
+template<class TFun> inline static_getter_meker<TFun> generate_static_getter(TFun){ 
+	return static_getter_meker<TFun>(); 
+}
+
+template<class TFun> struct static_setter_meker{ 
+	template<TFun fun> static const param_types_holder_n& inner(){ 
+		return fun_param_holder<dmemfun<static_setter_functor<TFun, fun> > >::value;
+	} 
+};
+
+template<class TFun> inline static_setter_meker<TFun> generate_static_setter(TFun){ 
+	return static_setter_meker<TFun>(); 
+}
+
+
+#define XTAL_FUN_PARAM(fun) ::xtal::generate_static_cfun(fun).inner<fun>()
+#define XTAL_METHOD_PARAM(fun) ::xtal::generate_static_cmemfun(fun).inner<fun>()
+#define XTAL_GETTER_PARAM(fun) ::xtal::generate_static_getter(fun).inner<fun>()
+#define XTAL_SETTER_PARAM(fun) ::xtal::generate_static_setter(fun).inner<fun>()
+
+#define Xdef_method(fun) it->define(XTAL_L(#fun), XTAL_METHOD_PARAM(&Self::fun))
+#define Xdef_method2(fun, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_METHOD_PARAM(&Self::fun))
+#define Xdef_method_alias(fun, impl) it->define(XTAL_L(#fun), XTAL_METHOD_PARAM(impl))
+#define Xdef_method_alias2(fun, impl, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_METHOD_PARAM(impl))
+
+#define Xdef_fun(fun) it->define(XTAL_L(#fun), XTAL_FUN_PARAM(&Self::fun))
+#define Xdef_fun2(fun, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_FUN_PARAM(&Self::fun))
+#define Xdef_fun_alias(fun, impl) it->define(XTAL_L(#fun), XTAL_FUN_PARAM(impl))
+#define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_FUN_PARAM(impl))
+
+#define Xdef_getter(fun) it->define(XTAL_L(#fun), XTAL_GETTER_PARAM(&Self::fun))
+#define Xdef_setter(fun) it->define(XTAL_L("set_" #fun), XTAL_SETTER_PARAM(&Self::fun))
+
+#endif
+
+#define Xdef_var(fun) Xdef_getter(fun), Xdef_setter(fun)
+
+#define Xparam(name, default_value) it->define_param(XTAL_L(#name), default_value)
+
+#define Xdef(name, value) it->define(XTAL_L(#name), value)
+#define Xdef2(name, value, secondary_key) it->define(XTAL_L(#name), value, secondary_key)
+
+#define Xdef_const(name) it->define(XTAL_L(#name), (int_t)Self::name)
+
+//{REPEAT{{
+/*
+#define Xdef_ctor`n`(#REPEAT_COMMA#A`i`#) it->def_ctor`n`<Self #COMMA_REPEAT#A`i`#>()
+*/
+
+#define Xdef_ctor0() it->def_ctor0<Self >()
+
+#define Xdef_ctor1(A0) it->def_ctor1<Self , A0>()
+
+#define Xdef_ctor2(A0, A1) it->def_ctor2<Self , A0, A1>()
+
+#define Xdef_ctor3(A0, A1, A2) it->def_ctor3<Self , A0, A1, A2>()
+
+#define Xdef_ctor4(A0, A1, A2, A3) it->def_ctor4<Self , A0, A1, A2, A3>()
+
+#define Xdef_ctor5(A0, A1, A2, A3, A4) it->def_ctor5<Self , A0, A1, A2, A3, A4>()
+
+#define Xdef_ctor6(A0, A1, A2, A3, A4, A5) it->def_ctor6<Self , A0, A1, A2, A3, A4, A5>()
+
+#define Xdef_ctor7(A0, A1, A2, A3, A4, A5, A6) it->def_ctor7<Self , A0, A1, A2, A3, A4, A5, A6>()
+
+#define Xdef_ctor8(A0, A1, A2, A3, A4, A5, A6, A7) it->def_ctor8<Self , A0, A1, A2, A3, A4, A5, A6, A7>()
+
+#define Xdef_ctor9(A0, A1, A2, A3, A4, A5, A6, A7, A8) it->def_ctor9<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8>()
+
+#define Xdef_ctor10(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) it->def_ctor10<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>()
+
+#define Xdef_ctor11(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) it->def_ctor11<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>()
+
+#define Xdef_ctor12(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) it->def_ctor12<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>()
+
+#define Xdef_ctor13(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) it->def_ctor13<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>()
+
+//}}REPEAT}
 
 }
 

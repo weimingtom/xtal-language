@@ -11,7 +11,7 @@ void Executor::reset(const AnyPtr& source, const StringPtr& source_name){
 		stream_ = stream;
 	}
 	else if(const StringPtr& string = ptr_cast<String>(source)){
-		stream_ = xnew<StringStream>(string);
+		stream_ = XNew<StringStream>(string);
 	}
 	else{
 		stream_ = null;	
@@ -19,8 +19,8 @@ void Executor::reset(const AnyPtr& source, const StringPtr& source_name){
 
 	source_name_ = source_name;
 
-	cap_ = xnew<Map>();
-	tree_ = xnew<TreeNode>();
+	cap_ = XNew<Map>();
+	tree_ = XNew<TreeNode>();
 	errors_ = null;
 	pos_begin_ = 0;
 	match_begin_ = 0;
@@ -31,7 +31,7 @@ void Executor::reset(const AnyPtr& source, const StringPtr& source_name){
 	begin_ = 0;
 	max_ = 0;
 
-	mm_ = xnew<MemoryStream>();
+	mm_ = XNew<MemoryStream>();
 	pos_ = 0;
 	read_ = 0;
 	base_ = 0;
@@ -171,7 +171,7 @@ int_t Executor::read_ascii(){
 
 const StringPtr& Executor::peek_s(int_t n){
 	const AnyPtr& ret = peek(n);
-	if(raweq(ret, undefined)){
+	if(is_undefined(ret)){
 		return empty_string;
 	}
 	return unchecked_ptr_cast<String>(ret);
@@ -179,7 +179,7 @@ const StringPtr& Executor::peek_s(int_t n){
 
 const StringPtr& Executor::read_s(){
 	const AnyPtr& ret = read();
-	if(raweq(ret, undefined)){
+	if(is_undefined(ret)){
 		return empty_string;
 	}
 	return unchecked_ptr_cast<String>(ret);
@@ -193,21 +193,34 @@ bool Executor::eat(const AnyPtr& v){
 	return false;
 }
 
+AnyPtr Executor::errors(){
+	if(!errors_ || errors_->empty()) return null;
+	return errors_->each();
+}
+
+void Executor::clear_errors(){
+	if(errors_) return errors_->clear();
+}
+
+bool Executor::has_error(){
+	return errors_ && !errors_->empty();
+}
+
 void Executor::error(const AnyPtr& message, int_t line){
 	if(!errors_){
-		errors_ = xnew<Array>();
+		errors_ = XNew<Array>();
 	}
 
 	if(errors_->size()<10){
-		errors_->push_back(Xf("%s:%d:%s")->call(source_name_, line==0 ? lineno() : line, message));
+		errors_->push_back(Xf3("%s:%d:%s", 0, source_name_, 1, line==0 ? lineno() : line, 2, message));
 	}
 }
 
 bool Executor::match_inner(const ElementPtr& e){
 	if(!e->nfa){
-		e->nfa = xnew<NFA>(e);
+		e->nfa = XNew<NFA>(e);
 		if(e->nfa->check_infinity_loop()){
-			XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1034")));
+			set_runtime_error(Xt("XRE1034"));
 			return false;
 		}
 	}
@@ -362,7 +375,7 @@ bool Executor::test(const ElementPtr& e){
 			if(eos()){ return false; }
 			const AnyPtr& a = peek();
 			if(rawtype(a)==TYPE_INT){
-				return unchecked_ptr_cast<Int>(a)->op_in(unchecked_ptr_cast<IntRange>(e->param1))!=e->inv;
+				return unchecked_ptr_cast<Int>(a)->op_in_IntRange(unchecked_ptr_cast<IntRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
 		}
@@ -371,7 +384,7 @@ bool Executor::test(const ElementPtr& e){
 			if(eos()){ return false; }
 			const AnyPtr& a = peek();
 			if(rawtype(a)==TYPE_FLOAT){
-				return unchecked_ptr_cast<Float>(a)->op_in(unchecked_ptr_cast<FloatRange>(e->param1))!=e->inv;
+				return unchecked_ptr_cast<Float>(a)->op_in_FloatRange(unchecked_ptr_cast<FloatRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
 		}
@@ -401,7 +414,7 @@ bool Executor::test(const ElementPtr& e){
 		XTAL_CASE(Element::TYPE_CALL){
 			if(eos()){ return false; }
 			AnyPtr ret = e->param1->call(to_smartptr(this));
-			return (ret || raweq(ret, undefined))!=e->inv;
+			return (ret || is_undefined(ret))!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_GREED){
@@ -584,7 +597,7 @@ ArrayPtr Executor::capture_values(int_t begin){
 StringPtr Executor::capture(int_t begin, int_t end){
 	mm_->clear();
 	for(int_t i=begin; i<end; ++i){
-		mm_->put_s(access(i)->to_s());
+		mm_->put_s(access(i));
 	}
 	return mm_->to_s();
 }
@@ -594,7 +607,7 @@ StringPtr Executor::capture(int_t begin){
 	int_t saved = pos_;
 	pos_ = begin;
 	while(!eos()){
-		mm_->put_s(read()->to_s());
+		mm_->put_s(read());
 	}
 	pos_ = saved;
 	return mm_->to_s();
@@ -738,10 +751,10 @@ bool NFA::check_infinity_loop(){
 }
 
 NFA::NFA(const ElementPtr& node){
-	e_ = xnew<Element>(Element::TYPE_INVALID);
+	e_ = XNew<Element>(Element::TYPE_INVALID);
 
 	cap_max_ = 0;
-	cap_list_ = xnew<Array>();
+	cap_list_ = XNew<Array>();
 
 	gen_state(); // NFA_STATE_START
 	gen_state(); // NFA_STATE_FINAL
@@ -875,17 +888,10 @@ void NFA::gen_nfa(int entry, const AnyPtr& a, int exit, int depth){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Element::Element(Type type)
-	:type((u8)type), inv(false), param1(null), param2(null), param3(0){}
+Element::Element(int_t type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
+	:type((u8)type), inv(false), param1(param1), param2(param2), param3(param3){
 
-Element::Element(Type type, const AnyPtr& param1)
-	:type((u8)type), inv(false), param1(param1), param2(null), param3(0){}
-
-Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2)
-	:type((u8)type), inv(false), param1(param1), param2(param2), param3(0){}
-
-Element::Element(Type type, const AnyPtr& param1, const AnyPtr& param2, int_t param3)
-	:type((u8)type), inv(false), param1(param1), param2(param2), param3(param3){}
+}
 	
 Element::~Element(){}
 
@@ -899,106 +905,46 @@ bool Element::is_e_transition() const{
 		case Element::TYPE_OR:
 			return unchecked_ptr_cast<Element>(param1)->is_e_transition() || unchecked_ptr_cast<Element>(param2)->is_e_transition();
 
-		case Element::TYPE_MORE0:
-			return true;
-
 		case Element::TYPE_MORE1:
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-
-		case Element::TYPE_01:
-			return true;
-
-		case Element::TYPE_EMPTY:
-			return true;
-
 		case Element::TYPE_CAP:
+		case Element::TYPE_GREED:
+		case Element::TYPE_LEAF:
+		case Element::TYPE_NODE:
 			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-
+			
+		case Element::TYPE_EMPTY:
+		case Element::TYPE_MORE0:
+		case Element::TYPE_01:
+		case Element::TYPE_BOS:
+		case Element::TYPE_EOS:
+		case Element::TYPE_BOL:
+		case Element::TYPE_LOOKAHEAD:
+		case Element::TYPE_LOOKBEHIND:
+		case Element::TYPE_ERROR:
+		case Element::TYPE_INVALID:
+			return true;
+			
 		case Element::TYPE_DECL:
+		case Element::TYPE_ANY:
+		case Element::TYPE_EOL:
+		case Element::TYPE_EQL:
+		case Element::TYPE_INT_RANGE:
+		case Element::TYPE_FLOAT_RANGE:
+		case Element::TYPE_CH_RANGE:
+		case Element::TYPE_PRED:
+		case Element::TYPE_CH_SET:
+		case Element::TYPE_CALL:
+		case Element::TYPE_BACKREF:
 			return false;
-
-		XTAL_CASE(Element::TYPE_INVALID){
-			return true;
-		}
-
-		XTAL_CASE(Element::TYPE_ANY){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_BOS){
-			return true;
-		}
-
-		XTAL_CASE(Element::TYPE_EOS){
-			return true;
-		}
-
-		XTAL_CASE(Element::TYPE_BOL){
-			return true;
-		}
-
-		XTAL_CASE(Element::TYPE_EOL){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_EQL){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_INT_RANGE){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_FLOAT_RANGE){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_CH_RANGE){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_PRED){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_CH_SET){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_CALL){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_GREED){
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-		}
-
-		XTAL_CASE(Element::TYPE_LOOKAHEAD){
-			return true;	
-		}
-
-		XTAL_CASE(Element::TYPE_LOOKBEHIND){
-			return true;	
-		}
-
-		XTAL_CASE(Element::TYPE_LEAF){
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-		}
-
-		XTAL_CASE(Element::TYPE_NODE){
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-		}
-
-		XTAL_CASE(Element::TYPE_BACKREF){
-			return false;
-		}
-
-		XTAL_CASE(Element::TYPE_ERROR){
-			return true;
-		}
 	}
 
 	return false;
+}
+
+ElementPtr Element::op_com() const{
+	ElementPtr ret = xnew<Element>(type, param1, param2, param3);
+	ret->inv = !inv;
+	return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1008,193 +954,50 @@ ElementPtr elem(const AnyPtr& a){
 		return p;
 	}
 
+	int_t type = -1;
 	if(can_cast<IntRange>(a)){
-		return xnew<Element>(Element::TYPE_INT_RANGE, a);
+		type = Element::TYPE_INT_RANGE;
 	}
-
-	if(can_cast<FloatRange>(a)){
-		return xnew<Element>(Element::TYPE_FLOAT_RANGE, a);
+	else if(can_cast<FloatRange>(a)){
+		type = Element::TYPE_FLOAT_RANGE;
 	}
-
-	if(can_cast<ChRange>(a)){
-		return xnew<Element>(Element::TYPE_CH_RANGE, a);
+	else if(can_cast<ChRange>(a)){
+		type = Element::TYPE_CH_RANGE;
 	}
-
-	if(const StringPtr& p = ptr_cast<String>(a)){
-		if(p->is_empty()){
-			return xnew<Element>(Element::TYPE_EMPTY);
-		}
-		
-		if(p->is_ch()){
-			return xnew<Element>(Element::TYPE_EQL, p);
-		}
-
-		AnyPtr str = null;
-		Xfor(v, p->each()){
-			if(str){
-				str = concat(str, v);
-			}
-			else{
-				str = v;
-			}
-		}
-		
-		return elem(str);
-	}
-
-	if(const FunPtr& p = ptr_cast<Fun>(a)){
-		return xnew<Element>(Element::TYPE_CALL, p);
-	}
-
-	XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1026")));
-	return nul<Element>();
-}
-
-ElementPtr set(const StringPtr& str){
-	SetPtr chset = xnew<Set>();
-	Xfor(v, str){
-		chset->set_at(v, true);
-	}
-	return xnew<Element>(Element::TYPE_CH_SET, chset);
-}
-
-ElementPtr call(const AnyPtr& fun){
-	return xnew<Element>(Element::TYPE_CALL, fun);
-}
-
-ElementPtr select(const AnyPtr& left, const AnyPtr& right){
-	ElementPtr eleft = elem(left);
-	ElementPtr eright = elem(right);
-
-	if((eleft->type==Element::TYPE_EQL || eleft->type==Element::TYPE_CH_SET) && 
-		(eright->type==Element::TYPE_EQL || eright->type==Element::TYPE_CH_SET)){
-
-		SetPtr chset = xnew<Set>();
-
-		if(eleft->type==Element::TYPE_EQL){
-			chset->set_at(eleft->param1, true);
-		}
-
-		if(eleft->type==Element::TYPE_CH_SET){
-			Xfor(v, eleft->param1){
-				chset->set_at(v, true);
-			}
-		}
-
-		if(eright->type==Element::TYPE_EQL){
-			chset->set_at(eright->param1, true);
-		}
-
-		if(eright->type==Element::TYPE_CH_SET){
-			Xfor(v, eright->param1){
-				chset->set_at(v, true);
-			}
-		}
-		return xnew<Element>(Element::TYPE_CH_SET, chset);
-	}
-
-	return xnew<Element>(Element::TYPE_OR, eleft, eright); 
-}
-
-ElementPtr concat(const AnyPtr& left, const AnyPtr& right){ 
-	ElementPtr eleft = elem(left);
-	ElementPtr eright = elem(right);
-
-	if(eleft->type==Element::TYPE_CONCAT){
-		return xnew<Element>(Element::TYPE_CONCAT, eleft->param1, xnew<Element>(Element::TYPE_CONCAT, eleft->param2, eright));
-	}
-
-	return xnew<Element>(Element::TYPE_CONCAT, eleft, eright); 
-}
-
-ElementPtr more_Int(const AnyPtr& left, int_t n, int_t kind){
-	if(n==0){ return xnew<Element>(Element::TYPE_MORE0, elem(left), null, kind); }
-	else if(n==1){ return xnew<Element>(Element::TYPE_MORE1, elem(left), null, kind); }
-	else if(n==-1){ return xnew<Element>(Element::TYPE_01, elem(left), null, kind); }
-
-	if(n>0){ return concat(left, more_Int(left, n-1, kind)); }
-	else{ return concat(more_Int(left, -1, kind), more_Int(left, n+1, kind)); }
-}
-
-ElementPtr more_IntRange(const AnyPtr& left, const IntRangePtr& range, int_t kind){
-	if(range->begin()<=0){
-		int n = -(range->end()-1);
-		return n < 0 ? more_Int(left, n, kind) : xnew<Element>(Element::TYPE_EMPTY);
-	}
-
-	return concat(left, more_IntRange(left, xnew<IntRange>(range->begin()-1, range->end()-1, RANGE_LEFT_CLOSED_RIGHT_OPEN), kind));
-}
-
-ElementPtr more_normal_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 0); }
-ElementPtr more_shortest_Int(const AnyPtr& left, int_t n){ return more_Int(left, n, 1); }
-ElementPtr more_greed_Int(const AnyPtr& left, int_t n){ return xnew<Element>(Element::TYPE_GREED, more_normal_Int(left, n)); }
-ElementPtr more_normal_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 0); }
-ElementPtr more_shortest_IntRange(const AnyPtr& left, const IntRangePtr& range){ return more_IntRange(left, range, 1); }
-ElementPtr more_greed_IntRange(const AnyPtr& left, const IntRangePtr& range){ return xnew<Element>(Element::TYPE_GREED, more_normal_IntRange(left, range)); }
-
-ElementPtr inv(const AnyPtr& left){
-	ElementPtr e = elem(left);
-	ElementPtr ret = xnew<Element>((Element::Type)e->type, e->param1, e->param2, e->param3);
-	ret->inv = !e->inv;
-	return ret;
-}
-
-ElementPtr lookahead(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LOOKAHEAD, elem(left)); }
-ElementPtr lookbehind(const AnyPtr& left, int_t back){ return xnew<Element>(Element::TYPE_LOOKBEHIND, elem(left), back); }
-
-ElementPtr cap(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_CAP, elem(left), name); }
-
-void cap_vm(const VMachinePtr& vm){
-	if(vm->named_arg_count()==1 && vm->ordered_arg_count()==0){ 
-		vm->return_result(cap(vm->arg_name(0), vm->arg(vm->arg_name(0)))); 
-		return;
+	else if(can_cast<Fun>(a)){
+		type = Element::TYPE_CALL;
 	}
 	
-	if(vm->ordered_arg_count()==2 && vm->named_arg_count()==0){ 
-		vm->return_result(cap(ptr_cast<ID>(vm->arg(0)), vm->arg(1)));
-		return;
+	if(type>0){
+		return xnew<Element>(type, a);
 	}
+	else{
+		if(const StringPtr& p = ptr_cast<String>(a)){
+			if(p->is_empty()){
+				return xnew<Element>(Element::TYPE_EMPTY);
+			}
+			
+			if(p->is_ch()){
+				return xnew<Element>(Element::TYPE_EQL, p);
+			}
 
-	XTAL_SET_EXCEPT(cpp_class<ArgumentError>()->call(Xt("XRE1027")));
-}
-
-ElementPtr node(const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left)); }
-ElementPtr node(const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name); }
-
-void node_vm(const VMachinePtr& vm){
-	if(vm->named_arg_count()!=0){ vm->return_result(node(vm->arg_name(0), vm->arg(vm->arg_name(0)))); }
-	else{ 
-		if(vm->ordered_arg_count()==2){ vm->return_result(node(ptr_cast<ID>(vm->arg(0)), vm->arg(1))); }
-		else{ vm->return_result(node(vm->arg(0))); }
+			AnyPtr str = null;
+			Xfor(v, p->each()){
+				if(str){
+					str = XNew<Element>(Element::TYPE_CONCAT, str, xnew<Element>(Element::TYPE_EQL, v));
+				}
+				else{
+					str = elem(v);
+				}
+			}
+			
+			return elem(str);
+		}
 	}
+	
+	set_runtime_error(Xt("XRE1026"));
+	return nul<Element>();
 }
-
-ElementPtr splice_node(int_t num, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), null, num); }
-ElementPtr splice_node(int_t num, const IDPtr& name, const AnyPtr& left){ return xnew<Element>(Element::TYPE_NODE, elem(left), name, num); }
-
-void splice_node_vm(const VMachinePtr& vm){
-	if(vm->named_arg_count()!=0){ vm->return_result(splice_node(vm->arg(0)->to_i(), vm->arg_name(0), vm->arg(vm->arg_name(0)))); }
-	else{ 
-		if(vm->ordered_arg_count()==3){ vm->return_result(splice_node(vm->arg(0)->to_i(), ptr_cast<ID>(vm->arg(1)), vm->arg(2))); }
-		else{ vm->return_result(splice_node(vm->arg(0)->to_i(), vm->arg(0))); }
-	}
-}
-
-ElementPtr leaf(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left)); }
-ElementPtr leafs(const AnyPtr& left){ return xnew<Element>(Element::TYPE_LEAF, elem(left), null, 1); }
-ElementPtr back_ref(const AnyPtr& n){ return xnew<Element>(Element::TYPE_BACKREF, n); }
-
-ElementPtr decl(){ return xnew<Element>(Element::TYPE_DECL); }
-
-void set_body(const ElementPtr& x, const AnyPtr& term){ 
-	if(x->type==Element::TYPE_DECL){
-		x->param1 = elem(term);
-	}
-}
-
-ElementPtr bound(const AnyPtr& body, const AnyPtr& sep){ return concat(concat(lookbehind(sep, 1), body), lookahead(sep)); }
-ElementPtr error(const AnyPtr& fn){ return xnew<Element>(Element::TYPE_ERROR, fn); }
-ElementPtr pred(const AnyPtr& e){ return xnew<Element>(Element::TYPE_PRED, e); }
 
 }
 

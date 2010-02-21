@@ -22,8 +22,9 @@ public:
 
 	void initialize(const Setting& setting);
 	void uninitialize();
-	
+
 	Setting setting_;
+
 	ObjectSpace object_space_;	
 	StringSpace string_space_;
 	ThreadSpace thread_space_;
@@ -32,7 +33,6 @@ public:
 	CtorCacheTable ctor_cache_table_;
 
 	ClassPtr builtin_;
-	ClassPtr cpp_;
 	ClassPtr global_;
 	LibPtr lib_;
 
@@ -47,6 +47,7 @@ public:
 	bool ignore_memory_assert_;
 	JmpBuf jmp_buf_;
 
+	uint_t malloc_count_;
 	uint_t used_memory_;
 	uint_t memory_threshold_;
 

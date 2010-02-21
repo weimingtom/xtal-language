@@ -102,11 +102,15 @@ void Frame::make_members_force(int_t flags){
 
 AnyPtr Frame::members(){
 	if(!orphan_){
-		return xnew<MembersIter2>(to_smartptr(this));
+		return XNew<MembersIter2>(to_smartptr(this));
 	}
 
 	make_members();
-	return xnew<MembersIter>(to_smartptr(this));
+	return XNew<MembersIter>(to_smartptr(this));
+}
+	
+Frame::map_t::iterator Frame::find(const IDPtr& primary_key, const AnyPtr& secondary_key){
+	return map_members_->find(RKey(primary_key, secondary_key));
 }
 
 const AnyPtr& Frame::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
@@ -114,8 +118,7 @@ const AnyPtr& Frame::on_rawmember(const IDPtr& primary_key, const AnyPtr& second
 
 	make_members_force(0);
 
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, secondary_key);
 	if(it!=map_members_->end()){		
 		return member_direct(it->second.num);
 	}
@@ -126,8 +129,7 @@ const AnyPtr& Frame::on_rawmember(const IDPtr& primary_key, const AnyPtr& second
 bool Frame::replace_member(const IDPtr& primary_key, const AnyPtr& value){
 	make_members();
 
-	Key key = {primary_key, undefined};
-	map_t::iterator it = map_members_->find(key);
+	map_t::iterator it = find(primary_key, undefined);
 	if(it!=map_members_->end()){
 		if(!it->second.nocache()){
 			invalidate_cache_member();

@@ -70,6 +70,7 @@ uint_t string_data_size(const char_t* str){
 }
 
 int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize){
+	if(a==b){ return 0; }
 	if(asize<bsize){ return -1; }
 	if(bsize<asize){ return 1; }
 
@@ -101,27 +102,13 @@ bool string_is_ch(const char_t* str, uint_t size){
 	return false;
 }
 
-
-struct Conv{
-	XMallocGuard memory;
-	Conv(const char8_t* str);
-};
-
-Conv::Conv(const char8_t* str)
-	:memory((std::strlen((char*)str)+1)*sizeof(char_t)){
-	char_t* buf = (char_t*)memory.get();
-	for(uint_t i=0; i<memory.size()/sizeof(char_t); ++i){
-		buf[i] = str[i];
-	}
-}
-
 void StringEachIter::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
 	m & ss_;
 }
 
 StringEachIter::StringEachIter(const StringPtr& str)
-	:ss_(xnew<StringStream>(str)){
+	:ss_(XNew<StringStream>(str)){
 }
 
 void StringEachIter::block_next(const VMachinePtr& vm){
@@ -133,7 +120,6 @@ void StringEachIter::block_next(const VMachinePtr& vm){
 	vm->return_result(to_smartptr(this), ss_->get_s(1));
 }
 
-
 void ChRangeIter::block_next(const VMachinePtr& vm){
 	if(ch_cmp(it_->data(), it_->data_size(), end_->data(), end_->data_size())>0){
 		vm->return_result(null, null);
@@ -141,12 +127,14 @@ void ChRangeIter::block_next(const VMachinePtr& vm){
 	}
 
 	StringPtr temp = it_;
-	it_ = ch_inc(it_->data(), it_->data_size());
+	char_t buf[8];
+	int_t sz = ch_inc(it_->data(), it_->data_size(), buf, 8);
+	it_ = XNew<String>(buf, sz);
 	vm->return_result(to_smartptr(this), temp);
 }
 
 AnyPtr ChRange::each(){
-	return xnew<ChRangeIter>(to_smartptr(this));
+	return XNew<ChRangeIter>(to_smartptr(this));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -158,16 +146,19 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 ////////////////////////////////////////////////////////////////
 
 StringData* String::new_string_data(uint_t size){
-	StringData* sd = new(object_xmalloc<StringData>()) StringData(size);
-	sd->set_virtual_members<StringData>();
-	value_.init_rcbase(TYPE_STRING, sd);
-	register_gc(sd);
-	return sd;
+	StringData* p = new(make_object<StringData>()) StringData(size);
+	value_.init_rcbase(TYPE_STRING, p);
+	register_gc(p);
+	return p;
+}
+
+void String::init_small_string(const char_t* str, uint_t size){
+	value_.init_small_string(str, size);
 }
 
 void String::init_string(const char_t* str, uint_t size){
 	if(size<SMALL_STRING_MAX){
-		value_.init_small_string(str, size);
+		init_small_string(str, size);
 	}
 	else{
 		if(string_is_ch(str, size)){
@@ -180,66 +171,37 @@ void String::init_string(const char_t* str, uint_t size){
 	}
 }
 
-String::String(const char_t* str, uint_t size, intern_t)	
-	{
-	if(size<SMALL_STRING_MAX){
-		value_.init_small_string(str, size);
-	}
-	else{
-		StringData* sd = new_string_data(size);
-		string_copy(sd->buf(), str, size);
-		sd->set_interned();
-	}
-}
-
-String::String(const StringLiteral& str, intern_t)	
-	{
-	if(str.size()<SMALL_STRING_MAX){
-		value_.init_small_string(str.str(), str.size());
-	}
-	else{
-		value_.init_string_literal(TYPE_ID_LITERAL, str);
-	}
-}
-
-String::String()
-	{
+String::String(){
 	value_.init_small_string(0);
 }
 
-String::String(const char_t* str)
-	{
+String::String(const char_t* str){
 	init_string(str, string_data_size(str));
 }
 
-String::String(const char8_t* str)
-	{
-	Conv conv(str);
+String::String(const char8_t* str){
+	StringConv conv(str);
 	init_string((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
 }
 
-String::String(const char_t* str, uint_t size)
-	{
+String::String(const char_t* str, uint_t size){
 	init_string(str, size);
 }
 
-String::String(const StringLiteral& str)
-	{
+String::String(const StringLiteral& str){
 	if(str.size()<SMALL_STRING_MAX){
-		value_.init_small_string(str.str(), str.size());
+		init_small_string(str.str(), str.size());
 	}
 	else{
-		value_.init_string_literal(TYPE_STRING_LITERAL, str);
+		value_.init_literal_string(str);
 	}
 }
 
-String::String(const char_t* begin, const char_t* last)
-	{
+String::String(const char_t* begin, const char_t* last){
 	init_string(begin, last-begin);
 }
 
-String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2)
-	{
+String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2){
 	if(size1==0){
 		init_string(str2, size2);
 		return;
@@ -264,20 +226,8 @@ String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size
 
 String::String(const String& s)
 	:Any(s){
-	inc_ref_count_force(s);
 }
 	
-String& String::operator= (const String& s){
-	if(this==&s){
-		return *this;
-	}
-
-	Any::operator=(s);
-	inc_ref_count_force(s);
-
-	return *this;
-}
-
 uint_t String::length() const{
 	return string_length(c_str());
 }
@@ -290,7 +240,7 @@ const char_t* String::data() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return value_.s(); }
-		XTAL_CASE2(TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ return value_.sp(); }
+		XTAL_CASE2(TYPE_INTERNED_STRING, TYPE_LITERAL_STRING){ return value_.sp(); }
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
 	}
 	return XTAL_L("");
@@ -300,7 +250,7 @@ uint_t String::data_size() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 
-		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_ID_LITERAL, TYPE_STRING_LITERAL){ 
+		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_INTERNED_STRING, TYPE_LITERAL_STRING){ 
 			return value_.string_size(); 
 		}
 
@@ -309,19 +259,17 @@ uint_t String::data_size() const{
 	return 0;
 }
 
-StringPtr String::clone() const{
+const StringPtr& String::clone() const{
 	return to_smartptr(this);
 }
 
-const IDPtr& String::intern() const{
+IDPtr String::intern() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_SMALL_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
-		XTAL_CASE(TYPE_STRING_LITERAL){ return xtal::intern(value_.sp(), value_.string_size()); }
-		XTAL_CASE(TYPE_ID_LITERAL){ return unchecked_ptr_cast<ID>(ap(*this)); }
+		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
+		XTAL_CASE(TYPE_LITERAL_STRING){ return xtal::intern(value_.sp(), value_.string_size()); }
 		XTAL_CASE(TYPE_STRING){
 			StringData* p = ((StringData*)rcpvalue(*this));
-			if(p->is_interned()) return unchecked_ptr_cast<ID>(ap(*this));
 			return xtal::intern(p->buf(), p->data_size());
 		}
 	}
@@ -331,15 +279,13 @@ const IDPtr& String::intern() const{
 bool String::is_interned() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
-		XTAL_CASE(TYPE_SMALL_STRING){ return true; }
-		XTAL_CASE(TYPE_STRING_LITERAL){ return false; }
-		XTAL_CASE(TYPE_ID_LITERAL){ return true; }
-		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->is_interned(); }
+		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return true; }
+		XTAL_CASE2(TYPE_LITERAL_STRING, TYPE_STRING){ return false; }
 	}
 	return false;
 }
 
-StringPtr String::to_s() const{
+const StringPtr& String::to_s() const{
 	return to_smartptr(this);
 }
 
@@ -390,7 +336,7 @@ float_t String::to_f() const{
 }
 
 AnyPtr String::each() const{
-	return xnew<StringEachIter>(to_smartptr(this));
+	return XNew<StringEachIter>(to_smartptr(this));
 }
 
 bool String::is_ch() const{
@@ -418,7 +364,7 @@ bool String::op_in(const ChRangePtr& range) const{
 
 ChRangePtr String::op_range(const StringPtr& right, int_t kind) const{
 	if(kind!=RANGE_CLOSED){
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1025")));
+		set_runtime_error(Xt("XRE1025"));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 
@@ -426,13 +372,13 @@ ChRangePtr String::op_range(const StringPtr& right, int_t kind) const{
 		return xnew<ChRange>(to_smartptr(this), right);
 	}
 	else{
-		XTAL_SET_EXCEPT(cpp_class<RuntimeError>()->call(Xt("XRE1023")));
+		set_runtime_error(Xt("XRE1023"));
 		return xnew<ChRange>(empty_string, empty_string);
 	}
 }
 
 StringPtr String::op_cat(const StringPtr& v) const{
-	return xnew<String>(data(), data_size(), v->data(), v->data_size());
+	return XNew<String>(data(), data_size(), v->data(), v->data_size());
 }
 
 bool String::op_eq(const StringPtr& v) const{ 
@@ -479,7 +425,7 @@ String::iterator String::end() const{
 
 StringData::StringData(uint_t size){
 	value_.init_rcbase(TYPE_STRING, this);
-	data_size_ = size<<SIZE_SHIFT;
+	data_size_ = size;
 	buf_ = (char_t*)xmalloc(sizeof(char_t)*(size+1));
 	buf()[size] = 0;
 }
@@ -494,10 +440,7 @@ ID::ID(const char_t* str)
 	:String(*xtal::intern(str)){}
 
 ID::ID(const char8_t* str)	
-	:String(noinit_t()){	
-	Conv conv(str);
-	*this = *xtal::intern((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
-}
+	:String(*xtal::intern(str)){}
 
 ID::ID(const StringLiteral& str)
 	:String(*xtal::intern(str)){}
@@ -506,39 +449,24 @@ ID::ID(const char_t* str, uint_t size)
 	:String(*xtal::intern(str, size)){}
 
 ID::ID(const char_t* begin, const char_t* last)
-	:String(*xtal::intern(begin, last-begin)){}
+	:String(*xtal::intern(begin, last)){}
 
 ID::ID(const StringPtr& name)
-	:String(*(name ? name->intern() : (const IDPtr&)name)){}
+	:String(name->is_interned() ? *name : *xtal::intern(name)){}
 
+SmartPtr<ID>::SmartPtr(const char_t* v)
+	:Any(ID(v)){}
 
-StringPtr SmartPtrCtor1<String>::call(type v){
-	return xnew<String>(v);
-}
+SmartPtr<ID>::SmartPtr(const StringPtr& v)
+	:Any(ID(v)){}
 
-StringPtr SmartPtrCtor2<String>::call(type v){
-	return xnew<String>(v);
-}
+SmartPtr<ID>::SmartPtr(const char8_t* v)
+	:Any(ID(v)){}
 
-StringPtr SmartPtrCtor3<String>::call(type v){
-	return xnew<String>(v);
-}
+SmartPtr<ID>::SmartPtr(const StringLiteral& v)
+	:Any(ID(v)){}
 
-IDPtr  SmartPtrCtor1<ID>::call(type v){
-	return intern(v);
-}
-
-IDPtr SmartPtrCtor2<ID>::call(type v){
-	if(v) return v->intern();
-	return v;
-}
-
-IDPtr SmartPtrCtor3<ID>::call(type v){
-	return xnew<ID>(v);
-}
-
-IDPtr SmartPtrCtor4<ID>::call(type v){
-	return xnew<ID>(v);
-}
+SmartPtr<ID>::SmartPtr(const ID& v)
+	:Any(v){}
 
 }

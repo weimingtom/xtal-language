@@ -15,11 +15,11 @@ enum{
 	VERSION1 = 1,
 	VERSION2 = 0,
 	VERSION3 = 2,
-	VERSION4 = 0
+	VERSION4 = 1
 };
 }
 
-#define XTAL_USE_COMPILED_EMB
+//#define XTAL_USE_COMPILED_EMB
 //#define XTAL_DEBUG_PRINT
 
 //#define XTAL_ENFORCE_64_BIT

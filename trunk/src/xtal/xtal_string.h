@@ -383,20 +383,6 @@ public:
 	AnyPtr each();
 };
 
-class StringEachIter : public Base{
-public:
-
-	StringEachIter(const StringPtr& str);
-
-	void block_next(const VMachinePtr& vm);
-
-	void on_visit_members(Visitor& m);
-
-
-private:
-	StringStreamPtr ss_;
-};
-
 class ChRangeIter : public Base{
 public:
 

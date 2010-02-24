@@ -10,7 +10,7 @@
 namespace xtal{
 
 const char_t* cast_const_char_t_ptr(const AnyPtr& a);
-const IDPtr& cast_IDPtr(const AnyPtr& a);
+IDPtr cast_IDPtr(const AnyPtr& a);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,6 @@ template<class T> struct NullGetter<const SmartPtr<T>&>{ static const SmartPtr<T
 template<class T> struct NullGetter<SmartPtr<T> >{ static const SmartPtr<T>& get(){ return nul<T>(); } };
 
 /////////////////////////////////////////////////////////////////////////////
-
 
 template<class T>
 struct Caster{
@@ -42,19 +41,19 @@ struct Caster<const T*>{
 template<class T>
 struct Caster<T*>{
 	typedef T* type;
-	static type cast(const AnyPtr& a){ return (type)&Caster<const T&>::cast(a); }
+	static type cast(const AnyPtr& a){ return (type)(&Caster<const T&>::cast(a)); }
 };
 
 template<class T>
 struct Caster<const T&>{
 	typedef const T& type;
-	static type cast(const AnyPtr& a){ return *((const SmartPtr<T>*)&a)->get(); }
+	static type cast(const AnyPtr& a){ return *reinterpret_cast<const SmartPtr<T>*>(&a)->get(); }
 };
 
 template<class T>
 struct Caster<const SmartPtr<T>&>{
 	typedef const SmartPtr<T>& type;
-	static type cast(const AnyPtr& a){ return *(const SmartPtr<T>*)&a; }
+	static type cast(const AnyPtr& a){ return *reinterpret_cast<const SmartPtr<T>*>(&a); }
 };
 
 template<>
@@ -65,8 +64,8 @@ struct Caster<const char_t*>{
 
 template<>
 struct Caster<const IDPtr&>{
-	typedef const IDPtr& type;
-	static type cast(const AnyPtr& a){ return *(const IDPtr*)&a; }
+	typedef IDPtr type;
+	static type cast(const AnyPtr& a){ return cast_IDPtr(a); }
 };
 
 template<>
@@ -154,7 +153,7 @@ cast(const AnyPtr& a){
 template<class T>
 inline const SmartPtr<T>&
 unchecked_ptr_cast(const AnyPtr& a){
-	return *(const SmartPtr<T>*)&a;
+	return *reinterpret_cast<const SmartPtr<T>*>(&a);
 }
 
 /**

@@ -345,11 +345,11 @@ const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr
 }
 
 void Class::define(const char_t* primary_key, const param_types_holder_n& pth){
-	def(intern(primary_key), XNew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
+	def(intern(primary_key), xnew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
 }
 
 void Class::define(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
-	def(intern(primary_key), XNew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
+	def(intern(primary_key), xnew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
 }
 
 void Class::define_param(const char_t* name, const AnyPtr& default_value){

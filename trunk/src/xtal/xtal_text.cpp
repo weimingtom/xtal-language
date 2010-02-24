@@ -217,8 +217,8 @@ void String::on_rawcall(const VMachinePtr& vm){
 					if(number){
 						int_t arg_i = arg_id->to_i();
 
-						if(arg_i<vm->ordered_arg_count()){
-							value = vm->arg(arg_i);
+						if(arg_i>0 && arg_i<=vm->ordered_arg_count()){
+							value = vm->arg(arg_i-1);
 						}
 						else{
 							value = vm->arg(arg_id);
@@ -274,15 +274,14 @@ Text::Text(const IDPtr& key)
 	:key_(key){}
 
 void Text::on_rawcall(const VMachinePtr& vm){
-	MapPtr m = text_map();
-	if(m){
+	if(MapPtr m = text_map()){
 		if(const AnyPtr& value = m->at(key_)){
 			value->to_s()->rawcall(vm);
 			return;
 		}
 	}
 	
-	vm->return_result(key_->cat(vm->make_arguments()->to_s()));
+	key_->rawcall(vm);
 }
 
 void Text::to_s(const VMachinePtr& vm){

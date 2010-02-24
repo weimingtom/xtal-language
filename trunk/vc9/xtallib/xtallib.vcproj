@@ -509,6 +509,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\xtal\xtal_lib\xtal_debugger.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\xtal\xtal_lib\xtal_errormessage.h"
 					>
 				</File>

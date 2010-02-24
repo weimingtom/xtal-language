@@ -138,8 +138,8 @@ public:
 	const param_types_holder_n* pth() const{ return pthvalue; }
 	
 	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
-		return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
-		//return rawbitxor(a, b)==0;
+		//return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
+		return rawbitxor(a, b)==0;
 	}
 
 	friend bool rawlt(const AnyRawValue& a, const AnyRawValue& b){
@@ -592,7 +592,7 @@ inline uint_t rawbitxor(const Any& a, const Any& b){
 }
 
 inline void copy_any(Any& v, const Any& u){
-	v = u;
+	v.value_ = u.value_;
 }
 
 inline void swap(Any& a, Any& b){

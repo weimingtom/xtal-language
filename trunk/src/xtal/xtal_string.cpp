@@ -102,24 +102,6 @@ bool string_is_ch(const char_t* str, uint_t size){
 	return false;
 }
 
-void StringEachIter::on_visit_members(Visitor& m){
-	Base::on_visit_members(m);
-	m & ss_;
-}
-
-StringEachIter::StringEachIter(const StringPtr& str)
-	:ss_(XNew<StringStream>(str)){
-}
-
-void StringEachIter::block_next(const VMachinePtr& vm){
-	if(ss_->eos()){
-		vm->return_result(null, null);
-		return;
-	}
-
-	vm->return_result(to_smartptr(this), ss_->get_s(1));
-}
-
 void ChRangeIter::block_next(const VMachinePtr& vm){
 	if(ch_cmp(it_->data(), it_->data_size(), end_->data(), end_->data_size())>0){
 		vm->return_result(null, null);
@@ -336,7 +318,8 @@ float_t String::to_f() const{
 }
 
 AnyPtr String::each() const{
-	return XNew<StringEachIter>(to_smartptr(this));
+	return send(Xid(each));
+//	return XNew<StringEachIter>(to_smartptr(this));
 }
 
 bool String::is_ch() const{

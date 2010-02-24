@@ -18,9 +18,7 @@ void Class_inherit(const ClassPtr& cls, const ClassPtr cls2){
 
 }
 
-Code::Code()
-	:source_file_name_(empty_string){
-
+Code::Code(){
 	set_singleton();
 	set_object_temporary_name(Xid(filelocal));
 	set_object_force(500);
@@ -85,7 +83,7 @@ bool Code::set_lineno_info(uint_t line){
 		return false;
 	}
 
-	LineNumberInfo lnt={(u16)code_.size(), (u16)line, 0, 0};
+	LineNumberInfo lnt={(u32)code_.size(), (u16)line, 0, 0};
 	lineno_table_.push_back(lnt);
 	return true;
 }

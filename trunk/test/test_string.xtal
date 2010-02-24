@@ -6,6 +6,9 @@ class StringTest{
 		assert ("te"~"st").length==4;
 		assert ("te"~"st")=="test";
 		assert "4".to_i==4;
+		assert "%s"("a")=="a";
+		assert "%(2)s%(1)s"("a", "b")=="ba";
+		assert "%(b)s%(a)s"(a:"a", b:"b")=="ba";
 	}
 	
 	sub#Test{

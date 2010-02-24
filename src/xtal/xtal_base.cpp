@@ -41,6 +41,10 @@ void Base::special_initialize(const VirtualMembers* vmembers){
 	class_ = cpp_class(vmembers->cpp_class_symbol_data).get();
 	instance_variables_ = &empty_instance_variables; 
 	vmembers_ = vmembers;
+
+	if(vmembers->finalize!=VirtualMembersN::finalize){
+		set_finalizer_flag();
+	}
 }
 
 void Base::special_uninitialize(){

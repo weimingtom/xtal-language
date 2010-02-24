@@ -673,8 +673,8 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 	}
 	else{
 		debug_info_->set_line(0);
-		debug_info_->set_file_name("?");
-		debug_info_->set_fun_name("?");
+		debug_info_->set_file_name(XTAL_STRING("?"));
+		debug_info_->set_fun_name(XTAL_STRING("?"));
 	}
 
 	debug_info_->set_exception(except_[0]);
@@ -698,6 +698,7 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 	}
 
 	FunFrame& f = *fun_frames_[n];
+	FunFrame& pf = n==0 ? f : *fun_frames_[n-1];
 	int_t scope_lower = n==0 ? 0 : fun_frames_[n-1]->scope_lower;
 
 	debug::CallerInfoPtr ret = xnew<debug::CallerInfo>();
@@ -708,7 +709,8 @@ debug::CallerInfoPtr VMachine::caller(uint_t n){
 		return ret;
 	}
 
-	ret->set_line(f.fun()->code()->compliant_lineno(f.poped_pc));
+	int_t line = f.fun()->code()->compliant_lineno(pf.poped_pc-1);
+	ret->set_line(line);
 	ret->set_fun(f.fun());
 
 	make_outer_outer(0, 0, true);
@@ -850,23 +852,21 @@ bool VMachine::eval_set_instance_variable(const AnyPtr& self, const IDPtr& key, 
 }
 
 void VMachine::debug_hook(const inst_t* pc, int_t kind){
-	{
-		struct guard{
-			int_t count;
-			guard(){ count = debug::disable_force(); }
-			~guard(){ debug::enable_force(count); }
-		} g;
+	struct guard{
+		int_t count;
+		guard(){ count = debug::disable_force(); }
+		~guard(){ debug::enable_force(count); }
+	} g;
 
-		make_debug_info(pc, kind);
+	make_debug_info(pc, kind);
 
-		// Œ»Ý”­¶‚µ‚Ä‚¢‚é—áŠO‚ð‘Þ”ð‚³‚¹‚é
-		AnyPtr e = except_[0];
-		except_[0] = null;
+	// Œ»Ý”­¶‚µ‚Ä‚¢‚é—áŠO‚ð‘Þ”ð‚³‚¹‚é
+	AnyPtr e = except_[0];
+	except_[0] = null;
 
-		debug::call_debug_hook(kind, debug_info_);
+	debug::call_debug_hook(kind, debug_info_);
 
-		except_[0] = debug_info_->exception();
-	}
+	except_[0] = debug_info_->exception();
 }
 
 const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){

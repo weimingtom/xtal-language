@@ -119,6 +119,38 @@ SmartPtr<Any>::~SmartPtr(){
 	dec_ref_count_force(*this);
 }	
 
+SmartPtr<Any>::SmartPtr(const NullPtr&){
+	value_.init_primitive(TYPE_NULL);
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const NullPtr& p){
+	dec_ref_count_force(*this);
+	value_.init_primitive(TYPE_NULL);
+	return *this;
+}
+
+SmartPtr<Any>::SmartPtr(const UndefinedPtr&){
+	value_.init_primitive(TYPE_UNDEFINED);
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const UndefinedPtr& p){
+	dec_ref_count_force(*this);
+	value_.init_primitive(TYPE_UNDEFINED);
+	return *this;
+}
+
+SmartPtr<Any>::SmartPtr(const IDPtr& p){
+	Any::operator=(p);
+	XTAL_ASSERT(type(*this)<TYPE_BASE);
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const IDPtr& p){
+	dec_ref_count_force(*this);
+	Any::operator=(p);
+	XTAL_ASSERT(type(*this)<TYPE_BASE);
+	return *this;
+}
+
 void visit_members(Visitor& m, const Any& p){
 	if(type(p)>=TYPE_BASE){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());

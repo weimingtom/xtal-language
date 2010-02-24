@@ -233,13 +233,8 @@ public:
 		virtual_members()->set_object_parent(this, parent);
 	}
 
-	/**
-	* \brief ファイナライザ
-	* full_gc時に、死ぬ予定のオブジェクトとなった時に破棄をするための関数。
-	* ただし、set_finalizer_flag()を呼んでいなければ呼ばれることはない。
-	* 破棄時にXtalのメンバ変数を触ることがあるのであればこれを使う。
-	* そうでないのであれば、デストラクタに破棄処理を書くこと。
-	*/
+public:
+
 	void finalize(){
 		virtual_members()->finalize(this);
 	}
@@ -253,7 +248,6 @@ public:
 	}
 
 public:
-	RefCountingBase(){}
 
 	void on_rawcall(const VMachinePtr& vm);
 	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){}
@@ -265,6 +259,8 @@ public:
 	void on_shrink_to_fit(){}
 
 public:
+	RefCountingBase(){}
+
 	bool have_finalizer(){ return value_.have_finalizer(); }
 	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
 	void unset_finalizer_flag(){ value_.unset_finalizer_flag(); }

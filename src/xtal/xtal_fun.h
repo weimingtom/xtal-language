@@ -285,6 +285,10 @@ protected:
 	AnyPtr this_;
 };
 
+inline AnyPtr bind_this(const AnyPtr& method, const AnyPtr& athis){
+	return xnew<BindedThis>(method, athis);
+}
+
 }
 
 

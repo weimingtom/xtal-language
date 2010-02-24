@@ -40,7 +40,7 @@ public:
 	template<class U>
 	SmartPtr<T>& operator =(const SmartPtr<U>& p){
 		check_inherit<U>();
-		SmartPtr<Any>::operator =(p);
+		SmartPtr<Any>::operator =((AnyPtr&)p);
 		return *this;
 	}
 
@@ -690,12 +690,20 @@ inline const SmartPtr<T>& to_smartptr(const T* p){
 	return ToSmartPtr<InheritedN<T>::value, T>::to(p);
 }
 
+template<class T>
+struct Nul{
+	static SmartPtr<T> nul;
+};
+
+template<class T>
+SmartPtr<T> Nul<T>::nul;
+
 /**
 * \brief SmartPtr<T>Œ^‚Ìnull‚ğæ“¾‚·‚éŠÖ”
 */
 template<class T>
 inline const SmartPtr<T>& nul(){
-	return *reinterpret_cast<SmartPtr<T>*>(&null);
+	return Nul<T>::nul;
 }
 
 //////////////////////////////////////////////////////////////
@@ -761,12 +769,15 @@ public:
 
 	SmartPtr(const ID& v);
 
+	SmartPtr(const IDPtr& v)
+		:Any(v){}
+
 public:
 
 	/**
 	* \brief TŒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾‚·‚éB
 	*/
-	ID* get() const{ return Extract<INHERITED_ANY, ID>::extract(*this); }
+	ID* get() const{ return (ID*)this; }
 
 	/**
 	* \brief ->‰‰Zq
@@ -780,9 +791,7 @@ public:
 	*/
 	ID& operator *() const{ return *get(); }
 
-	operator const AnyPtr&() const{
-		return *(AnyPtr*)this;
-	}
+public:
 
 	bool is_true() const{
 		return rawtype(*this)>TYPE_FALSE;

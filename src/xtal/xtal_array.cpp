@@ -389,7 +389,7 @@ AnyPtr Array::reverse(){
 }
 	
 void Array::block_first(const VMachinePtr& vm){
-	SmartPtr<ArrayIter> it = XNew<ArrayIter>(to_smartptr(this), &values_);
+	SmartPtr<ArrayIter> it = xnew<ArrayIter>(to_smartptr(this), &values_);
 	it->block_next(vm);
 }
 

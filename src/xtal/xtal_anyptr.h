@@ -154,20 +154,7 @@ public:
 
 	template<class T>
 	SmartPtr(const T* p, undeleter_t){
-		value_.init_pointer(p, CppClassSymbol<T>::value.value);
-	}
-
-public:
-
-	template<class U>
-	SmartPtr(const SmartPtr<U>& p)
-		:Any(p){
-		ref();
-	}
-	
-	template<class U>
-	AnyPtr& operator =(const SmartPtr<U>& p){
-		return SmartPtr<Any>::operator =((AnyPtr&)p);
+		value_.init_pointer(p,  CppClassSymbol<T>::value.key());
 	}
 
 public:
@@ -205,25 +192,14 @@ protected:
 
 public:
 
-	SmartPtr(const NullPtr&){
-		value_.init_primitive(TYPE_NULL);
-	}
+	SmartPtr(const NullPtr&);
+	SmartPtr<Any>& operator =(const NullPtr& p);
 
-	SmartPtr<Any>& operator =(const NullPtr& p){
-		unref();
-		value_.init_primitive(TYPE_NULL);
-		return *this;
-	}
+	SmartPtr(const UndefinedPtr&);
+	SmartPtr<Any>& operator =(const UndefinedPtr& p);
 
-	SmartPtr(const UndefinedPtr&){
-		value_.init_primitive(TYPE_UNDEFINED);
-	}
-
-	SmartPtr<Any>& operator =(const UndefinedPtr& p){
-		unref();
-		value_.init_primitive(TYPE_UNDEFINED);
-		return *this;
-	}
+	SmartPtr(const IDPtr& p);
+	SmartPtr<Any>& operator =(const IDPtr& p);
 
 public:
 
@@ -430,8 +406,6 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 typedef void (*XTAL_bind_t)(Class* it);
 
 struct CppClassSymbolData{ 
-	//CppClassSymbolData();
-
 	void init_bind0(XTAL_bind_t b, const char_t* xtname);
 	void init_bind1(XTAL_bind_t b, const char_t* xtname);
 	void init_bind2(XTAL_bind_t b, const char_t* xtname);

@@ -121,7 +121,7 @@ public:
 	void uninitialize(){
 		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last; ++it){
 			if((it->first.size&(1<<31))==0){
-				xfree((void*)it->first.str, it->first.size);
+				xfree((void*)it->first.str, (it->first.size+1)*sizeof(char_t));
 			}
 		}
 

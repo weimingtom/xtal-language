@@ -194,6 +194,10 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
 	result_ = XNew<Code>();
+
+	Code* pe = result_.get();
+	int_t nn = type(source_file_name);
+
 	result_->source_file_name_ = source_file_name;
 	result_->except_info_table_.push_back(ExceptInfo());
 

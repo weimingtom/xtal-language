@@ -853,7 +853,10 @@ IDPtr intern(const char_t* begin, const char_t* last){
 }
 
 IDPtr intern(const StringPtr& name){
-	return intern(name->c_str(), name->data_size(), string_hashcode(name->c_str(), name->data_size()), false);
+	const char_t* str = name->c_str();
+	uint_t size = name->data_size();
+	uint_t hashcode = string_hashcode(str, size);
+	return intern(str, size, hashcode, false);
 }
 
 void yield_thread(){
@@ -1031,7 +1034,7 @@ CodePtr source(const char_t* src, int_t size){
 	GCer gc;
 
 	CodeBuilder cb;
-	StreamPtr ms = XNew<PointerStream>(src, size*sizeof(char_t));
+	StreamPtr ms = xnew<PointerStream>(src, size*sizeof(char_t));
 	CodePtr ret =  cb.compile(ms);
 	if(!ret){
 		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1010"), cb.errors()));

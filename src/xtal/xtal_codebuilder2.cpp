@@ -866,7 +866,7 @@ int_t CodeBuilder::compile_send(const AnyPtr& eterm, const AnyPtr& eprimary, con
 			}
 		}
 		
-		Xfor_cast(const ExprPtr& v, args){
+		Xfor_cast(ExprPtr v, args){
 			if(v->at(0)){
 				const ExprPtr& k = ptr_cast<Expr>(v->at(0));
 
@@ -904,7 +904,7 @@ int_t CodeBuilder::compile_call(int_t target, int_t self, const ExprPtr& args, c
 	int_t named = 0;
 
 	if(args){
-		Xfor_cast(const ExprPtr& v, args){
+		Xfor_cast(ExprPtr v, args){
 			if(v->at(0)){
 				named++;
 			}
@@ -920,7 +920,7 @@ int_t CodeBuilder::compile_call(int_t target, int_t self, const ExprPtr& args, c
 			}
 		}
 		
-		Xfor_cast(const ExprPtr& v,args){
+		Xfor_cast(ExprPtr v,args){
 			if(v->at(0)){
 				const ExprPtr& k = ptr_cast<Expr>(v->at(0));
 

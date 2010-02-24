@@ -8,7 +8,7 @@ const ExprPtr& ep(const AnyPtr& a){
 	if(type(a)==TYPE_TREE_NODE){
 		return unchecked_ptr_cast<Expr>(a);
 	}
-	return unchecked_ptr_cast<Expr>(null);
+	return nul<Expr>();
 }
 
 TreeNode::TreeNode(const AnyPtr& tag, int_t lineno){

@@ -85,7 +85,7 @@ class CodeEditor : public QTabWidget{
    Q_OBJECT
 public:
 
-	CodeEditor();
+	CodeEditor(QWidget *parent = 0);
 
 public slots:
 
@@ -107,7 +107,7 @@ public:
 
 	CodeEditorPage* current_page();
 
-	void set_pos(const QString& filename, int lineno);
+	bool set_pos(const QString& filename, int lineno);
 
 	void set_cursor_line(int n);
 
@@ -115,7 +115,7 @@ public:
 
 	int find_widget(CodeEditorPage* a);
 
-	void set_source_file(const QString& path);
+	bool set_source_file(const QString& path);
 
 	void clear_cursor_line();
 

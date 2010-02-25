@@ -180,10 +180,14 @@ bool CtorCacheTable::cache(const AnyPtr& target_class, int_t kind){
 ////////////////////////////////////////////////
 
 void VMachine::carry_over(Method* fun){
+	const inst_t* called_pc =  fun->source();
+	check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
+	check_breakpoint_hook(called_pc, BREAKPOINT4);
+
 	FunFrame& f = ff();
 	
 	f.set_fun(to_smartptr(fun));
-	f.called_pc = fun->source();
+	f.called_pc = called_pc;
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	f.instance_variables = f.self()->instance_variables();
 	f.processed = 1;
@@ -202,15 +206,17 @@ void VMachine::carry_over(Method* fun){
 	push_scope(info);
 
 	f.ordered_arg_count = f.named_arg_count = 0;
-
-	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
 void VMachine::mv_carry_over(Method* fun){
+	const inst_t* called_pc =  fun->source();
+	check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
+	check_breakpoint_hook(called_pc, BREAKPOINT4);
+
 	FunFrame& f = ff();
 	
 	f.set_fun(to_smartptr(fun));
-	f.called_pc = fun->source();
+	f.called_pc = called_pc;
 	f.yieldable = f.poped_pc==&end_code_ ? false : prev_ff().yieldable;
 	f.instance_variables = f.self()->instance_variables();
 	f.processed = 1;
@@ -226,8 +232,6 @@ void VMachine::mv_carry_over(Method* fun){
 	f.named_arg_count = 0;
 
 	push_scope(info);
-
-	check_debug_hook(f.called_pc, BREAKPOINT_CALL);
 }
 
 void VMachine::adjust_values(int_t n, int_t need_result_count){
@@ -775,7 +779,8 @@ XTAL_VM_LOOP
 
 //{OPS{{
 	XTAL_VM_CASE_FIRST(InstLine){ // 3
-		check_debug_hook(pc, BREAKPOINT_LINE);
+		check_breakpoint_hook(pc, BREAKPOINT2);
+		check_breakpoint_hook(pc, BREAKPOINT_LINE);
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1307,13 +1312,16 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(InstReturn){ // 7
-		check_debug_hook(pc, BREAKPOINT_RETURN);
+		check_breakpoint_hook(pc, BREAKPOINT_RETURN);
 
 		FunFrame& f = ff();
 		f.result_count += inst.result_count;
 		pop_scope();
 		pop_ff();
-		XTAL_VM_CONTINUE(ff().called_pc);
+			
+		const inst_t* next_pc = ff().called_pc;
+		check_breakpoint_hook(next_pc-1, BREAKPOINT3);
+		XTAL_VM_CONTINUE(next_pc);
 	}
 
 	XTAL_VM_CASE(InstYield){ // 7
@@ -1551,7 +1559,7 @@ comp_send:
 		}
 
 		except_[0] = except; 
-		check_debug_hook(pc==&throw_code_ ? throw_pc_ : pc, BREAKPOINT_THROW); 
+		check_breakpoint_hook(pc==&throw_code_ ? throw_pc_ : pc, BREAKPOINT_THROW); 
 
 		// 例外にバックトレースを追加する
 		AnyPtr e = catch_except();
@@ -1572,7 +1580,7 @@ comp_send:
 	XTAL_VM_CASE(InstAssert){ XTAL_VM_CONTINUE(FunInstAssert(pc)); /*
 		XTAL_VM_FUN;
 		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
-		debug_hook(pc, BREAKPOINT_ASSERT);
+		breakpoint_hook(pc, fun(), BREAKPOINT_ASSERT);
 
 		if(except_[0]){
 			XTAL_VM_THROW_EXCEPT(except_[0]);
@@ -1582,7 +1590,7 @@ comp_send:
 	}*/ }
 
 	XTAL_VM_CASE(InstBreakPoint){ // 5
-		check_debug_hook(pc, BREAKPOINT);
+		check_breakpoint_hook(pc, BREAKPOINT);
 		if(inst_t opp = code()->original_op(pc)){
 			xop = opp;
 			goto vmloopbegin2;
@@ -1750,7 +1758,7 @@ const inst_t* VMachine::FunInstAssert(const inst_t* pc){
 		XTAL_VM_DEF_INST(InstAssert);
 		XTAL_VM_FUN;
 		set_except_x(cpp_class<AssertionFailed>()->call(ptr_cast<String>(local_variable(inst.message))));
-		debug_hook(pc, BREAKPOINT_ASSERT);
+		breakpoint_hook(pc, fun(), BREAKPOINT_ASSERT);
 
 		if(except_[0]){
 			XTAL_VM_THROW_EXCEPT(except_[0]);

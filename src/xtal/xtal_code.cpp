@@ -43,8 +43,6 @@ void Code::generated(){
 	Class* it = this;
 	Xdef_method_alias(inherit, &Class_inherit);
 	Xdef_method_alias(check_implicit_lookup, &filelocal_check_implicit_lookup);
-	//def_method(Xid(inherit), &Class_inherit);
-	//def_method(Xid(check_implicit_lookup), &filelocal_check_implicit_lookup);
 	
 	def(Xid(filelocal), to_smartptr(this));
 
@@ -83,7 +81,7 @@ bool Code::set_lineno_info(uint_t line){
 		return false;
 	}
 
-	LineNumberInfo lnt={(u32)code_.size(), (u16)line, 0, 0};
+	LineNumberInfo lnt = {(u32)code_.size(), (u16)line, 0, 0};
 	lineno_table_.push_back(lnt);
 	return true;
 }

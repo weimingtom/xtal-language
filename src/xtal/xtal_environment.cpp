@@ -996,27 +996,28 @@ void set_require_source_hook(const AnyPtr& hook){
 CodePtr require_source(const StringPtr& name){
 	const SmartPtr<RequireData>& r = cpp_value<RequireData>();
 	if(r->require_source_hook){
-		return ptr_cast<Code>(r->require_source_hook->call(name));
+		if(CodePtr ret = ptr_cast<Code>(r->require_source_hook->call(name))){
+			return ret;
+		}
+	}
+
+	StringPtr temp = Xf1("%s.xtalc", 0, name);
+	if(StreamPtr fs = open(name, Xid(r))){
+		if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
+			return code;
+		}
 	}
 	else{
-		StringPtr temp = Xf1("%s.xtalc", 0, name);
-		if(StreamPtr fs = open(name, Xid(r))){
-			if(CodePtr code = ptr_cast<Code>(fs->deserialize())){
-				return code;
+		XTAL_CATCH_EXCEPT(e){
+			if(e->is(cpp_class<CompileError>())){
+				XTAL_SET_EXCEPT(e);
+				return nul<Code>();
 			}
 		}
-		else{
-			XTAL_CATCH_EXCEPT(e){
-				if(e->is(cpp_class<CompileError>())){
-					XTAL_SET_EXCEPT(e);
-					return nul<Code>();
-				}
-			}
 
-			temp = Xf1("%s.xtal", 0, name);
-			if(CodePtr ret = compile_file(temp)){
-				return ret;
-			}
+		temp = Xf1("%s.xtal", 0, name);
+		if(CodePtr ret = compile_file(temp)){
+			return ret;
 		}
 	}
 

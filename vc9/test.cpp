@@ -758,7 +758,7 @@ int main2(int argc, char** argv){
 
 	{
 		if(CodePtr code = Xsrc((
-			require("test");
+		//	require("test");
 		))){
 			//code->inspect()->p();
 			//AnyPtr ret = code->call(xnew<Spr>());

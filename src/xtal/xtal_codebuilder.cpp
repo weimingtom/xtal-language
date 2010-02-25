@@ -105,7 +105,7 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 	
 	result_->once_table_.push_back(undefined);
 
-	linenos_.push(1);
+	linenos_.push(0);
 
 	// 関数フレームを作成する
 	fun_frames_.push();	
@@ -195,9 +195,6 @@ CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& so
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
 	result_ = XNew<Code>();
 
-	Code* pe = result_.get();
-	int_t nn = type(source_file_name);
-
 	result_->source_file_name_ = source_file_name;
 	result_->except_info_table_.push_back(ExceptInfo());
 
@@ -209,7 +206,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	
 	result_->once_table_.push_back(undefined);
 
-	linenos_.push(1);
+	linenos_.push(0);
 
 	// 関数フレームを作成する
 	fun_frames_.push();	
@@ -260,6 +257,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	
 	break_off(ff().var_frame_count+1);
 
+	eb_.set_lineno(result_->final_lineno());
 	eb_.push(Xid(filelocal));
 	eb_.splice(EXPR_LVAR, 1);
 	eb_.splice(0, 1);

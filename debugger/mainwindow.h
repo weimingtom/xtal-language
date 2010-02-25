@@ -155,7 +155,7 @@ public slots:
 	void print(const QString& mes);
 
 private:
-	EvalExprView* variables_;
+	EvalExprView* evalexpr_;
 	CallStackView* callstack_;
 	CodeEditor* code_editor_;
 	ProjectView* project_;

@@ -173,7 +173,7 @@ private:
 		stream_->serialize(a);
 
 		ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize());
-		if(raweq(cmd->at(0), Xid(required_source))){
+		if(cmd && raweq(cmd->at(0), Xid(required_source))){
 			return ptr_cast<Code>(cmd->at(1));
 		}
 		return null;
@@ -285,7 +285,7 @@ private:
 			ArrayPtr record = xnew<Array>(3);
 			record->set_at(0, info->fun_name());
 			record->set_at(1, info->file_name());
-			record->set_at(2, info->line());
+			record->set_at(2, info->lineno());
 			ret->push_back(record);
 		}
 
@@ -294,7 +294,7 @@ private:
 			if(debug::CallerInfoPtr caller = info->caller(i)){
 				record->set_at(0, caller->fun_name());
 				record->set_at(1, caller->file_name());
-				record->set_at(2, caller->line());
+				record->set_at(2, caller->lineno());
 			}
 			ret->push_back(record);
 		}

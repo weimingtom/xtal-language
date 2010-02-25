@@ -61,10 +61,10 @@ inline QString makeRelative(const QString& source, const QString& from){
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent){
-	code_editor_ = new CodeEditor();
-	variables_ = new EvalExprView();
-	callstack_ = new CallStackView();
-	messages_ = new QTextEdit();
+	code_editor_ = new CodeEditor(this);
+	evalexpr_ = new EvalExprView(this);
+	callstack_ = new CallStackView(this);
+	messages_ = new QTextEdit(this);
 	project_ = new ProjectView(this);
 
 	setCentralWidget(code_editor_);
@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
 	addDockWidget(Qt::LeftDockWidgetArea, proj_dock_widget);
 
 	QDockWidget* expr_dock_widget = new QDockWidget(tr("Expr"), this);
-	expr_dock_widget->setWidget(variables_);
+	expr_dock_widget->setWidget(evalexpr_);
 	expr_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	addDockWidget(Qt::RightDockWidgetArea, expr_dock_widget);
 
@@ -91,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	create_actions();
 
-	//variables_->add_expr(0, "filelocal");
+	//evalexpr_->add_expr(0, "filelocal");
 }
 
 MainWindow::~MainWindow(){
@@ -132,7 +132,7 @@ void MainWindow::create_actions(){
 	connect(&debugger_, SIGNAL(connected()), this, SLOT(connected()));
 	connect(&debugger_, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-	connect(variables_, SIGNAL(expr_changed(int, const QString&)), this, SLOT(expr_changed(int, const QString&)));
+	connect(evalexpr_, SIGNAL(expr_changed(int, const QString&)), this, SLOT(expr_changed(int, const QString&)));
 
 	connect(project_, SIGNAL(on_add_file(const QString&)), this, SLOT(add_file(const QString&)));
 	connect(project_, SIGNAL(on_view(const QString&)), this, SLOT(view_source(const QString&)));
@@ -144,7 +144,7 @@ void MainWindow::create_actions(){
 }
 
 void MainWindow::set_gui_enabled(bool b){
-	variables_->setEnabled(b);
+	evalexpr_->setEnabled(b);
 	callstack_->setEnabled(b);
 	code_editor_->setEnabled(b);
 	project_->setEnabled(b);
@@ -168,7 +168,7 @@ void MainWindow::set_step_actions_enabled(bool b){
 
 void MainWindow::update_expr_view(){
 	for(int i=0; i<debugger_.eval_expr_size(); ++i){
-		variables_->set_item(i, debugger_.eval_result(i));
+		evalexpr_->set_item(i, debugger_.eval_result(i));
 	}
 }
 
@@ -211,6 +211,11 @@ void MainWindow::load_project(){
 			project_->add_file(QFileInfo(path).fileName(), path);
 		}
 
+		for(int i=0; i<document_.eval_expr_count(); ++i){
+			QString expr = document_.eval_expr(i);
+			evalexpr_->set_expr(i, expr);
+		}
+
 		set_gui_enabled(true);
 		this->setWindowTitle(project_filename_ + " - xtal debugger");
 		this->setWindowTitle(QDir::current().absolutePath());
@@ -245,10 +250,9 @@ void MainWindow::expr_changed(int i, const QString& expr){
 }
 
 void MainWindow::breaked(){
+	code_editor_->set_pos(debugger_.call_stack_file_name(0)->c_str(), debugger_.call_stack_lineno(0));
 	update_expr_view();
 	update_call_stack_view();
-
-	code_editor_->set_pos(debugger_.call_stack_file_name(0)->c_str(), debugger_.call_stack_lineno(0));
 }
 
 void MainWindow::required(){
@@ -274,6 +278,7 @@ void MainWindow::required(){
 				XTAL_CATCH_EXCEPT(e){
 					print(e->to_s()->c_str());
 				}
+				debugger_.send_required_source(null);
 			}
 		}
 		else if(CodePtr code = compile_file(f->path.toStdString().c_str())){
@@ -289,9 +294,11 @@ void MainWindow::required(){
 			XTAL_CATCH_EXCEPT(e){
 				print(e->to_s()->c_str());
 			}
+			debugger_.send_required_source(null);
 		}
 	}
 	else{
+		debugger_.send_required_source(null);
 		print(QString("Not found %1").arg(debugger_.required_file()));
 	}
 
@@ -312,18 +319,22 @@ void MainWindow::disconnected(){
 }
 
 void MainWindow::run(){
+	code_editor_->clear_cursor_line();
 	debugger_.run();
 }
 
 void MainWindow::step_over(){
+	code_editor_->clear_cursor_line();
 	debugger_.step_over();
 }
 
 void MainWindow::step_into(){
+	code_editor_->clear_cursor_line();
 	debugger_.step_into();
 }
 
 void MainWindow::step_out(){
+	code_editor_->clear_cursor_line();
 	debugger_.step_out();
 }
 
@@ -373,5 +384,5 @@ void MainWindow::on_breakpoint_changed(const QString& path, int n, bool b){
 
 void MainWindow::print(const QString& mes){
 	messages_->append(mes);
-	messages_->append("\n\n");
+	messages_->append("\n");
 }

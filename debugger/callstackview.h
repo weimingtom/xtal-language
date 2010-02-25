@@ -14,7 +14,7 @@ class CallStackView : public QTreeView{
 	Q_OBJECT
 public:
 
-	CallStackView();
+	CallStackView(QWidget *parent = 0);
 
 public:
 

@@ -690,20 +690,22 @@ inline const SmartPtr<T>& to_smartptr(const T* p){
 	return ToSmartPtr<InheritedN<T>::value, T>::to(p);
 }
 
+/////////////////////////////////////////////////////////////
+
 template<class T>
 struct Nul{
-	static SmartPtr<T> nul;
+	static SmartPtr<T>* value;
 };
 
 template<class T>
-SmartPtr<T> Nul<T>::nul;
+SmartPtr<T>* Nul<T>::value = (SmartPtr<T>*)&null;
 
 /**
 * \brief SmartPtr<T>Œ^‚Ìnull‚ğæ“¾‚·‚éŠÖ”
 */
 template<class T>
 inline const SmartPtr<T>& nul(){
-	return Nul<T>::nul;
+	return *Nul<T>::value;
 }
 
 //////////////////////////////////////////////////////////////

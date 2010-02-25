@@ -130,7 +130,6 @@ public:
 
 }
 
-
 int main(int argc, char *argv[]){
 	xtal::Setting setting;
 	xtal::QtFilesystemLib flib;

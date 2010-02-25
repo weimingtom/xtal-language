@@ -55,7 +55,8 @@ enum{
 	BSTATE_GO,
 	BSTATE_STEP_OVER,
 	BSTATE_STEP_INTO,
-	BSTATE_STEP_OUT
+	BSTATE_STEP_OUT,
+	BSTATE_STEP_OUT2
 };
 
 class DebugData : public Base{
@@ -219,7 +220,9 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 
 				switch(ret){
 					XTAL_DEFAULT{
-					
+						// 2 line
+						// 3 return
+						// 4 call
 					}
 
 					XTAL_CASE(RUN){
@@ -260,10 +263,17 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 			}
 
 			XTAL_CASE(BSTATE_STEP_OVER){
-
-				if(kind==BREAKPOINT || info->call_stack_size() <= d->breakpoint_call_stack_size_){
+				if(kind==BREAKPOINT2 || kind==BREAKPOINT3 || kind==BREAKPOINT){
 					d->breakpoint_state_ = BSTATE_NONE;
 					continue;
+				}
+
+				if(kind==BREAKPOINT4){
+					d->breakpoint_state_ = BSTATE_STEP_OUT2;
+					bitchange(d, true, BREAKPOINT2);
+					bitchange(d, true, BREAKPOINT3);
+					bitchange(d, false, BREAKPOINT4);
+					break;
 				}
 			}
 
@@ -274,6 +284,17 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 
 			XTAL_CASE(BSTATE_STEP_OUT){
 				if(info->call_stack_size() < d->breakpoint_call_stack_size_){
+					d->breakpoint_state_ = BSTATE_NONE;
+					continue;
+				}
+			}
+
+			XTAL_CASE(BSTATE_STEP_OUT2){
+				if(kind==BREAKPOINT3 && info->call_stack_size() == d->breakpoint_call_stack_size_){
+					break;
+				}
+
+				if(info->call_stack_size() <= d->breakpoint_call_stack_size_){
 					d->breakpoint_state_ = BSTATE_NONE;
 					continue;
 				}

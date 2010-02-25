@@ -70,21 +70,25 @@ MainWindow::MainWindow(QWidget *parent)
 	setCentralWidget(code_editor_);
 
 	QDockWidget* proj_dock_widget = new QDockWidget(tr("Project"), this);
+	proj_dock_widget->setObjectName("Project");
 	proj_dock_widget->setWidget(project_);
 	proj_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	addDockWidget(Qt::LeftDockWidgetArea, proj_dock_widget);
 
 	QDockWidget* expr_dock_widget = new QDockWidget(tr("Expr"), this);
+	expr_dock_widget->setObjectName("Expr");
 	expr_dock_widget->setWidget(evalexpr_);
 	expr_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	addDockWidget(Qt::RightDockWidgetArea, expr_dock_widget);
 
 	QDockWidget* cs_dock_widget = new QDockWidget(tr("Call Stack"), this);
+	cs_dock_widget->setObjectName("Call Stack");
 	cs_dock_widget->setWidget(callstack_);
 	cs_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	addDockWidget(Qt::RightDockWidgetArea, cs_dock_widget);
 
 	QDockWidget* m_dock_widget = new QDockWidget(tr("Message"), this);
+	cs_dock_widget->setObjectName("Message");
 	m_dock_widget->setWidget(messages_);
 	m_dock_widget->setAllowedAreas(Qt::BottomDockWidgetArea);
 	addDockWidget(Qt::BottomDockWidgetArea, m_dock_widget);
@@ -92,9 +96,29 @@ MainWindow::MainWindow(QWidget *parent)
 	create_actions();
 
 	//evalexpr_->add_expr(0, "filelocal");
+
+	QSettings settings("xtal", "debugger");
+
+	QByteArray geo_data = settings.value("geometry").toByteArray();
+	QByteArray layout_data = settings.value("windowState").toByteArray();
+
+	if(geo_data.size() > 1){
+		restoreGeometry(geo_data);
+	}
+
+	if(layout_data.size() > 1){
+		restoreState(layout_data);
+	}
 }
 
 MainWindow::~MainWindow(){
+}
+
+void MainWindow::closeEvent(QCloseEvent *event){
+	QSettings settings("xtal", "debugger");
+	settings.setValue("geometry", saveGeometry());
+	settings.setValue("windowState", saveState());
+	QMainWindow::closeEvent(event);
 }
 
 void MainWindow::create_actions(){

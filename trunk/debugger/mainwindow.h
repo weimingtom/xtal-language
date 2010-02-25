@@ -103,6 +103,7 @@ public:
 	}
 
 protected:
+	void closeEvent(QCloseEvent *event);
 
 	void set_gui_enabled(bool b);
 

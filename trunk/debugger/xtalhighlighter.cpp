@@ -99,14 +99,14 @@ void XtalHighlighter::highlightBlock(const QString &text){
 		startIndex = comment_start_expression_.indexIn(text);
 	}
 
-	while(startIndex >= 0) {
+	while(startIndex >= 0){
 		int endIndex = comment_end_expression_.indexIn(text, startIndex);
 		int commentLength;
-		if (endIndex == -1) {
+		if(endIndex == -1){
 			setCurrentBlockState(1);
 			commentLength = text.length() - startIndex;
 		}
-		else {
+		else{
 			commentLength = endIndex - startIndex + comment_end_expression_.matchedLength();
 		}
 

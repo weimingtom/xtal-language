@@ -1027,7 +1027,7 @@ extern IDPtr empty_id;
 * \brief ‹ó•¶Žš—ñ
 */
 extern StringPtr empty_string;
-
+	
 //////////////////////////////////////////////
 
 }

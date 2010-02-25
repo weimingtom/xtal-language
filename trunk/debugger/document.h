@@ -41,7 +41,7 @@ public:
 		eval_exprs_[n] = expr;
 	}
 
-	int eval_expr_num(){
+	int eval_expr_count(){
 		return eval_exprs_.size();
 	}
 

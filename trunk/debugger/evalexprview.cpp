@@ -1,6 +1,7 @@
 #include "evalexprview.h"
 
-EvalExprView::EvalExprView(){
+EvalExprView::EvalExprView(QWidget *parent)
+	:QTreeView(parent){
 	model_ = new QStandardItemModel();
 	//model_->setColumnCount(3);
 	model_->setRowCount(0);
@@ -22,7 +23,7 @@ void EvalExprView::data_changed(QStandardItem* item){
 	}
 }
 
-void EvalExprView::add_expr(int n, const QString& expr){
+void EvalExprView::set_expr(int n, const QString& expr){
 	QStandardItem* item = make_item(expr);
 	item->setEditable(true);
 	model_->invisibleRootItem()->setChild(n, 0, item);

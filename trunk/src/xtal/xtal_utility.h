@@ -760,13 +760,8 @@ void string_copy(char_t* a, const char_t* b, uint_t size);
 bool string_is_ch(const char_t* str, uint_t size);
 
 struct StringLiteral{
-	const char_t* str() const{
-		return (char_t*)this;
-	}
-
-	uint_t size() const{
-		return string_data_size((char_t*)this);
-	}
+	const char_t* str() const{ return (char_t*)this; }
+	uint_t size() const{ return string_data_size((char_t*)this); }
 };
 
 //
@@ -882,6 +877,9 @@ enum BreakPointKind{
 	* \brief ブレークポイント
 	*/
 	BREAKPOINT,
+	BREAKPOINT2,
+	BREAKPOINT3,
+	BREAKPOINT4,
 
 	/**
 	* \brief ラインごとのブレークポイント
@@ -904,7 +902,7 @@ enum BreakPointKind{
 	BREAKPOINT_THROW,
 
 	/**
-	* \brief 表明ブレークポイント
+	* \brief 表明時ブレークポイント
 	*/
 	BREAKPOINT_ASSERT,
 
@@ -1008,15 +1006,7 @@ extern FunInfo empty_xfun_info;
 extern ExceptInfo empty_except_info;
 extern EmptyInstanceVariables empty_instance_variables;
 
-/**
-* \brief 空文字列
-*/
-extern IDPtr empty_id;
-
-/**
-* \brief 空文字列
-*/
-extern StringPtr empty_string;
+//////////////////////////////////////////
 
 /**
 * \brief null
@@ -1027,6 +1017,16 @@ extern NullPtr null;
 * \brief 未定義値
 */
 extern UndefinedPtr undefined;
+
+/**
+* \brief 空文字列
+*/
+extern IDPtr empty_id;
+
+/**
+* \brief 空文字列
+*/
+extern StringPtr empty_string;
 
 //////////////////////////////////////////////
 

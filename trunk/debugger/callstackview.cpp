@@ -1,6 +1,7 @@
 #include "callstackview.h"
 
-CallStackView::CallStackView(){
+CallStackView::CallStackView(QWidget *parent)
+	:QTreeView(parent){
 	model_ = new QStandardItemModel();
 	setModel(model_);
 
@@ -20,8 +21,8 @@ void CallStackView::view(const VMachinePtr& vm){
 		if(debug::CallerInfoPtr caller = vm->caller(i)){
 			model_->setItem(i, 0, make_item(caller->fun_name()->c_str()));
 			model_->setItem(i, 1, make_item(caller->file_name()->c_str()));
-			if(caller->line()){
-				model_->setItem(i, 2, make_item(QString("%1").arg(caller->line())));
+			if(caller->lineno()){
+				model_->setItem(i, 2, make_item(QString("%1").arg(caller->lineno())));
 			}
 		}
 		else{

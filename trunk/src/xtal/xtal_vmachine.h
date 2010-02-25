@@ -462,7 +462,7 @@ public:
 
 		void set_null();
 
-		const FunPtr& fun() const{ return unchecked_ptr_cast<Fun>(ap(fun_)); }
+		const MethodPtr& fun() const{ return unchecked_ptr_cast<Method>(ap(fun_)); }
 		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
 		//const FramePtr& outer() const{ return fun()->outer(); }
 		//const IDPtr& identifier(int_t n){ return fun()->code()->identifier(n); }
@@ -561,11 +561,11 @@ public:
 		return *fun_frames_[1]; 
 	}
 
-	const FunPtr& fun(){ 
+	const MethodPtr& fun(){ 
 		return ff().fun(); 
 	}
 
-	const FunPtr& prev_fun(){ 
+	const MethodPtr& prev_fun(){ 
 		return prev_ff().fun(); 
 	}
 
@@ -627,15 +627,18 @@ private:
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 
-	void make_debug_info(const inst_t* pc, int_t kind);
+	void make_debug_info(const inst_t* pc, const MethodPtr& fun, int_t kind);
 
-	void debug_hook(const inst_t* pc, int_t kind);
+	void breakpoint_hook(const inst_t* pc, const MethodPtr& fun, int_t kind);
 
-	void check_debug_hook(const inst_t* pc, int_t kind){
-		if((*hook_setting_bit_&(1<<kind))==0){
-			return;
-		}
-		debug_hook(pc, kind);
+	void check_breakpoint_hook(const inst_t* pc, const MethodPtr& fun, int_t kind){
+		if((*hook_setting_bit_&(1<<kind))==0){ return; }
+		breakpoint_hook(pc, fun, kind);
+	}
+	
+	void check_breakpoint_hook(const inst_t* pc, int_t kind){
+		if((*hook_setting_bit_&(1<<kind))==0){ return; }
+		breakpoint_hook(pc, fun(), kind);
 	}
 
 public:

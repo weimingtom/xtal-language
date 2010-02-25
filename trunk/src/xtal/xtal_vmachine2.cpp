@@ -660,16 +660,16 @@ void VMachine::set_except_0(const Any& e){
 	except_[0] = ap(e);
 }
 	
-void VMachine::make_debug_info(const inst_t* pc, int_t kind){
+void VMachine::make_debug_info(const inst_t* pc, const MethodPtr& fun, int_t kind){
 	if(!debug_info_){ 
 		debug_info_ = XNew<debug::HookInfo>(); 
 	}
 
 	debug_info_->set_kind(kind);
-	if(fun()){
-		debug_info_->set_line(fun()->code()->compliant_lineno(pc));
-		debug_info_->set_file_name(fun()->code()->source_file_name());
-		debug_info_->set_fun_name(fun()->object_name());
+	if(fun){
+		debug_info_->set_line(fun->code()->compliant_lineno(pc));
+		debug_info_->set_file_name(fun->code()->source_file_name());
+		debug_info_->set_fun_name(fun->object_name());
 	}
 	else{
 		debug_info_->set_line(0);
@@ -679,8 +679,13 @@ void VMachine::make_debug_info(const inst_t* pc, int_t kind){
 
 	debug_info_->set_exception(except_[0]);
 
-	make_outer_outer(0, 0, true);
-	debug_info_->set_variables_frame(scopes_.top().frame);
+	if(scopes_.empty()){
+		debug_info_->set_variables_frame(null);
+	}
+	else{
+		make_outer_outer(0, 0, true);
+		debug_info_->set_variables_frame(scopes_.top().frame);
+	}
 
 	debug_info_->set_vm(to_smartptr(this));
 }
@@ -851,22 +856,16 @@ bool VMachine::eval_set_instance_variable(const AnyPtr& self, const IDPtr& key, 
 	return false;
 }
 
-void VMachine::debug_hook(const inst_t* pc, int_t kind){
-	struct guard{
-		int_t count;
-		guard(){ count = debug::disable_force(); }
-		~guard(){ debug::enable_force(count); }
-	} g;
-
-	make_debug_info(pc, kind);
+void VMachine::breakpoint_hook(const inst_t* pc, const MethodPtr& fun, int_t kind){
+	make_debug_info(pc, fun, kind);
 
 	// Œ»Ý”­¶‚µ‚Ä‚¢‚é—áŠO‚ð‘Þ”ð‚³‚¹‚é
 	AnyPtr e = except_[0];
 	except_[0] = null;
 
-	debug::call_debug_hook(kind, debug_info_);
+	debug::call_breakpoint_hook(kind, debug_info_);
 
-	except_[0] = debug_info_->exception();
+	except_[0] = e;
 }
 
 const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
@@ -886,7 +885,7 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 			pop_scope();
 		}
 
-		check_debug_hook(pc, BREAKPOINT_RETURN);
+		check_breakpoint_hook(pc, BREAKPOINT_RETURN);
 		pop_ff2();
 		pc = ff().called_pc;
 		e = append_backtrace(pc, e);

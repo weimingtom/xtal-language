@@ -14,7 +14,7 @@ class EvalExprView : public QTreeView{
 	Q_OBJECT
 public:
 
-	EvalExprView();
+	EvalExprView(QWidget *parent);
 
 public slots:
 
@@ -26,7 +26,7 @@ signals:
 
 public:
 
-	void add_expr(int n, const QString& expr);
+	void set_expr(int n, const QString& expr);
 
 	QString item(int n);
 

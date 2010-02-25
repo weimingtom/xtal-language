@@ -191,7 +191,8 @@ void CodeEditorPage::on_block_count_changed(int block_count){
 
 //////////////////////
 
-CodeEditor::CodeEditor(){
+CodeEditor::CodeEditor(QWidget *parent)
+	:QTabWidget(parent){
 	CodeEditorPage* page = new CodeEditorPage();
 	setTabsClosable(true);
 	page->setEnabled(false);
@@ -242,9 +243,12 @@ CodeEditorPage* CodeEditor::current_page(){
 	return (CodeEditorPage*)currentWidget();
 }
 
-void CodeEditor::set_pos(const QString& filename, int lineno){
-	set_source_file(filename);
-	set_cursor_line(lineno);
+bool CodeEditor::set_pos(const QString& filename, int lineno){
+	if(set_source_file(filename)){
+		set_cursor_line(lineno);
+		return true;
+	}
+	return false;
 }
 
 void CodeEditor::set_cursor_line(int n){
@@ -273,9 +277,14 @@ int CodeEditor::find_widget(CodeEditorPage* a){
 	return -1;
 }
 
-void CodeEditor::set_source_file(const QString& path){
+bool CodeEditor::set_source_file(const QString& path){
 	if(CodeEditorPage* p = widget(find_widget(path))){
 		this->setCurrentWidget(p);
+		return true;
+	}
+	else{
+		add_page(path, "");
+		return true;
 	}
 }
 

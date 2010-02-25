@@ -109,6 +109,7 @@ public:
 	void step_over();
 	void step_into();
 	void step_out();
+	void redo();
 
 	void send_breakpoint(const QString& path, int n, bool b);
 
@@ -169,6 +170,8 @@ private:
 	QVector<ExprValue> exprs_;
 
 	QString required_file_;
+
+	IDPtr prev_command_;
 
 	int state_;
 

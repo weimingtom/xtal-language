@@ -14,16 +14,30 @@ bool Document::save(const QString& filename){
 	QTextStream ds(&file);
 
 	QDomDocument doc;
+
 	QDomElement root = doc.createElement("project");
+	doc.appendChild(root);
+
 	QDomElement files = doc.createElement("source_path_list");
+	root.appendChild(files);
 
 	for(int i=0; i<files_.size(); ++i){
-		QDomText file = doc.createTextNode(files_[i].path);
-		files.appendChild(file);
+		QDomElement node1 = doc.createElement("path");
+		QDomText node2 = doc.createTextNode(files_[i].path);
+		node1.appendChild(node2);
+		files.appendChild(node1);
 	}
 
-	doc.appendChild(root);
-	root.appendChild(files);
+	QDomElement eval_exprs = doc.createElement("eval_expr_list");
+	root.appendChild(eval_exprs);
+
+	for(int i=0; i<eval_exprs_.size(); ++i){
+		QDomElement node1 = doc.createElement("eval_expr");
+		QDomText node2 = doc.createTextNode(eval_exprs_[i]);
+		node1.appendChild(node2);
+		eval_exprs.appendChild(node1);
+	}
+
 	doc.save(ds, 4);
 
 	return true;
@@ -50,22 +64,26 @@ bool Document::load(const QString& filename){
 		return false;
 	}
 
-	QDomNode node = root.firstChild();
-	while(!node.isNull()){
+	for(QDomNode node=root.firstChild(); !node.isNull(); node=node.nextSibling()){
 		if(node.toElement().tagName()=="source_path_list"){
-			QDomNode path = node.toElement().firstChild();
-
-			while(!path.isNull()){
-				if(path.nodeType()==QDomNode::TextNode){
+			for(QDomNode node2 = node.toElement().firstChild(); !node2.isNull(); node2=node2.nextSibling()){
+				QDomNode node3 = node2.toElement().firstChild();
+				if(node3.nodeType()==QDomNode::TextNode){
 					FileInfo fi;
-					fi.path = path.toText().data();
+					fi.path = node3.toText().data();
 					files_.push_back(fi);
 				}
-
-				path = path.nextSibling();
 			}
 		}
-		node = node.nextSibling();
+
+		if(node.toElement().tagName()=="eval_expr_list"){
+			for(QDomNode node2 = node.toElement().firstChild(); !node2.isNull(); node2=node2.nextSibling()){
+				QDomNode node3 = node2.toElement().firstChild();
+				if(node3.nodeType()==QDomNode::TextNode){
+					eval_exprs_.push_back(node3.toText().data());
+				}
+			}
+		}
 	}
 
 	return true;

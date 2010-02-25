@@ -22,9 +22,9 @@ public:
 	* \xbind
 	* \brief 呼び出し場所の行数を返す
 	*/
-	int_t line(){ return line_; }
+	int_t lineno(){ return line_; }
 
-	const FunPtr& fun(){ return fun_; }
+	const MethodPtr& fun(){ return fun_; }
 
 	/**
 	* \xbind
@@ -45,14 +45,14 @@ public:
 	const FramePtr& variables_frame(){ return variables_frame_; }
 
 	void set_line(int_t v){ line_ = v; }
-	void set_fun(const FunPtr& v){ fun_ = v; }
+	void set_fun(const MethodPtr& v){ fun_ = v; }
 	void set_variables_frame(const FramePtr& v){ variables_frame_ = v; }
 
 	void on_visit_members(Visitor& m);
 
 private:
 	int_t line_;
-	FunPtr fun_;
+	MethodPtr fun_;
 	FramePtr variables_frame_;
 };
 
@@ -76,7 +76,7 @@ public:
 	* \xbind
 	* \brief フックされた場所の行数を返す
 	*/
-	int_t line(){ return line_; }
+	int_t lineno(){ return line_; }
 
 	/**
 	* \xbind
@@ -261,9 +261,7 @@ enum{
 	STEP_OUT
 };
 
-MapPtr make_debug_object(const AnyPtr& v, int depth = 5);
-
-void call_debug_hook(int_t kind, const HookInfoPtr& info);
+void call_breakpoint_hook(int_t kind, const HookInfoPtr& info);
 
 }
 

@@ -4,6 +4,8 @@ Debugger::Debugger(){
 	connect(&server_, SIGNAL(newConnection()), SLOT(on_connected()));
 	server_.listen(QHostAddress::Any, 13245);
 	state_ = STATE_NONE;
+
+	prev_command_ = "run";
 }
 
 void Debugger::set_source(const QString& source){
@@ -78,6 +80,10 @@ void Debugger::step_out(){
 	send_command("step_out");
 }
 
+void Debugger::redo(){
+	send_command(prev_command_);
+}
+
 void Debugger::send_breakpoint(const QString& path, int n, bool b){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(breakpoint));
@@ -92,6 +98,8 @@ bool Debugger::is_connected(){
 }
 
 void Debugger::send_command(const IDPtr& id){
+	prev_command_ = id;
+
 	ArrayPtr a = xnew<Array>();
 	a->push_back(id);
 

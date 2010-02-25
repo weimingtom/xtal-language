@@ -347,6 +347,7 @@ XTAL_BIND(Map){
 	Xdef_method(keys);
 	Xdef_method(values);
 	Xdef_method(clone);
+	Xdef_method(clear);
 	Xdef_method(erase);
 	Xdef_method(empty);
 	Xdef_method(is_empty);
@@ -650,7 +651,7 @@ namespace debug{
 XTAL_BIND(HookInfo){
 	Xdef_method(clone);
 	Xdef_method(kind);
-	Xdef_method(line);
+	Xdef_method(lineno);
 	Xdef_method(fun_name);
 	Xdef_method(file_name);
 	Xdef_method(exception);

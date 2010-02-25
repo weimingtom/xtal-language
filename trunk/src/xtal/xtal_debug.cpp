@@ -79,12 +79,6 @@ public:
 
 namespace{
 
-void debugenable(const SmartPtr<DebugData>& d){
-	for(int_t i=0, size=BREAKPOINT_MAX; i<size; ++i){
-		set_hook(i, d->hooks_[i]);
-	}
-}
-
 void bitchange(const SmartPtr<DebugData>& d, bool b, int_t type){
 	if(b){
 		d->hook_setting_bit_ |= 1<<type;
@@ -102,7 +96,6 @@ void enable(){
 		d->saved_hook_setting_bit_ = d->hook_setting_bit_;
 	}
 	d->enable_count_++;
-	debugenable(d);
 }
 
 void disable(){
@@ -123,10 +116,9 @@ bool is_enabled(){
 void enable_force(uint_t count){
 	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
 	if(d->enable_count_==0){
-		d->saved_hook_setting_bit_ = d->hook_setting_bit_;
+		d->hook_setting_bit_ = d->saved_hook_setting_bit_;
 	}
 	d->enable_count_ = count;
-	debugenable(d);
 }
 
 uint_t disable_force(){
@@ -203,39 +195,59 @@ const AnyPtr& assert_hook(){
 	return hook(BREAKPOINT_ASSERT);
 }
 
-void call_debug_hook(int_t kind, const HookInfoPtr& ainfo){
+void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
 	HookInfoPtr info = ainfo;
-	
-	AnyPtr hook = d->hooks_[kind];
 
+	if(kind>=BREAKPOINT_LINE){
+		int_t count = disable_force();
+		d->hooks_[kind]->call(info);
+		enable_force(count);
+		return;
+	}
+
+	AnyPtr hook = d->hooks_[0];
 	while(true){
 		switch(d->breakpoint_state_){
 			XTAL_NODEFAULT;
 
 			XTAL_CASE(BSTATE_NONE){
+				int_t count = disable_force();
 				AnyPtr hookret = hook ? hook->call(info) : AnyPtr(0);
-				int_t ret = type(hookret)==TYPE_INT ? hookret->to_i() : 0;
+				int_t ret = type(hookret)==TYPE_INT ? hookret->to_i() : -1;
+				enable_force(count);
 
 				switch(ret){
+					XTAL_DEFAULT{
+					
+					}
+
 					XTAL_CASE(RUN){
 						d->breakpoint_state_ = BSTATE_NONE;
-						d->hooks_[BREAKPOINT_LINE] = null;
+						bitchange(d, false, BREAKPOINT2);
+						bitchange(d, false, BREAKPOINT3);
+						bitchange(d, false, BREAKPOINT4);
 					}
 
 					XTAL_CASE(STEP_OVER){
 						d->breakpoint_state_ = BSTATE_STEP_OVER;
-						d->hooks_[BREAKPOINT_LINE] = hook;
+						bitchange(d, true, BREAKPOINT2);
+						bitchange(d, true, BREAKPOINT3);
+						bitchange(d, true, BREAKPOINT4);
 					}
 
 					XTAL_CASE(STEP_INTO){
 						d->breakpoint_state_ = BSTATE_STEP_INTO;
-						d->hooks_[BREAKPOINT_LINE] = hook;
+						bitchange(d, true, BREAKPOINT2);
+						bitchange(d, true, BREAKPOINT3);
+						bitchange(d, false, BREAKPOINT4);
 					}
 
 					XTAL_CASE(STEP_OUT){
 						d->breakpoint_state_ = BSTATE_STEP_OUT;
-						d->hooks_[BREAKPOINT_LINE] = hook;
+						bitchange(d, true, BREAKPOINT2);
+						bitchange(d, true, BREAKPOINT3);
+						bitchange(d, false, BREAKPOINT4);
 					}
 				}
 
@@ -243,14 +255,13 @@ void call_debug_hook(int_t kind, const HookInfoPtr& ainfo){
 			}
 
 			XTAL_CASE(BSTATE_GO){
-				if(true){
-					d->breakpoint_state_ = BSTATE_NONE;
-					continue;
-				}
+				d->breakpoint_state_ = BSTATE_NONE;
+				continue;
 			}
 
 			XTAL_CASE(BSTATE_STEP_OVER){
-				if(info->call_stack_size() <= d->breakpoint_call_stack_size_){
+
+				if(kind==BREAKPOINT || info->call_stack_size() <= d->breakpoint_call_stack_size_){
 					d->breakpoint_state_ = BSTATE_NONE;
 					continue;
 				}

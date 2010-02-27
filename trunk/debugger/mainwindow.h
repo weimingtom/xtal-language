@@ -34,14 +34,14 @@ public:
 
 	AlertDialog(const QString& mes, QWidget* parent = 0)
 		:QDialog(parent){
-		QHBoxLayout* main_layout = new QHBoxLayout();
-		setLayout(main_layout);
+		QHBoxLayout* mainLayout = new QHBoxLayout();
+		setLayout(mainLayout);
 
 		QTextEdit* edit = new QTextEdit();
 		QPushButton* cancel = new QPushButton(tr("cancel"));
 
-		main_layout->addWidget(edit);
-		main_layout->addWidget(cancel);
+		mainLayout->addWidget(edit);
+		mainLayout->addWidget(cancel);
 		connect(cancel, SIGNAL(clicked()), this, SLOT(close()));
 
 		edit->setText(mes);
@@ -66,20 +66,20 @@ public:
 
 	OptionDialog(QWidget* parent = 0)
 		:QDialog(parent){
-		QHBoxLayout* main_layout = new QHBoxLayout();
-		setLayout(main_layout);
+		QHBoxLayout* mainLayout = new QHBoxLayout();
+		setLayout(mainLayout);
 
 		QLabel* label = new QLabel(tr("ip address"));
-		QLineEdit* line_edit = new QLineEdit();
-		label->setBuddy(line_edit);
+		QLineEdit* lineEdit = new QLineEdit();
+		label->setBuddy(lineEdit);
 
 		QPushButton* ok = new QPushButton(tr("ok"));
 		QPushButton* cancel = new QPushButton(tr("cancel"));
 
-		main_layout->addWidget(label);
-		main_layout->addWidget(line_edit);
-		main_layout->addWidget(ok);
-		main_layout->addWidget(cancel);
+		mainLayout->addWidget(label);
+		mainLayout->addWidget(lineEdit);
+		mainLayout->addWidget(ok);
+		mainLayout->addWidget(cancel);
 
 		ok->setDefault(true);
 		connect(cancel, SIGNAL(clicked()), this, SLOT(close()));
@@ -96,7 +96,7 @@ public:
 
 public:
 
-	void create_actions();
+	void createActions();
 
 	void view(const VMachinePtr& vm){
 		callstack_->view(vm);
@@ -105,33 +105,33 @@ public:
 protected:
 	void closeEvent(QCloseEvent *event);
 
-	void set_gui_enabled(bool b);
+	void setGuiEnabled(bool b);
 
-	void set_actions_enabled(bool b);
+	void setActionsEnabled(bool b);
 
-	void set_step_actions_enabled(bool b);
+	void setStepActionsEnabled(bool b);
 
-	void update_expr_view();
+	void updateExprView();
 
-	void update_call_stack_view();
+	void updateCallStackView();
 
 public slots:
 
-	void new_project();
+	void newProject();
 
-	void save_project();
+	void saveProject();
 
-	void load_project();
+	void loadProject();
 
-	void add_file(const QString& filename);
+	void addFile(const QString& filename);
 	
-	void add_file();
+	void addFile();
 
-	void view_option();
+	void viewOption();
 
-	void view_source(const QString& file);
+	void viewSource(const QString& file);
 
-	void expr_changed(int i, const QString& expr);
+	void exprChanged(int i, const QString& expr);
 
 	void breaked();
 
@@ -143,46 +143,60 @@ public slots:
 
 	void run();
 
-	void step_over();
+	void stepOver();
 
-	void step_into();
+	void stepInto();
 
-	void step_out();
+	void stepOut();
 
-	void on_update();
+	void onUpdate();
 
-	void on_breakpoint_changed(const QString& path, int n, bool b);
+	void onBreakpointChanged(const QString& path, int n, bool b);
 
 	void print(const QString& mes);
+
+	void showProjectDock(){ projDockWidget_->show(); }
+	void showEvalExprDock(){ exprDockWidget_->show(); }
+	void showCSDock(){ csDockWidget_->show(); }
+	void showMessageDock(){ mesDockWidget_->show(); }
+
+	void moveCallStack(int n);
 
 private:
 	EvalExprView* evalexpr_;
 	CallStackView* callstack_;
-	CodeEditor* code_editor_;
+	CodeEditor* codeEditor_;
 	ProjectView* project_;
 	QTextEdit* messages_;
 	Debugger debugger_;
 
-	QStringList required_files_;
+	QSet<QString> requiredFiles_;
 	Document document_;
-	QString project_filename_;
+	QString projectFilename_;
 
 private:
-	QToolBar* tool_bar_;
-	QAction* run_action_;
-	QAction* step_into_action_;
-	QAction* step_over_action_;
-	QAction* step_out_action_;
-	QAction* update_action_;
-
-	QMenu* file_menu_;
+	QDockWidget* projDockWidget_;
+	QDockWidget* exprDockWidget_;
+	QDockWidget* csDockWidget_;
+	QDockWidget* mesDockWidget_;
 
 private:
-	int stopped_line_;
+	QToolBar* toolBar_;
+	QAction* runAction_;
+	QAction* stepIntoAction_;
+	QAction* stepOverAction_;
+	QAction* stepOutAction_;
+	QAction* updateAction_;
+
+	QMenu* fileMenu_;
+
+private:
+	int stoppedLine_;
 
 	enum{
 		STATE_NONE,
 		STATE_REQUIRING,
+		STATE_BREAKING
 	};
 
 	int state_;

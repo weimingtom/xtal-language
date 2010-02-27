@@ -18,7 +18,7 @@ bool Document::save(const QString& filename){
 	QDomElement root = doc.createElement("project");
 	doc.appendChild(root);
 
-	QDomElement files = doc.createElement("source_path_list");
+	QDomElement files = doc.createElement("sourcePathList");
 	root.appendChild(files);
 
 	for(int i=0; i<files_.size(); ++i){
@@ -28,14 +28,14 @@ bool Document::save(const QString& filename){
 		files.appendChild(node1);
 	}
 
-	QDomElement eval_exprs = doc.createElement("eval_expr_list");
-	root.appendChild(eval_exprs);
+	QDomElement evalExprs = doc.createElement("evalExprList");
+	root.appendChild(evalExprs);
 
-	for(int i=0; i<eval_exprs_.size(); ++i){
-		QDomElement node1 = doc.createElement("eval_expr");
-		QDomText node2 = doc.createTextNode(eval_exprs_[i]);
+	for(int i=0; i<evalExprs_.size(); ++i){
+		QDomElement node1 = doc.createElement("evalExpr");
+		QDomText node2 = doc.createTextNode(evalExprs_[i]);
 		node1.appendChild(node2);
-		eval_exprs.appendChild(node1);
+		evalExprs.appendChild(node1);
 	}
 
 	doc.save(ds, 4);
@@ -52,10 +52,10 @@ bool Document::load(const QString& filename){
 	init();
 
 	QDomDocument doc;
-	QString error_message;
-	int error_line;
-	int error_column;
-	if(!doc.setContent(&file, true, &error_message, &error_line, &error_column)){
+	QString errorMessage;
+	int errorLine;
+	int errorColumn;
+	if(!doc.setContent(&file, true, &errorMessage, &errorLine, &errorColumn)){
 		return false;
 	}
 
@@ -65,7 +65,7 @@ bool Document::load(const QString& filename){
 	}
 
 	for(QDomNode node=root.firstChild(); !node.isNull(); node=node.nextSibling()){
-		if(node.toElement().tagName()=="source_path_list"){
+		if(node.toElement().tagName()=="sourcePathList"){
 			for(QDomNode node2 = node.toElement().firstChild(); !node2.isNull(); node2=node2.nextSibling()){
 				QDomNode node3 = node2.toElement().firstChild();
 				if(node3.nodeType()==QDomNode::TextNode){
@@ -76,11 +76,11 @@ bool Document::load(const QString& filename){
 			}
 		}
 
-		if(node.toElement().tagName()=="eval_expr_list"){
+		if(node.toElement().tagName()=="evalExprList"){
 			for(QDomNode node2 = node.toElement().firstChild(); !node2.isNull(); node2=node2.nextSibling()){
 				QDomNode node3 = node2.toElement().firstChild();
 				if(node3.nodeType()==QDomNode::TextNode){
-					eval_exprs_.push_back(node3.toText().data());
+					evalExprs_.push_back(node3.toText().data());
 				}
 			}
 		}
@@ -96,12 +96,12 @@ Document::FileInfo* Document::file(int i){
 	return &files_[i];
 }
 
-int Document::file_count(){
+int Document::fileCount(){
 	return files_.size();
 }
 
-bool Document::add_file(const QString& file){
-	if(find_file(file)<0){
+bool Document::addFile(const QString& file){
+	if(findFile(file)<0){
 		FileInfo fi;
 		fi.path = file;
 		files_.push_back(fi);
@@ -110,7 +110,7 @@ bool Document::add_file(const QString& file){
 	return false;
 }
 
-int Document::find_file(const QString& file){
+int Document::findFile(const QString& file){
 	for(int i=0; i<files_.size(); ++i){
 		if(files_[i].path==file){
 			return i;
@@ -119,7 +119,7 @@ int Document::find_file(const QString& file){
 	return -1;
 }
 
-int Document::find_file_about(const QString& file){
+int Document::findFileAbout(const QString& file){
 	QString str = file + ".xtal";
 	QRegExp r2(".*\\/(.+)$");
 	r2.setMinimal(true);

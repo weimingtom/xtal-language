@@ -26,17 +26,17 @@ private:
 		QTextCharFormat format;
 	};
 
-	QVector<HighlightingRule> highlighting_rules_;
+	QVector<HighlightingRule> highlightingRules_;
 
-	QRegExp comment_start_expression_;
-	QRegExp comment_end_expression_;
+	QRegExp commentStartExpression_;
+	QRegExp commentEndExpression_;
 
-	QTextCharFormat keyword_format_;
-	QTextCharFormat class_format_;
-	QTextCharFormat singleline_comment_format_;
-	QTextCharFormat multiline_comment_format_;
-	QTextCharFormat quotation_format_;
-	QTextCharFormat number_format_;
+	QTextCharFormat keywordFormat_;
+	QTextCharFormat classFormat_;
+	QTextCharFormat singlelineCommentFormat_;
+	QTextCharFormat multilineCommentFormat_;
+	QTextCharFormat quotationFormat_;
+	QTextCharFormat numberFormat_;
 };
 
 #endif // XTALHIGHLIGHTER_H

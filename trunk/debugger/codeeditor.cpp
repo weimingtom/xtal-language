@@ -2,11 +2,11 @@
 
 CodeEditorPage::CodeEditorPage(QWidget *parent)
 :QPlainTextEdit(parent){
-	block_count_ = 0;
+	blockCount_ = 0;
 
 	lineNumberArea = new LineNumberArea(this);
 
-	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(on_block_count_changed(int)));
+	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(onBlockCountChanged(int)));
 	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
 	connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
 	//connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
@@ -14,7 +14,7 @@ CodeEditorPage::CodeEditorPage(QWidget *parent)
 	updateLineNumberAreaWidth(0);
 	highlightCurrentLine();
 
-	line_data_.clear();
+	lineData_.clear();
 
 	text_ = new QTextDocument();
 	highlighter_ = new XtalHighlighter(text_);
@@ -31,7 +31,7 @@ CodeEditorPage::CodeEditorPage(QWidget *parent)
 
 	setTabStopWidth(20);
 
-	connect(this, SIGNAL(textChanged()), this, SLOT(on_text_changed()));
+	connect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
 	changed_ = false;
 
 }
@@ -96,8 +96,8 @@ void CodeEditorPage::lineNumberAreaPaintEvent(QPaintEvent *event){
 			painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
 							 Qt::AlignRight, number);
 
-			if(block.blockNumber()<line_data_.size()){
-				LineData& data = line_data_[block.blockNumber()];
+			if(block.blockNumber()<lineData_.size()){
+				LineData& data = lineData_[block.blockNumber()];
 				if(data.breakpoint){
 					painter.setPen(Qt::red);
 					painter.setBrush(Qt::red);
@@ -113,9 +113,9 @@ void CodeEditorPage::lineNumberAreaPaintEvent(QPaintEvent *event){
 	}
 }
 
-void CodeEditorPage::on_text_changed(){
+void CodeEditorPage::onTextChanged(){
 	if(!changed_){
-		emit text_changed(this);
+		emit textChanged(this);
 		changed_ = true;
 	}
 }
@@ -128,13 +128,13 @@ QTextBlock CodeEditorPage::block(int line){
 	return block;
 }
 
-void CodeEditorPage::set_cursor_line(int line){
+void CodeEditorPage::setCursorLine(int line){
 	QTextBlock b = text_->findBlockByLineNumber(line-1);
 	setTextCursor(QTextCursor(b));
 	highlightCurrentLine();
 }
 
-void CodeEditorPage::click_event(QMouseEvent* event){
+void CodeEditorPage::clickEvent(QMouseEvent* event){
 	QTextBlock block = firstVisibleBlock();
 	int blockNumber = block.blockNumber();
 	int y = this->mapFromGlobal(event->globalPos()).y();
@@ -143,7 +143,7 @@ void CodeEditorPage::click_event(QMouseEvent* event){
 
 	while(block.isValid()) {
 		if(block.isVisible() && top<y && y<bottom) {
-			set_breakpoint(block.blockNumber()+1);
+			setBreakpoint(block.blockNumber()+1);
 			return;
 		}
 
@@ -154,15 +154,15 @@ void CodeEditorPage::click_event(QMouseEvent* event){
 	}
 }
 
-void CodeEditorPage::set_breakpoint(int n){
-	line_data_[n-1].breakpoint = !line_data_[n-1].breakpoint;
+void CodeEditorPage::setBreakpoint(int n){
+	lineData_[n-1].breakpoint = !lineData_[n-1].breakpoint;
 	this->update();
 
-	emit breakpoint_changed(source_path_, n, line_data_[n-1].breakpoint);
+	emit breakpointChanged(sourcePath_, n, lineData_[n-1].breakpoint);
 }
 
 void CodeEditorPage::save(){
-	QFile data(source_path_);
+	QFile data(sourcePath_);
 	if(data.open(QFile::WriteOnly | QFile::Truncate)){
 		QTextStream out(&data);
 		out << text_->toPlainText();
@@ -170,23 +170,23 @@ void CodeEditorPage::save(){
 	}
 }
 
-void CodeEditorPage::on_block_count_changed(int block_count){
+void CodeEditorPage::onBlockCountChanged(int blockCount){
 	QList<QTextEdit::ExtraSelection> sel = this->extraSelections();
-	if(line_data_.size()!=0){
+	if(lineData_.size()!=0){
 		if(sel.size()>0){
 			QTextCursor cur = textCursor();
-			int diff = block_count - line_data_.size();
+			int diff = blockCount - lineData_.size();
 			int n = cur.block().blockNumber();
 			if(diff>0){
-				line_data_.insert(line_data_.begin()+n+1-diff, diff, LineData());
+				lineData_.insert(lineData_.begin()+n+1-diff, diff, LineData());
 			}
 			else{
-				line_data_.erase(line_data_.begin()+n+1, line_data_.begin()+n+1-diff);
+				lineData_.erase(lineData_.begin()+n+1, lineData_.begin()+n+1-diff);
 			}
 
 		}
 	}
-	line_data_.resize(block_count);
+	lineData_.resize(blockCount);
 }
 
 //////////////////////
@@ -197,77 +197,77 @@ CodeEditor::CodeEditor(QWidget *parent)
 	setTabsClosable(true);
 	page->setEnabled(false);
 
-	connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(close_page(int)));
+	connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(closePage(int)));
 }
 
-void CodeEditor::close_page(int index){
-	if(widget(index)->source_path()!=""){
+void CodeEditor::closePage(int index){
+	//if(widget(index)->sourcePath()!=""){
 		this->removeTab(index);
-	}
+	//}
 }
 
-void CodeEditor::on_text_changed(CodeEditorPage* p){
-	int i = find_widget(p);
+void CodeEditor::onTextChanged(CodeEditorPage* p){
+	int i = findWidget(p);
 	this->setTabText(i, "*" + this->tabText(i));
 }
 
-void CodeEditor::on_breakpoint_changed(const QString& path, int n, bool b){
-	emit breakpoint_changed(path, n, b);
+void CodeEditor::onBreakpointChanged(const QString& path, int n, bool b){
+	emit breakpointChanged(path, n, b);
 }
-void CodeEditor::add_page(const QString& file, const QString& path){
-	if(CodeEditorPage* p = widget(find_widget(path))){
+void CodeEditor::addPage(const QString& file, const QString& path){
+	if(CodeEditorPage* p = widget(findWidget(path))){
 		this->setCurrentWidget(p);
 		return;
 	}
 
 	CodeEditorPage* page = new CodeEditorPage();
-	page->set_source_path(path);
+	page->setSourcePath(path);
 	addTab(page, file);
 	this->setCurrentWidget(page);
 
 	QFile f(path);
 	if(f.open(QIODevice::ReadOnly | QIODevice::Text)){
 		QTextStream ts(&f);
-		page->set_plain_text(ts.readAll());
+		page->setPlainText(ts.readAll());
 	}
 
-	connect(page, SIGNAL(text_changed(CodeEditorPage*)), this, SLOT(on_text_changed(CodeEditorPage*)));
-	connect(page, SIGNAL(breakpoint_changed(const QString&,int,bool)), this, SLOT(on_breakpoint_changed(const QString&,int,bool)));
+	connect(page, SIGNAL(textChanged(CodeEditorPage*)), this, SLOT(onTextChanged(CodeEditorPage*)));
+	connect(page, SIGNAL(breakpointChanged(const QString&,int,bool)), this, SLOT(onBreakpointChanged(const QString&,int,bool)));
 }
 
 CodeEditorPage* CodeEditor::widget(int index){
 	return (CodeEditorPage*)QTabWidget::widget(index);
 }
 
-CodeEditorPage* CodeEditor::current_page(){
+CodeEditorPage* CodeEditor::currentPage(){
 	return (CodeEditorPage*)currentWidget();
 }
 
-bool CodeEditor::set_pos(const QString& filename, int lineno){
-	if(set_source_file(filename)){
-		set_cursor_line(lineno);
+bool CodeEditor::setPos(const QString& filename, int lineno){
+	if(setSourceFile(filename)){
+		setCursorLine(lineno);
 		return true;
 	}
 	return false;
 }
 
-void CodeEditor::set_cursor_line(int n){
-	if(current_page()){
-		current_page()->set_cursor_line(n);
+void CodeEditor::setCursorLine(int n){
+	if(currentPage()){
+		currentPage()->setCursorLine(n);
 	}
 }
 
-int CodeEditor::find_widget(const QString& path){
+int CodeEditor::findWidget(const QString& path){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
-		if(p->source_path()==path){
+		if(p->sourcePath()==path){
 			return i;
 		}
 	}
 	return -1;
 }
 
-int CodeEditor::find_widget(CodeEditorPage* a){
+int CodeEditor::findWidget(CodeEditorPage* a){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
 		if(p==a){
@@ -277,25 +277,25 @@ int CodeEditor::find_widget(CodeEditorPage* a){
 	return -1;
 }
 
-bool CodeEditor::set_source_file(const QString& path){
-	if(CodeEditorPage* p = widget(find_widget(path))){
+bool CodeEditor::setSourceFile(const QString& path){
+	if(CodeEditorPage* p = widget(findWidget(path))){
 		this->setCurrentWidget(p);
 		return true;
 	}
 	else{
-		add_page(path, "");
+		addPage(path, "");
 		return true;
 	}
 }
 
-void CodeEditor::clear_cursor_line(){
+void CodeEditor::clearCursorLine(){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
 		p->setExtraSelections(QList<QTextEdit::ExtraSelection>());
 	}
 }
 
-void CodeEditor::save_all(){
+void CodeEditor::saveAll(){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
 		p->save();

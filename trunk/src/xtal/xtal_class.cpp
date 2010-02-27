@@ -730,7 +730,7 @@ AnyPtr Class::ancestors(){
 	ArrayPtr ret = xnew<Array>();
 
 	for(int_t i=0, sz=inherited_classes_.size(); i<sz; i++){
-		const ClassPtr& it = unchecked_ptr_cast<Class>(get_class()->inherited_classes_.at(i));
+		const ClassPtr& it = unchecked_ptr_cast<Class>(inherited_classes_.at(i));
 		ret->push_back(it);
 
 		Xfor(it2, it->ancestors()){

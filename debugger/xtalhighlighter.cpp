@@ -5,11 +5,11 @@ XtalHighlighter::XtalHighlighter(QTextDocument *parent)
 {
 	HighlightingRule rule;
 
-	keyword_format_.setForeground(Qt::blue);
-	keyword_format_.setFontWeight(QFont::Bold);
-	QStringList keyword_patterns;
+	keywordFormat_.setForeground(Qt::blue);
+	keywordFormat_.setFontWeight(QFont::Bold);
+	QStringList keywordPatterns;
 
-	keyword_patterns
+	keywordPatterns
 		<< "if"
 		<< "for"
 		<< "else"
@@ -48,42 +48,42 @@ XtalHighlighter::XtalHighlighter(QTextDocument *parent)
 		<< "protected"
 		<< "private";
 
-	foreach(const QString &pattern, keyword_patterns) {
+	foreach(const QString &pattern, keywordPatterns) {
 		rule.pattern = QRegExp("\\b" + pattern + "\\b");
-		rule.format = keyword_format_;
-		highlighting_rules_.append(rule);
+		rule.format = keywordFormat_;
+		highlightingRules_.append(rule);
 	}
 
-	class_format_.setFontWeight(QFont::Bold);
-	class_format_.setForeground(Qt::darkMagenta);
+	classFormat_.setFontWeight(QFont::Bold);
+	classFormat_.setForeground(Qt::darkMagenta);
 	rule.pattern = QRegExp("\\b[A-Z][A-Za-z0-9_]+\\b");
-	rule.format = class_format_;
-	highlighting_rules_.append(rule);
+	rule.format = classFormat_;
+	highlightingRules_.append(rule);
 
-	number_format_.setFontWeight(QFont::Bold);
-	number_format_.setForeground(Qt::darkBlue);
+	numberFormat_.setFontWeight(QFont::Bold);
+	numberFormat_.setForeground(Qt::darkBlue);
 	rule.pattern = QRegExp("\\b[0-9]([0-9_]|\\.[0-9])*[fF]?\\b");
-	rule.format = number_format_;
-	highlighting_rules_.append(rule);
+	rule.format = numberFormat_;
+	highlightingRules_.append(rule);
 
-	singleline_comment_format_.setForeground(Qt::darkGreen);
+	singlelineCommentFormat_.setForeground(Qt::darkGreen);
 	rule.pattern = QRegExp("//[^\n]*");
-	rule.format = singleline_comment_format_;
-	highlighting_rules_.append(rule);
+	rule.format = singlelineCommentFormat_;
+	highlightingRules_.append(rule);
 
-	multiline_comment_format_.setForeground(Qt::darkGreen);
+	multilineCommentFormat_.setForeground(Qt::darkGreen);
 
-	quotation_format_.setForeground(Qt::darkRed);
+	quotationFormat_.setForeground(Qt::darkRed);
 	rule.pattern = QRegExp("\".*\"");
-	rule.format = quotation_format_;
-	highlighting_rules_.append(rule);
+	rule.format = quotationFormat_;
+	highlightingRules_.append(rule);
 
-	comment_start_expression_ = QRegExp("/\\*");
-	comment_end_expression_ = QRegExp("\\*/");
+	commentStartExpression_ = QRegExp("/\\*");
+	commentEndExpression_ = QRegExp("\\*/");
 }
 
 void XtalHighlighter::highlightBlock(const QString &text){
-	foreach(const HighlightingRule &rule, highlighting_rules_){
+	foreach(const HighlightingRule &rule, highlightingRules_){
 		QRegExp expression(rule.pattern);
 		int index = expression.indexIn(text);
 		while(index >= 0){
@@ -96,22 +96,22 @@ void XtalHighlighter::highlightBlock(const QString &text){
 
 	int startIndex = 0;
 	if(previousBlockState() != 1){
-		startIndex = comment_start_expression_.indexIn(text);
+		startIndex = commentStartExpression_.indexIn(text);
 	}
 
 	while(startIndex >= 0){
-		int endIndex = comment_end_expression_.indexIn(text, startIndex);
+		int endIndex = commentEndExpression_.indexIn(text, startIndex);
 		int commentLength;
 		if(endIndex == -1){
 			setCurrentBlockState(1);
 			commentLength = text.length() - startIndex;
 		}
 		else{
-			commentLength = endIndex - startIndex + comment_end_expression_.matchedLength();
+			commentLength = endIndex - startIndex + commentEndExpression_.matchedLength();
 		}
 
-		setFormat(startIndex, commentLength, multiline_comment_format_);
-		startIndex = comment_start_expression_.indexIn(text, startIndex + commentLength);
+		setFormat(startIndex, commentLength, multilineCommentFormat_);
+		startIndex = commentStartExpression_.indexIn(text, startIndex + commentLength);
 	}
 }
 

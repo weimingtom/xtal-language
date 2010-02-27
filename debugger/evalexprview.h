@@ -18,29 +18,29 @@ public:
 
 public slots:
 
-	void data_changed(QStandardItem* item);
+	void dataChanged(QStandardItem* item);
 
 signals:
 
-	void expr_changed(int i, const QString& expr);
+	void exprChanged(int i, const QString& expr);
 
 public:
 
-	void set_expr(int n, const QString& expr);
+	void setExpr(int n, const QString& expr);
 
 	QString item(int n);
 
-	void set_item(int n, const ArrayPtr& value);
+	void setExprResult(int n, const ArrayPtr& value);
 
-	void set_child(QStandardItem* item, int n, const QString& key, const ArrayPtr& value);
+	void setChild(QStandardItem* item, int n, const QString& key, const ArrayPtr& value);
 
-	void set_child(QStandardItem* item, const AnyPtr& children);
+	void setChild(QStandardItem* item, const AnyPtr& children);
 
-	QStandardItem* make_item(const QString& text);
+	QStandardItem* makeItem(const QString& text, bool editable = false);
 
 private:
 	QStandardItemModel* model_;
-	bool data_changed_;
+	bool dataChanged_;
 };
 
 #endif // EVALEXPRVIEW_H

@@ -1,18 +1,19 @@
 #include "debugger.h"
 
 Debugger::Debugger(){
-	connect(&server_, SIGNAL(newConnection()), SLOT(on_connected()));
+	connect(&server_, SIGNAL(newConnection()), SLOT(onConnected()));
 	server_.listen(QHostAddress::Any, 13245);
 	state_ = STATE_NONE;
+	level_ = 0;
 
-	prev_command_ = "run";
+	prevCommand_ = "run";
 }
 
-void Debugger::set_source(const QString& source){
+void Debugger::setSource(const QString& source){
 	source_ = source;
 }
 
-void Debugger::set_eval_expr(int n, const StringPtr& expr){
+void Debugger::setEvalExpr(int n, const StringPtr& expr){
 	if(exprs_.size()<=n){
 		exprs_.resize(n+1);
 	}
@@ -20,12 +21,20 @@ void Debugger::set_eval_expr(int n, const StringPtr& expr){
 	exprs_[n].expr = expr;
 	exprs_[n].result = null;
 
-	if(state_==STATE_CONNECTED){
-		send_command("return");
+	if(isConnected()){
+		sendEvalExpr(n, expr);
 	}
 }
 
-ArrayPtr Debugger::eval_result(int n){
+StringPtr Debugger::evalExpr(int n){
+	if(exprs_.size()<=n){
+		exprs_.resize(n+1);
+	}
+
+	return exprs_[n].expr;
+}
+
+ArrayPtr Debugger::evalResult(int n){
 	if(exprs_.size()<=n){
 		exprs_.resize(n+1);
 	}
@@ -33,58 +42,63 @@ ArrayPtr Debugger::eval_result(int n){
 	return exprs_[n].result;
 }
 
-int Debugger::eval_expr_size(){
+int Debugger::evalExprSize(){
 	return exprs_.size();
 }
 
-int Debugger::call_stack_size(){
-	return call_stack_.size();
+int Debugger::callStackSize(){
+	return callStack_.size();
 }
 
-StringPtr Debugger::call_stack_fun_name(int n){
-	return call_stack_[n].fun_name;
+StringPtr Debugger::callStackFunName(int n){
+	return callStack_[n].funName;
 }
 
-StringPtr Debugger::call_stack_file_name(int n){
-	return call_stack_[n].file_name;
+StringPtr Debugger::callStackFileName(int n){
+	return callStack_[n].fileName;
 }
 
-int Debugger::call_stack_lineno(int n){
-	return call_stack_[n].lineno;
+int Debugger::callStackLineno(int n){
+	return callStack_[n].lineno;
 }
 
-QString Debugger::required_file(){
-	return required_file_;
+StringPtr Debugger::callStackFunName(){
+	return callStack_[level_].funName;
 }
 
-void Debugger::send_required_source(const CodePtr& code){
-	ArrayPtr a = xnew<Array>();
-	a->push_back(Xid(required_source));
-	a->push_back(code);
-	stream_->serialize(a);
+StringPtr Debugger::callStackFileName(){
+	return callStack_[level_].fileName;
+}
+
+int Debugger::callStackLineno(){
+	return callStack_[level_].lineno;
+}
+
+QString Debugger::requiredFile(){
+	return requiredFile_;
 }
 
 void Debugger::run(){
-	send_command("run");
+	sendCommand("run");
 }
 
-void Debugger::step_over(){
-	send_command("step_over");
+void Debugger::stepOver(){
+	sendCommand("step_over");
 }
 
-void Debugger::step_into(){
-	send_command("step_into");
+void Debugger::stepInto(){
+	sendCommand("step_into");
 }
 
-void Debugger::step_out(){
-	send_command("step_out");
+void Debugger::stepOut(){
+	sendCommand("step_out");
 }
 
 void Debugger::redo(){
-	send_command(prev_command_);
+	sendCommand(prevCommand_);
 }
 
-void Debugger::send_breakpoint(const QString& path, int n, bool b){
+void Debugger::sendBreakpoint(const QString& path, int n, bool b){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(breakpoint));
 	a->push_back(path.toStdString().c_str());
@@ -93,69 +107,99 @@ void Debugger::send_breakpoint(const QString& path, int n, bool b){
 	stream_->serialize(a);
 }
 
-bool Debugger::is_connected(){
-	return state_!=STATE_NONE;
-}
-
-void Debugger::send_command(const IDPtr& id){
-	prev_command_ = id;
-
+void Debugger::sendMoveCallStack(int n){
 	ArrayPtr a = xnew<Array>();
-	a->push_back(id);
-
-	ArrayPtr exprs = xnew<Array>(exprs_.size());
-	for(int i=0; i<exprs_.size(); ++i){
-		exprs->set_at(i, exprs_[i].expr);
-	}
-	a->push_back(exprs);
-
+	a->push_back(Xid(move_callstack));
+	a->push_back(n);
 	stream_->serialize(a);
 }
 
-void Debugger::on_recv(){
-	if(stream_->rawsocket()->bytesAvailable()==0){
-		return;
-	}
+void Debugger::sendNostep(){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(nostep));
+	stream_->serialize(a);
+}
 
-	ArrayPtr command = ptr_cast<Array>(stream_->deserialize());
-	AnyPtr type = command->at(0);
+void Debugger::sendRequiredSource(const CodePtr& code){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(required_source));
+	a->push_back(code);
+	stream_->serialize(a);
+}
 
-	if(raweq(type, Xid(break))){
-		ArrayPtr exprs = ptr_cast<Array>(command->at(1));
-		ArrayPtr call_stack = ptr_cast<Array>(command->at(2));
+void Debugger::sendEvalExpr(int n, const StringPtr& expr){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(eval_expr));
+	a->push_back(n);
+	a->push_back(expr);
+	stream_->serialize(a);
+}
 
-		for(uint_t i=0; i<exprs->size(); ++i){
-			exprs_[i].result = ptr_cast<Array>(exprs->at(i));
+void Debugger::sendCommand(const IDPtr& id){
+	prevCommand_ = id;
+	ArrayPtr a = xnew<Array>();
+	a->push_back(id);
+	stream_->serialize(a);
+}
+
+bool Debugger::isConnected(){
+	return state_!=STATE_NONE;
+}
+
+void Debugger::onRecv(){
+	while(stream_->rawsocket()->bytesAvailable()!=0){
+		ArrayPtr command = ptr_cast<Array>(stream_->deserialize());
+		AnyPtr type = command->at(0);
+
+		if(raweq(type, Xid(break))){
+			ArrayPtr exprs = ptr_cast<Array>(command->at(1));
+			ArrayPtr callStack = ptr_cast<Array>(command->at(2));
+
+			for(uint_t i=0; i<exprs->size(); ++i){
+				exprs_[i].result = ptr_cast<Array>(exprs->at(i));
+			}
+
+			callStack_.resize(callStack->size());
+			for(uint_t i=0; i<callStack->size(); ++i){
+				ArrayPtr record = ptr_cast<Array>(callStack->at(i));
+				callStack_[i].funName = record->at(0)->to_s();
+				callStack_[i].fileName = record->at(1)->to_s();
+				callStack_[i].lineno = record->at(2)->to_i();
+			}
+
+			level_ = command->at(3).to_i();
+
+			emit breaked();
+			continue;
 		}
 
-		call_stack_.resize(call_stack->size());
-		for(uint_t i=0; i<call_stack->size(); ++i){
-			ArrayPtr record = ptr_cast<Array>(call_stack->at(i));
-			call_stack_[i].fun_name = record->at(0)->to_s();
-			call_stack_[i].file_name = record->at(1)->to_s();
-			call_stack_[i].lineno = record->at(2)->to_i();
+		if(raweq(type, Xid(require))){
+			requiredFile_ = command->at(1)->to_s()->c_str();
+			emit required();
+			continue;
 		}
-
-		emit breaked();
-	}
-	else if(raweq(type, Xid(require))){
-		required_file_ = command->at(1)->to_s()->c_str();
-		emit required();
 	}
 }
 
-void Debugger::on_closed(){
+void Debugger::onClosed(){
 	state_ = STATE_NONE;
 	emit disconnected();
 }
 
-void Debugger::on_connected(){
+void Debugger::onConnected(){
 	stream_ = xnew<TCPStream>(server_.nextPendingConnection());
-	connect(stream_->rawsocket(), SIGNAL(readyRead()), SLOT(on_recv()));
-	connect(stream_->rawsocket(), SIGNAL(readChannelFinished()), SLOT(on_closed()));
+	connect(stream_->rawsocket(), SIGNAL(readyRead()), SLOT(onRecv()));
+	connect(stream_->rawsocket(), SIGNAL(readChannelFinished()), SLOT(onClosed()));
 	state_ = STATE_CONNECTED;
+
+	for(int i=0; i<exprs_.size(); ++i){
+		sendEvalExpr(i, exprs_[i].expr);
+	}
+
+	sendCommand(Xid(start));
+
 	emit connected();
-	on_recv();
+	onRecv();
 }
 
 

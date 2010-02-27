@@ -23,31 +23,31 @@ public:
 
 	QTextBlock block(int line);
 
-	void set_cursor_line(int line);
+	void setCursorLine(int line);
 
-	void click_event(QMouseEvent* event);
+	void clickEvent(QMouseEvent* event);
 
-	void set_breakpoint(int n);
+	void setBreakpoint(int n);
 
 	void save();
 
-	int line_count(){
-		return line_data_.size();
+	int lineCount(){
+		return lineData_.size();
 	}
 
 	bool breakpoint(int n){
-		return line_data_[n-1].breakpoint;
+		return lineData_[n-1].breakpoint;
 	}
 
-	const QString& source_path(){
-		return source_path_;
+	const QString& sourcePath(){
+		return sourcePath_;
 	}
 
-	void set_source_path(const QString& file){
-		source_path_ = file;
+	void setSourcePath(const QString& file){
+		sourcePath_ = file;
 	}
 
-	void set_plain_text(const QString& text){
+	void setPlainText(const QString& text){
 		text_->setPlainText(text);
 		changed_ = false;
 	}
@@ -61,22 +61,22 @@ private slots:
 	void highlightCurrentLine();
 	void updateLineNumberArea(const QRect &, int);
 
-	void on_text_changed();
+	void onTextChanged();
 
-	void on_block_count_changed(int block_count);
+	void onBlockCountChanged(int blockCount);
 
 signals:
 
-	void text_changed(CodeEditorPage* p);
+	void textChanged(CodeEditorPage* p);
 
-	void breakpoint_changed(const QString& path, int n, bool b);
+	void breakpointChanged(const QString& path, int n, bool b);
 
 private:
 	QTextDocument* text_;
 	QWidget *lineNumberArea;
-	QString source_path_;
-	QVector<LineData> line_data_;
-	int block_count_;
+	QString sourcePath_;
+	QVector<LineData> lineData_;
+	int blockCount_;
 	bool changed_;
 	XtalHighlighter* highlighter_;
 };
@@ -89,37 +89,37 @@ public:
 
 public slots:
 
-	void close_page(int index);
+	void closePage(int index);
 
-	void on_text_changed(CodeEditorPage* p);
+	void onTextChanged(CodeEditorPage* p);
 
-	void on_breakpoint_changed(const QString& path, int n, bool b);
+	void onBreakpointChanged(const QString& path, int n, bool b);
 
 signals:
 
-	void breakpoint_changed(const QString& path, int n, bool b);
+	void breakpointChanged(const QString& path, int n, bool b);
 
 public:
 
-	void add_page(const QString& file, const QString& path);
+	void addPage(const QString& file, const QString& path);
 
 	CodeEditorPage* widget(int index);
 
-	CodeEditorPage* current_page();
+	CodeEditorPage* currentPage();
 
-	bool set_pos(const QString& filename, int lineno);
+	bool setPos(const QString& filename, int lineno);
 
-	void set_cursor_line(int n);
+	void setCursorLine(int n);
 
-	int find_widget(const QString& path);
+	int findWidget(const QString& path);
 
-	int find_widget(CodeEditorPage* a);
+	int findWidget(CodeEditorPage* a);
 
-	bool set_source_file(const QString& path);
+	bool setSourceFile(const QString& path);
 
-	void clear_cursor_line();
+	void clearCursorLine();
 
-	void save_all();
+	void saveAll();
 };
 
 class LineNumberArea : public QWidget{
@@ -139,7 +139,7 @@ protected:
 	}
 
 	void mouseReleaseEvent(QMouseEvent* event){
-		codeEditor->click_event(event);
+		codeEditor->clickEvent(event);
 	}
 
 private:

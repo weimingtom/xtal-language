@@ -6,7 +6,7 @@
 #include <QObject>
 
 /**
-  * \brief
+  * \brief プロジェクトの情報を保持するクラス
 　　* ソースパス、ブレークポイントの位置を保持している
   */
 class Document{
@@ -23,35 +23,39 @@ public:
 
 	bool load(const QString& filename);
 
+public:
+
 	FileInfo* file(int i);
 
-	int file_count();
+	int fileCount();
 
-	bool add_file(const QString& file);
+	bool addFile(const QString& file);
 
-	int find_file(const QString& file);
+	int findFile(const QString& file);
 
-	int find_file_about(const QString& file);
+	int findFileAbout(const QString& file);
 
-	void set_eval_expr(int n, const QString& expr){
-		if(n>=eval_exprs_.size()){
-			eval_exprs_.resize(n+1);
+public:
+
+	void setEvalExpr(int n, const QString& expr){
+		if(n>=evalExprs_.size()){
+			evalExprs_.resize(n+1);
 		}
 
-		eval_exprs_[n] = expr;
+		evalExprs_[n] = expr;
 	}
 
-	int eval_expr_count(){
-		return eval_exprs_.size();
+	int evalExprCount(){
+		return evalExprs_.size();
 	}
 
-	QString eval_expr(int n){
-		return eval_exprs_[n];
+	QString evalExpr(int n){
+		return evalExprs_[n];
 	}
 
 private:
 	QVector<FileInfo> files_;
-	QVector<QString> eval_exprs_;
+	QVector<QString> evalExprs_;
 };
 
 

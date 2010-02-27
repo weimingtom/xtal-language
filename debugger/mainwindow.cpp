@@ -61,53 +61,53 @@ inline QString makeRelative(const QString& source, const QString& from){
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent){
-	code_editor_ = new CodeEditor(this);
+	codeEditor_ = new CodeEditor(this);
 	evalexpr_ = new EvalExprView(this);
 	callstack_ = new CallStackView(this);
 	messages_ = new QTextEdit(this);
 	project_ = new ProjectView(this);
 
-	setCentralWidget(code_editor_);
+	setCentralWidget(codeEditor_);
 
-	QDockWidget* proj_dock_widget = new QDockWidget(tr("Project"), this);
-	proj_dock_widget->setObjectName("Project");
-	proj_dock_widget->setWidget(project_);
-	proj_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-	addDockWidget(Qt::LeftDockWidgetArea, proj_dock_widget);
+	projDockWidget_ = new QDockWidget(tr("Project"), this);
+	projDockWidget_->setObjectName("Project");
+	projDockWidget_->setWidget(project_);
+	projDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	addDockWidget(Qt::LeftDockWidgetArea, projDockWidget_);
 
-	QDockWidget* expr_dock_widget = new QDockWidget(tr("Expr"), this);
-	expr_dock_widget->setObjectName("Expr");
-	expr_dock_widget->setWidget(evalexpr_);
-	expr_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-	addDockWidget(Qt::RightDockWidgetArea, expr_dock_widget);
+	exprDockWidget_ = new QDockWidget(tr("Expr"), this);
+	exprDockWidget_->setObjectName("Expr");
+	exprDockWidget_->setWidget(evalexpr_);
+	exprDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	addDockWidget(Qt::RightDockWidgetArea, exprDockWidget_);
 
-	QDockWidget* cs_dock_widget = new QDockWidget(tr("Call Stack"), this);
-	cs_dock_widget->setObjectName("Call Stack");
-	cs_dock_widget->setWidget(callstack_);
-	cs_dock_widget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-	addDockWidget(Qt::RightDockWidgetArea, cs_dock_widget);
+	csDockWidget_ = new QDockWidget(tr("Call Stack"), this);
+	csDockWidget_->setObjectName("Call Stack");
+	csDockWidget_->setWidget(callstack_);
+	csDockWidget_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	addDockWidget(Qt::RightDockWidgetArea, csDockWidget_);
 
-	QDockWidget* m_dock_widget = new QDockWidget(tr("Message"), this);
-	cs_dock_widget->setObjectName("Message");
-	m_dock_widget->setWidget(messages_);
-	m_dock_widget->setAllowedAreas(Qt::BottomDockWidgetArea);
-	addDockWidget(Qt::BottomDockWidgetArea, m_dock_widget);
+	mesDockWidget_ = new QDockWidget(tr("Message"), this);
+	mesDockWidget_->setObjectName("Message");
+	mesDockWidget_->setWidget(messages_);
+	mesDockWidget_->setAllowedAreas(Qt::BottomDockWidgetArea);
+	addDockWidget(Qt::BottomDockWidgetArea, mesDockWidget_);
 
-	create_actions();
+	createActions();
 
-	//evalexpr_->add_expr(0, "filelocal");
+	//evalexpr_->addExpr(0, "filelocal");
 
 	QSettings settings("xtal", "debugger");
 
-	QByteArray geo_data = settings.value("geometry").toByteArray();
-	QByteArray layout_data = settings.value("windowState").toByteArray();
+	QByteArray geoData = settings.value("geometry").toByteArray();
+	QByteArray layoutData = settings.value("windowState").toByteArray();
 
-	if(geo_data.size() > 1){
-		restoreGeometry(geo_data);
+	if(geoData.size() > 1){
+		restoreGeometry(geoData);
 	}
 
-	if(layout_data.size() > 1){
-		restoreState(layout_data);
+	if(layoutData.size() > 1){
+		restoreState(layoutData);
 	}
 }
 
@@ -121,169 +121,191 @@ void MainWindow::closeEvent(QCloseEvent *event){
 	QMainWindow::closeEvent(event);
 }
 
-void MainWindow::create_actions(){
-	file_menu_ = this->menuBar()->addMenu(tr("file"));
-	QAction* new_project_action = file_menu_->addAction(tr("new project"));
-	QAction* load_project_action = file_menu_->addAction(tr("load project"));
-	QAction* save_project_action = file_menu_->addAction(tr("save project"));
-	file_menu_->addSeparator();
-	QAction* add_file_action = file_menu_->addAction(tr("add file"));
+void MainWindow::createActions(){
+	fileMenu_ = this->menuBar()->addMenu(tr("&File"));
+	QAction* newProjectAction = fileMenu_->addAction(tr("&New Project"));
+	QAction* loadProjectAction = fileMenu_->addAction(tr("&Load Project"));
+	QAction* saveProjectAction = fileMenu_->addAction(tr("&Save Project"));
+	fileMenu_->addSeparator();
+	QAction* addFileAction = fileMenu_->addAction(tr("add file"));
 
-	QMenu* option_menu_ = this->menuBar()->addMenu(tr("tool"));
-	QAction* option_action = option_menu_->addAction(tr("option"));
+	QMenu* optionMenu_ = this->menuBar()->addMenu(tr("&Tool"));
+	QAction* optionAction = optionMenu_->addAction(tr("&Option"));
 
-	tool_bar_ = this->addToolBar(tr("debug"));
-	run_action_ = tool_bar_->addAction(QIcon("data/run.png"), tr("run"));
-	step_into_action_ = tool_bar_->addAction(QIcon("data/step_into.png"), tr("step into"));
-	step_over_action_ = tool_bar_->addAction(QIcon("data/step_over.png"), tr("step over"));
-	step_out_action_ = tool_bar_->addAction(QIcon("data/step_out.png"), tr("step out"));
-	update_action_ = tool_bar_->addAction(QIcon("data/update.png"), tr("update"));
+	toolBar_ = this->addToolBar(tr("debug"));
+	toolBar_->setObjectName("debug");
+	runAction_ = toolBar_->addAction(QIcon("data/run.png"), tr("run"));
+	stepIntoAction_ = toolBar_->addAction(QIcon("data/step_into.png"), tr("step into"));
+	stepOverAction_ = toolBar_->addAction(QIcon("data/step_over.png"), tr("step over"));
+	stepOutAction_ = toolBar_->addAction(QIcon("data/step_out.png"), tr("step out"));
+	updateAction_ = toolBar_->addAction(QIcon("data/update.png"), tr("update"));
 
-	connect(new_project_action, SIGNAL(triggered()), this, SLOT(new_project()));
-	connect(save_project_action, SIGNAL(triggered()), this, SLOT(save_project()));
-	connect(load_project_action, SIGNAL(triggered()), this, SLOT(load_project()));
-	connect(add_file_action, SIGNAL(triggered()), this, SLOT(add_file()));
-	connect(option_action, SIGNAL(triggered()), this, SLOT(view_option()));
+	connect(newProjectAction, SIGNAL(triggered()), this, SLOT(newProject()));
+	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
+	connect(loadProjectAction, SIGNAL(triggered()), this, SLOT(loadProject()));
+	connect(addFileAction, SIGNAL(triggered()), this, SLOT(addFile()));
+	connect(optionAction, SIGNAL(triggered()), this, SLOT(viewOption()));
 
-	connect(run_action_, SIGNAL(triggered()), this, SLOT(run()));
-	connect(step_into_action_, SIGNAL(triggered()), this, SLOT(step_into()));
-	connect(step_over_action_, SIGNAL(triggered()), this, SLOT(step_over()));
-	connect(step_out_action_, SIGNAL(triggered()), this, SLOT(step_out()));
-	connect(update_action_, SIGNAL(triggered()), this, SLOT(on_update()));
+	connect(runAction_, SIGNAL(triggered()), this, SLOT(run()));
+	connect(stepIntoAction_, SIGNAL(triggered()), this, SLOT(stepInto()));
+	connect(stepOverAction_, SIGNAL(triggered()), this, SLOT(stepOver()));
+	connect(stepOutAction_, SIGNAL(triggered()), this, SLOT(stepOut()));
+	connect(updateAction_, SIGNAL(triggered()), this, SLOT(onUpdate()));
+
+	QMenu* windowMenu = this->menuBar()->addMenu(tr("&Window"));
+	connect(windowMenu->addAction(tr("Project")), SIGNAL(triggered()), this, SLOT(showProjectDock()));
+	connect(windowMenu->addAction(tr("Expr")), SIGNAL(triggered()), this, SLOT(showEvalExprDock()));
+	connect(windowMenu->addAction(tr("CallStacl")), SIGNAL(triggered()), this, SLOT(showCSDock()));
+	connect(windowMenu->addAction(tr("Message")), SIGNAL(triggered()), this, SLOT(showMessageDock()));
 
 	connect(&debugger_, SIGNAL(breaked()), this, SLOT(breaked()));
 	connect(&debugger_, SIGNAL(required()), this, SLOT(required()));
 	connect(&debugger_, SIGNAL(connected()), this, SLOT(connected()));
 	connect(&debugger_, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-	connect(evalexpr_, SIGNAL(expr_changed(int, const QString&)), this, SLOT(expr_changed(int, const QString&)));
+	connect(evalexpr_, SIGNAL(exprChanged(int, const QString&)), this, SLOT(exprChanged(int, const QString&)));
 
-	connect(project_, SIGNAL(on_add_file(const QString&)), this, SLOT(add_file(const QString&)));
-	connect(project_, SIGNAL(on_view(const QString&)), this, SLOT(view_source(const QString&)));
+	connect(callstack_, SIGNAL(moveCallStack(int)), this, SLOT(moveCallStack(int)));
 
-	connect(code_editor_, SIGNAL(breakpoint_changed(const QString&,int,bool)), this, SLOT(on_breakpoint_changed(const QString&,int,bool)));
+	connect(project_, SIGNAL(onAddFile(const QString&)), this, SLOT(addFile(const QString&)));
+	connect(project_, SIGNAL(onView(const QString&)), this, SLOT(viewSource(const QString&)));
 
-	set_actions_enabled(false);
-	set_gui_enabled(false);
+	connect(codeEditor_, SIGNAL(breakpointChanged(const QString&,int,bool)), this, SLOT(onBreakpointChanged(const QString&,int,bool)));
+
+	setActionsEnabled(false);
+	setGuiEnabled(false);
 }
 
-void MainWindow::set_gui_enabled(bool b){
+void MainWindow::setGuiEnabled(bool b){
 	evalexpr_->setEnabled(b);
 	callstack_->setEnabled(b);
-	code_editor_->setEnabled(b);
+	codeEditor_->setEnabled(b);
 	project_->setEnabled(b);
 	messages_->setEnabled(b);
 }
 
-void MainWindow::set_actions_enabled(bool b){
-	run_action_->setEnabled(b);
-	step_into_action_->setEnabled(b);
-	step_over_action_->setEnabled(b);
-	step_out_action_->setEnabled(b);
-	update_action_->setEnabled(b);
+void MainWindow::setActionsEnabled(bool b){
+	runAction_->setEnabled(b);
+	stepIntoAction_->setEnabled(b);
+	stepOverAction_->setEnabled(b);
+	stepOutAction_->setEnabled(b);
+	updateAction_->setEnabled(b);
 }
 
-void MainWindow::set_step_actions_enabled(bool b){
-	run_action_->setEnabled(b);
-	step_into_action_->setEnabled(b);
-	step_over_action_->setEnabled(b);
-	step_out_action_->setEnabled(b);
+void MainWindow::setStepActionsEnabled(bool b){
+	runAction_->setEnabled(b);
+	stepIntoAction_->setEnabled(b);
+	stepOverAction_->setEnabled(b);
+	stepOutAction_->setEnabled(b);
 }
 
-void MainWindow::update_expr_view(){
-	for(int i=0; i<debugger_.eval_expr_size(); ++i){
-		evalexpr_->set_item(i, debugger_.eval_result(i));
+void MainWindow::updateExprView(){
+	for(int i=0; i<debugger_.evalExprSize(); ++i){
+		evalexpr_->setExprResult(i, debugger_.evalResult(i));
 	}
 }
 
-void MainWindow::update_call_stack_view(){
+void MainWindow::updateCallStackView(){
 	callstack_->clear();
-	for(int i=0; i<debugger_.call_stack_size(); ++i){
+	for(int i=0; i<debugger_.callStackSize(); ++i){
 		callstack_->set(i,
-			debugger_.call_stack_fun_name(i),
-			debugger_.call_stack_file_name(i),
-			debugger_.call_stack_lineno(i));
+			debugger_.callStackFunName(i),
+			debugger_.callStackFileName(i),
+			debugger_.callStackLineno(i));
 	}
+	callstack_->setLevel(debugger_.level());
 }
 
-void MainWindow::new_project(){
-	project_filename_ = QFileDialog::getSaveFileName(this, tr("New Project"), QString(), tr("xtal project(*.xproj)"));
+void MainWindow::newProject(){
+	projectFilename_ = QFileDialog::getSaveFileName(this, tr("New Project"), QString(), tr("xtal project(*.xproj)"));
 	document_.init();
-	if(document_.save(project_filename_)){
-		QDir::setCurrent(QFileInfo(project_filename_).dir().absolutePath());
+	if(document_.save(projectFilename_)){
+		QDir::setCurrent(QFileInfo(projectFilename_).dir().absolutePath());
 
-		//code_editor_->set_source_file(filename);
+		//codeEditor_->setSourceFile(filename);
 
-		set_gui_enabled(true);
-		this->setWindowTitle(project_filename_ + " - xtal debugger");
+		setGuiEnabled(true);
+		this->setWindowTitle(projectFilename_ + " - xtal debugger");
 	}
 }
 
-void MainWindow::save_project(){
-	document_.save(project_filename_);
-	code_editor_->save_all();
+void MainWindow::saveProject(){
+	document_.save(projectFilename_);
+	codeEditor_->saveAll();
 }
 
-void MainWindow::load_project(){
-	project_filename_ = QFileDialog::getOpenFileName(this, tr("Load Project"), QString(), tr("xtal project(*.xproj)"));
-	if(document_.load(project_filename_)){
-		QDir::setCurrent(QFileInfo(project_filename_).dir().absolutePath());
+void MainWindow::loadProject(){
+	projectFilename_ = QFileDialog::getOpenFileName(this, tr("Load Project"), QString(), tr("xtal project(*.xproj)"));
+	if(document_.load(projectFilename_)){
+		QDir::setCurrent(QFileInfo(projectFilename_).dir().absolutePath());
 
 		project_->init();
-		for(int i=0; i<document_.file_count(); ++i){
+		for(int i=0; i<document_.fileCount(); ++i){
 			QString path = document_.file(i)->path;
-			project_->add_file(QFileInfo(path).fileName(), path);
+			project_->addFile(QFileInfo(path).fileName(), path);
 		}
 
-		for(int i=0; i<document_.eval_expr_count(); ++i){
-			QString expr = document_.eval_expr(i);
-			evalexpr_->set_expr(i, expr);
+		for(int i=0; i<document_.evalExprCount(); ++i){
+			QString expr = document_.evalExpr(i);
+			evalexpr_->setExpr(i, expr);
 		}
 
-		set_gui_enabled(true);
-		this->setWindowTitle(project_filename_ + " - xtal debugger");
+		setGuiEnabled(true);
+		this->setWindowTitle(projectFilename_ + " - xtal debugger");
 		this->setWindowTitle(QDir::current().absolutePath());
 	}
 }
 
-void MainWindow::add_file(const QString& filename){
+void MainWindow::addFile(const QString& filename){
 	QString path = makeRelative(filename, QDir::currentPath());
-	if(document_.add_file(path)){
-		project_->add_file(QFileInfo(path).fileName(), path);
+	if(document_.addFile(path)){
+		project_->addFile(QFileInfo(path).fileName(), path);
 	}
 }
 
-void MainWindow::add_file(){
-	add_file(QFileDialog::getOpenFileName(this, tr("add file"), QString(), tr("xtal(*.xtal)")));
+void MainWindow::addFile(){
+	addFile(QFileDialog::getOpenFileName(this, tr("add file"), QString(), tr("xtal(*.xtal)")));
 }
 
-void MainWindow::view_option(){
+void MainWindow::viewOption(){
 	OptionDialog* dialog = new OptionDialog(this);
 	dialog->exec();
 }
 
-void MainWindow::view_source(const QString& file){
-	if(Document::FileInfo* fi = document_.file(document_.find_file(file))){
-		code_editor_->add_page(QFileInfo(fi->path).fileName(), fi->path);
+void MainWindow::viewSource(const QString& file){
+	if(Document::FileInfo* fi = document_.file(document_.findFile(file))){
+		codeEditor_->addPage(QFileInfo(fi->path).fileName(), fi->path);
 	}
 }
 
-void MainWindow::expr_changed(int i, const QString& expr){
-	document_.set_eval_expr(i, expr);
-	debugger_.set_eval_expr(i, expr.toStdString().c_str());
+void MainWindow::exprChanged(int i, const QString& expr){
+	document_.setEvalExpr(i, expr);
+	debugger_.setEvalExpr(i, expr.toStdString().c_str());
+
+	if(state_==STATE_BREAKING){
+		debugger_.sendNostep();
+	}
 }
 
 void MainWindow::breaked(){
-	code_editor_->set_pos(debugger_.call_stack_file_name(0)->c_str(), debugger_.call_stack_lineno(0));
-	update_expr_view();
-	update_call_stack_view();
+	QString path = debugger_.callStackFileName()->c_str();
+	if(Document::FileInfo* f=document_.file(document_.findFile(path))){
+		codeEditor_->addPage(QFileInfo(f->path).fileName(), f->path);
+	}
+
+	codeEditor_->setPos(debugger_.callStackFileName()->c_str(), debugger_.callStackLineno());
+	updateExprView();
+	updateCallStackView();
+
+	state_ = STATE_BREAKING;
+	setStepActionsEnabled(true);
 }
 
 void MainWindow::required(){
-	if(Document::FileInfo* f=document_.file(document_.find_file_about(debugger_.required_file()))){
-		if(CodeEditorPage* p=code_editor_->widget(code_editor_->find_widget(f->path))){
+	if(Document::FileInfo* f=document_.file(document_.findFileAbout(debugger_.requiredFile()))){
+		if(CodeEditorPage* p = codeEditor_->widget(codeEditor_->findWidget(f->path))){
 			f->breakpoints.clear();
-			for(int i=1; i<=p->line_count(); ++i){
+			for(int i=1; i<=p->lineCount(); ++i){
 				if(p->breakpoint(i)){
 					f->breakpoints.insert(i);
 				}
@@ -294,15 +316,15 @@ void MainWindow::required(){
 				for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
 					code->set_breakpoint(*it);
 				}
-				required_files_.push_back(f->path);
-				debugger_.send_required_source(code);
+				requiredFiles_.insert(f->path);
+				debugger_.sendRequiredSource(code);
 				return;
 			}
 			else{
 				XTAL_CATCH_EXCEPT(e){
 					print(e->to_s()->c_str());
 				}
-				debugger_.send_required_source(null);
+				debugger_.sendRequiredSource(null);
 			}
 		}
 		else if(CodePtr code = compile_file(f->path.toStdString().c_str())){
@@ -310,70 +332,79 @@ void MainWindow::required(){
 			for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
 				code->set_breakpoint(*it);
 			}
-			required_files_.push_back(f->path);
-			debugger_.send_required_source(code);
+			requiredFiles_.insert(f->path);
+			debugger_.sendRequiredSource(code);
 			return;
 		}
 		else{
 			XTAL_CATCH_EXCEPT(e){
 				print(e->to_s()->c_str());
 			}
-			debugger_.send_required_source(null);
+			debugger_.sendRequiredSource(null);
 		}
 	}
 	else{
-		debugger_.send_required_source(null);
-		print(QString("Not found %1").arg(debugger_.required_file()));
+		debugger_.sendRequiredSource(null);
+		print(QString("Not found %1").arg(debugger_.requiredFile()));
 	}
 
 	state_ = STATE_REQUIRING;
-	set_step_actions_enabled(false);
+	setStepActionsEnabled(false);
 }
 
 void MainWindow::connected(){
-	set_actions_enabled(true);
-	required_files_.clear();
+	setActionsEnabled(true);
+	setStepActionsEnabled(false);
+	requiredFiles_.clear();
 	state_ = STATE_NONE;
 }
 
 void MainWindow::disconnected(){
-	set_actions_enabled(false);
-	code_editor_->clear_cursor_line();
-	required_files_.clear();
+	setActionsEnabled(false);
+	codeEditor_->clearCursorLine();
+	requiredFiles_.clear();
 }
 
 void MainWindow::run(){
-	code_editor_->clear_cursor_line();
+	codeEditor_->clearCursorLine();
 	debugger_.run();
+	setStepActionsEnabled(false);
+	state_ = STATE_NONE;
 }
 
-void MainWindow::step_over(){
-	code_editor_->clear_cursor_line();
-	debugger_.step_over();
+void MainWindow::stepOver(){
+	codeEditor_->clearCursorLine();
+	debugger_.stepOver();
+	setStepActionsEnabled(false);
+	state_ = STATE_NONE;
 }
 
-void MainWindow::step_into(){
-	code_editor_->clear_cursor_line();
-	debugger_.step_into();
+void MainWindow::stepInto(){
+	codeEditor_->clearCursorLine();
+	debugger_.stepInto();
+	setStepActionsEnabled(false);
+	state_ = STATE_NONE;
 }
 
-void MainWindow::step_out(){
-	code_editor_->clear_cursor_line();
-	debugger_.step_out();
+void MainWindow::stepOut(){
+	codeEditor_->clearCursorLine();
+	debugger_.stepOut();
+	setStepActionsEnabled(false);
+	state_ = STATE_NONE;
 }
 
-void MainWindow::on_update(){
+void MainWindow::onUpdate(){
 	if(state_==STATE_REQUIRING){
 		state_ = STATE_NONE;
-		set_step_actions_enabled(true);
+		setStepActionsEnabled(true);
 		required();
 	}
 	else{
-		if(CodeEditorPage* p=code_editor_->current_page()){
-			Document::FileInfo* f=document_.file(document_.find_file(p->source_path()));
+		if(CodeEditorPage* p=codeEditor_->currentPage()){
+			Document::FileInfo* f=document_.file(document_.findFile(p->sourcePath()));
 
 			f->breakpoints.clear();
-			for(int i=1; i<=p->line_count(); ++i){
+			for(int i=1; i<=p->lineCount(); ++i){
 				if(p->breakpoint(i)){
 					f->breakpoints.insert(i);
 				}
@@ -384,8 +415,8 @@ void MainWindow::on_update(){
 				for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
 					code->set_breakpoint(*it);
 				}
-				required_files_.push_back(f->path);
-				//debugger_.send_updated_source(code);
+				requiredFiles_.insert(f->path);
+				//debugger_.sendUpdatedSource(code);
 				return;
 			}
 			else{
@@ -397,12 +428,11 @@ void MainWindow::on_update(){
 	}
 }
 
-void MainWindow::on_breakpoint_changed(const QString& path, int n, bool b){
-	foreach(QString file, required_files_){
-		if(file==path){
-			debugger_.send_breakpoint(path, n, b);
-			return;
-		}
+void MainWindow::onBreakpointChanged(const QString& path, int n, bool b){
+	QSet<QString>::const_iterator it = requiredFiles_.find(path);
+	if(it!=requiredFiles_.constEnd()){
+		debugger_.sendBreakpoint(path, n, b);
+		return;
 	}
 }
 
@@ -410,3 +440,8 @@ void MainWindow::print(const QString& mes){
 	messages_->append(mes);
 	messages_->append("\n");
 }
+
+void MainWindow::moveCallStack(int n){
+	debugger_.sendMoveCallStack(n);
+}
+

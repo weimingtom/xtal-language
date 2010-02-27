@@ -13,7 +13,7 @@ public:
 
 	void init();
 
-	QStandardItem* make_item(const QString& text, const QString& data);
+	QStandardItem* makeItem(const QString& text, const QString& data);
 
 	void dragEnterEvent(QDragEnterEvent *event);
 
@@ -21,16 +21,16 @@ public:
 
 	void dragMoveEvent(QDragMoveEvent *event);
 
-	void add_file(const QString& filename, const QString& data);
+	void addFile(const QString& filename, const QString& data);
 
 signals:
 
-	void on_add_file(const QString& filename);
-	void on_view(const QString& filename);
+	void onAddFile(const QString& filename);
+	void onView(const QString& filename);
 
 public slots:
 
-	void on_clicked(const QModelIndex& index);
+	void onClicked(const QModelIndex& index);
 
 private:
 	QStandardItemModel* model_;

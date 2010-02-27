@@ -149,6 +149,15 @@ public:
 		stream_ = stream;
 		debug::set_breakpoint_hook(bind_this(method(&Debugger::linehook), this));
 		set_require_source_hook(bind_this(method(&Debugger::require_source_hook), this));
+		eval_exprs_ = xnew<Array>();
+
+		while(ArrayPtr cmd = recv_command()){
+			AnyPtr type = cmd->at(0);
+			if(raweq(type, Xid(start))){
+				break;
+			}
+			exec_command(cmd);
+		}
 
 		return true;
 	}
@@ -159,12 +168,16 @@ public:
 	*/
 	void update(){
 		// 次のコマンドが到着していたらコマンドをデシリアライズして実行する
-		if(stream_->available()){
+		while(stream_->available()){
 			exec_command(ptr_cast<Array>(stream_->deserialize()));
 		}
 	}
 
 private:
+
+	ArrayPtr recv_command(){
+		return ptr_cast<Array>(stream_->deserialize());
+	}
 
 	CodePtr require_source_hook(const StringPtr& name){
 		ArrayPtr a = xnew<Array>();
@@ -172,9 +185,12 @@ private:
 		a->push_back(name);
 		stream_->serialize(a);
 
-		ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize());
-		if(cmd && raweq(cmd->at(0), Xid(required_source))){
-			return ptr_cast<Code>(cmd->at(1));
+		while(ArrayPtr cmd = recv_command()){
+			AnyPtr type = cmd->at(0);
+			if(raweq(type, Xid(required_source))){
+				return ptr_cast<Code>(cmd->at(1));
+			}
+			exec_command(cmd);
 		}
 		return null;
 	}
@@ -191,10 +207,27 @@ private:
 	}
 
 	void exec_command(const ArrayPtr& cmd){
-		if(cmd && raweq(cmd->at(0), Xid(breakpoint))){
-			if(CodePtr code=find_code(ptr_cast<String>(cmd->at(1)))){
+		if(!cmd){
+			return;
+		}
+
+		AnyPtr type = cmd->at(0);
+
+		if(raweq(type, Xid(breakpoint))){
+			if(CodePtr code = find_code(ptr_cast<String>(cmd->at(1)))){
 				code->set_breakpoint(cmd->at(2)->to_i(), cmd->at(3));
+				return;
 			}
+		}
+
+		if(raweq(type, Xid(eval_expr))){
+			int index = cmd->at(1)->to_i();
+			if(index>=eval_exprs_->size()){
+				eval_exprs_->resize(index+1);
+			}
+
+			eval_exprs_->set_at(cmd->at(1)->to_i(), cmd->at(2));
+			return;
 		}
 	}
 
@@ -323,25 +356,32 @@ private:
 		return ret;
 	}
 
+	void send_break(debug::HookInfoPtr info, int level){
+		ArrayPtr data = xnew<Array>();
+		data->push_back(Xid(break));
+		data->push_back(make_eval_expr_info(info));
+		data->push_back(make_call_stack_info(info));
+		data->push_back(level);
+		stream_->serialize(data);
+	}
+
 	int linehook(debug::HookInfoPtr info){
+		int level = 0;
+		send_break(info, level);
 		while(true){
-			ArrayPtr data = xnew<Array>();
-			data->push_back(Xid(break));
-			data->push_back(make_eval_expr_info(info));
-			data->push_back(make_call_stack_info(info));
-			stream_->serialize(data);
-
 			if(ArrayPtr cmd = ptr_cast<Array>(stream_->deserialize())){
-
-				if(cmd->at(1)){
-					eval_exprs_ = ptr_cast<Array>(cmd->at(1));
-				}
-
 				AnyPtr type = cmd->at(0);
 
-				if(raweq(type, Xid(return))){
+				if(raweq(type, Xid(move_callstack))){
+					level = cmd->at(1)->to_i();
+					send_break(info, level);
 					continue;
-				}	
+				}
+
+				if(raweq(type, Xid(nostep))){
+					send_break(info, level);
+					continue;
+				}
 
 				if(raweq(type, Xid(run))){
 					return debug::RUN;
@@ -360,6 +400,7 @@ private:
 				}
 
 				exec_command(cmd);
+				continue;
 			}
 		}
 	}

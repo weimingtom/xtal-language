@@ -2,21 +2,21 @@
 
 ProjectView::ProjectView(QWidget *parent)
 	:QTreeView(parent){
-	model_ = new QStandardItemModel();
+	model_ = new QStandardItemModel(this);
 	setModel(model_);
 
 	setDragEnabled(true);
 	setDragDropMode(QAbstractItemView::DragDrop);
 	setHeaderHidden(true);
 
-	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(on_clicked(const QModelIndex&)));
+	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(onClicked(const QModelIndex&)));
 }
 
 void ProjectView::init(){
 	model_->clear();
 }
 
-QStandardItem* ProjectView::make_item(const QString& text, const QString& data){
+QStandardItem* ProjectView::makeItem(const QString& text, const QString& data){
 	QStandardItem* ret = new QStandardItem(text);
 	ret->setData(data);
 	ret->setEditable(false);
@@ -39,8 +39,8 @@ void ProjectView::dropEvent(QDropEvent *event){
 			continue;
 		}
 
-		//model_->invisibleRootItem()->appendRow(make_item(file));
-		emit on_add_file(file);
+		//model_->invisibleRootItem()->appendRow(makeItem(file));
+		emit onAddFile(file);
 	}
 }
 
@@ -50,12 +50,12 @@ void ProjectView::dragMoveEvent(QDragMoveEvent *event){
 	}
 }
 
-void ProjectView::add_file(const QString& filename, const QString& data){
-	model_->invisibleRootItem()->appendRow(make_item(filename, data));
+void ProjectView::addFile(const QString& filename, const QString& data){
+	model_->invisibleRootItem()->appendRow(makeItem(filename, data));
 }
 
-void ProjectView::on_clicked(const QModelIndex& index){
+void ProjectView::onClicked(const QModelIndex& index){
 	if(QStandardItem* ret = model_->item(index.row(), index.column())){
-		emit on_view(ret->text());
+		emit onView(ret->text());
 	}
 }

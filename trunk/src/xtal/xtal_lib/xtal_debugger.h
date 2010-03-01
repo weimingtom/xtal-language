@@ -149,7 +149,8 @@ public:
 		stream_ = stream;
 		debug::set_breakpoint_hook(bind_this(method(&Debugger::linehook), this));
 		set_require_source_hook(bind_this(method(&Debugger::require_source_hook), this));
-		eval_exprs_ = xnew<Array>();
+		eval_exprs_ = xnew<Map>();
+		code_map_ = xnew<Map>();
 
 		while(ArrayPtr cmd = recv_command()){
 			AnyPtr type = cmd->at(0);
@@ -185,25 +186,31 @@ private:
 		a->push_back(name);
 		stream_->serialize(a);
 
+		CodePtr ret;
 		while(ArrayPtr cmd = recv_command()){
 			AnyPtr type = cmd->at(0);
 			if(raweq(type, Xid(required_source))){
-				return ptr_cast<Code>(cmd->at(1));
+				ret = ptr_cast<Code>(cmd->at(1));
+				if(ret){
+					MapPtr map = xnew<Map>();
+					map->set_at(Xid(code), ret);
+					code_map_->set_at(ret->source_file_name(), map);
+				}
+				else{
+					break;
+				}
+
+				continue;
 			}
+
+			if(raweq(type, Xid(start))){
+				break;
+			}
+
 			exec_command(cmd);
 		}
-		return null;
-	}
 
-	CodePtr find_code(const StringPtr& path){
-		for(int i=0; i<alive_object_count(); ++i){
-			if(CodePtr ret=ptr_cast<Code>(alive_object(i))){
-				if(ret->source_file_name()->op_eq(path)){
-					return ret;
-				}
-			}
-		}
-		return null;
+		return ret;
 	}
 
 	void exec_command(const ArrayPtr& cmd){
@@ -213,25 +220,40 @@ private:
 
 		AnyPtr type = cmd->at(0);
 
-		if(raweq(type, Xid(breakpoint))){
-			if(CodePtr code = find_code(ptr_cast<String>(cmd->at(1)))){
-				code->set_breakpoint(cmd->at(2)->to_i(), cmd->at(3));
-				return;
+		if(raweq(type, Xid(add_breakpoint))){
+			AnyPtr ddd = cmd->at(1);
+			if(MapPtr value = ptr_cast<Map>(code_map_->at(cmd->at(1)))){
+				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
+					code->add_breakpoint(cmd->at(2)->to_i());
+					value->set_at(cmd->at(2)->to_i(), cmd->at(3));
+				}
 			}
+
+			return;
 		}
 
-		if(raweq(type, Xid(eval_expr))){
-			int index = cmd->at(1)->to_i();
-			if(index>=eval_exprs_->size()){
-				eval_exprs_->resize(index+1);
+		if(raweq(type, Xid(remove_breakpoint))){
+			if(MapPtr value = ptr_cast<Map>(code_map_->at(cmd->at(1)))){
+				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
+					code->remove_breakpoint(cmd->at(2)->to_i());
+				}
 			}
 
-			eval_exprs_->set_at(cmd->at(1)->to_i(), cmd->at(2));
+			return;
+		}
+
+		if(raweq(type, Xid(add_eval_expr))){
+			eval_exprs_->set_at(cmd->at(1), cmd->at(2));
+			return;
+		}
+
+		if(raweq(type, Xid(remove_eval_expr))){
+			eval_exprs_->erase(cmd->at(1));
 			return;
 		}
 	}
 
-	ArrayPtr make_debug_object(const AnyPtr& v, int depth = 5){
+	ArrayPtr make_debug_object(const AnyPtr& v, int depth = 3){
 		ArrayPtr ret = xnew<Array>(3);
 		ret->set_at(0, v->get_class()->to_s());
 		ret->set_at(1, v->to_s());
@@ -335,22 +357,22 @@ private:
 		return ret;
 	}
 
-	ArrayPtr make_eval_expr_info(const debug::HookInfoPtr& info){
-		ArrayPtr ret = xnew<Array>();
-
-		int i = 0;
-		Xfor_cast(const StringPtr& key, eval_exprs_){
-			AnyPtr ev = info->vm()->eval(xnew<xpeg::Executor>(key), 0);
-
-			if(info->vm()->catch_except()){
-				ret->push_back(null);
+	MapPtr make_eval_expr_info(const debug::HookInfoPtr& info, int level){
+		MapPtr ret = xnew<Map>();
+		Xfor2(key, value, eval_exprs_){
+			if(CodePtr code = ptr_cast<Code>(value)){
+				AnyPtr val = info->vm()->eval(code, level);
+				
+				if(AnyPtr e = info->vm()->catch_except()){
+					ret->set_at(key, null);
+				}
+				else{
+					ret->set_at(key, make_debug_object(val));
+				}
 			}
 			else{
-				ret->push_back(make_debug_object(ev));
+				ret->set_at(key, null);
 			}
-		}
-		else{
-			ret->push_back(null);
 		}
 
 		return ret;
@@ -359,13 +381,27 @@ private:
 	void send_break(debug::HookInfoPtr info, int level){
 		ArrayPtr data = xnew<Array>();
 		data->push_back(Xid(break));
-		data->push_back(make_eval_expr_info(info));
+		data->push_back(make_eval_expr_info(info, level));
 		data->push_back(make_call_stack_info(info));
 		data->push_back(level);
 		stream_->serialize(data);
 	}
 
 	int linehook(debug::HookInfoPtr info){
+		if(info->kind()==BREAKPOINT){
+			if(MapPtr value = ptr_cast<Map>(code_map_->at(info->file_name()))){
+				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
+					if(CodePtr eval = ptr_cast<Code>(value->at(info->lineno()))){
+						AnyPtr val = info->vm()->eval(eval);
+						info->vm()->catch_except();
+						if(!val){
+							return debug::REDO;
+						}
+					}
+				}
+			}
+		}
+
 		int level = 0;
 		send_break(info, level);
 		while(true){
@@ -407,7 +443,8 @@ private:
 
 private:
 	DebugStreamPtr stream_;
-	ArrayPtr eval_exprs_;
+	MapPtr eval_exprs_;
+	MapPtr code_map_;
 };
 
 }

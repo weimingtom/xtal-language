@@ -58,7 +58,15 @@ void Any_this(const VMachinePtr& vm){
 }
 
 void eval(const VMachinePtr& vm){
-	vm->return_result(vm->eval(xnew<xpeg::Executor>(vm->arg(0), XTAL_STRING("<eval>")), vm->arg_default(1, 0)->to_i()));
+	AnyPtr ev = vm->arg(0);
+	int_t depth = vm->arg_default(1, 0)->to_i();
+
+	if(const CodePtr& code = ptr_cast<Code>(ev)){
+		vm->return_result(vm->eval(code, depth));
+		return;
+	}
+
+	vm->return_result(vm->eval(eval_compile(ev), depth));
 }
 
 void Stream_put_s(const StreamPtr& stream, const StringPtr& str){
@@ -1574,6 +1582,7 @@ XTAL_BIND(Builtin){
 #ifndef XTAL_NO_PARSER
 	Xdef_fun_alias(compile_file, &compile_file);
 	Xdef_fun_alias(compile, &compile);
+	Xdef_fun_alias(eval_compile, &eval_compile);
 	Xdef_fun_alias(eval, &eval);
 #endif
 }

@@ -49,31 +49,22 @@ void Code::generated(){
 	first_fun_->set_info(&xfun_info_table_[0]);
 }
 
-void Code::set_breakpoint(int_t lineno, bool set){
+void Code::add_breakpoint(int_t lineno){
 	for(uint_t i=0, sz=lineno_table_.size(); i<sz; ++i){
 		LineNumberInfo& info = lineno_table_[i];
-		if(info.lineno==lineno){
-			if(set){
-				if(!info.breakpoint){
-					info.op = code_[info.start_pc];
-					code_[info.start_pc] = InstBreakPoint::NUMBER;
-				}
-			}
-			else{
-				if(info.breakpoint){
-					code_[info.start_pc] = info.op;
-				}
-			}
-			info.breakpoint = (int)set;
+		if(info.lineno==lineno && code_[info.start_pc] == InstLine::NUMBER){
+			code_[info.start_pc] = InstBreakPoint::NUMBER;
 		}
 	}
 }
 
-inst_t Code::original_op(const inst_t* pc){
-	if(LineNumberInfo* lni = compliant_lineno_info(pc)){
-		return lni->op;
+void Code::remove_breakpoint(int_t lineno){
+	for(uint_t i=0, sz=lineno_table_.size(); i<sz; ++i){
+		LineNumberInfo& info = lineno_table_[i];
+		if(info.lineno==lineno && code_[info.start_pc] == InstBreakPoint::NUMBER){
+			code_[info.start_pc] = InstLine::NUMBER;
+		}
 	}
-	return 0;	
 }
 	
 bool Code::set_lineno_info(uint_t line){
@@ -81,7 +72,7 @@ bool Code::set_lineno_info(uint_t line){
 		return false;
 	}
 
-	LineNumberInfo lnt = {(u32)code_.size(), (u16)line, 0, 0};
+	LineNumberInfo lnt = {(u32)code_.size(), (u16)line};
 	lineno_table_.push_back(lnt);
 	return true;
 }

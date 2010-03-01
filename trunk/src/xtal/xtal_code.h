@@ -91,23 +91,27 @@ public:
 		return to_smartptr(static_cast<Class*>(this)); 
 	}
 
-	ScopeInfo* scope_info(int_t i){
+	ScopeInfo* scope_info(uint_t i){
+		XTAL_ASSERT(i<scope_info_table_.size());
 		return &scope_info_table_[i];
 	}
 
-	ClassInfo* class_info(int_t i){
+	ClassInfo* class_info(uint_t i){
+		XTAL_ASSERT(i<class_info_table_.size());
 		return &class_info_table_[i];
 	}
 
-	FunInfo* fun_info(int_t i){
+	FunInfo* fun_info(uint_t i){
+		XTAL_ASSERT(i<xfun_info_table_.size());
 		return &xfun_info_table_[i];
 	}	
 
-	ExceptInfo* except_info(int_t i){
+	ExceptInfo* except_info(uint_t i){
+		XTAL_ASSERT(i<except_info_table_.size());
 		return &except_info_table_[i];
 	}
 
-	MethodPtr first_fun(){
+	const MethodPtr& first_fun(){
 		return first_fun_;
 	}
 
@@ -121,9 +125,9 @@ public:
 
 	IDPtr find_near_variable(const IDPtr& primary_key);
 
-	void set_breakpoint(int_t lineno, bool set = true);
+	void add_breakpoint(int_t lineno);
 
-	inst_t original_op(const inst_t* pc);
+	void remove_breakpoint(int_t lineno);
 
 	void on_visit_members(Visitor& m){
 		Class::on_visit_members(m);
@@ -162,8 +166,6 @@ private:
 	struct LineNumberInfo{
 		u32 start_pc;
 		u16 lineno;
-		inst_t op;
-		u8 breakpoint;
 	};
 
 	struct LineNumberCmp{

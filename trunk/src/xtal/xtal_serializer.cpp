@@ -218,8 +218,6 @@ void Serializer::inner_serialize(const AnyPtr& v){
 			Code::LineNumberInfo& info = p->lineno_table_[i];
 			stream_->put_u32be(info.start_pc);
 			stream_->put_u16be(info.lineno);
-			stream_->put_u8(info.op);
-			stream_->put_u8(info.breakpoint);
 		}
 			
 		sz = p->once_table_.size();
@@ -424,8 +422,6 @@ CodePtr Serializer::inner_deserialize_code(){
 		Code::LineNumberInfo& info = p->lineno_table_[i];
 		info.start_pc = stream_->get_u32be();
 		info.lineno = stream_->get_u16be();
-		info.op = stream_->get_u8();
-		info.breakpoint = stream_->get_u8();
 	}
 
 	sz = stream_->get_u16be();

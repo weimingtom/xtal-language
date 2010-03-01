@@ -46,13 +46,16 @@ void CodeEditorPage::updateLineNumberAreaWidth(int /* newBlockCount */){
 }
 
 void CodeEditorPage::updateLineNumberArea(const QRect &rect, int dy){
-	if (dy)
+	if(dy){
 		lineNumberArea->scroll(0, dy);
-	else
+	}
+	else{
 		lineNumberArea->update(0, rect.y(), lineNumberArea->width(), rect.height());
+	}
 
-	if (rect.contains(viewport()->rect()))
+	if(rect.contains(viewport()->rect())){
 		updateLineNumberAreaWidth(0);
+	}
 }
 
 void CodeEditorPage::resizeEvent(QResizeEvent *e){
@@ -65,7 +68,7 @@ void CodeEditorPage::resizeEvent(QResizeEvent *e){
 void CodeEditorPage::highlightCurrentLine(){
 	QList<QTextEdit::ExtraSelection> extraSelections;
 
-	if (!isReadOnly()) {
+	if(!isReadOnly()){
 		QTextEdit::ExtraSelection selection;
 
 		QColor lineColor = QColor(Qt::yellow).lighter(120);
@@ -89,12 +92,11 @@ void CodeEditorPage::lineNumberAreaPaintEvent(QPaintEvent *event){
 	int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
 	int bottom = top + (int) blockBoundingRect(block).height();
 
-	while (block.isValid() && top <= event->rect().bottom()) {
-		if (block.isVisible() && bottom >= event->rect().top()) {
+	while(block.isValid() && top <= event->rect().bottom()){
+		if(block.isVisible() && bottom >= event->rect().top()){
 			QString number = QString::number(blockNumber + 1);
 			painter.setPen(Qt::black);
-			painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
-							 Qt::AlignRight, number);
+			painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
 
 			if(block.blockNumber()<lineData_.size()){
 				LineData& data = lineData_[block.blockNumber()];
@@ -171,6 +173,7 @@ void CodeEditorPage::save(){
 }
 
 void CodeEditorPage::onBlockCountChanged(int blockCount){
+	/*
 	QList<QTextEdit::ExtraSelection> sel = this->extraSelections();
 	if(lineData_.size()!=0){
 		if(sel.size()>0){
@@ -186,6 +189,8 @@ void CodeEditorPage::onBlockCountChanged(int blockCount){
 
 		}
 	}
+	*/
+
 	lineData_.resize(blockCount);
 }
 
@@ -207,22 +212,23 @@ void CodeEditor::closePage(int index){
 }
 
 void CodeEditor::onTextChanged(CodeEditorPage* p){
-	int i = findWidget(p);
+	int i = index(p);
 	this->setTabText(i, "*" + this->tabText(i));
 }
 
 void CodeEditor::onBreakpointChanged(const QString& path, int n, bool b){
 	emit breakpointChanged(path, n, b);
 }
-void CodeEditor::addPage(const QString& file, const QString& path){
-	if(CodeEditorPage* p = widget(findWidget(path))){
+
+void CodeEditor::addPage(const QString& path){
+	if(CodeEditorPage* p = findPage(path)){
 		this->setCurrentWidget(p);
 		return;
 	}
 
 	CodeEditorPage* page = new CodeEditorPage();
 	page->setSourcePath(path);
-	addTab(page, file);
+	addTab(page, QFileInfo(path).fileName());
 	this->setCurrentWidget(page);
 
 	QFile f(path);
@@ -235,7 +241,7 @@ void CodeEditor::addPage(const QString& file, const QString& path){
 	connect(page, SIGNAL(breakpointChanged(const QString&,int,bool)), this, SLOT(onBreakpointChanged(const QString&,int,bool)));
 }
 
-CodeEditorPage* CodeEditor::widget(int index){
+CodeEditorPage* CodeEditor::page(int index){
 	return (CodeEditorPage*)QTabWidget::widget(index);
 }
 
@@ -257,17 +263,17 @@ void CodeEditor::setCursorLine(int n){
 	}
 }
 
-int CodeEditor::findWidget(const QString& path){
+CodeEditorPage* CodeEditor::findPage(const QString& path){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
 		if(p->sourcePath()==path){
-			return i;
+			return p;
 		}
 	}
-	return -1;
+	return 0;
 }
 
-int CodeEditor::findWidget(CodeEditorPage* a){
+int CodeEditor::index(CodeEditorPage* a){
 	for(int i=0; i<this->count(); ++i){
 		CodeEditorPage* p = (CodeEditorPage*)widget(i);
 		if(p==a){
@@ -278,12 +284,12 @@ int CodeEditor::findWidget(CodeEditorPage* a){
 }
 
 bool CodeEditor::setSourceFile(const QString& path){
-	if(CodeEditorPage* p = widget(findWidget(path))){
+	if(CodeEditorPage* p = findPage(path)){
 		this->setCurrentWidget(p);
 		return true;
 	}
 	else{
-		addPage(path, "");
+		addPage(path);
 		return true;
 	}
 }

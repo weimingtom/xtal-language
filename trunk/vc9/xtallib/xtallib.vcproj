@@ -310,6 +310,11 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="リソース ファイル"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<Filter
 			Name="ヘッダー ファイル"
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
@@ -533,11 +538,6 @@
 					>
 				</File>
 			</Filter>
-		</Filter>
-		<Filter
-			Name="リソース ファイル"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-			>
 		</Filter>
 		<File
 			RelativePath="ReadMe.txt"

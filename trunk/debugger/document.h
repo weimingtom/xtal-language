@@ -5,17 +5,17 @@
 #include <QPlainTextEdit>
 #include <QObject>
 
+struct FileInfo{
+	QString path;
+	QSet<int> breakpoints;
+};
+
 /**
   * \brief プロジェクトの情報を保持するクラス
 　　* ソースパス、ブレークポイントの位置を保持している
   */
 class Document{
 public:
-
-	struct FileInfo{
-		QString path;
-		QSet<int> breakpoints;
-	};
 
 	void init();
 
@@ -29,11 +29,14 @@ public:
 
 	int fileCount();
 
+	/**
+	  * \brief プロジェクトにfileを追加する
+	  */
 	bool addFile(const QString& file);
 
-	int findFile(const QString& file);
+	FileInfo* findFile(const QString& file);
 
-	int findFileAbout(const QString& file);
+	FileInfo* findFileAbout(const QString& file);
 
 public:
 

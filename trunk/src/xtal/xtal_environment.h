@@ -562,30 +562,29 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
 
 /**
 * \xbind lib::builtin
-* \brief stream文字列をコンパイルする。
-* この戻り値をserializeすると、バイトコード形式で保存される。
-* \param stream Xtalスクリプトが記述された文字列を読み取れるストリーム
-* \return 実行できる関数オブジェクト
-*/
-CodePtr compile_stream(const StreamPtr& stream);
-
-/**
-* \xbind lib::builtin
 * \brief file_nameファイルをコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
 * \param file_name Xtalスクリプトが記述されたファイルの名前
-* \return 実行できる関数オブジェクト
+* \return 実行できるCodeオブジェクト
 */
 CodePtr compile_file(const StringPtr& file_name);
 
 /**
 * \xbind lib::builtin
-* \brief source文字列をコンパイルする。
+* \brief sourceをコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
 * \param source Xtalスクリプトが記述された文字列
-* \return 実行できる関数オブジェクト
+* \return 実行できるCodeオブジェクト
 */
-CodePtr compile(const StringPtr& source);
+CodePtr compile(const AnyPtr& source);
+
+/**
+* \xbind lib::builtin
+* \brief sourceをeval用にコンパイルする。
+* \param source Xtalスクリプトが記述された文字列
+* \return VMachine::evalに渡すことのできるCodeオブジェクト
+*/
+CodePtr eval_compile(const AnyPtr& source);
 
 /**
 * \xbind lib::builtin

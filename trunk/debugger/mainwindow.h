@@ -170,9 +170,11 @@ private:
 	QTextEdit* messages_;
 	Debugger debugger_;
 
+private:
 	QSet<QString> requiredFiles_;
 	Document document_;
 	QString projectFilename_;
+
 
 private:
 	QDockWidget* projDockWidget_;

@@ -339,8 +339,8 @@ void VMachine::adjust_values3(Any* values, int_t n, int_t need_result_count){
 void VMachine::upsize_variables(uint_t upsize){
 	int_t top = variables_top();
 
-	if(variables_.size()<top+upsize+128){
-		variables_.resize(top+upsize+128);
+	if(variables_.size()<top+upsize+150){
+		variables_.resize(top+upsize+200);
 		set_variables_top(top);
 
 		for(uint_t i=0; i<scopes_.size(); ++i){
@@ -774,13 +774,15 @@ zerodiv:
 
 vmloopbegin:
 	xop = *pc;
-vmloopbegin2:
+//vmloopbegin2:
 XTAL_VM_LOOP
 
 //{OPS{{
 	XTAL_VM_CASE_FIRST(InstLine){ // 3
-		check_breakpoint_hook(pc, BREAKPOINT2);
-		check_breakpoint_hook(pc, BREAKPOINT_LINE);
+		if(*hook_setting_bit_!=0){
+			check_breakpoint_hook(pc, BREAKPOINT2);
+			check_breakpoint_hook(pc, BREAKPOINT_LINE);
+		}
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
 
@@ -1227,6 +1229,7 @@ comp_send:
 	}
 
 	XTAL_VM_CASE(InstFilelocalVariable){ // 3
+		FunFrame& f = ff();
 		set_local_variable(inst.result, code()->member_direct(inst.value_number));
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}
@@ -1591,10 +1594,8 @@ comp_send:
 
 	XTAL_VM_CASE(InstBreakPoint){ // 5
 		check_breakpoint_hook(pc, BREAKPOINT);
-		if(inst_t opp = code()->original_op(pc)){
-			xop = opp;
-			goto vmloopbegin2;
-		}
+		//check_breakpoint_hook(pc, BREAKPOINT2);
+		check_breakpoint_hook(pc, BREAKPOINT_LINE);
 
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}

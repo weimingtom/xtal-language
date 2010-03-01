@@ -161,7 +161,7 @@ public:
 		ref.free = false;
 		used_memory_ += size;
 
-		debug_stacktrace(ref.stacktrace);
+		//debug_stacktrace(ref.stacktrace);
 
 		if(gcounter_==46910){
 			gcounter_ = gcounter_;
@@ -944,17 +944,6 @@ struct GCer{
 	}
 };
 
-CodePtr compile_stream(const StreamPtr& stream){
-	GCer gc;
-
-	CodeBuilder cb;
-	CodePtr ret = cb.compile(stream, empty_string);
-	if(!ret){
-		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1002"), cb.errors()));
-	}
-	return ret;
-}
-
 CodePtr compile_file(const StringPtr& file_name){
 	GCer gc;
 
@@ -973,8 +962,26 @@ CodePtr compile_file(const StringPtr& file_name){
 	return nul<Code>();
 }
 
-CodePtr compile(const StringPtr& source){
-	return compile_stream(xnew<StringStream>(source));
+CodePtr compile(const AnyPtr& source){
+	GCer gc;
+
+	CodeBuilder cb;
+	CodePtr ret = cb.compile(xnew<xpeg::Executor>(source), empty_string);
+	if(!ret){
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1002"), cb.errors()));
+	}
+	return ret;
+}
+
+CodePtr eval_compile(const AnyPtr& source){
+	GCer gc;
+
+	CodeBuilder cb;
+	CodePtr ret = cb.eval_compile(xnew<xpeg::Executor>(source));
+	if(!ret){
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1002"), cb.errors()));
+	}
+	return ret;
 }
 
 AnyPtr load(const StringPtr& file_name){

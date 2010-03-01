@@ -13,37 +13,31 @@ void Debugger::setSource(const QString& source){
 	source_ = source;
 }
 
-void Debugger::setEvalExpr(int n, const StringPtr& expr){
-	if(exprs_.size()<=n){
-		exprs_.resize(n+1);
-	}
-
-	exprs_[n].expr = expr;
-	exprs_[n].result = null;
-
-	if(isConnected()){
-		sendEvalExpr(n, expr);
+void Debugger::addEvalExpr(const QString& expr){
+	ExprValue& ev = exprs_[expr];
+	ev.count++;
+	if(ev.count==1){
+		ev.code = eval_compile(qstr2xstr(expr));
+		if(isConnected()){
+			sendAddEvalExpr(expr);
+		}
 	}
 }
 
-StringPtr Debugger::evalExpr(int n){
-	if(exprs_.size()<=n){
-		exprs_.resize(n+1);
+void Debugger::removeEvalExpr(const QString& expr){
+	ExprValue& ev = exprs_[expr];
+	ev.count--;
+	if(ev.count==0){
+		ev.code = null;
+		ev.result = null;
+		if(isConnected()){
+			sendRemoveEvalExpr(expr);
+		}
 	}
-
-	return exprs_[n].expr;
 }
 
-ArrayPtr Debugger::evalResult(int n){
-	if(exprs_.size()<=n){
-		exprs_.resize(n+1);
-	}
-
-	return exprs_[n].result;
-}
-
-int Debugger::evalExprSize(){
-	return exprs_.size();
+ArrayPtr Debugger::evalExprResult(const QString& expr){
+	return exprs_[expr].result;
 }
 
 int Debugger::callStackSize(){
@@ -98,12 +92,20 @@ void Debugger::redo(){
 	sendCommand(prevCommand_);
 }
 
-void Debugger::sendBreakpoint(const QString& path, int n, bool b){
+void Debugger::sendAddBreakpoint(const QString& path, int n){
 	ArrayPtr a = xnew<Array>();
-	a->push_back(Xid(breakpoint));
+	a->push_back(Xid(add_breakpoint));
 	a->push_back(path.toStdString().c_str());
 	a->push_back(n);
-	a->push_back(b);
+	a->push_back(null);
+	stream_->serialize(a);
+}
+
+void Debugger::sendRemoveBreakpoint(const QString& path, int n){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(remove_breakpoint));
+	a->push_back(path.toStdString().c_str());
+	a->push_back(n);
 	stream_->serialize(a);
 }
 
@@ -120,6 +122,12 @@ void Debugger::sendNostep(){
 	stream_->serialize(a);
 }
 
+void Debugger::sendStart(){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(start));
+	stream_->serialize(a);
+}
+
 void Debugger::sendRequiredSource(const CodePtr& code){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(required_source));
@@ -127,11 +135,19 @@ void Debugger::sendRequiredSource(const CodePtr& code){
 	stream_->serialize(a);
 }
 
-void Debugger::sendEvalExpr(int n, const StringPtr& expr){
+void Debugger::sendAddEvalExpr(const QString& expr){
 	ArrayPtr a = xnew<Array>();
-	a->push_back(Xid(eval_expr));
-	a->push_back(n);
-	a->push_back(expr);
+	a->push_back(Xid(add_eval_expr));
+	a->push_back(qstr2xid(expr));
+	a->push_back(exprs_[expr].code);
+	XTAL_CATCH_EXCEPT(e){}
+	stream_->serialize(a);
+}
+
+void Debugger::sendRemoveEvalExpr(const QString& expr){
+	ArrayPtr a = xnew<Array>();
+	a->push_back(Xid(remove_eval_expr));
+	a->push_back(qstr2xid(expr));
 	stream_->serialize(a);
 }
 
@@ -152,11 +168,12 @@ void Debugger::onRecv(){
 		AnyPtr type = command->at(0);
 
 		if(raweq(type, Xid(break))){
-			ArrayPtr exprs = ptr_cast<Array>(command->at(1));
+			MapPtr exprs = ptr_cast<Map>(command->at(1));
 			ArrayPtr callStack = ptr_cast<Array>(command->at(2));
 
-			for(uint_t i=0; i<exprs->size(); ++i){
-				exprs_[i].result = ptr_cast<Array>(exprs->at(i));
+			Xfor2(key, value, exprs){
+				ExprValue& ev = exprs_[xstr2qstr(key->to_s())];
+				ev.result = ptr_cast<Array>(value);
 			}
 
 			callStack_.resize(callStack->size());
@@ -192,8 +209,9 @@ void Debugger::onConnected(){
 	connect(stream_->rawsocket(), SIGNAL(readChannelFinished()), SLOT(onClosed()));
 	state_ = STATE_CONNECTED;
 
-	for(int i=0; i<exprs_.size(); ++i){
-		sendEvalExpr(i, exprs_[i].expr);
+	QMap<QString, ExprValue>::const_iterator it = exprs_.constBegin();
+	for(; it!=exprs_.constEnd(); ++it){
+		sendAddEvalExpr(it.key());
 	}
 
 	sendCommand(Xid(start));

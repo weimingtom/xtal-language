@@ -34,7 +34,7 @@ void CallStackView::view(const VMachinePtr& vm){
 }
 
 void CallStackView::setLevel(int n){
-	model_->item(n, 0)->setIcon(QIcon("data/step_into.png"));
+	model_->item(n, 0)->setIcon(QIcon("data/right.png"));
 }
 
 void CallStackView::set(int i, const StringPtr& fun, const StringPtr& file, int line){

@@ -668,11 +668,13 @@ void VMachine::make_debug_info(const inst_t* pc, const MethodPtr& fun, int_t kin
 	debug_info_->set_kind(kind);
 	if(fun){
 		debug_info_->set_line(fun->code()->compliant_lineno(pc));
+		debug_info_->set_code(fun->code());
 		debug_info_->set_file_name(fun->code()->source_file_name());
 		debug_info_->set_fun_name(fun->object_name());
 	}
 	else{
 		debug_info_->set_line(0);
+		debug_info_->set_code(null);
 		debug_info_->set_file_name(XTAL_STRING("?"));
 		debug_info_->set_fun_name(XTAL_STRING("?"));
 	}
@@ -816,13 +818,15 @@ AnyPtr VMachine::eval_instance_variable(const AnyPtr& self, const IDPtr& key){
 	ArrayPtr ary = klass->ancestors()->to_a();
 	ary->push_back(klass);
 
-	Xfor_cast(const ClassPtr& p, ary){
-		if(InstanceVariables* iv = pvalue(self)->instance_variables()){
-			if(const CodePtr& code = p->code()){
-				ClassInfo* info = p->info();
-				for(uint_t i=0; i<info->instance_variable_size; ++i){
-					if(raweq(key, code->identifier(info->instance_variable_identifier_offset+i))){
-						return iv->variable(i, info);
+	if(InstanceVariables* iv = pvalue(self)->instance_variables()){
+		Xfor_cast(const ClassPtr& p, ary){
+			if(!p->is(cpp_class<Code>())){
+				if(const CodePtr& code = p->code()){
+					ClassInfo* info = p->info();
+					for(uint_t i=0; i<info->instance_variable_size; ++i){
+						if(raweq(key, code->identifier(info->instance_variable_identifier_offset+i))){
+							return iv->variable(i, info);
+						}
 					}
 				}
 			}
@@ -1059,6 +1063,26 @@ void VMachine::print_info(){
 	std::printf("except_frames size %d\n", except_frames_.size());
 	std::printf("scopes size %d\n", scopes_.size());
 #endif
+}
+
+AnyPtr VMachine::eval(const CodePtr& code, uint_t n){
+	debug::CallerInfoPtr cp = caller(n+1);
+	if(!cp || !cp->fun()){
+		return undefined;
+	}
+
+	AnyPtr self = fun_frames_[n+1]->self();
+	setup_call(1);
+	set_arg_this(self);
+	code->first_fun()->rawcall(to_smartptr(this));
+
+	const inst_t* pc = ff().called_pc;
+	ff().called_pc = 0;
+
+	execute_inner(pc, n + 2);
+
+	ff().processed = 0;
+	return local_variable(result_base_+0);
 }
 
 }//namespace

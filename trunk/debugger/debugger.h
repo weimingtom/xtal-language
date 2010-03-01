@@ -4,9 +4,7 @@
 #include <QTcpSocket>
 #include <QTcpServer>
 
-#include "../src/xtal/xtal.h"
-#include "../src/xtal/xtal_macro.h"
-using namespace xtal;
+#include "xtal_src.h"
 
 class TCPStream : public Stream{
 public:
@@ -77,13 +75,11 @@ public:
 
 public:
 
-	void setEvalExpr(int n, const StringPtr& expr);
+	void addEvalExpr(const QString& expr);
 
-	StringPtr evalExpr(int n);
+	void removeEvalExpr(const QString& expr);
 
-	ArrayPtr evalResult(int n);
-
-	int evalExprSize();
+	ArrayPtr evalExprResult(const QString& expr);
 
 public:
 
@@ -118,9 +114,11 @@ public:
 	void stepOut();
 	void redo();
 
-	void sendBreakpoint(const QString& path, int n, bool b);
+	void sendAddBreakpoint(const QString& path, int n);
+	void sendRemoveBreakpoint(const QString& path, int n);
 	void sendMoveCallStack(int n);
 	void sendNostep();
+	void sendStart();
 
 public:
 
@@ -149,7 +147,8 @@ signals:
 protected:
 
 	void sendCommand(const IDPtr& id);
-	void sendEvalExpr(int n, const StringPtr& expr);
+	void sendAddEvalExpr(const QString& expr);
+	void sendRemoveEvalExpr(const QString& expr);
 
 protected slots:
 
@@ -173,11 +172,16 @@ private:
 	QVector<CallInfo> callStack_;
 
 	struct ExprValue{
-		StringPtr expr;
+		ExprValue(){
+			count = 0;
+		}
+
+		int count;
+		CodePtr code;
 		ArrayPtr result;
 	};
 
-	QVector<ExprValue> exprs_;
+	QMap<QString, ExprValue> exprs_;
 	QString requiredFile_;
 	int level_;
 

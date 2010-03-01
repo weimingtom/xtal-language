@@ -28,9 +28,13 @@ public:
 
 	void setExpr(int n, const QString& expr);
 
-	QString item(int n);
-
 	void setExprResult(int n, const ArrayPtr& value);
+
+	QString expr(int n);
+
+	int exprCount(){ return exprCount_; }
+
+public:
 
 	void setChild(QStandardItem* item, int n, const QString& key, const ArrayPtr& value);
 
@@ -40,6 +44,7 @@ public:
 
 private:
 	QStandardItemModel* model_;
+	int exprCount_;
 	bool dataChanged_;
 };
 

@@ -200,8 +200,8 @@ void MainWindow::setStepActionsEnabled(bool b){
 }
 
 void MainWindow::updateExprView(){
-	for(int i=0; i<debugger_.evalExprSize(); ++i){
-		evalexpr_->setExprResult(i, debugger_.evalResult(i));
+	for(int i=0; i<evalexpr_->exprCount(); ++i){
+		evalexpr_->setExprResult(i, debugger_.evalExprResult(evalexpr_->expr(i)));
 	}
 }
 
@@ -273,14 +273,14 @@ void MainWindow::viewOption(){
 }
 
 void MainWindow::viewSource(const QString& file){
-	if(Document::FileInfo* fi = document_.file(document_.findFile(file))){
-		codeEditor_->addPage(QFileInfo(fi->path).fileName(), fi->path);
+	if(FileInfo* fi = document_.findFile(file)){
+		codeEditor_->addPage(fi->path);
 	}
 }
 
 void MainWindow::exprChanged(int i, const QString& expr){
 	document_.setEvalExpr(i, expr);
-	debugger_.setEvalExpr(i, expr.toStdString().c_str());
+	debugger_.addEvalExpr(expr);
 
 	if(state_==STATE_BREAKING){
 		debugger_.sendNostep();
@@ -289,21 +289,24 @@ void MainWindow::exprChanged(int i, const QString& expr){
 
 void MainWindow::breaked(){
 	QString path = debugger_.callStackFileName()->c_str();
-	if(Document::FileInfo* f=document_.file(document_.findFile(path))){
-		codeEditor_->addPage(QFileInfo(f->path).fileName(), f->path);
+	if(FileInfo* f=document_.findFile(path)){
+		codeEditor_->addPage(f->path);
 	}
 
-	codeEditor_->setPos(debugger_.callStackFileName()->c_str(), debugger_.callStackLineno());
+	codeEditor_->setPos(path, debugger_.callStackLineno());
 	updateExprView();
 	updateCallStackView();
 
 	state_ = STATE_BREAKING;
 	setStepActionsEnabled(true);
+
+	activateWindow();
+	raise();
 }
 
 void MainWindow::required(){
-	if(Document::FileInfo* f=document_.file(document_.findFileAbout(debugger_.requiredFile()))){
-		if(CodeEditorPage* p = codeEditor_->widget(codeEditor_->findWidget(f->path))){
+	if(FileInfo* f=document_.findFileAbout(debugger_.requiredFile())){
+		if(CodeEditorPage* p = codeEditor_->findPage(f->path)){
 			f->breakpoints.clear();
 			for(int i=1; i<=p->lineCount(); ++i){
 				if(p->breakpoint(i)){
@@ -313,39 +316,44 @@ void MainWindow::required(){
 
 			if(CodePtr code = compile(p->toPlainText().toStdString().c_str())){
 				code->set_source_file_name(f->path.toStdString().c_str());
-				for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
-					code->set_breakpoint(*it);
-				}
 				requiredFiles_.insert(f->path);
 				debugger_.sendRequiredSource(code);
+
+				for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
+					debugger_.sendAddBreakpoint(f->path, *it);
+				}
+
+				debugger_.sendStart();
 				return;
 			}
 			else{
 				XTAL_CATCH_EXCEPT(e){
 					print(e->to_s()->c_str());
 				}
-				debugger_.sendRequiredSource(null);
 			}
 		}
 		else if(CodePtr code = compile_file(f->path.toStdString().c_str())){
 			code->set_source_file_name(f->path.toStdString().c_str());
-			for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
-				code->set_breakpoint(*it);
-			}
 			requiredFiles_.insert(f->path);
 			debugger_.sendRequiredSource(code);
+
+			for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
+				debugger_.sendAddBreakpoint(f->path, *it);
+			}
+
+			debugger_.sendStart();
 			return;
 		}
 		else{
 			XTAL_CATCH_EXCEPT(e){
 				print(e->to_s()->c_str());
 			}
-			debugger_.sendRequiredSource(null);
 		}
 	}
 	else{
 		debugger_.sendRequiredSource(null);
 		print(QString("Not found %1").arg(debugger_.requiredFile()));
+		return;
 	}
 
 	state_ = STATE_REQUIRING;
@@ -401,20 +409,10 @@ void MainWindow::onUpdate(){
 	}
 	else{
 		if(CodeEditorPage* p=codeEditor_->currentPage()){
-			Document::FileInfo* f=document_.file(document_.findFile(p->sourcePath()));
-
-			f->breakpoints.clear();
-			for(int i=1; i<=p->lineCount(); ++i){
-				if(p->breakpoint(i)){
-					f->breakpoints.insert(i);
-				}
-			}
+			FileInfo* f=document_.findFile(p->sourcePath());
 
 			if(CodePtr code = compile(p->toPlainText().toStdString().c_str())){
 				code->set_source_file_name(f->path.toStdString().c_str());
-				for(QSet<int>::iterator it=f->breakpoints.begin(); it!=f->breakpoints.end(); ++it){
-					code->set_breakpoint(*it);
-				}
 				requiredFiles_.insert(f->path);
 				//debugger_.sendUpdatedSource(code);
 				return;
@@ -429,10 +427,26 @@ void MainWindow::onUpdate(){
 }
 
 void MainWindow::onBreakpointChanged(const QString& path, int n, bool b){
-	QSet<QString>::const_iterator it = requiredFiles_.find(path);
-	if(it!=requiredFiles_.constEnd()){
-		debugger_.sendBreakpoint(path, n, b);
-		return;
+	if(debugger_.isConnected()){
+		QSet<QString>::const_iterator it = requiredFiles_.find(path);
+		if(it!=requiredFiles_.constEnd()){
+			if(b){
+				debugger_.sendAddBreakpoint(path, n);
+			}
+			else{
+				debugger_.sendRemoveBreakpoint(path, n);
+			}
+			return;
+		}
+	}
+
+	if(FileInfo* f=document_.findFile(path)){
+		if(b){
+			f->breakpoints.erase(f->breakpoints.find(n));
+		}
+		else{
+			f->breakpoints.insert(n);
+		}
 	}
 }
 

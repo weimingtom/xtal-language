@@ -1419,37 +1419,6 @@ void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
 	}
 }
 
-AnyPtr VMachine::eval(const xpeg::ExecutorPtr& executor, uint_t n){
-	debug::CallerInfoPtr cp = caller(n+1);
-	if(!cp || !cp->fun()){
-		return undefined;
-	}
-
-	CodeBuilder cb;
-	if(CodePtr code = cb.eval_compile(executor)){
-		print_info();
-
-		AnyPtr self = fun_frames_[n+1]->self();
-		setup_call(1);
-		set_arg_this(self);
-		code->first_fun()->rawcall(to_smartptr(this));
-
-		const inst_t* pc = ff().called_pc;
-		ff().called_pc = 0;
-
-		execute_inner(pc, n + 2);
-
-		ff().processed = 0;
-		print_info();
-		return local_variable(result_base_+0);
-	}
-	else{
-		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt("XRE1010")->call(), cb.errors()->to_a()));
-	}
-
-	return undefined;
-}
-
 }
 
 #endif

@@ -30,7 +30,6 @@ bool Document::save(const QString& filename){
 
 	QDomElement evalExprs = doc.createElement("evalExprList");
 	root.appendChild(evalExprs);
-
 	for(int i=0; i<evalExprs_.size(); ++i){
 		QDomElement node1 = doc.createElement("evalExpr");
 		QDomText node2 = doc.createTextNode(evalExprs_[i]);
@@ -89,7 +88,7 @@ bool Document::load(const QString& filename){
 	return true;
 }
 
-Document::FileInfo* Document::file(int i){
+FileInfo* Document::file(int i){
 	if(i<0 || i>=files_.size()){
 		return 0;
 	}
@@ -110,16 +109,16 @@ bool Document::addFile(const QString& file){
 	return false;
 }
 
-int Document::findFile(const QString& file){
+FileInfo* Document::findFile(const QString& file){
 	for(int i=0; i<files_.size(); ++i){
 		if(files_[i].path==file){
-			return i;
+			return &files_[i];
 		}
 	}
-	return -1;
+	return 0;
 }
 
-int Document::findFileAbout(const QString& file){
+FileInfo* Document::findFileAbout(const QString& file){
 	QString str = file + ".xtal";
 	QRegExp r2(".*\\/(.+)$");
 	r2.setMinimal(true);
@@ -131,7 +130,7 @@ int Document::findFileAbout(const QString& file){
 			FileInfo& f = files_[i];
 
 			if(r.indexIn(f.path)>-1){
-				return i;
+				return &f;
 			}
 		}
 
@@ -143,5 +142,5 @@ int Document::findFileAbout(const QString& file){
 		}
 	}
 
-	return -1;
+	return 0;
 }

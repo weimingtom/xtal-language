@@ -18,7 +18,7 @@ void CallerInfo::on_visit_members(Visitor& m){
 
 void HookInfo::on_visit_members(Visitor& m){
 	Base::on_visit_members(m);
-	m & /*vm_ & */file_name_ & fun_name_ & exception_ & variables_frame_;
+	m & /*vm_ & */ code_ & file_name_ & fun_name_ & exception_ & variables_frame_;
 }
 
 SmartPtr<HookInfo> HookInfo::clone(){
@@ -252,6 +252,10 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 						bitchange(d, true, BREAKPOINT3);
 						bitchange(d, false, BREAKPOINT4);
 					}
+
+					XTAL_CASE(REDO){
+						return;
+					}
 				}
 
 				d->breakpoint_call_stack_size_ = info->call_stack_size();
@@ -283,7 +287,7 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 			}
 
 			XTAL_CASE(BSTATE_STEP_OUT){
-				if(info->call_stack_size() < d->breakpoint_call_stack_size_){
+				if(kind==BREAKPOINT || info->call_stack_size() < d->breakpoint_call_stack_size_){
 					d->breakpoint_state_ = BSTATE_NONE;
 					continue;
 				}
@@ -294,7 +298,7 @@ void call_breakpoint_hook(int_t kind, const HookInfoPtr& ainfo){
 					break;
 				}
 
-				if(info->call_stack_size() <= d->breakpoint_call_stack_size_){
+				if(kind==BREAKPOINT || info->call_stack_size() <= d->breakpoint_call_stack_size_){
 					d->breakpoint_state_ = BSTATE_NONE;
 					continue;
 				}

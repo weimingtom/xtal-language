@@ -75,7 +75,11 @@ XTAL_PREBIND(InteractiveStream){
 void interactive_compile_loop(const VMachinePtr& vm){
 	SmartPtr<InteractiveStream> stream = unchecked_ptr_cast<InteractiveStream>(vm->arg(0));
 	SmartPtr<xpeg::Executor> exec = unchecked_ptr_cast<xpeg::Executor>(vm->arg(1));
-	vm->eval(exec, 0);
+
+	CodeBuilder cb;
+	CodePtr code = cb.eval_compile(exec);
+
+	vm->eval(code);
 	
 	XTAL_CATCH_EXCEPT(e){
 		exec->skip();

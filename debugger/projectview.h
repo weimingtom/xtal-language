@@ -26,6 +26,7 @@ public:
 signals:
 
 	void onAddFile(const QString& filename);
+
 	void onView(const QString& filename);
 
 public slots:

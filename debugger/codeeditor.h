@@ -101,19 +101,19 @@ signals:
 
 public:
 
-	void addPage(const QString& file, const QString& path);
+	CodeEditorPage* page(int index);
 
-	CodeEditorPage* widget(int index);
+	int index(CodeEditorPage* page);
+
+	CodeEditorPage* findPage(const QString& path);
+
+	void addPage(const QString& path);
 
 	CodeEditorPage* currentPage();
 
-	bool setPos(const QString& filename, int lineno);
+	bool setPos(const QString& path, int lineno);
 
 	void setCursorLine(int n);
-
-	int findWidget(const QString& path);
-
-	int findWidget(CodeEditorPage* a);
 
 	bool setSourceFile(const QString& path);
 

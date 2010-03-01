@@ -80,6 +80,12 @@ public:
 
 	/**
 	* \xbind
+	* \brief フックされた場所のCodeオブジェクトを返す
+	*/
+	const CodePtr& code(){ return code_; }
+
+	/**
+	* \xbind
 	* \brief フックされた場所のファイル名を返す
 	*/
 	const StringPtr& file_name(){ return file_name_; }
@@ -111,6 +117,7 @@ public:
 
 	void set_kind(int_t v){ kind_ = v; }
 	void set_line(int_t v){ line_ = v; }
+	void set_code(const CodePtr& v){ code_ = v; }
 	void set_file_name(const StringPtr& v){ file_name_ = v; }
 	void set_fun_name(const StringPtr& v){ fun_name_ = v; }
 	void set_exception(const AnyPtr& e){ exception_ = e; }
@@ -133,6 +140,7 @@ private:
 
 	int_t kind_;
 	int_t line_;
+	CodePtr code_;
 	StringPtr file_name_;
 	StringPtr fun_name_;
 	AnyPtr exception_;
@@ -258,7 +266,8 @@ enum{
 	RUN,
 	STEP_OVER,
 	STEP_INTO,
-	STEP_OUT
+	STEP_OUT,
+	REDO
 };
 
 void call_breakpoint_hook(int_t kind, const HookInfoPtr& info);

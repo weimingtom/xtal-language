@@ -400,7 +400,7 @@ public:
 
 	int_t call_stack_size();
 
-	AnyPtr eval(const xpeg::ExecutorPtr& scanner, uint_t n = 0);
+	AnyPtr eval(const CodePtr& code, uint_t n = 0);
 
 	AnyPtr eval_local_variable(const IDPtr& var, uint_t call_n);
 	bool eval_set_local_variable(const IDPtr& var, const AnyPtr& value, uint_t call_n);
@@ -773,9 +773,9 @@ private:
 public:
 
 	void on_shrink_to_fit(){
-		int_t top = variables_top();
+		/*int_t top = variables_top();
 		variables_.shrink_to_fit();
-		variables_top_ = (Any*)variables_.data()+top; 
+		variables_top_ = (Any*)variables_.data()+top; */
 	}
 
 	void on_visit_members(Visitor& m);

@@ -21,6 +21,7 @@ HEADERS += mainwindow.h \
     callstackview.h \
     projectview.h \
     document.h \
-    debugger.h
+    debugger.h \
+    xtal_src.h
 FORMS += 
 OTHER_FILES += 

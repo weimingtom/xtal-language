@@ -15,19 +15,28 @@ EvalExprView::EvalExprView(QWidget *parent)
 	connect(model_, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(dataChanged(QStandardItem*)));
 
 	dataChanged_ = false;
+	exprCount_ = 0;
 }
 
 void EvalExprView::dataChanged(QStandardItem* item){
 	if(item->isEditable() && item->column()==0 && item->text()!=""){
+		if(exprCount_<=item->row()){
+			exprCount_ = item->row()+1;
+		}
+
 		emit exprChanged(item->row(), item->text());
 	}
 }
 
 void EvalExprView::setExpr(int n, const QString& expr){
+	if(exprCount_<=n){
+		exprCount_ = n+1;
+	}
+
 	model_->invisibleRootItem()->setChild(n, 0, makeItem(expr, true));
 }
 
-QString EvalExprView::item(int n){
+QString EvalExprView::expr(int n){
 	if(model_->item(n, 0)){
 		return model_->item(n, 0)->text();
 	}
@@ -45,7 +54,13 @@ void EvalExprView::setChild(QStandardItem* item, int n, const QString& key, cons
 		if(!primary){ item->setChild(n, 0, makeItem(key)); }
 		item->setChild(n, 1, makeItem(value->at(1)->to_s()->c_str()));
 		item->setChild(n, 2, makeItem(value->at(0)->to_s()->c_str()));
-		setChild(item->child(n, 0), value->at(2));
+
+		if(value->at(2)){
+			setChild(item->child(n, 0), value->at(2));
+		}
+		else{
+			item->child(n, 0)->removeRows(0, item->child(n, 0)->rowCount());
+		}
 	}
 	else{
 		if(item->child(n, 0)){

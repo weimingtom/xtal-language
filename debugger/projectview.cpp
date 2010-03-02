@@ -9,7 +9,7 @@ ProjectView::ProjectView(QWidget *parent)
 	setDragDropMode(QAbstractItemView::DragDrop);
 	setHeaderHidden(true);
 
-	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(onClicked(const QModelIndex&)));
+	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(onClicked(const QModelIndex&)));
 }
 
 void ProjectView::init(){
@@ -50,8 +50,8 @@ void ProjectView::dragMoveEvent(QDragMoveEvent *event){
 	}
 }
 
-void ProjectView::addFile(const QString& filename, const QString& data){
-	model_->invisibleRootItem()->appendRow(makeItem(filename, data));
+void ProjectView::addFile(const QString& filename){
+	model_->invisibleRootItem()->appendRow(makeItem(QFile(filename).fileName(), filename));
 }
 
 void ProjectView::onClicked(const QModelIndex& index){

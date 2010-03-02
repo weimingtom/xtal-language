@@ -390,13 +390,11 @@ private:
 	int linehook(debug::HookInfoPtr info){
 		if(info->kind()==BREAKPOINT){
 			if(MapPtr value = ptr_cast<Map>(code_map_->at(info->file_name()))){
-				if(CodePtr code = ptr_cast<Code>(value->at(Xid(code)))){
-					if(CodePtr eval = ptr_cast<Code>(value->at(info->lineno()))){
-						AnyPtr val = info->vm()->eval(eval);
-						info->vm()->catch_except();
-						if(!val){
-							return debug::REDO;
-						}
+				if(CodePtr eval = ptr_cast<Code>(value->at(info->lineno()))){
+					AnyPtr val = info->vm()->eval(eval);
+					info->vm()->catch_except();
+					if(!val){
+						return debug::REDO;
 					}
 				}
 			}

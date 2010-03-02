@@ -7,12 +7,12 @@
 
 struct FileInfo{
 	QString path;
-	QSet<int> breakpoints;
+	QMap<int, QString> breakpoints;
 };
 
 /**
   * \brief プロジェクトの情報を保持するクラス
-　　* ソースパス、ブレークポイントの位置を保持している
+　 * ソースパス、ブレークポイントの位置を保持している
   */
 class Document{
 public:
@@ -25,8 +25,14 @@ public:
 
 public:
 
+	/**
+	  * \brief i番目のファイル情報を取り出す
+	  */
 	FileInfo* file(int i);
 
+	/**
+	  * \brief ファイル情報が何個あるか返す
+	  */
 	int fileCount();
 
 	/**
@@ -34,8 +40,16 @@ public:
 	  */
 	bool addFile(const QString& file);
 
+	bool removeFile(const QString& file);
+
+	/**
+	  * \brief 文字列fileにマッチするファイル情報を取り出す
+	  */
 	FileInfo* findFile(const QString& file);
 
+	/**
+	  * \brief 部分文字列fileにマッチするファイル情報を取り出す
+	  */
 	FileInfo* findFileAbout(const QString& file);
 
 public:
@@ -56,7 +70,12 @@ public:
 		return evalExprs_[n];
 	}
 
+	void removeEvalExpr(int n);
+
+	void insertEvaExpr(int n);
+
 private:
+
 	QVector<FileInfo> files_;
 	QVector<QString> evalExprs_;
 };

@@ -9,7 +9,7 @@ CallStackView::CallStackView(QWidget *parent)
 	model_->setHorizontalHeaderItem(1, new QStandardItem("file"));
 	model_->setHorizontalHeaderItem(2, new QStandardItem("line"));
 
-	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(onClicked(const QModelIndex&)));
+	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(onClicked(const QModelIndex&)));
 }
 
 QStandardItem* CallStackView::makeItem(const QString& text){

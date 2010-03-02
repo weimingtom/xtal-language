@@ -9,6 +9,7 @@ INPUT(
 ./release\projectview.o
 ./release\document.o
 ./release\debugger.o
+./release\breakpointview.o
 ./release\moc_mainwindow.o
 ./release\moc_xtalhighlighter.o
 ./release\moc_codeeditor.o
@@ -16,4 +17,5 @@ INPUT(
 ./release\moc_callstackview.o
 ./release\moc_projectview.o
 ./release\moc_debugger.o
+./release\moc_breakpointview.o
 );

@@ -21,7 +21,7 @@ public:
 
 	void dragMoveEvent(QDragMoveEvent *event);
 
-	void addFile(const QString& filename, const QString& data);
+	void addFile(const QString& filename);
 
 signals:
 
@@ -29,9 +29,23 @@ signals:
 
 	void onView(const QString& filename);
 
+	void removeFile(const QString& filename);
+
 public slots:
 
 	void onClicked(const QModelIndex& index);
+
+protected:
+
+	void keyPressEvent(QKeyEvent* event){
+		if(event->key()==Qt::Key_Delete){
+			QModelIndexList list = selectedIndexes();
+			for(int i=0; i<list.size(); ++i){
+				removeFile(model_->item(list.at(i).row(), 0)->data().toString());
+				model_->removeRow(list.at(i).row());
+			}
+		}
+	}
 
 private:
 	QStandardItemModel* model_;

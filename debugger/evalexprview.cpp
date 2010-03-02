@@ -19,7 +19,7 @@ EvalExprView::EvalExprView(QWidget *parent)
 }
 
 void EvalExprView::dataChanged(QStandardItem* item){
-	if(item->isEditable() && item->column()==0 && item->text()!=""){
+	if(item->isEditable() && item->column()==0){
 		if(exprCount_<=item->row()){
 			exprCount_ = item->row()+1;
 		}

@@ -18,6 +18,10 @@ public:
 
 public:
 
+	void init(){
+		clear();
+	}
+
 	QStandardItem* makeItem(const QString& text);
 
 	void view(const VMachinePtr& vm);

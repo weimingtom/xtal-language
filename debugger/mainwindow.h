@@ -15,6 +15,7 @@
 #include "evalexprview.h"
 #include "callstackview.h"
 #include "projectview.h"
+#include "breakpointview.h"
 #include "codeeditor.h"
 #include "debugger.h"
 #include "document.h"
@@ -117,6 +118,8 @@ protected:
 
 public slots:
 
+	void initProject();
+
 	void newProject();
 
 	void saveProject();
@@ -124,7 +127,8 @@ public slots:
 	void loadProject();
 
 	void addFile(const QString& filename);
-	
+	void removeFile(const QString& filename);
+
 	void addFile();
 
 	void viewOption();
@@ -151,22 +155,31 @@ public slots:
 
 	void onUpdate();
 
-	void onBreakpointChanged(const QString& path, int n, bool b);
+	void onBreakpointChanged(const QString& path, int line, bool b);
+	void onBreakpointConditionChanged(const QString& path, int line, const QString& cond);
+	void onViewBreakpoint(const QString& path, int line);
+	void eraseBreakpoint(const QString& path, int line);
 
 	void print(const QString& mes);
 
 	void showProjectDock(){ projDockWidget_->show(); }
 	void showEvalExprDock(){ exprDockWidget_->show(); }
 	void showCSDock(){ csDockWidget_->show(); }
+	void showBreakpointDock(){ breakpointDockWidget_->show(); }
 	void showMessageDock(){ mesDockWidget_->show(); }
 
 	void moveCallStack(int n);
+
+	void showAboutQt(){
+		QMessageBox::aboutQt(this, "Xtal Debugger");
+	}
 
 private:
 	EvalExprView* evalexpr_;
 	CallStackView* callstack_;
 	CodeEditor* codeEditor_;
 	ProjectView* project_;
+	BreakpointView* breakpoint_;
 	QTextEdit* messages_;
 	Debugger debugger_;
 
@@ -181,6 +194,7 @@ private:
 	QDockWidget* exprDockWidget_;
 	QDockWidget* csDockWidget_;
 	QDockWidget* mesDockWidget_;
+	QDockWidget* breakpointDockWidget_;
 
 private:
 	QToolBar* toolBar_;

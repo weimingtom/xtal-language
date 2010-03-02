@@ -1,0 +1,31 @@
+This directory contains a version of the MinGW system and gcc compiler
+which is distributed by MinGW.org.
+
+The MinGW and gcc distributions are comprised of several different
+packages. Each of the various packages is governed by its own
+individual copyright and licensing terms. Some of those packages are
+licensed by the GNU Public License (GPL) or the GNU Lesser General
+Public License(LGPL), some are licensed in the Public Domain and some
+have their own versions of a license.
+
+See MinGW.org for full source code and licensing details.
+
+This directory contains the following packages and modifications:
+
+binutils-2.19.1-mingw32-bin
+mingwrt-3.15.2-mingw32-dev
+mingwrt-3.15.2-mingw32-dll
+w32api-3.13-mingw32-dev
+
+gcc-core-4.4.0-mingw32-bin
+gcc-core-4.4.0-mingw32-dll
+gcc-c++-4.4.0-mingw32-bin
+gcc-c++-4.4.0-mingw32-dll
+gmp-4.2.4-mingw32-dll
+libiconv-1.13-mingw32-dll-2
+mingw32-make-3.81-20080326-3
+mpfr-2.4.1-mingw32-dll
+pthreads-w32-2.8.0-mingw32-dll
+gdb and libexpat-1.dll
+
+Modified with the patches in the directory _patches

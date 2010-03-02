@@ -13,7 +13,8 @@ SOURCES += main.cpp \
     callstackview.cpp \
     projectview.cpp \
     document.cpp \
-    debugger.cpp
+    debugger.cpp \
+    breakpointview.cpp
 HEADERS += mainwindow.h \
     xtalhighlighter.h \
     codeeditor.h \
@@ -22,6 +23,7 @@ HEADERS += mainwindow.h \
     projectview.h \
     document.h \
     debugger.h \
-    xtal_src.h
+    xtal_src.h \
+    breakpointview.h
 FORMS += 
 OTHER_FILES += 

@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 
 #include "../src/xtal/xtal.h"
+#include "../src/xtal/xtal_lib/xtal_errormessage.h"
 
 namespace xtal{
 
@@ -135,8 +136,10 @@ int main(int argc, char *argv[]){
 	xtal::QtFilesystemLib flib;
 	setting.filesystem_lib = &flib;
 	xtal::initialize(setting);
+	xtal::bind_error_message();
 
     QApplication a(argc, argv);
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("SJIS"));
 	MainWindow w;
     w.show();
 

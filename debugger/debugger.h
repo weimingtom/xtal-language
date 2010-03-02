@@ -73,6 +73,13 @@ public:
 
 	void setSource(const QString& source);
 
+	void init(){
+		if(stream_){
+			stream_->close();
+			stream_ = null;
+		}
+	}
+
 public:
 
 	void addEvalExpr(const QString& expr);
@@ -114,8 +121,9 @@ public:
 	void stepOut();
 	void redo();
 
-	void sendAddBreakpoint(const QString& path, int n);
+	void sendAddBreakpoint(const QString& path, int n, const QString& cond);
 	void sendRemoveBreakpoint(const QString& path, int n);
+
 	void sendMoveCallStack(int n);
 	void sendNostep();
 	void sendStart();

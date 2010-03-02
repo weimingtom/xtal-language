@@ -14,26 +14,14 @@ void Debugger::setSource(const QString& source){
 }
 
 void Debugger::addEvalExpr(const QString& expr){
-	ExprValue& ev = exprs_[expr];
-	ev.count++;
-	if(ev.count==1){
-		ev.code = eval_compile(qstr2xstr(expr));
-		if(isConnected()){
-			sendAddEvalExpr(expr);
-		}
+	exprs_[expr];
+	if(isConnected()){
+		sendAddEvalExpr(expr);
 	}
 }
 
 void Debugger::removeEvalExpr(const QString& expr){
-	ExprValue& ev = exprs_[expr];
-	ev.count--;
-	if(ev.count==0){
-		ev.code = null;
-		ev.result = null;
-		if(isConnected()){
-			sendRemoveEvalExpr(expr);
-		}
-	}
+	//sendRemoveEvalExpr(expr);
 }
 
 ArrayPtr Debugger::evalExprResult(const QString& expr){
@@ -92,19 +80,24 @@ void Debugger::redo(){
 	sendCommand(prevCommand_);
 }
 
-void Debugger::sendAddBreakpoint(const QString& path, int n){
+void Debugger::sendAddBreakpoint(const QString& path, int n, const QString& cond){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(add_breakpoint));
-	a->push_back(path.toStdString().c_str());
+	a->push_back(qstr2xstr(path));
 	a->push_back(n);
-	a->push_back(null);
+	if(cond==""){
+		a->push_back(null);
+	}
+	else{
+		a->push_back(eval_compile(cond));
+	}
 	stream_->serialize(a);
 }
 
 void Debugger::sendRemoveBreakpoint(const QString& path, int n){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(remove_breakpoint));
-	a->push_back(path.toStdString().c_str());
+	a->push_back(qstr2xstr(path));
 	a->push_back(n);
 	stream_->serialize(a);
 }
@@ -139,8 +132,7 @@ void Debugger::sendAddEvalExpr(const QString& expr){
 	ArrayPtr a = xnew<Array>();
 	a->push_back(Xid(add_eval_expr));
 	a->push_back(qstr2xid(expr));
-	a->push_back(exprs_[expr].code);
-	XTAL_CATCH_EXCEPT(e){}
+	a->push_back(eval_compile(expr));
 	stream_->serialize(a);
 }
 
@@ -200,24 +192,27 @@ void Debugger::onRecv(){
 
 void Debugger::onClosed(){
 	state_ = STATE_NONE;
+	stream_ = null;
 	emit disconnected();
 }
 
 void Debugger::onConnected(){
-	stream_ = xnew<TCPStream>(server_.nextPendingConnection());
-	connect(stream_->rawsocket(), SIGNAL(readyRead()), SLOT(onRecv()));
-	connect(stream_->rawsocket(), SIGNAL(readChannelFinished()), SLOT(onClosed()));
-	state_ = STATE_CONNECTED;
+	if(!stream_){
+		stream_ = xnew<TCPStream>(server_.nextPendingConnection());
+		connect(stream_->rawsocket(), SIGNAL(readyRead()), SLOT(onRecv()));
+		connect(stream_->rawsocket(), SIGNAL(readChannelFinished()), SLOT(onClosed()));
+		state_ = STATE_CONNECTED;
 
-	QMap<QString, ExprValue>::const_iterator it = exprs_.constBegin();
-	for(; it!=exprs_.constEnd(); ++it){
-		sendAddEvalExpr(it.key());
+		QMap<QString, ExprValue>::const_iterator it = exprs_.constBegin();
+		for(; it!=exprs_.constEnd(); ++it){
+			sendAddEvalExpr(it.key());
+		}
+
+		sendCommand(Xid(start));
+
+		emit connected();
+		onRecv();
 	}
-
-	sendCommand(Xid(start));
-
-	emit connected();
-	onRecv();
 }
 
 

@@ -145,7 +145,7 @@ void CodeEditorPage::clickEvent(QMouseEvent* event){
 
 	while(block.isValid()) {
 		if(block.isVisible() && top<y && y<bottom) {
-			setBreakpoint(block.blockNumber()+1);
+			flipBreakpoint(block.blockNumber()+1);
 			return;
 		}
 
@@ -156,10 +156,15 @@ void CodeEditorPage::clickEvent(QMouseEvent* event){
 	}
 }
 
-void CodeEditorPage::setBreakpoint(int n){
+void CodeEditorPage::setBreakpoint(int n, bool b){
+	lineData_[n-1].breakpoint = b;
+	this->update();
+	//emit breakpointChanged(sourcePath_, n, lineData_[n-1].breakpoint);
+}
+
+void CodeEditorPage::flipBreakpoint(int n){
 	lineData_[n-1].breakpoint = !lineData_[n-1].breakpoint;
 	this->update();
-
 	emit breakpointChanged(sourcePath_, n, lineData_[n-1].breakpoint);
 }
 

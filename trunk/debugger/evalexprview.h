@@ -16,6 +16,11 @@ public:
 
 	EvalExprView(QWidget *parent);
 
+	void init(){
+		model_->setRowCount(0);
+		model_->setRowCount(256);
+	}
+
 public slots:
 
 	void dataChanged(QStandardItem* item);

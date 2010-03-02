@@ -6,15 +6,21 @@
 using namespace xtal;
 
 inline StringPtr qstr2xstr(const QString& str){
-	return str.toStdString().c_str();
+	return str.toLocal8Bit().constData();
 }
 
 inline StringPtr qstr2xid(const QString& str){
-	return intern(str.toStdString().c_str());
+	return intern(str.toLocal8Bit().constData());
 }
 
 inline QString xstr2qstr(const StringPtr& str){
 	return str->c_str();
+}
+
+inline CodePtr eval_compile(const QString& str){
+	CodePtr ret = eval_compile(qstr2xstr(str));
+	XTAL_CATCH_EXCEPT(e){}
+	return ret;
 }
 
 #endif // XTALSRC_H

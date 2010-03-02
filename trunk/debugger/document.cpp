@@ -4,6 +4,7 @@
 
 void Document::init(){
 	files_.clear();
+	evalExprs_.clear();
 }
 
 bool Document::save(const QString& filename){
@@ -35,6 +36,20 @@ bool Document::save(const QString& filename){
 		QDomText node2 = doc.createTextNode(evalExprs_[i]);
 		node1.appendChild(node2);
 		evalExprs.appendChild(node1);
+	}
+
+	QDomElement breakpoints = doc.createElement("breakpointList");
+	root.appendChild(breakpoints);
+	for(int i=0; i<files_.size(); ++i){
+		FileInfo* f = &files_[i];
+		QMap<int, QString>::iterator it = f->breakpoints.begin();
+		for(; it!=f->breakpoints.end(); ++it){
+			QDomElement node1 = doc.createElement("breakpoint");
+			node1.setAttribute("file", f->path);
+			node1.setAttribute("lineno", it.key());
+			node1.setAttribute("condition", it.value());
+			breakpoints.appendChild(node1);
+		}
 	}
 
 	doc.save(ds, 4);
@@ -83,6 +98,14 @@ bool Document::load(const QString& filename){
 				}
 			}
 		}
+
+		if(node.toElement().tagName()=="breakpointList"){
+			for(QDomNode node2 = node.toElement().firstChild(); !node2.isNull(); node2=node2.nextSibling()){
+				QDomElement elem = node2.toElement();
+				QString path = elem.attribute("file");
+				findFile(path)->breakpoints.insert(elem.attribute("lineno").toInt(), elem.attribute("condition"));
+			}
+		}
 	}
 
 	return true;
@@ -100,11 +123,21 @@ int Document::fileCount(){
 }
 
 bool Document::addFile(const QString& file){
-	if(findFile(file)<0){
+	if(!findFile(file)){
 		FileInfo fi;
 		fi.path = file;
 		files_.push_back(fi);
 		return true;
+	}
+	return false;
+}
+
+bool Document::removeFile(const QString& file){
+	for(int i=0; i<files_.size(); ++i){
+		if(files_[i].path==file){
+			files_.erase(files_.begin()+i);
+			return true;
+		}
 	}
 	return false;
 }

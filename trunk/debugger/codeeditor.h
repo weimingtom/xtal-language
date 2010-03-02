@@ -27,7 +27,9 @@ public:
 
 	void clickEvent(QMouseEvent* event);
 
-	void setBreakpoint(int n);
+	void setBreakpoint(int n, bool b = true);
+
+	void flipBreakpoint(int n);
 
 	void save();
 
@@ -87,6 +89,10 @@ public:
 
 	CodeEditor(QWidget *parent = 0);
 
+	void init(){
+		this->clear();
+	}
+
 public slots:
 
 	void closePage(int index);
@@ -106,6 +112,12 @@ public:
 	int index(CodeEditorPage* page);
 
 	CodeEditorPage* findPage(const QString& path);
+
+	void setBreakpoint(const QString& path, int line, bool b = true){
+		if(CodeEditorPage* page = findPage(path)){
+			page->setBreakpoint(line, b);
+		}
+	}
 
 	void addPage(const QString& path);
 

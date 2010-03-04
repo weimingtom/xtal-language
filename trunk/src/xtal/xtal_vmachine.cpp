@@ -671,7 +671,7 @@ send_common2:
 				if(type(call_state.member)==TYPE_IVAR_GETTER){
 					const SmartPtr<InstanceVariableGetter>& p = unchecked_ptr_cast<InstanceVariableGetter>(ap(call_state.member));
 					set_local_variable(call_state.result, call_state.target.instance_variables()->variable(p->number_, p->info_));
-					XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(call_state.npc));
+					XTAL_VM_CONTINUE(call_state.npc);
 				}
 			}
 
@@ -679,14 +679,14 @@ send_common2:
 				if(type(call_state.member)==TYPE_IVAR_SETTER){
 					const SmartPtr<InstanceVariableSetter>& p = unchecked_ptr_cast<InstanceVariableSetter>(ap(call_state.member));
 					call_state.target.instance_variables()->set_variable(p->number_, p->info_, local_variable(call_state.stack_base));
-					XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(call_state.npc));
+					XTAL_VM_CONTINUE(call_state.npc);
 				}
 			}
 
 			XTAL_CASE(MEMBER){
 				if(!is_undefined(call_state.member)){
 					set_local_variable(call_state.result, ap(call_state.member));
-					XTAL_VM_CONTINUE(XTAL_VM_CHECK_EXCEPT_PC(call_state.npc));
+					XTAL_VM_CONTINUE(call_state.npc);
 				}
 			}
 		}

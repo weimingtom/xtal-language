@@ -19,7 +19,7 @@ enum{
 };
 }
 
-//#define XTAL_USE_COMPILED_EMB
+#define XTAL_USE_COMPILED_EMB
 //#define XTAL_DEBUG_PRINT
 
 //#define XTAL_ENFORCE_64_BIT

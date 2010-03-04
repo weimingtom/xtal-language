@@ -519,38 +519,23 @@ struct nfun_base<13, TFun, Method, R>
 
 //}}REPEAT}
 
-template<class TFun>
-struct nfun_base1<TFun, 0, void , const VMachinePtr&>{
-	typedef void R;
+template<class TFun, class R>
+struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
 	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
 	static void call(FunctorParam& fp){ 
 		(*(TFun*)fp.fun)(fp,
-			to_smartptr(fp.vm)
-		);
-	}
-};
-
-template<class TFun, class C>
-struct nfun_base2<TFun, 1, void , C, const VMachinePtr&>{
-	typedef void R;
-	typedef TFun fun_type;
-	typedef param_types_holder1<C, Any> fun_param_holder;
-	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
-	static void call(FunctorParam& fp){ 
-		(*(TFun*)fp.fun)(fp,
-			unchecked_cast<C>((AnyPtr&)fp.args[0]),
 			to_smartptr(fp.vm)
 		);
 	}
 };
 
 template<class TFun, class R>
-struct nfun_base1<TFun, 0, R, const VMachinePtr&>{
+struct nfun_base1<TFun, 1, R, const VMachinePtr&>{
 	typedef TFun fun_type;
 	typedef param_types_holder1<Any, Any> fun_param_holder;
-	enum{ method = 0, arity = 1, extendable = 0, vm = 1 };
+	enum{ method = 1, arity = 1, extendable = 0, vm = 1 };
 	static void call(FunctorParam& fp){ 
 		(*(TFun*)fp.fun)(fp,
 			to_smartptr(fp.vm)

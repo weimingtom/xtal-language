@@ -10,27 +10,6 @@ uint_t Stream::tell(){
 	return 0;
 }
 
-/*
-uint_t Stream::write(String::iterator first, String::iterator end){
-	char_t buf[256];
-	uint_t size = 0;
-	while(first!=end){
-		int_t i = 0;
-		while(first!=end){
-			buf[i] = *first;
-			++first;
-			++i;
-			if(i==256){
-				break;
-			}
-		}
-		size += write(&buf[0], i*sizeof(char_t));
-	}
-
-	return size;
-}
-*/
-
 void Stream::put_s(const StringPtr& str){
 	write(str->data(), str->data_size()*sizeof(char_t));
 }

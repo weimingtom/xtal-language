@@ -14,8 +14,8 @@ xtal_allocator.o: ../src/xtal/xtal_allocator.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h
 xtal_any.o: ../src/xtal/xtal_any.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -32,8 +32,8 @@ xtal_any.o: ../src/xtal/xtal_any.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_stringspace.h \
   ../src/xtal/xtal_details.h ../src/xtal/xtal_objectspace.h \
   ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h
@@ -53,8 +53,8 @@ xtal_anyptr.o: ../src/xtal/xtal_anyptr.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_array.o: ../src/xtal/xtal_array.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -72,8 +72,8 @@ xtal_array.o: ../src/xtal/xtal_array.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_base.o: ../src/xtal/xtal_base.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -91,9 +91,9 @@ xtal_base.o: ../src/xtal/xtal_base.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
-  ../src/xtal/xtal_macro.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_macro.h ../src/xtal/xtal_stringspace.h
 xtal_basictype.o: ../src/xtal/xtal_basictype.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -110,8 +110,8 @@ xtal_basictype.o: ../src/xtal/xtal_basictype.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_bind.o: ../src/xtal/xtal_bind.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -129,9 +129,32 @@ xtal_bind.o: ../src/xtal/xtal_bind.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
-  ../src/xtal/xtal_macro.h ../src/xtal/xtal_stringspace.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_macro.h ../src/xtal/xtal_details.h \
+  ../src/xtal/xtal_objectspace.h ../src/xtal/xtal_stringspace.h \
+  ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h
+xtal_bind2.o: ../src/xtal/xtal_bind2.cpp ../src/xtal/xtal.h \
+  ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
+  ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
+  ../src/xtal/xtal_base.h ../src/xtal/xtal_anyptr.h \
+  ../src/xtal/xtal_smartptr.h ../src/xtal/xtal_basictype.h \
+  ../src/xtal/xtal_array.h ../src/xtal/xtal_hashtable.h \
+  ../src/xtal/xtal_map.h ../src/xtal/xtal_cast.h \
+  ../src/xtal/xtal_string.h ../src/xtal/xtal_stack.h \
+  ../src/xtal/xtal_text.h ../src/xtal/xtal_inst.h ../src/xtal/xtal_fun.h \
+  ../src/xtal/xtal_debug.h ../src/xtal/xtal_vmachine.h \
+  ../src/xtal/xtal_cfun.h ../src/xtal/xtal_frame.h \
+  ../src/xtal/xtal_class.h ../src/xtal/xtal_code.h \
+  ../src/xtal/xtal_bind.h ../src/xtal/xtal_environment.h \
+  ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
+  ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
+  ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_macro.h ../src/xtal/xtal_details.h \
+  ../src/xtal/xtal_objectspace.h ../src/xtal/xtal_stringspace.h \
+  ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h
 xtal_cast.o: ../src/xtal/xtal_cast.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -148,8 +171,8 @@ xtal_cast.o: ../src/xtal/xtal_cast.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_cfun.o: ../src/xtal/xtal_cfun.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -167,8 +190,8 @@ xtal_cfun.o: ../src/xtal/xtal_cfun.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_ch.o: ../src/xtal/xtal_ch.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -186,8 +209,8 @@ xtal_ch.o: ../src/xtal/xtal_ch.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h
 xtal_class.o: ../src/xtal/xtal_class.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -204,8 +227,8 @@ xtal_class.o: ../src/xtal/xtal_class.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_details.h \
   ../src/xtal/xtal_objectspace.h ../src/xtal/xtal_stringspace.h \
   ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h
@@ -225,8 +248,8 @@ xtal_code.o: ../src/xtal/xtal_code.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_codebuilder.o: ../src/xtal/xtal_codebuilder.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -244,8 +267,8 @@ xtal_codebuilder.o: ../src/xtal/xtal_codebuilder.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_codebuilder.h \
   ../src/xtal/xtal_parser.h
 xtal_codebuilder2.o: ../src/xtal/xtal_codebuilder2.cpp ../src/xtal/xtal.h \
@@ -264,8 +287,8 @@ xtal_codebuilder2.o: ../src/xtal/xtal_codebuilder2.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_codebuilder.h \
   ../src/xtal/xtal_parser.h
 xtal_debug.o: ../src/xtal/xtal_debug.cpp ../src/xtal/xtal.h \
@@ -284,8 +307,8 @@ xtal_debug.o: ../src/xtal/xtal_debug.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_environment.o: ../src/xtal/xtal_environment.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -303,8 +326,8 @@ xtal_environment.o: ../src/xtal/xtal_environment.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_details.h \
   ../src/xtal/xtal_objectspace.h ../src/xtal/xtal_stringspace.h \
   ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h \
@@ -325,8 +348,8 @@ xtal_except.o: ../src/xtal/xtal_except.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_expr.o: ../src/xtal/xtal_expr.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -344,8 +367,8 @@ xtal_expr.o: ../src/xtal/xtal_expr.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h
 xtal_filesystem.o: ../src/xtal/xtal_filesystem.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -362,8 +385,8 @@ xtal_filesystem.o: ../src/xtal/xtal_filesystem.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h
 xtal_frame.o: ../src/xtal/xtal_frame.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -380,8 +403,8 @@ xtal_frame.o: ../src/xtal/xtal_frame.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_fun.o: ../src/xtal/xtal_fun.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -399,8 +422,8 @@ xtal_fun.o: ../src/xtal/xtal_fun.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_inst.o: ../src/xtal/xtal_inst.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -418,8 +441,8 @@ xtal_inst.o: ../src/xtal/xtal_inst.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_iterator.o: ../src/xtal/xtal_iterator.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -437,8 +460,8 @@ xtal_iterator.o: ../src/xtal/xtal_iterator.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_lib.o: ../src/xtal/xtal_lib.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -456,8 +479,8 @@ xtal_lib.o: ../src/xtal/xtal_lib.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_codebuilder.h \
   ../src/xtal/xtal_parser.h
 xtal_map.o: ../src/xtal/xtal_map.cpp ../src/xtal/xtal.h \
@@ -476,8 +499,8 @@ xtal_map.o: ../src/xtal/xtal_map.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_objectspace.o: ../src/xtal/xtal_objectspace.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -495,8 +518,8 @@ xtal_objectspace.o: ../src/xtal/xtal_objectspace.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_objectspace.h
 xtal_parser.o: ../src/xtal/xtal_parser.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -514,8 +537,8 @@ xtal_parser.o: ../src/xtal/xtal_parser.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_parser.h
 xtal_serializer.o: ../src/xtal/xtal_serializer.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -533,8 +556,8 @@ xtal_serializer.o: ../src/xtal/xtal_serializer.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_serializer.h
 xtal_stack.o: ../src/xtal/xtal_stack.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -552,8 +575,8 @@ xtal_stack.o: ../src/xtal/xtal_stack.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h
 xtal_stream.o: ../src/xtal/xtal_stream.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
   ../src/xtal/xtal_allocator.h ../src/xtal/xtal_any.h \
@@ -570,8 +593,8 @@ xtal_stream.o: ../src/xtal/xtal_stream.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_serializer.h
 xtal_string.o: ../src/xtal/xtal_string.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -589,8 +612,8 @@ xtal_string.o: ../src/xtal/xtal_string.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_text.o: ../src/xtal/xtal_text.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -608,8 +631,8 @@ xtal_text.o: ../src/xtal/xtal_text.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_thread.o: ../src/xtal/xtal_thread.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -627,8 +650,8 @@ xtal_thread.o: ../src/xtal/xtal_thread.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_threadspace.h
 xtal_vmachine.o: ../src/xtal/xtal_vmachine.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -646,8 +669,8 @@ xtal_vmachine.o: ../src/xtal/xtal_vmachine.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h ../src/xtal/xtal_stringspace.h \
   ../src/xtal/xtal_details.h ../src/xtal/xtal_objectspace.h \
   ../src/xtal/xtal_threadspace.h ../src/xtal/xtal_cache.h
@@ -667,8 +690,8 @@ xtal_vmachine2.o: ../src/xtal/xtal_vmachine2.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h
 xtal_xpeg.o: ../src/xtal/xtal_xpeg.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_setting.h ../src/xtal/xtal_utility.h \
@@ -686,6 +709,6 @@ xtal_xpeg.o: ../src/xtal/xtal_xpeg.cpp ../src/xtal/xtal.h \
   ../src/xtal/xtal_ch.h ../src/xtal/xtal_stream.h \
   ../src/xtal/xtal_filesystem.h ../src/xtal/xtal_thread.h \
   ../src/xtal/xtal_lib.h ../src/xtal/xtal_iterator.h \
-  ../src/xtal/xtal_except.h ../src/xtal/xtal_xpeg.h \
-  ../src/xtal/xtal_expr.h ../src/xtal/xtal_anyinline.h \
+  ../src/xtal/xtal_except.h ../src/xtal/xtal_expr.h \
+  ../src/xtal/xtal_xpeg.h ../src/xtal/xtal_anyinline.h \
   ../src/xtal/xtal_macro.h

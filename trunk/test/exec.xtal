@@ -7,8 +7,13 @@ lib::test: singleton{
 	_ok: 0;
 	_fail: 0;
 	
-	lrun_files: fun(files){
-	
+	run_dir: fun(dir){			
+		run_files(
+			//[dir ~ "/" ~ "test_array.xtal"].each
+			filesystem::entries(dir)
+				.select(|x| x.match(once xpeg::bos >> "test_" >> xpeg::word*0 >> ".xtal" >> xpeg::eos))
+				.map(|x| dir ~ "/" ~ x)
+		);//
 	}
 	
 	run_files: fun(files){
@@ -18,7 +23,12 @@ lib::test: singleton{
 		files.each{
 			println(it);
 			
-			run_file(it);
+			try{
+				run_file(it);
+			}
+			catch(e){
+				printf("\tfail %s:%s\n", it, e);
+			}
 		}
 			
 		print_result();
@@ -65,13 +75,6 @@ lib::test: singleton{
 				}
 			}
 		}
-	}
-	
-	run_dir: fun(dir){			
-		run_files(filesystem::entries(dir)
-					.select(|x| x.match(once xpeg::bos >> "test_" >> xpeg::word*0 >> ".xtal" >> xpeg::eos))
-					.map(|x| dir ~ "/" ~ x)
-			);
 	}
 	
 	print_result{

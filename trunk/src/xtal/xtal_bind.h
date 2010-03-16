@@ -2805,7 +2805,7 @@ template<class TFun> inline static_setter_meker<TFun> generate_static_setter(TFu
 #define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_FUN_PARAM(impl))
 
 #define Xdef_getter(fun) it->define(XTAL_L(#fun), XTAL_GETTER_PARAM(&Self::fun))
-#define Xdef_setter(fun) it->define(XTAL_L("set_" #fun), XTAL_SETTER_PARAM(&Self::fun))
+#define Xdef_setter(fun) it->define(XTAL_L("set_") XTAL_L(#fun), XTAL_SETTER_PARAM(&Self::fun))
 
 #endif
 

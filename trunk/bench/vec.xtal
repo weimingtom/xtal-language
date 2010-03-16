@@ -2,13 +2,9 @@ class Vec2D{
   + _x;
   + _y;
 
-  initialize: method(_x: 0, _y: 0){}
+  initialize: method(_x: 0, _y: 0){ return this; }
 
-  op_add#this: method(v){
-    return Vec2D(_x+v.x, _y+v.y);
-  }
-  
-  op_add_assign#this: method(v){
+  op_add_assign: method(v){
     _x += v.x;
     _y += v.y;
     return this;
@@ -24,7 +20,6 @@ foo: fun(){
 	u: Vec2D(1, 2);
 	for(i: 0; i<5000000; ++i){
 		v += u;
-		//v = v + u;
 	}
 	
 	v.p;

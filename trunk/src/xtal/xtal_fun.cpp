@@ -134,25 +134,16 @@ void ArgumentsIter::on_visit_members(Visitor& m){
 	m & ait_ & mit_;
 }
 
-InstanceVariableGetter::InstanceVariableGetter(int_t number, ClassInfo* info)
-	:number_(number), info_(info){
-}
-
-void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm){
+void InstanceVariableGetter::on_rawcall(const VMachinePtr& vm) const{
 	const AnyPtr& self = vm->arg_this();
-	vm->return_result(self->instance_variables()->variable(number_, info_));
+	vm->return_result(self->instance_variables()->variable(number(), class_info()));	
 }
 
-InstanceVariableSetter::InstanceVariableSetter(int_t number, ClassInfo* info)
-	:number_(number), info_(info){
-}
-
-void InstanceVariableSetter::on_rawcall(const VMachinePtr& vm){
+void InstanceVariableSetter::on_rawcall(const VMachinePtr& vm) const{
 	const AnyPtr& self = vm->arg_this();
-	self->instance_variables()->set_variable(number_, info_, vm->arg(0));
+	self->instance_variables()->set_variable(number(), class_info(), vm->arg(0));
 	vm->return_result();
 }
-
 
 Method::Method(const FramePtr& outer, const CodePtr& code, FunInfo* info)
 	:outer_(outer), code_(code), info_(info){

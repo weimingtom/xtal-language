@@ -9,9 +9,37 @@
 
 namespace xtal{
 
-/**
-* \brief 配列
-*/
+void xxmemmove(int_t* ss1, const int_t* ss2, size_t n);
+void xxmemcpy(int_t* ss1, const int_t* ss2, size_t n);
+void xxmemset(int_t* s, int_t c, size_t n);
+
+inline void ixmemmove(void* ss1, const void* ss2, size_t n){
+	xxmemmove((int_t*)ss1, (const int_t*)ss2, n/sizeof(int_t));
+}
+
+inline void ixmemcpy(void* ss1, const void* ss2, size_t n){
+	xxmemcpy((int_t*)ss1, (const int_t*)ss2, n/sizeof(int_t));
+}
+
+inline void ixmemset(void* s, int_t c, size_t n){
+	xxmemset((int_t*)s, c, n/sizeof(int_t));
+}
+
+template<class T>
+inline void xmemmove(T* s1, const T* s2, size_t n){
+	xxmemmove((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
+}
+
+template<class T>
+inline void xmemcpy(T* s1, const T* s2, size_t n){
+	xxmemcpy((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
+}
+
+template<class T>
+inline void xmemset(T* s, int_t c, size_t n){
+	xxmemset((int_t*)s, c, n*(sizeof(T)/sizeof(int_t)));
+}
+
 class xarray{
 public:
 
@@ -52,6 +80,13 @@ public:
 	}
 
 	/**
+	* \brief 配列のキャパシティを返す
+	*/
+	uint_t capacity() const{
+		return capa_;
+	}
+
+	/**
 	* \brief 配列の長さを変更する
 	*/
 	void resize(uint_t sz);
@@ -84,7 +119,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 先頭に要素を追加する
 	*/
 	void push_front(const AnyPtr& v){
@@ -92,7 +126,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 先頭の要素を削除する
 	*/
 	void pop_front(){
@@ -100,19 +133,16 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 末尾に要素を追加する
 	*/
 	void push_back(const AnyPtr& v);
 
 	/**
-	* \xbind
 	* \brief 末尾の要素を削除する
 	*/
 	void pop_back();
 
 	/**
-	* \xbind
 	* \brief 先頭の要素を返す
 	*/
 	const AnyPtr& front() const{
@@ -120,7 +150,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 末尾の要素を返す
 	*/
 	const AnyPtr& back() const{
@@ -128,7 +157,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief i番目のn個の要素を削除する
 	*/
 	void erase(int_t i, int_t n = 1);
@@ -140,7 +168,6 @@ public:
 	void insert(int_t i, const AnyPtr& v);
 
 	/**
-	* \xbind
 	* \brief 空か調べる
 	*/
 	bool empty() const{
@@ -148,7 +175,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 空か調べる
 	*/
 	bool is_empty() const{
@@ -156,7 +182,6 @@ public:
 	}
 
 	/**
-	* \xbind
 	* \brief 要素を全て削除する
 	*/
 	void clear();
@@ -212,7 +237,7 @@ public:
 		return iterator(values_ + size_);
 	}
 
-	const AnyPtr* data(){
+	AnyPtr* data(){
 		return values_;
 	}
 
@@ -228,22 +253,9 @@ public:
 		capa_ = 0;
 	}
 
-	void reflesh(){
-		AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
-		std::memcpy(&newp[0], &values_[0], sizeof(AnyPtr)*size_);
-		capa_ = size_;
-		values_ = newp;
-	}
+	void reflesh();
 
-	void set_at_unref(int_t i, const Any& value){
-		(Any&)values_[i] = value;
-	}
-
-	void upsize_unref(uint_t size);
-
-	void clear_unref();
-
-	void move_unref(int_t dest, int_t src, int_t n );
+	void move(int_t dest, int_t src, int_t n );
 
 	friend void swap(xarray& a, xarray& b){
 		std::swap(a.values_, b.values_);
@@ -263,7 +275,6 @@ protected:
 };
 
 void visit_members(Visitor& m, const xarray& values);
-
 
 /**
 * \xbind lib::builtin
@@ -531,18 +542,6 @@ public:
 
 	void detach(){
 		values_.detach();
-	}
-
-	void set_at_unref(int_t i, const Any& value){
-		values_.set_at_unref(i, value);
-	}
-
-	void upsize_unref(uint_t size){
-		values_.upsize_unref(size);
-	}
-
-	void clear_unref(){
-		values_.clear_unref();
 	}
 
 	void reflesh(){

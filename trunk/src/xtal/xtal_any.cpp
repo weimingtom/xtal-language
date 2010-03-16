@@ -32,7 +32,7 @@ const AnyPtr& Any::member(const IDPtr& primary_key, const AnyPtr& secondary_key,
 	if(type(*this)==TYPE_BASE){
 		Base* p = pvalue(*this);
 		const AnyPtr& ret = inherited_too ?
-			cache_member(p, primary_key, secondary_key, accessibility) :
+			environment_->member_cache_table_.cache(p, primary_key, secondary_key, accessibility) :
 			p->rawmember(primary_key, secondary_key, false, accessibility, Temp());
 		return ret;
 	}
@@ -82,11 +82,15 @@ void Any::rawcall(const VMachinePtr& vm) const{
 			pvalue(*this)->rawcall(vm);
 		}
 
+		XTAL_CASE(TYPE_IVAR_GETTER){ unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->on_rawcall(vm); }
+		XTAL_CASE(TYPE_IVAR_SETTER){ unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->on_rawcall(vm); }
 		XTAL_CASE(TYPE_STATELESS_NATIVE_METHOD){ unchecked_ptr_cast<StatelessNativeMethod>(ap(*this))->on_rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_METHOD){ unchecked_ptr_cast<NativeMethod>(ap(*this))->on_rawcall(vm); }
 		XTAL_CASE(TYPE_NATIVE_FUN){ unchecked_ptr_cast<NativeFun>(ap(*this))->on_rawcall(vm); }
-		XTAL_CASE(TYPE_IVAR_GETTER){ unchecked_ptr_cast<InstanceVariableGetter>(ap(*this))->on_rawcall(vm); }
-		XTAL_CASE(TYPE_IVAR_SETTER){ unchecked_ptr_cast<InstanceVariableSetter>(ap(*this))->on_rawcall(vm); }
+		XTAL_CASE(TYPE_METHOD){ unchecked_ptr_cast<Method>(ap(*this))->on_rawcall(vm); }
+		XTAL_CASE(TYPE_FUN){ unchecked_ptr_cast<Fun>(ap(*this))->on_rawcall(vm); }
+		XTAL_CASE(TYPE_LAMBDA){ unchecked_ptr_cast<Lambda>(ap(*this))->on_rawcall(vm); }
+		XTAL_CASE(TYPE_FIBER){ unchecked_ptr_cast<Fiber>(ap(*this))->on_rawcall(vm); }
 	}
 
 	if(vm->processed()==0){

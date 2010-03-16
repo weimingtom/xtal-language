@@ -186,6 +186,24 @@ uint_t disable_force();
 */
 bool is_enabled();
 
+/**
+* \xbind lib::builtin::debug
+* \brief デバッグコンパイルが有効かどうか
+*/
+bool is_debug_compile_enabled();
+
+/**
+* \xbind lib::builtin::debug
+* \brief デバッグコンパイルを有効にする
+*/
+void enable_debug_compile();
+
+/**
+* \xbind lib::builtin::debug
+* \brief デバッグコンパイルを有効にする
+*/
+void disable_debug_compile();
+
 uint_t hook_setting_bit();
 
 uint_t* hook_setting_bit_ptr();

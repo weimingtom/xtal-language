@@ -141,20 +141,8 @@ bool Frame::replace_member(const IDPtr& primary_key, const AnyPtr& value){
 	return false;
 }
 
-void Frame::add_ref_count_members(int_t n){
-	for(uint_t i=0, size=members_.size(); i<size; ++i){
-		add_ref_count_force(members_.at(i), n);
-	}
-}
-
 void Frame::push_back_member(const AnyPtr& value){
-	if(orphan_){
-		members_.push_back(value);
-	}
-	else{
-		members_.upsize(1);
-		members_.set_at_unref(members_.size()-1, value);
-	}
+	members_.push_back(value);
 }
 
 }

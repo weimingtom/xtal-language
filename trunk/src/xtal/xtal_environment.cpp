@@ -281,8 +281,6 @@ namespace{
 }
 
 void* AllocatorLib::malloc_align(std::size_t size, std::size_t alignment){
-	//return (char*)malloc(size+1)+1;
-
 	if(alignment <= sizeof(void*)){
         alignment = sizeof(void*);
 	}
@@ -302,8 +300,6 @@ void* AllocatorLib::malloc_align(std::size_t size, std::size_t alignment){
 }
 
 void AllocatorLib::free_align(void *mem, std::size_t size, std::size_t alignment){
-	//return free((char*)mem-1, size+1);
-
 	if(!mem){
 		return;
 	}
@@ -363,7 +359,7 @@ void set_vmachine(const VMachinePtr& vm){
 void* xmalloc(size_t size){
 	Environment* env = environment_;
 	
-	env->malloc_count_ = (env->malloc_count_ + 1) & 31;
+	env->malloc_count_ = (env->malloc_count_ + 1) & ((1<<7)-1);
 	if(env->malloc_count_==0){
 		lw_gc();
 	}
@@ -379,12 +375,6 @@ void* xmalloc(size_t size){
 #endif
 
 	env->used_memory_ += size;
-
-	if(env->used_memory_>env->memory_threshold_){
-		env->object_space_.lw_gc();
-		env->memory_threshold_ = env->used_memory_ + 1024*20;
-		//printf("mem %dKB\n", env->memory_threshold_/1024);
-	}
 
 	void* ret = env->setting_.allocator_lib->malloc(size);
 
@@ -447,7 +437,7 @@ void* xmalloc_align(size_t size, size_t alignment){
 
 	Environment* env = environment_;
 
-	env->malloc_count_ = (env->malloc_count_ + 1) & 31;
+	env->malloc_count_ = (env->malloc_count_ + 1) & ((1<<7)-1);
 	if(env->malloc_count_==0){
 		lw_gc();
 	}
@@ -457,11 +447,6 @@ void* xmalloc_align(size_t size, size_t alignment){
 	}
 
 	env->used_memory_ += size;
-
-	if(env->used_memory_>env->memory_threshold_){
-		env->object_space_.lw_gc();
-		env->memory_threshold_ = env->used_memory_ + 1024*20;
-	}
 
 	void* ret = env->setting_.allocator_lib->malloc_align(size, alignment);
 
@@ -587,7 +572,6 @@ void Environment::initialize(const Setting& setting){
 	set_jmp_buf_ = false;
 	ignore_memory_assert_ = false;
 	used_memory_ = 0;
-	memory_threshold_ = 1024*5;
 	malloc_count_ = 0;
 	
 	object_space_.initialize();
@@ -737,14 +721,6 @@ void register_gc(RefCountingBase* p){
 	return environment_->object_space_.register_gc(p);
 }
 
-void register_gc_vm(VMachine* p){
-	return environment_->object_space_.register_gc_vm(p);
-}
-
-void unregister_gc_vm(VMachine* p){
-	return environment_->object_space_.unregister_gc_vm(p);
-}
-
 uint_t alive_object_count(){
 	return environment_->object_space_.alive_object_count();
 }
@@ -763,14 +739,6 @@ const ClassPtr& cpp_class(int_t index){
 
 const AnyPtr& cpp_value(CppValueSymbolData* key){
 	return environment_->object_space_.cpp_value(key);
-}
-
-bool cache_is(const AnyPtr& target_class, const AnyPtr& klass){
-	return environment_->is_cache_table_.cache(target_class, klass);
-}
-
-bool cache_ctor(const AnyPtr& target_class, int_t kind){
-	return environment_->ctor_cache_table_.cache(target_class, kind);
 }
 
 void clear_cache(){
@@ -951,11 +919,6 @@ CodePtr compile_file(const StringPtr& file_name){
 		CodeBuilder cb;
 		CodePtr ret = cb.compile(fs, file_name);
 		fs->close();
-		
-		if(!ret){
-			XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt1("XRE1016", name, file_name), cb.errors()));
-		}
-		
 		return ret;
 	}
 	
@@ -966,22 +929,12 @@ CodePtr compile(const AnyPtr& source){
 	GCer gc;
 
 	CodeBuilder cb;
-	CodePtr ret = cb.compile(xnew<xpeg::Executor>(source), empty_string);
-	if(!ret){
-		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1002"), cb.errors()));
-	}
-	return ret;
+	return cb.compile(xnew<xpeg::Executor>(source), empty_string);
 }
 
 CodePtr eval_compile(const AnyPtr& source){
-	GCer gc;
-
 	CodeBuilder cb;
-	CodePtr ret = cb.eval_compile(xnew<xpeg::Executor>(source));
-	if(!ret){
-		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1002"), cb.errors()));
-	}
-	return ret;
+	return cb.eval_compile(xnew<xpeg::Executor>(source));
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -1043,11 +996,7 @@ CodePtr source(const char_t* src, int_t size){
 
 	CodeBuilder cb;
 	StreamPtr ms = xnew<PointerStream>(src, size*sizeof(char_t));
-	CodePtr ret =  cb.compile(ms);
-	if(!ret){
-		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt0("XRE1010"), cb.errors()));
-	}
-	return ret;
+	return cb.compile(ms);
 }
 
 void exec_source(const char_t* src, int_t size){

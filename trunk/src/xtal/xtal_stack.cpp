@@ -23,211 +23,154 @@ void stack_deallocate(void* p, size_t size){
 }
 
 
-PODStackBase::PODStackBase(size_t onesize){
-	one_size_ = onesize;
-	begin_ = plusp(stack_dummy_allocate(), 1);
-	current_ = minusp(begin_, 1);
-	end_ = begin_;
-}
+PODArrayBase::PODArrayBase(uint_t one_size, uint_t size){
+	one_size_ = one_size;
+	capa_ = size;
+	size_ = size;
 
-PODStackBase::~PODStackBase(){
-	stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
-}
-
-PODStackBase::PODStackBase(const PODStackBase &a){
-	one_size_ = a.one_size_;
-	if(a.capacity()==0){
-		begin_ = plusp(stack_dummy_allocate(), 1);
-		current_ = minusp(begin_, 1);
-		end_ = begin_;
+	if(capa_!=0){
+		values_ = (AnyPtr*)xmalloc(one_size_*capa_);
 	}
 	else{
-		begin_ = plusp(stack_allocate(one_size_*(a.capacity()+1)), 1);
-		current_ = plusp(begin_, a.size()-1);
-		end_ = plusp(begin_, a.capacity());
-		std::memcpy(begin_, a.begin_, one_size_*a.capacity());
+		values_ = 0;
 	}
 }
 
-PODStackBase &PODStackBase::operator =(const PODStackBase &a){
-	if(this==&a){
-		return *this;
-	}
-
-	if(a.capacity()==0){
-		stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
-		one_size_ = a.one_size_;
-		begin_ = plusp(stack_dummy_allocate(), 1);
-		current_ = minusp(begin_, 1);
-		end_ = begin_;
+void PODArrayBase::init(const void* values, uint_t size){
+	capa_ = size;
+	size_ = size;
+	if(capa_!=0){
+		values_ = (AnyPtr*)xmalloc(one_size_*capa_);
+		std::memcpy(values_, values, one_size_*size);
 	}
 	else{
-		void* newp = plusp(stack_allocate(a.one_size_*(a.capacity()+1)), 1);
-		stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
-		one_size_ = a.one_size_;
-		begin_ = newp;
-		current_ = plusp(begin_, a.size()-1);
-		end_ = plusp(begin_, a.capacity());
-		std::memcpy(begin_, a.begin_, one_size_*a.capacity());
+		values_ = 0;
 	}
+}
 
+
+PODArrayBase::PODArrayBase(const PODArrayBase& v){
+	one_size_ = v.one_size_;
+	init(((PODArrayBase&)v).data(), ((PODArrayBase&)v).size());
+}
+
+PODArrayBase& PODArrayBase::operator =(const PODArrayBase& v){
+	PODArrayBase temp(v);
+	std::swap(one_size_, temp.one_size_);
+	std::swap(values_, temp.values_);
+	std::swap(size_, temp.size_);
+	std::swap(capa_, temp.capa_);
 	return *this;
 }
 
-void PODStackBase::resize(size_t newsize){
-	XTAL_ASSERT(newsize>=0);
+PODArrayBase::~PODArrayBase(){
+	destroy();
+}
 
-	size_t oldsize = size();
-	if(newsize>oldsize){
-		upsize(newsize-oldsize);
+void PODArrayBase::destroy(){
+	xfree(values_, one_size_*capa_);
+	size_ = 0;
+	capa_ = 0;
+	values_ = 0;
+
+}
+
+void PODArrayBase::clear(){
+	size_ = 0;
+}
+
+void PODArrayBase::shrink_to_fit(){
+	if(size_!=capa_){
+		PODArrayBase temp(*this);
+		std::swap(values_, temp.values_);
+		std::swap(one_size_, temp.one_size_);
+		std::swap(size_, temp.size_);
+		std::swap(capa_, temp.capa_);
+	}
+}
+
+void PODArrayBase::resize(uint_t sz){
+	if(sz<size_){
+		downsize(size_-sz);
+	}
+	else if(sz>size_){
+		upsize(sz-size_);
+	}
+}
+
+void PODArrayBase::upsize(uint_t sz){
+	if(size_+sz>capa_){ // todo overflow check
+		if(capa_!=0){
+			uint_t newcapa = size_+sz+capa_+1;
+			void* newp = xmalloc(one_size_*newcapa);
+			std::memcpy(newp, values_, one_size_*size_);
+			xfree(values_, one_size_*capa_);
+			values_ = newp;
+			size_ += sz;
+			capa_ = newcapa;
+		}
+		else{
+			// 一番最初のリサイズは、きっかりに取る
+			uint_t newcapa = sz;
+			values_ = xmalloc(one_size_*newcapa);
+			size_ = sz;
+			capa_ = newcapa;
+		}
 	}
 	else{
-		downsize_n(newsize);
+		size_ += sz;
 	}
 }
 
-void PODStackBase::upsize_detail(size_t us){
-	XTAL_ASSERT(us>=0);
-
-	subp(current_, us);
-
-	size_t oldsize = size();
-	size_t oldcapa = capacity();
-	size_t newsize = oldsize+us;
-	void* oldp = begin_;
-	size_t newcapa = oldcapa==0 ? us : 2 + us + oldcapa + oldcapa/2;
-	void* newp = plusp(stack_allocate(one_size_*(newcapa+1)), 1);
-
-	std::memcpy(newp, oldp, one_size_*oldsize);
-	stack_deallocate(minusp(oldp, 1), one_size_*(oldcapa+1));
-
-	begin_ = newp;
-	current_ = plusp(begin_, newsize-1);
-	end_ = plusp(begin_, newcapa);
-}
-
-void PODStackBase::reverse_erase(size_t i, size_t n){
-	size_t sz = size();
-	if(sz-(i+n)!=0){
-		std::memmove(reverse_at(i), reverse_at(i+n), one_size_*(sz-(i+n)));
+void PODArrayBase::downsize(uint_t sz){
+	if(sz>size_){
+		sz = size_;
 	}
-	downsize(n);
-}	
-
-void PODStackBase::reverse_insert(size_t i, const void* v, size_t n){
-	upsize(n);
-	std::memmove(reverse_at(i+n), reverse_at(i), one_size_*(size()-(i+n)));
-	std::memcpy(reverse_at(i), v, one_size_*n);
+	size_ -= sz;
 }
 
-void PODStackBase::reserve(size_t capa){
-	if(capa<=capacity()){
+void PODArrayBase::erase(int_t start, int_t n){
+	if(n==0){
 		return;
 	}
 
-	size_t diff = capa-size();
-	upsize(diff);
-	downsize(diff);
-}
+	XTAL_ASSERT(0<=start && (uint_t)start<size_);
 
-void PODStackBase::release(){
-	stack_deallocate(minusp(begin_, 1), one_size_*(capacity()+1));
-	begin_ = plusp(stack_dummy_allocate(), 1);
-	current_ = minusp(begin_, 1);
-	end_ = begin_;
-}
-
-void PODStackBase::attach(void* p){
-	begin_ = plusp(p, 1);
-	current_ = minusp(begin_, 1);
-	end_ = begin_;
-	addp(current_, 1);
-}
-
-void PODStackBase::detach(){
-	begin_ = plusp(stack_dummy_allocate(), 1);
-	current_ = minusp(begin_, 1);
-	end_ = begin_;
-}
-
-
-//////////////////////////
-
-StackBase::StackBase(size_t onesize,
-	void (*ctorc)(void* p),
-	void (*copy_ctor)(void* p, const void* q),
-	void (*dtor)(void* p))
-	:impl_(onesize), ctor_(ctorc), copy_ctor_(copy_ctor), dtor_(dtor){} 
-
-StackBase::StackBase(const StackBase& v)
-	:impl_(v.impl_){
-	for(size_t i=0, sz=size(); i<sz; ++i){
-		copy_ctor_((*this)[i], v[i]);
+	if(size_-(start+n)!=0){
+		std::memmove(plusp(values_, start), plusp(values_, start+n), (size_-(start+n))*one_size_);
 	}
+	size_ -= n;
 }
 
-StackBase& StackBase::operator =(const StackBase& v){
-	if(this==&v){
-		return *this;
+void PODArrayBase::insert(int_t i, const void* v){
+	if(capa_==size_){
+		upsize(1);
 	}
-
-	impl_ = v.impl_;
-
-	for(size_t i=0, sz=size(); i<sz; ++i){
-		copy_ctor_((*this)[i], v[i]);
+	else{
+		size_++;
 	}
-
-	return *this;
+	std::memmove(plusp(values_, i+1), plusp(values_, i), (size_-(i+1))*one_size_);
+	std::memcpy(plusp(values_, i), v, one_size_);
 }
 
-StackBase::~StackBase(){
-	release();
-}
-
-void StackBase::erase(size_t i){
-	dtor_((*this)[i]);
-	for(size_t j = i; j != 0; --j){
-		copy_ctor_((*this)[j], (*this)[j-1]);
-		dtor_((*this)[j-1]);
+void PODArrayBase::push_back(const void* v){
+	if(capa_==size_){
+		upsize(1);
 	}
-	impl_.downsize(1);
-}
-	
-void StackBase::insert(size_t i, const void* v){
-	impl_.upsize(1);
-	for(size_t j = 0; j != i; ++j){
-		copy_ctor_((*this)[j], (*this)[j+1]);
-		dtor_((*this)[j+1]);
+	else{
+		size_++;
 	}
-	copy_ctor_((*this)[i], v);		
+	std::memcpy(plusp(values_, size_-1), v, one_size_);
 }
 
-void StackBase::resize(size_t newsize){
-	if(newsize>size()){
-		upsize(newsize-size());
-	}
-	else if(newsize<size()){
-		downsize(size()-newsize);
-	}
+void PODArrayBase::pop_back(){
+	XTAL_ASSERT(!empty());
+	size_--;
 }
 
-void StackBase::downsize(size_t ds){
-	for(size_t i=0; i<ds; ++i){
-		dtor_((*this)[i]);
-	}
-	impl_.downsize(ds);
-}
-
-void StackBase::upsize(size_t us){
-	impl_.upsize(us);
-	for(size_t i=0; i<us; ++i){
-		ctor_((*this)[i]);
-	}		
-}
-
-void StackBase::release(){
-	clear();
-	impl_.release();
+void PODArrayBase::set_at(int_t i, const void* v){
+	XTAL_ASSERT(0<=i && (uint_t)i<size_);
+	std::memcpy(plusp(values_, i), v, one_size_);
 }
 
 }

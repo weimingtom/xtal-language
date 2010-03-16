@@ -13,38 +13,38 @@ struct param_types_holder_n;
 
 class InstanceVariables{
 public:
-
-	struct uninit_t{};
-
-	InstanceVariables(uninit_t){}
-
-	InstanceVariables();
-			
-	~InstanceVariables();
 		
 	void init_variables(ClassInfo* class_info);
 
-	uint_t find_class_info(ClassInfo* class_info, uint_t index){
-		VariablesInfo& info = variables_info_.back();
-		if(info.class_info == class_info){
-			return info.pos + index;
-		}
-		return find_class_info_inner(class_info, index);
-	}
-
-	const AnyPtr& variable(uint_t index, ClassInfo* class_info){
-		return variables_.at(find_class_info(class_info, index));
-	}
-
-	void set_variable(uint_t index, ClassInfo* class_info, const AnyPtr& value){
-		variables_.set_at(find_class_info(class_info, index), value);
-	}
-
 	bool is_included(ClassInfo* class_info);
 
-	uint_t find_class_info_inner(ClassInfo* class_info, uint_t index);
-
 	void replace(ClassInfo* from, ClassInfo* to);
+
+	const AnyPtr& variable(uint_t index, ClassInfo* class_info){
+		if(!variables_info_.empty()){
+			VariablesInfo& front = variables_info_.top();
+			if(front.class_info==class_info){
+				return variables_.at(front.pos + index);
+			}
+			return variable2(index, class_info);
+		}
+		return undefined;
+	}
+
+	const AnyPtr& variable2(uint_t index, ClassInfo* class_info);
+
+	void set_variable(uint_t index, ClassInfo* class_info, const AnyPtr& value){
+		if(!variables_info_.empty()){
+			VariablesInfo& front = variables_info_.top();
+			if(front.class_info==class_info){
+				variables_.set_at(front.pos + index, value);
+				return;
+			}
+			set_variable2(index, class_info, value);
+		}
+	}
+
+	void set_variable2(uint_t index, ClassInfo* class_info, const AnyPtr& value);
 
 	bool empty(){
 		return variables_.empty();
@@ -68,18 +68,8 @@ protected:
 		int_t pos;
 	};
 
-	PODArrayList<VariablesInfo> variables_info_;
+	FastStack<VariablesInfo> variables_info_;
 	xarray variables_;
-};
-
-class EmptyInstanceVariables : public InstanceVariables{
-public:
-
-	EmptyInstanceVariables();
-
-	~EmptyInstanceVariables();
-
-	static VariablesInfo vi;
 };
 
 /**
@@ -498,8 +488,6 @@ public:
 	}
 
 protected:
-
-	void fillup_inherited_classes();
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 

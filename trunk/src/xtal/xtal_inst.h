@@ -89,7 +89,7 @@ struct Inst{
 };
 
 template<class T>
-void Inst::checked_assign(T& ref, int v){
+inline void Inst::checked_assign(T& ref, int v){
 	ref = T(v);
 	if(static_cast<int>(ref) != v){ 
 		op = 0xff; 
@@ -526,90 +526,135 @@ XTAL_DEF_INST_2(7, InstCopy,
 	inst_i8_t, result,
 	inst_i8_t, target);
 
-/**
-* \internal
-* \brief オブジェクトのメンバを取り出す。
-*
-*/
-XTAL_DEF_INST_5(8, InstMember,
-		inst_i8_t, result,
-		inst_i8_t, target,
-		inst_i16_t, primary,
-		inst_i8_t, secondary,
-		inst_u8_t, flags
-);
-
-enum{
-	UNA_INC,
-	UNA_DEC,
-	UNA_POS,
-	UNA_NEG,
-	UNA_COM
-};
-
-XTAL_DEF_INST_4(9, InstUna,
+XTAL_DEF_INST_3(8, InstInc,
 	inst_i8_t, result,
-	inst_u8_t, kind,
 	inst_i8_t, target,
 	inst_i8_t, stack_base);
 
-enum{
-	ARITH_ADD,
-	ARITH_SUB,
-	ARITH_CAT,
-	ARITH_MUL,
-	ARITH_DIV,
-	ARITH_MOD,
-
-	ARITH_ADD_ASSIGN = 8,
-	ARITH_SUB_ASSIGN,
-	ARITH_CAT_ASSIGN,
-	ARITH_MUL_ASSIGN,
-	ARITH_DIV_ASSIGN,
-	ARITH_MOD_ASSIGN,
-};
-
-XTAL_DEF_INST_5(10, InstArith,
+XTAL_DEF_INST_3(9, InstDec,
 	inst_i8_t, result,
-	inst_u8_t, kind,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(10, InstPos,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(11, InstNeg,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_3(12, InstCom,
+	inst_i8_t, result,
+	inst_i8_t, target,
+	inst_i8_t, stack_base);
+
+XTAL_DEF_INST_5(13, InstAdd,
+	inst_i8_t, result,
 	inst_i8_t, lhs,
 	inst_i8_t, rhs,
-	inst_i8_t, stack_base
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
 	);
 
-enum{
-	BITWISE_AND,
-	BITWISE_OR,
-	BITWISE_XOR,
-	BITWISE_SHL,
-	BITWISE_SHR,
-	BITWISE_USHR,
-
-	BITWISE_AND_ASSIGN = 8,
-	BITWISE_OR_ASSIGN,
-	BITWISE_XOR_ASSIGN,
-	BITWISE_SHL_ASSIGN,
-	BITWISE_SHR_ASSIGN,
-	BITWISE_USHR_ASSIGN,
-};
-
-XTAL_DEF_INST_5(11, InstBitwise,
+XTAL_DEF_INST_5(14, InstSub,
 	inst_i8_t, result,
-	inst_u8_t, kind,
 	inst_i8_t, lhs,
 	inst_i8_t, rhs,
-	inst_i8_t, stack_base
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
 	);
 
+XTAL_DEF_INST_5(15, InstCat,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
 
-XTAL_DEF_INST_4(12, InstAt,
+XTAL_DEF_INST_5(16, InstMul,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(17, InstDiv,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(18, InstMod,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(19, InstAnd,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(20, InstOr,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(21, InstXor,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(22, InstShl,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(23, InstShr,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_5(24, InstUshr,
+	inst_i8_t, result,
+	inst_i8_t, lhs,
+	inst_i8_t, rhs,
+	inst_i8_t, stack_base,
+	inst_u8_t, assign
+	);
+
+XTAL_DEF_INST_4(25, InstAt,
 	inst_i8_t, result,
 	inst_i8_t, target,
 	inst_i8_t, index,
 	inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_4(13, InstSetAt,
+XTAL_DEF_INST_4(26, InstSetAt,
 	inst_i8_t, target,
 	inst_i8_t, index,
 	inst_i8_t, value,
@@ -621,11 +666,11 @@ XTAL_DEF_INST_4(13, InstSetAt,
 * \brief 無条件分岐
 *
 */
-XTAL_DEF_INST_1(14, InstGoto,
+XTAL_DEF_INST_1(27, InstGoto,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_2(15, InstNot,
+XTAL_DEF_INST_2(28, InstNot,
 	inst_i8_t, result,
 	inst_i8_t, target);
 
@@ -634,49 +679,54 @@ XTAL_DEF_INST_2(15, InstNot,
 * \brief 条件分岐
 *
 */
-XTAL_DEF_INST_3(16, InstIf,
+XTAL_DEF_INST_3(29, InstIf,
 		inst_i8_t, target,
         inst_address_t, address_true,
 		inst_address_t, address_false
 );
 
-enum{
-	IF_COMP_EQ,
-	IF_COMP_LT,
-	IF_COMP_IN
-};
-
-XTAL_DEF_INST_4(17, InstIfComp,
-		inst_u8_t, kind,
+XTAL_DEF_INST_3(30, InstIfEq,
 		inst_i8_t, lhs,
 		inst_i8_t, rhs,
 		inst_i8_t, stack_base
 	);
 
-XTAL_DEF_INST_3(18, InstIfRawEq,
+XTAL_DEF_INST_3(31, InstIfLt,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base
+	);
+
+XTAL_DEF_INST_3(32, InstIfRawEq,
 		inst_i8_t, lhs,
 		inst_i8_t, rhs,
 		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_3(19, InstIfIs,
+XTAL_DEF_INST_3(33, InstIfIs,
 		inst_i8_t, lhs,
 		inst_i8_t, rhs,
 		inst_i8_t, stack_base);
 
-XTAL_DEF_INST_3(20, InstIfUndefined,
+XTAL_DEF_INST_3(34, InstIfIn,
+		inst_i8_t, lhs,
+		inst_i8_t, rhs,
+		inst_i8_t, stack_base
+	);
+
+XTAL_DEF_INST_3(35, InstIfUndefined,
 	inst_i8_t, target,
     inst_address_t, address_true,
 	inst_address_t, address_false
 );
 
-XTAL_DEF_INST_1(21, InstIfDebug,
+XTAL_DEF_INST_1(36, InstIfDebug,
 		inst_address_t, address);
 
 
-XTAL_DEF_INST_1(22, InstPush,
+XTAL_DEF_INST_1(37, InstPush,
 	inst_i8_t, target);
 
-XTAL_DEF_INST_1(23, InstPop,
+XTAL_DEF_INST_1(38, InstPop,
 	inst_i8_t, result);
 
 /**
@@ -684,7 +734,7 @@ XTAL_DEF_INST_1(23, InstPop,
 * \brief 値の数を調整する
 *
 */
-XTAL_DEF_INST_3(24, InstAdjustValues,
+XTAL_DEF_INST_3(39, InstAdjustValues,
 		inst_u8_t, stack_base,
         inst_u8_t, result_count,
         inst_u8_t, need_result_count
@@ -695,7 +745,7 @@ XTAL_DEF_INST_3(24, InstAdjustValues,
 * \brief ローカル変数を取り出す。
 *
 */
-XTAL_DEF_INST_3(25, InstLocalVariable,
+XTAL_DEF_INST_3(40, InstLocalVariable,
 		inst_i8_t, result,
         inst_u16_t, number,
 		inst_u8_t, depth
@@ -706,7 +756,7 @@ XTAL_DEF_INST_3(25, InstLocalVariable,
 * \brief ローカル変数に値を設定する。
 *
 */
-XTAL_DEF_INST_3(26, InstSetLocalVariable,
+XTAL_DEF_INST_3(41, InstSetLocalVariable,
 		inst_i8_t, target,
 		inst_u16_t, number,
 		inst_u8_t, depth
@@ -717,7 +767,7 @@ XTAL_DEF_INST_3(26, InstSetLocalVariable,
 * \brief インスタンス変数を取り出す。
 *
 */
-XTAL_DEF_INST_3(27, InstInstanceVariable,
+XTAL_DEF_INST_3(42, InstInstanceVariable,
 		inst_i8_t, result,
         inst_u8_t, number,
         inst_u16_t, info_number
@@ -728,7 +778,7 @@ XTAL_DEF_INST_3(27, InstInstanceVariable,
 * \brief インスタンス変数に値を設定する。
 *
 */
-XTAL_DEF_INST_3(28, InstSetInstanceVariable,
+XTAL_DEF_INST_3(43, InstSetInstanceVariable,
 		inst_i8_t, value,
         inst_u8_t, number,
         inst_u16_t, info_number
@@ -739,7 +789,7 @@ XTAL_DEF_INST_3(28, InstSetInstanceVariable,
 * \brief インスタンス変数を取り出す。
 *
 */
-XTAL_DEF_INST_2(29, InstInstanceVariableByName,
+XTAL_DEF_INST_2(44, InstInstanceVariableByName,
 		inst_i8_t, result,
         inst_u16_t, identifier_number
 );
@@ -749,7 +799,7 @@ XTAL_DEF_INST_2(29, InstInstanceVariableByName,
 * \brief インスタンス変数に値を設定する。
 *
 */
-XTAL_DEF_INST_2(30, InstSetInstanceVariableByName,
+XTAL_DEF_INST_2(45, InstSetInstanceVariableByName,
 		inst_i8_t, value,
         inst_u16_t, identifier_number
 );
@@ -759,7 +809,7 @@ XTAL_DEF_INST_2(30, InstSetInstanceVariableByName,
 * \brief ファイルローカル変数を取り出す。
 *
 */
-XTAL_DEF_INST_2(31, InstFilelocalVariable,
+XTAL_DEF_INST_2(46, InstFilelocalVariable,
 		inst_i8_t, result,
         inst_u16_t, value_number
 );
@@ -769,7 +819,7 @@ XTAL_DEF_INST_2(31, InstFilelocalVariable,
 * \brief ファイルローカル変数に値を設定する。
 *
 */
-XTAL_DEF_INST_2(32, InstSetFilelocalVariable,
+XTAL_DEF_INST_2(47, InstSetFilelocalVariable,
 		inst_i8_t, value,
         inst_u16_t, value_number
 );
@@ -779,7 +829,7 @@ XTAL_DEF_INST_2(32, InstSetFilelocalVariable,
 * \brief ファイルローカル変数を取り出す。
 *
 */
-XTAL_DEF_INST_2(33, InstFilelocalVariableByName,
+XTAL_DEF_INST_2(48, InstFilelocalVariableByName,
 		inst_i8_t, result,
         inst_u16_t, identifier_number
 );
@@ -789,7 +839,7 @@ XTAL_DEF_INST_2(33, InstFilelocalVariableByName,
 * \brief ファイルローカル変数に値を設定する。
 *
 */
-XTAL_DEF_INST_2(34, InstSetFilelocalVariableByName,
+XTAL_DEF_INST_2(49, InstSetFilelocalVariableByName,
 		inst_i8_t, value,
         inst_u16_t, identifier_number
 );
@@ -812,7 +862,34 @@ enum{
 	MEMBER_FLAG_Q_BIT = 1<<MEMBER_FLAG_Q,
 };
 
-XTAL_DEF_INST_8(35, InstCall,
+/**
+* \internal
+* \brief オブジェクトのメンバを取り出す。
+*
+*/
+XTAL_DEF_INST_3(50, InstMember,
+		inst_i8_t, result,
+		inst_i8_t, target,
+		inst_i16_t, primary
+);
+
+XTAL_DEF_INST_5(51, InstMemberEx,
+		inst_i8_t, result,
+		inst_i8_t, target,
+		inst_i16_t, primary,
+		inst_i8_t, secondary,
+		inst_u8_t, flags
+);
+
+XTAL_DEF_INST_5(52, InstCall,
+		inst_i8_t, result,
+        inst_u8_t, need_result,
+		inst_i8_t, target,
+		inst_i8_t, stack_base,
+        inst_u8_t, ordered
+);
+
+XTAL_DEF_INST_8(53, InstCallEx,
 		inst_i8_t, result,
         inst_u8_t, need_result,
 		inst_i8_t, target,
@@ -823,7 +900,17 @@ XTAL_DEF_INST_8(35, InstCall,
         inst_u8_t, flags
 );
 
-XTAL_DEF_INST_9(36, InstSend,
+XTAL_DEF_INST_7(54, InstSend,
+		inst_i8_t, result,
+        inst_u8_t, need_result,
+		inst_i8_t, target,
+		inst_i16_t, primary,
+		inst_i8_t, secondary,
+		inst_i8_t, stack_base,
+        inst_u8_t, ordered
+);
+
+XTAL_DEF_INST_9(55, InstSendEx,
 		inst_i8_t, result,
         inst_u8_t, need_result,
 		inst_i8_t, target,
@@ -835,31 +922,32 @@ XTAL_DEF_INST_9(36, InstSend,
         inst_u8_t, flags
 );
 
-XTAL_DEF_INST_4(37, InstProperty,
+XTAL_DEF_INST_4(56, InstProperty,
 		inst_i8_t, result,
 		inst_i8_t, target,
         inst_i16_t, primary,
 		inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_3(38, InstSetProperty,
+XTAL_DEF_INST_3(57, InstSetProperty,
 		inst_i8_t, target,
         inst_i16_t, primary,
 		inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_1(39, InstScopeBegin,
+XTAL_DEF_INST_1(58, InstScopeBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(40, InstScopeEnd);
+XTAL_DEF_INST_0(59, InstScopeEnd);
 
 /**
 * \internal
 * \brief 関数から抜ける
 *
 */
-XTAL_DEF_INST_1(41, InstReturn,
+XTAL_DEF_INST_2(60, InstReturn,
+		inst_i8_t, base,
         inst_u8_t, result_count
 );
 
@@ -868,10 +956,11 @@ XTAL_DEF_INST_1(41, InstReturn,
 * \brief fiberの実行を一時中断する
 *
 */
-XTAL_DEF_INST_3(42, InstYield,
+XTAL_DEF_INST_4(61, InstYield,
 		inst_i8_t, result,
 		inst_u8_t, need_result_count,
-        inst_u8_t, target_count
+ 		inst_u8_t, base,
+	    inst_i8_t, result_count
 );
 
 /**
@@ -879,9 +968,9 @@ XTAL_DEF_INST_3(42, InstYield,
 * \brief 仮想マシンのループから脱出する。
 *
 */
-XTAL_DEF_INST_0(43, InstExit);
+XTAL_DEF_INST_0(62, InstExit);
 
-XTAL_DEF_INST_5(44, InstRange,
+XTAL_DEF_INST_5(63, InstRange,
 	inst_i8_t, result,
 	inst_u8_t, kind,
 	inst_i8_t, lhs,
@@ -889,48 +978,48 @@ XTAL_DEF_INST_5(44, InstRange,
 	inst_i8_t, stack_base
 );
 
-XTAL_DEF_INST_3(45, InstOnce,
+XTAL_DEF_INST_3(64, InstOnce,
 		inst_i8_t, result,
         inst_address_t, address,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_2(46, InstSetOnce,
+XTAL_DEF_INST_2(65, InstSetOnce,
 		inst_i8_t, target,
         inst_u16_t, value_number
 );
 
-XTAL_DEF_INST_1(47, InstMakeArray,
+XTAL_DEF_INST_1(66, InstMakeArray,
 		inst_i8_t, result
 );
 
-XTAL_DEF_INST_2(48, InstArrayAppend,
+XTAL_DEF_INST_2(67, InstArrayAppend,
 		inst_i8_t, target,
 		inst_i8_t, value
 );
 
-XTAL_DEF_INST_1(49, InstMakeMap,
+XTAL_DEF_INST_1(68, InstMakeMap,
 		inst_i8_t, result);
 
-XTAL_DEF_INST_3(50, InstMapInsert,
+XTAL_DEF_INST_3(69, InstMapInsert,
 		inst_i8_t, target,
 		inst_i8_t, key,
 		inst_i8_t, value
 );
 
-XTAL_DEF_INST_2(51, InstMapSetDefault,
+XTAL_DEF_INST_2(70, InstMapSetDefault,
 		inst_i8_t, target,
 		inst_i8_t, value);
 
-XTAL_DEF_INST_2(52, InstClassBegin,
+XTAL_DEF_INST_2(71, InstClassBegin,
         inst_u16_t, info_number,
 		inst_i8_t, mixin_base
 );
 
-XTAL_DEF_INST_1(53, InstClassEnd,
+XTAL_DEF_INST_1(72, InstClassEnd,
 		inst_i8_t, result);
 
-XTAL_DEF_INST_5(54, InstDefineClassMember,
+XTAL_DEF_INST_5(73, InstDefineClassMember,
         inst_u16_t, number,
 		inst_u16_t, primary,
 		inst_i8_t, secondary,
@@ -943,7 +1032,7 @@ XTAL_DEF_INST_5(54, InstDefineClassMember,
 * \brief オブジェクトのメンバを定義する。
 *
 */
-XTAL_DEF_INST_5(55, InstDefineMember,
+XTAL_DEF_INST_5(74, InstDefineMember,
 		inst_i8_t, target,
 		inst_i16_t, primary,
 		inst_i8_t, secondary,
@@ -951,39 +1040,39 @@ XTAL_DEF_INST_5(55, InstDefineMember,
 		inst_i8_t, value
 );
 
-XTAL_DEF_INST_3(56, InstMakeFun,
+XTAL_DEF_INST_3(75, InstMakeFun,
 		inst_i8_t, result,
         inst_u16_t, info_number,
 		inst_address_t, address
 );
 
-XTAL_DEF_INST_4(57, InstMakeInstanceVariableAccessor,
+XTAL_DEF_INST_4(76, InstMakeInstanceVariableAccessor,
 		inst_i8_t, result,        
 		inst_u8_t, type,
 		inst_u8_t, number,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_1(58, InstTryBegin,
+XTAL_DEF_INST_1(77, InstTryBegin,
         inst_u16_t, info_number
 );
 
-XTAL_DEF_INST_0(59, InstTryEnd);
+XTAL_DEF_INST_0(78, InstTryEnd);
 
-XTAL_DEF_INST_1(60, InstPushGoto,
+XTAL_DEF_INST_1(79, InstPushGoto,
         inst_address_t, address
 );
 
-XTAL_DEF_INST_0(61, InstPopGoto);
+XTAL_DEF_INST_0(80, InstPopGoto);
 
-XTAL_DEF_INST_0(62, InstThrow);
+XTAL_DEF_INST_0(81, InstThrow);
 
-XTAL_DEF_INST_1(63, InstAssert,
+XTAL_DEF_INST_1(82, InstAssert,
 		inst_i8_t, message);
 
-XTAL_DEF_INST_0(64, InstBreakPoint);
+XTAL_DEF_INST_0(83, InstBreakPoint);
 
-XTAL_DEF_INST_0(65, InstMAX);
+XTAL_DEF_INST_0(84, InstMAX);
 
 }
 

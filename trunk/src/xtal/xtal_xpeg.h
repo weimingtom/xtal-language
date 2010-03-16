@@ -155,6 +155,8 @@ public:
 		tree_splice(tag, tree_->size()-state.pos, state.lineno);
 	}
 
+	void tree_splice(int_t itag, int_t num);
+	
 	void tree_splice(const AnyPtr& tag, int_t num);
 
 	void tree_splice(const AnyPtr& tag, int_t num, int_t lineno);
@@ -268,7 +270,7 @@ private:
 		State pos; 
 	};
 
-	typedef PODStack<StackInfo> stack_t;
+	typedef FastStack<StackInfo> stack_t;
 	stack_t stack_;
 
 	void push(uint_t mins, uint_t cur_state, uint_t nodes, const State& pos){
@@ -448,8 +450,6 @@ struct Element : public Base{
 
 	~Element();
 
-	bool is_e_transition() const;
-
 	ElementPtr op_com() const;
 
 	void on_visit_members(Visitor& m){
@@ -489,10 +489,8 @@ struct NFA : public Base{
 
 	int gen_state();
 
-	bool check_infinity_loop();
-
 	ElementPtr e_;
-	ArrayList<State> states_;
+	TArray<State> states_;
 	uint_t cap_max_;
 	ArrayPtr cap_list_;
 

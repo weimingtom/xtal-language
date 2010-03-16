@@ -7,8 +7,6 @@
 
 #pragma once
 
-#ifndef XTAL_NO_PARSER
-
 namespace xtal{
 
 enum ExprType{
@@ -129,8 +127,6 @@ typedef TreeNode Expr;
 typedef TreeNodePtr ExprPtr;
 const ExprPtr& ep(const AnyPtr& a);
 
-
-
 /*
 * \brief \•¶–Ø‚Ìƒm[ƒh
 */
@@ -139,7 +135,11 @@ public:
 	enum{ TYPE = TYPE_TREE_NODE };
 	enum{ BUILD = 0 };
 
-	TreeNode(const AnyPtr& tag=null, int_t lineno=0);
+	TreeNode();
+	
+	TreeNode(int_t tag, int_t lineno = 0);
+	
+	TreeNode(const AnyPtr& tag, int_t lineno = 0);
 
 	const AnyPtr& tag(){
 		return tag_;
@@ -291,72 +291,7 @@ public:
 	XTAL_DEF_MEMBER(0, const ExprPtr&, toplevel_stmts);
 };
 
-//#define XTAL_DEF_INST_1(N, InstName, MemberType1, MemberName1)
-
-class ExprBuilder{
-public:
-
-	ExprBuilder(int_t lineno = 0);
-
-	int_t lineno(){
-		return lineno_;
-	}
-
-	void set_lineno(int_t ln){
-		lineno_ = ln;
-	}
-
-	void splice(int_t tag, int_t num);
-
-	void splice(int_t tag, int_t num, int_t lineno);
-
-	struct State{
-		int_t lineno;
-		int_t pos;
-	};
-
-	State begin(){
-		State state = {lineno_, root_->size()};
-		return state;
-	}
-
-	void end(int_t tag, const State& state){
-		splice(tag, root_->size()-state.pos, state.lineno);
-	}
-
-	const AnyPtr& back(){
-		return root_->back();
-	}
-
-	void push(const AnyPtr& v);
-
-	void insert(int_t n, const AnyPtr& v);
-
-	AnyPtr pop();
-
-	bool empty(){
-		return root_->empty();
-	}
-
-private:
-	XTAL_DISALLOW_COPY_AND_ASSIGN(ExprBuilder);
-private:
-	ExprPtr root_;
-	ArrayPtr errors_;
-	PODArrayList<int> linenos_;
-	int_t lineno_;
-};
-
 }
 
-#else
-
-namespace xtal{
-
-class Expr : public Array{
-};
-
-}
-#endif
 
 #endif // XTAL_EXPR_H_INCLUDE_GUARD

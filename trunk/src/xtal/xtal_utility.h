@@ -129,11 +129,12 @@ private:
 #define XTAL_STATIC_ASSERT(expr) char XTAL_UNIQUE(static_assert_failure)[(expr)] = {0}; XTAL_UNUSED_VAR(XTAL_UNIQUE(static_assert_failure))
 
 #define XTAL_DEFAULT break; default:
-#define XTAL_CASE(key) break; case key:
-#define XTAL_CASE1(key) break; case key:
-#define XTAL_CASE2(key, key2) break; case key:case key2:
-#define XTAL_CASE3(key, key2, key3) break; case key:case key2:case key3:
-#define XTAL_CASE4(key, key2, key3, key4) break; case key:case key2:case key3:case key4:
+#define XTAL_CASE_N(key) break; key
+#define XTAL_CASE(key) XTAL_CASE_N(case key:)
+#define XTAL_CASE1(key) XTAL_CASE(key)
+#define XTAL_CASE2(key, key2) XTAL_CASE1(key) case key2:
+#define XTAL_CASE3(key, key2, key3) XTAL_CASE2(key, key2) case key3:
+#define XTAL_CASE4(key, key2, key3, key4) XTAL_CASE3(key, key2, key3) case key4:
 
 #ifdef XTAL_NO_THREAD
 #	define XTAL_UNLOCK 
@@ -784,18 +785,24 @@ enum PrimitiveType{
 	TYPE_FLOAT,
 
 	TYPE_IMMEDIATE_VALUE,
+
+	TYPE_POINTER,
+	TYPE_STATELESS_NATIVE_METHOD,
+
+	TYPE_IVAR_GETTER,
+	TYPE_IVAR_SETTER,
 	
 	TYPE_SMALL_STRING,
 	TYPE_LITERAL_STRING,
 	TYPE_INTERNED_STRING,
-
-	TYPE_POINTER,
-
-	TYPE_STATELESS_NATIVE_METHOD,
 	// Ç±Ç±Ç©ÇÁè„ÇÕimmutableÇ»ílå^Ç≈Ç†ÇÈ
 
+	TYPE_PRIMITIVE_TYPE_MAX,
+};
+
+enum PrimitiveTypeRef{
 	// Ç±Ç±Ç©ÇÁâ∫ÇÕéQè∆å^Ç≈Ç†ÇÈ
-	TYPE_BASE,
+	TYPE_BASE = TYPE_PRIMITIVE_TYPE_MAX,
 
 	TYPE_STRING,
 	
@@ -806,17 +813,14 @@ enum PrimitiveType{
 	TYPE_NATIVE_METHOD,
 	TYPE_NATIVE_FUN,
 
-	TYPE_IVAR_GETTER,
-	TYPE_IVAR_SETTER,
-
-	/*
-	TYPE_FRAME,
-	TYPE_CLASS,
-
 	TYPE_METHOD,
 	TYPE_FUN,
 	TYPE_LAMBDA,
 	TYPE_FIBER,
+
+	/*
+	TYPE_FRAME,
+	TYPE_CLASS,
 	*/
 
 	TYPE_MAX,
@@ -946,6 +950,7 @@ struct ScopeInfo{
 	u8 flags;
 	u16 variable_identifier_offset;
 	u16 variable_size;
+	u16 variable_offset;
 
 	enum{
 		FLAG_SCOPE_CHAIN = 1<<0,
@@ -998,13 +1003,11 @@ struct ExceptInfo{
 	u32 end_pc;
 };
 
-class EmptyInstanceVariables;
-
 extern ScopeInfo empty_scope_info;
 extern ClassInfo empty_class_info;
 extern FunInfo empty_xfun_info;
 extern ExceptInfo empty_except_info;
-extern EmptyInstanceVariables empty_instance_variables;
+extern InstanceVariables empty_instance_variables;
 
 //////////////////////////////////////////
 

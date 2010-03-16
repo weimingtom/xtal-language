@@ -18,7 +18,7 @@ public:
 };
 
 XTAL_PREBIND(TestGetterSetterBind){
-    it->def_ctor(ctor<TestGetterSetterBind>());
+    it->def_ctor(xtal::ctor<TestGetterSetterBind>());
 }
 
 XTAL_BIND(TestGetterSetterBind){
@@ -33,7 +33,7 @@ struct MyData{
 };
 
 struct MyDeleter{
-	void operator()(MyData* p){
+	void destroy(MyData* p){
 		delete p;
 	}
 };
@@ -67,7 +67,9 @@ using namespace xtal;
 
 int main2(int argc, char** argv){
 	
-	CodePtr code = compile_file("../test/test.xtal_");
+	debug::enable_debug_compile();
+	
+	CodePtr code = compile_file("../test/exec.xtal");
 	XTAL_CATCH_EXCEPT(e){
 		stderr_stream()->println(e);
 		return 1;
@@ -103,7 +105,7 @@ int main(int argc, char** argv){
 	setting.ch_code_lib = &ch_code_lib;
 
 	initialize(setting);
-	bind_error_message();
+	//bind_error_message();
 
 	int ret = main2(argc, argv);
 

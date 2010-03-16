@@ -219,10 +219,6 @@ void Executor::error(const AnyPtr& message, int_t line){
 bool Executor::match_inner(const ElementPtr& e){
 	if(!e->nfa){
 		e->nfa = XNew<NFA>(e);
-		if(e->nfa->check_infinity_loop()){
-			set_runtime_error(Xt("XRE1034"));
-			return false;
-		}
 	}
 
 	const NFAPtr& nfa = e->nfa;
@@ -690,6 +686,10 @@ void Executor::bin(){
 	}
 }
 
+void Executor::tree_splice(int_t itag, int_t num){
+	tree_splice(Int(itag), num, lineno_);	
+}
+
 void Executor::tree_splice(const AnyPtr& tag, int_t num){
 	tree_splice(tag, num, lineno_);
 }
@@ -711,44 +711,6 @@ void Executor::tree_splice(const AnyPtr& tag, int_t num, int_t lineno){
 
 
 /////////////////////////////////////////////////
-
-bool NFA::check_infinity_loop(){
-	PODArrayList<int_t> checked_list;
-	PODStack<int_t> stack;
-
-	checked_list.resize(states_.size());
-	for(uint_t i=0; i<states_.size(); ++i){
-		checked_list[i] = 0;
-	}
-
-	for(uint_t i=0; i<states_.size(); ++i){
-		if(checked_list[i]==0){
-
-			stack.push(i);
-			while(!stack.empty()){
-				State& state = states_[stack.top()];
-				checked_list[stack.top()] = 1;
-				stack.pop();
-
-				for(const TransPtr* tr=&state.trans; *tr; tr=&(*tr)->next){
-					if((*tr)->ch->is_e_transition()){
-						if(checked_list[(*tr)->to]==1){
-							return true;
-						}
-						stack.push((*tr)->to);
-					}
-				}
-			}
-
-			for(uint_t i=0; i<states_.size(); ++i){
-				if(checked_list[i] == 1){
-					checked_list[i] = 2;
-				}
-			}
-		}
-	}
-	return false;
-}
 
 NFA::NFA(const ElementPtr& node){
 	e_ = XNew<Element>(Element::TYPE_INVALID);
@@ -894,52 +856,6 @@ Element::Element(int_t type, const AnyPtr& param1, const AnyPtr& param2, int_t p
 }
 	
 Element::~Element(){}
-
-bool Element::is_e_transition() const{
-	switch(type){
-		XTAL_NODEFAULT;
-
-		case Element::TYPE_CONCAT: 
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition() && unchecked_ptr_cast<Element>(param2)->is_e_transition();
-
-		case Element::TYPE_OR:
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition() || unchecked_ptr_cast<Element>(param2)->is_e_transition();
-
-		case Element::TYPE_MORE1:
-		case Element::TYPE_CAP:
-		case Element::TYPE_GREED:
-		case Element::TYPE_LEAF:
-		case Element::TYPE_NODE:
-			return unchecked_ptr_cast<Element>(param1)->is_e_transition();
-			
-		case Element::TYPE_EMPTY:
-		case Element::TYPE_MORE0:
-		case Element::TYPE_01:
-		case Element::TYPE_BOS:
-		case Element::TYPE_EOS:
-		case Element::TYPE_BOL:
-		case Element::TYPE_LOOKAHEAD:
-		case Element::TYPE_LOOKBEHIND:
-		case Element::TYPE_ERROR:
-		case Element::TYPE_INVALID:
-			return true;
-			
-		case Element::TYPE_DECL:
-		case Element::TYPE_ANY:
-		case Element::TYPE_EOL:
-		case Element::TYPE_EQL:
-		case Element::TYPE_INT_RANGE:
-		case Element::TYPE_FLOAT_RANGE:
-		case Element::TYPE_CH_RANGE:
-		case Element::TYPE_PRED:
-		case Element::TYPE_CH_SET:
-		case Element::TYPE_CALL:
-		case Element::TYPE_BACKREF:
-			return false;
-	}
-
-	return false;
-}
 
 ElementPtr Element::op_com() const{
 	ElementPtr ret = xnew<Element>(type, param1, param2, param3);

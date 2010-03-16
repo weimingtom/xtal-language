@@ -30,7 +30,6 @@ struct FastStackDefaultValue{
 */
 template<class T>
 class FastStack{
-
 	T* begin_; // 確保したメモリの先頭の次を指す。
 	T* end_; // 確保したメモリの一番最後の次を指す
 	T* current_; // スタックトップの要素を指す
@@ -91,27 +90,11 @@ public:
 		return *current_;
 	}
 
-	void erase(size_t i){
-		for(size_t j = i; j != 0; --j){
-			(*this)[j] = (*this)[j-1];
-		}
-		downsize(1);
-	}
+	void erase(size_t i);
 
-	void erase(size_t i, size_t n){
-		for(size_t j = i; j != n-1; --j){
-			(*this)[j] = (*this)[j-n];
-		}
-		downsize(n);
-	}
+	void erase(size_t i, size_t n);
 
-	void insert(size_t i, const T& v){
-		upsize(1);
-		for(size_t j = 0; j != i; ++j){
-			(*this)[j] = (*this)[j+1];
-		}
-		(*this)[i] = v;
-	}
+	void insert(size_t i, const T& v);
 	
 	void resize(size_t newsize);
 
@@ -187,7 +170,7 @@ public:
 
 	bool empty() const{
 		XTAL_ASSERT(begin_<=current_+1);
-		return begin_==current_+1;
+		return begin_>current_;
 	}
 
 	void clear(){
@@ -344,6 +327,30 @@ void FastStack<T>::upsize_detail(size_t us){
 	end_ = begin_+newcapa;
 }
 
+template<class T>
+void FastStack<T>::erase(size_t i){
+	for(size_t j = i; j != 0; --j){
+		(*this)[j] = (*this)[j-1];
+	}
+	downsize(1);
+}
+
+template<class T>
+void FastStack<T>::erase(size_t i, size_t n){
+	for(size_t j = i; j != n-1; --j){
+		(*this)[j] = (*this)[j-n];
+	}
+	downsize(n);
+}
+
+template<class T>
+void FastStack<T>::insert(size_t i, const T& v){
+	upsize(1);
+	for(size_t j = 0; j != i; ++j){
+		(*this)[j] = (*this)[j+1];
+	}
+	(*this)[i] = v;
+}
 
 template<class T>
 void FastStack<T>::reserve(size_t capa){
@@ -363,376 +370,554 @@ void visit_members(Visitor& m, const FastStack<T>& value){
 	}
 }
 
-/*
-* POD専用に書き下ろしたスタックのベース部分
-*/
-class PODStackBase{
-protected:
+///////////////////////////////////////////////////////////////////
 
-	void* begin_; // 確保したメモリの先頭の次を指す。
-	void* end_; // 確保したメモリの一番最後の次を指す
-	void* current_; // スタックトップの要素を指す
-	int one_size_;
+template<class T>
+class PODStack{
+	T* begin_; // 確保したメモリの先頭の次を指す。
+	T* end_; // 確保したメモリの一番最後の次を指す
+	T* current_; // スタックトップの要素を指す
 
 private:
-
-	void* plusp(const void* p, size_t v) const{
-		return (u8*)p + v*one_size_;
-	}
-	
-	void* minusp(const void* p, size_t v) const{
-		return (u8*)p - v*one_size_;
-	}
-
-	void* addp(void*& p, size_t v){
-		return p = plusp(p, v);
-	}
-
-	void* subp(void*& p, size_t v){
-		return p = minusp(p, v);
-	}
-
-	void* incp(void*& p){
-		return addp(p, 1);
-	}
-
-	void* decp(void*& p){
-		return subp(p, 1);
-	}
 
 	void upsize_detail(size_t us);
 
 public:
 
-	explicit PODStackBase(size_t onesize);
+	PODStack();
 
-	PODStackBase(const PODStackBase &a);
+	PODStack(const PODStack<T>& a);
 	
-	PODStackBase &operator =(const PODStackBase &a);
+	PODStack<T> &operator =(const PODStack<T>& a);
 
-	~PODStackBase();
+	~PODStack();
 
 public:
 
-	void push(const void* val){
-		upsize(1);
-		std::memcpy(top(), val, one_size_);
+	T* data(){
+		return begin_;
+	}
+	
+	T& push_unchecked(const T &val){
+		upsize_unchecked(1);
+		return top()=val;
 	}
 
-	void* push(){
+	T& push(const T &val){
+		upsize(1);
+		return top()=val;
+	}
+
+	T& push_unchecked(){
+		upsize_unchecked(1);
+		return top();
+	}
+
+	T& push(){
 		upsize(1);
 		return top();
 	}
 
-	void* pop(){
+	T& pop(){
 		XTAL_ASSERT(!empty());
-		decp(current_);
-		return plusp(current_, 1);
+		--current_;
+		return current_[1];
 	}
 
-	void* top(){
+	T& top(){
 		XTAL_ASSERT(!empty());
-		return current_;
+		return *current_;
 	}
 
-	const void* top() const{
+	const T& top() const{
 		XTAL_ASSERT(!empty());
-		return current_;
+		return *current_;
 	}
 
-	void reverse_erase(size_t i, size_t n=1);
+	void erase(size_t i);
 
-	void reverse_insert(size_t i, const void* v, size_t n=1);
+	void erase(size_t i, size_t n);
 
+	void insert(size_t i, const T& v);
+	
 	void resize(size_t newsize);
 
 	void downsize(size_t ds){
 		XTAL_ASSERT(size()>=ds);
-		subp(current_, ds);
+		current_-=ds;
 	}
 
 	void downsize_n(size_t newsize){
-		current_ = plusp(begin_, -1+newsize);
+		XTAL_ASSERT(newsize<=size());
+		current_ = begin_-1+newsize;
+	}
+
+	void upsize_unchecked(size_t us){
+		XTAL_ASSERT(current_+us>=current_);
+		current_+=us;
 	}
 
 	void upsize(size_t us){		
-		addp(current_, us);
-		if(current_>=end_){
+		XTAL_ASSERT(current_+us>=current_);
+		current_+=us;
+		if(current_>=end_)
 			upsize_detail(us);
-		}
 	}
 
 	size_t size() const{
-		return ((u8*)plusp(current_, 1) - (u8*)begin_)/one_size_;
+		return (current_+1)-begin_;
 	}
 
 	size_t capacity() const{
-		return ((u8*)end_ - (u8*)begin_)/one_size_;
+		return end_-begin_;
 	}
 
 	void reserve(size_t capa);
 
-	void* operator [](size_t i){
+	T& get(size_t i = 0){
 		XTAL_ASSERT(i<size());
-		return minusp(current_, i);
+		return *(current_-i);
 	}
 
-	const void* operator [](size_t i) const{
+	void set(size_t i, const T& v){
 		XTAL_ASSERT(i<size());
-		return minusp(current_, i);
+		*(current_-i) = v;
 	}
 
-	void* reverse_at(size_t i){
+	T& operator [](size_t i){
 		XTAL_ASSERT(i<size());
-		return plusp(begin_, i);
+		return *(current_-i);
 	}
 
-	const void* reverse_at(size_t i) const{
+	const T &operator [](size_t i) const{
 		XTAL_ASSERT(i<size());
-		return plusp(begin_, i);
+		return *(current_-i);
+	}
+
+	T& reverse_at(size_t i){
+		XTAL_ASSERT(i<size());
+		return *(begin_+i);
+	}
+
+	const T &reverse_at(size_t i) const{
+		XTAL_ASSERT(i<size());
+		return *(begin_+i);
+	}
+
+	T& reverse_at_unchecked(size_t i){
+		return *(begin_+i);
+	}
+
+	const T &reverse_at_unchecked(size_t i) const{
+		return *(begin_+i);
 	}
 
 	bool empty() const{
-		XTAL_ASSERT(begin_<=plusp(current_, 1));
-		return begin_==plusp(current_, 1);
+		XTAL_ASSERT(begin_<=current_+1);
+		return begin_>current_;
 	}
 
 	void clear(){
-		current_ = minusp(begin_, 1);
+		current_ = begin_-1;
+	}
+	
+	void push(const PODStack<T>& other, size_t sz){
+		upsize(sz);
+		downsize(sz);
+		for(size_t i = sz; i!=0; --i){
+			push_unchecked(other[i-1]);
+		} 
+	}
+	
+	void push(const PODStack<T>& other, size_t other_offset, size_t sz){
+		upsize(sz);
+		downsize(sz);
+		for(size_t i = sz; i!=0; --i){
+			push_unchecked(other[other_offset+i-1]);
+		} 
+	}
+		
+	void move(PODStack<T>& other, size_t sz){
+		push(other, sz);
+		other.downsize(sz);
 	}
 
-	void release();
+	void fill_over(const T& val = T()){
+		for(size_t i = size(); i<capacity(); ++i){
+			reverse_at_unchecked(i)=val;
+		}
+	}
 
-
-	friend void swap(PODStackBase& a, PODStackBase& b){
+	friend void swap(PODStack<T>& a, PODStack<T>& b){
 		std::swap(a.current_, b.current_);
 		std::swap(a.begin_, b.begin_);
 		std::swap(a.end_, b.end_);
-		std::swap(a.one_size_, b.one_size_);
 	}
-
-public:
-
-	void attach(void* p);
-
-	void detach();
 };
 
-/*
-* POD専用に書き下ろしたスタック
-* TをPOD以外にすると未定義の動作となる
+template<class T>
+PODStack<T>::PODStack(){
+	begin_=(T*)stack_dummy_allocate()+1;
+	current_ = begin_-1;
+	end_ = begin_+0;
+}
+
+template<class T>
+PODStack<T>::~PODStack(){
+	stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
+}
+
+template<class T>
+PODStack<T>::PODStack(const PODStack<T> &a){
+	if(a.capacity()==0){
+		begin_=(T*)stack_dummy_allocate()+1;
+		current_ = begin_-1;
+		end_ = begin_+0;
+	}
+	else{
+		begin_=(T*)stack_allocate(sizeof(T)*(a.capacity()+1))+1;
+		current_ = begin_+a.size()-1;
+		end_ = begin_+a.capacity();
+		size_t capa = a.capacity();
+		std::memcpy(begin_, a.begin_, sizeof(T)*capa);
+	}
+}
+
+template<class T>
+PODStack<T> &PODStack<T>::operator =(const PODStack<T> &a){
+	if(this==&a){
+		return *this;
+	}
+	
+	if(a.capacity()==0){
+		stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
+		begin_=(T*)stack_dummy_allocate()+1;
+		current_ = begin_-1;
+		end_ = begin_+0;
+	}
+	else{
+		T* newp = (T*)stack_allocate(sizeof(T)*(a.capacity()+1))+1;
+		stack_deallocate(begin_-1, sizeof(T)*(capacity()+1));
+
+		begin_ = newp;
+		current_ = begin_+a.size()-1;
+		end_ = begin_+a.capacity();
+		size_t capa = a.capacity();
+		std::memcpy(begin_, a.begin_, sizeof(T)*capa);
+	}
+
+	return *this;
+}
+
+template<class T>
+void PODStack<T>::resize(size_t newsize){
+	XTAL_ASSERT(newsize>=0);
+
+	size_t oldsize = size();
+	if(newsize>oldsize){
+		upsize(newsize-oldsize);
+	}
+	else{
+		downsize_n(newsize);
+	}
+}
+
+template<class T>
+void PODStack<T>::upsize_detail(size_t us){
+	XTAL_ASSERT(us>=0);
+
+	current_-=us;
+
+	size_t oldsize = size();
+	size_t oldcapa = capacity();
+	size_t newsize = oldsize+us;
+	T* oldp = begin_;
+	size_t newcapa = oldcapa==0 ? us : 4 + us + oldcapa + oldcapa/2;
+	T* newp = (T*)stack_allocate(sizeof(T)*(newcapa+1))+1;
+	std::memcpy(newp, oldp, sizeof(T)*oldsize);
+	stack_deallocate(oldp-1, sizeof(T)*(oldcapa+1));
+	begin_ = newp;
+	current_ = begin_+newsize-1;
+	end_ = begin_+newcapa;
+}
+
+template<class T>
+void PODStack<T>::erase(size_t i){
+	for(size_t j = i; j != 0; --j){
+		(*this)[j] = (*this)[j-1];
+	}
+	downsize(1);
+}
+
+template<class T>
+void PODStack<T>::erase(size_t i, size_t n){
+	for(size_t j = i; j != n-1; --j){
+		(*this)[j] = (*this)[j-n];
+	}
+	downsize(n);
+}
+
+template<class T>
+void PODStack<T>::insert(size_t i, const T& v){
+	upsize(1);
+	for(size_t j = 0; j != i; ++j){
+		(*this)[j] = (*this)[j+1];
+	}
+	(*this)[i] = v;
+}
+
+template<class T>
+void PODStack<T>::reserve(size_t capa){
+	if(capa<=capacity()){
+		return;
+	}
+
+	size_t diff = capa-size();
+	upsize(diff);
+	downsize(diff);
+}
+
+///////////////////////////////////////////////////////////////////
+
+class PODArrayBase{
+public:
+	PODArrayBase(uint_t one_size, uint_t size = 0);
+	PODArrayBase(const PODArrayBase& v);
+	PODArrayBase& operator =(const PODArrayBase& v);
+	~PODArrayBase();
+
+	uint_t length() const{ return size_; }
+	uint_t size() const{ return size_; }
+	uint_t capacity() const{ return capa_; }
+	void resize(uint_t sz);
+	void upsize(uint_t sz);
+	void downsize(uint_t sz);
+	const void* at(int_t i) const{ return plusp(values_, i); }
+	void set_at(int_t i, const void* v);
+	void push_front(const void* v){ insert(0, v); }
+	void pop_front(){ erase(0); }
+	void push_back(const void* v);
+	void pop_back();
+	const void* front() const{ return at(0); }
+	const void* back() const{ return at(size()-1); }
+	void erase(int_t i, int_t n = 1);
+	void insert(int_t i, const void* v);
+	bool empty() const{ return size_ == 0; }
+	bool is_empty() const{ return size_ == 0; }
+	void clear();
+	void shrink_to_fit();
+	void* operator [](size_t i){ return plusp(values_, i); }
+	const void* operator [](size_t i) const{ return plusp(values_, i); }
+	void* data(){ return values_; }
+	void init(const void* values, uint_t size);
+	void destroy();
+
+private:
+	void* plusp(const void* p, size_t v) const{ return (u8*)p + v*one_size_; }
+	void* minusp(const void* p, size_t v) const{ return (u8*)p - v*one_size_; }
+	void* addp(void*& p, size_t v){ return p = plusp(p, v); }
+	void* subp(void*& p, size_t v){ return p = minusp(p, v); }
+	void* incp(void*& p){ return addp(p, 1); }
+	void* decp(void*& p){ return subp(p, 1); }
+
+protected:
+	void* values_;
+	uint_t size_;
+	uint_t capa_;
+	uint_t one_size_;
+};
+
+/**
+* \brief 配列
 */
 template<class T>
-class PODStack{
-
-	PODStackBase impl_;
-
+class PODArray{
 public:
-
-	PODStack():impl_(sizeof(T)){}
-
-public:
-
-	typedef T value_type;
-	typedef T* iterator;
-	typedef const T* const_iterator; 
-
-public:
-	
-	void push(const T &val){ impl_.push(&val); }
-	T& push(){ return *(T*)impl_.push(); }
-	T& pop(){ return *(T*)impl_.pop(); }
-	T& top(){ return *(T*)impl_.top(); }
-	const T &top() const{ return *(const T*)impl_.top(); }
-	void resize(size_t newsize){ impl_.resize(newsize); }
-	void downsize(size_t ds){ impl_.downsize(ds); }
-	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
-	void upsize(size_t us){ impl_.upsize(us); }
-	void reverse_erase(size_t i, size_t n){ impl_.reverse_erase(i, n); }
-	void reverse_insert(size_t i, const T& val){ impl_.reverse_insert(i, &val); }
-	void reverse_insert(size_t i, const T* val, size_t n){ impl_.reverse_insert(i, val, n); }
-	size_t size() const{ return impl_.size(); }
-	size_t capacity() const{ return impl_.capacity(); }
-	void reserve(size_t capa){ impl_.reserve(capa); }
+	PODArray(uint_t size = 0):impl_(sizeof(T), size){}
+	uint_t length() const{ return impl_.length(); }
+	uint_t size() const{ return impl_.size(); }
+	uint_t capacity() const{ return impl_.capacity(); }
+	void resize(uint_t sz){ return impl_.resize(sz); }
+	void upsize(uint_t sz){ return impl_.upsize(sz); }
+	void downsize(uint_t sz){ return impl_.downsize(sz); }
+	const T& at(int_t i) const{ return *(T*)impl_.at(i); }
+	void set_at(int_t i, const T& v){ return impl_.set_at(i, v); }
+	void push_front(const T& v){ return impl_.push_front(&v); }
+	void pop_front(){ return impl_.pop_front(); }
+	void push_back(const T& v){ return impl_.push_back(&v); }
+	void pop_back(){ return impl_.pop_back(); }
+	const T& front() const{ return *(T*)impl_.front(); }
+	const T& back() const{ return *(T*)impl_.back(); }
+	void erase(int_t i, int_t n = 1){ return impl_.erase(i, n); }
+	void insert(int_t i, const T& v){ return impl_.insert(i, &v); }
+	bool empty() const{ return impl_.empty(); }
+	bool is_empty() const{ return impl_.is_empty(); }
+	void clear(){ return impl_.clear(); }
+	void shrink_to_fit(){ return impl_.shrink_to_fit(); }
+	T* data(){ return (T*)impl_.data(); }
+	void destroy(){ return impl_.destroy(); }
 	T& operator [](size_t i){ return *(T*)impl_[i]; }
-	const T& operator [](size_t i) const{ return *(const T*)impl_[i]; }
-	T& reverse_at(size_t i){ return *(T*)impl_.reverse_at(i); }
-	const T& reverse_at(size_t i) const{ return *(const T*)impl_.reverse_at(i); }
-	bool empty() const{ return impl_.empty(); }
-	void clear(){ impl_.clear(); }
-	void release(){ impl_.release(); }
-
-	friend void swap(PODStack<T>& a, PODStack<T>& b){
-		swap(a.impl_, b.impl_);
-	}
-
-public:
-	void attach(T* p){ impl_.attach(p); }
-	void detach(){ impl_.detach(); }
+	const T& operator [](size_t i) const{ return *(T*)impl_[i]; }
+protected:
+	PODArrayBase impl_;
 };
 
-/*
-* 非PODもOKなスタックのベース
-*/
-class StackBase{
-	PODStackBase impl_;
-	void (*ctor_)(void* p);
-	void (*copy_ctor_)(void* p, const void* q);
-	void (*dtor_)(void* p);
-
-public:
-
-	StackBase(size_t onesize,
-		void (*ctor)(void* p),
-		void (*copy_ctor)(void* p, const void* q),
-		void (*dtor)(void* p));
-
-	StackBase(const StackBase& v);
-
-	StackBase& operator =(const StackBase& v);
-
-	~StackBase();
-
-public:
-
-	void push(const void* val){
-		copy_ctor_(impl_.push(), val);
-	}
-
-	void* push(){ 
-		ctor_(impl_.push());
-		return top();
-	}
-	
-	void pop(){ 
-		dtor_(impl_.pop());
-	}
-		
-	void erase(size_t i);
-		
-	void insert(size_t i, const void* v);
-
-	void resize(size_t newsize);
-
-	void downsize(size_t ds);
-
-	void downsize_n(size_t newsize){
-		downsize(size()-newsize);
-	}
-
-	void upsize(size_t us);
-
-	void clear(){
-		downsize_n(0);
-	}
-
-	void release();
-
-	void* top(){ return impl_.top(); }
-	const void* top() const{ return impl_.top(); }
-	size_t size() const{ return impl_.size(); }
-	size_t capacity() const{ return impl_.capacity(); }
-	void reserve(size_t capa){ impl_.reserve(capa); }
-	void* operator [](size_t i){ return impl_[i]; }
-	const void* operator [](size_t i) const{ return impl_[i]; }
-	void* reverse_at(size_t i){ return impl_.reverse_at(i); }
-	const void* reverse_at(size_t i) const{ return impl_.reverse_at(i); }
-	bool empty() const{ return impl_.empty(); }
-};
-
-/*
-* 非PODもOKなスタック
-* コードの複製が抑えられる分、速度が遅い
+/**
+* \brief 配列
 */
 template<class T>
-class Stack{
-
-	StackBase impl_;
-	
-	static void ctor(void* p){
-		new(p) T;
-	}
-	
-	static void copy_ctor(void* p, const void* q){
-		new(p) T(*(T*)q);
-	}
-	
-	static void dtor(void* p){
-		((T*)p)->~T();
-	}
-	
+class TArray{
 public:
+	TArray(){ capa_ = 0; size_ = 0; values_ = 0; }
+	TArray(const T* first, const T* end){ init(first, end-first); }
+	TArray(const TArray& v){ init(v.values_, v.size()); }
+	TArray& operator =(const TArray<T>& v);
+	~TArray(){ destroy(); }
 
-	Stack():impl_(sizeof(T), &ctor, &copy_ctor, &dtor){}
+	void destroy();
+	void clear();
+	uint_t size() const{ return size_; }
+	void resize(uint_t sz);
+	void upsize(uint_t sz);
+	void downsize(uint_t sz);
+	void push_back(const T& v);
+	void push(const T& v){ push_back(v); }
+	void pop_back();
+	void pop(){ pop_back(); }
+	T& operator [](size_t i){ return values_[i]; }
+	const T& operator [](size_t i) const{ return values_[i]; }
 
-public:
+private:
+	void init(const T* values, uint_t size);
 
-	void push(const T &val){ impl_.push(&val); }
-	T& push(){ return *(T*)impl_.push(); }
-	void pop(){ impl_.pop(); }
-	T& top(){ return *(T*)impl_.top(); }
-	const T &top() const{ return *(const T*)impl_.top(); }
-	void resize(size_t newsize){ impl_.resize(newsize); }
-	void downsize(size_t ds){ impl_.downsize(ds); }
-	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
-	void upsize(size_t us){ impl_.upsize(us); }
-	void insert(size_t i, const T &val){ impl_.insert(i, &val); }
-	void erase(size_t i){ impl_.erase(i); }
-	size_t size() const{ return impl_.size(); }
-	size_t capacity() const{ return impl_.capacity(); }
-	void reserve(size_t capa){ impl_.reserve(capa); }
-	T& operator [](size_t i){ return *(T*)impl_[i]; }
-	const T& operator [](size_t i) const{ return *(const T*)impl_[i]; }
-	T& reverse_at(size_t i){ return *(T*)impl_.reverse_at(i); }
-	const T& reverse_at(size_t i) const{ return *(const T*)impl_.reverse_at(i); }
-	bool empty() const{ return impl_.empty(); }
-	void clear(){ impl_.clear(); }
-	void release(){ impl_.release(); }
+private:
+	T* values_;
+	uint_t size_;
+	uint_t capa_;
+
 };
 
-/*
-* スタックを用いて配列を作る。
-* 実装を再利用してコードの膨張を押さえるための策
-*/
-template<class T, class TStack = Stack<T> >
-class ArrayList{
-	TStack impl_;
-	
-public:
-	
-	ArrayList(){}
-	
-public:
-	
-	void push_back(const T &val){ impl_.push(val); }
-	T& push_back(){ return impl_.push(); }
-	void pop_back(){ impl_.pop(); }
-	T& back(){ return impl_.top(); }
-	void resize(size_t newsize){ impl_.resize(newsize); }
-	void downsize(size_t ds){ impl_.downsize(ds); }
-	void downsize_n(size_t newsize){ impl_.downsize_n(newsize); }
-	void upsize(size_t us){ impl_.upsize(us); }
-	void insert(size_t i, const T *val, int_t n){ impl_.reverse_insert(i, val, n); }
-	void insert(size_t i, const T &val){ impl_.reverse_insert(i, val); }
-	void erase(size_t i, size_t n){ impl_.reverse_erase(i, n); }
-	size_t size() const{ return impl_.size(); }
-	size_t capacity() const{ return impl_.capacity(); }
-	void reserve(size_t capa){ impl_.reserve(capa); }
-	T& operator [](size_t i){ return impl_.reverse_at(i); }
-	const T& operator [](size_t i) const{ return impl_.reverse_at(i); }
-	bool empty() const{ return impl_.empty(); }
-	void clear(){ impl_.clear(); }
-	void release(){ impl_.release(); }
-public:
-	void attach(T* p){ impl_.attach(p); }
-	void detach(){ impl_.detach(); }
-};
-	
 template<class T>
-class PODArrayList : public ArrayList<T, PODStack<T> >{
-	
-};
-	
+TArray<T>& TArray<T>::operator =(const TArray<T>& v){
+	TArray<T> temp(v);
+	std::swap(values_, temp.values_);
+	std::swap(size_, temp.size_);
+	std::swap(capa_, temp.capa_);
+	return *this;
+}
+
+template<class T>
+void TArray<T>::destroy(){
+	clear();
+	xfree(values_, sizeof(T)*capa_);
+	capa_ = 0;
+	values_ = 0;
+}
+
+template<class T>
+void TArray<T>::clear(){
+	for(uint_t i=0; i<size_; ++i){
+		values_[i].~T();
+	}
+	size_ = 0;
+}
+
+template<class T>
+void TArray<T>::resize(uint_t sz){
+	if(sz<size_){
+		downsize(size_-sz);
+	}
+	else if(sz>size_){
+		upsize(sz-size_);
+	}
+}
+
+template<class T>
+void TArray<T>::upsize(uint_t sz){
+	if(size_+sz>capa_){ // todo overflow check
+		if(capa_!=0){
+			uint_t newcapa = size_+sz+capa_+1;
+			T* newp = (T*)xmalloc(sizeof(T)*newcapa);
+			
+			for(uint_t i=0; i<size_; ++i){
+				new(newp+i) T(*(values_+i));
+			}
+
+			for(uint_t i=size_; i<size_+sz; ++i){
+				new(newp+i) T();
+			}
+
+			for(uint_t i=0; i<size_; ++i){
+				(values_+i)->~T();
+			}
+
+			xfree(values_, sizeof(T)*capa_);
+			values_ = newp;
+			size_ += sz;
+			capa_ = newcapa;
+		}
+		else{
+			// 一番最初のリサイズは、きっかりに取る
+			uint_t newcapa = sz;
+			values_ = (T*)xmalloc(sizeof(T)*newcapa);
+			for(uint_t i=0; i<sz; ++i){
+				new(values_+i) T();
+			}
+			size_ = sz;
+			capa_ = newcapa;
+		}
+	}
+	else{
+		for(uint_t i=size_; i<size_+sz; ++i){
+			new(values_+i) T();
+		}
+		size_ += sz;
+	}
+}
+
+template<class T>
+void TArray<T>::downsize(uint_t sz){
+	for(uint_t i=size_-sz; i<size_; ++i){
+		values_[i].~T();
+	}
+	size_ -= sz;
+}
+
+template<class T>
+void TArray<T>::push_back(const T& v){
+	if(capa_==size_){
+		upsize(1);
+		(*this)[size_-1] = v;
+	}
+	else{
+		size_++;
+		new(values_+size_-1) T(v);
+	}
+}
+
+template<class T>
+void TArray<T>::pop_back(){
+	XTAL_ASSERT(!empty());
+	size_--;
+	values_[size_].~T();
+}
+
+template<class T>
+void TArray<T>::init(const T* values, uint_t size){
+	capa_ = size;
+	size_ = size;
+	if(capa_!=0){
+		values_ = (T*)xmalloc(sizeof(T)*capa_);
+		for(uint_t i=0; i<size; ++i){
+			new(values_+i) T(*(values+i));
+		}
+	}
+	else{
+		values_ = 0;
+	}
+}
+
+
 }
 
 

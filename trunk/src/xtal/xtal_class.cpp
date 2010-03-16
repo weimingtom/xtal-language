@@ -4,17 +4,6 @@
 #include "xtal_details.h"
 
 namespace xtal{
-
-InstanceVariables::InstanceVariables()		
-	:variables_(0){
-	VariablesInfo vi;
-	vi.class_info = 0;
-	vi.pos = 0;
-	variables_info_.push_back(vi);
-	variables_.push_back(undefined);
-}
-		
-InstanceVariables::~InstanceVariables(){}
 	
 void InstanceVariables::init_variables(ClassInfo* class_info){
 	if(class_info->instance_variable_size){
@@ -22,41 +11,56 @@ void InstanceVariables::init_variables(ClassInfo* class_info){
 		vi.class_info = class_info;
 		vi.pos = (int_t)variables_.size();
 		variables_.upsize(class_info->instance_variable_size);
-		variables_info_.push_back(vi);
+		variables_info_.push(vi);
 	}
 }
 
 bool InstanceVariables::is_included(ClassInfo* class_info){
-	VariablesInfo& info = variables_info_.back();
-	if(info.class_info == class_info){
+	VariablesInfo& front = variables_info_.top();
+	if(front.class_info == class_info){
 		return true;
 	}
-	for(uint_t i = 0, size = variables_info_.size()-1; i<size; ++i){
-		if(variables_info_[i].class_info==class_info){
-			std::swap(variables_info_[size], variables_info_[i]);
+
+	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
+		VariablesInfo& v = variables_info_[i];
+		if(v.class_info==class_info){
+			std::swap(front, v);
 			return true;
 		}	
 	}
 	return false;
 }
 
-uint_t InstanceVariables::find_class_info_inner(ClassInfo* class_info, uint_t index){
-	for(uint_t i = 0, size = variables_info_.size()-1; i<size; ++i){
-		if(variables_info_[i].class_info==class_info){
-			std::swap(variables_info_[size], variables_info_[i]);
-			return variables_info_[size].pos + index;
+const AnyPtr& InstanceVariables::variable2(uint_t index, ClassInfo* class_info){
+	VariablesInfo& front = variables_info_[0];
+	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
+		VariablesInfo& v = variables_info_[i];
+		if(v.class_info==class_info){
+			std::swap(front, v);
+			return variables_.at(front.pos + index);
 		}
-	}
-	
-	XTAL_SET_EXCEPT(cpp_class<InstanceVariableError>()->call(Xt0("XRE1003")));
-	return 0;
+	}	
+
+	return undefined;
+}
+
+void InstanceVariables::set_variable2(uint_t index, ClassInfo* class_info, const AnyPtr& value){
+	VariablesInfo& front = variables_info_[0];
+	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
+		VariablesInfo& v = variables_info_[i];
+		if(v.class_info==class_info){
+			std::swap(front, v);
+			variables_.set_at(front.pos + index, value);
+			return;
+		}
+	}	
 }
 
 void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
 	for(uint_t i = 0, size = variables_info_.size(); i<size; ++i){
 		if(variables_info_[i].class_info==from){
 			int_t pos = variables_info_[i].pos;
-			variables_info_.erase(i, 1);
+			variables_info_.erase(i);
 
 			for(uint_t j = 0, jsize = variables_info_.size(); j<jsize; ++j){
 				if(variables_info_[j].pos>pos){
@@ -70,22 +74,6 @@ void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
 		}	
 	}
 }
-
-
-EmptyInstanceVariables::EmptyInstanceVariables()
-	:InstanceVariables(uninit_t()){
-	vi.class_info = 0;
-	vi.pos = 0;
-	variables_info_.attach(&vi);
-	variables_.attach(&(AnyPtr&)undefined, 1);
-}
-
-EmptyInstanceVariables::~EmptyInstanceVariables(){
-	variables_info_.detach();
-	variables_.detach();
-}
-
-InstanceVariables::VariablesInfo EmptyInstanceVariables::vi;
 
 ///////////////////////////////////////
 
@@ -166,10 +154,6 @@ void Class::overwrite(const ClassPtr& p){
 	}
 }
 
-void Class::fillup_inherited_classes(){
-
-}
-
 void Class::inherit(const ClassPtr& cls){
 	if(is_inherited(cls))
 		return;
@@ -178,7 +162,6 @@ void Class::inherit(const ClassPtr& cls){
 
 	cls->prebind();
 
-	fillup_inherited_classes();
 	inherited_classes_.push_back(cls);
 	invalidate_cache_is();
 
@@ -249,7 +232,7 @@ const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_func){
 const NativeFunPtr& Class::ctor(int_t type){
 	prebind();
 
-	if(cache_ctor(to_smartptr(this), type)){
+	if(environment_->ctor_cache_table_.cache(to_smartptr(this), type)){
 		return ctor_[type];
 	}
 
@@ -677,11 +660,12 @@ void Class::on_rawcall(const VMachinePtr& vm){
 		XTAL_CHECK_EXCEPT(e){ return; }
 		
 		if(const AnyPtr& ret = member(Xid(initialize), undefined)){
+			int_t n = vm->need_result_count();
 			vm->set_arg_this(instance);
-			if(vm->need_result()){
-				vm->prereturn_result(instance);
-			}
 			ret->rawcall(vm);
+			if(n!=0){
+				vm->replace_result(instance);
+			}
 		}
 		else{
 			vm->return_result(instance);

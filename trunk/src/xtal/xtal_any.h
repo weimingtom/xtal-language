@@ -18,6 +18,8 @@ public:
 
 	void init_primitive(PrimitiveType t){ type = t; ivalue = 0; }
 
+	void init_null(){ type = 0; ivalue = 0; }
+
 	void init_int(char v){ type = TYPE_INT; ivalue = (int_t)v; }
 	void init_int(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
 	void init_int(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
@@ -89,6 +91,21 @@ public:
 		fvalue = value2;
 	}
 
+	void init_immediate_value(int_t value1, void* value2){
+		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+		vpvalue = value2;
+	}
+
+	void init_instance_variable_getter(int_t number, void* info){
+		type = TYPE_IVAR_GETTER | (number<<8);		
+		vpvalue = info;
+	}
+
+	void init_instance_variable_setter(int_t number, void* info){
+		type = TYPE_IVAR_SETTER | (number<<8);		
+		vpvalue = info;
+	}
+
 public:
 
 	enum{
@@ -120,8 +137,9 @@ public:
 	uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
 
 	int_t immediate_first_value() const{ return (int_t)(type>>8); }
-	int_t immediate_second_value() const{ return ivalue; }
-	float_t immediate_secondf_value() const{ return fvalue; }
+	int_t immediate_second_ivalue() const{ return ivalue; }
+	float_t immediate_second_fvalue() const{ return fvalue; }
+	void* immediate_second_vpvalue() const{ return vpvalue; }
 
 public:
 

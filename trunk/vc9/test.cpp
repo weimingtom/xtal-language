@@ -677,99 +677,39 @@ void Mared::move_initialize(const Mared&){
 
 }
 
+void println(Any a){
+	a = a;
+}
+
+void benchmark(const char* file, const AnyPtr& arg){
+	if(CodePtr code = compile_file(file)){
+		code->call(arg);
+	}
+
+	XTAL_CATCH_EXCEPT(e){
+		stderr_stream()->println(e);
+	}
+}
+
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
 	using namespace std;
 
-	MemoryStreamPtr ms = xnew<MemoryStream>();
-
-
-	VMachinePtr vm = vmachine();
-
-	SmartPtr<Spr> s = xnew<Spr>();
-	Spr& p = unchecked_cast<Spr&>(s);
-
-	if(vm){
-		vm = vm;
-	}
-
-//	ArrayPtr aa = pnew<Array>(10);
-
-//	_mm_add_ps(s->v.a, s->v.a);
-
-	//debug::enable();
-	//debug::set_breakpoint_hook(fun(&linehook));
-
-	//DebugConnector dc;
-	//dc.connect("12321");
-
-	/*{
-		CodePtr code=require_source("test");
-
-		while(true){
-			dc.update();
-			code->call();
-			
-			XTAL_CATCH_EXCEPT(e){
-				e->p();
-			}
-
-			Sleep(15);
-		}
-	}*/
-
-	/*
-	const StringPtr& a1 = "e";
-	VMachine* vvm = unchecked_cast<VMachine*>(vm);
-	{
-		ReturnResult<AnyPtr>::call(vvm, return_string());
-		ReturnResult<StringPtr>::call(vvm, a1);
-	}
-	*/
-
-	//test2();
-   // lib()->def(Xid(Vector2D), cpp_class<Vector2D>());
-
-	//AnyPtr a = cast<bool>(false);
-
-	//static_cmemfun_holder<StringPtr (String::*)() const, &String::clone>::call(vmachine(), 0, 0);
-
-	{
-		//XTAL_RETURN_TO_VM(StringPtr, vm, str());
-		//foo(str(), str());
-		//aaa(&n);
-		//vm->return_result(str());
-		//vm->return_result((
-		//	unchecked_cast<String*>(empty_string)->*(&String::to_s))());
-		//XTAL_RETURN_TO_VM(vmachine(), (unchecked_cast<String*>(empty_string)->*(&String::clone))(	
-		//));
-	}
-
-	XTAL_CATCH_EXCEPT(e){
-		StringPtr str = e->to_s();
-		const char_t* cstr = str->data();
-		stderr_stream()->println(e);
-		return 1;
-	}
-
-	Debugger debugger;
-	debugger.attach(xnew<DebugStream>("127.0.0.1", "13245"));
+	//Debugger debugger;
+	//debugger.attach(xnew<DebugStream>("127.0.0.1", "13245"));
 
 	{
 		if(CodePtr code = Xsrc((
-			require("test");
+
 		))){
-			//code->inspect()->p();
+			code->inspect()->p();
 			//AnyPtr ret = code->call(xnew<Spr>());
+
 			code->call();
-			full_gc();
+			//full_gc();
 		}
 	}
-
-	Environment* eeee = environment();
-	full_gc();
-	full_gc();
 
 	XTAL_CATCH_EXCEPT(e){
 		StringPtr str = e->to_s();
@@ -779,35 +719,18 @@ int main2(int argc, char** argv){
 	}
 
 	full_gc();
-
-	//compile_file("../bench/ao.xtal")->inspect()->p();
-	
-	if(0){
-		int c = clock();
-		load("../bench/ao.xtal");
-		printf("ao %g\n\n", (clock()-c)/1000.0f);		
-	}
-
-	XTAL_CATCH_EXCEPT(e){
-		stderr_stream()->println(e);
-		return 1;
-	}
 
 //*/
 
 #if 1
 
-	int c;
-
-	/*
-	benchmark("../fannkuch.xtal", 12);
-	benchmark("../n-body.xtal", 12);
-	benchmark("../special-norm.xtal", 12);
-	benchmark("../binary-trees.xtal", 3);
-	benchmark("../mandelbrot.xtal", 10);
-	//*/
-
+	int c;	
+	
 	/*		
+	//c = clock();
+	//load("../bench/ao.xtal");
+	//printf("ao %g\n\n", (clock()-c)/1000.0f);	
+
 	c = clock();
 	load("../bench/sum_fiber.xtal");
 	printf("sum_fiber %g\n\n", (clock()-c)/1000.0f);	
@@ -857,9 +780,10 @@ int main2(int argc, char** argv){
 	//*
 
 	//set_gc_stress(true);
+	debug::enable_debug_compile();
 
 #ifdef XTAL_USE_WCHAR
-	CodePtr code = compile_file("../utf16le-test/test.xtal_");
+	CodePtr code = compile_file("../utf16le-test/exec.xtal");
 #else
 	CodePtr code = compile_file("../test/exec.xtal");
 #endif
@@ -1572,7 +1496,7 @@ int main(int argc, char** argv){
 	setting.std_stream_lib = &cstd_std_stream_lib;
 	setting.filesystem_lib = &win_filesystem_lib;
 	setting.ch_code_lib = &sjis_ch_code_lib;
-	setting.allocator_lib = &alloc_lib;
+	//setting.allocator_lib = &alloc_lib;
 
 	initialize(setting);
 

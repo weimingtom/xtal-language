@@ -86,13 +86,13 @@ public:
 	
 	bool right_space() const{ return (((first()>>4)&0xf) & FLAG_RIGHT_SPACE) != 0; }
 	
-	int_t ivalue() const{ return second(); }
+	int_t ivalue() const{ return second_ivalue(); }
 	
-	float_t fvalue() const{ return secondf(); }
+	float_t fvalue() const{ return second_fvalue(); }
 	
-	int_t identifier_number() const{ return second(); }
+	int_t identifier_number() const{ return second_ivalue(); }
 	
-	int_t keyword_number() const{ return second(); }
+	int_t keyword_number() const{ return second_ivalue(); }
 };
 
 class Parser{
@@ -149,6 +149,7 @@ private:
 
 	void parse_expr_statement();
 	bool expr_end();
+	bool make_bin_expr(const Token& ch, int_t space, int_t pri, int_t PRI, int_t EXPR);
 	void expect_stmt_end();
 
 private:

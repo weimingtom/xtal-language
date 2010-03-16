@@ -14,7 +14,7 @@ ScopeInfo empty_scope_info;
 ClassInfo empty_class_info;
 
 ExceptInfo empty_except_info;
-EmptyInstanceVariables empty_instance_variables;
+InstanceVariables empty_instance_variables;
 
 undeleter_t undeleter;
 deleter_t deleter;

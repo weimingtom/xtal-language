@@ -36,8 +36,19 @@ inline T* object_xmalloc(){
 }
 
 template<class T>
+inline T* new_object_xmalloc(){
+	return new(object_xmalloc<T>()) T();
+}
+
+template<class T>
 inline void object_xfree(T* p){
 	ObjectXMalloc<sizeof(T), ((int)AlignOf<T>::value<=(int)ALIGN_MIN) ? 0 : AlignOf<T>::value>::xf(p);
+}
+
+template<class T>
+inline void delete_object_xfree(T* p){
+	p->~T();
+	object_xfree(p);
 }
 
 template<int N, class T>

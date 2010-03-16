@@ -276,7 +276,7 @@ void MainWindow::loadProject(){
 		for(int i=0; i<document_.fileCount(); ++i){
 			FileInfo* f = document_.file(i);
 			QString path = f->path;
-			project_->addFile(path);
+			//project_->addFile(path);
 
 			QMap<int, QString>::iterator it = f->breakpoints.begin();
 			for(; it!=f->breakpoints.end(); ++it){
@@ -300,7 +300,7 @@ void MainWindow::loadProject(){
 void MainWindow::addFile(const QString& filename){
 	QString path = makeRelative(filename, QDir::currentPath());
 	if(document_.addFile(path)){
-		project_->addFile(path);
+	//	project_->addFile(path);
 	}
 }
 

@@ -33,6 +33,7 @@ void Serializer::inner_serialize_scope_info(ScopeInfo& info){
 	stream_->put_u8(info.kind);
 	stream_->put_u8(info.flags);
 	stream_->put_u16be(info.variable_identifier_offset);
+	stream_->put_u16be(info.variable_offset);
 	stream_->put_u16be(info.variable_size);
 }
 
@@ -354,6 +355,7 @@ void Serializer::inner_deserialize_scope_info(ScopeInfo& info){
 	info.kind = stream_->get_u8();
 	info.flags = stream_->get_u8();
 	info.variable_identifier_offset = stream_->get_u16be();
+	info.variable_offset = stream_->get_u16be();
 	info.variable_size = stream_->get_u16be();		
 }
 

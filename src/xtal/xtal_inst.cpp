@@ -80,18 +80,33 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(InstLoadCallee);
 		XTAL_INST_CASE(InstLoadThis);
 		XTAL_INST_CASE(InstCopy);
-		XTAL_INST_CASE(InstMember);
-		XTAL_INST_CASE(InstUna);
-		XTAL_INST_CASE(InstArith);
-		XTAL_INST_CASE(InstBitwise);
+		XTAL_INST_CASE(InstInc);
+		XTAL_INST_CASE(InstDec);
+		XTAL_INST_CASE(InstPos);
+		XTAL_INST_CASE(InstNeg);
+		XTAL_INST_CASE(InstCom);
+		XTAL_INST_CASE(InstAdd);
+		XTAL_INST_CASE(InstSub);
+		XTAL_INST_CASE(InstCat);
+		XTAL_INST_CASE(InstMul);
+		XTAL_INST_CASE(InstDiv);
+		XTAL_INST_CASE(InstMod);
+		XTAL_INST_CASE(InstAnd);
+		XTAL_INST_CASE(InstOr);
+		XTAL_INST_CASE(InstXor);
+		XTAL_INST_CASE(InstShl);
+		XTAL_INST_CASE(InstShr);
+		XTAL_INST_CASE(InstUshr);
 		XTAL_INST_CASE(InstAt);
 		XTAL_INST_CASE(InstSetAt);
 		XTAL_INST_CASE(InstGoto);
 		XTAL_INST_CASE(InstNot);
 		XTAL_INST_CASE(InstIf);
-		XTAL_INST_CASE(InstIfComp);
+		XTAL_INST_CASE(InstIfEq);
+		XTAL_INST_CASE(InstIfLt);
 		XTAL_INST_CASE(InstIfRawEq);
 		XTAL_INST_CASE(InstIfIs);
+		XTAL_INST_CASE(InstIfIn);
 		XTAL_INST_CASE(InstIfUndefined);
 		XTAL_INST_CASE(InstIfDebug);
 		XTAL_INST_CASE(InstPush);
@@ -107,8 +122,12 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 		XTAL_INST_CASE(InstSetFilelocalVariable);
 		XTAL_INST_CASE(InstFilelocalVariableByName);
 		XTAL_INST_CASE(InstSetFilelocalVariableByName);
+		XTAL_INST_CASE(InstMember);
+		XTAL_INST_CASE(InstMemberEx);
 		XTAL_INST_CASE(InstCall);
+		XTAL_INST_CASE(InstCallEx);
 		XTAL_INST_CASE(InstSend);
+		XTAL_INST_CASE(InstSendEx);
 		XTAL_INST_CASE(InstProperty);
 		XTAL_INST_CASE(InstSetProperty);
 		XTAL_INST_CASE(InstScopeBegin);
@@ -163,18 +182,33 @@ int_t inst_size(uint_t no){
 	InstLoadCallee::ISIZE,
 	InstLoadThis::ISIZE,
 	InstCopy::ISIZE,
-	InstMember::ISIZE,
-	InstUna::ISIZE,
-	InstArith::ISIZE,
-	InstBitwise::ISIZE,
+	InstInc::ISIZE,
+	InstDec::ISIZE,
+	InstPos::ISIZE,
+	InstNeg::ISIZE,
+	InstCom::ISIZE,
+	InstAdd::ISIZE,
+	InstSub::ISIZE,
+	InstCat::ISIZE,
+	InstMul::ISIZE,
+	InstDiv::ISIZE,
+	InstMod::ISIZE,
+	InstAnd::ISIZE,
+	InstOr::ISIZE,
+	InstXor::ISIZE,
+	InstShl::ISIZE,
+	InstShr::ISIZE,
+	InstUshr::ISIZE,
 	InstAt::ISIZE,
 	InstSetAt::ISIZE,
 	InstGoto::ISIZE,
 	InstNot::ISIZE,
 	InstIf::ISIZE,
-	InstIfComp::ISIZE,
+	InstIfEq::ISIZE,
+	InstIfLt::ISIZE,
 	InstIfRawEq::ISIZE,
 	InstIfIs::ISIZE,
+	InstIfIn::ISIZE,
 	InstIfUndefined::ISIZE,
 	InstIfDebug::ISIZE,
 	InstPush::ISIZE,
@@ -190,8 +224,12 @@ int_t inst_size(uint_t no){
 	InstSetFilelocalVariable::ISIZE,
 	InstFilelocalVariableByName::ISIZE,
 	InstSetFilelocalVariableByName::ISIZE,
+	InstMember::ISIZE,
+	InstMemberEx::ISIZE,
 	InstCall::ISIZE,
+	InstCallEx::ISIZE,
 	InstSend::ISIZE,
+	InstSendEx::ISIZE,
 	InstProperty::ISIZE,
 	InstSetProperty::ISIZE,
 	InstScopeBegin::ISIZE,

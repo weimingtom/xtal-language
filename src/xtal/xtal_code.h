@@ -36,7 +36,7 @@ public:
 	int_t final_lineno();
 
 	const inst_t* data(){
-		return &code_[0];
+		return code_.data();
 	}
 
 	int_t size(){
@@ -146,7 +146,7 @@ private:
 	friend class VMachine;
 	friend class Serializer;
 
-	typedef PODArrayList<inst_t> code_t;
+	typedef PODArray<inst_t> code_t;
 	code_t code_;
 
 	xarray identifier_table_;
@@ -158,10 +158,10 @@ private:
 
 private:
 
-	PODArrayList<FunInfo> xfun_info_table_;
-	PODArrayList<ScopeInfo> scope_info_table_;
-	PODArrayList<ClassInfo> class_info_table_;
-	PODArrayList<ExceptInfo> except_info_table_;
+	PODArray<FunInfo> xfun_info_table_;
+	PODArray<ScopeInfo> scope_info_table_;
+	PODArray<ClassInfo> class_info_table_;
+	PODArray<ExceptInfo> except_info_table_;
 
 	struct LineNumberInfo{
 		u32 start_pc;
@@ -180,7 +180,7 @@ private:
 		}
 	};
 
-	PODArrayList<LineNumberInfo> lineno_table_;
+	PODArray<LineNumberInfo> lineno_table_;
 
 	LineNumberInfo* compliant_lineno_info(const inst_t* p);
 
@@ -189,7 +189,7 @@ private:
 		u16 lineno;
 	};
 
-	PODArrayList<ImplcitInfo> implicit_table_;
+	PODArray<ImplcitInfo> implicit_table_;
 };
 
 }

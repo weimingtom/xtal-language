@@ -29,4 +29,4 @@ function nested_loops(n)
 	return x
 end
 
-nested_loops(20)
+print(nested_loops(20))

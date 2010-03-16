@@ -108,7 +108,7 @@
 * ));
 * \endcode
 */
-#define Xsrc(text) ::xtal::source(#text+1, sizeof(#text)/sizeof(::xtal::char_t)-3)
+#define Xsrc(text) ::xtal::source(XTAL_L(#text)+1, sizeof(XTAL_L(#text))/sizeof(::xtal::char_t)-3)
 
 #endif
 
@@ -118,7 +118,7 @@
 
 #else
 
-#define Xemb(text, compiled_text) ::xtal::exec_source(#text+1, sizeof(#text)/sizeof(::xtal::char_t)-3)
+#define Xemb(text, compiled_text) ::xtal::exec_source(XTAL_L(#text)+1, sizeof(XTAL_L(#text))/sizeof(::xtal::char_t)-3)
 
 #endif
 

@@ -9,27 +9,6 @@
 
 namespace xtal{
 
-/*
-void xmemmove(int_t* s1, const int_t* s2, size_t n);
-void xmemcpy(int_t* s1, const int_t* s2, size_t n);
-void xmemset(int_t* s, int_t c, size_t n);
-
-template<class T>
-void  xmemmove(T* s1, const T* s2, size_t n){
-	xmemmove((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
-}
-
-template<class T>
-void  xmemcpy(T* s1, const T* s2, size_t n){
-	xmemcpy((int_t*)s1, (const int_t*)s2, n*(sizeof(T)/sizeof(int_t)));
-}
-
-template<class T>
-void  xmemset(T* s, int_t c, size_t n){
-	xmemset((int_t*)s, c, n*(sizeof(T)/sizeof(int_t)));
-}
-*/
-
 inline const ClassPtr& Base::get_class(){ 
 	return to_smartptr(class_); 
 }

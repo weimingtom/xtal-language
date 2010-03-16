@@ -2,6 +2,10 @@
 * \brief src/xtal/xtal.h
 */
 
+#pragma once
+
+#ifndef XTAL_H_INCLUDE_GUARD
+#define XTAL_H_INCLUDE_GUARD
 
 #include "xtal_setting.h"
 
@@ -13,6 +17,7 @@
 #include <algorithm>
 #include <setjmp.h>
 #include <new>
+#include <cstring>
 
 #include "xtal_utility.h"
 #include "xtal_allocator.h"
@@ -49,3 +54,4 @@
 #include "xtal_xpeg.h"
 #include "xtal_anyinline.h"
 
+#endif

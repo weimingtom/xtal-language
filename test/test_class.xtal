@@ -647,3 +647,20 @@ class Big{
 		}
 	}
 }
+
+class Vec2D{
+  + _x;
+  + _y;
+
+  initialize: method(_x, _y){}
+
+  op_add_assign: method(v){
+    _x += v.x;
+    _y += v.y;
+    return this;
+  }
+  
+  to_s: method(){
+    return %f(Vec2D(x: %g, y: %g))(_x, _y);
+  }
+}

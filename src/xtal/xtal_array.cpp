@@ -14,6 +14,46 @@ void fill_undefined(Any* begin, uint_t size){
 
 }
 
+void xxmemmove(int_t* ss1, const int_t* ss2, size_t n){
+	if(n != 0){
+		if(ss1 < ss2){
+			const int_t *t = ss2 + n;
+			do{
+				*ss1++ = *ss2++;
+			}while(ss2 != t);
+		}
+		else if(ss1 > ss2){
+			const int_t *t = ss2;
+			ss1 += n;
+			ss2 += n;
+			do{
+				*--ss1 = *--ss2;
+			}while(ss2 != t);
+		}
+	}
+}
+
+void xxmemcpy(int_t* ss1, const int_t* ss2, size_t n){
+	if(n != 0){
+		const int_t* t = ss2 + n;
+		do{
+			*ss1++ = *ss2++;
+		}while(ss2 != t);
+	}
+}
+
+void xxmemset(int_t* s, int_t c, size_t n){
+	if(n != 0){
+		int_t* addr = s;
+		int_t* end = addr + n;
+		for(; addr < end; ++addr){
+			*addr = c;
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////
+
 xarray::xarray(uint_t size){
 	capa_ = size;
 	size_ = size;
@@ -43,6 +83,16 @@ void xarray::init(const AnyPtr* values, uint_t size){
 	}
 }
 
+void xarray::reflesh(){
+	AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
+	xmemcpy(&newp[0], &values_[0], size_);
+	for(uint_t i=0; i<size_; ++i){
+		inc_ref_count_force(values_[i]);
+	}
+	capa_ = size_;
+	values_ = newp;
+}
+
 xarray::xarray(const AnyPtr* first, const AnyPtr* end){
 	init(first, end-first);
 }
@@ -64,11 +114,8 @@ xarray::~xarray(){
 }
 
 void xarray::destroy(){
-	for(uint_t i=0; i<size_; ++i){
-		dec_ref_count_force(values_[i]);
-	}
+	clear();
 	xfree(values_, sizeof(AnyPtr)*capa_);
-	size_ = 0;
 	capa_ = 0;
 	values_ = 0;
 
@@ -100,15 +147,11 @@ void xarray::resize(uint_t sz){
 }
 
 void xarray::upsize(uint_t sz){
-	if(sz==0){
-		return;
-	}
-
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
 			uint_t newcapa = size_+sz+capa_+1;
 			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-			std::memcpy(newp, values_, sizeof(AnyPtr)*size_);
+			xmemcpy(newp, values_, size_);
 			fill_undefined(&newp[size_], sz);
 			xfree(values_, sizeof(AnyPtr)*capa_);
 			values_ = newp;
@@ -125,16 +168,13 @@ void xarray::upsize(uint_t sz){
 		}
 	}
 	else{
-		fill_undefined(&values_[size_], sz);
+		fill_undefined(values_ + size_, sz);
 		size_ += sz;
 	}
 }
 
 void xarray::downsize(uint_t sz){
-	if(sz>size_){
-		sz = size_;
-	}
-
+	XTAL_ASSERT(sz<=size_);
 	for(uint_t i=size_-sz; i<size_; ++i){
 		dec_ref_count_force(values_[i]);
 	}
@@ -147,26 +187,29 @@ void xarray::erase(int_t start, int_t n){
 	}
 
 	int_t pos = start;
+	XTAL_ASSERT(0<=pos && (uint_t)pos<size_);
 
 	for(int_t i=0; i<n; ++i){
 		dec_ref_count_force(values_[pos+i]);
 	}
 
-	XTAL_ASSERT(0<=pos && (uint_t)pos<size_);
-	//XTAL_ASSERT(0<=pos+n && (uint_t)pos+n<size_);
-
 	if(size_-(pos+n)!=0){
-		std::memmove(&values_[pos], &values_[pos+n], sizeof(AnyPtr)*(size_-(pos+n)));
+		xmemmove(&values_[pos], &values_[pos+n], size_-(pos+n));
 	}
 	size_ -= n;
 }
 
-void xarray::move_unref(int_t dest, int_t src, int_t n){
+void xarray::move(int_t dest, int_t src, int_t n){
 	if(n==0 || dest==src){
 		return;
 	}
 
-	std::memmove(&values_[dest], &values_[src], sizeof(AnyPtr)*n);
+	for(int_t i=0; i<n; ++i){
+		inc_ref_count_force(values_[src+i]);
+		dec_ref_count_force(values_[dest+i]);
+	}
+
+	xmemmove(&values_[dest], &values_[src], n);
 }
 
 
@@ -180,7 +223,7 @@ void xarray::insert(int_t i, const AnyPtr& v){
 
 	int_t pos = i;
 
-	std::memmove(&values_[pos+1], &values_[pos], sizeof(AnyPtr)*(size_-(pos+1)));
+	xmemmove(&values_[pos+1], &values_[pos], size_-(pos+1));
 	copy_any(values_[pos], v);
 	inc_ref_count_force(values_[pos]);
 }
@@ -198,29 +241,9 @@ void xarray::push_back(const AnyPtr& v){
 }
 
 void xarray::pop_back(){
-	if(!empty()){
-		dec_ref_count_force(values_[size_-1]);
-		size_--;
-	}
-}
-
-void xarray::clear_unref(){
-	size_ = 0;
-}
-
-void xarray::upsize_unref(uint_t size){
-	if(size>capa_){
-		if(capa_!=0){
-			xfree(values_, sizeof(AnyPtr)*capa_);
-		}
-
-		uint_t newcapa = size;
-		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
-		capa_ = newcapa;
-	}
-
-	size_ = size;
-	fill_undefined(&values_[0], size_);
+	XTAL_ASSERT(!empty());
+	dec_ref_count_force(values_[size_-1]);
+	size_--;
 }
 
 void visit_members(Visitor& m, const xarray& values){
@@ -229,7 +252,7 @@ void visit_members(Visitor& m, const xarray& values){
 	}
 }
 
-//////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
 
 #define XTAL_ARRAY_CALC_OFFSET(i, size, ret) \
 	do{\

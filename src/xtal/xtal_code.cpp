@@ -32,9 +32,9 @@ Code::~Code(){
 
 void Code::generated(){
 	set_code(to_smartptr(this));
-	if(!scope_info_table_.empty()){
-		set_info(&scope_info_table_[0]);
-		resize_member_direct(scope_info_table_[0].variable_size);
+	if(scope_info_table_.size()>1){
+		set_info(&scope_info_table_[1]);
+		resize_member_direct(scope_info_table_[1].variable_size);
 		make_members_force(Frame::FLAG_NOCACHE);
 	}
 
@@ -129,8 +129,11 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 }
 
 void Code::on_rawcall(const VMachinePtr& vm){
+	overwrite_member(Xid(arg), vm->make_arguments());
+	vm->setup_call();
 	vm->set_arg_this(to_smartptr(this));
 	first_fun_->rawcall(vm);
+	vm->return_result(vm->result_and_cleanup_call());
 }
 
 void Code::find_near_variable_inner(const IDPtr& primary_key, const ScopeInfo& info, IDPtr& pick, int_t& minv){

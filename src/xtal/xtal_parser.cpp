@@ -43,6 +43,12 @@ inline bool test_ident_rest(int ch){
 	return test_ident_first(ch) || test_digit(ch) || ch=='_';
 }
 
+struct KeywordIntPair{
+	const char_t* key;
+	int value;
+};
+
+
 Parser::Parser(){
 	token_read_ = 0;
 	token_pos_ = 0;
@@ -50,48 +56,52 @@ Parser::Parser(){
 	ms_ = XNew<MemoryStream>();
 
 	identifier_map_ = XNew<Map>();
-	identifier_map_->set_at(Xid(if), (int_t)Token::KEYWORD_IF);
-	identifier_map_->set_at(Xid(for), (int_t)Token::KEYWORD_FOR);
-	identifier_map_->set_at(Xid(else), (int_t)Token::KEYWORD_ELSE);
-	identifier_map_->set_at(Xid(fun), (int_t)Token::KEYWORD_FUN);
-	identifier_map_->set_at(Xid(method), (int_t)Token::KEYWORD_METHOD);
-	identifier_map_->set_at(Xid(do), (int_t)Token::KEYWORD_DO);
-	identifier_map_->set_at(Xid(while), (int_t)Token::KEYWORD_WHILE);
-	identifier_map_->set_at(Xid(continue), (int_t)Token::KEYWORD_CONTINUE);
-	identifier_map_->set_at(Xid(break), (int_t)Token::KEYWORD_BREAK);
-	identifier_map_->set_at(Xid(fiber), (int_t)Token::KEYWORD_FIBER);
-	identifier_map_->set_at(Xid(yield), (int_t)Token::KEYWORD_YIELD);
-	identifier_map_->set_at(Xid(return), (int_t)Token::KEYWORD_RETURN);
-	identifier_map_->set_at(Xid(once), (int_t)Token::KEYWORD_ONCE);
-	identifier_map_->set_at(Xid(null), (int_t)Token::KEYWORD_NULL);
-	identifier_map_->set_at(Xid(undefined), (int_t)Token::KEYWORD_UNDEFINED);
-	identifier_map_->set_at(Xid(false), (int_t)Token::KEYWORD_FALSE);
-	identifier_map_->set_at(Xid(true), (int_t)Token::KEYWORD_TRUE);
-	identifier_map_->set_at(Xid(xtal), (int_t)Token::KEYWORD_XTAL);
-	identifier_map_->set_at(Xid(try), (int_t)Token::KEYWORD_TRY);
-	identifier_map_->set_at(Xid(catch), (int_t)Token::KEYWORD_CATCH);
-	identifier_map_->set_at(Xid(finally), (int_t)Token::KEYWORD_FINALLY);
-	identifier_map_->set_at(Xid(throw), (int_t)Token::KEYWORD_THROW);
-	identifier_map_->set_at(Xid(class), (int_t)Token::KEYWORD_CLASS);
-	identifier_map_->set_at(Xid(callee), (int_t)Token::KEYWORD_CALLEE);
-	identifier_map_->set_at(Xid(this), (int_t)Token::KEYWORD_THIS);
-	identifier_map_->set_at(Xid(dofun), (int_t)Token::KEYWORD_DOFUN);
-	identifier_map_->set_at(Xid(is), (int_t)Token::KEYWORD_IS);
-	identifier_map_->set_at(Xid(in), (int_t)Token::KEYWORD_IN);
-	identifier_map_->set_at(Xid(assert), (int_t)Token::KEYWORD_ASSERT);
-	identifier_map_->set_at(Xid(nobreak), (int_t)Token::KEYWORD_NOBREAK);
-	identifier_map_->set_at(Xid(switch), (int_t)Token::KEYWORD_SWITCH);
-	identifier_map_->set_at(Xid(case), (int_t)Token::KEYWORD_CASE);
-	identifier_map_->set_at(Xid(default), (int_t)Token::KEYWORD_DEFAULT);
-	identifier_map_->set_at(Xid(singleton), (int_t)Token::KEYWORD_SINGLETON);
-	identifier_map_->set_at(Xid(public), (int_t)Token::KEYWORD_PUBLIC);
-	identifier_map_->set_at(Xid(protected), (int_t)Token::KEYWORD_PROTECTED);
-	identifier_map_->set_at(Xid(private), (int_t)Token::KEYWORD_PRIVATE);
+
+	static KeywordIntPair keywords[] = {
+		{ XTAL_L("if"), (int_t)Token::KEYWORD_IF}, 
+		{ XTAL_L("for"), (int_t)Token::KEYWORD_FOR}, 
+		{ XTAL_L("else"), (int_t)Token::KEYWORD_ELSE}, 
+		{ XTAL_L("fun"), (int_t)Token::KEYWORD_FUN}, 
+		{ XTAL_L("method"), (int_t)Token::KEYWORD_METHOD}, 
+		{ XTAL_L("do"), (int_t)Token::KEYWORD_DO}, 
+		{ XTAL_L("while"), (int_t)Token::KEYWORD_WHILE}, 
+		{ XTAL_L("continue"), (int_t)Token::KEYWORD_CONTINUE}, 
+		{ XTAL_L("break"), (int_t)Token::KEYWORD_BREAK}, 
+		{ XTAL_L("fiber"), (int_t)Token::KEYWORD_FIBER}, 
+		{ XTAL_L("yield"), (int_t)Token::KEYWORD_YIELD}, 
+		{ XTAL_L("return"), (int_t)Token::KEYWORD_RETURN}, 
+		{ XTAL_L("once"), (int_t)Token::KEYWORD_ONCE}, 
+		{ XTAL_L("null"), (int_t)Token::KEYWORD_NULL}, 
+		{ XTAL_L("undefined"), (int_t)Token::KEYWORD_UNDEFINED}, 
+		{ XTAL_L("false"), (int_t)Token::KEYWORD_FALSE}, 
+		{ XTAL_L("true"), (int_t)Token::KEYWORD_TRUE}, 
+		{ XTAL_L("xtal"), (int_t)Token::KEYWORD_XTAL}, 
+		{ XTAL_L("try"), (int_t)Token::KEYWORD_TRY}, 
+		{ XTAL_L("catch"), (int_t)Token::KEYWORD_CATCH}, 
+		{ XTAL_L("finally"), (int_t)Token::KEYWORD_FINALLY}, 
+		{ XTAL_L("throw"), (int_t)Token::KEYWORD_THROW}, 
+		{ XTAL_L("class"), (int_t)Token::KEYWORD_CLASS}, 
+		{ XTAL_L("callee"), (int_t)Token::KEYWORD_CALLEE}, 
+		{ XTAL_L("this"), (int_t)Token::KEYWORD_THIS}, 
+		{ XTAL_L("dofun"), (int_t)Token::KEYWORD_DOFUN}, 
+		{ XTAL_L("is"), (int_t)Token::KEYWORD_IS}, 
+		{ XTAL_L("in"), (int_t)Token::KEYWORD_IN}, 
+		{ XTAL_L("assert"), (int_t)Token::KEYWORD_ASSERT}, 
+		{ XTAL_L("nobreak"), (int_t)Token::KEYWORD_NOBREAK}, 
+		{ XTAL_L("switch"), (int_t)Token::KEYWORD_SWITCH}, 
+		{ XTAL_L("case"), (int_t)Token::KEYWORD_CASE}, 
+		{ XTAL_L("default"), (int_t)Token::KEYWORD_DEFAULT}, 
+		{ XTAL_L("singleton"), (int_t)Token::KEYWORD_SINGLETON}, 
+		{ XTAL_L("public"), (int_t)Token::KEYWORD_PUBLIC}, 
+		{ XTAL_L("protected"), (int_t)Token::KEYWORD_PROTECTED}, 
+		{ XTAL_L("private"), (int_t)Token::KEYWORD_PRIVATE}, 
+	};
 
 	identifiers_ = XNew<Array>(Token::KEYWORD_MAX);
-
-	Xfor2(key, value, identifier_map_){
-		identifiers_->set_at(ivalue(value), key);
+	for(int i=0; i<sizeof(keywords)/sizeof(*keywords); ++i){
+		IDPtr id = intern(*(StringLiteral*)(keywords[i].key));
+		identifier_map_->set_at(id, keywords[i].value);
+		identifiers_->set_at(keywords[i].value, id);
 	}
 
 	/*
@@ -1093,6 +1103,18 @@ bool Parser::expr_end(){
 	return prevch.type()==Token::TYPE_TOKEN && prevch.ivalue()=='}';
 }
 
+bool Parser::make_bin_expr(const Token& ch, int_t space, int_t pri, int_t PRI, int_t EXPR){
+	int_t r_space = (ch.right_space()) ? PRI_MAX : 0;
+	int_t l_space = (ch.left_space()) ? PRI_MAX : 0;
+	if(cmp_pri(pri, PRI, space, l_space)){ 
+		expect_parse_expr(PRI, r_space); 
+		executor_->tree_splice(EXPR, 2); 
+		return true; 
+	}
+	putback_token(ch);
+	return false;
+}
+
 bool Parser::parse_post(int_t pri, int_t space){
 	if(expr_end()){
 		const Token& ch = peek_token();
@@ -1108,7 +1130,6 @@ bool Parser::parse_post(int_t pri, int_t space){
 	Token ch = read_token();
 	int_t r_space = (ch.right_space()) ? PRI_MAX : 0;
 	int_t l_space = (ch.left_space()) ? PRI_MAX : 0;
-
 	switch(ch.type()){
 	
 		XTAL_DEFAULT{}
@@ -1117,8 +1138,8 @@ bool Parser::parse_post(int_t pri, int_t space){
 			switch(ch.keyword_number()){
 				XTAL_DEFAULT{}
 				
-				XTAL_CASE(Token::KEYWORD_IS){ if(cmp_pri(pri, PRI_IS, space, l_space)){ expect_parse_expr(PRI_IS, r_space); executor_->tree_splice(EXPR_IS, 2); return true; } }
-				XTAL_CASE(Token::KEYWORD_IN){ if(cmp_pri(pri, PRI_IN, space, l_space)){ expect_parse_expr(PRI_IN, r_space); executor_->tree_splice(EXPR_IN, 2); return true; } }
+				XTAL_CASE(Token::KEYWORD_IS){ return make_bin_expr(ch, space, pri, PRI_IS, EXPR_IS); }
+				XTAL_CASE(Token::KEYWORD_IN){ return make_bin_expr(ch, space, pri, PRI_IN, EXPR_IN); }
 				XTAL_CASE(Token::KEYWORD_CATCH){ 
 					if(cmp_pri(pri, PRI_CATCH, space, l_space)){
 						expect('(');
@@ -1137,31 +1158,31 @@ bool Parser::parse_post(int_t pri, int_t space){
 
 				XTAL_DEFAULT{}
 			
-				XTAL_CASE('+'){ if(cmp_pri(pri, PRI_ADD, space, l_space)){ expect_parse_expr(PRI_ADD, r_space); executor_->tree_splice(EXPR_ADD, 2); return true; } }
-				XTAL_CASE('-'){ if(cmp_pri(pri, PRI_SUB, space, l_space)){ expect_parse_expr(PRI_SUB, r_space); executor_->tree_splice(EXPR_SUB, 2); return true; } }
-				XTAL_CASE('~'){ if(cmp_pri(pri, PRI_CAT, space, l_space)){ expect_parse_expr(PRI_CAT, r_space); executor_->tree_splice(EXPR_CAT, 2); return true; } } 
-				XTAL_CASE('*'){ if(cmp_pri(pri, PRI_MUL, space, l_space)){ expect_parse_expr(PRI_MUL, r_space); executor_->tree_splice(EXPR_MUL, 2); return true; } } 
-				XTAL_CASE('/'){ if(cmp_pri(pri, PRI_DIV, space, l_space)){ expect_parse_expr(PRI_DIV, r_space); executor_->tree_splice(EXPR_DIV, 2); return true; } } 
-				XTAL_CASE('%'){ if(cmp_pri(pri, PRI_MOD, space, l_space)){ expect_parse_expr(PRI_MOD, r_space); executor_->tree_splice(EXPR_MOD, 2); return true; } } 
-				XTAL_CASE('^'){ if(cmp_pri(pri, PRI_XOR, space, l_space)){ expect_parse_expr(PRI_XOR, r_space); executor_->tree_splice(EXPR_XOR, 2); return true; } } 
-				XTAL_CASE(c2('&','&')){ if(cmp_pri(pri, PRI_ANDAND, space, l_space)){ expect_parse_expr(PRI_ANDAND, r_space); executor_->tree_splice(EXPR_ANDAND, 2); return true; } } 
-				XTAL_CASE('&'){ if(cmp_pri(pri, PRI_AND, space, l_space)){ expect_parse_expr(PRI_AND, r_space); executor_->tree_splice(EXPR_AND, 2); return true; } } 
-				XTAL_CASE(c2('|','|')){ if(cmp_pri(pri, PRI_OROR, space, l_space)){ expect_parse_expr(PRI_OROR, r_space); executor_->tree_splice(EXPR_OROR, 2); return true; } } 
-				XTAL_CASE('|'){ if(cmp_pri(pri, PRI_OR, space, l_space)){ expect_parse_expr(PRI_OR, r_space); executor_->tree_splice(EXPR_OR, 2); return true; } } 
-				XTAL_CASE(c2('<','<')){ if(cmp_pri(pri, PRI_SHL, space, l_space)){ expect_parse_expr(PRI_SHL, r_space); executor_->tree_splice(EXPR_SHL, 2); return true; } } 
-				XTAL_CASE(c2('>','>')){ if(cmp_pri(pri, PRI_SHR, space, l_space)){ expect_parse_expr(PRI_SHR, r_space); executor_->tree_splice(EXPR_SHR, 2); return true; } } 
-				XTAL_CASE(c3('>','>','>')){ if(cmp_pri(pri, PRI_USHR, space, l_space)){ expect_parse_expr(PRI_USHR, r_space); executor_->tree_splice(EXPR_USHR, 2); return true; } } 
-				XTAL_CASE(c2('<','=')){ if(cmp_pri(pri, PRI_LE, space, l_space)){ expect_parse_expr(PRI_LE, r_space); executor_->tree_splice(EXPR_LE, 2); return true; } } 
-				XTAL_CASE('<'){ if(cmp_pri(pri, PRI_LT, space, l_space)){ expect_parse_expr(PRI_LT, r_space); executor_->tree_splice(EXPR_LT, 2); return true; } } 
-				XTAL_CASE(c2('>','=')){ if(cmp_pri(pri, PRI_GE, space, l_space)){ expect_parse_expr(PRI_GE, r_space); executor_->tree_splice(EXPR_GE, 2); return true; } } 
-				XTAL_CASE('>'){ if(cmp_pri(pri, PRI_GT, space, l_space)){ expect_parse_expr(PRI_GT, r_space); executor_->tree_splice(EXPR_GT, 2); return true; } } 
-				XTAL_CASE(c2('=','=')){ if(cmp_pri(pri, PRI_EQ, space, l_space)){ expect_parse_expr(PRI_EQ, r_space); executor_->tree_splice(EXPR_EQ, 2); return true; } } 
-				XTAL_CASE(c2('!','=')){ if(cmp_pri(pri, PRI_NE, space, l_space)){ expect_parse_expr(PRI_NE, r_space); executor_->tree_splice(EXPR_NE, 2); return true; } } 
-				XTAL_CASE(c3('=','=','=')){ if(cmp_pri(pri, PRI_RAWEQ, space, l_space)){ expect_parse_expr(PRI_RAWEQ, r_space); executor_->tree_splice(EXPR_RAWEQ, 2); return true; } } 
-				XTAL_CASE(c3('!','=','=')){ if(cmp_pri(pri, PRI_RAWNE, space, l_space)){ expect_parse_expr(PRI_RAWNE, r_space); executor_->tree_splice(EXPR_RAWNE, 2); return true; } } 
-				XTAL_CASE(c3('!','i','s')){ if(cmp_pri(pri, PRI_NIS, space, l_space)){ expect_parse_expr(PRI_NIS, r_space); executor_->tree_splice(EXPR_NIS, 2); return true; } }
-				XTAL_CASE(c3('!','i','n')){ if(cmp_pri(pri, PRI_NIN, space, l_space)){ expect_parse_expr(PRI_NIN, r_space); executor_->tree_splice(EXPR_NIN, 2); return true; } }
-
+				XTAL_CASE('+'){ return make_bin_expr(ch, space, pri, PRI_ADD, EXPR_ADD); }
+				XTAL_CASE('-'){ return make_bin_expr(ch, space, pri, PRI_SUB, EXPR_SUB); }
+				XTAL_CASE('~'){ return make_bin_expr(ch, space, pri, PRI_CAT, EXPR_CAT); }
+				XTAL_CASE('*'){ return make_bin_expr(ch, space, pri, PRI_MUL, EXPR_MUL); }
+				XTAL_CASE('/'){ return make_bin_expr(ch, space, pri, PRI_DIV, EXPR_DIV); }
+				XTAL_CASE('%'){ return make_bin_expr(ch, space, pri, PRI_MOD, EXPR_MOD); }
+				XTAL_CASE('^'){ return make_bin_expr(ch, space, pri, PRI_XOR, EXPR_XOR); }
+				XTAL_CASE(c2('&','&')){ return make_bin_expr(ch, space, pri, PRI_ANDAND, EXPR_ANDAND); }
+				XTAL_CASE('&'){ return make_bin_expr(ch, space, pri, PRI_AND, EXPR_AND); }
+				XTAL_CASE(c2('|','|')){ return make_bin_expr(ch, space, pri, PRI_OROR, EXPR_OROR); }
+				XTAL_CASE('|'){ return make_bin_expr(ch, space, pri, PRI_OR, EXPR_OR); }
+				XTAL_CASE(c2('<','<')){ return make_bin_expr(ch, space, pri, PRI_SHL, EXPR_SHL); }
+				XTAL_CASE(c2('>','>')){ return make_bin_expr(ch, space, pri, PRI_SHR, EXPR_SHR); }
+				XTAL_CASE(c3('>','>','>')){ return make_bin_expr(ch, space, pri, PRI_USHR, EXPR_USHR); }
+				XTAL_CASE(c2('<','=')){ return make_bin_expr(ch, space, pri, PRI_LE, EXPR_LE); }
+				XTAL_CASE('<'){ return make_bin_expr(ch, space, pri, PRI_LT, EXPR_LT); }
+				XTAL_CASE(c2('>','=')){ return make_bin_expr(ch, space, pri, PRI_GE, EXPR_GE); }
+				XTAL_CASE('>'){ return make_bin_expr(ch, space, pri, PRI_GT, EXPR_GT); }
+				XTAL_CASE(c2('=','=')){ return make_bin_expr(ch, space, pri, PRI_EQ, EXPR_EQ); }
+				XTAL_CASE(c2('!','=')){ return make_bin_expr(ch, space, pri, PRI_NE, EXPR_NE); }
+				XTAL_CASE(c3('=','=','=')){ return make_bin_expr(ch, space, pri, PRI_RAWEQ, EXPR_RAWEQ); }
+				XTAL_CASE(c3('!','=','=')){ return make_bin_expr(ch, space, pri, PRI_RAWNE, EXPR_RAWNE); }
+				XTAL_CASE(c3('!','i','s')){ return make_bin_expr(ch, space, pri, PRI_NIS, EXPR_NIS); }
+				XTAL_CASE(c3('!','i','n')){ return make_bin_expr(ch, space, pri, PRI_NIN, EXPR_NIN); }
+				
 				XTAL_CASE4(c2(':',':'), '.', c3(':',':','?'), c2('.', '?')){
 					if(cmp_pri(pri, PRI_MEMBER, space, l_space)){
 						if(eat('(')){

@@ -18,11 +18,7 @@ struct MemberCacheTable{
 		AnyPtr member;
 	};
 
-	enum{ CACHE_MAX = 128, CACHE_MASK = CACHE_MAX-1 };
-
-	static uint_t calc_index(uint_t hash){
-		return hash & CACHE_MASK;
-	}
+	enum{ CACHE_MAX = 277, CACHE_MASK = CACHE_MAX };
 
 	Unit table_[CACHE_MAX];
 
@@ -48,7 +44,40 @@ struct MemberCacheTable{
 		mutate_count_++;
 	}
 
-	const AnyPtr& cache(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
+	const AnyPtr& cache(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
+		uint_t itarget_class = (uint_t)target_class >> 2;
+		uint_t iprimary_key = rawvalue(primary_key).u();
+		uint_t isecondary_key = rawvalue(secondary_key).u();
+
+		uint_t hash = itarget_class ^ (iprimary_key ^ (iprimary_key>>24)) ^ isecondary_key;
+		Unit& unit = table_[hash % CACHE_MASK];
+
+		if(((mutate_count_ ^ unit.mutate_count) | 
+			rawbitxor(primary_key, unit.primary_key) | 
+			((uint_t)target_class ^ rawvalue(unit.target_class).u()) | 
+			rawbitxor(secondary_key, unit.secondary_key))==0){
+
+			hit_++;
+			accessibility = unit.accessibility;
+			return unit.member;
+		}
+		else{
+
+			miss_++;
+
+			bool nocache = false;
+			const AnyPtr& ret = target_class->rawmember(primary_key, secondary_key, true, accessibility, nocache);
+			if(!nocache){
+				unit.member = ret;
+				unit.target_class = to_smartptr(target_class);
+				unit.primary_key = primary_key;
+				unit.secondary_key = secondary_key;
+				unit.accessibility = accessibility;
+				unit.mutate_count = mutate_count_;
+			}
+			return ret;
+		}
+	}
 
 	void clear(){
 		for(int_t i=0; i<CACHE_MAX; ++i){
@@ -70,11 +99,8 @@ struct IsCacheTable{
 		bool result;
 	};
 
-	enum{ CACHE_MAX = 32, CACHE_MASK = CACHE_MAX-1 };
+	enum{ CACHE_MAX = 127, CACHE_MASK = CACHE_MAX };
 
-	static uint_t calc_index(uint_t hash){
-		return hash & CACHE_MASK;
-	}
 
 	Unit table_[CACHE_MAX];
 
@@ -100,7 +126,32 @@ struct IsCacheTable{
 		mutate_count_++;
 	}
 
-	bool cache(const AnyPtr& target_class, const AnyPtr& klass);
+	bool cache(const AnyPtr& target_class, const AnyPtr& klass){
+		uint_t itarget_class = rawvalue(target_class).u();
+		uint_t iklass = rawvalue(klass).u();
+
+		uint_t hash = (itarget_class>>3) ^ (iklass>>2);
+		Unit& unit = table_[hash % CACHE_MASK];
+		
+		if(mutate_count_==unit.mutate_count && 
+			raweq(target_class, unit.target_class) && 
+			raweq(klass, unit.klass)){
+
+			hit_++;
+			return unit.result;
+		}
+		else{
+			miss_++;
+
+			bool ret = unchecked_ptr_cast<Class>(target_class)->is_inherited(klass);
+
+			unit.target_class = target_class;
+			unit.klass = klass;
+			unit.mutate_count = mutate_count_;
+			unit.result = ret;
+			return ret;
+		}
+	}
 
 	void clear(){
 		for(int_t i=0; i<CACHE_MAX; ++i){
@@ -119,11 +170,7 @@ struct CtorCacheTable{
 		AnyPtr target_class;
 	};
 
-	enum{ CACHE_MAX = 32, CACHE_MASK = CACHE_MAX-1 };
-
-	static uint_t calc_index(uint_t hash){
-		return hash & CACHE_MASK;
-	}
+	enum{ CACHE_MAX = 127, CACHE_MASK = CACHE_MAX };
 
 	Unit table_[CACHE_MAX];
 
@@ -149,7 +196,27 @@ struct CtorCacheTable{
 		mutate_count_++;
 	}
 
-	bool cache(const AnyPtr& target_class, int_t kind);
+	bool cache(const AnyPtr& target_class, int_t kind){
+		uint_t itarget_class = rawvalue(target_class).u();
+
+		uint_t hash = (itarget_class>>3) ^ kind*37;
+		Unit& unit = table_[hash % CACHE_MASK];
+		
+		if(mutate_count_==unit.mutate_count && 
+			raweq(target_class, unit.target_class) &&
+			kind==kind){
+			hit_++;
+			return true;
+		}
+		else{
+			miss_++;
+
+			unit.target_class = target_class;
+			unit.kind = kind;
+			unit.mutate_count = mutate_count_;
+			return false;
+		}
+	}
 
 	void clear(){
 		for(int_t i=0; i<CACHE_MAX; ++i){

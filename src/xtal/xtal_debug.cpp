@@ -66,6 +66,7 @@ public:
 		hook_setting_bit_ = 0;
 		saved_hook_setting_bit_ = 0;
 		breakpoint_state_ = BSTATE_GO;
+		debug_compile_count_ = 0;
 	}
 
 	uint_t enable_count_;
@@ -76,6 +77,8 @@ public:
 
 	int_t breakpoint_state_;
 	int_t breakpoint_call_stack_size_;
+
+	uint_t debug_compile_count_;
 };
 
 namespace{
@@ -133,6 +136,21 @@ uint_t disable_force(){
 	}
 
 	return temp;
+}
+
+bool is_debug_compile_enabled(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	return d->debug_compile_count_>0;
+}
+
+void enable_debug_compile(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	d->debug_compile_count_++;
+}
+
+void disable_debug_compile(){
+	const SmartPtr<DebugData>& d = cpp_value<DebugData>();
+	d->debug_compile_count_--;
 }
 
 uint_t hook_setting_bit(){

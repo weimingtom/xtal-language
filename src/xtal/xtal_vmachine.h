@@ -54,8 +54,8 @@ inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyP
 
 
 template<>
-struct FastStackDefaultValue<Any>{
-	static const Any& get(){ return null; }
+struct FastStackDefaultValue<AnyPtr>{
+	static const AnyPtr& get(){ return null; }
 };
 
 // XTAL仮想マシン
@@ -232,12 +232,6 @@ public:
 	int_t named_arg_count(){ 
 		return ff().named_arg_count; 
 	}
-
-	/**
-	* \brief 引数の多値を平らにする
-	*
-	*/
-	void flatten_args();
 	
 	/**
 	* \brief 呼び出し元が必要としている戻り値の数。
@@ -286,10 +280,6 @@ public:
 		return ff().processed; 
 	}
 	
-	void prereturn_result(const AnyPtr& v);
-
-	void recycle_call();
-
 public:
 
 	void adjust_args(const NamedParam* params, int_t num);
@@ -347,7 +337,7 @@ public:
 
 	void set_except_x(const AnyPtr& e);
 
-	void set_except_0(const Any& e);
+	void set_except_0(const AnyPtr& e);
 
 	void execute_inner(const inst_t* start, int_t eval_n = 0);
 
@@ -373,9 +363,8 @@ public:
 
 public:
 
-	void adjust_values(int_t n, int_t need_result_count);
 	void adjust_values2(int_t stack_base, int_t n, int_t need_result_count);
-	void adjust_values3(Any* values, int_t n, int_t need_result_count);
+	void adjust_values3(AnyPtr* values, int_t src_count, int_t dest_count);
 
 public:
 
@@ -385,14 +374,7 @@ public:
 		}
 	}
 
-	/*
-	int_t push_mv(const ValuesPtr& mv){
-		int_t size = mv->size();
-		for(int_t i=0; i<size; ++i){
-			push(mv->at(i));
-		}
-		return size;
-	}*/
+	void replace_result(const AnyPtr& result);
 
 public:
 
@@ -427,9 +409,6 @@ public:
 		// 関数呼び出し側が必要とする戻り値の数
 		int_t need_result_count;
 
-		// 実際の戻り値の数
-		int_t result_count;
-
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
@@ -443,31 +422,29 @@ public:
 
 		int_t result;
 
-		uint_t stack_base;
-
 		uint_t prev_stack_base;
 
 		// 呼び出された関数オブジェクト
-		Any fun_; 
+		AnyPtr fun_; 
 
 		const IDPtr* identifier_;
 
 		// 関数の外側のフレームオブジェクト
-		Any outer_;
+		AnyPtr outer_;
 
 		// 関数が呼ばれたときのthisオブジェクト
-		Any self_;
+		AnyPtr self_;
 
 		FunFrame();
 
 		void set_null();
 
-		const MethodPtr& fun() const{ return unchecked_ptr_cast<Method>(ap(fun_)); }
-		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(ap(outer_)); }
+		const MethodPtr& fun() const{ return unchecked_ptr_cast<Method>(fun_); }
+		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(outer_); }
 		//const FramePtr& outer() const{ return fun()->outer(); }
 		//const IDPtr& identifier(int_t n){ return fun()->code()->identifier(n); }
 		const IDPtr& identifier(int_t n){ return identifier_[n]; }
-		const AnyPtr& self() const{ return ap(self_); }
+		const AnyPtr& self() const{ return self_; }
 		const CodePtr& code(){ return fun()->code(); }
 
 		int_t args_stack_size(){
@@ -479,8 +456,9 @@ public:
 		//void set_fun(const MethodPtr& v){ fun_ = v; identifier_ = &fun()->code()->identifier(0); }
 		void set_fun(const MethodPtr& v);
 		//void set_fun(){ fun_ = null; outer_ = null; }
-		void set_outer(const Any& v){ outer_ = v; }
-		void set_self(const Any& v){ self_ = v; }
+		void set_outer(const AnyPtr& v){ outer_ = v; }
+		void set_outer(){ outer_ = null; }
+		void set_self(const AnyPtr& v){ self_ = v; }
 		void set_self(){ self_ = null; }
 	};
 
@@ -542,14 +520,11 @@ private:
 	const inst_t* check_accessibility(CallState& call_state, int_t accessibility);
 
 	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info);
-
 	void pop_scope();
 
 	void push_ff(CallState& call_state);
-
-	void pop_ff();
-
-	void pop_ff2();
+	const inst_t* pop_ff(int_t base, int_t result_count);
+	void pop_ff_non();
 
 	void execute();
 
@@ -600,7 +575,7 @@ public:
 
 public:
 
-	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const Any& value);
+	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const AnyPtr& value);
 
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
@@ -608,16 +583,16 @@ public:
 		return (AnyPtr&)variables_top_[pos];
 	}
 
-	void set_local_variable(int_t pos, const Any& value){
-		static_cast<Any&>(variables_top_[pos]) = value;
+	void set_local_variable(int_t pos, const AnyPtr& value){
+		variables_top_[pos] = value;
 	}
 
 	int_t variables_top(){
-		return variables_top_-static_cast<const Any*>(variables_.data());
+		return variables_top_ - variables_.data();
 	}
 	
 	void set_variables_top(int_t top){
-		variables_top_ = const_cast<Any*>(static_cast<const Any*>(variables_.data())) + top;
+		variables_top_ = variables_.data() + top;
 	}
 
 private:
@@ -725,16 +700,17 @@ private:
 
 	const inst_t* resume_pc_;
 	
+	int_t yield_base_;
 	int_t yield_result_;
 	int_t yield_need_result_count_;
-	int_t yield_target_count_;
+	int_t yield_result_count_;
 
 	const inst_t* throw_pc_;
 
 	const IDPtr* id_;
 
 	// 値保持用スタック
-	FastStack<Any> stack_;
+	FastStack<AnyPtr> stack_;
 
 	// 関数呼び出しの度に積まれるフレーム
 	FastStack<FunFrame*> fun_frames_;
@@ -755,11 +731,11 @@ private:
 	// スコープ情報
 	FastStack<Scope> scopes_;
 
-	Any* variables_top_;
+	AnyPtr* variables_top_;
 	xarray variables_;
 
 	// tryの度に積まれるフレーム
-	PODStack<ExceptFrame> except_frames_;
+	FastStack<ExceptFrame> except_frames_;
 	
 	AnyPtr except_[3];
 
@@ -779,8 +755,6 @@ public:
 	}
 
 	void on_visit_members(Visitor& m);
-
-	void gc_signal(int_t flag);
 
 	int_t fun_frame_size(){
 		return fun_frames_.size();

@@ -96,40 +96,65 @@ private:
 	int_t index_;
 };
 
-
-class InstanceVariableGetter : public HaveParentRefCountingBase{
+class InstanceVariableGetter : public Any{
 public:
-	enum{ TYPE = TYPE_IVAR_GETTER };
 
-	InstanceVariableGetter(int_t number, ClassInfo* info);
-
-	void on_rawcall(const VMachinePtr& vm);
+	InstanceVariableGetter(int_t number, ClassInfo* info){
+		value_.init_instance_variable_getter(number, info);
+	}
 
 public:
-	int_t number_;
-	ClassInfo* info_;
+
+	int_t number() const{
+		return value_.immediate_first_value();
+	}
+
+	ClassInfo* class_info() const{
+		return (ClassInfo*)value_.immediate_second_vpvalue();
+	}
+
+	void on_rawcall(const VMachinePtr& vm) const;
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
 };
 
-class InstanceVariableSetter : public HaveParentRefCountingBase{
+class InstanceVariableSetter : public Any{
 public:
-	enum{ TYPE = TYPE_IVAR_SETTER };
 
-	InstanceVariableSetter(int_t number, ClassInfo* info);
-
-	void on_rawcall(const VMachinePtr& vm);
+	InstanceVariableSetter(int_t number, ClassInfo* info){
+		value_.init_instance_variable_setter(number, info);
+	}
 
 public:
-	int_t number_;
-	ClassInfo* info_;
+
+	int_t number() const{
+		return value_.immediate_first_value();
+	}
+
+	ClassInfo* class_info() const{
+		return (ClassInfo*)value_.immediate_second_vpvalue();
+	}
+
+	void on_rawcall(const VMachinePtr& vm) const;
+
+public:
+
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
 };
-
 /**
 * \xbind lib::builtin
 * \xinherit lib::builtin::Any
 * \brief メソッドオブジェクト
 */
-class Method : public HaveParentBase{
+class Method : public HaveParentRefCountingBase{
 public:
+	enum{ TYPE = TYPE_METHOD };
 
 	Method(const FramePtr& outer, const CodePtr& code, FunInfo* info);
 
@@ -160,7 +185,7 @@ public:
 	void on_rawcall(const VMachinePtr& vm);
 	
 	void on_visit_members(Visitor& m){
-		HaveParentBase::on_visit_members(m);
+		HaveParentRefCountingBase::on_visit_members(m);
 		m & outer_ & code_;
 	}
 
@@ -178,6 +203,7 @@ protected:
 */
 class Fun : public Method{
 public:
+	enum{ TYPE = TYPE_FUN };
 
 	Fun(const FramePtr& outer, const AnyPtr& athis, const CodePtr& code, FunInfo* info);
 
@@ -188,6 +214,10 @@ public:
 	void on_visit_members(Visitor& m){
 		Method::on_visit_members(m);
 		m & this_;
+	}
+
+	const AnyPtr& self(){
+		return this_;
 	}
 
 protected:
@@ -202,6 +232,7 @@ protected:
 */
 class Lambda : public Fun{
 public:
+	enum{ TYPE = TYPE_LAMBDA };
 
 	Lambda(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info);
 
@@ -217,6 +248,7 @@ public:
 */
 class Fiber : public Fun{
 public:
+	enum{ TYPE = TYPE_FIBER };
 
 	Fiber(const FramePtr& outer, const AnyPtr& th, const CodePtr& code, FunInfo* info);
 

@@ -4,7 +4,7 @@ IMAGE_HEIGHT: 32;
 NSUBSAMPLES: 2;
 NAO_SAMPLES: 8;
 
-class vec{
+class Vec{
 	public _x;
 	public _y;
 	public _z;
@@ -13,11 +13,11 @@ class vec{
 	}
 	
 	op_add(a){
-		return vec(_x+a.x, _y+a.y, _z+a.z);
+		return Vec(_x+a.x, _y+a.y, _z+a.z);
 	}
 	
 	op_sub(a){
-		return vec(_x-a.x, _y-a.y, _z-a.z);
+		return Vec(_x-a.x, _y-a.y, _z-a.z);
 	}
 	
 	length(){
@@ -27,13 +27,13 @@ class vec{
 	normalize(){
 		len: length();
 		if(math::abs(len) > 1.0e-17) {
-		   return vec(_x/len, _y/len, _z/len);
+		   return Vec(_x/len, _y/len, _z/len);
 		}
 		return this;	
 	}
 	
 	cross(a){
-		return vec(_y*a.z-_z*a.y, _z*a.x-_x*a.z, _x*a.y-_y*a.x);
+		return Vec(_y*a.z-_z*a.y, _z*a.x-_x*a.z, _x*a.y-_y*a.x);
 	}
 
 	dot(a){
@@ -60,7 +60,7 @@ class Sphere{
 			if((t > 0.0) && (t < isect.t)){
 				isect.t = t;
 				isect.hit = true;
-				isect.p = vec(ray.org.x + ray.dir.x * t, ray.org.y + ray.dir.y * t, ray.org.z + ray.dir.z * t);
+				isect.p = Vec(ray.org.x + ray.dir.x * t, ray.org.y + ray.dir.y * t, ray.org.z + ray.dir.z * t);
 				n: isect.p - _center;
 				isect.n = n.normalize;
 			}
@@ -87,7 +87,7 @@ class Plane{
 			isect.hit = true;
 			isect.t = t;
 			isect.n = _n;
-			isect.p = vec(ray.org.x + t * ray.dir.x, ray.org.y + t * ray.dir.y, ray.org.z + t * ray.dir.z);
+			isect.p = Vec(ray.org.x + t * ray.dir.x, ray.org.y + t * ray.dir.y, ray.org.z + t * ray.dir.z);
 		}
 	}
 }
@@ -109,8 +109,8 @@ class Isect{
 	initialize(){
     	_t = 1000000.0;
     	_hit = false;
-    	_p = vec(0.0, 0.0, 0.0);
-    	_n = vec(0.0, 0.0, 0.0);	
+    	_p = Vec(0.0, 0.0, 0.0);
+    	_n = Vec(0.0, 0.0, 0.0);	
 	}
 }
 
@@ -122,8 +122,8 @@ fun clamp(f){
 }
 
 fun orthoBasis(basis, n){
-	basis[2] = vec(n.x, n.y, n.z);
-	basis[1] = vec(0.0, 0.0, 0.0);
+	basis[2] = Vec(n.x, n.y, n.z);
+	basis[1] = Vec(0.0, 0.0, 0.0);
 
 	if((n.x < 0.6) && (n.x > -0.6)){
 		basis[1].x = 1.0;
@@ -151,10 +151,10 @@ plane: null;
 fun init_scene(){
 	spheres = [];
 	spheres.resize(3);
-	spheres[0] = Sphere(vec(-2.0, 0.0, -3.5), 0.5);
-	spheres[1] = Sphere(vec(-0.5, 0.0, -3.0), 0.5);
-	spheres[2] = Sphere(vec(1.0, 0.0, -2.2), 0.5);
-	plane = Plane(vec(0.0, -0.5, 0.0), vec(0.0, 1.0, 0.0));
+	spheres[0] = Sphere(Vec(-2.0, 0.0, -3.5), 0.5);
+	spheres[1] = Sphere(Vec(-0.5, 0.0, -3.0), 0.5);
+	spheres[2] = Sphere(Vec(1.0, 0.0, -2.2), 0.5);
+	plane = Plane(Vec(0.0, -0.5, 0.0), Vec(0.0, 1.0, 0.0));
 }
 
 fun ambient_occlusion(isect){
@@ -166,23 +166,30 @@ fun ambient_occlusion(isect){
 	nphi: NAO_SAMPLES;
 	eps: 0.0001;
 	occlusion: 0.0;
-
-	p: vec(isect.p.x + eps * isect.n.x, isect.p.y + eps * isect.n.y, isect.p.z + eps * isect.n.z);
-
+	
+	random: math::random;
+	sin: math::sin;
+	cos: math::cos;
+	sqrt: math::sqrt;
+	PI: math::PI;
+		
+	p: Vec(isect.p.x + eps * isect.n.x, isect.p.y + eps * isect.n.y, isect.p.z + eps * isect.n.z);
+	
 	for(j: 0; j < nphi; j++) {
 		for(i: 0; i < ntheta; i++) {
-			r: math::random();
-			phi: 2.0 * math::PI * math::random();
-
-			x: math::cos(phi) * math::sqrt(1.0 - r);
-			y: math::sin(phi) * math::sqrt(1.0 - r);
-			z: math::sqrt(r);
-
+			r: random();
+			phi: 2.0 * PI * random();
+			
+			sq:  sqrt(1.0 - r);
+			x: cos(phi) * sq;
+			y: sin(phi) * sq;
+			z: sqrt(r);
+						
 			rx: x * basis[0].x + y * basis[1].x + z * basis[2].x;
 			ry: x * basis[0].y + y * basis[1].y + z * basis[2].y;
 			rz: x * basis[0].z + y * basis[1].z + z * basis[2].z;
 
-			raydir: vec(rx, ry, rz);
+			raydir: Vec(rx, ry, rz);
 			ray: Ray(p, raydir);
 
 			occIsect: Isect();
@@ -198,7 +205,7 @@ fun ambient_occlusion(isect){
 	}
 
 	occlusion = (ntheta * nphi - occlusion) / (ntheta * nphi);
-	return vec(occlusion, occlusion, occlusion);
+	return Vec(occlusion, occlusion, occlusion);
 }
 
 fun render(out, w, h, nsubsamples){
@@ -206,7 +213,7 @@ fun render(out, w, h, nsubsamples){
 
 	for(y: 0; y < h; y++) {
 		for(x: 0; x < w; x++) {
-			rad: vec(0.0, 0.0, 0.0);
+			rad: Vec(0.0, 0.0, 0.0);
 
 			for(v: 0; v < nsubsamples; v++) {
 				for(u: 0; u < nsubsamples; u++) {
@@ -215,9 +222,9 @@ fun render(out, w, h, nsubsamples){
 					px: (x + (u / nsubsamples) - (w / 2.0))/(w / 2.0);
 					py: -(y + (v / nsubsamples) - (h / 2.0))/(h / 2.0);
 
-					eye: vec(px, py, -1.0).normalize;
+					eye: Vec(px, py, -1.0).normalize;
 
-					ray: Ray(vec(0.0, 0.0, 0.0), eye);
+					ray: Ray(Vec(0.0, 0.0, 0.0), eye);
 
 					isect: Isect();
 					spheres[0].intersect(ray, isect);
@@ -226,7 +233,7 @@ fun render(out, w, h, nsubsamples){
 					plane.intersect(ray, isect);
 
 					if(isect.hit){
-					   	col: ambient_occlusion(isect);
+						col: ambient_occlusion(isect);
 						rad.x += col.x;
 						rad.y += col.y;
 						rad.z += col.z;
@@ -249,11 +256,11 @@ fun render(out, w, h, nsubsamples){
 
 init_scene();
 
-open("out.ppm", "w"){
-	it.put_s("P6\n");
-	it.put_s(%f(%d %d\n)(IMAGE_WIDTH, IMAGE_HEIGHT));
-	it.put_s("255\n");
-	render(it, IMAGE_WIDTH, IMAGE_HEIGHT, NSUBSAMPLES);
+{
+	stdout.put_s("P6\n");
+	stdout.put_s(%f(%d %d\n)(IMAGE_WIDTH, IMAGE_HEIGHT));
+	stdout.put_s("255\n");
+	render(stdout, IMAGE_WIDTH, IMAGE_HEIGHT, NSUBSAMPLES);
 }
 
 

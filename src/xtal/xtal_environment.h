@@ -335,19 +335,19 @@ const SmartPtr<T>& cpp_value(){
 * \internal
 * \brief クラスのメンバを取り出す。
 */
-const AnyPtr& cache_member(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
+//const AnyPtr& cache_member(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility);
 
 /**
 * \internal
 * \brief クラスの継承関係を調べる。
 */
-bool cache_is(const AnyPtr& target_class, const AnyPtr& klass);
+//bool cache_is(const AnyPtr& target_class, const AnyPtr& klass);
 
 /**
 * \internal
 * \brief クラスのコンストラクタがキャッシュされているから調べる。
 */
-bool cache_ctor(const AnyPtr& target_class, int_t kind);
+//bool cache_ctor(const AnyPtr& target_class, int_t kind);
 
 /**
 * \internal
@@ -594,12 +594,6 @@ CodePtr eval_compile(const AnyPtr& source);
 */
 AnyPtr load(const StringPtr& file_name);
 
-void set_require_source_hook(const AnyPtr& hook);
-
-CodePtr require_source(const StringPtr& name);
-
-AnyPtr require(const StringPtr& name);
-
 //@}
 
 CodePtr source(const char_t* src, int_t size);
@@ -607,6 +601,12 @@ CodePtr source(const char_t* src, int_t size);
 void exec_source(const char_t* src, int_t size);
 
 #endif
+
+void set_require_source_hook(const AnyPtr& hook);
+
+CodePtr require_source(const StringPtr& name);
+
+AnyPtr require(const StringPtr& name);
 
 CodePtr compiled_source(const void* src, int_t size);
 

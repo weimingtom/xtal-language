@@ -11,46 +11,62 @@ CodeBuilder::CodeBuilder(){
 	implicit_ref_map_ = XNew<Map>();
 }
 
-CodeBuilder::~CodeBuilder(){}
+CodeBuilder::~CodeBuilder(){
+	while(!fun_frame_stack_.empty()){
+		pop_ff();
+	}
+
+	while(!class_frame_stack_.empty()){
+		pop_cf();
+	}
+}
 
 void CodeBuilder::error(const AnyPtr& message){
 	parser_.executor_->error(message, lineno());
 }
 
 CodePtr CodeBuilder::compile(const StreamPtr& stream, const StringPtr& source_file_name){
-	xpeg::ExecutorPtr exec = xnew<xpeg::Executor>(stream, source_file_name);
-	parser_.parse(exec);
+	xpeg::ExecutorPtr executor = xnew<xpeg::Executor>(stream, source_file_name);
+	eb_ = executor;
+	parser_.parse(executor);
 
 	if(!stream->eos()){
 		error(Xt("XCE1001"));
 	}
 
-	if(exec->has_error()){
+	if(executor->has_error()){
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt1("XRE1016", name, source_file_name), errors()));
 		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
 	eval_ = false;
 
-	return compile_toplevel(ep(exec->tree_back()), source_file_name);
+	return compile_toplevel(ep(executor->tree_back()), source_file_name);
 }
 
 CodePtr CodeBuilder::compile(const xpeg::ExecutorPtr& executor, const StringPtr& source_file_name){
+	eb_ = executor;
 	parser_.parse(executor);
 
 	if(executor->has_error()){
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt1("XRE1016", name, source_file_name), errors()));
 		return nul<Code>();
 	}
 
 	prev_inst_op_ = -1;
 	eval_ = false;
+
 	return compile_toplevel(ep(executor->tree_back()), source_file_name);
 }
 
 CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& executor){
+	eb_ = executor;
+
 	parser_.parse_eval(executor);
 	
 	if(executor->has_error()){
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt1("XRE1002", name, XTAL_STRING("<eval>")), errors()));
 		return nul<Code>();
 	}
 
@@ -58,12 +74,12 @@ CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& executor){
 
 	if(e->itag()==EXPR_DEFINE){
 		if(e->bin_lhs()->itag()==EXPR_LVAR){
-			eb_.push(Xid(filelocal));
-			eb_.splice(EXPR_LVAR, 1);
-			eb_.push(e->bin_lhs()->lvar_name());
-			eb_.push(null);
-			eb_.splice(EXPR_MEMBER, 3);
-			e->set_bin_lhs(ep(eb_.pop()));
+			eb_->tree_push_back(Xid(filelocal));
+			eb_->tree_splice(EXPR_LVAR, 1);
+			eb_->tree_push_back(e->bin_lhs()->lvar_name());
+			eb_->tree_push_back(null);
+			eb_->tree_splice(EXPR_MEMBER, 3);
+			e->set_bin_lhs(ep(eb_->tree_pop_back()));
 		}
 	}
 	else if(e->itag()==EXPR_MDEFINE){
@@ -71,128 +87,39 @@ CodePtr CodeBuilder::eval_compile(const xpeg::ExecutorPtr& executor){
 		for(uint_t i=0; i<lhs->size(); ++i){
 			ExprPtr e2 = ep(lhs->at(i));
 			if(e2->itag()==EXPR_LVAR){
-				eb_.push(Xid(filelocal));
-				eb_.splice(EXPR_LVAR, 1);
-				eb_.push(e2->lvar_name());
-				eb_.push(null);
-				eb_.splice(EXPR_MEMBER, 3);
-				lhs->set_at(i, ep(eb_.pop()));
+				eb_->tree_push_back(Xid(filelocal));
+				eb_->tree_splice(EXPR_LVAR, 1);
+				eb_->tree_push_back(e2->lvar_name());
+				eb_->tree_push_back(null);
+				eb_->tree_splice(EXPR_MEMBER, 3);
+				lhs->set_at(i, ep(eb_->tree_pop_back()));
 			}
 		}
 	}
 	else{
-		eb_.push(e);
-		eb_.splice(EXPR_LIST, 1);
-		eb_.splice(EXPR_RETURN, 1);
-		e = ep(eb_.pop());
+		eb_->tree_push_back(e);
+		eb_->tree_splice(EXPR_LIST, 1);
+		eb_->tree_splice(EXPR_RETURN, 1);
+		e = ep(eb_->tree_pop_back());
 	}
+
+	eb_->tree_push_back(e);
+	eb_->tree_splice(EXPR_LIST, 1);
+	eb_->tree_splice(EXPR_TOPLEVEL, 1);
+	e = ep(eb_->tree_pop_back());
 
 	prev_inst_op_ = -1;
 	eval_ = true;
-	return compile_eval_toplevel(e, "<eval>");
-}
 
-CodePtr CodeBuilder::compile_eval_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
-	result_ = XNew<Code>();
-	result_->source_file_name_ = source_file_name;
-	result_->except_info_table_.push_back(ExceptInfo());
-
-	identifier_map_ = XNew<Map>();
-	register_identifier(empty_id);
-
-	value_map_ = XNew<Map>();
-	register_value(null);
-	
-	result_->once_table_.push_back(undefined);
-
-	linenos_.push(0);
-
-	// 関数フレームを作成する
-	fun_frames_.push();	
-	ff().labels.clear();
-	ff().loops.clear();
-	ff().finallies.clear();
-	ff().var_frame_count = var_frames_.size();
-	ff().stack_count = 0;
-	ff().max_stack_count = 0;
-	ff().variable_count = 1;
-	ff().max_variable_count = 1;
-	ff().extendable_param = true;
-
-	// 変数フレームを作成して、コマンドライン引数を登録する
-	var_begin(VarFrame::FUN);
-
-	// コマンドライン引数
-	var_define(Xid(arg));
-
-	// 関数コアを作成
-	FunInfo info;
-	info.pc = 0;
-	info.kind = KIND_METHOD;
-	info.min_param_count = 0;
-	info.max_param_count = 0;
-	info.name_number = register_identifier(Xid(toplevel));
-	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
-
-	// 引数の名前を識別子テーブルに順番に乗せる
-	info.variable_size = vf().entries.size();
-	info.variable_identifier_offset = result_->identifier_table_.size();
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		vf().entries[i].initialized = true;
-		result_->identifier_table_.push_back(vf().entries[i].name);
-	}
-
-	int_t fun_info_table_number = 0;
-	result_->xfun_info_table_.push_back(info);
-
-	//var_begin(VarFrame::FRAME);
-	//scope_begin();	
-
-	// 関数本体を処理する
-	compile_stmt(e);
-
-	//scope_end();
-	//var_end();
-	
-	break_off(ff().var_frame_count+1);
-
-	put_inst(InstReturn(0));
-	
-	result_->set_lineno_info(result_->final_lineno()+1);
-
-	put_inst(InstThrow());
-
-	process_labels();
-	
-	if(vf().scope_chain){
-		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-	}
-
-	// 関数フレームをポップする
-	fun_frames_.downsize(1);
-
-	// 変数フレームをポップする
-	var_end();
-
-	Xfor2(k, v, implicit_ref_map_){
-		if(v){
-			Code::ImplcitInfo info = {k->to_i(), v->to_i()};
-			result_->implicit_table_.push_back(info);
-		}
-	}
-
-	if(!parser_.executor_->errors()){
-		opt_jump();
-		result_->generated();
-		return result_;
-	}
-	else{
-		result_ = null;
-		return nul<Code>();
-	}
+	return compile_toplevel(e, XTAL_STRING("<eval>"));
 }
 
 CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_file_name){
+	normalize(e);
+	build_scope(e);
+	optimize_scope(root_);
+	calc_scope(root_, root_, 0);
+
 	result_ = XNew<Code>();
 
 	result_->source_file_name_ = source_file_name;
@@ -209,22 +136,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	linenos_.push(0);
 
 	// 関数フレームを作成する
-	fun_frames_.push();	
-	ff().labels.clear();
-	ff().loops.clear();
-	ff().finallies.clear();
-	ff().var_frame_count = var_frames_.size();
-	ff().stack_count = 0;
-	ff().max_stack_count = 0;
-	ff().variable_count = 1;
-	ff().max_variable_count = 1;
-	ff().extendable_param = true;
-
-	// 変数フレームを作成して、コマンドライン引数を登録する
-	var_begin(VarFrame::FUN);
-
-	// コマンドライン引数
-	var_define(Xid(arg));
+	push_ff();
 
 	// 関数コアを作成
 	FunInfo info;
@@ -233,36 +145,27 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 	info.min_param_count = 0;
 	info.max_param_count = 0;
 	info.name_number = register_identifier(Xid(toplevel));
-	info.flags = FunInfo::FLAG_EXTENDABLE_PARAM;
+	info.flags = 0;
+	info.variable_offset = 0;
+	info.variable_size = 0;
+	info.variable_identifier_offset = 0;
 
-	// 引数の名前を識別子テーブルに順番に乗せる
-	info.variable_size = vf().entries.size();
-	info.variable_identifier_offset = result_->identifier_table_.size();
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		vf().entries[i].initialized = true;
-		result_->identifier_table_.push_back(vf().entries[i].name);
-	}
+	scope_begin();
 
+	info.max_variable = current_scope().register_max;
 	int_t fun_info_table_number = 0;
 	result_->xfun_info_table_.push_back(info);
 
-	//var_begin(VarFrame::FRAME);
-	//scope_begin();	
-
 	// 関数本体を処理する
 	compile_stmt(e);
-
-	//scope_end();
-	//var_end();
 	
 	break_off(ff().var_frame_count+1);
 
-	eb_.set_lineno(result_->final_lineno());
-	eb_.push(Xid(filelocal));
-	eb_.splice(EXPR_LVAR, 1);
-	eb_.splice(0, 1);
-	eb_.splice(EXPR_RETURN, 1);
-	compile_stmt(eb_.pop());
+	eb_->tree_push_back(Xid(filelocal));
+	eb_->tree_splice(EXPR_LVAR, 1);
+	eb_->tree_splice(0, 1);
+	eb_->tree_splice(EXPR_RETURN, 1);
+	compile_stmt(eb_->tree_pop_back());
 	
 	result_->set_lineno_info(result_->final_lineno()+1);
 
@@ -270,15 +173,17 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 
 	process_labels();
 	
-	if(vf().scope_chain){
+	if(current_scope().scope_chain){
 		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 	}
 
-	// 関数フレームをポップする
-	fun_frames_.downsize(1);
+	scope_end();
+	delete_scope(root_);
 
-	// 変数フレームをポップする
-	var_end();
+	XTAL_ASSERT(scope_stack_.empty());
+
+	// 関数フレームをポップする
+	pop_ff();
 
 	Xfor2(k, v, implicit_ref_map_){
 		if(v){
@@ -296,6 +201,28 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 		result_ = null;
 		return null;
 	}
+}
+
+CodeBuilder::FunFrame& CodeBuilder::push_ff(){
+	fun_frame_stack_.push(new_object_xmalloc<FunFrame>());
+	ff().var_frame_count = scope_stack_.size();
+	return ff();
+}
+	
+void CodeBuilder::pop_ff(){ 
+	delete_object_xfree<FunFrame>(fun_frame_stack_.top());
+	fun_frame_stack_.pop(); 
+}
+
+CodeBuilder::ClassFrame& CodeBuilder::push_cf(){
+	class_frame_stack_.push(new_object_xmalloc<ClassFrame>());
+	cf().class_info_num = result_->class_info_table_.size();
+	return cf();
+}
+	
+void CodeBuilder::pop_cf(){ 
+	delete_object_xfree<ClassFrame>(class_frame_stack_.top());
+	class_frame_stack_.pop(); 
 }
 
 inst_address_t CodeBuilder::calc_address(const inst_t* pc, inst_address_t address){
@@ -380,9 +307,9 @@ int_t CodeBuilder::append_value(const AnyPtr& v){
 }
 
 int_t CodeBuilder::lookup_instance_variable(const IDPtr& key, bool must){
-	if(!class_frames_.empty()){
+	if(!class_frame_stack_.empty()){
 		int ret = 0;
-		ClassFrame& cf = class_frames_.top();
+		ClassFrame& cf = this->cf();
 		for(size_t i = 0, last = cf.entries.size(); i<last; ++i){
 			if(raweq(cf.entries[i].name, key)){
 				return ret;
@@ -420,9 +347,10 @@ void CodeBuilder::put_instance_variable_code(int_t result, const IDPtr& var){
 }
 
 int_t CodeBuilder::reserve_label(){
-	ff().labels.resize(fun_frames_.top().labels.size()+1);
-	ff().labels[ff().labels.size()-1].pos = -1;
-	return ff().labels.size()-1;
+	FunFrame& ff = this->ff();
+	ff.labels.resize(ff.labels.size()+1);
+	ff.labels[ff.labels.size()-1].pos = -1;
+	return ff.labels.size()-1;
 }
 
 void CodeBuilder::set_label(int_t labelno){
@@ -452,7 +380,7 @@ void CodeBuilder::process_labels(){
 }
 
 void CodeBuilder::break_off(int_t n){
-	for(uint_t scope_count = var_frames_.size(); scope_count!=(uint_t)n; scope_count--){
+	for(uint_t scope_count = scope_stack_.size(); scope_count!=(uint_t)n; scope_count--){
 		for(uint_t k = 0; k<ff().finallies.size(); ++k){
 			if((uint_t)ff().finallies[k].frame_count==scope_count){
 				int_t label = reserve_label();
@@ -463,8 +391,8 @@ void CodeBuilder::break_off(int_t n){
 			}
 		}
 
-		VarFrame& vf = var_frames_[var_frames_.size()-scope_count];
-		if(vf.real_entry_num!=0 && vf.kind!=VarFrame::TOPLEVEL && vf.kind==VarFrame::FRAME){
+		Scope& scope = *scope_stack_[scope_stack_.size()-scope_count];
+		if(scope_exist(&scope)){
 			put_inst(InstScopeEnd());
 		}
 	}
@@ -479,67 +407,70 @@ bool CodeBuilder::is_comp_bin(const ExprPtr& e){
 
 void CodeBuilder::scope_chain(int_t var_frame_size){
 	for(int_t i=0; i<var_frame_size; ++i){
-		var_frames_[i].scope_chain = true;
+		scope_stack_[i]->scope_chain = true;
 	}
 }
 
-CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool traceless, int_t number){
-	LVarInfo ret = {0, 0, 0, 0, 0, false, false};
-	for(size_t i = 0, last = var_frames_.size(); i<last; ++i){
-		VarFrame& vf = var_frames_[i];
+CodeBuilder::VariableInfo CodeBuilder::var_find(const IDPtr& key, bool force){
+	VariableInfo ret;
+	ret.depth = 0;
+	ret.member_number = 0;
+	ret.register_number = 0;
+	ret.found = false;
+	ret.out_of_fun= false;
+	ret.toplevel= false;
+	ret.constant= false;
+	ret.entry = 0;
 
-		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
-			VarFrame::Entry& entry = vf.entries[vf.entries.size()-1-j];
+	for(size_t i = 0, last = scope_stack_.size(); i<last; ++i){
+		Scope& scope = *scope_stack_[i];
 
-			if(raweq(entry.name, key) && (number<0 || entry.number<0 || number==entry.number)){
-				bool out_of_fun = (uint_t)vf.fun_frames_size!=fun_frames_.size();
+		for(size_t j = 0, jlast = scope.entries.size(); j<jlast; ++j){
+			Scope::Entry& entry = scope.entries[scope.entries.size()-1-j];
 
-				if(out_of_fun || entry.initialized || define){
-					ret.out_of_fun = out_of_fun;
-					ret.var_frame = var_frames_.size()-1-i;
-					ret.entry = vf.entries.size()-1-j;
+			if(raweq(entry.name, key)){
+				if(ret.out_of_fun || entry.visible || force){
 
-					if(!traceless){
-						if(define){ entry.initialized = true; }
-						if(vf.kind!=VarFrame::TOPLEVEL){
-							scope_chain(i);
-						}
-					}
+					ret.member_number = scope.entries.size()-1-j;
 
-					for(size_t k = 0, klast = vf.entries.size()-1-j; k<klast; ++k){
-						//VarFrame::Entry& entry = vf.entries[k];
-						ret.pos++;
-					}
-
-					if(!define && ret.depth==0 && vf.kind==VarFrame::CLASS){
+					if(ret.depth==0 && scope.kind==Scope::CLASS){
 						ret.out_of_fun = true;
 					}
 
-					ret.vpos--;
+					ret.constant = entry.constant;
 
-					if(vf.kind==VarFrame::TOPLEVEL){
+					if(scope.kind==Scope::TOPLEVEL){
 						ret.toplevel = true;
-						ret.vpos = ret.entry;
-						ret.pos = -1;
+					}
+					else{
+						ret.found = true;
+					}
+
+					if(ret.found && !ret.out_of_fun){
+						ret.register_number = scope.register_base - scope.fun_scope->register_max - j - 1;
+					}
+
+					ret.entry = &entry;
+
+					if(ret.out_of_fun && !ret.toplevel){
+						scope_chain(i);
 					}
 
 					return ret;
 				}
 			}
-
-			if(vf.kind!=VarFrame::TOPLEVEL){
-				ret.vpos--;
-			}
 		}
 
-		if(vf.kind==VarFrame::FRAME){
-			for(size_t k = 0, klast = vf.entries.size(); k<klast; ++k){
-				//VarFrame::Entry& entry = vf.entries[k];
+		if(scope.kind==Scope::FRAME){
+			if(scope_exist(&scope)){
 				ret.depth++;
-				break;
 			}
 		}
-		else if(vf.kind==VarFrame::TOPLEVEL){
+		else if(scope.kind==Scope::FUN){
+			ret.out_of_fun = true;
+			ret.depth++;
+		}
+		else if(scope.kind==Scope::TOPLEVEL){
 
 		}
 		else{
@@ -547,30 +478,104 @@ CodeBuilder::LVarInfo CodeBuilder::var_find(const IDPtr& key, bool define, bool 
 		}
 	}
 
-	ret.pos = -1;
 	return ret;
 }
 
-void CodeBuilder::var_begin(int_t kind){
-	var_frames_.push();
-	vf().entries.clear();
-	vf().scope_info_num = 0;
-	vf().kind = kind;
-	vf().fun_frames_size = fun_frames_.size();
-	vf().scope_chain = false;
-}
+void CodeBuilder::var_visible(const IDPtr& key, bool visible){
+	for(size_t i = 0, last = scope_stack_.size(); i<last; ++i){
+		Scope& vf = *scope_stack_[i];
 
-void CodeBuilder::var_define_stmts(const ExprPtr& stmts){
-	Xfor(v, stmts){
-		var_define_stmt(v);
+		for(size_t j = 0, jlast = vf.entries.size(); j<jlast; ++j){
+			Scope::Entry& entry = vf.entries[vf.entries.size()-1-j];
+
+			if(raweq(entry.name, key)){
+				entry.visible = visible;
+				return;
+			}
+		}
 	}
 }
 
-void CodeBuilder::var_define_stmt(const AnyPtr& stmt){
+void CodeBuilder::var_begin(int_t kind){
+	Scope* p = new(object_xmalloc<Scope>()) Scope();
+	p->kind = kind;
+	p->scope_info_num = -1;
+	p->scope_chain = false;
+	p->scope_chain_have_possibilities = true;
+	p->children_pos = 0;
+	p->register_base = 0;
+
+	if(!scope_stack_.empty()){
+		scope_stack_[0]->children.push_back(p);
+	}
+
+	scope_stack_.push(p);
+}
+
+void CodeBuilder::var_end(){
+	root_ = scope_stack_[0];
+	scope_stack_.downsize(1);
+}
+
+void CodeBuilder::scope_begin(){
+	if(scope_stack_.empty()){
+		scope_stack_.push(root_);
+	}
+	else{
+		Scope* p = scope_stack_[0];
+		scope_stack_.push(p->children[p->children_pos++]);
+	}
+	
+	Scope& scope = current_scope();
+	if(scope.kind!=Scope::FRAME || scope_exist(&scope)){
+		int_t scope_info_num = result_->scope_info_table_.size();
+		current_scope().scope_info_num = scope_info_num;
+
+		ScopeInfo info;
+		info.pc = code_size();
+		info.variable_offset = (u16) -(scope.register_base - scope.register_max - (int_t)scope.entries.size());
+		info.variable_size = current_scope().entries.size();
+		info.variable_identifier_offset = result_->identifier_table_.size();
+		for(uint_t i=0; i<scope.entries.size(); ++i){
+			Scope::Entry& entry = scope.entries[i];
+			result_->identifier_table_.push_back(entry.name);
+		}
+
+		if(scope_exist(&current_scope())){
+			put_inst(InstScopeBegin(scope_info_num));
+		}
+
+		result_->scope_info_table_.push_back(info);
+	}
+}
+
+void CodeBuilder::scope_end(){	
+	if(scope_exist(&current_scope())){
+		put_inst(InstScopeEnd());
+	}
+		
+	if(current_scope().scope_chain && current_scope().scope_info_num>=0){
+		result_->scope_info_table_[current_scope().scope_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
+	}
+
+	scope_stack_.pop();
+}
+	
+void CodeBuilder::var_assign(const IDPtr& name){
+
+}
+
+void CodeBuilder::var_define_stmts(const ExprPtr& stmts, bool visible){
+	XTAL_FOR_EXPR(v, stmts){
+		var_define_stmt(v, visible);
+	}
+}
+
+void CodeBuilder::var_define_stmt(const AnyPtr& stmt, bool visible){
 	if(ExprPtr v = ptr_cast<Expr>(stmt)){
 		if(v->itag()==EXPR_DEFINE){
 			if(v->bin_lhs()->itag()==EXPR_LVAR){
-				var_define(v->bin_lhs()->lvar_name(), v->bin_rhs());
+				var_define(v->bin_lhs()->lvar_name(), visible);
 
 				if(v->bin_rhs()->itag()==EXPR_CLASS){
 					v->bin_rhs()->set_class_name(v->bin_lhs()->lvar_name());
@@ -581,86 +586,52 @@ void CodeBuilder::var_define_stmt(const AnyPtr& stmt){
 			}
 		}
 		else if(v->itag()==EXPR_MDEFINE){
-			Xfor(v1, v->mdefine_lhs_exprs()){
+			XTAL_FOR_EXPR(v1, v->mdefine_lhs_exprs()){
 				ExprPtr vv = ep(v1);
 				if(vv->itag()==EXPR_LVAR){
-					var_define(vv->lvar_name());
+					var_define(vv->lvar_name(), visible);
 				}			
 			}
 		}
 	}
 }
 
-void CodeBuilder::var_define(const IDPtr& name, const ExprPtr& expr, int_t accessibility, bool define, bool constant, bool assign, int_t number){
-	if(number<0){
-		for(size_t j = 0, jlast = vf().entries.size(); j<jlast; ++j){
-			if(raweq(vf().entries[vf().entries.size()-1-j].name, name)){
+void CodeBuilder::var_define(const IDPtr& name, bool visible){
+	for(size_t j = 0, jlast = current_scope().entries.size(); j<jlast; ++j){
+		if(raweq(current_scope().entries[current_scope().entries.size()-1-j].name, name)){
+			error(Xt("XCE1026")->call(Named(Xid(name), name)));
+			return;
+		}
+	}
+
+	Scope::Entry entry;
+	entry.name = name;
+	entry.refered = false;
+	entry.assigned = false;
+	entry.constant = false;
+	entry.accessibility = 0;
+	entry.visible = visible;
+	current_scope().entries.push_back(entry);
+}
+
+void CodeBuilder::var_define_class_member(const IDPtr& name, int_t accessibility, bool has_secondary){
+	if(!has_secondary){
+		for(size_t j = 0, jlast = current_scope().entries.size(); j<jlast; ++j){
+			if(raweq(current_scope().entries[current_scope().entries.size()-1-j].name, name)){
 				error(Xt("XCE1026")->call(Named(Xid(name), name)));
 				return;
 			}
 		}
 	}
 
-	VarFrame::Entry entry;
+	Scope::Entry entry;
 	entry.name = name;
-	entry.expr = expr;
-	entry.value = undefined;
-	entry.constant = constant;
-	entry.initialized = define;
+	entry.refered = false;
+	entry.assigned = false;
+	entry.constant = true;
 	entry.accessibility = accessibility;
-	entry.assigned = assign;
-	entry.referenced = false;
-	entry.number = number;
-	vf().entries.push_back(entry);
-}
-
-void CodeBuilder::var_end(){
-	var_frames_.downsize(1);
-}
-
-void CodeBuilder::scope_begin(){
-	int_t scope_info_num = result_->scope_info_table_.size();
-
-	ScopeInfo info;
-	info.pc = code_size();
-
-	ff().variable_count += vf().entries.size();
-	if(ff().max_variable_count<ff().variable_count){
-		ff().max_variable_count = ff().variable_count;
-	}
-
-	int_t real_entry_num = vf().entries.size();
-
-	vf().real_entry_num = real_entry_num;
-	vf().scope_info_num = scope_info_num;
-
-	info.variable_size = real_entry_num;
-	info.variable_identifier_offset = result_->identifier_table_.size();
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		VarFrame::Entry& entry = vf().entries[i];
-		result_->identifier_table_.push_back(entry.name);
-	}
-
-	if(vf().real_entry_num!=0 && vf().kind!=VarFrame::TOPLEVEL){
-		put_inst(InstScopeBegin(scope_info_num));
-	}
-
-	ff().variable_count += vf().real_entry_num;
-
-	result_->scope_info_table_.push_back(info);
-}
-
-void CodeBuilder::scope_end(){
-	
-	ff().variable_count -= vf().real_entry_num;
-
-	if(vf().real_entry_num!=0 && vf().kind!=VarFrame::TOPLEVEL){
-		put_inst(InstScopeEnd());
-	}
-		
-	if(vf().scope_chain){
-		result_->scope_info_table_[vf().scope_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
-	}
+	entry.visible = has_secondary;
+	current_scope().entries.push_back(entry);
 }
 
 int_t CodeBuilder::code_size(){
@@ -714,30 +685,41 @@ void CodeBuilder::compile_comp_bin_assert(const AnyPtr& f, const ExprPtr& e, con
 	if(mes){ compile_expr(mes, stack_top, mest); }
 	else{ put_inst(InstLoadConstant(mest, register_value(empty_string))); }
 
-	put_inst(InstCall(target, 1, vart, 0, vart+1, 4, 0, 0));
+	put_inst(InstCallEx(target, 1, vart, 0, vart+1, 4, 0, 0));
 	put_inst(InstAssert(target));
 }	
 
 void CodeBuilder::put_bin(int_t result, const ExprPtr& e, int_t a, int_t b, int_t stack_top){
 	int_t tag = e->itag();
-	if(tag>=EXPR_ADD && tag<=EXPR_MOD){	
-		put_inst(InstArith(result, ARITH_ADD + tag - EXPR_ADD, a, b, stack_top));
-		return;
-	}
+	switch(tag){
+		XTAL_NODEFAULT;
+		XTAL_CASE(EXPR_ADD){ put_inst(InstAdd(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_SUB){ put_inst(InstSub(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_CAT){ put_inst(InstCat(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_MUL){ put_inst(InstMul(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_DIV){ put_inst(InstDiv(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_MOD){ put_inst(InstMod(result, a, b, stack_top, 0)); }
 
-	if(tag>=EXPR_ADD_ASSIGN && tag<=EXPR_MOD_ASSIGN){	
-		put_inst(InstArith(result, ARITH_ADD_ASSIGN + tag - EXPR_ADD_ASSIGN, a, b, stack_top));
-		return;
-	}
+		XTAL_CASE(EXPR_ADD_ASSIGN){ put_inst(InstAdd(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_SUB_ASSIGN){ put_inst(InstSub(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_CAT_ASSIGN){ put_inst(InstCat(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_MUL_ASSIGN){ put_inst(InstMul(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_DIV_ASSIGN){ put_inst(InstDiv(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_MOD_ASSIGN){ put_inst(InstMod(result, a, b, stack_top, 1)); }
 
-	if(tag>=EXPR_AND && tag<=EXPR_USHR){	
-		put_inst(InstBitwise(result, BITWISE_AND + tag - EXPR_AND, a, b, stack_top));
-		return;
-	}
+		XTAL_CASE(EXPR_AND){ put_inst(InstAnd(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_OR){ put_inst(InstOr(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_XOR){ put_inst(InstXor(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_SHL){ put_inst(InstShl(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_SHR){ put_inst(InstShr(result, a, b, stack_top, 0)); }
+		XTAL_CASE(EXPR_USHR){ put_inst(InstUshr(result, a, b, stack_top, 0)); }
 
-	if(tag>=EXPR_AND_ASSIGN && tag<=EXPR_USHR_ASSIGN){	
-		put_inst(InstBitwise(result, BITWISE_AND_ASSIGN + tag - EXPR_AND_ASSIGN, a, b, stack_top));
-		return;
+		XTAL_CASE(EXPR_AND_ASSIGN){ put_inst(InstAnd(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_OR_ASSIGN){ put_inst(InstOr(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_XOR_ASSIGN){ put_inst(InstXor(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_SHL_ASSIGN){ put_inst(InstShl(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_SHR_ASSIGN){ put_inst(InstShr(result, a, b, stack_top, 1)); }
+		XTAL_CASE(EXPR_USHR_ASSIGN){ put_inst(InstUshr(result, a, b, stack_top, 1)); }
 	}
 }
 
@@ -771,7 +753,7 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e, int_t stack_top){
 		if(lhs->property_ns()){
 			sec = compile_expr(lhs->property_ns(), stack_top);
 		}
-
+	
 		int_t value = compile_expr(rhs, stack_top);
 		int_t target = stack_top++;
 
@@ -803,17 +785,15 @@ void CodeBuilder::compile_op_assign(const ExprPtr& e, int_t stack_top){
 
 		put_inst(InstAt(target, var, key, stack_top));
 		put_bin(value, e, target, value, stack_top);
-		//put_inst(InstArith(value, ARITH_ADD_ASSIGN + e->itag() - EXPR_ADD_ASSIGN, target, value, stack_top));
 		put_inst(InstSetAt(var, key, value, stack_top));
 	}
-
 }
 
 void CodeBuilder::put_incdec(const ExprPtr& e, int_t ret, int_t target, int_t stack_top){
 	if(e->itag()==EXPR_INC)
-		put_inst(InstUna(ret, UNA_INC, target, stack_top));
+		put_inst(InstInc(ret, target, stack_top));
 	else
-		put_inst(InstUna(ret, UNA_DEC, target, stack_top));
+		put_inst(InstDec(ret, target, stack_top));
 }
 
 void CodeBuilder::compile_incdec(const ExprPtr& e, int_t stack_top){
@@ -928,134 +908,19 @@ void CodeBuilder::compile_loop_control_statement(const ExprPtr& e){
 }
 
 void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result){
-	{
-		fun_frames_.push();	
-		ff().labels.clear();
-		ff().loops.clear();
-		ff().finallies.clear();
-		ff().var_frame_count = var_frames_.size();
-		ff().stack_count = 0;
-		ff().max_stack_count = 0;
-		ff().variable_count = 0;
-		ff().max_variable_count = 0;
-		ff().extendable_param = 0;
-	}
-
-	// インスタンス変数を暗黙的初期化するメソッドを定義する
-
-	{
-		int_t method_kind = e->class_kind()==KIND_SINGLETON ? KIND_FUN : KIND_METHOD;
-		ExprPtr stmts = xnew<Expr>();
-		MapPtr ivar_map = xnew<Map>();
-		bool auto_initialize = false;
-		Xfor_cast(const ExprPtr& v, e->class_stmts()->clone()){
-			if(v->itag()==EXPR_CDEFINE_IVAR){
-				if(v->cdefine_ivar_term()){
-					eb_.push(v->cdefine_ivar_name());
-					eb_.splice(EXPR_IVAR, 1);
-					eb_.push(v->cdefine_ivar_term());
-					eb_.splice(EXPR_ASSIGN, 2);
-					stmts->push_back(eb_.pop());
-					auto_initialize = true;
-				}
-
-				// 可触性が付いているので、アクセッサを定義する
-				if(v->cdefine_ivar_accessibility()){ 
-					IDPtr var = v->cdefine_ivar_name();
-					eb_.push(v->cdefine_ivar_accessibility());
-					eb_.push(var);
-					eb_.push(null);
-					
-					eb_.push(method_kind);
-					eb_.push(null);
-					eb_.push(null);
-					eb_.push(var);
-					eb_.splice(EXPR_IVAR, 1);
-					eb_.splice(0, 1);
-					eb_.splice(EXPR_RETURN, 1);
-					eb_.splice(EXPR_FUN, 4);
-
-					eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-
-					e->class_stmts()->push_back(eb_.pop());
-
-					IDPtr var2 = Xid(set_)->cat(var);
-					eb_.push(v->cdefine_ivar_accessibility());
-					eb_.push(var2);
-					eb_.push(null);
-
-					eb_.push(method_kind);
-					eb_.push(Xid(value));
-					eb_.splice(EXPR_LVAR, 1);
-					eb_.push(null);
-					eb_.splice(0, 2);
-					eb_.splice(0, 1);
-					eb_.push(null);
-					eb_.push(var);
-					eb_.splice(EXPR_IVAR, 1);
-					eb_.push(Xid(value));
-					eb_.splice(EXPR_LVAR, 1);
-					eb_.splice(EXPR_ASSIGN, 2);
-					eb_.splice(EXPR_FUN, 4);
-
-					eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-
-					e->class_stmts()->push_back(eb_.pop());
-				}
-			}
-		}
-
-		eb_.push(KIND_PUBLIC);
-		eb_.push(Xid(auto_initialize));
-		eb_.push(null);
-
-		if(auto_initialize){
-			eb_.push(method_kind);
-			eb_.push(null);
-			eb_.push(null);
-			eb_.push(stmts);
-			eb_.splice(EXPR_SCOPE, 1);
-			eb_.splice(EXPR_FUN, 4);
-		}
-		else{
-			eb_.splice(EXPR_NULL, 0);
-		}
-
-		eb_.splice(EXPR_CDEFINE_MEMBER, 4);
-
-		e->class_stmts()->push_front(eb_.pop());
-	}
+	push_ff();
 
 	// 継承
 	int_t mixins = 0;
 	int_t mixin_base = stack_top;
-	Xfor(v, e->class_mixins()){
+	XTAL_FOR_EXPR(v, e->class_mixins()){
 		compile_expr(v, stack_top+mixins+1, stack_top+mixins);
 		mixins++;
 	}
 
-	// 変数フレームを作成
-	var_begin(VarFrame::CLASS);
+	scope_begin();
 
-	// 変数を定義
-	{
-		int_t number = 0;
-		Xfor(v, e->class_stmts()){
-			ExprPtr v1 = ep(v);
-			if(v1->itag()==EXPR_CDEFINE_MEMBER){
-				if(v1->cdefine_member_ns()){
-					var_define(v1->cdefine_member_name(), nul<Expr>(), v1->cdefine_member_accessibility()->to_i(), false, true, false, number++);
-				}
-				else{
-					var_define(v1->cdefine_member_name(), nul<Expr>(), v1->cdefine_member_accessibility()->to_i(), false, true, false);
-				}
-			}
-		}
-	}
-
-	class_frames_.push();
-	cf().entries.clear();
-	cf().class_info_num = result_->class_info_table_.size();
+	push_cf();
 
 	int_t ivar_num = 0;
 	int_t instance_variable_identifier_offset = result_->identifier_table_.size();
@@ -1077,15 +942,16 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 	info.pc = code_size();
 	info.kind = e->class_kind();
 	info.mixins = mixins;
-	info.variable_size = vf().entries.size();
+	info.variable_size = current_scope().entries.size();
 	info.instance_variable_size = ivar_num;
 	info.instance_variable_identifier_offset = instance_variable_identifier_offset;
 	info.name_number = register_identifier(e->class_name());
 	
+	info.variable_offset = 0;
 	info.variable_identifier_offset = result_->identifier_table_.size();
 
-	//for(uint_t i=0; i<vf().entries.size(); ++i){
-	//	result_->identifier_table_.push_back(intern(Xid(_)->op_cat(vf().entries[i].name)));
+	//for(uint_t i=0; i<current_scope().entries.size(); ++i){
+	//	result_->identifier_table_.push_back(intern(Xid(_)->op_cat(current_scope().entries[i].name)));
 	//}
 
 	put_inst(InstClassBegin(class_info_num, mixin_base));
@@ -1093,7 +959,7 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 
 	{
 		int_t number = 0;
-		Xfor(v, e->class_stmts()){
+		XTAL_FOR_EXPR(v, e->class_stmts()){
 			ExprPtr v1 = ep(v);
 			if(v1->itag()==EXPR_CDEFINE_MEMBER){				
 				compile_expr(v1->cdefine_member_term(), stack_top+1, stack_top);
@@ -1101,13 +967,11 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 				int_t inumber = 0;
 				if(v1->cdefine_member_ns()){
 					compile_expr(v1->cdefine_member_ns(), stack_top+2, stack_top+1);
-					LVarInfo info = var_find(v1->cdefine_member_name(), true, false, number++);
-					inumber = info.pos;
+					inumber = number++;
 				}
 				else{
 					put_inst(InstLoadValue(stack_top+1, LOAD_UNDEFINED));
-					LVarInfo info = var_find(v1->cdefine_member_name(), true, false);
-					inumber = info.pos;
+					inumber = number++;
 				}
 
 				put_inst(InstDefineClassMember(inumber, 
@@ -1117,16 +981,15 @@ void CodeBuilder::compile_class(const ExprPtr& e, int_t stack_top, int_t result)
 		}
 	}
 
-	if(var_frames_.top().scope_chain){
+	if(scope_stack_.top()->scope_chain){
 		result_->class_info_table_[class_info_num].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 	}
 
 	put_inst(InstClassEnd(result));
-	class_frames_.pop();
 
-	var_end();
-
-	fun_frames_.pop();
+	pop_cf();
+	scope_end();
+	pop_ff();
 }
 
 int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
@@ -1208,34 +1071,7 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 	}
 
 	// 関数フレームを作成する
-	fun_frames_.push();	
-	ff().labels.clear();
-	ff().loops.clear();
-	ff().finallies.clear();
-	ff().var_frame_count = var_frames_.size();
-	ff().stack_count = 0;
-	ff().max_stack_count = 0;
-	ff().variable_count = 0;
-	ff().max_variable_count = 0;
-	ff().extendable_param = e->fun_extendable_param();
-
-	// 変数フレームを作成して、引数を登録する
-	var_begin(VarFrame::FUN);
-	Xfor_cast(const ExprPtr& v1, e->fun_params()){
-		if(const ExprPtr& v = ep(v1->at(0))){
-			if(v->itag()==EXPR_LVAR){
-				var_define(v->lvar_name());
-			}
-			else if(v->itag()==EXPR_IVAR){
-				var_define(v->ivar_name());
-			}
-		}
-	}
-
-	// 可変長引数があるか？
-	if(e->fun_extendable_param()){
-		var_define(e->fun_extendable_param());
-	}
+	push_ff();
 
 	// 関数コアを作成
 	FunInfo fun;
@@ -1246,12 +1082,16 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 	fun.name_number = register_identifier(e->fun_name());
 	fun.flags = e->fun_extendable_param() ? FunInfo::FLAG_EXTENDABLE_PARAM : 0;
 
+	scope_begin();
+
+	fun.max_variable = current_scope().register_max;
+
 	// 引数の名前を識別子テーブルに順番に乗せる
-	fun.variable_size = vf().entries.size();
+	fun.variable_offset = -(current_scope().register_base - current_scope().register_max - (int_t)current_scope().entries.size());
+	fun.variable_size = current_scope().entries.size();
 	fun.variable_identifier_offset = result_->identifier_table_.size();
-	for(uint_t i=0; i<vf().entries.size(); ++i){
-		vf().entries[i].initialized = true;
-		result_->identifier_table_.push_back(vf().entries[i].name);
+	for(uint_t i=0; i<current_scope().entries.size(); ++i){
+		result_->identifier_table_.push_back(current_scope().entries[i].name);
 	}
 
 	int_t fun_info_table_number = result_->xfun_info_table_.size();
@@ -1261,11 +1101,6 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 	set_jump(InstMakeFun::OFFSET_address, fun_end_label);
 	put_inst(InstMakeFun(result, fun_info_table_number, 0));
 
-	ff().variable_count += vf().entries.size();
-	if(ff().max_variable_count<ff().variable_count){
-		ff().max_variable_count = ff().variable_count;
-	}
-
 	// デフォルト値を持つ引数を処理する
 	{
 		int_t i = 0;
@@ -1273,18 +1108,20 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 			if(const ExprPtr& v = ptr_cast<Expr>(v1->at(1))){
 				int_t label_true = reserve_label();
 				int_t label_false = reserve_label();
+
+				VariableInfo var = var_find(current_scope().entries[i].name, true);
 				
 				set_jump(InstIfUndefined::OFFSET_address_true, label_true);
 				set_jump(InstIfUndefined::OFFSET_address_false, label_false);
-				put_inst(InstIfUndefined(-(maxv-1-i)-1, 0, 0));
+				put_inst(InstIfUndefined(var.register_number, 0, 0));
 				set_label(label_true);
 
-				compile_expr(v, stack_top+1, -(maxv-1-i)-1);
+				compile_expr(v, stack_top+1, var.register_number);
 								
 				set_label(label_false);
 			}
 			else{
-				var_find(vf().entries[i].name, true);
+				var_visible(current_scope().entries[i].name, true);
 			}	
 
 			++i;
@@ -1295,48 +1132,35 @@ int_t CodeBuilder::compile_fun(const ExprPtr& e, int_t stack_top, int_t result){
 	Xfor_cast(const ExprPtr& v1, e->fun_params()){
 		const ExprPtr& v = ep(v1->at(0));
 		if(v->itag()==EXPR_IVAR){
-			eb_.push(v);
-			eb_.push(v->ivar_name());
-			eb_.splice(EXPR_LVAR, 1);
-			eb_.splice(EXPR_ASSIGN, 2);
-			compile_stmt(eb_.pop());
+			eb_->tree_push_back(v);
+			eb_->tree_push_back(v->ivar_name());
+			eb_->tree_splice(EXPR_LVAR, 1);
+			eb_->tree_splice(EXPR_ASSIGN, 2);
+			compile_stmt(eb_->tree_pop_back());
 		}
-	}
-
-	if(e->fun_params()){
-		add_stack_count(e->fun_params()->size());
-		add_stack_count(-(int_t)e->fun_params()->size());
 	}
 
 	// 関数本体を処理する
 	compile_stmt(e->fun_body());
-
-	XTAL_ASSERT(ff().stack_count==0);
 	
 	break_off(ff().var_frame_count+1);
 
-	put_inst(InstReturn(0));
+	put_inst(InstReturn(0, 0));
 	set_label(fun_end_label);
 
 	process_labels();
 
-	if(vf().scope_chain){
+	if(current_scope().scope_chain){
 		result_->xfun_info_table_[fun_info_table_number].flags |= FunInfo::FLAG_SCOPE_CHAIN;
 	}
 
-	// 変数フレームをポップする
-	var_end();
-
-	result_->xfun_info_table_[fun_info_table_number].max_variable = ff().max_variable_count;
-
-	// 関数フレームをポップする
-	fun_frames_.downsize(1);
+	scope_end();
+	pop_ff();
 
 	return 1;
 }
 
 AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
-
 	if(!p){
 		return null;
 	}
@@ -1358,65 +1182,23 @@ AnyPtr CodeBuilder::do_expr(const AnyPtr& p){
 		}
 
 		XTAL_CASE(EXPR_LVAR){
-			LVarInfo info = var_find(e->lvar_name(), false, true);
+			/*
+			VariableInfo var = var_find(e->lvar_name());
+			if(var.is_register()){
+				
+			}
+
 			if(info.pos>=0){
 				if((var_frame(info).fun_frames_size==fun_frames_.size() || !entry(info).assigned)){
 					entry(info).referenced = true;
 					return entry(info).value;
 				}
 			}
+			*/
 		}
 	}
 
 	return undefined;
-}
-
-void CodeBuilder::check_lvar_assign(const ExprPtr& e){
-	if(e && e->itag()==EXPR_LVAR){
-		LVarInfo info = var_find(e->lvar_name(), true, true);
-		if(info.pos>=0){
-			entry(info).assigned = true;
-			entry(info).value = undefined;
-		}
-	}
-}
-
-// 代入演算子があるか調べる
-void CodeBuilder::check_lvar_assign_stmt(const AnyPtr& p){
-	if(ExprPtr e = ep(p)){
-		switch(e->itag()){
-		case EXPR_ASSIGN:
-		case EXPR_ADD_ASSIGN:
-		case EXPR_SUB_ASSIGN:
-		case EXPR_CAT_ASSIGN:
-		case EXPR_MUL_ASSIGN:
-		case EXPR_DIV_ASSIGN:
-		case EXPR_MOD_ASSIGN:
-		case EXPR_OR_ASSIGN:
-		case EXPR_AND_ASSIGN:
-		case EXPR_XOR_ASSIGN:
-		case EXPR_SHR_ASSIGN:
-		case EXPR_SHL_ASSIGN:
-		case EXPR_USHR_ASSIGN:
-			check_lvar_assign(e->bin_lhs());
-			break;
-
-		case EXPR_INC:
-		case EXPR_DEC:
-			check_lvar_assign(e->una_term());
-			break;
-
-		case EXPR_MASSIGN:
-			Xfor(v, e->massign_lhs_exprs()){
-				check_lvar_assign(ep(v));
-			}
-			break;
-		}
-
-		Xfor(v, e){
-			check_lvar_assign_stmt(v);
-		}
-	}
 }
 
 }

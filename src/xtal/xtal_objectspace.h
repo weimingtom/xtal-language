@@ -36,10 +36,6 @@ public:
 
 	void register_gc(RefCountingBase* p);
 
-	void register_gc_vm(VMachine* p);
-
-	void unregister_gc_vm(VMachine* p);
-
 	void make_cpp_class(CppClassSymbolData* key){
 		RefCountingBase*& ret = class_map_[key->key()];
 		ret = xnew<Class>(Class::cpp_class_t()).get();
@@ -84,10 +80,10 @@ public:
 	void shrink_to_fit();
 
 private:
-
-	void gc_signal(int_t flag);
 	
 	ConnectedPointer swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end);
+	ConnectedPointer swap_dead_objects2(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end, int_t miss, int_t hit);
+
 	void destroy_objects(ConnectedPointer it, ConnectedPointer current);
 	void free_objects(ConnectedPointer it, ConnectedPointer current);
 	void adjust_objects_list(ConnectedPointer it);
@@ -100,10 +96,6 @@ private:
 	RefCountingBase*** objects_list_begin_;
 	RefCountingBase*** objects_list_current_;
 	RefCountingBase*** objects_list_end_;
-
-	VMachine** gcvms_begin_;
-	VMachine** gcvms_current_;
-	VMachine** gcvms_end_;
 
 	uint_t objects_builtin_line_;
 	uint_t objects_count_;

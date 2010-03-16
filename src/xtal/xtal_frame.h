@@ -80,13 +80,7 @@ public:
 	* \brief i番目のメンバーをダイレクトに設定。
 	*/
 	void set_member_direct(int_t i, const AnyPtr& value){
-		if(orphan_){
-			members_.set_at(i, value);
-		}
-		else{
-			//members_.set_at(i, value);
-			members_.set_at_unref(i, value);
-		}
+		members_.set_at(i, value);
 	}
 
 	void resize_member_direct(int_t size){
@@ -94,18 +88,6 @@ public:
 	}
 
 	bool replace_member(const IDPtr& primary_key, const AnyPtr& value);
-
-private:
-
-	/**
-	* \brief i番目のメンバーを設定。
-	*/
-	void set_member_direct_unref(int_t i, const Any& value){
-		//members_.set_at(i, (AnyPtr&)value);
-		members_.set_at_unref(i, value);
-	}
-
-	void add_ref_count_members(int_t i);
 
 protected:
 
@@ -162,7 +144,7 @@ public:
 		}
 
 		bool nocache() const{
-			return (flag&FLAG_NOCACHE)==0;
+			return (flag&FLAG_NOCACHE)!=0;
 		}
 
 		friend void visit_members(Visitor& m, const Value&){}

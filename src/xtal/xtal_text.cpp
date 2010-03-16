@@ -238,7 +238,7 @@ void String::on_rawcall(const VMachinePtr& vm){
 						value = vm->arg(n);
 					}
 					else{
-						XTAL_SPRINTF(cbuf, LIMIT, "%d", n);
+						XTAL_SPRINTF(cbuf, LIMIT, XTAL_L("%d"), n);
 						value = vm->arg(xtal::intern(cbuf));
 					}
 					++n;

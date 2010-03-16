@@ -129,18 +129,26 @@ public:
 		value_.init_immediate_value(value1, value2);
 	}
 
+	ImmediateValue(int_t value1, void* value2){
+		value_.init_immediate_value(value1, value2);
+	}
+
 public:
 
 	int_t first() const{
 		return value_.immediate_first_value();
 	}
 
-	int_t second() const{
-		return value_.immediate_second_value();
+	int_t second_ivalue() const{
+		return value_.immediate_second_ivalue();
 	}
 
-	float_t secondf() const{
-		return value_.immediate_secondf_value();
+	float_t second_fvalue() const{
+		return value_.immediate_second_fvalue();
+	}
+
+	void* second_vpvalue() const{
+		return value_.immediate_second_vpvalue();
 	}
 
 public:

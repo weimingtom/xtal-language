@@ -232,9 +232,6 @@ void ObjectSpace::initialize(){
 	objects_list_begin_ = 0;
 	objects_list_current_ = 0;
 	objects_list_end_ = 0;
-	gcvms_begin_ = 0;
-	gcvms_current_ = 0;
-	gcvms_end_ = 0;
 	objects_count_ = 0;
 	objects_max_ = 0;
 	processed_line_ = 0;
@@ -335,9 +332,6 @@ void ObjectSpace::uninitialize(){
 		fit_simple_dynamic_pointer_array(&begin, &end, &current);
 	}
 
-	gcvms_current_ = gcvms_begin_;
-	fit_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_);
-
 	objects_list_current_ = objects_list_begin_;
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 }
@@ -363,7 +357,6 @@ void ObjectSpace::shrink_to_fit(){
 			fit_simple_dynamic_pointer_array(&begin, &end, &current);
 		}
 
-		fit_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_);
 		fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
 
 		objects_max_ = (objects_list_current_-objects_list_begin_)*OBJECTS_ALLOCATE_SIZE;
@@ -466,12 +459,6 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 	return *current;
 }
 
-void ObjectSpace::gc_signal(int_t flag){
-	for(VMachine** it = gcvms_begin_; it!=gcvms_current_; ++it){
-		(*it)->gc_signal(flag);
-	}
-}
-
 ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
 	if(first==last){
 		return end;
@@ -504,28 +491,53 @@ ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, Connecte
 	}while(cpre1.move());
 
 	return end;
+}
 
-	/*	
-	ConnectedPointer it = last - 1;
-	ConnectedPointer rend = first - 1;
+ConnectedPointer ObjectSpace::swap_dead_objects2(
+	ConnectedPointer first, ConnectedPointer last, ConnectedPointer end,
+	int_t miss, int_t hit
+	){
+	if(first==last){
+		return end;
+	}
 
-	for(; it!=rend; ){
-		RefCountingBase* p = *it;
+	ConnectedPointerReverseEnumerator cpre1(first+1, last);
+	ConnectedPointerReverseEnumerator cpre2(first+1, end);
 
+	RefCountingBase** endpp = cpre2.begin();
+	RefCountingBase** endppend = cpre2.end();
+
+	do for(RefCountingBase** pp=cpre1.begin(), **ppend=cpre1.end(); pp!=ppend; --pp){
+		RefCountingBase* p = *pp;
 		if(p->can_not_gc()==0){
-			--end;
+			hit++;
 
 			p->destroy();
 			p->object_free();
 
-			*it = *end;
+			if(endpp==endppend){
+				cpre2.move();
+				endpp = cpre2.begin();
+				endppend = cpre2.end();
+			}
+
+			--end;
+
+			*pp = *endpp;
+			--endpp;
+		}
+		else{
+			miss++;
+
+			if(miss>hit){
+				//printf("miss%d>hit%d\n", miss, hit);
+				break;
+			}
 		}
 
-		--it;
-	}
+	}while(cpre1.move());
 
 	return end;
-*/
 }
 
 void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer end){
@@ -564,24 +576,20 @@ void ObjectSpace::lw_gc(){
 
 	ConnectedPointer first, last, end;
 	
-	gc_signal(0);
-
 	uint_t N = 256;
 
 	first = ConnectedPointer(objects_count_<=N ? 0 : objects_count_-N, objects_list_begin_);
 	last = ConnectedPointer(objects_count_, objects_list_begin_);
 	end = ConnectedPointer(objects_count_, objects_list_begin_);
 
-	end = swap_dead_objects(first, last, end);
+	end = swap_dead_objects2(first, last, end, 0, 8);
 
 	first = ConnectedPointer(processed_line_, objects_list_begin_);
 	last = ConnectedPointer(processed_line_+N, objects_list_begin_);
 
 	if(first>end){ first = end; }
 	if(last>end){ last = end; }
-	end = swap_dead_objects(first, last, end);
-
-	gc_signal(1);
+	end = swap_dead_objects2(first, last, end, 0, 8);
 
 	adjust_objects_list(end);
 
@@ -600,9 +608,7 @@ void ObjectSpace::gc(){
 	ConnectedPointer last(objects_count_, objects_list_begin_);
 	ConnectedPointer end(objects_count_, objects_list_begin_);
 
-	gc_signal(0);
 	end = swap_dead_objects(first, last, end);
-	gc_signal(1);
 
 	adjust_objects_list(end);
 }
@@ -628,13 +634,14 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 }
 
 void ObjectSpace::full_gc(){
+	gc();
+	gc();
+
 	if(cycle_count_!=0){ return; }
 	{
 		vmachine_swap_temp();
 
 		ScopeCounter cc(&cycle_count_);
-
-		//std::sort(ConnectedPointer(0, objects_list_begin_), ConnectedPointer(objects_count_, objects_list_begin_));
 				
 		while(true){			
 			ConnectedPointer current(objects_count_, objects_list_begin_);
@@ -642,8 +649,6 @@ void ObjectSpace::full_gc(){
 			if(current==begin){
 				break;
 			}
-
-			gc_signal(0);
 
 			// 参照カウンタを減らす
 			// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
@@ -659,8 +664,6 @@ void ObjectSpace::full_gc(){
 
 			// 死者も、参照カウンタを元に戻す
 			add_ref_count_objects(alive, current, 1);
-
-			gc_signal(1);
 
 			if(!disable_finalizer_){
 				bool exists_have_finalizer = false;
@@ -682,8 +685,6 @@ void ObjectSpace::full_gc(){
 
 					// 死者が生き返ったかも知れないのでチェックする
 
-					gc_signal(0);
-
 					// 参照カウンタを減らす
 					add_ref_count_objects(alive, current, -1);
 					
@@ -694,8 +695,6 @@ void ObjectSpace::full_gc(){
 
 					// 死者も、参照カウンタを元に戻す
 					add_ref_count_objects(alive, current, 1);
-
-					gc_signal(1);
 				}
 			}
 
@@ -711,6 +710,8 @@ void ObjectSpace::full_gc(){
 			current = alive;
 		}
 
+		std::sort(ConnectedPointer(0, objects_list_begin_), ConnectedPointer(objects_count_, objects_list_begin_));
+
 		vmachine_swap_temp();
 	}
 }
@@ -723,22 +724,6 @@ void ObjectSpace::register_gc(RefCountingBase* p){
 
 	*ConnectedPointer(objects_count_, objects_list_begin_) = p;
 	objects_count_++;
-}
-
-void ObjectSpace::register_gc_vm(VMachine* p){
-	if(gcvms_current_==gcvms_end_){
-		expand_simple_dynamic_pointer_array(&gcvms_begin_, &gcvms_end_, &gcvms_current_, 64);
-	}
-	*gcvms_current_++ = p;
-}
-
-void ObjectSpace::unregister_gc_vm(VMachine* p){
-	for(VMachine** it = gcvms_begin_; it!=gcvms_current_; ++it){
-		if(*it==p){
-			std::swap(*it, *--gcvms_current_);
-			break;
-		}
-	}
 }
 
 }

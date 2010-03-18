@@ -580,11 +580,14 @@ public:
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
 	AnyPtr& local_variable(int_t pos){
-		return (AnyPtr&)variables_top_[pos];
+		return *(variables_top_ + pos);
 	}
 
 	void set_local_variable(int_t pos, const AnyPtr& value){
-		variables_top_[pos] = value;
+		AnyPtr& a = *(variables_top_ + pos);
+		if(type(a)>=TYPE_BASE){ rcpvalue(a)->dec_ref_count(); }
+		copy_any(a, value);
+		if(type(a)>=TYPE_BASE){ rcpvalue(a)->inc_ref_count(); }
 	}
 
 	int_t variables_top(){

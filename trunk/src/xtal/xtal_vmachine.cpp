@@ -91,12 +91,33 @@ bool Any::is(CppClassSymbolData* key) const{
 	return is(cpp_class(key));
 }
 
+SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
+	dec_ref_count_force(*this);
+	copy_any(*this, p);
+	inc_ref_count_force(*this);
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const NullPtr& p){
+	dec_ref_count_force(*this);
+	value_.init_primitive(TYPE_NULL);
+	return *this;
+}
+
+SmartPtr<Any>& SmartPtr<Any>::operator =(const UndefinedPtr& p){
+	dec_ref_count_force(*this);
+	value_.init_primitive(TYPE_UNDEFINED);
+	return *this;
+}
+
 ////////////////////////////////////////////////
 
 void VMachine::carry_over(Method* fun){
 	const inst_t* called_pc =  fun->source();
-	check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
-	check_breakpoint_hook(called_pc, BREAKPOINT4);
+	if(*hook_setting_bit_!=0){
+		check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
+		check_breakpoint_hook(called_pc, BREAKPOINT4);
+	}
 
 	FunFrame& f = ff();
 	
@@ -124,9 +145,11 @@ void VMachine::carry_over(Method* fun){
 }
 
 void VMachine::mv_carry_over(Method* fun){
-	const inst_t* called_pc =  fun->source();
-	check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
-	check_breakpoint_hook(called_pc, BREAKPOINT4);
+	const inst_t* called_pc =  fun->source();		
+	if(*hook_setting_bit_!=0){
+		check_breakpoint_hook(called_pc, BREAKPOINT_CALL);
+		check_breakpoint_hook(called_pc, BREAKPOINT4);
+	}
 
 	FunFrame& f = ff();
 	
@@ -1161,7 +1184,7 @@ zerodiv3:
 
 		// å^Ç™intÇ©floatÇ≈Ç†ÇÈÇ©ÅH
 		if(((atype|btype)&(~1U))==0){
-			int next;
+			int next = 0;
 			switch((atype<<1) | (btype)){
 				XTAL_NODEFAULT;
 				XTAL_CASE((0<<1) | 0){ next = ivalue(a)==ivalue(b) ? inst2.address_true : inst2.address_false; } 
@@ -1191,7 +1214,7 @@ zerodiv3:
 
 		// å^Ç™intÇ©floatÇ≈Ç†ÇÈÇ©ÅH
 		if(((atype|btype)&(~1U))==0){
-			int next;
+			int next = 0;
 			switch((atype<<1) | (btype)){
 				XTAL_NODEFAULT;
 				XTAL_CASE((0<<1) | 0){ next = ivalue(a)<ivalue(b) ? inst2.address_true : inst2.address_false; } 
@@ -1230,7 +1253,6 @@ zerodiv3:
 	XTAL_VM_CASE(InstIfIn){ // 41
 		XTAL_CHECK_YIELD;
 		typedef InstIf InstType2; 
-		InstType2& inst2 = *(InstType2*)(pc+inst.ISIZE);
 		iprimary = IDOp::id_op_in;
 		voidp = &inst;
 		goto send_comp;
@@ -1299,7 +1321,6 @@ zerodiv3:
 	}
 
 	XTAL_VM_CASE(InstFilelocalVariable){ // 3
-		FunFrame& f = ff();
 		set_local_variable(inst.result, code()->member_direct(inst.value_number));
 		XTAL_VM_CONTINUE(pc + inst.ISIZE); 
 	}

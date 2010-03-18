@@ -1161,7 +1161,6 @@ int_t CodeBuilder::compile_e(const ExprPtr& e, int_t stack_top, int_t result, in
 			int_t count = 0;
 			int_t base = stack_top;
 			XTAL_FOR_EXPR(v, e->return_exprs()){
-				int_t temp = stack_top+1;
 				compile_expr(v, stack_top+1, stack_top);
 				count++;
 				stack_top++;

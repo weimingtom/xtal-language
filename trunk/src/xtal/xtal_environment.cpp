@@ -907,13 +907,12 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 #ifndef XTAL_NO_PARSER
 
 struct GCer{
-	~GCer(){
-		full_gc();
-	}
+	GCer(int){}
+	~GCer(){ full_gc(); }
 };
 
 CodePtr compile_file(const StringPtr& file_name){
-	GCer gc;
+	GCer gc(0);
 
 	if(StreamPtr fs = open(file_name, XTAL_STRING("r"))){
 		CodeBuilder cb;
@@ -926,7 +925,7 @@ CodePtr compile_file(const StringPtr& file_name){
 }
 
 CodePtr compile(const AnyPtr& source){
-	GCer gc;
+	GCer gc(0);
 
 	CodeBuilder cb;
 	return cb.compile(xnew<xpeg::Executor>(source), empty_string);
@@ -992,7 +991,7 @@ AnyPtr require(const StringPtr& name){
 }
 
 CodePtr source(const char_t* src, int_t size){
-	GCer gc;
+	GCer gc(0);
 
 	CodeBuilder cb;
 	StreamPtr ms = xnew<PointerStream>(src, size*sizeof(char_t));

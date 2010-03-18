@@ -493,6 +493,9 @@ template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
 #define XTAL_PREBIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 0)
 #define XTAL_BIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 1)
 
+#define XTAL_BIND_DIRECT(Target) if(ClassPtr it = ptr_cast<Class>(Target))
+
+
 ////////////////////////////////////
 
 typedef AnyPtr (*bind_var_fun_t)();

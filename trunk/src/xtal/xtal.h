@@ -2,11 +2,6 @@
 * \brief src/xtal/xtal.h
 */
 
-#pragma once
-
-#ifndef XTAL_H_INCLUDE_GUARD
-#define XTAL_H_INCLUDE_GUARD
-
 #include "xtal_setting.h"
 
 #include <cstdio>
@@ -54,4 +49,3 @@
 #include "xtal_xpeg.h"
 #include "xtal_anyinline.h"
 
-#endif

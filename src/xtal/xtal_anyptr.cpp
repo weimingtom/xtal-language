@@ -57,13 +57,6 @@ void SmartPtr<Any>::unref(){
 	dec_ref_count_force(*this);
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const SmartPtr<Any>& p){
-	dec_ref_count_force(*this);
-	copy_any(*this, p);
-	inc_ref_count_force(*this);
-	return *this;
-}
-
 SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
 	:Any(p){
 	inc_ref_count_force(*this);
@@ -83,20 +76,8 @@ SmartPtr<Any>::SmartPtr(const NullPtr&){
 	value_.init_primitive(TYPE_NULL);
 }
 
-SmartPtr<Any>& SmartPtr<Any>::operator =(const NullPtr& p){
-	dec_ref_count_force(*this);
-	value_.init_primitive(TYPE_NULL);
-	return *this;
-}
-
 SmartPtr<Any>::SmartPtr(const UndefinedPtr&){
 	value_.init_primitive(TYPE_UNDEFINED);
-}
-
-SmartPtr<Any>& SmartPtr<Any>::operator =(const UndefinedPtr& p){
-	dec_ref_count_force(*this);
-	value_.init_primitive(TYPE_UNDEFINED);
-	return *this;
 }
 
 SmartPtr<Any>::SmartPtr(const IDPtr& p){

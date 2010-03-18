@@ -90,7 +90,6 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 	}
 
-	const ClassPtr& cls = v->get_class();
 	int_t num = register_value(v);
 	if(num>=0){
 		// 既に保存されているオブジェクトなので参照位置だけ保存する

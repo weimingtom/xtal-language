@@ -117,8 +117,6 @@ NativeMethod::~NativeMethod(){
 }
 
 const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr& value){
-	const param_types_holder_n& pth = *pth_;
-
 	// i‚Í1n‚Ü‚è
 	XTAL_ASSERT(i!=0);
 
@@ -126,7 +124,7 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 	XTAL_ASSERT(pth_->vm==0 && pth_->extendable==0);
 
 	// i‚ªˆø”‚Ì”‚æ‚è‘å‚«‚·‚¬‚é
-	XTAL_ASSERT(i<=pth.param_n);
+	XTAL_ASSERT(i<=pth_->param_n);
 
 	i--;
 
@@ -146,7 +144,6 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 }
 
 const NativeFunPtr& NativeMethod::add_param(const IDPtr& key, const AnyPtr& value){
-	const param_types_holder_n& pth = *pth_;
 	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
 	// ¡‚Ì‚Æ‚±‚ëA‰Â•Ï’·ˆø”‚ğ‚Æ‚éŠÖ”‚ÍAparam‚Íİ’è‚Å‚È‚¢§ŒÀ‚ ‚è
@@ -168,11 +165,10 @@ const NativeFunPtr& NativeMethod::add_param(const IDPtr& key, const AnyPtr& valu
 
 
 void NativeMethod::on_visit_members(Visitor& m){
-	const param_types_holder_n& pth = *pth_;
-
 	RefCountingBase::on_visit_members(m);
 	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
+	const param_types_holder_n& pth = *pth_;
 	for(uint_t i=0; i<pth.param_n; ++i){
 		m & params[i].name & params[i].value;
 	}
@@ -207,7 +203,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 
 		if(!pth.vm){
 			if(pth.extendable){
-				vm->set_local_variable(pth.param_n-1, vm->inner_make_arguments(params, pth.param_n-1));
+				vm->set_local_variable(param_n-1, vm->inner_make_arguments(params, param_n-1));
 			}
 			else{
 				if(vm->ordered_arg_count()!=pth.param_n){
@@ -215,7 +211,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 				}
 			}
 
-			for(int_t i=0; i<pth.param_n; ++i){
+			for(int_t i=0; i<param_n; ++i){
 				fp.args[i+1] = (Any&)vm->arg_unchecked(i);
 			}
 			num = pth.param_n+1;

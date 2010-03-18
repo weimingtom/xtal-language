@@ -1,7 +1,9 @@
 
 CC = g++
-OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -fno-strict-aliasing -Wall -DXTAL_USE_PTHREAD_TLS
-#OPT = -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS
+OPT = -O2 -DNDEBUG -fno-rtti -fno-exceptions -Wall -DXTAL_USE_PTHREAD_TLS -Wstrict-aliasing=1
+
+# -fno-strict-aliasing
+
 LOPT = -lpthread -lstdc++
 
 .SUFFIXES: .cpp .o 
@@ -14,11 +16,10 @@ SRC = $(shell ls $(SRCDIR)/xtal_*.cpp)
 OBJ = $(patsubst $(SRCDIR)/%.cpp,%.o,$(SRC))
 HED = $(shell ls $(SRCDIR)/xtal_*.h)
 
+all: libxtal ix xtal
+
 %.o: $(SRCDIR)/%.cpp
 	$(CC) -o $@ -c $< $(OPT)
-
-all: libxtal ix xtal
-	
 
 depend:
 	g++ -MM -MG $(SRC) >makefile.depend -DXTAL_NO_THREAD
@@ -45,7 +46,7 @@ $(BINDIR)/ix.exe: $(LIBDIR)/libxtal.a ix.cpp
 	strip --strip-all $(BINDIR)/ix.exe
 
 ix: $(BINDIR)/ix.exe
-	
+
 
 $(BINDIR)/test.exe: $(LIBDIR)/libxtal.a test.cpp
 	$(CC) -o $(BINDIR)/test.exe ./test.cpp $(LIBDIR)/libxtal.a $(OPT) $(LOPT) 
@@ -57,7 +58,7 @@ test: $(BINDIR)/test.exe
 	
 
 clean:
-	rm *.o *.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/bench.exe $(BINDIR)/all_src.exe $(SRCDIR)/xtal.h.gch
+	rm *.o $(LIBDIR)/libxtal.a $(BINDIR)/xtal.exe $(BINDIR)/ix.exe $(BINDIR)/test.exe $(BINDIR)/prof.exe $(BINDIR)/bench.exe $(BINDIR)/all_src.exe $(SRCDIR)/xtal.h.gch
 
 
 $(BINDIR)/bench.exe: $(LIBDIR)/libxtal.a bench.cpp

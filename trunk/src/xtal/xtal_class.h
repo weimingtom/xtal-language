@@ -13,63 +13,56 @@ struct param_types_holder_n;
 
 class InstanceVariables{
 public:
+
+	InstanceVariables* create(ClassInfo* class_info);
+
+	void destroy();
 		
-	void init_variables(ClassInfo* class_info);
-
-	bool is_included(ClassInfo* class_info);
-
-	void replace(ClassInfo* from, ClassInfo* to);
-
 	const AnyPtr& variable(uint_t index, ClassInfo* class_info){
-		if(!variables_info_.empty()){
-			VariablesInfo& front = variables_info_.top();
-			if(front.class_info==class_info){
-				return variables_.at(front.pos + index);
-			}
-			return variable2(index, class_info);
+		char* buf = (char*)(this + 1);
+		if(class_info==info_){
+			return ((AnyPtr*)buf)[index];
 		}
+
+		if(!info_){
+			int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
+			AnyPtr* values = (AnyPtr*)buf;
+			for(int_t i=0; i<install_count; ++i){
+				if(class_info==rawvalue(values[i]).immediate_second_vpvalue()){
+					int_t pos = rawvalue(values[i]).immediate_first_value();
+					return values[install_count+pos+index];
+				}
+			}
+		}
+
 		return undefined;
 	}
 
-	const AnyPtr& variable2(uint_t index, ClassInfo* class_info);
-
 	void set_variable(uint_t index, ClassInfo* class_info, const AnyPtr& value){
-		if(!variables_info_.empty()){
-			VariablesInfo& front = variables_info_.top();
-			if(front.class_info==class_info){
-				variables_.set_at(front.pos + index, value);
-				return;
+		char* buf = (char*)(this + 1);
+		if(class_info==info_){
+			((AnyPtr*)buf)[index] = value;
+			return;
+		}
+
+		if(!info_){
+			int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
+			AnyPtr* values = (AnyPtr*)buf;
+			for(int_t i=0; i<install_count; ++i){
+				if(class_info==rawvalue(values[i]).immediate_second_vpvalue()){
+					int_t pos = rawvalue(values[i]).immediate_first_value();
+					values[install_count+pos+index] = value;
+					return;
+				}
 			}
-			set_variable2(index, class_info, value);
 		}
 	}
 
-	void set_variable2(uint_t index, ClassInfo* class_info, const AnyPtr& value);
+	void visit_members(Visitor& m);
 
-	bool empty(){
-		return variables_.empty();
-	}
-
-	void clear(){
-		variables_info_.clear();
-		variables_.clear();
-	}
-
-	void visit_members(Visitor& m){
-		for(uint_t i=0; i<variables_.size(); ++i){
-			m & (AnyPtr&)variables_.at(i);
-		}
-	}
-
-protected:
-	
-	struct VariablesInfo{
-		ClassInfo* class_info;
-		int_t pos;
-	};
-
-	FastStack<VariablesInfo> variables_info_;
-	xarray variables_;
+public:
+	ClassInfo* info_;
+	int_t sum_;
 };
 
 /**
@@ -106,11 +99,9 @@ public:
 	using RefCountingBase::def;
 	
 	void def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
-	void def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility = KIND_PUBLIC);
 
 	void def(const IDPtr& primary_key, const AnyPtr& value);
 	void def(const char_t* primary_key, const AnyPtr& value);
-	void def(const char8_t* primary_key, const AnyPtr& value);
 
 	/**
 	* \internal
@@ -249,7 +240,7 @@ public:
 	template<class T, class U>
 	void def_var(const IDPtr& primary_key, T U::* v, const AnyPtr& secondary_key = undefined, int_t accessibility = KIND_PUBLIC){
 		def_getter(primary_key, v, secondary_key, accessibility);
-		def_setter(StringPtr("set_")->cat(primary_key), v, secondary_key, accessibility);
+		def_setter(StringPtr(XTAL_STRING("set_"))->cat(primary_key), v, secondary_key, accessibility);
 	}
 
 	/**
@@ -407,7 +398,7 @@ public:
 
 	void set_object_temporary_name(const IDPtr& name);
 
-	const IDPtr& object_temporary_name();
+	IDPtr object_temporary_name();
 
 	void on_set_object_parent(const ClassPtr& parent);
 
@@ -472,18 +463,19 @@ public:
 
 	const NativeFunPtr& def_and_return(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t accessibility, const param_types_holder_n& pth, const void* val);
 
-	void define(const char_t* primary_key, const param_types_holder_n& pth);
-	void define(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth);
-	void define_param(const char_t* name, const AnyPtr& default_value);
-	void define(const char_t* primary_key, const AnyPtr& valueh);
-	void define(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
+	void define(const LongLivedString& primary_key, const param_types_holder_n& pth);
+	void define(const LongLivedString& primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth);
+	void define(const LongLivedString& primary_key, const AnyPtr& valueh);
+	void define(const LongLivedString& primary_key, const AnyPtr& value, const AnyPtr& secondary_key);
+	
+	void define_param(const LongLivedString& name, const AnyPtr& default_value);
 
 public:
 
 	void on_visit_members(Visitor& m){
 		Frame::on_visit_members(m);
-		for(uint_t i=0; i<inherited_classes_.size(); ++i){
-			m & inherited_classes_.at(i);
+		for(Class** pp=inherited_classes_; *pp; ++pp){
+			m & *pp;
 		}
 	}
 
@@ -491,28 +483,51 @@ protected:
 	
 	const AnyPtr& def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key = null, int_t accessibility = KIND_PUBLIC);
 
-	IDPtr name_;
+	struct Options{
+		NativeFunPtr ctor;
+	};
 
-	NativeFunPtr ctor_[2];
+	struct Options2 : Options{
+		NativeFunPtr serial_ctor;
+		IDPtr name;
+	};
 
-	xarray inherited_classes_;
+	Options* options_;
+
+	void make_options();
+	void make_options_wide();
+
+	const IDPtr& option_name();
+	void set_option_name(const IDPtr& name);
+	
+	const NativeFunPtr& option_ctor();
+	void set_option_ctor(const NativeFunPtr& fun);
+
+	const NativeFunPtr& option_serial_ctor();
+	void set_option_serial_ctor(const NativeFunPtr& fun);
+
+	const NativeFunPtr& option_ctor(uint_t n);
+	void set_option_ctor(uint_t n, const NativeFunPtr& fun);
+
 	CppClassSymbolData* symbol_data_;
 
-	u16 object_force_;
-	u16 flags_;
+	Class** inherited_classes_;
 
-	enum{
-		FLAG_NATIVE = 1<<0,
-		FLAG_FINAL = 1<<1,
-		FLAG_SINGLETON = 1<<2,
-		FLAG_PREBINDED = 1<<3,
-		FLAG_BINDED = 1<<4,
-		FLAG_BINDED2 = 1<<5,
+	friend class InheritedClassesIter;
+};
 
-		FLAG_LAST_DEFINED_CTOR = 1<<7,
-		FLAG_LAST_DEFINED_CTOR2 = 1<<8,
+class InheritedClassesIter : public Base{
+public:
 
-	};
+	InheritedClassesIter(const ClassPtr& a);
+
+	void block_next(const VMachinePtr& vm);
+
+	void on_visit_members(Visitor& m);
+
+private:
+	ClassPtr frame_;
+	int_t it_;
 };
 
 }

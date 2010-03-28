@@ -221,13 +221,7 @@ public:
 	* \brief 文字列から構築するコンストラクタ。
 	*
 	*/
-	SmartPtr(const char8_t* str);
-
-	/**
-	* \brief 文字列から構築するコンストラクタ。
-	*
-	*/
-	SmartPtr(const StringLiteral& str);
+	SmartPtr(const LongLivedString& str);
 
 	// 基本型の整数、浮動小数点数から構築するコンストラクタ
 	SmartPtr(char v){ value_.init_int(v); }
@@ -366,6 +360,7 @@ struct Extract<INHERITED_OTHER, T>{
 /////////////////////////////////////////////////
 
 void visit_members(Visitor& m, const Any& p);
+void visit_members(Visitor& m, RefCountingBase* p);
 
 class Visitor{
 	int_t value_;
@@ -406,9 +401,7 @@ void visit_members(Visitor& m, const std::pair<F, S>& value){
 typedef void (*XTAL_bind_t)(Class* it);
 
 struct CppClassSymbolData{ 
-	void init_bind0(XTAL_bind_t b, const char_t* xtname);
-	void init_bind1(XTAL_bind_t b, const char_t* xtname);
-	void init_bind2(XTAL_bind_t b, const char_t* xtname);
+	void init_bind(int n, const char_t* xtname, XTAL_bind_t b);
 
 	enum{
 		BIND = 2,
@@ -453,7 +446,7 @@ template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Dele
 template<> struct CppClassSymbol<void> : CppClassSymbol<Any>{};
 
 template<> struct CppClassSymbol<Base> : CppClassSymbol<Any>{};
-template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
+template<> struct CppClassSymbol<ID> : CppClassSymbol<String>{};
 
 template<> struct CppClassSymbol<bool> : CppClassSymbol<Bool>{};
 template<> struct CppClassSymbol<char> : CppClassSymbol<Int>{};
@@ -472,19 +465,25 @@ template<> struct CppClassSymbol<long double> : CppClassSymbol<Float>{};
 template<> struct CppClassSymbol<const char*> : CppClassSymbol<String>{};
 template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
 
-
+	
 #define XTAL_BIND_(ClassName, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\
 	template<> struct XTAL_bind_template##N<ClassName>{\
 		typedef ClassName Self;\
-		XTAL_bind_template##N(){\
-			::xtal::CppClassSymbol<ClassName>::value.init_bind##N(&XTAL_bind_template##N::on_bind, xtname);\
-		}\
 		static void on_bind(::xtal::Class* it);\
 	};\
-	static volatile XTAL_bind_template##N<ClassName> XTAL_UNIQUE(XTAL_bind_variable##N);\
+	static volatile ::xtal::Binder\
+		XTAL_UNIQUE(XTAL_bind_variable##N)(\
+			::xtal::CppClassSymbol<ClassName>::value, N, xtname,\
+			&XTAL_bind_template##N<ClassName>::on_bind\
+		);\
 	void XTAL_bind_template##N<ClassName>::on_bind(::xtal::Class* it)
 
+struct Binder{
+	Binder(CppClassSymbolData& value, int n, const char_t* name, void (*bind)(Class* it)){
+		value.init_bind(n, name, bind);	
+	}
+};
 
 #define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 0)
 #define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 1)
@@ -493,7 +492,7 @@ template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
 #define XTAL_PREBIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 0)
 #define XTAL_BIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 1)
 
-#define XTAL_BIND_DIRECT(Target) if(ClassPtr it = ptr_cast<Class>(Target))
+#define XTAL_BIND_DIRECT(Target) if(::xtal::ClassPtr it = ::xtal::ptr_cast<::xtal::Class>(Target))
 
 
 ////////////////////////////////////

@@ -1,6 +1,8 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 #include "xtal_stringspace.h"
+#include "xtal_objectspace.h"
+#include "xtal_details.h"
 
 namespace xtal{
 
@@ -23,10 +25,28 @@ void RefCountingBase::special_initialize(const VirtualMembers* vmembers){
 }
 
 void RefCountingBase::destroy(){ 
-	virtual_members()->destroy(this); 
+	if(!destroyed()){
+		if(value_.have_finalizer()){
+			finalize();
+			
+			if(!value_.can_not_destroy()){
+				return;
+			}
+		}
 
-	if(type(*this)==TYPE_BASE){
-		pvalue(*this)->special_uninitialize();
+		set_destroyed_flag();
+		virtual_members()->destroy(this); 
+
+		if(type(*this)==TYPE_BASE){
+			pvalue(*this)->special_uninitialize();
+		}
+
+		if(virtual_members()->is_container){
+			environment_->object_space_.inc_objects_destroyed_count();
+		}
+		else{
+			object_free();
+		}
 	}
 }
 
@@ -49,13 +69,21 @@ void Base::special_initialize(const VirtualMembers* vmembers){
 
 void Base::special_uninitialize(){
 	if(instance_variables_!=&empty_instance_variables){
-		instance_variables_->~InstanceVariables();
-		xfree(instance_variables_, sizeof(InstanceVariables));
-
+		instance_variables_->destroy();
 		if(get_class()){
 			class_->dec_ref_count();
 		}
+		instance_variables_ = &empty_instance_variables; 
 	}
+}
+
+void Base::init_instance_variables(ClassInfo* info){
+	if(instance_variables_==&empty_instance_variables){
+		if(get_class()){
+			class_->inc_ref_count();
+		}
+	}
+	instance_variables_ = instance_variables_->create(info);
 }
 
 void Base::set_class(const ClassPtr& c){
@@ -72,24 +100,10 @@ void Base::set_class(const ClassPtr& c){
 		}
 	}
 }
-	
-void Base::make_instance_variables(){
-	if(instance_variables_==&empty_instance_variables){
-		InstanceVariables* temp = (InstanceVariables*)xmalloc(sizeof(InstanceVariables));
-		new(temp) InstanceVariables();
-		instance_variables_ = temp;
-
-		if(get_class()){
-			class_->inc_ref_count();
-		}
-	}
-}
 
 void Base::on_visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
-		ClassPtr temp = to_smartptr(class_);
-		m & temp;
-		class_ = temp.get();
+		m & class_;
 		instance_variables_->visit_members(m);
 	}
 }

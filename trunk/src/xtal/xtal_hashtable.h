@@ -649,7 +649,6 @@ protected:
 	void set_zero();
 
 protected:
-
 	Node** begin_;
 	uint_t size_;
 	uint_t used_size_;

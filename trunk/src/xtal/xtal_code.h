@@ -65,6 +65,10 @@ public:
 		return value_table_.at(i);
 	}
 
+	const AnyPtr* value_data(){
+		return (AnyPtr*)value_table_.data();
+	}
+
 	/**
 	* \brief onceテーブルからi番目の値を取り出す。
 	*/

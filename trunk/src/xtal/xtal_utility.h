@@ -154,12 +154,15 @@ private:
 #	pragma warning(disable: 4100)
 #endif
 
+#define XTAL_LONG_LIVED_STRING(x) (*(::xtal::LongLivedString*)(x))
+#define XTAL_LONG_LIVED_STRINGN(x, N) (*(::xtal::LongLivedStringN<N>*)(x))
+
 #ifdef XTAL_USE_WCHAR
 #	define XTAL_L(x) L##x
-#	define XTAL_STRING(x) (*(::xtal::StringLiteral*)(L##x))
+#	define XTAL_STRING(x) XTAL_LONG_LIVED_STRINGN(L##x, sizeof(x)-1)
 #else 
 #	define XTAL_L(x) x
-#	define XTAL_STRING(x) (*(::xtal::StringLiteral*)(x))
+#	define XTAL_STRING(x) XTAL_LONG_LIVED_STRINGN(x, sizeof(x)-1)
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW__) || defined(__MINGW32__)
@@ -197,64 +200,6 @@ private:
 #endif
 
 namespace xtal{
-
-/**
-* \brief 整数値のアライメント調整
-*/
-template<class T>
-inline T align(T v, int N){
-	return (v+(N-1)) & ~(N-1);
-}
-
-/**
-* \brief ポインタ値のアライメント調整
-*/
-template<class T>
-inline T* align_p(T* v, int N){
-	return (T*)align((unsigned long)v, N);
-}
-
-/**
-* \brief 整数値の2の累乗のアライメント調整
-*/
-template<class T>
-inline T align_2(T v){
-	v-=1;
-	v|=v>>1;
-	v|=v>>2;
-	v|=v>>4;
-	v|=v>>8;
-	v|=v>>16;
-//	v|=v>>32;
-	return v+1;
-}
-
-/**
-* \brief 静的にビットの数を数えるメタ関数
-*/
-template<int N>
-class static_count_bits{
-	enum{
-		N1 = (N & 0x55555555) + (N >> 1 & 0x55555555),
-		N2 = (N1 & 0x33333333) + (N1 >> 2 & 0x33333333),
-		N3 = (N2 & 0x0f0f0f0f) + (N2 >> 4 & 0x0f0f0f0f),
-		N4 = (N3 & 0x00ff00ff) + (N3 >> 8 & 0x00ff00ff)
-	};
-public:	
-	enum{
-		value = (N4 & 0x0000ffff) + (N4>>16 & 0x0000ffff)	
-	};
-};
-
-/**
-* \brief 静的にntzを計算するメタ関数
-*/
-template<int N>
-struct static_ntz{
-	enum{
-		value = static_count_bits<((N&(-N))-1)>::value
-	};
-};
 
 // 最低限のメタプログラミング下地
 
@@ -463,24 +408,27 @@ typedef SelectType<sizeof(void*)>::uint_t uint_t;
 /// float
 typedef SelectType<sizeof(void*)>::float_t float_t;
 	
+/// int
+typedef SelectType<sizeof(void*)>::int_t iptr_t;
+
+/// uint
+typedef SelectType<sizeof(void*)>::uint_t uptr_t;
 
 #endif
 
 /// byte
 typedef SelectType<1>::uint_t byte_t;
 
-//typedef std::size_t size_t;
-//typedef std::ptrdiff_t ptrdiff_t;
+//using std::size_t size_t;
+//using std::ptrdiff_t ptrdiff_t;
 
 #ifdef XTAL_USE_WCHAR
 
 typedef wchar_t char_t;
-typedef char char8_t;
 
 #else
 
 typedef char char_t;
-typedef signed char char8_t;
 
 #endif
 
@@ -567,6 +515,66 @@ struct AlignBuffer{
 };
 
 //////////////////////////////////////////////////
+
+/**
+* \brief 整数値のアライメント調整
+*/
+template<class T>
+inline T align(T v, int N){
+	return (v+(N-1)) & ~(T)(N-1);
+}
+
+/**
+* \brief ポインタ値のアライメント調整
+*/
+template<class T>
+inline T* align_p(T* v, int N){
+	return (T*)align((uptr_t)v, N);
+}
+
+/**
+* \brief 整数値の2の累乗のアライメント調整
+*/
+template<class T>
+inline T align_2(T v){
+	v-=1;
+	v|=v>>1;
+	v|=v>>2;
+	v|=v>>4;
+	v|=v>>8;
+	v|=v>>16;
+//	v|=v>>32;
+	return v+1;
+}
+
+/**
+* \brief 静的にビットの数を数えるメタ関数
+*/
+template<int N>
+class static_count_bits{
+	enum{
+		N1 = (N & 0x55555555) + (N >> 1 & 0x55555555),
+		N2 = (N1 & 0x33333333) + (N1 >> 2 & 0x33333333),
+		N3 = (N2 & 0x0f0f0f0f) + (N2 >> 4 & 0x0f0f0f0f),
+		N4 = (N3 & 0x00ff00ff) + (N3 >> 8 & 0x00ff00ff)
+	};
+public:	
+	enum{
+		value = (N4 & 0x0000ffff) + (N4>>16 & 0x0000ffff)	
+	};
+};
+
+/**
+* \brief 静的にNumber of Training Zero (NTZ)を計算するメタ関数
+*/
+template<int N>
+struct static_ntz{
+	enum{
+		value = static_count_bits<((N&(-N))-1)>::value
+	};
+};
+
+//////////////////////////////////////////////////
 //
 
 
@@ -574,6 +582,9 @@ class Any;
 
 template<class T>
 class SmartPtr;
+
+template<class T>
+class BasePtr;
 
 template<> class SmartPtr<Any>;
 typedef SmartPtr<Any> AnyPtr;
@@ -752,17 +763,22 @@ const uint_t hash_m = 0x5bd1e995;
 const uint_t hash_seed = 0xdeadbeef;
 const uint_t hash_r = 24;
 
-uint_t string_hashcode(const char_t* str, uint_t size);
-void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash);
 uint_t string_length(const char_t* str);
 uint_t string_data_size(const char_t* str);
-int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
+uint_t string_hashcode(const char_t* str, uint_t size);
+void string_data_size_and_hashcode(const char_t* str, uint_t& size, uint_t& hash);
 void string_copy(char_t* a, const char_t* b, uint_t size);
 bool string_is_ch(const char_t* str, uint_t size);
+int_t string_compare(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
-struct StringLiteral{
+struct LongLivedString{
 	const char_t* str() const{ return (char_t*)this; }
 	uint_t size() const{ return string_data_size((char_t*)this); }
+};
+
+template<int N>
+struct LongLivedStringN : LongLivedString{
+	uint_t size() const{ return N; }	
 };
 
 //
@@ -793,7 +809,7 @@ enum PrimitiveType{
 	TYPE_IVAR_SETTER,
 	
 	TYPE_SMALL_STRING,
-	TYPE_LITERAL_STRING,
+	TYPE_LONG_LIVED_STRING,
 	TYPE_INTERNED_STRING,
 	// ここから上はimmutableな値型である
 

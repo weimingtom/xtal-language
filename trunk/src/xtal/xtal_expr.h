@@ -133,7 +133,6 @@ const ExprPtr& ep(const AnyPtr& a);
 class TreeNode : public Array{
 public:
 	enum{ TYPE = TYPE_TREE_NODE };
-	enum{ BUILD = 0 };
 
 	TreeNode();
 	

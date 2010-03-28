@@ -56,13 +56,11 @@ const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondar
 }
 
 void Global::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	Key key = {primary_key, secondary_key};
-	map_t::iterator it = map_members_->find(key);
-	if(it==map_members_->end()){
-		Class::on_def(primary_key, value, secondary_key, accessibility);
+	if(find_node(primary_key, secondary_key)){
+		overwrite_member(primary_key, value, secondary_key, accessibility);
 	}
 	else{
-		overwrite_member(primary_key, value, secondary_key, accessibility);
+		Class::on_def(primary_key, value, secondary_key, accessibility);
 	}
 }
 

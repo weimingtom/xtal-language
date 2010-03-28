@@ -15,7 +15,7 @@ TextPtr text(const StringPtr& text){
 	return xnew<Text>(text->intern());
 }
 
-TextPtr text(const StringLiteral& text){
+TextPtr text(const LongLivedString& text){
 	return xnew<Text>(text);
 }
 
@@ -23,7 +23,7 @@ StringPtr format(const StringPtr& text){
 	return text;
 }
 
-StringPtr format(const StringLiteral& text){
+StringPtr format(const LongLivedString& text){
 	return text;
 }
 
@@ -212,7 +212,7 @@ void String::on_rawcall(const VMachinePtr& vm){
 						if(i==sz){ break; }
 					}
 
-					const IDPtr& arg_id = xtal::intern(begin, str+i);
+					const IDPtr& arg_id = xtal::intern(begin, (str+i)-begin);
 
 					if(number){
 						int_t arg_i = arg_id->to_i();
@@ -296,7 +296,7 @@ void Text::serial_load(const IDPtr& v){
 	key_ = v;
 }
 
-AnyPtr format_or_text(int_t type,  const StringLiteral& format_string){
+AnyPtr format_or_text(int_t type,  const LongLivedString& format_string){
 	if(type==SPRINTF_TYPE_f){
 		return format(format_string);
 	}
@@ -305,23 +305,23 @@ AnyPtr format_or_text(int_t type,  const StringLiteral& format_string){
 	}
 }
 
-StringPtr sprintf(int_t type, const StringLiteral& format){
+StringPtr sprintf(int_t type, const LongLivedString& format){
 	return format_or_text(type, format)->call()->to_s();
 }
 
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1){
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1){
 	return format_or_text(type, format)->call(Named(name1, value1))->to_s();
 }
 
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2){
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2){
 	return format_or_text(type, format)->call(Named(name1, value1), Named(name2, value2))->to_s();
 }
 
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2, const StringLiteral& name3, const AnyPtr& value3){
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2, const LongLivedString& name3, const AnyPtr& value3){
 	return format_or_text(type, format)->call(Named(name1, value1), Named(name2, value2), Named(name3, value3))->to_s();
 }
 
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2, const StringLiteral& name3, const AnyPtr& value3, const StringLiteral& name4, const AnyPtr& value4){
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2, const LongLivedString& name3, const AnyPtr& value3, const LongLivedString& name4, const AnyPtr& value4){
 	return format_or_text(type, format)->call(Named(name1, value1), Named(name2, value2), Named(name3, value3), Named(name4, value4))->to_s();
 }
 

@@ -722,13 +722,8 @@ struct SmartPtrCtor1<String>{
 };
 
 template<>
-struct SmartPtrCtor2<String>{
-	typedef const char8_t* type;
-};
-
-template<>
 struct SmartPtrCtor3<String>{
-	typedef const StringLiteral& type;
+	typedef const LongLivedString& type;
 };
 
 template<>
@@ -742,13 +737,8 @@ struct SmartPtrCtor2<ID>{
 };
 
 template<>
-struct SmartPtrCtor3<ID>{
-	typedef const char8_t* type;
-};
-
-template<>
 struct SmartPtrCtor4<ID>{
-	typedef const StringLiteral& type;
+	typedef const LongLivedString& type;
 };
 
 template<>
@@ -764,10 +754,8 @@ public:
 	SmartPtr(const char_t* v);
 
 	SmartPtr(const StringPtr& v);
-	
-	SmartPtr(const char8_t* v);
-	
-	SmartPtr(const StringLiteral& v);
+		
+	SmartPtr(const LongLivedString& v);
 
 	SmartPtr(const ID& v);
 
@@ -827,6 +815,143 @@ public:
 	bool operator !() const{
 		return !is_true();
 	}
+};
+
+//////////////////////////////////////////////////
+
+/**
+* \brief BaseÇåpè≥ÇµÇΩå^ÇÃÇ›äiî[Ç≈Ç´ÇÈÉXÉ}Å[ÉgÉ|ÉCÉìÉ^
+*/
+template<class T>
+class BasePtr{
+public:
+
+	BasePtr()
+		:ptr_(0){}
+
+	BasePtr(T* p)
+		:ptr_(p){
+		if(ptr_){ ptr_->inc_ref_count(); }
+	}
+
+	BasePtr(const SmartPtr<T>& p)
+		:ptr_(p.get()){
+		if(ptr_){ ptr_->inc_ref_count(); }
+	}
+
+	BasePtr(const BasePtr<T>& other)
+		:ptr_(other.ptr_){
+		if(ptr_){ ptr_->inc_ref_count(); }		
+	}
+
+	template<class U>
+	BasePtr(const SmartPtr<U>& p)
+		:ptr_(p.get()){
+		if(ptr_){ ptr_->inc_ref_count(); }
+	}
+
+	template<class U>
+	BasePtr(const BasePtr<U>& other)
+		:ptr_(other.ptr_){
+		if(ptr_){ ptr_->inc_ref_count(); }		
+	}
+
+	BasePtr(const NullPtr&)
+		:ptr_(0){}
+
+
+	~BasePtr(){
+		if(ptr_){ ptr_->dec_ref_count(); }
+	}
+
+	BasePtr<T>& operator=(const BasePtr<T>& other){
+		if(other.ptr_){ other.ptr_->inc_ref_count(); }
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = other.ptr_;
+		return *this;
+	}
+	
+	BasePtr<T>& operator=(const SmartPtr<T>& other){
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = other.get();
+		if(ptr_){ ptr_->inc_ref_count(); }
+		return *this;
+	}
+	
+	template<class U>
+	BasePtr<T>& operator=(const BasePtr<U>& other){
+		if(other.ptr_){ other.ptr_->inc_ref_count(); }
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = other.ptr_;
+		return *this;
+	}
+	
+	template<class U>
+	BasePtr<T>& operator=(const SmartPtr<U>& other){
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = other.get();
+		if(ptr_){ ptr_->inc_ref_count(); }
+		return *this;
+	}
+
+	BasePtr<T>& operator=(const NullPtr&){
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = 0;
+		return *this;
+	}
+public:
+
+	T* get() const{
+		return ptr_;
+	}
+
+	T* operator ->() const{
+		return ptr_;
+	}
+
+	T& operator *() const{
+		return *ptr_;
+	}
+
+private:
+
+	void* is_true() const{
+		return ptr_;
+	}
+
+public:
+
+#ifdef XTAL_DEBUG
+
+	struct dummy_bool_tag{ void safe_true(){} };
+	typedef void (dummy_bool_tag::*safe_bool)();
+
+	operator safe_bool() const{
+		return is_true() ? &dummy_bool_tag::safe_true : (safe_bool)0;
+	}
+
+#else
+
+	/**
+	* \brief booleanÇ÷ÇÃé©ìÆïœä∑
+	*/
+	operator bool() const{
+		return !!is_true();
+	}
+
+#endif
+
+	bool operator !() const{
+		return !is_true();
+	}
+
+public:
+	operator const SmartPtr<T>&() const{
+		return ptr_ ? to_smartptr(ptr_) : nul<T>();
+	}
+
+private:
+	T* ptr_;
 };
 
 }

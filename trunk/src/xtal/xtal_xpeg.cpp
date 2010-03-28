@@ -308,7 +308,7 @@ bool Executor::match_inner(const ElementPtr& e){
 		Value value;
 		value.state = match_pos;
 		value.tree = tree_->slice(nodenum, tree_->size()-nodenum);
-		memotable_[key] = value;
+		memotable_.insert(key, value);
 		load(match_pos);
 		return true;
 	}

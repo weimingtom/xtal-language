@@ -8,12 +8,7 @@ SmartPtr<Any>::SmartPtr(const char_t* str){
 	*this = XNew<String>(str);
 }
 
-SmartPtr<Any>::SmartPtr(const char8_t* str){
-	value_.init_primitive(TYPE_NULL);
-	*this = XNew<String>(str);
-}
-
-SmartPtr<Any>::SmartPtr(const StringLiteral& str){
+SmartPtr<Any>::SmartPtr(const LongLivedString& str){
 	value_.init_primitive(TYPE_NULL);
 	*this = XNew<String>(str);
 }
@@ -44,9 +39,9 @@ void SmartPtr<Any>::init(const Any& a){
 }
 
 void SmartPtr<Any>::unref_init(const Any& a){
+	inc_ref_count_force(a);
 	dec_ref_count_force(*this);
 	copy_any(*this, a);
-	inc_ref_count_force(*this);
 }
 
 void SmartPtr<Any>::ref(){
@@ -92,6 +87,11 @@ SmartPtr<Any>& SmartPtr<Any>::operator =(const IDPtr& p){
 	return *this;
 }
 
+void visit_members(Visitor& m, RefCountingBase* p){
+	XTAL_ASSERT((int)p->ref_count() >= -m.value());
+	p->add_ref_count(m.value());
+}
+
 void visit_members(Visitor& m, const Any& p){
 	if(type(p)>=TYPE_BASE){
 		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
@@ -101,21 +101,21 @@ void visit_members(Visitor& m, const Any& p){
 
 //////////////////////////////
 
-void CppClassSymbolData::init_bind0(XTAL_bind_t b, const char_t* xtname){
-	flags |= FLAG_NAME | FLAG_BIND0;
-	prebind = b;
-	name = xtname;
-}
-
-void CppClassSymbolData::init_bind1(XTAL_bind_t b, const char_t* xtname){
-	flags |= FLAG_NAME | FLAG_BIND1;
-	bind[0] = b;
-	name = xtname;
-}
-
-void CppClassSymbolData::init_bind2(XTAL_bind_t b, const char_t* xtname){
-	flags |= FLAG_BIND2;
-	bind[1] = b;
+void CppClassSymbolData::init_bind(int n, const char_t* xtname, XTAL_bind_t b){
+	if(n==0){
+		flags |= FLAG_NAME | FLAG_BIND0;
+		prebind = b;
+		name = xtname;
+	}
+	else if(n==1){
+		flags |= FLAG_NAME | FLAG_BIND1;
+		bind[0] = b;
+		name = xtname;
+	}
+	else{
+		flags |= FLAG_BIND2;
+		bind[1] = b;
+	}
 }
 
 }

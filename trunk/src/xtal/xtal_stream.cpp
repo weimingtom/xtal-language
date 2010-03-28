@@ -22,7 +22,11 @@ void Stream::put_s(const char_t* str, const char_t* end){
 	write(str, (end-str)*sizeof(char_t));
 }
 
-void Stream::put_s(const StringLiteral& str){
+void Stream::put_s(const char_t* str, uint_t length){
+	write(str, length*sizeof(char_t));
+}
+
+void Stream::put_s(const LongLivedString& str){
 	write(str.str(), str.size()*sizeof(char_t));
 }
 

@@ -393,18 +393,17 @@ ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2);
 class HaveParent{
 public:
 
-	HaveParent()
-		:parent_(0){}
-
-	~HaveParent();
+	HaveParent(){}
 
 	const ClassPtr& object_parent();
 
 	void set_object_parent(const ClassPtr& parent);
 
 	void visit_members(Visitor& m);
+
 private:
-	Class* parent_;
+	BasePtr<Class> parent_;
+
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(HaveParent);
 };

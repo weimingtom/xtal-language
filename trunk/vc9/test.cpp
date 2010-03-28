@@ -694,7 +694,24 @@ void benchmark(const char* file, const AnyPtr& arg){
 int main2(int argc, char** argv){
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | /*_CRTDBG_CHECK_ALWAYS_DF |*/ _CRTDBG_DELAY_FREE_MEM_DF);
 
+	Environment* env = environment();
 	using namespace std;
+
+	MapPtr map = xnew<Map>();
+	map->set_at(0, 100);
+	map->set_at(1, 100);
+	map->set_at(2, 100);
+	map->set_at(3, 100);
+	map->set_at(4, 100);
+	map->set_at(5, 100);
+	map->set_at(7, 100);
+	map->set_at(Xs("test1"), 100);
+	map->set_at(Xs("test2"), 100);
+	map->set_at(Xs("test3"), 100);
+	map->set_at(Xs("test4"), 100);
+	map->set_at(Xs("test5"), 100);
+	map->set_at(Xs("test6"), 100);
+	map->set_at(Xs("test7"), 100);
 
 	//Debugger debugger;
 	//debugger.attach(xnew<DebugStream>("127.0.0.1", "13245"));

@@ -163,13 +163,13 @@ public:
 
 		//debug_stacktrace(ref.stacktrace);
 
-		if(gcounter_==46910){
+		if(gcounter_==69836){
 			gcounter_ = gcounter_;
 		}
 
 		gcounter_++;
 
-		if(size>30000){
+		if(size==0){
 			size = size;
 		}
 		
@@ -178,7 +178,7 @@ public:
 				printf("max used memory %dKB\n", used_memory_/1024);
 				//analize();
 			}
-			max_used_memory_ = used_memory_+1024*50; 
+			max_used_memory_ = used_memory_+1024*10; 
 		}
 			
 		memset(ret, 0xda, size);
@@ -358,14 +358,9 @@ void set_vmachine(const VMachinePtr& vm){
 
 void* xmalloc(size_t size){
 	Environment* env = environment_;
-	
-	env->malloc_count_ = (env->malloc_count_ + 1) & ((1<<7)-1);
-	if(env->malloc_count_==0){
-		lw_gc();
-	}
-	
+		
 	if(env->gc_stress_){
-		full_gc();
+		env->object_space_.full_gc();
 	}
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
@@ -374,37 +369,29 @@ void* xmalloc(size_t size){
 	}
 #endif
 
-	env->used_memory_ += size;
+	env->used_memory_ += size + 16;
 
 	void* ret = env->setting_.allocator_lib->malloc(size);
 
 	if(!ret){
-		env->object_space_.gc();
+		env->object_space_.full_gc();
 		ret = env->setting_.allocator_lib->malloc(size);
 
 		if(!ret){
-			env->object_space_.full_gc();
+			env->object_space_.shrink_to_fit();
+			env->setting_.allocator_lib->out_of_memory();
 			ret = env->setting_.allocator_lib->malloc(size);
 
 			if(!ret){
-#ifndef XTAL_NO_SMALL_ALLOCATOR
-				environment_->so_alloc_.fit();
-#endif
-				env->object_space_.shrink_to_fit();
-				env->setting_.allocator_lib->out_of_memory();
-				ret = env->setting_.allocator_lib->malloc(size);
+				// だめだ。メモリが確保できない。
+				// XTAL_MEMORYまでジャンプしよう。
 
-				if(!ret){
-					// だめだ。メモリが確保できない。
-					// XTAL_MEMORYまでジャンプしよう。
-
-					// XTAL_MEMORYで囲まれていない！もうどうしようもない！
-					XTAL_ASSERT(env->set_jmp_buf_);
-					
-					env->object_space_.print_all_objects();
-					env->ignore_memory_assert_= true;
-					longjmp(env->jmp_buf_.buf, 1);
-				}
+				// XTAL_MEMORYで囲まれていない！もうどうしようもない！
+				XTAL_ASSERT(env->set_jmp_buf_);
+				
+				env->object_space_.print_all_objects();
+				env->ignore_memory_assert_= true;
+				longjmp(env->jmp_buf_.buf, 1);
 			}
 		}
 	}
@@ -426,7 +413,8 @@ void xfree(void* p, size_t size){
 	}
 #endif
 
-	env->used_memory_ -= size;
+	env->used_memory_ -= size + 16;
+
 	env->setting_.allocator_lib->free(p, size);
 }
 
@@ -436,47 +424,32 @@ void* xmalloc_align(size_t size, size_t alignment){
 	}
 
 	Environment* env = environment_;
-
-	env->malloc_count_ = (env->malloc_count_ + 1) & ((1<<7)-1);
-	if(env->malloc_count_==0){
-		lw_gc();
-	}
 	
 	if(env->gc_stress_){
-		full_gc();
+		env->object_space_.full_gc();
 	}
 
-	env->used_memory_ += size;
+	env->used_memory_ += size + 16;
 
 	void* ret = env->setting_.allocator_lib->malloc_align(size, alignment);
 
 	if(!ret){
-		env->object_space_.gc();
+		env->object_space_.full_gc();
 		ret = env->setting_.allocator_lib->malloc_align(size, alignment);
-
 		if(!ret){
-			env->object_space_.full_gc();
+			env->object_space_.shrink_to_fit();
+			env->setting_.allocator_lib->out_of_memory();
 			ret = env->setting_.allocator_lib->malloc_align(size, alignment);
 
 			if(!ret){
-#ifndef XTAL_NO_SMALL_ALLOCATOR
-				environment_->so_alloc_.fit();
-#endif
+				// だめだ。メモリが確保できない。
+				// XTAL_MEMORYまでジャンプしよう。
 
-				env->object_space_.shrink_to_fit();
-				env->setting_.allocator_lib->out_of_memory();
-				ret = env->setting_.allocator_lib->malloc_align(size, alignment);
-
-				if(!ret){
-					// だめだ。メモリが確保できない。
-					// XTAL_MEMORYまでジャンプしよう。
-
-					// XTAL_MEMORYで囲まれていない！もうどうしようもない！
-					XTAL_ASSERT(env->set_jmp_buf_);
-					
-					env->ignore_memory_assert_= true;
-					longjmp(env->jmp_buf_.buf, 1);
-				}
+				// XTAL_MEMORYで囲まれていない！もうどうしようもない！
+				XTAL_ASSERT(env->set_jmp_buf_);
+				
+				env->ignore_memory_assert_= true;
+				longjmp(env->jmp_buf_.buf, 1);
 			}
 		}
 	}
@@ -496,10 +469,9 @@ void xfree_align(void* p, size_t size, size_t alignment){
 		return;
 	}
 
-	env->used_memory_ -= size;
+	env->used_memory_ -= size + 16;
 	env->setting_.allocator_lib->free_align(p, size, alignment);
 }
-
 
 JmpBuf& protect(){
 	// XTAL_PROTECTが入れ子になっている場合assertに引っかかる
@@ -571,8 +543,7 @@ void Environment::initialize(const Setting& setting){
 
 	set_jmp_buf_ = false;
 	ignore_memory_assert_ = false;
-	used_memory_ = 0;
-	malloc_count_ = 0;
+	used_memory_ = sizeof(Environment);
 	
 	object_space_.initialize();
 	string_space_.initialize();
@@ -615,12 +586,8 @@ void Environment::initialize(const Setting& setting){
 	builtin_->def(Xid(debug), cpp_class<debug::Debug>());
 
 	enable_gc();
-	//exec_script();
-
-	//bind_all();
 
 	full_gc();
-	object_space_.finish_initialize();
 }
 
 void Environment::uninitialize(){
@@ -671,7 +638,7 @@ VMachinePtr vmachine_take_over(){
 void vmachine_take_back(const VMachinePtr& vm){
 	Environment* environment = environment_;
 	vm->reset();
-	if(environment->vm_list_->length()<16){
+	if(environment->vm_list_->length()<8){
 		environment->vm_list_->push_back(vm);
 	}
 }
@@ -686,15 +653,13 @@ const IDPtr* id_op_list(){
 	return environment_->string_space_.id_op_list();
 }
 
-void lw_gc(){
-	return environment_->object_space_.lw_gc();
-}
 
 void gc(){
 	return environment_->object_space_.gc();
 }
 
 void full_gc(){
+	clear_cache();
 	environment_->object_space_.full_gc();
 
 #ifdef XTAL_DEBUG_PRINT
@@ -744,7 +709,6 @@ const AnyPtr& cpp_value(CppValueSymbolData* key){
 void clear_cache(){
 	environment_->member_cache_table_.clear();
 	environment_->is_cache_table_.clear();
-	environment_->ctor_cache_table_.clear();
 }
 
 void invalidate_cache_member(){
@@ -754,12 +718,8 @@ void invalidate_cache_member(){
 void invalidate_cache_is(){
 	environment_->is_cache_table_.invalidate();
 	environment_->member_cache_table_.invalidate();
-	environment_->ctor_cache_table_.invalidate();
 }
 
-void invalidate_cache_ctor(){
-	environment_->ctor_cache_table_.invalidate();
-}
 
 const ClassPtr& builtin(){
 	return environment_->builtin_;
@@ -771,14 +731,6 @@ const LibPtr& lib(){
 
 const ClassPtr& global(){
 	return environment_->global_;
-}
-
-StringConv::StringConv(const char8_t* str)
-	:memory((std::strlen((char*)str)+1)*sizeof(char_t)){
-	char_t* buf = (char_t*)memory.get();
-	for(uint_t i=0; i<memory.size()/sizeof(char_t); ++i){
-		buf[i] = str[i];
-	}
 }
 
 namespace{
@@ -805,19 +757,14 @@ IDPtr intern(const char_t* str, uint_t data_size){
 	return intern(str, data_size, string_hashcode(str, data_size), false);
 }
 
-IDPtr intern(const StringLiteral& str){
+IDPtr intern(const LongLivedString& str){
 	uint_t hashcode, size;
 	string_data_size_and_hashcode(str.str(), size, hashcode);
 	return intern(str.str(), size, hashcode, true);
 }
 
-IDPtr intern(const char8_t* str){
-	StringConv conv(str);
-	return intern((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
-}
-
-IDPtr intern(const char_t* begin, const char_t* last){
-	return intern(begin, last-begin, string_hashcode(begin, last-begin), false);
+IDPtr intern(const char_t* str, uint_t data_size, String::long_lived_t){
+	return intern(str, data_size, string_hashcode(str, data_size), true);
 }
 
 IDPtr intern(const StringPtr& name){
@@ -913,14 +860,12 @@ struct GCer{
 
 CodePtr compile_file(const StringPtr& file_name){
 	GCer gc(0);
-
 	if(StreamPtr fs = open(file_name, XTAL_STRING("r"))){
 		CodeBuilder cb;
 		CodePtr ret = cb.compile(fs, file_name);
 		fs->close();
 		return ret;
 	}
-	
 	return nul<Code>();
 }
 

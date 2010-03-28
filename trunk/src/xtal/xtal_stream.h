@@ -34,11 +34,24 @@ public:
 	*/
 	void put_s(const char_t* str, const char_t* end);
 
+	/*
+	* \brief 文字列strをストリームに流す
+	*/
+	void put_s(const char_t* str, uint_t length);
+
 	/**
 	* \brief 文字列strをストリームに流す
 	*/
-	void put_s(const StringLiteral& str);
-	
+	template<int N>
+	void put_s(const LongLivedStringN<N>& str){
+		put_s(str.str(), str.size());
+	}
+
+	/**
+	* \brief 文字列strをストリームに流す
+	*/
+	void put_s(const LongLivedString& str);
+
 	/**
 	* \brief 文字列strをストリームに流す
 	*/

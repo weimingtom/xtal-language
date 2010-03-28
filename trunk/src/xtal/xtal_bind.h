@@ -573,7 +573,7 @@ struct functor<R (*)(#REPEAT_COMMA#A`i`#)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
-		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), fun_(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -592,7 +592,7 @@ struct functor<R (C::*)(#REPEAT_COMMA#A`i`#)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -611,7 +611,7 @@ struct functor<R (C::*)(#REPEAT_COMMA#A`i`#) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -624,7 +624,7 @@ struct static_functor<R (*)(#REPEAT_COMMA#A`i`#), fun_>{
 	enum{ arity = `n`};
 
 	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
-		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), fun_(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -635,7 +635,7 @@ struct static_functor<R (C::*)(#REPEAT_COMMA#A`i`#), fun_>{
 	enum{ arity = `n+1`};
 
 	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -646,7 +646,7 @@ struct static_functor<R (C::*)(#REPEAT_COMMA#A`i`#) const, fun_>{
 	enum{ arity = `n+1`};
 
 	void operator()(FunctorParam& ret, C* self #COMMA_REPEAT#A`i` a`i`#) const{
-		(self->*fun_)(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -658,7 +658,7 @@ struct ctor_functor<T #COMMA_REPEAT#A`i`#>{
 	enum{ arity = `n`};
 
 	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
-		xnew<T>(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -680,7 +680,7 @@ struct functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
-		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), fun_(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -691,7 +691,7 @@ struct static_functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#), fun_>{
 	enum{ arity = `n`};
 
 	void operator()(FunctorParam& ret #COMMA_REPEAT#A`i` a`i`#) const{
-		fun_(#REPEAT_COMMA#a`i`#), rcast<R>(ret);
+		rcast<R>(ret), fun_(#REPEAT_COMMA#a`i`#);
 	}
 };
 
@@ -714,7 +714,7 @@ struct functor<R (*)()>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret ) const{
-		fun_(), rcast<R>(ret);
+		rcast<R>(ret), fun_();
 	}
 };
 
@@ -733,7 +733,7 @@ struct functor<R (C::*)()>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self ) const{
-		(self->*fun_)(), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)();
 	}
 };
 
@@ -752,7 +752,7 @@ struct functor<R (C::*)() const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self ) const{
-		(self->*fun_)(), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)();
 	}
 };
 
@@ -765,7 +765,7 @@ struct static_functor<R (*)(), fun_>{
 	enum{ arity = 0};
 
 	void operator()(FunctorParam& ret ) const{
-		fun_(), rcast<R>(ret);
+		rcast<R>(ret), fun_();
 	}
 };
 
@@ -776,7 +776,7 @@ struct static_functor<R (C::*)(), fun_>{
 	enum{ arity = 1};
 
 	void operator()(FunctorParam& ret, C* self ) const{
-		(self->*fun_)(), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)();
 	}
 };
 
@@ -787,7 +787,7 @@ struct static_functor<R (C::*)() const, fun_>{
 	enum{ arity = 1};
 
 	void operator()(FunctorParam& ret, C* self ) const{
-		(self->*fun_)(), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)();
 	}
 };
 
@@ -799,7 +799,7 @@ struct ctor_functor<T >{
 	enum{ arity = 0};
 
 	void operator()(FunctorParam& ret ) const{
-		xnew<T>(), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>();
 	}
 };
 
@@ -821,7 +821,7 @@ struct functor<R (__stdcall *)()>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret ) const{
-		fun_(), rcast<R>(ret);
+		rcast<R>(ret), fun_();
 	}
 };
 
@@ -832,7 +832,7 @@ struct static_functor<R (__stdcall *)(), fun_>{
 	enum{ arity = 0};
 
 	void operator()(FunctorParam& ret ) const{
-		fun_(), rcast<R>(ret);
+		rcast<R>(ret), fun_();
 	}
 };
 
@@ -854,7 +854,7 @@ struct functor<R (*)(A0)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0) const{
-		fun_(a0), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0);
 	}
 };
 
@@ -873,7 +873,7 @@ struct functor<R (C::*)(A0)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0) const{
-		(self->*fun_)(a0), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0);
 	}
 };
 
@@ -892,7 +892,7 @@ struct functor<R (C::*)(A0) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0) const{
-		(self->*fun_)(a0), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0);
 	}
 };
 
@@ -905,7 +905,7 @@ struct static_functor<R (*)(A0), fun_>{
 	enum{ arity = 1};
 
 	void operator()(FunctorParam& ret , A0 a0) const{
-		fun_(a0), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0);
 	}
 };
 
@@ -916,7 +916,7 @@ struct static_functor<R (C::*)(A0), fun_>{
 	enum{ arity = 2};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0) const{
-		(self->*fun_)(a0), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0);
 	}
 };
 
@@ -927,7 +927,7 @@ struct static_functor<R (C::*)(A0) const, fun_>{
 	enum{ arity = 2};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0) const{
-		(self->*fun_)(a0), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0);
 	}
 };
 
@@ -939,7 +939,7 @@ struct ctor_functor<T , A0>{
 	enum{ arity = 1};
 
 	void operator()(FunctorParam& ret , A0 a0) const{
-		xnew<T>(a0), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0);
 	}
 };
 
@@ -961,7 +961,7 @@ struct functor<R (__stdcall *)(A0)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0) const{
-		fun_(a0), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0);
 	}
 };
 
@@ -972,7 +972,7 @@ struct static_functor<R (__stdcall *)(A0), fun_>{
 	enum{ arity = 1};
 
 	void operator()(FunctorParam& ret , A0 a0) const{
-		fun_(a0), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0);
 	}
 };
 
@@ -994,7 +994,7 @@ struct functor<R (*)(A0, A1)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
-		fun_(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1);
 	}
 };
 
@@ -1013,7 +1013,7 @@ struct functor<R (C::*)(A0, A1)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
-		(self->*fun_)(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1);
 	}
 };
 
@@ -1032,7 +1032,7 @@ struct functor<R (C::*)(A0, A1) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
-		(self->*fun_)(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1);
 	}
 };
 
@@ -1045,7 +1045,7 @@ struct static_functor<R (*)(A0, A1), fun_>{
 	enum{ arity = 2};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
-		fun_(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1);
 	}
 };
 
@@ -1056,7 +1056,7 @@ struct static_functor<R (C::*)(A0, A1), fun_>{
 	enum{ arity = 3};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
-		(self->*fun_)(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1);
 	}
 };
 
@@ -1067,7 +1067,7 @@ struct static_functor<R (C::*)(A0, A1) const, fun_>{
 	enum{ arity = 3};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1) const{
-		(self->*fun_)(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1);
 	}
 };
 
@@ -1079,7 +1079,7 @@ struct ctor_functor<T , A0, A1>{
 	enum{ arity = 2};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
-		xnew<T>(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1);
 	}
 };
 
@@ -1101,7 +1101,7 @@ struct functor<R (__stdcall *)(A0, A1)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
-		fun_(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1);
 	}
 };
 
@@ -1112,7 +1112,7 @@ struct static_functor<R (__stdcall *)(A0, A1), fun_>{
 	enum{ arity = 2};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1) const{
-		fun_(a0, a1), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1);
 	}
 };
 
@@ -1134,7 +1134,7 @@ struct functor<R (*)(A0, A1, A2)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
-		fun_(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2);
 	}
 };
 
@@ -1153,7 +1153,7 @@ struct functor<R (C::*)(A0, A1, A2)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
-		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2);
 	}
 };
 
@@ -1172,7 +1172,7 @@ struct functor<R (C::*)(A0, A1, A2) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
-		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2);
 	}
 };
 
@@ -1185,7 +1185,7 @@ struct static_functor<R (*)(A0, A1, A2), fun_>{
 	enum{ arity = 3};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
-		fun_(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2);
 	}
 };
 
@@ -1196,7 +1196,7 @@ struct static_functor<R (C::*)(A0, A1, A2), fun_>{
 	enum{ arity = 4};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
-		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2);
 	}
 };
 
@@ -1207,7 +1207,7 @@ struct static_functor<R (C::*)(A0, A1, A2) const, fun_>{
 	enum{ arity = 4};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2) const{
-		(self->*fun_)(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2);
 	}
 };
 
@@ -1219,7 +1219,7 @@ struct ctor_functor<T , A0, A1, A2>{
 	enum{ arity = 3};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
-		xnew<T>(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2);
 	}
 };
 
@@ -1241,7 +1241,7 @@ struct functor<R (__stdcall *)(A0, A1, A2)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
-		fun_(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2);
 	}
 };
 
@@ -1252,7 +1252,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2), fun_>{
 	enum{ arity = 3};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2) const{
-		fun_(a0, a1, a2), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2);
 	}
 };
 
@@ -1274,7 +1274,7 @@ struct functor<R (*)(A0, A1, A2, A3)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		fun_(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3);
 	}
 };
 
@@ -1293,7 +1293,7 @@ struct functor<R (C::*)(A0, A1, A2, A3)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3);
 	}
 };
 
@@ -1312,7 +1312,7 @@ struct functor<R (C::*)(A0, A1, A2, A3) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3);
 	}
 };
 
@@ -1325,7 +1325,7 @@ struct static_functor<R (*)(A0, A1, A2, A3), fun_>{
 	enum{ arity = 4};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		fun_(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3);
 	}
 };
 
@@ -1336,7 +1336,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3), fun_>{
 	enum{ arity = 5};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3);
 	}
 };
 
@@ -1347,7 +1347,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3) const, fun_>{
 	enum{ arity = 5};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		(self->*fun_)(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3);
 	}
 };
 
@@ -1359,7 +1359,7 @@ struct ctor_functor<T , A0, A1, A2, A3>{
 	enum{ arity = 4};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		xnew<T>(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3);
 	}
 };
 
@@ -1381,7 +1381,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		fun_(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3);
 	}
 };
 
@@ -1392,7 +1392,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3), fun_>{
 	enum{ arity = 4};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3) const{
-		fun_(a0, a1, a2, a3), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3);
 	}
 };
 
@@ -1414,7 +1414,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1433,7 +1433,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1452,7 +1452,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1465,7 +1465,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4), fun_>{
 	enum{ arity = 5};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1476,7 +1476,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4), fun_>{
 	enum{ arity = 6};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1487,7 +1487,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4) const, fun_>{
 	enum{ arity = 6};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		(self->*fun_)(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1499,7 +1499,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4>{
 	enum{ arity = 5};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		xnew<T>(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1521,7 +1521,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1532,7 +1532,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4), fun_>{
 	enum{ arity = 5};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) const{
-		fun_(a0, a1, a2, a3, a4), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4);
 	}
 };
 
@@ -1554,7 +1554,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1573,7 +1573,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1592,7 +1592,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1605,7 +1605,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5), fun_>{
 	enum{ arity = 6};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1616,7 +1616,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5), fun_>{
 	enum{ arity = 7};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1627,7 +1627,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5) const, fun_>{
 	enum{ arity = 7};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1639,7 +1639,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5>{
 	enum{ arity = 6};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1661,7 +1661,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1672,7 +1672,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5), fun_>{
 	enum{ arity = 6};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) const{
-		fun_(a0, a1, a2, a3, a4, a5), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5);
 	}
 };
 
@@ -1694,7 +1694,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1713,7 +1713,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1732,7 +1732,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1745,7 +1745,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	enum{ arity = 7};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1756,7 +1756,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	enum{ arity = 8};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1767,7 +1767,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const, fun_>{
 	enum{ arity = 8};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1779,7 +1779,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6>{
 	enum{ arity = 7};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1801,7 +1801,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1812,7 +1812,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 	enum{ arity = 7};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6);
 	}
 };
 
@@ -1834,7 +1834,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1853,7 +1853,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1872,7 +1872,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1885,7 +1885,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	enum{ arity = 8};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1896,7 +1896,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	enum{ arity = 9};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1907,7 +1907,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const, fun_>{
 	enum{ arity = 9};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1919,7 +1919,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7>{
 	enum{ arity = 8};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1941,7 +1941,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1952,7 +1952,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 	enum{ arity = 8};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7);
 	}
 };
 
@@ -1974,7 +1974,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -1993,7 +1993,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2012,7 +2012,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2025,7 +2025,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>{
 	enum{ arity = 9};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2036,7 +2036,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>{
 	enum{ arity = 10};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2047,7 +2047,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const, fun_>{
 	enum{ arity = 10};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2059,7 +2059,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
 	enum{ arity = 9};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2081,7 +2081,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2092,7 +2092,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>
 	enum{ arity = 9};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 	}
 };
 
@@ -2114,7 +2114,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2133,7 +2133,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2152,7 +2152,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2165,7 +2165,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), fun_>{
 	enum{ arity = 10};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2176,7 +2176,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), fun_>{
 	enum{ arity = 11};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2187,7 +2187,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const, fu
 	enum{ arity = 11};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2199,7 +2199,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
 	enum{ arity = 10};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2221,7 +2221,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2232,7 +2232,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), f
 	enum{ arity = 10};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 };
 
@@ -2254,7 +2254,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2273,7 +2273,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2292,7 +2292,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2305,7 +2305,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), fun_>{
 	enum{ arity = 11};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2316,7 +2316,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), fun
 	enum{ arity = 12};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2327,7 +2327,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) cons
 	enum{ arity = 12};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2339,7 +2339,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
 	enum{ arity = 11};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2361,7 +2361,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2372,7 +2372,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	enum{ arity = 11};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	}
 };
 
@@ -2394,7 +2394,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2413,7 +2413,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2432,7 +2432,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const>
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2445,7 +2445,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), f
 	enum{ arity = 12};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2456,7 +2456,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	enum{ arity = 13};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2467,7 +2467,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	enum{ arity = 13};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2479,7 +2479,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
 	enum{ arity = 12};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2501,7 +2501,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2512,7 +2512,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	enum{ arity = 12};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 	}
 };
 
@@ -2534,7 +2534,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2553,7 +2553,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2572,7 +2572,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) c
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2585,7 +2585,7 @@ struct static_functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A1
 	enum{ arity = 13};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2596,7 +2596,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	enum{ arity = 14};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2607,7 +2607,7 @@ struct static_functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	enum{ arity = 14};
 
 	void operator()(FunctorParam& ret, C* self , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		(self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), (self->*fun_)(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2619,7 +2619,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
 	enum{ arity = 13};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), xnew<T>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2641,7 +2641,7 @@ struct functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11,
 	functor(fun_type fun):fun_(fun){}
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2652,7 +2652,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 	enum{ arity = 13};
 
 	void operator()(FunctorParam& ret , A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9, A10 a10, A11 a11, A12 a12) const{
-		fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), rcast<R>(ret);
+		rcast<R>(ret), fun_(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 	}
 };
 
@@ -2676,7 +2676,7 @@ struct getter_functor{
 
 	void operator()(FunctorParam& ret, C* a0){
 		T& t = a0->*fun_;
-		t, rcast<R>(ret);
+		rcast<R>(ret), t;
 	}
 };
 
@@ -2693,7 +2693,7 @@ struct setter_functor{
 	void operator()(FunctorParam& ret, C* a0, const T& a1){
 		T& t = a0->*fun_;
 		t = a1;
-		t, rcast<R>(ret);
+		rcast<R>(ret), t;
 	}
 };
 
@@ -2711,7 +2711,7 @@ struct static_getter_functor<T C::*, fun_>{
 
 	void operator()(FunctorParam& ret, C* a0){
 		T& t = a0->*fun_;
-		t, rcast<R>(ret);
+		rcast<R>(ret), t;
 	}
 };
 
@@ -2724,7 +2724,7 @@ struct static_setter_functor<T C::*, fun_>{
 	void operator()(FunctorParam& ret, C* a0, const T& a1){
 		T& t = a0->*fun_;
 		t = a1;
-		t, rcast<R>(ret);
+		rcast<R>(ret), t;
 	}
 };
 
@@ -2732,18 +2732,18 @@ struct static_setter_functor<T C::*, fun_>{
 
 #if defined(_MSC_VER) && _MSC_VER<=1300
 
-#define Xdef_method(fun) it->def_method(XTAL_L(#fun), fun)
-#define Xdef_method2(fun, secondary_key) it->def_method(XTAL_L(#fun), secondary_key, &Self::fun)
-#define Xdef_method_alias(fun, impl) it->def_method(XTAL_L(#fun), impl)
-#define Xdef_method_alias2(fun, impl, secondary_key) it->def_method(XTAL_L(#fun), secondary_key, impl)
+#define Xdef_method(fun) it->def_method(XTAL_STRING(#fun), fun)
+#define Xdef_method2(fun, secondary_key) it->def_method(XTAL_STRING(#fun), secondary_key, &Self::fun)
+#define Xdef_method_alias(fun, impl) it->def_method(XTAL_STRING(#fun), impl)
+#define Xdef_method_alias2(fun, impl, secondary_key) it->def_method(XTAL_STRING(#fun), secondary_key, impl)
 
-#define Xdef_fun(fun) it->def_fun(XTAL_L(#fun), &Self::fun)
-#define Xdef_fun2(fun, secondary_key) it->def_fun(XTAL_L(#fun), secondary_key, &Self::fun)
-#define Xdef_fun_alias(fun, impl) it->def_fun(XTAL_L(#fun), impl)
-#define Xdef_fun_alias2(fun, impl, secondary_key) it->def_fun(XTAL_L(#fun), secondary_key, impl)
+#define Xdef_fun(fun) it->def_fun(XTAL_STRING(#fun), &Self::fun)
+#define Xdef_fun2(fun, secondary_key) it->def_fun(XTAL_STRING(#fun), secondary_key, &Self::fun)
+#define Xdef_fun_alias(fun, impl) it->def_fun(XTAL_STRING(#fun), impl)
+#define Xdef_fun_alias2(fun, impl, secondary_key) it->def_fun(XTAL_STRING(#fun), secondary_key, impl)
 
-#define Xdef_getter(fun) it->def_getter(XTAL_L(#fun), &Self::fun)
-#define Xdef_setter(fun) it->def_setter(XTAL_L("set_" #fun), &Self::fun)
+#define Xdef_getter(fun) it->def_getter(XTAL_STRING(#fun), &Self::fun)
+#define Xdef_setter(fun) it->def_setter(XTAL_STRING("set_" #fun), &Self::fun)
 
 #else
 
@@ -2794,29 +2794,29 @@ template<class TFun> inline static_setter_meker<TFun> generate_static_setter(TFu
 #define XTAL_GETTER_PARAM(fun) ::xtal::generate_static_getter(fun).inner<fun>()
 #define XTAL_SETTER_PARAM(fun) ::xtal::generate_static_setter(fun).inner<fun>()
 
-#define Xdef_method(fun) it->define(XTAL_L(#fun), XTAL_METHOD_PARAM(&Self::fun))
-#define Xdef_method2(fun, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_METHOD_PARAM(&Self::fun))
-#define Xdef_method_alias(fun, impl) it->define(XTAL_L(#fun), XTAL_METHOD_PARAM(impl))
-#define Xdef_method_alias2(fun, impl, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_METHOD_PARAM(impl))
+#define Xdef_method(fun) it->define(XTAL_STRING(#fun), XTAL_METHOD_PARAM(&Self::fun))
+#define Xdef_method2(fun, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_METHOD_PARAM(&Self::fun))
+#define Xdef_method_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_METHOD_PARAM(impl))
+#define Xdef_method_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_METHOD_PARAM(impl))
 
-#define Xdef_fun(fun) it->define(XTAL_L(#fun), XTAL_FUN_PARAM(&Self::fun))
-#define Xdef_fun2(fun, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_FUN_PARAM(&Self::fun))
-#define Xdef_fun_alias(fun, impl) it->define(XTAL_L(#fun), XTAL_FUN_PARAM(impl))
-#define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_L(#fun), secondary_key, XTAL_FUN_PARAM(impl))
+#define Xdef_fun(fun) it->define(XTAL_STRING(#fun), XTAL_FUN_PARAM(&Self::fun))
+#define Xdef_fun2(fun, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_FUN_PARAM(&Self::fun))
+#define Xdef_fun_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_FUN_PARAM(impl))
+#define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_FUN_PARAM(impl))
 
-#define Xdef_getter(fun) it->define(XTAL_L(#fun), XTAL_GETTER_PARAM(&Self::fun))
-#define Xdef_setter(fun) it->define(XTAL_L("set_") XTAL_L(#fun), XTAL_SETTER_PARAM(&Self::fun))
+#define Xdef_getter(fun) it->define(XTAL_STRING(#fun), XTAL_GETTER_PARAM(&Self::fun))
+#define Xdef_setter(fun) it->define(XTAL_LONG_LIVED_STRING(XTAL_L("set_") XTAL_L(#fun)), XTAL_SETTER_PARAM(&Self::fun))
 
 #endif
 
 #define Xdef_var(fun) Xdef_getter(fun), Xdef_setter(fun)
 
-#define Xparam(name, default_value) it->define_param(XTAL_L(#name), default_value)
+#define Xparam(name, default_value) it->define_param(XTAL_STRING(#name), default_value)
 
-#define Xdef(name, value) it->define(XTAL_L(#name), value)
-#define Xdef2(name, value, secondary_key) it->define(XTAL_L(#name), value, secondary_key)
+#define Xdef(name, value) it->define(XTAL_STRING(#name), value)
+#define Xdef2(name, value, secondary_key) it->define(XTAL_STRING(#name), value, secondary_key)
 
-#define Xdef_const(name) it->define(XTAL_L(#name), (int_t)Self::name)
+#define Xdef_const(name) it->define(XTAL_STRING(#name), (int_t)Self::name)
 
 //{REPEAT{{
 /*

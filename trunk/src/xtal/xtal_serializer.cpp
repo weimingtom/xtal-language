@@ -101,7 +101,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 	switch(type(v)){
 		XTAL_DEFAULT;
 
-		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LITERAL_STRING, TYPE_INTERNED_STRING, TYPE_STRING){
+		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LONG_LIVED_STRING, TYPE_INTERNED_STRING, TYPE_STRING){
 			const StringPtr& a = unchecked_ptr_cast<String>(v);
 			uint_t sz = a->data_size();
 			const char_t* str = a->data();
@@ -296,23 +296,26 @@ AnyPtr Serializer::inner_deserialize_name(){
 }
 
 StringPtr Serializer::inner_deserialize_string(int_t charsize, bool bintern){
-	uint_t sz = stream_->get_u32be();
-	
-	XMallocGuard guard(sizeof(char_t)*sz);
-	char_t* p = (char_t*)guard.get();
-
-	switch(charsize){
-		XTAL_DEFAULT{ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u8(); } }
-		XTAL_CASE(2){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u16be(); } }
-		XTAL_CASE(4){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u32be(); } }
-	}
-
 	StringPtr ret;
-	if(bintern){
-		ret = intern(p, sz);
+	if(uint_t sz = stream_->get_u32be()){
+		XMallocGuard guard(sizeof(char_t)*sz);
+		char_t* p = (char_t*)guard.get();
+
+		switch(charsize){
+			XTAL_DEFAULT{ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u8(); } }
+			XTAL_CASE(2){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u16be(); } }
+			XTAL_CASE(4){ for(uint_t i = 0; i<sz; ++i){ p[i] = (char_t)stream_->get_u32be(); } }
+		}
+
+		if(bintern){
+			ret = intern(p, sz);
+		}
+		else{
+			ret = XNew<String>(p, sz);
+		}
 	}
 	else{
-		ret = XNew<String>(p, sz);
+		ret = empty_id;
 	}
 	append_value(ret);
 	return ret;

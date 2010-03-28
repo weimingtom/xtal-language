@@ -48,9 +48,9 @@ public:
 		rcpvalue = const_cast<RefCountingBase*>(v); 
 	}
 
-	void init_literal_string(const StringLiteral& v){ 
-		type = TYPE_LITERAL_STRING | (v.size()<<STRING_SIZE_SHIFT); 
-		spvalue = v.str(); 
+	void init_long_lived_string(const char_t* str, uint_t size){ 
+		type = TYPE_LONG_LIVED_STRING | (size<<STRING_SIZE_SHIFT); 
+		spvalue = str; 
 	}
 
 	void init_small_string(uint_t size){ 
@@ -109,7 +109,10 @@ public:
 public:
 
 	enum{
-		HAVE_FINALIZER_FLAG_SHIFT = TYPE_SHIFT+1,
+		DESTROYED_FLAG_SHIFT = TYPE_SHIFT+1,
+		DESTROYED_FLAG_BIT = 1<<DESTROYED_FLAG_SHIFT,
+
+		HAVE_FINALIZER_FLAG_SHIFT = DESTROYED_FLAG_SHIFT+1,
 		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
 
 		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
@@ -122,7 +125,10 @@ public:
 		CPP_CLASS_INDEX_MASK = ~((1<<CPP_CLASS_INDEX_SHIFT)-1)
 	};
 
-	bool have_finalizer() const{ return (type & HAVE_FINALIZER_FLAG_BIT)!=0; }
+	uint_t destroyed() const{ return (type & DESTROYED_FLAG_BIT); }
+	void set_destroyed_flag(){ type |= DESTROYED_FLAG_BIT; }
+
+	uint_t have_finalizer() const{ return (type & HAVE_FINALIZER_FLAG_BIT); }
 	void set_finalizer_flag(){ type |= HAVE_FINALIZER_FLAG_BIT; }
 	void unset_finalizer_flag(){ type &= ~HAVE_FINALIZER_FLAG_BIT; }
 
@@ -130,7 +136,8 @@ public:
 	void add_ref_count(int_t rc){ type += rc<<REF_COUNT_SHIFT; }
 	void inc_ref_count(){ type += 1<<REF_COUNT_SHIFT; }
 	void dec_ref_count(){ type -= 1<<REF_COUNT_SHIFT; }
-	uint_t can_not_gc() const{ return type&(REF_COUNT_MASK|HAVE_FINALIZER_FLAG_BIT); }
+
+	uint_t can_not_destroy() const{ return (type&REF_COUNT_MASK); }
 
 	uint_t string_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
 	uint_t string_literal_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
@@ -545,6 +552,31 @@ public:
 	friend AnyRawValue& rawvalue(Any& v);
 };
 
+class AnyArg : public Any{
+public:
+	template<int N> AnyArg(const LongLivedStringN<N>& str){ value_.init_long_lived_string(str.str(), str.size()); }
+	AnyArg(const LongLivedString& str){ value_.init_long_lived_string(str.str(), str.size()); }
+	AnyArg(bool v){ value_.init_bool(v); }
+	AnyArg(char v){ value_.init_int(v); }
+	AnyArg(signed char v){ value_.init_int(v); }
+	AnyArg(unsigned char v){ value_.init_int(v); }
+	AnyArg(short v){ value_.init_int(v); }
+	AnyArg(unsigned short v){ value_.init_int(v); }
+	AnyArg(int v){ value_.init_int(v); }
+	AnyArg(unsigned int v){ value_.init_int(v); }
+	AnyArg(long v){ value_.init_int(v); }
+	AnyArg(unsigned long v){ value_.init_int(v); }
+	AnyArg(long long v){ value_.init_int(v); }
+	AnyArg(unsigned long long v){ value_.init_int(v); }
+	AnyArg(float v){ value_.init_float(v); }
+	AnyArg(double v){ value_.init_float(v); }
+	AnyArg(long double v){ value_.init_float(v); }
+	AnyArg(const Any& v){ value_ = v.value_; }
+public:
+	operator const AnyPtr&() const{
+		return *reinterpret_cast<const AnyPtr*>(this);
+	}
+};
 /////////////////////////////////////////////////////////
 
 inline const AnyRawValue& rawvalue(const Any& v){

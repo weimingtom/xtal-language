@@ -25,6 +25,7 @@
 #include "xtal_map.cpp"
 #include "xtal_cfun.cpp"
 #include "xtal_string.cpp"
+#include "xtal_stringspace.cpp"
 #include "xtal_stream.cpp"
 #include "xtal_basictype.cpp"
 #include "xtal_cast.cpp"

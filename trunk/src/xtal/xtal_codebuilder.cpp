@@ -198,6 +198,7 @@ CodePtr CodeBuilder::compile_toplevel(const ExprPtr& e, const StringPtr& source_
 		return result_;
 	}
 	else{
+		XTAL_SET_EXCEPT(cpp_class<CompileError>()->call(Xt1("XRE1016", name, source_file_name), errors()));
 		result_ = null;
 		return null;
 	}

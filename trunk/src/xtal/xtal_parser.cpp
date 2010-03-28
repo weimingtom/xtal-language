@@ -99,7 +99,7 @@ Parser::Parser(){
 
 	identifiers_ = XNew<Array>(Token::KEYWORD_MAX);
 	for(uint_t i=0; i<sizeof(keywords)/sizeof(*keywords); ++i){
-		IDPtr id = intern(*(StringLiteral*)(keywords[i].key));
+		IDPtr id = intern(*(LongLivedString*)(keywords[i].key));
 		identifier_map_->set_at(id, keywords[i].value);
 		identifiers_->set_at(keywords[i].value, id);
 	}

@@ -91,7 +91,7 @@ NativeMethod::NativeMethod(const param_types_holder_n& pth, const void* val){
 	max_param_count_ = (pth.vm || pth.extendable) ? 255 : pth.param_n;
 
 	uint_t data_size = val_size_ + pth.param_n*sizeof(NamedParam);
-	data_ = xmalloc(data_size);
+	data_ = data_size==0 ? 0 : xmalloc(data_size);
 
 	// ŠÖ”‚ğƒRƒs[
 	std::memcpy(data_, val, val_size_);

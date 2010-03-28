@@ -10,9 +10,9 @@
 namespace xtal{
 
 void* xmalloc(size_t);
-void xfree(void*p, size_t);
+void xfree(void*, size_t);
 void* xmalloc_align(size_t, size_t);
-void xfree_align(void*p, size_t, size_t);
+void xfree_align(void*, size_t, size_t);
 
 enum{
 	ALIGN_MIN = 8
@@ -63,9 +63,10 @@ struct RCBaseClassType<INHERITED_RCBASE, T>{
 
 struct VirtualMembers{
 	CppClassSymbolData* cpp_class_symbol_data;
-	u8 rcbase_class_type;
-	u8 object_align;
+	u16 rcbase_class_type;
+	u16 object_align;
 	u16 object_size;
+	u16 is_container;
 
 	void (*object_free)(RefCountingBase*);
 	void (*destroy)(RefCountingBase*);
@@ -181,9 +182,10 @@ struct VirtualMembersT{
 template<class T>
 const VirtualMembers VirtualMembersT<T>::value = {
 	&CppClassSymbol<T>::value,
-	(u8)RCBaseClassType<InheritedN<T>::value, T>::value,
-	(u8)AlignOf<T>::value,
+	(u16)RCBaseClassType<InheritedN<T>::value, T>::value,
+	(u16)AlignOf<T>::value,
 	(u16)sizeof(T),
+	(u16)checker::visit_members_overwrite,
 
 	&VirtualMembersM<T>::object_free,
 	&VirtualMembersM<T>::destroy,
@@ -247,11 +249,17 @@ public:
 public:
 
 	void finalize(){
-		virtual_members()->finalize(this);
+		if(!destroyed()){
+			value_.inc_ref_count(); 
+			virtual_members()->finalize(this);
+			value_.dec_ref_count(); 
+		}
 	}
 
 	void visit_members(Visitor& m){
-		virtual_members()->visit_members(this, m);
+		if(!destroyed()){
+			virtual_members()->visit_members(this, m);
+		}
 	}
 
 	void shrink_to_fit(){
@@ -261,27 +269,48 @@ public:
 public:
 
 	void on_rawcall(const VMachinePtr& vm);
+	
 	void on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){}
+	
 	const AnyPtr& on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){ return *(AnyPtr*)&undefined; }
+	
 	const ClassPtr& on_object_parent(){ return *(ClassPtr*)&null; }
+	
 	void on_set_object_parent(const ClassPtr& parent){}
+	
 	void on_finalize(){}
+	
 	void on_visit_members(Visitor& m){}
+
 	void on_shrink_to_fit(){}
 
 public:
 	RefCountingBase(){}
 
-	bool have_finalizer(){ return value_.have_finalizer(); }
+	uint_t have_finalizer(){ return value_.have_finalizer(); }
+
 	void set_finalizer_flag(){ value_.set_finalizer_flag(); }
+
 	void unset_finalizer_flag(){ value_.unset_finalizer_flag(); }
 
 	uint_t ref_count(){ return value_.ref_count(); }
-	void add_ref_count(int_t rc){ value_.add_ref_count(rc); }
-	void inc_ref_count(){ value_.inc_ref_count(); }
-	void dec_ref_count(){ value_.dec_ref_count(); }
 
-	uint_t can_not_gc(){ return value_.can_not_gc(); }
+	void inc_ref_count(){ value_.inc_ref_count(); }
+
+	void dec_ref_count(){
+		value_.dec_ref_count();
+		if(!value_.can_not_destroy()){
+			destroy();
+		}
+	}
+
+	void add_ref_count(int_t rc){ value_.add_ref_count(rc); }
+
+	uint_t can_not_destroy(){ return value_.can_not_destroy(); }
+
+	uint_t destroyed(){ return value_.destroyed(); }
+
+	void set_destroyed_flag(){ value_.set_destroyed_flag(); }
 
 	void destroy();
 
@@ -290,10 +319,6 @@ public:
 	}
 
 public:
-
-	enum{
-		BUILD = 0
-	};
 
 	void special_initialize(const VirtualMembers* vmembers);
 
@@ -338,7 +363,7 @@ public:
 
 	InstanceVariables* instance_variables(){ return instance_variables_; }
 
-	void make_instance_variables();
+	void init_instance_variables(ClassInfo* info);
 
 	void set_class(const ClassPtr& c);
 

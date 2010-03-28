@@ -11,15 +11,12 @@ VMachine::VMachine(){
 	resume_pc_ = 0;
 
 	variables_top_ = 0;
-	variables_.resize(128);
 	set_variables_top(0);
-	stack_.reserve(32);
+//	stack_.reserve(4);
 
-	setup_call();
-	fun_frames_.top()->processed = 0;
+	ready();
 
 	parent_vm_ = 0;
-
 
 	thread_yield_count_ = 1000;
 
@@ -45,8 +42,7 @@ void VMachine::reset(){
 	except_frames_.resize(0);
 	fun_frames_.resize(0);
 
-	setup_call();
-	fun_frames_.top()->processed = 0;
+	ready();
 	
 	for(int_t i=0, size=fun_frames_.capacity(); i<size; ++i){
 		if(FunFrame* p = fun_frames_.reverse_at_unchecked(i)){
@@ -60,7 +56,7 @@ void VMachine::reset(){
 
 	for(int_t i=0, size=scopes_.capacity(); i<size; ++i){
 		Scope& p = scopes_.reverse_at_unchecked(i);
-		p.frame = null;
+		p.frame = BasePtr<Frame>();
 	}
 
 	set_variables_top(0);
@@ -79,12 +75,6 @@ void VMachine::reset(){
 
 VMachine::FunFrame::FunFrame()
 	:fun_(null), outer_(null), self_(null){}
-
-void VMachine::FunFrame::set_fun(const MethodPtr& v){ 
-	fun_ = v; 
-	outer_ = v->outer();
-	identifier_ = fun()->code()->identifier_data(); 
-}
 
 void VMachine::FunFrame::set_null(){
 	set_fun();
@@ -121,8 +111,7 @@ void VMachine::push_named_args(const MapPtr& p){
 }
 
 void VMachine::push_arg(const char_t* s){ push_arg(AnyPtr(s)); }
-void VMachine::push_arg(const char8_t* s){ push_arg(AnyPtr(s)); }
-void VMachine::push_arg(const StringLiteral& s){ push_arg(AnyPtr(s)); }
+void VMachine::push_arg(const LongLivedString& s){ push_arg(AnyPtr(s)); }
 void VMachine::push_arg(char v){ push_arg(Int(v)); }
 void VMachine::push_arg(signed char v){ push_arg(Int(v)); }
 void VMachine::push_arg(unsigned char v){ push_arg(Int(v)); }
@@ -139,20 +128,39 @@ void VMachine::push_arg(double v){ push_arg(Float((float_t)v)); }
 void VMachine::push_arg(long double v){ push_arg(Float((float_t)v)); }
 void VMachine::push_arg(bool v){ push_arg(Bool(v)); }
 
+void VMachine::ready(){
+	FunFrame* fp = fun_frames_.push();
+	if(!fp){ 
+		fun_frames_.top() = fp = new_object_xmalloc<FunFrame>();
+	}
+
+	FunFrame& f = *fp;
+	f.processed = 0;
+	f.need_result_count = 0;
+	f.ordered_arg_count = 0;
+	f.named_arg_count = 0;
+	f.called_pc = 0;
+	f.poped_pc = &end_code_;
+	f.result = 0;
+	f.prev_stack_base = 0;
+	f.scope_lower = scopes_.size();
+	f.set_self(undefined);
+	f.set_fun();
+	f.processed = 0;
+
+	result_base_ = f.result;
+}
+
 void VMachine::setup_call(int_t need_result_count){
 	int_t base;
-	if(!fun_frames_.empty()){
-		FunFrame& f= ff();
-		if(f.fun()){
-			base = 128;
-		}
-		else{
-			base = f.ordered_arg_count+f.named_arg_count*2+1;
-		}
+	FunFrame& f= ff();
+	if(f.fun()){
+		base = 128;
 	}
 	else{
-		base = 0;
+		base = f.ordered_arg_count+f.named_arg_count*2+1;
 	}
+
 
 	CallState call_state;
 	call_state.self = undefined;
@@ -368,8 +376,7 @@ void VMachine::return_result_mv(const ValuesPtr& values){
 }
 
 void VMachine::return_result(const char_t* s){ return_result(xnew<String>(s)); }
-void VMachine::return_result(const char8_t* s){ return_result(xnew<String>(s)); }
-void VMachine::return_result(const StringLiteral& s){ return_result(xnew<String>(s)); }
+void VMachine::return_result(const LongLivedString& s){ return_result(xnew<String>(s)); }
 void VMachine::return_result(const IDPtr& s){ return_result((AnyPtr&)s); }
 
 void VMachine::return_result(char v){ return_result(Int(v)); }
@@ -531,15 +538,19 @@ void VMachine::push_args(const ArgumentsPtr& args, int_t stack_base, int_t order
 
 ArgumentsPtr VMachine::make_arguments(int_t lower){
 	ArgumentsPtr p = xnew<Arguments>();
-
-	for(int_t i = lower, size = ordered_arg_count(); i<size; ++i){
+	int_t osize = ordered_arg_count();
+	for(int_t i = lower; i<osize; ++i){
 		p->add_ordered(arg(i));
 	}
 
 	for(int_t i = 0, size = named_arg_count(); i<size; ++i){
-		p->add_named(local_variable(ff().ordered_arg_count+i*2+0), local_variable(ff().ordered_arg_count+i*2+1));
+		p->add_named(local_variable(osize+i*2+0), local_variable(osize+i*2+1));
 	}
 	return p;
+}
+
+bool VMachine::has_arguments(){
+	return ordered_arg_count()!=0 || named_arg_count()!=0;
 }
 
 ArgumentsPtr VMachine::inner_make_arguments(const NamedParam* params, int_t num){
@@ -603,20 +614,15 @@ AnyPtr VMachine::append_backtrace(const inst_t* pc, const AnyPtr& e){
 			ep = cpp_class<RuntimeError>()->call(ep);
 		}
 
-		if(fun() && fun()->code()){
-			if((pc !=  fun()->code()->data() + fun()->code()->size()-1)){
-				unchecked_ptr_cast<Exception>(ep)->append_backtrace(
-					 fun()->code()->source_file_name(),
-					 fun()->code()->compliant_lineno(pc),
-					fun()->object_name());
+		if(MethodPtr fun = ff().fun()){
+			if(CodePtr code = fun->code()){
+				if((pc !=  code->data() + code->size()-1)){
+					unchecked_ptr_cast<Exception>(ep)->append_backtrace(
+						code->source_file_name(),
+						code->compliant_lineno(pc),
+						fun->object_name());
+				}
 			}
-		}
-		else{
-			/*ep->send(Xid(append_backtrace))(
-				"C++ function",
-				-1,
-				ap(ff().temp1_)->object_name()
-			);*/
 		}
 		return ep;
 	}
@@ -882,15 +888,16 @@ const inst_t* VMachine::catch_body(const inst_t* pc, const ExceptFrame& nef){
 	set_variables_top(ef.variables_top);
 
 	if(ef.info){
+		CodePtr code = ff().fun()->code();
 		if(ef.info->catch_pc && e){
-			pc = ef.info->catch_pc +  fun()->code()->data();
+			pc = ef.info->catch_pc +  code->data();
 			stack_.push(AnyPtr(ef.info->end_pc));
 			stack_.push(e);
 		}
 		else{
-			pc = ef.info->finally_pc +  fun()->code()->data();
+			pc = ef.info->finally_pc +  code->data();
 			stack_.push(e);
-			stack_.push(AnyPtr(fun()->code()->size()-1));
+			stack_.push(AnyPtr(code->size()-1));
 		}
 
 		except_frames_.downsize(1);
@@ -945,6 +952,27 @@ const inst_t* VMachine::push_except(const inst_t* pc, const AnyPtr& e){
 }
 
 void VMachine::on_visit_members(Visitor& m){
+	/*
+	if(m.value()<0){
+		for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
+			if(FunFrame* p = fun_frames_.reverse_at_unchecked(i)){
+				p->set_null();
+			}
+		}
+
+		for(int_t i=scopes_.size(), size=scopes_.capacity(); i<size; ++i){
+			Scope& p = scopes_.reverse_at_unchecked(i);
+			p.frame = null;
+		}
+
+		for(int_t i=variables_top()+128, size=variables_.size(); i<size; ++i){
+			variables_.set_at(i, null);
+		}
+	}
+	*/
+
+////////////
+
 	Base::on_visit_members(m);
 	m & debug_info_ & except_[0] & except_[1] & except_[2];
 
@@ -966,23 +994,6 @@ void VMachine::on_visit_members(Visitor& m){
 
 	for(int_t i=0, size=variables_.size(); i<size; ++i){
 		m & variables_.at(i);
-	}
-
-///////////
-
-	for(int_t i=fun_frames_.size(), size=fun_frames_.capacity(); i<size; ++i){
-		if(FunFrame* p = fun_frames_.reverse_at_unchecked(i)){
-			p->set_null();
-		}
-	}
-
-	for(int_t i=scopes_.size(), size=scopes_.capacity(); i<size; ++i){
-		Scope& p = scopes_.reverse_at_unchecked(i);
-		p.frame = null;
-	}
-
-	for(int_t i=variables_top()+256, size=variables_.size(); i<size; ++i){
-	//	variables_.set_at(i, null);
 	}
 }
 

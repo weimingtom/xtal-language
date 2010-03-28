@@ -1,6 +1,9 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#include "xtal_stringspace.h"
+#include "xtal_details.h"
+
 namespace xtal{
 
 uint_t string_hashcode(const char_t* data, uint_t len){
@@ -130,7 +133,7 @@ int_t edit_distance(const StringPtr& str1, const StringPtr& str2){
 StringData* String::new_string_data(uint_t size){
 	StringData* p = new(make_object<StringData>()) StringData(size);
 	value_.init_rcbase(TYPE_STRING, p);
-	register_gc(p);
+	//register_gc(p);
 	return p;
 }
 
@@ -152,6 +155,20 @@ void String::init_string(const char_t* str, uint_t size){
 		}
 	}
 }
+	
+void String::init_long_lived_string(const char_t* str, uint_t size){
+	if(size<SMALL_STRING_MAX){
+		init_small_string(str, size);
+	}
+	else{
+		if(string_is_ch(str, size)){
+			*this = ID(str, size);
+		}
+		else{
+			value_.init_long_lived_string(str, size);
+		}
+	}
+}
 
 String::String(){
 	value_.init_small_string(0);
@@ -161,26 +178,8 @@ String::String(const char_t* str){
 	init_string(str, string_data_size(str));
 }
 
-String::String(const char8_t* str){
-	StringConv conv(str);
-	init_string((char_t*)conv.memory.release(), conv.memory.size()/sizeof(char_t)-1);
-}
-
 String::String(const char_t* str, uint_t size){
 	init_string(str, size);
-}
-
-String::String(const StringLiteral& str){
-	if(str.size()<SMALL_STRING_MAX){
-		init_small_string(str.str(), str.size());
-	}
-	else{
-		value_.init_literal_string(str);
-	}
-}
-
-String::String(const char_t* begin, const char_t* last){
-	init_string(begin, last-begin);
 }
 
 String::String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2){
@@ -222,7 +221,8 @@ const char_t* String::data() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE(TYPE_SMALL_STRING){ return value_.s(); }
-		XTAL_CASE2(TYPE_INTERNED_STRING, TYPE_LITERAL_STRING){ return value_.sp(); }
+		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return value_.sp(); }
+		XTAL_CASE(TYPE_INTERNED_STRING){ return value_.sp(); }
 		XTAL_CASE(TYPE_STRING){ return ((StringData*)rcpvalue(*this))->buf(); }
 	}
 	return XTAL_L("");
@@ -232,7 +232,7 @@ uint_t String::data_size() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 
-		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_INTERNED_STRING, TYPE_LITERAL_STRING){ 
+		XTAL_CASE3(TYPE_SMALL_STRING, TYPE_INTERNED_STRING, TYPE_LONG_LIVED_STRING){ 
 			return value_.string_size(); 
 		}
 
@@ -249,7 +249,7 @@ IDPtr String::intern() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return unchecked_ptr_cast<ID>(ap(*this)); }
-		XTAL_CASE(TYPE_LITERAL_STRING){ return xtal::intern(value_.sp(), value_.string_size()); }
+		XTAL_CASE(TYPE_LONG_LIVED_STRING){ return xtal::intern(value_.sp(), value_.string_size()); }
 		XTAL_CASE(TYPE_STRING){
 			StringData* p = ((StringData*)rcpvalue(*this));
 			return xtal::intern(p->buf(), p->data_size());
@@ -262,7 +262,7 @@ bool String::is_interned() const{
 	switch(type(*this)){
 		XTAL_NODEFAULT;
 		XTAL_CASE2(TYPE_SMALL_STRING, TYPE_INTERNED_STRING){ return true; }
-		XTAL_CASE2(TYPE_LITERAL_STRING, TYPE_STRING){ return false; }
+		XTAL_CASE2(TYPE_LONG_LIVED_STRING, TYPE_STRING){ return false; }
 	}
 	return false;
 }
@@ -319,7 +319,6 @@ float_t String::to_f() const{
 
 AnyPtr String::each() const{
 	return send(Xid(each));
-//	return XNew<StringEachIter>(to_smartptr(this));
 }
 
 bool String::is_ch() const{
@@ -419,34 +418,13 @@ StringData::~StringData(){
 
 ////////////////////////////////////////////////////////////////
 
-ID::ID(const char_t* str)
-	:String(*xtal::intern(str)){}
-
-ID::ID(const char8_t* str)	
-	:String(*xtal::intern(str)){}
-
-ID::ID(const StringLiteral& str)
-	:String(*xtal::intern(str)){}
-
-ID::ID(const char_t* str, uint_t size)
-	:String(*xtal::intern(str, size)){}
-
-ID::ID(const char_t* begin, const char_t* last)
-	:String(*xtal::intern(begin, last)){}
-
-ID::ID(const StringPtr& name)
-	:String(name->is_interned() ? *name : *xtal::intern(name)){}
-
 SmartPtr<ID>::SmartPtr(const char_t* v)
 	:Any(ID(v)){}
 
 SmartPtr<ID>::SmartPtr(const StringPtr& v)
 	:Any(ID(v)){}
 
-SmartPtr<ID>::SmartPtr(const char8_t* v)
-	:Any(ID(v)){}
-
-SmartPtr<ID>::SmartPtr(const StringLiteral& v)
+SmartPtr<ID>::SmartPtr(const LongLivedString& v)
 	:Any(ID(v)){}
 
 SmartPtr<ID>::SmartPtr(const ID& v)

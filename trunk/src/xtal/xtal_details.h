@@ -30,7 +30,6 @@ public:
 	ThreadSpace thread_space_;
 	MemberCacheTable member_cache_table_;
 	IsCacheTable is_cache_table_;
-	CtorCacheTable ctor_cache_table_;
 
 	ClassPtr builtin_;
 	ClassPtr global_;
@@ -47,7 +46,6 @@ public:
 	bool ignore_memory_assert_;
 	JmpBuf jmp_buf_;
 
-	uint_t malloc_count_;
 	uint_t used_memory_;
 
 	bool gc_stress_;

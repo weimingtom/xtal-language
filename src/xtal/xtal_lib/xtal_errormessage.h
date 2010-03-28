@@ -68,8 +68,8 @@ inline void bind_error_message(){
 		XTAL_L("XRE1034"), XTAL_L("XRE1034:無限ループが発生する可能性があるxpeg要素を実行しようとしました"),	};
 	
 	for(int i=0; i<sizeof(messages)/sizeof(*messages)/2; ++i){
-		IDPtr key(*(StringLiteral*)messages[i*2+0]);
-		text_map()->set_at(key, *(StringLiteral*)messages[i*2+1]);
+		IDPtr key(*(LongLivedString*)messages[i*2+0]);
+		text_map()->set_at(key, *(LongLivedString*)messages[i*2+1]);
 	}
 }
 	

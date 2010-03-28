@@ -4,74 +4,121 @@
 #include "xtal_details.h"
 
 namespace xtal{
+
+namespace{
+	Class* empty_inherited_classes[1] = {0};
+};
 	
-void InstanceVariables::init_variables(ClassInfo* class_info){
-	if(class_info->instance_variable_size){
-		VariablesInfo vi;
-		vi.class_info = class_info;
-		vi.pos = (int_t)variables_.size();
-		variables_.upsize(class_info->instance_variable_size);
-		variables_info_.push(vi);
+InstanceVariables* InstanceVariables::create(ClassInfo* class_info){
+	if(info_==&empty_class_info){
+		// 空状態から一つだけインストールした状態へ移行
+		InstanceVariables* ret = (InstanceVariables*)xmalloc(sizeof(InstanceVariables)+sizeof(AnyPtr)*class_info->instance_variable_size);
+		ret->info_ = class_info;
+		ret->sum_ = class_info->instance_variable_size;
+		char* retbuf = (char*)(ret + 1);
+		AnyPtr* retvalues = (AnyPtr*)retbuf;
+		xmemset(retvalues, 0, class_info->instance_variable_size);
+		return ret;
 	}
-}
+	else if(info_){
+		// 一つだけインストールした状態から複数インストールした状態へ移行
+		char* buf = (char*)(this + 1);
+		AnyPtr* values = (AnyPtr*)buf;
 
-bool InstanceVariables::is_included(ClassInfo* class_info){
-	VariablesInfo& front = variables_info_.top();
-	if(front.class_info == class_info){
-		return true;
+		int_t sum = info_->instance_variable_size+class_info->instance_variable_size;
+		InstanceVariables* ret = (InstanceVariables*)xmalloc(
+			sizeof(InstanceVariables) + sizeof(int_t) +
+			sizeof(AnyPtr)*(2+sum));
+		ret->info_ = 0;
+		ret->sum_ = sum;
+
+		char* retbuf = (char*)(ret + 1);
+		int_t& retinstall_count = *(int_t*)retbuf; retbuf += sizeof(int_t);
+		retinstall_count = 2;
+		AnyPtr* retvalues = (AnyPtr*)retbuf;
+		copy_any(retvalues[0], ImmediateValue(0, info_));
+		copy_any(retvalues[1], ImmediateValue(info_->instance_variable_size, class_info));
+		xmemcpy(retvalues+2, values, info_->instance_variable_size);
+		xmemset(retvalues+2+info_->instance_variable_size, 0, class_info->instance_variable_size);	
+
+		xfree(this, sizeof(InstanceVariables)+sizeof(AnyPtr)*info_->instance_variable_size);
+		return ret;
 	}
+	else{
+		char* buf = (char*)(this + 1);
+		int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
+		AnyPtr* values = (AnyPtr*)buf;
 
-	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
-		VariablesInfo& v = variables_info_[i];
-		if(v.class_info==class_info){
-			std::swap(front, v);
-			return true;
-		}	
-	}
-	return false;
-}
-
-const AnyPtr& InstanceVariables::variable2(uint_t index, ClassInfo* class_info){
-	VariablesInfo& front = variables_info_[0];
-	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
-		VariablesInfo& v = variables_info_[i];
-		if(v.class_info==class_info){
-			std::swap(front, v);
-			return variables_.at(front.pos + index);
+		int_t oldsum = 0;
+		for(int_t i=0; i<install_count; ++i){
+			oldsum += ((ClassInfo*)rawvalue(values[i]).immediate_second_vpvalue())->instance_variable_size;
 		}
-	}	
+		int_t sum = oldsum + class_info->instance_variable_size;
 
-	return undefined;
+		InstanceVariables* ret = (InstanceVariables*)xmalloc(
+			sizeof(InstanceVariables) + sizeof(int_t) +
+			sizeof(AnyPtr)*(install_count+1+sum));
+		ret->info_ = 0;
+		ret->sum_ = sum;
+	
+		char* retbuf = (char*)(ret + 1);
+		int_t& retinstall_count = *(int_t*)retbuf; retbuf += sizeof(int_t);
+		retinstall_count = install_count+1;
+		AnyPtr* retvalues = (AnyPtr*)retbuf;
+		copy_any(retvalues[0], ImmediateValue(oldsum, class_info));
+		xmemcpy(retvalues+1, values, install_count+oldsum);
+		xmemset(retvalues+1+install_count+oldsum, 0, class_info->instance_variable_size);	
+
+		xfree(this, sizeof(InstanceVariables)+sizeof(int_t)+sizeof(AnyPtr)*(oldsum+install_count));
+		return ret;
+	}
 }
 
-void InstanceVariables::set_variable2(uint_t index, ClassInfo* class_info, const AnyPtr& value){
-	VariablesInfo& front = variables_info_[0];
-	for(uint_t i = 1, size = variables_info_.size(); i<size; ++i){
-		VariablesInfo& v = variables_info_[i];
-		if(v.class_info==class_info){
-			std::swap(front, v);
-			variables_.set_at(front.pos + index, value);
-			return;
+void InstanceVariables::destroy(){
+	if(info_==&empty_class_info){
+
+	}
+	else if(info_){
+		// 一つだけインストールした状態を削除
+		char* buf = (char*)(this + 1);
+		AnyPtr* values = (AnyPtr*)buf;
+		for(int_t i=0, sz=sum_; i<sz; ++i){
+			dec_ref_count_force(values[i]);
 		}
-	}	
+		xfree(this, sizeof(InstanceVariables)+sizeof(AnyPtr)*sum_);
+	}
+	else{
+		// 複数インストールした状態を削除
+		char* buf = (char*)(this + 1);
+		int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
+		AnyPtr* values = (AnyPtr*)buf;
+
+		for(int_t i=0, sz=sum_; i<sz; ++i){
+			dec_ref_count_force(values[install_count+i]);
+		}
+
+		xfree(this, sizeof(InstanceVariables)+sizeof(int_t)+sizeof(AnyPtr)*(sum_+install_count));
+	}
 }
 
-void InstanceVariables::replace(ClassInfo* from, ClassInfo* to){
-	for(uint_t i = 0, size = variables_info_.size(); i<size; ++i){
-		if(variables_info_[i].class_info==from){
-			int_t pos = variables_info_[i].pos;
-			variables_info_.erase(i);
+void InstanceVariables::visit_members(Visitor& m){
+	if(info_==&empty_class_info){
 
-			for(uint_t j = 0, jsize = variables_info_.size(); j<jsize; ++j){
-				if(variables_info_[j].pos>pos){
-					variables_info_[j].pos -= from->instance_variable_size;
-				}
-			}
-
-			variables_.erase(pos, from->instance_variable_size);
-			init_variables(to);
-			return;
-		}	
+	}
+	else if(info_){
+		char* buf = (char*)(this + 1);
+		AnyPtr* values = (AnyPtr*)buf;
+		for(int_t i=0, sz=sum_; i<sz; ++i){
+			m & values[i];
+		}
+	}
+	else{
+		char* buf = (char*)(this + 1);
+		int_t install_count = *(int_t*)buf; buf += sizeof(int_t);
+		AnyPtr* values = (AnyPtr*)buf;
+		for(int_t i=0, sz=sum_; i<sz; ++i){
+			m & values[install_count+i];
+		}
 	}
 }
 
@@ -85,7 +132,6 @@ Class::Class()
 Class::Class(const FramePtr& outer, const CodePtr& code, ClassInfo* info)
 	:Frame(outer, code, info){
 	init();
-//	instance_variables_layout_.push(InstanceVariablesInfo(info, 0));
 }
 
 Class::Class(const IDPtr& name)
@@ -97,31 +143,59 @@ Class::Class(const IDPtr& name)
 Class::Class(cpp_class_t)
 	:Frame(nul<Frame>(), nul<Code>(), 0){
 	init();
-	flags_ = FLAG_NATIVE;
+	flags_ |= FLAG_NATIVE;
 }
 
 void Class::init(){
-	set_object_temporary_name(empty_id);
+	options_ = 0;
+	inherited_classes_ = empty_inherited_classes;
 	object_force_ = 0;
-	flags_ = 0;
 	symbol_data_ = 0;
-	make_map_members();
-	initialized_members_ = true;
+	set_initialized_members();
 }
 
 Class::~Class(){
+	int_t count = 0;
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		inherited_classes_[i]->dec_ref_count();
+		count++;
+	}
 
+	if(count>0){
+		xfree(inherited_classes_, sizeof(Class*)*(count+1));
+	}
+
+	if(options_){
+		if(flags_&FLAG_OPTIONS){
+			delete_object_xfree<Options2>((Options2*)options_);
+		}
+		else{
+			delete_object_xfree<Options>(options_);
+		}
+	}
 }
 
 void Class::overwrite(const ClassPtr& p){
 	if(!is_native() && !p->is_native()){
-		for(int_t i=0, sz=p->inherited_classes_.size(); i<sz; ++i){
-			inherit(unchecked_ptr_cast<Class>(p->inherited_classes_.at(i)));
+		
+		for(int_t i=0; p->inherited_classes_[i]; ++i){
+			inherit(p->inherited_classes_[i]);
 		}
 		
-		if(p->map_members_){
-			for(map_t::iterator it=p->map_members_->begin(), last=p->map_members_->end(); it!=last; ++it){
-				overwrite_member(it->first.primary_key, p->member_direct(it->second.num), it->first.secondary_key, it->second.flag);
+		if(p->buckets_){
+			for(uint_t i=0; i<p->buckets_capa_; ++i){
+				Node* node = p->buckets_[i];
+				while(node!=0){
+					if(node->flags&FLAG_NODE3){
+						Node3* n = (Node3*)node;
+						overwrite_member(n->primary_key, p->member_direct(n->num), n->secondary_key, n->accessibility());
+					}
+					else{
+						Node2* n = (Node2*)node;
+						overwrite_member(n->primary_key, p->member_direct(n->num), undefined, n->accessibility());
+					}
+					node = node->next;
+				}	
 			}
 		}
 
@@ -129,20 +203,16 @@ void Class::overwrite(const ClassPtr& p){
 			AnyPtr obj = alive_object(i);
 			if(type(obj)==TYPE_BASE){
 				if(obj->is(to_smartptr(this))){
+
 					AnyPtr data = obj->save_instance_variables(to_smartptr(this));
-					if(pvalue(obj)->instance_variables()){
-						pvalue(obj)->instance_variables()->replace(info(), p->info());
-					}
+					pvalue(obj)->init_instance_variables(p->info());
 					obj->load_instance_variables(p, data);
 
-					{
-						map_t::iterator it = find(Xid(reloaded), undefined);
-						if(it!=map_members_->end()){
-							const VMachinePtr& vm = setup_call(0);
-							vm->set_arg_this(obj);
-							member_direct(it->second.num)->rawcall(vm);
-							vm->cleanup_call();
-						}
+					if(Node* it = find_node(Xid(reloaded), undefined)){
+						const VMachinePtr& vm = setup_call(0);
+						vm->set_arg_this(obj);
+						member_direct(it->num)->rawcall(vm);
+						vm->cleanup_call();
 					}
 				}
 			}
@@ -162,22 +232,23 @@ void Class::inherit(const ClassPtr& cls){
 
 	cls->prebind();
 
-	inherited_classes_.push_back(cls);
+	int_t count = 0;
+	for(Class** pp=inherited_classes_; *pp; ++pp){
+		count++;
+	}
+
+	Class** classes = (Class**)xmalloc(sizeof(Class*)*(count+2));
+	*classes = cls.get();
+	(*classes)->inc_ref_count();
+	xmemcpy(classes+1, inherited_classes_, count+1);
+	
+	if(count>0){
+		xfree(inherited_classes_, sizeof(Class*)*(count+1));
+	}
+
+	inherited_classes_ = classes;
+
 	invalidate_cache_is();
-
-	/*
-	uint_t offset = 0;
-	for(uint_t i=0, size=instance_variables_layout_.size(); i<size; ++i){
-		offset += instance_variables_layout_[i].class_info->instance_variable_size;
-	}
-
-	for(uint_t i=0, size=cls->instance_variables_layout_.size(); i<size; ++i){
-		instance_variables_layout_.push(
-			InstanceVariablesInfo(
-				cls->instance_variables_layout_[i].class_info,
-				cls->instance_variables_layout_[i].pos + offset));
-	}
-	*/
 }
 
 void Class::inherit_first(const ClassPtr& cls){
@@ -218,31 +289,29 @@ void Class::inherit_strict(const ClassPtr& cls){
 }
 
 AnyPtr Class::inherited_classes(){
-	return xnew<ArrayIter>(to_smartptr(this), &inherited_classes_);
+	return xnew<InheritedClassesIter>(to_smartptr(this));
 }
 
 const NativeFunPtr& Class::def_ctor(int_t type, const NativeFunPtr& ctor_func){
-	ctor_[type] = ctor_func;
-	flags_ |= (FLAG_LAST_DEFINED_CTOR<<type);
+	set_option_ctor(type, ctor_func);
+	flags_ |= (FLAG_LAST_DEFINED_CTOR);
 	flags_ |= FLAG_NATIVE;
-	invalidate_cache_ctor();
-	return ctor_[type];
+	return option_ctor(type);
 }
 
 const NativeFunPtr& Class::ctor(int_t type){
 	prebind();
 
-	if(environment_->ctor_cache_table_.cache(to_smartptr(this), type)){
-		return ctor_[type];
+	const NativeFunPtr& ctor = option_ctor(type);
+
+	if(ctor){
+		return ctor;
 	}
 
-	if(ctor_[type]){
-		return ctor_[type];
-	}
-
-	for(int_t i = inherited_classes_.size(); i>0; --i){
-		if(const NativeFunPtr& ret = unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->ctor(type)){
-			return ctor_[type] = ret;
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		if(const NativeFunPtr& ret = inherited_classes_[i]->ctor(type)){
+			set_option_ctor(type, ret);
+			return ret;
 		}
 	}
 
@@ -266,13 +335,12 @@ const NativeFunPtr& Class::serial_ctor(){
 }
 
 void Class::init_instance(const AnyPtr& self, const VMachinePtr& vm){
-	for(int_t i = inherited_classes_.size(); i>0; --i){
-		unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->init_instance(self, vm);
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		inherited_classes_[i]->init_instance(self, vm);
 	}
 	
 	if(info()->instance_variable_size){
-		pvalue(self)->make_instance_variables();
-		pvalue(self)->instance_variables()->init_variables(info());
+		pvalue(self)->init_instance_variables(info());
 
 		// 先頭のメソッドはインスタンス変数初期化関数
 		if(member_direct(0)){
@@ -327,22 +395,22 @@ const NativeFunPtr& Class::def_and_return(const IDPtr& primary_key, const AnyPtr
 	}
 }
 
-void Class::define(const char_t* primary_key, const param_types_holder_n& pth){
+void Class::define(const LongLivedString& primary_key, const param_types_holder_n& pth){
 	def(intern(primary_key), xnew<StatelessNativeMethod>(pth), undefined, KIND_PUBLIC);
 }
 
-void Class::define(const char_t* primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
+void Class::define(const LongLivedString& primary_key, const AnyPtr& secondary_key, const param_types_holder_n& pth){
 	def(intern(primary_key), xnew<StatelessNativeMethod>(pth), secondary_key, KIND_PUBLIC);
 }
 
-void Class::define_param(const char_t* name, const AnyPtr& default_value){
+void Class::define_param(const LongLivedString& name, const AnyPtr& default_value){
 	AnyPtr member;
 
 	if(flags_&FLAG_LAST_DEFINED_CTOR){
-		member = ctor_[0];
+		member = option_ctor();
 	}
 	else if(flags_&FLAG_LAST_DEFINED_CTOR2){
-		member = ctor_[1];
+		member = option_serial_ctor();
 	}
 	else{
 		member = members_.back();
@@ -370,30 +438,26 @@ void Class::define_param(const char_t* name, const AnyPtr& default_value){
 	}
 }
 
-void Class::define(const char_t* primary_key, const AnyPtr& value){
+void Class::define(const LongLivedString& primary_key, const AnyPtr& value){
 	def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
-void Class::define(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
+void Class::define(const LongLivedString& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
 	def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
 const AnyPtr& Class::def2(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	on_def(primary_key, value, secondary_key, accessibility);
-	map_t::iterator it = find(primary_key, secondary_key);
-	if(it!=map_members_->end()){
-		return member_direct(it->second.num);
+
+	if(Node* it = find_node(primary_key, secondary_key)){
+		return member_direct(it->num);
 	}
 	return null;
 }
 
 void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	map_t::iterator it = find(primary_key, secondary_key);
-	if(it==map_members_->end()){
-		on_def(primary_key, value, secondary_key, accessibility);
-	}
-	else{
-		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->second.num))){
+	if(Node* it= find_node(primary_key, secondary_key)){
+		if(const ClassPtr& dest = ptr_cast<Class>(member_direct(it->num))){
 			if(const ClassPtr& src = ptr_cast<Class>(value)){
 				if(!dest->is_native() && !src->is_native()){
 					dest->overwrite(src);
@@ -402,35 +466,33 @@ void Class::overwrite_member(const IDPtr& primary_key, const AnyPtr& value, cons
 				}
 			}
 		}
-
-		Frame::set_member_direct(it->second.num, value);
+		
+		Frame::set_member_direct(it->num, value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
+	}
+	else{
+		on_def(primary_key, value, secondary_key, accessibility);
 	}
 }
 
 void Class::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	flags_ &= ~(FLAG_LAST_DEFINED_CTOR | FLAG_LAST_DEFINED_CTOR2);
 
-	map_t::iterator it = find(primary_key, secondary_key);
-	if(it==map_members_->end()){
-		Key key = {primary_key, secondary_key};
-		Value val = {member_size(), accessibility};
-		map_members_->insert(key, val);
+	if(find_node(primary_key, secondary_key)){
+		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
+	}
+	else{
+		Node* node = insert_node(primary_key, secondary_key);
+		node->num = members_.size();
+		node->flags |= accessibility;
 		push_back_member(value);
 		value->set_object_parent(to_smartptr(this));
 		invalidate_cache_member();
 	}
-	else{
-		XTAL_SET_EXCEPT(cpp_class<RedefinedError>()->call(Xt2("XRE1011", object, this->object_name(), name, primary_key)));
-	}
 }
 
 void Class::def(const char_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
-	on_def(intern(primary_key), value, secondary_key, accessibility);
-}
-
-void Class::def(const char8_t* primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	on_def(intern(primary_key), value, secondary_key, accessibility);
 }
 
@@ -442,21 +504,16 @@ void Class::def(const char_t* primary_key, const AnyPtr& value){
 	on_def(intern(primary_key), value, undefined, KIND_PUBLIC);
 }
 
-void Class::def(const char8_t* primary_key, const AnyPtr& value){
-	on_def(intern(primary_key), value, undefined, KIND_PUBLIC);
-}
-
 const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
-	map_t::iterator it = find(primary_key, secondary_key);
-	if(it!=map_members_->end()){		
-		accessibility = it->second.accessibility();
-		nocache = it->second.nocache();
-		return member_direct(it->second.num);
+	if(Node* it = find_node(primary_key, secondary_key)){
+		accessibility = it->accessibility();
+		nocache = it->nocache();
+		return member_direct(it->num);
 	}
 
 	if(const ClassPtr& klass = ptr_cast<Class>(secondary_key)){
-		for(int_t i=0, sz=klass->inherited_classes_.size(); i<sz; ++i){
-			const AnyPtr& ret = find_member(primary_key, unchecked_ptr_cast<Class>(klass->inherited_classes_.at(i)), accessibility, nocache);
+		for(int_t i=0; klass->inherited_classes_[i]; ++i){
+			const AnyPtr& ret = find_member(primary_key,  klass->inherited_classes_[i], accessibility, nocache);
 			if(!is_undefined(ret)){
 				return ret;
 			}
@@ -474,8 +531,8 @@ const AnyPtr& Class::find_member(const IDPtr& primary_key, const AnyPtr& seconda
 }
 	
 const AnyPtr& Class::find_member_from_inherited_classes(const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility, bool& nocache){
-	for(int_t i=inherited_classes_.size(); i>0; --i){
-		const AnyPtr& ret = unchecked_ptr_cast<Class>(inherited_classes_.at(i-1))->find_member(primary_key, secondary_key, true, accessibility, nocache);
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		const AnyPtr& ret = inherited_classes_[i]->find_member(primary_key, secondary_key, true, accessibility, nocache);
 		if(!is_undefined(ret)){
 			return ret;
 		}
@@ -522,23 +579,24 @@ const AnyPtr& Class::on_rawmember(const IDPtr& primary_key, const AnyPtr& second
 }
 
 bool Class::set_member(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key){
-	map_t::iterator it = find(primary_key, secondary_key);
-	if(it==map_members_->end()){
+	if(Node* it = find_node(primary_key, secondary_key)){
+		Frame::set_member_direct(it->num, value);
+		value->set_object_parent(to_smartptr(this));
+		invalidate_cache_member();
+		return true;
+	}
+	else{
 		set_runtime_error(Xid(undefined));
 		return false;
 	}
-
-	Frame::set_member_direct(it->second.num, value);
-	value->set_object_parent(to_smartptr(this));
-	invalidate_cache_member();
-	return true;
 }
 
 void Class::set_member_direct(int_t i, const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){
 	Frame::set_member_direct(i, value);
-	Key key = {primary_key, secondary_key};
-	Value val = {i, accessibility};
-	map_members_->insert(key, val);
+	
+	Node* it = insert_node(primary_key, secondary_key);
+	it->num = i;
+	it->flags |= accessibility;
 	value->set_object_parent(to_smartptr(this));
 	invalidate_cache_member();
 }
@@ -547,33 +605,43 @@ void Class::on_set_object_parent(const ClassPtr& parent){
 	if(object_force_<parent->object_force()){
 		object_force_ = parent->object_force()-1;
 		HaveParentBase::on_set_object_parent(parent);
-		if(map_members_){
-			for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-				member_direct(it->second.num)->set_object_parent(to_smartptr(this));
-			}
+
+		for(uint_t i=0; i<buckets_capa_; ++i){
+			Node* node = buckets_[i];
+			while(node!=0){
+				member_direct(node->num)->set_object_parent(to_smartptr(this));
+				node =  node->next;
+			}	
 		}
 	}
 }
 
 ValuesPtr Class::child_object_name(const AnyPtr& a){
-	if(map_members_){
-		for(map_t::iterator it=map_members_->begin(), last=map_members_->end(); it!=last; ++it){
-			if(raweq(member_direct(it->second.num), a)){
-				return mv(it->first.primary_key, it->first.secondary_key);
+	for(uint_t i=0; i<buckets_capa_; ++i){
+		Node* node = buckets_[i];
+		while(node!=0){
+			if(raweq(member_direct(node->num), a)){
+				if(node->flags&FLAG_NODE3){
+					return mv(((Node3*)node)->primary_key, ((Node3*)node)->secondary_key);
+				}
+				else{
+					return mv(((Node2*)node)->primary_key, undefined);
+				}
 			}
-		}
+			node =  node->next;
+		}	
 	}
 	return nul<Values>();
 }
 
-const IDPtr& Class::object_temporary_name(){
-	if(name_ && name_->data_size()!=0){
-		return name_;
+IDPtr Class::object_temporary_name(){
+	IDPtr name = option_name();
+	if(name && name->data_size()!=0){
+		return name;
 	}
 
 	if(symbol_data_ && (symbol_data_->flags&CppClassSymbolData::FLAG_NAME)){
-		name_ = *(StringLiteral*)(symbol_data_->name);
-		return name_;
+		return XTAL_LONG_LIVED_STRING(symbol_data_->name);
 	}
 
 	if(code() && info()){
@@ -584,7 +652,72 @@ const IDPtr& Class::object_temporary_name(){
 }
 
 void Class::set_object_temporary_name(const IDPtr& name){
-	name_ = name;
+	set_option_name(name);
+}
+
+void Class::make_options(){
+	if(!options_){
+		options_ = new_object_xmalloc<Options>();
+	}
+}
+
+void Class::make_options_wide(){
+	if(!options_){
+		options_ = new_object_xmalloc<Options2>();
+	}
+	else if(flags_&FLAG_OPTIONS){
+		Options2* p = new_object_xmalloc<Options2>();
+		p->ctor = options_->ctor;
+		delete_object_xfree<Options>(options_);
+		options_ = p;
+	}
+	flags_ |= FLAG_OPTIONS;
+}
+
+const IDPtr& Class::option_name(){
+	if(options_ && (flags_&FLAG_OPTIONS)){
+		return ((Options2*)options_)->name;
+	}
+	return empty_id;
+}
+
+void Class::set_option_name(const IDPtr& name){
+	make_options_wide();
+	((Options2*)options_)->name = name;
+}
+
+const NativeFunPtr& Class::option_ctor(){
+	if(options_){
+		return ((Options2*)options_)->ctor;
+	}
+	return nul<NativeMethod>();
+}
+
+void Class::set_option_ctor(const NativeFunPtr& fun){
+	make_options();
+	((Options2*)options_)->ctor = fun;
+}
+
+const NativeFunPtr& Class::option_serial_ctor(){
+	if(options_ && (flags_&FLAG_OPTIONS)){
+		return ((Options2*)options_)->serial_ctor;
+	}
+	return nul<NativeMethod>();
+}
+
+void Class::set_option_serial_ctor(const NativeFunPtr& fun){
+	make_options_wide();
+	((Options2*)options_)->serial_ctor = fun;
+}
+
+const NativeFunPtr& Class::option_ctor(uint_t n){
+	if(n==0){ return option_ctor(); }
+	else{ return option_serial_ctor(); }
+}
+
+void Class::set_option_ctor(uint_t n, const NativeFunPtr& fun){
+	if(n==0){ set_option_ctor(fun); }
+	else{ set_option_serial_ctor(fun); }
 }
 
 bool Class::is_inherited(const AnyPtr& v){
@@ -598,8 +731,8 @@ bool Class::is_inherited(const AnyPtr& v){
 
 	prebind();
 
-	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-		if(unchecked_ptr_cast<Class>(inherited_classes_.at(i))->is_inherited(v)){
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		if(inherited_classes_[i]->is_inherited(v)){
 			return true;
 		}
 	}
@@ -614,8 +747,8 @@ bool Class::is_inherited_cpp_class(){
 
 	prebind();
 
-	for(int_t i=0, sz=inherited_classes_.size(); i<sz; ++i){
-		if(unchecked_ptr_cast<Class>(inherited_classes_.at(i))->is_inherited_cpp_class()){
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		if(inherited_classes_[i]->is_inherited_cpp_class()){
 			return true;
 		}
 	}
@@ -713,11 +846,10 @@ AnyPtr Class::ancestors(){
 	
 	ArrayPtr ret = xnew<Array>();
 
-	for(int_t i=0, sz=inherited_classes_.size(); i<sz; i++){
-		const ClassPtr& it = unchecked_ptr_cast<Class>(inherited_classes_.at(i));
-		ret->push_back(it);
+	for(int_t i=0; inherited_classes_[i]; ++i){
+		ret->push_back(inherited_classes_[i]);
 
-		Xfor(it2, it->ancestors()){
+		Xfor(it2, inherited_classes_[i]->ancestors()){
 			ret->push_back(it2);
 		}
 	}
@@ -776,5 +908,26 @@ void Class::init_singleton(const VMachinePtr& vm){
 		vm->cleanup_call();
 	}
 }
+
+
+InheritedClassesIter::InheritedClassesIter(const ClassPtr& a)
+	:frame_(a), it_(0){
+}
+
+void InheritedClassesIter::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
+	m & frame_;
+}
+
+void InheritedClassesIter::block_next(const VMachinePtr& vm){
+	if(frame_->inherited_classes_[it_]){
+		vm->return_result(this, frame_->inherited_classes_[it_]);
+		++it_;
+	}
+	else{
+		vm->return_result(null, null);
+	}
+}
+
 
 }

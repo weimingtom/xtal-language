@@ -56,135 +56,66 @@ enum{
 	id_op_MAX
 };};
 
+
 /*
 * \brief ï∂éöóÒÇä«óùÇ∑ÇÈÉNÉâÉX
 */
 class StringSpace{
 public:
 
-	StringSpace()
-		:table_(table_t::no_use_memory_t()){
-	}
+	void initialize();
 
-	void initialize(){
-		table_.expand(4);
+	void uninitialize();
 
-		static const char_t* ids[] = {
-			XTAL_L("op_call"),
-
-			XTAL_L("op_inc"),
-			XTAL_L("op_dec"),
-			XTAL_L("op_pos"),
-			XTAL_L("op_neg"),
-			XTAL_L("op_com"),
-
-			XTAL_L("op_at"),
-			XTAL_L("op_set_at"),
-			XTAL_L("op_range"),
-
-			XTAL_L("op_add"),
-			XTAL_L("op_sub"),
-			XTAL_L("op_cat"),
-			XTAL_L("op_mul"),
-			XTAL_L("op_div"),
-			XTAL_L("op_mod"),
-			XTAL_L("op_and"),
-			XTAL_L("op_or"),
-			XTAL_L("op_xor"),
-			XTAL_L("op_shl"),
-			XTAL_L("op_shr"),
-			XTAL_L("op_ushr"),
-
-			XTAL_L("op_add_assign"),
-			XTAL_L("op_sub_assign"),
-			XTAL_L("op_cat_assign"),
-			XTAL_L("op_mul_assign"),
-			XTAL_L("op_div_assign"),
-			XTAL_L("op_mod_assign"),
-			XTAL_L("op_and_assign"),
-			XTAL_L("op_or_assign"),
-			XTAL_L("op_xor_assign"),
-			XTAL_L("op_shl_assign"),
-			XTAL_L("op_shr_assign"),
-			XTAL_L("op_ushr_assign"),
-
-			XTAL_L("op_eq"),
-			XTAL_L("op_lt"),
-			XTAL_L("op_in"),
-		};
-
-		for(int i=0; i<IDOp::id_op_MAX; ++i){
-			id_op_list_[i] = intern(*(StringLiteral*)(ids[i]));
-		}
-	}
-
-	void uninitialize(){
-		for(table_t::iterator it=table_.begin(), last=table_.end(); it!=last; ++it){
-			if((it->first.size&(1<<31))==0){
-				xfree((void*)it->first.str, (it->first.size+1)*sizeof(char_t));
-			}
-		}
-
-		table_.destroy();
-
-		for(int i=0; i<IDOp::id_op_MAX; ++i){
-			id_op_list_[i] = null;
-		}
-	}
-
-	const char_t* register_string(const char_t* str, uint_t size, uint_t hashcode, bool undelete){
-		Key key = {str, size, hashcode};
-		table_t::iterator it = table_.find(key, hashcode);
-		if(it!=table_.end()){
-			return it->first.str;
-		}
-
-		it = table_.insert(key, PairDummy(), hashcode).first;
-		if(!undelete){
-			char_t* newstr = (char_t*)xmalloc((size+1)*sizeof(char_t));
-			string_copy(newstr, str, size);
-			newstr[size] = 0;
-			it->first.str = newstr;
-		}
-		else{
-			it->first.size |= 1<<31;
-		}
-
-		return it->first.str;
-	}
+	const char_t* register_string(const char_t* str, uint_t size, uint_t hashcode, bool long_lived);
 
 	const IDPtr* id_op_list(){
 		return id_op_list_;
 	}
 
-public:
+private:
 
-	struct Key{
-		const char_t* str;
-		uint_t size;
-		uint_t hash;
+	enum{
+		LIMIT_SHIFT = 8,
+		LIMIT_MASK = (1<<LIMIT_SHIFT)-1,
+		LIMIT = 1<<(LIMIT_SHIFT+2)
 	};
 
-	struct Fun{
-		static uint_t hash(const Key& key){
-			return key.hash;
-		}
+	struct Block{
+		uint_t pos;
 
-		static bool eq(const Key& a, const Key& b){
-			if(a.hash!=b.hash){ return false; }
-			return string_compare(a.str, a.size&0x7fffffff, b.str, b.size&0x7fffffff)==0;
-		}
+		void* alloc(int size);
+	};
+
+	void add_block();
+
+	void expand_buckets(uint_t n);
+
+	void* alloc(int size);
+
+	struct Node{
+		Node* next;
+		u32 size;
+		u16 hash;
+		u16 flags; 
+
+		void set_pointer(char_t* str){ *(char_t**)(this+1) = str; }
+		char_t* pointer(){ return *(char_t**)(this+1); }
+		char_t* buf(){ return (char_t*)(this+1); }
+		char_t* data(){ return flags ? *(char_t**)(this+1) : (char_t*)(this+1); }
 	};
 
 private:
-	typedef Hashtable<Key, PairDummy, Fun> table_t; 
-	table_t table_;
-
 	IDPtr id_op_list_[IDOp::id_op_MAX];
 
-protected:
+	Block** blocks_;
+	Block* current_block_;
+	uint_t blocks_size_;
+	uint_t blocks_capa_;
 
-	friend class InternedStringIter;
+	Node** buckets_;
+	uint_t buckets_size_;
+	uint_t buckets_capa_;
 };
 
 }

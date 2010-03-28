@@ -32,7 +32,7 @@ Code::~Code(){
 
 void Code::generated(){
 	set_code(to_smartptr(this));
-	if(scope_info_table_.size()>1){
+	if(scope_info_table_.size()>2){
 		set_info(&scope_info_table_[1]);
 		resize_member_direct(scope_info_table_[1].variable_size);
 		make_members_force(Frame::FLAG_NOCACHE);
@@ -43,7 +43,6 @@ void Code::generated(){
 	Class* it = this;
 	Xdef_method_alias(inherit, &Class_inherit);
 	Xdef_method_alias(check_implicit_lookup, &filelocal_check_implicit_lookup);
-	
 	def(Xid(filelocal), to_smartptr(this));
 
 	first_fun_->set_info(&xfun_info_table_[0]);
@@ -129,7 +128,13 @@ Code::LineNumberInfo* Code::compliant_lineno_info(const inst_t* p){
 }
 
 void Code::on_rawcall(const VMachinePtr& vm){
-	overwrite_member(Xid(arg), vm->make_arguments());
+	if(vm->has_arguments()){
+		overwrite_member(Xid(arg), vm->make_arguments());
+	}
+	else{
+		overwrite_member(Xid(arg), null);
+	}
+
 	vm->setup_call();
 	vm->set_arg_this(to_smartptr(this));
 	first_fun_->rawcall(vm);

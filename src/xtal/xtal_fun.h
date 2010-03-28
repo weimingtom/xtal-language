@@ -190,10 +190,11 @@ public:
 	}
 
 protected:
-
-	FramePtr outer_;
-	CodePtr code_;
+	BasePtr<Frame> outer_;
+	BasePtr<Code> code_;
 	FunInfo* info_;
+
+	friend class VMachine;
 };
 
 /**
@@ -289,7 +290,6 @@ public:
 	}
 
 private:
-
 	VMachinePtr vm_;
 	const inst_t* resume_pc_;
 	bool alive_;
@@ -312,7 +312,6 @@ public:
 	}
 
 protected:
-
 	AnyPtr fun_;
 	AnyPtr this_;
 };

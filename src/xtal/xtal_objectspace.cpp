@@ -236,14 +236,15 @@ void ObjectSpace::initialize(){
 	objects_max_ = 0;
 	processed_line_ = 0;
 	cycle_count_ = 0;
-	objects_builtin_line_ = 0;
+	objects_generation_line_ = 0;
+	objects_destroyed_count_ = 0;
 
 	disable_finalizer_ = false;
 
 	disable_gc();
 
-	class_map_.expand(4);
-	value_map_.expand(4);
+	class_map_.expand(5);
+	value_map_.expand(5);
 
 	expand_objects_list();
 
@@ -258,22 +259,22 @@ void ObjectSpace::initialize(){
 
 	for(uint_t i=0; i<nsize; ++i){
 		Class* p = object_xmalloc<Class>();
-		class_map_[symbols[i]->key()] = p;
+		class_map_.insert(symbols[i]->key(), p);
 		p->special_initialize();
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_[symbols[i]->key()];
+		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
 		new(p) Class(Class::cpp_class_t());
 	}
 	
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_[symbols[i]->key()];
+		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
 		p->special_initialize(&VirtualMembersT<Class>::value);
 	}
 
 	for(uint_t i=0; i<nsize; ++i){
-		Class* p = (Class*)class_map_[symbols[i]->key()];
+		Class* p = (Class*)class_map_.find(symbols[i]->key())->second;
 		register_gc(p);
 		p->inc_ref_count();
 		p->set_symbol_data(symbols[i]);
@@ -295,7 +296,6 @@ void ObjectSpace::uninitialize(){
 	clear_cache();
 
 	disable_finalizer_ = true;
-
 	full_gc();
 
 	if(objects_count_ != 0){
@@ -334,10 +334,6 @@ void ObjectSpace::uninitialize(){
 
 	objects_list_current_ = objects_list_begin_;
 	fit_simple_dynamic_pointer_array(&objects_list_begin_, &objects_list_end_, &objects_list_current_);
-}
-
-void ObjectSpace::finish_initialize(){
-	objects_builtin_line_ = objects_count_;
 }
 	
 void ObjectSpace::shrink_to_fit(){
@@ -390,28 +386,19 @@ void ObjectSpace::print_all_objects(){
 						//table["Base"]++; 
 						if(Class* cp=dynamic_cast<Class*>(p)){
 							table["Class"]++;
+							const char_t* name = cp->object_temporary_name()->c_str();
+							int refcount = cp->ref_count();
 							table[classpre + cp->object_temporary_name()->c_str()]++;
 						}
 						else{
 							table[typeid(*p).name()]++;
-							if(table[typeid(*p).name()]==20){
-								table[typeid(*p).name()] = table[typeid(*p).name()];
-							}
 						}
 					}
 
 					XTAL_CASE(TYPE_STRING){ 
 						unchecked_ptr_cast<String>(ap(**it))->is_interned() ? table["iString"]++ : table["String"]++; 
 						const char_t* str = unchecked_ptr_cast<String>(ap(**it))->c_str();
-						str = str;
-						uint_t n = string_data_size(str);
-						XMallocGuard umg((n+1)*sizeof(char));
-						char* buf = (char*)umg.get();
-						for(uint_t i=0; i<n; ++i){
-							buf[i] = str[i];
-						}
-						buf[n] = 0;
-						table[stringpre+buf]++;
+						table[stringpre+str]++;
 					}
 
 				}
@@ -419,7 +406,7 @@ void ObjectSpace::print_all_objects(){
 
 			std::map<std::string, int>::iterator it=table.begin(), last=table.end();
 			for(; it!=last; ++it){
-				if(it->second>10){
+				if(it->second>3){
 					printf("alive %s %d\n", it->first.c_str(), it->second);
 				}
 			}
@@ -459,7 +446,7 @@ RefCountingBase* ObjectSpace::alive_object(uint_t i){
 	return *current;
 }
 
-ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
+ConnectedPointer ObjectSpace::sweep_dead_objects(ConnectedPointer first, ConnectedPointer last, ConnectedPointer end){
 	if(first==last){
 		return end;
 	}
@@ -472,70 +459,33 @@ ConnectedPointer ObjectSpace::swap_dead_objects(ConnectedPointer first, Connecte
 
 	do for(RefCountingBase** pp=cpre1.begin(), **ppend=cpre1.end(); pp!=ppend; --pp){
 		RefCountingBase* p = *pp;
-		if(p->can_not_gc()==0){
-			p->destroy();
-			p->object_free();
 
-			if(endpp==endppend){
-				cpre2.move();
-				endpp = cpre2.begin();
-				endppend = cpre2.end();
+		if(!p->destroyed()){
+			if(!p->can_not_destroy()){
+				p->destroy();
 			}
 
-			--end;
-
-			*pp = *endpp;
-			--endpp;
+			continue;
 		}
 
+		p->object_free();
+		objects_destroyed_count_--;
+
+		if(endpp==endppend){
+			cpre2.move();
+			endpp = cpre2.begin();
+			endppend = cpre2.end();
+		}
+
+		--end;
+
+		*pp = *endpp;
+		--endpp;
 	}while(cpre1.move());
 
-	return end;
-}
-
-ConnectedPointer ObjectSpace::swap_dead_objects2(
-	ConnectedPointer first, ConnectedPointer last, ConnectedPointer end,
-	int_t miss, int_t hit
-	){
-	if(first==last){
-		return end;
+	if(objects_destroyed_count_<0){
+		objects_destroyed_count_ = 0;
 	}
-
-	ConnectedPointerReverseEnumerator cpre1(first+1, last);
-	ConnectedPointerReverseEnumerator cpre2(first+1, end);
-
-	RefCountingBase** endpp = cpre2.begin();
-	RefCountingBase** endppend = cpre2.end();
-
-	do for(RefCountingBase** pp=cpre1.begin(), **ppend=cpre1.end(); pp!=ppend; --pp){
-		RefCountingBase* p = *pp;
-		if(p->can_not_gc()==0){
-			hit++;
-
-			p->destroy();
-			p->object_free();
-
-			if(endpp==endppend){
-				cpre2.move();
-				endpp = cpre2.begin();
-				endppend = cpre2.end();
-			}
-
-			--end;
-
-			*pp = *endpp;
-			--endpp;
-		}
-		else{
-			miss++;
-
-			if(miss>hit){
-				//printf("miss%d>hit%d\n", miss, hit);
-				break;
-			}
-		}
-
-	}while(cpre1.move());
 
 	return end;
 }
@@ -543,6 +493,7 @@ ConnectedPointer ObjectSpace::swap_dead_objects2(
 void ObjectSpace::destroy_objects(ConnectedPointer it, ConnectedPointer end){
 	ConnectedPointerEnumerator e(it, end);
 	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+		(*pp)->unset_finalizer_flag();
 		(*pp)->destroy();
 	}while(e.move());
 }
@@ -551,7 +502,12 @@ void ObjectSpace::free_objects(ConnectedPointer it, ConnectedPointer end){
 	ConnectedPointerEnumerator e(it, end);
 	do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
 		(*pp)->object_free();
+		objects_destroyed_count_--;
 	}while(e.move());
+
+	if(objects_destroyed_count_<0){
+		objects_destroyed_count_ = 0;
+	}
 }
 
 void ObjectSpace::adjust_objects_list(ConnectedPointer it){
@@ -569,46 +525,16 @@ void ObjectSpace::add_ref_count_objects(ConnectedPointer it, ConnectedPointer en
 	}while(e.move());
 }
 
-void ObjectSpace::lw_gc(){
-	if(cycle_count_!=0){ return; }
-
-	ScopeCounter cc(&cycle_count_);
-
-	ConnectedPointer first, last, end;
-	
-	uint_t N = 256;
-
-	first = ConnectedPointer(objects_count_<=N ? 0 : objects_count_-N, objects_list_begin_);
-	last = ConnectedPointer(objects_count_, objects_list_begin_);
-	end = ConnectedPointer(objects_count_, objects_list_begin_);
-
-	end = swap_dead_objects2(first, last, end, 0, 8);
-
-	first = ConnectedPointer(processed_line_, objects_list_begin_);
-	last = ConnectedPointer(processed_line_+N, objects_list_begin_);
-
-	if(first>end){ first = end; }
-	if(last>end){ last = end; }
-	end = swap_dead_objects2(first, last, end, 0, 8);
-
-	adjust_objects_list(end);
-
-	processed_line_ += N;
-	if(processed_line_>objects_count_){
-		processed_line_ = objects_builtin_line_;
-	}
-}
-
 void ObjectSpace::gc(){
 	if(cycle_count_!=0){ return; }
 
 	ScopeCounter cc(&cycle_count_);
 
-	ConnectedPointer first(objects_builtin_line_, objects_list_begin_);
+	ConnectedPointer first(objects_generation_line_, objects_list_begin_);
 	ConnectedPointer last(objects_count_, objects_list_begin_);
 	ConnectedPointer end(objects_count_, objects_list_begin_);
-
-	end = swap_dead_objects(first, last, end);
+	
+	end = sweep_dead_objects(first, last, end);
 
 	adjust_objects_list(end);
 }
@@ -622,7 +548,7 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 
 		ConnectedPointerEnumerator e(alive, current);
 		do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
-			if((*pp)->ref_count()!=0){
+			if((*pp)->can_not_destroy()){
 				end = false;
 				(*pp)->visit_members(m); // 生存確定オブジェクトは、参照カウンタを元に戻す
 				std::swap(*pp, *alive++);
@@ -634,90 +560,122 @@ ConnectedPointer ObjectSpace::find_alive_objects(ConnectedPointer alive, Connect
 }
 
 void ObjectSpace::full_gc(){
-	gc();
-	gc();
+	if(cycle_count_!=0){ 
+		return; 
+	}
 
-	if(cycle_count_!=0){ return; }
 	{
-		vmachine_swap_temp();
+		ConnectedPointer first(0, objects_list_begin_);
+		ConnectedPointer last(objects_count_, objects_list_begin_);
 
-		ScopeCounter cc(&cycle_count_);
-				
-		while(true){			
-			ConnectedPointer current(objects_count_, objects_list_begin_);
-			ConnectedPointer begin(0, objects_list_begin_);
-			if(current==begin){
-				break;
-			}
+		ConnectedPointer end(objects_count_, objects_list_begin_);
+		end = sweep_dead_objects(first, last, end);
+		adjust_objects_list(end);
+	}
 
-			// 参照カウンタを減らす
-			// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
-			add_ref_count_objects(begin, current, -1);
-		
-			ConnectedPointer alive = begin;
+	ScopeCounter cc(&cycle_count_);
 
-			alive = find_alive_objects(alive, current);
-
-			// begin ～ aliveまでのオブジェクトは生存確定
-			// alive ～ currentまでのオブジェクトは死亡予定
-
-
-			// 死者も、参照カウンタを元に戻す
-			add_ref_count_objects(alive, current, 1);
-
-			if(!disable_finalizer_){
-				bool exists_have_finalizer = false;
-				
-				// 死者のfinalizerを走らせる
-				ConnectedPointerEnumerator e(alive, current);
-				do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
-					RefCountingBase* p = *pp;
-					if(p->have_finalizer()){
-						exists_have_finalizer = true;
-						((Base*)p)->finalize();
-					}
-				}while(e.move());
-
-				if(exists_have_finalizer){
-					// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
-					current = ConnectedPointer(objects_count_, objects_list_begin_);
-					begin = ConnectedPointer(0, objects_list_begin_);
-
-					// 死者が生き返ったかも知れないのでチェックする
-
-					// 参照カウンタを減らす
-					add_ref_count_objects(alive, current, -1);
-					
-					alive = find_alive_objects(alive, current);
-
-					// begin ～ aliveまでのオブジェクトは生存確定
-					// alive ～ currentまでのオブジェクトは死亡確定
-
-					// 死者も、参照カウンタを元に戻す
-					add_ref_count_objects(alive, current, 1);
-				}
-			}
-
-			destroy_objects(alive, current);
-			free_objects(alive, current);
-			
-			adjust_objects_list(alive);
-
-			if(current==alive){
-				break;
-			}
-
-			current = alive;
+	vmachine_swap_temp();
+	
+	while(true){			
+		ConnectedPointer current(objects_count_, objects_list_begin_);
+		ConnectedPointer begin(0, objects_list_begin_);
+		if(current==begin){
+			break;
 		}
 
-		std::sort(ConnectedPointer(0, objects_list_begin_), ConnectedPointer(objects_count_, objects_list_begin_));
+		// 参照カウンタを減らす
+		// これにより、ルートから示されている以外のオブジェクトは参照カウンタが0となる
+		add_ref_count_objects(begin, current, -1);
+	
+		ConnectedPointer alive = begin;
 
-		vmachine_swap_temp();
+		alive = find_alive_objects(alive, current);
+
+		// begin ～ aliveまでのオブジェクトは生存確定
+		// alive ～ currentまでのオブジェクトは死亡予定
+
+		// 死者も、参照カウンタを元に戻す
+		add_ref_count_objects(alive, current, 1);
+
+		if(!disable_finalizer_){
+			bool exists_have_finalizer = false;
+			
+			// 死者となる予定のオブジェクトのfinalizerを走らせる
+			ConnectedPointerEnumerator e(alive, current);
+			do for(RefCountingBase** pp=e.begin(), **ppend=e.end(); pp!=ppend; ++pp){
+				RefCountingBase* p = *pp;
+				if(p->have_finalizer()){
+					exists_have_finalizer = true;
+					((Base*)p)->finalize();
+				}
+			}while(e.move());
+
+			if(exists_have_finalizer){
+				// finalizerでオブジェクトが作られたかもしれないので、currentを反映する
+				current = ConnectedPointer(objects_count_, objects_list_begin_);
+				begin = ConnectedPointer(0, objects_list_begin_);
+
+				// 死者が生き返ったかも知れないのでチェックする
+
+				// 参照カウンタを減らす
+				add_ref_count_objects(alive, current, -1);
+				
+				alive = find_alive_objects(alive, current);
+
+				// begin ～ aliveまでのオブジェクトは生存確定
+				// alive ～ currentまでのオブジェクトは死亡確定
+
+				// 死者も、参照カウンタを元に戻す
+				add_ref_count_objects(alive, current, 1);
+			}
+		}
+
+		destroy_objects(alive, current);
+		free_objects(alive, current);
+		
+		adjust_objects_list(alive);
+
+		if(current==alive){
+			break;
+		}
+
+		current = alive;
 	}
+
+	objects_generation_line_ = objects_count_;
+	objects_destroyed_count_ = 0;
+
+	vmachine_swap_temp();
+}
+
+Class* ObjectSpace::make_cpp_class(CppClassSymbolData* key){
+	ClassPtr cls = xnew<Class>(Class::cpp_class_t());
+	RefCountingBase* ret = cls.get();
+	ret->inc_ref_count();
+	cls->set_symbol_data(key);
+	class_map_.insert(key->key(), ret);
+	return ((Class*)ret);
+}
+
+RefCountingBase* ObjectSpace::make_cpp_value(CppValueSymbolData* key){
+	AnyPtr any = key->maker();
+	RefCountingBase* ret = rcpvalue(any);
+	ret->inc_ref_count();
+	value_map_.insert(key->key(), ret);
+	return ret;
 }
 
 void ObjectSpace::register_gc(RefCountingBase* p){
+	if(!p->virtual_members()->is_container){
+		return;
+	}
+
 	if(objects_count_==objects_max_){
+		if((objects_count_>>2) < (uint_t)objects_destroyed_count_){
+			gc();
+		}
+
 		ScopeCounter cc(&cycle_count_);
 		expand_objects_list();
 	}

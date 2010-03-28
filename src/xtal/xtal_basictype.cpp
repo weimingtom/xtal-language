@@ -14,7 +14,7 @@ ScopeInfo empty_scope_info;
 ClassInfo empty_class_info;
 
 ExceptInfo empty_except_info;
-InstanceVariables empty_instance_variables;
+InstanceVariables empty_instance_variables = {&empty_class_info, 0};
 
 undeleter_t undeleter;
 deleter_t deleter;
@@ -185,43 +185,18 @@ ValuesPtr mv(const AnyPtr& v1, const AnyPtr& v2){
 
 ///////////////////////////////////
 
-HaveParent::~HaveParent(){
-	if(parent_){
-		parent_->dec_ref_count();
-	}
-}
-
 const ClassPtr& HaveParent::object_parent(){
-	if(parent_){
-		return to_smartptr(parent_);
-	}
-	else{
-		return nul<Class>();
-	}
+	return parent_;
 }
 
 void HaveParent::set_object_parent(const ClassPtr& parent){
 	if(!parent_ || parent_->object_force()<parent->object_force()){
-		if(parent_){
-			parent_->dec_ref_count();
-		}
-
-		if(parent){
-			parent_ = parent.get();
-			parent_->inc_ref_count();
-		}
-		else{
-			parent_ = 0;
-		}
+		parent_ = parent;
 	}
 }
 
 void HaveParent::visit_members(Visitor& m){
-	if(parent_){
-		ClassPtr temp = to_smartptr(parent_);
-		m & temp;
-		parent_ = temp.get();
-	}
+	m & parent_;
 }	
 
 }

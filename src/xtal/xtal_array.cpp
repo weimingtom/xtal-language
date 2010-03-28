@@ -84,13 +84,19 @@ void xarray::init(const AnyPtr* values, uint_t size){
 }
 
 void xarray::reflesh(){
-	AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
-	xmemcpy(&newp[0], &values_[0], size_);
-	for(uint_t i=0; i<size_; ++i){
-		inc_ref_count_force(values_[i]);
+	if(size_){
+		AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
+		xmemcpy(&newp[0], &values_[0], size_);
+		for(uint_t i=0; i<size_; ++i){
+			inc_ref_count_force(values_[i]);
+		}
+		capa_ = size_;
+		values_ = newp;
 	}
-	capa_ = size_;
-	values_ = newp;
+	else{
+		capa_ = 0;
+		values_ = 0;
+	}
 }
 
 xarray::xarray(const AnyPtr* first, const AnyPtr* end){

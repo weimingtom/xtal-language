@@ -10,47 +10,47 @@ int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code){
 	return pc + value;
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName){
+StringPtr make_inst_string(const LongLivedString& InstName){
 	StringPtr temp = format(XTAL_STRING("%s:"))->call(InstName)->to_s();
 	return format(temp)->call()->to_s();
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1){
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1){
 	StringPtr temp = format(XTAL_STRING("%s: %s=%%s"))->call(InstName, MemberName1)->to_s();
 	return format(temp)->call(MemberValue1)->to_s();
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2){
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2){
 	StringPtr temp = format(XTAL_STRING("%s: %s=%%s, %s=%%s"))->call(InstName, MemberName1, MemberName2)->to_s();
 	return format(temp)->call(MemberValue1, MemberValue2)->to_s();
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3){
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3){
 	StringPtr temp = format(XTAL_STRING("%s: %s=%%s, %s=%%s, %s=%%s"))->call(InstName, MemberName1, MemberName2, MemberName3)->to_s();
 	return format(temp)->call(MemberValue1, MemberValue2, MemberValue3)->to_s();
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3,
-						const StringLiteral& MemberName4, int_t MemberValue4){
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3,
+						const LongLivedString& MemberName4, int_t MemberValue4){
 	StringPtr temp = format(XTAL_STRING("%s: %s=%%s, %s=%%s, %s=%%s, %s=%%s"))->call(InstName, MemberName1, MemberName2, MemberName3, MemberName4)->to_s();
 	return format(temp)->call(MemberValue1, MemberValue2, MemberValue3, MemberValue4)->to_s();
 }
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3,
-						const StringLiteral& MemberName4, int_t MemberValue4,
-						const StringLiteral& MemberName5, int_t MemberValue5){					
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3,
+						const LongLivedString& MemberName4, int_t MemberValue4,
+						const LongLivedString& MemberName5, int_t MemberValue5){					
 	StringPtr temp = format(XTAL_STRING("%s: %s=%%s, %s=%%s, %s=%%s, %s=%%s, %s=%%s"))->call(InstName, MemberName1, MemberName2, MemberName3, MemberName4, MemberName5)->to_s();
 	return format(temp)->call(MemberValue1, MemberValue2, MemberValue3, MemberValue4, MemberValue5)->to_s();
 }

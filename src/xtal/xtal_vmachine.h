@@ -137,8 +137,7 @@ public:
 	}
 
 	void push_arg(const char_t* s);
-	void push_arg(const char8_t* s);
-	void push_arg(const StringLiteral& s);
+	void push_arg(const LongLivedString& s);
 
 	void push_arg(char v);
 	void push_arg(signed char v);
@@ -254,6 +253,7 @@ public:
 	* return_result()を呼んだ後は正常な値は得られない。
 	*/
 	ArgumentsPtr make_arguments(int_t lower = 0);
+	bool has_arguments();
 	
 	/**
 	* \brief 呼び出し元に引数の数だけの戻り値を返す。
@@ -296,8 +296,7 @@ public:
 	}
 
 	void return_result(const char_t* s);
-	void return_result(const char8_t* s);
-	void return_result(const StringLiteral& s);
+	void return_result(const LongLivedString& s);
 	void return_result(const IDPtr& s);
 	void return_result(char v);
 	void return_result(signed char v);
@@ -412,9 +411,6 @@ public:
 		// yieldが可能かフラグ。このフラグは呼び出しを跨いで伝播する。
 		int_t yieldable;
 
-		// thisが持つインスタンス変数へのポインタ
-		InstanceVariables* instance_variables;
-
 		// この関数が使っているスコープの下限
 		uint_t scope_lower;
 
@@ -425,12 +421,14 @@ public:
 		uint_t prev_stack_base;
 
 		// 呼び出された関数オブジェクト
-		AnyPtr fun_; 
+		BasePtr<Method> fun_; 
 
 		const IDPtr* identifier_;
+		const AnyPtr* values_;
+		Code* code_;
 
 		// 関数の外側のフレームオブジェクト
-		AnyPtr outer_;
+		BasePtr<Frame> outer_;
 
 		// 関数が呼ばれたときのthisオブジェクト
 		AnyPtr self_;
@@ -439,27 +437,22 @@ public:
 
 		void set_null();
 
-		const MethodPtr& fun() const{ return unchecked_ptr_cast<Method>(fun_); }
-		const FramePtr& outer() const{ return unchecked_ptr_cast<Frame>(outer_); }
-		//const FramePtr& outer() const{ return fun()->outer(); }
-		//const IDPtr& identifier(int_t n){ return fun()->code()->identifier(n); }
+		const BasePtr<Method>& fun() const{ return fun_; }
+		const BasePtr<Frame>& outer() const{ return outer_; }
 		const IDPtr& identifier(int_t n){ return identifier_[n]; }
+		const AnyPtr& value(int_t n){ return values_[n]; }
 		const AnyPtr& self() const{ return self_; }
-		const CodePtr& code(){ return fun()->code(); }
+		Code* code() const{ return code_; }
+
+		void set_fun(){ fun_ = null; outer_ = null; }
+		void set_outer(const FramePtr& v){ outer_ = v; }
+		void set_outer(){ outer_ = null; }
+		void set_self(const AnyPtr& v){ self_ = v; }
+		void set_self(){ self_ = null; }
 
 		int_t args_stack_size(){
 			return ordered_arg_count+(named_arg_count<<1);
 		}
-
-		//void set_fun(const MethodPtr& v){ fun_ = v; }
-		void set_fun(){ fun_ = null; outer_ = null; }
-		//void set_fun(const MethodPtr& v){ fun_ = v; identifier_ = &fun()->code()->identifier(0); }
-		void set_fun(const MethodPtr& v);
-		//void set_fun(){ fun_ = null; outer_ = null; }
-		void set_outer(const AnyPtr& v){ outer_ = v; }
-		void set_outer(){ outer_ = null; }
-		void set_self(const AnyPtr& v){ self_ = v; }
-		void set_self(){ self_ = null; }
 	};
 
 	friend void visit_members(Visitor& m, FunFrame& v);
@@ -472,10 +465,6 @@ public:
 		uint_t scope_size;
 		uint_t variables_top;
 	};
-
-	FunFrame& ff(){ 
-		return *fun_frames_.top(); 
-	}
 
 private:
 
@@ -519,7 +508,7 @@ private:
 
 	const inst_t* check_accessibility(CallState& call_state, int_t accessibility);
 
-	FramePtr& push_scope(ScopeInfo* info = &empty_scope_info);
+	void push_scope(ScopeInfo* info = &empty_scope_info);
 	void pop_scope();
 
 	void push_ff(CallState& call_state);
@@ -530,48 +519,26 @@ private:
 
 	void upsize_variables(uint_t upsize);
 
-public:
+private:
+
+	FunFrame& ff(){ 
+		return *fun_frames_.top(); 
+	}
 
 	FunFrame& prev_ff(){ 
 		return *fun_frames_[1]; 
 	}
+		
+	void set_fun(FunFrame& f, const MethodPtr& v);
 
-	const MethodPtr& fun(){ 
-		return ff().fun(); 
-	}
-
-	const MethodPtr& prev_fun(){ 
-		return prev_ff().fun(); 
-	}
-
-	const FramePtr& outer(){ 
-		return ff().outer(); 
-	}
-
-	const FramePtr& prev_outer(){ 
-		return prev_ff().outer(); 
-	}
-
-	const CodePtr& code(){ 
-		return ff().fun()->code(); 
-	}
-
-	const CodePtr& prev_code(){ 
-		return prev_ff().fun()->code(); 
-	}
-
-	const IDPtr& identifier(int_t n){ 
-		return ff().identifier(n); 
-	}
-
-	const IDPtr& prev_identifier(int_t n){ 
-		return prev_ff().identifier(n);  
-	}
-
+public:
 	ArgumentsPtr inner_make_arguments(Method* fun);
 	ArgumentsPtr inner_make_arguments(const NamedParam* params, int_t num);
 
+private:
 	AnyPtr append_backtrace(const inst_t* pc, const AnyPtr& ep);
+
+	void ready();
 
 public:
 
@@ -616,7 +583,7 @@ private:
 	
 	void check_breakpoint_hook(const inst_t* pc, int_t kind){
 		if((*hook_setting_bit_&(1<<kind))==0){ return; }
-		breakpoint_hook(pc, fun(), kind);
+		breakpoint_hook(pc, ff().fun(), kind);
 	}
 
 public:
@@ -719,7 +686,7 @@ private:
 	FastStack<FunFrame*> fun_frames_;
 
 	struct Scope{
-		FramePtr frame;
+		BasePtr<Frame> frame;
 		uint_t pos;
 		uint_t size;
 		uint_t flags;

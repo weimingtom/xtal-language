@@ -18,6 +18,7 @@ namespace xtal{
 class AllocatorLib{
 public:
 	virtual ~AllocatorLib(){}
+
 	virtual void* malloc(std::size_t size){ return std::malloc(size); }
 	virtual void free(void* p, std::size_t size){ std::free(p); }
 
@@ -248,15 +249,6 @@ struct Protect{
 
 /**
 * \xbind lib::builtin
-* \brief すぐに終わるガーベジコレクションを実行する
-*
-* gc関数より処理がかからないガーベジコレクト関数
-* ゲームで毎フレームこまめに呼ぶときなどに使う。
-*/
-void lw_gc();
-
-/**
-* \xbind lib::builtin
 * \brief ガーベジコレクションを実行する
 *
 * さほど時間はかからないが、完全にゴミを解放できないガーベジコレクト関数
@@ -367,12 +359,6 @@ void invalidate_cache_member();
 */
 void invalidate_cache_is();
 
-/**
-* \internal
-* \brief クラスのコンストラクタのキャッシュテーブルに登録されているデータを無効にする。
-*/
-void invalidate_cache_ctor();
-
 /////////////////////////////////////////////////////
 
 /**
@@ -445,42 +431,37 @@ const VMachinePtr& setup_call(int_t need_result_count);
 IDPtr intern(const char_t* str);
 
 /**
-* \brief NUL終端のC文字列をインターン済み文字列に変換する
-*
-* \param str NULL終端文字列
-*/
-IDPtr intern(const char8_t* str);
-
-/**
 * \brief C文字列からsize分の長さを取り出しインターン済み文字列に変換する
 *
 */
 IDPtr intern(const char_t* str, uint_t size);
 
 /**
+* \brief C文字列からsize分の長さを取り出しインターン済み文字列に変換する
+*
+*/
+IDPtr intern(const char_t* str, uint_t size, String::long_lived_t);
+
+/**
 * \brief C文字列リテラルからインターン済み文字列に変換する
 *
 */
-IDPtr intern(const StringLiteral& str);
+template<int N>
+inline IDPtr intern(const LongLivedStringN<N>& str){
+	return intern(str.str(), str.size(), String::long_lived_t());
+}
 
 /**
-* \brief beginからlastまでの文字列でインターン済み文字列に変換する
+* \brief C文字列リテラルからインターン済み文字列に変換する
 *
-* [begin, last)
 */
-IDPtr intern(const char_t* begin, const char_t* last);
+IDPtr intern(const LongLivedString& str);
 
 /**
 * \brief Stringからインターン済み文字列に変換する
 *
 */
 IDPtr intern(const StringPtr& name);		
-
-
-struct StringConv{
-	XMallocGuard memory;
-	StringConv(const char8_t* str);
-};
 
 
 /**

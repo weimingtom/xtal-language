@@ -43,32 +43,32 @@ inline int_t inst_inspect(inst_u16_t value, Inst*, const CodePtr&){ return (int_
 
 int_t inst_inspect(inst_address_t& value, Inst* inst, const CodePtr& code);
 
-StringPtr make_inst_string(const StringLiteral& InstName);
+StringPtr make_inst_string(const LongLivedString& InstName);
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1);
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1);
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2);
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2);
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3);
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3);
 						
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3,
-						const StringLiteral& MemberName4, int_t MemberValue4);
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3,
+						const LongLivedString& MemberName4, int_t MemberValue4);
 
-StringPtr make_inst_string(const StringLiteral& InstName, 
-						const StringLiteral& MemberName1, int_t MemberValue1,
-						const StringLiteral& MemberName2, int_t MemberValue2,
-						const StringLiteral& MemberName3, int_t MemberValue3,
-						const StringLiteral& MemberName4, int_t MemberValue4,
-						const StringLiteral& MemberName5, int_t MemberValue5);
+StringPtr make_inst_string(const LongLivedString& InstName, 
+						const LongLivedString& MemberName1, int_t MemberValue1,
+						const LongLivedString& MemberName2, int_t MemberValue2,
+						const LongLivedString& MemberName3, int_t MemberValue3,
+						const LongLivedString& MemberName4, int_t MemberValue4,
+						const LongLivedString& MemberName5, int_t MemberValue5);
 
 StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end);
 

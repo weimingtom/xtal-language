@@ -76,7 +76,7 @@ XTAL_FP_HELPER(long double, Float, init_float);
 
 
 template<class R>
-inline void operator, (typename FunctorParamR<R>::type val, FunctorParamR<R>& ret){
+inline void operator, (FunctorParamR<R>& ret, typename FunctorParamR<R>::type val){
 	ret.return_result(val);
 }
 
@@ -109,7 +109,7 @@ struct fun_param_holder{
 template<class TFun>
 const param_types_holder_n fun_param_holder<TFun>::value = {
 	&TFun::call,
-	fph::values,
+	&fph::values[0],
 	sizeof(fun_type),
 	TFun::arity,
 	TFun::extendable,

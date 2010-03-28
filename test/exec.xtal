@@ -9,11 +9,11 @@ lib::test: singleton{
 	
 	run_dir: fun(dir){			
 		run_files(
-			//[dir ~ "/" ~ "test_array.xtal"].each
+			//[dir ~ "/" ~ "test_thread.xtal"].each
 			filesystem::entries(dir)
 				.select(|x| x.match(once xpeg::bos >> "test_" >> xpeg::word*0 >> ".xtal" >> xpeg::eos))
 				.map(|x| dir ~ "/" ~ x)
-		);//
+		);
 	}
 	
 	run_files: fun(files){

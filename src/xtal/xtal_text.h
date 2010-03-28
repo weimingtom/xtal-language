@@ -58,10 +58,10 @@ private:
 };
 
 TextPtr text(const StringPtr& text);
-TextPtr text(const StringLiteral& text);
+TextPtr text(const LongLivedString& text);
 
 StringPtr format(const StringPtr& text);
-StringPtr format(const StringLiteral& text);
+StringPtr format(const LongLivedString& text);
 
 void assign_text_map(const AnyPtr& map_iter);
 void append_text_map(const AnyPtr& map_iter);
@@ -71,11 +71,11 @@ enum{
 	SPRINTF_TYPE_t = 1
 };
 
-StringPtr sprintf(int_t type, const StringLiteral& format);
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1);
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2);
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2, const StringLiteral& name3, const AnyPtr& value3);
-StringPtr sprintf(int_t type, const StringLiteral& format, const StringLiteral& name1, const AnyPtr& value1, const StringLiteral& name2, const AnyPtr& value2, const StringLiteral& name3, const AnyPtr& value3, const StringLiteral& name4, const AnyPtr& value4);
+StringPtr sprintf(int_t type, const LongLivedString& format);
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1);
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2);
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2, const LongLivedString& name3, const AnyPtr& value3);
+StringPtr sprintf(int_t type, const LongLivedString& format, const LongLivedString& name1, const AnyPtr& value1, const LongLivedString& name2, const AnyPtr& value2, const LongLivedString& name3, const AnyPtr& value3, const LongLivedString& name4, const AnyPtr& value4);
 
 #define XTAL_SPRINTF0(Type, Format) ::xtal::sprintf(SPRINTF_TYPE_##Type, XTAL_STRING(Format))
 #define XTAL_SPRINTF1(Type, Format, Name1, Value1) ::xtal::sprintf(SPRINTF_TYPE_##Type, XTAL_STRING(Format), XTAL_STRING(#Name1), Value1)

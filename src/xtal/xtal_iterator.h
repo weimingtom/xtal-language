@@ -56,7 +56,7 @@ public:
 	* //=> 1::2::3
 	* \endcode
 	*/
-	StringPtr join(const StringPtr& sep = "");
+	StringPtr join(const StringPtr& sep = XTAL_STRING(""));
 
 	/**
 	* \xbind

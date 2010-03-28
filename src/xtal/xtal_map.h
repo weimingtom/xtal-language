@@ -63,20 +63,14 @@ public:
 	* \param key 検索のためのキー 
 	* \param value keyに対応する値
 	*/	
-	void insert(const AnyPtr& key, const AnyPtr& value){
-		const AnyPtr& akey = calc_key(key);
-		table_.insert(akey, value);
-	}
+	void insert(const AnyPtr& key, const AnyPtr& value);
 
 	/**
 	* \xbind
 	* \brief keyに対応する値を削除する
 	* \param key 検索のためのキー 
 	*/
-	void erase(const AnyPtr& key){
-		const AnyPtr& akey = calc_key(key);
-		table_.erase(akey);
-	}
+	void erase(const AnyPtr& key);
 
 	/**
 	* \xbind
@@ -250,9 +244,9 @@ public:
 	void on_visit_members(Visitor& m);
 	
 protected:
-
 	table_t table_;
 	AnyPtr default_value_;
+
 };
 
 class MapIter : public Base{

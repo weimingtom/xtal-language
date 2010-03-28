@@ -91,86 +91,90 @@ public:
 
 protected:
 
-	void make_map_members();
 	void make_members();
 	void make_members_force(int_t flags);
 
 	void push_back_member(const AnyPtr& value);
 
-	uint_t member_size(){
-		return members_.size();
-	}
-
-private:
-
-	FramePtr outer_;
-	CodePtr code_;
-	ScopeInfo* scope_info_;
-	
 protected:
-
-	xarray members_;
-
-public:
-
-	struct Key{
-		IDPtr primary_key;
-		AnyPtr secondary_key;
-
-		friend void visit_members(Visitor& m, Key& a){
-			m & a.primary_key & a.secondary_key;
-		}
-	};
-
-	struct RKey{
-		const IDPtr& primary_key;
-		const AnyPtr& secondary_key;
-
-		RKey(const IDPtr& primary_key, const AnyPtr& secondary_key)
-			:primary_key(primary_key), secondary_key(secondary_key){}
-	};
 
 	enum{
 		FLAG_ACCESSIBILITY_MASK = 0x3,
-		FLAG_NOCACHE = 1<<3
+		FLAG_NOCACHE = 1<<3,
+		FLAG_NODE3 = 1<<4
 	};
 
-	struct Value{
+	struct Node{
+		Node* next;
 		u16 num;
-		u16 flag;
+		u16 flags;
 
 		int_t accessibility() const{
-			return flag & FLAG_ACCESSIBILITY_MASK;
+			return flags & FLAG_ACCESSIBILITY_MASK;
 		}
 
 		bool nocache() const{
-			return (flag&FLAG_NOCACHE)!=0;
+			return (flags&FLAG_NOCACHE)!=0;
 		}
-
-		friend void visit_members(Visitor& m, const Value&){}
 	};
 
-	struct Fun{
-		template<class NKey>
-		static uint_t hash(const NKey& key){
-			return (rawvalue(key.primary_key).u()>>3) ^ rawvalue(key.secondary_key).u();
-		}
+	struct Node2 : Node{
+		IDPtr primary_key;
+	};
 
-		template<class LKey, class RKey>
-		static bool eq(const LKey& a, const RKey& b){
-			return raweq(a.primary_key, b.primary_key) && raweq(a.secondary_key, b.secondary_key);
-		}
+	struct Node3 : Node2{
+		AnyPtr secondary_key;
 	};
 
 protected:
 
-	typedef Hashtable<Key, Value, Fun> map_t; 
-	map_t* map_members_;
+	static uint_t hashcode(const IDPtr& primary_key, const AnyPtr& secondary_key){
+		return (rawvalue(primary_key).u()>>3) ^ rawvalue(secondary_key).u();
+	}
 
-	map_t::iterator find(const IDPtr& primary_key, const AnyPtr& secondary_key);
+	void expand_buckets();
 
-	bool orphan_;
-	bool initialized_members_;
+	Node* find_node(const IDPtr& primary_key, const AnyPtr& secondary_key);
+
+	Node* insert_node(const IDPtr& primary_key, const AnyPtr& secondary_key);
+
+protected:
+	enum{
+		FLAG_NATIVE = 1<<0,
+		FLAG_FINAL = 1<<1,
+		FLAG_SINGLETON = 1<<2,
+		FLAG_PREBINDED = 1<<3,
+		FLAG_BINDED = 1<<4,
+		FLAG_BINDED2 = 1<<5,
+
+		FLAG_LAST_DEFINED_CTOR = 1<<7,
+		FLAG_LAST_DEFINED_CTOR2 = 1<<8,
+
+		FLAG_ORPHAN = 1<<9,
+		FLAG_INITIALIZED_MEMBERS = 1<<10,
+
+		FLAG_OPTIONS = 1<<11	
+	};
+
+	uint_t orphan(){
+		return flags_ & FLAG_ORPHAN;
+	}
+
+	void set_orphan(){
+		flags_ |= FLAG_ORPHAN;
+	}
+	
+	void unset_orphan(){
+		flags_ &= ~FLAG_ORPHAN;
+	}
+
+	uint_t initialized_members(){
+		return flags_ & FLAG_INITIALIZED_MEMBERS;
+	}
+
+	void set_initialized_members(){
+		flags_ |= FLAG_INITIALIZED_MEMBERS;
+	}
 
 public:
 	
@@ -178,16 +182,36 @@ public:
 
 	void on_visit_members(Visitor& m){
 		HaveParentBase::on_visit_members(m);
-		m & outer_ & code_;
 
-		if(orphan_){
+		if(flags_ & FLAG_ORPHAN){
 			m & members_;
 		}
 
-		if(map_members_){
-			m & *map_members_;
+		m & outer_ & code_;
+
+		for(uint_t i=0; i<buckets_capa_; ++i){
+			Node* node = buckets_[i];
+			while(node!=0){
+				if(node->flags&FLAG_NODE3){
+					m & ((Node3*)node)->secondary_key;
+				}
+				node = node->next;
+			}	
 		}
 	}
+protected:
+	BasePtr<Frame> outer_;
+	BasePtr<Code> code_;
+	ScopeInfo* scope_info_;
+
+	xarray members_;
+
+	Node** buckets_;
+	uint_t buckets_size_;
+	uint_t buckets_capa_;
+
+	u16 object_force_;
+	u16 flags_;
 
 private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(Frame);
@@ -204,11 +228,14 @@ public:
 
 	void block_next(const VMachinePtr& vm);
 
+	void move_next();
+
 	void on_visit_members(Visitor& m);
 
 private:
-	FramePtr frame_;
-	Frame::map_t::iterator it_;
+	BasePtr<Frame> frame_;
+	Frame::Node* node_;
+	uint_t pos_;
 };
 
 class MembersIter2 : public Base{
@@ -221,7 +248,7 @@ public:
 	void on_visit_members(Visitor& m);
 
 private:
-	FramePtr frame_;
+	BasePtr<Frame> frame_;
 	int_t it_;
 };
 

@@ -47,16 +47,65 @@ inline void fit_simple_dynamic_pointer_array(T*** begin, T*** end, T*** current)
 * \internal
 * \brief 固定サイズメモリアロケータ
 */
+class MemoryPool{
+public:
+
+	typedef void* data_t;
+
+	enum{
+		BLOCK_SIZE = 256,
+		BLOCK_COUNT = 16,
+		BLOCK_MEMORY_SIZE = BLOCK_SIZE*BLOCK_COUNT
+	};
+
+	struct Chunk{
+		data_t* free_data;
+		uptr_t count;
+		Chunk* next;
+		Chunk* prev;
+
+		data_t* buf(){
+			return (data_t*)((u8*)this - BLOCK_MEMORY_SIZE);
+		}
+	};
+
+private:
+	Chunk* free_chunk_;
+	Chunk* full_chunk_;
+
+public:
+
+	MemoryPool();
+
+	void* malloc(Chunk** chunk);
+
+	void free(void* mem, Chunk* chunk);
+
+	void release();
+
+private:
+
+	void add_chunk();
+
+	XTAL_DISALLOW_COPY_AND_ASSIGN(MemoryPool);
+};
+
+/**
+* \internal
+* \brief 固定サイズメモリアロケータ
+*/
 class FixedAllocator{
 public:
 
 	typedef void* data_t;	
 
 	struct Chunk{
-		data_t* head;
-		data_t* tail;
-		uint_t count;
+		data_t* free_data;
+		uptr_t count;
 		Chunk* next;
+		Chunk* prev;
+		MemoryPool::Chunk* parent;
+		data_t dummy;
 
 		data_t* buf(){
 			return reinterpret_cast<data_t*>(this+1);
@@ -64,68 +113,37 @@ public:
 	};
 
 	enum{
-		ONE_SIZE = sizeof(data_t)*2
+		ONE_SIZE = sizeof(data_t)
 	};
 
-	std::size_t calc_size(std::size_t block_size){
-		return 128/block_size + 4;
-	}
-
 private:
-
-	data_t* free_data_;
-	Chunk* chunk_;
-	uint_t all_count_;
-	uint_t used_count_;
-
-	bool cant_fit_;
+	Chunk* free_chunk_;
+	Chunk* full_chunk_;
+	
+	uint_t block_size_;
+	uint_t block_count_;
+	
+	MemoryPool* pool_;
 
 public:
 
 	FixedAllocator();
 
-	void* malloc(std::size_t block_size){
-		if(free_data_){
-			void* ret = free_data_;
-			free_data_ = static_cast<data_t*>(*free_data_);
-			++used_count_;
-			return ret;
-		}
-		return malloc_inner(block_size);
-	}
+	void init(MemoryPool* pool, uint_t block_size);
 
-	void free(void* mem, std::size_t block_size){
-		/*
-		data_t* m = static_cast<data_t*>(mem);
-		data_t** p = &free_data_;
-		while(true){
-			if(*p==0 || *p>m){
-				break;
-			}
-			p = &(data_t*&)(**p);
-		}
-		
-		*m = *p;
-		*p = m;
-		--used_count_;
-		*/
+	void* malloc();
 
-		*static_cast<data_t*>(mem) = free_data_;
-		free_data_ = static_cast<data_t*>(mem);
-		--used_count_;
-	}
+	void free(void* mem);
 
-	void release(std::size_t block_size);
-
-	void fit(std::size_t block_size);
-
-	void print(std::size_t block_size);
+	void release();
 
 private:
 
-	void* malloc_inner(std::size_t block_size);
+	Chunk* to_chunk(void* mem){
+		return (Chunk*)(void*)((uptr_t)mem & ~(MemoryPool::BLOCK_SIZE-1));
+	}
 
-	void add_chunk(std::size_t block_size);
+	void add_chunk();
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(FixedAllocator);
 };
@@ -141,38 +159,35 @@ class SmallObjectAllocator{
 public:
 
 	enum{
-		POOL_SIZE = 8,
+		POOL_SIZE = 10,
 		ONE_SIZE = FixedAllocator::ONE_SIZE,
+		ONE_SIZE_SHIFT = static_ntz<ONE_SIZE>::value,
 		HANDLE_MAX_SIZE = POOL_SIZE*ONE_SIZE
 	};
 
 public:
 
-	SmallObjectAllocator(){}
+	SmallObjectAllocator();
 	
 	void* malloc(std::size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-
-		std::size_t wsize = align(size, ONE_SIZE)/ONE_SIZE;
+		std::size_t wsize = align(size, ONE_SIZE)>>ONE_SIZE_SHIFT;
 		if(wsize==0){ return 0; }
-		return pool_[wsize-1].malloc(wsize);
+		return pool_[wsize-1].malloc();
 	}
 
 	void free(void* p, std::size_t size){
 		XTAL_ASSERT(size<=HANDLE_MAX_SIZE);
-		if(std::size_t wsize = align(size, ONE_SIZE)/ONE_SIZE){
-			pool_[wsize-1].free(p, wsize);
+		if(std::size_t wsize = align(size, ONE_SIZE)>>ONE_SIZE_SHIFT){
+			pool_[wsize-1].free(p);
 		}
 	}
 
 	void release();
 
-	void fit();
-
-	void print();
-
 private:
 
+	MemoryPool mpool_;
 	FixedAllocator pool_[POOL_SIZE];
 
 	XTAL_DISALLOW_COPY_AND_ASSIGN(SmallObjectAllocator);

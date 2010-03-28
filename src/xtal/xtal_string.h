@@ -32,31 +32,39 @@ public:
 	String(const char_t* str);
 
 	/**
-	* \brief NUL終端のC文字列から構築する
-	* \param str NUL終端文字列
-	*/
-	String(const char8_t* str);
-
-	/**
 	* \brief C文字列からsize分の長さを取り出し構築する
 	*/
 	String(const char_t* str, uint_t size);
 
 	/**
-	* \brief C文字列リテラルから構築する
-	*/
-	String(const StringLiteral& str);
-
-	/**
-	* \brief beginからlastまでの文字列で構築する
-	* [begin, last)
-	*/
-	String(const char_t* begin, const char_t* last);
-
-	/**
 	* \brief 二つのC文字列から構築する
 	*/
 	String(const char_t* str1, uint_t size1, const char_t* str2, uint_t size2);
+
+
+	struct long_lived_t{};
+
+	/**
+	* \brief 寿命が長く、開放されないような文字列で構築する
+	*/
+	String(const char_t* str, uint_t size, long_lived_t){
+		init_long_lived_string(str, size);
+	}
+
+	/**
+	* \brief 寿命が長く、開放されないような文字列で構築する
+	*/
+	template<int N>
+	String(const LongLivedStringN<N>& str){
+		init_long_lived_string(str.str(), str.size());
+	}
+
+	/**
+	* \brief 寿命が長く、開放されないような文字列で構築する
+	*/
+	String(const LongLivedString& str){
+		init_long_lived_string(str.str(), str.size());
+	}
 
 public:
 	
@@ -234,6 +242,7 @@ public:
 
 private:
 	void init_string(const char_t* str, uint_t size);
+	void init_long_lived_string(const char_t* str, uint_t size);
 	void init_small_string(const char_t* str, uint_t size);
 	StringData* new_string_data(uint_t size);
 
@@ -298,6 +307,14 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(StringData);
 };
 
+
+IDPtr intern(const char_t* str);
+IDPtr intern(const char_t* str, String::long_lived_t);
+IDPtr intern(const char_t* str, uint_t size);
+IDPtr intern(const char_t* str, uint_t size, String::long_lived_t);
+IDPtr intern(const LongLivedString& str);
+IDPtr intern(const StringPtr& name);		
+
 /**
 * \brief Intern済みのString
 *
@@ -306,45 +323,49 @@ private:
 */
 class ID : public String{
 public:
-
 	/**
 	* \brief NUL終端のC文字列から構築する
 	*
 	* \param str NULL終端文字列
 	*/
-	ID(const char_t* str);
-
-	/**
-	* \brief NUL終端のC文字列から構築する
-	*
-	* \param str NULL終端文字列
-	*/
-	ID(const char8_t* str);
+	ID(const char_t* str)
+		:String(*xtal::intern(str)){}
 
 	/**
 	* \brief C文字列からsize分の長さを取り出し構築する
 	*
 	*/
-	ID(const char_t* str, uint_t size);
-	
-	/**
-	* \brief C文字列リテラルから構築する
-	*
-	*/
-	ID(const StringLiteral& str);
+	ID(const char_t* str, uint_t size)
+		:String(*xtal::intern(str, size)){}
 
 	/**
-	* \brief beginからlastまでの文字列で構築する
+	* \brief 寿命が長く、開放されないような文字列で構築する
 	*
-	* [begin, last)
 	*/
-	ID(const char_t* begin, const char_t* last);
+	ID(const char_t* str, uint_t size, String::long_lived_t)
+		:String(*xtal::intern(str, size, String::long_lived_t())){}
+
+	/**
+	* \brief 寿命が長く、開放されないような文字列で構築する
+	*
+	*/
+	template<int N>
+	ID(const LongLivedStringN<N>& str)
+		:String(*xtal::intern(str.str(), str.size(), String::long_lived_t())){}
+
+	/**
+	* \brief 寿命が長く、開放されないような文字列で構築する
+	*
+	*/
+	ID(const LongLivedString& str)
+		:String(*xtal::intern(str.str(), str.size(), String::long_lived_t())){}
 
 	/**
 	* \brief Stringから構築する
 	*
 	*/
-	ID(const StringPtr& name);	
+	ID(const StringPtr& name)	
+		:String(name->is_interned() ? *name : *xtal::intern(name)){}
 
 public:
 

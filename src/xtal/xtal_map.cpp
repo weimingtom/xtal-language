@@ -16,7 +16,8 @@ void Map::on_visit_members(Visitor& m){
 }	
 
 AnyPtr Map::calc_key(const AnyPtr& key){
-	if(type(key)==TYPE_STRING || type(key)==TYPE_LITERAL_STRING){
+	int_t t = type(key);
+	if(t==TYPE_STRING || t==TYPE_LONG_LIVED_STRING){
 		if(const StringPtr& str = unchecked_ptr_cast<String>(key)){
 			return str->intern();
 		}
@@ -37,6 +38,16 @@ const AnyPtr& Map::op_at(const AnyPtr& akey){
 	else{
 		return default_value_;
 	}
+}
+
+void Map::insert(const AnyPtr& key, const AnyPtr& value){
+	const AnyPtr& akey = calc_key(key);
+	table_.insert(akey, value);
+}
+
+void Map::erase(const AnyPtr& key){
+	const AnyPtr& akey = calc_key(key);
+	table_.erase(akey);
 }
 
 MapPtr Map::op_cat(const MapPtr& a){

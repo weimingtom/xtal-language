@@ -7,7 +7,7 @@ namespace xtal{
 	
 enum{
 	SERIALIZE_VERSION1 = 1,
-	SERIALIZE_VERSION2 = 0,
+	SERIALIZE_VERSION2 = 0
 };
 
 Serializer::Serializer(const StreamPtr& s)
@@ -40,7 +40,7 @@ void Serializer::inner_serialize_scope_info(ScopeInfo& info){
 void Serializer::inner_serialize(const AnyPtr& v){
 	
 	// 基本型かチェック
-	switch(type(v)){
+	switch(XTAL_detail_type(v)){
 		XTAL_DEFAULT;
 
 		XTAL_CASE(TYPE_NULL){
@@ -58,11 +58,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		XTAL_CASE(TYPE_INT){
 			if(sizeof(int_t)==4){
 				stream_->put_u8(TINT32);
-				stream_->put_i32be(ivalue(v));
+				stream_->put_i32be(XTAL_detail_ivalue(v));
 			}
 			else{
 				stream_->put_u8(TINT64);
-				stream_->put_i64be(ivalue(v));
+				stream_->put_i64be(XTAL_detail_ivalue(v));
 			}
 			return;
 		}
@@ -70,11 +70,11 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		XTAL_CASE(TYPE_FLOAT){
 			if(sizeof(float_t)==4){
 				stream_->put_u8(TFLOAT32);
-				stream_->put_f32be(fvalue(v));
+				stream_->put_f32be(XTAL_detail_fvalue(v));
 			}
 			else{
 				stream_->put_u8(TFLOAT64);
-				stream_->put_f64be(fvalue(v));
+				stream_->put_f64be(XTAL_detail_fvalue(v));
 			}
 			return;
 		}
@@ -98,7 +98,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		return;
 	}
 	
-	switch(type(v)){
+	switch(XTAL_detail_type(v)){
 		XTAL_DEFAULT;
 
 		XTAL_CASE4(TYPE_SMALL_STRING, TYPE_LONG_LIVED_STRING, TYPE_INTERNED_STRING, TYPE_STRING){
@@ -122,7 +122,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 				}
 			}
 
-			stream_->put_u8(type);
+			stream_->put_u8((u8)type);
 			stream_->put_u32be(sz);
 			for(size_t i=0; i<sz; ++i){
 				stream_->put_ch_code_be(str[i]);
@@ -172,14 +172,14 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		if(sz!=0){ stream_->write(&p->code_[0], sz); }	
 		
 		sz = p->scope_info_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			ScopeInfo& info = p->scope_info_table_[i];
 			inner_serialize_scope_info(info);
 		}
 		
 		sz = p->class_info_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			ClassInfo& info = p->class_info_table_[i];
 			inner_serialize_scope_info(info);
@@ -191,7 +191,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 
 		sz = p->xfun_info_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			FunInfo& info = p->xfun_info_table_[i];
 			inner_serialize_scope_info(info);
@@ -204,7 +204,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 
 		sz = p->except_info_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			ExceptInfo& info = p->except_info_table_[i];
 			stream_->put_u32be(info.catch_pc);
@@ -213,7 +213,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 		
 		sz = p->lineno_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			Code::LineNumberInfo& info = p->lineno_table_[i];
 			stream_->put_u32be(info.start_pc);
@@ -221,18 +221,18 @@ void Serializer::inner_serialize(const AnyPtr& v){
 		}
 			
 		sz = p->once_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 
 		inner_serialize(p->source_file_name_);
 
 		sz = p->identifier_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			inner_serialize(p->identifier_table_.at(i));
 		}
 
 		sz = p->value_table_.size();
-		stream_->put_u16be(sz);
+		stream_->put_u16be((u16)sz);
 		for(uint_t i=0; i<sz; ++i){
 			inner_serialize(p->value_table_.at(i));
 		}
@@ -248,7 +248,7 @@ void Serializer::inner_serialize(const AnyPtr& v){
 
 		Xfor_cast(const ValuesPtr& mv, name_list){
 			if(first_step){
-				if(raweq(mv->at(0), Xid(lib))){
+				if(XTAL_detail_raweq(mv->at(0), Xid(lib))){
 					break;
 				}
 				else{
@@ -559,7 +559,7 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 	AnyPtr ret;
 	Xfor_cast(const ValuesPtr& mv, n){
 		if(first_step){
-			if(raweq(mv->at(0), Xid(lib))){
+			if(XTAL_detail_raweq(mv->at(0), Xid(lib))){
 				ret = lib();
 			}
 			else{
@@ -587,17 +587,16 @@ AnyPtr Serializer::demangle(const AnyPtr& n){
 int_t Serializer::register_value(const AnyPtr& v){
 	Map::iterator it = map_->find_direct(v);
 	if(it!=map_->end()){
-		return ivalue(it->second);
+		return XTAL_detail_ivalue(it->second);
 	}
-	append_value(v);
+	map_->insert_direct(v, values_.size());
+	values_.push_back(v);
 	return -1;
 }
 
 int_t Serializer::append_value(const AnyPtr& v){
-	uint_t ret = values_.size();
-	map_->insert_direct(v, ret);
 	values_.push_back(v);
-	return ret;
+	return values_.size()-1;
 }
 
 void Serializer::put_tab(int_t tab){

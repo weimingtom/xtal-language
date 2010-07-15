@@ -11,83 +11,11 @@ namespace xtal{
 
 class NativeMethod;	
 
-/////////////////////////////////////////////
+////////////////////////////////////////////
 
-struct FunctorParam{
-	Any result;
-	const void* fun;
-	VMachine* vm;
-	Any args[16];
-};
-
-template<class R>
-struct FunctorParamR : FunctorParam{
-	typedef const R& type;
-	void return_result(type r){ vm->return_result(r); }
-};
-
-template<class R> 
-struct FunctorParamR<R&> : FunctorParam{
-	typedef R& type;
-	void return_result(type r){ vm->return_result(&r); }
-};
-
-template<class T> 
-struct FunctorParamR<SmartPtr<T>&> : FunctorParam{
-	typedef SmartPtr<T>& type;
-	void return_result(type r){ vm->return_result(r); }
-};
-
-template<class T> 
-struct FunctorParamR<const SmartPtr<T>&> : FunctorParam{
-	typedef const SmartPtr<T>& type;
-	void return_result(type r){ vm->return_result(r); }
-};
-
-template<> 
-struct FunctorParamR<void> : FunctorParam{
-	typedef void**** type;
-};
-
-#define XTAL_FP_HELPER(Type, XType, InitFun) \
-template<> struct FunctorParamR<Type> : FunctorParam{\
-	typedef Type type;\
-	void return_result(type r){ result.value_.InitFun((XType::value_type)r); }\
-};\
-template<> struct FunctorParamR<Type&> : FunctorParamR<Type>{};\
-template<> struct FunctorParamR<const Type&> : FunctorParamR<Type>{}
-
-XTAL_FP_HELPER(bool, Bool, init_bool);
-
-XTAL_FP_HELPER(char, Int, init_int);
-XTAL_FP_HELPER(signed char, Int, init_int);
-XTAL_FP_HELPER(unsigned char, Int, init_int);
-XTAL_FP_HELPER(short, Int, init_int);
-XTAL_FP_HELPER(unsigned short, Int, init_int);
-XTAL_FP_HELPER(int, Int, init_int);
-XTAL_FP_HELPER(unsigned int, Int, init_int);
-XTAL_FP_HELPER(long, Int, init_int);
-XTAL_FP_HELPER(unsigned long, Int, init_int);
-XTAL_FP_HELPER(float, Float, init_float);
-XTAL_FP_HELPER(double, Float, init_float);
-XTAL_FP_HELPER(long double, Float, init_float);
-
-#undef XTAL_FP_HELPER
-
-
-template<class R>
-inline void operator, (FunctorParamR<R>& ret, typename FunctorParamR<R>::type val){
-	ret.return_result(val);
-}
+struct FunctorParam;
 
 typedef void (*native_functon_t)(FunctorParam&);
-
-template<class R>
-inline FunctorParamR<R>& rcast(FunctorParam& a){
-	return (FunctorParamR<R>&)a;
-}
-
-////////////////////////////////////////////
 
 struct param_types_holder_n{
 	native_functon_t fun; // ä÷êî
@@ -137,15 +65,15 @@ struct nfun_base{};
 
 template<class TFun, int Method>
 struct nfun
-	: nfun_base<TFun::arity, TFun, Method, typename TFun::result_type>{};
+	: public nfun_base<TFun::arity, TFun, Method, typename TFun::result_type>{};
 
 template<class TFun>
 struct dfun
-	: nfun<TFun, 0>{};
+	: public nfun<TFun, 0>{};
 
 template<class TFun>
 struct dmemfun
-	: nfun<TFun, 1>{};
+	: public nfun<TFun, 1>{};
 
 template<class C, class T>
 struct getter_functor;
@@ -161,6 +89,8 @@ class A10=void, class A11=void, class A12=void, class A13=void, class A14=void>
 struct ctor_functor{};
 
 //////////////////////////////////////////////////////////////
+
+struct NamedParam;
 
 class StatelessNativeMethod : public Any{
 public:
@@ -242,14 +172,9 @@ struct ctor : public NativeFunPtr{
 class DoubleDispatchMethod : public Base{
 public:
 
-	DoubleDispatchMethod(const IDPtr& primary_key)
-		:primary_key_(primary_key){}
+	DoubleDispatchMethod(const IDPtr& primary_key);
 
-	void on_rawcall(const VMachinePtr& vm){
-		if(vm->ordered_arg_count()>0){
-			vm->arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class());
-		}
-	}
+	void on_rawcall(const VMachinePtr& vm);
 
 private:
 	IDPtr primary_key_;
@@ -261,17 +186,11 @@ private:
 class DoubleDispatchFun : public Base{
 public:
 
-	DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
-		:klass_(klass), primary_key_(primary_key){}
+	DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key);
 
-	void on_rawcall(const VMachinePtr& vm){
-		klass_->member(primary_key_, vm->arg(0)->get_class())->rawcall(vm);
-	}
+	void on_rawcall(const VMachinePtr& vm);
 
-	void on_visit_members(Visitor& m){
-		Base::on_visit_members(m);
-		m & klass_;
-	}
+	void on_visit_members(Visitor& m);
 
 private:
 	AnyPtr klass_;

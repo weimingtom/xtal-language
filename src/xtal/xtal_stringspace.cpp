@@ -1,11 +1,19 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 
+#define XATL_DEFINE_IDs
 #include "xtal_stringspace.h"
+#undef XATL_DEFINE_IDs
 
 namespace xtal{
 
 void StringSpace::initialize(){
+	nodes_ = 0;
+	nodes_size_ = 0;
+	nodes_capa_ = 0;
+	expand_nodes(127);
+	nodes_[nodes_size_++] = 0;
+
 	blocks_ = 0;
 	blocks_size_ = 0;
 	blocks_capa_ = 0;
@@ -17,64 +25,20 @@ void StringSpace::initialize(){
 	buckets_capa_ = 0;
 	expand_buckets(127);
 
-	static const char_t* ids[] = {
-		XTAL_L("op_call"),
-
-		XTAL_L("op_inc"),
-		XTAL_L("op_dec"),
-		XTAL_L("op_pos"),
-		XTAL_L("op_neg"),
-		XTAL_L("op_com"),
-
-		XTAL_L("op_at"),
-		XTAL_L("op_set_at"),
-		XTAL_L("op_range"),
-
-		XTAL_L("op_add"),
-		XTAL_L("op_sub"),
-		XTAL_L("op_cat"),
-		XTAL_L("op_mul"),
-		XTAL_L("op_div"),
-		XTAL_L("op_mod"),
-		XTAL_L("op_and"),
-		XTAL_L("op_or"),
-		XTAL_L("op_xor"),
-		XTAL_L("op_shl"),
-		XTAL_L("op_shr"),
-		XTAL_L("op_ushr"),
-
-		XTAL_L("op_add_assign"),
-		XTAL_L("op_sub_assign"),
-		XTAL_L("op_cat_assign"),
-		XTAL_L("op_mul_assign"),
-		XTAL_L("op_div_assign"),
-		XTAL_L("op_mod_assign"),
-		XTAL_L("op_and_assign"),
-		XTAL_L("op_or_assign"),
-		XTAL_L("op_xor_assign"),
-		XTAL_L("op_shl_assign"),
-		XTAL_L("op_shr_assign"),
-		XTAL_L("op_ushr_assign"),
-
-		XTAL_L("op_eq"),
-		XTAL_L("op_lt"),
-		XTAL_L("op_in"),
-	};
-
-	for(int i=0; i<IDOp::id_op_MAX; ++i){
-		id_op_list_[i] = intern(XTAL_LONG_LIVED_STRING(ids[i]));
+	for(uint_t i=0; i<sizeof(id_list)/sizeof(*id_list); ++i){
+		const LongLivedString& str = XTAL_LONG_LIVED_STRING(id_list[i]);
+		uint_t hashcode, size;
+		string_data_size_and_hashcode(str.str(), size, hashcode);
+		register_string(str.str(), size, hashcode, true);
 	}
 }
 
 void StringSpace::uninitialize(){
-	for(uint_t i=0; i<buckets_capa_; ++i){
-		Node* node = buckets_[i];
-		while(node!=0){
-			if(node->flags==2){
-				xfree(node->pointer(), (node->size+1)*sizeof(char_t));
-			}
-			node = node->next;
-		}	
+	for(uint_t i=0; i<nodes_size_; ++i){
+		Node* node = nodes_[i];
+		if(node && node->flags==2){
+			xfree(node->pointer(), (node->size+1)*sizeof(char_t));
+		}
 	}
 
 	for(uint_t i=0; i<blocks_size_; ++i){
@@ -82,31 +46,32 @@ void StringSpace::uninitialize(){
 	}
 
 	xfree(blocks_, sizeof(Block*)*blocks_capa_);
-	xfree(buckets_, sizeof(Node*)*buckets_capa_);
-
-	for(int i=0; i<IDOp::id_op_MAX; ++i){
-		id_op_list_[i] = null;
-	}
+	xfree(buckets_, sizeof(node_t)*buckets_capa_);
+	xfree(nodes_, sizeof(Node*)*nodes_capa_);
 }
 
 const char_t* StringSpace::register_string(const char_t* str, uint_t size, uint_t hashcode, bool long_lived){
 	uint_t hash = (hashcode&0xffff) ^ ((hashcode>>16)&0xffff);
 
 	uint_t hn = hash % buckets_capa_;
-	Node* node = buckets_[hn];
+	Node* node = nodes_[buckets_[hn]];
 	while(node!=0){
 		char_t* data = node->data();
 		if(node->hash==hash && string_compare(data, node->size, str, size)==0){
 			return data;
 		}
-		node = node->next;
+		node = nodes_[node->next];
+	}
+
+	if(size >= (1<<16) || buckets_size_ >= (1<<16)-1){
+		return XTAL_L("<error>");		
 	}
 
 	buckets_size_++;
 
 	Node* p;
 	char_t* newstr;
-	if(!long_lived){
+	if(!long_lived || size<8){
 		if(size<48){
 			p = (Node*)alloc(sizeof(Node) + (size+1)*sizeof(char_t));
 			p->flags = 0;
@@ -129,11 +94,16 @@ const char_t* StringSpace::register_string(const char_t* str, uint_t size, uint_
 		p->set_pointer(newstr);
 	}
 
-	p->size = size;
-	p->hash = hash;
+	p->size = (strsize_t)size;
+	p->hash = (u16)hash;
 
 	p->next = buckets_[hn];
-	buckets_[hn] = p;
+	buckets_[hn] = (node_t)nodes_size_;
+
+	if(nodes_capa_==nodes_size_){
+		expand_nodes(1);
+	}
+	nodes_[nodes_size_++] = p;
 
 	if(buckets_size_ > buckets_capa_){
 		expand_buckets(1);
@@ -168,25 +138,32 @@ void StringSpace::add_block(){
 
 void StringSpace::expand_buckets(uint_t n){
 	uint_t newcapa = buckets_capa_*2 + n;
-	Node** newbuckets = (Node**)xmalloc(sizeof(Node*)*newcapa);
+	node_t* newbuckets = (node_t*)xmalloc(sizeof(node_t)*newcapa);
 	for(uint_t i=0; i<newcapa; ++i){
 		newbuckets[i] = 0;
 	}
 
-	for(uint_t i=0; i<buckets_capa_; ++i){
-		Node* node = buckets_[i];
-		while(node!=0){
-			Node* next = node->next;
+	for(uint_t i=0; i<nodes_size_; ++i){
+		Node* node = nodes_[i];
+		if(node){
 			uint_t hn2 = node->hash % newcapa;
 			node->next = newbuckets[hn2]; 
-			newbuckets[hn2] = node;
-			node = next;
+			newbuckets[hn2] = (node_t)i;
 		}	
 	}
 
-	xfree(buckets_, sizeof(Node*)*buckets_capa_);
+	xfree(buckets_, sizeof(node_t)*buckets_capa_);
 	buckets_ = newbuckets;
 	buckets_capa_ = newcapa;
+}
+
+void StringSpace::expand_nodes(uint_t n){
+	uint_t newcapa = nodes_capa_*2 + n;
+	Node** newnodes = (Node**)xmalloc(sizeof(Node*)*newcapa);
+	std::memcpy(newnodes, nodes_, sizeof(Node*)*nodes_capa_);
+	xfree(nodes_, sizeof(Node*)*nodes_capa_);
+	nodes_ = newnodes;
+	nodes_capa_ = newcapa;
 }
 
 void* StringSpace::alloc(int size){

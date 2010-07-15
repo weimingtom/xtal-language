@@ -5,7 +5,7 @@
 namespace xtal{
 
 const ExprPtr& ep(const AnyPtr& a){
-	if(type(a)==TYPE_TREE_NODE){
+	if(XTAL_detail_type(a)==TYPE_TREE_NODE){
 		return unchecked_ptr_cast<Expr>(a);
 	}
 	return nul<Expr>();

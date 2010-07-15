@@ -579,7 +579,7 @@ private:
 };
 
 template<>
-struct XNew<Array> : XXNew<Array>{
+struct XNew<Array> : public XXNew<Array>{
 	XNew(uint_t size = 0);
 	XNew(const AnyPtr* first, const AnyPtr* end);
 };

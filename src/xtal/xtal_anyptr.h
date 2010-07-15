@@ -36,7 +36,7 @@ struct UserTypeHolderSub : public UserTypeHolder, public Deleter{
 
 struct undeleter_t{
 	template<class T>
-	void destroy(T* p){}
+	void destroy(T*){}
 
 	template<class T>
 	SmartPtr<T> operator()(const T* p){
@@ -63,7 +63,7 @@ template<class T>
 T* make_object();
 
 template<class T, class Deleter>
-UserTypeHolderSub<T, Deleter>* xnew_with_deleter(const T* tp, const Deleter& deleter){
+UserTypeHolderSub<T, Deleter>* xnew_with_deleter(const T* tp, const Deleter&){
 	typedef UserTypeHolderSub<T, Deleter> holder;
 	holder* p = new(make_object<holder>()) holder;
 	p->ptr = const_cast<T*>(tp);
@@ -95,6 +95,33 @@ template<class T>
 struct SmartPtrCtor4{
 	struct type{};
 	static int_t call(type){ return 0; };
+};
+
+/////////////////////////////////////////
+
+template<> 
+struct SmartPtrCtor1<String>{
+	typedef const char_t* type;
+};
+
+template<>
+struct SmartPtrCtor3<String>{
+	typedef const LongLivedString& type;
+};
+
+template<>
+struct SmartPtrCtor1<ID>{
+	typedef const char_t* type;
+};
+
+template<>
+struct SmartPtrCtor2<ID>{
+	typedef const StringPtr& type;
+};
+
+template<>
+struct SmartPtrCtor4<ID>{
+	typedef const LongLivedString& type;
 };
 
 template<class T>
@@ -259,12 +286,6 @@ public:
 	*/
 	Any& operator *() const{ return *get(); }
 	
-private:
-
-	bool is_true() const{
-		return rawtype(*this)>TYPE_FALSE;
-	}
-
 public:
 
 #ifdef XTAL_DEBUG
@@ -273,7 +294,7 @@ public:
 	typedef void (dummy_bool_tag::*safe_bool)();
 
 	operator safe_bool() const{
-		return is_true() ? &dummy_bool_tag::safe_true : (safe_bool)0;
+		return XTAL_detail_is_true(*this) ? &dummy_bool_tag::safe_true : (safe_bool)0;
 	}
 
 #else
@@ -282,7 +303,7 @@ public:
 	* \brief booleanÇ÷ÇÃé©ìÆïœä∑
 	*/
 	operator bool() const{
-		return is_true();
+		return XTAL_detail_is_true(*this);
 	}
 
 #endif
@@ -291,7 +312,7 @@ public:
 	* \biref !ââéZéq
 	*/
 	bool operator !() const{
-		return !is_true();
+		return !XTAL_detail_is_true(*this);
 	}
 
 private:
@@ -314,20 +335,74 @@ private:
 
 ///////////////////////////////////////////
 
+inline bool raweq(const AnyPtr& a, const AnyPtr& b){
+	return XTAL_detail_raweq(a, b);
+}
+
+inline bool rawne(const AnyPtr& a, const AnyPtr& b){
+	return !XTAL_detail_raweq(a, b);
+}
+
+inline uint_t type(const AnyPtr& v){
+	return XTAL_detail_type(v);
+}
+
+inline int_t ivalue(const AnyPtr& v){
+	return XTAL_detail_ivalue(v);
+}
+
+inline float_t fvalue(const AnyPtr& v){
+	return XTAL_detail_fvalue(v);
+}
+
+inline Base* pvalue(const AnyPtr& v){
+	return XTAL_detail_pvalue(v);
+}
+
+inline bool is_undefined(const AnyPtr& v){
+	return XTAL_detail_is_undefined(v);
+}
+
+inline bool is_null(const AnyPtr& v){
+	return XTAL_detail_is_null(v);
+}
+
+inline bool is_true(const AnyPtr& v){
+	return XTAL_detail_is_true(v);
+}
+
+inline bool is_int(const AnyPtr& v){
+	return XTAL_detail_is_ivalue(v);
+}
+
+inline bool is_float(const AnyPtr& v){
+	return XTAL_detail_is_fvalue(v);
+}
+
+inline bool operator==(const AnyPtr& a, const AnyPtr& b){
+	return XTAL_detail_raweq(a, b);
+}
+
+inline bool operator!=(const AnyPtr& a, const AnyPtr& b){
+	return !XTAL_detail_raweq(a, b);
+}
+
+///////////////////////////////////////////
+
 template<int N, class T>
 struct Extract{};
 
 template<class T>
 struct Extract<INHERITED_BASE, T>{
 	static T* extract(const AnyPtr& a){
-		return static_cast<T*>(pvalue(a));
+		return static_cast<T*>(XTAL_detail_pvalue(a));
 	}
 };
 
 template<class T>
 struct Extract<INHERITED_RCBASE, T>{
 	static T* extract(const AnyPtr& a){
-		return static_cast<T*>(rcpvalue(a));
+		return static_cast<T*>(XTAL_detail_rcpvalue(a));
 	}
 };
 
@@ -348,19 +423,16 @@ struct Extract<INHERITED_ANYPTR, T>{
 template<class T>
 struct Extract<INHERITED_OTHER, T>{
 	static T* extract(const AnyPtr& a){
-		if(type(a)==TYPE_BASE){
-			return static_cast<T*>((static_cast<UserTypeHolder*>(pvalue(a)))->ptr); 
+		if(XTAL_detail_type(a)==TYPE_BASE){
+			return static_cast<T*>((static_cast<UserTypeHolder*>(XTAL_detail_pvalue(a)))->ptr); 
 		}
 		else{
-			return static_cast<T*>(rawvalue(a).vp());
+			return static_cast<T*>(XTAL_detail_vpvalue(a));
 		}
 	}
 };
 
 /////////////////////////////////////////////////
-
-void visit_members(Visitor& m, const Any& p);
-void visit_members(Visitor& m, RefCountingBase* p);
 
 class Visitor{
 	int_t value_;
@@ -391,6 +463,9 @@ inline const AnyPtr& ap(const Any& v){
 
 void ap(const AnyPtr& v);
 
+void visit_members(Visitor& m, const Any& p);
+void visit_members(Visitor& m, RefCountingBase* p);
+
 template<class F, class S>
 void visit_members(Visitor& m, const std::pair<F, S>& value){
 	m & value.first & value.second;
@@ -420,6 +495,9 @@ struct CppClassSymbolData{
 	XTAL_bind_t prebind;
 	XTAL_bind_t bind[BIND];	
 	const char_t* name;
+	CppClassSymbolData* next;
+
+	static CppClassSymbolData* head;
 };
 
 template<class T>
@@ -433,38 +511,43 @@ CppClassSymbolData CppClassSymbolBase<T>::value;
 
 
 template<class T>
-struct CppClassSymbol : CppClassSymbolBase<T>{};
+struct CppClassSymbol : public CppClassSymbolBase<T>{};
 
 // CppClassSymbolÇÃèCè¸éqÇÇÕÇ∏Ç∑ÇΩÇﬂÇÃíËã`
-template<class T> struct CppClassSymbol<T&> : CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<T*> : CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<const T> : CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<volatile T> : CppClassSymbol<T>{};
-template<class T> struct CppClassSymbol<SmartPtr<T> > : CppClassSymbol<T>{};
-template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T&> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<T*> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<const T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<volatile T> : public CppClassSymbol<T>{};
+template<class T> struct CppClassSymbol<SmartPtr<T> > : public CppClassSymbol<T>{};
+template<class T, class Deleter> struct CppClassSymbol<UserTypeHolderSub<T, Deleter> > : public CppClassSymbol<T>{};
 
-template<> struct CppClassSymbol<void> : CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<void> : public CppClassSymbol<Any>{};
 
-template<> struct CppClassSymbol<Base> : CppClassSymbol<Any>{};
-template<> struct CppClassSymbol<ID> : CppClassSymbol<String>{};
+template<> struct CppClassSymbol<Base> : public CppClassSymbol<Any>{};
+template<> struct CppClassSymbol<ID> : public CppClassSymbol<String>{};
 
-template<> struct CppClassSymbol<bool> : CppClassSymbol<Bool>{};
-template<> struct CppClassSymbol<char> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<signed char> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<unsigned char> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<short> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<unsigned short> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<int> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<unsigned int> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<long> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<unsigned long> : CppClassSymbol<Int>{};
-template<> struct CppClassSymbol<float> : CppClassSymbol<Float>{};
-template<> struct CppClassSymbol<double> : CppClassSymbol<Float>{};
-template<> struct CppClassSymbol<long double> : CppClassSymbol<Float>{};
+template<> struct CppClassSymbol<bool> : public CppClassSymbol<Bool>{};
+template<> struct CppClassSymbol<char> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<signed char> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned char> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<short> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned short> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<int> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned int> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<long> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<unsigned long> : public CppClassSymbol<Int>{};
+template<> struct CppClassSymbol<float> : public CppClassSymbol<Float>{};
+template<> struct CppClassSymbol<double> : public CppClassSymbol<Float>{};
+template<> struct CppClassSymbol<long double> : public CppClassSymbol<Float>{};
 
-template<> struct CppClassSymbol<const char*> : CppClassSymbol<String>{};
-template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
+template<> struct CppClassSymbol<const char*> : public CppClassSymbol<String>{};
+template<> struct CppClassSymbol<const wchar_t*> : public CppClassSymbol<String>{};
 
+struct Binder{
+	Binder(CppClassSymbolData& value, int n, const char_t* name, void (*bind)(Class* it)){
+		value.init_bind(n, name, bind);	
+	}
+};
 	
 #define XTAL_BIND_(ClassName, xtname, N) \
 	template<class T> struct XTAL_bind_template##N;\
@@ -479,11 +562,6 @@ template<> struct CppClassSymbol<const wchar_t*> : CppClassSymbol<String>{};
 		);\
 	void XTAL_bind_template##N<ClassName>::on_bind(::xtal::Class* it)
 
-struct Binder{
-	Binder(CppClassSymbolData& value, int n, const char_t* name, void (*bind)(Class* it)){
-		value.init_bind(n, name, bind);	
-	}
-};
 
 #define XTAL_PREBIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 0)
 #define XTAL_BIND(ClassName) XTAL_BIND_(ClassName, XTAL_L(#ClassName), 1)
@@ -492,7 +570,7 @@ struct Binder{
 #define XTAL_PREBIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 0)
 #define XTAL_BIND_ALIAS(ClassName, Name) XTAL_BIND_(ClassName, XTAL_L(#Name), 1)
 
-#define XTAL_BIND_DIRECT(Target) if(::xtal::ClassPtr it = ::xtal::ptr_cast<::xtal::Class>(Target))
+#define XTAL_BIND_DIRECT(Target) if(::xtal::ClassPtr it = ::xtal::ptr_cast< ::xtal::Class >(Target))
 
 
 ////////////////////////////////////

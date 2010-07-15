@@ -32,6 +32,9 @@ template<class T>
 class FastStack{
 	T* begin_; // 確保したメモリの先頭の次を指す。
 	T* end_; // 確保したメモリの一番最後の次を指す
+
+public:
+
 	T* current_; // スタックトップの要素を指す
 
 private:
@@ -299,13 +302,13 @@ template<class T>
 void FastStack<T>::upsize_detail(size_t us){
 	XTAL_ASSERT(us>=0);
 
-	current_-=us;
+	current_ -= us;
 
 	size_t oldsize = size();
 	size_t oldcapa = capacity();
 	size_t newsize = oldsize+us;
 	T* oldp = begin_;
-	size_t newcapa = oldcapa==0 ? us : 4 + us + oldcapa + oldcapa/2;
+	size_t newcapa = oldcapa==0 ? us : oldsize + us + oldcapa/2 + 2;
 	T* newp = (T*)stack_allocate(sizeof(T)*(newcapa+1))+1;
 
 	for(size_t i = 0; i<oldsize; ++i){
@@ -784,6 +787,8 @@ public:
 	void push(const T& v){ push_back(v); }
 	void pop_back();
 	void pop(){ pop_back(); }
+	void erase(int_t i, int_t n = 1);
+
 	T& operator [](size_t i){ return values_[i]; }
 	const T& operator [](size_t i) const{ return values_[i]; }
 
@@ -897,7 +902,7 @@ void TArray<T>::push_back(const T& v){
 
 template<class T>
 void TArray<T>::pop_back(){
-	XTAL_ASSERT(!empty());
+	XTAL_ASSERT(size_ != 0);
 	size_--;
 	values_[size_].~T();
 }
@@ -917,6 +922,21 @@ void TArray<T>::init(const T* values, uint_t size){
 	}
 }
 
+template<class T>
+void TArray<T>::erase(int_t start, int_t n){
+	if(n==0){
+		return;
+	}
+
+	XTAL_ASSERT(0<=start && (uint_t)start<size_);
+
+	if(size_-(start+n)!=0){
+		for(uint_t i=0; i<(size_-(start+n)); ++i){
+			new(values_+start+i) T(*(values_+start+n+i));
+		}
+	}
+	size_ -= n;
+}
 
 }
 

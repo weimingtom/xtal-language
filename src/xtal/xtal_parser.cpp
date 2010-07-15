@@ -36,7 +36,7 @@ inline bool test_space(int ch){
 }
 
 inline bool test_ident_first(int ch){
-	return test_alpha(ch) || ch_len(ch)>1 || ch>255;
+	return test_alpha((char_t)ch) || ch_len((char_t)ch)>1 || ch>255;
 }
 
 inline bool test_ident_rest(int ch){
@@ -385,7 +385,7 @@ void Parser::tokenize(){
 					}
 					IDPtr identifier = ms_->to_s()->intern();
 					if(const AnyPtr& key = identifier_map_->at(identifier)){
-						int_t n = ivalue(key);
+						int_t n = XTAL_detail_ivalue(key);
 						if(n<Token::KEYWORD_MAX){
 							push_keyword_token(n);
 						}
@@ -669,7 +669,7 @@ void Parser::tokenize(){
 				IDPtr identifier = read_string('\'', '\'')->intern();
 
 				if(const AnyPtr& key = identifier_map_->at(identifier)){
-					int_t n = ivalue(key);
+					int_t n = XTAL_detail_ivalue(key);
 					push_identifier_token(n);
 				}
 				else{
@@ -753,7 +753,7 @@ StringPtr Parser::read_string(int_t open, int_t close){
 	for(;;){
 
 		AnyPtr ach = executor_->read();
-		int_t ch = chvalue(ach);
+		int_t ch = XTAL_detail_chvalue(ach);
 		if(ch==close){
 			--depth;
 			if(depth==0){
@@ -1790,10 +1790,6 @@ bool Parser::parse_var(){
 		}
 	}
 	return false;
-}
-
-void Parser::parse_expr_statement(){
-
 }
 	
 void Parser::parse_toplevel(){

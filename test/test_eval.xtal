@@ -61,6 +61,7 @@ class EvalTest{
 	
 	catch_except#Test{
 		aa: 10;
+		aa = 15;
 		assert eval("unknown") && false catch(e) true;
 		assert eval("aa") && true catch(e) false;
 	}

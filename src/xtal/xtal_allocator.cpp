@@ -1,4 +1,9 @@
- #include "xtal.h"
+#include "xtal.h"
+#include "xtal_setting.h"
+#include "xtal_utility.h"
+#include "xtal_allocator.h"
+
+#include <cstring>
 
 namespace xtal{
 
@@ -162,10 +167,10 @@ FixedAllocator::FixedAllocator(){
 	full_chunk_ = 0;
 }
 
-void FixedAllocator::init(MemoryPool* pool, uint_t block_size){
+void FixedAllocator::init(MemoryPool* pool, uint_t block_size, uint_t block_count){
 	pool_ = pool;
 	block_size_ = block_size;
-	block_count_ = (MemoryPool::BLOCK_SIZE-sizeof(Chunk))/(block_size*ONE_SIZE);
+	block_count_ = block_count;
 	XTAL_ASSERT(block_count_>1);
 }
 
@@ -292,8 +297,8 @@ void FixedAllocator::release(){
 
 SmallObjectAllocator::SmallObjectAllocator(){
 	for(int i=0; i<POOL_SIZE; ++i){
-		pool_[i].init(&mpool_, i+1);
-	}	
+		pool_[i].init(&mpool_, i, (MemoryPool::BLOCK_SIZE-sizeof(FixedAllocator::Chunk))/((i==0 ? 1 : i)*ONE_SIZE));
+	}
 }
 
 void SmallObjectAllocator::release(){

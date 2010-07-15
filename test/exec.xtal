@@ -59,15 +59,15 @@ lib::test: singleton{
 							try{
 								befores{ obj.(it)#Before; }
 								
-								printf("\tdo %s\n", it);
+								printf("\tdo %s", it);
 								obj.(it)#Test;
 								
 								afters{ obj.(it)#After; }
-								printf("\tok %s\n", it);
+								print(" ok\n");
 								_ok++;
 							}
 							catch(e){
-								printf("\tfail %s:%s\n", it, e);
+								printf(" fail\n%s\n", e);
 								_fail++;
 							}
 						}

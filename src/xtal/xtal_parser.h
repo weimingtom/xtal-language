@@ -147,7 +147,6 @@ private:
 	void parse_call();		
 	void parse_toplevel();
 
-	void parse_expr_statement();
 	bool expr_end();
 	bool make_bin_expr(const Token& ch, int_t space, int_t pri, int_t PRI, int_t EXPR);
 	void expect_stmt_end();

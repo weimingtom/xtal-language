@@ -697,33 +697,25 @@ int main2(int argc, char** argv){
 	Environment* env = environment();
 	using namespace std;
 
-	MapPtr map = xnew<Map>();
-	map->set_at(0, 100);
-	map->set_at(1, 100);
-	map->set_at(2, 100);
-	map->set_at(3, 100);
-	map->set_at(4, 100);
-	map->set_at(5, 100);
-	map->set_at(7, 100);
-	map->set_at(Xs("test1"), 100);
-	map->set_at(Xs("test2"), 100);
-	map->set_at(Xs("test3"), 100);
-	map->set_at(Xs("test4"), 100);
-	map->set_at(Xs("test5"), 100);
-	map->set_at(Xs("test6"), 100);
-	map->set_at(Xs("test7"), 100);
-
 	//Debugger debugger;
 	//debugger.attach(xnew<DebugStream>("127.0.0.1", "13245"));
 
 	{
 		if(CodePtr code = Xsrc((
-
+/////////////////////////////////
+			return 10*15;
+/////////////////////////////////
 		))){
-			code->inspect()->p();
+			//code->inspect()->p();
 			//AnyPtr ret = code->call(xnew<Spr>());
+			
+			MemoryStreamPtr ms = xnew<MemoryStream>();
+			ms->serialize(code);
+			ms->seek(0);
+			compile(ms)->call()->p();
+			
 
-			code->call();
+			//code->call(4);
 			//full_gc();
 		}
 	}

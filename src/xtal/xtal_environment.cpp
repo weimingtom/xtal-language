@@ -163,7 +163,7 @@ public:
 
 		//debug_stacktrace(ref.stacktrace);
 
-		if(gcounter_==69836){
+		if(gcounter_==433){
 			gcounter_ = gcounter_;
 		}
 
@@ -269,6 +269,7 @@ public:
 
 namespace xtal{
 
+Environment* last_environment_;
 XTAL_TLS_PTR(Environment) environment_;
 XTAL_TLS_PTR(VMachine) vmachine_;
 
@@ -316,7 +317,7 @@ Environment* environment(){
 }
 
 void set_environment(Environment* environment){
-	environment_ = environment;
+	last_environment_ = environment_ = environment;
 }
 
 const VMachinePtr& vmachine(){
@@ -335,22 +336,24 @@ const VMachinePtr& setup_call(int_t need_result_count){
 	return vm;
 }
 
-const VMachinePtr& vmachine_checked(){
-	return vmachine_ ? to_smartptr((VMachine*)vmachine_) : nul<VMachine>();
+VMachine* vmachine2(){
+	return vmachine_;
 }
 
-void set_vmachine(const VMachinePtr& vm){
+VMachinePtr set_vmachine(const VMachinePtr& vm){
+	VMachinePtr temp = vmachine_ ? VMachinePtr(vmachine_) : VMachinePtr();
+
 	if(vmachine_){
 		vmachine_->dec_ref_count();
 	}
 
-	if(vm){
-		vmachine_ = vm.get();
+	vmachine_ = vm.get();
+
+	if(vmachine_){
 		vmachine_->inc_ref_count();
 	}
-	else{
-		vmachine_ = 0;
-	}
+
+	return temp;
 }
 
 
@@ -364,7 +367,7 @@ void* xmalloc(size_t size){
 	}
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
-	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){
+	if(XTAL_SMALL_ALLOCATOR_HANDLE_SIZE(size)){
 		return env->so_alloc_.malloc(size);
 	}
 #endif
@@ -407,7 +410,7 @@ void xfree(void* p, size_t size){
 	}
 
 #if !defined(XTAL_NO_SMALL_ALLOCATOR) && !defined(XTAL_DEBUG_ALLOC)
-	if(size<=SmallObjectAllocator::HANDLE_MAX_SIZE){	
+	if(XTAL_SMALL_ALLOCATOR_HANDLE_SIZE(size)){	
 		env->so_alloc_.free(p, size);
 		return;
 	}
@@ -508,7 +511,7 @@ void initialize(const Setting& setting){
 	new(environment_) Environment();
 	environment_->initialize(setting2);
 #else
-	environment_ = (Environment*)setting.allocator_lib->malloc(sizeof(Environment));
+	last_environment_ = environment_ = (Environment*)setting.allocator_lib->malloc(sizeof(Environment));
 	new(environment_) Environment();
 	environment_->initialize(setting);
 #endif
@@ -545,29 +548,19 @@ void Environment::initialize(const Setting& setting){
 	ignore_memory_assert_ = false;
 	used_memory_ = sizeof(Environment);
 	
-	object_space_.initialize();
 	string_space_.initialize();
+	object_space_.initialize();
 
+	lib_ = *(SmartPtr<Lib>*)&cpp_class<Lib>();
+	global_ = *(SmartPtr<Global>*)&cpp_class<Global>();
 	builtin_ = cpp_class<Builtin>();
-	builtin_->unset_native();
-	builtin_->set_singleton();
-
-	lib_ = XNew<Lib>(Lib::most_top_level_t());
-	lib_->append_load_path(XTAL_STRING("."));
-
-	global_ = XNew<Global>();
-	global_->set_singleton();
-	builtin_->inherit(global_);
 	builtin_->def(Xid(global), global_);
+	builtin_->def(Xid(lib), lib_);
 
 	vm_list_ = XNew<Array>();
 	text_map_ = XNew<Map>();
 
-	lib_->def(Xid(builtin), builtin_);
-
 	bind();
-
-	builtin_->def(Xid(filesystem), cpp_class<filesystem::Filesystem>());
 
 	thread_space_.initialize(setting_.thread_lib);
 	
@@ -579,11 +572,9 @@ void Environment::initialize(const Setting& setting){
 	stdout_ = XNew<StdoutStream>();
 	stderr_ = XNew<StderrStream>();
 
-	builtin_->def(Xid(stdin), stdin_);
-	builtin_->def(Xid(stdout), stdout_);
-	builtin_->def(Xid(stderr), stderr_);
-
-	builtin_->def(Xid(debug), cpp_class<debug::Debug>());
+	builtin_->def(XTAL_DEFINED_ID(stdin), stdin_);
+	builtin_->def(XTAL_DEFINED_ID(stdout), stdout_);
+	builtin_->def(XTAL_DEFINED_ID(stderr), stderr_);
 
 	enable_gc();
 
@@ -628,7 +619,7 @@ void Environment::uninitialize(){
 VMachinePtr vmachine_take_over(){
 	Environment* environment = environment_;
 	if(environment->vm_list_->empty()){
-		environment->vm_list_->push_back(xnew<VMachine>());
+		return xnew<VMachine>();
 	}
 	VMachinePtr vm = unchecked_ptr_cast<VMachine>(environment->vm_list_->back());
 	environment->vm_list_->pop_back();
@@ -638,21 +629,10 @@ VMachinePtr vmachine_take_over(){
 void vmachine_take_back(const VMachinePtr& vm){
 	Environment* environment = environment_;
 	vm->reset();
-	if(environment->vm_list_->length()<8){
+	if(environment->vm_list_ && environment->vm_list_->length()<8){
 		environment->vm_list_->push_back(vm);
 	}
 }
-
-void vmachine_swap_temp(){
-	Environment* environment = environment_;
-	environment->thread_space_.swap_temp();
-}
-
-
-const IDPtr* id_op_list(){
-	return environment_->string_space_.id_op_list();
-}
-
 
 void gc(){
 	return environment_->object_space_.gc();
@@ -704,6 +684,10 @@ const ClassPtr& cpp_class(int_t index){
 
 const AnyPtr& cpp_value(CppValueSymbolData* key){
 	return environment_->object_space_.cpp_value(key);
+}
+
+void set_cpp_class(CppClassSymbolData* key, const ClassPtr& cls){
+	return environment_->object_space_.set_cpp_class(key, cls);
 }
 
 void clear_cache(){
@@ -774,6 +758,18 @@ IDPtr intern(const StringPtr& name){
 	return intern(str, size, hashcode, false);
 }
 
+IDPtr fetch_defined_id(uint_t index){
+	const StringSpace::Node* node = environment_->string_space_.fetch(index);
+
+	if(node->size<SMALL_STRING_MAX){
+		return ID(node->data(), node->size, ID::small_intern_t());
+	}
+	else{
+		return ID(node->data(), node->size, ID::intern_t());
+	}
+}
+
+
 void yield_thread(){
 	return environment_->thread_space_.yield_thread();
 }
@@ -790,13 +786,31 @@ void xunlock(){
 	environment_->thread_space_.xunlock();
 }
 
-void register_thread(Environment* env){
-	env->thread_space_.register_thread();
+bool register_thread(Environment* env){
+	if(vmachine_){ // Šù‚É“o˜^Ï‚Ý‚ÌƒXƒŒƒbƒh‚Å‚ ‚é‚È‚ç–ß‚é
+		return false;
+	}
+	env->thread_space_.register_thread(env);
+	return true;
 }
 
 void unregister_thread(Environment* env){
-	env->thread_space_.unregister_thread();
+	env->thread_space_.unregister_thread(env);
 }
+
+bool register_thread(){
+	if(vmachine_){ // Šù‚É“o˜^Ï‚Ý‚ÌƒXƒŒƒbƒh‚Å‚ ‚é‚È‚ç–ß‚é
+		return false;
+	}
+
+	last_environment_->thread_space_.register_thread(last_environment_);
+	return true;
+}
+
+void unregister_thread(){
+	last_environment_->thread_space_.unregister_thread(last_environment_);
+}
+
 
 ThreadLib* thread_lib(){
 	return environment_->setting_.thread_lib;
@@ -823,6 +837,7 @@ const StreamPtr& stderr_stream(){
 }
 
 const MapPtr& text_map(){
+	Environment* e = environment_;
 	return environment_->text_map_;
 }
 
@@ -851,18 +866,55 @@ StreamPtr open(const StringPtr& file_name, const StringPtr& mode){
 	return nul<Stream>();
 }
 
-#ifndef XTAL_NO_PARSER
 
 struct GCer{
 	GCer(int){}
 	~GCer(){ full_gc(); }
 };
 
-CodePtr compile_file(const StringPtr& file_name){
-	GCer gc(0);
-	if(StreamPtr fs = open(file_name, XTAL_STRING("r"))){
+namespace{
+	CodePtr compile_detail(const AnyPtr& source, const StringPtr& file_name){
+#ifndef XTAL_NO_PARSER
+		GCer gc(0);
 		CodeBuilder cb;
-		CodePtr ret = cb.compile(fs, file_name);
+		return cb.compile(xnew<xpeg::Executor>(source), file_name);
+#else
+		return nul<Code>();
+#endif
+	}
+
+	CodePtr eval_compile_detail(const AnyPtr& source){
+#ifndef XTAL_NO_PARSER
+		CodeBuilder cb;
+		return cb.eval_compile(xnew<xpeg::Executor>(source));
+#else
+		return nul<Code>();
+#endif
+	}
+
+	CodePtr compile_or_deserialize(const AnyPtr& source, const StringPtr& file_name){
+		StreamPtr stream = ptr_cast<Stream>(source);
+		if(!stream && ptr_cast<String>(source)){
+			stream = XNew<StringStream>(unchecked_ptr_cast<String>(source));
+		}
+
+		if(stream){
+			u8 head[4] = {0};
+			stream->read(head, 4);
+			stream->seek(0);
+
+			if(head[0]=='x' && head[1]=='t' && head[2]=='a' && head[3]=='l'){
+				return ptr_cast<Code>(stream->deserialize());
+			}		
+		}
+
+		return compile_detail(stream, file_name);
+	}
+}
+
+CodePtr compile_file(const StringPtr& file_name){
+	if(StreamPtr fs = open(file_name, XTAL_STRING("r"))){
+		CodePtr ret = compile_or_deserialize(fs, file_name);
 		fs->close();
 		return ret;
 	}
@@ -870,15 +922,11 @@ CodePtr compile_file(const StringPtr& file_name){
 }
 
 CodePtr compile(const AnyPtr& source){
-	GCer gc(0);
-
-	CodeBuilder cb;
-	return cb.compile(xnew<xpeg::Executor>(source), empty_string);
+	return compile_or_deserialize(source, empty_string);
 }
 
 CodePtr eval_compile(const AnyPtr& source){
-	CodeBuilder cb;
-	return cb.eval_compile(xnew<xpeg::Executor>(source));
+	return eval_compile_detail(source);
 }
 
 AnyPtr load(const StringPtr& file_name){
@@ -936,11 +984,7 @@ AnyPtr require(const StringPtr& name){
 }
 
 CodePtr source(const char_t* src, int_t size){
-	GCer gc(0);
-
-	CodeBuilder cb;
-	StreamPtr ms = xnew<PointerStream>(src, size*sizeof(char_t));
-	return cb.compile(ms);
+	return compile_detail(xnew<PointerStream>(src, size*sizeof(char_t)), empty_string);
 }
 
 void exec_source(const char_t* src, int_t size){
@@ -953,8 +997,6 @@ void exec_source(const char_t* src, int_t size){
 		}
 	}
 }
-
-#endif
 
 CodePtr compiled_source(const void* src, int_t size){
 	StreamPtr ms = xnew<CompressDecoder>(xnew<PointerStream>(src, size));

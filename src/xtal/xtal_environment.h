@@ -20,7 +20,7 @@ public:
 	virtual ~AllocatorLib(){}
 
 	virtual void* malloc(std::size_t size){ return std::malloc(size); }
-	virtual void free(void* p, std::size_t size){ std::free(p); }
+	virtual void free(void* p, std::size_t /*size*/){ std::free(p); }
 
 	virtual void* malloc_align(std::size_t size, std::size_t alignment);
 	virtual void free_align(void* p, std::size_t size, std::size_t alignment);
@@ -35,7 +35,7 @@ class ChCodeLib{
 public:
 	virtual ~ChCodeLib(){}
 
-	virtual int_t ch_len(char_t lead){ return 1; }
+	virtual int_t ch_len(char_t /*lead*/){ return 1; }
 	virtual int_t ch_len2(const char_t* str){ return ch_len(*str); }
 	virtual int_t ch_inc(const char_t* data, int_t data_size, char_t* dest, int_t dest_size);
 	virtual int_t ch_cmp(const char_t* a, int_t asize, const char_t* b, int_t bsize);
@@ -49,17 +49,17 @@ public:
 	virtual ~ThreadLib(){}
 
 	virtual void* new_thread(){ return 0; }
-	virtual void delete_thread(void* thread_object){}
-	virtual void start_thread(void* thread_object, void (*callback)(void*), void* data){ callback(data); }
-	virtual void join_thread(void* thread_object){}
+	virtual void delete_thread(void* /*thread_object*/){}
+	virtual void start_thread(void* /*thread_object*/, void (*callback)(void*), void* data){ callback(data); }
+	virtual void join_thread(void* /*thread_object*/){}
 
 	virtual void* new_mutex(){ return 0; }
-	virtual void delete_mutex(void* mutex_object){}
-	virtual void lock_mutex(void* mutex_object){}
-	virtual void unlock_mutex(void* mutex_object){}
+	virtual void delete_mutex(void* /*mutex_object*/){}
+	virtual void lock_mutex(void* /*mutex_object*/){}
+	virtual void unlock_mutex(void* /*mutex_object*/){}
 
 	virtual void yield(){}
-	virtual void sleep(float_t sec){}
+	virtual void sleep(float_t /*sec*/){}
 };
 
 /**
@@ -70,16 +70,16 @@ public:
 	virtual ~StdStreamLib(){}
 
 	virtual void* new_stdin_stream(){ return 0; }
-	virtual void delete_stdin_stream(void* stdin_stream_object){}
-	virtual uint_t read_stdin_stream(void* stdin_stream_object, void* dest, uint_t size){ return 0; }
+	virtual void delete_stdin_stream(void* /*stdin_stream_object*/){}
+	virtual uint_t read_stdin_stream(void* /*stdin_stream_object*/, void* /*dest*/, uint_t /*size*/){ return 0; }
 
 	virtual void* new_stdout_stream(){ return 0; }
-	virtual void delete_stdout_stream(void* stdout_stream_object){}
-	virtual uint_t write_stdout_stream(void* stdout_stream_object, const void* src, uint_t size){ return 0; }
+	virtual void delete_stdout_stream(void* /*stdout_stream_object*/){}
+	virtual uint_t write_stdout_stream(void* /*stdout_stream_object*/, const void* /*src*/, uint_t /*size*/){ return 0; }
 
 	virtual void* new_stderr_stream(){ return 0; }
-	virtual void delete_stderr_stream(void* stderr_stream_object){}
-	virtual uint_t write_stderr_stream(void* stderr_stream_object, const void* src, uint_t size){ return 0; }
+	virtual void delete_stderr_stream(void* /*stderr_stream_object*/){}
+	virtual uint_t write_stderr_stream(void* /*stderr_stream_object*/, const void* /*src*/, uint_t /*size*/){ return 0; }
 };
 
 /**
@@ -89,22 +89,22 @@ class FilesystemLib{
 public:
 	virtual ~FilesystemLib(){}
 
-	virtual bool is_directory(const char_t* path){ return false; }
+	virtual bool is_directory(const char_t* /*path*/){ return false; }
 
-	virtual void* new_file_stream(const char_t* path, const char_t* flags){ return 0; }
-	virtual void delete_file_stream(void* file_stream_object){}
-	virtual uint_t read_file_stream(void* file_stream_object, void* dest, uint_t size){ return 0; }
-	virtual uint_t write_file_stream(void* file_stream_object, const void* src, uint_t size){ return 0; }
-	virtual void seek_file_stream(void* file_stream_object, uint_t pos){}
-	virtual uint_t tell_file_stream(void* file_stream_object){ return 0; }
-	virtual bool end_file_stream(void* file_stream_object){ return true; }
-	virtual uint_t size_file_stream(void* file_stream_object){ return 0; }
-	virtual void flush_file_stream(void* file_stream_object){}
+	virtual void* new_file_stream(const char_t* /*path*/, const char_t* /*flags*/){ return 0; }
+	virtual void delete_file_stream(void* /*file_stream_object*/){}
+	virtual uint_t read_file_stream(void* /*file_stream_object*/, void* /*dest*/, uint_t /*size*/){ return 0; }
+	virtual uint_t write_file_stream(void* /*file_stream_object*/, const void* /*src*/, uint_t /*size*/){ return 0; }
+	virtual void seek_file_stream(void* /*file_stream_object*/, uint_t /*pos*/){}
+	virtual uint_t tell_file_stream(void* /*file_stream_object*/){ return 0; }
+	virtual bool end_file_stream(void* /*file_stream_object*/){ return true; }
+	virtual uint_t size_file_stream(void* /*file_stream_object*/){ return 0; }
+	virtual void flush_file_stream(void* /*file_stream_object*/){}
 
-	virtual void* new_entries(const char_t* path){ return 0; }
-	virtual void delete_entries(void* entries_object){}
-	virtual const char_t* next_entries(void* entries_object){ return 0; }
-	virtual void break_entries(void* entries_object){}
+	virtual void* new_entries(const char_t* /*path*/){ return 0; }
+	virtual void delete_entries(void* /*entries_object*/){}
+	virtual const char_t* next_entries(void* /*entries_object*/){ return 0; }
+	virtual void break_entries(void* /*entries_object*/){}
 };
 
 /**
@@ -305,6 +305,8 @@ inline const ClassPtr& cpp_class(){
 	return cpp_class(&CppClassSymbol<T>::value);
 }
 
+void set_cpp_class(CppClassSymbolData* key, const ClassPtr& cls);
+
 /////////////////////////////////////////////////////
 
 /**
@@ -373,7 +375,11 @@ VMachinePtr vmachine_take_over();
 */
 void vmachine_take_back(const VMachinePtr& vm);
 
-void vmachine_swap_temp();
+/**
+* \internal
+* \brief デフォルトで使用するVMachineインスタンスを設定する。
+*/
+VMachinePtr set_vmachine(const VMachinePtr& vm);
 
 /////////////////////////////////////////////////////
 
@@ -418,7 +424,7 @@ const StreamPtr& stderr_stream();
 */
 const VMachinePtr& vmachine();
 
-const VMachinePtr& vmachine_checked();
+VMachine* vmachine2();
 
 const VMachinePtr& setup_call();
 const VMachinePtr& setup_call(int_t need_result_count);
@@ -463,6 +469,11 @@ IDPtr intern(const LongLivedString& str);
 */
 IDPtr intern(const StringPtr& name);		
 
+/**
+* \brief 定義済みインターン済み文字列を取得する
+*
+*/
+IDPtr fetch_defined_id(uint_t index);
 
 /**
 * \brief 環境をロックする
@@ -483,9 +494,46 @@ private:
 	void operator =(const XUnlock&);
 };
 
-void register_thread(Environment*);
+struct XLock{
+	XLock(int){ xlock(); }
+	~XLock(){ xunlock(); }
+	operator bool() const{ return true; }
+private:
+	XLock(const XLock&);
+	void operator =(const XLock&);
+};
 
+#ifdef XTAL_NO_THREAD
+#	define XTAL_UNLOCK 
+#	define XTAL_LOCK 
+#	define XTAL_UNLOCK_DIRECT 
+#	define XTAL_LOCK_DIRECT 
+#else
+#	define XTAL_UNLOCK if(const ::xtal::XUnlock& xunlock = (XTAL_UNUSED_VAR(xunlock), 0))
+#	define XTAL_LOCK if(const ::xtal::XLock& xlock = (XTAL_UNUSED_VAR(xlock), 0))
+#	define XTAL_UNLOCK_DIRECT ::xtal::xunlock()
+#	define XTAL_LOCK_DIRECT ::xtal::xlock()
+#endif
+
+
+bool register_thread(Environment*);
 void unregister_thread(Environment*);
+
+bool register_thread();
+void unregister_thread();
+
+struct XInterpose{
+	XInterpose(int){ registered_ = register_thread(); }
+	~XInterpose(){ if(registered_)unregister_thread(); }
+	operator bool() const{ return true; }
+private:
+	XInterpose(const XInterpose&);
+	void operator =(const XInterpose&);
+private:
+	bool registered_;
+};
+
+#define XTAL_INTERPOSE if(const ::xtal::XInterpose& xinterpose = (XTAL_UNUSED_VAR(xinterpose), 0))
 
 /**
 * \brief テキストマップを返す
@@ -528,15 +576,8 @@ int_t ch_inc(const char_t* data, int_t data_size, char_t* dest, int_t dest_size)
 */
 int_t ch_cmp(const char_t* a, uint_t asize, const char_t* b, uint_t bsize);
 
-/**
-* \internal
-* \brief 演算子の名前をあらわすIDの配列を返す
-*/
-const IDPtr* id_op_list();
 
 StreamPtr open(const StringPtr& file_name, const StringPtr& mode);
-
-#ifndef XTAL_NO_PARSER
 
 /// \name コンパイル系関数
 //@{
@@ -554,18 +595,10 @@ CodePtr compile_file(const StringPtr& file_name);
 * \xbind lib::builtin
 * \brief sourceをコンパイルする。
 * この戻り値をserializeすると、バイトコード形式で保存される。
-* \param source Xtalスクリプトが記述された文字列
+* \param source Xtalスクリプトが記述されたStringかStream
 * \return 実行できるCodeオブジェクト
 */
 CodePtr compile(const AnyPtr& source);
-
-/**
-* \xbind lib::builtin
-* \brief sourceをeval用にコンパイルする。
-* \param source Xtalスクリプトが記述された文字列
-* \return VMachine::evalに渡すことのできるCodeオブジェクト
-*/
-CodePtr eval_compile(const AnyPtr& source);
 
 /**
 * \xbind lib::builtin
@@ -578,20 +611,20 @@ AnyPtr load(const StringPtr& file_name);
 //@}
 
 CodePtr source(const char_t* src, int_t size);
-
 void exec_source(const char_t* src, int_t size);
 
-#endif
+CodePtr compiled_source(const void* src, int_t size);
+void exec_compiled_source(const void* src, int_t size);
 
 void set_require_source_hook(const AnyPtr& hook);
-
 CodePtr require_source(const StringPtr& name);
-
 AnyPtr require(const StringPtr& name);
 
-CodePtr compiled_source(const void* src, int_t size);
+#ifndef XTAL_NO_PARSER
 
-void exec_compiled_source(const void* src, int_t size);
+CodePtr eval_compile(const AnyPtr& source);
+
+#endif
 
 }
 

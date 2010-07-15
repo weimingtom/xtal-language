@@ -101,7 +101,7 @@ void PODArrayBase::resize(uint_t sz){
 void PODArrayBase::upsize(uint_t sz){
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
-			uint_t newcapa = size_+sz+capa_+1;
+			uint_t newcapa = size_ + sz + capa_/2 + 2;
 			void* newp = xmalloc(one_size_*newcapa);
 			std::memcpy(newp, values_, one_size_*size_);
 			xfree(values_, one_size_*capa_);

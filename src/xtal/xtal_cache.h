@@ -46,16 +46,16 @@ struct MemberCacheTable{
 
 	const AnyPtr& cache(Base* target_class, const IDPtr& primary_key, const AnyPtr& secondary_key, int_t& accessibility){
 		uint_t itarget_class = (uint_t)target_class >> 2;
-		uint_t iprimary_key = rawvalue(primary_key).u();
-		uint_t isecondary_key = rawvalue(secondary_key).u();
+		uint_t iprimary_key = XTAL_detail_uvalue(primary_key);
+		uint_t isecondary_key = XTAL_detail_uvalue(secondary_key);
 
 		uint_t hash = itarget_class ^ (iprimary_key ^ (iprimary_key>>24)) ^ isecondary_key;
 		Unit& unit = table_[hash % CACHE_MASK];
 
 		if(((mutate_count_ ^ unit.mutate_count) | 
-			rawbitxor(primary_key, unit.primary_key) | 
-			((uint_t)target_class ^ rawvalue(unit.target_class).u()) | 
-			rawbitxor(secondary_key, unit.secondary_key))==0){
+			XTAL_detail_rawbitxor(primary_key, unit.primary_key) | 
+			((uint_t)target_class ^ XTAL_detail_uvalue(unit.target_class)) | 
+			XTAL_detail_rawbitxor(secondary_key, unit.secondary_key))==0){
 
 			hit_++;
 			accessibility = unit.accessibility;
@@ -127,15 +127,15 @@ struct IsCacheTable{
 	}
 
 	bool cache(const AnyPtr& target_class, const AnyPtr& klass){
-		uint_t itarget_class = rawvalue(target_class).u();
-		uint_t iklass = rawvalue(klass).u();
+		uint_t itarget_class = XTAL_detail_uvalue(target_class);
+		uint_t iklass = XTAL_detail_uvalue(klass);
 
 		uint_t hash = (itarget_class>>3) ^ (iklass>>2);
 		Unit& unit = table_[hash % CACHE_MASK];
 		
 		if(mutate_count_==unit.mutate_count && 
-			raweq(target_class, unit.target_class) && 
-			raweq(klass, unit.klass)){
+			XTAL_detail_raweq(target_class, unit.target_class) && 
+			XTAL_detail_raweq(klass, unit.klass)){
 
 			hit_++;
 			return unit.result;

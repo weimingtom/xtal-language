@@ -88,18 +88,18 @@ private:\
 
 // 以下の型は参照型にキャストできない。const参照型にはキャストできる。
 
-XTAL_CAST_HELPER(char, Int, ivalue);
-XTAL_CAST_HELPER(signed char, Int, ivalue);
-XTAL_CAST_HELPER(unsigned char, Int, ivalue);
-XTAL_CAST_HELPER(short, Int, ivalue);
-XTAL_CAST_HELPER(unsigned short, Int, ivalue);
-XTAL_CAST_HELPER(int, Int, ivalue);
-XTAL_CAST_HELPER(unsigned int, Int, ivalue);
-XTAL_CAST_HELPER(long, Int, ivalue);
-XTAL_CAST_HELPER(unsigned long, Int, ivalue);
-XTAL_CAST_HELPER(float, Float, fvalue);
-XTAL_CAST_HELPER(double, Float, fvalue);
-XTAL_CAST_HELPER(long double, Float, fvalue);
+XTAL_CAST_HELPER(char, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(signed char, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(unsigned char, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(short, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(unsigned short, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(int, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(unsigned int, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(long, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(unsigned long, Int, XTAL_detail_ivalue);
+XTAL_CAST_HELPER(float, Float, XTAL_detail_fvalue);
+XTAL_CAST_HELPER(double, Float, XTAL_detail_fvalue);
+XTAL_CAST_HELPER(long double, Float, XTAL_detail_fvalue);
 
 #undef XTAL_CAST_HELPER
 
@@ -178,7 +178,7 @@ ptr_cast(const AnyPtr& a){
 
 template<class T>
 inline typename Caster<T>::type 
-tricky_cast(const AnyPtr& a, void (*f)(T)){
+tricky_cast(const AnyPtr& a, void (*)(T)){
 	return cast<T>(a);
 }
 

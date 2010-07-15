@@ -9,6 +9,9 @@
 
 namespace xtal{
 
+template<>
+class SmartPtr<ID>;
+
 /**
 * \brief T型へのポインタを保持するためのスマートポインタ
 */
@@ -188,7 +191,7 @@ template<class T, int N = XNEW_NONE>
 struct XXNew;
 
 template<class T>
-struct XXNew<T, XNEW_NONE> : XXNew<T, XNewN<T>::value>{};
+struct XXNew<T, XNEW_NONE> : public XXNew<T, XNewN<T>::value>{};
 
 template<class T>
 T* make_object(){
@@ -207,14 +210,14 @@ struct XXNew<T, XNEW_BASE> : public Any{
 	}
 
 	void init(){
-		post(new(make_object<T>()) T);	
+		post(::new(make_object<T>()) T);	
 	}
 
 //{REPEAT{{
 /*
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	void init(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
-		post(new(make_object<T>()) T(a0 #COMMA_REPEAT#a`i+1`#));	
+		post(::new(make_object<T>()) T(a0 #COMMA_REPEAT#a`i+1`#));	
 	}
 */
 
@@ -225,67 +228,67 @@ struct XXNew<T, XNEW_BASE> : public Any{
 
 	template<class A0 , class A1>
 	void init(const A0& a0 , const A1& a1){
-		post(new(make_object<T>()) T(a0 , a1));	
+		post(::new(make_object<T>()) T(a0 , a1));	
 	}
 
 	template<class A0 , class A1, class A2>
 	void init(const A0& a0 , const A1& a1, const A2& a2){
-		post(new(make_object<T>()) T(a0 , a1, a2));	
+		post(::new(make_object<T>()) T(a0 , a1, a2));	
 	}
 
 	template<class A0 , class A1, class A2, class A3>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));	
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
-		post(new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));	
+		post(::new(make_object<T>()) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));	
 	}
 
 //}}REPEAT}
@@ -385,7 +388,7 @@ struct XXNew<T, XNEW_OTHER> : public Any{
 	typedef UserTypeHolderSub<T> holder;
 
 	static holder* pre(){
-		holder* ret = new(make_object<holder>()) holder;
+		holder* ret = ::new(make_object<holder>()) holder;
 		ret->ptr = static_cast<T*>(static_cast<void*>(ret->buffer()));
 		return ret;
 	}
@@ -395,92 +398,92 @@ struct XXNew<T, XNEW_OTHER> : public Any{
 	}
 
 	void init(){
-		holder* ret = pre(); new(ret->ptr) T; post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T; post(ret);
 	}
 
 //{REPEAT{{
 /*
 	template<class A0 #COMMA_REPEAT#class A`i+1`#>
 	void init(const A0& a0 #COMMA_REPEAT#const A`i+1`& a`i+1`#){
-		holder* ret = pre(); new(ret->ptr) T(a0 #COMMA_REPEAT#a`i+1`#); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 #COMMA_REPEAT#a`i+1`#); post(ret);
 	}
 */
 
 	template<class A0 >
 	void init(const A0& a0 ){
-		holder* ret = pre(); new(ret->ptr) T(a0 ); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 ); post(ret);
 	}
 
 	template<class A0 , class A1>
 	void init(const A0& a0 , const A1& a1){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1); post(ret);
 	}
 
 	template<class A0 , class A1, class A2>
 	void init(const A0& a0 , const A1& a1, const A2& a2){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); post(ret);
 	}
 
 	template<class A0 , class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13>
 	void init(const A0& a0 , const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, const A6& a6, const A7& a7, const A8& a8, const A9& a9, const A10& a10, const A11& a11, const A12& a12, const A13& a13){
-		holder* ret = pre(); new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13); post(ret);
+		holder* ret = pre(); ::new(ret->ptr) T(a0 , a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13); post(ret);
 	}
 
 //}}REPEAT}
 };
 
 template<class T>
-struct XNew : XXNew<T>{
+struct XNew : public XXNew<T>{
 	typedef XXNew<T> Super;
 
 	XNew(){
@@ -716,31 +719,6 @@ class SmartPtr< SmartPtr<T> >;
 
 //////////////////////////////////////////////////////////////
 
-template<> 
-struct SmartPtrCtor1<String>{
-	typedef const char_t* type;
-};
-
-template<>
-struct SmartPtrCtor3<String>{
-	typedef const LongLivedString& type;
-};
-
-template<>
-struct SmartPtrCtor1<ID>{
-	typedef const char_t* type;
-};
-
-template<>
-struct SmartPtrCtor2<ID>{
-	typedef const StringPtr& type;
-};
-
-template<>
-struct SmartPtrCtor4<ID>{
-	typedef const LongLivedString& type;
-};
-
 template<>
 class SmartPtr<ID> : public Any{
 public:
@@ -784,7 +762,7 @@ public:
 public:
 
 	bool is_true() const{
-		return rawtype(*this)>TYPE_FALSE;
+		return XTAL_detail_urawtype(*this)>TYPE_FALSE;
 	}
 
 public:
@@ -829,19 +807,28 @@ public:
 	BasePtr()
 		:ptr_(0){}
 
-	BasePtr(T* p)
-		:ptr_(p){
-		if(ptr_){ ptr_->inc_ref_count(); }
-	}
-
-	BasePtr(const SmartPtr<T>& p)
-		:ptr_(p.get()){
-		if(ptr_){ ptr_->inc_ref_count(); }
-	}
-
 	BasePtr(const BasePtr<T>& other)
 		:ptr_(other.ptr_){
 		if(ptr_){ ptr_->inc_ref_count(); }		
+	}
+
+	BasePtr<T>& operator=(const BasePtr<T>& other){
+		if(other.ptr_){ other.ptr_->inc_ref_count(); }
+		if(ptr_){ ptr_->dec_ref_count(); }
+		ptr_ = other.ptr_;
+		return *this;
+	}
+
+	~BasePtr(){
+		if(ptr_){ ptr_->dec_ref_count(); }
+	}
+
+public:
+
+	template<class U>
+	BasePtr(U* p)
+		:ptr_(p){
+		if(ptr_){ ptr_->inc_ref_count(); }
 	}
 
 	template<class U>
@@ -859,25 +846,16 @@ public:
 	BasePtr(const NullPtr&)
 		:ptr_(0){}
 
+public:
 
-	~BasePtr(){
+	template<class U>
+	BasePtr<T>& operator=(U* other){
+		if(other){ other->inc_ref_count(); }
 		if(ptr_){ ptr_->dec_ref_count(); }
-	}
-
-	BasePtr<T>& operator=(const BasePtr<T>& other){
-		if(other.ptr_){ other.ptr_->inc_ref_count(); }
-		if(ptr_){ ptr_->dec_ref_count(); }
-		ptr_ = other.ptr_;
+		ptr_ = other;
 		return *this;
 	}
-	
-	BasePtr<T>& operator=(const SmartPtr<T>& other){
-		if(ptr_){ ptr_->dec_ref_count(); }
-		ptr_ = other.get();
-		if(ptr_){ ptr_->inc_ref_count(); }
-		return *this;
-	}
-	
+
 	template<class U>
 	BasePtr<T>& operator=(const BasePtr<U>& other){
 		if(other.ptr_){ other.ptr_->inc_ref_count(); }
@@ -888,9 +866,10 @@ public:
 	
 	template<class U>
 	BasePtr<T>& operator=(const SmartPtr<U>& other){
+		U* p = other.get();
+		if(p){ p->inc_ref_count(); }
 		if(ptr_){ ptr_->dec_ref_count(); }
-		ptr_ = other.get();
-		if(ptr_){ ptr_->inc_ref_count(); }
+		ptr_ = p;
 		return *this;
 	}
 
@@ -899,6 +878,7 @@ public:
 		ptr_ = 0;
 		return *this;
 	}
+
 public:
 
 	T* get() const{
@@ -952,6 +932,8 @@ public:
 
 private:
 	T* ptr_;
+
+private:
 };
 
 }

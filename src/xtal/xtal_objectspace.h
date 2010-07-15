@@ -15,8 +15,7 @@ class ObjectSpace{
 public:
 
 	ObjectSpace()
-		:class_map_(map_t::no_use_memory_t())
-		,value_map_(map_t::no_use_memory_t()){}
+		:value_map_(map_t::no_use_memory_t()){}
 
 	void initialize();
 
@@ -35,28 +34,28 @@ public:
 	void register_gc(RefCountingBase* p);
 
 public:
+	void set_cpp_class(CppClassSymbolData* key, const ClassPtr& cls);
+
 	Class* make_cpp_class(CppClassSymbolData* key);
 
 	const ClassPtr& cpp_class(CppClassSymbolData* key){
-		map_t::iterator it = class_map_.find(key->key());
-		if(it==class_map_.end()){
-			return to_smartptr(make_cpp_class(key));
+		if(map_t::Node* it = value_map_.find(key->key())){
+			return to_smartptr((Class*)it->value().get());
 		}
-		return to_smartptr((Class*)it->second);
+		return to_smartptr(make_cpp_class(key));
 	}
 
 	const ClassPtr& cpp_class(uint_t key){
-		return to_smartptr((Class*)class_map_.find(key)->second);
+		return to_smartptr((Class*)value_map_.find(key));
 	}
 
 	RefCountingBase* make_cpp_value(CppValueSymbolData* key);
 
 	const AnyPtr& cpp_value(CppValueSymbolData* key){
-		map_t::iterator it = value_map_.find(key->key());
-		if(it==value_map_.end()){
-			return to_smartptr(make_cpp_value(key));
+		if(map_t::Node* it = value_map_.find(key->key())){
+			return to_smartptr(it->value().get());
 		}
-		return to_smartptr(it->second);
+		return to_smartptr(make_cpp_value(key));
 	}
 
 public:
@@ -114,10 +113,9 @@ public:
 		}
 	};
 
-	typedef Hashtable<uint_t, RefCountingBase*, Fun> map_t; 
+	typedef Hashtable<uint_t, BasePtr<RefCountingBase>, Fun> map_t; 
 
 private:
-	map_t class_map_;
 	map_t value_map_;
 };
 

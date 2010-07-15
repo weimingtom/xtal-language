@@ -14,57 +14,57 @@ SmartPtr<Any>::SmartPtr(const LongLivedString& str){
 }
 
 void SmartPtr<Any>::set_unknown_pointer(const Base* p){
-	copy_any(*this, *p);
-	inc_ref_count_force(*this);
+	XTAL_detail_copy(*this, *p);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::set_unknown_pointer(const RefCountingBase* p){
-	copy_any(*this, *p);
-	inc_ref_count_force(*this);
+	XTAL_detail_copy(*this, *p);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::set_unknown_pointer(const Any* p){
-	copy_any(*this, *p);
-	inc_ref_count_force(*this);
+	XTAL_detail_copy(*this, *p);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::set_unknown_pointer(const AnyPtr* p){
-	copy_any(*this, *p);
-	inc_ref_count_force(*this);
+	XTAL_detail_copy(*this, *p);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::init(const Any& a){
-	copy_any(*this, a);
-	inc_ref_count_force(*this);
+	XTAL_detail_copy(*this, a);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::unref_init(const Any& a){
-	inc_ref_count_force(a);
-	dec_ref_count_force(*this);
-	copy_any(*this, a);
+	XTAL_detail_inc_ref_count(a);
+	XTAL_detail_dec_ref_count(*this);
+	XTAL_detail_copy(*this, a);
 }
 
 void SmartPtr<Any>::ref(){
-	inc_ref_count_force(*this);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 void SmartPtr<Any>::unref(){
-	dec_ref_count_force(*this);
+	XTAL_detail_dec_ref_count(*this);
 }
 
 SmartPtr<Any>::SmartPtr(const SmartPtr<Any>& p)
 	:Any(p){
-	inc_ref_count_force(*this);
+	XTAL_detail_inc_ref_count(*this);
 }
 
 SmartPtr<Any>::~SmartPtr(){
 #ifdef XTAL_CHECK_REF_COUNT
 	if(!environment()){
-		XTAL_ASSERT(type(*this)<TYPE_BASE);
+		XTAL_ASSERT(XTAL_detail_type(*this)<TYPE_BASE);
 	}
 #endif
 
-	dec_ref_count_force(*this);
+	XTAL_detail_dec_ref_count(*this);
 }	
 
 SmartPtr<Any>::SmartPtr(const NullPtr&){
@@ -77,13 +77,13 @@ SmartPtr<Any>::SmartPtr(const UndefinedPtr&){
 
 SmartPtr<Any>::SmartPtr(const IDPtr& p){
 	Any::operator=(p);
-	XTAL_ASSERT(type(*this)<TYPE_BASE);
+	XTAL_ASSERT(XTAL_detail_type(*this)<TYPE_BASE);
 }
 
 SmartPtr<Any>& SmartPtr<Any>::operator =(const IDPtr& p){
-	dec_ref_count_force(*this);
+	XTAL_detail_dec_ref_count(*this);
 	Any::operator=(p);
-	XTAL_ASSERT(type(*this)<TYPE_BASE);
+	XTAL_ASSERT(XTAL_detail_type(*this)<TYPE_BASE);
 	return *this;
 }
 
@@ -93,19 +93,23 @@ void visit_members(Visitor& m, RefCountingBase* p){
 }
 
 void visit_members(Visitor& m, const Any& p){
-	if(type(p)>=TYPE_BASE){
-		XTAL_ASSERT((int)rcpvalue(p)->ref_count() >= -m.value());
-		rcpvalue(p)->add_ref_count(m.value());
+	if(XTAL_detail_is_rcpvalue(p)){
+		XTAL_ASSERT((int)XTAL_detail_rcpvalue(p)->ref_count() >= -m.value());
+		XTAL_detail_rcpvalue(p)->add_ref_count(m.value());
 	}
 }
 
 //////////////////////////////
+
+CppClassSymbolData* CppClassSymbolData::head = 0;
 
 void CppClassSymbolData::init_bind(int n, const char_t* xtname, XTAL_bind_t b){
 	if(n==0){
 		flags |= FLAG_NAME | FLAG_BIND0;
 		prebind = b;
 		name = xtname;
+		next = head;
+		head = this;
 	}
 	else if(n==1){
 		flags |= FLAG_NAME | FLAG_BIND1;

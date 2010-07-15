@@ -41,22 +41,37 @@ struct NamedParam{
 	AnyPtr value;
 };
 
-struct f2{
-	float_t a, b;
-};
-
-inline void to_f2(f2& ret, int_t atype, const AnyPtr& a, int_t btype, const AnyPtr& b){
-	float_t aa[2] = {(float_t)ivalue(a), fvalue(a)};
-	float_t bb[2] = {(float_t)ivalue(b), fvalue(b)};
-	ret.a = aa[atype];
-	ret.b = bb[btype];
-}
-
-
 template<>
 struct FastStackDefaultValue<AnyPtr>{
 	static const AnyPtr& get(){ return null; }
 };
+
+#if defined(XTAL_NO_THREAD) || !defined(XTAL_USE_THREAD_MODEL2)
+
+#define XTAL_VM_LOCK
+#define XTAL_VM_UNLOCK
+#define XTAL_VM_INC(v) XTAL_detail_inc_ref_count(v)
+#define XTAL_VM_DEC(v) XTAL_detail_dec_ref_count(v)
+
+#else
+
+#define XTAL_detail_inc_ref_count_locked(v) (void)(XTAL_detail_is_rcpvalue(v) && (XTAL_detail_rcpvalue(v)->atomic_inc_ref_count(), 1))
+#define XTAL_detail_dec_ref_count_locked(v) (void)(XTAL_detail_is_rcpvalue(v) && (XTAL_LOCK_DIRECT, XTAL_detail_rcpvalue(v)->object_destroy(), XTAL_UNLOCK_DIRECT, 1))
+
+#define XTAL_VM_LOCK XTAL_LOCK
+#define XTAL_VM_UNLOCK XTAL_UNLOCK
+#define XTAL_VM_INC(v) (void)(XTAL_detail_is_rcpvalue(v) && (XTAL_detail_rcpvalue(v)->atomic_inc_ref_count(), 1))
+#define XTAL_VM_DEC(v) (void)(XTAL_detail_is_rcpvalue(v) && !XTAL_detail_rcpvalue(v)->atomic_dec_ref_count() && (XTAL_LOCK_DIRECT, XTAL_detail_rcpvalue(v)->object_destroy(), XTAL_UNLOCK_DIRECT, 1))
+#endif
+
+#define XTAL_VM_variables_top() (variables_top_ - variables_.data())
+#define XTAL_VM_set_variables_top(top) (variables_top_ = variables_.data() + top)
+#define XTAL_VM_local_variable(pos) (*(variables_top_ + pos))
+#define XTAL_VM_set_local_variable(pos, value) (XTAL_VM_INC(value), XTAL_VM_DEC(XTAL_VM_local_variable(pos)), XTAL_detail_copy(XTAL_VM_local_variable(pos), value))
+
+#define XTAL_VM_ff() (**fun_frames_.current_)
+#define XTAL_VM_prev_ff() (**(fun_frames_.current_-1))
+#define XTAL_VM_identifier(n) (XTAL_VM_ff().identifier_[n])
 
 // XTAL仮想マシン
 class VMachine : public Base{
@@ -123,7 +138,7 @@ public:
 	*
 	*/	
 	void set_arg_this(const AnyPtr& self){ 
-		ff().set_self(self);
+		XTAL_VM_ff().self = self;
 	}
 
 // 
@@ -154,6 +169,9 @@ public:
 	void push_arg(double v);
 	void push_arg(long double v);
 	void push_arg(bool v);
+
+	void push_arg(const ArgumentsPtr& args);
+
 public:
 
 	// 関数呼び出され側が使うための関数群
@@ -205,7 +223,7 @@ public:
 	* \param pos 0からnamed_arg_count()-1まで
 	*/
 	const IDPtr& arg_name(int_t pos){
-		return unchecked_ptr_cast<ID>(local_variable(ordered_arg_count()+pos*2));
+		return unchecked_ptr_cast<ID>(XTAL_VM_local_variable(ordered_arg_count()+pos*2));
 	}
 
 	/**
@@ -213,7 +231,7 @@ public:
 	*
 	*/
 	const AnyPtr& arg_this(){ 
-		return ff().self(); 
+		return XTAL_VM_ff().self; 
 	}
 
 	/**
@@ -221,7 +239,7 @@ public:
 	*
 	*/
 	int_t ordered_arg_count(){ 
-		return ff().ordered_arg_count; 
+		return XTAL_VM_ff().ordered_arg_count; 
 	}
 	
 	/**
@@ -229,7 +247,7 @@ public:
 	*
 	*/
 	int_t named_arg_count(){ 
-		return ff().named_arg_count; 
+		return XTAL_VM_ff().named_arg_count; 
 	}
 	
 	/**
@@ -237,7 +255,7 @@ public:
 	*
 	*/
 	int_t need_result_count(){ 
-		return ff().need_result_count; 
+		return XTAL_VM_ff().need_result_count; 
 	}
 	
 	/**
@@ -245,7 +263,7 @@ public:
 	*
 	*/
 	bool need_result(){ 
-		return ff().need_result_count!=0; 
+		return XTAL_VM_ff().need_result_count!=0; 
 	}
 	
 	/*
@@ -276,8 +294,8 @@ public:
 	* \brief return_resultやcarry_overを既に呼び出したならtrueを、そうでないならfalseを返す。
 	*
 	*/
-	int_t processed(){
-		return ff().processed; 
+	int_t is_executed(){
+		return XTAL_VM_ff().is_executed; 
 	}
 	
 public:
@@ -287,7 +305,7 @@ public:
 	void adjust_args(Method* params);
 
 	const AnyPtr& arg_unchecked(int_t pos){
-		return local_variable(pos);
+		return XTAL_VM_local_variable(pos);
 	}
 
 	template<class T>
@@ -338,13 +356,17 @@ public:
 
 	void set_except_0(const AnyPtr& e);
 
-	void execute_inner(const inst_t* start, int_t eval_n = 0);
+	void execute_inner(const inst_t* start, int_t eval_n = 0){
+		XTAL_VM_UNLOCK{
+			execute_inner2(start, eval_n);
+		}
+	}
+
+	void execute_inner2(const inst_t* start, int_t eval_n = 0);
 
 	void execute(Method* fun, const inst_t* start_pc);
 
-	void carry_over(Method* fun);
-
-	void mv_carry_over(Method* fun);
+	void carry_over(Method* fun, bool adjust_arguments = false);
 
 	const inst_t* resume_pc(){
 		return resume_pc_;
@@ -375,10 +397,8 @@ public:
 
 	void replace_result(const AnyPtr& result);
 
-public:
-
+public: // eval系
 	debug::CallerInfoPtr caller(uint_t n);
-
 	int_t call_stack_size();
 
 	AnyPtr eval(const CodePtr& code, uint_t n = 0);
@@ -397,7 +417,7 @@ public:
 		const inst_t* poped_pc;
 
 		// callしたときはこのpcから実行する
-		const inst_t* called_pc;
+		const inst_t* next_pc;
 
 		// 関数が呼ばれたときの順番指定引数の数
 		int_t ordered_arg_count;
@@ -414,49 +434,28 @@ public:
 		// この関数が使っているスコープの下限
 		uint_t scope_lower;
 
-		int_t processed;
+		int_t is_executed;
 
 		int_t result;
 
 		uint_t prev_stack_base;
 
 		// 呼び出された関数オブジェクト
-		BasePtr<Method> fun_; 
+		BasePtr<Method> fun; 
 
-		const IDPtr* identifier_;
-		const AnyPtr* values_;
-		Code* code_;
+		const IDPtr* identifiers;
+		const AnyPtr* values;
+		Code* code;
 
 		// 関数の外側のフレームオブジェクト
-		BasePtr<Frame> outer_;
+		BasePtr<Frame> outer;
 
 		// 関数が呼ばれたときのthisオブジェクト
-		AnyPtr self_;
-
-		FunFrame();
-
-		void set_null();
-
-		const BasePtr<Method>& fun() const{ return fun_; }
-		const BasePtr<Frame>& outer() const{ return outer_; }
-		const IDPtr& identifier(int_t n){ return identifier_[n]; }
-		const AnyPtr& value(int_t n){ return values_[n]; }
-		const AnyPtr& self() const{ return self_; }
-		Code* code() const{ return code_; }
-
-		void set_fun(){ fun_ = null; outer_ = null; }
-		void set_outer(const FramePtr& v){ outer_ = v; }
-		void set_outer(){ outer_ = null; }
-		void set_self(const AnyPtr& v){ self_ = v; }
-		void set_self(){ self_ = null; }
-
-		int_t args_stack_size(){
-			return ordered_arg_count+(named_arg_count<<1);
-		}
+		AnyPtr self;
 	};
 
 	friend void visit_members(Visitor& m, FunFrame& v);
-
+	
 	// 例外を処理するためのフレーム
 	struct ExceptFrame{
 		ExceptInfo* info;
@@ -482,7 +481,7 @@ private:
 			:cls(null), target(null), primary(null), secondary(null), self(null), member(null){} 
 
 		const inst_t* pc;
-		const inst_t* npc;
+		const inst_t* next_pc;
 		int_t result;
 		int_t need_result_count;
 		int_t stack_base;
@@ -490,13 +489,13 @@ private:
 		int_t named;
 		int_t flags;
 
-		void set(const inst_t* pc, const inst_t* npc,
+		void set(const inst_t* pc, const inst_t* next_pc,
 			int_t result, int_t need_result_count, 
 			int_t stack_base, int_t ordered, int_t named, 
 			int_t flags){
 
 			this->pc = pc;
-			this->npc = npc; 
+			this->next_pc = next_pc; 
 			this->result = result; 
 			this->need_result_count = need_result_count;
 			this->stack_base = stack_base;
@@ -519,18 +518,6 @@ private:
 
 	void upsize_variables(uint_t upsize);
 
-private:
-
-	FunFrame& ff(){ 
-		return *fun_frames_.top(); 
-	}
-
-	FunFrame& prev_ff(){ 
-		return *fun_frames_[1]; 
-	}
-		
-	void set_fun(FunFrame& f, const MethodPtr& v);
-
 public:
 	ArgumentsPtr inner_make_arguments(Method* fun);
 	ArgumentsPtr inner_make_arguments(const NamedParam* params, int_t num);
@@ -540,38 +527,20 @@ private:
 
 	void ready();
 
-public:
-
+public: // ローカル変数系
 	void set_local_variable_out_of_fun(uint_t pos, uint_t depth, const AnyPtr& value);
-
 	AnyPtr& local_variable_out_of_fun(uint_t pos, uint_t depth);
 
-	AnyPtr& local_variable(int_t pos){
-		return *(variables_top_ + pos);
-	}
+	void set_local_variable(int_t pos, const AnyPtr& value){ XTAL_VM_set_local_variable(pos, value); }
+	AnyPtr& local_variable(int_t pos){ return XTAL_VM_local_variable(pos); }
 
-	void set_local_variable(int_t pos, const AnyPtr& value){
-		AnyPtr& a = *(variables_top_ + pos);
-		if(type(a)>=TYPE_BASE){ rcpvalue(a)->dec_ref_count(); }
-		copy_any(a, value);
-		if(type(a)>=TYPE_BASE){ rcpvalue(a)->inc_ref_count(); }
-	}
-
-	int_t variables_top(){
-		return variables_top_ - variables_.data();
-	}
-	
-	void set_variables_top(int_t top){
-		variables_top_ = variables_.data() + top;
-	}
-
-private:
-
+private: // 例外系
 	const inst_t* push_except(const inst_t* pc);
 	const inst_t* push_except(const inst_t* pc, const AnyPtr& e);
 
 	const inst_t* catch_body(const inst_t* pc, const ExceptFrame& cur);
 
+private: // ブレークポイント系
 	void make_debug_info(const inst_t* pc, const MethodPtr& fun, int_t kind);
 
 	void breakpoint_hook(const inst_t* pc, const MethodPtr& fun, int_t kind);
@@ -583,7 +552,7 @@ private:
 	
 	void check_breakpoint_hook(const inst_t* pc, int_t kind){
 		if((*hook_setting_bit_&(1<<kind))==0){ return; }
-		breakpoint_hook(pc, ff().fun(), kind);
+		breakpoint_hook(pc, XTAL_VM_ff().fun, kind);
 	}
 
 public:
@@ -677,8 +646,6 @@ private:
 
 	const inst_t* throw_pc_;
 
-	const IDPtr* id_;
-
 	// 値保持用スタック
 	FastStack<AnyPtr> stack_;
 
@@ -694,7 +661,7 @@ private:
 		enum{
 			NONE = 0,
 			FRAME = 1,
-			CLASS = 2,
+			CLASS = 2
 		};
 	};
 
@@ -743,7 +710,6 @@ private:
 	XTAL_DISALLOW_COPY_AND_ASSIGN(VMachine);
 
 };
-
 
 }
 

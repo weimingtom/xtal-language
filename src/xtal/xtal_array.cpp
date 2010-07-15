@@ -74,8 +74,8 @@ void xarray::init(const AnyPtr* values, uint_t size){
 		values_ = (AnyPtr*)xmalloc(sizeof(AnyPtr)*capa_);
 
 		for(uint_t i=0; i<size; ++i){
-			copy_any(values_[i], values[i]);
-			inc_ref_count_force(values_[i]);
+			XTAL_detail_copy(values_[i], values[i]);
+			XTAL_detail_inc_ref_count(values_[i]);
 		}
 	}
 	else{
@@ -88,7 +88,7 @@ void xarray::reflesh(){
 		AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*size_);
 		xmemcpy(&newp[0], &values_[0], size_);
 		for(uint_t i=0; i<size_; ++i){
-			inc_ref_count_force(values_[i]);
+			XTAL_detail_inc_ref_count(values_[i]);
 		}
 		capa_ = size_;
 		values_ = newp;
@@ -129,7 +129,7 @@ void xarray::destroy(){
 
 void xarray::clear(){
 	for(uint_t i=0; i<size_; ++i){
-		dec_ref_count_force(values_[i]);
+		XTAL_detail_dec_ref_count(values_[i]);
 	}
 	size_ = 0;
 }
@@ -155,7 +155,7 @@ void xarray::resize(uint_t sz){
 void xarray::upsize(uint_t sz){
 	if(size_+sz>capa_){ // todo overflow check
 		if(capa_!=0){
-			uint_t newcapa = size_+sz+capa_+1;
+			uint_t newcapa = size_ + sz + capa_/2 + 2;
 			AnyPtr* newp = (AnyPtr*)xmalloc(sizeof(AnyPtr)*newcapa);
 			xmemcpy(newp, values_, size_);
 			fill_undefined(&newp[size_], sz);
@@ -182,7 +182,7 @@ void xarray::upsize(uint_t sz){
 void xarray::downsize(uint_t sz){
 	XTAL_ASSERT(sz<=size_);
 	for(uint_t i=size_-sz; i<size_; ++i){
-		dec_ref_count_force(values_[i]);
+		XTAL_detail_dec_ref_count(values_[i]);
 	}
 	size_ -= sz;
 }
@@ -196,7 +196,7 @@ void xarray::erase(int_t start, int_t n){
 	XTAL_ASSERT(0<=pos && (uint_t)pos<size_);
 
 	for(int_t i=0; i<n; ++i){
-		dec_ref_count_force(values_[pos+i]);
+		XTAL_detail_dec_ref_count(values_[pos+i]);
 	}
 
 	if(size_-(pos+n)!=0){
@@ -211,8 +211,8 @@ void xarray::move(int_t dest, int_t src, int_t n){
 	}
 
 	for(int_t i=0; i<n; ++i){
-		inc_ref_count_force(values_[src+i]);
-		dec_ref_count_force(values_[dest+i]);
+		XTAL_detail_inc_ref_count(values_[src+i]);
+		XTAL_detail_dec_ref_count(values_[dest+i]);
 	}
 
 	xmemmove(&values_[dest], &values_[src], n);
@@ -230,8 +230,8 @@ void xarray::insert(int_t i, const AnyPtr& v){
 	int_t pos = i;
 
 	xmemmove(&values_[pos+1], &values_[pos], size_-(pos+1));
-	copy_any(values_[pos], v);
-	inc_ref_count_force(values_[pos]);
+	XTAL_detail_copy(values_[pos], v);
+	XTAL_detail_inc_ref_count(values_[pos]);
 }
 
 void xarray::push_back(const AnyPtr& v){
@@ -242,13 +242,13 @@ void xarray::push_back(const AnyPtr& v){
 		size_++;
 	}
 
-	copy_any(values_[size_-1], v);
-	inc_ref_count_force(values_[size_-1]);
+	XTAL_detail_copy(values_[size_-1], v);
+	XTAL_detail_inc_ref_count(values_[size_-1]);
 }
 
 void xarray::pop_back(){
 	XTAL_ASSERT(!empty());
-	dec_ref_count_force(values_[size_-1]);
+	XTAL_detail_dec_ref_count(values_[size_-1]);
 	size_--;
 }
 
@@ -365,7 +365,7 @@ const ArrayPtr& Array::op_cat_assign(const ArrayPtr& a){
 
 StringPtr Array::join(const StringPtr& sep){
 	MemoryStreamPtr ms = xnew<MemoryStream>();
-	if(raweq(sep, empty_string)){
+	if(XTAL_detail_raweq(sep, empty_string)){
 		for(uint_t i=0, sz=size(); i<sz; ++i){
 			ms->put_s(at(i));
 		}
@@ -395,11 +395,11 @@ bool Array::op_eq(const ArrayPtr& other){
 	
 	const VMachinePtr& vm = vmachine();
 	for(uint_t i=0, size=other->size(); i<size; ++i){
-		if(rawne(at(i), other->at(i))){
+		if(!XTAL_detail_raweq(at(i), other->at(i))){
 			vm->setup_call(1);
 			vm->push_arg(other->at(i));
 			at(i)->rawsend(vm, Xid(op_eq));
-			if(!vm->processed() || !vm->result()){
+			if(!vm->is_executed() || !vm->result()){
 				vm->cleanup_call();
 				return false;
 			}

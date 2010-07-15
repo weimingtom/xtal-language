@@ -9,192 +9,6 @@
 
 namespace xtal{
 
-enum{
-	SMALL_STRING_MAX = sizeof(void*) / sizeof(char_t)
-};
-
-struct AnyRawValue{
-public:
-
-	void init_primitive(PrimitiveType t){ type = t; ivalue = 0; }
-
-	void init_null(){ type = 0; ivalue = 0; }
-
-	void init_int(char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(short v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(unsigned short v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(int v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(unsigned int v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(unsigned long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(long long v){ type = TYPE_INT; ivalue = (int_t)v; }
-	void init_int(unsigned long long v){ type = TYPE_INT; ivalue = (int_t)v; }
-
-	void init_float(float v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-	void init_float(double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-	void init_float(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
-
-	void init_bool(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
-
-	void init_base(const Base* v){  
-		type = TYPE_BASE; 
-		pvalue = const_cast<Base*>(v); 
-	}
-
-	void init_rcbase(int t, const RefCountingBase* v){ 
-		type = t; 
-		rcpvalue = const_cast<RefCountingBase*>(v); 
-	}
-
-	void init_long_lived_string(const char_t* str, uint_t size){ 
-		type = TYPE_LONG_LIVED_STRING | (size<<STRING_SIZE_SHIFT); 
-		spvalue = str; 
-	}
-
-	void init_small_string(uint_t size){ 
-		type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
-		ivalue = 0;	
-	}
-
-	void init_small_string(const char_t* str, uint_t size){ 
-		type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
-		ivalue = 0;
-		for(uint_t i=0; i<size; ++i){
-			svalue[i] = str[i];
-		}
-	}
-
-	void init_interned_string(const char_t* str, uint_t size){ 
-		type = TYPE_INTERNED_STRING | (size<<STRING_SIZE_SHIFT);
-		spvalue = str; 
-	}
-
-	void init_pointer(const void* v, uint_t i){ 
-		type = TYPE_POINTER | (i<<CPP_CLASS_INDEX_SHIFT); 
-		vpvalue = const_cast<void*>(v);
-	}
-
-	void init_stateless_native_method(const param_types_holder_n* v){  
-		type = TYPE_STATELESS_NATIVE_METHOD; 
-		pthvalue = v; 
-	}
-
-	void init_immediate_value(int_t value1, int_t value2){
-		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
-		ivalue = value2;
-	}
-
-	void init_immediate_value(int_t value1, float_t value2){
-		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
-		fvalue = value2;
-	}
-
-	void init_immediate_value(int_t value1, void* value2){
-		type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
-		vpvalue = value2;
-	}
-
-	void init_instance_variable_getter(int_t number, void* info){
-		type = TYPE_IVAR_GETTER | (number<<8);		
-		vpvalue = info;
-	}
-
-	void init_instance_variable_setter(int_t number, void* info){
-		type = TYPE_IVAR_SETTER | (number<<8);		
-		vpvalue = info;
-	}
-
-public:
-
-	enum{
-		DESTROYED_FLAG_SHIFT = TYPE_SHIFT+1,
-		DESTROYED_FLAG_BIT = 1<<DESTROYED_FLAG_SHIFT,
-
-		HAVE_FINALIZER_FLAG_SHIFT = DESTROYED_FLAG_SHIFT+1,
-		HAVE_FINALIZER_FLAG_BIT = 1<<HAVE_FINALIZER_FLAG_SHIFT,
-
-		REF_COUNT_SHIFT = HAVE_FINALIZER_FLAG_SHIFT+1,
-		REF_COUNT_MASK = ~((1<<REF_COUNT_SHIFT)-1),
-
-		STRING_SIZE_SHIFT = TYPE_SHIFT+1,
-		STRING_SIZE_MASK = ~((1<<STRING_SIZE_SHIFT)-1),
-
-		CPP_CLASS_INDEX_SHIFT = TYPE_SHIFT+1,
-		CPP_CLASS_INDEX_MASK = ~((1<<CPP_CLASS_INDEX_SHIFT)-1)
-	};
-
-	uint_t destroyed() const{ return (type & DESTROYED_FLAG_BIT); }
-	void set_destroyed_flag(){ type |= DESTROYED_FLAG_BIT; }
-
-	uint_t have_finalizer() const{ return (type & HAVE_FINALIZER_FLAG_BIT); }
-	void set_finalizer_flag(){ type |= HAVE_FINALIZER_FLAG_BIT; }
-	void unset_finalizer_flag(){ type &= ~HAVE_FINALIZER_FLAG_BIT; }
-
-	uint_t ref_count() const{ return (type & REF_COUNT_MASK)>>REF_COUNT_SHIFT; }
-	void add_ref_count(int_t rc){ type += rc<<REF_COUNT_SHIFT; }
-	void inc_ref_count(){ type += 1<<REF_COUNT_SHIFT; }
-	void dec_ref_count(){ type -= 1<<REF_COUNT_SHIFT; }
-
-	uint_t can_not_destroy() const{ return (type&REF_COUNT_MASK); }
-
-	uint_t string_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
-	uint_t string_literal_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
-	uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
-
-	int_t immediate_first_value() const{ return (int_t)(type>>8); }
-	int_t immediate_second_ivalue() const{ return ivalue; }
-	float_t immediate_second_fvalue() const{ return fvalue; }
-	void* immediate_second_vpvalue() const{ return vpvalue; }
-
-public:
-
-	int_t t() const{ return type; }
-	int_t i() const{ return ivalue; }
-	uint_t u() const{ return uvalue; }
-	float_t f() const{ return fvalue; }
-	Base* p() const{ return pvalue; }
-	RefCountingBase* r() const{ return rcpvalue; }
-	char_t* s(){ return svalue; }
-	const char_t* s() const{ return svalue; }
-	const char_t* sp() const{ return spvalue; }
-	void* vp() const{ return vpvalue; }
-	const param_types_holder_n* pth() const{ return pthvalue; }
-	
-	friend bool raweq(const AnyRawValue& a, const AnyRawValue& b){
-		//return (a.type&TYPE_MASK)==(b.type&TYPE_MASK) && a.ivalue==b.ivalue;
-		return rawbitxor(a, b)==0;
-	}
-
-	friend bool rawlt(const AnyRawValue& a, const AnyRawValue& b){
-		int atype = a.type&TYPE_MASK;
-		int btype = b.type&TYPE_MASK;
-		if(atype<btype)return true;
-		if(btype<atype)return false;
-		return a.ivalue<b.ivalue;
-	}
-
-	friend uint_t rawbitxor(const AnyRawValue& a, const AnyRawValue& b){
-		return ((a.type^b.type)&TYPE_MASK) | (a.ivalue^b.ivalue);
-	}
-
-public:
-	union{
-		int_t ivalue;
-		uint_t uvalue;
-		float_t fvalue;
-		Base* pvalue;
-		RefCountingBase* rcpvalue;
-		const char_t* spvalue;
-		char_t svalue[SMALL_STRING_MAX];
-		void* vpvalue;
-		const param_types_holder_n* pthvalue;
-	};
-
-	int_t type;
-};
-
 /**
 * \xbind lib::builtin
 * \brief すべてのクラスの基底クラス
@@ -542,15 +356,194 @@ protected:
 
 	void init(RefCountingBase* p);
 
-public: // 
+public: // 性能確保のためpublicにするが、基本的に直接触ることはよろしくない
+
+	enum{
+		USER_FLAG_SHIFT = TYPE_SHIFT+1,
+
+		STRING_SIZE_SHIFT = USER_FLAG_SHIFT,
+		STRING_SIZE_MASK = ~((1<<STRING_SIZE_SHIFT)-1),
+
+		CPP_CLASS_INDEX_SHIFT = USER_FLAG_SHIFT,
+		CPP_CLASS_INDEX_MASK = ~((1<<CPP_CLASS_INDEX_SHIFT)-1)
+	};
+
+	struct AnyRawValue{
+	public:
+
+		void init_primitive(PrimitiveType t){ type = t; ivalue = 0; }
+
+		void init_null(){ type = 0; ivalue = 0; }
+
+		void init_int(char v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(signed char v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(unsigned char v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(short v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(unsigned short v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(int v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(unsigned int v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(long v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(unsigned long v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(long long v){ type = TYPE_INT; ivalue = (int_t)v; }
+		void init_int(unsigned long long v){ type = TYPE_INT; ivalue = (int_t)v; }
+
+		void init_float(float v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+		void init_float(double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+		void init_float(long double v){ type = TYPE_FLOAT; fvalue = (float_t)v; }
+
+		void init_bool(bool b){ type = TYPE_FALSE + (int)b; ivalue = 0; }
+
+		void init_base(const Base* v){  
+			type = TYPE_BASE; 
+			pvalue = const_cast<Base*>(v); 
+		}
+
+		void init_rcbase(int t, const RefCountingBase* v){ 
+			type = t; 
+			rcpvalue = const_cast<RefCountingBase*>(v); 
+		}
+
+		void init_long_lived_string(const char_t* str, uint_t size){ 
+			type = TYPE_LONG_LIVED_STRING | (size<<STRING_SIZE_SHIFT); 
+			spvalue = str; 
+		}
+
+		void init_small_string(uint_t size){ 
+			type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
+			ivalue = 0;	
+		}
+
+		void init_small_string(const char_t* str, uint_t size){ 
+			type = TYPE_SMALL_STRING | (size<<STRING_SIZE_SHIFT);
+			ivalue = 0;
+			for(uint_t i=0; i<size; ++i){
+				svalue[i] = str[i];
+			}
+		}
+
+		void init_interned_string(const char_t* str, uint_t size){ 
+			type = TYPE_INTERNED_STRING | (size<<STRING_SIZE_SHIFT);
+			spvalue = str; 
+		}
+
+		void init_pointer(const void* v, uint_t i){ 
+			type = TYPE_POINTER | (i<<CPP_CLASS_INDEX_SHIFT); 
+			vpvalue = const_cast<void*>(v);
+		}
+
+		void init_stateless_native_method(const param_types_holder_n* v){  
+			type = TYPE_STATELESS_NATIVE_METHOD; 
+			pthvalue = v; 
+		}
+
+		void init_immediate_value(int_t value1, int_t value2){
+			type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+			ivalue = value2;
+		}
+
+		void init_immediate_value(int_t value1, float_t value2){
+			type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+			fvalue = value2;
+		}
+
+		void init_immediate_value(int_t value1, void* value2){
+			type = TYPE_IMMEDIATE_VALUE | (value1<<8);		
+			vpvalue = value2;
+		}
+
+		void init_instance_variable_getter(int_t number, void* info){
+			type = TYPE_IVAR_GETTER | (number<<8);		
+			vpvalue = info;
+		}
+
+		void init_instance_variable_setter(int_t number, void* info){
+			type = TYPE_IVAR_SETTER | (number<<8);		
+			vpvalue = info;
+		}
+
+	public:
+		uint_t string_size() const{ return (type & STRING_SIZE_MASK)>>STRING_SIZE_SHIFT; }
+		uint_t cpp_class_index() const{ return (type & CPP_CLASS_INDEX_MASK)>>CPP_CLASS_INDEX_SHIFT; }
+
+		int_t immediate_first_value() const{ return (int_t)(type>>8); }
+		int_t immediate_second_ivalue() const{ return ivalue; }
+		float_t immediate_second_fvalue() const{ return fvalue; }
+		void* immediate_second_vpvalue() const{ return vpvalue; }
+
+	public: // 性能確保のためpublicにするが、基本的に直接触るのはよろしくない
+
+		union{
+			int_t ivalue;
+			uint_t uvalue;
+			float_t fvalue;
+			Base* pvalue;
+			RefCountingBase* rcpvalue;
+			const char_t* spvalue;
+			char_t svalue[SMALL_STRING_MAX];
+			void* vpvalue;
+			const param_types_holder_n* pthvalue;
+		};
+
+		union{
+			int_t type;
+			uint_t utype;
+		};
+	};
 
 	AnyRawValue value_;
-
-public:
-
-	friend const AnyRawValue& rawvalue(const Any& v);
-	friend AnyRawValue& rawvalue(Any& v);
 };
+
+//////////////////////////////////////////////////////
+
+#define XTAL_detail_rawvalue(v) ((v).value_)
+#define XTAL_detail_rawtype(v) (XTAL_detail_rawvalue(v).type)
+#define XTAL_detail_urawtype(v) (XTAL_detail_rawvalue(v).utype)
+#define XTAL_detail_user_flags(v) (XTAL_detail_rawvalue(v).utype)
+
+#define XTAL_detail_type(v) (XTAL_detail_urawtype(v) & ::xtal::TYPE_MASK)
+#define XTAL_detail_ivalue(v) (XTAL_detail_rawvalue(v).ivalue)
+#define XTAL_detail_uvalue(v) (XTAL_detail_rawvalue(v).uvalue)
+#define XTAL_detail_fvalue(v) (XTAL_detail_rawvalue(v).fvalue)
+#define XTAL_detail_chvalue(v) (XTAL_detail_rawvalue(v).svalue[0])
+#define XTAL_detail_pvalue(v) (XTAL_detail_rawvalue(v).pvalue)
+#define XTAL_detail_rcpvalue(v) (XTAL_detail_rawvalue(v).rcpvalue)
+#define XTAL_detail_vpvalue(v) (XTAL_detail_rawvalue(v).vpvalue)
+#define XTAL_detail_pthvalue(v) (XTAL_detail_rawvalue(v).pthvalue)
+#define XTAL_detail_svalue(v) (XTAL_detail_rawvalue(v).svalue)
+#define XTAL_detail_spvalue(v) (XTAL_detail_rawvalue(v).spvalue)
+#define XTAL_detail_ssize(v) (XTAL_detail_rawvalue(v).string_size())
+
+#define XTAL_detail_is_undefined(v) (XTAL_detail_urawtype(v)==::xtal::TYPE_UNDEFINED)
+#define XTAL_detail_is_null(v) (XTAL_detail_urawtype(v)==::xtal::TYPE_NULL)
+#define XTAL_detail_is_true(v) (XTAL_detail_urawtype(v)>::xtal::TYPE_FALSE)
+#define XTAL_detail_is_ivalue(v) (XTAL_detail_urawtype(v)==::xtal::TYPE_INT)
+#define XTAL_detail_is_fvalue(v) (XTAL_detail_urawtype(v)==::xtal::TYPE_FLOAT)
+#define XTAL_detail_is_pvalue(v) (XTAL_detail_type(v)==::xtal::TYPE_BASE)
+#define XTAL_detail_is_rcpvalue(v) (XTAL_detail_type(v)>=::xtal::TYPE_BASE)
+
+#define XTAL_detail_copy(a, b) (XTAL_detail_rawvalue(a) = XTAL_detail_rawvalue(b))
+#define XTAL_detail_swap(a, b) (std::swap(XTAL_detail_rawvalue(a), XTAL_detail_rawvalue(b)))
+
+#define XTAL_detail_rawbitxor(a, b) (::xtal::rawbitxor(a, b))
+#define XTAL_detail_raweq(a, b) (XTAL_detail_rawbitxor(a, b)==0)
+#define XTAL_detail_rawhash(v) (::xtal::rawhash(v))
+
+inline uint_t rawbitxor(const Any& a, const Any& b){
+	return ((XTAL_detail_urawtype(a)^XTAL_detail_urawtype(b))&TYPE_MASK) | (XTAL_detail_ivalue(a)^XTAL_detail_ivalue(b));
+}
+
+inline uint_t rawhash(const Any& v){
+	return XTAL_detail_uvalue(v) ^ XTAL_detail_type(v) ^ (XTAL_detail_uvalue(v)>>3);
+}
+
+#define XTAL_detail_rawbitxor(a, b) (::xtal::rawbitxor(a, b))
+#define XTAL_detail_raweq(a, b) (XTAL_detail_rawbitxor(a, b)==0)
+#define XTAL_detail_rawhash(v) (::xtal::rawhash(v))
+
+#define XTAL_detail_inc_ref_count(v) (void)(XTAL_detail_is_rcpvalue(v) && (XTAL_detail_rcpvalue(v)->inc_ref_count(), 1))
+#define XTAL_detail_dec_ref_count(v) (void)(XTAL_detail_is_rcpvalue(v) && (XTAL_detail_rcpvalue(v)->dec_ref_count(), 1))
+
+//////////////////////////////////////////////////////
 
 class AnyArg : public Any{
 public:
@@ -577,79 +570,8 @@ public:
 		return *reinterpret_cast<const AnyPtr*>(this);
 	}
 };
+
 /////////////////////////////////////////////////////////
-
-inline const AnyRawValue& rawvalue(const Any& v){
-	return v.value_;
-}
-
-inline AnyRawValue& rawvalue(Any& v){
-	return v.value_;
-}
-
-inline uint_t rawtype(const Any& v){
-	return (uint_t)(rawvalue(v).t());
-}
-
-inline int_t type(const Any& v){ 
-	return rawtype(v) & TYPE_MASK; 
-}
-
-inline int_t ivalue(const Any& v){ 
-	return rawvalue(v).i(); 
-}
-
-inline float_t fvalue(const Any& v){ 
-	return rawvalue(v).f(); 
-}
-
-inline int_t chvalue(const Any& v){ 
-	return rawvalue(v).s()[0];
-}
-
-inline Base* pvalue(const Any& v){ 
-	XTAL_ASSERT(type(v)==TYPE_BASE || type(v)==TYPE_NULL); 
-	return rawvalue(v).p(); 
-}
-
-inline RefCountingBase* rcpvalue(const Any& v){ 
-	XTAL_ASSERT(type(v)>=TYPE_BASE || type(v)==TYPE_NULL); 
-	return rawvalue(v).r(); 
-}
-
-inline bool is_undefined(const Any& a){
-	return rawtype(a)==TYPE_UNDEFINED;
-}
-
-inline bool is_null(const Any& a){
-	return rawtype(a)==TYPE_NULL;
-}
-
-inline bool raweq(const Any& a, const Any& b){
-	return raweq(rawvalue(a), rawvalue(b));
-}
-
-inline bool rawne(const Any& a, const Any& b){
-	return !raweq(a, b);
-}
-
-inline bool rawlt(const Any& a, const Any& b){
-	return rawlt(rawvalue(a), rawvalue(b));
-}
-
-inline uint_t rawbitxor(const Any& a, const Any& b){
-	return rawbitxor(rawvalue(a), rawvalue(b));
-}
-
-inline void copy_any(Any& v, const Any& u){
-	v.value_ = u.value_;
-}
-
-inline void swap(Any& a, Any& b){
-	Any temp = a;
-	a = b;
-	b = temp;
-}
 
 }
 

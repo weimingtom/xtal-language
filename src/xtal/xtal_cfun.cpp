@@ -16,7 +16,7 @@ StatelessNativeMethod::StatelessNativeMethod(const param_types_holder_n& pth){
 }
 
 void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
-	const param_types_holder_n& pth = *value_.pth();
+	const param_types_holder_n& pth = *XTAL_detail_pthvalue(*this);
 	int_t param_n = pth.param_n;
 
 	if(vm->ordered_arg_count()!=param_n){
@@ -44,7 +44,8 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 
 		if(!pth.vm){
 			if(pth.extendable){
-				vm->set_local_variable(param_n-1, vm->make_arguments(param_n-1));
+				vm->set_local_variable(param_n, vm->make_arguments(param_n));
+				fp.args[param_n+1] = (Any&)vm->arg_unchecked(param_n);
 			}
 
 			for(int_t i=0; i<param_n; ++i){
@@ -78,7 +79,7 @@ void StatelessNativeMethod::on_rawcall(const VMachinePtr& vm){
 
 	pth.fun(fp);
 
-	if(!vm->processed()){
+	if(!vm->is_executed()){
 		vm->return_result(ap(fp.result));
 	}
 }
@@ -131,13 +132,13 @@ const NativeFunPtr& NativeMethod::param(int_t i, const IDPtr& key, const AnyPtr&
 	NamedParam* params = (NamedParam*)((u8*)data_ + val_size_);
 
 	// Šù‚ÉÝ’èÏ‚Ý
-	XTAL_ASSERT(raweq(params[i].name, null) && raweq(params[i].value, undefined));
+	XTAL_ASSERT(XTAL_detail_raweq(params[i].name, null) && XTAL_detail_raweq(params[i].value, undefined));
 
 	params[i].name = key;
 	params[i].value = value;
 
 	if(min_param_count_>i){
-		min_param_count_ = i;
+		min_param_count_ = (u8)i;
 	}
 
 	return to_smartptr(this);
@@ -203,7 +204,8 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 
 		if(!pth.vm){
 			if(pth.extendable){
-				vm->set_local_variable(param_n-1, vm->inner_make_arguments(params, param_n-1));
+				vm->set_local_variable(param_n, vm->inner_make_arguments(params, param_n));
+				fp.args[param_n+1] = (Any&)vm->arg_unchecked(param_n);
 			}
 			else{
 				if(vm->ordered_arg_count()!=pth.param_n){
@@ -241,7 +243,7 @@ void NativeMethod::on_rawcall(const VMachinePtr& vm){
 
 	pth.fun(fp);
 
-	if(!vm->processed()){
+	if(!vm->is_executed()){
 		vm->return_result(ap(fp.result));
 	}
 }
@@ -259,6 +261,27 @@ void NativeFun::on_visit_members(Visitor& m){
 void NativeFun::on_rawcall(const VMachinePtr& vm){
 	vm->set_arg_this(this_);
 	NativeMethod::on_rawcall(vm);
+}
+
+DoubleDispatchMethod::DoubleDispatchMethod(const IDPtr& primary_key)
+	:primary_key_(primary_key){}
+
+void DoubleDispatchMethod::on_rawcall(const VMachinePtr& vm){
+	if(vm->ordered_arg_count()>0){
+		vm->arg_this()->rawsend(vm, primary_key_, vm->arg(0)->get_class());
+	}
+}
+
+DoubleDispatchFun::DoubleDispatchFun(const ClassPtr& klass, const IDPtr& primary_key)
+	:klass_(klass), primary_key_(primary_key){}
+
+void DoubleDispatchFun::on_rawcall(const VMachinePtr& vm){
+	klass_->member(primary_key_, vm->arg(0)->get_class())->rawcall(vm);
+}
+
+void DoubleDispatchFun::on_visit_members(Visitor& m){
+	Base::on_visit_members(m);
+	m & klass_;
 }
 
 DoubleDispatchMethodPtr double_dispatch_method(const IDPtr& primary_key){

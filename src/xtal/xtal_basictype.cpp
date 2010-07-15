@@ -14,41 +14,41 @@ ScopeInfo empty_scope_info;
 ClassInfo empty_class_info;
 
 ExceptInfo empty_except_info;
-InstanceVariables empty_instance_variables = {&empty_class_info, 0};
+InstanceVariables empty_instance_variables = {&empty_class_info};
 
 undeleter_t undeleter;
 deleter_t deleter;
 
 bool Int::op_in_IntRange(const IntRangePtr& range){
-	return range->begin() <= ivalue(*this) && ivalue(*this) < range->end();
+	return range->begin() <= XTAL_detail_ivalue(*this) && XTAL_detail_ivalue(*this) < range->end();
 }
 
 bool Int::op_in_FloatRange(const FloatRangePtr& range){
-	return (range->is_left_closed() ? (range->left() <= ivalue(*this)) : (range->left() < ivalue(*this))) && (range->is_right_closed() ? (ivalue(*this) <= range->right()) : (ivalue(*this) < range->right()));
+	return (range->is_left_closed() ? (range->left() <= XTAL_detail_ivalue(*this)) : (range->left() < XTAL_detail_ivalue(*this))) && (range->is_right_closed() ? (XTAL_detail_ivalue(*this) <= range->right()) : (XTAL_detail_ivalue(*this) < range->right()));
 }
 
 IntRangePtr Int::op_range_Int(int_t right, int_t kind){
-	return xnew<IntRange>(ivalue(*this), right, kind);	
+	return xnew<IntRange>(XTAL_detail_ivalue(*this), right, kind);	
 }
 
 FloatRangePtr Int::op_range_Float(float_t right, int_t kind){
-	return xnew<FloatRange>(fvalue(*this), right, kind);	
+	return xnew<FloatRange>(XTAL_detail_fvalue(*this), right, kind);	
 }
 
 FloatRangePtr Float::op_range_Int(int_t right, int_t kind){
-	return xnew<FloatRange>(fvalue(*this), (float_t)right, kind);	
+	return xnew<FloatRange>(XTAL_detail_fvalue(*this), (float_t)right, kind);	
 }
 
 FloatRangePtr Float::op_range_Float(float_t right, int_t kind){
-	return xnew<FloatRange>(fvalue(*this), right, kind);	
+	return xnew<FloatRange>(XTAL_detail_fvalue(*this), right, kind);	
 }
 
 bool Float::op_in_IntRange(const IntRangePtr& range){
-	return range->begin() <= fvalue(*this) && fvalue(*this) < range->end();
+	return range->begin() <= XTAL_detail_fvalue(*this) && XTAL_detail_fvalue(*this) < range->end();
 }
 
 bool Float::op_in_FloatRange(const FloatRangePtr& range){
-	return (range->is_left_closed() ? (range->left() <= fvalue(*this)) : (range->left() < fvalue(*this))) && (range->is_right_closed() ? (fvalue(*this) <= range->right()) : (fvalue(*this) < range->right()));
+	return (range->is_left_closed() ? (range->left() <= XTAL_detail_fvalue(*this)) : (range->left() < XTAL_detail_fvalue(*this))) && (range->is_right_closed() ? (XTAL_detail_fvalue(*this) <= range->right()) : (XTAL_detail_fvalue(*this) < range->right()));
 }
 
 
@@ -78,7 +78,7 @@ Values::~Values(){
 }
 	
 void Values::block_next(const VMachinePtr& vm){
-	if(!is_undefined(tail_)){
+	if(!XTAL_detail_is_undefined(tail_)){
 		vm->return_result(tail_, head_);
 	}
 	else{
@@ -90,7 +90,7 @@ int_t Values::size(){
 	const ValuesPtr* cur = &to_smartptr(this);
 	int_t size = 1;
 	while(true){
-		if(is_undefined((*cur)->tail_)){
+		if(XTAL_detail_is_undefined((*cur)->tail_)){
 			return size;
 		}
 		cur = &(*cur)->tail_;
@@ -102,7 +102,7 @@ const AnyPtr& Values::at(int_t i){
 	const ValuesPtr* cur = &to_smartptr(this);
 	const AnyPtr* ret = &head_;
 	for(int_t n=0; n<i; ++n){
-		if(is_undefined((*cur)->tail_)){
+		if(XTAL_detail_is_undefined((*cur)->tail_)){
 			ret = &(AnyPtr&)undefined;
 			break;
 		}
@@ -119,20 +119,20 @@ bool Values::op_eq(const ValuesPtr& other){
 	const ValuesPtr* cur2 = &other;
 
 	while(true){
-		if(rawne((*cur1)->head_, (*cur2)->head_)){
+		if(!XTAL_detail_raweq((*cur1)->head_, (*cur2)->head_)){
 			vm->setup_call(1);
 			vm->push_arg((*cur2)->head_);
 			(*cur1)->head_->rawsend(vm, Xid(op_eq), undefined, true, true);
 
-			if(!vm->processed() || !vm->result()){
+			if(!vm->is_executed() || !vm->result()){
 				vm->cleanup_call();
 				return false;
 			}
 			vm->cleanup_call();
 		}
 
-		if(is_undefined((*cur1)->tail_)){
-			if(is_undefined((*cur2)->tail_)){
+		if(XTAL_detail_is_undefined((*cur1)->tail_)){
+			if(XTAL_detail_is_undefined((*cur2)->tail_)){
 				return true;
 			}
 			else{
@@ -163,7 +163,7 @@ StringPtr Values::to_s(){
 
 		ms->put_s((*cur)->head_);
 
-		if(is_undefined((*cur)->tail_)){
+		if(XTAL_detail_is_undefined((*cur)->tail_)){
 			break;
 		}
 		cur = &(*cur)->tail_;
@@ -194,9 +194,5 @@ void HaveParent::set_object_parent(const ClassPtr& parent){
 		parent_ = parent;
 	}
 }
-
-void HaveParent::visit_members(Visitor& m){
-	m & parent_;
-}	
 
 }

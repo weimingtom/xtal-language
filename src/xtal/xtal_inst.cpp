@@ -57,9 +57,9 @@ StringPtr make_inst_string(const LongLivedString& InstName,
 
 #endif
 
-StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end){
-
 #ifdef XTAL_DEBUG
+
+StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* end){
 
 	int sz = 0;
 	const inst_t* pc = start;
@@ -162,14 +162,15 @@ StringPtr inspect_range(const CodePtr& code, const inst_t* start, const inst_t* 
 
 	ms->seek(0);
 	return ms->get_s(ms->size());
+}
 
 #else
 
+StringPtr inspect_range(const CodePtr&, const inst_t*, const inst_t*){
 	return XTAL_STRING("");
+}
 
 #endif
-
-}
 
 int_t inst_size(uint_t no){
 	static u8 sizelist[] = {

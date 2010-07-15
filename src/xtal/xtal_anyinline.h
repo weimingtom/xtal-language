@@ -13,37 +13,16 @@ inline const ClassPtr& Base::get_class(){
 	return to_smartptr(class_); 
 }
 
-inline void add_ref_count_force(const Any& v, int_t i){
-	uint_t t = type(v);
-	if(t>=TYPE_BASE){
-		rcpvalue(v)->add_ref_count(i);
-	}
-}
-
-inline void inc_ref_count_force(const Any& v){
-	uint_t t = type(v);
-	if(t>=TYPE_BASE){
-		rcpvalue(v)->inc_ref_count();
-	}
-}
-
-inline void dec_ref_count_force(const Any& v){
-	uint_t t = type(v);
-	if(t>=TYPE_BASE){
-		rcpvalue(v)->dec_ref_count();
-	}
-}
-
 inline InstanceVariables* Any::instance_variables() const{
-	if(type(*this)==TYPE_BASE){
-		return pvalue(*this)->instance_variables();
+	if(XTAL_detail_type(*this)==TYPE_BASE){
+		return XTAL_detail_pvalue(*this)->instance_variables();
 	}
 	return &empty_instance_variables;
 }
 
 inline void Any::visit_members(Visitor& m) const{
-	if(type(*this)>=TYPE_BASE){
-		rcpvalue(*this)->visit_members(m); 
+	if(XTAL_detail_type(*this)>=TYPE_BASE){
+		XTAL_detail_rcpvalue(*this)->visit_members(m); 
 	}
 }
 

@@ -32,13 +32,13 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	IDPtr pick;
 	if(const ClassPtr& klass = ptr_cast<Class>(target)){
 		pick = klass->find_near_member(primary_key, secondary_key);
-		if(raweq(pick, primary_key)){
+		if(XTAL_detail_raweq(pick, primary_key)){
 			pick = null;
 		}
 	}
 
 	if(pick){
-		if(rawne(secondary_key, undefined)){
+		if(!XTAL_detail_raweq(secondary_key, undefined)){
 			return (cpp_class<UnsupportedError>()->call(Xt("XRE1021")->call(
 				Named(Xid(object), Xf3("%s::%s#%s", 0, target->object_name(), 1, primary_key, 2, secondary_key)),
 				Named(Xid(pick), pick)
@@ -53,7 +53,7 @@ AnyPtr unsupported_error(const AnyPtr& target, const IDPtr& primary_key, const A
 	}
 #endif
 
-	if(!is_undefined(secondary_key)){
+	if(!XTAL_detail_is_undefined(secondary_key)){
 		return (cpp_class<UnsupportedError>()->call(Xt("XRE1015")->call(
 			Named(Xid(object), Xf3("%s::%s#%s", 0, target->object_name(), 1, primary_key, 2, secondary_key))
 		)));

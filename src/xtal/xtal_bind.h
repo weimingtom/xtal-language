@@ -9,6 +9,94 @@
 
 namespace xtal{
 
+struct FunctorParam{
+	Any result;
+	const void* fun;
+	VMachine* vm;
+	Any args[16];
+};
+
+template<class R>
+struct FunctorParamR : public FunctorParam{
+	typedef const R& type;
+	void return_result(type r){ vm->return_result(r); }
+};
+
+template<class R> 
+struct FunctorParamR<R&> : public FunctorParam{
+	typedef R& type;
+	void return_result(type r){ vm->return_result(&r); }
+};
+
+template<class T> 
+struct FunctorParamR<SmartPtr<T>&> : public FunctorParam{
+	typedef SmartPtr<T>& type;
+	void return_result(type r){ vm->return_result(r); }
+};
+
+template<class T> 
+struct FunctorParamR<const SmartPtr<T>&> : public FunctorParam{
+	typedef const SmartPtr<T>& type;
+	void return_result(type r){ vm->return_result(r); }
+};
+
+template<> 
+struct FunctorParamR<void> : public FunctorParam{
+	typedef void**** type;
+};
+
+#define XTAL_FP_HELPER(Type, XType, InitFun) \
+template<> struct FunctorParamR<Type> : public FunctorParam{\
+	typedef Type type;\
+	void return_result(type r){ result.value_.InitFun((XType::value_type)r); }\
+};\
+template<> struct FunctorParamR<Type&> : public FunctorParamR<Type>{};\
+template<> struct FunctorParamR<const Type&> : public FunctorParamR<Type>{}
+
+XTAL_FP_HELPER(bool, Bool, init_bool);
+
+XTAL_FP_HELPER(char, Int, init_int);
+XTAL_FP_HELPER(signed char, Int, init_int);
+XTAL_FP_HELPER(unsigned char, Int, init_int);
+XTAL_FP_HELPER(short, Int, init_int);
+XTAL_FP_HELPER(unsigned short, Int, init_int);
+XTAL_FP_HELPER(int, Int, init_int);
+XTAL_FP_HELPER(unsigned int, Int, init_int);
+XTAL_FP_HELPER(long, Int, init_int);
+XTAL_FP_HELPER(unsigned long, Int, init_int);
+XTAL_FP_HELPER(float, Float, init_float);
+XTAL_FP_HELPER(double, Float, init_float);
+XTAL_FP_HELPER(long double, Float, init_float);
+
+#undef XTAL_FP_HELPER
+
+
+template<class R>
+inline void operator, (FunctorParamR<R>& ret, typename FunctorParamR<R>::type val){
+	ret.return_result(val);
+}
+
+template<class R>
+struct RCast{
+	typedef FunctorParamR<R>& type;
+	static FunctorParamR<R>& rcast(FunctorParam& a){
+		return (FunctorParamR<R>&)a;
+	}
+};
+
+template<>
+struct RCast<void>{
+	typedef void type;
+	static void rcast(FunctorParam&){}	
+};
+
+template<class R>
+inline typename RCast<R>::type rcast(FunctorParam& a){
+	return RCast<R>::rcast(a);
+}
+
+/////////////////////////////////////////
+
 template<class C = Any >
 struct param_types_holderM1;
 
@@ -195,7 +283,7 @@ struct nfun_base`n`{
 		param_types_holder`n`<Any #COMMA_REPEAT#AA`i`#>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && `n`==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A`n-1`>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = `n`-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			#COMMA_REPEAT#unchecked_cast<A`i`>((AnyPtr&)fp.args[ArgBase+`i`])#
@@ -205,7 +293,7 @@ struct nfun_base`n`{
 
 template<class TFun, int Method, class R>
 struct nfun_base<`n`, TFun, Method, R>
-	: nfun_base`n`<TFun, Method, R #COMMA_REPEAT#typename TFun::arg`i+1`_type#>{};
+	: public nfun_base`n`<TFun, Method, R #COMMA_REPEAT#typename TFun::arg`i+1`_type#>{};
 
 */
 
@@ -218,7 +306,7 @@ struct nfun_base0{
 		param_types_holder0<Any >
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 0==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<AM1>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 0-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			
@@ -228,7 +316,7 @@ struct nfun_base0{
 
 template<class TFun, int Method, class R>
 struct nfun_base<0, TFun, Method, R>
-	: nfun_base0<TFun, Method, R >{};
+	: public nfun_base0<TFun, Method, R >{};
 
 
 template<class TFun, int Method, class R , class A0>
@@ -240,7 +328,7 @@ struct nfun_base1{
 		param_types_holder1<Any , AA0>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 1==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A0>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 1-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0])
@@ -250,7 +338,7 @@ struct nfun_base1{
 
 template<class TFun, int Method, class R>
 struct nfun_base<1, TFun, Method, R>
-	: nfun_base1<TFun, Method, R , typename TFun::arg1_type>{};
+	: public nfun_base1<TFun, Method, R , typename TFun::arg1_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1>
@@ -262,7 +350,7 @@ struct nfun_base2{
 		param_types_holder2<Any , AA0, AA1>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 2==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A1>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 2-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1])
@@ -272,7 +360,7 @@ struct nfun_base2{
 
 template<class TFun, int Method, class R>
 struct nfun_base<2, TFun, Method, R>
-	: nfun_base2<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type>{};
+	: public nfun_base2<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2>
@@ -284,7 +372,7 @@ struct nfun_base3{
 		param_types_holder3<Any , AA0, AA1, AA2>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 3==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A2>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 3-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2])
@@ -294,7 +382,7 @@ struct nfun_base3{
 
 template<class TFun, int Method, class R>
 struct nfun_base<3, TFun, Method, R>
-	: nfun_base3<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type>{};
+	: public nfun_base3<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3>
@@ -306,7 +394,7 @@ struct nfun_base4{
 		param_types_holder4<Any , AA0, AA1, AA2, AA3>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 4==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A3>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 4-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3])
@@ -316,7 +404,7 @@ struct nfun_base4{
 
 template<class TFun, int Method, class R>
 struct nfun_base<4, TFun, Method, R>
-	: nfun_base4<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type>{};
+	: public nfun_base4<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4>
@@ -328,7 +416,7 @@ struct nfun_base5{
 		param_types_holder5<Any , AA0, AA1, AA2, AA3, AA4>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 5==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A4>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 5-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4])
@@ -338,7 +426,7 @@ struct nfun_base5{
 
 template<class TFun, int Method, class R>
 struct nfun_base<5, TFun, Method, R>
-	: nfun_base5<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type>{};
+	: public nfun_base5<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
@@ -350,7 +438,7 @@ struct nfun_base6{
 		param_types_holder6<Any , AA0, AA1, AA2, AA3, AA4, AA5>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 6==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A5>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 6-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5])
@@ -360,7 +448,7 @@ struct nfun_base6{
 
 template<class TFun, int Method, class R>
 struct nfun_base<6, TFun, Method, R>
-	: nfun_base6<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type>{};
+	: public nfun_base6<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
@@ -372,7 +460,7 @@ struct nfun_base7{
 		param_types_holder7<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 7==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A6>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 7-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6])
@@ -382,7 +470,7 @@ struct nfun_base7{
 
 template<class TFun, int Method, class R>
 struct nfun_base<7, TFun, Method, R>
-	: nfun_base7<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type>{};
+	: public nfun_base7<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
@@ -394,7 +482,7 @@ struct nfun_base8{
 		param_types_holder8<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 8==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A7>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 8-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7])
@@ -404,7 +492,7 @@ struct nfun_base8{
 
 template<class TFun, int Method, class R>
 struct nfun_base<8, TFun, Method, R>
-	: nfun_base8<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type>{};
+	: public nfun_base8<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
@@ -416,7 +504,7 @@ struct nfun_base9{
 		param_types_holder9<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 9==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A8>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 9-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8])
@@ -426,7 +514,7 @@ struct nfun_base9{
 
 template<class TFun, int Method, class R>
 struct nfun_base<9, TFun, Method, R>
-	: nfun_base9<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type>{};
+	: public nfun_base9<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
@@ -438,7 +526,7 @@ struct nfun_base10{
 		param_types_holder10<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 10==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A9>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 10-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9])
@@ -448,7 +536,7 @@ struct nfun_base10{
 
 template<class TFun, int Method, class R>
 struct nfun_base<10, TFun, Method, R>
-	: nfun_base10<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type>{};
+	: public nfun_base10<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
@@ -460,7 +548,7 @@ struct nfun_base11{
 		param_types_holder11<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 11==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A10>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 11-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10])
@@ -470,7 +558,7 @@ struct nfun_base11{
 
 template<class TFun, int Method, class R>
 struct nfun_base<11, TFun, Method, R>
-	: nfun_base11<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type>{};
+	: public nfun_base11<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
@@ -482,7 +570,7 @@ struct nfun_base12{
 		param_types_holder12<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 12==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A11>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 12-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)fp.args[ArgBase+11])
@@ -492,7 +580,7 @@ struct nfun_base12{
 
 template<class TFun, int Method, class R>
 struct nfun_base<12, TFun, Method, R>
-	: nfun_base12<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type, typename TFun::arg12_type>{};
+	: public nfun_base12<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type, typename TFun::arg12_type>{};
 
 
 template<class TFun, int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
@@ -504,7 +592,7 @@ struct nfun_base13{
 		param_types_holder13<Any , AA0, AA1, AA2, AA3, AA4, AA5, AA6, AA7, AA8, AA9, AA10, AA11, AA12>
 		>::type fun_param_holder;
 	enum{ extendable = (Method==1 && 13==1) ? 0 : IsSame<Arguments, typename CppClassSymbol<A12>::type>::value };
-	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method, vm = 0 };
+	enum{ ArgBase = 1-Method, method = Method, arity = 13-Method-extendable, vm = 0 };
 	static void call(FunctorParam& fp){ 
 		(*(fun_type*)fp.fun)(fp
 			, unchecked_cast<A0>((AnyPtr&)fp.args[ArgBase+0]), unchecked_cast<A1>((AnyPtr&)fp.args[ArgBase+1]), unchecked_cast<A2>((AnyPtr&)fp.args[ArgBase+2]), unchecked_cast<A3>((AnyPtr&)fp.args[ArgBase+3]), unchecked_cast<A4>((AnyPtr&)fp.args[ArgBase+4]), unchecked_cast<A5>((AnyPtr&)fp.args[ArgBase+5]), unchecked_cast<A6>((AnyPtr&)fp.args[ArgBase+6]), unchecked_cast<A7>((AnyPtr&)fp.args[ArgBase+7]), unchecked_cast<A8>((AnyPtr&)fp.args[ArgBase+8]), unchecked_cast<A9>((AnyPtr&)fp.args[ArgBase+9]), unchecked_cast<A10>((AnyPtr&)fp.args[ArgBase+10]), unchecked_cast<A11>((AnyPtr&)fp.args[ArgBase+11]), unchecked_cast<A12>((AnyPtr&)fp.args[ArgBase+12])
@@ -514,7 +602,7 @@ struct nfun_base13{
 
 template<class TFun, int Method, class R>
 struct nfun_base<13, TFun, Method, R>
-	: nfun_base13<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type, typename TFun::arg12_type, typename TFun::arg13_type>{};
+	: public nfun_base13<TFun, Method, R , typename TFun::arg1_type, typename TFun::arg2_type, typename TFun::arg3_type, typename TFun::arg4_type, typename TFun::arg5_type, typename TFun::arg6_type, typename TFun::arg7_type, typename TFun::arg8_type, typename TFun::arg9_type, typename TFun::arg10_type, typename TFun::arg11_type, typename TFun::arg12_type, typename TFun::arg13_type>{};
 
 
 //}}REPEAT}
@@ -560,7 +648,7 @@ struct nfun_base2<TFun, 1, R , C, const VMachinePtr&>{
 /*
 template<int Method, class R #COMMA_REPEAT#class A`i`#>
 struct nfun<R (*)(#REPEAT_COMMA#A`i`#), Method>
-	: nfun_base<`n`, functor<R (*)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
+	: public nfun_base<`n`, functor<R (*)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R #COMMA_REPEAT#class A`i`#>
@@ -579,7 +667,7 @@ struct functor<R (*)(#REPEAT_COMMA#A`i`#)>{
 
 template<int Method, class R, class C #COMMA_REPEAT#class A`i`#>
 struct nfun<R (C::*)(#REPEAT_COMMA#A`i`#), Method>
-	: nfun_base<`n+1`, functor<R (C::*)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
+	: public nfun_base<`n+1`, functor<R (C::*)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C #COMMA_REPEAT#class A`i`#>
@@ -598,7 +686,7 @@ struct functor<R (C::*)(#REPEAT_COMMA#A`i`#)>{
 
 template<int Method, class R, class C #COMMA_REPEAT#class A`i`#>
 struct nfun<R (C::*)(#REPEAT_COMMA#A`i`#) const, Method>
-	: nfun_base<`n+1`, functor<R (C::*)(#REPEAT_COMMA#A`i`#) const>, Method, R>{};
+	: public nfun_base<`n+1`, functor<R (C::*)(#REPEAT_COMMA#A`i`#) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C #COMMA_REPEAT#class A`i`#>
@@ -667,7 +755,7 @@ struct ctor_functor<T #COMMA_REPEAT#A`i`#>{
 
 template<int Method, class R #COMMA_REPEAT#class A`i`#>
 struct nfun<R (__stdcall *)(#REPEAT_COMMA#A`i`#), Method>
-	: nfun_base<`n`, functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
+	: public nfun_base<`n`, functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R #COMMA_REPEAT#class A`i`#>
@@ -701,7 +789,7 @@ struct static_functor<R (__stdcall *)(#REPEAT_COMMA#A`i`#), fun_>{
 
 template<int Method, class R >
 struct nfun<R (*)(), Method>
-	: nfun_base<0, functor<R (*)()>, Method, R>{};
+	: public nfun_base<0, functor<R (*)()>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R >
@@ -720,7 +808,7 @@ struct functor<R (*)()>{
 
 template<int Method, class R, class C >
 struct nfun<R (C::*)(), Method>
-	: nfun_base<1, functor<R (C::*)()>, Method, R>{};
+	: public nfun_base<1, functor<R (C::*)()>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C >
@@ -739,7 +827,7 @@ struct functor<R (C::*)()>{
 
 template<int Method, class R, class C >
 struct nfun<R (C::*)() const, Method>
-	: nfun_base<1, functor<R (C::*)() const>, Method, R>{};
+	: public nfun_base<1, functor<R (C::*)() const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C >
@@ -808,7 +896,7 @@ struct ctor_functor<T >{
 
 template<int Method, class R >
 struct nfun<R (__stdcall *)(), Method>
-	: nfun_base<0, functor<R (__stdcall *)()>, Method, R>{};
+	: public nfun_base<0, functor<R (__stdcall *)()>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R >
@@ -841,7 +929,7 @@ struct static_functor<R (__stdcall *)(), fun_>{
 
 template<int Method, class R , class A0>
 struct nfun<R (*)(A0), Method>
-	: nfun_base<1, functor<R (*)(A0)>, Method, R>{};
+	: public nfun_base<1, functor<R (*)(A0)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0>
@@ -860,7 +948,7 @@ struct functor<R (*)(A0)>{
 
 template<int Method, class R, class C , class A0>
 struct nfun<R (C::*)(A0), Method>
-	: nfun_base<2, functor<R (C::*)(A0)>, Method, R>{};
+	: public nfun_base<2, functor<R (C::*)(A0)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0>
@@ -879,7 +967,7 @@ struct functor<R (C::*)(A0)>{
 
 template<int Method, class R, class C , class A0>
 struct nfun<R (C::*)(A0) const, Method>
-	: nfun_base<2, functor<R (C::*)(A0) const>, Method, R>{};
+	: public nfun_base<2, functor<R (C::*)(A0) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0>
@@ -948,7 +1036,7 @@ struct ctor_functor<T , A0>{
 
 template<int Method, class R , class A0>
 struct nfun<R (__stdcall *)(A0), Method>
-	: nfun_base<1, functor<R (__stdcall *)(A0)>, Method, R>{};
+	: public nfun_base<1, functor<R (__stdcall *)(A0)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0>
@@ -981,7 +1069,7 @@ struct static_functor<R (__stdcall *)(A0), fun_>{
 
 template<int Method, class R , class A0, class A1>
 struct nfun<R (*)(A0, A1), Method>
-	: nfun_base<2, functor<R (*)(A0, A1)>, Method, R>{};
+	: public nfun_base<2, functor<R (*)(A0, A1)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1>
@@ -1000,7 +1088,7 @@ struct functor<R (*)(A0, A1)>{
 
 template<int Method, class R, class C , class A0, class A1>
 struct nfun<R (C::*)(A0, A1), Method>
-	: nfun_base<3, functor<R (C::*)(A0, A1)>, Method, R>{};
+	: public nfun_base<3, functor<R (C::*)(A0, A1)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1>
@@ -1019,7 +1107,7 @@ struct functor<R (C::*)(A0, A1)>{
 
 template<int Method, class R, class C , class A0, class A1>
 struct nfun<R (C::*)(A0, A1) const, Method>
-	: nfun_base<3, functor<R (C::*)(A0, A1) const>, Method, R>{};
+	: public nfun_base<3, functor<R (C::*)(A0, A1) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1>
@@ -1088,7 +1176,7 @@ struct ctor_functor<T , A0, A1>{
 
 template<int Method, class R , class A0, class A1>
 struct nfun<R (__stdcall *)(A0, A1), Method>
-	: nfun_base<2, functor<R (__stdcall *)(A0, A1)>, Method, R>{};
+	: public nfun_base<2, functor<R (__stdcall *)(A0, A1)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1>
@@ -1121,7 +1209,7 @@ struct static_functor<R (__stdcall *)(A0, A1), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2>
 struct nfun<R (*)(A0, A1, A2), Method>
-	: nfun_base<3, functor<R (*)(A0, A1, A2)>, Method, R>{};
+	: public nfun_base<3, functor<R (*)(A0, A1, A2)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2>
@@ -1140,7 +1228,7 @@ struct functor<R (*)(A0, A1, A2)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2>
 struct nfun<R (C::*)(A0, A1, A2), Method>
-	: nfun_base<4, functor<R (C::*)(A0, A1, A2)>, Method, R>{};
+	: public nfun_base<4, functor<R (C::*)(A0, A1, A2)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2>
@@ -1159,7 +1247,7 @@ struct functor<R (C::*)(A0, A1, A2)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2>
 struct nfun<R (C::*)(A0, A1, A2) const, Method>
-	: nfun_base<4, functor<R (C::*)(A0, A1, A2) const>, Method, R>{};
+	: public nfun_base<4, functor<R (C::*)(A0, A1, A2) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2>
@@ -1228,7 +1316,7 @@ struct ctor_functor<T , A0, A1, A2>{
 
 template<int Method, class R , class A0, class A1, class A2>
 struct nfun<R (__stdcall *)(A0, A1, A2), Method>
-	: nfun_base<3, functor<R (__stdcall *)(A0, A1, A2)>, Method, R>{};
+	: public nfun_base<3, functor<R (__stdcall *)(A0, A1, A2)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2>
@@ -1261,7 +1349,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3>
 struct nfun<R (*)(A0, A1, A2, A3), Method>
-	: nfun_base<4, functor<R (*)(A0, A1, A2, A3)>, Method, R>{};
+	: public nfun_base<4, functor<R (*)(A0, A1, A2, A3)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3>
@@ -1280,7 +1368,7 @@ struct functor<R (*)(A0, A1, A2, A3)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3>
 struct nfun<R (C::*)(A0, A1, A2, A3), Method>
-	: nfun_base<5, functor<R (C::*)(A0, A1, A2, A3)>, Method, R>{};
+	: public nfun_base<5, functor<R (C::*)(A0, A1, A2, A3)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3>
@@ -1299,7 +1387,7 @@ struct functor<R (C::*)(A0, A1, A2, A3)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3>
 struct nfun<R (C::*)(A0, A1, A2, A3) const, Method>
-	: nfun_base<5, functor<R (C::*)(A0, A1, A2, A3) const>, Method, R>{};
+	: public nfun_base<5, functor<R (C::*)(A0, A1, A2, A3) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3>
@@ -1368,7 +1456,7 @@ struct ctor_functor<T , A0, A1, A2, A3>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3), Method>
-	: nfun_base<4, functor<R (__stdcall *)(A0, A1, A2, A3)>, Method, R>{};
+	: public nfun_base<4, functor<R (__stdcall *)(A0, A1, A2, A3)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3>
@@ -1401,7 +1489,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4>
 struct nfun<R (*)(A0, A1, A2, A3, A4), Method>
-	: nfun_base<5, functor<R (*)(A0, A1, A2, A3, A4)>, Method, R>{};
+	: public nfun_base<5, functor<R (*)(A0, A1, A2, A3, A4)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4>
@@ -1420,7 +1508,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4), Method>
-	: nfun_base<6, functor<R (C::*)(A0, A1, A2, A3, A4)>, Method, R>{};
+	: public nfun_base<6, functor<R (C::*)(A0, A1, A2, A3, A4)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4>
@@ -1439,7 +1527,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4) const, Method>
-	: nfun_base<6, functor<R (C::*)(A0, A1, A2, A3, A4) const>, Method, R>{};
+	: public nfun_base<6, functor<R (C::*)(A0, A1, A2, A3, A4) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4>
@@ -1508,7 +1596,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4), Method>
-	: nfun_base<5, functor<R (__stdcall *)(A0, A1, A2, A3, A4)>, Method, R>{};
+	: public nfun_base<5, functor<R (__stdcall *)(A0, A1, A2, A3, A4)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4>
@@ -1541,7 +1629,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5), Method>
-	: nfun_base<6, functor<R (*)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
+	: public nfun_base<6, functor<R (*)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
@@ -1560,7 +1648,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5), Method>
-	: nfun_base<7, functor<R (C::*)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
+	: public nfun_base<7, functor<R (C::*)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5>
@@ -1579,7 +1667,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5) const, Method>
-	: nfun_base<7, functor<R (C::*)(A0, A1, A2, A3, A4, A5) const>, Method, R>{};
+	: public nfun_base<7, functor<R (C::*)(A0, A1, A2, A3, A4, A5) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5>
@@ -1648,7 +1736,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5), Method>
-	: nfun_base<6, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
+	: public nfun_base<6, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5>
@@ -1681,7 +1769,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6), Method>
-	: nfun_base<7, functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
+	: public nfun_base<7, functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
@@ -1700,7 +1788,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6), Method>
-	: nfun_base<8, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
+	: public nfun_base<8, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
@@ -1719,7 +1807,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const, Method>
-	: nfun_base<8, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const>, Method, R>{};
+	: public nfun_base<8, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
@@ -1788,7 +1876,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), Method>
-	: nfun_base<7, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
+	: public nfun_base<7, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6>
@@ -1821,7 +1909,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7), Method>
-	: nfun_base<8, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
+	: public nfun_base<8, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
@@ -1840,7 +1928,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7), Method>
-	: nfun_base<9, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
+	: public nfun_base<9, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
@@ -1859,7 +1947,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const, Method>
-	: nfun_base<9, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const>, Method, R>{};
+	: public nfun_base<9, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
@@ -1928,7 +2016,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), Method>
-	: nfun_base<8, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
+	: public nfun_base<8, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7>
@@ -1961,7 +2049,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7), fun_>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), Method>
-	: nfun_base<9, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
+	: public nfun_base<9, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
@@ -1980,7 +2068,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8), Method>
-	: nfun_base<10, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
+	: public nfun_base<10, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
@@ -1999,7 +2087,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const, Method>
-	: nfun_base<10, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const>, Method, R>{};
+	: public nfun_base<10, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
@@ -2068,7 +2156,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), Method>
-	: nfun_base<9, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
+	: public nfun_base<9, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8>
@@ -2101,7 +2189,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8), fun_>
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), Method>
-	: nfun_base<10, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
+	: public nfun_base<10, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
@@ -2120,7 +2208,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), Method>
-	: nfun_base<11, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
+	: public nfun_base<11, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
@@ -2139,7 +2227,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const, Method>
-	: nfun_base<11, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const>, Method, R>{};
+	: public nfun_base<11, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
@@ -2208,7 +2296,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), Method>
-	: nfun_base<10, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
+	: public nfun_base<10, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9>
@@ -2241,7 +2329,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9), f
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Method>
-	: nfun_base<11, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
+	: public nfun_base<11, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
@@ -2260,7 +2348,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Method>
-	: nfun_base<12, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
+	: public nfun_base<12, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
@@ -2279,7 +2367,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const, Method>
-	: nfun_base<12, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const>, Method, R>{};
+	: public nfun_base<12, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
@@ -2348,7 +2436,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Method>
-	: nfun_base<11, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
+	: public nfun_base<11, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10>
@@ -2381,7 +2469,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Method>
-	: nfun_base<12, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
+	: public nfun_base<12, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
@@ -2400,7 +2488,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Method>
-	: nfun_base<13, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
+	: public nfun_base<13, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
@@ -2419,7 +2507,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const, Method>
-	: nfun_base<13, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const>, Method, R>{};
+	: public nfun_base<13, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
@@ -2488,7 +2576,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Method>
-	: nfun_base<12, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
+	: public nfun_base<12, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11>
@@ -2521,7 +2609,7 @@ struct static_functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A1
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Method>
-	: nfun_base<13, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
+	: public nfun_base<13, functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
@@ -2540,7 +2628,7 @@ struct functor<R (*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Method>
-	: nfun_base<14, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
+	: public nfun_base<14, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
 
 // メンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
@@ -2559,7 +2647,7 @@ struct functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>{
 
 template<int Method, class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const, Method>
-	: nfun_base<14, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const>, Method, R>{};
+	: public nfun_base<14, functor<R (C::*)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const>, Method, R>{};
 
 // constメンバ関数を関数オブジェクト化する
 template<class R, class C , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
@@ -2628,7 +2716,7 @@ struct ctor_functor<T , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>{
 
 template<int Method, class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
 struct nfun<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Method>
-	: nfun_base<13, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
+	: public nfun_base<13, functor<R (__stdcall *)(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>, Method, R>{};
 
 // 関数を関数オブジェクト化する
 template<class R , class A0, class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12>
@@ -2743,7 +2831,7 @@ struct static_setter_functor<T C::*, fun_>{
 #define Xdef_fun_alias2(fun, impl, secondary_key) it->def_fun(XTAL_STRING(#fun), secondary_key, impl)
 
 #define Xdef_getter(fun) it->def_getter(XTAL_STRING(#fun), &Self::fun)
-#define Xdef_setter(fun) it->def_setter(XTAL_STRING("set_" #fun), &Self::fun)
+#define Xdef_setter(fun) it->def_setter(XTAL_LONG_LIVED_STRING(XTAL_L("set_") XTAL_L(#fun), &Self::fun)
 
 #else
 
@@ -2789,34 +2877,169 @@ template<class TFun> inline static_setter_meker<TFun> generate_static_setter(TFu
 }
 
 
-#define XTAL_FUN_PARAM(fun) ::xtal::generate_static_cfun(fun).inner<fun>()
-#define XTAL_METHOD_PARAM(fun) ::xtal::generate_static_cmemfun(fun).inner<fun>()
-#define XTAL_GETTER_PARAM(fun) ::xtal::generate_static_getter(fun).inner<fun>()
-#define XTAL_SETTER_PARAM(fun) ::xtal::generate_static_setter(fun).inner<fun>()
+#define XTAL_FUN(fun) ::xtal::generate_static_cfun(fun).inner<fun>()
+#define XTAL_METHOD(fun) ::xtal::generate_static_cmemfun(fun).inner<fun>()
+#define XTAL_GETTER(fun) ::xtal::generate_static_getter(fun).inner<fun>()
+#define XTAL_SETTER(fun) ::xtal::generate_static_setter(fun).inner<fun>()
 
-#define Xdef_method(fun) it->define(XTAL_STRING(#fun), XTAL_METHOD_PARAM(&Self::fun))
-#define Xdef_method2(fun, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_METHOD_PARAM(&Self::fun))
-#define Xdef_method_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_METHOD_PARAM(impl))
-#define Xdef_method_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_METHOD_PARAM(impl))
+/**
+* \brief メソッドをバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Vector){
+*   Xdef_method(length); // Vector::lengthメソッドをバインドする
+* }
+* \endcode
+*/
+#define Xdef_method(fun) it->define(XTAL_STRING(#fun), XTAL_METHOD(&Self::fun))
 
-#define Xdef_fun(fun) it->define(XTAL_STRING(#fun), XTAL_FUN_PARAM(&Self::fun))
-#define Xdef_fun2(fun, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_FUN_PARAM(&Self::fun))
-#define Xdef_fun_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_FUN_PARAM(impl))
-#define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), secondary_key, XTAL_FUN_PARAM(impl))
+/**
+* \brief メソッドをセカンダリーキー付でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Vector){
+*   Xdef_method2(length, Vector); // Vector::lengthメソッドをセカンダリーキーをVectorクラスでバインドする
+* }
+* \endcode
+*/
+#define Xdef_method2(fun, secondary_key) it->define(XTAL_STRING(#fun), ::xtal::cpp_class< secondary_key >(), XTAL_METHOD(&Self::fun))
 
-#define Xdef_getter(fun) it->define(XTAL_STRING(#fun), XTAL_GETTER_PARAM(&Self::fun))
-#define Xdef_setter(fun) it->define(XTAL_LONG_LIVED_STRING(XTAL_L("set_") XTAL_L(#fun)), XTAL_SETTER_PARAM(&Self::fun))
+/**
+* \brief メソッドを別名でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Vector){
+*   Xdef_method_alias(size, &Vector::length); // Vector::lengthメソッドをsizeという名前でバインドする
+* }
+* \endcode
+*/
+#define Xdef_method_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_METHOD(impl))
+
+/**
+* \brief メソッドを別名でセカンダリーキー付でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Vector){
+*   Xdef_method_alias2(size, &Vector::length, Vector); // Vector::lengthメソッドをsizeという名前でセカンダリーキーをVectorクラスでバインドする
+* }
+* \endcode
+*/
+#define Xdef_method_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), ::xtal::cpp_class< secondary_key >(), XTAL_METHOD(impl))
+
+/**
+* \brief 関数をバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Test){
+*   Xdef_fun(fuge); // Test::fuge関数をバインドする
+* }
+* \endcode
+*/
+#define Xdef_fun(fun) it->define(XTAL_STRING(#fun), XTAL_FUN(&Self::fun))
+
+/**
+* \brief 関数をセカンダリーキー付でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Test){
+*   Xdef_fun2(fuge, Hoge); // Test::fuge関数をセカンダリーキーをHogeクラスでバインドする
+* }
+* \endcode
+*/
+#define Xdef_fun2(fun, secondary_key) it->define(XTAL_STRING(#fun), ::xtal::cpp_class< secondary_key >(), XTAL_FUN(&Self::fun))
+
+/**
+* \brief 関数を別名でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Test){
+*   Xdef_fun_alias(fuge, &hogehogen); // hogehogen関数をfugaという名前でバインドする
+* }
+* \endcode
+*/
+#define Xdef_fun_alias(fun, impl) it->define(XTAL_STRING(#fun), XTAL_FUN(impl))
+
+/**
+* \brief メソッドを別名でセカンダリーキー付でバインドする
+* XTAL_BINDの中で使用する。
+* \code
+* XTAL_BIND(Test){
+*   Xdef_method_alias2(fuge, &hogehogen, Huga); // hogehogen関数をfugaという名前でセカンダリーキーをHugaクラスでバインドする
+* }
+* \endcode
+*/
+#define Xdef_fun_alias2(fun, impl, secondary_key) it->define(XTAL_STRING(#fun), ::xtal::cpp_class< secondary_key >(), XTAL_FUN(impl))
+
+/**
+* \brief メンバ変数のゲッターをバインドする
+*/
+#define Xdef_getter(fun) it->define(XTAL_STRING(#fun), XTAL_GETTER(&Self::fun))
+
+/**
+* \brief メンバ変数のセッターをバインドする
+*/
+#define Xdef_setter(fun) it->define(XTAL_LONG_LIVED_STRING(XTAL_L("set_") XTAL_L(#fun)), XTAL_SETTER(&Self::fun))
 
 #endif
 
+#define Xdef_double_dispatch_method(fun) it->def_double_dispatch_method(XTAL_STRING(#fun))
+
+/**
+* \brief メンバ変数のゲッターとセッターをバインドする
+*/
 #define Xdef_var(fun) Xdef_getter(fun), Xdef_setter(fun)
 
+/**
+* \brief Xdef_methodやXdef_funなどで定義したメソッドや関数のオプショナル引数を定義する
+*/
 #define Xparam(name, default_value) it->define_param(XTAL_STRING(#name), default_value)
 
+/**
+* \brief メンバを定義する
+*/
 #define Xdef(name, value) it->define(XTAL_STRING(#name), value)
-#define Xdef2(name, value, secondary_key) it->define(XTAL_STRING(#name), value, secondary_key)
 
+/**
+* \brief メンバをセカンダリキー付きで定義する
+*/
+#define Xdef2(name, value, secondary_key) it->define(XTAL_STRING(#name), value, ::xtal::cpp_class< secondary_key >())
+
+/**
+* \brief クラス定数を定義する
+*/
 #define Xdef_const(name) it->define(XTAL_STRING(#name), (int_t)Self::name)
+
+/**
+* \brief クラス定数をセカンダリキー付きで定義する
+*/
+#define Xdef_const2(name) it->define(XTAL_STRING(#name), (int_t)Self::name)
+
+/**
+* \brief クラスを他のクラスに登録する
+*/
+#define Xregister(parent_class) ::xtal::cpp_class< parent_class >()->define(XTAL_LONG_LIVED_STRING(::xtal::CppClassSymbol<Self>::value.name), it)
+
+/**
+* \brief クラスを他のクラスに名前を変えて登録する
+*/
+#define Xregister_alias(parent_class, alias) ::xtal::cpp_class< parent_class >()->define(XTAL_STRING(#alias), it)
+
+#define Xinherit(super_class) it->inherit(::xtal::cpp_class< super_class >())
+
+/**
+* \brief バインドするクラスをXtalのクラスから継承できなくする
+* Xtalのクラスからはinheritできなくなるが、C++からはinheritできる。
+*/
+#define Xfinal() it->set_final()
+
+/**
+* \brief クラスをC++で定義されたクラスではなく、Xtalで定義されたクラスとみなすようにする
+* C++のクラスは二個以上inheritできない、などの制限があるため、
+* 名前空間的に使うだけのクラスなどはこれを使ってXtalで定義したクラスとみなすようにすることができる。
+*/
+#define Xxtal_class() it->set_xtal_class()
+
+#define Xsingleton() it->set_singleton()
 
 //{REPEAT{{
 /*
@@ -2852,6 +3075,8 @@ template<class TFun> inline static_setter_meker<TFun> generate_static_setter(TFu
 #define Xdef_ctor13(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) it->def_ctor13<Self , A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12>()
 
 //}}REPEAT}
+
+#define Xdef_serial_ctor() it->def_serial_ctor(ctor<Self>())
 
 }
 

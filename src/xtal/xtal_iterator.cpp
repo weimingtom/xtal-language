@@ -1,5 +1,6 @@
 #include "xtal.h"
 #include "xtal_macro.h"
+#include "xtal_stringspace.h"
 
 namespace xtal{
 
@@ -19,12 +20,12 @@ void ZipIter::common(const VMachinePtr& vm, const IDPtr& id){
 		next_->at(i)->rawsend(vm, id);
 		next_->set_at(i, vm->result(0));
 		
-		if(type(value)==TYPE_VALUES){
+		if(XTAL_detail_type(value)==TYPE_VALUES){
 			value = XNew<Values>(vm->result(1), value);
 		}
 		else{
 			AnyPtr ret = vm->result(1);
-			if(type(ret)==TYPE_VALUES){
+			if(XTAL_detail_type(ret)==TYPE_VALUES){
 				value = unchecked_ptr_cast<Values>(ret);
 			}
 			else{
@@ -58,7 +59,7 @@ void ZipIter::block_break(const VMachinePtr& vm){
 	for(int_t i = 0, len = next_->size(); i<len; ++i){
 		vm->setup_call(0);
 		next_->at(i)->rawsend(vm, id, undefined, true, true);
-		if(!vm->processed()){
+		if(!vm->is_executed()){
 			vm->return_result();	
 		}
 		vm->cleanup_call();
@@ -72,14 +73,14 @@ void ZipIter::on_visit_members(Visitor& m){
 }
 
 void DelegateToIterator::on_rawcall(const VMachinePtr& vm){
-	vm->arg_this()->send(Xid(each))->rawsend(vm, member_);
+	vm->arg_this()->send(XTAL_DEFINED_ID(each))->rawsend(vm, member_);
 }
 
 void block_break(AnyPtr& target){
 	if(target){
 		const VMachinePtr& vm = setup_call(0);
-		target->rawsend(vm, Xid(block_break), undefined, true, true);
-		if(!vm->processed()){
+		target->rawsend(vm, XTAL_DEFINED_ID(block_break), undefined, true, true);
+		if(!vm->is_executed()){
 			vm->return_result();
 		}
 		vm->cleanup_call();
@@ -94,7 +95,7 @@ bool block_next(BlockValueHolder1& holder, bool first){
 	}
 	else{
 		const VMachinePtr& vm = setup_call(2);
-		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+		holder.target->rawsend(vm, first ? XTAL_DEFINED_ID(block_first) : XTAL_DEFINED_ID(block_next));
 		holder.target = vm->result(0);
 		holder.values[0] = vm->result(1);
 		vm->cleanup_call();
@@ -110,7 +111,7 @@ bool block_next(BlockValueHolder2& holder, bool first){
 	}
 	else{
 		const VMachinePtr& vm = setup_call(3);
-		holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+		holder.target->rawsend(vm, first ? XTAL_DEFINED_ID(block_first) : XTAL_DEFINED_ID(block_next));
 		holder.target = vm->result(0);
 		holder.values[0] = vm->result(1);
 		holder.values[1] = vm->result(2);
@@ -121,7 +122,7 @@ bool block_next(BlockValueHolder2& holder, bool first){
 
 bool block_next(BlockValueHolder3& holder, bool first){
 	const VMachinePtr& vm = setup_call(4);
-	holder.target->rawsend(vm, first ? Xid(block_first) : Xid(block_next));
+	holder.target->rawsend(vm, first ? XTAL_DEFINED_ID(block_first) : XTAL_DEFINED_ID(block_next));
 	holder.target = vm->result(0);
 	holder.values[0] = vm->result(1);
 	holder.values[1] = vm->result(2);

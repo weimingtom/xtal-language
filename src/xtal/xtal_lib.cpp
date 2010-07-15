@@ -1,25 +1,17 @@
 #include "xtal.h"
 #include "xtal_macro.h"
 #include "xtal_codebuilder.h"
+#include "xtal_stringspace.h"
 
 namespace xtal{
 
-//AnyPtr load_lib_member(){
-
-//}
-
-Lib::Lib(most_top_level_t)
+AutoLoader::AutoLoader()
 	:load_path_list_(xnew<Array>()){
-	set_object_temporary_name(Xid(lib));
-	set_object_force(1000);
 }
 
-Lib::Lib()
-	:load_path_list_(xnew<Array>()){}
-
-const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
+const AnyPtr& AutoLoader::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondary_key, bool inherited_too, int_t& accessibility, bool& nocache){
 	const AnyPtr& ret = Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
-	if(!is_undefined(ret)){
+	if(!XTAL_detail_is_undefined(ret)){
 		return ret;
 	}
 	else{
@@ -44,7 +36,7 @@ const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondar
 				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
 
-			if(!is_undefined(value)){
+			if(!XTAL_detail_is_undefined(value)){
 				on_def(primary_key, value, secondary_key, accessibility);
 				return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 			}
@@ -53,6 +45,11 @@ const AnyPtr& Lib::on_rawmember(const IDPtr& primary_key, const AnyPtr& secondar
 		nocache = true;
 		return Class::on_rawmember(primary_key, secondary_key, inherited_too, accessibility, nocache);
 	}
+}
+
+Lib::Lib(){
+	set_object_temporary_name(XTAL_DEFINED_ID(lib));
+	set_object_force(1000);
 }
 
 void Global::on_def(const IDPtr& primary_key, const AnyPtr& value, const AnyPtr& secondary_key, int_t accessibility){

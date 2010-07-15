@@ -106,7 +106,7 @@ AnyPtr Executor::captures_values(){
 }
 
 StringPtr Executor::at(const StringPtr& key){
-	if(raweq(key, empty_id)){
+	if(XTAL_detail_raweq(key, empty_id)){
 		return capture(match_begin_, match_end_);
 	}
 	else{
@@ -125,7 +125,7 @@ StringPtr Executor::at(const StringPtr& key){
 }
 
 AnyPtr Executor::call(const StringPtr& key){
-	if(raweq(key, empty_id)){
+	if(XTAL_detail_raweq(key, empty_id)){
 		return capture_values(match_begin_, match_end_);
 	}
 	else{		
@@ -162,16 +162,16 @@ AnyPtr Executor::suffix_values(){
 }
 
 int_t Executor::peek_ascii(int_t n){
-	return chvalue(peek(n));
+	return XTAL_detail_chvalue(peek(n));
 }
 
 int_t Executor::read_ascii(){
-	return chvalue(read());
+	return XTAL_detail_chvalue(read());
 }
 
 const StringPtr& Executor::peek_s(int_t n){
 	const AnyPtr& ret = peek(n);
-	if(is_undefined(ret)){
+	if(XTAL_detail_is_undefined(ret)){
 		return empty_string;
 	}
 	return unchecked_ptr_cast<String>(ret);
@@ -179,14 +179,14 @@ const StringPtr& Executor::peek_s(int_t n){
 
 const StringPtr& Executor::read_s(){
 	const AnyPtr& ret = read();
-	if(is_undefined(ret)){
+	if(XTAL_detail_is_undefined(ret)){
 		return empty_string;
 	}
 	return unchecked_ptr_cast<String>(ret);
 }
 
 bool Executor::eat(const AnyPtr& v){
-	if(raweq(peek(), v)){
+	if(XTAL_detail_raweq(peek(), v)){
 		skip();
 		return true;
 	}
@@ -230,10 +230,9 @@ bool Executor::match_inner(const ElementPtr& e){
 	key.ptr = nfa.get();
 
 	// すでにメモ化してないかチェック
-	memotable_t::iterator it=memotable_.find(key);
-	if(it!=memotable_.end()){
-		load(it->second.state);
-		tree_->op_cat_assign(it->second.tree);
+	if(memotable_t::Node* it=memotable_.find(key)){
+		load(it->value().state);
+		tree_->op_cat_assign(it->value().tree);
 		return true;
 	}
 
@@ -363,14 +362,14 @@ bool Executor::test(const ElementPtr& e){
 
 		XTAL_CASE(Element::TYPE_EQL){
 			if(eos()){ return false; }
-			if(raweq(read(), e->param1)){ return !e->inv; }
+			if(XTAL_detail_raweq(read(), e->param1)){ return !e->inv; }
 			return e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_INT_RANGE){
 			if(eos()){ return false; }
 			const AnyPtr& a = peek();
-			if(rawtype(a)==TYPE_INT){
+			if(XTAL_detail_is_ivalue(a)){
 				return unchecked_ptr_cast<Int>(a)->op_in_IntRange(unchecked_ptr_cast<IntRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
@@ -379,7 +378,7 @@ bool Executor::test(const ElementPtr& e){
 		XTAL_CASE(Element::TYPE_FLOAT_RANGE){
 			if(eos()){ return false; }
 			const AnyPtr& a = peek();
-			if(rawtype(a)==TYPE_FLOAT){
+			if(XTAL_detail_is_fvalue(a)){
 				return unchecked_ptr_cast<Float>(a)->op_in_FloatRange(unchecked_ptr_cast<FloatRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
@@ -388,7 +387,7 @@ bool Executor::test(const ElementPtr& e){
 		XTAL_CASE(Element::TYPE_CH_RANGE){
 			if(eos()){ return false; }
 			const AnyPtr& a = read();
-			if(type(a)==TYPE_SMALL_STRING){
+			if(XTAL_detail_type(a)==TYPE_SMALL_STRING){
 				return unchecked_ptr_cast<String>(a)->op_in(unchecked_ptr_cast<ChRange>(e->param1))!=e->inv;
 			}
 			return e->inv;
@@ -410,7 +409,7 @@ bool Executor::test(const ElementPtr& e){
 		XTAL_CASE(Element::TYPE_CALL){
 			if(eos()){ return false; }
 			AnyPtr ret = e->param1->call(to_smartptr(this));
-			return (ret || is_undefined(ret))!=e->inv;
+			return (ret || XTAL_detail_is_undefined(ret))!=e->inv;
 		}
 
 		XTAL_CASE(Element::TYPE_GREED){
@@ -427,7 +426,7 @@ bool Executor::test(const ElementPtr& e){
 		XTAL_CASE(Element::TYPE_LOOKBEHIND){
 			State state = save();
 			State fict_state = state;
-			fict_state.pos = fict_state.pos > (uint_t)ivalue(e->param2) ? fict_state.pos-e->param3 : 0;
+			fict_state.pos = fict_state.pos > (uint_t)XTAL_detail_ivalue(e->param2) ? fict_state.pos-e->param3 : 0;
 			load(fict_state);
 			bool ret = match_inner(unchecked_ptr_cast<Element>(e->param1));
 			load(state);
@@ -524,7 +523,7 @@ const AnyPtr& Executor::peek(int_t n){
 
 const AnyPtr& Executor::read(){
 	const AnyPtr& ret = peek();
-	if(raweq(ret, n_ch_)){
+	if(XTAL_detail_raweq(ret, n_ch_)){
 		lineno_++;
 	}
 
@@ -538,12 +537,12 @@ bool Executor::bol(){
 	}
 
 	const AnyPtr& ch = access(pos_-1);
-	return raweq(ch, n_ch_) || raweq(ch, r_ch_);
+	return XTAL_detail_raweq(ch, n_ch_) || XTAL_detail_raweq(ch, r_ch_);
 }
 
 bool Executor::eol(){
 	const AnyPtr& ch = peek();
-	return raweq(ch, r_ch_) || raweq(ch, n_ch_);
+	return XTAL_detail_raweq(ch, r_ch_) || XTAL_detail_raweq(ch, n_ch_);
 }
 
 void Executor::skip(uint_t n){
@@ -558,15 +557,15 @@ void Executor::skip(){
 
 void Executor::skip_eol(){
 	const AnyPtr& ch = peek();
-	if(raweq(ch, r_ch_)){
-		if(raweq(peek(1), n_ch_)){
+	if(XTAL_detail_raweq(ch, r_ch_)){
+		if(XTAL_detail_raweq(peek(1), n_ch_)){
 			skip(2);
 		}
 		else{
 			skip(1);
 		}
 	}
-	else if(raweq(ch, n_ch_)){
+	else if(XTAL_detail_raweq(ch, n_ch_)){
 		skip(1);
 	}
 }
@@ -611,7 +610,7 @@ StringPtr Executor::capture(int_t begin){
 
 bool Executor::eat_capture(int_t begin, int_t end){
 	for(int_t i=begin; i<end; ++i){
-		if(rawne(peek(i-begin), access(i))){
+		if(!XTAL_detail_raweq(peek(i-begin), access(i))){
 			return false;
 		}
 	}

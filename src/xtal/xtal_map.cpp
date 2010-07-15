@@ -3,8 +3,6 @@
 
 namespace xtal{
 
-PairDummy PairDummy::second;
-
 Map::Map()
 	:default_value_(undefined){}
 
@@ -16,7 +14,7 @@ void Map::on_visit_members(Visitor& m){
 }	
 
 AnyPtr Map::calc_key(const AnyPtr& key){
-	int_t t = type(key);
+	int_t t = XTAL_detail_type(key);
 	if(t==TYPE_STRING || t==TYPE_LONG_LIVED_STRING){
 		if(const StringPtr& str = unchecked_ptr_cast<String>(key)){
 			return str->intern();

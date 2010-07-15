@@ -16,7 +16,7 @@ void VirtualMembersN::visit_members(RefCountingBase* p, Visitor& m){ p->on_visit
 void VirtualMembersN::shrink_to_fit(RefCountingBase* p){ p->on_shrink_to_fit(); }
 
 void RefCountingBase::on_rawcall(const VMachinePtr& vm){
-	to_smartptr(this)->rawsend(vm, id_op_list()[IDOp::id_op_call]);
+	to_smartptr(this)->rawsend(vm, XTAL_DEFINED_ID(op_call));
 }
 
 void RefCountingBase::special_initialize(const VirtualMembers* vmembers){
@@ -24,21 +24,21 @@ void RefCountingBase::special_initialize(const VirtualMembers* vmembers){
 	vmembers_ = vmembers;
 }
 
-void RefCountingBase::destroy(){ 
-	if(!destroyed()){
-		if(value_.have_finalizer()){
+void RefCountingBase::object_destroy(){ 
+	if(!object_destroyed()){
+		if(have_finalizer()){
 			finalize();
 			
-			if(!value_.can_not_destroy()){
+			if(alive_ref_count()){
 				return;
 			}
 		}
 
-		set_destroyed_flag();
-		virtual_members()->destroy(this); 
+		set_object_destroyed_flag();
+		virtual_members()->object_destroy(this); 
 
-		if(type(*this)==TYPE_BASE){
-			pvalue(*this)->special_uninitialize();
+		if(XTAL_detail_type(*this)==TYPE_BASE){
+			XTAL_detail_pvalue(*this)->special_uninitialize();
 		}
 
 		if(virtual_members()->is_container){
@@ -103,8 +103,7 @@ void Base::set_class(const ClassPtr& c){
 
 void Base::on_visit_members(Visitor& m){
 	if(instance_variables_!=&empty_instance_variables){
-		m & class_;
-		instance_variables_->visit_members(m);
+		m & class_ & instance_variables_;
 	}
 }
 

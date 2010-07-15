@@ -145,7 +145,7 @@ public:
 	}
 
 	int_t itag(){
-		return ivalue(tag_);
+		return XTAL_detail_ivalue(tag_);
 	}
 
 	void set_tag(const AnyPtr& tag){
